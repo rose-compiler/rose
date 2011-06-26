@@ -291,7 +291,9 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info )
 #else
        // DQ (5/15/2011): Test clearing the mangled name map.
        // printf ("Calling SgNode::clearGlobalMangledNameMap() \n");
-          SgNode::clearGlobalMangledNameMap();
+
+       // DQ (6/25/2011): Test if this is required...it works, I think we don't need to clear the global managled name table...
+       // SgNode::clearGlobalMangledNameMap();
 
         // Build the local set to use to record when declaration that might required qualified references have been seen.
           std::set<SgNode*> referencedNameSet;
@@ -1290,19 +1292,6 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
              {
                const SgType* type = isSgType(astNode);
 
-#if 0
-            // ROSE_ASSERT(inheritedAttributeInfo != NULL);
-               printf ("inheritedAttributeInfo.get_current_scope() = %p \n",inheritedAttributeInfo.get_current_scope());
-
-            // Build the local set to use to record when declaration that might required qualified references have been seen.
-               std::set<SgNode*> referencedNameSet;
-
-               SgType* nonconst_type = const_cast<SgType*>(isSgType(astNode));
-               ROSE_ASSERT(nonconst_type != NULL);
-               printf ("Developing a new implementation of the name qualification support (use for SgType). astNode = %p = %s \n",astNode,astNode->class_name().c_str());
-               generateNameQualificationSupport(nonconst_type,referencedNameSet);
-               printf ("DONE: new name qualification support built (use for SgType). \n*************************\n\n");
-#endif
             // DQ (9/6/2010): Added support to detect use of C (default) or Fortran code.
             // DQ (2/2/2007): Note that we should modify the unparser to take the IR nodes as const pointers, but this is a bigger job than I want to do now!
 #if 1

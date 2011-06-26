@@ -2314,80 +2314,155 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
        // ROSE_ASSERT(currentScope != NULL);
           if (currentScope != NULL)
              {
-       // Handle the function return type...
-          ROSE_ASSERT(functionDeclaration->get_orig_return_type() != NULL);
-          ROSE_ASSERT(functionDeclaration->get_type() != NULL);
-          ROSE_ASSERT(functionDeclaration->get_type()->get_return_type() != NULL);
-          SgType* returnType = functionDeclaration->get_type()->get_return_type();
-          ROSE_ASSERT(returnType != NULL);
+            // Handle the function return type...
+               ROSE_ASSERT(functionDeclaration->get_orig_return_type() != NULL);
+               ROSE_ASSERT(functionDeclaration->get_type() != NULL);
+               ROSE_ASSERT(functionDeclaration->get_type()->get_return_type() != NULL);
+               SgType* returnType = functionDeclaration->get_type()->get_return_type();
+               ROSE_ASSERT(returnType != NULL);
 
-          SgDeclarationStatement* declaration = getDeclarationAssociatedWithType(returnType);
-          if (declaration != NULL)
-             {
-               int amountOfNameQualificationRequiredForReturnType = nameQualificationDepth(declaration,currentScope,functionDeclaration);
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-               printf ("SgFunctionDeclaration's return type: amountOfNameQualificationRequiredForType = %d \n",amountOfNameQualificationRequiredForReturnType);
-               printf ("Putting the name qualification for the type into the return type of SgFunctionDeclaration = %p = %s \n",functionDeclaration,functionDeclaration->get_name().str());
-#endif
-            // setNameQualificationReturnType(functionDeclaration,amountOfNameQualificationRequiredForReturnType);
-               setNameQualificationReturnType(functionDeclaration,declaration,amountOfNameQualificationRequiredForReturnType);
-             }
-            else
-             {
-            // This case is common for builtin functions such as: __builtin_powi
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-               printf ("declaration == NULL: could not put name qualification for the type into the return type of SgFunctionDeclaration = %p = %s \n",functionDeclaration,functionDeclaration->get_name().str());
-#endif
-             }
-
-       // DQ (6/3/2011): Traverse the type to set any possible template arguments (or other subtypes?) that require name qualification.
-          traverseType(returnType,functionDeclaration,currentScope,functionDeclaration);
-
-       // Handle the function name...
-       // DQ (6/20/2011): Friend function can be qualified.
-       // if (functionDeclaration->get_declarationModifier().isFriend() == true || functionDeclaration->get_specialFunctionModifier().isOperator() == true)
-          if (functionDeclaration->get_specialFunctionModifier().isOperator() == true)
-             {
-            // DQ (6/19/2011): We sometimes have to qualify friends if it is to avoid ambiguity (see test2006_159.C) (but we never qualify an operator, I think).
-            // Maybe a friend declaration should add an SgAliasSymbol to the class definition scope's symbol table.
-            // Then simpler rules (no special case) would cause the name qualification to be generated properly.
-
-            // DQ (6/20/2011): Friend function can be qualified and a fix to add a SgAliasSymbol to the class definition scope's symbol table 
-            // should allow it to be handled with greater precission.
-            // Never use name qualification for friend functions or operators. I am more sure of the case of friend functions than operators.
-            // Friend functions will have a global scope (though this might change in the future; google "friend global scope injection").
-            // printf ("Detected a friend or operator function, these are not provided with name qualification. \n");
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-               printf ("Detected a operator function, these are not provided with name qualification. \n");
-#endif
-             }
-            else
-             {
-            // Only use name qualification where the scopes of the declaration's use (currentScope) is not the same 
-            // as the scope of the function declaration.  However, the analysis should work and determin that the 
-            // required name qualification length is zero.
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-               printf ("I would like to not have to have this SgFunctionDeclaration logic, we should get the name qualification correct more directly. \n");
-#endif
-               if (currentScope != functionDeclaration->get_scope())
+               SgDeclarationStatement* declaration = getDeclarationAssociatedWithType(returnType);
+               if (declaration != NULL)
                   {
-                    int amountOfNameQualificationRequired = nameQualificationDepth(functionDeclaration,currentScope,functionDeclaration);
+                    int amountOfNameQualificationRequiredForReturnType = nameQualificationDepth(declaration,currentScope,functionDeclaration);
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                    printf ("SgFunctionDeclaration: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
+                    printf ("SgFunctionDeclaration's return type: amountOfNameQualificationRequiredForType = %d \n",amountOfNameQualificationRequiredForReturnType);
+                    printf ("Putting the name qualification for the type into the return type of SgFunctionDeclaration = %p = %s \n",functionDeclaration,functionDeclaration->get_name().str());
 #endif
-                 // DQ (21/2011): test2011_89.C demonstrates a case where name wualification of a functionRef expression is required.
-                 // DQ (6/9/2011): Support for test2011_78.C (we only qualify function call references where the function has been declared in 
-                 // a scope where it could be expected to be defined (e.g. not using a forward declaration in a SgBasicBlock, since the function
-                 // definition could not live in the SgBasicBlock.
-                    bool skipNameQualification = skipNameQualificationIfNotProperlyDeclaredWhereDeclarationIsDefinable(functionDeclaration);
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                    printf ("Test of functionDeclaration: skipNameQualification = %s \n",skipNameQualification ? "true" : "false");
-#endif
-                    if (skipNameQualification == false)
-                         setNameQualification(functionDeclaration,amountOfNameQualificationRequired);
+                 // setNameQualificationReturnType(functionDeclaration,amountOfNameQualificationRequiredForReturnType);
+                    setNameQualificationReturnType(functionDeclaration,declaration,amountOfNameQualificationRequiredForReturnType);
                   }
-             }
+                 else
+                  {
+                 // This case is common for builtin functions such as: __builtin_powi
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    printf ("declaration == NULL: could not put name qualification for the type into the return type of SgFunctionDeclaration = %p = %s \n",functionDeclaration,functionDeclaration->get_name().str());
+#endif
+                  }
 
+            // DQ (6/3/2011): Traverse the type to set any possible template arguments (or other subtypes?) that require name qualification.
+               traverseType(returnType,functionDeclaration,currentScope,functionDeclaration);
+
+            // Handle the function name...
+            // DQ (6/20/2011): Friend function can be qualified...sometimes...
+            // if (functionDeclaration->get_declarationModifier().isFriend() == true || functionDeclaration->get_specialFunctionModifier().isOperator() == true)
+               if (functionDeclaration->get_specialFunctionModifier().isOperator() == true)
+                  {
+                 // DQ (6/19/2011): We sometimes have to qualify friends if it is to avoid ambiguity (see test2006_159.C) (but we never qualify an operator, I think).
+                 // Maybe a friend declaration should add an SgAliasSymbol to the class definition scope's symbol table.
+                 // Then simpler rules (no special case) would cause the name qualification to be generated properly.
+
+                 // Old comment
+                 // Never use name qualification for friend functions or operators. I am more sure of the case of friend functions than operators.
+                 // Friend functions will have a global scope (though this might change in the future; google "friend global scope injection").
+                 // printf ("Detected a friend or operator function, these are not provided with name qualification. \n");
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    printf ("Detected a operator function, these are not provided with name qualification. \n");
+#endif
+                  }
+                 else
+                  {
+                 // Only use name qualification where the scopes of the declaration's use (currentScope) is not the same 
+                 // as the scope of the function declaration.  However, the analysis should work and determin that the 
+                 // required name qualification length is zero.
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    printf ("I would like to not have to have this SgFunctionDeclaration logic, we should get the name qualification correct more directly. \n");
+#endif
+                 // DQ (6/20/2011): Friend function can be qualified and a fix to add a SgAliasSymbol to the class definition scope's symbol table 
+                 // should allow it to be handled with greater precission.
+
+                 // DQ (6/25/2011): Friend functions can require global qualification as well (see test2011_106.C).
+                 // Not clear how to handle this case.
+                    if (functionDeclaration->get_declarationModifier().isFriend() == true)
+                       {
+                      // This is the case of a friend function declaration which requires more name qualification than expected.
+                      // Note that this might be compiler dependent but at least GNU g++ required more qualification than expected.
+                         SgScopeStatement* scope = functionDeclaration->get_scope();
+                         SgGlobal* globalScope = isSgGlobal(scope);
+                         if (globalScope != NULL)
+                            {
+                           // We want to specify global qualification when the friend function is in global scope (see test2011_106.C).
+#if 1
+                           // DQ (6/25/2011): This will output the name qualification correctly AND cause the output of the outlined function to be supressed.
+                              int amountOfNameQualificationRequired = 0;
+
+                           // Check if this function declaration has been seen already...
+                           // if (functionDeclaration == functionDeclaration->get_firstNondefiningDeclaration())
+
+                           // This is the same code as below so it could be refactored (special handling for function declarations 
+                           // that are defining declaration and don't have an associated nondefining declaration).
+                              SgDeclarationStatement* declarationForReferencedNameSet = functionDeclaration->get_firstNondefiningDeclaration();
+                              if (declarationForReferencedNameSet == NULL)
+                                 {
+                                // Note that a function with only a defining declaration will not have a nondefining declaration 
+                                // automatically constructed in the AST (unlike classes and some onther sorts of declarations).
+                                   declarationForReferencedNameSet = functionDeclaration->get_definingDeclaration();
+
+                                // DQ (6/22/2011): I think this is true.  This assertion fails for test2006_78.C (a template example code).
+                                // ROSE_ASSERT(declarationForReferencedNameSet == declaration);
+
+                                // DQ (6/23/2011): This assertion fails for the LoopProcessor on tests/roseTests/loopProcessingTests/mm.C
+                                // ROSE_ASSERT(declarationForReferencedNameSet != NULL);
+                                   if (declarationForReferencedNameSet == NULL)
+                                      {
+                                        declarationForReferencedNameSet = functionDeclaration;
+                                        ROSE_ASSERT(declarationForReferencedNameSet != NULL);
+                                      }
+                                   ROSE_ASSERT(declarationForReferencedNameSet != NULL);
+                                 }
+                              ROSE_ASSERT(declarationForReferencedNameSet != NULL);
+
+                              if (referencedNameSet.find(declarationForReferencedNameSet) == referencedNameSet.end())
+                                 {
+                                // No global qualification is required.
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                                   printf ("No qualification should be used for this friend function. \n");
+#endif
+                                 }
+                                else
+                                 {
+                                   amountOfNameQualificationRequired = 1;
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                                   printf ("Force global qualification for friend function \n");
+#endif
+                                 }
+#else
+                           // DQ (6/25/2011): This will not generate the correct name qualification AND will cause the outlined function to be output.
+                              int amountOfNameQualificationRequired = 0;
+#endif
+                              setNameQualification(functionDeclaration,amountOfNameQualificationRequired);
+                            }
+                           else
+                            {
+                           // Not clear what to do with this case, I guess we just want standard qualification rules.
+                              int amountOfNameQualificationRequired = nameQualificationDepth(functionDeclaration,currentScope,functionDeclaration);
+                              setNameQualification(functionDeclaration,amountOfNameQualificationRequired);
+                            }
+                       }
+                      else
+                       {
+                      // Case of non-member functions (more logical name qualification rules).
+                         if (currentScope != functionDeclaration->get_scope())
+                            {
+                              int amountOfNameQualificationRequired = nameQualificationDepth(functionDeclaration,currentScope,functionDeclaration);
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                              printf ("SgFunctionDeclaration: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
+#endif
+                           // DQ (21/2011): test2011_89.C demonstrates a case where name qualification of a functionRef expression is required.
+                           // DQ (6/9/2011): Support for test2011_78.C (we only qualify function call references where the function has been declared in 
+                           // a scope where it could be expected to be defined (e.g. not using a forward declaration in a SgBasicBlock, since the function
+                           // definition could not live in the SgBasicBlock.
+                              bool skipNameQualification = skipNameQualificationIfNotProperlyDeclaredWhereDeclarationIsDefinable(functionDeclaration);
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                              printf ("Test of functionDeclaration: skipNameQualification = %s \n",skipNameQualification ? "true" : "false");
+#endif
+                              if (skipNameQualification == false)
+                                 {
+                                   setNameQualification(functionDeclaration,amountOfNameQualificationRequired);
+                                 }
+                            }
+                       }
+                  }
              }
             else
              {
@@ -2964,22 +3039,18 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
         }
 
   // DQ (6/25/2011): Added support for use from unparseToString().
+  // I don't think that we need this case since the unparser handles the case of using 
+  // the fully qualified name directly when called from the unparseToString() function.
      SgType* type = isSgType(n);
      if (type != NULL)
         {
        // printf ("Found a type in the evaluation of name qualification type = %p = %s \n",type,type->class_name().c_str());
 
        // void NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceToType, SgScopeStatement* currentScope, SgStatement* positionStatement )
-
-          SgNode* nodeReferenceToType    = NULL;
-          SgScopeStatement* currentScope = NULL;
-          SgStatement* positionStatement = NULL;
-
+       // SgNode* nodeReferenceToType    = NULL;
+       // SgScopeStatement* currentScope = NULL;
+       // SgStatement* positionStatement = NULL;
        // traverseType(type,initializedName,currentScope,currentStatement);
-#if 0          
-          printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
-#endif
         }
 
   // ******************************************************************************
