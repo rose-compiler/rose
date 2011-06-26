@@ -1,8 +1,11 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+# DQ (6/25/2011): Readded this directory so that we can support the older behavior as a default
+# although this will likely fail at least some of the nearly one hundred new name qualification tests.
 # DQ (6/22/2011): I think that the astHiddenTypeAndDeclarationLists directory is no longer required in ROSE.
 # SUBDIRS = astFileIO astMerge astFixup astPostProcessing sageInterface virtualCFG astTokenStream astHiddenTypeAndDeclarationLists astVisualization astFromString
-SUBDIRS = astFileIO astMerge astFixup astPostProcessing sageInterface virtualCFG astTokenStream astVisualization astFromString
+# SUBDIRS = astFileIO astMerge astFixup astPostProcessing sageInterface virtualCFG astTokenStream astVisualization astFromString
+SUBDIRS = astFileIO astMerge astFixup astPostProcessing sageInterface virtualCFG astTokenStream astHiddenTypeAndDeclarationLists astVisualization astFromString
 
 # DQ (12/29/2009): This is only used to handle generated code as smaller files.
 SUBDIRS += GENERATED_CODE_DIRECTORY_Cxx_Grammar
@@ -164,7 +167,8 @@ libsage3_la_LIBADD  = \
 	astTokenStream/libastTokenStream.la \
 	virtualCFG/libvirtualCFG.la \
    astVisualization/libastVisualization.la \
-   astFromString/libAstFromString.la
+   astFromString/libAstFromString.la \
+   astHiddenTypeAndDeclarationLists/libastHiddenTypeAndDeclarationLists.la 
 else
 libsage3_la_LIBADD  = \
 	astFixup/libastFixup.la \
@@ -173,10 +177,13 @@ libsage3_la_LIBADD  = \
 	sageInterface/libsageInterface.la \
 	virtualCFG/libvirtualCFG.la \
    astVisualization/libastVisualization.la \
-   astFromString/libAstFromString.la
+   astFromString/libAstFromString.la \
+   astHiddenTypeAndDeclarationLists/libastHiddenTypeAndDeclarationLists.la 
 endif
 
-# Removed now the the name qualification support in a part of src/backend/unparser.
+# DQ (6/25/2011): Readded this directory so that we can support the older behavior as a default
+# although this will likely fail at least some of the nearly one hundred new name qualification tests.
+# DQ (6/24/2011): Removed now the the name qualification support in a part of src/backend/unparser.
 # astHiddenTypeAndDeclarationLists/libastHiddenTypeAndDeclarationLists.la 
 
 if ROSE_USE_SMALLER_GENERATED_FILES

@@ -1,32 +1,62 @@
-class A
-   {
-     private:
-          class xxx {};
+#define SIMPLE 1
+// extern "C" void OUT__1__7816__(void **__out_argv);
+// void OUT__1__7816__(void **__out_argv);
+// void OUT__1__7816__(void **__out_argv) {}
+void OUT__1__7816__(void **__out_argv);
 
-     public:
-         typedef xxx referenced_t;
-   };
-
-A::referenced_t* foobar()
+namespace N
    {
-  // This is unparsed as: "A::xxx()" which is not visible.
-  // return A::referenced_t();
-     return 0L;
+     class A 
+        {
+       // Note that these are private, so the outline function will not 
+       // be able to access them. The generated friend function must
+       // also be output with global qualification to permit it reference
+       // the global scope version of the function instead of generating 
+       // a reference to a function that has not been defined with a scope.
+
+       // Error: name qualification does not output global qualifier.
+       // The function prototype has been seen, the defining declaration 
+       // has not been seen, the unparser generates:
+       //    "public: friend void OUT__1__7816__(void **__out_argv);" (missing global qualification).
+          friend void ::OUT__1__7816__(void **__out_argv);
+
+       // Bug causes both "protected" and "private" to be a problem.
+       // public: inline int foo() const
+       // protected: inline int foo() const
+          private: inline int foo() const
+             {
+               return 7;
+             }
+
+          public: 
+               inline int biz() const
+                  {
+                 // A declaration for this pointer
+                    const class A *this__ptr__ = this;
+                 // Build a reference to test the AST copy mechanism.
+                    (this) ->  foo ();
+                    int result = 0;
+                    typedef class A *pointerToA;
+                       {
+                         void *__out_argv1__1527__[2];
+                         __out_argv1__1527__[0] = ((void *)(&this__ptr__));
+                         __out_argv1__1527__[1] = ((void *)(&result));
+                         OUT__1__7816__(__out_argv1__1527__);
+                       }
+                     return result;
+                  }
+
+        };
    }
 
-#if 0
-// Failing name qualifications:
-
-/* Wrapper for ::SgAsmGenericStrtab::get_storage_list referenced_t ()() */
-referenced_t * _haskell_stub_L37893R__L37868R(const class SgAsmGenericStrtab * v0) {
-	referenced_t  rv = v0->get_storage_list();
-	referenced_t *urv = new referenced_t(rv);
-	return urv;
-}
-
-/* Wrapper for ::SgAsmGenericStrtab::set_storage_list void (referenced_t ) */
-void  _haskell_stub_L37915R__L37916R(class SgAsmGenericStrtab * v0, referenced_t * v1) {
-	v0->set_storage_list(*v1);
-}
-
+#if 1
+// I don't think the use of extern "C" is an issue.
+// extern "C" void OUT__1__7816__(void **__out_argv)
+void OUT__1__7816__(void **__out_argv)
+   {
+     int &result =  *((int *)__out_argv[1]);
+     const class N::A *&this__ptr__ =  *((const class N::A **)__out_argv[0]);
+     for (int i = 1; i <= this__ptr__ ->  foo (); i++) 
+          result += i;
+   }
 #endif
