@@ -33,6 +33,9 @@ using namespace std;
 
 // extern ROSEAttributesList *getPreprocessorDirectives( char *fileName); // [DT] 3/16/2000
 
+// DQ (6/25/2011): Forward declaration for new name qualification support.
+void generateNameQualificationSupport( SgNode* node, std::set<SgNode*> & referencedNameSet );
+
 //-----------------------------------------------------------------------------------
 //  Unparser::Unparser
 //  
@@ -270,7 +273,6 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info )
      file->display("file: Unparser::unparseFile");
 #endif
 
-#if 1
   // DQ (5/15/2011): Moved this to be called in the postProcessingSupport() (before resetTemplateNames() else template names will not be set properly).
 
   // DQ (11/10/2007): Moved computation of hidden list from astPostProcessing.C to unparseFile so that 
@@ -284,6 +286,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info )
        // DQ (5/22/2007): Moved from SgProject::parse() function to here so that propagateHiddenListData() could be called afterward.
        // DQ (5/8/2007): Now build the hidden lists for types and declarations (Robert Preissl's work)
 #if 0
+       // DQ (6/25/2011): This will be the default (the old system for name qualification so that initial transition windows will provide backward compatability).
           Hidden_List_Computation::buildHiddenTypeAndDeclarationLists(file);
 #else
        // DQ (5/15/2011): Test clearing the mangled name map.
@@ -293,7 +296,6 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info )
         // Build the local set to use to record when declaration that might required qualified references have been seen.
           std::set<SgNode*> referencedNameSet;
 
-          void generateNameQualificationSupport( SgNode* node, std::set<SgNode*> & referencedNameSet );
        // printf ("Developing a new implementation of the name qualification support. \n");
           generateNameQualificationSupport(file,referencedNameSet);
        // printf ("DONE: new name qualification support built. \n*************************\n\n");
@@ -303,7 +305,6 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info )
        // DQ (5/22/2007): Added support for passing hidden list information about types, declarations and elaborated types to child scopes.
           propagateHiddenListData(file);
         }
-#endif
 
   // Turn ON the error checking which triggers an if the default SgUnparse_Info constructor is called
      SgUnparse_Info::set_forceDefaultConstructorToTriggerError(true);
@@ -1289,6 +1290,19 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
              {
                const SgType* type = isSgType(astNode);
 
+#if 0
+            // ROSE_ASSERT(inheritedAttributeInfo != NULL);
+               printf ("inheritedAttributeInfo.get_current_scope() = %p \n",inheritedAttributeInfo.get_current_scope());
+
+            // Build the local set to use to record when declaration that might required qualified references have been seen.
+               std::set<SgNode*> referencedNameSet;
+
+               SgType* nonconst_type = const_cast<SgType*>(isSgType(astNode));
+               ROSE_ASSERT(nonconst_type != NULL);
+               printf ("Developing a new implementation of the name qualification support (use for SgType). astNode = %p = %s \n",astNode,astNode->class_name().c_str());
+               generateNameQualificationSupport(nonconst_type,referencedNameSet);
+               printf ("DONE: new name qualification support built (use for SgType). \n*************************\n\n");
+#endif
             // DQ (9/6/2010): Added support to detect use of C (default) or Fortran code.
             // DQ (2/2/2007): Note that we should modify the unparser to take the IR nodes as const pointers, but this is a bigger job than I want to do now!
 #if 1
@@ -1404,24 +1418,27 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
 
                  // Perhaps the support for SgFile and SgProject shoud be moved to this location?
                     default:
-                         printf ("Error: default reached in node derived from SgSupport astNode = %s \n",astNode->sage_class_name());
+                       {
+                         printf ("Error: default reached in node derived from SgSupport astNode = %s \n",astNode->class_name().c_str());
                          ROSE_ABORT();
-                }
+                       }
+                  }
              }
-             // Liao 11/5/2010 move out of SgSupport
-             if (isSgInitializedName(astNode)) //       case V_SgInitializedName:
-              {
-             // DQ (8/6/2007): This should just unparse the name (fully qualified if required).
-             // QY: not sure how to implement this
-             // DQ (7/23/2004): This should unparse as a declaration (type and name with initializer).
-                const SgInitializedName* initializedName = isSgInitializedName(astNode);
-             // roseUnparser.get_output_stream() << initializedName->get_qualified_name().str();
-                SgScopeStatement* scope = initializedName->get_scope();
-                if (isSgGlobal(scope) == NULL && scope->containsOnlyDeclarations() == true)
+
+       // Liao 11/5/2010 move out of SgSupport
+          if (isSgInitializedName(astNode)) //       case V_SgInitializedName:
+             {
+            // DQ (8/6/2007): This should just unparse the name (fully qualified if required).
+            // QY: not sure how to implement this
+            // DQ (7/23/2004): This should unparse as a declaration (type and name with initializer).
+               const SgInitializedName* initializedName = isSgInitializedName(astNode);
+            // roseUnparser.get_output_stream() << initializedName->get_qualified_name().str();
+               SgScopeStatement* scope = initializedName->get_scope();
+               if (isSgGlobal(scope) == NULL && scope->containsOnlyDeclarations() == true)
                      roseUnparser.get_output_stream() << roseUnparser.u_exprStmt->trimGlobalScopeQualifier ( scope->get_qualified_name().getString() ) << "::";
-                roseUnparser.get_output_stream() << initializedName->get_name().str();
-                //break;
-              }
+               roseUnparser.get_output_stream() << initializedName->get_name().str();
+            // break;
+             }
 
 
        // Liao, 8/28/2009, support for SgLocatedNodeSupport
@@ -1454,6 +1471,8 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
           if (inputUnparseInfoPointer == NULL)
                delete inheritedAttributeInfoPointer;
         }
+
+  // printf ("In globalUnparseToString_OpenMPSafe(): returnString = %s \n",returnString.c_str());
 
      return returnString;
    }

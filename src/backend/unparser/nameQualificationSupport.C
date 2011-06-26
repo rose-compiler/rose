@@ -261,6 +261,9 @@ NameQualificationTraversal::associatedDeclaration(SgType* type)
                break;
              }
 
+       // DQ (6/25/2011): Demonstrated by calling unparseToString on all possible type.
+          case V_SgTypeDefault:
+
        // Some scopes don't have an associated declaration (return NULL in these cases).
        // Also missing some of the Fortran specific scopes.
           case V_SgTypeInt:
@@ -2912,19 +2915,26 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                if (associatedTypeDeclaration != NULL)
                   {
                     SgStatement* currentStatement = TransformationSupport::getStatement(n);
-                    ROSE_ASSERT(currentStatement != NULL);
 
-                    SgScopeStatement* currentScope = currentStatement->get_scope();
-                    ROSE_ASSERT(currentScope != NULL);
+                 // ROSE_ASSERT(currentStatement != NULL);
+                    if (currentStatement != NULL)
+                       {
+                         SgScopeStatement* currentScope = currentStatement->get_scope();
+                         ROSE_ASSERT(currentScope != NULL);
 
-                    int amountOfNameQualificationRequiredForType = nameQualificationDepth(associatedTypeDeclaration,currentScope,currentStatement);
+                         int amountOfNameQualificationRequiredForType = nameQualificationDepth(associatedTypeDeclaration,currentScope,currentStatement);
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                    printf ("SgExpression (name = %s) type: amountOfNameQualificationRequiredForType = %d \n",referenceToType->class_name().c_str(),amountOfNameQualificationRequiredForType);
+                         printf ("SgExpression (name = %s) type: amountOfNameQualificationRequiredForType = %d \n",referenceToType->class_name().c_str(),amountOfNameQualificationRequiredForType);
 #endif
-                    setNameQualification(referenceToType,associatedTypeDeclaration,amountOfNameQualificationRequiredForType);
+                         setNameQualification(referenceToType,associatedTypeDeclaration,amountOfNameQualificationRequiredForType);
 
-                 // DQ (6/3/2011): Traverse the type to set any possible template arguments (or other subtypes?) that require name qualification.
-                    traverseType(qualifiedType,referenceToType,currentScope,currentStatement);
+                      // DQ (6/3/2011): Traverse the type to set any possible template arguments (or other subtypes?) that require name qualification.
+                         traverseType(qualifiedType,referenceToType,currentScope,currentStatement);
+                       }
+                      else
+                       {
+                         printf ("WARNING: currentStatement == NULL for case of referenceToType = %p = %s \n",referenceToType,referenceToType->class_name().c_str());
+                       }
                   }
                  else
                   {
@@ -2951,6 +2961,25 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                printf ("@@@@@@@@@@@@@ DONE: Recursive call to the originalExpressionTree = %p = %s \n",originalExpressionTree,originalExpressionTree->class_name().c_str());
 #endif
              }
+        }
+
+  // DQ (6/25/2011): Added support for use from unparseToString().
+     SgType* type = isSgType(n);
+     if (type != NULL)
+        {
+       // printf ("Found a type in the evaluation of name qualification type = %p = %s \n",type,type->class_name().c_str());
+
+       // void NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceToType, SgScopeStatement* currentScope, SgStatement* positionStatement )
+
+          SgNode* nodeReferenceToType    = NULL;
+          SgScopeStatement* currentScope = NULL;
+          SgStatement* positionStatement = NULL;
+
+       // traverseType(type,initializedName,currentScope,currentStatement);
+#if 0          
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
         }
 
   // ******************************************************************************
@@ -3837,8 +3866,32 @@ NameQualificationTraversal::setNameQualification(SgTypedefDeclaration* typedefDe
         }
        else
         {
+       // If it already existes then overwrite the existing information.
+          std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForTypes.find(typedefDeclaration);
+          ROSE_ASSERT (i != qualifiedNameMapForTypes.end());
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          string previousQualifier = i->second.c_str();
+          printf ("WARNING: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
+#endif
+       // I think I can do this!
+       // *i = std::pair<SgNode*,std::string>(templateArgument,qualifier);
+          if (i->second != qualifier)
+             {
+               i->second = qualifier;
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+               printf ("WARNING: name in qualifiedNameMapForTypes already exists and is different... \n");
+            // ROSE_ASSERT(false);
+
+               SgName testNameInMap = typedefDeclaration->get_qualified_name_prefix();
+               printf ("testNameInMap = %s \n",testNameInMap.str());
+#endif
+             }
+#if 0
           printf ("Error: name in qualifiedNameMapForTypes already exists... \n");
           ROSE_ASSERT(false);
+#endif
         }
    }
 
@@ -4014,7 +4067,26 @@ NameQualificationTraversal::setNameQualification(SgClassDeclaration* classDeclar
         }
        else
         {
+       // If it already existes then overwrite the existing information.
+          std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(classDeclaration);
+          ROSE_ASSERT (i != qualifiedNameMapForNames.end());
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          string previousQualifier = i->second.c_str();
+          printf ("WARNING: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
+#endif
+       // I think I can do this!
+       // *i = std::pair<SgNode*,std::string>(templateArgument,qualifier);
+          if (i->second != qualifier)
+             {
+               i->second = qualifier;
+
 #if 1
+               printf ("Error: name in qualifiedNameMapForNames already exists and is different... \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+#if 0
           printf ("Error: name in qualifiedNameMapForNames already exists... \n");
           ROSE_ASSERT(false);
 #endif
