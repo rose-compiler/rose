@@ -1,5 +1,8 @@
 /* See README. The basic idea is that ROSE parses the executable and then attaches to a debugger, single stepping through the
  * program and comparing the real execution to ROSE's semantic analysis. */
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+
 #include "rose.h"
 #include "Debugger.h"
 
