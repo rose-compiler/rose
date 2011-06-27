@@ -218,12 +218,6 @@ fi
 #
 #########################################################################################
 if test "x$label" = "x64bit-macos-10.6" ; then
-	export MACPORTS_HOME=/export/tmp.hudson-rose/opt/macports
-	set +e
-    source ${MACPORTS_HOME}/setup.sh
-	set -e
-	ROSE_TEST_BOOST_PATH=${MACPORTS_HOME}
-
 	case "$ROSE_TEST_BUILD_STYLE" in
 		"make/check/install-minimal")
 	 		CONFIGURE_FLAGS="
