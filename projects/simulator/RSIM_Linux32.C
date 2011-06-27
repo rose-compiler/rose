@@ -109,6 +109,7 @@ static void syscall_ftruncate(RSIM_Thread *t, int callno);
 static void syscall_ftruncate_enter(RSIM_Thread *t, int callno);
 static void syscall_futex(RSIM_Thread *t, int callno);
 static void syscall_futex_enter(RSIM_Thread *t, int callno);
+static void syscall_futex_leave(RSIM_Thread *t, int callno);
 static void syscall_getcwd(RSIM_Thread *t, int callno);
 static void syscall_getcwd_enter(RSIM_Thread *t, int callno);
 static void syscall_getcwd_leave(RSIM_Thread *t, int callno);
@@ -408,7 +409,7 @@ RSIM_Linux32::ctor()
     SC_REG(220, getdents64,                     getdents64);
     SC_REG(221, fcntl,                          fcntl);
     SC_REG(224, gettid,                         default);
-    SC_REG(240, futex,                          default);
+    SC_REG(240, futex,                          futex);
     SC_REG(242, sched_getaffinity,              sched_getaffinity);
     SC_REG(243, set_thread_area,                default);
     SC_REG(252, exit_group,                     exit_group);
@@ -5401,6 +5402,12 @@ syscall_futex(RSIM_Thread *t, int callno)
 
     int result = syscall(SYS_futex, futex1, op, val1, timespec, futex2, val3);
     t->syscall_return(-1==result ? -errno : result);
+}
+
+static void
+syscall_futex_leave(RSIM_Thread *t, int callno)
+{
+    t->syscall_leave("dP", (size_t)4, print_int_32);
 }
 
 /*******************************************************************************************************************************/
