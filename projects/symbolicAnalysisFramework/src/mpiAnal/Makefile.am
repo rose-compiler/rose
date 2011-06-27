@@ -21,7 +21,7 @@ include_HEADERS = contProcMatchAnalysis.h  mesgBuf.h  mesgExpr.h  pCFG.h procSet
 noinst_PROGRAMS = commTopoAnalTest  selfTest
 selfTest_SOURCES = selfTest.C
 commTopoAnalTest_SOURCES = commTopoAnalTest.C
-LDADD = \
+LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) \
          $(SAF_BUILD_ROOT)/src/mpiAnal/libSafmpiAnal.la  \
          $(SAF_BUILD_ROOT)/src/analysis/libSafanalysis.la \
          $(SAF_BUILD_ROOT)/src/simpleAnalyses/libSafsimpleAnalyses.la \
@@ -33,8 +33,6 @@ LDADD = \
          $(SAF_BUILD_ROOT)/src/external/libSafexternal.la \
          $(SAF_BUILD_ROOT)/src/rwAccessLabeler/libSafrwAccessLabeler.la \
          $(SAF_BUILD_ROOT)/src/arrIndexLabeler/libSafarrIndexLabeler.la 
-
-LDADD += $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 # Liao 10/12/2010, this test fails on our boost version test for 1.39.0 , 1.42.0 and 1.43.0
 check-local:selfTest
