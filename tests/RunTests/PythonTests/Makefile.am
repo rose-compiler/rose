@@ -1,6 +1,7 @@
-ALL_PYTHON_TESTCODES = $(wildcard $(srcdir)/*.py)
+ALL_PYTHON_TESTCODES = \
+    test2011_000.py
 
-TEST_Objects = $(addsuffix .done, $(basename $(notdir $(ALL_PYTHON_TESTCODES))))
+TEST_Objects = $(addsuffix .done, $(basename $(ALL_PYTHON_TESTCODES)))
 
 $(TEST_Objects): ../../testTranslator
     bname = $(basename $@)
@@ -24,4 +25,4 @@ check-local:
 clean-local:
 	rm -f *-o *-ro *-r *.done
 
-EXTRA_DIST = $(wildcard $(srcdir)/test*.py)
+EXTRA_DIST = $(ALL_PYTHON_TESTCODES)
