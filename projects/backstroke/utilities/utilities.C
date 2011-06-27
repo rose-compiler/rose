@@ -767,13 +767,18 @@ SgSwitchStatement* getEnclosingSwitchStmt(SgBreakStmt* breakStmt)
     {
         SgStatement* stmt = isSgStatement(parent);
         if (!stmt)
+        {
+            parent = parent->get_parent();
             continue;
+        }
         
         if (isLoopStatement(stmt))
             return NULL;
         
         if (SgSwitchStatement* switchStmt = isSgSwitchStatement(parent))
             return switchStmt;
+
+        parent = parent->get_parent();
     }
     
     return NULL;
