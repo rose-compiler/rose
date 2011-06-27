@@ -1,4 +1,23 @@
-ALL_PYTHON_TESTCODES = $(wildcard $(srcdir)/*.py)
+ALL_PYTHON_TESTCODES = \
+    test2011_000.py \
+    test2011_001.py \
+    test2011_002.py \
+    test2011_003.py \
+    test2011_004.py \
+    test2011_005.py \
+    test2011_006.py \
+    test2011_007.py \
+    test2011_008.py \
+    test2011_009.py \
+    test2011_010.py \
+    test2011_011.py \
+    test2011_012.py \
+    test2011_013.py \
+    test2011_014.py \
+    test2011_015.py \
+    test2011_016.py \
+    test2011_017.py
+
 
 TEST_Objects = $(notdir ${ALL_PYTHON_TESTCODES:.py=.py-o})
 
@@ -18,4 +37,4 @@ check-local:
 clean-local:
 	rm -f *-o
 
-EXTRA_DIST = $(wildcard $(srcdir)/test*.py)
+EXTRA_DIST = $(ALL_PYTHON_TESTCODES)
