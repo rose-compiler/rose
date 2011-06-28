@@ -568,5 +568,37 @@ RSIM_Simulator::syscall_define(int callno,
         syscall_implementation(callno)->leave.append(new SystemCall::Function(leave));
 }
 
+bool
+RSIM_Simulator::set_semaphore_name(const std::string &name, bool do_unlink/*=false*/)
+{
+    if (global_semaphore)
+        return false; // can't change the name if we've already created the semaphore
+    global_semaphore_name = name;
+    global_semaphore_unlink = do_unlink;
+    return true;
+}
+
+const std::string &
+RSIM_Simulator::get_semaphore_name() const
+{
+    return global_semaphore_name;
+}
+
+sem_t *
+RSIM_Simulator::get_semaphore()
+{
+    if (NULL==global_semaphore) {
+        if (global_semaphore_name.empty()) {
+            global_semaphore_name = "/ROSE_simulator-pid=" + StringUtility::numberToString(getpid());
+            global_semaphore_unlink = true;
+        }
+        fprintf(stderr, "RSIM_Simulator::get_semaphore() is using %s\n", global_semaphore_name.c_str());
+        global_semaphore = sem_open(global_semaphore_name.c_str(), O_CREAT, 0666, 1);
+        assert(SEM_FAILED!=global_semaphore);
+        if (global_semaphore_unlink)
+            sem_unlink(global_semaphore_name.c_str()); /* unlink now, destroyed when all closed (at simulator process exit) */
+    }
+    return global_semaphore;
+}
 
 #endif /* ROSE_ENABLE_SIMULATOR */
