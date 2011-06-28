@@ -2744,6 +2744,18 @@ SgIfStmt * SageBuilder::buildIfStmt_nfi(SgStatement* conditional, SgStatement * 
   return ifstmt;
 }
 
+SgForInitStatement * SageBuilder::buildForInitStatement(const SgStatementPtrList & statements) 
+{
+  SgForInitStatement * result = new SgForInitStatement();
+  result->get_init_stmt() = statements;
+
+  for (SgStatementPtrList::iterator it = result->get_init_stmt().begin(); it != result->get_init_stmt().end(); it++)
+    (*it)->set_parent(result);
+
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
 SgForInitStatement * SageBuilder::buildForInitStatement_nfi(SgStatementPtrList & statements) {
   SgForInitStatement * result = new SgForInitStatement();
 
