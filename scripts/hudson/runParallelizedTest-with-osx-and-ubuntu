@@ -218,6 +218,7 @@ fi
 #
 #########################################################################################
 if test "x$label" = "x64bit-macos-10.6" ; then
+	export DYLD_LIBRARY_PATH=
 	export MACPORTS_INS=/export/tmp.hudson-rose/opt/macports/ports
 	set +e
     source ${MACPORTS_INS}/setup.sh
