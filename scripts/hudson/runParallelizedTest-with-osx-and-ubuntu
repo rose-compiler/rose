@@ -222,7 +222,7 @@ if test "x$label" = "x64bit-macos-10.6" ; then
 	set +e
     source ${MACPORTS_INS}/setup.sh
 	set -e
-	ROSE_TEST_BOOST_PATH=${MACPORTS_INS}
+	export ROSE_TEST_BOOST_PATH=${MACPORTS_INS}
 
 	case "$ROSE_TEST_BUILD_STYLE" in
 		"make/check/install-minimal")
