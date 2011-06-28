@@ -8,9 +8,11 @@
 #include <syscall.h>
 
 #include <sys/user.h>
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/sem.h>
 
 size_t RSIM_Thread::next_sequence_number = 1;
-RTS_mutex_t RSIM_Thread::insn_mutex = RTS_MUTEX_INITIALIZER(RTS_LAYER_RSIM_THREAD_CLASS);
 
 /* Constructor */
 void
@@ -642,14 +644,21 @@ RSIM_Thread::main()
             if (signal_dequeue(&info)>0)
                 signal_deliver(info);
 
-            /* Simulate an instruction */
+            /* Simulate an instruction.  In order to make our simulated instructions atomic (at least among the simulators) we
+             * use a shared semaphore that was created in RSIM_Thread::ctor(). */
             SgAsmx86Instruction *insn = current_insn();
             bool cb_status = callbacks.call_insn_callbacks(RSIM_Callbacks::BEFORE, this, insn, true);
             if (cb_status) {
                 process->binary_trace_add(this, insn);
-                RTS_MUTEX(insn_mutex) {
-                    semantics.processInstruction(insn);
-                } RTS_MUTEX_END;
+                int status = sem_wait(process->get_simulator()->get_semaphore());
+                assert(0==status);
+                insn_semaphore_posted = false;
+                semantics.processInstruction(insn);             // blocking syscalls will post, and set insn_semaphore_posted
+                if (!insn_semaphore_posted) {
+                    status = sem_post(process->get_simulator()->get_semaphore());
+                    assert(0==status);
+                    insn_semaphore_posted = true;
+                }
             }
             callbacks.call_insn_callbacks(RSIM_Callbacks::AFTER, this, insn, cb_status);
 
@@ -657,6 +666,11 @@ RSIM_Thread::main()
             if (mesg->get_file())
                 policy.dump_registers(mesg);
         } catch (const Disassembler::Exception &e) {
+            if (!insn_semaphore_posted) {
+                int status = sem_post(process->get_simulator()->get_semaphore());
+                assert(0==status);
+                insn_semaphore_posted = true;
+            }
             std::ostringstream s;
             s <<e;
             tracing(TRACE_MISC)->mesg("caught Disassembler::Exception: %s\n", s.str().c_str());
@@ -666,6 +680,11 @@ RSIM_Thread::main()
             abort();
         } catch (const RSIM_Semantics::Exception &e) {
             /* Thrown for instructions whose semantics are not implemented yet. */
+            if (!insn_semaphore_posted) {
+                int status = sem_post(process->get_simulator()->get_semaphore());
+                assert(0==status);
+                insn_semaphore_posted = true;
+            }
             std::ostringstream s;
             s <<e;
             tracing(TRACE_MISC)->mesg("caught RSIM_Semantics::Exception: %s\n", s.str().c_str());
@@ -679,6 +698,11 @@ RSIM_Thread::main()
             tracing(TRACE_MISC)->mesg("exception ignored; continuing with a corrupt state...\n");
 #endif
         } catch (const RSIM_SEMANTIC_POLICY::Exception &e) {
+            if (!insn_semaphore_posted) {
+                int status = sem_post(process->get_simulator()->get_semaphore());
+                assert(0==status);
+                insn_semaphore_posted = true;
+            }
             std::ostringstream s;
             s <<e;
             tracing(TRACE_MISC)->mesg("caught semantic policy exception: %s\n", s.str().c_str());
@@ -687,9 +711,19 @@ RSIM_Thread::main()
             report_stack_frames(tracing(TRACE_MISC));
             abort();
         } catch (const RSIM_Process::Exit &e) {
+            if (!insn_semaphore_posted) {
+                int status = sem_post(process->get_simulator()->get_semaphore());
+                assert(0==status);
+                insn_semaphore_posted = true;
+            }
             sys_exit(e);
             return NULL;
         } catch (RSIM_SignalHandling::siginfo_32 &e) {
+            if (!insn_semaphore_posted) {
+                int status = sem_post(process->get_simulator()->get_semaphore());
+                assert(0==status);
+                insn_semaphore_posted = true;
+            }
             if (e.si_signo) {
                 bool cb_status = get_callbacks().call_signal_callbacks(RSIM_Callbacks::BEFORE, this, e.si_signo, &e,
                                                                        RSIM_Callbacks::SignalCallback::ARRIVAL, true);
@@ -1032,43 +1066,36 @@ RSIM_Thread::post_fork()
 void
 RSIM_Thread::emulate_syscall()
 {
-    int err = RTS_mutex_unlock(&insn_mutex);
-    assert(!err);
+    /* Post the instruction semphore because some system calls can block indefinitely. */
+    int status = sem_post(get_process()->get_simulator()->get_semaphore());
+    assert(0==status);
+    insn_semaphore_posted = true;
 
-    try {
-        unsigned callno = policy.readGPR(x86_gpr_ax).known_value();
-        bool cb_status = callbacks.call_syscall_callbacks(RSIM_Callbacks::BEFORE, this, callno, true);
-        if (cb_status) {
-            RSIM_Simulator *sim = get_process()->get_simulator();
-            if (sim->syscall_is_implemented(callno)) {
-                RSIM_Simulator::SystemCall *sc = sim->syscall_implementation(callno);
-                sc->enter.apply(true, RSIM_Simulator::SystemCall::Callback::Args(this, callno));
-                sc->body .apply(true, RSIM_Simulator::SystemCall::Callback::Args(this, callno));
-                sc->leave.apply(true, RSIM_Simulator::SystemCall::Callback::Args(this, callno));
-            } else {
-                char name[32];
-                sprintf(name, "syscall_%u", callno);
-                tracing(TRACE_MISC)->multipart(name, "syscall_%u(", callno);
-                for (int i=0; i<6; i++)
-                    tracing(TRACE_MISC)->more("%s0x%08"PRIx32, i?", ":"", syscall_arg(i));
-                tracing(TRACE_MISC)->more(") is not implemented yet");
-                tracing(TRACE_MISC)->multipart_end();
+    unsigned callno = policy.readGPR(x86_gpr_ax).known_value();
+    bool cb_status = callbacks.call_syscall_callbacks(RSIM_Callbacks::BEFORE, this, callno, true);
+    if (cb_status) {
+        RSIM_Simulator *sim = get_process()->get_simulator();
+        if (sim->syscall_is_implemented(callno)) {
+            RSIM_Simulator::SystemCall *sc = sim->syscall_implementation(callno);
+            sc->enter.apply(true, RSIM_Simulator::SystemCall::Callback::Args(this, callno));
+            sc->body .apply(true, RSIM_Simulator::SystemCall::Callback::Args(this, callno));
+            sc->leave.apply(true, RSIM_Simulator::SystemCall::Callback::Args(this, callno));
+        } else {
+            char name[32];
+            sprintf(name, "syscall_%u", callno);
+            tracing(TRACE_MISC)->multipart(name, "syscall_%u(", callno);
+            for (int i=0; i<6; i++)
+                tracing(TRACE_MISC)->more("%s0x%08"PRIx32, i?", ":"", syscall_arg(i));
+            tracing(TRACE_MISC)->more(") is not implemented yet");
+            tracing(TRACE_MISC)->multipart_end();
 
-                tracing(TRACE_MISC)->mesg("dumping core...\n");
-                get_process()->dump_core(SIGSYS);
-                report_stack_frames(tracing(TRACE_MISC));
-                abort();
-            }
+            tracing(TRACE_MISC)->mesg("dumping core...\n");
+            get_process()->dump_core(SIGSYS);
+            report_stack_frames(tracing(TRACE_MISC));
+            abort();
         }
-        callbacks.call_syscall_callbacks(RSIM_Callbacks::AFTER, this, callno, cb_status);
-    } catch (...) {
-        err = RTS_mutex_lock(&insn_mutex);
-        assert(!err);
-        throw;
     }
-
-    err = RTS_mutex_lock(&insn_mutex);
-    assert(!err);
+    callbacks.call_syscall_callbacks(RSIM_Callbacks::AFTER, this, callno, cb_status);
 }
 
 #endif /* ROSE_ENABLE_SIMULATOR */

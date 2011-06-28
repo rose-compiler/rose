@@ -44,10 +44,10 @@ public:
     /** Main loop. This loop simulates a single specimen thread and returns when the simulated thread exits. */
     void *main();
 
-    /** The global mutex for instruction simulation. */
-    static RTS_mutex_t insn_mutex;
-
-
+    /** Indicates whether the instruction semaphore was posted.  If an instruction needs to post the insn_semaphore, then it
+     *  can do so only if insn_semaphore_posted is clear, and it must set insn_semaphore_posted.  The insn_semaphore_posted is
+     *  part of RSIM_Thread because each simulator thread must have its own copy. */
+    bool insn_semaphore_posted;
 
     /**************************************************************************************************************************
      *                                  Thread simulation (specimen threads)
