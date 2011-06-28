@@ -461,24 +461,25 @@ void moveDeclarationsOut(SgNode* node)
             {
                 SgVariableDeclaration* var_decl = isSgVariableDeclaration(decl);
                 ROSE_ASSERT(var_decl);
-                new_block->append_statement(copyStatement(var_decl));
+                //appendStatement(copyStatement(var_decl), new_block);
+                appendStatement(var_decl, new_block);
                 //delete var_decl;
             }
-
+            
             // Since there is no builder function for SgForInitStatement, we build it by ourselves
-            SgForInitStatement* null_for_init = new SgForInitStatement();
-            setOneSourcePositionForTransformation(null_for_init);
+            SgForInitStatement* null_for_init = buildForInitStatement(SgStatementPtrList());
             replaceStatement(for_init_stmt, null_for_init);
 
             // It seems that 'for_init_stmt' should be deleted explicitly.
             //deepDelete(for_init_stmt);
 
-            new_block->append_statement(copyStatement(for_stmt));
+            appendStatement(copyStatement(for_stmt), new_block);
             replaceStatement(for_stmt, new_block);
             //deepDelete(for_stmt);
         }
     }
 
+#if 0
     // Separate variable's definition from its declaration
     // FIXME It is not sure that whether to permit declaration in condition of if (if the varible declared
     // is not of scalar type?).
@@ -521,13 +522,14 @@ void moveDeclarationsOut(SgNode* node)
 
                 replaceStatement(var_decl, buildExprStatement(new_exp));
                 //SgBasicBlock* block = buildBasicBlock(copyStatement(parent));
-                block->append_statement(new_decl);
-                block->append_statement(copyStatement(parent));
+                appendStatement(new_decl, block);
+                appendStatement(copyStatement(parent), block);
 
                 replaceStatement(parent, block);
             }
         }
     }
+#endif
 }
 
 void preprocess(SgNode* node)
