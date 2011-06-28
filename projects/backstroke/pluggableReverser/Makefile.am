@@ -23,7 +23,7 @@ libBackstrokePluggableReverser_a_include_HEADERS = expressionHandler.h statement
 
 libBackstrokePluggableReverser_a_LIBADD = ../ssa/libSSA.a
 
-EXTRA_DIST = 
+EXTRA_DIST = backstrokeRuntime.h backstrokeRuntime.C
 
 CLEANFILES = 
 

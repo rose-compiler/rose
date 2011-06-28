@@ -28,7 +28,6 @@ complex_01.c \
 constants.c \
 gconv_info.c \
 math.c \
-old_style_function.c \
 stdio.c \
 test2003_12.c \
 test2004_20.c \
@@ -65,7 +64,6 @@ test2010_01.c \
 test2010_02.c \
 test2010_03.c \
 test2010_04.c \
-test2010_05.c \
 test2010_06.c \
 test2010_07.c \
 test2010_08.c \
@@ -87,11 +85,11 @@ YardenPragmaPackExample.c \
 Yarden_client.c 
 
 C_FAILURE_TESTCODES = \
-gzip.c \
-expected failure (need special compile cmd) test2005_168.c
+expected failure (need special compile cmd) test2005_168.c \
+gzip.c
 
 
-CXX_TESTCODES_REQUIRED_TO_PASS CXX_= \
+CXX_TESTCODES_REQUIRED_TO_PASS = \
 test_CplusplusMacro_Cpp.C \
 test2001_01.C \
 test2001_02.C \
@@ -756,34 +754,36 @@ test2005_187.C \
 test2005_114.C \
 test2006_47.C 
 
-
-C_TEST_Objects = ${C_TESTCODES_REQUIRED_TO_PASS:.C=.o}
-
-C_TEST_INCLUDES = \
+TEST_INCLUDES = \
 	-I$(top_srcdir)/tests/CompileTests/A++Code \
-	-I$(top_srcdir)/tests/CompileTests/C_tests 
-
-$(C_TEST_Objects): ssaTestHarness
-	@cp $(top_srcdir)/tests/CompileTests/C_tests/$(@:.o=.C) $(@:.o=.C)
-	./ssaTestHarness --edg:no_warnings -w -rose:verbose 0 $(C_TEST_INCLUDES) -c $(@:.o=.C)
-
-CXX_TEST_Objects = ${CXX_TESTCODES_REQUIRED_TO_PASS:.C=.o}
-
-CXX_TEST_INCLUDES = \
-	-I$(top_srcdir)/tests/CompileTests/A++Code \
+	-I$(top_srcdir)/tests/CompileTests/C_tests \
 	-I$(top_srcdir)/tests/CompileTests/Cxx_tests 
 
-$(CXX_TEST_Objects): ssaTestHarness
-	@cp $(top_srcdir)/tests/CompileTests/Cxx_tests/$(@:.o=.C) $(@:.o=.C)
-	./ssaTestHarness --edg:no_warnings -w -rose:verbose 0 $(CXX_TEST_INCLUDES) -c $(@:.o=.C)
+.PHONY: TEST_C
+TEST_C: 
+	@cp -f $(top_srcdir)/tests/CompileTests/C_tests/*.c . 
+	@$(MAKE) $(C_TESTCODES_REQUIRED_TO_PASS)
+	@rm -f *.c
 
-TEST_Objects = $(C_TEST_Objects)
-if !ROSE_USE_EDG_VERSION_4
-TEST_Objects += $(CXX_TEST_Objects)
-endif
+.PHONY: $(C_TESTCODES_REQUIRED_TO_PASS)
+$(C_TESTCODES_REQUIRED_TO_PASS): ssaTestHarness
+	./ssaTestHarness --edg:no_warnings -w -rose:verbose 0 $(TEST_INCLUDES) -c $@
+
+.PHONY: TEST_CXX
+TEST_CXX:
+	@cp -f $(top_srcdir)/tests/CompileTests/Cxx_tests/*.C .
+	@$(MAKE) $(CXX_TESTCODES_REQUIRED_TO_PASS)
+	@rm -f *.C
+
+.PHONY: $(CXX_TESTCODES_REQUIRED_TO_PASS)
+$(CXX_TESTCODES_REQUIRED_TO_PASS): ssaTestHarness
+	./ssaTestHarness --edg:no_warnings -w -rose:verbose 0 $(TEST_INCLUDES) -c $@
 
 check-local:
-	@$(MAKE) $(TEST_Objects)
+	@$(MAKE) TEST_C
+if !ROSE_USE_EDG_VERSION_4
+	@$(MAKE) TEST_CXX
+endif
 	@echo "*********************************************************************************************************"
 	@echo "****** ROSE/projects/backstroke/ssa: make check rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************************"

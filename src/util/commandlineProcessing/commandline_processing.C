@@ -939,6 +939,25 @@ CommandlineProcessing::isPHPFileNameSuffix ( const std::string & suffix )
 
      return returnValue;
    }
+
+bool
+CommandlineProcessing::isPythonFileNameSuffix ( const std::string & suffix )
+   {
+     bool returnValue = false;
+
+  // For now define CASE_SENSITIVE_SYSTEM to be true, as we are currently a UNIXish project.
+
+#if(CASE_SENSITIVE_SYSTEM == 1)
+     if ( suffix == "py" )
+#else//It is a case insensitive system
+     if ( suffix == "py" )
+#endif
+        {
+          returnValue = true;
+        }
+
+     return returnValue;
+   }
    
 // TV (05/17/2010) Support for CUDA
 bool
@@ -1049,6 +1068,10 @@ CommandlineProcessing::initSourceFileSuffixList ( )
        // Liao (6/6/2008)  Support for UPC   
           validSourceFileSuffixes.push_back(".upc");
           validSourceFileSuffixes.push_back(".php");
+
+       // driscoll6 (06/02/2011): Adding support for Python
+          validSourceFileSuffixes.push_back(".py");
+
        // TV (05/17/2010) Support for CUDA
           validSourceFileSuffixes.push_back(".cu");
        // TV (05/17/2010) Support for OpenCL
@@ -1090,6 +1113,9 @@ CommandlineProcessing::initSourceFileSuffixList ( )
 
           validSourceFileSuffixes.push_back(".upc");
           validSourceFileSuffixes.push_back(".php");
+
+       // driscoll6 (06/02/2011): Adding support for Python
+          validSourceFileSuffixes.push_back(".py");
 
        // TV (05/17/2010) Support for CUDA
           validSourceFileSuffixes.push_back(".cu");

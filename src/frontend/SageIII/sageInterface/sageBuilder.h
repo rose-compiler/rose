@@ -823,6 +823,19 @@ SgCommonBlockObject* buildCommonBlockObject(std::string name="", SgExprListExp* 
 //! Build a Fortran Common statement
 SgCommonBlock* buildCommonBlock(SgCommonBlockObject* first_block=NULL);
 
+// driscoll6 (6/9/2011): Adding support for try stmts.
+// ! Build a catch statement.
+SgCatchOptionStmt* buildCatchOptionStmt(SgVariableDeclaration* condition, SgStatement* body);
+
+// driscoll6 (6/9/2011): Adding support for try stmts.
+// ! Build a try statement.
+SgTryStmt* buildTryStmt(SgStatement* body,
+                        SgCatchOptionStmt* catch0,
+                        SgCatchOptionStmt* catch1=NULL,
+                        SgCatchOptionStmt* catch2=NULL,
+                        SgCatchOptionStmt* catch3=NULL,
+                        SgCatchOptionStmt* catch4=NULL);
+
 // DQ (4/30/2010): Added support for building asm statements.
 //! Build a NULL statement
 SgAsmStmt* buildAsmStatement(std::string s);

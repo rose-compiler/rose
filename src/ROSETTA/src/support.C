@@ -491,6 +491,10 @@ Grammar::setUpSupport ()
      Unparse_Info.setDataPrototype("SgScopeStatement*","current_scope","= NULL",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // driscoll6 (6/6/2011): Added nesting level information for Python unparsing.
+     Unparse_Info.setDataPrototype("int","nestingLevel","= 0",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+
      BaseClass.setFunctionPrototype           ( "HEADER_BASECLASS", "../Grammar/Support.code");
 
   // DQ (4/29/2004): Removed in place of new modifier interface
@@ -709,6 +713,10 @@ Grammar::setUpSupport ()
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // PHP support
      File.setDataPrototype         ( "bool", "PHP_only", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // Python support
+     File.setDataPrototype         ( "bool", "Python_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // TV (05/17/2010) Cuda support
@@ -981,6 +989,8 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "sourceFileUsesCoArrayFortranFileExtension", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype         ( "bool", "sourceFileUsesPHPFileExtension", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype         ( "bool", "sourceFileUsesPythonFileExtension", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype         ( "bool", "sourceFileUsesJavaFileExtension", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);

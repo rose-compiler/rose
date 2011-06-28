@@ -10,6 +10,7 @@
 #include "analysis.h"
 #include "dataflow.h"
 #include "latticeFull.h"
+#include "liveDeadVarAnalysis.h"
 #include "printAnalysisStates.h"
 
 
@@ -56,6 +57,20 @@ class DivLattice : public FiniteLattice
 		level=uninitialized;
 	}
 	
+	DivLattice(long value) {
+		this->value = value;
+		div = -1;
+		rem = -1;
+		level = valKnown;
+	}
+	
+	DivLattice(long div, long rem) {
+		value = 0;
+		this->div = div;
+		this->rem = rem;
+		level = divKnown;
+	}
+	
 	DivLattice(const DivLattice& that)
 	{
 		this->value = that.value;
@@ -67,10 +82,13 @@ class DivLattice : public FiniteLattice
 	// initializes this Lattice to its default state
 	void initialize()
 	{
-		value=0;
-		div=-1;
-		rem=-1;
-		level=bottom;
+		if(level==uninitialized) {
+			value=0;
+			div=-1;
+			rem=-1;
+			level=bottom;
+		}
+		//cout << "DivLattice::initialize() new="<<str("")<<"\n";
 	}
 	
 	// returns a copy of this lattice
@@ -85,6 +103,13 @@ class DivLattice : public FiniteLattice
 	// Takes two lattices at level divKnown. If the two objects have matching div, rem pairs, returns
 	// true and sets div and rem to those mathching values. Otherwise, returns false;
 	static bool matchDiv(DivLattice* one, DivLattice* two, long& div, long& rem);
+	
+	// Takes two lattices at level divKnown. If the two objects have div, rem pairs that make it
+	// possible to add or subtract them them and produce div/rem information where div>1, 
+	// returns true and sets div and rem to correspond to the sum of these values.
+	// Otherwise, returns false.
+	// plus - true if the caller want to see one+two and false if one-two
+	static bool matchDivAddSubt(DivLattice* one, DivLattice* two, long& div, long& rem, bool plus);
 	
 	// computes the meet of this and that and saves the result in this
 	// returns true if this causes this to change and false otherwise
@@ -138,9 +163,15 @@ class DivAnalysis : public IntraFWDataflow
 	static map<varID, Lattice*> constVars;
 	static bool constVars_init;
 	
+	// The LiveDeadVarsAnalysis that identifies the live/dead state of all application variables.
+	// Needed to create a FiniteVarsExprsProductLattice.
+	LiveDeadVarsAnalysis* ldva; 
+	
 	public:
-	DivAnalysis(): IntraFWDataflow()
-	{	}
+	DivAnalysis(LiveDeadVarsAnalysis* ldva): IntraFWDataflow()
+	{	
+		this->ldva = ldva;
+	}
 	
 	/*// generates the initial variable-specific lattice state for a dataflow node
 	Lattice* genInitVarState(const Function& func, const DataflowNode& n, const NodeState& state);	
@@ -156,7 +187,7 @@ class DivAnalysis : public IntraFWDataflow
 	// Returns a map of special constant variables (such as zeroVar) and the lattices that correspond to them
 	// These lattices are assumed to be constants: it is assumed that they are never modified and it is legal to 
 	//    maintain only one copy of each lattice may for the duration of the analysis.
-	map<varID, Lattice*>& genConstVarLattices() const;
+	//map<varID, Lattice*>& genConstVarLattices() const;
 		
 	bool transfer(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo);
 };

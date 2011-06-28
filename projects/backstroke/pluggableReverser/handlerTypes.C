@@ -110,6 +110,16 @@ SgExpression* ReversalHandlerBase::popVal_front(SgType* type)
     return event_handler_->popVal_front(type);
 }
 
+SgExpression* ReversalHandlerBase::cloneValueExp(SgExpression* value, SgType* type)
+{
+	return event_handler_->cloneValueExp(value, type);
+}
+
+SgExpression* ReversalHandlerBase::assignPointerExp(SgExpression* lhs, SgExpression* rhs, SgType* lhsType, SgType* rhsType)
+{
+	return event_handler_->assignPointerExp(lhs, rhs, lhsType, rhsType);
+}
+
 vector<EvaluationResult> ReversalHandlerBase::evaluateExpression(SgExpression* exp,
 		const VariableVersionTable& var_table, bool is_value_used)
 {
