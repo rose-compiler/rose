@@ -188,6 +188,18 @@ RSIM_Simulator::configure(int argc, char **argv, char **envp)
                 s = colon ? colon+1 : NULL;
             }
             argno++;
+            
+        } else if (!strncmp(argv[argno], "--semaphore=", 12)) {
+            std::string semname = argv[argno]+12;
+            if (semname[0]!='/')
+                semname = "/" + semname;
+            if (semname.find_first_of('/', 1)!=std::string::npos) {
+                fprintf(stderr, "%s: invalid semaphore name: \"%s\" should not contain internal slashes\n",
+                        argv[0], argv[argno]+12);
+                exit(1);
+            }
+            set_semaphore_name(argv[argno]+12);
+            argno++;
 
         } else if (!strcmp(argv[argno], "--showauxv")) {
             fprintf(stderr, "showing the auxiliary vector for x86sim:\n");
