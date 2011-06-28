@@ -109,13 +109,13 @@ sage_appendStatements(PyObject *self, PyObject *args)
 }
 
 SgFunctionParameterList*
-buildFunctionParameterList(PyObject* args, PyObject* py_defaults_list) {
-    PyObject* py_args = PyObject_GetAttrString(args, "args");
+buildFunctionParameterList(PyObject* py_args, PyObject* py_defaults_list) {
     SgFunctionParameterList* sg_params =
         SageBuilder::buildFunctionParameterList();
 
     Py_ssize_t py_argc = PyList_Size(py_args);
-    Py_ssize_t py_defaults_argc = PyList_Size(py_defaults_list);
+    Py_ssize_t py_defaults_argc = (py_defaults_list != NULL) ?
+        PyList_Size(py_defaults_list) : 0;
     Py_ssize_t py_simples_argc = py_argc - py_defaults_argc;
 
     /* Handle simple parameters */

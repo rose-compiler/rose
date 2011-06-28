@@ -25,8 +25,8 @@ runPythonFrontend(SgFile* file)
     // TODO: find a better way to run/distribute the code in sageTranslator.py
     stringstream cmd;
     cmd << "import sys" << endl;
-    cmd << "sys.path.insert(0, '" << ROSE_AUTOMAKE_TOP_SRCDIR << "/src/frontend/PythonFrontend')" << endl;
     cmd << "sys.path.insert(0, '" << ROSE_INSTALLATION_PATH << "/lib/python')" << endl;
+    cmd << "sys.path.insert(0, '" << ROSE_AUTOMAKE_TOP_SRCDIR << "/src/frontend/PythonFrontend')" << endl;
     PyRun_SimpleString(cmd.str().c_str());
     pModule = PyImport_ImportModule(ROSE_PYTHON_FRONTEND_MODULE_NAME);
 

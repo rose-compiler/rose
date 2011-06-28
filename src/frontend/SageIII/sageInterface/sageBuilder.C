@@ -2912,6 +2912,21 @@ SgWhileStmt * SageBuilder::buildWhileStmt_nfi(SgStatement *  condition, SgStatem
   return result;
 }
 
+SgWithStatement* SageBuilder::buildWithStatement(SgExpression* expr,
+        const std::vector<SgVariableDeclaration*>& vars, SgStatement *body)
+{
+  ROSE_ASSERT(expr);
+  ROSE_ASSERT(body);
+  SgWithStatement* result = new SgWithStatement();
+  ROSE_ASSERT(result);
+
+  expr->set_parent(result);
+  body->set_parent(result);
+
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
 SgDoWhileStmt * SageBuilder::buildDoWhileStmt(SgStatement *  body, SgStatement *condition)
 {
   ROSE_ASSERT(condition);
@@ -3788,6 +3803,25 @@ SgConstVolatileModifier * SageBuilder::buildConstVolatileModifier (SgConstVolati
   result->set_modifier (mtype);  
 
   return result;
+}
+
+//! Build lambda expression
+SgLambdaExp*
+SageBuilder::buildLambdaExp(SgFunctionParameterList* params, SgStatement* body, SgScopeStatement* scope) {
+    SgLambdaExp* result = new SgLambdaExp();
+
+    /* set up parameterList */
+    result->set_parameterList(params);
+    params->set_parent(result);
+
+    /* set up body */
+    result->set_body(body);
+    body->set_parent(result);
+
+    /* TODO set up scope */
+
+    setOneSourcePositionForTransformation(result);
+    return result;
 }
 
 SgNamespaceDefinitionStatement* SageBuilder::buildNamespaceDefinition(SgNamespaceDeclarationStatement* d)

@@ -16,6 +16,7 @@ PyObject* sage_buildGlobal(PyObject *self, PyObject *args);
 PyObject* sage_buildIf(PyObject *self, PyObject *args);
 PyObject* sage_buildKeyword(PyObject *self, PyObject *args);
 PyObject* sage_buildLongIntVal(PyObject *self, PyObject *args);
+PyObject* sage_buildLambda(PyObject *self, PyObject *args);
 PyObject* sage_buildName(PyObject *self, PyObject *args);
 PyObject* sage_buildPower(PyObject *self, PyObject *args);
 PyObject* sage_buildPrintStmt(PyObject *self, PyObject *args);
@@ -26,6 +27,7 @@ PyObject* sage_buildTryExcept(PyObject *self, PyObject *args);
 PyObject* sage_buildTryFinally(PyObject *self, PyObject *args);
 PyObject* sage_buildUnaryOp(PyObject *self, PyObject *args);
 PyObject* sage_buildWhile(PyObject *self, PyObject *args);
+PyObject* sage_buildWith(PyObject *self, PyObject *args);
 
 static PyMethodDef SageBuilderMethods[] = {
     {"buildAugAssign", sage_buildAugAssign, METH_VARARGS, "Builds an augmented assignment node."},
@@ -39,6 +41,7 @@ static PyMethodDef SageBuilderMethods[] = {
     {"buildIf", sage_buildIf, METH_VARARGS, "Builds an if stmt  node."},
     {"buildKeyword", sage_buildKeyword, METH_VARARGS, "Builds a keyword node."},
     {"buildLongIntVal", sage_buildLongIntVal, METH_VARARGS, "Builds an SgIntVal node."},
+    {"buildLambda", sage_buildLambda, METH_VARARGS, "Builds an lambda node."},
     {"buildPrintStmt", sage_buildPrintStmt, METH_VARARGS, "Builds an SgPrintStmt node."},
     {"buildPower", sage_buildPower, METH_VARARGS, "Builds a power (exponentiation) node."},
     {"buildName", sage_buildName, METH_VARARGS, "Builds an SgVarRefExp from a Name node."},
@@ -49,6 +52,7 @@ static PyMethodDef SageBuilderMethods[] = {
     {"buildTryFinally", sage_buildTryFinally, METH_VARARGS, "Builds an try/finally stmt node."},
     {"buildUnaryOp", sage_buildUnaryOp, METH_VARARGS, "Builds unary operation node."},
     {"buildWhile", sage_buildWhile, METH_VARARGS, "Builds while stmt node."},
+    {"buildWith", sage_buildWith, METH_VARARGS, "Builds with stmt node."},
 
     {"appendStatements", (PyCFunction)sage_appendStatements, METH_VARARGS | METH_KEYWORDS, "Add children to a given SgNode."},
 

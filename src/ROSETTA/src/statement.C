@@ -114,6 +114,10 @@ Grammar::setUpStatements ()
                          "TemplateInstantiationFunctionDecl", "TEMPLATE_INST_FUNCTION_DECL_STMT" );
      NEW_TERMINAL_MACRO (TemplateInstantiationMemberFunctionDecl,
                          "TemplateInstantiationMemberFunctionDecl", "TEMPLATE_INST_MEMBER_FUNCTION_DECL_STMT" );
+
+  // driscoll6 (6/27/11): Support for Python
+     NEW_TERMINAL_MACRO (WithStatement,             "WithStatement",             "WITH_STATEMENT" );
+
 #if USE_FORTRAN_IR_NODES
   // Fortran language constructs that map directly to C/C++ IR nodes:
   //    Fortran: cycle        --> C: continue
@@ -418,7 +422,7 @@ Grammar::setUpStatements ()
           /* FortranDo            | */ AllocateStatement   | DeallocateStatement             | UpcNotifyStatement    | 
              UpcWaitStatement     | UpcBarrierStatement    | UpcFenceStatement               | 
              OmpBarrierStatement  | OmpTaskwaitStatement   |  OmpFlushStatement              | OmpBodyStatement      |
-             SequenceStatement,
+             SequenceStatement    | WithStatement,
                             "Statement","StatementTag", false);
 
   // DQ (11/24/2007): These have been moved to be declarations, so they can appear where only declaration statements are allowed
@@ -1989,6 +1993,12 @@ Grammar::setUpStatements ()
      UsingDirectiveStatement.setDataPrototype     ( "SgNamespaceDeclarationStatement*", "namespaceDeclaration", "= NULL",
                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+     WithStatement.setFunctionPrototype      ( "HEADER_WITH_STATEMENT", "../Grammar/Statement.code" );
+     WithStatement.setDataPrototype("SgDeclarationStatementPtrList", "variables", "",
+                                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     WithStatement.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_FUNCTIONS", "../Grammar/Expression.code" );
+     WithStatement.editSubstitute       ( "LIST_NAME", "variable" );
+
 #if USE_FORTRAN_IR_NODES
      ProgramHeaderStatement.setFunctionPrototype ( "HEADER_PROGRAM_HEADER_STATEMENT", "../Grammar/Statement.code" );
 
@@ -2932,6 +2942,8 @@ Grammar::setUpStatements ()
      TemplateInstantiationDirectiveStatement.setFunctionSource ( "SOURCE_TEMPLATE_INSTANTIATION_DIRECTIVE_STATEMENT", "../Grammar/Statement.code" );
      TemplateInstantiationDirectiveStatement.setFunctionSource (
           "SOURCE_POST_CONSTRUCTION_INITIALIZATION_STATEMENT", "../Grammar/Statement.code" );
+
+     WithStatement.setFunctionSource            ("SOURCE_WITH_STATEMENT", "../Grammar/Statement.code" );
 
 #if USE_FORTRAN_IR_NODES
      ProgramHeaderStatement.setFunctionSource   ("SOURCE_PROGRAM_HEADER_STATEMENT", "../Grammar/Statement.code" );

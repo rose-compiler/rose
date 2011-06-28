@@ -44,6 +44,11 @@ void
 Unparse_Python::unparseLanguageSpecificStatement(SgStatement* stmt,
                                                  SgUnparse_Info& info)
 {
+    if ( isSgExpression(stmt) != NULL ) {
+        unparseExpression( isSgExpression(stmt), info );
+        return;
+    }
+
     switch (stmt->variantT()) {
 
 #define CASE_DISPATCH_AND_BREAK(sg_t) \
@@ -110,6 +115,10 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
             unparseUnaryOp( isSgUnaryOp(stmt), info );
             break;
 
+        case V_SgLambdaExp:
+            unparseLambdaExp( isSgLambdaExp(stmt), info );
+            break;
+
         default: {
             cerr << "unparse Expression (" << stmt->class_name()
                  << "*) is unimplemented." << endl;
@@ -150,10 +159,7 @@ Unparse_Python::unparseBasicBlock(SgBasicBlock* bblock,
 {
     foreach (SgStatement* child, bblock->get_statements()) {
         curprint( ws_prefix(info.get_nestingLevel()) );
-        if (isSgExpression(child))
-            unparseExpression(isSgExpression(child), info);
-        else
-            unparseStatement(child, info);
+        unparseStatement(child, info);
         curprint("\n");
     }
 }
@@ -300,6 +306,16 @@ Unparse_Python::unparseInitializedName(SgInitializedName* init_name,
     if (init_name->get_initializer() != NULL) {
         unparseExpression(init_name->get_initializer(), info);
     }
+}
+
+void
+Unparse_Python::unparseLambdaExp(SgLambdaExp* lambda,
+                                 SgUnparse_Info& info)
+{
+    curprint( "lambda " );
+    unparseStatement( lambda->get_parameterList(), info );
+    curprint( ": " );
+    unparseStatement( lambda->get_body(), info );
 }
 
 void
