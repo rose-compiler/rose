@@ -317,7 +317,7 @@ void postProcessingSupport (SgNode* node)
   // driscoll6 (6/10/11): this traversal sets p_firstNondefiningDeclaration for defining declarations, which
   // causes justifiable failures in AstConsistencyTests. Until this is resolved, skip this test for Python.
      if (SageInterface::is_Python_language()) {
-         cerr << "warning: python. skipping fixupDeclarations() in astPostProcessing.C" << endl;
+         cerr << "warning: python. Skipping fixupDeclarations() in astPostProcessing.C" << endl;
      } else {
          fixupDeclarations(node);
      }

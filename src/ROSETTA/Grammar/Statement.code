@@ -1753,6 +1753,14 @@ HEADER_LABEL_STATEMENT_START
 
 HEADER_LABEL_STATEMENT_END
 
+HEADER_WITH_STATEMENT_START
+
+SgDeclarationStatementPtrList& get_variables();
+const SgDeclarationStatementPtrList& get_variables() const;
+
+HEADER_LIST_DECLARATIONS
+
+HEADER_WITH_STATEMENT_END
 
 HEADER_WHILE_STATEMENT_START
        // void post_construction_initialization();
@@ -3212,6 +3220,14 @@ SgStatement::get_scope(void) const
              {
             // Handle case of SgFunctionDeclaration or SgMemberFunctionDeclaration
                ROSE_ASSERT (stmt->get_parent() != NULL);
+
+               if ( SageInterface::is_Python_language() && isSgLambdaExp(stmt->get_parent()) ) {
+                   std::cout << "warning: python. Fetching scope of lambda parameters from lambda's scope." << std::endl;
+                   returnScope = SageInterface::getScope(stmt->get_parent());
+                   ROSE_ASSERT( returnScope != NULL );
+                   break;
+               }
+
                SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(stmt->get_parent());
                ROSE_ASSERT (functionDeclaration != NULL);
 #if 0
@@ -11311,6 +11327,25 @@ SgWhileStmt::get_mangled_name(void) const
 
 SOURCE_WHILE_STATEMENT_END
 
+SOURCE_WITH_STATEMENT_START
+
+SgDeclarationStatementPtrList&
+SgWithStatement::get_variables()
+{
+    return p_variables;
+}
+
+
+const SgDeclarationStatementPtrList&
+SgWithStatement::get_variables() const
+{
+    return p_variables;
+}
+
+void
+SgWithStatement::post_construction_initialization() {}
+
+SOURCE_WITH_STATEMENT_END
 
 SOURCE_DO_WHILE_STATEMENT_START
 void

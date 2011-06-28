@@ -307,6 +307,9 @@ SgUpcMythread* buildUpcMythread_nfi();
 SgThisExp* buildThisExp(SgClassSymbol* sym);
 SgThisExp* buildThisExp_nfi(SgClassSymbol* sym);
 
+//! Build lambda expression
+SgLambdaExp* buildLambdaExp(SgFunctionParameterList* params, SgStatement* body, SgScopeStatement* scope);
+
 //!  Template function to build a unary expression of type T. Instantiated functions include:buildAddressOfOp(),buildBitComplementOp(),buildBitComplementOp(),buildMinusOp(),buildNotOp(),buildPointerDerefExp(),buildUnaryAddOp(),buildMinusMinusOp(),buildPlusPlusOp().  They are also used for the unary vararg operators (which are not technically unary operators).
 /*! The instantiated functions' prototypes are not shown since they are expanded using macros.
  * Doxygen is not smart enough to handle macro expansion. 
@@ -732,6 +735,8 @@ inline SgWhileStmt * buildWhileStmt(SgExpression *  condition, SgStatement *body
   return buildWhileStmt(buildExprStatement(condition), body);
 }
 SgWhileStmt * buildWhileStmt_nfi(SgStatement *  condition, SgStatement *body);
+
+SgWithStatement* buildWithStatement(SgExpression* expr, const std::vector<SgVariableDeclaration*>& vars, SgStatement* body);
 
 //! Build do-while statement
 SgDoWhileStmt * buildDoWhileStmt(SgStatement *  body, SgStatement *condition);

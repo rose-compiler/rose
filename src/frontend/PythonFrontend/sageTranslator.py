@@ -92,6 +92,10 @@ class SageTranslator(ast.NodeVisitor):
     #print "generic_visit for class: ", node.__class__.__name__
     return map(self.visit, ast.iter_child_nodes(node))
 
+  def visit_arguments(self, node):
+    retval = map(self.visit, node.args)
+    return retval
+
   def visit_AugAssign(self, node):
     target = self.visit(node.target)
     value  = self.visit(node.value)
@@ -150,6 +154,10 @@ class SageTranslator(ast.NodeVisitor):
     value = self.visit(node.value)
     return sage.buildKeyword(arg, value)
 
+  def visit_Lambda(self, node):
+    body = self.visit(node.body)
+    return sage.buildLambda(node.args, body)
+
   def visit_Module(self, node):
     (scope, main_func) = sage.buildGlobal(self.filename)
 
@@ -204,6 +212,11 @@ class SageTranslator(ast.NodeVisitor):
     #return sage.buildWhile(test, body, orelse)
     return sage.buildWhile(test, body)
 
+  def visit_With(self, node):
+    expr = self.visit(node.test)
+    vars = map(self.visit, node.optional_vars)
+    body = sage.buildSuite(map(self.visit, node.body))
+    return sage.buildWith(expr, vars, body)
 
 def translate(infilename):
   try:

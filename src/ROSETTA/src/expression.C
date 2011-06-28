@@ -152,6 +152,9 @@ Grammar::setUpExpressions ()
      // sgCudaKernelCallExp is a node for CUDA support, it catch kernel's call.
      NEW_TERMINAL_MACRO (CudaKernelCallExp,        "CudaKernelCallExp",        "KERN_CALL" );
 
+  // driscoll6 (6/27/11) Support for Python
+     NEW_TERMINAL_MACRO (LambdaExp,              "LambdaExp",                 "LAMBDA_EXP" );
+
 #if USE_FORTRAN_IR_NODES
   // Intrisic function are just like other functions, but explicitly marked to be intrinsic.
   // DQ (2/2/2006): Support for Fortran IR nodes (contributed by Rice)
@@ -240,7 +243,8 @@ Grammar::setUpExpressions ()
           ColonShapeExp       | AsteriskShapeExp        | /*UseOnlyExpression |*/ ImpliedDo         | IOItemExpression         |
        /* UseRenameExpression | */ StatementExpression  | AsmOp               | LabelRefExp         | ActualArgumentExpression |
           UnknownArrayOrFunctionReference               | PseudoDestructorRefExp | CAFCoExpression  |
-          CudaKernelCallExp   | CudaKernelExecConfig, /* TV (04/22/2010): CUDA support */
+          CudaKernelCallExp   | CudaKernelExecConfig    |  /* TV (04/22/2010): CUDA support */
+          LambdaExp, /* driscoll6 (6/27/11): Python Support */
           "Expression","ExpressionTag", false);
 
   // ***********************************************************************
@@ -1596,6 +1600,15 @@ Grammar::setUpExpressions ()
      CudaKernelCallExp.setDataPrototype ( "SgExprListExp*", "args", "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      CudaKernelCallExp.setDataPrototype ( "SgCudaKernelExecConfig*", "exec_config", "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+ // driscoll6 (6/27/11): Python support
+     LambdaExp.setFunctionPrototype ( "HEADER_LAMBDA_EXP", "../Grammar/Expression.code" );
+     LambdaExp.setDataPrototype ("SgFunctionParameterList*", "parameterList", "= NULL",
+                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
+ // Python requires the body to be a single expression, but we'll use the more general SgStatement
+ // to allow easier adoption of C++0x (which allows BasicBlocks in lambdas).
+     LambdaExp.setDataPrototype ("SgStatement*", "body", "= NULL",
+                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
+
      // ***********************************************************************
      // ***********************************************************************
      //                       Source Code Declaration
@@ -1948,4 +1961,6 @@ Grammar::setUpExpressions ()
      CudaKernelExecConfig.setFunctionSource ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
      CudaKernelCallExp.setFunctionSource ( "SOURCE_CUDA_KERNEL_CALL_EXPRESSION","../Grammar/Expression.code" );
 
+  // driscoll6 (6/27/11): Python support
+     LambdaExp.setFunctionSource ( "SOURCE_LAMBDA_EXP","../Grammar/Expression.code" );
    }

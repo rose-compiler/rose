@@ -215,6 +215,7 @@ sage_buildExpr(PyObject *self, PyObject *args)
 {
     PyObject* py_value = PyTuple_GetItem(args, 0);
     SgNode* sg_value = PyDecapsulate<SgNode>(py_value);
+    ROSE_ASSERT(sg_value != NULL);
     return PyEncapsulate(sg_value);
 }
 
@@ -235,6 +236,7 @@ sage_buildFunctionDef(PyObject *self, PyObject *args)
     string func_name = string( PyString_AsString(py_name) );
 
     PyObject* py_args = PyObject_GetAttrString(func_def_capsule, "args");
+              py_args = PyObject_GetAttrString(py_args, "args");
     SgFunctionParameterList* sg_params =
         buildFunctionParameterList(py_args, py_defaults_capsules);
 
@@ -348,6 +350,26 @@ sage_buildKeyword(PyObject *self, PyObject *args)
         SageBuilder::buildAssignOp(sg_key, sg_value);
 
     return PyEncapsulate(sg_assign_op);
+}
+
+/*
+ */
+PyObject*
+sage_buildLambda(PyObject *self, PyObject *args)
+{
+    PyObject* py_args = PyTuple_GetItem(args, 0);
+    PyObject* py_body = PyTuple_GetItem(args, 1);
+
+    PyObject* py_arg_list = PyObject_GetAttrString(py_args, "args");
+    SgFunctionParameterList* sg_params =
+        buildFunctionParameterList(py_arg_list, NULL);
+
+    SgStatement* sg_body = PyDecapsulate<SgStatement>(py_body);
+
+    SgLambdaExp* sg_lambda_exp =
+        SageBuilder::buildLambdaExp(sg_params, sg_body, NULL);
+
+    return PyEncapsulate(sg_lambda_exp);
 }
 
 /*
@@ -544,4 +566,24 @@ sage_buildWhile(PyObject *self, PyObject *args)
 
     SgWhileStmt* sg_while_stmt = SageBuilder::buildWhileStmt(test, body);
     return PyEncapsulate(sg_while_stmt);
+}
+
+/*
+ */
+PyObject*
+sage_buildWith(PyObject *self, PyObject *args)
+{
+    PyObject* py_expr = PyTuple_GetItem(args, 0);
+    PyObject* py_vars = PyTuple_GetItem(args, 1);
+    PyObject* py_body = PyTuple_GetItem(args, 2);
+
+    SgExpression* expr = PyDecapsulate<SgExpression>(py_expr);
+    std::vector<SgVariableDeclaration*> vars; //PyDecapsulate<SgStatement>(py_vars);
+    SgStatement*  body = PyDecapsulate<SgStatement>(py_body);
+
+    ROSE_ASSERT(expr);
+    ROSE_ASSERT(body);
+
+    SgWithStatement* sg_with_stmt = SageBuilder::buildWithStatement(expr, vars, body);
+    return PyEncapsulate(sg_with_stmt);
 }
