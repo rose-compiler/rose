@@ -84,7 +84,9 @@ print_timespec_32(RTS_Message *m, const uint8_t *_ts, size_t sz)
 {
     assert(sz==sizeof(timespec_32));
     const timespec_32 *ts = (const timespec_32*)_ts;
-    m->more("sec=%"PRId32", nsec=%"PRId32, ts->tv_sec, ts->tv_nsec);
+    m->more("sec=");
+    print_time(m, ts->tv_sec);
+    m->more(", nsec=%"PRId32, ts->tv_nsec);
 }
 
 void
