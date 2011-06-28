@@ -1,10 +1,11 @@
-#ifndef BACKSTROKE_VALUEGRAPHNODE2_H
-#define	BACKSTROKE_VALUEGRAPHNODE2_H
+#ifndef BACKSTROKE_VALUEGRAPHNODE_H
+#define	BACKSTROKE_VALUEGRAPHNODE_H
 
 #include "types.h"
 #include <slicing/backstrokeCDG.h>
 #include <rose.h>
 #include <boost/lexical_cast.hpp>
+#include <fstream>
 
 namespace Backstroke
 {
@@ -229,12 +230,16 @@ struct FunctionCallNode: ValueGraphNode
     
     //! If this function is declared as virtual.
     bool isVirtual;
-    
-    //! If this function is declared as const.
-    bool isConst;
-    
+        
     //! If this function call is from std library.
     bool isStd;
+    
+    //! Indicates if this function call can be reversed.
+    bool canBeReversed;
+    
+    static std::set<SgMemberFunctionDeclaration*> functionsToReverse;
+    
+    static std::ofstream os;
 };
 
 #if 0

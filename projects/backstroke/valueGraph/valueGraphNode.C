@@ -59,9 +59,9 @@ namespace
                 return 100;
             case V_SgPointerType:
             {
-                SgPointerType* pType = isSgPointerType(t);
-                return getCostFromType(pType->get_base_type());
-                //return sizeof(void*);
+                //SgPointerType* pType = isSgPointerType(t);
+                //return getCostFromType(pType->get_base_type());
+                return sizeof(void*);
             }
             case V_SgTypedefType:
                 return getCostFromType(t->stripTypedefsAndModifiers());
@@ -226,8 +226,13 @@ std::string OperatorNode::toString() const
 }
 
 FunctionCallNode::FunctionCallNode(SgFunctionCallExp* funcCall, bool isRvs)
-        : ValueGraphNode(funcCall), isReverse(isRvs), isVirtual(false), isConst(false), isStd(false)
+:   ValueGraphNode(funcCall), isReverse(isRvs), isVirtual(false), 
+    isStd(false), canBeReversed(false)
 {
+    // If this function is declared as const.
+    bool isConst = false;
+    bool isInline = false;
+    bool isMemberFunc = false;
     
 #if 1
             
@@ -250,21 +255,24 @@ FunctionCallNode::FunctionCallNode(SgFunctionCallExp* funcCall, bool isRvs)
             isVirtual = memFuncDecl->get_functionModifier().isVirtual();
             //cout << "@@@" << funcDecl->get_type()->unparseToString() << endl;
             //isConst = SageInterface::isConstType(funcDecl->isDefinedInClass());
-            isConst = memFuncDecl->isDefinedInClass();
+            isInline = memFuncDecl->isDefinedInClass();
 
             funcDecl = memFuncDecl;
             //if (isVirtual)
             //cout << funcDecl->get_name().str() << "\t: VIRTUAL1\n\n";
+            
+            functionsToReverse.insert(memFuncDecl);
         }
 
         else 
         {
-            isVirtual = true;
+            //isVirtual = true;
             //cout << "UNKNOWN" << "\t: VIRTUAL2\n\n";
         }
         
         // TEMP
-        isVirtual = true;
+        //isVirtual = true;
+        isMemberFunc =true;
     }
     
     else
@@ -276,34 +284,55 @@ FunctionCallNode::FunctionCallNode(SgFunctionCallExp* funcCall, bool isRvs)
         if (funcRef)
         {
             //SgMemberFunctionRefExp* funcRef = isSgMemberFunctionRefExp(arrowExp->get_rhs_operand());
-            SgMemberFunctionDeclaration* funcDecl = funcRef->getAssociatedMemberFunctionDeclaration();
+            SgMemberFunctionDeclaration* memFuncDecl = funcRef->getAssociatedMemberFunctionDeclaration();
             //cout << funcDecl->get_name().str() << funcDecl->get_functionModifier().isVirtual() << endl;
-            isVirtual = funcDecl->get_functionModifier().isVirtual();
-            isConst = SageInterface::isConstType(funcDecl->get_type());
+            isVirtual = memFuncDecl->get_functionModifier().isVirtual();
+            isConst = SageInterface::isConstType(memFuncDecl->get_type());
+            isInline = memFuncDecl->get_functionModifier().isInline();
 
-            SgNamespaceDefinitionStatement* nsDef = SageInterface::enclosingNamespaceScope(funcDecl);
+            SgNamespaceDefinitionStatement* nsDef = SageInterface::enclosingNamespaceScope(memFuncDecl);
             SgNamespaceDeclarationStatement* nsDecl = nsDef ? nsDef->get_namespaceDeclaration() : NULL;
             if (nsDecl && nsDecl->get_name() == "std")
             {
-                cout << "\nFound a STD function: " << funcDecl->get_name() << "\n\n";
+                cout << "\nFound a STD function: " << memFuncDecl->get_name() << "\n\n";
                 isStd = true;
+            }
+            else if (memFuncDecl->get_specialFunctionModifier().isOperator() ||
+                    memFuncDecl->get_specialFunctionModifier().isConversion())
+            {
+                cout << "\nFound a overloaded operator: " << memFuncDecl->get_name() << "\n\n";
             }
             else
             {
-                isVirtual = true;
+                //isVirtual = true;
+                
+                functionsToReverse.insert(memFuncDecl);
             }
             
             //if (isVirtual)
             //cout << funcDecl->get_name().str() << "\t: VIRTUAL3\n\n";
             //funcRef->get_file_info()->display();
             
-            //TEMP
+            isMemberFunc = true;
         }
         //isVirtual = true;
     }
     
     ROSE_ASSERT(funcDecl);
     funcName = funcDecl->get_name();
+    
+    if (isVirtual)
+        canBeReversed = true;
+    else if (isConst || isInline || isStd)
+        canBeReversed = false;
+    else if (isMemberFunc)
+        canBeReversed = true;
+
+
+    os << funcDecl->get_name() << ":\n";
+    os << funcDecl->get_functionModifier() << "\n";
+    os << isMemberFunc << canBeReversed << "\n";
+    os << funcDecl->get_specialFunctionModifier() << "\n\n";
     
 #endif
 }

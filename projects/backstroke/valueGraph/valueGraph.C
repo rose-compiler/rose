@@ -720,6 +720,7 @@ void EventReverser::addAvailableAndTargetValues()
             addAvailableValue(node);
         }
         
+        
         // If this variable is a parameter and has pointer or reference type,
         // make it available.
         if (name.size() == 1 && isSgFunctionDefinition(name[0]->get_scope()))
@@ -728,6 +729,11 @@ void EventReverser::addAvailableAndTargetValues()
             if (isSgPointerType(type) || isSgReferenceType(type))
                 addAvailableValue(node);
         }
+        
+        // Here we treat any non-local variables as state variables. 
+        // Note this is not always true.
+        else if (!SageInterface::isAncestor(funcDef_, name[0]->get_scope()))
+            addAvailableValue(node);
     }
     
     // Collect all target values.
@@ -1111,14 +1117,18 @@ EventReverser::VGVertex EventReverser::createThisExpNode(SgThisExp* thisExp)
 
 EventReverser::VGVertex EventReverser::createFunctionCallNode(SgFunctionCallExp* funcCallExp)
 {
-    cout << funcCallExp->unparseToString() << endl;
+    //cout << funcCallExp->unparseToString() << endl;
     
     // Build a node for this function call in VG.
     FunctionCallNode* funcCallNode    = new FunctionCallNode(funcCallExp);
-    FunctionCallNode* rvsFuncCallNode = new FunctionCallNode(funcCallExp, true);
+    FunctionCallNode* rvsFuncCallNode;
+    if (funcCallNode->canBeReversed)
+        rvsFuncCallNode = new FunctionCallNode(funcCallExp, true);
     
-    VGVertex funcCallVertex    = addValueGraphNode(funcCallNode);
-    VGVertex rvsFuncCallVertex = addValueGraphNode(rvsFuncCallNode);
+    VGVertex funcCallVertex = addValueGraphNode(funcCallNode);
+    VGVertex rvsFuncCallVertex;
+    if (funcCallNode->canBeReversed)
+        rvsFuncCallVertex = addValueGraphNode(rvsFuncCallNode);
     
     nodeVertexMap_[funcCallExp] = funcCallVertex;
     
@@ -1187,7 +1197,8 @@ EventReverser::VGVertex EventReverser::createFunctionCallNode(SgFunctionCallExp*
     foreach (VGVertex argVertex, realArgs)
     {
         addValueGraphEdge(funcCallVertex, argVertex);
-        addValueGraphEdge(argVertex, rvsFuncCallVertex);
+        if (funcCallNode->canBeReversed)
+            addValueGraphEdge(argVertex, rvsFuncCallVertex);
         
         
         ROSE_ASSERT(isValueNode(valueGraph_[argVertex]));
@@ -1219,14 +1230,14 @@ EventReverser::VGVertex EventReverser::createFunctionCallNode(SgFunctionCallExp*
         addValueGraphEdge(argVertex, funcCallVertex);
         
         // Check if we should connect this argument to the reverse function.
-        if (rvsFuncCallNode->isNeededByInverse(var.name[0]))
+        if (funcCallNode->canBeReversed && rvsFuncCallNode->isNeededByInverse(var.name[0]))
             addValueGraphEdge(rvsFuncCallVertex, argVertex);
     }
     
     
     // For a virtual function call, its inverse is called in reverse function.
     // Black box style inversion is not used.
-    if (funcCallNode->isVirtual && !funcCallNode->isConst)
+    if (funcCallNode->canBeReversed)
     {
         // If the function called is a virtual one, add two dummy value nodes then its
         // inverse can be generated temporarily. This is a workaround!
@@ -1577,7 +1588,7 @@ void EventReverser::addPhiEdges()
             int version = def->getRenamingNumber();
             
             VersionedVariable defVar(phiNode->var.name, version);
-            cout << "$$$" << defVar << " for phi node: " << phiNode->var << endl;
+            //cout << "$$$" << defVar << " for phi node: " << phiNode->var << endl;
             
             //// Currently the extern variables may not be built here. Just skip it.
             if (varVertexMap_.count(defVar) == 0)
@@ -1835,8 +1846,8 @@ void EventReverser::addStateSavingEdges()
         // reaching defs on this statement to get all last versions of local variables.
         if (SgBasicBlock* basicBlock = isSgBasicBlock(scope))
         {
-            cout << "Scope end SS edge: " << initName->get_name() 
-                    << "--SS-->" << basicBlock->class_name() << "\n\n";
+            //cout << "Scope end SS edge: " << initName->get_name() 
+            //        << "--SS-->" << basicBlock->class_name() << "\n\n";
             ROSE_ASSERT(isSgNullStatement(basicBlock->get_statements().back()));
             addStateSavingEdges(VarName(1, initName), basicBlock->get_statements().back());
         }
@@ -1845,8 +1856,8 @@ void EventReverser::addStateSavingEdges()
         // For each early exit, add a SS edge for this local variable.
         foreach (SgStatement* exit, exitsForScopes[scope])
         {
-            cout << "Early exit SS edge: " << initName->get_name() 
-                    << "--SS-->" << exit->class_name() << "\n\n";
+            //cout << "Early exit SS edge: " << initName->get_name() 
+            //        << "--SS-->" << exit->class_name() << "\n\n";
             addStateSavingEdges(VarName(1, initName), exit);
         }
         

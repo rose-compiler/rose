@@ -31,6 +31,11 @@ EventReverser::~EventReverser()
     delete fullCfg_;
     delete cdg_;
     delete pathNumManager_;
+    
+    foreach (VGVertex node, boost::vertices(valueGraph_))
+        delete valueGraph_[node];
+    foreach (const VGEdge& edge, boost::edges(valueGraph_))
+        delete valueGraph_[edge];
 }
 
 
@@ -645,11 +650,13 @@ void EventReverser::getRouteGraphEdgesInProperOrder(int dagIndex, vector<VGEdge>
         VGEdge edge = nextEdgeCandidates.top();
         nextEdgeCandidates.pop();
         
+#if 0
         cout << "> " << getSource(edge)->toString() << " ===> " << getTarget(edge)->toString() << "\t" << valueGraph_[edge]->paths[0] << "\n\n";
         if (comp.getAstNode(edge) == NULL)
             cout << valueGraph_[edge]->toString() << "\n\n";
         else
             cout << comp.getAstNode(edge)->unparseToString() << " : " << nodeIndexTable[comp.getAstNode(edge)] << "\n\n";
+#endif
         
         // If this edge does not belong to the route of the given DAG.
         if (routeGraph_[edge]->paths.count(dagIndex) == 0)
@@ -742,7 +749,7 @@ void EventReverser::buildReverseCFG(
     vector<VGEdge> result;
     getRouteGraphEdgesInProperOrder(dagIndex, result);
     
-#if 1
+#if 0
     foreach (const VGEdge& edge, result)
     {
         VGVertex src = boost::source(edge, valueGraph_);
@@ -939,7 +946,7 @@ void EventReverser::addReverseCFGNode(
         // Update parent paths.
         parentTable[oldPaths] = fullPaths;
         
-        cout << oldPaths << endl;
+        //cout << oldPaths << endl;
         ROSE_ASSERT(rvsCFGBasicBlock.count(oldPaths) == 0);
 
         // Once the paths info is modified, we modified it by removing
@@ -1036,9 +1043,11 @@ namespace
         rvsSymbol = isSgMemberFunctionSymbol(rvsFuncDecl->get_symbol_from_symbol_table());
         cmtSymbol = isSgMemberFunctionSymbol(cmtFuncDecl->get_symbol_from_symbol_table());
         
-        insertStatementAfter(funcDecl, cmtFuncDecl);
-        insertStatementAfter(funcDecl, rvsFuncDecl);
-        insertStatementAfter(funcDecl, fwdFuncDecl);
+        SgStatement* firstFuncDecl = funcDecl;
+        //SgStatement* firstFuncDecl = funcDecl->get_firstNondefiningDeclaration();
+        insertStatementAfter(firstFuncDecl, cmtFuncDecl);
+        insertStatementAfter(firstFuncDecl, rvsFuncDecl);
+        insertStatementAfter(firstFuncDecl, fwdFuncDecl);
         
         ROSE_ASSERT(fwdSymbol && rvsSymbol && cmtSymbol);
         
@@ -1056,7 +1065,7 @@ void EventReverser::generateCodeForBasicBlock(
     
     pushScopeStack(rvsScope);
 
-#if 1
+#if 0
     // First, declare all temporary variables at the beginning of the reverse events.
     foreach (const VGEdge& edge, edges)
     {
@@ -1227,7 +1236,9 @@ void EventReverser::generateCodeForBasicBlock(
             // Virtual function call.
             SgFunctionCallExp* funcCallExp = funcCallNode->getFunctionCallExp();
             ROSE_ASSERT(funcCallExp);
-            cout << "Function: " << funcCallExp->unparseToString() << endl;
+            
+            //cout << "Function: " << funcCallExp->unparseToString() << endl;
+            
             SgMemberFunctionRefExp* funcRef = NULL;
             if (SgBinaryOp* binExp = isSgBinaryOp(funcCallExp->get_function()))
                 funcRef = isSgMemberFunctionRefExp(binExp->get_rhs_operand());
@@ -1280,7 +1291,7 @@ void EventReverser::generateCodeForBasicBlock(
                     }
                 }
                 
-                cout << "Processing Function Call:\t" << funcName << endl;
+                //cout << "Processing Function Call:\t" << funcName << endl;
                 
                 if (!(fwdFuncSymbol && rvsFuncSymbol && cmtFuncSymbol))
                 {
@@ -1471,7 +1482,38 @@ void EventReverser::generateCode(
     //boost::reverse_graph<ReverseCFG> rvsCFG 
     //        = boost::make_reverse_graph(rvsCFGs[0]);
     //foreach (RvsCFGVertex node, boost::vertices(boost::make_reverse_graph(rvsCFGs[dagIndex])))
+    
     const ReverseCFG& rvsCFG = rvsCFGs[dagIndex];
+    
+    
+    // First, declare all temporary variables at the beginning of the reverse events.
+    set<ValueNode*> declaredVars;
+    foreach (RvsCFGVertex node, boost::vertices(rvsCFG))
+    {
+        foreach (const VGEdge& edge, rvsCFG[node].edges)
+        {
+            if (!isStateSavingEdge(valueGraph_[edge]))
+                continue;
+
+            ValueNode* valNode = isValueNode(valueGraph_[boost::source(edge, valueGraph_)]);
+            if (declaredVars.count(valNode))
+                continue;
+
+            //if (valNode->isAvailable()) continue;
+            if (valNode == NULL || valNode->var.name.empty()) 
+                continue;
+            // If the function definition is not the ancestor of this variable, it is a state variable.
+            if (!SageInterface::isAncestor(funcDef_, valNode->var.name[0]))
+                continue;
+
+            SgStatement* varDecl = buildVarDeclaration(valNode);
+            SageInterface::appendStatement(varDecl, rvsFuncBody);
+            
+            declaredVars.insert(valNode);
+        }   
+    }
+    
+    
     //reverse_foreach (RvsCFGVertex node, boost::vertices(rvsCFG))
     foreach (RvsCFGVertex node, boost::vertices(rvsCFG))
     {
