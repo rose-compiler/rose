@@ -1,5 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+SUBDIRS = headerUnparser
+
 INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke
 LINK	 = $(CXXLINK)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
@@ -37,7 +39,7 @@ test:
 #./valueGraph -c temp2.C -I/opt/local/var/macports/software/boost/1.44.0_0/opt/local/include/
 
 #GTNETS_DIR = /home/hou1/MyWork/GTNetS/SRC
-GTNETS_DIR = /Users/hou1/MyWork/GTNetS/SRC
+GTNETS_DIR = /Users/hou1/MyWork/GTNetS/SRC_original
 
 #$(GTNETS_DIR)/application.cc 
 #GTNETS_FILES = $(GTNETS_DIR)/application-udpsink.cc $(GTNETS_DIR)/link-real.cc
@@ -71,7 +73,7 @@ l2proto802:
 	./valueGraph -c $(GTNETS_DIR)/l2proto802.11.cc $(GTNETS_FLAG)
 
 timer:
-	./valueGraph -c $(GTNETS_DIR)/timer.cc $(GTNETS_FLAG)
+	./valueGraph -c $(GTNETS_DIR)/timer.cc $(GTNETS_DIR)/l2proto802.11.cc $(GTNETS_FLAG)
 
 udpsink:
 	./valueGraph -c $(GTNETS_DIR)/application-udpsink.cc $(GTNETS_FLAG)
