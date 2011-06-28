@@ -376,6 +376,14 @@ public:
                     break;
                 }
 
+                case x86_pause: {
+                    /* PAUSE is treated as a CPU hint, and is a no-op on some architectures. */
+                    assert(0==operands.size());
+                    args.thread->policy.writeIP(newip);
+                    enabled = false;
+                    break;
+                }
+
                 case x86_stmxcsr: {
                     /* Store value of mxcsr register (which we don't actually have) to a doubleword in memory.  The value we
                      * store was obtained by running GDB under "i386 -LRB3", stopping at the first instruction, and looking at
