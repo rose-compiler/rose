@@ -234,23 +234,35 @@ bool MPIRankDepAnalysis::transfer(const Function& func, const DataflowNode& n, N
 		
 		// Assignment: lhs = rhs, lhs+=rhs, lhs*=rhs,  lhs/=rhs, ...
 		//    dependence flows from rhs to lhs and res
-		if(isSgAssignOp(sgn) ||
-		   isSgAndAssignOp(sgn) ||
-		   isSgDivAssignOp(sgn) ||
-		   isSgIorAssignOp(sgn) ||
-		   isSgLshiftAssignOp(sgn) ||
-		   isSgMinusAssignOp(sgn) ||
-		   isSgModAssignOp(sgn) ||
-		   isSgMultAssignOp(sgn) ||
-		   isSgPlusAssignOp(sgn) ||
-		   // What is this???
-		   //isSgPointerAssignOp(sgn) ||
-		   isSgRshiftAssignOp(sgn) ||
-		   isSgXorAssignOp(sgn))
+		if(isSgAssignOp(sgn))
 		{
 			// If the lhs and/or the SgAssignOp are live, copy lattice from the rhs
 			if(lhsLat){ lhsLat->copy(rhsLat); modified = true; }
 			if(resLat){ resLat->copy(rhsLat); modified = true; }
+		}
+		else if(isSgAndAssignOp(sgn) ||
+			isSgDivAssignOp(sgn) ||
+			isSgIorAssignOp(sgn) ||
+			isSgLshiftAssignOp(sgn) ||
+			isSgMinusAssignOp(sgn) ||
+			isSgModAssignOp(sgn) ||
+			isSgMultAssignOp(sgn) ||
+			isSgPlusAssignOp(sgn) ||
+			// What is this???
+			//isSgPointerAssignOp(sgn) ||
+			isSgRshiftAssignOp(sgn) ||
+			isSgXorAssignOp(sgn))
+		{
+		  if(lhsLat) {
+		    lhsLat->meetUpdate(rhsLat);
+		    modified = true;
+		  }
+		  if(resLat) {
+		    // 'lhs' must be alive here, and thus provide a lattice value, beacuse 'res' depends on it
+		    ROSE_ASSERT(lhsLat);
+		    resLat->copy(lhsLat);
+		    modified = true;
+		  }
 		}
 		// Non-assignments that do not refer to variables: lhs+rhs
 		// dependence flows from lhs and rhs to res
