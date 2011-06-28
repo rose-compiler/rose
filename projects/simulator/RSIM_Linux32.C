@@ -3885,8 +3885,13 @@ syscall_clone_enter(RSIM_Thread *t, int callno)
     /* From linux arch/x86/kernel/process.c:
      *    long sys_clone(unsigned long clone_flags, unsigned long newsp,
      *                   void __user *parent_tid, void __user *child_tid, struct pt_regs *regs)
+     *    {
+     *        if (!newsp)
+     *            newsp = regs->sp;
+     *        return do_fork(clone_flags, newsp, regs, 0, parent_tid, child_tid);
+     *    }
      *
-     * The fourth argument, child_tls_va, varies depending on clone_flags. Linux doesn't appear to require that
+     * The fourth argument, child_tid, varies depending on clone_flags. Linux doesn't appear to require that
      * these are mutually exclusive.  It appears as though the CLONE_SETTLS happens before CLONE_CHILD_SETTID.
      *   CLONE_CHILD_SETTID:  it is an address where the child's TID is written when the child is created
      *   CLONE_SETTLS:        it is an address of a user_desc_32 which will be loaded into the GDT.
