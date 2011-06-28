@@ -165,12 +165,14 @@ bool MPIRankDepAnalysis::transfer(const Function& func, const DataflowNode& n, N
 	for(vector<Lattice*>::const_iterator it = prodLat->getLattices().begin(); it!=prodLat->getLattices().end(); it++)
 		(dynamic_cast<MPIRankNProcsDepLattice*>(*it))->initialize();
 	
+	SgNode *sgn = n.getNode();
+
 	// Process any calls to MPI_Comm_rank and MPI_Comm_size to identify any new
 	// dependencies on the process' rank or the number of processes
-	if(isSgFunctionCallExp(n.getNode()))
+	if(isSgFunctionCallExp(sgn))
 	{
 		//Dbg::dbg << "    isSgFunctionCallExp"<<endl;
-		SgFunctionCallExp* fnCall = isSgFunctionCallExp(n.getNode());
+		SgFunctionCallExp* fnCall = isSgFunctionCallExp(sgn);
 		Function calledFunc(fnCall);
 		
 		if(calledFunc.get_name().getString() == "MPI_Comm_rank")
@@ -193,7 +195,7 @@ bool MPIRankDepAnalysis::transfer(const Function& func, const DataflowNode& n, N
 				Dbg::dbg << "prodLat="<<prodLat->str("    ")<<endl;
 			}
 			else
-			{ fprintf(stderr, "[rankDepAnalysis] MPIRankDepAnalysis::transfer() ERROR: second argument \"%s\" of function call \"%s\" is not a reference to a variable!\n", arg1->unparseToString().c_str(), n.getNode()->unparseToString().c_str()); exit(-1); }
+			{ fprintf(stderr, "[rankDepAnalysis] MPIRankDepAnalysis::transfer() ERROR: second argument \"%s\" of function call \"%s\" is not a reference to a variable!\n", arg1->unparseToString().c_str(), sgn->unparseToString().c_str()); exit(-1); }
 		}
 		else if(calledFunc.get_name().getString() == "MPI_Comm_size")
 		{
@@ -211,15 +213,15 @@ bool MPIRankDepAnalysis::transfer(const Function& func, const DataflowNode& n, N
 				modified = rnLat->setNprocsDep(true);
 			}
 			else
-			{ fprintf(stderr, "[rankDepAnalysis] MPIRankDepAnalysis::transfer() ERROR: second argument \"%s\" of function call \"%s\" is not a reference to a variable!\n", arg1->unparseToString().c_str(), n.getNode()->unparseToString().c_str()); exit(-1); }
+			{ fprintf(stderr, "[rankDepAnalysis] MPIRankDepAnalysis::transfer() ERROR: second argument \"%s\" of function call \"%s\" is not a reference to a variable!\n", arg1->unparseToString().c_str(), sgn->unparseToString().c_str()); exit(-1); }
 		}
 	// Binary operations: lhs=rhs, lhs+=rhs, lhs+rhs, ...
-	} else if(isSgBinaryOp(n.getNode())) {
+	} else if(isSgBinaryOp(sgn)) {
 		// Memory objects denoted by the expression’s left- and right-hand   
 		// sides as well as the SgAssignOp itself
-		varID lhs = SgExpr2Var(isSgBinaryOp(n.getNode())->get_lhs_operand());
-		varID rhs = SgExpr2Var(isSgBinaryOp(n.getNode())->get_rhs_operand());
-		varID res = SgExpr2Var(isSgBinaryOp(n.getNode()));
+		varID lhs = SgExpr2Var(isSgBinaryOp(sgn)->get_lhs_operand());
+		varID rhs = SgExpr2Var(isSgBinaryOp(sgn)->get_rhs_operand());
+		varID res = SgExpr2Var(isSgBinaryOp(sgn));
 
 		// The lattices associated the three memory objects
 		MPIRankNProcsDepLattice* resLat = 
@@ -232,19 +234,19 @@ bool MPIRankDepAnalysis::transfer(const Function& func, const DataflowNode& n, N
 		
 		// Assignment: lhs = rhs, lhs+=rhs, lhs*=rhs,  lhs/=rhs, ...
 		//    dependence flows from rhs to lhs and res
-		if(isSgAssignOp(n.getNode()) ||
-		   isSgAndAssignOp(n.getNode()) ||
-		   isSgDivAssignOp(n.getNode()) ||
-		   isSgIorAssignOp(n.getNode()) ||
-		   isSgLshiftAssignOp(n.getNode()) ||
-		   isSgMinusAssignOp(n.getNode()) ||
-		   isSgModAssignOp(n.getNode()) ||
-		   isSgMultAssignOp(n.getNode()) ||
-		   isSgPlusAssignOp(n.getNode()) ||
+		if(isSgAssignOp(sgn) ||
+		   isSgAndAssignOp(sgn) ||
+		   isSgDivAssignOp(sgn) ||
+		   isSgIorAssignOp(sgn) ||
+		   isSgLshiftAssignOp(sgn) ||
+		   isSgMinusAssignOp(sgn) ||
+		   isSgModAssignOp(sgn) ||
+		   isSgMultAssignOp(sgn) ||
+		   isSgPlusAssignOp(sgn) ||
 		   // What is this???
-		   //isSgPointerAssignOp(n.getNode()) ||
-		   isSgRshiftAssignOp(n.getNode()) ||
-		   isSgXorAssignOp(n.getNode()))
+		   //isSgPointerAssignOp(sgn) ||
+		   isSgRshiftAssignOp(sgn) ||
+		   isSgXorAssignOp(sgn))
 		{
 			// If the lhs and/or the SgAssignOp are live, copy lattice from the rhs
 			if(lhsLat){ lhsLat->copy(rhsLat); modified = true; }
@@ -262,11 +264,11 @@ bool MPIRankDepAnalysis::transfer(const Function& func, const DataflowNode& n, N
 		// NOTE: we need to deal with expressions such as a.b, a->b and a[i] specially since they refer to memory locations,
 		//       especially sub-expressions (e.g. a.b for a.b.c.d or a[i] for a[i][j][k]) but we don't yet have good abstraction for this.
 	// Unary operations
-	} else if(isSgUnaryOp(n.getNode())) {
-		if(!isSgAddressOfOp(n.getNode())) {
+	} else if(isSgUnaryOp(sgn)) {
+		if(!isSgAddressOfOp(sgn)) {
 			// Memory objects denoted by the expression’s oprand as well as the expression itself
-			varID op = SgExpr2Var(isSgUnaryOp(n.getNode())->get_operand());
-			varID res = SgExpr2Var(isSgUnaryOp(n.getNode()));
+			varID op = SgExpr2Var(isSgUnaryOp(sgn)->get_operand());
+			varID res = SgExpr2Var(isSgUnaryOp(sgn));
 	
 			// The lattices associated the three memory objects
 			MPIRankNProcsDepLattice* opLat = 
@@ -281,12 +283,12 @@ bool MPIRankDepAnalysis::transfer(const Function& func, const DataflowNode& n, N
 			modified = true;
 		}
 	// Conditional Operators: (x? y: z)
-	} else if(isSgConditionalExp(n.getNode())) {
+	} else if(isSgConditionalExp(sgn)) {
 		// Memory objects denoted by the expression’s condition, true and false sub-expressions
-		varID condE  = SgExpr2Var(isSgConditionalExp(n.getNode())->get_conditional_exp());
-		varID trueE  = SgExpr2Var(isSgConditionalExp(n.getNode())->get_true_exp());
-		varID falseE = SgExpr2Var(isSgConditionalExp(n.getNode())->get_false_exp());
-		varID res    = SgExpr2Var(isSgConditionalExp(n.getNode()));
+		varID condE  = SgExpr2Var(isSgConditionalExp(sgn)->get_conditional_exp());
+		varID trueE  = SgExpr2Var(isSgConditionalExp(sgn)->get_true_exp());
+		varID falseE = SgExpr2Var(isSgConditionalExp(sgn)->get_false_exp());
+		varID res    = SgExpr2Var(isSgConditionalExp(sgn));
 
 		// The lattices associated the three memory objects
 		MPIRankNProcsDepLattice* resLat = 
@@ -307,18 +309,18 @@ bool MPIRankDepAnalysis::transfer(const Function& func, const DataflowNode& n, N
 			modified = true;
 		}
 	// Variable Declaration
-	} else if(isSgInitializedName(n.getNode())) {
-		varID var(isSgInitializedName(n.getNode()));
+	} else if(isSgInitializedName(sgn)) {
+		varID var(isSgInitializedName(sgn));
 		MPIRankNProcsDepLattice* varLat = dynamic_cast<MPIRankNProcsDepLattice*>(prodLat->getVarLattice(var));
 		
 		// If this variable is live
 		if(varLat) {
 			// If there was no initializer, initialize its lattice to Bottom
-			if(isSgInitializedName(n.getNode())->get_initializer()==NULL)
+			if(isSgInitializedName(sgn)->get_initializer()==NULL)
 				modified = varLat->setToBottom() || modified;
 			// Otherwise, copy the lattice of the initializer to the variable
 			else {
-				varID init = SgExpr2Var(isSgInitializedName(n.getNode())->get_initializer());
+				varID init = SgExpr2Var(isSgInitializedName(sgn)->get_initializer());
 				MPIRankNProcsDepLattice* initLat = dynamic_cast<MPIRankNProcsDepLattice*>(prodLat->getVarLattice(init));
 				ROSE_ASSERT(initLat);
 				varLat->copy(initLat);
@@ -326,11 +328,11 @@ bool MPIRankDepAnalysis::transfer(const Function& func, const DataflowNode& n, N
 			}
 		}
 	// Initializer for a variable
-	} else if(isSgAssignInitializer(n.getNode())) {
+	} else if(isSgAssignInitializer(sgn)) {
 		// Memory objects of the initialized variable and the 
 		// initialization expression
-		varID res = SgExpr2Var(isSgAssignInitializer(n.getNode()));
-		varID asgn = SgExpr2Var(isSgAssignInitializer(n.getNode())->get_operand());
+		varID res = SgExpr2Var(isSgAssignInitializer(sgn));
+		varID asgn = SgExpr2Var(isSgAssignInitializer(sgn)->get_operand());
 		
 		// The lattices associated both memory objects
 		MPIRankNProcsDepLattice* resLat = dynamic_cast<MPIRankNProcsDepLattice*>(prodLat->getVarLattice(res));
