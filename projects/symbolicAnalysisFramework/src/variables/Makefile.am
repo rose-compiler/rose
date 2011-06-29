@@ -12,13 +12,11 @@ include_HEADERS = variables.h varSets.h
 
 noinst_PROGRAMS = selfTest
 selfTest_SOURCES = selfTest.C
-selfTest_LDADD = \
+selfTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) \
          $(SAF_BUILD_ROOT)/src/cfgUtils/libSafcfgUtils.la \
          $(SAF_BUILD_ROOT)/src/variables/libSafvariables.la \
          $(SAF_BUILD_ROOT)/src/rwAccessLabeler/libSafrwAccessLabeler.la \
          $(SAF_BUILD_ROOT)/src/arrIndexLabeler/libSafarrIndexLabeler.la 
-
-selfTest_LDADD += $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 # Liao 10/7/2010, this does not yet pass
 check-local:selfTest
