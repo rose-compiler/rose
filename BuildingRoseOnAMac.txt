@@ -9,7 +9,7 @@
 	
 	-Configure MacPorts so that it doesn't require root privileges. For example,
 	
-		./configure --prefix=/Users/$USER/macports --with-no-root-priviledges --with-install-user=$USER --with-install-group=rose
+		./configure --prefix=/Users/$USER/macports --with-no-root-privileges --with-install-user=$USER --with-install-group=rose
 		
 	-"make" and "make install" MacPorts
 
