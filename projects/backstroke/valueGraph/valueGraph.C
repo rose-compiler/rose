@@ -339,7 +339,8 @@ void EventReverser::processExpression(SgExpression* expr)
             }
             else
             {
-                ROSE_ASSERT(!"Only variable can be assigned now.");
+                cout << "!!!Only variable can be assigned now.\n\n";
+                //ROSE_ASSERT(!"Only variable can be assigned now.");
             }
 
             break;

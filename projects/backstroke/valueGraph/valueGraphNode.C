@@ -233,6 +233,7 @@ FunctionCallNode::FunctionCallNode(SgFunctionCallExp* funcCall, bool isRvs)
     bool isConst = false;
     bool isInline = false;
     bool isMemberFunc = false;
+    bool isOperator = false;
     
 #if 1
             
@@ -285,10 +286,15 @@ FunctionCallNode::FunctionCallNode(SgFunctionCallExp* funcCall, bool isRvs)
         {
             //SgMemberFunctionRefExp* funcRef = isSgMemberFunctionRefExp(arrowExp->get_rhs_operand());
             SgMemberFunctionDeclaration* memFuncDecl = funcRef->getAssociatedMemberFunctionDeclaration();
+            const SgFunctionModifier& modifier = memFuncDecl->get_functionModifier();
+            const SgSpecialFunctionModifier& specialModifier = memFuncDecl->get_specialFunctionModifier();
+            
+            
             //cout << funcDecl->get_name().str() << funcDecl->get_functionModifier().isVirtual() << endl;
-            isVirtual = memFuncDecl->get_functionModifier().isVirtual();
+            isVirtual = modifier.isVirtual();
             isConst = SageInterface::isConstType(memFuncDecl->get_type());
-            isInline = memFuncDecl->get_functionModifier().isInline();
+            isInline = modifier.isInline();
+            isOperator = specialModifier.isOperator() || specialModifier.isConversion();
 
             SgNamespaceDefinitionStatement* nsDef = SageInterface::enclosingNamespaceScope(memFuncDecl);
             SgNamespaceDeclarationStatement* nsDecl = nsDef ? nsDef->get_namespaceDeclaration() : NULL;
@@ -297,8 +303,7 @@ FunctionCallNode::FunctionCallNode(SgFunctionCallExp* funcCall, bool isRvs)
                 cout << "\nFound a STD function: " << memFuncDecl->get_name() << "\n\n";
                 isStd = true;
             }
-            else if (memFuncDecl->get_specialFunctionModifier().isOperator() ||
-                    memFuncDecl->get_specialFunctionModifier().isConversion())
+            else if (isOperator)
             {
                 cout << "\nFound a overloaded operator: " << memFuncDecl->get_name() << "\n\n";
             }
@@ -323,7 +328,7 @@ FunctionCallNode::FunctionCallNode(SgFunctionCallExp* funcCall, bool isRvs)
     
     if (isVirtual)
         canBeReversed = true;
-    else if (isConst || isInline || isStd)
+    else if (isConst || isInline || isOperator || isStd)
         canBeReversed = false;
     else if (isMemberFunc)
         canBeReversed = true;

@@ -2,6 +2,7 @@
 #include <utilities/utilities.h>
 #include <slicing/backstrokeCFG.h>
 #include <boost/lexical_cast.hpp>
+#include <boost/filesystem.hpp>
 #include <normalizations/expNormalization.h>
 
 using namespace std;
@@ -23,13 +24,57 @@ void addNullStmtAtScopeEnd(SgFunctionDefinition* funcDef)
     }
 }
 
+void reverseFunctions(const set<SgFunctionDefinition*>& funcDefs)
+{
+    SgProject* project = SageInterface::getProject();
+    
+    StaticSingleAssignment* ssa = new StaticSingleAssignment(project);
+    ssa->run(true);
+
+    set<SgGlobal*> globalScopes;
+
+    foreach (SgFunctionDefinition* funcDef, funcDefs)
+    {
+        string funcName = funcDef->get_declaration()->get_name();
+        globalScopes.insert(SageInterface::getGlobalScope(funcDef));
+
+        cout << "\nNow processing " << funcName << "\tfrom\n";
+        cout << funcDef->get_file_info()->get_filenameString() << "\n\n";
+
+        //string cfgFileName = "CFG" + boost::lexical_cast<string > (counter) + ".dot";
+        //string vgFileName = "VG" + boost::lexical_cast<string > (counter) + ".dot";
+        string cfgFileName = funcName + "_CFG.dot";
+        string cdgFileName = funcName + "_CDG.dot";
+        string vgFileName = "VG.dot";
+
+        Backstroke::FullCFG fullCfg(funcDef);
+        fullCfg.toDot(funcName + "_fullCFG.dot");
+
+        Backstroke::BackstrokeCFG cfg(funcDef);
+        cfg.toDot(cfgFileName);
+        
+        Backstroke::BackstrokeCDG cdg(cfg);
+        cdg.toDot(cdgFileName);
+
+        
+        Backstroke::EventReverser reverser(ssa);
+        reverser.reverseEvent(funcDef);
+
+        //reverser.valueGraphToDot(vgFileName);
+
+        cout << "\nFunction " << funcName << " is processed.\n\n";
+    }
+
+    
+    // Prepend includes to test files.
+    foreach (SgGlobal* globalScope, globalScopes)
+        SageInterface::insertHeader("rctypes.h", PreprocessingInfo::after, false, globalScope);
+}
+
 int main(int argc, char *argv[])
 {
     // Build the AST used by ROSE
     SgProject* project = frontend(argc, argv);
-    SgSourceFile* sourceFile = isSgSourceFile((*project)[0]);
-    
-    int counter = 0;
 
 #if 1
     // Draw the AST.
@@ -38,7 +83,8 @@ int main(int argc, char *argv[])
 #endif
     set<string> eventList;
     eventList.insert("Handle");
-#if 0
+    eventList.insert("Timeout");
+#if 1
     eventList.insert("StartApp");
     eventList.insert("StopApp");
     eventList.insert("TransmitComplete");
@@ -50,7 +96,6 @@ int main(int argc, char *argv[])
     eventList.insert("GetL2Proto");
     eventList.insert("Busy");
     eventList.insert("Send");
-    eventList.insert("Timeout");
     eventList.insert("Notify");
     eventList.insert("DataIndication");
     eventList.insert("SendPending");
@@ -124,64 +169,9 @@ int main(int argc, char *argv[])
     }
     
     
-
-    StaticSingleAssignment* ssa = new StaticSingleAssignment(SageInterface::getProject());
-    ssa->run(true);
-
-    set<SgGlobal*> globalScopes;
-
-    foreach (SgFunctionDefinition* funcDef, funcDefs)
-    {
-        string funcName = funcDef->get_declaration()->get_name();
-        globalScopes.insert(SageInterface::getGlobalScope(funcDef));
-
-        cout << "\nNow processing " << funcName << "\tfrom\n";
-        cout << funcDef->get_file_info()->get_filenameString() << "\n\n";
-
-        //string cfgFileName = "CFG" + boost::lexical_cast<string > (counter) + ".dot";
-        //string vgFileName = "VG" + boost::lexical_cast<string > (counter) + ".dot";
-        string cfgFileName = funcName + "_CFG.dot";
-        string cdgFileName = funcName + "_CDG.dot";
-        string vgFileName = "VG.dot";
-
-        //if (!funcDef->get_file_info()->isSameFile(sourceFile))
-        //    continue;
-
-#if 1
-        Backstroke::FullCFG fullCfg(funcDef);
-        fullCfg.toDot(funcName + "_fullCFG.dot");
-
-        Backstroke::BackstrokeCFG cfg(funcDef);
-        cfg.toDot(cfgFileName);
-        
-        Backstroke::BackstrokeCDG cdg(cfg);
-        cdg.toDot(cdgFileName);
-
-//        Backstroke::FilteredCFG filteredCFG(funcDef);
-//        filteredCFG.toDot("filteredCFG.dot");
-//
-//        Backstroke::FullCFG fullCFG(funcDef);
-//        fullCFG.toDot("fullCFG.dot");
-#endif
-        
-#if 1
-        //reverser.buildValueGraph();
-        Backstroke::EventReverser reverser(ssa);
-        reverser.reverseEvent(funcDef);
-#endif
-
-        reverser.valueGraphToDot(vgFileName);
-
-        cout << "\nFunction " << funcName << " is processed.\n\n";
-    }
-
-    cout << "The number of global scopes is: " << globalScopes.size() << endl;
     
-    // Prepend includes to test files.
-    foreach (SgGlobal* globalScope, globalScopes)
-        SageInterface::insertHeader("rctypes.h", PreprocessingInfo::after, false, globalScope);
-
-    //AstTests::runAllTests(project);
+    // Reverse all functions.
+    reverseFunctions(funcDefs);
     
     
     
@@ -195,5 +185,43 @@ int main(int argc, char *argv[])
     }
     cout << "\n\n";
 
-    return backend(project);
+    //return backend(project);
+    project->unparse();
+    
+    
+    // For GTNetS, copy all generated files to SRC directory.
+    foreach (const string& fileName, project->get_sourceFileNameList())
+    {
+        boost::filesystem::path p(fileName);
+        
+        string dir = p.parent_path().string();
+        string name = p.filename().string();
+        
+        string command = "cp " + dir + "/rose_" + name + " " + dir + "../SRC/" + name;
+        
+        cout << command << endl;
+        boost::filesystem::copy_file("rose_" + name, dir + "/../SRC/" + name, 
+                boost::filesystem::copy_option::overwrite_if_exists);
+        //system(command.c_str());
+    }
+    
+    ofstream osHeaders("headers.txt");
+    
+    // Copy the header file as a source file then do the transformation then copy it back.
+    foreach (SgFunctionDefinition* funcDef, funcDefs)
+    {
+        cout << funcDef->unparseToString() << endl;
+        SgFunctionDeclaration* funcDecl = isSgFunctionDeclaration(
+                funcDef->get_declaration()->get_firstNondefiningDeclaration());
+        // If funcDecl is NULL, this function is inlined.
+        if (!funcDecl) funcDecl = funcDef->get_declaration();
+        
+        cout << funcDecl->get_file_info()->get_filenameString() << endl;
+        cout << funcDecl->get_name() << endl;
+        osHeaders << funcDecl->get_file_info()->get_filenameString() << ' ' 
+                << funcDecl->get_name() << '\n';
+    }
+    osHeaders.close();
+    
+    ::system("./headerUnparser/unparseHeader headers.txt");
 }
