@@ -63,7 +63,11 @@ GTNETS_FLAG = -I$(GTNETS_DIR) -DNO_DEBUG
 
 
 wlan:
-	./functionReverserTest -c $(GTNETS_DIR)/wlan.cc $(GTNETS_FLAG)
+	./functionReverserTest -c \
+		$(GTNETS_DIR)/wlan.cc \
+		$(GTNETS_DIR)/link-real.cc \
+		$(GTNETS_DIR)/interface-wireless.cc \
+		$(GTNETS_FLAG)
 
 application:
 	./functionReverserTest -c $(GTNETS_DIR)/application.cc $(GTNETS_FLAG)

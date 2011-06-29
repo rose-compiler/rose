@@ -155,7 +155,8 @@ int main(int argc, char** argv)
         {
             if (decl->get_functionModifier().isPureVirtual())
                 buildThreeFuncDeclWithEmptyBody(decl);
-            else
+            else if (!decl->get_specialFunctionModifier().isDestructor()
+                    && !decl->get_specialFunctionModifier().isConstructor())
                 buildThreeFuncDecl(decl);
         }
     }
