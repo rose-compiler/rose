@@ -69,6 +69,9 @@ if ROSE_BUILD_EDG_WITH_OPENCL_SUPPORT
    SUBDIRS += OpenClTests
 endif
 
+if ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
+   SUBDIRS += Python_tests
+endif
 
 SUBDIRS += EDG_4_x
 

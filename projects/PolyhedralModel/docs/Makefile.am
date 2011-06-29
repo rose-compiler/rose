@@ -1,5 +1,5 @@
 
-include ../makefile.inc
+include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 EXTRA_DIST= biblio.docs doxy.conf intro_poly_model.docs \
 illustrations/Polyhedron/domain-poster.eps  \
@@ -11,3 +11,5 @@ illustrations/Polyhedron/j_eq_0.png \
 illustrations/Polyhedron/vp-dep.eps \
 illustrations/Polyhedron/vp-dep.pdf \
 illustrations/Polyhedron/vp-dep.png
+
+docs:

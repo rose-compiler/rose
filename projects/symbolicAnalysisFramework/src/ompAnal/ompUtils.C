@@ -306,12 +306,12 @@ cout << "                  pattern="<<"\\s+reduction\\s*\\(\\s*([+*\\-&^\\|]+)\\
 		smatch what = *m1;
 		//cout << "ompReductionsSet: " << what[0] << " | " << what[1] << "\n";
 
-		if(firstMatch) for(int i = 0; i < what.size(); ++i) lastNumCaptures[i] = 0;
+		if(firstMatch) for(unsigned int i = 0; i < what.size(); ++i) lastNumCaptures[i] = 0;
 
 		ompReduction nextRed(what, what.captures(3).size() - lastNumCaptures[3] + 1);
 		reductions.push_back(nextRed);
 		
-		for(int i = 0; i < what.size(); ++i) lastNumCaptures[i] = what.captures(i).size();
+		for(unsigned int i = 0; i < what.size(); ++i) lastNumCaptures[i] = what.captures(i).size();
 
 		firstMatch = false;
 
@@ -393,19 +393,19 @@ ompDataClause::ompDataClause(string directive, string clauseType)
 		smatch what = *m1;
 		//cout << "ompReductionsSet: " << what[0] << " | " << what[1] << "\n";
 
-		if(firstMatch) for(int i = 0; i < what.size(); ++i) lastNumCaptures[i] = 0;
+		if(firstMatch) for(unsigned int i = 0; i < what.size(); ++i) lastNumCaptures[i] = 0;
 
 		// the first variable
 		variables.push_back(what[1]);
 		
 		// the subsequent variables
-		for(int j=0; j<what.captures(2).size()-lastNumCaptures[2] ; j++)
+		for(unsigned int j=0; j<what.captures(2).size()-lastNumCaptures[2] ; j++)
 		{
 			//cout << "ompDataClause: what.captures("<<3<<")["<<j<<"]="<<what.captures(2)[j]<<"\n";
 			variables.push_back(what.captures(2)[j]);
 		}
 		
-		for(int i = 0; i < what.size(); ++i) lastNumCaptures[i] = what.captures(i).size();
+		for(unsigned int i = 0; i < what.size(); ++i) lastNumCaptures[i] = what.captures(i).size();
 
 		firstMatch = false;
 
