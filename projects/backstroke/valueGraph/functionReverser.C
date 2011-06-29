@@ -472,6 +472,11 @@ void EventReverser::buildFunctionBodies()
                             copyStatement(funcDecl->get_parameterList())),
                         funcScope);
         cmtFuncDef_ = cmtFuncDecl->get_definition();
+        
+        
+        fwdFuncDecl->get_functionModifier() = funcDecl->get_functionModifier();
+        rvsFuncDecl->get_functionModifier() = funcDecl->get_functionModifier();
+        cmtFuncDecl->get_functionModifier() = funcDecl->get_functionModifier();
     }
     else
     {
@@ -1039,6 +1044,10 @@ namespace
                         buildFunctionParameterList(),
                         funcScope);
         
+        fwdFuncDecl->get_functionModifier() = funcDecl->get_functionModifier();
+        rvsFuncDecl->get_functionModifier() = funcDecl->get_functionModifier();
+        cmtFuncDecl->get_functionModifier() = funcDecl->get_functionModifier();
+
         fwdSymbol = isSgMemberFunctionSymbol(fwdFuncDecl->get_symbol_from_symbol_table());
         rvsSymbol = isSgMemberFunctionSymbol(rvsFuncDecl->get_symbol_from_symbol_table());
         cmtSymbol = isSgMemberFunctionSymbol(cmtFuncDecl->get_symbol_from_symbol_table());
@@ -1882,6 +1891,75 @@ void EventReverser::removeEmptyIfStmt(SgNode* node)
                 falseBody->get_statements().empty())
             SageInterface::removeStatement(ifStmt);
     }
+}
+
+namespace
+{
+    // This function is used to help find the last defs of all local variables. This is a word-around
+    // due to the problem in SSA.
+    void addNullStmtAtScopeEnd(SgFunctionDefinition* funcDef)
+    {
+        vector<SgBasicBlock*> scopes = BackstrokeUtility::querySubTree<SgBasicBlock>(funcDef);
+        foreach (SgBasicBlock* scope, scopes)
+        {
+            SageInterface::appendStatement(SageBuilder::buildNullStatement(), scope);
+        }
+    }
+}
+    
+void reverseFunctions(const set<SgFunctionDefinition*>& funcDefs)
+{
+    foreach (SgFunctionDefinition* funcDef, funcDefs)
+    {
+        BackstrokeNorm::normalizeEvent(funcDef->get_declaration());
+        // Add a null statement at the end of all scopes then we can find the last defs of variables.
+        addNullStmtAtScopeEnd(funcDef);
+    }
+    
+    
+    SgProject* project = SageInterface::getProject();
+    
+    StaticSingleAssignment* ssa = new StaticSingleAssignment(project);
+    ssa->run(true);
+
+    set<SgGlobal*> globalScopes;
+
+    foreach (SgFunctionDefinition* funcDef, funcDefs)
+    {
+        string funcName = funcDef->get_declaration()->get_name();
+        globalScopes.insert(SageInterface::getGlobalScope(funcDef));
+
+        cout << "\nNow processing " << funcName << "\tfrom\n";
+        cout << funcDef->get_file_info()->get_filenameString() << "\n\n";
+
+        //string cfgFileName = "CFG" + boost::lexical_cast<string > (counter) + ".dot";
+        //string vgFileName = "VG" + boost::lexical_cast<string > (counter) + ".dot";
+        string cfgFileName = funcName + "_CFG.dot";
+        string cdgFileName = funcName + "_CDG.dot";
+        string vgFileName = "VG.dot";
+
+        Backstroke::FullCFG fullCfg(funcDef);
+        fullCfg.toDot(funcName + "_fullCFG.dot");
+
+        Backstroke::BackstrokeCFG cfg(funcDef);
+        cfg.toDot(cfgFileName);
+        
+        Backstroke::BackstrokeCDG cdg(cfg);
+        cdg.toDot(cdgFileName);
+
+        
+        Backstroke::EventReverser reverser(ssa);
+        reverser.reverseEvent(funcDef);
+
+        //reverser.valueGraphToDot(vgFileName);
+
+        cout << "\nFunction " << funcName << " is processed.\n\n";
+    }
+
+    
+    // Prepend includes to test files.
+    foreach (SgGlobal* globalScope, globalScopes)
+        SageInterface::insertHeader("rctypes.h", PreprocessingInfo::after, false, globalScope);
 }
 
 

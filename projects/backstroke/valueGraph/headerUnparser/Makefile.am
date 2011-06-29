@@ -12,6 +12,7 @@ unparseHeader_SOURCES = headerUnparser.C
 unparseHeader_LDADD = $(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.a \
 		$(top_builddir)/projects/backstroke/normalizations/libBackstrokeNormalizations.a \
 		$(top_builddir)/projects/backstroke/ssa/libSSA.a \
+		$(top_builddir)/projects/backstroke/valueGraph/libBackstrokeFunctionReverser.a \
 		$(LIBS_WITH_RPATH) $(ROSE_LIBS)
 unparseHeader_include_HEADERS = 
 unparseHeader_includedir = $(includedir)/backstroke
@@ -28,6 +29,6 @@ check-local:
 	@echo "*** ROSE/projects/backstroke/valueGraph/unparseHeader: make check rule complete (terminated normally) ***"
 	@echo "*********************************************************************************************************"
 
-test:
+test2:
 	./valueGraph -c temp.C -I/home/hou1/opt/boost_1_36_0//include/boost-1_36
 

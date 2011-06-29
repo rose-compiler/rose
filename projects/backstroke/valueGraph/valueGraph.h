@@ -460,6 +460,10 @@ private:
     }
 };
 
+
+void reverseFunctions(const std::set<SgFunctionDefinition*>& funcDefs);
+
+
 } // End of namespace Backstroke
 
 

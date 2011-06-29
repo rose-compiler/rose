@@ -3,6 +3,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
 #include <utilities/utilities.h>
+#include <valueGraph/valueGraph.h>
 
 using namespace std;
 using namespace boost;
@@ -11,6 +12,11 @@ using namespace SageInterface;
 using namespace SageBuilder;
 
 #define foreach BOOST_FOREACH
+
+
+std::set<SgMemberFunctionDeclaration*> Backstroke::FunctionCallNode::functionsToReverse;
+std::ofstream Backstroke::FunctionCallNode::os("fileList.txt");
+
 
 void buildThreeFuncDecl(SgFunctionDeclaration* funcDecl)
 {
@@ -88,6 +94,7 @@ int main(int argc, char** argv)
     
     SgProject* project = frontend(args);
      
+    set<SgFunctionDefinition*> funcDefs;
     
     vector<SgFunctionDeclaration*> functionDecls = 
                 BackstrokeUtility::querySubTree<SgFunctionDeclaration>(project);
@@ -96,9 +103,14 @@ int main(int argc, char** argv)
         string funcName = decl->get_name();
         if (functions.count(funcName) == 0)
             continue;
-        
-        buildThreeFuncDecl(decl);
+        SgFunctionDefinition* funcDef = isSgFunctionDefinition(decl->get_definition());
+        if (funcDef)
+            funcDefs.insert(funcDef);
+        else
+            buildThreeFuncDecl(decl);
     }
+    
+    Backstroke::reverseFunctions(funcDefs);
     
     project->unparse();
     

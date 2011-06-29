@@ -72,7 +72,7 @@ link-real:
 	./functionReverserTest -c $(GTNETS_DIR)/link-real.cc $(GTNETS_FLAG)
 
 interface-real:
-	./functionReverserTest -c $(GTNETS_DIR)/interface-real.cc $(GTNETS_FLAG)
+	./functionReverserTest -c $(GTNETS_DIR)/interface-real.cc $(GTNETS_DIR)/queue.cc $(GTNETS_FLAG)
 
 l2proto802:
 	./functionReverserTest -c $(GTNETS_DIR)/l2proto802.11.cc $(GTNETS_FLAG)

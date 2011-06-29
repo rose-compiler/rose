@@ -1,4 +1,5 @@
 #include "valueGraph.h"
+#include "test.h"
 #include <utilities/utilities.h>
 #include <slicing/backstrokeCFG.h>
 #include <boost/lexical_cast.hpp>
@@ -13,68 +14,13 @@ using namespace boost;
 std::set<SgMemberFunctionDeclaration*> Backstroke::FunctionCallNode::functionsToReverse;
 std::ofstream Backstroke::FunctionCallNode::os("fileList.txt");
 
-// This function is used to help find the last defs of all local variables. This is a word-around
-// due to the problem in SSA.
-void addNullStmtAtScopeEnd(SgFunctionDefinition* funcDef)
-{
-    vector<SgBasicBlock*> scopes = BackstrokeUtility::querySubTree<SgBasicBlock>(funcDef);
-    foreach (SgBasicBlock* scope, scopes)
-    {
-        SageInterface::appendStatement(SageBuilder::buildNullStatement(), scope);
-    }
-}
-
-void reverseFunctions(const set<SgFunctionDefinition*>& funcDefs)
-{
-    SgProject* project = SageInterface::getProject();
-    
-    StaticSingleAssignment* ssa = new StaticSingleAssignment(project);
-    ssa->run(true);
-
-    set<SgGlobal*> globalScopes;
-
-    foreach (SgFunctionDefinition* funcDef, funcDefs)
-    {
-        string funcName = funcDef->get_declaration()->get_name();
-        globalScopes.insert(SageInterface::getGlobalScope(funcDef));
-
-        cout << "\nNow processing " << funcName << "\tfrom\n";
-        cout << funcDef->get_file_info()->get_filenameString() << "\n\n";
-
-        //string cfgFileName = "CFG" + boost::lexical_cast<string > (counter) + ".dot";
-        //string vgFileName = "VG" + boost::lexical_cast<string > (counter) + ".dot";
-        string cfgFileName = funcName + "_CFG.dot";
-        string cdgFileName = funcName + "_CDG.dot";
-        string vgFileName = "VG.dot";
-
-        Backstroke::FullCFG fullCfg(funcDef);
-        fullCfg.toDot(funcName + "_fullCFG.dot");
-
-        Backstroke::BackstrokeCFG cfg(funcDef);
-        cfg.toDot(cfgFileName);
-        
-        Backstroke::BackstrokeCDG cdg(cfg);
-        cdg.toDot(cdgFileName);
-
-        
-        Backstroke::EventReverser reverser(ssa);
-        reverser.reverseEvent(funcDef);
-
-        //reverser.valueGraphToDot(vgFileName);
-
-        cout << "\nFunction " << funcName << " is processed.\n\n";
-    }
-
-    
-    // Prepend includes to test files.
-    foreach (SgGlobal* globalScope, globalScopes)
-        SageInterface::insertHeader("rctypes.h", PreprocessingInfo::after, false, globalScope);
-}
 
 int main(int argc, char *argv[])
 {
     // Build the AST used by ROSE
     SgProject* project = frontend(argc, argv);
+    
+    ClassHierarchyWrapper chWrapper(project);
 
 #if 1
     // Draw the AST.
@@ -83,8 +29,8 @@ int main(int argc, char *argv[])
 #endif
     set<string> eventList;
     eventList.insert("Handle");
-    eventList.insert("Timeout");
 #if 1
+    eventList.insert("Timeout");
     eventList.insert("StartApp");
     eventList.insert("StopApp");
     eventList.insert("TransmitComplete");
@@ -102,6 +48,7 @@ int main(int argc, char *argv[])
 #endif
     
     set<SgFunctionDefinition*> funcDefs;
+    set<SgFunctionDeclaration*> funcDecls;
     
     //set<SgFunctionDefinition*> 
     
@@ -143,6 +90,19 @@ int main(int argc, char *argv[])
             Backstroke::FunctionCallNode funcCallNode(funcCall);
             if (funcCallNode.canBeReversed)
             {
+                vector<SgFunctionDefinition*> defs;
+                CallTargetSet::getDefinitionsForExpression(
+                    funcCallNode.getFunctionCallExp(), &chWrapper, defs);
+                foreach (SgFunctionDefinition* def, defs)
+                    funcDefsUnprocessed.push(def);
+                
+                vector<SgFunctionDeclaration*> decls;
+                CallTargetSet::getDeclarationsForExpression(
+                    funcCallNode.getFunctionCallExp(), &chWrapper, decls);
+                funcDecls.insert(decls.begin(), decls.end());
+                funcDecls.insert(funcDef->get_declaration());
+                
+#if 0
                 SgFunctionDeclaration* decl = 
                         isSgFunctionDeclaration(funcCallNode.funcDecl->get_definingDeclaration());
                 if (decl)
@@ -150,6 +110,7 @@ int main(int argc, char *argv[])
                     if (SgFunctionDefinition* def = decl->get_definition())
                         funcDefsUnprocessed.push(def);
                 }
+#endif
             }
         }
 
@@ -160,19 +121,12 @@ int main(int argc, char *argv[])
     foreach (SgFunctionDefinition* funcDef, funcDefs)
         cout << funcDef->get_declaration()->get_name() << '\n';
     //getchar();
-        
-    foreach (SgFunctionDefinition* funcDef, funcDefs)
-    {
-        BackstrokeNorm::normalizeEvent(funcDef->get_declaration());
-        // Add a null statement at the end of all scopes then we can find the last defs of variables.
-        addNullStmtAtScopeEnd(funcDef);
-    }
     
     
-    
+    /***********************************************************************************************/
     // Reverse all functions.
-    reverseFunctions(funcDefs);
-    
+    Backstroke::reverseFunctions(funcDefs);
+    /***********************************************************************************************/
     
     
 
@@ -205,17 +159,22 @@ int main(int argc, char *argv[])
         //system(command.c_str());
     }
     
-    ofstream osHeaders("headers.txt");
     
     // Copy the header file as a source file then do the transformation then copy it back.
-    foreach (SgFunctionDefinition* funcDef, funcDefs)
+    //foreach (SgFunctionDefinition* funcDef, funcDefs)
+    set<SgFunctionDeclaration*> funcDeclsToProcess;
+    foreach (SgFunctionDeclaration* funcDecl, funcDecls)
     {
-        cout << funcDef->unparseToString() << endl;
-        SgFunctionDeclaration* funcDecl = isSgFunctionDeclaration(
-                funcDef->get_declaration()->get_firstNondefiningDeclaration());
+        //cout << funcDef->unparseToString() << endl;
+        SgFunctionDeclaration* decl = isSgFunctionDeclaration(funcDecl->get_firstNondefiningDeclaration());
         // If funcDecl is NULL, this function is inlined.
-        if (!funcDecl) funcDecl = funcDef->get_declaration();
-        
+        if (!decl) decl = funcDecl;
+        funcDeclsToProcess.insert(decl);
+    }
+    
+    ofstream osHeaders("headers.txt");
+    foreach (SgFunctionDeclaration* funcDecl, funcDeclsToProcess)
+    {
         cout << funcDecl->get_file_info()->get_filenameString() << endl;
         cout << funcDecl->get_name() << endl;
         osHeaders << funcDecl->get_file_info()->get_filenameString() << ' ' 
