@@ -64,10 +64,10 @@ inline
      #else
      
      #ifdef __clang__
-     	void ROSE_ABORT(void)
+        void ROSE_ABORT(void)
      #else
        void ROSE_ABORT() throw()
-	 #endif //Clang
+         #endif //Clang
    #endif // MSC
  #endif // USE_ROSE
  {
