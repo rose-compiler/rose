@@ -17,6 +17,51 @@ using namespace SageBuilder;
 std::set<SgMemberFunctionDeclaration*> Backstroke::FunctionCallNode::functionsToReverse;
 std::ofstream Backstroke::FunctionCallNode::os("fileList.txt");
 
+void buildThreeFuncDeclWithEmptyBody(SgFunctionDeclaration* funcDecl)
+{
+    SgName funcName = funcDecl->get_name();
+    SgScopeStatement* funcScope = funcDecl->get_scope(); 
+    SgType* returnType = funcDecl->get_orig_return_type();
+    
+    SgName fwdFuncName = funcName + "_forward";
+    SgFunctionDeclaration* fwdFuncDecl = buildDefiningMemberFunctionDeclaration(
+                    fwdFuncName,
+                    returnType,
+                    isSgFunctionParameterList(
+                        copyStatement(funcDecl->get_parameterList())),
+                    funcScope);
+
+    SgName rvsFuncName = funcName + "_reverse";
+    SgFunctionDeclaration* rvsFuncDecl = buildDefiningMemberFunctionDeclaration(
+                    rvsFuncName,
+                    returnType,
+                    isSgFunctionParameterList(
+                        copyStatement(funcDecl->get_parameterList())),
+                    funcScope);
+
+    SgName cmtFuncName = funcName + "_commit";
+    SgFunctionDeclaration* cmtFuncDecl = buildDefiningMemberFunctionDeclaration(
+                    cmtFuncName,
+                    returnType,
+                    buildFunctionParameterList(),
+                    funcScope);
+
+    fwdFuncDecl->get_functionModifier() = funcDecl->get_functionModifier();
+    rvsFuncDecl->get_functionModifier() = funcDecl->get_functionModifier();
+    cmtFuncDecl->get_functionModifier() = funcDecl->get_functionModifier();
+    
+    fwdFuncDecl->get_functionModifier().unsetPureVirtual();
+    rvsFuncDecl->get_functionModifier().unsetPureVirtual();
+    cmtFuncDecl->get_functionModifier().unsetPureVirtual();
+    
+    //fwdFuncDecl->get_definition()->
+
+    SgStatement* firstFuncDecl = funcDecl;
+    //SgStatement* firstFuncDecl = funcDecl->get_firstNondefiningDeclaration();
+    insertStatementAfter(firstFuncDecl, cmtFuncDecl);
+    insertStatementAfter(firstFuncDecl, rvsFuncDecl);
+    insertStatementAfter(firstFuncDecl, fwdFuncDecl);
+}
 
 void buildThreeFuncDecl(SgFunctionDeclaration* funcDecl)
 {
@@ -107,7 +152,12 @@ int main(int argc, char** argv)
         if (funcDef)
             funcDefs.insert(funcDef);
         else
-            buildThreeFuncDecl(decl);
+        {
+            if (decl->get_functionModifier().isPureVirtual())
+                buildThreeFuncDeclWithEmptyBody(decl);
+            else
+                buildThreeFuncDecl(decl);
+        }
     }
     
     Backstroke::reverseFunctions(funcDefs);

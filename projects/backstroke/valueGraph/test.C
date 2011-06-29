@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
                 
                 vector<SgFunctionDeclaration*> decls;
                 CallTargetSet::getDeclarationsForExpression(
-                    funcCallNode.getFunctionCallExp(), &chWrapper, decls);
+                    funcCallNode.getFunctionCallExp(), &chWrapper, decls, true);
                 funcDecls.insert(decls.begin(), decls.end());
                 funcDecls.insert(funcDef->get_declaration());
                 
