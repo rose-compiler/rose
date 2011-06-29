@@ -269,12 +269,9 @@ bool LiveDeadVarsAnalysis::transfer(const Function& func, const DataflowNode& n,
 				if(isSgMinusMinusOp(n.getNode()) || isSgPlusPlusOp(n.getNode())) {
 					// The argument is defined
 					assignedExprs.insert(isSgUnaryOp(n.getNode())->get_operand());
-					// The argument is used
-					usedVars.insert(SgExpr2Var(isSgUnaryOp(n.getNode())->get_operand()));
-				} else {
-					// The argument is used
-					usedVars.insert(SgExpr2Var(isSgUnaryOp(n.getNode())->get_operand()));
 				}
+				// The argument is used
+				usedVars.insert(SgExpr2Var(isSgUnaryOp(n.getNode())->get_operand()));
 			// Conditionals (condE ? trueE : falseE)
 			} else if(isSgConditionalExp(n.getNode())) {
 				// The arguments are used
