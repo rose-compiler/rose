@@ -134,3 +134,10 @@ void ROSE_ABORT( const char *message )
 {
     throw rose_exception( message );
 }
+
+ #ifdef USE_ROSE
+   void ROSE_ABORT() __THROW __attribute__ ((__noreturn__))
+   {
+      throw rose_exception( "abort" );
+   }
+ #endif // USE_ROSE
