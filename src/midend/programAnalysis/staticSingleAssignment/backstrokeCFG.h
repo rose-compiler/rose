@@ -1,5 +1,5 @@
 #ifndef BACKSTROKE_CFG_H
-#define	BACKSTROKE_CFG_H
+#define BACKSTROKE_CFG_H
 
 
 #include <rose.h>
@@ -108,12 +108,12 @@ namespace Backstroke
 
 
     /********************************************************************/
-    //	The concept required to be fulfilled by CFGNodeFilter is
+    //  The concept required to be fulfilled by CFGNodeFilter is
     //
-    //	struct CFGNodeFilter
-    //	{
-    //		bool operator()(const VirtualCFG::CFGNode& cfgNode) const;
-    //	};
+    //  struct CFGNodeFilter
+    //  {
+    //          bool operator()(const VirtualCFG::CFGNode& cfgNode) const;
+    //  };
     //
     /********************************************************************/
 
@@ -549,5 +549,5 @@ namespace Backstroke
 } // End of namespace Backstroke
 
 
-#endif	/* BACKSTROKE_CFG_H */
+#endif  /* BACKSTROKE_CFG_H */
 
