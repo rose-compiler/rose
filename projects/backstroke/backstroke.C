@@ -1,5 +1,5 @@
 #include "backstroke.h"
-#include "ssa/staticSingleAssignment.h"
+#include <staticSingleAssignment.h>
 #include <utilities/utilities.h>
 #include <pluggableReverser/eventProcessor.h>
 #include <normalizations/expNormalization.h>
