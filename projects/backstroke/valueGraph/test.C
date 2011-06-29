@@ -1,5 +1,5 @@
 #include "valueGraph.h"
-#include "test.h"
+#include <rose.h>
 #include <utilities/utilities.h>
 #include <slicing/backstrokeCFG.h>
 #include <boost/lexical_cast.hpp>
