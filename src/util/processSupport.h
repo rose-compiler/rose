@@ -55,7 +55,7 @@ inline
  #ifdef USE_ROSE
    // DQ (9/3/2009): This is required for EDG to correctly compile
    // tps (01/22/2010) : gcc43 requires abort(void)
-   void ROSE_ABORT() __THROW __attribute__ ((__noreturn__))
+   void ROSE_ABORT() __THROW __attribute__ ((__noreturn__));
  #else
      // DQ (9/3/2009): This is required for Mac OSX to correctly compile
      #ifdef _MSC_VER
@@ -64,15 +64,15 @@ inline
      #else
      
      #ifdef __clang__
-     	void ROSE_ABORT(void)
+        void ROSE_ABORT(void)
      #else
        void ROSE_ABORT() throw()
-	 #endif //Clang
+         #endif //Clang
    #endif // MSC
+   {
+      throw rose_exception( "abort" );
+   }
  #endif // USE_ROSE
- {
-    throw rose_exception( "abort" );
- }
 }
 
 // throw rose_exception with user defined abort message
