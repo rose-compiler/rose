@@ -17,7 +17,7 @@ namespace ssa_private
 
     public:
 
-        /** Create the attribute with no refs. 	 */
+        /** Create the attribute with no refs.   */
         ChildUses() : currentVar(NULL)
         {
         }

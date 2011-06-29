@@ -258,7 +258,7 @@ private:
      * The definitions are inserted in the original def table.
      * @param funcDef function whose body should be queries for function calls
      * @param processed all the functions completely processed by SSA. If a callee is one of these functions,
-     *			we can use exact information.
+     *                  we can use exact information.
      * @return true if new defs were inserted, false otherwise. */
     bool insertInterproceduralDefs(SgFunctionDefinition* funcDef, const boost::unordered_set<SgFunctionDefinition*>& processed,
             ClassHierarchyWrapper* classHierarchy);

@@ -159,14 +159,14 @@ ChildUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node, Synth
         {
             //SgAddressOfOp is special; it's not always a use of its operand. When creating a reference to a member variable,
             //we create reference without providing a variable instance. For example,
-            //		struct foo { int bar; };
+            //          struct foo { int bar; };
             //
-            //		void test()
-            //		{
-            //			int foo::*v = &foo::bar;  <---- There is no use of foo.bar on this line
-            //			foo b;
-            //			b.*v = 3;
-            //		}
+            //          void test()
+            //          {
+            //                  int foo::*v = &foo::bar;  <---- There is no use of foo.bar on this line
+            //                  foo b;
+            //                  b.*v = 3;
+            //          }
             //In this case, there are no uses in the operand. We also want to delete any uses for the children
             vector<SgNode*> successors = SageInterface::querySubTree<SgNode > (unaryOp);
 
