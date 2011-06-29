@@ -58,7 +58,7 @@ void buildThreeFuncDeclWithEmptyBody(SgFunctionDeclaration* funcDecl)
 
     SgStatement* firstFuncDecl = funcDecl;
     //SgStatement* firstFuncDecl = funcDecl->get_firstNondefiningDeclaration();
-    insertStatementAfter(firstFuncDecl, cmtFuncDecl);
+    //insertStatementAfter(firstFuncDecl, cmtFuncDecl);
     insertStatementAfter(firstFuncDecl, rvsFuncDecl);
     insertStatementAfter(firstFuncDecl, fwdFuncDecl);
 }
@@ -98,7 +98,7 @@ void buildThreeFuncDecl(SgFunctionDeclaration* funcDecl)
 
     SgStatement* firstFuncDecl = funcDecl;
     //SgStatement* firstFuncDecl = funcDecl->get_firstNondefiningDeclaration();
-    insertStatementAfter(firstFuncDecl, cmtFuncDecl);
+    //insertStatementAfter(firstFuncDecl, cmtFuncDecl);
     insertStatementAfter(firstFuncDecl, rvsFuncDecl);
     insertStatementAfter(firstFuncDecl, fwdFuncDecl);
 }

@@ -1863,7 +1863,7 @@ void EventReverser::insertFunctions()
 #if 1
     insertStatementAfter(funcDecl,    fwdFuncDecl);
     insertStatementAfter(fwdFuncDecl, rvsFuncDecl);
-    insertStatementAfter(rvsFuncDecl, cmtFuncDecl);
+    //insertStatementAfter(rvsFuncDecl, cmtFuncDecl);
     
     
     ROSE_ASSERT(funcDef_->get_body()->get_parent() == funcDef_);
