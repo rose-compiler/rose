@@ -1,9 +1,8 @@
 
-include ./makefile.inc
+include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIRS= . src tests docs
+SUBDIRS= 
 
-EXTRA_DIST= makefile.inc include/utils/ChainedList.hpp
-
-all-am:
-	mkdir -p obj/common obj/maths obj/misc-test obj/rose obj/rose-pragma obj/scoplib obj/system obj/test-common obj/test-rose-pragma bin
+if ROSE_USE_PPL
+SUBDIRS+= src tests docs
+endif

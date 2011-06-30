@@ -52,12 +52,26 @@ int main( int argc, char * argv[] )
 	analysisDebugLevel = 0;
 	
 	runIfMeetDetector(false);
+
+	analysisDebugLevel = 0;
+	printf("*************************************************************\n");
+	printf("*****************   Live/Dead Variable Analysis   *****************\n");
+	printf("*************************************************************\n");
+	LiveDeadVarsAnalysis ldva(project);
+	CallGraphBuilder cgb(project);
+	cgb.buildCallGraph();
+	//SgIncidenceDirectedGraph* graph = cgb.getGraph(); 
+	//ContextInsensitiveInterProceduralDataflow ciipd_da(&da, graph);
+	UnstructuredPassInterDataflow ciipd_ldva(&ldva);
+	ciipd_ldva.runAnalysis();
+	
+	printLiveDeadVarsAnalysisStates(&ldva, "[");
 	
 	analysisDebugLevel = 0;
 	printf("*************************************************************\n");
 	printf("*****************   Divisibility Analysis   *****************\n");
 	printf("*************************************************************\n");
-	DivAnalysis da;
+	DivAnalysis da(&ldva);
 	//ContextInsensitiveInterProceduralDataflow ciipd_da(&da, graph);
 	UnstructuredPassInterDataflow ciipd_da(&da);
 	ciipd_da.runAnalysis();
@@ -107,7 +121,7 @@ int main( int argc, char * argv[] )
 	vector<int> latticeNames;
 	latticeNames.push_back(0);
 	printf("Master Analysis = %p\n", sfwdpa.getMasterDFAnalysis());
-	printAnalysisStates pas(sfwdpa.getMasterDFAnalysis(), factNames, latticeNames, ":");
+	printAnalysisStates pas(sfwdpa.getMasterDFAnalysis(), factNames, latticeNames, printAnalysisStates::below, ":");
 	UnstructuredPassInterAnalysis upia_pas(pas);
 	upia_pas.runAnalysis();
 
@@ -217,6 +231,7 @@ bool IfMeetLat::meetUpdate(Lattice* that)
 			while(dynamic_cast<IfMeetLat*>(that)->ifHist.size() < ifHist.size())
 				ifHist.erase(ifHist.end());
 			//printf("after length cut ifHist.size()=%d (that)->ifHist.size()=%d\n", ifHist.size(), dynamic_cast<IfMeetLat*>(that)->ifHist.size());
+			return true;
 		}	
 		else
 		{
@@ -336,7 +351,7 @@ void printIfMeetDetectorStates(IfMeetDetector* ifmd, string indent)
 	vector<int> factNames;
 	vector<int> latticeNames;
 	latticeNames.push_back(0);
-	printAnalysisStates pas(ifmd, factNames, latticeNames, indent);
+	printAnalysisStates pas(ifmd, factNames, latticeNames, printAnalysisStates::below, indent);
 	UnstructuredPassInterAnalysis upia_pas(pas);
 	upia_pas.runAnalysis();
 }

@@ -18,6 +18,7 @@ SgFile* determineFileType ( std::vector<std::string> argv, int& nextErrorCode, S
 
 #include "LivenessAnalysis.h"
 #include "abstract_handle.h"
+#include "ClassHierarchyGraph.h"
 
 // DQ (8/19/2004): Moved from ROSE/src/midend/astRewriteMechanism/rewrite.h
 //! A global function for getting the string associated with an enum (which is defined in global scope)
@@ -500,6 +501,7 @@ sortSgNodeListBasedOnAppearanceOrderInSource(const std::vector<SgDeclarationStat
   bool is_Fortran_language ();
   bool is_CAF_language ();
   bool is_PHP_language();
+  bool is_Python_language();
   bool is_Cuda_language();
   bool is_binary_executable();
   bool is_mixed_C_and_Cxx_language ();
@@ -649,6 +651,11 @@ bool isCopyConstructible(SgType* type);
 
 //! Is a type assignable?  This may not quite work properly.
 bool isAssignable(SgType* type);
+
+//! Check if a class type is a pure virtual class. True means that there is at least
+//! one pure virtual function that has not been overridden. 
+//! In the case of an incomplete class type (forward declaration), this function returns false.
+bool isPureVirtualClass(SgType* type, const ClassHierarchyWrapper& classHierarchy);
 
 //! Does a type have a trivial (built-in) destructor?
 bool hasTrivialDestructor(SgType* t);

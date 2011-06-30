@@ -5201,11 +5201,11 @@ void c_action_scalar_int_constant()
 
 /**
  * Generated rule.
- * hollerith_constant
+ * hollerith_literal_constant
  *
  * @param hollerithConstant T_HOLLERITH token.
  */
-void c_action_hollerith_constant(Token_t *hollerithConstant)
+void c_action_hollerith_literal_constant(Token_t *hollerithConstant)
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_hollerith_constant() hollerithConstant = %p = %s \n",hollerithConstant,hollerithConstant != NULL ? hollerithConstant->text : "NULL");
@@ -12224,42 +12224,41 @@ void c_action_exit_stmt(Token_t *label, Token_t *exitKeyword, Token_t *id, Token
 
 /** R845
  * goto_stmt
- *      :       t_go_to label T_EOS
+ *      :   (label)? t_go_to target_label T_EOS
  *
- * @param label The branch target statement label
+ * @param target_label The branch target statement label
  */
-// void c_action_goto_stmt(Token_t * label)
-void c_action_goto_stmt(Token_t *goKeyword, Token_t *toKeyword, Token_t *label, Token_t *eos)
+void c_action_goto_stmt(Token_t *label, Token_t *goKeyword, Token_t *toKeyword,
+                        Token_t *target_label, Token_t *eos)
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-          printf ("In c_action_goto_stmt() label = %p = %s goKeyword = %p = %s toKeyword = %p = %s \n",
-            // label,label != NULL ? label->text : "NULL",
+          printf ("In c_action_goto_stmt() target_label = %p = %s goKeyword = %p = %s toKeyword = %p = %s \n",
                goKeyword,goKeyword != NULL ? goKeyword->text : "NULL",
                toKeyword,toKeyword != NULL ? toKeyword->text : "NULL",
-               label,label != NULL ? label->text : "NULL");
+               target_label,target_label != NULL ? target_label->text : "NULL");
 
-     ROSE_ASSERT(label != NULL);
-     SgLabelSymbol* label_symbol = buildNumericLabelSymbol(label);
-     ROSE_ASSERT(label_symbol != NULL);
+     ROSE_ASSERT(target_label != NULL);
+     SgLabelSymbol* target_symbol = buildNumericLabelSymbol(target_label);
+     ROSE_ASSERT(target_symbol != NULL);
 
   // This takes a SgStatement as a label, but that is being replaced to take a SgLabelSymbol.
      SgLabelStatement* labelStatement = NULL;
      SgGotoStatement* gotoStatement = new SgGotoStatement(labelStatement);
 
   // Set the generated SgLabelSymbol
-  // gotoStatement->set_label_symbol(label_symbol);
+  // gotoStatement->set_label_symbol(target_symbol);
 
-     SgLabelRefExp* labelRefExp = new SgLabelRefExp(label_symbol);
+     SgLabelRefExp* labelRefExp = new SgLabelRefExp(target_symbol);
      gotoStatement->set_label_expression(labelRefExp);
      labelRefExp->set_parent(gotoStatement);
-     setSourcePosition(labelRefExp,label);
+     setSourcePosition(labelRefExp,target_label);
 
      ROSE_ASSERT(goKeyword != NULL);
      setSourcePosition(gotoStatement,goKeyword);
 
   // When this statement can handle a numericl label (on the statement itself) then 
   // uncomment this line.  This is an OFP bug that was reported 12/20/2007.
-  // setStatementNumericLabel(gotoStatement,label);
+     setStatementNumericLabel(gotoStatement,label);
 
      astScopeStack.front()->append_statement(gotoStatement);
 
@@ -18700,19 +18699,19 @@ void c_action_end_of_stmt(Token_t * eos)
  * start_of_file
  *
  * @param filename The name of the file
- * @param path The full path of the file
+ * @param filepath The full path of the file
  *
- * Modified v0.8.3 (path argument added)
+ * Modified v0.8.3 (filepath argument added)
  */
 #if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 3
-void c_action_start_of_file(const char *filename, const char *path)
+void c_action_start_of_file(const char *filename, const char *filepath)
 #else
-void c_action_start_of_file(const char *filename)
+void c_action_start_of_file(const char *filepath)
 #endif
    {
     // New function to support Fortran include mechanism
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-          printf ("In c_action_start_of_file(%s) \n",filename);
+          printf ("In c_action_start_of_file(%s) \n",filepath);
 
 #if 0
   // Output debugging information about saved state (stack) information.
@@ -18724,15 +18723,15 @@ void c_action_start_of_file(const char *filename)
 
   // DXN: We create a SgFortranIncludeLine node only when the current file is not a top level file
   // and is not an rmod file.  When parsing a top level file, the astIncludeStack should be empty.
-     if (!astIncludeStack.empty() && !isARoseModuleFile(filename))
+     if (!astIncludeStack.empty() && !isARoseModuleFile(filepath))
         {
        // After the first time, ever call to this function is significant (represents use of the
        // Fortran include mechanism; not formally a part of the language grammar).
 
-          SgFortranIncludeLine* includeLine = new SgFortranIncludeLine(filename);
+          SgFortranIncludeLine* includeLine = new SgFortranIncludeLine(filepath);
 
           if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-               printf ("Note: Need a token to represent the the filename so that we can get the position of the include statment \n");
+               printf ("Note: Need a token to represent the filename so that we can get the position of the include statement\n");
 
        // Get the last statment (this is an expensive way to do that).
           SgScopeStatement* scope = astScopeStack.front();
@@ -18755,7 +18754,7 @@ void c_action_start_of_file(const char *filename)
 
           Sg_File_Info* fileInfo = new Sg_File_Info(filenameOfIncludeLocation,lineNumberOfLastStatement,columnNumber);
 
-       // We need a way to get the source position o fthe Fortran include line.
+       // We need a way to get the source position of the Fortran include line.
        // setSourcePositionCompilerGenerated(includeLine);
        // setSourcePosition(includeLine);
           includeLine->set_file_info(fileInfo);
@@ -18772,7 +18771,7 @@ void c_action_start_of_file(const char *filename)
        // files the call to c_action_start_of_file() is triggered by a symantic
        // handling of the use statement, not the existance of the Fortran include
        // so it should be a mistake to insert an Fortran include statement!
-       // ROSE_ASSERT(includeLine->get_file_info()->get_filenameString() != string(filename));
+       // ROSE_ASSERT(includeLine->get_file_info()->get_filenameString() != string(filepath));
 
           ROSE_ASSERT(astScopeStack.empty() == false);
 
@@ -18783,7 +18782,8 @@ void c_action_start_of_file(const char *filename)
           includeLine->set_firstNondefiningDeclaration(includeLine); 
         }
 
-     astIncludeStack.push_back(filename);
+     astIncludeStack.push_back(filepath);
+
 #if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of c_action_start_of_file()");
@@ -18794,15 +18794,15 @@ void c_action_start_of_file(const char *filename)
  * end_of_file
  *
  * @param filename The name of the file
- * @param path The full path of the file
+ * @param filepath The full path of the file
  *
  * Modified v0.7.2 (filename argument added)
- * Modified v0.8.3 (path argument added)
+ * Modified v0.8.3 (filepath argument added)
  */
 #if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 3
-void c_action_end_of_file(const char *filename, const char *path)
+void c_action_end_of_file(const char *filename, const char *filepath)
 #else
-void c_action_end_of_file(const char *filename)
+void c_action_end_of_file(const char *filepath)
 #endif
    {
     // New function to support Fortran include mechanism

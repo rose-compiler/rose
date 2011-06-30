@@ -6,7 +6,9 @@
 //#include "baseCFGIterator.h"
 
 namespace VirtualCFG{
-	
+
+// Iterates over DataflowNodes in a VirtualCFG, respecting dependences in the graph.
+// Supports both forward and backward iteration.
 class iterator/* : public virtual BaseCFG::iterator*/
 {
 	//protected:
@@ -15,11 +17,14 @@ class iterator/* : public virtual BaseCFG::iterator*/
 	list<DataflowNode> remainingNodes;
 	//map<DataflowNode, bool> visited;
 	set<DataflowNode> visited;
+	bool initialized;
 
 	public:
 	iterator();
 	
 	iterator(const DataflowNode &start);
+	
+	void init(const DataflowNode &start);
 
 	protected:
 	// returns true if the given DataflowNode is in the remainingNodes list and false otherwise
@@ -41,8 +46,11 @@ class iterator/* : public virtual BaseCFG::iterator*/
 		
 	DataflowNode& operator * ();
 	
+	// Returns a fresh iterator that starts at node n
 	static iterator begin(DataflowNode n);
 	
+	// Returns an empty iterator that can be compared to any other iterator to 
+	// check if it has completed passing over its iteration space
 	static iterator end();
 	
 	// Contains the state of an iterator, allowing iterators to be 
@@ -87,15 +95,22 @@ class dataflow : /*public virtual BaseCFG::dataflow, */public virtual iterator
 	public:
 	//dataflow(): iterator() {}
 	
-	dataflow(const DataflowNode &start, const DataflowNode &terminator_arg): 
-		iterator(start), terminator(terminator_arg)
-	{
-		ROSE_ASSERT(start!=terminator);
-	}
+	dataflow(const DataflowNode &terminator_arg);
+	
+	//dataflow(const DataflowNode &start) : iterator(start) {}
+	dataflow(const DataflowNode &start, const DataflowNode &terminator_arg);
+	
+	void init(const DataflowNode &start_arg, const DataflowNode &terminator_arg);
+	
+	// Initializes this iterator's terminator node
+	/*void setTerminator(const DataflowNode &terminator) {
+		initialized = true;
+		this->terminator = terminator;
+	}*/
 	
 	void add(const DataflowNode &next);
 	
-	void operator ++ (int);
+	//void operator ++ (int);
 	
 	// Contains the state of an dataflow iterator, allowing dataflow 
 	// iterators to be checkpointed and restarted.
@@ -128,8 +143,11 @@ class back_dataflow: /*public virtual BaseCFG::back_dataflow,*/ public virtual d
 	public:	
 	//back_dataflow(): back_iterator() {}
 	
-	back_dataflow(const DataflowNode &end, const DataflowNode &terminator_arg): 
-		iterator(end), dataflow(end, terminator_arg)/*, back_iterator(end)*/ {}
+	back_dataflow(const DataflowNode &terminator_arg) : dataflow(terminator_arg) {}
+	
+	//back_dataflow(const DataflowNode &end) : iterator(end) {}
+	
+	back_dataflow(const DataflowNode &end, const DataflowNode &terminator_arg);
 		
 	void operator ++ (int);
 };
