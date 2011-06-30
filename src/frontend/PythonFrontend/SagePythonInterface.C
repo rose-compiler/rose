@@ -220,6 +220,29 @@ sage_buildExpr(PyObject *self, PyObject *args)
 }
 
 /*
+ */
+PyObject*
+sage_buildExprListExp(PyObject *self, PyObject *args)
+{
+    PyObject* py_exprs = PyTuple_GetItem(args, 0);
+    if (! PyList_Check(py_exprs)) {
+        return Py_None;
+    }
+
+    std::vector<SgExpression*> sg_exprs;
+    Py_ssize_t exprc = PyList_Size(py_exprs);
+    for(int i = 0; i < exprc; i++) {
+        PyObject* py_exp = PyList_GetItem(py_exprs, i);
+        SgExpression* sg_exp = PyDecapsulate<SgExpression>(py_exp);
+        sg_exprs.push_back(sg_exp);
+    }
+
+    SgExprListExp* sg_expr_list_exp =
+        SageBuilder::buildExprListExp(sg_exprs);
+    return PyEncapsulate(sg_expr_list_exp);
+}
+
+/*
  * Build a FunctionDef
  */
 PyObject*
@@ -439,12 +462,16 @@ sage_buildPower(PyObject *self, PyObject *args)
 PyObject*
 sage_buildPrintStmt(PyObject *self, PyObject *args)
 {
-    PyObject* arg1v = PyTuple_GetItem(args, 0);
-    Py_ssize_t arg1c = PyList_Size(arg1v);
-    for (int i = 0; i < arg1c; i++) {
-       PyObject* capsule = PyList_GetItem(arg1v, i);
-    }
-    return Py_BuildValue("i", 0);
+    PyObject* py_dest = PyTuple_GetItem(args, 0);
+    PyObject* py_vals = PyTuple_GetItem(args, 1);
+
+    SgExpression* sg_dest = PyDecapsulate<SgExpression>(py_dest);
+    SgExprListExp* sg_vals = PyDecapsulate<SgExprListExp>(py_vals);
+
+    SgPythonPrintStmt* sg_print_stmt =
+        SageBuilder::buildPythonPrintStmt(sg_dest, sg_vals);
+
+    return PyEncapsulate(sg_print_stmt);
 }
 
 /*

@@ -11,6 +11,7 @@ PyObject* sage_buildCall(PyObject *self, PyObject *args);
 PyObject* sage_buildCompare(PyObject *self, PyObject *args);
 PyObject* sage_buildExceptHandler(PyObject *self, PyObject *args);
 PyObject* sage_buildExpr(PyObject *self, PyObject *args);
+PyObject* sage_buildExprListExp(PyObject *self, PyObject *args);
 PyObject* sage_buildFunctionDef(PyObject *self, PyObject *args);
 PyObject* sage_buildGlobal(PyObject *self, PyObject *args);
 PyObject* sage_buildIf(PyObject *self, PyObject *args);
@@ -36,6 +37,7 @@ static PyMethodDef SageBuilderMethods[] = {
     {"buildCompare", sage_buildCompare, METH_VARARGS, "Builds a comparison node."},
     {"buildExceptHandler", sage_buildExceptHandler, METH_VARARGS, "Builds an exception handler node."},
     {"buildExpr", sage_buildExpr, METH_VARARGS, "Builds an Expr node."},
+    {"buildExprListExp", sage_buildExprListExp, METH_VARARGS, "Builds an expression list."},
     {"buildFunctionDef", sage_buildFunctionDef, METH_VARARGS, "Builds an SgFunctionDeclaration node."},
     {"buildGlobal", sage_buildGlobal, METH_VARARGS, "Builds an SgGlobal node."},
     {"buildIf", sage_buildIf, METH_VARARGS, "Builds an if stmt  node."},

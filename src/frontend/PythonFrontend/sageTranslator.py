@@ -183,8 +183,9 @@ class SageTranslator(ast.NodeVisitor):
     return sage.buildLongIntVal(node.n, self.file_info(node))
 
   def visit_Print(self, node):
-    subforest = self.generic_visit(node)
-    return sage.buildPrintStmt(subforest, self.file_info(node))
+    dest = self.visit(node.dest)
+    values = sage.buildExprListExp(map(self.visit, node.values))
+    return sage.buildPrintStmt(dest, values)
 
   def visit_Return(self, node):
     value = self.visit(node.value)

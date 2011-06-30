@@ -11870,6 +11870,10 @@ SgGotoStatement::replace_child(SgStatement *target,SgStatement *newstmt, bool ex
 SOURCE_GOTO_STATEMENT_END
 
 SOURCE_PYTHON_PRINT_STMT_START
+
+void
+SgPythonPrintStmt::post_construction_initialization() {}
+
 SOURCE_PYTHON_PRINT_STMT_END
 
 SOURCE_ASM_STATEMENT_START

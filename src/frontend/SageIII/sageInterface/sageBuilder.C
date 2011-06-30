@@ -3225,6 +3225,13 @@ SgCatchOptionStmt* SageBuilder::buildCatchOptionStmt(SgVariableDeclaration* cond
   return new SgCatchOptionStmt(condition, body, /* SgTryStmt*= */ NULL);
 }
 
+SgPythonPrintStmt*
+SageBuilder::buildPythonPrintStmt(SgExpression* dest, SgExprListExp* values) {
+    SgPythonPrintStmt* result = new SgPythonPrintStmt(dest, values);
+    setOneSourcePositionForTransformation(result);
+    return result;
+}
+
 // DQ (4/30/2010): Added support for building asm statements.
 //! Build an asm statement
 SgAsmStmt* SageBuilder::buildAsmStatement( std::string s )

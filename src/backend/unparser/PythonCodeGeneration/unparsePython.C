@@ -62,6 +62,7 @@ Unparse_Python::unparseLanguageSpecificStatement(SgStatement* stmt,
         CASE_DISPATCH_AND_BREAK(FunctionParameterList);
         CASE_DISPATCH_AND_BREAK(IfStmt);
         CASE_DISPATCH_AND_BREAK(LongIntVal);
+        CASE_DISPATCH_AND_BREAK(PythonPrintStmt);
         CASE_DISPATCH_AND_BREAK(ReturnStmt);
         CASE_DISPATCH_AND_BREAK(StringVal);
         CASE_DISPATCH_AND_BREAK(WhileStmt);
@@ -79,6 +80,7 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
 {
     switch (stmt->variantT()) {
         CASE_DISPATCH_AND_BREAK(AssignInitializer);
+        CASE_DISPATCH_AND_BREAK(ExprListExp);
         CASE_DISPATCH_AND_BREAK(FunctionCallExp);
         CASE_DISPATCH_AND_BREAK(VarRefExp);
 
@@ -205,6 +207,19 @@ Unparse_Python::unparseBinaryOp(SgBinaryOp* bin_op,
     }
     curprint(" ");
     unparseExpression(bin_op->get_rhs_operand(), info);
+}
+
+void
+Unparse_Python::unparseExprListExp(SgExprListExp* expr_list_exp,
+                                   SgUnparse_Info& info)
+{
+    SgExpressionPtrList& exps = expr_list_exp->get_expressions();
+    SgExpressionPtrList::iterator exp_it = exps.begin();
+    for(exp_it = exps.begin(); exp_it != exps.end(); exp_it++) {
+        if (exp_it != exps.begin())
+            curprint(", ");
+        unparseExpression(*exp_it, info);
+    }
 }
 
 void
@@ -341,6 +356,22 @@ Unparse_Python::unparseLongIntVal(SgLongIntVal* long_int_val,
 }
 
 void
+Unparse_Python::unparsePythonPrintStmt(SgPythonPrintStmt* print_stmt,
+                                       SgUnparse_Info& info)
+{
+    curprint("print ");
+    if (print_stmt->get_destination() != NULL) {
+        curprint(">>");
+        unparseExpression(print_stmt->get_destination(), info);
+        curprint(", ");
+    }
+
+    if (print_stmt->get_values() != NULL) {
+        unparseExpression(print_stmt->get_values(), info);
+    }
+}
+
+void
 Unparse_Python::unparseReturnStmt(SgReturnStmt* return_stmt,
                                   SgUnparse_Info& info)
 {
@@ -378,10 +409,7 @@ Unparse_Python::unparseVarRefExp(SgVarRefExp* var_ref_exp,
                                  SgUnparse_Info& info)
 {
     SgVariableSymbol* symbol = var_ref_exp->get_symbol();
-
-    stringstream code;
-    code << " " << symbol->get_name().str();
-    curprint( code.str() );
+    curprint( symbol->get_name().str() );
 }
 
 void
