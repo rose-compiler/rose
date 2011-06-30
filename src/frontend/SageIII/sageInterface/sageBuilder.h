@@ -308,7 +308,7 @@ SgThisExp* buildThisExp(SgClassSymbol* sym);
 SgThisExp* buildThisExp_nfi(SgClassSymbol* sym);
 
 //! Build lambda expression
-SgLambdaExp* buildLambdaExp(SgFunctionParameterList* params, SgStatement* body, SgScopeStatement* scope);
+SgLambdaRefExp* buildLambdaRefExp(SgFunctionParameterList* params, SgStatement* body, SgScopeStatement* scope);
 
 //!  Template function to build a unary expression of type T. Instantiated functions include:buildAddressOfOp(),buildBitComplementOp(),buildBitComplementOp(),buildMinusOp(),buildNotOp(),buildPointerDerefExp(),buildUnaryAddOp(),buildMinusMinusOp(),buildPlusPlusOp().  They are also used for the unary vararg operators (which are not technically unary operators).
 /*! The instantiated functions' prototypes are not shown since they are expanded using macros.

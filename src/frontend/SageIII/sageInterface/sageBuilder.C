@@ -3806,9 +3806,9 @@ SgConstVolatileModifier * SageBuilder::buildConstVolatileModifier (SgConstVolati
 }
 
 //! Build lambda expression
-SgLambdaExp*
-SageBuilder::buildLambdaExp(SgFunctionParameterList* params, SgStatement* body, SgScopeStatement* scope) {
-    SgLambdaExp* result = new SgLambdaExp();
+SgLambdaRefExp*
+SageBuilder::buildLambdaRefExp(SgFunctionParameterList* params, SgStatement* body, SgScopeStatement* scope) {
+    SgLambdaRefExp* result = new SgLambdaRefExp();
 
     /* set up parameterList */
     result->set_parameterList(params);
