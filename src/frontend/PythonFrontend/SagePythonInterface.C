@@ -405,21 +405,9 @@ sage_buildName(PyObject *self, PyObject *args)
         PyDecapsulate<SgScopeStatement>(py_scope_capsule);
     ROSE_ASSERT(scope != NULL);
 
-    SgName sg_name(id);
-    SgVariableSymbol* sg_sym = scope->lookup_variable_symbol( sg_name );
-    if (sg_sym == NULL) {
-#if 0 //TODO figure out vardecls/initnames/symbols/varrefexps
-        cerr << "Decl: " << id << endl;
-        SgType* sg_type = SageBuilder::buildVoidType();
-        SgVariableDeclaration* sg_var_decl =
-            SageBuilder::buildVariableDeclaration(sg_name, sg_type, NULL, scope);
-#endif
-        SgStringVal* sg_str = SageBuilder::buildStringVal(id); //TODO this is wrong
-        return PyEncapsulate(sg_str);
-    } else {
-        SgVarRefExp* sg_var_ref = SageBuilder::buildVarRefExp(sg_sym);
-        return PyEncapsulate(sg_var_ref);
-    }
+    SgVarRefExp* sg_var_ref =
+        SageBuilder::buildOpaqueVarRefExp( std::string(id), scope );
+    return PyEncapsulate(sg_var_ref);
 }
 
 /*
