@@ -153,7 +153,7 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (CudaKernelCallExp,        "CudaKernelCallExp",        "KERN_CALL" );
 
   // driscoll6 (6/27/11) Support for Python
-     NEW_TERMINAL_MACRO (LambdaRefExp,              "LambdaRefExp",                 "LAMBDA_EXP" );
+     NEW_TERMINAL_MACRO (LambdaRefExp,              "LambdaRefExp",                 "LAMBDA_REF_EXP" );
 
 #if USE_FORTRAN_IR_NODES
   // Intrisic function are just like other functions, but explicitly marked to be intrinsic.
@@ -1601,12 +1601,8 @@ Grammar::setUpExpressions ()
      CudaKernelCallExp.setDataPrototype ( "SgCudaKernelExecConfig*", "exec_config", "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
  // driscoll6 (6/27/11): Python support
-     LambdaRefExp.setFunctionPrototype ( "HEADER_LAMBDA_EXP", "../Grammar/Expression.code" );
-     LambdaRefExp.setDataPrototype ("SgFunctionParameterList*", "parameterList", "= NULL",
-                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
- // Python requires the body to be a single expression, but we'll use the more general SgStatement
- // to allow easier adoption of C++0x (which allows BasicBlocks in lambdas).
-     LambdaRefExp.setDataPrototype ("SgStatement*", "body", "= NULL",
+     LambdaRefExp.setFunctionPrototype ( "HEADER_LAMBDA_REF_EXP", "../Grammar/Expression.code" );
+     LambdaRefExp.setDataPrototype ("SgFunctionDeclaration*", "function_declaration", "= NULL",
                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
 
      // ***********************************************************************
@@ -1962,5 +1958,5 @@ Grammar::setUpExpressions ()
      CudaKernelCallExp.setFunctionSource ( "SOURCE_CUDA_KERNEL_CALL_EXPRESSION","../Grammar/Expression.code" );
 
   // driscoll6 (6/27/11): Python support
-     LambdaRefExp.setFunctionSource ( "SOURCE_LAMBDA_EXP","../Grammar/Expression.code" );
+     LambdaRefExp.setFunctionSource ( "SOURCE_LAMBDA_REF_EXP","../Grammar/Expression.code" );
    }
