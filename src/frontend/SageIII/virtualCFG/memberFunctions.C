@@ -4713,12 +4713,12 @@ bool SgAssignOp::isChildUsedAsLValue(const SgExpression* child) const
 }
 
 /*! std:5.17 par:1 */
-bool SgPlusAssignOp::isLValue() const
+bool SgCompoundAssignOp::isLValue() const
 {
         return true;
 }
 
-bool SgPlusAssignOp::isChildUsedAsLValue(const SgExpression* child) const
+bool SgCompoundAssignOp::isChildUsedAsLValue(const SgExpression* child) const
 {
         if (get_lhs_operand() == child)
                 return true;
@@ -4726,178 +4726,7 @@ bool SgPlusAssignOp::isChildUsedAsLValue(const SgExpression* child) const
                 return false;
         else
         {
-                ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgPlusAssignOp");
-                return false;
-        }
-}
-
-/*! std:5.17 par:1 */
-bool SgMinusAssignOp::isLValue() const
-{
-        return true;
-}
-
-bool SgMinusAssignOp::isChildUsedAsLValue(const SgExpression* child) const
-{
-        if (get_lhs_operand() == child)
-                return true;
-        else if (get_rhs_operand() == child)
-                return false;
-        else
-        {
-                ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgMinusAssignOp");
-                return false;
-        }
-}
-
-/*! std:5.17 par:1 */
-bool SgAndAssignOp::isLValue() const
-{
-        return true;
-}
-
-bool SgAndAssignOp::isChildUsedAsLValue(const SgExpression* child) const
-{
-        if (get_lhs_operand() == child)
-                return true;
-        else if (get_rhs_operand() == child)
-                return false;
-        else
-        {
-                ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgAndAssignOp");
-                return false;
-        }
-}
-
-/*! std:5.17 par:1 */
-bool SgIorAssignOp::isLValue() const
-{
-        return true;
-}
-
-bool SgIorAssignOp::isChildUsedAsLValue(const SgExpression* child) const
-{
-        if (get_lhs_operand() == child)
-                return true;
-        else if (get_rhs_operand() == child)
-                return false;
-        else
-        {
-                ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgIorAssignOp");
-                return false;
-        }
-}
-
-/*! std:5.17 par:1 */
-bool SgMultAssignOp::isLValue() const
-{
-        return true;
-}
-
-bool SgMultAssignOp::isChildUsedAsLValue(const SgExpression* child) const
-{
-        if (get_lhs_operand() == child)
-                return true;
-        else if (get_rhs_operand() == child)
-                return false;
-        else
-        {
-                ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgMultAssignOp");
-                return false;
-        }
-}
-
-/*! std:5.17 par:1 */
-bool SgDivAssignOp::isLValue() const
-{
-        return true;
-}
-
-bool SgDivAssignOp::isChildUsedAsLValue(const SgExpression* child) const
-{
-        if (get_lhs_operand() == child)
-                return true;
-        else if (get_rhs_operand() == child)
-                return false;
-        else
-        {
-                ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgDivAssignOp");
-                return false;
-        }
-}
-
-/*! std:5.17 par:1 */
-bool SgModAssignOp::isLValue() const
-{
-        return true;
-}
-
-bool SgModAssignOp::isChildUsedAsLValue(const SgExpression* child) const
-{
-        if (get_lhs_operand() == child)
-                return true;
-        else if (get_rhs_operand() == child)
-                return false;
-        else
-        {
-                ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgModAssignOp");
-                return false;
-        }
-}
-
-/*! std:5.17 par:1 */
-bool SgXorAssignOp::isLValue() const
-{
-        return true;
-}
-
-bool SgXorAssignOp::isChildUsedAsLValue(const SgExpression* child) const
-{
-        if (get_lhs_operand() == child)
-                return true;
-        else if (get_rhs_operand() == child)
-                return false;
-        else
-        {
-                ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgXorAssignOp");
-                return false;
-        }
-}
-
-/*! std:5.17 par:1 */
-bool SgLshiftAssignOp::isLValue() const
-{
-        return true;
-}
-
-bool SgLshiftAssignOp::isChildUsedAsLValue(const SgExpression* child) const
-{
-        if (get_lhs_operand() == child)
-                return true;
-        else if (get_rhs_operand() == child)
-                return false;
-        else
-        {
-                ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgLshiftAssignOp");
-                return false;
-        }
-}
-
-/*! std:5.17 par:1 */
-bool SgRshiftAssignOp::isLValue() const
-{
-        return true;
-}
-
-bool SgRshiftAssignOp::isChildUsedAsLValue(const SgExpression* child) const
-{
-        if (get_lhs_operand() == child)
-                return true;
-        else if (get_rhs_operand() == child)
-                return false;
-        else
-        {
-                ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgRshiftAssignOp");
+                ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgCompoundAssignOp");
                 return false;
         }
 }
