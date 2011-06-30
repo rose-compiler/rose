@@ -526,6 +526,7 @@ SgProcedureHeaderStatement
 SgProgramHeaderStatement
 SgProject
 SgPseudoDestructorRefExp
+SgPythonPrintStmt
 SgQualifiedName
 SgQualifiedNameType
 SgReadStatement

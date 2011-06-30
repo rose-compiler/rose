@@ -117,6 +117,7 @@ Grammar::setUpStatements ()
 
   // driscoll6 (6/27/11): Support for Python
      NEW_TERMINAL_MACRO (WithStatement,             "WithStatement",             "WITH_STATEMENT" );
+     NEW_TERMINAL_MACRO (PythonPrintStmt,           "PythonPrintStmt",           "PYTHON_PRINT_STMT" );
 
 #if USE_FORTRAN_IR_NODES
   // Fortran language constructs that map directly to C/C++ IR nodes:
@@ -422,7 +423,7 @@ Grammar::setUpStatements ()
           /* FortranDo            | */ AllocateStatement   | DeallocateStatement             | UpcNotifyStatement    | 
              UpcWaitStatement     | UpcBarrierStatement    | UpcFenceStatement               | 
              OmpBarrierStatement  | OmpTaskwaitStatement   |  OmpFlushStatement              | OmpBodyStatement      |
-             SequenceStatement    | WithStatement,
+             SequenceStatement    | WithStatement          | PythonPrintStmt,
                             "Statement","StatementTag", false);
 
   // DQ (11/24/2007): These have been moved to be declarations, so they can appear where only declaration statements are allowed
@@ -2902,6 +2903,13 @@ Grammar::setUpStatements ()
   // Support for pragmas in the IR
      PragmaDeclaration.setFunctionSource      ( "SOURCE_PRAGMA_STATEMENT", "../Grammar/Statement.code" );
 
+  // driscoll6 (6/30/11) Support for python
+     PythonPrintStmt.setFunctionPrototype ( "HEADER_PYTHON_PRINT_STMT", "../Grammar/Statement.code" );
+     PythonPrintStmt.setFunctionSource    ( "SOURCE_PYTHON_PRINT_STMT", "../Grammar/Statement.code" );
+     PythonPrintStmt.setDataPrototype     ( "SgExpression*", "destination", "= NULL",
+             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     PythonPrintStmt.setDataPrototype     ( "SgExprListExp*", "values", "= NULL",
+             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // ClinkageStatement.setFunctionSource       ( "SOURCE_POST_CONSTRUCTION_INITIALIZATION_STATEMENT", "../Grammar/Statement.code" );
   // ClinkageStartStatement.setFunctionSource  ( "SOURCE_POST_CONSTRUCTION_INITIALIZATION_STATEMENT", "../Grammar/Statement.code" );
