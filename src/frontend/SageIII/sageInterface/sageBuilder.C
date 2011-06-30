@@ -3810,8 +3810,16 @@ SgLambdaRefExp*
 SageBuilder::buildLambdaRefExp(SgType* return_type, SgFunctionParameterList* params, SgScopeStatement* scope) {
     SgLambdaRefExp* result = new SgLambdaRefExp();
 
+    std::stringstream name;
+    name << "__rose__";
+    name << "lambda__" << (void*) result << "__";
+
     SgFunctionDeclaration* fxn =
-        SageBuilder::buildDefiningFunctionDeclaration("__rose__lambda__", return_type, params, scope);
+        SageBuilder::buildDefiningFunctionDeclaration(
+                name.str(),
+                return_type,
+                params,
+                scope);
     result->set_functionDeclaration(fxn);
 
     setOneSourcePositionForTransformation(result);
