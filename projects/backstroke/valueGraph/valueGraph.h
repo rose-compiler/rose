@@ -142,7 +142,7 @@ private:
     //std::set<VGVertex> varsKilledAtEventEnd_;
 
 	//! All state variables.
-	std::set<VarName> stateVariables_;
+	std::set<SgInitializedName*> stateVariables_;
 
 	//! All edges in the VG which are used to reverse values.
 	std::vector<VGEdge> dagEdges_;
@@ -378,10 +378,21 @@ private:
     
     //! Connect all phi nodes to their defs.
     void addPhiEdges();
+    
+    //! Add a state variable.
+    void addStateVariable(SgInitializedName* name)
+    { stateVariables_.insert(name); }
+    
+    //! Check if a variable is a state variable.
+	bool isStateVariable(SgInitializedName* name) const
+	{ return stateVariables_.find(name) != stateVariables_.end(); }
 
     //! Check if a variable is a state variable.
 	bool isStateVariable(const VarName& name) const
-	{ return stateVariables_.find(name) != stateVariables_.end(); }
+	{
+        ROSE_ASSERT(name.size());
+        return isStateVariable(name[0]);
+    }
 
 	/** Given a SgNode, return its variable name and version.
 	 * 

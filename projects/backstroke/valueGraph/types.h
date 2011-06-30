@@ -22,6 +22,8 @@ typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
 
 typedef boost::dynamic_bitset<> PathSet;
 
+typedef std::vector<SgInitializedName*> VarName;
+
 struct PathInfo : std::map<int, PathSet>
 {
     bool hasPath(int dagIdx, int pathIdx) const

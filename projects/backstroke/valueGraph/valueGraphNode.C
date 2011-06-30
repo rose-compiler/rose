@@ -234,6 +234,7 @@ FunctionCallNode::FunctionCallNode(SgFunctionCallExp* funcCall, bool isRvs)
     bool isInline = false;
     bool isMemberFunc = false;
     bool isOperator = false;
+    bool isCtorOrDtor = false;
     
 #if 1
             
@@ -267,6 +268,8 @@ FunctionCallNode::FunctionCallNode(SgFunctionCallExp* funcCall, bool isRvs)
 
         else 
         {
+            cout << funcCall->unparseToString() << endl;
+            ROSE_ASSERT(0);
             //isVirtual = true;
             //cout << "UNKNOWN" << "\t: VIRTUAL2\n\n";
         }
@@ -295,17 +298,18 @@ FunctionCallNode::FunctionCallNode(SgFunctionCallExp* funcCall, bool isRvs)
             isConst = SageInterface::isConstType(memFuncDecl->get_type());
             isInline = modifier.isInline();
             isOperator = specialModifier.isOperator() || specialModifier.isConversion();
+            isCtorOrDtor = specialModifier.isDestructor() || specialModifier.isConstructor();
 
             SgNamespaceDefinitionStatement* nsDef = SageInterface::enclosingNamespaceScope(memFuncDecl);
             SgNamespaceDeclarationStatement* nsDecl = nsDef ? nsDef->get_namespaceDeclaration() : NULL;
             if (nsDecl && nsDecl->get_name() == "std")
             {
-                cout << "\nFound a STD function: " << memFuncDecl->get_name() << "\n\n";
+                //cout << "\nFound a STD function: " << memFuncDecl->get_name() << "\n\n";
                 isStd = true;
             }
             else if (isOperator)
             {
-                cout << "\nFound a overloaded operator: " << memFuncDecl->get_name() << "\n\n";
+                //cout << "\nFound a overloaded operator: " << memFuncDecl->get_name() << "\n\n";
             }
             else
             {
@@ -328,7 +332,7 @@ FunctionCallNode::FunctionCallNode(SgFunctionCallExp* funcCall, bool isRvs)
     
     if (isVirtual)
         canBeReversed = true;
-    else if (isConst || isInline || isOperator || isStd)
+    else if (isConst || isInline || isOperator || isCtorOrDtor || isStd)
         canBeReversed = false;
     else if (isMemberFunc)
         canBeReversed = true;

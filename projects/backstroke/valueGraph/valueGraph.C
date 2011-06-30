@@ -107,8 +107,10 @@ void EventReverser::buildBasicValueGraph()
         foreach (SgInitializedName* initName, paraList)
         {
             // The argument may be anonymous.
-            if (initName->get_name() != "")
-                createValueNode(initName);
+            if (initName->get_name() == "")
+                continue;
+            createValueNode(initName);
+            addStateVariable(initName);
         }
     }
     else
@@ -125,7 +127,7 @@ void EventReverser::buildBasicValueGraph()
             // FIXME State variable may not be parameters.
             // Add the variable into wanted set.
             valuesToRestore_[0].insert(newNode);
-            stateVariables_.insert(VarName(1, initName));
+            addStateVariable(initName);
         } 
     }
     
@@ -545,7 +547,7 @@ void EventReverser::processClassDataMembers(SgClassDefinition* classDef)
             //VarName varName(1, initName);
             //VGVertex newNode = createValueNode(initName, NULL);
             //valuesToRestore_[0].insert(newNode);
-            stateVariables_.insert(VarName(1, initName));
+            addStateVariable(initName);
         }
     }
     
@@ -746,7 +748,7 @@ void EventReverser::addAvailableAndTargetValues()
         
         // Only pick the first initialized name.
         VarName varName(1, valNode->var.name[0]);
-        if (stateVariables_.count(varName) && valNode->var.version == 0)
+        if (isStateVariable(varName) && valNode->var.version == 0)
         {
             cout << "Target Var:\t" << valNode->var.toString() << endl;
             valuesToRestore_[0].insert(node);

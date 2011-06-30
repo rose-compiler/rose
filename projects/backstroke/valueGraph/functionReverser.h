@@ -2,6 +2,7 @@
 #define	BACKSTROKE_VG_EVENTREVERSER_H
 
 #include <rose.h>
+#include "types.h"
 
 namespace Backstroke
 {
@@ -13,6 +14,10 @@ SgExpression* buildVariable(ValueNode* node);
 
 //! Build a variable declaration.
 SgStatement* buildVarDeclaration(ValueNode* newVar, SgExpression* expr = 0);
+
+
+//! Build a local variable fron the given var name.
+SgStatement* buildVarDeclaration(const VarName& newVar, SgExpression* expr = 0);
 
 //! Instrument a push function for the variable in the given value node.
 //! The function definition is needed in case that the variable declaration is

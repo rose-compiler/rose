@@ -369,7 +369,7 @@ void EventReverser::removePhiNodesFromRouteGraph()
                 // Multiple state saving edges with cost 0 can be merged.
                 // Then we don't have to add a new edge.
                 StateSavingEdge* ssEdge = isStateSavingEdge(routeGraph_[outEdge]);
-                if (ssEdge && ssEdge->cost == 0);
+                if (ssEdge && ssEdge->cost == 0)
                 {
                     bool flag = false;
                     foreach (const VGEdge& e, boost::out_edges(src, routeGraph_))
@@ -1054,7 +1054,7 @@ namespace
         
         SgStatement* firstFuncDecl = funcDecl;
         //SgStatement* firstFuncDecl = funcDecl->get_firstNondefiningDeclaration();
-        insertStatementAfter(firstFuncDecl, cmtFuncDecl);
+        //insertStatementAfter(firstFuncDecl, cmtFuncDecl);
         insertStatementAfter(firstFuncDecl, rvsFuncDecl);
         insertStatementAfter(firstFuncDecl, fwdFuncDecl);
         
@@ -1226,6 +1226,10 @@ void EventReverser::generateCodeForBasicBlock(
             if (valNode->var.name == rhsValNode->var.name)
                 continue;
             // Simple assignment.
+            
+            valNode->isStateVar = isStateVariable(valNode->var.name);
+            rhsValNode->isStateVar = isStateVariable(rhsValNode->var.name);
+            
             rvsStmt = buildAssignOpertaion(valNode, rhsValNode);
         }
         
@@ -1496,29 +1500,30 @@ void EventReverser::generateCode(
     
     
     // First, declare all temporary variables at the beginning of the reverse events.
-    set<ValueNode*> declaredVars;
+    set<VarName> declaredVars;
     foreach (RvsCFGVertex node, boost::vertices(rvsCFG))
     {
         foreach (const VGEdge& edge, rvsCFG[node].edges)
         {
-            if (!isStateSavingEdge(valueGraph_[edge]))
-                continue;
-
             ValueNode* valNode = isValueNode(valueGraph_[boost::source(edge, valueGraph_)]);
-            if (declaredVars.count(valNode))
-                continue;
-
             //if (valNode->isAvailable()) continue;
-            if (valNode == NULL || valNode->var.name.empty()) 
+            if (valNode == NULL || valNode->var.isNull()) 
                 continue;
-            // If the function definition is not the ancestor of this variable, it is a state variable.
-            if (!SageInterface::isAncestor(funcDef_, valNode->var.name[0]))
+            
+            if (declaredVars.count(valNode->var.name))
                 continue;
 
-            SgStatement* varDecl = buildVarDeclaration(valNode);
+            // If the function definition is not the ancestor of this variable, it is a state variable.
+            if (isStateVariable(valNode->var.name))
+                continue;
+            
+            if (!SageInterface::isAncestor(funcDef_, valNode->var.name[0]->get_scope()))
+                continue;
+
+            SgStatement* varDecl = buildVarDeclaration(valNode->var.name);
             SageInterface::appendStatement(varDecl, rvsFuncBody);
             
-            declaredVars.insert(valNode);
+            declaredVars.insert(valNode->var.name);
         }   
     }
     

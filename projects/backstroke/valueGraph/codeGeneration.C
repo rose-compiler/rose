@@ -11,6 +11,13 @@ using namespace std;
 using namespace SageBuilder;
 using namespace SageInterface;
 
+string getVarNameString(const VarName& var)
+{
+    string name = var[0]->get_name();
+    for (int i = 1, s = var.size(); i < s; ++i)
+        name += "_" + var[i]->get_name();  
+    return name;
+}
 
 //! Build a variable expression from a value node in the value graph.
 SgExpression* buildVariable(ValueNode* node)
@@ -20,8 +27,10 @@ SgExpression* buildVariable(ValueNode* node)
         var = SageInterface::copyExpression(isSgExpression(node->astNode));
     else
     {
-        var = node->var.getVarRefExp();
-        //var = buildVarRefExp(node->str);
+        if (node->isStateVar)
+            var = node->var.getVarRefExp();
+        else
+            var = buildVarRefExp(getVarNameString(node->var.name));
     }
     return var;
 }
@@ -31,6 +40,14 @@ SgStatement* buildVarDeclaration(ValueNode* newVar, SgExpression* expr)
     SgAssignInitializer* init = expr ? buildAssignInitializer(expr) : NULL;
     return buildVariableDeclaration(newVar->var.name[0]->get_name(),
                                     newVar->getType(),
+                                    init);
+}
+
+SgStatement* buildVarDeclaration(const VarName& newVar, SgExpression* expr)
+{
+    SgAssignInitializer* init = expr ? buildAssignInitializer(expr) : NULL;
+    return buildVariableDeclaration(getVarNameString(newVar),
+                                    newVar.back()->get_type(),
                                     init);
 }
 

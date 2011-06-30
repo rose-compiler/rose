@@ -104,9 +104,10 @@ struct ValueGraphNode
 //! A value node can hold a lvalue and a rvalue.
 struct ValueNode : ValueGraphNode
 {    
-	explicit ValueNode(SgNode* node = NULL) : ValueGraphNode(node) {}
+	explicit ValueNode(SgNode* node = NULL)
+    : ValueGraphNode(node), isStateVar(false) {}
     explicit ValueNode(const VersionedVariable& v, SgNode* node = NULL)
-    : ValueGraphNode(node), var(v) {}
+    : ValueGraphNode(node), var(v), isStateVar(false) {}
 
 	virtual std::string toString() const;
     virtual int getCost() const;
@@ -131,6 +132,9 @@ struct ValueNode : ValueGraphNode
     //! The unique name of this value node in VG which becomes
     //! the name of the corresponding variable
     std::string str;
+    
+    //! Indicates if the variable is a state one.
+    bool isStateVar;
 };
 
 //! This node represents a phi node in the SSA form CFG. The AST node inside (actually

@@ -116,7 +116,7 @@ int main(int argc, char** argv)
     {
         headersAndFunctions.push_back(make_pair(headerName, funcName));
         headers.insert(headerName);
-        functions.insert(string(funcName.begin() + 1, funcName.end() - 1));
+        functions.insert(funcName);
         
         cout << headerName << " : " << funcName << "\n";
     }
@@ -141,24 +141,38 @@ int main(int argc, char** argv)
      
     set<SgFunctionDefinition*> funcDefs;
     
+    set<SgFunctionDeclaration*> processedFuncDecls;
     vector<SgFunctionDeclaration*> functionDecls = 
                 BackstrokeUtility::querySubTree<SgFunctionDeclaration>(project);
     foreach (SgFunctionDeclaration* decl, functionDecls)
     {
-        string funcName = decl->get_name();
+        SgFunctionDeclaration* firstDecl = 
+                isSgFunctionDeclaration(decl->get_firstNondefiningDeclaration());
+        if (!firstDecl)
+            firstDecl = decl;
+        
+        if (processedFuncDecls.count(firstDecl))
+            continue;
+        
+        if (firstDecl->get_specialFunctionModifier().isDestructor() ||
+                firstDecl->get_specialFunctionModifier().isConstructor())
+            continue;
+                
+        string funcName = firstDecl->get_name();
         if (functions.count(funcName) == 0)
             continue;
-        SgFunctionDefinition* funcDef = isSgFunctionDefinition(decl->get_definition());
+        SgFunctionDefinition* funcDef = isSgFunctionDefinition(firstDecl->get_definition());
         if (funcDef)
             funcDefs.insert(funcDef);
         else
         {
-            if (decl->get_functionModifier().isPureVirtual())
-                buildThreeFuncDeclWithEmptyBody(decl);
-            else if (!decl->get_specialFunctionModifier().isDestructor()
-                    && !decl->get_specialFunctionModifier().isConstructor())
-                buildThreeFuncDecl(decl);
+            if (firstDecl->get_functionModifier().isPureVirtual())
+                buildThreeFuncDeclWithEmptyBody(firstDecl);
+            else
+                buildThreeFuncDecl(firstDecl);
         }
+        
+        processedFuncDecls.insert(firstDecl);
     }
     
     Backstroke::reverseFunctions(funcDefs);
@@ -186,4 +200,12 @@ int main(int argc, char** argv)
             remove(tempFileName2);
 #endif
     }
+    
+    set<string> funcReversed;
+    foreach (SgFunctionDeclaration* decl, processedFuncDecls)
+        funcReversed.insert(decl->get_mangled_name());
+    foreach (SgFunctionDefinition* def, funcDefs)
+        funcReversed.insert(def->get_declaration()->get_mangled_name());
+    
+    cout << "\nThere are " << funcReversed.size() << " functions reversed.\n";
 }
