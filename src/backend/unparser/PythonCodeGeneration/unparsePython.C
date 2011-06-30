@@ -270,7 +270,6 @@ Unparse_Python::unparseFunctionParameterList(SgFunctionParameterList* param_list
 {
     SgInitializedNamePtrList& arg_list = param_list->get_args();
     SgInitializedNamePtrList::iterator name_iter;
-    SgInitializedName* init_name;
     for (name_iter = arg_list.begin(); name_iter != arg_list.end(); name_iter++) {
         if (name_iter != arg_list.begin())
             curprint(", ");
@@ -313,9 +312,20 @@ Unparse_Python::unparseLambdaRefExp(SgLambdaRefExp* lambda,
                                  SgUnparse_Info& info)
 {
     curprint( "lambda " );
-    unparseStatement( lambda->get_parameterList(), info );
+    unparseStatement( lambda->get_functionDeclaration()->get_parameterList(), info );
     curprint( ": " );
-    unparseStatement( lambda->get_body(), info );
+    SgStatement* lambda_body = lambda->get_body();
+    if (isSgBasicBlock(lambda_body)) {
+        lambda_body = isSgBasicBlock(lambda_body)->get_statements().front();
+    }
+    SgExpression* lambda_expr = isSgExpression(lambda_body);
+    if (lambda_expr != NULL) {
+        unparseExpression( lambda_expr, info );
+    } else {
+        cout << "Python lambda bodies must contain one SgExpression. (found " <<
+            lambda_body->class_name() << " instead)" << endl;
+        ROSE_ASSERT(!"lambda body missing SgExpression");
+    }
 }
 
 void

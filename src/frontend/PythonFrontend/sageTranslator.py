@@ -155,8 +155,15 @@ class SageTranslator(ast.NodeVisitor):
     return sage.buildKeyword(arg, value)
 
   def visit_Lambda(self, node):
-    body = self.visit(node.body)
-    return sage.buildLambda(node.args, body)
+    scope = self.scopeStack.peek()
+    (lambda_capsule, lambda_scope) = sage.buildLambda(node.args, scope)
+
+    self.scopeStack.push(scope)
+    expr = self.visit(node.body)
+    self.scopeStack.pop(scope)
+
+    sage.appendStatements(lambda_capsule, [expr])
+    return lambda_capsule
 
   def visit_Module(self, node):
     (scope, main_func) = sage.buildGlobal(self.filename)
