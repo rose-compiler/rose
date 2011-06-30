@@ -1110,8 +1110,8 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                   {
                     SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(parentParameterList->get_parent());
 
-                    if (SageInterface::is_Python_language() && isSgLambdaExp(parentParameterList->get_parent())) {
-                        std::cerr << "warning: python. Allowing inconsistent scope for InitializedNames in SgLambdaExp's parameter lists." << std::endl;
+                    if (SageInterface::is_Python_language() && isSgLambdaRefExp(parentParameterList->get_parent())) {
+                        std::cerr << "warning: python. Allowing inconsistent scope for InitializedNames in SgLambdaRefExp's parameter lists." << std::endl;
                         break;
                     }
                     ROSE_ASSERT(functionDeclaration != NULL);

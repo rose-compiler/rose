@@ -115,8 +115,8 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
             unparseUnaryOp( isSgUnaryOp(stmt), info );
             break;
 
-        case V_SgLambdaExp:
-            unparseLambdaExp( isSgLambdaExp(stmt), info );
+        case V_SgLambdaRefExp:
+            unparseLambdaRefExp( isSgLambdaRefExp(stmt), info );
             break;
 
         default: {
@@ -309,7 +309,7 @@ Unparse_Python::unparseInitializedName(SgInitializedName* init_name,
 }
 
 void
-Unparse_Python::unparseLambdaExp(SgLambdaExp* lambda,
+Unparse_Python::unparseLambdaRefExp(SgLambdaRefExp* lambda,
                                  SgUnparse_Info& info)
 {
     curprint( "lambda " );

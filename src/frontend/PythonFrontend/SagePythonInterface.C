@@ -366,8 +366,8 @@ sage_buildLambda(PyObject *self, PyObject *args)
 
     SgStatement* sg_body = PyDecapsulate<SgStatement>(py_body);
 
-    SgLambdaExp* sg_lambda_exp =
-        SageBuilder::buildLambdaExp(sg_params, sg_body, NULL);
+    SgLambdaRefExp* sg_lambda_exp =
+        SageBuilder::buildLambdaRefExp(sg_params, sg_body, NULL);
 
     return PyEncapsulate(sg_lambda_exp);
 }

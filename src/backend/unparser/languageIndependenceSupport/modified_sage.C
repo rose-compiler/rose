@@ -727,7 +727,7 @@ int GetPrecedence(int variant)
           case V_SgFunctionRefExp:    return 0;
 
     // driscoll6 (6/29/11) Support for Python
-          case V_SgLambdaExp:        return 0;
+          case V_SgLambdaRefExp:        return 0;
 
 #if 0
        // Template

@@ -3221,7 +3221,7 @@ SgStatement::get_scope(void) const
             // Handle case of SgFunctionDeclaration or SgMemberFunctionDeclaration
                ROSE_ASSERT (stmt->get_parent() != NULL);
 
-               if ( SageInterface::is_Python_language() && isSgLambdaExp(stmt->get_parent()) ) {
+               if ( SageInterface::is_Python_language() && isSgLambdaRefExp(stmt->get_parent()) ) {
                    std::cout << "warning: python. Fetching scope of lambda parameters from lambda's scope." << std::endl;
                    returnScope = SageInterface::getScope(stmt->get_parent());
                    ROSE_ASSERT( returnScope != NULL );

@@ -425,7 +425,7 @@ SgCudaKernelCallExp
 SgLabelRefExp
 SgLabelStatement
 SgLabelSymbol
-SgLambdaExp
+SgLambdaRefExp
 SgLessOrEqualOp
 SgLessThanOp
 SgLineDirectiveStatement

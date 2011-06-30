@@ -5537,12 +5537,12 @@ SOURCE_PSEUDO_DESTRUCTOR_REF_END
 
 SOURCE_LAMBDA_EXP_START
 
-SgType* SgLambdaExp::get_type() const {
+SgType* SgLambdaRefExp::get_type() const {
 	return SageBuilder::buildVoidType();
 }
 
 void
-SgLambdaExp::post_construction_initialization() {
+SgLambdaRefExp::post_construction_initialization() {
 
 }
 
