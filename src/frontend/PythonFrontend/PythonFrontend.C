@@ -52,7 +52,7 @@ runPythonFrontend(SgFile* file)
                 Py_DECREF(pFunc);
                 Py_DECREF(pModule);
                 PyErr_Print();
-                cerr << "Call failed" << endl;
+                ROSE_ABORT("Python frontend failed.");
                 return NULL;
             }
         }
