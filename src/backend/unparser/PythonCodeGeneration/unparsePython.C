@@ -159,7 +159,10 @@ Unparse_Python::unparseBasicBlock(SgBasicBlock* bblock,
 {
     foreach (SgStatement* child, bblock->get_statements()) {
         curprint( ws_prefix(info.get_nestingLevel()) );
-        unparseStatement(child, info);
+        if (isSgExpression(child))
+            unparseExpression(isSgExpression(child), info);
+        else
+            unparseStatement(child, info);
         curprint("\n");
     }
 }
