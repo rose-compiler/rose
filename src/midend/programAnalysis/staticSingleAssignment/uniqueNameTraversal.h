@@ -57,7 +57,7 @@ namespace ssa_private
          *
          * @param other The attribute to copy from.
          */
-        VarUniqueName(const VarUniqueName& other) : usesThis(false)
+        VarUniqueName(const VarUniqueName& other) : AstAttribute(other), usesThis(false)
         {
             key.assign(other.key.begin(), other.key.end());
         }
