@@ -3,12 +3,13 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # To keep compile commands tidy, please ONLY put required include flags here.
 INCLUDES = $(ROSE_INCLUDES)
 
-bin_PROGRAMS = matchPattern nopSourceTransform detectNopSequences nopBinaryTransform
+bin_PROGRAMS = matchPattern nopSourceTransform detectNopSequences nopBinaryTransform binaryCFGTraversalTutorial
 
 matchPattern_SOURCES = matchPattern.C
 detectNopSequences_SOURCES = detectNopSequences.C detectNopSequencesTraversal.C
 nopSourceTransform_SOURCES = nopSourceTransform.C
 nopBinaryTransform_SOURCES = nopBinaryTransform.C detectNopSequencesTraversal.C
+binaryCFGTraversalTutorial_SOURCES = binaryCFGTraversalTutorial.C
 
 DEPENDENCIES = $(REQUIRED_LIBS)
 LDADD  = $(LIBS_WITH_RPATH) $(ROSE_LIBS)

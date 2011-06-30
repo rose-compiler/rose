@@ -674,7 +674,7 @@ find libltdl folders.
 
    \item ROSE fails to compile after {\bf svn update}: \\
    We have seen this problem and had it reported and we don't understand it.
-It does however disappear after a fresh checkout from SVN into an empry directory.
+It does however disappear after a fresh checkout from SVN into an empty directory.
 If you figure this out please let us know.  Where this has happened to us, we
 were using svn version  1.4.6, where as our svn repository is more commonly
 (within development) had work checked in using svn version 1.5.1; since a lot
@@ -908,7 +908,7 @@ use the configure option {\em --with-haskell=no}.
 
 Note that we enforce and require version {\em 6.10.x} of ghc, this is
 because we assume some default modules that have been removed in more 
-recently releaced versions of ghc.
+recently released versions of ghc.
 
 \subsection{Testing ROSE}
      A set of test programs is available.  %More details are in section \ref{testing}.
@@ -1050,7 +1050,7 @@ Before running Rose's "./build", make sure the libtool-ltdl-devel RPM is install
 The Intel compiler can run out of space compiling some of the larger files in ROSE.
 Although not previously seen by anyone on the ROSE team, one user has reported
 that the Intel compiler option {\em -override-limits} was required.  As used on
-the followign configure line:
+the following configure line:
 {\em /nfs/casc/aleamr/yana-local/rose/build/rose-sourcetree/configure CXX=icpc CC=icc CXXFLAGS=-override-limits --prefix=`pwd` --with-boost=<path to boost>}
 More information is on this option and when to use it is at:
 {\em http://software.intel.com/en-us/articles/internal-threshold-was-exceeded}.
