@@ -3807,18 +3807,12 @@ SgConstVolatileModifier * SageBuilder::buildConstVolatileModifier (SgConstVolati
 
 //! Build lambda expression
 SgLambdaRefExp*
-SageBuilder::buildLambdaRefExp(SgFunctionParameterList* params, SgStatement* body, SgScopeStatement* scope) {
+SageBuilder::buildLambdaRefExp(SgType* return_type, SgFunctionParameterList* params, SgScopeStatement* scope) {
     SgLambdaRefExp* result = new SgLambdaRefExp();
 
-    /* set up parameterList */
-    result->set_parameterList(params);
-    params->set_parent(result);
-
-    /* set up body */
-    result->set_body(body);
-    body->set_parent(result);
-
-    /* TODO set up scope */
+    SgFunctionDeclaration* fxn =
+        SageBuilder::buildDefiningFunctionDeclaration("__rose__lambda__", return_type, params, scope);
+    result->set_functionDeclaration(fxn);
 
     setOneSourcePositionForTransformation(result);
     return result;

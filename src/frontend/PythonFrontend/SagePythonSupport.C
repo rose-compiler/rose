@@ -99,6 +99,12 @@ sage_appendStatements(PyObject *self, PyObject *args)
               sg_child->set_parent(body);
               break;
             }
+            case V_SgLambdaRefExp: {
+              SgBasicBlock* body = isSgLambdaRefExp(sg_target)->get_functionDeclaration()->get_definition()->get_body();
+              body->append_statement(sg_child);
+              sg_child->set_parent(body);
+              break;
+            }
             default:
               cerr << "Unhandled node type in sage_appendStatements: " << sg_target->class_name() << endl;
               break;

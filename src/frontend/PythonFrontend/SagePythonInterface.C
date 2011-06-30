@@ -357,19 +357,25 @@ sage_buildKeyword(PyObject *self, PyObject *args)
 PyObject*
 sage_buildLambda(PyObject *self, PyObject *args)
 {
-    PyObject* py_args = PyTuple_GetItem(args, 0);
-    PyObject* py_body = PyTuple_GetItem(args, 1);
+    PyObject* py_args  = PyTuple_GetItem(args, 0);
+    PyObject* py_scope = PyTuple_GetItem(args, 1);
 
     PyObject* py_arg_list = PyObject_GetAttrString(py_args, "args");
     SgFunctionParameterList* sg_params =
         buildFunctionParameterList(py_arg_list, NULL);
 
-    SgStatement* sg_body = PyDecapsulate<SgStatement>(py_body);
+    SgType* sg_ret_type = SageBuilder::buildVoidType();
+
+    SgScopeStatement* sg_scope = PyDecapsulate<SgScopeStatement>(py_scope);
+    ROSE_ASSERT(sg_scope != NULL);
 
     SgLambdaRefExp* sg_lambda_exp =
-        SageBuilder::buildLambdaRefExp(sg_params, sg_body, NULL);
+        SageBuilder::buildLambdaRefExp(sg_ret_type, sg_params, sg_scope);
 
-    return PyEncapsulate(sg_lambda_exp);
+    PyObject* return_tuple = PyTuple_New(2);
+    PyTuple_SetItem(return_tuple, 0, PyEncapsulate(sg_lambda_exp));
+    PyTuple_SetItem(return_tuple, 1, PyEncapsulate(sg_lambda_exp->get_functionDeclaration()->get_definition()));
+    return return_tuple;
 }
 
 /*
