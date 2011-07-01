@@ -61,15 +61,63 @@ $(GTNETS_DIR)/simulator.cc
 
 GTNETS_FLAG = -I$(GTNETS_DIR) -I/Users/hou1/MyApp/MacPorts/include/ -DNO_DEBUG
 
-
 wlan:
 	./functionReverserTest -c \
 		$(GTNETS_DIR)/wlan.cc \
+		$(GTNETS_FLAG)
+
+wlan1:
+	./functionReverserTest -c \
+		$(GTNETS_DIR)/wlan.cc \
+		$(GTNETS_DIR)/arp.cc \
 		$(GTNETS_DIR)/link-real.cc \
 		$(GTNETS_DIR)/interface.cc \
 		$(GTNETS_DIR)/interface-basic.cc \
 		$(GTNETS_DIR)/interface-wireless.cc \
 		$(GTNETS_DIR)/interface-real.cc \
+		$(GTNETS_FLAG)
+
+wlan2:
+	./functionReverserTest -c \
+		$(GTNETS_DIR)/l2proto.cc \
+		$(GTNETS_DIR)/l4protocol.cc \
+		$(GTNETS_DIR)/l2proto802.11.cc \
+		$(GTNETS_DIR)/l2proto802.3.cc \
+		$(GTNETS_DIR)/timer.cc \
+		$(GTNETS_DIR)/timerbuckets.cc \
+		$(GTNETS_DIR)/node.cc \
+		$(GTNETS_DIR)/node-real.cc \
+		$(GTNETS_FLAG)
+
+wlan3:
+	./functionReverserTest -c \
+		$(GTNETS_DIR)/node-impl.cc \
+		$(GTNETS_DIR)/node-ghost.cc \
+		$(GTNETS_DIR)/tcp.cc \
+		$(GTNETS_DIR)/rng.cc \
+		$(GTNETS_DIR)/queue.cc \
+		$(GTNETS_DIR)/rtt-estimator.cc \
+		$(GTNETS_DIR)/simulator.cc \
+		$(GTNETS_DIR)/trace.cc \
+		$(GTNETS_DIR)/ipv4.cc \
+		$(GTNETS_DIR)/datapdu.cc \
+		$(GTNETS_DIR)/RngStream.cc \
+		$(GTNETS_DIR)/tfstream.cc \
+		$(GTNETS_DIR)/packet-callbacks.cc \
+		$(GTNETS_DIR)/packet.cc \
+		$(GTNETS_DIR)/routing.cc \
+		$(GTNETS_FLAG)
+
+wlan-all:
+	./functionReverserTest -c \
+		$(GTNETS_DIR)/wlan.cc \
+		$(GTNETS_DIR)/arp.cc \
+		$(GTNETS_DIR)/link-real.cc \
+		$(GTNETS_DIR)/interface.cc \
+		$(GTNETS_DIR)/interface-basic.cc \
+		$(GTNETS_DIR)/interface-wireless.cc \
+		$(GTNETS_DIR)/interface-real.cc \
+		$(GTNETS_DIR)/l2proto.cc \
 		$(GTNETS_DIR)/l4protocol.cc \
 		$(GTNETS_DIR)/l2proto802.11.cc \
 		$(GTNETS_DIR)/l2proto802.3.cc \
@@ -87,6 +135,11 @@ wlan:
 		$(GTNETS_DIR)/trace.cc \
 		$(GTNETS_DIR)/ipv4.cc \
 		$(GTNETS_DIR)/datapdu.cc \
+		$(GTNETS_DIR)/RngStream.cc \
+		$(GTNETS_DIR)/tfstream.cc \
+		$(GTNETS_DIR)/packet-callbacks.cc \
+		$(GTNETS_DIR)/packet.cc \
+		$(GTNETS_DIR)/routing.cc \
 		$(GTNETS_FLAG)
 
 application:

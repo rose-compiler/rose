@@ -4,6 +4,7 @@
 #include <slicing/backstrokeCFG.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/unordered_map.hpp>
 #include <normalizations/expNormalization.h>
 
 using namespace std;
@@ -14,47 +15,56 @@ using namespace boost;
 std::set<SgMemberFunctionDeclaration*> Backstroke::FunctionCallNode::functionsToReverse;
 std::ofstream Backstroke::FunctionCallNode::os("fileList.txt");
 
-
-int main(int argc, char *argv[])
+vector<string> serializeMemberFunction(SgMemberFunctionDeclaration* memFuncDecl)
 {
-    // Build the AST used by ROSE
-    SgProject* project = frontend(argc, argv);
-    //mergeAST(project);
+    vector<string> strings;
     
-    ClassHierarchyWrapper classHierarchy(project);
+    string className = memFuncDecl->get_class_scope()->get_declaration()->get_name().str();
+    strings.push_back(className);
+    strings.push_back(memFuncDecl->get_name().str());
+    
+    const SgInitializedNamePtrList& args = memFuncDecl->get_args();
+    strings.push_back(boost::lexical_cast<string>(args.size()));
+    foreach (SgInitializedName* arg, args)
+        strings.push_back(arg->get_type()->get_mangled().str());
+    
+    return strings;
+}
 
-#if 0
-    // Draw the AST.
-    CppToDotTranslator c;
-    c.translate(argc,argv);
-#endif
-    set<pair<string, string> > eventList;
-    eventList.insert(make_pair("WirelessLink", "Handle"));
-#if 0
-    eventList.insert(make_pair("WirelessLink", "Copy"));
-    eventList.insert(make_pair("LinkReal", "Handle"));
-    eventList.insert(make_pair("InterfaceWireless", "Notify"));
-    eventList.insert(make_pair("Interface", "Notify"));
-    eventList.insert(make_pair("InterfaceReal", "Notify"));
-    eventList.insert(make_pair("L2Proto802_11", "Notify"));
-    eventList.insert(make_pair("TCP", "Notify"));
-    eventList.insert(make_pair("L2Proto802_11", "Handle"));
-    eventList.insert(make_pair("LinkReal", "Transmit"));
-    eventList.insert(make_pair("Timer", "Handle"));
-    eventList.insert(make_pair("Node", "TracePDU"));
+void readFunctionInfo(const string& filename, set<vector<string> >& functionsToReverse)
+{
+    ifstream funcListReader(filename.c_str());
+    string className, funcName;
+    int argNum;
+    while (funcListReader >> className >> funcName >> argNum)
+    {
+        vector<string> strings;
+        strings.push_back(className);
+        strings.push_back(funcName);
+        strings.push_back(boost::lexical_cast<string>(argNum));
+        
+        for (int i = 0; i < argNum; ++i)
+        {
+            string argName;
+            funcListReader >> argName;
+            strings.push_back(argName);
+        }
+        
+        functionsToReverse.insert(strings);
+    }
+    funcListReader.close();
+}
+
+//bool checkMemberFunctionWithStrings(SgMemberFunctionDeclaration* memFuncDecl, const vector<string>& strings)
+//{
+//}
+
+void generateFunctionList(const set<pair<string, string> >& eventList, ostream& os)
+{
+    SgProject* project = SageInterface::getProject();
+    ClassHierarchyWrapper classHierarchy(project);
     
-    
-    eventList.insert(make_pair("InterfaceReal", "AddNotify"));
-    eventList.insert(make_pair("L4Protocol", "RequestNotification"));
-    eventList.insert(make_pair("IPV4", "DataRequest"));
-    eventList.insert(make_pair("NodeReal", "GetQueue"));
-    eventList.insert(make_pair("Node", "TracePDU"));
-#endif
-    
-    set<SgFunctionDefinition*> funcDefs;
     set<SgFunctionDeclaration*> funcDecls;
-    
-    //set<SgFunctionDefinition*> 
     
     stack<SgFunctionDefinition*> funcDefsUnprocessed;
 
@@ -91,13 +101,16 @@ int main(int argc, char *argv[])
     vector<SgFunctionDefinition*> allFuncDefs = 
             BackstrokeUtility::querySubTree<SgFunctionDefinition>(project);
     
+    boost::unordered_map<string, SgFunctionDefinition*> nameToFuncDef;
+    foreach (SgFunctionDefinition* funcDef, allFuncDefs)
+    {
+        nameToFuncDef[funcDef->get_declaration()->get_mangled_name()] = funcDef;
+    }
+    
     while (!funcDefsUnprocessed.empty())
     {
         SgFunctionDefinition* funcDef  = funcDefsUnprocessed.top();
         funcDefsUnprocessed.pop();
-
-        if (funcDefs.count(funcDef))
-            continue;
         
         string mangledName = funcDef->get_declaration()->get_mangled_name();
         if (funcDefsAdded.count(mangledName))
@@ -111,130 +124,182 @@ int main(int argc, char *argv[])
         foreach (SgFunctionCallExp* funcCall, funcCalls)
         {
             Backstroke::FunctionCallNode funcCallNode(funcCall);
+            cout << funcCall->unparseToString() << " " << funcCallNode.canBeReversed << endl;
             if (funcCallNode.canBeReversed)
             {
-                //cout << funcCall->unparseToString() << endl;
-#if 1
-                vector<SgFunctionDefinition*> defs;
-                CallTargetSet::getDefinitionsForExpression(funcCall, &classHierarchy, defs);
-                foreach (SgFunctionDefinition* def, defs)
-                    funcDefsUnprocessed.push(def);
-#endif
                 vector<SgFunctionDeclaration*> decls;
-                if (funcCallNode.isVirtual)
-                {
-                    CallTargetSet::getDeclarationsForExpression(funcCall, &classHierarchy, decls, true);
-                    funcDecls.insert(decls.begin(), decls.end());
-                    funcDecls.insert(funcDef->get_declaration());
-                }
-                else
-                {
-                    funcDecls.insert(funcCallNode.funcDecl);
-                    decls.push_back(funcCallNode.funcDecl);
-                }
-               
-                //cout << decls.size() << endl;
 
-#if 1
-                foreach (SgFunctionDefinition* def, allFuncDefs)
-                {
-                    foreach (SgFunctionDeclaration* decl, decls)
-                    {
-                        if (def->get_declaration()->get_mangled_name() == decl->get_mangled_name())
-                            funcDefsUnprocessed.push(def);
-                    }
-                }
-#endif
+                CallTargetSet::getDeclarationsForExpression(funcCall, &classHierarchy, decls, true);
+                funcDecls.insert(decls.begin(), decls.end());
                 
-#if 0
-                SgFunctionDeclaration* decl = 
-                        isSgFunctionDeclaration(funcCallNode.funcDecl->get_definingDeclaration());
-                if (decl)
+                foreach (SgFunctionDeclaration* decl, decls)
                 {
-                    if (SgFunctionDefinition* def = decl->get_definition())
-                        funcDefsUnprocessed.push(def);
+                    string name = decl->get_mangled_name().str();
+                    if (nameToFuncDef.count(name))
+                        funcDefsUnprocessed.push(nameToFuncDef[name]);
                 }
-#endif
             }
         }
 
-        funcDefs.insert(funcDef);
         funcDecls.insert(funcDef->get_declaration());
     }
     
-    cout << "Functions being reversed:\n";
-    foreach (SgFunctionDefinition* funcDef, funcDefs)
-        cout << funcDef->get_declaration()->get_name() << '\n';
-    
-    cout << "\n\n";
-    
-#if 0
-    foreach (SgFunctionDeclaration* funcDecl, funcDecls)
-        cout << funcDecl->get_name() << '\n';
-#endif
-    getchar();
-    
-    
-    /***********************************************************************************************/
-    // Reverse all functions.
-    Backstroke::reverseFunctions(funcDefs);
-    /***********************************************************************************************/
-    
-    
-
-    cout << "\n\nDone!\n\n";
-    
-    cout << "Functions need to be reversed: \n";
-    foreach (SgMemberFunctionDeclaration* decl, Backstroke::FunctionCallNode::functionsToReverse)
-    {
-        cout << decl->get_name() << '\n';
-    }
-    cout << "\n\n";
-
-    //return backend(project);
-    project->unparse();
-    
-    
-    // For GTNetS, copy all generated files to SRC directory.
-    foreach (const string& fileName, project->get_sourceFileNameList())
-    {
-        boost::filesystem::path p(fileName);
-        
-        string dir = p.parent_path().string();
-        string name = p.filename().string();
-        
-        string command = "cp " + dir + "/rose_" + name + " " + dir + "../SRC/" + name;
-        
-        cout << command << endl;
-        boost::filesystem::copy_file("rose_" + name, dir + "/../SRC/" + name, 
-                boost::filesystem::copy_option::overwrite_if_exists);
-        //system(command.c_str());
-    }
-    
-    
-    // Copy the header file as a source file then do the transformation then copy it back.
-    //foreach (SgFunctionDefinition* funcDef, funcDefs)
-    set<SgFunctionDeclaration*> funcDeclsToProcess;
+    set<string> funcNames;
+    set<vector<string> > writtenFuncs;
     foreach (SgFunctionDeclaration* funcDecl, funcDecls)
     {
-        //cout << funcDef->unparseToString() << endl;
-        SgFunctionDeclaration* decl = isSgFunctionDeclaration(funcDecl->get_firstNondefiningDeclaration());
-        // If funcDecl is NULL, this function is inlined.
-        if (!decl) decl = funcDecl;
-        funcDeclsToProcess.insert(decl);
+        SgMemberFunctionDeclaration* memFuncDecl = isSgMemberFunctionDeclaration(funcDecl);
+        if (!memFuncDecl)
+            continue;
+        
+        vector<string> strings = serializeMemberFunction(memFuncDecl);
+        
+        if (writtenFuncs.count(strings))
+            continue;
+        writtenFuncs.insert(strings);
+        
+        foreach (const string& str, strings)
+            os << str << ' ';
+        os << '\n';
+        
+        funcNames.insert(funcDecl->get_mangled_name().str());
     }
-    
+        
+    foreach (SgFunctionDeclaration* funcDecl, funcDecls)
+    {
+        SgDeclarationStatement* firstDecl = 
+            funcDecl->get_firstNondefiningDeclaration();
+        if (firstDecl == NULL)
+            firstDecl = funcDecl;
+        SgClassDefinition* classDef = SageInterface::getEnclosingClassDefinition(firstDecl);
+        cout << (classDef ? classDef->get_declaration()->get_name() : "") << 
+                " : " << funcDecl->get_name().str() << '\n';
+    }
+    cout << funcNames.size() << endl;
+}
+
+void processHeaderFiles(const set<SgFunctionDeclaration*>& funcDecls)
+{
     ofstream osHeaders("headers.txt");
-    foreach (SgFunctionDefinition* funcDef, funcDefs)
-    //foreach (SgFunctionDeclaration* funcDecl, funcDeclsToProcess)
+    foreach (SgFunctionDeclaration* funcDecl, funcDecls)
     {
-        SgFunctionDeclaration* funcDecl = funcDef->get_declaration();
-        cout << funcDecl->get_file_info()->get_filenameString() << endl;
-        cout << funcDecl->get_name().str() << endl;
-        osHeaders << funcDecl->get_file_info()->get_filenameString() << ' ' 
-                << funcDecl->get_name().str() << '\n';
+        SgFunctionDeclaration* firstDecl = 
+            isSgFunctionDeclaration(funcDecl->get_firstNondefiningDeclaration());
+        if (firstDecl == NULL)
+            firstDecl = funcDecl;
+        
+        cout << firstDecl->get_file_info()->get_filenameString() << endl;
+        cout << firstDecl->get_name().str() << endl;
+        osHeaders << firstDecl->get_file_info()->get_filenameString() << ' ' 
+                << firstDecl->get_name().str() << '\n';
     }
     osHeaders.close();
     
     ::system("./headerUnparser/unparseHeader headers.txt");
+}
+
+int main(int argc, char *argv[])
+{
+    int option;
+    cin >> option;
+        
+    // Build the AST used by ROSE
+    SgProject* project = frontend(argc, argv);
+
+    if (option == 2)
+    {
+        //mergeAST(project);
+
+        set<pair<string, string> > eventList;
+        eventList.insert(make_pair("WirelessLink", "Handle"));
+
+        ofstream funcListWriter("funcList.txt");
+        generateFunctionList(eventList, funcListWriter);
+        funcListWriter.close();
+    }
+    else if (option == 0)
+    {
+        //mergeAST(project);
+
+        set<SgFunctionDefinition*> funcDefs;
+    
+        set<vector<string> > functionsToReverse;
+        readFunctionInfo("funcList.txt", functionsToReverse);
+
+        vector<SgFunctionDefinition*> allFuncDefs = 
+                BackstrokeUtility::querySubTree<SgFunctionDefinition>(project);
+        foreach (SgFunctionDefinition* funcDef, allFuncDefs)
+        {
+            SgMemberFunctionDeclaration* funcDecl = 
+                    isSgMemberFunctionDeclaration(funcDef->get_declaration());
+            if (!funcDecl) continue;
+
+            if (functionsToReverse.count(serializeMemberFunction(funcDecl)))
+            {
+                //cout << funcDef->get_declaration()->get_name().str() << " : " <<
+                //    funcName << endl;
+                funcDefs.insert(funcDef);
+            }
+        }
+
+
+
+        /***********************************************************************************************/
+        // Reverse all functions.
+        Backstroke::reverseFunctions(funcDefs);
+        /***********************************************************************************************/
+
+
+
+        cout << "\n\nDone!\n\n";
+
+    #if 0
+        cout << "Functions need to be reversed: \n";
+        foreach (SgMemberFunctionDeclaration* decl, Backstroke::FunctionCallNode::functionsToReverse)
+        {
+            cout << decl->get_name() << '\n';
+        }
+        cout << "\n\n";
+    #endif
+
+        //return backend(project);
+        project->unparse();
+
+
+        // For GTNetS, copy all generated files to SRC directory.
+        foreach (const string& fileName, project->get_sourceFileNameList())
+        {
+            boost::filesystem::path p(fileName);
+
+            string dir = p.parent_path().string();
+            string name = p.filename().string();
+
+            string command = "cp " + dir + "/rose_" + name + " " + dir + "../SRC/" + name;
+
+            cout << command << endl;
+            boost::filesystem::copy_file("rose_" + name, dir + "/../SRC/" + name, 
+                    boost::filesystem::copy_option::overwrite_if_exists);
+            //system(command.c_str());
+        }
+    }
+    
+    else if (option == 1)
+    {
+        set<vector<string> > functionsToReverse;
+        readFunctionInfo("funcList.txt", functionsToReverse);
+        
+        set<SgFunctionDeclaration*> funcDecls;
+        vector<SgFunctionDeclaration*> allFuncDecls = 
+                BackstrokeUtility::querySubTree<SgFunctionDeclaration>(project);
+        foreach (SgFunctionDeclaration* funcDecl, allFuncDecls)
+        {
+            SgMemberFunctionDeclaration* memFuncDecl = 
+                    isSgMemberFunctionDeclaration(funcDecl);
+            if (!memFuncDecl) continue;
+
+            if (functionsToReverse.count(serializeMemberFunction(memFuncDecl)))
+                funcDecls.insert(funcDecl);
+        }
+        processHeaderFiles(funcDecls);
+    }
 }

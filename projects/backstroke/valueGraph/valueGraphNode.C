@@ -21,6 +21,7 @@ namespace
     {
         ROSE_ASSERT(t);
 
+        t = t->stripTypedefsAndModifiers();
         if (SgReferenceType* refType = isSgReferenceType(t))
         {
             t = refType->get_base_type();
@@ -68,7 +69,7 @@ namespace
             case V_SgEnumType:
                 return sizeof(int);
             default:
-                cout << t->class_name() << endl;
+                cout << t->class_name() << ' ' << t->unparseToString() << endl;
                 ROSE_ASSERT(!"Unknow type.");
                 return 100;
         }
@@ -336,8 +337,14 @@ FunctionCallNode::FunctionCallNode(SgFunctionCallExp* funcCall, bool isRvs)
         //isVirtual = true;
     }
     
+    
     ROSE_ASSERT(funcDecl);
     funcName = funcDecl->get_name();
+    
+    // A work-around to detect operators. Sometimes an operator does not have a operator flag in its
+    // function modifier. For example, default assignment operator.
+    if (string(funcName.begin(), funcName.begin() + 8) == "operator")
+        isOperator = true;
     
     // Currently we don't reverse virtual destructor. We will reverse it in the future.
     if (isVirtual && !isCtorOrDtor)

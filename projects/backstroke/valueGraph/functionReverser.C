@@ -1052,8 +1052,10 @@ namespace
         rvsSymbol = isSgMemberFunctionSymbol(rvsFuncDecl->get_symbol_from_symbol_table());
         cmtSymbol = isSgMemberFunctionSymbol(cmtFuncDecl->get_symbol_from_symbol_table());
         
-        SgStatement* firstFuncDecl = funcDecl;
-        //SgStatement* firstFuncDecl = funcDecl->get_firstNondefiningDeclaration();
+        SgStatement* firstFuncDecl = funcDecl->get_firstNondefiningDeclaration();
+        if (!firstFuncDecl)
+            firstFuncDecl = funcDecl;
+        
         //insertStatementAfter(firstFuncDecl, cmtFuncDecl);
         insertStatementAfter(firstFuncDecl, rvsFuncDecl);
         insertStatementAfter(firstFuncDecl, fwdFuncDecl);
@@ -1304,7 +1306,9 @@ void EventReverser::generateCodeForBasicBlock(
                     }
                 }
                 
-                //cout << "Processing Function Call:\t" << funcName << endl;
+                cout << "Processing Function Call:\t" << funcName << " : " <<
+                        funcDecl->get_functionModifier() << " " << 
+                        funcDecl->get_specialFunctionModifier() << endl;
                 
                 if (!(fwdFuncSymbol && rvsFuncSymbol && cmtFuncSymbol))
                 {
@@ -1931,6 +1935,12 @@ void reverseFunctions(const set<SgFunctionDefinition*>& funcDefs)
 
     foreach (SgFunctionDefinition* funcDef, funcDefs)
     {
+        // Don't reverse ctor or dtor now.
+        const SgSpecialFunctionModifier& specialModifier = 
+            funcDef->get_declaration()->get_specialFunctionModifier();
+        if (specialModifier.isDestructor() || specialModifier.isConstructor())
+            continue;
+            
         string funcName = funcDef->get_declaration()->get_name();
         globalScopes.insert(SageInterface::getGlobalScope(funcDef));
 
