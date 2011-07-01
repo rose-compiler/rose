@@ -688,25 +688,22 @@ bool DivAnalysis::transfer(const Function& func, const DataflowNode& n, NodeStat
 		      isSgMinusAssignOp(n.getNode()) || isSgSubtractOp(n.getNode()) ||
 		      isSgMinusMinusOp(n.getNode())  || isSgPlusPlusOp(n.getNode())) {
 		      // Either one Bottom or Uninitialized
+			  bool isAddition = isSgPlusAssignOp(n.getNode()) || isSgAddOp(n.getNode()) || isSgPlusPlusOp(n.getNode());
 		      if(//arg1Lat->getLevel() == DivLattice::uninitialized || arg2Lat->getLevel() == DivLattice::uninitialized ||
 		         arg1Lat->getLevel() == DivLattice::bottom        || arg2Lat->getLevel() == DivLattice::bottom) {
 					modified = resLat->setBot() || modified;
 				// Both ValKnown
 				} else if(arg1Lat->getLevel() == DivLattice::valKnown && arg2Lat->getLevel() == DivLattice::valKnown) {
-					// Addition
-					if(isSgPlusAssignOp(n.getNode()) || isSgAddOp(n.getNode()) || isSgPlusPlusOp(n.getNode()))
+					if(isAddition)
 						modified = resLat->set(arg1Lat->getValue() + arg2Lat->getValue()) || modified;
-					// Subtraction
 					else
 						modified = resLat->set(arg1Lat->getValue() - arg2Lat->getValue()) || modified;
 				// Arg1 ValKnown, Arg2 DivKnown
 				} else if(arg1Lat->getLevel() == DivLattice::valKnown && arg2Lat->getLevel() == DivLattice::divKnown) {
-					// Addition
-					if(isSgPlusAssignOp(n.getNode()) || isSgAddOp(n.getNode()) || isSgPlusPlusOp(n.getNode()))
+					if(isAddition)
 						modified = resLat->set(arg2Lat->getDiv(), 
 						                       (arg1Lat->getValue() + arg2Lat->getRem()) %
 						                           arg2Lat->getDiv()) || modified;
-					// Subtraction
 					else
 						modified = resLat->set(arg2Lat->getDiv(), 
 						                      ((arg1Lat->getValue()%arg2Lat->getDiv()) - arg2Lat->getRem() + arg2Lat->getDiv()) %
@@ -714,12 +711,10 @@ bool DivAnalysis::transfer(const Function& func, const DataflowNode& n, NodeStat
 				}
 				// Arg1 DivKnown, Arg2 ValKnown
 				else if(arg1Lat->getLevel() == DivLattice::divKnown && arg2Lat->getLevel() == DivLattice::valKnown) {
-					// Addition
-					if(isSgPlusAssignOp(n.getNode()) || isSgAddOp(n.getNode()) || isSgPlusPlusOp(n.getNode()))
+					if(isAddition)
 						modified = resLat->set(arg1Lat->getDiv(), 
 						                       (arg2Lat->getValue() + arg1Lat->getRem()) %
 						                           arg1Lat->getDiv()) || modified;
-					// Subtraction
 					else
 						modified = resLat->set(arg1Lat->getDiv(), 
 						                      (arg1Lat->getRem() - (arg2Lat->getValue()%arg1Lat->getDiv()) + arg2Lat->getDiv()) %
@@ -728,11 +723,9 @@ bool DivAnalysis::transfer(const Function& func, const DataflowNode& n, NodeStat
 				// Both DivKnown
 				else if(arg1Lat->getLevel() == DivLattice::divKnown && arg2Lat->getLevel() == DivLattice::divKnown) {
 					long newDiv, newRem;
-					// True for addition, false for subtraction
-					bool plus = (isSgPlusAssignOp(n.getNode()) || isSgAddOp(n.getNode()) || isSgPlusPlusOp(n.getNode()));
 					
 					//if(DivLattice::matchDiv(arg1Lat, arg2Lat, newDiv, newRem))
-					if(DivLattice::matchDivAddSubt(arg1Lat, arg2Lat, newDiv, newRem, plus)) {
+					if(DivLattice::matchDivAddSubt(arg1Lat, arg2Lat, newDiv, newRem, isAddition)) {
 						modified = resLat->set(newDiv, newRem) || modified;
 					} else
 						modified = resLat->setTop() || modified;
