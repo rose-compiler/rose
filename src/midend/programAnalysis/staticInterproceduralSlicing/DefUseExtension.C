@@ -114,13 +114,14 @@ namespace DUVariableAnalysisExt
         bool isDef(SgNode * node,bool treadFunctionCallAsDef)
         {
                 bool assignCand=false;
+
                 // Straight assignments of a variable
                 //      if (isAssignInitializer(node->get_parent()))   assignCand=true;;
 
                 if (isSgAssignOp(node->get_parent()) || isSgCompoundAssignOp(node->get_parent()))
                         assignCand = true;;
 
-                if (assignCand==true)
+                if (assignCand)
                 {
                         if (isSgBinaryOp(node->get_parent())->get_lhs_operand()==node)
                                 return true;
