@@ -356,6 +356,8 @@ esac
 ##
 
    dumpHudsonEnvironment "${LOG_LOCATION}/HudsonEnvironment-after-tests.log"
+   ccache -s
+   #f90cache -s
 
 ##
 #
