@@ -255,9 +255,7 @@ bool LiveDeadVarsAnalysis::transfer(const Function& func, const DataflowNode& n,
 			// Binary Operations
 			} else if(isSgBinaryOp(n.getNode())) {
 				// Self-update expressions, where the lhs is assigned
-				if(isSgPlusAssignOp(n.getNode()) || isSgMinusAssignOp(n.getNode()) ||
-				   isSgModAssignOp(n.getNode())  || isSgMultAssignOp(n.getNode())  ||
-				   isSgDivAssignOp(n.getNode())) {
+				if(isSgCompoundAssignOp(n.getNode())) {
 				   assignedExprs.insert(isSgBinaryOp(n.getNode())->get_lhs_operand());
 				}
 				// Both the lhs and rhs are used
