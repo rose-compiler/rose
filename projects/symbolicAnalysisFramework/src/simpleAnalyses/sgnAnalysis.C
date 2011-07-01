@@ -549,7 +549,7 @@ bool SgnAnalysis::transfer(const Function& func, const DataflowNode& n, NodeStat
 		
 		// If the result expression is dead but the left-hand-side of the expression is live,
 		// update the left-hand-side with the result
-		if(resLat==NULL && isSgCompoundAssignOp(n.getNode()) && prodLat->getVarLattice(lhs)!=NULL)
+		if(resLat==NULL && isSgCompoundAssignOp(n.getNode()))
                         resLat = dynamic_cast<SgnLattice*>(prodLat->getVarLattice(lhs));
 		
 		//cout << "transfer C, resLat="<<resLat<<"\n";
