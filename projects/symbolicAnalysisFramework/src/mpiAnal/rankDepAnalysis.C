@@ -240,18 +240,7 @@ bool MPIRankDepAnalysis::transfer(const Function& func, const DataflowNode& n, N
 			if(lhsLat){ lhsLat->copy(rhsLat); modified = true; }
 			if(resLat){ resLat->copy(rhsLat); modified = true; }
 		}
-		else if(isSgAndAssignOp(sgn) ||
-			isSgDivAssignOp(sgn) ||
-			isSgIorAssignOp(sgn) ||
-			isSgLshiftAssignOp(sgn) ||
-			isSgMinusAssignOp(sgn) ||
-			isSgModAssignOp(sgn) ||
-			isSgMultAssignOp(sgn) ||
-			isSgPlusAssignOp(sgn) ||
-			// What is this???
-			//isSgPointerAssignOp(sgn) ||
-			isSgRshiftAssignOp(sgn) ||
-			isSgXorAssignOp(sgn))
+		else if(isSgCompoundAssignOp(sgn))
 		{
 		  if(lhsLat) {
 		    lhsLat->meetUpdate(rhsLat);
