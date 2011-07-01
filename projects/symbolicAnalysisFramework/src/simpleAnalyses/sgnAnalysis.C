@@ -523,9 +523,8 @@ bool SgnAnalysis::transfer(const Function& func, const DataflowNode& n, NodeStat
 		
 		// Set up the information on the arguments and target of the arithmetic operation
 		if(isSgBinaryOp(n.getNode())) {
-			if(isSgPlusAssignOp(n.getNode()) || isSgMinusAssignOp(n.getNode()) ||
-			   isSgModAssignOp(n.getNode())  || isSgMultAssignOp(n.getNode()) ||
-			   isSgDivAssignOp(n.getNode())) {
+                        // Tested that we're dealing with arithmetic above, so no worries about getting the logic operators by accident
+			if(isSgCompoundAssignOp(n.getNode())) {
 				lhs = SgExpr2Var(isSgBinaryOp(n.getNode())->get_lhs_operand());
 				arg1 = lhs;
 				arg2 = SgExpr2Var(isSgBinaryOp(n.getNode())->get_rhs_operand());
@@ -550,12 +549,8 @@ bool SgnAnalysis::transfer(const Function& func, const DataflowNode& n, NodeStat
 		
 		// If the result expression is dead but the left-hand-side of the expression is live,
 		// update the left-hand-side with the result
-		if(resLat==NULL && 
-			(isSgPlusAssignOp(n.getNode()) || isSgMinusAssignOp(n.getNode()) ||
-			 isSgMultAssignOp(n.getNode()) || isSgDivAssignOp(n.getNode()) ||
-			 isSgModAssignOp(n.getNode())) &&
-			prodLat->getVarLattice(lhs)!=NULL)
-		{ resLat = dynamic_cast<SgnLattice*>(prodLat->getVarLattice(lhs)); }
+		if(resLat==NULL && isSgCompoundAssignOp(n.getNode()) && prodLat->getVarLattice(lhs)!=NULL)
+                        resLat = dynamic_cast<SgnLattice*>(prodLat->getVarLattice(lhs));
 		
 		//cout << "transfer C, resLat="<<resLat<<"\n";
 		// If the result or left-hand-side expression as well as the arguments are live
@@ -602,9 +597,7 @@ bool SgnAnalysis::transfer(const Function& func, const DataflowNode& n, NodeStat
 			}
 		
 			// If there is a left-hand side, copy the final lattice to the lhs variable
-			if(isSgPlusAssignOp(n.getNode()) || isSgMinusAssignOp(n.getNode()) ||
-				isSgMultAssignOp(n.getNode()) || isSgDivAssignOp(n.getNode()) ||
-				isSgModAssignOp(n.getNode())) {
+			if(isSgCompoundAssignOp(n.getNode())) {
 				// If we didn't use the lhs lattice as resLat, copy resLat into lhsLat
 				//cout << "prodLat->getVarLattice("<<res.str()<<")="<<prodLat->getVarLattice(res)<<"\n";
 				if(prodLat->getVarLattice(res)!=NULL) {
