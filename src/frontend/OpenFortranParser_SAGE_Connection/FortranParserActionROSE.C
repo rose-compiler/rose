@@ -166,7 +166,7 @@ void c_action_specification_part(int numUseStmts, int numImportStmts, int numDec
           printf ("\n\n");
         }
 
-#if 0
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R204 c_action_specification_part()");
 #endif
@@ -515,12 +515,15 @@ void c_action_label_list(int count)
  * @param hasColon True if a ':' is present
  *
  * Post-condition:
+ * if DXN_CODE
+ *   astExpressionStack.front() is the type param value: an expression, an asterisk or a colon
+ * else
  *   hasColon case not implemented
- *   astTypeParameterStack.front() is the type param value
+ *   astTypeParameterStack.front() is the type param value: an expression or an asterisk
+ * endif
  */
 void c_action_type_param_value(ofp_bool hasExpr, ofp_bool hasAsterisk, ofp_bool hasColon)
    {
-    raise(SIGINT);
     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_type_param_value(): hasExpr = %s hasAsterisk = %s hasColon = %s \n",hasExpr ? "true" : "false",hasAsterisk ? "true" : "false",hasColon ? "true" : "false");
 
@@ -530,6 +533,23 @@ void c_action_type_param_value(ofp_bool hasExpr, ofp_bool hasAsterisk, ofp_bool 
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R402 c_action_type_param_value()");
 #endif
+
+#if DXN_CODE
+
+     if (hasAsterisk)
+        {
+          SgExpression* asteriskExpression = new SgAsteriskShapeExp();
+          setSourcePosition(asteriskExpression);
+          astExpressionStack.push_front(asteriskExpression);
+        }
+     else if (hasColon)
+        {
+          SgExpression* colonExpression = new SgColonShapeExp();
+          setSourcePosition(colonExpression);
+          astExpressionStack.push_front(colonExpression);
+        }
+
+#else
 
   // Case not yet implemented
      ROSE_ASSERT(hasColon == false);
@@ -552,6 +572,7 @@ void c_action_type_param_value(ofp_bool hasExpr, ofp_bool hasAsterisk, ofp_bool 
           astTypeParameterStack.push_front(astExpressionStack.front());
           astExpressionStack.pop_front();
         }
+#endif
 
 #if 1
   // Output debugging information about saved state (stack) information.
@@ -576,7 +597,6 @@ void c_action_type_param_value(ofp_bool hasExpr, ofp_bool hasAsterisk, ofp_bool 
  */
 void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int type, ofp_bool hasKindSelector)
    {
-    raise(SIGINT);
     // Save the type on the stack for use later.
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
@@ -1080,7 +1100,6 @@ void c_action_imag_part(ofp_bool hasIntConstant, ofp_bool hasRealConstant, Token
 // void c_action_char_selector(int kindOrLen1, int kindOrLen2, ofp_bool hasAsterisk)
 void c_action_char_selector(Token_t * type_keyword, Token_t * optional_keyword, int kindOrLen1, int kindOrLen2, ofp_bool hasAsterisk)
    {
-    raise(SIGINT);
     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_char_selector(): type_keyword = %p = %s optional_keyword = %p = %s kindOrLen1 = %d kindOrLen2 = %d hasAsterisk = %s \n",
                type_keyword,type_keyword != NULL ? type_keyword->text : "NULL",
@@ -1316,18 +1335,26 @@ void c_action_length_selector(Token_t * len_keyword, int kindOrLen, ofp_bool has
  *
  * @param hasTypeParamValue True if a type-param-value is specified, otherwise is a scalar-int-literal-constant
  *
- * Post-condition: the string type with the char length on top of the astExpressionStack is created and pushed on
- * the astTypeStack.  char length is popped from the astExpressionStack.
+ * Post-condition:
+ * if DXN_CODE
+ *   do nothing: the type param value is already on top of the astExpressionStack.
+ * else
+ *   the string type with the char length on top of the astExpressionStack is created and pushed on
+ *   the astTypeStack.  char length is popped from the astExpressionStack.
+ * endif
  */
 void c_action_char_length(ofp_bool hasTypeParamValue)
    {
-    raise(SIGINT);
     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_char_length(): hasTypeParamValue = %s \n",hasTypeParamValue ? "true" : "false");
 #if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R426 list c_action_char_length()");
 #endif
+
+#if DXN_CODE
+
+#else
 
   // printf ("astBaseTypeStack.empty() = %s \n",astBaseTypeStack.empty() ? "true" : "false");
 
@@ -1391,6 +1418,8 @@ void c_action_char_length(ofp_bool hasTypeParamValue)
        // Leave the correct type on the astTypeStack
           astTypeStack.push_front(stringType);
         }
+
+#endif
 
 #if 1
   // Output debugging information about saved state (stack) information.
@@ -1547,6 +1576,7 @@ void c_action_type_param_or_comp_def_stmt_list()
 // void c_action_derived_type_stmt(Token_t * label, Token_t * id)
 void c_action_derived_type_stmt(Token_t * label, Token_t * keyword, Token_t * id, Token_t * eos, ofp_bool hasTypeAttrSpecList, ofp_bool hasGenericNameList)
    {
+    raise(SIGINT);
         // Build a SgClassDeclaration to hold the Fortran Type (maybe it should be a SgFortranType derived from a SgClassDeclaration?)
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
@@ -1595,6 +1625,7 @@ void c_action_derived_type_stmt(Token_t * label, Token_t * keyword, Token_t * id
 // void c_action_type_attr_spec(Token_t * id, int specType)
 void c_action_type_attr_spec(Token_t * keyword, Token_t * id, int specType)
    {
+    raise(SIGINT);
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_type_attr_spec(): keyword = %p = %s id = %p = %s specType = %d \n",keyword,keyword != NULL ? keyword->text : "NULL",id,id != NULL ? id->text : "NULL",specType);
 
@@ -1621,10 +1652,12 @@ void c_action_type_attr_spec(Token_t * keyword, Token_t * id, int specType)
  */
 void c_action_type_attr_spec_list__begin()
    {
+    raise(SIGINT);
   // I think there is nothing required to be done here.
    }
 void c_action_type_attr_spec_list(int count)
    {
+    raise(SIGINT);
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
         printf ("In c_action_type_attr_spec_list(): count = %d \n",count);
    }
@@ -1730,6 +1763,7 @@ void c_action_type_param_decl_list(int count)
  */
 void c_action_component_def_stmt(int type)
    {
+    raise(SIGINT);
   // This rule only provides a type value to identify the declaration as data or
   // as a procedure. So I don't know if it is of much use in building the ROSE AST.
 
@@ -1761,6 +1795,7 @@ void c_action_data_component_def_stmt(Token_t *label, Token_t *eos, ofp_bool has
 
 #if DXN_CODE
 
+//     VarDeclAttrSpec.setDeclAttrSpecs();
      setStatementNumericLabel(VarDeclAttrSpec.varDeclaration,label);
      SgInitializedNamePtrList&  varList = VarDeclAttrSpec.varDeclaration->get_variables ();
      SgInitializedName* firstInitializedNameForSourcePosition = varList.front();
@@ -1919,8 +1954,10 @@ void c_action_component_attr_spec(Token_t * attrKeyword, int specType)
                     printf ("found a ComponentAttrSpec_dimension spec \n");
 #if DXN_CODE
                // transfer the array spec from the astExpressionStack to the AttrSpec record.
-               ROSE_ASSERT(isSgIntVal(astExpressionStack.front()));  // astExpressionStack.front() contains the number of array spec elements for the dimension attribute
-               int count = (isSgIntVal(astExpressionStack.front()))->get_value();
+               SgIntVal * intVal = isSgIntVal(astExpressionStack.front());
+               ROSE_ASSERT(intVal);  // astExpressionStack.front() contains the number of array spec elements for the dimension attribute
+               int count = intVal->get_value();
+               delete intVal;  // must remove it from AST
                astExpressionStack.pop_front();
                processMultidimensionalSubscriptsIntoExpressionList(count);  // the dimension attribute is now on top of astExpressionStack
                SgExprListExp* dimAttr = isSgExprListExp(astExpressionStack.front());
@@ -1941,7 +1978,7 @@ void c_action_component_attr_spec(Token_t * attrKeyword, int specType)
 
 #if DXN_CODE
 
-     setDeclarationAttributeSpec(VarDeclAttrSpec.varDeclaration, specType);
+//     setDeclarationAttributeSpec(VarDeclAttrSpec.varDeclaration, specType);
 
 #else
 
@@ -2085,7 +2122,17 @@ void c_action_component_decl_list__begin()
 #endif
 
 #if DXN_CODE
-    // TODO
+
+    // Create a variable declaration for this component_decl_list:
+     VarDeclAttrSpec.varDeclaration = new SgVariableDeclaration();
+     setSourcePosition(VarDeclAttrSpec.varDeclaration);
+     VarDeclAttrSpec.varDeclaration->set_parent(getTopOfScopeStack());
+     VarDeclAttrSpec.varDeclaration->set_definingDeclaration(VarDeclAttrSpec.varDeclaration);
+     VarDeclAttrSpec.varDeclaration->get_declarationModifier().get_accessModifier().setUndefined();
+     VarDeclAttrSpec.setDeclAttrSpecs();
+     VarDeclAttrSpec.baseType = astBaseTypeStack.front();
+     astBaseTypeStack.pop_front();
+
 #else
     // No action is required here because the scope for the derived type has been defined in R403
 
@@ -2102,7 +2149,6 @@ void c_action_component_decl_list__begin()
 
 void c_action_component_decl_list(int count)
    {
-    raise(SIGINT);
         // This function R442 R438-F2008 is similar to R504 R503-F2008
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
@@ -2203,6 +2249,7 @@ void c_action_component_array_spec(ofp_bool isExplicit)
  */
 void c_action_deferred_shape_spec_list__begin()
    {
+    raise(SIGINT);
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_deferred_shape_spec_list__begin() \n");
    }
@@ -2423,7 +2470,6 @@ void c_action_binding_attr_list(int count)
  */
 void c_action_derived_type_spec(Token_t * typeName, ofp_bool hasTypeParamSpecList)
    {
-    raise(SIGINT);
 #if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R455 c_action_derived_type_spec()");
@@ -2624,7 +2670,6 @@ void c_action_end_enum_stmt(Token_t *label, Token_t *endKeyword, Token_t *enumKe
  */
 void c_action_array_constructor()
    {
-    raise(SIGINT);
     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_array_constructor() \n");
 
@@ -2674,7 +2719,6 @@ void c_action_array_constructor()
  */
 void c_action_ac_spec()
    {
-    raise(SIGINT);
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_ac_spec() \n");
 #if DXN_DEBUG
@@ -2690,7 +2734,6 @@ void c_action_ac_spec()
  */
 void c_action_ac_value()
    {
-    raise(SIGINT);
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_ac_value() \n");
 
@@ -2711,7 +2754,6 @@ void c_action_ac_value()
  */
 void c_action_ac_value_list__begin()
    {
-    raise(SIGINT);
     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_ac_value_list__begin() \n");
 
@@ -2781,7 +2823,6 @@ void c_action_ac_value_list__begin()
 
 void c_action_ac_value_list(int count)
    {
-    raise(SIGINT);
     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_ac_value_list(): count = %d \n",count);
 
@@ -2827,7 +2868,6 @@ void c_action_ac_value_list(int count)
  */
 void c_action_ac_implied_do()
    {
-    raise(SIGINT);
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_ac_implied_do() \n");
 
@@ -2970,7 +3010,6 @@ void c_action_ac_implied_do()
  */
 void c_action_ac_implied_do_control( ofp_bool hasStride )
    {
-    raise(SIGINT);
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
         printf ("In c_action_ac_implied_do_control(): hasStride = %s \n",hasStride ? "true" : "false");
 
@@ -3099,6 +3138,7 @@ c_action_type_declaration_stmt(Token_t * label, int numAttributes, Token_t * eos
 
 #if DXN_CODE
 
+//     VarDeclAttrSpec.setDeclAttrSpecs();
      setStatementNumericLabel(VarDeclAttrSpec.varDeclaration,label);
      SgInitializedNamePtrList&  varList = VarDeclAttrSpec.varDeclaration->get_variables ();
      SgInitializedName* firstInitializedNameForSourcePosition = varList.front();
@@ -3135,7 +3175,6 @@ c_action_type_declaration_stmt(Token_t * label, int numAttributes, Token_t * eos
 // void c_action_declaration_type_spec(int type)
 void c_action_declaration_type_spec(Token_t * udtKeyword, int type)
    {
-    raise(SIGINT);
     // The type value makes it clear what the type will be for the variable declaration being defined in the next setof rules.
   // We need to save this information so that we can know the type of the variable declaration when it is later built.
 
@@ -3249,6 +3288,7 @@ void c_action_declaration_type_spec(Token_t * udtKeyword, int type)
 
 #if DXN_CODE
 // Create a variable declaration for this declaration type spec:
+/*
      VarDeclAttrSpec.varDeclaration = new SgVariableDeclaration();
      setSourcePosition(VarDeclAttrSpec.varDeclaration);
      VarDeclAttrSpec.varDeclaration->set_parent(getTopOfScopeStack());
@@ -3257,6 +3297,7 @@ void c_action_declaration_type_spec(Token_t * udtKeyword, int type)
 
      VarDeclAttrSpec.baseType = astBaseTypeStack.front();
      astBaseTypeStack.pop_front();
+*/
 #endif
 
 #if DXN_DEBUG
@@ -3291,7 +3332,6 @@ void c_action_declaration_type_spec(Token_t * udtKeyword, int type)
 // void c_action_attr_spec(int attr)
 void c_action_attr_spec(Token_t * attrKeyword, int attr)
    {
-    raise(SIGINT);
     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In R503 c_action_attr_spec(): attrKeyword = %p = %s attr = %d \n",attrKeyword,attrKeyword != NULL ? attrKeyword->text : "NULL",attr);
 
@@ -3314,6 +3354,8 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
             // DQ (5/20/2008): This is a redundant specifier, it appears to only be used with AttrSpec_PUBLIC or AttrSpec_PRIVATE
                if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                     printf ("found a AttrSpec_access spec \n");
+               VarDeclAttrSpec.hasAccessSpec = true;
+               VarDeclAttrSpec.accessAttr = AttrSpec_access;
                break;
              }
 
@@ -3321,6 +3363,8 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
               {
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a language_binding spec \n");
+                 VarDeclAttrSpec.hasLangBinding = true;
+                 VarDeclAttrSpec.bindingAttr = AttrSpec_language_binding;
                  break;
               }
 
@@ -3329,6 +3373,7 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a PUBLIC spec \n");
                  VarDeclAttrSpec.isPublic = true;
+                 VarDeclAttrSpec.publicAttr = AttrSpec_PUBLIC;
                  break;
               }
 
@@ -3337,6 +3382,7 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a PRIVATE spec \n");
                  VarDeclAttrSpec.isPrivate = true;
+                 VarDeclAttrSpec.privateAttr = AttrSpec_PRIVATE;
                  break;
               }
 
@@ -3345,6 +3391,7 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a ALLOCATABLE spec \n");
                  VarDeclAttrSpec.isAllocatable = true;
+                 VarDeclAttrSpec.allocatableAttr = AttrSpec_ALLOCATABLE;
                  break;
               }
 
@@ -3353,6 +3400,7 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a ASYNCHRONOUS spec \n");
                  VarDeclAttrSpec.isAsynchronous = true;
+                 VarDeclAttrSpec.asyncAttr = AttrSpec_ASYNCHRONOUS;
                  break;
               }
 
@@ -3366,9 +3414,12 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
                     printf ("found a DIMENSION spec \n");
 
 #if DXN_CODE
+               VarDeclAttrSpec.hasDimension = true;
                // transfer the array spec from the astExpressionStack to the AttrSpec record.
-               ROSE_ASSERT(isSgIntVal(astExpressionStack.front()));  // astExpressionStack.front() contains the number of array spec elements for the dimension attribute
-               int count = (isSgIntVal(astExpressionStack.front()))->get_value();
+               SgIntVal * intVal = isSgIntVal(astExpressionStack.front());
+               ROSE_ASSERT(intVal);  // astExpressionStack.front() contains the number of array spec elements for the dimension attribute
+               int count = intVal->get_value();
+               delete intVal;  // must remove it from AST
                astExpressionStack.pop_front();
                processMultidimensionalSubscriptsIntoExpressionList(count);  // the dimension attribute is now on top of astExpressionStack
                SgExprListExp* dimAttr = isSgExprListExp(astExpressionStack.front());
@@ -3385,6 +3436,7 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
           {
               // something analogous to AttrSpec_DIMENSION with codimensionAttr in place of dimensionAttr
               // the codimAttr is perhaps an SgExprListExp with get_expressions of size 0
+              VarDeclAttrSpec.hasCodimension = true;
           }
 
 #endif
@@ -3394,6 +3446,7 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a EXTERNAL spec \n");
                  VarDeclAttrSpec.isExternal = true;
+                 VarDeclAttrSpec.externalAttr = AttrSpec_EXTERNAL;
                  break;
               }
 
@@ -3401,6 +3454,11 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
               {
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a INTENT spec \n");
+                 VarDeclAttrSpec.hasIntent = true;
+                 VarDeclAttrSpec.intentAttr = AttrSpec_INTENT;
+                /* TODO
+                 *  VarDeclAttrSpec.intent = astIntentSpecStack.back(); // see c_action_intent_spec
+                 */
                  break;
               }
 
@@ -3409,6 +3467,7 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a INTRINSIC spec \n");
                  VarDeclAttrSpec.isIntrinsic = true;
+                 VarDeclAttrSpec.intrinsicAttr = AttrSpec_INTRINSIC;
                  break;
               }
 
@@ -3416,6 +3475,8 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
               {
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a BINDC spec \n");
+                 VarDeclAttrSpec.hasBindC = true;
+                 VarDeclAttrSpec.bindCAttr = AttrSpec_BINDC;
                  break;
               }
 
@@ -3424,6 +3485,7 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a OPTIONAL spec \n");
                  VarDeclAttrSpec.isOptional = true;
+                 VarDeclAttrSpec.optionalAttr = AttrSpec_OPTIONAL;
                  break;
               }
 
@@ -3432,6 +3494,7 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                     printf ("found a PARAMETER spec (AttrSpec_PARAMETER = %d)\n",AttrSpec_PARAMETER);
                  VarDeclAttrSpec.hasParameter = true;
+                 VarDeclAttrSpec.parameterAttr = AttrSpec_PARAMETER;
                  break;
               }
 
@@ -3440,6 +3503,7 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a POINTER spec \n");
                  VarDeclAttrSpec.isPointer = true;
+                 VarDeclAttrSpec.pointerAttr = AttrSpec_POINTER;
                  break;
               }
 
@@ -3448,6 +3512,7 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a COPOINTER spec \n");
                  VarDeclAttrSpec.isCopointer = true;
+                 VarDeclAttrSpec.copointerAttr = AttrSpec_COPOINTER;
                  break;
               }
 
@@ -3456,6 +3521,7 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a PROTECTED spec \n");
                  VarDeclAttrSpec.isProtected = true;
+                 VarDeclAttrSpec.protectedAttr = AttrSpec_PROTECTED;
                  break;
               }
 
@@ -3464,6 +3530,7 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a SAVE spec \n");
                  VarDeclAttrSpec.isSave = true;
+                 VarDeclAttrSpec.saveAttr = AttrSpec_SAVE;
                  break;
               }
 
@@ -3472,13 +3539,16 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a TARGET spec \n");
                  VarDeclAttrSpec.isTarget = true;
+                 VarDeclAttrSpec.targetAttr = AttrSpec_TARGET;
                  break;
               }
 
-           case AttrSpec_COTARGET:  // DXN (04/19/2011): TODO
+           case AttrSpec_COTARGET:  // TODO
               {
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a COTARGET spec \n");
+                 VarDeclAttrSpec.isCotarget = true;
+                 VarDeclAttrSpec.cotargetAttr = AttrSpec_COTARGET;
                  break;
               }
 
@@ -3487,6 +3557,7 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a VALUE spec \n");
                  VarDeclAttrSpec.isValue = true;
+                 VarDeclAttrSpec.valueAttr = AttrSpec_VALUE;
                  break;
               }
 
@@ -3495,6 +3566,7 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a VOLATILE spec \n");
                  VarDeclAttrSpec.isVolatile = true;
+                 VarDeclAttrSpec.volatileAttr = AttrSpec_VOLATILE;
                  break;
               }
 
@@ -3502,6 +3574,8 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
               {
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a PASS spec \n");
+                 VarDeclAttrSpec.isPass = true;
+                 VarDeclAttrSpec.passAttr = AttrSpec_PASS;
                  break;
               }
 
@@ -3509,6 +3583,8 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
               {
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a NOPASS spec \n");
+                 VarDeclAttrSpec.isNoPass = true;
+                 VarDeclAttrSpec.noPassAttr = AttrSpec_NOPASS;
                  break;
               }
 
@@ -3516,6 +3592,8 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
               {
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a NON_OVERRIDABLE spec \n");
+                 VarDeclAttrSpec.isNonOverridable = true;
+                 VarDeclAttrSpec.nonOverrideAttr = AttrSpec_NON_OVERRIDABLE;
                  break;
               }
 
@@ -3523,6 +3601,8 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
               {
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a DEFERRED spec \n");
+                 VarDeclAttrSpec.isDeferred = true;
+                 VarDeclAttrSpec.deferredAttr = AttrSpec_DEFERRED;
                  break;
               }
 
@@ -3535,7 +3615,7 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
 
 #if DXN_CODE
 
-     setDeclarationAttributeSpec(VarDeclAttrSpec.varDeclaration, attr);
+//     setDeclarationAttributeSpec(VarDeclAttrSpec.varDeclaration, attr);
 
 #else
   // DQ (1/23/2011): The dimension attribute will be associated with an attribute pusded by R510 #2 c_action_array_spec_element().
@@ -3600,7 +3680,8 @@ void c_action_entity_decl(Token_t * id)
 
 #if DXN_CODE
 #if !SKIP_C_ACTION_IMPLEMENTATION
-    AttrSpec entityAttr = VarDeclAttrSpec;
+    AttrSpec entityAttr;
+    entityAttr = VarDeclAttrSpec;
     SgExpression* initialization = NULL;
 
     // DXN (05/09/2011): update the array spec, coarray spec, char length and initialization of entity decl here
@@ -3612,7 +3693,7 @@ void c_action_entity_decl(Token_t * id)
     }
     if (hasCharLength)
     {
-      ROSE_ASSERT(!astExpressionStack.empty());  // astExpressionStack.front() contains char_length expression
+      ROSE_ASSERT(!astExpressionStack.empty());  // astExpressionStack() contains char_length expression
       entityAttr.lenExpr = astExpressionStack.front();
       astExpressionStack.pop_front();
     }
@@ -3623,6 +3704,7 @@ void c_action_entity_decl(Token_t * id)
       ROSE_ASSERT(coarraySpec);
       entityAttr.codimensionAttr = coarraySpec;
       astExpressionStack.pop_front();
+      entityAttr.hasCodimension = true;
     }
     if (hasArraySpec)
     {
@@ -3636,6 +3718,7 @@ void c_action_entity_decl(Token_t * id)
       ROSE_ASSERT(arraySpec);
       entityAttr.dimensionAttr = arraySpec;
       astExpressionStack.pop_front();
+      entityAttr.hasDimension = true;
     }
 
     SgType* entityType = entityAttr.computeEntityType();
@@ -3682,8 +3765,7 @@ void c_action_entity_decl(Token_t * id)
         ROSE_ASSERT(initializer == NULL);
         SgFunctionType* functionType = isSgFunctionType(functionSymbol->get_type());
         ROSE_ASSERT(functionType != NULL);
-        ROSE_ASSERT(astTypeStack.empty() == false);
-        functionType->set_return_type(astTypeStack.front());
+        functionType->set_return_type(entityType);
         functionType->set_orig_return_type(entityType);
     }
     ROSE_ASSERT(classSymbol == NULL);
@@ -3717,7 +3799,7 @@ void c_action_entity_decl(Token_t * id)
         ROSE_ASSERT(initializedName != NULL);
     }
     else {
-        if (functionSymbol != NULL && !classDef)  { // DXN (02/12/2011): only applies to non component entities.
+        if (functionSymbol != NULL && !classDef)  { // only applies to non component entities.
             ROSE_ASSERT(initializedName == NULL);
             initializedName = new SgInitializedName(name,entityType,initializer,NULL,NULL);
             SgProcedureHeaderStatement* functionDeclaration = isSgProcedureHeaderStatement(functionSymbol->get_declaration());
@@ -4160,7 +4242,7 @@ void c_action_entity_decl(Token_t * id)
  */
 void c_action_entity_decl_list__begin()
    {
-  // The use of the astNameListStack has been discontinued, we just use a stack of names (tokens) now!
+    // The use of the astNameListStack has been discontinued, we just use a stack of names (tokens) now!
   // This make for a simpler implementation and I don't think we require the additional complexity.
 
 #if DXN_DEBUG
@@ -4189,7 +4271,15 @@ void c_action_entity_decl_list__begin()
         }
 
 #if DXN_CODE
-     // TODO
+// Create a variable declaration for this entity_decl_list:
+     VarDeclAttrSpec.varDeclaration = new SgVariableDeclaration();
+     setSourcePosition(VarDeclAttrSpec.varDeclaration);
+     VarDeclAttrSpec.varDeclaration->set_parent(getTopOfScopeStack());
+     VarDeclAttrSpec.varDeclaration->set_definingDeclaration(VarDeclAttrSpec.varDeclaration);
+     VarDeclAttrSpec.varDeclaration->get_declarationModifier().get_accessModifier().setUndefined();
+     VarDeclAttrSpec.setDeclAttrSpecs();
+     VarDeclAttrSpec.baseType = astBaseTypeStack.front();
+     astBaseTypeStack.pop_front();
 #else
      ROSE_ASSERT(astBaseTypeStack.empty() == false);
 
@@ -4204,7 +4294,6 @@ void c_action_entity_decl_list__begin()
 
 void c_action_entity_decl_list(int count)
    {
-    raise(SIGINT);
     // This function R504 R503-F2008 is similar to R441 but is used for declarations in NON-types.
 
   // Since we already have the elements in the list we don't have to do anything here.
@@ -4260,7 +4349,6 @@ void c_action_entity_decl_list(int count)
  */
 void c_action_initialization(ofp_bool hasExpr, ofp_bool hasNullInit)
    {
-    raise(SIGINT);
     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_initialization(): hasExpr = %s hasNullInit = %s \n",hasExpr ? "true" : "false",hasNullInit ? "true" : "false");
 
@@ -4371,14 +4459,20 @@ void c_action_null_init(Token_t * id)
  */
 void c_action_access_spec(Token_t * keyword, int type)
    {
+    raise(SIGINT);
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_access_spec(): keyword = %p = %s type = %d \n",keyword,keyword != NULL ? keyword->text : "NULL",type);
 
+#if DXN_CODE
+     VarDeclAttrSpec.hasAccessSpec = true;
+     VarDeclAttrSpec.accessType = type;
+#else
      astAttributeSpecStack.push_front(type);
 
      ROSE_ASSERT(keyword != NULL);
+#endif
 
-#if 1
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R508 c_action_access_spec()");
 #endif
@@ -4395,7 +4489,6 @@ void c_action_access_spec(Token_t * keyword, int type)
 // void c_action_language_binding_spec(Token_t * id, ofp_bool hasName)
 void c_action_language_binding_spec(Token_t * keyword, Token_t * id, ofp_bool hasName)
    {
-    raise(SIGINT);
     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_language_binding_spec(): keyword = %p = %s id = %p = %s hasName = %s \n",keyword,keyword != NULL ? keyword->text : "NULL",id,id != NULL ? id->text : "NULL",hasName ? "true" : "false");
 
@@ -4428,7 +4521,6 @@ void c_action_array_spec__begin()
 
 void c_action_array_spec(int count)
    {
-    raise(SIGINT);
   // The stack size should match the count, NO!
 
   // The stack size here is the number of types used to represent the array (a single SgArrayType), 
@@ -4496,7 +4588,6 @@ void c_action_array_spec(int count)
 
 void c_action_array_spec_element(int type)
    {
-    raise(SIGINT);
 
 #if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
@@ -4729,6 +4820,18 @@ void c_action_access_stmt(Token_t * label, Token_t * eos, ofp_bool hasList)
   // (see test2007_147.f, the original Fortran I code from the IBM 704 Fortran Manual).
      build_implicit_program_statement_if_required();
 
+#if DXN_CODE
+
+     if (VarDeclAttrSpec.accessType == AttrSpec_PRIVATE)
+        {
+          buildAttributeSpecificationStatement(SgAttributeSpecificationStatement::e_accessStatement_private,label,eos);
+        }
+     else // (VarDeclAttrSpec.accessType == AttrSpec_PUBLIC)
+        {
+          buildAttributeSpecificationStatement(SgAttributeSpecificationStatement::e_accessStatement_public,label,eos);
+        }
+
+#else
   // What does this stmt mean if there is no list? This can be false (see test2008_34.f90)
   // ROSE_ASSERT(hasList == true);
 
@@ -4762,8 +4865,9 @@ void c_action_access_stmt(Token_t * label, Token_t * eos, ofp_bool hasList)
                ROSE_ASSERT(false);
              }
         }
+#endif
 
-#if 0
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R518 c_action_access_stmt()");
 #endif
@@ -6805,7 +6909,7 @@ void c_action_common_stmt(Token_t *label, Token_t *commonKeyword, Token_t *eos, 
 
      astScopeStack.front()->append_statement(commonBlock);
 
-#if 0
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R557 c_action_common_stmt()");
 #endif
@@ -7765,7 +7869,7 @@ void c_action_data_ref(int numPartRef)
                if (astExpressionStack.empty() == false)
                     printf ("astExpressionStack.front() = %s \n",astExpressionStack.front()->class_name().c_str());
              }
-#if 0
+#if DXN_DEBUG
        // Output debugging information about saved state (stack) information.
           outputState("At variableSymbol != NULL of R612 c_action_data_ref()");
 #endif
@@ -7984,7 +8088,7 @@ void c_action_data_ref(int numPartRef)
           }
         }
 
-#if 0
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("Before removing names from astNameStack at BOTTOM of R612 c_action_data_ref()");
 #endif
@@ -8267,7 +8371,7 @@ void c_action_part_ref(Token_t * id, ofp_bool hasSelectionSubscriptList, ofp_boo
      astMultipartReferenceStack.push_front(MultipartReferenceType(id_name,hasSelectionSubscriptList,hasImageSelector));
 #endif
 
-#if 0
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R613 c_action_part_ref()");
 #endif
@@ -17398,7 +17502,7 @@ void c_action_generic_spec(Token_t *keyword, Token_t *name, int type)
   // ROSE_ASSERT(name != NULL);
   // astNameStack.push_front(name);
 
-#if 0
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R1207 c_action_generic_spec()");
 #endif
@@ -18128,7 +18232,7 @@ void c_action_function_stmt(Token_t * label, Token_t * keyword, Token_t * name, 
           printf ("In c_action_function_stmt(): label = %p (function name) name = %s hasGenericNameList = %s hasSuffix = %s \n",
                label,name ? name->text : "NULL",hasGenericNameList ? "true" : "false",hasSuffix ? "true" : "false");
 
-#if 0
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R1224 c_action_function_stmt()");
 #endif
@@ -18202,7 +18306,7 @@ void c_action_function_stmt(Token_t * label, Token_t * keyword, Token_t * name, 
         }
      ROSE_ASSERT(astTypeStack.empty() == true);
 
-#if 0
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R1224 c_action_function_stmt()");
 #endif
@@ -19260,7 +19364,6 @@ void c_action_cleanUp()
 #if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
 void c_action_coarray_spec(int count) 
     {
-    raise(SIGINT);
 #if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of c_action_coarray_spec()");
@@ -19279,9 +19382,12 @@ void c_action_coarray_spec(int count)
     astExpressionStack.push_front(expresssionList);
 
 #else
-    if (count == 1) {
+    if (count == 1)
+     {
           astExpressionStack.pop_front();
-     } else {
+     }
+    else
+     {
           cout << "ERROR (Rice CoArray Fortran 2.0): the co-rank must be 1." << endl;
      }
 
