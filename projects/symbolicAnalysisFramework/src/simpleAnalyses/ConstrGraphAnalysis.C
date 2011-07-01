@@ -268,9 +268,7 @@ bool ConstrGraphAnalysis::transfer(const Function& func, const DataflowNode& n, 
 		
 		// Set up the information on the arguments and target of the arithmetic operation
 		if(isSgBinaryOp(n.getNode())) {
-			if(isSgPlusAssignOp(n.getNode()) || isSgMinusAssignOp(n.getNode()) ||
-			   isSgModAssignOp(n.getNode())  || isSgMultAssignOp(n.getNode())  ||
-			   isSgDivAssignOp(n.getNode())) {
+			if(isSgCompoundAssignOp(n.getNode())) {
 				lhs = SgExpr2Var(isSgBinaryOp(n.getNode())->get_lhs_operand());
 				arg1 = lhs;
 				arg2 = SgExpr2Var(isSgBinaryOp(n.getNode())->get_rhs_operand());
