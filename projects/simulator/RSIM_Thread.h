@@ -165,8 +165,12 @@ public:
     /** Print a progress report if progress reporting is enabled and enough time has elapsed since the previous report. */
     void report_progress_maybe();
 
-    /** Prints information about stack frames. */
-    void report_stack_frames(RTS_Message*);
+    /** Prints information about stack frames.  The first line of output will include the optional title string (followed by a
+     *  line feed) or the string "stack frames:".  The stack is unwound beginning with the current EIP, and using the EBP
+     *  register to locate both the next EBP and the return address.  If @p bp_not_saved is true, then the return address of
+     *  the inner-most function is assumed to be on the top of the stack (ss:[esp]), as is the case immediately after a CALL
+     *  instruction before the called function has a chance to "PUSH EBP; MOV EBP, ESP". */
+    void report_stack_frames(RTS_Message*, const std::string &title="", bool bp_not_saved=false);
 
     /**************************************************************************************************************************
      *                                  Callbacks

@@ -11,18 +11,50 @@
  *  tool. The function name is printed to the TRACE_MISC facility whenever the current function changes. */
 class FunctionReporter: public RSIM_Callbacks::InsnCallback {
 public:
+    bool show_call_stack;                       /**< Show a stack trace rather than just a function name. */
+    FunctionReporter(bool show_call_stack=false)
+        : show_call_stack(show_call_stack) {}
+
     virtual FunctionReporter *clone() { return this; }
 
     virtual bool operator()(bool enabled, const Args &args) {
+        RSIM_Process *process = args.thread->get_process();
         SgAsmBlock *basic_block = isSgAsmBlock(args.insn->get_parent());
         SgAsmFunctionDeclaration *func = basic_block ? basic_block->get_enclosing_function() : NULL;
         std::string new_name = func ? func->get_name() : "";
         if (new_name!=name) {
             name = new_name;
-            if (name.empty()) {
-                args.thread->tracing(TRACE_MISC)->mesg("in unknown function");
+            if (show_call_stack) {
+                /* Check for the case when we recently executed a CALL instruction, but the called function has not yet pushed
+                 * the old EBP register onto the stack.  In this case, the word at ss:[esp] will be two or five bytes past the
+                 * address of a CALL instruction in executable memory.  This only handles CALLs encoded in two or five
+                 * bytes. */
+                bool bp_not_pushed = false;
+                uint32_t esp = args.thread->policy.readGPR(x86_gpr_sp).known_value();
+                uint32_t top_word;
+                SgAsmx86Instruction *call_insn;
+                try {
+                    if (4==process->mem_read(&top_word, esp, 4)) {
+                        if (NULL!=(call_insn=isSgAsmx86Instruction(process->get_instruction(top_word-5))) &&
+                            (x86_call==call_insn->get_kind() || x86_farcall==call_insn->get_kind())) {
+                            bp_not_pushed = true;
+                        } else if (NULL!=(call_insn=isSgAsmx86Instruction(process->get_instruction(top_word-2))) &&
+                                   (x86_call==call_insn->get_kind() || x86_farcall==call_insn->get_kind())) {
+                            bp_not_pushed = true;
+                        } else if (NULL!=(call_insn=isSgAsmx86Instruction(process->get_instruction(top_word-6))) &&
+                                   (x86_call==call_insn->get_kind() || x86_farcall==call_insn->get_kind())) {
+                            bp_not_pushed = true;
+                        }
+                    }
+                } catch (const Disassembler::Exception&) {
+                    /* ignored -- it just means the top of stack probably doesn't even point to executable memory */
+                }
+                args.thread->report_stack_frames(args.thread->tracing(TRACE_MISC), "FunctionReporter: stack frames",
+                                                 bp_not_pushed);
+            } else if (name.empty()) {
+                args.thread->tracing(TRACE_MISC)->mesg("FunctionReporter: in unknown function");
             } else {
-                args.thread->tracing(TRACE_MISC)->mesg("in function \"%s\"", name.c_str());
+                args.thread->tracing(TRACE_MISC)->mesg("FunctionReporter: in function \"%s\"", name.c_str());
             }
         }
         return enabled;
