@@ -637,7 +637,7 @@ bool DivAnalysis::transfer(const Function& func, const DataflowNode& n, NodeStat
 		if(resLat) modified = resLat->setTop() || modified;
 	// Arithmetic Operations
 	} else if(isSgPlusAssignOp(n.getNode())  || isSgAddOp(n.getNode()) ||
-	          isSgMinusAssignOp(n.getNode()) || isSgMinusOp(n.getNode()) ||
+	          isSgMinusAssignOp(n.getNode()) || isSgSubtractOp(n.getNode()) ||
 	          isSgModAssignOp(n.getNode())   || isSgModOp(n.getNode()) ||
 	          isSgMultAssignOp(n.getNode())  || isSgMultiplyOp(n.getNode()) ||
 	          isSgDivAssignOp(n.getNode())   || isSgDivideOp(n.getNode()) ||
@@ -690,7 +690,7 @@ bool DivAnalysis::transfer(const Function& func, const DataflowNode& n, NodeStat
 		if(resLat && arg1Lat && arg2Lat) {
 			// ADDITION / SUBTRACTION
 			if(isSgPlusAssignOp(n.getNode())  || isSgAddOp(n.getNode()) ||
-		      isSgMinusAssignOp(n.getNode()) || isSgMinusOp(n.getNode()) ||
+		      isSgMinusAssignOp(n.getNode()) || isSgSubtractOp(n.getNode()) ||
 		      isSgMinusMinusOp(n.getNode())  || isSgPlusPlusOp(n.getNode())) {
 		      // Either one Bottom or Uninitialized
 		      if(//arg1Lat->getLevel() == DivLattice::uninitialized || arg2Lat->getLevel() == DivLattice::uninitialized ||
