@@ -2587,7 +2587,7 @@ buildImplicitVariableDeclaration( const SgName & variableName )
 
      astNameStack.pop_front();
      astNodeStack.push_front(initializedName);
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("Calling buildVariableDeclaration to build an implicitly defined variable from trace_back_through_parent_scopes_lookup_variable_symbol()");
 #endif
@@ -6535,60 +6535,3 @@ buildInitializedNameAndPutOntoStack(const SgName & name, SgType* type, SgInitial
      return initializedName;
    }
 
-// DXN (05/10/2011): pointer < copointer < codimension < dimension
-SgType* AttrSpec::computeEntityType()
-{
-    if (lenExpr)
-    {
-        // TODO: convert initType to string type with char length
-    }
-    if (dimensionAttr)
-    {
-      baseType = buildArrayType();
-    }
-    if (codimensionAttr)
-    {
-      makeBaseTypeCoArray();
-    }
-    if (isCopointer)
-    {
-      baseType = new SgPointerType(baseType);
-      baseType->set_isCoArray(true);             // a copointer is a pointer whose isCoArray flag is true.
-    }
-    if (isPointer)
-    {
-      baseType = new SgPointerType(baseType);
-    }
-    return baseType; // TODO
-}
-
-SgArrayType* AttrSpec::buildArrayType()
-{
-    SgExpression* sizeExpression = new SgNullExpression();  // this is the so-called index
-    setSourcePosition(sizeExpression);
-    SgArrayType* arrayType = new SgArrayType(baseType,sizeExpression);
-    sizeExpression->set_parent(arrayType);
-    arrayType->set_dim_info(dimensionAttr);
-    dimensionAttr->set_parent(arrayType);
-    arrayType->set_rank(dimensionAttr->get_expressions().size());
-    return arrayType;
-}
-
-void AttrSpec::makeBaseTypeCoArray()
-{
-//    VariantT varT = baseType->variantT();
-//    if (varT == V_SgTypeChar || varT == V_SgTypeInt || varT == V_SgTypeBool ||
-//        varT == V_SgTypeFloat || varT == V_SgTypeComplex || varT == V_SgTypeDouble)
-    if (!isSgArrayType(baseType))
-    { // build an array of rank 0 to represent a covariable of a non-array type.
-      SgExpression* sizeExpression = new SgNullExpression();
-      setSourcePosition(sizeExpression);
-      SgArrayType* arrayType = new SgArrayType(baseType,sizeExpression);
-      sizeExpression->set_parent(arrayType);
-      arrayType->set_dim_info(codimensionAttr);
-      codimensionAttr->set_parent(arrayType);
-      arrayType->set_rank(0);
-      baseType = arrayType;
-    }
-    baseType->set_isCoArray(true);
-}
