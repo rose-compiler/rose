@@ -482,9 +482,8 @@ bool IntraFWDataflow::runAnalysis(const Function& func, NodeState* fState, bool 
 					}
 				}
 			}
-			// Otherwise, call the user's transfer function
-			//else
-				/*modified = */transfer(func, n, *state, dfInfoBelow);
+
+			transfer(func, n, *state, dfInfoBelow);
 			
 			// =================== TRANSFER FUNCTION ===================
 			if(analysisDebugLevel>=1)
@@ -717,9 +716,7 @@ bool IntraBWDataflow::runAnalysis(const Function& func, NodeState* fState, bool 
 				
 				// NEED TO INCORPORATE INFORMATION ABOUT RETURN INTO DATAFLOW SOMEHOW
 			}
-			// Otherwise, call the user's transfer function
-			//else
-				/*modified = */
+
 			transfer(func, n, *state, dfInfoAbove);
 			
 			// =================== TRANSFER FUNCTION ===================
