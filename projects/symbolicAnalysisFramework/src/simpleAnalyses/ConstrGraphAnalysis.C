@@ -252,7 +252,7 @@ bool ConstrGraphAnalysis::transfer(const Function& func, const DataflowNode& n, 
 		// ??? }
 	// Arithmetic Operations
 	} else if(isSgPlusAssignOp(n.getNode())  || isSgAddOp(n.getNode())      ||
-	          isSgMinusAssignOp(n.getNode()) || isSgMinusOp(n.getNode())    ||
+	          isSgMinusAssignOp(n.getNode()) || isSgSubtractOp(n.getNode()) ||
 	          isSgModAssignOp(n.getNode())   || isSgModOp(n.getNode())      ||
 	          isSgMultAssignOp(n.getNode())  || isSgMultiplyOp(n.getNode()) ||
 	          isSgDivAssignOp(n.getNode())   || isSgDivideOp(n.getNode())   ||
@@ -318,7 +318,7 @@ bool ConstrGraphAnalysis::transfer(const Function& func, const DataflowNode& n, 
 		if((resLive || lhsLive) && arg1Live && arg2Live) {
 			// ADDITION / SUBTRACTION / MULTIPLICATION / DIVISION / MODULUS
 			if(isSgPlusAssignOp(n.getNode())  || isSgAddOp(n.getNode()) ||
-		      isSgMinusAssignOp(n.getNode()) || isSgMinusOp(n.getNode()) ||
+		      isSgMinusAssignOp(n.getNode()) || isSgSubtractOp(n.getNode()) ||
 		      isSgMinusMinusOp(n.getNode())  || isSgPlusPlusOp(n.getNode()) ||
 		      isSgMultAssignOp(n.getNode())  || isSgMultiplyOp(n.getNode()) ||
 		      isSgDivAssignOp(n.getNode())   || isSgDivideOp(n.getNode()) ||
@@ -332,7 +332,7 @@ bool ConstrGraphAnalysis::transfer(const Function& func, const DataflowNode& n, 
 		      
 		      // ADDITION / SUBTRACTION
 		      if(isSgPlusAssignOp(n.getNode())  || isSgAddOp(n.getNode()) ||
-		      	isSgMinusAssignOp(n.getNode()) || isSgMinusOp(n.getNode()) ||
+		      	isSgMinusAssignOp(n.getNode()) || isSgSubtractOp(n.getNode()) ||
 		      	isSgMinusMinusOp(n.getNode())  || isSgPlusPlusOp(n.getNode())) {
 		      		cout << indent << "ADDITION / SUBTRACTION\n";
 			      // ??? if(arg1Lat->isEqVars(arg1, zeroVar, a_arg1, b_arg1, c_arg1)) {
