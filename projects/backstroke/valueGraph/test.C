@@ -51,24 +51,6 @@ int main(int argc, char *argv[])
     eventList.insert(make_pair("Node", "TracePDU"));
 #endif
     
-#if 0
-    eventList.insert("Timeout");
-    eventList.insert("StartApp");
-    eventList.insert("StopApp");
-    eventList.insert("TransmitComplete");
-    eventList.insert("SendNotification");
-    eventList.insert("WirelessTxStart");
-    eventList.insert("WirelessTxEnd");
-    eventList.insert("PacketRxStart");
-    eventList.insert("PacketRxEnd");
-    eventList.insert("GetL2Proto");
-    eventList.insert("Busy");
-    eventList.insert("Send");
-    eventList.insert("Notify");
-    eventList.insert("DataIndication");
-    eventList.insert("SendPending");
-#endif
-    
     set<SgFunctionDefinition*> funcDefs;
     set<SgFunctionDeclaration*> funcDecls;
     
@@ -84,8 +66,12 @@ int main(int argc, char *argv[])
         SgFunctionDefinition* funcDef = isSgFunctionDefinition(*i);
         ROSE_ASSERT(funcDef != NULL);
 
-        SgClassDefinition* classDef = SageInterface::getEnclosingClassDefinition(
-                funcDef->get_declaration()->get_firstNondefiningDeclaration());
+        SgDeclarationStatement* firstDecl = 
+            funcDef->get_declaration()->get_firstNondefiningDeclaration();
+        if (firstDecl == NULL)
+            firstDecl = funcDef->get_declaration();
+        
+        SgClassDefinition* classDef = SageInterface::getEnclosingClassDefinition(firstDecl);
         if (!classDef) 
             continue;
         
@@ -98,20 +84,6 @@ int main(int argc, char *argv[])
             //funcDefs.insert(funcDef);
         }
     }
-    
-#if 0
-    vector<SgClassDefinition*> classes = BackstrokeUtility::querySubTree<SgClassDefinition>(project);
-    foreach (SgClassDefinition* classDef, classes)
-    {
-        const ClassHierarchyWrapper::ClassDefSet& subclasses = classHierarchy.getSubclasses(classDef);
-        if (classDef->get_declaration()->get_name() != "\"NotifyHandler\"")
-            continue;
-        cout << "\n\nClass: " << classDef->get_declaration()->get_name() << ": ";
-        foreach (SgClassDefinition* def, subclasses)
-            cout << def->get_declaration()->get_name() << " ";
-        cout << "\n\n";
-    }
-#endif
     
     // Search all events and find all functions which should be reversed.
  
@@ -127,6 +99,11 @@ int main(int argc, char *argv[])
         if (funcDefs.count(funcDef))
             continue;
         
+        string mangledName = funcDef->get_declaration()->get_mangled_name();
+        if (funcDefsAdded.count(mangledName))
+            continue;
+        funcDefsAdded.insert(mangledName);
+        
         cout << "\nSearching function " << funcDef->get_declaration()->get_name() << "\n\n";
 
         vector<SgFunctionCallExp*> funcCalls = 
@@ -137,7 +114,7 @@ int main(int argc, char *argv[])
             if (funcCallNode.canBeReversed)
             {
                 //cout << funcCall->unparseToString() << endl;
-#if 0
+#if 1
                 vector<SgFunctionDefinition*> defs;
                 CallTargetSet::getDefinitionsForExpression(funcCall, &classHierarchy, defs);
                 foreach (SgFunctionDefinition* def, defs)
@@ -153,11 +130,12 @@ int main(int argc, char *argv[])
                 else
                 {
                     funcDecls.insert(funcCallNode.funcDecl);
-                    decls.insert(funcCallNode.funcDecl);
+                    decls.push_back(funcCallNode.funcDecl);
                 }
                
                 //cout << decls.size() << endl;
 
+#if 1
                 foreach (SgFunctionDefinition* def, allFuncDefs)
                 {
                     foreach (SgFunctionDeclaration* decl, decls)
@@ -166,6 +144,7 @@ int main(int argc, char *argv[])
                             funcDefsUnprocessed.push(def);
                     }
                 }
+#endif
                 
 #if 0
                 SgFunctionDeclaration* decl = 
@@ -179,12 +158,7 @@ int main(int argc, char *argv[])
             }
         }
 
-        string mangledName = funcDef->get_declaration()->get_mangled_name();
-        if (funcDefsAdded.count(mangledName) == 0)
-        {
-            funcDefs.insert(funcDef);
-            funcDefsAdded.insert(mangledName);
-        }
+        funcDefs.insert(funcDef);
         funcDecls.insert(funcDef->get_declaration());
     }
     

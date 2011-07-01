@@ -1965,6 +1965,8 @@ void reverseFunctions(const set<SgFunctionDefinition*>& funcDefs)
     // Prepend includes to test files.
     foreach (SgGlobal* globalScope, globalScopes)
         SageInterface::insertHeader("rctypes.h", PreprocessingInfo::after, false, globalScope);
+    
+    delete ssa;
 }
 
 

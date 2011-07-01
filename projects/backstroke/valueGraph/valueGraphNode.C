@@ -253,11 +253,16 @@ FunctionCallNode::FunctionCallNode(SgFunctionCallExp* funcCall, bool isRvs)
         if (funcRef)
         {
             SgMemberFunctionDeclaration* memFuncDecl = funcRef->getAssociatedMemberFunctionDeclaration();
+            const SgFunctionModifier& modifier = memFuncDecl->get_functionModifier();
+            const SgSpecialFunctionModifier& specialModifier = memFuncDecl->get_specialFunctionModifier();
+            
             //cout << funcDecl->get_name().str() << funcDecl->get_functionModifier().isVirtual() << endl;
-            isVirtual = memFuncDecl->get_functionModifier().isVirtual();
-            //cout << "@@@" << funcDecl->get_type()->unparseToString() << endl;
-            //isConst = SageInterface::isConstType(funcDecl->isDefinedInClass());
-            isInline = memFuncDecl->isDefinedInClass();
+            
+            isVirtual = modifier.isVirtual();
+            isConst = SageInterface::isConstType(memFuncDecl->get_type());
+            isInline = modifier.isInline();
+            isOperator = specialModifier.isOperator() || specialModifier.isConversion();
+            isCtorOrDtor = specialModifier.isDestructor() || specialModifier.isConstructor();
 
             funcDecl = memFuncDecl;
             //if (isVirtual)
@@ -268,7 +273,11 @@ FunctionCallNode::FunctionCallNode(SgFunctionCallExp* funcCall, bool isRvs)
 
         else 
         {
+            canBeReversed = false;
+            return;
+            
             cout << funcCall->unparseToString() << endl;
+            funcCall->get_file_info()->display();
             ROSE_ASSERT(0);
             //isVirtual = true;
             //cout << "UNKNOWN" << "\t: VIRTUAL2\n\n";
@@ -330,7 +339,8 @@ FunctionCallNode::FunctionCallNode(SgFunctionCallExp* funcCall, bool isRvs)
     ROSE_ASSERT(funcDecl);
     funcName = funcDecl->get_name();
     
-    if (isVirtual)
+    // Currently we don't reverse virtual destructor. We will reverse it in the future.
+    if (isVirtual && !isCtorOrDtor)
         canBeReversed = true;
     else if (isConst || isInline || isOperator || isCtorOrDtor || isStd)
         canBeReversed = false;
