@@ -730,6 +730,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType*
 
   // DQ (2/24/2009): Delete the old parameter list build by the actualFunction (template argument) constructor.
      ROSE_ASSERT(func->get_parameterList() != NULL);
+     cout << "dELETING" << endl;
      delete func->get_parameterList();
      func->set_parameterList(NULL);
 
@@ -3817,9 +3818,10 @@ SgLambdaRefExp*
 SageBuilder::buildLambdaRefExp(SgType* return_type, SgFunctionParameterList* params, SgScopeStatement* scope) {
     SgLambdaRefExp* result = new SgLambdaRefExp();
 
-    std::stringstream name;
-    name << "__rose__";
-    name << "lambda__" << (void*) result << "__";
+    std::ostringstream name;
+    name << "__rose__lambda__"
+         << (void*) result
+         << "__";
 
     SgFunctionDeclaration* fxn =
         SageBuilder::buildDefiningFunctionDeclaration(
@@ -3827,7 +3829,9 @@ SageBuilder::buildLambdaRefExp(SgType* return_type, SgFunctionParameterList* par
                 return_type,
                 params,
                 scope);
+
     result->set_functionDeclaration(fxn);
+    fxn->set_parent(result);
 
     setOneSourcePositionForTransformation(result);
     return result;

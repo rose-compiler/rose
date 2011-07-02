@@ -248,26 +248,22 @@ sage_buildExprListExp(PyObject *self, PyObject *args)
 PyObject*
 sage_buildFunctionDef(PyObject *self, PyObject *args)
 {
-    PyObject* func_def_capsule     = PyTuple_GetItem(args, 0);
-    PyObject* py_defaults_capsules = PyTuple_GetItem(args, 1);
+    PyObject* py_name              = PyTuple_GetItem(args, 0);
+    PyObject* py_params            = PyTuple_GetItem(args, 1);
     PyObject* py_decorators        = PyTuple_GetItem(args, 2);
     PyObject* file_info_capsule    = PyTuple_GetItem(args, 3);
     PyObject* scope_capsule        = PyTuple_GetItem(args, 4);
 
+    string sg_name = string( PyString_AsString(py_name) );
 
-    PyObject* py_name = PyObject_GetAttrString(func_def_capsule, "name");
-    string func_name = string( PyString_AsString(py_name) );
-
-    PyObject* py_args = PyObject_GetAttrString(func_def_capsule, "args");
-              py_args = PyObject_GetAttrString(py_args, "args");
     SgFunctionParameterList* sg_params =
-        buildFunctionParameterList(py_args, py_defaults_capsules);
+        PyDecapsulate<SgFunctionParameterList>(py_params);
 
     SgScopeStatement* sg_scope_statement =
         PyDecapsulate<SgScopeStatement>(scope_capsule);
 
     SgFunctionDeclaration* sg_func_decl =
-        SageBuilder::buildDefiningFunctionDeclaration(func_name,
+        SageBuilder::buildDefiningFunctionDeclaration(sg_name,
                 SageBuilder::buildVoidType(),
                 sg_params,
                 sg_scope_statement);
@@ -380,20 +376,22 @@ sage_buildKeyword(PyObject *self, PyObject *args)
 PyObject*
 sage_buildLambda(PyObject *self, PyObject *args)
 {
-    PyObject* py_args  = PyTuple_GetItem(args, 0);
-    PyObject* py_scope = PyTuple_GetItem(args, 1);
+    PyObject* py_params = PyTuple_GetItem(args, 0);
+    PyObject* py_scope  = PyTuple_GetItem(args, 1);
 
-    PyObject* py_arg_list = PyObject_GetAttrString(py_args, "args");
     SgFunctionParameterList* sg_params =
-        buildFunctionParameterList(py_arg_list, NULL);
+        PyDecapsulate<SgFunctionParameterList>(py_params);
 
     SgType* sg_ret_type = SageBuilder::buildVoidType();
 
     SgScopeStatement* sg_scope = PyDecapsulate<SgScopeStatement>(py_scope);
-    ROSE_ASSERT(sg_scope != NULL);
 
     SgLambdaRefExp* sg_lambda_exp =
         SageBuilder::buildLambdaRefExp(sg_ret_type, sg_params, sg_scope);
+
+    ROSE_ASSERT(sg_lambda_exp);
+    ROSE_ASSERT(sg_lambda_exp->get_functionDeclaration());
+    ROSE_ASSERT(sg_lambda_exp->get_functionDeclaration()->get_definition());
 
     PyObject* return_tuple = PyTuple_New(2);
     PyTuple_SetItem(return_tuple, 0, PyEncapsulate(sg_lambda_exp));
