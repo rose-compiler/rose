@@ -138,20 +138,15 @@ class MultipartReferenceType
           SgName name;
           bool hasSelectionSubscriptList;
           bool hasImageSelector;
+          bool hasCo_deref;  // DXN (04/22/2011): for copointer derefencing
 
-          MultipartReferenceType ( const SgName & input_name, const bool & input_hasSelectionSubscriptList, const bool & input_hasImageSelector )
+          MultipartReferenceType ( const SgName & input_name = "", const bool & input_hasSelectionSubscriptList = false, const bool & input_hasImageSelector = false,
+                                   const bool & input_hasCo_deref = false)  // DXN (04/22/2011): add default values to avoid writing a separate default constructor
              {
                name                      = input_name;
                hasSelectionSubscriptList = input_hasSelectionSubscriptList;
                hasImageSelector          = input_hasImageSelector;
-             }
-
-      //  We need a default constructor to support use of this class in STL.
-          MultipartReferenceType ()
-             {
-            // name                      = input_name;
-               hasSelectionSubscriptList = false;
-               hasImageSelector          = false;
+               hasCo_deref               = input_hasCo_deref;
              }
 
        // We need a copy constructor and the operator== to support use of this class in STL.
@@ -160,15 +155,13 @@ class MultipartReferenceType
                name                      = X.name;
                hasSelectionSubscriptList = X.hasSelectionSubscriptList;
                hasImageSelector          = X.hasImageSelector;
+               hasCo_deref               = X.hasCo_deref;
              }
 
        // We need a copy constructor and the operator== to support use of this class in STL.
           bool operator== ( const MultipartReferenceType & X )
              {
-               bool returnValue = false;
-               if (name == X.name && hasSelectionSubscriptList == X.hasSelectionSubscriptList && hasImageSelector == X.hasImageSelector)
-                    returnValue = true;
-               return returnValue;
+               return (name == X.name && hasSelectionSubscriptList == X.hasSelectionSubscriptList && hasImageSelector == X.hasImageSelector && hasCo_deref == X.hasCo_deref);
              }
    };
 
