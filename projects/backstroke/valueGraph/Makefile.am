@@ -75,6 +75,8 @@ wlan1:
 		$(GTNETS_DIR)/interface-basic.cc \
 		$(GTNETS_DIR)/interface-wireless.cc \
 		$(GTNETS_DIR)/interface-real.cc \
+		$(GTNETS_DIR)/interface-ghost.cc \
+		$(GTNETS_DIR)/interface-ethernet.cc \
 		$(GTNETS_FLAG)
 
 wlan2:
@@ -83,29 +85,75 @@ wlan2:
 		$(GTNETS_DIR)/l4protocol.cc \
 		$(GTNETS_DIR)/l2proto802.11.cc \
 		$(GTNETS_DIR)/l2proto802.3.cc \
+		$(GTNETS_FLAG)
+
+
+wlan3:
+	./functionReverserTest -c \
 		$(GTNETS_DIR)/timer.cc \
 		$(GTNETS_DIR)/timerbuckets.cc \
 		$(GTNETS_DIR)/node.cc \
 		$(GTNETS_DIR)/node-real.cc \
-		$(GTNETS_FLAG)
-
-wlan3:
-	./functionReverserTest -c \
 		$(GTNETS_DIR)/node-impl.cc \
 		$(GTNETS_DIR)/node-ghost.cc \
+		$(GTNETS_FLAG)
+
+wlan4:
+	./functionReverserTest -c \
 		$(GTNETS_DIR)/tcp.cc \
+		$(GTNETS_FLAG)
+
+wlan5:
+	./functionReverserTest -c \
 		$(GTNETS_DIR)/rng.cc \
 		$(GTNETS_DIR)/queue.cc \
 		$(GTNETS_DIR)/rtt-estimator.cc \
 		$(GTNETS_DIR)/simulator.cc \
 		$(GTNETS_DIR)/trace.cc \
-		$(GTNETS_DIR)/ipv4.cc \
 		$(GTNETS_DIR)/datapdu.cc \
+		$(GTNETS_FLAG)
+
+wlan6:
+	./functionReverserTest -c \
+		$(GTNETS_DIR)/routing-aodv.cc \
+		$(GTNETS_DIR)/routing-nixvector.cc \
+		$(GTNETS_DIR)/routing-static.cc \
+		$(GTNETS_FLAG)
+
+wlan7:
+	./functionReverserTest -c \
 		$(GTNETS_DIR)/RngStream.cc \
 		$(GTNETS_DIR)/tfstream.cc \
-		$(GTNETS_DIR)/packet-callbacks.cc \
 		$(GTNETS_DIR)/packet.cc \
 		$(GTNETS_DIR)/routing.cc \
+		$(GTNETS_FLAG)
+
+wlan8:
+	./functionReverserTest -c \
+		$(GTNETS_DIR)/udp.cc \
+		$(GTNETS_DIR)/link-rti.cc \
+		$(GTNETS_DIR)/droptail.cc \
+		$(GTNETS_DIR)/portdemux.cc \
+		$(GTNETS_DIR)/linkp2p.cc \
+		$(GTNETS_DIR)/mobility.cc \
+		$(GTNETS_FLAG)
+
+wlan9:
+	./functionReverserTest -c \
+		$(GTNETS_DIR)/ipv4.cc \
+		$(GTNETS_DIR)/packet-callbacks.cc \
+		$(GTNETS_DIR)/routing-nvr.cc \
+		$(GTNETS_DIR)/routing-dsr.cc \
+		$(GTNETS_FLAG)
+
+wlan10:
+	./functionReverserTest -c \
+		$(GTNETS_DIR)/application.cc \
+		$(GTNETS_DIR)/application-tcpsend.cc \
+		$(GTNETS_DIR)/application-cbr.cc \
+		$(GTNETS_DIR)/protograph.cc \
+		$(GTNETS_DIR)/macaddr.cc \
+		$(GTNETS_DIR)/ethernet.cc \
 		$(GTNETS_FLAG)
 
 wlan-all:
@@ -117,6 +165,8 @@ wlan-all:
 		$(GTNETS_DIR)/interface-basic.cc \
 		$(GTNETS_DIR)/interface-wireless.cc \
 		$(GTNETS_DIR)/interface-real.cc \
+		$(GTNETS_DIR)/interface-ghost.cc \
+		$(GTNETS_DIR)/interface-ethernet.cc \
 		$(GTNETS_DIR)/l2proto.cc \
 		$(GTNETS_DIR)/l4protocol.cc \
 		$(GTNETS_DIR)/l2proto802.11.cc \
@@ -130,6 +180,7 @@ wlan-all:
 		$(GTNETS_DIR)/tcp.cc \
 		$(GTNETS_DIR)/rng.cc \
 		$(GTNETS_DIR)/queue.cc \
+		$(GTNETS_DIR)/macaddr.cc \
 		$(GTNETS_DIR)/rtt-estimator.cc \
 		$(GTNETS_DIR)/simulator.cc \
 		$(GTNETS_DIR)/trace.cc \
@@ -140,6 +191,22 @@ wlan-all:
 		$(GTNETS_DIR)/packet-callbacks.cc \
 		$(GTNETS_DIR)/packet.cc \
 		$(GTNETS_DIR)/routing.cc \
+		$(GTNETS_DIR)/routing-nvr.cc \
+		$(GTNETS_DIR)/routing-static.cc \
+		$(GTNETS_DIR)/routing-nixvector.cc \
+		$(GTNETS_DIR)/routing-dsr.cc \
+		$(GTNETS_DIR)/udp.cc \
+		$(GTNETS_DIR)/ethernet.cc \
+		$(GTNETS_DIR)/link-rti.cc \
+		$(GTNETS_DIR)/droptail.cc \
+		$(GTNETS_DIR)/portdemux.cc \
+		$(GTNETS_DIR)/linkp2p.cc \
+		$(GTNETS_DIR)/routing-aodv.cc \
+		$(GTNETS_DIR)/mobility.cc \
+		$(GTNETS_DIR)/protograph.cc \
+		$(GTNETS_DIR)/application.cc \
+		$(GTNETS_DIR)/application-tcpsend.cc \
+		$(GTNETS_DIR)/application-cbr.cc \
 		$(GTNETS_FLAG)
 
 application:

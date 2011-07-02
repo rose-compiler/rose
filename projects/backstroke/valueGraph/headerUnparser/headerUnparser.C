@@ -103,22 +103,71 @@ void buildThreeFuncDecl(SgFunctionDeclaration* funcDecl)
     insertStatementAfter(firstFuncDecl, fwdFuncDecl);
 }
 
+void readFunctionInfo(const string& filename, set<vector<string> >& functionsToReverse)
+{
+    ifstream funcListReader(filename.c_str());
+    string className, funcName;
+    //int argNum;
+    int lineNum;
+    while (funcListReader >> className >> funcName >> lineNum)
+    {
+        vector<string> strings;
+        strings.push_back(className);
+        strings.push_back(funcName);
+        strings.push_back(boost::lexical_cast<string>(lineNum));
+        
+#if 0
+        for (int i = 0; i < argNum; ++i)
+        {
+            string argName;
+            funcListReader >> argName;
+            strings.push_back(argName);
+        }
+#endif
+        
+        functionsToReverse.insert(strings);
+    }
+    funcListReader.close();
+}
+
+vector<string> serializeMemberFunction(SgMemberFunctionDeclaration* memFuncDecl)
+{
+    vector<string> strings;
+    
+    SgDeclarationStatement* firstDecl = memFuncDecl->get_firstNondefiningDeclaration();
+    if (!firstDecl) firstDecl = memFuncDecl;
+    
+    string className = memFuncDecl->get_class_scope()->get_declaration()->get_name().str();
+    strings.push_back(className);
+    strings.push_back(memFuncDecl->get_name().str());
+    strings.push_back(boost::lexical_cast<string>(firstDecl->get_file_info()->get_line()));
+    
+#if 0
+    const SgInitializedNamePtrList& args = memFuncDecl->get_args();
+    strings.push_back(boost::lexical_cast<string>(args.size()));
+    foreach (SgInitializedName* arg, args)
+        strings.push_back(arg->get_type()->get_mangled().str());
+#endif
+    
+    return strings;
+}
+
+
 int main(int argc, char** argv)
 {
+    set<vector<string> > functionsToReverse;
+    readFunctionInfo("funcList.txt", functionsToReverse);
+
+    
     ifstream headerIS(argv[1]);
     
-    vector<pair<string, string> > headersAndFunctions;
     set<string> headers;
-    set<string> functions;
     
-    string headerName, funcName;
-    while (headerIS >> headerName >> funcName)
+    string headerName;
+    while (headerIS >> headerName)
     {
-        headersAndFunctions.push_back(make_pair(headerName, funcName));
         headers.insert(headerName);
-        functions.insert(funcName);
-        
-        cout << headerName << " : " << funcName << "\n";
+        cout << headerName << "\n";
     }
     
     vector<string> args(1, "X");
@@ -157,10 +206,14 @@ int main(int argc, char** argv)
         if (firstDecl->get_specialFunctionModifier().isDestructor() ||
                 firstDecl->get_specialFunctionModifier().isConstructor())
             continue;
-                
-        string funcName = firstDecl->get_name();
-        if (functions.count(funcName) == 0)
+        
+        SgMemberFunctionDeclaration* memFuncDecl = isSgMemberFunctionDeclaration(firstDecl);
+        if (!memFuncDecl)
             continue;
+                
+        if (!functionsToReverse.count(serializeMemberFunction(memFuncDecl)))
+            continue;
+        
         SgFunctionDefinition* funcDef = isSgFunctionDefinition(firstDecl->get_definition());
         if (funcDef)
             funcDefs.insert(funcDef);
@@ -193,12 +246,10 @@ int main(int argc, char** argv)
         boost::filesystem::copy_file(tempFileName2, dir + "/../SRC/" + name,
                 boost::filesystem::copy_option::overwrite_if_exists);
       
-#if 1
         if (exists(tempFileName1))
             remove(tempFileName1);
         if (exists(tempFileName2))
             remove(tempFileName2);
-#endif
     }
     
     set<string> funcReversed;

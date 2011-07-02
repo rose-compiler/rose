@@ -85,7 +85,7 @@ void EventReverser::generateCode()
 #endif
     
     
-    cout << "\nStart to generate code!\n\n";
+    cout << "\nStart to generate code!\nStart search.\n";
     
     // Discard all available values here.
     availableValues_[0].clear();
@@ -1504,7 +1504,7 @@ void EventReverser::generateCode(
     
     
     // First, declare all temporary variables at the beginning of the reverse events.
-    set<VarName> declaredVars;
+    set<string> declaredVars;
     foreach (RvsCFGVertex node, boost::vertices(rvsCFG))
     {
         foreach (const VGEdge& edge, rvsCFG[node].edges)
@@ -1514,7 +1514,7 @@ void EventReverser::generateCode(
             if (valNode == NULL || valNode->var.isNull()) 
                 continue;
             
-            if (declaredVars.count(valNode->var.name))
+            if (declaredVars.count(valNode->var.name[0]->get_name()))
                 continue;
 
             // If the function definition is not the ancestor of this variable, it is a state variable.
@@ -1527,7 +1527,7 @@ void EventReverser::generateCode(
             SgStatement* varDecl = buildVarDeclaration(valNode->var.name);
             SageInterface::appendStatement(varDecl, rvsFuncBody);
             
-            declaredVars.insert(valNode->var.name);
+            declaredVars.insert(valNode->var.name[0]->get_name());
         }   
     }
     

@@ -19,14 +19,20 @@ vector<string> serializeMemberFunction(SgMemberFunctionDeclaration* memFuncDecl)
 {
     vector<string> strings;
     
+    SgDeclarationStatement* firstDecl = memFuncDecl->get_firstNondefiningDeclaration();
+    if (!firstDecl) firstDecl = memFuncDecl;
+    
     string className = memFuncDecl->get_class_scope()->get_declaration()->get_name().str();
     strings.push_back(className);
     strings.push_back(memFuncDecl->get_name().str());
+    strings.push_back(boost::lexical_cast<string>(firstDecl->get_file_info()->get_line()));
     
+#if 0
     const SgInitializedNamePtrList& args = memFuncDecl->get_args();
     strings.push_back(boost::lexical_cast<string>(args.size()));
     foreach (SgInitializedName* arg, args)
         strings.push_back(arg->get_type()->get_mangled().str());
+#endif
     
     return strings;
 }
@@ -35,20 +41,23 @@ void readFunctionInfo(const string& filename, set<vector<string> >& functionsToR
 {
     ifstream funcListReader(filename.c_str());
     string className, funcName;
-    int argNum;
-    while (funcListReader >> className >> funcName >> argNum)
+    //int argNum;
+    int lineNum;
+    while (funcListReader >> className >> funcName >> lineNum)
     {
         vector<string> strings;
         strings.push_back(className);
         strings.push_back(funcName);
-        strings.push_back(boost::lexical_cast<string>(argNum));
+        strings.push_back(boost::lexical_cast<string>(lineNum));
         
+#if 0
         for (int i = 0; i < argNum; ++i)
         {
             string argName;
             funcListReader >> argName;
             strings.push_back(argName);
         }
+#endif
         
         functionsToReverse.insert(strings);
     }
@@ -180,7 +189,9 @@ void generateFunctionList(const set<pair<string, string> >& eventList, ostream& 
 
 void processHeaderFiles(const set<SgFunctionDeclaration*>& funcDecls)
 {
+    set<string> headers;
     ofstream osHeaders("headers.txt");
+    
     foreach (SgFunctionDeclaration* funcDecl, funcDecls)
     {
         SgFunctionDeclaration* firstDecl = 
@@ -188,12 +199,27 @@ void processHeaderFiles(const set<SgFunctionDeclaration*>& funcDecls)
         if (firstDecl == NULL)
             firstDecl = funcDecl;
         
-        cout << firstDecl->get_file_info()->get_filenameString() << endl;
-        cout << firstDecl->get_name().str() << endl;
-        osHeaders << firstDecl->get_file_info()->get_filenameString() << ' ' 
-                << firstDecl->get_name().str() << '\n';
+        headers.insert(firstDecl->get_file_info()->get_filenameString());
+    }
+    
+    int counter = 0;
+    foreach (const string& header, headers)
+    {
+        cout << header << endl;
+        osHeaders << header << '\n';
+        counter++;
+        
+        if (counter == 10)
+        {
+            osHeaders.close();
+            ::system("./headerUnparser/unparseHeader headers.txt");
+            counter = 0;
+            osHeaders.open("headers.txt");
+        }
     }
     osHeaders.close();
+    
+    //SgProject_clearMemoryPool();
     
     ::system("./headerUnparser/unparseHeader headers.txt");
 }
