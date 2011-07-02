@@ -38,7 +38,7 @@ sage_appendStatements(PyObject *self, PyObject *args);
  * Build a SgFunctionParameterList from the given Python
  * Arg object.
  */
-SgFunctionParameterList*
-buildFunctionParameterList(PyObject* args, PyObject* py_defaults_list = NULL);
+PyObject*
+sage_buildFunctionParameterList(PyObject* args, PyObject* kwargs);
 
 #endif /* SAGE_PYTHON_SUPPORT_H_ */

@@ -114,46 +114,57 @@ sage_appendStatements(PyObject *self, PyObject *args)
     return Py_None;
 }
 
-SgFunctionParameterList*
-buildFunctionParameterList(PyObject* py_args, PyObject* py_defaults_list) {
+PyObject*
+sage_buildInitializedName(PyObject* self, PyObject* py_args) {
+    PyObject* py_name = PyTuple_GetItem(py_args, 0);
+
+    PyObject* py_id = PyObject_GetAttrString(py_name, "id");
+    string id = string( PyString_AsString(py_id) );
+
+    SgType* sg_type = SageBuilder::buildUnknownType();
+
+    SgInitializedName* sg_init_name = SageBuilder::buildInitializedName(id, sg_type);
+    return PyEncapsulate(sg_init_name);
+}
+
+PyObject*
+sage_buildFunctionParameterList(PyObject* self, PyObject* py_argv) {
+    PyObject* py_args = PyTuple_GetItem(py_argv, 0);
+    PyObject* py_defaults = PyTuple_GetItem(py_argv, 1);
+
     SgFunctionParameterList* sg_params =
         SageBuilder::buildFunctionParameterList();
 
     Py_ssize_t py_argc = PyList_Size(py_args);
-    Py_ssize_t py_defaults_argc = (py_defaults_list != NULL) ?
-        PyList_Size(py_defaults_list) : 0;
+    Py_ssize_t py_defaults_argc = (py_defaults != NULL) ?
+        PyList_Size(py_defaults) : 0;
     Py_ssize_t py_simples_argc = py_argc - py_defaults_argc;
 
-    /* Handle simple parameters */
+    /* Handle positional parameters */
     for (int i = 0; i < py_simples_argc; i++) {
         PyObject* py_name = PyList_GetItem(py_args, i);
-        PyObject* py_id = PyObject_GetAttrString(py_name, "id");
-        char* id = PyString_AsString(py_id);
-
-        SgType* sg_type = SageBuilder::buildVoidType();
-        SgInitializedName* sg_name =
-            SageBuilder::buildInitializedName(id, sg_type);
-
-        sg_params->append_arg(sg_name);
+        SgNode* sg_node = PyDecapsulate<SgNode>(py_name);
+        SgInitializedName* sg_init_name =
+            PyDecapsulate<SgInitializedName>(py_name);
+        sg_params->append_arg(sg_init_name);
     }
 
     /* Handle default parameters */
     for (int i = 0; i < py_defaults_argc; i++) {
         PyObject* py_name = PyList_GetItem(py_args, py_simples_argc+i);
-        PyObject* py_default = PyList_GetItem(py_defaults_list, i);
-        PyObject* py_id = PyObject_GetAttrString(py_name, "id");
-        char* id = PyString_AsString(py_id);
+        SgInitializedName* sg_name =
+            PyDecapsulate<SgInitializedName>(py_name);
 
+        PyObject* py_default = PyList_GetItem(py_defaults, i);
         SgExpression* sg_default = PyDecapsulate<SgExpression>(py_default);
-        SgType* sg_type = SageBuilder::buildVoidType();
         SgInitializer* sg_init =
             SageBuilder::buildAssignInitializer(sg_default);
-        SgInitializedName* sg_name =
-            SageBuilder::buildInitializedName(id, sg_type, sg_init);
+        sg_name->set_initptr(sg_init);
+        sg_init->set_parent(sg_name);
 
         sg_params->append_arg(sg_name);
     }
 
-    return sg_params;
+    return PyEncapsulate(sg_params);
 }
 

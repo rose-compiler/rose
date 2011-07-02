@@ -93,8 +93,9 @@ class SageTranslator(ast.NodeVisitor):
     return map(self.visit, ast.iter_child_nodes(node))
 
   def visit_arguments(self, node):
-    retval = map(self.visit, node.args)
-    return retval
+    args = map(sage.buildInitializedName, node.args)
+    kwargs = map(self.visit, node.defaults)
+    return sage.buildFunctionParameterList(args, kwargs)
 
   def visit_AugAssign(self, node):
     target = self.visit(node.target)
@@ -133,10 +134,10 @@ class SageTranslator(ast.NodeVisitor):
 
   def visit_FunctionDef(self, node):
     scope = self.scopeStack.peek()
-    defaults = map(self.visit, node.args.defaults)
     decorators = map(self.visit, node.decorator_list)
+    params = self.visit(node.args)
     (capsule, scope) = \
-        sage.buildFunctionDef(node, defaults, decorators, self.file_info(node), scope)
+        sage.buildFunctionDef(node.name, params, decorators, self.file_info(node), scope)
     self.scopeStack.push(scope)
     body_forest = map(self.visit, node.body)
     sage.appendStatements(capsule, body_forest)
@@ -156,7 +157,8 @@ class SageTranslator(ast.NodeVisitor):
 
   def visit_Lambda(self, node):
     scope = self.scopeStack.peek()
-    (lambda_capsule, lambda_scope) = sage.buildLambda(node.args, scope)
+    params = self.visit(node.args)
+    (lambda_capsule, lambda_scope) = sage.buildLambda(params, scope)
 
     self.scopeStack.push(scope)
     expr = self.visit(node.body)

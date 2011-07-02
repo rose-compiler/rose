@@ -15,6 +15,7 @@ PyObject* sage_buildExprListExp(PyObject *self, PyObject *args);
 PyObject* sage_buildFunctionDef(PyObject *self, PyObject *args);
 PyObject* sage_buildGlobal(PyObject *self, PyObject *args);
 PyObject* sage_buildIf(PyObject *self, PyObject *args);
+PyObject* sage_buildInitializedName(PyObject *self, PyObject *args);
 PyObject* sage_buildKeyword(PyObject *self, PyObject *args);
 PyObject* sage_buildLongIntVal(PyObject *self, PyObject *args);
 PyObject* sage_buildLambda(PyObject *self, PyObject *args);
@@ -39,8 +40,10 @@ static PyMethodDef SageBuilderMethods[] = {
     {"buildExpr", sage_buildExpr, METH_VARARGS, "Builds an Expr node."},
     {"buildExprListExp", sage_buildExprListExp, METH_VARARGS, "Builds an expression list."},
     {"buildFunctionDef", sage_buildFunctionDef, METH_VARARGS, "Builds an SgFunctionDeclaration node."},
+    {"buildFunctionParameterList", sage_buildFunctionParameterList, METH_VARARGS, "Builds an SgFunctionParameterList node."},
     {"buildGlobal", sage_buildGlobal, METH_VARARGS, "Builds an SgGlobal node."},
     {"buildIf", sage_buildIf, METH_VARARGS, "Builds an if stmt  node."},
+    {"buildInitializedName", sage_buildInitializedName, METH_VARARGS, "Builds an initialized name node."},
     {"buildKeyword", sage_buildKeyword, METH_VARARGS, "Builds a keyword node."},
     {"buildLongIntVal", sage_buildLongIntVal, METH_VARARGS, "Builds an SgIntVal node."},
     {"buildLambda", sage_buildLambda, METH_VARARGS, "Builds an lambda node."},
