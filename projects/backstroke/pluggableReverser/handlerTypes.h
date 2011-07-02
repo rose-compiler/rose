@@ -26,10 +26,14 @@ struct ExpressionReversal
 struct StatementReversal
 {
 	StatementReversal(SgStatement* fwd, SgStatement * rvs)
-	: fwd_stmt(fwd), rvs_stmt(rvs) { }
+	: fwd_stmt(fwd), rvs_stmt(rvs), commitStatement(NULL) { }
 
+	StatementReversal(SgStatement* fwd, SgStatement * rvs, SgStatement* commit)
+	: fwd_stmt(fwd), rvs_stmt(rvs), commitStatement(commit) { }
+    
 	SgStatement* fwd_stmt;
 	SgStatement* rvs_stmt;
+    SgStatement* commitStatement;
 };
 
 class EvaluationResult
@@ -157,6 +161,12 @@ protected:
 	//! This is used for fossil collection (commit methods)
 	SgExpression* popVal_front(SgType* type);
 
+	SgExpression* cloneValueExp(SgExpression* value, SgType* type);
+
+	//! Calls the __restore__ function, which is part of the Backstroke runtime.
+	//! It pops a value from the stack and assigns it to the given variable
+	SgExpression* assignPointerExp(SgExpression* lhs, SgExpression* rhs, SgType* lhsType, SgType* rhsType);
+	
 	//! Return if the given variable is a state variable
 	bool isStateVariable(SgExpression* exp);
 
@@ -205,11 +215,6 @@ public:
 
 	virtual StatementReversal generateReverseAST(SgStatement* stmt, const EvaluationResult& evaluationResult) = 0;
 	virtual std::vector<EvaluationResult> evaluate(SgStatement* stmt, const VariableVersionTable& var_table) = 0;
-
-	/** Generate the commit code. This code should release any state saved by the forward code, output any cached
-	 * output, etc.
-	 * TODO: Make this pure virtual. Right now, the default implementation does nothing. */
-	virtual SgStatement* generateCommitAST(const EvaluationResult& evaluationResult);
 };
 
 /** These types of reverse handlers recalculate a specific value of a variable at a different point

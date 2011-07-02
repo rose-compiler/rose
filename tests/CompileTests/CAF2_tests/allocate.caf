@@ -1,0 +1,7 @@
+program alloctest
+  team t
+  allocate(a(100))
+  allocate(a(100)[])
+  allocate(a(100)[@t])
+  allocate(a(2:100)[@t])
+end program

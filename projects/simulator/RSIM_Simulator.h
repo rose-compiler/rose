@@ -105,6 +105,8 @@
  * hexdumps of all data transfered over a TCP network connection, you would instantiate an RSIM_Adapter::TraceTcpIO adapter and
  * attach it to the simulator.  Documentation can be found in the RSIM_Adapter namespace.
  *
+ * If you run dynamically linked, 32-bit specimens on an amd64 host, you'll need to use "i386 -LRB3" to run the simulator.
+ *
  * @section RSIM_Example Example
  *
  * This example shows how to use the RSIM classes.
@@ -246,15 +248,16 @@ public:
      *                                  Callbacks
      **************************************************************************************************************************/
 
-    //@{
-    /** Obtains the callbacks object associated with the simulator. */
+    /** Obtains the callbacks object associated with the simulator.
+     *
+     *  @{ */
     RSIM_Callbacks &get_callbacks() {
         return callbacks;
     }
     const RSIM_Callbacks get_callbacks() const {
         return callbacks;
     }
-    //@}
+    /** @} */
 
     /**************************************************************************************************************************
      *                                  System calls

@@ -1169,6 +1169,7 @@ DataflowNode cfgUtils::getFuncStartCFG(SgFunctionDefinition* func)
   DataflowNode funcCFGStart = (DataflowNode)func->cfgForBeginning();
   for(VirtualCFG::iterator it(funcCFGStart); it!=VirtualCFG::iterator::end(); it++)
   {
+  	 //cout << "getFuncStartCFG(): (*it)=<"<<(*it).getNode()->unparseToString()<<" | "<<(*it).getNode()->class_name()<<">\n"; cout.flush();
     //		printf("getFuncStartCFG(): isSgFunctionParameterList((*it).getNode())=%d (*it)=<%s | %s>\n", isSgFunctionParameterList((*it).getNode()), (*it).getNode()->unparseToString().c_str(), (*it).getNode()->class_name().c_str());
     if(isSgFunctionParameterList((*it).getNode()))
     {

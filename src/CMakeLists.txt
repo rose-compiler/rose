@@ -124,6 +124,10 @@ set( phpFrontend_SRC
      ${CMAKE_SOURCE_DIR}/src/frontend/PHPFrontend/PHPFrontend.C
      )
 
+#set( pythonFrontend_SRC
+#     ${CMAKE_SOURCE_DIR}/src/frontend/PythonFrontend/PythonFrontend.C
+#     )
+
 set( astFixup_SRC
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astFixup/AstFixup.C 
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astFixup/fixupforGnuBackendCompiler.C 
@@ -197,14 +201,15 @@ set( binaryFrontend_SRC
      ${CMAKE_SOURCE_DIR}/src/frontend/BinaryDisassembly/AST_BIN_Traversal.C
    )
 
-set(rose_support_src 
-      ${CMAKE_SOURCE_DIR}/src/roseSupport/transformationSupport.C 
-      ${CMAKE_SOURCE_DIR}/src/roseSupport/optionDeclaration.C 
-      ${CMAKE_SOURCE_DIR}/src/roseSupport/sourceLocationInheritedAttribute.C 
-      ${CMAKE_SOURCE_DIR}/src/roseSupport/roseTranslators.C 
-      ${CMAKE_SOURCE_DIR}/src/roseSupport/utility_functions.C 
+set(rose_support_src
+      ${CMAKE_SOURCE_DIR}/src/roseSupport/transformationSupport.C
+      ${CMAKE_SOURCE_DIR}/src/roseSupport/optionDeclaration.C
+      ${CMAKE_SOURCE_DIR}/src/roseSupport/sourceLocationInheritedAttribute.C
+      ${CMAKE_SOURCE_DIR}/src/roseSupport/roseTranslators.C
+      ${CMAKE_SOURCE_DIR}/src/roseSupport/utility_functions.C
       ${CMAKE_SOURCE_DIR}/src/roseSupport/memoryUsage.C
       ${CMAKE_BINARY_DIR}/src/roseSupport/stringify.C
+      ${CMAKE_SOURCE_DIR}/src/roseSupport/threadSupport.C
      )
 
 
@@ -250,6 +255,7 @@ set (unparser_SRC
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/formatSupport/unparseFormatHelp.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/formatSupport/unparse_format.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/PHPCodeGeneration/unparsePHP.C
+      #${CMAKE_SOURCE_DIR}/src/backend/unparser/PythonCodeGeneration/unparsePython.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/languageIndependenceSupport/modified_sage_isUnaryOp.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/languageIndependenceSupport/unparser_opt.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/languageIndependenceSupport/modified_sage.C
@@ -359,6 +365,9 @@ set( midend_src
  ${CMAKE_SOURCE_DIR}/src/midend/astQuery/nameQueryInheritedAttribute.C
  #${CMAKE_SOURCE_DIR}/src/midend/astQuery/queryVariant.C
  ${CMAKE_SOURCE_DIR}/src/midend/astQuery/nodeQuery.C
+ ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryControlFlow.C
+ ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryDominance.C
+ ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryFunctionCall.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/GraphAlgorithms.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/binary_analysis.C
  #${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/libraryIdentification/libraryIdentification_writer.C
@@ -772,6 +781,7 @@ set(rose_LIB_SRCS dummyCppFileForLibrose.C
  ${roseBinaryLoader_SRC}
  ${roseAsmUnparser_SRC}
  ${phpFrontend_SRC}
+ #${pythonFrontend_SRC}
  ${libastMerge_SRC}
  ${astFixup_SRC}
  ${midend_src}

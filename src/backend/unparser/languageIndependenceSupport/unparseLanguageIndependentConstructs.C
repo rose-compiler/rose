@@ -396,6 +396,8 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
   // DQ (4/17/2007): Added enforcement for endOfConstruct().
      ROSE_ASSERT (stmt->get_endOfConstruct() != NULL);
 
+#endif
+#if 0
      curprint ( string("\n/* Unparse statement (" ) + StringUtility::numberToString(stmt) 
          + "): class_name() = " + stmt->class_name() 
                 + " raw line (start) = " + tostring(stmt->get_startOfConstruct()->get_raw_line()) 
@@ -1044,7 +1046,11 @@ UnparseLanguageIndependentConstructs::unparseNullStatement (SgStatement* stmt, S
      ROSE_ASSERT(nullStatement != NULL);
 
   // Not much to do here except output a ";", not really required however.
-  // curprint ( string(";";
+     if (!info.inConditional() && !info.SkipSemiColon())
+       {
+         curprint ( string(";"));
+       }
+
    }
 
 void

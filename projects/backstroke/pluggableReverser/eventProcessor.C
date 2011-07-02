@@ -232,7 +232,7 @@ SgVarRefExp* EventProcessor::getStackVar(SgType* type)
 		type_name = "boost::any";
 	}
 
-	string stack_name = event_->get_name() + "_" + stackIdentifier + "_stack";
+	string stack_name = event_->get_mangled_name().getString() + "_" + stackIdentifier + "_stack";
 	if (stack_decls_.count(stack_name) == 0)
 	{
 		SgClassDeclaration* stackTypeDeclaration = SageBuilder::buildStructDeclaration("std::deque<" + type_name + ">");
@@ -274,33 +274,52 @@ bool EventProcessor::isStateVariable(const VariableRenaming::VarName& var)
 #endif
 }
 
-std::vector<SgVariableDeclaration*> EventProcessor::getAllStackDeclarations() const
+std::vector<SgVariableDeclaration*> EventProcessor::getStackDeclarationsForLastEvent() const
 {
 	vector<SgVariableDeclaration*> output;
 	typedef std::pair<std::string, SgVariableDeclaration*> pair_t;
 	foreach(const pair_t& decl_pair, stack_decls_)
-	output.push_back(decl_pair.second);
+        output.push_back(decl_pair.second);
 	return output;
 }
 
 SgExpression* EventProcessor::pushVal(SgExpression* exp, SgType* returnType)
 {
-	SgExprListExp* parameters = SageBuilder::buildExprListExp(getStackVar(returnType), exp);
-	return buildFunctionCallExp("push", returnType, parameters);
+	SgExprListExp* parameters = SageBuilder::buildExprListExp(exp);
+	return buildFunctionCallExp("push< " + get_type_name(returnType) + " >", returnType, parameters);
 }
 
 SgExpression* EventProcessor::popVal(SgType* type)
 {
-	return buildFunctionCallExp("pop< " + get_type_name(type) + " >", type,
-					buildExprListExp(getStackVar(type)));
+	return buildFunctionCallExp("pop< " + get_type_name(type) + " >", type);
 }
 
 SgExpression* EventProcessor::popVal_front(SgType* type)
 {
 	SgVarRefExp* stackVariable = getStackVar(type);
 	string functionName = "pop_front< " + get_type_name(type) + " >";
-	SgTypeVoid* returnType = SageBuilder::buildVoidType();
-	return SageBuilder::buildFunctionCallExp(functionName, returnType, buildExprListExp(stackVariable));
+	return SageBuilder::buildFunctionCallExp(functionName, type);
+}
+
+
+SgExpression* EventProcessor::cloneValueExp(SgExpression* value, SgType* type)
+{
+	SgType* cleanedType = BackstrokeUtility::removePointerOrReferenceType(type);
+	string typeName = get_type_name(cleanedType);
+	string functionName = "__clone__< " + typeName + " >";
+	
+	SgType* returnType = SageBuilder::buildPointerType(cleanedType);
+	
+	SgExprListExp* params = SageBuilder::buildExprListExp(value);
+	return SageBuilder::buildFunctionCallExp(functionName, returnType, params);
+}
+
+SgExpression* EventProcessor::assignPointerExp(SgExpression* lhs, SgExpression* rhs, SgType* lhsType, SgType* rhsType)
+{
+	string functionName = "__assign__< " + get_type_name(lhsType) + " , " + get_type_name(rhsType) + " >";
+	SgType* returnType = SageBuilder::buildVoidType();
+	SgExprListExp* params = SageBuilder::buildExprListExp(lhs, rhs);
+	return SageBuilder::buildFunctionCallExp(functionName, returnType, params);
 }
 
 bool EventProcessor::checkForInitialVersions(const VariableVersionTable& var_table)
@@ -324,6 +343,7 @@ std::vector<EventReversalResult> EventProcessor::processEvent()
 {
 	// Before processing, build a variable version table for the event function.
 	VariableVersionTable var_table(event_, var_renaming_);
+    stack_decls_.clear();
 
 	//cout << "VVT:\n";
 	//var_table.print();
@@ -389,20 +409,24 @@ std::vector<EventReversalResult> EventProcessor::processEvent()
 		SgFunctionDefinition* rvs_func_def = rvs_func_decl->get_definition();
 		SageInterface::replaceStatement(rvs_func_def->get_body(), isSgBasicBlock(stmt.rvs_stmt));
 
-		//Create the function declaration for the commit method
-		SgName commitFunctionName = event_->get_name() + "_commit" + counterString;
-		SgFunctionDeclaration* commitFunctionDecl =
-						SageBuilder::buildDefiningFunctionDeclaration(
-						commitFunctionName, event_->get_orig_return_type(),
-						isSgFunctionParameterList(copyStatement(event_->get_parameterList())),
-						eventScope);
-		SgFunctionDefinition* commitFunctionDefinition = commitFunctionDecl->get_definition();
+		SgFunctionDeclaration* commitFunctionDecl = NULL;
+		if (stmt.commitStatement != NULL)
+		{
+			//Create the function declaration for the commit method
+			SgName commitFunctionName = event_->get_name() + "_commit" + counterString;
+			commitFunctionDecl =
+					SageBuilder::buildDefiningFunctionDeclaration(
+					commitFunctionName, event_->get_orig_return_type(),
+					isSgFunctionParameterList(copyStatement(event_->get_parameterList())),
+					eventScope);
+			SgFunctionDefinition* commitFunctionDefinition = commitFunctionDecl->get_definition();
 
-		SgStatement* commitBody = reversalResult.generateCommitStatement();
-		SageInterface::replaceStatement(commitFunctionDefinition->get_body(), isSgBasicBlock(commitBody));
+			ROSE_ASSERT(isSgBasicBlock(stmt.commitStatement));
+			SageInterface::replaceStatement(commitFunctionDefinition->get_body(), isSgBasicBlock(stmt.commitStatement));
+		}
 
 		// Add the cost information as comments to generated functions.
-		string comment = "Cost: " + lexical_cast<string> (reversalResult.getCost().getCost());
+		string comment = "Cost: " + lexical_cast<string > (reversalResult.getCost().getCost());
 		attachComment(fwd_func_decl, comment);
 		attachComment(rvs_func_decl, comment);
 

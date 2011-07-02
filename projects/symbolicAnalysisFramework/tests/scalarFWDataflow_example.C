@@ -25,7 +25,7 @@ int main(int argc,char **argv)
 //c=16;
   func(b,c);
   while(x == 1){
-    a = x;
+    a = 2;
   }
   if (x <= 0) {
     a = x;
@@ -37,9 +37,10 @@ int main(int argc,char **argv)
     y = 1;
   }
   else {
-    a = x;
+    a = y;
   }
-  y = 2;
+  y = (z*5+a);
+  y++;
 /*if(x<=10)
 	{
 		y=1;

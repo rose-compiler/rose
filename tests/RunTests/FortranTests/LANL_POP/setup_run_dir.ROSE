@@ -1,0 +1,49 @@
+#!/bin/bash
+
+# csh programming is bad for your health and isn't portable.  The file
+# distributed with POP has been converted to Bourne.
+
+die () {
+    echo "$0:" "$@" >&2
+    exit 1
+}
+
+usage () {
+    echo "usage: $0 DIRECTORY [MODEL]" >&2
+    echo "   DIRECTORY is a directory that may or may not exist." >&2
+    echo "   MODEL is the kind of run you want to set up, one of:" >&2
+    echo "       sector, test (the default), or 192x128x32" >&2
+    exit 1
+}
+
+# Parse command-line
+srcdir="$1"
+workdir="$2"
+model="$3"
+
+[ -n "$model" ] || model=test
+[ -n "$srcdir" -a -n "$workdir" ] || usage;
+[ -d "$srcdir" ] || die "source directory does not exist: $srcdir"
+
+
+# Make the requested working directory tree.  Old behavior was also to
+# set permissions to 0775, but we omit that. The user should already have
+# their umask set up how they want it.
+subdir="$workdir/compile"
+mkdir -p $subdir || exit 1
+
+# Copy files into the working directory tree
+if [ -n "$ARCHDIR" ]; then
+    cp -v -- "$ARCHDIR.gnu" "$workdir/$ARCHDIR.gnu" || exit 1
+else
+    cp -v -- "$srcdir/input_templates"/*.gnu "$workdir/." || exit 1
+fi
+
+cp -v -- "$srcdir/input_templates"/{GNUmakefile,*.awk,sample_*,utilities.gnu} "$workdir/."
+for name in domain_size.F90 pop_in pop_sgi.log; do
+    if [ -e "$srcdir/input_templates/$name.$model" ]; then
+	cp -v -- "$srcdir/input_templates/$name.$model" "$workdir/$name" || exit 1
+    fi
+done
+cp -v -- "$srcdir/input_templates/GNUmakefile.compile" "$subdir/GNUmakefile"
+

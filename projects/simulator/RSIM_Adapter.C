@@ -10,7 +10,7 @@
  ******************************************************************************************************************************/
 
 bool
-RSIM_Adapter::Base::NotImplemented::operator()(bool b, const Args &args)
+RSIM_Adapter::AdapterBase::NotImplemented::operator()(bool b, const Args &args)
 {
     args.thread->tracing(TRACE_MISC)->mesg("%ssyscall %d is not implemented for I/O tracing; dumping core",
                                            adapter->prefix().c_str(), args.callno);
@@ -19,6 +19,87 @@ RSIM_Adapter::Base::NotImplemented::operator()(bool b, const Args &args)
 }
 
 
+
+/******************************************************************************************************************************
+ *                                      Syscall Disabler Adapter (SyscallDisabler)
+ ******************************************************************************************************************************/
+
+void
+RSIM_Adapter::SyscallDisabler::enable_syscall(int callno, bool state/*=true*/) 
+{
+    RTS_MUTEX(mutex) {
+        syscall_state[callno] = state;
+    } RTS_MUTEX_END;
+}
+
+void
+RSIM_Adapter::SyscallDisabler::set_default(bool state)
+{
+    RTS_MUTEX(mutex) {
+        dflt_state = state;
+    } RTS_MUTEX_END;
+}
+
+bool
+RSIM_Adapter::SyscallDisabler::is_enabled(int callno) const
+{
+    bool retval = dflt_state;
+    RTS_MUTEX(mutex) {
+        std::map<int, bool>::const_iterator found = syscall_state.find(callno);
+        if (found!=syscall_state.end())
+            retval = found->second;
+    } RTS_MUTEX_END;
+    return retval;
+}
+
+bool
+RSIM_Adapter::SyscallDisabler::SyscallCB::operator()(bool state, const Args &args)
+{
+    if (state && !adapter->is_enabled(args.callno)) {
+        RTS_Message *strace = args.thread->tracing(TRACE_SYSCALL);
+        RTS_Message *mtrace = args.thread->tracing(TRACE_MISC);
+        RSIM_Simulator *sim = args.thread->get_process()->get_simulator();
+        RSIM_Simulator::SystemCall *sc = sim->syscall_is_implemented(args.callno) ?
+                                         sim->syscall_implementation(args.callno) : NULL;
+        
+        /* Run the system call's "enter" callbacks in order to generate syscall trace, and add our own note. */
+        if (sc)
+            sc->enter.apply(true, RSIM_Simulator::SystemCall::Callback::Args(args.thread, args.callno));
+        mtrace->mesg("%ssyscall %d is disabled", adapter->prefix().c_str(), args.callno);
+
+        /* Set the syscall return value to "Function not implemented". The following callbacks may change the value. */
+        uint32_t old_eax = args.thread->syscall_arg(-1);
+        args.thread->syscall_return(-ENOSYS);
+
+        /* Run the user-supplied body callbacks for disabled system calls. If those body callbacks changed the Boolean from
+         * false to true, then make the system call enabled now. */
+        if ((state=adapter->cblist.apply(false, RSIM_Simulator::SystemCall::Callback::Args(args.thread, args.callno)))) {
+            adapter->enable_syscall(args.callno);
+            strace->multipart_end(); /* because we won't be invoking the "leave" callbacks here */
+            mtrace->mesg("%ssyscall %d is now enabled", adapter->prefix().c_str(), args.callno);
+            args.thread->syscall_return(old_eax); /* restore the system call number */
+        } else if (sc) {
+            /* Run the system call "leave" callbacks to show the return value due to skipping. */
+            sc->leave.apply(true, RSIM_Simulator::SystemCall::Callback::Args(args.thread, args.callno));
+        }
+    }
+    return state;
+}
+
+void
+RSIM_Adapter::SyscallDisabler::attach(RSIM_Simulator *sim)
+{
+    if (!syscall_cb)
+        syscall_cb = new SyscallCB(this);
+
+    sim->get_callbacks().add_syscall_callback(RSIM_Callbacks::BEFORE, syscall_cb);
+}
+
+void
+RSIM_Adapter::SyscallDisabler::detach(RSIM_Simulator *sim)
+{
+    sim->get_callbacks().remove_syscall_callback(RSIM_Callbacks::BEFORE, syscall_cb);
+}
 
 /******************************************************************************************************************************
  *                                      I/O Tracing Adapter (TraceIO)

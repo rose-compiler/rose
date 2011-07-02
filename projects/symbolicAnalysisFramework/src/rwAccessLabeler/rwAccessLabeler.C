@@ -44,6 +44,7 @@ class fancyPointer
 	{
 		ptr = that.ptr;
 		exactMatch = that.exactMatch;
+		return *this;
 	}
 	
 /*	const bool operator == (const SgNode* &that)

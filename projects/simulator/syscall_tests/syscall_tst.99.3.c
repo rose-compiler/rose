@@ -139,7 +139,7 @@ void setup()
 			 TESTDIR, errno, strerror(errno));
 
 	/* create a test file */
-	sprintf(fname, "%s.%d", fname, getpid());
+	sprintf(fname+strlen(fname), ".%d", getpid());
 	if (mkdir(fname, 0444) == -1) {
 		tst_resm(TFAIL, "creat(2) FAILED to creat temp file");
 	} else {

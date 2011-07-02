@@ -11,8 +11,9 @@ SUBDIRS = CompileTests
    SUBDIRS += roseTests
 #endif
 
+SUBDIRS += RunTests
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
-   SUBDIRS += RunTests PerformanceTests CompilerOptionsTests translatorTests
+   SUBDIRS += PerformanceTests CompilerOptionsTests translatorTests
 endif
 
 

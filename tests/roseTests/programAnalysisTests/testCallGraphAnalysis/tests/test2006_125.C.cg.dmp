@@ -1,2 +1,2 @@
-foo -> __assert_fail
 __assert_fail ->
+foo -> __assert_fail

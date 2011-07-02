@@ -44,6 +44,9 @@ public:
     /** Main loop. This loop simulates a single specimen thread and returns when the simulated thread exits. */
     void *main();
 
+    /** The global mutex for instruction simulation. */
+    static RTS_mutex_t insn_mutex;
+
 
 
     /**************************************************************************************************************************
@@ -108,6 +111,14 @@ public:
     /** Wake (signal) a futex. Returns the number of processes woken up on success, negative error number on failure. */
     int futex_wake(uint32_t va);
 
+    /** Traverse the robust futex list and handle futex death for each item on the list. See the Linux version of this function
+     *  for details. */
+    int exit_robust_list();
+
+    /** Handle futex death.  This function is invoked for each futex on the robust list if it's owned by the calling
+     * thread. See the Linux version of this function for details. */
+    int handle_futex_death(uint32_t futex_va, RTS_Message*);
+
     /** Simulate thread exit. Return values is that which would be returned as the status for waitpid. */
     int sys_exit(const RSIM_Process::Exit &e);
 
@@ -154,15 +165,16 @@ public:
     /** Prints information about stack frames. */
     void report_stack_frames(RTS_Message*);
 
-    //@{
-    /** Obtain the set of callbacks for this object. */
+    /** Obtain the set of callbacks for this object.
+     *
+     *  @{ */
     RSIM_Callbacks &get_callbacks() {
         return callbacks;
     }
     const RSIM_Callbacks &get_callbacks() const {
         return callbacks;
     }
-    //@}
+    /** @} */
 
     /** Set all callbacks for this thread.  Note that callbacks can be added or removed individually by invoking methods on the
      *  callback object returned by get_callbacks().
@@ -205,6 +217,7 @@ public:
      *        varargs to indicate the total size of the buffer in bytes. In this case, print_buffer() is called to
      *        display the argument value, escaping unprintable characters, and printing an elipsis if the buffer is large.</li>
      *    <li>"d" prints the argument as a signed decimal number.</li>
+     *    <li>"D" is reserved for use by syscall_leave().</li>
      *    <li>"e" interprets the argument as an enum constant. A pointer to a Translation array should appear as the next
      *        vararg and will be used to convert the numeric argument value into a string.  If the numeric value does not appear
      *        in the Translation, then the numeric value is printed in place of a string.</li>
@@ -226,7 +239,7 @@ public:
      */
     void syscall_enter(const char *name, const char *fmt, ...);
 
-    /** Print the name and arguments of a system call in a manner like strace using supplied valies.  This is identical to the
+    /** Print the name and arguments of a system call in a manner like strace using supplied values.  This is identical to the
      *  other syscall_enter() method, except instead of obtaining values from the simulated thread's stack, they are supplied by
      *  the caller. */
     void syscall_enter(uint32_t *values, const char *name, const char *fmt, ...);
@@ -239,29 +252,41 @@ public:
      * itself (which might only be valid until syscall_return() is invoked. */
     uint32_t syscall_arg(int idx);
 
-    //@{
     /** Sets the return value for a system call.  The system call does not actually return by calling this function, it only
-     *  sets the value which will eventually be returned. */
+     *  sets the value which will eventually be returned.
+     *
+     *  @{ */
     void syscall_return(const RSIM_SEMANTIC_VTYPE<32> &value);
     void syscall_return(int value);
-    //@}
+    /** @} */
 
     /** Print the return value of a system call in a manner like strace.  The format is the same as for the syscall_enter()
      *  methods except the first letter refers to the system call return value (the remaining letters are the arguments). The
      *  system call return value is that which was set by the syscall_return() method; the arguments are obtained via the
      *  syscall_arg() method.
      *
-     *  If the first format character is "d" and the system call return value is negative and has an absolute value equal to one
-     *  of the error numbers (from errno.h), then the error symbol and message are printed instead of a decimal integer.  If
-     *  argument format letters are present (other than "-" placeholders), the arguments are printed on lines after the
-     *  syscall_enter() line.  The most common reason for printing arguments during syscall_leave() is to show values that the
-     *  operating system is returning to the user (e.g., the buffer of a read() call).
+     *  If the first format character is "d" or "D" and the system call return value is negative and has an absolute value
+     *  equal to one of the error numbers (from errno.h), then the error symbol and message are printed instead of a decimal
+     *  integer.  If the first character is "D" then the second character serves as the format of the return value when an
+     *  error number is not returned, and following formats are for the arguments. If argument format letters are present
+     *  (other than "-" placeholders), the arguments are printed on lines after the syscall_enter() line.  The most common
+     *  reason for printing arguments during syscall_leave() is to show values that the operating system is returning to the
+     *  user (e.g., the buffer of a read() call).
      *
      *  The system call simulation code should not output other data to the tracing file between the syscall_enter() and
      *  syscall_leave() invocations since doing so would mess up the output format.
      *
      *  This method produces no output unless system call tracing (TRACE_SYSCALL) is enabled. */
     void syscall_leave(const char *format, ...);
+
+    /** Print the return value of a system call in a manner like strace but using supplied values. This is identical to the
+     * other syscall_leave() method, except instead of obtaining values from the simulated thread's stack, they are supplied by
+     * the caller. */
+    void syscall_leave(uint32_t *values, const char *format, ...);
+
+    /** Print the return value of a system call. This is intended primarily as an internal function called by the various
+     * syscall_leave() methods. */
+    void syscall_leavev(uint32_t *values, const char *name, va_list *app);
 
 
 
@@ -286,13 +311,14 @@ public:
      *  shut down and the simulator returns to user control. */
     int signal_deliver(const RSIM_SignalHandling::siginfo_32&);
 
-    //@{
     /** Handles return from a signal handler. Returns zero on success, negative errno on failure. The only failure that is
      *  detected at this time is -EFAULT when reading the signal handler stack frame, in which case a message is printed to
-     *  TRACE_SIGNAL and no registers or memory are modified. */
+     *  TRACE_SIGNAL and no registers or memory are modified.
+     *
+     *  @{ */
     int sys_sigreturn();
     int sys_rt_sigreturn();
-    //@}
+    /** @} */
 
     /** Accepts a signal from the process manager for later delivery.  This function is called by RSIM_Process::sys_kill() to
      *  decide to which thread a signal should be delivered.  If the thread can accept the specified signal, then it does so,

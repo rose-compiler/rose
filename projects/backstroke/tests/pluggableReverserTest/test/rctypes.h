@@ -6,11 +6,13 @@
 #include <queue>
 #include <boost/any.hpp>
 
+#define __BACKSTROKE
+
 template <class T>
-T push(std::deque<T>& data_stack, T val)
+void push(std::deque<T>& data_stack, T val)
 {
     data_stack.push_back(val);
-    return val;
+    //return val;
 }
 
 template <class T>
@@ -23,16 +25,18 @@ T pop(std::deque<T>& data_stack)
 
 //!Pop from the front of a stack. Used in fossil collection
 template <class T>
-void pop_front(std::deque<T>& data_stack)
+T pop_front(std::deque<T>& data_stack)
 {
+	T val = data_stack.front();
     data_stack.pop_front();
+	return val;
 }
 
 template <class T>
-T push(std::deque<boost::any>& data_stack, T val)
+void push(std::deque<boost::any>& data_stack, T val)
 {
     data_stack.push_back(boost::any(val));
-    return val;
+    //return val;
 }
 
 template <class T>
@@ -45,11 +49,14 @@ T pop(std::deque<boost::any>& data_stack)
 
 //!Pop from the front of a stack. Used in fossil collection
 template <class T>
-void pop_front(std::deque<boost::any>& data_stack)
+T pop_front(std::deque<boost::any>& data_stack)
 {
-    data_stack.pop_front();
+	T val = boost::any_cast<T>(data_stack.front());
+	data_stack.pop_front();
+	return val;
 }
 
+#if 0
 /**********************************************************************************
  * The following random number generator functions are to make sure the event and forward event
  * functions received the same random numbers, in order to make test pass.
@@ -69,6 +76,6 @@ int rand_num_fwd()
     random_numbers.pop();
     return num;
 }
-
+#endif
 
 #endif

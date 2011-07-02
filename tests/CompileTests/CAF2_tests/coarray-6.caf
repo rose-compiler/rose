@@ -1,0 +1,17 @@
+program test15
+  integer(4), allocatable :: a(:)[*]
+  integer(4) :: rank
+
+  allocate (a(10)[])
+  a(1) = team_rank()
+  rank = team_rank()
+
+  if (0 .ne. a(1)[0]) then
+    print *, "Test failed for image ", rank
+    print *, rank, a(1)[0]
+  endif
+
+  if (0 .eq. a(1) .and. 0 .eq. rank) then
+    write(*, '(A)') "Test passed."
+  endif
+end program

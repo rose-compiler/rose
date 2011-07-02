@@ -33,21 +33,30 @@ automated tests ({\em make check} makefile rule).  If you want to add a new
 feature to ROSE, show us your tests.
 %}}}
 
-\section{Working with the ROSE GIT repositories}
-This section is mostly useful for internal ROSE developers who have access
-to LLNL's network file system hosting ROSE's git repository or external
-developers who are comfortable with using git. 
-Otherwise, external developers are suggested to use our external SVN repository as
-described in Section~\ref{gettingStarted::svn}.
+%----------------------------------------------------------------------------------------
+%
+%--
 
-We have two git repositories for ROSE: an internal one at LLNL (\textit{/nfs/casc/overture/ROSE/git/ROSE-EDG.git}) and an external
-one hosted at \url{http://www.rosecompiler.org/rose.git}. These two repositories share histories so that
-you can work closely with us as an external developing using our latest work. 
-Some tips for using them are gathered in this section.
+	\section{Working with the ROSE Git repositories}
 
+%--
+%
+%----------------------------------------------------------------------------------------
+This section is most useful for ROSE developers who have access to LLNL's network file
+system (NFS).
+\newline\newline
+We have (2) Git repositories:
+\begin{itemize}
+	\item internal: \textit{/nfs/casc/overture/ROSE/git/ROSE-EDG.git}
+	\item external: \url{http://www.rosecompiler.org/rose.git} -- is synced with the internal repository.
+\end{itemize}
 
-\subsection{Continuous Integration in ROSE}
-
+\textit{We also have an external SVN repository (see Section~\ref{gettingStarted::svn})}.
+%----------------------------------------------------------------------------------------
+%--
+	\subsection{Continuous Integration in ROSE}
+%--
+%----------------------------------------------------------------------------------------
 The ROSE project uses a workflow that automates the central principles of
 continuous integration in order to make integrating the work from different
 developers a non-event. Because the integration process only integrates
@@ -79,28 +88,40 @@ Any commits from a developer's private repository will not be immediately merged
 of the shared repository. In fact, we have access control to prevent any developer from pushing commits 
 to the master branch within the shared repository.
 A continuous integration server called Hudson is actively monitoring each developer's branch within the shared repository 
-and will initiate comprehensive tests upon the branch once new commits are detected.
+and will initiate comprehensive commit tests upon the branch once new commits are detected.
 Finally, Hudson will merge the new commits to the master branch of the shared repository if all tests pass.
 If a single test fails, Hudson will report the error and the responsible developer should address the error in 
 his private repository and push improved commits again. 
-As a result, the master branch of the shared git repository is always stable and can be readily released.  
+
+As a result, the master branch of the shared git repository is mostly
+stable and can be a good candidate for external release. 
+On top of the master branch of the shared git repository, we further have
+more comprehensive release tests in Hudson. If all the release tests pass,
+an external release based on the master branch will be made available
+outside. 
 
 
-\subsection{The Internal Repository}
+\subsection{The Internal Git Repository}
 
-The ROSE internal repository (the shared git repository shown in
-Fig.~\ref{fig:rose-git-hudson}) is hosted under \textit{/nfs/casc/overture/ROSE/git/ROSE.git}.
-It keeps track of the latest work of each
-internal developer (who have an account with LLNL). Each
-developer will make a complete local copy of the repository which he can use to
-perform his work and he can push his work from this copy to a branch he owns in the 
-central repository when he is ready. 
+The internal ROSE Git repository (Fig.~\ref{fig:rose-git-hudson}) is hosted under
+\textit{/nfs/casc/overture/ROSE/git/ROSE.git}. External collaborators can access
+this NFS path through any of these internal LLNL hosts: \texttt{tuxblue[1-6|9-13]}.
+\begin{verbatim}
+    $ git clone ssh://<user>@tuxblue[1-6|9-13]/nfs/casc/overture/ROSE/git/ROSE.git
+\end{verbatim}
 
-\subsection{Structure of Repositories and Branch Naming Conventions}
+Updates to the "Release Candidate" (*-rc) branches in this internal repository
+trigger our Continuous Integration framework. Although you'll want to make a
+local clone of ROSE for development purposes, you must make sure to push your
+changes to your remote branch for testing and integration purposes.
 
+The \texttt{master} branch always contains the latest work of ROSE and can only
+be updated by our continuous integration framework.
+
+\subsection{Our Git Naming Conventions}
 
 Both the internal and the external ROSE repositories are structured according to
-an continuous integration workflow using git best practises. The master branch
+n continuous integration workflow using Git best practices. The master branch
 contains the latest work in ROSE that passes the tests and each developer can
 create any number of branches that he owns. No developer can modify
 a branch owned by another developer, but a group branch can be created that 
@@ -147,14 +168,15 @@ Please configure this copy with your name and email before starting work.
     will appropriately merge from that remote branch: \textit{git config branch.autosetupmerge true}
           \item This setting tells git to convert the newlines to the system’s standard
 	    when checking out files, and to LF newlines when committing in \textit{git config core.autocrlf true}
-	 \item Tell git to automatically push to the remotely tracked branch: 
-	 	\textit{git config push.default 'tracking'}
+%	 \item Tell git to automatically push to the remotely tracked branch: 
+%	 	\textit{git config push.default 'tracking'}
    \end{itemize}       
 \item Get content in the repository:
   \begin{itemize}
           \item Clone a private repository from the shared repository: \textit{git clone 
-          file:///nfs/casc/overture/ROSE/git/ROSE.git} . A directory named ROSE will show up after this 
-           command. Type \textit{cd ROSE} to operate within the private repository from now on.
+          file:///nfs/casc/overture/ROSE/git/ROSE.git localRoseName} . A
+          directory named localRoseName will show up after this 
+           command. Type \textit{cd localRoseName} to operate within the private repository from now on.
            \item Retrieve EDG source files: we use a separated git
            repository for EDG to protect its proprietary source files. The
            EDG git repository is linked to the ROSE git repository as a
@@ -169,15 +191,20 @@ Please configure this copy with your name and email before starting work.
    \end{itemize}       
 \item Using a branch:
    \begin{itemize}
-          \item creating a local branch: \textit{git branch branch-name} 
+          \item creating a local branch within a local repo, based on
+          whatever current branch's content: \textit{git branch branch-name} 
           \item creating a local branch to track a central branch: \textit{git branch branch-name --track origin/branch-name} 
 
-          \item creating a branch in the central git: \textit{git push origin origin:refs/heads/branch-name} . This command is not allowed for average developer. Please ask ROSE administrator to create a remote branch if needed.
+          \item creating a branch in the central git: \textit{git push origin origin:refs/heads/branch-name} . This command is not
+          allowed for average developer unless the branch name has a prefix
+          matching the developer's LLNL OUN. Please ask ROSE administrator to create a remote branch if needed.
           \item start working on (switch to) a branch: \textit{git checkout branch-name} 
           \item deleting a local branch: \textit{git branch -d branch-name} 
-          \item deleting a remote branch: \textit{git push origin :branch-name } 
+          \item deleting a remote branch: \textit{git push origin
+          :branch-name } . Again, we have access control so developers can
+          only delete their own branches, not others'.
    \end{itemize}     
-\item Adding / Deleting:
+\item Adding / Deleting files:
    \begin{itemize}
           \item add $<$file$>$ to the project \textit{git add $<$file$>$}
           \item add all files under directory $<$dir$>$ to the project, including subdirectories \textit{git add $<$dir$>$}
@@ -186,6 +213,11 @@ Please configure this copy with your name and email before starting work.
    \end{itemize}     
 \item Committing : intermediate changes can be committed locally. You don't have to have active connection to the shared repository to do your daily work at all. 
    \begin{itemize}
+          \item Always check the current status of your local repo by
+          typing:
+          \textit{git status}  .  This allows you to see what
+          files/directories have been
+          modified, added, or out of control of git. 
           \item Commit changes to the local repository: \textit{git commit -a} 
    \end{itemize}   
 \item Pulling and Merging the shared master branch: It is recommended to synchronize the master branches often and merge new commits from others to  your local branch. 
@@ -207,8 +239,12 @@ It is highly recommended to pull and merge the shared master branch before doing
           needed since each git push will trigger a large set of
           Hudson tests which tax our own workstations and many other test machines.
 
-          \item Or if you have set git to automatically push the current branch to the remotely tracked branch by  \textit{git config push.default 'tracking'},
-      you can just type \textit{git push}. 
+%          \item Or if you have set git to automatically push the current
+%          branch to the remotely tracked branch by  \textit{git config
+%          push.default 'tracking'}, you can just type \textit{git push}.
+%          But we don't recommend this since people may forget the
+%          configuration and the default behavior of \textit{git push} is
+%          . 
 
    \end{itemize}
 
@@ -219,12 +255,19 @@ ask for help from senior LLNL developers for your first attempt. Here are some b
   \item First, make sure you have tried to pull the content from the EDG submodule. You can run \textit{git submodule init; git submodule update} again from the top level of your private ROSE git repository to be safe. 
   \item By default, the EDG submodule files checked out via \textit{git submodule init; git submodule update} is not on any branch (You can verify this by typing \textit{git status} within \textit{src/frontend/CxxFrontend/EDG}.  
 You can create a local branch based on the current content before you modify the EDG related files. Just type \textit{git checkout -b local-branch-name} under \textit{src/frontend/CxxFrontend/EDG} so you can create a local branch off the current content and switch to the branch.
+   \item We have access control over the EDG git repo the same way we have
+   for the ROE git repo. You have to have your own remote branch in
+   the shared EDG git repo so you can push any contributions to your own
+   branch. The initial content of your remote branch
+   MUST be the same as the current EDG version linked to ROSE. This
+   should be the default EDG version checked out and also the local branch
+   you just created from the previous step. To create a remote branch for
+   yourself based the latest linked EDG version, type 
+   \textit{git push origin HEAD:refs/heads/your\_LLNL\_OUN-main-rc} within \textit{src/frontend/CxxFrontend/EDG}.
    \item You can then modify EDG files and commit changes to your private repository of the submodule. 
-         You should also be able to push your commits to the remote EDG repository.
+         You should also be able to push your commits to your own branch
+         within the remote EDG repository.
          Again, always be sure do all commits and push within \textit{src/frontend/CxxFrontend/EDG} for EDG related changes. 
-         Similar to the ROSE git repository, we have access control to the git repository of the EDG submodule. You have to have a remote branch there 
-         and can only push your commits to your own remote branch. Please ask senior developers to add the remote branch if it does
-         not exist.   
    \item In the end, change ROSE git repository's link to the changed submodule. 
   \begin{verbatim}
   $ cd ROSE/src/frontend/CxxFrontend  # Go to submodule's parent repository's path 
@@ -234,6 +277,11 @@ You can create a local branch based on the current content before you modify the
   $ git push   # assuming you are on your local ROSE branch tracking your own remote branch 
                # and have set up the push mode by: git config push.default 'tracking'
   \end{verbatim}  
+  \item Due to the limited support of submodule of Hudson's git plugin, a developer's branch
+  of the EDG repo will not automatically be merged into the master of the EDG repo. So
+  the EDG branch linked to the parent ROSE repo often is often the master of
+  the EDG repo. This should not be a problem since two repositories are
+  linked through HASH numbers. 
    
    \end{itemize}
 

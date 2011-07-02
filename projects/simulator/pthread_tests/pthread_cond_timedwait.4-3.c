@@ -73,13 +73,18 @@
 /********************************************************************************************/
 /********************************** Configuration ******************************************/
 /********************************************************************************************/
-#define WITH_SYNCHRO
+/* #define WITH_SYNCHRO */
 #ifndef VERBOSE
 #define VERBOSE 2
 #endif
 
+#if 0
 #define TIMEOUT (1000) /* ns, timeout parameter for pthread_cond_timedwait */
 #define INTERVAL (700) /* ns, frequency (actually, period) for the condition signaling */
+#else /* longer periods for x86sim */
+#define TIMEOUT  250000000 /* 10/40 second */
+#define INTERVAL 175000000 /*  7/40 second */
+#endif
 
 /********************************************************************************************/
 /***********************************    Test case   *****************************************/
@@ -134,7 +139,8 @@ void * sendsig (void * arg)
 		if (ret != 0)  { UNRESOLVED(errno, "Kill in sendsig"); }
 		
 	}
-	
+
+        write(1, "sendsig finished\n", 17);
 	return NULL;
 }
 
@@ -201,7 +207,8 @@ void * waiter(void * arg)
 	
 	ret = pthread_mutex_unlock(&(data.mtx));
 	if (ret != 0)  {  UNRESOLVED(ret, "Unable to unlock mutex in waiter thread");  }
-	
+
+        write(1, "waiter finished\n", 16);
 	return NULL;
 }
 

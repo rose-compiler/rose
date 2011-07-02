@@ -1,5 +1,5 @@
 Component = simpleAnalyses
-execFiles = bin/factPlacer bin/latticePlacer bin/scalarFWDataflow bin/pathSensitive
+execFiles =  bin/scalarFWDataflow bin/factPlacer bin/latticePlacer bin/pathSensitive
 all: obj bin ${execFiles}
 
 include ${ANALYSIS_ROOT}/makefile.common
@@ -73,6 +73,5 @@ bin/pathSensitive : cfgUtils obj/pathSensitive.o common cfgUtils variables analy
 	        obj/pathSensitive.o ${common_OBJ} ${cfgUtils_OBJ} ${variables_OBJ} ${analysis_OBJ} ${simpleAnalyses_OBJ} \
 	        ${state_OBJ} ${lattice_OBJ} ${rwAccessLabeler_OBJ} ${arrIndexLabeler_OBJ} ${external_OBJ} \
 	        ${ROSE_MAKE_BASE}/src/librose.la -lfl -lrt
-
 clean:
 	rm -f obj/*  bin/* debug_bin/*
