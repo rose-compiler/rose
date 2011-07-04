@@ -15,6 +15,9 @@ void initAnalysis(SgProject* project)
 	cgb.buildCallGraph();
 	callGraph = cgb.getGraph(); 
 	//GenerateDotGraph(graph, "test_example.callgraph.dot");
+	
+	// Create unique annotations on each expression to make it possible to assign each expression a unique variable name
+	SageInterface::annotateExpressionsWithUniqueNames(project);
 }
 
 /*SgProject* getProject()

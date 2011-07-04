@@ -36,6 +36,12 @@ else
    librosePHPlibraries =
 endif
 
+if ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
+   librosePythonlibraries = frontend/PythonFrontend/librosePythonFrontend.la
+else
+   librosePythonlibraries =
+endif
+
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
    libroseBinaryLibraries = \
       $(top_builddir)/src/frontend/BinaryDisassembly/libbinaryFrontend.la \
@@ -79,6 +85,7 @@ libroseLibraries = \
    $(libroseOpenFortranParserlibraries) \
    $(libroseJavaParserlibraries) \
    $(librosePHPlibraries) \
+   $(librosePythonlibraries) \
    $(libroseEDGlibraries) \
    $(libroseBinaryLibraries) \
    $(top_builddir)/src/midend/abstractHandle/libabstractHandle.la \
