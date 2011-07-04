@@ -371,6 +371,7 @@ endif (HAVE_DLFCN_H)
      ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/astFromString 
      ${ROSE_TOP_SRC_DIR}/src/frontend/OpenFortranParser_SAGE_Connection 
      ${ROSE_TOP_SRC_DIR}/src/frontend/PHPFrontend 
+     ${ROSE_TOP_SRC_DIR}/src/frontend/PythonFrontend 
      ${ROSE_TOP_SRC_DIR}/src/frontend/BinaryFormats 
      ${ROSE_TOP_SRC_DIR}/src/frontend/BinaryLoader
      ${ROSE_TOP_SRC_DIR}/src/frontend/BinaryDisassembly 
@@ -383,6 +384,7 @@ endif (HAVE_DLFCN_H)
      ${ROSE_TOP_SRC_DIR}/src/backend/unparser/FortranCodeGeneration 
      ${ROSE_TOP_SRC_DIR}/src/backend/unparser/JavaCodeGeneration 
      ${ROSE_TOP_SRC_DIR}/src/backend/unparser/PHPCodeGeneration 
+     ${ROSE_TOP_SRC_DIR}/src/backend/unparser/PythonCodeGeneration 
      ${ROSE_TOP_SRC_DIR}/src/backend/asmUnparser 
      ${ROSE_TOP_SRC_DIR}/src/util 
      ${ROSE_TOP_SRC_DIR}/src/util/support 

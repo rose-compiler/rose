@@ -1576,7 +1576,7 @@ void c_action_type_param_or_comp_def_stmt_list()
 // void c_action_derived_type_stmt(Token_t * label, Token_t * id)
 void c_action_derived_type_stmt(Token_t * label, Token_t * keyword, Token_t * id, Token_t * eos, ofp_bool hasTypeAttrSpecList, ofp_bool hasGenericNameList)
    {
-    raise(SIGINT);
+    //raise(SIGINT);
         // Build a SgClassDeclaration to hold the Fortran Type (maybe it should be a SgFortranType derived from a SgClassDeclaration?)
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
@@ -1588,6 +1588,26 @@ void c_action_derived_type_stmt(Token_t * label, Token_t * keyword, Token_t * id
 #endif
 
 #if !SKIP_C_ACTION_IMPLEMENTATION
+
+#if DXN_CODE
+
+     SgScopeStatement* currentScope = getTopOfScopeStack();
+     ROSE_ASSERT(currentScope != NULL);
+     SgDerivedTypeStatement* derivedTypeStatement = buildDerivedTypeStatementAndDefinition(id->text,currentScope);
+
+     ROSE_ASSERT(keyword != NULL);
+     setSourcePosition(derivedTypeStatement,keyword);
+
+     currentScope->append_statement(derivedTypeStatement);
+
+     ROSE_ASSERT(derivedTypeStatement->get_definition() != NULL);
+     astScopeStack.push_front(derivedTypeStatement->get_definition());
+
+     DeclAttributes.setDeclaration(derivedTypeStatement);
+     DeclAttributes.setDeclAttrSpecs();
+     DeclAttributes.reset();
+
+#else
      ROSE_ASSERT(id != NULL);
   // printf ("id->text = %s \n",id->text);
 
@@ -1603,6 +1623,8 @@ void c_action_derived_type_stmt(Token_t * label, Token_t * keyword, Token_t * id
      ROSE_ASSERT(derivedTypeStatement->get_definition() != NULL);
      astScopeStack.push_front(derivedTypeStatement->get_definition());
 #endif
+
+#endif // !SKIP_C_ACTION_IMPLEMENTATION
 
 #if 1
   // Output debugging information about saved state (stack) information.
@@ -1625,10 +1647,15 @@ void c_action_derived_type_stmt(Token_t * label, Token_t * keyword, Token_t * id
 // void c_action_type_attr_spec(Token_t * id, int specType)
 void c_action_type_attr_spec(Token_t * keyword, Token_t * id, int specType)
    {
-    raise(SIGINT);
+    //raise(SIGINT);
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_type_attr_spec(): keyword = %p = %s id = %p = %s specType = %d \n",keyword,keyword != NULL ? keyword->text : "NULL",id,id != NULL ? id->text : "NULL",specType);
 
+#if DXN_CODE
+     // TODO: need to think about attr_spec that are not accessspec
+     DeclAttributes.setAccessAttr(specType);
+
+#else
   // If this is a access_spec then it will be handled by the R508.
      if (specType != TypeAttrSpec_access_spec)
         {
@@ -1636,6 +1663,7 @@ void c_action_type_attr_spec(Token_t * keyword, Token_t * id, int specType)
 
           ROSE_ASSERT(keyword != NULL);
         }
+#endif
 
 #if 1
   // Output debugging information about saved state (stack) information.
@@ -1652,12 +1680,12 @@ void c_action_type_attr_spec(Token_t * keyword, Token_t * id, int specType)
  */
 void c_action_type_attr_spec_list__begin()
    {
-    raise(SIGINT);
+    //raise(SIGINT);
   // I think there is nothing required to be done here.
    }
 void c_action_type_attr_spec_list(int count)
    {
-    raise(SIGINT);
+    //raise(SIGINT);
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
         printf ("In c_action_type_attr_spec_list(): count = %d \n",count);
    }
@@ -1763,7 +1791,7 @@ void c_action_type_param_decl_list(int count)
  */
 void c_action_component_def_stmt(int type)
    {
-    raise(SIGINT);
+    //raise(SIGINT);
   // This rule only provides a type value to identify the declaration as data or
   // as a procedure. So I don't know if it is of much use in building the ROSE AST.
 
@@ -1785,7 +1813,7 @@ void c_action_component_def_stmt(int type)
 // void c_action_data_component_def_stmt(Token_t * label, ofp_bool hasSpec)
 void c_action_data_component_def_stmt(Token_t *label, Token_t *eos, ofp_bool hasSpec)
    {
-    raise(SIGINT);
+    //raise(SIGINT);
     // This is where we build the declaration using whatever was pushed onto the stack (nameStack)
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
@@ -1795,17 +1823,23 @@ void c_action_data_component_def_stmt(Token_t *label, Token_t *eos, ofp_bool has
 
 #if DXN_CODE
 
-//     VarDeclAttrSpec.setDeclAttrSpecs();
-     setStatementNumericLabel(VarDeclAttrSpec.varDeclaration,label);
-     SgInitializedNamePtrList&  varList = VarDeclAttrSpec.varDeclaration->get_variables ();
+//     DeclAttributes.setDeclAttrSpecs();
+     setStatementNumericLabel(DeclAttributes.getDeclaration(),label);
+     SgVariableDeclaration* varDecl = isSgVariableDeclaration(DeclAttributes.getDeclaration());
+     if (!varDecl)
+     {
+    	 cerr << "ERROR: line " << eos->line << ", col " << eos->col << " - Expect a SgVariableDeclaration, but get a " << DeclAttributes.getDeclaration()->class_name() << endl;
+    	 ROSE_ASSERT(false);
+     }
+     SgInitializedNamePtrList&  varList = varDecl->get_variables ();
      SgInitializedName* firstInitializedNameForSourcePosition = varList.front();
      SgInitializedName* lastInitializedNameForSourcePosition  = varList.back();
-     ROSE_ASSERT(VarDeclAttrSpec.varDeclaration->get_startOfConstruct() != NULL);
+     ROSE_ASSERT(DeclAttributes.getDeclaration()->get_startOfConstruct() != NULL);
      ROSE_ASSERT(firstInitializedNameForSourcePosition->get_startOfConstruct() != NULL);
      ROSE_ASSERT(lastInitializedNameForSourcePosition->get_startOfConstruct() != NULL);
-     *(VarDeclAttrSpec.varDeclaration->get_startOfConstruct()) = *(firstInitializedNameForSourcePosition->get_startOfConstruct());
-     *(VarDeclAttrSpec.varDeclaration->get_endOfConstruct())   = *(lastInitializedNameForSourcePosition->get_startOfConstruct());
-     VarDeclAttrSpec.reset();
+     *(DeclAttributes.getDeclaration()->get_startOfConstruct()) = *(firstInitializedNameForSourcePosition->get_startOfConstruct());
+     *(DeclAttributes.getDeclaration()->get_endOfConstruct())   = *(lastInitializedNameForSourcePosition->get_startOfConstruct());
+     DeclAttributes.reset();
 
 #else
 
@@ -1845,7 +1879,7 @@ void c_action_data_component_def_stmt(Token_t *label, Token_t *eos, ofp_bool has
 // void c_action_component_attr_spec(int specType)
 void c_action_component_attr_spec(Token_t * attrKeyword, int specType)
    {
-    raise(SIGINT);
+    //raise(SIGINT);
     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_component_attr_spec(): attrKeyword = %p = %s specType = %d \n",attrKeyword,attrKeyword != NULL ? attrKeyword->text : "NULL",specType);
 
@@ -1860,7 +1894,11 @@ void c_action_component_attr_spec(Token_t * attrKeyword, int specType)
              {
                if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                     printf ("found a ComponentAttrSpec_pointer spec \n");
-#if 0
+
+#if DXN_CODE
+               DeclAttributes.setIsPointer(true);
+               DeclAttributes.setPointerAttr(ComponentAttrSpec_pointer);
+#else
             // DQ (1/20/2011): These are not processed until after they are accumulated, so that the base 
             // types will be properly handled for array of pointers, and pointers of arrays, etc.
 
@@ -1883,9 +1921,6 @@ void c_action_component_attr_spec(Token_t * attrKeyword, int specType)
                convertBaseTypeOnStackToPointer();
 #endif
 
-#if DXN_CODE
-               VarDeclAttrSpec.isPointer = true;
-#endif
                break;
              }
 
@@ -1909,6 +1944,8 @@ void c_action_component_attr_spec(Token_t * attrKeyword, int specType)
              {
                if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                     printf ("found a ComponentAttrSpec_allocatable spec \n");
+               DeclAttributes.setIsAllocatable(true);
+               DeclAttributes.setAllocatableAttr(ComponentAttrSpec_allocatable);
                break;
              }
 
@@ -1930,6 +1967,8 @@ void c_action_component_attr_spec(Token_t * attrKeyword, int specType)
              {
                if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                     printf ("found a ComponentAttrSpec_access_spec spec \n");
+               DeclAttributes.setHasAccessSpec(true);
+               DeclAttributes.setAccessAttr(ComponentAttrSpec_access_spec);
                break;
              }
 
@@ -1938,6 +1977,10 @@ void c_action_component_attr_spec(Token_t * attrKeyword, int specType)
              {
                if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                     printf ("found a ComponentAttrSpec_codimension spec \n");
+               // TODO: something analogous to AttrSpec_DIMENSION with codimensionAttr in place of dimExp
+               // the codimAttr is perhaps an SgExprListExp with get_expressions of size 0
+               DeclAttributes.setHasCodimension(true);
+               DeclAttributes.setCodimAttr(ComponentAttrSpec_codimension);
                break;
              }
 
@@ -1953,6 +1996,8 @@ void c_action_component_attr_spec(Token_t * attrKeyword, int specType)
                if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                     printf ("found a ComponentAttrSpec_dimension spec \n");
 #if DXN_CODE
+               DeclAttributes.setHasDimension(true);
+               DeclAttributes.setDimAttr(ComponentAttrSpec_dimension);
                // transfer the array spec from the astExpressionStack to the AttrSpec record.
                SgIntVal * intVal = isSgIntVal(astExpressionStack.front());
                ROSE_ASSERT(intVal);  // astExpressionStack.front() contains the number of array spec elements for the dimension attribute
@@ -1960,9 +2005,9 @@ void c_action_component_attr_spec(Token_t * attrKeyword, int specType)
                delete intVal;  // must remove it from AST
                astExpressionStack.pop_front();
                processMultidimensionalSubscriptsIntoExpressionList(count);  // the dimension attribute is now on top of astExpressionStack
-               SgExprListExp* dimAttr = isSgExprListExp(astExpressionStack.front());
-               ROSE_ASSERT(dimAttr);
-               VarDeclAttrSpec.dimensionAttr = dimAttr;
+               SgExprListExp* dimExpr = isSgExprListExp(astExpressionStack.front());
+               ROSE_ASSERT(dimExpr);
+               DeclAttributes.setDimExp(dimExpr);
                astExpressionStack.pop_front();
 #endif
                break;
@@ -1978,7 +2023,7 @@ void c_action_component_attr_spec(Token_t * attrKeyword, int specType)
 
 #if DXN_CODE
 
-//     setDeclarationAttributeSpec(VarDeclAttrSpec.varDeclaration, specType);
+//     setDeclarationAttributeSpec(DeclAttributes.varDeclaration, specType);
 
 #else
 
@@ -2002,7 +2047,7 @@ void c_action_component_attr_spec(Token_t * attrKeyword, int specType)
  */
 void c_action_component_attr_spec_list__begin()
    {
-    raise(SIGINT);
+    //raise(SIGINT);
     // I think this is the correct assertion, but the rest of this rule is not implemented!
 
 #if 1
@@ -2043,7 +2088,7 @@ void c_action_component_attr_spec_list__begin()
 
 void c_action_component_attr_spec_list(int count)
    {
-    raise(SIGINT);
+    //raise(SIGINT);
   // This function R441 is similar to R504 R503-F2008 but is used for declarations in types.
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
@@ -2084,7 +2129,7 @@ void c_action_component_decl(Token_t * id,
         ofp_bool hasComponentArraySpec, ofp_bool hasCoArraySpec, 
         ofp_bool hasCharLength, ofp_bool hasComponentInitialization)
    {
-    raise(SIGINT);
+    //raise(SIGINT);
     // Build each variable and append it to the current scope!
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
@@ -2115,7 +2160,7 @@ void c_action_component_decl(Token_t * id,
  */
 void c_action_component_decl_list__begin()
    {
-    raise(SIGINT);
+    //raise(SIGINT);
 #if DXN_DEBUG
     // Output debugging information about saved state (stack) information.
     outputState("At TOP of c_action_component_decl_list__begin()");
@@ -2124,13 +2169,13 @@ void c_action_component_decl_list__begin()
 #if DXN_CODE
 
     // Create a variable declaration for this component_decl_list:
-     VarDeclAttrSpec.varDeclaration = new SgVariableDeclaration();
-     setSourcePosition(VarDeclAttrSpec.varDeclaration);
-     VarDeclAttrSpec.varDeclaration->set_parent(getTopOfScopeStack());
-     VarDeclAttrSpec.varDeclaration->set_definingDeclaration(VarDeclAttrSpec.varDeclaration);
-     VarDeclAttrSpec.varDeclaration->get_declarationModifier().get_accessModifier().setUndefined();
-     VarDeclAttrSpec.setDeclAttrSpecs();
-     VarDeclAttrSpec.baseType = astBaseTypeStack.front();
+     DeclAttributes.setDeclaration(new SgVariableDeclaration());
+     setSourcePosition(DeclAttributes.getDeclaration());
+     DeclAttributes.getDeclaration()->set_parent(getTopOfScopeStack());
+     DeclAttributes.getDeclaration()->set_definingDeclaration(DeclAttributes.getDeclaration());
+     DeclAttributes.getDeclaration()->get_declarationModifier().get_accessModifier().setUndefined();
+     DeclAttributes.setBaseType(astBaseTypeStack.front());
+     DeclAttributes.setDeclAttrSpecs();
      astBaseTypeStack.pop_front();
 
 #else
@@ -2161,9 +2206,9 @@ void c_action_component_decl_list(int count)
 
 #if DXN_CODE
 
-    ROSE_ASSERT(VarDeclAttrSpec.varDeclaration->get_file_info()->isCompilerGenerated() == false);
+    ROSE_ASSERT(DeclAttributes.getDeclaration()->get_file_info()->isCompilerGenerated() == false);
     ROSE_ASSERT(getTopOfScopeStack()->variantT() == V_SgBasicBlock || getTopOfScopeStack()->variantT() == V_SgClassDefinition);
-    getTopOfScopeStack()->append_statement(VarDeclAttrSpec.varDeclaration);
+    getTopOfScopeStack()->append_statement(DeclAttributes.getDeclaration());
 
 #else
 
@@ -2203,7 +2248,7 @@ void c_action_component_decl_list(int count)
  */
 void c_action_component_array_spec(ofp_bool isExplicit)
    {
-    raise(SIGINT);
+    //raise(SIGINT);
     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_component_array_spec(): isExplicit = %s \n",isExplicit ? "true" : "false");
 
@@ -2249,14 +2294,14 @@ void c_action_component_array_spec(ofp_bool isExplicit)
  */
 void c_action_deferred_shape_spec_list__begin()
    {
-    raise(SIGINT);
+    //raise(SIGINT);
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_deferred_shape_spec_list__begin() \n");
    }
 
 void c_action_deferred_shape_spec_list(int count)
    {
-    raise(SIGINT);
+    //raise(SIGINT);
     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_deferred_shape_spec_list(): count = %d \n",count);
 
@@ -3115,7 +3160,8 @@ c_action_scalar_int_variable()
 void
 c_action_type_declaration_stmt(Token_t * label, int numAttributes, Token_t * eos)
    {
-    // This function is similar to R441 component-attr-spec-list
+	//raise(SIGINT);
+	// This function is similar to R441 component-attr-spec-list
 
   // This is a variable declaration (build the SgVariableDeclaration and populate it using data saved on the stack).
 
@@ -3138,17 +3184,23 @@ c_action_type_declaration_stmt(Token_t * label, int numAttributes, Token_t * eos
 
 #if DXN_CODE
 
-//     VarDeclAttrSpec.setDeclAttrSpecs();
-     setStatementNumericLabel(VarDeclAttrSpec.varDeclaration,label);
-     SgInitializedNamePtrList&  varList = VarDeclAttrSpec.varDeclaration->get_variables ();
+//     DeclAttributes.setDeclAttrSpecs();
+     setStatementNumericLabel(DeclAttributes.getDeclaration(),label);
+     SgVariableDeclaration* varDecl = isSgVariableDeclaration(DeclAttributes.getDeclaration());
+     if (!varDecl)
+     {
+    	 cerr << "ERROR: line " << eos->line << ", col " << eos->col << " - Expect a SgVariableDeclaration, but get a " << DeclAttributes.getDeclaration()->class_name() << endl;
+    	 ROSE_ASSERT(false);
+     }
+     SgInitializedNamePtrList&  varList = varDecl->get_variables ();
      SgInitializedName* firstInitializedNameForSourcePosition = varList.front();
      SgInitializedName* lastInitializedNameForSourcePosition  = varList.back();
-     ROSE_ASSERT(VarDeclAttrSpec.varDeclaration->get_startOfConstruct() != NULL);
+     ROSE_ASSERT(DeclAttributes.getDeclaration()->get_startOfConstruct() != NULL);
      ROSE_ASSERT(firstInitializedNameForSourcePosition->get_startOfConstruct() != NULL);
      ROSE_ASSERT(lastInitializedNameForSourcePosition->get_startOfConstruct() != NULL);
-     *(VarDeclAttrSpec.varDeclaration->get_startOfConstruct()) = *(firstInitializedNameForSourcePosition->get_startOfConstruct());
-     *(VarDeclAttrSpec.varDeclaration->get_endOfConstruct())   = *(lastInitializedNameForSourcePosition->get_startOfConstruct());
-     VarDeclAttrSpec.reset();
+     *(DeclAttributes.getDeclaration()->get_startOfConstruct()) = *(firstInitializedNameForSourcePosition->get_startOfConstruct());
+     *(DeclAttributes.getDeclaration()->get_endOfConstruct())   = *(lastInitializedNameForSourcePosition->get_startOfConstruct());
+     DeclAttributes.reset();
 
 #else
 
@@ -3289,13 +3341,13 @@ void c_action_declaration_type_spec(Token_t * udtKeyword, int type)
 #if DXN_CODE
 // Create a variable declaration for this declaration type spec:
 /*
-     VarDeclAttrSpec.varDeclaration = new SgVariableDeclaration();
-     setSourcePosition(VarDeclAttrSpec.varDeclaration);
-     VarDeclAttrSpec.varDeclaration->set_parent(getTopOfScopeStack());
-     VarDeclAttrSpec.varDeclaration->set_definingDeclaration(VarDeclAttrSpec.varDeclaration);
-     VarDeclAttrSpec.varDeclaration->get_declarationModifier().get_accessModifier().setUndefined();
+     DeclAttributes.varDeclaration = new SgVariableDeclaration();
+     setSourcePosition(DeclAttributes.varDeclaration);
+     DeclAttributes.varDeclaration->set_parent(getTopOfScopeStack());
+     DeclAttributes.varDeclaration->set_definingDeclaration(DeclAttributes.varDeclaration);
+     DeclAttributes.varDeclaration->get_declarationModifier().get_accessModifier().setUndefined();
 
-     VarDeclAttrSpec.baseType = astBaseTypeStack.front();
+     DeclAttributes.baseType = astBaseTypeStack.front();
      astBaseTypeStack.pop_front();
 */
 #endif
@@ -3354,8 +3406,8 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
             // DQ (5/20/2008): This is a redundant specifier, it appears to only be used with AttrSpec_PUBLIC or AttrSpec_PRIVATE
                if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                     printf ("found a AttrSpec_access spec \n");
-               VarDeclAttrSpec.hasAccessSpec = true;
-               VarDeclAttrSpec.accessAttr = AttrSpec_access;
+               DeclAttributes.setHasAccessSpec(true);
+               DeclAttributes.setAccessAttr(AttrSpec_access);
                break;
              }
 
@@ -3363,8 +3415,8 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
               {
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a language_binding spec \n");
-                 VarDeclAttrSpec.hasLangBinding = true;
-                 VarDeclAttrSpec.bindingAttr = AttrSpec_language_binding;
+                 DeclAttributes.setHasLangBinding(true);
+                 DeclAttributes.setBindingAttr(AttrSpec_language_binding);
                  break;
               }
 
@@ -3372,8 +3424,8 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
               {
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a PUBLIC spec \n");
-                 VarDeclAttrSpec.isPublic = true;
-                 VarDeclAttrSpec.publicAttr = AttrSpec_PUBLIC;
+                 DeclAttributes.setIsPublic(true);
+                 DeclAttributes.setPublicAttr(AttrSpec_PUBLIC);
                  break;
               }
 
@@ -3381,8 +3433,8 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
               {
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a PRIVATE spec \n");
-                 VarDeclAttrSpec.isPrivate = true;
-                 VarDeclAttrSpec.privateAttr = AttrSpec_PRIVATE;
+                 DeclAttributes.setIsPrivate(true);
+                 DeclAttributes.setPrivateAttr(AttrSpec_PRIVATE);
                  break;
               }
 
@@ -3390,8 +3442,8 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
               {
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a ALLOCATABLE spec \n");
-                 VarDeclAttrSpec.isAllocatable = true;
-                 VarDeclAttrSpec.allocatableAttr = AttrSpec_ALLOCATABLE;
+                 DeclAttributes.setIsAllocatable(true);
+                 DeclAttributes.setAllocatableAttr(AttrSpec_ALLOCATABLE);
                  break;
               }
 
@@ -3399,8 +3451,8 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
               {
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a ASYNCHRONOUS spec \n");
-                 VarDeclAttrSpec.isAsynchronous = true;
-                 VarDeclAttrSpec.asyncAttr = AttrSpec_ASYNCHRONOUS;
+                 DeclAttributes.setIsAsynchronous(true);
+                 DeclAttributes.setAsyncAttr(AttrSpec_ASYNCHRONOUS);
                  break;
               }
 
@@ -3414,7 +3466,8 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
                     printf ("found a DIMENSION spec \n");
 
 #if DXN_CODE
-               VarDeclAttrSpec.hasDimension = true;
+               DeclAttributes.setHasDimension(true);
+               DeclAttributes.setDimAttr(AttrSpec_DIMENSION);
                // transfer the array spec from the astExpressionStack to the AttrSpec record.
                SgIntVal * intVal = isSgIntVal(astExpressionStack.front());
                ROSE_ASSERT(intVal);  // astExpressionStack.front() contains the number of array spec elements for the dimension attribute
@@ -3422,31 +3475,28 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
                delete intVal;  // must remove it from AST
                astExpressionStack.pop_front();
                processMultidimensionalSubscriptsIntoExpressionList(count);  // the dimension attribute is now on top of astExpressionStack
-               SgExprListExp* dimAttr = isSgExprListExp(astExpressionStack.front());
-               ROSE_ASSERT(dimAttr);
-               VarDeclAttrSpec.dimensionAttr = dimAttr;
+               SgExprListExp* dimExpr = isSgExprListExp(astExpressionStack.front());
+               ROSE_ASSERT(dimExpr);
+               DeclAttributes.setDimExp(dimExpr);
                astExpressionStack.pop_front();
 #endif
                break;
              }
 
-#if 0
-             // DXN: TODO
-          case AttrSpec_CODIMENSION:
-          {
-              // something analogous to AttrSpec_DIMENSION with codimensionAttr in place of dimensionAttr
+           case AttrSpec_CODIMENSION:  // DXN: TODO
+             {
+              // something analogous to AttrSpec_DIMENSION with codimensionAttr in place of dimExp
               // the codimAttr is perhaps an SgExprListExp with get_expressions of size 0
-              VarDeclAttrSpec.hasCodimension = true;
-          }
-
-#endif
+              DeclAttributes.setHasCodimension(true);
+              DeclAttributes.setCodimAttr(AttrSpec_CODIMENSION);
+             }
 
            case AttrSpec_EXTERNAL:
               {
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a EXTERNAL spec \n");
-                 VarDeclAttrSpec.isExternal = true;
-                 VarDeclAttrSpec.externalAttr = AttrSpec_EXTERNAL;
+                 DeclAttributes.setIsExternal(true);
+                 DeclAttributes.setExternalAttr(AttrSpec_EXTERNAL);
                  break;
               }
 
@@ -3454,10 +3504,10 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
               {
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a INTENT spec \n");
-                 VarDeclAttrSpec.hasIntent = true;
-                 VarDeclAttrSpec.intentAttr = AttrSpec_INTENT;
+                 DeclAttributes.setHasIntent(true);
+                 DeclAttributes.setIntentAttr(AttrSpec_INTENT);
                 /* TODO
-                 *  VarDeclAttrSpec.intent = astIntentSpecStack.back(); // see c_action_intent_spec
+                 *  DeclAttributes.intent = astIntentSpecStack.back(); // see c_action_intent_spec
                  */
                  break;
               }
@@ -3466,8 +3516,8 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
               {
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a INTRINSIC spec \n");
-                 VarDeclAttrSpec.isIntrinsic = true;
-                 VarDeclAttrSpec.intrinsicAttr = AttrSpec_INTRINSIC;
+                 DeclAttributes.setIsIntrinsic(true);
+                 DeclAttributes.setIntrinsicAttr(AttrSpec_INTRINSIC);
                  break;
               }
 
@@ -3475,8 +3525,8 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
               {
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a BINDC spec \n");
-                 VarDeclAttrSpec.hasBindC = true;
-                 VarDeclAttrSpec.bindCAttr = AttrSpec_BINDC;
+                 DeclAttributes.setHasBindC(true);
+                 DeclAttributes.setBindCAttr(AttrSpec_BINDC);
                  break;
               }
 
@@ -3484,8 +3534,8 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
               {
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a OPTIONAL spec \n");
-                 VarDeclAttrSpec.isOptional = true;
-                 VarDeclAttrSpec.optionalAttr = AttrSpec_OPTIONAL;
+                 DeclAttributes.setIsOptional(true);
+                 DeclAttributes.setOptionalAttr(AttrSpec_OPTIONAL);
                  break;
               }
 
@@ -3493,8 +3543,8 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
               {
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                     printf ("found a PARAMETER spec (AttrSpec_PARAMETER = %d)\n",AttrSpec_PARAMETER);
-                 VarDeclAttrSpec.hasParameter = true;
-                 VarDeclAttrSpec.parameterAttr = AttrSpec_PARAMETER;
+                 DeclAttributes.setHasParameter(true);
+                 DeclAttributes.setParameterAttr(AttrSpec_PARAMETER);
                  break;
               }
 
@@ -3502,8 +3552,8 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
               {
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a POINTER spec \n");
-                 VarDeclAttrSpec.isPointer = true;
-                 VarDeclAttrSpec.pointerAttr = AttrSpec_POINTER;
+                 DeclAttributes.setIsPointer(true);
+                 DeclAttributes.setPointerAttr(AttrSpec_POINTER);
                  break;
               }
 
@@ -3511,8 +3561,8 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
               {
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a COPOINTER spec \n");
-                 VarDeclAttrSpec.isCopointer = true;
-                 VarDeclAttrSpec.copointerAttr = AttrSpec_COPOINTER;
+                 DeclAttributes.setIsCopointer(true);
+                 DeclAttributes.setCopointerAttr(AttrSpec_COPOINTER);
                  break;
               }
 
@@ -3520,8 +3570,8 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
               {
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a PROTECTED spec \n");
-                 VarDeclAttrSpec.isProtected = true;
-                 VarDeclAttrSpec.protectedAttr = AttrSpec_PROTECTED;
+                 DeclAttributes.setIsProtected(true);
+                 DeclAttributes.setProtectedAttr(AttrSpec_PROTECTED);
                  break;
               }
 
@@ -3529,8 +3579,8 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
               {
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a SAVE spec \n");
-                 VarDeclAttrSpec.isSave = true;
-                 VarDeclAttrSpec.saveAttr = AttrSpec_SAVE;
+                 DeclAttributes.setIsSave(true);
+                 DeclAttributes.setSaveAttr(AttrSpec_SAVE);
                  break;
               }
 
@@ -3538,8 +3588,8 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
               {
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a TARGET spec \n");
-                 VarDeclAttrSpec.isTarget = true;
-                 VarDeclAttrSpec.targetAttr = AttrSpec_TARGET;
+                 DeclAttributes.setIsTarget(true);
+                 DeclAttributes.setTargetAttr(AttrSpec_TARGET);
                  break;
               }
 
@@ -3547,8 +3597,8 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
               {
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a COTARGET spec \n");
-                 VarDeclAttrSpec.isCotarget = true;
-                 VarDeclAttrSpec.cotargetAttr = AttrSpec_COTARGET;
+                 DeclAttributes.setIsCotarget(true);
+                 DeclAttributes.setCotargetAttr(AttrSpec_COTARGET);
                  break;
               }
 
@@ -3556,8 +3606,8 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
               {
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a VALUE spec \n");
-                 VarDeclAttrSpec.isValue = true;
-                 VarDeclAttrSpec.valueAttr = AttrSpec_VALUE;
+                 DeclAttributes.setIsValue(true);
+                 DeclAttributes.setValueAttr(AttrSpec_VALUE);
                  break;
               }
 
@@ -3565,8 +3615,8 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
               {
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a VOLATILE spec \n");
-                 VarDeclAttrSpec.isVolatile = true;
-                 VarDeclAttrSpec.volatileAttr = AttrSpec_VOLATILE;
+                 DeclAttributes.setIsVolatile(true);
+                 DeclAttributes.setVolatileAttr(AttrSpec_VOLATILE);
                  break;
               }
 
@@ -3574,8 +3624,8 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
               {
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a PASS spec \n");
-                 VarDeclAttrSpec.isPass = true;
-                 VarDeclAttrSpec.passAttr = AttrSpec_PASS;
+                 DeclAttributes.setIsPass(true);
+                 DeclAttributes.setPassAttr(AttrSpec_PASS);
                  break;
               }
 
@@ -3583,8 +3633,8 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
               {
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a NOPASS spec \n");
-                 VarDeclAttrSpec.isNoPass = true;
-                 VarDeclAttrSpec.noPassAttr = AttrSpec_NOPASS;
+                 DeclAttributes.setIsNoPass(true);
+                 DeclAttributes.setNoPassAttr(AttrSpec_NOPASS);
                  break;
               }
 
@@ -3592,8 +3642,8 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
               {
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a NON_OVERRIDABLE spec \n");
-                 VarDeclAttrSpec.isNonOverridable = true;
-                 VarDeclAttrSpec.nonOverrideAttr = AttrSpec_NON_OVERRIDABLE;
+                 DeclAttributes.setIsNonOverridable(true);
+                 DeclAttributes.setNonOverrideAttr(AttrSpec_NON_OVERRIDABLE);
                  break;
               }
 
@@ -3601,8 +3651,8 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
               {
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a DEFERRED spec \n");
-                 VarDeclAttrSpec.isDeferred = true;
-                 VarDeclAttrSpec.deferredAttr = AttrSpec_DEFERRED;
+                 DeclAttributes.setIsDeferred(true);
+                 DeclAttributes.setDeferredAttr(AttrSpec_DEFERRED);
                  break;
               }
 
@@ -3615,7 +3665,7 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
 
 #if DXN_CODE
 
-//     setDeclarationAttributeSpec(VarDeclAttrSpec.varDeclaration, attr);
+//     setDeclarationAttributeSpec(DeclAttributes.varDeclaration, attr);
 
 #else
   // DQ (1/23/2011): The dimension attribute will be associated with an attribute pusded by R510 #2 c_action_array_spec_element().
@@ -3647,7 +3697,7 @@ void c_action_entity_decl(Token_t * id, ofp_bool hasArraySpec, ofp_bool hasCoarr
 void c_action_entity_decl(Token_t * id)
 #endif
    {
-    raise(SIGINT);
+    //raise(SIGINT);
     // This function R504 R503-F2008 is similar to R442 R438-F2008
 
   // Push the entities onto the list at the top of the stack
@@ -3680,8 +3730,8 @@ void c_action_entity_decl(Token_t * id)
 
 #if DXN_CODE
 #if !SKIP_C_ACTION_IMPLEMENTATION
-    AttrSpec entityAttr;
-    entityAttr = VarDeclAttrSpec;
+    AttributeRec entityAttr;
+    entityAttr = DeclAttributes;
     SgExpression* initialization = NULL;
 
     // DXN (05/09/2011): update the array spec, coarray spec, char length and initialization of entity decl here
@@ -3694,7 +3744,7 @@ void c_action_entity_decl(Token_t * id)
     if (hasCharLength)
     {
       ROSE_ASSERT(!astExpressionStack.empty());  // astExpressionStack() contains char_length expression
-      entityAttr.lenExpr = astExpressionStack.front();
+      entityAttr.setLenExpr(astExpressionStack.front());
       astExpressionStack.pop_front();
     }
     if (hasCoarraySpec)
@@ -3702,9 +3752,9 @@ void c_action_entity_decl(Token_t * id)
       ROSE_ASSERT(!astExpressionStack.empty());  // astExpressionStack.front() contains all codimension specs
       SgExprListExp* coarraySpec = isSgExprListExp(astExpressionStack.front());
       ROSE_ASSERT(coarraySpec);
-      entityAttr.codimensionAttr = coarraySpec;
+      entityAttr.setCodimExp(coarraySpec);
       astExpressionStack.pop_front();
-      entityAttr.hasCodimension = true;
+      entityAttr.setHasCodimension(true);
     }
     if (hasArraySpec)
     {
@@ -3716,9 +3766,9 @@ void c_action_entity_decl(Token_t * id)
       processMultidimensionalSubscriptsIntoExpressionList(count);  // the dimension attribute is now on top of astExpressionStack
       SgExprListExp* arraySpec = isSgExprListExp(astExpressionStack.front());
       ROSE_ASSERT(arraySpec);
-      entityAttr.dimensionAttr = arraySpec;
+      entityAttr.setDimExp(arraySpec);
       astExpressionStack.pop_front();
-      entityAttr.hasDimension = true;
+      entityAttr.setHasDimension(true);
     }
 
     SgType* entityType = entityAttr.computeEntityType();
@@ -3814,7 +3864,13 @@ void c_action_entity_decl(Token_t * id)
     ROSE_ASSERT(initializedName != NULL);
     setSourcePosition(initializedName,id);
 
-    VarDeclAttrSpec.varDeclaration->append_variable(initializedName,initializedName->get_initializer());
+    SgVariableDeclaration* varDecl = isSgVariableDeclaration(DeclAttributes.getDeclaration());
+    if (!varDecl)
+    {
+   	 cerr << "ERROR: line " << id->line << ", col " << id->col << " - Expect a SgVariableDeclaration, but get a " << DeclAttributes.getDeclaration()->class_name() << endl;
+   	 ROSE_ASSERT(false);
+    }
+    varDecl->append_variable(initializedName,initializedName->get_initializer());
     // astNodeStack.push_front(initializedName);
 
     ROSE_ASSERT(!astNameStack.empty());
@@ -4272,13 +4328,13 @@ void c_action_entity_decl_list__begin()
 
 #if DXN_CODE
 // Create a variable declaration for this entity_decl_list:
-     VarDeclAttrSpec.varDeclaration = new SgVariableDeclaration();
-     setSourcePosition(VarDeclAttrSpec.varDeclaration);
-     VarDeclAttrSpec.varDeclaration->set_parent(getTopOfScopeStack());
-     VarDeclAttrSpec.varDeclaration->set_definingDeclaration(VarDeclAttrSpec.varDeclaration);
-     VarDeclAttrSpec.varDeclaration->get_declarationModifier().get_accessModifier().setUndefined();
-     VarDeclAttrSpec.setDeclAttrSpecs();
-     VarDeclAttrSpec.baseType = astBaseTypeStack.front();
+     DeclAttributes.setDeclaration(new SgVariableDeclaration());
+     setSourcePosition(DeclAttributes.getDeclaration());
+     DeclAttributes.getDeclaration()->set_parent(getTopOfScopeStack());
+     DeclAttributes.getDeclaration()->set_definingDeclaration(DeclAttributes.getDeclaration());
+     DeclAttributes.getDeclaration()->get_declarationModifier().get_accessModifier().setUndefined();
+     DeclAttributes.setDeclAttrSpecs();
+     DeclAttributes.setBaseType(astBaseTypeStack.front());
      astBaseTypeStack.pop_front();
 #else
      ROSE_ASSERT(astBaseTypeStack.empty() == false);
@@ -4287,8 +4343,7 @@ void c_action_entity_decl_list__begin()
   // build the list and add the variable identifiers to the list
   // AstNameListType* nameList = new AstNameListType();
   // astNameListStack.push_front(nameList);
-     convertBaseTypeToArrayWhereAppropriate();   // DXN (05/09/2011): TODO - need to break this up into smaller chunks in order isolate and disable the conversion to array type.
-                                                 // if this commented out, top of astEpressionStack is not consumed and popped.
+     convertBaseTypeToArrayWhereAppropriate();
 #endif
    }
 
@@ -4313,9 +4368,9 @@ void c_action_entity_decl_list(int count)
 
 #if DXN_CODE
 
-     ROSE_ASSERT(VarDeclAttrSpec.varDeclaration->get_file_info()->isCompilerGenerated() == false);
+     ROSE_ASSERT(DeclAttributes.getDeclaration()->get_file_info()->isCompilerGenerated() == false);
      ROSE_ASSERT(getTopOfScopeStack()->variantT() == V_SgBasicBlock || getTopOfScopeStack()->variantT() == V_SgClassDefinition);
-     getTopOfScopeStack()->append_statement(VarDeclAttrSpec.varDeclaration);
+     getTopOfScopeStack()->append_statement(DeclAttributes.getDeclaration());
 
 #else
 
@@ -4459,13 +4514,13 @@ void c_action_null_init(Token_t * id)
  */
 void c_action_access_spec(Token_t * keyword, int type)
    {
-    raise(SIGINT);
+    //raise(SIGINT);
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_access_spec(): keyword = %p = %s type = %d \n",keyword,keyword != NULL ? keyword->text : "NULL",type);
 
 #if DXN_CODE
-     VarDeclAttrSpec.hasAccessSpec = true;
-     VarDeclAttrSpec.accessType = type;
+     DeclAttributes.setHasAccessSpec(true);
+     DeclAttributes.setAccessType(type);
 #else
      astAttributeSpecStack.push_front(type);
 
@@ -4822,11 +4877,11 @@ void c_action_access_stmt(Token_t * label, Token_t * eos, ofp_bool hasList)
 
 #if DXN_CODE
 
-     if (VarDeclAttrSpec.accessType == AttrSpec_PRIVATE)
+     if (DeclAttributes.getAccessType() == AttrSpec_PRIVATE)
         {
           buildAttributeSpecificationStatement(SgAttributeSpecificationStatement::e_accessStatement_private,label,eos);
         }
-     else // (VarDeclAttrSpec.accessType == AttrSpec_PUBLIC)
+     else // (DeclAttributes.accessType == AttrSpec_PUBLIC)
         {
           buildAttributeSpecificationStatement(SgAttributeSpecificationStatement::e_accessStatement_public,label,eos);
         }
@@ -5668,11 +5723,11 @@ void c_action_scalar_int_constant()
 
 /**
  * Generated rule.
- * hollerith_constant
+ * hollerith_literal_constant
  *
  * @param hollerithConstant T_HOLLERITH token.
  */
-void c_action_hollerith_constant(Token_t *hollerithConstant)
+void c_action_hollerith_literal_constant(Token_t *hollerithConstant)
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_hollerith_constant() hollerithConstant = %p = %s \n",hollerithConstant,hollerithConstant != NULL ? hollerithConstant->text : "NULL");
@@ -12691,42 +12746,41 @@ void c_action_exit_stmt(Token_t *label, Token_t *exitKeyword, Token_t *id, Token
 
 /** R845
  * goto_stmt
- *      :       t_go_to label T_EOS
+ *      :   (label)? t_go_to target_label T_EOS
  *
- * @param label The branch target statement label
+ * @param target_label The branch target statement label
  */
-// void c_action_goto_stmt(Token_t * label)
-void c_action_goto_stmt(Token_t *goKeyword, Token_t *toKeyword, Token_t *label, Token_t *eos)
+void c_action_goto_stmt(Token_t *label, Token_t *goKeyword, Token_t *toKeyword,
+                        Token_t *target_label, Token_t *eos)
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-          printf ("In c_action_goto_stmt() label = %p = %s goKeyword = %p = %s toKeyword = %p = %s \n",
-            // label,label != NULL ? label->text : "NULL",
+          printf ("In c_action_goto_stmt() target_label = %p = %s goKeyword = %p = %s toKeyword = %p = %s \n",
                goKeyword,goKeyword != NULL ? goKeyword->text : "NULL",
                toKeyword,toKeyword != NULL ? toKeyword->text : "NULL",
-               label,label != NULL ? label->text : "NULL");
+               target_label,target_label != NULL ? target_label->text : "NULL");
 
-     ROSE_ASSERT(label != NULL);
-     SgLabelSymbol* label_symbol = buildNumericLabelSymbol(label);
-     ROSE_ASSERT(label_symbol != NULL);
+     ROSE_ASSERT(target_label != NULL);
+     SgLabelSymbol* target_symbol = buildNumericLabelSymbol(target_label);
+     ROSE_ASSERT(target_symbol != NULL);
 
   // This takes a SgStatement as a label, but that is being replaced to take a SgLabelSymbol.
      SgLabelStatement* labelStatement = NULL;
      SgGotoStatement* gotoStatement = new SgGotoStatement(labelStatement);
 
   // Set the generated SgLabelSymbol
-  // gotoStatement->set_label_symbol(label_symbol);
+  // gotoStatement->set_label_symbol(target_symbol);
 
-     SgLabelRefExp* labelRefExp = new SgLabelRefExp(label_symbol);
+     SgLabelRefExp* labelRefExp = new SgLabelRefExp(target_symbol);
      gotoStatement->set_label_expression(labelRefExp);
      labelRefExp->set_parent(gotoStatement);
-     setSourcePosition(labelRefExp,label);
+     setSourcePosition(labelRefExp,target_label);
 
      ROSE_ASSERT(goKeyword != NULL);
      setSourcePosition(gotoStatement,goKeyword);
 
   // When this statement can handle a numericl label (on the statement itself) then 
   // uncomment this line.  This is an OFP bug that was reported 12/20/2007.
-  // setStatementNumericLabel(gotoStatement,label);
+     setStatementNumericLabel(gotoStatement,label);
 
      astScopeStack.front()->append_statement(gotoStatement);
 
@@ -19167,19 +19221,19 @@ void c_action_end_of_stmt(Token_t * eos)
  * start_of_file
  *
  * @param filename The name of the file
- * @param path The full path of the file
+ * @param filepath The full path of the file
  *
- * Modified v0.8.3 (path argument added)
+ * Modified v0.8.3 (filepath argument added)
  */
 #if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 3
-void c_action_start_of_file(const char *filename, const char *path)
+void c_action_start_of_file(const char *filename, const char *filepath)
 #else
-void c_action_start_of_file(const char *filename)
+void c_action_start_of_file(const char *filepath)
 #endif
    {
     // New function to support Fortran include mechanism
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-          printf ("In c_action_start_of_file(%s) \n",filename);
+          printf ("In c_action_start_of_file(%s) \n",filepath);
 
 #if 0
   // Output debugging information about saved state (stack) information.
@@ -19191,15 +19245,15 @@ void c_action_start_of_file(const char *filename)
 
   // DXN: We create a SgFortranIncludeLine node only when the current file is not a top level file
   // and is not an rmod file.  When parsing a top level file, the astIncludeStack should be empty.
-     if (!astIncludeStack.empty() && !isARoseModuleFile(filename))
+     if (!astIncludeStack.empty() && !isARoseModuleFile(filepath))
         {
        // After the first time, ever call to this function is significant (represents use of the
        // Fortran include mechanism; not formally a part of the language grammar).
 
-          SgFortranIncludeLine* includeLine = new SgFortranIncludeLine(filename);
+          SgFortranIncludeLine* includeLine = new SgFortranIncludeLine(filepath);
 
           if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-               printf ("Note: Need a token to represent the the filename so that we can get the position of the include statment \n");
+               printf ("Note: Need a token to represent the filename so that we can get the position of the include statement\n");
 
        // Get the last statment (this is an expensive way to do that).
           SgScopeStatement* scope = astScopeStack.front();
@@ -19222,7 +19276,7 @@ void c_action_start_of_file(const char *filename)
 
           Sg_File_Info* fileInfo = new Sg_File_Info(filenameOfIncludeLocation,lineNumberOfLastStatement,columnNumber);
 
-       // We need a way to get the source position o fthe Fortran include line.
+       // We need a way to get the source position of the Fortran include line.
        // setSourcePositionCompilerGenerated(includeLine);
        // setSourcePosition(includeLine);
           includeLine->set_file_info(fileInfo);
@@ -19239,7 +19293,7 @@ void c_action_start_of_file(const char *filename)
        // files the call to c_action_start_of_file() is triggered by a symantic
        // handling of the use statement, not the existance of the Fortran include
        // so it should be a mistake to insert an Fortran include statement!
-       // ROSE_ASSERT(includeLine->get_file_info()->get_filenameString() != string(filename));
+       // ROSE_ASSERT(includeLine->get_file_info()->get_filenameString() != string(filepath));
 
           ROSE_ASSERT(astScopeStack.empty() == false);
 
@@ -19250,7 +19304,8 @@ void c_action_start_of_file(const char *filename)
           includeLine->set_firstNondefiningDeclaration(includeLine); 
         }
 
-     astIncludeStack.push_back(filename);
+     astIncludeStack.push_back(filepath);
+
 #if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of c_action_start_of_file()");
@@ -19261,15 +19316,15 @@ void c_action_start_of_file(const char *filename)
  * end_of_file
  *
  * @param filename The name of the file
- * @param path The full path of the file
+ * @param filepath The full path of the file
  *
  * Modified v0.7.2 (filename argument added)
- * Modified v0.8.3 (path argument added)
+ * Modified v0.8.3 (filepath argument added)
  */
 #if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 3
-void c_action_end_of_file(const char *filename, const char *path)
+void c_action_end_of_file(const char *filename, const char *filepath)
 #else
-void c_action_end_of_file(const char *filename)
+void c_action_end_of_file(const char *filepath)
 #endif
    {
     // New function to support Fortran include mechanism
