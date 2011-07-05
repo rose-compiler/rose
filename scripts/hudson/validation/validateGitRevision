@@ -1,0 +1,67 @@
+#!/bin/bash
+#
+###############################################################################
+source $(dirname $0)/validateUtilities
+###############################################################################
+
+
+echo $border
+###############################################################################
+# Current Git Revision
+#
+#     e.g. 0e7f749692802c55d49d86b89a4de7155dd7b59c (too1-hudson-test) 
+#
+###############################################################################
+(
+REVISION="$(git rev-parse HEAD)"
+REVISION_NAME="$(echo $REVISION |git name-rev --stdin)"
+echo "Validating Git Revision: ${REVISION_NAME}"
+echo
+
+
+###############################################################################
+#
+#  Skip ancient branches
+#
+###############################################################################
+max_age=2
+step="Commits less than $max_age days old? "
+
+git log --since="$max_age days ago" | grep -q "$REVISION"
+if [ $? -ne 0  ]; then
+	failed && exit 2
+else
+	passed
+fi
+
+###############################################################################
+#
+#  Skip redundant branches
+#
+#  Check if this commit is already in master.
+#
+###############################################################################
+# Before 06-02-2011:
+#
+#  git log -n 100 origin/master | grep "$REVISION"
+#  if [ $? -eq 0 ]; then
+#      echo "The commit is already tested and merged into master"
+#      exit 3
+#  else
+#      echo "The commit is fresh"
+#  fi
+step="Has new commits? "
+git branch -r --contains "$REVISION" |grep -q "origin/master$"
+if [ $? -eq 0 ]; then
+	failed
+    exit 3
+else
+	passed
+fi
+) >&1 |while read; do echo "| $REPLY"; done
+[ ${PIPESTATUS[0]} -ne 0 ] && exit 1
+
+
+###############################################################################
+echo $border
+echo
