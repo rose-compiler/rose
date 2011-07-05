@@ -240,7 +240,7 @@ void StaticSingleAssignment::run(bool interprocedural)
 	time.restart();
 #endif
 	
-	DefsAndUsesTraversal defUseTrav(this);
+	DefsAndUsesTraversal defUseTrav;
 
 	//Generate all local information before doing interprocedural analysis. This is so we know
 	//what variables are directly modified in each function body before we do interprocedural propagation

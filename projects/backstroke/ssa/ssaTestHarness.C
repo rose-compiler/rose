@@ -189,6 +189,8 @@ int main(int argc, char** argv)
 	StaticSingleAssignment ssa(project);
 	ssa.run(false);
 	
+	return 0;
+	
 #if 0
 	vector<SgFunctionDefinition*> functions = SageInterface::querySubTree<SgFunctionDefinition>(project, V_SgFunctionDefinition);
 	foreach (SgFunctionDefinition* function, functions)
