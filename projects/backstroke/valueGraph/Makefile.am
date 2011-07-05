@@ -16,15 +16,14 @@ libBackstrokeFunctionReverser_a_SOURCES = valueGraphNode.C valueGraph.C graphSea
 libBackstrokeFunctionReverser_a_includedir = $(includedir)/backstroke
 libBackstrokeFunctionReverser_a_include_HEADERS = valueGraph.h valueGraphNode.h pathNumGenerator.h functionReverser.h \
 			CFGFilter.h types.h
-libBackstrokeFunctionReverser_a_LIBADD = $(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.a \
-		$(top_builddir)/projects/backstroke/ssa/libSSA.a
+libBackstrokeFunctionReverser_a_LIBADD = 
 
 noinst_PROGRAMS= functionReverserTest
 functionReverserTest_SOURCES = test.C
-functionReverserTest_LDADD =$(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.a \
+functionReverserTest_LDADD = libBackstrokeFunctionReverser.a \
+		$(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.a \
 		$(top_builddir)/projects/backstroke/normalizations/libBackstrokeNormalizations.a \
-		$(top_builddir)/projects/backstroke/ssa/libSSA.a \
-		libBackstrokeFunctionReverser.a $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+		$(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 
 # EXTRA_DIST are files that are not compiled or installed. These include readme's, internal header files, etc.

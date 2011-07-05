@@ -85,7 +85,7 @@ void EventReverser::generateCode()
 #endif
     
     
-    cout << "\nStart to generate code!\nStart search.\n";
+    cout << "\nStart to generate code!\n";
     
     // Discard all available values here.
     availableValues_[0].clear();
@@ -94,11 +94,14 @@ void EventReverser::generateCode()
     collectAvailableValues();
 
     
+    cout << "Start search.\n";
+    
     // The following table collects which VG edges are in the final route graph.
     map<VGEdge, PathInfo> routes;
     
     // Process the whole function first to see which variables are needed in loops.
     size_t pathNum = pathNumManager_->getNumberOfPath(0);
+    cout << "There are " << pathNum << " paths for this function.\n\n";
     for (size_t i = 0; i < pathNum; ++i)
     {
         // Search the subgraph then get the shorted paths.
@@ -138,6 +141,8 @@ void EventReverser::generateCode()
             }
         }
     }
+    
+    cout << "Start to build route graph.\n";
     
     buildRouteGraph(routes);
     routeGraphToDot(funcDef_->get_declaration()->get_name() + "_routeGraph.dot");
@@ -1945,7 +1950,7 @@ void reverseFunctions(const set<SgFunctionDefinition*>& funcDefs)
         globalScopes.insert(SageInterface::getGlobalScope(funcDef));
 
         cout << "\nNow processing " << funcName << "\tfrom\n";
-        cout << funcDef->get_file_info()->get_filenameString() << "\n\n";
+        funcDef->get_file_info()->display();
 
         //string cfgFileName = "CFG" + boost::lexical_cast<string > (counter) + ".dot";
         //string vgFileName = "VG" + boost::lexical_cast<string > (counter) + ".dot";

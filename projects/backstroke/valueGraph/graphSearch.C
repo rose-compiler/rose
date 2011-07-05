@@ -92,6 +92,13 @@ namespace // anonymous namespace
     struct RouteWithNodes
     {
         RouteWithNodes() : cost(0) {}
+        RouteWithNodes& operator=(RouteWithNodes& route)
+        {
+            edges.swap(route.edges);
+            nodes.swap(route.nodes);
+            cost = route.cost;
+            return *this;
+        }
 
         vector<VGEdge>   edges;
         vector<pair<VGVertex, VGVertex> >  nodes;
@@ -130,11 +137,21 @@ set<EventReverser::VGEdge> EventReverser::getReversalRoute(
         int dagIndex,
         int pathIndex,
         const SubValueGraph& subgraph,
-        const set<VGVertex>& valuesToRestore,
+        const set<VGVertex>& valsToRestore,
         const set<VGVertex>& availableNodes)
 {
     map<VGVertex, vector<RouteWithCost> > allRoutes;
-
+    
+    set<VGVertex> valuesToRestore = valsToRestore;
+    // Find all reverse function call node and put them into valuesToRestore set.
+    foreach (VGVertex node, boost::vertices(subgraph))
+    {
+        FunctionCallNode* funcCallNode = isFunctionCallNode(subgraph[node]);
+        // Note that now only reverse function call node will be add to route graph.
+        if (funcCallNode && funcCallNode->isReverse)
+            valuesToRestore.insert(node);
+    }
+    
     foreach (VGVertex valToRestore, valuesToRestore)
     {
         //// A flag for mu node search.
@@ -179,12 +196,21 @@ set<EventReverser::VGEdge> EventReverser::getReversalRoute(
             // Get the node on the top, and find it out edges.
             VGVertex node = unfinishedRoute.nodes.back().first;
             
+            
+            // Currently, we forbid the route graph includes any function call nodes
+            // which are not reverse ones. This will be modified in the future.
+            FunctionCallNode* funcCallNode = isFunctionCallNode(subgraph[node]);
+            if (funcCallNode && !funcCallNode->isReverse)
+                continue;
+
+            
             //if (availableNodes.count(node) > 0)
-            if (node == root_)
+            // For a function call node, if its target is itself, keep searching.
+            if ((node == root_ || funcCallNode) && node != valToRestore)
             {                
                 //cout << "AVAILABLE: " << valueGraph_[node]->toString() << endl;
                 
-                RouteWithNodes newRoute = unfinishedRoute;
+                RouteWithNodes& newRoute = unfinishedRoute;
 
                 // Keep removing nodes from the stack if the node before this
                 // node is its parent node.
@@ -219,19 +245,11 @@ set<EventReverser::VGEdge> EventReverser::getReversalRoute(
 
                 continue;
             }
-            
-            // Currently, we forbit the route graph includes any function call nodes
-            // which are not reverse ones. This will be modified in the future.
-            if (FunctionCallNode* funcCallNode = isFunctionCallNode(subgraph[node]))
-            {
-                if (!funcCallNode->isReverse)
-                    continue;
-            }
 
             // If this node is an operator node or function call node, add all its operands.
             if (isOperatorNode(subgraph[node]) || isFunctionCallNode(subgraph[node]))
             {
-                RouteWithNodes newRoute = unfinishedRoute;
+                RouteWithNodes& newRoute = unfinishedRoute;
                 foreach (const VGEdge& edge, boost::out_edges(node, valueGraph_))
                 {
                     VGVertex tar = boost::target(edge, subgraph);
@@ -242,7 +260,11 @@ set<EventReverser::VGEdge> EventReverser::getReversalRoute(
                     // this edge will form a circle.
                     if (containsVertex(unfinishedRoute.nodes, tar))
                         goto NEXT;
-
+                }
+                
+                foreach (const VGEdge& edge, boost::out_edges(node, valueGraph_))
+                {
+                    VGVertex tar = boost::target(edge, subgraph);
                     newRoute.edges.push_back(edge);
                     newRoute.nodes.push_back(make_pair(tar, node));
                 }
@@ -325,7 +347,6 @@ NEXT:
     } // end of foreach (VGVertex valNode, valuesToRestore)
 
     
-    
     /**************************************************************************/
     // Now get the route for all state variables.
     
@@ -357,10 +378,10 @@ NEXT:
         
         foreach (const VGEdge& edge, edges)
         {
-            // A way to force the inverse of each function call is used.
-            if (isSgFunctionCallExp(subgraph[nodeWithRoute.first]->astNode))
-                costForEdges[edge].second += 100;
-            else
+            //// A way to force the inverse of each function call is used.
+            //if (isSgFunctionCallExp(subgraph[nodeWithRoute.first]->astNode))
+            //    costForEdges[edge].second += 100;
+            //else
                 ++costForEdges[edge].second;
         }
     }
@@ -403,6 +424,18 @@ NEXT:
 
     // End.
     /**************************************************************************/
+    
+    // Check if there is root node in edges set.
+    bool hasRoot = false;
+    foreach (const VGEdge& edge, edgesInRoute)
+    {
+        if (root_ == boost::target(edge, subgraph))
+        {
+            hasRoot = true;
+            break;
+        }
+    }
+    ROSE_ASSERT(edgesInRoute.empty() || hasRoot);
 
     return edgesInRoute;
     

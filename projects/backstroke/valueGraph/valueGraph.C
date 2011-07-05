@@ -1238,6 +1238,7 @@ EventReverser::VGVertex EventReverser::createFunctionCallNode(SgFunctionCallExp*
     }
     
     
+#if 0
     // For a virtual function call, its inverse is called in reverse function.
     // Black box style inversion is not used.
     if (funcCallNode->canBeReversed)
@@ -1261,6 +1262,7 @@ EventReverser::VGVertex EventReverser::createFunctionCallNode(SgFunctionCallExp*
         
         //return funcCallVertex;
     }
+#endif
     
     
 #if 0
