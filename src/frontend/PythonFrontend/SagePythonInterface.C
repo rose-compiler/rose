@@ -215,9 +215,8 @@ sage_buildCompare(PyObject *self, PyObject *args)
 PyObject*
 sage_buildExceptHandler(PyObject *self, PyObject *args)
 {
-    PyObject* py_name = PyTuple_GetItem(args, 0);
-    PyObject* py_type = PyTuple_GetItem(args, 1);
-    PyObject* py_body = PyTuple_GetItem(args, 2);
+    if (! PyArg_ParseTuple(args, ""))
+        return NULL;
 
     // TODO: add buildCatchOptionStmt to SageBuilder
     cerr << "sage_buildExceptHandler is unimplemented" << endl;
@@ -455,15 +454,14 @@ sage_buildName(PyObject *self, PyObject *args)
 PyObject*
 sage_buildPrintStmt(PyObject *self, PyObject *args)
 {
-    PyObject* py_dest = PyTuple_GetItem(args, 0);
-    PyObject* py_vals = PyTuple_GetItem(args, 1);
-
-    SgExpression* sg_dest = PyDecapsulate<SgExpression>(py_dest);
-    SgExprListExp* sg_vals = PyDecapsulate<SgExprListExp>(py_vals);
+    SgExpression *sg_dest;
+    SgExprListExp *sg_vals;
+    if (! PyArg_ParseTuple(args, "O&O&", SAGE_CONVERTER(SgExpression), &sg_dest,
+                                         SAGE_CONVERTER(SgExprListExp), &sg_vals))
+        return NULL;
 
     SgPythonPrintStmt* sg_print_stmt =
         SageBuilder::buildPythonPrintStmt(sg_dest, sg_vals);
-
     return PyEncapsulate(sg_print_stmt);
 }
 
@@ -474,8 +472,10 @@ sage_buildPrintStmt(PyObject *self, PyObject *args)
 PyObject*
 sage_buildReturnStmt(PyObject *self, PyObject *args)
 {
-    PyObject* py_exp_capsule = PyTuple_GetItem(args, 0);
-    SgExpression* sg_exp = PyDecapsulate<SgExpression>(py_exp_capsule);
+    SgExpression* sg_exp;
+    if (! PyArg_ParseTuple(args, "O&", SAGE_CONVERTER(SgExpression), &sg_exp))
+        return NULL;
+
     SgReturnStmt* sg_return = SageBuilder::buildReturnStmt(sg_exp);
     return PyEncapsulate(sg_return);
 }
@@ -485,8 +485,11 @@ sage_buildReturnStmt(PyObject *self, PyObject *args)
 PyObject*
 sage_buildSuite(PyObject *self, PyObject *args)
 {
+    PyObject* py_body;
+    if (! PyArg_ParseTuple(args, "O&", &pylist_checker, &py_body))
+        return NULL;
+
     SgBasicBlock* sg_basic_block = SageBuilder::buildBasicBlock();
-    PyObject* py_body = PyTuple_GetItem(args, 0);
     Py_ssize_t body_c = PyList_Size(py_body);
     for (int i = 0; i < body_c; i++) {
         PyObject* capsule = PyList_GetItem(py_body, i);
@@ -502,9 +505,9 @@ sage_buildSuite(PyObject *self, PyObject *args)
 PyObject*
 sage_buildTryExcept(PyObject *self, PyObject *args)
 {
-    PyObject* py_body     = PyTuple_GetItem(args, 0);
-    PyObject* py_handlers = PyTuple_GetItem(args, 1);
-    PyObject* py_orelse   = PyTuple_GetItem(args, 2);
+    PyObject *py_body, *py_handlers, *py_orelse;
+    if (! PyArg_ParseTuple(args, ""))
+        return NULL;
 
     // TODO: add buildTryExcept to SageBuilder
     cerr << "sage_buildTryExcept is unimplemented" << endl;
@@ -517,8 +520,9 @@ sage_buildTryExcept(PyObject *self, PyObject *args)
 PyObject*
 sage_buildTryFinally(PyObject *self, PyObject *args)
 {
-    PyObject* py_body      = PyTuple_GetItem(args, 0);
-    PyObject* py_finalbody = PyTuple_GetItem(args, 1);
+    PyObject *py_body, *py_finalbody;
+    if (! PyArg_ParseTuple(args, ""))
+        return NULL;
 
     // TODO: add buildTryExcept to SageBuilder
     cerr << "sage_buildTryFinally is unimplemented" << endl;
@@ -531,11 +535,13 @@ sage_buildTryFinally(PyObject *self, PyObject *args)
 PyObject*
 sage_buildUnaryOp(PyObject *self, PyObject *args)
 {
-    PyObject* py_operation = PyTuple_GetItem(args, 0);
-    PyObject* py_operand   = PyTuple_GetItem(args, 1);
+    char *operation;
+    SgExpression *operand;
+    if (! PyArg_ParseTuple(args, "sO&", &operation,
+                                        SAGE_CONVERTER(SgExpression), &operand))
+        return NULL;
 
-    SgExpression* operand = PyDecapsulate<SgExpression>(py_operand);
-    std::string op = std::string( PyString_AsString(py_operation) );
+    std::string op(operation);
     SgUnaryOp* sg_unary_op = NULL;
     if      (op == ROSE_PYTHON_UADD_OP)
         sg_unary_op = SageBuilder::buildUnaryAddOp(operand);
@@ -558,8 +564,10 @@ sage_buildUnaryOp(PyObject *self, PyObject *args)
 PyObject*
 sage_buildStringVal(PyObject *self, PyObject *args)
 {
-    PyObject* py_str = PyTuple_GetItem(args, 0);
-    char* c_str = PyString_AsString(py_str);
+    char *c_str;
+    if (! PyArg_ParseTuple(args, "s", &c_str))
+        return NULL;
+
     std::string str = std::string(c_str);
     SgStringVal* sg_string_val = SageBuilder::buildStringVal(str);
     return PyEncapsulate(sg_string_val);
@@ -570,13 +578,11 @@ sage_buildStringVal(PyObject *self, PyObject *args)
 PyObject*
 sage_buildWhile(PyObject *self, PyObject *args)
 {
-    PyObject* py_test   = PyTuple_GetItem(args, 0);
-    PyObject* py_body   = PyTuple_GetItem(args, 1);
-    //PyObject* py_orelse = PyTuple_GetItem(args, 2);
-
-    SgStatement* test = PyDecapsulate<SgStatement>(py_test);
-    SgStatement* body = PyDecapsulate<SgStatement>(py_body);
-    //SgStatement* orelse = PyDecapsulate<SgStatement>(py_orelse);
+    SgStatement *test, *body, *orelse;
+    if (! PyArg_ParseTuple(args, "O&O&|O&", SAGE_CONVERTER(SgStatement), &test,
+                                            SAGE_CONVERTER(SgStatement), &body,
+                                            SAGE_CONVERTER(SgStatement), &orelse))
+        return NULL;
 
     SgWhileStmt* sg_while_stmt = SageBuilder::buildWhileStmt(test, body);
     return PyEncapsulate(sg_while_stmt);
@@ -587,17 +593,14 @@ sage_buildWhile(PyObject *self, PyObject *args)
 PyObject*
 sage_buildWith(PyObject *self, PyObject *args)
 {
-    PyObject* py_expr = PyTuple_GetItem(args, 0);
-    PyObject* py_vars = PyTuple_GetItem(args, 1);
-    PyObject* py_body = PyTuple_GetItem(args, 2);
+    SgExpression *expr;
+    SgStatement *vars, *body;
+    if (! PyArg_ParseTuple(args, "O&O&|O&", SAGE_CONVERTER(SgExpression), &expr,
+                                            SAGE_CONVERTER(SgStatement), &body,
+                                            SAGE_CONVERTER(SgStatement), &vars))
+        return NULL;
 
-    SgExpression* expr = PyDecapsulate<SgExpression>(py_expr);
-    std::vector<SgVariableDeclaration*> vars; //PyDecapsulate<SgStatement>(py_vars);
-    SgStatement*  body = PyDecapsulate<SgStatement>(py_body);
-
-    ROSE_ASSERT(expr);
-    ROSE_ASSERT(body);
-
-    SgWithStatement* sg_with_stmt = SageBuilder::buildWithStatement(expr, vars, body);
+    std::vector<SgVariableDeclaration*> no_vars; //PyDecapsulate<SgStatement>(py_vars);
+    SgWithStatement* sg_with_stmt = SageBuilder::buildWithStatement(expr, no_vars, body);
     return PyEncapsulate(sg_with_stmt);
 }
