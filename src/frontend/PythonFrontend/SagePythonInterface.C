@@ -18,13 +18,12 @@ using namespace std;
 PyObject*
 sage_buildAssign(PyObject *self, PyObject *args)
 {
-    PyObject* py_lhs_exp = PyTuple_GetItem(args, 0);
-    PyObject* py_rhs_exp = PyTuple_GetItem(args, 1);
+    SgExpression *sg_lhs_exp, *sg_rhs_exp;
+    if (! PyArg_ParseTuple(args, "O&O&", SAGE_CONVERTER(SgExpression), &sg_lhs_exp,
+                                         SAGE_CONVERTER(SgExpression), &sg_rhs_exp))
+        return NULL;
 
-    SgExpression* sg_lhs_exp = PyDecapsulate<SgExpression>(py_lhs_exp);
-    SgExpression* sg_rhs_exp = PyDecapsulate<SgExpression>(py_rhs_exp);
     SgAssignOp* sg_assign_op = SageBuilder::buildAssignOp(sg_lhs_exp, sg_rhs_exp);
-
     return PyEncapsulate(sg_assign_op);
 }
 
