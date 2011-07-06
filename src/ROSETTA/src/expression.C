@@ -747,6 +747,7 @@ Grammar::setUpExpressions ()
      CudaKernelExecConfig.editSubstitute ( "PRECEDENCE_VALUE", " 0" );
      CudaKernelCallExp.editSubstitute ( "PRECEDENCE_VALUE", " 0" );
 
+     LambdaRefExp.editSubstitute ( "PRECEDENCE_VALUE", " 0" );
 
      UnaryOp.setFunctionPrototype ( "HEADER_GET_NEXT_EXPRESSION", "../Grammar/Expression.code" );
      BinaryOp.setFunctionPrototype ( "HEADER_GET_NEXT_EXPRESSION", "../Grammar/Expression.code" );
@@ -1603,7 +1604,7 @@ Grammar::setUpExpressions ()
  // driscoll6 (6/27/11): Python support
      LambdaRefExp.setFunctionPrototype ( "HEADER_LAMBDA_REF_EXP", "../Grammar/Expression.code" );
      LambdaRefExp.setDataPrototype ("SgFunctionDeclaration*", "functionDeclaration", "= NULL",
-                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
+                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      // ***********************************************************************
      // ***********************************************************************
