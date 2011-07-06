@@ -43,7 +43,7 @@ class AttributeRec
 {
 private:
 
-	SgDeclarationStatement* declaration;
+        SgDeclarationStatement* declaration;
     SgType* baseType;
     SgExpression* lenExpr;
     bool hasAccessSpec; int accessAttr; int accessType;
@@ -113,8 +113,8 @@ public:
     void setPublicAttr(int attr);
     bool getIsPrivate();
     void setIsPrivate(bool isPriv);
-	int getPrivateAttr();
-	void setPrivateAttr(int privAttr);
+        int getPrivateAttr();
+        void setPrivateAttr(int privAttr);
     bool getIsAllocatable();
     void setIsAllocatable(bool isAlloc);
     int getAllocatableAttr();
