@@ -16,6 +16,9 @@ class PathNumGenerator
 {
 	typedef boost::graph_traits<DAG>::vertex_descriptor Vertex;
 	typedef boost::graph_traits<DAG>::edge_descriptor Edge;
+    
+    typedef BackstrokeCFG::Vertex CFGVertex;
+    typedef BackstrokeCFG::Edge   CFGEdge;
 
     typedef std::vector<Edge> Path;
 
@@ -33,6 +36,9 @@ class PathNumGenerator
 
     //! The DAG on which we'll add path numbers.
     const DAG& dag_;
+    
+    //! The CFG.
+    const BackstrokeCFG* cfg_;
 
     //! The entry of the dag. This may be the entry of the CFG, or the header of a loop.
     Vertex entry_;
@@ -62,8 +68,8 @@ class PathNumGenerator
     friend class PathNumManager;
 
 public:
-    PathNumGenerator(const DAG& dag, Vertex entry, Vertex exit)
-        : dag_(dag), entry_(entry), exit_(exit)
+    PathNumGenerator(const DAG& dag, Vertex entry, Vertex exit, const BackstrokeCFG* cfg)
+        : dag_(dag), cfg_(cfg), entry_(entry), exit_(exit)
     {}
 
     //! Returns the visible incomplete path numbers and their corresponding complete 

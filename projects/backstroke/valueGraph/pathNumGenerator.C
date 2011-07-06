@@ -201,7 +201,7 @@ void PathNumManager::generatePathNumbers()
     for (int i = 0, n = dags_.size(); i != n; ++i)
     {
         PathNumGenerator* pathNumGen = 
-                new PathNumGenerator(dags_[i], entries[i], exits[i]);
+                new PathNumGenerator(dags_[i], entries[i], exits[i], cfg_);
         pathNumGen->generatePathNumbers();
         //cout << pathNumGen->getNumberOfPath() << endl;
         pathNumGenerators_[i] = pathNumGen;
@@ -543,14 +543,35 @@ void PathNumManager::insertPathNumToFwdFunc()
         // Each DAG has a different path num name.
         pathNumName = string("__num") + boost::lexical_cast<string>(i);
         
-        typedef map<DAGEdge, int>::value_type EdgeValuePair;
+        typedef pair<DAGEdge, int> EdgeValuePair;
+        
+        // Sort edges which will be instrumented by topological order of its DAG.
+        // This makes sure instrumenting a parent prior to instrumenting its children.
+        
+        multimap<CFGVertex, EdgeValuePair> nodeToEdge;
         foreach (const EdgeValuePair& edgeVal, pathNumGenerators_[i]->edgeValues_)
         {
-            BackstrokeCFG::Edge cfgEdge = dags_[i][edgeVal.first];
-
+            CFGVertex src = boost::source(dags_[i][edgeVal.first], *cfg_);
             // If the edge value is 0, no updating.
             if (edgeVal.second == 0) continue;
+            
+            nodeToEdge.insert(make_pair(src, edgeVal));
+        }
 
+        vector<CFGVertex> nodes;
+        boost::topological_sort(dags_[i], std::back_inserter(nodes));
+        
+        vector<EdgeValuePair> edgesToInstrument;
+        foreach (CFGVertex node, nodes)
+        {
+            typedef pair<CFGVertex, EdgeValuePair> T;
+            foreach (const T& nodeEdge, nodeToEdge.equal_range(node))
+                edgesToInstrument.push_back(nodeEdge.second);
+        }
+        
+        foreach (const EdgeValuePair& edgeVal, edgesToInstrument)
+        {
+            BackstrokeCFG::Edge cfgEdge = dags_[i][edgeVal.first];
             // Insert the path num update on the CFG edge.
             insertPathNumberOnEdge(cfgEdge, pathNumName, edgeVal.second);
         }
@@ -683,16 +704,17 @@ void PathNumManager::insertPathNumberOnEdge(
         const string& pathNumName,
         int val)
 {
-    SgStatement* pathNumStmt = buildExprStatement(
-                                    buildPlusAssignOp(
-                                        buildVarRefExp(pathNumName),
-                                        buildIntVal(val)));
-    
+    SgExpression* pathNumExp = buildPlusAssignOp(
+                                buildVarRefExp(pathNumName),
+                                buildIntVal(val));
+
     SgNode* src = (*cfg_)[cfgEdge]->source().getNode();
     SgNode* tgt = (*cfg_)[cfgEdge]->target().getNode();
 
     if (SgIfStmt* ifStmt = isSgIfStmt(src))
     {
+        SgStatement* pathNumStmt = buildExprStatement(pathNumExp);
+        
         if (isAncestor(src, tgt))
         {
             SgStatement* s = getEnclosingStatement(tgt);
@@ -716,6 +738,8 @@ void PathNumManager::insertPathNumberOnEdge(
     
     else if (SgSwitchStatement* switchStmt = isSgSwitchStatement(src))
     {
+        SgStatement* pathNumStmt = buildExprStatement(pathNumExp);
+        
         if (SgCaseOptionStmt* caseStmt = isSgCaseOptionStmt(tgt))
         {
             if (SgBasicBlock* body = isSgBasicBlock(caseStmt->get_body()))
@@ -769,6 +793,8 @@ void PathNumManager::insertPathNumberOnEdge(
     
     else if (SgWhileStmt* whileStmt = isSgWhileStmt(src))
     {
+        SgStatement* pathNumStmt = buildExprStatement(pathNumExp);
+        
         // If the edge points to while body.
         if (isAncestor(src, tgt))
         {
@@ -802,6 +828,42 @@ void PathNumManager::insertPathNumberOnEdge(
             {
                 ROSE_ASSERT(!"Cannot handle goto in while stmt!");
             }
+        }
+    }
+    
+    else if (SgConditionalExp* condExp = isSgConditionalExp(src))
+    {
+        SgExpression* expr = isSgExpression(tgt);
+        ROSE_ASSERT(expr);
+        replaceExpression(expr, buildCommaOpExp(pathNumExp, copyExpression(expr)));
+    }
+    
+    else
+    {
+        // To avoid that replacing an expression invalidates an expression which is 
+        // used later, collect expressions replaces in the following table.
+        static map<SgNode*, SgNode*> replaceTable;
+
+        while (replaceTable.count(src))
+            src = replaceTable[src];
+
+        //    cout << src->class_name() << endl;
+            
+        SgNode* parent = src->get_parent();
+
+        if (isSgAndOp(parent) || isSgOrOp(parent))
+        {            
+            SgExpression* expr = isSgBinaryOp(parent)->get_rhs_operand();
+            ROSE_ASSERT(expr);
+
+            SgExpression* newExpr = buildCommaOpExp(pathNumExp, copyExpression(expr));
+            replaceTable[expr] = newExpr;
+
+            replaceExpression(expr, newExpr);
+        }
+        else
+        {
+            ROSE_ASSERT(false);
         }
     }
 }
@@ -933,8 +995,40 @@ void PathNumGenerator::getEdgeValues()
             continue;
         }
 
-        pathNum = 0;
+        
+        // Collect all out edges first then sort them. For && and || expression,
+        // we choose the specific edge whose value is not zero.
+        vector<Edge> outEdges;
         foreach (const Edge& e, boost::out_edges(v, dag_))
+        {
+            outEdges.push_back(e);
+        }
+        
+        if (outEdges.size() == 2)
+        {
+            // Get the source CFG node.
+            SgNode* src = (*cfg_)[dag_[v]]->getNode();
+            SgNode* parent = src->get_parent();
+
+            if (isSgAndOp(parent))
+            {
+                // Get the first edge see if it is a true edge.
+                BackstrokeCFG::CFGEdgePtr edge = (*cfg_)[dag_[outEdges[0]]];
+                if (edge->condition() == VirtualCFG::eckTrue)
+                    swap(outEdges[0], outEdges[1]);
+            }
+
+            else if (isSgOrOp(parent))
+            {
+                // Get the first edge see if it is a true edge.
+                BackstrokeCFG::CFGEdgePtr edge = (*cfg_)[dag_[outEdges[0]]];
+                if (edge->condition() == VirtualCFG::eckFalse)
+                    swap(outEdges[0], outEdges[1]);
+            }
+        }
+        
+        pathNum = 0;
+        foreach (const Edge& e, outEdges)
         {
             Vertex tar = boost::target(e, dag_);
             ROSE_ASSERT(pathNumbersOnVertices_.count(tar) > 0);

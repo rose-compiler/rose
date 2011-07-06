@@ -328,4 +328,19 @@ int main(int argc, char *argv[])
         }
         processHeaderFiles(funcDecls);
     }
+    
+    else if (option == 3)
+    {
+        set<SgFunctionDefinition*> funcDefs;
+    
+        vector<SgFunctionDefinition*> allFuncDefs = 
+                BackstrokeUtility::querySubTree<SgFunctionDefinition>(project);
+        foreach (SgFunctionDefinition* funcDef, allFuncDefs)
+            funcDefs.insert(funcDef);
+
+        /***********************************************************************************************/
+        // Reverse all functions.
+        Backstroke::reverseFunctions(funcDefs);
+        project->unparse();
+    }
 }

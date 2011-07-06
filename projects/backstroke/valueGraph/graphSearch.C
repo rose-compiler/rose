@@ -390,7 +390,7 @@ NEXT:
     foreach (VertexWithRoute& nodeWithRoute, allRoutes)
     {
         float minCost = std::numeric_limits<float>::max();
-        size_t minIndex;
+        size_t minIndex = 0;
 
         // Find the route with the minimum cost.
         for (size_t i = 0, m = nodeWithRoute.second.size(); i < m; ++i)
