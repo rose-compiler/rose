@@ -322,3 +322,13 @@ void DefsAndUsesTraversal::addDefForVarAtNode(SgVarRefExp* var, const CFGNode& n
 				<< " at " << node.toStringForDebugging() << endl;
 	}
 }
+
+void DefsAndUsesTraversal::CollectDefsAndUses(SgNode* traversalRoot, DefsAndUsesTraversal::CFGNodeToVarsMap& defs, 
+		std::map<SgNode*, std::set<SgVarRefExp*> >& uses)
+{
+	DefsAndUsesTraversal traversal;
+	traversal.traverse(traversalRoot);
+	
+	defs.insert(traversal.cfgNodeToDefinedVars.begin(), traversal.cfgNodeToDefinedVars.end());
+	uses.insert(traversal.astNodeToUsedVars.begin(), traversal.astNodeToUsedVars.end());
+}

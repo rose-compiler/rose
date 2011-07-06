@@ -60,7 +60,7 @@ void StaticSingleAssignment::printOriginalDefs(SgNode* node)
 {
 	cout << "Original Def Table for [" << node->class_name() << ":" << node << "]:" << endl;
 
-	foreach(const VarName& definedVar, originalDefTable[node])
+	foreach(const VarName& definedVar, originalDefTable_deleteMe[node])
 	{
 		cout << "  Defs for [" << varnameToString(definedVar) << "]:";
 		cout << "    -[" << node->class_name() << ":" << node << "]" << endl;
@@ -72,7 +72,7 @@ void StaticSingleAssignment::printOriginalDefTable()
 	cout << "Original Def Table:" << endl;
 
 	pair<SgNode*, std::set<VarName> > node;
-	foreach(node, originalDefTable)
+	foreach(node, originalDefTable_deleteMe)
 	{
 		printOriginalDefs(node.first);
 	}
@@ -556,15 +556,15 @@ set<StaticSingleAssignment::VarName> StaticSingleAssignment::getVarsDefinedInSub
 			if (isSgFunctionDefinition(node))
 				return;
 
-			if (ssa->originalDefTable.find(node) != ssa->originalDefTable.end())
+			if (ssa->originalDefTable_deleteMe.find(node) != ssa->originalDefTable_deleteMe.end())
 			{
-				const LocalDefUseTable::mapped_type& nodeDefs = ssa->originalDefTable.find(node)->second;
+				const LocalDefUseTable::mapped_type& nodeDefs = ssa->originalDefTable_deleteMe.find(node)->second;
 				definedNames.insert(nodeDefs.begin(), nodeDefs.end());
 			}
 
-			if (ssa->expandedDefTable.find(node) != ssa->expandedDefTable.end())
+			if (ssa->expandedDefTable_deleteMe.find(node) != ssa->expandedDefTable_deleteMe.end())
 			{
-				const LocalDefUseTable::mapped_type& nodeDefs = ssa->expandedDefTable.find(node)->second;
+				const LocalDefUseTable::mapped_type& nodeDefs = ssa->expandedDefTable_deleteMe.find(node)->second;
 				definedNames.insert(nodeDefs.begin(), nodeDefs.end());
 			}
 		}
@@ -595,9 +595,9 @@ set<StaticSingleAssignment::VarName> StaticSingleAssignment::getOriginalVarsDefi
 			if (isSgFunctionDefinition(node))
 				return;
 
-			if (ssa->originalDefTable.find(node) != ssa->originalDefTable.end())
+			if (ssa->originalDefTable_deleteMe.find(node) != ssa->originalDefTable_deleteMe.end())
 			{
-				const LocalDefUseTable::mapped_type& nodeDefs = ssa->originalDefTable.find(node)->second;
+				const LocalDefUseTable::mapped_type& nodeDefs = ssa->originalDefTable_deleteMe.find(node)->second;
 				definedNames.insert(nodeDefs.begin(), nodeDefs.end());
 			}
 		}

@@ -10,7 +10,7 @@
 using namespace std;
 using namespace boost;
 
-ReachingDef::ReachingDef(SgNode* defNode, Type type) : defType(type), thisNode(defNode), renamingNumer(-1)
+ReachingDef::ReachingDef(CFGNode defNode, Type type) : defType(type), thisNode(defNode), renamingNumer(-1)
 {
 }
 
@@ -25,14 +25,14 @@ const map<ReachingDef::ReachingDefPtr, set<ReachingDef::FilteredCfgEdge> >& Reac
 	return parentDefs;
 }
 
-SgNode* ReachingDef::getDefinitionNode() const
+const CFGNode& ReachingDef::getDefinitionNode() const
 {
 	return thisNode;
 }
 
-set<SgNode*> ReachingDef::getActualDefinitions() const
+set<CFGNode> ReachingDef::getActualDefinitions() const
 {
-	set<SgNode*> result;
+	set<CFGNode> result;
 	if (!isPhiFunction())
 	{
 		result.insert(thisNode);
@@ -86,7 +86,7 @@ bool ReachingDef::operator==(const ReachingDef& other) const
 			(parentDefs == other.parentDefs) && (renamingNumer == other.renamingNumer);
 }
 
-void ReachingDef::setDefinitionNode(SgNode* defNode)
+void ReachingDef::setDefinitionNode(CFGNode defNode)
 {
 	thisNode = defNode;
 }

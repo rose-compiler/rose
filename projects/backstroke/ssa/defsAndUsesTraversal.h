@@ -68,14 +68,20 @@ public:
 /** This class collects all the defs and uses associated with each node in the traversed CFG.
  * Note that this does not compute reachability information; it just records each instance of
  * a variable used or defined. */
-class DefsAndUsesTraversal : public AstBottomUpProcessing<ChildUses>
+class DefsAndUsesTraversal : private AstBottomUpProcessing<ChildUses>
 {
 public:
-	typedef std::map<CFGNode, std::set<UniqueNameTraversal::VarName> > NodeToVarsMap;
+	
+	typedef std::map<CFGNode, std::set<UniqueNameTraversal::VarName> > CFGNodeToVarsMap;
 
+	/** Call this method to collect defs and uses for a subtree. The additional defs and uses discovered
+	 * in the tree will be inserted in the passed data structures. */
+	static void CollectDefsAndUses(SgNode* traversalRoot, CFGNodeToVarsMap& defs, 
+		std::map<SgNode*, std::set<SgVarRefExp*> >& uses);
+	
 private:
 	//! Map from each CFG node that contains a definition to all the variables defined at the node
-	NodeToVarsMap cfgNodeToDefinedVars;
+	CFGNodeToVarsMap cfgNodeToDefinedVars;
 
 	//! Maps from each CFG node to the variables used by that node.
 	std::map<SgNode*, std::set<SgVarRefExp*> > astNodeToUsedVars;

@@ -150,7 +150,7 @@ bool StaticSingleAssignment::insertInterproceduralDefs(SgFunctionDefinition* fun
 		vector<SgFunctionDeclaration*> callees;
 		CallTargetSet::getDeclarationsForExpression(callSite, classHierarchy, callees);
 
-		LocalDefUseTable::mapped_type oldDefs = originalDefTable[callSite];
+		LocalDefUseTable::mapped_type oldDefs = originalDefTable_deleteMe[callSite];
 
 		//process each callee
 		foreach(SgFunctionDeclaration* callee, callees)
@@ -158,7 +158,7 @@ bool StaticSingleAssignment::insertInterproceduralDefs(SgFunctionDefinition* fun
 			processOneCallSite(callSite, callee, processed, classHierarchy);
 		}
 
-		const LocalDefUseTable::mapped_type& newDefs = originalDefTable[callSite];
+		const LocalDefUseTable::mapped_type& newDefs = originalDefTable_deleteMe[callSite];
 		if (oldDefs != newDefs)
 		{
 			changedDefs = true;
@@ -200,7 +200,7 @@ void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFuncti
 	foreach (const VarName& definedVar, varsDefinedinCallee)
 	{
 		if (isVarAccessibleFromCaller(definedVar, callSite, callee))
-			originalDefTable[callSite].insert(definedVar);
+			originalDefTable_deleteMe[callSite].insert(definedVar);
 	}
 
 	//Check if this is a member function. In this case, we should check if the "this" instance is modified
@@ -225,7 +225,7 @@ void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFuncti
 				ROSE_ASSERT(calleeFuncType != NULL);
 				if (!calleeFuncType->isConstFunc())
 				{
-					originalDefTable[callSite].insert(lhsVar);
+					originalDefTable_deleteMe[callSite].insert(lhsVar);
 				}
 			}
 			//If the callee has a definition and we have already processed it we can use exact info to check if 'this' is modified
@@ -251,7 +251,7 @@ void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFuncti
                     ROSE_ASSERT(isSgClassDefinition(varScope));
 					if (varScope == calleeClassScope)
 					{
-						originalDefTable[callSite].insert(lhsVar);
+						originalDefTable_deleteMe[callSite].insert(lhsVar);
 						break;
 					}
 
@@ -259,7 +259,7 @@ void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFuncti
 					const ClassHierarchyWrapper::ClassDefSet& superclasses = classHierarchy->getAncestorClasses(calleeClassScope);
 					if (superclasses.find(isSgClassDefinition(varScope)) != superclasses.end())
 					{
-						originalDefTable[callSite].insert(lhsVar);
+						originalDefTable_deleteMe[callSite].insert(lhsVar);
 						break;
 					}
 				}
@@ -318,7 +318,7 @@ void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFuncti
 		//Define the actual parameter in the caller if the callee modifies it
 		if (argModified)
 		{
-			originalDefTable[callSite].insert(callerArgVarName);
+			originalDefTable_deleteMe[callSite].insert(callerArgVarName);
 		}
 	}
 
@@ -362,7 +362,7 @@ void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFuncti
 		//Define the default argument value in the caller if the callee modifies it
 		if (argModified)
 		{
-			originalDefTable[callSite].insert(defaultArgVar);
+			originalDefTable_deleteMe[callSite].insert(defaultArgVar);
 		}
 	}
 }
