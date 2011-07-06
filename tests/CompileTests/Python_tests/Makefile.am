@@ -16,7 +16,8 @@ ALL_PYTHON_TESTCODES = \
     test2011_014.py \
     test2011_015.py \
     test2011_016.py \
-    test2011_017.py
+    test2011_017.py \
+    test2011_018.py
 
 
 TEST_Objects = $(notdir ${ALL_PYTHON_TESTCODES:.py=.py-o})
