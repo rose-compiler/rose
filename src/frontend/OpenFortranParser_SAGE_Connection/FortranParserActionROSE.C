@@ -10,7 +10,7 @@
 
 #define SKIP_C_ACTION_IMPLEMENTATION 0
 #define DXN_DEBUG 1
-#define DXN_CODE 1
+#define DXN_CODE 0
 
 using namespace std;
 
@@ -1576,7 +1576,6 @@ void c_action_type_param_or_comp_def_stmt_list()
 // void c_action_derived_type_stmt(Token_t * label, Token_t * id)
 void c_action_derived_type_stmt(Token_t * label, Token_t * keyword, Token_t * id, Token_t * eos, ofp_bool hasTypeAttrSpecList, ofp_bool hasGenericNameList)
    {
-    //raise(SIGINT);
         // Build a SgClassDeclaration to hold the Fortran Type (maybe it should be a SgFortranType derived from a SgClassDeclaration?)
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
@@ -1647,7 +1646,7 @@ void c_action_derived_type_stmt(Token_t * label, Token_t * keyword, Token_t * id
 // void c_action_type_attr_spec(Token_t * id, int specType)
 void c_action_type_attr_spec(Token_t * keyword, Token_t * id, int specType)
    {
-    //raise(SIGINT);
+    raise(SIGINT);
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_type_attr_spec(): keyword = %p = %s id = %p = %s specType = %d \n",keyword,keyword != NULL ? keyword->text : "NULL",id,id != NULL ? id->text : "NULL",specType);
 
@@ -1680,12 +1679,12 @@ void c_action_type_attr_spec(Token_t * keyword, Token_t * id, int specType)
  */
 void c_action_type_attr_spec_list__begin()
    {
-    //raise(SIGINT);
+    raise(SIGINT);
   // I think there is nothing required to be done here.
    }
 void c_action_type_attr_spec_list(int count)
    {
-    //raise(SIGINT);
+    raise(SIGINT);
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
         printf ("In c_action_type_attr_spec_list(): count = %d \n",count);
    }
@@ -1791,7 +1790,7 @@ void c_action_type_param_decl_list(int count)
  */
 void c_action_component_def_stmt(int type)
    {
-    //raise(SIGINT);
+    raise(SIGINT);
   // This rule only provides a type value to identify the declaration as data or
   // as a procedure. So I don't know if it is of much use in building the ROSE AST.
 
@@ -1813,7 +1812,7 @@ void c_action_component_def_stmt(int type)
 // void c_action_data_component_def_stmt(Token_t * label, ofp_bool hasSpec)
 void c_action_data_component_def_stmt(Token_t *label, Token_t *eos, ofp_bool hasSpec)
    {
-    //raise(SIGINT);
+    raise(SIGINT);
     // This is where we build the declaration using whatever was pushed onto the stack (nameStack)
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
@@ -1828,8 +1827,8 @@ void c_action_data_component_def_stmt(Token_t *label, Token_t *eos, ofp_bool has
      SgVariableDeclaration* varDecl = isSgVariableDeclaration(DeclAttributes.getDeclaration());
      if (!varDecl)
      {
-    	 cerr << "ERROR: line " << eos->line << ", col " << eos->col << " - Expect a SgVariableDeclaration, but get a " << DeclAttributes.getDeclaration()->class_name() << endl;
-    	 ROSE_ASSERT(false);
+         cerr << "ERROR: line " << eos->line << ", col " << eos->col << " - Expect a SgVariableDeclaration, but get a " << DeclAttributes.getDeclaration()->class_name() << endl;
+         ROSE_ASSERT(false);
      }
      SgInitializedNamePtrList&  varList = varDecl->get_variables ();
      SgInitializedName* firstInitializedNameForSourcePosition = varList.front();
@@ -1879,7 +1878,7 @@ void c_action_data_component_def_stmt(Token_t *label, Token_t *eos, ofp_bool has
 // void c_action_component_attr_spec(int specType)
 void c_action_component_attr_spec(Token_t * attrKeyword, int specType)
    {
-    //raise(SIGINT);
+    raise(SIGINT);
     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_component_attr_spec(): attrKeyword = %p = %s specType = %d \n",attrKeyword,attrKeyword != NULL ? attrKeyword->text : "NULL",specType);
 
@@ -2047,7 +2046,7 @@ void c_action_component_attr_spec(Token_t * attrKeyword, int specType)
  */
 void c_action_component_attr_spec_list__begin()
    {
-    //raise(SIGINT);
+    raise(SIGINT);
     // I think this is the correct assertion, but the rest of this rule is not implemented!
 
 #if 1
@@ -2088,7 +2087,7 @@ void c_action_component_attr_spec_list__begin()
 
 void c_action_component_attr_spec_list(int count)
    {
-    //raise(SIGINT);
+    raise(SIGINT);
   // This function R441 is similar to R504 R503-F2008 but is used for declarations in types.
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
@@ -2129,7 +2128,6 @@ void c_action_component_decl(Token_t * id,
         ofp_bool hasComponentArraySpec, ofp_bool hasCoArraySpec, 
         ofp_bool hasCharLength, ofp_bool hasComponentInitialization)
    {
-    //raise(SIGINT);
     // Build each variable and append it to the current scope!
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
@@ -2160,7 +2158,7 @@ void c_action_component_decl(Token_t * id,
  */
 void c_action_component_decl_list__begin()
    {
-    //raise(SIGINT);
+    raise(SIGINT);
 #if DXN_DEBUG
     // Output debugging information about saved state (stack) information.
     outputState("At TOP of c_action_component_decl_list__begin()");
@@ -2194,7 +2192,8 @@ void c_action_component_decl_list__begin()
 
 void c_action_component_decl_list(int count)
    {
-        // This function R442 R438-F2008 is similar to R504 R503-F2008
+    raise(SIGINT);
+    // This function R442 R438-F2008 is similar to R504 R503-F2008
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
         printf ("R442 R438-F2008 c_action_component_decl_list(): count = %d \n",count);
@@ -2248,7 +2247,7 @@ void c_action_component_decl_list(int count)
  */
 void c_action_component_array_spec(ofp_bool isExplicit)
    {
-    //raise(SIGINT);
+    raise(SIGINT);
     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_component_array_spec(): isExplicit = %s \n",isExplicit ? "true" : "false");
 
@@ -2294,14 +2293,12 @@ void c_action_component_array_spec(ofp_bool isExplicit)
  */
 void c_action_deferred_shape_spec_list__begin()
    {
-    //raise(SIGINT);
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_deferred_shape_spec_list__begin() \n");
    }
 
 void c_action_deferred_shape_spec_list(int count)
    {
-    //raise(SIGINT);
     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_deferred_shape_spec_list(): count = %d \n",count);
 
@@ -2515,7 +2512,8 @@ void c_action_binding_attr_list(int count)
  */
 void c_action_derived_type_spec(Token_t * typeName, ofp_bool hasTypeParamSpecList)
    {
-#if DXN_DEBUG
+    raise(SIGINT);
+    #if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R455 c_action_derived_type_spec()");
 #endif
@@ -3160,8 +3158,7 @@ c_action_scalar_int_variable()
 void
 c_action_type_declaration_stmt(Token_t * label, int numAttributes, Token_t * eos)
    {
-	//raise(SIGINT);
-	// This function is similar to R441 component-attr-spec-list
+        // This function is similar to R441 component-attr-spec-list
 
   // This is a variable declaration (build the SgVariableDeclaration and populate it using data saved on the stack).
 
@@ -3189,8 +3186,8 @@ c_action_type_declaration_stmt(Token_t * label, int numAttributes, Token_t * eos
      SgVariableDeclaration* varDecl = isSgVariableDeclaration(DeclAttributes.getDeclaration());
      if (!varDecl)
      {
-    	 cerr << "ERROR: line " << eos->line << ", col " << eos->col << " - Expect a SgVariableDeclaration, but get a " << DeclAttributes.getDeclaration()->class_name() << endl;
-    	 ROSE_ASSERT(false);
+         cerr << "ERROR: line " << eos->line << ", col " << eos->col << " - Expect a SgVariableDeclaration, but get a " << DeclAttributes.getDeclaration()->class_name() << endl;
+         ROSE_ASSERT(false);
      }
      SgInitializedNamePtrList&  varList = varDecl->get_variables ();
      SgInitializedName* firstInitializedNameForSourcePosition = varList.front();
@@ -3697,7 +3694,7 @@ void c_action_entity_decl(Token_t * id, ofp_bool hasArraySpec, ofp_bool hasCoarr
 void c_action_entity_decl(Token_t * id)
 #endif
    {
-    //raise(SIGINT);
+    raise(SIGINT);
     // This function R504 R503-F2008 is similar to R442 R438-F2008
 
   // Push the entities onto the list at the top of the stack
@@ -3759,11 +3756,11 @@ void c_action_entity_decl(Token_t * id)
     if (hasArraySpec)
     {
       SgIntVal * intVal = isSgIntVal(astExpressionStack.front());
-      ROSE_ASSERT(intVal);  // astExpressionStack.front() contains the number of array spec elements for the dimension attribute
+      ROSE_ASSERT(intVal);  // astExpressionStack.front() contains the number of array spec elements for the dimension info
       int count = intVal->get_value();
       delete intVal;  // must remove it from AST
       astExpressionStack.pop_front();
-      processMultidimensionalSubscriptsIntoExpressionList(count);  // the dimension attribute is now on top of astExpressionStack
+      processMultidimensionalSubscriptsIntoExpressionList(count);  // the dimension info is now on top of astExpressionStack
       SgExprListExp* arraySpec = isSgExprListExp(astExpressionStack.front());
       ROSE_ASSERT(arraySpec);
       entityAttr.setDimExp(arraySpec);
@@ -3867,8 +3864,8 @@ void c_action_entity_decl(Token_t * id)
     SgVariableDeclaration* varDecl = isSgVariableDeclaration(DeclAttributes.getDeclaration());
     if (!varDecl)
     {
-   	 cerr << "ERROR: line " << id->line << ", col " << id->col << " - Expect a SgVariableDeclaration, but get a " << DeclAttributes.getDeclaration()->class_name() << endl;
-   	 ROSE_ASSERT(false);
+         cerr << "ERROR: line " << id->line << ", col " << id->col << " - Expect a SgVariableDeclaration, but get a " << DeclAttributes.getDeclaration()->class_name() << endl;
+         ROSE_ASSERT(false);
     }
     varDecl->append_variable(initializedName,initializedName->get_initializer());
     // astNodeStack.push_front(initializedName);
@@ -4514,7 +4511,7 @@ void c_action_null_init(Token_t * id)
  */
 void c_action_access_spec(Token_t * keyword, int type)
    {
-    //raise(SIGINT);
+    raise(SIGINT);
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_access_spec(): keyword = %p = %s type = %d \n",keyword,keyword != NULL ? keyword->text : "NULL",type);
 
@@ -4576,7 +4573,8 @@ void c_action_array_spec__begin()
 
 void c_action_array_spec(int count)
    {
-  // The stack size should match the count, NO!
+        raise(SIGINT);
+        // The stack size should match the count, NO!
 
   // The stack size here is the number of types used to represent the array (a single SgArrayType), 
   // and the count is the number of dimensions of the array.  This could be used to set the rank, but
@@ -4643,7 +4641,7 @@ void c_action_array_spec(int count)
 
 void c_action_array_spec_element(int type)
    {
-
+        raise(SIGINT);
 #if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R510 #3 c_action_array_spec_element()");
@@ -5758,14 +5756,15 @@ void c_action_data_stmt_constant()
 // void c_action_dimension_stmt(Token_t * label, int count)
 void c_action_dimension_stmt(Token_t * label, Token_t * keyword, Token_t * eos, int count)
    {
-     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        raise(SIGINT);
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_dimension_stmt() label = %p count = %d \n",label,count);
 
   // An AttributeSpecification statement can be the first statement in a program
   // (see test2007_147.f, the original Fortran I code from the IBM 704 Fortran Manual).
      build_implicit_program_statement_if_required();
 
-#if 0
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R535 c_action_dimension_stmt()");
 #endif
@@ -5773,7 +5772,7 @@ void c_action_dimension_stmt(Token_t * label, Token_t * keyword, Token_t * eos, 
   // This statement's semantics is that it should change the type of the declared variables
      buildAttributeSpecificationStatement(SgAttributeSpecificationStatement::e_dimensionStatement,label,keyword);
 
-#if 0
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R535 c_action_dimension_stmt()");
 #endif
@@ -5797,7 +5796,8 @@ void c_action_dimension_decl(Token_t *id)
 void c_action_dimension_decl(Token_t *id, ofp_bool hasArraySpec, ofp_bool hasCoArraySpec)
 #endif
    {
-     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        raise(SIGINT);
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
         {
 #if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
        // printf ("In R544-F2008 (extracted from R535-F2003) c_action_dimension_decl(): id = %p = %s lbracket = %p = %s rbracket = %p = %s \n",
@@ -5818,7 +5818,7 @@ void c_action_dimension_decl(Token_t *id, ofp_bool hasArraySpec, ofp_bool hasCoA
   // We need to turn this into a declaration
   // printf ("We need to turn the named array into an array declaration at this point (variable = %s) \n",id->text);
 
-#if 0
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R544-F2008 c_action_dimension_decl()");
 #endif
@@ -5880,8 +5880,9 @@ void c_action_dimension_decl(Token_t *id, ofp_bool hasArraySpec, ofp_bool hasCoA
   // printf ("arrayVariableType = %s \n",arrayVariableType->class_name().c_str());
 
      arrayVariable->set_type(arrayVariableType);
+     astBaseTypeStack.pop_front();  // DXN: moved from the end of method to here.
 
-#if 0
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("Branch 2: building an array reference in R544-F2008 c_action_dimension_decl()");
 #endif
@@ -5902,9 +5903,9 @@ void c_action_dimension_decl(Token_t *id, ofp_bool hasArraySpec, ofp_bool hasCoA
 
      astExpressionStack.push_front(arrayRefExpression);
 
-     astBaseTypeStack.pop_front();
+     // astBaseTypeStack.pop_front();  // DXN: moved further up
 
-#if 0
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R544-F2008 c_action_dimension_decl()");
 #endif
@@ -7414,6 +7415,7 @@ SgCAFCoExpression *rice_dataref_coexpr;     // for 'c_action_rice_spawn_stmt'
 
 void c_action_data_ref(int numPartRef)
    {
+    raise(SIGINT);
     // DQ (12/29/2010): See notes on how R612 and R613 operate together.
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
@@ -8254,6 +8256,7 @@ void c_action_data_ref(int numPartRef)
  */
 void c_action_part_ref(Token_t * id, ofp_bool hasSelectionSubscriptList, ofp_bool hasImageSelector)
    {
+    raise(SIGINT);
     // This is a part of a variable reference (any likely used many other places as well)
 
   // DQ (12/29/2010): Notes on how R612 and R613 operate together.
