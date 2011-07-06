@@ -93,7 +93,7 @@ class SageTranslator(ast.NodeVisitor):
     return map(self.visit, ast.iter_child_nodes(node))
 
   def visit_arguments(self, node):
-    args = map(sage.buildInitializedName, node.args)
+    args = map(lambda arg: sage.buildInitializedName(arg.id), node.args)
     kwargs = map(self.visit, node.defaults)
     return sage.buildFunctionParameterList(args, kwargs)
 
