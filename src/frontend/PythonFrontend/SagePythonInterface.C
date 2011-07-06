@@ -145,7 +145,7 @@ sage_buildCall(PyObject *self, PyObject *args)
     char *name_str;
     PyObject *py_args, *py_kwargs;
     SgScopeStatement *sg_scope;
-    if (! PyArg_ParseTuple(args, "sOOO&", &name_str,
+    if (! PyArg_ParseTuple(args, "sO&O&O&", &name_str,
                                           &pylist_checker, py_args,
                                           &pylist_checker, py_kwargs,
                                           SAGE_CONVERTER(SgScopeStatement), &sg_scope))
@@ -194,9 +194,14 @@ sage_buildCall(PyObject *self, PyObject *args)
 PyObject*
 sage_buildCompare(PyObject *self, PyObject *args)
 {
-    PyObject* py_left        = PyTuple_GetItem(args, 0);
-    PyObject* py_ops         = PyTuple_GetItem(args, 1);
-    PyObject* py_comparators = PyTuple_GetItem(args, 2);
+    SgExpression *sg_left_exp;
+    PyObject* py_comparators;
+    PyObject *py_ops;
+
+    if (! PyArg_ParseTuple(args, "O&O&O&", SAGE_CONVERTER(SgExpression), &sg_left_exp,
+                                           &pylist_checker, py_comparators,
+                                           &pylist_checker, py_ops))
+        return NULL;
 
     cerr << "Error: Comparisons require new sage node. Skipping." << endl;
     SgExpression* left = SageBuilder::buildStringVal("COMPARISON");
@@ -227,10 +232,11 @@ sage_buildExceptHandler(PyObject *self, PyObject *args)
 PyObject*
 sage_buildExpr(PyObject *self, PyObject *args)
 {
-    PyObject* py_value = PyTuple_GetItem(args, 0);
-    SgNode* sg_value = PyDecapsulate<SgNode>(py_value);
-    ROSE_ASSERT(sg_value != NULL);
-    return PyEncapsulate(sg_value);
+    SgExpression *sg_exp;
+    if (! PyArg_ParseTuple(args, "O&", SAGE_CONVERTER(SgExpression), &sg_exp))
+        return NULL;
+
+    return PyEncapsulate(sg_exp);
 }
 
 /*
@@ -238,10 +244,9 @@ sage_buildExpr(PyObject *self, PyObject *args)
 PyObject*
 sage_buildExprListExp(PyObject *self, PyObject *args)
 {
-    PyObject* py_exprs = PyTuple_GetItem(args, 0);
-    if (! PyList_Check(py_exprs)) {
-        return Py_None;
-    }
+    PyObject* py_exprs;
+    if (! PyArg_ParseTuple(args, "O&", &pylist_checker, &py_exprs))
+        return NULL;
 
     std::vector<SgExpression*> sg_exprs;
     Py_ssize_t exprc = PyList_Size(py_exprs);
@@ -262,25 +267,22 @@ sage_buildExprListExp(PyObject *self, PyObject *args)
 PyObject*
 sage_buildFunctionDef(PyObject *self, PyObject *args)
 {
-    PyObject* py_name              = PyTuple_GetItem(args, 0);
-    PyObject* py_params            = PyTuple_GetItem(args, 1);
-    PyObject* py_decorators        = PyTuple_GetItem(args, 2);
-    PyObject* file_info_capsule    = PyTuple_GetItem(args, 3);
-    PyObject* scope_capsule        = PyTuple_GetItem(args, 4);
+    char *name;
+    SgFunctionParameterList *sg_params;
+    SgExprListExp *sg_decorators;
+    SgScopeStatement *sg_scope;
 
-    string sg_name = string( PyString_AsString(py_name) );
-
-    SgFunctionParameterList* sg_params =
-        PyDecapsulate<SgFunctionParameterList>(py_params);
-
-    SgScopeStatement* sg_scope_statement =
-        PyDecapsulate<SgScopeStatement>(scope_capsule);
+    if (! PyArg_ParseTuple(args, "sO&OO&", &name,
+                                            SAGE_CONVERTER(SgFunctionParameterList), &sg_params,
+                                            /*SAGE_CONVERTER(SgExprListExp),*/ &sg_decorators,
+                                            SAGE_CONVERTER(SgScopeStatement), &sg_scope))
+        return NULL;
 
     SgFunctionDeclaration* sg_func_decl =
-        SageBuilder::buildDefiningFunctionDeclaration(sg_name,
+        SageBuilder::buildDefiningFunctionDeclaration(name,
                 SageBuilder::buildVoidType(),
                 sg_params,
-                sg_scope_statement);
+                sg_scope);
 
 #if 0 // awaiting resolution of abstract handle bug
     SgExprListExp* decorators = sg_func_decl->get_decoratorList();
@@ -305,8 +307,9 @@ sage_buildFunctionDef(PyObject *self, PyObject *args)
 PyObject*
 sage_buildGlobal(PyObject *self, PyObject *args)
 {
-    PyObject* arg0 = PyTuple_GetItem(args, 0);
-    std::string filename = std::string( PyString_AsString(arg0) );
+    char *filename;
+    if (! PyArg_ParseTuple(args, "s", &filename))
+        return NULL;
 
     Sg_File_Info* sg_file_info = new Sg_File_Info(filename, 0, 0);
     sg_file_info->unsetTransformation();
@@ -340,9 +343,12 @@ sage_buildGlobal(PyObject *self, PyObject *args)
 PyObject*
 sage_buildIf(PyObject *self, PyObject *args)
 {
-    PyObject* py_test =        PyTuple_GetItem(args, 0);
-    PyObject* py_body_list =   PyTuple_GetItem(args, 1);
-    PyObject* py_orelse_list = PyTuple_GetItem(args, 2);
+    SgExpression *test;
+    PyObject *py_body_list, *py_orelse_list;
+    if (! PyArg_ParseTuple(args, "O&O&O&", SAGE_CONVERTER(SgExpression), &test,
+                                           &pylist_checker, &py_body_list,
+                                           &pylist_checker, &py_orelse_list))
+        return NULL;
 
     SgBasicBlock* true_body = SageBuilder::buildBasicBlock();
     Py_ssize_t tbodyc = PyList_Size(py_body_list);
@@ -353,15 +359,13 @@ sage_buildIf(PyObject *self, PyObject *args)
     }
 
     Py_ssize_t fbodyc = PyList_Size(py_orelse_list);
-    SgBasicBlock* false_body =
-        (fbodyc > 0) ? SageBuilder::buildBasicBlock() : NULL;
+    SgBasicBlock* false_body = (fbodyc > 0) ? SageBuilder::buildBasicBlock() : NULL;
     for (int i = 0; i < fbodyc; i++) {
         PyObject* py_stmt = PyList_GetItem(py_orelse_list, i);
         SgStatement* sg_stmt = PyDecapsulate<SgStatement>(py_stmt);
         false_body->append_statement(sg_stmt);
     }
 
-    SgExpression* test = PyDecapsulate<SgExpression>(py_test);
     SgIfStmt* sg_if_stmt =
         SageBuilder::buildIfStmt(test, true_body, false_body);
     return PyEncapsulate(sg_if_stmt);
@@ -373,11 +377,10 @@ sage_buildIf(PyObject *self, PyObject *args)
 PyObject*
 sage_buildKeyword(PyObject *self, PyObject *args)
 {
-    PyObject* py_key   = PyTuple_GetItem(args, 0);
-    PyObject* py_value = PyTuple_GetItem(args, 1);
-
-    SgExpression* sg_key   = PyDecapsulate<SgExpression>(py_key);
-    SgExpression* sg_value = PyDecapsulate<SgExpression>(py_value);
+    SgExpression *sg_key, *sg_value;
+    if (! PyArg_ParseTuple(args, "O&O&", SAGE_CONVERTER(SgExpression), &sg_key,
+                                         SAGE_CONVERTER(SgExpression), &sg_value))
+        return NULL;
 
     SgAssignOp* sg_assign_op =
         SageBuilder::buildAssignOp(sg_key, sg_value);
@@ -390,16 +393,13 @@ sage_buildKeyword(PyObject *self, PyObject *args)
 PyObject*
 sage_buildLambda(PyObject *self, PyObject *args)
 {
-    PyObject* py_params = PyTuple_GetItem(args, 0);
-    PyObject* py_scope  = PyTuple_GetItem(args, 1);
-
-    SgFunctionParameterList* sg_params =
-        PyDecapsulate<SgFunctionParameterList>(py_params);
+    SgFunctionParameterList *sg_params;
+    SgScopeStatement *sg_scope;
+    if (! PyArg_ParseTuple(args, "O&O&", SAGE_CONVERTER(SgFunctionParameterList), &sg_params,
+                                         SAGE_CONVERTER(SgScopeStatement), &sg_scope))
+        return NULL;
 
     SgType* sg_ret_type = SageBuilder::buildVoidType();
-
-    SgScopeStatement* sg_scope = PyDecapsulate<SgScopeStatement>(py_scope);
-
     SgLambdaRefExp* sg_lambda_exp =
         SageBuilder::buildLambdaRefExp(sg_ret_type, sg_params, sg_scope);
 
@@ -420,14 +420,12 @@ sage_buildLambda(PyObject *self, PyObject *args)
 PyObject*
 sage_buildLongIntVal(PyObject *self, PyObject *args)
 {
-    PyObject* py_value = PyTuple_GetItem(args, 0);
-    PyObject* file_info_capsule = PyTuple_GetItem(args, 1);
+    long value;
+    if (! PyArg_ParseTuple(args, "l", &value))
+        return NULL;
 
-    long value = PyInt_AsLong(py_value);
     SgLongIntVal* sg_long_int_val =
         SageBuilder::buildLongIntVal(value);
-
-    set_File_Info(sg_long_int_val, file_info_capsule);
     return PyEncapsulate(sg_long_int_val);
 }
 
@@ -438,32 +436,15 @@ sage_buildLongIntVal(PyObject *self, PyObject *args)
 PyObject*
 sage_buildName(PyObject *self, PyObject *args)
 {
-    PyObject* py_id = PyTuple_GetItem(args, 0);
-    char* id = PyString_AsString(py_id);
-
-    PyObject* py_scope_capsule = PyTuple_GetItem(args, 1);
-    SgScopeStatement* scope =
-        PyDecapsulate<SgScopeStatement>(py_scope_capsule);
-    ROSE_ASSERT(scope != NULL);
+    char *id;
+    SgScopeStatement *sg_scope;
+    if (! PyArg_ParseTuple(args, "sO&", &id,
+                                        SAGE_CONVERTER(SgScopeStatement), &sg_scope))
+        return NULL;
 
     SgVarRefExp* sg_var_ref =
-        SageBuilder::buildOpaqueVarRefExp( std::string(id), scope );
+        SageBuilder::buildOpaqueVarRefExp( std::string(id), sg_scope );
     return PyEncapsulate(sg_var_ref);
-}
-
-/*
- */
-PyObject*
-sage_buildPower(PyObject *self, PyObject *args)
-{
-    PyObject* rhs = PyTuple_GetItem(args, 0);
-    PyObject* lhs = PyTuple_GetItem(args, 1);
-
-    SgExpression* sg_base = PyDecapsulate<SgExpression>(lhs);
-    SgExpression* sg_pow  = PyDecapsulate<SgExpression>(rhs);
-    SgExponentiationOp* sg_exp_op =
-      SageBuilder::buildExponentiationOp(sg_base, sg_pow);
-    return PyEncapsulate(sg_exp_op);
 }
 
 /*

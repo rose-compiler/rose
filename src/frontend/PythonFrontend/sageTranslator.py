@@ -143,7 +143,7 @@ class SageTranslator(ast.NodeVisitor):
     decorators = map(self.visit, node.decorator_list)
     params = self.visit(node.args)
     (capsule, scope) = \
-        sage.buildFunctionDef(node.name, params, decorators, self.file_info(node), scope)
+        sage.buildFunctionDef(node.name, params, decorators, scope)
     self.scopeStack.push(scope)
     body_forest = map(self.visit, node.body)
     sage.appendStatements(capsule, body_forest)
@@ -188,7 +188,7 @@ class SageTranslator(ast.NodeVisitor):
     return sage.buildName(node.id, scope)
 
   def visit_Num(self, node):
-    return sage.buildLongIntVal(node.n, self.file_info(node))
+    return sage.buildLongIntVal(node.n)
 
   def visit_Print(self, node):
     dest = self.visit(node.dest)
