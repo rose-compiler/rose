@@ -200,7 +200,7 @@ class SageTranslator(ast.NodeVisitor):
     return sage.buildReturnStmt(value)
 
   def visit_Str(self, node):
-    return sage.buildStringVal(node.s, self.file_info(node))
+    return sage.buildStringVal(node.s)
 
   def visit_str(self, str):
     return sage.buildStringVal(str)
