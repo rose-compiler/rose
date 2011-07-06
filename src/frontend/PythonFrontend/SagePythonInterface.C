@@ -34,16 +34,14 @@ sage_buildAssign(PyObject *self, PyObject *args)
 PyObject*
 sage_buildAugAssign(PyObject *self, PyObject *args)
 {
-    PyObject* lhs_capsule = PyTuple_GetItem(args, 0);
-    PyObject* rhs_capsule = PyTuple_GetItem(args, 1);
-    PyObject* py_operation = PyTuple_GetItem(args, 2);
+    SgExpression *lhs, *rhs;
+    char *op_str;
+    if (! PyArg_ParseTuple(args, "O&O&s", SAGE_CONVERTER(SgExpression), &lhs,
+                                          SAGE_CONVERTER(SgExpression), &rhs,
+                                          &op_str))
+        return NULL;
 
-    SgExpression* lhs = PyDecapsulate<SgExpression>(lhs_capsule);
-    SgExpression* rhs = PyDecapsulate<SgExpression>(rhs_capsule);
-    std::string op = std::string( PyString_AsString(py_operation) );
-    cerr << "lhs: " << lhs->class_name() << endl;
-    cerr << "rhs: " << rhs->class_name() << endl;
-    cerr << "op: " << op << endl;
+    std::string op(op_str);
     SgBinaryOp* sg_bin_op = NULL;
     if      (op == ROSE_PYTHON_AUG_ADD_OP)
         sg_bin_op = SageBuilder::buildPlusAssignOp(lhs, rhs);
@@ -96,13 +94,14 @@ sage_buildAugAssign(PyObject *self, PyObject *args)
 PyObject*
 sage_buildBinOp(PyObject *self, PyObject *args)
 {
-    PyObject* lhs_capsule = PyTuple_GetItem(args, 0);
-    PyObject* rhs_capsule = PyTuple_GetItem(args, 1);
-    PyObject* py_operation = PyTuple_GetItem(args, 2);
+    SgExpression *lhs, *rhs;
+    char *op_str;
+    if (! PyArg_ParseTuple(args, "O&O&s", SAGE_CONVERTER(SgExpression), &lhs,
+                                          SAGE_CONVERTER(SgExpression), &rhs,
+                                          &op_str))
+        return NULL;
 
-    SgExpression* lhs = PyDecapsulate<SgExpression>(lhs_capsule);
-    SgExpression* rhs = PyDecapsulate<SgExpression>(rhs_capsule);
-    std::string op = std::string( PyString_AsString(py_operation) );
+    std::string op(op_str);
     SgBinaryOp* sg_bin_op = NULL;
     if      (op == ROSE_PYTHON_ADD_OP)
         sg_bin_op = SageBuilder::buildAddOp(lhs, rhs);
@@ -143,10 +142,14 @@ sage_buildBinOp(PyObject *self, PyObject *args)
 PyObject*
 sage_buildCall(PyObject *self, PyObject *args)
 {
-    PyObject* py_name    = PyTuple_GetItem(args, 0);
-    PyObject* py_args    = PyTuple_GetItem(args, 1);
-    PyObject* py_kwargs  = PyTuple_GetItem(args, 2);
-    PyObject* py_scope   = PyTuple_GetItem(args, 3);
+    char *name_str;
+    PyObject *py_args, *py_kwargs;
+    SgScopeStatement *sg_scope;
+    if (! PyArg_ParseTuple(args, "sOOO&", &name_str,
+                                          &pylist_checker, py_args,
+                                          &pylist_checker, py_kwargs,
+                                          SAGE_CONVERTER(SgScopeStatement), &sg_scope))
+        return NULL;
 
     std::vector<SgExpression*> sg_exprs;
     Py_ssize_t argc = PyList_Size(py_args);
@@ -172,9 +175,7 @@ sage_buildCall(PyObject *self, PyObject *args)
     SgExprListExp* sg_expr_list_exp =
         SageBuilder::buildExprListExp(sg_exprs);
 
-    SgScopeStatement* sg_scope = PyDecapsulate<SgScopeStatement>(py_scope);
-    ROSE_ASSERT(sg_scope != NULL);
-    SgName sg_func_name = SgName( PyString_AsString(py_name) );
+    SgName sg_func_name = SgName(name_str);
     SgFunctionSymbol* sg_func_symbol = isSgFunctionSymbol(
         SageInterface::lookupSymbolInParentScopes(sg_func_name, sg_scope));
     if (sg_func_symbol == NULL) {
