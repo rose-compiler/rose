@@ -3816,22 +3816,15 @@ SgConstVolatileModifier * SageBuilder::buildConstVolatileModifier (SgConstVolati
 //! Build lambda expression
 SgLambdaRefExp*
 SageBuilder::buildLambdaRefExp(SgType* return_type, SgFunctionParameterList* params, SgScopeStatement* scope) {
-    SgLambdaRefExp* result = new SgLambdaRefExp();
-
-    std::ostringstream name;
-    name << "__rose__lambda__"
-         << (void*) result
-         << "__";
-
-    SgFunctionDeclaration* fxn =
+    SgFunctionDeclaration* func_decl =
         SageBuilder::buildDefiningFunctionDeclaration(
-                name.str(),
+                "__rose__lambda__",
                 return_type,
                 params,
                 scope);
 
-    result->set_functionDeclaration(fxn);
-    fxn->set_parent(result);
+    SgLambdaRefExp* result = new SgLambdaRefExp(func_decl);
+    func_decl->set_parent(result);
 
     setOneSourcePositionForTransformation(result);
     return result;
