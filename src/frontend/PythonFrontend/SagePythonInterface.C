@@ -146,8 +146,8 @@ sage_buildCall(PyObject *self, PyObject *args)
     PyObject *py_args, *py_kwargs;
     SgScopeStatement *sg_scope;
     if (! PyArg_ParseTuple(args, "sO&O&O&", &name_str,
-                                          &pylist_checker, py_args,
-                                          &pylist_checker, py_kwargs,
+                                          &pylist_checker, &py_args,
+                                          &pylist_checker, &py_kwargs,
                                           SAGE_CONVERTER(SgScopeStatement), &sg_scope))
         return NULL;
 
