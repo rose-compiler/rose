@@ -293,10 +293,9 @@ sage_buildFunctionDef(PyObject *self, PyObject *args)
     }
 #endif
 
-    PyObject* return_tuple = PyTuple_New(2);
-    PyTuple_SetItem(return_tuple, 0, PyEncapsulate(sg_func_decl));
-    PyTuple_SetItem(return_tuple, 1, PyEncapsulate(sg_func_decl->get_definition()));
-    return return_tuple;
+    PyObject *py_func_decl = PyEncapsulate(sg_func_decl);
+    PyObject *py_func_def = PyEncapsulate(sg_func_decl->get_definition());
+    return Py_BuildValue("(OO)", py_func_decl, py_func_def);
 }
 
 /*
@@ -326,10 +325,9 @@ sage_buildGlobal(PyObject *self, PyObject *args)
 
     SageInterface::appendStatement(sg_main_func_decl, sg_global);
 
-    PyObject* return_tuple = PyTuple_New(2);
-    PyTuple_SetItem(return_tuple, 0, PyEncapsulate(sg_global));
-    PyTuple_SetItem(return_tuple, 1, PyEncapsulate(sg_main_func_decl));
-    return return_tuple;
+    PyObject *py_global = PyEncapsulate(sg_global);
+    PyObject *py_main = PyEncapsulate(sg_main_func_decl);
+    return Py_BuildValue("(OO)", py_global, py_main);
 }
 
 /*
@@ -406,10 +404,9 @@ sage_buildLambda(PyObject *self, PyObject *args)
     ROSE_ASSERT(sg_lambda_exp->get_functionDeclaration());
     ROSE_ASSERT(sg_lambda_exp->get_functionDeclaration()->get_definition());
 
-    PyObject* return_tuple = PyTuple_New(2);
-    PyTuple_SetItem(return_tuple, 0, PyEncapsulate(sg_lambda_exp));
-    PyTuple_SetItem(return_tuple, 1, PyEncapsulate(sg_lambda_exp->get_functionDeclaration()->get_definition()));
-    return return_tuple;
+    PyObject *py_lambda = PyEncapsulate(sg_lambda_exp);
+    PyObject *py_body = PyEncapsulate(sg_lambda_exp->get_functionDeclaration()->get_definition());
+    return Py_BuildValue("(OO)", py_lambda, py_body);
 }
 
 /*
