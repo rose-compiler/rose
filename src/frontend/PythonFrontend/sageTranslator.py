@@ -97,6 +97,12 @@ class SageTranslator(ast.NodeVisitor):
     kwargs = map(self.visit, node.defaults)
     return sage.buildFunctionParameterList(args, kwargs)
 
+  def visit_Assign(self, node):
+    targets = map(self.visit, node.targets)
+    value = self.visit(node.value)
+    assert len(targets) == 1, "target assignment lists are yet to be supported"
+    return sage.buildAssign(targets[0], value)
+
   def visit_AugAssign(self, node):
     target = self.visit(node.target)
     value  = self.visit(node.value)
@@ -168,13 +174,13 @@ class SageTranslator(ast.NodeVisitor):
     return lambda_capsule
 
   def visit_Module(self, node):
-    (scope, main_func) = sage.buildGlobal(self.filename)
+    (scope, wrapper_func) = sage.buildGlobal(self.filename)
 
     self.scopeStack.push(scope)
     subforest = self.generic_visit(node)
     self.scopeStack.pop(scope)
 
-    sage.appendStatements(main_func, subforest)
+    sage.appendStatements(wrapper_func, subforest)
     return scope
 
   def visit_Name(self, node):
