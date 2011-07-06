@@ -66,13 +66,11 @@ void set_File_Info(SgNode* sg_node, PyObject* py_file_info) {
 PyObject*
 sage_appendStatements(PyObject *self, PyObject *args)
 {
-
-    PyObject* py_target = PyTuple_GetItem(args, 0);
-    PyObject* py_stmts  = PyTuple_GetItem(args, 1);
-
-    SgScopeStatement* sg_target =
-        PyDecapsulate<SgScopeStatement>(py_target);
-    ROSE_ASSERT(sg_target != NULL);
+    PyObject *py_stmts;
+    SgScopeStatement *sg_target;
+    if (! PyArg_ParseTuple(args, "O&O&", SAGE_CONVERTER(SgScopeStatement), &sg_target,
+                                         &pylist_checker, &py_stmts))
+        return NULL;
 
     Py_ssize_t stmtc = PyList_Size(py_stmts);
     for (int i = 0; i < stmtc; i++) {
@@ -122,22 +120,22 @@ sage_appendStatements(PyObject *self, PyObject *args)
 }
 
 PyObject*
-sage_buildInitializedName(PyObject* self, PyObject* py_args) {
-    PyObject* py_name = PyTuple_GetItem(py_args, 0);
-
-    PyObject* py_id = PyObject_GetAttrString(py_name, "id");
-    string id = string( PyString_AsString(py_id) );
+sage_buildInitializedName(PyObject* self, PyObject* args) {
+    char *id;
+    if (! PyArg_ParseTuple(args, "s", &id))
+        return NULL;
 
     SgType* sg_type = SageBuilder::buildVoidType();
-
     SgInitializedName* sg_init_name = SageBuilder::buildInitializedName(id, sg_type);
     return PyEncapsulate(sg_init_name);
 }
 
 PyObject*
-sage_buildFunctionParameterList(PyObject* self, PyObject* py_argv) {
-    PyObject* py_args = PyTuple_GetItem(py_argv, 0);
-    PyObject* py_defaults = PyTuple_GetItem(py_argv, 1);
+sage_buildFunctionParameterList(PyObject* self, PyObject* args) {
+    PyObject *py_args, *py_defaults;
+    if (! PyArg_ParseTuple(args, "O&O&", &pylist_checker, &py_args,
+                                         &pylist_checker, &py_defaults))
+        return NULL;
 
     SgFunctionParameterList* sg_params =
         SageBuilder::buildFunctionParameterList();
