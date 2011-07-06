@@ -5,6 +5,7 @@
 
 #include "SagePythonSupport.h"
 
+PyObject* sage_buildAssign(PyObject *self, PyObject *args);
 PyObject* sage_buildAugAssign(PyObject *self, PyObject *args);
 PyObject* sage_buildBinOp(PyObject *self, PyObject *args);
 PyObject* sage_buildCall(PyObject *self, PyObject *args);
@@ -32,6 +33,7 @@ PyObject* sage_buildWhile(PyObject *self, PyObject *args);
 PyObject* sage_buildWith(PyObject *self, PyObject *args);
 
 static PyMethodDef SageBuilderMethods[] = {
+    {"buildAssign", sage_buildAssign, METH_VARARGS, "Builds an assignment node."},
     {"buildAugAssign", sage_buildAugAssign, METH_VARARGS, "Builds an augmented assignment node."},
     {"buildBinOp", sage_buildBinOp, METH_VARARGS, "Builds a binary expression node."},
     {"buildCall", sage_buildCall, METH_VARARGS, "Builds an SgFunctionCallExp node."},

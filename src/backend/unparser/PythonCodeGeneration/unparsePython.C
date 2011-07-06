@@ -79,6 +79,7 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
                                                   SgUnparse_Info& info)
 {
     switch (stmt->variantT()) {
+        CASE_DISPATCH_AND_BREAK(AssignOp);
         CASE_DISPATCH_AND_BREAK(AssignInitializer);
         CASE_DISPATCH_AND_BREAK(ExprListExp);
         CASE_DISPATCH_AND_BREAK(FunctionCallExp);
@@ -146,6 +147,15 @@ Unparse_Python::ws_prefix(int nesting_level) {
 }
 
 /* ================== Node-specific unparsing functions ===================== */
+
+void
+Unparse_Python::unparseAssignOp(SgAssignOp* sg_assign_op,
+                                SgUnparse_Info& info)
+{
+    unparseExpression(sg_assign_op->get_lhs_operand(), info);
+    curprint(" = ");
+    unparseExpression(sg_assign_op->get_rhs_operand(), info);
+}
 
 void
 Unparse_Python::unparseAssignInitializer(SgAssignInitializer* sg_assign_init,

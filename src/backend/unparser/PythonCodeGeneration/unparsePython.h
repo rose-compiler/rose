@@ -32,6 +32,7 @@ class Unparse_Python : public UnparseLanguageIndependentConstructs
           virtual std::string languageName() const { return "Python Unparser"; }
 
      protected:
+          virtual void unparseAssignOp(SgAssignOp*, SgUnparse_Info&);
           virtual void unparseAssignInitializer(SgAssignInitializer*, SgUnparse_Info&);
           virtual void unparseBasicBlock(SgBasicBlock*, SgUnparse_Info&);
           virtual void unparseBinaryOp(SgBinaryOp*, SgUnparse_Info&);

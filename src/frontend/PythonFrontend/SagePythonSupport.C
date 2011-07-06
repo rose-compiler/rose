@@ -77,7 +77,12 @@ sage_appendStatements(PyObject *self, PyObject *args)
     Py_ssize_t stmtc = PyList_Size(py_stmts);
     for (int i = 0; i < stmtc; i++) {
         PyObject* capsule = PyList_GetItem(py_stmts, i);
+        ROSE_ASSERT(capsule != NULL);
         SgStatement* sg_child = PyDecapsulate<SgStatement>(capsule);
+        if (sg_child == NULL) {
+            SgNode* sg_node = PyDecapsulate<SgNode>(capsule);
+            cout << "bad node: " << sg_node->class_name() << endl;
+        }
         // SageInterface::appendStatement calls functions that assert because of
         // (the lack of)? declaration statements in the given scopes. Until I suppress
         // this behavior for Python, use this simple version of the appendStatement
@@ -95,6 +100,8 @@ sage_appendStatements(PyObject *self, PyObject *args)
             }
             case V_SgFunctionDeclaration: {
               SgBasicBlock* body = isSgFunctionDeclaration(sg_target)->get_definition()->get_body();
+              ROSE_ASSERT(body);
+              ROSE_ASSERT(sg_child);
               body->append_statement(sg_child);
               sg_child->set_parent(body);
               break;
