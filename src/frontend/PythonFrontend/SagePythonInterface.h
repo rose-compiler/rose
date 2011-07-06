@@ -64,28 +64,4 @@ static PyMethodDef SageBuilderMethods[] = {
     {NULL, NULL, 0, NULL}
 };
 
-template <typename SgNode_T>
-static int sage_converter(PyObject* object, void** address) {
-    if (! PyCapsule_CheckExact(object))
-        return false;
-
-    SgNode_T* sg_node = PyDecapsulate<SgNode_T>(object);
-    if (! isSgNode(sg_node))
-        return false;
-
-    *address = sg_node;
-    return true;
-}
-#define SAGE_CONVERTER(sg_t) \
-  (int (*)(PyObject*,void**)) &sage_converter<sg_t>
-
-static int pylist_checker(PyObject* object, void** address) {
-    if (! PyList_Check(object)) {
-        return false;
-    } else {
-        *address = object;
-        return true;
-    }
-}
-
 #endif /* SAGE_PYTHON_INTERFACE_H_ */
