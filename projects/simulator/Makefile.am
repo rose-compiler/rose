@@ -80,6 +80,11 @@ demo1_SOURCES = demo1.C
 demo1_CPPFLAGS = $(ROSE_INCLUDES)
 demo1_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+noinst_PROGRAMS += demo2
+demo2_SOURCES = demo2.C
+demo2_CPPFLAGS = $(ROSE_INCLUDES)
+demo2_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
 ###############################################################################################################################
 #  SYSTEM CALL TESTS
 ###############################################################################################################################
