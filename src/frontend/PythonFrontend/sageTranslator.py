@@ -220,6 +220,9 @@ class SageTranslator(ast.NodeVisitor):
     finalbody = map(self.visit, node.finalbody)
     return sage.buildTryFinally(body, finalbody)
 
+  def visit_Tuple(self, node):
+    return sage.buildTuple(map(self.visit, node.elts))
+
   def visit_UnaryOp(self, node):
     operand = self.visit(node.operand)
     op_str = UNARY_OPERATOR_MAP[node.op.__class__]

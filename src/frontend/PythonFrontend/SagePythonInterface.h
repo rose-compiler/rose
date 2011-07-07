@@ -27,6 +27,7 @@ PyObject* sage_buildStringVal(PyObject *self, PyObject *args);
 PyObject* sage_buildSuite(PyObject *self, PyObject *args);
 PyObject* sage_buildTryExcept(PyObject *self, PyObject *args);
 PyObject* sage_buildTryFinally(PyObject *self, PyObject *args);
+PyObject* sage_buildTuple(PyObject *self, PyObject *args);
 PyObject* sage_buildUnaryOp(PyObject *self, PyObject *args);
 PyObject* sage_buildWhile(PyObject *self, PyObject *args);
 PyObject* sage_buildWith(PyObject *self, PyObject *args);
@@ -55,6 +56,7 @@ static PyMethodDef SageBuilderMethods[] = {
     {"buildSuite", sage_buildSuite, METH_VARARGS, "Builds a suite in a basic block node."},
     {"buildTryExcept", sage_buildTryExcept, METH_VARARGS, "Builds an try stmt node."},
     {"buildTryFinally", sage_buildTryFinally, METH_VARARGS, "Builds an try/finally stmt node."},
+    {"buildTuple", sage_buildTuple, METH_VARARGS, "Builds an tuple exp node."},
     {"buildUnaryOp", sage_buildUnaryOp, METH_VARARGS, "Builds unary operation node."},
     {"buildWhile", sage_buildWhile, METH_VARARGS, "Builds while stmt node."},
     {"buildWith", sage_buildWith, METH_VARARGS, "Builds with stmt node."},

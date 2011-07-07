@@ -28,7 +28,8 @@ ALL_PYTHON_TESTCODES = \
     test2011_026.py \
     test2011_027.py \
     test2011_028.py \
-    test2011_029.py
+    test2011_029.py \
+    test2011_030.py
 
 
 

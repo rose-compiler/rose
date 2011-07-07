@@ -4,5 +4,5 @@ def foo():
 def foo():
     return 1
 
-#def foo():
-#    return 1, 2, 3 # not implemented yet
+def foo():
+    return 1, 2, 3 # not implemented yet
