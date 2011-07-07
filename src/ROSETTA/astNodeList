@@ -576,6 +576,7 @@ SgThisExp
 SgThrowOp
 SgToken
 SgTryStmt
+SgTupleExp
 SgType
 SgTypeBool
 SgTypeChar

@@ -154,6 +154,7 @@ Grammar::setUpExpressions ()
 
   // driscoll6 (6/27/11) Support for Python
      NEW_TERMINAL_MACRO (LambdaRefExp,              "LambdaRefExp",                 "LAMBDA_REF_EXP" );
+     NEW_TERMINAL_MACRO (TupleExp,                  "TupleExp",                     "TUPLE_EXP" );
 
 #if USE_FORTRAN_IR_NODES
   // Intrisic function are just like other functions, but explicitly marked to be intrinsic.
@@ -244,7 +245,7 @@ Grammar::setUpExpressions ()
        /* UseRenameExpression | */ StatementExpression  | AsmOp               | LabelRefExp         | ActualArgumentExpression |
           UnknownArrayOrFunctionReference               | PseudoDestructorRefExp | CAFCoExpression  |
           CudaKernelCallExp   | CudaKernelExecConfig    |  /* TV (04/22/2010): CUDA support */
-          LambdaRefExp, /* driscoll6 (6/27/11): Python Support */
+          LambdaRefExp        | TupleExp, /* driscoll6 (6/27/11): Python Support */
           "Expression","ExpressionTag", false);
 
   // ***********************************************************************
@@ -571,6 +572,7 @@ Grammar::setUpExpressions ()
      ThisExp.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      RefExp.setFunctionSource           ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      Initializer.setFunctionSource      ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     TupleExp.setFunctionSource         ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
 
      NullExpression.setFunctionSource   ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      VariantExpression.setFunctionSource( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
@@ -1606,6 +1608,12 @@ Grammar::setUpExpressions ()
      LambdaRefExp.setDataPrototype ("SgFunctionDeclaration*", "functionDeclaration", "= NULL",
                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+     TupleExp.setFunctionPrototype ( "HEADER_TUPLE_EXP", "../Grammar/Expression.code" );
+     TupleExp.setDataPrototype("SgExpressionPtrList", "elements", "",
+                                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     TupleExp.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_FUNCTIONS", "../Grammar/Expression.code" );
+     TupleExp.editSubstitute       ( "LIST_NAME", "element" );
+
      // ***********************************************************************
      // ***********************************************************************
      //                       Source Code Declaration
@@ -1960,4 +1968,6 @@ Grammar::setUpExpressions ()
 
   // driscoll6 (6/27/11): Python support
      LambdaRefExp.setFunctionSource ( "SOURCE_LAMBDA_REF_EXP","../Grammar/Expression.code" );
+     TupleExp.setFunctionSource     ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
+     TupleExp.setFunctionSource     ( "SOURCE_TUPLE_EXP","../Grammar/Expression.code" );
    }

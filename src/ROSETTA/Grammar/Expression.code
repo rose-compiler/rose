@@ -792,6 +792,10 @@ HEADER_THIS_EXPRESSION_START
 
 HEADER_THIS_EXPRESSION_END
 
+HEADER_TUPLE_EXP_START
+          SgExpressionPtrList& get_elements();
+          const SgExpressionPtrList& get_elements() const;
+HEADER_TUPLE_EXP_END
 
 HEADER_SCOPE_OPERATOR_START
        // get lvalue
@@ -3964,6 +3968,17 @@ SOURCE_DELETE_OPERATOR_EXPRESSION_END
 SOURCE_THIS_EXPRESSION_START
 SOURCE_THIS_EXPRESSION_END
 
+SOURCE_TUPLE_EXP_START
+
+SgExpressionPtrList&
+SgTupleExp::get_elements()
+   { return p_elements; }
+
+const SgExpressionPtrList&
+SgTupleExp::get_elements() const
+   { return p_elements; }
+
+SOURCE_TUPLE_EXP_END
 
 SOURCE_SCOPE_OPERATOR_EXPRESSION_START
 SOURCE_SCOPE_OPERATOR_EXPRESSION_END
