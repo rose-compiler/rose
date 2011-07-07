@@ -544,9 +544,8 @@ sage_buildTuple(PyObject *self, PyObject *args)
         sg_exprs.push_back(sg_exp);
     }
 
-    SgExprListExp* sg_expr_list_exp =
-        SageBuilder::buildExprListExp(sg_exprs); //TODO: this is wrong. use buildTuple eventually
-    return PyEncapsulate(sg_expr_list_exp);
+    SgTupleExp* sg_tuple_exp = SageBuilder::buildTupleExp(sg_exprs);
+    return PyEncapsulate(sg_tuple_exp);
 }
 
 /*
