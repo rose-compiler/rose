@@ -224,7 +224,9 @@ namespace InsnSemanticsExpr {
         /* see superclass, where this is pure virtual */
         virtual bool equal_to(const TreeNode *other, SMTSolver*) const;
     };
-
 };
+
+
+std::ostream& operator<<(std::ostream &o, const InsnSemanticsExpr::TreeNode *node);
 
 #endif

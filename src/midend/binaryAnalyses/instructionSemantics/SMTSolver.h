@@ -25,6 +25,17 @@ public:
     /** Determines if the specified expression is satisfiable. Throws Exception if satisfiability cannot be determined. */
     virtual bool satisfiable(const InsnSemanticsExpr::TreeNode *expr);
 
+    /** Evidence of satisfiability.  If an expression is satisfiable, this function will return information about which values
+     *  should be bound to variables to make the expression satisfiable.  Not all SMT solvers can return this information. */
+    virtual InsnSemanticsExpr::TreeNode *get_definition(uint64_t varno) { return NULL; }
+
+    /** Turns debugging on or off. */
+    void set_debug(FILE *f) { debug = f; }
+
+    /** Obtain current debugging setting. */
+    FILE *get_debug() const { return debug; }
+
+protected:
     /** Generates an input file for for the solver. Usually the input file will be SMT-LIB format, but subclasses might
      *  override this to generate some other kind of input. Throws Excecption if the solver does not support an operation that
      *  is necessary to determine the satisfiability. */
@@ -34,12 +45,13 @@ public:
      *  of stdout emitted by the solver should be the word "sat" or "unsat". */
     virtual std::string get_command(const std::string &config_name) = 0;
 
-    /** Turns debugging on or off. */
-    void set_debug(FILE *f) { debug = f; }
+    /** Parses evidence of satisfiability.  Some solvers can emit information about what variable bindings satisfy the
+     *  expression.  This information is parsed by this function and added to a mapping of variable to value. */
+    virtual void parse_evidence() {};
 
-    /** Obtain current debugging setting. */
-    FILE *get_debug() const { return debug; }
-
+    /** Additional output obtained by satisfiable(). */
+    std::vector<std::string> output_text;
+    
     /** Tracks the number of times an SMT solver was called. Actually, the number of calls to satisfiable() */
     static size_t total_calls;
 

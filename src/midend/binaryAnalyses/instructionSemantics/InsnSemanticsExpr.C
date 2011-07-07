@@ -218,3 +218,10 @@ InsnSemanticsExpr::LeafNode::equal_to(const TreeNode *other_, SMTSolver *solver)
     }
     return retval;
 }
+
+std::ostream&
+operator<<(std::ostream &o, const InsnSemanticsExpr::TreeNode *node) {
+    node->print(o);
+    return o;
+}
+

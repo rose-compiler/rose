@@ -53,6 +53,13 @@ public:
      *  uses this library if the link mode is LM_LIBRARY. */
     virtual bool satisfiable(const InsnSemanticsExpr::TreeNode *expr);
 
+    /** See SMTSolver::get_definition(). */
+    virtual InsnSemanticsExpr::TreeNode *get_definition(uint64_t varno);
+
+protected:
+    virtual void parse_evidence();
+    std::map<uint64_t/*varnum*/, std::pair<size_t/*nbits*/, uint64_t/*value*/> > evidence;
+
 private:
     LinkMode linkage;
     void init();

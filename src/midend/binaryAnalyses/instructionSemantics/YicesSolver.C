@@ -89,7 +89,7 @@ YicesSolver::get_command(const std::string &config_name)
 {
 #ifdef YICES
     ROSE_ASSERT(get_linkage() & LM_EXECUTABLE);
-    return std::string(YICES) + " -tc " + config_name;
+    return std::string(YICES) + " --evidence --type-check " + config_name;
 #else
     return "false no yices command";
 #endif
@@ -109,6 +109,39 @@ YicesSolver::generate_file(std::ostream &o, const InsnSemanticsExpr::TreeNode *t
     o <<"\n(check)\n";
 
     delete allocated;
+}
+
+/* See SMTSolver::parse_evidence() */
+void
+YicesSolver::parse_evidence()
+{
+    /* Look for lines like "(= v36 0b01101111111111111101011110110100)" */
+    evidence.clear();
+    for (size_t i=0; i<output_text.size(); i++) {
+        const char *s = output_text[i].c_str();
+        if (!strncmp(s, "(= v", 4)) {
+            char *rest;
+            unsigned varnum = strtoul(s+4, &rest, 10);
+            assert(rest-s>4);
+            s = rest;
+            if (!strncmp(s, " 0b", 3)) {
+                uint64_t val = 0;
+                size_t nbits;
+                for (nbits=0; '0'==s[3+nbits] || '1'==s[3+nbits]; nbits++)
+                    val = (val<<1) | ('1'==s[3+nbits]?1:0);
+                evidence[varnum] = std::pair<size_t, uint64_t>(nbits, val);
+            }
+        }
+    }
+}
+
+/* See SMTSolver::get_definition() */
+InsnSemanticsExpr::TreeNode *
+YicesSolver::get_definition(uint64_t varno)
+{
+    if (evidence.find(varno)==evidence.end())
+        return NULL;
+    return InsnSemanticsExpr::LeafNode::create_integer(evidence[varno].first, evidence[varno].second);
 }
 
 /** Traverse an expression and produce Yices "define" statements for variables. */
