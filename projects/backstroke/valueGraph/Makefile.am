@@ -295,25 +295,39 @@ wlan3:
 		$(GTNETS_DIR)/node-ghost.cc \
 		$(GTNETS_FLAG)
 
+node-impl:
+	./functionReverserTest -c \
+		$(GTNETS_DIR)/node-impl.cc \
+		$(GTNETS_FLAG)
+
 wlan4:
 	./functionReverserTest -c \
 		$(GTNETS_DIR)/tcp.cc \
 		$(GTNETS_FLAG)
 
-wlan5:
+rng:
 	./functionReverserTest -c \
 		$(GTNETS_DIR)/rng.cc \
+		$(GTNETS_FLAG)
+
+nix:
+	./functionReverserTest -c \
+		$(GTNETS_DIR)/routing-nixvector.cc \
+		$(GTNETS_FLAG)
+
+wlan5:
+	./functionReverserTest -c \
 		$(GTNETS_DIR)/queue.cc \
 		$(GTNETS_DIR)/rtt-estimator.cc \
 		$(GTNETS_DIR)/simulator.cc \
 		$(GTNETS_DIR)/trace.cc \
 		$(GTNETS_DIR)/datapdu.cc \
+		$(GTNETS_DIR)/packet.cc \
 		$(GTNETS_FLAG)
 
 wlan6:
 	./functionReverserTest -c \
 		$(GTNETS_DIR)/routing-aodv.cc \
-		$(GTNETS_DIR)/routing-nixvector.cc \
 		$(GTNETS_DIR)/routing-static.cc \
 		$(GTNETS_FLAG)
 
@@ -321,8 +335,22 @@ wlan7:
 	./functionReverserTest -c \
 		$(GTNETS_DIR)/RngStream.cc \
 		$(GTNETS_DIR)/tfstream.cc \
-		$(GTNETS_DIR)/packet.cc \
 		$(GTNETS_DIR)/routing.cc \
+		$(GTNETS_FLAG)
+		
+nvr:
+	./functionReverserTest -c \
+		$(GTNETS_DIR)/routing-nvr.cc \
+		$(GTNETS_FLAG)
+
+dsr:
+	./functionReverserTest -c \
+		$(GTNETS_DIR)/routing-dsr.cc \
+		$(GTNETS_FLAG)
+
+ipv4:
+	./functionReverserTest -c \
+		$(GTNETS_DIR)/ipv4.cc \
 		$(GTNETS_FLAG)
 
 wlan8:
@@ -333,14 +361,11 @@ wlan8:
 		$(GTNETS_DIR)/portdemux.cc \
 		$(GTNETS_DIR)/linkp2p.cc \
 		$(GTNETS_DIR)/mobility.cc \
+		$(GTNETS_DIR)/packet-callbacks.cc \
 		$(GTNETS_FLAG)
 
 wlan9:
 	./functionReverserTest -c \
-		$(GTNETS_DIR)/ipv4.cc \
-		$(GTNETS_DIR)/packet-callbacks.cc \
-		$(GTNETS_DIR)/routing-nvr.cc \
-		$(GTNETS_DIR)/routing-dsr.cc \
 		$(GTNETS_FLAG)
 
 wlan10:

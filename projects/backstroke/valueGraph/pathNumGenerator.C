@@ -628,7 +628,7 @@ SgStatement* getLoopStatement(SgNode* header)
 
 }
 
-void PathNumManager::insertLoopCounterToFwdFunc()
+void PathNumManager::insertLoopCounterToFwdFunc(const set<SgNode*>& loopHeaders)
 {    
     //map<CFGVertex, string> loopCounterNames;
     int counter = 1;
@@ -637,6 +637,11 @@ void PathNumManager::insertLoopCounterToFwdFunc()
     foreach (const NodeToNodes& headerAndLoopNodes, loops_)
     {
         CFGVertex header = headerAndLoopNodes.first;
+        
+        // If this loop is not in route graph, skip it.
+        if (loopHeaders.count((*cfg_)[header]->getNode()) == 0)
+            continue;
+        
         set<CFGVertex> loopNodes = headerAndLoopNodes.second;
         loopNodes.insert(header);
         
@@ -825,6 +830,46 @@ void PathNumManager::insertPathNumberOnEdge(
             
             foreach (SgGotoStatement* gotoStmt, 
                     querySubTree<SgGotoStatement>(whileStmt, V_SgGotoStatement))
+            {
+                ROSE_ASSERT(!"Cannot handle goto in while stmt!");
+            }
+        }
+    }
+    
+    else if (SgForStatement* forStmt = isSgForStatement(src))
+    {
+        SgStatement* pathNumStmt = buildExprStatement(pathNumExp);
+        
+        // If the edge points to while body.
+        if (isAncestor(src, tgt))
+        {
+            SgStatement* s = getEnclosingStatement(tgt);
+            if (SgBasicBlock* body = isSgBasicBlock(s))
+            {
+                prependStatement(pathNumStmt, body);
+            }
+            else
+                ROSE_ASSERT(!"The target of the edge from a if statement is not a basic block!");
+            //SageInterface::insertStatementBefore(stmt, pathNumStmt);
+        }
+        else
+        {
+            insertStatementAfter(forStmt, pathNumStmt);
+            
+            // For all breaks in this while statement, add a -= statement to offset the one
+            // just added after while stmt.
+            foreach (SgBreakStmt* breakStmt, 
+                    querySubTree<SgBreakStmt>(forStmt, V_SgBreakStmt))
+            {
+                SgStatement* pathNumStmt2 = buildExprStatement(
+                                                    buildMinusAssignOp(
+                                                        buildVarRefExp(pathNumName),
+                                                        buildIntVal(val)));
+                insertStatementBefore(breakStmt, pathNumStmt2);
+            }
+            
+            foreach (SgGotoStatement* gotoStmt, 
+                    querySubTree<SgGotoStatement>(forStmt, V_SgGotoStatement))
             {
                 ROSE_ASSERT(!"Cannot handle goto in while stmt!");
             }

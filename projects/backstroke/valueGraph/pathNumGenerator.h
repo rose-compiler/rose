@@ -222,7 +222,7 @@ public:
     //std::map<PathSet, int> getPathsIndices(size_t index) const;
 
     void insertPathNumToFwdFunc();
-    void insertLoopCounterToFwdFunc();
+    void insertLoopCounterToFwdFunc(const std::set<SgNode*>& loopHeaders);
     
     //! Build a graph in dot file representing the given DAG.
     void dagToDot(const DAG& dag, const std::string& filename);

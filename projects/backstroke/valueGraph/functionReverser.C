@@ -184,7 +184,18 @@ void EventReverser::generateCode()
     
     // If the number of path is 1, we don't have to use path numbers.
     //if (pathNum > 1)
-    pathNumManager_->insertLoopCounterToFwdFunc();
+    
+    // If the loop is not chosen in route graph, we don't instrument this loop.
+    // Collect all loop which will be instrumented.
+    set<SgNode*> loopHeaders;
+    foreach (VGVertex node, boost::vertices(routeGraph_))
+    {
+        if (MuNode* muNode = isMuNode(routeGraph_[node]))
+            loopHeaders.insert(muNode->astNode);
+    }
+    
+    
+    pathNumManager_->insertLoopCounterToFwdFunc(loopHeaders);
     pathNumManager_->insertPathNumToFwdFunc();
 
     // Replace expressions in replaceTable_.
@@ -439,16 +450,20 @@ void EventReverser::buildFunctionBodies()
     SgScopeStatement* funcScope = funcDecl->get_scope();
     string funcName = funcDecl->get_name();
     
-    if (/*SgMemberFunctionDeclaration* memFuncDecl = */isSgMemberFunctionDeclaration(funcDecl))
+    SgName fwdFuncName = funcName + "_forward";
+    SgName rvsFuncName = funcName + "_reverse";
+    SgName cmtFuncName = funcName + "_commit";
+        
+    if (SgMemberFunctionDeclaration* memFuncDecl = isSgMemberFunctionDeclaration(funcDecl))
     {
-        //SgMemberFunctionType* memFuncType = isSgMemberFunctionType(memFuncDecl->get_type());
-        //ROSE_ASSERT(memFuncType);
+        SgMemberFunctionType* memFuncType = isSgMemberFunctionType(memFuncDecl->get_type());
+        ROSE_ASSERT(memFuncType);
 
         //Create the function declaration for the forward body
-        SgName fwdFuncName = funcName + "_forward";
-        SgFunctionDeclaration* fwdFuncDecl = buildDefiningMemberFunctionDeclaration(
+        SgMemberFunctionDeclaration* fwdFuncDecl = buildDefiningMemberFunctionDeclaration(
                         fwdFuncName,
-                        funcDecl->get_orig_return_type(),
+                        memFuncType,
+                        //funcDecl->get_orig_return_type(),
                         isSgFunctionParameterList(
                             copyStatement(funcDecl->get_parameterList())),
                         funcScope);
@@ -456,11 +471,11 @@ void EventReverser::buildFunctionBodies()
         //SageInterface::replaceStatement(fwdFuncDef->get_body(), isSgBasicBlock(stmt.fwd_stmt));
 
         //Create the function declaration for the reverse body
-        SgName rvsFuncName = funcName + "_reverse";
-        SgFunctionDeclaration* rvsFuncDecl = buildDefiningMemberFunctionDeclaration(
+        SgMemberFunctionDeclaration* rvsFuncDecl = buildDefiningMemberFunctionDeclaration(
                         rvsFuncName,
-                        funcDecl->get_orig_return_type(),
-                        //buildFunctionParameterList(),
+                        memFuncType,
+                        //funcDecl->get_orig_return_type(),
+                        ////buildFunctionParameterList(),
                         isSgFunctionParameterList(
                             copyStatement(funcDecl->get_parameterList())),
                         funcScope);
@@ -468,17 +483,21 @@ void EventReverser::buildFunctionBodies()
         //SageInterface::replaceStatement(rvsFuncDef->get_body(), isSgBasicBlock(stmt.rvs_stmt));
 
         //Create the function declaration for the commit method
-        SgName cmtFuncName = funcName + "_commit";
-        SgFunctionDeclaration* cmtFuncDecl = buildDefiningMemberFunctionDeclaration(
+        SgMemberFunctionDeclaration* cmtFuncDecl = buildDefiningMemberFunctionDeclaration(
                         cmtFuncName,
-                        funcDecl->get_orig_return_type(),
-                        //buildFunctionParameterList(),
-                        isSgFunctionParameterList(
-                            copyStatement(funcDecl->get_parameterList())),
+                        buildMemberFunctionType(
+                            memFuncType->get_return_type(),
+                            buildFunctionParameterTypeList(),
+                            memFuncType->get_struct_name(),
+                            memFuncType->get_mfunc_specifier()),
+                        //funcDecl->get_orig_return_type(),
+                        ////buildFunctionParameterList(),
+                        //isSgFunctionParameterList(
+                        //    copyStatement(funcDecl->get_parameterList())),
                         funcScope);
         cmtFuncDef_ = cmtFuncDecl->get_definition();
         
-        
+
         fwdFuncDecl->get_functionModifier() = funcDecl->get_functionModifier();
         rvsFuncDecl->get_functionModifier() = funcDecl->get_functionModifier();
         cmtFuncDecl->get_functionModifier() = funcDecl->get_functionModifier();
@@ -1929,7 +1948,6 @@ void reverseFunctions(const set<SgFunctionDefinition*>& funcDefs)
         // Add a null statement at the end of all scopes then we can find the last defs of variables.
         addNullStmtAtScopeEnd(funcDef);
     }
-    
     
     SgProject* project = SageInterface::getProject();
     

@@ -43,7 +43,8 @@ void EventReverser::buildValueGraph()
     // Assign a global unique name for each node in VG.
     assignNameToNodes();
     
-    valueGraphToDot(funcDef_->get_declaration()->get_name() + "_VG.dot");
+    valueGraphToDot(funcDef_->get_declaration()->get_name() + "_" +
+            funcDef_->get_declaration()->get_mangled_name() + "_VG.dot");
 }
 
 namespace
@@ -1238,7 +1239,7 @@ EventReverser::VGVertex EventReverser::createFunctionCallNode(SgFunctionCallExp*
     }
     
     
-#if 0
+#if 1
     // For a virtual function call, its inverse is called in reverse function.
     // Black box style inversion is not used.
     if (funcCallNode->canBeReversed)

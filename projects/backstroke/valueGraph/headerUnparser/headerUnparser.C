@@ -17,33 +17,41 @@ using namespace SageBuilder;
 std::set<SgMemberFunctionDeclaration*> Backstroke::FunctionCallNode::functionsToReverse;
 std::ofstream Backstroke::FunctionCallNode::os("fileList.txt");
 
-void buildThreeFuncDeclWithEmptyBody(SgFunctionDeclaration* funcDecl)
+void buildThreeFuncDeclWithEmptyBody(SgMemberFunctionDeclaration* funcDecl)
 {
     SgName funcName = funcDecl->get_name();
     SgScopeStatement* funcScope = funcDecl->get_scope(); 
-    SgType* returnType = funcDecl->get_orig_return_type();
+    //SgType* returnType = funcDecl->get_orig_return_type();
+    SgMemberFunctionType* memFuncType = isSgMemberFunctionType(funcDecl->get_type());
     
     SgName fwdFuncName = funcName + "_forward";
     SgFunctionDeclaration* fwdFuncDecl = buildDefiningMemberFunctionDeclaration(
                     fwdFuncName,
-                    returnType,
-                    isSgFunctionParameterList(
-                        copyStatement(funcDecl->get_parameterList())),
+                    memFuncType,
+                    //returnType,
+                    //isSgFunctionParameterList(
+                    //    copyStatement(funcDecl->get_parameterList())),
                     funcScope);
 
     SgName rvsFuncName = funcName + "_reverse";
     SgFunctionDeclaration* rvsFuncDecl = buildDefiningMemberFunctionDeclaration(
                     rvsFuncName,
-                    returnType,
-                    isSgFunctionParameterList(
-                        copyStatement(funcDecl->get_parameterList())),
+                    memFuncType,
+                    //returnType,
+                    //isSgFunctionParameterList(
+                    //    copyStatement(funcDecl->get_parameterList())),
                     funcScope);
 
     SgName cmtFuncName = funcName + "_commit";
     SgFunctionDeclaration* cmtFuncDecl = buildDefiningMemberFunctionDeclaration(
                     cmtFuncName,
-                    returnType,
-                    buildFunctionParameterList(),
+                    buildMemberFunctionType(
+                        memFuncType->get_return_type(),
+                        buildFunctionParameterTypeList(),
+                        memFuncType->get_struct_name(),
+                        memFuncType->get_mfunc_specifier()),
+                    //returnType,
+                    //buildFunctionParameterList(),
                     funcScope);
 
     fwdFuncDecl->get_functionModifier() = funcDecl->get_functionModifier();
@@ -63,16 +71,19 @@ void buildThreeFuncDeclWithEmptyBody(SgFunctionDeclaration* funcDecl)
     insertStatementAfter(firstFuncDecl, fwdFuncDecl);
 }
 
-void buildThreeFuncDecl(SgFunctionDeclaration* funcDecl)
+void buildThreeFuncDecl(SgMemberFunctionDeclaration* funcDecl)
 {
     SgName funcName = funcDecl->get_name();
     SgScopeStatement* funcScope = funcDecl->get_scope(); 
-    SgType* returnType = funcDecl->get_orig_return_type();
+    //SgType* returnType = funcDecl->get_orig_return_type();
+    SgMemberFunctionType* memFuncType = isSgMemberFunctionType(funcDecl->get_type());
+    ROSE_ASSERT(memFuncType);
     
     SgName fwdFuncName = funcName + "_forward";
     SgFunctionDeclaration* fwdFuncDecl = buildNondefiningMemberFunctionDeclaration(
                     fwdFuncName,
-                    returnType,
+                    memFuncType,
+                    //returnType,
                     isSgFunctionParameterList(
                         copyStatement(funcDecl->get_parameterList())),
                     funcScope);
@@ -80,7 +91,8 @@ void buildThreeFuncDecl(SgFunctionDeclaration* funcDecl)
     SgName rvsFuncName = funcName + "_reverse";
     SgFunctionDeclaration* rvsFuncDecl = buildNondefiningMemberFunctionDeclaration(
                     rvsFuncName,
-                    returnType,
+                    memFuncType,
+                    //returnType,
                     isSgFunctionParameterList(
                         copyStatement(funcDecl->get_parameterList())),
                     funcScope);
@@ -88,10 +100,15 @@ void buildThreeFuncDecl(SgFunctionDeclaration* funcDecl)
     SgName cmtFuncName = funcName + "_commit";
     SgFunctionDeclaration* cmtFuncDecl = buildNondefiningMemberFunctionDeclaration(
                     cmtFuncName,
-                    returnType,
+                    buildMemberFunctionType(
+                        memFuncType->get_return_type(),
+                        buildFunctionParameterTypeList(),
+                        memFuncType->get_struct_name(),
+                        memFuncType->get_mfunc_specifier()),
+                    //returnType,
                     buildFunctionParameterList(),
                     funcScope);
-
+    
     fwdFuncDecl->get_functionModifier() = funcDecl->get_functionModifier();
     rvsFuncDecl->get_functionModifier() = funcDecl->get_functionModifier();
     cmtFuncDecl->get_functionModifier() = funcDecl->get_functionModifier();
@@ -190,13 +207,13 @@ int main(int argc, char** argv)
      
     set<SgFunctionDefinition*> funcDefs;
     
-    set<SgFunctionDeclaration*> processedFuncDecls;
-    vector<SgFunctionDeclaration*> functionDecls = 
-                BackstrokeUtility::querySubTree<SgFunctionDeclaration>(project);
-    foreach (SgFunctionDeclaration* decl, functionDecls)
+    set<SgMemberFunctionDeclaration*> processedFuncDecls;
+    vector<SgMemberFunctionDeclaration*> functionDecls = 
+                BackstrokeUtility::querySubTree<SgMemberFunctionDeclaration>(project);
+    foreach (SgMemberFunctionDeclaration* decl, functionDecls)
     {
-        SgFunctionDeclaration* firstDecl = 
-                isSgFunctionDeclaration(decl->get_firstNondefiningDeclaration());
+        SgMemberFunctionDeclaration* firstDecl = 
+                isSgMemberFunctionDeclaration(decl->get_firstNondefiningDeclaration());
         if (!firstDecl)
             firstDecl = decl;
         
@@ -210,6 +227,13 @@ int main(int argc, char** argv)
         SgMemberFunctionDeclaration* memFuncDecl = isSgMemberFunctionDeclaration(firstDecl);
         if (!memFuncDecl)
             continue;
+        
+        if (!isSgMemberFunctionType(memFuncDecl->get_type()))
+        {
+            cout << "!!! One member function declaration does not have member function type: "
+                    << memFuncDecl->get_name() << '\n';
+            continue;
+        }
                 
         if (!functionsToReverse.count(serializeMemberFunction(memFuncDecl)))
             continue;

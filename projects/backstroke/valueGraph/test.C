@@ -336,7 +336,10 @@ int main(int argc, char *argv[])
         vector<SgFunctionDefinition*> allFuncDefs = 
                 BackstrokeUtility::querySubTree<SgFunctionDefinition>(project);
         foreach (SgFunctionDefinition* funcDef, allFuncDefs)
+        {
+            if (funcDef->get_declaration()->get_name() == "Handle")
             funcDefs.insert(funcDef);
+        }
 
         /***********************************************************************************************/
         // Reverse all functions.
