@@ -1,11 +1,15 @@
 /* Demonstrates how to perform symbolic analysis on a function that isn't called.
  *
  * 1. Allow the specimen to execute up to a certain point in order to resolve dynamic linking.  This demo parses the ELF file
- *    to find the address of "main" and stops when it is reached.
+ *    to find the address of "main" and stops when it is reached.  By executing to main(), we allow the dynamic linker to run,
+ *    giving us more information about the executable.
  *
- * 2. Change the execution point to be a function which is not normally called.  This demo calls a function named "payload".
+ * 2. When main is reached, we will do some symbolic analysis on the "payload" function.  This function, which normally isn't
+ *    called, takes one integer argument and calculates an integer result.  Our analysis gives an expression for the result in
+ *    terms of the (unknown) input argument.  In other words, an expression defining the function.
  *
- * 3. Perform symbolic analysis of function "payload" and show how the return value is related to the input argument.
+ * 3. Using the result from the previous step, try to determine if there's any argument that would result in a particular
+ *    return value.  E.g., find N satisfying payload(N)==2067789406.
  */
 
 #include "rose.h"
@@ -49,6 +53,7 @@ public:
 class SymbolicAnalysis: public RSIM_Callbacks::InsnCallback {
 public:
     rose_addr_t trigger_addr, analysis_addr;
+
     SymbolicAnalysis(rose_addr_t trigger_addr, rose_addr_t analysis_addr)
         : trigger_addr(trigger_addr), analysis_addr(analysis_addr) {}
 
@@ -64,7 +69,12 @@ public:
              * have been configured with "--with-yices=/full/path/to/yices/installation".  If not, you'll get a failed
              * assertion when ROSE tries to use the solver. */
             YicesSolver smt_solver;
-            smt_solver.set_linkage(YicesSolver::LM_LIBRARY); // avoids SIGCHLD arriving for the specimen
+            smt_solver.set_linkage(YicesSolver::LM_EXECUTABLE);
+
+            /* We deactive the simulator while we're doing this analysis.  If the simulator remains activated, then the SIGCHLD
+             * that are generated from running the Yices executable will be sent to the specimen.  That wouldn't cause problems
+             * for the demo3input program, but it would result in signal arrival messages from the simulator. */
+            args.thread->get_process()->get_simulator()->deactivate();
 
             /* Create the policy that holds the analysis state which is modified by each instruction.  Then plug the policy
              * into the X86InstructionSemantics to which we'll feed each instruction. */
@@ -76,6 +86,7 @@ public:
             SymbolicSemantics::ValueType<32> arg1_va = policy.add(policy.readGPR(x86_gpr_sp), policy.number<32>(4));
             SymbolicSemantics::ValueType<32> arg1 = policy.readMemory<32>(x86_segreg_ss, arg1_va, policy.true_());
             std::cout <<"function argument = " <<arg1 <<"\n";
+            std::cout <<"  (Note: \"vN[M]\" is a variable (the Nth variable) of type M-bit vector.)\n";
 
             /* Run the analysis until we can't figure out what instruction is next.  If we set things up correctly, the
              * simulation will stop when we hit the RET instruction to return from this function. */
@@ -90,7 +101,30 @@ public:
             /* Show the value of the EAX register since this is where GCC puts the function's return value.  If we did things
              * right, the return value should depend only on the functions first argument, which we printed above. */
             std::cout <<"return value = " <<policy.readGPR(x86_gpr_ax) <<"\n";
-            throw this; // will exit simulator, caught in main()
+            std::cout <<"  (Note: format is LISP-like; \"[M]\" notation means type is an M-bit vector.)\n";
+
+            /* Is there some way this function can be called in order to generate a particular value? */
+            if (!arg1.is_known()) {
+                using namespace InsnSemanticsExpr;
+                LeafNode *target = LeafNode::create_integer(32, 2067789406);
+                uint64_t arg1_varno = dynamic_cast<LeafNode*>(arg1.expr)->get_name();
+                InternalNode expr(32, OP_EQ, policy.readGPR(x86_gpr_ax).expr, target);
+                std::cout <<"using an SMT solver to find a solution to f(x) = " <<target <<"...\n";
+                if (smt_solver.satisfiable(&expr)) {
+                    LeafNode *arg1_value = dynamic_cast<LeafNode*>(smt_solver.get_definition(arg1_varno));
+                    if (arg1_value) {
+                        std::cout <<"  solution is x = " <<arg1_value <<"\n";
+                    } else {
+                        std::cout <<"  satisfiable, but no solution found\n";
+                    }
+                } else {
+                    std::cout <<"  not satisfiable.\n";
+                }
+            }
+
+            /* Reactivate the simulator in case we want to continue simulating. */
+            args.thread->get_process()->get_simulator()->activate();
+            throw this; // Optional: will exit simulator, caught in main(), which then deactivates the simulator
         }
         return enabled;
     }
