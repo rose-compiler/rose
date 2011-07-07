@@ -83,6 +83,7 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
         CASE_DISPATCH_AND_BREAK(AssignInitializer);
         CASE_DISPATCH_AND_BREAK(ExprListExp);
         CASE_DISPATCH_AND_BREAK(FunctionCallExp);
+        CASE_DISPATCH_AND_BREAK(ListExp);
         CASE_DISPATCH_AND_BREAK(TupleExp);
         CASE_DISPATCH_AND_BREAK(VarRefExp);
 
@@ -355,6 +356,21 @@ Unparse_Python::unparseLambdaRefExp(SgLambdaRefExp* lambda,
             lambda_body->class_name() << " instead)" << endl;
         ROSE_ASSERT(!"lambda body missing SgExpression");
     }
+}
+
+void
+Unparse_Python::unparseListExp(SgListExp* tuple,
+                                SgUnparse_Info& info)
+{
+    curprint("[");
+    SgExpressionPtrList& elts = tuple->get_elements();
+    SgExpressionPtrList::iterator elt_it = elts.begin();
+    for(elt_it = elts.begin(); elt_it != elts.end(); elt_it++) {
+        if (elt_it != elts.begin())
+            curprint(", ");
+        unparseExpression(*elt_it, info);
+    }
+    curprint("]");
 }
 
 void

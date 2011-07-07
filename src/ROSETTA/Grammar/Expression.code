@@ -798,6 +798,12 @@ HEADER_TUPLE_EXP_START
           void append_expression(SgExpression *what);
 HEADER_TUPLE_EXP_END
 
+HEADER_LIST_EXP_START
+          SgExpressionPtrList& get_elements();
+          const SgExpressionPtrList& get_elements() const;
+          void append_expression(SgExpression *what);
+HEADER_LIST_EXP_END
+
 HEADER_SCOPE_OPERATOR_START
        // get lvalue
           virtual bool isLValue() const;
@@ -3984,6 +3990,23 @@ SgTupleExp::append_expression(SgExpression *what)
    { what->set_parent(this); p_elements.push_back(what); }
 
 SOURCE_TUPLE_EXP_END
+
+SOURCE_LIST_EXP_START
+
+SgExpressionPtrList&
+SgListExp::get_elements()
+   { return p_elements; }
+
+const SgExpressionPtrList&
+SgListExp::get_elements() const
+   { return p_elements; }
+
+void
+SgListExp::append_expression(SgExpression *what)
+   { what->set_parent(this); p_elements.push_back(what); }
+
+SOURCE_LIST_EXP_END
+
 
 SOURCE_SCOPE_OPERATOR_EXPRESSION_START
 SOURCE_SCOPE_OPERATOR_EXPRESSION_END
