@@ -75,15 +75,34 @@ x86win_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 #  DEMOS
 ###############################################################################################################################
 
+# ---  demo 1: branching to an uncalled function
 noinst_PROGRAMS += demo1
 demo1_SOURCES = demo1.C
 demo1_CPPFLAGS = $(ROSE_INCLUDES)
 demo1_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+# --- demo 2: synchronous sign analysis
 noinst_PROGRAMS += demo2
 demo2_SOURCES = demo2.C
 demo2_CPPFLAGS = $(ROSE_INCLUDES)
 demo2_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+# --- demo 3: symbolic semantics for an uncalled function using the Yices SMT solver.
+#     don't try to run this demo unless you've configured ROSE using "--with-yices"
+noinst_PROGRAMS += demo3
+demo3_SOURCES = demo3.C
+demo3_CPPFLAGS = $(ROSE_INCLUDES)
+demo3_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+EXTRA_DIST += demo3input.c
+MOSTLYCLEANFILES += demo3input
+demo3input: demo3input.c
+	@echo "  CC32    $@"
+	@$(CC) $(CFLAGS32) -Wall -o $@ $^
+
+.PHONY: run_demo3
+run_demo3: demo3 demo3input
+	./demo3 ./demo3input
 
 ###############################################################################################################################
 #  SYSTEM CALL TESTS
