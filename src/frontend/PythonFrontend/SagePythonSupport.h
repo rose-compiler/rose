@@ -43,12 +43,16 @@ sage_buildFunctionParameterList(PyObject* args, PyObject* kwargs);
 
 template <typename SgNode_T>
 static int sage_converter(PyObject* object, void** address) {
-    if (! PyCapsule_CheckExact(object))
+    if (! PyCapsule_CheckExact(object)) {
+        PyErr_SetString(PyExc_TypeError, "expected 'capsule' type");
         return false;
+    }
 
     SgNode_T* sg_node = PyDecapsulate<SgNode_T>(object);
-    if (! isSgNode(sg_node))
+    if (! dynamic_cast<SgNode_T*>(sg_node)) {
+        PyErr_SetString(PyExc_TypeError, "capsule contained wrong SgNode type");
         return false;
+    }
 
     *address = sg_node;
     return true;
