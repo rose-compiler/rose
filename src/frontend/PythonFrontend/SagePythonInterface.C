@@ -410,6 +410,28 @@ sage_buildLambda(PyObject *self, PyObject *args)
 }
 
 /*
+ */
+PyObject*
+sage_buildListExp(PyObject *self, PyObject *args)
+{
+    PyObject* py_elts;
+    if (! PyArg_ParseTuple(args, "O!", &PyList_Type, &py_elts))
+        return NULL;
+
+    std::vector<SgExpression*> sg_elts;
+    Py_ssize_t eltsc = PyList_Size(py_elts);
+    for(int i = 0; i < eltsc; i++) {
+        PyObject* py_exp = PyList_GetItem(py_elts, i);
+        SgExpression* sg_exp = PyDecapsulate<SgExpression>(py_exp);
+        sg_elts.push_back(sg_exp);
+    }
+
+    SgExprListExp* sg_list_exp =
+        SageBuilder::buildExprListExp(sg_elts); //TODO change to SgListExp
+    return PyEncapsulate(sg_list_exp);
+}
+
+/*
  * Build an SgLongIntVal node from the given Python integer.
  *  - PyObject* args = (PyObject*,)
  */

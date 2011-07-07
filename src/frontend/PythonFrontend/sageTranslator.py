@@ -173,6 +173,9 @@ class SageTranslator(ast.NodeVisitor):
     sage.appendStatements(lambda_capsule, [expr])
     return lambda_capsule
 
+  def visit_List(self, node):
+    return sage.buildListExp(map(self.visit, node.elts))
+
   def visit_Module(self, node):
     (scope, wrapper_func) = sage.buildGlobal(self.filename)
 
