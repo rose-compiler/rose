@@ -83,6 +83,7 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
         CASE_DISPATCH_AND_BREAK(AssignInitializer);
         CASE_DISPATCH_AND_BREAK(ExprListExp);
         CASE_DISPATCH_AND_BREAK(FunctionCallExp);
+        CASE_DISPATCH_AND_BREAK(TupleExp);
         CASE_DISPATCH_AND_BREAK(VarRefExp);
 
         case V_SgAddOp:
@@ -396,6 +397,25 @@ Unparse_Python::unparseStringVal(SgStringVal* str,
     stringstream code;
     code << "\"" << str->get_value() << "\"";
     curprint( code.str() );
+}
+
+void
+Unparse_Python::unparseTupleExp(SgTupleExp* tuple,
+                                SgUnparse_Info& info)
+{
+    curprint("(");
+    SgExpressionPtrList& elts = tuple->get_elements();
+    SgExpressionPtrList::iterator elt_it = elts.begin();
+    for(elt_it = elts.begin(); elt_it != elts.end(); elt_it++) {
+        if (elt_it != elts.begin())
+            curprint(", ");
+        unparseExpression(*elt_it, info);
+
+        /* tuples with one item require a trailing comma */
+        if (elts.size() == 1)
+            curprint(",");
+    }
+    curprint(")");
 }
 
 void
