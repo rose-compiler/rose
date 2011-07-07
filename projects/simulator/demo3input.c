@@ -5,14 +5,20 @@
 /* Define only if you need to check the solution reported by demo3 */
 #undef CHECK_SOLUTION
 
+int right_shift(int x, int nbits)
+{
+    return x >> nbits;
+}
+
 /* Function to analyze.  This function is not normally called. */
 int payload(int seed)
 {
     seed += (seed << 3);
-    seed ^= (seed >> 11);
+    seed ^= right_shift(seed, 11);
     seed += (seed << 15);
     return seed;
 }
+
 
 int main()
 {
