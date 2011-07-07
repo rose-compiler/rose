@@ -68,8 +68,8 @@ sage_appendStatements(PyObject *self, PyObject *args)
 {
     PyObject *py_stmts;
     SgScopeStatement *sg_target;
-    if (! PyArg_ParseTuple(args, "O&O&", SAGE_CONVERTER(SgScopeStatement), &sg_target,
-                                         &pylist_checker, &py_stmts))
+    if (! PyArg_ParseTuple(args, "O&O!", SAGE_CONVERTER(SgScopeStatement), &sg_target,
+                                         &PyList_Type, &py_stmts))
         return NULL;
 
     Py_ssize_t stmtc = PyList_Size(py_stmts);
@@ -133,8 +133,8 @@ sage_buildInitializedName(PyObject* self, PyObject* args) {
 PyObject*
 sage_buildFunctionParameterList(PyObject* self, PyObject* args) {
     PyObject *py_args, *py_defaults;
-    if (! PyArg_ParseTuple(args, "O&O&", &pylist_checker, &py_args,
-                                         &pylist_checker, &py_defaults))
+    if (! PyArg_ParseTuple(args, "O!O!", &PyList_Type, &py_args,
+                                         &PyList_Type, &py_defaults))
         return NULL;
 
     SgFunctionParameterList* sg_params =

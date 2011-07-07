@@ -145,10 +145,10 @@ sage_buildCall(PyObject *self, PyObject *args)
     char *name_str;
     PyObject *py_args, *py_kwargs;
     SgScopeStatement *sg_scope;
-    if (! PyArg_ParseTuple(args, "sO&O&O&", &name_str,
-                                          &pylist_checker, &py_args,
-                                          &pylist_checker, &py_kwargs,
-                                          SAGE_CONVERTER(SgScopeStatement), &sg_scope))
+    if (! PyArg_ParseTuple(args, "sO!O!O&", &name_str,
+                                            &PyList_Type, &py_args,
+                                            &PyList_Type, &py_kwargs,
+                                            SAGE_CONVERTER(SgScopeStatement), &sg_scope))
         return NULL;
 
     std::vector<SgExpression*> sg_exprs;
@@ -198,9 +198,9 @@ sage_buildCompare(PyObject *self, PyObject *args)
     PyObject* py_comparators;
     PyObject *py_ops;
 
-    if (! PyArg_ParseTuple(args, "O&O&O&", SAGE_CONVERTER(SgExpression), &sg_left_exp,
-                                           &pylist_checker, py_comparators,
-                                           &pylist_checker, py_ops))
+    if (! PyArg_ParseTuple(args, "O&O!O!", SAGE_CONVERTER(SgExpression), &sg_left_exp,
+                                           &PyList_Type, py_comparators,
+                                           &PyList_Type, py_ops))
         return NULL;
 
     cerr << "Error: Comparisons require new sage node. Skipping." << endl;
@@ -244,7 +244,7 @@ PyObject*
 sage_buildExprListExp(PyObject *self, PyObject *args)
 {
     PyObject* py_exprs;
-    if (! PyArg_ParseTuple(args, "O&", &pylist_checker, &py_exprs))
+    if (! PyArg_ParseTuple(args, "O!", &PyList_Type, &py_exprs))
         return NULL;
 
     std::vector<SgExpression*> sg_exprs;
@@ -342,9 +342,9 @@ sage_buildIf(PyObject *self, PyObject *args)
 {
     SgExpression *test;
     PyObject *py_body_list, *py_orelse_list;
-    if (! PyArg_ParseTuple(args, "O&O&O&", SAGE_CONVERTER(SgExpression), &test,
-                                           &pylist_checker, &py_body_list,
-                                           &pylist_checker, &py_orelse_list))
+    if (! PyArg_ParseTuple(args, "O&O!O!", SAGE_CONVERTER(SgExpression), &test,
+                                           &PyList_Type, &py_body_list,
+                                           &PyList_Type, &py_orelse_list))
         return NULL;
 
     SgBasicBlock* true_body = SageBuilder::buildBasicBlock();
@@ -483,7 +483,7 @@ PyObject*
 sage_buildSuite(PyObject *self, PyObject *args)
 {
     PyObject* py_body;
-    if (! PyArg_ParseTuple(args, "O&", &pylist_checker, &py_body))
+    if (! PyArg_ParseTuple(args, "O!", &PyList_Type, &py_body))
         return NULL;
 
     SgBasicBlock* sg_basic_block = SageBuilder::buildBasicBlock();
