@@ -1578,6 +1578,53 @@ SageBuilder::buildTupleExp_nfi(const std::vector<SgExpression*>& elts)
   return tuple;
 }
 
+SgListExp*
+SageBuilder::buildListExp(SgExpression * elt1, SgExpression* elt2, SgExpression* elt3, SgExpression* elt4, SgExpression* elt5, SgExpression* elt6, SgExpression* elt7, SgExpression* elt8, SgExpression* elt9, SgExpression* elt10)
+{
+  SgListExp* tuple = new SgListExp();
+  ROSE_ASSERT(tuple);
+  if (elt1) appendExpression(tuple, elt1);
+  if (elt2) appendExpression(tuple, elt2);
+  if (elt3) appendExpression(tuple, elt3);
+  if (elt4) appendExpression(tuple, elt4);
+  if (elt5) appendExpression(tuple, elt5);
+  if (elt6) appendExpression(tuple, elt6);
+  if (elt7) appendExpression(tuple, elt7);
+  if (elt8) appendExpression(tuple, elt8);
+  if (elt9) appendExpression(tuple, elt9);
+  if (elt10) appendExpression(tuple, elt10);
+
+  setOneSourcePositionForTransformation(tuple);
+  return tuple;
+}
+
+SgListExp*
+SageBuilder::buildListExp(const std::vector<SgExpression*>& elts)
+{
+  SgListExp* expList = SageBuilder::buildListExp();
+  for (size_t i = 0; i < elts.size(); ++i)
+    appendExpression(expList, elts[i]);
+  return expList;
+}
+
+SgListExp*
+SageBuilder::buildListExp_nfi()
+{
+  SgListExp* tuple = new SgListExp();
+  ROSE_ASSERT(tuple);
+  setOneSourcePositionNull(tuple);
+  return tuple;
+}
+
+SgListExp*
+SageBuilder::buildListExp_nfi(const std::vector<SgExpression*>& elts)
+{
+  SgListExp* tuple = SageBuilder::buildListExp_nfi();
+  for (size_t i = 0; i < elts.size(); ++i)
+    appendExpression(tuple, elts[i]);
+  return tuple;
+}
+
 //----------------------build unary expressions----------------------
 template <class T>
 T* SageBuilder::buildUnaryExpression(SgExpression* operand)

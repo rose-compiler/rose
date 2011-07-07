@@ -431,6 +431,7 @@ SgLessThanOp
 SgLineDirectiveStatement
 SgLinemarkerDirectiveStatement
 SgLinkageModifier
+SgListExp
 SgLocatedNode
 SgLocatedNodeSupport
 SgLongDoubleVal

@@ -426,8 +426,8 @@ sage_buildListExp(PyObject *self, PyObject *args)
         sg_elts.push_back(sg_exp);
     }
 
-    SgExprListExp* sg_list_exp =
-        SageBuilder::buildExprListExp(sg_elts); //TODO change to SgListExp
+    SgListExp* sg_list_exp =
+        SageBuilder::buildListExp(sg_elts); //TODO change to SgListExp
     return PyEncapsulate(sg_list_exp);
 }
 
