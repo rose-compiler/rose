@@ -1223,6 +1223,7 @@ SgVariableSymbol* prependArg(SgFunctionParameterList *, SgInitializedName*);
 
 //! Append an expression to a SgExprListExp, set the parent pointer also
 void appendExpression(SgExprListExp *, SgExpression*);
+void appendExpression(SgTupleExp*, SgExpression*);
 
 //! Append an expression list to a SgExprListExp, set the parent pointers also
 void appendExpressionList(SgExprListExp *, const std::vector<SgExpression*>&);

@@ -795,6 +795,7 @@ HEADER_THIS_EXPRESSION_END
 HEADER_TUPLE_EXP_START
           SgExpressionPtrList& get_elements();
           const SgExpressionPtrList& get_elements() const;
+          void append_expression(SgExpression *what);
 HEADER_TUPLE_EXP_END
 
 HEADER_SCOPE_OPERATOR_START
@@ -3977,6 +3978,10 @@ SgTupleExp::get_elements()
 const SgExpressionPtrList&
 SgTupleExp::get_elements() const
    { return p_elements; }
+
+void
+SgTupleExp::append_expression(SgExpression *what)
+   { what->set_parent(this); p_elements.push_back(what); }
 
 SOURCE_TUPLE_EXP_END
 
