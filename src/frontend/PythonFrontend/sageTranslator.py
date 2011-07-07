@@ -187,6 +187,10 @@ class SageTranslator(ast.NodeVisitor):
     scope = self.scopeStack.peek()
     return sage.buildName(node.id, scope)
 
+  def visit_NoneType(self, node):
+    scope = self.scopeStack.peek()
+    return sage.buildName("None", scope)
+
   def visit_Num(self, node):
     return sage.buildLongIntVal(node.n)
 

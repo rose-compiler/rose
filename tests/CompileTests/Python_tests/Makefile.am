@@ -23,7 +23,9 @@ ALL_PYTHON_TESTCODES = \
     test2011_021.py \
     test2011_022.py \
     test2011_023.py \
-    test2011_024.py
+    test2011_024.py \
+    test2011_025.py \
+    test2011_026.py
 
 
 
