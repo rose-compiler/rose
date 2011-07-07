@@ -235,13 +235,6 @@ void StaticSingleAssignment::run(bool interprocedural)
 		if (functionFilter(f->get_declaration()))
 			interestingFunctions.insert(f);
 	}
-#ifdef DISPLAY_TIMINGS
-	printf("-- Timing: Creating list of functions took %.2f seconds.\n", time.elapsed());
-	fflush(stdout);
-	time.restart();
-#endif
-	
-
 
 	//Generate all local information before doing interprocedural analysis. This is so we know
 	//what variables are directly modified in each function body before we do interprocedural propagation
@@ -276,55 +269,54 @@ void StaticSingleAssignment::run(bool interprocedural)
 		ASTNodeToVarNamesMap functionVarNameUses = lookUpNamesForVarRefs(functionUses);
 
 		insertDefsForChildMemberUses(functionDefs, functionVarNameUses);
-	}
-	
-#ifdef DISPLAY_TIMINGS
-		printf("-- Timing: Inserting all local defs for %zu functions took %.2f seconds.\n", 
-                interestingFunctions.size(), time.elapsed());
-		fflush(stdout);
-		time.restart();
-#endif
-
-	//Interprocedural iterations. We iterate on the call graph until all interprocedural defs are propagated
-	if (interprocedural)
-	{
-		interproceduralDefPropagation(interestingFunctions);
-	}
-		
-#ifdef DISPLAY_TIMINGS
-		printf("-- Timing: Interprocedural propagation took %.2f seconds.\n", time.elapsed());
-		fflush(stdout);
-		time.restart();
-#endif
-
-	//Now we have all local information, including interprocedural defs. Propagate the defs along control-flow
-	foreach (SgFunctionDefinition* func, interestingFunctions)
-	{
-		vector<FilteredCfgNode> functionCfgNodesPostorder = getCfgNodesInPostorder(func);
 		
 		//Insert definitions at the SgFunctionDefinition for external variables whose values flow inside the function
-		insertDefsForExternalVariables(func->get_declaration());
+		insertDefsForExternalVariables(func, functionDefs, functionVarNameUses);
 
-		//Create all ReachingDef objects:
-		//Create ReachingDef objects for all original definitions
-		populateLocalDefsTable(func->get_declaration());
 		//Insert phi functions at join points
-		multimap< FilteredCfgNode, pair<FilteredCfgNode, FilteredCfgEdge> > controlDependencies = 
-				insertPhiFunctions(func, functionCfgNodesPostorder);
+		vector<CFGNode> functionCfgNodesPostorder = getCfgNodesInPostorder(func);
+		multimap< CFGNode, pair<CFGNode, CFGEdge> > controlDependencies = insertPhiFunctions(func, functionCfgNodesPostorder);
 
 		//Renumber all instantiated ReachingDef objects
 		renumberAllDefinitions(func, functionCfgNodesPostorder);
 
+		printf("Defs table for %s():\n", func->get_declaration()->get_name().str());
+		printDefTable(localDefTable);
+		
+		printf("\nPhi functions table for %s():\n", func->get_declaration()->get_name().str());
+		printDefTable(reachingDefTable);
+		
+		printf("\nUses table for %s():\n", func->get_declaration()->get_name().str());
+		foreach(const ASTNodeToVarNamesMap::value_type& nodeVarsPair, functionVarNameUses)
+		{
+			printf("%s @ %d: ", nodeVarsPair.first->class_name().c_str(), nodeVarsPair.first->get_file_info()->get_line());
+			
+			foreach(const VarName& var, nodeVarsPair.second)
+			{
+				printf("%s ", varnameToString(var).c_str());
+			}
+			printf("\n");
+		}
+		
 		if (getDebug())
 			cout << "Running DefUse Data Flow on function: " << SageInterface::get_name(func) << func << endl;
 		runDefUseDataFlow(func);
 
 		//We have all the propagated defs, now update the use table
-		buildUseTable(functionCfgNodesPostorder);
-
-		//Annotate phi functions with dependencies
-		//annotatePhiNodeWithConditions(func, controlDependencies);
+		//buildUseTable(functionCfgNodesPostorder);
 	}
+	
+
+
+	//Interprocedural iterations. We iterate on the call graph until all interprocedural defs are propagated
+//	if (interprocedural)
+//	{
+//		interproceduralDefPropagation(interestingFunctions);
+//	}
+		
+
+
+
 }
 
 void StaticSingleAssignment::expandParentMemberDefinitions(const CFGNodeToVarNamesMap& defs)
@@ -376,7 +368,7 @@ StaticSingleAssignment::ASTNodeToVarNamesMap StaticSingleAssignment::lookUpNames
 			
 			
 			//If we have a use for p.x.y, insert uses for p and p.x as well as p.x.y
-			for (size_t i = 1; i < usedVarName.size(); ++i)
+			for (size_t i = 1; i <= usedVarName.size(); ++i)
 			{
 				VarName var(usedVarName.begin(), usedVarName.begin() + i);
 				
@@ -610,26 +602,45 @@ set<StaticSingleAssignment::VarName> StaticSingleAssignment::getVarsUsedInSubtre
 //	return usesTrav.usedNames;
 }
 
-void StaticSingleAssignment::insertDefsForChildMemberUses(const CFGNodeToVarNamesMap& defs, const ASTNodeToVarNamesMap& uses)
+set<StaticSingleAssignment::VarName> getAllVarsUsedOrDefined(
+		const StaticSingleAssignment::CFGNodeToVarNamesMap& defs, 
+		const StaticSingleAssignment::ASTNodeToVarNamesMap& uses,
+		const map<CFGNode, StaticSingleAssignment::NodeReachingDefTable>& localDefTable)
 {
-	set<VarName> usedNames;
+	set<StaticSingleAssignment::VarName> usedNames;
 	
-	foreach(const CFGNodeToVarNamesMap::value_type& nodeVarsPair, defs)
+	foreach(const StaticSingleAssignment::CFGNodeToVarNamesMap::value_type& nodeVarsPair, defs)
 	{
-		foreach(const VarName& definedVarName, nodeVarsPair.second)
+		map<CFGNode, StaticSingleAssignment::NodeReachingDefTable>::const_iterator allDefsIter = 
+				localDefTable.find(nodeVarsPair.first);
+		
+		foreach(const StaticSingleAssignment::NodeReachingDefTable::value_type& varDefPair, allDefsIter->second)
 		{
-			usedNames.insert(definedVarName);
+			usedNames.insert(varDefPair.first);
+		}
+		
+		//FIXME: Delete this error-checking loop once the new SSA is done
+		foreach(const StaticSingleAssignment::VarName& definedVarName, nodeVarsPair.second)
+		{
+			ROSE_ASSERT(usedNames.count(definedVarName) > 0);
 		}
 	}
 	
-	foreach(const ASTNodeToVarNamesMap::value_type& nodeVarsPair, uses)
+	foreach(const StaticSingleAssignment::ASTNodeToVarNamesMap::value_type& nodeVarsPair, uses)
 	{
-		foreach(const VarName& usedVarName, nodeVarsPair.second)
+		foreach(const StaticSingleAssignment::VarName& usedVarName, nodeVarsPair.second)
 		{
 			usedNames.insert(usedVarName);
 		}
 	}
+	
+	return usedNames;
+}
 
+void StaticSingleAssignment::insertDefsForChildMemberUses(const CFGNodeToVarNamesMap& defs, const ASTNodeToVarNamesMap& uses)
+{
+	set<VarName> usedNames = getAllVarsUsedOrDefined(defs, uses, localDefTable);
+	
 	//Map each varName to all used names for which it is a prefix
 	map<VarName, set<VarName> > nameToChildNames;
 	foreach(const VarName& rootName, usedNames)
@@ -683,23 +694,27 @@ void StaticSingleAssignment::insertDefsForChildMemberUses(const CFGNodeToVarName
 
 
 /** Insert defs for functions that are declared outside the function scope. */
-void StaticSingleAssignment::insertDefsForExternalVariables(SgFunctionDeclaration* function)
+void StaticSingleAssignment::insertDefsForExternalVariables(SgFunctionDefinition* function, 
+		const CFGNodeToVarNamesMap& defs, const ASTNodeToVarNamesMap& uses)
 {
-	ROSE_ASSERT(function->get_definition() != NULL);
+	set<VarName> usedNames = getAllVarsUsedOrDefined(defs, uses, localDefTable);
+	
+	//The function definition should have 4 indices in the CFG. We insert defs for external variables
+	//At the very first one
+	ROSE_ASSERT(function->cfgIndexForEnd() == 3);
+	CFGNode functionEntryNode = function->cfgForBeginning();
 
-	set<VarName> usedNames = getVarsUsedInSubtree(function);
-
-	set<VarName>& originalVarsAtFunctionEntry = originalDefTable_deleteMe[function->get_definition()];
-	set<VarName>& expandedVarsAtFunctionEntry = expandedDefTable_deleteMe[function->get_definition()];
+	NodeReachingDefTable& functionEntryDefs = localDefTable[functionEntryNode];
 
 	//Iterate over each used variable and check it it is declared outside of the function scope
 	foreach(const VarName& usedVar, usedNames)
 	{
+		ROSE_ASSERT(!usedVar.empty());
 		VarName rootName;
 		rootName.assign(1, usedVar[0]);
 
 		SgScopeStatement* varScope = SageInterface::getScope(rootName[0]);
-		SgScopeStatement* functionScope = function->get_definition();
+		SgScopeStatement* functionScope = function;
 
 		//If it is a local variable, there should be a def somewhere inside the function
 		if (varScope == functionScope || SageInterface::isAncestor(functionScope, varScope))
@@ -712,7 +727,7 @@ void StaticSingleAssignment::insertDefsForExternalVariables(SgFunctionDeclaratio
 		{
 			//Handle the case of declaring "extern int x" inside the function
 			//Then, x has global scope but it actually has a definition inside the function so we don't need to insert one
-			if (SageInterface::isAncestor(function->get_definition(), rootName[0]))
+			if (SageInterface::isAncestor(function, rootName[0]))
 			{
 				//When else could a var be declared inside a function and be global?
 				SgVariableDeclaration* varDecl = isSgVariableDeclaration(rootName[0]->get_parent());
@@ -730,163 +745,98 @@ void StaticSingleAssignment::insertDefsForExternalVariables(SgFunctionDeclaratio
 		for (size_t i = 0; i < usedVar.size(); i++)
 		{
 			//Create a new varName vector that goes from beginning to end - i
-			VarName newName;
-			newName.assign(usedVar.begin(), usedVar.end() - i);
-			originalVarsAtFunctionEntry.insert(newName);
-			ROSE_ASSERT(expandedVarsAtFunctionEntry.count(newName) == 0);
+			VarName newName(usedVar.begin(), usedVar.end() - i);
+			
+			if (functionEntryDefs.count(newName) > 0)
+				continue;
+			
+			ReachingDefPtr def = ReachingDefPtr(new ReachingDef(functionEntryNode, ReachingDef::EXTERNAL_DEF));
+			functionEntryDefs.insert(make_pair(newName, def));
 		}
 	}
 }
 
 
-multimap< StaticSingleAssignment::FilteredCfgNode, pair<StaticSingleAssignment::FilteredCfgNode, StaticSingleAssignment::FilteredCfgEdge> > 
-StaticSingleAssignment::insertPhiFunctions(SgFunctionDefinition* function, const std::vector<FilteredCfgNode>& cfgNodesInPostOrder)
+multimap< CFGNode, pair<CFGNode, CFGEdge> > 
+StaticSingleAssignment::insertPhiFunctions(SgFunctionDefinition* function, const std::vector<CFGNode>& cfgNodesInPostOrder)
 {
 	if (getDebug())
 		printf("Inserting phi nodes in function %s...\n", function->get_declaration()->get_name().str());
 	ROSE_ASSERT(function != NULL);
 
 	//First, find all the places where each name is defined
-	map<VarName, vector<FilteredCfgNode> > nameToDefNodesMap;
+	map<VarName, vector<CFGNode> > nameToDefNodesMap;
 
-	foreach(const FilteredCfgNode& cfgNode, cfgNodesInPostOrder)
+	foreach(const CFGNode& cfgNode, cfgNodesInPostOrder)
 	{
-		SgNode* node = cfgNode.getNode();
-
-		//Don't visit the sgFunctionDefinition node twice
-		if (isSgFunctionDefinition(node) && cfgNode != FilteredCfgNode(node->cfgForBeginning()))
+		CFGNodeToDefTableMap::const_iterator defTableIter = localDefTable.find(cfgNode);
+		if (defTableIter == localDefTable.end())
 			continue;
 		
-		//Check the definitions at this node and add them to the map
-		LocalDefUseTable::const_iterator defEntry = originalDefTable_deleteMe.find(node);
-		if (defEntry != originalDefTable_deleteMe.end())
+		const NodeReachingDefTable& definitionsAtNode = defTableIter->second;
+		foreach(const NodeReachingDefTable::value_type& varDefPair, definitionsAtNode)
 		{
-			foreach (const VarName& definedVar, defEntry->second)
-			{
-				nameToDefNodesMap[definedVar].push_back(cfgNode);
-			}
-		}
-
-		defEntry = expandedDefTable_deleteMe.find(node);
-		if (defEntry != expandedDefTable_deleteMe.end())
-		{
-			foreach (const VarName& definedVar, defEntry->second)
-			{
-				nameToDefNodesMap[definedVar].push_back(cfgNode);
-			}
+			nameToDefNodesMap[varDefPair.first].push_back(cfgNode);
 		}
 	}
 
 	//Build an iterated dominance frontier for this function
-	map<FilteredCfgNode, FilteredCfgNode> iPostDominatorMap;
-	map<FilteredCfgNode, set<FilteredCfgNode> > domFrontiers =
-			calculateDominanceFrontiers<FilteredCfgNode, FilteredCfgEdge>(function, NULL, &iPostDominatorMap);
+	map<CFGNode, CFGNode> iPostDominatorMap;
+	map<CFGNode, set<CFGNode> > domFrontiers = calculateDominanceFrontiers<CFGNode, CFGEdge>(function, NULL, &iPostDominatorMap);
 
-	//Calculate control dependencies (for annotating the phi functions)
-	multimap< FilteredCfgNode, pair<FilteredCfgNode, FilteredCfgEdge> > controlDependencies =
-			calculateControlDependence<FilteredCfgNode, FilteredCfgEdge>(function, iPostDominatorMap);
+	//Calculate control dependencies (for annotating the phi functions in the future)
+	multimap< CFGNode, pair<CFGNode, CFGEdge> > controlDependencies =
+			calculateControlDependence<CFGNode, CFGEdge>(function, iPostDominatorMap);
 
 	//Find the phi function locations for each variable
-	VarName var;
-	vector<FilteredCfgNode> definitionPoints;
-	foreach (tie(var, definitionPoints), nameToDefNodesMap)
+	map<VarName, vector<CFGNode> >::const_iterator nameToDefNodesIter = nameToDefNodesMap.begin();
+	for(; nameToDefNodesIter != nameToDefNodesMap.end(); ++nameToDefNodesIter)
 	{
+		const VarName& var = nameToDefNodesIter->first;
+		const vector<CFGNode>& definitionPoints = nameToDefNodesIter->second;
+		
 		ROSE_ASSERT(!definitionPoints.empty() && "We have a variable that is not defined anywhere!");
 
 		//Calculate the iterated dominance frontier
-		set<FilteredCfgNode> phiNodes = calculateIteratedDominanceFrontier(domFrontiers, definitionPoints);
+		set<CFGNode> phiNodes = calculateIteratedDominanceFrontier(domFrontiers, definitionPoints);
 
 		if (getDebug())
 			printf("Variable %s has phi nodes inserted at\n", varnameToString(var).c_str());
 
-		foreach (FilteredCfgNode phiNode, phiNodes)
+		foreach (const CFGNode& phiNode, phiNodes)
 		{
-			SgNode* node = phiNode.getNode();
-			ROSE_ASSERT(reachingDefsTable[node].first.count(var) == 0);
-
 			//We don't want to insert phi defs for functions that have gone out of scope
-			if (!isVarInScope(var, node))
+			if (!isVarInScope(var, phiNode.getNode()))
 				continue;
 			
-			reachingDefsTable[node].first[var] = ReachingDefPtr(new ReachingDef(node, ReachingDef::PHI_FUNCTION));
-
-			if (getDebug())
-				printf("\t\t%s\n", phiNode.toStringForDebugging().c_str());
+			ReachingDefPtr phiDef =  ReachingDefPtr(new ReachingDef(phiNode, ReachingDef::PHI_FUNCTION));
+			reachingDefTable[phiNode].insert(make_pair(var, phiDef));
 		}
 	}
 
 	return controlDependencies;
 }
 
-void StaticSingleAssignment::populateLocalDefsTable(SgFunctionDeclaration* function)
-{
-	ROSE_ASSERT(function->get_definition() != NULL);
-	struct InsertDefs : public AstSimpleProcessing
-	{
-		StaticSingleAssignment* ssa;
 
-		void visit(SgNode* node)
-		{
-			//Short circuit to prevent creating empty entries in the local def table when we don't need them
-			if ((ssa->originalDefTable_deleteMe.count(node) == 0 || ssa->originalDefTable_deleteMe[node].empty()) &&
-				(ssa->expandedDefTable_deleteMe.count(node) == 0 || ssa->expandedDefTable_deleteMe[node].empty()))
-			{
-				return;
-			}
-
-			//This is the table of local definitions at the current node
-			NodeReachingDefTable& localDefs = ssa->ssaLocalDefTable[node];
-
-			if (ssa->originalDefTable_deleteMe.count(node) > 0)
-			{
-				foreach(const VarName& definedVar, ssa->originalDefTable_deleteMe[node])
-				{
-					localDefs[definedVar] = ReachingDefPtr(new ReachingDef(node, ReachingDef::ORIGINAL_DEF));
-				}
-			}
-
-			if (ssa->expandedDefTable_deleteMe.count(node) > 0)
-			{
-				foreach(const VarName& definedVar, ssa->expandedDefTable_deleteMe[node])
-				{
-					localDefs[definedVar] = ReachingDefPtr(new ReachingDef(node, ReachingDef::EXPANDED_DEF));
-				}
-			}
-		}
-	};
-
-	InsertDefs trav;
-	trav.ssa = this;
-	trav.traverse(function, preorder);
-}
-
-void StaticSingleAssignment::renumberAllDefinitions(SgFunctionDefinition* func, const vector<FilteredCfgNode>& cfgNodesInPostOrder)
+void StaticSingleAssignment::renumberAllDefinitions(SgFunctionDefinition* func, const vector<CFGNode>& cfgNodesInPostOrder)
 {
 	//Map from each name to the next index. Not in map means 0
 	map<VarName, int> nameToNextIndexMap;
 
-	//The SgFunctionDefinition node is special. reachingDefs INTO the function definition node are actually
-	//The definitions that reach the *end* of the function
-	//reachingDefs OUT of the function definition node are the ones that come externally into the function
-	FilteredCfgNode functionStartNode = FilteredCfgNode(func->cfgForBeginning());
-	FilteredCfgNode functionEndNode = FilteredCfgNode(func->cfgForEnd());
-	
 	//We process nodes in reverse postorder; this provides a natural numbering for definitions
-	reverse_foreach(const FilteredCfgNode& cfgNode, cfgNodesInPostOrder)
+	reverse_foreach(const CFGNode& cfgNode, cfgNodesInPostOrder)
 	{
-		SgNode* astNode = cfgNode.getNode();
-		
-		//Iterate over all the phi functions inserted at this node. We skip the SgFunctionDefinition entry node,
-		//since those phi functions actually belong to the bottom of the CFG
-		if (cfgNode != functionStartNode)
-		{
-			foreach (NodeReachingDefTable::value_type& varDefPair, reachingDefsTable[astNode].first)
+		CFGNodeToDefTableMap::const_iterator reachingDefsIter = reachingDefTable.find(cfgNode);
+		if (reachingDefsIter != reachingDefTable.end())
+		{		
+			//Iterate over all the phi functions inserted at this node.
+			foreach (const NodeReachingDefTable::value_type& varDefPair, reachingDefsIter->second)
 			{
 				const VarName& definedVar = varDefPair.first;
 				ReachingDefPtr reachingDef = varDefPair.second;
 
-				if (!reachingDef->isPhiFunction())
-					continue;
+				//At this point, only phi functions should be in the reaching defs table. Everything else is local defs
+				ROSE_ASSERT(reachingDef->isPhiFunction());
 
 				//Give an index to the variable
 				int index = 0;
@@ -899,15 +849,18 @@ void StaticSingleAssignment::renumberAllDefinitions(SgFunctionDefinition* func, 
 				reachingDef->setRenamingNumber(index);
 			}
 		}
-
-		//Local defs at the function end actually occur at the very beginning of the function
-		if (cfgNode != functionEndNode)
+		
+		//Number the real (non-phi) definitions
+		CFGNodeToDefTableMap::const_iterator localDefIter = localDefTable.find(cfgNode);
+		if (localDefIter != localDefTable.end())
 		{
-			//Iterate over all the local definitions at the node
-			foreach (NodeReachingDefTable::value_type& varDefPair, ssaLocalDefTable[astNode])
+			foreach (const NodeReachingDefTable::value_type& varDefPair, localDefIter->second)
 			{
 				const VarName& definedVar = varDefPair.first;
 				ReachingDefPtr reachingDef = varDefPair.second;
+
+				//At this point, only phi functions should be in the reaching defs table. Everything else is local defs
+				ROSE_ASSERT(!reachingDef->isPhiFunction());
 
 				//Give an index to the variable
 				int index = 0;
@@ -924,12 +877,11 @@ void StaticSingleAssignment::renumberAllDefinitions(SgFunctionDefinition* func, 
 }
 
 /*static*/
-vector<StaticSingleAssignment::FilteredCfgNode> StaticSingleAssignment::getCfgNodesInPostorder(SgFunctionDefinition* func)
+vector<CFGNode> StaticSingleAssignment::getCfgNodesInPostorder(SgFunctionDefinition* func)
 {
 	struct RecursiveDFS
 	{
-		static void depthFirstSearch(StaticSingleAssignment::FilteredCfgNode cfgNode, 
-			set<FilteredCfgNode>& visited, vector<StaticSingleAssignment::FilteredCfgNode>& result)
+		static void depthFirstSearch(const CFGNode& cfgNode, set<CFGNode>& visited, vector<CFGNode>& result)
 		{
 			//First, make sure this node hasn't been visited yet
 			if (visited.count(cfgNode) != 0)
@@ -938,7 +890,7 @@ vector<StaticSingleAssignment::FilteredCfgNode> StaticSingleAssignment::getCfgNo
 			visited.insert(cfgNode);
 			
 			//Now, visit all the node's successors
-			reverse_foreach(const FilteredCfgEdge outEdge, cfgNode.outEdges())
+			reverse_foreach(const CFGEdge& outEdge, cfgNode.outEdges())
 			{
 				depthFirstSearch(outEdge.target(), visited, result);
 			}
@@ -950,9 +902,9 @@ vector<StaticSingleAssignment::FilteredCfgNode> StaticSingleAssignment::getCfgNo
 	
 	ROSE_ASSERT(func != NULL);
 
-	set<FilteredCfgNode> visited;
-	vector<FilteredCfgNode> results;
-	FilteredCfgNode entry = func->cfgForBeginning();
+	set<CFGNode> visited;
+	vector<CFGNode> results;
+	CFGNode entry = func->cfgForBeginning();
 
 	RecursiveDFS::depthFirstSearch(entry, visited, results);
 	

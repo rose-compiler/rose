@@ -42,15 +42,20 @@ SgExpression* StaticSingleAssignment::buildVariableReference(const VarName& var,
 //Printing functions
 string StaticSingleAssignment::varnameToString(const VarName& vec)
 {
+	ROSE_ASSERT(!vec.empty());
 	string name = "";
 
-	foreach(const VarName::value_type& iter, vec)
+	foreach(SgInitializedName* iter, vec)
 	{
-		if (iter != vec.front())
-		{
-			name += ":";
-		}
 		name += iter->get_name().getString();
+		
+		if (iter != vec.back())
+		{
+			if (SageInterface::isPointerType(iter->get_type()))
+				name += "->";
+			else
+				name += ".";
+		}
 	}
 
 	return name;
@@ -89,6 +94,42 @@ void StaticSingleAssignment::printLocalDefUseTable(const StaticSingleAssignment:
 			printf("%s, ", varnameToString(var).c_str());
 		}
 		printf("\n");
+	}
+}
+
+void StaticSingleAssignment::printDefTable(const CFGNodeToDefTableMap& defTable)
+{
+	foreach(const CFGNodeToDefTableMap::value_type& nodeDefTablePair, defTable)
+	{
+		const CFGNode& definingNode = nodeDefTablePair.first;
+
+		printf("%s\n", definingNode.toStringForDebugging().c_str());
+
+		foreach(const NodeReachingDefTable::value_type& varDefPair, nodeDefTablePair.second)
+		{
+			printf("\t%s: \t", varnameToString(varDefPair.first).c_str());
+
+			string defName;
+			switch (varDefPair.second->getType())
+			{
+				case ReachingDef::EXPANDED_DEF:
+					defName = "EXPANDED_DEF";
+					break;
+				case ReachingDef::ORIGINAL_DEF:
+					defName = "ORIGINAL_DEF";
+					break;
+				case ReachingDef::EXTERNAL_DEF:
+					defName = "EXTERNAL_DEF";
+					break;
+				case ReachingDef::PHI_FUNCTION:
+					defName = "PHI_FUNCTION";
+					break;
+				default:
+					ROSE_ASSERT(false);
+			}
+
+			printf("(%d)-%s\n", varDefPair.second->getRenamingNumber(), defName.c_str());
+		}
 	}
 }
 

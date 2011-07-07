@@ -21,7 +21,11 @@ public:
 
 		/** Definition for the parent or child of this variable. (E.g. if x.b is the variable
 		 * in question, this def could be for x or x.b.a). */
-		EXPANDED_DEF
+		EXPANDED_DEF,
+		
+		/** This is not a real definition; this variable is external to the scope being analyzed and
+		 * this def represents the existing value of the variable at the beginning of the scope. */
+		EXTERNAL_DEF,
 	};
 	
 	typedef boost::shared_ptr<ReachingDef> ReachingDefPtr;
@@ -78,6 +82,11 @@ public:
 	}
 
 	bool operator==(const ReachingDef& other) const;
+	
+	Type getType() const
+	{
+		return defType;
+	}
 
 	//---------MODIFIERS---------
 
