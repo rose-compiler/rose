@@ -530,6 +530,28 @@ sage_buildTryFinally(PyObject *self, PyObject *args)
 /*
  */
 PyObject*
+sage_buildTuple(PyObject *self, PyObject *args)
+{
+    PyObject *py_elts;
+    if (! PyArg_ParseTuple(args, "O!", &PyList_Type, &py_elts))
+        return NULL;
+
+    std::vector<SgExpression*> sg_exprs;
+    Py_ssize_t eltsc = PyList_Size(py_elts);
+    for(int i = 0; i < eltsc; i++) {
+        PyObject* py_exp = PyList_GetItem(py_elts, i);
+        SgExpression* sg_exp = PyDecapsulate<SgExpression>(py_exp);
+        sg_exprs.push_back(sg_exp);
+    }
+
+    SgExprListExp* sg_expr_list_exp =
+        SageBuilder::buildExprListExp(sg_exprs); //TODO: this is wrong. use buildTuple eventually
+    return PyEncapsulate(sg_expr_list_exp);
+}
+
+/*
+ */
+PyObject*
 sage_buildUnaryOp(PyObject *self, PyObject *args)
 {
     char *operation;
