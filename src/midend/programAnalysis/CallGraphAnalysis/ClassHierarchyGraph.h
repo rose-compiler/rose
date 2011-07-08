@@ -10,23 +10,23 @@ class ClassHierarchyWrapper
 public:
     typedef boost::unordered_set<SgClassDefinition*> ClassDefSet;
 
-	typedef boost::unordered_map<std::string, ClassDefSet> MangledNameToClassDefsMap;
-   
+    typedef boost::unordered_map<std::string, ClassDefSet> MangledNameToClassDefsMap;
+
 private:
 
-    
+
     /** Map from each class to all its immediate superclasses. */
     MangledNameToClassDefsMap directParents;
-    
+
     /** Map from each class to all its immediate subclasses. */
     MangledNameToClassDefsMap directChildren;
-    
+
     /** Map from class to all (strict) ancestors. */
     MangledNameToClassDefsMap ancestorClasses;
-    
+
     /** Map from class to all (strict) subclasses. */
     MangledNameToClassDefsMap subclasses;
-    
+
     SgIncidenceDirectedGraph* classGraph;
 
 public:
