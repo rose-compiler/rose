@@ -60,6 +60,8 @@ Unparse_Python::unparseLanguageSpecificStatement(SgStatement* stmt,
         CASE_DISPATCH_AND_BREAK(FunctionDeclaration);
         CASE_DISPATCH_AND_BREAK(FunctionDefinition);
         CASE_DISPATCH_AND_BREAK(FunctionParameterList);
+        CASE_DISPATCH_AND_BREAK(ForInitStatement);
+        CASE_DISPATCH_AND_BREAK(ForStatement);
         CASE_DISPATCH_AND_BREAK(IfStmt);
         CASE_DISPATCH_AND_BREAK(LongIntVal);
         CASE_DISPATCH_AND_BREAK(PythonPrintStmt);
@@ -255,6 +257,30 @@ Unparse_Python::unparseExprStatement(SgExprStatement* expr_stmt,
                                      SgUnparse_Info& info)
 {
     unparseExpression(expr_stmt->get_expression(), info);
+}
+
+void
+Unparse_Python::unparseForInitStatement(SgForInitStatement* for_init_stmt,
+                                        SgUnparse_Info& info)
+{
+    foreach (SgStatement* stmt, for_init_stmt->get_init_stmt()) {
+        unparseStatement(stmt, info);
+    }
+}
+
+void
+Unparse_Python::unparseForStatement(SgForStatement* for_stmt,
+                                    SgUnparse_Info& info)
+{
+    curprint("for ");
+    unparseStatement(for_stmt->get_for_init_stmt(), info);
+    curprint(" in ");
+    unparseExpression(for_stmt->get_increment(), info);
+    curprint(":\n");
+
+    info.inc_nestingLevel();
+    unparseStatement(for_stmt->get_loop_body(), info);
+    info.dec_nestingLevel();
 }
 
 void
