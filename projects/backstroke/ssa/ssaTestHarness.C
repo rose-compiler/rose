@@ -44,7 +44,7 @@ public:
 		StaticSingleAssignment::VarName var;
 		foreach (tie(var, reachingDef), newReachingDefs)
 		{
-			set<SgNode*> newReachingDefNodes = reachingDef->getActualDefinitions();
+			set<SgNode*> newReachingDefNodes;// = reachingDef->getActualDefinitions();
 			set<SgNode*> oldReachingDefNodes = renameTableToDefNodes(oldReachingDefs[var]);
 
 			//The set of definition nodes should be the same
@@ -98,7 +98,7 @@ public:
 			foreach (StaticSingleAssignment::NodeReachingDefTable::value_type x, ssa->getOutgoingDefsAtNode(node))
 			{
 				printf("%s: ", StaticSingleAssignment::varnameToString(x.first).c_str());
-				printNodeSet(x.second->getActualDefinitions());
+				//printNodeSet(x.second->getActualDefinitions());
 			}
 
 			ROSE_ASSERT(false);
@@ -106,7 +106,7 @@ public:
 
 		foreach (tie(var, reachingDef), newUses)
 		{
-			set<SgNode*> newUseNodes = reachingDef->getActualDefinitions();
+			set<SgNode*> newUseNodes;// = reachingDef->getActualDefinitions();
 			set<SgNode*> oldUseNodes = renameTableToDefNodes(oldUses[var]);
 
 			if (newUseNodes != oldUseNodes)
