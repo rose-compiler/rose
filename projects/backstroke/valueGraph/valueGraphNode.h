@@ -282,7 +282,7 @@ struct BinaryOperaterNode : OperatorNode
 
 struct ValueGraphEdge
 {
-    ValueGraphEdge() : cost(0) {}
+    ValueGraphEdge() : cost(TRIVIAL_COST) {}
     ValueGraphEdge(int cst, const PathInfo& pths)
     : cost(cst), paths(pths) {}
     
@@ -296,6 +296,8 @@ struct ValueGraphEdge
     virtual ValueGraphEdge* clone() 
     { return new ValueGraphEdge(*this); }
 
+    static const int TRIVIAL_COST = 1;
+    
     //! The cost attached on this edge. The cost may come from state saving,
     //! or operations.
 	int cost;

@@ -270,10 +270,10 @@ int main(int argc, char *argv[])
 
 
 
-        /***********************************************************************************************/
+        /********************************************************************************/
         // Reverse all functions.
         Backstroke::reverseFunctions(funcDefs);
-        /***********************************************************************************************/
+        /********************************************************************************/
 
 
 
@@ -332,13 +332,17 @@ int main(int argc, char *argv[])
     else if (option == 3)
     {
         set<SgFunctionDefinition*> funcDefs;
+        
+        set<string> events;
+        events.insert("Handle");
+        events.insert("tmr_event_handler");
     
         vector<SgFunctionDefinition*> allFuncDefs = 
                 BackstrokeUtility::querySubTree<SgFunctionDefinition>(project);
         foreach (SgFunctionDefinition* funcDef, allFuncDefs)
         {
-            if (funcDef->get_declaration()->get_name() == "Handle")
-            funcDefs.insert(funcDef);
+            if (events.count(funcDef->get_declaration()->get_name().str()))
+                funcDefs.insert(funcDef);
         }
 
         /***********************************************************************************************/

@@ -453,6 +453,10 @@ void EventReverser::buildFunctionBodies()
     SgName fwdFuncName = funcName + "_forward";
     SgName rvsFuncName = funcName + "_reverse";
     SgName cmtFuncName = funcName + "_commit";
+    
+    SgFunctionDeclaration* fwdFuncDecl;
+    SgFunctionDeclaration* rvsFuncDecl;
+    SgFunctionDeclaration* cmtFuncDecl;
         
     if (SgMemberFunctionDeclaration* memFuncDecl = isSgMemberFunctionDeclaration(funcDecl))
     {
@@ -460,18 +464,16 @@ void EventReverser::buildFunctionBodies()
         ROSE_ASSERT(memFuncType);
 
         //Create the function declaration for the forward body
-        SgMemberFunctionDeclaration* fwdFuncDecl = buildDefiningMemberFunctionDeclaration(
+        fwdFuncDecl = buildDefiningMemberFunctionDeclaration(
                         fwdFuncName,
                         memFuncType,
                         //funcDecl->get_orig_return_type(),
                         isSgFunctionParameterList(
                             copyStatement(funcDecl->get_parameterList())),
                         funcScope);
-        fwdFuncDef_ = fwdFuncDecl->get_definition();
-        //SageInterface::replaceStatement(fwdFuncDef->get_body(), isSgBasicBlock(stmt.fwd_stmt));
 
         //Create the function declaration for the reverse body
-        SgMemberFunctionDeclaration* rvsFuncDecl = buildDefiningMemberFunctionDeclaration(
+        rvsFuncDecl = buildDefiningMemberFunctionDeclaration(
                         rvsFuncName,
                         memFuncType,
                         //funcDecl->get_orig_return_type(),
@@ -479,11 +481,9 @@ void EventReverser::buildFunctionBodies()
                         isSgFunctionParameterList(
                             copyStatement(funcDecl->get_parameterList())),
                         funcScope);
-        rvsFuncDef_ = rvsFuncDecl->get_definition();
-        //SageInterface::replaceStatement(rvsFuncDef->get_body(), isSgBasicBlock(stmt.rvs_stmt));
 
         //Create the function declaration for the commit method
-        SgMemberFunctionDeclaration* cmtFuncDecl = buildDefiningMemberFunctionDeclaration(
+        cmtFuncDecl = buildDefiningMemberFunctionDeclaration(
                         cmtFuncName,
                         buildMemberFunctionType(
                             memFuncType->get_return_type(),
@@ -495,17 +495,42 @@ void EventReverser::buildFunctionBodies()
                         //isSgFunctionParameterList(
                         //    copyStatement(funcDecl->get_parameterList())),
                         funcScope);
-        cmtFuncDef_ = cmtFuncDecl->get_definition();
-        
-
-        fwdFuncDecl->get_functionModifier() = funcDecl->get_functionModifier();
-        rvsFuncDecl->get_functionModifier() = funcDecl->get_functionModifier();
-        cmtFuncDecl->get_functionModifier() = funcDecl->get_functionModifier();
     }
     else
     {
-        ROSE_ASSERT(false);
+        //Create the function declaration for the forward body
+        fwdFuncDecl = buildDefiningFunctionDeclaration(
+                        fwdFuncName,
+                        funcDecl->get_orig_return_type(),
+                        isSgFunctionParameterList(
+                            copyStatement(funcDecl->get_parameterList())),
+                        funcScope);
+
+        //Create the function declaration for the reverse body
+        rvsFuncDecl = buildDefiningFunctionDeclaration(
+                        rvsFuncName,
+                        funcDecl->get_orig_return_type(),
+                        isSgFunctionParameterList(
+                            copyStatement(funcDecl->get_parameterList())),
+                        funcScope);
+
+        //Create the function declaration for the commit method
+        cmtFuncDecl = buildDefiningFunctionDeclaration(
+                        cmtFuncName,
+                        funcDecl->get_orig_return_type(),
+                        ////buildFunctionParameterList(),
+                        isSgFunctionParameterList(
+                            copyStatement(funcDecl->get_parameterList())),
+                        funcScope);
     }
+
+    fwdFuncDecl->get_functionModifier() = funcDecl->get_functionModifier();
+    rvsFuncDecl->get_functionModifier() = funcDecl->get_functionModifier();
+    cmtFuncDecl->get_functionModifier() = funcDecl->get_functionModifier();
+
+    fwdFuncDef_ = fwdFuncDecl->get_definition();
+    rvsFuncDef_ = rvsFuncDecl->get_definition();
+    cmtFuncDef_ = cmtFuncDecl->get_definition();
 
     // Copy the original function to forward function.
     replaceStatement(fwdFuncDef_->get_body(),

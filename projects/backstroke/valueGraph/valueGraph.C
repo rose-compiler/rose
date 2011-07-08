@@ -126,9 +126,14 @@ void EventReverser::buildBasicValueGraph()
             VGVertex newNode = createValueNode(initName, NULL);
 
             // FIXME State variable may not be parameters.
-            // Add the variable into wanted set.
-            valuesToRestore_[0].insert(newNode);
-            addStateVariable(initName);
+            
+            SgType* type = initName->get_type();
+            if (isSgPointerType(type) || isSgReferenceType(type))
+            {
+                // Add the variable into wanted set.
+                valuesToRestore_[0].insert(newNode);
+                addStateVariable(initName);
+            }
         } 
     }
     
@@ -965,7 +970,7 @@ EventReverser::VGEdge EventReverser::addValueGraphEdge(
     //valueGraph_[e] = new ValueGraphEdge(valNode->getCost(), dagIndex, paths);
     //valueGraph_[newEdge] = new ValueGraphEdge(0, dagIndex, paths);
     
-    valueGraph_[newEdge] = new ValueGraphEdge(0, paths, controlDeps);
+    valueGraph_[newEdge] = new ValueGraphEdge(ValueGraphEdge::TRIVIAL_COST, paths, controlDeps);
     
     return newEdge;
 }

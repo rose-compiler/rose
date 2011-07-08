@@ -1073,14 +1073,23 @@ void PathNumGenerator::getEdgeValues()
         }
         
         pathNum = 0;
+        
+        // Find the target node with the maximum number of paths.
+        size_t maxNumber = 0;
         foreach (const Edge& e, outEdges)
         {
             Vertex tar = boost::target(e, dag_);
             ROSE_ASSERT(pathNumbersOnVertices_.count(tar) > 0);
             ROSE_ASSERT(pathNumbersOnVertices_[tar] > 0);
             
+            maxNumber = std::max(maxNumber, pathNumbersOnVertices_[tar]);
+        }
+        
+        foreach (const Edge& e, outEdges)
+        {
+            Vertex tar = boost::target(e, dag_);
             edgeValues_[e] = pathNum;
-            pathNum += pathNumbersOnVertices_[tar];
+            pathNum += maxNumber;
         }
         
 #if 1

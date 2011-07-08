@@ -42,8 +42,22 @@ test:
 #./functionReverserTest -c temp1.C -I/opt/local/var/macports/software/boost/1.44.0_0/opt/local/include/
 #./functionReverserTest -c temp2.C -I/opt/local/var/macports/software/boost/1.44.0_0/opt/local/include/
 
+ROSE_DIR = /Users/hou1/MyWork/pdes/trunk
+ROSE_MODEL_DIR = $(ROSE_DIR)/models_modified
+
+ROSS_FLAG = -I$(ROSE_DIR)/ross -I/Users/hou1/MyApp/MacPorts/include/ \
+	    -DROSS_CLOCK_i386 -DROSS_THREAD_none -DROSS_NETWORK_none -DROSS_GVT_none -DROSS_RAND_clcg4
+
+timers:
+	./functionReverserTest -c \
+		$(ROSE_MODEL_DIR)/timers/tmr.c \
+		$(ROSS_FLAG)
+
+
 #GTNETS_DIR = /home/hou1/MyWork/GTNetS/SRC
 GTNETS_DIR = /Users/hou1/MyWork/GTNetS/SRC_original
+
+GTNETS_FLAG = -I$(GTNETS_DIR) -I/Users/hou1/MyApp/MacPorts/include/ -DNO_DEBUG
 
 #$(GTNETS_DIR)/application.cc 
 #GTNETS_FILES = $(GTNETS_DIR)/application-udpsink.cc $(GTNETS_DIR)/link-real.cc
@@ -255,8 +269,6 @@ GTNETS_FILES = $(GTNETS_DIR)/RngStream.cc \
 		$(GTNETS_DIR)/mobility.cc \
 		$(GTNETS_DIR)/rtt-estimator.cc
 	
-
-GTNETS_FLAG = -I$(GTNETS_DIR) -I/Users/hou1/MyApp/MacPorts/include/ -DNO_DEBUG
 
 wlan:
 	./functionReverserTest -c \
