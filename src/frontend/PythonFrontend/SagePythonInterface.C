@@ -261,6 +261,19 @@ sage_buildExprListExp(PyObject *self, PyObject *args)
 }
 
 /*
+ */
+PyObject*
+sage_buildFloat(PyObject *self, PyObject *args)
+{
+    double val;
+    if (! PyArg_ParseTuple(args, "d", &val))
+        return NULL;
+
+    SgDoubleVal* sg_double_val = SageBuilder::buildDoubleVal(val);
+    return PyEncapsulate(sg_double_val);
+}
+
+/*
  * Build a FunctionDef
  */
 PyObject*

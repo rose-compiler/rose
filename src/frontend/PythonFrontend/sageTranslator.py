@@ -156,6 +156,12 @@ class SageTranslator(ast.NodeVisitor):
     orelse = map(self.visit, node.orelse)
     return sage.buildIf(test, body, orelse)
 
+  def visit_int(self, n):
+    return sage.buildLongIntVal(n)
+
+  def visit_float(self, n):
+    return sage.buildFloat(n)
+
   def visit_keyword(self, node):
     arg = self.visit(node.arg)
     value = self.visit(node.value)
@@ -195,7 +201,7 @@ class SageTranslator(ast.NodeVisitor):
     return sage.buildName("None", scope)
 
   def visit_Num(self, node):
-    return sage.buildLongIntVal(node.n)
+    return self.visit(node.n)
 
   def visit_Print(self, node):
     dest = self.visit(node.dest)
