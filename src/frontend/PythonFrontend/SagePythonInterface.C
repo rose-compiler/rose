@@ -303,7 +303,7 @@ sage_buildFor(PyObject *self, PyObject *args)
         return NULL;
 
     SgNullStatement* null = SageBuilder::buildNullStatement_nfi();
-    SgForStatement* sg_for_stmt = SageBuilder::buildForStatement_nfi(target, null, iter, body);
+    SgForStatement* sg_for_stmt = SageBuilder::buildForStatement_nfi(target, null, iter, body, orelse);
     return PyEncapsulate(sg_for_stmt);
 }
 

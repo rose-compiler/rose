@@ -2840,7 +2840,7 @@ SgForInitStatement * SageBuilder::buildForInitStatement_nfi(SgStatementPtrList &
 
 //! Based on the contribution from Pradeep Srinivasa@ LANL
 //Liao, 8/27/2008
-SgForStatement * SageBuilder::buildForStatement(SgStatement* initialize_stmt, SgStatement * test, SgExpression * increment, SgStatement * loop_body)
+SgForStatement * SageBuilder::buildForStatement(SgStatement* initialize_stmt, SgStatement * test, SgExpression * increment, SgStatement * loop_body, SgStatement * else_body)
 {
   SgForStatement * result = new SgForStatement(test,increment, loop_body);
   ROSE_ASSERT(result);
@@ -2856,6 +2856,10 @@ SgForStatement * SageBuilder::buildForStatement(SgStatement* initialize_stmt, Sg
     loop_body->set_parent(result);
   if (increment) 
     increment->set_parent(result);
+
+  if (else_body)
+    else_body->set_parent(result);
+  result->set_else_body(else_body);
 
   // CH (5/13/2010): If the initialize_stmt is an object of SgForInitStatement, we can directly put it 
   // into for statement. Or else, there will be two semicolons after unparsing.
@@ -2890,7 +2894,7 @@ SgForStatement * SageBuilder::buildForStatement(SgStatement* initialize_stmt, Sg
 
 //! Based on the contribution from Pradeep Srinivasa@ LANL
 //Liao, 8/27/2008
-SgForStatement * SageBuilder::buildForStatement_nfi(SgStatement* initialize_stmt, SgStatement * test, SgExpression * increment, SgStatement * loop_body)
+SgForStatement * SageBuilder::buildForStatement_nfi(SgStatement* initialize_stmt, SgStatement * test, SgExpression * increment, SgStatement * loop_body, SgStatement * else_body)
 {
   SgForStatement * result = new SgForStatement(test,increment, loop_body);
   ROSE_ASSERT(result);
@@ -2904,6 +2908,9 @@ SgForStatement * SageBuilder::buildForStatement_nfi(SgStatement* initialize_stmt
   if (loop_body) loop_body->set_parent(result);
   if (increment) increment->set_parent(result);
 
+  if (else_body) else_body->set_parent(result);
+  result->set_else_body(else_body);
+
   if (initialize_stmt != NULL) {
     SgForInitStatement* init_stmt = result->get_for_init_stmt();
     ROSE_ASSERT(init_stmt);
@@ -2915,7 +2922,7 @@ SgForStatement * SageBuilder::buildForStatement_nfi(SgStatement* initialize_stmt
   return result;
 }
 
-SgForStatement * SageBuilder::buildForStatement_nfi(SgForInitStatement * init_stmt, SgStatement * test, SgExpression * increment, SgStatement * loop_body)
+SgForStatement * SageBuilder::buildForStatement_nfi(SgForInitStatement * init_stmt, SgStatement * test, SgExpression * increment, SgStatement * loop_body, SgStatement * else_body)
 {
   SgForStatement * result = new SgForStatement(init_stmt, test, increment, loop_body);
   ROSE_ASSERT(result);
@@ -2929,6 +2936,9 @@ SgForStatement * SageBuilder::buildForStatement_nfi(SgForInitStatement * init_st
   if (loop_body) loop_body->set_parent(result);
   if (increment) increment->set_parent(result);
   if (init_stmt) init_stmt->set_parent(result);
+
+  if (else_body) init_stmt->set_parent(result);
+  result->set_else_body(else_body);
 
   return result;
 }

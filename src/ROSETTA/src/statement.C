@@ -714,6 +714,8 @@ Grammar::setUpStatements ()
 
      ForStatement.setDataPrototype ( "SgStatement*", "loop_body",        "= NULL",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     ForStatement.setDataPrototype ( "SgStatement*", "else_body",        "= NULL",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
   // DQ (11/16/2007): Added support for string labels (for Fortran).
      ForStatement.setDataPrototype ( "std::string", "string_label", "= \"\"",
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
