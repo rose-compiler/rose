@@ -345,7 +345,7 @@ function printRoseTranslatorVersion {
 #
 #########################################################################################
 case "$ROSE_TEST_BUILD_STYLE" in
-"make/check/install-minimal"|"make/check/install-full")
+"make-check-install-minimal"|"make-check-install-full")
 
     ################################################################################
     # MAKE
