@@ -136,6 +136,18 @@ sage_buildBinOp(PyObject *self, PyObject *args)
 }
 
 /*
+ */
+PyObject*
+sage_buildBreak(PyObject *self, PyObject *args)
+{
+    if (! PyArg_ParseTuple(args, ""))
+        return NULL;
+
+    SgBreakStmt* sg_break = SageBuilder::buildBreakStmt();
+    return PyEncapsulate(sg_break);
+}
+
+/*
  * Build an SgAddOp node from the given Python statements.
  *  - PyObject* args = (PyObject*, PyObject*)
  */

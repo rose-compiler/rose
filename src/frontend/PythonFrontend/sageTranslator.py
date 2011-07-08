@@ -115,6 +115,9 @@ class SageTranslator(ast.NodeVisitor):
     op_str = BINARY_OPERATOR_MAP[node.op.__class__]
     return sage.buildBinOp(lhs, rhs, op_str)
 
+  def visit_Break(self, node):
+    return sage.buildBreak()
+
   def visit_Call(self, node):
     name = node.func.id
     args = map(self.visit, node.args)

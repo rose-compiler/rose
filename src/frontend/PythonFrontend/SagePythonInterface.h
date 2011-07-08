@@ -8,6 +8,7 @@
 PyObject* sage_buildAssign(PyObject *self, PyObject *args);
 PyObject* sage_buildAugAssign(PyObject *self, PyObject *args);
 PyObject* sage_buildBinOp(PyObject *self, PyObject *args);
+PyObject* sage_buildBreak(PyObject *self, PyObject *args);
 PyObject* sage_buildCall(PyObject *self, PyObject *args);
 PyObject* sage_buildCompare(PyObject *self, PyObject *args);
 PyObject* sage_buildComplexVal(PyObject *self, PyObject *args);
@@ -40,6 +41,7 @@ static PyMethodDef SageBuilderMethods[] = {
     {"buildAssign", sage_buildAssign, METH_VARARGS, "Builds an assignment node."},
     {"buildAugAssign", sage_buildAugAssign, METH_VARARGS, "Builds an augmented assignment node."},
     {"buildBinOp", sage_buildBinOp, METH_VARARGS, "Builds a binary expression node."},
+    {"buildBreak", sage_buildBreak, METH_VARARGS, "Builds a break node."},
     {"buildCall", sage_buildCall, METH_VARARGS, "Builds an SgFunctionCallExp node."},
     {"buildCompare", sage_buildCompare, METH_VARARGS, "Builds a comparison node."},
     {"buildComplexVal", sage_buildComplexVal, METH_VARARGS, "Builds a complex value node."},
