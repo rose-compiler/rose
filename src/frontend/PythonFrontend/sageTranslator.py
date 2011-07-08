@@ -171,7 +171,7 @@ class SageTranslator(ast.NodeVisitor):
     target = self.visit(node.target)
     iter = self.visit(node.iter)
     body = sage.buildSuite(map(self.visit, node.body))
-    orelse = None #node.orelse and sage.buildSuite(map(self.visit, node.orelse))
+    orelse = node.orelse and sage.buildSuite(map(self.visit, node.orelse))
     return sage.buildFor(target, iter, body, orelse)
 
   def visit_keyword(self, node):

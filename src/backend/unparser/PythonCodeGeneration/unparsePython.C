@@ -281,6 +281,13 @@ Unparse_Python::unparseForStatement(SgForStatement* for_stmt,
     info.inc_nestingLevel();
     unparseStatement(for_stmt->get_loop_body(), info);
     info.dec_nestingLevel();
+
+    if (for_stmt->get_else_body()) {
+        curprint(ws_prefix(info.get_nestingLevel()) + "else:\n");
+        info.inc_nestingLevel();
+        unparseStatement(for_stmt->get_else_body(), info);
+        info.dec_nestingLevel();
+    }
 }
 
 void
