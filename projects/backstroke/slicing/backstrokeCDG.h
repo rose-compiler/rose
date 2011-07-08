@@ -14,8 +14,12 @@ namespace Backstroke
 
 
 //! Define the edge type of CDG.
+template <class CFGType>
 struct CDGEdge
 {
+    //! The corresponding CFG edge.
+    typename CFGType::Edge cfgEdge;
+    
     //! The condition attached to edges in the CDG.
     VirtualCFG::EdgeConditionKind condition;
 
@@ -54,24 +58,6 @@ struct CDGEdge
 	//int caseValue;
 };
 
-//template <class CFGType> class CDG;
-
-struct ControlDependence 
-{
-    ControlDependence(const CDGEdge& edge, SgNode* node)
-    : cdEdge(edge), cdNode(node) {}
-    
-    //! Control dependence edge.
-    CDGEdge cdEdge;
-    
-    ////! Control dependence graph node.
-    //CDGNode cdNode;
-    
-    //! Control dependence node.
-    SgNode* cdNode;
-};
-
-typedef std::vector<ControlDependence> ControlDependences;
 
 //! A class holding a Control Dependence Graph.
 
@@ -79,14 +65,35 @@ typedef std::vector<ControlDependence> ControlDependences;
 
 template <class CFGType>
 class CDG : public boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
-		typename CFGType::CFGNodePtr, CDGEdge>
+		typename CFGType::CFGNodePtr, CDGEdge<CFGType> >
 {
 public:
 	typedef typename CFGType::CFGNodePtr CFGNodePtr;
-
+    
+    typedef typename CFGType::CFGNodePtr CDGNodeType;
+    typedef CDGEdge<CFGType>             CDGEdgeType;
+    
     typedef typename boost::graph_traits<CDG<CFGType> > GraphTraits;
 	typedef typename GraphTraits::vertex_descriptor Vertex;
-	typedef typename GraphTraits::edge_descriptor Edge;
+	typedef typename GraphTraits::edge_descriptor   Edge;
+
+
+    struct ControlDependence 
+    {
+        ControlDependence(const CDGEdge<CFGType>& edge, SgNode* node)
+        : cdEdge(edge), cdNode(node) {}
+
+        //! Control dependence edge.
+        CDGEdge<CFGType> cdEdge;
+
+        ////! Control dependence graph node.
+        //CDGNode cdNode;
+
+        //! Control dependence node.
+        SgNode* cdNode;
+    };
+
+    typedef std::vector<ControlDependence> ControlDependences;
 
 	//! The default constructor.
 	CDG() {}
@@ -116,7 +123,7 @@ public:
 
 	//! This function helps to write the DOT file for edges.
 	//! It's a static function which can be used by other classes (PDG for example).
-	static void writeGraphEdge(std::ostream& out, const CDGEdge& edge);
+	static void writeGraphEdge(std::ostream& out, const CDGEdge<CFGType>& edge);
 	
 protected:
 
@@ -243,7 +250,8 @@ void CDG<CFGType>::buildCDG(const CFGType& cfg)
 }
 
 template <class CFGType>
-typename CDG<CFGType>::Vertex CDG<CFGType>::getCDGVertex(SgNode* astNode)
+typename CDG<CFGType>::Vertex 
+CDG<CFGType>::getCDGVertex(SgNode* astNode)
 {
     foreach (Vertex node, boost::vertices(*this))
     {
@@ -254,7 +262,8 @@ typename CDG<CFGType>::Vertex CDG<CFGType>::getCDGVertex(SgNode* astNode)
 }
 
 template <class CFGType>
-ControlDependences CDG<CFGType>::getControlDependences(CFGNodePtr cfgNode)
+typename CDG<CFGType>::ControlDependences 
+CDG<CFGType>::getControlDependences(CFGNodePtr cfgNode)
 {
     ControlDependences controlDeps;
     
@@ -274,7 +283,8 @@ ControlDependences CDG<CFGType>::getControlDependences(CFGNodePtr cfgNode)
 }
 
 template <class CFGType>
-ControlDependences CDG<CFGType>::getControlDependences(SgNode* astNode)
+typename CDG<CFGType>::ControlDependences 
+CDG<CFGType>::getControlDependences(SgNode* astNode)
 {
     ControlDependences controlDeps;
     
@@ -404,7 +414,7 @@ CDG<CFGType>::buildDominanceFrontiers(
 }
 
 template <class CFGType>
-void CDG<CFGType>::writeGraphEdge(std::ostream& out, const CDGEdge& edge)
+void CDG<CFGType>::writeGraphEdge(std::ostream& out, const CDGEdge<CFGType>& edge)
 {
 	std::string label;
 	switch (edge.condition)
