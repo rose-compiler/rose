@@ -79,6 +79,7 @@ int python_main(std::string filename, SgFile* file)
 
     Py_Initialize();
     SgGlobal* sg_global = runPythonFrontend(file);
+    SageInterface::setSourcePositionForTransformation(sg_global);
     Py_Finalize();
 
     //const char* str = (sg_global != NULL) ? "success" : "failed";
