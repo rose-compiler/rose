@@ -1972,7 +1972,7 @@ HEADER_START
 
      protected:
 
-        /*! \brief Final initializaion for constructors
+        /*! \brief Final initialization for constructors
             This function is called at the end of generated constructors
             to allow the specification writer to add special initialization
             functions or tests.  Default is to do nothing.  Otherwise it should
