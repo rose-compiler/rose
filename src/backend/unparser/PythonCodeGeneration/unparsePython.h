@@ -27,6 +27,7 @@ class Unparse_Python : public UnparseLanguageIndependentConstructs
           virtual void unparseLanguageSpecificStatement(SgStatement*, SgUnparse_Info&);
           virtual void unparseLanguageSpecificExpression(SgExpression*, SgUnparse_Info&);
           virtual void unparseStringVal(SgExpression*, SgUnparse_Info&);
+          virtual void unparseComplexVal(SgExpression* expr, SgUnparse_Info& info);
 
        // DQ (9/6/2010): Mark the derived class to support debugging.
           virtual std::string languageName() const { return "Python Unparser"; }
@@ -36,6 +37,7 @@ class Unparse_Python : public UnparseLanguageIndependentConstructs
           virtual void unparseAssignInitializer(SgAssignInitializer*, SgUnparse_Info&);
           virtual void unparseBasicBlock(SgBasicBlock*, SgUnparse_Info&);
           virtual void unparseBinaryOp(SgBinaryOp*, SgUnparse_Info&);
+          virtual void unparseComplexVal(SgComplexVal*, SgUnparse_Info&);
           virtual void unparseExprStatement(SgExprStatement*, SgUnparse_Info&);
           virtual void unparseExprListExp(SgExprListExp*, SgUnparse_Info&);
           virtual void unparseFunctionCallExp(SgFunctionCallExp*, SgUnparse_Info&);
