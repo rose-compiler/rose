@@ -1999,6 +1999,7 @@ HEADER_IS_CLASSNAME_START
      // the generated cast function
      // friend $CLASSNAME* is$CLASSNAME ( SgNode* s );
 
+          typedef $BASECLASS base_node_type;
 HEADER_IS_CLASSNAME_END
 
 HEADER_PARSER_START
