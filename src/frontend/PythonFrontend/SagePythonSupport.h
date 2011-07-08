@@ -43,6 +43,11 @@ sage_buildFunctionParameterList(PyObject* args, PyObject* kwargs);
 
 template <typename SgNode_T>
 static int sage_converter(PyObject* object, void** address) {
+    if (object == Py_None) {
+        *address = NULL;
+        return true;
+    }
+
     if (! PyCapsule_CheckExact(object)) {
         PyErr_SetString(PyExc_TypeError, "expected 'capsule' type");
         return false;
