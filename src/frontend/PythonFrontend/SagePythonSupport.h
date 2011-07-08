@@ -43,7 +43,7 @@ sage_buildFunctionParameterList(PyObject* args, PyObject* kwargs);
 
 template <typename SgNode_T>
 static int sage_converter(PyObject* object, void** address) {
-    if (object == Py_None) {
+    if (! PyObject_IsTrue(object)) {
         *address = NULL;
         return true;
     }
