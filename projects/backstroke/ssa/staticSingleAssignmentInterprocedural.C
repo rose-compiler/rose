@@ -138,6 +138,7 @@ bool StaticSingleAssignment::insertInterproceduralDefs(SgFunctionDefinition* fun
 									const boost::unordered_set<SgFunctionDefinition*>& processed,
 									ClassHierarchyWrapper* classHierarchy)
 {
+#if 0
 	vector<SgExpression*> functionCalls = SageInterface::querySubTree<SgExpression>(funcDef, V_SgFunctionCallExp);
 	vector<SgExpression*> constructorCalls = SageInterface::querySubTree<SgExpression>(funcDef, V_SgConstructorInitializer);
 	functionCalls.insert(functionCalls.end(), constructorCalls.begin(), constructorCalls.end());
@@ -166,12 +167,14 @@ bool StaticSingleAssignment::insertInterproceduralDefs(SgFunctionDefinition* fun
 	}
 
 	return changedDefs;
+#endif
 }
 
 
 void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFunctionDeclaration* callee,
 							const unordered_set<SgFunctionDefinition*>& processed, ClassHierarchyWrapper* classHierarchy)
 {
+#if 0
 	ROSE_ASSERT(isSgFunctionCallExp(callSite) || isSgConstructorInitializer(callSite));
 	SgFunctionDefinition* calleeDef = NULL;
 	if (callee->get_definingDeclaration() != NULL)
@@ -365,6 +368,7 @@ void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFuncti
 			originalDefTable_deleteMe[callSite].insert(defaultArgVar);
 		}
 	}
+#endif
 }
 
 bool StaticSingleAssignment::isVarAccessibleFromCaller(const VarName& var, SgExpression* callSite, SgFunctionDeclaration* callee)
