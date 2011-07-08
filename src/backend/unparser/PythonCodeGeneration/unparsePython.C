@@ -55,6 +55,7 @@ Unparse_Python::unparseLanguageSpecificStatement(SgStatement* stmt,
   case V_Sg ##sg_t : unparse ##sg_t (isSg##sg_t (stmt),info); break;
 
         CASE_DISPATCH_AND_BREAK(BasicBlock);
+        CASE_DISPATCH_AND_BREAK(BreakStmt);
         CASE_DISPATCH_AND_BREAK(ExprStatement);
         CASE_DISPATCH_AND_BREAK(FunctionCallExp);
         CASE_DISPATCH_AND_BREAK(FunctionDeclaration);
@@ -227,6 +228,13 @@ Unparse_Python::unparseBinaryOp(SgBinaryOp* bin_op,
     }
     curprint(" ");
     unparseExpression(bin_op->get_rhs_operand(), info);
+}
+
+void
+Unparse_Python::unparseBreakStmt(SgBreakStmt* break_stmt,
+                                 SgUnparse_Info& info)
+{
+    curprint("break");
 }
 
 void
