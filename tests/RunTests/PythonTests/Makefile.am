@@ -1,5 +1,7 @@
 ALL_PYTHON_TESTCODES = \
-    test2011_000.py
+    test2011_000.py \
+    test2011_001.py \
+    test2011_002.py
 
 TEST_Objects = $(addsuffix .done, $(basename $(ALL_PYTHON_TESTCODES)))
 
