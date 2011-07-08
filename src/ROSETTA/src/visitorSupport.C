@@ -6,9 +6,9 @@
 #include "grammar.h"
 #include "terminal.h"
 #include "grammarString.h"
-#include <sstream>
+#include <string>
 
-using namespace std;
+using std::string;
 
 
 // ################################################################
