@@ -165,6 +165,15 @@ class SageTranslator(ast.NodeVisitor):
   def visit_float(self, n):
     return sage.buildFloat(n)
 
+  def visit_For(self, node):
+    scope = self.scopeStack.peek()
+
+    target = self.visit(node.target)
+    iter = self.visit(node.iter)
+    body = sage.buildSuite(map(self.visit, node.body))
+    orelse = None #node.orelse and sage.buildSuite(map(self.visit, node.orelse))
+    return sage.buildFor(target, iter, body, orelse)
+
   def visit_keyword(self, node):
     arg = self.visit(node.arg)
     value = self.visit(node.value)

@@ -290,6 +290,24 @@ sage_buildFloat(PyObject *self, PyObject *args)
 }
 
 /*
+ */
+PyObject*
+sage_buildFor(PyObject *self, PyObject *args)
+{
+    SgExpression *iter;
+    SgStatement *target, *body, *orelse;
+    if (! PyArg_ParseTuple(args, "O&O&O&O&", SAGE_CONVERTER(SgStatement),  &target,
+                                             SAGE_CONVERTER(SgExpression), &iter,
+                                             SAGE_CONVERTER(SgStatement),  &body,
+                                             SAGE_CONVERTER(SgStatement),  &orelse))
+        return NULL;
+
+    SgNullStatement* null = SageBuilder::buildNullStatement_nfi();
+    SgForStatement* sg_for_stmt = SageBuilder::buildForStatement_nfi(target, null, iter, body);
+    return PyEncapsulate(sg_for_stmt);
+}
+
+/*
  * Build a FunctionDef
  */
 PyObject*
