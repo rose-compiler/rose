@@ -81,8 +81,10 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
     switch (stmt->variantT()) {
         CASE_DISPATCH_AND_BREAK(AssignOp);
         CASE_DISPATCH_AND_BREAK(AssignInitializer);
+        CASE_DISPATCH_AND_BREAK(ComplexVal);
         CASE_DISPATCH_AND_BREAK(ExprListExp);
         CASE_DISPATCH_AND_BREAK(FunctionCallExp);
+        CASE_DISPATCH_AND_BREAK(LambdaRefExp);
         CASE_DISPATCH_AND_BREAK(ListExp);
         CASE_DISPATCH_AND_BREAK(TupleExp);
         CASE_DISPATCH_AND_BREAK(VarRefExp);
@@ -120,10 +122,6 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
             unparseUnaryOp( isSgUnaryOp(stmt), info );
             break;
 
-        case V_SgLambdaRefExp:
-            unparseLambdaRefExp( isSgLambdaRefExp(stmt), info );
-            break;
-
         default: {
             cerr << "unparse Expression (" << stmt->class_name()
                  << "*) is unimplemented." << endl;
@@ -138,6 +136,14 @@ Unparse_Python::unparseStringVal(SgExpression* str_exp, SgUnparse_Info& info)
     SgStringVal* str_val = isSgStringVal(str_exp);
     curprint(string("\"") + str_val->get_value() + string("\""));
     //TODO what about other types of python strings
+}
+
+void
+Unparse_Python::unparseComplexVal(SgExpression* exp, SgUnparse_Info& info)
+{
+    SgComplexVal* val = isSgComplexVal(exp);
+    ROSE_ASSERT(val != NULL);
+    unparseComplexVal(val, info);
 }
 
 std::string
@@ -219,6 +225,16 @@ Unparse_Python::unparseBinaryOp(SgBinaryOp* bin_op,
     }
     curprint(" ");
     unparseExpression(bin_op->get_rhs_operand(), info);
+}
+
+void
+Unparse_Python::unparseComplexVal(SgComplexVal* value,
+                                  SgUnparse_Info& info)
+{
+    unparseExpression(value->get_real_value(), info);
+    curprint("+");
+    unparseExpression(value->get_imaginary_value(), info);
+    curprint("j");
 }
 
 void

@@ -209,6 +209,22 @@ sage_buildCompare(PyObject *self, PyObject *args)
 }
 
 /*
+ */
+PyObject*
+sage_buildComplexVal(PyObject *self, PyObject *args)
+{
+    Py_complex value;
+    if (! PyArg_ParseTuple(args, "D", &value))
+        return NULL;
+
+    SgDoubleVal* real_part = SageBuilder::buildDoubleVal(value.real);
+    SgDoubleVal* imag_part = SageBuilder::buildDoubleVal(value.imag);
+    SgComplexVal* sg_complex_val =
+        SageBuilder::buildComplexVal(real_part, imag_part);
+    return PyEncapsulate(sg_complex_val);
+}
+
+/*
  * Build an Expr node from the given Python statements.
  *  - PyObject* args = (PyObject*)
  */
@@ -451,12 +467,12 @@ sage_buildListExp(PyObject *self, PyObject *args)
 PyObject*
 sage_buildLongIntVal(PyObject *self, PyObject *args)
 {
-    long value;
-    if (! PyArg_ParseTuple(args, "l", &value))
+    long long value;
+    if (! PyArg_ParseTuple(args, "L", &value))
         return NULL;
 
-    SgLongIntVal* sg_long_int_val =
-        SageBuilder::buildLongIntVal(value);
+    SgLongLongIntVal* sg_long_int_val =
+        SageBuilder::buildLongLongIntVal(value);
     return PyEncapsulate(sg_long_int_val);
 }
 

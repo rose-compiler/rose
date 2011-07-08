@@ -10,6 +10,7 @@ PyObject* sage_buildAugAssign(PyObject *self, PyObject *args);
 PyObject* sage_buildBinOp(PyObject *self, PyObject *args);
 PyObject* sage_buildCall(PyObject *self, PyObject *args);
 PyObject* sage_buildCompare(PyObject *self, PyObject *args);
+PyObject* sage_buildComplexVal(PyObject *self, PyObject *args);
 PyObject* sage_buildExceptHandler(PyObject *self, PyObject *args);
 PyObject* sage_buildExpr(PyObject *self, PyObject *args);
 PyObject* sage_buildExprListExp(PyObject *self, PyObject *args);
@@ -40,6 +41,7 @@ static PyMethodDef SageBuilderMethods[] = {
     {"buildBinOp", sage_buildBinOp, METH_VARARGS, "Builds a binary expression node."},
     {"buildCall", sage_buildCall, METH_VARARGS, "Builds an SgFunctionCallExp node."},
     {"buildCompare", sage_buildCompare, METH_VARARGS, "Builds a comparison node."},
+    {"buildComplexVal", sage_buildComplexVal, METH_VARARGS, "Builds a complex value node."},
     {"buildExceptHandler", sage_buildExceptHandler, METH_VARARGS, "Builds an exception handler node."},
     {"buildExpr", sage_buildExpr, METH_VARARGS, "Builds an Expr node."},
     {"buildExprListExp", sage_buildExprListExp, METH_VARARGS, "Builds an expression list."},

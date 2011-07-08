@@ -128,6 +128,9 @@ class SageTranslator(ast.NodeVisitor):
     ops = map(lambda op: COMP_OPERATOR_MAP[op.__class__], node.ops)
     return sage.buildCompare(lhs, ops, comparators)
 
+  def visit_complex(self, n):
+    return sage.buildComplexVal(n)
+
   def visit_ExceptHandler(self, node):
     e_name = node.name
     e_type = node.type
@@ -181,6 +184,9 @@ class SageTranslator(ast.NodeVisitor):
 
   def visit_List(self, node):
     return sage.buildListExp(map(self.visit, node.elts))
+
+  def visit_long(self, n):
+    return sage.buildLongIntVal(n)
 
   def visit_Module(self, node):
     (scope, wrapper_func) = sage.buildGlobal(self.filename)
