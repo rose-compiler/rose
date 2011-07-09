@@ -36,13 +36,21 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 if !ROSE_USE_INSURE
  SUBDIRS += roseHPCToolkitTests 
 endif
+
 # TOO (2/16/2011): Errors with Thrifty (GCC 3.4.4) backend compiler. We can gradually
 # enable these tests at a later stage if necessary.
 if !USING_GCC_3_4_4_BACKEND_COMPILER
 # TOO (2/17/11): Errors with Tensilica's Xtensa compilers. 
 if !USING_XTENSA_BACKEND_COMPILER
-   SUBDIRS += astInterfaceTests astInliningTests ompLoweringTests astFileIOTests programAnalysisTests astOutliningTests loopProcessingTests fileLocation_tests
+#  SUBDIRS += astInterfaceTests astInliningTests ompLoweringTests astFileIOTests programAnalysisTests astOutliningTests loopProcessingTests fileLocation_tests
+if !ROSE_USE_INSURE
+   SUBDIRS += astInterfaceTests astInliningTests ompLoweringTests
+endif
+   SUBDIRS += astFileIOTests 
+if !ROSE_USE_INSURE
+   SUBDIRS += programAnalysisTests astOutliningTests loopProcessingTests fileLocation_tests
 endif 
+endif
 endif
 endif
 
