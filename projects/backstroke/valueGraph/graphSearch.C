@@ -132,6 +132,8 @@ namespace // anonymous namespace
     }
 } // end of anonymous
 
+
+#if 0
 set<EventReverser::VGEdge> EventReverser::getReversalRoute(
         int dagIndex,
         //const SubValueGraph& subgraph,
@@ -160,7 +162,7 @@ set<EventReverser::VGEdge> EventReverser::getReversalRoute(
         {
             if (v->isTemp())
             {
-                PathInfo paths = valueGraph_[*(boost::out_edges(valToRestore, valueGraph_).first)]->paths;
+                PathInfos paths = valueGraph_[*(boost::out_edges(valToRestore, valueGraph_).first)]->paths;
                 if (paths.count(dagIndex) == 0 || !paths[dagIndex][pathIndex])
                 {
                     continue;
@@ -284,6 +286,7 @@ NEXT:
     } // end of foreach (VGVertex valNode, valuesToRestore)
 
 }
+#endif
 
 set<EventReverser::VGEdge> EventReverser::getReversalRoute(
         int dagIndex,
@@ -314,8 +317,8 @@ set<EventReverser::VGEdge> EventReverser::getReversalRoute(
         {
             if (v->isTemp())
             {
-                PathInfo paths = valueGraph_[*(boost::out_edges(valToRestore, valueGraph_).first)]->paths;
-                if (paths.count(dagIndex) == 0 || !paths[dagIndex][pathIndex])
+                PathInfos paths = valueGraph_[*(boost::out_edges(valToRestore, valueGraph_).first)]->paths;
+                if (paths.count(dagIndex) == 0 || !paths[dagIndex].paths[pathIndex])
                 {
                     continue;
                 }

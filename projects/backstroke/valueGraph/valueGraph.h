@@ -227,7 +227,7 @@ private:
         SgScopeStatement* cmtScope);
     
     //! Build the route graph representing search result.
-    void buildRouteGraph(const std::map<VGEdge, PathInfo>& routes);
+    void buildRouteGraph(const std::map<VGEdge, PathInfos>& routes);
     
     //! Remove phi nodes from the route graph to facilitate code generation.
     void removePhiNodesFromRouteGraph();

@@ -7,10 +7,10 @@ using namespace std;
 
 #define foreach         BOOST_FOREACH
 
-PathInfo operator&(const PathInfo& path1, const PathInfo& path2)
+PathInfos operator&(const PathInfos& path1, const PathInfos& path2)
 {
-    PathInfo paths;
-    std::map<int, PathSet>::const_iterator
+    PathInfos paths;
+    PathInfos::const_iterator
         first1 = path1.begin(),
         last1 = path1.end(),
         first2 = path2.begin(),
@@ -22,22 +22,22 @@ PathInfo operator&(const PathInfo& path1, const PathInfo& path2)
         else if (first2->first < first1->first) ++first2;
         else 
         {
-            paths[first1->first] = first1->second & first2->second;
+            paths[first1->first].paths = first1->second.paths & first2->second.paths;
             ++first1; ++first2; 
         }
     }
     return paths;
 }
 
-PathInfo operator|(const PathInfo& path1, const PathInfo& path2)
+PathInfos operator|(const PathInfos& path1, const PathInfos& path2)
 {
-    PathInfo paths = path1;
+    PathInfos paths = path1;
     
-    foreach (const PathInfo::value_type& idxPaths, path2)
+    foreach (const PathInfos::value_type& idxPaths, path2)
     {
-        PathInfo::iterator iter = paths.find(idxPaths.first);
+        PathInfos::iterator iter = paths.find(idxPaths.first);
         if (iter != paths.end())
-            iter->second |= idxPaths.second;
+            iter->second.paths |= idxPaths.second.paths;
         else
             paths.insert(iter, idxPaths);
     }

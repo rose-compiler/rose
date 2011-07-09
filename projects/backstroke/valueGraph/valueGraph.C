@@ -963,7 +963,7 @@ EventReverser::VGEdge EventReverser::addValueGraphEdge(
     //ROSE_ASSERT(valNode);
 
     // Get the path information of this edge from the source node.
-    PathInfo paths = pathNumManager_->getPathNumbers(node->astNode);
+    PathInfos paths = pathNumManager_->getPathNumbers(node->astNode);
     
     ControlDependences controlDeps = cdg_->getControlDependences(node->astNode);
     
@@ -996,7 +996,7 @@ void EventReverser::addValueGraphPhiEdge(
 
     VGEdge newEdge = boost::add_edge(src, tar, valueGraph_).first;
 
-    PathInfo paths = pathNumManager_->getPathNumbers(node1, node2);
+    PathInfos paths = pathNumManager_->getPathNumbers(node1, node2);
     ControlDependences controlDeps = cdg_->getControlDependences(node1);
     valueGraph_[newEdge] = new PhiEdge(0, paths, controlDeps);
 }
@@ -1039,7 +1039,7 @@ void EventReverser::addValueGraphStateSavingEdges(
 #endif
     
     VGEdge newEdge = boost::add_edge(src, root_, valueGraph_).first;
-    PathInfo paths;
+    PathInfos paths;
     ControlDependences controlDeps;
     
     if (killer)
@@ -1058,7 +1058,7 @@ void EventReverser::addValueGraphStateSavingEdges(
     // For a Mu node, we should remove the corresponding paths of the same DAG index.
     if (MuNode* muNode = isMuNode(valueGraph_[src]))
     {
-        PathInfo::iterator iter = paths.find(muNode->dagIndex);
+        PathInfos::iterator iter = paths.find(muNode->dagIndex);
         if (iter != paths.end())
             paths.erase(iter);
     }
@@ -1103,7 +1103,7 @@ EventReverser::addValueGraphStateSavingEdges(VGVertex src)
     ROSE_ASSERT(astNode);
 
     // Get the path information of this edge.
-    PathInfo paths = pathNumManager_->getPathNumbers(astNode);
+    PathInfos paths = pathNumManager_->getPathNumbers(astNode);
     valueGraph_[newEdge] = new StateSavingEdge(cost, paths);
 
     // If the variable is killed at the exit of a scope, add a state saving edge to it.
@@ -1750,10 +1750,10 @@ void EventReverser::addStateSavingEdges()
             
             // Only if the Mu node is a copy when it is available.
             VGEdge newEdge = boost::add_edge(v, root_, valueGraph_).first;
-            PathInfo paths = pathNumManager_->getPathNumbers(funcDef_);
+            PathInfos paths = pathNumManager_->getPathNumbers(funcDef_);
 
             // The real paths only contains the paths in its own DAG.
-            PathInfo realPaths;
+            PathInfos realPaths;
             realPaths[muNode->dagIndex] = paths[muNode->dagIndex];
 
             // Null control dependence.
@@ -2211,8 +2211,8 @@ bool EventReverser::RouteGraphEdgeComp::operator()(
 #if 1
     if (val1 < val2) return true;
     if (val1 > val2) return false;
-    return routeGraph[edge1]->paths[dagIndex].count() < 
-           routeGraph[edge2]->paths[dagIndex].count();
+    return routeGraph[edge1]->paths[dagIndex].paths.count() < 
+           routeGraph[edge2]->paths[dagIndex].paths.count();
 #endif
     
 #if 0

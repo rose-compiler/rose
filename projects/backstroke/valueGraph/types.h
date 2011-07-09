@@ -17,20 +17,28 @@ typedef CFG<ssa_private::DataflowCfgFilter> BackstrokeCFG;
 typedef CDG<BackstrokeCFG> BackstrokeCDG;
 //typedef FilteredCFG BackstrokeCFG;
 
-typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
-		BackstrokeCFG::Vertex, BackstrokeCFG::Edge> DAG;
+typedef BackstrokeCDG::ControlDependences ControlDependences;
+
+//typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
+//		BackstrokeCFG::Vertex, BackstrokeCFG::Edge> DAG;
 
 typedef boost::dynamic_bitset<> PathSet;
 
 typedef std::vector<SgInitializedName*> VarName;
 
-struct PathInfo : std::map<int, PathSet>
+struct PathInfo
+{
+    PathSet paths;
+    std::vector<std::vector<std::pair<int, int> > > pathCond;
+};
+
+struct PathInfos : std::map<int, PathInfo>
 {
     bool hasPath(int dagIdx, int pathIdx) const
     {
-        std::map<int, PathSet>::const_iterator iter = find(dagIdx);
+        const_iterator iter = find(dagIdx);
         if (iter != end())
-            return iter->second[pathIdx];
+            return iter->second.paths[pathIdx];
         return false;
     }
 
@@ -41,7 +49,7 @@ struct PathInfo : std::map<int, PathSet>
                 iter != iterEnd; ++iter)
         {
             std::string s;
-            boost::to_string(iter->second, s);
+            boost::to_string(iter->second.paths, s);
             s = boost::lexical_cast<std::string>(iter->first) + ":" + s;
             str += "\\n" + s;
         }
@@ -49,8 +57,8 @@ struct PathInfo : std::map<int, PathSet>
     }
 };
 
-PathInfo operator&(const PathInfo& path1, const PathInfo& path2);
-PathInfo operator|(const PathInfo& path1, const PathInfo& path2);
+PathInfos operator&(const PathInfos& path1, const PathInfos& path2);
+PathInfos operator|(const PathInfos& path1, const PathInfos& path2);
 
 } // end of Backstroke
 

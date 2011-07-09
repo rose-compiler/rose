@@ -1,6 +1,7 @@
 #include "pathNumGenerator.h"
 #include "functionReverser.h"
 
+#include <slicing/backstrokeCDG.h>
 #include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/graph/graphviz.hpp>
@@ -50,7 +51,7 @@ void PathNumManager::buildSuperDAG()
         //    continue;
         
         DAGVertex dagNode = boost::add_vertex(superDag_);
-        superDag_[dagNode] = v;
+        superDag_[dagNode] = (*cfg_)[v];
         vertexToDagIndex_[v][0] = dagNode;
     }
     
@@ -79,7 +80,7 @@ void PathNumManager::buildSuperDAG()
         
 
         DAGEdge dagEdge = boost::add_edge(src, tgt, superDag_).first;
-        superDag_[dagEdge] = e;
+        superDag_[dagEdge] = (*cfg_)[e];
         edgeToDagIndex_[e][0] = dagEdge;
     }
         
@@ -110,7 +111,7 @@ void PathNumManager::generatePathNumbers()
         //    continue;
         
         DAGVertex dagNode = boost::add_vertex(dag);
-        dag[dagNode] = v;
+        dag[dagNode] = (*cfg_)[v];
         vertexToDagIndex_[v][0] = dagNode;
     }
     
@@ -136,15 +137,19 @@ void PathNumManager::generatePathNumbers()
         
 
         DAGEdge dagEdge = boost::add_edge(src, tgt, dag).first;
-        dag[dagEdge] = e;
+        dag[dagEdge] = (*cfg_)[e];
         edgeToDagIndex_[e][0] = dagEdge;
     }
         
     // Entries and exits of all DAGs.
-    vector<DAGVertex> entries(dags_.size());
-    vector<DAGVertex> exits(dags_.size());
-    entries[0] = vertexToDagIndex_[cfg_->getEntry()].begin()->second;
-    exits[0]   = vertexToDagIndex_[cfg_->getExit()].begin()->second;
+    //vector<DAGVertex> entries(dags_.size());
+    //vector<DAGVertex> exits(dags_.size());
+    //entries[0] = vertexToDagIndex_[cfg_->getEntry()].begin()->second;
+    //exits[0]   = vertexToDagIndex_[cfg_->getExit()].begin()->second;
+    
+    // Set the entry and exit.
+    dag.setEntry(vertexToDagIndex_[cfg_->getEntry()].begin()->second);
+    dag.setExit(vertexToDagIndex_[cfg_->getExit()].begin()->second);
     
     // Then build other dags for loops.
     int dagIdx = 1;
@@ -158,12 +163,12 @@ void PathNumManager::generatePathNumbers()
         foreach (CFGVertex cfgNode, loop.second)
         {
             DAGVertex dagNode = boost::add_vertex(dag);
-            dag[dagNode] = cfgNode;
+            dag[dagNode] = (*cfg_)[cfgNode];
             vertexToDagIndex_[cfgNode][dagIdx] = dagNode;
         }
         // Set the exit of the CFG as the exit of this DAG.
         DAGVertex exit = boost::add_vertex(dag);
-        dag[exit] = cfg_->getExit();
+        dag[exit] = (*cfg_)[cfg_->getExit()];
         vertexToDagIndex_[cfg_->getExit()][dagIdx] = exit;
         
         foreach (CFGVertex cfgNode, loop.second)
@@ -186,12 +191,16 @@ void PathNumManager::generatePathNumbers()
                     dagTgt = vertexToDagIndex_[tgt][dagIdx];
                 
                 DAGEdge dagEdge = boost::add_edge(dagSrc, dagTgt, dag).first;
-                dag[dagEdge] = edge;
+                dag[dagEdge] = (*cfg_)[edge];
                 edgeToDagIndex_[edge][dagIdx] = dagEdge;
             }
         }
-        entries[dagIdx] = vertexToDagIndex_[header][dagIdx];
-        exits[dagIdx] = exit;
+        
+        dag.setEntry(vertexToDagIndex_[header][dagIdx]);
+        dag.setExit(exit);
+    
+        //entries[dagIdx] = vertexToDagIndex_[header][dagIdx];
+        //exits[dagIdx] = exit;
         
         ++dagIdx;
     }
@@ -201,7 +210,7 @@ void PathNumManager::generatePathNumbers()
     for (int i = 0, n = dags_.size(); i != n; ++i)
     {
         PathNumGenerator* pathNumGen = 
-                new PathNumGenerator(dags_[i], entries[i], exits[i], cfg_);
+                new PathNumGenerator(dags_[i], cfg_);
         pathNumGen->generatePathNumbers();
         //cout << pathNumGen->getNumberOfPath() << endl;
         pathNumGenerators_[i] = pathNumGen;
@@ -217,6 +226,10 @@ void PathNumManager::buildAuxiliaryDags()
 {
     typedef Backstroke::FullCFG::Vertex CFGVertex;
     typedef Backstroke::FullCFG::Edge   CFGEdge;
+    
+    typedef Backstroke::FullCFG DAG;
+    typedef CFGVertex DAGVertex;
+    typedef CFGEdge   DAGEdge;
     
     Backstroke::FullCFG& fullCFG = fullCfg_;
     
@@ -249,7 +262,7 @@ void PathNumManager::buildAuxiliaryDags()
         //    continue;
         
         DAGVertex dagNode = boost::add_vertex(dag);
-        dag[dagNode] = v;
+        dag[dagNode] = fullCFG[v];
         vertexToDagIndex[v][0] = dagNode;
     }
     
@@ -275,7 +288,7 @@ void PathNumManager::buildAuxiliaryDags()
         
 
         DAGEdge dagEdge = boost::add_edge(src, tgt, dag).first;
-        dag[dagEdge] = e;
+        dag[dagEdge] = fullCFG[e];
         edgeToDagIndex[e][0] = dagEdge;
     }
         
@@ -297,12 +310,12 @@ void PathNumManager::buildAuxiliaryDags()
         foreach (CFGVertex cfgNode, loop.second)
         {
             DAGVertex dagNode = boost::add_vertex(dag);
-            dag[dagNode] = cfgNode;
+            dag[dagNode] = fullCFG[cfgNode];
             vertexToDagIndex[cfgNode][dagIdx] = dagNode;
         }
         // Set the exit of the CFG as the exit of this DAG.
         DAGVertex exit = boost::add_vertex(dag);
-        dag[exit] = fullCFG.getExit();
+        dag[exit] = fullCFG[fullCFG.getExit()];
         vertexToDagIndex[fullCFG.getExit()][dagIdx] = exit;
         
         foreach (CFGVertex cfgNode, loop.second)
@@ -325,7 +338,7 @@ void PathNumManager::buildAuxiliaryDags()
                     dagTgt = vertexToDagIndex[tgt][dagIdx];
                 
                 DAGEdge dagEdge = boost::add_edge(dagSrc, dagTgt, dag).first;
-                dag[dagEdge] = edge;
+                dag[dagEdge] = fullCFG[edge];
                 edgeToDagIndex[edge][dagIdx] = dagEdge;
             }
         }
@@ -371,7 +384,50 @@ bool PathNumManager::isDataMember(SgNode* node) const
     return false;
 }
 
-PathInfo PathNumManager::getPathNumbers(SgNode* node) const
+void PathNumManager::getPathNumsAndEdgeValues(
+    int dagIndex, DAGVertex dagNode, 
+    const map<int, int>& values,
+    vector<map<int, int> >& results) const
+{
+    PathNumGenerator* pathGen = pathNumGenerators_[dagIndex];
+
+    //ROSE_ASSERT(pathNumGenerators_[idx]->controlDependences_.count(dagNode));
+    if (pathGen->controlDependences_.count(dagNode) == 0)
+    {
+        results.push_back(values);
+        return;
+    }
+
+    // Find all control dependences of this node.
+    typedef map<DAGVertex, vector<DAGEdge> >::value_type NodeEdges;
+    foreach (const NodeEdges& nodeEdges, 
+            pathGen->controlDependences_[dagNode])
+    {
+        //cout << "***" << pathGen->controlDependences_[dagNode].size() << endl;
+        
+        DAGVertex cdNode = nodeEdges.first;
+        
+        map<int, int> vals(values);
+        
+        foreach (const DAGEdge& edge, nodeEdges.second)
+        {
+            ROSE_ASSERT(pathGen->pathNumbersOnVertices_.count(cdNode));
+            ROSE_ASSERT(pathGen->edgeValues_.count(edge));
+
+            int pathNum = pathGen->pathNumbersOnVertices_[nodeEdges.first];
+            int edgeVal = pathGen->edgeValues_[edge];
+
+            vals[pathNum] = edgeVal;
+            
+            vector<map<int, int> > res;
+            //getPathNumsAndEdgeValues(dagIndex, cdNode, values);
+            getPathNumsAndEdgeValues(dagIndex, cdNode, vals, res);
+            results.insert(results.end(), res.begin(), res.end());
+        }
+    }
+}
+
+PathInfos PathNumManager::getPathNumbers(SgNode* node) const
 {
     CFGVertex cfgNode;
     // If the given node is a data member of a class, set its CFG node to the exit.
@@ -379,18 +435,51 @@ PathInfo PathNumManager::getPathNumbers(SgNode* node) const
         cfgNode = cfg_->getExit();
     else
         cfgNode = getCFGNode(node);
+    
+    // Find a vector of two important numbers: its immediate branch dominator's value, 
+    // and the value on the out edge from that dominator. There two values decide how 
+    // to represent this path.
 
     int idx;
     DAGVertex dagNode;
-    PathInfo paths;
+    PathInfos paths;
     
     typedef std::map<int, DAGVertex>::value_type IndexToDagVertex;
     foreach (const IndexToDagVertex& idxNode, vertexToDagIndex_.find(cfgNode)->second)
     {
+        
         boost::tie(idx, dagNode) = idxNode;
+          
+        vector<map<int, int> > values;
+        getPathNumsAndEdgeValues(idx, dagNode, map<int, int>(), values);
+
+        vector<pair<int, int> > maskAndTarget;
+
+        for (int i = 0, s = values.size(); i < s; ++i)
+        {
+            int mask = 0;
+            int compTgt = 0;
+
+            typedef pair<int, int> IntPair;
+            foreach (const IntPair& intPair, values[i])
+            {
+                mask |= intPair.first;
+                compTgt += intPair.second;
+            }
+            mask >>= 1;
+
+            //cout << "}}}" << mask << " " << compTgt << endl;
+
+            maskAndTarget.push_back(make_pair(mask, compTgt));
+        }
+        
+        if (!maskAndTarget.empty())
+            paths[idx].pathCond.push_back(maskAndTarget);
+        
+        
         PathSet p = pathNumGenerators_[idx]->getPaths(dagNode);
         if (p.any())
-            paths[idx] = p;
+            paths[idx].paths = p;
     }
     return paths;
 }
@@ -420,7 +509,7 @@ PathNumManager::getVisiblePathNumbers(SgNode* node) const
 #endif
 }
 
-PathInfo PathNumManager::getPathNumbers(
+PathInfos PathNumManager::getPathNumbers(
         SgNode* node1, SgNode* node2) const
 {
     //cout << node1->unparseToString() << ' ' << node2->unparseToString() << endl;
@@ -432,33 +521,33 @@ PathInfo PathNumManager::getPathNumbers(
 
     int idx;
     DAGEdge dagEdge;
-    PathInfo paths;
+    PathInfos paths;
     
     typedef std::map<int, DAGEdge>::value_type IndexToDagEdge;
     foreach (const IndexToDagEdge& idxEdge, edgeToDagIndex_.find(cfgEdge)->second)
     {
         boost::tie(idx, dagEdge) = idxEdge;
-        paths[idx] = pathNumGenerators_[idx]->getPaths(dagEdge);
+        paths[idx].paths = pathNumGenerators_[idx]->getPaths(dagEdge);
     }
     return paths;
 }
 
 
-PathInfo PathNumManager::getAllPaths() const
+PathInfos PathNumManager::getAllPaths() const
 {
-    PathInfo allPaths;
+    PathInfos allPaths;
     for (size_t i = 0, s = dags_.size(); i < s; ++i)
     {
         PathSet paths(getNumberOfPath(i));
         paths.flip();
-        allPaths[i] = paths;
+        allPaths[i].paths = paths;
     }
     return allPaths;
 }
 
 void PathNumManager::getAstNodeIndices(size_t index, map<SgNode*, int>& nodeIndicesTable) const
 {
-    const DAG& dag = auxDags_[index];
+    const FullCFG& dag = auxDags_[index];
 
     vector<DAGVertex> nodes;
     boost::topological_sort(dag, back_inserter(nodes));
@@ -466,7 +555,7 @@ void PathNumManager::getAstNodeIndices(size_t index, map<SgNode*, int>& nodeIndi
     int num = 0;
     reverse_foreach (DAGVertex node, nodes)
     {
-        SgNode* astNode = fullCfg_[dag[node]]->getNode();
+        SgNode* astNode = dag[node]->getNode();
         nodeIndicesTable[astNode] = num * 10;
         num++;
     }
@@ -551,7 +640,8 @@ void PathNumManager::insertPathNumToFwdFunc()
         multimap<CFGVertex, EdgeValuePair> nodeToEdge;
         foreach (const EdgeValuePair& edgeVal, pathNumGenerators_[i]->edgeValues_)
         {
-            CFGVertex src = boost::source(dags_[i][edgeVal.first], *cfg_);
+            //CFGVertex src = boost::source(dags_[i][edgeVal.first], *cfg_);
+            DAGVertex src = boost::source(edgeVal.first, dags_[i]);
             // If the edge value is 0, no updating.
             if (edgeVal.second == 0) continue;
             
@@ -571,9 +661,11 @@ void PathNumManager::insertPathNumToFwdFunc()
         
         foreach (const EdgeValuePair& edgeVal, edgesToInstrument)
         {
-            BackstrokeCFG::Edge cfgEdge = dags_[i][edgeVal.first];
+            //BackstrokeCFG::Edge cfgEdge = dags_[i][edgeVal.first];
+            SgNode* src = dags_[i][edgeVal.first]->source().getNode();
+            SgNode* tgt = dags_[i][edgeVal.first]->target().getNode();
             // Insert the path num update on the CFG edge.
-            insertPathNumberOnEdge(cfgEdge, pathNumName, edgeVal.second);
+            insertPathNumberOnEdge(src, tgt, pathNumName, edgeVal.second);
         }
     }
 
@@ -672,13 +764,17 @@ void PathNumManager::insertLoopCounterToFwdFunc(const set<SgNode*>& loopHeaders)
         {
             foreach (const CFGEdge& cfgEdge, boost::out_edges(cfgNode, *cfg_))
             {
-                CFGVertex tgt = boost::target(cfgEdge, *cfg_);
+                CFGVertex tgtVertex = boost::target(cfgEdge, *cfg_);
+                
+                SgNode* src = (*cfg_)[cfgEdge]->source().getNode();
+                SgNode* tgt = (*cfg_)[cfgEdge]->target().getNode();
+                
                 // Backedges
-                if (tgt == header)
-                    insertLoopCounterIncrOnEdge(cfgEdge, pathNumName, loopCounterName);
+                if (tgtVertex == header)
+                    insertLoopCounterIncrOnEdge(src, tgt, pathNumName, loopCounterName);
                 // exit edges
-                else if (loopNodes.count(tgt) == 0)
-                    insertLoopCounterPushOnEdge(cfgEdge, loopCounterName);
+                else if (loopNodes.count(tgtVertex) == 0)
+                    insertLoopCounterPushOnEdge(src, tgt, loopCounterName);
             }
         }
         
@@ -705,16 +801,19 @@ void PathNumManager::insertLoopCounterToFwdFunc(const set<SgNode*>& loopHeaders)
 //} // end of anonymous
 
 void PathNumManager::insertPathNumberOnEdge(
-        const BackstrokeCFG::Edge& cfgEdge,
+        SgNode* src, SgNode* tgt,
         const string& pathNumName,
         int val)
 {
     SgExpression* pathNumExp = buildPlusAssignOp(
                                 buildVarRefExp(pathNumName),
                                 buildIntVal(val));
-
-    SgNode* src = (*cfg_)[cfgEdge]->source().getNode();
-    SgNode* tgt = (*cfg_)[cfgEdge]->target().getNode();
+    
+    //SgNode* src = (*dags_[dagIndex])[dagEdge]->source().getNode();
+    //SgNode* tgt = (*dags_[dagIndex])[dagEdge]->target().getNode();
+    
+    //SgNode* src = (*cfg_)[cfgEdge]->source().getNode();
+    //SgNode* tgt = (*cfg_)[cfgEdge]->target().getNode();
 
     if (SgIfStmt* ifStmt = isSgIfStmt(src))
     {
@@ -876,7 +975,7 @@ void PathNumManager::insertPathNumberOnEdge(
         }
     }
     
-    else if (SgConditionalExp* condExp = isSgConditionalExp(src))
+    else if (/*SgConditionalExp* condExp = */isSgConditionalExp(src))
     {
         SgExpression* expr = isSgExpression(tgt);
         ROSE_ASSERT(expr);
@@ -914,11 +1013,11 @@ void PathNumManager::insertPathNumberOnEdge(
 }
 
 void PathNumManager::insertLoopCounterIncrOnEdge(
-            const BackstrokeCFG::Edge& cfgEdge,
+            SgNode* src, SgNode* tgt,
             const std::string& pathNumName,
             const std::string& counterName)
 {
-    SgNode* src = (*cfg_)[cfgEdge]->source().getNode();
+    //SgNode* src = (*cfg_)[cfgEdge]->source().getNode();
     //SgNode* tgt = (*cfg_)[cfgEdge]->target().getNode();
     pushScopeStack(getScope(src));
     
@@ -972,11 +1071,11 @@ void PathNumManager::insertLoopCounterIncrOnEdge(
 }
 
 void PathNumManager::insertLoopCounterPushOnEdge(
-            const BackstrokeCFG::Edge& cfgEdge,
+            SgNode* src, SgNode* tgt,
             const std::string& counterName)
 {
-    SgNode* src = (*cfg_)[cfgEdge]->source().getNode();
-    SgNode* tgt = (*cfg_)[cfgEdge]->target().getNode();
+    //SgNode* src = (*cfg_)[cfgEdge]->source().getNode();
+    //SgNode* tgt = (*cfg_)[cfgEdge]->target().getNode();
     
     pushScopeStack(getScope(src));
     
@@ -1023,7 +1122,7 @@ void PathNumManager::dagToDot(const DAG& dag, const std::string& filename)
     boost::write_graphviz(ofile, dag);    
 }
 
-void PathNumGenerator::getEdgeValues()
+void PathNumGenerator::generateEdgeValues()
 {
     vector<Vertex> nodes;
     boost::topological_sort(dag_, std::back_inserter(nodes));
@@ -1052,13 +1151,13 @@ void PathNumGenerator::getEdgeValues()
         if (outEdges.size() == 2)
         {
             // Get the source CFG node.
-            SgNode* src = (*cfg_)[dag_[v]]->getNode();
+            SgNode* src = dag_[v]->getNode();
             SgNode* parent = src->get_parent();
 
             if (isSgAndOp(parent))
             {
                 // Get the first edge see if it is a true edge.
-                BackstrokeCFG::CFGEdgePtr edge = (*cfg_)[dag_[outEdges[0]]];
+                BackstrokeCFG::CFGEdgePtr edge = dag_[outEdges[0]];
                 if (edge->condition() == VirtualCFG::eckTrue)
                     swap(outEdges[0], outEdges[1]);
             }
@@ -1066,7 +1165,7 @@ void PathNumGenerator::getEdgeValues()
             else if (isSgOrOp(parent))
             {
                 // Get the first edge see if it is a true edge.
-                BackstrokeCFG::CFGEdgePtr edge = (*cfg_)[dag_[outEdges[0]]];
+                BackstrokeCFG::CFGEdgePtr edge = dag_[outEdges[0]];
                 if (edge->condition() == VirtualCFG::eckFalse)
                     swap(outEdges[0], outEdges[1]);
             }
@@ -1087,7 +1186,7 @@ void PathNumGenerator::getEdgeValues()
         
         foreach (const Edge& e, outEdges)
         {
-            Vertex tar = boost::target(e, dag_);
+            //Vertex tar = boost::target(e, dag_);
             edgeValues_[e] = pathNum;
             pathNum += maxNumber;
         }
@@ -1109,13 +1208,29 @@ void PathNumGenerator::getEdgeValues()
     }
 }
 
-void PathNumGenerator::getAllPaths()
+void PathNumGenerator::generateControlDependences()
+{
+    CDG<DAG> cdg(dag_);
+    foreach (Vertex node, boost::vertices(dag_))
+    {
+        CDG<DAG>::ControlDependences cds = cdg.getControlDependences(dag_[node]);
+        
+        foreach (const CDG<DAG>::ControlDependence& cd, cds)
+        {
+            Edge edge = cd.cdEdge.cfgEdge;
+            Vertex src = boost::source(edge, dag_);
+            controlDependences_[node][src].push_back(edge);
+        }
+    }
+}
+
+void PathNumGenerator::generateAllPaths()
 {
     std::vector<Path> paths;
     map<Vertex, vector<Edge> > pathsOnVertex;
 
     stack<Vertex> nodes;
-    nodes.push(entry_);
+    nodes.push(dag_.getEntry());
     while (!nodes.empty())
     {
         Vertex node = nodes.top();
@@ -1133,7 +1248,7 @@ void PathNumGenerator::getAllPaths()
         }
 
         // The exit is the last node of each path.
-        if (node == exit_)
+        if (node == dag_.getExit())
             paths.push_back(pathsOnVertex[node]);
     }
     
@@ -1163,7 +1278,7 @@ void PathNumGenerator::getAllPaths()
     }
 }
 
-void PathNumGenerator::getAllPathNumForNodesAndEdges()
+void PathNumGenerator::generateAllPathNumForNodesAndEdges()
 {
     int pathNumber = getNumberOfPath();
     foreach (Vertex v, boost::vertices(dag_))

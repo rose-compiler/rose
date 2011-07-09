@@ -6,16 +6,22 @@
 namespace Backstroke
 {
     
-typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
-    BackstrokeCFG::Vertex, BackstrokeCFG::Edge> DAG;
+//typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
+//    BackstrokeCFG::Vertex, BackstrokeCFG::Edge> DAG;
 
+typedef BackstrokeCFG DAG;
+    
+    
 class PathNumManager;
 
 //! Given a DAG with its entry and exit, this class generates path numbers on its edges and vertices.
 class PathNumGenerator
 {
-	typedef boost::graph_traits<DAG>::vertex_descriptor Vertex;
-	typedef boost::graph_traits<DAG>::edge_descriptor Edge;
+	//typedef boost::graph_traits<DAG>::vertex_descriptor Vertex;
+	//typedef boost::graph_traits<DAG>::edge_descriptor Edge;
+    
+    typedef BackstrokeCFG::Vertex Vertex;
+    typedef BackstrokeCFG::Edge   Edge;
     
     typedef BackstrokeCFG::Vertex CFGVertex;
     typedef BackstrokeCFG::Edge   CFGEdge;
@@ -40,13 +46,6 @@ class PathNumGenerator
     //! The CFG.
     const BackstrokeCFG* cfg_;
 
-    //! The entry of the dag. This may be the entry of the CFG, or the header of a loop.
-    Vertex entry_;
-
-    //! The exit of the dag. This may be the exit of the CFG, or the exit of a loop.
-    //! An exit of a loop is not a node in the CFG, but a virtual node representing outside the loop.
-    Vertex exit_;
-
     //! A table mapping each vertex to the number of paths on it.
     std::map<Vertex, size_t> pathNumbersOnVertices_;
 
@@ -64,19 +63,26 @@ class PathNumGenerator
     std::map<Edge,   PathSet> pathsForEdge_;
     //std::map<Vertex, std::set<int> > pathsForNode_;
 
+
+    //! For each CFG node, this table stores all its control dependent nodes and 
+    //! corresponding edges.
+    std::map<Vertex, std::map<Vertex, std::vector<Edge> > > 
+    controlDependences_;
+        
+        
     //! Get access to edgeValues_.
     friend class PathNumManager;
 
 public:
-    PathNumGenerator(const DAG& dag, Vertex entry, Vertex exit, const BackstrokeCFG* cfg)
-        : dag_(dag), cfg_(cfg), entry_(entry), exit_(exit)
+    PathNumGenerator(const DAG& dag, const BackstrokeCFG* cfg)
+        : dag_(dag), cfg_(cfg)
     {}
 
     //! Returns the visible incomplete path numbers and their corresponding complete 
     //! paths set of the given DAG node.
-    std::map<int, PathInfo> getVisibleNumAndPaths(Vertex v) const
+    std::map<int, PathInfos> getVisibleNumAndPaths(Vertex v) const
     {
-        return std::map<int, PathInfo>();
+        return std::map<int, PathInfos>();
         //ROSE_ASSERT(pathsForNode_.count(v) > 0);
         //return pathsForNode_.find(v)->second.numToPath;
     }
@@ -103,28 +109,36 @@ public:
     
     void generatePathNumbers()
     {
-        getEdgeValues();
-        getAllPaths();
-        getAllPathNumForNodesAndEdges();
+        generateEdgeValues();
+        generateControlDependences();
+        generateAllPaths();
+        generateAllPathNumForNodesAndEdges();
     }
     
     size_t getNumberOfPath() const { return paths_.size(); }
 
 private:
     //! Assign values to edges then each path has a unique number.
-    void getEdgeValues();
+    void generateEdgeValues();
+    
+    //! Generate control dependences for all DAG nodes.
+    void generateControlDependences();
 
     //! Find all paths in this DAG.
-    void getAllPaths();
+    void generateAllPaths();
 
     //! For each vertex in the DAG, find all paths which contain it.
-    void getAllPathNumForNodesAndEdges();
+    void generateAllPathNumForNodesAndEdges();
 };
 
 class PathNumManager
 {
-    typedef boost::graph_traits<DAG>::vertex_descriptor DAGVertex;
-    typedef boost::graph_traits<DAG>::edge_descriptor   DAGEdge;
+    //typedef boost::graph_traits<DAG>::vertex_descriptor DAGVertex;
+    //typedef boost::graph_traits<DAG>::edge_descriptor   DAGEdge;
+    
+    typedef BackstrokeCFG::Vertex DAGVertex;
+    typedef BackstrokeCFG::Edge   DAGEdge;
+    
     typedef BackstrokeCFG::Vertex CFGVertex;
     typedef BackstrokeCFG::Edge   CFGEdge;
 
@@ -135,7 +149,7 @@ class PathNumManager
     //! The first DAG is about the function, and others are all loops.
     std::vector<DAG> dags_;
     
-    std::vector<DAG> auxDags_;
+    std::vector<FullCFG> auxDags_;
 
     //! A DAG including all CFG nodes and is used to get the path numbers.
     DAG superDag_;
@@ -176,11 +190,17 @@ public:
     //! A work around.
     void buildAuxiliaryDags();
     
+    //! A recursive function to get all control dependences related information.
+    void getPathNumsAndEdgeValues(
+        int dagIndex, DAGVertex dagNode, 
+        const std::map<int, int>& values,
+        std::vector<std::map<int, int> >& results) const;
+    
     //! Get path numbers from a AST node.
-    PathInfo getPathNumbers(SgNode* node) const;
+    PathInfos getPathNumbers(SgNode* node) const;
 
     //! Get path numbers from two AST nodes, which form a CFG edge.
-    PathInfo getPathNumbers(SgNode* node1, SgNode* node2) const;
+    PathInfos getPathNumbers(SgNode* node1, SgNode* node2) const;
 
     //! Get visible incomplete path numbers and their cooresponding complete path numbers.
     //! The first member in the returned pair is the DAG index, and the second is a table
@@ -204,7 +224,7 @@ public:
     }
     
     //! For all DAGs, return a path set with all 1 (all paths).
-    PathInfo getAllPaths() const;
+    PathInfos getAllPaths() const;
     
     size_t getDagNum() const { return dags_.size(); }
     
@@ -242,19 +262,19 @@ private:
 
     //! Insert a path number update statement on the given CFG edge.
     void insertPathNumberOnEdge(
-            const BackstrokeCFG::Edge& cfgEdge,
+            SgNode* src, SgNode* tgt,
             const std::string& pathNumName,
             int val);
     
     //! For a loop counter, insert ++counter on the given CFG edge.
     void insertLoopCounterIncrOnEdge(
-            const BackstrokeCFG::Edge& cfgEdge,
+            SgNode* src, SgNode* tgt,
             const std::string& pathNumName,
             const std::string& counterName);
     
     //! For a loop counter, insert push(counter) on the given CFG edge.
     void insertLoopCounterPushOnEdge(
-            const BackstrokeCFG::Edge& cfgEdge,
+            SgNode* src, SgNode* tgt,
             const std::string& pathNumName);
 };
 

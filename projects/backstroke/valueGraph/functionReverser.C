@@ -97,7 +97,7 @@ void EventReverser::generateCode()
     cout << "Start search.\n";
     
     // The following table collects which VG edges are in the final route graph.
-    map<VGEdge, PathInfo> routes;
+    map<VGEdge, PathInfos> routes;
     
     // Process the whole function first to see which variables are needed in loops.
     size_t pathNum = pathNumManager_->getNumberOfPath(0);
@@ -109,7 +109,7 @@ void EventReverser::generateCode()
 
         foreach (const VGEdge& edge, route)
         {
-            PathSet& path = routes[edge][0];
+            PathSet& path = routes[edge][0].paths;
             if (path.empty()) path.resize(pathNum);
             path.set(i);
             
@@ -135,7 +135,7 @@ void EventReverser::generateCode()
 
             foreach (const VGEdge& edge, route)
             {
-                PathSet& path = routes[edge][dagIndex];
+                PathSet& path = routes[edge][dagIndex].paths;
                 if (path.empty()) path.resize(pathNum);
                 path.set(i);
             }
@@ -264,15 +264,15 @@ void EventReverser::buildPathNumDeclForRvsCmtFunc(
     SageInterface::prependStatement(SageInterface::copyStatement(pathNumDecl), cmtScope);
 }
 
-void EventReverser::buildRouteGraph(const map<VGEdge, PathInfo>& routes)
+void EventReverser::buildRouteGraph(const map<VGEdge, PathInfos>& routes)
 {
     map<VGVertex, VGVertex> nodeTable;
     
-    typedef map<VGEdge, PathInfo>::value_type EdgePathPair;
+    typedef map<VGEdge, PathInfos>::value_type EdgePathPair;
     foreach (const EdgePathPair& edgePath, routes)
     {
         const VGEdge& edge = edgePath.first;
-        const PathInfo& paths = edgePath.second;
+        const PathInfos& paths = edgePath.second;
         
         VGVertex src = boost::source(edge, valueGraph_);
         VGVertex tgt = boost::target(edge, valueGraph_);
@@ -360,11 +360,11 @@ void EventReverser::removePhiNodesFromRouteGraph()
         {
             //VGEdge outEdge = *(boost::out_edges(node, routeGraph_).first);
             VGVertex tgt = boost::target(outEdge, routeGraph_);
-            const PathInfo& pathsOnOutEdge = routeGraph_[outEdge]->paths;
+            const PathInfos& pathsOnOutEdge = routeGraph_[outEdge]->paths;
 
             foreach (const VGEdge& inEdge, boost::in_edges(node, routeGraph_))
             {
-                const PathInfo& pathsOnInEdge =  routeGraph_[inEdge]->paths;
+                const PathInfos& pathsOnInEdge =  routeGraph_[inEdge]->paths;
 
                 //ROSE_ASSERT(pathsOnInEdge.is_subset_of(pathsOnOutEdge) ||
                 //        pathsOnOutEdge.is_subset_of(pathsOnInEdge));
@@ -372,7 +372,7 @@ void EventReverser::removePhiNodesFromRouteGraph()
                 // Add a new edge first, then attach the information in which
                 // the cost is the one on the out edge and the path set is the one
                 // on the in edge.
-                PathInfo newPaths = pathsOnInEdge & pathsOnOutEdge;
+                PathInfos newPaths = pathsOnInEdge & pathsOnOutEdge;
                 if (newPaths.empty())
                     continue;
 
@@ -659,9 +659,9 @@ void EventReverser::getRouteGraphEdgesInProperOrder(int dagIndex, vector<VGEdge>
     RouteGraphEdgeComp comp(routeGraph_, dagIndex, nodeIndexTable);
     priority_queue<VGEdge, vector<VGEdge>, RouteGraphEdgeComp> nextEdgeCandidates(comp);
     
-    map<VGVertex, PathInfo> nodePathsTable;
+    map<VGVertex, PathInfos> nodePathsTable;
     foreach (VGVertex node, boost::vertices(routeGraph_))
-        nodePathsTable[node][dagIndex].resize(pathNumManager_->getNumberOfPath(dagIndex));
+        nodePathsTable[node][dagIndex].paths.resize(pathNumManager_->getNumberOfPath(dagIndex));
     
     
 #if 0
@@ -742,8 +742,8 @@ void EventReverser::getRouteGraphEdgesInProperOrder(int dagIndex, vector<VGEdge>
         
         VGVertex src = boost::source(edge, routeGraph_);
         // The following paths are the paths on this edge.
-        PathSet& pathsOnSrc = nodePathsTable[src][dagIndex];
-        pathsOnSrc |= routeGraph_[edge]->paths[dagIndex];
+        PathSet& pathsOnSrc = nodePathsTable[src][dagIndex].paths;
+        pathsOnSrc |= routeGraph_[edge]->paths[dagIndex].paths;
         
         // If all out edges of this node are not traversed, don't go above.
         bool visited = true;
@@ -767,7 +767,7 @@ void EventReverser::getRouteGraphEdgesInProperOrder(int dagIndex, vector<VGEdge>
             if (routeGraph_[inEdge]->paths.count(dagIndex) == 0)
                 continue;
             
-            if (routeGraph_[inEdge]->paths[dagIndex].is_subset_of(pathsOnSrc))
+            if (routeGraph_[inEdge]->paths[dagIndex].paths.is_subset_of(pathsOnSrc))
             {
                 if (traversedEdges.count(inEdge) == 0)
                 {
@@ -818,7 +818,7 @@ void EventReverser::buildReverseCFG(
     
     foreach (const VGEdge& edge, result)
     {        
-        const PathSet& paths = routeGraph_[edge]->paths[dagIndex];
+        const PathSet& paths = routeGraph_[edge]->paths[dagIndex].paths;
         addReverseCFGNode(paths, &edge, rvsCFG, 
                 rvsCFGBasicBlock, parentTable, dagAdded);
     }
