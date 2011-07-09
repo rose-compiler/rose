@@ -179,12 +179,16 @@ public:
 	{ return funcDef_; }
 
 	//! Get the entry node of the CFG
-	const Vertex& getEntry() const
-	{ return entry_; }
-
+	Vertex getEntry() const { return entry_; }
+    
 	//! Get the exit node of the CFG
-	const Vertex& getExit() const
-	{ return exit_; }
+	Vertex getExit() const { return exit_; }
+    
+    //! Set the entry node of the CFG
+    void setEntry(Vertex entry) { entry_ = entry; }
+    
+    //! Set the exit node of the CFG
+    void setExit(Vertex exit) { exit_ = exit; }
 
 	//! Build the dominator tree of this CFG.
 	//! @returns A map from each node to its immediate dominator.

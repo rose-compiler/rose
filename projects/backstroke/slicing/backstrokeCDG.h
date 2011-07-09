@@ -181,6 +181,12 @@ void CDG<CFGType>::buildCDG(const CFGType& cfg)
 	
 	// Remove all nodes and edges.
 	this->clear();
+    
+    // Build a table from Virtual::CFG edge to the edge in the given CFG.
+    // Then we can look up edges from reverse CFG to normal CFG.
+    std::map<typename CFGType::CFGEdgePtr, CFGEdgeT> edgeTable;
+    foreach (const CFGEdgeT& edge, boost::edges(cfg))
+        edgeTable[cfg[edge]] = edge;
 
 	// First, build a reverse CFG.
 	CFGType rvsCfg = cfg.makeReverseCopy();
@@ -242,6 +248,7 @@ void CDG<CFGType>::buildCDG(const CFGType& cfg)
 			{
 				// Add the edge.
 				Edge edge = boost::add_edge(src, tar, *this).first;
+                (*this)[edge].cfgEdge   = edgeTable[rvsCfg[cdEdge]];
 				(*this)[edge].condition = rvsCfg[cdEdge]->condition();
 				(*this)[edge].caseLabel = rvsCfg[cdEdge]->caseLabel();
 			}
