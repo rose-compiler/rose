@@ -234,7 +234,8 @@ bool MemoryType::registerMemType(Location addr, size_t ofs, const RsType* type)
 {
     // \pp addr = beginAddress() + ofs
     //     however, in UPC the conversion is quite involved when shared
-    //     memory and blocking factors are in use.
+    //     memory and blocking factors are in use, thus the interface
+    //     supports both.
     const std::pair<bool, bool> mergeRes = checkAndMergeMemType(ofs, type);
     bool                        statuschange = mergeRes.second;
 
@@ -314,19 +315,19 @@ bool isDistMem(const MemoryType& mt, const RsType& t)
 static
 std::pair<bool, bool> mtyFailed()
 {
-  return std::make_pair(false /*success*/, false /* no status update */);
+  return std::make_pair(false /*success*/, false /* status update */);
 }
 
 static
 std::pair<bool, bool> mtyNoUpdate()
 {
-  return std::make_pair(true /*success*/, true /* no status update */);
+  return std::make_pair(true /*success*/, false /* status update */);
 }
 
 static
 std::pair<bool, bool> mtyMerged()
 {
-  return std::make_pair(true /*success*/, true /* no status update */);
+  return std::make_pair(true /*success*/, true /* status update */);
 }
 
 
@@ -996,16 +997,16 @@ MemoryManager::checkWrite(Location addr, size_t size, const RsType* t)
       }
 
       statuschange = mt->registerMemType(addr, ofs, t);
-    }
+      }
 
-    statuschange = mt->initialize(ofs, size) || statuschange;
+    const bool initmod = mt->initialize(ofs, size);
 
     if ( diagnostics::message(diagnostics::memory) )
     {
       RuntimeSystem::instance()->printMessage("   ++ checkWrite done.");
     }
 
-    return std::make_pair(mt, statuschange);
+    return std::make_pair(mt, initmod || statuschange);
 }
 
 bool MemoryManager::isInitialized(Location addr, size_t size) const
