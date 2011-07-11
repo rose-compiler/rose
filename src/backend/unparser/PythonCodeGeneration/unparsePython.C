@@ -54,6 +54,7 @@ Unparse_Python::unparseLanguageSpecificStatement(SgStatement* stmt,
 #define CASE_DISPATCH_AND_BREAK(sg_t) \
   case V_Sg ##sg_t : unparse ##sg_t (isSg##sg_t (stmt),info); break;
 
+        CASE_DISPATCH_AND_BREAK(AssertStmt);
         CASE_DISPATCH_AND_BREAK(BasicBlock);
         CASE_DISPATCH_AND_BREAK(BreakStmt);
         CASE_DISPATCH_AND_BREAK(ContinueStmt);
@@ -161,6 +162,14 @@ Unparse_Python::ws_prefix(int nesting_level) {
 }
 
 /* ================== Node-specific unparsing functions ===================== */
+
+void
+Unparse_Python::unparseAssertStmt(SgAssertStmt* sg_assert,
+                                  SgUnparse_Info& info)
+{
+    curprint("assert ");
+    unparseExpression(sg_assert->get_test(), info);
+}
 
 void
 Unparse_Python::unparseAssignOp(SgAssignOp* sg_assign_op,

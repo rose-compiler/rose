@@ -97,6 +97,10 @@ class SageTranslator(ast.NodeVisitor):
     kwargs = map(self.visit, node.defaults)
     return sage.buildFunctionParameterList(args, kwargs)
 
+  def visit_Assert(self, node):
+    test = self.visit(node.test)
+    return sage.buildAssert(test)
+
   def visit_Assign(self, node):
     targets = map(self.visit, node.targets)
     value = self.visit(node.value)
