@@ -100,7 +100,7 @@ demo3_CPPFLAGS = $(ROSE_INCLUDES)
 demo3_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 EXTRA_DIST += demos/demo3input.c
-MOSTLYCLEANFILES += demos/demo3input
+MOSTLYCLEANFILES += demo3input
 demo3input: demos/demo3input.c
 	@echo "  CC32    $@"
 	@$(CC) $(CFLAGS32) -Wall -o $@ $^
@@ -116,6 +116,7 @@ demo4_SOURCES = demos/demo4.C
 demo4_CPPFLAGS = $(ROSE_INCLUDES)
 demo4_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+MOSTLYCLEANFILES += demo4input
 demo4input: demo3input
 	cp $^ $@
 
