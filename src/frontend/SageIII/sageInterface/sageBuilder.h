@@ -780,6 +780,10 @@ SgBreakStmt* buildBreakStmt_nfi();
 SgContinueStmt* buildContinueStmt();
 SgContinueStmt* buildContinueStmt_nfi();
 
+//! Build a delete statement
+SgDeleteExp* buildDeleteExp(SgExpression *target, bool is_array = false, bool need_global_specifier = false, SgFunctionDeclaration *deleteOperatorDeclaration = NULL);
+SgDeleteExp* buildDeleteExp_nfi(SgExpression *target, bool is_array = false, bool need_global_specifier = false, SgFunctionDeclaration *deleteOperatorDeclaration = NULL);
+
 //! Build a class definition scope statement
 SgClassDefinition* buildClassDefinition(SgClassDeclaration *d = NULL);
 

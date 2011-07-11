@@ -248,6 +248,19 @@ sage_buildContinue(PyObject *self, PyObject *args)
 }
 
 /*
+ */
+PyObject*
+sage_buildDelete(PyObject *self, PyObject *args)
+{
+    SgExpression *sg_exp;
+    if (! PyArg_ParseTuple(args, "O&", SAGE_CONVERTER(SgExpression), &sg_exp))
+        return NULL;
+
+    SgDeleteExp* sg_delete = SageBuilder::buildDeleteExp(sg_exp);
+    return PyEncapsulate(sg_delete);
+}
+
+/*
  * Build an Expr node from the given Python statements.
  *  - PyObject* args = (PyObject*)
  */

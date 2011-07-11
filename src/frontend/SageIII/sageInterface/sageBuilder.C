@@ -3086,6 +3086,22 @@ SgContinueStmt * SageBuilder::buildContinueStmt_nfi()
   return result;
 }
 
+SgDeleteExp* SageBuilder::buildDeleteExp(SgExpression *target, bool is_array, bool need_global_specifier, SgFunctionDeclaration *deleteOperatorDeclaration)
+{
+    SgDeleteExp *result = new SgDeleteExp(target, is_array, need_global_specifier, deleteOperatorDeclaration);
+    target->set_parent(result);
+    setOneSourcePositionForTransformation(result);
+    return result;
+}
+
+SgDeleteExp* SageBuilder::buildDeleteExp_nfi(SgExpression *target, bool is_array, bool need_global_specifier, SgFunctionDeclaration *deleteOperatorDeclaration)
+{
+    SgDeleteExp *result = new SgDeleteExp(target, is_array, need_global_specifier, deleteOperatorDeclaration);
+    target->set_parent(result);
+    setOneSourcePositionNull(result);
+    return result;
+}
+
 SgPragmaDeclaration * SageBuilder::buildPragmaDeclaration(const string& name, SgScopeStatement* scope)
 {
   if (scope == NULL)
