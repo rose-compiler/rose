@@ -479,7 +479,7 @@ PathInfos PathNumManager::getPathNumbers(SgNode* node) const
         
         PathSet p = pathNumGenerators_[idx]->getPaths(dagNode);
         if (p.any())
-            paths[idx].paths = p;
+            paths[idx] = p;
     }
     return paths;
 }
@@ -527,7 +527,7 @@ PathInfos PathNumManager::getPathNumbers(
     foreach (const IndexToDagEdge& idxEdge, edgeToDagIndex_.find(cfgEdge)->second)
     {
         boost::tie(idx, dagEdge) = idxEdge;
-        paths[idx].paths = pathNumGenerators_[idx]->getPaths(dagEdge);
+        paths[idx] = pathNumGenerators_[idx]->getPaths(dagEdge);
     }
     return paths;
 }
@@ -540,7 +540,7 @@ PathInfos PathNumManager::getAllPaths() const
     {
         PathSet paths(getNumberOfPath(i));
         paths.flip();
-        allPaths[i].paths = paths;
+        allPaths[i] = paths;
     }
     return allPaths;
 }

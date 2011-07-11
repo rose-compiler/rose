@@ -7,6 +7,63 @@ using namespace std;
 
 #define foreach         BOOST_FOREACH
 
+
+
+PathInfo& PathInfo::operator&=(const PathInfo& p)
+{
+    if (p.empty())
+    {
+        this->reset();
+        return *this;
+    }
+
+    if (this->is_subset_of(p))
+    {
+        // Empty body.
+    }
+    else if (p.is_subset_of(*this))
+    {
+        *this = p;
+    }
+    else
+    {
+        this->PathSet::operator&=(p);
+        pathCond.insert(pathCond.end(), p.pathCond.begin(), p.pathCond.end());
+    }
+    return *this;
+}
+
+
+PathInfo& PathInfo::operator|=(const PathInfo& p)
+{
+    if (p.empty())
+    {
+        this->reset();
+        return *this;
+    }
+
+    if (this->is_subset_of(p))
+    {
+        *this = p;
+    }
+    else if (p.is_subset_of(*this))
+    {
+        // Empty body.
+    }
+    else
+    {
+        this->PathSet::operator|=(p);
+        //pathCond.insert(pathCond.end(), p.pathCond.begin(), p.pathCond.end());
+    }
+    return *this;
+}
+
+PathInfo& PathInfo::operator-=(const PathInfo& p)
+{
+    this->PathSet::operator-=(p);
+    return *this;
+}
+
 PathInfos operator&(const PathInfos& path1, const PathInfos& path2)
 {
     PathInfos paths;
@@ -22,7 +79,7 @@ PathInfos operator&(const PathInfos& path1, const PathInfos& path2)
         else if (first2->first < first1->first) ++first2;
         else 
         {
-            paths[first1->first].paths = first1->second.paths & first2->second.paths;
+            paths[first1->first] = first1->second & first2->second;
             ++first1; ++first2; 
         }
     }
@@ -37,7 +94,7 @@ PathInfos operator|(const PathInfos& path1, const PathInfos& path2)
     {
         PathInfos::iterator iter = paths.find(idxPaths.first);
         if (iter != paths.end())
-            iter->second.paths |= idxPaths.second.paths;
+            iter->second |= idxPaths.second;
         else
             paths.insert(iter, idxPaths);
     }

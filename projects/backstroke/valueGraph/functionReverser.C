@@ -102,6 +102,18 @@ void EventReverser::generateCode()
     // Process the whole function first to see which variables are needed in loops.
     size_t pathNum = pathNumManager_->getNumberOfPath(0);
     cout << "There are " << pathNum << " paths for this function.\n\n";
+    
+    
+    
+    map<VGEdge, PathInfo> routeWithPaths = getReversalRoute(0, valuesToRestore_[0]);
+    typedef map<VGEdge, PathInfo>::value_type T;
+    foreach (const T& edgeAndPaths, routeWithPaths)
+        routes[edgeAndPaths.first][0] = edgeAndPaths.second;
+    
+    
+    // Process other DAGs.
+    int dagNum = pathNumManager_->getNumberOfDags();
+#if 0
     for (size_t i = 0; i < pathNum; ++i)
     {
         // Search the subgraph then get the shorted paths.
@@ -109,7 +121,7 @@ void EventReverser::generateCode()
 
         foreach (const VGEdge& edge, route)
         {
-            PathSet& path = routes[edge][0].paths;
+            PathSet& path = routes[edge][0];
             if (path.empty()) path.resize(pathNum);
             path.set(i);
             
@@ -122,8 +134,6 @@ void EventReverser::generateCode()
         }
     }
     
-    // Process other DAGs.
-    int dagNum = pathNumManager_->getNumberOfDags();
     for (int dagIndex = 1; dagIndex < dagNum; ++dagIndex)
     {
         // Just for DAG 0.
@@ -135,12 +145,13 @@ void EventReverser::generateCode()
 
             foreach (const VGEdge& edge, route)
             {
-                PathSet& path = routes[edge][dagIndex].paths;
+                PathSet& path = routes[edge][dagIndex];
                 if (path.empty()) path.resize(pathNum);
                 path.set(i);
             }
         }
     }
+#endif
     
     cout << "Start to build route graph.\n";
     
@@ -661,7 +672,7 @@ void EventReverser::getRouteGraphEdgesInProperOrder(int dagIndex, vector<VGEdge>
     
     map<VGVertex, PathInfos> nodePathsTable;
     foreach (VGVertex node, boost::vertices(routeGraph_))
-        nodePathsTable[node][dagIndex].paths.resize(pathNumManager_->getNumberOfPath(dagIndex));
+        nodePathsTable[node][dagIndex].resize(pathNumManager_->getNumberOfPath(dagIndex));
     
     
 #if 0
@@ -742,8 +753,8 @@ void EventReverser::getRouteGraphEdgesInProperOrder(int dagIndex, vector<VGEdge>
         
         VGVertex src = boost::source(edge, routeGraph_);
         // The following paths are the paths on this edge.
-        PathSet& pathsOnSrc = nodePathsTable[src][dagIndex].paths;
-        pathsOnSrc |= routeGraph_[edge]->paths[dagIndex].paths;
+        PathInfo& pathsOnSrc = nodePathsTable[src][dagIndex];
+        pathsOnSrc |= routeGraph_[edge]->paths[dagIndex];
         
         // If all out edges of this node are not traversed, don't go above.
         bool visited = true;
@@ -767,7 +778,7 @@ void EventReverser::getRouteGraphEdgesInProperOrder(int dagIndex, vector<VGEdge>
             if (routeGraph_[inEdge]->paths.count(dagIndex) == 0)
                 continue;
             
-            if (routeGraph_[inEdge]->paths[dagIndex].paths.is_subset_of(pathsOnSrc))
+            if (routeGraph_[inEdge]->paths[dagIndex].is_subset_of(pathsOnSrc))
             {
                 if (traversedEdges.count(inEdge) == 0)
                 {
@@ -783,15 +794,15 @@ void EventReverser::buildReverseCFG(
         int dagIndex, ReverseCFG& rvsCFG)
 {
     set<VGEdge> visitedEdges;
-    map<PathSet, RvsCFGVertex> rvsCFGBasicBlock;
-    map<PathSet, PathSet> parentTable;
+    map<PathInfo, RvsCFGVertex> rvsCFGBasicBlock;
+    map<PathInfo, PathInfo> parentTable;
     // This set tracks which DAG has been added to the reverse CFG.
     set<int> dagAdded;
     
     
     // Add a initial node to reverse CFG indicating the entry.
     //RvsCFGVertex entry = boost::add_vertex(rvsCFG);
-    PathSet allPaths = pathNumManager_->getAllPaths(dagIndex);
+    PathInfo allPaths = pathNumManager_->getAllPaths(dagIndex);
     parentTable[allPaths] = allPaths;
     
     addReverseCFGNode(allPaths, NULL, rvsCFG, 
@@ -818,7 +829,7 @@ void EventReverser::buildReverseCFG(
     
     foreach (const VGEdge& edge, result)
     {        
-        const PathSet& paths = routeGraph_[edge]->paths[dagIndex].paths;
+        const PathInfo& paths = routeGraph_[edge]->paths[dagIndex];
         addReverseCFGNode(paths, &edge, rvsCFG, 
                 rvsCFGBasicBlock, parentTable, dagAdded);
     }
@@ -829,9 +840,9 @@ void EventReverser::buildReverseCFG(
 }
 
 void EventReverser::addReverseCFGNode(
-        const PathSet& paths, const VGEdge* edge, ReverseCFG& rvsCFG,
-        map<PathSet, RvsCFGVertex>& rvsCFGBasicBlock,
-        map<PathSet, PathSet>& parentTable,
+        const PathInfo& paths, const VGEdge* edge, ReverseCFG& rvsCFG,
+        map<PathInfo, RvsCFGVertex>& rvsCFGBasicBlock,
+        map<PathInfo, PathInfo>& parentTable,
         set<int>& dagAdded)
 {
     //const PathSet& paths = routeGraph_[edge]->paths;
@@ -851,7 +862,7 @@ void EventReverser::addReverseCFGNode(
 //        if (isStateSavingEdge(vgEdge) && vgEdge->cost == 0)
 //            return;
             
-        map<PathSet, RvsCFGVertex>::iterator iter = rvsCFGBasicBlock.find(paths);
+        map<PathInfo, RvsCFGVertex>::iterator iter = rvsCFGBasicBlock.find(paths);
 
         // If the rvs CFG does not have a node for this path now, or if it has, but
         // that basic block node already has out edges (which means that basic block
@@ -894,7 +905,7 @@ void EventReverser::addReverseCFGNode(
         
         foreach (RvsCFGVertex node, boost::vertices(rvsCFG))
         {
-            cout << node << "=>" << rvsCFG[node].paths << endl;
+            cout << node << "=>" << rvsCFG[node] << endl;
         }
 #endif
 
@@ -903,11 +914,11 @@ void EventReverser::addReverseCFGNode(
     // Also, once a basic block has a successor, this basic block must be
     // finished, since nodes on every path are searched in topological order.
 
-    typedef map<PathSet, RvsCFGVertex>::iterator PathVertexIter;
-    typedef pair<PathSet, RvsCFGVertex> PathSetVertexPair;
+    typedef map<PathInfo, RvsCFGVertex>::iterator PathVertexIter;
+    typedef pair<PathInfo, RvsCFGVertex> PathSetVertexPair;
     vector<PathVertexIter> nodesToRemove;
     vector<PathSetVertexPair> newNodes;
-    vector<pair<PathSet, RvsCFGVertex> > newEdges;
+    vector<pair<PathInfo, RvsCFGVertex> > newEdges;
 
 //NEXT:
     // For each visible CFG node, connect an edge from previous nodes
@@ -917,15 +928,15 @@ void EventReverser::addReverseCFGNode(
             it != itEnd; ++it)
     {
         //if (it->second == newNode) continue;
-        PathSet pathOnEdge = it->first & paths;
+        PathInfo pathOnEdge = it->first & paths;
         if (!pathOnEdge.any())
             continue;
         
         // Full paths are all paths on that CFG node.
-        PathSet fullPaths = rvsCFG[it->second].paths;
+        PathInfo fullPaths = rvsCFG[it->second].paths;
         
         // Visible paths are paths after being updated.
-        PathSet visiblePaths = it->first;
+        PathInfo visiblePaths = it->first;
 
         // If the new node is a child of an existing node.
         // Branch node.
@@ -975,7 +986,7 @@ void EventReverser::addReverseCFGNode(
             ROSE_ASSERT(parentTable.count(visiblePaths) 
                     && parentTable[visiblePaths].size());
             
-            PathSet newPaths = parentTable[visiblePaths];
+            PathInfo newPaths = parentTable[visiblePaths];
             //cout << newPaths << endl;
             //getchar();
             //if (paths.is_subset_of(newPaths))
@@ -994,7 +1005,7 @@ void EventReverser::addReverseCFGNode(
         newEdges.push_back(make_pair(pathOnEdge, it->second));
 
         // Insert a new node but not modify the current one.
-        PathSet oldPaths = it->first;
+        PathInfo oldPaths = it->first;
         oldPaths -= pathOnEdge;
         
         // Update parent paths.
@@ -1534,8 +1545,8 @@ void EventReverser::generateCode(
 //    SgNamespaceDefinitionStatement* anonymousNamespace = buildNamespaceDefinition(anonymousNamespaceDecl);
 //    prependStatement(anonymousNamespaceDecl, globalScope);
     
-    map<PathSet, SgScopeStatement*> rvsScopeTable;
-    map<PathSet, SgScopeStatement*> cmtScopeTable;
+    map<PathInfo, SgScopeStatement*> rvsScopeTable;
+    map<PathInfo, SgScopeStatement*> cmtScopeTable;
     
 #if 0
     for (int i = 1; i < rvsCFGs.size(); ++i)
@@ -1587,7 +1598,7 @@ void EventReverser::generateCode(
         SgScopeStatement* rvsScope = NULL;
         SgScopeStatement* cmtScope = NULL;
 
-        PathSet paths = rvsCFG[node].paths;
+        PathInfo paths = rvsCFG[node].paths;
         //cout << "&&& " << paths << endl;
         // If this node contains all paths, its scope is the reverse function body.
         if (paths.flip().none())
@@ -1645,7 +1656,7 @@ void EventReverser::generateCode(
         //if (outEdges.size() == 2)
         while (!outEdges.empty())
         {
-            PathSet condPaths = rvsCFG[outEdges.back()];
+            PathInfo condPaths = rvsCFG[outEdges.back()];
             //cout << "Path added: " << condPaths << endl;
             outEdges.pop_back();
             

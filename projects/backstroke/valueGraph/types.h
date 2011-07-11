@@ -26,11 +26,23 @@ typedef boost::dynamic_bitset<> PathSet;
 
 typedef std::vector<SgInitializedName*> VarName;
 
-struct PathInfo
+struct PathInfo : PathSet
 {
-    PathSet paths;
+    PathInfo() {}
+    PathInfo(const PathSet& paths) : PathSet(paths) {}
+    
+    //PathSet paths;
     std::vector<std::vector<std::pair<int, int> > > pathCond;
+    
+    bool isEmpty() const { return !any(); }
+    
+    PathInfo& operator&=(const PathInfo& p);
+    PathInfo& operator|=(const PathInfo& p);
+    PathInfo& operator-=(const PathInfo& p);
 };
+
+//inline bool operator<(const PathInfo& p1, const PathInfo& p2)
+//{ return paths < p2.paths; }
 
 struct PathInfos : std::map<int, PathInfo>
 {
@@ -38,7 +50,7 @@ struct PathInfos : std::map<int, PathInfo>
     {
         const_iterator iter = find(dagIdx);
         if (iter != end())
-            return iter->second.paths[pathIdx];
+            return iter->second[pathIdx];
         return false;
     }
 
@@ -49,7 +61,7 @@ struct PathInfos : std::map<int, PathInfo>
                 iter != iterEnd; ++iter)
         {
             std::string s;
-            boost::to_string(iter->second.paths, s);
+            boost::to_string(iter->second, s);
             s = boost::lexical_cast<std::string>(iter->first) + ":" + s;
             str += "\\n" + s;
         }

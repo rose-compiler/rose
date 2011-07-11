@@ -36,12 +36,12 @@ private:
     struct ReverseCFGNode
     {
         ReverseCFGNode() : dagIndex(0) {}
-        PathSet paths;
+        PathInfo paths;
         std::vector<VGEdge> edges;
         int dagIndex;
     };
     typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
-        ReverseCFGNode, PathSet> ReverseCFG;
+        ReverseCFGNode, PathInfo> ReverseCFG;
     typedef boost::graph_traits<ReverseCFG>::vertex_descriptor RvsCFGVertex;
     typedef boost::graph_traits<ReverseCFG>::edge_descriptor RvsCFGEdge;
     
@@ -307,6 +307,16 @@ private:
 
     //! Returns if the given edge belongs to the given path.
     bool edgeBelongsToPath(const VGEdge& e, int dagIndex, int pathIndex) const;
+    
+    /** Get the final route in the given subgraph. The route connects each variable
+     *  to store to the root node in the value graph.
+	 *  @param dagIndex The DAG index, which represents a region in CFG.
+     *  @param valuesToRestore All variables to restore in the subgraph.
+     *  @returns reversalRoute The search result.
+	 */
+    std::map<VGEdge, PathInfo> getReversalRoute(
+        int dagIndex,
+        const std::set<VGVertex>& valsToRestore);
 
     /** Get the final route in the given subgraph. The route connects each variable
      *  to store to the root node in the value graph.
@@ -423,9 +433,9 @@ private:
     
     //! Add a node to reverse CFG. Called by buildReverseCFG().
     void addReverseCFGNode(
-        const PathSet& paths, const VGEdge* edge, ReverseCFG& rvsCFG,
-        std::map<PathSet, RvsCFGVertex>& rvsCFGBasicBlock,
-        std::map<PathSet, PathSet>& parentTable,
+        const PathInfo& paths, const VGEdge* edge, ReverseCFG& rvsCFG,
+        std::map<PathInfo, RvsCFGVertex>& rvsCFGBasicBlock,
+        std::map<PathInfo, PathInfo>& parentTable,
         std::set<int>& dagAdded);
     
     //! Given a DAG index, return all edges of its reversal in the proper order.

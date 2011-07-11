@@ -2211,8 +2211,8 @@ bool EventReverser::RouteGraphEdgeComp::operator()(
 #if 1
     if (val1 < val2) return true;
     if (val1 > val2) return false;
-    return routeGraph[edge1]->paths[dagIndex].paths.count() < 
-           routeGraph[edge2]->paths[dagIndex].paths.count();
+    return routeGraph[edge1]->paths[dagIndex].count() < 
+           routeGraph[edge2]->paths[dagIndex].count();
 #endif
     
 #if 0
