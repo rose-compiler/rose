@@ -237,6 +237,17 @@ sage_buildComplexVal(PyObject *self, PyObject *args)
 }
 
 /*
+ */
+PyObject*
+sage_buildContinue(PyObject *self, PyObject *args)
+{
+    if (! PyArg_ParseTuple(args, ""))
+        return NULL;
+    SgContinueStmt* sg_continue = SageBuilder::buildContinueStmt();
+    return PyEncapsulate(sg_continue);
+}
+
+/*
  * Build an Expr node from the given Python statements.
  *  - PyObject* args = (PyObject*)
  */
