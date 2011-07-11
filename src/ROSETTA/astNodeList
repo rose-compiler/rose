@@ -259,6 +259,7 @@ SgAsmx86Instruction
 SgAsmx86RegisterReferenceExpression
 SgAsmBinaryAddressSymbol
 SgAsmBinaryDataSymbol
+SgAssertStmt
 SgAssignInitializer
 SgAssignOp
 SgAssignStatement

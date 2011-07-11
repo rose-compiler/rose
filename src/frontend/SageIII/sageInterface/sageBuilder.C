@@ -3118,6 +3118,24 @@ SgDeleteExp* SageBuilder::buildDeleteExp_nfi(SgExpression *target, bool is_array
     return result;
 }
 
+SgAssertStmt* SageBuilder::buildAssertStmt(SgExpression* test)
+{
+  SgAssertStmt* result = new SgAssertStmt(test);
+  ROSE_ASSERT(test != NULL);
+  test->set_parent(result);
+  setOneSourcePositionNull(result);
+  return result;
+}
+
+SgAssertStmt* SageBuilder::buildAssertStmt_nfi(SgExpression* test)
+{
+  SgAssertStmt* result = new SgAssertStmt(test);
+  ROSE_ASSERT(test != NULL);
+  test->set_parent(result);
+  setOneSourcePositionNull(result);
+  return result;
+}
+
 SgPragmaDeclaration * SageBuilder::buildPragmaDeclaration(const string& name, SgScopeStatement* scope)
 {
   if (scope == NULL)

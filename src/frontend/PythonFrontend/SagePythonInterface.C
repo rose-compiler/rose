@@ -16,6 +16,19 @@ using namespace std;
 /*
  */
 PyObject*
+sage_buildAssert(PyObject *self, PyObject *args)
+{
+    SgExpression *sg_test;
+    if (! PyArg_ParseTuple(args, "O&", SAGE_CONVERTER(SgExpression), &sg_test))
+        return NULL;
+
+    SgAssertStmt* sg_assert_stmt = SageBuilder::buildAssertStmt(sg_test);
+    return PyEncapsulate(sg_assert_stmt);
+}
+
+/*
+ */
+PyObject*
 sage_buildAssign(PyObject *self, PyObject *args)
 {
     SgExpression *sg_lhs_exp, *sg_rhs_exp;
