@@ -228,6 +228,9 @@ class SageTranslator(ast.NodeVisitor):
   def visit_Num(self, node):
     return self.visit(node.n)
 
+  def visit_Pass(self, node):
+    return sage.buildPass()
+
   def visit_Print(self, node):
     dest = node.dest and self.visit(node.dest)
     values = sage.buildExprListExp(map(self.visit, node.values))

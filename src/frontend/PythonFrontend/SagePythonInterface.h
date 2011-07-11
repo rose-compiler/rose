@@ -28,6 +28,7 @@ PyObject* sage_buildLongIntVal(PyObject *self, PyObject *args);
 PyObject* sage_buildLambda(PyObject *self, PyObject *args);
 PyObject* sage_buildListExp(PyObject *self, PyObject *args);
 PyObject* sage_buildName(PyObject *self, PyObject *args);
+PyObject* sage_buildPass(PyObject *self, PyObject *args);
 PyObject* sage_buildPrintStmt(PyObject *self, PyObject *args);
 PyObject* sage_buildReturnStmt(PyObject *self, PyObject *args);
 PyObject* sage_buildStringVal(PyObject *self, PyObject *args);
@@ -63,6 +64,7 @@ static PyMethodDef SageBuilderMethods[] = {
     {"buildLongIntVal", sage_buildLongIntVal, METH_VARARGS, "Builds an SgIntVal node."},
     {"buildLambda", sage_buildLambda, METH_VARARGS, "Builds a lambda node."},
     {"buildListExp", sage_buildListExp, METH_VARARGS, "Builds a list node."},
+    {"buildPass", sage_buildPass, METH_VARARGS, "Builds a pass node."},
     {"buildPrintStmt", sage_buildPrintStmt, METH_VARARGS, "Builds an SgPrintStmt node."},
     {"buildName", sage_buildName, METH_VARARGS, "Builds an SgVarRefExp from a Name node."},
     {"buildReturnStmt", sage_buildReturnStmt, METH_VARARGS, "Builds an SgReturnStmt node."},

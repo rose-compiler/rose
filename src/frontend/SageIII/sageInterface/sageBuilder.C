@@ -3086,6 +3086,22 @@ SgContinueStmt * SageBuilder::buildContinueStmt_nfi()
   return result;
 }
 
+SgPassStatement * SageBuilder::buildPassStatement()
+{
+  SgPassStatement* result = new SgPassStatement();
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgPassStatement * SageBuilder::buildPassStatement_nfi()
+{
+  SgPassStatement* result = new SgPassStatement();
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
+  return result;
+}
+
 SgDeleteExp* SageBuilder::buildDeleteExp(SgExpression *target, bool is_array, bool need_global_specifier, SgFunctionDeclaration *deleteOperatorDeclaration)
 {
     SgDeleteExp *result = new SgDeleteExp(target, is_array, need_global_specifier, deleteOperatorDeclaration);

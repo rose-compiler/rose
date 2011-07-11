@@ -548,6 +548,19 @@ sage_buildName(PyObject *self, PyObject *args)
     return PyEncapsulate(sg_var_ref);
 }
 
+
+/*
+ */
+PyObject*
+sage_buildPass(PyObject *self, PyObject *args)
+{
+    if (! PyArg_ParseTuple(args, ""))
+        return NULL;
+
+    SgPassStatement *sg_pass = SageBuilder::buildPassStatement();
+    return PyEncapsulate(sg_pass);
+}
+
 /*
  * Build an SgPrintStmt node from the given list of Python
  * expressions.
