@@ -14,13 +14,17 @@ public:
     /** Creates an empty process containing no threads. */
     explicit RSIM_Process(RSIM_Simulator *simulator)
         : simulator(simulator), tracing_file(NULL), tracing_flags(0),
-          map(NULL), brk_va(0), mmap_start(0x40000000ul), mmap_recycle(false), disassembler(NULL),
+          map(NULL), brk_va(0), mmap_start(0x40000000ul), mmap_recycle(false), disassembler(NULL), futexes(NULL),
           interpretation(NULL), ep_orig_va(0), ep_start_va(0),
           terminated(false), termination_status(0), core_flags(0), btrace_file(NULL),
           vdso_mapped_va(0), vdso_entry_va(0),
           core_styles(CORE_ELF), core_base_name("x-core.rose"), ld_linux_base_va(0x40000000) {
         RTS_rwlock_init(&instance_rwlock, RTS_LAYER_RSIM_PROCESS_OBJ, NULL);
         ctor();
+    }
+
+    ~RSIM_Process() {
+        delete futexes;
     }
 
     RSIM_Simulator *get_simulator() const {
@@ -385,6 +389,34 @@ public:
      *
      *  Thread safety: This method is thread safe. */
     void signal_dispatch();
+
+
+
+    /**************************************************************************************************************************
+     *                                  Fast User-space Mutexes (Futexes)
+     **************************************************************************************************************************/
+private:
+    RSIM_FutexTable *futexes;
+
+public:
+    /** Return futex table.
+     *
+     *  Specimen futexes have two parts: user-space atomic instructions that operate on a memory word, and the futex system
+     *  call to handle the contended cases.  The futex system call has two operations: wait and wake.  The wait operation
+     *  causes the calling thread to enter itself onto a queue based on the real address of the futex and block until
+     *  signaled.  The wake operation causes matching threads on the queue to resume running and remove themselves from the
+     *  queue.
+     *
+     *  The queues are implemented as an RSIM_FutexTable object, which creates/opens shared memory for communication across
+     *  processes.  The futex shared memory is created/opened the same way as the RSIM_Simulator main semaphore.  In fact, that
+     *  semaphore is used to protect access to the futex table.
+     *
+     *  Thread safety:  This method is thread safe.  The futex table is created when the RSIM_Process object is created.  The
+     *  actual futex queues are shared among all simulator processes that open the same shared memory object based on the name
+     *  of the RSIM_Simulator semaphore. */
+    RSIM_FutexTable *get_futexes() {
+        return futexes;
+    }
 
 
 

@@ -449,7 +449,7 @@ syscall_exit(RSIM_Thread *t, int callno)
         uint32_t zero = 0;
         size_t n = t->get_process()->mem_write(&zero, t->clear_child_tid, sizeof zero);
         ROSE_ASSERT(n==sizeof zero);
-        int nwoke = t->futex_wake(t->clear_child_tid);
+        int nwoke = t->futex_wake(t->clear_child_tid, INT_MAX);
         ROSE_ASSERT(nwoke>=0);
     }
 
@@ -5321,6 +5321,7 @@ syscall_futex_enter(RSIM_Thread *t, int callno)
     static const Translate opflags[] = {
         TF3(0xff, 0x80, FUTEX_PRIVATE_FLAG|FUTEX_WAIT),
         TF3(0x80, 0x80, FUTEX_PRIVATE_FLAG),
+        TF3(0x100, 0x100, FUTEX_CLOCK_REALTIME),
         TF3(0x7f, 0, FUTEX_WAIT),
         TF3(0x7f, 1, FUTEX_WAKE),
         TF3(0x7f, 2, FUTEX_FD),
@@ -5352,6 +5353,9 @@ syscall_futex_enter(RSIM_Thread *t, int callno)
         case 4: /*FUTEX_CMP_REQUEUE*/
             t->syscall_enter("futex", "Pfd-Pd", (size_t)4, print_int_32, opflags, (size_t)4, print_int_32);
             break;
+        case 9: /*FUTEX_WAIT_BITSET*/
+            t->syscall_enter("futex", "PfdP-x", (size_t)4, print_int_32, opflags, sizeof(timespec_32), print_timespec_32);
+            break;
         default:
             t->syscall_enter("futex", "PfdPPd", (size_t)4, print_int_32, opflags, sizeof(timespec_32), print_timespec_32, 
                              (size_t)4, print_int_32);
@@ -5369,43 +5373,43 @@ syscall_futex(RSIM_Thread *t, int callno)
     uint32_t timeout_va = 0;                    /* arg 3 when present */
     uint32_t futex2_va = 0;                     /* arg 4 when present */
     uint32_t val3 = 0;                          /* arg 5 when present */
+
+    int result = -ENOSYS;
     switch (op & 0x7f) {
         case 0: /*FUTEX_WAIT*/
             timeout_va = t->syscall_arg(3);
+            assert(0==timeout_va); // NOT HANDLED YET
+            result = t->futex_wait(futex1_va, val1);
             break;
         case 1: /*FUTEX_WAKE*/
+            result = t->futex_wake(futex1_va, val1);
+            break;
         case 2: /*FUTEX_FD*/
+            assert(0); // NOT HANDLED YET
             break;
         case 3: /*FUTEX_REQUEUE*/
             futex2_va = t->syscall_arg(4);
+            assert(0); // NOT HANDLED YET
             break;
         case 4: /*FUTEX_CMP_REQUEUE*/
             futex2_va = t->syscall_arg(4);
             val3 = t->syscall_arg(5);
+            assert(0); // NOT HANDLED YET
+            break;
+        case 9: /*FUTEX_WAIT_BITSET*/
+            timeout_va = t->syscall_arg(3);
+            assert(0==timeout_va); // NOT HANDLED YET
+            val3 = t->syscall_arg(5);
+            result = t->futex_wait(futex1_va, val1, val3/*bitset*/);
             break;
         default:
             timeout_va =t->syscall_arg(3);
             futex2_va = t->syscall_arg(4);
             val3 = t->syscall_arg(5);
+            assert(0); // NOT HANDLED YET
             break;
     }
 
-    assert(sizeof(int)==sizeof(uint32_t));
-    int *futex1 = futex1_va ? (int*)t->get_process()->my_addr(futex1_va, 4) : NULL;
-    int *futex2 = futex2_va ? (int*)t->get_process()->my_addr(futex2_va, 4) : NULL;
-    struct timespec timespec_buf, *timespec=NULL;
-    if (timeout_va) {
-        timespec_32 ts;
-        if (sizeof(ts) != t->get_process()->mem_read(&ts, timeout_va, sizeof ts)) {
-            t->syscall_return(-EFAULT);
-            return;
-        }
-        timespec_buf.tv_sec = ts.tv_sec;
-        timespec_buf.tv_nsec = ts.tv_nsec;
-        timespec = &timespec_buf;
-    }
-
-    int result = syscall(SYS_futex, futex1, op, val1, timespec, futex2, val3);
     t->syscall_return(-1==result ? -errno : result);
 }
 
@@ -5504,7 +5508,7 @@ syscall_exit_group(RSIM_Thread *t, int callno)
         uint32_t zero = 0;
         size_t n = t->get_process()->mem_write(&zero, t->clear_child_tid, sizeof zero);
         ROSE_ASSERT(n==sizeof zero);
-        int nwoke = t->futex_wake(t->clear_child_tid);
+        int nwoke = t->futex_wake(t->clear_child_tid, INT_MAX);
         ROSE_ASSERT(nwoke>=0);
     }
 

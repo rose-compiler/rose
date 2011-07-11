@@ -10,6 +10,7 @@
 #include "RSIM_Common.h"
 #include "RSIM_SignalHandling.h"
 #include "RSIM_Callbacks.h"
+#include "RSIM_Futex.h"
 #include "RSIM_Process.h"
 #include "RSIM_SemanticPolicy.h"
 #include "RSIM_Thread.h"
@@ -217,7 +218,7 @@ public:
      *  @{ */
     bool set_semaphore_name(const std::string &name, bool do_unlink=false);
     const std::string &get_semaphore_name() const;
-    sem_t *get_semaphore();
+    sem_t *get_semaphore(bool *unlinked=NULL);
     /** @} */
 
     /** Load program and create process object.  The argument vector, @p argv, should contain the name of the executable and

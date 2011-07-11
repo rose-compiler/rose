@@ -59,8 +59,9 @@ enum TracingFacility {
     TRACE_PROGRESS      = 7,    /**< Show a progress report now and then. */
     TRACE_SIGNAL        = 8,    /**< Show reception and delivery of signals. */
     TRACE_THREAD        = 9,    /**< Show thread creation/destruction, etc. */
+    TRACE_FUTEX         = 10,   /**< Show diagnostics for fast user-space mutexes. */
 
-    TRACE_NFACILITIES   = 10     /**< Number of facilities */
+    TRACE_NFACILITIES   = 11     /**< Number of facilities */
 };
 
 /** Returns a bit mask for a trace facility. Returns zero if the specified trace facility is invalid. */

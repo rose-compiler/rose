@@ -866,23 +866,6 @@ RSIM_Thread::set_thread_area(user_desc_32 *info, bool can_allocate)
 }
 
 int
-RSIM_Thread::futex_wake(uint32_t va)
-{
-    /* We need the process-wide read lock so no other thread unmaps the memory while we're signaling the futex. */
-    int retval;
-    assert(4==sizeof(int));
-    RTS_READ(get_process()->rwlock()) {
-        int *addr = (int*)get_process()->my_addr(va, sizeof(int));
-        if (!addr) {
-            retval = -EFAULT;
-        } else if (-1 == (retval = syscall(SYS_futex, addr, 1/*FUTEX_WAKE*/, 1/*nwake*/, 0/*timeout*/, 0/*addr2*/, 0/*val3*/))) {
-            retval = -errno;
-        }
-    } RTS_READ_END;
-    return retval;
-}
-
-int
 RSIM_Thread::handle_futex_death(uint32_t futex_va, RTS_Message *trace)
 {
     uint32_t futex;
@@ -906,7 +889,7 @@ RSIM_Thread::handle_futex_death(uint32_t futex_va, RTS_Message *trace)
         /* Wake another thread there's one waiting */
         if (futex & 0x80000000) {
             trace->more("    waking futex 0x%08"PRIx32"\n", futex_va);
-            int result = futex_wake(futex_va);
+            int result = futex_wake(futex_va, 1);
             if (result<0) {
                 trace->more("      wake failed for futex at 0x%08"PRIu32"\n", futex_va);
                 return result;
@@ -972,7 +955,7 @@ RSIM_Thread::do_clear_child_tid()
             tracing(TRACE_SYSCALL)->mesg("cannot write clear_child_tid address 0x%08"PRIx32, clear_child_tid);
         } else {
             tracing(TRACE_SYSCALL)->mesg("waking futex 0x%08"PRIx32, clear_child_tid);
-            int nwoke = futex_wake(clear_child_tid);
+            int nwoke = futex_wake(clear_child_tid, INT_MAX);
             if (nwoke<0)
                 tracing(TRACE_SYSCALL)->mesg("wake futex 0x%08"PRIx32" failed with %d\n", clear_child_tid, nwoke);
         }
@@ -1118,6 +1101,88 @@ RSIM_Thread::emulate_syscall()
         }
     }
     callbacks.call_syscall_callbacks(RSIM_Callbacks::AFTER, this, callno, cb_status);
+}
+
+int
+RSIM_Thread::futex_wait(rose_addr_t va, uint32_t oldval, uint32_t bitset)
+{
+    int retval = 0;
+    RTS_Message *trace = tracing(TRACE_FUTEX);
+
+    /* We need to access the futex memory atomically with respect to instructions from other threads and/or processes.  So we'll
+     * use the simulator's global semaphore for that purpose. */
+    assert(insn_semaphore_posted);
+    int status = sem_wait(process->get_simulator()->get_semaphore());
+    assert(0==status);
+
+    /* Futex queues are based on real addresses, not process virtual addresses.  In other words, the same futex can have two
+     * different addresses in two different processes.  The closest we can come to that is to use the simulator's address for
+     * the specimen's futex.  This will at least work in cases where the two processes have a parent/child relationship via
+     * fork and the futex is in shared memory -- it won't work when each process individually mmaps a file to contain the
+     * futex, since each simulator will likely get different addresses for the file mapping. */
+    uint32_t *futex = (uint32_t*)process->my_addr(va, 4);
+    trace->mesg("futex wait: specimen futex 0x%08"PRIx64" is at simulator address 0x%08"PRIx64, va, (rose_addr_t)futex);
+    if (!futex) {
+        retval = -EFAULT;
+    } else if (oldval != *futex) {
+        trace->mesg("futex wait: futex value %"PRIu32" but need %"PRIu32, *futex, oldval);
+        retval = -EWOULDBLOCK;
+    }
+
+    /* Place this process on the futex waiting queue. */
+    int futex_number = process->get_futexes()->insert((rose_addr_t)futex, bitset, RSIM_FutexTable::LOCKED);
+    if (futex_number<0)
+        retval = futex_number;
+
+    /* Release the global semaphore. */
+    status = sem_post(process->get_simulator()->get_semaphore());
+    assert(0==status);
+    return retval;
+
+    /* Block until we're signaled */
+    trace->mesg("futex wait: about to block...");
+    status = process->get_futexes()->wait(futex_number);
+    assert(0==status);
+    trace->mesg("futex wait: resumed");
+
+    /* Remove the semaphore from the table. */
+    status = process->get_futexes()->erase((rose_addr_t)futex, futex_number, RSIM_FutexTable::UNLOCKED);
+    assert(0==status);
+
+    return retval;
+}
+
+int
+RSIM_Thread::futex_wake(rose_addr_t va, int nprocs, uint32_t bitset)
+{
+    int retval = 0;
+    RTS_Message *trace = tracing(TRACE_FUTEX);
+
+    /* The futex wait queues are protected by the simulator global semaphore (the same one used to make instructions atomic). */
+    assert(insn_semaphore_posted);
+    int status = sem_wait(process->get_simulator()->get_semaphore());
+    assert(0==status);
+
+    /* Use simulators address as the key for the wait queue. See futex_wait() for details. */
+    uint32_t *futex = (uint32_t*)process->my_addr(va, 4);
+    trace->mesg("futex wake: specimen futex 0x%08"PRIx64" is at simulator address 0x%08"PRIx64, va, (rose_addr_t)futex);
+    if (!futex) {
+        retval = -EFAULT;
+    }
+    
+    /* Wake processes that are waiting on this semaphore */
+    retval = process->get_futexes()->signal((rose_addr_t)futex, bitset, nprocs, RSIM_FutexTable::LOCKED);
+    if (retval<0) {
+        trace->mesg("futex wake: failed with error %d", retval);
+    } else {
+        trace->mesg("futex wake: %d proc%s have been signaled", retval, 1==retval?"":"s");
+    }
+
+    /* Release the lock */
+    status = sem_post(process->get_simulator()->get_semaphore());
+    assert(0==status);
+
+    return retval;
 }
 
 #endif /* ROSE_ENABLE_SIMULATOR */

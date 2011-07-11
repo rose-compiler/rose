@@ -28,6 +28,7 @@ libRSIM_la_SOURCES =				\
 	RSIM_Adapter.C				\
 	RSIM_Callbacks.C			\
 	RSIM_Common.C				\
+	RSIM_Futex.C				\
 	RSIM_Linux32.C				\
 	RSIM_Process.C				\
 	RSIM_SemanticPolicy.C			\
@@ -40,6 +41,7 @@ include_HEADERS +=				\
 	RSIM_Adapter.h				\
 	RSIM_Callbacks.h			\
 	RSIM_Common.h				\
+	RSIM_Futex.h				\
 	RSIM_Linux32.h				\
 	RSIM_Process.h				\
 	RSIM_SemanticPolicy.h			\

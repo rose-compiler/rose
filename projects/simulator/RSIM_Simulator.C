@@ -148,9 +148,11 @@ RSIM_Simulator::configure(int argc, char **argv, char **envp)
                     tracing_flags |= tracingFacilityBit(TRACE_PROGRESS);
                 } else if (word=="thread") {
                     tracing_flags |= tracingFacilityBit(TRACE_THREAD);
+                } else if (word=="futex") {
+                    tracing_flags |= tracingFacilityBit(TRACE_FUTEX);
                 } else {
                     fprintf(stderr, "%s: debug words must be from the set: "
-                            "all, insn, state, mem, mmap, syscall, signal, loader, progress, thread\n",
+                            "all, insn, state, mem, mmap, syscall, signal, loader, progress, thread, futex\n",
                             argv[0]);
                     exit(1);
                 }
@@ -597,7 +599,7 @@ RSIM_Simulator::get_semaphore_name() const
 }
 
 sem_t *
-RSIM_Simulator::get_semaphore()
+RSIM_Simulator::get_semaphore(bool *unlinked/*=NULL*/)
 {
     if (NULL==global_semaphore) {
         if (global_semaphore_name.empty()) {
@@ -610,6 +612,8 @@ RSIM_Simulator::get_semaphore()
         if (global_semaphore_unlink)
             sem_unlink(global_semaphore_name.c_str()); /* unlink now, destroyed when all closed (at simulator process exit) */
     }
+    if (unlinked)
+        *unlinked = global_semaphore_unlink;
     return global_semaphore;
 }
 

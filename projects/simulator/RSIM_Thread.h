@@ -108,9 +108,6 @@ public:
      *  into the RSIM_Threads tls_array, depending on the value of @p idx. */
     user_desc_32 *gdt_entry(int idx);
 
-    /** Wake (signal) a futex. Returns the number of processes woken up on success, negative error number on failure. */
-    int futex_wake(uint32_t va);
-
     /** Traverse the robust futex list and handle futex death for each item on the list. See the Linux version of this function
      *  for details. */
     int exit_robust_list();
@@ -421,6 +418,31 @@ public:
     int sys_sigaltstack(const stack_32 *in, stack_32 *out);
     
 
+    /**************************************************************************************************************************
+     *                                  Futex interface
+     **************************************************************************************************************************/
+public:
+    
+    /** Wait for a futex.  Verifies that the aligned memory at @p va contains the value @p oldval and sleeps, waiting
+     * sys_futex_wake on this address.  Returns zero on success; negative error number on failure.  See manpage futex(2) for
+     * details about the return value, although the return values here are negative error numbers rather than -1 with errno
+     * set.
+     *
+     * The @p bitset value is a bit vector added to the wait queue.  When waking threads that are blocked, we wake only those
+     * threads where the intersection of the wait and wake bitsets is non-empty.
+     *
+     * Thread safety:  This method is thread safe. */
+    int futex_wait(rose_addr_t va, uint32_t oldval, uint32_t bitset=0xffffffff);
+
+    /** Wakes blocked processes.  Wakes at most @p nprocs processes waiting for the specified address.  Returns the number of
+     * processes woken up; negative error number on failure.
+     *
+     * The @p bitset value is a bit vector used when waking blocked threads.  Only threads where the intersection of the wait
+     * bitset with this wake bitset is non-empty are awoken.
+     *
+     * Thread safety:  This method is thread safe. */
+    int futex_wake(rose_addr_t va, int nprocs, uint32_t bitset=0xffffffff);
+    
 
     /**************************************************************************************************************************
      *                                  Instruction disassembly

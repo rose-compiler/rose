@@ -13,6 +13,11 @@
 void
 RSIM_Process::ctor()
 {
+    bool do_unlink;
+    sem_t *sem = simulator->get_semaphore(&do_unlink);
+    futexes = new RSIM_FutexTable(sem, simulator->get_semaphore_name(), do_unlink);
+    assert(futexes!=NULL);
+
     vdso_name = "x86vdso";
     vdso_paths.push_back(".");
 #ifdef X86_VDSO_PATH_1
