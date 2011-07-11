@@ -1,3 +1,5 @@
+/* Source file to generate input for demo3 */
+
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>

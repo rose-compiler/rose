@@ -5,6 +5,37 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+/** Traverses the AST to find a symbol for a global function with the specified name. */
+class FunctionFinder: public AstSimpleProcessing {
+private:
+    std::string fname;          /**< Holds address() function for use during traversal. */
+
+public:
+    /** Search for a function.  Searches for a function named @p fname in the specified @p ast and returns its entry address.
+     * If the function cannot be found, then the null address is returned. */
+    rose_addr_t address(SgNode *ast, const std::string &fname) {
+        this->fname = fname;
+        try {
+            traverse(ast, preorder);
+        } catch (rose_addr_t addr) {
+            return addr;
+        }
+        return 0;
+    }
+
+private:
+    /** Traversal callback. */
+    void visit(SgNode *node) {
+        SgAsmElfSymbol *sym = isSgAsmElfSymbol(node);
+        if (sym &&
+            sym->get_def_state() == SgAsmGenericSymbol::SYM_DEFINED &&
+            sym->get_binding()   == SgAsmGenericSymbol::SYM_GLOBAL &&
+            sym->get_type()      == SgAsmGenericSymbol::SYM_FUNC &&
+            sym->get_name()->get_string() == fname)
+            throw sym->get_value();
+    }
+};
+
 /** Prints the name of the currently executing function.
  *
  *  In order for this to work, instructions must be assigned to functions.  This can be done by the MemoryDisassembler

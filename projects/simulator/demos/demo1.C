@@ -13,34 +13,6 @@
 
 #include "RSIM_Linux32.h"
 
-/* Traverses the AST to find a symbol for a global function with specified name. */
-class FunctionFinder: public AstSimpleProcessing {
-public:
-    SgNode *ast;
-    std::string fname;
-    FunctionFinder(SgNode *ast, const std::string &fname)
-        : ast(ast), fname(fname) {}
-
-    rose_addr_t address() {
-        try {
-            this->traverse(ast, preorder);
-        } catch (rose_addr_t addr) {
-            return addr;
-        }
-        return 0;
-    }
-
-    void visit(SgNode *node) {
-        SgAsmElfSymbol *sym = isSgAsmElfSymbol(node);
-        if (sym &&
-            sym->get_def_state() == SgAsmGenericSymbol::SYM_DEFINED &&
-            sym->get_binding()   == SgAsmGenericSymbol::SYM_GLOBAL &&
-            sym->get_type()      == SgAsmGenericSymbol::SYM_FUNC &&
-            sym->get_name()->get_string() == fname)
-            throw sym->get_value();
-    }
-};
-
 /* Monitors the CPU instruction pointer.  When it reaches a specified value, replace it with some other value. */
 class ExecutionTransfer: public RSIM_Callbacks::InsnCallback {
 public:
@@ -78,9 +50,9 @@ int main(int argc, char *argv[], char *envp[])
     SgProject *project = frontend(rose_argc, rose_argv);
 
     /* Find the address of "main" and "payload" functions. */
-    rose_addr_t main_addr = FunctionFinder(project, "main").address();
+    rose_addr_t main_addr = FunctionFinder().address(project, "main");
     assert(main_addr!=0);
-    rose_addr_t payload_addr = FunctionFinder(project, "payload").address();
+    rose_addr_t payload_addr = FunctionFinder().address(project, "payload");
     assert(payload_addr!=0);
 
     /* Set a transfer point from "main" to "payload" */

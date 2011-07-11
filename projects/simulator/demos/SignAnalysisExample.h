@@ -1,55 +1,35 @@
-/* Demonstrates how to write a (very simple, naive) sign analysis.
- *
- * Assumes:
- *   * All values are signed integers (except 1-bit flags)
- *   * Operators are defined over infinite integers rather than modulo 2^31
- *   * This is an example, so we can afford to be rather sloppy
- *
- * A more accurate (and slower) way to do sign analysis is to use the SymbolicSemantics policy and an SMT solver to answer
- * questions about whether things are equal to zero, less than zero, or greater than zero.
- *
- * This example has two parts:
- *    1. The actual sign analysis engine contained in the SignAnalysisExample name space.  This is a collection of classes for
- *       value types (the domain), State (the model), and Policy (the operators).
- *    2. A small program that instantiates a simulator and registers a callback that drives the sign analysis.
- *
- * We drive the sign analysis in synchrony with the actual simulation.  This is a bit useless since we already know the sign
- * just by looking at the concrete values in the simulator.  But we actually need to do it this way (due to our design) because
- * the SignAnalysisExample's domain contains only <zero,positive,negative>, which isn't sufficient to determine the address of
- * the next instruction to simulate.  The instruction pointer, the EIP register, is after all, just a member of the sign
- * analysis state.
- *
- * There are several alternatives to running synchronously.  For instance, if we know the current instruction then we can
- * perform sign analysis on that instruction and all following instructions as long as we can determine a unique control-flow
- * successor.  I.e., we can do the analysis on following instructions of the same basic block, plus subsequent basic blocks as
- * long as we can determine branch targets at the end of each block.  However, as we've defined the domain for
- * SignAnalysisExample, the instruction fetching would have to be done outside that domain.
- *
- * Memory addresses:  since memory addresses are elements of the domain, we have only three possible memory locations: zero,
- * positive, and negative.  We use "must alias" and "may alias" when reading and writing to these three locations.
- */
+#ifndef ROSE_Simulator_SignAnalysisExample_H
+#define ROSE_Simulator_SignAnalysisExample_H
 
-
-#include "rose.h"
-#include "RSIM_Private.h"
-
-#ifdef ROSE_ENABLE_SIMULATOR /* protects this whole file */
-
-#include "RSIM_Linux32.h"
-
-/* Using VirtualMachineSemantics as a model, we put everything in a name space. */
+/** Example sign analysis.
+ *
+ *  This example demonstrates how to write a (very simple, naive) sign analysis and the structure of this file is based on the
+ *  VirtualMachineSemantics.h file.  This analysis makes certain assumptions to make a simple example:
+ *
+ *  <ul>
+ *    <li>All values are signed integers (except 1-bit flags, which are unsigned).</li>
+ *    <li>Some operators are defined over infinite integers rather than modulo 2^32.</li>
+ *    <li>This is only an example, so we're rather sloppy in some places.</li>
+ *    <li>Some parts of this analysis are not well tested.</li>
+ *  </ul>
+ *
+ * This namespace has three major components: the ValueType template class (the domain), a State class (the model), and the
+ * Policy class (model transition operators).  The Policy is plugged into the X86InstructionSemantics class and the analysis is
+ * driven by processing one instruction at a time in the order they would be executed.
+ *
+ * This analysis handles one control flow path.  If you want to do sign analysis over multiple paths you'd need to write code
+ * to (1) traverse the paths, (2) split the state a points where control flow splits, (3) join states when control flow
+ * joins. We don't cover that advanced topic in this example analysis. */
 namespace SignAnalysisExample {
-
-
-    /* The ValueType defines the domain over which operators are defined. In this case, each value of our domain could be zero,
-     * positive, or negative.  We use three bits since a value could be more than one at a time.  For instance, a completely
-     * unknown value could be zero, it could be positive, and it could be negative, so we set all three bits. */
     enum Signedness {
         ZERO            = 0x01,
         POSITIVE        = 0x02,
         NEGATIVE        = 0x04
     };
 
+    /** Domain over which operators are defined. In this case, each value of our domain could be zero, positive, or negative.
+     * We use three bits since a value could be more than one at a time.  For instance, a completely unknown value could be
+     * zero, it could be positive, and it could be negative, so we set all three bits. */
     template <size_t nBits>
     class ValueType {
     public:
@@ -94,23 +74,26 @@ namespace SignAnalysisExample {
         return o;
     }
 
-    /* Instructions operate on a state, transitioning one state to the next state.  The state usually consists of the registers
-     * and memory. We're assuming an i386. See also, Registers.h */
+    /** The analysis model.  Instructions operate on a state, transitioning one state to the next state.  The state usually
+     * consists of the registers and memory. We're assuming an i386. See also ROSE's <Registers.h> */
     class State {
     public:
-        static const size_t n_gprs = 8;         /* Number of general purpose registers */
-        static const size_t n_segregs = 6;      /* Number of 16-bit segmentation descriptor registers */
-        static const size_t n_flags = 32;       /* We treat EFLAGS as individual 1-bit (unsigned) values */
+        static const size_t n_gprs = 8;         /**< Number of general purpose registers */
+        static const size_t n_segregs = 6;      /**< Number of 16-bit segmentation descriptor registers */
+        static const size_t n_flags = 32;       /**< We treat EFLAGS as individual 1-bit (unsigned) values */
 
-        ValueType<32> ip;                       /* Instruction pointer */
-        ValueType<32> gpr[n_gprs];              /* General purpose registers */
-        ValueType<32> segreg[n_segregs];        /* Segmentation registers */
-        ValueType<1> flag[n_flags];             /* Bits of EFLAGS */
+        ValueType<32> ip;                       /**< Instruction pointer */
+        ValueType<32> gpr[n_gprs];              /**< General purpose registers */
+        ValueType<32> segreg[n_segregs];        /**< Segmentation registers */
+        ValueType<1> flag[n_flags];             /**< Bits of EFLAGS */
 
-        /* Memory cells are <address,value> pairs.  Addresses belong to the same domain as values, therefore we have only three
-         * possible addresses: negative, zero, positive. */
+        /** Memory cells are <address,value> pairs.  Addresses belong to the same domain as values, therefore we have only
+         * three possible addresses: negative, zero, positive.  This makes it impossible to determine the next instruction
+         * using only this analysis, so SignAnalysisExample needs to always be driven by some other kind of analysis. */
         ValueType<32> memory[3];                /* 0=>zero, 1=>positive, 2=>negative */
 
+        /** Prints state.  Prints all registers and the three memory locations.  The values are printed as "0", "+", and/or "-"
+         *  depending on their sign. */
         void print(std::ostream &o) const {
             for (size_t i=0; i<n_gprs; i++)
                 o <<gprToString((X86GeneralPurposeRegister)i) <<"=" <<gpr[i] <<" ";
@@ -124,6 +107,7 @@ namespace SignAnalysisExample {
             o <<"mem[-]=" <<memory[2] << std::endl;
         }
 
+        /** See print() */
         friend std::ostream& operator<<(std::ostream &o, const State &state) {
             state.print(o);
             return o;
@@ -131,7 +115,9 @@ namespace SignAnalysisExample {
     };
 
 
-    /* The Policy defines the operators, whose operands and result are all ValueType of various sizes. */
+    /** Defines how operators transition the state. The Policy defines the operators, whose operands and result are all
+     *  ValueType of various sizes. Most of the methods here have signatures dictated by how the policy is used by the
+     *  instruction semantics class, X86InstructionSemantics.  */
     class Policy {
     private:
         State cur_state;
@@ -514,71 +500,5 @@ namespace SignAnalysisExample {
         }
     };
 }; /*namespace*/
-
-
-
-
-
-/*******************************************************************************************************************************/
-
-
-
-
-
-/* This instruction callback constructs a sign analyzer and processes each instruction as it is executed.  Running it this way
- * is sort of pointless since we already know the sign of all concrete values (but this is only an example).  There are other
- * ways to run the analysis--for example, you could analyze instructions out beyond our current execution point.  See top of
- * this file for details. */
-class SynchronousSignAnalysis: public RSIM_Callbacks::InsnCallback {
-private:
-    SignAnalysisExample::Policy policy;
-    X86InstructionSemantics<SignAnalysisExample::Policy, SignAnalysisExample::ValueType> semantics;
-public:
-    SynchronousSignAnalysis(): semantics(policy) {}
-    virtual SynchronousSignAnalysis *clone() { return this; }
-    virtual bool operator()(bool enabled, const Args &args) {
-        SgAsmx86Instruction *insn = isSgAsmx86Instruction(args.insn);
-        if (enabled && insn) {
-            semantics.processInstruction(insn);
-            std::cerr <<policy;
-        }
-        return enabled;
-    }
-};
-
-int
-main(int argc, char *argv[], char *envp[])
-{
-    RSIM_Linux32 sim;
-    int n = sim.configure(argc, argv, envp);
-
-    /* Turn on instruction tracing regardless of command-line settings.  Note: This interface is not ideal; we're planning to
-     * add methods to adjust tracing in a more friendly manner. */
-    static const char *extras[] = {"INTERNAL", "--debug=insn"};
-    sim.configure(2, (char**)extras, NULL);
-
-    /* Install an instruction callback that does the sign analysis.  We could use the simpler install_callback() method, but we
-     * want this callback to trigger _after_ each instruction in order to make the output more readable. */
-    sim.get_callbacks().add_insn_callback(RSIM_Callbacks::AFTER, new SynchronousSignAnalysis);
-
-    /* Run the simulation.  This is pretty much boiler plate. */
-    sim.exec(argc-n, argv+n);
-    sim.activate();
-    sim.main_loop();
-    sim.deactivate();
-    sim.describe_termination(stderr);
-    sim.terminate_self(); // never returns
-    return 0;
-}
-
-
-
-#else
-
-int main(int argc, char *argv[])
-{
-    std::cerr <<argv[0] <<": not supported on this platform" <<std::endl;
-    return 0;
-}
 
 #endif

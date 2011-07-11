@@ -1,5 +1,12 @@
 /* Demonstrates how to perform symbolic analysis on a function that isn't called.
  *
+ * Run this demo like this:
+ *     $ demo3 ./demo3input
+ *
+ *
+ *
+ * This demo does the following:
+ *
  * 1. Allow the specimen to execute up to a certain point in order to resolve dynamic linking.  This demo parses the ELF file
  *    to find the address of "main" and stops when it is reached.  By executing to main(), we allow the dynamic linker to run,
  *    giving us more information about the executable.
@@ -21,44 +28,18 @@
 #include "SymbolicSemantics.h"
 #include "YicesSolver.h"
 
-/* Traverses the AST to find a symbol for a global function with specified name. */
-class FunctionFinder: public AstSimpleProcessing {
-public:
-    SgNode *ast;
-    std::string fname;
-    FunctionFinder(SgNode *ast, const std::string &fname)
-        : ast(ast), fname(fname) {}
-
-    rose_addr_t address() {
-        try {
-            this->traverse(ast, preorder);
-        } catch (rose_addr_t addr) {
-            return addr;
-        }
-        return 0;
-    }
-
-    void visit(SgNode *node) {
-        SgAsmElfSymbol *sym = isSgAsmElfSymbol(node);
-        if (sym &&
-            sym->get_def_state() == SgAsmGenericSymbol::SYM_DEFINED &&
-            sym->get_binding()   == SgAsmGenericSymbol::SYM_GLOBAL &&
-            sym->get_type()      == SgAsmGenericSymbol::SYM_FUNC &&
-            sym->get_name()->get_string() == fname)
-            throw sym->get_value();
-    }
-};
-
 /* Monitors the CPU instruction pointer.  When it reaches a specified value analyze the function at the specified location. */
-class SymbolicAnalysis: public RSIM_Callbacks::InsnCallback {
+class Analysis: public RSIM_Callbacks::InsnCallback {
 public:
     rose_addr_t trigger_addr, analysis_addr;
 
-    SymbolicAnalysis(rose_addr_t trigger_addr, rose_addr_t analysis_addr)
+    Analysis(rose_addr_t trigger_addr, rose_addr_t analysis_addr)
         : trigger_addr(trigger_addr), analysis_addr(analysis_addr) {}
 
-    virtual SymbolicAnalysis *clone() { return this; }
+    /* This analysis is intended to run in a single thread, so clone is a no-op. */
+    virtual Analysis *clone() { return this; }
 
+    /* The actual analysis, triggered when we reach the specified execution address... */
     virtual bool operator()(bool enabled, const Args &args) {
         if (enabled && args.insn->get_address()==trigger_addr) {
 
@@ -146,13 +127,13 @@ int main(int argc, char *argv[], char *envp[])
     SgProject *project = frontend(rose_argc, rose_argv);
 
     /* Find the address of "main" and "payload" functions. */
-    rose_addr_t main_addr = FunctionFinder(project, "main").address();
+    rose_addr_t main_addr = FunctionFinder().address(project, "main");
     assert(main_addr!=0);
-    rose_addr_t payload_addr = FunctionFinder(project, "payload").address();
+    rose_addr_t payload_addr = FunctionFinder().address(project, "payload");
     assert(payload_addr!=0);
 
     /* Register the analysis callback. */
-    SymbolicAnalysis analysis(main_addr, payload_addr);
+    Analysis analysis(main_addr, payload_addr);
     sim.install_callback(&analysis);
 
     /* Create the initial process object by loading a program and initializing the stack.   This also creates the main thread,
@@ -168,7 +149,7 @@ int main(int argc, char *argv[], char *envp[])
     /* Allow executor threads to run and return when the simulated process terminates. */
     try {
         sim.main_loop();
-    } catch (SymbolicAnalysis*) {
+    } catch (Analysis*) {
     }
 
     /* Not really necessary since we're not doing anything else. */

@@ -1,0 +1,12 @@
+This directory contains a number of demonstrations of how to use RSIM
+for analysis.  They are meant as demos, not fully functional analyses,
+and therefore have various shortcomings and aren't well tested.  Full
+details of each demo are documented at the top of each demoN.C
+file. The other source files might be shared between multiple demos.
+
+Short descriptions (see source for full descriptions):
+
+demo1: simulate a function that isn't normally called
+demo2: sign analysis in synchrony with simulation
+demo3: symbolic analysis of a function not normally called
+demo4: sign analysis tethered to symbolic analysis
