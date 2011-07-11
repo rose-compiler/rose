@@ -86,6 +86,7 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
         CASE_DISPATCH_AND_BREAK(AssignOp);
         CASE_DISPATCH_AND_BREAK(AssignInitializer);
         CASE_DISPATCH_AND_BREAK(ComplexVal);
+        CASE_DISPATCH_AND_BREAK(DeleteExp);
         CASE_DISPATCH_AND_BREAK(ExprListExp);
         CASE_DISPATCH_AND_BREAK(FunctionCallExp);
         CASE_DISPATCH_AND_BREAK(LambdaRefExp);
@@ -237,6 +238,14 @@ Unparse_Python::unparseBreakStmt(SgBreakStmt* break_stmt,
 {
     curprint("break");
 }
+
+void
+Unparse_Python::unparseDeleteExp(SgDeleteExp* delete_exp, SgUnparse_Info& info)
+{
+    curprint("del ");
+    unparseExpression(delete_exp->get_variable(), info);
+}
+
 
 void
 Unparse_Python::unparseComplexVal(SgComplexVal* value,
