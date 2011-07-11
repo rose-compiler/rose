@@ -3123,7 +3123,7 @@ SgAssertStmt* SageBuilder::buildAssertStmt(SgExpression* test)
   SgAssertStmt* result = new SgAssertStmt(test);
   ROSE_ASSERT(test != NULL);
   test->set_parent(result);
-  setOneSourcePositionNull(result);
+  setOneSourcePositionForTransformation(result);
   return result;
 }
 
@@ -3132,6 +3132,24 @@ SgAssertStmt* SageBuilder::buildAssertStmt_nfi(SgExpression* test)
   SgAssertStmt* result = new SgAssertStmt(test);
   ROSE_ASSERT(test != NULL);
   test->set_parent(result);
+  setOneSourcePositionNull(result);
+  return result;
+}
+
+SgYieldStatement* SageBuilder::buildYieldStatement(SgExpression* value)
+{
+  ROSE_ASSERT(value != NULL);
+  SgYieldStatement* result = new SgYieldStatement(value);
+  value->set_parent(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgYieldStatement* SageBuilder::buildYieldStatement_nfi(SgExpression* value)
+{
+  ROSE_ASSERT(value != NULL);
+  SgYieldStatement* result = new SgYieldStatement(value);
+  value->set_parent(result);
   setOneSourcePositionNull(result);
   return result;
 }

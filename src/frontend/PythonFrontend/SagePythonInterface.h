@@ -40,6 +40,7 @@ PyObject* sage_buildTuple(PyObject *self, PyObject *args);
 PyObject* sage_buildUnaryOp(PyObject *self, PyObject *args);
 PyObject* sage_buildWhile(PyObject *self, PyObject *args);
 PyObject* sage_buildWith(PyObject *self, PyObject *args);
+PyObject* sage_buildYield(PyObject *self, PyObject *args);
 
 static PyMethodDef SageBuilderMethods[] = {
     {"buildAssert", sage_buildAssert, METH_VARARGS, "Builds an assert node."},
@@ -78,6 +79,7 @@ static PyMethodDef SageBuilderMethods[] = {
     {"buildUnaryOp", sage_buildUnaryOp, METH_VARARGS, "Builds unary operation node."},
     {"buildWhile", sage_buildWhile, METH_VARARGS, "Builds while stmt node."},
     {"buildWith", sage_buildWith, METH_VARARGS, "Builds with stmt node."},
+    {"buildYield", sage_buildYield, METH_VARARGS, "Builds a yield node."},
 
     {"appendStatements", (PyCFunction)sage_appendStatements, METH_VARARGS | METH_KEYWORDS, "Add children to a given SgNode."},
 

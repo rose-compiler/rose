@@ -753,3 +753,16 @@ sage_buildWith(PyObject *self, PyObject *args)
     SgWithStatement* sg_with_stmt = SageBuilder::buildWithStatement(expr, no_vars, body);
     return PyEncapsulate(sg_with_stmt);
 }
+
+/*
+ */
+PyObject*
+sage_buildYield(PyObject *self, PyObject *args)
+{
+    SgExpression *expr;
+    if (! PyArg_ParseTuple(args, "O&", SAGE_CONVERTER(SgExpression), &expr))
+        return NULL;
+
+    SgYieldStatement* sg_yield = SageBuilder::buildYieldStatement(expr);
+    return PyEncapsulate(sg_yield);
+}

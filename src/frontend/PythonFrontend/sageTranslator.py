@@ -282,6 +282,10 @@ class SageTranslator(ast.NodeVisitor):
     body = sage.buildSuite(map(self.visit, node.body))
     return sage.buildWith(expr, vars, body)
 
+  def visit_Yield(self, node):
+    value = self.visit(node.value)
+    return sage.buildYield(value)
+
 def translate(infilename):
   try:
     infile = open(infilename)
