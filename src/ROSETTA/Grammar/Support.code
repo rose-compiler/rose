@@ -14574,9 +14574,9 @@ SgIncidenceDirectedGraph::getSuccessors(SgGraphNode* node, std::vector <SgGraphN
       SgGraphNode* target = isSgGraphNode(edge->get_to());
       assert(target);
       if (target) {
-	    string type_n = getProperty(SgGraph::type, edge);
-	    if (type_n==RoseBin_support::ToString(SgGraph::cfg))
+	    //if (type_n==RoseBin_support::ToString(SgGraph::cfg)) {
 	       vec.push_back(target);
+            //}
 	    //else 
 	    //   printf("Different edge type \n");
       }
@@ -14603,8 +14603,8 @@ SgIncidenceDirectedGraph::getPredecessors(SgGraphNode* node, std::vector <SgGrap
     if (edge) {
       SgGraphNode* source = isSgGraphNode(edge->get_from());
       if (source) {
-	string type_n = getProperty(SgGraph::type, edge);
-	if (type_n==RoseBin_support::ToString(SgGraph::cfg))
+	//string type_n = getProperty(SgGraph::type, edge);
+	//if (type_n==RoseBin_support::ToString(SgGraph::cfg))
 	  vec.push_back(source);
       }
     }
