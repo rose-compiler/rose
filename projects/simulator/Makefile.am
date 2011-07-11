@@ -805,7 +805,6 @@ PTHREAD_TEST_INPUTS_SRC = \
 		    $(srcdir)/pthread_tests/pthread_cond_wait.2-3.c \
 		    $(srcdir)/pthread_tests/pthread_cond_wait.3-1.c \
 		    $(srcdir)/pthread_tests/pthread_cond_wait.4-1.c \
-		    $(srcdir)/pthread_tests/pthread_create.10-1.c \
 		    $(srcdir)/pthread_tests/pthread_create.11-1.c \
 		    $(srcdir)/pthread_tests/pthread_create.1-1.c \
 		    $(srcdir)/pthread_tests/pthread_create.12-1.c \
@@ -1038,6 +1037,7 @@ PTHREAD_TEST_INPUTS_SRC = \
 		    $(srcdir)/pthread_tests/pthread_testcancel.2-1.c
 
 PTHREAD_INPUTS_FAILING =							\
+		    $(srcdir)/pthread_tests/pthread_create.10-1.c 		\
 		    $(srcdir)/pthread_tests/pthread_mutexattr_getprotocol.1-2.c	\
 		    $(srcdir)/pthread_tests/pthread_mutexattr_setprotocol.1-1.c	\
 		    $(srcdir)/pthread_tests/pthread_mutexattr_setprotocol.3-1.c	\
@@ -1059,6 +1059,8 @@ PTHREAD_INPUTS_FAILING =							\
 		    $(srcdir)/pthread_tests/pthread_once.4-1.c
 
 # Details about why things are listed in $(PTHREAD_INPUTS_FAILING)
+#	test result is non-deterministic when run natively
+#		    $(srcdir)/pthread_tests/pthread_create.10-1.c
 # 	compile error in these tests with undeclared variables
 #		    $(srcdir)/pthread_tests/pthread_mutexattr_getprotocol.1-2.c
 #		    $(srcdir)/pthread_tests/pthread_mutexattr_setprotocol.1-1.c
