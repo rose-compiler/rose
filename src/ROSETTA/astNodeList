@@ -513,6 +513,7 @@ SgOrOp
 SgParameterStatement
 SgPartialFunctionModifierType
 SgPartialFunctionType
+SgPassStatement
 SgPlusAssignOp
 SgPlusPlusOp
 SgPntrArrRefExp

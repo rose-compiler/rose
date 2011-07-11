@@ -67,6 +67,7 @@ Unparse_Python::unparseLanguageSpecificStatement(SgStatement* stmt,
         CASE_DISPATCH_AND_BREAK(IfStmt);
         CASE_DISPATCH_AND_BREAK(LongIntVal);
         CASE_DISPATCH_AND_BREAK(PythonPrintStmt);
+        CASE_DISPATCH_AND_BREAK(PassStatement);
         CASE_DISPATCH_AND_BREAK(ReturnStmt);
         CASE_DISPATCH_AND_BREAK(StringVal);
         CASE_DISPATCH_AND_BREAK(WhileStmt);
@@ -454,6 +455,12 @@ Unparse_Python::unparseLongIntVal(SgLongIntVal* long_int_val,
     stringstream code;
     code << long_int_val->get_value();
     curprint( code.str() );
+}
+void
+Unparse_Python::unparsePassStatement(SgPassStatement* pass_stmt,
+                                     SgUnparse_Info& info)
+{
+    curprint("pass");
 }
 
 void
