@@ -134,6 +134,9 @@ class SageTranslator(ast.NodeVisitor):
   def visit_complex(self, n):
     return sage.buildComplexVal(n)
 
+  def visit_Continue(self, node):
+    return sage.buildContinue()
+
   def visit_ExceptHandler(self, node):
     e_name = node.name
     e_type = node.type

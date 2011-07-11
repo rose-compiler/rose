@@ -56,6 +56,7 @@ Unparse_Python::unparseLanguageSpecificStatement(SgStatement* stmt,
 
         CASE_DISPATCH_AND_BREAK(BasicBlock);
         CASE_DISPATCH_AND_BREAK(BreakStmt);
+        CASE_DISPATCH_AND_BREAK(ContinueStmt);
         CASE_DISPATCH_AND_BREAK(ExprStatement);
         CASE_DISPATCH_AND_BREAK(FunctionCallExp);
         CASE_DISPATCH_AND_BREAK(FunctionDeclaration);
@@ -245,6 +246,13 @@ Unparse_Python::unparseComplexVal(SgComplexVal* value,
     curprint("+");
     unparseExpression(value->get_imaginary_value(), info);
     curprint("j");
+}
+
+void
+Unparse_Python::unparseContinueStmt(SgContinueStmt* continue_stmt,
+                                    SgUnparse_Info& info)
+{
+    curprint("continue");
 }
 
 void

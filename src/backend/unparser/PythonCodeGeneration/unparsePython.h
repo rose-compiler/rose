@@ -39,6 +39,7 @@ class Unparse_Python : public UnparseLanguageIndependentConstructs
           virtual void unparseBinaryOp(SgBinaryOp*, SgUnparse_Info&);
           virtual void unparseBreakStmt(SgBreakStmt*, SgUnparse_Info&);
           virtual void unparseComplexVal(SgComplexVal*, SgUnparse_Info&);
+          virtual void unparseContinueStmt(SgContinueStmt*, SgUnparse_Info&);
           virtual void unparseExprStatement(SgExprStatement*, SgUnparse_Info&);
           virtual void unparseExprListExp(SgExprListExp*, SgUnparse_Info&);
           virtual void unparseFunctionCallExp(SgFunctionCallExp*, SgUnparse_Info&);
