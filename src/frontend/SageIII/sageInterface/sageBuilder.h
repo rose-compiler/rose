@@ -788,6 +788,10 @@ SgPassStatement* buildPassStatement_nfi();
 SgAssertStmt* buildAssertStmt(SgExpression* test);
 SgAssertStmt* buildAssertStmt_nfi(SgExpression* test);
 
+//! Build a yield statement
+SgYieldStatement* buildYieldStatement(SgExpression* value);
+SgYieldStatement* buildYieldStatement_nfi(SgExpression* value);
+
 //! Build a delete statement
 SgDeleteExp* buildDeleteExp(SgExpression *target, bool is_array = false, bool need_global_specifier = false, SgFunctionDeclaration *deleteOperatorDeclaration = NULL);
 SgDeleteExp* buildDeleteExp_nfi(SgExpression *target, bool is_array = false, bool need_global_specifier = false, SgFunctionDeclaration *deleteOperatorDeclaration = NULL);

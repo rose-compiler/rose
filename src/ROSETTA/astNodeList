@@ -665,6 +665,7 @@ SgWhereStatement
 SgWhileStmt
 SgWriteStatement
 SgXorAssignOp
+SgYieldStatement
 Sg_File_Info
 SgTypeCAFTeam
 SgCAFWithTeamStatement

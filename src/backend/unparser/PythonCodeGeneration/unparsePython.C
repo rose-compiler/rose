@@ -72,6 +72,7 @@ Unparse_Python::unparseLanguageSpecificStatement(SgStatement* stmt,
         CASE_DISPATCH_AND_BREAK(ReturnStmt);
         CASE_DISPATCH_AND_BREAK(StringVal);
         CASE_DISPATCH_AND_BREAK(WhileStmt);
+        CASE_DISPATCH_AND_BREAK(YieldStatement);
         default: {
             cerr << "unparse Statement (" << stmt->class_name()
                  << "*) is unimplemented." << endl;
@@ -561,3 +562,10 @@ Unparse_Python::unparseWhileStmt(SgWhileStmt* while_stmt,
     info.dec_nestingLevel();
 }
 
+void
+Unparse_Python::unparseYieldStatement(SgYieldStatement* yield_stmt,
+                                      SgUnparse_Info& info)
+{
+    curprint("yield ");
+    unparseExpression(yield_stmt->get_value(), info);
+}
