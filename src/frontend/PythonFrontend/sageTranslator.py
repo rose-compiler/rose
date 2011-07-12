@@ -157,6 +157,13 @@ class SageTranslator(ast.NodeVisitor):
     pairs = [sage.buildKeyDatumPair(keys[i], values[i]) for i in range(len(keys))]
     return sage.buildDict(pairs)
 
+  def visit_DictComp(self, node):
+    key = self.visit(node.key)
+    value = self.visit(node.value)
+    elt = sage.buildKeyDatumPair(key, value)
+    gens = sage.buildExprListExp(map(self.visit, node.generators))
+    return sage.buildDictComp(elt, gens)
+
   def visit_ExceptHandler(self, node):
     e_name = node.name
     e_type = node.type

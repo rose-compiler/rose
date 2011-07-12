@@ -91,6 +91,7 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
         CASE_DISPATCH_AND_BREAK(ComplexVal);
         CASE_DISPATCH_AND_BREAK(Comprehension);
         CASE_DISPATCH_AND_BREAK(DeleteExp);
+        CASE_DISPATCH_AND_BREAK(DictionaryComprehension);
         CASE_DISPATCH_AND_BREAK(ExprListExp);
         CASE_DISPATCH_AND_BREAK(FunctionCallExp);
         CASE_DISPATCH_AND_BREAK(KeyDatumList);
@@ -276,6 +277,19 @@ Unparse_Python::unparseDeleteExp(SgDeleteExp* delete_exp, SgUnparse_Info& info)
 {
     curprint("del ");
     unparseExpression(delete_exp->get_variable(), info);
+}
+
+void
+Unparse_Python::unparseDictionaryComprehension(SgDictionaryComprehension* dict_comp, SgUnparse_Info& info)
+{
+    curprint("{");
+    unparseExpression(dict_comp->get_element(), info);
+
+    SgExprListExp* generators = dict_comp->get_generators();
+    foreach (SgExpression* generator, generators->get_expressions())
+        unparseExpression(generator, info);
+
+    curprint("}");
 }
 
 
