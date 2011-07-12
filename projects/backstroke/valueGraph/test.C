@@ -298,13 +298,15 @@ int main(int argc, char *argv[])
             boost::filesystem::path p(fileName);
 
             string dir = p.parent_path().string();
-            string name = p.filename().string();
+            //string name = p.filename().string();
+            string name = p.string();
 
             string command = "cp " + dir + "/rose_" + name + " " + dir + "../SRC/" + name;
 
             cout << command << endl;
-            boost::filesystem::copy_file("rose_" + name, dir + "/../SRC/" + name, 
-                    boost::filesystem::copy_option::overwrite_if_exists);
+            boost::filesystem::copy_file("rose_" + name, dir + "/../SRC/" + name
+                    /*, boost::filesystem::copy_option::overwrite_if_exists*/
+            );
             //system(command.c_str());
         }
     }

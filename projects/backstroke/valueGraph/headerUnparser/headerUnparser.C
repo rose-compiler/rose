@@ -12,7 +12,7 @@ using namespace SageInterface;
 using namespace SageBuilder;
 
 #define foreach BOOST_FOREACH
-
+#define BOOST_FILESYSTEM_VERSION 1
 
 std::set<SgMemberFunctionDeclaration*> Backstroke::FunctionCallNode::functionsToReverse;
 std::ofstream Backstroke::FunctionCallNode::os("fileList.txt");
@@ -193,8 +193,9 @@ int main(int argc, char** argv)
     foreach (const string& header, headers)
     {
         string srcHeader = header + ".cc";
-        boost::filesystem::copy_file(header, srcHeader,
-                boost::filesystem::copy_option::overwrite_if_exists);
+        boost::filesystem::copy_file(header, srcHeader
+        /*    , boost::filesystem::copy_option::overwrite_if_exists */
+        );
         
         args.push_back(srcHeader);
         cout << srcHeader << endl;
@@ -263,12 +264,17 @@ int main(int argc, char** argv)
         
         path p(tempFileName1);
         string dir = p.parent_path().string();
-        string name = path(header).filename().string();
+        //string name = path(header).filename().string();
         
-        string tempFileName2 = "rose_" + p.filename().string();
+        //string tempFileName2 = "rose_" + p.filename().string();
         
-        boost::filesystem::copy_file(tempFileName2, dir + "/../SRC/" + name,
-                boost::filesystem::copy_option::overwrite_if_exists);
+        string name = path(header).string();
+        
+        string tempFileName2 = "rose_" + p.string();
+        
+        boost::filesystem::copy_file(tempFileName2, dir + "/../SRC/" + name
+                /*, boost::filesystem::copy_option::overwrite_if_exists*/
+        );
       
         if (exists(tempFileName1))
             remove(tempFileName1);
