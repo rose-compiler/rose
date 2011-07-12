@@ -456,6 +456,12 @@ SgListExp * buildListExp(const std::vector<SgExpression*>& exprs);
 SgListExp * buildListExp_nfi();
 SgListExp * buildListExp_nfi(const std::vector<SgExpression*>& exprs);
 
+SgComprehension * buildComprehension(SgExpression *target, SgExpression *iter, SgExprListExp *ifs);
+SgComprehension * buildComprehension_nfi(SgExpression *target, SgExpression *iter, SgExprListExp *ifs);
+
+SgListComprehension * buildListComprehension(SgExpression *elt, SgExprListExp *generators);
+SgListComprehension * buildListComprehension_nfi(SgExpression *elt, SgExprListExp *generators);
+
 //! Build SgVarRefExp based on a variable's Sage name. It will lookup symbol table internally starting from scope. A variable name is unique so type can be inferred (double check this).
 
 /*! 

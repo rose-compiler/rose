@@ -12,6 +12,7 @@ PyObject* sage_buildBinOp(PyObject *self, PyObject *args);
 PyObject* sage_buildBreak(PyObject *self, PyObject *args);
 PyObject* sage_buildCall(PyObject *self, PyObject *args);
 PyObject* sage_buildCompare(PyObject *self, PyObject *args);
+PyObject* sage_buildComprehension(PyObject *self, PyObject *args);
 PyObject* sage_buildComplexVal(PyObject *self, PyObject *args);
 PyObject* sage_buildContinue(PyObject *self, PyObject *args);
 PyObject* sage_buildDelete(PyObject *self, PyObject *args);
@@ -30,6 +31,7 @@ PyObject* sage_buildKeyDatumPair(PyObject *self, PyObject *args);
 PyObject* sage_buildLongIntVal(PyObject *self, PyObject *args);
 PyObject* sage_buildLambda(PyObject *self, PyObject *args);
 PyObject* sage_buildListExp(PyObject *self, PyObject *args);
+PyObject* sage_buildListComp(PyObject *self, PyObject *args);
 PyObject* sage_buildName(PyObject *self, PyObject *args);
 PyObject* sage_buildPass(PyObject *self, PyObject *args);
 PyObject* sage_buildPrintStmt(PyObject *self, PyObject *args);
@@ -52,6 +54,7 @@ static PyMethodDef SageBuilderMethods[] = {
     {"buildBreak", sage_buildBreak, METH_VARARGS, "Builds a break node."},
     {"buildCall", sage_buildCall, METH_VARARGS, "Builds an SgFunctionCallExp node."},
     {"buildCompare", sage_buildCompare, METH_VARARGS, "Builds a comparison node."},
+    {"buildComprehension", sage_buildComprehension, METH_VARARGS, "Builds a complex value node."},
     {"buildComplexVal", sage_buildComplexVal, METH_VARARGS, "Builds a complex value node."},
     {"buildContinue", sage_buildContinue, METH_VARARGS, "Builds a continue stmt node."},
     {"buildDelete", sage_buildDelete, METH_VARARGS, "Builds a delete stmt node."},
@@ -71,6 +74,7 @@ static PyMethodDef SageBuilderMethods[] = {
     {"buildLongIntVal", sage_buildLongIntVal, METH_VARARGS, "Builds an SgIntVal node."},
     {"buildLambda", sage_buildLambda, METH_VARARGS, "Builds a lambda node."},
     {"buildListExp", sage_buildListExp, METH_VARARGS, "Builds a list node."},
+    {"buildListComp", sage_buildListComp, METH_VARARGS, "Builds a list node."},
     {"buildPass", sage_buildPass, METH_VARARGS, "Builds a pass node."},
     {"buildPrintStmt", sage_buildPrintStmt, METH_VARARGS, "Builds an SgPrintStmt node."},
     {"buildName", sage_buildName, METH_VARARGS, "Builds an SgVarRefExp from a Name node."},

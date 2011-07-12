@@ -732,6 +732,10 @@ int GetPrecedence(int variant)
           case V_SgListExp:             return 0;
           case V_SgKeyDatumList:        return 16;
           case V_SgKeyDatumPair:        return 17;
+          case V_SgComprehension:       return 17;
+          case V_SgListComprehension:   return 16;
+          case V_SgSetComprehension:    return 16;
+          case V_SgDictionaryComprehension:   return 16;
 
 
 #if 0

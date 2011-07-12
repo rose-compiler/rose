@@ -159,6 +159,12 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (KeyDatumList,              "KeyDatumList",                 "KEY_DATUM_LIST" );
      NEW_TERMINAL_MACRO (KeyDatumPair,              "KeyDatumPair",                 "KEY_DATUM_PAIR" );
 
+     NEW_TERMINAL_MACRO (Comprehension,             "Comprehension",                "COMPREHENSION");
+     NEW_TERMINAL_MACRO (ListComprehension,         "ListComprehension",            "LIST_COMPREHENSION" );
+     NEW_TERMINAL_MACRO (SetComprehension,          "SetComprehension",             "SET_COMPREHENSION" );
+     NEW_TERMINAL_MACRO (DictionaryComprehension,   "DictionaryComprehension",      "DICTIONARY_COMPREHENSION" );
+
+
 #if USE_FORTRAN_IR_NODES
   // Intrisic function are just like other functions, but explicitly marked to be intrinsic.
   // DQ (2/2/2006): Support for Fortran IR nodes (contributed by Rice)
@@ -248,7 +254,8 @@ Grammar::setUpExpressions ()
        /* UseRenameExpression | */ StatementExpression  | AsmOp               | LabelRefExp         | ActualArgumentExpression |
           UnknownArrayOrFunctionReference               | PseudoDestructorRefExp | CAFCoExpression  |
           CudaKernelCallExp   | CudaKernelExecConfig    |  /* TV (04/22/2010): CUDA support */
-          LambdaRefExp        | TupleExp                | ListExp             | KeyDatumList        | KeyDatumPair, /* driscoll6 (6/27/11): Python Support */
+          LambdaRefExp        | TupleExp                | ListExp             | KeyDatumList        | KeyDatumPair             |
+          Comprehension       | ListComprehension       | SetComprehension    | DictionaryComprehension, /* driscoll6 (6/27/11): Python Support */
           "Expression","ExpressionTag", false);
 
   // ***********************************************************************
@@ -579,6 +586,10 @@ Grammar::setUpExpressions ()
      ListExp.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      KeyDatumList.setFunctionSource     ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      KeyDatumPair.setFunctionSource     ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     Comprehension.setFunctionSource           ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     SetComprehension.setFunctionSource        ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     ListComprehension.setFunctionSource       ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     DictionaryComprehension.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
 
      NullExpression.setFunctionSource   ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      VariantExpression.setFunctionSource( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
@@ -1638,6 +1649,29 @@ Grammar::setUpExpressions ()
      KeyDatumPair.setDataPrototype ("SgExpression*", "datum", "= NULL",
                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+     Comprehension.setFunctionPrototype ( "HEADER_COMPREHENSION", "../Grammar/Expression.code" );
+     Comprehension.setDataPrototype ("SgExpression*", "target", "= NULL",
+                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     Comprehension.setDataPrototype ("SgExpression*", "iter", "= NULL",
+                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     Comprehension.setDataPrototype ("SgExprListExp*", "filters", "= NULL",
+                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     SetComprehension.setFunctionPrototype ( "HEADER_SET_COMPREHENSION", "../Grammar/Expression.code" );
+     SetComprehension.setDataPrototype ("SgExpression*", "element", "= NULL",
+                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     ListComprehension.setFunctionPrototype ( "HEADER_LIST_COMPREHENSION", "../Grammar/Expression.code" );
+     ListComprehension.setDataPrototype ("SgExpression*", "element", "= NULL",
+                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     ListComprehension.setDataPrototype ("SgExprListExp*", "generators", "= NULL",
+                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     DictionaryComprehension.setFunctionPrototype ( "HEADER_DICTIONARY_COMPREHENSION", "../Grammar/Expression.code" );
+     DictionaryComprehension.setDataPrototype ("SgKeyDatumPair*", "element", "= NULL",
+                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+
      // ***********************************************************************
      // ***********************************************************************
      //                       Source Code Declaration
@@ -2000,4 +2034,12 @@ Grammar::setUpExpressions ()
      KeyDatumList.setFunctionSource     ( "SOURCE_KEY_DATUM_LIST","../Grammar/Expression.code" );
      KeyDatumPair.setFunctionSource     ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
      KeyDatumPair.setFunctionSource     ( "SOURCE_KEY_DATUM_PAIR","../Grammar/Expression.code" );
+     Comprehension.setFunctionSource     ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
+     Comprehension.setFunctionSource     ( "SOURCE_COMPREHENSION","../Grammar/Expression.code" );
+     ListComprehension.setFunctionSource     ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
+     ListComprehension.setFunctionSource     ( "SOURCE_LIST_COMPREHENSION","../Grammar/Expression.code" );
+     SetComprehension.setFunctionSource     ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
+     SetComprehension.setFunctionSource     ( "SOURCE_SET_COMPREHENSION","../Grammar/Expression.code" );
+     DictionaryComprehension.setFunctionSource     ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
+     DictionaryComprehension.setFunctionSource     ( "SOURCE_DICTIONARY_COMPREHENSION","../Grammar/Expression.code" );
    }
