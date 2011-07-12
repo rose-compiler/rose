@@ -156,6 +156,8 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (LambdaRefExp,              "LambdaRefExp",                 "LAMBDA_REF_EXP" );
      NEW_TERMINAL_MACRO (TupleExp,                  "TupleExp",                     "TUPLE_EXP" );
      NEW_TERMINAL_MACRO (ListExp,                   "ListExp",                      "LIST_EXP" );
+     NEW_TERMINAL_MACRO (KeyDatumList,              "KeyDatumList",                 "KEY_DATUM_LIST" );
+     NEW_TERMINAL_MACRO (KeyDatumPair,              "KeyDatumPair",                 "KEY_DATUM_PAIR" );
 
 #if USE_FORTRAN_IR_NODES
   // Intrisic function are just like other functions, but explicitly marked to be intrinsic.
@@ -246,7 +248,7 @@ Grammar::setUpExpressions ()
        /* UseRenameExpression | */ StatementExpression  | AsmOp               | LabelRefExp         | ActualArgumentExpression |
           UnknownArrayOrFunctionReference               | PseudoDestructorRefExp | CAFCoExpression  |
           CudaKernelCallExp   | CudaKernelExecConfig    |  /* TV (04/22/2010): CUDA support */
-          LambdaRefExp        | TupleExp                | ListExp, /* driscoll6 (6/27/11): Python Support */
+          LambdaRefExp        | TupleExp                | ListExp             | KeyDatumList        | KeyDatumPair, /* driscoll6 (6/27/11): Python Support */
           "Expression","ExpressionTag", false);
 
   // ***********************************************************************
@@ -575,6 +577,8 @@ Grammar::setUpExpressions ()
      Initializer.setFunctionSource      ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      TupleExp.setFunctionSource         ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      ListExp.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     KeyDatumList.setFunctionSource     ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     KeyDatumPair.setFunctionSource     ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
 
      NullExpression.setFunctionSource   ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      VariantExpression.setFunctionSource( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
@@ -1622,6 +1626,18 @@ Grammar::setUpExpressions ()
      ListExp.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_FUNCTIONS", "../Grammar/Expression.code" );
      ListExp.editSubstitute       ( "LIST_NAME", "element" );
 
+     KeyDatumList.setFunctionPrototype ( "HEADER_KEY_DATUM_LIST", "../Grammar/Expression.code" );
+     KeyDatumList.setDataPrototype("SgKeyDatumPairPtrList", "key_datum_pairs", "",
+                                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     KeyDatumList.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_FUNCTIONS", "../Grammar/Expression.code" );
+     KeyDatumList.editSubstitute       ( "LIST_NAME", "key_datum_pair" );
+
+     KeyDatumPair.setFunctionPrototype ( "HEADER_KEY_DATUM_PAIR", "../Grammar/Expression.code" );
+     KeyDatumPair.setDataPrototype ("SgExpression*", "key", "= NULL",
+                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     KeyDatumPair.setDataPrototype ("SgExpression*", "datum", "= NULL",
+                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
      // ***********************************************************************
      // ***********************************************************************
      //                       Source Code Declaration
@@ -1980,4 +1996,8 @@ Grammar::setUpExpressions ()
      TupleExp.setFunctionSource     ( "SOURCE_TUPLE_EXP","../Grammar/Expression.code" );
      ListExp.setFunctionSource      ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
      ListExp.setFunctionSource      ( "SOURCE_LIST_EXP","../Grammar/Expression.code" );
+     KeyDatumList.setFunctionSource     ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
+     KeyDatumList.setFunctionSource     ( "SOURCE_KEY_DATUM_LIST","../Grammar/Expression.code" );
+     KeyDatumPair.setFunctionSource     ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
+     KeyDatumPair.setFunctionSource     ( "SOURCE_KEY_DATUM_PAIR","../Grammar/Expression.code" );
    }

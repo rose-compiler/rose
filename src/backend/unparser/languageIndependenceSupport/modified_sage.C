@@ -730,6 +730,9 @@ int GetPrecedence(int variant)
           case V_SgLambdaRefExp:        return 0;
           case V_SgTupleExp:            return 0;
           case V_SgListExp:             return 0;
+          case V_SgKeyDatumList:        return 16;
+          case V_SgKeyDatumPair:        return 17;
+
 
 #if 0
        // Template

@@ -3154,6 +3154,46 @@ SgYieldStatement* SageBuilder::buildYieldStatement_nfi(SgExpression* value)
   return result;
 }
 
+SgKeyDatumPair* SageBuilder::buildKeyDatumPair(SgExpression* key, SgExpression* datum)
+{
+    ROSE_ASSERT(key != NULL && datum != NULL);
+    SgKeyDatumPair *result = new SgKeyDatumPair(key, datum);
+    key->set_parent(result);
+    datum->set_parent(result);
+    setOneSourcePositionForTransformation(result);
+    return result;
+}
+
+SgKeyDatumPair* SageBuilder::buildKeyDatumPair_nfi(SgExpression* key, SgExpression* datum)
+{
+    ROSE_ASSERT(key != NULL && datum != NULL);
+    SgKeyDatumPair *result = new SgKeyDatumPair(key, datum);
+    key->set_parent(result);
+    datum->set_parent(result);
+    setOneSourcePositionNull(result);
+    return result;
+}
+
+SgKeyDatumList* SageBuilder::buildKeyDatumList(std::vector<SgKeyDatumPair*> pairs)
+{
+    SgKeyDatumList *result = new SgKeyDatumList();
+    ROSE_ASSERT(result);
+    for (size_t i = 0; i < pairs.size(); ++i)
+        result->append_pair(pairs[i]);
+    setOneSourcePositionForTransformation(result);
+    return result;
+}
+
+SgKeyDatumList* SageBuilder::buildKeyDatumList_nfi(std::vector<SgKeyDatumPair*> pairs)
+{
+    SgKeyDatumList *result = new SgKeyDatumList();
+    ROSE_ASSERT(result);
+    for (size_t i = 0; i < pairs.size(); ++i)
+        result->append_pair(pairs[i]);
+    setOneSourcePositionNull(result);
+    return result;
+}
+
 SgPragmaDeclaration * SageBuilder::buildPragmaDeclaration(const string& name, SgScopeStatement* scope)
 {
   if (scope == NULL)

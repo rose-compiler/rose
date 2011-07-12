@@ -148,7 +148,8 @@ class SageTranslator(ast.NodeVisitor):
   def visit_Dict(self, node):
     keys = map(self.visit, node.keys)
     values = map(self.visit, node.values)
-    return sage.buildDict(keys, values)
+    pairs = [sage.buildKeyDatumPair(keys[i], values[i]) for i in range(len(keys))]
+    return sage.buildDict(pairs)
 
   def visit_ExceptHandler(self, node):
     e_name = node.name
