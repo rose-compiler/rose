@@ -289,7 +289,7 @@ case "$ROSE_TEST_BUILD_STYLE" in
     ################################################################################
     # MAKE
     #
-    runBuildStep make "make_output.txt"
+    #runBuildStep make "make_output.txt"
     ################################################################################
     # MAKE CHECK
     #
