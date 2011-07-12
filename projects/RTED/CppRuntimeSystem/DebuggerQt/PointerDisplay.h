@@ -12,18 +12,18 @@ class PointerInfo;
 class PointerDisplay : public ItemTreeNode
 {
     public:
-        PointerDisplay(PointerInfo * pi_);
+        PointerDisplay(const PointerInfo * pi_);
 
         virtual QVariant    data(int role, int column=0) const;
         virtual QStringList sectionHeader() const;
 
 
-        static PointerDisplay * build(PointerManager * mm);
+        static PointerDisplay* build(PointerManager * mm);
 
     protected:
         PointerDisplay() : pi(NULL) {}
 
-        PointerInfo * pi;
+        const PointerInfo* pi;
 
 };
 

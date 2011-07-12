@@ -1,36 +1,51 @@
+#include <sstream>
+#include <QIcon>
+
 #include "MemoryTypeDisplay.h"
 #include "MemoryManager.h"
 #include "PointerDisplay.h"
+
 #include "PointerManager.h"
 #include "CppRuntimeSystem.h"
-
 
 #include "ModelRoles.h"
 
 #include "TypeInfoDisplay.h"
 #include "VariablesTypeDisplay.h"
-#include <QIcon>
 
+static
+bool onStack(const MemoryType& mt)
+{
+  return mt.howCreated() & (akStack | akGlobal);
+}
 
-MemoryTypeDisplay::MemoryTypeDisplay(MemoryType * mt_, bool displayPointer)
-    : mt(mt_)
+MemoryTypeDisplay::MemoryTypeDisplay(const MemoryType& mt_, bool displayPointer)
+    : mt(&mt_)
 {
     typedef PropertyValueNode Pvn;
-    QString addrStr = QString("0x%1").arg(mt->getAddress(),0,16);
 
-    addChild( new Pvn("Address",addrStr));
+    std::stringstream out;
+
+    out << mt->beginAddress();
+
+    addChild( new Pvn("Address", out.str().c_str()));
     addChild( new Pvn("Size", static_cast<unsigned int>(mt->getSize())));
-    addChild( new Pvn("Allocation at",mt->getPos().toString().c_str()));
+    addChild( new Pvn("Allocation at", mt->getPos().toString().c_str()));
     addChild( new Pvn("Init Status", mt->getInitString().c_str()) );
-    addChild( new Pvn("Is On Stack", mt->isOnStack()));
+    addChild( new Pvn("Is On Stack", onStack(*mt)) );
 
     Pvn * typeInfoSection = new Pvn("Type Info","");
     typeInfoSection->setFirstColumnSpanned(true);
     addChild( typeInfoSection);
 
 
-    MemoryType::TypeInfoMap::const_iterator it = mt->getTypeInfoMap().begin();
-    for(; it != mt->getTypeInfoMap().end();  ++it)
+    MemoryType::TypeData::const_iterator it = mt->typeData().begin();
+
+
+
+
+
+    for(; it != mt->typeData().end();  ++it)
         typeInfoSection->addChild( RsTypeDisplay::build(it->second,it->first));
 
     //pointer->setIcon(QIcon(":/icons/arrow.png"));
@@ -45,8 +60,8 @@ MemoryTypeDisplay::MemoryTypeDisplay(MemoryType * mt_, bool displayPointer)
             Pvn * pointerIn = new Pvn("Pointer to this Allocation","");
             pointerIn->setFirstColumnSpanned(true);
 
-            PointerManager::PointerSetIter i   = pm->sourceRegionIter(mt->getAddress());
-            PointerManager::PointerSetIter end = pm->sourceRegionIter(mt->getAddress()+mt->getSize());
+            PointerManager::PointerSetIter i   = pm->sourceRegionIter(mt->beginAddress());
+            PointerManager::PointerSetIter end = pm->sourceRegionIter(mt->lastValidAddress());
 
             for(; i != end; ++i)
                 pointerIn->addChild(new PointerDisplay(*i));
@@ -56,8 +71,8 @@ MemoryTypeDisplay::MemoryTypeDisplay(MemoryType * mt_, bool displayPointer)
             Pvn * pointerOut = new Pvn("Pointer into this Allocation","");
             pointerOut->setFirstColumnSpanned(true);
 
-            PointerManager::TargetToPointerMapIter i   = pm->targetRegionIterBegin(mt->getAddress());
-            PointerManager::TargetToPointerMapIter end = pm->targetRegionIterEnd(mt->getAddress()+mt->getSize());
+            PointerManager::TargetToPointerMap::const_iterator i   = pm->targetRegionIterBegin(mt->beginAddress());
+            PointerManager::TargetToPointerMap::const_iterator end = pm->targetRegionIterEnd(mt->lastValidAddress());
 
             for(; i!= end; ++i)
                 pointerOut->addChild(new PointerDisplay(i->second));
@@ -68,26 +83,26 @@ MemoryTypeDisplay::MemoryTypeDisplay(MemoryType * mt_, bool displayPointer)
 
 
 
-
-
 QVariant MemoryTypeDisplay::data(int role, int column) const
 {
     if(role == Qt::DisplayRole)
     {
         if(column == 0)
         {
-            QString addrStr = QString("Address 0x%1").arg(mt->getAddress(),0,16);
+            QString addrStr = QString("Address 0x%1").arg(mt->beginAddress().local,0,16);
             return addrStr;
         }
         else if (column == 1)
             return mt->getPos().toString().c_str();
     }
-    if ( role == MemoryTypeRole)
-        return QVariant::fromValue<MemoryType*>(mt);
+
+    // \pp commented out to avoid compile error
+    //~ if ( role == MemoryTypeRole)
+        //~ return QVariant::fromValue<const MemoryType*>(mt);
 
     if(role == Qt::DecorationRole && column ==0)
     {
-        return mt->isOnStack() ? QIcon(":/icons/variable.gif") : QIcon(":/icons/allocation.gif");
+        return onStack(*mt) ? QIcon(":/icons/variable.gif") : QIcon(":/icons/allocation.gif");
     }
 
     return QVariant();
@@ -110,13 +125,11 @@ MemoryTypeDisplay * MemoryTypeDisplay::build(MemoryManager * mm, bool showHeap, 
     MemoryManager::MemoryTypeSet::const_iterator it = mm->getAllocationSet().begin();
     for(; it != mm->getAllocationSet().end(); ++it )
     {
-        if( (*it)->isOnStack() && !showStack)
-            continue;
+        if ( onStack(it->second) && !showStack ) continue;
 
-        if( !(*it)->isOnStack() && !showHeap)
-            continue;
+        if ( (!onStack(it->second)) && !showStack ) continue;
 
-        root->addChild(new MemoryTypeDisplay(*it));
+        root->addChild(new MemoryTypeDisplay(it->second));
     }
 
     return root;

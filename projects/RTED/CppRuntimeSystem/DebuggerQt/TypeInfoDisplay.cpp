@@ -4,7 +4,7 @@
 #include <QIcon>
 #include <QDebug>
 
-RsTypeDisplay::RsTypeDisplay(RsType * t, const QString & n, int off)
+RsTypeDisplay::RsTypeDisplay(const RsType* t, const QString & n, int off)
     : type(t), name(n),offset(off)
 {
 }
@@ -40,15 +40,15 @@ QVariant RsTypeDisplay::data(int role, int column) const
 
     if( role == Qt::DecorationRole && column ==0)
     {
-        RsClassType * classType = dynamic_cast<RsClassType*> (type);
+        const RsClassType* classType = dynamic_cast<const RsClassType*> (type);
         if(classType)
             return QIcon(":/util/NodeIcons/class.gif");
 
-        RsArrayType * arrType =  dynamic_cast<RsArrayType*> (type);
+        const RsArrayType* arrType =  dynamic_cast<const RsArrayType*> (type);
         if(arrType )
             return QIcon(":/icons/array.gif");
 
-        RsBasicType * basicType = dynamic_cast<RsBasicType*> (type);
+        const RsBasicType * basicType = dynamic_cast<const RsBasicType*> (type);
         if(basicType)
             return QIcon(":/icons/basic_type.gif");
 
@@ -59,22 +59,22 @@ QVariant RsTypeDisplay::data(int role, int column) const
 }
 
 
-RsTypeDisplay * RsTypeDisplay::build (TypeSystem * t)
+RsTypeDisplay* RsTypeDisplay::build(TypeSystem * t)
 {
+    typedef TypeSystem::NamedTypeContainer::const_iterator ConstIterator;
+
     RsTypeDisplay * root = new RsTypeDisplay(NULL,"root",-1);
 
-    for(TypeSystem::const_iterator it = t->begin(); it != t->end(); ++it)
+    for (ConstIterator it = t->begin(); it != t->end(); ++it)
     {
-        root->addChild( build(*it,-1,"") );
+        root->addChild( build(it->second,-1,"") );
     }
 
     return root;
 }
 
 
-RsTypeDisplay * RsTypeDisplay::build (RsType * t,
-                                         int memberOffset,
-                                         const QString & memberName)
+RsTypeDisplay * RsTypeDisplay::build (const RsType* t, int memberOffset, const QString& memberName)
 {
     RsTypeDisplay * curNode = new RsTypeDisplay(t,memberName,memberOffset);
 
