@@ -462,6 +462,12 @@ SgComprehension * buildComprehension_nfi(SgExpression *target, SgExpression *ite
 SgListComprehension * buildListComprehension(SgExpression *elt, SgExprListExp *generators);
 SgListComprehension * buildListComprehension_nfi(SgExpression *elt, SgExprListExp *generators);
 
+SgSetComprehension * buildSetComprehension(SgExpression *elt, SgExprListExp *generators);
+SgSetComprehension * buildSetComprehension_nfi(SgExpression *elt, SgExprListExp *generators);
+
+SgDictionaryComprehension * buildDictionaryComprehension(SgKeyDatumPair *kd_pair, SgExprListExp *generators);
+SgDictionaryComprehension * buildDictionaryComprehension_nfi(SgKeyDatumPair *kd_pair, SgExprListExp *generators);
+
 //! Build SgVarRefExp based on a variable's Sage name. It will lookup symbol table internally starting from scope. A variable name is unique so type can be inferred (double check this).
 
 /*! 

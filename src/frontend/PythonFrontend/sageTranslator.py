@@ -261,6 +261,11 @@ class SageTranslator(ast.NodeVisitor):
     value = self.visit(node.value)
     return sage.buildReturnStmt(value)
 
+  def visit_SetComp(self, node):
+    elt = self.visit(node.elt)
+    gens = sage.buildExprListExp(map(self.visit, node.generators))
+    return sage.buildSetComp(elt, gens)
+
   def visit_Str(self, node):
     return sage.buildStringVal(node.s)
 
