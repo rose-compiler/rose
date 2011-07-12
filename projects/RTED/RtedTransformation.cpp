@@ -6,17 +6,13 @@
 #include <string>
 #include <set>
 
-#include <boost/foreach.hpp>
 #include "RtedSymbols.h"
 #include "DataStructures.h"
 #include "RtedTransformation.h"
 #include "RtedVisit.h"
 
-using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
-
-
 
 /* -----------------------------------------------------------
  * Run frontend and return project
@@ -32,60 +28,84 @@ RtedTransformation::parse(int argc, char** argv) {
  * Load all function symbols that are needed for transformations
  * Basically we need to know which functions to insert
  * -----------------------------------------------------------*/
-void RtedTransformation::loadFunctionSymbols(SgProject* project) {
-   // traverse the AST and find locations that need to be transformed
-   symbols->traverse(project, preorder);
+void RtedTransformation::loadFunctionSymbols(SgSourceFile& n)
+{
+   SgGlobal* globalScope = n.get_globalScope();
+   ROSE_ASSERT(globalScope);
 
-   ROSE_ASSERT(symbols->roseCreateHeap);
-   ROSE_ASSERT(symbols->roseAccessHeap);
-   ROSE_ASSERT(symbols->roseFunctionCall);
-   ROSE_ASSERT(symbols->roseAssertFunctionSignature);
-   ROSE_ASSERT(symbols->roseConfirmFunctionSignature);
-   ROSE_ASSERT(symbols->roseFreeMemory);
-   ROSE_ASSERT(symbols->roseReallocateMemory);
-   ROSE_ASSERT(symbols->roseConvertIntToString);
-   ROSE_ASSERT(symbols->roseCheckpoint);
-   ROSE_ASSERT(symbols->roseCreateVariable);
-   ROSE_ASSERT(symbols->roseCreateObject);
-   ROSE_ASSERT(symbols->roseInitVariable);
-   ROSE_ASSERT(symbols->roseMovePointer);
-   ROSE_ASSERT(symbols->roseAccessVariable);
-   ROSE_ASSERT(symbols->roseEnterScope);
-   ROSE_ASSERT(symbols->roseExitScope);
-   ROSE_ASSERT(symbols->roseIOFunctionCall);
-   ROSE_ASSERT(symbols->roseRegisterTypeCall);
-   ROSE_ASSERT(symbols->size_t_member);
-   ROSE_ASSERT(symbols->roseCheckIfThisNULL);
+   symbols.initialize(*globalScope);
+
+   ROSE_ASSERT(symbols.roseCreateArray);
+   ROSE_ASSERT(symbols.roseAllocMem);
+   ROSE_ASSERT(symbols.roseAccessArray);
+   ROSE_ASSERT(symbols.roseCheckpoint);
+   ROSE_ASSERT(symbols.roseFunctionCall);
+   ROSE_ASSERT(symbols.roseAssertFunctionSignature);
+   ROSE_ASSERT(symbols.roseConfirmFunctionSignature);
+   ROSE_ASSERT(symbols.roseFreeMemory);
+   ROSE_ASSERT(symbols.roseReallocateMemory);
+   ROSE_ASSERT(symbols.roseConvertIntToString);
+   ROSE_ASSERT(symbols.roseCreateVariable);
+   ROSE_ASSERT(symbols.roseCreateObject);
+   ROSE_ASSERT(symbols.roseInitVariable);
+   ROSE_ASSERT(symbols.roseMovePointer);
+   ROSE_ASSERT(symbols.roseAccessVariable);
+   ROSE_ASSERT(symbols.roseEnterScope);
+   ROSE_ASSERT(symbols.roseExitScope);
+   ROSE_ASSERT(symbols.roseIOFunctionCall);
+   ROSE_ASSERT(symbols.roseRegisterTypeCall);
+   ROSE_ASSERT(symbols.roseCheckIfThisNULL);
+   ROSE_ASSERT(symbols.roseAddr);
+   ROSE_ASSERT(symbols.roseClose);
+
+   if (withupc)
+   {
+     /* only present when compiling for UPC code */
+     ROSE_ASSERT(symbols.roseAddrSh);
+     ROSE_ASSERT(symbols.roseUpcExitWorkzone);
+     ROSE_ASSERT(symbols.roseUpcEnterWorkzone);
+     ROSE_ASSERT(symbols.roseUpcBeginExclusive);
+     ROSE_ASSERT(symbols.roseUpcEndExclusive);
+   }
+
+   ROSE_ASSERT(symbols.roseUpcAllInitialize); // see comment in ParallelRTS.h
+
+   ROSE_ASSERT(symbols.roseAllocKind);
+
+   ROSE_ASSERT(symbols.roseTypeDesc);
+   ROSE_ASSERT(symbols.roseAddressDesc);
+   ROSE_ASSERT(symbols.roseSourceInfo);
+   ROSE_ASSERT(symbols.size_t_member);
 }
 
 /* -----------------------------------------------------------
  * Perform all transformations needed
  * -----------------------------------------------------------*/
-void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
-   if (RTEDDEBUG())   cout << "Running Transformation..." << endl;
-   globalScope = getFirstGlobalScope(isSgProject(project));
-   ROSE_ASSERT( project);
+void RtedTransformation::transform(SgProject* project, std::set<std::string>& rtedfiles)
+{
+   using rted::VariableTraversal;
+   using rted::InheritedAttribute;
 
-   this -> rtedfiles = &rtedfiles;
-   loadFunctionSymbols(project);
+   ROSE_ASSERT(project);
 
-   VariableTraversal varTraversal(this);
-   InheritedAttribute inheritedAttribute(false,false,false,false,false,false);
-   //   InheritedAttribute inheritedAttribute(bools);
+   if (RTEDDEBUG) std::cout << "Running Transformation..." << std::endl;
+
+   this->rtedfiles = &rtedfiles;
+
+   VariableTraversal                varTraversal(this);
+
    // Call the traversal starting at the project (root) node of the AST
-   varTraversal.traverseInputFiles(project,inheritedAttribute);
+   varTraversal.traverseInputFiles(project, InheritedAttribute());
 
+   // tps: Traverse all classes that appear in header files and create copy in
+   // source file within a namespace We need to know the sizeOf classes. To do
+   // so we need to modify the class but do not want to do this in the header
+   // file right now.
+   // \pp \note can the loop be done as part of varTraversal, or seperated into
+   //           another class? This way we could eliminate the dependency
+   //           between Rtedtransformation and AstSimpleProcessing.
 
-   // tps: Traverse all classes that appear in header files and create copy in source file within a namespace.
-   // We need to know the sizeOf classes. To do so we need to modify the class but do not want to do this in the header file right now.
-   vector<SgClassDeclaration*> traverseClasses;
-   insertNamespaceIntoSourceFile(project,traverseClasses);
-   // traverse all header files and collect information
-   vector<SgClassDeclaration*>::const_iterator travClassIt = traverseClasses.begin();
-   for (;travClassIt!=traverseClasses.end();++travClassIt) {
-      // traverse the new classes with RTED namespace
-      traverse(*travClassIt,preorder);
-   }
+   insertNamespaceIntoSourceFile(project);
 
    executeTransformations();
 }
@@ -94,22 +114,6 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
 /* -----------------------------------------------------------
  * Collects information needed for transformations
  * -----------------------------------------------------------*/
-
-void RtedTransformation::visit(SgNode* n) {
-   if (isSgScopeStatement(n)) {
-#if 1
-      // if, while, do, etc., where we need to check for locals going out of scope
-      visit_isSgScopeStatement(n);
-      // *********************** DETECT structs and class definitions ***************
-      if (isSgClassDefinition(n)) {
-         // call to a specific function that needs to be checked
-         //cerr << " +++++++++++++++++++++ FOUND Class Def!! ++++++++++++++++ " << endl;
-         visit_isClassDefinition(isSgClassDefinition(n));
-      }
-#endif
-   }
-
-}
 
 #endif
 

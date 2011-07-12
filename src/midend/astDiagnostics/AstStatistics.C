@@ -140,6 +140,9 @@ AstNodeMemoryPoolStatistics::AstNodeMemoryPoolStatistics()
      totalMemoryUsed = memoryUsage();
      printf ("Total memory used = %d \n",totalMemoryUsed);
      printf ("numberOfNodes = %zu \n",numberOfNodes());
+
+  // DQ (5/6/2011): Insure++ reports this as an error in the tests/RunTests/AstDeleteTests
+     counter = 0;
    }
 
 AstNodeMemoryPoolStatistics::~AstNodeMemoryPoolStatistics()

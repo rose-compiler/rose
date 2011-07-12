@@ -62,7 +62,7 @@ void RtedDebug::startRtsi()
 {
     leaveGui();
     enterGui();
-    cout << "StartRtsi." << endl;
+    std::cout << "StartRtsi." << std::endl;
     updateDialogData();
 }
 
@@ -93,13 +93,13 @@ void RtedDebug::updateDialogData()
 }
 
 
-void RtedDebug::addMessage(std::string &  msg, MessageType type)
+void RtedDebug::addMessage(const std::string& msg, MessageType type)
 {
   QString message = QString(msg.c_str());
   addMessage(message,type);
 }
 
-void RtedDebug::addMessage(std::string &  msg)
+void RtedDebug::addMessage(const std::string& msg)
 {
   QString message = QString(msg.c_str());
   addMessage(message,RtedDebug::MESSAGE);
@@ -182,5 +182,3 @@ void RtedDebug::printDbg(const QString & s)
 
     qDebug() << "Nothing running" << s;
 }
-
-
