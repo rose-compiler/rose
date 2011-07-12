@@ -103,6 +103,18 @@ public:
     }
 };
 
+class FutexFooler: public RSIM_Simulator::SystemCall::Callback {
+public:
+    virtual bool operator()(bool enabled, const Args &args) {
+        if (enabled && 0x68000832==args.thread->policy.readIP().known_value()) {
+            args.thread->tracing(TRACE_MISC)->mesg("FutexFooler triggered: returning zero");
+            args.thread->syscall_return(0);
+            enabled = false;
+        }
+        return enabled;
+    }
+};
+
 int
 main(int argc, char *argv[], char *envp[])
 {
@@ -113,15 +125,19 @@ main(int argc, char *argv[], char *envp[])
     RSIM_Linux32 sim;
     int n = sim.configure(argc, argv, envp);
 
-#if 0
+#if 1
     /* Disassemble when we hit the dynamic linker at 0x68000850 */
-    MemoryDisassembler disassembler(0x68000850, false);
+    RSIM_Tools::MemoryDisassembler disassembler(0x68000850, false);
     sim.install_callback(&disassembler);
-    sim.install_callback(new FunctionReporter);
+    sim.install_callback(new RSIM_Tools::FunctionReporter);
+#elif 0
+    RSIM_Tools::MemoryDisassembler disassembler(0x080a4f28, false);
+    sim.install_callback(&disassembler);
+    sim.install_callback(new RSIM_Tools::FunctionReporter(true));
 #endif
 
     /* Emulate instructions that ROSE doesn't handle yet. */
-    sim.install_callback(new UnhandledInstruction);
+    sim.install_callback(new RSIM_Tools::UnhandledInstruction);
 
     /* Make adjustments for RDTSC instruction after the instruction executes. */
     sim.get_callbacks().add_insn_callback(RSIM_Callbacks::AFTER, new Rdtsc);
@@ -129,6 +145,7 @@ main(int argc, char *argv[], char *envp[])
     /* System call handlers */
     sim.syscall_implementation(5/*open*/)->body.prepend(new ProcMapsOpen);
     sim.syscall_implementation(243/*set_thread_area*/)->body.prepend(new MapReporter);
+    //sim.syscall_implementation(0xf0/*futex*/)->body.prepend(new FutexFooler);
 
     /**************************************************************************************************************************
      * Load the specimen into memory, create a process and its initial thread.
@@ -142,10 +159,21 @@ main(int argc, char *argv[], char *envp[])
 
     /* Initialize the stack from data saved when the program was run natively. */
     {
+#if 1
         rose_addr_t bottom_of_stack = 0xbffeb000;
         rose_addr_t new_stack_pointer = bottom_of_stack + 0x13f40; /* points to specimen's argc */
+        const char *stack_name = "x-real-initial-stack";
+#elif 0
+        rose_addr_t bottom_of_stack   = 0xbfffe000;
+        rose_addr_t new_stack_pointer = 0xbfffefd0;
+        const char *stack_name = "x-a.out-stack";
+#else
+        rose_addr_t bottom_of_stack = 0;
+        rose_addr_t new_stack_pointer = 0;
+        const char *stack_name = "";
+#endif
 
-        int fd = open("x-real-initial-stack", O_RDONLY);
+        int fd = open(stack_name, O_RDONLY);
         if (fd>=0) {
             fprintf(stderr, "Initializing the stack...\n");
             uint8_t buf[4096];
@@ -156,9 +184,8 @@ main(int argc, char *argv[], char *envp[])
                 bottom_of_stack += nwritten;
             }
             close(fd);
+            thread->policy.writeGPR(x86_gpr_sp, thread->policy.number<32>(new_stack_pointer));
         }
-
-        thread->policy.writeGPR(x86_gpr_sp, thread->policy.number<32>(new_stack_pointer));
     }
 
     /**************************************************************************************************************************

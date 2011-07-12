@@ -114,7 +114,7 @@ main(int argc, char *argv[], char *envp[])
     if (do_disassemble_at_coredump)
         sim.get_callbacks().add_process_callback(RSIM_Callbacks::BEFORE, new DisassembleAtCoreDump);
 
-    sim.get_callbacks().add_signal_callback(RSIM_Callbacks::AFTER, new SignalStackTrace);
+    sim.get_callbacks().add_signal_callback(RSIM_Callbacks::AFTER, new RSIM_Tools::SignalStackTrace);
         
         
 #if 0
@@ -238,7 +238,7 @@ main(int argc, char *argv[], char *envp[])
 
     /***************************************************************************************************************************/
 #   if 1 /* Example: providing implementation for instructions not recognized by ROSE proper. */
-    sim.install_callback(new UnhandledInstruction);
+    sim.install_callback(new RSIM_Tools::UnhandledInstruction);
 #   endif
 
     /***************************************************************************************************************************

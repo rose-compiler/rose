@@ -127,9 +127,9 @@ int main(int argc, char *argv[], char *envp[])
     SgProject *project = frontend(rose_argc, rose_argv);
 
     /* Find the address of "main" and "payload" functions. */
-    rose_addr_t main_addr = FunctionFinder().address(project, "main");
+    rose_addr_t main_addr = RSIM_Tools::FunctionFinder().address(project, "main");
     assert(main_addr!=0);
-    rose_addr_t payload_addr = FunctionFinder().address(project, "payload");
+    rose_addr_t payload_addr = RSIM_Tools::FunctionFinder().address(project, "payload");
     assert(payload_addr!=0);
 
     /* Register the analysis callback. */

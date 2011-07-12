@@ -5,14 +5,44 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-/** Traverses the AST to find a symbol for a global function with the specified name. */
+/** A collection of useful tools. */
+namespace RSIM_Tools {
+
+/** Traverses the AST to find a symbol for a global function with the specified name.
+ *
+ *  This class operates over an AST and is not a callback like most of the other classes in this collection of tools.  The
+ *  simulator doesn't have an AST available by default, so one must be created by parsing the executable file.  Once the AST is
+ *  obtained, FunctionFinder traverses the symbol table (not debugging information) to find a global, defined function with the
+ *  specified name and returns its starting address.
+ *
+ *  Example:
+ *  @code
+ *    int main(int argc, char *argv[], char *envp[]) {
+ *       // Create the simulator and parse arguments
+ *       RSIM_Linux32 sim;
+ *       int n = sim.configure(argc, argv, envp);
+ *
+ *       // Parse the ELF container (no disassembly)
+ *       char *rose_argv[4];
+ *       rose_argv[0] = argv[0];
+ *       rose_argv[1] = strdup("-rose:read_executable_file_format_only");
+ *       rose_argv[2] = argv[n];
+ *       rose_argv[3] = NULL;
+ *       SgProject *project = frontend(3, rose_argv);
+ *
+ *       // Find the addresses of "main" and "printf"
+ *       rose_addr_t f1_va = FunctionFinder().address(project, "main");
+ *       rose_addr_t f2_va = FunctionFinder().address(project, "printf");
+ *  @endcode
+ */
 class FunctionFinder: public AstSimpleProcessing {
 private:
     std::string fname;          /**< Holds address() function for use during traversal. */
 
 public:
-    /** Search for a function.  Searches for a function named @p fname in the specified @p ast and returns its entry address.
-     * If the function cannot be found, then the null address is returned. */
+    /** Search for a function.  Searches for a function named @p fname in the specified @p ast and returns its entry
+     *  address. The function must be a global, defined symbol.  If the function cannot be found, then the null address is
+     *  returned. */
     rose_addr_t address(SgNode *ast, const std::string &fname) {
         this->fname = fname;
         try {
@@ -38,8 +68,29 @@ private:
 
 /** Prints the name of the currently executing function.
  *
- *  In order for this to work, instructions must be assigned to functions.  This can be done by the MemoryDisassembler
- *  tool. The function name is printed to the TRACE_MISC facility whenever the current function changes. */
+ *  This instruction callback looks at the current instruction's AST ancestors to find an enclosing SgAsmFunctionDeclaration
+ *  node. If the current instruction's function is different than the previous instruction's, then we print either the current
+ *  function name or a full stack trace to the TRACE_MISC facility.
+ *
+ *  Two things must exist for this callback to work:  First the instructions must have been linked into the AST.  Normally the
+ *  simulator's instruction fetching returns raw instructions and makes no attempt to discover how they're organized into basic
+ *  blocks and functions.  The easiest way to get AST-linked instructions is to use the MemoryDisassembler class defined in
+ *  this same header file.  The second requirement is that the TRACE_MISC facility is enabled, which can be done by configuring
+ *  the simulator with the "--debug" switch.
+ *
+ *  The best time to disassemble is when the dynamic linker has finished running.  One can use the FunctionFinder class to find
+ *  the address of main() and use that as the disassembly trigger.  Alternatively, one could write a callback that looks at the
+ *  current instruction and if that instruction has no parent (see SgNode::get_parent()) then invoke
+ *  RSIM_Process::disassemble().
+ *
+ *  Example:  Assuming that we wish to disassemble when we hit main(), and the address of main() has been determined to be
+ *  0x401eb7, here's how one would use the FunctionReporter callback:
+ *  @code
+ *    RSIM_Linux32 sim;
+ *    sim.install_callback(new MemoryDisassembler(0x401eb7, false));
+ *    sim.install_callback(new FunctionReporter);
+ *  @endcode
+ */
 class FunctionReporter: public RSIM_Callbacks::InsnCallback {
 public:
     bool show_call_stack;                       /**< Show a stack trace rather than just a function name. */
@@ -98,9 +149,26 @@ private:
 /** Watches for memory access.
  *
  *  This memory callback watches for access to certain memory locations and prints a message to the specified facility when
- *  such an access occurs.
+ *  such an access occurs.  An access need not change the value of the memory location in order to be reported. The message
+ *  facility must be specified as a constructor argument because memory callbacks are not associated with any particular
+ *  thread.
  *
- *  See also, MemoryChecker, which checks the contents of memory after every instruction. */
+ *  Memory locations can be arbitrarily large since this class, unlike MemoryChecker, doesn't actually allocate any backing
+ *  store, but rather just looks at the memory addresses.  Also, the addresses to watch do not need to be mapped to the process
+ *  yet--the memory access watcher can detect access to addresses that would cause a segmentation fault.
+ *
+ *  See also, MemoryChecker, which checks the contents of memory after every instruction; and the "--debug=mem" switch which
+ *  prints all memory access and the values which are copied to/from memory.
+ *
+ *  Example:  Here's how to use a memory watcher to monitor reads and writes to the first page of memory, which are indicative
+ *  of dereferencing a null pointer.
+ *  @code
+ *    RSIM_Linux32 sim;
+ *    unsigned perm = MemoryMap::MM_PROT_READ | MemoryMap::MM_PROT_WRITE;
+ *    RTS_Message mesg(stdout, NULL)
+ *    sim.install_callback(new MemoryAccessWatcher(0, 4096, perm, &mesg);
+ *  @endcode
+ */
 class MemoryAccessWatcher: public RSIM_Callbacks::MemoryCallback {
 public:
     RTS_Message *mesg;                          /**< Tracing facility, since no thread is available. */
@@ -131,13 +199,14 @@ public:
  *  This instruction callback reads from the specified memory area and verifies that the conetnts of memory at that location
  *  match the expected value.  If not, a message is printed to the TRACE_MISC facility and the callback is disabled.
  *
- *  See also, MemoryAccessWatcher, which is a memory callback to look for memory access.
+ *  See also, MemoryAccessWatcher, which is a memory callback to look for memory access; and the "--debug=mem" switch which
+ *  prints all memory access and the values which are copied to/from memory.
  *
  *  Here's an example of how to use this tool:
  *  @code
  *  uint8_t valid_mem = {0x00, 0x00, 0x11, 0x00, 0x00, 0x00, 0x00, 0xef,
  *                       0x67, 0x00, 0x00, 0x00, 0x7f, 0x00, 0x00, 0x03};
- *  MemoryChecker mcheck(0x7c402740, sizeof valid_mem, valid_mem);
+ *  MemoryChecker mcheck(0x7c402740, sizeof valid_mem, valid_mem, true);
  *  simulator.install_callback(&mcheck);
  *  @endcode
  */
@@ -193,13 +262,26 @@ public:
 
 /** Disassemble memory when an address is executed.
  *
- *  Runs the disassembler the first time we hit the specified execution address. */
+ *  Runs the disassembler the first time we hit the specified execution address.  A good place to run the disassembler is at
+ *  the start of main(), after the dynamic linker has had a chance to load and link all shared libraries.  See FunctionFinder
+ *  for an example of how to obtain the address of a function.
+ *
+ *  Example:
+ *  @code
+ *    RSIM_Linux32 sim;
+ *    rose_addr_t main_va = ....; // See FunctionFinder
+ *    sim.install_callback(new MemoryDisassembler(main_va, false);
+ *  @endcode
+ */
 class MemoryDisassembler: public RSIM_Callbacks::InsnCallback {
 public:
     rose_addr_t when;                   /**< IP value when this callback is to be triggered. */
     bool triggered;                     /**< Set once this callback has been triggered. */
     bool show;                          /**< Controls whether result is emitted. If true, then emit the results to stdout. */
 
+    /** Constructor.  The disassembler is triggered the first time that an instruction at address @p when is simulated.  If @p
+     *  show is true then the assembly listing is produced on standard output.  All disassembled instructions are added to the
+     *  instruction cache used by the simulator's instruction fetching methods. */
     MemoryDisassembler(rose_addr_t when, bool show)
         : when(when), triggered(false), show(show) {}
 
@@ -218,7 +300,25 @@ public:
     }
 };
 
-/** Show memory contents. */
+/** Show memory contents.
+ *
+ *  This instruction callback prints the contents of a specified memory region every time a certain instruction address is
+ *  reached. The output is a hexdump-like format controlled by the public HexdumpFormat fmt data member.  Output is sent to the
+ *  TRACE_MISC facility.
+ *
+ *  Note: SgAsmExecutableFileFormat isn't able to write directly to an RTS_Message object. Therefore we buffer up the output
+ *  from hexdump before sending it to the tracing facility.  In other words, don't try to print huge memory traces.
+ *
+ *  See also MemoryChecker and the "--debug=mem" switch.
+ *
+ *  Example:  Here's how one would set a breakpoint at address 0x0804660d to print the contents of an 80-byte variable at
+ *  address @p var_va:
+ *  @code
+ *    RSIM_Linux32 sim;
+ *    rose_addr_t var_va = ...;
+ *    sim.install_callback(new MemoryDumper(0x0804660d, var_va, 80);
+ *  @endcode
+ */
 class MemoryDumper: public RSIM_Callbacks::InsnCallback {
 public:
     rose_addr_t when;                   /**< IP value when this callback is to be triggered. */
@@ -226,6 +326,8 @@ public:
     size_t nbytes;                      /**< Number of bytes to dump. */
     HexdumpFormat fmt;                  /**< Format to use for hexdump. */
 
+    /** Constructor.  Creates an instruction callback that will dump @p nbytes bytes of memory starting at address @p va every
+     *  time the simulator is about to execute an instruction at address @p when. */
     MemoryDumper(rose_addr_t when, rose_addr_t va, size_t nbytes)
         : when(when), va(va), nbytes(nbytes) {
         fmt.prefix = "  ";
@@ -330,11 +432,23 @@ public:
     }
 };
 
-/** Show memory mapping when an address is executed. */
+/** Show memory mapping when an address is executed.
+ *
+ *  The memory map is the definition of how the specimen's memory regions map into the simulator's memory.  See MemoryMap for
+ *  details.  The output is sent to the TRACE_MISC facility.  See also, the "--debug=mmap" switch causes memory dumps to
+ *  occur for certain system calls such as "mmap".
+ *
+ *  Example:  To produce a memory map dump every time the instruction at @p insn_va is executed:
+ *  @code
+ *    RSIM_Linux32 sim;
+ *    sim.install_callback(new MemoryMapDumper(insn_va));
+ *  @endcode
+ */
 class MemoryMapDumper: public RSIM_Callbacks::InsnCallback {
 public:
     rose_addr_t when;                   /**< IP value when this callback is to be triggered. */
 
+    /** Constructor.  Causes a memory dump each time the instruction at address @p when is simulated. */
     MemoryMapDumper(rose_addr_t when)
         : when(when) {}
 
@@ -349,11 +463,21 @@ public:
 
 /** Prints register contents.
  *
- *  Every time execution hits a specified address, registers are dumped to the TRACE_MISC facility. */
+ *  Every time execution hits a specified address, registers are dumped to the TRACE_MISC facility.
+ *
+ *  See also, the "--debug=state" configuration switch, which prints the contents of registers after every instruction.
+ *
+ *  Example:  To produce a register dump every time the instruction at @p insn_va is executed:
+ *  @code
+ *    RSIM_Linux32 sim;
+ *    sim.install_callback(new RegisterDumper(insn_va));
+ *  @endcode
+ */
 class RegisterDumper: public RSIM_Callbacks::InsnCallback {
 public:
     rose_addr_t when;                   /**< IP value when this callback is to be triggered. */
 
+    /** Constructor.  Causes a register dump each time the instruction at address @p when is simulated. */
     RegisterDumper(rose_addr_t when)
         : when(when) {}
 
@@ -366,7 +490,18 @@ public:
     }
 };
 
-/** Generates a stack trace when a signal arrives. */
+/** Generates a stack trace when a signal arrives.
+ *
+ *  Each time a signal arrives, a stack trace is printed.  Since stack traces require instructions to be linked into the AST
+ *  (specifically, instructions should each have an SgAsmFunctionDeclaration ancestor), the disassembler is invoked the first
+ *  time this callback is triggered.
+ *
+ *  Example:
+ *  @code
+ *    RSIM_Linux32 sim;
+ *    sim.install_callback(new SignalStackTrace);
+ *  @endcode
+ */
 class SignalStackTrace: public RSIM_Callbacks::SignalCallback {
 public:
     bool disassembled;                  /**< Controls disassembly.  If clear, then disassemble memory and set. */
@@ -390,7 +525,16 @@ public:
 
 /** Provides implementations for functions not in ROSE.
  *
- *  These few functions are sometimes encountered in ld-linux.so and are important for its correct operation. */
+ *  These few functions are sometimes encountered in ld-linux.so and are important for its correct operation.  Eventually
+ *  they'll be moved into ROSE's instruction semantics layer and this callback will no longer be necessary.  However, we'll
+ *  probably keep it around as an example of how to modify the behavior of an instruction.
+ *
+ *  Example:
+ *  @code
+ *    RSIM_Linux32 sim;
+ *    sim.install_callback(new UnhandledInstruction);
+ *  @endcode
+ */
 class UnhandledInstruction: public RSIM_Callbacks::InsnCallback {
 public:
     struct MmxValue {
@@ -481,4 +625,5 @@ public:
     }
 };
 
+};
 #endif

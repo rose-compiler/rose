@@ -149,7 +149,7 @@ public:
     public:
         virtual ~Callback() {}
 
-        /** Allocate a copy of this object. */
+        /** Possibly allocate a copy of this object. */
         virtual Callback *clone() = 0;
     };
 
