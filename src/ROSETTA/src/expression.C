@@ -1660,6 +1660,8 @@ Grammar::setUpExpressions ()
      SetComprehension.setFunctionPrototype ( "HEADER_SET_COMPREHENSION", "../Grammar/Expression.code" );
      SetComprehension.setDataPrototype ("SgExpression*", "element", "= NULL",
                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     SetComprehension.setDataPrototype ("SgExprListExp*", "generators", "= NULL",
+                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      ListComprehension.setFunctionPrototype ( "HEADER_LIST_COMPREHENSION", "../Grammar/Expression.code" );
      ListComprehension.setDataPrototype ("SgExpression*", "element", "= NULL",
@@ -1669,6 +1671,8 @@ Grammar::setUpExpressions ()
 
      DictionaryComprehension.setFunctionPrototype ( "HEADER_DICTIONARY_COMPREHENSION", "../Grammar/Expression.code" );
      DictionaryComprehension.setDataPrototype ("SgKeyDatumPair*", "element", "= NULL",
+                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     DictionaryComprehension.setDataPrototype ("SgExprListExp*", "generators", "= NULL",
                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 

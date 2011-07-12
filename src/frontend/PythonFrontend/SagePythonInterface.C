@@ -680,6 +680,22 @@ sage_buildReturnStmt(PyObject *self, PyObject *args)
 /*
  */
 PyObject*
+sage_buildSetComp(PyObject *self, PyObject *args)
+{
+    SgExpression *elt;
+    SgExprListExp *generators;
+    if (! PyArg_ParseTuple(args, "O&O&", SAGE_CONVERTER(SgExpression), &elt,
+                                         SAGE_CONVERTER(SgExprListExp), &generators))
+        return NULL;
+
+    SgSetComprehension *sg_set_comp =
+        SageBuilder::buildSetComprehension(elt, generators);
+    return PyEncapsulate(sg_set_comp);
+}
+
+/*
+ */
+PyObject*
 sage_buildSuite(PyObject *self, PyObject *args)
 {
     PyObject* py_body;

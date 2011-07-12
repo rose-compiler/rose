@@ -3252,6 +3252,54 @@ SageBuilder::buildListComprehension_nfi(SgExpression *elt, SgExprListExp *genera
     return result;
 }
 
+SgSetComprehension*
+SageBuilder::buildSetComprehension(SgExpression *elt, SgExprListExp *generators)
+{
+    ROSE_ASSERT(elt != NULL);
+    ROSE_ASSERT(generators != NULL);
+    SgSetComprehension* result = new SgSetComprehension(elt, generators);
+    elt->set_parent(result);
+    generators->set_parent(result);
+    setOneSourcePositionForTransformation(result);
+    return result;
+}
+
+SgSetComprehension*
+SageBuilder::buildSetComprehension_nfi(SgExpression *elt, SgExprListExp *generators)
+{
+    ROSE_ASSERT(elt != NULL);
+    ROSE_ASSERT(generators != NULL);
+    SgSetComprehension* result = new SgSetComprehension(elt, generators);
+    elt->set_parent(result);
+    generators->set_parent(result);
+    setOneSourcePositionNull(result);
+    return result;
+}
+
+SgDictionaryComprehension*
+SageBuilder::buildDictionaryComprehension(SgKeyDatumPair *kd_pair, SgExprListExp *generators)
+{
+    ROSE_ASSERT(kd_pair != NULL);
+    ROSE_ASSERT(generators != NULL);
+    SgDictionaryComprehension* result = new SgDictionaryComprehension(kd_pair, generators);
+    kd_pair->set_parent(result);
+    generators->set_parent(result);
+    setOneSourcePositionForTransformation(result);
+    return result;
+}
+
+SgDictionaryComprehension*
+SageBuilder::buildDictionaryComprehension_nfi(SgKeyDatumPair *kd_pair, SgExprListExp *generators)
+{
+    ROSE_ASSERT(kd_pair != NULL);
+    ROSE_ASSERT(generators != NULL);
+    SgDictionaryComprehension* result = new SgDictionaryComprehension(kd_pair, generators);
+    kd_pair->set_parent(result);
+    generators->set_parent(result);
+    setOneSourcePositionNull(result);
+    return result;
+}
+
 SgPragmaDeclaration * SageBuilder::buildPragmaDeclaration(const string& name, SgScopeStatement* scope)
 {
   if (scope == NULL)

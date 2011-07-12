@@ -98,6 +98,7 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
         CASE_DISPATCH_AND_BREAK(LambdaRefExp);
         CASE_DISPATCH_AND_BREAK(ListComprehension);
         CASE_DISPATCH_AND_BREAK(ListExp);
+        CASE_DISPATCH_AND_BREAK(SetComprehension);
         CASE_DISPATCH_AND_BREAK(TupleExp);
         CASE_DISPATCH_AND_BREAK(VarRefExp);
 
@@ -555,6 +556,22 @@ Unparse_Python::unparseReturnStmt(SgReturnStmt* return_stmt,
 {
     curprint("return ");
     unparseExpression(return_stmt->get_expression(), info);
+}
+
+void
+Unparse_Python::unparseSetComprehension(SgSetComprehension* set_comp,
+                                        SgUnparse_Info& info)
+{
+    SgExprListExp* generators = set_comp->get_generators();
+
+    curprint("{");
+    unparseExpression(set_comp->get_element(), info);
+
+    /* SgExprListExps unparse with commas separating elements, so override that behavior here */
+    foreach (SgExpression* exp, generators->get_expressions())
+        unparseExpression(exp, info);
+
+    curprint("}");
 }
 
 void
