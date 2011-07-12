@@ -36,37 +36,23 @@ struct PathInfo : PathSet
     
     bool isEmpty() const { return !any(); }
     
+    PathInfo operator&(const PathInfo& p) const;
+    
     PathInfo& operator&=(const PathInfo& p);
     PathInfo& operator|=(const PathInfo& p);
     PathInfo& operator-=(const PathInfo& p);
 };
+
+std::ostream& operator<<(std::ostream& os, const PathInfo& path);
 
 //inline bool operator<(const PathInfo& p1, const PathInfo& p2)
 //{ return paths < p2.paths; }
 
 struct PathInfos : std::map<int, PathInfo>
 {
-    bool hasPath(int dagIdx, int pathIdx) const
-    {
-        const_iterator iter = find(dagIdx);
-        if (iter != end())
-            return iter->second[pathIdx];
-        return false;
-    }
+    bool hasPath(int dagIdx, int pathIdx) const;
 
-    std::string toString() const 
-    {
-        std::string str;
-        for (const_iterator iter = begin(), iterEnd = end();
-                iter != iterEnd; ++iter)
-        {
-            std::string s;
-            boost::to_string(iter->second, s);
-            s = boost::lexical_cast<std::string>(iter->first) + ":" + s;
-            str += "\\n" + s;
-        }
-        return str;
-    }
+    std::string toString() const;
 };
 
 PathInfos operator&(const PathInfos& path1, const PathInfos& path2);

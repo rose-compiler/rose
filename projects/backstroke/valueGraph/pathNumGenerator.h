@@ -162,6 +162,9 @@ class PathNumManager
     
     //! A table from each CFG vertex to the index of the DAG and the DAG vertex.
     std::map<CFGVertex, std::map<int, DAGVertex> > vertexToDagIndex_;
+    
+    //! A table for normalized DAG.
+    std::map<DAGVertex, DAGVertex> replaceTable_;
 
     //! A table from each CFG edge to the index of the DAG and the DAG vertex.
     std::map<CFGEdge, std::map<int, DAGEdge> > edgeToDagIndex_;
@@ -195,6 +198,10 @@ public:
         int dagIndex, DAGVertex dagNode, 
         const std::map<int, int>& values,
         std::vector<std::map<int, int> >& results) const;
+    
+    //! Get the mask and comparison target used in conditions in reverse function.
+    std::vector<std::pair<int, int> > 
+    getMastAndCompTarget(int dagIndex, DAGVertex dagNode) const;
     
     //! Get path numbers from a AST node.
     PathInfos getPathNumbers(SgNode* node) const;
@@ -250,6 +257,10 @@ public:
 private:
     //! Use path number generator to generate path numbers.
     void generatePathNumbers();
+    
+    //! Add additional nodes and edges to remove the edge whose source has
+    //! several out edges and whose target has several in edges.
+    void normalizeDAG(DAG& dag);
 
     //! Build a table from each SgNode to its belonging CFG vertex.
     void buildNodeCFGVertexMap();

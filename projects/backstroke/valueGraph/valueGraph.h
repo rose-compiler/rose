@@ -40,11 +40,14 @@ private:
         std::vector<VGEdge> edges;
         int dagIndex;
     };
+    
+public:
     typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
         ReverseCFGNode, PathInfo> ReverseCFG;
     typedef boost::graph_traits<ReverseCFG>::vertex_descriptor RvsCFGVertex;
     typedef boost::graph_traits<ReverseCFG>::edge_descriptor RvsCFGEdge;
-    
+      
+private:
     //! A functor to compare two route graph edges according to their indices from 
     //! the table passed in.
     struct RouteGraphEdgeComp
@@ -53,9 +56,6 @@ private:
             const ValueGraph& routeG, int dagIdx, const std::map<SgNode*, int>& nodeIdx)
         : routeGraph(routeG), dagIndex(dagIdx), nodeIndexTable(nodeIdx) {}
  
-//        RouteGraphEdgeComp(const ValueGraph& routeG, const std::map<PathSet, int>& pathsIdx)
-//        : routeGraph(routeG), pathsIndexTable(pathsIdx) {}
-        
         // For each VG edge, get the according AST node whose order in CFG decides the order of 
         // this edge in reverse CFG.
         SgNode* getAstNode(const VGEdge& edge) const;
@@ -63,16 +63,6 @@ private:
         int getEdgeValue(const VGEdge& edge) const;
         
         bool operator()(const VGEdge& edge1, const VGEdge& edge2) const;
-//        {
-//            using namespace std;
-//            cout << routeGraph[edge1]->paths << endl;
-//            cout << routeGraph[edge2]->paths << endl;
-//            
-//            ROSE_ASSERT(pathsIndexTable.count(routeGraph[edge1]->paths));
-//            ROSE_ASSERT(pathsIndexTable.count(routeGraph[edge2]->paths));
-//            return pathsIndexTable.find(routeGraph[edge1]->paths)->second > 
-//                   pathsIndexTable.find(routeGraph[edge2]->paths)->second;
-//        }
         
         const ValueGraph& routeGraph;
         int dagIndex;

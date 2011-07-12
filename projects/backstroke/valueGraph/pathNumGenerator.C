@@ -86,6 +86,39 @@ void PathNumManager::buildSuperDAG()
         
 }
 
+void PathNumManager::normalizeDAG(DAG& dag)
+{
+    vector<DAGEdge> edgesToSplit;
+    foreach (const DAGEdge& edge, boost::edges(dag))
+    {
+        DAGVertex src = boost::source(edge, dag);
+        DAGVertex tgt = boost::target(edge, dag);
+        if (boost::out_degree(src, dag) > 1 && boost::in_degree(tgt, dag) > 1)
+            edgesToSplit.push_back(edge);
+    }
+    
+    vector<pair<DAGVertex, DAGVertex> > edgesToRemove;
+    foreach (const DAGEdge& edge, edgesToSplit)
+    {
+        DAGVertex src = boost::source(edge, dag);
+        DAGVertex tgt = boost::target(edge, dag);
+        
+        DAGVertex newNode = boost::add_vertex(dag);
+        dag[newNode] = dag[src];
+        
+        DAGEdge newEdge1 = boost::add_edge(src, newNode, dag).first;
+        dag[newEdge1] = dag[edge];
+        boost::add_edge(newNode, tgt, dag).first;
+        
+        replaceTable_[src] = newNode;
+        
+        edgesToRemove.push_back(make_pair(src, tgt));
+    }
+    
+    for (int i = 0, s = edgesToRemove.size(); i < s; ++i)
+        boost::remove_edge(edgesToRemove[i].first, edgesToRemove[i].second, dag);
+}
+
 void PathNumManager::generatePathNumbers()
 {
     // Get all loops in this CFG.
@@ -204,6 +237,10 @@ void PathNumManager::generatePathNumbers()
         
         ++dagIdx;
     }
+    
+    // Normalize all DAGs.
+    foreach (DAG& dag, dags_)
+        normalizeDAG(dag);
 
     pathNumGenerators_.resize(dags_.size());
     // For each DAG, generate its path information.
@@ -427,6 +464,33 @@ void PathNumManager::getPathNumsAndEdgeValues(
     }
 }
 
+vector<pair<int, int> > PathNumManager::getMastAndCompTarget(int dagIndex, DAGVertex dagNode) const
+{
+    vector<map<int, int> > values;
+    getPathNumsAndEdgeValues(dagIndex, dagNode, map<int, int>(), values);
+
+    vector<pair<int, int> > maskAndTarget;
+
+    for (int i = 0, s = values.size(); i < s; ++i)
+    {
+        int mask = 0;
+        int compTgt = 0;
+
+        typedef pair<int, int> IntPair;
+        foreach (const IntPair& intPair, values[i])
+        {
+            mask |= intPair.first;
+            compTgt += intPair.second;
+        }
+        mask >>= 1;
+
+        //cout << "}}}" << mask << " " << compTgt << endl;
+
+        maskAndTarget.push_back(make_pair(mask, compTgt));
+    }
+    return maskAndTarget;
+}
+
 PathInfos PathNumManager::getPathNumbers(SgNode* node) const
 {
     CFGVertex cfgNode;
@@ -447,39 +511,16 @@ PathInfos PathNumManager::getPathNumbers(SgNode* node) const
     typedef std::map<int, DAGVertex>::value_type IndexToDagVertex;
     foreach (const IndexToDagVertex& idxNode, vertexToDagIndex_.find(cfgNode)->second)
     {
-        
         boost::tie(idx, dagNode) = idxNode;
-          
-        vector<map<int, int> > values;
-        getPathNumsAndEdgeValues(idx, dagNode, map<int, int>(), values);
-
-        vector<pair<int, int> > maskAndTarget;
-
-        for (int i = 0, s = values.size(); i < s; ++i)
-        {
-            int mask = 0;
-            int compTgt = 0;
-
-            typedef pair<int, int> IntPair;
-            foreach (const IntPair& intPair, values[i])
-            {
-                mask |= intPair.first;
-                compTgt += intPair.second;
-            }
-            mask >>= 1;
-
-            //cout << "}}}" << mask << " " << compTgt << endl;
-
-            maskAndTarget.push_back(make_pair(mask, compTgt));
-        }
-        
-        if (!maskAndTarget.empty())
-            paths[idx].pathCond.push_back(maskAndTarget);
-        
+        vector<pair<int, int> > maskAndTarget = getMastAndCompTarget(idx, dagNode);
         
         PathSet p = pathNumGenerators_[idx]->getPaths(dagNode);
         if (p.any())
             paths[idx] = p;
+        
+        if (!maskAndTarget.empty())
+            paths[idx].pathCond.push_back(maskAndTarget);
+        
     }
     return paths;
 }
@@ -527,7 +568,22 @@ PathInfos PathNumManager::getPathNumbers(
     foreach (const IndexToDagEdge& idxEdge, edgeToDagIndex_.find(cfgEdge)->second)
     {
         boost::tie(idx, dagEdge) = idxEdge;
-        paths[idx] = pathNumGenerators_[idx]->getPaths(dagEdge);
+        DAGVertex dagNode = boost::source(dagEdge, dags_[idx]);
+        
+        // Get the dummy node from normalization.
+        if (replaceTable_.count(dagNode))
+            dagNode = replaceTable_.find(dagNode)->second;
+        
+        // There is a bug if the source node is a loop header.
+        ROSE_ASSERT(boost::out_degree(dagNode, dags_[idx]) == 1);
+        vector<pair<int, int> > maskAndTarget = getMastAndCompTarget(idx, dagNode);
+        
+        PathSet p = pathNumGenerators_[idx]->getPaths(dagNode);
+        if (p.any())
+            paths[idx] = p;
+        
+        if (!maskAndTarget.empty())
+            paths[idx].pathCond.push_back(maskAndTarget);
     }
     return paths;
 }

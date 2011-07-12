@@ -68,6 +68,17 @@ void EventReverser::reverseEvent(SgFunctionDefinition* funcDef)
     generateCode();
 }
 
+namespace
+{
+    void writeReverseCFGEdge(
+            std::ostream& out, 
+            const EventReverser::RvsCFGEdge& edge, 
+            const EventReverser::ReverseCFG& rvsCFG)
+    {
+        out << "[label=\"" << rvsCFG[edge] << "\"]";
+    }
+}
+
 void EventReverser::generateCode()
 {
         
@@ -177,7 +188,12 @@ void EventReverser::generateCode()
         char name[32];
         sprintf(name, "rvsCFG%d.dot", i);
         ofstream ofile(name, std::ios::out);
-        boost::write_graphviz(ofile, rvsCFGs[i]);
+        //boost::write_graphviz(ofile, rvsCFGs[i]);
+        
+        boost::write_graphviz(ofile, rvsCFGs[i],
+            boost::default_writer(),
+            boost::bind(&writeReverseCFGEdge, ::_1, ::_2, rvsCFGs[i]),
+            boost::default_writer());
     }
     
     //buildReverseCFG(0, rvsCFG);
@@ -929,6 +945,8 @@ void EventReverser::addReverseCFGNode(
     {
         //if (it->second == newNode) continue;
         PathInfo pathOnEdge = it->first & paths;
+        //ROSE_ASSERT(!PathInfo(pathOnEdge).flip().any() || pathOnEdge.pathCond.size());
+        
         if (!pathOnEdge.any())
             continue;
         
@@ -1537,7 +1555,7 @@ void EventReverser::generateCode(
     using namespace SageBuilder;
     using namespace SageInterface;
     
-    int counter = 0;
+    //  int counter = 0;
     
 //    // Build an anonymous namespace.
 //    SgGlobal* globalScope = getGlobalScope(fwdFuncDef_);
@@ -1641,7 +1659,7 @@ void EventReverser::generateCode(
         // Generate all code in the scope of this node.
         generateCodeForBasicBlock(rvsCFG[node].edges, rvsScope, cmtScope);
 
-        vector<RvsCFGEdge> outEdges;
+        deque<RvsCFGEdge> outEdges;
         foreach (const RvsCFGEdge& outEdge, boost::out_edges(node, rvsCFG))
             outEdges.push_back(outEdge);
         
@@ -1656,9 +1674,19 @@ void EventReverser::generateCode(
         //if (outEdges.size() == 2)
         while (!outEdges.empty())
         {
-            PathInfo condPaths = rvsCFG[outEdges.back()];
-            //cout << "Path added: " << condPaths << endl;
+            RvsCFGEdge edge = outEdges.back();
             outEdges.pop_back();
+            
+            PathInfo condPaths = rvsCFG[edge];
+            
+            // A trick to select edges which can be represented easily.
+            if (!outEdges.empty() && condPaths.pathCond.empty())
+            {
+                outEdges.push_front(edge);
+                continue;
+            }
+            
+            //cout << "Path added: " << condPaths << endl;
             
             // The last edge can get the current scope.
             if (outEdges.empty())
@@ -1667,6 +1695,8 @@ void EventReverser::generateCode(
                 cmtScopeTable[condPaths] = cmtScope;
                 break;
             }
+            
+            
             
 //            PathSet paths1 = rvsCFG[outEdges[0]];
 //            PathSet paths2 = rvsCFG[outEdges[1]];
@@ -1685,83 +1715,35 @@ void EventReverser::generateCode(
             vector<SgExpression*> conditions;
             vector<int> pathNums;
 
-            // Find the path set with the minimum number of paths, then build a
-            // logical or expression.
-            // Note this part will be optimized later.
-            for (size_t i = 0, s = condPaths.size(); i < s; ++i)
-            {
-                if (condPaths[i])
-                {
-                    size_t val = pathNumManager_->getPathNumber(dagIndex, i);
-                    pathNums.push_back(val);
-                    
-                    SgVarRefExp* numVar = buildVarRefExp(pathNumName);
-                    SgIntVal* intVal = buildIntVal(val);
-                    SgExpression* cond = buildEqualityOp(numVar, intVal);
-                    conditions.push_back(cond);
-                }
-            }
-
             // The if condition.
             SgExpression* condition = NULL;
             
-            // Here we put all path numbers into an array then do a binary search
-            // on this array. It can improve the performance.
-            
-            if (conditions.size() > 8)
+            //std::vector<std::vector<std::pair<int, int> > > pathCond;
+            typedef pair<int, int>  IntPair;
+            typedef vector<IntPair> IntPairVec;
+            foreach (const IntPairVec& conds, condPaths.pathCond)
             {
-                // Build an array containing all path numbers.
-                
-                //pushScopeStack(anonymousNamespace);
-                
-                SgArrayType* pathNumArrayType = 
-                        buildArrayType(buildIntType(), buildIntVal(pathNums.size()));
-                
-                vector<SgExpression*> pathNumExps;
-                foreach (int num, pathNums)
-                    pathNumExps.push_back(buildIntVal(num));
-                
-                SgInitializer* initList = 
-                        buildAggregateInitializer(buildExprListExp(pathNumExps));
-                
-                string arrayName = "conditions" + boost::lexical_cast<string>(counter++);
-                SgVariableDeclaration* pathNumArray = 
-                        buildVariableDeclaration(arrayName, pathNumArrayType, initList);
-                setStatic(pathNumArray);
-                
-                //anonymousNamespace->append_declaration(pathNumArray);
-                prependStatement(pathNumArray, rvsFuncBody);
-                prependStatement(copyStatement(pathNumArray), cmtFuncBody);
-                
-                //popScopeStack();
-                
-#if 0
-                SgExprListExp* para = buildExprListExp(
-                                            buildVarRefExp(pathNumArray), 
-                                            buildUnsignedIntVal(conditions.size()), 
-                                            buildVarRefExp(pathNumName));
-                condition = buildFunctionCallExp("__check__", buildBoolType(), para);
-#endif
-                
-                SgExprListExp* para = buildExprListExp(
-                                        buildVarRefExp(pathNumArray), 
-                                        buildAddOp(
-                                            buildVarRefExp(pathNumArray), 
-                                            buildUnsignedIntVal(conditions.size())),
-                                        buildVarRefExp(pathNumName));
-                condition = buildFunctionCallExp("std::binary_search", buildBoolType(), para);
-            }
-            else
-            {
-                // Build a logical or expression.
-                foreach (SgExpression* cond, conditions)
+                SgExpression* condExpr = NULL;
+                foreach (const IntPair& cond, conds)
                 {
-                    if (condition == NULL)
-                        condition = cond;
+                    SgVarRefExp* numVar = buildVarRefExp(pathNumName);
+                    SgExpression* bitAndExpr = buildBitAndOp(numVar, buildIntVal(cond.first));
+                    SgExpression* compExpr = buildEqualityOp(bitAndExpr, buildIntVal(cond.second));
+                    
+                    if (condExpr == NULL)
+                        condExpr = compExpr;
                     else
-                        condition = buildOrOp(condition, cond);
-                } 
+                        condExpr = buildOrOp(condExpr, compExpr);
+                }
+                
+                if (condition == NULL)
+                    condition = condExpr;
+                else
+                    condition = buildOrOp(condition, condExpr);
             }
+            cout << condPaths << endl;
+            ROSE_ASSERT(condition);
+
 
             SgBasicBlock* rvsTrueBody = buildBasicBlock();
             SgBasicBlock* rvsFalseBody = buildBasicBlock();
