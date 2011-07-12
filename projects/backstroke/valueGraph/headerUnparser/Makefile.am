@@ -9,10 +9,11 @@ LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 noinst_PROGRAMS = unparseHeader
 
 unparseHeader_SOURCES = headerUnparser.C
-unparseHeader_LDADD = $(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.a \
+unparseHeader_LDADD = \
+		$(top_builddir)/projects/backstroke/valueGraph/libBackstrokeFunctionReverser.a \
+		$(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.a \
 		$(top_builddir)/projects/backstroke/normalizations/libBackstrokeNormalizations.a \
 		$(top_builddir)/projects/backstroke/ssa/libSSA.a \
-		$(top_builddir)/projects/backstroke/valueGraph/libBackstrokeFunctionReverser.a \
 		$(LIBS_WITH_RPATH) $(ROSE_LIBS)
 unparseHeader_include_HEADERS = 
 unparseHeader_includedir = $(includedir)/backstroke
