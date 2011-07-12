@@ -278,13 +278,21 @@ sage_buildDelete(PyObject *self, PyObject *args)
 PyObject*
 sage_buildDict(PyObject *self, PyObject *args)
 {
-    PyObject *py_keys, *py_vals;
-    if (! PyArg_ParseTuple(args, "O!O!", &PyList_Type, &py_keys,
-                                         &PyList_Type, &py_vals))
+    PyObject *py_pairs;
+    if (! PyArg_ParseTuple(args, "O!", &PyList_Type, &py_pairs))
         return NULL;
 
-    SgStringVal* sg_dict = SageBuilder::buildStringVal("DICT");
-    return PyEncapsulate(sg_dict);
+    std::vector<SgKeyDatumPair*> pairs;
+    Py_ssize_t pairc = PyList_Size(py_pairs);
+    for(int i = 0; i < pairc; i++) {
+        PyObject* py_pair = PyList_GetItem(py_pairs, i);
+        SgKeyDatumPair* kd_pair = PyDecapsulate<SgKeyDatumPair>(py_pair);
+        pairs.push_back(kd_pair);
+    }
+
+    SgKeyDatumList* key_datum_list =
+        SageBuilder::buildKeyDatumList(pairs);
+    return PyEncapsulate(key_datum_list);
 }
 
 /*
@@ -476,6 +484,22 @@ sage_buildIf(PyObject *self, PyObject *args)
     SgIfStmt* sg_if_stmt =
         SageBuilder::buildIfStmt(test, true_body, false_body);
     return PyEncapsulate(sg_if_stmt);
+}
+
+/*
+ */
+PyObject*
+sage_buildKeyDatumPair(PyObject *self, PyObject *args)
+{
+    SgExpression *sg_key, *sg_value;
+    if (! PyArg_ParseTuple(args, "O&O&", SAGE_CONVERTER(SgExpression), &sg_key,
+                                         SAGE_CONVERTER(SgExpression), &sg_value))
+        return NULL;
+
+    SgKeyDatumPair* sg_kd_pair =
+        SageBuilder::buildKeyDatumPair(sg_key, sg_value);
+
+    return PyEncapsulate(sg_kd_pair);
 }
 
 /*

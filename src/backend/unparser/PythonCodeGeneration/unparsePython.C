@@ -92,6 +92,8 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
         CASE_DISPATCH_AND_BREAK(DeleteExp);
         CASE_DISPATCH_AND_BREAK(ExprListExp);
         CASE_DISPATCH_AND_BREAK(FunctionCallExp);
+        CASE_DISPATCH_AND_BREAK(KeyDatumList);
+        CASE_DISPATCH_AND_BREAK(KeyDatumPair);
         CASE_DISPATCH_AND_BREAK(LambdaRefExp);
         CASE_DISPATCH_AND_BREAK(ListExp);
         CASE_DISPATCH_AND_BREAK(TupleExp);
@@ -420,6 +422,31 @@ Unparse_Python::unparseInitializedName(SgInitializedName* init_name,
     if (init_name->get_initializer() != NULL) {
         unparseExpression(init_name->get_initializer(), info);
     }
+}
+
+void
+Unparse_Python::unparseKeyDatumList(SgKeyDatumList* kd_list,
+                                    SgUnparse_Info& info)
+{
+    SgKeyDatumPairPtrList pairs = kd_list->get_key_datum_pairs();
+    SgKeyDatumPairPtrList::iterator pair_it;
+
+    curprint("{");
+    for (pair_it = pairs.begin(); pair_it != pairs.end(); pair_it++) {
+        if (pair_it != pairs.begin())
+            curprint(", ");
+        unparseExpression(*pair_it, info);
+    }
+    curprint("}");
+}
+
+void
+Unparse_Python::unparseKeyDatumPair(SgKeyDatumPair* kd_pair,
+                                    SgUnparse_Info& info)
+{
+    unparseExpression(kd_pair->get_key(), info);
+    curprint(": ");
+    unparseExpression(kd_pair->get_datum(), info);
 }
 
 void

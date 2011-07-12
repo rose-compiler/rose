@@ -421,6 +421,8 @@ SgInterfaceStatement
 SgInterfaceSymbol
 SgIntrinsicSymbol
 SgIorAssignOp
+SgKeyDatumList
+SgKeyDatumPair
 SgCudaKernelExecConfig
 SgCudaKernelCallExp
 SgLabelRefExp

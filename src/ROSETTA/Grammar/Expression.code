@@ -804,6 +804,18 @@ HEADER_LIST_EXP_START
           void append_expression(SgExpression *what);
 HEADER_LIST_EXP_END
 
+HEADER_DICTIONARY_DISPLAY_START
+HEADER_DICTIONARY_DISPLAY_END
+
+HEADER_KEY_DATUM_LIST_START
+SgKeyDatumPairPtrList& get_key_datum_pairs();
+const SgKeyDatumPairPtrList& get_key_datum_pairs() const;
+void append_pair(SgKeyDatumPair *what);
+HEADER_KEY_DATUM_LIST_END
+
+HEADER_KEY_DATUM_PAIR_START
+HEADER_KEY_DATUM_PAIR_END
+
 HEADER_SCOPE_OPERATOR_START
        // get lvalue
           virtual bool isLValue() const;
@@ -4007,6 +4019,27 @@ SgListExp::append_expression(SgExpression *what)
 
 SOURCE_LIST_EXP_END
 
+SOURCE_DICTIONARY_DISPLAY_START
+SOURCE_DICTIONARY_DISPLAY_END
+
+SOURCE_KEY_DATUM_LIST_START
+
+SgKeyDatumPairPtrList&
+SgKeyDatumList::get_key_datum_pairs()
+   { return p_key_datum_pairs; }
+
+const SgKeyDatumPairPtrList&
+SgKeyDatumList::get_key_datum_pairs() const
+   { return p_key_datum_pairs; }
+
+void
+SgKeyDatumList::append_pair(SgKeyDatumPair *what)
+   { what->set_parent(this); p_key_datum_pairs.push_back(what); }
+
+SOURCE_KEY_DATUM_LIST_END
+
+SOURCE_KEY_DATUM_PAIR_START
+SOURCE_KEY_DATUM_PAIR_END
 
 SOURCE_SCOPE_OPERATOR_EXPRESSION_START
 SOURCE_SCOPE_OPERATOR_EXPRESSION_END

@@ -26,6 +26,7 @@ PyObject* sage_buildGlobal(PyObject *self, PyObject *args);
 PyObject* sage_buildIf(PyObject *self, PyObject *args);
 PyObject* sage_buildInitializedName(PyObject *self, PyObject *args);
 PyObject* sage_buildKeyword(PyObject *self, PyObject *args);
+PyObject* sage_buildKeyDatumPair(PyObject *self, PyObject *args);
 PyObject* sage_buildLongIntVal(PyObject *self, PyObject *args);
 PyObject* sage_buildLambda(PyObject *self, PyObject *args);
 PyObject* sage_buildListExp(PyObject *self, PyObject *args);
@@ -66,6 +67,7 @@ static PyMethodDef SageBuilderMethods[] = {
     {"buildIf", sage_buildIf, METH_VARARGS, "Builds an if stmt  node."},
     {"buildInitializedName", sage_buildInitializedName, METH_VARARGS, "Builds an initialized name node."},
     {"buildKeyword", sage_buildKeyword, METH_VARARGS, "Builds a keyword node."},
+    {"buildKeyDatumPair", sage_buildKeyDatumPair, METH_VARARGS, "Builds a key datum pair node."},
     {"buildLongIntVal", sage_buildLongIntVal, METH_VARARGS, "Builds an SgIntVal node."},
     {"buildLambda", sage_buildLambda, METH_VARARGS, "Builds a lambda node."},
     {"buildListExp", sage_buildListExp, METH_VARARGS, "Builds a list node."},

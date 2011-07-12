@@ -792,6 +792,14 @@ SgAssertStmt* buildAssertStmt_nfi(SgExpression* test);
 SgYieldStatement* buildYieldStatement(SgExpression* value);
 SgYieldStatement* buildYieldStatement_nfi(SgExpression* value);
 
+//! Build a key-datum pair
+SgKeyDatumPair* buildKeyDatumPair    (SgExpression* key, SgExpression* datum);
+SgKeyDatumPair* buildKeyDatumPair_nfi(SgExpression* key, SgExpression* datum);
+
+//! Build a list of key-datum pairs
+SgKeyDatumList* buildKeyDatumList    (std::vector<SgKeyDatumPair*> pairs);
+SgKeyDatumList* buildKeyDatumList_nfi(std::vector<SgKeyDatumPair*> pairs);
+
 //! Build a delete statement
 SgDeleteExp* buildDeleteExp(SgExpression *target, bool is_array = false, bool need_global_specifier = false, SgFunctionDeclaration *deleteOperatorDeclaration = NULL);
 SgDeleteExp* buildDeleteExp_nfi(SgExpression *target, bool is_array = false, bool need_global_specifier = false, SgFunctionDeclaration *deleteOperatorDeclaration = NULL);
