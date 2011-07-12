@@ -27,7 +27,7 @@ bool ExtractFunctionArguments::NormalizeTree(SgNode* tree)
 					constructor->get_file_info()->get_line(),
 					constructor->get_file_info()->get_filename(),
 					constructor->unparseToString().c_str());
-			//return false;
+			return false;
 		}
 	}
 
@@ -69,7 +69,7 @@ bool ExtractFunctionArguments::RewriteFunctionCallArguments(const FunctionCallIn
 				functionCall->get_file_info()->get_filename(), functionCall->get_file_info()->get_line());
 		fprintf(stderr, "\t%s\n", functionCall->unparseToString().c_str());
 		fprintf(stderr, "If you are using function pointers, save the function pointer first and then call the function on another line.\n");
-		//return false;
+		return false;
 	}
 
 	SgExprListExp* functionArgs = functionCall->get_args();
@@ -103,7 +103,7 @@ bool ExtractFunctionArguments::RewriteFunctionCallArguments(const FunctionCallIn
 		//Replace the argument with the new temporary variable
 		SageInterface::replaceExpression(arg, tempVarReference);
 
-#if 0
+#if 1
 		//Build a CommaOp that evaluates the temporary variable and proceeds to the original function call expression
 		SgExpression* placeholderExp = SageBuilder::buildIntVal(7);
 		SgCommaOpExp* comma = SageBuilder::buildCommaOpExp(tempVarAssignment, placeholderExp);
