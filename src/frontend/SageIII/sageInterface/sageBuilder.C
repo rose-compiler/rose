@@ -3194,6 +3194,64 @@ SgKeyDatumList* SageBuilder::buildKeyDatumList_nfi(std::vector<SgKeyDatumPair*> 
     return result;
 }
 
+SgComprehension*
+SageBuilder::buildComprehension(SgExpression *target, SgExpression *iter, SgExprListExp *ifs)
+{
+    ROSE_ASSERT(target != NULL);
+    ROSE_ASSERT(iter != NULL);
+    ROSE_ASSERT(ifs != NULL);
+    SgComprehension *result = new SgComprehension(target, iter, ifs);
+    ROSE_ASSERT(result);
+
+    target->set_parent(result);
+    iter->set_parent(result);
+    ifs->set_parent(result);
+
+    setOneSourcePositionForTransformation(result);
+    return result;
+}
+
+SgComprehension*
+SageBuilder::buildComprehension_nfi(SgExpression *target, SgExpression *iter, SgExprListExp *ifs)
+{
+    ROSE_ASSERT(target != NULL);
+    ROSE_ASSERT(iter != NULL);
+    ROSE_ASSERT(ifs != NULL);
+    SgComprehension *result = new SgComprehension(target, iter, ifs);
+    ROSE_ASSERT(result);
+
+    target->set_parent(result);
+    iter->set_parent(result);
+    ifs->set_parent(result);
+
+    setOneSourcePositionNull(result);
+    return result;
+}
+
+SgListComprehension*
+SageBuilder::buildListComprehension(SgExpression *elt, SgExprListExp *generators)
+{
+    ROSE_ASSERT(elt != NULL);
+    ROSE_ASSERT(generators != NULL);
+    SgListComprehension* result = new SgListComprehension(elt, generators);
+    elt->set_parent(result);
+    generators->set_parent(result);
+    setOneSourcePositionNull(result);
+    return result;
+}
+
+SgListComprehension*
+SageBuilder::buildListComprehension_nfi(SgExpression *elt, SgExprListExp *generators)
+{
+    ROSE_ASSERT(elt != NULL);
+    ROSE_ASSERT(generators != NULL);
+    SgListComprehension* result = new SgListComprehension(elt, generators);
+    elt->set_parent(result);
+    generators->set_parent(result);
+    setOneSourcePositionForTransformation(result);
+    return result;
+}
+
 SgPragmaDeclaration * SageBuilder::buildPragmaDeclaration(const string& name, SgScopeStatement* scope)
 {
   if (scope == NULL)

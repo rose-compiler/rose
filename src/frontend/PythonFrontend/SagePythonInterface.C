@@ -213,6 +213,22 @@ sage_buildCall(PyObject *self, PyObject *args)
 }
 
 /*
+ */
+PyObject*
+sage_buildComprehension(PyObject *self, PyObject *args)
+{
+    SgExpression *sg_target, *sg_iter;
+    SgExprListExp *sg_ifs;
+    if (! PyArg_ParseTuple(args, "O&O&O&", SAGE_CONVERTER(SgExpression), &sg_target,
+                                           SAGE_CONVERTER(SgExpression), &sg_iter,
+                                           SAGE_CONVERTER(SgExprListExp), &sg_ifs))
+        return NULL;
+
+    SgComprehension* sg_comp = SageBuilder::buildComprehension(sg_target, sg_iter, sg_ifs);
+    return PyEncapsulate(sg_comp);
+}
+
+/*
  * Build an SgOp node from the given Python statements.
  *  - PyObject* args = (PyObject*, PyObject*)
  */
@@ -541,6 +557,21 @@ sage_buildLambda(PyObject *self, PyObject *args)
     PyObject *py_lambda = PyEncapsulate(sg_lambda_exp);
     PyObject *py_body = PyEncapsulate(sg_lambda_exp->get_functionDeclaration()->get_definition());
     return Py_BuildValue("(OO)", py_lambda, py_body);
+}
+
+/*
+ */
+PyObject*
+sage_buildListComp(PyObject *self, PyObject *args)
+{
+    SgExpression *elt;
+    SgExprListExp *gens;
+    if (! PyArg_ParseTuple(args, "O&O&", SAGE_CONVERTER(SgExpression), &elt,
+                                         SAGE_CONVERTER(SgExprListExp), &gens))
+        return NULL;
+
+    SgListComprehension *sg_list_comp = SageBuilder::buildListComprehension(elt, gens);
+    return PyEncapsulate(sg_list_comp);
 }
 
 /*

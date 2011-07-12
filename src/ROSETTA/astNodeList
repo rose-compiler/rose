@@ -305,6 +305,8 @@ SgCommonBlock
 SgCommonBlockObject
 SgCommonSymbol
 SgComplexVal
+SgComprehension
+SgComprehensionList
 SgComputedGotoStatement
 SgConcatenationOp
 SgConditionalExp
@@ -327,6 +329,7 @@ SgDefineDirectiveStatement
 SgDeleteExp
 SgDerivedTypeStatement
 SgDesignatedInitializer
+SgDictionaryComprehension
 SgDimensionObject
 SgDirectedGraph
 SgDirectedGraphEdge
@@ -434,6 +437,7 @@ SgLessThanOp
 SgLineDirectiveStatement
 SgLinemarkerDirectiveStatement
 SgLinkageModifier
+SgListComprehension
 SgListExp
 SgLocatedNode
 SgLocatedNodeSupport
@@ -547,6 +551,7 @@ SgRshiftOp
 SgScopeOp
 SgScopeStatement
 SgSequenceStatement
+SgSetComprehension
 SgShortVal
 SgSizeOfOp
 SgSourceFile

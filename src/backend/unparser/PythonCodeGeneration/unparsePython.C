@@ -89,12 +89,14 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
         CASE_DISPATCH_AND_BREAK(AssignOp);
         CASE_DISPATCH_AND_BREAK(AssignInitializer);
         CASE_DISPATCH_AND_BREAK(ComplexVal);
+        CASE_DISPATCH_AND_BREAK(Comprehension);
         CASE_DISPATCH_AND_BREAK(DeleteExp);
         CASE_DISPATCH_AND_BREAK(ExprListExp);
         CASE_DISPATCH_AND_BREAK(FunctionCallExp);
         CASE_DISPATCH_AND_BREAK(KeyDatumList);
         CASE_DISPATCH_AND_BREAK(KeyDatumPair);
         CASE_DISPATCH_AND_BREAK(LambdaRefExp);
+        CASE_DISPATCH_AND_BREAK(ListComprehension);
         CASE_DISPATCH_AND_BREAK(ListExp);
         CASE_DISPATCH_AND_BREAK(TupleExp);
         CASE_DISPATCH_AND_BREAK(VarRefExp);
@@ -251,6 +253,22 @@ Unparse_Python::unparseBreakStmt(SgBreakStmt* break_stmt,
 {
     curprint("break");
 }
+
+void
+Unparse_Python::unparseComprehension(SgComprehension* comp, SgUnparse_Info& info)
+{
+    curprint(" for ");
+    unparseExpression(comp->get_target(), info);
+    curprint(" in ");
+    unparseExpression(comp->get_iter(), info);
+
+    SgExprListExp* filters = comp->get_filters();
+    foreach (SgExpression* if_exp, filters->get_expressions()) {
+        curprint(" if ");
+        unparseExpression(if_exp, info);
+    }
+}
+
 
 void
 Unparse_Python::unparseDeleteExp(SgDeleteExp* delete_exp, SgUnparse_Info& info)
@@ -468,6 +486,21 @@ Unparse_Python::unparseLambdaRefExp(SgLambdaRefExp* lambda,
             lambda_body->class_name() << " instead)" << endl;
         ROSE_ASSERT(!"lambda body missing SgExpression");
     }
+}
+
+void
+Unparse_Python::unparseListComprehension(SgListComprehension* list_comp, SgUnparse_Info& info)
+{
+    SgExprListExp* generators = list_comp->get_generators();
+
+    curprint("[");
+    unparseExpression(list_comp->get_element(), info);
+
+    /* SgExprListExps unparse with commas separating elements, so override that behavior here */
+    foreach (SgExpression* exp, generators->get_expressions())
+        unparseExpression(exp, info);
+
+    curprint("]");
 }
 
 void

@@ -138,6 +138,12 @@ class SageTranslator(ast.NodeVisitor):
   def visit_complex(self, n):
     return sage.buildComplexVal(n)
 
+  def visit_comprehension(self, node):
+    ifs = sage.buildExprListExp(map(self.visit, node.ifs))
+    target = self.visit(node.target)
+    iter = self.visit(node.iter)
+    return sage.buildComprehension(target, iter, ifs)
+
   def visit_Continue(self, node):
     return sage.buildContinue()
 
@@ -213,6 +219,11 @@ class SageTranslator(ast.NodeVisitor):
 
   def visit_List(self, node):
     return sage.buildListExp(map(self.visit, node.elts))
+
+  def visit_ListComp(self, node):
+    elt = self.visit(node.elt)
+    gens = sage.buildExprListExp(map(self.visit, node.generators))
+    return sage.buildListComp(elt, gens)
 
   def visit_long(self, n):
     return sage.buildLongIntVal(n)
