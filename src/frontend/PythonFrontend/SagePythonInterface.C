@@ -292,6 +292,22 @@ sage_buildDelete(PyObject *self, PyObject *args)
 /*
  */
 PyObject*
+sage_buildDictComp(PyObject *self, PyObject *args)
+{
+    SgKeyDatumPair *kd_pair;
+    SgExprListExp *generators;
+    if (! PyArg_ParseTuple(args, "O&O&", SAGE_CONVERTER(SgKeyDatumPair), &kd_pair,
+                                         SAGE_CONVERTER(SgExprListExp), &generators))
+        return NULL;
+
+    SgDictionaryComprehension *sg_dict_comp =
+        SageBuilder::buildDictionaryComprehension(kd_pair, generators);
+    return PyEncapsulate(sg_dict_comp);
+}
+
+/*
+ */
+PyObject*
 sage_buildDict(PyObject *self, PyObject *args)
 {
     PyObject *py_pairs;
