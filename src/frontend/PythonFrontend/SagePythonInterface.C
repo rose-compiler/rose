@@ -274,6 +274,20 @@ sage_buildDelete(PyObject *self, PyObject *args)
 }
 
 /*
+ */
+PyObject*
+sage_buildDict(PyObject *self, PyObject *args)
+{
+    PyObject *py_keys, *py_vals;
+    if (! PyArg_ParseTuple(args, "O!O!", &PyList_Type, &py_keys,
+                                         &PyList_Type, &py_vals))
+        return NULL;
+
+    SgStringVal* sg_dict = SageBuilder::buildStringVal("DICT");
+    return PyEncapsulate(sg_dict);
+}
+
+/*
  * Build an Expr node from the given Python statements.
  *  - PyObject* args = (PyObject*)
  */

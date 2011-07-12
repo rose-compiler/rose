@@ -15,6 +15,7 @@ PyObject* sage_buildCompare(PyObject *self, PyObject *args);
 PyObject* sage_buildComplexVal(PyObject *self, PyObject *args);
 PyObject* sage_buildContinue(PyObject *self, PyObject *args);
 PyObject* sage_buildDelete(PyObject *self, PyObject *args);
+PyObject* sage_buildDict(PyObject *self, PyObject *args);
 PyObject* sage_buildExceptHandler(PyObject *self, PyObject *args);
 PyObject* sage_buildExpr(PyObject *self, PyObject *args);
 PyObject* sage_buildExprListExp(PyObject *self, PyObject *args);
@@ -53,6 +54,7 @@ static PyMethodDef SageBuilderMethods[] = {
     {"buildComplexVal", sage_buildComplexVal, METH_VARARGS, "Builds a complex value node."},
     {"buildContinue", sage_buildContinue, METH_VARARGS, "Builds a continue stmt node."},
     {"buildDelete", sage_buildDelete, METH_VARARGS, "Builds a delete stmt node."},
+    {"buildDict", sage_buildDict, METH_VARARGS, "Builds a dictionary display node."},
     {"buildExceptHandler", sage_buildExceptHandler, METH_VARARGS, "Builds an exception handler node."},
     {"buildExpr", sage_buildExpr, METH_VARARGS, "Builds an Expr node."},
     {"buildExprListExp", sage_buildExprListExp, METH_VARARGS, "Builds an expression list."},

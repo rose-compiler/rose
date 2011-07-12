@@ -145,6 +145,11 @@ class SageTranslator(ast.NodeVisitor):
     target = sage.buildExprListExp(map(self.visit, node.targets))
     return sage.buildDelete(target)
 
+  def visit_Dict(self, node):
+    keys = map(self.visit, node.keys)
+    values = map(self.visit, node.values)
+    return sage.buildDict(keys, values)
+
   def visit_ExceptHandler(self, node):
     e_name = node.name
     e_type = node.type
