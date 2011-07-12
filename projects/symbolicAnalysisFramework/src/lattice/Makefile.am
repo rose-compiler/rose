@@ -12,7 +12,7 @@ include_HEADERS = ConstrGraph.h  intArithLogical.h  latticeFull.h  lattice.h aff
 noinst_PROGRAMS = selfTest
 selfTest_SOURCES = selfTest.C
 # the order or la files matters!!
-selfTest_LDADD = \
+selfTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) \
          $(SAF_BUILD_ROOT)/src/state/libSafstate.la \
          $(SAF_BUILD_ROOT)/src/simpleAnalyses/libSafsimpleAnalyses.la \
          libSaflattice.la \
@@ -23,8 +23,6 @@ selfTest_LDADD = \
          $(SAF_BUILD_ROOT)/src/arrIndexLabeler/libSafarrIndexLabeler.la \
          $(SAF_BUILD_ROOT)/src/analysis/libSafanalysis.la \
          $(SAF_BUILD_ROOT)/src/external/libSafexternal.la
-
-selfTest_LDADD += $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 check-local:selfTest
 #	./selfTest test_example.c
