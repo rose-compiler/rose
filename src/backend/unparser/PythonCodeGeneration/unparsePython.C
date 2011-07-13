@@ -157,6 +157,26 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
 }
 
 void
+Unparse_Python::unparseAsSuite(SgStatement* stmt, SgUnparse_Info& info) {
+    info.inc_nestingLevel();
+    switch (stmt->variantT()) {
+        case V_SgBasicBlock: {
+            SgBasicBlock* basic_block = isSgBasicBlock(stmt);
+            foreach (SgStatement* child, basic_block->get_statements()) {
+                curprint( ws_prefix(info.get_nestingLevel()) );
+                unparseStatement(child, info);
+                curprint("\n");
+            }
+            break;
+        }
+        default:
+            cout << "error: cannnot unparse " << stmt->class_name() << " as suite." << endl;
+            ROSE_ASSERT(false);
+    }
+    info.dec_nestingLevel();
+}
+
+void
 Unparse_Python::unparseStringVal(SgExpression* str_exp, SgUnparse_Info& info)
 {
     SgStringVal* str_val = isSgStringVal(str_exp);
@@ -212,11 +232,7 @@ Unparse_Python::unparseBasicBlock(SgBasicBlock* bblock,
                                   SgUnparse_Info& info)
 {
     foreach (SgStatement* child, bblock->get_statements()) {
-        curprint( ws_prefix(info.get_nestingLevel()) );
-        if (isSgExpression(child))
-            unparseExpression(isSgExpression(child), info);
-        else
-            unparseStatement(child, info);
+        unparseStatement(child, info);
         curprint("\n");
     }
 }
@@ -382,15 +398,11 @@ Unparse_Python::unparseForStatement(SgForStatement* for_stmt,
     unparseExpression(for_stmt->get_increment(), info);
     curprint(":\n");
 
-    info.inc_nestingLevel();
-    unparseStatement(for_stmt->get_loop_body(), info);
-    info.dec_nestingLevel();
+    unparseAsSuite(for_stmt->get_loop_body(), info);
 
     if (for_stmt->get_else_body()) {
         curprint(ws_prefix(info.get_nestingLevel()) + "else:\n");
-        info.inc_nestingLevel();
-        unparseStatement(for_stmt->get_else_body(), info);
-        info.dec_nestingLevel();
+        unparseAsSuite(for_stmt->get_else_body(), info);
     }
 }
 
@@ -431,9 +443,7 @@ Unparse_Python::unparseFunctionDeclaration(SgFunctionDeclaration* func_decl,
     code1 << "):" << endl;
     curprint (code1.str());
 
-    info.inc_nestingLevel();
     unparseStatement(func_decl->get_definition(), info);
-    info.dec_nestingLevel();
 
 #if 0 // awaiting resolution of abstract handle bug
     curprint(string("\n") + ws_prefix(info.get_nestingLevel()));
@@ -444,7 +454,7 @@ void
 Unparse_Python::unparseFunctionDefinition(SgFunctionDefinition* func_decl,
                                           SgUnparse_Info& info)
 {
-    unparseStatement(func_decl->get_body(), info);
+    unparseAsSuite(func_decl->get_body(), info);
 }
 
 void
@@ -468,15 +478,11 @@ Unparse_Python::unparseIfStmt(SgIfStmt* if_stmt,
     unparseStatement(if_stmt->get_conditional(), info);
     curprint(":\n");
 
-    info.inc_nestingLevel();
-    unparseStatement(if_stmt->get_true_body(), info);
-    info.dec_nestingLevel();
+    unparseAsSuite(if_stmt->get_true_body(), info);
 
     if (if_stmt->get_false_body() != NULL) {
         curprint(ws_prefix(info.get_nestingLevel()) + "else:\n");
-        info.inc_nestingLevel();
-        unparseStatement(if_stmt->get_false_body(), info);
-        info.dec_nestingLevel();
+        unparseAsSuite(if_stmt->get_false_body(), info);
     }
 }
 
@@ -698,9 +704,7 @@ Unparse_Python::unparseWhileStmt(SgWhileStmt* while_stmt,
     unparseStatement(while_stmt->get_condition(), info);
     curprint(":\n");
 
-    info.inc_nestingLevel();
-    unparseStatement(while_stmt->get_body(), info);
-    info.dec_nestingLevel();
+    unparseAsSuite(while_stmt->get_body(), info);
 }
 
 void
