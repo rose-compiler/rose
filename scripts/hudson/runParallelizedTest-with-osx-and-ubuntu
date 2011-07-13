@@ -151,7 +151,7 @@ CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-i386"
 #  testing but the way to turn it on is to specify --enable-openGL
 #
 #########################################################################################
-if test "x$ROSE_TEST_BUILD_STYLE" = "xmake/check/install-full" ; then
+if test "x$ROSE_TEST_BUILD_STYLE" = "xmake-check-install-full" ; then
 	CONFIGURE_FLAGS="\
 		${CONFIGURE_FLAGS} \
 		--with-qt=${ROSE_TEST_QT_PATH} \
@@ -226,7 +226,7 @@ if test "x$label" = "x64bit-macos-10.6" ; then
 	#export ROSE_TEST_BOOST_PATH=${MACPORTS_INS}
 
 	case "$ROSE_TEST_BUILD_STYLE" in
-		"make/check/install-minimal")
+		"make-check-install-minimal")
 	 		CONFIGURE_FLAGS="
 			--with-boost=${ROSE_TEST_BOOST_PATH} \
 			--with-boost-lib=${ROSE_TEST_BOOST_PATH}/lib/ \
@@ -245,7 +245,7 @@ fi
 #########################################################################################
 if test "x$label" = "xamd64-ubuntu" ; then
 	case "$ROSE_TEST_BUILD_STYLE" in
-  		"make/check/install-minimal")
+  		"make-check-install-minimal")
 	 		CONFIGURE_FLAGS="
 				--with-boost=${ROSE_TEST_BOOST_PATH} \
 				--with-boost-lib=${ROSE_TEST_BOOST_PATH}/lib/ \
@@ -345,7 +345,7 @@ function printRoseTranslatorVersion {
 #
 #########################################################################################
 case "$ROSE_TEST_BUILD_STYLE" in
-"make/check/install-minimal"|"make/check/install-full")
+"make-check-install-minimal"|"make-check-install-full")
 
     ################################################################################
     # MAKE

@@ -1,157 +1,190 @@
-#include "TypeSystem.h"
-
 #include <cassert>
+#include <iostream>
+#include <algorithm>
 
-using namespace std;
+#include "TypeSystem.h"
+#include "CppRuntimeSystem.h"
 
-TypeSystem::TypeSystem()
+static
+TypeSystem::BasicTypeContainer makeBasicTypes()
 {
-    //call clear, to register all base types
-    clearStatus();
+  TypeSystem::BasicTypeContainer container;
+  const size_t                   szBasicTypes = RsBasicType::SgUnknownType - RsBasicType::SgTypeBool;
+
+  container.reserve(szBasicTypes);
+  for (RsBasicType::SgType i = RsBasicType::SgTypeBool; i < RsBasicType::SgUnknownType; ++i)
+  {
+    container.push_back(RsBasicType::create(i));
+  }
+
+  return container;
 }
 
-TypeSystem::~TypeSystem()
+TypeSystem::TypeSystem()
+: types(), ptrTypeMap(), arrTypeMap(), basictypes(makeBasicTypes())
 {
-    for(TypeSet::iterator i = types.begin(); i != types.end(); ++i)
-        delete *i;
+    // register all base types
+    registerBaseTypes();
+}
+
+struct TypeRegistrar
+{
+  typedef void (TypeSystem::* Memfun)(const RsType&);
+
+  TypeSystem& ts;
+  Memfun      fn;
+
+  TypeRegistrar(TypeSystem& typesys, Memfun f)
+  : ts(typesys), fn(f)
+  {}
+
+  void operator()(const RsBasicType& t)
+  {
+    (ts.*fn)(t);
+  }
+};
+
+
+void TypeSystem::registerBaseTypes()
+{
+  std::for_each( basictypes.begin(),
+                 basictypes.end(),
+                 TypeRegistrar(*this, &TypeSystem::registerType)
+                 // std::bind1st(std::mem_fun(), this)
+               );
 }
 
 void TypeSystem::clearStatus()
 {
     types.clear();
-
-    // Register all Base-Types
-    int count = RsBasicType::getBaseTypeCount();
-    for(int i=0; i<count; i++)
-    {
-        RsBasicType::SgType t = RsBasicType::getBaseType(i);
-        bool success = registerType(new RsBasicType(t));
-        assert(success);
-    }
+    classMap.clear();
+    registerBaseTypes();
 }
 
 
-bool TypeSystem::registerType(RsType * t)
+void TypeSystem::registerType(const RsType& t)
 {
-    pair<TypeSet::iterator, bool> res;
-    res =types.insert(t);
+    // std::pair<NamedTypeContainer::iterator, bool> res = types.insert(&t);
 
-    if(!res.second) {
-        cerr << "Error: tried to register type " << t->getName() << " twice!" << endl;
+    NamedTypeContainer::mapped_type& entry = types[t.getName()];
+
+    if (entry)
+    {
+        std::cerr << "Error: tried to register type " << t.getName() << " twice!" << std::endl;
         assert( false );
     }
 
-    return res.second;
+    entry = &t;
 }
 
-RsType * TypeSystem::getTypeInfo(const string & name)
+RsClassType& TypeSystem::getClassType(const std::string& name, size_t sz /*= 0*/, bool uniontype /*= false*/)
 {
+  RsClassType& entry = classMap[name];
 
-    //TODO remove SgPointerType and SgArrayType from BasicTypes
-    if(name == "SgPointerType" || name == "SgArrayType" )
+  if (entry.invalid())
+  {
+    entry = RsClassType(name, sz, uniontype);
+    registerType(entry);
+  }
+
+  return entry;
+}
+
+const RsType* TypeSystem::getTypeInfo(const std::string& name) const
+{
+    // TODO remove SgPointerType and SgArrayType from BasicTypes
+    if ( diagnostics::warning() )
     {
-      cerr << endl << "getTypeInfo for " << name << "was called:" << endl;
-      cerr << "SEVERE WARNING: Pointer and Arrays have now be registered differently!" << endl;
+      if (name == "SgPointerType" || name == "SgArrayType")
+      {
+        std::stringstream msg;
+
+        msg << "getTypeInfo for " << name << "was called:" << std::endl;
+        msg << "*** SEVERE WARNING: Pointer and Arrays have now be registered differently!" << std::endl;
+
+        RuntimeSystem::instance()->printMessage(msg.str());
+      }
     }
 
-    InvalidType comparisonObject(name);
+    NamedTypeContainer::const_iterator i = types.find(name);
+    if (i == types.end()) return NULL;
 
-    TypeSet::iterator i = types.find(&comparisonObject);
-    if(i == types.end())
-        return NULL;
-    else
-        return *i;
+    return i->second;
 }
 
 
-RsArrayType * TypeSystem::getArrayType(const string & name, size_t size)
+const RsArrayType* TypeSystem::getArrayType(const std::string& name, size_t size)
 {
-    RsType * bt = getTypeInfo(name);
+    const RsType* bt = getTypeInfo(name);
 
     assert( bt );
-    return getArrayType(bt,size);
+    return getArrayType(bt, size);
 }
 
 
-RsArrayType * TypeSystem::getArrayType(RsType * bt, size_t size)
+const RsArrayType* TypeSystem::getArrayType(const RsType* bt, size_t size)
 {
-    map<size_t, RsArrayType*> & m = arrTypeMap[bt];
+    ArrayDimensions& m = arrTypeMap[bt];
+    RsArrayType&     t = m[size];
 
-    map<size_t,RsArrayType*>::iterator it = m.find(size);
-    if( it == m.end() )
+    // new entry?
+    if (t == RsArrayType())
     {
-        RsArrayType * arrType = new RsArrayType(bt,size);
-        m.insert(make_pair<size_t,RsArrayType*>(size,arrType));
-        return arrType;
+      t = RsArrayType(bt, size);
     }
-    else
-        return it->second;
-}
 
-RsPointerType * TypeSystem::getPointerType(const string & name, size_t indirection)
-{
-    RsType * bt = getTypeInfo(name);
-    return getPointerType(bt,indirection);
+    return &t;
 }
 
 
-RsPointerType * TypeSystem::getPointerType(RsType * bt, size_t indirection)
+const RsPointerType* TypeSystem::getPointerType(const RsType* bt, AddressDesc desc)
 {
-    assert(indirection >= 1);
+    assert( rted_isPtr(desc) >= 1 );
     assert( bt != NULL );
 
-    map<size_t, RsPointerType * > & m = ptrTypeMap[bt];
+    TypeDerivatives& m = ptrTypeMap[bt];
+    RsPointerType&   t = m[desc.levels];
 
-    map<size_t,RsPointerType*>::iterator it = m.find(indirection);
-    if( it == m.end() )
+    // new entry?
+    if (t == RsPointerType())
     {
-        RsType * base = NULL;
-        // multiple pointers are represented as pointer which have a pointer basetype
-        // build these base-types recursively
-        if(indirection > 1)
-            base = getPointerType(bt,indirection-1);
-        else
-            base = bt;
+      AddressDesc desc_prime = rted_deref_desc(desc);
 
-        RsPointerType * ptrType = new RsPointerType(base);
-        m.insert(make_pair<size_t,RsPointerType*>(indirection,ptrType));
-        return ptrType;
+      // multiple pointers are represented as pointer which have a pointer basetype
+      // build these base-types recursively
+      if (rted_isPtr(desc_prime))
+          bt = getPointerType(bt, desc_prime);
+
+      t = RsPointerType(bt);
     }
-    else
-        return it->second;
 
+    return &t;
+}
+
+const RsPointerType* TypeSystem::getPointerType(const std::string& name, AddressDesc desc)
+{
+    const RsType* bt = getTypeInfo(name);
+    return getPointerType(bt, desc);
+}
+
+const RsPointerType* TypeSystem::getPointerType(const RsType* bt)
+{
+    return getPointerType(bt, rted_ptr());
+}
+
+const RsPointerType* TypeSystem::getPointerType(const std::string & name)
+{
+    return getPointerType(getTypeInfo(name));
 }
 
 
-
-/*
-RsType * TypeSystem::getArrayType(RsType * bt, size_t size)
+void TypeSystem::print(std::ostream & os) const
 {
-    string arrName (RsArrayType::getArrayTypeName(bt,size));
-    InvalidType comparisonObject(arrName);
+    os << "--------------  All Registered Types -----------------------" << std::endl;
+    for (NamedTypeContainer::const_iterator it = types.begin(); it != types.end(); ++it)
+        os << *(it->second);
 
-    TypeSet::iterator i = types.find(&comparisonObject);
-    if(i == types.end())
-    {
-        //Not yet needed -> create it
-        RsArrayType * at = new RsArrayType(bt,size);
-        registerType(at);
-        return at;
-    }
-    else
-        return *i;
-}*/
-
-
-
-
-void TypeSystem::print(ostream & os) const
-{
-    os << "--------------  All Registered Types -----------------------" << endl;
-    for(TypeSet::iterator it = types.begin(); it != types.end(); ++it)
-        os << *it;
-
-    os << "------------------------------------------------------------" << endl;
+    os << "------------------------------------------------------------" << std::endl;
 
 }
 
@@ -161,6 +194,3 @@ std::ostream& operator<< (std::ostream &os, const TypeSystem & m)
     m.print(os);
     return os;
 }
-
-
-
