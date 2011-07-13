@@ -2715,7 +2715,7 @@ getNextChild(const CFG* &g, const int &n)
     {
         //std::cout << "bad node" << std::endl;
         pr.first = true;
-        pr.second = nullNode;
+        pr.second = n;
         return pr;
     }
 

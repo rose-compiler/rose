@@ -64,11 +64,12 @@ if !ROSE_USE_INSURE
 #	$(VALGRIND) ../../testParser $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
 else
 #	DQ (4/22/2011): For Insure++ we want to get the filename into the names used for the report files.
-	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; ../../testTranslator --help > /dev/null; echo "Fixed"; fi
-	cp ../../.libs/lt-testTranslator testTranslator_$(@:.o=)
-	./testTranslator_$(@:.o=) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
-	echo "Removing the just built copy of lt-testTranslator to save space..."
-	rm -f testTranslator_$(@:.o=)
+#	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; ../../testTranslator --help > /dev/null; echo "Fixed"; fi
+#	cp ../../.libs/lt-testTranslator testTranslator_$(@:.o=)
+#	./testTranslator_$(@:.o=) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
+#	echo "Removing the just built copy of lt-testTranslator to save space..."
+#	rm -f testTranslator_$(@:.o=)
+	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
 endif
 
 # DQ (4/6/2010): Added test for parsing only (tested here for C++ code)

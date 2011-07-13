@@ -14,7 +14,7 @@ fi
 echo "In ROSE SUPPORT MACRO: with_rted $with_rted"
 
 if test "$with_rted" = no; then
-   # If dwarf is not specified, then don't use it.
+   # If RTED is not specified, then don't use it.
    echo "Skipping use of RTED support!"
 else
    rted_path=$with_rted
