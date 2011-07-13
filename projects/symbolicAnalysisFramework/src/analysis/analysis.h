@@ -42,6 +42,8 @@ class IntraProceduralAnalysis : virtual public Analysis
 	// the function's NodeState gets modified as a result and false otherwise
 	// state - the function's NodeState
 	virtual bool runAnalysis(const Function& func, NodeState* state)=0;
+	
+	virtual ~IntraProceduralAnalysis();
 };
 
 class InterProceduralAnalysis : virtual public Analysis
@@ -57,6 +59,8 @@ class InterProceduralAnalysis : virtual public Analysis
 	}
 	
 	virtual void runAnalysis()=0;
+	
+	virtual ~InterProceduralAnalysis();
 };
 
 /********************************

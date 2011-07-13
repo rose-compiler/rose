@@ -9,10 +9,19 @@ namespace VirtualCFG{
  ********** ITERATOR **********
  ******************************/
 	
-iterator::iterator() {}
+iterator::iterator() {
+	initialized	= false;
+}
 
 iterator::iterator(const DataflowNode &start) 
 {
+	initialized	= true;
+	remainingNodes.push_front(start);
+	visited.insert(start);
+}
+
+void iterator::init(const DataflowNode &start) {
+	initialized	= true;
 	remainingNodes.push_front(start);
 	visited.insert(start);
 }
@@ -21,6 +30,7 @@ iterator::iterator(const DataflowNode &start)
 // returns true if the given DataflowNode is in the remainingNodes list and false otherwise
 bool iterator::isRemaining(DataflowNode n)
 {
+	ROSE_ASSERT(initialized);
 	for(list<DataflowNode>::const_iterator it=remainingNodes.begin(); it!=remainingNodes.end(); it++)
 	{
 		// if in is currently n remainingNodes, say so
@@ -35,7 +45,11 @@ bool iterator::isRemaining(DataflowNode n)
 //    depending on fwDir) are pushed onto remainingNodes
 void iterator::advance(bool fwDir, bool pushAllChildren)
 {
-	//printf("   iterator::advance(%d) remainingNodes.size()=%d\n", fwDir, remainingNodes.size());
+	ROSE_ASSERT(initialized);
+	/*printf("   iterator::advance(%d) remainingNodes.size()=%d\n", fwDir, remainingNodes.size());
+	cout<<"        visited=\n";
+	for(set<DataflowNode>::iterator it=visited.begin(); it!=visited.end(); it++)
+		cout << "            <"<<it->getNode()->class_name()<<" | "<<it->getNode()<<" | "<<it->getNode()->unparseToString()<<">\n";*/
 	if(remainingNodes.size()>0)
 	{
 		// pop the next CFG node from the front of the list
@@ -57,7 +71,10 @@ void iterator::advance(bool fwDir, bool pushAllChildren)
 				if(fwDir) nextN = (*it).target();
 				else nextN = (*it).source();
 					
-				//printf("      iterator::advance %s: <%s: 0x%x: %s>, visited=%d remaining=%d\n", fwDir?"descendant":"predecessor", nextN.getNode()->class_name().c_str(), nextN.getNode(), nextN.getNode()->unparseToString().c_str(), visited.find(nextN) != visited.end(), isRemaining(nextN));
+				/*cout << "      iterator::advance "<<(fwDir?"descendant":"predecessor")<<": "<<
+					           "<"<<nextN.getNode()->class_name()<<" | "<<nextN.getNode()<<" | "<<nextN.getNode()->unparseToString()<<">, "<<
+					           "visited="<<(visited.find(nextN) != visited.end())<<
+					           " remaining="<<isRemaining(nextN)<<"\n";*/
 				
 				// if we haven't yet visited this node and don't yet have it on the remainingNodes list
 				if(visited.find(nextN) == visited.end() &&
@@ -81,11 +98,17 @@ void iterator::advance(bool fwDir, bool pushAllChildren)
 
 void iterator::operator ++ (int)
 {
+	ROSE_ASSERT(initialized);
 	advance(true, true);
 }
 
 bool iterator::eq(const iterator& other_it) const
 {
+	if(initialized != other_it.initialized) return false;
+		
+	// If both iterators are not initialized, they're equal
+	if(!initialized) return true;
+		
 	//printf("iterator::eq() remainingNodes.size()=%d  other_it.remainingNodes.size()=%d\n", remainingNodes.size(), other_it.remainingNodes.size());
 	if(remainingNodes.size() != other_it.remainingNodes.size()) return false;
 	
@@ -138,6 +161,7 @@ bool iterator::operator!=(const iterator& it) const
 	
 DataflowNode& iterator::operator * ()
 {
+	ROSE_ASSERT(initialized);
 /*		printf("VirtualCFG::iterator::operator* remainingNodes.size()=%d\n", remainingNodes.size());
 	printf("VirtualCFG::iterator::operator* remainingNodes.front()->getNode()=0x%x\n", remainingNodes.front().getNode());
 	printf("VirtualCFG::iterator::operator* ===\n");*/
@@ -153,6 +177,8 @@ iterator iterator::begin(DataflowNode n)
 iterator iterator::end()
 {
 	iterator blank;
+	// Make sure that this iterator is initialized even though it is empty
+	blank.initialized = true;
 	return blank;
 }
 
@@ -190,6 +216,7 @@ string iterator::checkpoint::str(string indent)
 // Returns a checkpoint of this iterator's progress.
 iterator::checkpoint iterator::getChkpt()
 {
+	ROSE_ASSERT(initialized);
 	iterator::checkpoint chkpt(remainingNodes, visited);
 	return chkpt;
 	//return new iterator::checkpoint::checkpoint(remainingNodes, visited);
@@ -198,6 +225,7 @@ iterator::checkpoint iterator::getChkpt()
 // Loads this iterator's state from the given checkpoint.
 void iterator::restartFromChkpt(iterator::checkpoint& chkpt)
 {
+	
 	remainingNodes.clear();
 	visited.clear();
 	
@@ -211,22 +239,29 @@ void iterator::restartFromChkpt(iterator::checkpoint& chkpt)
 	
 	remainingNodes = chkpt.remainingNodes;
 	visited = chkpt.visited;
+	// The iterator must become initialized because it is only possible to take a checkpoints of initialized iterators
+	initialized = true;
 }
 
 string iterator::str(string indent)
 {
+	
 	ostringstream outs;
 	
-	outs << "[iterator:\n";
-	outs << "    remainingNodes = \n";
-	for(list<DataflowNode>::iterator it=remainingNodes.begin(); it!=remainingNodes.end(); it++)
-	{ outs << "        <"<<(*it).getNode()->class_name()<<" | "<<(*it).getNode()->unparseToString()<<" | "<<(*it).getIndex()<<"\n"; }
-	
-	outs << "    visited = \n";
-	for(set<DataflowNode>::iterator it=visited.begin(); it!=visited.end(); it++)
-	{ outs << "        <"<<(*it).getNode()->class_name()<<" | "<<(*it).getNode()->unparseToString()<<" | "<<(*it).getIndex()<<"\n"; }
-	
-	outs << "]";
+	if(initialized) {
+		outs << "[iterator:\n";
+		outs << "    remainingNodes = \n";
+		for(list<DataflowNode>::iterator it=remainingNodes.begin(); it!=remainingNodes.end(); it++)
+		{ outs << "        <"<<(*it).getNode()->class_name()<<" | "<<(*it).getNode()->unparseToString()<<" | "<<(*it).getIndex()<<"\n"; }
+		
+		outs << "    visited = \n";
+		for(set<DataflowNode>::iterator it=visited.begin(); it!=visited.end(); it++)
+		{ outs << "        <"<<(*it).getNode()->class_name()<<" | "<<(*it).getNode()->unparseToString()<<" | "<<(*it).getIndex()<<"\n"; }
+		
+		outs << "]";
+	} else {
+		outs << "[iterator: Uninitialized]";
+	}
 		
 	return outs.str();
 }
@@ -238,24 +273,56 @@ string iterator::str(string indent)
 	
 void back_iterator::operator ++ (int)
 {
+	ROSE_ASSERT(initialized);
 	advance(false, true);
 }
 
 /******************************
  ********** DATAFLOW **********
  ******************************/
+
+dataflow::dataflow(const DataflowNode &terminator_arg) : terminator(terminator_arg)
+{
+	// Record that the terminator has been visited to ensure that it is never analyzed
+	visited.insert(terminator);
+}
+
+dataflow::dataflow(const DataflowNode &start, const DataflowNode &terminator_arg): 
+		iterator(start), terminator(terminator_arg)
+{
+	// Record that the terminator has been visited to ensure that it is never analyzed
+	visited.insert(terminator);
+	
+	/*cout<<"        dataflow::dataflow() terminator=<"<<terminator.getNode()->class_name()<<" | "<<terminator.getNode()->unparseToString()<<"> visited=\n";
+	for(set<DataflowNode>::iterator it=visited.begin(); it!=visited.end(); it++)
+		cout << "            <"<<it->getNode()->class_name()<<" | "<<it->getNode()<<" | "<<it->getNode()->unparseToString()<<">\n";*/
+	
+	ROSE_ASSERT(start!=terminator);
+}
+
+void dataflow::init(const DataflowNode &start_arg, const DataflowNode &terminator_arg)
+{
+	ROSE_ASSERT(start_arg!=terminator_arg);
+	// Use the init method to initialize the starting point to make sure that the object is recorded as being initialized
+	iterator::init(start_arg);
+	terminator = terminator_arg;
+}
+ 
 void dataflow::add(const DataflowNode &next)
 {
-/*	// never add the terminator node
+	// If this dataflow iterator is not initialized, initialize it now since it will now have real state
+	if(!initialized) initialized = true;
+	
+	// never add the terminator node
 	if(next==terminator)
-		return;*/
+		return;
 	
 	// if next is not currently in remainingNodes, add it
-	//printf("dataflow::add() isRemaining(next)=%d\n", isRemaining(next));
+	//cout << "dataflow::add() isRemaining()="<<isRemaining(next)<<" next = <"<<next.getNode()->class_name()<<" | "<<next.getNode()->unparseToString()<<">\n";
 	if(!isRemaining(next))
 	{
 		set<DataflowNode>::iterator nextLoc = visited.find(next);
-		//printf("dataflow::add() nextLoc != visited.end()=%d\n", nextLoc != visited.end());
+		//printf("    visited=%d\n", nextLoc != visited.end());
 		if(nextLoc != visited.end())
 			visited.erase(visited.find(next));
 		remainingNodes.push_back(next);
@@ -263,12 +330,13 @@ void dataflow::add(const DataflowNode &next)
 	//printf("dataflow::add() remainingNodes.size()=%d\n", remainingNodes.size());
 }
 
-void dataflow::operator ++ (int)
+/*void dataflow::operator ++ (int)
 {
+	ROSE_ASSERT(initialized);
 //	printf("dataflow::++() <<< remainingNodes.size()=%d\n", remainingNodes.size());
 	advance(true, false);
 //	printf("dataflow::++() >>> remainingNodes.size()=%d\n", remainingNodes.size());
-}
+}*/
 
 dataflow::checkpoint::checkpoint(const iterator::checkpoint& iChkpt, const DataflowNode& terminator): 
 	iChkpt(iChkpt), terminator(terminator) {}
@@ -291,6 +359,7 @@ string dataflow::checkpoint::str(string indent)
 // Returns a checkpoint of this iterator's progress.
 dataflow::checkpoint dataflow::getChkpt()
 {
+	ROSE_ASSERT(initialized);
 	dataflow::checkpoint chkpt(iterator::getChkpt(), terminator);
 	return chkpt;
 	//return new dataflow::checkpoint::checkpoint(iterator::getChkpt(), terminator);
@@ -307,9 +376,13 @@ string dataflow::str(string indent)
 {
 	ostringstream outs;
 	
-	outs << "[dataflow:\n";
-	outs << "    iterator = "<<iterator::str(indent+"    ")<<"\n";
-	outs << "    terminator = "<< terminator.getNode()->class_name()<<" | "<<terminator.getNode()->unparseToString()<<" | "<<terminator.getIndex()<<"]";
+	if(initialized) {
+		outs << "[dataflow:\n";
+		outs << "    iterator = "<<iterator::str(indent+"    ")<<"\n";
+		outs << "    terminator = "<< terminator.getNode()->class_name()<<" | "<<terminator.getNode()->unparseToString()<<" | "<<terminator.getIndex()<<"]";
+	} else {
+		outs << "[dataflow: Uninitialized]";
+	}
 		
 	return outs.str();
 }
@@ -318,10 +391,13 @@ string dataflow::str(string indent)
 /*****************************
 ******* BACK_DATAFLOW *******
 *****************************/
+back_dataflow::back_dataflow(const DataflowNode &end, const DataflowNode &terminator_arg): 
+		iterator(end), dataflow(end, terminator_arg)/*, back_iterator(end)*/ {
+}
+
 void back_dataflow::operator ++ (int)
 {
-	advance(true, false);
+	advance(false, true);
 }
 
 }
-

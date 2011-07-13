@@ -63,7 +63,9 @@ namespace VirtualCFG {
       if (((*i).*otherSide)().isInteresting())
 	edges.push_back(DataflowEdge(*i));
     }
-    // cerr << "makeClosure done: " << edges.size() << endl;
+    //cout << "makeClosure done: #edges=" << edges.size() << endl;
+    //for(vector<DataflowEdge>::iterator e=edges.begin(); e!=edges.end(); e++)
+    //    printf("Current Node %p<%s | %s>\n", e.target().getNode(), e.target().getNode()->unparseToString().c_str(), e.target().getNode()->class_name().c_str());
     return edges;
   }
 	
@@ -74,17 +76,22 @@ namespace VirtualCFG {
 	vector<DataflowEdge> DataflowNode::inEdges() const {
 		return makeClosure(n.inEdges(), &CFGNode::inEdges, &CFGPath::source, &mergePathsReversed);
 	}
+
+	bool DataflowNode::isInteresting() const {
+		return (n.getNode())->cfgIsIndexInteresting(n.getIndex());
+		//return isDataflowInteresting(n);
+	}
 	
 	bool isDataflowInteresting(CFGNode cn) {
 		ROSE_ASSERT (cn.getNode());
 		return (cn.getNode()->cfgIsIndexInteresting(cn.getIndex()) && 
-		       !isSgFunctionRefExp(cn.getNode()) &&
+		       //!isSgFunctionRefExp(cn.getNode()) &&
 		       !isSgExprListExp(cn.getNode()) &&
 		       !isSgForInitStatement(cn.getNode()) &&
-		       !isSgVarRefExp(cn.getNode()) &&
-		       !isSgValueExp(cn.getNode()) &&
-		       !isSgExprStatement(cn.getNode()) &&
-		       !(isSgInitializedName(cn.getNode()) && cn.getIndex()==1)) 
+		       //!isSgVarRefExp(cn.getNode()) &&
+		       //!isSgValueExp(cn.getNode()) &&
+		       //!isSgExprStatement(cn.getNode()) &&
+		       !(isSgInitializedName(cn.getNode()) && cn.getIndex()==0)) 
 		       ||
 		       (isSgIfStmt(cn.getNode()) &&
 		        cn.getIndex()==1 || cn.getIndex()==2);

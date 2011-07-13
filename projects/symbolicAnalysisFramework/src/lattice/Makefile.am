@@ -4,27 +4,25 @@ include $(top_srcdir)/projects/symbolicAnalysisFramework/common.for.dep.libs
 # Saf is the short for symbolic analysis framework.
 # it is used to avoid possible name collision 
 noinst_LTLIBRARIES = libSaflattice.la
-libSaflattice_la_SOURCES = ConstrGraph.C  intArithLogical.C  lattice.C
-include_HEADERS = ConstrGraph.h  intArithLogical.h  latticeFull.h  lattice.h
+libSaflattice_la_SOURCES = ConstrGraph.C  intArithLogical.C  lattice.C affineInequality.C
+include_HEADERS = ConstrGraph.h  intArithLogical.h  latticeFull.h  lattice.h affineInequality.h
 # ----------test program -------------------
 #.NOTPARALLEL:selfTest
 
 noinst_PROGRAMS = selfTest
 selfTest_SOURCES = selfTest.C
 # the order or la files matters!!
-selfTest_LDADD = \
+selfTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) \
+         $(SAF_BUILD_ROOT)/src/state/libSafstate.la \
+         $(SAF_BUILD_ROOT)/src/simpleAnalyses/libSafsimpleAnalyses.la \
          libSaflattice.la \
          $(SAF_BUILD_ROOT)/src/common/libSafcommon.la \
          $(SAF_BUILD_ROOT)/src/cfgUtils/libSafcfgUtils.la \
          $(SAF_BUILD_ROOT)/src/variables/libSafvariables.la \
          $(SAF_BUILD_ROOT)/src/rwAccessLabeler/libSafrwAccessLabeler.la \
          $(SAF_BUILD_ROOT)/src/arrIndexLabeler/libSafarrIndexLabeler.la \
-         $(SAF_BUILD_ROOT)/src/state/libSafstate.la \
          $(SAF_BUILD_ROOT)/src/analysis/libSafanalysis.la \
-         $(SAF_BUILD_ROOT)/src/external/libSafexternal.la \
-         $(SAF_BUILD_ROOT)/src/simpleAnalyses/libSafsimpleAnalyses.la
-
-selfTest_LDADD += $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+         $(SAF_BUILD_ROOT)/src/external/libSafexternal.la
 
 check-local:selfTest
 #	./selfTest test_example.c
