@@ -871,13 +871,20 @@ RSIM_Process::get_instruction(rose_addr_t va)
         insn = found!=icache.end() ? found->second : NULL;
     } RTS_READ_END;
 
-    /* If we found a cached instruction, make sure memory still contains that value. */
+    /* If we found a cached instruction, make sure memory still contains that value. If we didn't find an instruction, read one
+     * word from the address anyway (and discard it) so that memory access callbacks will see the memory access.  We'll read
+     * the rest of the instruction words after we know the instruction size.   Note that since we discard the memory that was
+     * read, the callbacks will not have an opportunity to change the instruction that's fetched.  If you need to do that, use
+     * an instruction callback instead. */
     if (insn) {
         size_t insn_sz = insn->get_raw_bytes().size();
         SgUnsignedCharList curmem(insn_sz);
-        size_t nread = mem_read(&curmem[0], va, insn_sz);
+        size_t nread = mem_read(&curmem[0], va, insn_sz, MemoryMap::MM_PROT_EXEC);
         if (nread==insn_sz && curmem==insn->get_raw_bytes())
             return insn;
+    } else {
+        uint32_t word;
+        (void)mem_read(&word, va, 4, MemoryMap::MM_PROT_EXEC);
     }
 
     /* Disassemble (and cache) a new instruction. At this time it is not safe to be multi-threaded inside a single Disassemble
@@ -888,6 +895,12 @@ RSIM_Process::get_instruction(rose_addr_t va)
         ROSE_ASSERT(insn!=NULL); /*only happens if our disassembler is not an x86 disassembler!*/
         icache[va] = insn;
     } RTS_WRITE_END;
+
+    /* Read the rest of the instruction if necessary so that memory access callbacks have a chance to see the access. */
+    for (uint32_t i=4; i<insn->get_raw_bytes().size(); i+=4) {
+        uint32_t word;
+        (void)mem_read(&word, va+i, 4, MemoryMap::MM_PROT_EXEC);
+    }
 
     return insn;
 }
