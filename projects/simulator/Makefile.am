@@ -143,6 +143,17 @@ demo5input: demos/demo5input.c
 run_demo5: demo5 demo5input
 	./demo5 ./demo5input
 
+#------------------------------------------------------------------------------------------------------------------------------
+# demo 6: instruction tracing with function call stacks
+noinst_PROGRAMS += demo6
+demo6_SOURCES = demos/demo6.C
+demo6_CPPFLAGS = $(ROSE_INCLUDES)
+demo6_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+.PHONY: run_demo6
+run_demo6: demo6
+	./demo6 --debug=insn $(top_srcdir)/binaries/samples/buffer2.bin
+
 ###############################################################################################################################
 #  SYSTEM CALL TESTS
 ###############################################################################################################################

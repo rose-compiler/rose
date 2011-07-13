@@ -11,3 +11,4 @@ demo2: sign analysis in synchrony with simulation
 demo3: symbolic analysis of a function not normally called
 demo4: sign analysis tethered to symbolic analysis
 demo5: looks for buffer overflow being exploited; instructions on stack
+demo6: instruction trace with function call information

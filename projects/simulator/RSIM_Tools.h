@@ -7,7 +7,10 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-/** A collection of useful tools. */
+/** A collection of useful tools.
+ *
+ *  Most of these tools are implemented as callbacks.  There's nothing special about any of the tools -- you could look at the
+ *  source code and write similar tools as classes within your own source files, which are then registered as RSIM callbacks. */
 namespace RSIM_Tools {
 
 /** Traverses the AST to find a symbol for a global function with the specified name.
