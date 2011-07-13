@@ -7,6 +7,7 @@
 #include "analysis.h"
 #include "lattice.h"
 #include <string.h>
+#include <boost/shared_ptr.hpp>
 
 // !!! NOTE: THE CURRENT INTER-/INTRA-PROCEDURAL ANALYSIS API EFFECTIVELY ASSUMES THAT EACH ANALYSIS WILL BE EXECUTED
 // !!!       ONCE BECAUSE DURING A GIVEN ANALYSIS PASS THE INTRA- ANALYSIS MAY ACCUMULATE STATE AND THERE IS NO
@@ -69,6 +70,26 @@ class IntraProceduralDataflow : virtual public IntraProceduralAnalysis
 	}
 };
 
+/// Apply an analysis A's transfer function at a particular AST node type
+class IntraDFTransferVisitor : public ROSE_VisitorPatternDefaultBase
+{
+protected:
+  // Common arguments to the underlying transfer function
+  const Function &func;
+  const DataflowNode &dfNode;
+  NodeState &nodeState;
+  const vector<Lattice*> &dfInfo;
+
+public:
+
+  IntraDFTransferVisitor(const Function &f, const DataflowNode &n, NodeState &s, const vector<Lattice*> &d)
+    : func(f), dfNode(n), nodeState(s), dfInfo(d)
+  { }
+
+  virtual bool finish() = 0;
+  virtual ~IntraDFTransferVisitor() { }
+};
+
 class IntraUnitDataflow : virtual public IntraProceduralDataflow
 {
 	public:
@@ -81,7 +102,25 @@ class IntraUnitDataflow : virtual public IntraProceduralDataflow
 	//          as input and overwrites them with the result of the transfer.
 	// Returns true if any of the input lattices changed as a result of the transfer function and
 	//    false otherwise.
-	virtual bool transfer(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo)=0;	
+	virtual bool transfer(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo)=0;
+
+  class DefaultTransfer : public IntraDFTransferVisitor
+  {
+    bool modified;
+    IntraUnitDataflow *analysis;
+  public:
+    DefaultTransfer(const Function& func_, const DataflowNode& n_, NodeState& state_, const vector<Lattice*>& dfInfo_, IntraUnitDataflow *a)
+      : IntraDFTransferVisitor(func_, n_, state_, dfInfo_), modified(false), analysis(a)
+      { }
+
+    
+    void visit(SgNode *n) { modified = analysis->transfer(func, dfNode, nodeState, dfInfo); }
+    bool finish() { return modified; }
+  };
+    
+    virtual boost::shared_ptr<IntraDFTransferVisitor> getTransferVisitor(const Function& func, const DataflowNode& n,
+                                                                  NodeState& state, const vector<Lattice*>& dfInfo)
+  { return boost::shared_ptr<IntraDFTransferVisitor>(new DefaultTransfer(func, n, state, dfInfo, this)); }
 };
 
 class InterProceduralDataflow : virtual public InterProceduralAnalysis

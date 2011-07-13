@@ -483,8 +483,10 @@ bool IntraFWDataflow::runAnalysis(const Function& func, NodeState* fState, bool 
 				}
 			}
 
-			transfer(func, n, *state, dfInfoBelow);
-			
+                        boost::shared_ptr<IntraDFTransferVisitor> transferVisitor = getTransferVisitor(func, n, *state, dfInfoBelow);
+                        sgn->accept(*transferVisitor);
+                        modified = transferVisitor->finish() || modified;
+
 			// =================== TRANSFER FUNCTION ===================
 			if(analysisDebugLevel>=1)
 			{
@@ -717,8 +719,11 @@ bool IntraBWDataflow::runAnalysis(const Function& func, NodeState* fState, bool 
 				// NEED TO INCORPORATE INFORMATION ABOUT RETURN INTO DATAFLOW SOMEHOW
 			}
 
-			transfer(func, n, *state, dfInfoAbove);
-			
+
+                        boost::shared_ptr<IntraDFTransferVisitor> transferVisitor = getTransferVisitor(func, n, *state, dfInfoAbove);
+                        sgn->accept(*transferVisitor);
+                        modified = transferVisitor->finish() || modified;
+
 			// =================== TRANSFER FUNCTION ===================
 			if(analysisDebugLevel>=1)
 			{
