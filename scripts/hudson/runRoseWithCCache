@@ -199,6 +199,20 @@ if test "x$ROSE_TEST_GCC_VERSION" = "x4.4.1" ; then
   	fi
 fi
 
+set +e
+source /export/tmp.hudson-rose/opt/ccache/3.1.5/install/setup.sh
+#source /export/tmp.hudson-rose/opt/f90cache/0.93.6/install/setup.sh
+set -e
+export CCACHE_DIR=/export/tmp.hudson-rose/caches/ccache
+#export F90CACHE_DIR=/export/tmp.hudson-rose/caches/f90cache
+
+ccache -M 10G
+#f90cache -M 10G
+df -h -a /export/tmp.hudson-rose
+
+ccache -s
+#f90cache -s
+
 #########################################################################################
 #
 ##
@@ -241,7 +255,8 @@ cd ROSE-build
 #########################################################################################
 (
 
-    ../configure --prefix=${ROSE_CONFIGURE_PREFIX} ${CONFIGURE_FLAGS} --with-alternate_backend_Cxx_compiler=g++ --with-alternate_backend_C_compiler=gcc CXX="ccache g++" CC="ccache gcc"
+    ../configure --prefix=${ROSE_CONFIGURE_PREFIX} ${CONFIGURE_FLAGS}
+#    ../configure --prefix=${ROSE_CONFIGURE_PREFIX} ${CONFIGURE_FLAGS} --with-alternate_backend_Cxx_compiler=g++ --with-alternate_backend_C_compiler=gcc CXX="ccache g++" CC="ccache gcc"
 
 ) 2>&1 |filterStep "configure" 
 [ ${PIPESTATUS[0]} -ne 0 ] && killStep "configure"
@@ -341,6 +356,8 @@ esac
 ##
 
    dumpHudsonEnvironment "${LOG_LOCATION}/HudsonEnvironment-after-tests.log"
+   ccache -s
+   #f90cache -s
 
 ##
 #

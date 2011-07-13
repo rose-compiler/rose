@@ -1,13 +1,15 @@
 #include "MemoryGraphicsView.h"
-#include "MemoryManager.h"
-#include "RsType.h"
 
 #include <QGraphicsScene>
 #include <QGraphicsRectItem>
 #include <QGraphicsSimpleTextItem>
 
-
 #include <QDebug>
+
+#include "MemoryManager.h"
+#include "RsType.h"
+
+#include "ptrops_operators.h"
 
 const float MemoryGraphicsView::BOX_WIDTH = 20;
 const float MemoryGraphicsView::BOX_HEIGHT = 25;
@@ -32,15 +34,14 @@ MemoryGraphicsView::MemoryGraphicsView(QWidget *par)
 
 }
 
-void MemoryGraphicsView::setMemoryType(MemoryType * _mt)
+void MemoryGraphicsView::setMemoryType(const MemoryType& _mt)
 {
     qDeleteAll(byteBoxes);
     byteBoxes.clear();
     scene->clear();
 
-    mt = _mt;
-    if(!mt)
-        return;
+    mt = &_mt;
+    if(!mt) return;
 
     byteBoxes.resize(mt->getSize());
     QRectF box(0,0,BOX_WIDTH,BOX_HEIGHT);
@@ -50,15 +51,16 @@ void MemoryGraphicsView::setMemoryType(MemoryType * _mt)
         byteBoxes[b]->moveBy(b*BOX_WIDTH,0);
         scene->addItem(byteBoxes[b]);
 
-        QBrush bgBrush ( mt->isInitialized(b,b+1) ? COLOR_INITIALIZED : COLOR_NOT_INITIALIZED );
+        QBrush bgBrush ( mt->byteInitialized(b) ? COLOR_INITIALIZED : COLOR_NOT_INITIALIZED );
         QPen p;
         p.setWidth(2);
         byteBoxes[b]->setBrush(bgBrush);
         byteBoxes[b]->setPen(p);
 
         //Addr label
-        addr_type curAddr = mt->getAddress() +b;
-        if( curAddr % 8 ==0 )
+        size_t  curAddr = reinterpret_cast<size_t>(::add(mt->beginAddress(), b, 0).local);
+
+        if ( curAddr % 8 == 0 )
         {
             QString addrStr = QString("0x%1").arg(curAddr,0,16);
             QGraphicsTextItem * ti = new QGraphicsTextItem(addrStr, byteBoxes[b]);
@@ -66,16 +68,16 @@ void MemoryGraphicsView::setMemoryType(MemoryType * _mt)
         }
     }
 
-    MemoryType::TypeInfoMap::const_iterator it = mt->getTypeInfoMap().begin();
-    for(; it != mt->getTypeInfoMap().end();  ++it)
-        paintTypeInfo(it->second,it->first,0);
+    MemoryType::TypeData::const_iterator it = mt->typeData().begin();
+    for(; it != mt->typeData().end(); ++it)
+        paintTypeInfo(it->second, it->first,0);
 
 }
 
 
-void MemoryGraphicsView::paintTypeInfo(RsType * t, addr_type offset, int layer)
+void MemoryGraphicsView::paintTypeInfo(const RsType* t, size_t offset, int layer)
 {
-    RsTypeGraphicsRect * gr = new RsTypeGraphicsRect(t,mt->getAddress()+offset);
+    RsTypeGraphicsRect * gr = new RsTypeGraphicsRect(t, ::add(mt->beginAddress(), offset, 0) );
     qreal x = offset * BOX_WIDTH;
     qreal y = (SPACE_BOX_TYPEINFO + BOX_HEIGHT) + (layer * (BOX_HEIGHT +  SPACE_TYPEINFO_TYPEINFO));
 
@@ -99,10 +101,10 @@ float RsTypeGraphicsRect::BOX_WIDTH = 0;
 float RsTypeGraphicsRect::BOX_HEIGHT = 0;
 
 
-RsTypeGraphicsRect::RsTypeGraphicsRect(RsType * t_,addr_type a,QGraphicsItem * par)
+RsTypeGraphicsRect::RsTypeGraphicsRect(const RsType * t_, Address a, QGraphicsItem * par)
     : QGraphicsRectItem(par),t(t_),address(a),infoBox(NULL)
 {
-    if(dynamic_cast<RsClassType*>(t))
+    if(dynamic_cast<const RsClassType*>(t))
         font.setBold(true);
 
     setAcceptHoverEvents(true);
@@ -167,7 +169,7 @@ void RsTypeGraphicsRect::buildInfoBox()
     QString labelText;
     labelText += "<b>" + text + "</b>";
 
-    RsBasicType * basicType = dynamic_cast<RsBasicType*>(t);
+    const RsBasicType * basicType = dynamic_cast<const RsBasicType*>(t);
     if(basicType)
     {
         labelText += "<br>Value: ";
@@ -231,9 +233,9 @@ void RsTypeGraphicsRect::hoverMoveEvent ( QGraphicsSceneHoverEvent * ev )
 QColor RsTypeGraphicsRect::getTypeColor()
 {
 
-    RsBasicType * basicType = dynamic_cast<RsBasicType*>(t);
-    RsArrayType * arrType =   dynamic_cast<RsArrayType*>(t);
-    RsClassType * classType = dynamic_cast<RsClassType*>(t);
+    const RsBasicType * basicType = dynamic_cast<const RsBasicType*>(t);
+    const RsArrayType * arrType =   dynamic_cast<const RsArrayType*>(t);
+    const RsClassType * classType = dynamic_cast<const RsClassType*>(t);
 
     /*
     int typeId=0;
@@ -256,4 +258,3 @@ QColor RsTypeGraphicsRect::getTypeColor()
 
     return c;
 }
-
