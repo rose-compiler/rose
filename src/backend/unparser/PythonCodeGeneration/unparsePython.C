@@ -295,11 +295,11 @@ Unparse_Python::unparseCatchOptionStmt(SgCatchOptionStmt* catch_stmt,
                                        SgUnparse_Info& info)
 {
     if (catch_stmt->get_condition() != NULL) {
-        curprint("catch ");
+        curprint("except ");
         unparseStatement(catch_stmt->get_condition(), info);
         curprint(":\n");
     } else {
-        curprint("catch:\n");
+        curprint("except:\n");
     }
 
     unparseAsSuite(catch_stmt->get_body(), info);
