@@ -169,9 +169,11 @@ Unparse_Python::unparseAsSuite(SgStatement* stmt, SgUnparse_Info& info) {
             }
             break;
         }
-        default:
-            cout << "error: cannnot unparse " << stmt->class_name() << " as suite." << endl;
-            ROSE_ASSERT(false);
+        default: {
+                curprint( ws_prefix(info.get_nestingLevel()) );
+                unparseStatement(stmt, info);
+                break;
+        }
     }
     info.dec_nestingLevel();
 }
