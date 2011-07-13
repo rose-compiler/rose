@@ -68,6 +68,158 @@ private:
     }
 };
 
+/** Shows addresses and names of all known functions.
+ *
+ *  When a particular execution address is hit for the first time, this callback prints information about all known functions.
+ *  Note that functions that were loaded by simulating the dynamic linker will probably not have meaningful names because ROSE
+ *  will not know about the ELF files of the shared objects -- they would have been mapped into specimen memory by the dynamic
+ *  linker rather than the simulator itself.
+ *
+ *  This callback only does something if the disassembler has been run and the triggering instruction is one of the
+ *  instructions that was disassembled.  It is permissible to run this callback on the same instruction that triggered the
+ *  disassembler as long as the disassembler happens before this callback.
+ *
+ *  All output is to the TRACE_MISC facility.
+ *
+ *  Example usage:
+ *  @code
+ *    RSIM_Linux32 sim;
+ *    rose_addr_t main_va = ....; // see FunctionFinder
+ *    sim.install_callback(new MemoryDisassembler(main_va);
+ *    sim.install_callback(new FunctionIndex(main_va));
+ *  @endcode
+ *
+ *  Example output:
+ *  @verbatim
+32283:1 1.684 0x08048462[119574]:  FunctionIndex: triggered. Showing all functions in the AST rooted at (SgAsmBlock*)0x310fbb0
+32283:1 1.684 0x08048462[119574]:      Key for reason(s) address is a suspected function:
+32283:1 1.684 0x08048462[119574]:        E = entry address         C = function call(*)      X = exception frame
+32283:1 1.684 0x08048462[119574]:        S = function symbol       P = instruction pattern   G = interblock branch graph
+32283:1 1.684 0x08048462[119574]:        U = user-def detection    N = NOP/Zero padding      D = discontiguous blocks
+32283:1 1.684 0x08048462[119574]:        H = insn sequence head    I = imported/dyn-linked   L = leftover blocks
+32283:1 1.684 0x08048462[119574]:      Note: "c" means this is the target of a call-like instruction or instruction sequence but
+32283:1 1.684 0x08048462[119574]:            the sequence is not present in the set of nodes of the control flow graph.
+32283:1 1.684 0x08048462[119574]:      Note: Functions detected in memory that's not part of the executable loaded by the simulator
+32283:1 1.684 0x08048462[119574]:            will probably not have names because the simulator never parsed those ELF containers.
+32283:1 1.684 0x08048462[119574]:  
+32283:1 1.684 0x08048462[119574]:      Num  Low-Addr   End-Addr  Insns/Bytes  Reason      Name or memory region
+32283:1 1.684 0x08048462[119574]:      --- ---------- ---------- ------------ ----------- ------------------------
+32283:1 1.685 0x08048462[119574]:        1 0x080482e4 0x08048314    17/48     .C..S...... _init
+32283:1 2.024 0x08048462[119574]:        3 0x08048324 0x0804832a     1/6      .C......... __gmon_start__@plt
+32283:1 2.024 0x08048462[119574]:        4 0x08048334 0x0804833a     1/6      .C......... write@plt
+32283:1 2.024 0x08048462[119574]:        5 0x08048344 0x0804834a     1/6      .C......... __libc_start_main@plt
+32283:1 2.024 0x08048462[119574]:        6 0x08048354 0x0804835a     1/6      .C......... mprotect@plt
+32283:1 2.025 0x08048462[119574]:        7 0x08048380 0x080483a1    13/33     E...S...... _start
+32283:1 2.025 0x08048462[119574]:        8 0x080483b0 0x08048405    25/85     .C..S...... __do_global_dtors_aux
+32283:1 2.025 0x08048462[119574]:        9 0x08048410 0x08048433    11/26     .C..S....D. frame_dummy
+32283:1 2.026 0x08048462[119574]:       10 0x08048433 0x08048434     1/1      ........N.. in demo5input(LOAD#2)
+32283:1 2.026 0x08048462[119574]:       11 0x08048434 0x08048456     7/34     ....S...... payload (0x8048440)
+32283:1 2.026 0x08048462[119574]:       12 0x08048462 0x0804848c    10/42     ....S...... main
+32283:1 2.026 0x08048462[119574]:       13 0x080484c0 0x080484c5     4/5      ....S...... __libc_csu_fini
+32283:1 2.026 0x08048462[119574]:       14 0x080484d0 0x0804852a    21/54     ....S....D. __libc_csu_init
+32283:1 2.027 0x08048462[119574]:       15 0x0804852a 0x0804852e     2/4      .C..S...... __i686.get_pc_thunk.bx
+32283:1 2.027 0x08048462[119574]:       16 0x0804852e 0x08048530     2/2      ........N.. in demo5input(LOAD#2)
+32283:1 2.027 0x08048462[119574]:       17 0x08048530 0x0804855a    18/42     .C..S...... __do_global_ctors_aux
+32283:1 2.027 0x08048462[119574]:       18 0x0804855a 0x0804855c     2/2      ........N.. in demo5input(LOAD#2)
+32283:1 2.027 0x08048462[119574]:       19 0x0804855c 0x08048578    12/28     ....S...... _fini
+32283:1 2.027 0x08048462[119574]:       20 0x40000840 0x40000844     2/4      .C......... in ld-linux.so.2(LOAD#0)
+32283:1 2.028 0x08048462[119574]:       21 0x40000850 0x4000089a    24/74     E.......... in ld-linux.so.2(LOAD#0)
+32283:1 2.028 0x08048462[119574]:       22 0x400009c0 0x40000a0b    19/75     .C......... in ld-linux.so.2(LOAD#0)
+32283:1 2.037 0x08048462[119574]:       23 0x40000fa0 0x40001522   351/1396   .C.......D. in ld-linux.so.2(LOAD#0)
+32283:1 2.039 0x08048462[119574]:       24 0x400090b0 0x4000917e    57/206    .C......... in ld-linux.so.2(LOAD#0)
+32283:1 2.041 0x08048462[119574]:       25 0x4000e670 0x4000e790    89/281    .C.......D. in ld-linux.so.2(LOAD#0)
+32283:1 2.044 0x08048462[119574]:       26 0x4000e790 0x4000e8c3    91/300    .C.......D. in ld-linux.so.2(LOAD#0)
+32283:1 2.069 0x08048462[119574]:      --- ---------- ---------- ------------ ----------- ------------------------
+@endverbatim
+ */
+class FunctionIndex: public RSIM_Callbacks::InsnCallback {
+protected:
+    rose_addr_t when;                   /**< Address at which to trigger this callback. */
+    bool triggered;                     /**< Set to true once this callback has been triggered. */
+
+public:
+    /** Constructor that takes an instruction address.  The callback is triggered the first time any thread executes an
+     * instruction at the specified address. */
+    explicit FunctionIndex(rose_addr_t when): when(when), triggered(false) {}
+
+    virtual FunctionIndex *clone() { return this; }
+
+    virtual bool operator()(bool enabled, const Args &args) {
+        if (enabled && !triggered && args.insn->get_address()==when) {
+            triggered = true;
+            RTS_Message *m = args.thread->tracing(TRACE_MISC);
+
+            /* Traversal just prints information about each individual function. */
+            struct T1: public AstSimpleProcessing {
+                RSIM_Process *process;
+                RTS_Message *m;
+                size_t nfuncs;
+                explicit T1(RSIM_Process *process, RTS_Message *m): process(process), m(m), nfuncs(0) {}
+                void visit(SgNode *node) {
+                    SgAsmFunctionDeclaration *defn = isSgAsmFunctionDeclaration(node);
+                    if (defn!=NULL) {
+                        /* Scan through the function's instructions to find the range of addresses for the function. */
+                        rose_addr_t func_start=~(rose_addr_t)0, func_end=0;
+                        size_t nbytes=0;
+                        std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(defn);
+                        for (std::vector<SgAsmInstruction*>::iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
+                            SgAsmInstruction *insn = *ii;
+                            func_start = std::min(func_start, insn->get_address());
+                            func_end = std::max(func_end, insn->get_address()+insn->get_raw_bytes().size());
+                            nbytes += insn->get_raw_bytes().size();
+                        }
+
+                        /* Compute name string */
+                        std::string name = defn->get_name();
+                        if (name.empty()) {
+                            RTS_READ(process->rwlock()) {
+                                const MemoryMap::MapElement *me = process->get_memory()->find(defn->get_entry_va());
+                                if (me && !me->get_name().empty())
+                                    name = "in " + me->get_name();
+                            } RTS_READ_END;
+                        }
+                        if (defn->get_entry_va()!=func_start)
+                            name += " (" + StringUtility::addrToString(defn->get_entry_va()) + ")";
+
+                        /* Print the whole line at once */
+                        m->more("    %3zu 0x%08"PRIx64" 0x%08"PRIx64" %5zu/%-6zu %s %s\n",
+                                ++nfuncs, func_start, func_end, insns.size(), nbytes,
+                                defn->reason_str(true).c_str(), name.c_str());
+
+                    }
+                }
+            } t1(args.thread->get_process(), m);
+
+            /* If we just ran the disassembler on at this same instruction address, then args.insn is still pointing to the
+             * originally fetched instruction and probably has no parent (or it doesn't belong to the same AST as the recently
+             * disassembled instructions).  We need to get the fresh instruction, so we fetch it again, then follow the parent
+             * points until we reach the parent of all the recently disassembled instructions (probably an SgAsmBlock). We then
+             * traverse the AST from the top looking for and printing names of all functions. */
+            SgNode *top = args.thread->get_process()->get_instruction(when);
+            assert(top!=NULL);
+            while (top->get_parent()) top = top->get_parent();
+            m->multipart("FunctionIndex", "FunctionIndex triggered: showing all functions in the AST rooted at (%s*)%p\n",
+                         top?stringifyVariantT(top->variantT(), "V_").c_str() : "void", top);
+            m->more("    Key for reason(s) address is a suspected function:\n");
+            m->more("      E = entry address         C = function call(*)      X = exception frame\n");
+            m->more("      S = function symbol       P = instruction pattern   G = interblock branch graph\n");
+            m->more("      U = user-def detection    N = NOP/Zero padding      D = discontiguous blocks\n");
+            m->more("      H = insn sequence head    I = imported/dyn-linked   L = leftover blocks\n");
+            m->more("    Note: \"c\" means this is the target of a call-like instruction or instruction sequence but\n");
+            m->more("          the sequence is not present in the set of nodes of the control flow graph.\n");
+            m->more("    Note: Functions detected in memory that's not part of the executable loaded by the simulator\n");
+            m->more("          will probably not have names because the simulator never parsed those ELF containers.\n");
+            m->more("\n");
+            m->more("    Num  Low-Addr   End-Addr  Insns/Bytes  Reason      Name or memory region\n");
+            m->more("    --- ---------- ---------- ------------ ----------- ------------------------\n");
+            t1.traverse(top, preorder);
+            m->more("    --- ---------- ---------- ------------ ----------- ------------------------\n");
+        }
+        return enabled;
+    }
+};
+
+
 /** Prints the name of the currently executing function.
  *
  *  This instruction callback looks at the current instruction's AST ancestors to find an enclosing SgAsmFunctionDeclaration
@@ -96,7 +248,7 @@ private:
 class FunctionReporter: public RSIM_Callbacks::InsnCallback {
 public:
     bool show_call_stack;                       /**< Show a stack trace rather than just a function name. */
-    FunctionReporter(bool show_call_stack=false)
+    explicit FunctionReporter(bool show_call_stack=false)
         : show_call_stack(show_call_stack) {}
 
     virtual FunctionReporter *clone() { return this; }
@@ -308,7 +460,7 @@ public:
     /** Constructor.  The disassembler is triggered the first time that an instruction at address @p when is simulated.  If @p
      *  show is true then the assembly listing is produced on standard output.  All disassembled instructions are added to the
      *  instruction cache used by the simulator's instruction fetching methods. */
-    MemoryDisassembler(rose_addr_t when, bool show)
+    explicit MemoryDisassembler(rose_addr_t when, bool show=false)
         : when(when), triggered(false), show(show) {}
 
     virtual MemoryDisassembler *clone() { return this; }

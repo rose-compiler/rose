@@ -168,7 +168,7 @@ RSIM_SemanticPolicy::startInstruction(SgAsmInstruction* insn)
     if (mesg->get_file()) {
         if (isatty(fileno(mesg->get_file()))) {
             fprintf(mesg->get_file(), "\033[K\n%s\033[K\r\033[1A",
-                    unparseInstruction(insn).c_str());
+                    unparseInstructionWithAddress(insn).c_str());
         } else {
             mesg->mesg("%s", unparseInstruction(insn).c_str());
         }
