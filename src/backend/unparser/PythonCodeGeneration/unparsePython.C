@@ -7,7 +7,12 @@
 #include <boost/foreach.hpp>
 #define foreach BOOST_FOREACH
 
+#define CASE_DISPATCH_AND_BREAK(sg_t) \
+  case V_Sg ##sg_t : unparse ##sg_t (isSg##sg_t (stmt),info); break;
+
+
 using namespace std;
+
 
 Unparse_Python::Unparse_Python(Unparser* unp, std::string fname) :
     UnparseLanguageIndependentConstructs(unp, fname)
@@ -51,12 +56,10 @@ Unparse_Python::unparseLanguageSpecificStatement(SgStatement* stmt,
 
     switch (stmt->variantT()) {
 
-#define CASE_DISPATCH_AND_BREAK(sg_t) \
-  case V_Sg ##sg_t : unparse ##sg_t (isSg##sg_t (stmt),info); break;
-
         CASE_DISPATCH_AND_BREAK(AssertStmt);
         CASE_DISPATCH_AND_BREAK(BasicBlock);
         CASE_DISPATCH_AND_BREAK(BreakStmt);
+        CASE_DISPATCH_AND_BREAK(CatchOptionStmt);
         CASE_DISPATCH_AND_BREAK(ContinueStmt);
         CASE_DISPATCH_AND_BREAK(ExprStatement);
         CASE_DISPATCH_AND_BREAK(FunctionCallExp);
@@ -71,6 +74,7 @@ Unparse_Python::unparseLanguageSpecificStatement(SgStatement* stmt,
         CASE_DISPATCH_AND_BREAK(PassStatement);
         CASE_DISPATCH_AND_BREAK(ReturnStmt);
         CASE_DISPATCH_AND_BREAK(StringVal);
+        CASE_DISPATCH_AND_BREAK(TryStmt);
         CASE_DISPATCH_AND_BREAK(WhileStmt);
         CASE_DISPATCH_AND_BREAK(YieldStatement);
         default: {
@@ -268,6 +272,21 @@ Unparse_Python::unparseBreakStmt(SgBreakStmt* break_stmt,
                                  SgUnparse_Info& info)
 {
     curprint("break");
+}
+
+void
+Unparse_Python::unparseCatchOptionStmt(SgCatchOptionStmt* catch_stmt,
+                                       SgUnparse_Info& info)
+{
+    if (catch_stmt->get_condition() != NULL) {
+        curprint("catch ");
+        unparseStatement(catch_stmt->get_condition(), info);
+        curprint(":\n");
+    } else {
+        curprint("catch:\n");
+    }
+
+    unparseAsSuite(catch_stmt->get_body(), info);
 }
 
 void
@@ -609,6 +628,22 @@ Unparse_Python::unparseStringVal(SgStringVal* str,
     stringstream code;
     code << "\"" << str->get_value() << "\"";
     curprint( code.str() );
+}
+
+void
+Unparse_Python::unparseTryStmt(SgTryStmt* try_stmt,
+                               SgUnparse_Info& info)
+{
+    curprint("try:\n");
+    unparseAsSuite(try_stmt->get_body(), info);
+
+    foreach(SgStatement* stmt, try_stmt->get_catch_statement_seq())
+        unparseStatement(stmt, info);
+
+    if (try_stmt->get_else_body() != NULL) {
+        curprint("else:\n");
+        unparseAsSuite(try_stmt->get_else_body(), info);
+    }
 }
 
 void

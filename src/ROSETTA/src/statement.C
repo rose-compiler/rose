@@ -1703,6 +1703,10 @@ Grammar::setUpStatements ()
                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      TryStmt.setDataPrototype ( "SgCatchStatementSeq*", "catch_statement_seq_root", "= NULL",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     TryStmt.setDataPrototype     ( "SgStatement*", "else_body", "= NULL",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     TryStmt.setDataPrototype     ( "SgStatement*", "finally_body", "= NULL",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      CatchStatementSeq.setFunctionPrototype ( "HEADER_CATCH_STATEMENT_SEQ", "../Grammar/Statement.code" );
      CatchStatementSeq.editSubstitute   ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
