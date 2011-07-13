@@ -25,6 +25,23 @@ PyObject* py_op_isnot = NULL;
 PyObject* py_op_in = NULL;
 PyObject* py_op_notin = NULL;
 
+PyObject* py_op_add = NULL;
+PyObject* py_op_sub = NULL;
+PyObject* py_op_mult = NULL;
+PyObject* py_op_div = NULL;
+PyObject* py_op_idiv = NULL;
+PyObject* py_op_mod = NULL;
+PyObject* py_op_lshift = NULL;
+PyObject* py_op_rshift = NULL;
+PyObject* py_op_bitand = NULL;
+PyObject* py_op_bitor = NULL;
+PyObject* py_op_bitxor = NULL;
+PyObject* py_op_pow = NULL;
+
+PyObject* py_op_uadd= NULL;
+PyObject* py_op_usub = NULL;
+PyObject* py_op_invert = NULL;
+
 #define SAGE_PY_EVAL(str) \
     PyRun_String("str", Py_eval_input, PyEval_GetGlobals(), PyEval_GetLocals())
 
@@ -45,6 +62,23 @@ initializePythonTypes()
     py_op_isnot = PyObject_GetAttrString(astModule, "IsNot");
     py_op_in    = PyObject_GetAttrString(astModule, "In");
     py_op_notin = PyObject_GetAttrString(astModule, "NotIn");
+
+    py_op_add    = PyObject_GetAttrString(astModule, "Add");
+    py_op_sub    = PyObject_GetAttrString(astModule, "Sub");
+    py_op_mult   = PyObject_GetAttrString(astModule, "Mult");
+    py_op_div    = PyObject_GetAttrString(astModule, "Div");
+    py_op_idiv   = PyObject_GetAttrString(astModule, "FloorDiv");
+    py_op_mod    = PyObject_GetAttrString(astModule, "Mod");
+    py_op_lshift = PyObject_GetAttrString(astModule, "LShift");
+    py_op_rshift = PyObject_GetAttrString(astModule, "RShift");
+    py_op_bitand = PyObject_GetAttrString(astModule, "BitAnd");
+    py_op_bitor  = PyObject_GetAttrString(astModule, "BitOr");
+    py_op_bitxor = PyObject_GetAttrString(astModule, "BitXor");
+    py_op_pow    = PyObject_GetAttrString(astModule, "Pow");
+
+    py_op_uadd   = PyObject_GetAttrString(astModule, "UAdd");
+    py_op_usub   = PyObject_GetAttrString(astModule, "USub");
+    py_op_invert = PyObject_GetAttrString(astModule, "Invert");
 }
 
 /*
@@ -82,54 +116,30 @@ PyObject*
 sage_buildAugAssign(PyObject *self, PyObject *args)
 {
     SgExpression *lhs, *rhs;
-    char *op_str;
-    if (! PyArg_ParseTuple(args, "O&O&s", SAGE_CONVERTER(SgExpression), &lhs,
-                                          SAGE_CONVERTER(SgExpression), &rhs,
-                                          &op_str))
+    PyObject *op;
+    if (! PyArg_ParseTuple(args, "O&O&O!", SAGE_CONVERTER(SgExpression), &lhs,
+                                           SAGE_CONVERTER(SgExpression), &rhs,
+                                           &PyType_Type, &op))
         return NULL;
 
-    std::string op(op_str);
     SgBinaryOp* sg_bin_op = NULL;
-    if      (op == ROSE_PYTHON_AUG_ADD_OP)
-        sg_bin_op = SageBuilder::buildPlusAssignOp(lhs, rhs);
-    else if (op == ROSE_PYTHON_AUG_SUB_OP)
-        sg_bin_op = SageBuilder::buildMinusAssignOp(lhs, rhs);
-    else if (op == ROSE_PYTHON_AUG_MULT_OP)
-        sg_bin_op = SageBuilder::buildMultAssignOp(lhs, rhs);
-    else if (op == ROSE_PYTHON_AUG_DIV_OP)
-        sg_bin_op = SageBuilder::buildDivAssignOp(lhs, rhs);
-    else if (op == ROSE_PYTHON_AUG_IDIV_OP) {
-        //sg_bin_op = SageBuilder::buildIntegerDivideAssignOp(lhs, rhs);
-        cerr << "Error: no SgIntegerDivAssignOp node." << endl;
-        ROSE_ABORT();
-    }
-    else if (op == ROSE_PYTHON_AUG_MOD_OP)
-        sg_bin_op = SageBuilder::buildModAssignOp(lhs, rhs);
-    else if (op == ROSE_PYTHON_AUG_LSHIFT_OP)
-        sg_bin_op = SageBuilder::buildLshiftAssignOp(lhs, rhs);
-    else if (op == ROSE_PYTHON_AUG_RSHIFT_OP)
-        sg_bin_op = SageBuilder::buildRshiftAssignOp(lhs, rhs);
-    else if (op == ROSE_PYTHON_AUG_BITAND_OP) {
-        //sg_bin_op = SageBuilder::buildBitAndAssignOp(lhs, rhs);
-        cerr << "Error: no SgBitAndAssignOp node." << endl;
-        ROSE_ABORT();
-    }
-    else if (op == ROSE_PYTHON_AUG_BITOR_OP) {
-        sg_bin_op = SageBuilder::buildBitOrOp(lhs, rhs);
-        //sg_bin_op = SageBuilder::buildBitAndAssignOp(lhs, rhs);
-        cerr << "Error: no SgBitOrAssignOp node." << endl;
-        ROSE_ABORT();
-    }
-    else if (op == ROSE_PYTHON_AUG_BITXOR_OP) {
-        //sg_bin_op = SageBuilder::buildBitXorAssignOp(lhs, rhs);
-        cerr << "Error: no SgBitXorAssignOp node." << endl;
-        ROSE_ABORT();
-    }
-    else if (op == ROSE_PYTHON_AUG_EXP_OP)
-        sg_bin_op = SageBuilder::buildExponentiationOp(lhs, rhs);
+         if (op == py_op_add)    sg_bin_op = SageBuilder::buildPlusAssignOp(lhs, rhs);
+    else if (op == py_op_sub)    sg_bin_op = SageBuilder::buildMinusAssignOp(lhs, rhs);
+    else if (op == py_op_mult)   sg_bin_op = SageBuilder::buildMultAssignOp(lhs, rhs);
+    else if (op == py_op_div)    sg_bin_op = SageBuilder::buildDivAssignOp(lhs, rhs);
+    else if (op == py_op_idiv)   ROSE_ASSERT(!"Error: no SgIntegerDivAssignOp node.");
+    else if (op == py_op_mod)    sg_bin_op = SageBuilder::buildModAssignOp(lhs, rhs);
+    else if (op == py_op_lshift) sg_bin_op = SageBuilder::buildLshiftAssignOp(lhs, rhs);
+    else if (op == py_op_rshift) sg_bin_op = SageBuilder::buildRshiftAssignOp(lhs, rhs);
+    else if (op == py_op_bitand) ROSE_ASSERT(!"Error: no SgBitAndAssignOp node.");
+    else if (op == py_op_bitor)  ROSE_ASSERT(!"Error: no SgBitOrAssignOp node.");
+    else if (op == py_op_bitxor) ROSE_ASSERT(!"Error: no SgBitXorAssignOp node.");
+    else if (op == py_op_pow)    sg_bin_op = SageBuilder::buildExponentiationOp(lhs, rhs);
     else {
-        cerr << "Unrecognized aug assign operator: " << op << endl;
-        ROSE_ABORT();
+        cout << "Unrecognized operator in augmented assignment: ";
+        PyObject_Print(op, stdout, Py_PRINT_RAW);
+        cout << endl;
+        ROSE_ASSERT(false);
     }
     return PyEncapsulate(sg_bin_op);
 }
@@ -142,41 +152,30 @@ PyObject*
 sage_buildBinOp(PyObject *self, PyObject *args)
 {
     SgExpression *lhs, *rhs;
-    char *op_str;
-    if (! PyArg_ParseTuple(args, "O&O&s", SAGE_CONVERTER(SgExpression), &lhs,
-                                          SAGE_CONVERTER(SgExpression), &rhs,
-                                          &op_str))
+    PyObject *op;
+    if (! PyArg_ParseTuple(args, "O&O&O!", SAGE_CONVERTER(SgExpression), &lhs,
+                                           SAGE_CONVERTER(SgExpression), &rhs,
+                                           &PyType_Type, &op))
         return NULL;
 
-    std::string op(op_str);
     SgBinaryOp* sg_bin_op = NULL;
-    if      (op == ROSE_PYTHON_ADD_OP)
-        sg_bin_op = SageBuilder::buildAddOp(lhs, rhs);
-    else if (op == ROSE_PYTHON_SUB_OP)
-        sg_bin_op = SageBuilder::buildSubtractOp(lhs, rhs);
-    else if (op == ROSE_PYTHON_MULT_OP)
-        sg_bin_op = SageBuilder::buildMultiplyOp(lhs, rhs);
-    else if (op == ROSE_PYTHON_DIV_OP)
-        sg_bin_op = SageBuilder::buildDivideOp(lhs, rhs);
-    else if (op == ROSE_PYTHON_IDIV_OP)
-        sg_bin_op = SageBuilder::buildIntegerDivideOp(lhs, rhs);
-    else if (op == ROSE_PYTHON_MOD_OP)
-        sg_bin_op = SageBuilder::buildModOp(lhs, rhs);
-    else if (op == ROSE_PYTHON_LSHIFT_OP)
-        sg_bin_op = SageBuilder::buildLshiftOp(lhs, rhs);
-    else if (op == ROSE_PYTHON_RSHIFT_OP)
-        sg_bin_op = SageBuilder::buildRshiftOp(lhs, rhs);
-    else if (op == ROSE_PYTHON_BITAND_OP)
-        sg_bin_op = SageBuilder::buildBitAndOp(lhs, rhs);
-    else if (op == ROSE_PYTHON_BITOR_OP)
-        sg_bin_op = SageBuilder::buildBitOrOp(lhs, rhs);
-    else if (op == ROSE_PYTHON_BITXOR_OP)
-        sg_bin_op = SageBuilder::buildBitXorOp(lhs, rhs);
-    else if (op == ROSE_PYTHON_EXP_OP)
-        sg_bin_op = SageBuilder::buildExponentiationOp(lhs, rhs);
+         if (op == py_op_add)    sg_bin_op = SageBuilder::buildAddOp(lhs, rhs);
+    else if (op == py_op_sub)    sg_bin_op = SageBuilder::buildSubtractOp(lhs, rhs);
+    else if (op == py_op_mult)   sg_bin_op = SageBuilder::buildMultiplyOp(lhs, rhs);
+    else if (op == py_op_div)    sg_bin_op = SageBuilder::buildDivideOp(lhs, rhs);
+    else if (op == py_op_idiv)   sg_bin_op = SageBuilder::buildIntegerDivideOp(lhs, rhs);
+    else if (op == py_op_mod)    sg_bin_op = SageBuilder::buildModOp(lhs, rhs);
+    else if (op == py_op_lshift) sg_bin_op = SageBuilder::buildLshiftOp(lhs, rhs);
+    else if (op == py_op_rshift) sg_bin_op = SageBuilder::buildRshiftOp(lhs, rhs);
+    else if (op == py_op_bitand) sg_bin_op = SageBuilder::buildBitAndOp(lhs, rhs);
+    else if (op == py_op_bitor)  sg_bin_op = SageBuilder::buildBitOrOp(lhs, rhs);
+    else if (op == py_op_bitxor) sg_bin_op = SageBuilder::buildBitXorOp(lhs, rhs);
+    else if (op == py_op_pow)    sg_bin_op = SageBuilder::buildExponentiationOp(lhs, rhs);
     else {
-        cerr << "Unrecognized binary operator: " << op << endl;
-        ROSE_ABORT();
+        cout << "Unrecognized binary operator: ";
+        PyObject_Print(op, stdout, Py_PRINT_RAW);
+        cout << endl;
+        ROSE_ASSERT(false);
     }
 
     return PyEncapsulate(sg_bin_op);
@@ -270,26 +269,29 @@ PyObject*
 sage_buildCompare(PyObject *self, PyObject *args)
 {
     //char *op;
-    PyObject *op_type;
+    PyObject *op;
     SgExpression *sg_lhs_exp, *sg_rhs_exp;
-    if (! PyArg_ParseTuple(args, "OO&O&", &op_type,
+    if (! PyArg_ParseTuple(args, "O!O&O&", &PyType_Type, &op,
                                            SAGE_CONVERTER(SgExpression), &sg_lhs_exp,
                                            SAGE_CONVERTER(SgExpression), &sg_rhs_exp))
         return NULL;
 
     SgBinaryOp *sg_bin_op;
-         if (op_type == py_op_lt)    sg_bin_op = SageBuilder::buildLessThanOp(sg_lhs_exp, sg_rhs_exp);
-    else if (op_type == py_op_lte)   sg_bin_op = SageBuilder::buildLessOrEqualOp(sg_lhs_exp, sg_rhs_exp);
-    else if (op_type == py_op_gt)    sg_bin_op = SageBuilder::buildGreaterThanOp(sg_lhs_exp, sg_rhs_exp);
-    else if (op_type == py_op_gte)   sg_bin_op = SageBuilder::buildGreaterOrEqualOp(sg_lhs_exp, sg_rhs_exp);
-    else if (op_type == py_op_is)    sg_bin_op = SageBuilder::buildGreaterOrEqualOp(sg_lhs_exp, sg_rhs_exp);
-    else if (op_type == py_op_isnot) sg_bin_op = SageBuilder::buildGreaterOrEqualOp(sg_lhs_exp, sg_rhs_exp);
-    else if (op_type == py_op_in)    sg_bin_op = SageBuilder::buildGreaterOrEqualOp(sg_lhs_exp, sg_rhs_exp);
-    else if (op_type == py_op_notin) sg_bin_op = SageBuilder::buildGreaterOrEqualOp(sg_lhs_exp, sg_rhs_exp);
-    else if (op_type == py_op_eq)    sg_bin_op = SageBuilder::buildEqualityOp(sg_lhs_exp, sg_rhs_exp);
-    else if (op_type == py_op_noteq) sg_bin_op = SageBuilder::buildNotEqualOp(sg_lhs_exp, sg_rhs_exp);
+         if (op == py_op_lt)    sg_bin_op = SageBuilder::buildLessThanOp(sg_lhs_exp, sg_rhs_exp);
+    else if (op == py_op_lte)   sg_bin_op = SageBuilder::buildLessOrEqualOp(sg_lhs_exp, sg_rhs_exp);
+    else if (op == py_op_gt)    sg_bin_op = SageBuilder::buildGreaterThanOp(sg_lhs_exp, sg_rhs_exp);
+    else if (op == py_op_gte)   sg_bin_op = SageBuilder::buildGreaterOrEqualOp(sg_lhs_exp, sg_rhs_exp);
+    else if (op == py_op_is)    sg_bin_op = SageBuilder::buildGreaterOrEqualOp(sg_lhs_exp, sg_rhs_exp);
+    else if (op == py_op_isnot) sg_bin_op = SageBuilder::buildGreaterOrEqualOp(sg_lhs_exp, sg_rhs_exp);
+    else if (op == py_op_in)    sg_bin_op = SageBuilder::buildGreaterOrEqualOp(sg_lhs_exp, sg_rhs_exp);
+    else if (op == py_op_notin) sg_bin_op = SageBuilder::buildGreaterOrEqualOp(sg_lhs_exp, sg_rhs_exp);
+    else if (op == py_op_eq)    sg_bin_op = SageBuilder::buildEqualityOp(sg_lhs_exp, sg_rhs_exp);
+    else if (op == py_op_noteq) sg_bin_op = SageBuilder::buildNotEqualOp(sg_lhs_exp, sg_rhs_exp);
     else {
-        cout << "Unhandled comparison operator: " << "op_str" << endl;
+        cout << "Unrecognized comparison operator: ";
+        PyObject_Print(op, stdout, Py_PRINT_RAW);
+        cout << endl;
+        ROSE_ASSERT(false);
     }
 
     return PyEncapsulate(sg_bin_op);
@@ -831,25 +833,23 @@ sage_buildTuple(PyObject *self, PyObject *args)
 PyObject*
 sage_buildUnaryOp(PyObject *self, PyObject *args)
 {
-    char *operation;
+    PyObject *op;
     SgExpression *operand;
-    if (! PyArg_ParseTuple(args, "sO&", &operation,
-                                        SAGE_CONVERTER(SgExpression), &operand))
+    if (! PyArg_ParseTuple(args, "O!O&", &PyType_Type, &op,
+                                         SAGE_CONVERTER(SgExpression), &operand))
         return NULL;
 
-    std::string op(operation);
     SgUnaryOp* sg_unary_op = NULL;
-    if      (op == ROSE_PYTHON_UADD_OP)
-        sg_unary_op = SageBuilder::buildUnaryAddOp(operand);
-    else if (op == ROSE_PYTHON_USUB_OP)
-        sg_unary_op = SageBuilder::buildMinusOp(operand);
-    else if (op == ROSE_PYTHON_INVERT_OP)
-        sg_unary_op = SageBuilder::buildBitComplementOp(operand);
+         if (op == py_op_uadd)   sg_unary_op = SageBuilder::buildUnaryAddOp(operand);
+    else if (op == py_op_usub)   sg_unary_op = SageBuilder::buildMinusOp(operand);
+    else if (op == py_op_invert) sg_unary_op = SageBuilder::buildBitComplementOp(operand);
     else {
-        cerr << "Unrecognized unary operator: " << op << endl;
-        ROSE_ABORT();
+        cout << "Unrecognized unary operator: ";
+        PyObject_Print(op, stdout, Py_PRINT_RAW);
+        cout << endl;
+        ROSE_ASSERT(false);
     }
-    ROSE_ASSERT(sg_unary_op != NULL);
+
     return PyEncapsulate(sg_unary_op);
 }
 

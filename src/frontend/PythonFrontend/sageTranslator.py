@@ -8,36 +8,6 @@ UNARY_OPERATOR_MAP = {
     ast.Invert:   "~"
 }
 
-BINARY_OPERATOR_MAP = {
-    ast.Add:      "+",
-    ast.BitAnd:   "&",
-    ast.BitOr:    "|",
-    ast.BitXor:   "^",
-    ast.Div:      "/",
-    ast.FloorDiv: "//",
-    ast.LShift:   "<<",
-    ast.Mod:      "%",
-    ast.Mult:     "*",
-    ast.Pow:      "**",
-    ast.RShift:   ">>",
-    ast.Sub:      "-",
-}
-
-AUG_OPERATOR_MAP = {
-    ast.Add:      "+=",
-    ast.BitAnd:   "&=",
-    ast.BitOr:    "|=",
-    ast.BitXor:   "^=",
-    ast.Div:      "/=",
-    ast.FloorDiv: "//=",
-    ast.LShift:   "<<=",
-    ast.Mod:      "%=",
-    ast.Mult:     "*=",
-    ast.Pow:      "**=",
-    ast.RShift:   ">>=",
-    ast.Sub:      "-=",
-}
-
 class FileInfo():
 
   def __init__(self, filename, node):
@@ -97,13 +67,13 @@ class SageTranslator(ast.NodeVisitor):
   def visit_AugAssign(self, node):
     target = self.visit(node.target)
     value  = self.visit(node.value)
-    op_str = AUG_OPERATOR_MAP[node.op.__class__]
-    return sage.buildAugAssign(target, value, op_str)
+    op = node.op.__class__
+    return sage.buildAugAssign(target, value, op)
 
   def visit_BinOp(self, node):
     lhs = self.visit(node.left)
     rhs = self.visit(node.right)
-    op_str = BINARY_OPERATOR_MAP[node.op.__class__]
+    op_str = node.op.__class__
     return sage.buildBinOp(lhs, rhs, op_str)
 
   def visit_Break(self, node):
@@ -286,8 +256,8 @@ class SageTranslator(ast.NodeVisitor):
 
   def visit_UnaryOp(self, node):
     operand = self.visit(node.operand)
-    op_str = UNARY_OPERATOR_MAP[node.op.__class__]
-    return sage.buildUnaryOp(op_str, operand)
+    op = node.op.__class__
+    return sage.buildUnaryOp(op, operand)
 
   def visit_While(self, node):
     test = self.visit(node.test)
