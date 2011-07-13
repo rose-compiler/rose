@@ -16,7 +16,7 @@ ALL_PYTHON_TESTCODES = \
     test2011_001.py \
     test2011_000.py
 
-TEST_Objects = $(addsuffix .done, $(basename $(ALL_PYTHON_TESTCODES)))
+TEST_Objects = $(ALL_PYTHON_TESTCODES:.py=.done)
 
 $(TEST_Objects): ../../testTranslator
     bname = $(basename $@)
