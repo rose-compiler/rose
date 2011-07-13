@@ -13,6 +13,40 @@
 
 using namespace std;
 
+
+PyObject* py_op_lt = NULL;
+PyObject* py_op_gt = NULL;
+PyObject* py_op_lte = NULL;
+PyObject* py_op_gte = NULL;
+PyObject* py_op_eq = NULL;
+PyObject* py_op_noteq = NULL;
+PyObject* py_op_is = NULL;
+PyObject* py_op_isnot = NULL;
+PyObject* py_op_in = NULL;
+PyObject* py_op_notin = NULL;
+
+#define SAGE_PY_EVAL(str) \
+    PyRun_String("str", Py_eval_input, PyEval_GetGlobals(), PyEval_GetLocals())
+
+void
+initializePythonTypes()
+{
+    PyObject *astModule = PyImport_ImportModule("ast");
+    if (astModule == NULL)
+        ROSE_ASSERT(!"Unable to initialize python types.");
+
+    py_op_lt    = PyObject_GetAttrString(astModule, "Lt");
+    py_op_lte   = PyObject_GetAttrString(astModule, "LtE");
+    py_op_gt    = PyObject_GetAttrString(astModule, "Gt");
+    py_op_gte   = PyObject_GetAttrString(astModule, "GtE");
+    py_op_eq    = PyObject_GetAttrString(astModule, "Eq");
+    py_op_noteq = PyObject_GetAttrString(astModule, "NotEq");
+    py_op_is    = PyObject_GetAttrString(astModule, "Is");
+    py_op_isnot = PyObject_GetAttrString(astModule, "IsNot");
+    py_op_in    = PyObject_GetAttrString(astModule, "In");
+    py_op_notin = PyObject_GetAttrString(astModule, "NotIn");
+}
+
 /*
  */
 PyObject*
@@ -235,18 +269,30 @@ sage_buildComprehension(PyObject *self, PyObject *args)
 PyObject*
 sage_buildCompare(PyObject *self, PyObject *args)
 {
-    SgExpression *sg_left_exp;
-    PyObject* py_comparators;
-    PyObject *py_ops;
-
-    if (! PyArg_ParseTuple(args, "O&O!O!", SAGE_CONVERTER(SgExpression), &sg_left_exp,
-                                           &PyList_Type, py_comparators,
-                                           &PyList_Type, py_ops))
+    //char *op;
+    PyObject *op_type;
+    SgExpression *sg_lhs_exp, *sg_rhs_exp;
+    if (! PyArg_ParseTuple(args, "OO&O&", &op_type,
+                                           SAGE_CONVERTER(SgExpression), &sg_lhs_exp,
+                                           SAGE_CONVERTER(SgExpression), &sg_rhs_exp))
         return NULL;
 
-    cerr << "Error: Comparisons require new sage node. Skipping." << endl;
-    SgExpression* left = SageBuilder::buildStringVal("COMPARISON");
-    return PyEncapsulate(left);
+    SgBinaryOp *sg_bin_op;
+         if (op_type == py_op_lt)    sg_bin_op = SageBuilder::buildLessThanOp(sg_lhs_exp, sg_rhs_exp);
+    else if (op_type == py_op_lte)   sg_bin_op = SageBuilder::buildLessOrEqualOp(sg_lhs_exp, sg_rhs_exp);
+    else if (op_type == py_op_gt)    sg_bin_op = SageBuilder::buildGreaterThanOp(sg_lhs_exp, sg_rhs_exp);
+    else if (op_type == py_op_gte)   sg_bin_op = SageBuilder::buildGreaterOrEqualOp(sg_lhs_exp, sg_rhs_exp);
+    else if (op_type == py_op_is)    sg_bin_op = SageBuilder::buildGreaterOrEqualOp(sg_lhs_exp, sg_rhs_exp);
+    else if (op_type == py_op_isnot) sg_bin_op = SageBuilder::buildGreaterOrEqualOp(sg_lhs_exp, sg_rhs_exp);
+    else if (op_type == py_op_in)    sg_bin_op = SageBuilder::buildGreaterOrEqualOp(sg_lhs_exp, sg_rhs_exp);
+    else if (op_type == py_op_notin) sg_bin_op = SageBuilder::buildGreaterOrEqualOp(sg_lhs_exp, sg_rhs_exp);
+    else if (op_type == py_op_eq)    sg_bin_op = SageBuilder::buildEqualityOp(sg_lhs_exp, sg_rhs_exp);
+    else if (op_type == py_op_noteq) sg_bin_op = SageBuilder::buildNotEqualOp(sg_lhs_exp, sg_rhs_exp);
+    else {
+        cout << "Unhandled comparison operator: " << "op_str" << endl;
+    }
+
+    return PyEncapsulate(sg_bin_op);
 }
 
 /*
