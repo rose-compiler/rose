@@ -1,6 +1,8 @@
 #ifndef ROSE_RSIM_Tools_H
 #define ROSE_RSIM_Tools_H
 
+#include "stringify.h"          // Needed by the MemoryAccessWatcher tool
+
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -149,13 +151,18 @@ private:
 /** Watches for memory access.
  *
  *  This memory callback watches for access to certain memory locations and prints a message to the specified facility when
- *  such an access occurs.  An access need not change the value of the memory location in order to be reported. The message
- *  facility must be specified as a constructor argument because memory callbacks are not associated with any particular
- *  thread.
+ *  such an access occurs.  An access need not change the value of the memory location in order to be reported.  This callback
+ *  is triggered if the operation matches one of the @p how bits and the required memory region protection bits match at least
+ *  one of the specified @p req_perms bits.
  *
  *  Memory locations can be arbitrarily large since this class, unlike MemoryChecker, doesn't actually allocate any backing
  *  store, but rather just looks at the memory addresses.  Also, the addresses to watch do not need to be mapped to the process
  *  yet--the memory access watcher can detect access to addresses that would cause a segmentation fault.
+ *
+ *  A message facility must be specified (or defaults to standard error) because memory callbacks are not associated with any
+ *  particular thread.  Likewise, at this time there's no way to obtain information about the thead that triggered the memory
+ *  operation.  We hope to remedy this in the future.  You might be able to use MemoryChecker if you need thread information,
+ *  although that callback is more expensive and will only detect writes operations.
  *
  *  See also, MemoryChecker, which checks the contents of memory after every instruction; and the "--debug=mem" switch which
  *  prints all memory access and the values which are copied to/from memory.
@@ -164,9 +171,21 @@ private:
  *  of dereferencing a null pointer.
  *  @code
  *    RSIM_Linux32 sim;
- *    unsigned perm = MemoryMap::MM_PROT_READ | MemoryMap::MM_PROT_WRITE;
+ *    unsigned operations = MemoryMap::MM_PROT_READ | MemoryMap::MM_PROT_WRITE;
+ *    unsigned req_perms = MemoryMap::MM_PROT_ANY; //read, write, or execute
  *    RTS_Message mesg(stdout, NULL)
- *    sim.install_callback(new MemoryAccessWatcher(0, 4096, perm, &mesg);
+ *    sim.install_callback(new MemoryAccessWatcher(0, 4096, operations, req_perms, &mesg);
+ *  @endcode
+ *
+ *  Example: Here's how to use a memory watch to detect when instructions are executed on the stack, which might indicate a
+ *  buffer overflow attack.
+ *  @code
+ *    RSIM_Linux32 sim;
+ *    unsigned operations = MemoryMap::MM_PROT_READ;
+ *    unsigned req_perms = MemoryMap::MM_PROT_EXEC;
+ *    rose_addr_t stack_base = 0xbffeb000;
+ *    rose_addr_t stack_size = 0x00015000;
+ *    sim.install_callback(new MemoryAccessWatcher(stack_base, stack_size, operations, req_perms);
  *  @endcode
  */
 class MemoryAccessWatcher: public RSIM_Callbacks::MemoryCallback {
@@ -174,11 +193,15 @@ public:
     RTS_Message *mesg;                          /**< Tracing facility, since no thread is available. */
     rose_addr_t va;                             /**< Starting address for watched memory region. */
     size_t nbytes;                              /**< Size of watched memory region. */
-    unsigned how;                               /**< What kind of access we are watching. This should be a mask of
-                                                 *   MemoryMap::Protection bits. */
+    unsigned how;                               /**< What kind of operations we are watching. This should be the bits
+                                                 *   MM_PROT_READ and/or MM_PROT_WRITE from MemoryMap::Protection. */
+    unsigned req_perms;                         /**< What requested protection bits trigger the MemoryAccessWatcher.  This bit
+                                                 *   vector is compared with the req_perms argument to RSIM_Process::mem_read()
+                                                 *   or RSIM_Process::mem_write().  If the intersection is empty then this
+                                                 *   callback will not be triggered. */
 
-    MemoryAccessWatcher(rose_addr_t va, size_t nbytes, unsigned how, RTS_Message *mesg=NULL)
-        : mesg(mesg), va(va), nbytes(nbytes), how(how) {
+    MemoryAccessWatcher(rose_addr_t va, size_t nbytes, unsigned how, unsigned req_perms, RTS_Message *mesg=NULL)
+        : mesg(mesg), va(va), nbytes(nbytes), how(how), req_perms(req_perms) {
         if (!mesg)
             this->mesg = new RTS_Message(stderr, NULL);
     }
@@ -186,9 +209,12 @@ public:
     virtual MemoryAccessWatcher *clone() { return this; }
 
     virtual bool operator()(bool enabled, const Args &args) {
-        if (enabled && 0!=(args.how & how) && args.va<va+nbytes && args.va+args.nbytes>=va) {
-            mesg->mesg("MemoryAccessWatcher: triggered for access at 0x%08"PRIx64" for %zu byte%s\n",
-                       args.va, args.nbytes, 1==args.nbytes?"":"s");
+        if (enabled && 0!=(args.how & how) && 0!=(args.req_perms & req_perms) && args.va<va+nbytes && args.va+args.nbytes>=va) {
+            std::string operation = stringifyMemoryMapProtection(args.how, "MM_PROT_");
+            for (size_t i=0; i<operation.size(); i++)
+                operation[i] = tolower(operation[i]);
+            mesg->mesg("MemoryAccessWatcher: triggered for %s access at 0x%08"PRIx64" for %zu byte%s\n",
+                       operation.c_str(), args.va, args.nbytes, 1==args.nbytes?"":"s");
         }
         return enabled;
     }

@@ -118,12 +118,13 @@ RSIM_Callbacks::clear_memory_callbacks(When when)
 
 bool
 RSIM_Callbacks::call_memory_callbacks(When when,
-                                      RSIM_Process *process, MemoryMap::Protection how, rose_addr_t va, size_t nbytes,
+                                      RSIM_Process *process, MemoryMap::Protection how, unsigned req_perms,
+                                      rose_addr_t va, size_t nbytes,
                                       bool prev)
 {
     if (when==BEFORE)
-        return memory_pre.apply (prev, MemoryCallback::Args(process, how, va, nbytes), ROSE_Callbacks::FORWARD);
-    return     memory_post.apply(prev, MemoryCallback::Args(process, how, va, nbytes), ROSE_Callbacks::FORWARD);
+        return memory_pre.apply (prev, MemoryCallback::Args(process, how, req_perms, va, nbytes), ROSE_Callbacks::FORWARD);
+    return     memory_post.apply(prev, MemoryCallback::Args(process, how, req_perms, va, nbytes), ROSE_Callbacks::FORWARD);
 }
 
 /******************************************************************************************************************************

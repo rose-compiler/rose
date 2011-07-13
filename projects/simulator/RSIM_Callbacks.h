@@ -244,12 +244,15 @@ public:
     class MemoryCallback: public Callback {
     public:
 
-        /** Arguments passed to memory callbacks. */
+        /** Arguments passed to memory callbacks.  Note that the @p how argument is always either read or write depending on
+         *  the operation being performed, but the the @p req_perms argument might have other bits set.  For instance, when
+         *  fetching instructions, @p how will be read while @p req_perms will be execute. */
         struct Args {
-            Args(RSIM_Process *process, MemoryMap::Protection how, rose_addr_t va, size_t nbytes)
-                : process(process), how(how), va(va), nbytes(nbytes) {}
+            Args(RSIM_Process *process, MemoryMap::Protection how, unsigned req_perms, rose_addr_t va, size_t nbytes)
+                : process(process), how(how), req_perms(req_perms), va(va), nbytes(nbytes) {}
             RSIM_Process *process;              /**< The process whose memory is accessed. */
             MemoryMap::Protection how;          /**< How memory is being access. */
+            unsigned req_perms;                 /**< Memory required permissions for access. */
             rose_addr_t va;                     /**< Virtual address for beginning of memory access. */
             size_t nbytes;                      /**< Size of memory access. */
         };
@@ -289,10 +292,16 @@ public:
      *  accessed, and the initial @p prev value for these callbacks is the return value from the last pre-memory callback (or
      *  true if there were none).
      *
+     *  The return value of the callbacks is ignored when the simulator is fetching instructions because the disassembler reads
+     *  directly from process memory without going through the RSIM_Process memory interface.  However, we've added memory read
+     *  operations (word-at-a-time) around the instruction fetching so that memory callbacks are invoked.  The @p how will be
+     *  read, while the @p req_perms will be execute.
+     *
      *  Thread safety:  This method is thread safe.  The callbacks may register and/or unregister themselves or other callbacks
      *  from this RSIM_Callbacks object, but those actions do not affect which callbacks are made by this invocation of
      *  call_memory_callbacks(). */
-    bool call_memory_callbacks(When, RSIM_Process *process, MemoryMap::Protection how, rose_addr_t va, size_t nbytes, bool prev);
+    bool call_memory_callbacks(When, RSIM_Process *process, MemoryMap::Protection how, unsigned req_perms,
+                               rose_addr_t va, size_t nbytes, bool prev);
 
 
 
