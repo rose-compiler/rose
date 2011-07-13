@@ -98,4 +98,6 @@ static PyMethodDef SageBuilderMethods[] = {
     {NULL, NULL, 0, NULL}
 };
 
+void initializePythonTypes();
+
 #endif /* SAGE_PYTHON_INTERFACE_H_ */

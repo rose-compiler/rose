@@ -30,6 +30,7 @@ runPythonFrontend(SgFile* file)
     PyRun_SimpleString(cmd.str().c_str());
     pModule = PyImport_ImportModule(ROSE_PYTHON_FRONTEND_MODULE_NAME);
 
+
     if (pModule != NULL) {
         pFunc = PyObject_GetAttrString(pModule, ROSE_PYTHON_FRONTEND_TRANSLATOR_FXN_NAME);
 
@@ -78,8 +79,11 @@ int python_main(std::string filename, SgFile* file)
     //std::cout << "Launching interpreter." << std::endl;
 
     Py_Initialize();
+
+    initializePythonTypes();
     SgGlobal* sg_global = runPythonFrontend(file);
     SageInterface::setSourcePositionForTransformation(sg_global);
+
     Py_Finalize();
 
     //const char* str = (sg_global != NULL) ? "success" : "failed";

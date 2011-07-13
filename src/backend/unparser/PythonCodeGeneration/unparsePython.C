@@ -127,6 +127,14 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
         case V_SgModAssignOp:
         case V_SgMultAssignOp:
         case V_SgMinusAssignOp:
+
+        case V_SgLessThanOp:
+        case V_SgLessOrEqualOp:
+        case V_SgGreaterThanOp:
+        case V_SgGreaterOrEqualOp:
+        case V_SgEqualityOp:
+        case V_SgNotEqualOp:
+
             unparseBinaryOp( isSgBinaryOp(stmt), info );
             break;
 
@@ -241,6 +249,12 @@ Unparse_Python::unparseBinaryOp(SgBinaryOp* bin_op,
         case V_SgModAssignOp:      curprint(ROSE_PYTHON_AUG_MOD_OP);    break;
         case V_SgMultAssignOp:     curprint(ROSE_PYTHON_AUG_MULT_OP);   break;
         case V_SgMinusAssignOp:    curprint(ROSE_PYTHON_AUG_SUB_OP);    break;
+        case V_SgLessThanOp:       curprint(ROSE_PYTHON_LT_OP);         break;
+        case V_SgLessOrEqualOp:    curprint(ROSE_PYTHON_LE_OP);         break;
+        case V_SgGreaterThanOp:    curprint(ROSE_PYTHON_GT_OP);         break;
+        case V_SgGreaterOrEqualOp:  curprint(ROSE_PYTHON_GE_OP);        break;
+        case V_SgEqualityOp:       curprint(ROSE_PYTHON_EQ_OP);         break;
+        case V_SgNotEqualOp:       curprint(ROSE_PYTHON_NE_OP);         break;
         default: { cerr << "Unhandled SgBinaryOp: " << bin_op->class_name() << endl;
             ROSE_ABORT();
         }

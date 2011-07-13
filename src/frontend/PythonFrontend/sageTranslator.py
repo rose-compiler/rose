@@ -38,19 +38,6 @@ AUG_OPERATOR_MAP = {
     ast.Sub:      "-=",
 }
 
-COMP_OPERATOR_MAP = {
-    ast.Eq:       "==",
-    ast.NotEq:    "!=",
-    ast.LtE:      "<=",
-    ast.GtE:      ">=",
-    ast.Lt:       "<",
-    ast.Gt:       ">",
-    ast.Is:       "is",
-    ast.IsNot:    "is not",
-    ast.In:       "in",
-    ast.NotIn:    "not in"
-}
-
 class FileInfo():
 
   def __init__(self, filename, node):
@@ -130,10 +117,14 @@ class SageTranslator(ast.NodeVisitor):
     return sage.buildCall(name, args, kwargs, scope)
 
   def visit_Compare(self, node):
+    # Until n-ary comparators are implemented in sage, only allow binary comparisons
+    assert len(node.comparators) == 1
     lhs = self.visit(node.left)
-    comparators = map(self.visit, node.comparators)
-    ops = map(lambda op: COMP_OPERATOR_MAP[op.__class__], node.ops)
-    return sage.buildCompare(lhs, ops, comparators)
+    rhs = self.visit(node.comparators[0])
+    op = node.ops[0].__class__
+    #comparators = map(self.visit, node.comparators)
+    #ops = map(lambda op: op.__class__, node.ops)
+    return sage.buildCompare(op, lhs, rhs)
 
   def visit_complex(self, n):
     return sage.buildComplexVal(n)
