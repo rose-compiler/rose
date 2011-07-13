@@ -26,6 +26,11 @@ namespace VirtualCFG
         FilteredCFGNode() : n()
         {
         }
+        
+        void setFilter(const FilterFunction& f)
+        {
+            filter = f;
+        }
 
         CFGNode toNode() const
         {
@@ -87,6 +92,11 @@ namespace VirtualCFG
         /**  Need a default constructor to use with boost_graph. Underlying path will be invalid. */
         FilteredCFGEdge()
         {
+        }
+        
+        void setFilter(const FilterFunction& f)
+        {
+            filter = f;
         }
 
         std::string toString()const
