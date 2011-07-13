@@ -382,13 +382,38 @@ sage_buildDict(PyObject *self, PyObject *args)
 PyObject*
 sage_buildExceptHandler(PyObject *self, PyObject *args)
 {
-    if (! PyArg_ParseTuple(args, ""))
+    char *name_str, *classobj_str;
+    PyObject *py_body;
+    SgScopeStatement *scope;
+    if (! PyArg_ParseTuple(args, "zzO!O&", &name_str,
+                                         &classobj_str,
+                                         &PyList_Type, &py_body,
+                                         SAGE_CONVERTER(SgScopeStatement), &scope))
         return NULL;
 
-    // TODO: add buildCatchOptionStmt to SageBuilder
-    cerr << "sage_buildExceptHandler is unimplemented" << endl;
-    //SgNode* sg_value = SageBuilder::buildBasicBlock();
-    return PyEncapsulate(NULL);
+#if 1
+    SgVariableDeclaration *var = NULL;
+    if (classobj_str != NULL) {
+        if (name_str != NULL) {
+            SgExpression *exp = SageBuilder::buildOpaqueVarRefExp(string(name_str), scope);
+            SgInitializer *init = SageBuilder::buildAssignInitializer(exp);
+            var = SageBuilder::buildVariableDeclaration(name_str, SageBuilder::buildVoidType(), init);
+        }
+    }
+
+    std::vector<SgStatement*> stmts;
+    Py_ssize_t body_c = PyList_Size(py_body);
+    for (int i = 0; i < body_c; i++)
+        stmts.push_back( PyDecapsulate<SgStatement>( PyList_GetItem(py_body, i) ));
+    SgBasicBlock *body = SageBuilder::buildBasicBlock_nfi(stmts);
+
+    SgCatchOptionStmt *sg_catch =
+        SageBuilder::buildCatchOptionStmt(var, body);
+#else
+        SgCatchOptionStmt *sg_catch = NULL;
+#endif
+
+    return PyEncapsulate(sg_catch);
 }
 
 /*
@@ -782,14 +807,20 @@ sage_buildSuite(PyObject *self, PyObject *args)
 PyObject*
 sage_buildTryExcept(PyObject *self, PyObject *args)
 {
-    PyObject *py_body, *py_handlers, *py_orelse;
-    if (! PyArg_ParseTuple(args, ""))
+    PyObject *py_handlers;
+    SgStatement *body, *orelse;
+    if (! PyArg_ParseTuple(args, "O&O!O&", SAGE_CONVERTER(SgStatement), &body,
+                                           &PyList_Type, &py_handlers,
+                                           SAGE_CONVERTER(SgStatement), &orelse))
         return NULL;
 
-    // TODO: add buildTryExcept to SageBuilder
-    cerr << "sage_buildTryExcept is unimplemented" << endl;
-    SgNode* sg_value = SageBuilder::buildBasicBlock();
-    return PyEncapsulate(sg_value);
+    SgTryStmt* sg_try = SageBuilder::buildTryStmt(body);
+
+    Py_ssize_t handler_c = PyList_Size(py_handlers);
+    for (int i = 0; i < handler_c; i++)
+        sg_try->append_catch_statement( PyDecapsulate<SgCatchOptionStmt>( PyList_GetItem(py_handlers, i) ) );
+
+    return PyEncapsulate(sg_try);
 }
 
 /*

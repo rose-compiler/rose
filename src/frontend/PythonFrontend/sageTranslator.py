@@ -126,10 +126,11 @@ class SageTranslator(ast.NodeVisitor):
     return sage.buildDictComp(elt, gens)
 
   def visit_ExceptHandler(self, node):
-    e_name = node.name
-    e_type = node.type
-    e_body = map(self.visit, node.body)
-    return sage.buildExceptHandler(e_name, e_type, e_body)
+    name = node.name and node.name.id
+    type = node.type and node.type.id
+    body = map(self.visit, node.body)
+    scope = self.scopeStack.peek()
+    return sage.buildExceptHandler(name, type, body, scope)
 
   def visit_Expr(self, node):
     value = self.visit(node.value)
@@ -241,9 +242,9 @@ class SageTranslator(ast.NodeVisitor):
     return sage.buildStringVal(str)
 
   def visit_TryExcept(self, node):
-    body = map(self.visit, node.body)
+    body = sage.buildSuite(map(self.visit, node.body))
     handlers = map(self.visit, node.handlers)
-    orelse = map(self.visit, node.orelse)
+    orelse = [] #sage.buildSuite(map(self.visit, node.orelse))
     return sage.buildTryExcept(body, handlers, orelse)
 
   def visit_TryFinally(self, node):
