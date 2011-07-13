@@ -4,6 +4,7 @@
 #ifndef USE_ROSE
 
 #include <string>
+#include <iostream>
 
 #include "RtedSymbols.h"
 #include "DataStructures.h"
@@ -12,11 +13,13 @@
 using namespace SageInterface;
 using namespace SageBuilder;
 
-
-void
-RtedTransformation::insertMainCloseCall()
+void RtedTransformation::insertMainCloseCall()
 {
-  ROSE_ASSERT(mainBody);
+  if (!mainBody)
+  {
+    std::cerr << "# note: file/project without main." << std::endl;
+    return;
+  }
 
   SgStatement*      last = mainBody->get_statements().back();
   SgScopeStatement* scope = last->get_scope();
@@ -38,16 +41,14 @@ RtedTransformation::insertMainCloseCall()
 
 
 
-void RtedTransformation::transformIfMain(SgFunctionDefinition* const mainFunc)
+void RtedTransformation::transformIfMain(SgFunctionDefinition& mainFunc)
 {
-    ROSE_ASSERT(mainFunc);
-
     if (!is_main_func(mainFunc)) return;
 
-    renameMain(mainFunc->get_declaration());
+    renameMain(mainFunc.get_declaration());
 
     // find the last statement
-    SgBasicBlock*         block = mainFunc->get_body();
+    SgBasicBlock*         block = mainFunc.get_body();
     ROSE_ASSERT(block);
 
     SgStatementPtrList&   stmts = block->get_statements();

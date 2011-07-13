@@ -32,9 +32,9 @@
 
 #include "RuntimeSystem.h"
 
-#ifdef __cplusplus
+//#ifdef __cplusplus
 // to cope with tests written in old style C++
-using namespace std;
-#endif
+//using namespace std;
+//#endif
 
 #endif
