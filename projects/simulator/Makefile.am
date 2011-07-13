@@ -77,7 +77,7 @@ x86win_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 #  DEMOS
 ###############################################################################################################################
 
-EXTRA_DIST += SignAnalysisExample.h
+EXTRA_DIST += demos/README SignAnalysisExample.h
 
 #------------------------------------------------------------------------------------------------------------------------------
 # demo 1: branching to an uncalled function
@@ -125,6 +125,23 @@ demo4input: demo3input
 .PHONY: run_demo4
 run_demo4: demo4 demo4input
 	./demo4 ./demo4input
+
+#------------------------------------------------------------------------------------------------------------------------------
+# demo 5: watch for executing instructions on the stack
+noinst_PROGRAMS += demo5
+demo5_SOURCES = demos/demo5.C
+demo5_CPPFLAGS = $(ROSE_INCLUDES)
+demo5_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+EXTRA_DIST += demos/demo5input.c
+MOSTLYCLEANFILES += demo5input
+demo5input: demos/demo5input.c
+	@echo "  CC32    $@"
+	@$(CC) $(CFLAGS32) -Wall -o $@ $^
+
+.PHONY: run_demo5
+run_demo5: demo5 demo5input
+	./demo5 ./demo5input
 
 ###############################################################################################################################
 #  SYSTEM CALL TESTS
