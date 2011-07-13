@@ -74,6 +74,7 @@ class Unparse_Python : public UnparseLanguageIndependentConstructs
           virtual void unparseYieldStatement(SgYieldStatement*, SgUnparse_Info&);
 
           virtual std::string ws_prefix(int nesting_level);
+          virtual void unparseAsSuite(SgStatement* stmt, SgUnparse_Info&);
    };
 
 #define ROSE_PYTHON_WRAPPER_FXN_NAME "__main__"
