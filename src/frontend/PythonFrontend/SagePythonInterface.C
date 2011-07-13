@@ -808,7 +808,7 @@ PyObject*
 sage_buildTryExcept(PyObject *self, PyObject *args)
 {
     PyObject *py_handlers;
-    SgStatement *body, *orelse;
+    SgStatement *body, *orelse = NULL;
     if (! PyArg_ParseTuple(args, "O&O!O&", SAGE_CONVERTER(SgStatement), &body,
                                            &PyList_Type, &py_handlers,
                                            SAGE_CONVERTER(SgStatement), &orelse))
@@ -819,6 +819,9 @@ sage_buildTryExcept(PyObject *self, PyObject *args)
     Py_ssize_t handler_c = PyList_Size(py_handlers);
     for (int i = 0; i < handler_c; i++)
         sg_try->append_catch_statement( PyDecapsulate<SgCatchOptionStmt>( PyList_GetItem(py_handlers, i) ) );
+
+    sg_try->set_else_body(orelse);
+    orelse->set_parent(sg_try);
 
     return PyEncapsulate(sg_try);
 }
