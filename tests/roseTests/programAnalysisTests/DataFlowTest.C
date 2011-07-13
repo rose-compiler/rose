@@ -1,4 +1,3 @@
-
 #include <sage3.h>
 
 #include <StmtInfoCollect.h>
