@@ -24,6 +24,13 @@ Unparse_Python::~Unparse_Python()
 
 }
 
+void
+Unparse_Python::curprint_indented(std::string txt, SgUnparse_Info& info)
+{
+    curprint( ws_prefix(info.get_nestingLevel()) );
+    curprint( txt );
+}
+
 /*
  * Expects an SgGlobal scope node that includes a single function declaration
  * with name __main__. This allows us to wrap the program in a __main__ function
@@ -297,11 +304,11 @@ Unparse_Python::unparseCatchOptionStmt(SgCatchOptionStmt* catch_stmt,
                                        SgUnparse_Info& info)
 {
     if (catch_stmt->get_condition() != NULL) {
-        curprint("except ");
+        curprint_indented("except ", info);
         unparseStatement(catch_stmt->get_condition(), info);
         curprint(":\n");
     } else {
-        curprint("except:\n");
+        curprint_indented("except:\n", info);
     }
 
     unparseAsSuite(catch_stmt->get_body(), info);
@@ -403,7 +410,7 @@ Unparse_Python::unparseForStatement(SgForStatement* for_stmt,
     unparseAsSuite(for_stmt->get_loop_body(), info);
 
     if (for_stmt->get_else_body()) {
-        curprint(ws_prefix(info.get_nestingLevel()) + "else:\n");
+        curprint_indented("else:\n", info);
         unparseAsSuite(for_stmt->get_else_body(), info);
     }
 }
@@ -483,7 +490,7 @@ Unparse_Python::unparseIfStmt(SgIfStmt* if_stmt,
     unparseAsSuite(if_stmt->get_true_body(), info);
 
     if (if_stmt->get_false_body() != NULL) {
-        curprint(ws_prefix(info.get_nestingLevel()) + "else:\n");
+        curprint_indented("else:\n", info);
         unparseAsSuite(if_stmt->get_false_body(), info);
     }
 }
@@ -649,7 +656,7 @@ Unparse_Python::unparseTryStmt(SgTryStmt* try_stmt,
         unparseStatement(stmt, info);
 
     if (try_stmt->get_else_body() != NULL) {
-        curprint("else:\n");
+        curprint_indented("else:\n", info);
         unparseAsSuite(try_stmt->get_else_body(), info);
     }
 }
