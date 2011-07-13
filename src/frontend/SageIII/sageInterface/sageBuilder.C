@@ -3526,11 +3526,10 @@ SgTryStmt* SageBuilder::buildTryStmt(SgStatement* body,
                                      SgCatchOptionStmt* catch4
                                      ) {
     ROSE_ASSERT(body != NULL);
-    ROSE_ASSERT(catch0 != NULL);
-
     SgTryStmt* try_stmt = new SgTryStmt(body);
-    try_stmt->append_catch_statement(catch0);
+    body->set_parent(try_stmt);
 
+    if (catch0 != NULL) try_stmt->append_catch_statement(catch0);
     if (catch1 != NULL) try_stmt->append_catch_statement(catch1);
     if (catch2 != NULL) try_stmt->append_catch_statement(catch2);
     if (catch3 != NULL) try_stmt->append_catch_statement(catch3);
@@ -3541,7 +3540,11 @@ SgTryStmt* SageBuilder::buildTryStmt(SgStatement* body,
 
 //! Build a catch statement
 SgCatchOptionStmt* SageBuilder::buildCatchOptionStmt(SgVariableDeclaration* condition, SgStatement* body) {
-  return new SgCatchOptionStmt(condition, body, /* SgTryStmt*= */ NULL);
+  SgCatchOptionStmt* result = new SgCatchOptionStmt(condition, body, /* SgTryStmt*= */ NULL);
+  if (condition) condition->set_parent(result);
+  body->set_parent(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
 }
 
 SgPythonPrintStmt*
