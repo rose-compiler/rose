@@ -353,6 +353,31 @@ void EventReverser::processExpression(SgExpression* expr)
 
             break;
 
+        case V_SgEqualityOp:
+        {
+            SgIfStmt* ifStmt = isSgIfStmt(binOp->get_parent()->get_parent());
+            if (ifStmt)
+                addValueGraphEdge(nodeVertexMap_[lhs], nodeVertexMap_[rhs],
+                        pathNumManager_->getPathNumbers(ifStmt->get_true_body()));
+            
+            createOperatorNode(t, binOp, createValueNode(binOp),
+                    nodeVertexMap_[lhs], nodeVertexMap_[rhs]);
+            break;
+        }
+        
+        case V_SgNotEqualOp:
+        {
+            SgIfStmt* ifStmt = isSgIfStmt(binOp->get_parent()->get_parent());
+            if (ifStmt)
+                addValueGraphEdge(nodeVertexMap_[lhs], nodeVertexMap_[rhs],
+                        pathNumManager_->getPathNumbers(ifStmt->get_false_body()));
+            
+            createOperatorNode(t, binOp, createValueNode(binOp),
+                    nodeVertexMap_[lhs], nodeVertexMap_[rhs]);
+            break;
+        }
+            
+            
         case V_SgAddOp:
         case V_SgSubtractOp:
         case V_SgMultiplyOp:
@@ -361,8 +386,6 @@ void EventReverser::processExpression(SgExpression* expr)
         case V_SgGreaterOrEqualOp:
         case V_SgLessThanOp:
         case V_SgLessOrEqualOp:
-        case V_SgEqualityOp:
-        case V_SgNotEqualOp:
         case V_SgAndOp:
         case V_SgOrOp:
         case V_SgBitAndOp:
@@ -965,13 +988,23 @@ EventReverser::VGEdge EventReverser::addValueGraphEdge(
     // Get the path information of this edge from the source node.
     PathInfos paths = pathNumManager_->getPathNumbers(node->astNode);
     
-    ControlDependences controlDeps = cdg_->getControlDependences(node->astNode);
+    //ControlDependences controlDeps = cdg_->getControlDependences(node->astNode);
     
     //valueGraph_[e] = new ValueGraphEdge(valNode->getCost(), dagIndex, paths);
     //valueGraph_[newEdge] = new ValueGraphEdge(0, dagIndex, paths);
     
-    valueGraph_[newEdge] = new ValueGraphEdge(ValueGraphEdge::TRIVIAL_COST, paths, controlDeps);
+    valueGraph_[newEdge] = new ValueGraphEdge(ValueGraphEdge::TRIVIAL_COST, paths);
     
+    return newEdge;
+}
+
+EventReverser::VGEdge EventReverser::addValueGraphEdge(
+        EventReverser::VGVertex src, 
+        EventReverser::VGVertex tar,
+        const PathInfos& paths)
+{
+    VGEdge newEdge = boost::add_edge(src, tar, valueGraph_).first;
+    valueGraph_[newEdge] = new ValueGraphEdge(ValueGraphEdge::TRIVIAL_COST, paths);
     return newEdge;
 }
 
@@ -997,8 +1030,8 @@ void EventReverser::addValueGraphPhiEdge(
     VGEdge newEdge = boost::add_edge(src, tar, valueGraph_).first;
 
     PathInfos paths = pathNumManager_->getPathNumbers(node1, node2);
-    ControlDependences controlDeps = cdg_->getControlDependences(node1);
-    valueGraph_[newEdge] = new PhiEdge(0, paths, controlDeps);
+    //ControlDependences controlDeps = cdg_->getControlDependences(node1);
+    valueGraph_[newEdge] = new PhiEdge(0, paths);
 }
 
 EventReverser::VGEdge EventReverser::addValueGraphOrderedEdge(
@@ -1040,7 +1073,7 @@ void EventReverser::addValueGraphStateSavingEdges(
     
     VGEdge newEdge = boost::add_edge(src, root_, valueGraph_).first;
     PathInfos paths;
-    ControlDependences controlDeps;
+    //ControlDependences controlDeps;
     
     if (killer)
     {
@@ -1064,7 +1097,7 @@ void EventReverser::addValueGraphStateSavingEdges(
     }
     
     valueGraph_[newEdge] = new StateSavingEdge(
-            cost, paths, controlDeps, killer, scopeKiller);
+            cost, paths, killer, scopeKiller);
     
     //valueGraph_[newEdge] = new StateSavingEdge(
     //        cost, paths, controlDeps, visiblePaths, killer);
@@ -1757,8 +1790,8 @@ void EventReverser::addStateSavingEdges()
             realPaths[muNode->dagIndex] = paths[muNode->dagIndex];
 
             // Null control dependence.
-            ControlDependences controlDeps;
-            valueGraph_[newEdge] = new StateSavingEdge(0, realPaths, controlDeps, NULL);
+            //ControlDependences controlDeps;
+            valueGraph_[newEdge] = new StateSavingEdge(0, realPaths, NULL);
         }
         
 #if 0

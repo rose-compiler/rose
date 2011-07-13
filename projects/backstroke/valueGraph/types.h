@@ -26,6 +26,13 @@ typedef boost::dynamic_bitset<> PathSet;
 
 typedef std::vector<SgInitializedName*> VarName;
 
+struct PathCondition
+{
+    int mask;
+    int compTarget;
+    bool equality;
+};
+
 struct PathInfo : PathSet
 {
     PathInfo() {}

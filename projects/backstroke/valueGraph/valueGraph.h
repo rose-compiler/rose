@@ -339,6 +339,15 @@ private:
 	 *  @returns The new added edge.
 	 */
     VGEdge addValueGraphEdge(VGVertex src, VGVertex tar, ValueGraphEdge* edgeToCopy = NULL);
+    
+    /** Add a new edge to the value graph.
+	 *
+	 *  @param src The source vertex.
+	 *  @param tar The target vertex.
+	 *  @param paths This path information.
+	 *  @returns The new added edge.
+	 */
+    VGEdge addValueGraphEdge(VGVertex src, VGVertex tar, const PathInfos& paths);
 
     /** Add a new edge coming from a phi node to the value graph.
 	 *
@@ -390,7 +399,7 @@ private:
     //! Check if a variable is a state variable.
 	bool isStateVariable(const VarName& name) const
 	{
-        ROSE_ASSERT(name.size());
+        if (name.empty()) return false;
         return isStateVariable(name[0]);
     }
 

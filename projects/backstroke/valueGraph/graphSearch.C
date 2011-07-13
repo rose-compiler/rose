@@ -355,8 +355,9 @@ NEXT:
         
     foreach (VertexWithRoute& nodeWithRoute, allRoutes)
     {
-        set<Route> routes;
+        cout << nodeWithRoute.first << endl;
         
+        vector<Route> routes;
         
         map<PathInfo, int> pathToCost;
         
@@ -381,33 +382,30 @@ NEXT:
             
             
             bool toInsert = true;
-            vector<Route> toRemove;
-            vector<Route> toAdd;
+            vector<Route> newRoutes;
             
-            foreach (const Route& route2, routes)
+            foreach (Route& route2, routes)
             {
-                PathSet p = route2.paths & route.paths;
+                PathInfo p = route2.paths & route.paths;
                 if (p.any())
                 {
                     if (cost < route2.cost)
                     {
-                        toRemove.push_back(route2);
-                        toAdd.push_back(route);
-                        //pathToCost.erase(pathCost.first);
-                        //routes.insert(route);
+                        newRoutes.push_back(route);
+                        route2.paths -= route.paths;
+                    }
+                    else
+                    {
+                        route.paths -= route2.paths;
+                        newRoutes.push_back(route);
                     }
                     toInsert = false;
                 }
             }
             if (toInsert)
-                routes.insert(route);
+                routes.push_back(route);
             
-            // Add and remove routes.
-            foreach (const Route& route, toRemove)
-                routes.erase(route);
-            foreach (const Route& route, toAdd)
-                routes.insert(route);
-            
+            routes.insert(routes.end(), newRoutes.begin(), newRoutes.end());
         }
         
         
@@ -415,6 +413,7 @@ NEXT:
         PathSet paths;
         foreach (const Route& route, routes)
         {
+            cout << route.paths << endl;
             if (paths.empty())
                 paths = route.paths;
             else
@@ -424,6 +423,9 @@ NEXT:
         
         foreach (const Route& route, routes)
         {
+            if (!route.paths.any())
+                continue;
+            
             foreach (const VGEdge& edge, route.edges)
             {
                 PathInfo& paths = edgesInRoute[edge];

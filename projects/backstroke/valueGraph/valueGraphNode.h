@@ -286,8 +286,8 @@ struct ValueGraphEdge
     ValueGraphEdge(int cst, const PathInfos& pths)
     : cost(cst), paths(pths) {}
     
-    ValueGraphEdge(int cst, const PathInfos& pths, const ControlDependences& cd)
-    : cost(cst), paths(pths), controlDependences(cd) {}
+    //ValueGraphEdge(int cst, const PathInfos& pths, const ControlDependences& cd)
+    //: cost(cst), paths(pths), controlDependences(cd) {}
 
     virtual ~ValueGraphEdge() {}
 
@@ -305,8 +305,8 @@ struct ValueGraphEdge
     //! All paths on which this relationship exists.
     PathInfos paths;
     
-    //! All immediate control dependences representing conditions in VG.
-    ControlDependences controlDependences;
+    ////! All immediate control dependences representing conditions in VG.
+    //ControlDependences controlDependences;
 };
 
 //! An edge coming from an operator node.
@@ -328,8 +328,8 @@ struct OrderedEdge : ValueGraphEdge
 //! An edge coming from a phi node.
 struct PhiEdge : ValueGraphEdge
 {
-    PhiEdge(int cst, const PathInfos& pths, const ControlDependences& cd)
-    : ValueGraphEdge(cst, pths, cd), muEdge(false) {}
+    PhiEdge(int cst, const PathInfos& pths)
+    : ValueGraphEdge(cst, pths), muEdge(false) {}
     //PhiEdge(const std::set<ReachingDef::FilteredCfgEdge>* edges)
     //: ValueGraphEdge(0, dagIdx, paths), visiblePathNum(visibleNum) {}
     //! A set of edges indicating where the target def comes from in CFG.
@@ -354,18 +354,18 @@ struct StateSavingEdge : ValueGraphEdge
 //    :   ValueGraphEdge(cost, dagIdx, paths), 
 //        visiblePathNum(visibleNum), killer(killerNode) {}
     
-    StateSavingEdge(int cost, const PathInfos& paths, const ControlDependences& cd,
+    StateSavingEdge(int cost, const PathInfos& paths,
                     SgNode* killerNode, bool isKillerScope = false)
-    :   ValueGraphEdge(cost, paths, cd), 
+    :   ValueGraphEdge(cost, paths), 
         killer(killerNode), 
         scopeKiller(isKillerScope),
         varStored(false) 
     {}
     
-    StateSavingEdge(int cost, const PathInfos& paths, const ControlDependences& cd,
+    StateSavingEdge(int cost, const PathInfos& paths,
                     const std::map<int, PathSet> visiblePaths, 
                     SgNode* killerNode, bool isKillerScope = false)
-    :   ValueGraphEdge(cost, paths, cd), 
+    :   ValueGraphEdge(cost, paths), 
         visiblePaths(visiblePaths), 
         killer(killerNode), 
         scopeKiller(isKillerScope),
