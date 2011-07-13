@@ -14,12 +14,17 @@
 class MemoryMap {
 public:
     /** Mapping permissions. */
-    enum Protection 
-        {
+    enum Protection {
         MM_PROT_READ    = 0x1,          /**< Pages can be read. */
         MM_PROT_WRITE   = 0x2,          /**< Pages can be written. */
         MM_PROT_EXEC    = 0x4,          /**< Pages can be executed. */
-        MM_PROT_NONE    = 0x0           /**< Pages cannot be accessed. */
+        MM_PROT_NONE    = 0x0,          /**< Pages cannot be accessed. */
+        MM_PROT_ANY     = 0x7,          /**< Any access */
+
+        /* Convenience stuff */
+        MM_PROT_RW      = (MM_PROT_READ|MM_PROT_WRITE), /**< Read or write. */                  /*NO_STRINGIFY*/
+        MM_PROT_RX      = (MM_PROT_READ|MM_PROT_EXEC),  /**< Read or execute. */                /*NO_STRINGIFY*/
+        MM_PROT_RWX     = (MM_PROT_ANY),                                                        /*NO_STRINGIFY*/
     };
 
     /** Data structure for memory map names.  Often, memory map element names used for debugging are of the form
