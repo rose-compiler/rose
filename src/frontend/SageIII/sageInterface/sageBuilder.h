@@ -882,7 +882,7 @@ SgCatchOptionStmt* buildCatchOptionStmt(SgVariableDeclaration* condition, SgStat
 // driscoll6 (6/9/2011): Adding support for try stmts.
 // ! Build a try statement.
 SgTryStmt* buildTryStmt(SgStatement* body,
-                        SgCatchOptionStmt* catch0,
+                        SgCatchOptionStmt* catch0=NULL,
                         SgCatchOptionStmt* catch1=NULL,
                         SgCatchOptionStmt* catch2=NULL,
                         SgCatchOptionStmt* catch3=NULL,
