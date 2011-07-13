@@ -4,6 +4,10 @@
  *    to find the address of "main" and stops when it is reached.
  *
  * 2. Change the execution point to be a function which is not normally called.  This demo calls a function named "payload".
+ *
+ * Documentation can be found by running:
+ *    $ doxygen RSIM.dxy
+ *    $ $WEB_BROWSER docs/html/index.html
  */
 
 #include "rose.h"

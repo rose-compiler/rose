@@ -3,6 +3,9 @@
  * Run this demo like this:
  *     $ demo3 ./demo3input
  *
+ * Documentation can be found by running:
+ *    $ doxygen RSIM.dxy
+ *    $ $WEB_BROWSER docs/html/index.html
  *
  *
  * This demo does the following:

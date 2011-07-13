@@ -3,8 +3,9 @@
  * Run this demo like this:
  *   $ demo4 ./demo4input
  *
- * You must have configured ROSE with "--enable-yices" and have libyices.a available.  If not, this demo will still compile but
- * you'll get a failed assertion at run time.
+ * Documentation can be found by running:
+ *    $ doxygen RSIM.dxy
+ *    $ $WEB_BROWSER docs/html/index.html
  *
  *
  *

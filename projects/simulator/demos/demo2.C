@@ -5,6 +5,9 @@
  *
  * The pipe to "cat" is necessary only if you want to actually see the instructions.
  *
+ * Documentation can be found by running:
+ *    $ doxygen RSIM.dxy
+ *    $ $WEB_BROWSER docs/html/index.html
  *
  *
  * The analysis itself is defined in the SignAnalysisExample namespace (see SignAnalysisExample.h).  The analysis values are
