@@ -89,7 +89,8 @@ sage_appendStatements(PyObject *self, PyObject *args)
         switch (sg_target->variantT()) {
             case V_SgGlobal: {
               if (isSgDeclarationStatement(sg_child) == NULL) {
-                  cerr << "adding non-declaration statements to the global scope is not yet supported" << endl;
+                  cerr << "adding non-declaration statements to the global scope is not supported" << endl;
+                  ROSE_ASSERT(false);
               } else {
                   isSgGlobal(sg_target)->get_declarations().push_back(isSgDeclarationStatement(sg_child));
                   sg_child->set_parent(sg_target);
@@ -106,8 +107,12 @@ sage_appendStatements(PyObject *self, PyObject *args)
             }
             case V_SgLambdaRefExp: {
               SgBasicBlock* body = isSgLambdaRefExp(sg_target)->get_functionDeclaration()->get_definition()->get_body();
-              body->append_statement(sg_child);
-              sg_child->set_parent(body);
+              SageInterface::appendStatement(sg_child, body);
+              break;
+            }
+            case V_SgClassDefinition: {
+              SgClassDefinition* class_def = isSgClassDefinition(sg_target);
+              SageInterface::appendStatement(sg_child, class_def);
               break;
             }
             default:
