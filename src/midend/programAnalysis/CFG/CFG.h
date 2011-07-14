@@ -6,33 +6,27 @@
 #include <ProcessAstTree.h>
 #include <CommandOptions.h>
 
-// A path in the class hierarchy: 
-// CFGConfig->BuildCFGConfig->CFGImplTemplate->DataFlowAnalysis->ReachingDefinitionAnalysis
 class CFGConfig {
  public:
-  // Edge types for control flow graphs: executed when condition is true, false, or always executed
   typedef enum {COND_TRUE, COND_FALSE, ALWAYS} EdgeType;
   static std::string EdgeType2String( EdgeType e);
 };
 
-//Abstract interface of building a CFG using Node type, such as data flow info. node ReachingDefNode
 template <class Node>
 class BuildCFGConfig  : public CFGConfig
 {
  public:
   virtual Node* CreateNode() = 0;
   virtual void CreateEdge( Node *n1, Node *n2, EdgeType condval) = 0;
-  //Associating a CFG node to its corresponding AST node
   virtual void AddNodeStmt(Node* n, const AstNodePtr& s) = 0;
   virtual ~BuildCFGConfig() {}
 };
 
 namespace ROSE_Analysis {
-  template <class Node>
-  void BuildCFG ( AstInterface& fa, const AstNodePtr& head, BuildCFGConfig<Node>& g);
-
-  template <class Node>
-  void BuildCFG ( AstInterface& fa, const AstInterface::AstNodeList& head, BuildCFGConfig<Node>& g);
+template <class Node>
+void BuildCFG ( AstInterface& fa, const AstNodePtr& head, BuildCFGConfig<Node>& g);
+template <class Node>
+void BuildCFG ( AstInterface& fa, const AstInterface::AstNodeList& head, BuildCFGConfig<Node>& g);
 };
 
 
@@ -52,7 +46,7 @@ void OA2ROSE_CFG_Translate ( ROSE_CFG_Wrap& wrap, BuildCFGConfig<Node>& ng);
 
 template <class Node>
 void BuildCFG ( AstInterface& fa, const AstNodePtr& head, BuildCFGConfig<Node>& g);
-}; // end namespace OpenAnalysis
+};
 
 bool debug_cfg();
 
@@ -63,7 +57,7 @@ inline std::string CFGConfig::EdgeType2String( EdgeType e)
   case COND_FALSE: return "false";
   case ALWAYS: return "always";
   default:
-          { assert(false); /* Avoid MSVC warning */ return "error"; }
+     assert(false);
   }
 }
 
@@ -148,7 +142,7 @@ class BuildCFGTraverse : public ProcessAstTree
          assert(false);
       };
    }
-  // map s to a CFG node: create a new one if not already mapped 
+      // map s to a CFG node: create a new one if not already mapped 
   Node* MapStmt( AstInterface& fa, const AstNodePtr& s, MapType t, bool add = false) 
    {
      assert(s != AST_NULL);
@@ -342,17 +336,13 @@ class BuildCFGTraverse : public ProcessAstTree
         if (t == AstInterface::PreVisit) {
             Node *lastNode = GetCurNode();
             assert( cond != AST_NULL);
-            //Process test condition expression
             Node *testNode = IsCurNodeEmpty()? AddStmt(fa, lastNode, cond) : MapStmt(fa, cond, START, true);
             AddBranch( lastNode, testNode, CFGConfig::ALWAYS);
-            // Process the false body first
             Node *falseNode = IsBodyEmpty(fa,falseBody)? 0 : MapStmt(fa, falseBody, START);
             if (falseNode != 0)  {
                  AddBranch(testNode, falseNode, CFGConfig::COND_FALSE);
                  SetStmtNode( falseBody, exitNode, EXIT);
             }
-            // Process the true body later since the preorder traversal will
-            // use it's CFG node as the current CFG node
             Node *trueNode = IsBodyEmpty(fa,trueBody)? 0 :MapStmt(fa, trueBody, START);
             if (trueNode != 0) {
                AddBranch(testNode, trueNode, CFGConfig::COND_TRUE);
@@ -415,23 +405,9 @@ class BuildCFGTraverse : public ProcessAstTree
         std::cerr << "processing go to  " ; 
      }
         AstNodePtr dest = _dest;
-        Node *lastNode = GetCurNode( false );
-     // Liao, 11/18/2008. bug fix
-     // Both true and false body of if-stmt may contain a naked (without a Basic block) goto(return etc.)
-     // the first ProcessGoto() of the true body will reset the current node to 0.
-     // So we have to restore it to the right one when the second ProcessGoto() is processing the false body
-     // for a naked false body: 
-     // current CFG node ==false body's START CFG node== return's START CFG node)
-     if (lastNode==0)
-      {
-        lastNode = GetStmtNode(s,START);
-         if (debug_cfg())
-          std::cerr << "processing go to: GetCurNode() return 0, restoring it to:"<<lastNode <<std::endl; ;
-      }
-        assert (lastNode != 0);
+        Node *lastNode = GetCurNode( true );
         AddStmt(fa, lastNode, s); 
-         // If it is a goto jumping to the position after the destination
-         // return; break;
+
         if (fa.IsGotoAfter(s)) {
             Node* destNode = MapStmt(fa, dest, EXIT);
             AddBranch( lastNode, destNode, CFGConfig::ALWAYS);
@@ -440,7 +416,7 @@ class BuildCFGTraverse : public ProcessAstTree
               SetStmtNode(dest, destNode, EXIT); 
             }
         }
-        else { // IsGotoBefore(s): goto, continue
+        else { 
             Node* destNode =  MapStmt(fa, dest, START);
             AddBranch( lastNode, destNode, CFGConfig::ALWAYS);
             AstNodePtr prev = fa.GetPrevStmt(dest);
@@ -477,7 +453,7 @@ class BuildCFGTraverse : public ProcessAstTree
          }
         return  ProcessAstTree::ProcessStmt(fa, s);
      }
-}; //end class BuildCFGTraverse..
+};
 
 template <class Node>
 void ROSE_Analysis::BuildCFG( AstInterface& fa, const AstNodePtr& head, BuildCFGConfig<Node>& g)

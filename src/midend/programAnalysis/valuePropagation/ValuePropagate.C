@@ -1,4 +1,3 @@
-
 #include <ValuePropagate.h>
 #include <SinglyLinkedList.h>
 #include <CommandOptions.h>
