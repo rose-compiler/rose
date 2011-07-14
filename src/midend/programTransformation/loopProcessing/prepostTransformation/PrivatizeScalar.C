@@ -1,5 +1,3 @@
-
-
 #include <PrivatizeScalar.h>
 #include <LoopInfoInterface.h>
 #include <DefUseChain.h>
@@ -16,11 +14,12 @@ bool PrivatizeScalar:: cmdline_configure()
 }
 
 AstNodePtr PrivatizeScalar::
-operator()( LoopTransformInterface& la, const AstNodePtr& root)
+operator()( const AstNodePtr& root)
 {
-  AstInterface& fa = la;
+  AstInterface& fa = LoopTransformInterface::getAstInterface();
   DefaultDUchain defuse;
-  defuse.build(fa, root, &la.getAliasInterface(), la.getSideEffectInterface());
+  defuse.build(fa, root, LoopTransformInterface::getAliasInfo(), 
+                LoopTransformInterface::getSideEffectInterface());
   for (DefaultDUchain::NodeIterator nodes = defuse.GetNodeIterator(); 
        !nodes.ReachEnd(); ++nodes) {
      DefUseChainNode *n = *nodes;
