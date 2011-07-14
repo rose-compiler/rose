@@ -738,6 +738,8 @@ int GetPrecedence(int variant)
           case V_SgDictionaryComprehension:   return 16;
           case V_SgMembershipOp:        return 16;
           case V_SgNonMembershipOp:     return 16;
+          case V_SgIsOp:                return 16;
+          case V_SgIsNotOp:             return 16;
 
 
 #if 0
