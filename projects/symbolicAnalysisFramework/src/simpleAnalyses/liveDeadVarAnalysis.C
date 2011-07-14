@@ -170,7 +170,7 @@ string LiveVarsLattice::str(string indent)
 // ##### LiveDeadVarsAnalysis #####
 // ################################
 
-LiveDeadVarsAnalysis::LiveDeadVarsAnalysis(SgProject *project, funcSideEffectUses* fseu): fseu(fseu), IntraBWDataflow()
+LiveDeadVarsAnalysis::LiveDeadVarsAnalysis(SgProject *project, funcSideEffectUses* fseu): fseu(fseu)
 {
 }
 
@@ -181,157 +181,126 @@ void LiveDeadVarsAnalysis::genInitState(const Function& func, const DataflowNode
 	initLattices.push_back(new LiveVarsLattice());	
 }
 
-bool LiveDeadVarsAnalysis::transfer(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo) 
-{ 
-	string indent="    ";
-	bool modified = false;
-	
-	// At every variable reference, add the variable to liveVars since it is used.
-	// At every variable assignment, remove the variable from liveVars since its original value just got killed.
-	// At every reference to an expression, 
-	// 	- Add the expression's arguments to liveVars since the expression uses the arguments 
-	// 	- Remove the expression itself from liveVars because expressions that are arguments of other expressions
-	// 	     appear earlier in the CFG, meaning that this expression is the definition of the expression and its
-	// 	     parent expression is its use.
-	
-	// !!! NOTE: WE NEED TO PERFORM AN ADDITIONAL ANALYSIS TO DETERMINE IF THE SUB-EXPRESSIONS THAT 
-	// !!!       ARE USED IN n.getNode() ARE JUST COMPUTING A REFERENCE TO A MEMORY LOCATION AND 
-	// !!!       SHOULD DECLARE THAT MEMORY LOCATION LIVE. WE DON'T NEED TO DO THE SAME FOR THE THE 
-	// !!!       SUB-EXPRESSIONS THAT DESCRIBE MEMORY THAT IS DEFINED SINCE WE'RE OK WITH MISTAKING 
-	// !!!       SOME DEAD EXPRESSIONS AND VARIABLES FOR BEING LIVE.
-	
-	LiveVarsLattice* liveLat = dynamic_cast<LiveVarsLattice*>(*(dfInfo.begin()));
-	
-	if(liveDeadAnalysisDebugLevel>=1) Dbg::dbg << indent << "liveLat="<<liveLat->str(indent + "    ")<<endl;
-	// Make sure that all the lattice is initialized
-	liveLat->initialize();
-	
-	// Expressions that are assigned by the current operation
-	set<SgExpression*> assignedExprs;
-	// Variables that are assigned by the current operation
-	set<varID> assignedVars;
-	
-	// Variables that are used/read by the current operation
-	set<varID> usedVars;
-	
-	if(isSgExpression(n.getNode())) {
-		if(liveLat->isLiveVar(SgExpr2Var(isSgExpression(n.getNode())))) {
+void LiveDeadVarsTransfer::visit(SgExpression *sgn)
+{
+	if(isSgExpression(sgn)) {
+		if(liveLat->isLiveVar(SgExpr2Var(isSgExpression(sgn)))) {
 			if(liveDeadAnalysisDebugLevel>=1) Dbg::dbg << indent << "Live Expression"<<endl;
 			// Plain assignment: lhs = rhs
-			if(isSgAssignOp(n.getNode())) {
-				assignedExprs.insert(isSgAssignOp(n.getNode())->get_lhs_operand());
+			if(isSgAssignOp(sgn)) {
+				assignedExprs.insert(isSgAssignOp(sgn)->get_lhs_operand());
 				
 				// If the lhs of the assignment is a complex expression (i.e. it refers to a variable that may be live) OR
 				// if is a known expression that is known to may-be-live
 				// THIS CODE ONLY APPLIES TO RHSs THAT ARE SIDE-EFFECT-FREE AND WE DON'T HAVE AN ANALYSIS FOR THAT YET
-				/*if(!isVarExpr(isSgAssignOp(n.getNode())->get_lhs_operand()) || 
-				   (isVarExpr(isSgAssignOp(n.getNode())->get_lhs_operand()) && 
-				    liveLat->isLiveVar(SgExpr2Var(isSgAssignOp(n.getNode())->get_lhs_operand()))))
+				/*if(!isVarExpr(isSgAssignOp(sgn)->get_lhs_operand()) || 
+				   (isVarExpr(isSgAssignOp(sgn)->get_lhs_operand()) && 
+				    liveLat->isLiveVar(SgExpr2Var(isSgAssignOp(sgn)->get_lhs_operand()))))
 				{ */
-				usedVars.insert(SgExpr2Var(isSgAssignOp(n.getNode())->get_rhs_operand()));
+				usedVars.insert(SgExpr2Var(isSgAssignOp(sgn)->get_rhs_operand()));
 			// Initializer for a variable
-			} else if(isSgAssignInitializer(n.getNode())) {
-				usedVars.insert(SgExpr2Var(isSgAssignInitializer(n.getNode())->get_operand()));
+			} else if(isSgAssignInitializer(sgn)) {
+				usedVars.insert(SgExpr2Var(isSgAssignInitializer(sgn)->get_operand()));
 			// Initializer for a function arguments
-			} else if(isSgConstructorInitializer(n.getNode())) {
-				SgExprListExp* exprList = isSgConstructorInitializer(n.getNode())->get_args();
+			} else if(isSgConstructorInitializer(sgn)) {
+				SgExprListExp* exprList = isSgConstructorInitializer(sgn)->get_args();
 				for(SgExpressionPtrList::iterator expr=exprList->get_expressions().begin();
 				    expr!=exprList->get_expressions().end(); expr++)
 					usedVars.insert(SgExpr2Var(*expr));
 			// Initializer that captures internal stucture of structs or arrays ("int x[2] = {1,2};", it is the "1,2")
-			} else if(isSgAggregateInitializer(n.getNode())) {
-				SgExprListExp* exprList = isSgAggregateInitializer(n.getNode())->get_initializers();
+			} else if(isSgAggregateInitializer(sgn)) {
+				SgExprListExp* exprList = isSgAggregateInitializer(sgn)->get_initializers();
 				for(SgExpressionPtrList::iterator expr=exprList->get_expressions().begin();
 				    expr!=exprList->get_expressions().end(); expr++)
 					usedVars.insert(SgExpr2Var(*expr));
 			// Designated Initializer 
-			} else if(isSgDesignatedInitializer(n.getNode())) {
-				SgExprListExp* exprList = isSgDesignatedInitializer(n.getNode())->get_designatorList();
+			} else if(isSgDesignatedInitializer(sgn)) {
+				SgExprListExp* exprList = isSgDesignatedInitializer(sgn)->get_designatorList();
 				for(SgExpressionPtrList::iterator expr=exprList->get_expressions().begin();
 				    expr!=exprList->get_expressions().end(); expr++)
 					usedVars.insert(SgExpr2Var(*expr));
 			// Constant expressions
-			} else if(isSgValueExp(n.getNode())) {
+			} else if(isSgValueExp(sgn)) {
 			// Binary Operations
-			} else if(isSgBinaryOp(n.getNode())) {
+			} else if(isSgBinaryOp(sgn)) {
 				// Self-update expressions, where the lhs is assigned
-				if(isSgCompoundAssignOp(n.getNode())) {
-				   assignedExprs.insert(isSgBinaryOp(n.getNode())->get_lhs_operand());
+				if(isSgCompoundAssignOp(sgn)) {
+				   assignedExprs.insert(isSgBinaryOp(sgn)->get_lhs_operand());
 				}
 				// Both the lhs and rhs are used
-			   usedVars.insert(SgExpr2Var(isSgBinaryOp(n.getNode())->get_lhs_operand()));
-		   	usedVars.insert(SgExpr2Var(isSgBinaryOp(n.getNode())->get_rhs_operand()));
+			   usedVars.insert(SgExpr2Var(isSgBinaryOp(sgn)->get_lhs_operand()));
+		   	usedVars.insert(SgExpr2Var(isSgBinaryOp(sgn)->get_rhs_operand()));
 			// Unary Operations
-			} else if(isSgUnaryOp(n.getNode())) {
+			} else if(isSgUnaryOp(sgn)) {
 				// If this is an auto-update operation
-				if(isSgMinusMinusOp(n.getNode()) || isSgPlusPlusOp(n.getNode())) {
+				if(isSgMinusMinusOp(sgn) || isSgPlusPlusOp(sgn)) {
 					// The argument is defined
-					assignedExprs.insert(isSgUnaryOp(n.getNode())->get_operand());
+					assignedExprs.insert(isSgUnaryOp(sgn)->get_operand());
 				}
 				// The argument is used
-				usedVars.insert(SgExpr2Var(isSgUnaryOp(n.getNode())->get_operand()));
+				usedVars.insert(SgExpr2Var(isSgUnaryOp(sgn)->get_operand()));
 			// Conditionals (condE ? trueE : falseE)
-			} else if(isSgConditionalExp(n.getNode())) {
+			} else if(isSgConditionalExp(sgn)) {
 				// The arguments are used
-				usedVars.insert(SgExpr2Var(isSgConditionalExp(n.getNode())->get_conditional_exp()));
-				usedVars.insert(SgExpr2Var(isSgConditionalExp(n.getNode())->get_true_exp()));
-				usedVars.insert(SgExpr2Var(isSgConditionalExp(n.getNode())->get_false_exp()));
+				usedVars.insert(SgExpr2Var(isSgConditionalExp(sgn)->get_conditional_exp()));
+				usedVars.insert(SgExpr2Var(isSgConditionalExp(sgn)->get_true_exp()));
+				usedVars.insert(SgExpr2Var(isSgConditionalExp(sgn)->get_false_exp()));
 			// Delete
-			} else if(isSgDeleteExp(n.getNode())) {
+			} else if(isSgDeleteExp(sgn)) {
 				// Delete expressions return nothing
 				// The arguments are used
-				usedVars.insert(SgExpr2Var(isSgDeleteExp(n.getNode())->get_variable()));
+				usedVars.insert(SgExpr2Var(isSgDeleteExp(sgn)->get_variable()));
 			// New
-			} else if(isSgNewExp(n.getNode())) {
+			} else if(isSgNewExp(sgn)) {
 				// The placement arguments are used
-				SgExprListExp* exprList = isSgNewExp(n.getNode())->get_placement_args();
+				SgExprListExp* exprList = isSgNewExp(sgn)->get_placement_args();
 				for(SgExpressionPtrList::iterator expr=exprList->get_expressions().begin();
 				    expr!=exprList->get_expressions().end(); expr++)
 					usedVars.insert(SgExpr2Var(*expr));
 				
 				// The placement arguments are used
-				exprList = isSgNewExp(n.getNode())->get_constructor_args()->get_args();
+				exprList = isSgNewExp(sgn)->get_constructor_args()->get_args();
 				for(SgExpressionPtrList::iterator expr=exprList->get_expressions().begin();
 				    expr!=exprList->get_expressions().end(); expr++)
 					usedVars.insert(SgExpr2Var(*expr));
 				
 				// The built-in arguments are used (DON'T KNOW WHAT THESE ARE!)
-				usedVars.insert(isSgNewExp(n.getNode())->get_builtin_args());
+				usedVars.insert(isSgNewExp(sgn)->get_builtin_args());
 			// Function Calls
-			} else if(isSgFunctionCallExp(n.getNode())) {
+			} else if(isSgFunctionCallExp(sgn)) {
 				// !!! CURRENTLY WE HAVE NO NOTION OF VARIABLES THAT IDENTIFY FUNCTIONS, SO THIS CASE IS EXCLUDED FOR NOW
 				/*// The expression that identifies the called function is used
-				usedVars.insert(isSgFunctionCallExp(n.getNode())->get_function());*/
+				usedVars.insert(isSgFunctionCallExp(sgn)->get_function());*/
 				
 				// The function call's arguments are used
-				SgExprListExp* exprList = isSgFunctionCallExp(n.getNode())->get_args();
+				SgExprListExp* exprList = isSgFunctionCallExp(sgn)->get_args();
 				for(SgExpressionPtrList::iterator expr=exprList->get_expressions().begin();
 				    expr!=exprList->get_expressions().end(); expr++)
 					usedVars.insert(SgExpr2Var(*expr));
 				
 				// If this function has no definition and the user provided a class to provide 
 				// the variables that are used by such functions
-				if(isSgFunctionCallExp(n.getNode())->getAssociatedFunctionDeclaration() && 
-					isSgFunctionCallExp(n.getNode())->getAssociatedFunctionDeclaration()->get_definition()==NULL &&
+				if(isSgFunctionCallExp(sgn)->getAssociatedFunctionDeclaration() && 
+					isSgFunctionCallExp(sgn)->getAssociatedFunctionDeclaration()->get_definition()==NULL &&
 					fseu) {
-					set<varID> funcUsedVars = fseu->usedVarsInFunc(Function(isSgFunctionCallExp(n.getNode())->getAssociatedFunctionDeclaration()), n, state);
+					set<varID> funcUsedVars = fseu->usedVarsInFunc(Function(isSgFunctionCallExp(sgn)->getAssociatedFunctionDeclaration()), dfNode, nodeState);
 					usedVars.insert(funcUsedVars.begin(), funcUsedVars.end());
 				}
 			// Function Reference
 			// !!! CURRENTLY WE HAVE NO NOTION OF VARIABLES THAT IDENTIFY FUNCTIONS, SO THIS CASE IS EXCLUDED FOR NOW
-			/*} else if(isSgFunctionRefExp(n.getNode())) {*/
-			/*} else if(isSgMemberFunctionRefExp(n.getNode())) {*/
+			/*} else if(isSgFunctionRefExp(sgn)) {*/
+			/*} else if(isSgMemberFunctionRefExp(sgn)) {*/
 			// Sizeof
-			} else if(isSgSizeOfOp(n.getNode())) {
+			} else if(isSgSizeOfOp(sgn)) {
 				// The arguments are used
-				usedVars.insert(SgExpr2Var(isSgSizeOfOp(n.getNode())->get_operand_expr()));
+				usedVars.insert(SgExpr2Var(isSgSizeOfOp(sgn)->get_operand_expr()));
 			// !!! DON'T KNOW HOW TO HANDLE THESE
-			/*} else if(isSgStatementExpression(n.getNode())) {(*/
+			/*} else if(isSgStatementExpression(sgn)) {(*/
 			// This
-			} else if(isSgThisExp(n.getNode())) {
+			} else if(isSgThisExp(sgn)) {
 			// Typeid
 			// !!! DON'T KNOW WHAT TO DO HERE SINCE THE RETURN VALUE IS A TYPE AND THE ARGUMENT'S VALUE IS NOT USED
-			/*} else if(isSgTypeIdOp(n.getNode())) {*/
+			/*} else if(isSgTypeIdOp(sgn)) {*/
 			// Var Args
 			// !!! DON'T HANDLE THESE RIGHT NOW. WILL HAVE TO IN THE FUTURE
 			/*	SgVarArgOp 
@@ -349,59 +318,68 @@ bool LiveDeadVarsAnalysis::transfer(const Function& func, const DataflowNode& n,
 			// !!! WHAT IS THIS?
 			/*	SgVariantExpression*/
 			// Variable Reference (we know this expression is live)
-			} else if(isSgVarRefExp(n.getNode())) {
-				usedVars.insert(SgExpr2Var(isSgVarRefExp(n.getNode())));
+			} else if(isSgVarRefExp(sgn)) {
+				usedVars.insert(SgExpr2Var(isSgVarRefExp(sgn)));
 			}
 		} else {
 			if(liveDeadAnalysisDebugLevel>=1) Dbg::dbg << indent << "Dead Expression"<<endl;
 		}
 		
 		// Remove the expression itself since it has no uses above itself
-		if(liveDeadAnalysisDebugLevel>=1) Dbg::dbg << indent << "   Removing "<<SgExpr2Var(isSgExpression(n.getNode()))<<endl;
-		modified = liveLat->remVar(SgExpr2Var(isSgExpression(n.getNode()))) || modified;
+		if(liveDeadAnalysisDebugLevel>=1) Dbg::dbg << indent << "   Removing "<<SgExpr2Var(isSgExpression(sgn))<<endl;
+		modified = liveLat->remVar(SgExpr2Var(isSgExpression(sgn))) || modified;
 	// Variable Declaration
-	} else if(isSgInitializedName(n.getNode())) {
-		SgInitializedName* initName = isSgInitializedName(n.getNode());
-		varID var(initName);
-		assignedVars.insert(var);
-		// If this is the instance of SgInitializedName that occurrs immediately after the declaration's initializer AND
-		// this declaration has an initializer, add it as a use
-		if(n.getIndex()==1 && isSgInitializedName(n.getNode())->get_initializer())
-			usedVars.insert(SgExpr2Var(isSgInitializedName(n.getNode())->get_initializer()));
-	} else if(isSgStatement(n.getNode())) {
-		if(isSgReturnStmt(n.getNode())) {
-			usedVars.insert(SgExpr2Var(isSgReturnStmt(n.getNode())->get_expression()));
-		} else if(isSgExprStatement(n.getNode())) {
-			usedVars.insert(SgExpr2Var(isSgExprStatement(n.getNode())->get_expression()));
-		} else if(isSgCaseOptionStmt(n.getNode())) {
-			usedVars.insert(SgExpr2Var(isSgCaseOptionStmt(n.getNode())->get_key()));
-			usedVars.insert(SgExpr2Var(isSgCaseOptionStmt(n.getNode())->get_key_range_end()));
-		} else if(isSgIfStmt(n.getNode())) {
-			//Dbg::dbg << "SgIfStmt"<<endl;
-			ROSE_ASSERT(isSgExprStatement(isSgIfStmt(n.getNode())->get_conditional()));
-			//Dbg::dbg << "    conditional stmt="<<Dbg::escape(isSgExprStatement(isSgIfStmt(n.getNode())->get_conditional())->unparseToString()) << " | " << isSgExprStatement(isSgIfStmt(n.getNode())->get_conditional())->class_name()<<endl;
-			//Dbg::dbg << "    conditional expr="<<Dbg::escape(isSgExprStatement(isSgIfStmt(n.getNode())->get_conditional())->get_expression()->unparseToString()) << " | " << isSgExprStatement(isSgIfStmt(n.getNode())->get_conditional())->get_expression()->class_name()<<endl;
-			//Dbg::dbg << "    conditional var="<<SgExpr2Var(isSgExprStatement(isSgIfStmt(n.getNode())->get_conditional())->get_expression())<<endl;
-			usedVars.insert(SgExpr2Var(isSgExprStatement(isSgIfStmt(n.getNode())->get_conditional())->get_expression()));
-		} else if(isSgForStatement(n.getNode())) {
-			//Dbg::dbg << "test="<<Dbg::escape(isSgForStatement(n.getNode())->get_test()->unparseToString()) << " | " << isSgForStatement(n.getNode())->get_test()->class_name()<<endl;
-			//Dbg::dbg << "increment="<<Dbg::escape(isSgForStatement(n.getNode())->get_increment()->unparseToString()) << " | " << isSgForStatement(n.getNode())->get_increment()->class_name()<<endl;
-			
-			ROSE_ASSERT(isSgExprStatement(isSgForStatement(n.getNode())->get_test()));
-			usedVars.insert(SgExpr2Var(isSgExprStatement(isSgForStatement(n.getNode())->get_test())->get_expression()));
-			
-			usedVars.insert(SgExpr2Var(isSgForStatement(n.getNode())->get_increment()));
-		} else if(isSgWhileStmt(n.getNode())) {
-			ROSE_ASSERT(isSgExprStatement(isSgWhileStmt(n.getNode())->get_condition()));
-			//Dbg::dbg << "condition="<<Dbg::escape(isSgWhileStmt(n.getNode())->get_condition()->unparseToString()) << " | " << isSgWhileStmt(n.getNode())->get_condition()->class_name()<<endl;
-			usedVars.insert(SgExpr2Var(isSgExprStatement(isSgWhileStmt(n.getNode())->get_condition())->get_expression()));
-		} else if(isSgDoWhileStmt(n.getNode())) {
-			ROSE_ASSERT(isSgExprStatement(isSgDoWhileStmt(n.getNode())->get_condition()));
-			//Dbg::dbg << "condition="<<Dbg::escape(isSgDoWhileStmt(n.getNode())->get_condition()->unparseToString()) << " | " << isSgDoWhileStmt(n.getNode())->get_condition()->class_name()<<endl;
-			usedVars.insert(SgExpr2Var(isSgExprStatement(isSgDoWhileStmt(n.getNode())->get_condition())->get_expression()));
-		}
 	}
-	
+}
+
+void LiveDeadVarsTransfer::visit(SgInitializedName *sgn) {
+  varID var(sgn);
+  assignedVars.insert(var);
+  // If this is the instance of SgInitializedName that occurrs immediately after the declaration's initializer AND
+  // this declaration has an initializer, add it as a use
+  if(dfNode.getIndex()==1 && sgn->get_initializer())
+    usedVars.insert(SgExpr2Var(sgn->get_initializer()));
+}
+
+void LiveDeadVarsTransfer::visit(SgReturnStmt *sgn) {
+  usedVars.insert(SgExpr2Var(sgn->get_expression()));
+}
+void LiveDeadVarsTransfer::visit(SgExprStatement *sgn) {
+  usedVars.insert(SgExpr2Var(sgn->get_expression()));
+}
+void LiveDeadVarsTransfer::visit(SgCaseOptionStmt *sgn) {
+  usedVars.insert(SgExpr2Var(sgn->get_key()));
+  usedVars.insert(SgExpr2Var(sgn->get_key_range_end()));
+}
+void LiveDeadVarsTransfer::visit(SgIfStmt *sgn) {
+  //Dbg::dbg << "SgIfStmt"<<endl;
+  ROSE_ASSERT(isSgExprStatement(sgn->get_conditional()));
+  //Dbg::dbg << "    conditional stmt="<<Dbg::escape(isSgExprStatement(sgn->get_conditional())->unparseToString()) << " | " << isSgExprStatement(sgn->get_conditional())->class_name()<<endl;
+  //Dbg::dbg << "    conditional expr="<<Dbg::escape(isSgExprStatement(sgn->get_conditional())->get_expression()->unparseToString()) << " | " << isSgExprStatement(sgn->get_conditional())->get_expression()->class_name()<<endl;
+  //Dbg::dbg << "    conditional var="<<SgExpr2Var(isSgExprStatement(sgn->get_conditional())->get_expression())<<endl;
+  usedVars.insert(SgExpr2Var(isSgExprStatement(sgn->get_conditional())->get_expression()));
+}
+void LiveDeadVarsTransfer::visit(SgForStatement *sgn) {
+  //Dbg::dbg << "test="<<Dbg::escape(sgn->get_test()->unparseToString()) << " | " << sgn->get_test()->class_name()<<endl;
+  //Dbg::dbg << "increment="<<Dbg::escape(sgn->get_increment()->unparseToString()) << " | " << sgn->get_increment()->class_name()<<endl;
+			
+  ROSE_ASSERT(isSgExprStatement(sgn->get_test()));
+  usedVars.insert(SgExpr2Var(isSgExprStatement(sgn->get_test())->get_expression()));
+  usedVars.insert(SgExpr2Var(sgn->get_increment()));
+}
+void LiveDeadVarsTransfer::visit(SgWhileStmt *sgn) {
+  ROSE_ASSERT(isSgExprStatement(sgn->get_condition()));
+  //Dbg::dbg << "condition="<<Dbg::escape(sgn->get_condition()->unparseToString()) << " | " << sgn->get_condition()->class_name()<<endl;
+  usedVars.insert(SgExpr2Var(isSgExprStatement(sgn->get_condition())->get_expression()));
+}
+void LiveDeadVarsTransfer::visit(SgDoWhileStmt *sgn) {
+  ROSE_ASSERT(isSgExprStatement(sgn->get_condition()));
+  //Dbg::dbg << "condition="<<Dbg::escape(sgn->get_condition()->unparseToString()) << " | " << sgn->get_condition()->class_name()<<endl;
+  usedVars.insert(SgExpr2Var(isSgExprStatement(sgn->get_condition())->get_expression()));
+}
+
+bool LiveDeadVarsTransfer::finish()
+{
 	// First process assignments, then uses since we may assign and use the same variable
 	// and in the end we want to first remove it and then re-insert it.
 	

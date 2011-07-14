@@ -93,6 +93,53 @@ class LiveVarsLattice : public FiniteLattice
 	string str(string indent="");
 };
 
+// Virtual class that allows users of the LiveDeadVarsAnalysis to mark certain variables as 
+// being used inside a function call if the function's body is not available.
+class funcSideEffectUses
+{
+public:
+  // Returns the set of variables that are used in a call to the given function for which a body has not been provided.
+  // The function is also provided with the DataflowNode where the function was called, as well as its state.
+  virtual set<varID> usedVarsInFunc(const Function& func, const DataflowNode& n, NodeState& state)=0;
+};
+
+class LiveDeadVarsTransfer : public IntraDFTransferVisitor
+{
+  string indent;
+  LiveVarsLattice* liveLat;
+
+  bool modified;
+  // Expressions that are assigned by the current operation
+  set<SgExpression*> assignedExprs;
+  // Variables that are assigned by the current operation
+  set<varID> assignedVars;
+  // Variables that are used/read by the current operation
+  set<varID> usedVars;
+
+  funcSideEffectUses *fseu;
+
+public:
+  LiveDeadVarsTransfer(const Function &f, const DataflowNode &n, NodeState &s, const vector<Lattice*> &d, funcSideEffectUses *fseu_)
+    : IntraDFTransferVisitor(f, n, s, d), indent("    "), liveLat(dynamic_cast<LiveVarsLattice*>(*(dfInfo.begin()))), modified(false), fseu(fseu_)
+  {
+	if(liveDeadAnalysisDebugLevel>=1) Dbg::dbg << indent << "liveLat="<<liveLat->str(indent + "    ")<<endl;
+	// Make sure that all the lattice is initialized
+	liveLat->initialize();
+  }
+
+  bool finish();
+
+  void visit(SgExpression *);
+  void visit(SgInitializedName *);
+  void visit(SgReturnStmt *);
+  void visit(SgExprStatement *);
+  void visit(SgCaseOptionStmt *);
+  void visit(SgIfStmt *);
+  void visit(SgForStatement *);
+  void visit(SgWhileStmt *);
+  void visit(SgDoWhileStmt *);
+};
+
 /* Computes an over-approximation of the set of variables that are live at each DataflowNode. It may consider a given
    variable as live when in fact it is not. */
 // !!! CURRENTLY THE ANALYSIS IS IMPRECISE BECAUSE:
@@ -101,17 +148,6 @@ class LiveVarsLattice : public FiniteLattice
 // !!!    - IT DOES NOT CONSIDER INTERNALS OF ARRAYS OR OTHER HEAP MEMORY
 class LiveDeadVarsAnalysis : public IntraBWDataflow
 {
-	public:
-	// Virtual class that allows users of the LiveDeadVarsAnalysis to mark certain variables as 
-	// being used inside a function call if the function's body is not available.
-	class funcSideEffectUses
-	{
-		public:
-		// Returns the set of variables that are used in a call to the given function for which a body has not been provided.
-		// The function is also provided with the DataflowNode where the function was called, as well as its state.
-		virtual set<varID> usedVarsInFunc(const Function& func, const DataflowNode& n, NodeState& state)=0;
-	};
-
 	protected:
 	funcSideEffectUses* fseu;
 	
@@ -122,7 +158,11 @@ class LiveDeadVarsAnalysis : public IntraBWDataflow
 	void genInitState(const Function& func, const DataflowNode& n, const NodeState& state,
 	                  vector<Lattice*>& initLattices, vector<NodeFact*>& initFacts);
 	
-	bool transfer(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo);
+  boost::shared_ptr<IntraDFTransferVisitor> getTransferVisitor(const Function& func, const DataflowNode& n,
+                                                               NodeState& state, const vector<Lattice*>& dfInfo)
+  { return boost::shared_ptr<IntraDFTransferVisitor>(new LiveDeadVarsTransfer(func, n, state, dfInfo, fseu)); }
+
+  bool transfer(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo) { assert(0); return false; }
 };
 
 // Initialize vars to hold all the variables and expressions that are live at DataflowNode n
