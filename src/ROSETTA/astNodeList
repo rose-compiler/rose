@@ -450,6 +450,7 @@ SgMemberFunctionDeclaration
 SgMemberFunctionRefExp
 SgMemberFunctionSymbol
 SgMemberFunctionType
+SgMembershipOp
 SgMinusAssignOp
 SgMinusMinusOp
 SgMinusOp
@@ -474,6 +475,7 @@ SgNewExp
 SgNode
 SgNotEqualOp
 SgNotOp
+SgNonMembershipOp
 SgNullExpression
 SgNullStatement
 SgNullifyStatement
