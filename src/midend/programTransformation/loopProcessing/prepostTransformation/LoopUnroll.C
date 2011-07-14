@@ -1,5 +1,3 @@
-
-
 #include <vector>
 #include <string>
 #include <algorithm>
@@ -11,65 +9,71 @@
 #include <SymbolicVal.h>
 #include <assert.h>
 #include <CommandOptions.h>
+#include <AutoTuningInterface.h>
 
-using namespace std;
-
+unsigned LoopUnrolling::unrollsize = 0;
+LoopUnrolling::UnrollOpt LoopUnrolling::opt = DEFAULT;
 std::string LoopUnrolling:: cmdline_help() 
    { 
-    return "-unroll [locond] [nvar] <unrollsize> : unrolling innermost loops at <unrollsize>";
+    return "-unroll [-locond] [-nvar] [poet] <-unrollsize> : unrolling innermost loops at <unrollsize>";
    }
 
-bool LoopUnrolling:: cmdline_configure()
+void LoopUnrolling::
+cmdline_configure(const std::vector<std::string>& argv,
+                                std::vector<std::string>* unknown_args) 
 {
-        opt = DEFAULT;
-        vector<string>& opts = CmdOptions::GetInstance()->opts;
-        // Must use -unroll to turn this on
-        vector<string>::const_iterator i = std::find(opts.begin(), opts.end(), "-unroll");
-        if (i == opts.end()) 
-          return false;
-        size_t idx = i - opts.begin();
-        opts.erase(opts.begin() + idx);
-        if (idx != opts.size() && opts[idx] == "locond") {
-           opt = (LoopUnrolling::UnrollOpt)(opt | LoopUnrolling::COND_LEFTOVER);
-           opts.erase(opts.begin() + idx);
-        }
-        if (idx != opts.size() && opts[idx] == "nvar") {
-           opt = (LoopUnrolling::UnrollOpt)(opt | LoopUnrolling::USE_NEWVAR);
-           opts.erase(opts.begin() + idx);
-        }
-        int localUnrollsize = 0;
-        if (idx != opts.size()) {
-          sscanf(opts[idx].c_str(), "%d",&localUnrollsize);
-          if (localUnrollsize >= 1) {
-            unrollsize = localUnrollsize;
-            opts.erase(opts.begin() + idx);
-          } else {
+     unsigned index=0;
+     if (!cmdline_find(argv, index, "-unroll", unknown_args)) return;
+     ++index;
+     if (index < argv.size() && argv[index] == "-locond") {
+        opt = (LoopUnrolling::UnrollOpt)(opt | LoopUnrolling::COND_LEFTOVER);
+        ++index;
+     }
+     if (index < argv.size() && argv[index] == "-nvar") {
+        opt = (LoopUnrolling::UnrollOpt)(opt | LoopUnrolling::USE_NEWVAR);
+        ++index;
+     }
+     if (index < argv.size() && argv[index] == "poet") {
+          opt = (LoopUnrolling::UnrollOpt)(opt | LoopUnrolling::POET_TUNING);
+          ++index;
+     }
+     if (index < argv.size() && ((unrollsize = atoi(argv[index].c_str())) > 0)) 
+         ++index;
+     else
+        {
              std::cerr << "invalid unrolling size. Use default (4)\n";
              unrollsize = 4;
-          }
         }
-        return true;
+     if (unknown_args != 0)
+         append_args(argv,index,*unknown_args);
 }
 
 bool LoopUnrolling::operator() ( AstInterface& fa, const AstNodePtr& s, AstNodePtr& r)
 {
    bool isLoop = false;
-   if (enclosingloop == s || (enclosingloop == AST_NULL && (isLoop = fa.IsLoop(s)))) 
-   {
-       // find the outer most enclosing loop of s 
+   if (enclosingloop == s || (enclosingloop == AST_NULL && (isLoop = fa.IsLoop(s)))) {
        for (enclosingloop = fa.GetParent(s); 
             enclosingloop != AST_NULL && !fa.IsLoop(enclosingloop); 
             enclosingloop = fa.GetParent(enclosingloop));
        if (!isLoop)
           return false;
    }
-   assert( la != 0);
 
    AstNodePtr body;
    SymbolicVal stepval, ubval, lbval;
    SymbolicVar ivar;
-   // is Canonical loop?
-   if (la->IsFortranLoop(s, &ivar, &lbval, &ubval, &stepval, &body)) { 
+   if (!SymbolicValGenerator::IsFortranLoop(fa, s, &ivar, &lbval, &ubval, &stepval, &body)) 
+      return false; 
+    
+   if (opt & POET_TUNING) {
+     AutoTuningInterface* tune = LoopTransformInterface::getAutoTuningInterface();
+     if (tune == 0) {
+        std::cerr << "ERROR: AutoTuning Interface not defined!\n";
+        assert(0);
+     }
+     tune->UnrollLoop(fa,s, unrollsize);
+   }
+   else {
           AstNodePtr r = s;
           SymbolicVal nstepval = stepval * unrollsize;
           SymbolicVal nubval = ubval;
@@ -82,11 +86,9 @@ bool LoopUnrolling::operator() ( AstInterface& fa, const AstNodePtr& s, AstNodeP
           SymbolicVal loopval = ubval - lbval + 1;
           if (stepval.isConstInt(stepnum) && loopval.isConstInt(loopnum) 
                && !(loopnum % stepnum)) {
-            // Check if there are leftover iterations if loop step is not 1
              hasleft = false; 
           }
           else {
-          // Create a loop for leftover  iterations when loopnum % stepnum !=0 
              nubval = ubval - SymbolicVal(unrollsize - 1);
              if (opt & COND_LEFTOVER) {
                  leftbody = fa.CreateBlock();
@@ -117,7 +119,6 @@ bool LoopUnrolling::operator() ( AstInterface& fa, const AstNodePtr& s, AstNodeP
                nvar = SymbolicVar(nvarname,body);
           }
           bodylist.push_back(body);
-          // Generate unrolled loop's body
           for (int i = 1; i < unrollsize; ++i) {
               AstNodePtr bodycopy = fa.CopyAstTree(origbody);
               if (opt & USE_NEWVAR) {
@@ -142,7 +143,6 @@ bool LoopUnrolling::operator() ( AstInterface& fa, const AstNodePtr& s, AstNodeP
                  leftbody = body1;
               }
           }
-          // Insert the loop for leftover iterations when iterationCount%step !=0
           if (hasleft) {
               fa.InsertStmt( r, lefthead, false, true);
           }
