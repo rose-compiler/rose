@@ -1,4 +1,3 @@
-
 #include <sstream>
 
 #include <SinglyLinkedList.h>
@@ -11,6 +10,7 @@
 #include <LoopTreeDummyNode.h>
 #include <StmtDepAnal.h>
 
+/*QY: modify $prep$ to save the value of $v$ to variable named name_i; */
 void save_value( AstInterface& fa, SymbolicVal& v, const std::string& name, int i, AstNodePtr& prep)
 {
   SymbolicValType t = v.GetValType();
@@ -35,7 +35,7 @@ void save_value( AstInterface& fa, SymbolicVal& v, const std::string& name, int 
 
 void Notify( const LoopTreeObserveInfo &e)
     {
-         LoopTreeNode *orig = e.GetObserveNode();
+         const LoopTreeNode *orig = e.GetObserveNode();
          orig->Notify(e);
     }
 
@@ -94,12 +94,11 @@ class ObserveTransform
 };
 
 LoopTreeNode*  LoopTreeDistributeNode ::
-Distribute( LoopTreeNode *n, SelectLoopTreeNode sel, ObserveTransform &ob)
+Distribute( LoopTreeNode *n, SelectLoopTreeNode sel, ObserveTransform &ob, 
+            LoopTreeNode** loc)
 {
-  if (sel(n))
-      return n;
-  if (n->ChildCount() == 0)
-      return 0;
+  if (sel(n)) return n; 
+  if (n->ChildCount() == 0) { return 0; }
 
   LoopTreeNode *tmp = 0, *tmp1 = 0,*n1 = 0;
   LoopTreeNode *cur = n->FirstChild(); 
@@ -110,19 +109,19 @@ Distribute( LoopTreeNode *n, SelectLoopTreeNode sel, ObserveTransform &ob)
     if (tmp != tmp1) 
        break;
   }
-  if (cur == 0 && tmp == tmp1)
-    return n;
+  if (cur == 0 && tmp == tmp1) return n; 
 
   if (tmp1 == n->FirstChild() && tmp == 0) {
+      if (loc != 0) *loc = tmp1;
       while (cur != 0) {
           tmp1 = cur;
           cur = cur->NextSibling();
           tmp = Distribute( tmp1, sel, ob);
           if (tmp != 0) 
              break;
+          else if (loc != 0) *loc = tmp1;
       }
-      if (cur == 0 && tmp == 0)
-        return 0;
+      if (cur == 0 && tmp == 0) { if (loc != 0) *loc = 0; return 0; }
       n1 = n->Clone();
   }
   else {
@@ -154,34 +153,50 @@ Distribute( LoopTreeNode *n, SelectLoopTreeNode sel, ObserveTransform &ob)
   return n1;
 }
 
+LoopTreeNode*  LoopTreeDistributeNode :: 
+DistributeBefore(LoopTreeNode* parent, LoopTreeNode* loc)
+{
+  assert(parent != 0);
+  LoopTreeNode* n = parent->Clone();
+  n->Link( parent, LoopTreeNode::AsPrevSibling);
+  LoopTreeNode *cur = parent->FirstChild(); 
+  assert(cur != 0);
+  for ( ;cur != 0 && cur != loc; ) {
+      LoopTreeNode* tmp = cur;
+      cur = cur->NextSibling();
+      UnlinkNode(tmp);
+      tmp->Link(n, LoopTreeNode::AsLastChild);
+  }
+  UnlinkNode(loc);
+  loc->Link(n, LoopTreeNode::AsLastChild);
+  if (n != 0) {
+     DistNodeInfo info( parent, n);
+     Notify(info);
+  }
+  return n;
+}
+
 LoopTreeNode* LoopTreeDistributeNode ::
-operator () ( LoopTreeNode *n, SelectLoopTreeNode stmts, bool before)
+operator () ( LoopTreeNode *n, SelectLoopTreeNode stmts, Location config)
 {
    ObserveTransform ob;
-   LoopTreeNode *n1 = Distribute( n, stmts, ob);
+   LoopTreeNode* loc = 0;
+   LoopTreeNode *n1 = Distribute( n, stmts, ob, &loc);
    if (n1 != n && n1 != 0) {
-     if (before)
-        n1->Link( n, LoopTreeNode::AsPrevSibling);
-     else
-        n1->Link( n, LoopTreeNode::AsNextSibling);
+     switch(config) {
+     case ORIG:
+        if (loc != 0) {
+            loc = DistributeBefore(n, loc);
+        }
+     case BEFORE:
+        n1->Link( n, LoopTreeNode::AsPrevSibling); break;
+     case AFTER:
+        n1->Link( n, LoopTreeNode::AsNextSibling); break;
+     default: assert(0);
+     }
      ob.Notify();
    }
    return n1;
-}
-
-LoopTreeNode*  LoopTreeDistributeNode :: operator () (LoopTreeNodeIterator nodes)
-{
-  LoopTreeNode* p = nodes.Current()->Parent();
-  LoopTreeNode* n = p->Clone();
-  n->Link( p, LoopTreeNode::AsPrevSibling);
-  for ( ; !nodes.ReachEnd(); ++nodes) {
-    LoopTreeNode *tmp = nodes.Current();
-    UnlinkNode(tmp);
-    tmp->Link(n, LoopTreeNode::AsLastChild);
-  }
-  DistNodeInfo info( p, n);
-  Notify(info);
-  return n;
 }
 
 LoopTreeNode* LoopTreeSplitStmt ::
@@ -378,7 +393,8 @@ class OptimizeLoopTreeImpl : public LoopTreeObserver
       }
   void UpdateSwapNode( const SwapNodeInfo &info)
      {
-       LoopTreeNode *node = info.GetObserveNode(), *that = info.GetOtherNode();
+       const LoopTreeNode *node = info.GetObserveNode();
+       LoopTreeNode *that = info.GetOtherNode();
        assert (cur == node); 
        if (info.GetDirection() < 0) {
             if (!markSet.IsMember(that) ) {
@@ -419,16 +435,67 @@ class OptimizeLoopTreeImpl : public LoopTreeObserver
 void OptimizeLoopTree( LoopTreeNode *r)
  { OptimizeLoopTreeImpl()(r); }
 
+bool SelectArray:: insert_selinfo
+   (LoopTreeGetVarBound &context, /*QY: context info. for symbolic eval*/
+    int arrDim,                   /*QY: the array dimension being processed*/
+    SymbolicVal& selincr,         /*QY: increment info. of current selection*/
+    SymbolicVal& selsize,         /*QY: size info of current selection*/
+    int minLevel, int maxLevel,   /*QY: accLoop levels of current selection */
+    const SymbolicVal& startdiff) /*QY: difference in starting address to copy*/
+{
+   bool mod = true;
+   std::list<ArrayDim>::iterator p = selinfo.begin(); 
+   /*QY: does selinfo already has a compatible dimension? */
+   while (p != selinfo.end()) {
+       ArrayDim& cursel = *p;
+       if (cursel.get_arrDim() < arrDim) /*QY:do nothing; keep going */; 
+       else if (cursel.get_arrDim() > arrDim) { /*QY:insert a new dim here*/
+           selinfo.insert(p, ArrayDim(arrDim, selincr,selsize,minLevel,maxLevel));
+           break;
+       }
+       else if (cursel.get_incr() == selincr) 
+       { /* QY:extend this dimension if necessary*/
+          if (startdiff != 0 || !(cursel.get_size() >= selsize)) {
+              cursel.size = cursel.size + startdiff;
+              cursel.size = Max(cursel.size, selsize, &context); 
+          }
+          else mod = false;
+          break;
+       }
+       else if (startdiff != 0) assert(false); /* QY: cannot handle this yet*/
+       else {
+         CompareRel rel = CompareVal(cursel.incr, selincr, &context);
+         if (cursel.incr == 1 || (rel & REL_LE)) {
+            /*QY: an additional selection for arrDim; insert here*/ 
+            selinfo.insert(p, ArrayDim(arrDim, selincr,selsize,minLevel,maxLevel));
+            break;
+         }
+         /*QY: else an additional selection for arrDim; insert later*/ 
+       }
+       ++p;
+    }
+   if (p == selinfo.end()) { 
+       selinfo.push_back(ArrayDim(arrDim, selincr,selsize,minLevel,maxLevel));
+   }
+   return mod;
+}
+
 bool SelectArray::
-select(LoopTransformInterface& la, LoopTreeNode* stmt, LoopTreeNode* cproot,
+select( LoopTreeNode* stmt, LoopTreeNode* cproot,
          AstInterface::AstNodeList& index) 
 {
-   AstInterface& fa = la;
+   AstInterface& fa = LoopTransformInterface::getAstInterface();
    bool mod = false;
+
+//std::cerr << "cproot=" << cproot->toString() << "\n";
+//std::cerr << "stmt=" << stmt->toString() << "\n";
 
    std::vector <SymbolicVar> ivars;
    std::vector <std::pair<SymbolicVar, SymbolicVal> > repl;
    std::vector <SymbolicBound> bounds;
+   /*QY: ivars: index vars of surrounding loops
+         bounds: constant bounds of loop ivars; 
+         repl: ivars that need to be renamed with surrouding loop ivars */
    LoopTreeGetVarConstBound boundop(stmt,cproot);
    for (LoopTreeNode* c = stmt; c != cproot; c = c->Parent()) {
       LoopInfo* info = c->GetLoopInfo();
@@ -444,21 +511,29 @@ select(LoopTransformInterface& la, LoopTreeNode* stmt, LoopTreeNode* cproot,
             repl.push_back(std::pair<SymbolicVar,SymbolicVal>(vinfo.GetVar(), b.lb));
       }
    }
+   int loopnum = ivars.size();
    LoopTreeGetVarBound context(cproot);
    AstInterface::AstNodeList::const_iterator indexp = index.begin();
    for (int i = 0; indexp != index.end(); ++i, ++indexp) {
+      /*QY: cur: the current array subscript in terms of loop ivars */
       SymbolicVal cur = SymbolicValGenerator::GetSymbolicVal(fa, *indexp);
       for (size_t k = 0; k < repl.size(); ++k) 
          cur = ReplaceVal(cur, repl[k].first, repl[k].second);
+
       typedef std::pair<SymbolicVal, std::vector<SymbolicVal> > CopyDim; 
       std::list <CopyDim> coeffs; 
+      /*QY: curdim.second contains coefficients of each loop ivar in cur*/
       CopyDim curdim(1, std::vector<SymbolicVal>());
       SymbolicVal lb = 
-        DecomposeAffineExpression(la, cur, ivars, curdim.second, ivars.size()); 
+        DecomposeAffineExpression(cur, ivars, curdim.second, ivars.size()); 
       for (size_t j = 0; j < ivars.size(); ++j) {
+/*std::cerr << "j = " << j << "; ivar[j] = " << ivars[j] << "; curdim[j]=" << curdim.second[j] << "\n";
+*/
            lb = lb + curdim.second[j] * bounds[j].lb;
       }
-      coeffs.push_back( curdim);
+      coeffs.push_back( curdim); /* currently only a single dimension*/
+
+      /* compute new address of array copy starting address*/
       SymbolicVal& curstart = selstart[i]; 
       SymbolicVal startdiff = 0;
       if (curstart.IsNIL())
@@ -468,7 +543,9 @@ select(LoopTransformInterface& la, LoopTreeNode* stmt, LoopTreeNode* cproot,
          startdiff = curstart - newstart;
          curstart = newstart;
       }
-      while (coeffs.size()) {
+      /* may need to split some dimensions into multiple ones*/
+//std::cerr << "cur=" << cur.toString() << "\n";
+      do {
         curdim = coeffs.front();
         coeffs.pop_front();
         SymbolicVal incr = curdim.first;
@@ -478,115 +555,52 @@ select(LoopTransformInterface& la, LoopTreeNode* stmt, LoopTreeNode* cproot,
              if (cut != 1) {
                curdim.second.push_back(0);  
                CopyDim split(cut*incr, std::vector<SymbolicVal>()); 
-               if (SplitEquation(la, curdim.second, cut, bounds, context, split.second))
+               if (SplitEquation(curdim.second, cut, bounds, context, split.second))
                    coeffs.push_back(split);
              }
            }
         }
         SymbolicVal selsize = lb - curstart+1;
-        for (size_t j = 0; j < ivars.size(); ++j) {
+        int minindex = loopnum, maxindex = -1;
+        for (int j = 0; j < loopnum; ++j) {
             SymbolicVal cut = curdim.second[j];
+//td::cerr << "j = " << j << "; cut = " << cut.toString() << "\n";
             if (cut != 0) {
+               /* find loops that enumerate different elems of array*/
                selsize = selsize + (bounds[j].ub - bounds[j].lb) * cut;
-             
+               if (minindex > j) { minindex = j; }
+               if (maxindex < j) { maxindex = j; }
             }
         }
-        if (selsize <= 1 && startdiff == 0)
-           continue;
-        std::list<ArrayDim>::iterator p = selinfo.begin(); 
-        for ( ; p != selinfo.end(); ++p) {
-            ArrayDim& cursel = *p;
-            if (cursel.dim < i) 
-                 continue;
-            else if (cursel.dim > i) {
-                mod = true;
-                selinfo.insert(p, ArrayDim(i, incr,selsize));
-                break;
-            }
-            else {
-              if (cursel.incr == incr) {
-                if (startdiff != 0 || !(cursel.size >= selsize)) {
-                   mod = true;
-                   cursel.size = cursel.size + startdiff;
-                   cursel.size = Max(cursel.size, selsize, &context); 
-                }
-                break;
-              }
-              else if (startdiff != 0)
-                 assert(false);
-              else if (CompareVal(incr * selsize, cursel.incr, 
-                                &context) & REL_LE) 
-                 continue;
-              else if (CompareVal(cursel.size*cursel.incr, incr,
-                                &context) & REL_LE) {
-                mod = true;
-                selinfo.insert(p, ArrayDim(i, incr,selsize));
-                break;
-              }
-              else {
-                mod= true;
-                selsize = Max(cursel.size * cursel.incr, incr * selsize, 
-                              &context); 
-                std::list<ArrayDim>::iterator p1 = p; 
-                for ( ; p1 != selinfo.end(); p = p1++) {
-                  ArrayDim& sel1 = *p1;
-                  assert(sel1.dim >= i);
-                  if (sel1.dim > i) { 
-                      (*p).size = selsize;
-                      (*p).incr = 1;
-                      break;
-                  } 
-                  else if (sel1.incr == 1) {
-                      sel1.size = Max(sel1.size, selsize, &context);
-                      selinfo.erase(p);
-                      break;
-                  }
-                  else if (CompareVal(sel1.size * sel1.incr, incr,&context)
-                               & REL_LE) {
-                      sel1.size = Max(sel1.size, selsize / sel1.incr);
-                      selinfo.erase(p);
-                      break;
-                  }
-                  else {
-                    selsize = Max(selsize, sel1.size * sel1.incr, &context);
-                    selinfo.erase(p);
-                  }
-                }
-                if (p1 == selinfo.end()) {
-                   (*p).size = selsize;
-                   (*p).incr = 1;
-                } 
-                break;
-              }
-           }
-         }
-         if (p == selinfo.end()) { 
-               mod = true;
-               selinfo.push_back(ArrayDim(i, incr,selsize));
-         }
+        if (minindex > maxindex) { 
+            /*QY: No loop inside cproot enumerate the array*/
+           minindex = maxindex = loopnum; 
+        }
+        mod = insert_selinfo(context, i, incr, selsize, loopnum-maxindex-1,loopnum-minindex-1, startdiff); 
       } 
+      while (coeffs.size()); 
    }
    return mod;
 }
 
 std::string SelectArray::toString() const
 {
-  std::string r = "(";
+  std::string r = arrname + "(";
   std::list<ArrayDim>::const_iterator selp = selinfo.begin();
   for (size_t i = 0; i < selstart.size(); ++i) {
       r = r + selstart[i].toString();
-      for ( ; selp != selinfo.end() && size_t((*selp).dim) == i; ++selp) 
-         r = r + ":" + (*selp).incr.toString() + ":" + (*selp).size.toString();
+      for ( ; selp != selinfo.end() && size_t((*selp).get_arrDim()) == i; ++selp) 
+         r = r + ":" + (*selp).get_incr().toString() + ":" + (*selp).get_size().toString() + ":";
       r = r + "; ";
   }
-  r = r + ")"; 
+  r = r + ")" + ":" + AstToString(prep); 
   return r;
 }
 
 CopyArrayConfig::
-CopyArrayConfig( AstInterface& fa, const std::string& arr, const AstNodeType& base, 
-                const SelectArray& _sel, LoopTreeNode* root)
-   : shift(0), arrname(arr), basetype(base), sel(_sel)
+CopyArrayConfig( AstInterface& fa, const SelectArray& _sel, 
+      CopyArrayOpt _opt, LoopTreeNode* root)
+   : shift(0), sel(_sel), opt(_opt)
 { 
    if (root != 0)
         shift = root->GetLoopInfo();
@@ -596,8 +610,9 @@ CopyArrayConfig( AstInterface& fa, const std::string& arr, const AstNodeType& ba
      for (size_t i = 0; i < sel.arr_dim(); ++i) 
         copyvec.push_back(0);
      for (SelectArray::iterator p = sel.begin(); !(p == sel.end()); ++p) {
-        SymbolicVal& cur = copyvec[p.cur_dim()];
-        cur = cur + p.cur_size() * p.cur_incr();
+        SelectArray::ArrayDim& cursel = *p;
+        SymbolicVal& cur = copyvec[cursel.get_arrDim()];
+        cur = cur + cursel.get_size() * cursel.get_incr();
      }
      bool succ = false;
      for (size_t j = 0; j < sel.arr_dim(); ++j) {
@@ -618,18 +633,26 @@ CopyArrayConfig( AstInterface& fa, const std::string& arr, const AstNodeType& ba
         arrshift.clear();
      }
    }   
-
-   set_bufsize(fa); 
-   set_bufname(fa); 
    if (shift != 0) {
-        bufshift = buf_offset(fa, arrshift);
+        bufshift = sel.buf_offset(fa, arrshift);
         assert(bufshift != 0);
    }
+
+   if  (shift_buffer())
+      opt = (CopyArrayOpt)(opt | SHIFT_COPY);
+   else opt = (CopyArrayOpt)(opt & (~SHIFT_COPY));
+   if (sel.need_allocate_buffer())
+      opt = (CopyArrayOpt)(opt | ALLOC_COPY);
+   else opt = (CopyArrayOpt)(opt & (~ALLOC_COPY));
+   if (sel.need_delete_buffer())
+      opt = (CopyArrayOpt)(opt | DELETE_COPY);
+   else opt = (CopyArrayOpt)(opt & (~DELETE_COPY));
 } 
 
-void CopyArrayConfig:: set_bufname(AstInterface& fa)
+void SelectArray:: set_bufname(AstInterface& fa)
 {
     AstNodeType buftype = basetype;
+    assert(bufsize.size() >= 1);
     SymbolicVal copysize = bufsize[bufsize.size()-1];
     if (!scalar_repl()) {
        AstInterface::AstNodeList bufsizes;
@@ -649,12 +672,12 @@ void CopyArrayConfig:: set_bufname(AstInterface& fa)
        }
     }
 }
-void CopyArrayConfig:: set_bufsize(AstInterface& fa)
+void SelectArray:: set_bufsize(AstInterface& fa)
 {
-      // unsigned dim = sel.sel_dim();
       int i = 0;
-      for (SelectArray::iterator p = sel.begin(); !(p == sel.end()); ++p,++i) {
-         SymbolicVal& cur = p.cur_size();
+      for (SelectArray::iterator p = begin(); !(p == end()); ++p,++i) {
+         SymbolicVal& cur = (*p).size;
+         /*QY: modify prep to save the copy size to variable arrname_csz_i */
          save_value(fa, cur, arrname+"_csz", i, prep);
          bufsize.push_back(cur);
       }
@@ -662,6 +685,7 @@ void CopyArrayConfig:: set_bufsize(AstInterface& fa)
       SymbolicVal cursize = 1;
       for (int j = bufsize.size()-1; j >= 0; --j) {  
          SymbolicVal tmp = bufsize[j];
+         /*QY: modify prep to save the buf size to variable arrname_bsz_i */
          save_value(fa, cursize, arrname+"_bsz", j, prep);
          bufsize[j] = cursize;
          cursize = cursize * tmp;
@@ -669,20 +693,15 @@ void CopyArrayConfig:: set_bufsize(AstInterface& fa)
       bufsize.push_back(cursize);
 }
 
-bool CopyArrayConfig:: scalar_repl() const
+bool SelectArray:: scalar_repl() const
 {
-   unsigned dim = sel.sel_dim();
+   unsigned dim = sel_dim();
    int bufsizeval = -1;
    return (bufsize[dim].isConstInt(bufsizeval) && bufsizeval <= 5);
 }
- 
-AstNodePtr CopyArrayConfig::
-buf_codegen(AstInterface& fa, const SymbolicVal& bufoffset) const
+AstNodePtr SelectArray::
+buf_codegen(AstInterface& fa, int offsetval) const
 {
-   if (scalar_repl()) {
-      int offsetval = -1;
-      if (!bufoffset.isConstInt(offsetval))
-          assert(false);
       if (offsetval == 0)
          return fa.CreateVarRef(bufname);
       else {
@@ -690,35 +709,46 @@ buf_codegen(AstInterface& fa, const SymbolicVal& bufoffset) const
          out << bufname << "_" << offsetval;
          return fa.CreateVarRef(out.str());
       }
-   }
-   else {
-      AstInterface::AstNodeList bufindex;
-      bufindex.push_back( bufoffset.CodeGen(fa));
-      return fa.CreateArrayAccess( fa.CreateVarRef(bufname), bufindex);
-   }
 }
 
-SymbolicVal CopyArrayConfig::
+ 
+AstNodePtr SelectArray::
+buf_codegen(AstInterface& fa, const SymbolicVal& bufoffset) const
+{
+   int offsetval=-1;
+   if (!bufoffset.isConstInt(offsetval)) {
+      AstInterface::AstNodeList bufindex;
+      AstNodePtr offsetAST = bufoffset.CodeGen(fa);
+      bufindex.push_back(offsetAST);
+      return fa.CreateArrayAccess( fa.CreateVarRef(bufname), bufindex);
+   }
+   return buf_codegen(fa, offsetval);
+}
+
+SymbolicVal SelectArray::
 buf_offset( AstInterface& fa, std::vector<SymbolicVal>& arrindex) const
 {
    SymbolicVal bufoffset = 0;
-   SelectArray::const_iterator selp = sel.begin();
+   SelectArray::const_iterator selp = begin();
    int j = 0;
    for (size_t i = 0; i < arrindex.size(); ++i) {
       SymbolicVal offset = arrindex[i];
       if (offset == 0)
          continue;
-      for  ( ; !(selp == sel.end()) && (size_t)selp.cur_dim() < i; ++selp,++j);
-      for  ( ; !(selp == sel.end()) && (size_t)selp.cur_dim() == i; ++selp,++j) {
-         SymbolicVal offset1 = offset / selp.cur_incr();
+      for  ( ; !(selp == end()) && (size_t)(*selp).dim < i; ++selp,++j);
+      for  ( ; !(selp == end()) && (size_t)(*selp).dim == i; ++selp,++j) {
+         const ArrayDim& curdim = (*selp);
+         SymbolicVal offset1 = offset / curdim.incr;
          SymbolicVal offset2;
          if (HasFraction(offset1, &offset2)) {
+   if (offset2 >= curdim.size) { assert(0); }
             bufoffset = bufoffset + offset2 * bufsize[j];
             if (offset2 != 0)
-               offset = offset - offset2 * selp.cur_incr();
+               offset = offset - offset2 * (*selp).incr;
          } 
          else {
-            bufoffset = bufoffset + offset2 * bufsize[j];
+   if (offset1 >= curdim.size) { assert(0); }
+            bufoffset = bufoffset + offset1 * bufsize[j];
             break;
          }
       }
@@ -726,7 +756,7 @@ buf_offset( AstInterface& fa, std::vector<SymbolicVal>& arrindex) const
    return bufoffset;
 }
 
-AstNodePtr CopyArrayConfig::
+AstNodePtr SelectArray::
 buf_codegen( AstInterface& fa, AstInterface::AstNodeList& arrindex) const
 {
    std::vector <SymbolicVal> indexval;
@@ -734,14 +764,20 @@ buf_codegen( AstInterface& fa, AstInterface::AstNodeList& arrindex) const
    for (AstInterface::AstNodeList::const_iterator indexp = arrindex.begin();
           indexp != arrindex.end(); ++indexp, ++i) {
       SymbolicVal curindexval = SymbolicValGenerator::GetSymbolicVal(fa, *indexp);
-      SymbolicVal offset = curindexval - sel.sel_start(i);
+      SymbolicVal offset = curindexval - sel_start(i);
       indexval.push_back(offset);
    } 
    SymbolicVal offset = buf_offset(fa, indexval);
-   return buf_codegen(fa, offset);
+   if (scalar_repl()) {
+      int offsetval = -1;
+      if (!offset.isConstInt(offsetval)) assert(0);
+      return buf_codegen(fa, offsetval);
+   }
+   else
+      return buf_codegen(fa, offset);
 }
 
-AstNodePtr CopyArrayConfig:: delete_codegen(AstInterface& fa) const
+AstNodePtr SelectArray:: delete_codegen(AstInterface& fa) const
 {
       int sizeval = -1;
       SymbolicVal sz = bufsize[bufsize.size()-1];
@@ -750,18 +786,18 @@ AstNodePtr CopyArrayConfig:: delete_codegen(AstInterface& fa) const
       return AST_NULL;
 }
 
-bool CopyArrayConfig:: need_allocate_buffer() const
+bool SelectArray:: need_allocate_buffer() const
 {
   if (prep != 0)
       return true;
   return bufsize[bufsize.size()-1].GetValType() != VAL_CONST; 
 }
-bool CopyArrayConfig:: need_delete_buffer() const
+bool SelectArray:: need_delete_buffer() const
 {
   return bufsize[bufsize.size()-1].GetValType() != VAL_CONST; 
 }
 
-AstNodePtr CopyArrayConfig::allocate_codegen(AstInterface& fa) const
+AstNodePtr SelectArray::allocate_codegen(AstInterface& fa) const
 {
    // int sizeval = -1;
    SymbolicVal sz = bufsize[bufsize.size()-1];
@@ -784,209 +820,13 @@ AstNodePtr CopyArrayConfig::allocate_codegen(AstInterface& fa) const
      return prep; 
 }
 
-std::string CopyArrayConfig::toString() const
-{
-  std::string r = arrname + sel.toString() + ":" + AstToString(prep); 
-  if (shift != 0) {
-      r = r + " : shift " + shift->toString();
-/*
-      for (int i = 0; i < shift.size(); ++i)
-         r = r + shiftbuf[i]->toString() + "-";
-*/
-  }
-  return r;
-}
-
-void CopyArrayConfig::
-copy_scalar_codegen(LoopTransformInterface& la, 
-                    SelectArray::const_iterator selp, 
-                    std::vector<SymbolicVal>& arrindex, CopyOpt opt,
-                    AstNodePtr& r, int &size) const
-{
-  AstInterface& fa = la;
-  if (selp == sel.end()) {
-    AstNodePtr lhs = buf_codegen(fa, SymbolicVal(size++));
-    AstNodePtr rhs;
-    if (opt == SHIFT_COPY) {
-        SymbolicVal offset = bufshift + size - 1;
-        if (offset < bufsize[bufsize.size()-1]) 
-            rhs = buf_codegen(fa, offset);
-    }
-    if (rhs == 0) {
-      AstInterface::AstNodeList indexlist;
-      for (std::vector<SymbolicVal>::const_iterator indexp = arrindex.begin();
-            indexp != arrindex.end(); ++indexp) 
-              indexlist.push_back((*indexp).CodeGen(fa));
-      rhs = la.CreateArrayAccess(fa.CreateVarRef(arrname),indexlist); 
-    }
-    AstNodePtr init;
-    if (opt == INIT_COPY || opt == SHIFT_COPY) 
-        init = fa.CreateAssignment(lhs,rhs);
-    else if (opt == SAVE_COPY)
-         init = fa.CreateAssignment(rhs,lhs);
-    else
-         assert(false);
-    fa.BlockAppendStmt(r, init);
-    return;
-  }
-  SelectArray::const_iterator selp1 = selp;
-  ++selp1;
-  SymbolicVal curindex = arrindex[selp.cur_dim()];
-  int copynum = 0;
-  if (!selp.cur_size().isConstInt(copynum)) 
-       assert(false);
-  copy_scalar_codegen(la, selp1, arrindex, opt, r, size); 
-  for (int k = 1; k < copynum; ++k) {
-    curindex = curindex + selp.cur_incr();
-    arrindex[selp.cur_dim()] = curindex;
-    copy_scalar_codegen(la, selp1, arrindex, opt, r, size); 
-  }
-}
-
-void CopyArrayConfig:: 
-copy_loop_codegen(LoopTransformInterface& la, SelectArray::const_iterator selp, 
-                  std::vector<SymbolicVal>& arrindex, CopyOpt opt,
-                  AstNodePtr& r, const AstNodePtr& bufoffset) const
-{
-  AstInterface& fa = la;
-  if (selp == sel.end()) {
-    AstInterface::AstNodeList bufindex;
-    bufindex.push_back(bufoffset);
-    AstNodePtr lhs = la.CreateArrayAccess(fa.CreateVarRef(bufname),bufindex);
-
-    AstInterface::AstNodeList indexlist;
-    AstNodePtr rhs;
-    if (opt == SHIFT_COPY) {
-        bufindex.clear();
-        bufindex.push_back(
-            fa.CreateBinaryOP(AstInterface::BOP_PLUS, fa.CopyAstTree(bufoffset),
-                                               bufshift.CodeGen(fa)));
-        rhs = fa.CreateArrayAccess(fa.CreateVarRef(bufname), bufindex); 
-    }
-    else {
-       for (std::vector<SymbolicVal>::const_iterator indexp = arrindex.begin();
-            indexp != arrindex.end(); ++indexp) 
-              indexlist.push_back((*indexp).CodeGen(fa));
-       AstNodePtr arrnode = fa.CreateVarRef(arrname);
-       rhs = la.CreateArrayAccess(arrnode, indexlist); 
-     }
-     AstNodePtr init;
-     if (opt == INIT_COPY || opt == SHIFT_COPY) 
-       init = fa.CreateAssignment(lhs,rhs);
-     else if (opt == SAVE_COPY)
-       init = fa.CreateAssignment(rhs,lhs);
-     else
-       assert(false);
-     fa.BlockAppendStmt( r, init);
-     fa.BlockAppendStmt( r,
-             fa.CreateAssignment( fa.CopyAstTree(bufoffset), 
-                      fa.CreateBinaryOP(AstInterface::BOP_PLUS,
-                                           fa.CopyAstTree(bufoffset),
-                                                       fa.CreateConstInt(1))));
-     return;
-  }
-   int cpsize = 0, cpincr = 0;
-   if (selp.cur_size().isConstInt(cpsize) && selp.cur_incr().isConstInt(cpincr))  {
-      int dim = selp.cur_dim();
-      SymbolicVal& curindex = arrindex[dim];
-      ++selp;
-      copy_loop_codegen( la, selp, arrindex, opt, r, bufoffset); 
-      int i = 1;
-      if (opt == SHIFT_COPY) {
-         for ( ; i < cpsize-arrshift[dim]; ++i) {
-            curindex = curindex + cpincr;
-            copy_loop_codegen(la,selp,arrindex,opt,r,fa.CopyAstTree(bufoffset)); 
-         }
-         opt = INIT_COPY;
-      }
-      for ( ; i < cpsize; ++i) {
-         curindex = curindex + cpincr;
-         copy_loop_codegen(la,selp,arrindex,opt,r,fa.CopyAstTree(bufoffset)); 
-      }
-   }
-   else {
-      std::string ivarname = fa.NewVar(fa.GetType("int"));
-      AstNodePtr ivar = fa.CreateVarRef(ivarname); 
-
-      int dim = selp.cur_dim();
-      SymbolicVal cursize = selp.cur_size(), curincr = selp.cur_incr();
-      ++selp;
-    
-      SymbolicVal lb = 0;
-      SymbolicVal ub = (cursize-1)*curincr;  
-      SymbolicVal curshift;
-      if (opt == SHIFT_COPY && (curshift = arrshift[dim]) != 0 
-          && curshift > curincr) {
-        SymbolicVal ub1 = ub - curshift;
-        AstNodePtr tmpbody = fa.CreateBlock();
-        AstNodePtr tmpcopy = fa.CreateLoop( ivar, fa.CreateConstInt(0),
-                                            ub1.CodeGen(fa),
-                                            curincr.CodeGen(fa), tmpbody, false);
-        fa.BlockAppendStmt(r, tmpcopy);
-        copy_loop_codegen( la, selp, arrindex, SHIFT_COPY, tmpbody, bufoffset); 
-        SymbolicVal tmp = (ub1 + curincr)/ curincr;
-        HasFraction(tmp, &lb);
-        opt = INIT_COPY;
-      }
-      AstNodePtr body = fa.CreateBlock();
-      AstNodePtr curcopy = fa.CreateLoop( ivar, lb.CodeGen(fa),ub.CodeGen(fa),
-                                            curincr.CodeGen(fa), body, false);
-      fa.BlockAppendStmt(r, curcopy);
-      SymbolicVal& curindex = arrindex[dim];
-      curindex = curindex + SymbolicVar(ivarname, fa.GetRoot());
-      copy_loop_codegen( la, selp, arrindex, opt, body, bufoffset); 
-   }
-}
-
-AstNodePtr CopyArrayConfig::
-copy_codegen( LoopTransformInterface& la, CopyOpt opt) const
-{ 
-   AstInterface& fa = la;
-   AstNodePtr r = fa.CreateBlock(); 
-
-   std::vector<SymbolicVal> arrindex;
-   if (opt == SHIFT_COPY) {
-      assert(shift != 0);
-      for (size_t i = 0; i < sel.arr_dim(); ++i) 
-         arrindex.push_back( ReplaceVal(sel.sel_start(i), shift->GetVar(),
-                                 shift->GetVar()+shift->GetStep()));
-   }
-   else if (shift != 0 && opt == INIT_COPY) {
-      for (size_t i = 0; i < sel.arr_dim(); ++i) 
-         arrindex.push_back( ReplaceVal(sel.sel_start(i), shift->GetVar(),
-                                        shift->GetBound().lb));
-   }
-   else {
-      for (size_t i = 0; i < sel.arr_dim(); ++i) 
-         arrindex.push_back(sel.sel_start(i));
-   }
-
-   if (scalar_repl()) {
-       int size = 0;
-       copy_scalar_codegen(la, sel.begin(), arrindex, opt, r, size); 
-   }
-   else {
-      std::string bufoffsetname = fa.NewVar(fa.GetType("int"));
-      AstNodePtr bufoffset = fa.CreateVarRef(bufoffsetname);
-      fa.BlockAppendStmt(r, fa.CreateAssignment(fa.CopyAstTree(bufoffset),
-                                             fa.CreateConstInt(0)));
-      copy_loop_codegen( la, sel.begin(), arrindex, opt, r, bufoffset); 
-   }
-   if (opt == SHIFT_COPY) {
-      AstNodePtr cond = fa.CreateBinaryOP(AstInterface::BOP_LT,shift->GetVar().CodeGen(fa), 
-                                       shift->GetBound().ub.CodeGen(fa));
-      r = fa.CreateIf(cond, r);
-   }
-   return r;
-}
-
-std::string CopyArrayConfig:: CopyOpt2String( int opt)
+std::string CopyArrayOpt2String(CopyArrayOpt  opt)
 {
   std::string r;
   if (opt & ALLOC_COPY)
        r = r + "_alloc"; 
   if (opt & INIT_COPY)
-       r = r + " _init"; 
+       r = r + "_init"; 
   if (opt & SAVE_COPY)
        r = r + "_save"; 
   if (opt & SHIFT_COPY)
@@ -996,24 +836,353 @@ std::string CopyArrayConfig:: CopyOpt2String( int opt)
   return r;
 }
 
-void LoopTreeCopyArrayToBuffer::
-operator()( LoopTransformInterface& la, LoopTreeNode* init, LoopTreeNode* save,
-            const CopyArrayConfig& c, int opt)
+std::string CopyArrayConfig::toString() const
 {
-  int opt1 = (opt & (CopyArrayConfig::ALLOC_COPY | CopyArrayConfig::INIT_COPY));
-  int opt2 = (opt & (CopyArrayConfig::SAVE_COPY | CopyArrayConfig::SHIFT_COPY | CopyArrayConfig::DELETE_COPY ));
+  std::string r = sel.toString();
+  if (shift != 0) {
+      r = r + " : shift " + shift->toString();
+  }
+  r = r + CopyArrayOpt2String(opt); 
+  return r;
+}
+
+class CopyCodeGen
+{
+ protected:
+  AstInterface& fa;
+  const SelectArray& sel;
+  std::vector<SymbolicVal> arrindex;
+
+  virtual void basecopy_codegen(AstNodePtr& res)=0;
+
+public: 
+   CopyCodeGen( const SelectArray& _sel, const std::vector<SymbolicVal>& _arrindex)
+       : fa(LoopTransformInterface::getAstInterface()), sel(_sel), arrindex(_arrindex) 
+   { assert(arrindex.size() > 0); }
+
+  virtual void scalarcopy_codegen(SelectArray::const_iterator selp1, int curdim,
+                      int copynum, const SymbolicVal& curincr, AstNodePtr& res)
+     {
+       SymbolicVal& curindex = arrindex[curdim];
+       apply(selp1, res); 
+       for (int k = 1; k < copynum; ++k) {
+          curindex = curindex + curincr;
+          apply(selp1, res);
+       }
+     }
+  virtual void loopcopy_codegen(SelectArray::const_iterator selp1, int curdim,
+            const SymbolicVar& ivar, const SymbolicVal& cursize, 
+            const SymbolicVal& curincr, AstNodePtr& res)
+    {
+      SymbolicVal ub = (cursize-1)*curincr;  
+      AstNodePtr body = fa.CreateBlock();
+      AstNodePtr curcopy = fa.CreateLoop(ivar.CodeGen(fa), 
+                                       fa.CreateConstInt(0), 
+                                       ub.CodeGen(fa),
+                                       curincr.CodeGen(fa), body, false);
+      fa.BlockAppendStmt(res, curcopy);
+
+      SymbolicVal& curindex = arrindex[curdim];
+      curindex = curindex + ivar;
+      apply(selp1, body);
+    }
+  void apply( SelectArray::const_iterator selp, AstNodePtr& res)
+  {
+    if (selp == sel.end()) { basecopy_codegen(res); return; }
+    const SelectArray::ArrayDim& cursel = *selp;
+    SelectArray::const_iterator selp1 = selp;
+    ++selp1;
+
+    SymbolicVal cursize = cursel.get_size(), curincr = cursel.get_incr();
+    int copynum = 0;
+    if (cursize.isConstInt(copynum)) {
+       scalarcopy_codegen(selp1, cursel.get_arrDim(), copynum, curincr, res); 
+    }
+    else {
+      if (sel.scalar_repl()) assert(false);
+      std::string ivarname = fa.NewVar(fa.GetType("int"));
+      SymbolicVar ivar(ivarname, fa.GetRoot()); 
+      loopcopy_codegen(selp1, cursel.get_arrDim(), ivar, cursize,curincr,res);
+    }
+  }
+  void operator() (AstNodePtr& res)
+   { apply(sel.begin(), res); }
+};
+
+class LoopCopyInitCodeGen  : public CopyCodeGen
+{
+ protected:
+  SymbolicVal bufoffset;
+ protected:
+  void base_impl(AstNodePtr& res, const AstNodePtr& init) 
+  {
+    fa.BlockAppendStmt( res, init);
+    fa.BlockAppendStmt( res,
+             fa.CreateAssignment( bufoffset.CodeGen(fa), 
+                      fa.CreateBinaryOP(AstInterface::BOP_PLUS, bufoffset.CodeGen(fa),
+                                                       fa.CreateConstInt(1))));
+  }
+  virtual void basecopy_codegen(AstNodePtr& res) 
+  {
+    AstNodePtr lhs = sel.buf_codegen(fa, bufoffset);
+    AstNodePtr rhs = LoopTransformInterface::CreateArrayAccess(sel.arr_name(),arrindex);
+    AstNodePtr init = fa.CreateAssignment(lhs,rhs);
+    base_impl(res, init);
+  }
+  public: 
+   LoopCopyInitCodeGen( const SelectArray& _sel, 
+              const std::vector<SymbolicVal>& _arrindex)
+       : CopyCodeGen(_sel, _arrindex)
+   {
+      std::string bufoffsetname = fa.NewVar(fa.GetType("int"));
+      bufoffset = SymbolicVar(bufoffsetname, fa.GetRoot());
+   }
+   LoopCopyInitCodeGen( const SelectArray& _sel, const std::vector<SymbolicVal>& _arrindex,
+               const SymbolicVal& _bufoffset)
+       : CopyCodeGen( _sel, _arrindex), bufoffset(_bufoffset) {}
+   void operator() (AstNodePtr& res)
+   { 
+      fa.BlockAppendStmt(res, fa.CreateAssignment(bufoffset.CodeGen(fa),
+                                             fa.CreateConstInt(0)));
+      apply(sel.begin(), res); 
+   }
+};
+
+class LoopCopySaveCodeGen : public LoopCopyInitCodeGen
+{
+  virtual void basecopy_codegen(AstNodePtr& res) 
+  {
+    AstNodePtr lhs = sel.buf_codegen(fa, bufoffset);
+    AstNodePtr rhs = LoopTransformInterface::CreateArrayAccess(sel.arr_name(),arrindex);
+    AstNodePtr init = fa.CreateAssignment(rhs,lhs);
+    base_impl(res, init);
+  }
+ public: LoopCopySaveCodeGen( const SelectArray& _sel, const std::vector<SymbolicVal>& _arrindex)
+    : LoopCopyInitCodeGen( _sel, _arrindex) {}
+};
+
+class LoopCopyShiftCodeGen : public LoopCopyInitCodeGen
+{
+  SymbolicVal bufshift; 
+  std::vector<SymbolicVal> arrshift;
+  virtual void basecopy_codegen(AstNodePtr& res) 
+  {
+    AstNodePtr lhs = sel.buf_codegen(fa, bufoffset);
+    AstNodePtr rhs = sel.buf_codegen(fa, bufoffset + bufshift);
+    AstNodePtr init = fa.CreateAssignment(lhs,rhs);
+    base_impl(res, init);
+  }
+  virtual void scalarcopy_codegen(SelectArray::const_iterator selp1, int curdim,
+                      int copynum, const SymbolicVal& curincr, AstNodePtr& res)
+   {
+      SymbolicVal curshift = arrshift[curdim]; 
+      int shiftnum = 0;
+      if (curshift.isConstInt(shiftnum) && shiftnum != 0 && curshift > curincr) {
+         LoopCopyInitCodeGen::scalarcopy_codegen(selp1, curdim, copynum-shiftnum, curincr,res);
+         copynum = shiftnum;
+      } 
+      LoopCopyInitCodeGen initgen(sel, arrindex, bufoffset);
+      initgen.scalarcopy_codegen(selp1,curdim, copynum, curincr, res); 
+  }
+  virtual void loopcopy_codegen(SelectArray::const_iterator selp1, int curdim,
+            const SymbolicVar& ivar, const SymbolicVal& cursize, 
+            const SymbolicVal& curincr, AstNodePtr& res)
+  {
+     SymbolicVal curshift = arrshift[curdim];;
+     if (curshift != 0 && curshift > curincr) {
+        LoopCopyInitCodeGen::loopcopy_codegen(selp1,curdim, ivar, cursize-curshift, curincr, res);  
+     }
+     else curshift = cursize;
+     LoopCopyInitCodeGen initgen(sel, arrindex, bufoffset);
+     initgen.loopcopy_codegen(selp1,curdim, ivar, curshift, curincr, res); 
+  }
+
+ public: LoopCopyShiftCodeGen( const SelectArray& _sel, const std::vector<SymbolicVal>& _arrindex,
+               const SymbolicVal& _bufshift,
+               const std::vector<SymbolicVal>& _arrshift)
+    : LoopCopyInitCodeGen( _sel, _arrindex),
+      bufshift(_bufshift), arrshift(_arrshift) {}
+};
+
+
+class ScalarCopyInitCodeGen : public CopyCodeGen
+{
+ protected:
+  int size;
+
+  virtual void basecopy_codegen(AstNodePtr& res) 
+  {
+    AstNodePtr lhs = sel.buf_codegen(fa, size++);
+    AstNodePtr rhs = LoopTransformInterface::CreateArrayAccess(sel.arr_name(),arrindex);
+    fa.BlockAppendStmt(res, fa.CreateAssignment(lhs,rhs));
+  }
+ public: ScalarCopyInitCodeGen( const SelectArray& _sel, const std::vector<SymbolicVal>& _arrindex)
+       : CopyCodeGen(_sel,_arrindex), size(0) {}
+};
+
+class ScalarCopySaveCodeGen : public ScalarCopyInitCodeGen
+{
+  virtual void basecopy_codegen(AstNodePtr& res) 
+  {
+    AstNodePtr lhs = sel.buf_codegen(fa, size++);
+    AstNodePtr rhs = LoopTransformInterface::CreateArrayAccess(sel.arr_name(),arrindex);
+    fa.BlockAppendStmt(res, fa.CreateAssignment(rhs,lhs));
+  }
+ public: ScalarCopySaveCodeGen( const SelectArray& _sel, const std::vector<SymbolicVal>& _arrindex)
+    : ScalarCopyInitCodeGen(_sel, _arrindex) {}
+};
+
+class ScalarCopyShiftCodeGen : public ScalarCopyInitCodeGen
+{
+  SymbolicVal bufshift;
+
+  virtual void basecopy_codegen(AstNodePtr& res) 
+  {
+    AstNodePtr lhs = sel.buf_codegen(fa, size++);
+    AstNodePtr rhs;
+    SymbolicVal offset = bufshift + size - 1;
+    if (offset < sel.buf_size()) rhs = sel.buf_codegen(fa, offset);
+    else rhs = LoopTransformInterface::CreateArrayAccess(sel.arr_name(),arrindex);
+    fa.BlockAppendStmt(res, fa.CreateAssignment(lhs,rhs));
+  }
+ public: ScalarCopyShiftCodeGen( const SelectArray& _sel, const std::vector<SymbolicVal>& _arrindex,
+               const SymbolicVal& _bufshift)
+    : ScalarCopyInitCodeGen( _sel, _arrindex), bufshift(_bufshift) {}
+};
+
+AstNodePtr SelectArray::
+initcopy_codegen( LoopInfo* shift) const
+{ 
+   AstInterface& fa = LoopTransformInterface::getAstInterface();
+   AstNodePtr r = fa.CreateBlock(); 
+
+   std::vector<SymbolicVal> arrindex;
+   if (shift != 0) {
+      for (size_t i = 0; i < arr_dim(); ++i) 
+      {
+         SymbolicVal curindex = ReplaceVal(sel_start(i), shift->GetVar(),
+                                        shift->GetBound().lb);
+         arrindex.push_back(curindex);
+      }
+   }
+   else {
+      for (size_t i = 0; i < arr_dim(); ++i) 
+      {
+         SymbolicVal curindex = sel_start(i);
+assert(!curindex.IsNIL());
+         arrindex.push_back(curindex);
+      }
+   }
+
+   if (scalar_repl()) ScalarCopyInitCodeGen(*this, arrindex)( r); 
+   else LoopCopyInitCodeGen(*this, arrindex)( r); 
+   return r;
+}
+
+AstNodePtr SelectArray::
+savecopy_codegen( ) const
+{ 
+   AstInterface& fa = LoopTransformInterface::getAstInterface();
+   AstNodePtr r = fa.CreateBlock(); 
+
+   std::vector<SymbolicVal> arrindex;
+   for (size_t i = 0; i < arr_dim(); ++i) 
+         arrindex.push_back(sel_start(i));
+
+   if (scalar_repl()) ScalarCopySaveCodeGen(*this, arrindex)( r); 
+   else LoopCopySaveCodeGen(*this, arrindex)( r); 
+   return r;
+}
+
+AstNodePtr SelectArray::
+shiftcopy_codegen( LoopInfo& shift, const std::vector<SymbolicVal>& arrshift,
+                   const SymbolicVal& bufshift) const
+{ 
+   AstInterface& fa = LoopTransformInterface::getAstInterface();
+   AstNodePtr r = fa.CreateBlock(); 
+
+   std::vector<SymbolicVal> arrindex;
+   for (size_t i = 0; i < arr_dim(); ++i) 
+       arrindex.push_back( ReplaceVal(sel_start(i), shift.GetVar(),
+                                 shift.GetVar()+shift.GetStep()));
+   if (scalar_repl()) 
+          ScalarCopyShiftCodeGen(*this, arrindex,bufshift)( r); 
+   else LoopCopyShiftCodeGen(*this, arrindex,bufshift,arrshift)( r); 
+   AstNodePtr cond = fa.CreateBinaryOP(AstInterface::BOP_LT,shift.GetVar().CodeGen(fa), 
+                                       shift.GetBound().ub.CodeGen(fa));
+   r = fa.CreateIf(cond, r);
+   return r;
+}
+
+AstNodePtr CopyArrayConfig:: CodeGen( const AstNodePtr& h) const
+{
+   AstInterface& fa = LoopTransformInterface::getAstInterface();
+   AstNodePtr r = fa.CreateBlock();
+ 
+   if ( opt & ALLOC_COPY) { 
+       AstNodePtr alloc = sel.allocate_codegen(fa);
+       if (alloc != 0)
+          fa.BlockAppendStmt(r, alloc);
+   }
+   if (opt & INIT_COPY) {
+       AstNodePtr copy = sel.initcopy_codegen(shift);
+       fa.BlockAppendStmt(r, copy);
+   }
+   
+   fa.BlockAppendStmt(r, h);
+   if (opt & SAVE_COPY) {
+       AstNodePtr copy = sel.savecopy_codegen();
+       fa.BlockAppendStmt(r, copy);
+   }
+   if (opt & SHIFT_COPY) {
+       assert(shift != 0);
+       AstNodePtr copy = sel.shiftcopy_codegen(*shift,arrshift,bufshift); 
+       fa.BlockAppendStmt(r, copy);
+   }
+   if ((opt & DELETE_COPY)) {
+       AstNodePtr del = sel.delete_codegen(fa);
+       if (del != 0)
+         fa.BlockAppendStmt(r,del); 
+   }
+   return r;
+}
+
+extern bool DebugCopyConfig();
+void LoopTreeCopyArrayToBuffer::
+operator()( LoopTreeNode* repl, LoopTreeNode* init,
+            LoopTreeNode* save, CopyArrayConfig& c)
+{
+  CopyArrayOpt opt = c.get_opt();
+  if (DebugCopyConfig()) {
+      if (init != 0) 
+        std::cerr << "init cutting node: " << init->toString() << std::endl;
+      if (save != 0) 
+        std::cerr << "save cutting node: " << save->toString() << std::endl;
+      std::cerr << "copy config " << c.toString() << " : " << std::endl;
+  }
+  if (init == save) {
+     LoopTreeNode *r = new LoopTreeCopyArray(c);
+     InsertNode(r,init,-1); 
+     return;
+  }
+
+  CopyArrayOpt opt1 = (CopyArrayOpt)(opt & (ALLOC_COPY | INIT_COPY));
+  CopyArrayOpt opt2 = (CopyArrayOpt)(opt & (SAVE_COPY | SHIFT_COPY | DELETE_COPY ));
   if (opt1 != 0) {
-     LoopTreeNode *r = new LoopTreeCopyArray(c, opt1); 
+     c.set_opt(opt1);
+     LoopTreeNode *r = new LoopTreeCopyArray(c);
      InsertNode(r,init,-1); 
   }
+
   if (opt2 != 0) {
-     LoopTreeNode *r = new LoopTreeCopyArray(c, opt2); 
+     c.set_opt(opt2);
+     LoopTreeNode *r = new LoopTreeCopyArray(c);
      InsertNode(r,save,-1); 
   }
 }
 
 LoopTreeNode* LoopTreeReplaceAst :: 
-operator()(LoopTransformInterface& la, LoopTreeNode* h,
+operator()(LoopTreeNode* h,
                  const AstNodePtr& orig, const AstNodePtr& repl)
 {
   LoopTreeNode* r = new LoopTreeReplAst(orig, repl);
@@ -1052,7 +1221,7 @@ class ApplyLoopSplittingImpl
          LoopTreeSplitStmt()(curstmt, loop, mid);
        }
        SelectPtrSet<LoopTreeNode> sel(stmtlist);
-       LoopTreeDistributeNode()( loop, sel, false);
+       LoopTreeDistributeNode()( loop, sel, LoopTreeDistributeNode::AFTER);
        LoopTreeNode* loop1 = loop->NextSibling();
        OptimizeLoopTree(loop);       
        OptimizeLoopTree(loop1); 

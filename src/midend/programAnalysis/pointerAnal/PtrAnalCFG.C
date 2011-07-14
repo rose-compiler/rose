@@ -1,7 +1,3 @@
-// tps (12/09/2009) : Playing with precompiled headers in Windows. Requires rose.h as the first line in source files.
-// tps (1/14/2010) : Switching from rose.h to sage3 changed size from 18,6 MB to 8,3MB
-//#include "rose.h"
-#include "sage3basic.h"
 #include <PtrAnal.h>
 
 
