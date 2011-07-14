@@ -4,6 +4,8 @@
 #include <list>
 #include <string>
 #include <iostream>
+#include <map>
+#include <stdexcept>
 #include "ObserveObject.h"
 #include "AstInterface.h"
 
@@ -50,9 +52,13 @@ class SgFunctionDeclaration;
 class SgClassDefinition;
 class AstInterfaceImpl : public ObserveObject< AstObserver>
 {
+  typedef AstInterfaceImpl _Self;
+
  public:
   AstInterfaceImpl( SgNode* _top)  : newVarIndex(0), delayNewVarInsert(0)
    { set_top(_top); }
+
+  ~AstInterfaceImpl() { }
 
 
   typedef AstInterface::AstNodeList AstNodeList;
@@ -62,12 +68,12 @@ class AstInterfaceImpl : public ObserveObject< AstObserver>
   void set_top( SgNode* _top);
   SgScopeStatement* get_scope() const { return scope; }
 
-  void GetTypeInfo( const AstNodeType& t, std:: string* name = 0, 
+  static void GetTypeInfo( const AstNodeType& t, std:: string* name = 0, 
                            std:: string* stripname = 0, int* size = 0);
   SgFunctionSymbol* LookupFunction(const char* start) const;
   SgClassSymbol* LookupClass(const char* start) const;
   SgSymbol* CreateDeclarationStmts( const std:: string& _decl);
-  SgClassSymbol* GetClass( const std:: string& name, const char** start = 0);
+  SgClassSymbol* GetClass( const std:: string& name, char** start = 0);
   SgClassSymbol* NewClass( const std:: string& name);
   SgClassSymbol* AddClass( SgClassDeclaration* d) ;
 
@@ -103,13 +109,17 @@ class AstInterfaceImpl : public ObserveObject< AstObserver>
  void AddNewVarDecls();
  void AddNewVarDecls(SgScopeStatement* nblock, SgScopeStatement* oldblock);
 
+public:
+  ///  Arbitary debug function.
+  void
+  _debug(const AstNodePtr& __x) const;
+
  private:
   SgNode *top;
   SgScopeStatement* scope;
   SgGlobal* global;
   int newVarIndex;
   int delayNewVarInsert;
-  //std::list< std::pair<SgNode*,SgNode*> > replList;
   std::vector< std::pair<SgScopeStatement*,SgStatement*> > newVarList;
  friend class AstInterface;
 };
