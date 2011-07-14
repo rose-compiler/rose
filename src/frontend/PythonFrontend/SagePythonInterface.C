@@ -253,17 +253,18 @@ sage_buildClassDef(PyObject *self, PyObject *args)
     char *name;
     PyObject *py_members;
     SgScopeStatement *scope;
-    if (! PyArg_ParseTuple(args, "sO!O&", &name,
-                                          &PyList_Type, &py_members,
-                                          SAGE_CONVERTER(SgScopeStatement), &scope))
+    if (! PyArg_ParseTuple(args, "sO&", &name,
+                                        SAGE_CONVERTER(SgScopeStatement), &scope))
         return NULL;
 
-    SgClassDeclaration* sg_class = SageBuilder::buildDefiningClassDeclaration(SgName(name), scope);
+    SgClassDeclaration* sg_class_decl =
+        SageBuilder::buildDefiningClassDeclaration(SgName(name), scope);
 
-    // TODO add members to class
     // TODO handle base clases
 
-    return PyEncapsulate(sg_class);
+    PyObject *py_class_decl = PyEncapsulate(sg_class_decl);
+    PyObject *py_class_def = PyEncapsulate(sg_class_decl->get_definition());
+    return Py_BuildValue("(OO)", py_class_decl, py_class_def);
 }
 
 /*

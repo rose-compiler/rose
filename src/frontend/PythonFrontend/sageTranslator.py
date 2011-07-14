@@ -88,10 +88,16 @@ class SageTranslator(ast.NodeVisitor):
 
   def visit_ClassDef(self, node):
     scope = self.scopeStack.peek()
-    body = map(self.visit, node.body)
     #bases = node.bases
     #decorators = node.decorator_list:w
-    return sage.buildClassDef(node.name, body, scope)
+    class_decl, scope = \
+        sage.buildClassDef(node.name, scope)
+
+    self.scopeStack.push(scope)
+    body = map(self.visit, node.body)
+    sage.appendStatements(scope, body)
+    self.scopeStack.pop(scope)
+    return class_decl
 
   def visit_Compare(self, node):
     # Until n-ary comparators are implemented in sage, only allow binary comparisons
