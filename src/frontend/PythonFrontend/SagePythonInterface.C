@@ -248,6 +248,27 @@ sage_buildCall(PyObject *self, PyObject *args)
 /*
  */
 PyObject*
+sage_buildClassDef(PyObject *self, PyObject *args)
+{
+    char *name;
+    PyObject *py_members;
+    SgScopeStatement *scope;
+    if (! PyArg_ParseTuple(args, "sO!O&", &name,
+                                          &PyList_Type, &py_members,
+                                          SAGE_CONVERTER(SgScopeStatement), &scope))
+        return NULL;
+
+    SgClassDeclaration* sg_class = SageBuilder::buildDefiningClassDeclaration(SgName(name), scope);
+
+    // TODO add members to class
+    // TODO handle base clases
+
+    return PyEncapsulate(sg_class);
+}
+
+/*
+ */
+PyObject*
 sage_buildComprehension(PyObject *self, PyObject *args)
 {
     SgExpression *sg_target, *sg_iter;
