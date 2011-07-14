@@ -175,6 +175,11 @@ FixupDeclarations::visit (SgNode* node)
              {
             // If firstNondefiningDeclaration is not defined then make it a self reference
             // printf ("In fixupDeclarations set_firstNondefiningDeclaration of %p = %s to %p \n",declaration,declaration->class_name().c_str(),declaration);
+#if 0
+               if (declaration->get_definingDeclaration() == declaration) {
+                   std::cerr << "warning: setting a defining declaration as the firstNondefiningDeclaration" << std::endl;
+               }
+#endif
                declaration->set_firstNondefiningDeclaration(declaration);
                firstDeclaration = declaration;
              }

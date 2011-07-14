@@ -345,8 +345,20 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info )
                        }
                       else
                        {
-                         printf ("Error: unclear how to unparse the input code! \n");
-                         ROSE_ASSERT(false);
+                           if (file->get_Python_only())
+                              {
+#if ROSE_USE_PYTHON
+                                  Unparse_Python unparser(this,file->get_unparse_output_filename());
+                                  unparser.unparseStatement(globalScope, info);
+#else
+                                  ROSE_ABORT("unparsing Python requires ROSE_USE_PYTHON be set");
+#endif
+                              }
+                           else
+                             {
+                                 printf ("Error: unclear how to unparse the input code! \n");
+                                 ROSE_ASSERT(false);
+                             }
                        }
                   }
              }
@@ -1693,6 +1705,8 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
 void unparseProject ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparseDelegate)
    {
      ROSE_ASSERT(project != NULL);
+
+     // negara1 (07/13/2011) - test comment
 
 #if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
 #error "This implementation of the support for the older interface has been refactored"

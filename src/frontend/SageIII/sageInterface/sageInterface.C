@@ -3258,7 +3258,7 @@ SgExpression* SageInterface::forallMaskExpression(SgForAllStatement* stmt) {
   return ls.back();
 }
 
-//Find all SgPntrArrRefExp under astNode, add the referenced dim_info SgVarRefExp (if any) into NodeList_t 
+//Find all SgPntrArrRefExp under astNode, add the referenced dim_info SgVarRefExp (if any) into NodeList_t
 void SageInterface::addVarRefExpFromArrayDimInfo(SgNode * astNode, Rose_STL_Container<SgNode *>& NodeList_t)
 {
   ROSE_ASSERT (astNode != NULL);
@@ -3488,6 +3488,23 @@ SageInterface::is_PHP_language()
      for (int i = 0; i < size; i++)
         {
           if (fileList[i]->get_PHP_only() == true)
+               returnValue = true;
+        }
+
+     return returnValue;
+   }
+
+bool
+SageInterface::is_Python_language()
+   {
+     bool returnValue = false;
+
+     vector<SgFile*> fileList = generateFileList();
+
+     int size = (int)fileList.size();
+     for (int i = 0; i < size; i++)
+        {
+          if (fileList[i]->get_Python_only() == true)
                returnValue = true;
         }
 
@@ -4314,7 +4331,7 @@ SgFunctionSymbol *SageInterface::lookupFunctionSymbolInParentScopes (const SgNam
 {
     SgFunctionSymbol* functionSymbol = NULL;
     if (currentScope == NULL)
-        currentScope = SageBuilder::topScopeStack();   
+        currentScope = SageBuilder::topScopeStack();
     ROSE_ASSERT(currentScope != NULL);
     SgScopeStatement* tempScope = currentScope;
     while (functionSymbol == NULL && tempScope != NULL)
@@ -4336,7 +4353,7 @@ SgSymbol *SageInterface:: lookupSymbolInParentScopes (const SgName &  name,
 {
     SgSymbol* symbol = NULL;
     if (cscope == NULL)
-        cscope = SageBuilder::topScopeStack(); 
+        cscope = SageBuilder::topScopeStack();
     ROSE_ASSERT(cscope);
 
     while ((cscope!=NULL)&&(symbol==NULL))
@@ -4346,15 +4363,15 @@ SgSymbol *SageInterface:: lookupSymbolInParentScopes (const SgName &  name,
         // cscope->print_symboltable("debug sageInterface.C L3749...");
         if (cscope->get_parent()!=NULL) // avoid calling get_scope when parent is not set
             cscope = isSgGlobal(cscope) ? NULL : cscope->get_scope();
-        else 
+        else
             cscope = NULL;
     }
 
     if (symbol==NULL)
     {
         //    printf ("Warning: could not locate the specified name %s in any outer symbol table \n"e,
-        //      name.str());
-        //  ROSE_ASSERT(false); 
+        //  name.str());
+        //  ROSE_ASSERT(false);
     }
     return symbol;
 }
@@ -4466,7 +4483,7 @@ SageInterface::setOneSourcePositionForTransformation(SgNode *node)
 //           locatedNode->get_endOfConstruct  ()->set_parent(locatedNode);
 //
 //         }
-//         else  
+//         else
            if ( (pragma != NULL) && (pragma->get_startOfConstruct() == NULL) )
          {
            pragma->set_startOfConstruct(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
@@ -4501,7 +4518,7 @@ SageInterface::setOneSourcePositionNull(SgNode *node)
 
   // if ((locatedNode) && (locatedNode->get_endOfConstruct() == NULL))
   //   if ( (locatedNode != NULL) && (locatedNode->get_startOfConstruct() == NULL) )
-     if  (locatedNode != NULL) 
+     if  (locatedNode != NULL)
         {
           locatedNode->set_startOfConstruct(NULL);
 
@@ -4747,13 +4764,13 @@ SgStatement* SageInterface::getFirstStatement(SgScopeStatement *scope, bool incl
 bool SageInterface::isMain(const SgNode* n)
 {
  bool result = false;
- // Liao 1/5/2010, handle Fortran main entry: SgProgramHeaderStatement 
+ // Liao 1/5/2010, handle Fortran main entry: SgProgramHeaderStatement
  if (SageInterface::is_Fortran_language())
  {
    if (isSgProgramHeaderStatement(n))
      result = true;
  }
- else  
+ else
  {
    if (isSgFunctionDeclaration(n) &&
      isSgGlobal(isSgStatement(n)->get_scope())&&
@@ -4793,28 +4810,28 @@ SgFunctionDeclaration* SageInterface::findMain(SgNode* n) {
   return 0;
 }
 
-//! iterate through the statement within a scope, find the last declaration statement (if any) after which 
-//  another declaration statement can be inserted.  
+//! iterate through the statement within a scope, find the last declaration statement (if any) after which
+//  another declaration statement can be inserted.
 // This is useful to find a safe place to insert a declaration statement with special requirements about where it can be inserted.
 // e.g. a variable declaration statement should not be inserted before IMPLICIT none in Fortran
 // If it returns NULL, a declaration statement should be able to be prepended to the scope
 SgStatement* SageInterface::findLastDeclarationStatement(SgScopeStatement * scope)
-{   
+{
   SgStatement* rt = NULL;
   ROSE_ASSERT (scope != NULL);
 
   SgStatementPtrList stmt_list = scope->generateStatementList ();
-    
+
   for (size_t i = 0; i<stmt_list.size(); i++)
-  { 
+  {
     SgStatement* cur_stmt = stmt_list[i];
     if (isSgDeclarationStatement(cur_stmt))
       rt = cur_stmt;
     //if (isSgImplicitStatement(cur_stmt)) || isSgFortranIncludeLine(cur_stmt) || isSgDeclarationStatement
-  } 
-    
+  }
+
   return rt;
-}   
+}
 
 SgNode * SageInterface::deepCopyNode (const SgNode* n)
 {
@@ -5770,20 +5787,20 @@ void SageInterface::replaceStatement(SgStatement* oldStmt, SgStatement* newStmt,
   if (oldStmt == newStmt) return;
   SgStatement * p = isSgStatement(oldStmt->get_parent());
   ROSE_ASSERT(p);
-#if 0  
+#if 0
   // TODO  handle replace the body of a C/Fortran function definition with a single statement?
   // Liao 2/1/2010, in some case, we want to replace the entire body (SgBasicBlock) for some parent nodes.
-  // the built-in replace_statement() (insert_child() underneath) may not defined for them. 
-  if (SgFortranDo * f_do = isSgFortranDo (p)) 
+  // the built-in replace_statement() (insert_child() underneath) may not defined for them.
+  if (SgFortranDo * f_do = isSgFortranDo (p))
   {
     ROSE_ASSERT (f_do->get_body() == oldStmt);
     if (!isSgBasicBlock(newStmt))
      newStmt = buildBasicBlock (newStmt);
     f_do->set_body(isSgBasicBlock(newStmt));
     newStmt->set_parent(f_do);
-  } 
-  else 
-#endif    
+  }
+  else
+#endif
     p->replace_statement(oldStmt,newStmt);
 
 // Some translators have their own handling for this (e.g. the outliner)
@@ -5791,7 +5808,7 @@ void SageInterface::replaceStatement(SgStatement* oldStmt, SgStatement* newStmt,
     moveUpPreprocessingInfo(newStmt, oldStmt);
 }
 
-//! Replace an anchor node with a specified pattern subtree with optional SgVariantExpression. 
+//! Replace an anchor node with a specified pattern subtree with optional SgVariantExpression.
 // All SgVariantExpression in the pattern will be replaced with copies of the anchor node.
 SgNode* SageInterface::replaceWithPattern (SgNode * anchor, SgNode* new_pattern)
 {
@@ -5800,8 +5817,8 @@ SgNode* SageInterface::replaceWithPattern (SgNode * anchor, SgNode* new_pattern)
   ROSE_ASSERT (anchor_exp != NULL);
   ROSE_ASSERT (pattern_exp != NULL);
 
-   // we replace all SgExpression within the pattern with copies of anchor 
-   Rose_STL_Container<SgNode*> opaque_exp_list = NodeQuery::querySubTree(pattern_exp,V_SgExpression); 
+   // we replace all SgExpression within the pattern with copies of anchor
+   Rose_STL_Container<SgNode*> opaque_exp_list = NodeQuery::querySubTree(pattern_exp,V_SgExpression);
    for (size_t i = 0; i<opaque_exp_list.size(); i++)
    {
      SgExpression* opaque_exp = isSgExpression(opaque_exp_list[i]);
@@ -5811,10 +5828,10 @@ SgNode* SageInterface::replaceWithPattern (SgNode * anchor, SgNode* new_pattern)
        SgExpression * anchor_exp_copy = deepCopy(anchor_exp);
        replaceExpression(opaque_exp, anchor_exp_copy);
      }
-   }  
+   }
 
    // finally we replace anchor_exp with the pattern_exp
-   replaceExpression(anchor_exp, pattern_exp, false); 
+   replaceExpression(anchor_exp, pattern_exp, false);
   return new_pattern;
 }
 
@@ -6425,7 +6442,8 @@ bool SageInterface::loopUnrolling(SgForStatement* loop, size_t unrolling_factor)
   ArrayInterface array_interface (*annot);
   array_interface.initialize(fa, AstNodePtrImpl(func->get_definition()));
   array_interface.observe(fa);
-  LoopTransformInterface lpTrans(fa, array_interface);
+  LoopTransformInterface :: set_astInterface(fa);
+  LoopTransformInterface :: set_arrayInterface(&array_interface);
 
   // invoke the unrolling defined in Qing's code
   // the traversal will skip the input node ptr, so we pass loop's parent ptr instead
@@ -6913,8 +6931,8 @@ SgInitializedName* SageInterface::getLoopIndexVariable(SgNode* loop)
     ivarname = var->get_symbol()->get_declaration();
     ROSE_ASSERT (ivarname != NULL);
     return ivarname;
-  }  
-  // C/C++ case ------------------------------ 
+  }
+  // C/C++ case ------------------------------
   SgForStatement* fs = isSgForStatement(loop);
   ROSE_ASSERT (fs != NULL);
 
@@ -6947,9 +6965,9 @@ SgInitializedName* SageInterface::getLoopIndexVariable(SgNode* loop)
       ivarname = var->get_symbol()->get_declaration();
       isCase2 = true;
     }
-  } 
+  }
   else if (SgExprStatement* exp_stmt = isSgExprStatement(init1))
-  { //case like: for (i = 1, len1 = 0, len2=0; i <= n; i++) 
+  { //case like: for (i = 1, len1 = 0, len2=0; i <= n; i++)
      // AST is: SgCommaOpExp -> SgAssignOp -> SgVarRefExp
     if (SgCommaOpExp* comma_exp = isSgCommaOpExp(exp_stmt->get_expression()))
     {
@@ -6970,7 +6988,7 @@ SgInitializedName* SageInterface::getLoopIndexVariable(SgNode* loop)
   {
     cerr<<"Error. SageInterface::getLoopIndexVariable(). Unhandled init_stmt type of SgForStatement"<<endl;
     cerr<<"Init statement is :"<<init1->class_name() <<" " <<init1->unparseToString()<<endl;
-    init1->get_file_info()->display("Debug"); 
+    init1->get_file_info()->display("Debug");
     ROSE_ASSERT (false);
   }
   // Cannot be both true
@@ -6998,11 +7016,11 @@ bool SageInterface::isLoopIndexVariable(SgInitializedName* ivar, SgNode* subtree
       break;
     }
     else
-    { // findEnclosingLoop() is inclusive. 
+    { // findEnclosingLoop() is inclusive.
       cur_loop = findEnclosingLoop (getEnclosingStatement(cur_loop->get_parent()));
     }
   }
-  return result; 
+  return result;
 }
 
 //! Get Fortran Do loop's key features
@@ -7082,9 +7100,9 @@ bool SageInterface::isCanonicalDoLoop(SgFortranDo* loop,SgInitializedName** ivar
 #endif
  //grab the upper bound
   ubast = loop->get_bound();
-  // Fortran Do loops always have inclusive upper bound  
-  if (isInclusiveUpperBound != NULL) 
-     *isInclusiveUpperBound = true;  
+  // Fortran Do loops always have inclusive upper bound
+  if (isInclusiveUpperBound != NULL)
+     *isInclusiveUpperBound = true;
   //3. Check the increment expression
   SgExpression* incr = fs->get_increment();
   ROSE_ASSERT (incr != NULL);
@@ -7096,7 +7114,7 @@ bool SageInterface::isCanonicalDoLoop(SgFortranDo* loop,SgInitializedName** ivar
   if (hasIncrementalIterationSpace != NULL)
   {
      *hasIncrementalIterationSpace = true;
-    // We can only tell a few cases 
+    // We can only tell a few cases
     if (SgIntVal* i_v = isSgIntVal(incr))
     {
       if (i_v->get_value()<0)
@@ -7148,7 +7166,7 @@ bool SageInterface::isCanonicalForLoop(SgNode* loop,SgInitializedName** ivar/*=N
   SgForStatement* fs = isSgForStatement(loop);
   //SgFortranDo* fs2 = isSgFortranDo(loop);
   if (fs == NULL)
-  { 
+  {
    // if (fs2)
    //   return isCanonicalDoLoop (fs2, ivar, lb, ub, step, body, hasIncrementalIterationSpace, isInclusiveUpperBound);
    // else
@@ -7356,7 +7374,7 @@ void SageInterface::setLoopUpperBound(SgNode* loop, SgExpression* ub)
   {
     cerr<<"Error. SageInterface::setLoopUpperBound(), illegal loop type:"<< loop->class_name()<<endl;
     ROSE_ASSERT (false);
-  } 
+  }
 
 }
 
@@ -7374,7 +7392,7 @@ void SageInterface::setLoopStride(SgNode* loop, SgExpression* stride)
     stride->set_parent(dostmt);
     //TODO delete original increment expression
   }
-  else  if (forstmt != NULL)  
+  else  if (forstmt != NULL)
   {
     // set stride expression
     // case 1: i++ change to i+=stride
@@ -7468,7 +7486,7 @@ void SageInterface::setLoopStride(SgNode* loop, SgExpression* stride)
     cerr<<"Error. SageInterface::setLoopStride(), illegal loop type:"<< loop->class_name()<<endl;
     ROSE_ASSERT (false);
 
-  }  
+  }
 }
 
 //! Check if a SgNode _s is an assignment statement (any of =,+=,-=,&=,/=, ^=, etc)
@@ -8217,8 +8235,8 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
                           ROSE_ASSERT(stmt_present);
                           insertStatement(p, newStmt, insertBefore);
                         }
-                      else
-                         isSgStatement(parent)->insert_statement(targetStmt,newStmt,insertBefore);
+                        else
+                           isSgStatement(parent)->insert_statement(targetStmt,newStmt,insertBefore);
 
   // update the links after insertion!
      if (isSgFunctionDeclaration(newStmt))
@@ -8250,8 +8268,8 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
   //! Insert a statement after the last declaration within a scope. The statement will be prepended to the scope if there is no declaration statement found
   void SageInterface::insertStatementAfterLastDeclaration(SgStatement* stmt, SgScopeStatement* scope)
   {
-    ROSE_ASSERT (stmt != NULL); 
-    ROSE_ASSERT (scope != NULL); 
+    ROSE_ASSERT (stmt != NULL);
+    ROSE_ASSERT (scope != NULL);
     // Insert to be the declaration after current declaration sequence, if any
     SgStatement* l_stmt = findLastDeclarationStatement (scope);
     if (l_stmt)
@@ -8263,7 +8281,7 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
   //! Insert a list of statements after the last declaration within a scope. The statement will be prepended to the scope if there is no declaration statement found
   void SageInterface::insertStatementAfterLastDeclaration(std::vector<SgStatement*> stmt_list, SgScopeStatement* scope)
   {
-    ROSE_ASSERT (scope != NULL); 
+    ROSE_ASSERT (scope != NULL);
     vector <SgStatement* >::iterator iter;
     SgStatement* prev_stmt = NULL;
     for (iter= stmt_list.begin(); iter != stmt_list.end(); iter++)
@@ -8851,12 +8869,12 @@ void SageInterface::setFortranNumericLabel(SgStatement* stmt, int label_value)
   {
     cerr<<"Error. SageInterface::setFortranNumericLabel() tries to set a duplicated label value!"<<endl;
     ROSE_ASSERT (false);
-  }  
+  }
   //SgLabelRefExp
   SgLabelRefExp* ref_exp = buildLabelRefExp(symbol);
   stmt->set_numeric_label(ref_exp);
   ref_exp->set_parent(stmt);
-  
+
 }
 
 //! Suggest next usable (non-conflicting) numeric label value for a Fortran function definition scope
@@ -8866,7 +8884,7 @@ int  SageInterface::suggestNextNumericLabel(SgFunctionDefinition* func_def)
   ROSE_ASSERT (func_def != NULL);
   ROSE_ASSERT (SageInterface::is_Fortran_language()== true);
   std::set<SgNode*> symbols = func_def->get_symbol_table()->get_symbols();
-  
+
   // find the max label value, +10 to be the suggested next label value
   std::set<SgNode*>::iterator iter ;
   for (iter=symbols.begin(); iter !=symbols.end(); iter++)
@@ -8881,7 +8899,7 @@ int  SageInterface::suggestNextNumericLabel(SgFunctionDefinition* func_def)
   }
 
   ROSE_ASSERT (result <=99999); // max 5 digits for F77 label
-  return result; 
+  return result;
 }
 
 //! A wrapper containing fixes (fixVariableDeclaration(),fixStructDeclaration(), fixLabelStatement(), etc) for all kinds statements.
@@ -12908,7 +12926,7 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
             // I am unclear if this is a reasonable constraint, it passes all tests but this one!
                if ((*i)->get_scope() != targetBlock)
                   {
-                    if (SgFunctionDeclaration* func = isSgFunctionDeclaration(*i)) 
+                    if (SgFunctionDeclaration* func = isSgFunctionDeclaration(*i))
                     { // A call to a undeclared function will introduce a hidden func prototype declaration in the enclosing scope .
                       // The func declaration should be moved along with the call site.
                       // The scope should be set to the new block also
@@ -13183,7 +13201,8 @@ SageInterface::collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& rea
   ArrayInterface array_interface (*annot);
   array_interface.initialize(fa, AstNodePtrImpl(funcDef));
   array_interface.observe(fa);
-  LoopTransformInterface * lpTrans = new LoopTransformInterface(fa, array_interface);
+  LoopTransformInterface::set_arrayInfo(&array_interface);
+  LoopTransformInterface::set_astInterface(fa);
 
   // variables to store results
   DoublyLinkedListWrap<AstNodePtr> rRef1, wRef1;
@@ -13191,7 +13210,7 @@ SageInterface::collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& rea
   AstNodePtr s1 = AstNodePtrImpl(stmt);
 
   // Actual side effect analysis
-  if (!AnalyzeStmtRefs(*lpTrans, s1, cwRef1, crRef1))
+  if (!AnalyzeStmtRefs(fa, s1, cwRef1, crRef1))
   {
     cerr<<"error in side effect analysis!"<<endl;
     return false;
