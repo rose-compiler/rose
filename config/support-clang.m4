@@ -19,7 +19,7 @@ AC_SUBST([CLANG_CXXFLAGS])
 
 AC_MSG_CHECKING([for Clang ld flags])
     if test -z "$CLANG_LDFLAGS"; then
-        llvm_ldflags="`$LLVM_CONFIG --ldflags` -lclangFrontend -lclangSerialization -lclangDriver -lclangSema -lclangAnalysis -lclangAST -lclangParse -lclangLex -lclangBasic "
+        llvm_ldflags="`$LLVM_CONFIG --ldflags` -lclangFrontend -lclangSerialization -lclangDriver -lclangParse -lclangSema -lclangAnalysis -lclangAST -lclangLex -lclangBasic "
         llvm_ldflags+=`$LLVM_CONFIG --libs`
         if test -n "${llvm_ldflags}"; then
             llvm_ldflags="$llvm_ldflags"

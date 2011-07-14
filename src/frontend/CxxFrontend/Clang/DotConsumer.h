@@ -18,36 +18,33 @@
 
 #include "llvm/Support/raw_ostream.h"
 
+#include "DotVisitor.h"
+
+enum Language {
+    C,
+    CPLUSPLUS,
+    OBJC,
+    CUDA,
+    OPENCL,
+    unknown
+};
+
 class DotConsumer : public clang::ASTConsumer {
     protected:
-        clang::Diagnostic & p_diagnostic;
-        const clang::LangOptions & p_lang_options;
+        DotVisitor p_dot_visitor;
 
-        std::string p_input_file;
-        llvm::raw_ostream * p_output_file;
-
-        clang::ASTContext * p_ast_context;
-        clang::SourceManager * p_source_management;
-        clang::TranslationUnitDecl * p_translation_unit_decl;
-
-        clang::FileID p_main_file_id;
-        const char * p_main_file_start;
-        const char * p_main_file_end;
+        void print(std::ostream & out);
 
     public:
-        DotConsumer(std::string & input, llvm::raw_ostream * output, clang::Diagnostic & diagnostic, const clang::LangOptions & lang_options);
+        DotConsumer(const clang::SourceManager & src_mgr, const clang::LangOptions & lang_opts);
 
         virtual ~DotConsumer();
 
-        virtual void Initialize(clang::ASTContext & context);
+        virtual void HandleTranslationUnit(clang::ASTContext & ast_context);
 
-        virtual void HandleTopLevelDecl(clang::DeclGroupRef D);
-        virtual void HandleTranslationUnit(clang::ASTContext &C);
+        static int generateDot(std::string input, std::string output, Language language);
 };
-
-int generateDot(std::string input, std::string output);
 
 void traverseAST(clang::Decl * decl, std::string indent = std::string());
 void traverseAST(clang::Stmt * stmt, std::string indent = std::string());
-
 
