@@ -1,6 +1,4 @@
 
-
-
 #include <CompSliceLocality.h>
 #include <InterchangeAnal.h>
 
@@ -16,7 +14,7 @@ float SliceNestingLevel( const CompSlice *slice)
   }
   return level*1.0 / num;
 }
-// weight vector should have incremental values
+
 void ArrangeNestingOrder :: 
 RearrangeSliceNest( CompSliceNest &g, float *weightvec)
 {
@@ -29,15 +27,15 @@ RearrangeSliceNest( CompSliceNest &g, float *weightvec)
      for ( int k = j; k < num ; ++k) {
         // const CompSlice *slice1 = g[k];
         float w1 = weightvec[k];
-        if ( w1 < w) { // find smaller weight from the vec
+        if ( w1 < w) {
            index = k;
            w = w1;
         }
      }
      if (index != j) {
-       weightvec[index] = weightvec[j]; // update weight vector
+       weightvec[index] = weightvec[j];
        weightvec[j] = w;
-       g.SwapEntry(j,index);  // interchange two loops
+       g.SwapEntry(j,index); 
      }
   }
 }

@@ -42,3 +42,6 @@ endif
 
 clean-local:
 	rm -f *.o rose_* test_*
+
+EXTRA_DIST= $(TESTCODES)
+

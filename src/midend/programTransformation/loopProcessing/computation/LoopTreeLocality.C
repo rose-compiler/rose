@@ -1,4 +1,3 @@
-
 #include <stdlib.h>
 #include <sstream>
 
@@ -8,6 +7,7 @@
 #include <CommandOptions.h>
 #include <StmtInfoCollect.h>
 #include <StmtDepAnal.h>
+#include <LoopTransformInterface.h>
 
 bool DebugRefGraph()
 {
@@ -19,13 +19,12 @@ bool DebugRefGraph()
 }
 
 LoopTreeLocalityAnal :: 
- LoopTreeLocalityAnal( LoopTransformInterface& _fa, LoopTreeDepCompCreate& c)
-    : comp(c), anal(comp.GetDepAnal()),
-      inputCreate(c.GetTreeNodeMap()), fa(_fa)
+ LoopTreeLocalityAnal( LoopTreeDepCompCreate& c)
+    : comp(c), anal(comp.GetDepAnal()), inputCreate(c.GetTreeNodeMap())
 {
   comp.GetLoopTreeCreate()->AttachObserver(inputCreate);
   LoopTreeNode* root = comp.GetLoopTreeRoot();
-  DepCompAstRefAnal stmtorder(_fa, root);
+  DepCompAstRefAnal stmtorder(root);
   for (LoopTreeTraverseSelectStmt p1(root); !p1.ReachEnd(); ++p1) {
     LoopTreeDepGraphNode *n1 = comp.GetDepNode(p1.Current());
     for (LoopTreeTraverseSelectStmt p2 = p1; !p2.ReachEnd(); ++p2) {
@@ -70,7 +69,7 @@ ComputeInputDep( LoopTreeDepGraphNode *n1, LoopTreeDepGraphNode *n2, DepCompAstR
   if (!p.ReachEnd())
     return;
   
-  inputCreate.BuildDep(fa, anal, n1,n2,DEPTYPE_INPUT);
+  inputCreate.BuildDep(anal, n1,n2,DEPTYPE_INPUT);
 }
 
 void LoopTreeLocalityAnal ::
@@ -88,25 +87,25 @@ ComputeInputDep( LoopTreeDepGraph::NodeIterator srcIter,
 class AccumulateSpatialReuse : public CollectObject<AstNodePtr>
 {
   float res;
-  LoopTransformInterface& la;
   std::string ivarname;
   int linesize;
  public:
   bool operator()(const AstNodePtr& cur)
-  { res +=  SelfSpatialReuse( la, cur, ivarname, linesize); return true;}
-  AccumulateSpatialReuse( LoopTransformInterface& _la, const std::string& _ivarname, int _linesize)
-    : res(0), la(_la), ivarname(_ivarname), linesize(_linesize) {}
+  { res +=  SelfSpatialReuse( cur, ivarname, linesize); return true;}
+  AccumulateSpatialReuse( const std::string& _ivarname, int _linesize)
+    : res(0), ivarname(_ivarname), linesize(_linesize) {}
   float get_result() const { return res; }
 };
 
 float LoopTreeLocalityAnal ::
 SelfSpatialReuses( LoopTreeNode *n, int loop, int linesize)
 {
+   AstInterface& fa = LoopTransformInterface::getAstInterface();
    int loop1 = comp.GetDepNode(n)->LoopTreeDim2AstTreeDim(loop);
    AstNodePtr s = n->GetOrigStmt();
-   std::string name = anal.GetStmtInfo(fa, s).ivars[loop1].GetVarName();
-   AccumulateSpatialReuse  col(fa, name, linesize);
-   AnalyzeStmtRefs( fa, s, col, col);
+   std::string name = anal.GetStmtInfo(s).ivars[loop1].GetVarName();
+   AccumulateSpatialReuse  col(name, linesize);
+   AnalyzeStmtRefs( fa,  s, col, col);
    return col.get_result();
 }
 
@@ -187,7 +186,7 @@ CreateEdge( DepCompAstRefGraphNode* src,  DepCompAstRefGraphNode* snk, const Dep
 }
 
 template<class Graph, class EdgeIterator>
-void CreateEdgeWrap( LoopTransformInterface& la, DepCompAstRefGraphCreate* res, 
+void CreateEdgeWrap( DepCompAstRefGraphCreate* res, 
             LoopTreeDepComp& comp, Graph* g, EdgeIterator deps)
 {
   for ( ; !deps.ReachEnd(); ++deps) {
@@ -198,7 +197,7 @@ void CreateEdgeWrap( LoopTransformInterface& la, DepCompAstRefGraphCreate* res,
     AstNodePtr src = curdep.SrcRef(), snk = curdep.SnkRef();
     if (src == 0 && snk == 0)
        continue;
-    if (la.IsArrayAccess(src) || la.IsArrayAccess(snk)) {
+    if (LoopTransformInterface::IsArrayAccess(src) || LoopTransformInterface::IsArrayAccess(snk)) {
        DepCompAstRefGraphNode* srcnode = res->CreateNode(src,comp.GetTreeNode(depsrc));
        DepCompAstRefGraphNode* snknode = res->CreateNode(snk,comp.GetTreeNode(depsnk));;
        res->CreateEdge( srcnode, snknode, curdep);
@@ -207,19 +206,19 @@ void CreateEdgeWrap( LoopTransformInterface& la, DepCompAstRefGraphCreate* res,
 }
 
 void DepCompAstRefGraphCreate::
-Build(LoopTransformInterface& la, LoopTreeLocalityAnal& tc, LoopTreeNode* root) 
+Build(LoopTreeLocalityAnal& tc, LoopTreeNode* root) 
 { 
   LoopTreeDepComp& comp = tc.GetDepComp();
   LoopTreeDepGraphSubtree depgraph(comp, root, comp.GetDepGraph());
   GraphEdgeIterator<LoopTreeDepGraphSubtree> edgep(&depgraph);
-  CreateEdgeWrap( la, this, comp, &depgraph, edgep); 
+  CreateEdgeWrap( this, comp, &depgraph, edgep); 
 
   LoopTreeDepGraphSubtree inputgraph(comp,root, tc.GetInputGraph());
   GraphEdgeIterator<LoopTreeDepGraphSubtree> edgep1(&inputgraph);
-  CreateEdgeWrap( la, this, comp, &inputgraph, edgep1);
+  CreateEdgeWrap( this, comp, &inputgraph, edgep1);
 }
      
-void DepCompAstRefAnal:: Append(LoopTransformInterface& ai, LoopTreeNode* _root)
+void DepCompAstRefAnal:: Append(LoopTreeNode* _root)
      {
        
        typedef std::map<AstNodePtr,int,std::less<AstNodePtr> > AstIntMap;
@@ -232,9 +231,11 @@ void DepCompAstRefAnal:: Append(LoopTransformInterface& ai, LoopTreeNode* _root)
           {
             if (refmap.find(cur.first) == refmap.end()) {
                 int num = refmap.size();
-                refmap[cur.first] = -num;
+                refmap[cur.first] = -(num+1);
                 return true;
             }
+            else if (refmap[cur.first] > 0)
+                refmap[cur.first] = -refmap[cur.first];
             return false;
           }
        } modcollect(refmap);
@@ -247,19 +248,21 @@ void DepCompAstRefAnal:: Append(LoopTransformInterface& ai, LoopTreeNode* _root)
           {
             if (refmap.find(cur.first) == refmap.end()) {
                 int num = refmap.size();
-                refmap[cur.first] = num;
+                refmap[cur.first] = num+1;
                 return true;
             }
              return false;
           }
        } readcollect(refmap);
        int stmtnum = stmtmap.size();
+       AstInterface& fa = LoopTransformInterface::getAstInterface();
        for (LoopTreeTraverse stmts(_root, LoopTreeTraverse::PostOrder); 
             !stmts.ReachEnd(); stmts.Advance(),++stmtnum) {
            LoopTreeNode* curstmt = stmts.Current();
            assert(stmtmap.find(curstmt) == stmtmap.end());
            stmtmap[curstmt] = stmtnum; 
-           StmtSideEffectCollect(ai.getSideEffectInterface())(ai, curstmt->GetOrigStmt(), &modcollect, &readcollect);  
+           StmtSideEffectCollect effect(LoopTransformInterface::getSideEffectInterface());
+           effect(fa,curstmt->GetOrigStmt(), &modcollect, &readcollect);  
        } 
      }
 

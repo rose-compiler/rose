@@ -7,6 +7,8 @@
 extern "C" {
 #endif
 
+int MPI_HACKED_HEADER_INCLUDED;
+
 /* type definitions */
 typedef int MPI_Datatype;
 typedef int MPI_Comm;

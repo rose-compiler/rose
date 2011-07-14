@@ -38,7 +38,7 @@ void PrintUsage( char* name)
   cerr << ReadAnnotation::get_inst()->OptionString() << endl;
   cerr << "-pre:  apply partial redundancy elimination\n";
   cerr << "-fd:  apply finite differencing to array index expressions\n";
-  PrintLoopTransformUsage( cerr );
+  LoopTransformInterface::PrintTransformUsage( cerr );
 }
 
 bool GenerateObj()
@@ -55,23 +55,11 @@ main ( int argc,  char * argv[] )
       PrintUsage(argv[0]);
       return -1;
   }
-#if 0
-  CmdOptions::GetInstance()->SetOptions(argc, argv);
-  SetLoopTransformOptions(argc, argv);
-
-  OperatorSideEffectAnnotation *funcInfo = 
-         OperatorSideEffectAnnotation::get_inst();
-  funcInfo->register_annot();
-  ReadAnnotation::get_inst()->read();
-  AssumeNoAlias aliasInfo;
-
   vector<string> argvList(argv, argv + argc);
-  SgProject sageProject ( argvList);
-#else
-// DQ (2/10/2008): Using command-line support similar to that in tests/roseTests/loopProcessor
-  vector<string> argvList(argv, argv + argc);
-  SetLoopTransformOptions(argvList);
   CmdOptions::GetInstance()->SetOptions(argvList);
+  AssumeNoAlias aliasInfo;
+  LoopTransformInterface::cmdline_configure(argvList);
+  LoopTransformInterface::set_aliasInfo(&aliasInfo);
 
 #ifdef USE_OMEGA
   DepStats.SetFileName(buffer.str());
@@ -83,9 +71,8 @@ main ( int argc,  char * argv[] )
   ReadAnnotation::get_inst()->read();
   if (DebugAnnot())
      funcInfo->Dump();
-  AssumeNoAlias aliasInfo;
+  LoopTransformInterface::set_sideEffectInfo(funcInfo);
   SgProject *project = new SgProject ( argvList);
-#endif
 
    int filenum = project->numberOfFiles();
    for (int i = 0; i < filenum; ++i) {
@@ -103,9 +90,8 @@ main ( int argc,  char * argv[] )
              continue;
           SgBasicBlock *stmts = defn->get_body();  
           AstInterfaceImpl faImpl = AstInterfaceImpl(stmts);
-          AstInterface fa(&faImpl);
-          NormalizeForLoop(fa, AstNodePtrImpl(stmts));
-          LoopTransformTraverse( fa, AstNodePtrImpl(stmts), aliasInfo, funcInfo);
+          LoopTransformInterface::TransformTraverse(faImpl, AstNodePtrImpl(stmts));
+
        // JJW 10-29-2007 Adjust for iterator invalidation and possible changes to declList
           p = std::find(declList.begin(), declList.end(), func);
           assert (p != declList.end());

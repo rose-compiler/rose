@@ -1,5 +1,4 @@
-
-#include "sage3basic.h"
+#include <sage3.h>
 
 #include <StmtInfoCollect.h>
 #include <AstInterface_ROSE.h>

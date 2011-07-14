@@ -1,5 +1,3 @@
-
-
 #include <ArrayAnnot.h>
 #include <fstream>
 #include <CommandOptions.h>
@@ -217,20 +215,17 @@ ArrayAnnotation* ArrayAnnotation::get_inst()
     inst = new ArrayAnnotation();
   return inst;
 }
-//Hook up ReadAnnotation: register various type and operator collectors, including
-// independent collectors: Operator side effect, inline, alias, value
-// own collectors: arrays, array optimizations, construct_array, modify_array
+
 void ArrayAnnotation:: register_annot()
 {
    OperatorSideEffectAnnotation::get_inst()->register_annot();
    OperatorInlineAnnotation::get_inst()->register_annot();
    OperatorAliasAnnotation::get_inst()->register_annot();
+
    ValueAnnotation::get_inst()->register_annot();
-   
    ReadAnnotation* op = ReadAnnotation::get_inst();
    op->add_TypeCollection(&arrays);
    op->add_TypeCollection(&arrayopt);
-   
    op->add_OperatorCollection(&arrayConstruct);
    op->add_OperatorCollection(&arrayModify);
 }
@@ -239,6 +234,7 @@ void ArrayAnnotation :: Dump() const
 {
    OperatorSideEffectAnnotation::get_inst()->Dump();
    OperatorAliasAnnotation::get_inst()->Dump();
+
    ValueAnnotation::get_inst()->Dump();
    arrays.Dump();
    arrayopt.Dump();
@@ -263,7 +259,7 @@ has_array_opt( CPPAstInterface& fa, const AstNodePtr array, ArrayOptDescriptor* 
 {
   return arrayopt.known_type( fa, array, r);
 }
-//! Check if an expression 'arrayExp' is an expression(operation) modifying an array(creation or modifying)
+
 bool ArrayAnnotation::
 is_array_mod_op( CPPAstInterface& fa, const AstNodePtr& arrayExp,
                  AstNodePtr* arrayp, ArrayDescriptor* descp, bool* reshape,
@@ -377,9 +373,7 @@ is_access_array_length( CPPAstInterface& fa, const SymbolicVal& orig,
   }
   return false;
 }
-//! Check if a node is a known member function of an array to access the length of one dimension
-// If true, return the array node 'arrayp', function parameter 'dimAst', 
-// and the integer value of the prameter 'dim'
+
 bool ArrayAnnotation ::
 is_access_array_length( CPPAstInterface& fa, const AstNodePtr& orig, AstNodePtr* arrayp,
                         AstNodePtr* dimAst, int *dim)
@@ -391,7 +385,7 @@ is_access_array_length( CPPAstInterface& fa, const AstNodePtr& orig, AstNodePtr*
       if (dimAst != 0)
             *dimAst = cur;
       if (dim != 0) {
-          if (!fa.IsConstInt(cur, dim)) // Must be constant? How about variables as parameter!!??
+          if (!fa.IsConstInt(cur, dim))
               assert(false);
       }
       return true;
@@ -399,28 +393,21 @@ is_access_array_length( CPPAstInterface& fa, const AstNodePtr& orig, AstNodePtr*
    return false;
 }
 
-bool 
-ArrayAnnotation::is_access_array_elem( CPPAstInterface& fa, const SymbolicVal& orig, AstNodePtr* array, SymbolicFunction::Arguments* args)
+bool ArrayAnnotation ::
+is_access_array_elem( CPPAstInterface& fa, const SymbolicVal& orig, AstNodePtr* array, SymbolicFunction::Arguments* args)
 {
-   // It calls CPPTypeCollection<ArrayDefineDescriptor>::is_known_member_function() 
-   // Add random access operator as a default element access function
-   // There is another similar version below for AST input
-  if ((arrays.is_known_member_function( fa, orig, array, args) == "elem") ||
-      (arrays.is_known_member_function( fa, orig, array, args) == "operator[]")||
-      (arrays.is_known_member_function( fa, orig, array, args) == "at") ){
+  if (arrays.is_known_member_function( fa, orig, array, args) == "elem") {
     return true;
   }
   return false;
 }
 
-bool 
-ArrayAnnotation::is_access_array_elem( CPPAstInterface& fa, const AstNodePtr& orig, 
+bool ArrayAnnotation ::
+is_access_array_elem( CPPAstInterface& fa, const AstNodePtr& orig, 
                       AstNodePtr* arrayp,
                       CPPAstInterface::AstNodeList* args)
 {
-  if ((arrays.is_known_member_function( fa, orig, arrayp, args) == "elem") ||
-      (arrays.is_known_member_function( fa, orig, arrayp, args) == "operator[]")||
-      (arrays.is_known_member_function( fa, orig, arrayp, args) == "at") ){
+  if (arrays.is_known_member_function( fa, orig, arrayp, args) == "elem") {
     return true;
   }
   return false;
@@ -457,17 +444,14 @@ get_modify(AstInterface& _fa, const AstNodePtr& fc,
                                CollectObject<AstNodePtr>* collect)
 {
   CPPAstInterface& fa = static_cast<CPPAstInterface&>(_fa);
-    // No modified variables for array length retrieval and element read calls.  
    if ( is_access_array_elem(fa, fc) || is_access_array_length(fa, fc)) 
       return true;
-   // array reshape calls modify the entire array   
    AstNodePtr array;
    if (is_reshape_array( fa,fc, &array)) {
       if (collect != 0)
          (*collect)(array);
       return true;
    } 
-   // Relying on annotations for all other function calls 
    return OperatorSideEffectAnnotation::get_inst()->get_modify(fa, fc, collect);
 }
 
@@ -476,13 +460,11 @@ get_read(AstInterface& _fa, const AstNodePtr& fc, CollectObject<AstNodePtr>* col
 {
   CPPAstInterface& fa = static_cast<CPPAstInterface&>(_fa);
    AstNodePtr dim;
-   //the 'dim' parameter used to retrieve array length of a dimension is a read accesss
    if (is_access_array_length( fa, fc, 0, &dim)) {
        if (collect != 0)
            (*collect)(dim);
        return true;
    }
-   // The variables used as subscripts in array element access function call are read.
    CPPAstInterface::AstNodeList args;
    if (is_access_array_elem( fa, fc, 0, &args)) {
       if (collect != 0) {
@@ -492,22 +474,19 @@ get_read(AstInterface& _fa, const AstNodePtr& fc, CollectObject<AstNodePtr>* col
       }
       return true;
    }
-   //Use side effect annotation for all other function calls
    return OperatorSideEffectAnnotation::get_inst()->get_read(fa, fc, collect);
 }
 
+
 #define TEMPLATE_ONLY
 #include <TypeAnnotation.C>
-//#include <OperatorDescriptors.C>
+#include <OperatorDescriptors.h>
 template class TypeCollection<ArrayModifyDescriptor>;
 template class TypeCollection<ArrayConstructDescriptor>;
 template class OperatorAnnotCollection<ArrayModifyDescriptor>;
 template class OperatorAnnotCollection<ArrayConstructDescriptor>;
 template class TypeAnnotCollection<ArrayDefineDescriptor>;
 template class TypeAnnotCollection<ArrayOptDescriptor>;
-
 #include <AnnotDescriptors.C>
 template class CollectPair<TypeDescriptor, ArrayDescriptor, 0>;
-
-
 
