@@ -163,6 +163,8 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (ListComprehension,         "ListComprehension",            "LIST_COMPREHENSION" );
      NEW_TERMINAL_MACRO (SetComprehension,          "SetComprehension",             "SET_COMPREHENSION" );
      NEW_TERMINAL_MACRO (DictionaryComprehension,   "DictionaryComprehension",      "DICTIONARY_COMPREHENSION" );
+     NEW_TERMINAL_MACRO (MembershipOp,              "MembershipOp",                 "MEMBERSHIP_OP" );
+     NEW_TERMINAL_MACRO (NonMembershipOp,           "NonMembershipOp",              "NON_MEMBERSHIP_OP" );
 
 
 #if USE_FORTRAN_IR_NODES
@@ -234,7 +236,9 @@ Grammar::setUpExpressions ()
           BitXorOp       | BitAndOp         | BitOrOp         | CommaOpExp       | LshiftOp      | RshiftOp       |
           PntrArrRefExp  | ScopeOp          | AssignOp        | PlusAssignOp     | MinusAssignOp | AndAssignOp    |
           IorAssignOp    | MultAssignOp     | DivAssignOp     | ModAssignOp      | XorAssignOp   | LshiftAssignOp |
-          RshiftAssignOp | ExponentiationOp | ConcatenationOp | PointerAssignOp  | UserDefinedBinaryOp,"BinaryOp","BINARY_EXPRESSION", false);
+          RshiftAssignOp | ExponentiationOp | ConcatenationOp | PointerAssignOp  | MembershipOp  | NonMembershipOp |
+          UserDefinedBinaryOp,
+          "BinaryOp","BINARY_EXPRESSION", false);
 
      NEW_NONTERMINAL_MACRO (ValueExp,
           BoolValExp     | StringVal        | ShortVal               | CharVal         | UnsignedCharVal |
@@ -552,6 +556,11 @@ Grammar::setUpExpressions ()
      ConcatenationOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
                                   "../Grammar/Expression.code" );
 
+     MembershipOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
+                                  "../Grammar/Expression.code" );
+     NonMembershipOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
+                                  "../Grammar/Expression.code" );
+
   // DQ (2/5/2004): Adding support for varargs in AST
      VarArgStartOp.setFunctionSource           ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      VarArgStartOneOperandOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
@@ -698,6 +707,8 @@ Grammar::setUpExpressions ()
      RshiftAssignOp.editSubstitute  ( "PRECEDENCE_VALUE", " 2" );
      PointerAssignOp.editSubstitute ( "PRECEDENCE_VALUE", " 2" );
      ThrowOp.editSubstitute         ( "PRECEDENCE_VALUE", "15" );
+     MembershipOp.editSubstitute    ( "PRECEDENCE_VALUE", " 9" );
+     NonMembershipOp.editSubstitute ( "PRECEDENCE_VALUE", " 9" );
 
      ConcatenationOp.editSubstitute ( "PRECEDENCE_VALUE", " 3" );
 
@@ -1095,6 +1106,8 @@ Grammar::setUpExpressions ()
      NotEqualOp.setFunctionPrototype ( "HEADER_NOT_EQUAL_OPERATOR", "../Grammar/Expression.code" );
      LessOrEqualOp.setFunctionPrototype ( "HEADER_LESS_OR_EQUAL_OPERATOR", "../Grammar/Expression.code" );
      GreaterOrEqualOp.setFunctionPrototype ( "HEADER_GREATER_OR_EQUAL_OPERATOR", "../Grammar/Expression.code" );
+     MembershipOp.setFunctionPrototype ( "HEADER_MEMBERSHIP_OP", "../Grammar/Expression.code" );
+     NonMembershipOp.setFunctionPrototype ( "HEADER_NON_MEMBERSHIP_OP", "../Grammar/Expression.code" );
 
   // DQ (6/20/2006): Relational Operators must return bool type
      EqualityOp.editSubstitute       ( "HEADER_BOOLEAN_GET_TYPE_MEMBER_FUNCTION", "HEADER_BOOLEAN_GET_TYPE", "../Grammar/Expression.code" );
@@ -1103,6 +1116,8 @@ Grammar::setUpExpressions ()
      NotEqualOp.editSubstitute       ( "HEADER_BOOLEAN_GET_TYPE_MEMBER_FUNCTION", "HEADER_BOOLEAN_GET_TYPE", "../Grammar/Expression.code" );
      LessOrEqualOp.editSubstitute    ( "HEADER_BOOLEAN_GET_TYPE_MEMBER_FUNCTION", "HEADER_BOOLEAN_GET_TYPE", "../Grammar/Expression.code" );
      GreaterOrEqualOp.editSubstitute ( "HEADER_BOOLEAN_GET_TYPE_MEMBER_FUNCTION", "HEADER_BOOLEAN_GET_TYPE", "../Grammar/Expression.code" );
+     MembershipOp.editSubstitute     ( "HEADER_BOOLEAN_GET_TYPE_MEMBER_FUNCTION", "HEADER_BOOLEAN_GET_TYPE", "../Grammar/Expression.code" );
+     NonMembershipOp.editSubstitute  ( "HEADER_BOOLEAN_GET_TYPE_MEMBER_FUNCTION", "HEADER_BOOLEAN_GET_TYPE", "../Grammar/Expression.code" );
 
      AddOp.setFunctionPrototype ( "HEADER_ADD_OPERATOR", "../Grammar/Expression.code" );
      SubtractOp.setFunctionPrototype ( "HEADER_SUBTRACT_OPERATOR", "../Grammar/Expression.code" );
@@ -1740,6 +1755,8 @@ Grammar::setUpExpressions ()
      LessOrEqualOp.setFunctionSource    ( "SOURCE_LESS_OR_EQUAL_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      GreaterOrEqualOp.setFunctionSource ( "SOURCE_GREATER_OR_EQUAL_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      NotOp.setFunctionSource            ( "SOURCE_NOT_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
+     MembershipOp.setFunctionSource     ( "SOURCE_MEMBERSHIP_OP","../Grammar/Expression.code" );
+     NonMembershipOp.setFunctionSource  ( "SOURCE_NON_MEMBERSHIP_OP","../Grammar/Expression.code" );
 
   // DQ (6/20/2006): Relational Operators must return bool type
      EqualityOp.editSubstitute       ( "SOURCE_BOOLEAN_GET_TYPE_MEMBER_FUNCTION", "SOURCE_BOOLEAN_GET_TYPE", "../Grammar/Expression.code" );
@@ -1766,6 +1783,8 @@ Grammar::setUpExpressions ()
      RshiftOp.setFunctionSource ( "SOURCE_RIGHT_SHIFT_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      MinusOp.setFunctionSource ( "SOURCE_MINUS_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      UnaryAddOp.setFunctionSource ( "SOURCE_UNARY_ADD_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
+     MembershipOp.editSubstitute  ( "SOURCE_BOOLEAN_GET_TYPE_MEMBER_FUNCTION", "SOURCE_BOOLEAN_GET_TYPE", "../Grammar/Expression.code" );
+     NonMembershipOp.editSubstitute  ( "SOURCE_BOOLEAN_GET_TYPE_MEMBER_FUNCTION", "SOURCE_BOOLEAN_GET_TYPE", "../Grammar/Expression.code" );
 
      SizeOfOp.setFunctionSource ( "SOURCE_SIZE_OF_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
 
