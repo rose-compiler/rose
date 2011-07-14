@@ -206,13 +206,6 @@ fi
 #
 #########################################################################################
 if test "x$label" = "x64bit-macos-10.6" ; then
-	#export MACPORTS_INS=/export/tmp.hudson-rose/opt/macports/ports
-	#set +e
-    #source ${MACPORTS_INS}/setup.sh
-	#set -e
-	#export DYLD_LIBRARY_PATH=/Developer/SDKs/MacOSX10.6.sdk/usr/lib:/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/ImageIO.framework/Versions/A/Resources:${MACPORTS_INS}/lib:$DYLD_LBIRARY_PATH
-	#export ROSE_TEST_BOOST_PATH=${MACPORTS_INS}
-
 	case "$ROSE_TEST_BUILD_STYLE" in
 		"make-check-install-minimal")
 	 		CONFIGURE_FLAGS="
@@ -297,7 +290,7 @@ function printRoseTranslatorVersion {
 #
 #########################################################################################
 case "$ROSE_TEST_BUILD_STYLE" in
-"make/check/install-minimal"|"make/check/install-full")
+"make-check-install-minimal"|"make-check-install-full")
 
     ################################################################################
     # MAKE
@@ -319,7 +312,7 @@ case "$ROSE_TEST_BUILD_STYLE" in
  ;;
 
 *)
-   echo "ERROR: unrecognized build step = $ROSE_TEST_BUILD_STEP"
+   echo "ERROR: unrecognized build step = $ROSE_TEST_BUILD_STYLE"
    exit 1;
  ;;
 esac
