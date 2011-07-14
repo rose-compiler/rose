@@ -750,6 +750,39 @@ class EasyStorage <ROSEAttributesListContainerPtr>
 };
 #endif
 
+template < >
+class EasyStorageMapEntry <std::string, std::set<PreprocessingInfo*> > 
+   {
+    private:
+     EasyStorage <std::string> nameString; 
+     EasyStorage <std::set<PreprocessingInfo*> > preprocessingInfoSet; 
+    public: 
+     EasyStorageMapEntry () {}
+     void storeDataInEasyStorageClass(const std::pair<std::string, std::set<PreprocessingInfo*> >& iter);
+     std::pair<std::string, std::set<PreprocessingInfo*> >  rebuildDataStoredInEasyStorageClass() const;
+     static void arrangeMemoryPoolInOneBlock() ;
+     static void deleteMemoryPool() ;
+        
+     static void writeToFile(std::ostream& out);
+     static void readFromFile (std::istream& in);
+   };
+
+// EasyStorage for a map of sets of PreprocessingInfo*
+template < >
+class EasyStorage <std::map<std::string, std::set<PreprocessingInfo*> > > 
+   : public StorageClassMemoryManagement< EasyStorageMapEntry<std::string, std::set<PreprocessingInfo*> > >
+   {
+     typedef StorageClassMemoryManagement< EasyStorageMapEntry<std::string, std::set<PreprocessingInfo*> > > Base;
+    public:
+     void storeDataInEasyStorageClass(const std::map<std::string, std::set<PreprocessingInfo*> >& data) ;
+     std::map<std::string, std::set<PreprocessingInfo*> > rebuildDataStoredInEasyStorageClass() const ;
+     static void arrangeMemoryPoolInOneBlock() ;
+     static void deleteMemoryPool() ;
+        
+     static void writeToFile(std::ostream& out);
+     static void readFromFile (std::istream& in);
+};
+
 // EasyStorageMapEntry concerning an SgName and a Type T
 // * it has overloaded methods for arrangeMemoryPoolInOneBlock and deleteMemoryPool
 template < >
