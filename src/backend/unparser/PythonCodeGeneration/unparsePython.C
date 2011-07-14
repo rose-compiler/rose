@@ -147,6 +147,8 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
         case V_SgNotEqualOp:
         case V_SgMembershipOp:
         case V_SgNonMembershipOp:
+        case V_SgIsOp:
+        case V_SgIsNotOp:
 
             unparseBinaryOp( isSgBinaryOp(stmt), info );
             break;
@@ -288,6 +290,8 @@ Unparse_Python::unparseBinaryOp(SgBinaryOp* bin_op,
         case V_SgNotEqualOp:       curprint("!=");    break;
         case V_SgMembershipOp:     curprint("in");    break;
         case V_SgNonMembershipOp:  curprint("not in"); break;
+        case V_SgIsOp:             curprint("is");    break;
+        case V_SgIsNotOp:          curprint("is not"); break;
         default: { cerr << "Unhandled SgBinaryOp: " << bin_op->class_name() << endl;
             ROSE_ABORT();
         }

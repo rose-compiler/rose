@@ -303,8 +303,8 @@ sage_buildCompare(PyObject *self, PyObject *args)
     else if (op == py_op_lte)   sg_bin_op = SageBuilder::buildLessOrEqualOp(sg_lhs_exp, sg_rhs_exp);
     else if (op == py_op_gt)    sg_bin_op = SageBuilder::buildGreaterThanOp(sg_lhs_exp, sg_rhs_exp);
     else if (op == py_op_gte)   sg_bin_op = SageBuilder::buildGreaterOrEqualOp(sg_lhs_exp, sg_rhs_exp);
-    else if (op == py_op_is)    sg_bin_op = SageBuilder::buildGreaterOrEqualOp(sg_lhs_exp, sg_rhs_exp);
-    else if (op == py_op_isnot) sg_bin_op = SageBuilder::buildGreaterOrEqualOp(sg_lhs_exp, sg_rhs_exp);
+    else if (op == py_op_is)    sg_bin_op = SageBuilder::buildIsOp(sg_lhs_exp, sg_rhs_exp);
+    else if (op == py_op_isnot) sg_bin_op = SageBuilder::buildIsNotOp(sg_lhs_exp, sg_rhs_exp);
     else if (op == py_op_in)    sg_bin_op = SageBuilder::buildMembershipOp(sg_lhs_exp, sg_rhs_exp);
     else if (op == py_op_notin) sg_bin_op = SageBuilder::buildNonMembershipOp(sg_lhs_exp, sg_rhs_exp);
     else if (op == py_op_eq)    sg_bin_op = SageBuilder::buildEqualityOp(sg_lhs_exp, sg_rhs_exp);

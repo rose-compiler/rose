@@ -423,6 +423,8 @@ SgInterfaceBody
 SgInterfaceStatement
 SgInterfaceSymbol
 SgIntrinsicSymbol
+SgIsOp
+SgIsNotOp
 SgIorAssignOp
 SgKeyDatumList
 SgKeyDatumPair
