@@ -10,11 +10,12 @@
 #include <boost/tuple/tuple.hpp>
 
 
+#define foreach BOOST_FOREACH
+
+
 namespace Backstroke
 {
 
-
-#define foreach BOOST_FOREACH
 
 void ControlFlowGraph::toDot(const std::string& filename) const
 {
@@ -293,8 +294,20 @@ ControlFlowGraph::getAllLoops() const
 }
 
 
-namespace
+//! This function helps to write the DOT file for vertices.
+void ControlFlowGraph::writeGraphNode(std::ostream& out, const Vertex& node) const
 {
+    writeCFGNode(out, *(*this)[node]);
+    //VirtualCFG::printNode(out, (*this)[node]);
+}
+
+//! This function helps to write the DOT file for edges.
+void ControlFlowGraph::writeGraphEdge(std::ostream& out, const Edge& edge) const
+{
+    writeCFGEdge(out, *(*this)[edge]);
+    //VirtualCFG::printEdge(out, (*this)[edge], true);
+}
+
 
 //! This function helps to write the DOT file for vertices.
 void writeCFGNode(std::ostream& out, const CFGNode& cfgNode)
@@ -346,23 +359,6 @@ void writeCFGEdge(std::ostream& out, const CFGEdge& e)
 		"\", style=\"" << "solid" << "\"]";
 }
 
-
-} // end of anonymous namespace
-
-
-//! This function helps to write the DOT file for vertices.
-void ControlFlowGraph::writeGraphNode(std::ostream& out, const Vertex& node) const
-{
-    writeCFGNode(out, *(*this)[node]);
-    //VirtualCFG::printNode(out, (*this)[node]);
-}
-
-//! This function helps to write the DOT file for edges.
-void ControlFlowGraph::writeGraphEdge(std::ostream& out, const Edge& edge) const
-{
-    writeCFGEdge(out, *(*this)[edge]);
-    //VirtualCFG::printEdge(out, (*this)[edge], true);
-}
 
 
 } // end of namespace

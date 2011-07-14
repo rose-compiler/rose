@@ -26,8 +26,8 @@ struct DefaultFilter
 class ControlFlowGraph : public boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS, 
 		CFGNodePtr, CFGEdgePtr>
 {
-    typedef boost::graph_traits<ControlFlowGraph> GraphTraits;
 public:
+    typedef boost::graph_traits<ControlFlowGraph> GraphTraits;
     typedef GraphTraits::vertex_descriptor Vertex;
 	typedef GraphTraits::edge_descriptor   Edge;
 
@@ -147,18 +147,10 @@ protected:
 	void setEntryAndExit();
     
     CFGNodePtr newCFGNode(const CFGNode& node)
-    {
-        CFGNodePtr newCFGNode(new CFGNode(node));
-        //newCFGNode->setFilter(filter_);
-        return newCFGNode;
-    }
+    { return CFGNodePtr(new CFGNode(node)); }
     
     CFGEdgePtr newCFGEdge(const CFGEdge& edge)
-    {
-        CFGEdgePtr newCFGEdge(new CFGEdge(edge));
-        //newCFGEdge->setFilter(filter_);
-        return newCFGEdge;
-    }
+    { return CFGEdgePtr(new CFGEdge(edge)); }
 
 	//! This function helps to write the DOT file for vertices.
 	void writeGraphNode(std::ostream& out, const Vertex& node) const;
@@ -166,6 +158,8 @@ protected:
 	//! This function helps to write the DOT file for edges.
 	void writeGraphEdge(std::ostream& out, const Edge& edge) const;
 
+    
+protected:
 	//! This class is used to copy vertices when calling copy_graph().
 	struct VertexCopier
 	{
@@ -192,6 +186,13 @@ protected:
 		ControlFlowGraph& cfg2;
 	};
 };
+
+
+//! This function helps to write the DOT file for vertices.
+void writeCFGNode(std::ostream& out, const CFGNode& cfgNode);
+
+//! This function helps to write the DOT file for edges.
+void writeCFGEdge(std::ostream& out, const CFGEdge& e);
 
 
 } // end of namespace

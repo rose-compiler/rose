@@ -1,4 +1,5 @@
 #include "newCFG.h"
+#include "newCDG.h"
 
 int main(int argc, char *argv[])
 {
@@ -18,6 +19,9 @@ int main(int argc, char *argv[])
 
         Backstroke::ControlFlowGraph cfg(proc);
         cfg.toDot("CFG.dot");
+        
+        Backstroke::ControlDependenceGraph cdg(cfg);
+        cdg.toDot("CDG.dot");
         
         break;
     }
