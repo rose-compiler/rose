@@ -154,6 +154,17 @@ demo6_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 run_demo6: demo6
 	./demo6 --debug=insn $(top_srcdir)/binaries/samples/buffer2.bin
 
+#------------------------------------------------------------------------------------------------------------------------------
+# demo 7: trace instructions, printing only the name of the instruction's function.
+noinst_PROGRAMS += demo7
+demo7_SOURCES = demos/demo7.C
+demo7_CPPFLAGS = $(ROSE_INCLUDES)
+demo7_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+.PHONY: run_demo7
+run_demo7: demo7
+	./demo7 --debug $(top_srcdir)/binaries/samples/buffer2.bin
+
 ###############################################################################################################################
 #  SYSTEM CALL TESTS
 ###############################################################################################################################

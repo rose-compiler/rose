@@ -1,7 +1,7 @@
 /* Demonstrates how to obtain an instruction trace with information about the function call stack interspersed.
  *
  * Run this demo like this:
- *     $ demo5 --debug=insn ./demo5input
+ *     $ demo6 --debug=insn ./demo6input
  *
  * Documentation can be found by running:
  *    $ doxygen RSIM.dxy
