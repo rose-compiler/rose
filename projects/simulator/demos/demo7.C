@@ -7,7 +7,7 @@
  *       in the RSIM_Process object of the simulator.  The RSIM_Tools::MemoryDisassembler is another way to do this--it
  *       triggers RSIM_Process::disassemble() when a certain instruction is hit. If you don't run the disassembler over the
  *       whole process memory, the instruction you'll get back won't have any basic block or function information.  In other
- *       words, you can't discover basic blocks or functions if you only disassemble on instruction--you have to disassemble a
+ *       words, you can't discover basic blocks or functions if you only disassemble one instruction--you have to disassemble a
  *       whole bunch.
  *
  *   2.  You have to obtain a pointer to an instruction (SgAsmInstruction).  The best way to get a single instruction is with
@@ -16,21 +16,23 @@
  *       and in this case the instruction won't have basic block or function information.
  *
  *       Another alternative is to write an instruction callback that will be invoked for every simulated instruction and an
- *       SgAsmInstruction will be passed as one of its arguments.
+ *       SgAsmInstruction will be passed as one of its arguments.  That's what we do in this example.
  *
  *   3.  Once you have an instruction pointer, you just traverse upward in the AST to find the SgAsmFunctionDeclaration
- *       node. There are three cases:
+ *       node. There are four cases:
  *         A.  The instruction has no SgAsmFunctionDeclaration parent.  This can happen if you asked for an instruction that
  *             wasn't run through the partitioning process.  Perhaps you didn't call the disassembler, the disassembler didn't
  *             disassemble at that address for some reason, or the memory containing the instruction has been modified since
  *             the instruction was first disassembled.
  *         B.  The instruction's SgAsmFunctionDeclaration has the FUNC_LEFTOVERS bit set in the vector returned by the
- *             get_reason() method.  This means the Partitioner couldn't figure out to which function this instruction belongs,
- *             so it lumped it into a catch-all function.  Be aware that control flow analysis etc. probably will be
+ *             get_reason() method.  This means the Partitioner couldn't figure out which function this instruction belongs to,
+ *             so it lumped it into a catch-all function.  Be aware that control flow analysis etc. will probably be
  *             meaningless on this function.
  *         C.  The SgAsmFunctionDeclaration has an empty name string.  This means that the instruction's function was detected,
- *             but the Partitioner couldn't find any information in symbol tables.  You can probably create your own name by
- *             using the function's unique entry address, SgAsmFunctionDeclaration::get_entry_va().
+ *             but the Partitioner couldn't find any information in symbol tables.  The RSIM_Process::disassemble() will only
+ *             know about symbol tables in the main executable, not symbol tables in shared objects that were linked in by the
+ *             dynamic linker. (We hope to remedy this).  If the function has no name, you can probably create your own name by
+ *             using the function's unique entry address (see SgAsmFunctionDeclaration::get_entry_va()).
  *         D.  Otherwise the function exists and has a name.
  *
  * This test simply prints the name of every instruction's function if known.
