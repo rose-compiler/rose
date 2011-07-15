@@ -13,6 +13,10 @@
 #include "Partitioner.h"
 #include "sageBuilder.h"
 
+#include "CollectionHelper.h"
+#include "CompilerOutputParser.h"
+#include "IncludingPreprocessingInfosCollector.h"
+
 #ifdef _MSC_VER
 //#pragma message ("WARNING: wait.h header file not available in MSVC.")
 #else
@@ -92,6 +96,8 @@ using namespace SageInterface;
 using namespace SageBuilder;
 using namespace OmpSupport;
 
+
+const string FileHelper::pathDelimiter = "/";
 
 // DQ (9/17/2009): This appears to only be required for the GNU 4.1.x compiler (not for any earlier or later versions).
 extern const std::string ROSE_GFORTRAN_PATH;
@@ -4252,6 +4258,32 @@ SgProject::parse(const vector<string>& argv)
      ROSE_ASSERT(SgNode::get_globalTypeTable() != NULL);
      ROSE_ASSERT(SgNode::get_globalTypeTable()->get_parent() != NULL);
 #endif
+
+     // negara1 (06/23/2011): Collect information about the included files to support unparsing of those that are modified.
+     //Proceed only if there are input files and they require header files unparsing.
+     //This code is currently disabled.
+     if (1 < 0) { //!get_fileList().empty() && (*get_fileList().begin()) -> get_unparseHeaderFiles()) {
+         if (SgProject::get_verbose() >= 1){
+             cout << endl << "***HEADER FILES ANALYSIS***" << endl << endl;
+         }
+         CompilerOutputParser compilerOutputParser(this);
+         const pair<list<string>, list<string> >& includedFilesSearchPaths = compilerOutputParser.collectIncludedFilesSearchPaths();
+         const map<string, set<string> >& includedFilesMap = compilerOutputParser.collectIncludedFilesMap();
+
+         IncludingPreprocessingInfosCollector includingPreprocessingInfosCollector(this, includedFilesSearchPaths, includedFilesMap);
+         const map<string, set<PreprocessingInfo*> >& includingPreprocessingInfosMap = includingPreprocessingInfosCollector.collect();
+
+         set_includingPreprocessingInfosMap(includingPreprocessingInfosMap);
+
+         if (SgProject::get_verbose() >= 1){
+             CollectionHelper::printList(includedFilesSearchPaths.first, "\nQuoted includes search paths:", "Path:");
+             CollectionHelper::printList(includedFilesSearchPaths.second, "\nBracketed includes search paths:", "Path:");
+
+             CollectionHelper::printMapOfSets(includedFilesMap, "\nIncluded files map:", "File:", "Included file:");
+
+             CollectionHelper::printMapOfSets(includingPreprocessingInfosMap, "\nIncluding files map:", "File:", "Including file:");
+         }
+     }
 
      return errorCode;
    }
