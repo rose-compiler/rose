@@ -2,7 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # Include the "." to force the current directory to be compiled 
 # before the subdirectories.
-SUBDIRS = astFileIO astMerge astFixup astPostProcessing sageInterface virtualCFG astTokenStream astHiddenTypeAndDeclarationLists astVisualization astFromString
+SUBDIRS = astFileIO astMerge astFixup astPostProcessing sageInterface virtualCFG astTokenStream astHiddenTypeAndDeclarationLists astVisualization astFromString includeDirectivesProcessing
 
 # DQ (12/29/2009): This is only used to handle generated code as smaller files.
 SUBDIRS += GENERATED_CODE_DIRECTORY_Cxx_Grammar
@@ -165,7 +165,8 @@ libsage3_la_LIBADD  = \
 	virtualCFG/libvirtualCFG.la \
 	astHiddenTypeAndDeclarationLists/libastHiddenTypeAndDeclarationLists.la \
         astVisualization/libastVisualization.la \
-        astFromString/libAstFromString.la
+        astFromString/libAstFromString.la \
+        includeDirectivesProcessing/libincludeDirectivesProcessing.la
 else
 libsage3_la_LIBADD  = \
 	astFixup/libastFixup.la \
@@ -175,7 +176,8 @@ libsage3_la_LIBADD  = \
 	virtualCFG/libvirtualCFG.la \
 	astHiddenTypeAndDeclarationLists/libastHiddenTypeAndDeclarationLists.la \
         astVisualization/libastVisualization.la \
-        astFromString/libAstFromString.la
+        astFromString/libAstFromString.la \
+        includeDirectivesProcessing/libincludeDirectivesProcessing.la
 endif
 
 if ROSE_USE_SMALLER_GENERATED_FILES
