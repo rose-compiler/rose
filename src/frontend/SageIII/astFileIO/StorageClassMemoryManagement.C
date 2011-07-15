@@ -2368,6 +2368,165 @@ void EasyStorage <ROSEAttributesListContainerPtr> :: readFromFile (std::istream&
    }
 #endif
 
+/*
+   ****************************************************************************************************
+   **      Implementations for EasyStorageMapEntry <std::string, std::set<PreprocessingInfo*> >      **
+   ****************************************************************************************************
+*/
+// Is not inherited from StorageClassMemoryManagement
+//void EasyStorageMapEntry <std::string, std::set<PreprocessingInfo*> > :: storeDataInEasyStorageClass(const std::pair<std::string, std::set<PreprocessingInfo*> >& iter)
+//   {
+//     nameString.storeDataInEasyStorageClass(iter.first);
+//     preprocessingInfoSet.storeDataInEasyStorageClass(iter.second);
+//   }
+//
+//std::pair<std::string, std::set<PreprocessingInfo*> > EasyStorageMapEntry <std::string, std::set<PreprocessingInfo*> > :: rebuildDataStoredInEasyStorageClass() const
+//   {
+//     std::pair<std::string, std::set<PreprocessingInfo*> > returnPair(nameString.rebuildDataStoredInEasyStorageClass(),
+//                                                                      preprocessingInfoSet.rebuildDataStoredInEasyStorageClass());
+//     return returnPair;
+//   }
+//
+//void EasyStorageMapEntry <std::string, std::set<PreprocessingInfo*> > :: arrangeMemoryPoolInOneBlock() 
+//   {
+//     EasyStorage <std::string> :: arrangeMemoryPoolInOneBlock();
+//     EasyStorage <std::set<PreprocessingInfo*> > :: arrangeMemoryPoolInOneBlock();
+//   }
+//  
+//void EasyStorageMapEntry <std::string, std::set<PreprocessingInfo*> > :: deleteMemoryPool() 
+//   {
+//     EasyStorage <std::string> :: deleteMemoryPool();
+//     EasyStorage <std::set<PreprocessingInfo*> > :: deleteMemoryPool();
+//   }
+//
+//
+//void EasyStorageMapEntry <std::string, std::set<PreprocessingInfo*> > :: writeToFile(std::ostream& outputFileStream)
+//   {
+//#if FILE_IO_MARKER
+//     AST_FILE_IO_MARKER::writeMarker("|32|",outputFileStream);
+//#endif
+//     EasyStorage <std::string> :: writeToFile(outputFileStream);
+//     EasyStorage <std::set<PreprocessingInfo*> > :: writeToFile(outputFileStream);
+//   }
+//  
+//void EasyStorageMapEntry <std::string, std::set<PreprocessingInfo*> > :: readFromFile (std::istream& inputFileStream)
+//   {
+//#if FILE_IO_MARKER
+//     AST_FILE_IO_MARKER::readMarker("|32|",inputFileStream);
+//#endif
+//     EasyStorage <std::string> :: readFromFile (inputFileStream);
+//     EasyStorage <std::set<PreprocessingInfo*> > :: readFromFile (inputFileStream);
+//   }
+
+/*
+   *************************************************************************************************************
+   **      Implementations for EasyStorage <std::map<std::string, std::set<PreprocessingInfo*> > >            **
+   *************************************************************************************************************
+*/
+//void EasyStorage <std::map<std::string, std::set<PreprocessingInfo*> > > :: storeDataInEasyStorageClass(const std::map<std::string, std::set<PreprocessingInfo*> >& data)
+//   {
+//    if (data.empty()) {
+//      Base::sizeOfData = -1;
+//    } else {
+//      std::map<std::string, std::set<PreprocessingInfo*> >::const_iterator dataIterator = data.begin();
+//      long offset = Base::setPositionAndSizeAndReturnOffset ( data.size() ) ;
+//   // if the new data does not fit in the actual block
+//      if (0 < offset)
+//         {
+//        // if there is still space in the actual block
+//           if (offset < Base::getSizeOfData())
+//              {
+//                if (Base::actual != NULL)
+//                   {
+//                     for (; (unsigned long)(Base::actual - Base::getBeginningOfActualBlock()) < Base::blockSize; ++Base::actual, ++dataIterator)
+//                        {
+//                          Base::actual->storeDataInEasyStorageClass(*dataIterator);
+//                        }
+//                   }
+//              }
+//        // the data does not fit in one block
+//           while (Base::blockSize < (unsigned long)(offset))
+//              {
+//                Base::actual = Base::getNewMemoryBlock();
+//                for (; (unsigned long)(Base::actual - Base::getBeginningOfActualBlock()) < Base::blockSize; ++Base::actual, ++dataIterator)
+//                   {
+//                     Base::actual->storeDataInEasyStorageClass(*dataIterator);
+//                   }
+//                offset -= Base::blockSize;
+//              };
+//           Base::actual = Base::getNewMemoryBlock();
+//         }
+//      for (; dataIterator != data.end(); ++dataIterator, ++Base::actual)
+//         {
+//           Base::actual->storeDataInEasyStorageClass(*dataIterator);
+//         }
+//     }
+//   }
+//
+//
+//std::map<std::string, std::set<PreprocessingInfo*> >
+//EasyStorage <std::map<std::string, std::set<PreprocessingInfo*> > > :: rebuildDataStoredInEasyStorageClass() const
+//   {
+//     std::map<std::string, std::set<PreprocessingInfo*> > returnMap;
+//     if (Base::getSizeOfData() != -1 )
+//        {
+//#if STORAGE_CLASS_MEMORY_MANAGEMENT_CHECK
+//          assert ( Base::actualBlock <= 1 );
+//          assert ( (0 < Base::getSizeOfData() && Base::actual!= NULL) || ( Base::getSizeOfData() <= 0 ) );
+//#endif
+//       // if the memory pool is valid 
+//          if ( Base::actual != NULL && 0 < Base::getSizeOfData() )
+//             {
+//               std::pair<std::string, std::set<PreprocessingInfo*> > tempPair;
+//               EasyStorageMapEntry<std::string, std::set<PreprocessingInfo*> >* pointer = Base::getBeginningOfDataBlock();
+//               for ( long i=0; i < Base::getSizeOfData(); ++i )
+//                  {
+//                    assert (Base::actualBlock == 1);
+//                    tempPair = (pointer+i) -> rebuildDataStoredInEasyStorageClass();
+//                    returnMap[tempPair.first] = tempPair.second;
+//                  }
+//             }
+//        }
+//      return returnMap;
+//   }
+//
+//
+//void EasyStorage <std::map<std::string, std::set<PreprocessingInfo*> > > :: arrangeMemoryPoolInOneBlock()
+//   {
+//  // call suitable methods on members and base class
+//      StorageClassMemoryManagement< EasyStorageMapEntry<std::string, std::set<PreprocessingInfo*> > >:: arrangeMemoryPoolInOneBlock();
+//      EasyStorageMapEntry<std::string, std::set<PreprocessingInfo*> > :: arrangeMemoryPoolInOneBlock();
+//   }
+//
+//
+//void EasyStorage <std::map<std::string, std::set<PreprocessingInfo*> > > :: deleteMemoryPool()
+//   {
+//  // call suitable methods on members and base class
+//      StorageClassMemoryManagement< EasyStorageMapEntry<std::string, std::set<PreprocessingInfo*> > > :: deleteMemoryPool();
+//      EasyStorageMapEntry<std::string, std::set<PreprocessingInfo*> > :: deleteMemoryPool();
+//   }
+//
+//
+//void EasyStorage <std::map<std::string, std::set<PreprocessingInfo*> > > :: writeToFile(std::ostream& outputFileStream)
+//   {
+//#if FILE_IO_MARKER
+//     AST_FILE_IO_MARKER::writeMarker("|33|",outputFileStream);
+//#endif
+//  // call suitable methods on members and base class
+//      StorageClassMemoryManagement< EasyStorageMapEntry<std::string, std::set<PreprocessingInfo*> > >:: writeToFile(outputFileStream);
+//      EasyStorageMapEntry<std::string, std::set<PreprocessingInfo*> > :: writeToFile(outputFileStream);
+//   }
+//
+//
+//void EasyStorage <std::map<std::string, std::set<PreprocessingInfo*> > > :: readFromFile (std::istream& inputFileStream)
+//   {
+//#if FILE_IO_MARKER
+//     AST_FILE_IO_MARKER::readMarker("|33|",inputFileStream);
+//#endif
+//  // call suitable methods on members and base class
+//     StorageClassMemoryManagement< EasyStorageMapEntry<std::string, std::set<PreprocessingInfo*> > > :: readFromFile (inputFileStream);
+//     EasyStorageMapEntry<std::string, std::set<PreprocessingInfo*> > :: readFromFile (inputFileStream);
+//   }
 
 /*
    ****************************************************************************************
