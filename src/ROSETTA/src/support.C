@@ -1525,8 +1525,8 @@ Grammar::setUpSupport ()
             NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // negara1 (06/23/2011): This field tracks for each included file its including preprocessing infos.
-     //Project.setDataPrototype("std::map<std::string, std::set<PreprocessingInfo*> >", "includingPreprocessingInfosMap", "",
-     //       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);    
+     Project.setDataPrototype("std::map<std::string, std::set<PreprocessingInfo*> >", "includingPreprocessingInfosMap", "",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);    
 
      Attribute.setDataPrototype    ( "std::string"  , "name", "= \"\"",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
