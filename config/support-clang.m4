@@ -1,8 +1,15 @@
 AC_DEFUN([ROSE_SUPPORT_CLANG],
 [
 
-AC_MSG_NOTICE([Clang support enabled])
-AC_DEFINE([ROSE_USE_CLANG], 1, [Use Clang for parsing C/C++-like languages])
+AC_MSG_CHECKING([for enabled Clang Frontend support])
+
+AC_ARG_ENABLE(clang-frontend, AS_HELP_STRING([--enable-clang-frontend], [Wether or not we use Clang as frontend for C/C++-like languages]))
+AM_CONDITIONAL(ROSE_USE_CLANG_FRONTEND, [test "x$enable_clang_frontend" = xyes])
+if test "x$enable_clang_frontend" = "xyes"; then
+  AC_DEFINE([ROSE_USE_CLANG_FRONTEND], [], [Use Clang for parsing C/C++-like languages])
+fi
+
+AC_SUBST(ROSE_USE_CLANG_FRONTEND)
 
 AC_PATH_TOOL([LLVM_CONFIG], [llvm-config])
 

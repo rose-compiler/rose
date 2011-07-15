@@ -18,7 +18,7 @@ else
    libroseCxxlibraries =
 endif
 
-if ROSE_USE_CLANG
+if ROSE_USE_CLANG_FRONTEND
    libroseCxxlibraries += frontend/CxxFrontend/Clang/libroseClangFrontend.la
 endif
 
