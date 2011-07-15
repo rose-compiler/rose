@@ -165,6 +165,14 @@ demo7_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 run_demo7: demo7
 	./demo7 --debug $(top_srcdir)/binaries/samples/buffer2.bin
 
+#------------------------------------------------------------------------------------------------------------------------------
+# demo 8: report statistics about number of instructions and system calls
+noinst_PROGRAMS += demo8
+demo8_SOURCES = demos/demo8.C
+demo8_CPPFLAGS = $(ROSE_INCLUDES)
+demo8_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+
 ###############################################################################################################################
 #  SYSTEM CALL TESTS
 ###############################################################################################################################

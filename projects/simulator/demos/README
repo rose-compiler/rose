@@ -12,3 +12,5 @@ demo3: symbolic analysis of a function not normally called
 demo4: sign analysis tethered to symbolic analysis
 demo5: looks for buffer overflow being exploited; instructions on stack
 demo6: instruction trace with function call information
+demo7: how to get the function that an instruction belongs to
+demo8: reports number of instructions and system calls
