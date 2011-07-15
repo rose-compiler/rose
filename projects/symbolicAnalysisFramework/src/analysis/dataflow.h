@@ -178,7 +178,7 @@ class FindAllFunctionCalls : public UnstructuredPassIntraAnalysis
 };
 
 /* Base class of Uni-directional (Forward or Backward) Intra-Procedural Dataflow Analyses */
-class IntraUniDirectionalDataflow  : public virtual IntraUnitDataflow
+class IntraUniDirectionalDataflow : public IntraUnitDataflow
 {
 	public:
 	
@@ -191,7 +191,7 @@ class IntraUniDirectionalDataflow  : public virtual IntraUnitDataflow
 };
 
 /* Forward Intra-Procedural Dataflow Analysis */
-class IntraFWDataflow  : public virtual IntraUnitDataflow, IntraUniDirectionalDataflow
+class IntraFWDataflow  : public IntraUniDirectionalDataflow
 {
 	protected:
 		
@@ -212,7 +212,7 @@ class IntraFWDataflow  : public virtual IntraUnitDataflow, IntraUniDirectionalDa
 };
 
 /* Backward Intra-Procedural Dataflow Analysis */
-class IntraBWDataflow  : public virtual IntraUnitDataflow, IntraUniDirectionalDataflow
+class IntraBWDataflow  : public IntraUniDirectionalDataflow
 {
 	protected:
 		
