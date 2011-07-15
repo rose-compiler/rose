@@ -73,6 +73,10 @@ if ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
    SUBDIRS += Python_tests
 endif
 
+if ROSE_USE_CLANG_FRONTEND
+   SUBDIRS += ClangFrontend_tests
+endif
+
 SUBDIRS += EDG_4_x
 
 check-local:

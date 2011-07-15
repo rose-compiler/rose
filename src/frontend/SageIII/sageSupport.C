@@ -27,7 +27,7 @@
 #include <libgen.h>
 #endif
 
-#if ROSE_USE_CLANG
+#ifdef ROSE_USE_CLANG_FRONTEND
 #include "ClangFrontend.h"
 #endif
 
@@ -6699,7 +6699,7 @@ SgSourceFile::build_C_and_Cxx_AST( vector<string> argv, vector<string> inputComm
              }
 #endif
 
-#if ROSE_USE_CLANG
+#ifdef ROSE_USE_CLANG_FRONTEND
      int frontendErrorLevel = clang_main (c_cxx_argc, c_cxx_argv, *this);
 #else /* default to EDG */
      int edg_main(int, char *[], SgSourceFile & sageFile );

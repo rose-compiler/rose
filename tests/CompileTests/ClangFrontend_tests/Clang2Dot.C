@@ -1,7 +1,5 @@
 #include <iostream>
 
-#include "ClangFrontend.h"
-
 #include "DotConsumer.h"
 
 int main(int argc, char ** argv) {

@@ -85,6 +85,8 @@ class ClangToSageTranslator : public clang::ASTConsumer {
 
         virtual ~ClangToSageTranslator();
 
+        SgGlobal * getGlobalScope();
+
   /* ASTConsumer's methods overload */
 
         virtual void HandleTranslationUnit(clang::ASTContext & ast_context);

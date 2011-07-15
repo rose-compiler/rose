@@ -2,8 +2,7 @@
 #include "DotConsumer.h"
 
 #include <string>
-
-#include "ClangFrontend.h"
+#include <fstream>
 
 #include "clang/AST/ParentMap.h"
 

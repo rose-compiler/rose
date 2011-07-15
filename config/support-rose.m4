@@ -2098,10 +2098,10 @@ src/frontend/SageIII/astVisualization/Makefile
 src/frontend/SageIII/GENERATED_CODE_DIRECTORY_Cxx_Grammar/Makefile
 src/frontend/SageIII/astFromString/Makefile
 src/frontend/CxxFrontend/Makefile
+src/frontend/CxxFrontend/Clang/Makefile
 src/frontend/OpenFortranParser_SAGE_Connection/Makefile
 src/frontend/ECJ_ROSE_Connection/Makefile
 src/frontend/PHPFrontend/Makefile
-src/frontend/CxxFrontend/Clang/Makefile
 src/frontend/PythonFrontend/Makefile
 src/frontend/BinaryDisassembly/Makefile
 src/frontend/BinaryLoader/Makefile
@@ -2416,6 +2416,7 @@ tests/CompileTests/NewEDGInterface_C_tests/Makefile
 tests/CompileTests/CudaTests/Makefile
 tests/CompileTests/OpenClTests/Makefile
 tests/CompileTests/EDG_4_x/Makefile
+tests/CompileTests/ClangFrontend_tests/Makefile
 tests/CompilerOptionsTests/collectAllCommentsAndDirectives_tests/Makefile
 tests/CompilerOptionsTests/preinclude_tests/Makefile
 tests/CompilerOptionsTests/tokenStream_tests/Makefile

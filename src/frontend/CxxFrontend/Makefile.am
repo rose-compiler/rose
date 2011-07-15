@@ -1,5 +1,11 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+SUBDIRS = 
+
+if ROSE_USE_CLANG_FRONTEND
+  SUBDIRS += Clang
+endif
+
 release_binary_compatibility_signature=$(shell ${top_srcdir}/scripts/bincompat-sig)
 # BINARY_EDG_DIRNAME=roseBinaryEDG-${build_triplet_without_redhat}-${GENERATED_COMPILER_NAME_AND_VERSION_SUFFIX}-${release_binary_compatibility_signature}
 
@@ -66,7 +72,7 @@ deploy_tarballs:
 
 if ROSE_HAS_EDG_SOURCE
 
-SUBDIRS = EDG Clang
+SUBDIRS += EDG
 
 EDG/libroseEDG.la:
 	@echo "Calling make in ../../util"
@@ -114,9 +120,6 @@ upload_edg_binary:
 
 else 
 #------------------- no EDG sources
-
-SUBDIRS= 
-
 
 all: EDG/libroseEDG.la
 

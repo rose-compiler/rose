@@ -4,10 +4,29 @@
 #include "ClangFrontend-private.h"
 
 int clang_main(int argc, char* argv[], SgSourceFile& sageFile) {
-    ClangToSageTranslator translator(std::vector<std::string>(argc, argv));
+    std::vector<std::string> args;
+    for (unsigned i = 0; i < argc; i++)
+        args.push_back(std::string(argv[i]));
+
+    ClangToSageTranslator translator(args);
+
+    SgGlobal * global_scope = translator.getGlobalScope();
+
+    sageFile.set_globalScope(global_scope);
+
+    global_scope->set_parent(&sageFile);
+
+    Sg_File_Info * start_fi = new Sg_File_Info(args[args.size()-1], 0, 0);
+    Sg_File_Info * end_fi   = new Sg_File_Info(args[args.size()-1], 0, 0);
+
+    global_scope->set_startOfConstruct(start_fi);
+
+    global_scope->set_endOfConstruct(end_fi);
 
     return 1;
 }
+
+SgGlobal * ClangToSageTranslator::getGlobalScope() { return p_global_scope; }
 
 ClangToSageTranslator::ClangToSageTranslator(std::vector<std::string> & arg) :
     clang::ASTConsumer(),
@@ -131,35 +150,72 @@ void ClangToSageTranslator::applySourceRange(SgNode * node, clang::SourceRange s
         exit(-1);
     }
 
-    // TODO
+    clang::SourceLocation begin  = source_range.getBegin();
+    clang::SourceLocation end    = source_range.getEnd();
+
+    clang::FileID file_begin = p_source_manager->getFileID(begin);
+    clang::FileID file_end   = p_source_manager->getFileID(end);
+
+    bool inv_begin_line;
+    bool inv_begin_col;
+    bool inv_end_line;
+    bool inv_end_col;
+
+    unsigned ls = p_source_manager->getSpellingLineNumber(begin, &inv_begin_line);
+    unsigned cs = p_source_manager->getSpellingColumnNumber(begin, &inv_begin_col);
+    unsigned le = p_source_manager->getSpellingLineNumber(end, &inv_end_line);
+    unsigned ce = p_source_manager->getSpellingColumnNumber(end, &inv_end_col);
+
+    std::string file = p_source_manager->getFileEntryForID(file_begin)->getName();
+
+    Sg_File_Info * start_fi = new Sg_File_Info(file, ls, cs);
+    Sg_File_Info * end_fi   = new Sg_File_Info(file, le, ce);
+
+    located_node->set_startOfConstruct(start_fi);
+
+    located_node->set_endOfConstruct(end_fi);
 }
 
 /* Overload of ASTConsumer::HandleTranslationUnit, it is the "entry point" */
 
 void ClangToSageTranslator::HandleTranslationUnit(clang::ASTContext & ast_context) {
-
-
     Traverse(ast_context.getTranslationUnitDecl());
 }
 
-/* Overload of Traverse{Decl|Stmt|Type} methods to prevent multiple traversal */
+/* Traverse({Decl|Stmt|Type} *) methods */
 
 SgNode * ClangToSageTranslator::Traverse(clang::Decl * decl) {
     if (decl == NULL)
         return NULL;
+
+    if (decl->isImplicit()) {
+        std::cerr << "Warning: skip implicit declaration." << std::endl;
+        return NULL;
+    }
 
     std::map<clang::Decl *, SgNode *>::iterator it = p_decl_translation_map.find(decl);
     if (it != p_decl_translation_map.end())
         return it->second;
 
     SgNode * result = NULL;
+    bool ret_status = false;
 
     switch (decl->getKind()) {
+        case clang::Decl::TranslationUnit:
+            ret_status = VisitTranslationUnitDecl((clang::TranslationUnitDecl *)decl, &result);
+            break;
+        case clang::Decl::Typedef:
+            // TODO
+//          ret_status = VisitTypedef((clang::TypedefDecl *)decl, &result);
+            break;
         // TODO cases
         default:
-            std::cerr << "Unknown declacaration kind !" << std::endl;
-            exit(-1);
+            std::cerr << "Unknown declacaration kind: " << decl->getDeclKindName() << " !" << std::endl;
+            ROSE_ASSERT(false);
     }
+
+    // FIXME this assertion need to be activate (lock by typedef)
+//  ROSE_ASSERT(result != NULL);
 
     return result;
 }
@@ -173,13 +229,16 @@ SgNode * ClangToSageTranslator::Traverse(clang::Stmt * stmt) {
         return it->second; 
 
     SgNode * result = NULL;
+    bool ret_status = false;
 
     switch (stmt->getStmtClass()) {
         //TODO cases
         default:
             std::cerr << "Unknown statement kind !" << std::endl;
-            exit(-1);
+            ROSE_ASSERT(false);
     }
+
+    ROSE_ASSERT(result != NULL);
 
     return result;
 }
@@ -193,13 +252,16 @@ SgNode * ClangToSageTranslator::Traverse(const clang::Type * type) {
          return it->second;
 
     SgNode * result = NULL;
+    bool ret_status = false;
 
     switch (type->getTypeClass()) {
         // TODO cases
         default:
             std::cerr << "Unknown type kind !" << std::endl;
-            exit(-1);
+            ROSE_ASSERT(false);
     }
+
+    ROSE_ASSERT(result != NULL);
 
     return result;
 }
@@ -218,7 +280,8 @@ bool ClangToSageTranslator::VisitDecl(clang::Decl * decl, SgNode ** node) {
         return false;
     }
 
-    applySourceRange(*node, decl->getSourceRange());
+    if (!isSgGlobal(*node))
+        applySourceRange(*node, decl->getSourceRange());
 
     // TODO attributes
 
@@ -246,20 +309,24 @@ bool ClangToSageTranslator::VisitTranslationUnitDecl(clang::TranslationUnitDecl 
 
     clang::DeclContext * decl_context = (clang::DeclContext *)translation_unit_decl; // useless but more clear
 
+    bool res = true;
     clang::DeclContext::decl_iterator it;
     for (it = decl_context->decls_begin(); it != decl_context->decls_end(); it++) {
+        if (*it == NULL) continue;
         SgNode * child = Traverse(*it);
+
         SgDeclarationStatement * decl_stmt = isSgDeclarationStatement(child);
         if (decl_stmt == NULL) {
             std::cerr << "Runtime error: the node produce for a clang::Decl is not a SgDeclarationStatement !" << std::endl;
-            return false;
+            res = false;
         }
-        p_global_scope->append_declaration(decl_stmt);
+        else
+            p_global_scope->append_declaration(decl_stmt);
     }
 
   // Traverse the class hierarchy
 
-    return VisitDecl(translation_unit_decl, node);
+    return VisitDecl(translation_unit_decl, node) && res;
 }
 
 /********************/
