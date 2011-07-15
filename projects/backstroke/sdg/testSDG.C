@@ -1,6 +1,7 @@
 #include "newCFG.h"
 #include "newCDG.h"
 #include "newDDG.h"
+#include "newPDG.h"
 
 int main(int argc, char *argv[])
 {
@@ -26,6 +27,9 @@ int main(int argc, char *argv[])
         
         Backstroke::DataDependenceGraph ddg(cfg);
         ddg.toDot("DDG.dot");
+        
+        Backstroke::ProgramDependenceGraph pdg(cfg);
+        pdg.toDot("PDG.dot");
         
         break;
     }
