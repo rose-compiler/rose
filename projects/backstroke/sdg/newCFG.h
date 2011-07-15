@@ -23,6 +23,13 @@ struct DefaultFilter
 	{ return true; }
 };
 
+struct InterestingCFGNodeFilter
+{
+	bool operator()(const VirtualCFG::CFGNode& cfgNode) const
+	{ return cfgNode.isInteresting(); }
+};
+
+
 class ControlFlowGraph : public boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS, 
 		CFGNodePtr, CFGEdgePtr>
 {

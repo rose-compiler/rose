@@ -1,5 +1,6 @@
 #include "newCFG.h"
 #include "newCDG.h"
+#include "newDDG.h"
 
 int main(int argc, char *argv[])
 {
@@ -17,11 +18,14 @@ int main(int argc, char *argv[])
         if (!proc->get_file_info()->isSameFile(sourceFile))
             continue;
 
-        Backstroke::ControlFlowGraph cfg(proc);
+        Backstroke::ControlFlowGraph cfg(proc, Backstroke::InterestingCFGNodeFilter());
         cfg.toDot("CFG.dot");
         
         Backstroke::ControlDependenceGraph cdg(cfg);
         cdg.toDot("CDG.dot");
+        
+        Backstroke::DataDependenceGraph ddg(cfg);
+        ddg.toDot("DDG.dot");
         
         break;
     }

@@ -97,7 +97,7 @@ void ControlDependenceGraph::build(const ControlFlowGraph& cfg)
 			foreach (CFGEdgeT cdEdge, cdEdges)
 			{
 				// Add the edge.
-				Edge edge = boost::add_edge(src, tar, *this).first;
+				Edge edge = boost::add_edge(tar, src, *this).first;
                 (*this)[edge].cfgEdge   = edgeTable[rvsCfg[cdEdge]];
 				(*this)[edge].condition = rvsCfg[cdEdge]->condition();
 				(*this)[edge].caseLabel = rvsCfg[cdEdge]->caseLabel();
