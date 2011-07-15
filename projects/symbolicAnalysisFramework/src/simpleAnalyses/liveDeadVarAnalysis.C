@@ -491,7 +491,7 @@ VarsExprsProductLattice::VarsExprsProductLattice
                         Lattice* allVarLattice,
                         LiveDeadVarsAnalysis* ldva, 
                         const DataflowNode& n, const NodeState& state) : 
-                        	perVarLattice(perVarLattice), constVarLattices(constVarLattices), allVarLattice(allVarLattice), ldva(ldva), n(n), state(state)
+                        	perVarLattice(perVarLattice), allVarLattice(allVarLattice), constVarLattices(constVarLattices), ldva(ldva), n(n), state(state)
 {
 	// If a LiveDeadVarsAnalysis was provided, create a lattice only for each live object
 	if(ldva) { 
