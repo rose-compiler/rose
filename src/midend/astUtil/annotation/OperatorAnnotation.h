@@ -37,9 +37,6 @@ class OperatorAnnotCollection
     AstInterface::AstTypeList params;
     AstNodePtr f;
     std::string fname;
-    // operator cases:
-    //  Is a function call and the grabbed f is a variable reference (functionRefExp), OR
-    //  function definition 
     if (!(fa.IsFunctionCall(exp,&f, &args, 0, &params) && fa.IsVarRef(f,0,&fname))
        && !fa.IsFunctionDefinition(exp,&fname,&args,0,0, &params))
         return false;
