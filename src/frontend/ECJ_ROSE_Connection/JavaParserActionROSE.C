@@ -1355,6 +1355,47 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionAssignment(JNIEnv *env, jobject xx
    }
 
 
+JNIEXPORT void JNICALL Java_JavaParser_cactionAssignmentEnd(JNIEnv *env, jobject xxx)
+   {
+  // This function builds an assignement statement (not an expression).
+
+     if (SgProject::get_verbose() > 2)
+          printf ("Build an assignement statement (expression?) \n");
+
+     outputJavaState("At TOP of cactionAssignmentEnd");
+
+     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
+     ROSE_ASSERT(astJavaExpressionStack.size() >= 2);
+
+     SgExpression* lhs = astJavaExpressionStack.front();
+     ROSE_ASSERT(lhs != NULL);
+     astJavaExpressionStack.pop_front();
+
+     SgExpression* rhs = astJavaExpressionStack.front();
+     ROSE_ASSERT(rhs != NULL);
+     astJavaExpressionStack.pop_front();
+
+#if 1
+  // This is an assignement statement so we have to build a statement and push it onto the stack.
+     SgExprStatement* assignmentStatement = SageBuilder::buildAssignStatement(lhs,rhs);
+     ROSE_ASSERT(assignmentStatement != NULL);
+     ROSE_ASSERT(astJavaExpressionStack.empty() == true);
+
+  // astJavaStatementStack.push_front(assignmentStatement);
+     astJavaScopeStack.front()->append_statement(assignmentStatement);
+#else
+  // Build the assignment operator and push it onto the stack.
+     SgExpression* assignmentExpression = SageBuilder::buildBinaryExpression<SgAssignOp>(lhs,rhs);
+     ROSE_ASSERT(assignmentExpression != NULL);
+     astJavaExpressionStack.push_front(assignmentExpression);
+     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
+#endif
+
+     outputJavaState("At BOTTOM of cactionAssignmentEnd");
+
+   }
+
+
 JNIEXPORT void JNICALL Java_JavaParser_cactionBinaryExpression(JNIEnv *env, jobject xxx)
    {
    }
@@ -1686,6 +1727,15 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionLocalDeclaration(JNIEnv *env, jobj
      SgVariableDeclaration* variableDeclaration = buildSimpleVariableDeclaration(name);
      ROSE_ASSERT(variableDeclaration != NULL);
 
+  // DQ (7/16/2011): Added test for scope
+     ROSE_ASSERT(variableDeclaration->get_scope() != NULL);
+
+  // DQ (7/16/2011): This is a test to debug failing test in resetParentPointers.C:1733
+     ROSE_ASSERT(SageInterface::is_Fortran_language() == false);
+     SgInitializedName* initializedName = variableDeclaration->get_decl_item (name);
+     ROSE_ASSERT(initializedName != NULL);
+     ROSE_ASSERT(initializedName->get_scope() != NULL);
+
   // Save it on the stack so that we can add SgInitializedNames to it.
      astJavaStatementStack.push_front(variableDeclaration);
 
@@ -1695,6 +1745,40 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionLocalDeclaration(JNIEnv *env, jobj
 
      if (SgProject::get_verbose() > 0)
           variableDeclaration->get_file_info()->display("source position in Java_JavaParser_cactionLocalDeclaration(): debug");
+   }
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionLocalDeclarationInitialization(JNIEnv *env, jobject xxx)
+   {
+     if (SgProject::get_verbose() > 0)
+          printf ("Inside of Java_JavaParser_cactionLocalDeclarationInitialization() \n");
+
+     outputJavaState("At TOP of cactionLocalDeclarationInitialization");
+
+     ROSE_ASSERT(astJavaStatementStack.empty() == false);
+     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
+
+     SgExpression* expression = astJavaExpressionStack.front();
+     astJavaExpressionStack.pop_front();
+
+     SgStatement* statement = astJavaStatementStack.front();
+     ROSE_ASSERT(statement != NULL);
+     SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(statement);
+     ROSE_ASSERT(variableDeclaration != NULL);
+
+  // variableDeclaration->set_initializer(initializer);
+     SgInitializedName* initializedName = variableDeclaration->get_variables()[0];
+     ROSE_ASSERT(initializedName != NULL);
+
+     SgAssignInitializer* initializer = SageBuilder::buildAssignInitializer(expression,initializedName->get_type());
+     ROSE_ASSERT(initializer != NULL);
+
+     initializedName->set_initptr(initializer);
+     initializer->set_parent(initializedName);
+
+     ROSE_ASSERT(initializer->get_parent() != NULL);
+     ROSE_ASSERT(initializer->get_parent() == initializedName);
+
+     ROSE_ASSERT(astJavaExpressionStack.empty() == true);
    }
 
 
@@ -1808,8 +1892,22 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionSingleMemberAnnotation(JNIEnv *env
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionSingleNameReference(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionSingleNameReference(JNIEnv *env, jobject xxx, jstring variableName)
    {
+     outputJavaState("At TOP of cactionSingleNameReference");
+
+     SgName name = convertJavaStringToCxxString(env,variableName);
+
+     if (SgProject::get_verbose() > 0)
+          printf ("Building a variable reference for name = %s \n",name.str());
+
+  // We have to provide the starting scope to trigger the name to be looked up in parent scopes.
+     SgVarRefExp* varRefExp = SageBuilder::buildVarRefExp(name,astJavaScopeStack.front());
+     ROSE_ASSERT(varRefExp != NULL);
+
+     astJavaExpressionStack.push_front(varRefExp);
+
+     outputJavaState("At BOTTOM of cactionSingleNameReference");
    }
 
 

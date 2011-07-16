@@ -1881,7 +1881,13 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of visit (SingleNameReference,BlockScope)");
 
-          java_parser.cactionSingleNameReference();
+          String varRefName = node.toString();
+          if (java_parser.verboseLevel > 0)
+             {
+               System.out.println("Building a variable reference for name = " + varRefName);
+             }
+
+          java_parser.cactionSingleNameReference(varRefName);
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (SingleNameReference,BlockScope)");
@@ -2229,7 +2235,13 @@ class ecjASTVisitor extends ASTVisitor
      public void endVisit(Assignment  node, BlockScope scope)
         {
        // do nothing by default
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Inside of endVisit (Assignment,BlockScope)");
+
+          java_parser.cactionAssignmentEnd();
         }
+
+
      public void endVisit(BinaryExpression  node, BlockScope scope) {
        // do nothing by default
      }
@@ -2509,6 +2521,13 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (LocalDeclaration,BlockScope)");
 
+          System.out.println("If there is an expression on the stack it is the initializer...");
+          if (node.initialization != null)
+             {
+               System.out.println("Process the initializer expression...");
+               java_parser.cactionLocalDeclarationInitialization();
+             }
+
        // Not clear when we have to provide a parameter.
           java_parser.cactionStatementEnd("LocalDeclaration");
         }
@@ -2671,11 +2690,15 @@ class ecjASTVisitor extends ASTVisitor
      public void endVisit(SingleNameReference node, BlockScope scope)
         {
        // do nothing  by default
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (SingleNameReference,BlockScope)");
         }
 
      public void endVisit(SingleNameReference node, ClassScope scope)
         {
        // do nothing  by default
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (SingleNameReference,ClassScope)");
         }
 
      public void endVisit(SingleTypeReference node, BlockScope scope)

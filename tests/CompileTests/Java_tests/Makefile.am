@@ -11,6 +11,8 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2011_04.java \
      test2011_05.java \
      test2011_06.java \
+     test2011_07.java \
+     test2011_08.java \
      simple.java
 
 

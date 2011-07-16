@@ -945,10 +945,16 @@ buildSimpleVariableDeclaration(const SgName & name)
      astJavaTypeStack.pop_front();
 
   // We are not supporting an initialized at this point in the implementation of the Java support.
-     SgVariableDeclaration* variable = SageBuilder::buildVariableDeclaration (name, type, NULL, astJavaScopeStack.front() );
-     ROSE_ASSERT(variable != NULL);
+     SgVariableDeclaration* variableDeclaration = SageBuilder::buildVariableDeclaration (name, type, NULL, astJavaScopeStack.front() );
+     ROSE_ASSERT(variableDeclaration != NULL);
 
-     return variable;
+  // DQ (7/16/2011): This is a test to debug failing test in resetParentPointers.C:1733
+     ROSE_ASSERT(SageInterface::is_Fortran_language() == false);
+     SgInitializedName* initializedName = variableDeclaration->get_decl_item (name);
+     ROSE_ASSERT(initializedName != NULL);
+     ROSE_ASSERT(initializedName->get_scope() != NULL);
+
+     return variableDeclaration;
    }
 
 list<SgName>
