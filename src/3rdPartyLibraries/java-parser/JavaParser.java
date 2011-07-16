@@ -80,6 +80,7 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionArrayTypeReferenceClassScope(String filename);
      public native void cactionAssertStatement();
      public native void cactionAssignment();
+     public native void cactionAssignmentEnd();
      public native void cactionBinaryExpression();
      public native void cactionBlock();
      public native void cactionBreakStatement();
@@ -139,6 +140,7 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionJavadocSingleTypeReferenceClassScope();
      public native void cactionLabeledStatement();
      public native void cactionLocalDeclaration(String variableName);
+     public native void cactionLocalDeclarationInitialization();
      public native void cactionLongLiteral();
      public native void cactionMarkerAnnotation();
      public native void cactionMemberValuePair();
@@ -161,7 +163,7 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionQualifiedTypeReferenceClassScope();
      public native void cactionReturnStatement();
      public native void cactionSingleMemberAnnotation();
-     public native void cactionSingleNameReference();
+     public native void cactionSingleNameReference(String variableName);
      public native void cactionSingleNameReferenceClassScope();
      public native void cactionSuperReference();
      public native void cactionSwitchStatement();
