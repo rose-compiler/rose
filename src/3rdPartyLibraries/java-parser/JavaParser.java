@@ -80,8 +80,10 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionArrayTypeReferenceClassScope(String filename);
      public native void cactionAssertStatement();
      public native void cactionAssignment();
+     public native void cactionAssignmentEnd();
      public native void cactionBinaryExpression();
      public native void cactionBlock();
+     public native void cactionBlockEnd();
      public native void cactionBreakStatement();
      public native void cactionCaseStatement();
      public native void cactionCastExpression();
@@ -95,6 +97,7 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionDoubleLiteral();
      public native void cactionEmptyStatement();
      public native void cactionEqualExpression();
+     public native void cactionEqualExpressionEnd();
      public native void cactionExtendedStringLiteral();
      public native void cactionFalseLiteral();
      public native void cactionFieldDeclaration();
@@ -104,6 +107,7 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionForeachStatement();
      public native void cactionForStatement();
      public native void cactionIfStatement();
+     public native void cactionIfStatementEnd();
 
   // DQ (4/16/2011): I can't seem to get Boolean values to pass through the JNI C++ interface (so I will use an integer since that works fine).
   // public native void cactionImportReference(String path);
@@ -139,6 +143,7 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionJavadocSingleTypeReferenceClassScope();
      public native void cactionLabeledStatement();
      public native void cactionLocalDeclaration(String variableName);
+     public native void cactionLocalDeclarationInitialization();
      public native void cactionLongLiteral();
      public native void cactionMarkerAnnotation();
      public native void cactionMemberValuePair();
@@ -161,7 +166,7 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionQualifiedTypeReferenceClassScope();
      public native void cactionReturnStatement();
      public native void cactionSingleMemberAnnotation();
-     public native void cactionSingleNameReference();
+     public native void cactionSingleNameReference(String variableName);
      public native void cactionSingleNameReferenceClassScope();
      public native void cactionSuperReference();
      public native void cactionSwitchStatement();
