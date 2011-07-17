@@ -1,6 +1,6 @@
 // Simplest java example (note that class name must match filename).
 
-public class test2011_15
+public class test2011_16
    {
   // This is the required "main" function.
      public static void main(String args[])
