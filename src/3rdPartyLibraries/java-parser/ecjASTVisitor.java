@@ -938,9 +938,10 @@ class ecjASTVisitor extends ASTVisitor
      public boolean visit(IntLiteral  node, BlockScope scope)
         {
           if (java_parser.verboseLevel > -1)
-               System.out.println("Inside of visit (IntLiteral,BlockScope)");
+             System.out.println("Inside of visit (IntLiteral,BlockScope) value = " + node.toString());
 
-          java_parser.cactionIntLiteral();
+       // java_parser.cactionIntLiteral();
+          java_parser.cactionIntLiteral(node.value);
 
           if (java_parser.verboseLevel > -1)
                System.out.println("Leaving visit (IntLiteral,BlockScope)");
