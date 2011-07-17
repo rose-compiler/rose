@@ -1726,6 +1726,15 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionIfStatementEnd(JNIEnv *env, jobjec
           ifStatement->set_true_body(astJavaStatementStack.front());
           astJavaStatementStack.pop_front();
         }
+
+  // If there is another one left, then it is for the false branch.
+     if (astJavaStatementStack.empty() == false)
+        {
+       // The end of statement rule will not be called, so we have to append 
+       // any remaining statments.
+          ifStatement->set_false_body(astJavaStatementStack.front());
+          astJavaStatementStack.pop_front();
+        }
      ROSE_ASSERT(astJavaStatementStack.empty() == true);
 
      outputJavaState("At BOTTOM of cactionIfStatementEnd");
