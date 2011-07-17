@@ -1881,7 +1881,13 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of visit (SingleNameReference,BlockScope)");
 
-          java_parser.cactionSingleNameReference();
+          String varRefName = node.toString();
+          if (java_parser.verboseLevel > 0)
+             {
+               System.out.println("Building a variable reference for name = " + varRefName);
+             }
+
+          java_parser.cactionSingleNameReference(varRefName);
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (SingleNameReference,BlockScope)");
@@ -2176,67 +2182,93 @@ class ecjASTVisitor extends ASTVisitor
         {
         // do nothing by default
         }
+
      public void endVisit(AND_AND_Expression  node, BlockScope scope)
         {
        // do nothing by default
         }
+
      public void endVisit(AnnotationMethodDeclaration node, ClassScope classScope)
         {
        // do nothing by default
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (AnnotationMethodDeclaration,ClassScope)");
         }
+
      public void endVisit(Argument  node, BlockScope scope)
         {
        // do nothing by default
         }
+
      public void endVisit(Argument  node,ClassScope scope)
         {
        // do nothing by default
         }
+
      public void endVisit(ArrayAllocationExpression node, BlockScope scope)
         {
        // do nothing by default
         }
+
      public void endVisit(ArrayInitializer  node, BlockScope scope)
         {
        // do nothing by default
         }
+
      public void endVisit(ArrayQualifiedTypeReference node, BlockScope scope)
         {
        // do nothing by default
         }
+
      public void endVisit(ArrayQualifiedTypeReference node, ClassScope scope)
         {
        // do nothing by default
         }
+
      public void endVisit(ArrayReference  node, BlockScope scope)
         {
        // do nothing by default
         }
+
      public void endVisit(ArrayTypeReference  node, BlockScope scope)
         {
        // do nothing by default
         }
+
      public void endVisit(ArrayTypeReference  node, ClassScope scope)
         {
        // do nothing by default
         }
+
      public void endVisit(AssertStatement  node, BlockScope scope)
         {
        // do nothing by default
         }
+
      public void endVisit(Assignment  node, BlockScope scope)
         {
        // do nothing by default
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Inside of endVisit (Assignment,BlockScope)");
+
+          java_parser.cactionAssignmentEnd();
         }
-     public void endVisit(BinaryExpression  node, BlockScope scope) {
+
+
+     public void endVisit(BinaryExpression  node, BlockScope scope)
+        {
        // do nothing by default
-     }
-     public void endVisit(Block  node, BlockScope scope) {
+        }
+
+     public void endVisit(Block  node, BlockScope scope) 
+        {
        // do nothing by default
-          System.out.println("Inside of endVisit (Block,BlockScope)");
-     }
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Inside of endVisit (Block,BlockScope)");
+
+          java_parser.cactionBlockEnd();
+        }
+
      public void endVisit(BreakStatement  node, BlockScope scope) {
         // do nothing  by default
      }
@@ -2306,6 +2338,10 @@ class ecjASTVisitor extends ASTVisitor
      public void endVisit(EqualExpression  node, BlockScope scope)
         {
        // do nothing  by default
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Inside of endVisit (EqualExpression,BlockScope)");
+
+          java_parser.cactionEqualExpressionEnd();
         }
 
      public void endVisit(ExplicitConstructorCall node, BlockScope scope)
@@ -2356,6 +2392,13 @@ class ecjASTVisitor extends ASTVisitor
      public void endVisit(IfStatement  node, BlockScope scope)
         {
        // do nothing  by default
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Inside of endVisit (IfStatement,BlockScope)");
+
+          java_parser.cactionIfStatementEnd();
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (IfStatement,BlockScope)");
         }
 
      public void endVisit(ImportReference  node, CompilationUnitScope scope)
@@ -2508,6 +2551,13 @@ class ecjASTVisitor extends ASTVisitor
        // do nothing  by default
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (LocalDeclaration,BlockScope)");
+
+          System.out.println("If there is an expression on the stack it is the initializer...");
+          if (node.initialization != null)
+             {
+               System.out.println("Process the initializer expression...");
+               java_parser.cactionLocalDeclarationInitialization();
+             }
 
        // Not clear when we have to provide a parameter.
           java_parser.cactionStatementEnd("LocalDeclaration");
@@ -2671,11 +2721,15 @@ class ecjASTVisitor extends ASTVisitor
      public void endVisit(SingleNameReference node, BlockScope scope)
         {
        // do nothing  by default
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (SingleNameReference,BlockScope)");
         }
 
      public void endVisit(SingleNameReference node, ClassScope scope)
         {
        // do nothing  by default
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (SingleNameReference,ClassScope)");
         }
 
      public void endVisit(SingleTypeReference node, BlockScope scope)
