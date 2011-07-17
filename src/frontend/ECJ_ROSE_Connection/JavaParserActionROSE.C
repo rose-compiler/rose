@@ -326,6 +326,14 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclarationEnd (JNIEnv *env,
 
   // Pop the constructor body...
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
+
+  // Don't leave any orphaned statments
+     if (astJavaStatementStack.empty() == false)
+        {
+          astJavaScopeStack.front()->append_statement(astJavaStatementStack.front());
+          astJavaStatementStack.pop_front();
+        }
+
      astJavaScopeStack.pop_front();
  
   // Pop the fuction definition...
@@ -1253,10 +1261,33 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionStatementEnd(JNIEnv *env, jclass x
 
           astJavaStatementStack.pop_front();
 
-          astJavaScopeStack.front()->append_statement(statement);
+          if (SgProject::get_verbose() > 0)
+               printf ("Append statement on statement stack to the current scope \n");
+
+       // astJavaScopeStack.front()->append_statement(statement);
+
+          SgIfStmt* ifStatement = isSgIfStmt(astJavaScopeStack.front());
+          if (ifStatement != NULL)
+             {
+               SgNullStatement* nullStatement = isSgNullStatement(ifStatement->get_true_body());
+               if (nullStatement != NULL)
+                  {
+                    ifStatement->set_true_body(statement);
+                    delete nullStatement;
+                  }
+                 else
+                  {
+                    ifStatement->set_false_body(statement);
+                  }
+             }
+            else
+             {
+               astJavaScopeStack.front()->append_statement(statement);
+             }
+
           ROSE_ASSERT(astJavaStatementStack.empty() == true);
         }
-     ROSE_ASSERT(astJavaStatementStack.empty() == true);
+  // ROSE_ASSERT(astJavaStatementStack.empty() == true);
 
      outputJavaState("At Bottom of cactionStatementEnd()");
 
@@ -1264,7 +1295,10 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionStatementEnd(JNIEnv *env, jclass x
      ROSE_ASSERT(astJavaNodeStack.empty() == true);
      ROSE_ASSERT(astJavaInitializedNameStack.empty() == true);
      ROSE_ASSERT(astJavaStatementStack.empty() == true);
-     ROSE_ASSERT(astJavaExpressionStack.empty() == true);
+
+  // DQ (7/16/2011): Note that there could be a predicate on the expression stack 
+  // associated with an SgIfStmt that is not finished being constructed.
+  // ROSE_ASSERT(astJavaExpressionStack.empty() == true);
 
   // We want to at some point make this an error, but for now just a warning.
      if (astJavaTypeStack.empty() == false)
@@ -1379,10 +1413,12 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionAssignmentEnd(JNIEnv *env, jobject
   // This is an assignement statement so we have to build a statement and push it onto the stack.
      SgExprStatement* assignmentStatement = SageBuilder::buildAssignStatement(lhs,rhs);
      ROSE_ASSERT(assignmentStatement != NULL);
-     ROSE_ASSERT(astJavaExpressionStack.empty() == true);
 
-  // astJavaStatementStack.push_front(assignmentStatement);
-     astJavaScopeStack.front()->append_statement(assignmentStatement);
+  // DQ (7/16/2011): We can't assert this since it will be false if a conditional from an if...statement is to be processed.
+  // ROSE_ASSERT(astJavaExpressionStack.empty() == true);
+
+     astJavaStatementStack.push_front(assignmentStatement);
+  // astJavaScopeStack.front()->append_statement(assignmentStatement);
 #else
   // Build the assignment operator and push it onto the stack.
      SgExpression* assignmentExpression = SageBuilder::buildBinaryExpression<SgAssignOp>(lhs,rhs);
@@ -1403,6 +1439,82 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBinaryExpression(JNIEnv *env, jobj
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionBlock(JNIEnv *env, jobject xxx)
    {
+     if (SgProject::get_verbose() > 2)
+          printf ("Build an SgBasicBlock scope \n");
+
+     outputJavaState("At TOP of cactionBlock");
+
+  // There could be a conditional from an IF statement on the stack.
+  // ROSE_ASSERT(astJavaExpressionStack.empty() == true);
+
+  // If there is an expression on the expression stack and an SgIfStmt on the scope stack then 
+  // this might be a good time to associate the conditional with the SgIfStmt and have a more
+  // enforceble rules going forward.  But then there might not be a SgBasicBlock, so don't do this.
+
+  // Since we build the true body when we build the ifStmt, we need to detect and reuse this 
+  // SgBasicBlock instead of building a new one.
+  // SgBasicBlock* block = SageBuilder::buildBasicBlock();
+     SgBasicBlock* block = NULL;
+     SgIfStmt* ifStatement = isSgIfStmt(astJavaScopeStack.front());
+     if (ifStatement != NULL)
+        {
+          SgNullStatement* nullStatement = isSgNullStatement(ifStatement->get_true_body());
+          if (nullStatement != NULL)
+             {
+            // block = ifStatement->get_true_body();
+               block = SageBuilder::buildBasicBlock();
+               ROSE_ASSERT(block != NULL);
+               ifStatement->set_true_body(block);
+
+               delete nullStatement;
+             }
+            else
+             {
+            // Set the false body
+               block = SageBuilder::buildBasicBlock();
+               ROSE_ASSERT(block != NULL);
+               ifStatement->set_false_body(block);
+             }
+        }
+       else
+        {
+          block = SageBuilder::buildBasicBlock();
+          ROSE_ASSERT(block != NULL);
+        }
+     ROSE_ASSERT(block != NULL);
+
+     block->set_parent(astJavaScopeStack.front());
+     ROSE_ASSERT(block->get_parent() != NULL);
+
+     astJavaScopeStack.push_front(block);
+
+     outputJavaState("At BOTTOM of cactionBlock");
+   }
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionBlockEnd(JNIEnv *env, jobject xxx)
+   {
+     if (SgProject::get_verbose() > 2)
+          printf ("Pop the current SgBasicBlock scope off the scope stack...\n");
+
+     outputJavaState("At TOP of cactionBlockEnd");
+
+     ROSE_ASSERT(astJavaScopeStack.empty() == false);
+
+  // There should not be any orphaned statements (collect the last one since 
+  // the end of statement rule will not always be called.
+     if (astJavaStatementStack.empty() == false)
+        {
+       // The end of statement rule will not be called, so we have to append 
+       // any remaining statments.
+          astJavaScopeStack.front()->append_statement(astJavaStatementStack.front());
+          astJavaStatementStack.pop_front();
+        }
+     ROSE_ASSERT(astJavaStatementStack.empty() == true);
+
+     astJavaScopeStack.pop_front();
+
+     outputJavaState("At BOTTOM of cactionBlockEnd");
    }
 
 
@@ -1468,6 +1580,36 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionEmptyStatement(JNIEnv *env, jobjec
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionEqualExpression(JNIEnv *env, jobject xxx)
    {
+     if (SgProject::get_verbose() > 0)
+          printf ("Inside of Java_JavaParser_cactionEqualExpression() \n");
+   }
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionEqualExpressionEnd(JNIEnv *env, jobject xxx)
+   {
+     if (SgProject::get_verbose() > 0)
+          printf ("Inside of Java_JavaParser_cactionEqualExpressionEnd() \n");
+
+     outputJavaState("At TOP of cactionEqualExpressionEnd");
+
+     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
+     ROSE_ASSERT(astJavaExpressionStack.size() >= 2);
+
+     SgExpression* lhs = astJavaExpressionStack.front();
+     ROSE_ASSERT(lhs != NULL);
+     astJavaExpressionStack.pop_front();
+
+     SgExpression* rhs = astJavaExpressionStack.front();
+     ROSE_ASSERT(rhs != NULL);
+     astJavaExpressionStack.pop_front();
+
+  // Build the assignment operator and push it onto the stack.
+     SgExpression* assignmentExpression = SageBuilder::buildBinaryExpression<SgAssignOp>(lhs,rhs);
+     ROSE_ASSERT(assignmentExpression != NULL);
+     astJavaExpressionStack.push_front(assignmentExpression);
+     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
+
+     outputJavaState("At BOTTOM of cactionEqualExpressionEnd");
    }
 
 
@@ -1513,6 +1655,80 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionForStatement(JNIEnv *env, jobject 
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionIfStatement(JNIEnv *env, jobject xxx)
    {
+     if (SgProject::get_verbose() > 2)
+          printf ("Inside of Java_JavaParser_cactionIfStatement() \n");
+
+     outputJavaState("At TOP of cactionIfStatement");
+
+  // Build a SgIfStatement and push it onto the stack with a true block.
+
+  // We need a predicate to use to call the SageBuilder::buildIfStmt() function.  So build a SgNullExpression for now. 
+  // SgNullExpression* temp_conditional = SageBuilder::buildNullExpression();
+     SgNullStatement* temp_conditional = SageBuilder::buildNullStatement();
+  // SgBasicBlock* true_block = SageBuilder::buildBasicBlock();
+     SgNullStatement* true_block = SageBuilder::buildNullStatement();
+     ROSE_ASSERT(true_block != NULL);
+
+     SgIfStmt* ifStatement = SageBuilder::buildIfStmt(temp_conditional,true_block,NULL);
+     ROSE_ASSERT(ifStatement != NULL);
+
+     ifStatement->set_parent(astJavaScopeStack.front());
+
+     astJavaScopeStack.front()->append_statement(ifStatement);
+
+  // Push the SgIfStmt onto the stack, but not the true block.
+     astJavaScopeStack.push_front(ifStatement);
+     ROSE_ASSERT(astJavaScopeStack.front()->get_parent() != NULL);
+
+     outputJavaState("At BOTTOM of cactionIfStatement");
+   }
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionIfStatementEnd(JNIEnv *env, jobject xxx)
+   {
+     if (SgProject::get_verbose() > 2)
+          printf ("Inside of Java_JavaParser_cactionIfStatementEnd() \n");
+
+     outputJavaState("At TOP of cactionIfStatementEnd");
+
+  // There should be a predicate on the stack for us to use as a final step in construction of the SgIfStmt.
+     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
+
+     ROSE_ASSERT(astJavaScopeStack.empty() == false);
+
+     SgIfStmt* ifStatement = isSgIfStmt(astJavaScopeStack.front());
+     ROSE_ASSERT(ifStatement != NULL);
+     ROSE_ASSERT(ifStatement->get_parent() != NULL);
+
+     SgExpression* condititonalExpr = astJavaExpressionStack.front();
+     ROSE_ASSERT(condititonalExpr != NULL);
+
+     SgExprStatement* exprStatement = SageBuilder::buildExprStatement(condititonalExpr);
+
+     ROSE_ASSERT(exprStatement != NULL);
+     ROSE_ASSERT(condititonalExpr->get_parent() != NULL);
+
+     ifStatement->set_conditional(exprStatement);
+
+     ROSE_ASSERT(exprStatement->get_parent() == NULL);
+     exprStatement->set_parent(ifStatement);
+     ROSE_ASSERT(exprStatement->get_parent() != NULL);
+
+     astJavaExpressionStack.pop_front();
+
+     astJavaScopeStack.pop_front();
+
+  // There should not be any orphaned statements (collect the last one since 
+  // the end of statement rule will not always be called.
+     if (astJavaStatementStack.empty() == false)
+        {
+       // The end of statement rule will not be called, so we have to append 
+       // any remaining statments.
+          ifStatement->set_true_body(astJavaStatementStack.front());
+          astJavaStatementStack.pop_front();
+        }
+     ROSE_ASSERT(astJavaStatementStack.empty() == true);
+
+     outputJavaState("At BOTTOM of cactionIfStatementEnd");
    }
 
 
@@ -1739,7 +1955,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionLocalDeclaration(JNIEnv *env, jobj
   // Save it on the stack so that we can add SgInitializedNames to it.
      astJavaStatementStack.push_front(variableDeclaration);
 
-  // We don't want to add the statment to the current scpe until it is finished being built.
+  // We don't want to add the statement to the current scope until it is finished being built.
   // ROSE_ASSERT(astJavaScopeStack.empty() == false);
   // astJavaScopeStack.front()->append_statement(variableDeclaration);
 
@@ -1778,7 +1994,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionLocalDeclarationInitialization(JNI
      ROSE_ASSERT(initializer->get_parent() != NULL);
      ROSE_ASSERT(initializer->get_parent() == initializedName);
 
-     ROSE_ASSERT(astJavaExpressionStack.empty() == true);
+  // This can't be enforced since the scope might include a SgIfStmt with the predicate still on the stack.
+  // ROSE_ASSERT(astJavaExpressionStack.empty() == true);
    }
 
 
