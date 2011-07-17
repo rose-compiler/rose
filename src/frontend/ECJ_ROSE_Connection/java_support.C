@@ -1206,3 +1206,33 @@ lookupTypeFromQualifiedName(string className)
 
      return classType;
    }
+
+
+
+void
+appendStatement(SgStatement* statement)
+   {
+  // This support function handles the complexity of handling append where the current scope is a SgIfStmt.
+
+     SgIfStmt* ifStatement = isSgIfStmt(astJavaScopeStack.front());
+     if (ifStatement != NULL)
+        {
+          SgNullStatement* nullStatement = isSgNullStatement(ifStatement->get_true_body());
+          if (nullStatement != NULL)
+             {
+               ifStatement->set_true_body(statement);
+               delete nullStatement;
+             }
+            else
+             {
+               ifStatement->set_false_body(statement);
+             }
+        }
+       else
+        {
+          astJavaScopeStack.front()->append_statement(statement);
+        }
+
+     ROSE_ASSERT(statement->get_parent() != NULL);
+   }
+

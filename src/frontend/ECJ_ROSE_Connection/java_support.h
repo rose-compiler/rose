@@ -97,5 +97,9 @@ SgClassSymbol* lookupSymbolFromQualifiedName(std::string className);
 
 SgClassType* lookupTypeFromQualifiedName(std::string className);
 
+
+//! Support function handles the complexity of handling append where the current scope is a SgIfStmt.
+void appendStatement(SgStatement* statement);
+
 // endif for ROSE_JAVA_SUPPORT
 #endif

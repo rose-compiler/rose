@@ -18,6 +18,9 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2011_11.java \
      test2011_12.java \
      test2011_13.java \
+     test2011_14.java \
+     test2011_15.java \
+     test2011_16.java \
      simple.java
 
 

@@ -116,7 +116,8 @@ class JavaParser  implements Callable<Boolean>
 
      public native void cactionInitializer();
      public native void cactionInstanceOfExpression();
-     public native void cactionIntLiteral();
+  // public native void cactionIntLiteral();
+     public native void cactionIntLiteral(int value);
      public native void cactionJavadoc();
      public native void cactionJavadocClassScope();
      public native void cactionJavadocAllocationExpression();
