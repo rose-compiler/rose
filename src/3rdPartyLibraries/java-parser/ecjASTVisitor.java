@@ -60,7 +60,7 @@ class ecjASTVisitor extends ASTVisitor
                System.out.println("Inside of visit (AND_AND_Expression,BlockScope)");
 
        // Call the Java side of the JNI function.
-          java_parser.cactionAND_AND_Expression();
+          java_parser.cactionANDANDExpression();
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (AND_AND_Expression,BlockScope)");
@@ -1557,7 +1557,7 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of visit (OR_OR_Expression,BlockScope)");
 
-          java_parser.cactionOR_OR_Expression();
+          java_parser.cactionORORExpression();
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (OR_OR_Expression,BlockScope)");
@@ -2187,6 +2187,15 @@ class ecjASTVisitor extends ASTVisitor
      public void endVisit(AND_AND_Expression  node, BlockScope scope)
         {
        // do nothing by default
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Inside of endVisit (AND_AND_Expression,BlockScope)");
+
+       // Call the Java side of the JNI function.
+          java_parser.cactionANDANDExpressionEnd();
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (AND_AND_Expression,BlockScope)");
+
         }
 
      public void endVisit(AnnotationMethodDeclaration node, ClassScope classScope)
@@ -2259,6 +2268,19 @@ class ecjASTVisitor extends ASTVisitor
      public void endVisit(BinaryExpression  node, BlockScope scope)
         {
        // do nothing by default
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Inside of endVisit (BinaryExpression,BlockScope)");
+
+          int operatorKind = (node.bits & ASTNode.OperatorMASK) >> ASTNode.OperatorSHIFT;
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Inside of endVisit (BinaryExpression,BlockScope): operatorKind = " + operatorKind);
+
+          java_parser.cactionBinaryExpressionEnd(operatorKind);
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (BinaryExpression,BlockScope)");
+
         }
 
      public void endVisit(Block  node, BlockScope scope) 
@@ -2299,6 +2321,18 @@ class ecjASTVisitor extends ASTVisitor
      public void endVisit(CompoundAssignment  node, BlockScope scope)
         {
        // do nothing  by default
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Inside of endVisit (CompoundAssignment,BlockScope)");
+
+          if (java_parser.verboseLevel > 0)
+             System.out.println("Inside of endVisit (CompoundAssignment,BlockScope): operator_kind" + node.toString());
+
+          int operator_kind = node.operator;
+
+          java_parser.cactionCompoundAssignmentEnd(operator_kind);
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (CompoundAssignment,BlockScope)");
         }
 
      public void endVisit(ConditionalExpression node, BlockScope scope)
@@ -2632,6 +2666,13 @@ class ecjASTVisitor extends ASTVisitor
      public void endVisit(OR_OR_Expression  node, BlockScope scope)
         {
        // do nothing  by default
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Inside of endVisit (OR_OR_Expression,BlockScope)");
+
+          java_parser.cactionORORExpressionEnd();
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (OR_OR_Expression,BlockScope)");
         }
 
      public void endVisit(ParameterizedQualifiedTypeReference  node, BlockScope scope)
@@ -2816,6 +2857,16 @@ class ecjASTVisitor extends ASTVisitor
      public void endVisit(UnaryExpression  node, BlockScope scope)
         {
        // do nothing  by default
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Inside of endVisit (UnaryExpression,BlockScope)");
+
+       // Not clear what the valueRequired filed means.
+          int operator_kind = (node.bits & ASTNode.OperatorMASK) >> ASTNode.OperatorSHIFT;
+
+          java_parser.cactionUnaryExpressionEnd(operator_kind);
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (UnaryExpression,BlockScope)");
         }
 
      public void endVisit(WhileStatement  node, BlockScope scope)
