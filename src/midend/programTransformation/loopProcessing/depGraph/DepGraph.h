@@ -50,11 +50,9 @@ inline bool SelectDepType( const DepInfo &info, const DepType& sel)
 
 inline bool SelectDepLevel( const DepInfo &d, int level) 
    {  
-     int num = d.CommonLevel();
-     if ( level <= num) {
-        return level <= d.CarryLevel();
-     }
-     return false;
+     int num1 = 0, num2 = 0;
+     d.CarryLevels(num1,num2);
+     return (level <= num2);
    }
 
 template <class Node>
