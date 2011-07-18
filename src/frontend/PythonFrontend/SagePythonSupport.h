@@ -41,6 +41,12 @@ sage_appendStatements(PyObject *self, PyObject *args);
 PyObject*
 sage_buildFunctionParameterList(PyObject* args, PyObject* kwargs);
 
+/**
+ * Build a reference to the name in the given scope. If not such name
+ * exists, build an opaque VarRefExp.
+ */
+SgExpression* buildReference(char* id, SgScopeStatement* scope);
+
 template <typename SgNode_T>
 static int sage_converter(PyObject* object, void** address) {
     if (! PyObject_IsTrue(object)) {
