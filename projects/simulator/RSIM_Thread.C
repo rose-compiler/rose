@@ -1130,24 +1130,28 @@ RSIM_Thread::futex_wait(rose_addr_t va, uint32_t oldval, uint32_t bitset)
     }
 
     /* Place this process on the futex waiting queue. */
-    int futex_number = process->get_futexes()->insert((rose_addr_t)futex, bitset, RSIM_FutexTable::LOCKED);
-    if (futex_number<0)
-        retval = futex_number;
+    int futex_number = -1;
+    if (0==retval) {
+        futex_number = process->get_futexes()->insert((rose_addr_t)futex, bitset, RSIM_FutexTable::LOCKED);
+        if (futex_number<0)
+            retval = futex_number;
+    }
 
     /* Release the global semaphore. */
     status = sem_post(process->get_simulator()->get_semaphore());
     assert(0==status);
-    return retval;
 
-    /* Block until we're signaled */
-    trace->mesg("futex wait: about to block...");
-    status = process->get_futexes()->wait(futex_number);
-    assert(0==status);
-    trace->mesg("futex wait: resumed");
+    if (futex_number>=0) {
+        /* Block until we're signaled */
+        trace->mesg("futex wait: about to block...");
+        status = process->get_futexes()->wait(futex_number);
+        assert(0==status);
+        trace->mesg("futex wait: resumed");
 
-    /* Remove the semaphore from the table. */
-    status = process->get_futexes()->erase((rose_addr_t)futex, futex_number, RSIM_FutexTable::UNLOCKED);
-    assert(0==status);
+        /* Remove the semaphore from the table. */
+        status = process->get_futexes()->erase((rose_addr_t)futex, futex_number, RSIM_FutexTable::UNLOCKED);
+        assert(0==status);
+    }
 
     return retval;
 }
