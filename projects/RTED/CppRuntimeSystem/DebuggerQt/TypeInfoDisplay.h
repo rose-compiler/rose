@@ -16,18 +16,16 @@ class RsTypeDisplay : public ItemTreeNode
 
         static RsTypeDisplay * build (TypeSystem * ts);
 
-        static RsTypeDisplay * build (RsType * t,
-                                      int memberOffset=-1,
-                                      const QString & memberName="");
+        static RsTypeDisplay * build (const RsType* t, int memberOffset=-1, const QString & memberName="");
     protected:
 
-        RsTypeDisplay(RsType * type, const QString & memberName="", int offset=-1);
+        RsTypeDisplay(const RsType* type, const QString& memberName="", int offset=-1);
 
 
 
 
 
-        RsType * type; ///< type information
+        const RsType * type; ///< type information
         QString name;  ///< name of member (when contained by other class)
         int offset;    ///< offset in containing type
 };

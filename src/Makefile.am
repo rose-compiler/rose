@@ -104,6 +104,7 @@ libroseLibraries = \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/outsideInterface/libarrayOptimization.la \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/prepostTransformation/libprepostloop.la \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/slicing/libslicing.la \
+   $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la \
    $(top_builddir)/src/midend/programTransformation/ompLowering/libompLowering.la \
    $(top_builddir)/src/midend/programTransformation/constantFolding/libconstantFolding.la \
    $(top_builddir)/src/midend/programTransformation/finiteDifferencing/libfiniteDifferencing.la \
@@ -165,8 +166,8 @@ endif
 
 
 librose_la_SOURCES = dummyCppFileForLibrose.C
-librose_la_LIBADD = $(libroseLibraries) $(JAVA_JVM_FLAGS) $(LIB_QT) -lm $(RT_LIBS) \
-                    $(BOOST_LDFLAGS) $(BOOST_DATE_TIME_LIB) \
+librose_la_LIBADD = $(BOOST_LDFLAGS) $(libroseLibraries) $(JAVA_JVM_FLAGS) $(LIB_QT) -lm $(RT_LIBS) \
+                    $(BOOST_DATE_TIME_LIB) \
 		    $(BOOST_THREAD_LIB) $(BOOST_FILESYSTEM_LIB) \
 		    $(BOOST_PROGRAM_OPTIONS_LIB) $(BOOST_REGEX_LIB) \
 		    $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB) \

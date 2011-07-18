@@ -8,8 +8,15 @@ INCLUDES = $(ROSE_INCLUDES)
 
 ## Don't use the repository in ../src
 CXX_TEMPLATE_REPOSITORY_PATH = .
+
 # This test program does not require the rest of ROSE so it can be handled locally
-bin_PROGRAMS  = astTraversalTest processnew3Down4SgIncGraph processnew3Down4 binaryPaths
+
+# DQ (7/2/2011): Fixed this to only handle binary work when binary support is available.
+# bin_PROGRAMS  = astTraversalTest processnew3Down4SgIncGraph processnew3Down4 binaryPaths
+bin_PROGRAMS  = astTraversalTest processnew3Down4SgIncGraph processnew3Down4
+if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+bin_PROGRAMS += binaryPaths
+endif
 
 # Allow development using -lrose -ledg (simpler) or using 
 # long list of separate libraries (for faster development)

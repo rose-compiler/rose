@@ -5,7 +5,7 @@
 #include <FunctionObject.h>
 
 class VoidPtrSet : public std::set<void*, std::less<void*> > {};
-//! A custom container based on std::set for arbitrary pointers of type T
+
 template <class T>
 class PtrSetWrap  
 {
@@ -20,7 +20,7 @@ class PtrSetWrap
   class Iterator 
   {
     const VoidPtrSet *impl;
-    VoidPtrSet::const_iterator p;
+    VoidPtrSet::iterator p;
     Iterator( const VoidPtrSet* _impl) 
             : impl(_impl) { Reset(); }
     Iterator( const VoidPtrSet* _impl, const VoidPtrSet::iterator _p) 
@@ -67,12 +67,7 @@ class PtrSetWrap
   };
 
   const_iterator begin() const { return Iterator(&impl); }
-#if _MSC_VER
-//#if ROSE_MICROSOFT_OS
-  const_iterator end() const { return Iterator(&impl); }
-#else
   const_iterator end() const { return Iterator(&impl, impl.end()); }
-#endif
   const_iterator find(const T* t) const { return Iterator(&impl,impl.find((void*)t)); }
   iterator begin() { return Iterator(&impl); }
   iterator end() { return Iterator(&impl, impl.end()); }
@@ -98,17 +93,12 @@ class PtrSetWrap
   void operator |= (const PtrSetWrap<T>& that)
     { impl.insert(that.impl.begin(), that.impl.end()); }
   void operator -= (const PtrSetWrap<T>& that)
-    {
-#ifdef _MSC_VER
-          for (VoidPtrSet::const_iterator p = that.impl.begin(); p !=  that.impl.end(); ++p) 
-#else
-          for (VoidPtrSet::iterator p = that.impl.begin(); p !=  that.impl.end(); ++p) 
-#endif
-             {
-           VoidPtrSet::iterator p1 = impl.find(*p);
-           if (p1 != impl.end())
-                impl.erase(p1);
-         }
+    { for (VoidPtrSet::iterator p = that.impl.begin();
+           p !=  that.impl.end(); ++p) {
+         VoidPtrSet::iterator p1 = impl.find(*p);
+         if (p1 != impl.end())
+           impl.erase(p1);
+      }
     }      
   void Clear() { impl.clear(); }
 
@@ -147,22 +137,19 @@ class AppendPtrSet : public CollectObject<T*>
 };
 
 
-// DQ (11/25/2009): Changed name from SelectObject to SelectObjectBase to avoid SelectObject function ambiguity using Microsoft Visual Studio
 template<class T>
-class SelectSTLSet : public SelectObjectBase<T>
+class SelectSTLSet : public SelectObject<T>
 {
   std::set<T> res;
  public:
   SelectSTLSet( const std::set<T> r) : res(r) {}
-  bool operator()(const T& cur) 
+  bool operator()(const T& cur) const
    {
       return (res.find(cur) != res.end());
    }
 };
-
-// DQ (11/25/2009): Changed name from SelectObject to SelectObjectBase to avoid SelectObject function ambiguity using Microsoft Visual Studio
 template<class T>
-class SelectPtrSet : public SelectObjectBase<T*>
+class SelectPtrSet : public SelectObject<T*>
 {
   PtrSetWrap<T> res;
  public:
@@ -177,10 +164,8 @@ class SelectPtrSet : public SelectObjectBase<T*>
       return (res.IsMember(cur));
    }
 };
-
-// DQ (11/25/2009): Changed name from SelectObject to SelectObjectBase to avoid SelectObject function ambiguity using Microsoft Visual Studio
 template<class T>
-class NotSelectPtrSet : public SelectObjectBase<T*>
+class NotSelectPtrSet : public SelectObject<T*>
 {
   PtrSetWrap<T> res;
  public:

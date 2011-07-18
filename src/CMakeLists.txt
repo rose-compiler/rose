@@ -170,6 +170,23 @@ set(MSTL_SRC
     ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/MSTL/DOTGraphInterface.C
    )
 
+set(POET_SRC
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/AutoTuningInterface.cpp
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/codegen.cpp
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/driver.cpp
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/evalAST.cpp
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/evalOp.cpp
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/main.cpp
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/parse.cpp
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/poetAST.cpp
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/timing.cpp
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/poet_lex.c
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/poet_yacc.c
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/poet_yacc.y
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/poet_lex.l
+   )
+
+
 set(EDG_SAGE_Connection_SRC
     ${CMAKE_SOURCE_DIR}/src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection/sage_gen_be.C
     ${CMAKE_SOURCE_DIR}/src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection/wrapperFunctionsForEDG.C
@@ -697,6 +714,7 @@ ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/LoopT
 ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/TransformComputation.C
 ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/BlockingAnal.C
 ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/TypedFusionImpl.C
+${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/ParallelizeLoop.C
 ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depInfo/StmtDepAnal.C
 #${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depInfo/DepTestStatistics.C
 #${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depInfo/PlatoOmegaInterface.C
@@ -774,6 +792,7 @@ set(rose_LIB_SRCS dummyCppFileForLibrose.C
  ${unparser_SRC}
  ${sage3_SRC}
  ${MSTL_SRC} 
+ ${POET_SRC} 
  ${virtualCFG_SRC} 
  ${rose_support_src}
  ${roseDisassemblers_SRC}
@@ -840,6 +859,8 @@ add_custom_target(
 
 ###############################################################################################################################
 
+#Faizur(07/21/2011): POET VERSION ADDED
+add_definitions(-DPOET_VERSION="\\"1.02.06.10\\"")
 
 add_library(ROSE_DLL SHARED ${rose_LIB_SRCS} )
 add_dependencies(ROSE_DLL OMPPARSER ROSE_PREPROCESSOR edg33 libhpdf generate_stringify generate_rosePublicConfig) 

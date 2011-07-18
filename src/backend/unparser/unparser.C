@@ -1706,6 +1706,8 @@ void unparseProject ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, 
    {
      ROSE_ASSERT(project != NULL);
 
+     // negara1 (07/13/2011) - test comment
+
 #if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
 #error "This implementation of the support for the older interface has been refactored"
      for (int i=0; i < project->numberOfFiles(); ++i)

@@ -1,10 +1,12 @@
 #ifndef RTED_DS_H
 #define RTED_DS_H
-#include <boost/foreach.hpp>
-#include <string>
 
-using namespace SageInterface;
-using namespace SageBuilder;
+#include <string>
+#include <vector>
+
+#include <rose.h>
+
+#include "CppRuntimeSystem/rted_typedefs.h"
 
 
 /* -----------------------------------------------------------
@@ -12,62 +14,52 @@ using namespace SageBuilder;
  * it stores information about the dimension of the array
  * whether its allocated on the stack or heap
  * and the size for both dimensions
- * Finally, there is a bollean to indicate if this array is created with malloc
+ * Finally, there is a boolean to indicate if this array is created with malloc
  * -----------------------------------------------------------*/
-class RTedArray {
- public:
-  bool stack;
-  SgInitializedName* initName;
-  SgStatement* surroundingStatement;
-  bool onHeap;
-  bool fromMalloc;
-  SgExpression* size;
-  std::vector<SgExpression*> indices;
+struct RtedArray
+{
+    SgInitializedName*         initName;
+    SgStatement*               surroundingStatement;
+    AllocKind                  allocKind;
+    SgExpression*              size;
+    std::vector<SgExpression*> indices;
 
-  RTedArray(bool s, SgInitializedName* init, SgStatement* stmt,
-	    bool _onHeap, bool _fromMalloc = false, SgExpression* _size = NULL )
-	  :stack(s),initName(init),surroundingStatement(stmt), onHeap(_onHeap) ,
-	  fromMalloc (_fromMalloc), size(_size){
-#if 0
-      stack = s;
-	  initName = init;
-      surroundingStatement = stmt;
-      onHeap = _onHeap;
-      fromMalloc = _fromMalloc;
-      size = _size;
-#endif
-  }
-  virtual ~RTedArray() {}
+    RtedArray()
+    : initName(NULL), surroundingStatement(NULL), allocKind(akUndefined), size(0), indices()
+    {
+      // \todo remove constructor and use insert for adding elements to the map
+    }
 
-  std::vector<SgExpression*> & getIndices() {
-      return indices;
-  }
+    RtedArray ( SgInitializedName* init,
+                SgStatement* stmt,
+                AllocKind _allocKind,
+                SgExpression* _size = NULL
+              )
+    : initName(init), surroundingStatement(stmt), allocKind(_allocKind), size(_size), indices()
+    {
+      ROSE_ASSERT(initName && surroundingStatement && (allocKind != akUndefined));
+      ROSE_ASSERT((allocKind & (akStack | akGlobal)) || size);
+    }
 
-  int getDimension() {
-      return indices.size();
-  }
+    std::vector<SgExpression*>&       getIndices()       { return indices; }
+    const std::vector<SgExpression*>& getIndices() const { return indices; }
 
-  void appendDimensionInformation( SgExprListExp* arg_list ) {
-      appendExpression( arg_list, buildIntVal( getDimension() ));
-      BOOST_FOREACH( SgExpression* expr, getIndices() ) {
-          if ( expr == NULL )
-              expr = buildIntVal( -1 );
-          ROSE_ASSERT( expr );
-          appendExpression( arg_list, expr );
-      }
-  }
+    int getDimension() const { return indices.size(); }
 
-  std::string unparseToString() {
-	  std::string res = "";
-      std::vector< SgExpression* >::iterator i = indices.begin();
+    std::string unparseToString() const
+    {
+      std::string                                  res;
+      std::vector< SgExpression* >::const_iterator i = indices.begin();
+
       while( i != indices.end() ) {
-          res += (*i) -> unparseToString();
-          ++i;
-          if( i != indices.end() )
-              res += ", ";
+            res += (*i) -> unparseToString();
+            ++i;
+            if( i != indices.end() )
+                res += ", ";
       }
-	  return res;
-  }
+
+      return res;
+    }
 };
 
 
@@ -80,45 +72,43 @@ class RTedArray {
  * -----------------------------------------------------------*/
 class RtedClassElement {
  public:
-	std::string manglElementName;
-	std::string elementType;
+  std::string manglElementName;
+  std::string elementType;
   SgDeclarationStatement* sgElement;
-  
-  RtedClassElement(std::string _elementName,
-		  std::string _elementType,
-		   SgDeclarationStatement* _sgElement) {
-    manglElementName = _elementName;
-    elementType = _elementType;
-    sgElement = _sgElement;
+
+  RtedClassElement( std::string _elementName,
+                    std::string _elementType,
+                    SgDeclarationStatement* _sgElement
+                  )
+  : manglElementName(_elementName), elementType(_elementType), sgElement(_sgElement)
+  {
     ROSE_ASSERT(sgElement);
   }
-  virtual ~RtedClassElement(){}
+
+  virtual ~RtedClassElement() {}
 
   virtual size_t extraArgSize() { return 0; }
-  virtual void appendExtraArgs( SgExprListExp* arg_list ) {}
+  virtual RtedArray* get_array() { return NULL; }
 };
 
 class RtedClassArrayElement : public RtedClassElement {
-  private:
-      RTedArray* array;
+      RtedArray* array;
   public:
-      RtedClassArrayElement(
-            std::string elementName,
-            std::string elementType,
-            SgDeclarationStatement* sgElement,
-            RTedArray* array
-      ) : RtedClassElement( elementName, elementType, sgElement ) {
-
-          this -> array = array;
+      RtedClassArrayElement( std::string elementName,
+                             std::string elementType,
+                             SgDeclarationStatement* sgElement,
+                             RtedArray* arr
+                           )
+      : RtedClassElement(elementName, elementType, sgElement), array(arr)
+      {
+        ROSE_ASSERT(array);
       }
 
-      size_t extraArgSize() { 
-          // dimensionality, then each dimension
-          return (array -> getDimension() + 1);
+      size_t extraArgSize() {
+          return 1;
       }
-      void appendExtraArgs( SgExprListExp* arg_list ) {
-          array -> appendDimensionInformation( arg_list );
-      }
+
+      RtedArray* get_array() { return array; }
 };
 
 
@@ -127,34 +117,35 @@ class RtedClassArrayElement : public RtedClassElement {
  * We want to know types and sizes and offsets
  * of all the variables in a class and struct
  * -----------------------------------------------------------*/
-class RtedClassDefinition {
- public:
-  SgClassDefinition* classDef;
-  std::string manglClassName;
-  std::string classType;
-  unsigned int nrOfElements;
-  SgExpression* sizeClass;
-  std::vector<RtedClassElement*> elements;
-  
-  RtedClassDefinition(SgClassDefinition* _classDef,
-		  std::string _className,
-		  std::string _classType,
-		      unsigned int _elementsSize,
-              SgExpression* _sizeClass,
-		      std::vector<RtedClassElement*> _elements) {
-    classDef = _classDef;
-    manglClassName = _className;
-    classType = _classType;
-    nrOfElements = _elementsSize;
-    sizeClass = _sizeClass;
-    elements = _elements;
+struct RtedClassDefinition
+{
+  SgClassDefinition*             classDef;
+  std::string                    manglClassName;
+  std::string                    classType;
+  SgExpression*                  sizeClass;
+  std::vector<RtedClassElement*> elems;
+
+  RtedClassDefinition( SgClassDefinition* _classDef,
+                       std::string _className,
+                       std::string _classType,
+                       SgExpression* _sizeClass,
+                       const std::vector<RtedClassElement*>& _elements
+                     )
+  : classDef(_classDef), manglClassName(_className), classType(_classType),
+    sizeClass(_sizeClass), elems(_elements)
+  {
     ROSE_ASSERT(classDef);
   }
+
+  size_t nrOfElems() const
+  {
+    return elems.size();
+  }
+
   virtual ~RtedClassDefinition(){}
 };
 
 
-#if 1
 /* -----------------------------------------------------------
  * This class stores information about all variable declarations
  * We need to know if they were initialized
@@ -166,14 +157,13 @@ class RTedVariableType {
   SgInitializedName* initName;
   SgExpression* initialized;
   RTedVariableType(SgInitializedName* init,
-		   SgExpression* initExp) {
+       SgExpression* initExp) {
     initName=init;
     initialized=initExp;
   }
+
   virtual ~RTedVariableType(){}
 };
-#endif
-
 
 
 /* -----------------------------------------------------------
@@ -186,66 +176,65 @@ class RTedVariableType {
  * arguments: Additional arguments used when "interesting functions" are called, such as
  *            strcpy, memcpy
  * -----------------------------------------------------------*/
-class RtedArguments {
- public:
-  SgStatement* stmt;
+struct RtedArguments {
   // The arguments hold either a FunctionCall
   // or a stackcall, if it is a function call
   // we need f_name, if it is a stack call
   // we use d_name for the variable that is put on stack
   // but we also use the func name to avoid certain functions
   // for being checked
-  std::string f_name;
-  std::string f_mangled_name;
-  std::string d_name;
-  std::string d_mangled_name;
-  SgInitializedName* initName;
-  SgExpression* varRefExp;
-  std::vector<SgExpression*> arguments;
-  SgExpression* leftHandSideAssignmentExpr;
-  SgExpression* leftHandSideAssignmentExprStr;
-  SgExprListExp* argumentList;
-  RtedArguments(
-		std::string ffuncn, 
-		std::string fmangl,
-		std::string funcn, 
-		std::string mangl,
-		SgExpression* var,
-		SgStatement* stm,
-		std::vector<SgExpression*> args,
-		SgExpression* leftHandAssignStr,
-		SgExpression* leftHandAssign,
-		SgExprListExp* exprList
-		) {
+  SgStatement*               stmt;
+  std::string                f_name;
+  std::string                f_mangled_name;
+  std::string                d_name;
+  std::string                d_mangled_name;
+  SgInitializedName*         initName;
+  SgExpression*              varRefExp;
+  SgExpression*              leftHandSideAssignmentExpr;
+  SgExpression*              leftHandSideAssignmentExprStr;
+  SgExprListExp*             argumentList;
+  SgExpressionPtrList        arguments;
+
+  RtedArguments( SgStatement* stm,
+                 const std::string& ffuncn,
+                 const std::string& fmangl,
+                 const std::string& funcn,
+                 const std::string& mangl,
+                 SgExpression* var,
+                 SgExpression* leftHandAssignStr,
+                 SgExpression* leftHandAssign,
+                 SgExprListExp* exprList,
+                 const SgExpressionPtrList& args
+               )
+  : stmt(stm),
+    f_name(ffuncn), f_mangled_name(fmangl), d_name(funcn), d_mangled_name(mangl),
+    initName(NULL), varRefExp(var),
+    leftHandSideAssignmentExpr(leftHandAssign), leftHandSideAssignmentExprStr (leftHandAssignStr),
+    argumentList(exprList), arguments(args)
+  {
     ROSE_ASSERT(var);
-    stmt = stm;
-    f_name=ffuncn;
-    f_mangled_name=fmangl;
-    d_name=funcn;
-    d_mangled_name=mangl;
-    varRefExp=var;
-    arguments = args;
-    leftHandSideAssignmentExpr = leftHandAssign;
-    leftHandSideAssignmentExprStr = leftHandAssignStr;
-    argumentList = exprList;
+
     if (isSgVarRefExp(var)) {
       initName = isSgVarRefExp(var)->get_symbol()->get_declaration();
       ROSE_ASSERT(initName);
     }
- }
-  std::string toString() {
-    return "func name: " + f_name + "  func mangl_name: " +f_mangled_name +
-      "data name: " + d_name + "  data mangl_name: " +d_mangled_name +  " varRefExp : " + 
-      varRefExp->unparseToString() + " at addr: " + RoseBin_support::ToString(varRefExp)+
-      "  stmt: "+stmt->unparseToString() + " at addr: " + RoseBin_support::ToString(stmt);
   }
-  virtual ~RtedArguments() {}
+
+  std::string toString()
+  {
+    return ( "func name: " + f_name + "  func mangl_name: " + f_mangled_name
+           + "data name: " + d_name + "  data mangl_name: " + d_mangled_name
+           + " varRefExp : " + varRefExp->unparseToString() + " at addr: "
+           + RoseBin_support::ToString(varRefExp)
+           + "  stmt: "+stmt->unparseToString() + " at addr: " + RoseBin_support::ToString(stmt)
+           );
+  }
 };
 
 
 class RtedForStmtProcessed : public AstAttribute {
     public:
-        static const std::string &Key;
+        static const std::string Key;
 
 
         RtedForStmtProcessed( SgExpression* _exp ) : exp( _exp ) {}

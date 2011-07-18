@@ -3,73 +3,96 @@
 
 #include "RtedTransformation.h"
 
-
 // Build an inherited attribute for the tree traversal to test the rewrite mechanism
 
-class InheritedAttribute
-   {
-     public:
-      // Depth in AST
+namespace rted
+{
+  struct InheritedAttribute
+  {
+    bool          function;
+    bool          isAssignInitializer;
+    bool          isArrowExp;
+    bool          isAddressOfOp;
+    bool          isForStatement;
+    bool          isBinaryOp;
 
-         bool function;
-         bool isAssignInitializer;
-         bool isArrowExp;
-         bool isAddressOfOp;
-         bool isForStatement;
-         bool isBinaryOp;
+    InheritedAttribute()
+    : function(false),  isAssignInitializer(false), isArrowExp(false),
+      isAddressOfOp(false), isForStatement(false), isBinaryOp(false)
+    {}
+  };
+
+  struct SynthesizedAttribute
+  {
+#if NOT_YET_IMPLEMENTED
+    typedef void (RtedTransformation::*Modop(SgExpression&, SgFunctionSymbol&));
+
+    const char* operation;
+    Modop*      handler;
+
+    SynthesizedAttribute()
+    : operation(NULL), handler(NULL)
+    {}
+
+    void modify(RtedTransformation& trans, SgExpression& n, SgFunctionSymbol& c)
+    {
+      // trans.*handler(n, c);
+    }
+#endif /* NOT_YET_IMPLEMENTED */
+  };
+
+  class VariableTraversal : public SgTopDownBottomUpProcessing<InheritedAttribute,SynthesizedAttribute>
+     {
+       typedef SgTopDownBottomUpProcessing<InheritedAttribute,SynthesizedAttribute> Base;
+
+       public:
+
+       typedef std::vector<SgStatement*>                                            LoopStack;
+       typedef std::vector<SgBinaryOp*>                                             BinaryOpStack;
 
 
- //  InheritedAttributeBools* bools;
-       // Specific constructors are required
+     explicit
+     VariableTraversal(RtedTransformation* t) ;
 
-	 InheritedAttribute (bool f, bool a, bool ae, bool ao, bool i, bool bo) :
-	                                               function(f),
-	                                               isAssignInitializer(a),
-	                                               isArrowExp(ae),
-	                                               isAddressOfOp(ao),
-	                                               isForStatement(i),
-	                                               isBinaryOp(bo)
-         {};
-	 InheritedAttribute ( const InheritedAttribute & X ) : 
-	                                                       function(X.function),
-	                                                       isAssignInitializer(X.isAssignInitializer),
-	                                                       isArrowExp(X.isArrowExp),
-	                                                       isAddressOfOp(X.isAddressOfOp),
-	                                                       isForStatement(X.isForStatement),
-	                                                       isBinaryOp(X.isBinaryOp)
-	 {};
+     ~VariableTraversal()
+     {
+       ROSE_ASSERT(for_loops.empty());
 
- //  InheritedAttribute (InheritedAttributeBools* b) : bools(b){};
- //  InheritedAttribute ( const InheritedAttribute & X ) : bools(X.bools){};
-   };
+       if (!binary_ops.empty())
+       {
+         std::cerr << "still " << binary_ops.size() << " inside" << std::endl;
+         std::cerr << "front = " << binary_ops.front()->unparseToString() << std::endl;
+         std::cerr << "back = " << binary_ops.back()->unparseToString() << std::endl;
+       }
 
-typedef bool SynthesizedAttribute;
+       ROSE_ASSERT(binary_ops.empty());
+     }
 
+       // Functions required
+       InheritedAttribute evaluateInheritedAttribute (
+                  SgNode* astNode,
+                  InheritedAttribute inheritedAttribute );
 
+       SynthesizedAttribute evaluateSynthesizedAttribute (
+                SgNode* astNode,
+                InheritedAttribute inheritedAttribute,
+                SubTreeSynthesizedAttributes synthesizedAttributeList );
 
-class VariableTraversal : public SgTopDownBottomUpProcessing<InheritedAttribute,SynthesizedAttribute>
-   {
+      friend class InheritedAttributeHandler;
 
-     RtedTransformation* transf;
-     std::vector<SgExpression*>* rightOfbinaryOp;
-     std::vector<SgForStatement*>* for_stmt;
-     public:
+       private:
+         RtedTransformation* const   transf;
+         BinaryOpStack               binary_ops;  ///< stores all binary operations in the current traversal
+         LoopStack                   for_loops;   ///< stores C/C++ for and UPC upc_forall
 
-   VariableTraversal(RtedTransformation* t) ;
-     ~VariableTraversal() {};
+         // internal functions
+         void handleIfVarRefExp(SgVarRefExp* varref, const InheritedAttribute& inh);
 
-     // Functions required
-     InheritedAttribute evaluateInheritedAttribute (
-						    SgNode* astNode, 
-						    InheritedAttribute inheritedAttribute );
-     
-     SynthesizedAttribute evaluateSynthesizedAttribute (
-							SgNode* astNode,
-							InheritedAttribute inheritedAttribute,
-							SubTreeSynthesizedAttributes synthesizedAttributeList );
-
-     bool isRightOfBinaryOp(SgNode* node);
-     bool isInitializedNameInForStatement(SgForStatement* for_stmt,SgInitializedName* name);
-   };
+         // should fail when needed
+         VariableTraversal();
+         VariableTraversal(const VariableTraversal&);
+         VariableTraversal& operator=(const VariableTraversal&);
+     };
+}
 
 #endif
