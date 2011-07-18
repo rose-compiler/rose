@@ -50,7 +50,7 @@
 6. Verify that the right version of libtool is getting called by running
 	"which libtool" and "which libtoolize"
 
-7. Configure ROSE as follows
+7. Configure ROSE as follows. (Make sure to run the build script beforehand if necessary)
 	
 	../configure --with-CXX_DEBUG=-ggdb3 --with-CXX_WARNINGS=-Wall --with-boost=/Users/$USER/macports  --with-gfortran=/Users/$USER/macports/bin/gfortran-mp-4.4 --with-alternate_backend_fortran_compiler=gfortran-mp-4.4 GFORTRAN_PATH=/Users/$USER/macports/bin/gfortran-mp-4.4
 	
