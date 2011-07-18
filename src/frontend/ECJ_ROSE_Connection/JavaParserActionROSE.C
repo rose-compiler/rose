@@ -1511,7 +1511,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBinaryExpressionEnd(JNIEnv *env, j
        // This may have to handled special in ROSE. ROSE does not represent the semantics,
        // and so this support my require a special operator to support Java in ROSE. For
        // now we will use the more common SgRshiftOp.
-          case UNSIGNED_RIGHT_SHIFT: binaryExpressionSupport<SgRshiftOp>();         break;
+          case UNSIGNED_RIGHT_SHIFT: binaryExpressionSupport<SgJavaUnsignedRshiftOp>();         break;
 
        // These are handled through separate functions (not a BinaryExpression in ECJ).
           case OR_OR:   ROSE_ASSERT(false); break;
@@ -1743,7 +1743,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompoundAssignmentEnd(JNIEnv *env,
        // This may have to handled special in ROSE. ROSE does not represent the semantics,
        // and so this support my require a special operator to support Java in ROSE. For
        // now we will use the more common SgRshiftOp.
-          case UNSIGNED_RIGHT_SHIFT: binaryAssignmentStatementSupport<SgRshiftAssignOp>(); break;
+          case UNSIGNED_RIGHT_SHIFT: binaryAssignmentStatementSupport<SgJavaUnsignedRshiftAssignOp>(); break;
 
           default:
              {
