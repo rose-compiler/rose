@@ -592,7 +592,7 @@ SageBuilder::buildFunctionType(SgType* return_type, SgFunctionParameterList * ar
 // 4. fortran ?
 template <class actualFunction>
 actualFunction*
-SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, bool isMemberFunction, SgScopeStatement* scope)
+SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, bool isMemberFunction, SgScopeStatement* scope, SgExprListExp* decoratorList)
    {
 #if 0 //FMZ (3/23/2009): We need this for the  coarray translator
      if (SageInterface::is_Fortran_language() == true)
@@ -769,6 +769,12 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType*
   // mark as a forward declartion
      func->setForward();
 
+  // handle decorators
+     if (decoratorList != NULL) {
+         func->set_decoratorList(decoratorList);
+         decoratorList->set_parent(func);
+     }
+
   // set File_Info as transformation generated
      setSourcePositionForTransformation(func);
 
@@ -796,7 +802,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType*
 
 //! Build a prototype for an existing function declaration (defining or nondefining ) 
 SgFunctionDeclaration *
-SageBuilder::buildNondefiningFunctionDeclaration (const SgFunctionDeclaration* funcdecl, SgScopeStatement* scope/*=NULL*/)
+SageBuilder::buildNondefiningFunctionDeclaration (const SgFunctionDeclaration* funcdecl, SgScopeStatement* scope/*=NULL*/, SgExprListExp* decoratorList)
 {
   ROSE_ASSERT(funcdecl!=NULL);
   SgName name=funcdecl->get_name(); 
@@ -806,7 +812,7 @@ SageBuilder::buildNondefiningFunctionDeclaration (const SgFunctionDeclaration* f
 
 // DQ (2/19/2009): Fixed to handle extern "C" state in input "funcdecl"
 // return buildNondefiningFunctionDeclaration(name,return_type,paralist,scope);
-  SgFunctionDeclaration* returnFunction = buildNondefiningFunctionDeclaration(name,return_type,paralist,scope);
+  SgFunctionDeclaration* returnFunction = buildNondefiningFunctionDeclaration(name,return_type,paralist,scope,decoratorList);
 
   returnFunction->set_linkage(funcdecl->get_linkage());
 
@@ -832,21 +838,21 @@ SageBuilder::buildNondefiningFunctionDeclaration (const SgFunctionDeclaration* f
 }
 
 SgFunctionDeclaration*
-SageBuilder::buildNondefiningFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope)
+SageBuilder::buildNondefiningFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope, SgExprListExp* decoratorList)
 {
   SgFunctionDeclaration * result = NULL;
   if (SageInterface::is_Fortran_language())
   {
-      result = buildNondefiningFunctionDeclaration_T <SgProcedureHeaderStatement> (name,return_type,paralist, /* isMemberFunction = */ false, scope);
+      result = buildNondefiningFunctionDeclaration_T <SgProcedureHeaderStatement> (name,return_type,paralist, /* isMemberFunction = */ false, scope, decoratorList);
   }
   else
-    result = buildNondefiningFunctionDeclaration_T <SgFunctionDeclaration> (name,return_type,paralist, /* isMemberFunction = */ false, scope);
+    result = buildNondefiningFunctionDeclaration_T <SgFunctionDeclaration> (name,return_type,paralist, /* isMemberFunction = */ false, scope, decoratorList);
   return result;
 }
 
 //! Build a prototype for an existing member function declaration (defining or nondefining ) 
 SgMemberFunctionDeclaration *
-SageBuilder::buildNondefiningMemberFunctionDeclaration (const SgMemberFunctionDeclaration* funcdecl, SgScopeStatement* scope/*=NULL*/)
+SageBuilder::buildNondefiningMemberFunctionDeclaration (const SgMemberFunctionDeclaration* funcdecl, SgScopeStatement* scope/*=NULL*/, SgExprListExp* decoratorList)
 {
   ROSE_ASSERT(funcdecl!=NULL);
   SgName name=funcdecl->get_name(); 
@@ -856,7 +862,7 @@ SageBuilder::buildNondefiningMemberFunctionDeclaration (const SgMemberFunctionDe
 
 // DQ (2/19/2009): Fixed to handle extern "C" state in input "funcdecl"
 // return buildNondefiningFunctionDeclaration(name,return_type,paralist,scope);
-  SgMemberFunctionDeclaration* returnFunction = buildNondefiningMemberFunctionDeclaration(name,return_type,paralist,scope);
+  SgMemberFunctionDeclaration* returnFunction = buildNondefiningMemberFunctionDeclaration(name,return_type,paralist,scope,decoratorList);
 
   returnFunction->set_linkage(funcdecl->get_linkage());
 
@@ -872,9 +878,9 @@ SageBuilder::buildNondefiningMemberFunctionDeclaration (const SgMemberFunctionDe
   return returnFunction;
 }
 
-SgMemberFunctionDeclaration* SageBuilder::buildNondefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope)
+SgMemberFunctionDeclaration* SageBuilder::buildNondefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope, SgExprListExp* decoratorList)
 {
-  SgMemberFunctionDeclaration * result = buildNondefiningFunctionDeclaration_T <SgMemberFunctionDeclaration> (name,return_type,paralist, /* isMemberFunction = */ true,scope);
+  SgMemberFunctionDeclaration * result = buildNondefiningFunctionDeclaration_T <SgMemberFunctionDeclaration> (name,return_type,paralist, /* isMemberFunction = */ true,scope,decoratorList);
   // set definingdecl for SgCtorInitializerList
   SgCtorInitializerList * ctor= result-> get_CtorInitializerList ();
   ROSE_ASSERT(ctor != NULL);
@@ -904,18 +910,18 @@ SgMemberFunctionDeclaration* SageBuilder::buildNondefiningMemberFunctionDeclarat
 }
 
 SgMemberFunctionDeclaration*
-SageBuilder::buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgScopeStatement* scope)
+SageBuilder::buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgScopeStatement* scope, SgExprListExp* decoratorList)
 {
     SgType* return_type = func_type->get_return_type();
     SgFunctionParameterList* paralist = buildFunctionParameterList(func_type->get_argument_list());
 
-    return SageBuilder::buildDefiningMemberFunctionDeclaration(name, return_type, paralist, scope);
+    return SageBuilder::buildDefiningMemberFunctionDeclaration(name, return_type, paralist, scope, decoratorList);
 }
 
 SgMemberFunctionDeclaration*
-SageBuilder::buildDefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope)
+SageBuilder::buildDefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope, SgExprListExp* decoratorList)
 {
-  SgMemberFunctionDeclaration * result = buildDefiningFunctionDeclaration_T <SgMemberFunctionDeclaration> (name,return_type,paralist,scope);
+  SgMemberFunctionDeclaration * result = buildDefiningFunctionDeclaration_T <SgMemberFunctionDeclaration> (name,return_type,paralist,scope,decoratorList);
   // set definingdecl for SgCtorInitializerList
   SgCtorInitializerList * ctor= result-> get_CtorInitializerList ();
   ROSE_ASSERT(ctor);
@@ -936,7 +942,7 @@ SageBuilder::buildDefiningMemberFunctionDeclaration (const SgName & name, SgType
 
 template <class actualFunction>
 actualFunction *
-SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & name, SgType* return_type, SgFunctionParameterList * paralist,SgScopeStatement* scope)
+SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & name, SgType* return_type, SgFunctionParameterList * paralist,SgScopeStatement* scope, SgExprListExp* decoratorList)
 //      (const SgName & name, SgType* return_type, SgScopeStatement* scope=NULL)
 {
   if (scope == NULL)
@@ -987,6 +993,13 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & name, SgType* ret
     // cannot do anything until append/prepend_statment() is invoked
   }
 
+  // handle decorators
+  if (decoratorList != NULL)
+      {
+          func->set_decoratorList(decoratorList);
+          decoratorList->set_parent(func);
+      }
+
   // definingDeclaration 
   func->set_definingDeclaration(func);
 
@@ -1030,9 +1043,9 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & name, SgType* ret
 
 SgFunctionDeclaration *
 SageBuilder::buildDefiningFunctionDeclaration(const SgName& name, SgType* return_type, SgFunctionParameterList* paralist,
-                                              SgScopeStatement* scope)
+                                              SgScopeStatement* scope, SgExprListExp* decoratorList)
 {
-  SgFunctionDeclaration * func= buildDefiningFunctionDeclaration_T<SgFunctionDeclaration>(name,return_type,paralist,scope);
+  SgFunctionDeclaration * func= buildDefiningFunctionDeclaration_T<SgFunctionDeclaration>(name,return_type,paralist,scope,decoratorList);
   return func;
 }
 
@@ -1058,17 +1071,17 @@ SageBuilder::buildProcedureHeaderStatement(const char* name, SgType* return_type
 }
 
 SgFunctionDeclaration *
-SageBuilder::buildDefiningFunctionDeclaration(const std::string & name, SgType* return_type, SgFunctionParameterList * paralist,SgScopeStatement* scope)
+SageBuilder::buildDefiningFunctionDeclaration(const std::string & name, SgType* return_type, SgFunctionParameterList * paralist,SgScopeStatement* scope, SgExprListExp* decoratorList)
 {
   SgName sg_name(name);
-  return buildDefiningFunctionDeclaration(sg_name,return_type, paralist,scope);
+  return buildDefiningFunctionDeclaration(sg_name,return_type, paralist,scope,decoratorList);
 }
 
 SgFunctionDeclaration *
-SageBuilder::buildDefiningFunctionDeclaration(const char* name, SgType* return_type, SgFunctionParameterList * paralist,SgScopeStatement* scope)
+SageBuilder::buildDefiningFunctionDeclaration(const char* name, SgType* return_type, SgFunctionParameterList * paralist,SgScopeStatement* scope, SgExprListExp* decoratorList)
 {
   SgName sg_name(name);
-  return buildDefiningFunctionDeclaration(sg_name,return_type, paralist,scope);
+  return buildDefiningFunctionDeclaration(sg_name,return_type, paralist,scope,decoratorList);
 }
 
 

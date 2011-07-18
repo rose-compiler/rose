@@ -105,6 +105,7 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
         CASE_DISPATCH_AND_BREAK(DictionaryComprehension);
         CASE_DISPATCH_AND_BREAK(ExprListExp);
         CASE_DISPATCH_AND_BREAK(FunctionCallExp);
+        CASE_DISPATCH_AND_BREAK(FunctionRefExp);
         CASE_DISPATCH_AND_BREAK(KeyDatumList);
         CASE_DISPATCH_AND_BREAK(KeyDatumPair);
         CASE_DISPATCH_AND_BREAK(LambdaRefExp);
@@ -438,33 +439,21 @@ void
 Unparse_Python::unparseFunctionDeclaration(SgFunctionDeclaration* func_decl,
                                            SgUnparse_Info& info)
 {
-#if 0 // awaiting resolution of abstract handle bug
     SgExprListExp* decoratorList = func_decl->get_decoratorList();
-    SgExpressionPtrList& decorators = decoratorList->get_expressions();
-    SgExpressionPtrList::iterator dec_it;
-    for(dec_it = decorators.begin(); dec_it != decorators.end(); dec_it++) {
-        curprint("@");
-        unparseExpression(*dec_it, info);
-        curprint(string("\n") + ws_prefix(info.get_nestingLevel()));
+    if (decoratorList != NULL) {
+        foreach (SgExpression* expr, decoratorList->get_expressions()) {
+            curprint_indented("@", info);
+            unparseExpression(expr, info);
+            curprint("\n");
+        }
     }
-#endif
 
-    stringstream code0;
-    string func_name = func_decl->get_name().getString();
-    code0 << "def " << func_name << "(";
-    curprint (code0.str());
-
+    curprint_indented("def ", info);
+    curprint(func_decl->get_name().getString());
+    curprint("(");
     unparseStatement(func_decl->get_parameterList(), info);
-
-    stringstream code1;
-    code1 << "):" << endl;
-    curprint (code1.str());
-
+    curprint("):\n");
     unparseStatement(func_decl->get_definition(), info);
-
-#if 0 // awaiting resolution of abstract handle bug
-    curprint(string("\n") + ws_prefix(info.get_nestingLevel()));
-#endif
 }
 
 void
@@ -485,6 +474,13 @@ Unparse_Python::unparseFunctionParameterList(SgFunctionParameterList* param_list
             curprint(", ");
         unparseInitializedName(*name_iter, info);
     }
+}
+
+void
+Unparse_Python::unparseFunctionRefExp(SgFunctionRefExp* func_ref,
+                                      SgUnparse_Info& info)
+{
+    curprint( func_ref->get_symbol()->get_name().str() );
 }
 
 void

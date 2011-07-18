@@ -219,16 +219,7 @@ sage_buildCall(PyObject *self, PyObject *args)
     Py_ssize_t kwargc = PyList_Size(py_kwargs);
     for (int i = 0; i < kwargc; i++) {
         PyObject* py_kwarg = PyList_GetItem(py_kwargs, i);
-        SgExpression* sg_exp = PyDecapsulate<SgExpression>(py_kwarg);
-        if (sg_exp == NULL) {
-            SgNode* sg_node = PyDecapsulate<SgNode>(py_kwarg);
-            if (sg_node == NULL) {
-                cout << "null sg node" << endl;
-            } else {
-                cout << "bad node: " << sg_node->class_name() << endl;
-            }
-        }
-        sg_exprs.push_back(sg_exp);
+        sg_exprs.push_back( PyDecapsulate<SgExpression>(py_kwarg) );
     }
     SgExprListExp* sg_expr_list_exp =
         SageBuilder::buildExprListExp(sg_exprs);
@@ -516,9 +507,9 @@ sage_buildFunctionDef(PyObject *self, PyObject *args)
     SgExprListExp *sg_decorators;
     SgScopeStatement *sg_scope;
 
-    if (! PyArg_ParseTuple(args, "sO&OO&", &name,
+    if (! PyArg_ParseTuple(args, "sO&O&O&", &name,
                                             SAGE_CONVERTER(SgFunctionParameterList), &sg_params,
-                                            /*SAGE_CONVERTER(SgExprListExp),*/ &sg_decorators,
+                                            SAGE_CONVERTER(SgExprListExp), &sg_decorators,
                                             SAGE_CONVERTER(SgScopeStatement), &sg_scope))
         return NULL;
 
@@ -526,17 +517,8 @@ sage_buildFunctionDef(PyObject *self, PyObject *args)
         SageBuilder::buildDefiningFunctionDeclaration(name,
                 SageBuilder::buildVoidType(),
                 sg_params,
-                sg_scope);
-
-#if 0 // awaiting resolution of abstract handle bug
-    SgExprListExp* decorators = sg_func_decl->get_decoratorList();
-    Py_ssize_t decc = PyList_Size(py_decorators);
-    for(int i = 0; i < decc; i++) {
-        PyObject* py_exp = PyList_GetItem(py_decorators, i);
-        SgExpression* exp = PyDecapsulate<SgExpression>(py_exp);
-        decorators->append_expression(exp);
-    }
-#endif
+                sg_scope,
+                sg_decorators);
 
     PyObject *py_func_decl = PyEncapsulate(sg_func_decl);
     PyObject *py_func_def = PyEncapsulate(sg_func_decl->get_definition());
@@ -736,9 +718,35 @@ sage_buildName(PyObject *self, PyObject *args)
                                         SAGE_CONVERTER(SgScopeStatement), &sg_scope))
         return NULL;
 
-    SgVarRefExp* sg_var_ref =
-        SageBuilder::buildOpaqueVarRefExp( std::string(id), sg_scope );
-    return PyEncapsulate(sg_var_ref);
+    SgExpression* sg_ref = NULL;
+
+    SgSymbol* sg_sym = sg_scope->lookup_symbol( SgName(id) );
+    if (sg_sym == NULL) {
+        sg_ref = SageBuilder::buildOpaqueVarRefExp(id, sg_scope);
+        return PyEncapsulate( sg_ref );
+    }
+    else switch (sg_sym->variantT()) {
+        case V_SgFunctionSymbol: {
+            sg_ref = SageBuilder::buildFunctionRefExp( isSgFunctionSymbol(sg_sym) );
+            break;
+        }
+        case V_SgVariableSymbol: {
+            sg_ref = SageBuilder::buildVarRefExp( isSgVariableSymbol(sg_sym) );
+            break;
+        }
+        case V_SgClassSymbol: {
+            sg_ref = SageBuilder::buildClassNameRefExp( isSgClassSymbol(sg_sym) );
+            break;
+        }
+        default: {
+            cout << "error: unable to convert python Name: " << id
+                 << ". Corresponding symbol had type: " << sg_sym->class_name() << endl;
+            break;
+        }
+    }
+
+
+    return PyEncapsulate(sg_ref);
 }
 
 
