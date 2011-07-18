@@ -328,11 +328,32 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclarationEnd (JNIEnv *env,
      if (SgProject::get_verbose() > 0)
           printf ("End of SgMemberFunctionDeclaration (method) \n");
 
+     outputJavaState("At TOP of cactionMethodDeclarationEnd");
+
   // SgName name = convertJavaStringToCxxString(env,java_string);
 
   // Pop the constructor body...
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
 
+#if 1
+     appendStatementStack();
+#else
+#if 1
+  // Reverse the list to avoid acesses to the stack from the bottom, 
+  // which would be confusing and violate stack semantics.
+     list<SgStatement*> reverseStatementList;
+     while (astJavaStatementStack.empty() == false)
+        {
+          reverseStatementList.push_front(astJavaStatementStack.front());
+          astJavaStatementStack.pop_front();
+        }
+
+     while (reverseStatementList.empty() == false)
+        {
+          appendStatement(reverseStatementList.front());
+          reverseStatementList.pop_front();
+        }
+#else
   // Don't leave any orphaned statments
      if (astJavaStatementStack.empty() == false)
         {
@@ -344,12 +365,19 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclarationEnd (JNIEnv *env,
 #endif
           astJavaStatementStack.pop_front();
         }
+#endif
+#endif
 
      astJavaScopeStack.pop_front();
  
   // Pop the fuction definition...
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
      astJavaScopeStack.pop_front();
+
+     outputJavaState("At BOTTOM of cactionMethodDeclarationEnd");
+
+  // DQ (7/17/2011): I think we can assert this.
+     ROSE_ASSERT (astJavaStatementStack.empty() == true);
    }
 
 
@@ -1266,8 +1294,25 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionAllocationExpression(JNIEnv *env, 
    {
    }
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionAND_AND_Expression(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionANDANDExpression(JNIEnv *env, jobject xxx)
    {
+     if (SgProject::get_verbose() > 0)
+          printf ("Inside of Java_JavaParser_cactionANDANDExpression() \n");
+
+     outputJavaState("At TOP of cactionANDANDExpression");
+   }
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionANDANDExpressionEnd(JNIEnv *env, jobject xxx)
+   {
+     if (SgProject::get_verbose() > 0)
+          printf ("Inside of Java_JavaParser_cactionANDANDExpressionEnd() \n");
+
+     outputJavaState("At TOP of cactionANDANDExpressionEnd");
+
+     binaryExpressionSupport<SgAndOp>();
+
+     outputJavaState("At BOTTOM of cactionANDANDExpressionEnd");
    }
 
 
@@ -1360,12 +1405,86 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionAssignmentEnd(JNIEnv *env, jobject
 #endif
 
      outputJavaState("At BOTTOM of cactionAssignmentEnd");
-
    }
 
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionBinaryExpression(JNIEnv *env, jobject xxx)
    {
+  // I don't think we need this function.
+   }
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionBinaryExpressionEnd(JNIEnv *env, jobject xxx, jint java_operator_kind)
+   {
+     if (SgProject::get_verbose() > 2)
+          printf ("Build an Binary Expression End \n");
+
+     outputJavaState("At TOP of cactionBinaryExpressionEnd");
+
+  // These are the operator code values directly from ECJ.
+     enum ops
+        {
+          ERROR_OPERATOR       = 0, // This is not a ECJ value 
+          AND                  = 2,
+          DIVIDE               = 9, 
+          GREATER              = 6,
+          GREATER_EQUAL        = 7, 
+          LEFT_SHIFT           = 10, 
+          LESS                 = 4, 
+          LESS_EQUAL           = 5, 
+          MINUS                = 13, 
+          MULTIPLY             = 15, 
+          OR                   = 3,
+          PLUS                 = 14,  
+          REMAINDER            = 16, 
+          RIGHT_SHIFT          = 17, 
+          UNSIGNED_RIGHT_SHIFT = 19, 
+          XOR                  = 8,
+          OR_OR                = 100, // Handled by separate function 
+          AND_AND              = 101, // Handled by separate function 
+          LAST_OPERATOR };
+
+  // printf ("PLUS = %d \n",PLUS);
+
+     int operator_kind = java_operator_kind;
+  // printf ("operator_kind = %d \n",operator_kind);
+
+     switch(operator_kind)
+        {
+       // Operator codes used by the BinaryExpression in ECJ.
+          case LESS:                 binaryExpressionSupport<SgLessThanOp>();       break;
+          case LESS_EQUAL:           binaryExpressionSupport<SgLessOrEqualOp>();    break;
+          case GREATER:              binaryExpressionSupport<SgGreaterThanOp>();    break;
+          case GREATER_EQUAL:        binaryExpressionSupport<SgGreaterOrEqualOp>(); break;
+          case AND:                  binaryExpressionSupport<SgBitAndOp>();         break;
+          case OR:                   binaryExpressionSupport<SgBitOrOp>();          break;
+          case XOR:                  binaryExpressionSupport<SgBitXorOp>();         break;
+          case DIVIDE:               binaryExpressionSupport<SgDivideOp>();         break;
+          case MINUS:                binaryExpressionSupport<SgSubtractOp>();       break;
+          case PLUS:                 binaryExpressionSupport<SgAddOp>();            break;
+          case MULTIPLY:             binaryExpressionSupport<SgMultiplyOp>();       break;
+          case RIGHT_SHIFT:          binaryExpressionSupport<SgRshiftOp>();         break;
+          case LEFT_SHIFT:           binaryExpressionSupport<SgLshiftOp>();         break;
+          case REMAINDER:            binaryExpressionSupport<SgModOp>();            break;
+
+       // This may have to handled special in ROSE. ROSE does not represent the semantics,
+       // and so this support my require a special operator to support Java in ROSE. For
+       // now we will use the more common SgRshiftOp.
+          case UNSIGNED_RIGHT_SHIFT: binaryExpressionSupport<SgRshiftOp>();         break;
+
+       // These are handled through separate functions (not a BinaryExpression in ECJ).
+          case OR_OR:   ROSE_ASSERT(false); break;
+          case AND_AND: ROSE_ASSERT(false); break;
+
+          default:
+             {
+            // binaryExpressionSupport<SgAddOp>();
+               printf ("Error: default reached in cactionBinaryExpressionEnd() operator_kind = %d \n",operator_kind);
+               ROSE_ASSERT(false);
+             }
+        }
+
+     outputJavaState("At BOTTOM of cactionBinaryExpressionEnd");
    }
 
 
@@ -1435,6 +1554,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBlockEnd(JNIEnv *env, jobject xxx)
 
   // There should not be any orphaned statements (collect the last one since 
   // the end of statement rule will not always be called.
+#if 1
+     appendStatementStack();
+#else
      if (astJavaStatementStack.empty() == false)
         {
        // The end of statement rule will not be called, so we have to append 
@@ -1447,6 +1569,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBlockEnd(JNIEnv *env, jobject xxx)
 
           astJavaStatementStack.pop_front();
         }
+#endif
      ROSE_ASSERT(astJavaStatementStack.empty() == true);
 
      astJavaScopeStack.pop_front();
@@ -1500,6 +1623,67 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompoundAssignment(JNIEnv *env, jo
    }
 
 
+JNIEXPORT void JNICALL Java_JavaParser_cactionCompoundAssignmentEnd(JNIEnv *env, jobject xxx, jint java_operator_kind)
+   {
+     if (SgProject::get_verbose() > 0)
+          printf ("Inside of Java_JavaParser_cactionCompoundAssignmentEnd() \n");
+
+     outputJavaState("At TOP of cactionCompoundAssignmentEnd");
+
+  // This will be a family of operators.
+  // binaryAssignmentStatementSupport<SgPlusAssignOp>();
+
+  // These are the operator code values directly from ECJ.
+     enum ops
+        {
+          ERROR_OPERATOR       = 0, // This is not a ECJ value 
+          AND                  = 2,
+          DIVIDE               = 9, 
+          LEFT_SHIFT           = 10, 
+          MINUS                = 13, 
+          MULTIPLY             = 15, 
+          OR                   = 3,
+          PLUS                 = 14,  
+          REMAINDER            = 16, 
+          RIGHT_SHIFT          = 17, 
+          UNSIGNED_RIGHT_SHIFT = 19, 
+          XOR                  = 8,
+          LAST_OPERATOR };
+
+     int operator_kind = java_operator_kind;
+  // printf ("operator_kind = %d \n",operator_kind);
+
+     switch(operator_kind)
+        {
+       // Operator codes used by the CompoundAssignment in ECJ.
+          case PLUS:        binaryAssignmentStatementSupport<SgPlusAssignOp>();   break;
+          case MINUS:       binaryAssignmentStatementSupport<SgMinusAssignOp>();  break;
+          case DIVIDE:      binaryAssignmentStatementSupport<SgDivAssignOp>();    break;
+          case MULTIPLY:    binaryAssignmentStatementSupport<SgMultAssignOp>();   break;
+          case OR:          binaryAssignmentStatementSupport<SgIorAssignOp>();    break;
+          case AND:         binaryAssignmentStatementSupport<SgAndAssignOp>();    break;
+          case XOR:         binaryAssignmentStatementSupport<SgXorAssignOp>();    break;
+          case REMAINDER:   binaryAssignmentStatementSupport<SgModAssignOp>();    break;
+          case RIGHT_SHIFT: binaryAssignmentStatementSupport<SgRshiftAssignOp>(); break;
+          case LEFT_SHIFT:  binaryAssignmentStatementSupport<SgLshiftAssignOp>(); break;
+
+       // This may have to handled special in ROSE. ROSE does not represent the semantics,
+       // and so this support my require a special operator to support Java in ROSE. For
+       // now we will use the more common SgRshiftOp.
+          case UNSIGNED_RIGHT_SHIFT: binaryAssignmentStatementSupport<SgRshiftAssignOp>(); break;
+
+          default:
+             {
+            // binaryExpressionSupport<SgAddOp>();
+               printf ("Error: default reached in cactionCompoundAssignmentEnd() operator_kind = %d \n",operator_kind);
+               ROSE_ASSERT(false);
+             }
+        }
+
+     outputJavaState("At BOTTOM of cactionCompoundAssignmentEnd");
+   }
+
+
 JNIEXPORT void JNICALL Java_JavaParser_cactionDoStatement(JNIEnv *env, jobject xxx)
    {
    }
@@ -1529,6 +1713,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionEqualExpressionEnd(JNIEnv *env, jo
 
      outputJavaState("At TOP of cactionEqualExpressionEnd");
 
+#if 1
+     binaryExpressionSupport<SgEqualityOp>();
+#else
      ROSE_ASSERT(astJavaExpressionStack.empty() == false);
      ROSE_ASSERT(astJavaExpressionStack.size() >= 2);
 
@@ -1545,6 +1732,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionEqualExpressionEnd(JNIEnv *env, jo
      ROSE_ASSERT(assignmentExpression != NULL);
      astJavaExpressionStack.push_front(assignmentExpression);
      ROSE_ASSERT(astJavaExpressionStack.empty() == false);
+#endif
 
      outputJavaState("At BOTTOM of cactionEqualExpressionEnd");
    }
@@ -2008,8 +2196,25 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionNullLiteral(JNIEnv *env, jobject x
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionOR_OR_Expression(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionORORExpression(JNIEnv *env, jobject xxx)
    {
+     if (SgProject::get_verbose() > 0)
+          printf ("Inside of Java_JavaParser_cactionORORExpression() \n");
+
+     outputJavaState("At TOP of cactionORORExpression");
+   }
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionORORExpressionEnd(JNIEnv *env, jobject xxx)
+   {
+     if (SgProject::get_verbose() > 0)
+          printf ("Inside of Java_JavaParser_cactionORORExpressionEnd() \n");
+
+     outputJavaState("At TOP of cactionORORExpressionEnd");
+
+     binaryExpressionSupport<SgOrOp>();
+
+     outputJavaState("At BOTTOM of cactionORORExpressionEnd");
    }
 
 
@@ -2164,6 +2369,47 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeParameterClassScope(JNIEnv *en
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionUnaryExpression(JNIEnv *env, jobject xxx)
    {
+     if (SgProject::get_verbose() > 2)
+          printf ("Build an Unary Expression \n");
+   }
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionUnaryExpressionEnd(JNIEnv *env, jobject xxx, jint java_operator_kind)
+   {
+     if (SgProject::get_verbose() > 2)
+          printf ("Build an Unary Expression End \n");
+
+     outputJavaState("At TOP of cactionUnaryExpressionEnd");
+
+  // These are the operator code values directly from ECJ.
+     enum ops
+        {
+          ERROR_OPERATOR = 0, // This is not a ECJ value 
+          NOT            = 11,
+          TWIDDLE        = 12,
+          MINUS          = 13,
+          PLUS           = 14,
+          LAST_OPERATOR };
+
+     int operator_kind = java_operator_kind;
+     printf ("operator_kind = %d \n",operator_kind);
+
+     switch(operator_kind)
+        {
+       // Operator codes used by the UnaryExpression in ECJ.
+          case NOT:     unaryExpressionSupport<SgNotOp>();           break;
+          case TWIDDLE: unaryExpressionSupport<SgBitComplementOp>(); break;
+          case MINUS:   unaryExpressionSupport<SgMinusOp>();         break;
+          case PLUS:    unaryExpressionSupport<SgUnaryAddOp>();      break;
+
+          default:
+             {
+               printf ("Error: default reached in cactionUnaryExpressionEnd() operator_kind = %d \n",operator_kind);
+               ROSE_ASSERT(false);
+             }
+        }
+
+     outputJavaState("At BOTTOM of cactionUnaryExpressionEnd");
    }
 
 

@@ -101,5 +101,69 @@ SgClassType* lookupTypeFromQualifiedName(std::string className);
 //! Support function handles the complexity of handling append where the current scope is a SgIfStmt.
 void appendStatement(SgStatement* statement);
 
+//! Put the astJavaStatementStack into the current scope.
+void appendStatementStack();
+
+template< class T >
+void
+unaryExpressionSupport()
+   {
+     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
+     ROSE_ASSERT(astJavaExpressionStack.size() >= 1);
+
+     SgExpression* operand = astJavaExpressionStack.front();
+     ROSE_ASSERT(operand != NULL);
+     astJavaExpressionStack.pop_front();
+
+  // Build the assignment operator and push it onto the stack.
+     SgExpression* assignmentExpression = SageBuilder::buildUnaryExpression<T>(operand);
+     ROSE_ASSERT(assignmentExpression != NULL);
+     astJavaExpressionStack.push_front(assignmentExpression);
+     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
+   }
+
+template< class T >
+void
+binaryExpressionSupport()
+   {
+     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
+     ROSE_ASSERT(astJavaExpressionStack.size() >= 2);
+
+     SgExpression* rhs = astJavaExpressionStack.front();
+     ROSE_ASSERT(rhs != NULL);
+     astJavaExpressionStack.pop_front();
+
+     SgExpression* lhs = astJavaExpressionStack.front();
+     ROSE_ASSERT(lhs != NULL);
+     astJavaExpressionStack.pop_front();
+
+  // Build the assignment operator and push it onto the stack.
+     SgExpression* assignmentExpression = SageBuilder::buildBinaryExpression<T>(lhs,rhs);
+     ROSE_ASSERT(assignmentExpression != NULL);
+     astJavaExpressionStack.push_front(assignmentExpression);
+     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
+   }
+
+template< class T >
+void
+binaryAssignmentStatementSupport()
+   {
+     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
+     ROSE_ASSERT(astJavaExpressionStack.size() >= 2);
+
+     binaryExpressionSupport<T>();
+
+     SgExpression* exp = astJavaExpressionStack.front();
+     ROSE_ASSERT(exp != NULL);
+     astJavaExpressionStack.pop_front();
+
+     SgExprStatement* exprStatement = SageBuilder::buildExprStatement(exp);
+
+     ROSE_ASSERT(exprStatement != NULL);
+     ROSE_ASSERT(exp->get_parent() != NULL);
+
+     astJavaStatementStack.push_front(exprStatement);
+   }
+
 // endif for ROSE_JAVA_SUPPORT
 #endif
