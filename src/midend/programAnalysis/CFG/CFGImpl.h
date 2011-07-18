@@ -6,7 +6,6 @@
 #include <sstream>
 #include <list>
 
-// A CFG template for arbitrary node and edge types
 template <class Node, class Edge>
 class CFGImplTemplate 
   : public VirtualGraphCreateTemplate<Node, Edge>, public BuildCFGConfig<Node>
@@ -39,12 +38,12 @@ class CFGImplTemplate
        { return new GraphNodeSuccessorIterator<CFGImplTemplate<Node,Edge> >
                    (this, n); }
 };
-// A CFG node may representing several actual source statements
+
 class CFGNodeImpl : public MultiGraphElem
 {
  public:
   CFGNodeImpl(MultiGraphCreate *c) : MultiGraphElem(c) {}
-  std::list<AstNodePtr>& GetStmts() { return stmtList; } 
+  std:: list<AstNodePtr>& GetStmts() { return stmtList; } 
   
   void AddNodeStmt( const AstNodePtr& s) { stmtList.push_back(s); }
 
@@ -76,7 +75,7 @@ class CFGNodeImpl : public MultiGraphElem
  private:
   std:: list<AstNodePtr> stmtList;
 };
-// A CFG edge stores edge type information: exectuted on true condition, false condition, or always executed
+
 class CFGEdgeImpl : public MultiGraphElem
 {
  public:
@@ -90,7 +89,7 @@ class CFGEdgeImpl : public MultiGraphElem
        case CFGConfig::COND_FALSE: return "false"; 
        case CFGConfig::ALWAYS: return "always";
        default:
-                   { assert(false); /* Avoid MSVC warning */ return "error"; }
+           assert(false);
        }
     }
   virtual void write(std:: ostream& out) const
