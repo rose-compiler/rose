@@ -183,6 +183,35 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclaration (JNIEnv *env, jobj
    }
 
 
+JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclarationEnd (JNIEnv *env, jobject xxx, jstring java_string)
+   {
+     if (SgProject::get_verbose() > 0)
+          printf ("Build a SgClassDeclaration (cactionTypeDeclarationEnd) \n");
+
+  // We could provide a constructor for "SgName" that takes a "jstring".  This might help support a simpler interface.
+     SgName name = convertJavaStringToCxxString(env,java_string);
+
+     if (SgProject::get_verbose() > 0)
+          printf ("Build class type: name = %s \n",name.str());
+
+     outputJavaState("At TOP of cactionTypeDeclaration");
+
+     if (SgProject::get_verbose() > 0)
+          printf ("We might have to be popping off the existing scope for class type: name = %s \n",name.str());
+
+     astJavaScopeStack.pop_front();
+
+     ROSE_ASSERT(astJavaScopeStack.front() != NULL);
+
+     if (SgProject::get_verbose() > 0)
+          astJavaScopeStack.front()->get_file_info()->display("source position in Java_JavaParser_cactionTypeDeclaration(): debug");
+
+     outputJavaState("At BOTTOM of cactionTypeDeclaration");
+
+     if (SgProject::get_verbose() > 0)
+          printf ("Leaving Java_JavaParser_cactionTypeDeclaration() (cactionTypeDeclarationEnd) \n");
+   }
+
 
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclaration (JNIEnv *env, jobject xxx, jstring java_string)
@@ -232,6 +261,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclarationEnd (JNIEnv 
      if (SgProject::get_verbose() > 0)
           printf ("End of SgMemberFunctionDeclaration (constructor) \n");
 
+     outputJavaState("At TOP of cactionConstructorDeclarationEnd");
+
   // Pop the constructor body...
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
      astJavaScopeStack.pop_front();
@@ -239,6 +270,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclarationEnd (JNIEnv 
   // Pop the fuction definition...
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
      astJavaScopeStack.pop_front();
+
+     outputJavaState("At BOTTOM of cactionConstructorDeclarationEnd");
    }
 
 
@@ -1125,8 +1158,16 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateType (JNIEnv* env, jclass 
         }
        else
         {
+          printf ("I think this is a user defined class (so we have to look it up) (name = %s) \n",name.str());
+
+          SgClassType* classType = lookupTypeFromQualifiedName(name);
+          ROSE_ASSERT(classType != NULL);
+
+          astJavaTypeStack.push_front(classType);
+#if 0
           printf ("Error: default reached in switch in Java_JavaParser_cactionGenerateType() (name = %s) \n",name.str());
           ROSE_ASSERT(false);
+#endif
         }
 
   // There should be a type on the stack!
@@ -1613,6 +1654,38 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionConditionalExpression(JNIEnv *env,
    }
 
 
+JNIEXPORT void JNICALL Java_JavaParser_cactionConditionalExpressionEnd(JNIEnv *env, jobject xxx)
+   {
+     if (SgProject::get_verbose() > 0)
+          printf ("Inside of Java_JavaParser_cactionConditionalExpressionEnd() \n");
+
+     outputJavaState("At TOP of cactionConditionalExpressionEnd");
+
+     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
+     ROSE_ASSERT(astJavaExpressionStack.size() >= 3);
+
+     SgExpression* false_exp = astJavaExpressionStack.front();
+     ROSE_ASSERT(false_exp != NULL);
+     astJavaExpressionStack.pop_front();
+
+     SgExpression* true_exp = astJavaExpressionStack.front();
+     ROSE_ASSERT(true_exp != NULL);
+     astJavaExpressionStack.pop_front();
+
+     SgExpression* test_exp = astJavaExpressionStack.front();
+     ROSE_ASSERT(test_exp != NULL);
+     astJavaExpressionStack.pop_front();
+
+  // Build the assignment operator and push it onto the stack.
+     SgConditionalExp* conditional = SageBuilder::buildConditionalExp(test_exp,true_exp,false_exp);
+     ROSE_ASSERT(conditional != NULL);
+     astJavaExpressionStack.push_front(conditional);
+     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
+
+     outputJavaState("At BOTTOM of cactionConditionalExpressionEnd");
+   }
+
+
 JNIEXPORT void JNICALL Java_JavaParser_cactionContinueStatement(JNIEnv *env, jobject xxx)
    {
    }
@@ -1706,33 +1779,36 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionEqualExpression(JNIEnv *env, jobje
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionEqualExpressionEnd(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionEqualExpressionEnd(JNIEnv *env, jobject xxx, jint java_operator_kind)
    {
      if (SgProject::get_verbose() > 0)
           printf ("Inside of Java_JavaParser_cactionEqualExpressionEnd() \n");
 
      outputJavaState("At TOP of cactionEqualExpressionEnd");
 
-#if 1
-     binaryExpressionSupport<SgEqualityOp>();
-#else
-     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
-     ROSE_ASSERT(astJavaExpressionStack.size() >= 2);
+  // These are the operator code values directly from ECJ.
+     enum ops
+        {
+          ERROR_OPERATOR = 0, // This is not a ECJ value 
+          EQUAL_EQUAL    = 18,
+          NOT_EQUAL      = 29,
+          LAST_OPERATOR };
 
-     SgExpression* rhs = astJavaExpressionStack.front();
-     ROSE_ASSERT(rhs != NULL);
-     astJavaExpressionStack.pop_front();
+     int operator_kind = java_operator_kind;
+     printf ("operator_kind = %d \n",operator_kind);
 
-     SgExpression* lhs = astJavaExpressionStack.front();
-     ROSE_ASSERT(lhs != NULL);
-     astJavaExpressionStack.pop_front();
+     switch(operator_kind)
+        {
+       // Operator codes used by the UnaryExpression in ECJ.
+          case EQUAL_EQUAL: binaryExpressionSupport<SgEqualityOp>(); break;
+          case NOT_EQUAL:   binaryExpressionSupport<SgNotEqualOp>(); break;
 
-  // Build the assignment operator and push it onto the stack.
-     SgExpression* assignmentExpression = SageBuilder::buildBinaryExpression<SgEqualityOp>(lhs,rhs);
-     ROSE_ASSERT(assignmentExpression != NULL);
-     astJavaExpressionStack.push_front(assignmentExpression);
-     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
-#endif
+          default:
+             {
+               printf ("Error: default reached in cactionEqualExpressionEnd() operator_kind = %d \n",operator_kind);
+               ROSE_ASSERT(false);
+             }
+        }
 
      outputJavaState("At BOTTOM of cactionEqualExpressionEnd");
    }
@@ -1940,6 +2016,17 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionInitializer(JNIEnv *env, jobject x
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionInstanceOfExpression(JNIEnv *env, jobject xxx)
    {
+     if (SgProject::get_verbose() > 0)
+          printf ("Inside of Java_JavaParser_cactionInstanceOfExpression() \n");
+   }
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionInstanceOfExpressionEnd(JNIEnv *env, jobject xxx)
+   {
+     if (SgProject::get_verbose() > 0)
+          printf ("Inside of Java_JavaParser_cactionInstanceOfExpressionEnd() \n");
+
+     outputJavaState("cactionInstanceOfExpressionEnd");
    }
 
 
@@ -2242,9 +2329,88 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionPostfixExpression(JNIEnv *env, job
    {
    }
 
+JNIEXPORT void JNICALL Java_JavaParser_cactionPostfixExpressionEnd(JNIEnv *env, jobject xxx, jint java_operator_kind)
+   {
+     if (SgProject::get_verbose() > 0)
+          printf ("Inside of Java_JavaParser_cactionPostfixExpressionEnd() \n");
+
+     outputJavaState("At TOP of cactionPostfixExpressionEnd");
+
+  // These are the operator code values directly from ECJ.
+     enum ops
+        {
+          ERROR_OPERATOR = 0, // This is not a ECJ value 
+          MINUS          = 13,
+          PLUS           = 14,
+          LAST_OPERATOR };
+
+     int operator_kind = java_operator_kind;
+     printf ("operator_kind = %d \n",operator_kind);
+
+     switch(operator_kind)
+        {
+       // Operator codes used by the UnaryExpression in ECJ.
+          case PLUS:  unaryExpressionSupport<SgPlusPlusOp>(); break;
+          case MINUS: unaryExpressionSupport<SgMinusMinusOp>(); break;
+
+          default:
+             {
+               printf ("Error: default reached in cactionPostfixExpressionEnd() operator_kind = %d \n",operator_kind);
+               ROSE_ASSERT(false);
+             }
+        }
+
+  // Mark this a a postfix operator
+     SgUnaryOp* unaryOp = isSgUnaryOp(astJavaExpressionStack.front());
+     ROSE_ASSERT(unaryOp != NULL);
+     unaryOp->set_mode(SgUnaryOp::postfix);
+
+     outputJavaState("At BOTTOM of cactionPostfixExpressionEnd");
+   }
+
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionPrefixExpression(JNIEnv *env, jobject xxx)
    {
+   }
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionPrefixExpressionEnd(JNIEnv *env, jobject xxx, jint java_operator_kind)
+   {
+     if (SgProject::get_verbose() > 0)
+          printf ("Inside of Java_JavaParser_cactionPrefixExpressionEnd() \n");
+
+     outputJavaState("At TOP of cactionPrefixExpressionEnd");
+
+  // These are the operator code values directly from ECJ.
+     enum ops
+        {
+          ERROR_OPERATOR = 0, // This is not a ECJ value 
+          MINUS          = 13,
+          PLUS           = 14,
+          LAST_OPERATOR };
+
+     int operator_kind = java_operator_kind;
+     printf ("operator_kind = %d \n",operator_kind);
+
+     switch(operator_kind)
+        {
+       // Operator codes used by the UnaryExpression in ECJ.
+          case PLUS:  unaryExpressionSupport<SgPlusPlusOp>(); break;
+          case MINUS: unaryExpressionSupport<SgMinusMinusOp>(); break;
+
+          default:
+             {
+               printf ("Error: default reached in cactionPrefixExpressionEnd() operator_kind = %d \n",operator_kind);
+               ROSE_ASSERT(false);
+             }
+        }
+
+  // Mark this a a prefix operator
+     SgUnaryOp* unaryOp = isSgUnaryOp(astJavaExpressionStack.front());
+     ROSE_ASSERT(unaryOp != NULL);
+     unaryOp->set_mode(SgUnaryOp::prefix);
+
+     outputJavaState("At BOTTOM of cactionPrefixExpressionEnd");
    }
 
 

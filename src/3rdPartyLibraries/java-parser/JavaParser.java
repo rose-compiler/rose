@@ -52,6 +52,7 @@ class JavaParser  implements Callable<Boolean>
   // These are used in the ecjASTVisitor (which is derived from the ECJ ASTVisitor class).
      public native void cactionCompilationUnitDeclaration(String filename);
      public native void cactionTypeDeclaration(String filename);
+     public native void cactionTypeDeclarationEnd(String filename);
 
   // Need to change the names of the function parameters (should not all be "filename").
      public native void cactionConstructorDeclaration(String filename);
@@ -93,6 +94,7 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionClassLiteralAccess();
      public native void cactionClinit();
      public native void cactionConditionalExpression();
+     public native void cactionConditionalExpressionEnd();
      public native void cactionContinueStatement();
      public native void cactionCompoundAssignment();
      public native void cactionCompoundAssignmentEnd(int java_operator_kind);
@@ -100,7 +102,7 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionDoubleLiteral();
      public native void cactionEmptyStatement();
      public native void cactionEqualExpression();
-     public native void cactionEqualExpressionEnd();
+     public native void cactionEqualExpressionEnd(int java_operator_kind);
      public native void cactionExtendedStringLiteral();
      public native void cactionFalseLiteral();
      public native void cactionFieldDeclaration();
@@ -119,6 +121,7 @@ class JavaParser  implements Callable<Boolean>
 
      public native void cactionInitializer();
      public native void cactionInstanceOfExpression();
+     public native void cactionInstanceOfExpressionEnd();
   // public native void cactionIntLiteral();
      public native void cactionIntLiteral(int value);
      public native void cactionJavadoc();
@@ -161,7 +164,9 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionParameterizedSingleTypeReference();
      public native void cactionParameterizedSingleTypeReferenceClassScope();
      public native void cactionPostfixExpression();
+     public native void cactionPostfixExpressionEnd(int java_operator_kind);
      public native void cactionPrefixExpression();
+     public native void cactionPrefixExpressionEnd(int java_operator_kind);
      public native void cactionQualifiedAllocationExpression();
      public native void cactionQualifiedSuperReference();
      public native void cactionQualifiedSuperReferenceClassScope();
