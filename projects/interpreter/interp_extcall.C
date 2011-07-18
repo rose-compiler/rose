@@ -287,7 +287,7 @@ vector<void *> buildLibraryList(SgProject *prj)
      if (NULL==libc)
          libc = dlopen("libc.dylib", RTLD_NOW | RTLD_GLOBAL); // Mac OS X
      if (NULL==libc)
-         throw InterpError(string("Couldn't load libc: ") + dlerror();
+         throw InterpError(string("Couldn't load libc: ") + dlerror());
 
      libs.push_back(libc);
      // libs.push_back(RTLD_DEFAULT);
