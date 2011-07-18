@@ -1206,3 +1206,57 @@ lookupTypeFromQualifiedName(string className)
 
      return classType;
    }
+
+
+
+void
+appendStatement(SgStatement* statement)
+   {
+  // This support function handles the complexity of handling append where the current scope is a SgIfStmt.
+
+     SgIfStmt* ifStatement = isSgIfStmt(astJavaScopeStack.front());
+     if (ifStatement != NULL)
+        {
+          SgNullStatement* nullStatement = isSgNullStatement(ifStatement->get_true_body());
+          if (nullStatement != NULL)
+             {
+               ifStatement->set_true_body(statement);
+               delete nullStatement;
+             }
+            else
+             {
+               ifStatement->set_false_body(statement);
+             }
+        }
+       else
+        {
+          astJavaScopeStack.front()->append_statement(statement);
+        }
+
+     ROSE_ASSERT(statement->get_parent() != NULL);
+   }
+
+
+void
+appendStatementStack()
+   {
+  // This function is used to dump all statements accumulated on the astJavaStatementStack
+  // into the current scope (called as part of closing off the scope where functions that 
+  // don't call the function to close off statements).
+
+  // Reverse the list to avoid acesses to the stack from the bottom, 
+  // which would be confusing and violate stack semantics.
+     list<SgStatement*> reverseStatementList;
+     while (astJavaStatementStack.empty() == false)
+        {
+          reverseStatementList.push_front(astJavaStatementStack.front());
+          astJavaStatementStack.pop_front();
+        }
+
+     while (reverseStatementList.empty() == false)
+        {
+          appendStatement(reverseStatementList.front());
+          reverseStatementList.pop_front();
+        }
+   }
+
