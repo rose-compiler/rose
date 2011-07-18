@@ -65,7 +65,7 @@ HEADER_START
           virtual bool isUsedAsDefinable() const;
           virtual bool isLValue() const;
           virtual bool isUsedAsLValue() const; // Calls parent.isChildUsedAsLValue(this)
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
        // DQ (11/6/2006): use this to return the operatorPosition 
        // (instead of the startOfConstruct as it is used for SgStatement objects)
@@ -177,7 +177,7 @@ HEADER_BINARY_EXPRESSION_START
           void set_rhs_operand(SgExpression * exp);
           SgType* get_type() const;
 
-	  virtual unsigned int cfgIndexForEnd() const;
+          virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
@@ -220,7 +220,7 @@ HEADER_LIST_DECLARATIONS
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
        // get lvalue
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 HEADER_EXPRESSION_LIST_EXPRESSION_END
 
 
@@ -236,7 +236,7 @@ HEADER_VAR_REF_EXPRESSION_START
        // get lvalue
           virtual bool isDefinable() const;
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_VAR_REF_EXPRESSION_END
 
@@ -285,7 +285,7 @@ HEADER_FUNCTION_REF_EXPRESSION_START
 
 //       // get lvalue
 //          virtual bool isLValue() const;
-//		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+//          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_FUNCTION_REF_EXPRESSION_END
 
@@ -305,7 +305,7 @@ HEADER_MEMBER_FUNCTION_REF_EXPRESSION_START
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_MEMBER_FUNCTION_REF_EXPRESSION_END
 
@@ -334,7 +334,7 @@ HEADER_STRING_VALUE_EXPRESSION_START
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_STRING_VALUE_EXPRESSION_END
 
@@ -433,7 +433,7 @@ HEADER_LIST_DECLARATIONS
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_FUNCTION_CALL_EXPRESSION_END
 
@@ -443,7 +443,7 @@ HEADER_ARROW_EXPRESSION_START
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_ARROW_EXPRESSION_END
 
@@ -453,7 +453,7 @@ HEADER_DOT_EXPRESSION_START
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_DOT_EXPRESSION_END
 
@@ -463,7 +463,7 @@ HEADER_DOT_STAR_OPERATOR_START
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_DOT_STAR_OPERATOR_END
 
@@ -473,7 +473,7 @@ HEADER_ARROW_STAR_OPERATOR_START
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_ARROW_STAR_OPERATOR_END
 
@@ -569,7 +569,7 @@ HEADER_COMMA_OPERATOR_EXPRESSION_START
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_COMMA_OPERATOR_EXPRESSION_END
 
@@ -581,6 +581,8 @@ HEADER_LEFT_SHIFT_OPERATOR_END
 HEADER_RIGHT_SHIFT_OPERATOR_START
 HEADER_RIGHT_SHIFT_OPERATOR_END
 
+HEADER_JAVA_UNSIGNED_RIGHT_SHIFT_OPERATOR_START
+HEADER_JAVA_UNSIGNED_RIGHT_SHIFT_OPERATOR_END
 
 HEADER_MINUS_OPERATOR_START
 HEADER_MINUS_OPERATOR_END
@@ -607,7 +609,7 @@ HEADER_TYPE_ID_OPERATOR_START
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_TYPE_ID_OPERATOR_END
 
@@ -647,7 +649,7 @@ HEADER_POINTER_DEREF_EXPRESSION_START
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_POINTER_DEREF_EXPRESSION_END
 
@@ -657,7 +659,7 @@ HEADER_ADDRESS_OF_OPERATOR_START
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_ADDRESS_OF_OPERATOR_END
 
@@ -668,7 +670,7 @@ HEADER_MINUS_MINUS_OPERATOR_START
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_MINUS_MINUS_OPERATOR_END
 
@@ -679,7 +681,7 @@ HEADER_PLUS_PLUS_OPERATOR_START
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_PLUS_PLUS_OPERATOR_END
 
@@ -709,7 +711,7 @@ HEADER_CONDITIONAL_EXPRESSION_START
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_CONDITIONAL_EXPRESSION_END
 
@@ -742,14 +744,14 @@ HEADER_CAST_EXPRESSION_START
        // (one of the few places where we have to store the expression type explicitly).
           SgType* get_type() const;
 
-	  virtual unsigned int cfgFindChildIndex(SgNode* n); // CFG children do not match traversalSuccessorContainer
+          virtual unsigned int cfgFindChildIndex(SgNode* n); // CFG children do not match traversalSuccessorContainer
 
        // DQ (1/17/2008): Added to permit the type to be set.
           void set_type (SgType* type);
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_CAST_EXPRESSION_END
 
@@ -761,7 +763,7 @@ HEADER_POINTER_ARRAY_REFERENCE_EXPRESSION_START
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_POINTER_ARRAY_REFERENCE_EXPRESSION_END
 
@@ -796,7 +798,7 @@ HEADER_THIS_EXPRESSION_END
 HEADER_SCOPE_OPERATOR_START
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 HEADER_SCOPE_OPERATOR_END
 
 
@@ -804,7 +806,7 @@ HEADER_ASSIGNMENT_OPERATOR_START
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_ASSIGNMENT_OPERATOR_END
 
@@ -813,7 +815,7 @@ HEADER_PLUS_ASSIGNMENT_OPERATOR_START
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_PLUS_ASSIGNMENT_OPERATOR_END
 
@@ -822,7 +824,7 @@ HEADER_MINUS_ASSIGNMENT_OPERATOR_START
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_MINUS_ASSIGNMENT_OPERATOR_END
 
@@ -831,7 +833,7 @@ HEADER_AND_ASSIGNMENT_OPERATOR_START
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_AND_ASSIGNMENT_OPERATOR_END
 
@@ -840,7 +842,7 @@ HEADER_IOR_ASSIGNMENT_OPERATOR_START
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_IOR_ASSIGNMENT_OPERATOR_END
 
@@ -849,7 +851,7 @@ HEADER_MULTIPLY_ASSIGNMENT_OPERATOR_START
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_MULTIPLY_ASSIGNMENT_OPERATOR_END
 
@@ -858,7 +860,7 @@ HEADER_DIVIDE_ASSIGNMENT_OPERATOR_START
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_DIVIDE_ASSIGNMENT_OPERATOR_END
 
@@ -867,7 +869,7 @@ HEADER_MOD_ASSIGNMENT_OPERATOR_START
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_MOD_ASSIGNMENT_OPERATOR_END
 
@@ -876,7 +878,7 @@ HEADER_XOR_ASSIGNMENT_OPERATOR_START
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_XOR_ASSIGNMENT_OPERATOR_END
 
@@ -885,7 +887,7 @@ HEADER_LEFT_SHIFT_ASSIGNMENT_OPERATOR_START
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_LEFT_SHIFT_ASSIGNMENT_OPERATOR_END
 
@@ -894,9 +896,18 @@ HEADER_RIGHT_SHIFT_ASSIGNEMENT_OPERATOR_START
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_RIGHT_SHIFT_ASSIGNEMENT_OPERATOR_END
+
+
+HEADER_JAVA_UNSIGNED_RIGHT_SHIFT_ASSIGNEMENT_OPERATOR_START
+
+       // get lvalue
+          virtual bool isLValue() const;
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+
+HEADER_JAVA_UNSIGNED_RIGHT_SHIFT_ASSIGNEMENT_OPERATOR_END
 
 
 HEADER_POINTER_ASSIGNMENT_OPERATOR_START
@@ -976,7 +987,7 @@ HEADER_ASSIGNMENT_INITIALIZER_EXPRESSION_START
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_ASSIGNMENT_INITIALIZER_EXPRESSION_END
 
@@ -3023,6 +3034,9 @@ SOURCE_LEFT_SHIFT_OPERATOR_EXPRESSION_END
 SOURCE_RIGHT_SHIFT_OPERATOR_EXPRESSION_START
 SOURCE_RIGHT_SHIFT_OPERATOR_EXPRESSION_END
 
+SOURCE_JAVA_UNSIGNED_RIGHT_SHIFT_OPERATOR_EXPRESSION_START
+SOURCE_JAVA_UNSIGNED_RIGHT_SHIFT_OPERATOR_EXPRESSION_END
+
 SOURCE_MINUS_OPERATOR_EXPRESSION_START
 SOURCE_MINUS_OPERATOR_EXPRESSION_END
 
@@ -4005,6 +4019,10 @@ SOURCE_LEFT_SHIFT_ASSIGN_OPERATOR_EXPRESSION_END
 
 SOURCE_RIGHT_SHIFT_ASSIGN_OPERATOR_EXPRESSION_START
 SOURCE_RIGHT_SHIFT_ASSIGN_OPERATOR_EXPRESSION_END
+
+
+SOURCE_JAVA_UNSIGNED_RIGHT_SHIFT_ASSIGN_OPERATOR_EXPRESSION_START
+SOURCE_JAVA_UNSIGNED_RIGHT_SHIFT_ASSIGN_OPERATOR_EXPRESSION_END
 
 
 SOURCE_POINTER_ASSIGN_OPERATOR_EXPRESSION_START

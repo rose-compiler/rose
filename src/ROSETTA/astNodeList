@@ -537,6 +537,8 @@ SgReturnStmt
 SgRewindStatement
 SgRshiftAssignOp
 SgRshiftOp
+SgJavaUnsignedRshiftAssignOp
+SgJavaUnsignedRshiftOp
 SgScopeOp
 SgScopeStatement
 SgSequenceStatement

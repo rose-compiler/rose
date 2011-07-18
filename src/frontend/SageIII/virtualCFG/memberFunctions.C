@@ -4902,6 +4902,27 @@ bool SgRshiftAssignOp::isChildUsedAsLValue(const SgExpression* child) const
         }
 }
 
+// DQ (7/17/2011): Added this function to support new Java ">>>" operator.
+/*! std:5.17 par:1 */
+bool SgJavaUnsignedRshiftAssignOp::isLValue() const
+{
+        return true;
+}
+
+// DQ (7/17/2011): Added this function to support new Java ">>>" operator.
+bool SgJavaUnsignedRshiftAssignOp::isChildUsedAsLValue(const SgExpression* child) const
+{
+        if (get_lhs_operand() == child)
+                return true;
+        else if (get_rhs_operand() == child)
+                return false;
+        else
+        {
+                ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgJavaUnsignedRshiftAssignOp");
+                return false;
+        }
+}
+
 bool SgPointerAssignOp::isDefinable() const
 {
         return true;
