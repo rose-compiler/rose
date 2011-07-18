@@ -4388,6 +4388,29 @@ SgEnumDeclaration* SageBuilder::buildNondefiningEnumDeclaration_nfi(const SgName
      return nondefdecl;
    }
 
+SgStmtDeclarationStatement*
+SageBuilder::buildStmtDeclarationStatement_nfi(SgStatement* stmt) {
+    ROSE_ASSERT(stmt != NULL);
+
+    SgStmtDeclarationStatement* result = new SgStmtDeclarationStatement(stmt);
+    stmt->set_parent(result);
+
+    setOneSourcePositionNull(result);
+    return result;
+}
+
+SgStmtDeclarationStatement*
+SageBuilder::buildStmtDeclarationStatement(SgStatement* stmt) {
+    ROSE_ASSERT(stmt != NULL);
+
+    SgStmtDeclarationStatement* result = new SgStmtDeclarationStatement(stmt);
+    stmt->set_parent(result);
+
+    setOneSourcePositionForTransformation(result);
+    return result;
+}
+
+
 // This should take a SgClassDeclaration::class_types kind parameter!
 SgClassDeclaration * SageBuilder::buildStructDeclaration(const SgName& name, SgScopeStatement* scope /*=NULL*/)
    {

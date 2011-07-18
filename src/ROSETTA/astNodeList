@@ -562,6 +562,7 @@ SgSourceFile
 SgSpawnStmt
 SgSpecialFunctionModifier
 SgStatement
+SgStmtDeclarationStatement
 SgStatementExpression
 SgStatementFunctionStatement
 SgStopOrPauseStatement
