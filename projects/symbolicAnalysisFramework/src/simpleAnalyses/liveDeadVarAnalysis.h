@@ -118,6 +118,11 @@ class LiveDeadVarsTransfer : public IntraDFTransferVisitor
 
   funcSideEffectUses *fseu;
 
+  friend class LDVAExpressionTransfer;
+
+  // Note that the variable corresponding to this expression is used
+  void used(SgExpression *);
+
 public:
   LiveDeadVarsTransfer(const Function &f, const DataflowNode &n, NodeState &s, const vector<Lattice*> &d, funcSideEffectUses *fseu_)
     : IntraDFTransferVisitor(f, n, s, d), indent("    "), liveLat(dynamic_cast<LiveVarsLattice*>(*(dfInfo.begin()))), modified(false), fseu(fseu_)

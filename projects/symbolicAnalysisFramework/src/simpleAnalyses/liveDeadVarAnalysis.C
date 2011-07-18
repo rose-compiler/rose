@@ -181,155 +181,194 @@ void LiveDeadVarsAnalysis::genInitState(const Function& func, const DataflowNode
 	initLattices.push_back(new LiveVarsLattice());	
 }
 
+/// Visits live expressions - helper to LiveDeadVarsTransfer
+class LDVAExpressionTransfer : public ROSE_VisitorPatternDefaultBase
+{
+  LiveDeadVarsTransfer &ldva;
+
+public:
+  // Should only be called on expressions
+  void visit(SgNode *) { assert(0); }
+  // Catch up any other expressions that are not yet handled
+  void visit(SgExpression *)
+  {
+    // Function Reference
+    // !!! CURRENTLY WE HAVE NO NOTION OF VARIABLES THAT IDENTIFY FUNCTIONS, SO THIS CASE IS EXCLUDED FOR NOW
+    /*} else if(isSgFunctionRefExp(sgn)) {*/
+    /*} else if(isSgMemberFunctionRefExp(sgn)) {*/
+
+    // !!! DON'T KNOW HOW TO HANDLE THESE
+    /*} else if(isSgStatementExpression(sgn)) {(*/
+
+    // Typeid
+    // !!! DON'T KNOW WHAT TO DO HERE SINCE THE RETURN VALUE IS A TYPE AND THE ARGUMENT'S VALUE IS NOT USED
+    /*} else if(isSgTypeIdOp(sgn)) {*/
+    // Var Args
+    // !!! DON'T HANDLE THESE RIGHT NOW. WILL HAVE TO IN THE FUTURE
+    /*	SgVarArgOp 
+        SgExpression * 	get_operand_expr () const 
+        SgVarArgCopyOp
+        SgExpression * 	get_lhs_operand () const
+        SgExpression * 	get_rhs_operand () const  
+        SgVarArgEndOp 
+        SgExpression * 	get_operand_expr 
+        SgVarArgStartOneOperandOp 
+        SgExpression * 	get_operand_expr () const 
+        SgVarArgStartOp 
+        SgExpression * 	get_lhs_operand () const
+        SgExpression * 	get_rhs_operand () const */
+    // !!! WHAT IS THIS?
+    /*	SgVariantExpression*/
+
+
+    // TODO: Make this assert(0), because unhandled expression types are likely to give wrong results
+  }
+  // Plain assignment: lhs = rhs
+  void visit(SgAssignOp *sgn) {
+    ldva.assignedExprs.insert(sgn->get_lhs_operand());
+				
+    // If the lhs of the assignment is a complex expression (i.e. it refers to a variable that may be live) OR
+    // if is a known expression that is known to may-be-live
+    // THIS CODE ONLY APPLIES TO RHSs THAT ARE SIDE-EFFECT-FREE AND WE DON'T HAVE AN ANALYSIS FOR THAT YET
+    /*if(!isVarExpr(sgn->get_lhs_operand()) || 
+      (isVarExpr(sgn->get_lhs_operand()) && 
+      liveLat->isLiveVar(SgExpr2Var(sgn->get_lhs_operand()))))
+      { */
+    ldva.used(sgn->get_rhs_operand());
+  }
+  // Initializer for a variable
+  void visit(SgAssignInitializer *sgn) {
+    ldva.used(sgn->get_operand());
+  }
+  // Initializer for a function arguments
+  void visit(SgConstructorInitializer *sgn) {
+    SgExprListExp* exprList = sgn->get_args();
+    for(SgExpressionPtrList::iterator expr=exprList->get_expressions().begin();
+        expr!=exprList->get_expressions().end(); expr++)
+      ldva.used(*expr);
+  }
+  // Initializer that captures internal stucture of structs or arrays ("int x[2] = {1,2};", it is the "1,2")
+  void visit(SgAggregateInitializer *sgn) {
+    SgExprListExp* exprList = sgn->get_initializers();
+    for(SgExpressionPtrList::iterator expr=exprList->get_expressions().begin();
+        expr!=exprList->get_expressions().end(); expr++)
+      ldva.used(*expr);
+  }
+  // Designated Initializer 
+  void visit(SgDesignatedInitializer *sgn) {
+    SgExprListExp* exprList = sgn->get_designatorList();
+    for(SgExpressionPtrList::iterator expr=exprList->get_expressions().begin();
+        expr!=exprList->get_expressions().end(); expr++)
+      ldva.used(*expr);
+  }
+  // Binary Operations
+  void visit(SgBinaryOp *sgn) {
+    // Self-update expressions, where the lhs is assigned
+    if(isSgCompoundAssignOp(sgn)) {
+      ldva.assignedExprs.insert(sgn->get_lhs_operand());
+    }
+    // Both the lhs and rhs are used
+    ldva.used(sgn->get_lhs_operand());
+    ldva.used(sgn->get_rhs_operand());
+  }
+  // Unary Operations
+  void visit(SgUnaryOp *sgn) {
+    // If this is an auto-update operation
+    if(isSgMinusMinusOp(sgn) || isSgPlusPlusOp(sgn)) {
+      // The argument is defined
+      ldva.assignedExprs.insert(sgn->get_operand());
+    }
+    // The argument is used
+    ldva.used(sgn->get_operand());
+  }
+  // Conditionals (condE ? trueE : falseE)
+  void visit(SgConditionalExp *sgn) {
+    // The arguments are used
+    ldva.used(sgn->get_conditional_exp());
+    ldva.used(sgn->get_true_exp());
+    ldva.used(sgn->get_false_exp());
+  }
+  // Delete
+  void visit(SgDeleteExp *sgn) {
+    // Delete expressions return nothing
+    // The arguments are used
+    ldva.used(sgn->get_variable());
+  }
+  // New
+  void visit(SgNewExp *sgn) {
+    // The placement arguments are used
+    SgExprListExp* exprList = sgn->get_placement_args();
+    for(SgExpressionPtrList::iterator expr=exprList->get_expressions().begin();
+        expr!=exprList->get_expressions().end(); expr++)
+      ldva.used(*expr);
+				
+    // The placement arguments are used
+    exprList = sgn->get_constructor_args()->get_args();
+    for(SgExpressionPtrList::iterator expr=exprList->get_expressions().begin();
+        expr!=exprList->get_expressions().end(); expr++)
+      ldva.used(*expr);
+				
+    // The built-in arguments are used (DON'T KNOW WHAT THESE ARE!)
+    ldva.used(sgn->get_builtin_args());
+  }
+  // Function Calls
+  void visit(SgFunctionCallExp *sgn) {
+    // !!! CURRENTLY WE HAVE NO NOTION OF VARIABLES THAT IDENTIFY FUNCTIONS, SO THIS CASE IS EXCLUDED FOR NOW
+    /*// The expression that identifies the called function is used
+      ldva.used(sgn->get_function());*/
+				
+    // The function call's arguments are used
+    SgExprListExp* exprList = sgn->get_args();
+    for(SgExpressionPtrList::iterator expr=exprList->get_expressions().begin();
+        expr!=exprList->get_expressions().end(); expr++)
+      ldva.used(*expr);
+				
+    // If this function has no definition and the user provided a class to provide 
+    // the variables that are used by such functions
+    if(sgn->getAssociatedFunctionDeclaration() && 
+       sgn->getAssociatedFunctionDeclaration()->get_definition()==NULL &&
+       ldva.fseu) {
+      set<varID> funcUsedVars = ldva.fseu->usedVarsInFunc(Function(sgn->getAssociatedFunctionDeclaration()), ldva.dfNode, ldva.nodeState);
+      ldva.usedVars.insert(funcUsedVars.begin(), funcUsedVars.end());
+    }
+  }
+  // Sizeof
+  void visit(SgSizeOfOp *sgn) {
+    // XXX: The argument is NOT used, but its type is
+    ldva.used(sgn->get_operand_expr());
+  }
+  // This
+  void visit(SgThisExp *sgn) {
+  }
+  // Variable Reference (we know this expression is live)
+  void visit(SgVarRefExp *sgn) {
+    ldva.used(sgn);
+  }
+
+  LDVAExpressionTransfer(LiveDeadVarsTransfer &base)
+    : ldva(base)
+  { }
+};
+
+void LiveDeadVarsTransfer::used(SgExpression *sgn)
+{
+  usedVars.insert(SgExpr2Var(sgn));
+}
+
 void LiveDeadVarsTransfer::visit(SgExpression *sgn)
 {
-	if(isSgExpression(sgn)) {
-		if(liveLat->isLiveVar(SgExpr2Var(isSgExpression(sgn)))) {
-			if(liveDeadAnalysisDebugLevel>=1) Dbg::dbg << indent << "Live Expression"<<endl;
-			// Plain assignment: lhs = rhs
-			if(isSgAssignOp(sgn)) {
-				assignedExprs.insert(isSgAssignOp(sgn)->get_lhs_operand());
-				
-				// If the lhs of the assignment is a complex expression (i.e. it refers to a variable that may be live) OR
-				// if is a known expression that is known to may-be-live
-				// THIS CODE ONLY APPLIES TO RHSs THAT ARE SIDE-EFFECT-FREE AND WE DON'T HAVE AN ANALYSIS FOR THAT YET
-				/*if(!isVarExpr(isSgAssignOp(sgn)->get_lhs_operand()) || 
-				   (isVarExpr(isSgAssignOp(sgn)->get_lhs_operand()) && 
-				    liveLat->isLiveVar(SgExpr2Var(isSgAssignOp(sgn)->get_lhs_operand()))))
-				{ */
-				usedVars.insert(SgExpr2Var(isSgAssignOp(sgn)->get_rhs_operand()));
-			// Initializer for a variable
-			} else if(isSgAssignInitializer(sgn)) {
-				usedVars.insert(SgExpr2Var(isSgAssignInitializer(sgn)->get_operand()));
-			// Initializer for a function arguments
-			} else if(isSgConstructorInitializer(sgn)) {
-				SgExprListExp* exprList = isSgConstructorInitializer(sgn)->get_args();
-				for(SgExpressionPtrList::iterator expr=exprList->get_expressions().begin();
-				    expr!=exprList->get_expressions().end(); expr++)
-					usedVars.insert(SgExpr2Var(*expr));
-			// Initializer that captures internal stucture of structs or arrays ("int x[2] = {1,2};", it is the "1,2")
-			} else if(isSgAggregateInitializer(sgn)) {
-				SgExprListExp* exprList = isSgAggregateInitializer(sgn)->get_initializers();
-				for(SgExpressionPtrList::iterator expr=exprList->get_expressions().begin();
-				    expr!=exprList->get_expressions().end(); expr++)
-					usedVars.insert(SgExpr2Var(*expr));
-			// Designated Initializer 
-			} else if(isSgDesignatedInitializer(sgn)) {
-				SgExprListExp* exprList = isSgDesignatedInitializer(sgn)->get_designatorList();
-				for(SgExpressionPtrList::iterator expr=exprList->get_expressions().begin();
-				    expr!=exprList->get_expressions().end(); expr++)
-					usedVars.insert(SgExpr2Var(*expr));
-			// Constant expressions
-			} else if(isSgValueExp(sgn)) {
-			// Binary Operations
-			} else if(isSgBinaryOp(sgn)) {
-				// Self-update expressions, where the lhs is assigned
-				if(isSgCompoundAssignOp(sgn)) {
-				   assignedExprs.insert(isSgBinaryOp(sgn)->get_lhs_operand());
-				}
-				// Both the lhs and rhs are used
-			   usedVars.insert(SgExpr2Var(isSgBinaryOp(sgn)->get_lhs_operand()));
-		   	usedVars.insert(SgExpr2Var(isSgBinaryOp(sgn)->get_rhs_operand()));
-			// Unary Operations
-			} else if(isSgUnaryOp(sgn)) {
-				// If this is an auto-update operation
-				if(isSgMinusMinusOp(sgn) || isSgPlusPlusOp(sgn)) {
-					// The argument is defined
-					assignedExprs.insert(isSgUnaryOp(sgn)->get_operand());
-				}
-				// The argument is used
-				usedVars.insert(SgExpr2Var(isSgUnaryOp(sgn)->get_operand()));
-			// Conditionals (condE ? trueE : falseE)
-			} else if(isSgConditionalExp(sgn)) {
-				// The arguments are used
-				usedVars.insert(SgExpr2Var(isSgConditionalExp(sgn)->get_conditional_exp()));
-				usedVars.insert(SgExpr2Var(isSgConditionalExp(sgn)->get_true_exp()));
-				usedVars.insert(SgExpr2Var(isSgConditionalExp(sgn)->get_false_exp()));
-			// Delete
-			} else if(isSgDeleteExp(sgn)) {
-				// Delete expressions return nothing
-				// The arguments are used
-				usedVars.insert(SgExpr2Var(isSgDeleteExp(sgn)->get_variable()));
-			// New
-			} else if(isSgNewExp(sgn)) {
-				// The placement arguments are used
-				SgExprListExp* exprList = isSgNewExp(sgn)->get_placement_args();
-				for(SgExpressionPtrList::iterator expr=exprList->get_expressions().begin();
-				    expr!=exprList->get_expressions().end(); expr++)
-					usedVars.insert(SgExpr2Var(*expr));
-				
-				// The placement arguments are used
-				exprList = isSgNewExp(sgn)->get_constructor_args()->get_args();
-				for(SgExpressionPtrList::iterator expr=exprList->get_expressions().begin();
-				    expr!=exprList->get_expressions().end(); expr++)
-					usedVars.insert(SgExpr2Var(*expr));
-				
-				// The built-in arguments are used (DON'T KNOW WHAT THESE ARE!)
-				usedVars.insert(isSgNewExp(sgn)->get_builtin_args());
-			// Function Calls
-			} else if(isSgFunctionCallExp(sgn)) {
-				// !!! CURRENTLY WE HAVE NO NOTION OF VARIABLES THAT IDENTIFY FUNCTIONS, SO THIS CASE IS EXCLUDED FOR NOW
-				/*// The expression that identifies the called function is used
-				usedVars.insert(isSgFunctionCallExp(sgn)->get_function());*/
-				
-				// The function call's arguments are used
-				SgExprListExp* exprList = isSgFunctionCallExp(sgn)->get_args();
-				for(SgExpressionPtrList::iterator expr=exprList->get_expressions().begin();
-				    expr!=exprList->get_expressions().end(); expr++)
-					usedVars.insert(SgExpr2Var(*expr));
-				
-				// If this function has no definition and the user provided a class to provide 
-				// the variables that are used by such functions
-				if(isSgFunctionCallExp(sgn)->getAssociatedFunctionDeclaration() && 
-					isSgFunctionCallExp(sgn)->getAssociatedFunctionDeclaration()->get_definition()==NULL &&
-					fseu) {
-					set<varID> funcUsedVars = fseu->usedVarsInFunc(Function(isSgFunctionCallExp(sgn)->getAssociatedFunctionDeclaration()), dfNode, nodeState);
-					usedVars.insert(funcUsedVars.begin(), funcUsedVars.end());
-				}
-			// Function Reference
-			// !!! CURRENTLY WE HAVE NO NOTION OF VARIABLES THAT IDENTIFY FUNCTIONS, SO THIS CASE IS EXCLUDED FOR NOW
-			/*} else if(isSgFunctionRefExp(sgn)) {*/
-			/*} else if(isSgMemberFunctionRefExp(sgn)) {*/
-			// Sizeof
-			} else if(isSgSizeOfOp(sgn)) {
-				// The arguments are used
-				usedVars.insert(SgExpr2Var(isSgSizeOfOp(sgn)->get_operand_expr()));
-			// !!! DON'T KNOW HOW TO HANDLE THESE
-			/*} else if(isSgStatementExpression(sgn)) {(*/
-			// This
-			} else if(isSgThisExp(sgn)) {
-			// Typeid
-			// !!! DON'T KNOW WHAT TO DO HERE SINCE THE RETURN VALUE IS A TYPE AND THE ARGUMENT'S VALUE IS NOT USED
-			/*} else if(isSgTypeIdOp(sgn)) {*/
-			// Var Args
-			// !!! DON'T HANDLE THESE RIGHT NOW. WILL HAVE TO IN THE FUTURE
-			/*	SgVarArgOp 
-					SgExpression * 	get_operand_expr () const 
-				SgVarArgCopyOp
-					SgExpression * 	get_lhs_operand () const
-					SgExpression * 	get_rhs_operand () const  
-				SgVarArgEndOp 
-					SgExpression * 	get_operand_expr 
-				SgVarArgStartOneOperandOp 
-					SgExpression * 	get_operand_expr () const 
-				SgVarArgStartOp 
-					SgExpression * 	get_lhs_operand () const
-					SgExpression * 	get_rhs_operand () const */
-			// !!! WHAT IS THIS?
-			/*	SgVariantExpression*/
-			// Variable Reference (we know this expression is live)
-			} else if(isSgVarRefExp(sgn)) {
-				usedVars.insert(SgExpr2Var(isSgVarRefExp(sgn)));
-			}
-		} else {
-			if(liveDeadAnalysisDebugLevel>=1) Dbg::dbg << indent << "Dead Expression"<<endl;
-		}
-		
-		// Remove the expression itself since it has no uses above itself
-		if(liveDeadAnalysisDebugLevel>=1) Dbg::dbg << indent << "   Removing "<<SgExpr2Var(isSgExpression(sgn))<<endl;
-		modified = liveLat->remVar(SgExpr2Var(isSgExpression(sgn))) || modified;
-	// Variable Declaration
-	}
+  bool isLive = liveLat->isLiveVar(SgExpr2Var(sgn));
+  if(liveDeadAnalysisDebugLevel>=1)
+    Dbg::dbg << indent << (isLive ? "Live Expression" : "Dead Expression") <<endl;
+
+  if(isLive) {
+    LDVAExpressionTransfer helper(*this);
+    sgn->accept(helper);
+  }
+
+  // Remove the expression itself since it has no uses above itself
+  if(liveDeadAnalysisDebugLevel>=1) Dbg::dbg << indent << "   Removing "<<SgExpr2Var(sgn)<<endl;
+  modified = liveLat->remVar(SgExpr2Var(sgn)) || modified;
 }
 
 void LiveDeadVarsTransfer::visit(SgInitializedName *sgn) {
@@ -338,18 +377,18 @@ void LiveDeadVarsTransfer::visit(SgInitializedName *sgn) {
   // If this is the instance of SgInitializedName that occurrs immediately after the declaration's initializer AND
   // this declaration has an initializer, add it as a use
   if(dfNode.getIndex()==1 && sgn->get_initializer())
-    usedVars.insert(SgExpr2Var(sgn->get_initializer()));
+    used(sgn->get_initializer());
 }
 
 void LiveDeadVarsTransfer::visit(SgReturnStmt *sgn) {
-  usedVars.insert(SgExpr2Var(sgn->get_expression()));
+  used(sgn->get_expression());
 }
 void LiveDeadVarsTransfer::visit(SgExprStatement *sgn) {
-  usedVars.insert(SgExpr2Var(sgn->get_expression()));
+  used(sgn->get_expression());
 }
 void LiveDeadVarsTransfer::visit(SgCaseOptionStmt *sgn) {
-  usedVars.insert(SgExpr2Var(sgn->get_key()));
-  usedVars.insert(SgExpr2Var(sgn->get_key_range_end()));
+  used(sgn->get_key());
+  used(sgn->get_key_range_end());
 }
 void LiveDeadVarsTransfer::visit(SgIfStmt *sgn) {
   //Dbg::dbg << "SgIfStmt"<<endl;
@@ -357,25 +396,25 @@ void LiveDeadVarsTransfer::visit(SgIfStmt *sgn) {
   //Dbg::dbg << "    conditional stmt="<<Dbg::escape(isSgExprStatement(sgn->get_conditional())->unparseToString()) << " | " << isSgExprStatement(sgn->get_conditional())->class_name()<<endl;
   //Dbg::dbg << "    conditional expr="<<Dbg::escape(isSgExprStatement(sgn->get_conditional())->get_expression()->unparseToString()) << " | " << isSgExprStatement(sgn->get_conditional())->get_expression()->class_name()<<endl;
   //Dbg::dbg << "    conditional var="<<SgExpr2Var(isSgExprStatement(sgn->get_conditional())->get_expression())<<endl;
-  usedVars.insert(SgExpr2Var(isSgExprStatement(sgn->get_conditional())->get_expression()));
+  used(isSgExprStatement(sgn->get_conditional())->get_expression());
 }
 void LiveDeadVarsTransfer::visit(SgForStatement *sgn) {
   //Dbg::dbg << "test="<<Dbg::escape(sgn->get_test()->unparseToString()) << " | " << sgn->get_test()->class_name()<<endl;
   //Dbg::dbg << "increment="<<Dbg::escape(sgn->get_increment()->unparseToString()) << " | " << sgn->get_increment()->class_name()<<endl;
 			
   ROSE_ASSERT(isSgExprStatement(sgn->get_test()));
-  usedVars.insert(SgExpr2Var(isSgExprStatement(sgn->get_test())->get_expression()));
-  usedVars.insert(SgExpr2Var(sgn->get_increment()));
+  used(isSgExprStatement(sgn->get_test())->get_expression());
+  used(sgn->get_increment());
 }
 void LiveDeadVarsTransfer::visit(SgWhileStmt *sgn) {
   ROSE_ASSERT(isSgExprStatement(sgn->get_condition()));
   //Dbg::dbg << "condition="<<Dbg::escape(sgn->get_condition()->unparseToString()) << " | " << sgn->get_condition()->class_name()<<endl;
-  usedVars.insert(SgExpr2Var(isSgExprStatement(sgn->get_condition())->get_expression()));
+  used(isSgExprStatement(sgn->get_condition())->get_expression());
 }
 void LiveDeadVarsTransfer::visit(SgDoWhileStmt *sgn) {
   ROSE_ASSERT(isSgExprStatement(sgn->get_condition()));
   //Dbg::dbg << "condition="<<Dbg::escape(sgn->get_condition()->unparseToString()) << " | " << sgn->get_condition()->class_name()<<endl;
-  usedVars.insert(SgExpr2Var(isSgExprStatement(sgn->get_condition())->get_expression()));
+  used(isSgExprStatement(sgn->get_condition())->get_expression());
 }
 
 bool LiveDeadVarsTransfer::finish()
