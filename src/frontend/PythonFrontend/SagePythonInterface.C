@@ -718,34 +718,7 @@ sage_buildName(PyObject *self, PyObject *args)
                                         SAGE_CONVERTER(SgScopeStatement), &sg_scope))
         return NULL;
 
-    SgExpression* sg_ref = NULL;
-
-    SgSymbol* sg_sym = sg_scope->lookup_symbol( SgName(id) );
-    if (sg_sym == NULL) {
-        sg_ref = SageBuilder::buildOpaqueVarRefExp(id, sg_scope);
-        return PyEncapsulate( sg_ref );
-    }
-    else switch (sg_sym->variantT()) {
-        case V_SgFunctionSymbol: {
-            sg_ref = SageBuilder::buildFunctionRefExp( isSgFunctionSymbol(sg_sym) );
-            break;
-        }
-        case V_SgVariableSymbol: {
-            sg_ref = SageBuilder::buildVarRefExp( isSgVariableSymbol(sg_sym) );
-            break;
-        }
-        case V_SgClassSymbol: {
-            sg_ref = SageBuilder::buildClassNameRefExp( isSgClassSymbol(sg_sym) );
-            break;
-        }
-        default: {
-            cout << "error: unable to convert python Name: " << id
-                 << ". Corresponding symbol had type: " << sg_sym->class_name() << endl;
-            break;
-        }
-    }
-
-
+    SgExpression* sg_ref = buildReference(id, sg_scope);
     return PyEncapsulate(sg_ref);
 }
 
