@@ -844,6 +844,10 @@ SgClassDeclaration * buildStructDeclaration(const SgName& name, SgScopeStatement
 SgClassDeclaration * buildStructDeclaration(const std::string& name, SgScopeStatement* scope=NULL);
 SgClassDeclaration * buildStructDeclaration(const char* name, SgScopeStatement* scope=NULL);
 
+//! Build a StmtDeclarationStmt
+SgStmtDeclarationStatement* buildStmtDeclarationStatement(SgStatement* stmt);
+SgStmtDeclarationStatement* buildStmtDeclarationStatement_nfi(SgStatement* stmt);
+
 // tps (09/02/2009) : Added support for building namespaces
 SgNamespaceDeclarationStatement *  buildNamespaceDeclaration(const SgName& name, SgScopeStatement* scope=NULL);
 SgNamespaceDeclarationStatement *  buildNamespaceDeclaration_nfi(const SgName& name, bool unnamednamespace, SgScopeStatement* scope );

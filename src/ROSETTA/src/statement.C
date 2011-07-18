@@ -73,6 +73,7 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (VariableDefinition,        "VariableDefinition",        "VAR_DEFN_STMT" );
   // NEW_TERMINAL_MACRO (ClassDeclaration,          "ClassDeclaration",          "CLASS_DECL_STMT" );
   // NEW_TERMINAL_MACRO (ClassDefinition,           "ClassDefinition",           "CLASS_DEFN_STMT" );
+     NEW_TERMINAL_MACRO (StmtDeclarationStatement,  "StmtDeclarationStatement",  "STMT_DECL_STMT" );
      NEW_TERMINAL_MACRO (EnumDeclaration,           "EnumDeclaration",           "ENUM_DECL_STMT" );
      NEW_TERMINAL_MACRO (AsmStmt,                   "AsmStmt",                   "ASM_STMT" );
      NEW_TERMINAL_MACRO (TypedefDeclaration,        "TypedefDeclaration",        "TYPEDEF_STMT" );
@@ -411,7 +412,8 @@ Grammar::setUpStatements ()
           UsingDeclarationStatement               | NamelistStatement         | ImportStatement      |
           FunctionDeclaration                  /* | ModuleStatement */        | ContainsStatement    |
           C_PreprocessorDirectiveStatement        | OmpThreadprivateStatement | FortranIncludeLine   | 
-          JavaImportStatement, "DeclarationStatement","DECL_STMT", false);
+          JavaImportStatement                     | StmtDeclarationStatement,
+          "DeclarationStatement","DECL_STMT", false);
 
 
   // DQ (2/2/2006): Support for Fortran IR nodes (contributed by Rice)
@@ -1312,6 +1314,11 @@ Grammar::setUpStatements ()
   // PC (7/27/2009): Support for identifying abstract classes.
      ClassDefinition.setDataPrototype("bool", "isAbstract", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     StmtDeclarationStatement.setFunctionPrototype ( "HEADER_STMT_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
+     StmtDeclarationStatement.setDataPrototype ( "SgStatement*", "statement", "= NULL",
+                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_TREE);
+     StmtDeclarationStatement.setFunctionSource ( "SOURCE_POST_CONSTRUCTION_INITIALIZATION_STATEMENT", "../Grammar/Statement.code" );
 
      TemplateDeclaration.setFunctionPrototype  ( "HEADER_TEMPLATE_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
      //
@@ -2857,6 +2864,9 @@ Grammar::setUpStatements ()
      ClassDeclaration.setFunctionSource     ( "SOURCE_TEMPLATE_SPECIALIZATION_SUPPORT", "../Grammar/Statement.code" );
 
      ClassDefinition.setFunctionSource      ( "SOURCE_CLASS_DEFINITION_STATEMENT", "../Grammar/Statement.code" );
+
+     StmtDeclarationStatement.setFunctionSource  ( "SOURCE_STMT_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
+
      EnumDeclaration.setFunctionSource      ( "SOURCE_ENUM_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
      ExprStatement.setFunctionSource        ( "SOURCE_EXPRESSION_STATEMENT", "../Grammar/Statement.code" );
      LabelStatement.setFunctionSource       ( "SOURCE_LABEL_STATEMENT", "../Grammar/Statement.code" );
