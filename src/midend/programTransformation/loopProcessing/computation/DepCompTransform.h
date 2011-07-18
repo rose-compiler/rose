@@ -3,6 +3,7 @@
 #define DEP_COMP_TRANSFORM_H
 
 #include <LoopTreeLocality.h>
+#include <LoopTreeTransform.h>
 #include <GraphScope.h>
 #include <DoublyLinkedList.h>
 
@@ -132,8 +133,7 @@ class DepCompCopyArrayCollect
   LoopTreeNode* OutmostCopyRoot( DepCompCopyArrayCollect::CopyArrayUnit& unit, 
                                DepCompAstRefGraphCreate& refDep, LoopTreeNode* treeroot);
 
-  DepCompCopyArrayCollect( LoopTransformInterface& la, LoopTreeNode* root) 
-      : stmtrefInfo(la, root) {}
+  DepCompCopyArrayCollect( LoopTreeNode* root) : stmtrefInfo(root) {}
  private:
   DoublyLinkedListWrap<CopyArrayUnit> arraycopy;
   DepCompAstRefAnal stmtrefInfo;
@@ -141,6 +141,11 @@ class DepCompCopyArrayCollect
 
 class DepCompCopyArrayToBuffer 
 { 
+ protected:
+ /*QY: perform all copy + init + save transformations specified in (collect) */
+  virtual void ApplyXform( DepCompCopyArrayCollect::CopyArrayUnit& curarray,
+                CopyArrayConfig& config, LoopTreeNode* replRoot,
+                LoopTreeNode* initStmt, LoopTreeNode* saveStmt);
  public: 
   void EnforceCopyRoot( DepCompCopyArrayCollect::CopyArrayUnit& curunit, 
                        const DepCompAstRefGraphCreate& refDep,
@@ -149,9 +154,9 @@ class DepCompCopyArrayToBuffer
                        const DepCompAstRefGraphCreate& refDep,
                        const DepCompAstRefGraphNode* outnode,
                        DepCompCopyArrayCollect::CopyArrayUnit::NodeSet& cuts);
-  void CollectCopyArray(LoopTransformInterface& la, DepCompCopyArrayCollect& col, 
+  void CollectCopyArray( DepCompCopyArrayCollect& col, 
                          const DepCompAstRefGraphCreate& refDep);
-  void ApplyCopyArray(LoopTransformInterface& la, DepCompCopyArrayCollect& col, 
+  void ApplyCopyArray( DepCompCopyArrayCollect& col, 
                          const DepCompAstRefGraphCreate& refDep);
 };
 

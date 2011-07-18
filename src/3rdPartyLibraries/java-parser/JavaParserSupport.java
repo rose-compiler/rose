@@ -983,7 +983,7 @@ class JavaParserSupport
 
                default:
                   {
-                    System.out.println("Error: unknown type in generateType()");
+                    System.out.println("Error: unknown type in generateType(): id = " + id);
                     System.exit(1);
                     break;
                   }

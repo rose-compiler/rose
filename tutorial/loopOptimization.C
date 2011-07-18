@@ -17,8 +17,9 @@ main ( int argc,  char * argv[] )
    {
      vector<string> argvList(argv, argv + argc);
      CmdOptions::GetInstance()->SetOptions(argvList);
-     SetLoopTransformOptions(argvList);
      AssumeNoAlias aliasInfo;
+     LoopTransformInterface::cmdline_configure(argvList);
+     LoopTransformInterface::set_aliasInfo(&aliasInfo);
 
      SgProject* project = new SgProject(argvList);
 
@@ -42,11 +43,10 @@ main ( int argc,  char * argv[] )
 
                SgBasicBlock *stmts = defn->get_body();
                AstInterfaceImpl faImpl(stmts);
-               AstInterface fa(&faImpl);
 
             // This will do as much fusion as possible (finer grained 
             // control over loop optimizations uses a different interface).
-               LoopTransformTraverse( fa, AstNodePtrImpl(stmts), aliasInfo);
+               LoopTransformInterface::TransformTraverse(faImpl, AstNodePtrImpl(stmts));
 
             // JJW 10-29-2007 Adjust for iterator invalidation and possible
             // inserted statements

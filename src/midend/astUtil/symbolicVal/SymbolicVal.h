@@ -8,13 +8,13 @@
 #include <assert.h>
 #include <string>
 #include <vector>
+#include <ostream>
 
 class SymbolicConst;
 class SymbolicVar;
 class SymbolicFunction;
 class SymbolicExpr;
 class SymbolicAstWrap;
-
 class SymbolicVisitor
 {
  protected:
@@ -28,16 +28,12 @@ class SymbolicVisitor
   virtual ~SymbolicVisitor() {}
 };
 
-//! Supported symbolic expression value types: only integer?
 typedef enum {VAL_BASE = 0, VAL_CONST = 1, VAL_VAR = 2, VAL_AST = 4, 
               VAL_FUNCTION = 8, VAL_EXPR = 16}
       SymbolicValType;
-
-//! Supported operators for symbolic expressions: *, +, -, max(), power(^)      
 typedef enum { SYMOP_NIL = 0, SYMOP_MULTIPLY=1, SYMOP_PLUS = 2,
                SYMOP_MIN=3, SYMOP_MAX=4, SYMOP_POW = 5} SymOpType;
 
-//! Base interface for symbolic values
 class SymbolicValImpl 
 {
  protected:
@@ -59,11 +55,11 @@ class SymbolicValImpl
 inline SymbolicValImpl* Clone(const SymbolicValImpl& that) 
   { return that.Clone(); }
 
-//! Constant symbol for integers and fractions
+
 class SymbolicConst : public SymbolicValImpl
 {
-  std:: string val, type;//val: string format; type: one of "int" or "fraction"
-  int intval, dval; // dval is for denominator of a fraction type
+  std:: string val, type;
+  int intval, dval;
 
   SymbolicValImpl* Clone() const { return new SymbolicConst(*this); }
  public:
@@ -95,7 +91,6 @@ class SymbolicConst : public SymbolicValImpl
   std:: string GetVal() const { return val; }
 };
 
-//! Symbolic variable: names and scopes
 class SymbolicVar : public SymbolicValImpl
 {
   std:: string varname;
@@ -145,7 +140,6 @@ class SymbolicAstWrap : public SymbolicValImpl
   const AstNodePtr& get_ast() const { return ast; }
 };
 
-//! A count reference handle to all kinds of symbolic items, including variables and values
 class SymbolicVal : public CountRefHandle <SymbolicValImpl>
 {
  public:
@@ -160,7 +154,7 @@ class SymbolicVal : public CountRefHandle <SymbolicValImpl>
   SymbolicVal& operator = (const SymbolicVal& that)
    { CountRefHandle <SymbolicValImpl>:: operator = (that); return *this; }
   virtual ~SymbolicVal() {}
-  // If this is a null item 
+
   bool IsNIL() const { return ConstPtr() == 0; }
   bool IsSame( const SymbolicVal& that) const
      { return ConstPtr() == that.ConstPtr(); }
@@ -218,7 +212,7 @@ class SymbolicVal : public CountRefHandle <SymbolicValImpl>
 
 class SymbolicFunction : public SymbolicValImpl
 {
-  std:: string op; // Function name?
+  std:: string op;
   std:: vector<SymbolicVal> args;
  protected:
   typedef AstInterface::OperatorEnum OpType;
@@ -247,6 +241,7 @@ class SymbolicFunction : public SymbolicValImpl
   bool operator == (const SymbolicFunction& that) const;
   std:: string GetOp() const { return op; }
   const Arguments& get_args() const { return args; }
+  SymbolicVal get_arg(int index) const { return args[index]; }
   const_iterator args_begin() const { return args.begin(); }
   const_iterator args_end() const { return args.end(); }
   SymbolicVal first_arg() const { return args.front(); }
@@ -259,8 +254,7 @@ class SymbolicFunction : public SymbolicValImpl
   virtual SymbolicFunction* cloneFunction(const Arguments& args) const
      { return  new SymbolicFunction(t, op,args); }
 };
-//! Check if a symbolic variable is a function call expression
-// If yes, return function name and parameter list
+
 inline bool 
 SymbolicVal:: isFunction(std:: string& name, std:: vector<SymbolicVal>* argp) const
 {
@@ -291,11 +285,16 @@ class SymbolicPow : public SymbolicFunction
   virtual SymbolicFunction* cloneFunction(const Arguments& args) 
      { SymbolicFunction* r =  new SymbolicPow(args); return r; }
 };
-// Converting an AST expression to a symbolic expression
+
+/******************* Symbolic Operator interface *************/
+
 class SymbolicValGenerator
 {
  public:
  static SymbolicVal GetSymbolicVal( AstInterface &fa, const AstNodePtr& exp);
+ static bool IsFortranLoop(AstInterface& fa, const AstNodePtr& s, 
+        SymbolicVar* ivar =0,
+        SymbolicVal* lb =0, SymbolicVal* ub=0, SymbolicVal* step=0, AstNodePtr* body=0);
 };
 
 SymbolicVal ApplyBinOP( SymOpType t, const SymbolicVal &v1,
@@ -305,23 +304,12 @@ inline SymbolicVal operator + (const SymbolicVal &v1, const SymbolicVal &v2)
 SymbolicVal operator * (const SymbolicVal &v1, const SymbolicVal &v2);
 SymbolicVal operator / (const SymbolicVal &v1, const SymbolicVal &v2);
 inline SymbolicVal operator - (const SymbolicVal &v1, const SymbolicVal &v2)
-         { return v1 + (-1 * v2); }  // Liao 5/21/2010, performance bottleneck here for multiplication
-//         { return ApplyBnOp(SYMOP_PLUS ,v1,v2 ); }
+         { return v1 + (-1 * v2); }
 inline SymbolicVal operator - (const SymbolicVal &v) { return -1 * v; }
                                                                                           
-typedef enum Compare_Rel
-{
-  REL_NONE = 0, 
-  REL_EQ = 1,  // ==
-  REL_LT = 2,  // <
-  REL_LE = 3,  // <=
-  REL_GT = 4,  // > 
-  REL_GE = 5,  // >=
-  REL_NE = 6,  // != 
-  REL_UNKNOWN = 8
- } CompareRel;  // Relational operation types
+typedef enum {REL_NONE = 0, REL_EQ = 1, REL_LT = 2, REL_LE = 3,
+              REL_GT = 4, REL_GE = 5, REL_NE = 6, REL_UNKNOWN = 8} CompareRel;
  
-//! Symbolic conditions: x>y  
 class SymbolicCond
 {
   SymbolicVal val1, val2;
@@ -347,7 +335,7 @@ class SymbolicCond
   std:: string toString () const;
   AstNodePtr  CodeGen(AstInterface &fa) const;
 };
-//! A bound using symbolic lower bound and upper bound
+
 struct SymbolicBound{
   SymbolicVal lb, ub;
   SymbolicBound() {}
@@ -416,7 +404,6 @@ SymbolicVal UnwrapVarCond( const SymbolicCond& valCond,
                          const SymbolicVar &pivot, SymbolicBound& pivotBound ); //return pivot coefficient
 
 bool FindVal( const SymbolicVal &v, const SymbolicVal &sub);
-//! Replace the variable 'sub' in 'v' with 'newval'
 SymbolicVal ReplaceVal( const SymbolicVal &v, const SymbolicVal &sub, const SymbolicVal& newval);
 SymbolicVal ReplaceVal( const SymbolicVal &v, MapObject<SymbolicVal, SymbolicVal>& valmap);
 
