@@ -544,17 +544,7 @@ sage_buildGlobal(PyObject *self, PyObject *args)
     sg_global->set_startOfConstruct(sg_file_info);
     sg_global->set_endOfConstruct(new Sg_File_Info(filename, 0, 0));
 
-    SgFunctionDeclaration* sg_main_func_decl =
-        SageBuilder::buildDefiningFunctionDeclaration( SgName(ROSE_PYTHON_WRAPPER_FXN_NAME),
-                SageBuilder::buildVoidType(),
-                SageBuilder::buildFunctionParameterList(),
-                sg_global);
-
-    SageInterface::appendStatement(sg_main_func_decl, sg_global);
-
-    PyObject *py_global = PyEncapsulate(sg_global);
-    PyObject *py_main = PyEncapsulate(sg_main_func_decl);
-    return Py_BuildValue("(OO)", py_global, py_main);
+    return PyEncapsulate(sg_global);
 }
 
 /*

@@ -211,13 +211,13 @@ class SageTranslator(ast.NodeVisitor):
     return sage.buildLongIntVal(n)
 
   def visit_Module(self, node):
-    (scope, wrapper_func) = sage.buildGlobal(self.filename)
+    scope = sage.buildGlobal(self.filename)
 
     self.scopeStack.push(scope)
     subforest = self.generic_visit(node)
     self.scopeStack.pop(scope)
 
-    sage.appendStatements(wrapper_func, subforest)
+    sage.appendStatements(scope, subforest)
     return scope
 
   def visit_Name(self, node):

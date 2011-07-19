@@ -4395,6 +4395,7 @@ SageBuilder::buildStmtDeclarationStatement_nfi(SgStatement* stmt) {
     SgStmtDeclarationStatement* result = new SgStmtDeclarationStatement(stmt);
     stmt->set_parent(result);
 
+    result->set_definingDeclaration(result);
     setOneSourcePositionNull(result);
     return result;
 }
@@ -4406,6 +4407,7 @@ SageBuilder::buildStmtDeclarationStatement(SgStatement* stmt) {
     SgStmtDeclarationStatement* result = new SgStmtDeclarationStatement(stmt);
     stmt->set_parent(result);
 
+    result->set_definingDeclaration(result);
     setOneSourcePositionForTransformation(result);
     return result;
 }

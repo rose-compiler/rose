@@ -31,27 +31,6 @@ Unparse_Python::curprint_indented(std::string txt, SgUnparse_Info& info)
     curprint( txt );
 }
 
-/*
- * Expects an SgGlobal scope node that includes a single function declaration
- * with name __main__. This allows us to wrap the program in a __main__ function
- * (because SageIII requires declaration statements in the global scope) and still
- * unparse code that resembles the original.
- */
-void
-Unparse_Python::unparseWrappedProgram(SgScopeStatement* scope, SgUnparse_Info& info) {
-
-    AbstractHandle::abstract_handle* handle = SageBuilder::buildAbstractHandle(scope);
-    SgNode* match = SageInterface::getSgNodeFromAbstractHandleString(handle->toString() +
-        "::FunctionDeclaration<name," + ROSE_PYTHON_WRAPPER_FXN_NAME + ">" +
-        "::FunctionDefinition<numbering,1>" +
-        "::BasicBlock<numbering,1>");
-    SgBasicBlock* program = isSgBasicBlock(match);
-    ROSE_ASSERT(program != NULL);
-
-    info.set_current_scope(program);
-    unparseStatement(program, info);
-}
-
 void
 Unparse_Python::unparseLanguageSpecificStatement(SgStatement* stmt,
                                                  SgUnparse_Info& info)
@@ -80,6 +59,7 @@ Unparse_Python::unparseLanguageSpecificStatement(SgStatement* stmt,
         CASE_DISPATCH_AND_BREAK(PythonPrintStmt);
         CASE_DISPATCH_AND_BREAK(PassStatement);
         CASE_DISPATCH_AND_BREAK(ReturnStmt);
+        CASE_DISPATCH_AND_BREAK(StmtDeclarationStatement);
         CASE_DISPATCH_AND_BREAK(StringVal);
         CASE_DISPATCH_AND_BREAK(TryStmt);
         CASE_DISPATCH_AND_BREAK(WhileStmt);
@@ -169,6 +149,19 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
 }
 
 void
+Unparse_Python::unparseGlobalStmt(SgStatement* stmt, SgUnparse_Info& info) {
+    SgGlobal* global = isSgGlobal(stmt);
+    ROSE_ASSERT(global != NULL);
+
+    info.set_current_scope(global);
+    foreach (SgDeclarationStatement* child, global->get_declarations()) {
+        curprint( ws_prefix(info.get_nestingLevel()) );
+        unparseStatement(child, info);
+        curprint("\n");
+    }
+}
+
+void
 Unparse_Python::unparseAsSuite(SgStatement* stmt, SgUnparse_Info& info) {
     info.inc_nestingLevel();
     switch (stmt->variantT()) {
@@ -181,10 +174,15 @@ Unparse_Python::unparseAsSuite(SgStatement* stmt, SgUnparse_Info& info) {
             }
             break;
         }
+        case V_SgGlobal: {
+            ROSE_ASSERT(!"Cannot unparseAsSuite(SgGlobal*,info). Use unparseGlobalStmt()");
+            break;
+        }
         default: {
-                curprint( ws_prefix(info.get_nestingLevel()) );
-                unparseStatement(stmt, info);
-                break;
+            curprint( ws_prefix(info.get_nestingLevel()) );
+            unparseStatement(stmt, info);
+            curprint("\n");
+            break;
         }
     }
     info.dec_nestingLevel();
@@ -638,6 +636,13 @@ Unparse_Python::unparseSetComprehension(SgSetComprehension* set_comp,
         unparseExpression(exp, info);
 
     curprint("}");
+}
+
+void
+Unparse_Python::unparseStmtDeclarationStatement(SgStmtDeclarationStatement* stmt,
+                                                SgUnparse_Info& info)
+{
+    unparseStatement(stmt->get_statement(), info);
 }
 
 void
