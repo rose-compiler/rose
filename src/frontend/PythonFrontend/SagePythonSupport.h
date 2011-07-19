@@ -42,7 +42,7 @@ PyObject*
 sage_buildFunctionParameterList(PyObject* args, PyObject* kwargs);
 
 /**
- * Build a reference to the name in the given scope. If not such name
+ * Build a reference to the name in the given scope. If no such name
  * exists, build an opaque VarRefExp.
  */
 SgExpression* buildReference(char* id, SgScopeStatement* scope);

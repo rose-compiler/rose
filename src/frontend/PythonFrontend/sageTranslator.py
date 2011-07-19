@@ -89,9 +89,9 @@ class SageTranslator(ast.NodeVisitor):
   def visit_ClassDef(self, node):
     scope = self.scopeStack.peek()
     #bases = node.bases
-    #decorators = node.decorator_list:w
+    decorators = node.decorator_list and sage.buildExprListExp(map(self.visit, node.decorator_list))
     class_decl, scope = \
-        sage.buildClassDef(node.name, scope)
+        sage.buildClassDef(node.name, decorators, scope)
 
     self.scopeStack.push(scope)
     body = map(self.visit, node.body)

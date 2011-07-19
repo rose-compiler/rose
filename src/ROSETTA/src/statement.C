@@ -830,12 +830,6 @@ Grammar::setUpStatements ()
                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
-#if 0 // awaiting resolution of abstract handle bug
-  // driscoll6 (6/10/11) Support for Python decorators.
-     FunctionDeclaration.setDataPrototype ( "SgExprListExp*", "decoratorList", "",
-                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-#endif
-
      /* driscoll6 (7/14/11) support for python decorators */
      FunctionDeclaration.setDataPrototype ( "SgExprListExp*", "decoratorList", "= NULL",
                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -1264,6 +1258,10 @@ Grammar::setUpStatements ()
   // DQ (7/30/2008): Added support suggested by Ryan for PHP interface specification.
      ClassDeclaration.setDataPrototype ( "bool", "explicit_interface", "= false",
                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     /* driscoll6 (7/19/11) support for python decorators */
+     ClassDeclaration.setDataPrototype ( "SgExprListExp*", "decoratorList", "= NULL",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // This class contains two lists (we don't know if this edit/substitution mechanism for work for two lists)
      ClassDefinition.setFunctionPrototype ( "HEADER_CLASS_DEFINITION_STATEMENT", "../Grammar/Statement.code" );      

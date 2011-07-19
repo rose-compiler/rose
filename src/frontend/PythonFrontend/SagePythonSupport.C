@@ -88,12 +88,12 @@ sage_appendStatements(PyObject *self, PyObject *args)
         //SageInterface::appendStatement(sg_child, sg_target);
         switch (sg_target->variantT()) {
             case V_SgGlobal: {
+              SgGlobal* sg_global = isSgGlobal(sg_target);
               SgDeclarationStatement* sg_decl_stmt = isSgDeclarationStatement(sg_child);
               if (sg_decl_stmt == NULL) {
                   sg_decl_stmt = SageBuilder::buildStmtDeclarationStatement(sg_child);
               }
-              isSgGlobal(sg_target)->get_declarations().push_back(sg_decl_stmt);
-              sg_decl_stmt->set_parent(sg_target);
+              SageInterface::appendStatement(sg_decl_stmt, sg_global);
               break;
             }
             case V_SgFunctionDeclaration: {
@@ -111,7 +111,11 @@ sage_appendStatements(PyObject *self, PyObject *args)
             }
             case V_SgClassDefinition: {
               SgClassDefinition* class_def = isSgClassDefinition(sg_target);
-              SageInterface::appendStatement(sg_child, class_def);
+              SgDeclarationStatement* sg_decl_stmt = isSgDeclarationStatement(sg_child);
+              if (sg_decl_stmt == NULL) {
+                  sg_decl_stmt = SageBuilder::buildStmtDeclarationStatement(sg_child);
+              }
+              SageInterface::appendStatement(sg_decl_stmt, class_def);
               break;
             }
             default:

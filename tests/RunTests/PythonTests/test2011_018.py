@@ -1,4 +1,4 @@
-# test function decorators
+# test class decorators
 
 def foo(fn):
     print "foo"
@@ -10,7 +10,7 @@ def bar(fn):
 
 @foo
 @bar
-def quux():
+class quux:
     print "quux"
 
-quux()
+#quux()
