@@ -57,6 +57,7 @@ Unparse_Python::unparseLanguageSpecificStatement(SgStatement* stmt,
         CASE_DISPATCH_AND_BREAK(ForInitStatement);
         CASE_DISPATCH_AND_BREAK(ForStatement);
         CASE_DISPATCH_AND_BREAK(IfStmt);
+        CASE_DISPATCH_AND_BREAK(ImportStatement);
         CASE_DISPATCH_AND_BREAK(LongIntVal);
         CASE_DISPATCH_AND_BREAK(PythonPrintStmt);
         CASE_DISPATCH_AND_BREAK(PassStatement);
@@ -532,6 +533,20 @@ Unparse_Python::unparseIfStmt(SgIfStmt* if_stmt,
     if (if_stmt->get_false_body() != NULL) {
         curprint_indented("else:\n", info);
         unparseAsSuite(if_stmt->get_false_body(), info);
+    }
+}
+
+void
+Unparse_Python::unparseImportStatement(SgImportStatement* import,
+                                       SgUnparse_Info& info)
+{
+    curprint("import ");
+    SgExpressionPtrList& exps = import->get_import_list();
+    SgExpressionPtrList::iterator exp_it = exps.begin();
+    for(exp_it = exps.begin(); exp_it != exps.end(); exp_it++) {
+        if (exp_it != exps.begin())
+            curprint(", ");
+        unparseExpression(*exp_it, info);
     }
 }
 

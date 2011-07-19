@@ -49,6 +49,13 @@ class SageTranslator(ast.NodeVisitor):
     #print "generic_visit for class: ", node.__class__.__name__
     return map(self.visit, ast.iter_child_nodes(node))
 
+  def visit_alias(self, node):
+    scope = self.scopeStack.peek()
+    id = node.asname or node.name
+    init = node.asname and self.visit(node.name)
+    name = sage.buildName(id, scope)
+    return (init and sage.buildAssign(name, init)) or name
+
   def visit_arguments(self, node):
     args = map(lambda arg: sage.buildInitializedName(arg.id), node.args)
     kwargs = map(self.visit, node.defaults)
@@ -166,6 +173,10 @@ class SageTranslator(ast.NodeVisitor):
     body = map(self.visit, node.body)
     orelse = map(self.visit, node.orelse)
     return sage.buildIf(test, body, orelse)
+
+  def visit_Import(self, node):
+    names = map(self.visit, node.names)
+    return sage.buildImport(names)
 
   def visit_int(self, n):
     return sage.buildLongIntVal(n)

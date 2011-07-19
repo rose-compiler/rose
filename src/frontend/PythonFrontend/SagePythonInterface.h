@@ -27,6 +27,7 @@ PyObject* sage_buildFor(PyObject *self, PyObject *args);
 PyObject* sage_buildFunctionDef(PyObject *self, PyObject *args);
 PyObject* sage_buildGlobal(PyObject *self, PyObject *args);
 PyObject* sage_buildIf(PyObject *self, PyObject *args);
+PyObject* sage_buildImport(PyObject *self, PyObject *args);
 PyObject* sage_buildInitializedName(PyObject *self, PyObject *args);
 PyObject* sage_buildKeyword(PyObject *self, PyObject *args);
 PyObject* sage_buildKeyDatumPair(PyObject *self, PyObject *args);
@@ -73,6 +74,7 @@ static PyMethodDef SageBuilderMethods[] = {
     {"buildFunctionParameterList", sage_buildFunctionParameterList, METH_VARARGS, "Builds an SgFunctionParameterList node."},
     {"buildGlobal", sage_buildGlobal, METH_VARARGS, "Builds an SgGlobal node."},
     {"buildIf", sage_buildIf, METH_VARARGS, "Builds an if stmt  node."},
+    {"buildImport", sage_buildImport, METH_VARARGS, "Builds an import stmt  node."},
     {"buildInitializedName", sage_buildInitializedName, METH_VARARGS, "Builds an initialized name node."},
     {"buildKeyword", sage_buildKeyword, METH_VARARGS, "Builds a keyword node."},
     {"buildKeyDatumPair", sage_buildKeyDatumPair, METH_VARARGS, "Builds a key datum pair node."},
