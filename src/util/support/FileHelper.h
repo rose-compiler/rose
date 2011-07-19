@@ -1,3 +1,5 @@
+#define BOOST_FILESYSTEM_VERSION 2
+
 #include <boost/filesystem.hpp>
 
 #include <string>
@@ -41,7 +43,7 @@ public:
 
     static string getFileName(const string& aPath) {
         path boostPath(aPath);
-        return boostPath.filename().string();
+        return boostPath.filename();
     }
 
     static string makeAbsoluteNormalizedPath(const string& path, const string& workingDirectory) {
@@ -56,6 +58,12 @@ public:
     static bool isAbsolutePath(const string& path) {
         return path.compare(0, 1, pathDelimiter) == 0;
     }
+    
+    //Expects both paths to be absolute.
+    static bool areEquivalentPaths(const string& path1, const string& path2) {
+        //Note: Do not use boost::filesystem::equivalent since the compared paths might not exist, which will cause an error.        
+        return normalizePath(path1).compare(normalizePath(path2)) == 0;
+    }
 
     //Assumes that both arguments are absolute and normalized.
     //Argument toPath can be either a folder or a file.
@@ -63,11 +71,11 @@ public:
         string relativePath;
         path boostFromFolder(fromFolder);
         path boostToPath(toPath);
-        path::iterator fromFolderIterator = boostFromFolder.begin();
-        path::iterator toPathIterator = boostToPath.begin();
+        path::const_iterator fromFolderIterator = boostFromFolder.begin();
+        path::const_iterator toPathIterator = boostToPath.begin();
         //Move over the common part of the paths.
         while (fromFolderIterator != boostFromFolder.end() && toPathIterator != boostToPath.end() && 
-                (fromFolderIterator -> string()).compare(toPathIterator -> string()) == 0) {
+                (*fromFolderIterator).compare(*toPathIterator) == 0) {
             fromFolderIterator++;
             toPathIterator++;
         }
@@ -78,10 +86,10 @@ public:
         }
         //All remaining path elements of toPath are appended to the relative path.
         if (toPathIterator != boostToPath.end()) {
-            relativePath += toPathIterator -> string(); //The first path element comes without the leading path delimiter
+            relativePath += *toPathIterator; //The first path element comes without the leading path delimiter
             toPathIterator++;
             while (toPathIterator != boostToPath.end()) {
-                relativePath += pathDelimiter + toPathIterator -> string();
+                relativePath += pathDelimiter + *toPathIterator;
                 toPathIterator++;
             }                
         } else if (relativePath.length() > 0) { //If any moves up were added, remove the trailing path delimiter
