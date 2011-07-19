@@ -1291,9 +1291,13 @@ class ecjASTVisitor extends ASTVisitor
           System.out.println("node.binding.type             = " + node.binding.type);
           System.out.println("node.binding.type.id          = " + node.binding.type.id);
           System.out.println("node.binding.type.debugName() = " + node.binding.type.debugName());
+          System.out.println("node.type                     = " + node.type);
 
        // Construct the type (will be constructed on the astJavaTypeStack.
-          JavaParserSupport.generateType(node.binding.type);
+
+       // DQ (7/18/2011): Switch to using the different generateType() function (taking a TypeReference).
+       // JavaParserSupport.generateType(node.binding.type);
+          JavaParserSupport.generateType(node.type);
 
        // Build the variable declaration using the type from the astJavaTypeStack.
        // Note that this may have to handle an array of names or be even more complex in the future.
@@ -1893,6 +1897,8 @@ class ecjASTVisitor extends ASTVisitor
                System.out.println("Building a variable reference for name = " + varRefName);
              }
 
+          System.out.println("node.genericCast = " + node.genericCast);
+
           java_parser.cactionSingleNameReference(varRefName);
 
           if (java_parser.verboseLevel > 0)
@@ -2310,9 +2316,19 @@ class ecjASTVisitor extends ASTVisitor
      public void endVisit(CaseStatement  node, BlockScope scope) {
         // do nothing  by default
      }
-     public void endVisit(CastExpression  node, BlockScope scope) {
+
+     public void endVisit(CastExpression  node, BlockScope scope)
+        {
         // do nothing  by default
-     }
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Inside of endVisit (CastExpression,BlockScope)");
+
+          java_parser.cactionCastExpressionEnd();
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (CastExpression,BlockScope)");
+        }
+
      public void endVisit(CharLiteral  node, BlockScope scope) {
         // do nothing  by default
      }

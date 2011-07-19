@@ -594,12 +594,19 @@ HEADER_UNARY_ADD_OPERATOR_END
 
 HEADER_SIZEOF_OPERATOR_START
  // Liao, 11/17/2009
- int replace_expression(SgExpression*, SgExpression*) ROSE_DEPRECATED_FUNCTION;
+          int replace_expression(SgExpression*, SgExpression*) ROSE_DEPRECATED_FUNCTION;
 
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 HEADER_SIZEOF_OPERATOR_END
+
+
+HEADER_JAVA_INSTANCEOF_OPERATOR_START
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+HEADER_JAVA_INSTANCEOF_OPERATOR_END
 
 
 HEADER_TYPE_ID_OPERATOR_START
@@ -3081,6 +3088,47 @@ SgSizeOfOp::replace_expression (SgExpression *o, SgExpression *n)
    } 
 
 SOURCE_SIZE_OF_OPERATOR_EXPRESSION_END
+
+SOURCE_JAVA_INSTANCEOF_OPERATOR_EXPRESSION_START
+
+SgType*
+$CLASSNAME::get_type() const
+   {
+  // This function returns an unsigned integer representing the size of type 
+  // (the unsigned int should match size_t, which may or may not be defined).
+
+     ROSE_ASSERT(p_operand_expr != NULL || p_operand_type != NULL);
+     SgType* returnType = SgTypeUnsignedInt::createType();
+
+     ROSE_ASSERT(returnType != NULL);
+     return returnType;
+   }
+
+#if 0
+// Liao, 11/17/2009
+int
+SgJavaInstanceOfOp::replace_expression (SgExpression *o, SgExpression *n)
+   {
+  // DQ (12/17/2006): This function should have the semantics that it will represent a  
+  // structural change to the AST, thus it is free to set the parent of the new expression.
+
+     ROSE_ASSERT(o != NULL);
+     ROSE_ASSERT(n != NULL);
+
+     if (get_operand_expr() == o)
+        {
+          set_operand_expr(n);
+          return 1;
+        }
+       else
+        {
+          printf ("Warning: inside of SgSizeOfOp::replace_expression original SgExpression unidentified \n");
+          return 0;
+        }
+   }
+#endif
+
+SOURCE_JAVA_INSTANCEOF_OPERATOR_EXPRESSION_END
 
 SOURCE_TYPE_ID_OPERATOR_EXPRESSION_START
 

@@ -1634,6 +1634,30 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCastExpression(JNIEnv *env, jobjec
    }
 
 
+JNIEXPORT void JNICALL Java_JavaParser_cactionCastExpressionEnd(JNIEnv *env, jobject xxx)
+   {
+     if (SgProject::get_verbose() > 2)
+          printf ("Inside of Java_JavaParser_cactionCastExpressionEnd() \n");
+
+     outputJavaState("At TOP of cactionCastExpressionEnd");
+
+     ROSE_ASSERT(astJavaTypeStack.empty() == false);
+     SgType* castType = astJavaTypeStack.front();
+     astJavaTypeStack.pop_front();
+
+     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
+     SgExpression* castExpression = astJavaExpressionStack.front();
+     astJavaExpressionStack.pop_front();
+
+     SgCastExp* castExp = SageBuilder::buildCastExp(castExpression, castType);
+     ROSE_ASSERT(castExp != NULL);
+
+     astJavaExpressionStack.push_front(castExp);
+
+     outputJavaState("At BOTTOM of cactionCastExpressionEnd");
+   }
+
+
 JNIEXPORT void JNICALL Java_JavaParser_cactionCharLiteral(JNIEnv *env, jobject xxx)
    {
    }
@@ -2026,7 +2050,21 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionInstanceOfExpressionEnd(JNIEnv *en
      if (SgProject::get_verbose() > 0)
           printf ("Inside of Java_JavaParser_cactionInstanceOfExpressionEnd() \n");
 
-     outputJavaState("cactionInstanceOfExpressionEnd");
+     outputJavaState("At TOP of cactionInstanceOfExpressionEnd()");
+
+     SgExpression* exp = astJavaExpressionStack.front();
+     astJavaExpressionStack.pop_front();
+
+  // The generation of this type is not yet supported.
+     SgType* type = NULL;
+
+  // Warn that this support in not finished.
+     printf ("WARNING: Support for SgJavaInstanceOfOp is incomplete, type not specified! \n");
+
+     SgExpression* result = SageBuilder::buildJavaInstanceOfOp(exp,type);
+     astJavaExpressionStack.push_front(result);
+
+     outputJavaState("At BOTTOM of cactionInstanceOfExpressionEnd()");
    }
 
 
@@ -2469,10 +2507,23 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionSingleNameReference(JNIEnv *env, j
           printf ("Building a variable reference for name = %s \n",name.str());
 
   // We have to provide the starting scope to trigger the name to be looked up in parent scopes.
-     SgVarRefExp* varRefExp = SageBuilder::buildVarRefExp(name,astJavaScopeStack.front());
-     ROSE_ASSERT(varRefExp != NULL);
-
-     astJavaExpressionStack.push_front(varRefExp);
+  // SgVarRefExp* varRefExp = SageBuilder::buildVarRefExp(name,astJavaScopeStack.front());
+  // ROSE_ASSERT(varRefExp != NULL);
+     SgVarRefExp* varRefExp = NULL;
+     SgClassSymbol* className = SageInterface::lookupClassSymbolInParentScopes(name,astJavaScopeStack.front());
+     if (className != NULL)
+        {
+       // DQ (7/18/2011): test2011_24.java demonstrates that this can be a type.  So check for a type first...
+          SgType* type = className->get_type();
+          ROSE_ASSERT(type != NULL);
+          astJavaTypeStack.push_front(type);
+        }
+       else
+        {
+          varRefExp = SageBuilder::buildVarRefExp(name,astJavaScopeStack.front());
+          ROSE_ASSERT(varRefExp != NULL);
+          astJavaExpressionStack.push_front(varRefExp);
+        }
 
      outputJavaState("At BOTTOM of cactionSingleNameReference");
    }
