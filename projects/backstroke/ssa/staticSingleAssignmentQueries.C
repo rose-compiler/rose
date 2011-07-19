@@ -62,20 +62,6 @@ string StaticSingleAssignment::varnameToString(const VarName& vec)
 }
 
 
-void StaticSingleAssignment::printLocalDefUseTable(const StaticSingleAssignment::LocalDefUseTable& table)
-{
-	foreach(const LocalDefUseTable::value_type& nodeVarsPair, table)
-	{
-		const SgNode* node = nodeVarsPair.first;
-		printf("    %s@%d: ", node->class_name().c_str(), node->get_file_info()->get_line());
-		foreach (const VarName& var, nodeVarsPair.second)
-		{
-			printf("%s, ", varnameToString(var).c_str());
-		}
-		printf("\n");
-	}
-}
-
 void StaticSingleAssignment::printNodeDefTable(const NodeReachingDefTable& table)
 {
 	foreach(const NodeReachingDefTable::value_type& varDefPair, table)

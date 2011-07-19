@@ -34,8 +34,6 @@ struct FunctionFilter
 
 		//Don't process any built-in functions
 		std::string filename = funcDecl->get_file_info()->get_filename();
-		if (filename.find("include") != string::npos)
-			return false;
 
 		//Exclude compiler generated functions, but keep template instantiations
 		if (funcDecl->get_file_info()->isCompilerGenerated() && !isSgTemplateInstantiationFunctionDecl(funcDecl)
@@ -71,25 +69,10 @@ public:
 	/** A compound variable name as used by the variable renaming.  */
 	typedef std::vector<SgInitializedName*> VarName;
 
-	/** Describes the defs or uses at each node. This is for local, rather than propagated, information. */
-	typedef boost::unordered_map<SgNode*, std::set<VarName> > LocalDefUseTable;
-
-	/** A filtered CFGNode that is used for DefUse traversal.  */
-	typedef FilteredCFGNode<ssa_private::DataflowCfgFilter> FilteredCfgNode;
-	
-	/** A filtered CFGEdge that is used for DefUse traversal.  */
-	typedef FilteredCFGEdge<ssa_private::DataflowCfgFilter> FilteredCfgEdge;
-
 	typedef boost::shared_ptr<ReachingDef> ReachingDefPtr;
 
 	/** A map from each variable to its reaching definitions at the current node. */
 	typedef std::map<VarName, ReachingDefPtr> NodeReachingDefTable;
-
-	/** The first table is the IN table. The second table is the OUT table. */
-	typedef boost::unordered_map<SgNode*, std::pair<NodeReachingDefTable, NodeReachingDefTable> > GlobalReachingDefTable;
-
-	/** Map from each node to the variables used at that node and their reaching definitions. */
-	typedef boost::unordered_map<SgNode*, NodeReachingDefTable> UseTable;
 
 	typedef std::map<CFGNode, std::set<VarName> > CFGNodeToVarNamesMap;
 	
@@ -100,26 +83,19 @@ public:
 	typedef std::map<CFGNode, NodeReachingDefTable> CFGNodeToDefTableMap;
 	
 private:
-	//Private member variables
 
-	ASTNodeToVarRefsMap localUseTable;
-	
-	/** This is the table that is populated with all the use information for all the variables
-	 * at all the nodes. It is populated during the runDefUse function, and is done
-	 * with the steady-state dataflow algorithm.
-	 * For each node, the table contains all the variables that were used at that node, and maps them
-	 * to the reaching definitions for each use.
-	 */
-	ASTNodeToVarNamesMap astNodeToVarsUsed;
+	ASTNodeToVarRefsMap astNodeToUses;
 
-	/** Map from each node to the variables used at that node and their reaching definitions. */
-	UseTable useTable;
-
-	/** Map from each node to all the variables defined at that node. */
+	/** Map from each node to all the variables defined at that node. If there are no variables defined at the node,
+      * the corresponding entry is empty. */
 	CFGNodeToDefTableMap localDefTable;
 	
+    /** Map from each node to all the reaching definitions at that node. If a definition occurs at the node itself,
+     * it is not considered to reach the node. */
 	CFGNodeToDefTableMap reachingDefTable;
 	
+    /** Map from each node to the reaching definitions at the end of the node. If no definitions occur at the node,
+     * its entry in this table should be the same as its entry in the reachingDef table. */
     CFGNodeToDefTableMap outgoingDefTable;
     
 public:
@@ -165,21 +141,15 @@ private:
 	 *       o.a.b = 5;     //Def for o.a.b, o.a, o
 	 */
 	void expandParentMemberDefinitions(const CFGNodeToVarNamesMap& defs);
-
-	/** Given a map from AST nodes to the variable references used at each node, return a map
-	 * that gives the VarName objects used at each AST node. This function also expands uses, so
-	 * if (p.x.y) is used, p.x and p are also considered used. */
-	ASTNodeToVarNamesMap lookUpNamesForVarRefs(const ASTNodeToVarRefsMap& uses);
 	
 	/** Find all uses of compound variable names and insert expanded defs for them when their
 	 * parents are defined. E.g. for a.x, all defs of a will have a def of a.x inserted.
 	 * Note that there might be other child expansions of a, such as a.y, that we do not insert since
 	 * they have no uses. */
-	void insertDefsForChildMemberUses(const CFGNodeToVarNamesMap& defs, const ASTNodeToVarNamesMap& uses);
+	void insertDefsForChildMemberUses(const CFGNodeToVarNamesMap& defs, const std::set<VarName>& usedNames);
 
 	/** Insert defs for functions that are declared outside the function scope. */
-	void insertDefsForExternalVariables(SgFunctionDefinition* function, 
-			const CFGNodeToVarNamesMap& defs, const ASTNodeToVarNamesMap& uses);
+	void insertDefsForExternalVariables(SgFunctionDefinition* function, const std::set<VarName>& usedNames);
 
 	/** Find where phi functions need to be inserted and insert empty phi functions at those nodes.
 	 * This updates the IN part of the reaching def table with Phi functions.
@@ -202,11 +172,6 @@ private:
 	/** Performs the data-flow update for one individual node, populating the reachingDefsTable for that node.
 	 * @returns true if the OUT defs from the node changed, false if they stayed the same. */
 	bool propagateDefs(const CFGNode& cfgNode);
-
-	/** Once all the reaching def information has been propagated, uses the reaching def information and the local
-	 * use information to match uses to their reaching defs. 
-     * @param cfgNodesInPostOrder all the nodes for which uses should be matched to defs*/
-	void buildUseTable(const std::vector<FilteredCfgNode>& cfgNodes);
 
 	/** Iterates all the CFG nodes in the function and returns them in postorder, according to depth-first search.
 	 * Reverse postorder is the most efficient order for dataflow propagation. */
@@ -363,8 +328,6 @@ public:
 	 * @return String for given varName.
 	 */
 	static std::string varnameToString(const VarName& vec);
-
-	static void printLocalDefUseTable(const LocalDefUseTable& table);
 	
 	static void printNodeDefTable(const NodeReachingDefTable& table);
 	static void printFullDefTable(const CFGNodeToDefTableMap& defTable);

@@ -198,14 +198,50 @@ bool StaticSingleAssignment::isVarInScope(const VarName& var, SgNode* astNode)
 
 #include <fstream>
 
+set<StaticSingleAssignment::VarName> getAllVarsUsedOrDefined(
+		const StaticSingleAssignment::CFGNodeToVarNamesMap& defs, 
+		const StaticSingleAssignment::ASTNodeToVarRefsMap& uses,
+		const map<CFGNode, StaticSingleAssignment::NodeReachingDefTable>& localDefTable)
+{
+	set<StaticSingleAssignment::VarName> usedNames;
+	
+	foreach(const StaticSingleAssignment::CFGNodeToVarNamesMap::value_type& nodeVarsPair, defs)
+	{
+		map<CFGNode, StaticSingleAssignment::NodeReachingDefTable>::const_iterator allDefsIter = 
+				localDefTable.find(nodeVarsPair.first);
+		
+		foreach(const StaticSingleAssignment::NodeReachingDefTable::value_type& varDefPair, allDefsIter->second)
+		{
+			usedNames.insert(varDefPair.first);
+		}
+	}
+	
+	foreach(const StaticSingleAssignment::ASTNodeToVarRefsMap::value_type& nodeVarRefsPair, uses)
+	{
+		foreach(SgVarRefExp* varRef, nodeVarRefsPair.second)
+		{
+			const StaticSingleAssignment::VarName& usedVarName = StaticSingleAssignment::getVarName(varRef);
+			ROSE_ASSERT(usedVarName != StaticSingleAssignment::emptyName);
+			
+			//If we have a use for p.x.y, insert uses for p and p.x as well as p.x.y
+			for (size_t i = 1; i <= usedVarName.size(); ++i)
+			{
+				StaticSingleAssignment::VarName var(usedVarName.begin(), usedVarName.begin() + i);
+				
+				usedNames.insert(var);
+			}
+		}
+	}
+	
+	return usedNames;
+}
+
 void StaticSingleAssignment::run(bool interprocedural)
 {
     localDefTable.clear();
     reachingDefTable.clear();
     outgoingDefTable.clear();
-	localUseTable.clear();
-	astNodeToVarsUsed.clear();
-	useTable.clear();
+	astNodeToUses.clear();
 
 #ifdef DISPLAY_TIMINGS
 	timer time;
@@ -258,17 +294,19 @@ void StaticSingleAssignment::run(bool interprocedural)
 			}
 		}
 		
+		//Insert new uses into the uses table
+		astNodeToUses.insert(functionUses.begin(), functionUses.end());
+		
 		//Expand any member variable definition to also define its parents at the same node. E.g. p.x defines p
 		expandParentMemberDefinitions(functionDefs);
 		
-		ASTNodeToVarNamesMap functionVarNameUses = lookUpNamesForVarRefs(functionUses);
-
 		//Insert defs for any variable that is an extension of a defined variable and is used.
 		//E.g. if p is defined, a definition for p.x will be inserted if p.x is used anywhere in the function
-		insertDefsForChildMemberUses(functionDefs, functionVarNameUses);
+		set<VarName> referencedVarNames = getAllVarsUsedOrDefined(functionDefs, functionUses, localDefTable);
+		insertDefsForChildMemberUses(functionDefs, referencedVarNames);
 		
 		//Insert definitions at the SgFunctionDefinition for external variables whose values flow inside the function
-		insertDefsForExternalVariables(func, functionDefs, functionVarNameUses);
+		insertDefsForExternalVariables(func, referencedVarNames);
 
 		//Insert phi functions at join points
 		vector<CFGNode> functionCfgNodesPostorder = getCfgNodesInPostorder(func);
@@ -277,15 +315,14 @@ void StaticSingleAssignment::run(bool interprocedural)
 		//Renumber all instantiated ReachingDef objects
 		renumberAllDefinitions(func, functionCfgNodesPostorder);
 
-
 		printf("\nUses table for %s():\n", func->get_declaration()->get_name().str());
-		foreach(const ASTNodeToVarNamesMap::value_type& nodeVarsPair, functionVarNameUses)
+		foreach(const ASTNodeToVarRefsMap::value_type& nodeVarsPair, functionUses)
 		{
 			printf("%s @ %d: ", nodeVarsPair.first->class_name().c_str(), nodeVarsPair.first->get_file_info()->get_line());
 			
-			foreach(const VarName& var, nodeVarsPair.second)
+			foreach(SgVarRefExp* varRef, nodeVarsPair.second)
 			{
-				printf("%s ", varnameToString(var).c_str());
+				printf("%s ", varnameToString(getVarName(varRef)).c_str());
 			}
 			printf("\n");
 		}
@@ -296,9 +333,6 @@ void StaticSingleAssignment::run(bool interprocedural)
 		
 		ofstream file((func->get_declaration()->get_name() + "_unfiltered.dot").str());
 		printToDOT(func, file);
-		
-		//We have all the propagated defs, now update the use table
-		//buildUseTable(functionCfgNodesPostorder);
 	}
 	
 
@@ -343,36 +377,6 @@ void StaticSingleAssignment::expandParentMemberDefinitions(const CFGNodeToVarNam
 			}
 		}
 	}
-}
-
-
-StaticSingleAssignment::ASTNodeToVarNamesMap StaticSingleAssignment::lookUpNamesForVarRefs(
-		const StaticSingleAssignment::ASTNodeToVarRefsMap& uses)
-{
-	ASTNodeToVarNamesMap result;
-	
-	foreach(const ASTNodeToVarRefsMap::value_type& nodeVarRefsPair, uses)
-	{
-		SgNode* useNode = nodeVarRefsPair.first;
-		set<VarName>& usedVarNamesAtNode = result[useNode];
-		
-		foreach(SgVarRefExp* usedVarRef, nodeVarRefsPair.second)
-		{
-			const VarName& usedVarName = getVarName(usedVarRef);
-			ROSE_ASSERT(!usedVarName.empty());
-			
-			
-			//If we have a use for p.x.y, insert uses for p and p.x as well as p.x.y
-			for (size_t i = 1; i <= usedVarName.size(); ++i)
-			{
-				VarName var(usedVarName.begin(), usedVarName.begin() + i);
-				
-				usedVarNamesAtNode.insert(var);
-			}
-		}
-	}
-	
-	return result;
 }
 
 
@@ -527,75 +531,8 @@ void StaticSingleAssignment::updateIncomingPropagatedDefs(const CFGNode& cfgNode
 	}
 }
 
-void StaticSingleAssignment::buildUseTable(const vector<FilteredCfgNode>& cfgNodes)
+void StaticSingleAssignment::insertDefsForChildMemberUses(const CFGNodeToVarNamesMap& defs, const set<VarName>& usedNames)
 {
-//	foreach(const FilteredCfgNode& cfgNode, cfgNodes)
-//	{
-//		SgNode* node = cfgNode.getNode();
-//
-//		if (astNodeToVarsUsed.count(node) == 0)
-//			continue;
-//
-//		foreach(const VarName& usedVar, astNodeToVarsUsed[node])
-//		{
-//			//Check the defs that are active at the current node to find the reaching definition
-//			//We want to check if there is a definition entry for this use at the current node
-//			if (reachingDefsTable[node].first.count(usedVar) > 0)
-//			{
-//				useTable[node][usedVar] = reachingDefsTable[node].first[usedVar];
-//			}
-//			else
-//			{
-//				// There are no defs for this use at this node, this shouldn't happen
-//				printf("Error: Found use for the name '%s', but no reaching defs!\n", varnameToString(usedVar).c_str());
-//				printf("Node is %s:%d in %s\n", node->class_name().c_str(), node->get_file_info()->get_line(),
-//						node->get_file_info()->get_filename());
-//				ROSE_ASSERT(false);
-//			}
-//		}
-//	}
-//
-//	if (getDebug())
-//	{
-//		printf("Local uses table:\n");
-//		//printLocalDefUseTable(astNodeToVarsUsed);
-//	}
-}
-
-
-set<StaticSingleAssignment::VarName> getAllVarsUsedOrDefined(
-		const StaticSingleAssignment::CFGNodeToVarNamesMap& defs, 
-		const StaticSingleAssignment::ASTNodeToVarNamesMap& uses,
-		const map<CFGNode, StaticSingleAssignment::NodeReachingDefTable>& localDefTable)
-{
-	set<StaticSingleAssignment::VarName> usedNames;
-	
-	foreach(const StaticSingleAssignment::CFGNodeToVarNamesMap::value_type& nodeVarsPair, defs)
-	{
-		map<CFGNode, StaticSingleAssignment::NodeReachingDefTable>::const_iterator allDefsIter = 
-				localDefTable.find(nodeVarsPair.first);
-		
-		foreach(const StaticSingleAssignment::NodeReachingDefTable::value_type& varDefPair, allDefsIter->second)
-		{
-			usedNames.insert(varDefPair.first);
-		}
-	}
-	
-	foreach(const StaticSingleAssignment::ASTNodeToVarNamesMap::value_type& nodeVarsPair, uses)
-	{
-		foreach(const StaticSingleAssignment::VarName& usedVarName, nodeVarsPair.second)
-		{
-			usedNames.insert(usedVarName);
-		}
-	}
-	
-	return usedNames;
-}
-
-void StaticSingleAssignment::insertDefsForChildMemberUses(const CFGNodeToVarNamesMap& defs, const ASTNodeToVarNamesMap& uses)
-{
-	set<VarName> usedNames = getAllVarsUsedOrDefined(defs, uses, localDefTable);
-	
 	//Map each varName to all used names for which it is a prefix
 	map<VarName, set<VarName> > nameToChildNames;
 	foreach(const VarName& rootName, usedNames)
@@ -649,11 +586,8 @@ void StaticSingleAssignment::insertDefsForChildMemberUses(const CFGNodeToVarName
 
 
 /** Insert defs for functions that are declared outside the function scope. */
-void StaticSingleAssignment::insertDefsForExternalVariables(SgFunctionDefinition* function, 
-		const CFGNodeToVarNamesMap& defs, const ASTNodeToVarNamesMap& uses)
+void StaticSingleAssignment::insertDefsForExternalVariables(SgFunctionDefinition* function, const set<VarName>& usedNames)
 {
-	set<VarName> usedNames = getAllVarsUsedOrDefined(defs, uses, localDefTable);
-	
 	//The function definition should have 4 indices in the CFG. We insert defs for external variables
 	//At the very first one
 	ROSE_ASSERT(function->cfgIndexForEnd() == 3);

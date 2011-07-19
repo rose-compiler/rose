@@ -28,13 +28,13 @@ public:
 	virtual void visit(SgNode* node)
 	{
 		/** Compare reaching defs at node. */
-		StaticSingleAssignment::NodeReachingDefTable newReachingDefs = ssa->getOutgoingDefsAtNode(node);
+		StaticSingleAssignment::NodeReachingDefTable newReachingDefs; //= ssa->getOutgoingDefsAtNode(node);
 		VariableRenaming::NumNodeRenameTable oldReachingDefs = varRenaming->getReachingDefsAtNode(node);
 		
 		if (isSgFunctionDefinition(node))
 		{
-			newReachingDefs = ssa->getLastVersions(isSgFunctionDefinition(node)->get_declaration());
-			oldReachingDefs = varRenaming->getReachingDefsAtFunctionEnd(isSgFunctionDefinition(node));
+			//newReachingDefs = ssa->getLastVersions(isSgFunctionDefinition(node)->get_declaration());
+			//oldReachingDefs = varRenaming->getReachingDefsAtFunctionEnd(isSgFunctionDefinition(node));
 			
 			//FIXME: The StaticSingleAssignment::getLastVersions function is broken
 			return;
@@ -72,7 +72,7 @@ public:
 		}
 
 		/** Compare uses at node */
-		StaticSingleAssignment::NodeReachingDefTable newUses = ssa->getUsesAtNode(node);
+		StaticSingleAssignment::NodeReachingDefTable newUses; //= ssa->getUsesAtNode(node);
 		VariableRenaming::NumNodeRenameTable oldUses = varRenaming->getUsesAtNode(node);
 
 		if (newUses.size() != oldUses.size())
@@ -95,9 +95,9 @@ public:
 			printf("\nVarRenaming defs table:\n");
 			varRenaming->printDefs(node);
 			printf("\nSSA defs table:\n");
-			foreach (StaticSingleAssignment::NodeReachingDefTable::value_type x, ssa->getOutgoingDefsAtNode(node))
+			//foreach (StaticSingleAssignment::NodeReachingDefTable::value_type x, ssa->getOutgoingDefsAtNode(node))
 			{
-				printf("%s: ", StaticSingleAssignment::varnameToString(x.first).c_str());
+				//printf("%s: ", StaticSingleAssignment::varnameToString(x.first).c_str());
 				//printNodeSet(x.second->getActualDefinitions());
 			}
 
