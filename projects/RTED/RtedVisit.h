@@ -14,11 +14,10 @@ namespace rted
     bool          isArrowExp;
     bool          isAddressOfOp;
     bool          isForStatement;
-    bool          isBinaryOp;
 
     InheritedAttribute()
     : function(false),  isAssignInitializer(false), isArrowExp(false),
-      isAddressOfOp(false), isForStatement(false), isBinaryOp(false)
+      isAddressOfOp(false), isForStatement(false)
     {}
   };
 

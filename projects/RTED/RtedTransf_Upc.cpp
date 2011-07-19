@@ -21,7 +21,7 @@ void RtedTransformation::transformUpcBlockingOps(SgStatement* const stmt)
   static const std::string exitwz_msg("RS: UpcExitWorkzone()");
   static const std::string enterwz_msg("RS: UpcEnterWorkzone()");
 
-  ROSE_ASSERT( stmt && symbols.roseUpcEnterWorkzone && symbols.roseUpcExitWorkzone );
+  ROSE_ASSERT( stmt );
 
   requiresParentIsBasicBlock(*stmt);
 

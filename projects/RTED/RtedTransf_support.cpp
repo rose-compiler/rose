@@ -87,14 +87,14 @@ SgUpcLocalsizeofOp* buildUpcLocalsizeofOp(SgExpression* exp)
 
 #endif /* NOTUSED */
 
-SgStatement* getSurroundingStatement(SgExpression* n)
+SgStatement* getSurroundingStatement(SgExpression& n)
 {
-  return sg::ancestor<SgStatement>(n);
+  return &sg::ancestor<SgStatement>(n);
 }
 
-SgStatement* getSurroundingStatement(SgInitializedName* n)
+SgStatement* getSurroundingStatement(SgInitializedName& n)
 {
-  return sg::ancestor<SgStatement>(n);
+  return &sg::ancestor<SgStatement>(n);
 }
 
 SgAggregateInitializer* genAggregateInitializer(SgExprListExp* initexpr, SgType* type)
@@ -134,7 +134,9 @@ SgExprStatement* insertCheck(InsertLoc iloc, SgStatement* stmt, SgFunctionSymbol
 SgExprStatement*
 insertCheckOnStmtLevel(InsertLoc iloc, SgExpression* checked_node, SgFunctionSymbol* checker, SgExprListExp* args)
 {
-  return insertCheck(iloc, getSurroundingStatement(checked_node), checker, args);
+  ROSE_ASSERT(checked_node);
+
+  return insertCheck(iloc, getSurroundingStatement(*checked_node), checker, args);
 }
 
 bool isFunctionParameter(const SgInitializedName& n)
@@ -498,7 +500,7 @@ RtedTransformation::isInInstrumentedFile( SgNode* n ) {
   ROSE_ASSERT( n );
   std::string file_name = n -> get_file_info() -> get_filename();
 
-  return rtedfiles -> find( file_name ) != rtedfiles -> end();
+  return rtedfiles.find(file_name) != rtedfiles.end();
 }
 
 std::string removeSpecialChar(std::string str) {

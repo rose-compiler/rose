@@ -507,7 +507,6 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt, SgPntrArrRefEx
   appendExpression(arg_list, buildIntVal(read_write_mask));
   appendFileInfo(arg_list, stmt);
 
-  ROSE_ASSERT(symbols.roseAccessArray);
   insertCheck( ilBefore,
                stmt,
                symbols.roseAccessArray,
@@ -543,7 +542,7 @@ void RtedTransformation::populateDimensions(RtedArray& array, SgInitializedName&
    {
       SgExpression* mulid = buildIntVal(1);
       SgExpression* denominator = std::accumulate(indices.begin(), indices.end(), mulid, buildMultiplyOp);
-      SgVarRefExp*  varref = buildVarRefExp(&init, getSurroundingStatement(&init)->get_scope());
+      SgVarRefExp*  varref = buildVarRefExp(&init, getSurroundingStatement(init)->get_scope());
       SgExpression* sz = buildDivideOp(buildSizeOfOp(varref), denominator);
 
       indices.insert(indices.begin(), sz);
@@ -670,7 +669,7 @@ RtedTransformation::arrayHeapAlloc(SgInitializedName* initName, SgVarRefExp* var
 
   // varRef can not be an array access, its only an array Create
   variablesUsedForArray.push_back(varRef);
-  create_array_define_varRef_multiArray[varRef] = RtedArray(initName, getSurroundingStatement(varRef), ak, sz);
+  create_array_define_varRef_multiArray[varRef] = RtedArray(initName, getSurroundingStatement(*varRef), ak, sz);
 }
 
 void RtedTransformation::arrayHeapAlloc1( SgInitializedName* initName,
@@ -1354,7 +1353,7 @@ void RtedTransformation::visit_isArrayPntrArrRefExp(SgPntrArrRefExp* const arrRe
                  << " : " << arrRefExp->unparseToString() << std::endl;
 
        // \todo distinguish between akStack and akGlobal
-       create_array_access_call[arrRefExp] = RtedArray(initName, getSurroundingStatement(arrRefExp), akStack);
+       create_array_access_call[arrRefExp] = RtedArray(initName, getSurroundingStatement(*arrRefExp), akStack);
     }
 }
 

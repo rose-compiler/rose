@@ -49,8 +49,7 @@ void RtedTransformation::visit_isClassDefinition(SgClassDefinition* const cdef)
   //
 
   // We are not interested in compiler generated classes (they are not instrumented),
-  // not in RTED runtime related types.
-
+  // nor in RTED runtime related types.
   if (   (  cdef -> get_file_info() -> isCompilerGenerated()
          && cdef -> get_declaration() -> get_file_info() -> isCompilerGenerated()
          )
@@ -94,7 +93,7 @@ void RtedTransformation::visit_isClassDefinition(SgClassDefinition* const cdef)
           if (SgArrayType* arrtype = isSgArrayType( initName -> get_type()))
           {
             // \pp akStack should probably be akUndefined or akEmbedded
-            RtedArray* arrayRted = new RtedArray( initName, getSurroundingStatement(initName), akStack );
+            RtedArray* arrayRted = new RtedArray( initName, getSurroundingStatement(*initName), akStack );
             populateDimensions( *arrayRted, *initName, *arrtype );
             el = new RtedClassArrayElement( name, type, sgElement, arrayRted );
           }
@@ -125,7 +124,7 @@ void RtedTransformation::visit_isClassDefinition(SgClassDefinition* const cdef)
 
 void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* const rtedClass)
 {
-  SgStatement*      stmt = rtedClass->classDef; // \pp was: = getSurroundingStatement(rtedClass->classDef);
+  SgStatement*      stmt = rtedClass->classDef;
   SgScopeStatement* scope = NULL;
   bool              global_stmt = false;
 

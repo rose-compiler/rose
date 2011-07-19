@@ -81,7 +81,7 @@ void RtedTransformation::loadFunctionSymbols(SgSourceFile& n)
 /* -----------------------------------------------------------
  * Perform all transformations needed
  * -----------------------------------------------------------*/
-void RtedTransformation::transform(SgProject* project, std::set<std::string>& rtedfiles)
+void RtedTransformation::transform(SgProject* project)
 {
    using rted::VariableTraversal;
    using rted::InheritedAttribute;
@@ -89,8 +89,6 @@ void RtedTransformation::transform(SgProject* project, std::set<std::string>& rt
    ROSE_ASSERT(project);
 
    if (RTEDDEBUG) std::cout << "Running Transformation..." << std::endl;
-
-   this->rtedfiles = &rtedfiles;
 
    VariableTraversal                varTraversal(this);
 
@@ -101,12 +99,8 @@ void RtedTransformation::transform(SgProject* project, std::set<std::string>& rt
    // source file within a namespace We need to know the sizeOf classes. To do
    // so we need to modify the class but do not want to do this in the header
    // file right now.
-   // \pp \note can the loop be done as part of varTraversal, or seperated into
-   //           another class? This way we could eliminate the dependency
-   //           between Rtedtransformation and AstSimpleProcessing.
 
    insertNamespaceIntoSourceFile(project);
-
    executeTransformations();
 }
 

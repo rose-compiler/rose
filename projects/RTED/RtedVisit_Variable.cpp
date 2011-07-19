@@ -70,7 +70,8 @@ namespace rted
   }
 
   static
-  bool isUsableAsSgPointerType( SgType* type ) {
+  bool isUsableAsSgPointerType( SgType* type )
+  {
       return isSgPointerType( skip_ReferencesAndTypedefs( type ));
   }
 
@@ -101,7 +102,7 @@ namespace rted
       {
         // \pp \note the Nov'10 RTED code would skip this when we get a modifier-type
         //     something like: if (&n != initname.get_type()) return;
-        RtedArray arrayRted(&initname, getSurroundingStatement(&initname), varAllocKind(initname));
+        RtedArray arrayRted(&initname, getSurroundingStatement(initname), varAllocKind(initname));
 
         transf.populateDimensions( arrayRted, initname, arrtype );
         transf.create_array_define_varRef_multiArray_stack[&initname] = arrayRted;
@@ -224,12 +225,14 @@ namespace rted
      /// the pointer by virtue of the operator alone (e.g. ++, --)  As a heuristic,
      /// we say that such operations should not change the @e "Memory Chunk", i.e.
      /// the array the pointer refers to.
-     void push_if_ptr_movement(SgExpression& astNode, SgExpression* operand)
+     void push_if_ptr_movement(SgExpression* ptrexp)
      {
-        if( isUsableAsSgPointerType( operand -> get_type() )) {
-           // we don't care about int++, only pointers, or reference to pointers.
-           vt.transf->pointer_movements.push_back( &astNode );
-        }
+        ROSE_ASSERT(ptrexp);
+
+        // we don't care about int++, only pointers, or reference to pointers.
+        if ( !isUsableAsSgPointerType(ptrexp->get_type()) ) return;
+
+        vt.transf->pointer_movements.push_back( ptrexp );
      }
 
      // unary
@@ -287,13 +290,13 @@ namespace rted
 
      void handle(SgMinusAssignOp& n)
      {
-       push_if_ptr_movement(n, n.get_lhs_operand());
+       push_if_ptr_movement(n.get_lhs_operand());
        handle_binary(n);
      }
 
      void handle(SgPlusAssignOp& n)
      {
-       push_if_ptr_movement(n, n.get_lhs_operand());
+       push_if_ptr_movement(n.get_lhs_operand());
        handle_binary(n);
      }
 
@@ -322,12 +325,12 @@ namespace rted
 
      void handle(SgPlusPlusOp& n)
      {
-       push_if_ptr_movement(n, n.get_operand());
+       push_if_ptr_movement(n.get_operand());
      }
 
      void handle(SgMinusMinusOp& n)
      {
-       push_if_ptr_movement(n, n.get_operand());
+       push_if_ptr_movement(n.get_operand());
      }
 
      void handle(SgDeleteExp& del)
