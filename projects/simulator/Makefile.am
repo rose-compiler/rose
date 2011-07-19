@@ -173,6 +173,26 @@ demo8_CPPFLAGS = $(ROSE_INCLUDES)
 demo8_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 
+
+###############################################################################################################################
+#  SUPPORT PROGRAMS FOR PAPERS
+###############################################################################################################################
+
+noinst_PROGRAMS += concrete_1
+concrete_1_SOURCES = papers/concrete_1.C
+concrete_1_CPPFLAGS = $(ROSE_INCLUDES)
+concrete_1_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+EXTRA_DIST += papers/gzip_sample_1.c
+concrete_1_input: papers/gzip_sample_1.c
+	@echo "  CC32    $@"
+	@$(CC) $(CFLAGS32) -Wall -o $@ $^
+
+.PHONY: run_concrete_1
+run_concrete_1: concrete_1 concrete_1_input
+	./concrete_1 --debug ./concrete_1_input
+
+
 ###############################################################################################################################
 #  SYSTEM CALL TESTS
 ###############################################################################################################################
