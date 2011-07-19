@@ -244,14 +244,22 @@ sage_buildClassDef(PyObject *self, PyObject *args)
     char *name;
     PyObject *py_members;
     SgScopeStatement *scope;
-    if (! PyArg_ParseTuple(args, "sO&", &name,
-                                        SAGE_CONVERTER(SgScopeStatement), &scope))
+    SgExprListExp *decoratorList;
+    if (! PyArg_ParseTuple(args, "sO&O&", &name,
+                                          SAGE_CONVERTER(SgExprListExp), &decoratorList,
+                                          SAGE_CONVERTER(SgScopeStatement), &scope))
         return NULL;
 
     SgClassDeclaration* sg_class_decl =
         SageBuilder::buildDefiningClassDeclaration(SgName(name), scope);
 
     // TODO handle base clases
+
+    // TODO add decoratorList arg to sageBuilder
+    if (decoratorList != NULL) {
+        sg_class_decl->set_decoratorList(decoratorList);
+        decoratorList->set_parent(sg_class_decl);
+    }
 
     PyObject *py_class_decl = PyEncapsulate(sg_class_decl);
     PyObject *py_class_def = PyEncapsulate(sg_class_decl->get_definition());

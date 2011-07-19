@@ -46,6 +46,8 @@ Unparse_Python::unparseLanguageSpecificStatement(SgStatement* stmt,
         CASE_DISPATCH_AND_BREAK(BasicBlock);
         CASE_DISPATCH_AND_BREAK(BreakStmt);
         CASE_DISPATCH_AND_BREAK(CatchOptionStmt);
+        CASE_DISPATCH_AND_BREAK(ClassDeclaration);
+        CASE_DISPATCH_AND_BREAK(ClassDefinition);
         CASE_DISPATCH_AND_BREAK(ContinueStmt);
         CASE_DISPATCH_AND_BREAK(ExprStatement);
         CASE_DISPATCH_AND_BREAK(FunctionCallExp);
@@ -168,6 +170,15 @@ Unparse_Python::unparseAsSuite(SgStatement* stmt, SgUnparse_Info& info) {
         case V_SgBasicBlock: {
             SgBasicBlock* basic_block = isSgBasicBlock(stmt);
             foreach (SgStatement* child, basic_block->get_statements()) {
+                curprint( ws_prefix(info.get_nestingLevel()) );
+                unparseStatement(child, info);
+                curprint("\n");
+            }
+            break;
+        }
+        case V_SgClassDefinition: {
+            SgClassDefinition* class_def = isSgClassDefinition(stmt);
+            foreach (SgDeclarationStatement* child, class_def->get_members()) {
                 curprint( ws_prefix(info.get_nestingLevel()) );
                 unparseStatement(child, info);
                 curprint("\n");
@@ -320,6 +331,33 @@ Unparse_Python::unparseCatchOptionStmt(SgCatchOptionStmt* catch_stmt,
 
     unparseAsSuite(catch_stmt->get_body(), info);
 }
+
+void
+Unparse_Python::unparseClassDeclaration(SgClassDeclaration* class_decl,
+                                        SgUnparse_Info& info)
+{
+    SgExprListExp* decoratorList = class_decl->get_decoratorList();
+    if (decoratorList != NULL) {
+        foreach (SgExpression* expr, decoratorList->get_expressions()) {
+            curprint_indented("@", info);
+            unparseExpression(expr, info);
+            curprint("\n");
+        }
+    }
+
+    curprint_indented("class ", info);
+    curprint(class_decl->get_name().getString());
+    curprint("():\n");
+    unparseStatement(class_decl->get_definition(), info);
+}
+
+void
+Unparse_Python::unparseClassDefinition(SgClassDefinition* class_def,
+                                       SgUnparse_Info& info)
+{
+    unparseAsSuite(class_def, info);
+}
+
 
 void
 Unparse_Python::unparseComprehension(SgComprehension* comp, SgUnparse_Info& info)
