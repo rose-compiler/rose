@@ -90,6 +90,7 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionBreakStatement();
      public native void cactionCaseStatement();
      public native void cactionCastExpression();
+     public native void cactionCastExpressionEnd();
      public native void cactionCharLiteral();
      public native void cactionClassLiteralAccess();
      public native void cactionClinit();

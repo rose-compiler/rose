@@ -1,4 +1,4 @@
-public final class test2011_23 // BadInstanceOf 
+public final class test2011_22 // BadInstanceOf 
    {
      private static class Animal {}
      private static final class Fish extends Animal { void swim(){}  }
@@ -6,7 +6,22 @@ public final class test2011_23 // BadInstanceOf
 
      public static void doSomething(Animal aAnimal)
         {
-           if (aAnimal instanceof Fish)
+          if (aAnimal instanceof Fish)
+             {
+            // Initialization is a problem
+            // Fish fish;
+               Fish fish = (Fish)aAnimal;
+             }
+/*
+            else
+             {
+               if (aAnimal instanceof Spider)
+                  {           
+                  }
+             }
+*/
+
+/*         if (aAnimal instanceof Fish)
              {
                Fish fish = (Fish)aAnimal;
                fish.swim();
@@ -17,5 +32,8 @@ public final class test2011_23 // BadInstanceOf
                     Spider spider = (Spider)aAnimal;
                     spider.crawl();
                   }
+*/
         }
    }
+
+

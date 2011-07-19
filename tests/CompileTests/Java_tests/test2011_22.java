@@ -8,30 +8,10 @@ public final class test2011_22 // BadInstanceOf
         {
           if (aAnimal instanceof Fish)
              {
-//             Fish fish = (Fish)aAnimal;
-//             Fish fish;
+            // Initialization is a problem
+               Fish fish;
+            // Fish fish = (Fish)aAnimal;
              }
-/*
-            else
-             {
-               if (aAnimal instanceof Spider)
-                  {           
-                  }
-             }
-*/
-
-/*         if (aAnimal instanceof Fish)
-             {
-               Fish fish = (Fish)aAnimal;
-               fish.swim();
-             }
-            else
-               if (aAnimal instanceof Spider)
-                  {
-                    Spider spider = (Spider)aAnimal;
-                    spider.crawl();
-                  }
-*/
         }
    }
 

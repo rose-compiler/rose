@@ -27,6 +27,7 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (MemberFunctionRefExp,   "MemberFunctionRefExp",   "MEMBER_FUNCTION_REF" );
      NEW_TERMINAL_MACRO (FunctionCallExp,        "FunctionCallExp",        "FUNC_CALL" );
      NEW_TERMINAL_MACRO (SizeOfOp,               "SizeOfOp",               "SIZEOF_OP" );
+     NEW_TERMINAL_MACRO (JavaInstanceOfOp,       "JavaInstanceOfOp",       "JAVA_INSTANCEOF_OP" );
 
 #if USE_UPC_IR_NODES
   // DQ and Liao (6/10/2008): Added new IR nodes specific to UPC.
@@ -234,14 +235,14 @@ Grammar::setUpExpressions ()
           "ValueExp","ValueExpTag", false);
 
      NEW_NONTERMINAL_MACRO (Expression,
-          UnaryOp             | BinaryOp                | ExprListExp         | VarRefExp           | ClassNameRefExp          |
-          FunctionRefExp      | MemberFunctionRefExp    | ValueExp            | FunctionCallExp     | SizeOfOp                 |
-          UpcLocalsizeofExpression| UpcBlocksizeofExpression| UpcElemsizeofExpression|
-          TypeIdOp            | ConditionalExp          | NewExp              | DeleteExp           | ThisExp                  |
-          RefExp              | Initializer             | VarArgStartOp       | VarArgOp            | VarArgEndOp              |
-          VarArgCopyOp        | VarArgStartOneOperandOp | NullExpression      | VariantExpression   | SubscriptExpression      |
-          ColonShapeExp       | AsteriskShapeExp        | /*UseOnlyExpression |*/ ImpliedDo         | IOItemExpression         |
-       /* UseRenameExpression | */ StatementExpression  | AsmOp               | LabelRefExp         | ActualArgumentExpression |
+          UnaryOp                  | BinaryOp                 | ExprListExp             | VarRefExp           | ClassNameRefExp          |
+          FunctionRefExp           | MemberFunctionRefExp     | ValueExp                | FunctionCallExp     | SizeOfOp                 |
+          UpcLocalsizeofExpression | UpcBlocksizeofExpression | UpcElemsizeofExpression | JavaInstanceOfOp    |
+          TypeIdOp                 | ConditionalExp           | NewExp                  | DeleteExp           | ThisExp                  |
+          RefExp                   | Initializer              | VarArgStartOp           | VarArgOp            | VarArgEndOp              |
+          VarArgCopyOp             | VarArgStartOneOperandOp  | NullExpression          | VariantExpression   | SubscriptExpression      |
+          ColonShapeExp            | AsteriskShapeExp         | /*UseOnlyExpression     |*/ ImpliedDo         | IOItemExpression         |
+       /* UseRenameExpression      | */ StatementExpression   | AsmOp                   | LabelRefExp         | ActualArgumentExpression |
           UnknownArrayOrFunctionReference               | PseudoDestructorRefExp | CAFCoExpression  |
           CudaKernelCallExp   | CudaKernelExecConfig, /* TV (04/22/2010): CUDA support */
           "Expression","ExpressionTag", false);
@@ -484,6 +485,8 @@ Grammar::setUpExpressions ()
                                   "../Grammar/Expression.code" );
      SizeOfOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
                                   "../Grammar/Expression.code" );
+     JavaInstanceOfOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
+                                  "../Grammar/Expression.code" );
      TypeIdOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
                                   "../Grammar/Expression.code" );
 
@@ -622,6 +625,9 @@ Grammar::setUpExpressions ()
   // Now set the precedence values for each leaf of the grammar 
   // (where the precedence member function is defined)
      SizeOfOp.editSubstitute        ( "PRECEDENCE_VALUE", "16" );
+
+  // DQ (7/18/2011): What is the precedence of this operator?
+     JavaInstanceOfOp.editSubstitute        ( "PRECEDENCE_VALUE", "16" );
 
   // DQ (2/12/2011): Added support for UPC specific sizeof operators.
      UpcLocalsizeofExpression.editSubstitute ( "PRECEDENCE_VALUE", "16" );
@@ -1117,6 +1123,16 @@ Grammar::setUpExpressions ()
   // SizeOfOp.setDataPrototype ( "SgType*", "expression_type", "= NULL",
   //        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
      SizeOfOp.setDataPrototype ( "SgType*", "expression_type", "= NULL",
+            CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+
+  // DQ (7/18/2011): This is structurally similar to the SizeOfOp in that it takes a type operand
+  // and we have to save the expression type explicitly (I think).
+     JavaInstanceOfOp.setFunctionPrototype ( "HEADER_JAVA_INSTANCEOF_OPERATOR", "../Grammar/Expression.code" );
+     JavaInstanceOfOp.setDataPrototype ( "SgExpression*", "operand_expr", "= NULL",
+                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     JavaInstanceOfOp.setDataPrototype ( "SgType*", "operand_type", "= NULL",
+                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+     JavaInstanceOfOp.setDataPrototype ( "SgType*", "expression_type", "= NULL",
             CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
 
      TypeIdOp.setFunctionPrototype ( "HEADER_TYPE_ID_OPERATOR", "../Grammar/Expression.code" );
@@ -1702,6 +1718,7 @@ Grammar::setUpExpressions ()
      UnaryAddOp.setFunctionSource ( "SOURCE_UNARY_ADD_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
 
      SizeOfOp.setFunctionSource ( "SOURCE_SIZE_OF_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
+     JavaInstanceOfOp.setFunctionSource ( "SOURCE_JAVA_INSTANCEOF_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
 
   // DQ (2/12/2011): Added support for UPC specific sizeof operators.
      UpcLocalsizeofExpression.setFunctionSource ( "SOURCE_UPC_LOCAL_SIZEOF_EXPRESSION","../Grammar/Expression.code" );

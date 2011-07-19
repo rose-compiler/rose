@@ -544,6 +544,7 @@ SgScopeStatement
 SgSequenceStatement
 SgShortVal
 SgSizeOfOp
+SgJavaInstanceOfOp
 SgSourceFile
 SgSpawnStmt
 SgSpecialFunctionModifier

@@ -866,7 +866,8 @@ class JavaParserSupport
 
      public static void generateType(TypeBinding node)
         {
-       // TypeBindings are used in variable declarations (I think that these are the primative types .
+       // TypeBindings are used in variable declarations (I think that these are the primative types).
+       // No, they can be class types, and when they are this is a current problem.
 
        // This function traverses the type and calls JNI functions to 
        // at the end of the function define a type built in the ROSE 
@@ -984,6 +985,7 @@ class JavaParserSupport
                default:
                   {
                     System.out.println("Error: unknown type in generateType(): id = " + id);
+                 // System.abort(1);
                     System.exit(1);
                     break;
                   }
