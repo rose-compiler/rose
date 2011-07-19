@@ -255,7 +255,7 @@ namespace rted
         if (ia.isArrowExp || ia.isAddressOfOp) return;
 
         vt.binary_ops.push_back(&n);
-        ia.isBinaryOp = true;
+        //~ ia.isBinaryOp = true;
      }
 
      void handle_binary(SgBinaryOp& n) { handle(n); }  // implcitely casts to SgBinaryOp
@@ -314,10 +314,10 @@ namespace rted
         //     cases relevant to UPC
         // \todo 1) make suppression unconditional (remove if)
         // \todo 2) I think the following code is obsolete
-        if (suppress_binary_for_specific_calls(n.getAssociatedFunctionDeclaration()))
-        {
-          ia.isBinaryOp = false;
-        }
+        //~ if (suppress_binary_for_specific_calls(n.getAssociatedFunctionDeclaration()))
+        //~ {
+          //~ ia.isBinaryOp = false;
+        //~ }
      }
 
      void handle(SgPlusPlusOp& n)
@@ -440,7 +440,7 @@ namespace rted
     if ( rted::partOfUpcForallAffinityExpr(forloops, varref) ) return true;
 
     // not in binary context
-    if (!inh.isBinaryOp)
+    if (binary_ops.empty()) //(!inh.isBinaryOp)
     {
       return rted::isInitializedNameInForStatement(forloops, varname);
     }

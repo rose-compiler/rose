@@ -50,6 +50,7 @@ void RtedTransformation::visit_isClassDefinition(SgClassDefinition* const cdef)
 
   // We are not interested in compiler generated classes (they are not instrumented),
   // not in RTED runtime related types.
+
   if (   (  cdef -> get_file_info() -> isCompilerGenerated()
          && cdef -> get_declaration() -> get_file_info() -> isCompilerGenerated()
          )
@@ -122,20 +123,8 @@ void RtedTransformation::visit_isClassDefinition(SgClassDefinition* const cdef)
                                  );
 }
 
-/// \brief returns whether a name belongs to rted (i.e., has prefix "rted_")
-static inline
-bool isRtedDecl(const std::string& name)
-{
-  return boost::starts_with(name, RtedSymbols::prefix);
-}
-
 void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* const rtedClass)
 {
-  ROSE_ASSERT(rtedClass);
-
-  string            name = rtedClass->manglClassName;
-  if (isRtedDecl(name)) return;
-
   SgStatement*      stmt = rtedClass->classDef; // \pp was: = getSurroundingStatement(rtedClass->classDef);
   SgScopeStatement* scope = NULL;
   bool              global_stmt = false;
@@ -146,42 +135,44 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* const rtedC
   //
   // we want to call register type before type is used, but where it's in
   // scope
-  SgStatement* origStmt = stmt;
-  //cerr <<"@@@@ registerType : " << stmt->unparseToString() << endl;
-  //  abort();
-
+  SgStatement*      origStmt = stmt;
   SgScopeStatement* globalScope = NULL;
+
   scope = stmt -> get_scope();
-  //cerr << "  the surrounding statement is (1): " << stmt->class_name()
-  //    << " for : "
-  //    << rtedClass->classDef->get_declaration()->get_name().str() << endl;
-  while (isSgClassDefinition(stmt) || isSgClassDeclaration(stmt)
   // for nested classes, we care about the scope of the outermost class
-      || isSgClassDeclaration(scope) || isSgClassDefinition(scope)) {
+  while (  isSgClassDefinition(stmt)
+        || isSgClassDeclaration(stmt)
+        || isSgClassDeclaration(scope)
+        || isSgClassDefinition(scope)
+        )
+  {
     origStmt = stmt;
     stmt = isSgStatement(stmt -> get_parent());
     scope = stmt -> get_scope();
-    //cerr << "  the surrounding statement is (2): " << stmt->class_name()
-    //    << endl;
   }
-  cerr << " -----------> stmt : " << stmt->unparseToString() << " ::::: "<<
-    stmt->class_name() <<  " isSgGlobal(stmt) : " << isSgGlobal(stmt) <<
-      "   getScope: " << isSgGlobal(stmt->get_scope()) << endl;
-  if (!stmt || isSgGlobal(stmt)    || isSgGlobal(stmt->get_scope())
-  // catch the case where a class (or union) is within another class - this is consider to be global
-      || (isSgVariableDeclaration(stmt) && isSgClassDefinition(
-          stmt->get_parent()))) {
+
+  cerr << " -----------> stmt : " << stmt->unparseToString() << " ::::: "
+       << stmt->class_name() <<  " isSgGlobal(stmt) : " << isSgGlobal(stmt)
+       << "   getScope: " << isSgGlobal(stmt->get_scope()) << endl;
+
+  if ( !stmt
+     || isSgGlobal(stmt)
+     || isSgGlobal(stmt->get_scope())
+     // catch the case where a class (or union) is within another class - this is consider to be global
+     || (isSgVariableDeclaration(stmt) && isSgClassDefinition(stmt->get_parent()))
+     )
+  {
     globalScope = scope;
     if (stmt) {
       // the classdefinition is global --
       // is there a global variable?
-      SgVariableDeclaration* stmtVar = getGlobalVariableForClass(
-          isSgGlobal(globalScope), isSgClassDeclaration(origStmt));
+      SgVariableDeclaration* stmtVar = getGlobalVariableForClass(isSgGlobal(globalScope), isSgClassDeclaration(origStmt));
+
       if (stmtVar) {
-        stmt = appendToGlobalConstructor(stmt->get_scope(),
-            rtedClass->classDef->get_declaration()->get_name());
+        stmt = appendToGlobalConstructor(stmt->get_scope(), rtedClass->classDef->get_declaration()->get_name());
         scope = globalFunction;
-        ROSE_ASSERT(isNormalScope( scope));
+
+        ROSE_ASSERT( isNormalScope(scope) );
         cerr << "Current scope = " << scope->class_name() << endl;
         global_stmt = true;
       } else {
@@ -234,7 +225,7 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* const rtedC
     SgExprListExp* arg_list = buildExprListExp();
     SgExpression*  nrElements = buildIntVal(argcount);
 
-    appendExpression(arg_list, buildStringVal(name));
+    appendExpression(arg_list, buildStringVal(rtedClass->manglClassName));
     appendExpression(arg_list, buildStringVal(typeC));
     appendBool(arg_list, isUnionType);
     appendExpression(arg_list, rtedClass->sizeClass);
@@ -426,7 +417,7 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* const rtedC
   else // isNormalScope
   {
     cerr << "RuntimeInstrumentation :: Surrounding Block is not Block! : "
-         << name << " : " << scope->class_name() << "    stmt:" << stmt->unparseToString() << endl;
+         << rtedClass->manglClassName << " : " << scope->class_name() << "    stmt:" << stmt->unparseToString() << endl;
     ROSE_ASSERT(false);
   }
 }
