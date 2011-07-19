@@ -178,6 +178,8 @@ demo8_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 #  SUPPORT PROGRAMS FOR PAPERS
 ###############################################################################################################################
 
+#------------------------------------------------------------------------------------------------------------------------------
+# Example of concrete analysis on a gzip code sample.
 noinst_PROGRAMS += concrete_1
 concrete_1_SOURCES = papers/concrete_1.C
 concrete_1_CPPFLAGS = $(ROSE_INCLUDES)
@@ -191,7 +193,24 @@ concrete_1_input: papers/gzip_sample_1.c
 .PHONY: run_concrete_1
 run_concrete_1: concrete_1 concrete_1_input
 	./concrete_1 --debug ./concrete_1_input
+	./concrete_1_input
 
+#------------------------------------------------------------------------------------------------------------------------------
+# Example of symbolic analysis on a gzip code sample.
+noinst_PROGRAMS += symbolic_1
+symbolic_1_SOURCES = papers/symbolic_1.C
+symbolic_1_CPPFLAGS = $(ROSE_INCLUDES)
+symbolic_1_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+EXTRA_DIST += papers/gzip_sample_2.c
+symbolic_1_input: papers/gzip_sample_2.c
+	@echo "  CC32    $@"
+	@$(CC) $(CFLAGS32) -Wall -o $@ $^
+
+.PHONY: run_symbolic_1
+run_symbolic_1: symbolic_1 symbolic_1_input
+	./symbolic_1 --debug ./symbolic_1_input
+	./symbolic_1_input
 
 ###############################################################################################################################
 #  SYSTEM CALL TESTS

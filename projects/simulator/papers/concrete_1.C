@@ -62,7 +62,7 @@ public:
             // manipulation if this example were multi-threaded.  The buffer should be at or above 0x40000000, at least one
             // page in length, and aligned on a page boundary.
             RTS_WRITE(process->rwlock()) {
-                buf_va = process->get_memory()->find_free(0x40000000, sizeof buf, sizeof buf);
+                buf_va = process->get_memory()->find_free(0x40000000, sizeof buf, 0x1000);
                 if (buf_va) {
                     MemoryMap::MapElement me(buf_va, sizeof buf, buf, 0, MemoryMap::MM_PROT_RWX);
                     me.set_name("Debugging page");
