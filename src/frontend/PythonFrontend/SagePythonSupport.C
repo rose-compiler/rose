@@ -88,13 +88,12 @@ sage_appendStatements(PyObject *self, PyObject *args)
         //SageInterface::appendStatement(sg_child, sg_target);
         switch (sg_target->variantT()) {
             case V_SgGlobal: {
-              if (isSgDeclarationStatement(sg_child) == NULL) {
-                  cerr << "adding non-declaration statements to the global scope is not supported" << endl;
-                  ROSE_ASSERT(false);
-              } else {
-                  isSgGlobal(sg_target)->get_declarations().push_back(isSgDeclarationStatement(sg_child));
-                  sg_child->set_parent(sg_target);
+              SgDeclarationStatement* sg_decl_stmt = isSgDeclarationStatement(sg_child);
+              if (sg_decl_stmt == NULL) {
+                  sg_decl_stmt = SageBuilder::buildStmtDeclarationStatement(sg_child);
               }
+              isSgGlobal(sg_target)->get_declarations().push_back(sg_decl_stmt);
+              sg_decl_stmt->set_parent(sg_target);
               break;
             }
             case V_SgFunctionDeclaration: {

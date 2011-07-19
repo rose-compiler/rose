@@ -16,16 +16,9 @@ class Unparse_Python : public UnparseLanguageIndependentConstructs
           Unparse_Python(Unparser* unp, std::string fname);
           virtual ~Unparse_Python();
 
-          /* SageIII requires all statements in the global scope to be declaration
-           * statements. Python allows arbitrary expressions, so we've wrapped the
-           * entire program in an implicit __main__() function. When unparsing, we
-           * don't want to to appear, so this function only unparses the body of the
-           * wrapper function.
-           */
-          virtual void unparseWrappedProgram(SgScopeStatement*, SgUnparse_Info&);
-
           virtual void unparseLanguageSpecificStatement(SgStatement*, SgUnparse_Info&);
           virtual void unparseLanguageSpecificExpression(SgExpression*, SgUnparse_Info&);
+          virtual void unparseGlobalStmt(SgStatement*, SgUnparse_Info&);
           virtual void unparseStringVal(SgExpression*, SgUnparse_Info&);
           virtual void unparseComplexVal(SgExpression* expr, SgUnparse_Info& info);
 
@@ -68,6 +61,7 @@ class Unparse_Python : public UnparseLanguageIndependentConstructs
           virtual void unparsePythonPrintStmt(SgPythonPrintStmt*, SgUnparse_Info&);
           virtual void unparseReturnStmt(SgReturnStmt*, SgUnparse_Info&);
           virtual void unparseSetComprehension(SgSetComprehension*, SgUnparse_Info&);
+          virtual void unparseStmtDeclarationStatement(SgStmtDeclarationStatement*, SgUnparse_Info&);
           virtual void unparseStringVal(SgStringVal*, SgUnparse_Info&);
           virtual void unparseTryStmt(SgTryStmt*, SgUnparse_Info&);
           virtual void unparseTupleExp(SgTupleExp*, SgUnparse_Info&);
@@ -79,8 +73,6 @@ class Unparse_Python : public UnparseLanguageIndependentConstructs
           virtual std::string ws_prefix(int nesting_level);
           virtual void unparseAsSuite(SgStatement* stmt, SgUnparse_Info&);
    };
-
-#define ROSE_PYTHON_WRAPPER_FXN_NAME "__main__"
 
 #define ROSE_PYTHON_AND_OP  "and"
 #define ROSE_PYTHON_OR_OP   "or"
