@@ -621,23 +621,59 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSendEnd (JNIEnv *env, jobje
        else
         {
           ROSE_ASSERT(astJavaExpressionStack.empty() == false);
+
           SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(astJavaExpressionStack.front());
           ROSE_ASSERT(functionCallExp != NULL);
+
           astJavaExpressionStack.pop_front();
+
+       // DQ (7/18/2011): Some of these entries in "arguments" from the stack are arguments 
+       // and some are associated with the object whose member function is being called.
+       // SgExpression* functionRefExp = functionCallExp->get_function();
+          SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(functionCallExp->get_function());
+          ROSE_ASSERT(functionRefExp != NULL);
+          printf ("functionRefExp from functionCallExp = %p = %s \n",functionRefExp,functionRefExp->class_name().c_str());
+
+          SgSymbol* symbol = functionRefExp->get_symbol();
+          ROSE_ASSERT(symbol != NULL);
+          printf ("symbol from functionRefExp = %p = %s \n",symbol,symbol->class_name().c_str());
+          SgFunctionSymbol* functionSymbol = isSgFunctionSymbol(symbol);
+          ROSE_ASSERT(functionSymbol != NULL);
+
+          SgFunctionDeclaration* functionDeclaration = functionSymbol->get_declaration();
+          ROSE_ASSERT(functionDeclaration != NULL);
+          printf ("functionDeclaration from functionSymbol = %p = %s \n",functionDeclaration,functionDeclaration->class_name().c_str());
+
+          size_t numberOfFunctionParameters = functionDeclaration->get_args().size();
+
+          printf ("numberOfFunctionParameters = %zu \n",numberOfFunctionParameters);
 
           printf ("functionCallExp = %p args = %p \n",functionCallExp,functionCallExp->get_args());
 
        // Are we traversing this the correct direction to get the argument order correct?
           printf ("Number of arguments to the function call expression = %zu \n",arguments.size());
-          for (size_t i = 0; i < arguments.size(); i++)
+       // for (size_t i = 0; i < arguments.size(); i++)
+          for (size_t i = 0; i < numberOfFunctionParameters; i++)
              {
                ROSE_ASSERT(arguments[i] != NULL);
                functionCallExp->append_arg(arguments[i]);
              }
 
+          SgExpression* exprForExprStatement = functionCallExp;
+
+       // The remaining arguments are really just the object chain through which the function is called.
+          ROSE_ASSERT(arguments.size() >= numberOfFunctionParameters);
+          size_t objectChainLength = arguments.size() - numberOfFunctionParameters;
+          for (size_t i = 0; i < objectChainLength; i++)
+             {
+               ROSE_ASSERT(arguments[i] != NULL);
+               exprForExprStatement = SageBuilder::buildBinaryExpression<SgDotExp>(arguments[i],exprForExprStatement);
+             }
+
        // ROSE_ASSERT(astJavaStatementStack.empty() == true);
        // SgStatement* statement = SageBuilder::buildExprStatement(functionCallExp);
-          statement = SageBuilder::buildExprStatement(functionCallExp);
+       // statement = SageBuilder::buildExprStatement(functionCallExp);
+          statement = SageBuilder::buildExprStatement(exprForExprStatement);
           ROSE_ASSERT(statement != NULL);
         }
 
@@ -653,8 +689,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSendEnd (JNIEnv *env, jobje
 
      printf ("Number of statements in current scope = %zu \n",astJavaScopeStack.front()->generateStatementList().size());
 
-     ROSE_ASSERT(astJavaExpressionStack.empty() == true);
-     
+  // DQ (7/18/2011): This will not be true if we are in a "if" statement block.
+  // ROSE_ASSERT(astJavaExpressionStack.empty() == true);
+
      outputJavaState("At BOTTOM of cactionMessageSendEnd");
 
 #if 0

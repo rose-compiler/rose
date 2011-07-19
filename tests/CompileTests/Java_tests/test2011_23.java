@@ -11,11 +11,12 @@ public final class test2011_23 // BadInstanceOf
                Fish fish = (Fish)aAnimal;
                fish.swim();
              }
-            else
+/*          else
                if (aAnimal instanceof Spider)
                   {
                     Spider spider = (Spider)aAnimal;
-                    spider.crawl();
+                 // spider.crawl();
                   }
+*/
         }
    }
