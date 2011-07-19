@@ -42,6 +42,7 @@ void StaticSingleAssignment::interproceduralDefPropagation(const unordered_set<S
 
         foreach(SgFunctionDefinition* func, topologicalFunctionOrder)
         {
+            ROSE_ASSERT(func != NULL);
             bool newDefsForFunc = insertInterproceduralDefs(func, interestingFunctions, &classHierarchy);
             changedDefs = changedDefs || newDefsForFunc;
         }
@@ -90,33 +91,38 @@ vector<SgFunctionDefinition*> StaticSingleAssignment::calculateInterproceduralPr
 
     foreach(SgFunctionDefinition* interestingFunction, interestingFunctions)
     {
-        processCalleesThenFunction(interestingFunction, callGraph, graphNodeToFunction, processingOrder);
+		if (find(processingOrder.begin(), processingOrder.end(), interestingFunction) != processingOrder.end())
+			continue;
+		
+		set<SgFunctionDefinition*> visited;
+        processCalleesThenFunction(interestingFunction, callGraph, graphNodeToFunction, processingOrder, visited);
     }
 
     return processingOrder;
 }
 
 void StaticSingleAssignment::processCalleesThenFunction(SgFunctionDefinition* targetFunction, SgIncidenceDirectedGraph* callGraph,
-        unordered_map<SgFunctionDefinition*, SgGraphNode*> graphNodeToFunction,
-        vector<SgFunctionDefinition*> &processingOrder)
+            const boost::unordered_map<SgFunctionDefinition*, SgGraphNode*>& graphNodeToFunction,
+            std::vector<SgFunctionDefinition*> &processingOrder, std::set<SgFunctionDefinition*> visited)
 {
-    //If the function is already in the list of functions to be processed, don't add it again.
-    if (find(processingOrder.begin(), processingOrder.end(), targetFunction) != processingOrder.end())
-        return;
+	if (visited.count(targetFunction) != 0)
+		return;
+	else
+		visited.insert(targetFunction);
 
-    if (graphNodeToFunction.count(targetFunction) == 0)
+	unordered_map<SgFunctionDefinition*, SgGraphNode*>::const_iterator functionIter = graphNodeToFunction.find(targetFunction);
+    if (functionIter == graphNodeToFunction.end())
     {
         printf("The function %s has no vertex in the call graph!\n", targetFunction->get_declaration()->get_name().str());
         ROSE_ASSERT(false);
     }
 
-    SgGraphNode* graphNode = graphNodeToFunction[targetFunction];
+    SgGraphNode const * graphNode = functionIter->second;
 
     vector<SgGraphNode*> callees;
     callGraph->getSuccessors(graphNode, callees);
 
     //Recursively process all the callees before adding this function to the list
-
     foreach(SgGraphNode* callerNode, callees)
     {
         SgFunctionDeclaration* callerDecl = isSgFunctionDeclaration(callerNode->get_SgNode());
@@ -124,8 +130,15 @@ void StaticSingleAssignment::processCalleesThenFunction(SgFunctionDefinition* ta
         callerDecl = isSgFunctionDeclaration(callerDecl->get_definingDeclaration());
         ROSE_ASSERT(callerDecl != NULL);
         SgFunctionDefinition* callee = callerDecl->get_definition();
+        
+        if (callee == NULL)
+        {
+            fprintf(stderr, "BUG IN ROSE: The function %s has a defining declaration but no definition!?!\n",
+                    callerDecl->get_qualified_name().str());
+            continue;
+        }
 
-        processCalleesThenFunction(callee, callGraph, graphNodeToFunction, processingOrder);
+        processCalleesThenFunction(callee, callGraph, graphNodeToFunction, processingOrder, visited);
     }
 
     //If the function is already in the list of functions to be processed, don't add it again.
@@ -138,6 +151,7 @@ bool StaticSingleAssignment::insertInterproceduralDefs(SgFunctionDefinition* fun
         const boost::unordered_set<SgFunctionDefinition*>& processed,
         ClassHierarchyWrapper* classHierarchy)
 {
+    ROSE_ASSERT(funcDef != NULL);
     vector<SgExpression*> functionCalls = SageInterface::querySubTree<SgExpression > (funcDef, V_SgFunctionCallExp);
     vector<SgExpression*> constructorCalls = SageInterface::querySubTree<SgExpression > (funcDef, V_SgConstructorInitializer);
     functionCalls.insert(functionCalls.end(), constructorCalls.begin(), constructorCalls.end());
