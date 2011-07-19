@@ -96,10 +96,11 @@ void AttributeRec::setDeclAttrSpecs()
 // The entity type follows the following ordering: pointer < copointer < codimension < dimension
 SgType* AttributeRec::computeEntityType()
 {
-    if (lenExpr)
+    if (charLenExpr)
     {
-        // TODO: convert baseType to string type with char length
-        baseType = SgTypeString::createType(lenExpr);
+        // TODO: convert baseType to string type with char length and the existing type kind
+        SgExpression* typeKind = baseType->get_type_kind();  // TODO: NEED TO Make a copy and not use the original typeKind.
+        baseType = SgTypeString::createType(charLenExpr, typeKind);
     }
     if (hasDimension)
     {
@@ -153,8 +154,8 @@ SgDeclarationStatement* AttributeRec::getDeclaration() { return declaration; }
 void AttributeRec::setDeclaration(SgDeclarationStatement* decl) { declaration = decl; }
 SgType* AttributeRec::getBaseType() { return baseType; }
 void AttributeRec::setBaseType(SgType* newType) { baseType = newType; }
-SgExpression* AttributeRec::AttributeRec::getLenExpr () { return lenExpr; }
-void AttributeRec::setLenExpr(SgExpression* exp) { lenExpr = exp; }
+SgExpression* AttributeRec::AttributeRec::getLenExpr () { return charLenExpr; }
+void AttributeRec::setLenExpr(SgExpression* exp) { charLenExpr = exp; }
 bool AttributeRec::getHasAccessSpec () { return hasAccessSpec; }
 void AttributeRec::setHasAccessSpec (bool hasAccSpec) { hasAccessSpec = hasAccSpec; }
 int AttributeRec::getAccessAttr() { return accessAttr; }
@@ -274,7 +275,7 @@ void AttributeRec::setDeferredAttr(int attr) { deferredAttr = attr; }
 
 void AttributeRec::reset()
 {
-    declaration = NULL; baseType = NULL; lenExpr = NULL;
+    declaration = NULL; baseType = NULL; charLenExpr = NULL;
     hasAccessSpec = false; accessAttr = -1; accessType = -1;
     isPublic = false; publicAttr = -1; isPrivate = false; privateAttr = -1;
     isAllocatable = false; allocatableAttr = -1; isAsynchronous = false; asyncAttr = -1;

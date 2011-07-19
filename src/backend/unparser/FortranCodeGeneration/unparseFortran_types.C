@@ -6,6 +6,8 @@
 #include "sage3basic.h"
 #include "unparser.h"
 
+#define DXN_CODE 1
+
 //----------------------------------------------------------------------------
 //  void UnparserFort::unparseType
 //
@@ -152,10 +154,15 @@ UnparseFortran_type::unparseTypeKind(SgType* type, SgUnparse_Info& info)
 void
 UnparseFortran_type::unparseTypeLengthAndKind(SgType* type, SgExpression* lengthExpression, SgUnparse_Info & info)
    {
+#if DXN_CODE
+
+     // the length is printed as part of the entity_decl.
+    unparseTypeKind(type, info);
+
+#else
   // DQ (12/1/2007): This has been moved to the SgModifierType
      SgExpression* kindExpression = type->get_type_kind();
   // printf ("In UnparseFortran_type::unparseType(): type->get_type_kind() = %p \n",type->get_type_kind());
-
      if (lengthExpression != NULL || kindExpression != NULL)
         {
           curprint("(");
@@ -180,6 +187,7 @@ UnparseFortran_type::unparseTypeLengthAndKind(SgType* type, SgExpression* length
 
           curprint(")");
         }
+#endif
    }
 
 void 
@@ -223,7 +231,7 @@ UnparseFortran_type::unparseStringType(SgType* type, SgUnparse_Info& info)
 
      curprint(")");
 #else
-     curprint ("character");
+     curprint ("CHARACTER");
      unparseTypeLengthAndKind(string_type,string_type->get_lengthExpression(),info);
 #endif
 

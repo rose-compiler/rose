@@ -4197,39 +4197,69 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
                curprint("(");
                unparseExpression(arrayType->get_dim_info(), info);
                curprint(")");
+               SgTypeString* stringType = isSgTypeString(arrayType->get_base_type());
+               if (stringType)
+                  {
+                    curprint("*");
+                    curprint("(");
+                    unparseExpression(stringType->get_lengthExpression(), info);
+                    curprint(")");
+                  }
              }
-
+          SgTypeString* stringType = isSgTypeString(type);
+          if (stringType)
+             {
+               curprint("*");
+               curprint("(");
+               unparseExpression(stringType->get_lengthExpression(), info);
+               curprint(")");
+             }
         }
 
-#if 0
-       // FMZ (3/23/2009) after the caf translator translates the coarray to be a f90 pointer
-       // we are no longer need to keep this unparsed
-       // We actually better use intializedName to hold the flag, 
-       // since type is shared by more variables
-     if (initializedName->get_isCoArray() == true)
-               curprint("[*]");
-#endif
-     // DXN (06/19/2011)
+     // The entity type follows the following ordering: pointer < copointer < codimension < dimension
      SgPointerType* pType = isSgPointerType(type);
-     if (pType)  // pType may be a copointer, so look at its base type instead
-     {
-       SgArrayType* arrayType = isSgArrayType(pType->get_base_type());
-       if (arrayType != NULL && arrayType->get_rank() > 0)  // "coscalar", a scalar coarray is implemented as an array of rank 0.
-       {
-         curprint("(");
-         unparseExpression(arrayType->get_dim_info(), info);
-         curprint(")");
-         if (arrayType->get_isCoArray())
-         {
-           curprint("[*]");
-         }
+     if (pType)
+     { // pType may points to a copointer or may be a copointer itself, so look at its base type
+       SgPointerType* pointeeType = isSgPointerType(pType->get_base_type());
+       if (pointeeType)
+       {   // pType is a pointer to a copointer
+           SgArrayType* pointeeBase = isSgArrayType(pointeeType->get_base_type());
+           if (pointeeBase != NULL && pointeeBase->get_rank() > 0)  // the base type is an array of rank >= 1.
+           {
+             curprint("(");
+             unparseExpression(pointeeBase->get_dim_info(), info);
+             curprint(")");
+             if (pointeeBase->get_isCoArray())
+             {
+               curprint("[*]");
+             }
+           }
+           else if (pointeeType->get_base_type()->get_isCoArray())
+           {
+             curprint("[*]");  // a scalar/derived-type coarray is implemented as a rank 0 array of the given type.
+           }
        }
-       else if (pType->get_base_type()->get_isCoArray())
-       {
-         curprint("[*]");
+       else
+       {   // if the base type of pType is a coarray or an array, print the appropriate coarray or array info
+           SgArrayType* pTypeBase = isSgArrayType(pType->get_base_type());
+           if (pTypeBase != NULL && pTypeBase->get_rank() > 0)  // the base type is an array of rank >= 1.
+           {
+             curprint("(");
+             unparseExpression(pTypeBase->get_dim_info(), info);
+             curprint(")");
+             if (pTypeBase->get_isCoArray())
+             {
+               curprint("[*]");
+             }
+           }
+           else if (pType->get_base_type()->get_isCoArray())
+           {
+             curprint("[*]");  // a scalar/derived-type coarray is implemented as a rank 0 array of the given type.
+           }
+
        }
      }
-     else if (type->get_isCoArray())  // type is not a copointer, but is a coarray type
+     else if (type->get_isCoArray())  // type is not a pointer, but is a coarray type
      {
        curprint("[*]");
      }

@@ -45,7 +45,7 @@ private:
 
         SgDeclarationStatement* declaration;
     SgType* baseType;
-    SgExpression* lenExpr;
+    SgExpression* charLenExpr;
     bool hasAccessSpec; int accessAttr; int accessType;
     bool isPublic; int publicAttr;
     bool isPrivate; int privateAttr;
@@ -78,7 +78,7 @@ private:
     // SgExpression* kindExp; // TODO
 
 public:
-    AttributeRec(): declaration(NULL), baseType(NULL), lenExpr(NULL),
+    AttributeRec(): declaration(NULL), baseType(NULL), charLenExpr(NULL),
                 hasAccessSpec(false), accessAttr(-1), accessType(-1),
                 isPublic(false), publicAttr(-1), isPrivate(false), privateAttr(-1),
                 isAllocatable(false), allocatableAttr(-1), isAsynchronous(false), asyncAttr(-1),
