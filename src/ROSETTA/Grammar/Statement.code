@@ -3148,7 +3148,7 @@ SgStatement::replace_child(SgStatement *target,SgStatement *newstmt, bool extrac
      printf ("$CLASSNAME::replace_child(): ERROR: virtual function called in base class by mistake in %s (exiting at ...) \n",sage_class_name());
      ROSE_ASSERT(newstmt->get_file_info() != NULL);
      newstmt->get_file_info()->display("called from $CLASSNAME::insert_child()");
-     ROSE_ABORT();
+     ROSE_ASSERT(false);
 
      return false;
    }
@@ -3159,7 +3159,7 @@ SgStatement::insert_child(SgStatement* target, SgStatement* newstmt, bool inFron
      printf ("$CLASSNAME::insert_child(): ERROR: virtual function called in base class by mistake in %s (exiting at ...) \n",sage_class_name());
      ROSE_ASSERT(newstmt->get_file_info() != NULL);
      newstmt->get_file_info()->display("called from $CLASSNAME::insert_child()");
-     ROSE_ABORT();
+     ROSE_ASSERT(false);
 
      return false;
    }
@@ -4283,7 +4283,7 @@ SgScopeStatement::insertStatementInScope ( SgStatement* newTransformationStateme
                
 #if 0
                printf ("Exiting after call to insert_statement in $CLASSNAME::insertStatementInScope() \n");
-               ROSE_ABORT();
+               ROSE_ASSERT(false);
 #endif
              }
             else
@@ -4357,7 +4357,7 @@ SgScopeStatement::insertStatementInScope ( SgStatement* newTransformationStateme
                ROSE_ASSERT(newTransformationStatement->get_parent() != NULL);
 #if 0
                printf ("Exiting after call to insert_statement in $CLASSNAME::insertStatementInScope() \n");
-               ROSE_ABORT();
+               ROSE_ASSERT(false);
 #endif
              }
             else
@@ -4684,7 +4684,7 @@ SgScopeStatement::getStatementList ()
 #endif
 
                printf ("getStatementList() return value not defined for SgIfStmt containing true and false bodies (use generateStatementList() to form copy of merges lists) \n");
-               ROSE_ABORT();
+               ROSE_ASSERT(false);
                break;
              }
 
@@ -4727,7 +4727,7 @@ SgScopeStatement::getStatementList ()
           default:
                printf ("ERROR: default reached in switch (getStatementList()) currentScope = %s \n",currentScope->sage_class_name());
                printf ("Note: this function is not defined for all IR nodes derived from SgScopeStatement (use SgScopeStatement::containsOnlyDeclarations() to check)\n");
-               ROSE_ABORT();
+               ROSE_ASSERT(false);
                break;
         }
 
@@ -4859,7 +4859,7 @@ SgScopeStatement::getStatementList () const
 #endif
 
                printf ("getStatementList() const return value not defined for SgIfStmt containing true and false bodies (use generateStatementList() const to form copy of merges lists) \n");
-               ROSE_ABORT();
+               ROSE_ASSERT(false);
                break;
              }
 
@@ -5567,7 +5567,7 @@ Sgparse ( $PARENT_GRAMMARS_PREFIX_Global* Xptr )
         {
        // it is an error for isRootGrammar() == true
           printf ("ERROR: isRootGrammar() == true in SgScopeStatement::parse ( $PARENT_GRAMMARS_PREFIX_ScopeStatement* X )! \n");
-          ROSE_ABORT();
+          ROSE_ASSERT(false);
         }
 
      ROSE_ASSERT(Xptr->getGrammar()->isRootGrammar() == false);
@@ -7147,7 +7147,7 @@ void
 SgBasicBlock::append_statement(SgStatement * what) 
    {
 //   printf ("In $CLASSNAME::append_statement(): Call to insert_statement() commented out \n");
-//   ROSE_ABORT();
+//   ROSE_ASSERT(false);
 
      get_statements().push_back(what);
      what->set_parent(this);
@@ -8647,7 +8647,7 @@ Sgparse ( $PARENT_GRAMMARS_PREFIX_FunctionDeclaration* Xptr )
         {
        // it is an error for isRootGrammar() == true
           printf ("ERROR: isRootGrammar() == true in SgScopeStatement::parse ( $PARENT_GRAMMARS_PREFIX_ScopeStatement* X )! \n");
-          ROSE_ABORT();
+          ROSE_ASSERT(false);
         }
 
      ROSE_ASSERT(Xptr->getGrammar()->isRootGrammar() == false);
@@ -8928,7 +8928,7 @@ Sgparse ( $PARENT_GRAMMARS_PREFIX_FunctionDefinition* Xptr )
         {
        // it is an error for isRootGrammar() == true
           printf ("ERROR: isRootGrammar() == true in SgScopeStatement::parse ( $PARENT_GRAMMARS_PREFIX_ScopeStatement* X )! \n");
-          ROSE_ABORT();
+          ROSE_ASSERT(false);
         }
 
      ROSE_ASSERT(Xptr->getGrammar()->isRootGrammar() == false);

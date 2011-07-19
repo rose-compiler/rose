@@ -945,10 +945,16 @@ buildSimpleVariableDeclaration(const SgName & name)
      astJavaTypeStack.pop_front();
 
   // We are not supporting an initialized at this point in the implementation of the Java support.
-     SgVariableDeclaration* variable = SageBuilder::buildVariableDeclaration (name, type, NULL, astJavaScopeStack.front() );
-     ROSE_ASSERT(variable != NULL);
+     SgVariableDeclaration* variableDeclaration = SageBuilder::buildVariableDeclaration (name, type, NULL, astJavaScopeStack.front() );
+     ROSE_ASSERT(variableDeclaration != NULL);
 
-     return variable;
+  // DQ (7/16/2011): This is a test to debug failing test in resetParentPointers.C:1733
+     ROSE_ASSERT(SageInterface::is_Fortran_language() == false);
+     SgInitializedName* initializedName = variableDeclaration->get_decl_item (name);
+     ROSE_ASSERT(initializedName != NULL);
+     ROSE_ASSERT(initializedName->get_scope() != NULL);
+
+     return variableDeclaration;
    }
 
 list<SgName>
@@ -1200,3 +1206,57 @@ lookupTypeFromQualifiedName(string className)
 
      return classType;
    }
+
+
+
+void
+appendStatement(SgStatement* statement)
+   {
+  // This support function handles the complexity of handling append where the current scope is a SgIfStmt.
+
+     SgIfStmt* ifStatement = isSgIfStmt(astJavaScopeStack.front());
+     if (ifStatement != NULL)
+        {
+          SgNullStatement* nullStatement = isSgNullStatement(ifStatement->get_true_body());
+          if (nullStatement != NULL)
+             {
+               ifStatement->set_true_body(statement);
+               delete nullStatement;
+             }
+            else
+             {
+               ifStatement->set_false_body(statement);
+             }
+        }
+       else
+        {
+          astJavaScopeStack.front()->append_statement(statement);
+        }
+
+     ROSE_ASSERT(statement->get_parent() != NULL);
+   }
+
+
+void
+appendStatementStack()
+   {
+  // This function is used to dump all statements accumulated on the astJavaStatementStack
+  // into the current scope (called as part of closing off the scope where functions that 
+  // don't call the function to close off statements).
+
+  // Reverse the list to avoid acesses to the stack from the bottom, 
+  // which would be confusing and violate stack semantics.
+     list<SgStatement*> reverseStatementList;
+     while (astJavaStatementStack.empty() == false)
+        {
+          reverseStatementList.push_front(astJavaStatementStack.front());
+          astJavaStatementStack.pop_front();
+        }
+
+     while (reverseStatementList.empty() == false)
+        {
+          appendStatement(reverseStatementList.front());
+          reverseStatementList.pop_front();
+        }
+   }
+

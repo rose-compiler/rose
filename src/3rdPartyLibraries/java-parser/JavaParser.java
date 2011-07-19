@@ -69,7 +69,8 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionStringLiteral(String filename);
 
      public native void cactionAllocationExpression();
-     public native void cactionAND_AND_Expression();
+     public native void cactionANDANDExpression();
+     public native void cactionANDANDExpressionEnd();
      public native void cactionAnnotationMethodDeclaration();
      public native void cactionArgumentClassScope(String variableName);
      public native void cactionArrayAllocationExpression();
@@ -80,8 +81,11 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionArrayTypeReferenceClassScope(String filename);
      public native void cactionAssertStatement();
      public native void cactionAssignment();
+     public native void cactionAssignmentEnd();
      public native void cactionBinaryExpression();
+     public native void cactionBinaryExpressionEnd(int java_operator_kind);
      public native void cactionBlock();
+     public native void cactionBlockEnd();
      public native void cactionBreakStatement();
      public native void cactionCaseStatement();
      public native void cactionCastExpression();
@@ -91,10 +95,12 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionConditionalExpression();
      public native void cactionContinueStatement();
      public native void cactionCompoundAssignment();
+     public native void cactionCompoundAssignmentEnd(int java_operator_kind);
      public native void cactionDoStatement();
      public native void cactionDoubleLiteral();
      public native void cactionEmptyStatement();
      public native void cactionEqualExpression();
+     public native void cactionEqualExpressionEnd();
      public native void cactionExtendedStringLiteral();
      public native void cactionFalseLiteral();
      public native void cactionFieldDeclaration();
@@ -104,6 +110,7 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionForeachStatement();
      public native void cactionForStatement();
      public native void cactionIfStatement();
+     public native void cactionIfStatementEnd();
 
   // DQ (4/16/2011): I can't seem to get Boolean values to pass through the JNI C++ interface (so I will use an integer since that works fine).
   // public native void cactionImportReference(String path);
@@ -112,7 +119,8 @@ class JavaParser  implements Callable<Boolean>
 
      public native void cactionInitializer();
      public native void cactionInstanceOfExpression();
-     public native void cactionIntLiteral();
+  // public native void cactionIntLiteral();
+     public native void cactionIntLiteral(int value);
      public native void cactionJavadoc();
      public native void cactionJavadocClassScope();
      public native void cactionJavadocAllocationExpression();
@@ -139,13 +147,15 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionJavadocSingleTypeReferenceClassScope();
      public native void cactionLabeledStatement();
      public native void cactionLocalDeclaration(String variableName);
+     public native void cactionLocalDeclarationInitialization();
      public native void cactionLongLiteral();
      public native void cactionMarkerAnnotation();
      public native void cactionMemberValuePair();
      public native void cactionStringLiteralConcatenation();
      public native void cactionNormalAnnotation();
      public native void cactionNullLiteral();
-     public native void cactionOR_OR_Expression();
+     public native void cactionORORExpression();
+     public native void cactionORORExpressionEnd();
      public native void cactionParameterizedQualifiedTypeReference();
      public native void cactionParameterizedQualifiedTypeReferenceClassScope();
      public native void cactionParameterizedSingleTypeReference();
@@ -161,7 +171,7 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionQualifiedTypeReferenceClassScope();
      public native void cactionReturnStatement();
      public native void cactionSingleMemberAnnotation();
-     public native void cactionSingleNameReference();
+     public native void cactionSingleNameReference(String variableName);
      public native void cactionSingleNameReferenceClassScope();
      public native void cactionSuperReference();
      public native void cactionSwitchStatement();
@@ -174,6 +184,7 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionTypeParameter();
      public native void cactionTypeParameterClassScope();
      public native void cactionUnaryExpression();
+     public native void cactionUnaryExpressionEnd(int java_operator_kind);
      public native void cactionWhileStatement();
      public native void cactionWildcard();
      public native void cactionWildcardClassScope();
