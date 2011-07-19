@@ -2671,6 +2671,10 @@ SideEffect::solveRMOD(CallMultiGraph *multigraph, long projectId,
   
   typedef size_type cg_vertex;
   std::vector < cg_vertex > component_number_vec(num_vertices(*multigraph));
+  
+  if (component_number_vec.empty())
+	  return;
+  
   boost::iterator_property_map < cg_vertex *, VertexIndexMap, cg_vertex, cg_vertex& >
     component_number(&component_number_vec[0], index_map);
   
