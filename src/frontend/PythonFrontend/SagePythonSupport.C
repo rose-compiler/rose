@@ -75,53 +75,29 @@ sage_appendStatements(PyObject *self, PyObject *args)
     Py_ssize_t stmtc = PyList_Size(py_stmts);
     for (int i = 0; i < stmtc; i++) {
         PyObject* capsule = PyList_GetItem(py_stmts, i);
-        ROSE_ASSERT(capsule != NULL);
+        ROSE_ASSERT(PyCapsule_CheckExact(capsule));
+
         SgStatement* sg_child = PyDecapsulate<SgStatement>(capsule);
-        if (sg_child == NULL) {
-            SgNode* sg_node = PyDecapsulate<SgNode>(capsule);
-            cout << "bad node: " << sg_node->class_name() << endl;
-        }
-        // SageInterface::appendStatement calls functions that assert because of
-        // (the lack of)? declaration statements in the given scopes. Until I suppress
-        // this behavior for Python, use this simple version of the appendStatement
-        // implementation:
-        //SageInterface::appendStatement(sg_child, sg_target);
         switch (sg_target->variantT()) {
-            case V_SgGlobal: {
-              SgGlobal* sg_global = isSgGlobal(sg_target);
-              SgDeclarationStatement* sg_decl_stmt = isSgDeclarationStatement(sg_child);
-              if (sg_decl_stmt == NULL) {
-                  sg_decl_stmt = SageBuilder::buildStmtDeclarationStatement(sg_child);
-              }
-              SageInterface::appendStatement(sg_decl_stmt, sg_global);
+            case V_SgBasicBlock:
+              break;
+            case V_SgFunctionDeclaration:
+              sg_target = isSgFunctionDeclaration(sg_target)->get_definition()->get_body();
+              break;
+            case V_SgLambdaRefExp:
+              sg_target = isSgLambdaRefExp(sg_target)->get_functionDeclaration()->get_definition()->get_body();
+              break;
+            case V_SgGlobal:
+            case V_SgClassDefinition:
+              sg_child = normalizeToDeclarationStatement(sg_child);
+              break;
+            default: {
+              cout << "Unhandled node type in sage_appendStatements: " << sg_target->class_name() << endl;
+              ROSE_ASSERT(false);
               break;
             }
-            case V_SgFunctionDeclaration: {
-              SgBasicBlock* body = isSgFunctionDeclaration(sg_target)->get_definition()->get_body();
-              ROSE_ASSERT(body);
-              ROSE_ASSERT(sg_child);
-              body->append_statement(sg_child);
-              sg_child->set_parent(body);
-              break;
-            }
-            case V_SgLambdaRefExp: {
-              SgBasicBlock* body = isSgLambdaRefExp(sg_target)->get_functionDeclaration()->get_definition()->get_body();
-              SageInterface::appendStatement(sg_child, body);
-              break;
-            }
-            case V_SgClassDefinition: {
-              SgClassDefinition* class_def = isSgClassDefinition(sg_target);
-              SgDeclarationStatement* sg_decl_stmt = isSgDeclarationStatement(sg_child);
-              if (sg_decl_stmt == NULL) {
-                  sg_decl_stmt = SageBuilder::buildStmtDeclarationStatement(sg_child);
-              }
-              SageInterface::appendStatement(sg_decl_stmt, class_def);
-              break;
-            }
-            default:
-              cerr << "Unhandled node type in sage_appendStatements: " << sg_target->class_name() << endl;
-              break;
         }
+        SageInterface::appendStatement(sg_child, sg_target);
     }
 
     return Py_None;
@@ -179,6 +155,17 @@ sage_buildFunctionParameterList(PyObject* self, PyObject* args) {
     }
 
     return PyEncapsulate(sg_params);
+}
+
+SgDeclarationStatement*
+normalizeToDeclarationStatement(SgStatement* stmt) {
+    ROSE_ASSERT(stmt != NULL);
+
+    SgDeclarationStatement* decl_stmt = isSgDeclarationStatement(stmt);
+    if (decl_stmt == NULL)
+        decl_stmt = SageBuilder::buildStmtDeclarationStatement(stmt);
+
+    return decl_stmt;
 }
 
 SgExpression*

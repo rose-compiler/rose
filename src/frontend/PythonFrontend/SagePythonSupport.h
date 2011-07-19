@@ -47,6 +47,13 @@ sage_buildFunctionParameterList(PyObject* args, PyObject* kwargs);
  */
 SgExpression* buildReference(char* id, SgScopeStatement* scope);
 
+/**
+ * Convenience function for wrapping arbitrary statements in
+ * SgDeclarationStatements, so that any statement can be placed in
+ * global or class scope.
+ */
+SgDeclarationStatement* normalizeToDeclarationStatement(SgStatement* stmt);
+
 template <typename SgNode_T>
 static int sage_converter(PyObject* object, void** address) {
     if (! PyObject_IsTrue(object)) {
