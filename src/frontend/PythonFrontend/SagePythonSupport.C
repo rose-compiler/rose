@@ -106,11 +106,15 @@ sage_appendStatements(PyObject *self, PyObject *args)
 PyObject*
 sage_buildInitializedName(PyObject* self, PyObject* args) {
     char *id;
-    if (! PyArg_ParseTuple(args, "s", &id))
+    SgExpression *sg_init_val = NULL;
+    if (! PyArg_ParseTuple(args, "s|O&", &id,
+                                         SAGE_CONVERTER(SgExpression), &sg_init_val))
         return NULL;
 
     SgType* sg_type = SageBuilder::buildVoidType();
-    SgInitializedName* sg_init_name = SageBuilder::buildInitializedName(id, sg_type);
+    SgInitializer* sg_init = (sg_init_val == NULL) ?
+        NULL : SageBuilder::buildAssignInitializer(sg_init_val);
+    SgInitializedName* sg_init_name = SageBuilder::buildInitializedName(id, sg_type, sg_init);
     return PyEncapsulate(sg_init_name);
 }
 

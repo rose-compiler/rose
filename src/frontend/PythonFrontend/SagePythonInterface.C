@@ -596,6 +596,29 @@ sage_buildIf(PyObject *self, PyObject *args)
 /*
  */
 PyObject*
+sage_buildImport(PyObject *self, PyObject *args)
+{
+    PyObject *py_names;
+    if (! PyArg_ParseTuple(args, "O!", &PyList_Type, &py_names))
+        return NULL;
+
+    SgImportStatement* sg_import = new SgImportStatement();
+    sg_import->set_definingDeclaration(sg_import);
+
+    SgExpressionPtrList& exprs = sg_import->get_import_list();
+    Py_ssize_t namec = PyList_Size(py_names);
+    for (int i = 0; i < namec; i++) {
+        SgExpression* expr = PyDecapsulate<SgExpression>( PyList_GetItem(py_names, i) );
+        exprs.push_back(expr);
+        expr->set_parent(sg_import);
+    }
+
+    return PyEncapsulate(sg_import);
+}
+
+/*
+ */
+PyObject*
 sage_buildKeyDatumPair(PyObject *self, PyObject *args)
 {
     SgExpression *sg_key, *sg_value;

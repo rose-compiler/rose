@@ -52,6 +52,7 @@ class Unparse_Python : public UnparseLanguageIndependentConstructs
           virtual void unparseForInitStatement(SgForInitStatement*, SgUnparse_Info&);
           virtual void unparseForStatement(SgForStatement*, SgUnparse_Info&);
           virtual void unparseIfStmt(SgIfStmt*, SgUnparse_Info&);
+          virtual void unparseImportStatement(SgImportStatement*, SgUnparse_Info&);
           virtual void unparseInitializedName(SgInitializedName*, SgUnparse_Info&);
           virtual void unparseKeyDatumList(SgKeyDatumList*, SgUnparse_Info&);
           virtual void unparseKeyDatumPair(SgKeyDatumPair*, SgUnparse_Info&);
