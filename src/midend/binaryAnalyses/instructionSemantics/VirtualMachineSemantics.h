@@ -431,7 +431,7 @@ public:
                 }
             }
 
-            /* Not found in intial state. But if we have a known address and a valid memory map then initialize the original
+            /* Not found in initial state. But if we have a known address and a valid memory map then initialize the original
              * state with data from the memory map. */      
             if (map && addr.is_known()) {
                 uint8_t buf[sizeof(uint64_t)];

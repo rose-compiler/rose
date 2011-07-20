@@ -654,12 +654,16 @@ namespace SymbolicSemantics {
         /** Computes bit-wise AND of two values. */
         template <size_t Len>
         ValueType<Len> and_(const ValueType<Len> &a, const ValueType<Len> &b) const {
+            if (a.is_known() && b.is_known())
+                return ValueType<Len>(a.known_value() ^ b.known_value());
             return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_BV_AND, a.expr, b.expr));
         }
 
         /** Returns true_, false_, or undefined_ depending on whether argument is zero. */
         template <size_t Len>
         ValueType<1> equalToZero(const ValueType<Len> &a) const {
+            if (a.is_known())
+                return a.known_value() ? false_() : true_();
             return ValueType<1>(new InternalNode(1, InsnSemanticsExpr::OP_ZEROP, a.expr));
         }
 
@@ -675,7 +679,9 @@ namespace SymbolicSemantics {
          *  bits. */
         template<size_t Len1, size_t Len2>
         ValueType<Len1+Len2> concat(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
-            return ValueType<Len1+Len2>(new InternalNode(Len1+Len2, InsnSemanticsExpr::OP_CONCAT, a.expr, b.expr));
+            if (a.is_known() && b.is_known())
+                return ValueType<Len1+Len2>(a.known_value() | (b.known_value() << Len1));
+            return ValueType<Len1+Len2>(new InternalNode(Len1+Len2, InsnSemanticsExpr::OP_CONCAT, b.expr, a.expr));
         }
 
         /** Returns second or third arg depending on value of first arg. "ite" means "if-then-else". */
@@ -705,54 +711,84 @@ namespace SymbolicSemantics {
         /** Returns position of least significant set bit; zero when no bits are set. */
         template <size_t Len>
         ValueType<Len> leastSignificantSetBit(const ValueType<Len> &a) const {
+            if (a.is_known()) {
+                uint64_t n = a.known_value();
+                for (size_t i=0; i<Len; ++i) {
+                    if (n & ((uint64_t)1 << i))
+                        return ValueType<Len>(i);
+                }
+                return ValueType<Len>((uint64_t)0);
+            }
             return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_LSSB, a.expr));
         }
 
         /** Returns position of most significant set bit; zero when no bits are set. */
         template <size_t Len>
         ValueType<Len> mostSignificantSetBit(const ValueType<Len> &a) const {
+            if (a.is_known()) {
+                uint64_t n = a.known_value();
+                for (size_t i=Len; i>0; --i) {
+                    if (n & ((uint64_t)1 << (i-1)))
+                        return ValueType<Len>(i-1);
+                }
+                return ValueType<Len>((uint64_t)0);
+            }
             return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_MSSB, a.expr));
         }
 
         /** Two's complement. */
         template <size_t Len>
         ValueType<Len> negate(const ValueType<Len> &a) const {
+            if (a.is_known())
+                return ValueType<Len>(-a.known_value());
             return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_NEGATE, a.expr));
         }
 
         /** Computes bit-wise OR of two values. */
         template <size_t Len>
         ValueType<Len> or_(const ValueType<Len> &a, const ValueType<Len> &b) const {
+            if (a.is_known() && b.is_known())
+                return ValueType<Len>(a.known_value() | b.known_value());
             return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_BV_OR, a.expr, b.expr));
         }
 
         /** Rotate bits to the left. */
         template <size_t Len, size_t SALen>
         ValueType<Len> rotateLeft(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
+            if (a.is_known() && sa.is_known())
+                return ValueType<Len>(IntegerOps::rotateLeft<Len>(a.known_value(), sa.known_value()));
             return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_ROL, sa.expr, a.expr));
         }
 
         /** Rotate bits to the right. */
         template <size_t Len, size_t SALen>
         ValueType<Len> rotateRight(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
+            if (a.is_known() && sa.is_known())
+                return ValueType<Len>(IntegerOps::rotateRight<Len>(a.known_value(), sa.known_value()));
             return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_ROR, sa.expr, a.expr));
         }
 
         /** Returns arg shifted left. */
         template <size_t Len, size_t SALen>
         ValueType<Len> shiftLeft(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
+            if (a.is_known() && sa.is_known())
+                return ValueType<Len>(IntegerOps::shiftLeft<Len>(a.known_value(), sa.known_value()));
             return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_SHL0, sa.expr, a.expr));
         }
 
         /** Returns arg shifted right logically (no sign bit). */
         template <size_t Len, size_t SALen>
         ValueType<Len> shiftRight(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
+            if (a.is_known() && sa.is_known())
+                return ValueType<Len>(IntegerOps::shiftRightLogical<Len>(a.known_value(), sa.known_value()));
             return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_SHR0, sa.expr, a.expr));
         }
 
         /** Returns arg shifted right arithmetically (with sign bit). */
         template <size_t Len, size_t SALen>
         ValueType<Len> shiftRightArithmetic(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
+            if (a.is_known() && sa.is_known())
+                return ValueType<Len>(IntegerOps::shiftRightArithmetic<Len>(a.known_value(), sa.known_value()));
             return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_ASR, sa.expr, a.expr));
         }
 
@@ -765,42 +801,59 @@ namespace SymbolicSemantics {
         /** Divides two signed values. */
         template <size_t Len1, size_t Len2>
         ValueType<Len1> signedDivide(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
+            if (a.is_known() && b.is_known() && 0!=b.known_value())
+                return ValueType<Len1>(IntegerOps::signExtend<Len1, 64>(a.known_value()) /
+                                       IntegerOps::signExtend<Len2, 64>(b.known_value()));
             return ValueType<Len1>(new InternalNode(Len1, InsnSemanticsExpr::OP_SDIV, a.expr, b.expr));
         }
 
         /** Calculates modulo with signed values. */
         template <size_t Len1, size_t Len2>
         ValueType<Len2> signedModulo(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
+            if (a.is_known() && b.is_known() && 0!=b.known_value())
+                return ValueType<Len2>(IntegerOps::signExtend<Len1, 64>(a.known_value()) %
+                                       IntegerOps::signExtend<Len2, 64>(b.known_value()));
             return ValueType<Len2>(new InternalNode(Len2, InsnSemanticsExpr::OP_SMOD, a.expr, b.expr));
         }
 
         /** Multiplies two signed values. */
         template <size_t Len1, size_t Len2>
         ValueType<Len1+Len2> signedMultiply(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
+            if (a.is_known() && b.is_known())
+                return ValueType<Len1+Len2>(IntegerOps::signExtend<Len1, 64>(a.known_value()) *
+                                            IntegerOps::signExtend<Len2, 64>(b.known_value()));
             return ValueType<Len1+Len2>(new InternalNode(Len1+Len2, InsnSemanticsExpr::OP_SMUL, a.expr, b.expr));
         }
 
         /** Divides two unsigned values. */
         template <size_t Len1, size_t Len2>
         ValueType<Len1> unsignedDivide(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
+            if (a.is_known() && b.is_known() && 0!=b.known_value())
+                return ValueType<Len1>(a.known_value() / b.known_value());
             return ValueType<Len1>(new InternalNode(Len1, InsnSemanticsExpr::OP_UDIV, a.expr, b.expr));
         }
 
         /** Calculates modulo with unsigned values. */
         template <size_t Len1, size_t Len2>
         ValueType<Len2> unsignedModulo(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
+            if (a.is_known() && b.is_known() && 0!=b.known_value())
+                return ValueType<Len2>(a.known_value() % b.known_value());
             return ValueType<Len2>(new InternalNode(Len2, InsnSemanticsExpr::OP_UMOD, a.expr, b.expr));
         }
 
         /** Multiply two unsigned values. */
         template <size_t Len1, size_t Len2>
         ValueType<Len1+Len2> unsignedMultiply(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
+            if (a.is_known() && b.is_known())
+                return ValueType<Len1+Len2>(a.known_value()*b.known_value());
             return ValueType<Len1+Len2>(new InternalNode(Len1+Len2, InsnSemanticsExpr::OP_UMUL, a.expr, b.expr));
         }
 
         /** Computes bit-wise XOR of two values. */
         template <size_t Len>
         ValueType<Len> xor_(const ValueType<Len> &a, const ValueType<Len> &b) const {
+            if (a.is_known() && b.is_known())
+                return ValueType<Len>(a.known_value() ^ b.known_value());
             return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_BV_XOR, a.expr, b.expr));
         }
     };
