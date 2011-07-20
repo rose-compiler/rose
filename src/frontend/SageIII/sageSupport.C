@@ -1043,7 +1043,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
                if (get_binary_only() == true)
                   {
                     printf ("This may be an error, since the library archive should be treated as a source file for binary analysis. \n");
-                    ROSE_ASSERT(false);
+                    //ROSE_ASSERT(false);
                   }
              }
 

@@ -18,6 +18,7 @@ class DeleteStmtLoopInfo;
 class InsertStmtLoopInfo;
 class SplitStmtInfo;
 class SplitStmtInfo2;
+class LoopTreeCodeGenInfo;
 
 class LoopTreeObserver
 {
@@ -33,7 +34,8 @@ class LoopTreeObserver
                { if (next != 0) next->UpdateDistNode( info ); }
    virtual void UpdateSwapNode( const SwapNodeInfo &info)
                { if (next != 0) next->UpdateSwapNode( info ); }
-
+   virtual void UpdateCodeGen(const LoopTreeCodeGenInfo& info)
+               { if (next != 0) next->UpdateCodeGen( info ); }
    virtual void UpdateSplitStmt( const SplitStmtInfo &info)
                { if (next != 0) next->UpdateSplitStmt( info ); }
    virtual void UpdateSplitStmt2( const SplitStmtInfo2 &info)
@@ -56,13 +58,25 @@ class LoopTreeObserver
 
 class LoopTreeObserveInfo  : public ObserveInfo<LoopTreeObserver>
 {
-  LoopTreeNode *orig;
+  const LoopTreeNode *orig;
  protected:
-  LoopTreeObserveInfo( LoopTreeNode *n ) { orig = n; }
+  LoopTreeObserveInfo( const LoopTreeNode *n ) { orig = n; }
  public:
   virtual ~LoopTreeObserveInfo() {}
 
-  LoopTreeNode * GetObserveNode() const { return orig; }
+  const LoopTreeNode * GetObserveNode() const { return orig; }
+};
+
+class LoopTreeCodeGenInfo : public LoopTreeObserveInfo
+{
+  AstNodePtr res;
+ public:
+   LoopTreeCodeGenInfo( const LoopTreeNode *n, const AstNodePtr& _res) 
+      : LoopTreeObserveInfo(n), res(_res) {}
+   virtual ~LoopTreeCodeGenInfo() {}
+   virtual void UpdateObserver( LoopTreeObserver &o) const
+       { o.UpdateCodeGen( *this ); }
+   AstNodePtr GetAST() const { return res; }
 };
 
 class DeleteNodeInfo : public LoopTreeObserveInfo

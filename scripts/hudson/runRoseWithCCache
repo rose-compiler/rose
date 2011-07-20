@@ -107,7 +107,8 @@ CONFIGURE_FLAGS="\
 	--with-java=${ROSE_TEST_JAVA_PATH} \
 	--with-ROSE_LONG_MAKE_CHECK_RULE=yes \
 	--with-C_DEBUG=-g \
-	--with-CXX_WARNINGS=-Wall"
+	--with-CXX_WARNINGS=-Wall \
+    --with-CXX_OPTIMIZE=-03"
 #########################################################################################
 #  i386 
 # 
@@ -288,7 +289,7 @@ case "$ROSE_TEST_BUILD_STYLE" in
     ################################################################################
     # MAKE
     #
-    runBuildStep make "make_output.txt"
+    #runBuildStep make "make_output.txt"
     ################################################################################
     # MAKE CHECK
     #

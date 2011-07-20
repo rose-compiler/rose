@@ -3,7 +3,7 @@
 
 #include "SymbolicVal.h"
 #include <map>
-//! A single variable's bound
+
 class SingleValBound : public MapObject<SymbolicVal, SymbolicBound>
 {
   SymbolicVal val;
@@ -68,30 +68,25 @@ class VarInfo : public MapObject<SymbolicVal, SymbolicBound>
 
 };
 
-
-// DQ (11/27/2009): When using MSVC, this should be using "typename" instead of "class"
-// Note that this might be the better fix and should work for Linux as well (g++).
-// Another likely related problem is the "interface" is a keyword in MSVC.
-// So I have changed to name to avoid requiring that we turn off MS language extensions.
-template <class Stmt, typename InterfaceArg>
+template <class Stmt, class Interface>
 class SymbolicBoundAnalysis 
   : public MapObject<SymbolicVal, SymbolicBound>, private SymbolicVisitor
 {
  protected:
-  InterfaceArg interfaceClass;
+  Interface interface;
   SymbolicBound result;
   Stmt node, ances;
   void VisitVar( const SymbolicVar& var)
    { result = GetBound(var); }
  public:
-  SymbolicBoundAnalysis(InterfaceArg _interface, Stmt n, Stmt a = 0)
-      : interfaceClass(_interface), node(n), ances(a) {}
+  SymbolicBoundAnalysis(Interface _interface, Stmt n, Stmt a = 0)
+      : interface(_interface), node(n), ances(a) {}
   SymbolicBound GetBound(const SymbolicVar& var, Stmt* stop = 0)
        {
          SymbolicBound tmp;
          Stmt n = node; 
-         for ( ; n != ances; n = interfaceClass.GetParent(n)) {
-             VarInfo info = interfaceClass.GetVarInfo(n);
+         for ( ; n != ances; n = interface.GetParent(n)) {
+             VarInfo info = interface.GetVarInfo(n);
              if (info.IsTop())
                 continue;
              if (info.GetVar() == var) {
@@ -114,26 +109,26 @@ class SymbolicBoundAnalysis
    }
 };
 
-template <class Stmt, class InterfaceArg>
-class SymbolicConstBoundAnalysis : public SymbolicBoundAnalysis<Stmt,InterfaceArg> 
+template <class Stmt, class Interface>
+class SymbolicConstBoundAnalysis : public SymbolicBoundAnalysis<Stmt,Interface> 
 {
  protected:
-  SymbolicBoundAnalysis<Stmt,InterfaceArg>::result;
-  SymbolicBoundAnalysis<Stmt,InterfaceArg>::ances;
-  SymbolicBoundAnalysis<Stmt,InterfaceArg>::interfaceClass;
-  SymbolicBoundAnalysis<Stmt,InterfaceArg>::node;
+  SymbolicBoundAnalysis<Stmt,Interface>::result;
+  SymbolicBoundAnalysis<Stmt,Interface>::ances;
+  SymbolicBoundAnalysis<Stmt,Interface>::interface;
+  SymbolicBoundAnalysis<Stmt,Interface>::node;
  private:
   void VisitVar( const SymbolicVar& var)
    { result = GetConstBound(var); }
  public:
-  SymbolicConstBoundAnalysis(InterfaceArg _interface, Stmt n, Stmt a )
-      : SymbolicBoundAnalysis<Stmt,InterfaceArg>(_interface,n,a) {}
+  SymbolicConstBoundAnalysis(Interface _interface, Stmt n, Stmt a )
+      : SymbolicBoundAnalysis<Stmt,Interface>(_interface,n,a) {}
   SymbolicBound GetConstBound(const SymbolicVar& var)
        {
          Stmt n;
-         SymbolicBound tmp = SymbolicBoundAnalysis<Stmt,InterfaceArg>::GetBound(var, &n);
+         SymbolicBound tmp = SymbolicBoundAnalysis<Stmt,Interface>::GetBound(var, &n);
          if (n != ances) {
-            SymbolicBoundAnalysis<Stmt,InterfaceArg> next(interfaceClass,interfaceClass.GetParent(n),ances); 
+            SymbolicBoundAnalysis<Stmt,Interface> next(interface,interface.GetParent(n),ances); 
             if (tmp.lb.IsNIL())
                 tmp.lb = var;
             if (tmp.ub.IsNIL())
@@ -142,8 +137,8 @@ class SymbolicConstBoundAnalysis : public SymbolicBoundAnalysis<Stmt,InterfaceAr
             tmp.ub = GetValBound(tmp.ub,next).ub;
          }
          else if (tmp.lb.IsNIL() && tmp.ub.IsNIL()) {
-            for (n = node ; n != ances; n = interfaceClass.GetParent(n)) {
-               VarInfo info = interfaceClass.GetVarInfo(n);
+            for (n = node ; n != ances; n = interface.GetParent(n)) {
+               VarInfo info = interface.GetVarInfo(n);
                if (info.IsTop())
                   continue;
                SymbolicCond cond(REL_LE, info.GetBound().lb, info.GetBound().ub);

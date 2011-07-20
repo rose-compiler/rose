@@ -447,6 +447,8 @@ void RoseBin_FILE::process_expression_tree_query( ) {
     exprTree.expr_type = atoi(vec_expression_tree_1[i].expr_type.c_str());
     exprTree.symbol = vec_expression_tree_1[i].symbol;
     
+    if (vec_expression_tree_1[i].immediate != "NULL")
+    {
       errno = 0;
       exprTree.immediate = strtol(vec_expression_tree_1[i].immediate.c_str(), NULL, 10);
       if (errno != 0) {
@@ -454,6 +456,11 @@ void RoseBin_FILE::process_expression_tree_query( ) {
         exprTree.immediate = strtoul(vec_expression_tree_1[i].immediate.c_str(), NULL, 10);
         ROSE_ASSERT (errno == 0);
       }
+    }
+    else
+    {
+        exprTree.immediate = 0;
+    }
       if (RoseBin_support::DEBUG_MODE())
         cout << "immediate = (char*)" << exprTree.immediate << endl;
 

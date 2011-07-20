@@ -8,7 +8,7 @@ by many other open source projects such as the Linux kernel, Perl,
 Eclipse, Gnome, KDE, Android, Debian, and others.  Being
 "distributed", Git uses a slightly different work flow and terminology
 than centralized systems like Subversion and CVS.
-
+ 
 If you're coming from a centralized system, you may have to unlearn a
 few of the things you've become accustomed to.  For example, you
 generally don't checkout out a branch from a central repo, but rather

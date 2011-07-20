@@ -152,24 +152,6 @@ int main(int argc, char** argv)
 		return 1;
 	}
     
-    ClassHierarchyWrapper hierarchy(project);
-    
-    vector<SgClassDefinition*> classDefs = SageInterface::querySubTree<SgClassDefinition>(project, V_SgClassDefinition);
-    
-    foreach(SgClassDefinition* classDef, classDefs)
-    {
-        printf("Found class %s\n", classDef->get_declaration()->get_name().str());
-        printf("\tMangled name: %s\n", classDef->get_declaration()->get_mangled_name().str());
-        printf("\tSubclasses: ");
-        
-        const ClassHierarchyWrapper::ClassDefSet& subclasses = hierarchy.getSubclasses(classDef);
-        foreach(SgClassDefinition* subclass, subclasses)
-        {
-            printf("%s ", subclass->get_declaration()->get_name().str());
-        }
-        printf("\n\n");
-    }
-
 	//Write out basic graphs
 	if (SgProject::get_verbose() > 0)
 	{

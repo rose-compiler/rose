@@ -37,6 +37,8 @@ test_unparser() {
     sample="$(basename $sample).new"
     if [ -n "$cleanup" ]; then
 	rm -f rose_$sample.s $sample.new $sample.dump
+    elif [ "${sample%.a.new}" != "$sample" ]; then
+	: we do not unparse archives yet
     else
 	(set -x; ./execFormatsTest -rose:read_binary_file_format_only -rose:binary $sample) || return 1
     fi
