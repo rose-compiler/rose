@@ -427,8 +427,10 @@ BUILD_BINARY_PROTO(OrOp)
 BUILD_BINARY_PROTO(PlusAssignOp)
 BUILD_BINARY_PROTO(PntrArrRefExp)
 BUILD_BINARY_PROTO(RshiftAssignOp)
+BUILD_BINARY_PROTO(JavaUnsignedRshiftAssignOp)
 
 BUILD_BINARY_PROTO(RshiftOp)
+BUILD_BINARY_PROTO(JavaUnsignedRshiftOp)
 BUILD_BINARY_PROTO(ScopeOp)
 BUILD_BINARY_PROTO(SubtractOp)
 BUILD_BINARY_PROTO(XorAssignOp)
@@ -570,6 +572,9 @@ SgSizeOfOp* buildSizeOfOp_nfi(SgExpression* exp);
 SgSizeOfOp* buildSizeOfOp(SgType* type = NULL);
 SgSizeOfOp* buildSizeOfOp_nfi(SgType* type);
 
+// DQ (7/18/2011): Added support for SgJavaInstanceOfOp
+//! This is part of Java specific operator support.
+SgJavaInstanceOfOp* buildJavaInstanceOfOp(SgExpression* exp = NULL, SgType* type = NULL);
 
 
 //@}

@@ -31,5 +31,7 @@ public class test2011_17
        // unsigned y_u = 8;
        // unsigned z_u = 9;
           x = y >>> z;
+
+          x = y != z;
         }
    }
