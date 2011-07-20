@@ -105,6 +105,7 @@ libroseLibraries = \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/outsideInterface/libarrayOptimization.la \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/prepostTransformation/libprepostloop.la \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/slicing/libslicing.la \
+   $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la \
    $(top_builddir)/src/midend/programTransformation/ompLowering/libompLowering.la \
    $(top_builddir)/src/midend/programTransformation/constantFolding/libconstantFolding.la \
    $(top_builddir)/src/midend/programTransformation/finiteDifferencing/libfiniteDifferencing.la \

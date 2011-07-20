@@ -1,6 +1,8 @@
 
 #include <DepRel.h>
+#include <GraphIO.h>
 #include <LoopTreeDepComp.h>
+#include <LoopTreeTransform.h>
 #include <DepGraphTransform.h>
 #include <DGBaseGraphImpl.h>
 #include <CompSliceDepGraph.h>
@@ -38,22 +40,24 @@ CompSliceDepGraphCreate( LoopTreeDepComp &comp, DependenceHoisting& op,
     LoopTreeNode *s2 = comp.GetTreeNode(n2);
  
     CompSliceDepGraphNode *src = treeMap.Map( s1 ), *snk = treeMap.Map(s2);
-    if (src == snk)
+    if (src == snk) {
       continue;
-    CompSliceNest &nest1 = src->GetInfo(), &nest2 = snk->GetInfo();
-    int dim1 = nest1.NumberOfEntries(), dim2 = nest2.NumberOfEntries();
+   }
+    CompSliceNest *nest1 = src->GetInfo().GetNest(), *nest2 = snk->GetInfo().GetNest();
+    int dim1 = (nest1==0)? 0 : nest1->NumberOfEntries();
+    int dim2 = (nest2==0)? 0 : nest2->NumberOfEntries();
     DepInfo dep = DepInfoGenerator::GetBottomDepInfo(dim1, dim2);
     for (int i = 0; i < dim1; i++) {
-       CompSlice::SliceStmtInfo info1 = nest1[i]->QuerySliceStmtInfo(s1);
-       int level1 = info1.loop->LoopLevel();
-       for (int j = 0; j < dim2; j++) {
-          CompSlice::SliceStmtInfo info2 = nest2[j]->QuerySliceStmtInfo(s2);
-          int level2 = info2.loop->LoopLevel();
-          DepRel rel = edge->GetInfo().Entry( level1, level2);
-          rel.IncreaseAlign(info1.align - info2.align);
-          dep.Entry(i,j) = rel;
-       }
-    } 
+        CompSlice::SliceStmtInfo info1=nest1->Entry(i)->QuerySliceStmtInfo(s1);
+        int level1 = info1.loop->LoopLevel();
+        for (int j = 0; j < dim2; j++) {
+           CompSlice::SliceStmtInfo info2=nest2->Entry(j)->QuerySliceStmtInfo(s2);
+           int level2 = info2.loop->LoopLevel();
+           DepRel rel = edge->GetInfo().Entry( level1, level2);
+           rel.IncreaseAlign(info1.align - info2.align);
+           dep.Entry(i,j) = rel;
+        }
+    }
     CreateEdge(src, snk, dep);
    }
 }
@@ -67,29 +71,39 @@ CompSliceDepGraphNode ::
 CompSliceDepGraphNode(MultiGraphCreate* g, LoopTreeDepComp &c, DependenceHoisting &op)
      : MultiGraphElem(g)
       { 
-        vec.AttachObserver(*this);
         LoopTreeNode *r = c.GetLoopTreeRoot();
-        if (r->ContainLoop())
-           op.Analyze(c, vec);
-        rootList.AppendLast(r);
+        if (r->ContainLoop()) {
+           FullNestInfo* info = new FullNestInfo();
+           op.Analyze(c, info->vec);
+           if (info->vec.NumberOfEntries() > 0) {
+              info->vec.AttachObserver(*this);
+              impl = info;
+              return;
+           }
+           delete info;
+        }
+        EmptyNestInfo* info = new EmptyNestInfo(r);
+        impl = info;
       }
 CompSliceDepGraphNode:: 
 CompSliceDepGraphNode(MultiGraphCreate* g, LoopTreeDepComp &c, DependenceHoisting& op,
                         LoopTreeTransDepGraphCreate *t)
      : MultiGraphElem(g)
       { 
-        vec.AttachObserver(*this);
         LoopTreeNode *r = c.GetLoopTreeRoot();
-        if (r->ContainLoop())
-           op.Analyze(c,t,vec);
-        rootList.AppendLast(r);
+        if (r->ContainLoop()) {
+           FullNestInfo* info = new FullNestInfo();
+           op.Analyze(c,t, info->vec);
+           if (info->vec.NumberOfEntries() > 0) {
+              info->vec.AttachObserver(*this);
+              impl = info;
+              return; 
+           }
+           delete info;
+        }
+        EmptyNestInfo* info = new EmptyNestInfo(r);
+        impl = info;
       }
-
-LoopTreeNodeIterator CompSliceDepGraphNode :: GetSliceRootIterator() const
-{
-  SinglyLinkedListWrap<LoopTreeNode*>::Iterator p(rootList);
-  return new IteratorImplTemplate<LoopTreeNode*, SinglyLinkedListWrap<LoopTreeNode*>::Iterator>(p);
-}
 
 void CompSliceDepGraphNode:: UpdateSwap(const CompSliceNestSwapInfo &info)
 {
@@ -102,17 +116,50 @@ void CompSliceDepGraphNode:: UpdateFusion(const CompSliceNestFusionInfo& info)
 {
  CompSliceDepGraphCreate* graph =
     static_cast<CompSliceDepGraphCreate*>(GetGraphCreate());
- CompSliceDepGraphNode* that = graph->QueryDepNode(&info.GetSliceNest2());
- rootList += that->rootList;
+ const CompSliceNest& g1 = info.GetSliceVec();
+ const CompSliceNest& g2 = info.GetSliceNest2();
+ CompSliceDepGraphNode* that = graph->QueryDepNode(&g2);
+
+    if (that->impl->innerNest != 0 || impl->innerNest != 0) {
+       NestInfo* p = impl->innerNest, *q = that->impl->innerNest;
+       if (p == 0) {
+          EmptyNestInfo* info = new EmptyNestInfo();
+          p = impl->innerNest = info;
+          for (CompSlice::ConstStmtIterator stmts = g1[0]->GetConstStmtIterator(); !stmts.ReachEnd(); ++stmts) {
+              LoopTreeNode* cur = stmts.Current();
+              if (!g2[0]->QuerySliceStmt(cur))
+                info->nodes.insert(cur);
+           }
+       }
+       if (q == 0) 
+          q = new EmptyNestInfo(that->impl->GetNest()->Entry(0));
+       while (p->innerNest != 0) p = p->innerNest;
+       p->innerNest = q;
+    }
+
  FuseDepGraphNode(graph, this, that);
 }
 
 void CompSliceDepGraphNode::
 UpdateDeleteEntry( const CompSliceNestDeleteEntryInfo &info)
 {
+  int index = info.GetIndex();
   CompSliceDepGraphCreate* graph =
       static_cast<CompSliceDepGraphCreate*>(GetGraphCreate());
-  DepGraphNodeRemoveLoop( graph, this, info.GetIndex());
+  DepGraphNodeRemoveLoop( graph, this, index);
+
+  if (!info.SaveAsInner()) return;
+
+  const CompSliceNest& sliceVec = info.GetSliceVec();
+  int size = sliceVec.NumberOfEntries();
+  if (impl->innerNest == 0) {
+       impl->innerNest = new FullNestInfo(const_cast<CompSlice*>(sliceVec[index]),size);
+  }
+  else {
+      FullNestInfo* fullImpl = dynamic_cast<FullNestInfo*>(impl->innerNest);
+      assert(fullImpl!=0 && fullImpl->vec[0]->SliceCommonStmt(sliceVec[index]));
+      fullImpl->vec.Append(const_cast<CompSlice*>(sliceVec[index]));
+   }
 }
 
 void CompSliceDepGraphNode::
@@ -178,3 +225,25 @@ CreateEdge( CompSliceDepGraphNode *n1, CompSliceDepGraphNode *n2, const DepInfo 
        }
 
 
+LoopTreeNode* CompSliceDepGraphNode::FullNestInfo:: 
+GenXformRoot(LoopTreeNode* top) const
+{
+   if (vec.NumberOfEntries() == 0)
+    {
+      std::cerr << "error: empty slice : " << vec.toString() << "\n";
+      assert(0);
+    }
+   const CompSlice* cur = vec[0];
+   CompSliceSelect sel(cur);
+   LoopTreeNode* res = LoopTreeDistributeNode()(top, sel,LoopTreeDistributeNode::BEFORE);
+   assert(res != 0);
+   return res;
+}
+
+LoopTreeNode* CompSliceDepGraphNode::EmptyNestInfo:: 
+GenXformRoot(LoopTreeNode* top) const
+{
+  SelectSTLSet<LoopTreeNode*> sel(nodes);
+  LoopTreeNode* res = LoopTreeDistributeNode()(top, sel,LoopTreeDistributeNode::BEFORE);
+  return res;
+}

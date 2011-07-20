@@ -1,0 +1,65 @@
+/*
+   POET : Parameterized Optimizations for Empirical Tuning
+   Copyright (c)  2008,  Qing Yi.  All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+ 1. Redistributions of source code must retain the above copyright notice,
+    this list of conditions and the following disclaimer.
+ 2. Redistributions in binary form must reproduce the above copyright notice,
+    this list of conditions and the following disclaimer in the documentation
+    and/or other materials provided with the distribution.
+ 3. Neither the name of UTSA nor the names of its contributors may be used to
+    endorse or promote products derived from this software without specific
+    prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISEDOF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+#ifndef POET_CONFIG_H
+#define POET_CONFIG_H
+
+typedef enum 
+  { POET_OP_NONE, POET_OP_DEBUG, POET_OP_PRINT, 
+    POET_OP_REPLACE, POET_OP_DUPLICATE, POET_OP_PERMUTE, POET_OP_REBUILD, 
+    POET_OP_TRACE, POET_OP_ERASE, POET_OP_COPY, POET_OP_SAVE, POET_OP_RESTORE, 
+    POET_OP_TYPEMATCH, POET_OP_TYPEMATCH_Q, POET_OP_ANNOT, POET_OP_ASTMATCH, 
+    POET_OP_EXP, POET_OP_VAR, POET_OP_CLEAR,
+    POET_OP_DELAY, POET_OP_APPLY, 
+    POET_OP_SPLIT, POET_OP_LEN, POET_OP_CODE, POET_OP_XFORM,POET_OP_MAP, 
+    POET_OP_CONCAT, POET_OP_TUPLE, POET_OP_LIST, POET_OP_LIST1, POET_OP_RANGE,
+    POET_OP_POND, POET_OP_PLUS, POET_OP_MINUS, POET_OP_UMINUS, POET_OP_MULT, POET_OP_DIVIDE, POET_OP_MOD, 
+    POET_OP_CAR, POET_OP_CDR, POET_OP_CONS, POET_OP_INSERT, POET_OP_AND, POET_OP_OR, POET_OP_NOT, 
+    TYPE_TOR, TYPE_LIST, TYPE_LIST1,
+    POET_OP_EQ, POET_OP_LT, POET_OP_LE, POET_OP_GT, POET_OP_GE, POET_OP_NE, POET_OP_DOT,
+    POET_OP_SEQ,POET_OP_IFELSE, POET_OP_CASE, 
+    POET_OP_FOR, POET_OP_FOREACH, POET_OP_FOREACHR, POET_OP_CONTINUE, 
+    POET_OP_BREAK, POET_OP_RETURN, POET_OP_ERROR} POETOperatorType;
+
+extern const char* OpName[];
+
+typedef enum {TYPE_ANY, TYPE_INT, TYPE_STRING, TYPE_ID, TYPE_NOT} POETTypeEnum; 
+extern const char* POETTypeName[];
+
+typedef enum {LVAR_UNKNOWN, LVAR_ATTR=1, LVAR_CODEPAR, LVAR_XFORMPAR, LVAR_OUTPUT, LVAR_TUNE, LVAR_TUNE_GROUP, LVAR_REG, LVAR_TRACE, LVAR_TRACE_OUTDATE } 
+  LocalVarType;
+
+typedef enum {LEX_DEFAULT, LEX_INPUT=1, LEX_NOANNOT=2, LEX_INPUT_NOANNOT=3, LEX_SYNTAX=4} 
+        LexState; 
+typedef enum {YACC_DEFAULT, YACC_CODE} YaccState;
+
+typedef enum {ASSIGN_VAR, CODE_VAR, XFORM_VAR, GLOBAL_VAR, CODE_OR_XFORM_VAR, ID_DEFAULT, GLOBAL_SCOPE} ParseID;
+
+typedef struct ParseConfig {void* ptr; ParseID config;} ParseConfig;
+#define YYSTYPE ParseConfig
+#endif
+

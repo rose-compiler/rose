@@ -1,7 +1,3 @@
-
-#include "MainWindow.h"
-
-
 #include <QSettings>
 #include <QFileDialog>
 #include <QDebug>
@@ -11,6 +7,7 @@
 
 #include <QListWidgetItem>
 
+#include "MainWindow.h"
 #include "qcodeedit.h"
 
 #include "RtedDebug.h"
@@ -140,9 +137,9 @@ void DbgMainWindow::on_actionEditorSettings_triggered()
 
 void DbgMainWindow::on_actionSingleStep_triggered()
 {
-	singleStep=true;
-	breakPoints1[file1] = ui->codeEdit1->getBreakPoints();
-	breakPoints2[file2] = ui->codeEdit2->getBreakPoints();
+  singleStep=true;
+  breakPoints1[file1] = ui->codeEdit1->getBreakPoints();
+  breakPoints2[file2] = ui->codeEdit2->getBreakPoints();
 
     dbgObj->startRtsi();
 }
@@ -153,13 +150,13 @@ void DbgMainWindow::on_actionResume_triggered()
     breakPoints1[file1] = ui->codeEdit1->getBreakPoints();
     breakPoints2[file2] = ui->codeEdit2->getBreakPoints();
 
-    cout << "Saved Breakpoints:" << endl;
+    std::cout << "Saved Breakpoints:" << std::endl;
     foreach(int bp, breakPoints1[file1])
-        cout << bp << " ";
+        std::cout << bp << " ";
 
     qDebug() << "bp2";
     foreach(int bp, breakPoints2[file2])
-        cout << bp << " ";
+        std::cout << bp << " ";
 
 
     dbgObj->startRtsi();
@@ -194,7 +191,7 @@ void DbgMainWindow::updateAllRsData(bool showAlways)
 
     // skip stepping over transformed code
     std::string filename1 = file1.toStdString();
-    //cout << "++++++++++++ file1 :" << filename1 << endl;
+    //std::cout << "++++++++++++ file1 :" << filename1 << std::endl;
     QString text = QString("Looking at: ");
     if (file1=="0") {
       singleStep=false;
@@ -207,7 +204,7 @@ void DbgMainWindow::updateAllRsData(bool showAlways)
       text.append(QString("%1").arg(row2));
     }
     addMessage(text);
-    
+
     if(!singleStep && !showAlways &&
        !breakPoints1[file1].contains(row1) &&
        !breakPoints2[file2].contains(row2))
@@ -262,7 +259,7 @@ void DbgMainWindow::updateTypeDisplay()
 void DbgMainWindow::on_treeMemorySystem_clicked(const QModelIndex & ind)
 {
     MemoryType * mt = qvariant_cast<MemoryType*>( ind.model()->data(ind,MemoryTypeRole));
-    ui->memGraphicsView->setMemoryType(mt);
+    ui->memGraphicsView->setMemoryType(*mt);
 }
 
 
@@ -288,9 +285,9 @@ void DbgMainWindow::updateMemoryDisplay()
 
     // GraphicsView
     MemoryManager * mm = RuntimeSystem::instance()->getMemManager();
-    if (mm->getAllocationSet().begin() != mm->getAllocationSet().end())
+    if (!mm->getAllocationSet().empty())
     {
-        ui->memGraphicsView->setMemoryType(*(mm->getAllocationSet().begin()));
+        ui->memGraphicsView->setMemoryType(mm->getAllocationSet().begin()->second);
     }
 }
 
@@ -328,4 +325,3 @@ void DbgMainWindow::updatePointerDisplay()
 
     ui->treePointer->setModel(pointerProxyModel);
 }
-
