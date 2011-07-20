@@ -1,6 +1,6 @@
 // Simplest java example (note that class name must match filename).
 
-public class test2011_19
+public class test2011_20
    {
   // This is the required "main" function.
      public static void main(String args[])
@@ -8,15 +8,6 @@ public class test2011_19
           int x = 7;
           int y = 8;
 
-          x = !y;
-          x = ~y;
-          x = -y;
-          x = +y;
-
-          x = y++;
-          x = y--;
-
-          x = ++y;
-          x = --y;
+          x = y > 0 ? 4 : 7;
         }
    }

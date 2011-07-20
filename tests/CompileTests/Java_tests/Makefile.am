@@ -24,13 +24,19 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2011_17.java \
      test2011_18.java \
      test2011_19.java \
+     test2011_20.java \
+     test2011_21.java \
+     test2011_22.java \
+     test2011_23.java \
+     test2011_24.java \
+     test2011_25.java \
      simple.java
 
 
 # This class does not match the file name.
 #    simple_fortran.java
 
-TESTCODE_CURRENTLY_FAILING =
+TESTCODE_CURRENTLY_FAILING = 
 
 noinst_headers = 
 
