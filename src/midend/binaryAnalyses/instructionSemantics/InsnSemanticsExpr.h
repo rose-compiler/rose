@@ -59,6 +59,16 @@ namespace InsnSemanticsExpr {
 
     typedef std::map<uint64_t, uint64_t> RenameMap;
 
+    class TreeNode;
+    class InternalNode;
+    class LeafNode;
+
+    class Visitor {
+    public:
+        virtual ~Visitor() {}
+        virtual void operator()(const TreeNode*) = 0;
+    };
+
     /** Any node of an expression tree for instruction semantics, from which the InternalNode and LeafNode classes are
      *  derived.  Every node has a specified number of significant bits that is constant over the life of the node.
      *
@@ -120,6 +130,13 @@ namespace InsnSemanticsExpr {
          *  the user may want to decrement the reference count for other reasons.  The dec_nrefs() method should be called the
          *  same number of times that inc_nrefs() was called. See also, documentation for the class. */
         size_t dec_nrefs() const { ROSE_ASSERT(nrefs>0); return --nrefs; }
+
+        /** Traverse the expression.  The expression is traversed in a depth-first visit, invoking the functor at each node of
+         *  the expression tree. */
+        virtual void depth_first_visit(Visitor*) const = 0;
+
+        /** Returns the variables appearing in the expression. */
+        std::set<const LeafNode*> get_variables() const;
     };
 
     /** Internal node of an expression tree for instruction semantics. Each internal node has an operator (constant for the
@@ -176,6 +193,9 @@ namespace InsnSemanticsExpr {
         /* see superclass, where this is pure virtual */
         virtual uint64_t get_value() const { ROSE_ASSERT(!"not a constant value"); return 0;}
 
+        /* see superclass, where this is pure virtual */
+        virtual void depth_first_visit(Visitor*) const;
+
         /** Returns the number of children. */
         size_t size() const { return children.size(); }
 
@@ -223,6 +243,9 @@ namespace InsnSemanticsExpr {
 
         /* see superclass, where this is pure virtual */
         virtual bool equal_to(const TreeNode *other, SMTSolver*) const;
+
+        /* see superclass, where this is pure virtual */
+        virtual void depth_first_visit(Visitor*) const;
     };
 };
 
