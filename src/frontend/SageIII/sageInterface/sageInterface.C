@@ -4318,7 +4318,8 @@ SageInterface::addTextForUnparser ( SgNode* astNode, string s, AstUnparseAttribu
    }
 
 
-
+#if 0
+// DQ (7/20/2011): Resolving conflict, this was added in previous work in dq-cxx-rc branch.
 // DQ (7/17/2011): Added function from cxx branch that I need here for the Java support.
 SgClassSymbol *
 SageInterface::lookupClassSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope)
@@ -4342,7 +4343,7 @@ SageInterface::lookupClassSymbolInParentScopes (const SgName &  name, SgScopeSta
 
      return symbol;
    }
-
+#endif
 
 
 
