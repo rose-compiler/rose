@@ -246,15 +246,26 @@ public:
 
         /** Arguments passed to memory callbacks.  Note that the @p how argument is always either read or write depending on
          *  the operation being performed, but the the @p req_perms argument might have other bits set.  For instance, when
-         *  fetching instructions, @p how will be read while @p req_perms will be execute. */
+         *  fetching instructions, @p how will be read while @p req_perms will be execute.
+         *
+         *  If a callback chooses to transfer data itself, it should use the @p buffer (the buffer contains the data for the
+         *  write callbacks, and should be filled in with results for read callbacks).  The buffer is allocated before the
+         *  callbacks are invoked, and is guaranteed to be at lease @p nbytes in length.  If the final callback returns true
+         *  (see call_memory_callbacks() for details) then the simulator transfers data as usual, otherwise it assumes that one
+         *  of the callbacks has transferred the data and the simulator uses @p nbytes_xfer as the return value of the memory
+         *  operation. */
         struct Args {
-            Args(RSIM_Process *process, MemoryMap::Protection how, unsigned req_perms, rose_addr_t va, size_t nbytes)
-                : process(process), how(how), req_perms(req_perms), va(va), nbytes(nbytes) {}
+            Args(RSIM_Process *process, MemoryMap::Protection how, unsigned req_perms, rose_addr_t va, size_t nbytes,
+                 void *buffer, size_t &nbytes_xfer/*out*/)
+                : process(process), how(how), req_perms(req_perms), va(va), nbytes(nbytes),
+                  buffer(buffer), nbytes_xfer(nbytes_xfer) {}
             RSIM_Process *process;              /**< The process whose memory is accessed. */
             MemoryMap::Protection how;          /**< How memory is being access. */
             unsigned req_perms;                 /**< Memory required permissions for access. */
             rose_addr_t va;                     /**< Virtual address for beginning of memory access. */
             size_t nbytes;                      /**< Size of memory access. */
+            void *buffer;                       /**< Buffer to be filled by read callbacks; contains data for writes. */
+            mutable size_t &nbytes_xfer;        /**< Amount of data transferred. */
         };
         virtual bool operator()(bool prev, const Args&) = 0;
     };
@@ -288,9 +299,16 @@ public:
      *  the callbacks.
      *
      *  When the simulator calls this function for pre-memory callbacks, it does so with @p prev set.  If the return value is
-     *  false, then the memory access fails. The post-memory callbacks are invoked regardless of whether the memory was
-     *  accessed, and the initial @p prev value for these callbacks is the return value from the last pre-memory callback (or
-     *  true if there were none).
+     *  false (i.e., the final callback returned false), then the simulator does not access specimen memory, but rather uses
+     *  the value saved into the buffer (if it was a read operation) and returns the number of transferred bytes.  If the
+     *  function returns true then the specimen memory operation proceeds as usual.  Memory write callbacks should not modify
+     *  the buffer.
+     *
+     *  The post-memory callbacks are invoked regardless of whether the memory was accessed, and the initial @p prev value for
+     *  these callbacks is the return value from the last pre-memory callback (or true if there were none).  The @p buffer and
+     *  @p nbytes_xfer contain the data and result of the memory operation and can be modified by post-memory callbacks if
+     *  desired (new values will be used regardless of the call_memory_callbacks() return value).  Memory write callbacks
+     *  should not modify the buffer, but may adjust the nbytes_xfer field.
      *
      *  The return value of the callbacks is ignored when the simulator is fetching instructions because the disassembler reads
      *  directly from process memory without going through the RSIM_Process memory interface.  However, we've added memory read
@@ -301,7 +319,7 @@ public:
      *  from this RSIM_Callbacks object, but those actions do not affect which callbacks are made by this invocation of
      *  call_memory_callbacks(). */
     bool call_memory_callbacks(When, RSIM_Process *process, MemoryMap::Protection how, unsigned req_perms,
-                               rose_addr_t va, size_t nbytes, bool prev);
+                               rose_addr_t va, size_t nbytes, void *buffer, size_t &nbytes_xfer, bool prev);
 
 
 

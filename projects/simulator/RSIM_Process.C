@@ -104,12 +104,13 @@ RSIM_Process::mem_write(const void *buf, rose_addr_t va, size_t size, unsigned r
 {
     size_t retval = 0;
     bool cb_status = callbacks.call_memory_callbacks(RSIM_Callbacks::BEFORE, this, MemoryMap::MM_PROT_WRITE, req_perms,
-                                                     va, size, true);
+                                                     va, size, (void*)buf, retval, true);
     RTS_WRITE(rwlock()) {
         if (cb_status)
             retval = map->write(buf, va, size, req_perms);
     } RTS_WRITE_END;
-    callbacks.call_memory_callbacks(RSIM_Callbacks::AFTER, this, MemoryMap::MM_PROT_WRITE, req_perms, va, size, cb_status);
+    callbacks.call_memory_callbacks(RSIM_Callbacks::AFTER, this, MemoryMap::MM_PROT_WRITE, req_perms,
+                                    va, size, (void*)buf, retval, cb_status);
     return retval;
 }
 
@@ -118,12 +119,13 @@ RSIM_Process::mem_read(void *buf, rose_addr_t va, size_t size, unsigned req_perm
 {
     size_t retval = 0;
     bool cb_status = callbacks.call_memory_callbacks(RSIM_Callbacks::BEFORE, this, MemoryMap::MM_PROT_READ, req_perms,
-                                                     va, size, true);
+                                                     va, size, buf, retval, true);
     RTS_READ(rwlock()) {
         if (cb_status)
             retval = map->read(buf, va, size, req_perms);
     } RTS_READ_END;
-    callbacks.call_memory_callbacks(RSIM_Callbacks::AFTER, this, MemoryMap::MM_PROT_READ, req_perms, va, size, cb_status);
+    callbacks.call_memory_callbacks(RSIM_Callbacks::AFTER, this, MemoryMap::MM_PROT_READ, req_perms, va, size,
+                                    buf, retval, cb_status);
     return retval;
 }
 
