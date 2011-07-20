@@ -73,6 +73,12 @@ x86win_SOURCES = x86win.C
 x86win_CPPFLAGS = $(ROSE_INCLUDES)
 x86win_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+# Robb's debugging area so he doesn't need to monkey with x86sim all the time
+noinst_PROGRAMS += x86robb
+x86robb_SOURCES = x86robb.C
+x86robb_CPPFLAGS = $(ROSE_INCLUDES)
+x86robb_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
 ###############################################################################################################################
 #  DEMOS
 ###############################################################################################################################
