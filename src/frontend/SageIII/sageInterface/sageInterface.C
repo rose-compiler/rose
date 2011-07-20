@@ -4319,6 +4319,30 @@ SageInterface::addTextForUnparser ( SgNode* astNode, string s, AstUnparseAttribu
 
 
 
+// DQ (7/17/2011): Added function from cxx branch that I need here for the Java support.
+SgClassSymbol *
+SageInterface::lookupClassSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope)
+   {
+  // DQ (5/7/2011): I think this is the better implementation that lookupVariableSymbolInParentScopes() should have.
+     SgClassSymbol* symbol = NULL;
+     if (cscope == NULL)
+          cscope = SageBuilder::topScopeStack(); 
+     ROSE_ASSERT(cscope != NULL);
+
+     while ((cscope != NULL) && (symbol == NULL))
+        {
+       // I think this will resolve SgAliasSymbols to be a SgClassSymbol where the alias is of a SgClassSymbol.
+          symbol = cscope->lookup_class_symbol(name);
+
+          if (cscope->get_parent() != NULL) // avoid calling get_scope when parent is not set
+               cscope = isSgGlobal(cscope) ? NULL : cscope->get_scope();
+            else
+               cscope = NULL;
+        }
+
+     return symbol;
+   }
+
 
 
 
