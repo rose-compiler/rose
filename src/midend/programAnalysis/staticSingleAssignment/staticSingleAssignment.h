@@ -31,6 +31,11 @@ namespace ssa_private
         {
             ROSE_ASSERT(funcDecl != NULL);
 
+            //Don't process any built-in functions
+            std::string filename = funcDecl->get_file_info()->get_filename();
+            if (filename.find("include") != std::string::npos)
+                return false;
+
             //Exclude compiler generated functions, but keep template instantiations
             if (funcDecl->get_file_info()->isCompilerGenerated() && !isSgTemplateInstantiationFunctionDecl(funcDecl)
                     && !isSgTemplateInstantiationMemberFunctionDecl(funcDecl))
