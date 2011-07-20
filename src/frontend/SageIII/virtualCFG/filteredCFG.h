@@ -18,7 +18,7 @@ namespace VirtualCFG
         FilterFunction filter;
 
       public:
-        FilteredCFGNode(CFGNode n):n(n)
+        FilteredCFGNode(const CFGNode& n):n(n)
         {
         }
 
@@ -32,7 +32,7 @@ namespace VirtualCFG
             filter = f;
         }
 
-        CFGNode toNode() const
+        const CFGNode& toNode() const
         {
             return n;
         }

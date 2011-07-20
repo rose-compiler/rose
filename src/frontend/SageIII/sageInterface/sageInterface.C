@@ -4312,6 +4312,30 @@ SageInterface::addTextForUnparser ( SgNode* astNode, string s, AstUnparseAttribu
 
 
 
+// DQ (7/17/2011): Added function from cxx branch that I need here for the Java support.
+SgClassSymbol *
+SageInterface::lookupClassSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope)
+   {
+  // DQ (5/7/2011): I think this is the better implementation that lookupVariableSymbolInParentScopes() should have.
+     SgClassSymbol* symbol = NULL;
+     if (cscope == NULL)
+          cscope = SageBuilder::topScopeStack(); 
+     ROSE_ASSERT(cscope != NULL);
+
+     while ((cscope != NULL) && (symbol == NULL))
+        {
+       // I think this will resolve SgAliasSymbols to be a SgClassSymbol where the alias is of a SgClassSymbol.
+          symbol = cscope->lookup_class_symbol(name);
+
+          if (cscope->get_parent() != NULL) // avoid calling get_scope when parent is not set
+               cscope = isSgGlobal(cscope) ? NULL : cscope->get_scope();
+            else
+               cscope = NULL;
+        }
+
+     return symbol;
+   }
+
 
 
 
@@ -6442,7 +6466,8 @@ bool SageInterface::loopUnrolling(SgForStatement* loop, size_t unrolling_factor)
   ArrayInterface array_interface (*annot);
   array_interface.initialize(fa, AstNodePtrImpl(func->get_definition()));
   array_interface.observe(fa);
-  LoopTransformInterface lpTrans(fa, array_interface);
+  LoopTransformInterface :: set_astInterface(fa);
+  LoopTransformInterface :: set_arrayInterface(&array_interface);
 
   // invoke the unrolling defined in Qing's code
   // the traversal will skip the input node ptr, so we pass loop's parent ptr instead
@@ -13200,7 +13225,8 @@ SageInterface::collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& rea
   ArrayInterface array_interface (*annot);
   array_interface.initialize(fa, AstNodePtrImpl(funcDef));
   array_interface.observe(fa);
-  LoopTransformInterface * lpTrans = new LoopTransformInterface(fa, array_interface);
+  LoopTransformInterface::set_arrayInfo(&array_interface);
+  LoopTransformInterface::set_astInterface(fa);
 
   // variables to store results
   DoublyLinkedListWrap<AstNodePtr> rRef1, wRef1;
@@ -13208,7 +13234,7 @@ SageInterface::collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& rea
   AstNodePtr s1 = AstNodePtrImpl(stmt);
 
   // Actual side effect analysis
-  if (!AnalyzeStmtRefs(*lpTrans, s1, cwRef1, crRef1))
+  if (!AnalyzeStmtRefs(fa, s1, cwRef1, crRef1))
   {
     cerr<<"error in side effect analysis!"<<endl;
     return false;
