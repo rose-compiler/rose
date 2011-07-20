@@ -17,7 +17,7 @@ extract_rose_required_ecj_source_files: JavaTraversal.class
 #	cp ${srcdir}/ecjROSE.jar ecjROSE.jar
 	@echo "In extract_rose_required_ecj_source_files: output the directory listing (debugging)."
 	@pwd
-	@echo "calling ls -l --full-time"
+	@echo "calling ls -l"
 	ls -l
 	@echo "after ls"
 
