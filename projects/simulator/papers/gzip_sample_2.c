@@ -3,8 +3,8 @@
  *   1. The "crc" variable is local and used only to initialize "c".  In real gzip, many of the functions have global variable
  *      side effects, and this was one.
  *
- *   2. The crc_32_tab table is a local array and initialized each time we call this function.  The original code initialized
- *      this table, a global array, statically.
+ *   2. The crc_32_tab was a statically initialized, global array in gzip.  We replace it with a function here, although our
+ *      function doesn't return the same values as in gzip.
  */
 
 #include <stdio.h>
@@ -32,14 +32,19 @@ updcrc(const unsigned char *s, unsigned n)
     return c ^ 0xffffffffL;
 }
 
+void
+show_result(const char *s)
+{
+    unsigned long crc = updcrc((const unsigned char*)s, strlen(s));
+    printf("s=\"%s\"; crc=0x%08lx\n", s, crc);
+}
+
 int
 main()
 {
 #if 1 /* we don't actually need to ever call updcrc() */
-    const char *s = "xx";
-    size_t n = strlen(s);
-    unsigned long crc = updcrc((const unsigned char*)s, n);
-    printf("s=\"%s\"; crc=0x%08lx\n", s, crc);
+    show_result("xxxx");
+    show_result("t$xV");
 #endif
     return 0;
 }
