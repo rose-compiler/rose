@@ -27,6 +27,7 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (MemberFunctionRefExp,   "MemberFunctionRefExp",   "MEMBER_FUNCTION_REF" );
      NEW_TERMINAL_MACRO (FunctionCallExp,        "FunctionCallExp",        "FUNC_CALL" );
      NEW_TERMINAL_MACRO (SizeOfOp,               "SizeOfOp",               "SIZEOF_OP" );
+     NEW_TERMINAL_MACRO (JavaInstanceOfOp,       "JavaInstanceOfOp",       "JAVA_INSTANCEOF_OP" );
 
 #if USE_UPC_IR_NODES
   // DQ and Liao (6/10/2008): Added new IR nodes specific to UPC.
@@ -91,6 +92,7 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (CommaOpExp,             "CommaOpExp",             "COMMA_OP" );
      NEW_TERMINAL_MACRO (LshiftOp,               "LshiftOp",               "LSHIFT_OP" );
      NEW_TERMINAL_MACRO (RshiftOp,               "RshiftOp",               "RSHIFT_OP" );
+     NEW_TERMINAL_MACRO (JavaUnsignedRshiftOp,   "JavaUnsignedRshiftOp",   "JAVA_UNSIGNED_RSHIFT_OP" );
      NEW_TERMINAL_MACRO (PntrArrRefExp,          "PntrArrRefExp",          "ARRAY_OP" );
      NEW_TERMINAL_MACRO (ScopeOp,                "ScopeOp",                "SCOPE_OP" );
      NEW_TERMINAL_MACRO (AssignOp,               "AssignOp",               "ASSIGN_OP" );
@@ -104,6 +106,7 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (XorAssignOp,            "XorAssignOp",            "XOR_ASSIGN_OP" );
      NEW_TERMINAL_MACRO (LshiftAssignOp,         "LshiftAssignOp",         "LSHIFT_ASSIGN_OP" );
      NEW_TERMINAL_MACRO (RshiftAssignOp,         "RshiftAssignOp",         "RSHIFT_ASSIGN_OP" );
+     NEW_TERMINAL_MACRO (JavaUnsignedRshiftAssignOp, "JavaUnsignedRshiftAssignOp", "JAVA_UNSIGNED_RSHIFT_ASSIGN_OP" );
 
   // DQ (12/13/2007): Added support for Fortran string concatenation operator
      NEW_TERMINAL_MACRO (ConcatenationOp,        "ConcatenationOp",        "CONCATENATION_OP" );
@@ -236,6 +239,7 @@ Grammar::setUpExpressions ()
           GreaterThanOp  | NotEqualOp       | LessOrEqualOp   | GreaterOrEqualOp | AddOp         | SubtractOp     | 
           MultiplyOp     | DivideOp         | IntegerDivideOp | ModOp            | AndOp         | OrOp           |
           BitXorOp       | BitAndOp         | BitOrOp         | CommaOpExp       | LshiftOp      | RshiftOp       |
+          JavaUnsignedRshiftOp | JavaUnsignedRshiftAssignOp |
           PntrArrRefExp  | ScopeOp          | AssignOp        | PlusAssignOp     | MinusAssignOp | AndAssignOp    |
           IorAssignOp    | MultAssignOp     | DivAssignOp     | ModAssignOp      | XorAssignOp   | LshiftAssignOp |
           RshiftAssignOp | ExponentiationOp | ConcatenationOp | PointerAssignOp  | MembershipOp  | NonMembershipOp |
@@ -250,14 +254,14 @@ Grammar::setUpExpressions ()
           "ValueExp","ValueExpTag", false);
 
      NEW_NONTERMINAL_MACRO (Expression,
-          UnaryOp             | BinaryOp                | ExprListExp         | VarRefExp           | ClassNameRefExp          |
-          FunctionRefExp      | MemberFunctionRefExp    | ValueExp            | FunctionCallExp     | SizeOfOp                 |
-          UpcLocalsizeofExpression| UpcBlocksizeofExpression| UpcElemsizeofExpression|
-          TypeIdOp            | ConditionalExp          | NewExp              | DeleteExp           | ThisExp                  |
-          RefExp              | Initializer             | VarArgStartOp       | VarArgOp            | VarArgEndOp              |
-          VarArgCopyOp        | VarArgStartOneOperandOp | NullExpression      | VariantExpression   | SubscriptExpression      |
-          ColonShapeExp       | AsteriskShapeExp        | /*UseOnlyExpression |*/ ImpliedDo         | IOItemExpression         |
-       /* UseRenameExpression | */ StatementExpression  | AsmOp               | LabelRefExp         | ActualArgumentExpression |
+          UnaryOp                  | BinaryOp                 | ExprListExp             | VarRefExp           | ClassNameRefExp          |
+          FunctionRefExp           | MemberFunctionRefExp     | ValueExp                | FunctionCallExp     | SizeOfOp                 |
+          UpcLocalsizeofExpression | UpcBlocksizeofExpression | UpcElemsizeofExpression | JavaInstanceOfOp    |
+          TypeIdOp                 | ConditionalExp           | NewExp                  | DeleteExp           | ThisExp                  |
+          RefExp                   | Initializer              | VarArgStartOp           | VarArgOp            | VarArgEndOp              |
+          VarArgCopyOp             | VarArgStartOneOperandOp  | NullExpression          | VariantExpression   | SubscriptExpression      |
+          ColonShapeExp            | AsteriskShapeExp         | /*UseOnlyExpression     |*/ ImpliedDo         | IOItemExpression         |
+       /* UseRenameExpression      | */ StatementExpression   | AsmOp                   | LabelRefExp         | ActualArgumentExpression |
           UnknownArrayOrFunctionReference               | PseudoDestructorRefExp | CAFCoExpression  |
           CudaKernelCallExp   | CudaKernelExecConfig    |  /* TV (04/22/2010): CUDA support */
           LambdaRefExp        | TupleExp                | ListExp             | KeyDatumList        | KeyDatumPair             |
@@ -494,11 +498,15 @@ Grammar::setUpExpressions ()
                                   "../Grammar/Expression.code" );
      RshiftOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
                                   "../Grammar/Expression.code" );
+     JavaUnsignedRshiftOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
+                                  "../Grammar/Expression.code" );
      MinusOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
                                   "../Grammar/Expression.code" );
      UnaryAddOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
                                   "../Grammar/Expression.code" );
      SizeOfOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
+                                  "../Grammar/Expression.code" );
+     JavaInstanceOfOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
                                   "../Grammar/Expression.code" );
      TypeIdOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
                                   "../Grammar/Expression.code" );
@@ -548,6 +556,8 @@ Grammar::setUpExpressions ()
      LshiftAssignOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
                                   "../Grammar/Expression.code" );
      RshiftAssignOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
+                                  "../Grammar/Expression.code" );
+     JavaUnsignedRshiftAssignOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
                                   "../Grammar/Expression.code" );
      PointerAssignOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
                                   "../Grammar/Expression.code" );
@@ -654,6 +664,9 @@ Grammar::setUpExpressions ()
   // (where the precedence member function is defined)
      SizeOfOp.editSubstitute        ( "PRECEDENCE_VALUE", "16" );
 
+  // DQ (7/18/2011): What is the precedence of this operator?
+     JavaInstanceOfOp.editSubstitute        ( "PRECEDENCE_VALUE", "16" );
+
   // DQ (2/12/2011): Added support for UPC specific sizeof operators.
      UpcLocalsizeofExpression.editSubstitute ( "PRECEDENCE_VALUE", "16" );
      UpcBlocksizeofExpression.editSubstitute ( "PRECEDENCE_VALUE", "16" );
@@ -686,6 +699,7 @@ Grammar::setUpExpressions ()
      CommaOpExp.editSubstitute      ( "PRECEDENCE_VALUE", " 1" ); // lowest precedence
      LshiftOp.editSubstitute        ( "PRECEDENCE_VALUE", "11" );
      RshiftOp.editSubstitute        ( "PRECEDENCE_VALUE", "11" );
+     JavaUnsignedRshiftOp.editSubstitute        ( "PRECEDENCE_VALUE", "11" );
      MinusOp.editSubstitute         ( "PRECEDENCE_VALUE", "15" );
      UnaryAddOp.editSubstitute      ( "PRECEDENCE_VALUE", "15" );
      NotOp.editSubstitute           ( "PRECEDENCE_VALUE", "15" );
@@ -711,6 +725,7 @@ Grammar::setUpExpressions ()
      XorAssignOp.editSubstitute     ( "PRECEDENCE_VALUE", " 2" );
      LshiftAssignOp.editSubstitute  ( "PRECEDENCE_VALUE", " 2" );
      RshiftAssignOp.editSubstitute  ( "PRECEDENCE_VALUE", " 2" );
+     JavaUnsignedRshiftAssignOp.editSubstitute  ( "PRECEDENCE_VALUE", " 2" );
      PointerAssignOp.editSubstitute ( "PRECEDENCE_VALUE", " 2" );
      ThrowOp.editSubstitute         ( "PRECEDENCE_VALUE", "15" );
      MembershipOp.editSubstitute    ( "PRECEDENCE_VALUE", " 9" );
@@ -1145,6 +1160,8 @@ Grammar::setUpExpressions ()
      CommaOpExp.setFunctionPrototype ( "HEADER_COMMA_OPERATOR_EXPRESSION", "../Grammar/Expression.code" );
      LshiftOp.setFunctionPrototype ( "HEADER_LEFT_SHIFT_OPERATOR", "../Grammar/Expression.code" );
      RshiftOp.setFunctionPrototype ( "HEADER_RIGHT_SHIFT_OPERATOR", "../Grammar/Expression.code" );
+     JavaUnsignedRshiftOp.setFunctionPrototype ( "HEADER_JAVA_UNSIGNED_RIGHT_SHIFT_OPERATOR", "../Grammar/Expression.code" );
+
      MinusOp.setFunctionPrototype ( "HEADER_MINUS_OPERATOR", "../Grammar/Expression.code" );
      UnaryAddOp.setFunctionPrototype ( "HEADER_UNARY_ADD_OPERATOR", "../Grammar/Expression.code" );
 
@@ -1157,6 +1174,16 @@ Grammar::setUpExpressions ()
   // SizeOfOp.setDataPrototype ( "SgType*", "expression_type", "= NULL",
   //        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
      SizeOfOp.setDataPrototype ( "SgType*", "expression_type", "= NULL",
+            CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+
+  // DQ (7/18/2011): This is structurally similar to the SizeOfOp in that it takes a type operand
+  // and we have to save the expression type explicitly (I think).
+     JavaInstanceOfOp.setFunctionPrototype ( "HEADER_JAVA_INSTANCEOF_OPERATOR", "../Grammar/Expression.code" );
+     JavaInstanceOfOp.setDataPrototype ( "SgExpression*", "operand_expr", "= NULL",
+                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     JavaInstanceOfOp.setDataPrototype ( "SgType*", "operand_type", "= NULL",
+                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+     JavaInstanceOfOp.setDataPrototype ( "SgType*", "expression_type", "= NULL",
             CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
 
      TypeIdOp.setFunctionPrototype ( "HEADER_TYPE_ID_OPERATOR", "../Grammar/Expression.code" );
@@ -1332,6 +1359,7 @@ Grammar::setUpExpressions ()
      XorAssignOp.setFunctionPrototype ( "HEADER_XOR_ASSIGNMENT_OPERATOR", "../Grammar/Expression.code" );
      LshiftAssignOp.setFunctionPrototype ( "HEADER_LEFT_SHIFT_ASSIGNMENT_OPERATOR", "../Grammar/Expression.code" );
      RshiftAssignOp.setFunctionPrototype ( "HEADER_RIGHT_SHIFT_ASSIGNEMENT_OPERATOR", "../Grammar/Expression.code" );
+     JavaUnsignedRshiftAssignOp.setFunctionPrototype ( "HEADER_JAVA_UNSIGNED_RIGHT_SHIFT_ASSIGNEMENT_OPERATOR", "../Grammar/Expression.code" );
      PointerAssignOp.setFunctionPrototype ( "HEADER_POINTER_ASSIGNMENT_OPERATOR", "../Grammar/Expression.code" );
 
      RefExp.setFunctionPrototype ( "HEADER_REFERENCE_EXPRESSION", "../Grammar/Expression.code" );
@@ -1795,6 +1823,8 @@ Grammar::setUpExpressions ()
      CommaOpExp.setFunctionSource ( "SOURCE_COMMA_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      LshiftOp.setFunctionSource ( "SOURCE_LEFT_SHIFT_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      RshiftOp.setFunctionSource ( "SOURCE_RIGHT_SHIFT_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
+     JavaUnsignedRshiftOp.setFunctionSource ( "SOURCE_JAVA_UNSIGNED_RIGHT_SHIFT_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
+
      MinusOp.setFunctionSource ( "SOURCE_MINUS_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      UnaryAddOp.setFunctionSource ( "SOURCE_UNARY_ADD_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      MembershipOp.editSubstitute  ( "SOURCE_BOOLEAN_GET_TYPE_MEMBER_FUNCTION", "SOURCE_BOOLEAN_GET_TYPE", "../Grammar/Expression.code" );
@@ -1803,6 +1833,7 @@ Grammar::setUpExpressions ()
      IsNotOp.editSubstitute       ( "SOURCE_BOOLEAN_GET_TYPE_MEMBER_FUNCTION", "SOURCE_BOOLEAN_GET_TYPE", "../Grammar/Expression.code" );
 
      SizeOfOp.setFunctionSource ( "SOURCE_SIZE_OF_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
+     JavaInstanceOfOp.setFunctionSource ( "SOURCE_JAVA_INSTANCEOF_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
 
   // DQ (2/12/2011): Added support for UPC specific sizeof operators.
      UpcLocalsizeofExpression.setFunctionSource ( "SOURCE_UPC_LOCAL_SIZEOF_EXPRESSION","../Grammar/Expression.code" );
@@ -1837,6 +1868,7 @@ Grammar::setUpExpressions ()
      XorAssignOp.setFunctionSource ( "SOURCE_XOR_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      LshiftAssignOp.setFunctionSource ( "SOURCE_LEFT_SHIFT_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      RshiftAssignOp.setFunctionSource ( "SOURCE_RIGHT_SHIFT_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
+     JavaUnsignedRshiftAssignOp.setFunctionSource ( "SOURCE_JAVA_UNSIGNED_RIGHT_SHIFT_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      PointerAssignOp.setFunctionSource  ( "SOURCE_POINTER_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
 
      RefExp.setFunctionSource ( "SOURCE_REFERENCE_EXPRESSION","../Grammar/Expression.code" );
