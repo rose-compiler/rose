@@ -245,6 +245,7 @@ static void syscall_set_robust_list(RSIM_Thread *t, int callno);
 static void syscall_set_robust_list_enter(RSIM_Thread *t, int callno);
 static void syscall_set_thread_area(RSIM_Thread *t, int callno);
 static void syscall_set_thread_area_enter(RSIM_Thread *t, int callno);
+static void syscall_set_thread_area_leave(RSIM_Thread *t, int callno);
 static void syscall_set_tid_address(RSIM_Thread *t, int callno);
 static void syscall_set_tid_address_enter(RSIM_Thread *t, int callno);
 static void syscall_setpgid(RSIM_Thread *t, int callno);
@@ -411,7 +412,7 @@ RSIM_Linux32::ctor()
     SC_REG(224, gettid,                         default);
     SC_REG(240, futex,                          futex);
     SC_REG(242, sched_getaffinity,              sched_getaffinity);
-    SC_REG(243, set_thread_area,                default);
+    SC_REG(243, set_thread_area,                set_thread_area);
     SC_REG(252, exit_group,                     exit_group);
     SC_REG(258, set_tid_address,                default);
     SC_REG(264, clock_settime,                  default);
@@ -5488,6 +5489,13 @@ syscall_set_thread_area(RSIM_Thread *t, int callno)
     }
     t->syscall_return(0);
 }
+
+static void
+syscall_set_thread_area_leave(RSIM_Thread *t, int callno)
+{
+    t->syscall_leave("dP", sizeof(user_desc_32), print_user_desc_32);
+}
+
 
 /*******************************************************************************************************************************/
 

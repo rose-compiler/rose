@@ -289,7 +289,7 @@ public:
     user_desc_32 *gdt_entry(int idx);
 
     static const int GDT_ENTRIES = 8192;                     /**< Number of GDT entries. */
-    static const int GDT_ENTRY_TLS_MIN = 6;                  /**< First TLS entry */
+    static const int GDT_ENTRY_TLS_MIN = 6;                  /**< First TLS entry (this would be 12 on x86_64) */
     static const int GDT_ENTRY_TLS_ENTRIES = 3;              /**< Number of TLS entries */
     static const int GDT_ENTRY_TLS_MAX = GDT_ENTRY_TLS_MIN + GDT_ENTRY_TLS_ENTRIES - 1; /**< Last TLS entry */
 
