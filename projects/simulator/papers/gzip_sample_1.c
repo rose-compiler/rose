@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include <string.h>
 
+static const char *note = " (uninitialized CRC table)";
+
 unsigned long
 updcrc(const unsigned char *s, unsigned n)
 {
@@ -17,6 +19,8 @@ updcrc(const unsigned char *s, unsigned n)
     register unsigned long c;
     unsigned long crc = (unsigned long)0xffffffffL;
 
+#ifdef INIT_CRC_32_TAB
+    note = "";
     crc_32_tab[0] = 0x00000000L;
     crc_32_tab[1] = 0x77073096L;
     crc_32_tab[2] = 0xee0e612cL;
@@ -273,6 +277,7 @@ updcrc(const unsigned char *s, unsigned n)
     crc_32_tab[253] = 0xc30c8ea1L;
     crc_32_tab[254] = 0x5a05df1bL;
     crc_32_tab[255] = 0x2d02ef8dL;
+#endif
 
     if (s==NULL) {
         c = 0xffffffffL;
@@ -293,7 +298,7 @@ main()
     const char *s = "hello world!";
     size_t n = strlen(s);
     unsigned long crc = updcrc((const unsigned char*)s, n);
-    printf("s=\"%s\"; crc=0x%08lx\n", s, crc);
+    printf("s=\"%s\"; crc=0x%08lx%s\n", s, crc, note);
 #endif
     return 0;
 }

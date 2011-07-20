@@ -188,12 +188,29 @@ concrete_1_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 EXTRA_DIST += papers/gzip_sample_1.c
 concrete_1_input: papers/gzip_sample_1.c
 	@echo "  CC32    $@"
-	@$(CC) $(CFLAGS32) -Wall -o $@ $^
+	@$(CC) $(CFLAGS32) -DINIT_CRC_32_TAB -Wall -o $@ $^
 
 .PHONY: run_concrete_1
 run_concrete_1: concrete_1 concrete_1_input
 	./concrete_1 --debug ./concrete_1_input
 	./concrete_1_input
+
+#------------------------------------------------------------------------------------------------------------------------------
+# Example of concrete analysis on a gzip code sample with memory initialization in the simulator
+noinst_PROGRAMS += concrete_2
+concrete_2_SOURCES = papers/concrete_2.C
+concrete_2_CPPFLAGS = $(ROSE_INCLUDES)
+concrete_2_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+EXTRA_DIST += papers/gzip_sample_1.c
+concrete_2_input: papers/gzip_sample_1.c
+	@echo "  CC32    $@"
+	@$(CC) $(CFLAGS32) -UINIT_CRC_32_TAB -Wall -o $@ $^
+
+.PHONY: run_concrete_2
+run_concrete_2: concrete_2 concrete_2_input
+	./concrete_2 --debug ./concrete_2_input
+	./concrete_2_input
 
 #------------------------------------------------------------------------------------------------------------------------------
 # Example of symbolic analysis on a gzip code sample.
