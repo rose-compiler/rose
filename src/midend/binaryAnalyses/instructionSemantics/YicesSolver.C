@@ -50,7 +50,7 @@ YicesSolver::available_linkage() const
 
 /* See YicesSolver.h */
 bool
-YicesSolver::satisfiable(const InsnSemanticsExpr::TreeNode *expr)
+YicesSolver::satisfiable(const std::vector<const InsnSemanticsExpr::TreeNode*> &exprs)
 {
 #ifdef HAVE_LIBYICES
     if (get_linkage() & LM_LIBRARY) {
@@ -68,8 +68,10 @@ YicesSolver::satisfiable(const InsnSemanticsExpr::TreeNode *expr)
 #endif
 
         Definitions defns;
-        ctx_define(expr, &defns);
-        ctx_assert(expr);
+        for (std::vector<const InsnSemanticsExpr::TreeNode*>::const_iterator ei=exprs.begin(); ei!=exprs.end(); ++ei)
+            ctx_define(*ei, &defns);
+        for (std::vector<const InsnSemanticsExpr::TreeNode*>::const_iterator ei=exprs.begin(); ei!=exprs.end(); ++ei)
+            ctx_assert(*ei);
         switch (yices_check(context)) {
             case l_false: return false;
             case l_true:  return true;
@@ -79,7 +81,7 @@ YicesSolver::satisfiable(const InsnSemanticsExpr::TreeNode *expr)
 #endif
 
     ROSE_ASSERT(get_linkage() & LM_EXECUTABLE);
-    return SMTSolver::satisfiable(expr);
+    return SMTSolver::satisfiable(exprs);
 }
 
 
@@ -97,15 +99,17 @@ YicesSolver::get_command(const std::string &config_name)
 
 /* See SMTSolver::generate_file() */
 void
-YicesSolver::generate_file(std::ostream &o, const InsnSemanticsExpr::TreeNode *tn, Definitions *defns)
+YicesSolver::generate_file(std::ostream &o, const std::vector<const InsnSemanticsExpr::TreeNode*> &exprs, Definitions *defns)
 {
     ROSE_ASSERT(get_linkage() & LM_EXECUTABLE);
     Definitions *allocated = NULL;
     if (!defns)
         defns = allocated = new Definitions;
 
-    out_define(o, tn, defns);
-    out_assert(o, tn);
+    for (std::vector<const InsnSemanticsExpr::TreeNode*>::const_iterator ei=exprs.begin(); ei!=exprs.end(); ++ei)
+        out_define(o, *ei, defns);
+    for (std::vector<const InsnSemanticsExpr::TreeNode*>::const_iterator ei=exprs.begin(); ei!=exprs.end(); ++ei)
+        out_assert(o, *ei);
     o <<"\n(check)\n";
 
     delete allocated;
@@ -170,7 +174,7 @@ YicesSolver::out_assert(std::ostream &o, const InsnSemanticsExpr::TreeNode *tn)
 {
     o <<"(assert ";
     out_expr(o, tn);
-    o <<")";
+    o <<")\n";
 }
 
 /** Output a decimal number. */

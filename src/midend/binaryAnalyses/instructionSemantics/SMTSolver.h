@@ -25,9 +25,19 @@ public:
     /** Determines if the specified expression is satisfiable. Throws Exception if satisfiability cannot be determined. */
     virtual bool satisfiable(const InsnSemanticsExpr::TreeNode *expr);
 
+    /** Determines if the specified collection of expressions is satisfiable.  Throws Exception if satisfiability cannot be
+     *  determined. */
+    virtual bool satisfiable(const std::vector<const InsnSemanticsExpr::TreeNode*> &exprs);
+
     /** Evidence of satisfiability.  If an expression is satisfiable, this function will return information about which values
-     *  should be bound to variables to make the expression satisfiable.  Not all SMT solvers can return this information. */
+     *  should be bound to variables to make the expression satisfiable.  Not all SMT solvers can return this information.
+     *  @{ */
     virtual InsnSemanticsExpr::TreeNode *get_definition(uint64_t varno) { return NULL; }
+    virtual InsnSemanticsExpr::TreeNode *get_definition(const InsnSemanticsExpr::LeafNode *var) {
+        assert(var && !var->is_known());
+        return get_definition(var->get_name());
+    }
+    /** @} */
 
     /** Turns debugging on or off. */
     void set_debug(FILE *f) { debug = f; }
@@ -39,7 +49,7 @@ protected:
     /** Generates an input file for for the solver. Usually the input file will be SMT-LIB format, but subclasses might
      *  override this to generate some other kind of input. Throws Excecption if the solver does not support an operation that
      *  is necessary to determine the satisfiability. */
-    virtual void generate_file(std::ostream&, const InsnSemanticsExpr::TreeNode *expr, Definitions*) = 0;
+    virtual void generate_file(std::ostream&, const std::vector<const InsnSemanticsExpr::TreeNode*> &exprs, Definitions*) = 0;
 
     /** Given the name of a configuration file, return the command that is needed to run the solver. The first line
      *  of stdout emitted by the solver should be the word "sat" or "unsat". */

@@ -30,7 +30,7 @@ public:
     }
     virtual ~YicesSolver();
 
-    virtual void generate_file(std::ostream&, const InsnSemanticsExpr::TreeNode *expr, Definitions*);
+    virtual void generate_file(std::ostream&, const std::vector<const InsnSemanticsExpr::TreeNode*> &exprs, Definitions*);
     virtual std::string get_command(const std::string &config_name);
 
     /** Returns a bit vector indicating what calling modes are available.  The bits are defined by the LinkMode enum. */
@@ -50,11 +50,24 @@ public:
     /** Determines if the specified expression is satisfiable.  Most solvers use the implementation in the base class, which
      *  creates a text file (usually in SMT-LIB format) and then invokes an executable with that input, looking for a line of
      *  output containing "sat" or "unsat". However, Yices provides a library that can optionally be linked into ROSE, and
-     *  uses this library if the link mode is LM_LIBRARY. */
-    virtual bool satisfiable(const InsnSemanticsExpr::TreeNode *expr);
+     *  uses this library if the link mode is LM_LIBRARY.
+     *  @{ */
+    virtual bool satisfiable(const std::vector<const InsnSemanticsExpr::TreeNode*> &exprs);
+    virtual bool satisfiable(const InsnSemanticsExpr::TreeNode *tn) {
+        std::vector<const InsnSemanticsExpr::TreeNode*> exprs;
+        exprs.push_back(tn);
+        return satisfiable(exprs);
+    }
+    /** @} */
 
-    /** See SMTSolver::get_definition(). */
+    /** See SMTSolver::get_definition().
+     *  @{ */
     virtual InsnSemanticsExpr::TreeNode *get_definition(uint64_t varno);
+    virtual InsnSemanticsExpr::TreeNode *get_definition(const InsnSemanticsExpr::LeafNode *var) {
+        assert(var && !var->is_known());
+        return get_definition(var->get_name());
+    }
+    /** @} */
 
 protected:
     virtual void parse_evidence();

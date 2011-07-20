@@ -15,7 +15,7 @@ operator<<(std::ostream &o, const SMTSolver::Exception &e)
 size_t SMTSolver::total_calls;
 
 bool
-SMTSolver::satisfiable(const InsnSemanticsExpr::TreeNode *tn)
+SMTSolver::satisfiable(const std::vector<const InsnSemanticsExpr::TreeNode*> &exprs)
 {
     bool retval = false;
 
@@ -39,7 +39,7 @@ SMTSolver::satisfiable(const InsnSemanticsExpr::TreeNode *tn)
     }
     std::ofstream config(config_name);
     Definitions defns;
-    generate_file(config, tn, &defns);
+    generate_file(config, exprs, &defns);
     config.close();
 
     /* Show solver input */
@@ -89,4 +89,13 @@ SMTSolver::satisfiable(const InsnSemanticsExpr::TreeNode *tn)
     parse_evidence();
 #endif
     return retval;
+}
+    
+
+bool
+SMTSolver::satisfiable(const InsnSemanticsExpr::TreeNode *tn)
+{
+    std::vector<const InsnSemanticsExpr::TreeNode*> exprs;
+    exprs.push_back(tn);
+    return satisfiable(exprs);
 }
