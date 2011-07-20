@@ -169,6 +169,9 @@ struct hash_nodeptr
    SgEnumSymbol*      lookupEnumSymbolInParentScopes     (const SgName & name, SgScopeStatement *currentScope = NULL);
    SgNamespaceSymbol* lookupNamespaceSymbolInParentScopes(const SgName & name, SgScopeStatement *currentScope = NULL);
 
+// DQ (7/17/2011): Added function from cxx branch that I need here for the Java support.
+// SgClassSymbol* lookupClassSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope);
+
    /*! \brief set_name of symbol in symbol table.
 
        This function extracts the symbol from the relavant symbol table,

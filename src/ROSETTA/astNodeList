@@ -537,11 +537,14 @@ SgReturnStmt
 SgRewindStatement
 SgRshiftAssignOp
 SgRshiftOp
+SgJavaUnsignedRshiftAssignOp
+SgJavaUnsignedRshiftOp
 SgScopeOp
 SgScopeStatement
 SgSequenceStatement
 SgShortVal
 SgSizeOfOp
+SgJavaInstanceOfOp
 SgSourceFile
 SgSpawnStmt
 SgSpecialFunctionModifier
