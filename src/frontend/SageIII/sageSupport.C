@@ -6281,10 +6281,94 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
 
      ROSE_ASSERT(get_requires_C_preprocessor() == false);
 
+  // *******************************************************
+
+  // DQ (9/19/2011): This is what I thought, but it does not appear to be true or we tie into ECJ at the
+  // the wrong location so that we don't get any syntax checking.  So we need to introduce a pass using
+  // the backend compiler to support the syntax checking for Java.
   // DQ (10/11/2010): We don't need syntax checking because ECJ will do that.
   // bool syntaxCheckInputCode = (get_skip_syntax_check() == false);
   // bool syntaxCheckInputCode = false;
+     bool syntaxCheckInputCode = (get_skip_syntax_check() == false);
   // printf ("In build_Java_AST(): syntaxCheckInputCode = %s \n",syntaxCheckInputCode ? "true" : "false");
+
+     if (syntaxCheckInputCode == true)
+        {
+       // Introduce tracking of performance of ROSE.
+          TimingPerformance timer ("Java syntax checking of input:");
+
+       // DQ (9/19/2011): For Java we want to run the backend javacc compiler to do the syntax checking.
+          string backendJavaCompiler = BACKEND_JAVA_COMPILER_NAME_WITH_PATH;
+          if ( get_verbose() > 2 )
+             {
+               printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Setting up Java Syntax check @@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+               printf ("BACKEND_JAVA_COMPILER_NAME_WITH_PATH = %s \n",backendJavaCompiler.c_str());
+             }
+
+          vector<string> javaCommandLine;
+          javaCommandLine.push_back(backendJavaCompiler);
+
+          if (get_output_warnings() == true)
+             {
+            // Specify warnings for javac compiler.
+               if (backendJavaCompiler == "javac")
+                  {
+                    javaCommandLine.push_back("-Xlint");
+                  }
+                 else
+                  {
+                    printf ("Currently only the javac compiler backend is supported backendCompilerSystem = %s \n",backendJavaCompiler.c_str());
+                    ROSE_ASSERT(false);
+                  }
+             }
+
+#if 1
+          if ( get_verbose() > 0 )
+             {
+               printf ("Checking syntax of input program using gfortran: syntaxCheckingCommandline = %s \n",CommandlineProcessing::generateStringFromArgList(javaCommandLine,false,false).c_str());
+             }
+#endif
+       // Call the OS with the commandline defined by: syntaxCheckingCommandline
+          javaCommandLine.push_back(get_sourceFileNameWithPath());
+
+       // At this point we have the full command line with the source file name
+          if ( get_verbose() > 0 )
+             {
+               printf ("Checking syntax of input program using gfortran: syntaxCheckingCommandline = %s \n",CommandlineProcessing::generateStringFromArgList(javaCommandLine,false,false).c_str());
+             }
+
+          int returnValueForSyntaxCheckUsingBackendCompiler = 0;
+#if USE_GFORTRAN_IN_ROSE
+          returnValueForSyntaxCheckUsingBackendCompiler = systemFromVector (javaCommandLine);
+#else
+          printf ("backend java compiler (javac) unavailable ... (not an error) \n");
+#endif
+
+       // Check that there are no errors, I think that warnings are ignored!
+          if (returnValueForSyntaxCheckUsingBackendCompiler != 0)
+             {
+            // printf ("Syntax errors detected in input java program ... \n");
+               printf ("Syntax errors detected in input java program ... status = %d \n",returnValueForSyntaxCheckUsingBackendCompiler);
+
+            // We should define some convention for error codes returned by ROSE
+               exit(1);
+             }
+          ROSE_ASSERT(returnValueForSyntaxCheckUsingBackendCompiler == 0);
+
+          if ( get_verbose() > 2 )
+             {
+               printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@ DONE: Setting up Java Syntax check @@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+             }
+
+#if 0
+       // Debugging code.
+          printf ("Exiting as a test ... (after syntax check) \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
+  // *******************************************************
+
 
   // Build the classpath list for Java support.
      const string classpath = build_classpath();
