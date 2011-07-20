@@ -3,8 +3,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
-//! Old class for command option handling. 
-//Please use the better src/util/commandlineProcessing/commandline_processing.h instead
+
 class CmdOptions
 {
   static CmdOptions *inst;

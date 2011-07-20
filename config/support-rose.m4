@@ -169,6 +169,7 @@ else
     AC_MSG_RESULT([skipping])
 fi
 
+  ROSE_SUPPORT_UPC
 
 ##
 #########################################################################################
@@ -498,6 +499,7 @@ AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_44,test "x$rose_boost_version" = "x104
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_45,test "x$rose_boost_version" = "x104500" -o "x$_version" = "x1.45")
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_46,test "x$rose_boost_version" = "x104600" -o "x$_version" = "x1.46")
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_46,test "x$rose_boost_version" = "x104601" -o "x$_version" = "x1.46")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_47,test "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.47")
 
 # DQ (10/18/2010): Error checking for Boost version.
 if test "x$rose_boost_version" = "x103600" -o "x$_version" = "x1.36" \
@@ -511,7 +513,8 @@ if test "x$rose_boost_version" = "x103600" -o "x$_version" = "x1.36" \
    -o "x$rose_boost_version" = "x104400" -o "x$_version" = "x1.44" \
    -o "x$rose_boost_version" = "x104500" -o "x$_version" = "x1.45" \
    -o "x$rose_boost_version" = "x104600" -o "x$_version" = "x1.46" \
-   -o "x$rose_boost_version" = "x104601" -o "x$_version" = "x1.46"; then
+   -o "x$rose_boost_version" = "x104601" -o "x$_version" = "x1.46" \
+   -o "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.47"; then 
 echo "Reasonable version of Boost found!"
 else
 echo "No identifiable version of boost recognised!"
