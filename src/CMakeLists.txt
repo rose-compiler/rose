@@ -354,6 +354,7 @@ set( midend_src
  ${CMAKE_SOURCE_DIR}/src/midend/abstractHandle/abstract_handle.cpp
  ${CMAKE_SOURCE_DIR}/src/midend/abstractHandle/loopAdapter.cpp
  ${CMAKE_SOURCE_DIR}/src/midend/abstractHandle/roseAdapter.cpp
+ ${CMAKE_SOURCE_DIR}/src/midend/abstractMemoryObject/memory_object.cpp
  ${CMAKE_SOURCE_DIR}/src/midend/astQuery/nodeQueryInheritedAttribute.C
  ${CMAKE_SOURCE_DIR}/src/midend/astQuery/nameQuery.C
  ${CMAKE_SOURCE_DIR}/src/midend/astQuery/astQueryInheritedAttribute.C

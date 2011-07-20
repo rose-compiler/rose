@@ -40,6 +40,8 @@
 #include "abstract_handle.h"
 #include "roseAdapter.h"
 
+#include "memory_object.h"
+
 //Liao, 2/8/2008. SAGE III node building interface
 #include "sageBuilder.h"
 #include "sageBuilderAsm.h"

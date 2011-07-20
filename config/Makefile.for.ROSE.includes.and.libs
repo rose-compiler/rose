@@ -233,6 +233,7 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/util/stringSupport \
      -I$(top_srcdir)/src/util/commandlineProcessing \
      -I$(top_srcdir)/src/midend/abstractHandle \
+     -I$(top_srcdir)/src/midend/abstractMemoryObject \
      -I$(top_srcdir)/src/midend/astDiagnostics \
      -I$(top_srcdir)/src/midend/programTransformation/astInlining \
      -I$(top_srcdir)/src/midend/programTransformation/astOutlining  \

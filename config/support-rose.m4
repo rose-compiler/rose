@@ -2099,6 +2099,7 @@ src/frontend/BinaryFormats/Makefile
 src/frontend/Disassemblers/Makefile
 src/midend/Makefile
 src/midend/abstractHandle/Makefile
+src/midend/abstractMemoryObject/Makefile
 src/midend/astUtil/Makefile
 src/midend/astQuery/Makefile
 src/midend/astProcessing/Makefile
