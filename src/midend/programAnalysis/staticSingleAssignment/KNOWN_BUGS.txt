@@ -1,0 +1,51 @@
+BUGS
+----
+
+-StaticSingleAssignment::getLastVersions does not work correctly because variables are filtered when they go out of scope.
+    If a variable should have a phi node as its last version, that phi node might not get inserted because the function
+    is not accessible there.
+
+-SERIOUS INTERPROCEDURAL BUG: Interprocedural definitions are P-defs, or possible definitions, rather than D-defs (definite
+	definitions. As such, they should not (always) kill the previous reaching definition!
+
+-For post-increment ops, such as i++, the uses are incorrectly matched to the post-increment op. Instead, uses should be matched
+   to the definition that comes before the increment.
+
+-Bodies of catch statements are not analyzed. This is a shortcoming of the ROSE virtual CFG (to be fixed by Michael)
+
+-Variables used to define the dimensions inside an array declaration are not detected as uses
+
+-The analysis repeatedly traverses the virtual CFG, instead of building a static CFG up front. While this does not impact
+   correctness, it is a serious performance detriment
+
+-Interprocedural SSA always does two passes, even if no new defs have to be propagated. This doubles its runtime.
+
+-Serious bug: If a variable goes out of scope, there is not necessarily a phi node that defines its last version. 
+ For example,
+
+	void foo()
+	{
+		{
+			int a;
+			if (a)
+				a = 0;
+			else
+				a = 1;
+		}  //a goes out of scope here
+		3; //phi node is not inserted here because a is out of scope. Now 'a' has no valid final version
+	}
+
+-In interprocedural SSA, modifications that are not in scope are not versioned. For example, if we have a virtual function
+ that modifies variables from a subclass, no defs are inserted for those variables.
+  C::foo() {  vfunc(); } //Modification of d is not detected here if d is a member of the subclass D
+  D::vfunc() { d = 3; }
+
+
+TODO (in addition to fixing the above bugs)
+-----
+
+-Add more query functions
+
+-Add a classification for expanded defs, as either expanded from prefix or expanded from a member
+
+-Add a method to allow analyzing a single function

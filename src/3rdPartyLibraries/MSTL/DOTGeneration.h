@@ -17,7 +17,7 @@ class DOTInheritedAttribute : public SgInheritedAttribute
        // These are specific gnu compatability details.
           bool skipSubTree;
 
-          DOTInheritedAttribute() : skipSubTree(false) {}
+          DOTInheritedAttribute() : skipSubTree(false), tdTracePos(0), tdbuTracePos(0) {}
           DOTRepresentation<SgNode*>::TraceType tdTracePos; // tdTrace value at node
           DOTRepresentation<SgNode*>::TraceType tdbuTracePos; // tdbuTrace value at node
    };
