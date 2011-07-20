@@ -681,6 +681,11 @@ set( libastVisualization_SRC
   ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astVisualization/walrus.C 
 )
 
+set( libincludeDirectivesProcessing_SRC
+  ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/includeDirectivesProcessing/CompilerOutputReader.C
+  ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/includeDirectivesProcessing/CompilerOutputParser.C
+  ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/includeDirectivesProcessing/IncludingPreprocessingInfosCollector.C
+)
 
 
 set( midend_loopproc_src
@@ -816,6 +821,7 @@ set(rose_LIB_SRCS dummyCppFileForLibrose.C
  ${libastTokenStream_SRC}
  ${libastHiddenTypeAndDeclarationLists_SRC}
  ${libastVisualization_SRC}
+ ${libincludeDirectivesProcessing_SRC}
  ${midend_loopproc_src}
  ${libastPostProcessing_SRC}
  ${binaryFrontend_SRC}
