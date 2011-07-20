@@ -175,6 +175,9 @@ static void syscall_mmap_leave(RSIM_Thread *t, int callno);
 static void syscall_mmap2(RSIM_Thread *t, int callno);
 static void syscall_mmap2_enter(RSIM_Thread *t, int callno);
 static void syscall_mmap2_leave(RSIM_Thread *t, int callno);
+static void syscall_modify_ldt(RSIM_Thread *t, int callno);
+static void syscall_modify_ldt_enter(RSIM_Thread *t, int callno);
+static void syscall_modify_ldt_leave(RSIM_Thread *t, int callno);
 static void syscall_mprotect(RSIM_Thread *t, int callno);
 static void syscall_mprotect_enter(RSIM_Thread *t, int callno);
 static void syscall_mprotect_leave(RSIM_Thread *t, int callno);
@@ -372,6 +375,7 @@ RSIM_Linux32::ctor()
     SC_REG(119, sigreturn,                      sigreturn);
     SC_REG(120, clone,                          clone);
     SC_REG(122, uname,                          uname);
+    SC_REG(123, modify_ldt,                     modify_ldt);
     SC_REG(125, mprotect,                       mprotect);
     SC_REG(133, fchdir,                         default);
     SC_REG(140, llseek,                         default);
@@ -4061,6 +4065,26 @@ static void
 syscall_uname_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave("dP", sizeof(new_utsname_32), print_new_utsname_32);
+}
+
+/*******************************************************************************************************************************/
+
+static void
+syscall_modify_ldt_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("modify_ldt", "dpd");
+}
+
+static void
+syscall_modify_ldt(RSIM_Thread *t, int callno)
+{
+    assert(!"not implemented yet");
+}
+
+static void
+syscall_modify_ldt_leave(RSIM_Thread *t, int callno)
+{
+    t->syscall_leave("d---"); // FIXME
 }
 
 /*******************************************************************************************************************************/
