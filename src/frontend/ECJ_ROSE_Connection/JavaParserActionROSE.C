@@ -283,6 +283,15 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionExplicitConstructorCall (JNIEnv *e
 
      outputJavaState("At TOP of cactionExplicitConstructorCall");
 
+
+  // ****************************************************
+  // ****************************************************
+     printf ("This function is not called anywhere! \n");
+     ROSE_ASSERT(false);
+  // ****************************************************
+  // ****************************************************
+
+
   // Should this be a SgBasicBlock or just a SgScopeStatement?
      SgBasicBlock* basicBlock = isSgBasicBlock(astJavaScopeStack.front());
      ROSE_ASSERT(basicBlock != NULL);
@@ -308,7 +317,35 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionExplicitConstructorCall (JNIEnv *e
 
      printf ("In cactionExplicitConstructorCall: Number of statements in current scope = %zu \n",astJavaScopeStack.front()->generateStatementList().size());
 
-     outputJavaState("At Bottom of cactionExplicitConstructorCall");
+     outputJavaState("At BOTTOM of cactionExplicitConstructorCall");
+   }
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionExplicitConstructorCallEnd (JNIEnv *env, jobject xxx, jstring java_string)
+   {
+  // Build a member function call...
+     if (SgProject::get_verbose() > 0)
+          printf ("Build a explicit constructor function call END \n");
+
+     outputJavaState("At TOP of cactionExplicitConstructorCallEnd");
+
+  // ROSE_ASSERT(astJavaExpressionStack.empty() == false);
+     if (astJavaExpressionStack.empty() == false)
+        {
+          SgExpression* expr = astJavaExpressionStack.front();
+          ROSE_ASSERT(expr != NULL);
+          astJavaExpressionStack.pop_front();
+
+          SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(expr);
+          ROSE_ASSERT(functionCallExp != NULL);
+
+          SgExprStatement* expressionStatement = SageBuilder::buildExprStatement(functionCallExp);
+          ROSE_ASSERT(expressionStatement != NULL);
+
+          appendStatement(expressionStatement);
+        }
+
+     outputJavaState("At BOTTOM of cactionExplicitConstructorCallEnd");
    }
 
 
@@ -420,6 +457,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionSingleTypeReference (JNIEnv *, job
      if (SgProject::get_verbose() > 0)
           printf ("Build a type \n");
 
+     outputJavaState("At TOP of cactionSingleTypeReference");
+
   // Build a type and put it onto the type stack.
   // ...OR...
   // Build a type and add it to the declaration on the declaration stack.
@@ -499,12 +538,36 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSend (JNIEnv *env, jobject 
      SgName name      = convertJavaStringToCxxString(env,functionName);
      SgName className = convertJavaStringToCxxString(env,associatedClassName);
 
+     if (name == "super")
+        {
+       // Handle case of super class.
+          printf ("Handle case of super class. \n");
+
+       // SgScopeStatement* classDefinition = NULL;
+          std::list<SgScopeStatement*>::reverse_iterator i = astJavaScopeStack.rbegin();
+          while (i != astJavaScopeStack.rend() && isSgClassDefinition(*i) == NULL)
+             {
+               i++;
+             }
+
+          if (i != astJavaScopeStack.rend())
+             {
+               SgClassDefinition* classDefinition = isSgClassDefinition(*i);
+               className = classDefinition->get_declaration()->get_name();
+             }
+            else
+             {
+               printf ("Error: SgClassDefinition not found \n");
+               ROSE_ASSERT(false);
+             }
+        }
+
      if (SgProject::get_verbose() > -1)
           printf ("building function call: name = %s from class name = %s \n",name.str(),className.str());
 
   // Refactored this code to "lookupSymbolFromQualifiedName()" so it could be used to generate class types.
      SgClassSymbol* targetClassSymbol = lookupSymbolFromQualifiedName(className);
-  
+
   // ROSE_ASSERT(targetClassSymbol != NULL);
 
      SgScopeStatement* targetClassScope = NULL;
@@ -1882,6 +1945,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionExtendedStringLiteral(JNIEnv *env,
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionFalseLiteral(JNIEnv *env, jobject xxx)
    {
+     SgExpression* expression = SageBuilder::buildBoolValExp(false);
+     astJavaExpressionStack.push_front(expression);
    }
 
 
@@ -2603,6 +2668,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionThrowStatement(JNIEnv *env, jobjec
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionTrueLiteral(JNIEnv *env, jobject xxx)
    {
+     SgExpression* expression = SageBuilder::buildBoolValExp(true);
+     astJavaExpressionStack.push_front(expression);
    }
 
 
