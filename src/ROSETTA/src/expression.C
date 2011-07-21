@@ -107,6 +107,8 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (LshiftAssignOp,         "LshiftAssignOp",         "LSHIFT_ASSIGN_OP" );
      NEW_TERMINAL_MACRO (RshiftAssignOp,         "RshiftAssignOp",         "RSHIFT_ASSIGN_OP" );
      NEW_TERMINAL_MACRO (JavaUnsignedRshiftAssignOp, "JavaUnsignedRshiftAssignOp", "JAVA_UNSIGNED_RSHIFT_ASSIGN_OP" );
+     NEW_TERMINAL_MACRO (IntegerDivideAssignOp,  "IntegerDivideAssignOp",  "IDIV_ASSIGN_OP" );
+     NEW_TERMINAL_MACRO (ExponentiationAssignOp, "ExponentiationAssignOp", "EXP_ASSIGN_OP" );
 
   // DQ (12/13/2007): Added support for Fortran string concatenation operator
      NEW_TERMINAL_MACRO (ConcatenationOp,        "ConcatenationOp",        "CONCATENATION_OP" );
@@ -247,7 +249,7 @@ Grammar::setUpExpressions ()
           PntrArrRefExp  | ScopeOp          | AssignOp        | PlusAssignOp     | MinusAssignOp | AndAssignOp    |
           IorAssignOp    | MultAssignOp     | DivAssignOp     | ModAssignOp      | XorAssignOp   | LshiftAssignOp |
           RshiftAssignOp | ExponentiationOp | ConcatenationOp | PointerAssignOp  | MembershipOp  | NonMembershipOp |
-          IsOp           | IsNotOp          | UserDefinedBinaryOp,
+          IsOp           | IsNotOp          | IntegerDivideAssignOp | ExponentiationAssignOp | UserDefinedBinaryOp,
           "BinaryOp","BINARY_EXPRESSION", false);
 
      NEW_NONTERMINAL_MACRO (NaryOp,
@@ -573,6 +575,10 @@ Grammar::setUpExpressions ()
                                   "../Grammar/Expression.code" );
      PointerAssignOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
                                   "../Grammar/Expression.code" );
+     IntegerDivideAssignOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
+                                  "../Grammar/Expression.code" );
+     ExponentiationAssignOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
+                                  "../Grammar/Expression.code" );
 
      ThrowOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
                                   "../Grammar/Expression.code" );
@@ -745,6 +751,8 @@ Grammar::setUpExpressions ()
      RshiftAssignOp.editSubstitute  ( "PRECEDENCE_VALUE", " 2" );
      JavaUnsignedRshiftAssignOp.editSubstitute  ( "PRECEDENCE_VALUE", " 2" );
      PointerAssignOp.editSubstitute ( "PRECEDENCE_VALUE", " 2" );
+     IntegerDivideAssignOp.editSubstitute  ( "PRECEDENCE_VALUE", " 2" );
+     ExponentiationAssignOp.editSubstitute ( "PRECEDENCE_VALUE", " 2" );
      ThrowOp.editSubstitute         ( "PRECEDENCE_VALUE", "15" );
      MembershipOp.editSubstitute    ( "PRECEDENCE_VALUE", " 9" );
      NonMembershipOp.editSubstitute ( "PRECEDENCE_VALUE", " 9" );
@@ -1394,6 +1402,10 @@ Grammar::setUpExpressions ()
      JavaUnsignedRshiftAssignOp.setFunctionPrototype ( "HEADER_JAVA_UNSIGNED_RIGHT_SHIFT_ASSIGNEMENT_OPERATOR", "../Grammar/Expression.code" );
      PointerAssignOp.setFunctionPrototype ( "HEADER_POINTER_ASSIGNMENT_OPERATOR", "../Grammar/Expression.code" );
 
+     IntegerDivideAssignOp.setFunctionPrototype ( "HEADER_INTEGER_DIVIDE_ASSIGN_OP", "../Grammar/Expression.code" );
+     ExponentiationAssignOp.setFunctionPrototype ( "HEADER_EXPONENTIATION_ASSIGN_OP", "../Grammar/Expression.code" );
+
+
      RefExp.setFunctionPrototype ( "HEADER_REFERENCE_EXPRESSION", "../Grammar/Expression.code" );
      RefExp.setDataPrototype     ( "SgType*", "type_name", "= NULL",
                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
@@ -1906,6 +1918,8 @@ Grammar::setUpExpressions ()
      RshiftAssignOp.setFunctionSource ( "SOURCE_RIGHT_SHIFT_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      JavaUnsignedRshiftAssignOp.setFunctionSource ( "SOURCE_JAVA_UNSIGNED_RIGHT_SHIFT_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      PointerAssignOp.setFunctionSource  ( "SOURCE_POINTER_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
+     IntegerDivideAssignOp.setFunctionSource ( "SOURCE_INTEGER_DIVIDE_ASSIGN_OP", "../Grammar/Expression.code" );
+     ExponentiationAssignOp.setFunctionSource ( "SOURCE_EXPONENTIATION_ASSIGN_OP", "../Grammar/Expression.code" );
 
      RefExp.setFunctionSource ( "SOURCE_REFERENCE_EXPRESSION","../Grammar/Expression.code" );
      ThrowOp.setFunctionSource ( "SOURCE_THROW_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
