@@ -990,7 +990,7 @@ sage_buildWhile(PyObject *self, PyObject *args)
                                             SAGE_CONVERTER(SgStatement), &orelse))
         return NULL;
 
-    SgWhileStmt* sg_while_stmt = SageBuilder::buildWhileStmt(test, body);
+    SgWhileStmt* sg_while_stmt = SageBuilder::buildWhileStmt(test, body, orelse);
     return PyEncapsulate(sg_while_stmt);
 }
 

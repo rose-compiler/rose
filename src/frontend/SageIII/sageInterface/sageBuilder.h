@@ -762,11 +762,11 @@ SgUpcForAllStatement * buildUpcForAllStatement_nfi(SgStatement* initialize_stmt,
 SgUpcForAllStatement * buildUpcForAllStatement_nfi(SgForInitStatement * init_stmt, SgStatement * test, SgExpression * increment, SgExpression* affinity, SgStatement * loop_body);
 
 //! Build while statement
-SgWhileStmt * buildWhileStmt(SgStatement *  condition, SgStatement *body);
-inline SgWhileStmt * buildWhileStmt(SgExpression *  condition, SgStatement *body) {
-  return buildWhileStmt(buildExprStatement(condition), body);
+SgWhileStmt * buildWhileStmt(SgStatement *  condition, SgStatement *body, SgStatement *else_body = NULL);
+inline SgWhileStmt * buildWhileStmt(SgExpression *  condition, SgStatement *body, SgStatement* else_body = NULL) {
+  return buildWhileStmt(buildExprStatement(condition), body, else_body);
 }
-SgWhileStmt * buildWhileStmt_nfi(SgStatement *  condition, SgStatement *body);
+SgWhileStmt * buildWhileStmt_nfi(SgStatement *  condition, SgStatement *body, SgStatement *else_body = NULL);
 
 SgWithStatement* buildWithStatement(SgExpression* expr, const std::vector<SgVariableDeclaration*>& vars, SgStatement* body);
 

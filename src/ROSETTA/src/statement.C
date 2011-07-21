@@ -1593,6 +1593,10 @@ Grammar::setUpStatements ()
      WhileStmt.setDataPrototype     ( "SgStatement*", "body", "= NULL",
                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+  // driscoll6 (7/21/11) support for python
+     WhileStmt.setDataPrototype ( "SgStatement*", "else_body",  "= NULL",
+                               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
   // DQ (8/24/2007): Added to support Fortran specific use of do ... while construct.
   // WhileStmt.setDataPrototype ( "int", "end_numeric_label", "= -1",
   //              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
