@@ -150,6 +150,12 @@ class Unparser
           Unparse_MOD_SAGE* u_sage;
           Unparse_ExprStmt* u_exprStmt;
 
+       // driscoll6 (7/21/11) Allow the Unparser to query aspects of the particular language being unparsed.
+       // For example, the generalized expression unparser should reference the particular language's
+       // operator precedences when placing parentheses. Python defines a different set of precedences than
+       // C/C++/Fortran/Java, so this member will allow both sets of precedences to coexist.
+          UnparseLanguageIndependentConstructs* u_lang;
+
        // DQ (8/14/2007): I have added this here to be consistant, but I question if this is a good design!
           UnparseFortran_type* u_fortran_type;
           FortranCodeGeneration_locatedNode* u_fortran_locatedNode;
