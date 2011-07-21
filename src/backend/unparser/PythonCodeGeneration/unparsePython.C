@@ -143,6 +143,11 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
             unparseUnaryOp( isSgUnaryOp(stmt), info );
             break;
 
+        case V_SgNaryBooleanOp:
+        case V_SgNaryComparisonOp:
+            unparseNaryOp( isSgNaryOp(stmt), info );
+            break;
+
         default: {
             cerr << "unparse Expression (" << stmt->class_name()
                  << "*) is unimplemented." << endl;
@@ -198,6 +203,56 @@ Unparse_Python::unparseAsSuite(SgStatement* stmt, SgUnparse_Info& info) {
         }
     }
     info.dec_nestingLevel();
+}
+
+void
+Unparse_Python::unparseOperator(VariantT variant, bool pad) {
+    if (pad) curprint(" ");
+    switch(variant) {
+        case V_SgAddOp:              curprint("+");      break;
+        case V_SgAndOp:              curprint("and");      break;
+        case V_SgAssignOp:           curprint("=");      break;
+        case V_SgBitAndOp:           curprint("&");      break;
+        case V_SgBitOrOp:            curprint("|");      break;
+        case V_SgBitXorOp:           curprint("^");      break;
+        case V_SgDivideOp:           curprint("/");      break;
+        case V_SgExponentiationOp:   curprint("**");     break;
+        case V_SgIntegerDivideOp:    curprint("//");     break;
+        case V_SgLshiftOp:           curprint("<<");     break;
+        case V_SgModOp:              curprint("%");      break;
+        case V_SgMultiplyOp:         curprint("*");      break;
+        case V_SgRshiftOp:           curprint(">>");     break;
+        case V_SgSubtractOp:         curprint("-");      break;
+        case V_SgPlusAssignOp:       curprint("+=");     break;
+      //case V_SgBitAndAssignOp:     curprint("&=");     break;
+      //case V_SgBitOrAssignOp:      curprint("|=");     break;
+      //case V_SgBitXorAssignOp:     curprint("^=");     break;
+        case V_SgDivAssignOp:        curprint("/=");     break;
+      //case V_SgExpAssignOp:        curprint("**=");    break;
+      //case V_SgIntegerDivAssignOp: curprint("//=");    break;
+        case V_SgLshiftAssignOp:     curprint("<<=");    break;
+        case V_SgRshiftAssignOp:     curprint(">>=");    break;
+        case V_SgModAssignOp:        curprint("%=");     break;
+        case V_SgMultAssignOp:       curprint("*=");     break;
+        case V_SgMinusAssignOp:      curprint("-=");     break;
+        case V_SgNotOp:              curprint("not");    break;
+        case V_SgOrOp:               curprint("or");     break;
+        case V_SgLessThanOp:         curprint("<");      break;
+        case V_SgLessOrEqualOp:      curprint("<=");     break;
+        case V_SgGreaterThanOp:      curprint(">");      break;
+        case V_SgGreaterOrEqualOp:   curprint(">=");     break;
+        case V_SgEqualityOp:         curprint("==");     break;
+        case V_SgNotEqualOp:         curprint("!=");     break;
+        case V_SgMembershipOp:       curprint("in");     break;
+        case V_SgNonMembershipOp:    curprint("not in"); break;
+        case V_SgIsOp:               curprint("is");     break;
+        case V_SgIsNotOp:            curprint("is not"); break;
+        default: {
+            cerr << "Unable to unparse operator: variant = " << variant << endl;
+            ROSE_ABORT();
+        }
+    }
+    if (pad) curprint(" ");
 }
 
 void
@@ -266,48 +321,7 @@ Unparse_Python::unparseBinaryOp(SgBinaryOp* bin_op,
                                 SgUnparse_Info& info)
 {
     unparseExpression(bin_op->get_lhs_operand(), info);
-    curprint(" ");
-    switch(bin_op->variantT()) {
-        case V_SgAddOp:            curprint("+");     break;
-        case V_SgAssignOp:         curprint("=");     break;
-        case V_SgBitAndOp:         curprint("&");     break;
-        case V_SgBitOrOp:          curprint("|");     break;
-        case V_SgBitXorOp:         curprint("^");     break;
-        case V_SgDivideOp:         curprint("/");     break;
-        case V_SgExponentiationOp: curprint("**");    break;
-        case V_SgIntegerDivideOp:  curprint("//");    break;
-        case V_SgLshiftOp:         curprint("<<");    break;
-        case V_SgModOp:            curprint("%");     break;
-        case V_SgMultiplyOp:       curprint("*");     break;
-        case V_SgRshiftOp:         curprint(">>");    break;
-        case V_SgSubtractOp:       curprint("-");     break;
-        case V_SgPlusAssignOp:     curprint("+=");    break;
-    //  case V_SgBitAndAssignOp:   curprint("&=");    break;
-    //  case V_SgBitOrAssignOp:    curprint("|=");    break;
-    //  case V_SgBitXorAssignOp:   curprint("^=");    break;
-        case V_SgDivAssignOp:      curprint("/=");    break;
-    //  case V_SgExpAssignOp:      curprint("**=");   break;
-    //  case V_SgIntegerDivAssignOp: curprint("//="); break;
-        case V_SgLshiftAssignOp:   curprint("<<=");   break;
-        case V_SgRshiftAssignOp:   curprint(">>=");   break;
-        case V_SgModAssignOp:      curprint("%=");    break;
-        case V_SgMultAssignOp:     curprint("*=");    break;
-        case V_SgMinusAssignOp:    curprint("-=");    break;
-        case V_SgLessThanOp:       curprint("<");     break;
-        case V_SgLessOrEqualOp:    curprint("<=");    break;
-        case V_SgGreaterThanOp:    curprint(">");     break;
-        case V_SgGreaterOrEqualOp:  curprint(">=");   break;
-        case V_SgEqualityOp:       curprint("==");    break;
-        case V_SgNotEqualOp:       curprint("!=");    break;
-        case V_SgMembershipOp:     curprint("in");    break;
-        case V_SgNonMembershipOp:  curprint("not in"); break;
-        case V_SgIsOp:             curprint("is");    break;
-        case V_SgIsNotOp:          curprint("is not"); break;
-        default: { cerr << "Unhandled SgBinaryOp: " << bin_op->class_name() << endl;
-            ROSE_ABORT();
-        }
-    }
-    curprint(" ");
+    unparseOperator(bin_op->variantT());
     unparseExpression(bin_op->get_rhs_operand(), info);
 }
 
@@ -644,6 +658,24 @@ Unparse_Python::unparseLongIntVal(SgLongIntVal* long_int_val,
     code << long_int_val->get_value();
     curprint( code.str() );
 }
+
+void
+Unparse_Python::unparseNaryOp(SgNaryOp* op,
+                              SgUnparse_Info& info)
+{
+    SgExpressionPtrList& operands = op->get_operands();
+    VariantTList& operators = op->get_operators();
+
+    SgExpressionPtrList::iterator exp_it = operands.begin();
+    VariantTList::iterator op_it = operators.begin();
+
+    unparseExpression(*exp_it++, info);
+    for ( ; exp_it != operands.end(); exp_it++, op_it++) {
+        unparseOperator(*op_it);
+        unparseExpression(*exp_it, info);
+    }
+}
+
 void
 Unparse_Python::unparsePassStatement(SgPassStatement* pass_stmt,
                                      SgUnparse_Info& info)

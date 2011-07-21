@@ -473,6 +473,9 @@ SgNamespaceAliasDeclarationStatement
 SgNamespaceDeclarationStatement
 SgNamespaceDefinitionStatement
 SgNamespaceSymbol
+SgNaryOp
+SgNaryBooleanOp
+SgNaryComparisonOp
 SgNewExp
 SgNode
 SgNotEqualOp

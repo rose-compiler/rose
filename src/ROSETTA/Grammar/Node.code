@@ -358,6 +358,8 @@ typedef Rose_STL_Container<SgKeyDatumPair*>  SgKeyDatumPairPtrList;
 class SgComprehension;
 typedef Rose_STL_Container<SgComprehension*>  SgComprehensionPtrList;
 
+typedef Rose_STL_Container<VariantT>       VariantTList;
+
 // Liao 9/27/2010: new typedef for SgVarRefExp list
 class SgVarRefExp;
 typedef Rose_STL_Container<SgVarRefExp*>   SgVarRefExpPtrList;
