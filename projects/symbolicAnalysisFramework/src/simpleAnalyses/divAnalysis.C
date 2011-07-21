@@ -1,4 +1,6 @@
 #include "divAnalysis.h"
+#include <boost/bind.hpp>
+#include <boost/mem_fn.hpp>
 
 int divAnalysisDebugLevel=0;
 
@@ -533,325 +535,310 @@ for(vector<Lattice*>::iterator it = initLattices.begin();
 	return constVars;
 }*/
 
-bool DivAnalysis::transfer(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo)
+DivAnalysisTransfer::DivAnalysisTransfer(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo)
+  : IntraDFTransferVisitor(func, n, state, dfInfo), modified(false), prodLat(dynamic_cast<FiniteVarsExprsProductLattice*>(*(dfInfo.begin())))
 {
-	bool modified=false;
-	
-	FiniteVarsExprsProductLattice* prodLat = dynamic_cast<FiniteVarsExprsProductLattice*>(*(dfInfo.begin()));
-	
-	//Dbg::dbg << "transfer A prodLat="<<prodLat<<"="<<prodLat->str("    ")<<"\n";
-	// Make sure that all the lattices are initialized
-	//prodLat->initialize();
-	const vector<Lattice*>& lattices = prodLat->getLattices();
-	for(vector<Lattice*>::const_iterator it = lattices.begin(); it!=lattices.end(); it++)
-		(dynamic_cast<DivLattice*>(*it))->initialize();
-	
-	// Plain assignment: lhs = rhs
-	if(isSgAssignOp(n.getNode())) {
-		varID res = SgExpr2Var(isSgExpression(n.getNode()));
-		varID lhs = SgExpr2Var(isSgAssignOp(n.getNode())->get_lhs_operand());
-		varID rhs = SgExpr2Var(isSgAssignOp(n.getNode())->get_rhs_operand());
-		if(divAnalysisDebugLevel>=1) {
-			Dbg::dbg << "res="<<res.str()<<" lhs="<<lhs.str()<<" rhs="<<rhs.str()<<"\n";
-		}
-		
-		DivLattice* resLat = dynamic_cast<DivLattice*>(prodLat->getVarLattice(res));
-		DivLattice* lhsLat = dynamic_cast<DivLattice*>(prodLat->getVarLattice(lhs));
-		DivLattice* rhsLat = dynamic_cast<DivLattice*>(prodLat->getVarLattice(rhs));
-		
-		if(divAnalysisDebugLevel>=1) {
-			if(resLat) Dbg::dbg << "resLat=\n    "<<resLat->str("    ")<<"\n";
-			if(lhsLat) Dbg::dbg << "lhsLat=\n    "<<lhsLat->str("    ")<<"\n";
-			if(rhsLat) Dbg::dbg << "rhsLat=\n    "<<rhsLat->str("    ")<<"\n";
-		}
-		
-		// Copy the lattice of the right-hand-side to both the left-hand-side variable and to the assignment expression itself
-		if(resLat) // If the left-hand-side contains a live expression or variable
-		{ resLat->copy(rhsLat); modified = true; }
-		if(lhsLat) // If the left-hand-side contains a live expression or variable
-		{ lhsLat->copy(rhsLat); modified = true; }
-	// Initializer for a variable
-	} else if(isSgAssignInitializer(n.getNode())) {
-		varID res = SgExpr2Var(isSgAssignInitializer(n.getNode()));
-		varID asgn = SgExpr2Var(isSgAssignInitializer(n.getNode())->get_operand());
-
-		DivLattice* asgnLat = dynamic_cast<DivLattice*>(prodLat->getVarLattice(asgn));
-		DivLattice* resLat = dynamic_cast<DivLattice*>(prodLat->getVarLattice(res));
-		if(divAnalysisDebugLevel>=1) {
-			if(asgnLat) Dbg::dbg << "asgnLat=    "<<asgnLat->str("    ")<<"\n";
-			if(resLat) Dbg::dbg << "resLat=    "<<resLat->str("    ")<<"\n";
-		}
-
-		// If the result expression is live
-		if(resLat) { resLat->copy(asgnLat); modified = true; }
-	// Variable Declaration
-	} else if(isSgInitializedName(n.getNode())) {
-		SgInitializedName* initName = isSgInitializedName(n.getNode());
-		varID var(initName);
-		DivLattice* varLat = dynamic_cast<DivLattice*>(prodLat->getVarLattice(var));
-		
-		//Dbg::dbg << "DivAnalysis::transfer() isSgInitializedName var="<<var.str()<<" varLat="<<varLat<<"\n";
-		
-		// if this is a scalar that we care about, initialize it to Bottom
-		if(varLat)
-		{
-			//if(divAnalysisDebugLevel>=1) Dbg::dbg << "Variable declaration: "<<var.str()<<", get_initializer()="<<initName->get_initializer()<<"\n";
-			// If there was no initializer
-			if(initName->get_initializer()==NULL)
-				modified = varLat->setBot() || modified;
-			else {
-				varID init = SgExpr2Var(initName->get_initializer());
-				DivLattice* initLat = dynamic_cast<DivLattice*>(prodLat->getVarLattice(init));
-				//if(divAnalysisDebugLevel>=1) Dbg::dbg << "    init="<<init.str()<<" initLat="<<initLat<<"\n";
-				if(initLat) {
-					varLat->copy(initLat);
-					modified = true;
-				}
-			}
-		}
-	// Integral Numeric Constants
-	} else if(isSgLongLongIntVal(n.getNode())         || isSgLongIntVal(n.getNode()) || 
-	          isSgIntVal(n.getNode())                 || isSgShortVal(n.getNode()) ||
-	          isSgUnsignedLongLongIntVal(n.getNode()) || isSgUnsignedLongVal(n.getNode()) || 
-	          isSgUnsignedIntVal(n.getNode())         || isSgUnsignedShortVal(n.getNode())) {
-		varID res = SgExpr2Var(isSgExpression(n.getNode()));
-		DivLattice* resLat = dynamic_cast<DivLattice*>(prodLat->getVarLattice(res));
-		
-		// If the result expression is live
-/// !!! ADD MODIFICATION DETECTION
-		if(resLat) {
-			     if(isSgLongLongIntVal(n.getNode()))         modified = resLat->set(isSgLongLongIntVal(n.getNode())->get_value())         || modified;
-			else if(isSgLongIntVal(n.getNode()))             modified = resLat->set(isSgLongIntVal(n.getNode())->get_value())             || modified;
-			else if(isSgIntVal(n.getNode()))                 modified = resLat->set(isSgIntVal(n.getNode())->get_value())                 || modified;
-			else if(isSgShortVal(n.getNode()))               modified = resLat->set(isSgShortVal(n.getNode())->get_value())               || modified;
-			else if(isSgUnsignedLongLongIntVal(n.getNode())) modified = resLat->set(isSgUnsignedLongLongIntVal(n.getNode())->get_value()) || modified;
-			else if(isSgUnsignedLongVal(n.getNode()))        modified = resLat->set(isSgUnsignedLongVal(n.getNode())->get_value())        || modified;
-			else if(isSgUnsignedIntVal(n.getNode()))         modified = resLat->set(isSgUnsignedIntVal(n.getNode())->get_value())         || modified;
-			else if(isSgUnsignedShortVal(n.getNode()))       modified = resLat->set(isSgUnsignedShortVal(n.getNode())->get_value())       || modified;
-		}
-	// Non-integral Constants
-	} else if(isSgValueExp(n.getNode())) {
-		varID res = SgExpr2Var(isSgExpression(n.getNode()));
-		DivLattice* resLat = dynamic_cast<DivLattice*>(prodLat->getVarLattice(res));
-		// If the result expression is live
-		if(resLat) modified = resLat->setTop() || modified;
-	// Arithmetic Operations
-	} else if(isSgPlusAssignOp(n.getNode())  || isSgAddOp(n.getNode()) ||
-	          isSgMinusAssignOp(n.getNode()) || isSgSubtractOp(n.getNode()) ||
-	          isSgModAssignOp(n.getNode())   || isSgModOp(n.getNode()) ||
-	          isSgMultAssignOp(n.getNode())  || isSgMultiplyOp(n.getNode()) ||
-	          isSgDivAssignOp(n.getNode())   || isSgDivideOp(n.getNode()) ||
-	          isSgMinusMinusOp(n.getNode())  || isSgMinusOp(n.getNode()) || 
-	          isSgPlusPlusOp(n.getNode())    || isSgUnaryAddOp(n.getNode())
-	          // Mod and exponentiation
-	          ) {
-		varID lhs, arg1, arg2;
-		varID res = SgExpr2Var(isSgExpression(n.getNode()));
-		DivLattice *resLat, *arg1Lat, *arg2Lat;
-		
-		// Set up the information on the arguments and target of the arithmetic operation
-		if(isSgBinaryOp(n.getNode())) {
-			if(isSgCompoundAssignOp(n.getNode())) {
-				lhs = SgExpr2Var(isSgBinaryOp(n.getNode())->get_lhs_operand());
-				arg1 = lhs;
-				arg2 = SgExpr2Var(isSgBinaryOp(n.getNode())->get_rhs_operand());
-				//Dbg::dbg << "lhs="<<lhs.str()<<" arg1="<<arg1.str()<<" arg2="<<arg2.str()<<"\n";
-			} else {
-				arg1 = SgExpr2Var(isSgBinaryOp(n.getNode())->get_lhs_operand());
-				arg2 = SgExpr2Var(isSgBinaryOp(n.getNode())->get_rhs_operand());
-			}
-			arg1Lat = dynamic_cast<DivLattice*>(prodLat->getVarLattice(arg1));
-			arg2Lat = dynamic_cast<DivLattice*>(prodLat->getVarLattice(arg2));
-		} else if(isSgUnaryOp(n.getNode())) {
-			arg1 = SgExpr2Var(isSgUnaryOp(n.getNode())->get_operand());
-			arg1Lat = dynamic_cast<DivLattice*>(prodLat->getVarLattice(arg1));
-			// Unary Update
-			if(isSgMinusMinusOp(n.getNode()) || isSgPlusPlusOp(n.getNode())) {
-				arg2Lat = new DivLattice(1);
-			}
-			//Dbg::dbg << "res="<<res.str()<<" arg1="<<arg1.str()<<" arg1Lat="<<arg1Lat<<", arg2Lat="<<arg2Lat<<"\n";
-		}
-		resLat = dynamic_cast<DivLattice*>(prodLat->getVarLattice(res));
-		//Dbg::dbg << "transfer B, resLat="<<resLat<<"\n";
-		
-		// If the result expression is dead but the left-hand-side of the expression is live,
-		// update the left-hand-side with the result
-		if(resLat==NULL && isSgCompoundAssignOp(n.getNode()) &&
-			prodLat->getVarLattice(lhs)!=NULL)
-		{ resLat = dynamic_cast<DivLattice*>(prodLat->getVarLattice(lhs)); }
-		
-		//Dbg::dbg << "transfer C, resLat="<<resLat<<"\n";
-		// If the result or left-hand-side expression as well as the arguments are live
-		if(resLat && arg1Lat && arg2Lat) {
-			// ADDITION / SUBTRACTION
-			if(isSgPlusAssignOp(n.getNode())  || isSgAddOp(n.getNode()) ||
-		      isSgMinusAssignOp(n.getNode()) || isSgSubtractOp(n.getNode()) ||
-		      isSgMinusMinusOp(n.getNode())  || isSgPlusPlusOp(n.getNode())) {
-		      // Either one Bottom or Uninitialized
-			  bool isAddition = isSgPlusAssignOp(n.getNode()) || isSgAddOp(n.getNode()) || isSgPlusPlusOp(n.getNode());
-		      if(//arg1Lat->getLevel() == DivLattice::uninitialized || arg2Lat->getLevel() == DivLattice::uninitialized ||
-		         arg1Lat->getLevel() == DivLattice::bottom        || arg2Lat->getLevel() == DivLattice::bottom) {
-					modified = resLat->setBot() || modified;
-				// Both ValKnown
-				} else if(arg1Lat->getLevel() == DivLattice::valKnown && arg2Lat->getLevel() == DivLattice::valKnown) {
-					if(isAddition)
-						modified = resLat->set(arg1Lat->getValue() + arg2Lat->getValue()) || modified;
-					else
-						modified = resLat->set(arg1Lat->getValue() - arg2Lat->getValue()) || modified;
-				// Arg1 ValKnown, Arg2 DivKnown
-				} else if(arg1Lat->getLevel() == DivLattice::valKnown && arg2Lat->getLevel() == DivLattice::divKnown) {
-					if(isAddition)
-						modified = resLat->set(arg2Lat->getDiv(), 
-						                       (arg1Lat->getValue() + arg2Lat->getRem()) %
-						                           arg2Lat->getDiv()) || modified;
-					else
-						modified = resLat->set(arg2Lat->getDiv(), 
-						                      ((arg1Lat->getValue()%arg2Lat->getDiv()) - arg2Lat->getRem() + arg2Lat->getDiv()) %
-						                          arg2Lat->getDiv()) || modified;
-				}
-				// Arg1 DivKnown, Arg2 ValKnown
-				else if(arg1Lat->getLevel() == DivLattice::divKnown && arg2Lat->getLevel() == DivLattice::valKnown) {
-					if(isAddition)
-						modified = resLat->set(arg1Lat->getDiv(), 
-						                       (arg2Lat->getValue() + arg1Lat->getRem()) %
-						                           arg1Lat->getDiv()) || modified;
-					else
-						modified = resLat->set(arg1Lat->getDiv(), 
-						                      (arg1Lat->getRem() - (arg2Lat->getValue()%arg1Lat->getDiv()) + arg2Lat->getDiv()) %
-						                          arg1Lat->getDiv()) || modified;
-				}
-				// Both DivKnown
-				else if(arg1Lat->getLevel() == DivLattice::divKnown && arg2Lat->getLevel() == DivLattice::divKnown) {
-					long newDiv, newRem;
-					
-					//if(DivLattice::matchDiv(arg1Lat, arg2Lat, newDiv, newRem))
-					if(DivLattice::matchDivAddSubt(arg1Lat, arg2Lat, newDiv, newRem, isAddition)) {
-						modified = resLat->set(newDiv, newRem) || modified;
-					} else
-						modified = resLat->setTop() || modified;
-				}
-				// Else => Top
-				else
-					modified = resLat->setTop() || modified;
-			// Negation
-			} else if(isSgMinusOp(n.getNode())) {
-				resLat->copy(arg1Lat); modified = true;
-				if(resLat->getLevel() == DivLattice::valKnown)
-					modified = resLat->set(0-resLat->getValue()) || modified;
-				else if(resLat->getLevel() == DivLattice::divKnown)
-					modified = resLat->set(resLat->getDiv(),
-					                       (resLat->getDiv()-resLat->getRem())%resLat->getDiv()) || modified;
-			// PLUS SIGN
-			} else if(isSgUnaryAddOp(n.getNode())) {
-				resLat->copy(arg1Lat); modified = true;
-			// MULTIPLICATION
-			} else if(isSgMultAssignOp(n.getNode()) || isSgMultiplyOp(n.getNode())) {
-				if(divAnalysisDebugLevel>=1) Dbg::dbg << "   case i = j * k\n";
-				/*printf("arg1Lat = %s\n", arg1Lat->str().c_str());
-				printf("arg2Lat = %s\n", arg2Lat->str().c_str());*/
-				
-				// Both Bottom
-				if(arg1Lat->getLevel() == DivLattice::bottom || arg2Lat->getLevel() == DivLattice::bottom)
-					modified = resLat->setBot() || modified;
-				// Both ValKnown
-				else if(arg1Lat->getLevel() == DivLattice::valKnown && arg2Lat->getLevel() == DivLattice::valKnown)
-					modified = resLat->set(arg1Lat->getValue() * arg2Lat->getValue()) || modified;
-				// Arg1 ValKnown, Arg2 DivKnown, Arg1
-				else if(arg1Lat->getLevel() == DivLattice::valKnown && arg2Lat->getLevel() == DivLattice::divKnown)
-				{
-					// (m*k.div + k.rem)*j.val*c = (m*(k.div*j.val*c) + k.rem*j.val*c) = 
-					modified = resLat->set(arg2Lat->getDiv(), arg2Lat->getRem()) || modified;
-					modified = resLat->mult(arg1Lat->getValue()) || modified;
-				}
-				// Arg1 DivKnown, Arg2 ValKnown
-				else if(arg1Lat->getLevel() == DivLattice::divKnown && arg2Lat->getLevel() == DivLattice::valKnown)
-				{
-					// (m*j.div + j.rem)*k.val*c = (m*(j.div*k.val*c) + j.rem*k.val*c) = 
-					modified = resLat->set(arg1Lat->getDiv(), arg1Lat->getRem()) || modified;
-					modified = resLat->mult(arg2Lat->getValue()) || modified;
-				}
-				// Both DivKnown => Top
-				else if(arg1Lat->getLevel() == DivLattice::divKnown && arg2Lat->getLevel() == DivLattice::divKnown)
-				{
-					modified = resLat->setTop() || modified;
-				}
-				// Else => Top
-				else
-					modified = resLat->setTop() || modified;
-			// DIVISION
-			} else if(isSgDivAssignOp(n.getNode()) || isSgDivideOp(n.getNode())) {
-				if(divAnalysisDebugLevel>=1) Dbg::dbg << "   case i = j / k\n";
-			
-				// Both Bottom
-				if(arg1Lat->getLevel() == DivLattice::bottom || arg2Lat->getLevel() == DivLattice::bottom)
-					modified = resLat->setBot() || modified;
-				// Both ValKnown
-				else if(arg1Lat->getLevel() == DivLattice::valKnown && arg2Lat->getLevel() == DivLattice::valKnown)
-					modified = resLat->set(arg1Lat->getValue() / arg2Lat->getValue()) || modified;
-				// Arg1 ValKnown, Arg2 DivKnown, Arg1 divisible by Arg2 Div
-				else if(arg1Lat->getLevel() == DivLattice::valKnown && arg2Lat->getLevel() == DivLattice::divKnown &&
-				        arg2Lat->getRem()==0 && arg1Lat->getValue()%arg2Lat->getDiv() == 0)
-					modified = resLat->set(arg1Lat->getValue()/arg2Lat->getDiv()) || modified;
-				// Arg1 DivKnown, Arg2 ValKnown, Arg1 Div/Rem divisible by Arg2
-				else if(arg1Lat->getLevel() == DivLattice::divKnown && arg2Lat->getLevel() == DivLattice::valKnown &&
-				        (arg1Lat->getDiv()%arg2Lat->getValue() == 0) && (arg1Lat->getRem()%arg2Lat->getValue() == 0))
-					modified = resLat->set(arg1Lat->getDiv()/arg2Lat->getValue(), arg1Lat->getRem()/arg2Lat->getValue()) || modified;
-				// Both DivKnown, Arg1 Div/Rem divisible by Arg2 Div
-				else if(arg1Lat->getLevel() == DivLattice::divKnown && arg2Lat->getLevel() == DivLattice::divKnown &&
-				        arg2Lat->getRem()==0 && (arg1Lat->getDiv()%arg2Lat->getDiv() == 0) && (arg1Lat->getRem()%arg2Lat->getDiv() == 0))
-					modified = resLat->set(arg1Lat->getDiv()/arg2Lat->getDiv(), arg1Lat->getRem()/arg2Lat->getDiv()) || modified;
-				// Else => Top
-				else
-					modified = resLat->setTop() || modified;
-			// MODULUS
-			} else if(isSgModAssignOp(n.getNode()) || isSgModOp(n.getNode())) {
-				if(divAnalysisDebugLevel>=1) Dbg::dbg << "   case i = j %% k\n";
-				
-				// Both Bottom
-				if(arg1Lat->getLevel() == DivLattice::bottom || arg2Lat->getLevel() == DivLattice::bottom)
-					modified = resLat->setBot() || modified;
-				// Both ValKnown
-				else if(arg1Lat->getLevel() == DivLattice::valKnown && arg2Lat->getLevel() == DivLattice::valKnown)
-					modified = resLat->set(arg1Lat->getValue() % arg2Lat->getValue()) || modified;
-				// Arg1 ValKnown, Arg2 DivKnown
-				else if(arg1Lat->getLevel() == DivLattice::valKnown && arg2Lat->getLevel() == DivLattice::divKnown &&
-				        arg2Lat->getRem()==0 && arg1Lat->getValue()%arg2Lat->getDiv() == 0)
-					modified = resLat->setTop() || modified;
-				// Arg1 DivKnown, Arg2 ValKnown, Arg1 Div divisible by Arg2
-				else if(arg1Lat->getLevel() == DivLattice::divKnown && arg2Lat->getLevel() == DivLattice::valKnown &&
-				        (arg1Lat->getDiv()%arg2Lat->getValue() == 0))
-					modified = resLat->set(arg1Lat->getRem() % arg2Lat->getValue()) || modified;
-				// Both DivKnown
-				else if(arg1Lat->getLevel() == DivLattice::divKnown && arg2Lat->getLevel() == DivLattice::divKnown &&
-				        arg2Lat->getRem()==0 && (arg1Lat->getDiv()%arg2Lat->getDiv() == 0) && (arg1Lat->getRem()%arg2Lat->getDiv() == 0))
-					modified = resLat->setTop() || modified;
-				// Else => Top
-				else
-					modified = resLat->setTop() || modified;
-			}
-		
-			// If there is a left-hand side, copy the final lattice to the lhs variable
-			if(isSgCompoundAssignOp(n.getNode())) {
-				// If we didn't use the lhs lattice as resLat, copy resLat into lhsLat
-				//Dbg::dbg << "prodLat-&lt;getVarLattice("<<res.str()<<")="<<prodLat-&lt;getVarLattice(res)<<"\n";
-				if(prodLat->getVarLattice(res)!=NULL) {
-					DivLattice* lhsLat = dynamic_cast<DivLattice*>(prodLat->getVarLattice(lhs));
-					//Dbg::dbg << "prodLat-&lt;getVarLattice("<<lhs.str()<<")="<<lhsLat<<"\n";
-					if(lhsLat) // If the left-hand-side contains an identifiable variable
-						lhsLat->copy(resLat);
-				}
-			}
-		}
-		
-		// Deallocate newly-created objects
-		if(isSgMinusMinusOp(n.getNode()) || isSgPlusPlusOp(n.getNode()))
-			delete arg2Lat;
-	} else
-		return false;
-	//Dbg::dbg << "transfer C\n";
-	
-	return modified;
+  //Dbg::dbg << "transfer A prodLat="<<prodLat<<"="<<prodLat->str("    ")<<"\n";
+  // Make sure that all the lattices are initialized
+  //prodLat->initialize();
+  const vector<Lattice*>& lattices = prodLat->getLattices();
+  for(vector<Lattice*>::const_iterator it = lattices.begin(); it!=lattices.end(); it++)
+    (dynamic_cast<DivLattice*>(*it))->initialize();
 }
+
+void DivAnalysisTransfer::visit(SgAssignOp *sgn)
+{
+  DivLattice *lhsLat, *rhsLat, *resLat;
+  getLattices(sgn, lhsLat, rhsLat, resLat);
+		
+  if(divAnalysisDebugLevel>=1) {
+    if(resLat) Dbg::dbg << "resLat=\n    "<<resLat->str("    ")<<"\n";
+    if(lhsLat) Dbg::dbg << "lhsLat=\n    "<<lhsLat->str("    ")<<"\n";
+    if(rhsLat) Dbg::dbg << "rhsLat=\n    "<<rhsLat->str("    ")<<"\n";
+  }
+		
+  // Copy the lattice of the right-hand-side to both the left-hand-side variable and to the assignment expression itself
+  if(resLat) // If the left-hand-side contains a live expression or variable
+    { resLat->copy(rhsLat); modified = true; }
+  if(lhsLat) // If the left-hand-side contains a live expression or variable
+    { lhsLat->copy(rhsLat); modified = true; }
+}
+
+void DivAnalysisTransfer::visit(SgAssignInitializer *sgn)
+{
+  DivLattice* asgnLat = getLattice(sgn->get_operand());
+  DivLattice* resLat = getLattice(sgn);
+
+  if(divAnalysisDebugLevel>=1) {
+    if(asgnLat) Dbg::dbg << "asgnLat=    "<<asgnLat->str("    ")<<"\n";
+    if(resLat) Dbg::dbg << "resLat=    "<<resLat->str("    ")<<"\n";
+  }
+
+  // If the result expression is live
+  if(resLat) { resLat->copy(asgnLat); modified = true; }
+}
+
+void DivAnalysisTransfer::visit(SgInitializedName *initName)
+{
+  varID var(initName);
+  DivLattice* varLat = dynamic_cast<DivLattice *>(prodLat->getVarLattice(var));
+		
+  //Dbg::dbg << "DivAnalysis::transfer() isSgInitializedName var="<<var.str()<<" varLat="<<varLat<<"\n";
+		
+  // if this is a scalar that we care about, initialize it to Bottom
+  if(varLat) {
+    //if(divAnalysisDebugLevel>=1) Dbg::dbg << "Variable declaration: "<<var.str()<<", get_initializer()="<<initName->get_initializer()<<"\n";
+    // If there was no initializer
+    if(initName->get_initializer()==NULL)
+      updateModified(varLat->setBot());
+    else {
+      //varID init = SgExpr2Var(initName->get_initializer());
+      DivLattice* initLat = getLattice(initName->get_initializer());
+      //if(divAnalysisDebugLevel>=1) Dbg::dbg << "    init="<<init.str()<<" initLat="<<initLat<<"\n";
+      if(initLat) {
+        varLat->copy(initLat);
+        modified = true;
+      }
+    }
+  }
+}
+
+// Integral Numeric Constants
+template <class T>
+void DivAnalysisTransfer::visitIntegerValue(T *sgn)
+{
+  DivLattice* resLat = getLattice(sgn);
+
+  // If the result expression is live
+/// !!! ADD MODIFICATION DETECTION
+  if (resLat)
+    updateModified(resLat->set(sgn->get_value()));
+}
+void DivAnalysisTransfer::visit(SgLongLongIntVal *sgn)          { visitIntegerValue(sgn); }
+void DivAnalysisTransfer::visit(SgLongIntVal *sgn)              { visitIntegerValue(sgn); }
+void DivAnalysisTransfer::visit(SgIntVal *sgn)                  { visitIntegerValue(sgn); }
+void DivAnalysisTransfer::visit(SgShortVal *sgn)                { visitIntegerValue(sgn); }
+void DivAnalysisTransfer::visit(SgUnsignedLongLongIntVal *sgn)  { visitIntegerValue(sgn); }
+void DivAnalysisTransfer::visit(SgUnsignedLongVal *sgn)         { visitIntegerValue(sgn); }
+void DivAnalysisTransfer::visit(SgUnsignedIntVal *sgn)          { visitIntegerValue(sgn); }
+void DivAnalysisTransfer::visit(SgUnsignedShortVal *sgn)        { visitIntegerValue(sgn); }
+
+// Non-integral Constants
+void DivAnalysisTransfer::visit(SgValueExp *sgn) {
+  DivLattice* resLat = getLattice(sgn);
+  // If the result expression is live
+  if(resLat) updateModified(resLat->setTop());
+}
+
+DivLattice* DivAnalysisTransfer::getLattice(const SgExpression *sgn) {
+  return dynamic_cast<DivLattice *>(prodLat->getVarLattice(SgExpr2Var(sgn)));
+}
+
+bool DivAnalysisTransfer::getLattices(const SgBinaryOp *sgn, DivLattice* &arg1Lat, DivLattice* &arg2Lat, DivLattice* &resLat) {
+  arg1Lat = getLattice(sgn->get_lhs_operand());
+  arg2Lat = getLattice(sgn->get_rhs_operand());
+  resLat = getLattice(sgn);
+
+  if(isSgCompoundAssignOp(sgn)) {
+    if(resLat==NULL && arg1Lat != NULL)
+      resLat = arg1Lat;
+  }
+  //Dbg::dbg << "transfer B, resLat="<<resLat<<"\n";
+
+  return (arg1Lat && arg2Lat && resLat);
+}
+
+bool DivAnalysisTransfer::getLattices(const SgUnaryOp *sgn, DivLattice* &arg1Lat, DivLattice* &arg2Lat, DivLattice* &resLat) {
+    arg1Lat = getLattice(sgn->get_operand());
+    resLat = getLattice(sgn);
+
+    // Unary Update
+    if(isSgMinusMinusOp(sgn) || isSgPlusPlusOp(sgn)) {
+        arg2Lat = new DivLattice(1);
+    }
+    //Dbg::dbg << "res="<<res.str()<<" arg1="<<arg1.str()<<" arg1Lat="<<arg1Lat<<", arg2Lat="<<arg2Lat<<"\n";
+    //Dbg::dbg << "transfer B, resLat="<<resLat<<"\n";
+
+  return (arg1Lat && arg2Lat && resLat);
+}
+
+void DivAnalysisTransfer::transferAdditive(DivLattice *arg1Lat, DivLattice *arg2Lat, DivLattice *resLat, bool isAddition) {
+  // Either one Bottom or Uninitialized
+  if(//arg1Lat->getLevel() == DivLattice::uninitialized || arg2Lat->getLevel() == DivLattice::uninitialized ||
+     arg1Lat->getLevel() == DivLattice::bottom        || arg2Lat->getLevel() == DivLattice::bottom) {
+    updateModified(resLat->setBot());
+    // Both ValKnown
+  } else if(arg1Lat->getLevel() == DivLattice::valKnown && arg2Lat->getLevel() == DivLattice::valKnown) {
+    updateModified(resLat->set(isAddition ?
+                               arg1Lat->getValue() + arg2Lat->getValue() : 
+                               arg1Lat->getValue() - arg2Lat->getValue()));
+    // Arg1 ValKnown, Arg2 DivKnown
+  } else if(arg1Lat->getLevel() == DivLattice::valKnown && arg2Lat->getLevel() == DivLattice::divKnown) {
+    long rem = (isAddition 
+                ? arg1Lat->getValue() + arg2Lat->getRem()
+                : arg1Lat->getValue() % arg2Lat->getDiv() - arg2Lat->getRem() + arg2Lat->getDiv())
+      % arg2Lat->getDiv();
+    updateModified(resLat->set(arg2Lat->getDiv(), rem));
+  }
+  // Arg1 DivKnown, Arg2 ValKnown
+  else if(arg1Lat->getLevel() == DivLattice::divKnown && arg2Lat->getLevel() == DivLattice::valKnown) {
+    if(isAddition)
+      modified = resLat->set(arg1Lat->getDiv(), 
+                             (arg2Lat->getValue() + arg1Lat->getRem()) %
+                             arg1Lat->getDiv()) || modified;
+    else
+      modified = resLat->set(arg1Lat->getDiv(), 
+                             (arg1Lat->getRem() - (arg2Lat->getValue()%arg1Lat->getDiv()) + arg2Lat->getDiv()) %
+                             arg1Lat->getDiv()) || modified;
+  }
+  // Both DivKnown
+  else if(arg1Lat->getLevel() == DivLattice::divKnown && arg2Lat->getLevel() == DivLattice::divKnown) {
+    long newDiv, newRem;
+
+    //if(DivLattice::matchDiv(arg1Lat, arg2Lat, newDiv, newRem))
+    if(DivLattice::matchDivAddSubt(arg1Lat, arg2Lat, newDiv, newRem, isAddition)) {
+      updateModified(resLat->set(newDiv, newRem));
+    } else
+      updateModified(resLat->setTop());
+  }
+  // Else => Top
+  else
+    updateModified(resLat->setTop());
+}
+void DivAnalysisTransfer::visit(SgPlusAssignOp *sgn)  { transferArith(sgn, boost::bind(&DivAnalysisTransfer::transferAdditive, _1, _2, _3, _4, true )); }
+void DivAnalysisTransfer::visit(SgMinusAssignOp *sgn) { transferArith(sgn, boost::bind(&DivAnalysisTransfer::transferAdditive, _1, _2, _3, _4, false)); }
+void DivAnalysisTransfer::visit(SgAddOp *sgn)         { transferArith(sgn, boost::bind(&DivAnalysisTransfer::transferAdditive, _1, _2, _3, _4, true )); }
+void DivAnalysisTransfer::visit(SgSubtractOp *sgn)    { transferArith(sgn, boost::bind(&DivAnalysisTransfer::transferAdditive, _1, _2, _3, _4, false)); }
+
+void DivAnalysisTransfer::transferIncrement(SgUnaryOp *sgn) {
+  DivLattice *arg1Lat, *arg2Lat = NULL, *resLat;
+  if (getLattices(sgn, arg1Lat, arg2Lat, resLat))
+    transferAdditive(arg1Lat, arg2Lat, resLat, isSgPlusPlusOp(sgn));
+  delete arg2Lat; // Allocated by getLattices
+}
+void DivAnalysisTransfer::visit(SgPlusPlusOp *sgn) { transferIncrement(sgn); }
+void DivAnalysisTransfer::visit(SgMinusMinusOp *sgn) { transferIncrement(sgn); }
+
+void DivAnalysisTransfer::visit(SgUnaryAddOp *sgn) {
+  DivLattice *arg1Lat, *arg2Lat = NULL, *resLat;
+  getLattices(sgn, arg1Lat, arg2Lat, resLat);
+  resLat->copy(arg1Lat);
+  modified = true;
+}
+void DivAnalysisTransfer::visit(SgMinusOp *sgn) {
+  DivLattice *arg1Lat, *arg2Lat = NULL, *resLat;
+  getLattices(sgn, arg1Lat, arg2Lat, resLat);
+  resLat->copy(arg1Lat);
+  modified = true;
+  if(resLat->getLevel() == DivLattice::valKnown)
+    resLat->set(0 - resLat->getValue());
+  else if(resLat->getLevel() == DivLattice::divKnown)
+    resLat->set(resLat->getDiv(), (resLat->getDiv() - resLat->getRem()) % resLat->getDiv());
+}
+
+void DivAnalysisTransfer::transferMultiplicative(DivLattice *arg1Lat, DivLattice *arg2Lat, DivLattice *resLat) {
+  if(divAnalysisDebugLevel>=1) Dbg::dbg << "   case i = j * k\n";
+  /*printf("arg1Lat = %s\n", arg1Lat->str().c_str());
+    printf("arg2Lat = %s\n", arg2Lat->str().c_str());*/
+				
+  // Both Bottom
+  if(arg1Lat->getLevel() == DivLattice::bottom || arg2Lat->getLevel() == DivLattice::bottom)
+    updateModified(resLat->setBot());
+  // Both ValKnown
+  else if(arg1Lat->getLevel() == DivLattice::valKnown && arg2Lat->getLevel() == DivLattice::valKnown)
+    updateModified(resLat->set(arg1Lat->getValue() * arg2Lat->getValue()));
+  // Arg1 ValKnown, Arg2 DivKnown, Arg1
+  else if(arg1Lat->getLevel() == DivLattice::valKnown && arg2Lat->getLevel() == DivLattice::divKnown)
+    {
+      // (m*k.div + k.rem)*j.val*c = (m*(k.div*j.val*c) + k.rem*j.val*c) = 
+      updateModified(resLat->set(arg2Lat->getDiv(), arg2Lat->getRem()));
+      updateModified(resLat->mult(arg1Lat->getValue()));
+    }
+  // Arg1 DivKnown, Arg2 ValKnown
+  else if(arg1Lat->getLevel() == DivLattice::divKnown && arg2Lat->getLevel() == DivLattice::valKnown)
+    {
+      // (m*j.div + j.rem)*k.val*c = (m*(j.div*k.val*c) + j.rem*k.val*c) = 
+      updateModified(resLat->set(arg1Lat->getDiv(), arg1Lat->getRem()));
+      updateModified(resLat->mult(arg2Lat->getValue()));
+    }
+  // Both DivKnown => Top
+  else if(arg1Lat->getLevel() == DivLattice::divKnown && arg2Lat->getLevel() == DivLattice::divKnown)
+    {
+      updateModified(resLat->setTop());
+    }
+  // Else => Top
+  else
+    updateModified(resLat->setTop());
+}
+void DivAnalysisTransfer::visit(SgMultiplyOp *sgn) { transferArith(sgn, &DivAnalysisTransfer::transferMultiplicative); }
+void DivAnalysisTransfer::visit(SgMultAssignOp *sgn) { transferArith(sgn, &DivAnalysisTransfer::transferMultiplicative); }
+
+void DivAnalysisTransfer::transferDivision(DivLattice *arg1Lat, DivLattice *arg2Lat, DivLattice *resLat) {
+  if(divAnalysisDebugLevel>=1) Dbg::dbg << "   case i = j / k\n";
+			
+  // Both Bottom
+  if(arg1Lat->getLevel() == DivLattice::bottom || arg2Lat->getLevel() == DivLattice::bottom)
+    updateModified(resLat->setBot());
+  // Both ValKnown
+  else if(arg1Lat->getLevel() == DivLattice::valKnown && arg2Lat->getLevel() == DivLattice::valKnown)
+    updateModified(resLat->set(arg1Lat->getValue() / arg2Lat->getValue()));
+  // Arg1 ValKnown, Arg2 DivKnown, Arg1 divisible by Arg2 Div
+  else if(arg1Lat->getLevel() == DivLattice::valKnown && arg2Lat->getLevel() == DivLattice::divKnown &&
+          arg2Lat->getRem()==0 && arg1Lat->getValue()%arg2Lat->getDiv() == 0)
+    updateModified(resLat->set(arg1Lat->getValue()/arg2Lat->getDiv()));
+  // Arg1 DivKnown, Arg2 ValKnown, Arg1 Div/Rem divisible by Arg2
+  else if(arg1Lat->getLevel() == DivLattice::divKnown && arg2Lat->getLevel() == DivLattice::valKnown &&
+          (arg1Lat->getDiv()%arg2Lat->getValue() == 0) && (arg1Lat->getRem()%arg2Lat->getValue() == 0))
+    updateModified(resLat->set(arg1Lat->getDiv()/arg2Lat->getValue(), arg1Lat->getRem()/arg2Lat->getValue()));
+  // Both DivKnown, Arg1 Div/Rem divisible by Arg2 Div
+  else if(arg1Lat->getLevel() == DivLattice::divKnown && arg2Lat->getLevel() == DivLattice::divKnown &&
+          arg2Lat->getRem()==0 && (arg1Lat->getDiv()%arg2Lat->getDiv() == 0) && (arg1Lat->getRem()%arg2Lat->getDiv() == 0))
+    updateModified(resLat->set(arg1Lat->getDiv()/arg2Lat->getDiv(), arg1Lat->getRem()/arg2Lat->getDiv()));
+  // Else => Top
+  else
+    updateModified(resLat->setTop());
+}
+void DivAnalysisTransfer::visit(SgDivideOp *sgn) { transferArith(sgn, &DivAnalysisTransfer::transferDivision); }
+void DivAnalysisTransfer::visit(SgDivAssignOp *sgn) { transferArith(sgn, &DivAnalysisTransfer::transferDivision); }
+
+template <typename T>
+void DivAnalysisTransfer::transferArith(SgBinaryOp *sgn, T transferOp) {
+  DivLattice *arg1Lat, *arg2Lat, *resLat;
+  if (getLattices(sgn, arg1Lat, arg2Lat, resLat)) {
+    transferOp(this, arg1Lat, arg2Lat, resLat);
+    if (isSgCompoundAssignOp(sgn))
+      arg1Lat->copy(resLat);
+  }
+}
+void DivAnalysisTransfer::transferArith(SgBinaryOp *sgn, TransferOp transferOp) { transferArith(sgn, boost::mem_fn(transferOp)); }
+
+void DivAnalysisTransfer::transferMod(DivLattice *arg1Lat, DivLattice *arg2Lat, DivLattice *resLat) {
+  if(divAnalysisDebugLevel>=1) Dbg::dbg << "   case i = j %% k\n";
+				
+  // Both Bottom
+  if(arg1Lat->getLevel() == DivLattice::bottom || arg2Lat->getLevel() == DivLattice::bottom)
+    updateModified(resLat->setBot());
+  // Both ValKnown
+  else if(arg1Lat->getLevel() == DivLattice::valKnown && arg2Lat->getLevel() == DivLattice::valKnown)
+    updateModified(resLat->set(arg1Lat->getValue() % arg2Lat->getValue()));
+  // Arg1 ValKnown, Arg2 DivKnown
+  else if(arg1Lat->getLevel() == DivLattice::valKnown && arg2Lat->getLevel() == DivLattice::divKnown &&
+          arg2Lat->getRem()==0 && arg1Lat->getValue()%arg2Lat->getDiv() == 0)
+    updateModified(resLat->setTop());
+  // Arg1 DivKnown, Arg2 ValKnown, Arg1 Div divisible by Arg2
+  else if(arg1Lat->getLevel() == DivLattice::divKnown && arg2Lat->getLevel() == DivLattice::valKnown &&
+          (arg1Lat->getDiv()%arg2Lat->getValue() == 0))
+    updateModified(resLat->set(arg1Lat->getRem() % arg2Lat->getValue()));
+  // Both DivKnown
+  else if(arg1Lat->getLevel() == DivLattice::divKnown && arg2Lat->getLevel() == DivLattice::divKnown &&
+          arg2Lat->getRem()==0 && (arg1Lat->getDiv()%arg2Lat->getDiv() == 0) && (arg1Lat->getRem()%arg2Lat->getDiv() == 0))
+    updateModified(resLat->setTop());
+  // Else => Top
+  else
+    updateModified(resLat->setTop());
+}
+void DivAnalysisTransfer::visit(SgModOp *sgn) { transferArith(sgn, &DivAnalysisTransfer::transferMod); }
+void DivAnalysisTransfer::visit(SgModAssignOp *sgn) { transferArith(sgn, &DivAnalysisTransfer::transferMod); }
 
 // prints the Lattices set by the given DivAnalysis 
 void printDivAnalysisStates(DivAnalysis* da, string indent)

@@ -157,6 +157,63 @@ class DivLattice : public FiniteLattice
 	string str(string indent="");
 };
 
+class DivAnalysisTransfer : public IntraDFTransferVisitor
+{
+  bool modified;
+  FiniteVarsExprsProductLattice* prodLat;
+
+  template <class T>
+  void visitIntegerValue(T *sgn);
+  void transferIncrement(SgUnaryOp *sgn);
+  void transferCompoundAdd(SgBinaryOp *sgn);
+  DivLattice *getLattice(const SgExpression *sgn);
+  bool getLattices(const SgUnaryOp *sgn,  DivLattice* &arg1Lat, DivLattice* &arg2Lat, DivLattice* &resLat);
+  bool getLattices(const SgBinaryOp *sgn, DivLattice* &arg1Lat, DivLattice* &arg2Lat, DivLattice* &resLat);
+
+  void updateModified(bool latModified) { modified = latModified || modified; }
+
+  typedef void (DivAnalysisTransfer::*TransferOp)(DivLattice *, DivLattice *, DivLattice *);
+  template <typename T>
+  void transferArith(SgBinaryOp *sgn, T transferOp);
+  void transferArith(SgBinaryOp *sgn, TransferOp transferOp);
+  void transferAdditive(DivLattice *arg1Lat, DivLattice *arg2Lat, DivLattice *resLat, bool isAddition);
+  void transferMultiplicative(DivLattice *arg1Lat, DivLattice *arg2Lat, DivLattice *resLat);
+  void transferDivision(DivLattice *arg1Lat, DivLattice *arg2Lat, DivLattice *resLat);
+  void transferMod(DivLattice *arg1Lat, DivLattice *arg2Lat, DivLattice *resLat);
+
+public:
+  //  void visit(SgNode *);
+  void visit(SgAssignOp *);
+  void visit(SgAssignInitializer *);
+  void visit(SgInitializedName *);
+  void visit(SgLongLongIntVal *sgn);
+  void visit(SgLongIntVal *sgn);
+  void visit(SgIntVal *sgn);
+  void visit(SgShortVal *sgn);
+  void visit(SgUnsignedLongLongIntVal *sgn);
+  void visit(SgUnsignedLongVal *sgn);
+  void visit(SgUnsignedIntVal *sgn);
+  void visit(SgUnsignedShortVal *sgn);
+  void visit(SgValueExp *sgn);
+  void visit(SgPlusAssignOp *sgn);
+  void visit(SgMinusAssignOp *sgn);
+  void visit(SgMultAssignOp *sgn);
+  void visit(SgDivAssignOp *sgn);
+  void visit(SgModAssignOp *sgn);
+  void visit(SgAddOp *sgn);
+  void visit(SgSubtractOp *sgn);
+  void visit(SgMultiplyOp *sgn);
+  void visit(SgDivideOp *sgn);
+  void visit(SgModOp *sgn);
+  void visit(SgPlusPlusOp *sgn);
+  void visit(SgMinusMinusOp *sgn);
+  void visit(SgUnaryAddOp *sgn);
+  void visit(SgMinusOp *sgn);
+  bool finish() { return modified; }
+
+  DivAnalysisTransfer(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo);
+};
+
 class DivAnalysis : public IntraFWDataflow
 {
 	protected:
@@ -168,8 +225,8 @@ class DivAnalysis : public IntraFWDataflow
 	LiveDeadVarsAnalysis* ldva; 
 	
 	public:
-	DivAnalysis(LiveDeadVarsAnalysis* ldva): IntraFWDataflow()
-	{	
+	DivAnalysis(LiveDeadVarsAnalysis* ldva)
+	{
 		this->ldva = ldva;
 	}
 	
@@ -189,7 +246,11 @@ class DivAnalysis : public IntraFWDataflow
 	//    maintain only one copy of each lattice may for the duration of the analysis.
 	//map<varID, Lattice*>& genConstVarLattices() const;
 		
-	bool transfer(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo);
+  bool transfer(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo)
+  { assert(0); return false; }
+  boost::shared_ptr<IntraDFTransferVisitor> getTransferVisitor(const Function& func, const DataflowNode& n,
+                                                            NodeState& state, const vector<Lattice*>& dfInfo)
+  { return boost::shared_ptr<IntraDFTransferVisitor>(new DivAnalysisTransfer(func, n, state, dfInfo)); }
 };
 
 // prints the Lattices set by the given DivAnalysis 
