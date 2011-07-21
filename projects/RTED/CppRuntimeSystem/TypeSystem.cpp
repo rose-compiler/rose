@@ -64,13 +64,17 @@ void TypeSystem::clearStatus()
 
 void TypeSystem::registerType(const RsType& t)
 {
-    std::pair<NamedTypeContainer::iterator, bool> res = types.insert(&t);
+    // std::pair<NamedTypeContainer::iterator, bool> res = types.insert(&t);
 
-    if (!res.second)
+    NamedTypeContainer::mapped_type& entry = types[t.getName()];
+
+    if (entry)
     {
         std::cerr << "Error: tried to register type " << t.getName() << " twice!" << std::endl;
         assert( false );
     }
+
+    entry = &t;
 }
 
 RsClassType& TypeSystem::getClassType(const std::string& name, size_t sz /*= 0*/, bool uniontype /*= false*/)
@@ -86,12 +90,12 @@ RsClassType& TypeSystem::getClassType(const std::string& name, size_t sz /*= 0*/
   return entry;
 }
 
-const RsType* TypeSystem::getTypeInfo(const std::string& name)
+const RsType* TypeSystem::getTypeInfo(const std::string& name) const
 {
     // TODO remove SgPointerType and SgArrayType from BasicTypes
-    if (name == "SgPointerType" || name == "SgArrayType")
+    if ( diagnostics::warning() )
     {
-      if ( diagnostics::warning() )
+      if (name == "SgPointerType" || name == "SgArrayType")
       {
         std::stringstream msg;
 
@@ -102,11 +106,10 @@ const RsType* TypeSystem::getTypeInfo(const std::string& name)
       }
     }
 
-    InvalidType                  comparisonObject(name);
-    NamedTypeContainer::iterator i = types.find(&comparisonObject);
-
+    NamedTypeContainer::const_iterator i = types.find(name);
     if (i == types.end()) return NULL;
-    return *i;
+
+    return i->second;
 }
 
 
@@ -178,8 +181,8 @@ const RsPointerType* TypeSystem::getPointerType(const std::string & name)
 void TypeSystem::print(std::ostream & os) const
 {
     os << "--------------  All Registered Types -----------------------" << std::endl;
-    for (NamedTypeContainer::iterator it = types.begin(); it != types.end(); ++it)
-        os << *it;
+    for (NamedTypeContainer::const_iterator it = types.begin(); it != types.end(); ++it)
+        os << *(it->second);
 
     os << "------------------------------------------------------------" << std::endl;
 

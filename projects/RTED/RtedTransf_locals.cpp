@@ -15,8 +15,8 @@ using namespace SageBuilder;
 /// Determines a nice scope name for @c stmt.  This is only used for convenience
 /// in the debugger, and does not affect any checks.
 static
-std::string scope_name(SgStatement* stmt) {
-
+std::string scope_name(SgStatement* stmt)
+{
     if( isSgWhileStmt( stmt)) {
       return "while";
     } else if( isSgIfStmt( stmt)) {

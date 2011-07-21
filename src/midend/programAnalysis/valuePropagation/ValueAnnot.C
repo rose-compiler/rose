@@ -1,4 +1,3 @@
-
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -22,32 +21,18 @@ has_value( const std::string& name, SymbolicValDescriptor* r) const
       const_iterator p = find(name);
       if (p == end())
         return false;
-
       if (r != 0)
-         {
-// DQ (8/30/2009): Debugging ROSE compiling ROSE (this statement does not compile using ROSE).
-#ifndef USE_ROSE
-           *r = (*p).second;
-#endif
-         }
-
+        *r = (*p).second;
       return true;
     }
-
 
 bool HasValueDescriptor::merge (const HasValueDescriptor& that)
 {
   bool change = false;;
-
   for (const_iterator p = that.begin(); p != that.end(); ++p) {
-
-// DQ (8/30/2009): Debugging ROSE compiling ROSE (this statement does not compile using ROSE).
-#ifndef USE_ROSE
     if (operator[]((*p).first).merge((*p).second))
        change = true;
-#endif
   }
-
   return change;
 }
 
@@ -97,9 +82,7 @@ is_known_member_function( AstInterface& fa,
     *argsp = arg1;
  return arg2.back().toString();
 }
-//! Check if an expression 'exp' is a member function call to an object 'objp'
-// If yes, return the member function's name, store function arguments, and 
-// store the has_value descriptor of the object (desc)
+
 std::string HasValueCollection::
 is_known_member_function( CPPAstInterface& fa, const AstNodePtr& exp,
                           AstNodePtr* objp, AstInterface::AstNodeList* args,
@@ -107,13 +90,11 @@ is_known_member_function( CPPAstInterface& fa, const AstNodePtr& exp,
 {
   AstNodePtr obj;
   std::string func;
-  // Return a null string if it is not data or function member access expressions to an object.
   if (!fa.IsMemberAccess( exp, &obj, &func) &&
      !fa.IsMemberFunctionCall(exp, &obj, &func, 0, args))
      return "";
   if (obj == AST_NULL)
     return "";
-  // Return member function name if the object has a known type  
   if (known_type( fa, obj, desc)) {
     if (objp != 0)
         *objp = obj;
@@ -143,13 +124,10 @@ void ValueAnnotation :: Dump() const
    values.Dump();
    valueRestrict.Dump();
 }
-// Check if an expression representing an class object has a known class type
-// Store its has_value descriptor into "r" if the descriptor exists, also 
-// replace its corresonding has_value annotations' "this" pointer with the concrete object references 'exp'
+
 bool ValueAnnotation ::
 known_type( AstInterface& fa, const AstNodePtr& exp, HasValueDescriptor* r)
 {
-  // values is HasValueCollection, which derives from TypeCollection and has access to known_type() of the base class
   if (!values.known_type(fa, exp, r))
     return false;
   if (r != 0)
@@ -263,5 +241,3 @@ is_access_value( CPPAstInterface& fa, const AstNodePtr& exp, AstNodePtr* obj, st
 template class TypeAnnotCollection<HasValueDescriptor>;
 template class TypeCollection<HasValueDescriptor>;
 #endif
-
-

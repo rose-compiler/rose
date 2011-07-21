@@ -29,6 +29,16 @@ std::string HexToString(T t)
 }
 */
 
+struct PointerCompare
+{
+  template <class T>
+  bool operator()(const T* lhs, const T* rhs) const
+  {
+    return (*lhs) < (*rhs);
+  }
+};
+
+
 /**
  * This class represents a position in a sourcefile
  */
@@ -58,16 +68,6 @@ class SourcePosition
 };
 
 std::ostream& operator<< (std::ostream &os, const SourcePosition & m);
-
-
-struct PointerCompare
-{
-  template <class T>
-  bool operator()(const T* lhs, const T* rhs) const
-  {
-    return (*lhs) < (*rhs);
-  }
-};
 
 class RuntimeViolation
 {

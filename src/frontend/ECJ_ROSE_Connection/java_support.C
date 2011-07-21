@@ -945,10 +945,16 @@ buildSimpleVariableDeclaration(const SgName & name)
      astJavaTypeStack.pop_front();
 
   // We are not supporting an initialized at this point in the implementation of the Java support.
-     SgVariableDeclaration* variable = SageBuilder::buildVariableDeclaration (name, type, NULL, astJavaScopeStack.front() );
-     ROSE_ASSERT(variable != NULL);
+     SgVariableDeclaration* variableDeclaration = SageBuilder::buildVariableDeclaration (name, type, NULL, astJavaScopeStack.front() );
+     ROSE_ASSERT(variableDeclaration != NULL);
 
-     return variable;
+  // DQ (7/16/2011): This is a test to debug failing test in resetParentPointers.C:1733
+     ROSE_ASSERT(SageInterface::is_Fortran_language() == false);
+     SgInitializedName* initializedName = variableDeclaration->get_decl_item (name);
+     ROSE_ASSERT(initializedName != NULL);
+     ROSE_ASSERT(initializedName->get_scope() != NULL);
+
+     return variableDeclaration;
    }
 
 list<SgName>
@@ -1076,18 +1082,22 @@ lookupSymbolFromQualifiedName(string className)
        // SgClassSymbol* classSymbol = astJavaScopeStack.back()->lookupSymbolInParentScopes(*i);
 
           ROSE_ASSERT(previousClassScope != NULL);
-       // printf ("Lookup SgSymbol for name = %s i scope = %p = %s = %s \n",(*i).str(),previousClassScope,previousClassScope->class_name().c_str(),SageInterface::get_name(previousClassScope).c_str());
+
+          if (SgProject::get_verbose() > 2)
+               printf ("Lookup SgSymbol for name = %s i scope = %p = %s = %s \n",(*i).str(),previousClassScope,previousClassScope->class_name().c_str(),SageInterface::get_name(previousClassScope).c_str());
+
           SgSymbol* tmpSymbol = SageInterface::lookupSymbolInParentScopes(*i,previousClassScope);
 
        // ROSE_ASSERT(tmpSymbol != NULL);
           if (tmpSymbol != NULL)
              {
-            // printf ("Found a symbol tmpSymbol = %s = %s \n",tmpSymbol->class_name().c_str(),tmpSymbol->get_name().str());
+               if (SgProject::get_verbose() > 2)
+                    printf ("Found a symbol tmpSymbol = %s = %s \n",tmpSymbol->class_name().c_str(),tmpSymbol->get_name().str());
 
             // This is either a proper class or an alias to a class where the class is implicit or included via an import statement.
-               SgClassSymbol* classSymbol = isSgClassSymbol(tmpSymbol);
+               SgClassSymbol*    classSymbol    = isSgClassSymbol(tmpSymbol);
                SgVariableSymbol* variableSymbol = isSgVariableSymbol(tmpSymbol);
-               SgAliasSymbol* aliasSymbol = isSgAliasSymbol(tmpSymbol);
+               SgAliasSymbol*    aliasSymbol    = isSgAliasSymbol(tmpSymbol);
 
                if (classSymbol == NULL && aliasSymbol != NULL)
                   {
@@ -1134,8 +1144,20 @@ lookupSymbolFromQualifiedName(string className)
                        }
                       else
                        {
+                      // DQ (7/17/2011): This is not from a variable, it can be associated with a function when we started inside of the class.  See test2011_21.java.
+                         SgFunctionSymbol* functionSymbol = isSgFunctionSymbol(tmpSymbol);
+                         if (functionSymbol != NULL)
+                            {
+                              printf ("This could/should the constructor for the class we want, we just want the class... \n");
+
+                           // Get the class directly since it is likely a parent class of the current scope.
+                              classSymbol = SageInterface::lookupClassSymbolInParentScopes(*i,previousClassScope);
+                              ROSE_ASSERT(classSymbol != NULL);
+                            }
+
                          ROSE_ASSERT(classSymbol != NULL);
                        }
+
                     ROSE_ASSERT(aliasSymbol == NULL);
                   }
 
@@ -1172,12 +1194,17 @@ lookupTypeFromQualifiedName(string className)
 
      SgClassType* classType = NULL;
 
+     if (SgProject::get_verbose() > 2)
+          printf ("DONE: In lookupTypeFromQualifiedName(): Calling lookupSymbolFromQualifiedName(name = %s) targetClassSymbol = %p \n",className.c_str(),targetClassSymbol);
+
   // printf ("DONE: In lookupTypeFromQualifiedName(): Calling lookupSymbolFromQualifiedName(name = %s) targetClassSymbol = %p \n",className.c_str(),targetClassSymbol);
   // ROSE_ASSERT(targetClassSymbol != NULL);
 
      if (targetClassSymbol != NULL)
         {
-       // printf ("In Java_JavaParser_cactionGenerateClassType(): Get the SgClassDeclaration \n");
+          if (SgProject::get_verbose() > 2)
+               printf ("In Java_JavaParser_cactionGenerateClassType(): Get the SgClassDeclaration \n");
+
           SgClassDeclaration* classDeclaration = isSgClassDeclaration(targetClassSymbol->get_declaration());
           ROSE_ASSERT(classDeclaration != NULL);
 
@@ -1200,3 +1227,57 @@ lookupTypeFromQualifiedName(string className)
 
      return classType;
    }
+
+
+
+void
+appendStatement(SgStatement* statement)
+   {
+  // This support function handles the complexity of handling append where the current scope is a SgIfStmt.
+
+     SgIfStmt* ifStatement = isSgIfStmt(astJavaScopeStack.front());
+     if (ifStatement != NULL)
+        {
+          SgNullStatement* nullStatement = isSgNullStatement(ifStatement->get_true_body());
+          if (nullStatement != NULL)
+             {
+               ifStatement->set_true_body(statement);
+               delete nullStatement;
+             }
+            else
+             {
+               ifStatement->set_false_body(statement);
+             }
+        }
+       else
+        {
+          astJavaScopeStack.front()->append_statement(statement);
+        }
+
+     ROSE_ASSERT(statement->get_parent() != NULL);
+   }
+
+
+void
+appendStatementStack()
+   {
+  // This function is used to dump all statements accumulated on the astJavaStatementStack
+  // into the current scope (called as part of closing off the scope where functions that 
+  // don't call the function to close off statements).
+
+  // Reverse the list to avoid acesses to the stack from the bottom, 
+  // which would be confusing and violate stack semantics.
+     list<SgStatement*> reverseStatementList;
+     while (astJavaStatementStack.empty() == false)
+        {
+          reverseStatementList.push_front(astJavaStatementStack.front());
+          astJavaStatementStack.pop_front();
+        }
+
+     while (reverseStatementList.empty() == false)
+        {
+          appendStatement(reverseStatementList.front());
+          reverseStatementList.pop_front();
+        }
+   }
+

@@ -1,9 +1,9 @@
 
-
-//
-// creates the interfaces to support RTED on UPC
-//
-// On on UPC code, the interfaces decay to static inline functions
+/// \file ParallelRTS.upc
+///
+/// \brief communication interface for RTED/UPC
+///
+/// \email peter.pirkelbauer@llnl.gov
 
 #ifndef _PARALLEL_RTS_H
 #define _PARALLEL_RTS_H
@@ -35,6 +35,8 @@ void snd_MovePointer(rted_TypeDesc, rted_Address, rted_Address, const char*, rte
 
 /// \brief initializes the runtime system
 void rted_UpcAllInitialize(void);
+
+void rted_PrintStats(void);
 
 #else /* WITH_UPC */
 
@@ -75,6 +77,10 @@ void snd_MovePointer(rted_TypeDesc td, rted_Address addr, rted_Address haddr, co
 /// \todo remove
 static inline
 void rted_UpcAllInitialize(void)
+{}
+
+static inline
+void rted_PrintStats(void)
 {}
 
 #endif /* WITH_UPC */

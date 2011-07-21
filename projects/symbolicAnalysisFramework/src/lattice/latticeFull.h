@@ -124,6 +124,15 @@ class BoolAndLattice : public FiniteLattice
 	// returns true if this causes the BoolAndLattice state to change, false otherwise
 	bool andUpd(bool state);
 	
+	// Functions used to inform this lattice that a given variable is now in use (e.g. a variable has entered 
+	//    scope or an expression is being analyzed) or is no longer in use (e.g. a variable has exited scope or
+	//    an expression or variable is dead).
+	// It is assumed that a newly-added variable has not been added before and that a variable that is being
+	//    removed was previously added
+	// These are empty in this lattice since it is now explicitly aware of variables.
+	/*void addVar(varID var) {};
+	void remVar(varID var) {};*/
+	
 	string str(string indent="");
 };
 
@@ -185,21 +194,38 @@ class IntMaxLattice : public InfiniteLattice
 	// returns true if this causes the lattice's state to change, false otherwise
 	bool maximum(int value);
 	
+	// Functions used to inform this lattice that a given variable is now in use (e.g. a variable has entered 
+	//    scope or an expression is being analyzed) or is no longer in use (e.g. a variable has exited scope or
+	//    an expression or variable is dead).
+	// It is assumed that a newly-added variable has not been added before and that a variable that is being
+	//    removed was previously added
+	// These are empty in this lattice since it is now explicitly aware of variables.
+	/*void addVar(varID var) {};
+	void remVar(varID var) {};*/
+	
 	string str(string indent="");
 };
 
 /*########################
   ### Utility lattices ###
   ########################*/
- 
+
 class ProductLattice : public virtual Lattice
 {
+	public:
+	// The different levels of this lattice
+	static const int uninitialized=0; 
+	static const int initialized=1; 
+	// This object's current level in the lattice: (uninitialized or initialized)
+	short level;
+	
 	protected:
 	vector<Lattice*> lattices;
 	
 	public:
 	ProductLattice();
 	ProductLattice(const vector<Lattice*>& lattices);
+	~ProductLattice();
 	
 	void init(const vector<Lattice*>& lattices);
 	
@@ -212,18 +238,29 @@ class ProductLattice : public virtual Lattice
 	void copy_lattices(vector<Lattice*>& newLattices) const;
 	
 	// overwrites the state of this Lattice with that of that Lattice
-	void copy(Lattice* that);
+	virtual void copy(Lattice* that);
 	
 	// computes the meet of this and that and saves the result in this
 	// returns true if this causes this to change and false otherwise
-	bool meetUpdate(Lattice* that);
+	virtual bool meetUpdate(Lattice* that);
 	
-	bool operator==(Lattice* that);
+	virtual bool operator==(Lattice* that);
+	
+	int getLevel() { return level; }
+	
+	// Functions used to inform this lattice that a given variable is now in use (e.g. a variable has entered 
+	//    scope or an expression is being analyzed) or is no longer in use (e.g. a variable has exited scope or
+	//    an expression or variable is dead).
+	// It is assumed that a newly-added variable has not been added before and that a variable that is being
+	//    removed was previously added
+	// These are empty in this lattice since it is now explicitly aware of variables.
+	/*void addVar(varID var) {};
+	void remVar(varID var) {};*/
 	
 	// The string that represents this object
 	// If indent!="", every line of this string must be prefixed by indent
 	// The last character of the returned string should not be '\n', even if it is a multi-line string.
-	string str(string indent="");
+	virtual string str(string indent="");
 };
 
 class FiniteProductLattice : public virtual ProductLattice, public virtual FiniteLattice
@@ -248,7 +285,7 @@ class FiniteProductLattice : public virtual ProductLattice, public virtual Finit
 				ROSE_ASSERT((*it)->finiteLattice());
 	}
 	
-	// returns a copy of this lattice
+	// Returns a copy of this lattice
 	Lattice* copy() const
 	{
 		return new FiniteProductLattice(*this);
@@ -273,18 +310,9 @@ class InfiniteProductLattice : public virtual ProductLattice, public virtual Inf
 		return new InfiniteProductLattice(*this);
 	}
 	
-	// widens this from that and saves the result in this
-	// returns true if this causes this to change and false otherwise
-	bool widenUpdate(InfiniteLattice* that)
-	{
-		bool modified=false;
-		vector<Lattice*>::iterator it, itThat;
-		for(it = lattices.begin(), itThat = (dynamic_cast<InfiniteProductLattice*>(that))->lattices.begin(); 
-		    it!=lattices.end() && itThat!=(dynamic_cast<InfiniteProductLattice*>(that))->lattices.end(); 
-		    it++, itThat++)
-			modified = (dynamic_cast<InfiniteProductLattice*>(*it))->widenUpdate(dynamic_cast<InfiniteProductLattice*>(*itThat)) || modified;
-          return modified;
-	}
+	// Widens this from that and saves the result in this.
+	// Returns true if this causes this to change and false otherwise.
+	bool widenUpdate(InfiniteLattice* that);
 };
 
 
@@ -344,6 +372,7 @@ class VariablesProductLattice : public virtual ProductLattice
 	int getVarIndex(const Function& func, const varID& var);
 	
 	public:
+	
 	// returns the set of global variables(scalars and/or arrays)
 	varIDSet& getGlobalVars() const;
 	static varIDSet& getGlobalVars(bool includeScalars, bool includeArrays);
@@ -379,7 +408,15 @@ class VariablesProductLattice : public virtual ProductLattice
 	// those variables, while leaving its state for other variables alone.
 	// We do not force child classes to define their own versions of this function since not all
 	//    Lattices have per-variable information.
-	void incorporateVars(Lattice* that);
+	void incorporateVars(Lattice* that);	
+	
+	// Functions used to inform this lattice that a given variable is now in use (e.g. a variable has entered 
+	//    scope or an expression is being analyzed) or is no longer in use (e.g. a variable has exited scope or
+	//    an expression or variable is dead).
+	// It is assumed that a newly-added variable has not been added before and that a variable that is being
+	//    removed was previously added
+	/*void addVar(varID var);
+	void remVar(varID var);*/
 	
 	// The string that represents this object
 	// If indent!="", every line of this string must be prefixed by indent
@@ -458,6 +495,5 @@ class InfiniteVariablesProductLattice : public virtual VariablesProductLattice, 
 		return new InfiniteVariablesProductLattice(*this);
 	}
 };
-
 
 #endif

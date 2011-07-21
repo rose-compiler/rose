@@ -13,12 +13,11 @@
 class VariablesType;
 
 
-class StackManager
+struct StackManager
 {
-    typedef Address                     Location;
-    typedef std::vector<VariablesType*> VariableStack;
+        typedef Address                     Location;
+        typedef std::vector<VariablesType*> VariableStack;
 
-    public:
         StackManager();
         ~StackManager() {}
 

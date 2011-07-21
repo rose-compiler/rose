@@ -6,7 +6,7 @@
 //   Note, the only UPC compiler supported is GCCUPC with the following
 //     command-line define: upc -DIN_TARGET_LIBS
 //
-//   In non-UPC context, this file can be compiled with a C/C++ compiler
+//   In non-UPC projects, this file can be compiled with a C/C++ compiler
 //
 // \email peter.pirkelbauer@llnl.gov
 
@@ -90,6 +90,14 @@ const char* rted_ThisShmemBase(void)
   return base - ofs ;
 }
 
+
+/// avoids warning when a stack ptr is returned in rted_ThisShmemLimit
+static inline
+const char* stackAddr(const char* ptr)
+{
+  return ptr;
+}
+
 const char* rted_ThisShmemLimit(void)
 {
   // \hack
@@ -111,10 +119,9 @@ const char* rted_ThisShmemLimit(void)
   //      -----------------
   //
   // \todo get the real limit of the shared heap
-
   char curr;
 
-  return &curr;
+  return stackAddr(&curr);
 }
 
 static inline

@@ -124,6 +124,10 @@ set( phpFrontend_SRC
      ${CMAKE_SOURCE_DIR}/src/frontend/PHPFrontend/PHPFrontend.C
      )
 
+#set( pythonFrontend_SRC
+#     ${CMAKE_SOURCE_DIR}/src/frontend/PythonFrontend/PythonFrontend.C
+#     )
+
 set( astFixup_SRC
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astFixup/AstFixup.C 
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astFixup/fixupforGnuBackendCompiler.C 
@@ -165,6 +169,23 @@ set(MSTL_SRC
     ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/MSTL/PDFGeneration.C 
     ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/MSTL/DOTGraphInterface.C
    )
+
+set(POET_SRC
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/AutoTuningInterface.cpp
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/codegen.cpp
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/driver.cpp
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/evalAST.cpp
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/evalOp.cpp
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/main.cpp
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/parse.cpp
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/poetAST.cpp
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/timing.cpp
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/poet_lex.c
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/poet_yacc.c
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/poet_yacc.y
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/poet_lex.l
+   )
+
 
 set(EDG_SAGE_Connection_SRC
     ${CMAKE_SOURCE_DIR}/src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection/sage_gen_be.C
@@ -251,6 +272,7 @@ set (unparser_SRC
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/formatSupport/unparseFormatHelp.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/formatSupport/unparse_format.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/PHPCodeGeneration/unparsePHP.C
+      #${CMAKE_SOURCE_DIR}/src/backend/unparser/PythonCodeGeneration/unparsePython.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/languageIndependenceSupport/modified_sage_isUnaryOp.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/languageIndependenceSupport/unparser_opt.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/languageIndependenceSupport/modified_sage.C
@@ -692,6 +714,7 @@ ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/LoopT
 ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/TransformComputation.C
 ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/BlockingAnal.C
 ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/TypedFusionImpl.C
+${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/ParallelizeLoop.C
 ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depInfo/StmtDepAnal.C
 #${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depInfo/DepTestStatistics.C
 #${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depInfo/PlatoOmegaInterface.C
@@ -769,6 +792,7 @@ set(rose_LIB_SRCS dummyCppFileForLibrose.C
  ${unparser_SRC}
  ${sage3_SRC}
  ${MSTL_SRC} 
+ ${POET_SRC} 
  ${virtualCFG_SRC} 
  ${rose_support_src}
  ${roseDisassemblers_SRC}
@@ -776,6 +800,7 @@ set(rose_LIB_SRCS dummyCppFileForLibrose.C
  ${roseBinaryLoader_SRC}
  ${roseAsmUnparser_SRC}
  ${phpFrontend_SRC}
+ #${pythonFrontend_SRC}
  ${libastMerge_SRC}
  ${astFixup_SRC}
  ${midend_src}
@@ -834,6 +859,8 @@ add_custom_target(
 
 ###############################################################################################################################
 
+#Faizur(07/21/2011): POET VERSION ADDED
+add_definitions(-DPOET_VERSION="\\"1.02.06.10\\"")
 
 add_library(ROSE_DLL SHARED ${rose_LIB_SRCS} )
 add_dependencies(ROSE_DLL OMPPARSER ROSE_PREPROCESSOR edg33 libhpdf generate_stringify generate_rosePublicConfig) 

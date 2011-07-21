@@ -19,6 +19,9 @@ static const int msgHandling = 0;
 
 static const char* localBaseAddr;
 
+static unsigned int sndctr;
+static unsigned int rcvctr;
+
 enum rted_MsgKind
 {
   mskFreeMemory,
@@ -400,8 +403,10 @@ int shareHeapAllocInfo(rted_AllocKind allocKind)
 static
 int inSharedRegion(rted_Address addr)
 {
+  const char pseudo_limit; // see comment at rted_ThisShmemLimit
+
   return (  addr.local >= localBaseAddr
-         && addr.local <  rted_ThisShmemLimit()
+         && addr.local <  &pseudo_limit
          );
 }
 
@@ -646,6 +651,10 @@ void msgBroadcast(const char* msg, const size_t len)
   // do not send if there is only one thread
   if (THREADS == 1) return;
 
+#ifndef NDEBUG
+  ++sndctr;
+#endif /* NDEBUG */
+
   // to be freed by the last dequeuer in retire
   shared char*                tgtblock = upc_global_alloc(len, sizeof(char[len]));
   assert(tgtblock);
@@ -685,6 +694,10 @@ void msgReceive()
   //~ fprintf(stderr, "r (#%i) : %i (%i)\n", MYTHREAD, msg->kind, msg->threadno);
   //~ fflush(stderr);
 
+#ifndef NDEBUG
+  ++rcvctr;
+#endif /* NDEBUG */
+
   switch (msg->kind)
   {
     case mskFreeMemory:
@@ -720,11 +733,23 @@ void rted_ProcessMsg()
   }
 }
 
+void rted_PrintStats()
+{
+#ifdef NDEBUG
+  fprintf(stderr, "(#%i) *RELEASE MODE* \n", MYTHREAD);
+#endif /* NDEBUF */
+
+  fprintf(stderr, "(#%i) snd = %i   rcv = %i\n", MYTHREAD, sndctr, rcvctr);
+  fflush(stderr);
+}
+
 void rted_UpcAllInitialize()
 {
   // create the messageing system for the current thread
   upcAllInitMsgQueue();
+  sndctr = rcvctr = 0;
   localBaseAddr = rted_ThisShmemBase();
+
   // initialize the heap protection
   rted_UpcAllInitWorkzone();
   rted_UpcEnterWorkzone();

@@ -423,7 +423,7 @@ public:
     SgType* roseFileInfo() const    { return symbols.roseSourceInfo; }
 
     /// \brief returns the RTED representation type for array dimensions
-    SgType* roseDimensionType() const { return SageBuilder::buildUnsignedLongType(); }
+    SgType* roseDimensionType() const { return symbols.size_t_member; }
 
     /// \brief returns the RTED representation type for char*
     SgType* roseConstCharPtrType() const

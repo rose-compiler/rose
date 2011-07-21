@@ -1,14 +1,15 @@
+/// \file ptrops.h
+/// \brief Abstracts concepts from UPC and provides
+///        implementations that work both for C and UPC
 ///
-/// Abstracts concepts from UPC and provides
-///   implementations that work both for C and UPC
-/// Note, any UPC dependent implementation (that requires
-/// compilation with a UPC compiler cannot be put in this header file
-/// b/c in mixed source code projects, compilation of non-UPC code
-/// would get non-UPC aware implementation.
-
+/// \email peter.pirkelbauer@llnl.gov
+///
+/// \note any UPC dependent implementation (that requires compilation with a
+///       UPC compiler) cannot be put in this header file. In mixed source
+///       code projects, compilation of non-UPC code would get non-UPC aware
+///       implementation.
 
 #ifndef _PTROPS_H
-
 #define _PTROPS_H
 
 #include <stdlib.h>

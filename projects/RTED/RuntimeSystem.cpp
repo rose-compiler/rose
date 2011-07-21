@@ -118,11 +118,32 @@ rs_getArrayType(TypeSystem& ts, const size_t* dimDesc, size_t size, const RsType
                         ).first;
 }
 
+static
+const RsType* rs_getTypeInfo(const TypeSystem& ts, const std::string& type)
+{
+  static const RsType* cached = ts.getTypeInfo("SgTypeInt");
+
+  const RsType* result = NULL;
+
+  if (cached->getName() == type)
+  {
+    result = cached;
+  }
+  else
+  {
+    result = ts.getTypeInfo(type);
+
+    if (result) cached = result;
+  }
+
+  return result;
+}
+
 
 static
 const RsType& rs_getTypeInfo_fallback(TypeSystem& ts, const std::string& type)
 {
-  const RsType* res = ts.getTypeInfo(type);
+  const RsType* res = rs_getTypeInfo(ts, type);
 
   if (res == NULL)
   {
@@ -191,9 +212,6 @@ rs_getArrayElemType(TypeSystem& ts, TypeDesc td, size_t noDimensions, const std:
 
   return rs_simpleGetType(ts, elemtype, td.base, classname, desc);
 }
-
-
-
 
 
 
@@ -796,7 +814,7 @@ int _rted_InitVariable( rted_TypeDesc    td,
   }
 
   const RsType& rs_type = rs_simpleGetType(*rs->getTypeSystem(), td.name, td.base, class_name, td.desc);
-  bool          sendupd = rs->checkMemWrite( address, size, &rs_type );
+  int           sendupd = rs->checkMemWrite( address, size, &rs_type );
 
   // This assumes roseInitVariable is called after the assignment has taken
   // place (otherwise we wouldn't get the new heap address).
@@ -941,7 +959,7 @@ void rted_RegisterTypeCall( const char* nameC,
         const size_t* dimensionality = va_arg( vl, size_t* );
         assert(*dimensionality > 0);
 
-        t = rs_getArrayType( ts, dimensionality, size, *ts.getTypeInfo(td.base) );
+        t = rs_getArrayType( ts, dimensionality, size, rs_getTypeInfo_fallback(ts, td.base) );
       }
       else
       {

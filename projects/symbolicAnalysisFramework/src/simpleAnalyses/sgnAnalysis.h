@@ -10,6 +10,7 @@
 #include "analysis.h"
 #include "dataflow.h"
 #include "latticeFull.h"
+#include "liveDeadVarAnalysis.h"
 #include "printAnalysisStates.h"
 
 extern int sgnAnalysisDebugLevel;
@@ -64,11 +65,25 @@ class SgnLattice : public FiniteLattice
 		this->level = that.level;
 	}
 	
-	// initializes this Lattice to its default state
+	SgnLattice(long val)
+	{
+		if(val == 0)
+			this->level = eqZero;
+		else {
+			this->level = sgnKnown;
+			if(val > 0) this->sgnState = posZero;
+			else        this->sgnState = negZero;
+		}
+	}
+	
+	// Ensures that the state of this lattice is initialized
 	void initialize()
 	{
-		sgnState=unknown;
-		level=bottom;
+		if(level == uninitialized)
+		{
+			sgnState=unknown;
+			level=bottom;
+		}
 	}
 	
 	// returns a copy of this lattice
@@ -119,13 +134,29 @@ class SgnLattice : public FiniteLattice
 	// returns true if this causes the lattice's state to change, false otherwise
 	bool plus(const SgnLattice& that);
 	
-	// Multiplies the state of this object by value
+	// Decrements the state of this object by increment
 	// returns true if this causes the lattice's state to change, false otherwise
-	bool mult(long multiplier);
+	bool minus(long increment);
 	
-	// Multiplies the state of this object by the contents of that
+	// Decrements the state of this object by the contents of that
 	// returns true if this causes the lattice's state to change, false otherwise
-	bool mult(const SgnLattice& that);
+	bool minus(const SgnLattice& that);
+	
+	// Negates the state of the object
+	// returns true if this causes the lattice's state to change, false otherwise
+	bool negate();
+	
+	// Multiplies and/or divides the state of this object by value
+	// returns true if this causes the lattice's state to change, false otherwise
+	bool multdiv(long multiplier);
+	
+	// Multiplies and/or divides the state of this object by the contents of that
+	// returns true if this causes the lattice's state to change, false otherwise
+	bool multdiv(const SgnLattice& that);
+	
+	// Applies a generic complex operation to this and that objects, storing the results in this object
+	// returns true if this causes the lattice's state to change, false otherwise
+	bool complexOp(const SgnLattice& that);
 		
 	string str(string indent="");
 };
@@ -136,9 +167,15 @@ class SgnAnalysis : public IntraFWDataflow
 	static map<varID, Lattice*> constVars;
 	static bool constVars_init;
 	
+	// The LiveDeadVarsAnalysis that identifies the live/dead state of all application variables.
+	// Needed to create a FiniteVarsExprsProductLattice.
+	LiveDeadVarsAnalysis* ldva; 
+	
 	public:
-	SgnAnalysis(): IntraFWDataflow()
-	{	}
+	SgnAnalysis(LiveDeadVarsAnalysis* ldva): IntraFWDataflow()
+	{
+		this->ldva = ldva;
+	}
 	
 	// generates the initial lattice state for the given dataflow node, in the given function, with the given NodeState
 	//vector<Lattice*> genInitState(const Function& func, const DataflowNode& n, const NodeState& state);

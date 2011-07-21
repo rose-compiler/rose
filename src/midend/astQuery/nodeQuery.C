@@ -426,7 +426,6 @@ Rose_STL_Container<SgNode*> NodeQuery::queryNodeVariableDeclarationFromName(SgNo
     {
       SgInitializedName* elmVar = *k;
       std::string name = elmVar->get_name().str();
-      ROSE_ASSERT (name.length () > 0);
       if(name == nameToMatch)
         returnList.push_back(astNode);
 

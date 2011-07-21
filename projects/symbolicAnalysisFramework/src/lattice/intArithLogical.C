@@ -1559,7 +1559,8 @@ bool IntArithLogical::logicNode::removeVar(varID var)
 				modified = c->removeVar(var) || modified;
 			}
 			return modified;
-		}
+		} else
+			ROSE_ASSERT(false);
 	}
 	else
 		// There are no sub-expressions, so there's nothing to remove
@@ -1680,8 +1681,7 @@ bool IntArithLogical::logicNode::eqChildren(list<exprLeafOrNode*>& one, list<exp
 			{ matched.insert(*it); }
 		}
 		// if we didn't match all the members of one to all the members of two, this expression was modified
-		if(matched.size() != one.size())
-			return true;
+		return (matched.size() == one.size());
 	}
 	else
 		return false;
@@ -1695,7 +1695,7 @@ bool IntArithLogical::logicNode::operator==(exprLeafOrNode& that_arg)
 	if(logOp == that.logOp && level == that.level && children.size() == that.children.size())
 	{
 		list<exprLeafOrNode*>::iterator itThis, itThat;
-		for(itThis = children.begin(), itThat = that.children.begin(); itThis != children.end(); itThis++, itThat)
+		for(itThis = children.begin(), itThat = that.children.begin(); itThis != children.end(); itThis++, itThat++)
 		{
 			if(!(*(*itThis) == *(*itThat)))
 			{ return false; }
@@ -1703,6 +1703,8 @@ bool IntArithLogical::logicNode::operator==(exprLeafOrNode& that_arg)
 	}
 	else
 		return false;
+
+	return true;
 }
 
 // Information order on affine relationships with the least information (True) being highest
@@ -1782,7 +1784,8 @@ bool IntArithLogical::logicNode::operator<=(exprLeafOrNode& that_arg)
 		}
 		// since we got here without finding counter-examples to the assertion this <= that, it must be true
 		return true;
-	}
+	} else 
+		ROSE_ASSERT(false);
 }
 
 /*******************
@@ -2011,7 +2014,7 @@ bool IntArithLogical::setToTrue(/*bool onlyIfNotInit*/)
 		if(level==uninitialized)
 			initialize(true);
 		else*/
-			expr->setToTrue();
+		return	expr->setToTrue();
 	//}
 }
 
@@ -2025,7 +2028,7 @@ bool IntArithLogical::setToFalse(/*bool onlyIfNotInit*/)
 		if(level==uninitialized)
 			initialize(false);
 		else*/
-			expr->setToFalse();
+		return	expr->setToFalse();
 	//}
 }
 
@@ -2451,7 +2454,7 @@ void printIntArithLogicals(IntArithLogicalPlacer* aip, string indent)
 	vector<int> factNames;
 	vector<int> latticeNames;
 	factNames.push_back(0);
-	printAnalysisStates pas(aip, factNames, latticeNames, indent);
+	printAnalysisStates pas(aip, factNames, latticeNames, printAnalysisStates::below, indent);
 	UnstructuredPassInterAnalysis upia_pas(pas);
 	upia_pas.runAnalysis();
 }

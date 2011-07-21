@@ -18,9 +18,7 @@ extern "C" {
 /***************************** HELPER FUNCTIONS *************************************/
 // \pp \todo using convertIntToString currently leakes memory as the generated
 //           string is never freed. This could (likely) be done in the function numval...
-const char*
-rted_ConvertIntToString(size_t num);
-
+const char* rted_ConvertIntToString(size_t num);
 
 #ifdef ROSE_WITH_ROSEQT
 

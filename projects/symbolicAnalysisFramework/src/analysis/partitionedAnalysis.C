@@ -535,7 +535,7 @@ void unionDFAnalysisStatePartitions::visit(const Function& func, const DataflowN
 // Runs the intra-procedural analysis on the given function. Returns true if 
 // the function's NodeState gets modified as a result and false otherwise.
 // state - the function's NodeState
-bool IntraPartitionFWDataflow::runAnalysis(const Function& func, NodeState* fState)
+bool IntraPartitionFWDataflow::runAnalysis(const Function& func, NodeState* fState, bool analyzeDueToCallers, set<Function> calleesUpdated)
 {
 	ROSE_ASSERT(0);
 	bool joinPart=false, splitPart=false;
@@ -587,7 +587,8 @@ bool IntraPartitionFWDataflow::runAnalysisResume(const Function& func, NodeState
 		printf("    chkpt=%p=%s\n", chkpt, chkpt->str("    ").c_str());
 
 	// Dataflow Iterator that iterates over all the nodes in this function
-	VirtualCFG::dataflow dfIt(funcCFGStart, funcCFGEnd);
+	//VirtualCFG::dataflow dfIt(funcCFGStart, funcCFGEnd);
+	VirtualCFG::dataflow dfIt(funcCFGStart);
 	
 	// Set of nodes that this analysis has blocked progress on until the next join point
 	set<DataflowNode> joinNodes;
@@ -699,8 +700,11 @@ printf("    dfIt!=VirtualCFG::dataflow::end() = %d\n", dfIt!=VirtualCFG::dataflo
 					Function calledFunc(isSgFunctionCallExp(sgn));
 					if(calledFunc.get_definition())
 					{
+						vector<Lattice*>* retState;
 						dynamic_cast<InterProceduralDataflow*>(interAnalysis)->
-						      transfer(calledFunc, n, *state, dfInfoBelow, true);
+						      transfer(calledFunc, n, *state, dfInfoBelow, &retState, true);
+						// NEED TO INCORPORATE INFORMATION ABOUT RETURN INTO DATAFLOW SOMEHOW
+						ROSE_ASSERT(0);
 					}
 					else
 					{
