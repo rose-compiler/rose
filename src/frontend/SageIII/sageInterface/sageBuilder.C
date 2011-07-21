@@ -941,9 +941,12 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & name, SgType* ret
   if (scope == NULL)
     scope = SageBuilder::topScopeStack();
   ROSE_ASSERT(scope != NULL);
-  ROSE_ASSERT(scope->containsOnlyDeclarations());
   ROSE_ASSERT(name.is_null() == false);
   ROSE_ASSERT(return_type != NULL);
+
+  if (SageInterface::is_Python_language() == false) {
+      ROSE_ASSERT(scope->containsOnlyDeclarations());
+  }
 
   // build function type, manage function type symbol internally
   SgFunctionType * func_type = buildFunctionType(return_type,paralist);
@@ -1018,7 +1021,7 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & name, SgType* ret
 
   func->set_parent(scope);
   func->set_scope(scope);
-  
+
   // set File_Info as transformation generated
   setSourcePositionForTransformation(func);
   return func;
@@ -1795,8 +1798,10 @@ BUILD_BINARY_DEF(OrOp)
 BUILD_BINARY_DEF(PlusAssignOp)
 BUILD_BINARY_DEF(PntrArrRefExp)
 BUILD_BINARY_DEF(RshiftAssignOp)
+BUILD_BINARY_DEF(JavaUnsignedRshiftAssignOp)
 
 BUILD_BINARY_DEF(RshiftOp)
+BUILD_BINARY_DEF(JavaUnsignedRshiftOp)
 BUILD_BINARY_DEF(ScopeOp)
 BUILD_BINARY_DEF(SubtractOp)
 BUILD_BINARY_DEF(XorAssignOp)
@@ -1928,12 +1933,14 @@ SageBuilder::buildConstructorInitializer(
    bool associated_class_unknown /*= false*/)
    {
   // Prototype:
-  // SgConstructorInitializer (SgMemberFunctionDeclaration *declaration, SgExprListExp *args, SgType *expression_type, bool need_name, bool need_qualifier, bool need_parenthesis_after_name, bool associated_class_unknown);
+  // SgConstructorInitializer (SgMemberFunctionDeclaration *declaration, SgExprListExp *args, SgType *expression_type, 
+  //    bool need_name, bool need_qualifier, bool need_parenthesis_after_name, bool associated_class_unknown);
 
-  // DQ (1/4/2009): Error checking
-     ROSE_ASSERT(declaration->get_associatedClassDeclaration() != NULL);
+     //George Vulov (05/24/2011) Modified this assertion to allow for a NULL declaration (in case of implicit constructors)
+     ROSE_ASSERT(declaration == NULL || declaration->get_associatedClassDeclaration() != NULL);
 
-     SgConstructorInitializer* result = new SgConstructorInitializer( declaration, args, expression_type, need_name, need_qualifier, need_parenthesis_after_name, associated_class_unknown );
+     SgConstructorInitializer* result = new SgConstructorInitializer( declaration, args, expression_type, need_name, 
+                                        need_qualifier, need_parenthesis_after_name, associated_class_unknown );
      ROSE_ASSERT(result != NULL);
      if (args != NULL)
         {
@@ -2033,6 +2040,35 @@ SgSizeOfOp* SageBuilder::buildSizeOfOp_nfi(SgType* type /* = NULL*/)
   return result;
 }
 
+
+
+// DQ (7/18/2011): Added support for SgJavaInstanceOfOp
+//! This is part of Java specific operator support.
+SgJavaInstanceOfOp* SageBuilder::buildJavaInstanceOfOp(SgExpression* exp, SgType* type)
+   {
+  // Not sure what should be the correct type of the SgJavaInstanceOfOp expression...
+     SgType* exp_type = NULL;
+
+  // I think this should evaluate to be a boolean type (typically used in conditionals).
+  // if (exp != NULL) exp_type = exp->get_type();
+
+  // Warn that this support in not finished.
+     printf ("WARNING: Support for SgJavaInstanceOfOp is incomplete, expression type not specified, should it be SgTypeBool? \n");
+
+     SgJavaInstanceOfOp* result = new SgJavaInstanceOfOp(exp,type, exp_type);
+     ROSE_ASSERT(result);
+     if (exp != NULL)
+        {
+          exp->set_parent(result);
+          markLhsValues(result);
+        }
+
+     setOneSourcePositionForTransformation(result);
+     return result;
+   }
+
+
+
 SgExprListExp * SageBuilder::buildExprListExp(SgExpression * expr1, SgExpression* expr2, SgExpression* expr3, SgExpression* expr4, SgExpression* expr5, SgExpression* expr6, SgExpression* expr7, SgExpression* expr8, SgExpression* expr9, SgExpression* expr10)
 {
   SgExprListExp* expList = new SgExprListExp();
@@ -2125,32 +2161,37 @@ SageBuilder::buildVarRefExp(const std::string& varName, SgScopeStatement* scope)
 
 SgVarRefExp *
 SageBuilder::buildVarRefExp(const SgName& name, SgScopeStatement* scope/*=NULL*/)
-{
-  if (scope == NULL)
-    scope = SageBuilder::topScopeStack();
- // ROSE_ASSERT(scope != NULL); // we allow to build a dangling ref without symbol
-  SgSymbol * symbol = NULL;
-  SgVariableSymbol* varSymbol=NULL;
- if (scope)
-  symbol = lookupSymbolInParentScopes(name,scope); 
- if (symbol) 
-    varSymbol= isSgVariableSymbol(symbol); 
-  else
-// if not found: put fake init name and symbol here and 
-//waiting for a postProcessing phase to clean it up
-// two features: no scope and unknown type for initializedName
-  {
-    SgInitializedName * name1 = buildInitializedName(name,SgTypeUnknown::createType());
-    name1->set_scope(scope); //buildInitializedName() does not set scope for various reasons
-    varSymbol= new SgVariableSymbol(name1);
-  }
-  ROSE_ASSERT(varSymbol); 
+   {
+     if (scope == NULL)
+          scope = SageBuilder::topScopeStack();
 
-  SgVarRefExp *varRef = new SgVarRefExp(varSymbol);
-  setOneSourcePositionForTransformation(varRef);
-  ROSE_ASSERT(varRef);
-  return varRef; 
-}
+  // ROSE_ASSERT(scope != NULL); // we allow to build a dangling ref without symbol
+     SgSymbol*         symbol    = NULL;
+     SgVariableSymbol* varSymbol = NULL;
+
+     if (scope != NULL)
+          symbol = lookupSymbolInParentScopes(name,scope); 
+
+     if (symbol != NULL) 
+        {
+          varSymbol= isSgVariableSymbol(symbol); 
+        }
+       else
+        {
+       // if not found: put fake init name and symbol here and 
+       // waiting for a postProcessing phase to clean it up
+       // two features: no scope and unknown type for initializedName
+          SgInitializedName * name1 = buildInitializedName(name,SgTypeUnknown::createType());
+          name1->set_scope(scope); //buildInitializedName() does not set scope for various reasons
+          varSymbol= new SgVariableSymbol(name1);
+        }
+     ROSE_ASSERT(varSymbol); 
+
+     SgVarRefExp *varRef = new SgVarRefExp(varSymbol);
+     setOneSourcePositionForTransformation(varRef);
+     ROSE_ASSERT(varRef);
+     return varRef; 
+   }
 
 //! Build a variable reference from an existing variable declaration. The assumption is a SgVariableDeclartion only declares one variable in the ROSE AST.
 SgVarRefExp *
@@ -3176,6 +3217,33 @@ SgNullStatement* SageBuilder::buildNullStatement_nfi()
   ROSE_ASSERT(result);
   setOneSourcePositionNull(result);
   return result;
+}
+
+//! Build a try statement
+SgTryStmt* SageBuilder::buildTryStmt(SgStatement* body,
+                                     SgCatchOptionStmt* catch0,
+                                     SgCatchOptionStmt* catch1,
+                                     SgCatchOptionStmt* catch2,
+                                     SgCatchOptionStmt* catch3,
+                                     SgCatchOptionStmt* catch4
+                                     ) {
+    ROSE_ASSERT(body != NULL);
+    ROSE_ASSERT(catch0 != NULL);
+
+    SgTryStmt* try_stmt = new SgTryStmt(body);
+    try_stmt->append_catch_statement(catch0);
+
+    if (catch1 != NULL) try_stmt->append_catch_statement(catch1);
+    if (catch2 != NULL) try_stmt->append_catch_statement(catch2);
+    if (catch3 != NULL) try_stmt->append_catch_statement(catch3);
+    if (catch4 != NULL) try_stmt->append_catch_statement(catch4);
+
+    return try_stmt;
+}
+
+//! Build a catch statement
+SgCatchOptionStmt* SageBuilder::buildCatchOptionStmt(SgVariableDeclaration* condition, SgStatement* body) {
+  return new SgCatchOptionStmt(condition, body, /* SgTryStmt*= */ NULL);
 }
 
 // DQ (4/30/2010): Added support for building asm statements.
