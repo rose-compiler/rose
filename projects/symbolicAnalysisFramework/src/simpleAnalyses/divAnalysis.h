@@ -12,7 +12,7 @@
 #include "latticeFull.h"
 #include "liveDeadVarAnalysis.h"
 #include "printAnalysisStates.h"
-
+#include "VariableStateTransfer.h"
 
 extern int divAnalysisDebugLevel;
 
@@ -157,20 +157,12 @@ class DivLattice : public FiniteLattice
 	string str(string indent="");
 };
 
-class DivAnalysisTransfer : public IntraDFTransferVisitor
+class DivAnalysisTransfer : public VariableStateTransfer<DivLattice>
 {
-  bool modified;
-  FiniteVarsExprsProductLattice* prodLat;
-
   template <class T>
   void visitIntegerValue(T *sgn);
   void transferIncrement(SgUnaryOp *sgn);
   void transferCompoundAdd(SgBinaryOp *sgn);
-  DivLattice *getLattice(const SgExpression *sgn);
-  bool getLattices(const SgUnaryOp *sgn,  DivLattice* &arg1Lat, DivLattice* &arg2Lat, DivLattice* &resLat);
-  bool getLattices(const SgBinaryOp *sgn, DivLattice* &arg1Lat, DivLattice* &arg2Lat, DivLattice* &resLat);
-
-  void updateModified(bool latModified) { modified = latModified || modified; }
 
   typedef void (DivAnalysisTransfer::*TransferOp)(DivLattice *, DivLattice *, DivLattice *);
   template <typename T>
@@ -183,9 +175,6 @@ class DivAnalysisTransfer : public IntraDFTransferVisitor
 
 public:
   //  void visit(SgNode *);
-  void visit(SgAssignOp *);
-  void visit(SgAssignInitializer *);
-  void visit(SgInitializedName *);
   void visit(SgLongLongIntVal *sgn);
   void visit(SgLongIntVal *sgn);
   void visit(SgIntVal *sgn);

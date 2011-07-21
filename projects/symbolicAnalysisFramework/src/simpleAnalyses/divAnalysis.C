@@ -536,72 +536,8 @@ for(vector<Lattice*>::iterator it = initLattices.begin();
 }*/
 
 DivAnalysisTransfer::DivAnalysisTransfer(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo)
-  : IntraDFTransferVisitor(func, n, state, dfInfo), modified(false), prodLat(dynamic_cast<FiniteVarsExprsProductLattice*>(*(dfInfo.begin())))
-{
-  //Dbg::dbg << "transfer A prodLat="<<prodLat<<"="<<prodLat->str("    ")<<"\n";
-  // Make sure that all the lattices are initialized
-  //prodLat->initialize();
-  const vector<Lattice*>& lattices = prodLat->getLattices();
-  for(vector<Lattice*>::const_iterator it = lattices.begin(); it!=lattices.end(); it++)
-    (dynamic_cast<DivLattice*>(*it))->initialize();
-}
-
-void DivAnalysisTransfer::visit(SgAssignOp *sgn)
-{
-  DivLattice *lhsLat, *rhsLat, *resLat;
-  getLattices(sgn, lhsLat, rhsLat, resLat);
-		
-  if(divAnalysisDebugLevel>=1) {
-    if(resLat) Dbg::dbg << "resLat=\n    "<<resLat->str("    ")<<"\n";
-    if(lhsLat) Dbg::dbg << "lhsLat=\n    "<<lhsLat->str("    ")<<"\n";
-    if(rhsLat) Dbg::dbg << "rhsLat=\n    "<<rhsLat->str("    ")<<"\n";
-  }
-		
-  // Copy the lattice of the right-hand-side to both the left-hand-side variable and to the assignment expression itself
-  if(resLat) // If the left-hand-side contains a live expression or variable
-    { resLat->copy(rhsLat); modified = true; }
-  if(lhsLat) // If the left-hand-side contains a live expression or variable
-    { lhsLat->copy(rhsLat); modified = true; }
-}
-
-void DivAnalysisTransfer::visit(SgAssignInitializer *sgn)
-{
-  DivLattice* asgnLat = getLattice(sgn->get_operand());
-  DivLattice* resLat = getLattice(sgn);
-
-  if(divAnalysisDebugLevel>=1) {
-    if(asgnLat) Dbg::dbg << "asgnLat=    "<<asgnLat->str("    ")<<"\n";
-    if(resLat) Dbg::dbg << "resLat=    "<<resLat->str("    ")<<"\n";
-  }
-
-  // If the result expression is live
-  if(resLat) { resLat->copy(asgnLat); modified = true; }
-}
-
-void DivAnalysisTransfer::visit(SgInitializedName *initName)
-{
-  varID var(initName);
-  DivLattice* varLat = dynamic_cast<DivLattice *>(prodLat->getVarLattice(var));
-		
-  //Dbg::dbg << "DivAnalysis::transfer() isSgInitializedName var="<<var.str()<<" varLat="<<varLat<<"\n";
-		
-  // if this is a scalar that we care about, initialize it to Bottom
-  if(varLat) {
-    //if(divAnalysisDebugLevel>=1) Dbg::dbg << "Variable declaration: "<<var.str()<<", get_initializer()="<<initName->get_initializer()<<"\n";
-    // If there was no initializer
-    if(initName->get_initializer()==NULL)
-      updateModified(varLat->setBot());
-    else {
-      //varID init = SgExpr2Var(initName->get_initializer());
-      DivLattice* initLat = getLattice(initName->get_initializer());
-      //if(divAnalysisDebugLevel>=1) Dbg::dbg << "    init="<<init.str()<<" initLat="<<initLat<<"\n";
-      if(initLat) {
-        varLat->copy(initLat);
-        modified = true;
-      }
-    }
-  }
-}
+  : VariableStateTransfer<DivLattice>(func, n, state, dfInfo, divAnalysisDebugLevel)
+{ }
 
 // Integral Numeric Constants
 template <class T>
@@ -628,38 +564,6 @@ void DivAnalysisTransfer::visit(SgValueExp *sgn) {
   DivLattice* resLat = getLattice(sgn);
   // If the result expression is live
   if(resLat) updateModified(resLat->setTop());
-}
-
-DivLattice* DivAnalysisTransfer::getLattice(const SgExpression *sgn) {
-  return dynamic_cast<DivLattice *>(prodLat->getVarLattice(SgExpr2Var(sgn)));
-}
-
-bool DivAnalysisTransfer::getLattices(const SgBinaryOp *sgn, DivLattice* &arg1Lat, DivLattice* &arg2Lat, DivLattice* &resLat) {
-  arg1Lat = getLattice(sgn->get_lhs_operand());
-  arg2Lat = getLattice(sgn->get_rhs_operand());
-  resLat = getLattice(sgn);
-
-  if(isSgCompoundAssignOp(sgn)) {
-    if(resLat==NULL && arg1Lat != NULL)
-      resLat = arg1Lat;
-  }
-  //Dbg::dbg << "transfer B, resLat="<<resLat<<"\n";
-
-  return (arg1Lat && arg2Lat && resLat);
-}
-
-bool DivAnalysisTransfer::getLattices(const SgUnaryOp *sgn, DivLattice* &arg1Lat, DivLattice* &arg2Lat, DivLattice* &resLat) {
-    arg1Lat = getLattice(sgn->get_operand());
-    resLat = getLattice(sgn);
-
-    // Unary Update
-    if(isSgMinusMinusOp(sgn) || isSgPlusPlusOp(sgn)) {
-        arg2Lat = new DivLattice(1);
-    }
-    //Dbg::dbg << "res="<<res.str()<<" arg1="<<arg1.str()<<" arg1Lat="<<arg1Lat<<", arg2Lat="<<arg2Lat<<"\n";
-    //Dbg::dbg << "transfer B, resLat="<<resLat<<"\n";
-
-  return (arg1Lat && arg2Lat && resLat);
 }
 
 void DivAnalysisTransfer::transferAdditive(DivLattice *arg1Lat, DivLattice *arg2Lat, DivLattice *resLat, bool isAddition) {
