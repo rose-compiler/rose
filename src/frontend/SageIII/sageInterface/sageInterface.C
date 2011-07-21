@@ -7838,22 +7838,6 @@ SgAssignInitializer* SageInterface::splitExpression(SgExpression* from, string n
     exp->set_parent(expList);
   }
 
-  void SageInterface::appendExpression(SgTupleExp *tuple, SgExpression* exp)
-  {
-    ROSE_ASSERT(tuple);
-    ROSE_ASSERT(exp);
-    tuple->append_expression(exp);
-    exp->set_parent(tuple);
-  }
-
-  void SageInterface::appendExpression(SgListExp *list, SgExpression* exp)
-  {
-    ROSE_ASSERT(list);
-    ROSE_ASSERT(exp);
-    list->append_expression(exp);
-    exp->set_parent(list);
-  }
-
   void SageInterface::appendExpressionList(SgExprListExp *expList, const std::vector<SgExpression*>& exp)
   {
     for (size_t i = 0; i < exp.size(); ++i)
