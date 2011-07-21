@@ -6308,6 +6308,30 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
           vector<string> javaCommandLine;
           javaCommandLine.push_back(backendJavaCompiler);
 
+       // Use "-d ." option to force class files to be generated in the current directory (instead of the source directory.
+       // this semantics matches the support of the other languages in ROSE and privents "make check" from trying to write
+       // to the source directory which is an error.  It might be different from the samantics of the SUN javac and other 
+       // java compilers.  I am unclear on this point.
+
+       // Use C system function to get the current directory.
+       // char currentDirectory[PATH_MAX];
+       // char currentDirectory[MAX_PATH];
+          char currentDirectory[8096];
+          getcwd(currentDirectory, sizeof(currentDirectory));
+          string currentDirectoryString = currentDirectory;
+
+       // DQ (7/20/2011): We can't build a striang with spaces, I don't know why.  Each part of the option 
+       // for "-sourcepath <path>" or "-d <path>" must be pushed onto the javaCommandLine seperately.
+
+          if ( get_verbose() > 2 )
+               javaCommandLine.push_back("-verbose");
+
+       // Better to use "-d" than to specify the "-sourcepath" option.  I think.
+       // javaCommandLine.push_back("-sourcepath");
+       // javaCommandLine.push_back(StringUtility::getPathFromFileName(get_sourceFileNameWithPath()));
+          javaCommandLine.push_back("-d");
+          javaCommandLine.push_back(currentDirectoryString);
+
           if (get_output_warnings() == true)
              {
             // Specify warnings for javac compiler.
@@ -6418,25 +6442,8 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
   // printf ("get_exit_after_parser() = %s \n",get_exit_after_parser() ? "true" : "false");
      if (get_exit_after_parser() == true)
         {
-          printf("Sorry, not implemented: exit_after_parser option is not supported for Java yet. \n");
-          ROSE_ASSERT(false);
+           int errorCode = 0;
 
-       // DQ (1/19/2008): New version of OFP requires different calling syntax.
-       // string OFPCommandLineString = std::string("java parser.java.FortranMain") + " " + get_sourceFileNameWithPath();
-          vector<string> OFPCommandLine;
-          OFPCommandLine.push_back(JAVA_JVM_PATH);
-          OFPCommandLine.push_back(classpath);
-       // OFPCommandLine.push_back("fortran.ofp.FrontEnd");
-          OFPCommandLine.push_back("JavaTraversal");
-
-#if 0
-          printf ("exit_after_parser: OFPCommandLine = %s \n",StringUtility::listToString(OFPCommandLine).c_str());
-#endif
-
-       // Some security checking here could be helpful!!!
-          int errorCode = systemFromVector (OFPCommandLine);
-
-       // DQ (9/30/2008): Added error checking of return value
           if (errorCode != 0)
              {
                printf ("Using option -rose:exit_after_parser (errorCode = %d) \n",errorCode);
