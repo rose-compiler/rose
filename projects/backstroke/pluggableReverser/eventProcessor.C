@@ -296,7 +296,6 @@ SgExpression* EventProcessor::popVal(SgType* type)
 
 SgExpression* EventProcessor::popVal_front(SgType* type)
 {
-	SgVarRefExp* stackVariable = getStackVar(type);
 	string functionName = "pop_front< " + get_type_name(type) + " >";
 	return SageBuilder::buildFunctionCallExp(functionName, type);
 }
