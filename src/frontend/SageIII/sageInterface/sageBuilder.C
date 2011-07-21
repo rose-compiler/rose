@@ -1798,8 +1798,10 @@ BUILD_BINARY_DEF(OrOp)
 BUILD_BINARY_DEF(PlusAssignOp)
 BUILD_BINARY_DEF(PntrArrRefExp)
 BUILD_BINARY_DEF(RshiftAssignOp)
+BUILD_BINARY_DEF(JavaUnsignedRshiftAssignOp)
 
 BUILD_BINARY_DEF(RshiftOp)
+BUILD_BINARY_DEF(JavaUnsignedRshiftOp)
 BUILD_BINARY_DEF(ScopeOp)
 BUILD_BINARY_DEF(SubtractOp)
 BUILD_BINARY_DEF(XorAssignOp)
@@ -2037,6 +2039,35 @@ SgSizeOfOp* SageBuilder::buildSizeOfOp_nfi(SgType* type /* = NULL*/)
   setOneSourcePositionNull(result);
   return result;
 }
+
+
+
+// DQ (7/18/2011): Added support for SgJavaInstanceOfOp
+//! This is part of Java specific operator support.
+SgJavaInstanceOfOp* SageBuilder::buildJavaInstanceOfOp(SgExpression* exp, SgType* type)
+   {
+  // Not sure what should be the correct type of the SgJavaInstanceOfOp expression...
+     SgType* exp_type = NULL;
+
+  // I think this should evaluate to be a boolean type (typically used in conditionals).
+  // if (exp != NULL) exp_type = exp->get_type();
+
+  // Warn that this support in not finished.
+     printf ("WARNING: Support for SgJavaInstanceOfOp is incomplete, expression type not specified, should it be SgTypeBool? \n");
+
+     SgJavaInstanceOfOp* result = new SgJavaInstanceOfOp(exp,type, exp_type);
+     ROSE_ASSERT(result);
+     if (exp != NULL)
+        {
+          exp->set_parent(result);
+          markLhsValues(result);
+        }
+
+     setOneSourcePositionForTransformation(result);
+     return result;
+   }
+
+
 
 SgExprListExp * SageBuilder::buildExprListExp(SgExpression * expr1, SgExpression* expr2, SgExpression* expr3, SgExpression* expr4, SgExpression* expr5, SgExpression* expr6, SgExpression* expr7, SgExpression* expr8, SgExpression* expr9, SgExpression* expr10)
 {

@@ -225,7 +225,7 @@ void EventReverser::removePhiNodesFromRouteGraph()
                     // Multiple state saving edges with cost 0 can be merged.
                     // Then we don't have to add a new edge.
                     StateSavingEdge* ssEdge = isStateSavingEdge(routeGraph_[outEdge]);
-                    if (ssEdge && ssEdge->cost == 0);
+                    if (ssEdge && ssEdge->cost == 0)
                     {
                         bool flag = false;
                         foreach (const VGEdge& e, boost::out_edges(src, routeGraph_))

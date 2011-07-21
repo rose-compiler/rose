@@ -13,5 +13,10 @@ public class test2011_19
           x = -y;
           x = +y;
 
+          x = y++;
+          x = y--;
+
+          x = ++y;
+          x = --y;
         }
    }

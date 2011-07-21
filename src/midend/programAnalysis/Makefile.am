@@ -4,6 +4,8 @@
 
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+SUBDIRS = staticSingleAssignment
+
 ###############################################################################
 # Subdirectory specifics
 # TOO (01/26/11): relative paths must be updated for each propagation upward
@@ -95,6 +97,8 @@ libprogramAnalysis_la_SOURCES=\
 	$(mpaValuePropagation_la_sources) \
 	$(mpaVariableRenaming_la_sources)
 
+libprogramAnalysis_la_LIBADD = \
+	staticSingleAssignment/libSSA.la
 
 include_HEADERS=\
 	$(mpaCallGraphAnalysis_includeHeaders) \
