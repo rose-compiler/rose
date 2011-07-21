@@ -118,6 +118,10 @@ Grammar::setUpTypes ()
                             ClassType | EnumType | TypedefType,
                             "NamedType","T_NAME", false);
 
+  // DQ (5/11/2011): This is no longer used, and has not be used since the 3rd rewite of the name qualification
+  // support in 2007.  We are now working on the 4rh rewrite of this horrible subject and it is not clear if it
+  // should be revived.  I would rather place the name qualification information into the constructs the reference
+  // the type, instead of having the type re wrapped as if it were a SgPointerType, SgReferenceType, etc.
   // DQ (12/21/2005): Support for qualified named types (wraps SgType (always a SgNamedType) with SgQualifiedName)
      NEW_TERMINAL_MACRO ( QualifiedNameType        , "QualifiedNameType",         "T_QUALIFIED_NAME" );
 
