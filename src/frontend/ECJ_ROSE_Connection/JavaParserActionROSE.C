@@ -263,6 +263,17 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclarationEnd (JNIEnv 
 
      outputJavaState("At TOP of cactionConstructorDeclarationEnd");
 
+     if (astJavaStatementStack.empty() == false)
+        {
+       // We have some statement to append to the current scope before we pop it off the astJavaScopeStack.
+          printf ("We have one or more statements to append to the current scope before we pop it off the astJavaScopeStack. \n");
+          while (astJavaStatementStack.empty() == false)
+             {
+               appendStatement(astJavaStatementStack.front());
+               astJavaStatementStack.pop_front();
+             }
+        }
+
   // Pop the constructor body...
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
      astJavaScopeStack.pop_front();
@@ -543,6 +554,11 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSend (JNIEnv *env, jobject 
        // Handle case of super class.
           printf ("Handle case of super class. \n");
 
+#if 1
+       // Refactored the support for getting the current class scope.
+          SgClassDefinition* classDefinition = getCurrentClassDefinition();
+          className = classDefinition->get_declaration()->get_name();
+#else
        // SgScopeStatement* classDefinition = NULL;
           std::list<SgScopeStatement*>::reverse_iterator i = astJavaScopeStack.rbegin();
           while (i != astJavaScopeStack.rend() && isSgClassDefinition(*i) == NULL)
@@ -560,6 +576,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSend (JNIEnv *env, jobject 
                printf ("Error: SgClassDefinition not found \n");
                ROSE_ASSERT(false);
              }
+#endif
         }
 
      if (SgProject::get_verbose() > -1)
@@ -2653,6 +2670,18 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionSynchronizedStatement(JNIEnv *env,
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionThisReference(JNIEnv *env, jobject xxx)
    {
+     SgClassDefinition* classDefinition = getCurrentClassDefinition();
+     string className = classDefinition->get_declaration()->get_name();
+     printf ("Current class for ThisReference is: %s \n",className.c_str());
+
+  // SgClassSymbol* classSymbol = classDefinition->get_declaration()->get_symbol();
+     SgClassSymbol* classSymbol = isSgClassSymbol(classDefinition->get_declaration()->search_for_symbol_from_symbol_table());
+     ROSE_ASSERT(classSymbol != NULL);
+
+     SgThisExp* thisExp = SageBuilder::buildThisExp(classSymbol);
+     ROSE_ASSERT(thisExp != NULL);
+
+     astJavaExpressionStack.push_front(thisExp);
    }
 
 

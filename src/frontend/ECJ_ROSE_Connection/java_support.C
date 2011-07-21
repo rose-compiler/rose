@@ -1287,3 +1287,34 @@ appendStatementStack()
         }
    }
 
+
+
+SgClassDefinition*
+getCurrentClassDefinition()
+   {
+     SgClassDefinition* classDefinition = NULL;
+     std::list<SgScopeStatement*>::reverse_iterator i = astJavaScopeStack.rbegin();
+     while (i != astJavaScopeStack.rend() && isSgClassDefinition(*i) == NULL)
+        {
+          i++;
+        }
+
+     if (i != astJavaScopeStack.rend())
+        {
+          classDefinition = isSgClassDefinition(*i);
+          string className = classDefinition->get_declaration()->get_name();
+          printf ("Current class is className = %s \n",className.c_str());
+        }
+       else
+        {
+          printf ("Error in getCurrentClassDefinition(): SgClassDefinition not found \n");
+          ROSE_ASSERT(false);
+        }
+
+     ROSE_ASSERT(classDefinition != NULL);
+     return classDefinition;
+   }
+
+
+
+
