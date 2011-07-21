@@ -1304,11 +1304,19 @@ struct new_utsname_32 {
 /* Third arg of madvise syscall */
 static const Translate madvise_behaviors[] = {
     TE(MADV_NORMAL), TE(MADV_RANDOM), TE(MADV_SEQUENTIAL), TE(MADV_WILLNEED), TE(MADV_DONTNEED),
-    TE(MADV_REMOVE), TE(MADV_DONTFORK), TE(MADV_DOFORK), TE(MADV_HWPOISON),
+    TE(MADV_REMOVE), TE(MADV_DONTFORK), TE(MADV_DOFORK),
+#ifdef MADV_HWPOISON
+    TE(MADV_HWPOISON),
+#endif
 #ifdef MADV_SOFT_OFFLINE
     TE(MADV_SOFT_OFFLINE),
 #endif
-    TE(MADV_MERGEABLE), TE(MADV_UNMERGEABLE),
+#ifdef MADV_MERGEABLE
+    TE(MADV_MERGEABLE),
+#endif
+#ifdef MADV_UNMERGEABLE
+    TE(MADV_UNMERGEABLE),
+#endif
 #ifdef MADV_HUGEPAGE
     TE(MADV_HUGEPAGE), TE(MADV_NOHUGEPAGE),
 #endif
@@ -1361,20 +1369,48 @@ static const Translate prctl_options[] = {
     TE(PR_GET_NAME),
     TE(PR_GET_ENDIAN),
     TE(PR_SET_ENDIAN),
+#ifdef PR_GET_SECCOMP
     TE(PR_GET_SECCOMP),
+#endif
+#ifdef PR_SET_SECCOMP
     TE(PR_SET_SECCOMP),
+#endif
+#ifdef PR_CAPBSET_READ
     TE(PR_CAPBSET_READ),
+#endif
+#ifdef PR_CAPBSET_DROP
     TE(PR_CAPBSET_DROP),
+#endif
+#ifdef PR_GET_TSC
     TE(PR_GET_TSC),
+#endif
+#ifdef PR_SET_TSC
     TE(PR_SET_TSC),
+#endif
+#ifdef PR_GET_SECUREBITS
     TE(PR_GET_SECUREBITS),
+#endif
+#ifdef PR_SET_SECUREBITS
     TE(PR_SET_SECUREBITS),
+#endif
+#ifdef PR_SET_TIMERSLACK
     TE(PR_SET_TIMERSLACK),
+#endif
+#ifdef PR_GET_TIMERSLACK
     TE(PR_GET_TIMERSLACK),
+#endif
+#ifdef PR_TASK_PERF_EVENTS_DISABLE
     TE(PR_TASK_PERF_EVENTS_DISABLE),
+#endif
+#ifdef PR_TASK_PERF_EVENTS_ENABLE
     TE(PR_TASK_PERF_EVENTS_ENABLE),
+#endif
+#ifdef PR_MCE_KILL
     TE(PR_MCE_KILL),
+#endif
+#ifdef PR_MCE_KILL_GET
     TE(PR_MCE_KILL_GET),
+#endif
     T_END
 };
 
