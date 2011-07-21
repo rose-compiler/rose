@@ -29,9 +29,11 @@ SUBDIRS = \
      programModeling \
      pragmaParsing \
      roseToLLVM \
-     symbolicAnalysisFramework \
      taintcheck \
      PowerAwareCompiler
+
+# DQ (6/25/2011): Removed from being tested (failing symbolicAnalysisFramework/tests/test_examples/dominator_example.cpp)
+SUBDIRS += symbolicAnalysisFramework
 
 # DQ (4/8/2011): Directories of tests are a current problem for Insure++.
 if !ROSE_USE_INSURE

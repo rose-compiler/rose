@@ -684,8 +684,10 @@ UnparseJava_type::unparseClassType(SgType* type, SgUnparse_Info& info)
 
                  // info.display("In unparseClassType: The C++ support is more complex and can require qualified names");
 
+                 // DQ (7/20/2011): Test compilation without the generateNameQualifier() functions.
                  // The C++ support is more complex and can require qualified names!
-                    SgName nameQualifier = unp->u_name->generateNameQualifier( decl , info );
+                 // SgName nameQualifier = unp->u_name->generateNameQualifier( decl , info );
+                    SgName nameQualifier;
                  // SgName nameQualifier = unp->u_name->generateNameQualifierForType( type , info );
 #if 0
                     printf ("In unparseClassType: nameQualifier (from unp->u_name->generateNameQualifier function) = %s \n",nameQualifier.str());
@@ -811,8 +813,10 @@ UnparseJava_type::unparseEnumType(SgType* type, SgUnparse_Info& info)
              }
             else
              {
+            // DQ (7/20/2011): Test compilation without the generateNameQualifier() functions.
             // The C++ support is more complex and can require qualified names!
-               SgName nameQualifier = unp->u_name->generateNameQualifier( edecl , info );
+            // SgName nameQualifier = unp->u_name->generateNameQualifier( edecl , info );
+               SgName nameQualifier;
 
             // printf ("nameQualifier (from unp->u_name->generateNameQualifier function) = %s \n",nameQualifier.str());
             // curprint ( "\n/* nameQualifier (from unp->u_name->generateNameQualifier function) = " + nameQualifier + " */ \n ";
@@ -945,8 +949,10 @@ UnparseJava_type::unparseTypedefType(SgType* type, SgUnparse_Info& info)
              }
             else
              {
+            // DQ (7/20/2011): Test compilation without the generateNameQualifier() functions.
             // The C++ support is more complex and can require qualified names!
-               SgName nameQualifier = unp->u_name->generateNameQualifier( tdecl , info );
+            // SgName nameQualifier = unp->u_name->generateNameQualifier( tdecl , info );
+               SgName nameQualifier;
 
             // printf ("nameQualifier (from unp->u_name->generateNameQualifier function) = %s \n",nameQualifier.str());
             // curprint ( "\n/* nameQualifier (from unp->u_name->generateNameQualifier function) = " + nameQualifier + " */ \n ";
