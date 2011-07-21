@@ -132,14 +132,14 @@ sage_buildAugAssign(PyObject *self, PyObject *args)
     else if (op == py_op_sub)    sg_bin_op = SageBuilder::buildMinusAssignOp(lhs, rhs);
     else if (op == py_op_mult)   sg_bin_op = SageBuilder::buildMultAssignOp(lhs, rhs);
     else if (op == py_op_div)    sg_bin_op = SageBuilder::buildDivAssignOp(lhs, rhs);
-    else if (op == py_op_idiv)   ROSE_ASSERT(!"Error: no SgIntegerDivAssignOp node.");
+    else if (op == py_op_idiv)   sg_bin_op = SageBuilder::buildIntegerDivideAssignOp(lhs, rhs);
     else if (op == py_op_mod)    sg_bin_op = SageBuilder::buildModAssignOp(lhs, rhs);
     else if (op == py_op_lshift) sg_bin_op = SageBuilder::buildLshiftAssignOp(lhs, rhs);
     else if (op == py_op_rshift) sg_bin_op = SageBuilder::buildRshiftAssignOp(lhs, rhs);
-    else if (op == py_op_bitand) ROSE_ASSERT(!"Error: no SgBitAndAssignOp node.");
-    else if (op == py_op_bitor)  ROSE_ASSERT(!"Error: no SgBitOrAssignOp node.");
-    else if (op == py_op_bitxor) ROSE_ASSERT(!"Error: no SgBitXorAssignOp node.");
-    else if (op == py_op_pow)    sg_bin_op = SageBuilder::buildExponentiationOp(lhs, rhs);
+    else if (op == py_op_bitand) sg_bin_op = SageBuilder::buildAndAssignOp(lhs, rhs);
+    else if (op == py_op_bitor)  sg_bin_op = SageBuilder::buildIorAssignOp(lhs, rhs);
+    else if (op == py_op_bitxor) sg_bin_op = SageBuilder::buildXorAssignOp(lhs, rhs);
+    else if (op == py_op_pow)    sg_bin_op = SageBuilder::buildExponentiationAssignOp(lhs, rhs);
     else {
         cout << "Unrecognized operator in augmented assignment: ";
         PyObject_Print(op, stdout, Py_PRINT_RAW);
