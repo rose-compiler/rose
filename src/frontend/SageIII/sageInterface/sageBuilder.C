@@ -3038,7 +3038,7 @@ SgUpcForAllStatement * SageBuilder::buildUpcForAllStatement_nfi(SgForInitStateme
   return result;
 }
 
-SgWhileStmt * SageBuilder::buildWhileStmt(SgStatement *  condition, SgStatement *body)
+SgWhileStmt * SageBuilder::buildWhileStmt(SgStatement *  condition, SgStatement *body, SgStatement* else_body)
 {
   ROSE_ASSERT(condition);
   ROSE_ASSERT(body);
@@ -3052,10 +3052,16 @@ SgWhileStmt * SageBuilder::buildWhileStmt(SgStatement *  condition, SgStatement 
   setOneSourcePositionForTransformation(result);
   condition->set_parent(result);
   body->set_parent(result);
+
+  if (else_body != NULL) {
+      result->set_else_body(else_body);
+      else_body->set_parent(result);
+  }
+
   return result;
 }
 
-SgWhileStmt * SageBuilder::buildWhileStmt_nfi(SgStatement *  condition, SgStatement *body)
+SgWhileStmt * SageBuilder::buildWhileStmt_nfi(SgStatement *  condition, SgStatement *body, SgStatement *else_body)
 {
   SgWhileStmt * result = new SgWhileStmt(condition,body);
   ROSE_ASSERT(result);
@@ -3067,6 +3073,12 @@ SgWhileStmt * SageBuilder::buildWhileStmt_nfi(SgStatement *  condition, SgStatem
   setOneSourcePositionNull(result);
   if (condition) condition->set_parent(result);
   if (body) body->set_parent(result);
+
+  if (else_body != NULL) {
+      result->set_else_body(else_body);
+      else_body->set_parent(result);
+  }
+
   return result;
 }
 

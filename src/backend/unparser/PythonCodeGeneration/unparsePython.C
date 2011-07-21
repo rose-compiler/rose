@@ -808,6 +808,11 @@ Unparse_Python::unparseWhileStmt(SgWhileStmt* while_stmt,
     curprint(":\n");
 
     unparseAsSuite(while_stmt->get_body(), info);
+
+    if (while_stmt->get_else_body() != NULL) {
+        curprint_indented("else:\n", info);
+        unparseAsSuite(while_stmt->get_else_body(), info);
+    }
 }
 
 void

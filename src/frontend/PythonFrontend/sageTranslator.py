@@ -287,9 +287,8 @@ class SageTranslator(ast.NodeVisitor):
   def visit_While(self, node):
     test = self.visit(node.test)
     body = sage.buildSuite(map(self.visit, node.body))
-    #orelse = sage.buildSuite(map(self.visit, node.orelse))
-    #return sage.buildWhile(test, body, orelse)
-    return sage.buildWhile(test, body)
+    orelse = node.orelse and sage.buildSuite(map(self.visit, node.orelse))
+    return sage.buildWhile(test, body, orelse)
 
   def visit_With(self, node):
     expr = self.visit(node.test)
