@@ -349,6 +349,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info )
                               {
 #ifdef ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
                                   Unparse_Python unparser(this,file->get_unparse_output_filename());
+                                  this->u_lang = &unparser;
                                   unparser.unparseGlobalStmt(globalScope, info);
 #else
                                   ROSE_ABORT("unparsing Python requires ROSE_USE_PYTHON be set");

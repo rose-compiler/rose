@@ -614,8 +614,7 @@ SgExpression* GetFirstOperand(SgExpression* expr) {
 //  returns the precedence (1-17) of the expression variants,
 //  such that 17 has the highest precedence and 1 has the lowest precedence.
 //-----------------------------------------------------------------------------------
-int GetPrecedence(int variant)
-   {
+int UnparseLanguageIndependentConstructs::getPrecedence(int variant) {
   // DQ (11/24/2007): This is a redundant mechanism for computing the precidence of expressions
 #if PRINT_DEVELOPER_WARNINGS
      printf ("This is a redundant mechanism for computing the precedence of expressions \n");
@@ -1054,7 +1053,7 @@ bool Unparse_MOD_SAGE::PrintStartParen(SgExpression* expr, SgUnparse_Info& info)
                     return false;
                   }
 
-               int parentPrecedence = GetPrecedence(parentVariant);
+               int parentPrecedence = unp->u_lang->getPrecedence(parentVariant);
 
 #if DEBUG_PARENTHESIS_PLACEMENT
                printf ("parentVariant = %d  parentPrecedence = %d \n",parentVariant,parentPrecedence);
@@ -1069,7 +1068,7 @@ bool Unparse_MOD_SAGE::PrintStartParen(SgExpression* expr, SgUnparse_Info& info)
                   }
 
                int exprVariant = GetOperatorVariant(expr);
-               int exprPrecedence = GetPrecedence(exprVariant);
+               int exprPrecedence = unp->u_lang->getPrecedence(exprVariant);
 
 #if DEBUG_PARENTHESIS_PLACEMENT
                printf ("exprVariant = %d  exprPrecedence = %d \n",exprVariant,exprPrecedence);
