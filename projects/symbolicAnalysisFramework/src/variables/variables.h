@@ -84,14 +84,14 @@ class varID : public variable
 	}
 	
 	// pre-condition: isValidVarExp(refExp) evaluates to true
-	varID(SgExpression *exp)
+	varID(const SgExpression *exp)
 	{
 		bool ret=init(exp);
 		ROSE_ASSERT(ret);
 		genID();
 	}
 	
-	varID(const varID& that)
+        varID(const varID& that) : variable()
 	{
 		init(that);
 	}
@@ -105,7 +105,7 @@ class varID : public variable
 	
 	// initializes this object from the given expression (assumed that isValidVarExp(exp) is true)
 	// returns true on success, false on failure
-	bool init(SgExpression *exp);
+	bool init(const SgExpression *exp);
 	
 	// initializes this object from the given SgInitializedName (assumed that isValidVarExp(name) is true)
 	bool init(SgInitializedName* name);
@@ -114,7 +114,7 @@ class varID : public variable
 	
 	// recursive function that pulls the SgInitializedNames of all the SgVarRefExps inside this SgDotExp
 	// returns true on success, false on failure
-	bool collectDotComponents(SgDotExp* dotExp);
+	bool collectDotComponents(const SgDotExp* dotExp);
 	
 	// returns the scope in which this variable was declared
 	// for compound variables (i.e. those composed of dot expressions), it is the scope of the leftmost name
@@ -130,12 +130,12 @@ protected:
 	
 public:
 	// returns true if the given expression is one that can be represented as a variable in our representation
-	static bool isValidVarExp(SgNode* exp);
-	static bool isValidVarExp(SgExpression* exp);
-	static bool isValidVarExp(SgInitializedName* exp);
+	static bool isValidVarExp(const SgNode* exp);
+	static bool isValidVarExp(const SgExpression* exp);
+	static bool isValidVarExp(const SgInitializedName* exp);
 	
 protected:
-	static bool isValidVarExp_rec(SgExpression* exp);
+	static bool isValidVarExp_rec(const SgExpression* exp);
 	
 public:
 	void add(SgInitializedName *name);
@@ -284,7 +284,7 @@ typedef map<quad, setQuad *> m_quad2setPtr;
    ################################# */
 
 // Returns the varID that corresponds to the given SgExpression
-varID SgExpr2Var(SgExpression* expr);
+varID SgExpr2Var(const SgExpression* expr);
 
 // Returns true if the given expression can be interepreted as a concrete variable
 bool isVarExpr(SgExpression* expr);
@@ -355,7 +355,7 @@ class arrayElt : public variable
 	bool operator <  (const variable &that) const;
 	
 	// returns true if the given expression is one that can be represented as a variable in our representation
-	static bool isValidVarExp(SgExpression* exp);
+	static bool isValidVarExp(const SgExpression* exp);
 	
 	// returns the scope in which this array variable was declared
 	// for compound variables (i.e. those composed of dot expressions), it is the scope of the leftmost name
