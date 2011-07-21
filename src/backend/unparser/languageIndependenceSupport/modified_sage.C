@@ -740,6 +740,8 @@ int GetPrecedence(int variant)
           case V_SgNonMembershipOp:     return 16;
           case V_SgIsOp:                return 16;
           case V_SgIsNotOp:             return 16;
+          case V_SgNaryComparisonOp:    return 16;
+          case V_SgNaryBooleanOp:       return 16;
 
 
 #if 0

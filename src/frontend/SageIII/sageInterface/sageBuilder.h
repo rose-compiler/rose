@@ -858,6 +858,12 @@ SgNamespaceDeclarationStatement *  buildNamespaceDeclaration(const SgName& name,
 SgNamespaceDeclarationStatement *  buildNamespaceDeclaration_nfi(const SgName& name, bool unnamednamespace, SgScopeStatement* scope );
 SgNamespaceDefinitionStatement * buildNamespaceDefinition(SgNamespaceDeclarationStatement* d=NULL);
 
+// driscoll6 (7/20/11) : Support n-ary operators for python
+SgNaryComparisonOp* buildNaryComparisonOp(SgExpression* lhs);
+SgNaryComparisonOp* buildNaryComparisonOp_nfi(SgExpression* lhs);
+SgNaryBooleanOp* buildNaryBooleanOp(SgExpression* lhs);
+SgNaryBooleanOp* buildNaryBooleanOp_nfi(SgExpression* lhs);
+
 
 // DQ (1/24/2009): Added this "_nfi" function but refactored buildStructDeclaration to also use it (thsi needs to be done uniformally).
 SgClassDeclaration * buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgClassDeclaration* nonDefiningDecl);

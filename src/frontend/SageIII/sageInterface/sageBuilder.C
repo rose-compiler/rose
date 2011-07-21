@@ -4664,6 +4664,50 @@ SgNamespaceDeclarationStatement * SageBuilder::buildNamespaceDeclaration_nfi(con
      return defdecl;    
    }
 
+// driscoll6 (7/20/11) : Support n-ary operators for python
+SgNaryComparisonOp*
+SageBuilder::buildNaryComparisonOp(SgExpression* lhs) {
+    SgNaryComparisonOp* result = new SgNaryComparisonOp();
+
+    result->get_operands().push_back(lhs);
+    lhs->set_parent(result);
+
+    setOneSourcePositionForTransformation(result);
+    return result;
+}
+
+SgNaryComparisonOp*
+SageBuilder::buildNaryComparisonOp_nfi(SgExpression* lhs) {
+    SgNaryComparisonOp* result = new SgNaryComparisonOp();
+
+    result->get_operands().push_back(lhs);
+    lhs->set_parent(result);
+
+    setOneSourcePositionNull(result);
+    return result;
+}
+
+SgNaryBooleanOp*
+SageBuilder::buildNaryBooleanOp(SgExpression* lhs) {
+    SgNaryBooleanOp* result = new SgNaryBooleanOp();
+
+    result->get_operands().push_back(lhs);
+    lhs->set_parent(result);
+
+    setOneSourcePositionForTransformation(result);
+    return result;
+}
+
+SgNaryBooleanOp*
+SageBuilder::buildNaryBooleanOp_nfi(SgExpression* lhs) {
+    SgNaryBooleanOp* result = new SgNaryBooleanOp();
+
+    result->get_operands().push_back(lhs);
+    lhs->set_parent(result);
+
+    setOneSourcePositionNull(result);
+    return result;
+}
 
 // DQ (11/7/2009): Added more uniform support for building class declarations.
 SgClassDeclaration*

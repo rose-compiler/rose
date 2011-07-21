@@ -547,6 +547,26 @@ HEADER_IS_NOT_OP_START
 HEADER_BOOLEAN_GET_TYPE_MEMBER_FUNCTION
 HEADER_IS_NOT_OP_END
 
+HEADER_NARY_OP_START
+    void post_constructor_initialization();
+    SgExpressionPtrList& get_operands();
+    const SgExpressionPtrList& get_operands() const;
+    VariantTList& get_operators();
+    const VariantTList& get_operators() const;
+    virtual void append_operation(VariantT sg_operator, SgExpression* operand); 
+HEADER_NARY_OP_END
+
+HEADER_NARY_COMPARISON_OP_START
+    virtual SgType* get_type() const;
+HEADER_NARY_COMPARISON_OP_END
+
+HEADER_NARY_BOOLEAN_OP_START
+    virtual SgType* get_type() const;
+HEADER_NARY_BOOLEAN_OP_END
+
+HEADER_BOOLEAN_GET_TYPE_MEMBER_FUNCTION
+HEADER_IS_NOT_OP_END
+
 HEADER_AND_OPERATOR_START
           SgType* get_type() const;
           virtual bool cfgIsIndexInteresting(unsigned int) const;
@@ -3031,6 +3051,55 @@ SOURCE_IS_OP_END
 SOURCE_IS_NOT_OP_START
 SOURCE_BOOLEAN_GET_TYPE_MEMBER_FUNCTION
 SOURCE_IS_NOT_OP_END
+
+SOURCE_NARY_OP_START
+void
+SgNaryOp::post_construction_initialization() {}
+
+int
+SgNaryOp::replace_expression(SgExpression *o, SgExpression *n) {
+    ROSE_ASSERT(!"SgNaryOp::replace_expression is unimplemented.");
+}
+
+SgExpressionPtrList&
+SgNaryOp::get_operands()
+   { return p_operands; }
+
+const SgExpressionPtrList&
+SgNaryOp::get_operands() const
+   { return p_operands; }
+
+VariantTList&
+SgNaryOp::get_operators()
+   { return p_operators; }
+
+const VariantTList&
+SgNaryOp::get_operators() const
+   { return p_operators; }
+
+void
+SgNaryOp::append_operation(VariantT sg_operator, SgExpression* operand) {
+    ROSE_ASSERT(operand != NULL);
+    get_operands().push_back(operand);
+    get_operators().push_back(sg_operator);
+    operand->set_parent(this);
+}
+
+SOURCE_NARY_OP_END
+
+SOURCE_NARY_COMPARISON_OP_START
+SgType*
+SgNaryComparisonOp::get_type() const {
+    return SageBuilder::buildBoolType();
+}
+SOURCE_NARY_COMPARISON_OP_END
+
+SOURCE_NARY_BOOLEAN_OP_START
+SgType*
+SgNaryBooleanOp::get_type() const {
+    return SageBuilder::buildVoidType();
+}
+SOURCE_NARY_BOOLEAN_OP_END
 
 SOURCE_AND_OPERATOR_EXPRESSION_START
 

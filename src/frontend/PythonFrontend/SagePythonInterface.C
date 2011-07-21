@@ -42,8 +42,9 @@ PyObject* py_op_uadd= NULL;
 PyObject* py_op_usub = NULL;
 PyObject* py_op_invert = NULL;
 
-#define SAGE_PY_EVAL(str) \
-    PyRun_String("str", Py_eval_input, PyEval_GetGlobals(), PyEval_GetLocals())
+PyObject* py_op_and = NULL;
+PyObject* py_op_or = NULL;
+PyObject* py_op_not= NULL;
 
 void
 initializePythonTypes()
@@ -79,6 +80,10 @@ initializePythonTypes()
     py_op_uadd   = PyObject_GetAttrString(astModule, "UAdd");
     py_op_usub   = PyObject_GetAttrString(astModule, "USub");
     py_op_invert = PyObject_GetAttrString(astModule, "Invert");
+
+    py_op_and    = PyObject_GetAttrString(astModule, "And");
+    py_op_or     = PyObject_GetAttrString(astModule, "Or");
+    py_op_not    = PyObject_GetAttrString(astModule, "Not");
 }
 
 /*
@@ -184,6 +189,43 @@ sage_buildBinOp(PyObject *self, PyObject *args)
 /*
  */
 PyObject*
+sage_buildBoolOp(PyObject *self, PyObject *args)
+{
+    PyObject *py_operator, *py_operands;
+    if (! PyArg_ParseTuple(args, "OO!", &py_operator,
+                                        &PyList_Type, &py_operands))
+        return NULL;
+
+    PyObject* py_lhs = PyList_GetItem(py_operands, 0);
+    SgExpression* lhs = PyDecapsulate<SgExpression>(py_lhs);
+
+    SgNaryBooleanOp* sg_bool =
+        SageBuilder::buildNaryBooleanOp(lhs);
+
+    VariantT sg_operator;
+    if      (py_operator == py_op_and) sg_operator = V_SgAndOp;
+    else if (py_operator == py_op_or)  sg_operator = V_SgOrOp;
+    else if (py_operator == py_op_not) sg_operator = V_SgNotOp;
+    else {
+        cout << "Unrecognized operator in BoolOp: ";
+        PyObject_Print(py_operator, stdout, Py_PRINT_RAW);
+        cout << endl;
+        ROSE_ASSERT(false);
+    }
+
+    Py_ssize_t operandc = PyList_Size(py_operands);
+    for(int i = 1; i < operandc; i++) {
+        PyObject* py_operand = PyList_GetItem(py_operands, i);
+        SgExpression* sg_operand = PyDecapsulate<SgExpression>(py_operand);
+        sg_bool->append_operation(sg_operator, sg_operand);
+    }
+
+    return PyEncapsulate(sg_bool);
+}
+
+/*
+ */
+PyObject*
 sage_buildBreak(PyObject *self, PyObject *args)
 {
     if (! PyArg_ParseTuple(args, ""))
@@ -283,39 +325,49 @@ sage_buildComprehension(PyObject *self, PyObject *args)
 }
 
 /*
- * Build an SgOp node from the given Python statements.
- *  - PyObject* args = (PyObject*, PyObject*)
  */
 PyObject*
 sage_buildCompare(PyObject *self, PyObject *args)
 {
-    //char *op;
-    PyObject *op;
-    SgExpression *sg_lhs_exp, *sg_rhs_exp;
-    if (! PyArg_ParseTuple(args, "O!O&O&", &PyType_Type, &op,
-                                           SAGE_CONVERTER(SgExpression), &sg_lhs_exp,
-                                           SAGE_CONVERTER(SgExpression), &sg_rhs_exp))
+    PyObject *py_operators, *py_operands;
+    if (! PyArg_ParseTuple(args, "O!O!", &PyList_Type, &py_operators,
+                                         &PyList_Type, &py_operands))
         return NULL;
 
-    SgBinaryOp *sg_bin_op;
-         if (op == py_op_lt)    sg_bin_op = SageBuilder::buildLessThanOp(sg_lhs_exp, sg_rhs_exp);
-    else if (op == py_op_lte)   sg_bin_op = SageBuilder::buildLessOrEqualOp(sg_lhs_exp, sg_rhs_exp);
-    else if (op == py_op_gt)    sg_bin_op = SageBuilder::buildGreaterThanOp(sg_lhs_exp, sg_rhs_exp);
-    else if (op == py_op_gte)   sg_bin_op = SageBuilder::buildGreaterOrEqualOp(sg_lhs_exp, sg_rhs_exp);
-    else if (op == py_op_is)    sg_bin_op = SageBuilder::buildIsOp(sg_lhs_exp, sg_rhs_exp);
-    else if (op == py_op_isnot) sg_bin_op = SageBuilder::buildIsNotOp(sg_lhs_exp, sg_rhs_exp);
-    else if (op == py_op_in)    sg_bin_op = SageBuilder::buildMembershipOp(sg_lhs_exp, sg_rhs_exp);
-    else if (op == py_op_notin) sg_bin_op = SageBuilder::buildNonMembershipOp(sg_lhs_exp, sg_rhs_exp);
-    else if (op == py_op_eq)    sg_bin_op = SageBuilder::buildEqualityOp(sg_lhs_exp, sg_rhs_exp);
-    else if (op == py_op_noteq) sg_bin_op = SageBuilder::buildNotEqualOp(sg_lhs_exp, sg_rhs_exp);
-    else {
-        cout << "Unrecognized comparison operator: ";
-        PyObject_Print(op, stdout, Py_PRINT_RAW);
-        cout << endl;
-        ROSE_ASSERT(false);
+    PyObject* py_lhs = PyList_GetItem(py_operands, 0);
+    SgExpression* lhs = PyDecapsulate<SgExpression>(py_lhs);
+
+    SgNaryComparisonOp* sg_compare =
+        SageBuilder::buildNaryComparisonOp(lhs);
+
+    Py_ssize_t operatorc = PyList_Size(py_operators);
+    for(int i = 0; i < operatorc; i++) {
+        PyObject* py_operand = PyList_GetItem(py_operands, i+1);
+        SgExpression* sg_operand = PyDecapsulate<SgExpression>(py_operand);
+
+        PyObject* py_operator = PyList_GetItem(py_operators, i);
+        VariantT sg_operator; //TODO put this in a map or another function
+        if      (py_operator == py_op_lt)    sg_operator = V_SgLessThanOp;
+        else if (py_operator == py_op_lte)   sg_operator = V_SgLessOrEqualOp;
+        else if (py_operator == py_op_gt)    sg_operator = V_SgGreaterThanOp;
+        else if (py_operator == py_op_gte)   sg_operator = V_SgGreaterOrEqualOp;
+        else if (py_operator == py_op_is)    sg_operator = V_SgIsOp;
+        else if (py_operator == py_op_isnot) sg_operator = V_SgIsNotOp;
+        else if (py_operator == py_op_in)    sg_operator = V_SgMembershipOp;
+        else if (py_operator == py_op_notin) sg_operator = V_SgNonMembershipOp;
+        else if (py_operator == py_op_eq)    sg_operator = V_SgEqualityOp;
+        else if (py_operator == py_op_noteq) sg_operator = V_SgNotEqualOp;
+        else {
+            cout << "Unrecognized comparison operator: ";
+            PyObject_Print(py_operator, stdout, Py_PRINT_RAW);
+            cout << endl;
+            ROSE_ASSERT(false);
+        }
+
+        sg_compare->append_operation(sg_operator, sg_operand);
     }
 
-    return PyEncapsulate(sg_bin_op);
+    return PyEncapsulate(sg_compare);
 }
 
 /*

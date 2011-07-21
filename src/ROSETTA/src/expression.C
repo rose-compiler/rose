@@ -111,6 +111,10 @@ Grammar::setUpExpressions ()
   // DQ (12/13/2007): Added support for Fortran string concatenation operator
      NEW_TERMINAL_MACRO (ConcatenationOp,        "ConcatenationOp",        "CONCATENATION_OP" );
 
+  // driscoll6 (7/20/11): Support for n-ary operators in python
+     NEW_TERMINAL_MACRO (NaryComparisonOp,       "NaryComparisonOp",       "NARY_COMPARISON_OP");
+     NEW_TERMINAL_MACRO (NaryBooleanOp,          "NaryBooleanOp",          "NARY_BOOLEAN_OP");
+
      NEW_TERMINAL_MACRO (BoolValExp,             "BoolValExp",             "BOOL_VAL" );
      NEW_TERMINAL_MACRO (StringVal,              "StringVal",              "STRING_VAL" );
      NEW_TERMINAL_MACRO (ShortVal,               "ShortVal",               "SHORT_VAL" );
@@ -246,6 +250,10 @@ Grammar::setUpExpressions ()
           IsOp           | IsNotOp          | UserDefinedBinaryOp,
           "BinaryOp","BINARY_EXPRESSION", false);
 
+     NEW_NONTERMINAL_MACRO (NaryOp,
+          NaryBooleanOp  | NaryComparisonOp,
+          "NaryOp","NARY_EXPRESSION", false);
+
      NEW_NONTERMINAL_MACRO (ValueExp,
           BoolValExp     | StringVal        | ShortVal               | CharVal         | UnsignedCharVal |
           WcharVal       | UnsignedShortVal | IntVal                 | EnumVal         | UnsignedIntVal  | 
@@ -265,7 +273,7 @@ Grammar::setUpExpressions ()
           UnknownArrayOrFunctionReference               | PseudoDestructorRefExp | CAFCoExpression  |
           CudaKernelCallExp   | CudaKernelExecConfig    |  /* TV (04/22/2010): CUDA support */
           LambdaRefExp        | TupleExp                | ListExp             | KeyDatumList        | KeyDatumPair             |
-          Comprehension       | ListComprehension       | SetComprehension    | DictionaryComprehension, /* driscoll6 (6/27/11): Python Support */
+          Comprehension       | ListComprehension       | SetComprehension    | DictionaryComprehension | NaryOp, /* driscoll6 (6/27/11): Python Support */
           "Expression","ExpressionTag", false);
 
   // ***********************************************************************
@@ -353,6 +361,7 @@ Grammar::setUpExpressions ()
 
      UnaryOp.setFunctionPrototype             ( "HEADER_EXTRA_FUNCTIONS", "../Grammar/Expression.code" );
      BinaryOp.setFunctionPrototype            ( "HEADER_EXTRA_FUNCTIONS", "../Grammar/Expression.code" );
+     NaryOp.setFunctionPrototype              ( "HEADER_EXTRA_FUNCTIONS", "../Grammar/Expression.code" );
 
 #if 0
   // DQ (1/14/2006): Removing the set_type() function since it shuld be computed from the operands directly
@@ -389,6 +398,9 @@ Grammar::setUpExpressions ()
 
      BinaryOp.excludeFunctionPrototype        ( "HEADER_GET_TYPE", "../Grammar/Expression.code" );
      BinaryOp.excludeSubTreeFunctionPrototype ( "HEADER_GET_TYPE", "../Grammar/Expression.code" );
+
+     NaryOp.excludeFunctionPrototype          ( "HEADER_GET_TYPE", "../Grammar/Expression.code" );
+     NaryOp.excludeSubTreeFunctionPrototype   ( "HEADER_GET_TYPE", "../Grammar/Expression.code" );
 
      ClassNameRefExp.excludeFunctionPrototype ( "HEADER_GET_TYPE", "../Grammar/Expression.code" );
      ValueExp.excludeFunctionPrototype        ( "HEADER_GET_TYPE", "../Grammar/Expression.code" );
@@ -576,6 +588,10 @@ Grammar::setUpExpressions ()
                                   "../Grammar/Expression.code" );
      IsNotOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
                                   "../Grammar/Expression.code" );
+     NaryComparisonOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
+                                  "../Grammar/Expression.code" );
+     NaryBooleanOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
+                                  "../Grammar/Expression.code" );
 
   // DQ (2/5/2004): Adding support for varargs in AST
      VarArgStartOp.setFunctionSource           ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
@@ -642,6 +658,8 @@ Grammar::setUpExpressions ()
      ExpressionRoot.excludeFunctionPrototype ( "HEADER_PRECEDENCE", "../Grammar/Expression.code" );
      BinaryOp.setSubTreeFunctionPrototype    ( "HEADER_PRECEDENCE", "../Grammar/Expression.code" );
      BinaryOp.excludeFunctionPrototype       ( "HEADER_PRECEDENCE", "../Grammar/Expression.code" );
+     NaryOp.setSubTreeFunctionPrototype      ( "HEADER_PRECEDENCE", "../Grammar/Expression.code" );
+     NaryOp.excludeFunctionPrototype         ( "HEADER_PRECEDENCE", "../Grammar/Expression.code" );
 
 
   // DQ (2/1/2009: Added comment.
@@ -732,6 +750,8 @@ Grammar::setUpExpressions ()
      NonMembershipOp.editSubstitute ( "PRECEDENCE_VALUE", " 9" );
      IsOp.editSubstitute            ( "PRECEDENCE_VALUE", " 9" );
      IsNotOp.editSubstitute         ( "PRECEDENCE_VALUE", " 9" );
+     NaryComparisonOp.editSubstitute ( "PRECEDENCE_VALUE", "13" );
+     NaryBooleanOp.editSubstitute    ( "PRECEDENCE_VALUE", "13" );
 
      ConcatenationOp.editSubstitute ( "PRECEDENCE_VALUE", " 3" );
 
@@ -804,6 +824,7 @@ Grammar::setUpExpressions ()
 
      UnaryOp.setFunctionPrototype ( "HEADER_GET_NEXT_EXPRESSION", "../Grammar/Expression.code" );
      BinaryOp.setFunctionPrototype ( "HEADER_GET_NEXT_EXPRESSION", "../Grammar/Expression.code" );
+     NaryOp.setFunctionPrototype ( "HEADER_GET_NEXT_EXPRESSION", "../Grammar/Expression.code" );
      FunctionCallExp.setFunctionPrototype ( "HEADER_GET_NEXT_EXPRESSION", "../Grammar/Expression.code" );
      ConditionalExp.setFunctionPrototype ( "HEADER_GET_NEXT_EXPRESSION", "../Grammar/Expression.code" );
      NewExp.setFunctionPrototype ( "HEADER_GET_NEXT_EXPRESSION", "../Grammar/Expression.code" );
@@ -815,7 +836,6 @@ Grammar::setUpExpressions ()
      UnaryOp.setFunctionPrototype ( "HEADER_UNARY_EXPRESSION", "../Grammar/Expression.code" );
      UnaryOp.setDataPrototype ( "SgExpression*", "operand_i", "= NULL",
                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-
   // DQ (1/14/2006): We should not store the type of unary operators but instead obtain it from the operand directly.
   // However, we can't do that because in a few cases the type is changed as a result of the operator (e.g. SgAddressOp, SgPointerDerefExp).
   // The solution is to have specially built versions of the get_type() function for those operators.
@@ -848,6 +868,15 @@ Grammar::setUpExpressions ()
      BinaryOp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
+
+     NaryOp.setFunctionPrototype ( "HEADER_NARY_OP", "../Grammar/Expression.code" );
+     NaryOp.setDataPrototype     ( "SgExpressionPtrList", "operands", "",
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     NaryOp.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_FUNCTIONS", "../Grammar/Expression.code" );
+     NaryOp.editSubstitute       ( "LIST_NAME", "operand" );
+     NaryOp.setDataPrototype     ( "VariantTList", "operators", "",
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
      ExpressionRoot.setFunctionPrototype ( "HEADER_EXPRESSION_ROOT_EXPRESSION", "../Grammar/Expression.code" );
   // QY:9/30/04: remove statement pointer. use parent pointer instead
@@ -1161,6 +1190,9 @@ Grammar::setUpExpressions ()
      LshiftOp.setFunctionPrototype ( "HEADER_LEFT_SHIFT_OPERATOR", "../Grammar/Expression.code" );
      RshiftOp.setFunctionPrototype ( "HEADER_RIGHT_SHIFT_OPERATOR", "../Grammar/Expression.code" );
      JavaUnsignedRshiftOp.setFunctionPrototype ( "HEADER_JAVA_UNSIGNED_RIGHT_SHIFT_OPERATOR", "../Grammar/Expression.code" );
+
+     NaryComparisonOp.setFunctionPrototype ( "HEADER_NARY_COMPARISON_OP", "../Grammar/Expression.code" );
+     NaryBooleanOp.setFunctionPrototype ( "HEADER_NARY_BOOLEAN_OP", "../Grammar/Expression.code" );
 
      MinusOp.setFunctionPrototype ( "HEADER_MINUS_OPERATOR", "../Grammar/Expression.code" );
      UnaryAddOp.setFunctionPrototype ( "HEADER_UNARY_ADD_OPERATOR", "../Grammar/Expression.code" );
@@ -1745,6 +1777,7 @@ Grammar::setUpExpressions ()
 
      UnaryOp.setFunctionSource  ( "SOURCE_UNARY_EXPRESSION", "../Grammar/Expression.code" );
      BinaryOp.setFunctionSource ( "SOURCE_BINARY_EXPRESSION", "../Grammar/Expression.code" );
+     NaryOp.setFunctionSource   ( "SOURCE_NARY_OP", "../Grammar/Expression.code" );
 
      ExpressionRoot.setFunctionSource         ( "SOURCE_EXPRESSION_ROOT","../Grammar/Expression.code" );
 
@@ -1824,6 +1857,9 @@ Grammar::setUpExpressions ()
      LshiftOp.setFunctionSource ( "SOURCE_LEFT_SHIFT_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      RshiftOp.setFunctionSource ( "SOURCE_RIGHT_SHIFT_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      JavaUnsignedRshiftOp.setFunctionSource ( "SOURCE_JAVA_UNSIGNED_RIGHT_SHIFT_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
+
+     NaryComparisonOp.setFunctionSource ( "SOURCE_NARY_COMPARISON_OP","../Grammar/Expression.code" );
+     NaryBooleanOp.setFunctionSource ( "SOURCE_NARY_BOOLEAN_OP","../Grammar/Expression.code" );
 
      MinusOp.setFunctionSource ( "SOURCE_MINUS_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      UnaryAddOp.setFunctionSource ( "SOURCE_UNARY_ADD_OPERATOR_EXPRESSION","../Grammar/Expression.code" );

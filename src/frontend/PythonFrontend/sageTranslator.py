@@ -83,6 +83,11 @@ class SageTranslator(ast.NodeVisitor):
     op_str = node.op.__class__
     return sage.buildBinOp(lhs, rhs, op_str)
 
+  def visit_BoolOp(self, node):
+    operands = map(self.visit, node.values)
+    operator = node.op.__class__
+    return sage.buildBoolOp(operator, operands)
+
   def visit_Break(self, node):
     return sage.buildBreak()
 
@@ -107,14 +112,9 @@ class SageTranslator(ast.NodeVisitor):
     return class_decl
 
   def visit_Compare(self, node):
-    # Until n-ary comparators are implemented in sage, only allow binary comparisons
-    assert len(node.comparators) == 1
-    lhs = self.visit(node.left)
-    rhs = self.visit(node.comparators[0])
-    op = node.ops[0].__class__
-    #comparators = map(self.visit, node.comparators)
-    #ops = map(lambda op: op.__class__, node.ops)
-    return sage.buildCompare(op, lhs, rhs)
+    operands = map(self.visit, [node.left] + node.comparators)
+    operators = map(lambda op: op.__class__, node.ops)
+    return sage.buildCompare(operators, operands)
 
   def visit_complex(self, n):
     return sage.buildComplexVal(n)
