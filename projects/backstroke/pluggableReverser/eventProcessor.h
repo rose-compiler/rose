@@ -7,7 +7,7 @@
 #include "variableVersionTable.h"
 #include "handlerTypes.h"
 #include "utilities/types.h"
-#include "ssa/staticSingleAssignment.h"
+#include <staticSingleAssignment.h>
 
 
 class VariableRenaming;
