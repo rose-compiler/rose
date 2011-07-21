@@ -79,6 +79,14 @@ void
 Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
                                                   SgUnparse_Info& info)
 {
+    cout << "Unexpected call to Unparse_Python::unparseLanguageSpecificExpression for " << stmt->class_name() << endl;
+    unparseExpression(stmt, info);
+}
+
+void
+Unparse_Python::unparseExpression(SgExpression* stmt,
+                                  SgUnparse_Info& info)
+{
     switch (stmt->variantT()) {
         CASE_DISPATCH_AND_BREAK(AssignOp);
         CASE_DISPATCH_AND_BREAK(AssignInitializer);
@@ -149,8 +157,7 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
             break;
 
         default: {
-            cerr << "unparse Expression (" << stmt->class_name()
-                 << "*) is unimplemented." << endl;
+            UnparseLanguageIndependentConstructs::unparseExpression(stmt, info);
             break;
         }
     }
@@ -636,17 +643,11 @@ Unparse_Python::unparseListComprehension(SgListComprehension* list_comp, SgUnpar
 }
 
 void
-Unparse_Python::unparseListExp(SgListExp* tuple,
-                                SgUnparse_Info& info)
+Unparse_Python::unparseListExp(SgListExp* list_exp,
+                               SgUnparse_Info& info)
 {
     curprint("[");
-    SgExpressionPtrList& elts = tuple->get_elements();
-    SgExpressionPtrList::iterator elt_it = elts.begin();
-    for(elt_it = elts.begin(); elt_it != elts.end(); elt_it++) {
-        if (elt_it != elts.begin())
-            curprint(", ");
-        unparseExpression(*elt_it, info);
-    }
+    unparseExprListExp(list_exp, info);
     curprint("]");
 }
 
@@ -760,18 +761,7 @@ Unparse_Python::unparseTupleExp(SgTupleExp* tuple,
                                 SgUnparse_Info& info)
 {
     curprint("(");
-    SgExpressionPtrList& elts = tuple->get_elements();
-    SgExpressionPtrList::iterator elt_it = elts.begin();
-    for(elt_it = elts.begin(); elt_it != elts.end(); elt_it++) {
-        if (elt_it != elts.begin())
-            curprint(", ");
-        unparseExpression(*elt_it, info);
-    }
-
-    /* tuples with one item require a trailing comma */
-    if (elts.size() == 1)
-        curprint(",");
-
+    unparseExprListExp(tuple, info);
     curprint(")");
 }
 

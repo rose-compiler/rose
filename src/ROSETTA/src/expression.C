@@ -12,7 +12,6 @@ Grammar::setUpExpressions ()
   // C++ grammar, but this will be modified to permit all grammars to contain elements of the
   // C++ grammar.  Modified grammars will add and subtract elements from this default C++ grammar.
 
-     NEW_TERMINAL_MACRO (ExprListExp,            "ExprListExp",            "EXPR_LIST" );
      NEW_TERMINAL_MACRO (VarRefExp,              "VarRefExp",              "VAR_REF" );
 
   // DQ (12/30/2007): New IR node to support references to labels (much like references to variables 
@@ -263,6 +262,10 @@ Grammar::setUpExpressions ()
           DoubleVal      | LongDoubleVal    | ComplexVal             |  UpcThreads     | UpcMythread,
           "ValueExp","ValueExpTag", false);
 
+     NEW_NONTERMINAL_MACRO (ExprListExp,
+          ListExp  | TupleExp,
+          "ExprListExp","EXPR_LIST", /* can have instances = */ true);
+
      NEW_NONTERMINAL_MACRO (Expression,
           UnaryOp                  | BinaryOp                 | ExprListExp             | VarRefExp           | ClassNameRefExp          |
           FunctionRefExp           | MemberFunctionRefExp     | ValueExp                | FunctionCallExp     | SizeOfOp                 |
@@ -274,7 +277,7 @@ Grammar::setUpExpressions ()
        /* UseRenameExpression      | */ StatementExpression   | AsmOp                   | LabelRefExp         | ActualArgumentExpression |
           UnknownArrayOrFunctionReference               | PseudoDestructorRefExp | CAFCoExpression  |
           CudaKernelCallExp   | CudaKernelExecConfig    |  /* TV (04/22/2010): CUDA support */
-          LambdaRefExp        | TupleExp                | ListExp             | KeyDatumList        | KeyDatumPair             |
+          LambdaRefExp        | KeyDatumList        | KeyDatumPair             |
           Comprehension       | ListComprehension       | SetComprehension    | DictionaryComprehension | NaryOp, /* driscoll6 (6/27/11): Python Support */
           "Expression","ExpressionTag", false);
 
@@ -1725,16 +1728,7 @@ Grammar::setUpExpressions ()
                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      TupleExp.setFunctionPrototype ( "HEADER_TUPLE_EXP", "../Grammar/Expression.code" );
-     TupleExp.setDataPrototype("SgExpressionPtrList", "elements", "",
-                                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     TupleExp.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_FUNCTIONS", "../Grammar/Expression.code" );
-     TupleExp.editSubstitute       ( "LIST_NAME", "element" );
-
      ListExp.setFunctionPrototype ( "HEADER_LIST_EXP", "../Grammar/Expression.code" );
-     ListExp.setDataPrototype("SgExpressionPtrList", "elements", "",
-                                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     ListExp.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_FUNCTIONS", "../Grammar/Expression.code" );
-     ListExp.editSubstitute       ( "LIST_NAME", "element" );
 
      KeyDatumList.setFunctionPrototype ( "HEADER_KEY_DATUM_LIST", "../Grammar/Expression.code" );
      KeyDatumList.setDataPrototype("SgKeyDatumPairPtrList", "key_datum_pairs", "",

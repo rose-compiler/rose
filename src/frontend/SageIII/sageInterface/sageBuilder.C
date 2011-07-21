@@ -1568,8 +1568,7 @@ SgTupleExp*
 SageBuilder::buildTupleExp(const std::vector<SgExpression*>& elts)
 {
   SgTupleExp* expList = SageBuilder::buildTupleExp();
-  for (size_t i = 0; i < elts.size(); ++i)
-    appendExpression(expList, elts[i]);
+  appendExpressionList(expList, elts);
   return expList;
 }
 
@@ -1586,8 +1585,7 @@ SgTupleExp*
 SageBuilder::buildTupleExp_nfi(const std::vector<SgExpression*>& elts)
 {
   SgTupleExp* tuple = SageBuilder::buildTupleExp_nfi();
-  for (size_t i = 0; i < elts.size(); ++i)
-    appendExpression(tuple, elts[i]);
+  appendExpressionList(tuple, elts);
   return tuple;
 }
 
@@ -1615,8 +1613,7 @@ SgListExp*
 SageBuilder::buildListExp(const std::vector<SgExpression*>& elts)
 {
   SgListExp* expList = SageBuilder::buildListExp();
-  for (size_t i = 0; i < elts.size(); ++i)
-    appendExpression(expList, elts[i]);
+  appendExpressionList(expList, elts);
   return expList;
 }
 
@@ -1633,8 +1630,7 @@ SgListExp*
 SageBuilder::buildListExp_nfi(const std::vector<SgExpression*>& elts)
 {
   SgListExp* tuple = SageBuilder::buildListExp_nfi();
-  for (size_t i = 0; i < elts.size(); ++i)
-    appendExpression(tuple, elts[i]);
+  appendExpressionList(tuple, elts);
   return tuple;
 }
 
