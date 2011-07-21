@@ -14,7 +14,9 @@ int NodeID::getID()
 // The last character of the returned string must not be '\n', even if it is a multi-line string.
 string NodeID::str(string indent)
 {
-	cout << indent << "[NodeID: id="<<id<<"]";
+	ostringstream oss;
+	oss << indent << "[NodeID: id="<<id<<"]";
+	return oss.str();
 }
 
 // returns a copy of this node fact
@@ -57,6 +59,7 @@ void runPlaceUniqueIDs()
 int getNodeID(const NodeState& state)
 {
 	ROSE_ASSERT(puids);
-	state.getFact(puids, 0);
+	NodeID* id = (NodeID*)state.getFact(puids, 0);
+	return id->getID();
 }
 

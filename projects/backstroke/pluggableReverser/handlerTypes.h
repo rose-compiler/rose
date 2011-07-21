@@ -4,7 +4,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/any.hpp>
 #include "variableVersionTable.h"
-#include "ssa/staticSingleAssignment.h"
+#include <staticSingleAssignment.h>
 #include "costModel.h"
 
 //Forward declarations
@@ -161,6 +161,12 @@ protected:
 	//! This is used for fossil collection (commit methods)
 	SgExpression* popVal_front(SgType* type);
 
+	SgExpression* cloneValueExp(SgExpression* value, SgType* type);
+
+	//! Calls the __restore__ function, which is part of the Backstroke runtime.
+	//! It pops a value from the stack and assigns it to the given variable
+	SgExpression* assignPointerExp(SgExpression* lhs, SgExpression* rhs, SgType* lhsType, SgType* rhsType);
+	
 	//! Return if the given variable is a state variable
 	bool isStateVariable(SgExpression* exp);
 

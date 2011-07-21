@@ -28,13 +28,13 @@ int main(int argc, char** argv)
 		{
 			for(int i=1; i<nprocs; i++)
 			{
-				MPI_Recv(buf, 100, MPI_INTEGER, i, 1, MPI_COMM_WORLD);
+				MPI_Status status;
+				MPI_Recv(buf, 100, MPI_INTEGER, i, 1, MPI_COMM_WORLD, &status);
 			}
 		}
 		else
 		{
-			MPI_Status status;
-			MPI_Send(buf, 100, MPI_INTEGER, 0, 1, MPI_COMM_WORLD, &status);
+			MPI_Send(buf, 100, MPI_INTEGER, 0, 1, MPI_COMM_WORLD);
 		}
 	}
 /*	int mult;

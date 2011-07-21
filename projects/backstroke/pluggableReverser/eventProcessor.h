@@ -7,7 +7,7 @@
 #include "variableVersionTable.h"
 #include "handlerTypes.h"
 #include "utilities/types.h"
-#include "ssa/staticSingleAssignment.h"
+#include <staticSingleAssignment.h>
 
 
 class VariableRenaming;
@@ -78,7 +78,10 @@ private:
 	//! This is used for fossil collection
 	SgExpression* popVal_front(SgType* type);
 
+	SgExpression* cloneValueExp(SgExpression* value, SgType* type);
 
+	SgExpression* assignPointerExp(SgExpression* lhs, SgExpression* rhs, SgType* lhsType, SgType* rhsType);
+	
 public:
 
 	EventProcessor(IVariableFilter* varFilter = NULL);

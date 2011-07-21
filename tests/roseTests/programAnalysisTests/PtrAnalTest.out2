@@ -47,42 +47,42 @@ ctrl: 16->17 always
 ctrl: 17->18 always
 
  Mapping 
-SgBasicBlock:{if(end == 0) {head =(end =(::new ::List()));}else {( *end).::List::next =(::new ::List());end =( *end).::List::next;}( *end).::List::val = val;( *end).::List::next = 0;}:6->18
-SgIfStmt:if(end == 0) {head =(end =(::new ::List()));}else {( *end).::List::next =(::new ::List());end =( *end).::List::next;}:6->15
+SgBasicBlock:{if(end == 0) {head =(end =(::new List()));}else {( *end).next =(::new List());end =( *end).next;}( *end).val = val;( *end).next = 0;}:6->18
+SgIfStmt:if(end == 0) {head =(end =(::new List()));}else {( *end).next =(::new List());end =( *end).next;}:6->15
 SgExprStatement:end == 0;:6->7
 SgEqualityOp:end == 0:7v:appendList-3-4
 SgVarRefExp:end:7v:appendList-3-end
 SgCastExp:0:7v:appendList-3-5
 SgIntVal:0:6c:0
-SgBasicBlock:{head =(end =(::new ::List()));}:8->10
+SgBasicBlock:{head =(end =(::new List()));}:8->10
 SgExprStatement:head =(end =(::new List()));:8->10
 SgAssignOp:head =(end =(::new List())):10v:appendList-3-head
 SgVarRefExp:head:10v:appendList-3-head
 SgAssignOp:(end =(::new List())):10v:appendList-3-end
 SgVarRefExp:end:9v:appendList-3-end
-SgBasicBlock:{( *end).::List::next =(::new ::List());end =( *end).::List::next;}:11->15
-SgExprStatement:( *end).List::next =(::new List());:11->12
-SgAssignOp:( *end).List::next =(::new List()):12v:appendList-3-7
-SgDotExp:( *end).List::next:12v:appendList-3-7
+SgBasicBlock:{( *end).next =(::new List());end =( *end).next;}:11->15
+SgExprStatement:( *end).next =(::new List());:11->12
+SgAssignOp:( *end).next =(::new List()):12v:appendList-3-7
+SgDotExp:( *end).next:12v:appendList-3-7
 SgPointerDerefExp:( *end):12v:appendList-3-7
 SgVarRefExp:end:12v:appendList-3-end
 SgNewExp:(::new List()):12v:appendList-3-7
-SgExprStatement:end =( *end).List::next;:13->15
-SgAssignOp:end =( *end).List::next:15v:appendList-3-end
+SgExprStatement:end =( *end).next;:13->15
+SgAssignOp:end =( *end).next:15v:appendList-3-end
 SgVarRefExp:end:15v:appendList-3-end
-SgDotExp:( *end).List::next:15v:appendList-3-end
+SgDotExp:( *end).next:15v:appendList-3-end
 SgPointerDerefExp:( *end):15v:appendList-3-9
 SgVarRefExp:end:13v:appendList-3-end
 SgVarRefExp:next:15d:next
-SgExprStatement:( *end).List::val = val;:16->16
-SgAssignOp:( *end).List::val = val:16v:appendList-3-val
-SgDotExp:( *end).List::val:16v:appendList-3-val
+SgExprStatement:( *end).val = val;:16->16
+SgAssignOp:( *end).val = val:16v:appendList-3-val
+SgDotExp:( *end).val:16v:appendList-3-val
 SgPointerDerefExp:( *end):16v:appendList-3-val
 SgVarRefExp:end:16v:appendList-3-end
 SgVarRefExp:val:16v:appendList-3-val
-SgExprStatement:( *end).List::next = 0;:17->18
-SgAssignOp:( *end).List::next = 0:18v:appendList-3-10
-SgDotExp:( *end).List::next:18v:appendList-3-10
+SgExprStatement:( *end).next = 0;:17->18
+SgAssignOp:( *end).next = 0:18v:appendList-3-10
+SgDotExp:( *end).next:18v:appendList-3-10
 SgPointerDerefExp:( *end):18v:appendList-3-10
 SgVarRefExp:end:18v:appendList-3-end
 SgCastExp:0:18v:appendList-3-10
@@ -112,26 +112,26 @@ ctrl: 26->27 true
 ctrl: 28->29 always
 
  Mapping 
-SgBasicBlock:{struct ::List *p = head;for(;p != 0;p =(p -> ::List::next)) {if((p -> ::List::val) == val) {break;}else {}}return p;}:20->28
+SgBasicBlock:{struct List *p = head;for(;p != 0;p =(p -> next)) {if((p -> val) == val) {break;}else {}}return p;}:20->28
 SgVariableDeclaration:struct List *p = head;:20->20
 SgInitializedName:p:20v:lookupList-11-p
 SgVarRefExp:head:20v:lookupList-11-head
-SgForStatement:for(;p != 0;p =(p -> ::List::next)) {if((p -> ::List::val) == val) {break;}else {}}:21->26
+SgForStatement:for(;p != 0;p =(p -> next)) {if((p -> val) == val) {break;}else {}}:21->26
 SgExprStatement:p != 0;:21->22
 SgNotEqualOp:p != 0:22v:lookupList-11-12
 SgVarRefExp:p:22v:lookupList-11-p
 SgCastExp:0:22v:lookupList-11-13
 SgIntVal:0:21c:0
-SgAssignOp:p =(p -> List::next):24v:lookupList-11-p
+SgAssignOp:p =(p -> next):24v:lookupList-11-p
 SgVarRefExp:p:24v:lookupList-11-p
-SgArrowExp:(p -> List::next):24v:lookupList-11-p
+SgArrowExp:(p -> next):24v:lookupList-11-p
 SgVarRefExp:p:24v:lookupList-11-p
 SgVarRefExp:next:24d:next
-SgBasicBlock:{if((p -> ::List::val) == val) {break;}else {}}:25->26
-SgIfStmt:if((p -> ::List::val) == val) {break;}else {}:25->26
-SgExprStatement:(p -> List::val) == val;:25->26
-SgEqualityOp:(p -> List::val) == val:26v:lookupList-11-15
-SgArrowExp:(p -> List::val):26v:lookupList-11-16
+SgBasicBlock:{if((p -> val) == val) {break;}else {}}:25->26
+SgIfStmt:if((p -> val) == val) {break;}else {}:25->26
+SgExprStatement:(p -> val) == val;:25->26
+SgEqualityOp:(p -> val) == val:26v:lookupList-11-15
+SgArrowExp:(p -> val):26v:lookupList-11-16
 SgVarRefExp:p:25v:lookupList-11-p
 SgVarRefExp:val:25d:val
 SgVarRefExp:val:26v:lookupList-11-val
@@ -165,12 +165,12 @@ ctrl: 39->40 always
 ctrl: 40->41 always
 
  Mapping 
-SgBasicBlock:{struct ::List *head;struct ::List *end;::buildList(head,end);for(int i = 0;i < 10;++i) {::appendList(head,end,(2 * i));}struct ::List *p = ::lookupList(head,6);return 0;}:31->40
+SgBasicBlock:{struct List *head;struct List *end;buildList(head,end);for(int i = 0;i < 10;++i) {appendList(head,end,(2 * i));}struct List *p = lookupList(head,6);return 0;}:31->40
 SgExprStatement:buildList(head,end);:31->31
 SgFunctionRefExp:buildList:31v:buildList
 SgVarRefExp:head:31v:main-17-head
 SgVarRefExp:end:31v:main-17-end
-SgForStatement:for(int i = 0;i < 10;++i) {::appendList(head,end,(2 * i));}:32->36
+SgForStatement:for(int i = 0;i < 10;++i) {appendList(head,end,(2 * i));}:32->36
 SgForInitStatement:int i = 0;;:32->32
 SgVariableDeclaration:int i = 0;:32->32
 SgInitializedName:i:32v:main-17-i
@@ -181,7 +181,7 @@ SgVarRefExp:i:33v:main-17-i
 SgIntVal:10:33c:10
 SgPlusPlusOp:++i:34v:main-17-19
 SgVarRefExp:i:34v:main-17-i
-SgBasicBlock:{::appendList(head,end,(2 * i));}:35->36
+SgBasicBlock:{appendList(head,end,(2 * i));}:35->36
 SgExprStatement:appendList(head,end,(2 * i));:35->36
 SgFunctionRefExp:appendList:36v:appendList
 SgVarRefExp:head:36v:main-17-head

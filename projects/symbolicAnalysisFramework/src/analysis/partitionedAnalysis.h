@@ -411,7 +411,7 @@ class IntraPartitionFWDataflow  : public virtual IntraPartitionDataflow
 	// Runs the intra-procedural analysis on the given function. Returns true if 
 	// the function's NodeState gets modified as a result and false otherwise.
 	// state - the function's NodeState
-	bool runAnalysis(const Function& func, NodeState* fState);
+	bool runAnalysis(const Function& func, NodeState* fState, bool analyzeDueToCallers, set<Function> calleesUpdated);
 	
 	// Runs the intra-procedural analysis on the given function. 
 	// Returns true if the function's NodeState gets modified as a result and false otherwise.

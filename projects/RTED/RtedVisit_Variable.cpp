@@ -7,279 +7,647 @@
 #include <algorithm>
 #include <functional>
 #include <numeric>
-
 #include <string>
+
+#include "sageGeneric.hpp"
+
 #include "RtedSymbols.h"
 #include "DataStructures.h"
 #include "RtedTransformation.h"
 
 #include "RtedVisit.h"
 
-using namespace std;
-using namespace SageInterface;
-using namespace SageBuilder;
+namespace rted
+{
+  VariableTraversal::VariableTraversal(RtedTransformation* t)
+  : Base(), transf(t), binary_ops(), for_loops()
+  {
+    ROSE_ASSERT(transf != NULL);
+  }
 
-VariableTraversal::VariableTraversal(RtedTransformation* t) {
-   transf = t;
-   rightOfbinaryOp = new std::vector<SgExpression*>();
-   ROSE_ASSERT(rightOfbinaryOp);
-   for_stmt = new std::vector<SgForStatement*>();
-}
+  static
+  bool isInitializedNameInForStatement(const VariableTraversal::LoopStack& forloops, const SgInitializedName& name)
+  {
+     if (forloops.empty()) return false;
 
-bool VariableTraversal::isInitializedNameInForStatement(SgForStatement* for_stmt, SgInitializedName* name) {
-   // Capture for( int i = 0;
-   vector<SgNode*> initialized_names = NodeQuery::querySubTree(for_stmt -> get_for_init_stmt(), V_SgInitializedName);
-   // Capture int i; for( i = 0;
-   vector<SgNode*> init_var_refs = NodeQuery::querySubTree(for_stmt -> get_for_init_stmt(), V_SgVarRefExp);
-   for (vector<SgNode*>::iterator i = init_var_refs.begin(); i != init_var_refs.end(); ++i)
-      initialized_names.push_back(isSgVarRefExp(*i) -> get_symbol() -> get_declaration());
+     SgForInitStatement* inits = GeneralizdFor::initializer(forloops.back());
 
-   if (find(initialized_names.begin(), initialized_names.end(), name) != initialized_names.end())
-      return true;
-   return false;
-}
+     // Capture for( int i = 0;
+     SgNodePtrList        initialized_names = NodeQuery::querySubTree(inits, V_SgInitializedName);
+     // Capture int i; for( i = 0;
+     const SgNodePtrList& init_var_refs = NodeQuery::querySubTree(inits, V_SgVarRefExp);
+     for (std::vector<SgNode*>::const_iterator i = init_var_refs.begin(); i != init_var_refs.end(); ++i)
+        initialized_names.push_back(isSgVarRefExp(*i) -> get_symbol() -> get_declaration());
 
-bool VariableTraversal::isRightOfBinaryOp(SgNode* astNode) {
-   SgNode* temp = astNode;
-   while (!isSgProject(temp)) {
-      if (temp->get_parent() && isSgBinaryOp(temp->get_parent()) && !(isSgDotExp(temp->get_parent()) || isSgPointerDerefExp(
-            temp->get_parent())))
-         if (isSgBinaryOp(temp->get_parent())->get_rhs_operand() == temp) {
-            return true;
-         } else
-            break;
-      temp = temp->get_parent();
-   }
-   return false;
-}
+     return (find(initialized_names.begin(), initialized_names.end(), &name) != initialized_names.end());
+  }
 
-InheritedAttribute VariableTraversal::evaluateInheritedAttribute(SgNode* astNode, InheritedAttribute inheritedAttribute) {
+  /// \brief   tests whether astNode directly or indirectly is on the right hand
+  ///          side of a binary expressions.
+  /// \details indirectly means that if astNode is a child of a non-binary
+  ///          expression or a dot-expression, isRightOfBinaryOp is invoked
+  ///          'recursively' (with the parent node) as the new astNode.
+  static
+  bool isRightOfBinaryOp(const SgExpression* expr)
+  {
+     const SgNode* temp = expr;
+     while (!isSgProject(temp)) {
+        if ( temp->get_parent()
+           && isSgBinaryOp(temp->get_parent())
+           && !(  isSgDotExp(temp->get_parent())
+               || isSgPointerDerefExp(temp->get_parent())
+               )
+           )
+        {
+           if (isSgBinaryOp(temp->get_parent())->get_rhs_operand() == temp) {
+              return true;
+           } else
+              break;
+        }
+        temp = temp->get_parent();
+     }
+     return false;
+  }
 
-   if (isSgFunctionDefinition(astNode)) {
-      // ------------------------------ visit isSgFunctionDefinition ----------------------------------------------
-      transf->visit_checkIsMain(astNode);
-      transf->function_definitions.push_back(isSgFunctionDefinition(astNode));
-      return InheritedAttribute(true, inheritedAttribute.isAssignInitializer, inheritedAttribute.isArrowExp,
-            inheritedAttribute.isAddressOfOp, inheritedAttribute.isForStatement, inheritedAttribute.isBinaryOp);
-   }
+  static
+  bool isUsableAsSgPointerType( SgType* type ) {
+      return isSgPointerType( skip_ReferencesAndTypedefs( type ));
+  }
 
-   if (isSgVariableDeclaration(astNode) && !isSgClassDefinition(isSgVariableDeclaration(astNode) -> get_parent())) {
-      // ------------------------------ visit Variable Declarations ----------------------------------------------
-      Rose_STL_Container<SgInitializedName*> vars = isSgVariableDeclaration(astNode)->get_variables();
-      for (Rose_STL_Container<SgInitializedName*>::const_iterator it = vars.begin();it!=vars.end();++it) {
-         SgInitializedName* initName = *it;
-         ROSE_ASSERT(initName);
-         if( isSgReferenceType( initName -> get_type() ))
-         continue;
-         transf->variable_declarations.push_back(initName);
+  namespace
+  {
+    struct VarTypeHandler
+    {
+      RtedTransformation& transf;
+      SgInitializedName&  initname;
+
+      VarTypeHandler(RtedTransformation& rtedobj, SgInitializedName& iname)
+      : transf(rtedobj), initname(iname)
+      {}
+
+      void handle(SgNode&) { assert(false); }
+
+      // regular variable declaration
+      void handle(SgType&)
+      {
+        transf.variable_declarations.push_back(&initname);
       }
-   }
 
-   if (isSgInitializedName(astNode)) {
-      // ------------------------------ visit isSgInitializedName ----------------------------------------------
-      ROSE_ASSERT(isSgInitializedName(astNode)->get_typeptr());
-      SgArrayType* array = isSgArrayType(isSgInitializedName(astNode)->get_typeptr());
-      SgNode* gp = astNode -> get_parent() -> get_parent();
+      // nothing to be done for references
+      void handle(SgReferenceType&) {}
+
+      // handle arrays
+      void handle(SgArrayType& arrtype)
+      {
+        // \pp \note the Nov'10 RTED code would skip this when we get a modifier-type
+        //     something like: if (&n != initname.get_type()) return;
+        RtedArray arrayRted(&initname, getSurroundingStatement(&initname), varAllocKind(initname));
+
+        transf.populateDimensions( arrayRted, initname, arrtype );
+        transf.create_array_define_varRef_multiArray_stack[&initname] = arrayRted;
+      }
+    };
+  }
+
+
+  struct InheritedAttributeHandler
+  {
+    VariableTraversal& vt;
+    InheritedAttribute ia;
+
+    InheritedAttributeHandler(VariableTraversal& trav, const InheritedAttribute& inh)
+    : vt(trav), ia(inh)
+    {}
+
+    void storeUpcBlockingOp(SgStatement& n)
+    {
+      vt.transf->upcBlockingOps.push_back(&n);
+    }
+
+    void handle(SgNode&) {}
+
+    void handle(SgSourceFile& n)
+    {
+      const bool first = vt.transf->srcfiles.empty();
+
+      ROSE_ASSERT(first || vt.transf->srcfiles.back() != &n);
+
+      if (first) vt.transf->loadFunctionSymbols(n);
+      vt.transf->srcfiles.push_back(&n);
+    }
+
+    void handle(SgFunctionDefinition& n)
+    {
+        vt.transf->transformIfMain(n);
+        vt.transf->function_definitions.push_back(&n);
+
+        ia.function = true;
+        // do not handle as SgScopeStatement
+    }
+
+
+    void handle(SgInitializedName& n)
+    {
       // something like: struct type { int before; char c[ 10 ]; int after; }
       // does not need a createarray call, as the type is registered and any array
       // information will be tracked when variables of that type are created.
       // ignore arrays in parameter lists as they're actually pointers, not stack arrays
-      if ( array && !( isSgClassDefinition( gp )) && !( isSgFunctionDeclaration( gp ) )) {
-         RTedArray* arrayRted = new RTedArray(true, isSgInitializedName(astNode), NULL, false);
-         transf->populateDimensions( arrayRted, isSgInitializedName(astNode), array );
-         transf->create_array_define_varRef_multiArray_stack[isSgInitializedName(astNode)] = arrayRted;
-      }
-   }
+      if (isStructMember(n) || isFunctionParameter(n)) return;
 
-   if (isSgAssignOp(astNode)) {
-      // 1. look for MALLOC
-      // 2. Look for assignments to variables - i.e. a variable is initialized
-      // 3. Assign variables that come from assign initializers (not just assignments
-      transf->visit_isArraySgAssignOp(astNode);
-   }
+      // \pp should we also skip typedefs?
+      SgType* unmodType = skip_ModifierType(n.get_type());
+
+      sg::dispatch(VarTypeHandler(*vt.transf, n), unmodType);
+    }
+
+    void handle(SgAssignInitializer& n)
+    {
+        vt.transf->visit_isAssignInitializer(&n);
+        ia.isAssignInitializer = true;
+    }
+
+    void handle(SgReturnStmt& n)
+    {
+      if (!n.get_expression()) return;
+
+      vt.transf->returnstmt.push_back(&n);
+    }
+
+    void handle(SgUpcBarrierStatement& n) { storeUpcBlockingOp(n); }
+
+    void handle(SgUpcWaitStatement& n)
+    {
+      storeUpcBlockingOp(n);
+    }
+
+    // implicitly casts to SgScopeStatement
+    void store_scope(SgScopeStatement& n) { vt.transf->scopes[&n] = &n; }
+
+    void handle(SgClassDefinition& n)
+    {
+      vt.transf->visit_isClassDefinition(&n);
+    }
+
+    void handle_gfor(SgScopeStatement& sgfor)
+    {
+      store_scope(sgfor);
+
+      vt.for_loops.push_back(&sgfor);
+      ia.isForStatement = true;
+    }
+
+    void handle(SgForStatement& n)
+    {
+      handle_gfor(n);
+    }
+
+    void handle(SgUpcForAllStatement& n)
+    {
+      handle_gfor(n);
+    }
+
+    void handle(SgWhileStmt& n)       { store_scope(n); }
+    void handle(SgDoWhileStmt& n)     { store_scope(n); }
+    void handle(SgSwitchStatement& n) { store_scope(n); }
+    void handle(SgIfStmt& n)          { store_scope(n); }
+
+    void handle(SgBasicBlock& n)
+    {
+      if (isSgBasicBlock(n.get_parent())) store_scope(n);
+    }
+
+     //
+     // Expressions
+     //
+
+     /// Visit pointer assignments whose lhs is computed from the original value of
+     /// the pointer by virtue of the operator alone (e.g. ++, --)  As a heuristic,
+     /// we say that such operations should not change the @e "Memory Chunk", i.e.
+     /// the array the pointer refers to.
+     void push_if_ptr_movement(SgExpression& astNode, SgExpression* operand)
+     {
+        if( isUsableAsSgPointerType( operand -> get_type() )) {
+           // we don't care about int++, only pointers, or reference to pointers.
+           vt.transf->pointer_movements.push_back( &astNode );
+        }
+     }
+
+     // unary
+
+     void handle(SgAddressOfOp& n)
+     {
+       ia.isAddressOfOp = true;
+       /* returns immediately */
+     }
+
+     void handle(SgPointerDerefExp& n)
+     {
+        // if this is a varrefexp and it is not initialized, we flag it.
+        // do only if it is by itself or on right hand side of assignment
+        vt.transf->visit_isSgPointerDerefExp(&n);
+     }
 
 
-   if (isSgAssignInitializer(astNode)) {
-      // ------------------------------  DETECT ALL array creations  ----------------------------------------------
-      transf->visit_isAssignInitializer(astNode);
-      return InheritedAttribute(inheritedAttribute.function, true, inheritedAttribute.isArrowExp,
-            inheritedAttribute.isAddressOfOp, inheritedAttribute.isForStatement, inheritedAttribute.isBinaryOp);
-   }
+     // binary
+
+     void handle(SgBinaryOp& n)
+     {
+        if (ia.isArrowExp || ia.isAddressOfOp) return;
+
+        vt.binary_ops.push_back(&n);
+        ia.isBinaryOp = true;
+     }
+
+     void handle_binary(SgBinaryOp& n) { handle(n); }  // implcitely casts to SgBinaryOp
+
+     void handle(SgDotExp&) { /* skip binary handling */ }
+
+     void handle(SgPntrArrRefExp& n)
+     {
+       vt.transf->visit_isArrayPntrArrRefExp(&n);
+       handle_binary(n);
+     }
+
+     void handle(SgArrowExp& n)
+     {
+       vt.transf->visit_isSgArrowExp(&n);
+       ia.isArrowExp = true;
+       /* skip binary handling */
+     }
+
+     void handle(SgAssignOp& n)
+     {
+        // 1. look for MALLOC
+        // 2. Look for assignments to variables - i.e. a variable is initialized
+        // 3. Assign variables that come from assign initializers (not just assignments
+        std::cerr << n.unparseToString() << std::endl;
+        vt.transf->visit_isArraySgAssignOp(&n);
+        handle_binary(n);
+     }
+
+     void handle(SgMinusAssignOp& n)
+     {
+       push_if_ptr_movement(n, n.get_lhs_operand());
+       handle_binary(n);
+     }
+
+     void handle(SgPlusAssignOp& n)
+     {
+       push_if_ptr_movement(n, n.get_lhs_operand());
+       handle_binary(n);
+     }
+
+     // n-ary
+
+     // \note see note comment in handle(SgFunctionCallExp)
+     bool suppress_binary_for_specific_calls(const SgFunctionDeclaration* fndecl)
+     {
+       return ((fndecl != NULL) && isLibFunctionRequiringArgCheck(fndecl->get_name()));
+     }
+
+     void handle(SgFunctionCallExp& n)
+     {
+        vt.transf->visit_isFunctionCall(&n);
+
+        // \pp binary should be suppressed for all calls
+        //     in order not to impact existing RTED tests, we suppress for
+        //     cases relevant to UPC
+        // \todo 1) make suppression unconditional (remove if)
+        // \todo 2) I think the following code is obsolete
+        if (suppress_binary_for_specific_calls(n.getAssociatedFunctionDeclaration()))
+        {
+          ia.isBinaryOp = false;
+        }
+     }
+
+     void handle(SgPlusPlusOp& n)
+     {
+       push_if_ptr_movement(n, n.get_operand());
+     }
+
+     void handle(SgMinusMinusOp& n)
+     {
+       push_if_ptr_movement(n, n.get_operand());
+     }
+
+     void handle(SgDeleteExp& del)
+     {
+        typedef RtedTransformation::Deallocations Deallocations;
+
+        const AllocKind allocKind = (del.get_is_array() ? akCxxArrayNew : akCxxNew);
+
+        vt.transf->frees.push_back( Deallocations::value_type(&del, allocKind) );
+     }
+
+     operator InheritedAttribute()
+     {
+       return ia;
+     }
+  };
+
+  InheritedAttribute VariableTraversal::evaluateInheritedAttribute(SgNode* astNode, InheritedAttribute inheritedAttribute)
+  {
+    return sg::dispatch(InheritedAttributeHandler(*this, inheritedAttribute), astNode);
+  }
+
+  /// wraps ::isUsableAsSgArrayType and makes sure that type is
+  /// not null.
+  static
+  bool isUsableAsSgArrayTypeChecked(SgType* type)
+  {
+    return (type != NULL) && ::isUsableAsSgArrayType(type);
+  }
+
+  /// wraps ::isUsableAsSgReferenceType and makes sure that
+  /// type is not null.
+  static
+  bool isUsableAsSgReferenceTypeChecked(SgType* type)
+  {
+    return (type != NULL) && ::isUsableAsSgReferenceType(type);
+  }
+
+  /// \brief tests if the first argument is an ancestor of the second argument
+  /// \note  see also SageInterface::isAncestor (which is defined over arbitrary
+  ///        nodes).
+  bool isAncestorOf(const SgExpression& ancestor, const SgExpression& expr)
+  {
+    const SgExpression* parent = isSgExpression(expr.get_parent());
+
+    return (  (parent != NULL)
+           && ( (&ancestor == parent) || isAncestorOf(ancestor, *parent) )
+           );
+  }
+
+  /// tests if the second argument is (or is part of) the upc_forall loop's
+  /// affinity expression.
+  static
+  bool partOfUpcForallAffinityExpr(const SgUpcForAllStatement& upcForall, const SgExpression& expr)
+  {
+    const SgExpression* affinity = upcForall.get_affinity();
+
+    ROSE_ASSERT(affinity != NULL);
+    return (affinity == &expr || isAncestorOf(*affinity, expr));
+  }
+
+  /// tests if the first argument is an upc_forall loop AND if the second
+  /// argument occurs in the context of the former's affinity expression.
+  static
+  bool partOfUpcForallAffinityExpr(const VariableTraversal::LoopStack& forloops, const SgExpression& expr)
+  {
+    if (forloops.empty()) return false;
+
+    const SgUpcForAllStatement* upcForall = isSgUpcForAllStatement( forloops.back() );
+
+    return (upcForall != NULL && partOfUpcForallAffinityExpr(*upcForall, expr));
+  }
 
 
-   if (isSgPntrArrRefExp(astNode)) {
-      // ------------------------------ checks for array access  ----------------------------------------------
-      transf->visit_isArrayPntrArrRefExp(astNode);
-   } // pntrarrrefexp
-
-   if (isSgPointerDerefExp(astNode)) {
-      // if this is a varrefexp and it is not initialized, we flag it.
-      // do only if it is by itself or on right hand side of assignment
-      transf->visit_isSgPointerDerefExp(isSgPointerDerefExp(astNode));
-   }
-
-
-
-   if (isSgArrowExp(astNode)) {
-      // if this is a varrefexp and it is not initialized, we flag it.
-      // do only if it is by itself or on right hand side of assignment
-      transf->visit_isSgArrowExp(isSgArrowExp(astNode));
-   return InheritedAttribute(inheritedAttribute.function, inheritedAttribute.isAssignInitializer, true,
-         inheritedAttribute.isAddressOfOp, inheritedAttribute.isForStatement, inheritedAttribute.isBinaryOp);
-   }
-
-   transf->visit(astNode);
-#if 0
-   if (isSgScopeStatement(astNode)) {
-      // if, while, do, etc., where we need to check for locals going out of scope
-      transf->visit_isSgScopeStatement(astNode);
-      // *********************** DETECT structs and class definitions ***************
-      if (isSgClassDefinition(astNode)) {
-         // call to a specific function that needs to be checked
-         transf->visit_isClassDefinition(isSgClassDefinition(astNode));
-      }
-   }
-#endif
+  /// \brief   tests whether a varref is related to a for loop
+  /// \return  true, iff an access guard test should be skipped
+  /// \details returns true if the accessed variable is initialized in a for loop
+  ///          or if the variable is accessed in the context of a upc_forall.
+  /// \note    currently we do not test whether the UPC affinity could be out of
+  ///          bounds.
+  //~ static
+  //~ bool test_for_loops(const VariableTraversal::LoopStack& for_loops, const SgVarRefExp& varref, const SgInitializedName& varname)
+  //~ {
+    //~ if (for_loops.empty()) return false;
+//~
+    //~ SgStatement* forloop = for_loops.back();
+//~
+    //~ return (
+           //~ || rted::partOfUpcForallAffinityExpr(*forloop, varref)
+           //~ );
+  //~ }
 
 
-   if (isSgFunctionCallExp(astNode)) {
-      // call to a specific function that needs to be checked
-      transf->visit_isFunctionCall(astNode);
-   }
+  /// \brief   defines patterns of binary operations that should not be tested
+  /// \note    the for loop test needed to be integrated into the binary test
+  ///          b/c it is an alternative if varref is not in a binary context.
+  /// \return  true, if an access guard should be skipped
+  ///          false, otherwise
+  static
+  bool test_binaryop_and_forloop( const VariableTraversal::BinaryOpStack& binary_ops,
+                                  const VariableTraversal::LoopStack& forloops,
+                                  SgVarRefExp& varref,
+                                  const SgInitializedName& varname,
+                                  const InheritedAttribute& inh
+                                )
+  {
+    // \pp this function seems to be to broad
+    //     For starters, I do not understand why we want to skip the test to
+    //     check whether ptr in ptr+3 is initialized (assuming ptr is of pointer type)?
+    if ( rted::partOfUpcForallAffinityExpr(forloops, varref) ) return true;
 
-   if( isSgPlusPlusOp( astNode ) || isSgMinusMinusOp( astNode )
-         || isSgMinusAssignOp( astNode ) || isSgPlusAssignOp( astNode )) {
-      // ------------------------------  Detect pointer movements, e.g ++, --  ----------------------------------------------
-      ROSE_ASSERT( isSgUnaryOp( astNode ) || isSgBinaryOp( astNode ) );
-      SgExpression* operand = NULL;
-      if( isSgUnaryOp( astNode ) )
-      operand = isSgUnaryOp( astNode ) -> get_operand();
-      else if( isSgBinaryOp( astNode ) )
-      operand = isSgBinaryOp( astNode ) -> get_lhs_operand();
-      if( transf->isUsableAsSgPointerType( operand -> get_type() )) {
-         // we don't care about int++, only pointers, or reference to pointers.
-         transf->pointer_movements.push_back( isSgExpression( astNode ));
-      }
-   }
+    // not in binary context
+    if (!inh.isBinaryOp)
+    {
+      return rted::isInitializedNameInForStatement(forloops, varname);
+    }
 
-   if( isSgDeleteExp( astNode )) {
-      // ------------------------------ Detect delete (c++ free) ----------------------------------------------
-      transf->frees.push_back( isSgDeleteExp( astNode ) );
-   }
+    ROSE_ASSERT(!binary_ops.empty());
 
-   if (isSgReturnStmt(astNode)) {
-      // ------------------------------ visit isSgReturnStmt ----------------------------------------------
-      if (isSgReturnStmt(astNode)->get_expression())
-      transf->returnstmt.push_back(isSgReturnStmt(astNode));
-   }
+    // do the real checks
+    const SgBinaryOp*   binop = binary_ops.back();
+    const SgExpression* rhs = binop->get_rhs_operand();
+
+    // \note isRightOfBinaryOp(&varref)
+    //       does not mean that varref == rhs. varref could also be
+    //       an (indirect) right side child of binop.
+    // \pp not sure why the side on which varref occurs matters,
+    //     when we, for example, have a commutative operation?
+    return (  !isRightOfBinaryOp(&varref)
+           || isSgArrayType(rhs->get_type())
+           || isSgNewExp(rhs)
+           || isSgReferenceType(binop->get_lhs_operand()->get_type())
+           );
+  }
 
 
-   if (isSgAddressOfOp(astNode))
-   return InheritedAttribute(inheritedAttribute.function, inheritedAttribute.isAssignInitializer,
-         inheritedAttribute.isArrowExp, true, inheritedAttribute.isForStatement, inheritedAttribute.isBinaryOp);
 
-   if (isSgForStatement(astNode)) {
-      for_stmt->push_back(isSgForStatement(astNode));
-      return InheritedAttribute(inheritedAttribute.function, inheritedAttribute.isAssignInitializer,
-            inheritedAttribute.isArrowExp, inheritedAttribute.isAddressOfOp, true, inheritedAttribute.isBinaryOp);
-   }
+  /// \brief   tests whether a varref is related to an assign initializer
+  static
+  bool test_assign_initializer(const InheritedAttribute& inh, const SgVarRefExp& varref)
+  {
+     if (!inh.isAssignInitializer) return false;
 
-   if (isSgBinaryOp(astNode) && !inheritedAttribute.isArrowExp && !inheritedAttribute.isAddressOfOp && !isSgDotExp(astNode)
-         && !isSgPointerDerefExp(astNode)) {
-      ROSE_ASSERT(isSgBinaryOp(astNode) -> get_rhs_operand());
-      rightOfbinaryOp->push_back(isSgBinaryOp(astNode) -> get_rhs_operand());
-      return InheritedAttribute(inheritedAttribute.function, inheritedAttribute.isAssignInitializer,
-            inheritedAttribute.isArrowExp, inheritedAttribute.isAddressOfOp, inheritedAttribute.isForStatement, true);
-   }
+     SgInitializedName* initName = isSgInitializedName(varref.get_parent() ->get_parent()-> get_parent());
+     if (initName == NULL)
+        initName = isSgInitializedName(varref.get_parent() ->get_parent());
 
-   return inheritedAttribute;
+     return (initName && isSgReferenceType(initName -> get_type()));
+  }
+
+
+  /// \brief   tests whether a varref is related to a function call
+  /// \note    do we assume that the function has a declaration?
+  /// \todo    \pp Can't we take the type from the call expression
+  ///          (in case that the callee is computed)?
+  static
+  bool test_call_argument(RtedTransformation* transf, const SgVarRefExp& varref)
+  {
+    // this does not work if there are for example casts in between :(
+    const SgExprListExp* exprl = isSgExprListExp(varref.get_parent());
+    if (exprl == NULL) return false;
+
+    const SgFunctionCallExp* callexp = isSgFunctionCallExp(exprl->get_parent());
+    if (callexp == NULL) return false;
+
+    // \note do not move up the isUsableAsSgArrayType test
+    //       b/c we only want it to succeed if this is indeed a function call expr
+    if (isUsableAsSgArrayTypeChecked(varref.get_type())) return true;
+
+    // \pp \todo
+    // Instead of getting the type form the fundecl, it might be better to get
+    // the type from the callee expression. This way we would always know the
+    // argument types.
+
+    // try to determine the parameter type
+    const SgFunctionDeclaration*   fndecl = callexp->getAssociatedFunctionDeclaration();
+    if (fndecl == NULL) return false; // \pp not sure if this is correct
+
+    const SgExpressionPtrList&     args = exprl->get_expressions();
+    size_t                         arg_pos = 0;
+
+    ROSE_ASSERT(args.size() > 0); // at least varref is in args
+
+    while (args[arg_pos] != &varref)
+    {
+      ++arg_pos;
+      ROSE_ASSERT( arg_pos < args.size() );
+    }
+
+    const SgInitializedNamePtrList& param_lst = fndecl->get_parameterList()->get_args();
+
+    // \note param_lst.size() could be 0, if the compiler generated a function
+    //       prototype (i.e., there was no prototype present in the code.
+    return (  arg_pos < param_lst.size()
+           && (param_lst[arg_pos] != NULL)
+           && isUsableAsSgReferenceTypeChecked(param_lst[arg_pos]->get_type())
+           );
+  }
+
+
+  /// wraps RtedTransformation::isInInstrumentedFile and makes sure that
+  /// the argument is not null.
+  static
+  bool in_instrumented_file(RtedTransformation* transf, SgInitializedName* name)
+  {
+    return (name != NULL) && !transf->isInInstrumentedFile(name -> get_declaration());
+  }
+
+
+  void VariableTraversal::handleIfVarRefExp(SgVarRefExp* varref, const InheritedAttribute& inh)
+  {
+    if (varref == NULL) return;
+
+    SgInitializedName *name = varref->get_symbol()->get_declaration();
+
+    bool elide_access_guard = (  (inh.isArrowExp                                                        )
+                              || (inh.isAddressOfOp                                                     )
+                              || (in_instrumented_file(transf, name)                                    )
+                              || (test_binaryop_and_forloop(binary_ops, for_loops, *varref, *name, inh) )
+                              || (test_assign_initializer(inh, *varref)                                 )
+                              || (test_call_argument(transf, *varref)                                   )
+                              );
+
+    if (elide_access_guard)
+    {
+      // std::cerr << "### ELIDE " << where << " " << varref->unparseToString() << std::endl;
+      return;
+    }
+
+    // its a plain variable access
+    transf->variable_access_varref.push_back(varref);
+  }
+
+  SynthesizedAttribute VariableTraversal::evaluateSynthesizedAttribute(SgNode* astNode, InheritedAttribute inheritedAttribute, SynthesizedAttributesList childAttributes)
+  {
+     SynthesizedAttribute res; // = sg::dispatch(SafeEval(this, childAttributes));
+
+     // take from stacks, if applicable
+     if (GeneralizdFor::is(astNode))
+     {
+       ROSE_ASSERT(!for_loops.empty());
+       ROSE_ASSERT(astNode == for_loops.back());
+       for_loops.pop_back();
+     }
+     else if (isSgBinaryOp(astNode) && !inheritedAttribute.isArrowExp && !inheritedAttribute.isAddressOfOp && !isSgDotExp(astNode))
+     {
+       ROSE_ASSERT(!binary_ops.empty() && astNode == binary_ops.back());
+       binary_ops.pop_back();
+     }
+
+     if (inheritedAttribute.function)
+     {
+       // ------------------------------ visit isSgVarRefExp ----------------------------------------------
+       handleIfVarRefExp(isSgVarRefExp(astNode), inheritedAttribute);
+     }
+
+     return res;
+  }
 }
 
-SynthesizedAttribute VariableTraversal::evaluateSynthesizedAttribute(SgNode* astNode, InheritedAttribute inheritedAttribute,
-      SynthesizedAttributesList childAttributes) {
-   SynthesizedAttribute localResult = std::accumulate(childAttributes.begin(), childAttributes.end(), false,
-         std::logical_or<bool>());
+#if INCOMPLETE_CODE
+  >>> imported from RtedTransforamtion.h
+   typedef std::vector< std::pair<const SgSourceFile*, SgPointerDerefExp*> > PtrDerefContainer;
 
-   if (inheritedAttribute.function == true) {
-      if (isSgForStatement(astNode))
-         for_stmt->pop_back();// = NULL;
+   PtrDerefContainer    ptrderefs;
+   // \todo add to ctor member initializer list
 
-      bool isRightBranchOfBinary = isRightOfBinaryOp(astNode);
-      if (isSgBinaryOp(astNode) && !inheritedAttribute.isArrowExp && !inheritedAttribute.isAddressOfOp && !isSgDotExp(astNode)
-            && !isSgPointerDerefExp(astNode) && rightOfbinaryOp && !rightOfbinaryOp->empty())
-         rightOfbinaryOp->pop_back();
+   typedef std::pair<SgPointerType*, std::string>                            SafeFunctionKey;
+   typedef std::map< SafeFunctionKey, SgFunctionSymbol* >                    SafeFunctionContainer;
+   typedef std::map< const SgSourceFile*, SafeFunctionContainer >            GeneratedFunctions;
+  <<< imported from RtedTransforamtion.h
 
-      // ------------------------------ visit isSgVarRefExp ----------------------------------------------
-      if (isSgVarRefExp(astNode)) {
-         SgInitializedName *name = isSgVarRefExp(astNode) -> get_symbol() -> get_declaration();
-         if (name && !transf->isInInstrumentedFile(name -> get_declaration())) {
-            return localResult;
-         }
-         bool stopSearch = false;
+  struct SafeEval
+  {
+    static const char* const read  = "r";
+    static const char* const write = "w";
 
-         SgForStatement* fstmt = NULL;
-         if (!for_stmt->empty())
-            fstmt = for_stmt->back();
+    static const char* const deref   = "Deref"
+    static const char* const none    = "None"
+    static const char* const assign  = "Assign"
 
-         if (fstmt)
-            stopSearch = isInitializedNameInForStatement(fstmt, name);
-         if (!inheritedAttribute.isArrowExp && !inheritedAttribute.isAddressOfOp) {
-            if (rightOfbinaryOp && !rightOfbinaryOp->empty()) {
-               if (isRightBranchOfBinary && !isSgArrayType(rightOfbinaryOp->back()->get_type()) && !isSgNewExp(
-                     rightOfbinaryOp->back()) && !isSgReferenceType(
-                     isSgBinaryOp(rightOfbinaryOp->back()->get_parent())->get_lhs_operand()->get_type())) {
-                  stopSearch = false;
-               } else
-                  stopSearch = true;
-            }
+    SynthesizedAttribute             res;
+    VariableTraversal&               vt;
+    const SynthesizedAttributesList& subeval;
 
-            if (inheritedAttribute.isAssignInitializer) {
-               SgInitializedName* initName = isSgInitializedName(astNode -> get_parent() ->get_parent()-> get_parent());
-               if (initName == NULL)
-                  initName = isSgInitializedName(astNode -> get_parent() ->get_parent());
-               if (initName && isSgReferenceType(initName -> get_type()))
-                  stopSearch = true;
-            }
+    SafeEval(VariableTraversal& trav, const SynthesizedAttributesList& childattr)
+    : res(NULL, none), vt(trav), subeval(childattr)
+    {}
 
-            SgExprListExp* exprl = isSgExprListExp(astNode->get_parent());
-            if (isSgExprListExp(exprl) && isSgFunctionCallExp(exprl->get_parent())) {
-               SgType* param_type = NULL;
-               // try to determine the parameter type
-               SgFunctionDeclaration* fndecl = isSgFunctionCallExp(exprl->get_parent())-> getAssociatedFunctionDeclaration();
-               if (fndecl) {
-                  int param_index = -1;
-                  SgExpressionPtrList& args = exprl->get_expressions();
-                  for (unsigned int i = 0; i < args.size(); ++i) {
-                     if (args[i] == astNode) {
-                        param_index = i;
-                        break;
-                     }
-                  }
-                  ROSE_ASSERT( param_index > -1 );
+    void handle_subexpr(SgUnaryOp& n, std::string mode)
+    {
+      ROSE_ASSERT(subeval.size() == 1);
 
-                  if ((int) fndecl -> get_parameterList() -> get_args().size() > param_index
-                        && fndecl -> get_parameterList()-> get_args()[param_index])
-                     param_type = fndecl -> get_parameterList()-> get_args()[param_index] -> get_type();
-               }
+      const SynthesizedAttribute& attr = subeval.front();
+      SgExpression&               operand = *n.get_operand();
 
-               if ((isSgExpression(astNode)->get_type() && transf->isUsableAsSgArrayType(isSgExpression(astNode)->get_type())
-                     != NULL) || (param_type && transf->isUsableAsSgReferenceType(param_type) != NULL))
-                  stopSearch = true;
-            }
+      attr.modify(*vt.transf, operand, vt.get_safeFunctionSym(attr.operation, mode));
+    }
 
-            if (stopSearch == false) {
-               // its a plain variable access
-               transf->variable_access_varref.push_back(isSgVarRefExp(astNode));
-               if (RTEDDEBUG())
-                  cout << " @@@@@@@@@ ADDING Variable access : " << astNode->unparseToString() << "  vec size: "
-                        << astNode->get_parent()->unparseToString() << endl;
-            }
-         }
-      }
+    void handle(SgNode&) {}
 
-   }
-   return localResult;
-}
+    void handle(SgPointerDerefExp& n)
+    {
+      handle_sub(n, read);
+
+      res.operation = deref;
+      res.handler = RtedTransformation::replaceNode;
+    }
+
+    void handle(SgAssignOp& n)
+    {
+      handle_subexpr(n, read, write);
+
+      if (subeval.front().operation == none) return;
+
+      res.operand = assign;
+      res.handler = RtedTransformation::replaceNode;
+    }
+  }
+#endif /* INCOMPLETE_CODE */
+
 
 #endif
-

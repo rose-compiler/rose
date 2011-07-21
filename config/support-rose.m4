@@ -169,6 +169,7 @@ else
     AC_MSG_RESULT([skipping])
 fi
 
+  ROSE_SUPPORT_UPC
 
 ##
 #########################################################################################
@@ -498,6 +499,7 @@ AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_44,test "x$rose_boost_version" = "x104
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_45,test "x$rose_boost_version" = "x104500" -o "x$_version" = "x1.45")
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_46,test "x$rose_boost_version" = "x104600" -o "x$_version" = "x1.46")
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_46,test "x$rose_boost_version" = "x104601" -o "x$_version" = "x1.46")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_47,test "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.47")
 
 # DQ (10/18/2010): Error checking for Boost version.
 if test "x$rose_boost_version" = "x103600" -o "x$_version" = "x1.36" \
@@ -511,7 +513,8 @@ if test "x$rose_boost_version" = "x103600" -o "x$_version" = "x1.36" \
    -o "x$rose_boost_version" = "x104400" -o "x$_version" = "x1.44" \
    -o "x$rose_boost_version" = "x104500" -o "x$_version" = "x1.45" \
    -o "x$rose_boost_version" = "x104600" -o "x$_version" = "x1.46" \
-   -o "x$rose_boost_version" = "x104601" -o "x$_version" = "x1.46"; then
+   -o "x$rose_boost_version" = "x104601" -o "x$_version" = "x1.46" \
+   -o "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.47"; then 
 echo "Reasonable version of Boost found!"
 else
 echo "No identifiable version of boost recognised!"
@@ -842,6 +845,10 @@ ROSE_SUPPORT_PHP
 
 AM_CONDITIONAL(ROSE_USE_PHP,test ! "$with_php" = no)
 
+ROSE_SUPPORT_PYTHON
+
+AM_CONDITIONAL(ROSE_USE_PYTHON,test ! "$with_python" = no)
+
 #ASR
 ROSE_SUPPORT_LLVM
 
@@ -1037,12 +1044,12 @@ AC_ARG_ENABLE(ofp-version,
 # DQ (7/31/2010): Changed the default version of OFP to 0.8.1 (now distributed with ROSE).
 echo "enable_ofp_version = $enable_ofp_version"
 if test "x$enable_ofp_version" = "x"; then
-   echo "Default version of OFP used (0.8.2)"
+   echo "Default version of OFP used (0.8.3)"
    ofp_major_version_number=0
    ofp_minor_version_number=8
  # DQ (9/26/2010): Changed default version to 0.8.2
- # ofp_patch_version_number=1
-   ofp_patch_version_number=2
+ # CER (6/2/2011): Changed default version to 0.8.3
+   ofp_patch_version_number=3
 else
    ofp_major_version_number=`echo $enable_ofp_version | cut -d\. -f1`
    ofp_minor_version_number=`echo $enable_ofp_version | cut -d\. -f2`
@@ -1069,7 +1076,7 @@ if test "x$ofp_major_version_number" = "x0"; then
             if test "x$ofp_patch_version_number" = "x2"; then
                echo "Recognized an accepted patch version number."
             elif test "x$ofp_patch_version_number" = "x3"; then
-               echo "Recognized an accepted patch version number ONLY for testing."
+               echo "Recognized an accepted patch version number."
             else
 #              echo "ERROR: Could not identify the OFP patch version number."
                echo "Recognized an accepted patch version number (later than default)."
@@ -1123,11 +1130,11 @@ AC_SUBST(ROSE_OFP_PATCH_VERSION_NUMBER)
 # CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/fortran-parser/lib/OpenFortranParser-0.7.2.jar:.
 # CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-0.7.2.jar:.
 # CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-${ROSE_OFP_MAJOR_VERSION_NUMBER}.${ROSE_OFP_MINOR_VERSION_NUMBER}.${ROSE_OFP_PATCH_VERSION_NUMBER}.jar:.
-#
-# OFP version 0.8.2 and antlr 3.2 are the defaults
-#
 CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar:${ABSOLUTE_SRCDIR}${OPEN_FORTRAN_PARSER_PATH}/OpenFortranParser-${ROSE_OFP_MAJOR_VERSION_NUMBER}.${ROSE_OFP_MINOR_VERSION_NUMBER}.${ROSE_OFP_PATCH_VERSION_NUMBER}.jar:.
 
+#
+# OFP version 0.8.3 and antlr 3.3 are the defaults
+#
 if test "x$ofp_minor_version_number" = "x8"; then
    if test "x$ofp_patch_version_number" = "x3"; then
       CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.3-complete.jar:${ABSOLUTE_SRCDIR}${OPEN_FORTRAN_PARSER_PATH}/OpenFortranParser-${ROSE_OFP_MAJOR_VERSION_NUMBER}.${ROSE_OFP_MINOR_VERSION_NUMBER}.${ROSE_OFP_PATCH_VERSION_NUMBER}.jar:.
@@ -1815,6 +1822,11 @@ AC_SUBST(top_pwd)
 absolute_path_srcdir="`cd $srcdir; pwd`"
 AC_SUBST(absolute_path_srcdir)
 
+# Liao 6/20/2011, store source path without symbolic links, used to have consistent source and compile paths for ROSE 
+# when call graph analysis tests are used.
+res_top_src=$(cd "$srcdir" && pwd -P)
+AC_DEFINE_UNQUOTED([ROSE_SOURCE_TREE_PATH],"$res_top_src",[Location of ROSE Source Tree.])
+
 # This is silly, but it is done to hide an include command (in
 # projects/compass/Makefile.am, including compass-makefile.inc in the build
 # tree) from Automake because the needed include file does not exist when
@@ -2083,12 +2095,14 @@ src/frontend/CxxFrontend/Makefile
 src/frontend/OpenFortranParser_SAGE_Connection/Makefile
 src/frontend/ECJ_ROSE_Connection/Makefile
 src/frontend/PHPFrontend/Makefile
+src/frontend/PythonFrontend/Makefile
 src/frontend/BinaryDisassembly/Makefile
 src/frontend/BinaryLoader/Makefile
 src/frontend/BinaryFormats/Makefile
 src/frontend/Disassemblers/Makefile
 src/midend/Makefile
 src/midend/abstractHandle/Makefile
+src/midend/abstractMemoryObject/Makefile
 src/midend/astUtil/Makefile
 src/midend/astQuery/Makefile
 src/midend/astProcessing/Makefile
@@ -2096,6 +2110,7 @@ src/midend/astRewriteMechanism/Makefile
 src/midend/astDiagnostics/Makefile
 src/midend/binaryAnalyses/Makefile
 src/midend/programAnalysis/Makefile
+src/midend/programAnalysis/staticSingleAssignment/Makefile
 src/midend/programTransformation/Makefile
 src/midend/programTransformation/astInlining/Makefile
 src/midend/programTransformation/astOutlining/Makefile
@@ -2191,7 +2206,9 @@ projects/FiniteStateModelChecker/Makefile
 projects/HeaderFilesInclusion/HeaderFilesGraphGenerator/Makefile
 projects/HeaderFilesInclusion/HeaderFilesNotIncludedList/Makefile
 projects/HeaderFilesInclusion/Makefile
-projects/MPICodeMotion/Makefile
+projects/MPI_Tools/Makefile
+projects/MPI_Tools/MPICodeMotion/Makefile
+projects/MPI_Tools/MPIDeterminismAnalysis/Makefile
 projects/MacroRewrapper/Makefile
 projects/Makefile
 projects/OpenMP_Analysis/Makefile
@@ -2324,18 +2341,10 @@ projects/PowerAwareCompiler/Makefile
 projects/traceAnalysis/Makefile
 projects/PolyhedralModel/Makefile
 projects/PolyhedralModel/src/Makefile
-projects/PolyhedralModel/src/maths/Makefile
-projects/PolyhedralModel/src/system/Makefile
-projects/PolyhedralModel/src/misc-test/Makefile
-projects/PolyhedralModel/src/common/Makefile
-projects/PolyhedralModel/src/test-common/Makefile
-projects/PolyhedralModel/src/scoplib/Makefile
-projects/PolyhedralModel/src/rose/Makefile
-projects/PolyhedralModel/src/rose-pragma/Makefile
-projects/PolyhedralModel/src/test-rose-pragma/Makefile
 projects/PolyhedralModel/docs/Makefile
 projects/PolyhedralModel/tests/Makefile
 projects/PolyhedralModel/tests/rose-pragma/Makefile
+projects/PolyhedralModel/tests/rose-max-cover/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
@@ -2380,6 +2389,7 @@ tests/CompileTests/CAF2_tests/Makefile
 tests/CompileTests/RoseExample_tests/Makefile
 tests/CompileTests/ExpressionTemplateExample_tests/Makefile
 tests/CompileTests/PythonExample_tests/Makefile
+tests/CompileTests/Python_tests/Makefile
 tests/CompileTests/UPC_tests/Makefile
 tests/CompileTests/OpenMP_tests/Makefile
 tests/CompileTests/OpenMP_tests/fortran/Makefile
@@ -2434,6 +2444,7 @@ tests/roseTests/programAnalysisTests/staticInterproceduralSlicingTests/Makefile
 tests/roseTests/programAnalysisTests/testCallGraphAnalysis/Makefile
 tests/roseTests/programAnalysisTests/variableLivenessTests/Makefile
 tests/roseTests/programAnalysisTests/variableRenamingTests/Makefile
+tests/roseTests/programAnalysisTests/staticSingleAssignmentTests/Makefile
 tests/roseTests/programTransformationTests/Makefile
 tests/roseTests/roseHPCToolkitTests/Makefile
 tests/roseTests/roseHPCToolkitTests/data/01/ANALYSIS/Makefile

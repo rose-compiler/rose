@@ -25,29 +25,17 @@ class PlusApplicator : public OPApplicator
 {
  public:
   SymOpType GetOpType() { return SYMOP_PLUS; }
-  // Add two fractions: vu1/vd1 and vu2/vd2 , save numerator and demoninator into r1 and r2 respectively
   bool MergeConstInt( int vu1, int vd1, int vu2, int vd2, int& r1, int& r2) 
        { 
-#if 0
-         assert(vd1 == vd2);  //QY: not yet handle other case
-         r1= vu1 + vu2; 
-         r2 = vd1;
-#else
-         //Liao, 2/10/2010
-         // Try the simplest way first,
-         // We may need to use LCM/GCD as an optimized version
-         // Boost math lib has support for them
-         if (vd1 == vd2)
-         {
-           r1= vu1 + vu2; 
-           r2 = vd1;
+         if (vu1 == 0) { r1 = vu2; r2 = vd2; }
+         else if (vu2 == 0) { r1 = vu1; r2 = vd1; }
+         else if (vd1 == vd2) {r1= vu1 + vu2; r2 = vd1; }
+         else if (vd1 == 1) { r1 = vu1 * vd2 + vu2; r2 = vd2; } 
+         else if (vd2 == 1) { r1 = vu1 + vu2 * vd1; r2 = vd1; }
+         else {
+              std::cerr << "Cannot not yet handle this case: vd1=" << vd1 << "; vd2= " << vd2 << "; vu1=" << vu1 << "; vu2 = " << vu2 << "\n";
+             assert(0);
          }
-         else
-         {
-           r1 = vu1*vd2 + vu2*vd1;
-           r2 = vd1*vd2;
-         }
-#endif         
          return true;
        }
   SymbolicExpr* CreateExpr() { return new SymbolicPlus(); }

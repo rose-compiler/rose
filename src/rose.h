@@ -166,6 +166,11 @@ namespace ELF{
 #endif
 #endif
 
+// Include PythonFrontend.h if and only if a Python support is required
+#ifdef USE_ROSE_PYTHON_SUPPORT
+#include "PythonFrontend.h"
+#endif
+
 // Support for Xen/Ether hypervisor
 #ifndef _MSC_VER
 #include "ether.h"
@@ -173,6 +178,7 @@ namespace ELF{
 
 // King84 (2010.08.03) : Now that everything is defined we can include all the implementation files for templates.
 #define TEMPLATE_IMPLEMENTATIONS
+// DQ (6/25/2011): Commented out so that I could debug name qualification without function definitions in header files.
 #include "AstDOTGenerationImpl.C"
 #include "utility_functionsImpl.C"
 #undef TEMPLATE_IMPLEMENTATIONS

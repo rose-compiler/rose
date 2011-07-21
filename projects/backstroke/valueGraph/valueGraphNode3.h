@@ -2,7 +2,7 @@
 #define	BACKSTROKE_VALUEGRAPHNODE_H
 
 #include <rose.h>
-#include <ssa/staticSingleAssignment.h>
+#include <staticSingleAssignment.h>
 #include <boost/lexical_cast.hpp>
 
 namespace Backstroke

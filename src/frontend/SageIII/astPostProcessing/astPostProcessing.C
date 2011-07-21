@@ -253,6 +253,22 @@ void postProcessingSupport (SgNode* node)
      if ( SgProject::get_verbose() >= AST_POST_PROCESSING_VERBOSE_LEVEL )
           cout << "/* AST Postprocessing reset template names */" << endl;
 
+#if 0
+  // DQ (5/15/2011): I don't feel comfortable with this being called before the AST is finied being post processed.
+  // This used to be called in the unparser, but that is after resetTemplateNames() below and that is a problem
+  // because template names have already been generated.
+     void newBuildHiddenTypeAndDeclarationLists( SgNode* node );
+     printf ("Developing a new implementation of the name qualification support. \n");
+     newBuildHiddenTypeAndDeclarationLists(node);
+     printf ("DONE: new name qualification support built. \n");
+
+     printf ("Calling SgNode::clearGlobalMangledNameMap() \n");
+     SgNode::clearGlobalMangledNameMap();
+#endif
+
+  // DQ (5/15/2011): This causes template names to be computed as strings and and without name qualification 
+  // if we don't call the name qualification before here. Or we reset the template names after we do the 
+  // analysis to support the name qualification.
   // reset the names of template class declarations
      resetTemplateNames(node);
 
@@ -314,7 +330,13 @@ void postProcessingSupport (SgNode* node)
 
   // DQ (3/16/2006): fixup any newly added declarations (see if we can eliminate the first place where this is called, above)
   // fixup all definingDeclaration and NondefiningDeclaration pointers in SgDeclarationStatement IR nodes
-     fixupDeclarations(node);
+  // driscoll6 (6/10/11): this traversal sets p_firstNondefiningDeclaration for defining declarations, which
+  // causes justifiable failures in AstConsistencyTests. Until this is resolved, skip this test for Python.
+     if (SageInterface::is_Python_language()) {
+         cerr << "warning: python. skipping fixupDeclarations() in astPostProcessing.C" << endl;
+     } else {
+         fixupDeclarations(node);
+     }
 
   // DQ (3/17/2007): This should be empty
      ROSE_ASSERT(SgNode::get_globalMangledNameMap().size() == 0);

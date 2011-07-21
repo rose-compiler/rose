@@ -26,6 +26,7 @@ EXTRA_DIST = CMakeLists.txt                     \
     i686-test1.O3.bin                           \
     i686-test1.O3-stripped.bin                  \
     libm-2.3.6.so                               \
+    libTest-amd64.a				\
     pocketputty.exe                             \
     pocketputty2.exe                            \
     proxycfg.exe                                \

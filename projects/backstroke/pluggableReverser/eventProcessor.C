@@ -285,22 +285,40 @@ std::vector<SgVariableDeclaration*> EventProcessor::getStackDeclarationsForLastE
 
 SgExpression* EventProcessor::pushVal(SgExpression* exp, SgType* returnType)
 {
-	SgExprListExp* parameters = SageBuilder::buildExprListExp(getStackVar(returnType), exp);
-	return buildFunctionCallExp("push", returnType, parameters);
+	SgExprListExp* parameters = SageBuilder::buildExprListExp(exp);
+	return buildFunctionCallExp("push< " + get_type_name(returnType) + " >", returnType, parameters);
 }
 
 SgExpression* EventProcessor::popVal(SgType* type)
 {
-	return buildFunctionCallExp("pop< " + get_type_name(type) + " >", type,
-					buildExprListExp(getStackVar(type)));
+	return buildFunctionCallExp("pop< " + get_type_name(type) + " >", type);
 }
 
 SgExpression* EventProcessor::popVal_front(SgType* type)
 {
-	SgVarRefExp* stackVariable = getStackVar(type);
 	string functionName = "pop_front< " + get_type_name(type) + " >";
-	SgTypeVoid* returnType = SageBuilder::buildVoidType();
-	return SageBuilder::buildFunctionCallExp(functionName, returnType, buildExprListExp(stackVariable));
+	return SageBuilder::buildFunctionCallExp(functionName, type);
+}
+
+
+SgExpression* EventProcessor::cloneValueExp(SgExpression* value, SgType* type)
+{
+	SgType* cleanedType = BackstrokeUtility::removePointerOrReferenceType(type);
+	string typeName = get_type_name(cleanedType);
+	string functionName = "__clone__< " + typeName + " >";
+	
+	SgType* returnType = SageBuilder::buildPointerType(cleanedType);
+	
+	SgExprListExp* params = SageBuilder::buildExprListExp(value);
+	return SageBuilder::buildFunctionCallExp(functionName, returnType, params);
+}
+
+SgExpression* EventProcessor::assignPointerExp(SgExpression* lhs, SgExpression* rhs, SgType* lhsType, SgType* rhsType)
+{
+	string functionName = "__assign__< " + get_type_name(lhsType) + " , " + get_type_name(rhsType) + " >";
+	SgType* returnType = SageBuilder::buildVoidType();
+	SgExprListExp* params = SageBuilder::buildExprListExp(lhs, rhs);
+	return SageBuilder::buildFunctionCallExp(functionName, returnType, params);
 }
 
 bool EventProcessor::checkForInitialVersions(const VariableVersionTable& var_table)

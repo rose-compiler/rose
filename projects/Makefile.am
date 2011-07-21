@@ -13,7 +13,7 @@ SUBDIRS = \
      DocumentationGenerator \
      FiniteStateModelChecker \
      HeaderFilesInclusion \
-     MPICodeMotion \
+     MPI_Tools \
      MacroRewrapper \
      OpenMP_Analysis \
      QtDesignerPlugins \
@@ -29,9 +29,11 @@ SUBDIRS = \
      programModeling \
      pragmaParsing \
      roseToLLVM \
-     symbolicAnalysisFramework \
      taintcheck \
      PowerAwareCompiler
+
+# DQ (6/25/2011): Removed from being tested (failing symbolicAnalysisFramework/tests/test_examples/dominator_example.cpp)
+SUBDIRS += symbolicAnalysisFramework
 
 # DQ (4/8/2011): Directories of tests are a current problem for Insure++.
 if !ROSE_USE_INSURE
@@ -121,9 +123,7 @@ endif
 SUBDIRS += SatSolver
 # endif
 
-if ROSE_USE_PPL
 SUBDIRS += PolyhedralModel
-endif
 
 # DQ (9/12/2009): This was not added to ROSE correctly, please let me help you do this.
 #     StaticDynamicAnalysis/DynamicCPU

@@ -125,16 +125,19 @@ struct OnlyCurrentDirectory : public std::unary_function<bool, SgFunctionDeclara
 
     bool operator() (SgFunctionDeclaration * node) const
     {
-        std::string stringToFilter = ROSE_COMPILE_TREE_PATH + std::string("/tests");
-        std::string srcDir = ROSE_AUTOMAKE_TOP_SRCDIR + std::string("/tests");
-
+        // build tree, ROSE_COMPILE_TREE_PATH is the output of  `pwd -P`, which means symbolic links are resolved already.
+        std::string stringToFilter = ROSE_COMPILE_TREE_PATH + std::string("/tests"); 
+        // Liao 6/20/2011, we have to use the same source path without symbolic links to have the right match
+        std::string srcDir = ROSE_SOURCE_TREE_PATH + std::string("/tests");  //source tree
+        //std::string srcDir = ROSE_AUTOMAKE_TOP_SRCDIR + std::string("/tests");  //source tree
+        //
         // Hard code this for initial testing on target exercise.
         std::string secondaryTestSrcDir = ROSE_AUTOMAKE_TOP_SRCDIR + std::string("/developersScratchSpace");
 
         string sourceFilename = node->get_file_info()->get_filename();
-        string sourceFilenameSubstring = sourceFilename.substr(0, stringToFilter.size());
-        string sourceFilenameSrcdirSubstring = sourceFilename.substr(0, srcDir.size());
-        string sourceFilenameSecondaryTestSrcdirSubstring = sourceFilename.substr(0, secondaryTestSrcDir.size());
+        string sourceFilenameSubstring = sourceFilename.substr(0, stringToFilter.size()); // if the file is from the build tree?
+        string sourceFilenameSrcdirSubstring = sourceFilename.substr(0, srcDir.size());  // or from the ROSE source tree?
+        string sourceFilenameSecondaryTestSrcdirSubstring = sourceFilename.substr(0, secondaryTestSrcDir.size()); // or from the developer scratch space?
 
         if (sourceFilenameSubstring == stringToFilter)
             return true;
