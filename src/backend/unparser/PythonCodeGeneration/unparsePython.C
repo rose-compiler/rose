@@ -111,12 +111,12 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
         case V_SgRshiftOp:
         case V_SgExponentiationOp:
         case V_SgPlusAssignOp:
-    //  case V_SgBitAndAssignOp:
-    //  case V_SgBitOrAssignOp:
-    //  case V_SgBitXorAssignOp:
+        case V_SgAndAssignOp:
+        case V_SgIorAssignOp:
+        case V_SgXorAssignOp:
         case V_SgDivAssignOp:
-    //  case V_SgExpAssignOp:
-    //  case V_SgIntegerDivAssignOp:
+        case V_SgExponentiationAssignOp:
+        case V_SgIntegerDivideAssignOp:
         case V_SgLshiftAssignOp:
         case V_SgRshiftAssignOp:
         case V_SgModAssignOp:
@@ -210,7 +210,7 @@ Unparse_Python::unparseOperator(VariantT variant, bool pad) {
     if (pad) curprint(" ");
     switch(variant) {
         case V_SgAddOp:              curprint("+");      break;
-        case V_SgAndOp:              curprint("and");      break;
+        case V_SgAndOp:              curprint("and");    break;
         case V_SgAssignOp:           curprint("=");      break;
         case V_SgBitAndOp:           curprint("&");      break;
         case V_SgBitOrOp:            curprint("|");      break;
@@ -224,12 +224,12 @@ Unparse_Python::unparseOperator(VariantT variant, bool pad) {
         case V_SgRshiftOp:           curprint(">>");     break;
         case V_SgSubtractOp:         curprint("-");      break;
         case V_SgPlusAssignOp:       curprint("+=");     break;
-      //case V_SgBitAndAssignOp:     curprint("&=");     break;
-      //case V_SgBitOrAssignOp:      curprint("|=");     break;
-      //case V_SgBitXorAssignOp:     curprint("^=");     break;
+        case V_SgAndAssignOp:        curprint("&=");     break;
+        case V_SgIorAssignOp:        curprint("|=");     break;
+        case V_SgXorAssignOp:        curprint("^=");     break;
         case V_SgDivAssignOp:        curprint("/=");     break;
-      //case V_SgExpAssignOp:        curprint("**=");    break;
-      //case V_SgIntegerDivAssignOp: curprint("//=");    break;
+        case V_SgExponentiationAssignOp: curprint("**="); break;
+        case V_SgIntegerDivideAssignOp:  curprint("//="); break;
         case V_SgLshiftAssignOp:     curprint("<<=");    break;
         case V_SgRshiftAssignOp:     curprint(">>=");    break;
         case V_SgModAssignOp:        curprint("%=");     break;
