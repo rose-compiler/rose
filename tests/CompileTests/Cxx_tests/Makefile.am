@@ -38,7 +38,9 @@ $(TESTCODE_CURRENTLY_FAILING)
 
 SKIP_UNPARSE_C_ASM_STATEMENTS = -rose:skip_unparse_asm_commands
 
+# DQ (5/8/2011): Adding -rose:skipfinalCompileStep so that we can test the new name qualification support that is not yet hooked up to the unparser.
 ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 $(SKIP_UNPARSE_C_ASM_STATEMENTS)
+# ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 -rose:skipfinalCompileStep $(SKIP_UNPARSE_C_ASM_STATEMENTS)
 
 # Some of these test codes reference A++ header fiels as part of their tests
 # Include the path to A++ and the transformation specification
@@ -156,18 +158,21 @@ MPI_LOCATION = /home/dquinlan/ROSE/ROSE_TESTS/MPI_header_tests/MPI_header_tests_
 test_MPI_LAM:
 	../../testTranslator -rose:verbose 0 -I$(MPI_LOCATION)/LAM_MPI/include -c $(MPI_LOCATION)/tests/input.C
 
+print_testcodes:
+	echo $(TESTCODES)
 
 check-local:
-	@$(MAKE) test2005_56.o
 #	@$(MAKE) testUsingBadCommandline
 	@$(MAKE) testBuildUsingNoPath
 	@$(MAKE) testBuildUsingRelativePath
 	@$(MAKE) testBuildUsingAbsolutePath
-	@$(MAKE) test2010_07.o
 	@echo "Tests of C++."
 	@$(MAKE) $(PASSING_TEST_Objects)
 #	DQ (4/6/2010): This fails on Hudson, but I don't know why!
 #	@$(MAKE) testParser
+#	DQ (5/8/2011): Special tests are now moved to the end.
+	@$(MAKE) test2005_56.o
+	@$(MAKE) test2010_07.o
 	@echo "***********************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/Cxx_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************"
