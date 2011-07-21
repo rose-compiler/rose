@@ -213,6 +213,7 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/frontend/OpenFortranParser_SAGE_Connection \
      -I$(top_srcdir)/src/frontend/ECJ_ROSE_Connection \
      -I$(top_srcdir)/src/frontend/PHPFrontend \
+     -I$(top_srcdir)/src/frontend/PythonFrontend \
      -I$(top_srcdir)/src/frontend/BinaryDisassembly \
      -I$(top_srcdir)/src/frontend/BinaryFormats \
      -I$(top_srcdir)/src/frontend/BinaryLoader \
@@ -224,6 +225,7 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/backend/unparser/JavaCodeGeneration \
      -I$(top_srcdir)/src/backend/unparser/FortranCodeGeneration \
      -I$(top_srcdir)/src/backend/unparser/PHPCodeGeneration \
+     -I$(top_srcdir)/src/backend/unparser/PythonCodeGeneration \
      -I$(top_srcdir)/src/backend/asmUnparser \
      -I$(top_srcdir)/src/util \
      -I$(top_srcdir)/src/util/support \
@@ -231,6 +233,7 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/util/stringSupport \
      -I$(top_srcdir)/src/util/commandlineProcessing \
      -I$(top_srcdir)/src/midend/abstractHandle \
+     -I$(top_srcdir)/src/midend/abstractMemoryObject \
      -I$(top_srcdir)/src/midend/astDiagnostics \
      -I$(top_srcdir)/src/midend/programTransformation/astInlining \
      -I$(top_srcdir)/src/midend/programTransformation/astOutlining  \
@@ -254,6 +257,7 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/midend/programAnalysis \
      -I$(top_srcdir)/src/midend/programAnalysis/annotationLanguageParser \
      -I$(top_srcdir)/src/midend/programAnalysis/CFG \
+     -I$(top_srcdir)/src/midend/programAnalysis/staticSingleAssignment \
      -I$(top_srcdir)/src/midend/programAnalysis/CallGraphAnalysis \
      -I$(top_srcdir)/src/midend/programAnalysis/OAWrap \
      -I$(top_srcdir)/src/midend/programAnalysis/dataflowAnalysis \
@@ -287,6 +291,7 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/midend/astUtil/astInterface \
      -I$(top_srcdir)/libltdl \
      $(ROSE_PHP_INCLUDES) \
+     $(ROSE_PYTHON_INCLUDES) \
      $(ROSE_YICES_INCLUDES) \
      $(ROSE_DWARF_INCLUDES) \
      $(ROSE_WINE_INCLUDES) \

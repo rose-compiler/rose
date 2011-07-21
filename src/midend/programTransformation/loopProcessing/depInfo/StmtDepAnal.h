@@ -3,24 +3,23 @@
 
 #include <SymbolicVal.h>
 
-class LoopTransformInterface;
 class DepRel;
 class DepInfo;
 class DomainCond;
 
 template <class Result>
-void ComputeLoopDep( LoopTransformInterface &fa, const AstNodePtr& exp, 
+void ComputeLoopDep( const AstNodePtr& exp, 
                      const DepRel& rel, Result& r);
 
 template <class VarVec, class CoeffVec>
-SymbolicVal DecomposeAffineExpression(LoopTransformInterface& la, 
-            const SymbolicVal& exp, const VarVec& vars, CoeffVec& vec, int size);
+SymbolicVal DecomposeAffineExpression( const SymbolicVal& exp, 
+                 const VarVec& vars, CoeffVec& vec, int size);
 
 template <class Collect>
 int SetDepDirection( DepInfo &edd, int commLevel, Collect &result);
 
 template <class CoeffVec, class BoundVec,class BoundOp>
-bool SplitEquation( LoopTransformInterface& la, CoeffVec& cur, 
+bool SplitEquation( CoeffVec& cur, 
                       const SymbolicVal& cut, const BoundVec& bounds, 
                       BoundOp& boundop, CoeffVec& split);
 

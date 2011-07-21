@@ -8,7 +8,6 @@
 class LoopTreeBuild : public ProcessAstTree
 {
   LoopTreeCreate *lt;
-  LoopTransformInterface* la;
   LoopTreeNode *cur;
  protected:
   bool ProcessLoop( AstInterface &fa, const AstNodePtr& loop ,
@@ -18,14 +17,12 @@ class LoopTreeBuild : public ProcessAstTree
        LoopTreeNode *root = lt->GetTreeRoot();
        if (t == AstInterface::PreVisit) {
           if (fa.IsFortranLoop(loop)) {
-              LoopTreeNode* result = lt->CreateLoopNode( *la, loop);
+              LoopTreeNode* result = lt->CreateLoopNode(loop);
               result->Link(cur, LoopTreeNode::AsLastChild);
               cur = result;
            } 
            else  {
-             std::cerr << "Warning: treating non-Fortran loop at:"
-               << getAstLocation(loop)
-               <<" as a single statement\n";
+             std::cerr << "Warning: treating non-Fortran loop as a single statement\n";
              ProcessStmt(fa, loop);
            }
         }
@@ -55,11 +52,9 @@ class LoopTreeBuild : public ProcessAstTree
     } 
  public:
    bool operator ()( AstInterface& fa, const AstNodePtr& top, 
-                        LoopTreeCreate *ltc, LoopTransformInterface* _la,
-                        LoopTreeNode* root = 0)
+                        LoopTreeCreate *ltc, LoopTreeNode* root = 0)
      { 
         lt = ltc;
-        la = _la;
         cur = (root)? root: lt->GetTreeRoot();
         return ReadAstTraverse(fa, top, *this, AstInterface::PreAndPostOrder);
      }

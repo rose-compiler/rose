@@ -100,10 +100,12 @@ class CompSliceNestSwapInfo : public CompSliceNestObserveInfo
 class CompSliceNestDeleteEntryInfo : public CompSliceNestObserveInfo
 {
   int index;
+  bool saveAsInner;
  public:
-  CompSliceNestDeleteEntryInfo( const CompSliceNest& c, int i)
-    : CompSliceNestObserveInfo(c), index(i) {}
+  CompSliceNestDeleteEntryInfo( const CompSliceNest& c, int i, bool _save)
+    : CompSliceNestObserveInfo(c), index(i), saveAsInner(_save) {}
   int GetIndex() const { return index; }
+  bool SaveAsInner() const {return saveAsInner; }
   virtual void UpdateObserver( CompSliceNestObserver &o) const
       { o.UpdateDeleteEntry(*this);}
 };
