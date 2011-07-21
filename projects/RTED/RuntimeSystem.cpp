@@ -814,7 +814,7 @@ int _rted_InitVariable( rted_TypeDesc    td,
   }
 
   const RsType& rs_type = rs_simpleGetType(*rs->getTypeSystem(), td.name, td.base, class_name, td.desc);
-  bool          sendupd = rs->checkMemWrite( address, size, &rs_type );
+  int           sendupd = rs->checkMemWrite( address, size, &rs_type );
 
   // This assumes roseInitVariable is called after the assignment has taken
   // place (otherwise we wouldn't get the new heap address).

@@ -277,10 +277,11 @@ void RuntimeSystem::checkBounds(Address addr, Address accaddr, size_t size) cons
 bool
 RuntimeSystem::checkMemWrite(Address addr, size_t size, const RsType* t)
 {
-    std::pair<MemoryType*, bool> res = memManager.checkWrite(addr, size, t);
+    std::pair<MemoryType*, int>  res = memManager.checkWrite(addr, size, t);
     AllocKind                    ak = res.first->howCreated();
 
-    return res.second && (ak & akUpcShared);
+    if ((ak & akUpcShared) == 0) return 0;
+    return res.second;
 }
 
 
