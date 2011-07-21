@@ -314,6 +314,7 @@ testECJ:
 	java -cp ecjROSE.jar org.eclipse.jdt.internal.compiler.batch.Main $(srcdir)/simple.java
 
 # Test for help option to ECJ (some ECJ options not supported via ROSE).
+# DQ (7/21/2011): Currently a file must be specified, but this should be fixed later.
 testECJ_help_option:
 	$(testTranslator) -rose:java -rose:verbose 0 -rose:skipfinalCompileStep -ecj:help -c $(srcdir)/simple.java
 
@@ -365,7 +366,7 @@ check-local:
 	@echo "**********************************************************************************************"
 endif
 
-EXTRA_DIST = $(ALL_TESTCODES) gcjTestSuite
+EXTRA_DIST = $(ALL_TESTCODES) testWithJavaSpecification.java testWithoutJavaSpecification.java gcjTestSuite 
 
 clean-local:
 	rm -f *.dot *.class *.java rose_performance_report_lockfile.lock *.out
