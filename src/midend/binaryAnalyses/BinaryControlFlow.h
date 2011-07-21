@@ -91,7 +91,7 @@ namespace BinaryAnalysis {
      *
      *  Since binary control flow graphs are simply Boost graphs, they can be easily printed as GraphViz graphs using
      *  boost::write_graphviz().  If you want something other than vertex descriptors in the graphs, you could use a
-     *  PropertyWriter class, like this one, which labels the vertices the the basic block address.  Ideally, one would
+     *  PropertyWriter class, like this one, which labels the vertices with the basic block address.  Ideally, one would
      *  use a class template, but we keep this example simple:
      *
      *  @code
@@ -100,7 +100,8 @@ namespace BinaryAnalysis {
      *  struct GraphvizVertexWriter {
      *      const BinaryAnalysis::ControlFlow::Graph &cfg;
      *      GraphvizVertexWriter(BinaryAnalysis::ControlFlow::Graph &cfg): cfg(cfg) {}
-     *      void operator()(std::ostream &output, const BinaryAnalysis::ControlFlow::Vertex &v) {
+     *      typedef boost::graph<BinaryAnalysis::ControlFlow::Graph>::vertex_descriptor Vertex;
+     *      void operator()(std::ostream &output, const Vertex &v) {
      *          SgAsmBlock *block = get(boost::vertex_name, cfg, v);
      *          output <<"[ label=\"" <<StringUtility::addrToString(block->get_address()) <<"\" ]";
      *      }
@@ -124,7 +125,18 @@ namespace BinaryAnalysis {
          *  SgAsmBlock nodes in the AST (via the boost::vertex_name property).  The graph edges represent flow of control from
          *  one SgAsmBlock to another.  Since the control flow graph is a Boost graph, it is endowed with all the features of a
          *  Boost graph and can be the operand of the various Boost graph algorithms.  See build_cfg_from_ast() for specifics
-         *  about what is included in such a graph. */
+         *  about what is included in such a graph.
+         *
+         *  It is common to need a type for the vertices and edges.  Boost graphs store this information in graph_traits and
+         *  users should use that to obtain those types.  Doing so will, in the long run, make your code more extensible since
+         *  the only datatype you're depending on is the graph itself--change the graph type and the vertex and edge types will
+         *  automatically adjust.  See Boost Graph Library documentation for all the available types.  The most common are:
+         *
+         *  @code
+         *  typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;
+         *  typedef boost::graph_traits<Graph>::edge_descriptor Edge;
+         *  @endcode
+         */
         typedef boost::adjacency_list<boost::listS,                                 /* edges of each vertex in std::list */
                                       boost::vecS,                                  /* vertices in std::vector */
                                       boost::bidirectionalS,

@@ -34,7 +34,18 @@ namespace BinaryAnalysis {
          *  (BinaryAnalysis::ControlFlowGraph) to include only the edges (and their incident vertices) that flow from one
          *  function to another.  The advantage of using a control flow graph to represent function call information is that
          *  each call site will be included in the function call graph due to the fact that the control flow graph vertices are
-         *  blocks (SgAsmBlock) rather than functions (SgAsmFunctionDeclaration). */
+         *  blocks (SgAsmBlock) rather than functions (SgAsmFunctionDeclaration).
+         *
+         *  It is common to need a type for the vertices and edges.  Boost graphs store this information in graph_traits and
+         *  users should use that to obtain those types.  Doing so will, in the long run, make your code more extensible since
+         *  the only datatype you're depending on is the graph itself--change the graph type and the vertex and edge types will
+         *  automatically adjust.  See Boost Graph Library documentation for all the available types.  The most common are:
+         *
+         *  @code
+         *  typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;
+         *  typedef boost::graph_traits<Graph>::edge_descriptor Edge;
+         *  @endcode
+         */
         typedef boost::adjacency_list<boost::listS,                                 /* out-edges of each vertex in std::list */
                                       boost::vecS,                                  /* store vertices in std::vector */
                                       boost::directedS,                             /* call graph is directed */
