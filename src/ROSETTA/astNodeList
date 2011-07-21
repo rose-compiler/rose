@@ -359,6 +359,7 @@ SgEqualityOp
 SgEquivalenceStatement
 SgErrorDirectiveStatement
 SgExponentiationOp
+SgExponentiationAssignOp
 SgExprListExp
 SgExprStatement
 SgExpression
@@ -419,6 +420,7 @@ SgInquireStatement
 SgIntKeyedBidirectionalGraph
 SgIntVal
 SgIntegerDivideOp
+SgIntegerDivideAssignOp
 SgInterfaceBody
 SgInterfaceStatement
 SgInterfaceSymbol
