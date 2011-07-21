@@ -4321,6 +4321,7 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
              }
 #endif
 
+#if 0
        // DQ (10/11/2006): Don't generate qualified names for the class name a forward declaration
        // curprint ( string("/* In unparseClassDeclStmt: (skip qualified name if true) classdecl_stmt->get_forward() = " + ((classdecl_stmt->get_forward() == true) ? "true" : "false") + " */\n ";
           if (classdecl_stmt->get_forward() == false)
@@ -4333,6 +4334,8 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
                curprint ( nameQualifier.str());
              }
+#endif
+       // DQ (7/20/2011): Test compilation without these functions.
 
        // DQ (6/5/2011): Newest refactored support for name qualification.
           SgName nameQualifier = classdecl_stmt->get_qualified_name_prefix();

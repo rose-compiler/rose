@@ -137,6 +137,8 @@ Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
 
 
 
+#if 0
+// DQ (7/20/2011): Test compilation without these functions.
 
 SgName
 Unparser_Nameq::generateNameQualifier( SgInitializedName* initializedName, const SgUnparse_Info& info, bool qualificationOfType )
@@ -246,4 +248,5 @@ Unparser_Nameq::generateNameQualifierSupport ( SgScopeStatement* scope, const Sg
      return qualifiedName;
    }
 
+#endif
 
