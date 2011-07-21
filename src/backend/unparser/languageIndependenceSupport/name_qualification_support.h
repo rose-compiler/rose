@@ -56,6 +56,9 @@ class Unparser_Nameq
        // DQ (6/2/2011): New name qualification support.
          SgName lookup_generated_qualified_name ( SgNode* n );
 
+#if 0
+       // DQ (7/20/2011): Test compilation without these functions.
+
        // DQ (5/11/2011): New name qualification support.
        // SgName generateNameQualifier( SgInitializedName* initializedName, const SgUnparse_Info& info );
           SgName generateNameQualifier( SgInitializedName* initializedName, const SgUnparse_Info& info, bool qualificationOfType = false );
@@ -66,6 +69,7 @@ class Unparser_Nameq
        // Lower level support for generateNameQualifier() functions.
        // SgName generateNameQualifierSupport( SgScopeStatement* scope, const SgUnparse_Info& info );
           SgName generateNameQualifierSupport( SgScopeStatement* scope, const SgUnparse_Info& info, bool qualificationOfType );
+#endif
    };
 
 #endif
