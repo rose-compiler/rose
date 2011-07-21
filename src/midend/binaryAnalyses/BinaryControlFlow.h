@@ -1,6 +1,9 @@
 #ifndef ROSE_BinaryAnalysis_ControlFlow_H
 #define ROSE_BinaryAnalysis_ControlFlow_H
 
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/depth_first_search.hpp>
 
