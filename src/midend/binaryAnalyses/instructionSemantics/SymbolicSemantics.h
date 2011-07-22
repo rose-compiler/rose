@@ -356,7 +356,7 @@ namespace SymbolicSemantics {
             if (0==BeginAt)
                 return unsignedExtend<Len,EndAt-BeginAt>(a);
             if (a.is_known())
-                return ValueType<EndAt-BeginAt>(a.known_value());
+                return ValueType<EndAt-BeginAt>((a.known_value()>>BeginAt) & IntegerOps::genMask<uint64_t>(EndAt-BeginAt));
             return ValueType<EndAt-BeginAt>(new InternalNode(EndAt-BeginAt, InsnSemanticsExpr::OP_EXTRACT,
                                                              LeafNode::create_integer(32, BeginAt),
                                                              LeafNode::create_integer(32, EndAt),
@@ -655,7 +655,7 @@ namespace SymbolicSemantics {
         template <size_t Len>
         ValueType<Len> and_(const ValueType<Len> &a, const ValueType<Len> &b) const {
             if (a.is_known() && b.is_known())
-                return ValueType<Len>(a.known_value() ^ b.known_value());
+                return ValueType<Len>(a.known_value() & b.known_value());
             return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_BV_AND, a.expr, b.expr));
         }
 
