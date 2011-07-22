@@ -1,4 +1,4 @@
-public final class test2011_25 // BadInstanceOf 
+public final class test2011_25
    {
      private static class Animal {}
      private static final class Fish extends Animal { void swim(){}  }

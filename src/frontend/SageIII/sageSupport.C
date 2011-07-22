@@ -2636,6 +2636,17 @@ SgSourceFile::initializeGlobalScope()
      set_globalScope( new SgGlobal( globalScopeFileInfo ) );
      ROSE_ASSERT (get_globalScope() != NULL);
 
+#if 0
+  // DQ (6/23/2011): Changed my mind, I would like to avoid using this if possible.
+  // DQ (6/15/2011): Added scope to hold unhandled declarations (see test2011_80.C).
+     Sg_File_Info* holdingScopeFileInfo = new Sg_File_Info(sourceFilename,0,0);
+     ROSE_ASSERT (holdingScopeFileInfo != NULL);
+     set_temp_holding_scope( new SgGlobal( holdingScopeFileInfo ) );
+     ROSE_ASSERT (get_temp_holding_scope() != NULL);
+
+     get_temp_holding_scope()->set_parent(this);
+#endif
+
      if (SageBuilder::symbol_table_case_insensitive_semantics == true)
         {
           get_globalScope()->setCaseInsensitive(true);
@@ -4263,6 +4274,9 @@ SgSourceFile::SgSourceFile ( vector<string> & argv , SgProject* project )
   // printf ("In the SgSourceFile constructor \n");
 
      set_globalScope(NULL);
+
+  // DQ (6/15/2011): Added scope to hold unhandled declarations (see test2011_80.C).
+     set_temp_holding_scope(NULL);
 
   // This constructor actually makes the call to EDG/OFP to build the AST (via callFrontEnd()).
   // printf ("In SgSourceFile::SgSourceFile(): Calling doSetupForConstructor() \n");
@@ -6281,10 +6295,118 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
 
      ROSE_ASSERT(get_requires_C_preprocessor() == false);
 
+  // *******************************************************
+
+  // DQ (9/19/2011): This is what I thought, but it does not appear to be true or we tie into ECJ at the
+  // the wrong location so that we don't get any syntax checking.  So we need to introduce a pass using
+  // the backend compiler to support the syntax checking for Java.
   // DQ (10/11/2010): We don't need syntax checking because ECJ will do that.
   // bool syntaxCheckInputCode = (get_skip_syntax_check() == false);
   // bool syntaxCheckInputCode = false;
+     bool syntaxCheckInputCode = (get_skip_syntax_check() == false);
   // printf ("In build_Java_AST(): syntaxCheckInputCode = %s \n",syntaxCheckInputCode ? "true" : "false");
+
+     if (syntaxCheckInputCode == true)
+        {
+       // Introduce tracking of performance of ROSE.
+          TimingPerformance timer ("Java syntax checking of input:");
+
+       // DQ (9/19/2011): For Java we want to run the backend javacc compiler to do the syntax checking.
+          string backendJavaCompiler = BACKEND_JAVA_COMPILER_NAME_WITH_PATH;
+          if ( get_verbose() > 2 )
+             {
+               printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Setting up Java Syntax check @@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+               printf ("BACKEND_JAVA_COMPILER_NAME_WITH_PATH = %s \n",backendJavaCompiler.c_str());
+             }
+
+          vector<string> javaCommandLine;
+          javaCommandLine.push_back(backendJavaCompiler);
+
+       // Use "-d ." option to force class files to be generated in the current directory (instead of the source directory.
+       // this semantics matches the support of the other languages in ROSE and privents "make check" from trying to write
+       // to the source directory which is an error.  It might be different from the samantics of the SUN javac and other 
+       // java compilers.  I am unclear on this point.
+
+       // Use C system function to get the current directory.
+       // char currentDirectory[PATH_MAX];
+       // char currentDirectory[MAX_PATH];
+          char currentDirectory[8096];
+          getcwd(currentDirectory, sizeof(currentDirectory));
+          string currentDirectoryString = currentDirectory;
+
+       // DQ (7/20/2011): We can't build a striang with spaces, I don't know why.  Each part of the option 
+       // for "-sourcepath <path>" or "-d <path>" must be pushed onto the javaCommandLine seperately.
+
+          if ( get_verbose() > 2 )
+               javaCommandLine.push_back("-verbose");
+
+       // Better to use "-d" than to specify the "-sourcepath" option.  I think.
+       // javaCommandLine.push_back("-sourcepath");
+       // javaCommandLine.push_back(StringUtility::getPathFromFileName(get_sourceFileNameWithPath()));
+          javaCommandLine.push_back("-d");
+          javaCommandLine.push_back(currentDirectoryString);
+
+          if (get_output_warnings() == true)
+             {
+            // Specify warnings for javac compiler.
+               if (backendJavaCompiler == "javac")
+                  {
+                    javaCommandLine.push_back("-Xlint");
+                  }
+                 else
+                  {
+                    printf ("Currently only the javac compiler backend is supported backendCompilerSystem = %s \n",backendJavaCompiler.c_str());
+                    ROSE_ASSERT(false);
+                  }
+             }
+
+#if 1
+          if ( get_verbose() > 0 )
+             {
+               printf ("Checking syntax of input program using gfortran: syntaxCheckingCommandline = %s \n",CommandlineProcessing::generateStringFromArgList(javaCommandLine,false,false).c_str());
+             }
+#endif
+       // Call the OS with the commandline defined by: syntaxCheckingCommandline
+          javaCommandLine.push_back(get_sourceFileNameWithPath());
+
+       // At this point we have the full command line with the source file name
+          if ( get_verbose() > 0 )
+             {
+               printf ("Checking syntax of input program using gfortran: syntaxCheckingCommandline = %s \n",CommandlineProcessing::generateStringFromArgList(javaCommandLine,false,false).c_str());
+             }
+
+          int returnValueForSyntaxCheckUsingBackendCompiler = 0;
+#if USE_GFORTRAN_IN_ROSE
+          returnValueForSyntaxCheckUsingBackendCompiler = systemFromVector (javaCommandLine);
+#else
+          printf ("backend java compiler (javac) unavailable ... (not an error) \n");
+#endif
+
+       // Check that there are no errors, I think that warnings are ignored!
+          if (returnValueForSyntaxCheckUsingBackendCompiler != 0)
+             {
+            // printf ("Syntax errors detected in input java program ... \n");
+               printf ("Syntax errors detected in input java program ... status = %d \n",returnValueForSyntaxCheckUsingBackendCompiler);
+
+            // We should define some convention for error codes returned by ROSE
+               exit(1);
+             }
+          ROSE_ASSERT(returnValueForSyntaxCheckUsingBackendCompiler == 0);
+
+          if ( get_verbose() > 2 )
+             {
+               printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@ DONE: Setting up Java Syntax check @@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+             }
+
+#if 0
+       // Debugging code.
+          printf ("Exiting as a test ... (after syntax check) \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
+  // *******************************************************
+
 
   // Build the classpath list for Java support.
      const string classpath = build_classpath();
@@ -6334,25 +6456,8 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
   // printf ("get_exit_after_parser() = %s \n",get_exit_after_parser() ? "true" : "false");
      if (get_exit_after_parser() == true)
         {
-          printf("Sorry, not implemented: exit_after_parser option is not supported for Java yet. \n");
-          ROSE_ASSERT(false);
+           int errorCode = 0;
 
-       // DQ (1/19/2008): New version of OFP requires different calling syntax.
-       // string OFPCommandLineString = std::string("java parser.java.FortranMain") + " " + get_sourceFileNameWithPath();
-          vector<string> OFPCommandLine;
-          OFPCommandLine.push_back(JAVA_JVM_PATH);
-          OFPCommandLine.push_back(classpath);
-       // OFPCommandLine.push_back("fortran.ofp.FrontEnd");
-          OFPCommandLine.push_back("JavaTraversal");
-
-#if 0
-          printf ("exit_after_parser: OFPCommandLine = %s \n",StringUtility::listToString(OFPCommandLine).c_str());
-#endif
-
-       // Some security checking here could be helpful!!!
-          int errorCode = systemFromVector (OFPCommandLine);
-
-       // DQ (9/30/2008): Added error checking of return value
           if (errorCode != 0)
              {
                printf ("Using option -rose:exit_after_parser (errorCode = %d) \n",errorCode);

@@ -79,7 +79,7 @@ bool isFileIOFunctionCall(const std::string& name) {
           || name == "fgetc"
           || name == "fputc"
           || name == "fclose"
-          || name == "std::fstream"
+          || name == "::std::fstream"
           );
 }
 
