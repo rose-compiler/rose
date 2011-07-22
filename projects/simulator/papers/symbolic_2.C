@@ -52,7 +52,7 @@ public:
     virtual Analysis *clone() { return this; }
 
     // The actual analysis, triggered when we reach the specified execution address...
-    virtual bool operator()(bool enabled, const Args &args) {
+    virtual bool operator()(bool enabled, const Args &args) try {
         static const char *name = "Analysis";
         using namespace InsnSemanticsExpr;
         if (enabled && args.insn->get_address()==trigger_addr) {
@@ -143,6 +143,12 @@ public:
                   <<name <<": return value has " <<vars.size() <<" variables:";
                 for (std::set<const InsnSemanticsExpr::LeafNode*>::iterator vi=vars.begin(); vi!=vars.end(); ++vi)
                     s <<" " <<*vi;
+                s <<"\n";
+                if (!constraints.empty()) {
+                    s <<name <<": path constraints:\n";
+                    for (std::vector<const TreeNode*>::iterator ci=constraints.begin(); ci!=constraints.end(); ++ci)
+                        s <<name <<":   " <<*ci <<"\n";
+                }
                 trace->mesg("%s", s.str().c_str());
             }
 
@@ -167,7 +173,7 @@ public:
                         trace->mesg("%s: evaluation result is 0x%08"PRIx64, name, result_value->get_value());
                     }
                 } else {
-                    trace->mesg("%s: expression is not satisfiable. ERROR!", name);
+                    trace->mesg("%s: expression is not satisfiable.", name);
                 }
             }
 
@@ -196,33 +202,45 @@ public:
             throw this; // Optional: will exit simulator, caught in main(), which then deactivates the simulator
         }
         return enabled;
+    } catch (const Analysis*) {
+        args.thread->get_process()->get_simulator()->activate();
+        throw;
     }
 };
 
 int main(int argc, char *argv[], char *envp[])
 {
-#if 1
-    // Look for the --take-branch=STRING switch, parse it, and remove it from the arguments.  The STRING is a series of boolean
-    // values (t/f or 1/0 or y/n) that say what to do when the analysis hits a conditional branch instruction and cannot decide
-    // whether the branch should be taken or not taken.  Whatever choice the user specifies here causes the analysis to add a
-    // new constraint to the solver.
+    // Parse (and remove) switches intended for the analysis.
+    std::string analysis_func;
+    rose_addr_t analysis_va = 0;
     std::vector<bool> take_branch;
     for (int i=1; i<argc; i++) {
-        if (!strncmp(argv[i], "--take-branch=", 14)) {
+        if (!strncmp(argv[i], "--analysis-func=", 16)) {
+            // name or address of function to analyze
+            char *rest;
+            analysis_va = strtoull(argv[i]+16, &rest, 0);
+            if (*rest) {
+                analysis_va = 0;
+                analysis_func = argv[i]+16;
+            }
+            memmove(argv+i, argv+i+1, (argc-- - i)*sizeof(*argv));
+            --i;
+        } else if (!strncmp(argv[i], "--take-branch=", 14)) {
+            // --take-branch=STRING.  The STRING is a series of boolean values (t/f or 1/0 or y/n) that say what to do when the
+            // analysis hits a conditional branch instruction and cannot decide whether the branch should be taken or not
+            // taken.  Whatever choice the user specifies here causes the analysis to add a new constraint to the solver.
             for (size_t j=14; argv[i][j]; j++)
                 take_branch.push_back(NULL!=strchr("t1y", argv[i][j]));
-            memmove(argv+i, argv+i+1, (argc-- - i)*sizeof(*argv)); // dont forget argv[argc]'s NULL
-            --i; // continue, there can be more than one "--take-branch" switch.
+            memmove(argv+i, argv+i+1, (argc-- -i)*sizeof(*argv));
+            --i;
         }
     }
-#else
-    std::vector<bool> take_branch;
-    take_branch.push_back(true);        // 0x08048471: "while" loop;  true means enter loop
-    take_branch.push_back(true);        // 0x08048482: lhs of '&&' op in "if (*bp=='\r' && ..."; true means opand is false
-    take_branch.push_back(true);        // 0x08048471: second hit; see above
-    take_branch.push_back(false);       // 0x08048482: second hit; see above
-#endif
+    if (analysis_func.empty()) {
+        std::cerr <<argv[0] <<": --analysis-func=NAME required\n";
+        return 1;
+    }
 
+    // Parse switches intended for the simulator.
     RSIM_Linux32 sim;
     int n = sim.configure(argc, argv, envp);
 
@@ -235,10 +253,11 @@ int main(int argc, char *argv[], char *envp[])
     rose_argv[rose_argc] = NULL;
     SgProject *project = frontend(rose_argc, rose_argv);
 
-    // Find the address of "main" and "updcrc" functions.
+    // Find the address of "main" and analysis functions.
     rose_addr_t main_va = RSIM_Tools::FunctionFinder().address(project, "main");
     assert(main_va!=0);
-    rose_addr_t analysis_va = RSIM_Tools::FunctionFinder().address(project, "guess_type");
+    if (!analysis_func.empty())
+        analysis_va = RSIM_Tools::FunctionFinder().address(project, analysis_func);
     assert(analysis_va!=0);
 
     // Register the analysis callback.
