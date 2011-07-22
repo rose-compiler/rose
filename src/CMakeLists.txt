@@ -270,6 +270,7 @@ set (unparser_SRC
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/astUnparseAttribute.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/unparser.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/unparse_sym.C
+      ${CMAKE_SOURCE_DIR}/src/backend/unparser/IncludedFilesUnparser.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/formatSupport/unparseFormatHelp.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/formatSupport/unparse_format.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/PHPCodeGeneration/unparsePHP.C

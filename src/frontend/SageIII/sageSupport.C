@@ -1858,6 +1858,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
        // Skip all processing of comments
           set_skip_commentsAndDirectives(true);
           set_collectAllCommentsAndDirectives(false);
+          set_unparseHeaderFiles(false);
         }
 
   //
@@ -1978,6 +1979,14 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
      if ( CommandlineProcessing::isOption(argv,"-rose:","(collectAllCommentsAndDirectives)",true) == true )
         {
        // printf ("option -rose:collectAllCommentsAndDirectives found \n");
+          set_collectAllCommentsAndDirectives(true);
+        }
+
+     // negara1 (07/08/2011): Made unparsing of header files optional. 
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(unparseHeaderFiles)",true) == true )
+        {
+          set_unparseHeaderFiles(true);
+          //To support header files unparsing, it is always needed to collect all directives.
           set_collectAllCommentsAndDirectives(true);
         }
 
@@ -2315,6 +2324,7 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(unparse_binary_file_format)",1);
 
      optionCount = sla(argv, "-rose:", "($)", "(collectAllCommentsAndDirectives)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(unparseHeaderFiles)",1);
      optionCount = sla(argv, "-rose:", "($)", "(skip_commentsAndDirectives)",1);
      optionCount = sla(argv, "-rose:", "($)", "(skipfinalCompileStep)",1);
      optionCount = sla(argv, "-rose:", "($)", "(prelink)",1);
@@ -4261,8 +4271,7 @@ SgProject::parse(const vector<string>& argv)
 
      // negara1 (06/23/2011): Collect information about the included files to support unparsing of those that are modified.
      //Proceed only if there are input files and they require header files unparsing.
-     //This code is currently disabled.
-     if (1 < 0) { //!get_fileList().empty() && (*get_fileList().begin()) -> get_unparseHeaderFiles()) {
+     if (!get_fileList().empty() && (*get_fileList().begin()) -> get_unparseHeaderFiles()) {
          if (SgProject::get_verbose() >= 1){
              cout << endl << "***HEADER FILES ANALYSIS***" << endl << endl;
          }
@@ -7418,7 +7427,12 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
        // the input source file's path has to be the first one to be searched for header!
        // This is required since one of the SPEC CPU 2006 benchmarks: gobmk relies on this to be compiled.
        // insert before the position
-       compilerNameString.insert(iter, std::string("-I") + oldFileNamePathOnly); 
+
+       // negara1 (07/14/2011): The functionality of header files unparsing takes care of this, so this is needed
+       // only when header files unparsing is not enabled.
+       if (!this -> get_unparseHeaderFiles()) {
+         compilerNameString.insert(iter, std::string("-I") + oldFileNamePathOnly); 
+       }
      }
         }
 
@@ -8250,6 +8264,9 @@ SgFile::usage ( int status )
 "     -rose:collectAllCommentsAndDirectives\n"
 "                             store all comments and CPP directives in header\n"
 "                             files into the AST\n"
+"     -rose:unparseHeaderFiles\n"
+"                             unparse all directly or indirectly modified\n"
+"                             header files\n"
 "     -rose:excludeCommentsAndDirectives PATH\n"
 "                             provide path to exclude when using the\n"
 "                             collectAllCommentsAndDirectives option\n"
