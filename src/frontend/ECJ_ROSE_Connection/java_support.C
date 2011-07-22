@@ -591,11 +591,17 @@ buildJavaClass (const SgName & className, SgScopeStatement* scope )
      ROSE_ASSERT(classDefinition->get_declaration()->get_symbol_from_symbol_table() == NULL);
      ROSE_ASSERT(classDefinition->get_declaration()->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table() != NULL);
 
-#if 0
+#if 1
   // Ignore this requirement while we are debugging...
 
   // DQ (3/25/2011): Changed this to a non-defining declaration.
   // Add "super()" member function.
+
+  // Push a dummy type to stand for the return type of the member function to be built.
+  // This allows us to use a common member function support for constrcutors and the "super" function.
+     SgTypeVoid* voidType = SgTypeVoid::createType();
+     astJavaTypeStack.push_front(voidType);
+
   // SgMemberFunctionDeclaration* functionDeclaration = buildSimpleMemberFunction("super",classDefinition);
      SgMemberFunctionDeclaration* functionDeclaration = buildNonDefiningMemberFunction("super",classDefinition);
      ROSE_ASSERT(functionDeclaration != NULL);
@@ -1280,4 +1286,35 @@ appendStatementStack()
           reverseStatementList.pop_front();
         }
    }
+
+
+
+SgClassDefinition*
+getCurrentClassDefinition()
+   {
+     SgClassDefinition* classDefinition = NULL;
+     std::list<SgScopeStatement*>::reverse_iterator i = astJavaScopeStack.rbegin();
+     while (i != astJavaScopeStack.rend() && isSgClassDefinition(*i) == NULL)
+        {
+          i++;
+        }
+
+     if (i != astJavaScopeStack.rend())
+        {
+          classDefinition = isSgClassDefinition(*i);
+          string className = classDefinition->get_declaration()->get_name();
+          printf ("Current class is className = %s \n",className.c_str());
+        }
+       else
+        {
+          printf ("Error in getCurrentClassDefinition(): SgClassDefinition not found \n");
+          ROSE_ASSERT(false);
+        }
+
+     ROSE_ASSERT(classDefinition != NULL);
+     return classDefinition;
+   }
+
+
+
 

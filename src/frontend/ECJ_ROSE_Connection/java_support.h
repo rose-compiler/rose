@@ -104,6 +104,13 @@ void appendStatement(SgStatement* statement);
 //! Put the astJavaStatementStack into the current scope.
 void appendStatementStack();
 
+//! Support to get current class scope.
+SgClassDefinition* getCurrentClassDefinition();
+
+
+
+
+
 template< class T >
 void
 unaryExpressionSupport()
