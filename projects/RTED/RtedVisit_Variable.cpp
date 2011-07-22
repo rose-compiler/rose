@@ -383,11 +383,11 @@ namespace rted
      /// the pointer by virtue of the operator alone (e.g. ++, --)  As a heuristic,
      /// we say that such operations should not change the @e "Memory Chunk", i.e.
      /// the array the pointer refers to.
-     void push_if_ptr_movement(SgExpression& astNode, SgExpression* operand)
+     void push_if_ptr_movement(SgExpression& operand)
      {
-        if( isUsableAsSgPointerType( operand -> get_type() )) {
+        if( isUsableAsSgPointerType( operand.get_type() )) {
            // we don't care about int++, only pointers, or reference to pointers.
-           vt.transf->pointer_movements.push_back( &astNode );
+           vt.transf->pointer_movements.push_back( &operand );
         }
      }
 
@@ -468,13 +468,13 @@ namespace rted
 
      void handle(SgMinusAssignOp& n)
      {
-       push_if_ptr_movement(n, n.get_lhs_operand());
+       push_if_ptr_movement(*n.get_lhs_operand());
        handle_binary(n);
      }
 
      void handle(SgPlusAssignOp& n)
      {
-       push_if_ptr_movement(n, n.get_lhs_operand());
+       push_if_ptr_movement(*n.get_lhs_operand());
        handle_binary(n);
      }
 
@@ -503,12 +503,12 @@ namespace rted
 
      void handle(SgPlusPlusOp& n)
      {
-       push_if_ptr_movement(n, n.get_operand());
+       push_if_ptr_movement(*n.get_operand());
      }
 
      void handle(SgMinusMinusOp& n)
      {
-       push_if_ptr_movement(n, n.get_operand());
+       push_if_ptr_movement(*n.get_operand());
      }
 
      void handle(SgDeleteExp& del)

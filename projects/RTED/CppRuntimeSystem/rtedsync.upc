@@ -9,12 +9,14 @@
 #include "workzone.h"
 
 workzone_policy_t* workzone = 0;
+upc_lock_t*        sharedptrlock = 0;
 
 void rted_UpcAllInitWorkzone(void)
 {
   assert(!workzone);
 
   workzone = wzp_all_alloc();
+  sharedptrlock = upc_all_lock_alloc()
 }
 
 void rted_UpcEnterWorkzone(void)
@@ -65,6 +67,16 @@ void rted_sync_log(void)
 
   printf("      readers = %lu\n", workzone->rw->readers);
   printf("      writer = %lu\n", workzone->rw->current_writer);
+}
+
+void rted_EnterSharedPtr(rted_Address addr)
+{
+  upc_lock(sharedptrlock);
+}
+
+void rted_ExitSharedPtr(rted_Address addr)
+{
+  upc_unlock(sharedptrlock);
 }
 
 void rted_barrier(void)
