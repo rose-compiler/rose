@@ -50,8 +50,6 @@ long gcd(long u, long v)
  **********************/
 
 // The different levels of this lattice
-// this object is uninitialized
-const int DivLattice::uninitialized; 
 // no information is known about the value of the variable
 const int DivLattice::bottom; 
 // the value of the variable is known
@@ -198,112 +196,93 @@ bool DivLattice::meetUpdate(Lattice* that_arg)
 Dbg::dbg << "this: " << str("") << "\n";
 Dbg::dbg << "that: " << that->str("") << "\n";*/
 
-	// if this object is uninitialized, just copy the state of that
-	if(level==uninitialized)
-	{
-		//Dbg::dbg << "    level="<<level<<" that->level="<<that->level<<"\n";
-		if(that->level > uninitialized)
-			copy(that);
-		//Dbg::dbg << "    level="<<level<<" that->level="<<that->level<<"\n";
-		goto Done;
-	}
-	// else, if that is uninitialized, leave this alone
-	else if(that->level==uninitialized)
-	{
-		goto Done;
-	}
-	// if both are initialized, perform the meet
-	else
-	{
-		// if this object is bottom, just copy the state of that
-		// (since we know that both objects are initialized
-		if(level==bottom)
-		{
-			if(that->level>bottom)
-				copy(that);
-			goto Done;
-		}
-		// else, if that is bottom, leave this alone since this is at least bottom
-		else if(that->level==bottom)
-		{
-			goto Done;
-		}
-		// else, if both are above bottom, perform the meet
-		else
-		{
-			// if the two objects have known values 
-			if(level==valKnown && that->level==valKnown)
-			{
-				// if they disagree on their values, move the state 
-				// of this object to divKnown
-				if(value != that->value)
-				{
-					div = gcd(value, that->value);
+        // if this object is bottom, just copy the state of that
+        if(level==bottom)
+          {
+            if(that->level>bottom)
+              copy(that);
+            goto Done;
+          }
+        // else, if that is bottom, leave this alone since this is at least bottom
+        else if(that->level==bottom)
+          {
+            goto Done;
+          }
+        // else, if both are above bottom, perform the meet
+        else
+          {
+            // if the two objects have known values
+            if(level==valKnown && that->level==valKnown)
+              {
+                // if they disagree on their values, move the state
+                // of this object to divKnown
+                if(value != that->value)
+                  {
+                    div = gcd(value, that->value);
 					
-					// If the gcd is > 1, then we know a useful divisor and the level is divKnown
-					// otherwise, the divisor info is useless and the level becomes top
-					if(div != 1) {
-						level = divKnown;
-						rem = 0;
-						value = -1;
-					} else {
-						// If we cannot find a good divisor, we guess that the variable's new value
-						// was produced via an iteration where the variable's value is repeatedly
-						// incremented by a constant. If this is the case, the divisor is the difference
-						// between the two values. If this guess is wrong, the next time we update
-						// this lattice, we'll update it to top.
-						level = divKnown;
-						div = that->value - value;
-						rem = value % div;
-					}
-					goto Done;
-				}
-				// else, if the two objects agree on their values, we can 
-				// leave this object alone
-				else
-					goto Done;
-			}
-			else if(level==valKnown && that->level==divKnown)
-			{
-				//Dbg::dbg << "(level==valKnown && that->level==divKnown) value%that->div="<<(value%that->div)<<" that->rem="<<that->rem<<"\n";
-				// if this can be divided by that->div to get that->rem as the remainder,
-				// we can use that->div, that->rem to represent both objects
-				if(value%that->div == that->rem)
-				{
-					value=0;
-					div = that->div;
-					rem = that->rem;
-					level = divKnown;
-					goto Done;
-				}
-				// otherwise, the two objects are not compatible
-			}
-			else if(level==divKnown && that->level==valKnown)
-			{
-				//Dbg::dbg << "(level==divKnown && that->level==valKnown) that->value%div="<<that->value%div<<" == rem="<<rem<<"\n";
-				// if this can be divided by that->div to get that->rem as the remainder,
-				// we can use div, rem to represent both objects
-				if(that->value%div == rem)
-				{
-					// leave this object alone
-					goto Done;
-				}
-				// otherwise, the two objects are not compatible
-			}
-			else if(level==divKnown && that->level==divKnown)
-			{
-				long newDiv, newRem;
-				bool match = matchDiv(this, that, newDiv, newRem);
-				if(match)
-				{
-					div = newDiv;
-					rem = newRem;
-					goto Done;
-				}
-			}
-		}
-	}
-	
+                    // If the gcd is > 1, then we know a useful divisor and the level is divKnown
+                    // otherwise, the divisor info is useless and the level becomes top
+                    if(div != 1) {
+                      level = divKnown;
+                      rem = 0;
+                      value = -1;
+                    } else {
+                      // If we cannot find a good divisor, we guess that the variable's new value
+                      // was produced via an iteration where the variable's value is repeatedly
+                      // incremented by a constant. If this is the case, the divisor is the difference
+                      // between the two values. If this guess is wrong, the next time we update
+                      // this lattice, we'll update it to top.
+                      level = divKnown;
+                      div = that->value - value;
+                      rem = value % div;
+                    }
+                    goto Done;
+                  }
+                // else, if the two objects agree on their values, we can
+                // leave this object alone
+                else
+                  goto Done;
+              }
+            else if(level==valKnown && that->level==divKnown)
+              {
+                //Dbg::dbg << "(level==valKnown && that->level==divKnown) value%that->div="<<(value%that->div)<<" that->rem="<<that->rem<<"\n";
+                // if this can be divided by that->div to get that->rem as the remainder,
+                // we can use that->div, that->rem to represent both objects
+                if(value%that->div == that->rem)
+                  {
+                    value=0;
+                    div = that->div;
+                    rem = that->rem;
+                    level = divKnown;
+                    goto Done;
+                  }
+                // otherwise, the two objects are not compatible
+              }
+            else if(level==divKnown && that->level==valKnown)
+              {
+                //Dbg::dbg << "(level==divKnown && that->level==valKnown) that->value%div="<<that->value%div<<" == rem="<<rem<<"\n";
+                // if this can be divided by that->div to get that->rem as the remainder,
+                // we can use div, rem to represent both objects
+                if(that->value%div == rem)
+                  {
+                    // leave this object alone
+                    goto Done;
+                  }
+                // otherwise, the two objects are not compatible
+              }
+            else if(level==divKnown && that->level==divKnown)
+              {
+                long newDiv, newRem;
+                bool match = matchDiv(this, that, newDiv, newRem);
+                if(match)
+                  {
+                    div = newDiv;
+                    rem = newRem;
+                    goto Done;
+                  }
+              }
+          }
+
 	// if we haven't hit a case that goes to a non-top level, make this object top
 	div = 1;
 	rem = 0;
@@ -446,9 +425,7 @@ bool DivLattice::mult(long multiplier)
 string DivLattice::str(string indent)
 {
 	ostringstream outs;
-	if(level == uninitialized)
-		outs << indent << "[level: uninitialized]";
-	else if(level == bottom)
+        if(level == bottom)
 		outs << indent << "[level: bottom]";
 	else if(level == valKnown)
 		outs << indent << "[level: valKnown, val="<<value<<"]";
@@ -567,9 +544,8 @@ void DivAnalysisTransfer::visit(SgValueExp *sgn) {
 }
 
 void DivAnalysisTransfer::transferAdditive(DivLattice *arg1Lat, DivLattice *arg2Lat, DivLattice *resLat, bool isAddition) {
-  // Either one Bottom or Uninitialized
-  if(//arg1Lat->getLevel() == DivLattice::uninitialized || arg2Lat->getLevel() == DivLattice::uninitialized ||
-     arg1Lat->getLevel() == DivLattice::bottom        || arg2Lat->getLevel() == DivLattice::bottom) {
+  // Either one Bottom
+  if (arg1Lat->getLevel() == DivLattice::bottom        || arg2Lat->getLevel() == DivLattice::bottom) {
     updateModified(resLat->setBot());
     // Both ValKnown
   } else if(arg1Lat->getLevel() == DivLattice::valKnown && arg2Lat->getLevel() == DivLattice::valKnown) {

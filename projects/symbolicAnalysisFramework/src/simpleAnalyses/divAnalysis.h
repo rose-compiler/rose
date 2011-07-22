@@ -32,8 +32,6 @@ class DivLattice : public FiniteLattice
 		
 	public:
 	// The different levels of this lattice
-	// this object is uninitialized
-	static const int uninitialized=0; 
 	// no information is known about the value of the variable
 	static const int bottom=1; 
 	// the value of the variable is known
@@ -44,7 +42,7 @@ class DivLattice : public FiniteLattice
 	static const int top=4; 
 	
 	private:
-	// this object's current level in the lattice: (uninitialized, bottom, valKnown, divKnown, top)
+	// this object's current level in the lattice: (bottom, valKnown, divKnown, top)
 	short level;
 	
 	public:
@@ -54,7 +52,7 @@ class DivLattice : public FiniteLattice
 		value=0;
 		div=-1;
 		rem=-1;
-		level=uninitialized;
+		level=bottom;
 	}
 	
 	DivLattice(long value) {
@@ -81,15 +79,7 @@ class DivLattice : public FiniteLattice
 	
 	// initializes this Lattice to its default state
 	void initialize()
-	{
-		if(level==uninitialized) {
-			value=0;
-			div=-1;
-			rem=-1;
-			level=bottom;
-		}
-		//cout << "DivLattice::initialize() new="<<str("")<<"\n";
-	}
+	{ }
 	
 	// returns a copy of this lattice
 	Lattice* copy() const;
