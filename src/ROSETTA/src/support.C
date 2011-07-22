@@ -879,6 +879,10 @@ Grammar::setUpSupport ()
      File.setDataPrototype("bool","collectAllCommentsAndDirectives", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // negara1 (07/08/2011): Added to permit optional header files unparsing.
+     File.setDataPrototype("bool","unparseHeaderFiles", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (4/7/2001) Added support for multiple files (save the preprocessor
   //               directives and comments into the SgFile)
   //               the ROSEAttributesListContainer represents all preprocessor
