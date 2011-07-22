@@ -268,6 +268,7 @@ set (unparser_SRC
 #      ${CMAKE_SOURCE_DIR}/src/backend/unparser/copy_unparser.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/astUnparseAttribute.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/unparser.C
+      ${CMAKE_SOURCE_DIR}/src/backend/unparser/nameQualificationSupport.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/unparse_sym.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/formatSupport/unparseFormatHelp.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/formatSupport/unparse_format.C
@@ -371,6 +372,7 @@ set( midend_src
  ${CMAKE_SOURCE_DIR}/src/midend/abstractHandle/abstract_handle.cpp
  ${CMAKE_SOURCE_DIR}/src/midend/abstractHandle/loopAdapter.cpp
  ${CMAKE_SOURCE_DIR}/src/midend/abstractHandle/roseAdapter.cpp
+ ${CMAKE_SOURCE_DIR}/src/midend/abstractMemoryObject/memory_object.cpp
  ${CMAKE_SOURCE_DIR}/src/midend/astQuery/nodeQueryInheritedAttribute.C
  ${CMAKE_SOURCE_DIR}/src/midend/astQuery/nameQuery.C
  ${CMAKE_SOURCE_DIR}/src/midend/astQuery/astQueryInheritedAttribute.C
