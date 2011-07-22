@@ -111,7 +111,7 @@ ChildUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node, Synth
 					//we should remove it from the list of used vars
 					if (isSgAssignOp(binaryOp))
 					{
-						if (lhsCurrVarUse != uses.end() && rhsCurrVarUse == uses.end())
+						if (lhsCurrVarUse != lhs.getUses().end() && rhsCurrVarUse == rhs.getUses().end())
 						{
 							set<SgVarRefExp*>::iterator currVarUse = uses.find(currentVar);
 							ROSE_ASSERT(currVarUse != uses.end());
