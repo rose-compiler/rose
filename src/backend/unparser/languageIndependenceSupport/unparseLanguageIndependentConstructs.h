@@ -32,10 +32,6 @@ class UnparseLanguageIndependentConstructs
 
           virtual ~UnparseLanguageIndependentConstructs() {};
 
-       // driscoll6 (7/21/11) allow language-specific unparsers to define their own operator precedences.
-       // By default, use existing C/C++ precedences.
-          virtual int getPrecedence(int variant);
-
       //! Support for unparsing of line directives into generated code to support debugging
           virtual void unparseLineDirectives ( SgStatement* stmt );
 
