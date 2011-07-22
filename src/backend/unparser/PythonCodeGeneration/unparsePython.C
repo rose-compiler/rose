@@ -10,6 +10,9 @@
 #define CASE_DISPATCH_AND_BREAK(sg_t) \
   case V_Sg ##sg_t : unparse ##sg_t (isSg##sg_t (stmt),info); break;
 
+#define PY_UNPARSE_NO_PRECEDENCE -1
+#define PY_UNPARSE_LEFT_ASSOC     1
+#define PY_UNPARSE_RIGHT_ASSOC   -1
 
 using namespace std;
 
@@ -78,14 +81,6 @@ Unparse_Python::unparseLanguageSpecificStatement(SgStatement* stmt,
 void
 Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
                                                   SgUnparse_Info& info)
-{
-    cout << "Unexpected call to Unparse_Python::unparseLanguageSpecificExpression for " << stmt->class_name() << endl;
-    unparseExpression(stmt, info);
-}
-
-void
-Unparse_Python::unparseExpression(SgExpression* stmt,
-                                  SgUnparse_Info& info)
 {
     switch (stmt->variantT()) {
         CASE_DISPATCH_AND_BREAK(AssignOp);
@@ -161,6 +156,28 @@ Unparse_Python::unparseExpression(SgExpression* stmt,
             break;
         }
     }
+}
+
+void
+Unparse_Python::unparseExpression(SgExpression* expr, SgUnparse_Info& info) {
+    bool parenthesize = requiresParentheses(expr);
+    if (parenthesize) curprint("(");
+    unparseLanguageSpecificExpression(expr, info);
+    if (parenthesize) curprint(")");
+}
+
+bool
+Unparse_Python::requiresParentheses(SgExpression* expr) {
+    int exprPrecedence = getPrecedence(expr->variantT());
+    int parentPrecedence = getPrecedence(expr->get_parent()->variantT());
+    int assoc = getAssociativity(expr->get_parent()->variantT());
+    if      (exprPrecedence == PY_UNPARSE_NO_PRECEDENCE)      return false;
+    else if (parentPrecedence == PY_UNPARSE_NO_PRECEDENCE)    return false;
+    else if (assoc == PY_UNPARSE_RIGHT_ASSOC && exprPrecedence >  parentPrecedence) return false;
+    else if (assoc == PY_UNPARSE_LEFT_ASSOC  && exprPrecedence >= parentPrecedence) return false;
+    else if (assoc == PY_UNPARSE_LEFT_ASSOC  && exprPrecedence <  parentPrecedence) return true;
+    else if (assoc == PY_UNPARSE_RIGHT_ASSOC && exprPrecedence <= parentPrecedence) return true;
+    else ROSE_ASSERT(!"cant determine if parens are required");
 }
 
 void
@@ -260,6 +277,71 @@ Unparse_Python::unparseOperator(VariantT variant, bool pad) {
         }
     }
     if (pad) curprint(" ");
+}
+
+int
+Unparse_Python::getAssociativity(int variant) {
+    if (variant == V_SgExponentiationOp)
+        return PY_UNPARSE_RIGHT_ASSOC;
+    else
+        return PY_UNPARSE_LEFT_ASSOC;
+}
+
+int
+Unparse_Python::getPrecedence(int variant) {
+    switch (variant) {
+        case V_SgLambdaRefExp:         return 1;
+     // case V_Sg:                     return 2; // "conditional expression"?
+        case V_SgOrOp:                 return 3;
+        case V_SgAndOp:                return 4;
+        case V_SgNotOp:                return 5;
+        case V_SgNaryBooleanOp:        return 5; // TODO actually depends on which ops
+
+        case V_SgMembershipOp:         return 6;
+        case V_SgNonMembershipOp:      return 6;
+        case V_SgIsOp:                 return 6;
+        case V_SgIsNotOp:              return 6;
+        case V_SgLessThanOp:           return 6;
+        case V_SgLessOrEqualOp:        return 6;
+        case V_SgGreaterThanOp:        return 6;
+        case V_SgGreaterOrEqualOp:     return 6;
+        case V_SgNotEqualOp:           return 6;
+        case V_SgEqualityOp:           return 6;
+        case V_SgNaryComparisonOp:     return 6;
+
+        case V_SgBitOrOp:              return 7;
+        case V_SgBitAndOp:             return 8;
+        case V_SgBitXorOp:             return 9;
+
+        case V_SgLshiftOp:             return 10;
+        case V_SgRshiftOp:             return 10;
+
+        case V_SgAddOp:                return 11;
+        case V_SgSubtractOp:           return 11;
+
+        case V_SgMultiplyOp:           return 12;
+        case V_SgDivideOp:             return 12;
+        case V_SgIntegerDivideOp:      return 12;
+        case V_SgModOp:                return 12;
+
+        case V_SgUnaryAddOp:           return 13;
+        case V_SgMinusOp:              return 13;
+        case V_SgBitComplementOp:      return 13;
+
+        case V_SgExponentiationOp:     return 14;
+
+        case V_SgFunctionCallExp:      return 15;
+     // case V_Sg Subscription:        return 15;
+     // case V_Sg Slicing:             return 15;
+     // case V_Sg Attribute Ref:       return 15;
+
+        case V_SgTupleExp:             return 16;
+        case V_SgListExp:              return 16;
+        case V_SgListComprehension:    return 16;
+        case V_SgSetComprehension:     return 16;
+        case V_SgDictionaryComprehension: return 16;
+    }
+    return PY_UNPARSE_NO_PRECEDENCE;
 }
 
 void
