@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke/slicing
+INCLUDES = $(ROSE_INCLUDES) 
 
 # noinst_LIBRARIES lists all the librarlies that should be built, but not installed
 noinst_LIBRARIES =  libSSA.a

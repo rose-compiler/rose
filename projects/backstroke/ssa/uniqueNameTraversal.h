@@ -1,6 +1,5 @@
-//Author: Justin Frye <jafrye@tamu.edu>
 #pragma once
-#include "rose.h"
+#include <rose.h>
 #include <vector>
 
 namespace ssa_private
@@ -192,6 +191,9 @@ class UniqueNameTraversal : public AstBottomUpProcessing<VariableReferenceSet>
 
 public:
 
+	/** A compound variable name as used by the variable renaming.  */
+	typedef std::vector<SgInitializedName*> VarName;
+    
 	UniqueNameTraversal(const std::vector<SgInitializedName*>& allNames) : allInitNames(allNames)
 	{
 	}

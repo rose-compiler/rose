@@ -21,7 +21,11 @@ public:
 
 		/** Definition for the parent or child of this variable. (E.g. if x.b is the variable
 		 * in question, this def could be for x or x.b.a). */
-		EXPANDED_DEF
+		EXPANDED_DEF,
+		
+		/** This is not a real definition; this variable is external to the scope being analyzed and
+		 * this def represents the existing value of the variable at the beginning of the scope. */
+		EXTERNAL_DEF,
 	};
 	
 	typedef boost::shared_ptr<ReachingDef> ReachingDefPtr;
@@ -34,11 +38,11 @@ private:
 
 	/** If this is a phi node, here we store all the joined definitions and all the edges
 	 * associated with each one. */
-	std::map<ReachingDefPtr, std::set<FilteredCfgEdge> > parentDefs;
+	std::map<ReachingDefPtr, std::set<CFGEdge> > parentDefs;
 
 	/** The node at which this definition is attached. If it's not a phi a function, then
 	 * this is the defining node of the variable. */
-	SgNode* thisNode;
+	CFGNode thisNode;
 
 	/** The values are renamed so that they increase monotonically with program flow. 0 is the first value. */
 	int renamingNumer;
@@ -48,7 +52,7 @@ public:
 	//---------CONSTRUCTORS---------
 
 	/** Creates a new reaching def. */
-	ReachingDef(SgNode* defNode, Type type);
+	ReachingDef(CFGNode defNode, Type type);
 
 	//---------ACCESSORS---------
 
@@ -57,14 +61,14 @@ public:
 
 	/** If this is a join node (phi function), get the definitions merged. 
 	 * Each definition is paired with the CFG node along which it flows. */
-	const std::map<ReachingDefPtr, std::set<FilteredCfgEdge> >& getJoinedDefs() const;
+	const std::map<ReachingDefPtr, std::set<CFGEdge> >& getJoinedDefs() const;
 
 	/** If this is not a phi function, returns the actual reaching definition. 
 	  * If this is a phi function, returns the node where the phi function appears. */
-	SgNode* getDefinitionNode() const;
+	const CFGNode& getDefinitionNode() const;
 
 	/** Returns the actual reaching definitions at the current node, expanding all phi functions. */
-	std::set<SgNode*> getActualDefinitions() const;
+	std::set<CFGNode> getActualDefinitions() const;
 
 	/** Get the renaming (SSA index) associated with this definition. 0 is the first value,
 	 * and numbers increase monotonically with program flow. */
@@ -78,14 +82,19 @@ public:
 	}
 
 	bool operator==(const ReachingDef& other) const;
+	
+	Type getType() const
+	{
+		return defType;
+	}
 
 	//---------MODIFIERS---------
 
 	/** Set the definition node in the AST (only valid if this is not a phi function) */
-	void setDefinitionNode(SgNode* defNode);
+	void setDefinitionNode(CFGNode defNode);
 
 	/** Add a new join definition (only valid for phi functions). */
-	void addJoinedDef(ReachingDefPtr newDef, FilteredCfgEdge edge);
+	void addJoinedDef(ReachingDefPtr newDef, CFGEdge edge);
 
 	/** Set the renaming number (SSA index) of this def. */
 	void setRenamingNumber(int n);

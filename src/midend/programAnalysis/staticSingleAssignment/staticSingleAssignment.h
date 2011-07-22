@@ -31,11 +31,6 @@ namespace ssa_private
         {
             ROSE_ASSERT(funcDecl != NULL);
 
-            //Don't process any built-in functions
-            std::string filename = funcDecl->get_file_info()->get_filename();
-            if (filename.find("include") != std::string::npos)
-                return false;
-
             //Exclude compiler generated functions, but keep template instantiations
             if (funcDecl->get_file_info()->isCompilerGenerated() && !isSgTemplateInstantiationFunctionDecl(funcDecl)
                     && !isSgTemplateInstantiationMemberFunctionDecl(funcDecl))
@@ -251,8 +246,8 @@ private:
     /** Add all the callees of the function to the processing list, then add the function itself. Does nothing
      * if the function is already in the list. */
     void processCalleesThenFunction(SgFunctionDefinition* targetFunction, SgIncidenceDirectedGraph* callGraph,
-            boost::unordered_map<SgFunctionDefinition*, SgGraphNode*> graphNodeToFunction,
-            std::vector<SgFunctionDefinition*> &processingOrder);
+            const boost::unordered_map<SgFunctionDefinition*, SgGraphNode*>& graphNodeToFunction,
+            std::vector<SgFunctionDefinition*> &processingOrder, std::set<SgFunctionDefinition*> visited);
 
     /** Add definitions at function call expressions for variables that are modified interprocedurally.
      * The definitions are inserted in the original def table.
