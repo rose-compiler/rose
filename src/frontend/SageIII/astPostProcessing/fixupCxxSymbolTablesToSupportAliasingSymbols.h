@@ -21,8 +21,7 @@ class FixupAstSymbolTablesToSupportAliasedSymbols : public AstSimpleProcessing
           void visit ( SgNode* node );
 
        // This inserts an alias for each of the symbols in referencedScope into the symbol table of currentScope
-          void injectSymbolsFromReferencedScopeIntoCurrentScope ( SgScopeStatement* referencedScope, SgScopeStatement* currentScope );
-
+          void injectSymbolsFromReferencedScopeIntoCurrentScope ( SgScopeStatement* referencedScope, SgScopeStatement* currentScope, SgAccessModifier::access_modifier_enum accessLevel);
    };
 
 // endif for FIXUP_CXX_TO_USE_ALIASING_SYMBOLS_H

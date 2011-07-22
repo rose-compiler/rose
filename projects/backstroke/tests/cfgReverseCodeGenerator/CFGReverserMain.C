@@ -52,8 +52,6 @@ struct VariableReversalFilter : public IVariableFilter
 {
 	virtual bool isVariableInteresting(const VariableRenaming::VarName& var) const
 	{
-		static ClassHierarchyWrapper* classHierarchy = new ClassHierarchyWrapper(SageInterface::getProject());
-		
 		SgType* type = var[0]->get_type();
 
 		if (SageInterface::isPointerType(type))

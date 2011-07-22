@@ -130,7 +130,7 @@ AttributeMechanism<Key,Value>::~AttributeMechanism()
 template<class Key, class Value>
 bool 
 AttributeMechanism<Key,Value>::exists(Key name) {
-  iterator iter=find(name);
+  iterator iter=std::map<Key,Value>::find(name);
   return iter!=end();
 }
 
@@ -140,7 +140,7 @@ AttributeMechanism<Key,Value>::add(Key name, Value data)
    {
      if (!exists(name))
         {
-          insert(MapValueType(name,data));
+          std::map<Key,Value>::insert(MapValueType(name,data));
         }
        else
         {
@@ -164,9 +164,9 @@ AttributeMechanism<Key,Value>::replace(Key name, Value data) {
 template<class Key, class Value>
 void 
 AttributeMechanism<Key,Value>::remove(Key name) {
-  iterator iter=find(name);
+  iterator iter=std::map<Key,Value>::find(name);
   if(iter!=end()) {
-    erase(name); // map erase
+    std::map<Key,Value>::erase(name); // map erase
   } else {
     std::cerr << "Error: remove failed. Attribute: " << name 
 	 << "exists already." << std::endl;
