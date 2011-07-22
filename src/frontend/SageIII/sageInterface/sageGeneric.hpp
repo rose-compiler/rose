@@ -2735,6 +2735,7 @@ namespace sg
   /// \param n  a Sage node
   /// \return   a copy of the RoseVisitor object
   /// \code
+  ///   // Counts the number of all expression and statement nodes.
   ///   struct Counter
   ///   {
   ///      size_t expr;
@@ -2752,6 +2753,8 @@ namespace sg
   ///      void handle(const SgStatement&)  { ++stmt; }
   ///   };
   ///
+  ///   // Traverses all nodes in the subtree passed to run, and
+  ///   // prints the expression / statement ratio.
   ///   struct Traversal : ASTTraversal
   ///   {
   ///     Counter ctr;
@@ -2762,8 +2765,8 @@ namespace sg
   ///       // the changed counter state has to be stored back.
   ///       ctr = sg::dispatch(ctr, n);
   ///
-  ///       // Alternatively, a pointer to the counter object
-  ///       // could be passed to dispatch:
+  ///       // When the counter object is passed by pointer, the object's data
+  ///       // is manipulated directly.
   ///       //   sg::dispatch(&ctr, n);
   ///     }
   ///

@@ -36,16 +36,16 @@ namespace rted
        // Functions required
     InheritedAttribute evaluateInheritedAttribute (SgNode* astNode, InheritedAttribute inheritedAttribute );
 
-      friend class InheritedAttributeHandler;
+    friend class InheritedAttributeHandler;
 
-       private:
-         RtedTransformation* const   transf;
+  private:
+    RtedTransformation* const   transf;
 
-         // should fail when needed
-         VariableTraversal();
-         VariableTraversal(const VariableTraversal&);
-         VariableTraversal& operator=(const VariableTraversal&);
-     };
+    // should fail when needed
+    VariableTraversal();
+    VariableTraversal(const VariableTraversal&);
+    VariableTraversal& operator=(const VariableTraversal&);
+  };
 }
 
 #endif

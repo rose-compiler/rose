@@ -1,4 +1,4 @@
-# Find a compiler for Unified Parallel C.	            -*- Autoconf -*-
+# Find a compiler for Unified Parallel C.             -*- Autoconf -*-
 
 # Copyright (C) 2006  Free Software Foundation, Inc.
 #

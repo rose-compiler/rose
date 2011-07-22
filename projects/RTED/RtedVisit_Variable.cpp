@@ -401,6 +401,7 @@ namespace rted
                                  || (test_binaryop_and_forloop(n, *name, ia))
                                  || (test_assign_initializer(ia, n)         )
                                  || (test_call_argument(vt.transf, n)       )
+<<<<<<< HEAD
                               );
 
     if (elide_access_guard)
@@ -410,6 +411,17 @@ namespace rted
     }
 
     // its a plain variable access
+=======
+                                 );
+
+       if (elide_access_guard)
+       {
+         // std::cerr << "### ELIDE " << where << " " << varref->unparseToString() << std::endl;
+         return;
+       }
+
+       // its a plain variable access
+>>>>>>> c802717004ee022ef4deb68006a5bd1d8f68731a
        vt.transf->variable_access_varref.push_back(&n);
      }
 
