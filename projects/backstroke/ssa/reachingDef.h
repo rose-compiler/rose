@@ -25,7 +25,7 @@ public:
 		
 		/** This is not a real definition; this variable is external to the scope being analyzed and
 		 * this def represents the existing value of the variable at the beginning of the scope. */
-		EXTERNAL_DEF,
+		EXTERNAL_DEF
 	};
 	
 	typedef boost::shared_ptr<ReachingDef> ReachingDefPtr;
