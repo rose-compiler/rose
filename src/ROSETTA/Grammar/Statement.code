@@ -243,6 +243,10 @@ HEADER_SCOPE_STATEMENT_START
       //! (note that it is sometime OK for there to be more than 1).
           size_t count_symbol(const SgName& n);
 
+       // DQ (5/14/2011): Added count for alias symbols (used in name qualification, since alias symbols of a base class are added to the derived class).
+      //! Count for alias symbols of a specific name, used in name qualification support.
+          size_t count_alias_symbol(const SgName& n);
+
        // Single interface for inserting symbol into symbol table
           void insert_symbol(const SgName& n, SgSymbol* s);
 
@@ -430,6 +434,16 @@ HEADER_SCOPE_STATEMENT_START
       //! Query of scope symbol table behavior (is symbol table behavior case sensitive (C/C++) or case insensitive (Fortran).
           bool isCaseInsensitive() const;
           void setCaseInsensitive(bool b);
+
+       // DQ (5/11/2011): Added support for new name qualification implementation.
+      //! Some scopes have associated names for purposed of name qualification. This returns true if the scope has a name, false if not.
+          bool isNamedScope();
+
+       // DQ (5/11/2011): Added support for new name qualification implementation.
+      //! Some scopes have associated names for purposed of name qualification. This generates the associated name.
+          SgName associatedScopeName();
+
+
 
      public:
 
@@ -693,6 +707,10 @@ HEADER_DECLARATION_STATEMENT_START
        // since not all declarations are associated with a symbol.  This is mostly used for internal 
        // testing so that we can know when to verify rules about associated symbols.
           bool hasAssociatedSymbol() const;
+
+       // DQ (5/29/2011): Added to support for new qualified name generation
+      //! This function generates the qualified name prefix to be used with the named declaration (only applied to restricted set of declarations where name qualification can be used).
+          SgName get_qualified_name_prefix() const;
 
 HEADER_DECLARATION_STATEMENT_END
 
@@ -1157,6 +1175,10 @@ HEADER_LIST_DECLARATIONS
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
+       // DQ (5/29/2011): Added support for return type name qualification.
+      //! This function generates the qualified name prefix to be used with the return type.
+          SgName get_qualified_name_prefix_for_return_type() const;
 
 HEADER_FUNCTION_DECLARATION_STATEMENT_END
 
@@ -2126,6 +2148,10 @@ HEADER_TYPEDEF_DECLARATION_STATEMENT_START
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
 #endif
 
+       // DQ (5/29/2011): Added to support for new qualified name generation
+      //! This function generates the qualified name prefix to be used with the base type of the typedef declaration.
+          SgName get_qualified_name_prefix_for_base_type() const;
+
      private:
        // GB (09/25/2007): Added this function as part of the traversal island fix.
       //! Internal support for the traversal mechanism.
@@ -2176,6 +2202,34 @@ HEADER_TEMPLATE_DECLARATION_STATEMENT_START
 #endif
 
 HEADER_TEMPLATE_DECLARATION_STATEMENT_END
+
+
+HEADER_TEMPLATE_CLASS_DECLARATION_STATEMENT_START
+HEADER_TEMPLATE_CLASS_DECLARATION_STATEMENT_END
+
+HEADER_TEMPLATE_FUNCTION_DECLARATION_STATEMENT_START
+HEADER_TEMPLATE_FUNCTION_DECLARATION_STATEMENT_END
+
+HEADER_TEMPLATE_MEMBER_FUNCTION_DECLARATION_STATEMENT_START
+HEADER_TEMPLATE_MEMBER_FUNCTION_DECLARATION_STATEMENT_END
+
+HEADER_TEMPLATE_CLASS_DEFINITION_STATEMENT_START
+
+     public:
+          SgTemplateClassDeclaration* get_declaration() const;
+          void set_declaration(SgTemplateClassDeclaration* new_val);
+
+          SgName get_qualified_name() const;
+          SgName get_mangled_name (void) const;
+          SgName get_mangled_qualified_name (int& i);
+
+HEADER_TEMPLATE_CLASS_DEFINITION_STATEMENT_END
+
+HEADER_TEMPLATE_FUNCTION_DEFINITION_STATEMENT_START
+HEADER_TEMPLATE_FUNCTION_DEFINITION_STATEMENT_END
+
+
+
 
 HEADER_TEMPLATE_INSTANTIATION_DECLARATION_STATEMENT_START
 
@@ -3745,6 +3799,14 @@ SgScopeStatement::count_symbol(const SgName& n)
      return p_symbol_table->count(n);
    }
 
+size_t
+SgScopeStatement::count_alias_symbol(const SgName& n)
+   {
+  // DQ (5/14/2011): Added support to count just the alias symbols that match the input name (key).
+     assert (p_symbol_table != NULL);
+     return p_symbol_table->count_aliases(n);
+   }
+
 // DQ (2/10/2007): Added test function for existence of symbols
 bool
 SgScopeStatement::symbol_exists ( const SgName & nm , SgSymbol *sp ) const
@@ -4202,6 +4264,9 @@ SgScopeStatement::containsOnlyDeclarations() const
                returnValue = false;
                break;
 
+       // DQ (6/11/2011): Added support for new Template IR nodes.
+          case V_SgTemplateClassDefinition:
+
           case V_SgClassDefinition:
           case V_SgTemplateInstantiationDefn:
           case V_SgNamespaceDefinitionStatement:
@@ -4408,6 +4473,8 @@ SgScopeStatement::getDeclarationList ()
      SgDeclarationStatementPtrList* currentStatementList = NULL;
      switch ( currentScope->variantT() )
         {
+       // DQ (6/11/2011): Added support for new template IR nodes.
+          case V_SgTemplateClassDefinition:
           case V_SgClassDefinition:
              {
                SgClassDefinition* classDefinitionScope = isSgClassDefinition(currentScope);
@@ -4463,6 +4530,8 @@ SgScopeStatement::getDeclarationList () const
   // SgDeclarationStatementPtrList* currentStatementList = NULL;
      switch ( currentScope->variantT() )
         {
+       // DQ (6/11/2011): Added support for new template IR nodes.
+          case V_SgTemplateClassDefinition:
           case V_SgClassDefinition:
              {
                const SgClassDefinition* classDefinitionScope = isSgClassDefinition(currentScope);
@@ -4610,6 +4679,8 @@ SgScopeStatement::getStatementList ()
                break;
              }
 
+       // DQ (6/11/2011): Added support for new template IR nodes.
+          case V_SgTemplateClassDefinition:
        // DQ (1/30/2007): Added this case!
           case V_SgClassDefinition:
              {
@@ -4771,6 +4842,8 @@ SgScopeStatement::getStatementList () const
                break;
              }
 
+       // DQ (6/11/2011): Added support for new template IR nodes.
+          case V_SgTemplateClassDefinition:
        // DQ (1/30/2007): Added this case!
           case V_SgClassDefinition:
              {
@@ -4802,7 +4875,7 @@ SgScopeStatement::getStatementList () const
                break;
              }
 
-// Liao, 6/17/2008, upc_forall statement             
+       // Liao, 6/17/2008, upc_forall statement             
           case V_SgUpcForAllStatement:
              { 
                const SgUpcForAllStatement* forScope = isSgUpcForAllStatement(currentScope);
@@ -4923,7 +4996,7 @@ SgScopeStatement::getStatementList () const
                break;
              }
 
-          // FMZ (CoArray with team)
+       // FMZ (CoArray with team)
           case V_SgCAFWithTeamStatement:
              {
                const SgCAFWithTeamStatement* teamScope = isSgCAFWithTeamStatement(currentScope);
@@ -5264,6 +5337,130 @@ SgScopeStatement::setCaseInsensitive(bool b)
      p_symbol_table->setCaseInsensitive(b);
    }
 
+
+bool
+SgScopeStatement::isNamedScope()
+   {
+  // DQ (5/11/2011): Added support for new name qualification.  If this is associated with 
+  // a scope that has a name then return true, else false. This is used to support the name 
+  // qualification.
+
+     bool result = false;
+     switch (this->variantT())
+        {
+       // Though it might seem incorrect, since functions have names, the SgFunctionDefinition 
+       // is not a named scope for purposes of name qualification.
+       // case SgFunctionDefinition:
+
+          case V_SgBasicBlock:
+             {
+            // A SgBasicBlock is used inside of a few declarations to define a new scope.
+            // This for this case, the enum can't nest other scopes. But field values can 
+            // be qualified, so this is a named scope when it is used in an SgEnumDeclaration.
+               SgEnumDeclaration* enumDeclaration = isSgEnumDeclaration(this->get_parent());
+               if (enumDeclaration != NULL)
+                  {
+                    result = true;
+                  }
+               break;
+             }
+
+       // case V_SgGlobal:  // global has the name "::" but it does not have an associated declaration.
+          case V_SgClassDefinition:
+          case V_SgTemplateInstantiationDefn:
+          case V_SgNamespaceDefinitionStatement:
+             {
+               result = true;
+               break;
+             }
+
+          default:
+             {
+               printf ("Default reached in SgScopeStatement::isNamedScope(): scope = %s \n",this->class_name().c_str());
+#if 0
+               ROSE_ASSERT(false);
+#endif
+             }
+        }
+      
+     return result;
+   }
+
+// DQ (5/11/2011): Added support for new name qualification implementation.
+//! Some scopes have associated names for purposed of name qualification. This generates the associated name.
+SgName
+SgScopeStatement::associatedScopeName()
+   {
+     SgName name;
+     if (isNamedScope() == true)
+        {
+          SgDeclarationStatement* declaration = isSgDeclarationStatement(this->get_parent());
+          ROSE_ASSERT(declaration != NULL);
+          switch (declaration->variantT())
+             {
+               case V_SgTemplateClassDeclaration:
+                  {
+                 // DQ (6/11/2011): Since we don't handle the case of SgTemplateDeclaration, I don't think we have to handle this case.
+                    printf ("ERROR: I think this should be an error for now at least...\n");
+                    ROSE_ASSERT(false);
+                    break;
+                  }
+                
+               case V_SgClassDeclaration:
+                  {
+                    SgClassDeclaration* namedDeclaration = isSgClassDeclaration(declaration);
+                    name = namedDeclaration->get_name();
+                    break;
+                  }
+
+            // The name stored in a SgTemplateInstantiationDecl is different from that in the SgClassDeclaration base class, as I recall.
+               case V_SgTemplateInstantiationDecl:
+                  {
+                    SgTemplateInstantiationDecl* namedDeclaration = isSgTemplateInstantiationDecl(declaration);
+                    name = namedDeclaration->get_name();
+                    break;
+                  }
+
+               case V_SgNamespaceDeclarationStatement:
+                  {
+                    SgNamespaceDeclarationStatement* namedDeclaration = isSgNamespaceDeclarationStatement(declaration);
+                    name = namedDeclaration->get_name();
+                    break;
+                  }
+
+               case V_SgEnumDeclaration:
+                  {
+                    SgEnumDeclaration* namedDeclaration = isSgEnumDeclaration(declaration);
+                    name = namedDeclaration->get_name();
+                    break;
+                  }
+#if 0
+               case V_SgGlobal:
+                  {
+                 // The name of global scope (as used for name qualification).
+                    name = "::";
+                    break;
+                  }
+#endif
+               default:
+                  {
+                    printf ("Default reached in SgScopeStatement::associatedScopeName(): scope = %s \n",this->class_name().c_str());
+                    ROSE_ASSERT(false);
+                  }
+             }
+        }
+#if 0
+       else
+        {
+          if (isSgGlobal(this) != NULL)
+             {
+               name = "::";
+             }
+        }
+#endif
+
+     return name;
+   }
 
 SOURCE_SCOPE_STATEMENT_END
 
@@ -5647,6 +5844,37 @@ void
 SgDeclarationStatement::set_qualifiedNameList( const SgQualifiedNamePtrList & x )
    {
      p_qualifiedNameList = x;
+   }
+
+SgName
+SgDeclarationStatement::get_qualified_name_prefix() const
+   {
+  // DQ (5/29/2011): Added to support for new qualified name generation.
+  // This only applies to specific IR nodes:
+  //    SgFunctionDeclaration (for the function name)
+  //    SgFunctionDeclaration (for the return type)
+  //    SgUsingDeclarationStatement (for references to a declaration (e.g. namespace or class))
+  //    SgUsingDeclarationStatement (for references to a SgInitializedName)
+  //    SgUsingDirectiveStatement
+  //    SgVariableDeclaration 
+  //    SgTypedefDeclaration
+
+  // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
+  // different and so it depends upon where the type is referenced.  Thus the qualified name is 
+  // stored in a map to the IR node that references the type.
+     SgName nameQualifier;
+     std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForNames().find(const_cast<SgDeclarationStatement*>(this));
+  // ROSE_ASSERT(i != SgNode::get_globalQualifiedNameMapForNames().end());
+
+     if (i != SgNode::get_globalQualifiedNameMapForNames().end())
+        {
+          nameQualifier = i->second;
+       // printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+        }
+
+  // printf ("nameQualifier for SgDeclarationStatement = %s = %s \n",class_name().c_str(),nameQualifier.str());
+
+     return nameQualifier;
    }
 
 void
@@ -6761,6 +6989,13 @@ SgDeclarationStatement::generate_alternative_name_for_unnamed_declaration_in_sco
   // Now generate the unique string for the declaration (use the data/enum members where possible)
      switch(variantT())
         {
+          case V_SgTemplateClassDeclaration:
+             {
+               printf ("ERROR: case not handled for SgTemplateClassDeclaration \n");
+               ROSE_ASSERT(false);
+               break;
+             }
+
           case V_SgClassDeclaration:
              {
             // case of "class { int x; }; in global scope
@@ -7852,6 +8087,16 @@ SgFunctionDeclaration::post_construction_initialization()
   // JJW (8/6/2008): It probably isn't now that p_exceptionSpecification is a vector
      p_exceptionSpecification.clear();
 
+  // DQ (5/14/2011): Added to support name qualification on types referenced by template arguments.
+     p_name_qualification_length     = 0;
+     p_type_elaboration_required     = false;
+     p_global_qualification_required = false;
+
+  // DQ (5/14/2011): Added to support name qualification on types referenced by template arguments.
+     p_name_qualification_length_for_return_type     = 0;
+     p_type_elaboration_required_for_return_type     = false;
+     p_global_qualification_required_for_return_type = false;
+
 #if 0 // awaiting resolution of abstract handle bug
   // driscoll6 (6/15/11) Support for python function decorators.
      SgExprListExp* decorators = SageBuilder::buildExprListExp();
@@ -8460,6 +8705,32 @@ SgFunctionDeclaration::get_symbol_from_symbol_table() const
   // ROSE_ASSERT(get_scope() != NULL);
   // return get_scope()->get_symbol_table()->find(this);
    }
+
+
+SgName
+SgFunctionDeclaration::get_qualified_name_prefix_for_return_type() const
+   {
+  // DQ (5/29/2011): Added to support for new qualified name generation.
+
+  // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
+  // different and so it depends upon where the type is referenced.  Thus the qualified name is 
+  // stored in a map to the IR node that references the type.
+     SgName nameQualifier;
+     std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(const_cast<SgFunctionDeclaration*>(this));
+  // ROSE_ASSERT(i != SgNode::get_globalQualifiedNameMapForNames().end());
+
+     if (i != SgNode::get_globalQualifiedNameMapForTypes().end())
+        {
+          nameQualifier = i->second;
+       // printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+        }
+
+  // printf ("nameQualifier for SgFunctionDeclaration = %s = %s \n",class_name().c_str(),nameQualifier.str());
+
+     return nameQualifier;
+   }
+
+
 
 SOURCE_FUNCTION_DECLARATION_STATEMENT_END
 
@@ -10827,7 +11098,11 @@ SgClassDefinition::get_declaration() const
    {
   // QY: 10-4-04 removed declaration pointer. use parent pointer instead
      ROSE_ASSERT(this != NULL);
-     SgClassDeclaration *decl= isSgClassDeclaration(get_parent());
+
+     ROSE_ASSERT(get_parent() != NULL);
+  // printf ("In SgClassDefinition::get_declaration(): get_parent() = %p = %s \n",get_parent(),get_parent()->class_name().c_str());
+
+     SgClassDeclaration *decl = isSgClassDeclaration(get_parent());
      assert( get_parent() == NULL || decl != NULL ); 
      return decl;
    }
@@ -12097,6 +12372,36 @@ SgTypedefDeclaration::get_qualified_name() const
      return returnName;
    }
 
+SgName
+SgTypedefDeclaration::get_qualified_name_prefix_for_base_type() const
+   {
+  // DQ (5/29/2011): Added to support for new qualified name generation.
+  // this function has a different name from the base class since it requires 
+  // a different definition to support using the SgNode::get_globalQualifiedNameMapForTypes() 
+  // function instead of the SgNode::get_globalQualifiedNameMapForNames() function.
+  // This function generates the qualified name prefix to be used with 
+  // the base type of the typedef declaration. 
+
+  // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
+  // different and so it depends upon where the type is referenced.  Thus the qualified name is 
+  // stored in a map to the IR node that references the type.
+     SgName nameQualifier;
+     std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(const_cast<SgTypedefDeclaration*>(this));
+  // ROSE_ASSERT(i != SgNode::get_globalQualifiedNameMapForNames().end());
+
+     if (i != SgNode::get_globalQualifiedNameMapForTypes().end())
+        {
+          nameQualifier = i->second;
+       // printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+        }
+
+  // printf ("nameQualifier for SgFunctionDeclaration = %s = %s \n",class_name().c_str(),nameQualifier.str());
+
+     return nameQualifier;
+   }
+
+
+
 // RV (1/30/2006): Revised to follow typedef chains to their base types.
 SgName
 SgTypedefDeclaration::get_mangled_name (void) const
@@ -12322,6 +12627,98 @@ SgTemplateDeclaration::get_symbol_from_symbol_table() const
    }
 
 SOURCE_TEMPLATE_DECLARATION_STATEMENT_END
+
+
+SOURCE_TEMPLATE_CLASS_DECLARATION_STATEMENT_START
+void
+SgTemplateClassDeclaration::post_construction_initialization()
+   {
+   }
+
+SOURCE_TEMPLATE_CLASS_DECLARATION_STATEMENT_END
+
+SOURCE_TEMPLATE_FUNCTION_DECLARATION_STATEMENT_START
+void
+SgTemplateFunctionDeclaration::post_construction_initialization()
+   {
+   }
+
+SOURCE_TEMPLATE_FUNCTION_DECLARATION_STATEMENT_END
+
+SOURCE_TEMPLATE_MEMBER_FUNCTION_DECLARATION_STATEMENT_START
+void
+SgTemplateMemberFunctionDeclaration::post_construction_initialization()
+   {
+   }
+
+SOURCE_TEMPLATE_MEMBER_FUNCTION_DECLARATION_STATEMENT_END
+
+SOURCE_TEMPLATE_CLASS_DEFINITION_STATEMENT_START
+void
+SgTemplateClassDefinition::post_construction_initialization()
+   {
+   }
+
+// DQ (6/11/2011): Added support for new template IR nodes.
+void
+SgTemplateClassDefinition::set_declaration(SgTemplateClassDeclaration* new_val)
+   {
+  // QY: 10-4-04 removed declaration pointer. use parent pointer instead
+     ROSE_ASSERT(this != NULL);
+     set_parent(new_val);
+   }
+
+// DQ (6/11/2011): Added support for new template IR nodes.
+SgTemplateClassDeclaration*
+SgTemplateClassDefinition::get_declaration() const
+   {
+  // QY: 10-4-04 removed declaration pointer. use parent pointer instead
+     ROSE_ASSERT(this != NULL);
+
+     ROSE_ASSERT(get_parent() != NULL);
+     printf ("In SgTemplateClassDefinition::get_declaration(): get_parent() = %p = %s \n",get_parent(),get_parent()->class_name().c_str());
+
+     SgTemplateClassDeclaration *decl = isSgTemplateClassDeclaration(get_parent());
+     assert( get_parent() == NULL || decl != NULL ); 
+     return decl;
+   }
+
+SgName
+SgTemplateClassDefinition::get_qualified_name() const
+   {
+  // printf ("In SgClassDefinition::get_qualified_name() \n");
+     return get_declaration()->get_qualified_name();
+   }
+
+// DQ (2/7/2006): code added by Rich Vuduc
+SgName
+SgTemplateClassDefinition::get_mangled_name (void) const
+   {
+     return get_declaration()->get_mangled_name ();
+   }
+
+SgName
+SgTemplateClassDefinition::get_mangled_qualified_name (int& i) 
+   {
+  // printf ("In SgClassDefinition::get_mangled_qualified_name(%d): Calling get_declaration()->get_mangled_qualified_name(%d) \n",i,i);
+
+      printf ("Sorry, SgTemplateClassDefinition::get_mangled_qualified_name(int) not implemented! \n");
+      ROSE_ASSERT(false);
+
+      return "error_no_name";
+
+  // return get_declaration()->get_mangled_qualified_name(i);
+   }
+
+SOURCE_TEMPLATE_CLASS_DEFINITION_STATEMENT_END
+
+SOURCE_TEMPLATE_FUNCTION_DEFINITION_STATEMENT_START
+void
+SgTemplateFunctionDefinition::post_construction_initialization()
+   {
+   }
+
+SOURCE_TEMPLATE_FUNCTION_DEFINITION_STATEMENT_END
 
 
 SOURCE_PRAGMA_STATEMENT_START
