@@ -60,7 +60,7 @@ MpiDeterminism MpiDeterminismAnalysis::checkCall(SgFunctionCallExp *fncall)
 	SgName name = sourceVar->get_symbol()->get_name();
 	bump(d.source, name == "MPI_ANY_SOURCE" ? NONDETERMINISTIC : QUESTIONABLE);
       } else if (sourceInt) {
-	if (sourceInt < 0) {
+	if (sourceInt->get_value() < 0) {
 	  std::cerr << "Negative literal source rank seen - not using the hacked mpi.h?" << std::endl;
 	  bump(d.source, QUESTIONABLE);
 	}
