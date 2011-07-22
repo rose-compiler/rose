@@ -1,11 +1,10 @@
 #ifndef LATTICE_H
 #define LATTICE_H
 
-#include <string>
-#include <map>
 #include "CallGraphTraverse.h"
 #include "variables.h"
-using namespace std;
+#include <string>
+#include <map>
 
 class Lattice : public printable
 {
