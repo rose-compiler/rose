@@ -74,7 +74,7 @@ namespace cfgUtils
 
   // if the given SgNode is an assignment operation, adds to rhs the set of SgNodes that comprise the right-hand
   // side of this assignment
-  void getAssignmentRHS(SgNode* n, set<SgNode*>& rhs);
+  void getAssignmentRHS(SgNode* n, std::set<SgNode*>& rhs);
 
   const short none=0;
   const short add=1;
@@ -136,10 +136,10 @@ namespace cfgUtils
   DataflowNode getFuncEndCFG(SgFunctionDefinition* func);
 
   // returns a string containing a unique name that is not otherwise used inside this project
-  string genUniqueName();
+  std::string genUniqueName();
 
   // returns the SgFunctionDeclaration for the function with the given name
-  SgFunctionDeclaration* getFuncDecl(string name);
+  SgFunctionDeclaration* getFuncDecl(std::string name);
 
   // given a function's declaration, returns the function's definition.
   // handles the case where decl->get_definition()==NULL

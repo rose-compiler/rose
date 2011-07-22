@@ -14,6 +14,10 @@
 #include "printAnalysisStates.h"
 #include "VariableStateTransfer.h"
 
+#include <map>
+#include <string>
+#include <vector>
+
 extern int divAnalysisDebugLevel;
 
 // Maintains value information about live variables. If a given variable may have more than one value,
@@ -144,7 +148,7 @@ class DivLattice : public FiniteLattice
 	// returns true if this causes the lattice's state to change, false otherwise
 	bool mult(long multiplier);
 		
-	string str(string indent="");
+	std::string str(std::string indent="");
 };
 
 class DivAnalysisTransfer : public VariableStateTransfer<DivLattice>
@@ -190,13 +194,13 @@ public:
   void visit(SgMinusOp *sgn);
   bool finish() { return modified; }
 
-  DivAnalysisTransfer(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo);
+  DivAnalysisTransfer(const Function& func, const DataflowNode& n, NodeState& state, const std::vector<Lattice*>& dfInfo);
 };
 
 class DivAnalysis : public IntraFWDataflow
 {
 	protected:
-	static map<varID, Lattice*> constVars;
+        static std::map<varID, Lattice*> constVars;
 	static bool constVars_init;
 	
 	// The LiveDeadVarsAnalysis that identifies the live/dead state of all application variables.
@@ -216,23 +220,23 @@ class DivAnalysis : public IntraFWDataflow
 	Lattice* genInitNonVarState(const Function& func, const DataflowNode& n, const NodeState& state);*/
 	
 	// generates the initial lattice state for the given dataflow node, in the given function, with the given NodeState
-	//vector<Lattice*> genInitState(const Function& func, const DataflowNode& n, const NodeState& state);
+	//std::vector<Lattice*> genInitState(const Function& func, const DataflowNode& n, const NodeState& state);
 	void genInitState(const Function& func, const DataflowNode& n, const NodeState& state,
-	                  vector<Lattice*>& initLattices, vector<NodeFact*>& initFacts);
+	                  std::vector<Lattice*>& initLattices, std::vector<NodeFact*>& initFacts);
 	
 	// Returns a map of special constant variables (such as zeroVar) and the lattices that correspond to them
 	// These lattices are assumed to be constants: it is assumed that they are never modified and it is legal to 
 	//    maintain only one copy of each lattice may for the duration of the analysis.
-	//map<varID, Lattice*>& genConstVarLattices() const;
+	//std::map<varID, Lattice*>& genConstVarLattices() const;
 		
-  bool transfer(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo)
+  bool transfer(const Function& func, const DataflowNode& n, NodeState& state, const std::vector<Lattice*>& dfInfo)
   { assert(0); return false; }
   boost::shared_ptr<IntraDFTransferVisitor> getTransferVisitor(const Function& func, const DataflowNode& n,
-                                                            NodeState& state, const vector<Lattice*>& dfInfo)
+                                                            NodeState& state, const std::vector<Lattice*>& dfInfo)
   { return boost::shared_ptr<IntraDFTransferVisitor>(new DivAnalysisTransfer(func, n, state, dfInfo)); }
 };
 
 // prints the Lattices set by the given DivAnalysis 
-void printDivAnalysisStates(DivAnalysis* da, string indent="");
+void printDivAnalysisStates(DivAnalysis* da, std::string indent="");
 
 #endif

@@ -1,12 +1,11 @@
 #ifndef CFG_REWRITE_H
 #define CFG_REWRITE_H
 
+#include "DataflowCFG.h"
 #include <string>
 #include <iostream>
 #include <sstream>
-#include "DataflowCFG.h"
-
-using namespace std;
+#include <list>
 
 namespace VirtualCFG{
 	
@@ -41,9 +40,9 @@ void replaceStatement(SgNode* parent, SgStatement* from, SgStatement* to);
 
 Sg_File_Info* getFileInfo(SgNode* n);
 
-string getFileInfoString(SgNode* n);
+ std::string getFileInfoString(SgNode* n);
 
-string getFileInfoString(CFGNode n);
+ std::string getFileInfoString(CFGNode n);
 
 // Returns the source of n's only in-edge. Yells if n has multiple in-edges.
 CFGNode theInEdge(CFGNode n);
@@ -75,7 +74,7 @@ void replaceStatementByBlockAfter(SgStatement* stmt, SgStatement* newNode);
 // sets initName to the new variable's SgInitializedName 
 // sets newType to the new variable's type
 // sets newType to the new variable's declaration
-void createTmpVarInit(SgType* varType, string newName, bool byReference, 
+ void createTmpVarInit(SgType* varType, std::string newName, bool byReference, 
                       SgName& varName, SgInitializedName *& initName, SgType*& newType, SgVariableDeclaration*& varDecl);
 
 // creates and returns a statement contains a call to the given function with no arguments
@@ -119,7 +118,7 @@ class cfgRWTransaction
 		modType getType()
 		{ return type; }
 		
-		string str() { return ""; }
+                std::string str() { return ""; }
 	};
 	
 	class insertRequest: public modRequest{
@@ -137,7 +136,7 @@ class cfgRWTransaction
 		
 		SgNode* getTgtNode() { return origNode; }
 		
-		string str();
+                std::string str();
 		friend class cfgRWTransaction;
 	};
 	
@@ -157,12 +156,12 @@ class cfgRWTransaction
 			this->data = data;
 		}
 		
-		string str();
+		std::string str();
 		friend class cfgRWTransaction;
 	};
 	
 	public: 
-	list<modRequest*> requests;
+	std::list<modRequest*> requests;
 	//list<void*> requests;
 	
 	

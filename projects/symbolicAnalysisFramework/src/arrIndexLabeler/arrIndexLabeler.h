@@ -3,7 +3,7 @@
 
 #include "rose.h"
 #include <list>
-using namespace std;
+
 namespace arrIndexLabeler {
 	
 // labels the portion of the AST rooted at root with annotations that identify the various portions
@@ -26,6 +26,6 @@ SgExpression* getArrayNameExp(SgNode* n);
 int getArrayDim(SgPntrArrRefExp* n);
 
 // returns the list of index expressionf in the given SgPntrArrRefExp
-list<SgExpression*>& getArrayIndexExprs(SgPntrArrRefExp* n);
+ std::list<SgExpression*>& getArrayIndexExprs(SgPntrArrRefExp* n);
 }
 #endif

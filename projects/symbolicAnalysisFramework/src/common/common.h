@@ -3,14 +3,28 @@
 
 #include "rose.h"
 #include <list>
+using std::list;
 #include <map>
+using std::map;
+using std::pair;
+using std::make_pair;
 #include <set>
+using std::set;
 #include <vector>
+using std::vector;
 #include <string>
+using std::string;
 #include <iostream>
+using std::ostream;
+using std::ofstream;
 #include <sstream>
+using std::stringstream;
+using std::ostringstream;
+using std::endl;
+using std::cout;
+using std::cerr;
 
-using namespace std;
+
 using namespace VirtualCFG;
 
 const int ZERO = 0;
@@ -43,18 +57,18 @@ const std::string ZEROStr = "0";
 typedef long long quad;
 //typedef quad variable;
 
-typedef map<quad, quad>                     m_quad2quad;
-typedef map<quad, std::string>              m_quad2str;
-typedef map<quad, m_quad2quad>              m_quad2map;
-typedef pair<quad, quad>                    quadpair;
-typedef list<quad>                          quadlist;
-typedef map<quad, quadpair>                 m_quad2quadpair;
-typedef map<quad, bool>                     m_quad2bool;
+typedef std::map<quad, quad>                     m_quad2quad;
+typedef std::map<quad, std::string>              m_quad2str;
+typedef std::map<quad, m_quad2quad>              m_quad2map;
+typedef std::pair<quad, quad>                    quadpair;
+typedef std::list<quad>                          quadlist;
+typedef std::map<quad, quadpair>                 m_quad2quadpair;
+typedef std::map<quad, bool>                     m_quad2bool;
 
 class printable
 {
 	public:
-	virtual string str(string indent="")=0;
+	virtual std::string str(std::string indent="")=0;
 	virtual ~printable() {}
 };
 
@@ -63,14 +77,14 @@ class dottable
 	public:
 	// Returns a string that containts the representation of the object as a graph in the DOT language
 	// that has the given name
-	virtual string toDOT(string graphName)=0;
+	virtual std::string toDOT(std::string graphName)=0;
 };
 
 /* #####################################
    ######### F U N C T I O N S #########
    ##################################### */
 
-string itostr(int num);
+std::string itostr(int num);
 
 /* #####################################
    ######### D E B U G G I N G #########
@@ -138,11 +152,11 @@ protected:
 // Stream that uses dbgBuf
 class dbgStream : public std::ostream
 {
-	ofstream dbgFile;
+        std::ofstream dbgFile;
 	dbgBuf buf;
 	std::vector<std::string> colors;
 	// The root working directory
-	string workDir;
+	std::string workDir;
 	// The directory where all images will be stored
 	std::string imgPath;
 	// The name of the output debug file
@@ -150,16 +164,16 @@ class dbgStream : public std::ostream
 	// The total number of images in the output file
 	int numImages;
 	
-	ofstream summaryF;
+        std::ofstream summaryF;
 	
 public:
 	// Construct an ostream which tees output to the supplied
 	// ostreams.
 	dbgStream();
 	dbgStream(std::string title, std::string dbgFileName, std::string workDir, std::string imgPath);
-	void init(string title, std::string dbgFileName, std::string workDir, std::string imgPath);
+	void init(std::string title, std::string dbgFileName, std::string workDir, std::string imgPath);
 	~dbgStream();
-	void printDetailFileHeader(string title);
+	void printDetailFileHeader(std::string title);
 	void printDetailFileTrailer();
 		
 	// Indicates that the application has entered or exited a function
@@ -180,7 +194,7 @@ public:
 	// Return the path of the image.
 	std::string addDOT(std::string dot);
 	// The common work code for all the addDOT methods
-	void addDOT(std::string imgFName, std::string graphName, std::string dot, ostream& ret);
+	void addDOT(std::string imgFName, std::string graphName, std::string dot, std::ostream& ret);
 };
 
 // Indicates that the application has entered or exited a function
@@ -189,7 +203,7 @@ namespace Dbg {
 	extern dbgStream dbg;
 	
 	// Initializes the debug sub-system
-	void init(string title, string workDir, string fName="debug");
+	void init(std::string title, std::string workDir, std::string fName="debug");
 	
 	// Indicates that the application has entered or exited a function
 	void enterFunc(std::string funcName/*, std::string indent="    "*/);

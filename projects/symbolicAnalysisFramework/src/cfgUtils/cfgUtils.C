@@ -1,7 +1,11 @@
 #include "cfgUtils.h"
 #include <stdlib.h>
 #include <time.h>
- 
+#include <set>
+using std::set;
+#include <string> 
+using std::string;
+
 namespace cfgUtils
 {
   SgProject* project;

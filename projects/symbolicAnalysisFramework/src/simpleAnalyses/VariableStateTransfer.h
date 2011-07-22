@@ -1,6 +1,8 @@
 #include "dataflow.h"
 #include "latticeFull.h"
 
+#include <vector>
+
 template <class LatticeType>
 class VariableStateTransfer : public IntraDFTransferVisitor
 {
@@ -43,14 +45,14 @@ protected:
   }
 
 public:
-  VariableStateTransfer(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo, const int &debugLevel_)
+  VariableStateTransfer(const Function& func, const DataflowNode& n, NodeState& state, const std::vector<Lattice*>& dfInfo, const int &debugLevel_)
     : IntraDFTransferVisitor(func, n, state, dfInfo), modified(false), debugLevel(debugLevel_), prodLat(dynamic_cast<FiniteVarsExprsProductLattice*>(*(dfInfo.begin())))
   {
     //Dbg::dbg << "transfer A prodLat="<<prodLat<<"="<<prodLat->str("    ")<<"\n";
     // Make sure that all the lattices are initialized
     //prodLat->initialize();
-    const vector<Lattice*>& lattices = prodLat->getLattices();
-    for(vector<Lattice*>::const_iterator it = lattices.begin(); it!=lattices.end(); it++)
+    const std::vector<Lattice*>& lattices = prodLat->getLattices();
+    for(std::vector<Lattice*>::const_iterator it = lattices.begin(); it!=lattices.end(); it++)
       (dynamic_cast<LatticeType *>(*it))->initialize();
   }
 
