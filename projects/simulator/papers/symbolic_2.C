@@ -85,12 +85,29 @@ public:
             SymbolicSemantics::ValueType<32> arg2_va = policy.add(arg1_va, policy.number<32>(4));
             policy.writeMemory<32>(x86_segreg_ss, arg1_va, policy.number<32>(12345), policy.true_());   // ptr to buffer
             policy.writeMemory<32>(x86_segreg_ss, arg2_va, policy.number<32>(2), policy.true_());       // bytes in buffer
+            policy.writeIP(SymbolicSemantics::ValueType<32>(analysis_addr));            // branch to analysis address
+
+#if 1
+            {
+                // This is a kludge.  If the first instruction is an indirect JMP then assume we're executing through a dynamic
+                // linker thunk and execute the instruction concretely to advance the instruction pointer.
+                SgAsmx86Instruction *insn = isSgAsmx86Instruction(args.thread->get_process()->get_instruction(analysis_addr));
+                if (x86_jmp==insn->get_kind()) {
+                    VirtualMachineSemantics::Policy p;
+                    X86InstructionSemantics<VirtualMachineSemantics::Policy, VirtualMachineSemantics::ValueType> sem(p);
+                    p.set_map(args.thread->get_process()->get_memory()); // won't be thread safe
+                    sem.processInstruction(insn);
+                    policy.writeIP(SymbolicSemantics::ValueType<32>(p.readIP().known_value()));
+                    trace->mesg("%s: dynamic linker thunk kludge triggered: changed eip from 0x%08"PRIx64" to 0x%08"PRIx64,
+                                name, analysis_addr, p.readIP().known_value());
+                }
+            }
+#endif
 
             // Run the analysis until we can't figure out what instruction is next.  If we set things up correctly, the
             // simulation will stop when we hit the RET instruction to return from this function.
             size_t nbranches = 0;
             std::vector<const TreeNode*> constraints; // path constraints for the SMT solver
-            policy.writeIP(SymbolicSemantics::ValueType<32>(analysis_addr));
             while (policy.readIP().is_known()) {
                 uint64_t va = policy.readIP().known_value();
                 SgAsmx86Instruction *insn = isSgAsmx86Instruction(args.thread->get_process()->get_instruction(va));
@@ -211,11 +228,21 @@ public:
 int main(int argc, char *argv[], char *envp[])
 {
     // Parse (and remove) switches intended for the analysis.
-    std::string analysis_func;
-    rose_addr_t analysis_va = 0;
+    std::string trigger_func, analysis_func;
+    rose_addr_t trigger_va=0, analysis_va=0;
     std::vector<bool> take_branch;
     for (int i=1; i<argc; i++) {
-        if (!strncmp(argv[i], "--analysis-func=", 16)) {
+        if (!strncmp(argv[i], "--trigger=", 10)) {
+            // name or address of function triggering analysis
+            char *rest;
+            trigger_va = strtoull(argv[i]+10, &rest, 0);
+            if (*rest) {
+                trigger_va = 0;
+                trigger_func = argv[i]+10;
+            }
+            memmove(argv+i, argv+i+1, (argc-- - i)*sizeof(*argv));
+            --i;
+        } else if (!strncmp(argv[i], "--analysis-func=", 16)) {
             // name or address of function to analyze
             char *rest;
             analysis_va = strtoull(argv[i]+16, &rest, 0);
@@ -235,8 +262,12 @@ int main(int argc, char *argv[], char *envp[])
             --i;
         }
     }
-    if (analysis_func.empty()) {
-        std::cerr <<argv[0] <<": --analysis-func=NAME required\n";
+    if (trigger_func.empty() && 0==trigger_va) {
+        std::cerr <<argv[0] <<": --trigger-func=NAME_OR_ADDR is required\n";
+        return 1;
+    }
+    if (analysis_func.empty() && 0==analysis_va) {
+        std::cerr <<argv[0] <<": --analysis-func=NAME_OR_ADDR is required\n";
         return 1;
     }
 
@@ -254,14 +285,15 @@ int main(int argc, char *argv[], char *envp[])
     SgProject *project = frontend(rose_argc, rose_argv);
 
     // Find the address of "main" and analysis functions.
-    rose_addr_t main_va = RSIM_Tools::FunctionFinder().address(project, "main");
-    assert(main_va!=0);
+    if (!trigger_func.empty())
+        trigger_va = RSIM_Tools::FunctionFinder().address(project, trigger_func);
+    assert(trigger_va!=0);
     if (!analysis_func.empty())
         analysis_va = RSIM_Tools::FunctionFinder().address(project, analysis_func);
     assert(analysis_va!=0);
 
     // Register the analysis callback.
-    Analysis analysis(main_va, analysis_va, take_branch);
+    Analysis analysis(trigger_va, analysis_va, take_branch);
     sim.install_callback(&analysis);
 
     // The rest is normal boiler plate to run the simulator, except we'll catch the Analysis to terminate the simulation early

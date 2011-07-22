@@ -237,8 +237,9 @@ run_symbolic_1: symbolic_1 symbolic_1_input
 
 #------------------------------------------------------------------------------------------------------------------------------
 # Example of symbolic analysis on:
-#  grep code sample.
-#  glibc's strcmp() function
+#  grep code sample distilled
+#  glibc's strcmp() function distilled
+#  glibc's strcmp() inside a 32-bit grep
 noinst_PROGRAMS += symbolic_2
 symbolic_2_SOURCES = papers/symbolic_2.C
 symbolic_2_CPPFLAGS = $(ROSE_INCLUDES)
@@ -252,11 +253,17 @@ glibc_strcmp: papers/glibc_strcmp.c
 	@echo "  CC32    $@"
 	@$(CC) $(CFLAGS32) -Wall -o $@ $^
 
+# Location of some 32-bit programs
+32BIT_REPO=/home/matzke/junk/32bit
+
 .PHONY: run_symbolic_2_grep
 run_symbolic_2_grep: symbolic_2 grep_sample_1
-	./symbolic_2 --debug --analysis-func=guess_type --take-branch=yyyn ./grep_sample_1
+	./symbolic_2 --debug --trigger=main --analysis-func=guess_type --take-branch=yyyn ./grep_sample_1
 run_symbolic_2_strcmp: symbolic_2 glibc_strcmp
-	./symbolic_2 --debug --analysis-func=glibc_strcmp --take-branch=n ./glibc_strcmp
+	./symbolic_2 --debug --trigger=main --analysis-func=glibc_strcmp --take-branch=n ./glibc_strcmp
+run_symbolic_2_grep_strcmp: symbolic_2 $(32BIT_REPO)/grep
+	LD_BIND_NOW=y ./symbolic_2 --debug --trigger=0x08049508 --analysis-func=0x8049908 --take-branch=y $(32BIT_REPO)/grep x /dev/null
+
 
 
 ###############################################################################################################################
