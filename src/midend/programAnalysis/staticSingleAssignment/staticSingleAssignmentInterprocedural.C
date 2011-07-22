@@ -91,10 +91,10 @@ vector<SgFunctionDefinition*> StaticSingleAssignment::calculateInterproceduralPr
 
     foreach(SgFunctionDefinition* interestingFunction, interestingFunctions)
     {
-		if (find(processingOrder.begin(), processingOrder.end(), interestingFunction) != processingOrder.end())
-			continue;
-		
-		set<SgFunctionDefinition*> visited;
+        if (find(processingOrder.begin(), processingOrder.end(), interestingFunction) != processingOrder.end())
+            continue;
+
+        set<SgFunctionDefinition*> visited;
         processCalleesThenFunction(interestingFunction, callGraph, graphNodeToFunction, processingOrder, visited);
     }
 
@@ -102,15 +102,15 @@ vector<SgFunctionDefinition*> StaticSingleAssignment::calculateInterproceduralPr
 }
 
 void StaticSingleAssignment::processCalleesThenFunction(SgFunctionDefinition* targetFunction, SgIncidenceDirectedGraph* callGraph,
-            const boost::unordered_map<SgFunctionDefinition*, SgGraphNode*>& graphNodeToFunction,
-            std::vector<SgFunctionDefinition*> &processingOrder, std::set<SgFunctionDefinition*> visited)
+        const boost::unordered_map<SgFunctionDefinition*, SgGraphNode*>& graphNodeToFunction,
+        std::vector<SgFunctionDefinition*> &processingOrder, std::set<SgFunctionDefinition*> visited)
 {
-	if (visited.count(targetFunction) != 0)
-		return;
-	else
-		visited.insert(targetFunction);
+    if (visited.count(targetFunction) != 0)
+        return;
+    else
+        visited.insert(targetFunction);
 
-	unordered_map<SgFunctionDefinition*, SgGraphNode*>::const_iterator functionIter = graphNodeToFunction.find(targetFunction);
+    unordered_map<SgFunctionDefinition*, SgGraphNode*>::const_iterator functionIter = graphNodeToFunction.find(targetFunction);
     if (functionIter == graphNodeToFunction.end())
     {
         printf("The function %s has no vertex in the call graph!\n", targetFunction->get_declaration()->get_name().str());
@@ -123,6 +123,7 @@ void StaticSingleAssignment::processCalleesThenFunction(SgFunctionDefinition* ta
     callGraph->getSuccessors(graphNode, callees);
 
     //Recursively process all the callees before adding this function to the list
+
     foreach(SgGraphNode* callerNode, callees)
     {
         SgFunctionDeclaration* callerDecl = isSgFunctionDeclaration(callerNode->get_SgNode());
@@ -130,7 +131,7 @@ void StaticSingleAssignment::processCalleesThenFunction(SgFunctionDefinition* ta
         callerDecl = isSgFunctionDeclaration(callerDecl->get_definingDeclaration());
         ROSE_ASSERT(callerDecl != NULL);
         SgFunctionDefinition* callee = callerDecl->get_definition();
-        
+
         if (callee == NULL)
         {
             fprintf(stderr, "BUG IN ROSE: The function %s has a defining declaration but no definition!?!\n",
