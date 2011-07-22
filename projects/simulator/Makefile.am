@@ -235,6 +235,23 @@ run_symbolic_1: symbolic_1 symbolic_1_input
 	./symbolic_1 --debug ./symbolic_1_input
 	./symbolic_1_input
 
+#------------------------------------------------------------------------------------------------------------------------------
+# Example of symbolic analysis on a grep code sample.
+noinst_PROGRAMS += symbolic_2
+symbolic_2_SOURCES = papers/symbolic_2.C
+symbolic_2_CPPFLAGS = $(ROSE_INCLUDES)
+symbolic_2_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+EXTRA_DIST += papers/grep_sample_1.c
+symbolic_2_input: papers/grep_sample_1.c
+	@echo "  CC32    $@"
+	@$(CC) $(CFLAGS32) -Wall -o $@ $^
+
+.PHONY: run_symbolic_2
+run_symbolic_2: symbolic_2 symbolic_2_input
+	./symbolic_2 --debug --take-branch=tttf ./symbolic_2_input
+	./symbolic_2_input
+
 ###############################################################################################################################
 #  SYSTEM CALL TESTS
 ###############################################################################################################################
