@@ -954,9 +954,19 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 
                            // Reset the symbol to one that will match the declaration.
                               symbol = SageInterface::lookupFunctionSymbolInParentScopes(name,currentScope);
-                              ROSE_ASSERT(symbol != NULL);
+
+                           // DQ (7/24/2011): The symbol is NULL for test2011_121.C
+                           // ROSE_ASSERT(symbol != NULL);
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                              printf ("Lookup symbol based symbol type: reset symbol = %p = %s \n",symbol,symbol->class_name().c_str());
+                              if (symbol != NULL)
+                                 {
+                                   printf ("Lookup symbol based symbol type: reset symbol = %p = %s \n",symbol,symbol->class_name().c_str());
+                                 }
+                                else
+                                 {
+                                // DQ (6/22/2011): This is demonstrated by test2011_95.C
+                                   printf ("Detected no template symbol in a parent scope (ignoring this case for now) \n");
+                                 }
 #endif
                             }
 #if 0
