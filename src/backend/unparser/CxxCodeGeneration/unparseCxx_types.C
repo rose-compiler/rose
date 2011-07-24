@@ -373,7 +373,9 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
             // if (isSgPointerType(type) != NULL)
                if (info.isTypeFirstPart() == false && info.isTypeSecondPart() == false)
                   {
+#if 0
                     printf ("Note: Handling unparsing of name qualified type as special case (typeNameString = %s) \n",typeNameString.c_str());
+#endif
                     curprint(typeNameString);
                   }
              }
@@ -1112,8 +1114,12 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
                unp->u_exprStmt->unparseAttachedPreprocessingInfo(edecl, info, PreprocessingInfo::before);
              }
 
-       // DQ (5/22/2003) Added output of "enum" string
-          curprint ( "enum ");
+       // DQ (7/24/2011): Restrict where enum is used (to avoid output in template arguments after the name qualification).
+          if ( (info.isTypeFirstPart() == true) )
+             {
+            // DQ (5/22/2003) Added output of "enum" string
+               curprint ( "enum ");
+             }
 
        // DQ (10/16/2004): Handle name qualification the same as in the unparseClassType function (we could factor common code later!)
           SgNamedType *ptype = NULL;
@@ -1239,7 +1245,7 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
                  // DQ (6/2/2011): Newest support for name qualification...
                     SgName nameQualifier = unp->u_name->lookup_generated_qualified_name(info.get_reference_node_for_qualification());
 #if 0
-                    printf ("nameQualifier (from initializedName->get_qualified_name_prefix_for_type() function) = %s \n",nameQualifier.str());
+                    printf ("In unparseEnumType(): nameQualifier (from initializedName->get_qualified_name_prefix_for_type() function) = %s \n",nameQualifier.str());
 #endif
                  // printf ("nameQualifier (from unp->u_name->generateNameQualifier function) = %s \n",nameQualifier.str());
                  // curprint ("\n/* nameQualifier (from unp->u_name->generateNameQualifier function) = " + nameQualifier + " */ \n ";
