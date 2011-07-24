@@ -108,6 +108,7 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
 
        // DQ (7/23/2011): Added support for array type index expressions.
           void processNameQualificationArrayType(SgArrayType* arrayType, SgScopeStatement* currentScope);
+          void processNameQualificationForPossibleArrayType(SgType* possibleArrayType, SgScopeStatement* currentScope);
 
        // SgName associatedName(SgScopeStatement* scope);
           SgDeclarationStatement* associatedDeclaration ( SgScopeStatement* scope );

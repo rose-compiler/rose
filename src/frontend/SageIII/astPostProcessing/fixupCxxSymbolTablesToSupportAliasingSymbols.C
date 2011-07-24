@@ -161,6 +161,97 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
   // DQ (11/24/2007): Output the current IR node for debugging the traversal of the Fortran AST.
   // printf ("node = %s \n",node->class_name().c_str());
 
+  // DQ (7/23/2011): New support for linking namespaces sharing the same name (mangled name).
+  // std::map<SgName,std::vector<SgNamespaceDefinition*> > namespaceMap;
+     SgNamespaceDefinitionStatement* namespaceDefinition = isSgNamespaceDefinitionStatement(node);
+     if (namespaceDefinition != NULL)
+        {
+       // DQ (7/23/2011): Assemble namespaces with the same name into vectors defined in the map 
+       // accessed using the name of the namespace as a key.
+
+          SgName name = namespaceDefinition->get_namespaceDeclaration()->get_name();
+#if ALIAS_SYMBOL_DEBUGGING
+          printf ("namespace definition found for name = %s \n",name.str());
+#endif
+       // It is important to use mangled names to define unique names when namespaces are nested.
+          SgName mangledNamespaceName = namespaceDefinition->get_namespaceDeclaration()->get_mangled_name();
+#if ALIAS_SYMBOL_DEBUGGING
+          printf ("namespace definition associated mangled name = %s \n",mangledNamespaceName.str());
+#endif
+       // DQ (7/23/2011): Fixup the name we use as a key in the map to relect that some namespaces don't have a name.
+          if (name == "")
+             {
+            // Modify the mangled name to reflect the unnamed namespace...
+
+#if ALIAS_SYMBOL_DEBUGGING
+               printf ("Warning in FixupAstSymbolTablesToSupportAliasedSymbols::visit(): Unnamed namespaces shuld be mangled to reflect the lack of a name \n");
+#endif
+               mangledNamespaceName += "_unnamed_namespace";
+             }
+
+#if ALIAS_SYMBOL_DEBUGGING
+          printf ("namespace definition associated mangled name = %s \n",mangledNamespaceName.str());
+#endif
+          std::map<SgName,std::vector<SgNamespaceDefinitionStatement*> >::iterator i = namespaceMap.find(mangledNamespaceName);
+          if (i != namespaceMap.end())
+             {
+               std::vector<SgNamespaceDefinitionStatement*> & namespaceVector = i->second;
+               for (size_t j = 0; j < namespaceVector.size(); j++)
+                  {
+                    ROSE_ASSERT(namespaceVector[j] != NULL);
+                    SgName existingNamespaceName = namespaceVector[j]->get_namespaceDeclaration()->get_name();
+#if ALIAS_SYMBOL_DEBUGGING
+                    printf ("Existing namespace %p = %s \n",namespaceVector[j],existingNamespaceName.str());
+#endif
+                    if (j > 0)
+                       {
+                         ROSE_ASSERT(namespaceVector[j]->get_previousNamepaceDefinition() != NULL);
+                       }
+
+                    if (namespaceVector.size() > 1 && j < namespaceVector.size() - 2)
+                       {
+                         ROSE_ASSERT(namespaceVector[j]->get_nextNamepaceDefinition() != NULL);
+                       }
+                  }
+
+               size_t namespaceListSize = namespaceVector.size();
+               if (namespaceListSize > 0)
+                  {
+                    size_t lastNamespaceIndex = namespaceListSize - 1;
+                    namespaceVector[lastNamespaceIndex]->set_nextNamepaceDefinition(namespaceDefinition);
+
+                    namespaceDefinition->set_previousNamepaceDefinition(namespaceVector[lastNamespaceIndex]);
+                  }
+
+            // Add the namespace matching a previous name to the list.
+               namespaceVector.push_back(namespaceDefinition);
+
+            // Setup scopes as sources and distinations of alias symbols.
+               SgNamespaceDefinitionStatement* referencedScope = namespaceDefinition->get_previousNamepaceDefinition();
+               ROSE_ASSERT(referencedScope != NULL);
+               SgNamespaceDefinitionStatement* currentScope = namespaceDefinition;
+               ROSE_ASSERT(currentScope != NULL);
+
+            // Generate the alias symbols from the referencedScope and inject into the currentScope.
+               injectSymbolsFromReferencedScopeIntoCurrentScope(referencedScope,currentScope,SgAccessModifier::e_default);
+             }
+            else
+             {
+#if ALIAS_SYMBOL_DEBUGGING
+               printf ("Insert namespace %p for name = %s into the namespaceMap \n",namespaceDefinition,mangledNamespaceName.str());
+#endif
+               std::vector<SgNamespaceDefinitionStatement*> list(1);
+               ROSE_ASSERT(list.size() == 1);
+
+               list[0] = namespaceDefinition;
+
+               ROSE_ASSERT(namespaceDefinition->get_nextNamepaceDefinition()     == NULL);
+               ROSE_ASSERT(namespaceDefinition->get_previousNamepaceDefinition() == NULL);
+
+               namespaceMap.insert(std::pair<SgName,std::vector<SgNamespaceDefinitionStatement*> >(mangledNamespaceName,list));
+             }
+        }
+
      SgUseStatement* useDeclaration = isSgUseStatement(node);
      if (useDeclaration != NULL)
         {
