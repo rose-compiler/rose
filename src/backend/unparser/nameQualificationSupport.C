@@ -897,6 +897,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                                    printf ("In NameQualificationTraversal::nameQualificationDepth(): typedefSymbol == NULL \n");
 #endif
+                                // DQ (7/24/2011): I don't understand this code...this appears to be a cut/paste error.
                                 // Look for a template symbol
                                    symbol = SageInterface::lookupTemplateSymbolInParentScopes(name,currentScope);
                                    ROSE_ASSERT(symbol != NULL);
@@ -926,9 +927,17 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 
                            // Reset the symbol to one that will match the declaration.
                               symbol = SageInterface::lookupTemplateSymbolInParentScopes(name,currentScope);
-                              ROSE_ASSERT(symbol != NULL);
+                           // ROSE_ASSERT(symbol != NULL);
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                              printf ("Lookup symbol based symbol type: reset symbol = %p = %s \n",symbol,symbol->class_name().c_str());
+                              if (symbol != NULL)
+                                 {
+                                   printf ("Lookup symbol based symbol type: reset symbol = %p = %s \n",symbol,symbol->class_name().c_str());
+                                 }
+                                else
+                                 {
+                                // DQ (6/22/2011): This is demonstrated by test2004_48.C when using the Thrifty simulator.
+                                   printf ("Detected no template symbol in a parent scope (ignoring this case for now) \n");
+                                 }
 #endif
                             }
 
@@ -964,8 +973,8 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                                  }
                                 else
                                  {
-                                // DQ (6/22/2011): This is demonstrated by test2011_95.C
-                                   printf ("Detected no template symbol in a parent scope (ignoring this case for now) \n");
+                                // DQ (6/22/2011): This is demonstrated by test2011_121.C
+                                   printf ("Detected no template function instantiation symbol in a parent scope (ignoring this case for now) \n");
                                  }
 #endif
                             }
@@ -2466,6 +2475,21 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
                   }
              }
+
+       // DQ (7/24/2011): if there is a bit-field width specifier then it could contain variable references that require name qualification.
+          SgVariableDefinition* variableDefinition = isSgVariableDefinition(initializedName->get_declptr());
+          if (variableDefinition != NULL)
+             {
+               SgExpression* bitFieldWidthSpecifier = variableDefinition->get_bitfield();
+               if (bitFieldWidthSpecifier != NULL)
+                  {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    printf ("Traverse the bitFieldWidthSpecifier and add any required name qualification.\n");
+#endif
+                    generateNestedTraversalWithExplicitScope(bitFieldWidthSpecifier,currentScope);
+                  }
+             }
+
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           printf ("++++++++++++++++ DONE: Calling nameQualificationDepth to evaluate the name \n\n");
 #endif
@@ -3153,19 +3177,32 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
      SgEnumVal* enumVal = isSgEnumVal(n);
      if (enumVal != NULL)
         {
-          SgStatement* currentStatement = TransformationSupport::getStatement(enumVal);
-          ROSE_ASSERT(currentStatement != NULL);
-
-          SgScopeStatement* currentScope = isSgScopeStatement(currentStatement);
-
-       // If the current statement was not a scope, then what scope contains the current statement.
-          if (currentScope == NULL)
-               currentScope = currentStatement->get_scope();
-
-          ROSE_ASSERT(currentScope != NULL);
+          SgScopeStatement* currentScope = NULL;
 
           SgEnumDeclaration* enumDeclaration = enumVal->get_declaration();
           ROSE_ASSERT(enumDeclaration != NULL);
+
+          SgStatement* currentStatement = TransformationSupport::getStatement(enumVal);
+       // ROSE_ASSERT(currentStatement != NULL);
+          if (currentStatement != NULL)
+             {
+               currentScope = isSgScopeStatement(currentStatement);
+
+            // If the current statement was not a scope, then what scope contains the current statement.
+               if (currentScope == NULL)
+                    currentScope = currentStatement->get_scope();
+               ROSE_ASSERT(currentScope != NULL);
+             }
+            else
+             {
+            // If the enum value is contained in an index expression then currentStatement will be NULL.
+            // But then the current scope should be known explicitly.
+               currentScope = explictlySpecifiedCurrentScope;
+               ROSE_ASSERT(currentScope != NULL);
+
+            // Use the currentScope as the currentStatement
+               currentStatement = currentScope;
+             }
 
           int amountOfNameQualificationRequired = nameQualificationDepth(enumDeclaration,currentScope,currentStatement);
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)

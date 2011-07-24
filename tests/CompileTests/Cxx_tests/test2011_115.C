@@ -16,6 +16,6 @@ namespace X
 struct Z
    {
   // Here the bit with specifier requires name qualification.
-     int fieldVar_Z:X::const_size;
+     int fieldVar_Z:(X::const_size+X::const_size*2);
    };
 
