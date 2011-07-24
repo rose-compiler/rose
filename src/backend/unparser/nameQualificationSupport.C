@@ -175,6 +175,15 @@ NameQualificationTraversal::associatedDeclaration(SgScopeStatement* scope)
                SgNamespaceDefinitionStatement* definition = isSgNamespaceDefinitionStatement(scope);
                ROSE_ASSERT(definition != NULL);
 
+            // Let the first definition be used to get the associated first declaration so that we 
+            // are always refering to a consistant declaration for any chain of namespaces.  If not
+            // the first then perhaps the last?
+               while (definition->get_previousNamepaceDefinition() != NULL)
+                  {
+                 // printf ("Iterating through the namespace chain... \n");
+                    definition = definition->get_previousNamepaceDefinition();
+                  }
+
                SgNamespaceDeclarationStatement* declaration = definition->get_namespaceDeclaration();
                ROSE_ASSERT(declaration != NULL);
 
@@ -432,6 +441,9 @@ NameQualificationTraversal::requiresTypeElaboration(SgSymbol* symbol)
      ROSE_ASSERT(symbol != NULL);
      switch (symbol->variantT())
         {
+       // DQ (7/23/2011): Class elaboration can be required....
+          case V_SgClassSymbol:
+
        // DQ (6/21/2011): Added case for SgFunctionSymbol (triggers type elaboration).
           case V_SgFunctionSymbol:
           case V_SgMemberFunctionSymbol:
@@ -458,7 +470,7 @@ NameQualificationTraversal::requiresTypeElaboration(SgSymbol* symbol)
 
                typeElaborationRequired = requiresTypeElaboration(baseSymbol);
                break;
-             }           
+             }
 
           default:
              {
@@ -469,7 +481,6 @@ NameQualificationTraversal::requiresTypeElaboration(SgSymbol* symbol)
 
      return typeElaborationRequired;
    }
-
 
 
 void
@@ -499,6 +510,23 @@ NameQualificationTraversal::processNameQualificationArrayType(SgArrayType* array
      printf ("ERROR: Case of SgArrayType not supported yet! \n");
      ROSE_ASSERT(false);
 #endif
+   }
+
+void
+NameQualificationTraversal::processNameQualificationForPossibleArrayType(SgType* possibleArrayType, SgScopeStatement* currentScope)
+   {
+  // DQ (7/23/2011): Refactored support for name qualification of the index expressions used in array types.
+
+     SgType* strippedPossibleArrayType = possibleArrayType->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE);
+     ROSE_ASSERT(strippedPossibleArrayType != NULL);
+     SgArrayType* arrayType = isSgArrayType(strippedPossibleArrayType);
+     if (arrayType != NULL)
+        {
+          processNameQualificationArrayType(arrayType,currentScope);
+
+       // Now process the base type, since it might be part of a multi-dimentional array type (in C/C++ these are a chain of array types).
+          processNameQualificationForPossibleArrayType(arrayType->get_base_type(),currentScope);
+        }
    }
 
 
@@ -541,12 +569,12 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
      printf ("currentScope = %p = %s = %s \n",currentScope,currentScope->class_name().c_str(),SageInterface::get_name(currentScope).c_str());
 #endif
 
-     SgClassDeclaration*    classDeclaration    = isSgClassDeclaration(declaration);
-     SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(declaration);
-     SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(declaration);
-     SgTypedefDeclaration*  typedefDeclaration  = isSgTypedefDeclaration(declaration);
-     SgTemplateDeclaration* templateDeclaration = isSgTemplateDeclaration(declaration);
-     SgEnumDeclaration*     enumDeclaration     = isSgEnumDeclaration(declaration);
+     SgClassDeclaration*              classDeclaration     = isSgClassDeclaration(declaration);
+     SgVariableDeclaration*           variableDeclaration  = isSgVariableDeclaration(declaration);
+     SgFunctionDeclaration*           functionDeclaration  = isSgFunctionDeclaration(declaration);
+     SgTypedefDeclaration*            typedefDeclaration   = isSgTypedefDeclaration(declaration);
+     SgTemplateDeclaration*           templateDeclaration  = isSgTemplateDeclaration(declaration);
+     SgEnumDeclaration*               enumDeclaration      = isSgEnumDeclaration(declaration);
      SgNamespaceDeclarationStatement* namespaceDeclaration = isSgNamespaceDeclarationStatement(declaration);
 
 #if 0
@@ -1193,6 +1221,10 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                          printf ("Resetting the symbol to that stored in the SgAliasSymbol \n");
 #endif
                          symbol = aliasSymbol->get_alias();
+
+                      // DQ (7/23/2011): If we can't assert this, then we need to loop through the chain of alias 
+                      // symbols to get to the non-alias (original) symbol.
+                         ROSE_ASSERT(isSgAliasSymbol(symbol) == NULL);
                        }
 
                     switch (symbol->variantT())
@@ -1637,6 +1669,9 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
                   }
 
 #if 1
+#if 1
+               processNameQualificationForPossibleArrayType(type,currentScope);
+#else
                SgType* strippedPossibleArrayType = type->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE);
                ROSE_ASSERT(strippedPossibleArrayType != NULL);
                SgArrayType* arrayType = isSgArrayType(strippedPossibleArrayType);
@@ -1644,8 +1679,8 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
                   {
                     processNameQualificationArrayType(arrayType,currentScope);
                   }
+#endif
 #else
-// processNameQualificationArrayType(arrayType);
             // The template argument can be an array type and if so it could require name qualification for its index expression (since constant variables can be used).
                SgArrayType* arrayType = isSgArrayType(type);
                if (arrayType != NULL)
@@ -1710,7 +1745,7 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
                     printf ("Recursive call to generateNameQualificationSupport() with expression = %p = %s \n",expression,expression->class_name().c_str());
 #endif
 
-#if 1
+#if 0
                  // This is the older version, but debug what I have first before switching.
                     printf ("This is the older version, used generateNestedTraversalWithExplicitScope() instead \n");
                     generateNameQualificationSupport(expression,referencedNameSet);
@@ -1743,6 +1778,12 @@ NameQualificationTraversal::nameQualificationDepth ( SgType* type, SgScopeStatem
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
      printf ("In nameQualificationDepth(SgType*): type = %s \n",type->class_name().c_str());
 #endif
+
+  // DQ (7/23/2011): Test if we see array types here (looking for way to process all array types).
+  // ROSE_ASSERT(isSgArrayType(type) == NULL);
+
+  // DQ (7/23/2011): If this is an array type, then we need special processing for any name qualification of its index expressions.
+     processNameQualificationForPossibleArrayType(type,currentScope);
 
      SgDeclarationStatement* declaration = getDeclarationAssociatedWithType(type);
      if (declaration != NULL)
@@ -1813,6 +1854,26 @@ NameQualificationTraversal::nameQualificationDepth ( SgInitializedName* initiali
         {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           printf ("Lookup symbol based on name only (via parents starting at currentScope = %p = %s: name = %s symbol = %p = %s) \n",currentScope,currentScope->class_name().c_str(),name.str(),symbol,symbol->class_name().c_str());
+#endif
+
+#if 0
+          printf ("This should be a while loop to resolve the full possible chain of alias symbols! \n");
+          SgAliasSymbol* aliasSymbol = isSgAliasSymbol(symbol);
+          if (aliasSymbol != NULL) 
+             {
+               symbol = aliasSymbol->get_alias();
+
+               ROSE_ASSERT(isSgAliasSymbol(symbol) == NULL);
+             }
+#else
+       // Loop over possible chain of alias symbols to find the original sysmbol.
+          SgAliasSymbol* aliasSymbol = isSgAliasSymbol(symbol);
+          while (aliasSymbol != NULL) 
+             {
+               symbol = aliasSymbol->get_alias();
+               aliasSymbol = isSgAliasSymbol(symbol);
+             }
+          ROSE_ASSERT(isSgAliasSymbol(symbol) == NULL);
 #endif
           variableSymbol = isSgVariableSymbol(symbol);
           if (variableSymbol == NULL)
@@ -3058,7 +3119,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
              }
             else
              {
-            // This case happens when the SgVarRefExp can not be associated with a statement.
+            // DQ (7/23/2011): This case happens when the SgVarRefExp can not be associated with a statement.
             // I think this only happens when a constant variable is used in an array index of an array type.
             // printf ("Case of TransformationSupport::getStatement(varRefExp) == NULL \n");
 
@@ -3174,7 +3235,9 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                        }
                       else
                        {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                          printf ("WARNING: currentStatement == NULL for case of referenceToType = %p = %s \n",referenceToType,referenceToType->class_name().c_str());
+#endif
                        }
                   }
                  else

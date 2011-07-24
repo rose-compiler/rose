@@ -5,7 +5,7 @@ class Y
    {
 //   T* array[X::const_size];
    };
-   
+
 class Z {};
 
 namespace X
@@ -19,3 +19,4 @@ namespace X
 Y<Z[X::const_size]> b;
 
 // Z c[X::const_size];
+
