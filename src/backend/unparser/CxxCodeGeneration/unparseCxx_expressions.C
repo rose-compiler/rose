@@ -341,7 +341,7 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
                     if (i != SgNode::get_globalQualifiedNameMapForTypes().end())
                        {
                          nameQualifier = i->second;
-#if 1
+#if 0
                          printf ("In unparseTemplateArgument(): Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
 #endif
                          curprint(nameQualifier);
