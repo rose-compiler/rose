@@ -1687,66 +1687,9 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
                        }
                   }
 
-#if 1
-#if 1
+            // If this was not a SgNamedType (and even if it is, see test2011_117.C), it still might be a type 
+            // where name qualification is required (might be a SgArrayType with an index requiring qualification).
                processNameQualificationForPossibleArrayType(type,currentScope);
-#else
-               SgType* strippedPossibleArrayType = type->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE);
-               ROSE_ASSERT(strippedPossibleArrayType != NULL);
-               SgArrayType* arrayType = isSgArrayType(strippedPossibleArrayType);
-               if (arrayType != NULL)
-                  {
-                    processNameQualificationArrayType(arrayType,currentScope);
-                  }
-#endif
-#else
-            // The template argument can be an array type and if so it could require name qualification for its index expression (since constant variables can be used).
-               SgArrayType* arrayType = isSgArrayType(type);
-               if (arrayType != NULL)
-                  {
-                 // Note that we may have to traverse base types in case they include other SgArrayType IR nodes where their index requires name qualification.
-                    SgType* strippedArrayType = arrayType->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE);
-                    ROSE_ASSERT(strippedArrayType != NULL);
-
-                    SgExpression* index = arrayType->get_index();
-                    if (index != NULL)
-                       {
-                         printf ("~~~~~ Handling case of SgArrayType: currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
-                         printf ("~~~~~ Handling case of SgArrayType: index        = %p = %s \n",index,index->class_name().c_str());
-
-#if 1
-                      // DQ (7/23/2011): This will not work since the current scope is not know and can't be determined from the type (which is shared).
-                         printf ("Support name qualification on the array index expression if required (recursive call) \n");
-                      // generateNameQualificationSupport(index,referencedNameSet);
-                      // generateNameQualificationSupportWithScope(index,this,currentScope);
-                         ROSE_ASSERT(currentScope != NULL);
-                         generateNestedTraversalWithExplicitScope(index,currentScope);
-                         printf ("DONE: Support name qualification on the array index expression if required (recursive call) \n");
-#else
-                         SgVarRefExp* varRefExp = isSgVarRefExp(index);
-                         if (varRefExp != NULL)
-                            {
-                           // DQ (7/22/2011): Support name qualification on the index expression if required.
-                              SgVariableSymbol* variableSymbol = varRefExp->get_symbol();
-                              ROSE_ASSERT(variableSymbol != NULL);
-                              SgInitializedName* initializedName = variableSymbol->get_declaration();
-                              ROSE_ASSERT(initializedName != NULL);
-                              SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(initializedName->get_parent());
-
-                              int amountOfNameQualificationRequiredForArrayTypeIndex = nameQualificationDepth(variableDeclaration,currentScope,positionStatement);
-
-                              printf ("amountOfNameQualificationRequiredForArrayTypeIndex = %d \n",amountOfNameQualificationRequiredForArrayTypeIndex);
-
-                              setNameQualification(varRefExp,variableDeclaration,amountOfNameQualificationRequiredForArrayTypeIndex);
-                            }
-#endif
-                       }
-#if 0
-                    printf ("ERROR: Case of SgArrayType not supported yet! \n");
-                    ROSE_ASSERT(false);
-#endif
-                  }
-#endif
              }
             else
              {
@@ -1782,11 +1725,12 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
         }
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-     printf ("*********************************************************************************************************************\n");
+     printf ("************************************************************************************************************************\n");
      printf ("Leaving NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList(): templateArgumentList.size() = %zu \n",templateArgumentList.size());
-     printf ("*********************************************************************************************************************\n\n");
+     printf ("************************************************************************************************************************\n\n");
 #endif
    }
+
 
 int
 NameQualificationTraversal::nameQualificationDepth ( SgType* type, SgScopeStatement* currentScope, SgStatement* positionStatement )
@@ -3157,19 +3101,22 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
             // I think this only happens when a constant variable is used in an array index of an array type.
             // printf ("Case of TransformationSupport::getStatement(varRefExp) == NULL \n");
 
-               ROSE_ASSERT(explictlySpecifiedCurrentScope != NULL);
+            // DQ (7/24/2011): This fails for the tests/CompileTests/OpenMP_tests/objectLastprivate.cpp test code.
+            // ROSE_ASSERT(explictlySpecifiedCurrentScope != NULL);
+               if (explictlySpecifiedCurrentScope != NULL)
+                  {
+                    SgVariableSymbol* variableSymbol = varRefExp->get_symbol();
+                    ROSE_ASSERT(variableSymbol != NULL);
+                    SgInitializedName* initializedName = variableSymbol->get_declaration();
+                    ROSE_ASSERT(initializedName != NULL);
+                    SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(initializedName->get_parent());
+                    ROSE_ASSERT(variableDeclaration != NULL);
 
-               SgVariableSymbol* variableSymbol = varRefExp->get_symbol();
-               ROSE_ASSERT(variableSymbol != NULL);
-               SgInitializedName* initializedName = variableSymbol->get_declaration();
-               ROSE_ASSERT(initializedName != NULL);
-               SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(initializedName->get_parent());
-               ROSE_ASSERT(variableDeclaration != NULL);
+                    currentStatement = explictlySpecifiedCurrentScope;
+                    int amountOfNameQualificationRequired = nameQualificationDepth(variableDeclaration,explictlySpecifiedCurrentScope,currentStatement);
 
-               currentStatement = explictlySpecifiedCurrentScope;
-               int amountOfNameQualificationRequired = nameQualificationDepth(variableDeclaration,explictlySpecifiedCurrentScope,currentStatement);
-
-               setNameQualification(varRefExp,variableDeclaration,amountOfNameQualificationRequired);
+                    setNameQualification(varRefExp,variableDeclaration,amountOfNameQualificationRequired);
+                  }
              }
         }
 
