@@ -245,6 +245,13 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
 
                list[0] = namespaceDefinition;
 
+
+            // DQ (7/24/2011): get_nextNamepaceDefinition() == NULL is false in the case of the AST copy tests 
+            // (see tests/CompileTests/copyAST_tests/copytest2007_30.C). Only  get_nextNamepaceDefinition() 
+            // appears to sometimes be non-null, so we reset them both to NULL just to make sure.
+               namespaceDefinition->set_nextNamepaceDefinition(NULL);
+               namespaceDefinition->set_previousNamepaceDefinition(NULL);
+
                ROSE_ASSERT(namespaceDefinition->get_nextNamepaceDefinition()     == NULL);
                ROSE_ASSERT(namespaceDefinition->get_previousNamepaceDefinition() == NULL);
 
