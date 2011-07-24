@@ -899,13 +899,9 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #endif
                                 // DQ (7/24/2011): I don't understand this code...this appears to be a cut/paste error.
                                 // Look for a template symbol
-                                   symbol = SageInterface::lookupTemplateSymbolInParentScopes(name,currentScope);
-                                   ROSE_ASSERT(symbol != NULL);
+                                // symbol = SageInterface::lookupTemplateSymbolInParentScopes(name,currentScope);
+                                // ROSE_ASSERT(symbol != NULL);
                                  }
-#endif
-                              ROSE_ASSERT(symbol != NULL);
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                              printf ("Lookup symbol based symbol type: reset symbol = %p = %s \n",symbol,symbol->class_name().c_str());
 #endif
                             }
 
@@ -3520,11 +3516,7 @@ NameQualificationTraversal::setNameQualification(SgVarRefExp* varRefExp, SgVaria
             // the name qualification to be reset each time.  This is OK since it is used to build
             // the type name that will be saved.
                i->second = qualifier;
-
 #if 0
-               printf ("Error: name in qualifiedNameMapForNames already exists and is different... \n");
-               ROSE_ASSERT(false);
-#else
                printf ("Note: name in qualifiedNameMapForNames already exists and is different... \n");
 #endif
              }

@@ -307,6 +307,9 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
                newInfo.set_SkipClassDefinition();
                newInfo.set_SkipClassSpecifier();
 
+            // DQ (7/24/2011): Added to prevent output of enum declarations with enum fields in template argument.
+               newInfo.set_SkipEnumDefinition();
+               
             // DQ (7/23/2011): These are required to unparse the full type directly (e.g. SgArrayType (see test2011_117.C).
             // DQ (11/27/2004): Set these (though I am not sure that they help!)
             // newInfo.unset_isTypeFirstPart();
