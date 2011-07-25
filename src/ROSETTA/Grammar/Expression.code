@@ -431,8 +431,11 @@ HEADER_UPC_THREADS_EXPRESSION_END
 HEADER_UPC_MYTHREAD_EXPRESSION_START
 HEADER_UPC_MYTHREAD_EXPRESSION_END
 
-HEADER_FUNCTION_CALL_EXPRESSION_START
+HEADER_CALL_EXPRESSION_START
 HEADER_LIST_DECLARATIONS
+HEADER_CALL_EXPRESSION_END
+
+HEADER_FUNCTION_CALL_EXPRESSION_START
 
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
@@ -1435,6 +1438,7 @@ SgExpression::get_type() const
   // This catches any IR nodes where the fucntion should have been overwritten and was not.
 
      cerr << "Call to undefined $CLASSNAME::get_type(): aborting" << endl;
+     cerr << "dynamic type: " << this->class_name() << endl;
      ROSE_ASSERT(false);
 
      return 0;
@@ -2754,19 +2758,38 @@ SOURCE_UPC_THREADS_EXPRESSION_END
 SOURCE_UPC_MYTHREAD_EXPRESSION_START
 SOURCE_UPC_MYTHREAD_EXPRESSION_END
 
-SOURCE_FUNCTION_CALL_EXPRESSION_START
+SOURCE_CALL_EXPRESSION_START
 
 void
-SgFunctionCallExp::post_construction_initialization() 
+SgCallExpression::post_construction_initialization()
    {
      if (p_function != NULL)
           p_function->set_parent(this);
    }
 
+
+SgExpression*
+SgCallExpression::get_next(int& n) const
+   {
+     if(n==0)
+        {
+          n++;
+          return get_function();
+        } 
+       else 
+          if(p_args && n==1)
+             {
+               n++;
+               return get_args();
+             }
+
+     return 0;
+   }
+
 #if 1
 // DQ: trying to remove the nested iterator class
 void
-SgFunctionCallExp::append_arg(SgExpression* what)
+SgCallExpression::append_arg(SgExpression* what)
    {
      assert(this != NULL);
 
@@ -2790,32 +2813,15 @@ SgFunctionCallExp::append_arg(SgExpression* what)
 // DQ: trying to remove the nested iterator class
 // $CLASSNAME::insert_arg(const SgExpression::iterator& where, SgExpression* what)
 void
-SgFunctionCallExp::insert_arg(const SgExpressionPtrList::iterator& where, SgExpression* what)
+SgCallExpression::insert_arg(const SgExpressionPtrList::iterator& where, SgExpression* what)
    {
      p_args->insert_expression(where,what); 
    }
 #endif
 
-SgExpression*
-SgFunctionCallExp::get_next(int& n) const
-   {
-     if(n==0)
-        {
-          n++;
-          return get_function();
-        } 
-       else 
-          if(p_args && n==1)
-             {
-               n++;
-               return get_args();
-             }
-
-     return 0;
-   }
 
 int
-SgFunctionCallExp::replace_expression(SgExpression *o, SgExpression *n)
+SgCallExpression::replace_expression(SgExpression *o, SgExpression *n)
    {
   // DQ (12/17/2006): This function should have the semantics that it will represent a  
   // structural change to the AST, thus it is free to set the parent of the new expression.
@@ -2846,6 +2852,23 @@ SgFunctionCallExp::replace_expression(SgExpression *o, SgExpression *n)
 
      return 0;
    }
+
+SgType*
+SgCallExpression::get_type() const
+   {
+       return SageBuilder::buildVoidType(); //TODO this is wrong
+   }
+
+SOURCE_CALL_EXPRESSION_END
+
+SOURCE_FUNCTION_CALL_EXPRESSION_START
+
+void
+SgFunctionCallExp::post_construction_initialization()
+   {
+       SgCallExpression::post_construction_initialization();
+   }
+
 
 SgType*
 SgFunctionCallExp::get_type() const
