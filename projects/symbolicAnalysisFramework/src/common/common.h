@@ -33,20 +33,7 @@ const int INF = 10101010;
 const std::string ZEROStr = "0";
 //const std::string SPECIALStr = "$";
 
-/* ###############################
-   ######### M A C R O S #########
-   ############################### */
-#ifndef min
-#define min(x, y) ( (x) < (y) ? x : y )
-#endif
-
-#ifndef max
-#define max(x, y) ( (x) > (y) ? x : y )
-#endif
-
-#ifndef XOR
-#define XOR(x, y)  ( ((x) || (y)) && !((x) && (y)) ) 
-#endif
+inline bool XOR(bool x, bool y) { return x != y; }
 
 #define SgDefaultFile Sg_File_Info::generateDefaultFileInfoForTransformationNode()
 
