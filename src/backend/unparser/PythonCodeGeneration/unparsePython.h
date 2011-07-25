@@ -43,6 +43,7 @@ class Unparse_Python : public UnparseLanguageIndependentConstructs
           virtual void unparseCatchOptionStmt(SgCatchOptionStmt*, SgUnparse_Info&);
           virtual void unparseClassDeclaration(SgClassDeclaration*, SgUnparse_Info&);
           virtual void unparseClassDefinition(SgClassDefinition*, SgUnparse_Info&);
+          virtual void unparseClassNameRefExp(SgClassNameRefExp*, SgUnparse_Info&);
           virtual void unparseComplexVal(SgComplexVal*, SgUnparse_Info&);
           virtual void unparseComprehension(SgComprehension*, SgUnparse_Info&);
           virtual void unparseContinueStmt(SgContinueStmt*, SgUnparse_Info&);
