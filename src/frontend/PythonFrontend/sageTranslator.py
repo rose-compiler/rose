@@ -151,6 +151,10 @@ class SageTranslator(ast.NodeVisitor):
     gens = sage.buildExprListExp(map(self.visit, node.generators))
     return sage.buildDictComp(elt, gens)
 
+  def visit_Ellipsis(self, node):
+    scope = self.scopeStack.peek()
+    return sage.buildName("...", scope)
+
   def visit_ExceptHandler(self, node):
     name = node.name and node.name.id
     type = node.type and node.type.id
