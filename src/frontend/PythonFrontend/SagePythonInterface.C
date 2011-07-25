@@ -870,6 +870,21 @@ sage_buildSetComp(PyObject *self, PyObject *args)
 /*
  */
 PyObject*
+sage_buildSlice(PyObject *self, PyObject *args)
+{
+    SgExpression *sg_lower, *sg_upper, *sg_step;
+    if (! PyArg_ParseTuple(args, "O&O&O&", SAGE_CONVERTER(SgExpression), &sg_lower,
+                                           SAGE_CONVERTER(SgExpression), &sg_upper,
+                                           SAGE_CONVERTER(SgExpression), &sg_step))
+        return NULL;
+
+    SgSubscriptExpression* sg_slice = new SgSubscriptExpression(sg_lower, sg_upper, sg_step);
+    return PyEncapsulate(sg_slice);
+}
+
+/*
+ */
+PyObject*
 sage_buildSubscript(PyObject *self, PyObject *args)
 {
     SgExpression *sg_value, *sg_slice;
