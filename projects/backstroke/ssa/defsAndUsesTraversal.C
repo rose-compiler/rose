@@ -32,7 +32,8 @@ ChildUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node, Synth
 
 			if (StaticSingleAssignment::getDebug())
 			{
-				cout << "Defined " << uName->getNameString() << " at " << definingNode.toStringForDebugging() << endl;
+				cout << "Defined " << StaticSingleAssignment::varnameToString(uName->getKey()) << 
+						" at " << definingNode.toStringForDebugging() << endl;
 			}
 		}
 
@@ -56,7 +57,8 @@ ChildUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node, Synth
 
 		if (StaticSingleAssignment::getDebug())
 		{
-			cout << "Found use for " << uName->getNameString() << " at " << node->cfgForBeginning().toStringForDebugging() << endl;
+			cout << "Found use for " << StaticSingleAssignment::varnameToString(uName->getKey()) << 
+					" at " << node->cfgForBeginning().toStringForDebugging() << endl;
 		}
 
 		//This varref is both the only use in the subtree and the current variable

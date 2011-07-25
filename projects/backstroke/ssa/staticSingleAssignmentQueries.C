@@ -211,7 +211,7 @@ void StaticSingleAssignment::printToDOT(SgNode* source, ostream &outFile)
 					VarUniqueName *attr = getUniqueName(current.getNode());
 					ROSE_ASSERT(attr);
 
-					name = attr->getNameString();
+					name = StaticSingleAssignment::varnameToString(attr->getKey());
 				}
 
 				//Print the defs to a string
@@ -365,7 +365,7 @@ void StaticSingleAssignment::printToFilteredDOT(SgSourceFile* source, ofstream& 
 					VarUniqueName *attr = getUniqueName(current.getNode());
 					ROSE_ASSERT(attr);
 
-					name = attr->getNameString();
+					name = StaticSingleAssignment::varnameToString(attr->getKey());
 				}
 
 				//Print the defs to a string

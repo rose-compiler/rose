@@ -250,6 +250,28 @@ void StaticSingleAssignment::run(bool interprocedural)
 		cout << "Running UniqueNameTraversal...\n";
 	UniqueNameTraversal uniqueTrav(SageInterface::querySubTree<SgInitializedName>(project, V_SgInitializedName));
 	uniqueTrav.traverse(project);
+	
+//	//BEGIN DEBUGGING CODE
+//	vector<SgNode*> allNodes = SageInterface::querySubTree<SgNode>(project, V_SgNode);
+//	foreach (SgNode* node, allNodes)
+//	{
+//		const VarName& varName = getVarName(node);
+//	
+//		if (varName != emptyName)
+//		{
+//			if (varnameToString(varName).substr(0, 11) == "__builtin__")
+//				continue;
+//			
+//			if (node->get_file_info()->get_line() == 0)
+//				continue;
+//			
+//			printf("%d: Node %s - %s\n", node->get_file_info()->get_line(), node->class_name().c_str(), 
+//					varnameToString(varName).c_str());
+//		}
+//	}
+//	
+//	return;
+	
 	if (getDebug())
 		cout << "Finished UniqueNameTraversal." << endl;
 #ifdef DISPLAY_TIMINGS
