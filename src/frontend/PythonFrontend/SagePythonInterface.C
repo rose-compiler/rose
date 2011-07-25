@@ -242,13 +242,13 @@ sage_buildBreak(PyObject *self, PyObject *args)
 PyObject*
 sage_buildCall(PyObject *self, PyObject *args)
 {
-    char *name_str;
+    SgExpression* sg_callable;
     PyObject *py_args, *py_kwargs;
     SgScopeStatement *sg_scope;
-    if (! PyArg_ParseTuple(args, "sO!O!O&", &name_str,
-                                            &PyList_Type, &py_args,
-                                            &PyList_Type, &py_kwargs,
-                                            SAGE_CONVERTER(SgScopeStatement), &sg_scope))
+    if (! PyArg_ParseTuple(args, "O&O!O!O&", SAGE_CONVERTER(SgExpression), &sg_callable,
+                                             &PyList_Type, &py_args,
+                                             &PyList_Type, &py_kwargs,
+                                             SAGE_CONVERTER(SgScopeStatement), &sg_scope))
         return NULL;
 
     std::vector<SgExpression*> sg_exprs;
@@ -263,19 +263,15 @@ sage_buildCall(PyObject *self, PyObject *args)
         PyObject* py_kwarg = PyList_GetItem(py_kwargs, i);
         sg_exprs.push_back( PyDecapsulate<SgExpression>(py_kwarg) );
     }
-    SgExprListExp* sg_expr_list_exp =
+    SgExprListExp* sg_parameters =
         SageBuilder::buildExprListExp(sg_exprs);
 
-    SgName sg_func_name = SgName(name_str);
-    SgFunctionSymbol* sg_func_symbol = isSgFunctionSymbol(
-        SageInterface::lookupSymbolInParentScopes(sg_func_name, sg_scope));
-    if (sg_func_symbol == NULL) {
-        cerr << "Cannot find symbol: " << sg_func_name.str() << endl;
-    }
-
-    SgFunctionCallExp* sg_function_call_exp =
-        SageBuilder::buildFunctionCallExp(sg_func_symbol, sg_expr_list_exp);
-    return PyEncapsulate(sg_function_call_exp);
+    SgFunctionParameterTypeList * typeList = SageBuilder::buildFunctionParameterTypeList(sg_parameters);
+    SgFunctionType* func_type = SageBuilder::buildFunctionType(SageBuilder::buildVoidType(),typeList);
+    SgCallExpression* sg_call_exp = new SgCallExpression(sg_callable,sg_parameters,func_type);
+    sg_parameters->set_parent(sg_function_call_exp);
+    SageInterface::setOneSourcePositionForTransformation(sg_function_call_exp);
+    return PyEncapsulate(sg_call_exp);
 }
 
 /*

@@ -58,7 +58,7 @@ static PyMethodDef SageBuilderMethods[] = {
     {"buildBinOp", sage_buildBinOp, METH_VARARGS, "Builds a binary expression node."},
     {"buildBoolOp", sage_buildBoolOp, METH_VARARGS, "Builds a boolean operation expression node."},
     {"buildBreak", sage_buildBreak, METH_VARARGS, "Builds a break node."},
-    {"buildCall", sage_buildCall, METH_VARARGS, "Builds an SgFunctionCallExp node."},
+    {"buildCall", sage_buildCall, METH_VARARGS, "Builds an SgCallExpression node."},
     {"buildClassDef", sage_buildClassDef, METH_VARARGS, "Builds a class def node."},
     {"buildCompare", sage_buildCompare, METH_VARARGS, "Builds a comparison node."},
     {"buildComprehension", sage_buildComprehension, METH_VARARGS, "Builds a complex value node."},
