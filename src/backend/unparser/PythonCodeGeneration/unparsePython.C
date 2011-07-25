@@ -168,6 +168,11 @@ Unparse_Python::unparseExpression(SgExpression* expr, SgUnparse_Info& info) {
     if (parenthesize) curprint(")");
 }
 
+void
+Unparse_Python::unparseStatement(SgStatement* stmt, SgUnparse_Info& info) {
+    unparseLanguageSpecificStatement(stmt, info);
+}
+
 bool
 Unparse_Python::requiresParentheses(SgExpression* expr) {
     int exprPrecedence = getPrecedence(expr->variantT());

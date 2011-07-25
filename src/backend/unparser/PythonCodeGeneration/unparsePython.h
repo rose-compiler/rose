@@ -23,6 +23,7 @@ class Unparse_Python : public UnparseLanguageIndependentConstructs
           virtual void unparseLanguageSpecificStatement(SgStatement*, SgUnparse_Info&);
           virtual void unparseLanguageSpecificExpression(SgExpression*, SgUnparse_Info&);
           virtual void unparseExpression(SgExpression*, SgUnparse_Info&);
+          virtual void unparseStatement(SgStatement*, SgUnparse_Info&);
           virtual void unparseGlobalStmt(SgStatement*, SgUnparse_Info&);
           virtual void unparseComplexVal(SgExpression* expr, SgUnparse_Info& info);
 
