@@ -85,6 +85,7 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
         CASE_DISPATCH_AND_BREAK(CallExpression);
         CASE_DISPATCH_AND_BREAK(ComplexVal);
         CASE_DISPATCH_AND_BREAK(Comprehension);
+        CASE_DISPATCH_AND_BREAK(ClassNameRefExp);
         CASE_DISPATCH_AND_BREAK(DeleteExp);
         CASE_DISPATCH_AND_BREAK(DictionaryComprehension);
         CASE_DISPATCH_AND_BREAK(DoubleVal);
@@ -463,6 +464,12 @@ Unparse_Python::unparseClassDefinition(SgClassDefinition* class_def,
     unparseAsSuite(class_def, info);
 }
 
+void
+Unparse_Python::unparseClassNameRefExp(SgClassNameRefExp* class_ref,
+                                       SgUnparse_Info& info)
+{
+    curprint( class_ref->get_symbol()->get_name().getString() );
+}
 
 void
 Unparse_Python::unparseComprehension(SgComprehension* comp, SgUnparse_Info& info)
