@@ -5780,6 +5780,10 @@ HEADER_TEMPLATE_ARGUMENT_START
       //! This function generates the qualified name prefix to be used with the template argument type.
           SgName get_qualified_name_prefix() const;
 
+       // DQ (7/24/2011): Added to support for new qualified name generation
+      //! This function generates the qualified name prefix to be used with the named declaration (only applied to restricted set of declarations where name qualification can be used).
+          SgName get_qualified_name_prefix_for_type() const;
+
 HEADER_TEMPLATE_ARGUMENT_END
 
 
@@ -14501,6 +14505,8 @@ SgTemplateArgument::get_qualified_name_prefix() const
   //    SgBaseClass
   //    SgTemplateArgument
 
+     printf ("This is not called see the function: SgTemplateArgument::get_qualified_name_prefix_for_type() \n");
+
   // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
   // different and so it depends upon where the type is referenced.  Thus the qualified name is 
   // stored in a map to the IR node that references the type.
@@ -14518,6 +14524,30 @@ SgTemplateArgument::get_qualified_name_prefix() const
 
      return nameQualifier;
    }
+
+SgName
+SgTemplateArgument::get_qualified_name_prefix_for_type() const
+   {
+  // DQ (5/29/2011): Added to support for new qualified name generation.
+
+  // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
+  // different and so it depends upon where the type is referenced.  Thus the qualified name is 
+  // stored in a map to the IR node that references the type.
+     SgName nameQualifier;
+     std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(const_cast<SgTemplateArgument*>(this));
+  // ROSE_ASSERT(i != SgNode::get_globalQualifiedNameMapForNames().end());
+
+     if (i != SgNode::get_globalQualifiedNameMapForTypes().end())
+        {
+          nameQualifier = i->second;
+          printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+        }
+
+     printf ("nameQualifier for SgTemplateArgument = %s = %s \n",class_name().c_str(),nameQualifier.str());
+
+     return nameQualifier;
+   }
+ 
 
 SOURCE_TEMPLATE_ARGUMENT_END
 
