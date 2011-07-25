@@ -120,8 +120,9 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
 
             // DQ (7/24/2011): Need to make sure that the symbol is not already present in the symbol table 
             // (else injection would be redundant. This is a likely key to the problem we are having with 
-            // symbol table explosions for some codes.  Thgis should be refactored to a member function of 
+            // symbol table explosions for some codes.  This should be refactored to a member function of 
             // the symbol table support.
+            // Note that this change improves the performance from 15 minutes to 5 seconds for the outlining example.
                bool alreadyExists = currentScope->symbol_exists(name);
                if (alreadyExists == true)
                   {
@@ -129,8 +130,13 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                  // SgSymbol* symbol currentScope->symbol_exists(name);
                     switch (symbol->variantT())
                        {
-                         case V_SgAliasSymbol: // not clear what to do here...
+                         case V_SgAliasSymbol:
+                            {
+                           // not clear what to do here...
+                           // I think we need more symbol table support for detecting matching symbols.
+                           // I think we also need more alias symbol specfic query support.
                               break;
+                            }
 
                          case V_SgEnumSymbol:
                             {
