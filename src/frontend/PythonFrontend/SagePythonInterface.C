@@ -867,6 +867,20 @@ sage_buildSetComp(PyObject *self, PyObject *args)
         SageBuilder::buildSetComprehension(elt, generators);
     return PyEncapsulate(sg_set_comp);
 }
+/*
+ */
+PyObject*
+sage_buildSubscript(PyObject *self, PyObject *args)
+{
+    SgExpression *sg_value, *sg_slice;
+    if (! PyArg_ParseTuple(args, "O&O&", SAGE_CONVERTER(SgExpression), &sg_value,
+                                         SAGE_CONVERTER(SgExpression), &sg_slice))
+        return NULL;
+
+    SgPntrArrRefExp* sg_subscript =
+        SageBuilder::buildPntrArrRefExp(sg_value, sg_slice);
+    return PyEncapsulate(sg_subscript);
+}
 
 /*
  */

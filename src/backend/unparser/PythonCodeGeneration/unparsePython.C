@@ -97,6 +97,7 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
         CASE_DISPATCH_AND_BREAK(ListComprehension);
         CASE_DISPATCH_AND_BREAK(ListExp);
         CASE_DISPATCH_AND_BREAK(LongLongIntVal);
+        CASE_DISPATCH_AND_BREAK(PntrArrRefExp);
         CASE_DISPATCH_AND_BREAK(SetComprehension);
         CASE_DISPATCH_AND_BREAK(StringVal);
         CASE_DISPATCH_AND_BREAK(TupleExp);
@@ -764,6 +765,16 @@ Unparse_Python::unparseNaryOp(SgNaryOp* op,
         unparseOperator(*op_it);
         unparseExpression(*exp_it, info);
     }
+}
+
+void
+Unparse_Python::unparsePntrArrRefExp(SgPntrArrRefExp* ref,
+                                     SgUnparse_Info& info)
+{
+    unparseExpression(ref->get_lhs_operand(), info);
+    curprint("[");
+    unparseExpression(ref->get_rhs_operand(), info);
+    curprint("]");
 }
 
 void
