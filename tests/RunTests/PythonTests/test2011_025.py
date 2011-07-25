@@ -1,6 +1,6 @@
 # constructors
 
 class foo:
-    pass
+    print "okay"
 
 foo()
