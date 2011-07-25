@@ -152,7 +152,7 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
             break;
 
         default: {
-            UnparseLanguageIndependentConstructs::unparseExpression(stmt, info);
+            cout << "Error: unparseExpression(" << stmt->class_name() << "*) is unimplemented" << endl;
             break;
         }
     }
