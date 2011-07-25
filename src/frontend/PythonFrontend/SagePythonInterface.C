@@ -269,8 +269,8 @@ sage_buildCall(PyObject *self, PyObject *args)
     SgFunctionParameterTypeList * typeList = SageBuilder::buildFunctionParameterTypeList(sg_parameters);
     SgFunctionType* func_type = SageBuilder::buildFunctionType(SageBuilder::buildVoidType(),typeList);
     SgCallExpression* sg_call_exp = new SgCallExpression(sg_callable,sg_parameters,func_type);
-    sg_parameters->set_parent(sg_function_call_exp);
-    SageInterface::setOneSourcePositionForTransformation(sg_function_call_exp);
+    sg_parameters->set_parent(sg_call_exp);
+    SageInterface::setOneSourcePositionForTransformation(sg_call_exp);
     return PyEncapsulate(sg_call_exp);
 }
 
