@@ -69,6 +69,7 @@ class Unparse_Python : public UnparseLanguageIndependentConstructs
           virtual void unparseLongLongIntVal(SgLongLongIntVal* val, SgUnparse_Info& info);
           virtual void unparseNaryOp(SgNaryOp*, SgUnparse_Info&);
           virtual void unparsePassStatement(SgPassStatement*, SgUnparse_Info&);
+          virtual void unparsePntrArrRefExp(SgPntrArrRefExp*, SgUnparse_Info&);
           virtual void unparsePythonPrintStmt(SgPythonPrintStmt*, SgUnparse_Info&);
           virtual void unparseReturnStmt(SgReturnStmt*, SgUnparse_Info&);
           virtual void unparseSetComprehension(SgSetComprehension*, SgUnparse_Info&);

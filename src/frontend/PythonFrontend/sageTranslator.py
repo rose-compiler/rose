@@ -184,6 +184,9 @@ class SageTranslator(ast.NodeVisitor):
     names = map(self.visit, node.names)
     return sage.buildImport(names)
 
+  def visit_Index(self, node):
+    return self.visit(node.value)
+
   def visit_int(self, n):
     return sage.buildLongIntVal(n)
 
@@ -270,6 +273,11 @@ class SageTranslator(ast.NodeVisitor):
 
   def visit_str(self, str):
     return sage.buildStringVal(str)
+
+  def visit_Subscript(self, node):
+    value = self.visit(node.value)
+    slice = self.visit(node.slice)
+    return sage.buildSubscript(value, slice)
 
   def visit_TryExcept(self, node):
     body = sage.buildSuite(map(self.visit, node.body))
