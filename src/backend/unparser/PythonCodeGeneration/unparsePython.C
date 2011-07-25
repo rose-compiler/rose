@@ -53,7 +53,6 @@ Unparse_Python::unparseLanguageSpecificStatement(SgStatement* stmt,
         CASE_DISPATCH_AND_BREAK(ClassDefinition);
         CASE_DISPATCH_AND_BREAK(ContinueStmt);
         CASE_DISPATCH_AND_BREAK(ExprStatement);
-        CASE_DISPATCH_AND_BREAK(FunctionCallExp);
         CASE_DISPATCH_AND_BREAK(FunctionDeclaration);
         CASE_DISPATCH_AND_BREAK(FunctionDefinition);
         CASE_DISPATCH_AND_BREAK(FunctionParameterList);
@@ -61,12 +60,10 @@ Unparse_Python::unparseLanguageSpecificStatement(SgStatement* stmt,
         CASE_DISPATCH_AND_BREAK(ForStatement);
         CASE_DISPATCH_AND_BREAK(IfStmt);
         CASE_DISPATCH_AND_BREAK(ImportStatement);
-        CASE_DISPATCH_AND_BREAK(LongIntVal);
         CASE_DISPATCH_AND_BREAK(PythonPrintStmt);
         CASE_DISPATCH_AND_BREAK(PassStatement);
         CASE_DISPATCH_AND_BREAK(ReturnStmt);
         CASE_DISPATCH_AND_BREAK(StmtDeclarationStatement);
-        CASE_DISPATCH_AND_BREAK(StringVal);
         CASE_DISPATCH_AND_BREAK(TryStmt);
         CASE_DISPATCH_AND_BREAK(WhileStmt);
         CASE_DISPATCH_AND_BREAK(YieldStatement);
@@ -85,19 +82,22 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
     switch (stmt->variantT()) {
         CASE_DISPATCH_AND_BREAK(AssignOp);
         CASE_DISPATCH_AND_BREAK(AssignInitializer);
+        CASE_DISPATCH_AND_BREAK(CallExpression);
         CASE_DISPATCH_AND_BREAK(ComplexVal);
         CASE_DISPATCH_AND_BREAK(Comprehension);
         CASE_DISPATCH_AND_BREAK(DeleteExp);
         CASE_DISPATCH_AND_BREAK(DictionaryComprehension);
+        CASE_DISPATCH_AND_BREAK(DoubleVal);
         CASE_DISPATCH_AND_BREAK(ExprListExp);
-        CASE_DISPATCH_AND_BREAK(FunctionCallExp);
         CASE_DISPATCH_AND_BREAK(FunctionRefExp);
         CASE_DISPATCH_AND_BREAK(KeyDatumList);
         CASE_DISPATCH_AND_BREAK(KeyDatumPair);
         CASE_DISPATCH_AND_BREAK(LambdaRefExp);
         CASE_DISPATCH_AND_BREAK(ListComprehension);
         CASE_DISPATCH_AND_BREAK(ListExp);
+        CASE_DISPATCH_AND_BREAK(LongLongIntVal);
         CASE_DISPATCH_AND_BREAK(SetComprehension);
+        CASE_DISPATCH_AND_BREAK(StringVal);
         CASE_DISPATCH_AND_BREAK(TupleExp);
         CASE_DISPATCH_AND_BREAK(VarRefExp);
 
@@ -136,7 +136,6 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
         case V_SgNonMembershipOp:
         case V_SgIsOp:
         case V_SgIsNotOp:
-
             unparseBinaryOp( isSgBinaryOp(stmt), info );
             break;
 
@@ -330,7 +329,7 @@ Unparse_Python::getPrecedence(int variant) {
 
         case V_SgExponentiationOp:     return 14;
 
-        case V_SgFunctionCallExp:      return 15;
+        case V_SgCallExpression:       return 15;
      // case V_Sg Subscription:        return 15;
      // case V_Sg Slicing:             return 15;
      // case V_Sg Attribute Ref:       return 15;
@@ -342,14 +341,6 @@ Unparse_Python::getPrecedence(int variant) {
         case V_SgDictionaryComprehension: return 16;
     }
     return PY_UNPARSE_NO_PRECEDENCE;
-}
-
-void
-Unparse_Python::unparseStringVal(SgExpression* str_exp, SgUnparse_Info& info)
-{
-    SgStringVal* str_val = isSgStringVal(str_exp);
-    curprint(string("\"") + str_val->get_value() + string("\""));
-    //TODO what about other types of python strings
 }
 
 void
@@ -419,6 +410,16 @@ Unparse_Python::unparseBreakStmt(SgBreakStmt* break_stmt,
                                  SgUnparse_Info& info)
 {
     curprint("break");
+}
+
+void
+Unparse_Python::unparseCallExpression(SgCallExpression* func_call,
+                                       SgUnparse_Info& info)
+{
+    unparseExpression(func_call->get_function(), info);
+    curprint("(");
+    unparseExpression(func_call->get_args(), info);
+    curprint(")");
 }
 
 void
@@ -499,6 +500,14 @@ Unparse_Python::unparseDictionaryComprehension(SgDictionaryComprehension* dict_c
     curprint("}");
 }
 
+void
+Unparse_Python::unparseDoubleVal(SgDoubleVal* d_val, SgUnparse_Info& info)
+{
+    stringstream code;
+    code.setf( ios::showpoint );
+    code << d_val->get_value();
+    curprint( code.str() );
+}
 
 void
 Unparse_Python::unparseComplexVal(SgComplexVal* value,
@@ -562,17 +571,6 @@ Unparse_Python::unparseForStatement(SgForStatement* for_stmt,
         curprint_indented("else:\n", info);
         unparseAsSuite(for_stmt->get_else_body(), info);
     }
-}
-
-void
-Unparse_Python::unparseFunctionCallExp(SgFunctionCallExp* func_call,
-                                       SgUnparse_Info& info)
-{
-    SgFunctionSymbol* func_sym = func_call->getAssociatedFunctionSymbol();
-    string func_name = func_sym->get_name().getString();
-    curprint(func_name + string("("));
-    unparseExpression(func_call->get_args(), info);
-    curprint(")");
 }
 
 void
@@ -734,11 +732,11 @@ Unparse_Python::unparseListExp(SgListExp* list_exp,
 }
 
 void
-Unparse_Python::unparseLongIntVal(SgLongIntVal* long_int_val,
-                                  SgUnparse_Info& info)
+Unparse_Python::unparseLongLongIntVal(SgLongLongIntVal* lli_val,
+                                      SgUnparse_Info& info)
 {
     stringstream code;
-    code << long_int_val->get_value();
+    code << lli_val->get_value();
     curprint( code.str() );
 }
 
