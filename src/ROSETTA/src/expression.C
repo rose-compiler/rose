@@ -266,9 +266,13 @@ Grammar::setUpExpressions ()
           ListExp  | TupleExp,
           "ExprListExp","EXPR_LIST", /* can have instances = */ true);
 
+     NEW_NONTERMINAL_MACRO (CallExpression,
+          FunctionCallExp,
+          "CallExpression","CALL_EXPRESSION", true);
+
      NEW_NONTERMINAL_MACRO (Expression,
           UnaryOp                  | BinaryOp                 | ExprListExp             | VarRefExp           | ClassNameRefExp          |
-          FunctionRefExp           | MemberFunctionRefExp     | ValueExp                | FunctionCallExp     | SizeOfOp                 |
+          FunctionRefExp           | MemberFunctionRefExp     | ValueExp                | CallExpression      | SizeOfOp                 |
           UpcLocalsizeofExpression | UpcBlocksizeofExpression | UpcElemsizeofExpression | JavaInstanceOfOp    |
           TypeIdOp                 | ConditionalExp           | NewExp                  | DeleteExp           | ThisExp                  |
           RefExp                   | Initializer              | VarArgStartOp           | VarArgOp            | VarArgEndOp              |
@@ -836,7 +840,7 @@ Grammar::setUpExpressions ()
      UnaryOp.setFunctionPrototype ( "HEADER_GET_NEXT_EXPRESSION", "../Grammar/Expression.code" );
      BinaryOp.setFunctionPrototype ( "HEADER_GET_NEXT_EXPRESSION", "../Grammar/Expression.code" );
      NaryOp.setFunctionPrototype ( "HEADER_GET_NEXT_EXPRESSION", "../Grammar/Expression.code" );
-     FunctionCallExp.setFunctionPrototype ( "HEADER_GET_NEXT_EXPRESSION", "../Grammar/Expression.code" );
+     CallExpression.setFunctionPrototype ( "HEADER_GET_NEXT_EXPRESSION", "../Grammar/Expression.code" );
      ConditionalExp.setFunctionPrototype ( "HEADER_GET_NEXT_EXPRESSION", "../Grammar/Expression.code" );
      NewExp.setFunctionPrototype ( "HEADER_GET_NEXT_EXPRESSION", "../Grammar/Expression.code" );
      DeleteExp.setFunctionPrototype ( "HEADER_GET_NEXT_EXPRESSION", "../Grammar/Expression.code" );
@@ -1190,17 +1194,20 @@ Grammar::setUpExpressions ()
                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      FunctionCallExp.setFunctionPrototype ( "HEADER_FUNCTION_CALL_EXPRESSION", "../Grammar/Expression.code" );
-     FunctionCallExp.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_FUNCTIONS", "../Grammar/Expression.code" );
-     FunctionCallExp.editSubstitute       ( "LIST_NAME", "arg" );
   // FunctionCallExp.editSubstitute       ( "LIST_FUNCTION_RETURN_TYPE", "void" );
-     FunctionCallExp.setDataPrototype ( "SgExpression*", "function", "= NULL",
+
+     CallExpression.setFunctionPrototype ( "HEADER_CALL_EXPRESSION", "../Grammar/Expression.code" );
+     CallExpression.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_FUNCTIONS", "../Grammar/Expression.code" );
+     CallExpression.editSubstitute       ( "LIST_NAME", "arg" );
+     CallExpression.setDataPrototype ( "SgExpression*", "function", "= NULL",
                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     FunctionCallExp.setDataPrototype ( "SgExprListExp*", "args", "= NULL",
+     CallExpression.setDataPrototype ( "SgExprListExp*", "args", "= NULL",
                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
   // DQ (1/14/2006): We should not store the type of unary operators but instead obtain it from the operand directly.
-  // FunctionCallExp.setDataPrototype ( "SgType*", "expression_type", "= NULL",
+  // CallExpression.setDataPrototype ( "SgType*", "expression_type", "= NULL",
   //        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
-     FunctionCallExp.setDataPrototype ( "SgType*", "expression_type", "= NULL",
+     CallExpression.setDataPrototype ( "SgType*", "expression_type", "= NULL",
             CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
 
 #if 0
@@ -1941,6 +1948,7 @@ Grammar::setUpExpressions ()
      DoubleVal.setFunctionSource ( "SOURCE_DOUBLE_VALUE_EXPRESSION","../Grammar/Expression.code" );
      LongDoubleVal.setFunctionSource ( "SOURCE_LONG_DOUBLE_VALUE_EXPRESSION","../Grammar/Expression.code" );
      ComplexVal.setFunctionSource ( "SOURCE_COMPLEX_VALUE_EXPRESSION","../Grammar/Expression.code" );
+     CallExpression.setFunctionSource ( "SOURCE_CALL_EXPRESSION","../Grammar/Expression.code" );
      FunctionCallExp.setFunctionSource ( "SOURCE_FUNCTION_CALL_EXPRESSION","../Grammar/Expression.code" );
      ArrowExp.setFunctionSource ( "SOURCE_ARROW_EXPRESSION","../Grammar/Expression.code" );
      DotExp.setFunctionSource ( "SOURCE_DOT_EXPRESSION","../Grammar/Expression.code" );

@@ -725,8 +725,8 @@ HEADER_TEMPLATE_SPECIALIZATION_SUPPORT_END
 
 HEADER_LIST_DECLARATIONS_START
      public:
-          void append_LIST_FUNCTION_NAME  ( LIST_ELEMENT_DATA_TYPE element );
-          void prepend_LIST_FUNCTION_NAME ( LIST_ELEMENT_DATA_TYPE element );
+          virtual void append_LIST_FUNCTION_NAME  ( LIST_ELEMENT_DATA_TYPE element );
+          virtual void prepend_LIST_FUNCTION_NAME ( LIST_ELEMENT_DATA_TYPE element );
 
      public:
        // New functions added

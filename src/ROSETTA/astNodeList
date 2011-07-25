@@ -695,5 +695,6 @@ Sg_File_Info
 SgTypeCAFTeam
 SgCAFWithTeamStatement
 SgCAFCoExpression
+SgCallExpression
 SgTypeCrayPointer
 SgJavaImportStatement
