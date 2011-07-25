@@ -99,7 +99,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
        // ROSE_ASSERT(declarationFromSymbol != NULL);
           if (declarationFromSymbol != NULL)
              {
-            // DQ (6/22/2011): Can I or should I do relational operatios on enum values (note that the values are designed to allow this).
+            // DQ (6/22/2011): Can I, or should I, do relational operations on enum values (note that the values are designed to allow this).
                declarationAccessLevel = declarationFromSymbol->get_declarationModifier().get_accessModifier().get_modifier();
              }
             else
@@ -118,14 +118,155 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
              {
             // This declaration is visible, so build an alias.
 
-            // SgAliasSymbol* aliasSymbol = new SgAliasSymbol (SgSymbol *alias=NULL, bool isRenamed=false, SgName new_name="")
-               SgAliasSymbol* aliasSymbol = new SgAliasSymbol (symbol);
+            // DQ (7/24/2011): Need to make sure that the symbol is not already present in the symbol table 
+            // (else injection would be redundant. This is a likely key to the problem we are having with 
+            // symbol table explosions for some codes.  Thgis should be refactored to a member function of 
+            // the symbol table support.
+               bool alreadyExists = currentScope->symbol_exists(name);
+               if (alreadyExists == true)
+                  {
+                 // Just because the names match is not strong enough.
+                 // SgSymbol* symbol currentScope->symbol_exists(name);
+                    switch (symbol->variantT())
+                       {
+                         case V_SgAliasSymbol: // not clear what to do here...
+                              break;
+
+                         case V_SgEnumSymbol:
+                            {
+                           // alreadyExists = (currentScope->lookup_enum_symbol(name) != NULL);
+                              SgEnumSymbol* tmpSymbol = currentScope->lookup_enum_symbol(name);
+                              if (tmpSymbol != NULL)
+                                 {
+                                   SgNode* tmpSymbolBasis = tmpSymbol->get_symbol_basis();
+                                   ROSE_ASSERT(tmpSymbolBasis != NULL);
+                                   alreadyExists = (tmpSymbolBasis == symbolBasis);
+                                 }
+                              break;
+                            }
+
+                         case V_SgVariableSymbol:
+                            {
+                           // alreadyExists = (currentScope->lookup_variable_symbol(name) != NULL);
+                              SgVariableSymbol* tmpSymbol = currentScope->lookup_variable_symbol(name);
+                              if (tmpSymbol != NULL)
+                                 {
+                                   SgNode* tmpSymbolBasis = tmpSymbol->get_symbol_basis();
+                                   ROSE_ASSERT(tmpSymbolBasis != NULL);
+                                   alreadyExists = (tmpSymbolBasis == symbolBasis);
+                                 }
+                              break;
+                            }
+
+                         case V_SgClassSymbol:
+                            {
+                           // alreadyExists = (currentScope->lookup_class_symbol(name) != NULL);
+                              SgClassSymbol* tmpSymbol = currentScope->lookup_class_symbol(name);
+                              if (tmpSymbol != NULL)
+                                 {
+                                   SgNode* tmpSymbolBasis = tmpSymbol->get_symbol_basis();
+                                   ROSE_ASSERT(tmpSymbolBasis != NULL);
+                                   alreadyExists = (tmpSymbolBasis == symbolBasis);
+                                 }
+                              break;
+                            }
+
+                         case V_SgFunctionSymbol:
+                         case V_SgMemberFunctionSymbol:
+                            {
+                           // alreadyExists = (currentScope->lookup_function_symbol(name) != NULL);
+                              SgFunctionSymbol* tmpSymbol = currentScope->lookup_function_symbol(name);
+                              if (tmpSymbol != NULL)
+                                 {
+                                   SgNode* tmpSymbolBasis = tmpSymbol->get_symbol_basis();
+                                   ROSE_ASSERT(tmpSymbolBasis != NULL);
+                                   alreadyExists = (tmpSymbolBasis == symbolBasis);
+                                 }
+                              break;
+                            }
+
+                         case V_SgTypedefSymbol:
+                            {
+                              alreadyExists = (currentScope->lookup_typedef_symbol(name) != NULL);
+                              SgTypedefSymbol* tmpSymbol = currentScope->lookup_typedef_symbol(name);
+                              if (tmpSymbol != NULL)
+                                 {
+                                   SgNode* tmpSymbolBasis = tmpSymbol->get_symbol_basis();
+                                   ROSE_ASSERT(tmpSymbolBasis != NULL);
+                                   alreadyExists = (tmpSymbolBasis == symbolBasis);
+                                 }
+                              break;
+                            }
+
+                         case V_SgEnumFieldSymbol:
+                            {
+                              alreadyExists = (currentScope->lookup_enum_field_symbol(name) != NULL);
+                              SgEnumFieldSymbol* tmpSymbol = currentScope->lookup_enum_field_symbol(name);
+                              if (tmpSymbol != NULL)
+                                 {
+                                   SgNode* tmpSymbolBasis = tmpSymbol->get_symbol_basis();
+                                   ROSE_ASSERT(tmpSymbolBasis != NULL);
+                                   alreadyExists = (tmpSymbolBasis == symbolBasis);
+                                 }
+                              break;
+                            }
+
+                         case V_SgNamespaceSymbol:
+                            {
+                              alreadyExists = (currentScope->lookup_namespace_symbol(name) != NULL);
+                              SgNamespaceSymbol* tmpSymbol = currentScope->lookup_namespace_symbol(name);
+                              if (tmpSymbol != NULL)
+                                 {
+                                   SgNode* tmpSymbolBasis = tmpSymbol->get_symbol_basis();
+                                   ROSE_ASSERT(tmpSymbolBasis != NULL);
+                                   alreadyExists = (tmpSymbolBasis == symbolBasis);
+                                 }
+                              break;
+                            }
+
+                         case V_SgTemplateSymbol:
+                            {
+                              alreadyExists = (currentScope->lookup_template_symbol(name) != NULL);
+                              SgTemplateSymbol* tmpSymbol = currentScope->lookup_template_symbol(name);
+                              if (tmpSymbol != NULL)
+                                 {
+                                   SgNode* tmpSymbolBasis = tmpSymbol->get_symbol_basis();
+                                   ROSE_ASSERT(tmpSymbolBasis != NULL);
+                                   alreadyExists = (tmpSymbolBasis == symbolBasis);
+                                 }
+                              break;
+                            }
+
+                         case V_SgLabelSymbol:
+                            {
+                              alreadyExists = (currentScope->lookup_label_symbol(name) != NULL);
+                              SgLabelSymbol* tmpSymbol = currentScope->lookup_label_symbol(name);
+                              if (tmpSymbol != NULL)
+                                 {
+                                   SgNode* tmpSymbolBasis = tmpSymbol->get_symbol_basis();
+                                   ROSE_ASSERT(tmpSymbolBasis != NULL);
+                                   alreadyExists = (tmpSymbolBasis == symbolBasis);
+                                 }
+                              break;
+                            }
+
+                         default:
+                              printf ("Error: default reached in switch symbol = %p = %s \n",symbol,symbol->class_name().c_str());
+                              ROSE_ASSERT(false);
+                              break;
+                       }
+                  }
+               
+               if ( alreadyExists == false)
+                  {
+                    SgAliasSymbol* aliasSymbol = new SgAliasSymbol (symbol);
 
 #if ALIAS_SYMBOL_DEBUGGING
-               printf ("Adding symbol to new scope as a SgAliasSymbol = %p \n",aliasSymbol);
+                    printf ("Adding symbol to new scope as a SgAliasSymbol = %p \n",aliasSymbol);
 #endif
-            // Use the current name and the alias to the symbol
-               currentScope->insert_symbol(name, aliasSymbol);
+                 // Use the current name and the alias to the symbol
+                    currentScope->insert_symbol(name, aliasSymbol);
+                  }
              }
             else
              {
@@ -192,10 +333,17 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
 #if ALIAS_SYMBOL_DEBUGGING
           printf ("namespace definition associated mangled name = %s \n",mangledNamespaceName.str());
 #endif
+#if ALIAS_SYMBOL_DEBUGGING
+          printf ("In FixupAstSymbolTablesToSupportAliasedSymbols: associated mangled name = %s namespaceMap size = %zu \n",mangledNamespaceName.str(),namespaceMap.size());
+#endif
           std::map<SgName,std::vector<SgNamespaceDefinitionStatement*> >::iterator i = namespaceMap.find(mangledNamespaceName);
           if (i != namespaceMap.end())
              {
                std::vector<SgNamespaceDefinitionStatement*> & namespaceVector = i->second;
+#if ALIAS_SYMBOL_DEBUGGING
+               printf ("In FixupAstSymbolTablesToSupportAliasedSymbols: Namespace vector size = %zu \n",namespaceVector.size());
+#endif
+            // Testing each entry...
                for (size_t j = 0; j < namespaceVector.size(); j++)
                   {
                     ROSE_ASSERT(namespaceVector[j] != NULL);
@@ -232,8 +380,14 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
                SgNamespaceDefinitionStatement* currentScope = namespaceDefinition;
                ROSE_ASSERT(currentScope != NULL);
 
+#if ALIAS_SYMBOL_DEBUGGING
+               printf ("In FixupAstSymbolTablesToSupportAliasedSymbols: Suppress injection of symbols from one namespace to the other for each reintrant namespace \n");
+               printf ("In FixupAstSymbolTablesToSupportAliasedSymbols: referencedScope #symbols = %d currentScope #symbols = %d \n",referencedScope->get_symbol_table()->size(),currentScope->get_symbol_table()->size());
+#endif
+#if 1
             // Generate the alias symbols from the referencedScope and inject into the currentScope.
                injectSymbolsFromReferencedScopeIntoCurrentScope(referencedScope,currentScope,SgAccessModifier::e_default);
+#endif
              }
             else
              {
