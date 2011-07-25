@@ -216,7 +216,9 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList& t
           SgTemplateArgumentPtrList::const_iterator i = templateArgListPtr.begin();
           while (i != templateArgListPtr.end())
              {
-            // printf ("templateArgList element *i = %s \n",(*i)->sage_class_name());
+#if 0
+               printf ("In unparseTemplateArgumentList(): templateArgList element *i = %s \n",(*i)->class_name().c_str());
+#endif
 #if 0
                unp->u_exprStmt->curprint ( string("/* templateArgument is explicitlySpecified = ") + 
                       (((*i)->get_explicitlySpecified() == true) ? "true" : "false") + " */");
@@ -292,19 +294,45 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
           case SgTemplateArgument::type_argument:
              {
                ROSE_ASSERT (templateArgument->get_type() != NULL);
+
+            // printf ("In unparseTemplateArgument(): templateArgument->get_type() = %s \n",templateArgument->get_type()->class_name().c_str());
+
 #if OUTPUT_DEBUGGING_INFORMATION
                printf ("In unparseTemplateArgument(): templateArgument->get_type() = %s \n",templateArgument->get_type()->sage_class_name());
                unp->u_exprStmt->curprint ( "\n /* templateArgument->get_type() */ \n");
 #endif
             // curprint ( "\n /* SgTemplateArgument::type_argument */ \n");
 
+            // DQ (7/24/2011): Comment out to test going back to previous version befor unparsing array types correctly.
+               newInfo.set_SkipClassDefinition();
+               newInfo.set_SkipClassSpecifier();
+
+            // DQ (7/24/2011): Added to prevent output of enum declarations with enum fields in template argument.
+               newInfo.set_SkipEnumDefinition();
+               
+            // DQ (7/23/2011): These are required to unparse the full type directly (e.g. SgArrayType (see test2011_117.C).
             // DQ (11/27/2004): Set these (though I am not sure that they help!)
             // newInfo.unset_isTypeFirstPart();
             // newInfo.unset_isTypeSecondPart();
 
-               newInfo.set_SkipClassDefinition();
-               newInfo.set_SkipClassSpecifier();
+#if 0
+            // DQ (7/24/2011): Output the first part (before the name qualification)
+               newInfo.unset_isTypeFirstPart();
+               newInfo.unset_isTypeSecondPart();
 
+               newInfo.set_isTypeFirstPart();
+               unp->u_type->unparseType(templateArgument->get_type(),newInfo);
+
+            // DQ (7/24/2011): Output the second part (after the name qualification)
+               newInfo.unset_isTypeFirstPart();
+               newInfo.set_isTypeSecondPart();
+
+            // Debugging...this will fail for unparseToString...
+               ROSE_ASSERT(newInfo.get_reference_node_for_qualification() != NULL);
+               printf ("newInfo.get_reference_node_for_qualification() = %p = %s \n",newInfo.get_reference_node_for_qualification(),newInfo.get_reference_node_for_qualification()->class_name().c_str());
+#endif
+
+#if 1
             // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
             // different and so it depends upon where the type is referenced.  Thus the qualified name is 
             // stored in a map to the IR node that references the type.
@@ -316,10 +344,16 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
                     if (i != SgNode::get_globalQualifiedNameMapForTypes().end())
                        {
                          nameQualifier = i->second;
-                      // printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+#if 0
+                         printf ("In unparseTemplateArgument(): Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+#endif
                          curprint(nameQualifier);
                        }
                   }
+#endif
+            // DQ (7/23/2011): To unparse the type directly we can't have either of these set!
+            // ROSE_ASSERT(newInfo.isTypeFirstPart()  == false);
+            // ROSE_ASSERT(newInfo.isTypeSecondPart() == false);
 
             // This will unparse the type will any required name qualification.
                unp->u_type->unparseType(templateArgument->get_type(),newInfo);
