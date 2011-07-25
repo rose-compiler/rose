@@ -24,6 +24,7 @@ VariableReferenceSet UniqueNameTraversal::evaluateSynthesizedAttribute(SgNode* n
 
         return VariableReferenceSet(name);
     }
+
         //Next, see if it is a varRef
     else if (isSgVarRefExp(node))
     {
@@ -35,12 +36,13 @@ VariableReferenceSet UniqueNameTraversal::evaluateSynthesizedAttribute(SgNode* n
             ROSE_ASSERT(false);
         }
 
-        //We want to assign this node its unique name, as well as adding it to the defs.
+        //We want to assign this node its unique name, as well as adding it to the uses.
         VarUniqueName* uName = new VarUniqueName(resolveTemporaryInitNames(var->get_symbol()->get_declaration()));
         var->setAttribute(StaticSingleAssignment::varKeyTag, uName);
 
         return VariableReferenceSet(var);
     }
+
         //We check if it is a 'this' expression, since we want to be able to version 'this' as well.
         //We don't have an SgInitializedName for 'this', so we use a flag in the unique names
     else if (isSgThisExp(node))
@@ -55,8 +57,9 @@ VariableReferenceSet UniqueNameTraversal::evaluateSynthesizedAttribute(SgNode* n
 
         return VariableReferenceSet(thisExp);
     }
+
         //Now we check if we have reached a Dot Expression, where we have to merge names.
-    else if (isSgDotExp(node) || isSgArrowExp(node))
+    else if (isSgDotExp(node) || (isSgArrowExp(node) && treatPointersAsStructs))
     {
         if (attrs.size() != 2)
         {
@@ -64,26 +67,28 @@ VariableReferenceSet UniqueNameTraversal::evaluateSynthesizedAttribute(SgNode* n
             ROSE_ASSERT(false);
         }
 
+        SgNode* lhsVar = attrs[0].getCurrentVar();
+        SgNode* rhsVar = attrs[1].getCurrentVar();
+
         //We want to update the naming for the RHS child
         //Check if the LHS has at least one varRef
-        if (attrs[0].getRefs().size() > 0)
+        if (lhsVar != NULL)
         {
             //Check if our LHS varRef is the 'this' expression
-            SgThisExp* thisExp = isSgThisExp(attrs[0].getRefs().back());
+            SgThisExp* thisExp = isSgThisExp(lhsVar);
 
-            //Get the unique name from the highest varRef in the LHS, since this will have the most
-            //fully qualified UniqueName.
+            //Get the unique name from the varRef in the LHS
             VarUniqueName* lhsName = NULL;
             if (thisExp == NULL)
             {
-                lhsName = dynamic_cast<VarUniqueName*> (attrs[0].getRefs().back()->getAttribute(StaticSingleAssignment::varKeyTag));
+                lhsName = dynamic_cast<VarUniqueName*> (lhsVar->getAttribute(StaticSingleAssignment::varKeyTag));
                 ROSE_ASSERT(lhsName);
             }
 
             //Check if the RHS has a single varRef
-            if (attrs[1].getRefs().size() == 1)
+            if (rhsVar != NULL)
             {
-                SgVarRefExp* varRef = isSgVarRefExp(attrs[1].getRefs().front());
+                SgVarRefExp* varRef = isSgVarRefExp(rhsVar);
 
                 if (varRef != NULL)
                 {
@@ -114,14 +119,14 @@ VariableReferenceSet UniqueNameTraversal::evaluateSynthesizedAttribute(SgNode* n
                     }
 
                     //Return the combination of the LHS and RHS varRefs
-                    return VariableReferenceSet(attrs[0].getRefs(), varRef);
+                    return VariableReferenceSet(node);
                 }
                 else
                 {
                     //Since the RHS has no varRef, we can no longer
                     //establish a direct reference chain between the LHS and any varRefs
                     //further up the tree.
-                    return VariableReferenceSet();
+                    return VariableReferenceSet(NULL);
                 }
             }
             else
@@ -129,7 +134,7 @@ VariableReferenceSet UniqueNameTraversal::evaluateSynthesizedAttribute(SgNode* n
                 //Since the RHS has no varRef, we can no longer
                 //establish a direct reference chain between the LHS and any varRefs
                 //further up the tree.
-                return VariableReferenceSet();
+                return VariableReferenceSet(NULL);
             }
         }
         else
@@ -138,9 +143,10 @@ VariableReferenceSet UniqueNameTraversal::evaluateSynthesizedAttribute(SgNode* n
 
             //We need to check if the RHS had a name assigned.
             //If so, we need to remove it, because it will be incorrect.
-            if (attrs[1].getRefs().size() == 1)
+            if (rhsVar != NULL)
             {
-                SgVarRefExp* varRef = isSgVarRefExp(attrs[1].getRefs()[0]);
+                SgVarRefExp* varRef = isSgVarRefExp(rhsVar);
+                ROSE_ASSERT(varRef);
 
                 if (varRef)
                 {
@@ -154,19 +160,34 @@ VariableReferenceSet UniqueNameTraversal::evaluateSynthesizedAttribute(SgNode* n
                 }
             }
 
-            return VariableReferenceSet();
+            return VariableReferenceSet(NULL);
         }
     }
-        //Now we hit the default case. We should return a merged list.
+
+    else if (isSgCastExp(node))
+    {
+        ROSE_ASSERT(attrs.size() > 0);
+        return attrs.front();
+    }
+
+        //If we don't distinguish between arrow and dot operations, then dereferencing preserves the current variable.
+    else if (isSgPointerDerefExp(node) && treatPointersAsStructs)
+    {
+        ROSE_ASSERT(attrs.size() == 1);
+        return attrs.front();
+    }
+
+        //This allows us to treat (a, b).x as b.x
+    else if (isSgCommaOpExp(node) && propagateNamesThroughComma)
+    {
+        ROSE_ASSERT(attrs.size() == 2);
+        return attrs.back();
+    }
+
+        //Now we hit the default case. Names should not propagate up
     else
     {
-        std::vector<SgNode*> names;
-        for (unsigned int i = 0; i < attrs.size(); i++)
-        {
-            names.insert(names.end(), attrs[i].getRefs().begin(), attrs[i].getRefs().end());
-        }
-
-        return VariableReferenceSet(names);
+        return VariableReferenceSet(NULL);
     }
 }
 
