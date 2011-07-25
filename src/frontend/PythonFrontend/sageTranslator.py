@@ -71,6 +71,12 @@ class SageTranslator(ast.NodeVisitor):
     assert len(targets) == 1, "target assignment lists are yet to be supported"
     return sage.buildAssign(targets[0], value)
 
+  def visit_Attribute(self, node):
+    value = self.visit(node.value)
+    scope = self.scopeStack.peek()
+    attr = sage.buildName(node.attr, scope)
+    return sage.buildAttr(value, attr)
+
   def visit_AugAssign(self, node):
     target = self.visit(node.target)
     value  = self.visit(node.value)

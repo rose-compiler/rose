@@ -137,6 +137,7 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
         case V_SgNonMembershipOp:
         case V_SgIsOp:
         case V_SgIsNotOp:
+        case V_SgDotExp:
             unparseBinaryOp( isSgBinaryOp(stmt), info );
             break;
 
@@ -271,6 +272,7 @@ Unparse_Python::unparseOperator(VariantT variant, bool pad) {
         case V_SgNonMembershipOp:    curprint("not in"); break;
         case V_SgIsOp:               curprint("is");     break;
         case V_SgIsNotOp:            curprint("is not"); break;
+        case V_SgDotExp:             curprint(".");      break;
         default: {
             cerr << "Unable to unparse operator: variant = " << variant << endl;
             ROSE_ABORT();

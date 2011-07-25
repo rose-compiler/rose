@@ -7,6 +7,7 @@
 
 PyObject* sage_buildAssert(PyObject *self, PyObject *args);
 PyObject* sage_buildAssign(PyObject *self, PyObject *args);
+PyObject* sage_buildAttr(PyObject *self, PyObject *args);
 PyObject* sage_buildAugAssign(PyObject *self, PyObject *args);
 PyObject* sage_buildBinOp(PyObject *self, PyObject *args);
 PyObject* sage_buildBoolOp(PyObject *self, PyObject *args);
@@ -54,6 +55,7 @@ PyObject* sage_buildYield(PyObject *self, PyObject *args);
 static PyMethodDef SageBuilderMethods[] = {
     {"buildAssert", sage_buildAssert, METH_VARARGS, "Builds an assert node."},
     {"buildAssign", sage_buildAssign, METH_VARARGS, "Builds an assignment node."},
+    {"buildAttr", sage_buildAttr, METH_VARARGS, "Builds an attribute reference node."},
     {"buildAugAssign", sage_buildAugAssign, METH_VARARGS, "Builds an augmented assignment node."},
     {"buildBinOp", sage_buildBinOp, METH_VARARGS, "Builds a binary expression node."},
     {"buildBoolOp", sage_buildBoolOp, METH_VARARGS, "Builds a boolean operation expression node."},
