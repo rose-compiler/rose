@@ -765,6 +765,14 @@ test2011_98.C \
 test2011_99.C \
 test2011_100.C \
 test2011_101.C \
+test2011_110.C \
+test2011_111.C \
+test2011_115.C \
+test2011_117.C \
+test2011_118.C \
+test2011_119.C \
+test2011_120.C \
+test2011_121.C \
    test2005_112.C \
    test2005_117.C \
    test2005_154.C \
@@ -803,6 +811,12 @@ test2005_09.C \
 test2005_104.C \
 test2010_24.C \
 test2010_25.C
+
+# Failing AST File I/O tests (7/24/2011):
+# test2011_113.C 
+# test2011_114.C 
+# test2011_116.C 
+
 
 # DQ (5/8/2011): These fail only in the generated (unparsed) code for the new name
 # qualification support.  Thus we can't use them to test the new name qualifiction
