@@ -114,6 +114,20 @@ sage_buildAssign(PyObject *self, PyObject *args)
 }
 
 /*
+ */
+PyObject*
+sage_buildAttr(PyObject *self, PyObject *args)
+{
+    SgExpression *sg_attr, *sg_value;
+    if (! PyArg_ParseTuple(args, "O&O&", SAGE_CONVERTER(SgExpression), &sg_value,
+                                         SAGE_CONVERTER(SgExpression), &sg_attr))
+        return NULL;
+
+    SgDotExp *sg_dot_exp = SageBuilder::buildDotExp(sg_value, sg_attr);
+    return PyEncapsulate(sg_dot_exp);
+}
+
+/*
  * Build an SgOp node from the given Python statements.
  *  - PyObject* args = (PyObject*, PyObject*)
  */
