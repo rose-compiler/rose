@@ -99,6 +99,7 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
         CASE_DISPATCH_AND_BREAK(LongLongIntVal);
         CASE_DISPATCH_AND_BREAK(PntrArrRefExp);
         CASE_DISPATCH_AND_BREAK(SetComprehension);
+        CASE_DISPATCH_AND_BREAK(SubscriptExpression);
         CASE_DISPATCH_AND_BREAK(StringVal);
         CASE_DISPATCH_AND_BREAK(TupleExp);
         CASE_DISPATCH_AND_BREAK(VarRefExp);
@@ -844,6 +845,25 @@ Unparse_Python::unparseStringVal(SgStringVal* str,
     code << "\"" << str->get_value() << "\"";
     curprint( code.str() );
 }
+
+void
+Unparse_Python::unparseSubscriptExpression(SgSubscriptExpression* slice,
+                                           SgUnparse_Info& info)
+{
+    if (slice->get_lowerBound() != NULL)
+        unparseExpression(slice->get_lowerBound(), info);
+
+    curprint(":");
+
+    if (slice->get_upperBound() != NULL)
+        unparseExpression(slice->get_upperBound(), info);
+
+    if (slice->get_stride() != NULL) {
+        curprint(":");
+        unparseExpression(slice->get_stride(), info);
+    }
+}
+
 
 void
 Unparse_Python::unparseTryStmt(SgTryStmt* try_stmt,
