@@ -602,7 +602,7 @@ Unparse_Python::unparseFunctionDeclaration(SgFunctionDeclaration* func_decl,
         }
     }
 
-    curprint_indented("def ", info);
+    curprint("def ");
     curprint(func_decl->get_name().getString());
     curprint("(");
     unparseStatement(func_decl->get_parameterList(), info);
