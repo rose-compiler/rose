@@ -838,6 +838,15 @@ Unparse_Python::unparseStmtDeclarationStatement(SgStmtDeclarationStatement* stmt
 }
 
 void
+Unparse_Python::unparseStringVal(SgExpression* exp,
+                                 SgUnparse_Info& info)
+{
+    SgStringVal* str = isSgStringVal(exp);
+    ROSE_ASSERT(str != NULL);
+    unparseStringVal(str, info);
+}
+
+void
 Unparse_Python::unparseStringVal(SgStringVal* str,
                                  SgUnparse_Info& info)
 {
