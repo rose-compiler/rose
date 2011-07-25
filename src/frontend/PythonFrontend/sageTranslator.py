@@ -92,7 +92,7 @@ class SageTranslator(ast.NodeVisitor):
     return sage.buildBreak()
 
   def visit_Call(self, node):
-    name = node.func.id
+    name = self.visit(node.func)
     args = map(self.visit, node.args)
     kwargs = map(self.visit, node.keywords)
     scope = self.scopeStack.peek()
