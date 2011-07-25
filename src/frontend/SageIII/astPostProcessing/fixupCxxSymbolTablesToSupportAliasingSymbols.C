@@ -193,7 +193,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
 
                          case V_SgTypedefSymbol:
                             {
-                              alreadyExists = (currentScope->lookup_typedef_symbol(name) != NULL);
+                           // alreadyExists = (currentScope->lookup_typedef_symbol(name) != NULL);
                               SgTypedefSymbol* tmpSymbol = currentScope->lookup_typedef_symbol(name);
                               if (tmpSymbol != NULL)
                                  {
@@ -206,7 +206,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
 
                          case V_SgEnumFieldSymbol:
                             {
-                              alreadyExists = (currentScope->lookup_enum_field_symbol(name) != NULL);
+                           // alreadyExists = (currentScope->lookup_enum_field_symbol(name) != NULL);
                               SgEnumFieldSymbol* tmpSymbol = currentScope->lookup_enum_field_symbol(name);
                               if (tmpSymbol != NULL)
                                  {
@@ -219,7 +219,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
 
                          case V_SgNamespaceSymbol:
                             {
-                              alreadyExists = (currentScope->lookup_namespace_symbol(name) != NULL);
+                           // alreadyExists = (currentScope->lookup_namespace_symbol(name) != NULL);
                               SgNamespaceSymbol* tmpSymbol = currentScope->lookup_namespace_symbol(name);
                               if (tmpSymbol != NULL)
                                  {
@@ -232,7 +232,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
 
                          case V_SgTemplateSymbol:
                             {
-                              alreadyExists = (currentScope->lookup_template_symbol(name) != NULL);
+                           // alreadyExists = (currentScope->lookup_template_symbol(name) != NULL);
                               SgTemplateSymbol* tmpSymbol = currentScope->lookup_template_symbol(name);
                               if (tmpSymbol != NULL)
                                  {
@@ -245,7 +245,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
 
                          case V_SgLabelSymbol:
                             {
-                              alreadyExists = (currentScope->lookup_label_symbol(name) != NULL);
+                           // alreadyExists = (currentScope->lookup_label_symbol(name) != NULL);
                               SgLabelSymbol* tmpSymbol = currentScope->lookup_label_symbol(name);
                               if (tmpSymbol != NULL)
                                  {
