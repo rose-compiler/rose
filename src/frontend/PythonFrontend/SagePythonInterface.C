@@ -1039,7 +1039,8 @@ sage_buildStringVal(PyObject *self, PyObject *args)
 PyObject*
 sage_buildWhile(PyObject *self, PyObject *args)
 {
-    SgStatement *test, *body, *orelse;
+    SgStatement *test, *body;
+    SgStatement *orelse = NULL;
     if (! PyArg_ParseTuple(args, "O&O&|O&", SAGE_CONVERTER(SgStatement), &test,
                                             SAGE_CONVERTER(SgStatement), &body,
                                             SAGE_CONVERTER(SgStatement), &orelse))
@@ -1055,7 +1056,8 @@ PyObject*
 sage_buildWith(PyObject *self, PyObject *args)
 {
     SgExpression *expr;
-    SgStatement *vars, *body;
+    SgStatement *body;
+    SgStatement *vars = NULL;
     if (! PyArg_ParseTuple(args, "O&O&|O&", SAGE_CONVERTER(SgExpression), &expr,
                                             SAGE_CONVERTER(SgStatement), &body,
                                             SAGE_CONVERTER(SgStatement), &vars))
