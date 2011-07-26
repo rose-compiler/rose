@@ -570,12 +570,15 @@ HEADER_BOOLEAN_GET_TYPE_MEMBER_FUNCTION
 HEADER_IS_NOT_OP_END
 
 HEADER_NARY_OP_START
-    void post_constructor_initialization();
+
     SgExpressionPtrList& get_operands();
     const SgExpressionPtrList& get_operands() const;
+
     VariantTList& get_operators();
     const VariantTList& get_operators() const;
+
     virtual void append_operation(VariantT sg_operator, SgExpression* operand); 
+
 HEADER_NARY_OP_END
 
 HEADER_NARY_COMPARISON_OP_START
@@ -3246,13 +3249,6 @@ SOURCE_BOOLEAN_GET_TYPE_MEMBER_FUNCTION
 SOURCE_IS_NOT_OP_END
 
 SOURCE_NARY_OP_START
-void
-SgNaryOp::post_construction_initialization() {}
-
-int
-SgNaryOp::replace_expression(SgExpression *o, SgExpression *n) {
-    ROSE_ASSERT(!"SgNaryOp::replace_expression is unimplemented.");
-}
 
 SgExpressionPtrList&
 SgNaryOp::get_operands()
@@ -3276,6 +3272,26 @@ SgNaryOp::append_operation(VariantT sg_operator, SgExpression* operand) {
     get_operands().push_back(operand);
     get_operators().push_back(sg_operator);
     operand->set_parent(this);
+}
+
+int
+SgNaryOp::replace_expression(SgExpression *o, SgExpression *n) {
+    ROSE_ASSERT(!"SgNaryOp::replace_expression is unimplemented.");
+}
+
+int
+SgNaryOp::length() const {
+     return get_operands().size();
+}
+
+SgExpression*
+SgNaryOp::get_next(int& i) const {
+    return get_operands()[i++];
+}
+
+bool
+SgNaryOp::empty() const {
+    return get_operands().empty();
 }
 
 SOURCE_NARY_OP_END
