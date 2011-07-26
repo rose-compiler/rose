@@ -898,6 +898,11 @@ Unparse_Python::unparseTryStmt(SgTryStmt* try_stmt,
         curprint_indented("else:\n", info);
         unparseAsSuite(try_stmt->get_else_body(), info);
     }
+
+    if (try_stmt->get_finally_body() != NULL) {
+        curprint_indented("finally:\n", info);
+        unparseAsSuite(try_stmt->get_finally_body(), info);
+    }
 }
 
 void

@@ -295,8 +295,8 @@ class SageTranslator(ast.NodeVisitor):
 
   def visit_TryExcept(self, node):
     body = sage.buildSuite(map(self.visit, node.body))
-    handlers = map(self.visit, node.handlers)
-    orelse = sage.buildSuite(map(self.visit, node.orelse))
+    handlers = node.handlers and map(self.visit, node.handlers)
+    orelse = node.orelse and sage.buildSuite(map(self.visit, node.orelse))
     return sage.buildTryExcept(body, handlers, orelse)
 
   def visit_TryFinally(self, node):
