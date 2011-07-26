@@ -820,8 +820,8 @@ SgKeyDatumPair* buildKeyDatumPair    (SgExpression* key, SgExpression* datum);
 SgKeyDatumPair* buildKeyDatumPair_nfi(SgExpression* key, SgExpression* datum);
 
 //! Build a list of key-datum pairs
-SgKeyDatumList* buildKeyDatumList    (std::vector<SgKeyDatumPair*> pairs);
-SgKeyDatumList* buildKeyDatumList_nfi(std::vector<SgKeyDatumPair*> pairs);
+SgDictionaryExp* buildDictionaryExp    (std::vector<SgKeyDatumPair*> pairs);
+SgDictionaryExp* buildDictionaryExp_nfi(std::vector<SgKeyDatumPair*> pairs);
 
 //! Build a delete statement
 SgDeleteExp* buildDeleteExp(SgExpression *target, bool is_array = false, bool need_global_specifier = false, SgFunctionDeclaration *deleteOperatorDeclaration = NULL);

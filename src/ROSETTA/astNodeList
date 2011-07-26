@@ -330,6 +330,7 @@ SgDeleteExp
 SgDerivedTypeStatement
 SgDesignatedInitializer
 SgDictionaryComprehension
+SgDictionaryExp
 SgDimensionObject
 SgDirectedGraph
 SgDirectedGraphEdge
@@ -428,7 +429,6 @@ SgIntrinsicSymbol
 SgIsOp
 SgIsNotOp
 SgIorAssignOp
-SgKeyDatumList
 SgKeyDatumPair
 SgCudaKernelExecConfig
 SgCudaKernelCallExp

@@ -876,11 +876,11 @@ HEADER_SET_COMPREHENSION_END
 HEADER_DICTIONARY_COMPREHENSION_START
 HEADER_DICTIONARY_COMPREHENSION_END
 
-HEADER_KEY_DATUM_LIST_START
+HEADER_DICTIONARY_EXP_START
 SgKeyDatumPairPtrList& get_key_datum_pairs();
 const SgKeyDatumPairPtrList& get_key_datum_pairs() const;
 void append_pair(SgKeyDatumPair *what);
-HEADER_KEY_DATUM_LIST_END
+HEADER_DICTIONARY_EXP_END
 
 HEADER_KEY_DATUM_PAIR_START
 HEADER_KEY_DATUM_PAIR_END
@@ -4367,21 +4367,21 @@ SOURCE_SET_COMPREHENSION_END
 SOURCE_DICTIONARY_COMPREHENSION_START
 SOURCE_DICTIONARY_COMPREHENSION_END
 
-SOURCE_KEY_DATUM_LIST_START
+SOURCE_DICTIONARY_EXP_START
 
 SgKeyDatumPairPtrList&
-SgKeyDatumList::get_key_datum_pairs()
+SgDictionaryExp::get_key_datum_pairs()
    { return p_key_datum_pairs; }
 
 const SgKeyDatumPairPtrList&
-SgKeyDatumList::get_key_datum_pairs() const
+SgDictionaryExp::get_key_datum_pairs() const
    { return p_key_datum_pairs; }
 
 void
-SgKeyDatumList::append_pair(SgKeyDatumPair *what)
+SgDictionaryExp::append_pair(SgKeyDatumPair *what)
    { what->set_parent(this); p_key_datum_pairs.push_back(what); }
 
-SOURCE_KEY_DATUM_LIST_END
+SOURCE_DICTIONARY_EXP_END
 
 SOURCE_KEY_DATUM_PAIR_START
 SOURCE_KEY_DATUM_PAIR_END

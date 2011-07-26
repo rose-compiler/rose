@@ -453,8 +453,8 @@ sage_buildDict(PyObject *self, PyObject *args)
         pairs.push_back(kd_pair);
     }
 
-    SgKeyDatumList* key_datum_list =
-        SageBuilder::buildKeyDatumList(pairs);
+    SgDictionaryExp* key_datum_list =
+        SageBuilder::buildDictionaryExp(pairs);
     return PyEncapsulate(key_datum_list);
 }
 
