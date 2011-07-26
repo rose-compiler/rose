@@ -393,6 +393,7 @@ endif (HAVE_DLFCN_H)
      ${ROSE_TOP_SRC_DIR}/src/util/stringSupport 
      ${ROSE_TOP_SRC_DIR}/src/util/commandlineProcessing 
      ${ROSE_TOP_SRC_DIR}/src/midend/abstractHandle 
+     ${ROSE_TOP_SRC_DIR}/src/midend/abstractMemoryObject
      ${ROSE_TOP_SRC_DIR}/src/midend/astDiagnostics 
      ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/astInlining 
      ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/astOutlining  
