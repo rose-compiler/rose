@@ -3237,9 +3237,9 @@ SgKeyDatumPair* SageBuilder::buildKeyDatumPair_nfi(SgExpression* key, SgExpressi
     return result;
 }
 
-SgKeyDatumList* SageBuilder::buildKeyDatumList(std::vector<SgKeyDatumPair*> pairs)
+SgDictionaryExp* SageBuilder::buildDictionaryExp(std::vector<SgKeyDatumPair*> pairs)
 {
-    SgKeyDatumList *result = new SgKeyDatumList();
+    SgDictionaryExp *result = new SgDictionaryExp();
     ROSE_ASSERT(result);
     for (size_t i = 0; i < pairs.size(); ++i)
         result->append_pair(pairs[i]);
@@ -3247,9 +3247,9 @@ SgKeyDatumList* SageBuilder::buildKeyDatumList(std::vector<SgKeyDatumPair*> pair
     return result;
 }
 
-SgKeyDatumList* SageBuilder::buildKeyDatumList_nfi(std::vector<SgKeyDatumPair*> pairs)
+SgDictionaryExp* SageBuilder::buildDictionaryExp_nfi(std::vector<SgKeyDatumPair*> pairs)
 {
-    SgKeyDatumList *result = new SgKeyDatumList();
+    SgDictionaryExp *result = new SgDictionaryExp();
     ROSE_ASSERT(result);
     for (size_t i = 0; i < pairs.size(); ++i)
         result->append_pair(pairs[i]);

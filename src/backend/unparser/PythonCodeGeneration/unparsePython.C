@@ -91,7 +91,7 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
         CASE_DISPATCH_AND_BREAK(DoubleVal);
         CASE_DISPATCH_AND_BREAK(ExprListExp);
         CASE_DISPATCH_AND_BREAK(FunctionRefExp);
-        CASE_DISPATCH_AND_BREAK(KeyDatumList);
+        CASE_DISPATCH_AND_BREAK(DictionaryExp);
         CASE_DISPATCH_AND_BREAK(KeyDatumPair);
         CASE_DISPATCH_AND_BREAK(LambdaRefExp);
         CASE_DISPATCH_AND_BREAK(ListComprehension);
@@ -679,7 +679,7 @@ Unparse_Python::unparseInitializedName(SgInitializedName* init_name,
 }
 
 void
-Unparse_Python::unparseKeyDatumList(SgKeyDatumList* kd_list,
+Unparse_Python::unparseDictionaryExp(SgDictionaryExp* kd_list,
                                     SgUnparse_Info& info)
 {
     SgKeyDatumPairPtrList pairs = kd_list->get_key_datum_pairs();
