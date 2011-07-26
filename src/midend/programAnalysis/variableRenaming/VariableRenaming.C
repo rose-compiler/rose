@@ -1124,8 +1124,8 @@ VariableRenaming::VarRefSynthAttr VariableRenaming::UniqueNameTraversal::evaluat
     }
     else if (isSgPntrArrRefExp(node))
     {
-    	//Our abstraction does not handle arrays.
-    	return VarRefSynthAttr();
+        //Our abstraction does not handle arrays.
+        return VarRefSynthAttr();
     }
         //Now we hit the default case. We should return a merged list.
     else

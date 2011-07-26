@@ -166,8 +166,8 @@ class UniqueNameTraversal : public AstBottomUpProcessing<VariableReferenceSet>
 public:
 
     /** Tag to use to retrieve unique naming key from node.  */
-	static std::string varKeyTag;
-    
+    static std::string varKeyTag;
+
     /** A compound variable name as used by the variable renaming.  */
     typedef std::vector<SgInitializedName*> VarName;
 
