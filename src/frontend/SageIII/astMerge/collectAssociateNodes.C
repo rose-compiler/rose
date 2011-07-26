@@ -1437,6 +1437,8 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                break;
              }
 
+       // DQ (6/11/2011): Added support for new template IR nodes.
+          case V_SgTemplateClassDeclaration:
           case V_SgTemplateDeclaration:
              {
                SgTemplateDeclaration* templateDeclaration = isSgTemplateDeclaration(node);
@@ -1802,6 +1804,9 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                break;
              }
 #if 1
+       // DQ (6/11/2011): Added support for new template IR nodes.
+          case V_SgTemplateClassDefinition:
+
        // DQ (3/17/2007): Added support to make sure that the SgBaseClass is not orphaned in the AST merge
           case V_SgClassDefinition:
           case V_SgTemplateInstantiationDefn:

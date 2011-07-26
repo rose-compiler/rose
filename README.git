@@ -821,6 +821,7 @@ git clone --bare --shared X Y
 git clone Y localY
 cd localY/
 
+
 # This will build a local branch 
 # git branch dq-main-rc master
 # This will build in in origin
@@ -839,3 +840,13 @@ git branch -a
 git checkout dq-main-rc
  
 
+
+*****************************************************************************
+To commit a new branch without changes (used to force another Hudson rebuild)
+*****************************************************************************
+
+# make an empty commit
+git commit --allow-empty
+
+# And then push the changes
+git push origin dq-cxx-rc

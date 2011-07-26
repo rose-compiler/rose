@@ -4,8 +4,8 @@ int min2(int a0,int a1)
   return a0 < a1?a0 : a1;
 }
 #define N 50
-extern void printmatrix(double x[][50UL]);
-extern void initmatrix(double x[][50UL],double s);
+void printmatrix(double x[][50UL]);
+void initmatrix(double x[][50UL],double s);
 
 int main()
 {

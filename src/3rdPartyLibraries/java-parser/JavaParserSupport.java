@@ -477,9 +477,15 @@ class JavaParserSupport
                                    System.out.println("DONE: This call to JavaParserSupport.generateType() pushes a type onto the astJavaTypeStack (constructor): type = " + pvec[j].getName());
                             }
 
+                         if (verboseLevel > 2)
+                              System.out.println("Push void as a return type for now (ignored because this is a constructor)");
+
                       // Push a type to serve as the return type which will be ignored for the case of a constructor
                       // (this allows us to reuse the general member function support).
                          JavaParser.cactionGenerateType("void");
+
+                         if (verboseLevel > 2)
+                              System.out.println("DONE: Push void as a return type for now (ignored because this is a constructor)");
 
                          JavaParser.cactionBuildImplicitMethodSupport(ct.getName());
                        }
@@ -624,6 +630,8 @@ class JavaParserSupport
 
           if (verboseLevel > 0)
                System.out.println("Inside of generateType(TypeReference)");
+
+          assert(node != null);
 
           System.out.println("Inside of generateType(TypeReference) TypeReference node                            = " + node);
           System.out.println("Inside of generateType(TypeReference) TypeReference node.implicitConversion         = " + node.implicitConversion);
