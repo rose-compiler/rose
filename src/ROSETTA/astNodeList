@@ -575,6 +575,7 @@ SgStatementExpression
 SgStatementFunctionStatement
 SgStopOrPauseStatement
 SgStorageModifier
+SgStringConversion
 SgStringKeyedBidirectionalGraph
 SgStringVal
 SgSubscriptExpression
