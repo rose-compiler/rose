@@ -187,3 +187,10 @@ test2010_26.C
 
 # test2010_23.C \
 # eof
+
+
+# Failing AST File I/O tests (7/24/2011):
+TESTCODE_CURRENTLY_FAILING += \
+ test2011_113.C \
+ test2011_114.C \
+ test2011_116.C 

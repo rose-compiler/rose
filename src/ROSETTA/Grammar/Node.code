@@ -1827,6 +1827,23 @@ HEADER_START
           static void set_globalTypeNameMap ( const std::map<SgNode*,std::string> & X );
 
 #if 0
+      /*! \brief Access function for name qualification support (for names in array type dimensions).
+
+          This type name is stored with reference to where the type is used (as required) instead
+          of with the IR node representing the type (which are typically shared) (e.g. function return 
+          type, variable type, etc.).
+       */
+          static std::map<SgNode*,std::vector<std::string> > & get_globalQualifiedNameMapForArrayTypeDimensions();
+
+      /*! \brief Access function for name qualification support (for names in array type dimensions).
+
+          This qualified name is stored with reference to where the name is used (as required) instead
+          of with the IR node of what is names (e.g. function declaration, variable declaration, etc.).
+       */
+          static void set_globalQualifiedNameMapForArrayTypeDimensions ( const std::map<SgNode*, std::vector<std::string> > & X );
+#endif
+
+#if 0
        // DQ (6/21/2011): Added support for the state within the name qualification support to be referenced consistantly independent of recursive calls.
       /*! \brief Access function for name qualification support (for names of types).
 
@@ -2127,6 +2144,9 @@ std::map<std::string,int> SgNode::p_shortMangledNameCache;
 std::map<SgNode*,std::string> SgNode::p_globalQualifiedNameMapForNames;
 std::map<SgNode*,std::string> SgNode::p_globalQualifiedNameMapForTypes;
 std::map<SgNode*,std::string> SgNode::p_globalTypeNameMap;
+
+// DQ (7/22/2011): array dimensions may include expressions that require name qualification.
+// std::map<SgNode*,std::string> SgNode::p_globalQualifiedNameMapForArrayTypeDimensions;
 
 
 #if ALT_FIXUP_COPY
