@@ -1784,8 +1784,6 @@ HEADER_WITH_STATEMENT_START
 SgDeclarationStatementPtrList& get_variables();
 const SgDeclarationStatementPtrList& get_variables() const;
 
-HEADER_LIST_DECLARATIONS
-
 HEADER_WITH_STATEMENT_END
 
 HEADER_WHILE_STATEMENT_START
@@ -11639,9 +11637,6 @@ SgWithStatement::get_variables() const
 {
     return p_variables;
 }
-
-void
-SgWithStatement::post_construction_initialization() {}
 
 SOURCE_WITH_STATEMENT_END
 
