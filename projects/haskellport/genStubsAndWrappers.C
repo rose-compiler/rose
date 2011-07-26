@@ -1111,7 +1111,31 @@ genMethodWrapper(ostream &wrappers, SgMemberFunctionDeclaration *fn)
      SgType *retType = FFIfunctionReturnType(fn);
 
      wrappers << "/* Wrapper for " << fn->get_qualified_name().getString() << " " << fn->get_type()->unparseToString(&upi) << " */" << endl;
+
+  // DQ (6/25/2011): This use of unparseToString() does not represent qualified names properly.
      wrappers << cUnmarshalledType(retType)->unparseToString(&upi) << " " << wrapperFn << "(" << argsSS.str() << ") {\n";
+
+#if 0
+  // DQ (6/25/2011): Debuggng code for name qualification issue (unparseToString must output a fully qualified name).
+     printf ("retType = %p = %s upi.get_current_scope() = %p \n",retType,retType->class_name().c_str(),upi.get_current_scope());
+  // SgNamedType* namedType = isSgNamedType(retType->stripType(STRIP_MODIFIER_TYPE|STRIP_REFERENCE_TYPE|STRIP_POINTER_TYPE|STRIP_ARRAY_TYPE|STRIP_TYPEDEF_TYPE));
+     SgNamedType* namedType = isSgNamedType(retType->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE));
+     if (namedType != NULL)
+        {
+          printf ("namedType->get_qualified_name() = %s \n",namedType->get_qualified_name().str());
+        }
+       else
+        {
+          printf ("retType = %p = %s\n",retType,retType->class_name().c_str());
+        }
+     string name = cUnmarshalledType(retType)->unparseToString(&upi);
+     printf ("Haskell Wrapper: Calling unparser on return type: cUnmarshalledType(retType)->unparseToString(&upi) = %s \n",cUnmarshalledType(retType)->unparseToString(&upi).c_str());
+     if (name == "referenced_t *")
+        {
+          printf ("Exit after finding target type \n");
+          ROSE_ASSERT(false);
+        }
+#endif
 
      wrappers << marshallSS.str();
      wrappers << "\t";

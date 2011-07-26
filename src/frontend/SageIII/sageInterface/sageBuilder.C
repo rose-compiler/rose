@@ -1798,8 +1798,10 @@ BUILD_BINARY_DEF(OrOp)
 BUILD_BINARY_DEF(PlusAssignOp)
 BUILD_BINARY_DEF(PntrArrRefExp)
 BUILD_BINARY_DEF(RshiftAssignOp)
+BUILD_BINARY_DEF(JavaUnsignedRshiftAssignOp)
 
 BUILD_BINARY_DEF(RshiftOp)
+BUILD_BINARY_DEF(JavaUnsignedRshiftOp)
 BUILD_BINARY_DEF(ScopeOp)
 BUILD_BINARY_DEF(SubtractOp)
 BUILD_BINARY_DEF(XorAssignOp)
@@ -2038,6 +2040,35 @@ SgSizeOfOp* SageBuilder::buildSizeOfOp_nfi(SgType* type /* = NULL*/)
   return result;
 }
 
+
+
+// DQ (7/18/2011): Added support for SgJavaInstanceOfOp
+//! This is part of Java specific operator support.
+SgJavaInstanceOfOp* SageBuilder::buildJavaInstanceOfOp(SgExpression* exp, SgType* type)
+   {
+  // Not sure what should be the correct type of the SgJavaInstanceOfOp expression...
+     SgType* exp_type = NULL;
+
+  // I think this should evaluate to be a boolean type (typically used in conditionals).
+  // if (exp != NULL) exp_type = exp->get_type();
+
+  // Warn that this support in not finished.
+     printf ("WARNING: Support for SgJavaInstanceOfOp is incomplete, expression type not specified, should it be SgTypeBool? \n");
+
+     SgJavaInstanceOfOp* result = new SgJavaInstanceOfOp(exp,type, exp_type);
+     ROSE_ASSERT(result);
+     if (exp != NULL)
+        {
+          exp->set_parent(result);
+          markLhsValues(result);
+        }
+
+     setOneSourcePositionForTransformation(result);
+     return result;
+   }
+
+
+
 SgExprListExp * SageBuilder::buildExprListExp(SgExpression * expr1, SgExpression* expr2, SgExpression* expr3, SgExpression* expr4, SgExpression* expr5, SgExpression* expr6, SgExpression* expr7, SgExpression* expr8, SgExpression* expr9, SgExpression* expr10)
 {
   SgExprListExp* expList = new SgExprListExp();
@@ -2130,32 +2161,37 @@ SageBuilder::buildVarRefExp(const std::string& varName, SgScopeStatement* scope)
 
 SgVarRefExp *
 SageBuilder::buildVarRefExp(const SgName& name, SgScopeStatement* scope/*=NULL*/)
-{
-  if (scope == NULL)
-    scope = SageBuilder::topScopeStack();
- // ROSE_ASSERT(scope != NULL); // we allow to build a dangling ref without symbol
-  SgSymbol * symbol = NULL;
-  SgVariableSymbol* varSymbol=NULL;
- if (scope)
-  symbol = lookupSymbolInParentScopes(name,scope); 
- if (symbol) 
-    varSymbol= isSgVariableSymbol(symbol); 
-  else
-// if not found: put fake init name and symbol here and 
-//waiting for a postProcessing phase to clean it up
-// two features: no scope and unknown type for initializedName
-  {
-    SgInitializedName * name1 = buildInitializedName(name,SgTypeUnknown::createType());
-    name1->set_scope(scope); //buildInitializedName() does not set scope for various reasons
-    varSymbol= new SgVariableSymbol(name1);
-  }
-  ROSE_ASSERT(varSymbol); 
+   {
+     if (scope == NULL)
+          scope = SageBuilder::topScopeStack();
 
-  SgVarRefExp *varRef = new SgVarRefExp(varSymbol);
-  setOneSourcePositionForTransformation(varRef);
-  ROSE_ASSERT(varRef);
-  return varRef; 
-}
+  // ROSE_ASSERT(scope != NULL); // we allow to build a dangling ref without symbol
+     SgSymbol*         symbol    = NULL;
+     SgVariableSymbol* varSymbol = NULL;
+
+     if (scope != NULL)
+          symbol = lookupSymbolInParentScopes(name,scope); 
+
+     if (symbol != NULL) 
+        {
+          varSymbol= isSgVariableSymbol(symbol); 
+        }
+       else
+        {
+       // if not found: put fake init name and symbol here and 
+       // waiting for a postProcessing phase to clean it up
+       // two features: no scope and unknown type for initializedName
+          SgInitializedName * name1 = buildInitializedName(name,SgTypeUnknown::createType());
+          name1->set_scope(scope); //buildInitializedName() does not set scope for various reasons
+          varSymbol= new SgVariableSymbol(name1);
+        }
+     ROSE_ASSERT(varSymbol); 
+
+     SgVarRefExp *varRef = new SgVarRefExp(varSymbol);
+     setOneSourcePositionForTransformation(varRef);
+     ROSE_ASSERT(varRef);
+     return varRef; 
+   }
 
 //! Build a variable reference from an existing variable declaration. The assumption is a SgVariableDeclartion only declares one variable in the ROSE AST.
 SgVarRefExp *

@@ -201,6 +201,8 @@ HEADER_START
        // procesing so that the local type table in each scope can be referenced.
           static SgScopeStatement* getCurrentScope();
 
+          SgDeclarationStatement* getAssociatedDeclaration() const;
+
 HEADER_END
 
 
@@ -1981,6 +1983,34 @@ SgType::getCurrentScope()
   // ROSE_ASSERT(isSgScopeStatement(currentScope) != NULL);
 
      return currentScope;
+   }
+
+SgDeclarationStatement*
+SgType::getAssociatedDeclaration() const
+   {
+     SgDeclarationStatement* declaration = NULL;
+
+  // printf ("In SgType::getAssociatedDeclaration(): type = %s \n",class_name().c_str());
+
+  // Resolve to the base type (but not past typedef types).  Note that a subtle point is that 
+  // we want to avoid expressing typedefs that are private in functions that are public.
+     SgType* strippedType = this->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE);
+     ROSE_ASSERT(strippedType != NULL);
+
+  // printf ("In getAssociatedDeclaration(): strippedType = %s \n",strippedType->class_name().c_str());
+
+  // Check if this is a named type (either SgClassType, SgEnumType, or SgTypedefType).
+     SgNamedType* namedType = isSgNamedType(strippedType);
+     if (namedType != NULL)
+        {
+       // Look for the declaration and evaluate if it required qualification.
+          declaration = namedType->get_declaration();
+          ROSE_ASSERT(declaration != NULL);
+
+       // printf ("In HiddenListTraversal::getDeclarationAssociatedWithType(): declaration = %p = %s \n",declaration,declaration->class_name().c_str());
+        }
+
+     return declaration;
    }
 
 
@@ -4417,8 +4447,8 @@ SgTypeInt* SgTypeInt::p_builtin_type = NULL;
 
 // DQ (10/4/2010): Added support for fortran type kind expressions.
 // $CLASSNAME* $CLASSNAME::createType(int bitLength)
-$CLASSNAME*
-$CLASSNAME::createType(int bitLength, SgExpression* optional_fortran_type_kind)
+SgTypeInt*
+SgTypeInt::createType(int bitLength, SgExpression* optional_fortran_type_kind)
    {
 #if 0
      static bool firstCallToFunction = true;

@@ -5,7 +5,8 @@
 #include <boost/tuple/tuple.hpp>
 #include <boost/operators.hpp>
 #include <new>
-#include "CallGraph.h"
+#include <CallGraph.h>
+#include <ClassHierarchyGraph.h>
 
 #define foreach BOOST_FOREACH
 using namespace std;
@@ -150,7 +151,7 @@ int main(int argc, char** argv)
 		//The frontend failed!
 		return 1;
 	}
-
+    
 	//Write out basic graphs
 	if (SgProject::get_verbose() > 0)
 	{

@@ -11,16 +11,252 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2011_04.java \
      test2011_05.java \
      test2011_06.java \
+     test2011_07.java \
+     test2011_08.java \
+     test2011_09.java \
+     test2011_10.java \
+     test2011_11.java \
+     test2011_12.java \
+     test2011_13.java \
+     test2011_14.java \
+     test2011_15.java \
+     test2011_16.java \
+     test2011_17.java \
+     test2011_18.java \
+     test2011_19.java \
+     test2011_20.java \
+     test2011_21.java \
+     test2011_22.java \
+     test2011_23.java \
+     test2011_24.java \
+     test2011_25.java \
+     test2011_26.java \
+     test2011_27.java \
+     test2011_28.java \
      simple.java
 
 
 # This class does not match the file name.
 #    simple_fortran.java
 
-TESTCODE_CURRENTLY_FAILING =
+TESTCODE_CURRENTLY_FAILING = 
+
+
+
+# Later we will move these tests to the gcjTestSuite subdirectory.
+GCJ_TESTCODES_REQUIRED_TO_PASS = \
+anfi.java \
+anon2.java \
+anon3.java \
+anon4.java \
+anonarray2.java \
+anonarray3.java \
+anonarray.java \
+anon_ctor_itf_arg.java \
+anon.java \
+Array_1.java \
+Array_2.java \
+Array_3.java \
+ArrayStore2.java \
+ArrayStore.java \
+assign2.java \
+assign.java \
+bclink.java \
+bytearray.java \
+Class_1.java \
+CompareNaN.java \
+direct_read.java \
+direct_write.java \
+Divide_1.java \
+Divide_2.java \
+emptystring.java \
+err10.java \
+err11.java \
+err12.java \
+err13.java \
+err14.java \
+err1.java \
+err2.java \
+err3.java \
+err4.java \
+err5.java \
+err6.java \
+err7.java \
+err8.java \
+err9.java \
+EvaluationOrder.java \
+ExtraClassLoader.java \
+FileHandleGcTest.java \
+final_inner.java \
+final_int.java \
+Final.java \
+final_static_and_friend.java \
+Float_1.java \
+Float_2.java \
+G19990301_01.java \
+G19990302_02.java \
+G19990303_01.java \
+G19990303_02.java \
+G19990304_01.java \
+G19990310_01.java \
+II.java \
+indirect.java \
+indirect_read.java \
+indirect_write.java \
+initexc.java \
+initfield.java \
+inline.java \
+inner1.java \
+inner2.java \
+inner3.java \
+inner4.java \
+inner_array.java \
+inner_interface.java \
+instance.java \
+instinit2.java \
+instinit.java \
+InterfaceDispatch.java \
+Invoke_1.java \
+Invoke_2.java \
+invoke_from_inner.java \
+InvokeInterface.java \
+InvokeReturn.java \
+invokethrow.java \
+KeepInline.java \
+klass.java \
+LargeFile.java \
+MathBuiltin.java \
+Matrix4f.java \
+md5test.java \
+multiple_finit.java \
+N19990310_02.java \
+N19990310_3.java \
+N19990310_4.java \
+N19990310_5.java \
+negzero.java \
+nested_with_ctor.java \
+newarray_overflow.java \
+Overflow.java \
+override.java \
+pr100.java \
+pr109.java \
+PR12350.java \
+PR12416.java \
+PR12656.java \
+PR12915.java \
+pr13107_2.java \
+pr13107_3.java \
+pr13107.java \
+pr133.java \
+PR141.java \
+PR160.java \
+PR162.java \
+pr16789.java \
+PR16867.java \
+pr17536.java \
+pr179.java \
+pr184.java \
+PR18699.java \
+PR19870_2.java \
+PR19870.java \
+PR19921.java \
+PR20056.java \
+pr21785.java \
+pr21844.java \
+PR218.java \
+pr22211.java \
+PR242.java \
+pr24321.java \
+PR25535.java \
+pr25676.java \
+PR260.java \
+pr26390.java \
+PR26858.java \
+pr26990.java \
+pr27171.java \
+PR27908.java \
+PR29013.java \
+PR29495.java \
+PR3096.java \
+PR31264.java \
+PR36252.java \
+PR3731.java \
+PR5057_2.java \
+PR5057.java \
+PR55.java \
+PR56.java \
+PR6085.java \
+PR6204.java \
+pr6388.java \
+PR6520.java \
+PR6729.java \
+PR6820.java \
+PR7482.java \
+pr83.java \
+pr8415.java \
+pr8676.java \
+pr8823.java \
+PR8866.java \
+pr8945.java \
+private_direct_read.java \
+private_direct_write.java \
+private_indirect_read.java \
+private_indirect_write.java \
+Process_1.java \
+Process_2.java \
+Process_3.java \
+Process_4.java \
+Process_5.java \
+Process_6.java \
+Process_7.java \
+ProxyTest.java \
+RH194522.java \
+search_outer.java \
+Serialization.java \
+shatest.java \
+Shazam.java \
+StackTrace2.java \
+stacktrace.java \
+StaticConstructor.java \
+StringBuffer_1.java \
+StringBuffer_overflow.java \
+stringconst2.java \
+stringconst.java \
+String_overflow.java \
+stub.java \
+SyncGlobal.java \
+Synch.java \
+SyncTest.java \
+test_long.java \
+TestProxy.java \
+Thread_Alive.java \
+Thread_HoldsLock.java \
+Thread_Interrupt.java \
+Thread_Join.java \
+Thread_Monitor.java \
+Thread_Sleep_2.java \
+Thread_Sleep.java \
+Thread_Wait_2.java \
+Thread_Wait_Interrupt.java \
+Thread_Wait.java \
+Throw_1.java \
+Throw_2.java \
+Throw_3.java \
+TLtest.java \
+tmi.java \
+tp.java \
+update_outer.java \
+utf8concat.java \
+utilTest.java \
+verify.java
+
+GCJ_TESTCODE_CURRENTLY_FAILING = \
+   PR35020.java \
+   WalkerTest.java
+
+
 
 noinst_headers = 
-
 
 # Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
 TESTCODES = \
@@ -78,31 +314,47 @@ testECJ:
 	java -cp ecjROSE.jar org.eclipse.jdt.internal.compiler.batch.Main $(srcdir)/simple.java
 
 # Test for help option to ECJ (some ECJ options not supported via ROSE).
+# DQ (7/21/2011): Currently a file must be specified, but this should be fixed later.
 testECJ_help_option:
 	$(testTranslator) -rose:java -rose:verbose 0 -rose:skipfinalCompileStep -ecj:help -c $(srcdir)/simple.java
 
 # Test with the "-rose:java" specification (one way to specify the language in ROSE).
 testWithJavaSpecification:
-	$(testTranslator) -rose:java $(ROSE_FLAGS) $(srcdir)/test2011_01.java
+	$(testTranslator) -rose:java $(ROSE_FLAGS) $(srcdir)/testWithJavaSpecification.java
 
 # Test without the "-rose:java" specification (ROSE can alternatively obtain the source language from the file suffix).
 testWithoutJavaSpecification:
-	$(testTranslator) $(ROSE_FLAGS) $(srcdir)/test2011_01.java
+	$(testTranslator) $(ROSE_FLAGS) $(srcdir)/testWithoutJavaSpecification.java
 
 # Build a rule to allow running all tests in parallel...
 extraTests: testWithJavaSpecification testWithoutJavaSpecification testECJ_help_option
 
 # Execute the java file using: java -Djava.library.path=. HelloWorld
 
+# ********************************************************************************
+# ********************************************************************************
+# Support for GCJ test codes (will be moved to the gcjTestSuite subdirectory soon.
+# Likely it is too early to expect any of these to pass using ROSE's Java support.
+GCJ_TESTCODES = $(GCJ_TESTCODES_REQUIRED_TO_PASS) $(GCJ_TESTCODE_CURRENTLY_FAILING)
+gcjTests_passing_Objects = ${GCJ_TESTCODES_REQUIRED_TO_PASS:.java=.class}
+gcjTests_Objects = ${GCJ_TESTCODES:.java=.class}
+
+# Test the GCJ test code by only doing syntax checking on them using ROSE (calling only the 
+# backend javac to do the syntax checking). This is more of a test of the Makefile than ROSE.
+$(gcjTests_Objects): $(testTranslator) ../../testTranslator
+	$(testTranslator) $(ROSE_FLAGS) -rose:exit_after_parser $(srcdir)/gcjTestSuite/$(@:.class=.java)
+
+# This test evaluates the GCJ test code to make sure that they compile with ECJ (all but 2 pass).
+testGCJ: $(gcjTests_passing_Objects)
+# ********************************************************************************
+# ********************************************************************************
+
+
 check-local:
 	@echo "Tests for Java."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
 	@$(MAKE) $(PASSING_TEST_Objects) extraTests
-#	@$(MAKE) testWithJavaSpecification
-#	@$(MAKE) testWithoutJavaSpecification
-#	@$(MAKE) testECJ_help_option
-#	@$(MAKE) extraTests
 	@echo "************************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/Java_tests: make check rule complete (terminated normally) ******"
 	@echo "************************************************************************************************"
@@ -114,7 +366,7 @@ check-local:
 	@echo "**********************************************************************************************"
 endif
 
-EXTRA_DIST = $(ALL_TESTCODES)
+EXTRA_DIST = $(ALL_TESTCODES) testWithJavaSpecification.java testWithoutJavaSpecification.java gcjTestSuite 
 
 clean-local:
 	rm -f *.dot *.class *.java rose_performance_report_lockfile.lock *.out

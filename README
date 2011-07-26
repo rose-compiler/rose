@@ -7,7 +7,7 @@ that operate on source code (analyzing or optimizing). ROSE is a library that
 makes it easy to build a wide range of tools from optimizing source-to-source 
 compilers to special purpose analysis tools. ROSE supports, 
 Fortran (66,77/95/2003), C89, C99, C++, OpenMP, UPC, and PHP.  ROSE is
-part of an ongoing collaborations with many external groups worldwide.
+part of ongoing collaborations with many external groups worldwide.
 
 
 
