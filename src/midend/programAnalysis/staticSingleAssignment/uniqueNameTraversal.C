@@ -15,6 +15,7 @@ VariableReferenceSet UniqueNameTraversal::evaluateSynthesizedAttribute(SgNode* n
     {
         cout << "Examining " << node->class_name() << node << endl;
     }
+
     //First we check if this is an initName
     if (isSgInitializedName(node))
     {
@@ -84,7 +85,7 @@ VariableReferenceSet UniqueNameTraversal::evaluateSynthesizedAttribute(SgNode* n
             if (thisExp == NULL)
             {
                 lhsName = dynamic_cast<VarUniqueName*> (lhsVar->getAttribute(varKeyTag));
-                ROSE_ASSERT(lhsName);
+                ROSE_ASSERT(lhsName != NULL);
             }
 
             //Check if the RHS has a single varRef
@@ -162,7 +163,7 @@ VariableReferenceSet UniqueNameTraversal::evaluateSynthesizedAttribute(SgNode* n
             return VariableReferenceSet(NULL);
         }
     }
-    
+
     //If we have an arrow expression and we don't treat pointers as structs, delete
     //the variable from the right-hand side
     else if (isSgArrowExp(node) && !treatPointersAsStructs)
@@ -184,6 +185,8 @@ VariableReferenceSet UniqueNameTraversal::evaluateSynthesizedAttribute(SgNode* n
                 delete name;
             }
         }
+        
+        return VariableReferenceSet(NULL);
     }
 
     else if (isSgCastExp(node))
@@ -206,7 +209,6 @@ VariableReferenceSet UniqueNameTraversal::evaluateSynthesizedAttribute(SgNode* n
         return attrs.back();
     }
 
-    //Now we hit the default case. Names should not propagate up
     else
     {
         return VariableReferenceSet(NULL);
