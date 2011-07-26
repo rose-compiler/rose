@@ -485,9 +485,15 @@ class ecjASTVisitor extends ASTVisitor
                System.out.println("     --- method arguments (empty) = " + node.arguments);
              }
 
+          if (java_parser.verboseLevel > 2)
+               System.out.println("Push void as a return type for now (will be ignored because this is a constructor)");
+
        // Push a type to serve as the return type which will be ignored for the case of a constructor
        // (this allows us to reuse the general member function support).
           JavaParser.cactionGenerateType("void");
+
+          if (java_parser.verboseLevel > 2)
+               System.out.println("DONE: Push void as a return type for now (will be ignored because this is a constructor)");
 
           java_parser.cactionConstructorDeclaration(name);
 
@@ -610,6 +616,37 @@ class ecjASTVisitor extends ASTVisitor
                        {
                          System.out.println("Sorry, not implemented in support for ExplicitConstructorCall: super()");
                       // java_parser.cactionExplicitConstructorCall("super");
+
+                         String name = new String("super");
+                         System.out.println("super function name = " + name);
+
+                         System.out.println("super function node = " + node);
+                         System.out.println("super function node.isSuperAccess() = " + node.isSuperAccess());
+                         System.out.println("super function node.isTypeAccess()  = " + node.isTypeAccess());
+                         System.out.println("super function node.binding = " + node.binding);
+                         System.out.println("super function node.binding = xxx" + node.binding.toString() + "xxx");
+                         if (node.binding.toString() == "public void <init>() ")
+                            {
+                              System.out.println("super() in class without base class ...");
+                            }
+                           else
+                            {
+                              System.out.println("Proper super() call to class with base class ...");
+                            }
+
+                      // System.out.println("super function node.binding.declaringClass = " + node.binding.declaringClass);
+                      // System.out.println("super function node.binding.declaringClass.toString() = " + node.binding.declaringClass.toString());
+
+                      // String associatedClassName = node.binding.toString();
+                      // String associatedClassName = node.binding.declaringClass.toString();
+                         String associatedClassName = node.binding.toString();
+                         System.out.println("super function associatedClassName = " + associatedClassName);
+
+                         System.out.println("super function cactionMessageSend() associatedClassName = " + associatedClassName);
+
+                         java_parser.cactionMessageSend(name,associatedClassName);
+
+                         System.out.println("DONE: super function cactionMessageSend() associatedClassName = " + associatedClassName);
                        }
                       else
                        {
@@ -1497,8 +1534,20 @@ class ecjASTVisitor extends ASTVisitor
                System.out.println("     --- method arguments (empty) = " + node.arguments);
              }
 
+          if (java_parser.verboseLevel > 2)
+               System.out.println("Process the return type = " + node.returnType);
+
+          if (node.returnType == null)
+             {
+               System.out.println("Errro: no return type defined for the member function node.returnType = " + node.returnType);
+               System.exit(1);
+             }
+
        // Build the return type in ROSE and push it onto the stack (astJavaTypeStack).
           JavaParserSupport.generateType(node.returnType);
+
+          if (java_parser.verboseLevel > 2)
+               System.out.println("DONE: Process the return type = " + node.returnType);
 
        // System.out.println("Exiting to test error handling! \n");
        // System.exit(0);
@@ -2423,6 +2472,10 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of endVisit (ExplicitConstructorCall,BlockScope)");
 
+          java_parser.cactionExplicitConstructorCallEnd("abc");
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (ExplicitConstructorCall,BlockScope)");
         }
 
      public void endVisit(ExtendedStringLiteral node, BlockScope scope)

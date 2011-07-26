@@ -55,7 +55,8 @@ class UnparseLanguageIndependentConstructs
 
       //! used to support the run_unparser function
       //! (support for #line 42 "filename" when it appears in source code)
-          bool statementFromFile ( SgStatement* stmt, std::string sourceFilename );
+          bool statementFromFile ( SgStatement* stmt, std::string sourceFilename, SgUnparse_Info& info );
+       // bool statementFromFile ( SgStatement* stmt, std::string sourceFilename );
 
       //! Generate a CPP directive  
           void outputDirective ( PreprocessingInfo* directive );
