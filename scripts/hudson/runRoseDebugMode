@@ -9,6 +9,8 @@ source scripts/hudson/roseUtilities.sh
 #########################################################################################
 ( echo ) |filter "Starting ${ROSE_TEST_BUILD_STYLE}..."
 
+[ ! -n "$ROSE_CONFIGURE_PREFIX" ] && killStep "\$ROSE_CONFIGURE_PREFIX is undefined"
+
 machine=`uname -m`
 machine_os=`uname -s`
 machine_name=`uname -n`
@@ -16,36 +18,6 @@ start_time=`date`
 hudson_start_time_seconds="$(date +%s)"
 TOP_LEVEL_ROSE_DIRECTORY="$PWD"
 LOG_LOCATION="$PWD"
-
-#########################################################################################
-#
-#  Install tree 
-#
-#  Define the platform specific install directory for this ROSE build.
-#  This directory will be built into the Hudson home directory.
-#
-#########################################################################################
-
-# Liao 1/6/2010
-# Remove the stale installation tree since the stale headers will be included before updated ones are used.
-[ ! -n "$ROSE_CONFIGURE_PREFIX" ] && echo "ROSE_CONFIGURE_PREFIX is undefined" && exit 1
-( safe_rm_rf $ROSE_CONFIGURE_PREFIX ) |filterStep "MasterInstallTree removal"
-( mkdir -p $ROSE_CONFIGURE_PREFIX ) |filterStep "MasterInstallTree creation: $ROSE_CONFIGURE_PREFIX"
-
-#########################################################################################
-#
-#  BOOST C++ 
-#
-#########################################################################################
-echo "Setting up the [DY]LD_LIBRARY_PATH"
-
-	if test "x$label" = "x64bit-macos-10.6" ; then
-		export DYLD_LIBRARY_PATH="$ROSE_TEST_BOOST_PATH/lib:$DYLD_LIBRARY_PATH"
-	else
-		# tps : 04/26/2010 - Added support for OpenGL for 64bit
-		export LD_LIBRARY_PATH="${ROSE_TEST_BOOST_PATH}/lib:${ROSE_TEST_OPENGL_PATH}/lib:$LD_LIBRARY_PATH"
-	fi
-
 
 #########################################################################################
 #
@@ -120,7 +92,8 @@ CONFIGURE_FLAGS="\
 	--with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib \
 	--with-java=${ROSE_TEST_JAVA_PATH} \
 	--with-ROSE_LONG_MAKE_CHECK_RULE=yes \
-	--with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall"
+	--with-C_DEBUG=-g \
+	--with-CXX_WARNINGS=-Wall"
 #########################################################################################
 #  i386 
 # 
@@ -151,7 +124,7 @@ CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-i386"
 #  testing but the way to turn it on is to specify --enable-openGL
 #
 #########################################################################################
-if test "x$ROSE_TEST_BUILD_STYLE" = "xmake-check-install-full" ; then
+if test "x$ROSE_TEST_BUILD_STYLE" = "xmake/check/install-full" ; then
 	CONFIGURE_FLAGS="\
 		${CONFIGURE_FLAGS} \
 		--with-qt=${ROSE_TEST_QT_PATH} \
@@ -175,7 +148,7 @@ if test "x$ROSE_TEST_BUILD_STYLE" = "xmake-check-install-full" ; then
   then
 	echo "Skipping OpenGL..."
 	# admins are troubleshooting the libGL.la
-    	#CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --enable-rose-openGL"
+	CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --enable-rose-openGL"
   fi
   #######################################################################################
   #  PCH
@@ -214,53 +187,6 @@ fi
 
 #########################################################################################
 #
-#  Mac OS X 10.6 (64-bit) 
-#
-#########################################################################################
-if test "x$label" = "x64bit-macos-10.6" ; then
-	#export MACPORTS_INS=/export/tmp.hudson-rose/opt/macports/ports
-	#set +e
-    #source ${MACPORTS_INS}/setup.sh
-	#set -e
-	#export DYLD_LIBRARY_PATH=/Developer/SDKs/MacOSX10.6.sdk/usr/lib:/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/ImageIO.framework/Versions/A/Resources:${MACPORTS_INS}/lib:$DYLD_LBIRARY_PATH
-	#export ROSE_TEST_BOOST_PATH=${MACPORTS_INS}
-
-	case "$ROSE_TEST_BUILD_STYLE" in
-		"make-check-install-minimal")
-	 		CONFIGURE_FLAGS="
-			--with-boost=${ROSE_TEST_BOOST_PATH} \
-			--with-boost-lib=${ROSE_TEST_BOOST_PATH}/lib/ \
-			--with-CXX_DEBUG=-g --with-CXX_WARNINGS=-Wall"
-    		;;
-
-		*)
-			echo "Error: '$ROSE_TEST_BUILD_STYLE' build-style is not currently supported for '$label'"
-    		;;
-  	esac
-fi
-#########################################################################################
-#
-#  Ubuntu 10.4 LTS (64-bit) 
-#
-#########################################################################################
-if test "x$label" = "xamd64-ubuntu" ; then
-	case "$ROSE_TEST_BUILD_STYLE" in
-  		"make-check-install-minimal")
-	 		CONFIGURE_FLAGS="
-				--with-boost=${ROSE_TEST_BOOST_PATH} \
-				--with-boost-lib=${ROSE_TEST_BOOST_PATH}/lib/ \
-				--without-java \
-				--with-CXX_DEBUG=-g --with-CXX_WARNINGS=-Wall"
-    		;;
-
-  		*)
-			echo "Error: '$ROSE_TEST_BUILD_STYLE' build-style is not currently supported for '$label'"
-    		;;
-  	esac
-fi
-
-#########################################################################################
-#
 ##
    dumpHudsonEnvironment "${LOG_LOCATION}/HudsonEnvironment-before-tests.log"
 ##
@@ -268,23 +194,6 @@ fi
 #########################################################################################
 
 set -e
-#########################################################################################
-#
-#  CMake build 
-#
-#########################################################################################
-if test "x$ROSE_TEST_BUILD_STYLE" = "xcmake" ; then
-  (
-
-      rm -rf  ROSE-build-cmake
-      mkdir   ROSE-build-cmake
-      cd      ROSE-build-cmake
-
-      cmake .. -DBOOST_ROOT=${ROSE_TEST_BOOST_PATH} && make -j${NUM_PROCESS}
-
-  ) 2>&1 |filterStep "CMake" 
-  [ ${PIPESTATUS[0]} -ne 0 ] && killStep "CMake" || exit 0
-fi
 #########################################################################################
 #
 #  ROSE/build
@@ -318,7 +227,7 @@ cd ROSE-build
 #########################################################################################
 (
 
-    ../configure --prefix=${ROSE_CONFIGURE_PREFIX} ${CONFIGURE_FLAGS}
+    ../configure --prefix=${ROSE_CONFIGURE_PREFIX} ${CONFIGURE_FLAGS} --with-CXX_DEBUG="-g -D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC"
 
 ) 2>&1 |filterStep "configure" 
 [ ${PIPESTATUS[0]} -ne 0 ] && killStep "configure"
@@ -345,7 +254,7 @@ function printRoseTranslatorVersion {
 #
 #########################################################################################
 case "$ROSE_TEST_BUILD_STYLE" in
-"make-check-install-minimal"|"make-check-install-full")
+"make/check/install-minimal"|"make/check/install-full")
 
     ################################################################################
     # MAKE
