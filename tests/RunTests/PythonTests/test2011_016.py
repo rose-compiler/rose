@@ -16,4 +16,21 @@ def foo():
   print "done foo"
 
 foo()
+
+try:
+    print 9
+except:
+    print 10
+finally:
+    print 11
+
+try:
+    print 12
+    try:
+        print 13
+    except:
+        print 14
+finally:
+    print 15
+
 print "done"

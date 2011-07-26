@@ -948,8 +948,10 @@ sage_buildTryExcept(PyObject *self, PyObject *args)
     for (int i = 0; i < handler_c; i++)
         sg_try->append_catch_statement( PyDecapsulate<SgCatchOptionStmt>( PyList_GetItem(py_handlers, i) ) );
 
-    sg_try->set_else_body(orelse);
-    orelse->set_parent(sg_try);
+    if (orelse != NULL) {
+        sg_try->set_else_body(orelse);
+        orelse->set_parent(sg_try);
+    }
 
     return PyEncapsulate(sg_try);
 }
@@ -959,14 +961,15 @@ sage_buildTryExcept(PyObject *self, PyObject *args)
 PyObject*
 sage_buildTryFinally(PyObject *self, PyObject *args)
 {
-    PyObject *py_body, *py_finalbody;
-    if (! PyArg_ParseTuple(args, ""))
+    SgStatement *sg_body, *sg_finally;
+    if (! PyArg_ParseTuple(args, "O&O&", SAGE_CONVERTER(SgStatement), &sg_body,
+                                         SAGE_CONVERTER(SgStatement), &sg_finally))
         return NULL;
 
-    // TODO: add buildTryExcept to SageBuilder
-    cerr << "sage_buildTryFinally is unimplemented" << endl;
-    SgNode* sg_value = SageBuilder::buildBasicBlock();
-    return PyEncapsulate(sg_value);
+    SgTryStmt* sg_try = SageBuilder::buildTryStmt(sg_body);
+    sg_try->set_finally_body(sg_finally);
+    sg_finally->set_parent(sg_try);
+    return PyEncapsulate(sg_try);
 }
 
 /*
