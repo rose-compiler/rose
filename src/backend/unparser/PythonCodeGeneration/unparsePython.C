@@ -100,6 +100,7 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
         CASE_DISPATCH_AND_BREAK(PntrArrRefExp);
         CASE_DISPATCH_AND_BREAK(SetComprehension);
         CASE_DISPATCH_AND_BREAK(SubscriptExpression);
+        CASE_DISPATCH_AND_BREAK(StringConversion);
         CASE_DISPATCH_AND_BREAK(StringVal);
         CASE_DISPATCH_AND_BREAK(TupleExp);
         CASE_DISPATCH_AND_BREAK(VarRefExp);
@@ -835,6 +836,15 @@ Unparse_Python::unparseStmtDeclarationStatement(SgStmtDeclarationStatement* stmt
                                                 SgUnparse_Info& info)
 {
     unparseStatement(stmt->get_statement(), info);
+}
+
+void
+Unparse_Python::unparseStringConversion(SgStringConversion* str_conv,
+                                        SgUnparse_Info& info)
+{
+    curprint("`");
+    unparseExpression(str_conv->get_expression(), info);
+    curprint("`");
 }
 
 void

@@ -40,6 +40,7 @@ PyObject* sage_buildListComp(PyObject *self, PyObject *args);
 PyObject* sage_buildName(PyObject *self, PyObject *args);
 PyObject* sage_buildPass(PyObject *self, PyObject *args);
 PyObject* sage_buildPrintStmt(PyObject *self, PyObject *args);
+PyObject* sage_buildRepr(PyObject *self, PyObject *args);
 PyObject* sage_buildReturnStmt(PyObject *self, PyObject *args);
 PyObject* sage_buildSetComp(PyObject *self, PyObject *args);
 PyObject* sage_buildSlice(PyObject *self, PyObject *args);
@@ -91,6 +92,7 @@ static PyMethodDef SageBuilderMethods[] = {
     {"buildPass", sage_buildPass, METH_VARARGS, "Builds a pass node."},
     {"buildPrintStmt", sage_buildPrintStmt, METH_VARARGS, "Builds an SgPrintStmt node."},
     {"buildName", sage_buildName, METH_VARARGS, "Builds an SgVarRefExp from a Name node."},
+    {"buildRepr", sage_buildRepr, METH_VARARGS, "Builds string conversion node."},
     {"buildReturnStmt", sage_buildReturnStmt, METH_VARARGS, "Builds an SgReturnStmt node."},
     {"buildSetComp", sage_buildSetComp, METH_VARARGS, "Builds a set comprehension node."},
     {"buildSlice", sage_buildSlice, METH_VARARGS, "Builds a slice node."},

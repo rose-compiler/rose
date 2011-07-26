@@ -838,6 +838,19 @@ sage_buildPrintStmt(PyObject *self, PyObject *args)
 }
 
 /*
+ */
+PyObject*
+sage_buildRepr(PyObject *self, PyObject *args)
+{
+    SgExpression* sg_value;
+    if (! PyArg_ParseTuple(args, "O&", SAGE_CONVERTER(SgExpression), &sg_value))
+        return NULL;
+
+    SgStringConversion* sg_str_conv = SageBuilder::buildStringConversion(sg_value);
+    return PyEncapsulate(sg_str_conv);
+}
+
+/*
  * Build an SgReturnStmt node from the given Python object.
  *  - PyObject* args = ( PyObject*, )
  */
