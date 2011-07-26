@@ -4719,6 +4719,27 @@ SageBuilder::buildNaryBooleanOp_nfi(SgExpression* lhs) {
     return result;
 }
 
+SgStringConversion*
+SageBuilder::buildStringConversion(SgExpression* exp) {
+    ROSE_ASSERT(exp);
+    SgStringConversion* result = new SgStringConversion(exp);
+    exp->set_parent(result);
+
+    setOneSourcePositionForTransformation(result);
+    return result;
+}
+
+
+SgStringConversion*
+SageBuilder::buildStringConversion_nfi(SgExpression* exp) {
+    ROSE_ASSERT(exp);
+    SgStringConversion* result = new SgStringConversion(exp);
+    exp->set_parent(result);
+
+    setOneSourcePositionNull(result);
+    return result;
+}
+
 // DQ (11/7/2009): Added more uniform support for building class declarations.
 SgClassDeclaration*
 SageBuilder::buildNondefiningClassDeclaration ( SgName name, SgScopeStatement* scope )
