@@ -138,8 +138,9 @@ public:
 
     /** Run the analysis. If interprocedural analysis is not enabled, functionc all expressions (SgFunctionCallExp) will not
      * count as definitions of any variables.
-     * @param interprocedural true to enable interprocedural analysis, false to perform no interprocedural analysis. */
-    void run(bool interprocedural);
+     * @param interprocedural true to enable interprocedural analysis, false to perform no interprocedural analysis. 
+     * @param treatPointersAsStructures if true, p->x is versioned as if it were the variable p.x. */
+    void run(bool interprocedural, bool treatPointersAsStructures);
 
     static bool getDebug()
     {
@@ -305,8 +306,6 @@ private:
 
 public:
     //External static helper functions/variables
-    /** Tag to use to retrieve unique naming key from node.  */
-    static std::string varKeyTag;
 
     static VarName emptyName;
 
