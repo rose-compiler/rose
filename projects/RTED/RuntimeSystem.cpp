@@ -652,7 +652,7 @@ void rted_IOFunctionCall( const char* fname,
       rs->checkFileAccess( (FILE*)file, true /* is_read? */);
     } else if ( 0 == strcmp("putc", fname)) {
       rs->checkFileAccess( (FILE*)file, false /* is_read? */);
-    } else if ( 0 == strcmp("std::fstream", fname)) {
+    } else if ( 0 == strcmp("::std::fstream", fname)) {
        rs->checkFileAccess((std::fstream&) file, strcmp(arg1,"r") == 0 /* is_read? */);
     } else {
       // \pp does a fall through indicate an error?

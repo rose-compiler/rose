@@ -2866,6 +2866,52 @@ SgSizeOfOp::cfgInEdges(unsigned int idx) {
         return result;
 }
 
+// DQ (7/18/2011): Added support for new Java specific IR node (structurally similar to SgSizeOf operator).
+unsigned int
+SgJavaInstanceOfOp::cfgIndexForEnd() const {
+     return 1;
+}
+
+// DQ (7/18/2011): Added support for new Java specific IR node (structurally similar to SgSizeOf operator).
+std::vector<CFGEdge>
+SgJavaInstanceOfOp::cfgOutEdges(unsigned int idx) {
+        std::vector<CFGEdge> result;
+
+        switch (idx) {
+                case 0:
+                        if (get_operand_expr())
+                                makeEdge(CFGNode(this, idx), get_operand_expr()->cfgForBeginning(), result);
+                        else
+                                makeEdge(CFGNode(this, idx), CFGNode(this, idx+1), result);
+                        break;
+                case 1: 
+                        makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
+                        break;
+                default: 
+                        ROSE_ASSERT (!"Bad index for SgUnaryOp");
+        }
+        return result;
+}
+
+// DQ (7/18/2011): Added support for new Java specific IR node (structurally similar to SgSizeOf operator).
+std::vector<CFGEdge>
+SgJavaInstanceOfOp::cfgInEdges(unsigned int idx) {
+        std::vector<CFGEdge> result;
+        switch (idx) {
+                case 0: 
+                        makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
+                case 1:
+                        if (get_operand_expr())
+                                makeEdge(get_operand_expr()->cfgForEnd(), CFGNode(this, idx), result);
+                        else
+                                makeEdge(CFGNode(this, idx-1), CFGNode(this, idx), result);
+                        break;
+                default: 
+                        ROSE_ASSERT (!"Bad index for SgUnaryOp");
+        }
+        return result;
+}
+
 unsigned int
 SgThrowOp::cfgIndexForEnd() const 
    {

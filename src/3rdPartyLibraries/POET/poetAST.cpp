@@ -553,7 +553,7 @@ std:: string POETMap:: toString(ASTOutputEnum config)
 { 
     std:: stringstream r;
     r << "MAP{";
-    for (std::map<POETCode*,POETCode*>::const_iterator p=impl.begin(); 
+    for (std::map<POETCode*,POETCode*,POETCodeLessThan>::const_iterator p=impl.begin(); 
          p != impl.end(); ++p) {
        r << (*p).first->toString(config) << "=>" << (*p).second->toString(config) << ";";
     }
