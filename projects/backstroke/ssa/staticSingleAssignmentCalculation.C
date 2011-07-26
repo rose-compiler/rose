@@ -31,7 +31,6 @@ using namespace ssa_private;
 using namespace boost;
 
 //Initializations of the static attribute tags
-string StaticSingleAssignment::varKeyTag = "ssa_varname_KeyTag";
 StaticSingleAssignment::VarName StaticSingleAssignment::emptyName;
 
 bool StaticSingleAssignment::isBuiltinVar(const VarName& var)

@@ -247,8 +247,6 @@ private:
 
 public:
 	//External static helper functions/variables
-	/** Tag to use to retrieve unique naming key from node.  */
-	static std::string varKeyTag;
 
 	static VarName emptyName;
 

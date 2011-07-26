@@ -36,7 +36,8 @@ ChildUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node, Synth
 
         return ChildUses();
     }
-        //Catch all variable references
+    
+    //Variable references are where all uses originate
     else if (isSgVarRefExp(node))
     {
         //Get the unique name of the def.
@@ -60,7 +61,8 @@ ChildUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node, Synth
         //This varref is both the only use in the subtree and the current variable
         return ChildUses(node, isSgVarRefExp(node));
     }
-        //Catch all types of Binary Operations
+    
+    //Catch all types of Binary Operations
     else if (SgBinaryOp * binaryOp = isSgBinaryOp(node))
     {
         ROSE_ASSERT(attrs.size() == 2 && "Error: BinaryOp without exactly 2 children.");
@@ -148,7 +150,8 @@ ChildUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node, Synth
             }
         }
     }
-        //Catch all unary operations here.
+    
+    //Catch all unary operations here.
     else if (isSgUnaryOp(node))
     {
         SgUnaryOp* unaryOp = isSgUnaryOp(node);
@@ -215,9 +218,10 @@ ChildUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node, Synth
         //Return the combined uses
         return ChildUses(uses, currentVar);
     }
-    else if (isSgDeleteExp(node))
+    
+    else if (isSgDeleteExp(node) && treatPointersAsStructs)
     {
-        //Deleting a variable definitely modifies it.
+        //Deleting a variable modifies the value that it points to
         ROSE_ASSERT(attrs.size() == 1);
         SgVarRefExp* currentVar = attrs.front().getCurrentVar();
 
@@ -231,6 +235,7 @@ ChildUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node, Synth
             return ChildUses();
         }
     }
+    
     else if (isSgStatement(node))
     {
         //Don't propagate uses and defs up to the statement level

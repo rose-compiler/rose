@@ -7,6 +7,8 @@
 using namespace std;
 using namespace ssa_private;
 
+string UniqueNameTraversal::varKeyTag = "ssa_varname_KeyTag";
+
 VariableReferenceSet UniqueNameTraversal::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttributesList attrs)
 {
     if (StaticSingleAssignment::getDebugExtra())
@@ -20,12 +22,12 @@ VariableReferenceSet UniqueNameTraversal::evaluateSynthesizedAttribute(SgNode* n
 
         //We want to assign this node its unique name, as well as adding it to the defs.
         VarUniqueName* uName = new VarUniqueName(name);
-        node->setAttribute(StaticSingleAssignment::varKeyTag, uName);
+        node->setAttribute(varKeyTag, uName);
 
         return VariableReferenceSet(name);
     }
 
-        //Next, see if it is a varRef
+    //Next, see if it is a varRef
     else if (isSgVarRefExp(node))
     {
         SgVarRefExp* var = isSgVarRefExp(node);
@@ -38,13 +40,13 @@ VariableReferenceSet UniqueNameTraversal::evaluateSynthesizedAttribute(SgNode* n
 
         //We want to assign this node its unique name, as well as adding it to the uses.
         VarUniqueName* uName = new VarUniqueName(resolveTemporaryInitNames(var->get_symbol()->get_declaration()));
-        var->setAttribute(StaticSingleAssignment::varKeyTag, uName);
+        var->setAttribute(varKeyTag, uName);
 
         return VariableReferenceSet(var);
     }
 
-        //We check if it is a 'this' expression, since we want to be able to version 'this' as well.
-        //We don't have an SgInitializedName for 'this', so we use a flag in the unique names
+    //We check if it is a 'this' expression, since we want to be able to version 'this' as well.
+    //We don't have an SgInitializedName for 'this', so we use a flag in the unique names
     else if (isSgThisExp(node))
     {
         SgThisExp* thisExp = isSgThisExp(node);
@@ -58,7 +60,7 @@ VariableReferenceSet UniqueNameTraversal::evaluateSynthesizedAttribute(SgNode* n
         return VariableReferenceSet(thisExp);
     }
 
-        //Now we check if we have reached a Dot Expression, where we have to merge names.
+    //Now we check if we have reached a Dot Expression, where we have to merge names.
     else if (isSgDotExp(node) || (isSgArrowExp(node) && treatPointersAsStructs))
     {
         if (attrs.size() != 2)
@@ -81,7 +83,7 @@ VariableReferenceSet UniqueNameTraversal::evaluateSynthesizedAttribute(SgNode* n
             VarUniqueName* lhsName = NULL;
             if (thisExp == NULL)
             {
-                lhsName = dynamic_cast<VarUniqueName*> (lhsVar->getAttribute(StaticSingleAssignment::varKeyTag));
+                lhsName = dynamic_cast<VarUniqueName*> (lhsVar->getAttribute(varKeyTag));
                 ROSE_ASSERT(lhsName);
             }
 
@@ -98,24 +100,24 @@ VariableReferenceSet UniqueNameTraversal::evaluateSynthesizedAttribute(SgNode* n
                         VarUniqueName* uName = new VarUniqueName(lhsName->getKey(),
                                 resolveTemporaryInitNames(varRef->get_symbol()->get_declaration()));
                         uName->setUsesThis(lhsName->getUsesThis());
-                        varRef->setAttribute(StaticSingleAssignment::varKeyTag, uName);
+                        varRef->setAttribute(varKeyTag, uName);
 
                         VarUniqueName* uName2 = new VarUniqueName(*uName);
-                        node->setAttribute(StaticSingleAssignment::varKeyTag, uName2);
+                        node->setAttribute(varKeyTag, uName2);
                     }
                     else
                     {
                         //Create the UniqueName from the current varRef, and stores that it uses 'this'
                         VarUniqueName* uName = new VarUniqueName(resolveTemporaryInitNames(varRef->get_symbol()->get_declaration()));
                         uName->setUsesThis(true);
-                        varRef->setAttribute(StaticSingleAssignment::varKeyTag, uName);
+                        varRef->setAttribute(varKeyTag, uName);
 
                         VarUniqueName* uName2 = new VarUniqueName(*uName);
-                        node->setAttribute(StaticSingleAssignment::varKeyTag, uName2);
+                        node->setAttribute(varKeyTag, uName2);
 
                         //Add a varName to the this expression also
                         uName2 = new VarUniqueName(*uName);
-                        thisExp->setAttribute(StaticSingleAssignment::varKeyTag, uName2);
+                        thisExp->setAttribute(varKeyTag, uName2);
                     }
 
                     //Return the combination of the LHS and RHS varRefs
@@ -148,19 +150,39 @@ VariableReferenceSet UniqueNameTraversal::evaluateSynthesizedAttribute(SgNode* n
                 SgVarRefExp* varRef = isSgVarRefExp(rhsVar);
                 ROSE_ASSERT(varRef);
 
-                if (varRef)
+                //If the RHS is a varRef and has the naming attribute set, remove it
+                if (varRef->attributeExists(varKeyTag))
                 {
-                    //If the RHS is a varRef and has the naming attribute set, remove it
-                    if (varRef->attributeExists(StaticSingleAssignment::varKeyTag))
-                    {
-                        VarUniqueName* name = dynamic_cast<VarUniqueName*> (varRef->getAttribute(StaticSingleAssignment::varKeyTag));
-                        varRef->removeAttribute(StaticSingleAssignment::varKeyTag);
-                        delete name;
-                    }
+                    VarUniqueName* name = dynamic_cast<VarUniqueName*> (varRef->getAttribute(varKeyTag));
+                    varRef->removeAttribute(varKeyTag);
+                    delete name;
                 }
             }
 
             return VariableReferenceSet(NULL);
+        }
+    }
+    
+    //If we have an arrow expression and we don't treat pointers as structs, delete
+    //the variable from the right-hand side
+    else if (isSgArrowExp(node) && !treatPointersAsStructs)
+    {
+        ROSE_ASSERT(attrs.size() == 2);
+
+        SgNode* rhsVar = attrs[1].getCurrentVar();
+        if (rhsVar != NULL)
+        {
+            SgVarRefExp* varRef = isSgVarRefExp(rhsVar);
+            ROSE_ASSERT(varRef);
+
+            //If the RHS is a varRef and has the naming attribute set, remove it
+            if (varRef->attributeExists(varKeyTag))
+            {
+                VarUniqueName* name = dynamic_cast<VarUniqueName*> (varRef->getAttribute(varKeyTag));
+                ROSE_ASSERT(name != NULL);
+                varRef->removeAttribute(varKeyTag);
+                delete name;
+            }
         }
     }
 
@@ -170,21 +192,21 @@ VariableReferenceSet UniqueNameTraversal::evaluateSynthesizedAttribute(SgNode* n
         return attrs.front();
     }
 
-        //If we don't distinguish between arrow and dot operations, then dereferencing preserves the current variable.
+    //If we don't distinguish between arrow and dot operations, then dereferencing preserves the current variable.
     else if (isSgPointerDerefExp(node) && treatPointersAsStructs)
     {
         ROSE_ASSERT(attrs.size() == 1);
         return attrs.front();
     }
 
-        //This allows us to treat (a, b).x as b.x
+    //This allows us to treat (a, b).x as b.x
     else if (isSgCommaOpExp(node) && propagateNamesThroughComma)
     {
         ROSE_ASSERT(attrs.size() == 2);
         return attrs.back();
     }
 
-        //Now we hit the default case. Names should not propagate up
+    //Now we hit the default case. Names should not propagate up
     else
     {
         return VariableReferenceSet(NULL);
