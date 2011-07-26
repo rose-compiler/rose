@@ -5,10 +5,11 @@ INCLUDES = $(ROSE_INCLUDES)
 noinst_LTLIBRARIES=libabstractMemoryObject.la
 
 libabstractMemoryObject_la_SOURCES =\
-  memory_object.cpp  memory_object.h
+  memory_object.cpp  memory_object.h \
+  memory_object_impl.h memory_object_impl.cpp
 
 include_HEADERS = \
-   memory_object.h
+   memory_object.h memory_object_impl.h
   
 clean-local:
 	rm -rf Templates.DB ii_files ti_files core
