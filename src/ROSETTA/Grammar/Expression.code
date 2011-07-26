@@ -3276,7 +3276,14 @@ SgNaryOp::append_operation(VariantT sg_operator, SgExpression* operand) {
 
 int
 SgNaryOp::replace_expression(SgExpression *o, SgExpression *n) {
-    ROSE_ASSERT(!"SgNaryOp::replace_expression is unimplemented.");
+    SgExpressionPtrList::iterator i;
+    for (i = get_operands().begin(); i != get_operands().end(); ++i) {
+        if( (*i) == o) {
+            *i = n;
+            return 1;
+        }
+    }
+    return 0;
 }
 
 int
