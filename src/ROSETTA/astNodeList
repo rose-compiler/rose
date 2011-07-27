@@ -304,6 +304,7 @@ SgCommonBlock
 SgCommonBlockObject
 SgCommonSymbol
 SgComplexVal
+SgCompoundAssignOp
 SgComputedGotoStatement
 SgConcatenationOp
 SgConditionalExp

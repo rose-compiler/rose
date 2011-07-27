@@ -1,14 +1,6 @@
 #ifndef AFFINE_INEQUALITY_H
 #define AFFINE_INEQUALITY_H
 
-#include <sstream>
-#include <iostream>
-#include <string>
-#include <functional>
-#include <queue>
-
-using namespace std;
-
 #include "common.h"
 #include "VirtualCFGIterator.h"
 #include "cfgUtils.h"
@@ -18,6 +10,14 @@ using namespace std;
 #include "divAnalysis.h"
 #include "printAnalysisStates.h"
 #include "logical.h"
+
+#include <sstream>
+#include <iostream>
+#include <string>
+#include <functional>
+#include <queue>
+#include <list>
+#include <set>
 
 // represents the constraint on variables x and y: x*a <= y*b + c
 class affineInequality: public printable // : public LogicalCond
@@ -100,12 +100,12 @@ class affineInequality: public printable // : public LogicalCond
 	bool semLessThan(const affineInequality& that, bool xEqZero, bool yEqZero) const;
 	bool semLessThan(const affineInequality& that, 
                     const affineInequality* xZero, const affineInequality* zeroX,
-                    const affineInequality* yZero, const affineInequality* zeroY, string indent="") const;
+                    const affineInequality* yZero, const affineInequality* zeroY, std::string indent="") const;
 	bool semLessThanEq(const affineInequality& that, 
                     bool xIsZeroVar, 
                     const affineInequality* xZero, const affineInequality* zeroX,
                     bool yIsZeroVar,
-                    const affineInequality* yZero, const affineInequality* zeroY, string indent="") const;
+                    const affineInequality* yZero, const affineInequality* zeroY, std::string indent="") const;
 	
 	// Semantic affineInequality ordering (partial order), focused on negated inequalities
 	// Returns true if the negation of this affineInequality represents more information (less information is 
@@ -185,14 +185,14 @@ class affineInequality: public printable // : public LogicalCond
 	// prove this.
 	static bool mayConsistent(const affineInequality& constrXY, const affineInequality& constrYX);
 	
-	static string signToString(signs sign);
+	static std::string signToString(signs sign);
 	
-	string str(string indent="");
-	string str(string indent="") const;
+	std::string str(std::string indent="");
+	std::string str(std::string indent="") const;
 	
-	string str(varID x, varID y, string indent="") const;
+	std::string str(varID x, varID y, std::string indent="") const;
 	// Prints out the negation of the constraint ax <= by+c
-	string strNeg(varID x, varID y, string indent) const;
+	std::string strNeg(varID x, varID y, std::string indent) const;
 	
 	public:
 	// the basic logical operations that must be supported by any implementation of 
@@ -255,9 +255,9 @@ class varAffineInequality : public printable //: public LogicalCond
 	
 	bool operator<(const varAffineInequality& that) const;
 	
-	string str(string indent="");
+	std::string str(std::string indent="");
 
-	string str(string indent="") const;
+	std::string str(std::string indent="") const;
 	
 	// Parses expr and returns the corresponding varAffineInequality if expr can be represented
 	// as such and NULL otherwise.
@@ -281,7 +281,7 @@ class varAffineInequality : public printable //: public LogicalCond
 class affineInequalityFact : public NodeFact
 {
 	public:
-	set<varAffineInequality> ineqs;
+	std::set<varAffineInequality> ineqs;
 	
 	affineInequalityFact()
 	{}
@@ -293,8 +293,8 @@ class affineInequalityFact : public NodeFact
 	
 	NodeFact* copy() const;
 	
-	string str(string indent="");
-	string str(string indent="") const;
+	std::string str(std::string indent="");
+	std::string str(std::string indent="") const;
 };
 
 
@@ -321,7 +321,7 @@ class affineInequalitiesPlacer : public UnstructuredPassIntraAnalysis
 void initAffineIneqs(SgProject* project);
 
 // return the set of varAffineInequalities associated with this node or NULL if none are available
-set<varAffineInequality>* getAffineIneq(SgNode* n);*/
+std::set<varAffineInequality>* getAffineIneq(SgNode* n);*/
 
 /*class printAffineInequalities : public UnstructuredPassIntraAnalysis
 {
@@ -334,15 +334,15 @@ set<varAffineInequality>* getAffineIneq(SgNode* n);*/
 };*/
 
 // prints the inequality facts set by the given affineInequalityPlacer
-void printAffineInequalities(affineInequalitiesPlacer* aip, string indent="");
+void printAffineInequalities(affineInequalitiesPlacer* aip, std::string indent="");
 
 // Runs the Affine Inequality Placer analysis
 void runAffineIneqPlacer(bool printStates=false);
 
 // returns the set of inequalities known to be true at the given DataflowNode
-const set<varAffineInequality>& getAffineIneq(const DataflowNode& n);
+const std::set<varAffineInequality>& getAffineIneq(const DataflowNode& n);
 
 // Returns the set of inequalities known to be true at the given DataflowNode's descendants
-list<set<varAffineInequality> > getAffineIneqDesc(const DataflowNode& n);
+std::list<std::set<varAffineInequality> > getAffineIneqDesc(const DataflowNode& n);
 
 #endif
