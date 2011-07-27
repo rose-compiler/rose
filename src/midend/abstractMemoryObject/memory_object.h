@@ -19,7 +19,7 @@
 namespace AbstractMemoryObject
 {
   //Users should provide a concrete node implementation by default
-  // We try not to use pure virtual functions here to allow 
+  // We try not to use pure virtual functions here to allow  
   // users to reuse the default implementation as much as possible
   class ObjSet
   {
