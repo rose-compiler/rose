@@ -9,7 +9,7 @@ libSSA_a_DEPENDENCIES =
 libSSA_a_SOURCES = staticSingleAssignmentCalculation.C staticSingleAssignmentQueries.C  defsAndUsesTraversal.C \
 		reachingDef.C staticSingleAssignmentInterprocedural.C
 include_HEADERS = staticSingleAssignment.h defsAndUsesTraversal.h iteratedDominanceFrontier.h \
-		reachingDef.h controlDependence.h controlPredicate.h dataflowCfgFilter.h
+		reachingDef.h controlDependence.h controlPredicate.h dataflowCfgFilter.h boostGraphCFG.h
 
 noinst_PROGRAMS= ssaTestHarness
 ssaTestHarness_SOURCES = ssaTestHarness.C
