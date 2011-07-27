@@ -227,6 +227,7 @@ set(rose_support_src
       ${CMAKE_SOURCE_DIR}/src/roseSupport/memoryUsage.C
       ${CMAKE_BINARY_DIR}/src/roseSupport/stringify.C
       ${CMAKE_SOURCE_DIR}/src/roseSupport/threadSupport.C
+      ${CMAKE_SOURCE_DIR}/src/roseSupport/IncludeDirective.C
      )
 
 
@@ -270,6 +271,7 @@ set (unparser_SRC
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/unparser.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/nameQualificationSupport.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/unparse_sym.C
+      ${CMAKE_SOURCE_DIR}/src/backend/unparser/IncludedFilesUnparser.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/formatSupport/unparseFormatHelp.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/formatSupport/unparse_format.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/PHPCodeGeneration/unparsePHP.C
@@ -683,6 +685,11 @@ set( libastVisualization_SRC
   ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astVisualization/walrus.C 
 )
 
+set( libincludeDirectivesProcessing_SRC
+  ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/includeDirectivesProcessing/CompilerOutputReader.C
+  ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/includeDirectivesProcessing/CompilerOutputParser.C
+  ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/includeDirectivesProcessing/IncludingPreprocessingInfosCollector.C
+)
 
 
 set( midend_loopproc_src
@@ -818,6 +825,7 @@ set(rose_LIB_SRCS dummyCppFileForLibrose.C
  ${libastTokenStream_SRC}
  ${libastHiddenTypeAndDeclarationLists_SRC}
  ${libastVisualization_SRC}
+ ${libincludeDirectivesProcessing_SRC}
  ${midend_loopproc_src}
  ${libastPostProcessing_SRC}
  ${binaryFrontend_SRC}

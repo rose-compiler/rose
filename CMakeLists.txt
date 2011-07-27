@@ -361,7 +361,8 @@ endif (HAVE_DLFCN_H)
      ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/astFixup 
      ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/astPostProcessing 
      ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/astMerge 
-     ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/astVisualization 
+     ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/astVisualization
+     ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/includeDirectivesProcessing 
      ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/astFileIO 
      ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/sageInterface 
      ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/virtualCFG 

@@ -99,7 +99,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
        // ROSE_ASSERT(declarationFromSymbol != NULL);
           if (declarationFromSymbol != NULL)
              {
-            // DQ (6/22/2011): Can I or should I do relational operatios on enum values (note that the values are designed to allow this).
+            // DQ (6/22/2011): Can I, or should I, do relational operations on enum values (note that the values are designed to allow this).
                declarationAccessLevel = declarationFromSymbol->get_declarationModifier().get_accessModifier().get_modifier();
              }
             else
@@ -118,14 +118,161 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
              {
             // This declaration is visible, so build an alias.
 
-            // SgAliasSymbol* aliasSymbol = new SgAliasSymbol (SgSymbol *alias=NULL, bool isRenamed=false, SgName new_name="")
-               SgAliasSymbol* aliasSymbol = new SgAliasSymbol (symbol);
+            // DQ (7/24/2011): Need to make sure that the symbol is not already present in the symbol table 
+            // (else injection would be redundant. This is a likely key to the problem we are having with 
+            // symbol table explosions for some codes.  This should be refactored to a member function of 
+            // the symbol table support.
+            // Note that this change improves the performance from 15 minutes to 5 seconds for the outlining example.
+               bool alreadyExists = currentScope->symbol_exists(name);
+               if (alreadyExists == true)
+                  {
+                 // Just because the names match is not strong enough.
+                 // SgSymbol* symbol currentScope->symbol_exists(name);
+                    switch (symbol->variantT())
+                       {
+                         case V_SgAliasSymbol:
+                            {
+                           // not clear what to do here...
+                           // I think we need more symbol table support for detecting matching symbols.
+                           // I think we also need more alias symbol specfic query support.
+                              break;
+                            }
+
+                         case V_SgEnumSymbol:
+                            {
+                           // alreadyExists = (currentScope->lookup_enum_symbol(name) != NULL);
+                              SgEnumSymbol* tmpSymbol = currentScope->lookup_enum_symbol(name);
+                              if (tmpSymbol != NULL)
+                                 {
+                                   SgNode* tmpSymbolBasis = tmpSymbol->get_symbol_basis();
+                                   ROSE_ASSERT(tmpSymbolBasis != NULL);
+                                   alreadyExists = (tmpSymbolBasis == symbolBasis);
+                                 }
+                              break;
+                            }
+
+                         case V_SgVariableSymbol:
+                            {
+                           // alreadyExists = (currentScope->lookup_variable_symbol(name) != NULL);
+                              SgVariableSymbol* tmpSymbol = currentScope->lookup_variable_symbol(name);
+                              if (tmpSymbol != NULL)
+                                 {
+                                   SgNode* tmpSymbolBasis = tmpSymbol->get_symbol_basis();
+                                   ROSE_ASSERT(tmpSymbolBasis != NULL);
+                                   alreadyExists = (tmpSymbolBasis == symbolBasis);
+                                 }
+                              break;
+                            }
+
+                         case V_SgClassSymbol:
+                            {
+                           // alreadyExists = (currentScope->lookup_class_symbol(name) != NULL);
+                              SgClassSymbol* tmpSymbol = currentScope->lookup_class_symbol(name);
+                              if (tmpSymbol != NULL)
+                                 {
+                                   SgNode* tmpSymbolBasis = tmpSymbol->get_symbol_basis();
+                                   ROSE_ASSERT(tmpSymbolBasis != NULL);
+                                   alreadyExists = (tmpSymbolBasis == symbolBasis);
+                                 }
+                              break;
+                            }
+
+                         case V_SgFunctionSymbol:
+                         case V_SgMemberFunctionSymbol:
+                            {
+                           // alreadyExists = (currentScope->lookup_function_symbol(name) != NULL);
+                              SgFunctionSymbol* tmpSymbol = currentScope->lookup_function_symbol(name);
+                              if (tmpSymbol != NULL)
+                                 {
+                                   SgNode* tmpSymbolBasis = tmpSymbol->get_symbol_basis();
+                                   ROSE_ASSERT(tmpSymbolBasis != NULL);
+                                   alreadyExists = (tmpSymbolBasis == symbolBasis);
+                                 }
+                              break;
+                            }
+
+                         case V_SgTypedefSymbol:
+                            {
+                           // alreadyExists = (currentScope->lookup_typedef_symbol(name) != NULL);
+                              SgTypedefSymbol* tmpSymbol = currentScope->lookup_typedef_symbol(name);
+                              if (tmpSymbol != NULL)
+                                 {
+                                   SgNode* tmpSymbolBasis = tmpSymbol->get_symbol_basis();
+                                   ROSE_ASSERT(tmpSymbolBasis != NULL);
+                                   alreadyExists = (tmpSymbolBasis == symbolBasis);
+                                 }
+                              break;
+                            }
+
+                         case V_SgEnumFieldSymbol:
+                            {
+                           // alreadyExists = (currentScope->lookup_enum_field_symbol(name) != NULL);
+                              SgEnumFieldSymbol* tmpSymbol = currentScope->lookup_enum_field_symbol(name);
+                              if (tmpSymbol != NULL)
+                                 {
+                                   SgNode* tmpSymbolBasis = tmpSymbol->get_symbol_basis();
+                                   ROSE_ASSERT(tmpSymbolBasis != NULL);
+                                   alreadyExists = (tmpSymbolBasis == symbolBasis);
+                                 }
+                              break;
+                            }
+
+                         case V_SgNamespaceSymbol:
+                            {
+                           // alreadyExists = (currentScope->lookup_namespace_symbol(name) != NULL);
+                              SgNamespaceSymbol* tmpSymbol = currentScope->lookup_namespace_symbol(name);
+                              if (tmpSymbol != NULL)
+                                 {
+                                   SgNode* tmpSymbolBasis = tmpSymbol->get_symbol_basis();
+                                   ROSE_ASSERT(tmpSymbolBasis != NULL);
+                                   alreadyExists = (tmpSymbolBasis == symbolBasis);
+                                 }
+                              break;
+                            }
+
+                         case V_SgTemplateSymbol:
+                            {
+                           // alreadyExists = (currentScope->lookup_template_symbol(name) != NULL);
+                              SgTemplateSymbol* tmpSymbol = currentScope->lookup_template_symbol(name);
+                              if (tmpSymbol != NULL)
+                                 {
+                                   SgNode* tmpSymbolBasis = tmpSymbol->get_symbol_basis();
+                                   ROSE_ASSERT(tmpSymbolBasis != NULL);
+                                   alreadyExists = (tmpSymbolBasis == symbolBasis);
+                                 }
+                              break;
+                            }
+
+                         case V_SgLabelSymbol:
+                            {
+                           // alreadyExists = (currentScope->lookup_label_symbol(name) != NULL);
+                              SgLabelSymbol* tmpSymbol = currentScope->lookup_label_symbol(name);
+                              if (tmpSymbol != NULL)
+                                 {
+                                   SgNode* tmpSymbolBasis = tmpSymbol->get_symbol_basis();
+                                   ROSE_ASSERT(tmpSymbolBasis != NULL);
+                                   alreadyExists = (tmpSymbolBasis == symbolBasis);
+                                 }
+                              break;
+                            }
+
+                         default:
+                              printf ("Error: default reached in switch symbol = %p = %s \n",symbol,symbol->class_name().c_str());
+                              ROSE_ASSERT(false);
+                              break;
+                       }
+                  }
+               
+               if ( alreadyExists == false)
+                  {
+                    SgAliasSymbol* aliasSymbol = new SgAliasSymbol (symbol);
 
 #if ALIAS_SYMBOL_DEBUGGING
-               printf ("Adding symbol to new scope as a SgAliasSymbol = %p \n",aliasSymbol);
+                    printf ("Adding symbol to new scope as a SgAliasSymbol = %p \n",aliasSymbol);
 #endif
-            // Use the current name and the alias to the symbol
-               currentScope->insert_symbol(name, aliasSymbol);
+                 // Use the current name and the alias to the symbol
+                    currentScope->insert_symbol(name, aliasSymbol);
+                  }
              }
             else
              {
@@ -160,6 +307,117 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
    {
   // DQ (11/24/2007): Output the current IR node for debugging the traversal of the Fortran AST.
   // printf ("node = %s \n",node->class_name().c_str());
+
+  // DQ (7/23/2011): New support for linking namespaces sharing the same name (mangled name).
+  // std::map<SgName,std::vector<SgNamespaceDefinition*> > namespaceMap;
+     SgNamespaceDefinitionStatement* namespaceDefinition = isSgNamespaceDefinitionStatement(node);
+     if (namespaceDefinition != NULL)
+        {
+       // DQ (7/23/2011): Assemble namespaces with the same name into vectors defined in the map 
+       // accessed using the name of the namespace as a key.
+
+          SgName name = namespaceDefinition->get_namespaceDeclaration()->get_name();
+#if ALIAS_SYMBOL_DEBUGGING
+          printf ("namespace definition found for name = %s \n",name.str());
+#endif
+       // It is important to use mangled names to define unique names when namespaces are nested.
+          SgName mangledNamespaceName = namespaceDefinition->get_namespaceDeclaration()->get_mangled_name();
+#if ALIAS_SYMBOL_DEBUGGING
+          printf ("namespace definition associated mangled name = %s \n",mangledNamespaceName.str());
+#endif
+       // DQ (7/23/2011): Fixup the name we use as a key in the map to relect that some namespaces don't have a name.
+          if (name == "")
+             {
+            // Modify the mangled name to reflect the unnamed namespace...
+
+#if ALIAS_SYMBOL_DEBUGGING
+               printf ("Warning in FixupAstSymbolTablesToSupportAliasedSymbols::visit(): Unnamed namespaces shuld be mangled to reflect the lack of a name \n");
+#endif
+               mangledNamespaceName += "_unnamed_namespace";
+             }
+
+#if ALIAS_SYMBOL_DEBUGGING
+          printf ("namespace definition associated mangled name = %s \n",mangledNamespaceName.str());
+#endif
+#if ALIAS_SYMBOL_DEBUGGING
+          printf ("In FixupAstSymbolTablesToSupportAliasedSymbols: associated mangled name = %s namespaceMap size = %zu \n",mangledNamespaceName.str(),namespaceMap.size());
+#endif
+          std::map<SgName,std::vector<SgNamespaceDefinitionStatement*> >::iterator i = namespaceMap.find(mangledNamespaceName);
+          if (i != namespaceMap.end())
+             {
+               std::vector<SgNamespaceDefinitionStatement*> & namespaceVector = i->second;
+#if ALIAS_SYMBOL_DEBUGGING
+               printf ("In FixupAstSymbolTablesToSupportAliasedSymbols: Namespace vector size = %zu \n",namespaceVector.size());
+#endif
+            // Testing each entry...
+               for (size_t j = 0; j < namespaceVector.size(); j++)
+                  {
+                    ROSE_ASSERT(namespaceVector[j] != NULL);
+                    SgName existingNamespaceName = namespaceVector[j]->get_namespaceDeclaration()->get_name();
+#if ALIAS_SYMBOL_DEBUGGING
+                    printf ("Existing namespace %p = %s \n",namespaceVector[j],existingNamespaceName.str());
+#endif
+                    if (j > 0)
+                       {
+                         ROSE_ASSERT(namespaceVector[j]->get_previousNamepaceDefinition() != NULL);
+                       }
+
+                    if (namespaceVector.size() > 1 && j < namespaceVector.size() - 2)
+                       {
+                         ROSE_ASSERT(namespaceVector[j]->get_nextNamepaceDefinition() != NULL);
+                       }
+                  }
+
+               size_t namespaceListSize = namespaceVector.size();
+               if (namespaceListSize > 0)
+                  {
+                    size_t lastNamespaceIndex = namespaceListSize - 1;
+                    namespaceVector[lastNamespaceIndex]->set_nextNamepaceDefinition(namespaceDefinition);
+
+                    namespaceDefinition->set_previousNamepaceDefinition(namespaceVector[lastNamespaceIndex]);
+                  }
+
+            // Add the namespace matching a previous name to the list.
+               namespaceVector.push_back(namespaceDefinition);
+
+            // Setup scopes as sources and distinations of alias symbols.
+               SgNamespaceDefinitionStatement* referencedScope = namespaceDefinition->get_previousNamepaceDefinition();
+               ROSE_ASSERT(referencedScope != NULL);
+               SgNamespaceDefinitionStatement* currentScope = namespaceDefinition;
+               ROSE_ASSERT(currentScope != NULL);
+
+#if ALIAS_SYMBOL_DEBUGGING
+               printf ("In FixupAstSymbolTablesToSupportAliasedSymbols: Suppress injection of symbols from one namespace to the other for each reintrant namespace \n");
+               printf ("In FixupAstSymbolTablesToSupportAliasedSymbols: referencedScope #symbols = %d currentScope #symbols = %d \n",referencedScope->get_symbol_table()->size(),currentScope->get_symbol_table()->size());
+#endif
+#if 1
+            // Generate the alias symbols from the referencedScope and inject into the currentScope.
+               injectSymbolsFromReferencedScopeIntoCurrentScope(referencedScope,currentScope,SgAccessModifier::e_default);
+#endif
+             }
+            else
+             {
+#if ALIAS_SYMBOL_DEBUGGING
+               printf ("Insert namespace %p for name = %s into the namespaceMap \n",namespaceDefinition,mangledNamespaceName.str());
+#endif
+               std::vector<SgNamespaceDefinitionStatement*> list(1);
+               ROSE_ASSERT(list.size() == 1);
+
+               list[0] = namespaceDefinition;
+
+
+            // DQ (7/24/2011): get_nextNamepaceDefinition() == NULL is false in the case of the AST copy tests 
+            // (see tests/CompileTests/copyAST_tests/copytest2007_30.C). Only  get_nextNamepaceDefinition() 
+            // appears to sometimes be non-null, so we reset them both to NULL just to make sure.
+               namespaceDefinition->set_nextNamepaceDefinition(NULL);
+               namespaceDefinition->set_previousNamepaceDefinition(NULL);
+
+               ROSE_ASSERT(namespaceDefinition->get_nextNamepaceDefinition()     == NULL);
+               ROSE_ASSERT(namespaceDefinition->get_previousNamepaceDefinition() == NULL);
+
+               namespaceMap.insert(std::pair<SgName,std::vector<SgNamespaceDefinitionStatement*> >(mangledNamespaceName,list));
+             }
+        }
 
      SgUseStatement* useDeclaration = isSgUseStatement(node);
      if (useDeclaration != NULL)

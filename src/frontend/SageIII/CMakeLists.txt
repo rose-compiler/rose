@@ -12,6 +12,7 @@ add_subdirectory(virtualCFG)
 add_subdirectory(astTokenStream)
 add_subdirectory(astHiddenTypeAndDeclarationLists)
 add_subdirectory(astVisualization)
+add_subdirectory(includeDirectivesProcessing)
 
 
 ########### next target ###############

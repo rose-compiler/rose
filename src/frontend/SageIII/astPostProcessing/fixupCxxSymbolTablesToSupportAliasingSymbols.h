@@ -18,6 +18,9 @@ void fixupAstSymbolTablesToSupportAliasedSymbols (SgNode* node);
 class FixupAstSymbolTablesToSupportAliasedSymbols : public AstSimpleProcessing
    {
      public:
+       // DQ (7/23/2011): Linkup namespaces so that we can build alias sysmbol from previously matching namespaces into subsequent matching namespaces.
+          std::map<SgName,std::vector<SgNamespaceDefinitionStatement*> > namespaceMap;
+
           void visit ( SgNode* node );
 
        // This inserts an alias for each of the symbols in referencedScope into the symbol table of currentScope
