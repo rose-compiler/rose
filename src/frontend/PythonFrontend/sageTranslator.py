@@ -162,6 +162,12 @@ class SageTranslator(ast.NodeVisitor):
     scope = self.scopeStack.peek()
     return sage.buildExceptHandler(name, type, body, scope)
 
+  def visit_Exec(self, node):
+    body = self.visit(node.body)
+    globals = node.globals and self.visit(node.globals)
+    locals = node.locals and self.visit(node.locals)
+    return sage.buildExec(body, globals, locals)
+
   def visit_Expr(self, node):
     value = self.visit(node.value)
     return sage.buildExpr(value)

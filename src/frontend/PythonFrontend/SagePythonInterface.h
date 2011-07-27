@@ -22,6 +22,7 @@ PyObject* sage_buildDelete(PyObject *self, PyObject *args);
 PyObject* sage_buildDict(PyObject *self, PyObject *args);
 PyObject* sage_buildDictComp(PyObject *self, PyObject *args);
 PyObject* sage_buildExceptHandler(PyObject *self, PyObject *args);
+PyObject* sage_buildExec(PyObject *self, PyObject *args);
 PyObject* sage_buildExpr(PyObject *self, PyObject *args);
 PyObject* sage_buildExprListExp(PyObject *self, PyObject *args);
 PyObject* sage_buildFloat(PyObject *self, PyObject *args);
@@ -73,6 +74,7 @@ static PyMethodDef SageBuilderMethods[] = {
     {"buildDict", sage_buildDict, METH_VARARGS, "Builds a dictionary display node."},
     {"buildDictComp", sage_buildDictComp, METH_VARARGS, "Builds a dictionary comprehension node."},
     {"buildExceptHandler", sage_buildExceptHandler, METH_VARARGS, "Builds an exception handler node."},
+    {"buildExec", sage_buildExec, METH_VARARGS, "Builds an exec node."},
     {"buildExpr", sage_buildExpr, METH_VARARGS, "Builds an Expr node."},
     {"buildExprListExp", sage_buildExprListExp, METH_VARARGS, "Builds an expression list."},
     {"buildFloat", sage_buildFloat, METH_VARARGS, "Builds a float."},

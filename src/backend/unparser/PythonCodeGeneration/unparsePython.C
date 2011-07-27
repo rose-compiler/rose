@@ -53,6 +53,7 @@ Unparse_Python::unparseLanguageSpecificStatement(SgStatement* stmt,
         CASE_DISPATCH_AND_BREAK(ClassDefinition);
         CASE_DISPATCH_AND_BREAK(ContinueStmt);
         CASE_DISPATCH_AND_BREAK(ExprStatement);
+        CASE_DISPATCH_AND_BREAK(ExecStatement);
         CASE_DISPATCH_AND_BREAK(FunctionDeclaration);
         CASE_DISPATCH_AND_BREAK(FunctionDefinition);
         CASE_DISPATCH_AND_BREAK(FunctionParameterList);
@@ -553,6 +554,26 @@ Unparse_Python::unparseExprListExp(SgExprListExp* expr_list_exp,
         if (exp_it != exps.begin())
             curprint(", ");
         unparseExpression(*exp_it, info);
+    }
+}
+
+void
+Unparse_Python::unparseExecStatement(SgExecStatement* exec,
+                                     SgUnparse_Info& info)
+{
+    curprint("exec ");
+    unparseExpression(exec->get_executable(), info);
+
+    if (exec->get_globals() != NULL) {
+        curprint(" in ");
+        unparseExpression(exec->get_globals(), info);
+
+        if (exec->get_locals() != NULL) {
+            curprint(", ");
+            unparseExpression(exec->get_locals(), info);
+        }
+    } else {
+        ROSE_ASSERT(exec->get_locals() == NULL);
     }
 }
 

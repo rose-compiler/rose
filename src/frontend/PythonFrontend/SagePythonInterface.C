@@ -500,6 +500,25 @@ sage_buildExceptHandler(PyObject *self, PyObject *args)
 }
 
 /*
+ */
+PyObject*
+sage_buildExec(PyObject *self, PyObject *args)
+{
+    SgExpression *sg_body;
+    SgExpression *sg_globals = NULL;
+    SgExpression *sg_locals = NULL;
+    if (! PyArg_ParseTuple(args, "O&|O&O&", SAGE_CONVERTER(SgExpression), &sg_body,
+                                            SAGE_CONVERTER(SgExpression), &sg_globals,
+                                            SAGE_CONVERTER(SgExpression), &sg_locals))
+
+        return NULL;
+
+    SgExecStatement* sg_exec =
+        SageBuilder::buildExecStatement(sg_body, sg_globals, sg_locals);
+    return PyEncapsulate(sg_exec);
+}
+
+/*
  * Build an Expr node from the given Python statements.
  *  - PyObject* args = (PyObject*)
  */
