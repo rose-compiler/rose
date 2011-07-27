@@ -10,7 +10,7 @@ bool SaveDotAnalysis::runAnalysis(const Function& func, NodeState* state)
 	if(func.get_definition())
 	{
 		// output the CFG to a file
-		ofstream fileCFG;
+                std::ofstream fileCFG;
 		fileCFG.open((func.get_name().getString()+"_cfg.dot").c_str());
 		cout << "    writing to file "<<(func.get_name().getString()+"_cfg.dot")<<"\n";
 		cfgToDot(fileCFG, func.get_name(), func.get_definition()->cfgForBeginning());

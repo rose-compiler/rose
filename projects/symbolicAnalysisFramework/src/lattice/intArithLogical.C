@@ -1,5 +1,21 @@
 #include <math.h>
 #include "intArithLogical.h"
+#include <list>
+using std::list;
+#include <string>
+using std::string;
+#include <iostream>
+using std::ostream;
+using std::cout;
+#include <sstream>
+using std::stringstream;
+using std::ostringstream;
+#include <fstream>
+using std::ofstream;
+#include <set>
+using std::set;
+#include <vector>
+using std::vector;
 
 // GCD implementation from Wikipedia
 static long gcd(long u, long v)

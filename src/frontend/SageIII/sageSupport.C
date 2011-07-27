@@ -497,15 +497,17 @@ bool roseInstallPrefix(std::string& result) {
     if (libroseName == NULL) goto default_check;
     char* libdir = dirname(libroseName);
     if (libdir == NULL) {free(libroseName); goto default_check;}
-    char* libdirCopy = strdup(libdir);
-    if (libdirCopy == NULL) {free(libroseName); free(libdirCopy); goto default_check;}
-    char* libdirBasenameCS = basename(libdirCopy);
-    if (libdirBasenameCS == NULL) {free(libroseName); free(libdirCopy); goto default_check;}
+    char* libdirCopy1 = strdup(libdir);
+    char* libdirCopy2 = strdup(libdir);
+    if (libdirCopy1 == NULL || libdirCopy2 == NULL) { free(libroseName); free(libdirCopy1); free(libdirCopy2); goto default_check;}
+    char* libdirBasenameCS = basename(libdirCopy1);
+    if (libdirBasenameCS == NULL) {free(libroseName); free(libdirCopy1); free(libdirCopy2); goto default_check;}
     string libdirBasename = libdirBasenameCS;
-    free(libdirCopy);
-    char* prefixCS = dirname(libdir);
+    free(libdirCopy1);
+    char* prefixCS = dirname(libdirCopy2);
     if (prefixCS == NULL) {free(libroseName); goto default_check;}
     string prefix = prefixCS;
+    free(libdirCopy2); 
     free(libroseName);
 // Liao, 12/2/2009
 // Check the librose's parent directory name to tell if it is within a build or installation tree

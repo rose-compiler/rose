@@ -3,6 +3,18 @@
 #include "virtualCFG.h"
 #include "VirtualCFGIterator.h"
 
+#include <list>
+using std::list;
+#include <vector>
+using std::vector;
+#include <set>
+using std::set;
+#include <string>
+using std::string;
+#include <iostream>
+using std::cout;
+using std::ostringstream;
+
 namespace VirtualCFG{
 	
 /******************************
