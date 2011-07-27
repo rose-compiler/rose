@@ -1341,6 +1341,22 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                     break;
                   }
 
+               case V_SgNamespaceDeclarationStatement:
+                  {
+                    SgNamespaceDeclarationStatement* namespaceDeclaration = isSgNamespaceDeclarationStatement(node);
+                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=2,color=\"blue\",fillcolor=lightgreen,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    labelWithSourceCode = "\\n  " + namespaceDeclaration->get_name().getString() + 
+                                          "\\n  " +  StringUtility::numberToString(namespaceDeclaration) + "  ";
+                    break;
+                  }
+
+               case V_SgNamespaceDefinitionStatement:
+                  {
+                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=2,color=\"blue\",fillcolor=lightgreen,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    labelWithSourceCode = "\\n  " +  StringUtility::numberToString(node) + "  ";
+                    break;
+                  }
+
                default:
                   {
                  // It appears that we can't unparse one of these (not implemented)
@@ -1398,6 +1414,15 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
 
             // DQ (10/4/2010): Output the value so that we can provide more information.
                labelWithSourceCode += string("\\n value = ") + valueExp->get_constant_folded_value_as_string() + "  ";
+             }
+
+       // DQ (6/5/2011): Added support to output if this is an implicit or explicit cast.
+          SgCastExp* castExp = isSgCastExp(node);
+          if (castExp != NULL)
+             {
+            // DQ (6/5/2011): Output if this is an implicit (compiler generated) or explicit case (non-compiler generated).
+               ROSE_ASSERT(castExp->get_startOfConstruct() != NULL);
+               labelWithSourceCode += string("\\n cast is: ") + ((castExp->get_startOfConstruct()->isCompilerGenerated() == true) ? "implicit" : "explicit") + "  ";
              }
 
        // DQ (2/2/2011): Added support for fortran...
@@ -1528,6 +1553,14 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                     SgTemplateArgument* templateArgument = isSgTemplateArgument(node);
                     additionalNodeOptions = "shape=circle,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"blue\",fillcolor=yellow,fontname=\"7x13bold\",fontcolor=black,style=filled";
                     labelWithSourceCode = string("\\n  ") + StringUtility::numberToString(templateArgument) + "  ";
+                    break;
+                  }
+
+               case V_SgBaseClass:
+                  {
+                    SgBaseClass* baseClass = isSgBaseClass(node);
+                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=1,color=\"blue\",fillcolor=greenyellow,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    labelWithSourceCode = string("\\n  ") + StringUtility::numberToString(baseClass) + "  ";
                     break;
                   }
 

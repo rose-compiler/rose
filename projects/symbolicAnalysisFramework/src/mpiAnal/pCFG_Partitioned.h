@@ -2,12 +2,6 @@
 #define PARTITIONED_ANALYSIS_H
 
 #include "rose.h"
-#include <list>
-#include <sstream>
-#include <iostream>
-#include <fstream>
-#include <string.h>
-using namespace std;
 
 #include "common.h"
 #include "variables.h"
@@ -21,6 +15,11 @@ using namespace std;
 #include "logical.h"
 #include "printAnalysisStates.h"
 
+#include <list>
+#include <sstream>
+#include <iostream>
+#include <fstream>
+#include <string.h>
 
 class IntraPartitionDataflow;
 class pCFG_Checkpoint;
@@ -44,9 +43,9 @@ class partSplit
 		splitSet.insert(child);
 	}
 	
-	string str(string indent="")
+	std::string str(std::string indent="")
 	{
-		ostringstream oss;
+                std::ostringstream oss;
 		
 		oss << indent << "[partSplit:\n";
 		oss << indent << "    splitSet = <";
@@ -295,7 +294,7 @@ class IntraPartitionDataflow : virtual public IntraProceduralDataflow
 	
 	~pCFG_SplitConditions();
 	
-	string str(string indent="");
+	std::string str(std::string indent="");
 };*/
 
 

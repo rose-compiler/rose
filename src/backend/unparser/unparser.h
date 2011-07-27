@@ -234,7 +234,7 @@ class Unparser
 
        // void unparseProject ( SgProject* project, SgUnparse_Info& info );
        // void unparseFile       ( SgFile* file, SgUnparse_Info& info );
-          void unparseFile ( SgSourceFile* file, SgUnparse_Info& info );
+          void unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStatement* unparseScope = NULL );
           void unparseFile ( SgBinaryComposite*, SgUnparse_Info& info );
 
        // Unparses a single physical file
@@ -271,7 +271,10 @@ void resetSourcePositionToGeneratedCode( SgFile* file, UnparseFormatHelp *unpars
 // called by the user if backend compilation using the vendor compiler is not required.
 
 //! User callable function available if compilation using the backend compiler is not required.
-void unparseFile   ( SgFile*    file,    UnparseFormatHelp* unparseHelp = NULL, UnparseDelegate *repl  = NULL );
+void unparseFile   ( SgFile*    file,    UnparseFormatHelp* unparseHelp = NULL, UnparseDelegate *repl  = NULL, SgScopeStatement* unparseScope = NULL );
+
+//! User callable function available if compilation using the backend compiler is not required.
+void unparseIncludedFiles( SgProject* project, UnparseFormatHelp* unparseHelp = NULL, UnparseDelegate *repl  = NULL );
 
 //! User callable function available if compilation using the backend compiler is not required.
 void unparseProject( SgProject* project, UnparseFormatHelp* unparseHelp = NULL, UnparseDelegate *repl  = NULL );

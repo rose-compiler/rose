@@ -115,5 +115,7 @@ int main(int argc, char **argv)
        << " cases, imprecise in " << imprecise 
        << " cases, and WRONG in " << incorrect << " cases." << endl;
 
+  delete project;
+
   return incorrect;
 }
