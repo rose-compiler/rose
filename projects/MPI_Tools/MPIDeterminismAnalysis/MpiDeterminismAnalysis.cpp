@@ -60,7 +60,7 @@ MpiDeterminism MpiDeterminismAnalysis::checkCall(SgFunctionCallExp *fncall)
 	SgName name = sourceVar->get_symbol()->get_name();
 	bump(d.source, name == "MPI_ANY_SOURCE" ? NONDETERMINISTIC : QUESTIONABLE);
       } else if (sourceInt) {
-	if (sourceInt < 0) {
+	if (sourceInt->get_value() < 0) {
 	  std::cerr << "Negative literal source rank seen - not using the hacked mpi.h?" << std::endl;
 	  bump(d.source, QUESTIONABLE);
 	}
@@ -76,7 +76,7 @@ MpiDeterminism MpiDeterminismAnalysis::checkCall(SgFunctionCallExp *fncall)
 	SgName name = tagVar->get_symbol()->get_name();
 	bump(d.tag, name == "MPI_ANY_TAG" ? NONDETERMINISTIC : QUESTIONABLE);
       } else if (tagInt) {
-	if (tagInt < 0) {
+	if (tagInt->get_value() < 0) {
 	  std::cerr << "Negative literal tag seen - not using the hacked mpi.h?" << std::endl;
 	  bump(d.tag, QUESTIONABLE);
 	}

@@ -5,6 +5,9 @@
 #include "DataflowCFG.h"
 //#include "baseCFGIterator.h"
 
+#include <list>
+#include <set>
+
 namespace VirtualCFG{
 
 // Iterates over DataflowNodes in a VirtualCFG, respecting dependences in the graph.
@@ -14,9 +17,9 @@ class iterator/* : public virtual BaseCFG::iterator*/
 	//protected:
 	public:
 		
-	list<DataflowNode> remainingNodes;
+        std::list<DataflowNode> remainingNodes;
 	//map<DataflowNode, bool> visited;
-	set<DataflowNode> visited;
+        std::set<DataflowNode> visited;
 	bool initialized;
 
 	public:
@@ -57,15 +60,15 @@ class iterator/* : public virtual BaseCFG::iterator*/
 	// checkpointed and restarted.
 	class checkpoint/* : public virtual BaseCFG::iterator::checkpoint*/
 	{
-		list<DataflowNode> remainingNodes;
-		set<DataflowNode> visited;
+          std::list<DataflowNode> remainingNodes;
+          std::set<DataflowNode> visited;
 	
 		public:
-		checkpoint(const list<DataflowNode>& remainingNodes, const set<DataflowNode>& visited);
+          checkpoint(const std::list<DataflowNode>& remainingNodes, const std::set<DataflowNode>& visited);
 		
 		checkpoint(const checkpoint& that);
 		
-		string str(string indent="");
+		std::string str(std::string indent="");
 		
 		friend class iterator;
 	};
@@ -76,7 +79,7 @@ class iterator/* : public virtual BaseCFG::iterator*/
 	// Loads this iterator's state from the given checkpoint.
 	void restartFromChkpt(checkpoint& chkpt);
 	
-	string str(string indent="");
+	std::string str(std::string indent="");
 };
 
 class back_iterator : /*public virtual BaseCFG::backiterator, */public virtual iterator
@@ -124,7 +127,7 @@ class dataflow : /*public virtual BaseCFG::dataflow, */public virtual iterator
 		
 		checkpoint(const checkpoint &that);
 			
-		string str(string indent="");
+		std::string str(std::string indent="");
 		
 		friend class dataflow;
 	};
@@ -135,7 +138,7 @@ class dataflow : /*public virtual BaseCFG::dataflow, */public virtual iterator
 	// Loads this dataflow iterator's state from the given checkpoint.
 	void restartFromChkpt(checkpoint& chkpt);
 	
-	string str(string indent="");
+	std::string str(std::string indent="");
 };
 
 class back_dataflow: /*public virtual BaseCFG::back_dataflow,*/ public virtual dataflow
