@@ -133,6 +133,7 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (PassStatement,             "PassStatement",             "PASS_STATEMENT" );
      NEW_TERMINAL_MACRO (YieldStatement,            "YieldStatement",            "YIELD_STATEMENT" );
      NEW_TERMINAL_MACRO (AssertStmt,                "AssertStmt",                "ASSERT_STMT" );
+     NEW_TERMINAL_MACRO (ExecStatement,             "ExecStatement",             "EXEC_STMT" );
 
 #if USE_FORTRAN_IR_NODES
   // Fortran language constructs that map directly to C/C++ IR nodes:
@@ -448,7 +449,7 @@ Grammar::setUpStatements ()
              UpcWaitStatement     | UpcBarrierStatement    | UpcFenceStatement               | 
              OmpBarrierStatement  | OmpTaskwaitStatement   |  OmpFlushStatement              | OmpBodyStatement      |
              SequenceStatement    | WithStatement          | PythonPrintStmt                 | PassStatement         |
-             AssertStmt           | YieldStatement,
+             AssertStmt           | YieldStatement         | ExecStatement,
                             "Statement","StatementTag", false);
 
   // DQ (11/24/2007): These have been moved to be declarations, so they can appear where only declaration statements are allowed
@@ -3088,6 +3089,15 @@ Grammar::setUpStatements ()
 
      YieldStatement.setFunctionSource           ( "SOURCE_YIELD_STATEMENT", "../Grammar/Statement.code" );
      YieldStatement.setDataPrototype            ( "SgExpression*", "value", "= NULL",
+             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     ExecStatement.setFunctionSource           ( "SOURCE_EXEC_STATEMENT", "../Grammar/Statement.code" );
+     ExecStatement.setFunctionSource ( "SOURCE_POST_CONSTRUCTION_INITIALIZATION_STATEMENT", "../Grammar/Statement.code" );
+     ExecStatement.setDataPrototype            ( "SgExpression*", "executable", "= NULL",
+             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     ExecStatement.setDataPrototype            ( "SgExpression*", "globals", "= NULL",
+             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     ExecStatement.setDataPrototype            ( "SgExpression*", "locals", "= NULL",
              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // ClinkageStatement.setFunctionSource       ( "SOURCE_POST_CONSTRUCTION_INITIALIZATION_STATEMENT", "../Grammar/Statement.code" );
