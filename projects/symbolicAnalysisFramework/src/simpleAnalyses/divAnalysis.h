@@ -12,7 +12,11 @@
 #include "latticeFull.h"
 #include "liveDeadVarAnalysis.h"
 #include "printAnalysisStates.h"
+#include "VariableStateTransfer.h"
 
+#include <map>
+#include <string>
+#include <vector>
 
 extern int divAnalysisDebugLevel;
 
@@ -32,8 +36,6 @@ class DivLattice : public FiniteLattice
 		
 	public:
 	// The different levels of this lattice
-	// this object is uninitialized
-	static const int uninitialized=0; 
 	// no information is known about the value of the variable
 	static const int bottom=1; 
 	// the value of the variable is known
@@ -44,7 +46,7 @@ class DivLattice : public FiniteLattice
 	static const int top=4; 
 	
 	private:
-	// this object's current level in the lattice: (uninitialized, bottom, valKnown, divKnown, top)
+	// this object's current level in the lattice: (bottom, valKnown, divKnown, top)
 	short level;
 	
 	public:
@@ -54,7 +56,7 @@ class DivLattice : public FiniteLattice
 		value=0;
 		div=-1;
 		rem=-1;
-		level=uninitialized;
+		level=bottom;
 	}
 	
 	DivLattice(long value) {
@@ -81,15 +83,7 @@ class DivLattice : public FiniteLattice
 	
 	// initializes this Lattice to its default state
 	void initialize()
-	{
-		if(level==uninitialized) {
-			value=0;
-			div=-1;
-			rem=-1;
-			level=bottom;
-		}
-		//cout << "DivLattice::initialize() new="<<str("")<<"\n";
-	}
+	{ }
 	
 	// returns a copy of this lattice
 	Lattice* copy() const;
@@ -154,13 +148,59 @@ class DivLattice : public FiniteLattice
 	// returns true if this causes the lattice's state to change, false otherwise
 	bool mult(long multiplier);
 		
-	string str(string indent="");
+	std::string str(std::string indent="");
+};
+
+class DivAnalysisTransfer : public VariableStateTransfer<DivLattice>
+{
+  template <class T>
+  void visitIntegerValue(T *sgn);
+  void transferIncrement(SgUnaryOp *sgn);
+  void transferCompoundAdd(SgBinaryOp *sgn);
+
+  typedef void (DivAnalysisTransfer::*TransferOp)(DivLattice *, DivLattice *, DivLattice *);
+  template <typename T>
+  void transferArith(SgBinaryOp *sgn, T transferOp);
+  void transferArith(SgBinaryOp *sgn, TransferOp transferOp);
+  void transferAdditive(DivLattice *arg1Lat, DivLattice *arg2Lat, DivLattice *resLat, bool isAddition);
+  void transferMultiplicative(DivLattice *arg1Lat, DivLattice *arg2Lat, DivLattice *resLat);
+  void transferDivision(DivLattice *arg1Lat, DivLattice *arg2Lat, DivLattice *resLat);
+  void transferMod(DivLattice *arg1Lat, DivLattice *arg2Lat, DivLattice *resLat);
+
+public:
+  //  void visit(SgNode *);
+  void visit(SgLongLongIntVal *sgn);
+  void visit(SgLongIntVal *sgn);
+  void visit(SgIntVal *sgn);
+  void visit(SgShortVal *sgn);
+  void visit(SgUnsignedLongLongIntVal *sgn);
+  void visit(SgUnsignedLongVal *sgn);
+  void visit(SgUnsignedIntVal *sgn);
+  void visit(SgUnsignedShortVal *sgn);
+  void visit(SgValueExp *sgn);
+  void visit(SgPlusAssignOp *sgn);
+  void visit(SgMinusAssignOp *sgn);
+  void visit(SgMultAssignOp *sgn);
+  void visit(SgDivAssignOp *sgn);
+  void visit(SgModAssignOp *sgn);
+  void visit(SgAddOp *sgn);
+  void visit(SgSubtractOp *sgn);
+  void visit(SgMultiplyOp *sgn);
+  void visit(SgDivideOp *sgn);
+  void visit(SgModOp *sgn);
+  void visit(SgPlusPlusOp *sgn);
+  void visit(SgMinusMinusOp *sgn);
+  void visit(SgUnaryAddOp *sgn);
+  void visit(SgMinusOp *sgn);
+  bool finish() { return modified; }
+
+  DivAnalysisTransfer(const Function& func, const DataflowNode& n, NodeState& state, const std::vector<Lattice*>& dfInfo);
 };
 
 class DivAnalysis : public IntraFWDataflow
 {
 	protected:
-	static map<varID, Lattice*> constVars;
+        static std::map<varID, Lattice*> constVars;
 	static bool constVars_init;
 	
 	// The LiveDeadVarsAnalysis that identifies the live/dead state of all application variables.
@@ -168,8 +208,8 @@ class DivAnalysis : public IntraFWDataflow
 	LiveDeadVarsAnalysis* ldva; 
 	
 	public:
-	DivAnalysis(LiveDeadVarsAnalysis* ldva): IntraFWDataflow()
-	{	
+	DivAnalysis(LiveDeadVarsAnalysis* ldva)
+	{
 		this->ldva = ldva;
 	}
 	
@@ -180,19 +220,23 @@ class DivAnalysis : public IntraFWDataflow
 	Lattice* genInitNonVarState(const Function& func, const DataflowNode& n, const NodeState& state);*/
 	
 	// generates the initial lattice state for the given dataflow node, in the given function, with the given NodeState
-	//vector<Lattice*> genInitState(const Function& func, const DataflowNode& n, const NodeState& state);
+	//std::vector<Lattice*> genInitState(const Function& func, const DataflowNode& n, const NodeState& state);
 	void genInitState(const Function& func, const DataflowNode& n, const NodeState& state,
-	                  vector<Lattice*>& initLattices, vector<NodeFact*>& initFacts);
+	                  std::vector<Lattice*>& initLattices, std::vector<NodeFact*>& initFacts);
 	
 	// Returns a map of special constant variables (such as zeroVar) and the lattices that correspond to them
 	// These lattices are assumed to be constants: it is assumed that they are never modified and it is legal to 
 	//    maintain only one copy of each lattice may for the duration of the analysis.
-	//map<varID, Lattice*>& genConstVarLattices() const;
+	//std::map<varID, Lattice*>& genConstVarLattices() const;
 		
-	bool transfer(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo);
+  bool transfer(const Function& func, const DataflowNode& n, NodeState& state, const std::vector<Lattice*>& dfInfo)
+  { assert(0); return false; }
+  boost::shared_ptr<IntraDFTransferVisitor> getTransferVisitor(const Function& func, const DataflowNode& n,
+                                                            NodeState& state, const std::vector<Lattice*>& dfInfo)
+  { return boost::shared_ptr<IntraDFTransferVisitor>(new DivAnalysisTransfer(func, n, state, dfInfo)); }
 };
 
 // prints the Lattices set by the given DivAnalysis 
-void printDivAnalysisStates(DivAnalysis* da, string indent="");
+void printDivAnalysisStates(DivAnalysis* da, std::string indent="");
 
 #endif

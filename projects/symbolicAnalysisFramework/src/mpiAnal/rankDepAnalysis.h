@@ -16,8 +16,7 @@
 
 extern int MPIRankDepAnalysisDebugLevel;
 
-// Maintains sign information about live variables. If a given variable may be either positive or negative, this object becomes top.
-// There is one SgnLattice object for every variable
+// Maintains information about a variable's dependence on MPI rank or number of ranks
 class MPIRankNProcsDepLattice : public FiniteLattice
 {
 	public:
