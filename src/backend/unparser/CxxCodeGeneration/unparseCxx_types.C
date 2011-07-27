@@ -309,8 +309,8 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
      string firstPartString  = (info.isTypeFirstPart()  == true) ? "true" : "false";
      string secondPartString = (info.isTypeSecondPart() == true) ? "true" : "false";
      printf ("In Unparse_Type::unparseType(): type->sage_class_name() = %s firstPart = %s secondPart = %s \n",
-          type->sage_class_name(),firstPartString.c_str(),secondPartString.c_str());
-     curprint ( string("\n/* Top of unparseType name ") + type->sage_class_name()
+             type->class_name().c_str(),firstPartString.c_str(),secondPartString.c_str());
+     curprint ( string("\n/* Top of unparseType name ") + type->class_name().c_str()
          + " firstPart " + firstPartString + " secondPart " + secondPartString + " */ \n");
 #endif
 
@@ -337,15 +337,18 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
      SgNode* nodeReferenceToType = info.get_reference_node_for_qualification();
      if (nodeReferenceToType != NULL)
         {
-       // printf ("rrrrrrrrrrrr In unparseType() output type generated name: nodeReferenceToType = %p = %s SgNode::get_globalTypeNameMap().size() = %zu \n",nodeReferenceToType,nodeReferenceToType->class_name().c_str(),SgNode::get_globalTypeNameMap().size());
-
+#if 0
+          printf ("rrrrrrrrrrrr In unparseType() output type generated name: nodeReferenceToType = %p = %s SgNode::get_globalTypeNameMap().size() = %zu \n",nodeReferenceToType,nodeReferenceToType->class_name().c_str(),SgNode::get_globalTypeNameMap().size());
+#endif
           std::map<SgNode*,std::string>::iterator i = SgNode::get_globalTypeNameMap().find(nodeReferenceToType);
           if (i != SgNode::get_globalTypeNameMap().end())
              {
                usingGeneratedNameQualifiedTypeNameString = true;
 
                typeNameString = i->second.c_str();
-            // printf ("ssssssssssssssss Found type name in SgNode::get_globalTypeNameMap() typeNameString = %s for nodeReferenceToType = %p = %s \n",typeNameString.c_str(),nodeReferenceToType,nodeReferenceToType->class_name().c_str());
+#if 0
+               printf ("ssssssssssssssss Found type name in SgNode::get_globalTypeNameMap() typeNameString = %s for nodeReferenceToType = %p = %s \n",typeNameString.c_str(),nodeReferenceToType,nodeReferenceToType->class_name().c_str());
+#endif
              }
         }
 #endif
@@ -356,11 +359,12 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
 #if 0
           string firstPartString  = (info.isTypeFirstPart()  == true) ? "true" : "false";
           string secondPartString = (info.isTypeSecondPart() == true) ? "true" : "false";
-          printf ("In Unparse_Type::unparseType() using generated type name string: type->sage_class_name() = %s firstPart = %s secondPart = %s \n",type->sage_class_name(),firstPartString.c_str(),secondPartString.c_str());
+          printf ("In Unparse_Type::unparseType() using generated type name string: type->class_name() = %s firstPart = %s secondPart = %s \n",type->class_name().c_str(),firstPartString.c_str(),secondPartString.c_str());
           curprint ( string("\n/* Top of unparseType() using generated type name string: ") + type->sage_class_name() + " firstPart " + firstPartString + " secondPart " + secondPartString + " */ \n");
 #endif
           if (info.isTypeFirstPart() == true)
              {
+            // printf ("Ouput typeNameString = %s \n",typeNameString.c_str());
                curprint(typeNameString);
              }
             else
@@ -369,7 +373,9 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
             // if (isSgPointerType(type) != NULL)
                if (info.isTypeFirstPart() == false && info.isTypeSecondPart() == false)
                   {
-                 // printf ("Note: Handling unparsing of name qualified type as special case \n");
+#if 0
+                    printf ("Note: Handling unparsing of name qualified type as special case (typeNameString = %s) \n",typeNameString.c_str());
+#endif
                     curprint(typeNameString);
                   }
              }
@@ -409,9 +415,13 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
                case T_ELLIPSE:
                   {
                     if ( ( info.isWithType() && info.SkipBaseType() ) || info.isTypeSecondPart() )
-                       { /* do nothing */; }
+                       {
+                      /* do nothing */
+                       }
                       else
-                       { curprint ( get_type_name(type) + " "); }
+                       {
+                         curprint ( get_type_name(type) + " ");
+                       }
                     break;
                   }
 
@@ -424,8 +434,10 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
                case T_TYPEDEF:            unparseTypedefType(type, info);          break;
                case T_MODIFIER:           unparseModifierType(type, info);         break;
                case T_QUALIFIED_NAME:     unparseQualifiedNameType(type, info);    break;
+
                case T_PARTIAL_FUNCTION:
                case T_FUNCTION:           unparseFunctionType(type, info);         break;
+
                case T_MEMBERFUNCTION:     unparseMemberFunctionType(type, info);   break;
                case T_ARRAY:              unparseArrayType(type, info);            break;
 
@@ -1102,8 +1114,12 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
                unp->u_exprStmt->unparseAttachedPreprocessingInfo(edecl, info, PreprocessingInfo::before);
              }
 
-       // DQ (5/22/2003) Added output of "enum" string
-          curprint ( "enum ");
+       // DQ (7/24/2011): Restrict where enum is used (to avoid output in template arguments after the name qualification).
+          if ( (info.isTypeFirstPart() == true) )
+             {
+            // DQ (5/22/2003) Added output of "enum" string
+               curprint ( "enum ");
+             }
 
        // DQ (10/16/2004): Handle name qualification the same as in the unparseClassType function (we could factor common code later!)
           SgNamedType *ptype = NULL;
@@ -1228,8 +1244,9 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
                   {
                  // DQ (6/2/2011): Newest support for name qualification...
                     SgName nameQualifier = unp->u_name->lookup_generated_qualified_name(info.get_reference_node_for_qualification());
-                 // printf ("nameQualifier (from initializedName->get_qualified_name_prefix_for_type() function) = %s \n",nameQualifier.str());
-
+#if 0
+                    printf ("In unparseEnumType(): nameQualifier (from initializedName->get_qualified_name_prefix_for_type() function) = %s \n",nameQualifier.str());
+#endif
                  // printf ("nameQualifier (from unp->u_name->generateNameQualifier function) = %s \n",nameQualifier.str());
                  // curprint ("\n/* nameQualifier (from unp->u_name->generateNameQualifier function) = " + nameQualifier + " */ \n ";
                     curprint (nameQualifier.str());
@@ -1843,6 +1860,12 @@ void Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
   //      ArrayType(base_type, 2)
   //        ArrayType(int, 10), because of the front-end
 
+#if 0
+     string firstPartString  = (info.isTypeFirstPart()  == true) ? "true" : "false";
+     string secondPartString = (info.isTypeSecondPart() == true) ? "true" : "false";
+     printf ("In Unparse_Type::unparseArrayType(): type->class_name() = %s firstPart = %s secondPart = %s \n",type->class_name().c_str(),firstPartString.c_str(),secondPartString.c_str());
+#endif
+
      SgUnparse_Info ninfo(info);
      bool needParen = false;
      if (ninfo.isReferenceToSomething() || ninfo.isPointerToSomething())
@@ -1850,7 +1873,9 @@ void Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
           needParen = true;
         }
 
-     if (ninfo.isTypeFirstPart())
+  // printf ("needParen = %s \n",(needParen == true) ? "true" : "false");
+
+     if (ninfo.isTypeFirstPart() == true)
         {
           if(needParen == true)
              {
@@ -1866,7 +1891,7 @@ void Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
         }
        else
         {
-          if (ninfo.isTypeSecondPart())
+          if (ninfo.isTypeSecondPart() == true)
              {
                if (needParen == true)
                   {
