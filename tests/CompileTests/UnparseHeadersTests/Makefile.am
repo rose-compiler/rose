@@ -6,14 +6,14 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 
 TESTCODES_REQUIRED_TO_PASS = \
-     test1/Simple.C \
-     test2/Simple.C \
-     test3/Simple.C \
-     test4/Simple.C \
-     test5/Simple.C \
-     test6/subdir/Simple.C \
-     test7/Simple.C \
-     test8/Simple.C
+     test1/Simple.C
+     #test2/Simple.C \
+     #test3/Simple.C \
+     #test4/Simple.C \
+     #test5/Simple.C \
+     #test6/subdir/Simple.C \
+     #test7/Simple.C \
+     #test8/Simple.C
 
 TESTCODES_CURRENTLY_FAILING =
 
@@ -26,7 +26,7 @@ ALL_TESTCODES = \
 $(TESTCODES_REQUIRED_TO_PASS) \
 $(TESTCODES_CURRENTLY_FAILING)
 
-ROSE_FLAGS = -rose:unparseHeaderFiles --edg:no_warnings --edg:restrict -w -rose:verbose 0
+ROSE_FLAGS = -rose:unparseHeaderFiles --edg:no_warnings --edg:restrict -w -rose:verbose 1
 
 PASSING_TEST_Objects = ${TESTCODES:.C=.o}
 TEST_Objects = ${ALL_TESTCODES:.C=.o}
