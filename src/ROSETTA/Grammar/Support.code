@@ -11223,6 +11223,7 @@ X no_implicit_templates
 X no_implicit_inline_templates
 X skip_commentsAndDirectives
 X collectAllCommentsAndDirectives
+X unparseHeaderFiles
 X preprocessorDirectivesAndCommentsList
 X attributeMechanism
 X KCC_frontend
@@ -11267,6 +11268,9 @@ X aggressive
 
   // DQ (4/19/2006): Added to control comment and directive handling (takes more time to process header files).
      p_collectAllCommentsAndDirectives = false;
+
+  // negara1 (07/08/2011): Added to control whether header files should be unparsed.
+     p_unparseHeaderFiles = false;
 
   // DQ (4/7/2001) Added support for multiple files (save the preprocessor 
   //               directives and comments into the SgFile)
@@ -11709,7 +11713,7 @@ SgFile::generateOutputFileName() const
 // DQ (8/20/2005): Removed default parameter from extern function declaration
 // extern void unparseFile( SgFile&, UnparseDelegate* repl = NULL );
 // Liao (2/8/2008): Removed default parameters due to conflicts with src/backend/unparser/unparser.h
-// extern void unparseFile( SgFile* file, UnparseFormatHelp *unparseFormatHelp /* = NULL */, UnparseDelegate* unparseDelegate/* = NULL */);
+// extern void unparseFile( SgFile* file, UnparseFormatHelp *unparseFormatHelp /* = NULL */, UnparseDelegate* unparseDelegate/* = NULL */, SgScopeStatement* unparseScope /* = NULL */);
 
 void
 // SgFile::unparse ()
@@ -11727,8 +11731,8 @@ SgFile::unparse ( UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparse
 
   // Call the unparser mechanism
   // DQ (1/24/2010): Moved the extern declaration for unparseFile() to be local to this function (better code design).
-     extern void unparseFile( SgFile* file, UnparseFormatHelp *unparseFormatHelp /* = NULL */, UnparseDelegate* unparseDelegate/* = NULL */);
-     unparseFile ( this, unparseFormatHelp, unparseDelegate );
+     extern void unparseFile( SgFile* file, UnparseFormatHelp *unparseFormatHelp /* = NULL */, UnparseDelegate* unparseDelegate/* = NULL */, SgScopeStatement* unparseScope /* = NULL */);
+     unparseFile ( this, unparseFormatHelp, unparseDelegate, NULL );
    }
 
 // Moved to sageSupport.C: int SgFile::compileOutput ( vector<string>& argv, int fileNameIndex, const string& compilerNameOrig )
@@ -11890,6 +11894,7 @@ SgFile::display ( const std::string & label ) const
      printf ("     p_no_implicit_inline_templates         = %s \n",(p_no_implicit_inline_templates == true) ? "true" : "false");
      printf ("     p_skip_commentsAndDirectives           = %s \n",(p_skip_commentsAndDirectives == true) ? "true" : "false");
      printf ("     p_collectAllCommentsAndDirectives      = %s \n",(p_collectAllCommentsAndDirectives == true) ? "true" : "false");
+     printf ("     p_unparseHeaderFiles                   = %s \n",(p_unparseHeaderFiles == true) ? "true" : "false");
 
      printf ("     p_preprocessorDirectivesAndCommentsList is %s pointer \n",(p_preprocessorDirectivesAndCommentsList != NULL) ? "VALID" : "NULL");
 
@@ -11976,6 +11981,7 @@ X no_implicit_templates
 X no_implicit_inline_templates
 X skip_commentsAndDirectives
 X collectAllCommentsAndDirectives
+X unparseHeaderFiles
 X preprocessorDirectivesAndCommentsList
 X attributeMechanism
 X KCC_frontend
