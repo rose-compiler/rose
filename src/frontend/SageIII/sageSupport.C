@@ -6694,11 +6694,15 @@ SgSourceFile_processCppLinemarkers::LinemarkerTraversal::LinemarkerTraversal( co
      sourcePositionStack.push_front( pair<int,int>(line,fileId) );
    }
 
+
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+     extern SgSourceFile* OpenFortranParser_globalFilePointer;
+#endif
+
 void
 SgSourceFile_processCppLinemarkers::LinemarkerTraversal::visit ( SgNode* astNode )
    {
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-     extern SgSourceFile* OpenFortranParser_globalFilePointer;
 
     // DXN (02/21/2011): Consider the case of SgInterfaceBody.
     // TODO: revise SgInterfaceBody::get_numberOfTraversalSuccessor() to return 1 and

@@ -242,6 +242,6 @@ namespace ROSE_Callbacks {
         mutable RTS_mutex_t mutex;
         CBList list;
     };
-};
+}
 
 #endif /* ROSE_callbacks_H */

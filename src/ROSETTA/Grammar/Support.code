@@ -358,8 +358,8 @@ HEADER_INCIDENCE_DIRECTED_GRAPH_START
      SgDirectedGraphEdge* addDirectedEdge( SgDirectedGraphEdge* edge  );
 
 	// tps (4/30/2009): Added to support functionality for DirectedGraphs		   
-     void getSuccessors(SgGraphNode* node, std::vector <SgGraphNode*>& vec );
-     void getPredecessors(SgGraphNode* node, std::vector <SgGraphNode*>& vec );
+     void getSuccessors(const SgGraphNode* node, std::vector <SgGraphNode*>& vec ) const;
+     void getPredecessors(const SgGraphNode* node, std::vector <SgGraphNode*>& vec ) const;
      std::set<SgDirectedGraphEdge*> getDirectedEdge(SgGraphNode* src, SgGraphNode* trg);
      bool checkIfDirectedGraphEdgeExists(SgGraphNode* src, SgGraphNode* trg);
 
@@ -14846,7 +14846,8 @@ SgIncidenceDirectedGraph::getEdge(SgGraphNode* src) {
 
 
 void
-SgIncidenceDirectedGraph::getSuccessors(SgGraphNode* node, std::vector <SgGraphNode*>& vec ) {
+SgIncidenceDirectedGraph::getSuccessors(const SgGraphNode* node, std::vector <SgGraphNode*>& vec ) const
+{
   //SgGraphEdgeList* gedges = get_edgesOut();
   const rose_graph_integer_edge_hash_multimap& edges = get_node_index_to_edge_multimap_edgesOut();
   rose_graph_integer_edge_hash_multimap::const_iterator it1, it2;
@@ -14864,9 +14865,9 @@ SgIncidenceDirectedGraph::getSuccessors(SgGraphNode* node, std::vector <SgGraphN
       SgGraphNode* target = isSgGraphNode(edge->get_to());
       assert(target);
       if (target) {
-	    string type_n = getProperty(SgGraph::type, edge);
-	    if (type_n==RoseBin_support::ToString(SgGraph::cfg))
+	    //if (type_n==RoseBin_support::ToString(SgGraph::cfg)) {
 	       vec.push_back(target);
+            //}
 	    //else 
 	    //   printf("Different edge type \n");
       }
@@ -14878,7 +14879,8 @@ SgIncidenceDirectedGraph::getSuccessors(SgGraphNode* node, std::vector <SgGraphN
 }
 
 void
-SgIncidenceDirectedGraph::getPredecessors(SgGraphNode* node, std::vector <SgGraphNode*>& vec ) {
+SgIncidenceDirectedGraph::getPredecessors(const SgGraphNode* node, std::vector <SgGraphNode*>& vec ) const
+{
   //SgGraphEdgeList* gredges = get_edgesIn();
   rose_graph_integer_edge_hash_multimap edges = get_node_index_to_edge_multimap_edgesIn();
   rose_graph_integer_edge_hash_multimap::iterator it1, it2;
@@ -14893,8 +14895,8 @@ SgIncidenceDirectedGraph::getPredecessors(SgGraphNode* node, std::vector <SgGrap
     if (edge) {
       SgGraphNode* source = isSgGraphNode(edge->get_from());
       if (source) {
-	string type_n = getProperty(SgGraph::type, edge);
-	if (type_n==RoseBin_support::ToString(SgGraph::cfg))
+	//string type_n = getProperty(SgGraph::type, edge);
+	//if (type_n==RoseBin_support::ToString(SgGraph::cfg))
 	  vec.push_back(source);
       }
     }
