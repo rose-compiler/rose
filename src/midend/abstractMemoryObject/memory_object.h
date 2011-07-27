@@ -19,12 +19,12 @@
 namespace AbstractMemoryObject
 {
   //Users should provide a concrete node implementation by default
-  // We try not to use pure virtual functions here to allow 
+  // We try not to use pure virtual functions here to allow  
   // users to reuse the default implementation as much as possible
-  class objSet
+  class ObjSet
   {
     // True if this set includes memory objects what May be the same
-    bool maySet();
+    virtual bool maySet() = 0;
 
     // True if this set includes memory objects what Must be the same
     bool mustSet();
@@ -32,7 +32,7 @@ namespace AbstractMemoryObject
     // Return the number of real memory objects that this object set corresponds to. 
     // Returns a concrete number if it is known or the constant unboundedSize if no static bound is known.
     static const size_t unboundedSize=UINT_MAX;  
-    size_t objCount(); // the number of real memory locations the abstract objSet corresponds to
+    size_t objCount(); // the number of real memory locations the abstract ObjSet corresponds to
     size_t memSize(); // the number of bytes of this objset takes up within memory
 
     // Type of memory
@@ -54,20 +54,20 @@ namespace AbstractMemoryObject
 
     // Equality relations (implemented by interface)
     // Returns true if this object set and that object set may/must refer to the same memory objects.
-    bool operator == (const objSet& o2);
+    bool operator == (const ObjSet& o2);
 
     // Total order relations (implemented by interface)
     // General comparison operators. Provide a total order among different object types (scalar, labeledAggregate, array or pointer). 
     // These operators have no semantic meaning and are primarily intended to be used to put all objects into a total order, 
     // which makes it possible to use them in data structures such as std::map.
-    bool operator < ( const objSet& o2);
-    bool operator <= ( const objSet& o2);
-    bool operator > ( const objSet& o2);
-    bool operator >= ( const objSet& o2);
-  }; // end class objSet
+    bool operator < ( const ObjSet& o2);
+    bool operator <= ( const ObjSet& o2);
+    bool operator > ( const ObjSet& o2);
+    bool operator >= ( const ObjSet& o2);
+  }; // end class ObjSet
 
   //memory object that has no internal structure
-  class scalar : public objSet
+  class scalar : public ObjSet
   {
     // Equality relations:
     // Returns true if this object and that object may/must refer to the same scalar memory object.
@@ -82,11 +82,11 @@ namespace AbstractMemoryObject
     public:
     std::string name; // field name
     size_t index; // The field's index within its parent object. The first field has index 0.
-    objSet* field; // Pionter to an abstract description of the field
+    ObjSet* field; // Pionter to an abstract description of the field
   };
 
   // a memory object that contains a finite number of explicitly labeled memory objects, such as structs, classes and bitfields
-  class labeledAggregate: public objSet
+  class labeledAggregate: public ObjSet
   {
     // number of fields
     size_t fieldCount();
@@ -106,13 +106,13 @@ namespace AbstractMemoryObject
     
   };
 
-  class array: public objSet
+  class array: public ObjSet
   {
     // Returns a memory object that corresponds to all the elements in the given array
-    objSet* getElements();
+    ObjSet* getElements();
     // Returns the memory object that corresponds to the elements described by the given abstract index, 
     // which represents one or more indexes within the array
-    objSet* getElements(abstractIndex* ai);
+    ObjSet* getElements(abstractIndex* ai);
     
     // number of dimensions of the aray
     size_t numDims();
@@ -120,12 +120,12 @@ namespace AbstractMemoryObject
     bool operator < (const array & that) const;
   };
 
-  class pointer: public objSet
+  class pointer: public ObjSet
   {
     // used for a pointer to non-array
-    objSet* getDereference () const;
+    ObjSet* getDereference () const;
     // used for a pointer to an array
-    objSet * getElements() const;
+    ObjSet * getElements() const;
     // Returns true if this pointer refers to the same abstract object as that pointer.
     bool equalPoints(const pointer & that);
     // Returns true if this object and that object may/must refer to the same pointer memory object.
@@ -133,11 +133,11 @@ namespace AbstractMemoryObject
     bool operator < (const pointer & that) const;
   };
 
-  // A factory method for creating instances of objSet of a given abstraction
-  class objSetFactory
+  // A factory method for creating instances of ObjSet of a given abstraction
+  class ObjSetFactory
   {
     //TODO smart pointer
-    static objSet* createObjSet(SgNode*); 
+    static ObjSet* createObjSet(SgNode*); 
   };
 
 } // end namespace

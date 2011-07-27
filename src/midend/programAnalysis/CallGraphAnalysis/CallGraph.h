@@ -77,7 +77,7 @@ namespace CallTargetSet
   void getExpressionsForDefinition(SgFunctionDefinition* targetDef, 
                                    ClassHierarchyWrapper* classHierarchy,
                                    Rose_STL_Container<SgExpression*>& exps);
-};
+}
 
 class FunctionData
 {
@@ -262,7 +262,7 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
         std::cout << "Total number of edges: " << totEdges << "\n";
 
     graph = returnGraph;
-};
+}
 
 // endif for CALL_GRAPH_H
 #endif

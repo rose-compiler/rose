@@ -42,7 +42,7 @@ class Unparser_Nameq;
 #define ANONYMOUS_TYPEDEF_FIX false
 
 // Whether to use Rice's code to wrap long lines in Fortran.
-#define USE_RICE_FORTRAN_WRAPPING  0  // 1 if you're Rice, 0 if you want to get through Hudson
+#define USE_RICE_FORTRAN_WRAPPING  0  // 1 if you're Rice, 0 if you want to get through Jenkins
 
 // Maximum line lengths for Fortran fixed source form and free source form, per the F90 specification.
 #if USE_RICE_FORTRAN_WRAPPING
@@ -52,32 +52,7 @@ class Unparser_Nameq;
   #define MAX_F90_LINE_LEN      1024
 #endif
 
-// DQ (2/6/03):
-// The unparser should not write to (modify) the AST.  This fix skips and locations
-// in the unparser when the AST is modified.  It is an experimental fix.
-// DQ (3/18/2004): This fix has works well for over a year now so I think we can 
-// at some point remove code which was previously modifying the AST. Might
-// want to check the locations of forward declarations of classes where they
-// appear in the same file as their class definitions!
-#define UNPARSER_IS_READ_ONLY
-
 #define KAI_NONSTD_IOSTREAM 1
-
-// DQ (3/18/2004): This is not removed as part of the newly added template support.
-// #ifndef UNPARSE_TEMPLATES
-// [DT] 
-// #define UNPARSE_TEMPLATES true
-// #define UNPARSE_TEMPLATES false
-// #endif /* UNPARSE_TEMPLATES */
-
-#ifndef UNPARSER_VERBOSE
-// [DT] 8/14/2000 -- Toggle some of my debug output in the unparser.
-//#define UNPARSER_VERBOSE true
-  #define UNPARSER_VERBOSE false
-#endif /* UNPARSER_VERBOSE */
-
-// optionally turn off all directive processing (for debugging)
-// define SKIP_UNPARSING_DIRECTIVES
 
 // typedef map<int,int,less<int>,allocator<int> > X;
 // typedef multimap<int,int,less<int>,allocator<int> > X;
