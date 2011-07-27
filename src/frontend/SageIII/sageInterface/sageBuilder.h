@@ -912,6 +912,10 @@ SgTryStmt* buildTryStmt(SgStatement* body,
                         SgCatchOptionStmt* catch3=NULL,
                         SgCatchOptionStmt* catch4=NULL);
 
+// ! Build an exec statement
+SgExecStatement* buildExecStatement(SgExpression* executable, SgExpression* globals = NULL, SgExpression* locals = NULL);
+SgExecStatement* buildExecStatement_nfi(SgExpression* executable, SgExpression* globals = NULL, SgExpression* locals = NULL);
+
 // ! Build a python print statement
 SgPythonPrintStmt* buildPythonPrintStmt(SgExpression* dest = NULL, SgExprListExp* values = NULL);
 
