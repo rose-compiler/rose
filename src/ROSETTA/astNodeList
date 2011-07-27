@@ -359,6 +359,7 @@ SgEnumVal
 SgEqualityOp
 SgEquivalenceStatement
 SgErrorDirectiveStatement
+SgExecStatement
 SgExponentiationOp
 SgExponentiationAssignOp
 SgExprListExp
