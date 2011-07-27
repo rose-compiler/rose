@@ -39,6 +39,8 @@ bin_PROGRAMS = TestUnparseHeaders
 
 TestUnparseHeaders_SOURCES = UnparseHeadersTransformVisitor.C TestUnparseHeaders.C
 
+include_HEADERS = UnparseHeadersTransformVisitor.h
+
 # Note that although all tests are run with the same -I paths, it is fine as long as we
 # ensure that the file names inside the -I paths are unique for each test.
 TEST_INCLUDE_PATHS = -I$(srcdir)/test8/subdir
