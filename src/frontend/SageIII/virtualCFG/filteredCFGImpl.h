@@ -166,7 +166,7 @@ namespace VirtualCFG
             if (i->second == n)
                 return;
         }
-        exploredNodes.insert(make_pair(n.getNode(), n));
+        exploredNodes.insert(std::make_pair(n.getNode(), n));
         printNodePlusEdges<NodeT, EdgeT>(o, n);
         std::vector < EdgeT > outEdges = n.outEdges();
         for (unsigned int i = 0; i < outEdges.size(); ++i)

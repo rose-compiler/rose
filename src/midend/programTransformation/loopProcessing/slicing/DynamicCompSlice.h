@@ -19,7 +19,7 @@ class DynamicSlicing : public DependenceHoisting
 {
   virtual CompSlice* CreateCompSlice( int level) { return new DynamicCompSlice(level); }
  public:
-  virtual LoopTreeNode* Transform( LoopTransformInterface &_fa, LoopTreeDepComp& c,
+  virtual LoopTreeNode* Transform( LoopTreeDepComp& c,
                                    const CompSlice *slice, LoopTreeNode *root);
 };
 
