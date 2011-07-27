@@ -336,24 +336,30 @@ void StaticSingleAssignment::run(bool interprocedural)
 		//Renumber all instantiated ReachingDef objects
 		renumberAllDefinitions(func, functionCfgNodesPostorder);
 
-		printf("\nUses table for %s():\n", func->get_declaration()->get_name().str());
-		foreach(const ASTNodeToVarRefsMap::value_type& nodeVarsPair, functionUses)
-		{
-			printf("%s @ %d: ", nodeVarsPair.first->class_name().c_str(), nodeVarsPair.first->get_file_info()->get_line());
-			
-			foreach(SgVarRefExp* varRef, nodeVarsPair.second)
-			{
-				printf("%s ", varnameToString(getVarName(varRef)).c_str());
-			}
-			printf("\n");
-		}
+        if (getDebug())
+        {
+            printf("\nUses table for %s():\n", func->get_declaration()->get_name().str());
+            foreach(const ASTNodeToVarRefsMap::value_type& nodeVarsPair, functionUses)
+            {
+                printf("%s @ %d: ", nodeVarsPair.first->class_name().c_str(), nodeVarsPair.first->get_file_info()->get_line());
+
+                foreach(SgVarRefExp* varRef, nodeVarsPair.second)
+                {
+                    printf("%s ", varnameToString(getVarName(varRef)).c_str());
+                }
+                printf("\n");
+            }
+        }
 		
 		if (getDebug())
 			cout << "Running DefUse Data Flow on function: " << SageInterface::get_name(func) << func << endl;
 		runDefUseDataFlow(func);
 		
-		ofstream file((func->get_declaration()->get_name() + "_unfiltered.dot").str());
-		printToDOT(func, file);
+        if (getDebugExtra())
+        {
+            ofstream file((func->get_declaration()->get_name() + "_unfiltered.dot").str());
+            printToDOT(func, file);
+        }
 	}
 	
 
