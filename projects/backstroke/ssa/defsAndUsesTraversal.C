@@ -26,18 +26,21 @@ ChildUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node, Synth
 		if (initName->get_preinitialization() != SgInitializedName::e_virtual_base_class
 				&& initName->get_preinitialization() != SgInitializedName::e_nonvirtual_base_class)
 		{
-			ssa->getOriginalDefTable()[node].insert(uName->getKey());
+			CFGNode definingNode = initName->cfgForBeginning();
+			
+			cfgNodeToDefinedVars[definingNode].insert(uName->getKey());
 
 			if (StaticSingleAssignment::getDebug())
 			{
-				cout << "Defined " << uName->getNameString() << endl;
+				cout << "Defined " << StaticSingleAssignment::varnameToString(uName->getKey()) << 
+						" at " << definingNode.toStringForDebugging() << endl;
 			}
 		}
 
 		return ChildUses();
 	}
-	//Catch all variable references
-	else if (isSgVarRefExp(node))
+	//Catch all variable references. These are uses
+    else if (SgVarRefExp* varRef = isSgVarRefExp(node))
 	{
 		//Get the unique name of the def.
 		VarUniqueName * uName = StaticSingleAssignment::getUniqueName(node);
@@ -50,15 +53,16 @@ ChildUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node, Synth
 		}
 
 		//Add this as a use. If it's not a use (e.g. target of an assignment), we'll fix it up later.
-		ssa->getLocalUsesTable()[node].insert(uName->getKey());
+		astNodeToUsedVars[varRef].insert(varRef);
 
 		if (StaticSingleAssignment::getDebug())
 		{
-			cout << "Found use for " << uName->getNameString() << " at " << node->cfgForBeginning().toStringForDebugging() << endl;
+			cout << "Found use for " << StaticSingleAssignment::varnameToString(uName->getKey()) << 
+					" at " << node->cfgForBeginning().toStringForDebugging() << endl;
 		}
 
 		//This varref is both the only use in the subtree and the current variable
-		return ChildUses(node, isSgVarRefExp(node));
+		return ChildUses(varRef, varRef);
 	}
 	//Catch all types of Binary Operations
 	else if (SgBinaryOp* binaryOp = isSgBinaryOp(node))
@@ -69,7 +73,7 @@ ChildUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node, Synth
 
 		//If we have an assigning operation, we want to list everything on the LHS as being defined
 		//Otherwise, everything is being used.
-		vector<SgNode*> uses;
+		set<SgVarRefExp*> uses;
 		switch (binaryOp->variantT())
 		{
 			//All the binary ops that define the LHS
@@ -86,35 +90,39 @@ ChildUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node, Synth
 			case V_SgXorAssignOp:
 			case V_SgAssignOp:
 			{
+				//All the binary ops have 3 indices in the CFG. The first index is before the lhs operand,
+				//the second index is after the lhs operand but before the rhs operand. 
+				ROSE_ASSERT(binaryOp->cfgIndexForEnd() == 2);
+				
 				//All the uses from the RHS are propagated
-				uses.insert(uses.end(), rhs.getUses().begin(), rhs.getUses().end());
+				uses.insert(rhs.getUses().begin(), rhs.getUses().end());
 
 				//All the uses from the LHS are propagated, unless we're an assign op
-				uses.insert(uses.end(), lhs.getUses().begin(), lhs.getUses().end());
+				uses.insert(lhs.getUses().begin(), lhs.getUses().end());
 
 				SgVarRefExp* currentVar = lhs.getCurrentVar();
 
 				if (currentVar != NULL)
 				{
-					vector<SgNode*>::iterator currVarUse = find(uses.begin(), uses.end(), currentVar);
-
-					//An assign op doesn't use the var it's defining. So, remove that var from the uses
+					set<SgVarRefExp*>::iterator lhsCurrVarUse = lhs.getUses().find(currentVar);
+					set<SgVarRefExp*>::iterator rhsCurrVarUse = rhs.getUses().find(currentVar);
+					//How can we have an active variable without any uses?
+					ROSE_ASSERT(uses.find(currentVar) != uses.end());
+					
+					//An assign op doesn't use the var it's defining. So, if it's only used in the left-hand side,
+					//we should remove it from the list of used vars
 					if (isSgAssignOp(binaryOp))
 					{
-						if (currVarUse != uses.end())
+						if (lhsCurrVarUse != lhs.getUses().end() && rhsCurrVarUse == rhs.getUses().end())
 						{
+							set<SgVarRefExp*>::iterator currVarUse = uses.find(currentVar);
+							ROSE_ASSERT(currVarUse != uses.end());
 							uses.erase(currVarUse);
-						}
-
-						//Also remove the use from the varRef node, because it's not really a use.
-						ssa->getLocalUsesTable()[currentVar].clear();
-					}
-					//All the other ops always use the var they're defining (+=, -=, /=, etc)
-					else
-					{
-						if (currVarUse == uses.end())
-						{
-							uses.push_back(currentVar);
+							
+							//Also remove the use from the varRef node, because it's not really a use.
+							//FIXME: this doesn't erase uses in the parents of the SgVarRefExp.
+							//		We can end up with false positives for uses.
+							astNodeToUsedVars.erase(currentVar);
 						}
 					}
 				}
@@ -127,34 +135,42 @@ ChildUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node, Synth
 				//foo() = 3, where foo() returns a reference
 				if (currentVar != NULL)
 				{
-					addDefForVarAtNode(currentVar, binaryOp);
+					//The definition actually happens after both sides are evaluated
+					CFGNode definingCfgNode = binaryOp->cfgForEnd();
+					addDefForVarAtNode(currentVar, definingCfgNode);
 				}
-
+				
 				return ChildUses(uses, currentVar);
 			}
 			//Otherwise cover all the non-defining Ops
 			default:
 			{
 				//We want to set all the varRefs as being used here
-				std::vector<SgNode*> uses;
-				uses.insert(uses.end(), lhs.getUses().begin(), lhs.getUses().end());
-				uses.insert(uses.end(), rhs.getUses().begin(), rhs.getUses().end());
+				std::set<SgVarRefExp*> uses;
+				uses.insert(lhs.getUses().begin(), lhs.getUses().end());
+				uses.insert(rhs.getUses().begin(), rhs.getUses().end());
 
 				//Set all the uses as being used here.
 				addUsesToNode(binaryOp, uses);
-
-				//Propagate the current variable up. The rhs variable is the one that could be potentially defined up the tree
-				return ChildUses(uses, rhs.getCurrentVar());
+				
+				SgVarRefExp* newCurrentVar = NULL;
+				
+				//An assignment to a comma op assigns to its rhs member. 
+				//Same is true for arrow/dot
+				if (isSgCommaOpExp(binaryOp) || isSgDotExp(binaryOp) || isSgArrowExp(binaryOp))
+				{
+					newCurrentVar = rhs.getCurrentVar();
+				}
+				
+				return ChildUses(uses, newCurrentVar);
 			}
 		}
 	}
 	//Catch all unary operations here.
-	else if (isSgUnaryOp(node))
+	else if (SgUnaryOp* unaryOp = isSgUnaryOp(node))
 	{
-		SgUnaryOp* unaryOp = isSgUnaryOp(node);
-
 		//Now handle the uses. All unary operators use everything in their operand
-		std::vector<SgNode*> uses;
+		std::set<SgVarRefExp*> uses;
 		if (isSgAddressOfOp(unaryOp) && isSgPointerMemberType(unaryOp->get_type()))
 		{
 			//SgAddressOfOp is special; it's not always a use of its operand. When creating a reference to a member variable,
@@ -171,15 +187,29 @@ ChildUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node, Synth
 			vector<SgNode*> successors = SageInterface::querySubTree<SgNode>(unaryOp);
 			foreach(SgNode* successor, successors)
 			{
-				ssa->getLocalUsesTable()[successor].clear();
+				astNodeToUsedVars.erase(successor);
 			}
 		}
 		else
 		{
-			//Guard against unary ops that have no children (exception rethrow statement)
-			if (attrs.size() > 0)
+			//We now know that the unary op is a use. We have to merge its child uses
+			if (isSgCastExp(unaryOp))
 			{
-				uses.insert(uses.end(), attrs[0].getUses().begin(), attrs[0].getUses().end());
+				//Cast expressions can have two children in the AST, because of the original expression tree
+				ROSE_ASSERT(attrs.size() == 2);
+				uses.insert(attrs[0].getUses().begin(), attrs[0].getUses().end());
+			}
+			else if (isSgThrowOp(unaryOp))
+			{
+				//Rethrow is a unary op that can have no children
+				ROSE_ASSERT(attrs.size() <= 1);
+				if (attrs.size() == 1)
+					uses = attrs[0].getUses();
+			}
+			else
+			{
+				ROSE_ASSERT(attrs.size() == 1);
+				uses = attrs[0].getUses();
 			}
 		}
 
@@ -192,16 +222,28 @@ ChildUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node, Synth
 			//The defs can be empty. For example, foo()++ where foo returns a reference
 			if (currentVar != NULL)
 			{
-				addDefForVarAtNode(currentVar, unaryOp);
+				//The increment/decrement ops should have exactly two indices.
+				//The first index comes before the operand and the second index comes after the operand
+				ROSE_ASSERT(unaryOp->cfgIndexForEnd() == 1);
+				
+				CFGNode definingNode;
+				
+				if (unaryOp->get_mode() == SgUnaryOp::prefix)
+					definingNode = unaryOp->cfgForBeginning();
+				else if (unaryOp->get_mode() == SgUnaryOp::postfix)
+					definingNode = unaryOp->cfgForEnd();
+				else
+					ROSE_ASSERT(false);
+				
+				
+				addDefForVarAtNode(currentVar, definingNode);
 
 				//++ and -- always use their operand. Make sure it's part of the uses
-				if (find(uses.begin(), uses.end(), currentVar) == uses.end())
-				{
-					uses.push_back(currentVar);
-				}
+				ROSE_ASSERT(uses.find(currentVar) != uses.end());
 			}
 		}
-		//Some other ops also preserve the current var. We don't really distinguish between the pointer variable
+		//Some other ops also preserve the current var. 
+		//FIXME: We don't really distinguish between the pointer variable
 		//and the value to which it points
 		else if (isSgCastExp(unaryOp) || isSgPointerDerefExp(unaryOp) || isSgAddressOfOp(unaryOp))
 		{
@@ -214,7 +256,7 @@ ChildUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node, Synth
 		//Return the combined uses
 		return ChildUses(uses, currentVar);
 	}
-	else if (isSgDeleteExp(node))
+	else if (SgDeleteExp* deleteExp = isSgDeleteExp(node))
 	{
 		//Deleting a variable definitely modifies it.
 		ROSE_ASSERT(attrs.size() == 1);
@@ -222,7 +264,13 @@ ChildUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node, Synth
 		
 		if (currentVar != NULL)
 		{
-			addDefForVarAtNode(currentVar, node);
+			//The delete expression should have exactly two indices. One is invoked before the operand
+			//and one after the operand
+			ROSE_ASSERT(deleteExp->cfgIndexForEnd() == 1);
+			
+			CFGNode definingNode = deleteExp->cfgForEnd();
+			
+			addDefForVarAtNode(currentVar, definingNode);
 			return ChildUses(attrs.front().getUses());
 		}
         else
@@ -232,20 +280,20 @@ ChildUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node, Synth
 	}
 	else if (isSgStatement(node))
 	{
-		//Don't propagate uses and defs up to the statement level
+		//Don't propagate uses up to the statement level
 		return ChildUses();
 	}
 	else
 	{
 		//For the default case, we merge the uses of every attribute and pass them upwards
-		std::vector<SgNode*> uses;
+		std::set<SgVarRefExp*> uses;
 		for (unsigned int i = 0; i < attrs.size(); i++)
 		{
 			if (StaticSingleAssignment::getDebug())
 			{
 				cout << "Merging attr[" << i << "]" << endl;
 			}
-			uses.insert(uses.end(), attrs[i].getUses().begin(), attrs[i].getUses().end());
+			uses.insert(attrs[i].getUses().begin(), attrs[i].getUses().end());
 		}
 
 		//Set all the uses as being used here.
@@ -257,36 +305,32 @@ ChildUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node, Synth
 }
 
 /** Mark all the uses as occurring at the specified node. */
-void DefsAndUsesTraversal::addUsesToNode(SgNode* node, std::vector<SgNode*> uses)
+void DefsAndUsesTraversal::addUsesToNode(SgNode* node, std::set<SgVarRefExp*> uses)
 {
-	foreach(SgNode* useNode, uses)
-	{
-		//Get the unique name of the def.
-		VarUniqueName * uName = StaticSingleAssignment::getUniqueName(useNode);
-		ROSE_ASSERT(uName);
-
-		//Add the varRef as a def at the current node of the ref's uniqueName
-		//We will correct the reference later.
-		ssa->getLocalUsesTable()[node].insert(uName->getKey());
-
-		if (StaticSingleAssignment::getDebug())
-		{
-			cout << "Found use for " << uName->getNameString() << " at " << node->cfgForBeginning().toStringForDebugging() << endl;
-		}
-	}
+	astNodeToUsedVars[node].insert(uses.begin(), uses.end());
 }
 
-void DefsAndUsesTraversal::addDefForVarAtNode(SgVarRefExp* currentVar, SgNode* defNode)
+
+void DefsAndUsesTraversal::addDefForVarAtNode(SgVarRefExp* var, const CFGNode& node)
 {
-	const StaticSingleAssignment::VarName& varName = StaticSingleAssignment::getVarName(currentVar);
+	const StaticSingleAssignment::VarName& varName = StaticSingleAssignment::getVarName(var);
 	ROSE_ASSERT(varName != StaticSingleAssignment::emptyName);
-
-	//Add the varRef as a definition at the current node of the ref's uniqueName
-	ssa->getOriginalDefTable()[defNode].insert(varName);
-
+	
+	cfgNodeToDefinedVars[node].insert(varName);
+	
 	if (StaticSingleAssignment::getDebug())
 	{
 		cout << "Found def for " << StaticSingleAssignment::varnameToString(varName)
-				<< " at " << defNode->cfgForBeginning().toStringForDebugging() << endl;
+				<< " at " << node.toStringForDebugging() << endl;
 	}
+}
+
+void DefsAndUsesTraversal::CollectDefsAndUses(SgNode* traversalRoot, DefsAndUsesTraversal::CFGNodeToVarsMap& defs, 
+		std::map<SgNode*, std::set<SgVarRefExp*> >& uses)
+{
+	DefsAndUsesTraversal traversal;
+	traversal.traverse(traversalRoot);
+	
+	defs.insert(traversal.cfgNodeToDefinedVars.begin(), traversal.cfgNodeToDefinedVars.end());
+	uses.insert(traversal.astNodeToUsedVars.begin(), traversal.astNodeToUsedVars.end());
 }

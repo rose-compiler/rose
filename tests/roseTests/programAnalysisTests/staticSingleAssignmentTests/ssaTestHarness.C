@@ -186,7 +186,7 @@ int main(int argc, char** argv)
 
 	//Run the SSA analysis intraprocedurally
 	StaticSingleAssignment ssa(project);
-	ssa.run(false);
+	ssa.run(false, true);
 	
 #if 0
 	vector<SgFunctionDefinition*> functions = SageInterface::querySubTree<SgFunctionDefinition>(project, V_SgFunctionDefinition);
@@ -213,7 +213,11 @@ int main(int argc, char** argv)
 
 	//Also test the interprocedural analysis
 	StaticSingleAssignment ssaInterprocedural(project);
-	ssaInterprocedural.run(true);
+	ssaInterprocedural.run(true, true);
+    
+    //Run the safe version of SSA which does not treat pointers as structures
+    StaticSingleAssignment ssaNoPointersAsStructures(project);
+    ssaNoPointersAsStructures.run(false, false);
 
 	if (SgProject::get_verbose() > 0)
 	{
