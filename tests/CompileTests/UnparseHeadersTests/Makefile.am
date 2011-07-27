@@ -41,9 +41,14 @@ TestUnparseHeaders_SOURCES = UnparseHeadersTransformVisitor.C TestUnparseHeaders
 
 include_HEADERS = UnparseHeadersTransformVisitor.h
 
+EXTRA_DIST = test1
+#TODO: Use a wildcard instead of specifying each folder separately.
+#EXTRA_DIST = test1 test2 test3 test4 test5 test6 test7 test8
+
 # Note that although all tests are run with the same -I paths, it is fine as long as we
 # ensure that the file names inside the -I paths are unique for each test.
-TEST_INCLUDE_PATHS = -I$(srcdir)/test8/subdir
+TEST_INCLUDE_PATHS =
+#TEST_INCLUDE_PATHS = -I$(srcdir)/test8/subdir
 
 # Add the dependence upon the source file to trigger recompilation each time the makefile is run!
 $(TEST_Objects): TestUnparseHeaders 
