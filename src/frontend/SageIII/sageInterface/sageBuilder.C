@@ -3580,6 +3580,40 @@ SgNullStatement* SageBuilder::buildNullStatement_nfi()
   return result;
 }
 
+//! Build an exec stmt
+SgExecStatement* SageBuilder::buildExecStatement(SgExpression* executable,
+                                                 SgExpression* globals,
+                                                 SgExpression* locals) {
+    if (locals != NULL && globals == NULL)
+        ROSE_ASSERT(!"buildExecStatement with non-NULL locals requires non-NULL globals");
+    ROSE_ASSERT(executable != NULL);
+
+    SgExecStatement* result = new SgExecStatement(executable, globals, locals);
+    executable->set_parent(result);
+    if (globals != NULL) globals->set_parent(result);
+    if (locals != NULL) locals->set_parent(result);
+
+    setOneSourcePositionForTransformation(result);
+    return result;
+}
+
+//! Build an exec stmt
+SgExecStatement* SageBuilder::buildExecStatement_nfi(SgExpression* executable,
+                                                     SgExpression* globals,
+                                                     SgExpression* locals) {
+    if (locals != NULL && globals == NULL)
+        ROSE_ASSERT(!"buildExecStatement with non-NULL locals requires non-NULL globals");
+    ROSE_ASSERT(executable != NULL);
+
+    SgExecStatement* result = new SgExecStatement(executable, globals, locals);
+    executable->set_parent(result);
+    if (globals != NULL) globals->set_parent(result);
+    if (locals != NULL) locals->set_parent(result);
+
+    setOneSourcePositionNull(result);
+    return result;
+}
+
 //! Build a try statement
 SgTryStmt* SageBuilder::buildTryStmt(SgStatement* body,
                                      SgCatchOptionStmt* catch0,
