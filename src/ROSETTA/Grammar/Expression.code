@@ -837,103 +837,13 @@ HEADER_ASSIGNMENT_OPERATOR_START
 HEADER_ASSIGNMENT_OPERATOR_END
 
 
-HEADER_PLUS_ASSIGNMENT_OPERATOR_START
+HEADER_COMPOUND_ASSIGNMENT_OPERATOR_START
 
        // get lvalue
           virtual bool isLValue() const;
           virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
-HEADER_PLUS_ASSIGNMENT_OPERATOR_END
-
-
-HEADER_MINUS_ASSIGNMENT_OPERATOR_START
-
-       // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
-
-HEADER_MINUS_ASSIGNMENT_OPERATOR_END
-
-
-HEADER_AND_ASSIGNMENT_OPERATOR_START
-
-       // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
-
-HEADER_AND_ASSIGNMENT_OPERATOR_END
-
-
-HEADER_IOR_ASSIGNMENT_OPERATOR_START
-
-       // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
-
-HEADER_IOR_ASSIGNMENT_OPERATOR_END
-
-
-HEADER_MULTIPLY_ASSIGNMENT_OPERATOR_START
-
-       // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
-
-HEADER_MULTIPLY_ASSIGNMENT_OPERATOR_END
-
-
-HEADER_DIVIDE_ASSIGNMENT_OPERATOR_START
-
-       // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
-
-HEADER_DIVIDE_ASSIGNMENT_OPERATOR_END
-
-
-HEADER_MOD_ASSIGNMENT_OPERATOR_START
-
-       // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
-
-HEADER_MOD_ASSIGNMENT_OPERATOR_END
-
-
-HEADER_XOR_ASSIGNMENT_OPERATOR_START
-
-       // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
-
-HEADER_XOR_ASSIGNMENT_OPERATOR_END
-
-
-HEADER_LEFT_SHIFT_ASSIGNMENT_OPERATOR_START
-
-       // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
-
-HEADER_LEFT_SHIFT_ASSIGNMENT_OPERATOR_END
-
-
-HEADER_RIGHT_SHIFT_ASSIGNEMENT_OPERATOR_START
-
-       // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
-
-HEADER_RIGHT_SHIFT_ASSIGNEMENT_OPERATOR_END
-
-
-HEADER_JAVA_UNSIGNED_RIGHT_SHIFT_ASSIGNEMENT_OPERATOR_START
-
-       // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
-
-HEADER_JAVA_UNSIGNED_RIGHT_SHIFT_ASSIGNEMENT_OPERATOR_END
+HEADER_COMPOUND_ASSIGNMENT_OPERATOR_END
 
 
 HEADER_POINTER_ASSIGNMENT_OPERATOR_START
@@ -4195,50 +4105,6 @@ SOURCE_SCOPE_OPERATOR_EXPRESSION_END
 
 SOURCE_ASSIGN_OPERATOR_EXPRESSION_START
 SOURCE_ASSIGN_OPERATOR_EXPRESSION_END
-
-
-SOURCE_PLUS_ASSIGN_OPERATOR_EXPRESSION_START
-SOURCE_PLUS_ASSIGN_OPERATOR_EXPRESSION_END
-
-
-SOURCE_MINUS_ASSIGN_OPERATOR_EXPRESSION_START
-SOURCE_MINUS_ASSIGN_OPERATOR_EXPRESSION_END
-
-
-SOURCE_AND_ASSIGN_OPERATOR_EXPRESSION_START
-SOURCE_AND_ASSIGN_OPERATOR_EXPRESSION_END
-
-
-SOURCE_IOR_ASSIGN_OPERATOR_EXPRESSION_START
-SOURCE_IOR_ASSIGN_OPERATOR_EXPRESSION_END
-
-
-SOURCE_MULTIPLY_ASSIGN_OPERATOR_EXPRESSION_START
-SOURCE_MULTIPLY_ASSIGN_OPERATOR_EXPRESSION_END
-
-
-SOURCE_DIVIDE_ASSIGN_OPERATOR_EXPRESSION_START
-SOURCE_DIVIDE_ASSIGN_OPERATOR_EXPRESSION_END
-
-
-SOURCE_MOD_ASSIGN_OPERATOR_EXPRESSION_START
-SOURCE_MOD_ASSIGN_OPERATOR_EXPRESSION_END
-
-
-SOURCE_XOR_ASSIGN_OPERATOR_EXPRESSION_START
-SOURCE_XOR_ASSIGN_OPERATOR_EXPRESSION_END
-
-
-SOURCE_LEFT_SHIFT_ASSIGN_OPERATOR_EXPRESSION_START
-SOURCE_LEFT_SHIFT_ASSIGN_OPERATOR_EXPRESSION_END
-
-
-SOURCE_RIGHT_SHIFT_ASSIGN_OPERATOR_EXPRESSION_START
-SOURCE_RIGHT_SHIFT_ASSIGN_OPERATOR_EXPRESSION_END
-
-
-SOURCE_JAVA_UNSIGNED_RIGHT_SHIFT_ASSIGN_OPERATOR_EXPRESSION_START
-SOURCE_JAVA_UNSIGNED_RIGHT_SHIFT_ASSIGN_OPERATOR_EXPRESSION_END
 
 
 SOURCE_POINTER_ASSIGN_OPERATOR_EXPRESSION_START
