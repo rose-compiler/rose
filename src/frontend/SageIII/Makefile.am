@@ -5,7 +5,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # DQ (6/22/2011): I think that the astHiddenTypeAndDeclarationLists directory is no longer required in ROSE.
 # SUBDIRS = astFileIO astMerge astFixup astPostProcessing sageInterface virtualCFG astTokenStream astHiddenTypeAndDeclarationLists astVisualization astFromString
 # SUBDIRS = astFileIO astMerge astFixup astPostProcessing sageInterface virtualCFG astTokenStream astVisualization astFromString
-SUBDIRS = astFileIO astMerge astFixup astPostProcessing sageInterface virtualCFG astTokenStream astHiddenTypeAndDeclarationLists astVisualization astFromString
+SUBDIRS = astFileIO astMerge astFixup astPostProcessing sageInterface virtualCFG astTokenStream astHiddenTypeAndDeclarationLists astVisualization astFromString includeDirectivesProcessing
 
 # DQ (12/29/2009): This is only used to handle generated code as smaller files.
 SUBDIRS += GENERATED_CODE_DIRECTORY_Cxx_Grammar
@@ -166,9 +166,10 @@ libsage3_la_LIBADD  = \
 	sageInterface/libsageInterface.la \
 	astTokenStream/libastTokenStream.la \
 	virtualCFG/libvirtualCFG.la \
-   astVisualization/libastVisualization.la \
-   astFromString/libAstFromString.la \
-   astHiddenTypeAndDeclarationLists/libastHiddenTypeAndDeclarationLists.la 
+        astVisualization/libastVisualization.la \
+        astFromString/libAstFromString.la \
+        astHiddenTypeAndDeclarationLists/libastHiddenTypeAndDeclarationLists.la \
+        includeDirectivesProcessing/libincludeDirectivesProcessing.la
 else
 libsage3_la_LIBADD  = \
 	astFixup/libastFixup.la \
@@ -176,9 +177,10 @@ libsage3_la_LIBADD  = \
 	astMerge/libastMerge.la \
 	sageInterface/libsageInterface.la \
 	virtualCFG/libvirtualCFG.la \
-   astVisualization/libastVisualization.la \
-   astFromString/libAstFromString.la \
-   astHiddenTypeAndDeclarationLists/libastHiddenTypeAndDeclarationLists.la 
+        astVisualization/libastVisualization.la \
+        astFromString/libAstFromString.la \
+        astHiddenTypeAndDeclarationLists/libastHiddenTypeAndDeclarationLists.la \
+        includeDirectivesProcessing/libincludeDirectivesProcessing.la
 endif
 
 # DQ (6/25/2011): Readded this directory so that we can support the older behavior as a default

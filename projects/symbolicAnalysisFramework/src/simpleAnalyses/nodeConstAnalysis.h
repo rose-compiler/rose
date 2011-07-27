@@ -13,6 +13,8 @@
 #include "latticeFull.h"
 #include "printAnalysisStates.h"
 
+#include <string>
+#include <vector>
 
 extern int nodeConstAnalysisDebugLevel;
 
@@ -117,7 +119,7 @@ class nodeConstLattice : public FiniteLattice
 	// returns true if this causes the lattice's state to change, false otherwise
 	bool setToTop();
 		
-	string str(string indent="");
+	std::string str(std::string indent="");
 };
 
 class nodeConstAnalysis : public IntraFWDataflow
@@ -136,17 +138,17 @@ class nodeConstAnalysis : public IntraFWDataflow
 	Lattice* genInitNonVarState(const Function& func, const DataflowNode& n, const NodeState& state);*/
 	
 	// generates the initial lattice state for the given dataflow node, in the given function, with the given NodeState
-	//vector<Lattice*> genInitState(const Function& func, const DataflowNode& n, const NodeState& state);
+	//std::vector<Lattice*> genInitState(const Function& func, const DataflowNode& n, const NodeState& state);
 	void genInitState(const Function& func, const DataflowNode& n, const NodeState& state,
-	                  vector<Lattice*>& initLattices, vector<NodeFact*>& initFacts);
+	                  std::vector<Lattice*>& initLattices, std::vector<NodeFact*>& initFacts);
 		
-	bool transfer(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo);
+	bool transfer(const Function& func, const DataflowNode& n, NodeState& state, const std::vector<Lattice*>& dfInfo);
 };
 
 // runs the nodeConstAnalysis on the project and returns the resulting nodeConstAnalysis object
 nodeConstAnalysis* runNodeConstAnalysis();
 
 // prints the Lattices set by the given nodeConstAnalysis 
-void printNodeConstAnalysisStates(nodeConstAnalysis* da, string indent="");
+void printNodeConstAnalysisStates(nodeConstAnalysis* da, std::string indent="");
 
 #endif

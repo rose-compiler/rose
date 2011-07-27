@@ -840,3 +840,13 @@ git branch -a
 git checkout dq-main-rc
  
 
+
+*****************************************************************************
+To commit a new branch without changes (used to force another Hudson rebuild)
+*****************************************************************************
+
+# make an empty commit
+git commit --allow-empty
+
+# And then push the changes
+git push origin dq-cxx-rc
