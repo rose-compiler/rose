@@ -15,7 +15,7 @@ protected:
   FiniteVarsExprsProductLattice* prodLat;
 
   LatticeType *getLattice(const SgExpression *sgn) {
-    return dynamic_cast<LatticeType *>(prodLat->getVarLattice(SgExpr2Var(sgn)));
+    return sgn ? getLattice(SgExpr2Var(sgn)) : NULL;
   }
   bool getLattices(const SgBinaryOp *sgn, LatticeType* &arg1Lat, LatticeType* &arg2Lat, LatticeType* &resLat) {
     arg1Lat = getLattice(sgn->get_lhs_operand());
