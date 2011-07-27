@@ -58,49 +58,49 @@ namespace AbstractMemoryObject
 
   //Derived classes for each kind of each category
   // expression object
-  class scalarExprObj: public scalar_Impl, ExprObj
+  class scalarExprObj: public scalar_Impl, public ExprObj
   {
   };
 
-  class labeledAggregateExprObj: public labeledAggregate_Impl, ExprObj
+  class labeledAggregateExprObj: public labeledAggregate_Impl, public ExprObj
   {
   };
 
-  class arrayExprObj: public array_Impl, ExprObj
+  class arrayExprObj: public array_Impl, public ExprObj
   {};
 
-  class pointerExprbj: public pointer_Impl, ExprObj
+  class pointerExprbj: public pointer_Impl, public ExprObj
   {};
 
   // named object
-   class scalarNamedObj: public scalar_Impl, NamedObj 
+   class scalarNamedObj: public scalar_Impl, public NamedObj 
   {
   };
 
-  class labeledAggregateNamedObj: public labeledAggregate_Impl, NamedObj
+  class labeledAggregateNamedObj: public labeledAggregate_Impl, public NamedObj
   {
   };
 
-  class arrayNamedObj: public array_Impl, NamedObj
+  class arrayNamedObj: public array_Impl, public NamedObj
   {};
 
-  class pointerNamedObj: public pointer_Impl, NamedObj
+  class pointerNamedObj: public pointer_Impl, public NamedObj
   {};
 
  
   // aliased object
-   class scalarAliasedObj: public scalar_Impl, AliasedObj
+   class scalarAliasedObj: public scalar_Impl, public AliasedObj
   {
   };
 
-  class labeledAggregateAliasedObj:public  labeledAggregate_Impl, AliasedObj
+  class labeledAggregateAliasedObj:public  labeledAggregate_Impl, public AliasedObj
   {
   };
 
-  class arrayAliasedObj: public array_Impl, AliasedObj
+  class arrayAliasedObj: public array_Impl, public AliasedObj
   {};
 
-  class pointerAliasedObj: public pointer_Impl, AliasedObj
+  class pointerAliasedObj: public pointer_Impl, public AliasedObj
   {};
 
 
