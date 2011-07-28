@@ -5,6 +5,15 @@
 
 #include "partitionedAnalysis.h"
 //#include "ConstrGraph.h"
+#include <list>
+#include <set>
+#include <vector>
+#include <iostream>
+
+using std::cout;
+using std::set;
+using std::list;
+using std::vector;
 
 /***************************
  *** PartitionedAnalysis ***
@@ -30,7 +39,7 @@ void PartitionedAnalysis::initMaster()
 	
 	// Create a new partition split that corresponds to just the master partition
 	partSplit* newSplit = new partSplit(master);
-	list<partSplit*> splitsList;
+        list<partSplit*> splitsList;
 	splitsList.push_back(newSplit);
 	parts2splits[master] = splitsList;
 	parts2chkpts[master] = NULL;

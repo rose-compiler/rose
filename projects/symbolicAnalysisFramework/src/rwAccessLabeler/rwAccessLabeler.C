@@ -151,16 +151,7 @@ class lrRecord
 				strcpy(typeStr, "SgAssignOp");
 			}
 			// rwSubtree op= readSubtree
-			else if(isSgAndAssignOp(binOp) ||
-			        isSgDivAssignOp(binOp) ||
-			        isSgIorAssignOp(binOp) ||
-			        isSgLshiftAssignOp(binOp) ||
-			        isSgMinusAssignOp(binOp) ||
-			        isSgModAssignOp(binOp) ||
-			        isSgMultAssignOp(binOp) ||
-			        isSgPlusAssignOp(binOp) ||
-			        isSgRshiftAssignOp(binOp) ||
-			        isSgXorAssignOp(binOp))
+			else if(isSgCompoundAssignOp(binOp))
 			{
 				rwSubtree = binOp->get_lhs_operand();
 				readSubtree = binOp->get_rhs_operand();
