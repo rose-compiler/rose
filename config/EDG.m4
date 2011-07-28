@@ -21,7 +21,8 @@ AC_HEADER_STDC
 AC_CHECK_HEADERS(limits.h sys/time.h unistd.h)
 
 # Checks for typedefs, structures, and compiler characteristics.
-AC_C_CONST
+# George Vulov: This macro seems to cause nothing but trouble and it's only used for ancient compilers
+# AC_C_CONST
 
 # This screws up the C++ compiler, it tests to see if the C compiler supports the inline keyword
 # (usually not) and then defines inline to be empty which interferes with the processing of inline
