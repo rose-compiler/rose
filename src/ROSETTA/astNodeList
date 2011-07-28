@@ -307,6 +307,7 @@ SgCommonSymbol
 SgComplexVal
 SgComprehension
 SgComprehensionList
+SgCompoundAssignOp
 SgComputedGotoStatement
 SgConcatenationOp
 SgConditionalExp

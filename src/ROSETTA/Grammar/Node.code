@@ -2063,7 +2063,7 @@ HEADER_START
 
      protected:
 
-        /*! \brief Final initializaion for constructors
+        /*! \brief Final initialization for constructors
             This function is called at the end of generated constructors
             to allow the specification writer to add special initialization
             functions or tests.  Default is to do nothing.  Otherwise it should
@@ -2090,6 +2090,7 @@ HEADER_IS_CLASSNAME_START
      // the generated cast function
      // friend $CLASSNAME* is$CLASSNAME ( SgNode* s );
 
+          typedef $BASECLASS base_node_type;
 HEADER_IS_CLASSNAME_END
 
 HEADER_PARSER_START
