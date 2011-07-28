@@ -16,6 +16,9 @@
 #include "sage3basic.h"
 #include "unparser.h"
 
+#include <boost/foreach.hpp>
+#define foreach BOOST_FOREACH
+
 #define ROSE_TRACK_PROGRESS_OF_ROSE_COMPILING_ROSE 0
 
 using namespace std;
@@ -66,117 +69,6 @@ JavaCodeGeneration_locatedNode::unparseOneElemConInit(SgConstructorInitializer* 
 #endif
    }
 
-
-void
-JavaCodeGeneration_locatedNode::unparseFunctionParameterDeclaration ( 
-   SgFunctionDeclaration* funcdecl_stmt, 
-   SgInitializedName* initializedName,
-   bool outputParameterDeclaration,
-   SgUnparse_Info& info )
-   {
-     ROSE_ASSERT (funcdecl_stmt != NULL);
-
-     SgName        tmp_name  = initializedName->get_name();
-     SgInitializer *tmp_init = initializedName->get_initializer();
-  // SgType        *tmp_type = initializedName->get_type();
-     ROSE_ASSERT (initializedName!= NULL);
-
-     SgStorageModifier & storage = initializedName->get_storageModifier();
-     if (storage.isExtern())
-        {
-          curprint( "extern ");
-        }
-
-     ROSE_ASSERT(storage.isStatic() == false);
-
-  // This was a bug mistakenly reported by Isaac
-     ROSE_ASSERT(storage.get_modifier() >= 0);
-
-     if (storage.isStatic())
-        {
-          curprint( "static ");
-        }
-
-     if (storage.isMutable())
-        {
-          curprint( "mutable ");
-        }
-
-     if (storage.isTypedef())
-        {
-          curprint( "typedef ");
-        }
- 
-     SgUnparse_Info ninfo3(info);
-     ninfo3.unset_inArgList();
-
-     bool outputInitializer = true;
-     if (funcdecl_stmt->get_scope() != funcdecl_stmt->get_parent())
-        {
-       // This function declaration is appearing in a different scope there where it was first 
-       // declared so avoid output of the default initializers of any function parameters!
-       // printf ("Skipping output of initializer since this is not the original declaration! \n");
-          outputInitializer = false;
-        }
-
-  // Add an initializer if it exists
-     if ( outputInitializer == true && tmp_init != NULL )
-        {
-          curprint( "=");
-          unp->u_exprStmt->unparseExpression(tmp_init, ninfo3);
-        }
-   }
-
-void
-JavaCodeGeneration_locatedNode::unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUnparse_Info& info)
-   {
-     ROSE_ASSERT (funcdecl_stmt != NULL);
-
-#if 0
-     printf ("funcdecl_stmt->get_args().size() = %zu \n",funcdecl_stmt->get_args().size());
-     curprint( "\n/* funcdecl_stmt->get_args().size() = " << (int)(funcdecl_stmt->get_args().size()) << " */ \n");
-#endif
-
-     SgInitializedNamePtrList::iterator p = funcdecl_stmt->get_args().begin();
-     while ( p != funcdecl_stmt->get_args().end() )
-        {
-       // Liao 11/9/2010, 
-       // Skip duplicated unparsing of the attached information for C function arguments declared in old style.
-       // They usually should be unparsed when unparsing the arguments which are outside of the parameter list
-       //  are outside of the parameter list
-       // See example code: tests/CompileTests/C_tests/test2010_10.c
-          if (funcdecl_stmt->get_oldStyleDefinition() == false)
-               unparseAttachedPreprocessingInfo(*p, info, PreprocessingInfo::before);
-          unparseFunctionParameterDeclaration (funcdecl_stmt,*p,false,info);
-
-       // Move to the next argument
-          p++;
-
-       // Check if this is the last argument (output a "," separator if not)
-          if (p != funcdecl_stmt->get_args().end())
-             {
-               curprint( ",");
-             }
-        }
-   }
-
-//-----------------------------------------------------------------------------------
-//  void JavaCodeGeneration_locatedNode::unparse_helper
-//
-//  prints out the function parameters in a function declaration or function
-//  call. For now, all parameters are printed on one line since there is no
-//  file information for each parameter.
-//-----------------------------------------------------------------------------------
-void
-JavaCodeGeneration_locatedNode::unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse_Info& info)
-   {
-     ROSE_ASSERT (funcdecl_stmt != NULL);
-
-  // printf ("End of function JavaCodeGeneration_locatedNode::unparse_helper() \n");
-   }
-
-
-
 void
 JavaCodeGeneration_locatedNode::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Info& info)
    {
@@ -213,18 +105,6 @@ JavaCodeGeneration_locatedNode::unparseLanguageSpecificStatement(SgStatement* st
 #if ROSE_TRACK_PROGRESS_OF_ROSE_COMPILING_ROSE
      printf ("In unparseLanguageSpecificStatement(): file = %s line = %d \n",stmt->get_startOfConstruct()->get_filenameString().c_str(),stmt->get_startOfConstruct()->get_line());
 #endif
-
-#if 0
-  // Debugging support
-     SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(stmt);
-     if (declarationStatement != NULL)
-        {
-          curprint ( string("\n/* Inside of JavaCodeGeneration_locatedNode::unparseLanguageSpecificStatement (" ) + StringUtility::numberToString(stmt) + "): sage_class_name() = " + stmt->sage_class_name() + " */ \n");
-        }
-#endif
-
-  // DQ (added comments) this is where the new lines are introduced before statements.
-     unp->cur.format(stmt, info, FORMAT_BEFORE_STMT);
 
      switch (stmt->variantT())
         {
@@ -278,7 +158,7 @@ JavaCodeGeneration_locatedNode::unparseLanguageSpecificStatement(SgStatement* st
           case V_SgForInitStatement:                   unparseForInitStmt(stmt, info); break;
 
           case V_SgCatchStatementSeq:     // CATCH_STATEMENT_SEQ:
-          case V_SgFunctionParameterList: // FUNCTION_PARAMETER_LIST:
+          case V_SgFunctionParameterList:  unparseFunctionParameterList(stmt, info); break;
           case V_SgCtorInitializerList:   // CTOR_INITIALIZER_LIST:
 #if PRINT_DEVELOPER_WARNINGS
              printf ("Ignore these newly implemented cases (case of %s) \n",stmt->sage_class_name());
@@ -808,19 +688,7 @@ JavaCodeGeneration_locatedNode::unparseExceptionSpecification(const SgTypePtrLis
 void
 JavaCodeGeneration_locatedNode::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
-#if 0
-     printf ("Inside of unparseFuncDeclStmt() \n");
-     curprint ( string("\n/* Inside of JavaCodeGeneration_locatedNode::unparseFuncDeclStmt (" ) + StringUtility::numberToString(stmt) + "): sage_class_name() = " + stmt->sage_class_name() + " */ \n");
-
-     stmt->get_startOfConstruct()->display("Inside of unparseFuncDeclStmt()");
-#endif
-
-#if 0
-  // curprint ( string("/* End of JavaCodeGeneration_locatedNode::unparseFuncDeclStmt */";
-     curprint ( string("\n/* End of JavaCodeGeneration_locatedNode::unparseFuncDeclStmt (" ) + StringUtility::numberToString(stmt) 
-         + "): sage_class_name() = " + stmt->sage_class_name() + " */ \n");
-     printf ("End of JavaCodeGeneration_locatedNode::unparseFuncDeclStmt() \n");
-#endif
+     ROSE_ASSERT(!"Unexpected function declaration. All java functions should be SgMemberFunctions");
    }
 
 
@@ -840,6 +708,22 @@ JavaCodeGeneration_locatedNode::unparseFuncDefnStmt(SgStatement* stmt, SgUnparse
      unparseAttachedPreprocessingInfo(funcdefn_stmt->get_declaration()->get_parameterList(), info, PreprocessingInfo::after);
    }
 
+void
+JavaCodeGeneration_locatedNode::unparseFunctionParameterList(SgStatement* stmt, SgUnparse_Info& info)
+{
+    SgFunctionParameterList* param_list = isSgFunctionParameterList(stmt);
+    ROSE_ASSERT(param_list != NULL);
+
+    SgInitializedNamePtrList& names = param_list->get_args();
+    SgInitializedNamePtrList::iterator name_it;
+    for (name_it = names.begin(); name_it != names.end(); name_it++) {
+        if (name_it != names.begin())
+            curprint(", ");
+        SgInitializedName* iname = *name_it;
+        unp->u_type->unparseType(iname->get_type(), info);
+        curprint(iname->get_name().getString());
+    }
+}
 
 string
 JavaCodeGeneration_locatedNode::trimGlobalScopeQualifier ( string qualifiedName )
@@ -865,6 +749,47 @@ JavaCodeGeneration_locatedNode::unparseMFuncDeclStmt(SgStatement* stmt, SgUnpars
    {
      SgMemberFunctionDeclaration* mfuncdecl_stmt = isSgMemberFunctionDeclaration(stmt);
      ROSE_ASSERT(mfuncdecl_stmt != NULL);
+
+     //TODO should there be forward declarations or nondefining declarations?
+     if (mfuncdecl_stmt->isForward()) {
+         cout << "unparser: skipping forward mfuncdecl: "
+              << mfuncdecl_stmt->get_qualified_name().getString()
+              << endl;
+         return;
+     } else if (mfuncdecl_stmt->get_definition() == NULL) {
+         cout << "unparser: skipping nondefining mfuncdecl: "
+              << mfuncdecl_stmt->get_qualified_name().getString()
+              << endl;
+         return;
+     }
+
+     //TODO more complete handling of modifiers
+     SgStorageModifier& storage = mfuncdecl_stmt->get_declarationModifier().get_storageModifier();
+     SgAccessModifier& access = mfuncdecl_stmt->get_declarationModifier().get_accessModifier();
+     SgSpecialFunctionModifier& special = mfuncdecl_stmt->get_specialFunctionModifier();
+     if (access.isPublic()) curprint("public ");
+     if (storage.isStatic()) curprint("static ");
+
+     //TODO remove when specialFxnModifier.isConstructor works
+     bool name_match = mfuncdecl_stmt->get_name() == mfuncdecl_stmt->get_associatedClassDeclaration()->get_name();
+     if (name_match && !special.isConstructor()) {
+         cout << "unparser: method " << mfuncdecl_stmt->get_qualified_name().getString()
+              << " should be marked isConstructor" << endl;
+     }
+
+     // unparse type, unless this a constructor
+     if (!special.isConstructor() && !name_match) {
+         info.set_isTypeFirstPart();
+         unp->u_type->unparseType(mfuncdecl_stmt->get_type(), info);
+         info.unset_isTypeFirstPart();
+     }
+
+     curprint(mfuncdecl_stmt->get_name().getString());
+     curprint("(");
+     unparseStatement(mfuncdecl_stmt->get_parameterList(), info);
+     curprint(") {\n");
+     unparseStatement(mfuncdecl_stmt->get_definition(), info);
+     curprint("}\n");
 
 #if 0
      curprint ( string("\n/* Inside of JavaCodeGeneration_locatedNode::unparseMFuncDeclStmt */ \n") ); 
@@ -937,16 +862,21 @@ JavaCodeGeneration_locatedNode::unparseClassDeclStmt(SgStatement* stmt, SgUnpars
           curprint ( string("\n/* file: " ) + classDeclarationfileInfo->get_filename() + " line: " + classDeclarationfileInfo->get_line() + " col: " + classDeclarationfileInfo->get_col() + " */ \n");
 #endif
 
+     curprint("class ");
+     curprint(classdecl_stmt->get_name().getString());
+     curprint(" {\n");
+     unparseStatement(classdecl_stmt->get_definition(), info);
+     curprint("}\n");
    }
 
 void
 JavaCodeGeneration_locatedNode::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
-  // printf ("Inside of unparseClassDefnStmt \n");
-  // curprint ( string("/* Inside of unparseClassDefnStmt */ \n";
-
      SgClassDefinition* classdefn_stmt = isSgClassDefinition(stmt);
      ROSE_ASSERT(classdefn_stmt != NULL);
+
+     foreach (SgDeclarationStatement* child, classdefn_stmt->get_members())
+         unparseStatement(child, info);
    }
 
 
