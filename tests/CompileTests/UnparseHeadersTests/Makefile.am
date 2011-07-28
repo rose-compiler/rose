@@ -66,4 +66,6 @@ check-local:
 
 clean-local:
 	rm -f *.o rose_*.[cC] *.out
-	rm -rf QMTest
+
+distclean-local:
+	rm -rf _rose_
