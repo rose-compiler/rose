@@ -40,16 +40,8 @@ class JavaCodeGeneration_locatedNode : public UnparseLanguageIndependentConstruc
        // DQ (11/27/2004): Added to support unparsing of pointers to nested template arguments 
           virtual void unparseTemplateName(SgTemplateInstantiationDecl* templateInstantiationDeclaration, SgUnparse_Info& info);
 
-       // DQ (2/16/2004): Added to refactor code and add support for old-style K&R C
-          void unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUnparse_Info& info);
-          void unparseFunctionParameterDeclaration ( SgFunctionDeclaration* funcdecl_stmt, 
-                                                     SgInitializedName* initializedName,
-                                                     bool outputParameterDeclaration, 
-                                                     SgUnparse_Info& info );
 
           void unparseOneElemConInit(SgConstructorInitializer* con_init, SgUnparse_Info& info);
-
-          void unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse_Info& info);
 
       //! Unparser support for compiler-generated statments
           void outputCompilerGeneratedStatements( SgUnparse_Info & info );
@@ -57,6 +49,8 @@ class JavaCodeGeneration_locatedNode : public UnparseLanguageIndependentConstruc
        // DQ (8/14/2007): This is where all the langauge specific statement unparing is done
           virtual void unparseLanguageSpecificStatement (SgStatement*  stmt, SgUnparse_Info& info);
           virtual void unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_Info& info);
+
+          virtual void unparseFunctionParameterList(SgStatement* stmt, SgUnparse_Info& info);
 
        // DQ (9/6/2010): Mark the derived class to support debugging.
           virtual std::string languageName() const { return "C++ Unparser"; }
