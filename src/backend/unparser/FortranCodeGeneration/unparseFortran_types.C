@@ -6,8 +6,6 @@
 #include "sage3basic.h"
 #include "unparser.h"
 
-#define DXN_CODE 1
-
 //----------------------------------------------------------------------------
 //  void UnparserFort::unparseType
 //
@@ -154,12 +152,6 @@ UnparseFortran_type::unparseTypeKind(SgType* type, SgUnparse_Info& info)
 void
 UnparseFortran_type::unparseTypeLengthAndKind(SgType* type, SgExpression* lengthExpression, SgUnparse_Info & info)
    {
-#if DXN_CODE
-
-     // the length is printed as part of the entity_decl.
-    unparseTypeKind(type, info);
-
-#else
   // DQ (12/1/2007): This has been moved to the SgModifierType
      SgExpression* kindExpression = type->get_type_kind();
   // printf ("In UnparseFortran_type::unparseType(): type->get_type_kind() = %p \n",type->get_type_kind());
@@ -187,7 +179,6 @@ UnparseFortran_type::unparseTypeLengthAndKind(SgType* type, SgExpression* length
 
           curprint(")");
         }
-#endif
    }
 
 void 
@@ -208,32 +199,10 @@ UnparseFortran_type::unparseStringType(SgType* type, SgUnparse_Info& info)
   
      SgTypeString* string_type = isSgTypeString(type);
      ROSE_ASSERT(string_type != NULL);
-#if 0
-  // curprint("CHARACTER(LEN=*)");
-     curprint("CHARACTER(LEN=");
-
-  // DQ (8/17/2010): Changed the name of this variable (only used in Fortran codes).
-  // SgExpression* lengthExpression = string_type->get_index();
-     if (string_type->get_definedUsingScalarLength())
-        {
-       // Output the scalar integer value
-          curprint(StringUtility::numberToString(string_type->get_lengthScalar()));
-        }
-       else
-        {
-       // Output the integer expression.
-          SgExpression* lengthExpression = string_type->get_lengthExpression();
-          ROSE_ASSERT(lengthExpression != NULL);
-
-       // UnparseLanguageIndependentConstructs::unparseExpression(lengthExpression,info);
-          unp->u_fortran_locatedNode->unparseExpression(lengthExpression,info);
-        }
-
-     curprint(")");
-#else
      curprint ("CHARACTER");
-     unparseTypeLengthAndKind(string_type,string_type->get_lengthExpression(),info);
-#endif
+     // Do not unparse the length since it will be printed as part of the entity_decl.
+    unparseTypeKind(type, info);
+    // unparseTypeLengthAndKind(string_type,string_type->get_lengthExpression(),info);
 
   // printf ("Leaving of UnparserFortran_type::unparseStringType \n");
   // cur << "\n/* Leaving of UnparserFort::unparseStringType */\n";
