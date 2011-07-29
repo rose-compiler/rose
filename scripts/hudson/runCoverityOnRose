@@ -105,7 +105,8 @@ CONFIGURE_FLAGS="\
 	--with-java=${ROSE_TEST_JAVA_PATH} \
 	--with-ROSE_LONG_MAKE_CHECK_RULE=yes \
 	--with-C_DEBUG=-g \
-	--with-CXX_WARNINGS=-Wall"
+	--with-CXX_WARNINGS=-Wall
+	--without-haskell" #cov-build hangs with haskell
 #########################################################################################
 #  i386 
 # 
@@ -272,6 +273,10 @@ cd ROSE-build
     ################################################################################
     # TODO: COMMIT DEFECTS
     #
+    HEAD_REV="$(git rev-parse HEAD)"
+	(cov-commit-defects --description "$HEAD_REV" --config /export/apps/coverity-integrity-center/config/coverity_config.xml --dir "$(pwd)" --host hudson-rose-25 --port 8080 --stream ROSE --cva
+	) 2>&1 |filterStep "cov-commit-defects"
+	[ ${PIPESTATUS[0]} -ne 0 ] && killStep "cov-commit-defects"
 
 
 ####################################################################################
