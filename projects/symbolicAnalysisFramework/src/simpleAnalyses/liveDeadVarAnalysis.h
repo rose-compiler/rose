@@ -210,7 +210,7 @@ class VarsExprsProductLattice: public virtual ProductLattice
 	// initial blank VarsExprsProductLattice
 	VarsExprsProductLattice(const DataflowNode& n, const NodeState& state);
 	
-	// Retrns a blank instance of a VarsExprsProductLattice that only has the fields n and state set
+	// Returns a blank instance of a VarsExprsProductLattice that only has the fields n and state set
 	virtual VarsExprsProductLattice* blankVEPL(const DataflowNode& n, const NodeState& state)=0;
 	
 	public:
@@ -240,7 +240,7 @@ class VarsExprsProductLattice: public virtual ProductLattice
 	
 	public:
 	
-	// Returns the Lattice mapped to the given variable of NULL if nothing is mapped to it
+	// Returns the Lattice mapped to the given variable or NULL if nothing is mapped to it
 	Lattice* getVarLattice(const varID& var);
 	
 	// Returns the set of all variables mapped by this VarsExprsProductLattice
@@ -322,7 +322,7 @@ class FiniteVarsExprsProductLattice : public virtual VarsExprsProductLattice, pu
 	// initial blank VarsExprsProductLattice
 	FiniteVarsExprsProductLattice(const DataflowNode& n, const NodeState& state);
 	
-	// Retrns a blank instance of a VarsExprsProductLattice that only has the fields n and state set
+	// Returns a blank instance of a VarsExprsProductLattice that only has the fields n and state set
 	VarsExprsProductLattice* blankVEPL(const DataflowNode& n, const NodeState& state);
 		
 	public:
@@ -357,7 +357,7 @@ class InfiniteVarsExprsProductLattice: public virtual VarsExprsProductLattice, p
 	// initial blank VarsExprsProductLattice
 	InfiniteVarsExprsProductLattice(const DataflowNode& n, const NodeState& state);
 	
-	// Retrns a blank instance of a VarsExprsProductLattice that only has the fields n and state set
+	// Returns a blank instance of a VarsExprsProductLattice that only has the fields n and state set
 	VarsExprsProductLattice* blankVEPL(const DataflowNode& n, const NodeState& state);
 	
 	public:
