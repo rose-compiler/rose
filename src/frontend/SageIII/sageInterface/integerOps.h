@@ -61,7 +61,7 @@ inline T signExtend(T value) {
 template <size_t NBits, typename T>
 inline T shiftLeft(T value, size_t count) {
   return (value * shl1<T>(count)) & GenMask<T, NBits>::value;
-};
+}
 
 template <size_t NBits, typename T>
 inline T shiftRightLogical(T value, size_t count) {
