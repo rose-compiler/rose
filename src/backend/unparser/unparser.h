@@ -130,7 +130,6 @@ class Unparser
           FortranCodeGeneration_locatedNode* u_fortran_locatedNode;
 
        // DQ (4/16/2011): Added the Java support semetric to the Fortran unparser support.
-          UnparseJava_type* u_java_type;
           JavaCodeGeneration_locatedNode* u_java_locatedNode;
 
      private:

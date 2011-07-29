@@ -76,14 +76,8 @@ Unparser::Unparser( ostream* nos, string fname, Unparser_Opt nopt, UnparseFormat
      u_fortran_type = new UnparseFortran_type(this);
      u_fortran_locatedNode = new FortranCodeGeneration_locatedNode(this, fname);
 
-#if 0
-     u_java_type = NULL;
-     u_java_locatedNode = NULL;
-#else
   // DQ (4/16/2011): Added the Java support symetric to the Fortran unparser support.
-     u_java_type = new UnparseJava_type(this);
      u_java_locatedNode = new JavaCodeGeneration_locatedNode(this, fname);
-#endif
 
   // ROSE_ASSERT(nfile != NULL);
      ROSE_ASSERT(nos != NULL);
