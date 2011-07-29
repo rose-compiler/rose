@@ -345,8 +345,8 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
              {
             // Unparse using C/C++ unparser by default
                // negara1 (06/29/2011): If unparseScope is provided, unparse it. Otherwise, unparse the global scope (the default behavior).
-               if (unparseScope != NULL) {                   
-                   if (isSgGlobal(unparseScope) != NULL || isSgClassDefinition(unparseScope) != NULL) {                       
+               if (unparseScope != NULL) {
+                   if (isSgGlobal(unparseScope) != NULL || isSgClassDefinition(unparseScope) != NULL) {
                        info.set_current_scope(unparseScope);
                        const SgDeclarationStatementPtrList& declarations = unparseScope -> getDeclarationList();
                        for (SgDeclarationStatementPtrList::const_iterator declaration = declarations.begin(); declaration != declarations.end(); declaration++) {
@@ -354,7 +354,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
                        }
                    } else {
                        //Simulate that the unparsed scope is global in order to unparse an included file.
-                       SgGlobal* fakeGlobal = new SgGlobal(); 
+                       SgGlobal* fakeGlobal = new SgGlobal();
                        fakeGlobal -> set_file_info(unparseScope -> get_file_info());
                        info.set_current_scope(fakeGlobal);
 
