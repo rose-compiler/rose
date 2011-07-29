@@ -304,6 +304,7 @@ SgCommonBlock
 SgCommonBlockObject
 SgCommonSymbol
 SgComplexVal
+SgCompoundAssignOp
 SgComputedGotoStatement
 SgConcatenationOp
 SgConditionalExp
@@ -537,11 +538,14 @@ SgReturnStmt
 SgRewindStatement
 SgRshiftAssignOp
 SgRshiftOp
+SgJavaUnsignedRshiftAssignOp
+SgJavaUnsignedRshiftOp
 SgScopeOp
 SgScopeStatement
 SgSequenceStatement
 SgShortVal
 SgSizeOfOp
+SgJavaInstanceOfOp
 SgSourceFile
 SgSpawnStmt
 SgSpecialFunctionModifier
@@ -561,6 +565,11 @@ SgSymbolTable
 SgTemplateArgument
 SgTemplateArgumentList
 SgTemplateDeclaration
+SgTemplateClassDeclaration
+SgTemplateFunctionDeclaration
+SgTemplateMemberFunctionDeclaration
+SgTemplateClassDefinition
+SgTemplateFunctionDefinition
 SgTemplateInstantiationDecl
 SgTemplateInstantiationDefn
 SgTemplateInstantiationDirectiveStatement

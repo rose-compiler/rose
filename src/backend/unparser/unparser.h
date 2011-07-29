@@ -42,7 +42,7 @@ class Unparser_Nameq;
 #define ANONYMOUS_TYPEDEF_FIX false
 
 // Whether to use Rice's code to wrap long lines in Fortran.
-#define USE_RICE_FORTRAN_WRAPPING  1  // 1 if you're Rice, 0 if you want to get through Jenkins
+#define USE_RICE_FORTRAN_WRAPPING  0  // 1 if you're Rice, 0 if you want to get through Jenkins
 
 // Maximum line lengths for Fortran fixed source form and free source form, per the F90 specification.
 #if USE_RICE_FORTRAN_WRAPPING
@@ -234,7 +234,7 @@ class Unparser
 
        // void unparseProject ( SgProject* project, SgUnparse_Info& info );
        // void unparseFile       ( SgFile* file, SgUnparse_Info& info );
-          void unparseFile ( SgSourceFile* file, SgUnparse_Info& info );
+          void unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStatement* unparseScope = NULL );
           void unparseFile ( SgBinaryComposite*, SgUnparse_Info& info );
 
        // Unparses a single physical file
@@ -271,7 +271,10 @@ void resetSourcePositionToGeneratedCode( SgFile* file, UnparseFormatHelp *unpars
 // called by the user if backend compilation using the vendor compiler is not required.
 
 //! User callable function available if compilation using the backend compiler is not required.
-void unparseFile   ( SgFile*    file,    UnparseFormatHelp* unparseHelp = NULL, UnparseDelegate *repl  = NULL );
+void unparseFile   ( SgFile*    file,    UnparseFormatHelp* unparseHelp = NULL, UnparseDelegate *repl  = NULL, SgScopeStatement* unparseScope = NULL );
+
+//! User callable function available if compilation using the backend compiler is not required.
+void unparseIncludedFiles( SgProject* project, UnparseFormatHelp* unparseHelp = NULL, UnparseDelegate *repl  = NULL );
 
 //! User callable function available if compilation using the backend compiler is not required.
 void unparseProject( SgProject* project, UnparseFormatHelp* unparseHelp = NULL, UnparseDelegate *repl  = NULL );

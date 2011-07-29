@@ -1,4 +1,4 @@
-# Support functions for definition of C++ grammar (SAGE 3)
+// Support functions for definition of C++ grammar (SAGE 3)
 
 HEADER_START
   // DQ (4/13/2004): Make the copy constructor parameter a const ref instead of just ref parameter
@@ -3830,6 +3830,9 @@ HEADER_SYMBOL_TABLE_START
       //! Computes the number of symbols of a specific name
           int count(const SgName &) const;
 
+      //! Computes the number of alias symbols of a specific name (used in name qualification support).
+          int count_aliases(const SgName &) const;
+
       //! Outputs symbol table information (useful for debugging)
           void print( std::string label, VariantT nodeType = V_SgSymbol );
           void print();
@@ -3903,6 +3906,9 @@ HEADER_BASECLASS_START
           SgClassDeclaration* p_ptr;
 #endif
 
+       // DQ (5/29/2011): Added to support for new qualified name generation
+      //! This function generates the qualified name prefix to be used with the named declaration (only applied to restricted set of declarations where name qualification can be used).
+          SgName get_qualified_name_prefix() const;
 
 HEADER_BASECLASS_END
 
@@ -4149,6 +4155,10 @@ HEADER_INITIALIZED_NAME_START
        // DQ (10/5/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
 #endif
+
+       // DQ (5/29/2011): Added to support for new qualified name generation
+      //! This function generates the qualified name prefix to be used with the named declaration (only applied to restricted set of declarations where name qualification can be used).
+          SgName get_qualified_name_prefix_for_type() const;
 
 HEADER_INITIALIZED_NAME_END
 
@@ -5766,6 +5776,14 @@ HEADER_TEMPLATE_ARGUMENT_START
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
 #endif
 
+       // DQ (5/29/2011): Added to support for new qualified name generation
+      //! This function generates the qualified name prefix to be used with the template argument type.
+          SgName get_qualified_name_prefix() const;
+
+       // DQ (7/24/2011): Added to support for new qualified name generation
+      //! This function generates the qualified name prefix to be used with the named declaration (only applied to restricted set of declarations where name qualification can be used).
+          SgName get_qualified_name_prefix_for_type() const;
+
 HEADER_TEMPLATE_ARGUMENT_END
 
 
@@ -6103,6 +6121,8 @@ SgSymbolTable::get_name( const SgNode* node) const
                break;
              }
 
+       // DQ (6/11/2011): Added support for new template declaration IR nodes.
+          case V_SgTemplateClassDeclaration:
           case V_SgTemplateDeclaration:
              {
                const SgTemplateDeclaration* templateDeclaration = isSgTemplateDeclaration(node); 
@@ -6791,21 +6811,46 @@ SgTypedefSymbol*
 SgSymbolTable::find_typedef(const SgName & nm)
    {
      assert(p_table != NULL);
-     if(p_table)
+
+     p_iterator = p_table->find(nm);
+
+     hash_iterator save_original_iterator = p_iterator;
+
+     while (p_iterator != p_table->end() && get_table()->key_eq()(p_iterator->first,nm))
         {
-          p_iterator = p_table->find(nm);
-       // while (p_iterator != p_table->end() && p_iterator->first == nm)
-          while (p_iterator != p_table->end() && get_table()->key_eq()(p_iterator->first,nm))
+          if ( p_iterator->second->variantT() == V_SgTypedefSymbol)
              {
-            // if(isSgTypedefSymbol((*p_iterator).second))
-               if ( p_iterator->second->variantT() == V_SgTypedefSymbol)
-                  {
-                    p_name=nm;
-                    p_no_name = false;
-                    return (SgTypedefSymbol *) p_iterator->second;
-                  }
-               p_iterator++;
+               p_name = nm;
+               p_no_name = false;
+               return (SgTypedefSymbol *) p_iterator->second;
              }
+
+          p_iterator++;
+        }
+
+  // DQ (5/14/2011): If we have not found a symbol from the current scope, search for symbols 
+  // injected from other scopes using the Fortran "use" statment (and now also with the C++ 
+  // "using" directive, "using" declaration, and base class declarations).
+     p_iterator = save_original_iterator;
+
+     while (p_iterator != p_table->end() && get_table()->key_eq()(p_iterator->first,nm))
+        {
+       // printf ("Looking for aliased symbols: p_iterator->second->class_name() = %s p_iterator->second->get_name() = %s \n",p_iterator->second->class_name().c_str(),p_iterator->second->get_name().str());
+          SgAliasSymbol* aliasedSymbol = isSgAliasSymbol(p_iterator->second);
+          if (aliasedSymbol != NULL)
+             {
+            // DQ (10/9/2008): Resolve the last link in any chain of alias symbols
+            // SgVariableSymbol* variableSymbol = isSgVariableSymbol(aliasedSymbol->get_alias());
+               SgTypedefSymbol* typedefSymbol = isSgTypedefSymbol(aliasedSymbol->get_base());
+               if ( typedefSymbol != NULL )
+                  {
+                    p_name    = nm;
+                    p_no_name = false;
+                    return typedefSymbol;
+                  }
+             }
+          
+          p_iterator++;
         }
 
      return NULL;
@@ -6899,6 +6944,7 @@ SgSymbolTable::find_variable(const SgName & nm)
   // injected from other scopes using the Fortran "use" statment (or in a future implementation 
   // the C++ "using" directive or "using" declaration).
      p_iterator = save_original_iterator;
+
   // while (p_iterator != p_table->end() && (*p_iterator).first == nm)
      while (p_iterator != p_table->end() && get_table()->key_eq()(p_iterator->first,nm))
         {
@@ -6959,6 +7005,7 @@ SgSymbolTable::find_class(const SgName & nm)
   // injected from other scopes using the Fortran "use" statment (or in a future implementation 
   // the C++ "using" directive or "using" declaration).
      p_iterator = save_original_iterator;
+
   // while (p_iterator != p_table->end() && (*p_iterator).first==nm)
      while (p_iterator != p_table->end() && get_table()->key_eq()(p_iterator->first,nm))
         {
@@ -7038,20 +7085,45 @@ SgNamespaceSymbol*
 SgSymbolTable::find_namespace ( const SgName & nm )
    {
      assert(p_table != NULL);
-     if (p_table)
+     p_iterator = p_table->find(nm);
+
+     hash_iterator save_original_iterator = p_iterator;
+
+     while (p_iterator != p_table->end() && (*p_iterator).first == nm)
         {
-          p_iterator = p_table->find(nm);
-          while (p_iterator != p_table->end() && (*p_iterator).first == nm)
+          if ( p_iterator->second->variantT() == V_SgNamespaceSymbol)
              {
-            // if (isSgNamespaceSymbol((*p_iterator).second))
-               if ( p_iterator->second->variantT() == V_SgNamespaceSymbol)
+               p_name    = nm;
+               p_no_name = false;
+               return (SgNamespaceSymbol *) p_iterator->second;
+             }
+
+          p_iterator++;
+        }
+
+  // DQ (6/5/2011): If we have not found a symbol from the current scope, search for symbols 
+  // injected from other scopes using the Fortran "use" statment (and now also with the C++ 
+  // "using" directive, "using" declaration, and base class declarations).
+     p_iterator = save_original_iterator;
+
+     while (p_iterator != p_table->end() && get_table()->key_eq()(p_iterator->first,nm))
+        {
+       // printf ("Looking for aliased symbols: p_iterator->second->class_name() = %s p_iterator->second->get_name() = %s \n",p_iterator->second->class_name().c_str(),p_iterator->second->get_name().str());
+          SgAliasSymbol* aliasedSymbol = isSgAliasSymbol(p_iterator->second);
+          if (aliasedSymbol != NULL)
+             {
+            // DQ (10/9/2008): Resolve the last link in any chain of alias symbols
+            // SgVariableSymbol* variableSymbol = isSgVariableSymbol(aliasedSymbol->get_alias());
+               SgNamespaceSymbol* namespaceSymbol = isSgNamespaceSymbol(aliasedSymbol->get_base());
+               if ( namespaceSymbol != NULL )
                   {
                     p_name    = nm;
                     p_no_name = false;
-                    return (SgNamespaceSymbol *) p_iterator->second;
+                    return namespaceSymbol;
                   }
-               p_iterator++;
              }
+
+          p_iterator++;
         }
 
      return NULL;
@@ -7071,9 +7143,8 @@ SgSymbolTable::find_function (const SgName & nm, const SgType* t)
    {
      SgFunctionSymbol *s = NULL;
      assert(p_table != NULL);
-     if(p_table)
+     if (p_table)
         {
-
        // AJ (10/21/2004): Adjusted implementation to use new STL hash map interface
        // SgSymbolHashBase::iterator i=p_table->find(nm);
        // JW and AS (08/30/06) changed to use equal range rather than find and
@@ -7094,10 +7165,11 @@ SgSymbolTable::find_function (const SgName & nm, const SgType* t)
             }
          }
 
-	if (s != NULL) {
-		ROSE_ASSERT(s->get_name() == nm);
-		ROSE_ASSERT(s->get_declaration()->get_type() == t);
-	}
+     if (s != NULL)
+        {
+          ROSE_ASSERT(s->get_name() == nm);
+          ROSE_ASSERT(s->get_declaration()->get_type() == t);
+        }
 
      return s;
    }
@@ -7805,11 +7877,36 @@ SgSymbolTable::size() const
 
 // AJ (10/21/2004): Adjusted implementation to use new STL hash map interface
 int
-SgSymbolTable::count(const SgName &nm) const
+SgSymbolTable::count(const SgName & nm) const
    {
   // DQ (1/30/2007): assertion added
      assert(p_table != NULL);
      return p_table->count(nm);
+   }
+
+int
+SgSymbolTable::count_aliases(const SgName & nm) const
+   {
+     assert(p_table != NULL);
+
+  // This is the fastest way (that I know of) to iterate over just those entries that match the key.
+     std::pair<hash_iterator,hash_iterator> range = p_table->equal_range(nm);
+
+     hash_iterator start = range.first;
+     hash_iterator last  = range.second;
+
+     int count = 0;
+     hash_iterator i = start;
+     while (i != last)
+        {
+       // Count only the alias symbols.
+           if (isSgAliasSymbol((*i).second) != NULL)
+               count++;
+
+          i++;
+        }
+
+     return count;
    }
 
 void
@@ -8158,6 +8255,11 @@ SgBaseClass::post_construction_initialization()
   // data member and was forced to handle it as a pointer).
      p_baseClassModifier = new SgBaseClassModifier();
      assert ( p_baseClassModifier != NULL);
+
+  // DQ (5/12/2011): New support for name qualification.
+     p_name_qualification_length     = 0;
+     p_type_elaboration_required     = false;
+     p_global_qualification_required = false;
    }
 
 #if 0
@@ -8183,6 +8285,11 @@ SgBaseClass::SgBaseClass(const SgBaseClass& X)
      assert ( X.p_baseClassModifier != NULL);
      p_baseClassModifier = new SgBaseClassModifier( *(X.p_baseClassModifier) );
      assert ( p_baseClassModifier != NULL);
+
+  // DQ (5/12/2011): New support for name qualification.
+     p_name_qualification_length     = X.p_name_qualification_length;
+     p_type_elaboration_required     = X.p_type_elaboration_required;
+     p_global_qualification_required = X.p_global_qualification_required;
    }
 
 #if 0
@@ -8210,6 +8317,11 @@ SgBaseClass::operator= (const SgBaseClass & X)
      assert (p_baseClassModifier   != NULL);
      assert (X.p_baseClassModifier != NULL);
      *p_baseClassModifier = *X.p_baseClassModifier;
+
+  // DQ (5/12/2011): New support for name qualification.
+     p_name_qualification_length     = X.p_name_qualification_length;
+     p_type_elaboration_required     = X.p_type_elaboration_required;
+     p_global_qualification_required = X.p_global_qualification_required;
 
      return *this;
    }
@@ -8246,6 +8358,33 @@ SgBaseClass::get_baseClassModifier()
    {
      assert ( p_baseClassModifier != NULL);
      return *p_baseClassModifier;
+   }
+
+
+SgName
+SgBaseClass::get_qualified_name_prefix() const
+   {
+  // DQ (5/29/2011): Added to support for new qualified name generation.
+  // This only applies to specific SgSupport IR nodes:
+  //    SgBaseClass
+  //    SgTemplateArgument
+
+  // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
+  // different and so it depends upon where the type is referenced.  Thus the qualified name is 
+  // stored in a map to the IR node that references the type.
+     SgName nameQualifier;
+     std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForNames().find(const_cast<SgBaseClass*>(this));
+  // ROSE_ASSERT(i != SgNode::get_globalQualifiedNameMapForNames().end());
+
+     if (i != SgNode::get_globalQualifiedNameMapForNames().end())
+        {
+          nameQualifier = i->second;
+       // printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+        }
+
+  // printf ("nameQualifier for SgBaseClass = %s = %s \n",class_name().c_str(),nameQualifier.str());
+
+     return nameQualifier;
    }
  
 SOURCE_BASECLASS_END
@@ -8365,6 +8504,29 @@ SgInitializedName::get_qualified_name() const
      return returnName;
    }
 
+SgName
+SgInitializedName::get_qualified_name_prefix_for_type() const
+   {
+  // DQ (5/29/2011): Added to support for new qualified name generation.
+
+  // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
+  // different and so it depends upon where the type is referenced.  Thus the qualified name is 
+  // stored in a map to the IR node that references the type.
+     SgName nameQualifier;
+     std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(const_cast<SgInitializedName*>(this));
+  // ROSE_ASSERT(i != SgNode::get_globalQualifiedNameMapForNames().end());
+
+     if (i != SgNode::get_globalQualifiedNameMapForTypes().end())
+        {
+          nameQualifier = i->second;
+       // printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+        }
+
+  // printf ("nameQualifier for SgInitializedName = %s = %s \n",class_name().c_str(),nameQualifier.str());
+
+     return nameQualifier;
+   }
+ 
 void
 SgInitializedName::post_construction_initialization()
    {
@@ -11061,6 +11223,7 @@ X no_implicit_templates
 X no_implicit_inline_templates
 X skip_commentsAndDirectives
 X collectAllCommentsAndDirectives
+X unparseHeaderFiles
 X preprocessorDirectivesAndCommentsList
 X attributeMechanism
 X KCC_frontend
@@ -11105,6 +11268,9 @@ X aggressive
 
   // DQ (4/19/2006): Added to control comment and directive handling (takes more time to process header files).
      p_collectAllCommentsAndDirectives = false;
+
+  // negara1 (07/08/2011): Added to control whether header files should be unparsed.
+     p_unparseHeaderFiles = false;
 
   // DQ (4/7/2001) Added support for multiple files (save the preprocessor 
   //               directives and comments into the SgFile)
@@ -11547,7 +11713,7 @@ SgFile::generateOutputFileName() const
 // DQ (8/20/2005): Removed default parameter from extern function declaration
 // extern void unparseFile( SgFile&, UnparseDelegate* repl = NULL );
 // Liao (2/8/2008): Removed default parameters due to conflicts with src/backend/unparser/unparser.h
-// extern void unparseFile( SgFile* file, UnparseFormatHelp *unparseFormatHelp /* = NULL */, UnparseDelegate* unparseDelegate/* = NULL */);
+// extern void unparseFile( SgFile* file, UnparseFormatHelp *unparseFormatHelp /* = NULL */, UnparseDelegate* unparseDelegate/* = NULL */, SgScopeStatement* unparseScope /* = NULL */);
 
 void
 // SgFile::unparse ()
@@ -11565,8 +11731,8 @@ SgFile::unparse ( UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparse
 
   // Call the unparser mechanism
   // DQ (1/24/2010): Moved the extern declaration for unparseFile() to be local to this function (better code design).
-     extern void unparseFile( SgFile* file, UnparseFormatHelp *unparseFormatHelp /* = NULL */, UnparseDelegate* unparseDelegate/* = NULL */);
-     unparseFile ( this, unparseFormatHelp, unparseDelegate );
+     extern void unparseFile( SgFile* file, UnparseFormatHelp *unparseFormatHelp /* = NULL */, UnparseDelegate* unparseDelegate/* = NULL */, SgScopeStatement* unparseScope /* = NULL */);
+     unparseFile ( this, unparseFormatHelp, unparseDelegate, NULL );
    }
 
 // Moved to sageSupport.C: int SgFile::compileOutput ( vector<string>& argv, int fileNameIndex, const string& compilerNameOrig )
@@ -11728,6 +11894,7 @@ SgFile::display ( const std::string & label ) const
      printf ("     p_no_implicit_inline_templates         = %s \n",(p_no_implicit_inline_templates == true) ? "true" : "false");
      printf ("     p_skip_commentsAndDirectives           = %s \n",(p_skip_commentsAndDirectives == true) ? "true" : "false");
      printf ("     p_collectAllCommentsAndDirectives      = %s \n",(p_collectAllCommentsAndDirectives == true) ? "true" : "false");
+     printf ("     p_unparseHeaderFiles                   = %s \n",(p_unparseHeaderFiles == true) ? "true" : "false");
 
      printf ("     p_preprocessorDirectivesAndCommentsList is %s pointer \n",(p_preprocessorDirectivesAndCommentsList != NULL) ? "VALID" : "NULL");
 
@@ -11814,6 +11981,7 @@ X no_implicit_templates
 X no_implicit_inline_templates
 X skip_commentsAndDirectives
 X collectAllCommentsAndDirectives
+X unparseHeaderFiles
 X preprocessorDirectivesAndCommentsList
 X attributeMechanism
 X KCC_frontend
@@ -12935,6 +13103,14 @@ SgUnparse_Info & SgUnparse_Info::operator= ( const SgUnparse_Info & X )
   // type, declaration and class elaboration lists stored in the scopes.
      p_current_scope = X.p_current_scope;
 
+  // DQ (5/11/2011): New support for name qualification.
+     p_name_qualification_length     = X.p_name_qualification_length;
+     p_type_elaboration_required     = X.p_type_elaboration_required;
+     p_global_qualification_required = X.p_global_qualification_required;
+
+  // DQ (5/21/2011): New support for name qualification.
+     p_reference_node_for_qualification = X.p_reference_node_for_qualification;
+
      return *this;
    }
 
@@ -13033,6 +13209,14 @@ SgUnparse_Info::post_construction_initialization()
 
   // DQ (6/2/2007): Added initialization of new data member.
      p_current_scope = NULL;
+
+  // DQ (5/11/2011): New support for name qualification.
+     p_name_qualification_length     = 0;
+     p_type_elaboration_required     = false;
+     p_global_qualification_required = false;
+
+  // DQ (5/21/2011): New support for name qualification.
+     p_reference_node_for_qualification = NULL;
    }
 
 bool
@@ -13836,6 +14020,9 @@ SgUnparse_Info::display ( const std::string & label ) const
      printf ("p_outputCodeGenerationFormatDelimiters = %s \n",p_outputCodeGenerationFormatDelimiters ? "true" : "false");
      printf ("p_current_function_call                = %p \n",p_current_function_call);
      printf ("p_current_scope                        = %p = %s \n",p_current_scope,p_current_scope != NULL ? p_current_scope->class_name().c_str() : "EmPtY sTrInG");
+
+  // DQ (5/21/2011): Added support for name qualification...
+     printf ("p_reference_node_for_qualification     = %p = %s \n",p_reference_node_for_qualification,p_reference_node_for_qualification != NULL ? p_reference_node_for_qualification->class_name().c_str() : "EmPtY sTrInG");
    }
 
 string
@@ -14099,7 +14286,12 @@ void SgTemplateArgument::post_construction_initialization()
      p_type                  = NULL;
      p_expression            = NULL;
   // p_templateInstantiation = NULL;
-     p_templateDeclaration = NULL;
+     p_templateDeclaration   = NULL;
+
+  // DQ (5/14/2011): Added to support name qualification on types referenced by template arguments.
+     p_name_qualification_length     = 0;
+     p_type_elaboration_required     = false;
+     p_global_qualification_required = false;
    }
 
 // Different constructors for use in building the different types of arguments possible
@@ -14310,6 +14502,58 @@ SgTemplateArgument::get_scope () const
      return scope;
    } 
 #endif
+
+SgName
+SgTemplateArgument::get_qualified_name_prefix() const
+   {
+  // DQ (5/29/2011): Added to support for new qualified name generation.
+  // This only applies to specific SgSupport IR nodes:
+  //    SgBaseClass
+  //    SgTemplateArgument
+
+     printf ("This is not called see the function: SgTemplateArgument::get_qualified_name_prefix_for_type() \n");
+
+  // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
+  // different and so it depends upon where the type is referenced.  Thus the qualified name is 
+  // stored in a map to the IR node that references the type.
+     SgName nameQualifier;
+     std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(const_cast<SgTemplateArgument*>(this));
+  // ROSE_ASSERT(i != SgNode::get_globalQualifiedNameMapForNames().end());
+
+     if (i != SgNode::get_globalQualifiedNameMapForTypes().end())
+        {
+          nameQualifier = i->second;
+       // printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+        }
+
+  // printf ("nameQualifier for SgBaseClass = %s = %s \n",class_name().c_str(),nameQualifier.str());
+
+     return nameQualifier;
+   }
+
+SgName
+SgTemplateArgument::get_qualified_name_prefix_for_type() const
+   {
+  // DQ (5/29/2011): Added to support for new qualified name generation.
+
+  // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
+  // different and so it depends upon where the type is referenced.  Thus the qualified name is 
+  // stored in a map to the IR node that references the type.
+     SgName nameQualifier;
+     std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(const_cast<SgTemplateArgument*>(this));
+  // ROSE_ASSERT(i != SgNode::get_globalQualifiedNameMapForNames().end());
+
+     if (i != SgNode::get_globalQualifiedNameMapForTypes().end())
+        {
+          nameQualifier = i->second;
+          printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+        }
+
+     printf ("nameQualifier for SgTemplateArgument = %s = %s \n",class_name().c_str(),nameQualifier.str());
+
+     return nameQualifier;
+   }
+ 
 
 SOURCE_TEMPLATE_ARGUMENT_END
 
