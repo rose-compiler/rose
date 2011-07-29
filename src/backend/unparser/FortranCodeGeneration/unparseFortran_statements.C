@@ -16,7 +16,7 @@
 
 using namespace std;
 
-
+#define DXN_CODE 1
 
 FortranCodeGeneration_locatedNode::FortranCodeGeneration_locatedNode(Unparser* unp, std::string fname)
    : UnparseLanguageIndependentConstructs(unp,fname)
@@ -4220,9 +4220,10 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
      SgPointerType* pType = isSgPointerType(type);
      if (pType)
      { // pType may points to a copointer or may be a copointer itself, so look at its base type
-       SgPointerType* pointeeType = isSgPointerType(pType->get_base_type());
-       if (pointeeType)
+//       SgPointerType* pointeeType = isSgPointerType(pType->get_base_type());
+       if (isSgPointerType(pType->get_base_type()))
        {   // pType is a pointer to a copointer
+           SgPointerType* pointeeType = isSgPointerType(pType->get_base_type());
            SgArrayType* pointeeBase = isSgArrayType(pointeeType->get_base_type());
            if (pointeeBase != NULL && pointeeBase->get_rank() > 0)  // the base type is an array of rank >= 1.
            {
@@ -4239,7 +4240,7 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
              curprint("[*]");  // a scalar/derived-type coarray is implemented as a rank 0 array of the given type.
            }
        }
-       else
+       else if (isSgArrayType(pType->get_base_type()))
        {   // if the base type of pType is a coarray or an array, print the appropriate coarray or array info
            SgArrayType* pTypeBase = isSgArrayType(pType->get_base_type());
            if (pTypeBase != NULL && pTypeBase->get_rank() > 0)  // the base type is an array of rank >= 1.
@@ -4258,6 +4259,14 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
            }
 
        }
+       else if (isSgTypeString(pType->get_base_type()))
+       {  // print the character length
+           SgTypeString* stringType = isSgTypeString(pType->get_base_type());
+           curprint("*");
+           curprint("(");
+           unparseExpression(stringType->get_lengthExpression(), info);
+           curprint(")");
+       }
      }
      else if (type->get_isCoArray())  // type is not a pointer, but is a coarray type
      {
@@ -4268,10 +4277,23 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
   // printf ("In FortranCodeGeneration_locatedNode::unparseVarDecl(initializedName=%p): variable initializer = %p \n",initializedName,init);
      if (init != NULL)
         {
+#if DXN_CODE
+         if (pType)
+            {  // this is a pointer null-init; OFP 0.8.2 has yet to implement pointer => init-data-object
+               // TODO: need an IR to model pointer initialization, something like SgPointerInitializer.
+              curprint(" => NULL()");
+
+            }
+         else
+            {
+              curprint(" = ");
+              SgInitializer* initializer = isSgInitializer(init);
+              ROSE_ASSERT(initializer != NULL);
+              unparseExpression(initializer, info);
+            }
+#else
           curprint(" = ");
-
        // printf ("In FortranCodeGeneration_locatedNode::unparseVarDecl(initializedName=%p): init = %s \n",init,init->class_name().c_str());
-
        // I think the initializer for Fortran is always a SgExprListExp, but it need not be.
 #if 0
           SgAssignInitializer* assignInitializer = isSgAssignInitializer(init);
@@ -4317,6 +4339,8 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
           ROSE_ASSERT(initializer != NULL);
           unparseExpression(initializer, info);
 #endif
+
+#endif // DXN_CODE
         }
    }
 

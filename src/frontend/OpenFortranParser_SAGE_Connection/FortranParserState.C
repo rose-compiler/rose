@@ -98,8 +98,8 @@ SgType* AttributeRec::computeEntityType()
 {
     if (charLenExpr)
     {
-        // TODO: convert baseType to string type with char length and the existing type kind
-        SgExpression* typeKind = baseType->get_type_kind();  // TODO: NEED TO Make a copy and not use the original typeKind.
+        // convert baseType to string type with char length and the existing type kind
+        SgExpression* typeKind = baseType->get_type_kind();
         baseType = SgTypeString::createType(charLenExpr, typeKind);
     }
     if (hasDimension)
@@ -119,7 +119,7 @@ SgType* AttributeRec::computeEntityType()
     {
       baseType = new SgPointerType(baseType);
     }
-    return baseType; // TODO
+    return baseType;
 }
 
 SgArrayType* AttributeRec::buildArrayType()
