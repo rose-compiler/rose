@@ -1,17 +1,15 @@
-
-
 #include <ArrayInterface.h>
 #include <CPPAstInterface.h>
 
 extern bool DebugAliasAnal();
-//! Collect alias information with the help from annotations and propagate some values
+
 void ArrayInterface::
 initialize( AstInterface& fa, const AstNodePtr& h)
 {
    aliasCollect(fa, h);
    valueCollect.build( fa, h, *this, ArrayAnnotation::get_inst());
 }
-//! call valueCollect
+
 void ArrayInterface::observe( AstInterface& fa) 
 {
   fa.AttachObserver( &valueCollect.get_value_map());
@@ -35,7 +33,7 @@ stop_observe( AstInterface& fa)
   fa.DetachObserver( &valueCollect.get_value_map());
   fa.DetachObserver(this);
 }
-//! Using ArrayAnnotation to tell if two references may be aliased.
+
 bool ArrayInterface ::
 may_alias(AstInterface& _fa, const AstNodePtr& r1, const AstNodePtr& r2)
 {
@@ -264,7 +262,7 @@ is_array_mod_op( CPPAstInterface& fa, const AstNodePtr& arrayExp, AstNodePtr* ar
 bool ArrayInterface::
 is_array_construct_op( CPPAstInterface& fa, const AstNodePtr& arrayExp, 
                        AstInterface::AstNodeList* alias,int *dimp, 
-                       SymbolicFunctionDeclarationGroup *len, SymbolicFunctionDeclarationGroup* elem)
+                              SymbolicFunctionDeclarationGroup *len, SymbolicFunctionDeclarationGroup* elem)
 {
   ArrayDescriptor desc;
   if (ArrayAnnotation::get_inst()->is_array_construct_op( fa, arrayExp, alias, &desc) ) {
@@ -372,7 +370,7 @@ impl_reshape_array( CPPAstInterface& fa,
 
 AstNodePtr ArrayInterface::
 impl_access_array_elem (CPPAstInterface& fa, const AstNodePtr& array,
-                        AstInterface::AstNodeList& ivarAst)
+                           AstInterface::AstNodeList& ivarAst)
 {
   SymbolicFunctionDeclarationGroup elem;
 
@@ -399,7 +397,7 @@ impl_access_array_elem (CPPAstInterface& fa, const AstNodePtr& array,
 
 AstNodePtr ArrayInterface::
 impl_access_array_length( CPPAstInterface& fa, const AstNodePtr& array,
-                          int dim, int plus)
+                         int dim, int plus)
 {
   SymbolicVal rval;
   ArrayOptDescriptor desc;
@@ -422,7 +420,7 @@ impl_access_array_length( CPPAstInterface& fa, const AstNodePtr& array,
      rval = rval + plus;
   return rval.CodeGen(fa);
 }
-// Not really used?
+
 bool ArrayInterface ::
 IsArray( CPPAstInterface& fa, const AstNodePtr& s)
 { 
@@ -430,7 +428,7 @@ IsArray( CPPAstInterface& fa, const AstNodePtr& s)
      return true;
   return false;
 }
-// Not used?
+
 bool ArrayInterface ::
 IsArrayRef( CPPAstInterface& fa, const AstNodePtr& t)
 {
@@ -438,7 +436,6 @@ IsArrayRef( CPPAstInterface& fa, const AstNodePtr& t)
      return true;
   return false;
 }
-//! Using ArrayAnnotation to tell if a node is an array element access
 bool ArrayInterface :: 
 IsArrayAccess( AstInterface& _fa, const AstNodePtr& s, AstNodePtr* arrayp,
                                  AstInterface::AstNodeList* index)
@@ -478,7 +475,6 @@ GetArrayBound( AstInterface& _fa, const AstNodePtr& array,
      return false;
   if (!rval.isConstInt(ub))
      return false;
-  //lower bound is fixed to 0 ???   
   lb = 0;
   return true;
 }

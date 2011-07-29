@@ -170,6 +170,23 @@ set(MSTL_SRC
     ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/MSTL/DOTGraphInterface.C
    )
 
+set(POET_SRC
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/AutoTuningInterface.cpp
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/codegen.cpp
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/driver.cpp
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/evalAST.cpp
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/evalOp.cpp
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/main.cpp
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/parse.cpp
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/poetAST.cpp
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/timing.cpp
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/poet_lex.c
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/poet_yacc.c
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/poet_yacc.y
+    ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/POET/poet_lex.l
+   )
+
+
 set(EDG_SAGE_Connection_SRC
     ${CMAKE_SOURCE_DIR}/src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection/sage_gen_be.C
     ${CMAKE_SOURCE_DIR}/src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection/wrapperFunctionsForEDG.C
@@ -210,6 +227,7 @@ set(rose_support_src
       ${CMAKE_SOURCE_DIR}/src/roseSupport/memoryUsage.C
       ${CMAKE_BINARY_DIR}/src/roseSupport/stringify.C
       ${CMAKE_SOURCE_DIR}/src/roseSupport/threadSupport.C
+      ${CMAKE_SOURCE_DIR}/src/roseSupport/IncludeDirective.C
      )
 
 
@@ -251,7 +269,9 @@ set (unparser_SRC
 #      ${CMAKE_SOURCE_DIR}/src/backend/unparser/copy_unparser.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/astUnparseAttribute.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/unparser.C
+      ${CMAKE_SOURCE_DIR}/src/backend/unparser/nameQualificationSupport.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/unparse_sym.C
+      ${CMAKE_SOURCE_DIR}/src/backend/unparser/IncludedFilesUnparser.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/formatSupport/unparseFormatHelp.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/formatSupport/unparse_format.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/PHPCodeGeneration/unparsePHP.C
@@ -354,6 +374,7 @@ set( midend_src
  ${CMAKE_SOURCE_DIR}/src/midend/abstractHandle/abstract_handle.cpp
  ${CMAKE_SOURCE_DIR}/src/midend/abstractHandle/loopAdapter.cpp
  ${CMAKE_SOURCE_DIR}/src/midend/abstractHandle/roseAdapter.cpp
+ ${CMAKE_SOURCE_DIR}/src/midend/abstractMemoryObject/memory_object.cpp
  ${CMAKE_SOURCE_DIR}/src/midend/astQuery/nodeQueryInheritedAttribute.C
  ${CMAKE_SOURCE_DIR}/src/midend/astQuery/nameQuery.C
  ${CMAKE_SOURCE_DIR}/src/midend/astQuery/astQueryInheritedAttribute.C
@@ -664,6 +685,11 @@ set( libastVisualization_SRC
   ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astVisualization/walrus.C 
 )
 
+set( libincludeDirectivesProcessing_SRC
+  ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/includeDirectivesProcessing/CompilerOutputReader.C
+  ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/includeDirectivesProcessing/CompilerOutputParser.C
+  ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/includeDirectivesProcessing/IncludingPreprocessingInfosCollector.C
+)
 
 
 set( midend_loopproc_src
@@ -697,6 +723,7 @@ ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/LoopT
 ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/TransformComputation.C
 ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/BlockingAnal.C
 ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/TypedFusionImpl.C
+${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/ParallelizeLoop.C
 ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depInfo/StmtDepAnal.C
 #${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depInfo/DepTestStatistics.C
 #${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depInfo/PlatoOmegaInterface.C
@@ -774,6 +801,7 @@ set(rose_LIB_SRCS dummyCppFileForLibrose.C
  ${unparser_SRC}
  ${sage3_SRC}
  ${MSTL_SRC} 
+ ${POET_SRC} 
  ${virtualCFG_SRC} 
  ${rose_support_src}
  ${roseDisassemblers_SRC}
@@ -797,6 +825,7 @@ set(rose_LIB_SRCS dummyCppFileForLibrose.C
  ${libastTokenStream_SRC}
  ${libastHiddenTypeAndDeclarationLists_SRC}
  ${libastVisualization_SRC}
+ ${libincludeDirectivesProcessing_SRC}
  ${midend_loopproc_src}
  ${libastPostProcessing_SRC}
  ${binaryFrontend_SRC}
@@ -840,6 +869,8 @@ add_custom_target(
 
 ###############################################################################################################################
 
+#Faizur(07/21/2011): POET VERSION ADDED
+add_definitions(-DPOET_VERSION="\\"1.02.06.10\\"")
 
 add_library(ROSE_DLL SHARED ${rose_LIB_SRCS} )
 add_dependencies(ROSE_DLL OMPPARSER ROSE_PREPROCESSOR edg33 libhpdf generate_stringify generate_rosePublicConfig) 

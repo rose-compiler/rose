@@ -1,7 +1,11 @@
 #include "cfgUtils.h"
 #include <stdlib.h>
 #include <time.h>
- 
+#include <set>
+using std::set;
+#include <string> 
+using std::string;
+
 namespace cfgUtils
 {
   SgProject* project;
@@ -768,7 +772,7 @@ bool parseAssignment(/*SgExpression*/SgNode* expr, short& op, varID &i, varID &j
 //    where op may be either + (add), * (mult) or / (divide)
 //    op may be = none if the rhs has only one term
 // This function parses non-assignment expressions such as i op j or c but not i = j op c, i op= j or i++
-bool parseExpr(SgExpression* expr, short& op, varID &i, bool &negI, varID& j, bool &negJ, long &c)
+bool parseExpr(const SgExpression* expr, short& op, varID &i, bool &negI, varID& j, bool &negJ, long &c)
 {
   // if the expression is a parseable addition operation
   if(parseAddition(expr, i, negI, j, negJ, c))
@@ -810,7 +814,7 @@ bool parseExpr(SgExpression* expr, short& op, varID &i, bool &negI, varID& j, bo
 // and sets *j, *k and *c appropriately
 // negJ=true if j is supposed to be negated and false otherwise
 // negK=true if k is supposed to be negated and false otherwise
-bool parseAddition(SgExpression* expr, varID &j, bool &negJ, varID& k, bool &negK, long &c)
+bool parseAddition(const SgExpression* expr, varID &j, bool &negJ, varID& k, bool &negK, long &c)
 {
   //printf("   parseAddition(<%s | %s>)\n", expr->class_name().c_str(), expr->unparseToString().c_str());
   expr = unwrapCasts(expr);
@@ -900,7 +904,7 @@ bool parseAddition(SgExpression* expr, varID &j, bool &negJ, varID& k, bool &neg
 // returns true if parsing was successful
 //    (expressions accepted: c, -c, j, c * j, j * c, j * k
 // and sets *j, *k and *c appropriately
-bool parseMultiplication(SgExpression* expr, varID &j, varID& k, long &c)
+bool parseMultiplication(const SgExpression* expr, varID &j, varID& k, long &c)
 {
   //printf("   parseAddition expr = <%s | %s>\n", expr->class_name().c_str(), expr->unparseToString().c_str());
   expr = unwrapCasts(expr);
@@ -978,7 +982,7 @@ bool parseMultiplication(SgExpression* expr, varID &j, varID& k, long &c)
 // returns true if parsing was successful
 //    (expressions accepted: c, -c, j, j / c, c / k, j / k
 // and sets *j, *k and *c appropriately
-bool parseDivision(SgExpression* expr, varID &j, varID& k, long &c)
+bool parseDivision(const SgExpression* expr, varID &j, varID& k, long &c)
 {
   //printf("   parseAddition expr = <%s | %s>\n", expr->class_name().c_str(), expr->unparseToString().c_str());
   expr = unwrapCasts(expr);
@@ -1091,7 +1095,7 @@ return 0;
 // returns whether a given AST node that represents a constant is an integer and
 // sets val to be the numeric value of that integer (all integer types are included
 // but not floating point, characters, etc.)
-bool IsConstInt(SgExpression* rhs, long &val)
+bool IsConstInt(const SgExpression* rhs, long &val)
 {
   //	printf("rhs = %s: %s\n", rhs->unparseToString().c_str(), rhs->class_name().c_str());
 
@@ -1154,7 +1158,7 @@ bool IsConstInt(SgExpression* rhs, long &val)
 
 // Liao 10/7/2010, made a few functions' namespace explicit
 // pulls off all the SgCastExps that may be wrapping the given expression, returning the expression that is being wrapped
-SgExpression* cfgUtils::unwrapCasts(SgExpression* e)
+const SgExpression* cfgUtils::unwrapCasts(const SgExpression* e)
 {
   if(isSgCastExp(e))
   {

@@ -27,28 +27,24 @@ void read_graph(Graph& g, std::istream& in, const std::string& hint)
     }  
   }
 
-
-// DQ (11/26/2009): Note that changing "OUT" to "Out" allowed this code to compile using MS VS 9.0 (strange)
-template <class Graph, class Out>
-void write_graph( const Graph & g, Out & outputStream, const std::string & hint) 
+template <class Graph, class OUT>
+void write_graph( const Graph& g, OUT& out, const std::string& hint) 
   {
-// #ifndef _MSC_VER
      typename Graph::NodeIterator nodes = g.GetNodeIterator();
      for ( ; !nodes.ReachEnd() ; ++nodes) {
         typename Graph::Node* curnode = *nodes;
         typename Graph::EdgeIterator edges 
                         = g.GetNodeEdgeIterator(curnode,GraphAccess::EdgeOut);
         if (edges.ReachEnd()) 
-            outputStream << hint << " " << curnode->toString() << std::endl; 
+            out << hint << " " << curnode->toString() << std::endl; 
         else for ( ;!edges.ReachEnd(); ++edges) {
             typename Graph::Edge *e = (*edges);
             typename Graph::Node* n = 
                   g.GetEdgeEndPoint(e, GraphAccess::EdgeIn);
-            outputStream << hint << " " << curnode->toString() << " " << n->toString() 
+            out << hint << " " << curnode->toString() << " " << n->toString() 
                <<  " " << e->toString() << std::endl; 
         }
      }
-// #endif
   }
 
 template <class Graph, class Node>
@@ -67,7 +63,6 @@ void write_graph_node_edge(Graph& g, const Node* curnode,
    }
 }
 
-#ifndef _MSC_VER
 template <class Graph, class OUT>
 void write_graph2( const Graph& g, OUT& out, const std::string& hint) 
   {
@@ -81,7 +76,6 @@ void write_graph2( const Graph& g, OUT& out, const std::string& hint)
         write_graph_node_edge(g, curnode, out, hint, GraphAccess::EdgeOut);
      }
   }
-#endif
 
 
 template <class Graph>

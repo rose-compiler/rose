@@ -2,28 +2,41 @@
 #ifndef UTIL_H
 #define UTIL_H
 
-
 #include <string>
+#include <sstream>
 
-#ifndef  _WIN64
-#define unsigned_long_long unsigned long
-#else
-#define unsigned_long_long unsigned long long
-#endif
+// typedef unsigned long addr_type;
 
-typedef unsigned long addr_type;
+#include "rted_iface_structs.h"
 
-
-
-/// Compare Functor, which compares two pointer by comparing the objects they point to
-template <class T>
-struct PointerCmpFunc
+template<typename T>
+inline
+std::string ToString(T t)
 {
-    bool operator() (const T* o1, const T* o2)  {
-        return (*o1 < *o2);
-    }
-};
+  std::ostringstream myStream; //creates an ostringstream object
+  myStream << t << std::flush;
+  return myStream.str(); //returns the string form of the stringstream object
+}
 
+/*
+template<typename T>
+inline
+std::string HexToString(T t)
+{
+  std::ostringstream myStream; //creates an ostringstream object
+  myStream << std::hex << t ;
+  return myStream.str(); //returns the string form of the stringstream object
+}
+*/
+
+struct PointerCompare
+{
+  template <class T>
+  bool operator()(const T* lhs, const T* rhs) const
+  {
+    return (*lhs) < (*rhs);
+  }
+};
 
 
 /**
@@ -32,32 +45,29 @@ struct PointerCmpFunc
 class SourcePosition
 {
     public:
-        SourcePosition();
-        SourcePosition(const std::string & file);
-        SourcePosition(const std::string & file,int line1, int line2);
+        SourcePosition()
+        : file("Unknown"), line1(0), line2(0)
+        {}
 
-        std::string toString() const;
+        explicit
+        SourcePosition(rted_SourceInfo si)
+        : file(si.file), line1(si.src_line), line2(si.rted_line)
+        {}
 
+        std::string toString()           const;
         std::string getTransformedFile() const;
 
-        const std::string & getFile() const { return file; }
-
-        int getLineInOrigFile() const        { return line1; }
+        const std::string& getFile()   const { return file; }
+        int getLineInOrigFile()        const { return line1; }
         int getLineInTransformedFile() const { return line2; }
 
-    protected:
+    private:
         std::string file;   ///< Absolute Path of source-file
-        int line1;          ///< line number in sourcefile
-        int line2;          ///< line number in transformed sourcefile
+        size_t      line1;  ///< line number in sourcefile
+        size_t      line2;  ///< line number in transformed sourcefile
 };
+
 std::ostream& operator<< (std::ostream &os, const SourcePosition & m);
-
-
-
-
-
-
-#include <sstream>
 
 class RuntimeViolation
 {
@@ -65,29 +75,29 @@ class RuntimeViolation
 
         enum Type
         {
-                DOUBLE_ALLOCATION,       // try to reserve memory with lies in already allocated mem
-                INVALID_FREE,            // called free on non allocated address
-                MEMORY_LEAK,             // some allocated memory was not freed on program exit
-                EMPTY_ALLOCATION,        // trying to get a memory area of size 0
-                INVALID_READ,            // trying to read non-allocated or non-initialized mem region
-                INVALID_WRITE,           // trying to write to non-allocated mem region
-                INVALID_FILE_OPEN,       // fopen could not open file, fileHandle==NULL
-                DOUBLE_FILE_OPEN,        // trying to register the same file-pointer twice
-                INVALID_FILE_CLOSE,      // trying to close a file which has already been closed / not opened
-                INVALID_FILE_ACCESS,     // trying to access file which is not opened
-                UNCLOSED_FILES,          // some opened files where not closed before program exit
-                INVALID_PTR_ASSIGN,      // a invalid address (not allocated) is assigned to a pointer
-                MEM_WITHOUT_POINTER,     // the last pointer which has pointed to a mem-location
-                                         // has been deregistered
-                POINTER_CHANGED_MEMAREA, // a pointer changed the memory area which it points to
-                                         // (may be an error if changed by pointer arithmetic)
-                INVALID_MEM_OVERLAP,     // some memory chunk overlaps with some
-                                         // other memory chunk illegaly, e.g. in arguments to memcpy
-                INVALID_TYPE_ACCESS,     // invalid access to "typed" memory
-                UNEXPECTED_FUNCTION_SIGNATURE,  // a c program compiled with a missing or wrong 
-					// prototype gave the wrong types at the callsite
-                NONE,                   // no violation
-		UNKNOWN_VIOLATION
+                DOUBLE_ALLOCATION,              ///< try to reserve memory with lies in already allocated mem
+                INVALID_FREE,                   ///< called free on non allocated address
+                MEMORY_LEAK,                    ///< some allocated memory was not freed on program exit
+                EMPTY_ALLOCATION,               ///< trying to get a memory area of size 0
+                INVALID_READ,                   ///< trying to read non-allocated or non-initialized mem region
+                INVALID_WRITE,                  ///< trying to write to non-allocated mem region
+                INVALID_FILE_OPEN,              ///< fopen could not open file, fileHandle==NULL
+                DOUBLE_FILE_OPEN,               ///< trying to register the same file-pointer twice
+                INVALID_FILE_CLOSE,             ///< trying to close a file which has already been closed / not opened
+                INVALID_FILE_ACCESS,            ///< trying to access file which is not opened
+                UNCLOSED_FILES,                 ///< some opened files where not closed before program exit
+                INVALID_PTR_ASSIGN,             ///< a invalid address (not allocated) is assigned to a pointer
+                MEM_WITHOUT_POINTER,            ///< the last pointer which has pointed to a mem-location
+                                                ///  has been deregistered
+                POINTER_CHANGED_MEMAREA,        ///< a pointer changed the memory area which it points to
+                                                ///  (may be an error if changed by pointer arithmetic)
+                INVALID_MEM_OVERLAP,            ///< some memory chunk overlaps with some
+                                                ///  other memory chunk illegaly, e.g. in arguments to memcpy
+                INVALID_TYPE_ACCESS,            ///< invalid access to "typed" memory
+                UNEXPECTED_FUNCTION_SIGNATURE,  ///< a c program compiled with a missing or wrong
+                                                ///  prototype gave the wrong types at the callsite
+                NONE,                           ///< no violation
+                UNKNOWN_VIOLATION
         };
 
 
@@ -137,8 +147,6 @@ class ViolationPolicy {
             Invalid
         };
 };
-
-
 
 
 #endif

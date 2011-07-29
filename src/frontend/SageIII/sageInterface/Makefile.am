@@ -20,24 +20,25 @@ if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
    libsageInterface_la_SOURCES += \
      sageInterfaceAsm.C \
      sageInterface_asm.C \
-     sageBuilderAsm.C 
+     sageBuilderAsm.C
 endif
 
-libsageInterface_la_LIBADD       = 
-libsageInterface_la_DEPENDENCIES = 
+libsageInterface_la_LIBADD       =
+libsageInterface_la_DEPENDENCIES =
 
 include_HEADERS = \
      sageInterface.h \
      sageBuilder.h \
+     sageGeneric.hpp \
      integerOps.h \
      abiStuff.h
 #     highLevelInterface.h
-#     loopHelpers.h 
+#     loopHelpers.h
 
 # if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
    include_HEADERS += \
      sageInterfaceAsm.h \
-     sageBuilderAsm.h 
+     sageBuilderAsm.h
 # endif
 
 

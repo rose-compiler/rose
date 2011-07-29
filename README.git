@@ -8,7 +8,7 @@ by many other open source projects such as the Linux kernel, Perl,
 Eclipse, Gnome, KDE, Android, Debian, and others.  Being
 "distributed", Git uses a slightly different work flow and terminology
 than centralized systems like Subversion and CVS.
-
+ 
 If you're coming from a centralized system, you may have to unlearn a
 few of the things you've become accustomed to.  For example, you
 generally don't checkout out a branch from a central repo, but rather
@@ -821,6 +821,7 @@ git clone --bare --shared X Y
 git clone Y localY
 cd localY/
 
+
 # This will build a local branch 
 # git branch dq-main-rc master
 # This will build in in origin
@@ -839,3 +840,13 @@ git branch -a
 git checkout dq-main-rc
  
 
+
+*****************************************************************************
+To commit a new branch without changes (used to force another Hudson rebuild)
+*****************************************************************************
+
+# make an empty commit
+git commit --allow-empty
+
+# And then push the changes
+git push origin dq-cxx-rc
