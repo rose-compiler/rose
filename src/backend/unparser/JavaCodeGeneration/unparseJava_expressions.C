@@ -1154,31 +1154,9 @@ JavaCodeGeneration_locatedNode::unparseAssnInit(SgExpression* expr, SgUnparse_In
    {
      SgAssignInitializer* assn_init = isSgAssignInitializer(expr);
      ROSE_ASSERT(assn_init != NULL);
-  /* code inserted from specification */
 
-  // printf ("In unparseAssnInit(): assn_init->get_is_explicit_cast() = %s \n",(assn_init->get_is_explicit_cast() == true) ? "true" : "false");
-
-     if (assn_init->get_is_explicit_cast() == true)
-        {
-          unparseExpression(assn_init->get_operand(), info);
-        }
-       else
-        {
-          SgCastExp* castExp = isSgCastExp(assn_init->get_operand());
-          if ( castExp != NULL)
-             {
-            // curprint ( "\n/* Skip the CAST in unparsing SgAssignInitializer */ \n";
-               unparseExpression(castExp->get_operand(), info);
-             }
-            else
-             {
-            // temp backup in case operand is not a cast!
-               printf ("Warning: unparseAssnInit operand was marked as implicit cast but didn't contain a SgCastExp object \n");
-            // ROSE_ASSERT(false);
-
-               unparseExpression(assn_init->get_operand(), info);
-             }
-        }
+     curprint("= ");
+     unparseExpression(assn_init->get_operand_i(), info);
    }
 
 void
