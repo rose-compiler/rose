@@ -76,9 +76,6 @@ Unparser::Unparser( ostream* nos, string fname, Unparser_Opt nopt, UnparseFormat
      u_fortran_type = new UnparseFortran_type(this);
      u_fortran_locatedNode = new FortranCodeGeneration_locatedNode(this, fname);
 
-  // DQ (4/16/2011): Added the Java support symetric to the Fortran unparser support.
-     u_java_locatedNode = new JavaCodeGeneration_locatedNode(this, fname);
-
   // ROSE_ASSERT(nfile != NULL);
      ROSE_ASSERT(nos != NULL);
 
@@ -373,13 +370,8 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
                   {
                     if (file->get_Java_only())
                        {
-                      // Unparse using the new Fortran unparser!
-                         ROSE_ASSERT(u_java_locatedNode != NULL);
-
-                      // printf ("This is the unparser support for Java (exiting as a test) \n");
-                      // ROSE_ASSERT(false);
-
-                         u_java_locatedNode->unparseStatement(globalScope, info);
+                         JavaCodeGeneration_locatedNode unparser(this, file->getFileName());
+                         unparser.unparseStatement(globalScope, info);
                        }
                       else
                        {
