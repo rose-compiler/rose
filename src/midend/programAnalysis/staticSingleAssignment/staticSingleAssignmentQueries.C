@@ -189,7 +189,7 @@ void StaticSingleAssignment::printToDOT(SgSourceFile* source, ofstream &outFile)
                 string id = current.id();
                 string nodeColor = "black";
 
-                bool uniqueName = current.getNode()->attributeExists(StaticSingleAssignment::varKeyTag);
+                bool uniqueName = current.getNode()->attributeExists(UniqueNameTraversal::varKeyTag);
 
                 if (isSgStatement(current.getNode()))
                     nodeColor = "blue";
@@ -340,7 +340,7 @@ void StaticSingleAssignment::printToFilteredDOT(SgSourceFile* source, ofstream& 
                 string id = current.id();
                 string nodeColor = "black";
 
-                bool uniqueName = current.getNode()->attributeExists(StaticSingleAssignment::varKeyTag);
+                bool uniqueName = current.getNode()->attributeExists(UniqueNameTraversal::varKeyTag);
 
                 if (isSgStatement(current.getNode()))
                     nodeColor = "blue";
@@ -454,11 +454,11 @@ void StaticSingleAssignment::printToFilteredDOT(SgSourceFile* source, ofstream& 
 
 VarUniqueName* StaticSingleAssignment::getUniqueName(SgNode* node)
 {
-    if (!node->attributeExists(StaticSingleAssignment::varKeyTag))
+    if (!node->attributeExists(UniqueNameTraversal::varKeyTag))
     {
         return NULL;
     }
-    VarUniqueName* uName = dynamic_cast<VarUniqueName*> (node->getAttribute(StaticSingleAssignment::varKeyTag));
+    VarUniqueName* uName = dynamic_cast<VarUniqueName*> (node->getAttribute(UniqueNameTraversal::varKeyTag));
     return uName;
 }
 
