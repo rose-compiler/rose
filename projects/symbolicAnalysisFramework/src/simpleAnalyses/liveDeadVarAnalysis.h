@@ -260,6 +260,8 @@ class VarsExprsProductLattice: public virtual ProductLattice
 	// that are the same as in this.
 	void copy(const VarsExprsProductLattice* that);
 	
+        bool meetUpdate(Lattice *that);
+
 	// Called by analyses to create a copy of this lattice. However, if this lattice maintains any 
 	//    information on a per-variable basis, these per-variable mappings must be converted from 
 	//    the current set of variables to another set. This may be needed during function calls, 

@@ -746,6 +746,31 @@ void VarsExprsProductLattice::copy(const VarsExprsProductLattice* that)
 	//Dbg::dbg << "    "<<str("        ")<<endl;
 }
 
+bool VarsExprsProductLattice::meetUpdate(Lattice *lThat)
+{
+  bool modified = false;
+  VarsExprsProductLattice *that = dynamic_cast<VarsExprsProductLattice *>(lThat);
+  ROSE_ASSERT(that);
+
+  int newLevel = std::max(level, that->level);
+  if (newLevel != level) {
+    modified = true;
+    level = newLevel;
+  }
+
+  for (map<varID, int>::iterator i_that = that->varLatticeIndex.begin(); i_that != that->varLatticeIndex.end(); ++i_that) {
+    map<varID, int>::iterator i_this = varLatticeIndex.find(i_that->first);
+    if (varLatticeIndex.end() == i_this) {
+      Dbg::dbg << "VarsExprsProductLattice::meetUpdate is missing variable w/ ID" << i_that->first << endl;
+      continue; // XXX: Perhaps this should be an assertion failure? Must *this contain at least the elements of *that?
+    }
+
+    modified = lattices[i_this->second]->meetUpdate(that->lattices[i_that->second]) || modified;
+  }
+
+  return modified;
+}
+
 // Called by analyses to create a copy of this lattice. However, if this lattice maintains any 
 //    information on a per-variable basis, these per-variable mappings must be converted from 
 //    the current set of variables to another set. This may be needed during function calls, 
