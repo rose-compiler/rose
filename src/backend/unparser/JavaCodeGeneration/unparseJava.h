@@ -226,6 +226,13 @@ class JavaCodeGeneration_locatedNode : public UnparseLanguageIndependentConstruc
 
       //! Support for exception specification for functions and member functions
           virtual void unparseExceptionSpecification( const SgTypePtrList& exceptionSpecifierList, SgUnparse_Info& info);
+
+      //! Unparse intialized names (technically not an SgStatement, but both share SgLocatedNode)
+          virtual void unparseInitializedName(SgInitializedName* init_name, SgUnparse_Info& info);
+          virtual void unparseName(SgName name, SgUnparse_Info& info);
+
+      //! Convenience method for unparsing types using unp->u_type
+          virtual void unparseType(SgType* type, SgUnparse_Info& info);
    };
 
 #endif

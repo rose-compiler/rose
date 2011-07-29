@@ -76,6 +76,7 @@ JavaCodeGeneration_locatedNode::unparseLanguageSpecificStatement(SgStatement* st
 
      ROSE_ASSERT(stmt != NULL);
 
+
 #if 0
   // Debugging support
      SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(stmt);
@@ -200,6 +201,18 @@ JavaCodeGeneration_locatedNode::unparseImportDeclarationStatement (SgStatement* 
      SgName name = importDeclaration->get_path();
      curprint ( name.str());
      curprint ("; ");
+   }
+
+void
+JavaCodeGeneration_locatedNode::unparseName(SgName name, SgUnparse_Info& info)
+   {
+        curprint(name.getString());
+   }
+
+void
+JavaCodeGeneration_locatedNode::unparseType(SgType* type, SgUnparse_Info& info)
+   {
+       unp->u_type->unparseType(type, info);
    }
 
 void
@@ -403,40 +416,12 @@ JavaCodeGeneration_locatedNode::unparseBasicBlockStmt(SgStatement* stmt, SgUnpar
      SgBasicBlock* basic_stmt = isSgBasicBlock(stmt);
      ROSE_ASSERT(basic_stmt != NULL);
 
-  // unparseAttachedPreprocessingInfo(basic_stmt, info, PreprocessingInfo::before);
-
-     unp->cur.format(basic_stmt, info, FORMAT_BEFORE_BASIC_BLOCK1);
-     curprint ( string("{"));
-     unp->cur.format(basic_stmt, info, FORMAT_AFTER_BASIC_BLOCK1);
-
-     if (basic_stmt->get_asm_function_body().empty() == false)
-        {
-       // This is an asm function body.
-          curprint (basic_stmt->get_asm_function_body());
-
-       // Make sure this is a function definition.
-          ROSE_ASSERT(isSgFunctionDefinition(basic_stmt->get_parent()) != NULL);
-        }
-
-#if OUTPUT_HIDDEN_LIST_DATA
-     outputHiddenListData (basic_stmt);
-#endif
-
-     SgStatementPtrList::iterator p = basic_stmt->get_statements().begin();
-     while(p != basic_stmt->get_statements().end())
-        { 
-          ROSE_ASSERT((*p) != NULL);
-
-          unparseStatement((*p), info);
-
-          p++;
-        }
-
-     unparseAttachedPreprocessingInfo(basic_stmt, info, PreprocessingInfo::inside);
-
-     unp->cur.format(basic_stmt, info, FORMAT_BEFORE_BASIC_BLOCK2);
-     curprint ( string("}"));
-     unp->cur.format(basic_stmt, info, FORMAT_AFTER_BASIC_BLOCK2);
+     curprint ("{\n");
+     foreach (SgStatement* stmt, basic_stmt->get_statements()) {
+         unparseStatement(stmt, info);
+         curprint(";\n");
+     }
+     curprint ("}");
    }
 
 
@@ -542,6 +527,16 @@ void JavaCodeGeneration_locatedNode::unparseIfStmt(SgStatement* stmt, SgUnparse_
         }
    }
 
+void
+JavaCodeGeneration_locatedNode::unparseInitializedName(SgInitializedName* init_name, SgUnparse_Info& info) {
+    unparseType(init_name->get_type(), info);
+    unparseName(init_name->get_name(), info);
+
+    if (init_name->get_initializer() != NULL) {
+        curprint(" ");
+        unparseExpression(init_name->get_initializer(), info);
+    }
+}
 
 void
 JavaCodeGeneration_locatedNode::unparseForInitStmt (SgStatement* stmt, SgUnparse_Info& info)
@@ -696,16 +691,10 @@ JavaCodeGeneration_locatedNode::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse
 void
 JavaCodeGeneration_locatedNode::unparseFuncDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
-#if 0
-     printf ("Inside of unparseFuncDefnStmt() \n");
-     curprint ( string("/* Inside of JavaCodeGeneration_locatedNode::unparseFuncDefnStmt */"));
-#endif
-
      SgFunctionDefinition* funcdefn_stmt = isSgFunctionDefinition(stmt);
      ROSE_ASSERT(funcdefn_stmt != NULL);
 
-  // Unparse any comments of directives attached to the SgFunctionParameterList
-     unparseAttachedPreprocessingInfo(funcdefn_stmt->get_declaration()->get_parameterList(), info, PreprocessingInfo::after);
+     unparseStatement(funcdefn_stmt->get_body(), info);
    }
 
 void
@@ -720,8 +709,8 @@ JavaCodeGeneration_locatedNode::unparseFunctionParameterList(SgStatement* stmt, 
         if (name_it != names.begin())
             curprint(", ");
         SgInitializedName* iname = *name_it;
-        unp->u_type->unparseType(iname->get_type(), info);
-        curprint(iname->get_name().getString());
+        unparseType(iname->get_type(), info);
+        unparseName(iname->get_name(), info);
     }
 }
 
@@ -784,16 +773,11 @@ JavaCodeGeneration_locatedNode::unparseMFuncDeclStmt(SgStatement* stmt, SgUnpars
          info.unset_isTypeFirstPart();
      }
 
-     curprint(mfuncdecl_stmt->get_name().getString());
+     unparseName(mfuncdecl_stmt->get_name(), info);
      curprint("(");
      unparseStatement(mfuncdecl_stmt->get_parameterList(), info);
-     curprint(") {\n");
+     curprint(") ");
      unparseStatement(mfuncdecl_stmt->get_definition(), info);
-     curprint("}\n");
-
-#if 0
-     curprint ( string("\n/* Inside of JavaCodeGeneration_locatedNode::unparseMFuncDeclStmt */ \n") ); 
-#endif
 
 #if OUTPUT_DEBUGGING_FUNCTION_NAME
      printf ("Inside of unparseMFuncDeclStmt() name = %s  transformed = %s prototype = %s \n",
@@ -801,29 +785,16 @@ JavaCodeGeneration_locatedNode::unparseMFuncDeclStmt(SgStatement* stmt, SgUnpars
          isTransformed (mfuncdecl_stmt) ? "true" : "false",
          (mfuncdecl_stmt->get_definition() == NULL) ? "true" : "false");
 #endif
-
-  // Unparse any comments of directives attached to the SgCtorInitializerList
-     if (mfuncdecl_stmt->get_CtorInitializerList() != NULL)
-          unparseAttachedPreprocessingInfo(mfuncdecl_stmt->get_CtorInitializerList(), info, PreprocessingInfo::after);
    }
 
 void
 JavaCodeGeneration_locatedNode::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
-#if 0
-     printf ("Inside of unparseVarDeclStmt(%p) \n",stmt);
-     ROSE_ASSERT(info.get_current_scope() != NULL);
-     printf ("An the current scope is (from info): info.get_current_scope() = %p = %s = %s \n",info.get_current_scope(),info.get_current_scope()->class_name().c_str(),SageInterface::get_name(info.get_current_scope()).c_str());
-     curprint ( string("\n /* Inside of unparseVarDeclStmt() */ \n"));
-#endif
-
      SgVariableDeclaration* vardecl_stmt = isSgVariableDeclaration(stmt);
      ROSE_ASSERT(vardecl_stmt != NULL);
 
-#if 0
-     printf ("Leaving unparseVarDeclStmt() \n");
-     curprint ( string("/* Leaving unparseVarDeclStmt() */ \n";
-#endif
+     foreach (SgInitializedName* init_name, vardecl_stmt->get_variables())
+         unparseInitializedName(init_name, info);
    }
 
 
@@ -833,7 +804,6 @@ JavaCodeGeneration_locatedNode::unparseVarDefnStmt(SgStatement* stmt, SgUnparse_
      SgVariableDefinition* vardefn_stmt = isSgVariableDefinition(stmt);
      ROSE_ASSERT(vardefn_stmt != NULL);
    }
-
 
 void
 JavaCodeGeneration_locatedNode::initializeDeclarationsFromParent ( 
@@ -851,22 +821,11 @@ JavaCodeGeneration_locatedNode::unparseClassDeclStmt(SgStatement* stmt, SgUnpars
      SgClassDeclaration* classdecl_stmt = isSgClassDeclaration(stmt);
      ROSE_ASSERT(classdecl_stmt != NULL);
 
-#if 0
-  // printf ("Inside of JavaCodeGeneration_locatedNode::unparseClassDeclStmt(): classdecl_stmt->get_from_template() = %s \n",
-  //      classdecl_stmt->get_from_template() ? "true" : "false");
-     if (classdecl_stmt->get_from_template() == true)
-          curprint ( string("/* Unparser comment: Templated Class Declaration Function */"));
-     Sg_File_Info* classDeclarationfileInfo = classdecl_stmt->get_file_info();
-     ROSE_ASSERT ( classDeclarationfileInfo != NULL );
-     if ( classDeclarationfileInfo->isCompilerGenerated() == false)
-          curprint ( string("\n/* file: " ) + classDeclarationfileInfo->get_filename() + " line: " + classDeclarationfileInfo->get_line() + " col: " + classDeclarationfileInfo->get_col() + " */ \n");
-#endif
-
+     //TODO access modifiers
      curprint("class ");
-     curprint(classdecl_stmt->get_name().getString());
-     curprint(" {\n");
+     unparseName(classdecl_stmt->get_name(), info);
+     //TODO inheritance
      unparseStatement(classdecl_stmt->get_definition(), info);
-     curprint("}\n");
    }
 
 void
@@ -875,8 +834,12 @@ JavaCodeGeneration_locatedNode::unparseClassDefnStmt(SgStatement* stmt, SgUnpars
      SgClassDefinition* classdefn_stmt = isSgClassDefinition(stmt);
      ROSE_ASSERT(classdefn_stmt != NULL);
 
-     foreach (SgDeclarationStatement* child, classdefn_stmt->get_members())
+     curprint(" {");
+     foreach (SgDeclarationStatement* child, classdefn_stmt->get_members()) {
          unparseStatement(child, info);
+         curprint("\n");
+     }
+     curprint("}");
    }
 
 
