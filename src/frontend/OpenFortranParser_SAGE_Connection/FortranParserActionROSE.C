@@ -1772,7 +1772,7 @@ void c_action_component_attr_spec(Token_t * attrKeyword, int specType)
     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_component_attr_spec(): attrKeyword = %p = %s specType = %d \n",attrKeyword,attrKeyword != NULL ? attrKeyword->text : "NULL",specType);
 
-#if 1
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R441 c_action_component_attr_spec()");
 #endif
@@ -1872,10 +1872,12 @@ void c_action_component_attr_spec(Token_t * attrKeyword, int specType)
              {
                if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                     printf ("found a ComponentAttrSpec_codimension spec \n");
-               // TODO: something analogous to AttrSpec_DIMENSION with codimensionAttr in place of dimExp
-               // the codimAttr is perhaps an SgExprListExp with get_expressions of size 0
                DeclAttributes.setHasCodimension(true);
                DeclAttributes.setCodimAttr(ComponentAttrSpec_codimension);
+               SgExprListExp* codimExpr = isSgExprListExp(astExpressionStack.front());
+               ROSE_ASSERT(codimExpr);
+               DeclAttributes.setCodimExp(codimExpr);
+               astExpressionStack.pop_front();
                break;
              }
 
@@ -1927,7 +1929,7 @@ void c_action_component_attr_spec(Token_t * attrKeyword, int specType)
 
 #endif
 
-#if 1
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R441 c_action_component_attr_spec()");
 #endif
@@ -2088,11 +2090,10 @@ void c_action_component_decl_list__begin()
 
 void c_action_component_decl_list(int count)
    {
-
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
         printf ("R442 R438-F2008 c_action_component_decl_list(): count = %d \n",count);
 
-#if 1
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R442 c_action_component_decl_list()");
 #endif
@@ -2125,7 +2126,7 @@ void c_action_component_decl_list(int count)
 
 #endif
 
-#if 1
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R442 c_action_component_decl_list()");
 #endif
@@ -3602,18 +3603,17 @@ void c_action_entity_decl(Token_t * id)
 #endif
         }
 
-#if 1
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R504 R503-F2008 c_action_entity_decl()");
 #endif
 
 #if DXN_CODE
 #if !SKIP_C_ACTION_IMPLEMENTATION
+    // Merge the entity attributes with the declaration attributes in order to build the correct type for the entity-decl
     AttributeRec entityAttr;
     entityAttr = DeclAttributes;
     SgExpression* initialization = NULL;
-
-    // DXN (05/09/2011): update the array spec, coarray spec, char length and initialization of entity decl here
     if (hasInitialization)
     {
       ROSE_ASSERT(!astExpressionStack.empty());  // astExpressionStack.front() contains initialization expression
@@ -3649,40 +3649,35 @@ void c_action_entity_decl(Token_t * id)
       astExpressionStack.pop_front();
       entityAttr.setHasDimension(true);
     }
-
+    // Now, we are ready to build the type the entity-decl:
     SgType* entityType = entityAttr.computeEntityType();
-
-    astNameStack.push_front(id);
-    AstNameType* nameToken = astNameStack.front();
-    SgName name = nameToken->text;
-    SgInitializer* initializer = NULL;
 
 #if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState(" c_action_entity_decl(): after computing entity's type:");
 #endif
 
+    // Compute the appropriate initializer if any:
+    SgInitializer* initializer = NULL;
     if (hasInitialization)
     {
-        if (isSgClassType(entityType)){
-//            SgConstructorInitializer* constructorInitializer = isSgConstructorInitializer(initialization);
-//            initializer = constructorInitializer;
-//            if (initializer != NULL) {
-//               astExpressionStack.clear();
-//            }
-//            else {
-                // This is the case of a name in the bind expression.
-                // printf ("This is the case of a name in the bind expression (leave it on the stack and process it later). \n");
-                // DXN (02/11/2011): for example, TYPE(T), bind (C, name = "abc") :: x
-                // see fortran_support.C - processBindingAttribute
-//            }
+        if (isSgClassType(entityType))
+        {  // if entityType is a derived type then the initialzer must be a SgConstructorInitializer.
+            SgConstructorInitializer* constructorInitializer = isSgConstructorInitializer(initialization);
+            ROSE_ASSERT(constructorInitializer);
+            initializer = constructorInitializer;
         }
-        else {
+        else
+        {
             initializer = new SgAssignInitializer(initialization,NULL);
             setSourcePosition(initializer);
         }
     }
 
+   // Build the initialized name for the entity-decl:
+    astNameStack.push_front(id);
+    AstNameType* nameToken = astNameStack.front();
+    SgName name = nameToken->text;
     SgVariableSymbol* variableSymbol = NULL;
     SgFunctionSymbol* functionSymbol = NULL;
     SgClassSymbol*    classSymbol    = NULL;
@@ -3690,7 +3685,8 @@ void c_action_entity_decl(Token_t * id)
     ROSE_ASSERT(currentScope != NULL);
     trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(name,currentScope,variableSymbol,functionSymbol,classSymbol);
     SgClassDefinition* classDef = isSgClassDefinition(currentScope);
-    if (functionSymbol != NULL && !classDef) {
+    if (functionSymbol != NULL && !classDef)
+    {
         ROSE_ASSERT(initializer == NULL);
         SgFunctionType* functionType = isSgFunctionType(functionSymbol->get_type());
         ROSE_ASSERT(functionType != NULL);
@@ -3699,7 +3695,8 @@ void c_action_entity_decl(Token_t * id)
     }
     ROSE_ASSERT(classSymbol == NULL);
     SgInitializedName* initializedName = NULL;
-    if (variableSymbol != NULL) {
+    if (variableSymbol != NULL)
+    {
         ROSE_ASSERT(entityType != NULL);
         initializedName = variableSymbol->get_declaration();
         ROSE_ASSERT(initializedName != NULL);
@@ -3716,8 +3713,10 @@ void c_action_entity_decl(Token_t * id)
             }
             initializedName->set_type(entityType);
         }
-        else {
-            if (currentScope != initializedName->get_scope())   {
+        else
+        {
+            if (currentScope != initializedName->get_scope())
+            {
                 initializedName = buildInitializedNameAndPutOntoStack(name,entityType,initializer);
             }
             else {
@@ -3726,22 +3725,24 @@ void c_action_entity_decl(Token_t * id)
         }
         ROSE_ASSERT(initializedName != NULL);
     }
-    else {
-        if (functionSymbol != NULL && !classDef)  { // only applies to non component entities.
+    else
+    {
+        if (functionSymbol != NULL && !classDef)
+        { // only applies to non component entities.
             ROSE_ASSERT(initializedName == NULL);
             initializedName = new SgInitializedName(name,entityType,initializer,NULL,NULL);
             SgProcedureHeaderStatement* functionDeclaration = isSgProcedureHeaderStatement(functionSymbol->get_declaration());
             functionDeclaration->set_result_name(initializedName);
         }
-        else {
-            // DQ (1/30/2011): Refactored code to use here and just above as well.
+        else
+        {
             initializedName = buildInitializedNameAndPutOntoStack(name,entityType,initializer);
         }
     }
-
     ROSE_ASSERT(initializedName != NULL);
     setSourcePosition(initializedName,id);
 
+    // Now that we have the initialized name corresponding to the entiy-decl, add it to the current variable declaration:
     SgVariableDeclaration* varDecl = isSgVariableDeclaration(DeclAttributes.getDeclaration());
     if (!varDecl)
     {
@@ -3751,14 +3752,17 @@ void c_action_entity_decl(Token_t * id)
     initializedName->set_declptr(varDecl);
     varDecl->append_variable(initializedName,initializedName->get_initializer());
 
+    // Make sure that the variable name corresponding to the initialized name is in the appropriate scope
+    // with appropriate symbol table information: (see buildVariableDeclaration in fortran_support.C)
     SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(astScopeStack.front()->get_parent());
     variableSymbol = NULL;
     SgName variableName = initializedName->get_name();
     if (functionDefinition != NULL) {
         variableSymbol = functionDefinition->lookup_variable_symbol(variableName);
-        if (variableSymbol != NULL)     {
+        if (variableSymbol != NULL)
+        {
             // This variable symbol has already been placed into the function definition's symbol table
-            // Link the SgInitializedName in the variable declaration with it's intry in the function parameter list.
+            // Link the SgInitializedName in the variable declaration with its entry in the function parameter list.
             initializedName->set_prev_decl_item(variableSymbol->get_declaration());
             // Set the referenced type in the function parameter to be the same as that in the declaration being processed.
             variableSymbol->get_declaration()->set_type(initializedName->get_type());
@@ -3766,18 +3770,18 @@ void c_action_entity_decl(Token_t * id)
             initializedName->set_scope(functionDefinition);
         }
     }
-
     // If not just set above then this is not a function parameter, but it could have been built in a common block
-    if (variableSymbol == NULL) {
+    if (variableSymbol == NULL)
+    {
         variableSymbol = getTopOfScopeStack()->lookup_variable_symbol(variableName);
         initializedName->set_scope(astScopeStack.front());
-        if (variableSymbol == NULL) {
+        if (variableSymbol == NULL)
+        {
             variableSymbol = new SgVariableSymbol(initializedName);
             astScopeStack.front()->insert_symbol(variableName,variableSymbol);
             ROSE_ASSERT (initializedName->get_symbol_from_symbol_table () != NULL);
         }
     }
-
 
     ROSE_ASSERT(!astNameStack.empty());
     astNameStack.pop_front();
@@ -4394,7 +4398,7 @@ void c_action_initialization(ofp_bool hasExpr, ofp_bool hasNullInit)
  */
 void c_action_null_init(Token_t * id)
    {
-     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+    if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_null_init(): id = %p = %s \n",id,id != NULL ? id->text : "NULL");
 
   // DQ (1/23/2011): We don't have a NULL() IR node, so I will have to add one.  For the moment (debugging) use a value!.
@@ -4548,7 +4552,7 @@ void c_action_array_spec(int count)
 
 void c_action_array_spec_element(int type)
    {
-    #if DXN_DEBUG
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R510 #3 c_action_array_spec_element()");
 #endif
@@ -8124,7 +8128,7 @@ void c_action_data_ref(int numPartRef)
         }
 #endif
 
-#if 0
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("After removing names from astNameStack at BOTTOM of R612 c_action_data_ref()");
 #endif
@@ -8174,7 +8178,7 @@ void c_action_data_ref(int numPartRef)
           astExpressionStack.push_front(recordReference);
         }
 
-#if 0
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R612 c_action_data_ref()");
 #endif
@@ -8676,7 +8680,7 @@ void c_action_allocate_stmt(Token_t *label, Token_t *allocateKeyword, Token_t *e
   // An AttributeSpecification statement can be the first statement in a program
      build_implicit_program_statement_if_required();
 
-#if 0
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R623 c_action_allocate_stmt()");
 #endif
@@ -8738,7 +8742,7 @@ void c_action_allocate_stmt(Token_t *label, Token_t *allocateKeyword, Token_t *e
 
      astScopeStack.front()->append_statement(allocateStatement);
 
-#if 0
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R623 c_action_allocate_stmt()");
 #endif
@@ -8817,7 +8821,7 @@ void c_action_allocation_list__begin()
    }
 void c_action_allocation_list(int count)
    {
-     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+    if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In R628 (list) c_action_allocation_list() count = %d \n",count);
 
      SgExprListExp* expressionList = new SgExprListExp();
@@ -19484,7 +19488,6 @@ void c_action_rice_co_dereference_op(Token_t *leftBracket, Token_t *rightBracket
  */
 //FMZ (2/12/2009): Added CoArray image team ID
 void c_action_rice_allocate_coarray_spec(int type, Token_t *team_id) {
-
      if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
           printf ("In c_action_rice_allocate_co_array_spec() \n");
 

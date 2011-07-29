@@ -43,7 +43,7 @@ class AttributeRec
 {
 private:
 
-        SgDeclarationStatement* declaration;
+    SgDeclarationStatement* declaration;
     SgType* baseType;
     SgExpression* charLenExpr;
     bool hasAccessSpec; int accessAttr; int accessType;
@@ -56,8 +56,6 @@ private:
     bool hasDimension; int dimAttr; SgExprListExp* dimExp;
     bool isExternal; int externalAttr;
     bool hasIntent; int intentAttr; int intent;
-//    bool isIn; int inAttr;
-//    bool isOut; int outAttr;
     bool isIntrinsic; int intrinsicAttr;
     bool hasLangBinding;  int bindingAttr;
     bool hasBindC; int bindCAttr;
@@ -75,7 +73,6 @@ private:
     bool isNoPass; int noPassAttr;
     bool isNonOverridable; int nonOverrideAttr;
     bool isDeferred; int deferredAttr;
-    // SgExpression* kindExp; // TODO
 
 public:
     AttributeRec(): declaration(NULL), baseType(NULL), charLenExpr(NULL),
