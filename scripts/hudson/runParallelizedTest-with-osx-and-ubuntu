@@ -182,7 +182,12 @@ if test "x$ROSE_TEST_BUILD_STYLE" = "xmake-check-install-full" ; then
   #
   #  tps : 11/12/10 - OpenGL is not installed on all nodes yet. 
   #######################################################################################
-  CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-pch  "
+ # DQ (7/30/2011): We want to turn off Precompiled Headers (PCH) since it is failing for the 
+ # 4.1.2 compiler on 64 bit linux machines. We don't know why this has been happening only recently.
+ # CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-pch  "
+  if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.1.2" \) ; then
+    CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-pch  "
+  fi
 
   #######################################################################################
   #  RTED
