@@ -13,13 +13,13 @@ EDefUse::EDefUse(SgProject * proj)
 void EDefUse::printDefUse()
 {
 
-	cout<< "defs:\n";
+        cout<< "defs:\n";
 
-	internalDefUse->printDefMap();
+        internalDefUse->printDefMap();
 
-	cout<< "uses:\n";
+        cout<< "uses:\n";
 
-  	internalDefUse->printUseMap();
+        internalDefUse->printUseMap();
 
 }
 
