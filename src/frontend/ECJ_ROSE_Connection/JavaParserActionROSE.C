@@ -361,7 +361,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionExplicitConstructorCallEnd (JNIEnv
           ROSE_ASSERT(expressionStatement != NULL);
 
        // DQ (7/31/2011): This should be left on the stack instead of being added to the current scope before the end of the scope.
-          printf ("Previously calling appendStatement in cactionExplicitConstructorCallEnd() \n");
+       // printf ("Previously calling appendStatement in cactionExplicitConstructorCallEnd() \n");
        // appendStatement(expressionStatement);
           astJavaStatementStack.push_front(expressionStatement);
         }
@@ -746,7 +746,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSendEnd (JNIEnv *env, jobje
   // astJavaStatementStack.push_front(statement);
 #if 1
   // DQ (7/31/2011): This should be left on the stack instead of being added to the current scope before the end of the scope.
-     printf ("Previously calling appendStatement in cactionMessageSendEnd() \n");
+  // printf ("Previously calling appendStatement in cactionMessageSendEnd() \n");
   // appendStatement(statement);
      astJavaStatementStack.push_front(statement);
 #else
@@ -1105,7 +1105,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitFieldSupport (JNIEnv*
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
 #if 1
   // DQ (7/31/2011): This should be left on the stack instead of being added to the current scope before the end of the scope.
-     printf ("Previously calling appendStatement in cactionBuildImplicitFieldSupport() \n");
+  // printf ("Previously calling appendStatement in cactionBuildImplicitFieldSupport() \n");
   // appendStatement(variableDeclaration);
      astJavaStatementStack.push_front(variableDeclaration);
 #else
@@ -2394,7 +2394,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jobje
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
 #if 1
   // DQ (7/31/2011): This should be left on the stack instead of being added to the current scope before the end of the scope.
-     printf ("Previously calling appendStatement in cactionImportReference() \n");
+  // printf ("Previously calling appendStatement in cactionImportReference() \n");
   // appendStatement(importStatement);
      astJavaStatementStack.push_front(importStatement);
 #else
