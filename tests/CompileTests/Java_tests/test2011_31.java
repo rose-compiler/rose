@@ -6,12 +6,10 @@ public class test2011_31
      public static void main(String args[])
         {
           int x = 7;
-       // int y = 8;
 
-       // Case of for statement.
+       // Case of "for" statement with a statement as body (demonstrates use of SgBreakStatement).
           for (x = 2; x < 1; x++)
                break;
-            // continue;
         }
    }
 

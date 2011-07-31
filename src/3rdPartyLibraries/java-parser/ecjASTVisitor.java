@@ -2443,7 +2443,7 @@ class ecjASTVisitor extends ASTVisitor
           java_parser.cactionConstructorDeclarationEnd();
 
        // Not clear when we have top provide a parameter.
-          java_parser.cactionStatementEnd("ConstructorDeclaration");
+       // java_parser.cactionStatementEnd("ConstructorDeclaration");
         }
 
      public void endVisit(ContinueStatement  node, BlockScope scope)
@@ -2727,7 +2727,7 @@ class ecjASTVisitor extends ASTVisitor
              }
 
        // Not clear when we have to provide a parameter.
-          java_parser.cactionStatementEnd("LocalDeclaration");
+       // java_parser.cactionStatementEnd("LocalDeclaration");
         }
 
      public void endVisit(LongLiteral  node, BlockScope scope)
@@ -2755,7 +2755,7 @@ class ecjASTVisitor extends ASTVisitor
           java_parser.cactionMessageSendEnd();
 
        // Not clear when we have to provide a parameter.
-          java_parser.cactionStatementEnd("MessageSend");
+       // java_parser.cactionStatementEnd("MessageSend");
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (MessageSend,BlockScope)");
@@ -2785,7 +2785,7 @@ class ecjASTVisitor extends ASTVisitor
           java_parser.cactionMethodDeclarationEnd(numberOfStatements);
 
        // Not clear when we have to provide a parameter.
-          java_parser.cactionStatementEnd("MethodDeclaration");
+       // java_parser.cactionStatementEnd("MethodDeclaration");
         }
 
      public void endVisit(StringLiteralConcatenation  node, BlockScope scope)

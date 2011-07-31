@@ -8,7 +8,7 @@ public class test2011_30
           int x = 7;
        // int y = 8;
 
-       // Case of for statement.
+       // Case of "for" statement with SgBasicBlock as body.
           for (x = 2; x < 1; x++)
              {
             // Demonstrate "continue" statement.
