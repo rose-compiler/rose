@@ -56,7 +56,7 @@ class JavaParser  implements Callable<Boolean>
 
   // Need to change the names of the function parameters (should not all be "filename").
      public native void cactionConstructorDeclaration(String filename);
-     public native void cactionConstructorDeclarationEnd();
+     public native void cactionConstructorDeclarationEnd(int java_numberOfStatements);
      public native void cactionExplicitConstructorCall(String filename);
      public native void cactionExplicitConstructorCallEnd(String filename);
      public native void cactionMethodDeclaration(String filename);
