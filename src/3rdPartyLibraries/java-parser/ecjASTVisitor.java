@@ -2356,7 +2356,18 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of endVisit (Block,BlockScope)");
 
-          java_parser.cactionBlockEnd();
+          System.out.println("node.explicitDeclarations = " + node.explicitDeclarations);
+
+          int numberOfStatements = 0;
+          if (node.statements != null)
+               numberOfStatements = node.statements.length;
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("numberOfStatements = " + numberOfStatements);
+
+       // DQ (9/30/2011): We need to pass the number of statments so that we can pop 
+       // a pricise number of statements off of the stack (and not the whole stack).
+          java_parser.cactionBlockEnd(numberOfStatements);
         }
 
      public void endVisit(BreakStatement  node, BlockScope scope) {
@@ -2516,6 +2527,13 @@ class ecjASTVisitor extends ASTVisitor
      public void endVisit(ForStatement  node, BlockScope scope)
         {
        // do nothing  by default
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Inside of endVisit (ForStatement,BlockScope)");
+
+          java_parser.cactionForStatementEnd();
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (ForStatement,BlockScope)");
         }
 
      public void endVisit(IfStatement  node, BlockScope scope)
@@ -2524,7 +2542,20 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of endVisit (IfStatement,BlockScope)");
 
-          java_parser.cactionIfStatementEnd();
+          int numberOfStatements = 0;
+          if (node.thenStatement != null)
+             {
+               System.out.println("Inside of visit (IfStatement,BlockScope): thenStatement detected");
+               numberOfStatements = 1;
+             }
+          
+          if (node.elseStatement != null)
+             {
+               System.out.println("Inside of visit (IfStatement,BlockScope): elseStatement detected");
+               numberOfStatements = 2;
+             }
+
+          java_parser.cactionIfStatementEnd(numberOfStatements);
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (IfStatement,BlockScope)");
@@ -2743,7 +2774,15 @@ class ecjASTVisitor extends ASTVisitor
 
        // This has to be declared as a non-static function!
        // java_parser.cactionMethodDeclarationEnd("MethodDeclaration");
-          java_parser.cactionMethodDeclarationEnd();
+
+       // DQ (9/30/2011): We have to specify exactly how many statements we will collect off the stack.
+       // java_parser.cactionMethodDeclarationEnd();
+          int numberOfStatements = 0;
+          if (node.statements != null)
+               numberOfStatements = node.statements.length;
+          System.out.println("numberOfStatements = " + numberOfStatements);
+
+          java_parser.cactionMethodDeclarationEnd(numberOfStatements);
 
        // Not clear when we have to provide a parameter.
           java_parser.cactionStatementEnd("MethodDeclaration");
