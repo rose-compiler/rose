@@ -1264,25 +1264,39 @@ appendStatement(SgStatement* statement)
    }
 
 
+// void appendStatementStack()
 void
-appendStatementStack()
+appendStatementStack(int numberOfStatements)
    {
+  // DQ (9/30/2011): Modified to only pop a precise number of statements off the of the stack.
+
   // This function is used to dump all statements accumulated on the astJavaStatementStack
   // into the current scope (called as part of closing off the scope where functions that 
   // don't call the function to close off statements).
 
   // Reverse the list to avoid acesses to the stack from the bottom, 
   // which would be confusing and violate stack semantics.
+     int counter = 0;
      list<SgStatement*> reverseStatementList;
+#if 1
+     while (astJavaStatementStack.empty() == false && counter < numberOfStatements)
+#else
      while (astJavaStatementStack.empty() == false)
+#endif
         {
           reverseStatementList.push_front(astJavaStatementStack.front());
           astJavaStatementStack.pop_front();
+
+          counter++;
         }
 
      while (reverseStatementList.empty() == false)
         {
           appendStatement(reverseStatementList.front());
+
+          ROSE_ASSERT(reverseStatementList.front()->get_parent() != NULL);
+          ROSE_ASSERT(reverseStatementList.front()->get_parent()->get_startOfConstruct() != NULL);
+
           reverseStatementList.pop_front();
         }
    }
