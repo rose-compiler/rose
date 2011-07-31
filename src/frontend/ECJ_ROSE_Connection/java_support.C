@@ -370,19 +370,6 @@ memberFunctionSetup (SgName & name, SgClassDefinition* classDefinition, SgFuncti
      ROSE_ASSERT(return_type != NULL);
      astJavaTypeStack.pop_front();
 
-#if 0
-  // Loop over the types in the astJavaTypeStack (the rest of the stack).
-     while (astJavaTypeStack.empty() == false)
-        {
-          SgType* parameterType = astJavaTypeStack.front();
-          ROSE_ASSERT(parameterType != NULL);
-
-       // Note certain this is the correct order (we might need to insert instead of append).
-          typeList->append_argument(parameterType);
-
-          astJavaTypeStack.pop_front();
-        }
-#else
   // Loop over the types in the astJavaTypeStack (the rest of the stack).
      while (astJavaInitializedNameStack.empty() == false)
         {
@@ -400,7 +387,6 @@ memberFunctionSetup (SgName & name, SgClassDefinition* classDefinition, SgFuncti
 
           astJavaInitializedNameStack.pop_front();
         }
-#endif
 
   // Specify if this is const, volatile, or restrict (0 implies normal member function).
      unsigned int mfunc_specifier = 0;
@@ -921,12 +907,6 @@ buildImplicitClass (const SgName & className)
    {
      bool implicitClass = true;
      buildClassSupport (className,implicitClass);
-
-#if 0
-  // DQ (4/14/2011): This is a test, if it works then we should not have pushed the scope onto the stack in the first place!
-     astJavaScopeStack.pop_front();
-     outputJavaState("In buildImplicitClass(): Pop the class built implicitly from the stack.");
-#endif
    }
 
 void
@@ -1254,10 +1234,14 @@ appendStatement(SgStatement* statement)
              {
                ifStatement->set_false_body(statement);
              }
+
+          ROSE_ASSERT(statement->get_parent() != NULL);
         }
        else
         {
           astJavaScopeStack.front()->append_statement(statement);
+
+          ROSE_ASSERT(statement->get_parent() != NULL);
         }
 
      ROSE_ASSERT(statement->get_parent() != NULL);
@@ -1278,11 +1262,11 @@ appendStatementStack(int numberOfStatements)
   // which would be confusing and violate stack semantics.
      int counter = 0;
      list<SgStatement*> reverseStatementList;
-#if 1
+
+  // DQ (7/30/2011): We want to be more exact in the future, if possible.  This allows
+  // for the number of statements to be larger than the statck size and if so we take
+  // everything on the stack, but don't trigger an error.
      while (astJavaStatementStack.empty() == false && counter < numberOfStatements)
-#else
-     while (astJavaStatementStack.empty() == false)
-#endif
         {
           reverseStatementList.push_front(astJavaStatementStack.front());
           astJavaStatementStack.pop_front();
@@ -1317,7 +1301,7 @@ getCurrentClassDefinition()
         {
           classDefinition = isSgClassDefinition(*i);
           string className = classDefinition->get_declaration()->get_name();
-          printf ("Current class is className = %s \n",className.c_str());
+       // printf ("Current class is className = %s \n",className.c_str());
         }
        else
         {
