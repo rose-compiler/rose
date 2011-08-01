@@ -1067,7 +1067,7 @@ void c_action_char_selector(Token_t * type_keyword, Token_t * optional_keyword, 
   // only called for the length type parameter and not for the kind parameter. It
   // used to be called for each parameter.
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("TOP of R424 list c_action_char_selector()");
 #endif
@@ -1154,7 +1154,7 @@ void c_action_char_selector(Token_t * type_keyword, Token_t * optional_keyword, 
              }
         }
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R424 list c_action_char_selector()");
 #endif
@@ -3507,6 +3507,11 @@ void c_action_entity_decl_list__begin()
      DeclAttributes.setDeclAttrSpecs();
      DeclAttributes.setBaseType(astBaseTypeStack.front());
      astBaseTypeStack.pop_front();
+
+#if 0
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R504 (list__begin) c_action_entity_decl_list__begin()");
+#endif
    }
 
 void c_action_entity_decl_list(int count)
