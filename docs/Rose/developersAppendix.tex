@@ -47,7 +47,7 @@ system (NFS).
 \newline\newline
 We have (2) Git repositories:
 \begin{itemize}
-	\item internal: \textit{/nfs/casc/overture/ROSE/git/ROSE-EDG.git}
+	\item internal: \textit{/nfs/casc/overture/ROSE/git/ROSE.git}
 	\item external: \url{http://www.rosecompiler.org/rose.git} -- is synced with the internal repository.
 \end{itemize}
 
@@ -107,7 +107,7 @@ The internal ROSE Git repository (Fig.~\ref{fig:rose-git-hudson}) is hosted unde
 \textit{/nfs/casc/overture/ROSE/git/ROSE.git}. External collaborators can access
 this NFS path through any of these internal LLNL hosts: \texttt{tuxblue[1-6|9-13]}.
 \begin{verbatim}
-    $ git clone ssh://<user>@tuxblue[1-6|9-13]/nfs/casc/overture/ROSE/git/ROSE.git
+    \$ git clone ssh://<user>@tuxblue[1-6|9-13]/nfs/casc/overture/ROSE/git/ROSE.git
 \end{verbatim}
 
 Updates to the "Release Candidate" (*-rc) branches in this internal repository
@@ -117,6 +117,52 @@ changes to your remote branch for testing and integration purposes.
 
 The \texttt{master} branch always contains the latest work of ROSE and can only
 be updated by our continuous integration framework.
+
+
+\subsection{The External Git Repository}
+
+External users (who don't have an account with LLNL) are recommended to use
+ROSE's external SVN repository, which is described
+in~\ref{gettingStarted::svn}.
+
+For advanced external users who are comfortable with git. 
+We have an external git repository which is cloned and synchronized with our internal shared repository. 
+To clone the external git repository, simply type:
+
+\textit{git clone http://www.rosecompiler.org/rose.git}
+
+\noindent Depending on your network speed, the commandline above may take 3 to 5
+minutes, or even longer.
+
+\subsubsection{How to work with us on ROSE}
+
+\begin{figure}[htbp]  
+  \centering
+    \includegraphics[width=0.8\textwidth]{git_collaboration_diagram.pdf}
+  \caption{How to setup external collaborations with Git}
+  \label{fig:rose-git-collaborations}
+\end{figure}
+
+Figure~\ref{fig:rose-git-collaborations} shows the suggested organization of 
+git repositories to support external collaborations.  LLNL provides 
+external accesss to its public git repository; internal LLNL
+developers work with the internal git repository. Once a feature or 
+bug fix is ready, it is pushed to the external public git 
+repository. 
+
+External collaborators should clone their private repository from
+the LLNL public git repository.  Collaborators should work on their
+private repository and push their features and bug fixes to their
+public git repository (which should be cloned from their private
+repository).
+
+LLNL will accept changes by pulling them from the external collaborator's
+public repository.  All changes will be inspected as part of internal 
+LLNL policies. External collaborators can obtain the latest version of
+the LLNL work by pulling from our external public repository to their
+private git repository as often as they wish.
+
+
 
 \subsection{Our Git Naming Conventions}
 
@@ -204,11 +250,11 @@ Please configure this copy with your name and email before starting work.
           :branch-name } . Again, we have access control so developers can
           only delete their own branches, not others'.
    \end{itemize}     
-\item Adding / Deleting files:
+\item Adding / Deleting files: always be careful not to add/delete wrong files!
    \begin{itemize}
           \item add $<$file$>$ to the project \textit{git add $<$file$>$}
           \item add all files under directory $<$dir$>$ to the project, including subdirectories \textit{git add $<$dir$>$}
-	  \item add all files under the current directory to the project \textit{git add .}
+%	  \item add all files under the current directory to the project \textit{git add .}
 	  \item remove $<$file$>$ from the project \textit{git rm $<$file$>$}
    \end{itemize}     
 \item Committing : intermediate changes can be committed locally. You don't have to have active connection to the shared repository to do your daily work at all. 
@@ -342,21 +388,6 @@ You can create a local branch based on the current content before you modify the
 %}}}
 Git cheat sheet: \htmladdnormallink{http://cheat.errtheblog.com/s/git}{http://cheat.errtheblog.com/s/git}
 
-\subsection{The External Repository}
-
-External users (who don't have account with LLNL) are recommended to use
-ROSE's external SVN repository, which is described
-in~\ref{gettingStarted::svn}.
-
-
-For advanced external users who are comfortable with git. 
-We have an external git repository which is cloned and synchronized with our internal shared repository. 
-To clone the external git repository, simply type:
-
-\textit{git clone http://www.rosecompiler.org/rose.git/}
-
-\noindent Depending on your network speed, the commandline above may take 3 to 5
-minutes or even longer.
 
 
 %Added by Liao 10/17/2008

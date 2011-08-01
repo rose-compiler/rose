@@ -1,4 +1,4 @@
-extern int min(int ,int );
+int min(int ,int );
 
 void dgemm(double *a,double *b,double *c,int n)
 {

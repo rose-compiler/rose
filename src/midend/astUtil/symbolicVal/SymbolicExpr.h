@@ -8,46 +8,39 @@
 
 SymbolicVal ApplyBinOP( SymOpType t, const SymbolicVal &v1,
                         const SymbolicVal &v2);
-// A term in symbolic expressions
 class SymbolicTerm
 {
-  int time1, time2;// numerator and denominator values for integer constant
-  SymbolicVal v;   // non-constant value
+  int time1, time2;
+  SymbolicVal v;
  public:
   SymbolicTerm( int t1, int t2, const SymbolicVal& _v) 
           : time1(t1), time2(t2), v( _v) { }
   SymbolicTerm( int t1, int t2) : time1(t1), time2(t2) {}
-  SymbolicTerm() : time1(0), time2(1) {} // Initialized to 0
+  SymbolicTerm() : time1(0), time2(1) {}
   ~SymbolicTerm() {}
   SymbolicTerm& operator = (const SymbolicTerm& that)
      { time1 = that.time1; time2 = that.time2; v = that.v; return *this; }
 
   std::string toString() const;
-  // Is constant if non-constant value is NULL
   bool IsConst() const
       {  return v.IsNIL(); }
   bool IsConstInt( int& val1, int& val2) const 
-      {  if (v.IsNIL()) 
-           { val1=time1; val2=time2;  return true; } 
+      {  if (v.IsNIL()) { val1=time1; val2=time2;  return true; } 
          return false;
       }
-  // Is integer constant (not fraction constant) if non-constant value is NULL and denominator==1
   bool IsConstInt( int& val) const 
-      {  if (v.IsNIL() && time2 == 1) 
-           { val=time1; return true; } 
+      {  if (v.IsNIL() && time2 == 1) { val=time1; return true; } 
          return false;
       }
   SymbolicVal GetVal( SymOpType op)  const
-          { // Return fraction value if v is null
+          { 
             if (v.IsNIL())
                 return SymbolicConst(time1, time2); 
-            else // v is not NULL
-              if ( time1 == 1 && time2 == 1)
+            else if ( time1 == 1 && time2 == 1)
                return v;
             return ApplyBinOP( op, v, SymbolicConst(time1,time2));
           }
-  //! Liao 2/19/2009 , access function to v directly. Used for debugging mostly       
-  SymbolicVal GetV(); // { return v; } // gdb sometimes cannot evaluate inlined functions
+
   bool IsTop() const { return  !v.IsNIL() && time1 == 0; } 
   bool CombineWith( const SymbolicTerm &that)  ;
   bool operator == (const SymbolicTerm& that) const;
@@ -65,11 +58,11 @@ inline bool operator != (const SymbolicTerm& v1, const SymbolicTerm& v2)
 {  return !(v1 == v2); }
 
 class OPApplicator;
-class SymbolicOperands // List of symbolic terms as operands
+class SymbolicOperands
 {
-  LatticeElemList<SymbolicTerm> opds; // operands
+  LatticeElemList<SymbolicTerm> opds;
  public:
-  typedef LatticeElemList<SymbolicTerm>::iterator OpdIterator;// Operand iterator
+  typedef LatticeElemList<SymbolicTerm>::iterator OpdIterator;
 
   SymbolicOperands() {}
   SymbolicOperands( const SymbolicOperands& that)
@@ -111,7 +104,8 @@ class SymbolicExpr : public SymbolicValImpl,
   void Visit( SymbolicVisitor* op) const { op->VisitExpr(*this); }
   SymbolicValImpl* Clone() const { return CloneExpr(); }
   std::string toString() const;
-  SymbolicValType GetType() const { return VAL_EXPR; }
+  SymbolicValType GetValType() const { return VAL_EXPR; }
+  std:: string GetTypeName() const  { return "expr"; }
   void push_back( const SymbolicVal& v) { ApplyOpd(v); }
   virtual std::string GetOPName () const = 0;
 

@@ -4,7 +4,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/any.hpp>
 #include "variableVersionTable.h"
-#include "ssa/staticSingleAssignment.h"
+#include <staticSingleAssignment.h>
 #include "costModel.h"
 
 //Forward declarations

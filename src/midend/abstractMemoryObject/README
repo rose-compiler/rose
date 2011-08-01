@@ -1,0 +1,19 @@
+
+
+* Use boost share pointers (smart pointers) to avoid memory leaks
+
+* Support lookup x from y for references like x.y
+
+* Support intersection and union operations on MemObjSet
+
+* Skip overlaps() for now
+
+* Name change: ObjSet -> MemObjSet
+
+* abstractIndex: a separate abstract class, similar to MemObjSet
+
+* Pointer: provide getDereference() and getElement(), users choose which one to use, either a pointer to a scalar or as an array, depending on how the pointer is used as part of the code
+
+* Figure 2.  Anonymous objects: equals if same type  or one type is a subtype of the other.
+
+* Three use cases: def-use analysis  by George, alias analysis by Faizur, and constant propagation/live variable  by Phil ????.

@@ -1,11 +1,6 @@
 // tps : Switching from rose.h to sage3 changed size from 17,7 MB to 7,3MB
 #include "sage3basic.h"
 
-// DQ (10/14/2010):  This should only be included by source files that require it.
-// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
-// Interestingly it must be at the top of the list of include files.
-#include "rose_config.h"
-
 #include "CallGraph.h"
 #include <boost/foreach.hpp>
 #include <boost/tuple/tuple.hpp>
@@ -13,7 +8,6 @@
 #define foreach BOOST_FOREACH
 using namespace std;
 using namespace boost;
-
 
 ClassHierarchyWrapper::ClassHierarchyWrapper(SgNode *node)
 {
@@ -29,8 +23,8 @@ ClassHierarchyWrapper::ClassHierarchyWrapper(SgNode *node)
         SgClassDefinition *clsDescDef = isSgClassDefinition(*it);
         SgBaseClassPtrList &baseClses = clsDescDef->get_inheritances();
 
-        ClassDefSet& classParents = directParents[clsDescDef];
-        
+        ClassDefSet& classParents = directParents[clsDescDef->get_declaration()->get_mangled_name().getString()];
+
         // for each iterate through their parents and add parent - child relationship to the graph
         for (SgBaseClassPtrList::iterator it = baseClses.begin(); it != baseClses.end(); it++)
         {
@@ -39,39 +33,21 @@ ClassHierarchyWrapper::ClassHierarchyWrapper(SgNode *node)
             ROSE_ASSERT(baseCls != NULL);
             SgClassDefinition *baseClsDef = baseCls->get_definition();
             ROSE_ASSERT(baseClsDef != NULL);
-            
+
             classParents.insert(baseClsDef);
+            directChildren[baseCls->get_mangled_name().getString()].insert(clsDescDef);
         }
     }
-    
-    //Ok, now to populate the directChildren map
-    ClassDefToClassDefsMap::const_iterator it = directParents.begin();
-    for(; it != directParents.end(); ++it)
-    {
-        SgClassDefinition* childClass = it->first;
-        const ClassDefSet& baseClasses = it->second;
-        
-        foreach(SgClassDefinition* baseClass, baseClasses)
-        {
-            directChildren[baseClass].insert(childClass);
-        }
-    }
-    
+
     //Now populate the ancestor/all subclasses maps
     buildAncestorsMap(directParents, ancestorClasses);
     buildAncestorsMap(directChildren, subclasses);
 }
 
-const ClassHierarchyWrapper::ClassDefSet& ClassHierarchyWrapper::getSubclasses( SgClassDefinition *cls ) const
+const ClassHierarchyWrapper::ClassDefSet& ClassHierarchyWrapper::getSubclasses(SgClassDefinition *cls) const
 {
-    if (cls->get_declaration()->get_definingDeclaration() != NULL)
-    {
-        cls = isSgClassDefinition(isSgClassDeclaration(cls->get_declaration()->get_definingDeclaration())->get_definition());
-        ROSE_ASSERT(cls != NULL);
-    }
-    
     const ClassDefSet* result = NULL;
-    ClassDefToClassDefsMap::const_iterator children = subclasses.find(cls);
+    MangledNameToClassDefsMap::const_iterator children = subclasses.find(cls->get_declaration()->get_mangled_name());
     if (children == subclasses.end())
     {
         static ClassDefSet emptySet;
@@ -81,15 +57,14 @@ const ClassHierarchyWrapper::ClassDefSet& ClassHierarchyWrapper::getSubclasses( 
     {
         result = &children->second;
     }
-    
+
     return *result;
 }
 
-
-const ClassHierarchyWrapper::ClassDefSet& ClassHierarchyWrapper::getAncestorClasses( SgClassDefinition *cls ) const
+const ClassHierarchyWrapper::ClassDefSet& ClassHierarchyWrapper::getAncestorClasses(SgClassDefinition *cls) const
 {
     const ClassDefSet* result = NULL;
-    ClassDefToClassDefsMap::const_iterator children = ancestorClasses.find(cls);
+    MangledNameToClassDefsMap::const_iterator children = ancestorClasses.find(cls->get_declaration()->get_mangled_name());
     if (children == ancestorClasses.end())
     {
         static ClassDefSet emptySet;
@@ -105,15 +80,9 @@ const ClassHierarchyWrapper::ClassDefSet& ClassHierarchyWrapper::getAncestorClas
 
 const ClassHierarchyWrapper::ClassDefSet& ClassHierarchyWrapper::getDirectSubclasses(SgClassDefinition * cls) const
 {
-    if (cls->get_declaration()->get_definingDeclaration() != NULL)
-    {
-        cls = isSgClassDefinition(isSgClassDeclaration(cls->get_declaration()->get_definingDeclaration())->get_definition());
-        ROSE_ASSERT(cls != NULL);
-    }
-
     const ClassDefSet* result = NULL;
 
-    ClassDefToClassDefsMap::const_iterator children = directChildren.find(cls);
+    MangledNameToClassDefsMap::const_iterator children = directChildren.find(cls->get_declaration()->get_mangled_name());
     if (children == directChildren.end())
     {
         static ClassDefSet emptySet;
@@ -127,34 +96,51 @@ const ClassHierarchyWrapper::ClassDefSet& ClassHierarchyWrapper::getDirectSubcla
     return *result;
 }
 
+void findParents(const string& classMangledName,
+        const ClassHierarchyWrapper::MangledNameToClassDefsMap& parents,
+        ClassHierarchyWrapper::MangledNameToClassDefsMap& transitiveParents,
+        set<SgClassDefinition*>& processed)
+{
+    ClassHierarchyWrapper::MangledNameToClassDefsMap::const_iterator currentParents = parents.find(classMangledName);
 
-void ClassHierarchyWrapper::buildAncestorsMap(const ClassDefToClassDefsMap& parents, ClassDefToClassDefsMap& transitiveParents)
+    if (currentParents == parents.end())
+    {
+        ROSE_ASSERT(transitiveParents.find(classMangledName) == transitiveParents.end());
+        return;
+    }
+
+    ClassHierarchyWrapper::ClassDefSet& currentTransitiveParents = transitiveParents[classMangledName];
+
+    //Our transitive parents are simply the union of our parents' transitive parents
+    foreach(SgClassDefinition* parent, currentParents->second)
+    {
+        std::string parentName = parent->get_declaration()->get_mangled_name();
+
+        if (processed.find(parent) == processed.end())
+        {
+            findParents(parentName, parents, transitiveParents, processed);
+            processed.insert(parent);
+        }
+
+        ClassHierarchyWrapper::MangledNameToClassDefsMap::const_iterator grandparents = transitiveParents.find(parentName);
+        if (grandparents != transitiveParents.end())
+        {
+            currentTransitiveParents.insert(grandparents->second.begin(), grandparents->second.end());
+        }
+
+        currentTransitiveParents.insert(parent);
+    }
+}
+
+void ClassHierarchyWrapper::buildAncestorsMap(const MangledNameToClassDefsMap& parents, MangledNameToClassDefsMap& transitiveParents)
 {
     transitiveParents.clear();
 
-    //Iterate over all the classes and perform DFS for each one
-    ClassDefToClassDefsMap::const_iterator it = parents.begin();
-    for(; it != parents.end(); ++it)
+    //Iterate over all the classes and calculate the transitive parents for each one
+    set<SgClassDefinition*> processedNodes;
+    MangledNameToClassDefsMap::const_iterator it = parents.begin();
+    for (; it != parents.end(); ++it)
     {
-        SgClassDefinition* currentClass = it->first;
-        const ClassDefSet& directParents = it->second;
-        ClassDefSet& currentAncestors = transitiveParents[currentClass];
-
-        //Use DFS to find all ancestors
-        vector<SgClassDefinition*> worklist;
-        worklist.insert(worklist.end(), directParents.begin(), directParents.end());
-        
-        while (!worklist.empty())
-        {
-            SgClassDefinition* ancestor = worklist.back();
-            worklist.pop_back();
-            currentAncestors.insert(ancestor);
-            
-            ClassDefToClassDefsMap::const_iterator deeperAncestors = parents.find(ancestor);
-            if (deeperAncestors != parents.end())
-            {
-                worklist.insert(worklist.end(), deeperAncestors->second.begin(), deeperAncestors->second.end());
-            }
-        }
+        findParents(it->first, parents, transitiveParents, processedNodes);
     }
 }

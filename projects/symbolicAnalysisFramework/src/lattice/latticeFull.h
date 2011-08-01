@@ -1,78 +1,17 @@
 #ifndef LATTICE_EXTRA_H
 #define LATTICE_EXTRA_H
 
-#include <string>
 #include "cfgUtils.h"
 #include "variables.h"
 #include "nodeState.h"
 #include "lattice.h"
-using namespace std;
-
+#include <string>
+#include <map>
+#include <vector>
 
 /******************************
  *** Commonly used lattices ***
  ******************************/
- 
-/* Generic lattice wrapper that adds an uninitialized state below all the regular
-   lattice states and assumes a single bottom state that corresponds to no information. * /
-class uninitBotLattice : public Lattice
-{
-	public:
-	typedef enum infContent {uninitalized, bottom, value};
-	
-	private:
-	infContent level;
-	
-	public:
-	
-	uninitBotLattice();
-	
-	uninitBotLattice(const uninitLattice &that);
-	
-	// initializes this Lattice to its bottom state, if it it not already initialized
-	void initialize();
-	
-	// called by derived classes to indicate that this lattice has been set to a specific value
-	void setToVal();
-	
-	// Returns this lattice's level in the uninitialized <= bottom <= value hierarchy
-	infContent getUninitBotLevel();
-	
-	// returns a copy of this lattice
-	//Lattice* copy();
-	
-	// overwrites the state of this Lattice with that of that Lattice
-	void copy(Lattice* that);
-	
-	// Called by analyses to create a copy of this lattice. However, if this lattice maintains any 
-	//    information on a per-variable basis, these per-variable mappings must be converted from 
-	//    the current set of variables to another set. This may be needed during function calls, 
-	//    when dataflow information from the caller/callee needs to be transferred to the callee/calleer.
-	// We do not force child classes to define their own versions of this function since not all
-	//    Lattices have per-variable information.
-	// varNameMap - maps all variable names that have changed, in each mapping pair, pair->first is the 
-	//              old variable and pair->second is the new variable
-	// func - the function that the copy Lattice will now be associated with
-	void remapVars(const map<varID, varID>& varNameMap, const Function& newFunc);
-	
-	// Called by analyses to copy over from the that Lattice dataflow information into this Lattice.
-	// that contains data for a set of variables and incorporateVars must overwrite the state of just
-	// those variables, while leaving its state for other variables alone.
-	// We do not force child classes to define their own versions of this function since not all
-	//    Lattices have per-variable information.
-	void incorporateVars(Lattice* that);
-	
-	// computes the meet of this and that and saves the result in this
-	// returns true if this causes this to change and false otherwise
-	bool meetUpdate(Lattice* that);
-	
-	virtual bool operator==(Lattice* that);
-		
-	// The string that represents this object
-	// If indent!="", every line of this string must be prefixed by indent
-	// The last character of the returned string should not be '\n', even if it is a multi-line string.
-	string str(string indent="");
-};*/
  
 class BoolAndLattice : public FiniteLattice
 {
@@ -133,7 +72,7 @@ class BoolAndLattice : public FiniteLattice
 	/*void addVar(varID var) {};
 	void remVar(varID var) {};*/
 	
-	string str(string indent="");
+	std::string str(std::string indent="");
 };
 
 class IntMaxLattice : public InfiniteLattice
@@ -203,7 +142,7 @@ class IntMaxLattice : public InfiniteLattice
 	/*void addVar(varID var) {};
 	void remVar(varID var) {};*/
 	
-	string str(string indent="");
+	std::string str(std::string indent="");
 };
 
 /*########################
@@ -220,22 +159,22 @@ class ProductLattice : public virtual Lattice
 	short level;
 	
 	protected:
-	vector<Lattice*> lattices;
+	std::vector<Lattice*> lattices;
 	
 	public:
 	ProductLattice();
-	ProductLattice(const vector<Lattice*>& lattices);
+	ProductLattice(const std::vector<Lattice*>& lattices);
 	~ProductLattice();
 	
-	void init(const vector<Lattice*>& lattices);
+	void init(const std::vector<Lattice*>& lattices);
 	
 	// initializes this Lattice to its default state
 	void initialize();
 	
-	const vector<Lattice*>& getLattices();
+	const std::vector<Lattice*>& getLattices();
 	
 	// initializes the given vector with a copy of the lattices vector
-	void copy_lattices(vector<Lattice*>& newLattices) const;
+	void copy_lattices(std::vector<Lattice*>& newLattices) const;
 	
 	// overwrites the state of this Lattice with that of that Lattice
 	virtual void copy(Lattice* that);
@@ -260,7 +199,7 @@ class ProductLattice : public virtual Lattice
 	// The string that represents this object
 	// If indent!="", every line of this string must be prefixed by indent
 	// The last character of the returned string should not be '\n', even if it is a multi-line string.
-	virtual string str(string indent="");
+	virtual std::string str(std::string indent="");
 };
 
 class FiniteProductLattice : public virtual ProductLattice, public virtual FiniteLattice
@@ -269,7 +208,7 @@ class FiniteProductLattice : public virtual ProductLattice, public virtual Finit
 	FiniteProductLattice() : ProductLattice(), FiniteLattice()
 	{}
 	
-	FiniteProductLattice(const vector<Lattice*>& lattices) : ProductLattice(lattices), FiniteLattice()
+	FiniteProductLattice(const std::vector<Lattice*>& lattices) : ProductLattice(lattices), FiniteLattice()
 	{
 		verifyFinite();
 	}
@@ -281,7 +220,7 @@ class FiniteProductLattice : public virtual ProductLattice, public virtual Finit
 	
 	void verifyFinite()
 	{
-		for(vector<Lattice*>::iterator it = lattices.begin(); it!=lattices.end(); it++)
+		for(std::vector<Lattice*>::iterator it = lattices.begin(); it!=lattices.end(); it++)
 				ROSE_ASSERT((*it)->finiteLattice());
 	}
 	
@@ -298,7 +237,7 @@ class InfiniteProductLattice : public virtual ProductLattice, public virtual Inf
 	InfiniteProductLattice() : ProductLattice(), InfiniteLattice()
 	{}
 	
-	InfiniteProductLattice(const vector<Lattice*>& lattices) : ProductLattice(lattices), InfiniteLattice()
+	InfiniteProductLattice(const std::vector<Lattice*>& lattices) : ProductLattice(lattices), InfiniteLattice()
 	{}
 	
 	InfiniteProductLattice(const InfiniteProductLattice& that) : ProductLattice(that.lattices), InfiniteLattice()
@@ -326,7 +265,7 @@ class VariablesProductLattice : public virtual ProductLattice
 	// the function that this lattice is associated with
 	Function func;
 	// map of lattices that correspond to constant variables
-	map<varID, Lattice*> constVarLattices;
+	std::map<varID, Lattice*> constVarLattices;
 	// lattice that corresponds to allVar;
 	Lattice* allVarLattice;
 	
@@ -335,7 +274,7 @@ class VariablesProductLattice : public virtual ProductLattice
 	
 	// maps variables in a given function to the index of their respective Lattice objects in 
 	// the ProductLattice::lattice[] array
-	static map<Function, map<varID, int> > varLatticeIndex;
+	static std::map<Function, std::map<varID, int> > varLatticeIndex;
 	
 	public:
 	// creates a new VariablesProductLattice
@@ -353,7 +292,7 @@ class VariablesProductLattice : public virtual ProductLattice
 	// n - the dataflow node that this lattice will be associated with
 	// state - the NodeState at this dataflow node
 	VariablesProductLattice(bool includeScalars, bool includeArrays, Lattice* perVarLattice, 
-	                        const map<varID, Lattice*>& constVarLattices, Lattice* allVarLattice,
+	                        const std::map<varID, Lattice*>& constVarLattices, Lattice* allVarLattice,
 	                        const Function& func, const DataflowNode& n, const NodeState& state);
 	                        
 	// copy constructor
@@ -401,7 +340,7 @@ class VariablesProductLattice : public virtual ProductLattice
 	// varNameMap - maps all variable names that have changed, in each mapping pair, pair->first is the 
 	//              old variable and pair->second is the new variable
 	// func - the function that the copy Lattice will now be associated with
-	/*Lattice**/void remapVars(const map<varID, varID>& varNameMap, const Function& newFunc);
+	/*Lattice**/void remapVars(const std::map<varID, varID>& varNameMap, const Function& newFunc);
 	
 	// Called by analyses to copy over from the that Lattice dataflow information into this Lattice.
 	// that contains data for a set of variables and incorporateVars must overwrite the state of just
@@ -421,7 +360,7 @@ class VariablesProductLattice : public virtual ProductLattice
 	// The string that represents this object
 	// If indent!="", every line of this string must be prefixed by indent
 	// The last character of the returned string should not be '\n', even if it is a multi-line string.
-	string str(string indent="");
+	std::string str(std::string indent="");
 };
 
 class FiniteVariablesProductLattice : public virtual VariablesProductLattice, public virtual FiniteProductLattice
@@ -440,7 +379,7 @@ class FiniteVariablesProductLattice : public virtual VariablesProductLattice, pu
 	// n - the dataflow node that this lattice will be associated with
 	// state - the NodeState at this dataflow node
 	FiniteVariablesProductLattice(bool includeScalars, bool includeArrays, 
-	                              Lattice* perVarLattice, const map<varID, Lattice*>& constVarLattices, Lattice* allVarLattice,
+	                              Lattice* perVarLattice, const std::map<varID, Lattice*>& constVarLattices, Lattice* allVarLattice,
 	                        		const Function& func, const DataflowNode& n, const NodeState& state) : 
 	    VariablesProductLattice(includeScalars, includeArrays, perVarLattice, constVarLattices, allVarLattice, func, n, state), 
 	    FiniteProductLattice()
@@ -477,7 +416,7 @@ class InfiniteVariablesProductLattice : public virtual VariablesProductLattice, 
 	// n - the dataflow node that this lattice will be associated with
 	// state - the NodeState at this dataflow node
 	InfiniteVariablesProductLattice(bool includeScalars, bool includeArrays, 
-	                                Lattice* perVarLattice, map<varID, Lattice*> constVarLattices, Lattice* allVarLattice,
+	                                Lattice* perVarLattice, std::map<varID, Lattice*> constVarLattices, Lattice* allVarLattice,
 	                        		  const Function& func, const DataflowNode& n, const NodeState& state) : 
 	    VariablesProductLattice(includeScalars, includeArrays, perVarLattice, constVarLattices, allVarLattice, func, n, state), 
 	    InfiniteProductLattice()

@@ -17,8 +17,6 @@ class Analysis;
 #include <set>
 #include <map>
 
-using namespace std;
-
 extern int analysisDebugLevel;
 
 class Analysis

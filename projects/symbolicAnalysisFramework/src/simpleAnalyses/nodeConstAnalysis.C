@@ -1,4 +1,5 @@
 #include "nodeConstAnalysis.h"
+#include <algorithm>
 
 int nodeConstAnalysisDebugLevel=0;
 
@@ -148,7 +149,7 @@ cout << "that: " << that.str("") << "\n";*/
 			if(level==valKnown && that.level==valKnown)
 			{
 				// update valID to the maximum of the two valIDs
-				valID = max(valID, that.valID);
+                                valID = std::max(valID, that.valID);
 			}
 			// else, if either object is top, set this object to top
 			else
