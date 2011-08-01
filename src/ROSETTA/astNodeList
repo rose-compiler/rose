@@ -693,7 +693,7 @@ SgWhereStatement
 SgWhileStmt
 SgWriteStatement
 SgXorAssignOp
-SgYieldStatement
+SgYieldExpression
 Sg_File_Info
 SgTypeCAFTeam
 SgCAFWithTeamStatement

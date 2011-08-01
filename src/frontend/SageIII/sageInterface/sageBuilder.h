@@ -812,8 +812,8 @@ SgAssertStmt* buildAssertStmt(SgExpression* test);
 SgAssertStmt* buildAssertStmt_nfi(SgExpression* test);
 
 //! Build a yield statement
-SgYieldStatement* buildYieldStatement(SgExpression* value);
-SgYieldStatement* buildYieldStatement_nfi(SgExpression* value);
+SgYieldExpression* buildYieldExpression(SgExpression* value);
+SgYieldExpression* buildYieldExpression_nfi(SgExpression* value);
 
 //! Build a key-datum pair
 SgKeyDatumPair* buildKeyDatumPair    (SgExpression* key, SgExpression* datum);

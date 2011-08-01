@@ -67,7 +67,6 @@ Unparse_Python::unparseLanguageSpecificStatement(SgStatement* stmt,
         CASE_DISPATCH_AND_BREAK(StmtDeclarationStatement);
         CASE_DISPATCH_AND_BREAK(TryStmt);
         CASE_DISPATCH_AND_BREAK(WhileStmt);
-        CASE_DISPATCH_AND_BREAK(YieldStatement);
         default: {
             cerr << "unparse Statement (" << stmt->class_name()
                  << "*) is unimplemented." << endl;
@@ -105,6 +104,7 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
         CASE_DISPATCH_AND_BREAK(StringVal);
         CASE_DISPATCH_AND_BREAK(TupleExp);
         CASE_DISPATCH_AND_BREAK(VarRefExp);
+        CASE_DISPATCH_AND_BREAK(YieldExpression);
 
         case V_SgAddOp:
         case V_SgSubtractOp:
@@ -976,9 +976,12 @@ Unparse_Python::unparseWhileStmt(SgWhileStmt* while_stmt,
 }
 
 void
-Unparse_Python::unparseYieldStatement(SgYieldStatement* yield_stmt,
+Unparse_Python::unparseYieldExpression(SgYieldExpression* yield_exp,
                                       SgUnparse_Info& info)
 {
+    bool atom = isSgExpression(yield_exp->get_parent()) != NULL;
+    if (atom) curprint("(");
     curprint("yield ");
-    unparseExpression(yield_stmt->get_value(), info);
+    unparseExpression(yield_exp->get_value(), info);
+    if (atom) curprint(")");
 }
