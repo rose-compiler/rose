@@ -896,7 +896,8 @@ void RtedTransformation::visit_isFunctionCall(SgFunctionCallExp* const fcexp)
         function_call_missing_def.push_back( fcexp );
      }
 
-     scopes[ fncallStmt ] = end_of_scope;
+     //
+     // \todo: scopes[ fncallStmt ] = end_of_scope;
   }
 }
 

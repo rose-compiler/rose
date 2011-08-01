@@ -61,29 +61,35 @@ void StackManager::beginScope(const std::string & name)
     scope.push_back(ScopeInfo(name,stack.size()));
 }
 
-void StackManager::endScope()
+void StackManager::endScope(size_t scopecount)
 {
-    const size_t noScopes = scope.size();
+    const size_t                   noScopes = scope.size();
+    assert( noScopes >= scopecount );
 
-    assert( noScopes > 0 );
+    const ScopeContainer::iterator limit   = scope.end();
+    const ScopeContainer::iterator new_top = limit - scopecount;
+    const size_t                   new_stack_size = new_top->stackIndex;
 
-    ScopeInfo lastScope = scope.back();
+    scope.erase(new_top+1, limit);
 
-    scope.pop_back();
+    size_t                         curr_stack_size = stack.size();
+    assert(curr_stack_size >= new_stack_size);
 
-    for (int i=stack.size()-1; i >= lastScope.stackIndex; --i)
+    MemoryManager&                 memmgr = *rtedRTS(this)->getMemManager();
+
+    while (curr_stack_size > new_stack_size)
     {
+        --curr_stack_size;
+
         VariablesType* var = stack.back();
         const Address  varaddr = var->getAddress();
 
         stack.pop_back();
         addrToVarMap.erase(varaddr);
-        rtedRTS(this)->getMemManager()->freeStackMemory(varaddr);
+        memmgr.freeStackMemory(varaddr);
 
         delete var;
     }
-
-    assert((int)stack.size() == lastScope.stackIndex);
 }
 
 int StackManager::getScopeCount()  const
@@ -122,8 +128,7 @@ StackManager::variablesEnd(int i) const
 
 void StackManager::clearStatus()
 {
-    while(scope.size() > 0)
-        endScope();
+    endScope(scope.size());
 
     assert(stack.size() ==0);
     assert(addrToVarMap.size() == 0);

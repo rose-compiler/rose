@@ -336,6 +336,14 @@ long upcBlocksize(const SgType* n)
   return sharedTest(n).second;
 }
 
+bool isUpcSharedPointer(SgType* t)
+{
+  SgModifierType* modtype = isSgModifierType( skip_Typedefs(t) );
+  if (!modtype) return false;
+
+  return (upcSharedFlag(modtype).first > usNonshared);
+}
+
 
 static
 bool isStaticVariable(const SgInitializedName& n)

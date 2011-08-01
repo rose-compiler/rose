@@ -191,7 +191,7 @@ void RuntimeSystem::violationHandler(RuntimeViolation & vio)  throw (RuntimeViol
 void RuntimeSystem::doProgramExitChecks()
 {
   // exit global scope
-  stackManager.endScope();
+  stackManager.endScope(1);
 
   // allows you to call doProgramExitChecks but then keep going without first
   // calling clearStatus.  Convenient for testing, but not generally
@@ -455,9 +455,9 @@ void RuntimeSystem::beginScope(const std::string & name)
     stackManager.beginScope(name);
 }
 
-void RuntimeSystem::endScope ()
+void RuntimeSystem::endScope(size_t scopecount)
 {
-    stackManager.endScope();
+    stackManager.endScope(scopecount);
 }
 
 

@@ -14,6 +14,12 @@ ostream& out = cout;
 static const long nondistributed = 0;
 
 static
+void endScope(RuntimeSystem* rs)
+{
+  rs->endScope(1);
+}
+
+static
 void freeMemory(RuntimeSystem* rs, Address addr, MemoryType::AllocKind kind = akCxxNew)
 {
   rs->freeMemory(addr, kind);
@@ -500,7 +506,7 @@ void testStack()
     rs->printMemStatus(cout);
 
 
-    rs->endScope();
+    endScope(rs);
     cout << endl << endl << "After return of function" << endl;
     rs->printStack(cout);
     rs->printMemStatus(cout);
@@ -617,7 +623,7 @@ void testScopeFreesStack()
         akStack,
         nondistributed
     );
-    rs->endScope();
+    endScope(rs);
 
     CLEANUP
 }
@@ -668,7 +674,7 @@ void testImplicitScope()
         rs->beginScope("Scope2");
             rs->createVariable(addr+=ptrSize,"p2_to_10","mangled_p2_to_10",ts->getPointerType("SgTypeInt"), akStack, nondistributed);
             registerPointerChange(rs, "mangled_p2_to_10", asAddr(10));
-        rs->endScope();
+        endScope(rs);
 
         /*
         freeMemory(rs, 10);
@@ -682,7 +688,7 @@ void testImplicitScope()
         try{ registerPointerChange(rs, "mangled_p1_to_18", asAddr(0)); }
         TEST_CATCH(RuntimeViolation::MEM_WITHOUT_POINTER)
 
-    rs->endScope();
+    endScope(rs);
 
     freeMemory(rs, asAddr(10));
     freeMemory(rs, asAddr(18));
@@ -762,7 +768,7 @@ void testPointerChanged()
 
         freeMemory(rs, asAddr(10));
         freeMemory(rs, asAddr(18));
-    rs->endScope();
+    endScope(rs);
 
 
     std::cout << "--- Scope 2" << std::endl;
@@ -783,7 +789,7 @@ void testPointerChanged()
 
         try{ registerPointerChange(rs, "mangled_intPtr", asAddr(0x42) + 10*sizeof(int),true); }
         TEST_CATCH(RuntimeViolation::INVALID_PTR_ASSIGN )
-    rs->endScope();
+    endScope(rs);
 
     std::cout << "--- Scope 3" << std::endl;
 
@@ -805,7 +811,7 @@ void testPointerChanged()
         TEST_CATCH(RuntimeViolation::INVALID_READ )
 
 
-    rs->endScope();
+    endScope(rs);
 
 
     CLEANUP
@@ -825,7 +831,7 @@ void testInvalidPointerAssign()
         try { registerPointerChange(rs, "mangled_intPtr", asAddr(0x42)); }
         TEST_CATCH ( RuntimeViolation::INVALID_TYPE_ACCESS )
 
-    rs->endScope();
+    endScope(rs);
     CLEANUP
 }
 
@@ -850,7 +856,7 @@ void testPointerTracking()
     //rs->checkpoint(SourcePosition());
 
 
-    rs->endScope();
+    endScope(rs);
 
     CLEANUP
 }
@@ -892,7 +898,7 @@ void testMultidimensionalStackArrayAccess()
     // as above, but this time legally access the sub array
     checkIfSameChunk( *mm, asAddr(0x100) + 3 * intsz, asAddr(0x100) + 3 * intsz, intsz);
 
-    rs->endScope();
+    endScope(rs);
 
     CLEANUP
 }
@@ -931,7 +937,7 @@ void testArrayAccess()
     freeMemory(rs, heapAddr);
     freeMemory(rs, heapAddr+10*sizeof(int));
 
-    rs->endScope();
+    endScope(rs);
     rs -> setViolationPolicy( RuntimeViolation::INVALID_PTR_ASSIGN, ViolationPolicy::InvalidatePointer );
 
     CLEANUP

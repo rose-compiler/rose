@@ -35,6 +35,8 @@ struct RtedSymbols
   SgFunctionSymbol*   roseUpcAllInitialize;
   SgFunctionSymbol*   roseUpcBeginExclusive;
   SgFunctionSymbol*   roseUpcEndExclusive;
+  SgFunctionSymbol*   roseUpcEnterSharedPtr;
+  SgFunctionSymbol*   roseUpcExitSharedPtr;
 
   SgEnumDeclaration*  roseAllocKind;
 
@@ -73,6 +75,8 @@ struct RtedSymbols
     roseUpcAllInitialize(NULL),
     roseUpcBeginExclusive(NULL),
     roseUpcEndExclusive(NULL),
+    roseUpcEnterSharedPtr(NULL),
+    roseUpcExitSharedPtr(NULL),
 
     roseAllocKind(NULL),
 

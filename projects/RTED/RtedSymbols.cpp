@@ -44,6 +44,7 @@ create_type(SgScopeStatement& n, const std::string& name, SageType* tag)
   return SageType::createType(find_sym(n, name, tag)->get_declaration());
 }
 
+static
 std::string rtedIdentifier(const std::string& name)
 {
   std::string res;
@@ -113,6 +114,9 @@ void RtedSymbols::initialize(SgGlobal& n)
   set_rtedfunc(n, "UpcAllInitialize",         roseUpcAllInitialize);
   set_rtedfunc(n, "UpcBeginExclusive",        roseUpcBeginExclusive);
   set_rtedfunc(n, "UpcEndExclusive",          roseUpcEndExclusive);
+
+  set_rtedfunc(n, "UpcEnterSharedPtr",        roseUpcEnterSharedPtr);
+  set_rtedfunc(n, "UpcExitSharedPtr",         roseUpcExitSharedPtr);
 
   set_rtedtype(n, "AddressDesc",              roseAddressDesc);
   set_rtedtype(n, "TypeDesc",                 roseTypeDesc);

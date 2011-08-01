@@ -11,17 +11,19 @@ namespace rted
   {
     bool          function;
     bool          isAssignInitializer;
+    bool          isVariableDecl;
     bool          isArrowExp;
     bool          isAddressOfOp;
     bool          isForStatement;
     bool          isBinaryOp;
+    size_t        openBlocks;
     SgStatement*  lastGForLoop;
     SgBinaryOp*   lastBinary;
 
     InheritedAttribute()
-    : function(false),  isAssignInitializer(false), isArrowExp(false),
-      isAddressOfOp(false), isForStatement(false), isBinaryOp(false),
-      lastGForLoop(NULL), lastBinary(NULL)
+    : function(false),  isAssignInitializer(false), isVariableDecl(false),
+      isArrowExp(false), isAddressOfOp(false), isForStatement(false),
+      isBinaryOp(false), openBlocks(0), lastGForLoop(NULL), lastBinary(NULL)
     {}
   };
 

@@ -29,6 +29,24 @@ void RtedTransformation::transformUpcBlockingOps(SgStatement* const stmt)
   insertCheck(ilAfter,  stmt, symbols.roseUpcEnterWorkzone, SB::buildExprListExp(), enterwz_msg);
 }
 
+void RtedTransformation::transformPtrDerefs(SgPointerDerefExp* ptrderef)
+{
+    ROSE_ASSERT(ptrderef);
+
+    SgExpression* operand = ptrderef->get_operand();
+    ROSE_ASSERT ( isUpcSharedPointer(operand->get_type()) );
+
+    SgStatement*   stmt = getSurroundingStatement(ptrderef);
+    SgExprListExp* lock_args   = SB::buildExprListExp();
+    SgExprListExp* unlock_args = SB::buildExprListExp();
+
+    SI::appendExpression(lock_args,   SI::deepCopy(operand));
+    SI::appendExpression(unlock_args, SI::deepCopy(operand));
+
+    insertCheck(ilBefore, stmt, symbols.roseUpcEnterSharedPtr, lock_args);
+    insertCheck(ilAfter,  stmt, symbols.roseUpcExitSharedPtr,  unlock_args);
+}
+
 
 
 #if NOT_YET_IMPLEMENTED

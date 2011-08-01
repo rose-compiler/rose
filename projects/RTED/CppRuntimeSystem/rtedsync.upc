@@ -16,7 +16,7 @@ void rted_UpcAllInitWorkzone(void)
   assert(!workzone);
 
   workzone = wzp_all_alloc();
-  sharedptrlock = upc_all_lock_alloc()
+  sharedptrlock = upc_all_lock_alloc();
 }
 
 void rted_UpcEnterWorkzone(void)

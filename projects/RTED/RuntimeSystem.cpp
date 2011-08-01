@@ -674,14 +674,14 @@ void rted_EnterScope(const char* name)
   rs->beginScope( name );
 }
 
-void rted_ExitScope(const char*, SourceInfo si)
+void rted_ExitScope(size_t scopecount, rted_SourceInfo si);
 {
   rted_ProcessMsg();
 
   RuntimeSystem* rs = RuntimeSystem::instance();
 
   checkpoint( rs, SourcePosition(si), primaryLoc );
-  rs->endScope();
+  rs->endScope(scopecount);
 }
 
 

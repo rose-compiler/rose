@@ -15,9 +15,22 @@ using namespace SageInterface;
 using namespace SageBuilder;
 
 
-void
-RtedTransformation::changeReturnStmt(SgReturnStmt * rstmt)
+static
+SgReturnStmt* return_stmt(ReturnInfo ri)
 {
+  return ri.first;
+}
+
+static
+size_t open_blocks(ReturnInfo ri)
+{
+  return ri.second;
+}
+
+void
+RtedTransformation::changeReturnStmt(ReturnInfo rinfo)
+{
+  SgReturnStmt* rstmt = return_stmt(rinfo);
   ROSE_ASSERT(rstmt);
   std::cerr << "\n\n@@@@@@@@@@@@@@@@@@@@@@@ enter ReturnStmtChange" << std::endl;
 
@@ -27,6 +40,8 @@ RtedTransformation::changeReturnStmt(SgReturnStmt * rstmt)
   // and assign that expr to that new variable:
   //   type x = rightOfRet;
   //   return x;
+
+  requiresParentIsBasicBlock(*rstmt);
 
   SgScopeStatement*     scope = rstmt->get_scope();
   std::string           name = "rstmt";
@@ -46,25 +61,9 @@ RtedTransformation::changeReturnStmt(SgReturnStmt * rstmt)
   replaceStatement( rstmt, newRtnStmt );
   insertStatementBefore( newRtnStmt, newStmt );
 
-  //replaceExpression(rightOfRet,vexp);
-  std::map<SgStatement*, SgNode*>::iterator it = scopes.find(rstmt);
-  if (it!=scopes.end()) {
-    SgNode* fcall = it->second;
+  SgStatement*          exitBlock = buildExitBlockStmt(open_blocks(rinfo), scope, rstmt->get_file_info());
 
-    scopes.erase(it->first);
-    scopes[newStmt]=fcall;
-  }
-
-/*
-  SgFunctionDefinition* main = &sg::ancestor<SgFunctionDefinition>(*rstmt);
-
-  if (is_main_func(main))
-  {
-    // overwrite the last statment in main;
-    mainLast = newRtnStmt;
-    std::cerr << "\n\n@@@@@@@@@@@@@@@@@@@@@@@ Changing mainLast in ReturnStmtChange" << std::endl;
-  }
-*/
+  insertStatementBefore( newRtnStmt, exitBlock );
 }
 
 #endif
