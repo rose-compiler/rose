@@ -1096,6 +1096,6 @@ sage_buildYield(PyObject *self, PyObject *args)
     if (! PyArg_ParseTuple(args, "O&", SAGE_CONVERTER(SgExpression), &expr))
         return NULL;
 
-    SgYieldStatement* sg_yield = SageBuilder::buildYieldStatement(expr);
+    SgYieldExpression* sg_yield = SageBuilder::buildYieldExpression(expr);
     return PyEncapsulate(sg_yield);
 }

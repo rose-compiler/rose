@@ -3199,19 +3199,19 @@ SgAssertStmt* SageBuilder::buildAssertStmt_nfi(SgExpression* test)
   return result;
 }
 
-SgYieldStatement* SageBuilder::buildYieldStatement(SgExpression* value)
+SgYieldExpression* SageBuilder::buildYieldExpression(SgExpression* value)
 {
   ROSE_ASSERT(value != NULL);
-  SgYieldStatement* result = new SgYieldStatement(value);
+  SgYieldExpression* result = new SgYieldExpression(value);
   value->set_parent(result);
   setOneSourcePositionForTransformation(result);
   return result;
 }
 
-SgYieldStatement* SageBuilder::buildYieldStatement_nfi(SgExpression* value)
+SgYieldExpression* SageBuilder::buildYieldExpression_nfi(SgExpression* value)
 {
   ROSE_ASSERT(value != NULL);
-  SgYieldStatement* result = new SgYieldStatement(value);
+  SgYieldExpression* result = new SgYieldExpression(value);
   value->set_parent(result);
   setOneSourcePositionNull(result);
   return result;
