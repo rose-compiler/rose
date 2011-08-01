@@ -3978,6 +3978,14 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
              curprint("(");
              unparseExpression(pTypeBase->get_dim_info(), info);
              curprint(")");
+             SgTypeString* stringType = isSgTypeString(pTypeBase->get_base_type());
+             if (stringType)
+             {
+               curprint("*");
+               curprint("(");
+               unparseExpression(stringType->get_lengthExpression(), info);
+               curprint(")");
+             }
              if (pTypeBase->get_isCoArray())
              {
                curprint("[*]");
