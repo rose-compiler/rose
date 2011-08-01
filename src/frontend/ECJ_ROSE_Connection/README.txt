@@ -44,3 +44,13 @@ Work to do with Craig:
   1) Review how java error handling is done to support both OFP (Fortran) and ECJ (Java);
      make it uniform.
 
+
+Work to do in language support:
+  1) Expression operators not handled yet:
+        "instanceof" operator
+
+  2) Statements:
+       a) Most declarations and supported (e.g functions, data members, and class declarations)
+       b) Most control statements are not yet implemented...(a few are)...
+
+

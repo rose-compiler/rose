@@ -4,6 +4,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # will be installed by "make install", even with language only options are used.
 SUBDIRS = \
         abstractHandle \
+	abstractMemoryObject \
         astDiagnostics \
         astProcessing \
         astQuery \

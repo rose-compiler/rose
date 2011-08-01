@@ -2,29 +2,31 @@
 #define CLASS_HIERARCHY_GRAPH_H
 
 #include <vector>
-#include <boost/unordered_map.hpp>
+#include <map>
 #include <boost/unordered_set.hpp>
 
 class ClassHierarchyWrapper
 {
 public:
     typedef boost::unordered_set<SgClassDefinition*> ClassDefSet;
-        
+
+    typedef boost::unordered_map<std::string, ClassDefSet> MangledNameToClassDefsMap;
+
 private:
-    typedef boost::unordered_map<SgClassDefinition*,  ClassDefSet> ClassDefToClassDefsMap;
-    
+
+
     /** Map from each class to all its immediate superclasses. */
-    ClassDefToClassDefsMap directParents;
-    
+    MangledNameToClassDefsMap directParents;
+
     /** Map from each class to all its immediate subclasses. */
-    ClassDefToClassDefsMap directChildren;
-    
+    MangledNameToClassDefsMap directChildren;
+
     /** Map from class to all (strict) ancestors. */
-    ClassDefToClassDefsMap ancestorClasses;
-    
+    MangledNameToClassDefsMap ancestorClasses;
+
     /** Map from class to all (strict) subclasses. */
-    ClassDefToClassDefsMap subclasses;
-    
+    MangledNameToClassDefsMap subclasses;
+
     SgIncidenceDirectedGraph* classGraph;
 
 public:
@@ -39,7 +41,7 @@ private:
     /** Computes the transitive closure of the child-parent class relationship.
      * @param parents map from each class to its parents. 
      * @param transitiveParents map from each class to all its ancestors */
-    static void buildAncestorsMap(const ClassDefToClassDefsMap& parents, ClassDefToClassDefsMap& transitiveParents);
+    static void buildAncestorsMap(const MangledNameToClassDefsMap& parents, MangledNameToClassDefsMap& transitiveParents);
 };
 
 
