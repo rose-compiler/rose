@@ -716,6 +716,11 @@ void
 Unparse_Python::unparseInitializedName(SgInitializedName* init_name,
                                        SgUnparse_Info& info)
 {
+    if (init_name->isExcessPositionalParameter())
+        curprint("*");
+    else if (init_name->isExcessKeywordParameter())
+        curprint("**");
+
     curprint(init_name->get_name().str());
     if (init_name->get_initializer() != NULL) {
         unparseExpression(init_name->get_initializer(), info);
