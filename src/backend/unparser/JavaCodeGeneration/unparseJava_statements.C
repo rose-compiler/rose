@@ -76,37 +76,7 @@ JavaCodeGeneration_locatedNode::unparseLanguageSpecificStatement(SgStatement* st
 
      ROSE_ASSERT(stmt != NULL);
 
-
-#if 0
-  // Debugging support
-     SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(stmt);
-     if (declarationStatement != NULL)
-        {
-          curprint( "/* In unparseLanguageSpecificStatement(): declarationStatement->get_declarationModifier().isFriend() = ");
-          declarationStatement->get_declarationModifier().isFriend() ? curprint("true") : curprint("false");
-          curprint( "*/ \n ");
-        }
-#endif
-
-#if 0
-     curprint ( string("\n/* Top of unparseLanguageSpecificStatement (JavaCodeGeneration_locatedNode) " ) + stmt->class_name() + " */\n ");
-     ROSE_ASSERT(stmt->get_startOfConstruct() != NULL);
-  // ROSE_ASSERT(stmt->getAttachedPreprocessingInfo() != NULL);
-     int numberOfComments = -1;
-     if (stmt->getAttachedPreprocessingInfo() != NULL)
-          numberOfComments = stmt->getAttachedPreprocessingInfo()->size();
-     curprint ( string("/* startOfConstruct: file = " ) + stmt->get_startOfConstruct()->get_filenameString()
-         + " raw filename = " + stmt->get_startOfConstruct()->get_raw_filename()
-         + " raw line = "     + StringUtility::numberToString(stmt->get_startOfConstruct()->get_raw_line())
-         + " raw column = "   + StringUtility::numberToString(stmt->get_startOfConstruct()->get_raw_col())
-         + " #comments = "    + StringUtility::numberToString(numberOfComments)
-         + " */\n ");
-#endif
-
-#if ROSE_TRACK_PROGRESS_OF_ROSE_COMPILING_ROSE
-     printf ("In unparseLanguageSpecificStatement(): file = %s line = %d \n",stmt->get_startOfConstruct()->get_filenameString().c_str(),stmt->get_startOfConstruct()->get_line());
-#endif
-
+     curprint_indented("", info);
      switch (stmt->variantT())
         {
        // DQ (3/14/2011): Need to move the Java specific unparse member functions from the base class to this function.
@@ -186,7 +156,32 @@ JavaCodeGeneration_locatedNode::unparseLanguageSpecificStatement(SgStatement* st
                break;
              }
         }
+
+        bool printSemicolon = true;
+        switch (stmt->variantT()) {
+            case V_SgClassDeclaration:
+            case V_SgClassDefinition:
+            case V_SgMemberFunctionDeclaration:
+            case V_SgFunctionDefinition:
+            case V_SgFunctionParameterList:
+            case V_SgBasicBlock:
+                printSemicolon = false;
+        }
+        if (printSemicolon) curprint(";");
    }
+
+void
+JavaCodeGeneration_locatedNode::unparseNestedStatement(SgStatement* stmt, SgUnparse_Info& info) {
+    info.inc_nestingLevel();
+    unparseStatement(stmt, info);
+    info.dec_nestingLevel();
+}
+
+void
+JavaCodeGeneration_locatedNode::curprint_indented(const string str, SgUnparse_Info& info) const {
+    unp->cur.insert_newline(0, 4 * info.get_nestingLevel());
+    curprint(str);
+}
 
 void
 JavaCodeGeneration_locatedNode::unparseImportDeclarationStatement (SgStatement* stmt, SgUnparse_Info& info)
@@ -416,12 +411,13 @@ JavaCodeGeneration_locatedNode::unparseBasicBlockStmt(SgStatement* stmt, SgUnpar
      SgBasicBlock* basic_stmt = isSgBasicBlock(stmt);
      ROSE_ASSERT(basic_stmt != NULL);
 
-     curprint ("{\n");
+     curprint ("{");
+     unp->cur.insert_newline();
      foreach (SgStatement* stmt, basic_stmt->get_statements()) {
-         unparseStatement(stmt, info);
-         curprint(";\n");
+         unparseNestedStatement(stmt, info);
+         unp->cur.insert_newline();
      }
-     curprint ("}");
+     curprint_indented ("}", info);
    }
 
 
@@ -835,11 +831,11 @@ JavaCodeGeneration_locatedNode::unparseClassDefnStmt(SgStatement* stmt, SgUnpars
      ROSE_ASSERT(classdefn_stmt != NULL);
 
      curprint(" {");
+     unp->cur.insert_newline();
      foreach (SgDeclarationStatement* child, classdefn_stmt->get_members()) {
-         unparseStatement(child, info);
-         curprint("\n");
+         unparseNestedStatement(child, info);
      }
-     curprint("}");
+     curprint_indented("}", info);
    }
 
 
