@@ -739,6 +739,7 @@ sage_buildKeyword(PyObject *self, PyObject *args)
                                         SAGE_CONVERTER(SgExpression), &sg_value))
         return NULL;
 
+    cout << "got name: " << key << endl;
     SgActualArgumentExpression* sg_keyword =
         SageBuilder::buildActualArgumentExpression(SgName(key), sg_value);
 

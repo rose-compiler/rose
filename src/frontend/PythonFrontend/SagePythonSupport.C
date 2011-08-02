@@ -104,35 +104,25 @@ sage_appendStatements(PyObject *self, PyObject *args)
 }
 
 PyObject*
-sage_buildInitializedName(PyObject* self, PyObject* args, PyObject* kwargs) {
+sage_buildInitializedName(PyObject* self, PyObject* args) {
     char *id;
-    PyObject *vararg = NULL, *kwarg = NULL;
-    char *kwlist[] = {"id", "vararg", "kwarg", NULL};
-    if (! PyArg_ParseTupleAndKeywords(args, kwargs, "s|OO", kwlist,
-                                        &id,
-                                        &vararg,
-                                        &kwarg))
+    SgExpression *sg_init_val = NULL;
+    if (! PyArg_ParseTuple(args, "s|O&", &id,
+                                         SAGE_CONVERTER(SgExpression), &sg_init_val))
         return NULL;
 
-    int isExcessPositionalParameter = vararg == Py_True;
-    int isExcessKeywordParameter = kwarg == Py_True;
-    ROSE_ASSERT(!(isExcessPositionalParameter && isExcessKeywordParameter));
     SgType* sg_type = SageBuilder::buildVoidType();
-    SgInitializedName* sg_init_name = SageBuilder::buildInitializedName(id, sg_type);
-    if (isExcessPositionalParameter) sg_init_name->setExcessPositionalParameter();
-    if (isExcessKeywordParameter) sg_init_name->setExcessKeywordParameter();
+    SgInitializer* sg_init = (sg_init_val == NULL) ?
+        NULL : SageBuilder::buildAssignInitializer(sg_init_val);
+    SgInitializedName* sg_init_name = SageBuilder::buildInitializedName(id, sg_type, sg_init);
     return PyEncapsulate(sg_init_name);
 }
 
 PyObject*
 sage_buildFunctionParameterList(PyObject* self, PyObject* args) {
     PyObject *py_args, *py_defaults;
-    SgInitializedName* sg_excess_positional_id = NULL;
-    SgInitializedName* sg_excess_keyword_id = NULL;
-    if (! PyArg_ParseTuple(args, "O!O!|O&O&", &PyList_Type, &py_args,
-                                              &PyList_Type, &py_defaults,
-                                              SAGE_CONVERTER(SgInitializedName), &sg_excess_positional_id,
-                                              SAGE_CONVERTER(SgInitializedName), &sg_excess_keyword_id))
+    if (! PyArg_ParseTuple(args, "O!O!", &PyList_Type, &py_args,
+                                         &PyList_Type, &py_defaults))
         return NULL;
 
     SgFunctionParameterList* sg_params =
@@ -167,12 +157,6 @@ sage_buildFunctionParameterList(PyObject* self, PyObject* args) {
 
         sg_params->append_arg(sg_name);
     }
-
-    if (sg_excess_positional_id != NULL)
-        sg_params->append_arg(sg_excess_positional_id);
-
-    if (sg_excess_keyword_id != NULL)
-        sg_params->append_arg(sg_excess_keyword_id);
 
     return PyEncapsulate(sg_params);
 }

@@ -39,7 +39,7 @@ sage_appendStatements(PyObject *self, PyObject *args);
  * Arg object.
  */
 PyObject*
-sage_buildFunctionParameterList(PyObject* self, PyObject* args);
+sage_buildFunctionParameterList(PyObject* args, PyObject* kwargs);
 
 /**
  * Build a reference to the name in the given scope. If no such name

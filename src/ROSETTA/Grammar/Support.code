@@ -4016,23 +4016,6 @@ HEADER_INITIALIZED_NAME_START
                e_last_gnu_variable_attribute /*!< last value (upper bound on range of values, used in error checking) */
              };
 
-       // driscoll6 (8/2/11) Support for excess parameter identifiers in python
-          enum excess_parameter_enum
-             {
-               e_excess_parameter_none = 0,   /* for a simple paramter    (foo)   */
-               e_excess_parameter_positional, /* for a position parameter (*foo)  */
-               e_excess_parameter_keyword,    /* for a keyword paramter   (**foo) */
-               e_excess_parameter_last        /* sentry */
-             };
-
-          bool isExcessParameter() const;
-          bool isExcessKeywordParameter() const;
-          bool isExcessPositionalParameter() const;
-
-          void setExcessParameterNone();
-          void setExcessKeywordParameter();
-          void setExcessPositionalParameter();
-
           bool checkBit ( unsigned int bit ) const;
           void setBit ( unsigned int bit );
           void unsetBit ( unsigned int bit );
@@ -8627,8 +8610,6 @@ SgInitializedName::SgInitializedName
      p_register_name_code(SgInitializedName::e_invalid_register),
   // DQ (8/9/2006): Added support for asm declarations on variables (using strings)
      p_register_name_string(""),
-  // driscoll6 (8/2/11) support for python excess parameter forms
-     p_excess_parameter(SgInitializedName::e_excess_parameter_none),
   // DQ (10/10/2007): Added support for initialization of this data member (reported as uninitialized by valgrind).
      p_requiresGlobalNameQualificationOnType(false)
    {
@@ -8654,8 +8635,6 @@ SgInitializedName::SgInitializedName
      //p_attributeMechanism(NULL),
      p_register_name_code(SgInitializedName::e_invalid_register),
      p_register_name_string(""),
-  // driscoll6 (8/2/11) support for python excess parameter forms
-     p_excess_parameter(SgInitializedName::e_excess_parameter_none),
   // DQ (10/10/2007): Added support for initialization of this data member (reported as uninitialized by valgrind).
      p_requiresGlobalNameQualificationOnType(false)
    {
@@ -8720,9 +8699,6 @@ SgInitializedName::SgInitializedName (const SgInitializedName& ptr)
   // DQ (8/9/2006): Added support for asm declarations on variables (using strings)
   // Note: don't copy the register string (I think this is best, but it is debatable)
      p_register_name_string = "";
-
-  // driscoll6 (8/2/11) support for python excess parameter forms
-     p_excess_parameter = SgInitializedName::e_excess_parameter_none;
 
   // DQ (10/10/2007): Added support for initialization of this data member (reported as uninitialized by valgrind).
      p_requiresGlobalNameQualificationOnType = ptr.p_requiresGlobalNameQualificationOnType;
@@ -8813,9 +8789,6 @@ SgInitializedName::operator= (const SgInitializedName& ptr)
 
        // DQ (7/31/2006): Added support for asm declarations on variables
           p_register_name_string = ptr.p_register_name_string;
-
-       // driscoll6 (8/2/11) support for python excess parameter forms
-          p_excess_parameter = ptr.p_excess_parameter;
 
        // DQ (10/10/2007): Added support for initialization of this data member (reported as uninitialized by valgrind).
           p_requiresGlobalNameQualificationOnType = ptr.p_requiresGlobalNameQualificationOnType;
@@ -9189,37 +9162,6 @@ SgInitializedName::unsetBit ( unsigned int bit )
      assert (bit < e_last_gnu_variable_attribute);
      p_gnu_attribute_modifierVector[bit] = false;
    }
-
-bool
-SgInitializedName::isExcessParameter() const {
-    return isExcessKeywordParameter() || isExcessPositionalParameter();
-}
-
-bool
-SgInitializedName::isExcessKeywordParameter() const {
-    return p_excess_parameter == e_excess_parameter_keyword;
-}
-
-bool
-SgInitializedName::isExcessPositionalParameter() const {
-    return p_excess_parameter == e_excess_parameter_positional;
-}
-
-void
-SgInitializedName::setExcessParameterNone() {
-    p_excess_parameter = e_excess_parameter_none;
-}
-
-void
-SgInitializedName::setExcessKeywordParameter() {
-    p_excess_parameter = e_excess_parameter_keyword;
-}
-
-void
-SgInitializedName::setExcessPositionalParameter() {
-    p_excess_parameter = e_excess_parameter_positional;
-}
-
 
 
 // DQ (1/3/2009): Added GNU specific attributes

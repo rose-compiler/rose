@@ -1,5 +1,4 @@
 ALL_PYTHON_TESTCODES = \
-    test2011_034.py \
     test2011_033.py \
     test2011_032.py \
     test2011_031.py \
