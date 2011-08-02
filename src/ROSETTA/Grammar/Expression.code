@@ -4723,6 +4723,7 @@ SgType*
 
 $CLASSNAME::get_type() const
    { 
+     ROSE_ASSERT(this != NULL);
      return SgTypeDefault::createType();
    }
 
@@ -4734,6 +4735,7 @@ SOURCE_GET_TYPE_FROM_SYMBOL_START
 SgType*
 $CLASSNAME::get_type() const
    {
+     ROSE_ASSERT(this != NULL);
      ROSE_ASSERT(get_symbol() != NULL);
   // DQ (9/27/2006): Added assertion
      ROSE_ASSERT(get_symbol()->get_type() != NULL);

@@ -102,7 +102,8 @@ SgClassType* lookupTypeFromQualifiedName(std::string className);
 void appendStatement(SgStatement* statement);
 
 //! Put the astJavaStatementStack into the current scope.
-void appendStatementStack();
+// void appendStatementStack();
+void appendStatementStack(int numberOfStatements);
 
 //! Support to get current class scope.
 SgClassDefinition* getCurrentClassDefinition();
