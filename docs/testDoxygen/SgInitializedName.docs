@@ -228,6 +228,15 @@ the asm options in C and C++.
     takes more storage (though it is not used often).
 */
 
+/*!
+\var SgInitializedName::p_excess_parameter
+\brief Identifies if this is a simple parameter/argument, or if this is used for excess
+positional or keywords arguments. Intended for use with Python.
+
+Differentiates between simple parameters or arguments ('foo') and excess params/args. In Python, excess
+positional and keyword parameters are preceded by one and two stars, respectively. ('*foo' and '**foo')
+*/
+
 
 //////////////////////////////////////////////////////////////////////////
 // Documentation for class SgInitializedName member functions (methods)

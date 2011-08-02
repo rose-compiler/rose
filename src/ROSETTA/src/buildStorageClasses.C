@@ -823,6 +823,7 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgAsmOp::asm_operand_constraint_enum" ) ||
                  ( varTypeString == "SgAsmOp::asm_operand_modifier_enum" ) ||
                  ( varTypeString == "SgInitializedName::asm_register_name_enum" ) ||
+                 ( varTypeString == "SgInitializedName::excess_parameter_enum" ) ||
                  ( varTypeString == "SgTypeComplex::floating_point_precision_enum" ) ||
                  ( varTypeString == "SgTypeImaginary::floating_point_precision_enum" ) ||
                  ( varTypeString == "SgClassDeclaration::class_types" ) ||
