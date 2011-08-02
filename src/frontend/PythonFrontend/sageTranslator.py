@@ -101,8 +101,7 @@ class SageTranslator(ast.NodeVisitor):
     name = self.visit(node.func)
     args = map(self.visit, node.args)
     kwargs = map(self.visit, node.keywords)
-    scope = self.scopeStack.peek()
-    return sage.buildCall(name, args, kwargs, scope)
+    return sage.buildCall(name, args, kwargs)
 
   def visit_ClassDef(self, node):
     scope = self.scopeStack.peek()
@@ -219,7 +218,8 @@ class SageTranslator(ast.NodeVisitor):
     return sage.buildFor(target, iter, body, orelse)
 
   def visit_keyword(self, node):
-    arg = self.visit(node.arg)
+    scope = self.scopeStack.peek()
+    arg = sage.buildName(node.arg, scope)
     value = self.visit(node.value)
     return sage.buildKeyword(arg, value)
 
@@ -298,7 +298,7 @@ class SageTranslator(ast.NodeVisitor):
     return sage.buildStringVal(node.s)
 
   def visit_str(self, str):
-    return sage.buildStringVal(str)
+    assert False, "unhandled raw string"
 
   def visit_Subscript(self, node):
     value = self.visit(node.value)
