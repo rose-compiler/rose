@@ -92,6 +92,7 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (CommaOpExp,             "CommaOpExp",             "COMMA_OP" );
      NEW_TERMINAL_MACRO (LshiftOp,               "LshiftOp",               "LSHIFT_OP" );
      NEW_TERMINAL_MACRO (RshiftOp,               "RshiftOp",               "RSHIFT_OP" );
+  // DQ (7/17/2011): Added this function to support new Java ">>>" operator.
      NEW_TERMINAL_MACRO (JavaUnsignedRshiftOp,   "JavaUnsignedRshiftOp",   "JAVA_UNSIGNED_RSHIFT_OP" );
      NEW_TERMINAL_MACRO (PntrArrRefExp,          "PntrArrRefExp",          "ARRAY_OP" );
      NEW_TERMINAL_MACRO (ScopeOp,                "ScopeOp",                "SCOPE_OP" );
@@ -106,6 +107,7 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (XorAssignOp,            "XorAssignOp",            "XOR_ASSIGN_OP" );
      NEW_TERMINAL_MACRO (LshiftAssignOp,         "LshiftAssignOp",         "LSHIFT_ASSIGN_OP" );
      NEW_TERMINAL_MACRO (RshiftAssignOp,         "RshiftAssignOp",         "RSHIFT_ASSIGN_OP" );
+  // DQ (7/17/2011): Added this function to support new Java ">>>" operator.
      NEW_TERMINAL_MACRO (JavaUnsignedRshiftAssignOp, "JavaUnsignedRshiftAssignOp", "JAVA_UNSIGNED_RSHIFT_ASSIGN_OP" );
 
   // DQ (12/13/2007): Added support for Fortran string concatenation operator
@@ -150,9 +152,9 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (AsmOp,                  "AsmOp",                      "ASM_OP" );
   
   // TV (04/22/2010): CUDA support
-     // sgCudaKernelExecConfig is the '<<< grid, block, shared_size, stream >>>' part of a kernel call
+  // sgCudaKernelExecConfig is the '<<< grid, block, shared_size, stream >>>' part of a kernel call
      NEW_TERMINAL_MACRO (CudaKernelExecConfig,     "CudaKernelExecConfig",     "EXEC_CONF" );
-     // sgCudaKernelCallExp is a node for CUDA support, it catch kernel's call.
+  // sgCudaKernelCallExp is a node for CUDA support, it catch kernel's call.
      NEW_TERMINAL_MACRO (CudaKernelCallExp,        "CudaKernelCallExp",        "KERN_CALL" );
 
 #if USE_FORTRAN_IR_NODES
@@ -216,16 +218,21 @@ Grammar::setUpExpressions ()
                             ThrowOp        | RealPartOp         | ImagPartOp | ConjugateOp     | UserDefinedUnaryOp,
                             "UnaryOp","UNARY_EXPRESSION", false);
 
+     NEW_NONTERMINAL_MACRO (CompoundAssignOp,
+                            PlusAssignOp   | MinusAssignOp    | AndAssignOp  | IorAssignOp    | MultAssignOp     |
+                            DivAssignOp    | ModAssignOp      | XorAssignOp  | LshiftAssignOp | RshiftAssignOp   |
+                            JavaUnsignedRshiftAssignOp,
+                            "CompoundAssignOp", "COMPOUND_ASSIGN_OP", false);
+
   // DQ (2/2/2006): Support for Fortran IR nodes (contributed by Rice) (adding ExponentiationOp binary operator)
      NEW_NONTERMINAL_MACRO (BinaryOp,
           ArrowExp       | DotExp           | DotStarOp       | ArrowStarOp      | EqualityOp    | LessThanOp     | 
           GreaterThanOp  | NotEqualOp       | LessOrEqualOp   | GreaterOrEqualOp | AddOp         | SubtractOp     | 
           MultiplyOp     | DivideOp         | IntegerDivideOp | ModOp            | AndOp         | OrOp           |
           BitXorOp       | BitAndOp         | BitOrOp         | CommaOpExp       | LshiftOp      | RshiftOp       |
-          JavaUnsignedRshiftOp | JavaUnsignedRshiftAssignOp |
-          PntrArrRefExp  | ScopeOp          | AssignOp        | PlusAssignOp     | MinusAssignOp | AndAssignOp    |
-          IorAssignOp    | MultAssignOp     | DivAssignOp     | ModAssignOp      | XorAssignOp   | LshiftAssignOp |
-          RshiftAssignOp | ExponentiationOp | ConcatenationOp | PointerAssignOp  | UserDefinedBinaryOp,"BinaryOp","BINARY_EXPRESSION", false);
+          PntrArrRefExp  | ScopeOp          | AssignOp        | ExponentiationOp | JavaUnsignedRshiftOp |
+          ConcatenationOp | PointerAssignOp | UserDefinedBinaryOp | CompoundAssignOp,
+                            "BinaryOp","BINARY_EXPRESSION", false);
 
      NEW_NONTERMINAL_MACRO (ValueExp,
           BoolValExp     | StringVal        | ShortVal               | CharVal         | UnsignedCharVal |
@@ -516,6 +523,8 @@ Grammar::setUpExpressions ()
                                   "../Grammar/Expression.code" );
      AssignOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
                                   "../Grammar/Expression.code" );
+     CompoundAssignOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
+                                  "../Grammar/Expression.code" );
      PlusAssignOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
                                   "../Grammar/Expression.code" );
      MinusAssignOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
@@ -604,7 +613,7 @@ Grammar::setUpExpressions ()
      ExpressionRoot.excludeFunctionPrototype ( "HEADER_PRECEDENCE", "../Grammar/Expression.code" );
      BinaryOp.setSubTreeFunctionPrototype    ( "HEADER_PRECEDENCE", "../Grammar/Expression.code" );
      BinaryOp.excludeFunctionPrototype       ( "HEADER_PRECEDENCE", "../Grammar/Expression.code" );
-
+     CompoundAssignOp.excludeFunctionPrototype ( "HEADER_PRECEDENCE", "../Grammar/Expression.code" );
 
   // DQ (2/1/2009: Added comment.
   // ***********************************************************
@@ -843,6 +852,18 @@ Grammar::setUpExpressions ()
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
+  // DQ (5/11/2011): Added support for name qualification.
+     VarRefExp.setDataPrototype ( "int", "name_qualification_length", "= 0",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/11/2011): Added information required for new name qualification support.
+     VarRefExp.setDataPrototype("bool","type_elaboration_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/11/2011): Added information required for new name qualification support.
+     VarRefExp.setDataPrototype("bool","global_qualification_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      LabelRefExp.setFunctionPrototype ( "HEADER_LABEL_REF_EXPRESSION", "../Grammar/Expression.code" );
      LabelRefExp.setDataPrototype ( "SgLabelSymbol*", "symbol", "= NULL",
                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -871,6 +892,18 @@ Grammar::setUpExpressions ()
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
+  // DQ (5/12/2011): Added support for name qualification.
+     FunctionRefExp.setDataPrototype ( "int", "name_qualification_length", "= 0",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/12/2011): Added information required for new name qualification support.
+     FunctionRefExp.setDataPrototype("bool","type_elaboration_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/12/2011): Added information required for new name qualification support.
+     FunctionRefExp.setDataPrototype("bool","global_qualification_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      MemberFunctionRefExp.setFunctionPrototype ( "HEADER_MEMBER_FUNCTION_REF_EXPRESSION", "../Grammar/Expression.code" );
      MemberFunctionRefExp.setDataPrototype ( "SgMemberFunctionSymbol*", "symbol_i", "= NULL",
             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -889,6 +922,18 @@ Grammar::setUpExpressions ()
   //                 post_constructor_initialization(), as suggested by Qing).
      MemberFunctionRefExp.setDataPrototype ( "int", "need_qualifier", "= true",
                                              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/12/2011): Added support for name qualification.
+     MemberFunctionRefExp.setDataPrototype ( "int", "name_qualification_length", "= 0",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/12/2011): Added information required for new name qualification support.
+     MemberFunctionRefExp.setDataPrototype("bool","type_elaboration_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/12/2011): Added information required for new name qualification support.
+     MemberFunctionRefExp.setDataPrototype("bool","global_qualification_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      ValueExp.setFunctionPrototype ( "HEADER_VALUE_EXPRESSION", "../Grammar/Expression.code" );
 
@@ -981,6 +1026,18 @@ Grammar::setUpExpressions ()
      EnumVal.setDataPrototype("bool", "requiresNameQualification", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (5/11/2011): Added support for name qualification.
+     EnumVal.setDataPrototype ( "int", "name_qualification_length", "= 0",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/11/2011): Added information required for new name qualification support.
+     EnumVal.setDataPrototype("bool","type_elaboration_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/11/2011): Added information required for new name qualification support.
+     EnumVal.setDataPrototype("bool","global_qualification_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      UnsignedIntVal.setFunctionPrototype ( "HEADER_UNSIGNED_INT_VALUE_EXPRESSION", "../Grammar/Expression.code" );
      UnsignedIntVal.setDataPrototype ( "unsigned int", "value", "= 0",
                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1072,6 +1129,20 @@ Grammar::setUpExpressions ()
      FunctionCallExp.setDataPrototype ( "SgType*", "expression_type", "= NULL",
             CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
 
+#if 0
+  // DQ (5/12/2011): Added support for name qualification.
+     FunctionCallExp.setDataPrototype ( "int", "name_qualification_length", "= 0",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/12/2011): Added information required for new name qualification support.
+     FunctionCallExp.setDataPrototype("bool","type_elaboration_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/12/2011): Added information required for new name qualification support.
+     FunctionCallExp.setDataPrototype("bool","global_qualification_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
      ArrowExp.setFunctionPrototype ( "HEADER_ARROW_EXPRESSION", "../Grammar/Expression.code" );
 
      DotExp.setFunctionPrototype ( "HEADER_DOT_EXPRESSION", "../Grammar/Expression.code" );
@@ -1125,6 +1196,18 @@ Grammar::setUpExpressions ()
      SizeOfOp.setDataPrototype ( "SgType*", "expression_type", "= NULL",
             CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/2/2011): Added support for name qualification.
+     SizeOfOp.setDataPrototype ( "int", "name_qualification_length", "= 0",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (6/2/2011): Added information required for new name qualification support.
+     SizeOfOp.setDataPrototype("bool","type_elaboration_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (6/2/2011): Added information required for new name qualification support.
+     SizeOfOp.setDataPrototype("bool","global_qualification_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (7/18/2011): This is structurally similar to the SizeOfOp in that it takes a type operand
   // and we have to save the expression type explicitly (I think).
      JavaInstanceOfOp.setFunctionPrototype ( "HEADER_JAVA_INSTANCEOF_OPERATOR", "../Grammar/Expression.code" );
@@ -1145,6 +1228,18 @@ Grammar::setUpExpressions ()
   //        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
      TypeIdOp.setDataPrototype ( "SgType*"      , "expression_type", "= NULL",
             CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+
+  // DQ (6/2/2011): Added support for name qualification.
+     TypeIdOp.setDataPrototype ( "int", "name_qualification_length", "= 0",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (6/2/2011): Added information required for new name qualification support.
+     TypeIdOp.setDataPrototype("bool","type_elaboration_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (6/2/2011): Added information required for new name qualification support.
+     TypeIdOp.setDataPrototype("bool","global_qualification_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (2/5/2004): Adding vararg support for SAGE AST
      VarArgStartOp.setFunctionPrototype ( "HEADER_VARARG_START_OPERATOR", "../Grammar/Expression.code" );
@@ -1245,6 +1340,19 @@ Grammar::setUpExpressions ()
                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #endif
 
+  // DQ (6/2/2011): Added support for name qualification.
+     CastExp.setDataPrototype ( "int", "name_qualification_length", "= 0",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (6/2/2011): Added information required for new name qualification support.
+     CastExp.setDataPrototype("bool","type_elaboration_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (6/2/2011): Added information required for new name qualification support.
+     CastExp.setDataPrototype("bool","global_qualification_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
      PntrArrRefExp.setFunctionPrototype ( "HEADER_POINTER_ARRAY_REFERENCE_EXPRESSION", "../Grammar/Expression.code" );
 
 #if 0
@@ -1274,6 +1382,17 @@ Grammar::setUpExpressions ()
   // This is NULL if the new operator is compiler generated (not explicitly declared).
      NewExp.setDataPrototype     ( "SgFunctionDeclaration*", "newOperatorDeclaration", "= NULL",
                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DQ (6/2/2011): Added support for name qualification.
+     NewExp.setDataPrototype ( "int", "name_qualification_length", "= 0",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (6/2/2011): Added information required for new name qualification support.
+     NewExp.setDataPrototype("bool","type_elaboration_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (6/2/2011): Added information required for new name qualification support.
+     NewExp.setDataPrototype("bool","global_qualification_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      DeleteExp.setFunctionPrototype ( "HEADER_DELETE_OPERATOR_EXPRESSION", "../Grammar/Expression.code" );
      DeleteExp.setDataPrototype     ( "SgExpression*", "variable", "= NULL",
@@ -1298,17 +1417,7 @@ Grammar::setUpExpressions ()
 
      ScopeOp.setFunctionPrototype ( "HEADER_SCOPE_OPERATOR", "../Grammar/Expression.code" );
      AssignOp.setFunctionPrototype ( "HEADER_ASSIGNMENT_OPERATOR", "../Grammar/Expression.code" );
-     PlusAssignOp.setFunctionPrototype ( "HEADER_PLUS_ASSIGNMENT_OPERATOR", "../Grammar/Expression.code" );
-     MinusAssignOp.setFunctionPrototype ( "HEADER_MINUS_ASSIGNMENT_OPERATOR", "../Grammar/Expression.code" );
-     AndAssignOp.setFunctionPrototype ( "HEADER_AND_ASSIGNMENT_OPERATOR", "../Grammar/Expression.code" );
-     IorAssignOp.setFunctionPrototype ( "HEADER_IOR_ASSIGNMENT_OPERATOR", "../Grammar/Expression.code" );
-     MultAssignOp.setFunctionPrototype ( "HEADER_MULTIPLY_ASSIGNMENT_OPERATOR", "../Grammar/Expression.code" );
-     DivAssignOp.setFunctionPrototype ( "HEADER_DIVIDE_ASSIGNMENT_OPERATOR", "../Grammar/Expression.code" );
-     ModAssignOp.setFunctionPrototype ( "HEADER_MOD_ASSIGNMENT_OPERATOR", "../Grammar/Expression.code" );
-     XorAssignOp.setFunctionPrototype ( "HEADER_XOR_ASSIGNMENT_OPERATOR", "../Grammar/Expression.code" );
-     LshiftAssignOp.setFunctionPrototype ( "HEADER_LEFT_SHIFT_ASSIGNMENT_OPERATOR", "../Grammar/Expression.code" );
-     RshiftAssignOp.setFunctionPrototype ( "HEADER_RIGHT_SHIFT_ASSIGNEMENT_OPERATOR", "../Grammar/Expression.code" );
-     JavaUnsignedRshiftAssignOp.setFunctionPrototype ( "HEADER_JAVA_UNSIGNED_RIGHT_SHIFT_ASSIGNEMENT_OPERATOR", "../Grammar/Expression.code" );
+     CompoundAssignOp.setFunctionPrototype ( "HEADER_COMPOUND_ASSIGNMENT_OPERATOR", "../Grammar/Expression.code" );
      PointerAssignOp.setFunctionPrototype ( "HEADER_POINTER_ASSIGNMENT_OPERATOR", "../Grammar/Expression.code" );
 
      RefExp.setFunctionPrototype ( "HEADER_REFERENCE_EXPRESSION", "../Grammar/Expression.code" );
@@ -1389,6 +1498,19 @@ Grammar::setUpExpressions ()
   // is NULL, else class_decl should be a valid pointer!
      ConstructorInitializer.setDataPrototype     ( "bool", "associated_class_unknown", "= false",
                                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (6/1/2011): Added support for name qualification.
+     ConstructorInitializer.setDataPrototype ( "int", "name_qualification_length", "= 0",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/12/2011): Added information required for new name qualification support.
+     ConstructorInitializer.setDataPrototype("bool","type_elaboration_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/12/2011): Added information required for new name qualification support.
+     ConstructorInitializer.setDataPrototype("bool","global_qualification_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
      AssignInitializer.setFunctionPrototype ( "HEADER_ASSIGNMENT_INITIALIZER_EXPRESSION", "../Grammar/Expression.code" );
      AssignInitializer.setDataPrototype     ( "SgExpression*", "operand_i"      , "= NULL",
@@ -1742,18 +1864,6 @@ Grammar::setUpExpressions ()
      ThisExp.setFunctionSource ( "SOURCE_THIS_EXPRESSION","../Grammar/Expression.code" );
      ScopeOp.setFunctionSource ( "SOURCE_SCOPE_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      AssignOp.setFunctionSource  ( "SOURCE_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-  // This must be a bug since it is different from the MinusAssignOp!
-     PlusAssignOp.setFunctionSource  ( "SOURCE_PLUS_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     MinusAssignOp.setFunctionSource ( "SOURCE_MINUS_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     AndAssignOp.setFunctionSource ( "SOURCE_AND_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     IorAssignOp.setFunctionSource ( "SOURCE_IOR_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     MultAssignOp.setFunctionSource ( "SOURCE_MULTIPLY_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     DivAssignOp.setFunctionSource ( "SOURCE_DIVIDE_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     ModAssignOp.setFunctionSource ( "SOURCE_MOD_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     XorAssignOp.setFunctionSource ( "SOURCE_XOR_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     LshiftAssignOp.setFunctionSource ( "SOURCE_LEFT_SHIFT_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     RshiftAssignOp.setFunctionSource ( "SOURCE_RIGHT_SHIFT_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     JavaUnsignedRshiftAssignOp.setFunctionSource ( "SOURCE_JAVA_UNSIGNED_RIGHT_SHIFT_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      PointerAssignOp.setFunctionSource  ( "SOURCE_POINTER_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
 
      RefExp.setFunctionSource ( "SOURCE_REFERENCE_EXPRESSION","../Grammar/Expression.code" );

@@ -2091,6 +2091,7 @@ src/frontend/SageIII/astHiddenTypeAndDeclarationLists/Makefile
 src/frontend/SageIII/astVisualization/Makefile
 src/frontend/SageIII/GENERATED_CODE_DIRECTORY_Cxx_Grammar/Makefile
 src/frontend/SageIII/astFromString/Makefile
+src/frontend/SageIII/includeDirectivesProcessing/Makefile
 src/frontend/CxxFrontend/Makefile
 src/frontend/OpenFortranParser_SAGE_Connection/Makefile
 src/frontend/ECJ_ROSE_Connection/Makefile
@@ -2102,6 +2103,7 @@ src/frontend/BinaryFormats/Makefile
 src/frontend/Disassemblers/Makefile
 src/midend/Makefile
 src/midend/abstractHandle/Makefile
+src/midend/abstractMemoryObject/Makefile
 src/midend/astUtil/Makefile
 src/midend/astQuery/Makefile
 src/midend/astProcessing/Makefile
@@ -2109,6 +2111,7 @@ src/midend/astRewriteMechanism/Makefile
 src/midend/astDiagnostics/Makefile
 src/midend/binaryAnalyses/Makefile
 src/midend/programAnalysis/Makefile
+src/midend/programAnalysis/staticSingleAssignment/Makefile
 src/midend/programTransformation/Makefile
 src/midend/programTransformation/astInlining/Makefile
 src/midend/programTransformation/astOutlining/Makefile
@@ -2442,6 +2445,7 @@ tests/roseTests/programAnalysisTests/staticInterproceduralSlicingTests/Makefile
 tests/roseTests/programAnalysisTests/testCallGraphAnalysis/Makefile
 tests/roseTests/programAnalysisTests/variableLivenessTests/Makefile
 tests/roseTests/programAnalysisTests/variableRenamingTests/Makefile
+tests/roseTests/programAnalysisTests/staticSingleAssignmentTests/Makefile
 tests/roseTests/programTransformationTests/Makefile
 tests/roseTests/roseHPCToolkitTests/Makefile
 tests/roseTests/roseHPCToolkitTests/data/01/ANALYSIS/Makefile

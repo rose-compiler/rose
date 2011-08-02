@@ -178,6 +178,7 @@ namespace ELF{
 
 // King84 (2010.08.03) : Now that everything is defined we can include all the implementation files for templates.
 #define TEMPLATE_IMPLEMENTATIONS
+// DQ (6/25/2011): Commented out so that I could debug name qualification without function definitions in header files.
 #include "AstDOTGenerationImpl.C"
 #include "utility_functionsImpl.C"
 #undef TEMPLATE_IMPLEMENTATIONS

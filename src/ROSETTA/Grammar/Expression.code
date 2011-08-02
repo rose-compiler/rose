@@ -82,6 +82,25 @@ HEADER_START
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
 #endif
 
+       // DQ (5/29/2011): Added to support for new qualified name generation
+      //! This function generates the qualified name prefix to be used with the type referenced by this expression.
+          SgName get_qualified_name_prefix() const;
+
+       // DQ (6/2/2011): Added to support for new qualified name generation
+      //! This function generates the qualified name prefix to be used with the type referenced by this expression.
+          SgName get_qualified_name_prefix_for_referenced_type() const;
+
+       // DQ (6/2/2011): Added virtual functions so that we can define specialized versions at specific IR nodes.
+          virtual int get_name_qualification_length () const;
+          virtual void set_name_qualification_length ( int name_qualification_length );
+          virtual bool get_type_elaboration_required () const;
+          virtual void set_type_elaboration_required ( bool type_elaboration_required );
+          virtual bool get_global_qualification_required () const;
+          virtual void set_global_qualification_required ( bool global_qualification_required );
+
+       // DQ (6/21/2011): Get the original expression if this is an IR node where it is defined and it is a valid pointer.
+          SgExpression* get_originalExpressionTree() const;
+
 HEADER_END
 
 
@@ -818,103 +837,13 @@ HEADER_ASSIGNMENT_OPERATOR_START
 HEADER_ASSIGNMENT_OPERATOR_END
 
 
-HEADER_PLUS_ASSIGNMENT_OPERATOR_START
+HEADER_COMPOUND_ASSIGNMENT_OPERATOR_START
 
        // get lvalue
           virtual bool isLValue() const;
           virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
-HEADER_PLUS_ASSIGNMENT_OPERATOR_END
-
-
-HEADER_MINUS_ASSIGNMENT_OPERATOR_START
-
-       // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
-
-HEADER_MINUS_ASSIGNMENT_OPERATOR_END
-
-
-HEADER_AND_ASSIGNMENT_OPERATOR_START
-
-       // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
-
-HEADER_AND_ASSIGNMENT_OPERATOR_END
-
-
-HEADER_IOR_ASSIGNMENT_OPERATOR_START
-
-       // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
-
-HEADER_IOR_ASSIGNMENT_OPERATOR_END
-
-
-HEADER_MULTIPLY_ASSIGNMENT_OPERATOR_START
-
-       // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
-
-HEADER_MULTIPLY_ASSIGNMENT_OPERATOR_END
-
-
-HEADER_DIVIDE_ASSIGNMENT_OPERATOR_START
-
-       // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
-
-HEADER_DIVIDE_ASSIGNMENT_OPERATOR_END
-
-
-HEADER_MOD_ASSIGNMENT_OPERATOR_START
-
-       // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
-
-HEADER_MOD_ASSIGNMENT_OPERATOR_END
-
-
-HEADER_XOR_ASSIGNMENT_OPERATOR_START
-
-       // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
-
-HEADER_XOR_ASSIGNMENT_OPERATOR_END
-
-
-HEADER_LEFT_SHIFT_ASSIGNMENT_OPERATOR_START
-
-       // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
-
-HEADER_LEFT_SHIFT_ASSIGNMENT_OPERATOR_END
-
-
-HEADER_RIGHT_SHIFT_ASSIGNEMENT_OPERATOR_START
-
-       // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
-
-HEADER_RIGHT_SHIFT_ASSIGNEMENT_OPERATOR_END
-
-
-HEADER_JAVA_UNSIGNED_RIGHT_SHIFT_ASSIGNEMENT_OPERATOR_START
-
-       // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
-
-HEADER_JAVA_UNSIGNED_RIGHT_SHIFT_ASSIGNEMENT_OPERATOR_END
+HEADER_COMPOUND_ASSIGNMENT_OPERATOR_END
 
 
 HEADER_POINTER_ASSIGNMENT_OPERATOR_START
@@ -1258,6 +1187,56 @@ SgExpression::set_file_info(Sg_File_Info* fileInfo)
      return set_operatorPosition(fileInfo);
    }
 
+SgName
+SgExpression::get_qualified_name_prefix() const
+   {
+  // DQ (5/29/2011): Added to support for new qualified name generation.
+  // This only applies to specific SgSupport IR nodes:
+  //    SgVarRefExp
+  //    SgFunctionRefExp
+  //    SgMemberFunctionRefExp
+
+  // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
+  // different and so it depends upon where the type is referenced.  Thus the qualified name is 
+  // stored in a map to the IR node that references the type.
+     SgName nameQualifier;
+     std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForNames().find(const_cast<SgExpression*>(this));
+  // ROSE_ASSERT(i != SgNode::get_globalQualifiedNameMapForNames().end());
+
+     if (i != SgNode::get_globalQualifiedNameMapForNames().end())
+        {
+          nameQualifier = i->second;
+       // printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+        }
+
+  // printf ("nameQualifier for SgExpression = %p = %p = %s = %s \n",this,const_cast<SgExpression*>(this),class_name().c_str(),nameQualifier.str());
+
+     return nameQualifier;
+   }
+ 
+SgName
+SgExpression::get_qualified_name_prefix_for_referenced_type() const
+   {
+  // DQ (6/2/2011): Added to support for new qualified name generation.
+
+  // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
+  // different and so it depends upon where the type is referenced.  Thus the qualified name is 
+  // stored in a map to the IR node that references the type.
+     SgName nameQualifier;
+     std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(const_cast<SgExpression*>(this));
+
+     if (i != SgNode::get_globalQualifiedNameMapForTypes().end())
+        {
+          nameQualifier = i->second;
+       // printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+        }
+
+  // printf ("nameQualifier for SgExpression referenced type = %s = %s \n",class_name().c_str(),nameQualifier.str());
+
+     return nameQualifier;
+   }
+
+
 void
 SgExpression::post_construction_initialization()
    {
@@ -1573,6 +1552,105 @@ remove_user_attribute(SgAttributePtrList& pattr, char *attr_name)
      return 0;
    }
 #endif
+
+
+int 
+SgExpression::get_name_qualification_length () const
+   {
+     ROSE_ASSERT (this != NULL);
+
+     printf ("Error: base class virtual function called by mistake on node = %p = %s \n",this,this->class_name().c_str());
+     ROSE_ASSERT(false);
+
+     return 0; // p_name_qualification_length;
+   }
+
+void
+SgExpression::set_name_qualification_length ( int name_qualification_length )
+   {
+     ROSE_ASSERT (this != NULL);
+     set_isModified(true);
+     
+     printf ("Error: base class virtual function called by mistake on node = %p = %s \n",this,this->class_name().c_str());
+     ROSE_ASSERT(false);
+
+  // p_name_qualification_length = name_qualification_length;
+   }
+
+
+bool 
+SgExpression::get_type_elaboration_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+
+     printf ("Error: base class virtual function called by mistake on node = %p = %s \n",this,this->class_name().c_str());
+     ROSE_ASSERT(false);
+
+     return false; // p_type_elaboration_required;
+   }
+
+void
+SgExpression::set_type_elaboration_required ( bool type_elaboration_required )
+   {
+     ROSE_ASSERT (this != NULL);
+     set_isModified(true);
+     
+     printf ("Error: base class virtual function called by mistake on node = %p = %s \n",this,this->class_name().c_str());
+     ROSE_ASSERT(false);
+
+  // p_type_elaboration_required = type_elaboration_required;
+   }
+
+bool 
+SgExpression::get_global_qualification_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+
+     printf ("Error: base class virtual function called by mistake on node = %p = %s \n",this,this->class_name().c_str());
+     ROSE_ASSERT(false);
+
+     return false; // p_global_qualification_required;
+   }
+
+void
+SgExpression::set_global_qualification_required ( bool global_qualification_required )
+   {
+     ROSE_ASSERT (this != NULL);
+     set_isModified(true);
+     
+     printf ("Error: base class virtual function called by mistake on node = %p = %s \n",this,this->class_name().c_str());
+     ROSE_ASSERT(false);
+
+  // p_global_qualification_required = global_qualification_required;
+   }
+
+SgExpression*
+SgExpression::get_originalExpressionTree() const
+   {
+  // DQ (6/21/2011): Get the original expression if this is an IR node where it is defined and it is a valid pointer.
+  // The p_originalExpressionTree datamember exists only on these IR nodes:
+  //    SgBinaryOp
+  //    SgValueExp
+  //    SgFunctionRefExp
+  //    SgValueExp
+  //    SgCastExp
+
+     SgExpression* originalExpressionTree = NULL;
+     switch(variantT())
+        {
+          case V_SgBinaryOp:       originalExpressionTree = isSgBinaryOp(this)->get_originalExpressionTree();       break;
+          case V_SgValueExp:       originalExpressionTree = isSgValueExp(this)->get_originalExpressionTree();       break;
+          case V_SgFunctionRefExp: originalExpressionTree = isSgFunctionRefExp(this)->get_originalExpressionTree(); break;
+          case V_SgCastExp:        originalExpressionTree = isSgCastExp(this)->get_originalExpressionTree();        break;
+
+          default:
+             {
+            // For all other cases do nothing, since there is no originalExpressionTree data member.
+             }
+        }
+
+     return originalExpressionTree;
+   }
 
 SOURCE_BASECLASS_EXPRESSION_END
 
@@ -4029,50 +4107,6 @@ SOURCE_ASSIGN_OPERATOR_EXPRESSION_START
 SOURCE_ASSIGN_OPERATOR_EXPRESSION_END
 
 
-SOURCE_PLUS_ASSIGN_OPERATOR_EXPRESSION_START
-SOURCE_PLUS_ASSIGN_OPERATOR_EXPRESSION_END
-
-
-SOURCE_MINUS_ASSIGN_OPERATOR_EXPRESSION_START
-SOURCE_MINUS_ASSIGN_OPERATOR_EXPRESSION_END
-
-
-SOURCE_AND_ASSIGN_OPERATOR_EXPRESSION_START
-SOURCE_AND_ASSIGN_OPERATOR_EXPRESSION_END
-
-
-SOURCE_IOR_ASSIGN_OPERATOR_EXPRESSION_START
-SOURCE_IOR_ASSIGN_OPERATOR_EXPRESSION_END
-
-
-SOURCE_MULTIPLY_ASSIGN_OPERATOR_EXPRESSION_START
-SOURCE_MULTIPLY_ASSIGN_OPERATOR_EXPRESSION_END
-
-
-SOURCE_DIVIDE_ASSIGN_OPERATOR_EXPRESSION_START
-SOURCE_DIVIDE_ASSIGN_OPERATOR_EXPRESSION_END
-
-
-SOURCE_MOD_ASSIGN_OPERATOR_EXPRESSION_START
-SOURCE_MOD_ASSIGN_OPERATOR_EXPRESSION_END
-
-
-SOURCE_XOR_ASSIGN_OPERATOR_EXPRESSION_START
-SOURCE_XOR_ASSIGN_OPERATOR_EXPRESSION_END
-
-
-SOURCE_LEFT_SHIFT_ASSIGN_OPERATOR_EXPRESSION_START
-SOURCE_LEFT_SHIFT_ASSIGN_OPERATOR_EXPRESSION_END
-
-
-SOURCE_RIGHT_SHIFT_ASSIGN_OPERATOR_EXPRESSION_START
-SOURCE_RIGHT_SHIFT_ASSIGN_OPERATOR_EXPRESSION_END
-
-
-SOURCE_JAVA_UNSIGNED_RIGHT_SHIFT_ASSIGN_OPERATOR_EXPRESSION_START
-SOURCE_JAVA_UNSIGNED_RIGHT_SHIFT_ASSIGN_OPERATOR_EXPRESSION_END
-
-
 SOURCE_POINTER_ASSIGN_OPERATOR_EXPRESSION_START
 SOURCE_POINTER_ASSIGN_OPERATOR_EXPRESSION_END
 
@@ -4689,6 +4723,7 @@ SgType*
 
 $CLASSNAME::get_type() const
    { 
+     ROSE_ASSERT(this != NULL);
      return SgTypeDefault::createType();
    }
 
@@ -4700,6 +4735,7 @@ SOURCE_GET_TYPE_FROM_SYMBOL_START
 SgType*
 $CLASSNAME::get_type() const
    {
+     ROSE_ASSERT(this != NULL);
      ROSE_ASSERT(get_symbol() != NULL);
   // DQ (9/27/2006): Added assertion
      ROSE_ASSERT(get_symbol()->get_type() != NULL);
