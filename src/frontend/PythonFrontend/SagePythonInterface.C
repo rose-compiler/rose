@@ -258,11 +258,9 @@ sage_buildCall(PyObject *self, PyObject *args)
 {
     SgExpression* sg_callable;
     PyObject *py_args, *py_kwargs;
-    SgScopeStatement *sg_scope;
-    if (! PyArg_ParseTuple(args, "O&O!O!O&", SAGE_CONVERTER(SgExpression), &sg_callable,
+    if (! PyArg_ParseTuple(args, "O&O!O!", SAGE_CONVERTER(SgExpression), &sg_callable,
                                              &PyList_Type, &py_args,
-                                             &PyList_Type, &py_kwargs,
-                                             SAGE_CONVERTER(SgScopeStatement), &sg_scope))
+                                             &PyList_Type, &py_kwargs))
         return NULL;
 
     std::vector<SgExpression*> sg_exprs;
