@@ -341,10 +341,10 @@ Unparse_Python::getPrecedence(int variant) {
 
         case V_SgExponentiationOp:     return 14;
 
+        case V_SgDotExp:               return 15; // attribute refs
         case V_SgCallExpression:       return 15;
-     // case V_Sg Subscription:        return 15;
-     // case V_Sg Slicing:             return 15;
-     // case V_Sg Attribute Ref:       return 15;
+        case V_SgSubscriptExpression:  return 15; // slices
+        case V_SgPntrArrRefExp:        return 15; // subscript exps
 
         case V_SgTupleExp:             return 16;
         case V_SgListExp:              return 16;
