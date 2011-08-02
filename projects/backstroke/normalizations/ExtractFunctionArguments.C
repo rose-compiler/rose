@@ -245,7 +245,12 @@ FunctionCallInheritedAttribute FunctionEvaluationOrderTraversal::evaluateInherit
 		result.loopStatus = FunctionCallInheritedAttribute::INSIDE_DO_WHILE_CONDITION;
 	}
 
-	if (isSgStatement(astNode))
+    //We can't insert variables before an expression statement that appears inside if(), switch, throw, etc.
+    if (isSgExprStatement(astNode) && !isSgBasicBlock(astNode->get_parent()))
+    {
+        //We can't insert a variable declaration at these locations. Use the parent statement
+    }
+    else if (isSgStatement(astNode))
 		result.lastStatement = isSgStatement(astNode);
 
 	return result;

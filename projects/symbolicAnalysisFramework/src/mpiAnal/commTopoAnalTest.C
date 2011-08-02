@@ -28,7 +28,7 @@ using namespace std;
 #include "rankDepAnalysis.h"
 #include "ranknpDepIfMeet.h"
 
-class MPISideffectUses : public LiveDeadVarsAnalysis::funcSideEffectUses
+class MPISideffectUses : public funcSideEffectUses
 {
 	MPIRankDepAnalysis* rda;
 	

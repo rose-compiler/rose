@@ -8,7 +8,8 @@ libSafsimpleAnalyses_la_SOURCES = divAnalysis.C liveDeadVarAnalysis.C nodeConstA
                           placeUIDs.C  printAnalysisStates.C  saveDotAnalysis.C \
 			  sgnAnalysis.C sequenceStructAnalysis.C dominatorAnalysis.C ConstrGraphAnalysis.C
 include_HEADERS = divAnalysis.h liveDeadVarAnalysis.h nodeConstAnalysis.h  placeUIDs.h  \
-                  printAnalysisStates.h  saveDotAnalysis.h  sgnAnalysis.h sequenceStructAnalysis.h dominatorAnalysis.h ConstrGraphAnalysis.h
+                  printAnalysisStates.h  saveDotAnalysis.h  sgnAnalysis.h sequenceStructAnalysis.h \
+                  dominatorAnalysis.h ConstrGraphAnalysis.h VariableStateTransfer.h
 
 # ----------test program -------------------
 #noinst_PROGRAMS = selfTest

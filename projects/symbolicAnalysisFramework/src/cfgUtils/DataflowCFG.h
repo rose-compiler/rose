@@ -2,6 +2,8 @@
 #define DATAFLOW_CFG_H
 
 #include "common.h"
+#include <map>
+#include <string>
 
 namespace VirtualCFG {
 
@@ -29,7 +31,7 @@ class DataflowNode {
 	std::string str(std::string indent="") const;
 };
 
-typedef map<SgNode*, DataflowNode> m_AST2CFG;
+typedef std::map<SgNode*, DataflowNode> m_AST2CFG;
 
 class DataflowEdge {
 	CFGPath p;

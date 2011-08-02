@@ -10,6 +10,10 @@
 #include "spearWrap.h"
 #include "printAnalysisStates.h"
 
+#include <list>
+#include <string>
+#include <fstream>
+
 // Represents an expression that uses arithmetic and logical operators
 // on a set of integral variables.
 class IntArithLogical : public FiniteLattice, public LogicalCond
@@ -72,7 +76,7 @@ public:
 		// Returns a human-readable string representation of this expression.
 		// Every line of this string must be prefixed by indent.
 		// The last character of the returned string should not be '\n', even if it is a multi-line string.
-		virtual string str(string indent="")=0;
+		virtual std::string str(std::string indent="")=0;
 
 		virtual ~exprLeafOrNode() {}
 	};
@@ -97,9 +101,9 @@ public:
 		
 		exprLeafOrNode::infContent level;
 		
-		list<SpearAbstractVar*> vars;
+		std::list<SpearAbstractVar*> vars;
 		SpearAbstractVar* outVar;
-		string logExpr;
+		std::string logExpr;
 		bool varsExprInitialized;
 		
 		exprLeaf(SpearOp cmp, int a, varID x, int b, varID y, int c);
@@ -131,20 +135,20 @@ public:
 			
 		// returns a list of the names of all the variables needed to represent the logical 
 		// expression in this object
-		const list<SpearAbstractVar*>& getVars();
+		const std::list<SpearAbstractVar*>& getVars();
 		
 		// returns the variable that represents the result of this expression
 		SpearAbstractVar* getOutVar();
 		
 		// returns the SPEAR Format expression that represents the constraint in this object
-		const string& getExpr();
+		const std::string& getExpr();
 		
 		// Returns a human-readable string representation of this expression.
 		// Every line of this string must be prefixed by indent.
 		// The last character of the returned string should not be '\n', even if it is a multi-line string.
-		string str(string indent="");
-		string str(string indent="") const;
-		string genStr(string indent="") const;
+		std::string str(std::string indent="");
+		std::string str(std::string indent="") const;
+		std::string genStr(std::string indent="") const;
 		
 		elt elType(){ return exprLeafOrNode::eLeaf; }
 		
@@ -183,14 +187,14 @@ public:
 	// An internal node that represents a logical connective between the affine relations
 	class logicNode: public virtual exprLeafOrNode
 	{
-		list<exprLeafOrNode*> children;
+		std::list<exprLeafOrNode*> children;
 		SpearOp logOp;
 		exprLeafOrNode::infContent level;
 		
 		bool varsExprInitialized;
-		list<SpearAbstractVar*> vars;
+		std::list<SpearAbstractVar*> vars;
 		SpearAbstractVar*       outVar;
-		string logExpr;
+		std::string logExpr;
 				
 		public:
 		logicNode(logOps logOp);
@@ -202,7 +206,7 @@ public:
 		logicNode(logOps logOp, exprLeafOrNode* childA, exprLeafOrNode* childB);
 		
 		// constructor for logOp==andOp, orOp and xorOp, which have 2+ children
-		logicNode(logOps logOp, const list<exprLeafOrNode*>& children);
+		logicNode(logOps logOp, const std::list<exprLeafOrNode*>& children);
 		
 		logicNode(const logicNode& that);
 		
@@ -229,20 +233,20 @@ public:
 		
 		// returns a list of the names of all the variables needed to represent the logical 
 		// expression in this object
-		const list<SpearAbstractVar*>& getVars();
+		const std::list<SpearAbstractVar*>& getVars();
 		
 		// returns the variable that represents the result of this expression
 		SpearAbstractVar* getOutVar();
 		
 		// returns the SPEAR Format expression that represents the constraint in this object
-		const string& getExpr();
+		const std::string& getExpr();
 		
 		// Returns a human-readable string representation of this expression.
 		// Every line of this string must be prefixed by indent.
 		// The last character of the returned string should not be '\n', even if it is a multi-line string.
-		string str(string indent="");
-		string str(string indent="") const;
-		string genStr(string indent="") const;
+		std::string str(std::string indent="");
+		std::string str(std::string indent="") const;
+		std::string genStr(std::string indent="") const;
 		
 		protected:
 		void computeVarsExpr();
@@ -266,8 +270,8 @@ public:
 		//              may be A,C,E,F, with H or I to be added when the function recurses again.
 		// curChild: Iterator that refers to the current child we're processing. The conjuncts
 		//           are formed whenever curChild reaches the end of children.
-		void genChildrenConj(list<exprLeafOrNode*>& newChildren, list<exprLeafOrNode*> newConjOrig, 
-		                     list<exprLeafOrNode*>::const_iterator curChild);
+		void genChildrenConj(std::list<exprLeafOrNode*>& newChildren, std::list<exprLeafOrNode*> newConjOrig, 
+		                     std::list<exprLeafOrNode*>::const_iterator curChild);
 		
 		// ANDs this and that, storing the result in this.
 		// Returns true if this causes this logicNode to change, false otherwise.
@@ -293,10 +297,10 @@ public:
 		// generic function used by orUpd and andUpd to insert new term into a disjunction
 		// newChildren - The new list of children that will eventually replace children. We will be trying to
 		//               insert newTerm into newChildren.
-		void insertNewChildOr(list<exprLeafOrNode*>& newChildren, exprLeafOrNode* newTerm);
+		void insertNewChildOr(std::list<exprLeafOrNode*>& newChildren, exprLeafOrNode* newTerm);
 		
 		// compares two different children lists, returning true if they're equal and false otherwise
-		bool eqChildren(list<exprLeafOrNode*>& one, list<exprLeafOrNode*>& two);
+		bool eqChildren(std::list<exprLeafOrNode*>& one, std::list<exprLeafOrNode*>& two);
 		
 		public:
 		bool operator==(exprLeafOrNode& that);
@@ -322,8 +326,8 @@ public:
 		//              may be A,C,E,F, with H or I to be added when the function recurses again.
 		// curChild: Iterator that refers to the current child we're processing. The conjuncts
 		//           are formed whenever curChild reaches the end of children.
-		void genChildrenConj(list<logicNode*>& newChildren, list<exprLeaf*> newConjOrig, 
-		                     list<exprLeafOrNode*>::const_iterator curChild);
+		void genChildrenConj(std::list<logicNode*>& newChildren, std::list<exprLeaf*> newConjOrig, 
+		                     std::list<exprLeafOrNode*>::const_iterator curChild);
 	};
 	
 	class DNFAndNode : logicNode
@@ -369,7 +373,7 @@ public:
 	// The string that represents this object
 	// If indent!="", every line of this string must be prefixed by indent
 	// The last character of the returned string should not be '\n', even if it is a multi-line string.
-	string str(string indent="");
+	std::string str(std::string indent="");
 	
 	// the basic logical operations that must be supported by any implementation of 
 	// a logical condition: NOT, AND and OR
@@ -405,10 +409,10 @@ public:
 	// createProposition - if true, outputSpearExpr() creates a self-contained proposition. If false, no 
 	//       proposition is created; it is presumed that the caller will be using the expression as part 
 	//       of a larger proposition.
-	SpearVar outputSpearExpr(exprLeaf* otherExpr, ofstream &os, bool createProposition);
+	SpearVar outputSpearExpr(exprLeaf* otherExpr, std::ofstream &os, bool createProposition);
 	
 	// Runs Spear on the given input file. Returns true if the file's conditions are satisfiable and false otherwise.
-	static bool runSpear(string inputFile);
+	static bool runSpear(std::string inputFile);
 	
 	public:
 	// Queries whether the given affine relation is implied by this arithmetic/logical constrains.
@@ -449,7 +453,7 @@ class IntArithLogicalFact : public NodeFact
 	
 	NodeFact* copy() const;
 	
-	string str(string indent="");
+	std::string str(std::string indent="");
 };
 
 /*****************************
@@ -472,7 +476,7 @@ class IntArithLogicalPlacer : public UnstructuredPassIntraAnalysis
 };
 
 // prints the inequality facts set by the given affineInequalityPlacer
-void printIntArithLogicals(IntArithLogicalPlacer* aip, string indent="");
+void printIntArithLogicals(IntArithLogicalPlacer* aip, std::string indent="");
 
 // Runs the Affine Inequality Placer analysis
 void runIntArithLogicalPlacer(bool printStates);

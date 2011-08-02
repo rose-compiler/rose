@@ -8,21 +8,24 @@ public class test2011_17
           int x = 7;
           int y = 8;
           int z = 9;
+          boolean boolean_x = true;
+          boolean boolean_y = false;
+          boolean boolean_z = true;
 
           x = y + z;
           x = y - z;
           x = y / z;
           x = y * z;
           x = y | z;
-          x = y || z;
+          boolean_x = boolean_y || boolean_z;
           x = y & z;
-          x = y && z;
+          boolean_x = boolean_y && boolean_z;
           x = y ^ z;
-          x = y < z;
-          x = y <= z;
-          x = y > z;
-          x = y >= z;
-          x = y == z;
+          boolean_x = y < z;
+          boolean_x = y <= z;
+          boolean_x = y > z;
+          boolean_x = y >= z;
+          boolean_x = y == z;
           x = y >> z;
           x = y << z;
           x = y % z;
@@ -32,6 +35,6 @@ public class test2011_17
        // unsigned z_u = 9;
           x = y >>> z;
 
-          x = y != z;
+          boolean_x = y != z;
         }
    }

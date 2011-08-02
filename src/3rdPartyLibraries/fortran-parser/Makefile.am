@@ -151,8 +151,8 @@ check-local:
 # file and thus are not in the build tree for use in compiling sageSupport.C in the src/frontend/SageIII
 # directory.
 dist-hook:
-	@echo "calling ls -l --full-time ${distdir}"
-	ls -l --full-time ${distdir}
+	@echo "calling ls -l ${distdir}"
+	ls -l ${distdir}
 	@echo "after ls: removing these files from distdir since they should not be copied here"
 	rm -f ${distdir}/ActionEnums.h
 	rm -f ${distdir}/c_actions_jni.c
@@ -160,7 +160,7 @@ dist-hook:
 	rm -f ${distdir}/jni_token_funcs.c
 	rm -f ${distdir}/token.h
 	rm -f ${distdir}/token.c
-	@echo "calling ls -l --full-time ${distdir}"
+	@echo "calling ls -l ${distdir}"
 	ls -l ${distdir}
 	@echo "(disthook processed normally)"
 

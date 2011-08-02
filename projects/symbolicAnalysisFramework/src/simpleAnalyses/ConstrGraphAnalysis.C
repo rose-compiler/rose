@@ -252,7 +252,7 @@ bool ConstrGraphAnalysis::transfer(const Function& func, const DataflowNode& n, 
 		// ??? }
 	// Arithmetic Operations
 	} else if(isSgPlusAssignOp(n.getNode())  || isSgAddOp(n.getNode())      ||
-	          isSgMinusAssignOp(n.getNode()) || isSgMinusOp(n.getNode())    ||
+	          isSgMinusAssignOp(n.getNode()) || isSgSubtractOp(n.getNode()) ||
 	          isSgModAssignOp(n.getNode())   || isSgModOp(n.getNode())      ||
 	          isSgMultAssignOp(n.getNode())  || isSgMultiplyOp(n.getNode()) ||
 	          isSgDivAssignOp(n.getNode())   || isSgDivideOp(n.getNode())   ||
@@ -268,9 +268,7 @@ bool ConstrGraphAnalysis::transfer(const Function& func, const DataflowNode& n, 
 		
 		// Set up the information on the arguments and target of the arithmetic operation
 		if(isSgBinaryOp(n.getNode())) {
-			if(isSgPlusAssignOp(n.getNode()) || isSgMinusAssignOp(n.getNode()) ||
-			   isSgModAssignOp(n.getNode())  || isSgMultAssignOp(n.getNode())  ||
-			   isSgDivAssignOp(n.getNode())) {
+			if(isSgCompoundAssignOp(n.getNode())) {
 				lhs = SgExpr2Var(isSgBinaryOp(n.getNode())->get_lhs_operand());
 				arg1 = lhs;
 				arg2 = SgExpr2Var(isSgBinaryOp(n.getNode())->get_rhs_operand());
@@ -318,7 +316,7 @@ bool ConstrGraphAnalysis::transfer(const Function& func, const DataflowNode& n, 
 		if((resLive || lhsLive) && arg1Live && arg2Live) {
 			// ADDITION / SUBTRACTION / MULTIPLICATION / DIVISION / MODULUS
 			if(isSgPlusAssignOp(n.getNode())  || isSgAddOp(n.getNode()) ||
-		      isSgMinusAssignOp(n.getNode()) || isSgMinusOp(n.getNode()) ||
+		      isSgMinusAssignOp(n.getNode()) || isSgSubtractOp(n.getNode()) ||
 		      isSgMinusMinusOp(n.getNode())  || isSgPlusPlusOp(n.getNode()) ||
 		      isSgMultAssignOp(n.getNode())  || isSgMultiplyOp(n.getNode()) ||
 		      isSgDivAssignOp(n.getNode())   || isSgDivideOp(n.getNode()) ||
@@ -332,7 +330,7 @@ bool ConstrGraphAnalysis::transfer(const Function& func, const DataflowNode& n, 
 		      
 		      // ADDITION / SUBTRACTION
 		      if(isSgPlusAssignOp(n.getNode())  || isSgAddOp(n.getNode()) ||
-		      	isSgMinusAssignOp(n.getNode()) || isSgMinusOp(n.getNode()) ||
+		      	isSgMinusAssignOp(n.getNode()) || isSgSubtractOp(n.getNode()) ||
 		      	isSgMinusMinusOp(n.getNode())  || isSgPlusPlusOp(n.getNode())) {
 		      		cout << indent << "ADDITION / SUBTRACTION\n";
 			      // ??? if(arg1Lat->isEqVars(arg1, zeroVar, a_arg1, b_arg1, c_arg1)) {

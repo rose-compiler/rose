@@ -1,5 +1,5 @@
 #include "stateSavingStatementHandler.h"
-#include "ssa/staticSingleAssignment.h"
+#include <staticSingleAssignment.h>
 #include "eventProcessor.h"
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>

@@ -1,7 +1,7 @@
 #ifndef MYBARS_H
 #define MYBARS_H
 
-//#include "rose.h"
+#include <rose.h>
 #include <QWidget>
 
 #include "Item.h"
