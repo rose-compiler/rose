@@ -733,15 +733,17 @@ sage_buildKeyDatumPair(PyObject *self, PyObject *args)
 PyObject*
 sage_buildKeyword(PyObject *self, PyObject *args)
 {
-    SgExpression *sg_key, *sg_value;
-    if (! PyArg_ParseTuple(args, "O&O&", SAGE_CONVERTER(SgExpression), &sg_key,
-                                         SAGE_CONVERTER(SgExpression), &sg_value))
+    char *key;
+    SgExpression *sg_value;
+    if (! PyArg_ParseTuple(args, "sO&", &key,
+                                        SAGE_CONVERTER(SgExpression), &sg_value))
         return NULL;
 
-    SgAssignOp* sg_assign_op =
-        SageBuilder::buildAssignOp(sg_key, sg_value);
+    cout << "got name: " << key << endl;
+    SgActualArgumentExpression* sg_keyword =
+        SageBuilder::buildActualArgumentExpression(SgName(key), sg_value);
 
-    return PyEncapsulate(sg_assign_op);
+    return PyEncapsulate(sg_keyword);
 }
 
 /*

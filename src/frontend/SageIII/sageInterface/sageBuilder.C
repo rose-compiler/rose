@@ -3361,6 +3361,24 @@ SageBuilder::buildDictionaryComprehension_nfi(SgKeyDatumPair *kd_pair, SgExprLis
     return result;
 }
 
+SgActualArgumentExpression*
+SageBuilder::buildActualArgumentExpression(SgName arg_name, SgExpression* arg) {
+    ROSE_ASSERT(arg != NULL);
+    SgActualArgumentExpression* result = new SgActualArgumentExpression(arg_name, arg);
+    arg->set_parent(result);
+    setOneSourcePositionForTransformation(result);
+    return result;
+}
+
+SgActualArgumentExpression*
+SageBuilder::buildActualArgumentExpression_nfi(SgName arg_name, SgExpression* arg) {
+    ROSE_ASSERT(arg != NULL);
+    SgActualArgumentExpression* result = new SgActualArgumentExpression(arg_name, arg);
+    arg->set_parent(result);
+    setOneSourcePositionNull(result);
+    return result;
+}
+
 SgPragmaDeclaration * SageBuilder::buildPragmaDeclaration(const string& name, SgScopeStatement* scope)
 {
   if (scope == NULL)

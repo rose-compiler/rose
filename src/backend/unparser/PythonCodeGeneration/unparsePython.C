@@ -80,6 +80,7 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
                                                   SgUnparse_Info& info)
 {
     switch (stmt->variantT()) {
+        CASE_DISPATCH_AND_BREAK(ActualArgumentExpression);
         CASE_DISPATCH_AND_BREAK(AssignOp);
         CASE_DISPATCH_AND_BREAK(AssignInitializer);
         CASE_DISPATCH_AND_BREAK(CallExpression);
@@ -373,6 +374,14 @@ Unparse_Python::ws_prefix(int nesting_level) {
 }
 
 /* ================== Node-specific unparsing functions ===================== */
+
+void
+Unparse_Python::unparseActualArgumentExpression(SgActualArgumentExpression* exp,
+                                                SgUnparse_Info& info) {
+    curprint(exp->get_argument_name().getString());
+    curprint("=");
+    unparseExpression(exp->get_expression(), info);
+}
 
 void
 Unparse_Python::unparseAssertStmt(SgAssertStmt* sg_assert,

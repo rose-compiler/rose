@@ -218,10 +218,9 @@ class SageTranslator(ast.NodeVisitor):
     return sage.buildFor(target, iter, body, orelse)
 
   def visit_keyword(self, node):
-    scope = self.scopeStack.peek()
-    arg = sage.buildName(node.arg, scope)
     value = self.visit(node.value)
-    return sage.buildKeyword(arg, value)
+    print "giving name:", node.arg, type(node.arg)
+    return sage.buildKeyword(node.arg, value)
 
   def visit_Lambda(self, node):
     scope = self.scopeStack.peek()
