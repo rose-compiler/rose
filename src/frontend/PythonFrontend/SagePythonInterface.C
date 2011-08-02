@@ -677,6 +677,22 @@ sage_buildIf(PyObject *self, PyObject *args)
 /*
  */
 PyObject*
+sage_buildIfExp(PyObject *self, PyObject *args)
+{
+    SgExpression *test, *body, *orelse;
+    if (! PyArg_ParseTuple(args, "O&O&O&", SAGE_CONVERTER(SgExpression), &test,
+                                           SAGE_CONVERTER(SgExpression), &body,
+                                           SAGE_CONVERTER(SgExpression), &orelse))
+        return NULL;
+
+    SgConditionalExp* sg_conditional =
+        SageBuilder::buildConditionalExp(test, body, orelse);
+    return PyEncapsulate(sg_conditional);
+}
+
+/*
+ */
+PyObject*
 sage_buildImport(PyObject *self, PyObject *args)
 {
     PyObject *py_names;

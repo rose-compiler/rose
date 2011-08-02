@@ -85,6 +85,7 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
         CASE_DISPATCH_AND_BREAK(CallExpression);
         CASE_DISPATCH_AND_BREAK(ComplexVal);
         CASE_DISPATCH_AND_BREAK(Comprehension);
+        CASE_DISPATCH_AND_BREAK(ConditionalExp);
         CASE_DISPATCH_AND_BREAK(ClassNameRefExp);
         CASE_DISPATCH_AND_BREAK(DeleteExp);
         CASE_DISPATCH_AND_BREAK(DictionaryComprehension);
@@ -302,7 +303,7 @@ int
 Unparse_Python::getPrecedence(int variant) {
     switch (variant) {
         case V_SgLambdaRefExp:         return 1;
-     // case V_Sg:                     return 2; // "conditional expression"?
+        case V_SgConditionalExp:       return 2;
         case V_SgOrOp:                 return 3;
         case V_SgAndOp:                return 4;
         case V_SgNotOp:                return 5;
@@ -544,6 +545,17 @@ Unparse_Python::unparseContinueStmt(SgContinueStmt* continue_stmt,
                                     SgUnparse_Info& info)
 {
     curprint("continue");
+}
+
+void
+Unparse_Python::unparseConditionalExp(SgConditionalExp* cond_exp,
+                                      SgUnparse_Info& info)
+{
+    unparseExpression(cond_exp->get_true_exp(), info);
+    curprint(" if ");
+    unparseExpression(cond_exp->get_conditional_exp(), info);
+    curprint(" else ");
+    unparseExpression(cond_exp->get_false_exp(), info);
 }
 
 void

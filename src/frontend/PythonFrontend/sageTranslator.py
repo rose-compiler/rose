@@ -190,6 +190,12 @@ class SageTranslator(ast.NodeVisitor):
     orelse = map(self.visit, node.orelse)
     return sage.buildIf(test, body, orelse)
 
+  def visit_IfExp(self, node):
+    test = self.visit(node.test)
+    body = self.visit(node.body)
+    orelse = self.visit(node.orelse)
+    return sage.buildIfExp(test, body, orelse)
+
   def visit_Import(self, node):
     names = map(self.visit, node.names)
     return sage.buildImport(names)
