@@ -3262,13 +3262,12 @@ SageBuilder::buildComprehension(SgExpression *target, SgExpression *iter, SgExpr
 {
     ROSE_ASSERT(target != NULL);
     ROSE_ASSERT(iter != NULL);
-    ROSE_ASSERT(ifs != NULL);
     SgComprehension *result = new SgComprehension(target, iter, ifs);
     ROSE_ASSERT(result);
 
     target->set_parent(result);
     iter->set_parent(result);
-    ifs->set_parent(result);
+    if (ifs != NULL) ifs->set_parent(result);
 
     setOneSourcePositionForTransformation(result);
     return result;
@@ -3279,13 +3278,12 @@ SageBuilder::buildComprehension_nfi(SgExpression *target, SgExpression *iter, Sg
 {
     ROSE_ASSERT(target != NULL);
     ROSE_ASSERT(iter != NULL);
-    ROSE_ASSERT(ifs != NULL);
     SgComprehension *result = new SgComprehension(target, iter, ifs);
     ROSE_ASSERT(result);
 
     target->set_parent(result);
     iter->set_parent(result);
-    ifs->set_parent(result);
+    if (ifs != NULL) ifs->set_parent(result);
 
     setOneSourcePositionNull(result);
     return result;

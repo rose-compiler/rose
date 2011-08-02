@@ -126,7 +126,7 @@ class SageTranslator(ast.NodeVisitor):
     return sage.buildComplexVal(n)
 
   def visit_comprehension(self, node):
-    ifs = sage.buildExprListExp(map(self.visit, node.ifs))
+    ifs = node.ifs and sage.buildExprListExp(map(self.visit, node.ifs))
     target = self.visit(node.target)
     iter = self.visit(node.iter)
     return sage.buildComprehension(target, iter, ifs)
