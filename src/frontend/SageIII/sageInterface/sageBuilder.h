@@ -204,7 +204,7 @@ Expressions are usually built using bottomup approach, i.e. buiding operands fir
   - Value string is not included in the argument list for simplicty. It can be set afterwards using set_valueString()
   - Expression builders are organized roughtly in the order of class hierarchy list of ROSE Web Reference
   - default values for arguments are provided to support top-down construction. Should use SageInterface::setOperand(),setLhsOperand(), setRhsOperand() etc to set operands and handle side effects.
-  \todo SgActualArgumentExpression, SgAsmOp, SgAsteriskShapeExp, 
+  \todo SgAsmOp, SgAsteriskShapeExp,
   SgValueExp, SgEnumVal,
   SgThrowOp,
 */
@@ -822,6 +822,10 @@ SgKeyDatumPair* buildKeyDatumPair_nfi(SgExpression* key, SgExpression* datum);
 //! Build a list of key-datum pairs
 SgDictionaryExp* buildDictionaryExp    (std::vector<SgKeyDatumPair*> pairs);
 SgDictionaryExp* buildDictionaryExp_nfi(std::vector<SgKeyDatumPair*> pairs);
+
+//! Build an Actual Argument Expression
+SgActualArgumentExpression* buildActualArgumentExpression(SgName arg_name, SgExpression* arg);
+SgActualArgumentExpression* buildActualArgumentExpression_nfi(SgName arg_name, SgExpression* arg);
 
 //! Build a delete statement
 SgDeleteExp* buildDeleteExp(SgExpression *target, bool is_array = false, bool need_global_specifier = false, SgFunctionDeclaration *deleteOperatorDeclaration = NULL);
