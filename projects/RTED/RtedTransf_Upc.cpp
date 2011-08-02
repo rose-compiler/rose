@@ -29,7 +29,7 @@ void RtedTransformation::transformUpcBlockingOps(SgStatement* const stmt)
   insertCheck(ilAfter,  stmt, symbols.roseUpcEnterWorkzone, SB::buildExprListExp(), enterwz_msg);
 }
 
-void RtedTransformation::transformPtrDerefs(SgPointerDerefExp* ptrderef)
+void RtedTransformation::transformPtrDerefs(SharedPtrDerefContainer::value_type ptrderef)
 {
     ROSE_ASSERT(ptrderef);
 

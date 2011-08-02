@@ -239,10 +239,11 @@ private:
    // references to nodes in other files
 
 public:
-   typedef std::vector< std::pair<SgExpression*, AllocKind> >         Deallocations;
-   typedef std::set<SgScopeStatement*>                                ScopeContainer;
-   typedef std::map<SgSourceFile*, SgNamespaceDeclarationStatement* > SourceFileRoseNMType;
-   typedef std::vector< SgPointerDerefExp* >                          SharedPtrDerefContainer;
+   typedef std::vector< std::pair<SgExpression*, AllocKind> >        Deallocations;
+   typedef std::vector<SgScopeStatement*>                            ScopeContainer;
+   typedef std::map<SgSourceFile*, SgNamespaceDeclarationStatement*> SourceFileRoseNMType;
+   typedef std::vector<SgPointerDerefExp*>                           SharedPtrDerefContainer;
+   typedef std::vector<SgFunctionCallExp*>                           CallSiteContainer;
 
    RtedSymbols                   symbols;
    std::vector< SgSourceFile* >  srcfiles;
@@ -262,6 +263,9 @@ private:
 public:
    /// stores deref expressions of shared pointers
    SharedPtrDerefContainer                  sharedptr_derefs;
+
+   /// stores call sites that need to be instrumented
+   CallSiteContainer                        callsites;
 
 private:
    /// this vector is used to check which variables have been marked as initialized (through assignment)
@@ -520,6 +524,10 @@ private:
    /// \param blocks number of blocks to close (e.g., for return statements, etc.)
    SgExprStatement* buildExitBlockStmt(size_t blocks, SgScopeStatement*, Sg_File_Info*);
 
+   /// builds a call to rtedEnterBlock
+   /// \param scopename name helps users debugging
+   SgExprStatement* buildEnterBlockStmt(const std::string& scopename);
+
    /// factors commonalities of heap allocations
    void arrayHeapAlloc(SgInitializedName*, SgVarRefExp*, SgExpression*, AllocKind);
 
@@ -552,6 +560,7 @@ public:
      create_array_access_call(),
      variablesUsedForArray(),
      sharedptr_derefs(),
+     callsites(),
      variableIsInitialized(),
      create_array_define_varRef_multiArray_stack(),
      variable_access_varref(),
@@ -653,7 +662,10 @@ public:
 
    /// wraps UPC shared ptr to shared derefs by a lock
    ///   to guarantee consistency
-   void transformPtrDerefs(SgPointerDerefExp* ptrderef);
+   void transformPtrDerefs(SharedPtrDerefContainer::value_type ptrderef);
+
+   /// wraps function calls in beginScope / endScope
+   void transformCallSites(CallSiteContainer::value_type callexp);
 
    /// \brief transforms a UPC barrier statement
    // void transformUpcBarriers(SgUpcBarrierStatement* stmt);

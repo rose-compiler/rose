@@ -14,6 +14,12 @@ ostream& out = cout;
 static const long nondistributed = 0;
 
 static
+void beginScope(RuntimeSystem* rs, const std::string& desc)
+{
+  rs->beginScope(desc);
+}
+
+static
 void endScope(RuntimeSystem* rs)
 {
   rs->endScope(1);
@@ -494,7 +500,7 @@ void testStack()
     rs->printStack(cout);
     rs->printMemStatus(cout);
 
-    rs->beginScope("Function1");
+    beginScope(rs, "Function1");
     rs->createVariable(addr+=4,"Function1Var1","Mangled","SgInt");
     rs->createVariable(addr+=4,"Fucntion1Var2","Mangled","SgDouble");
 
@@ -614,7 +620,7 @@ void testScopeFreesStack()
     errorFound=false; /*tps unused variable - removing warning */
 
 
-    rs->beginScope("main");
+    beginScope(rs, "main");
     rs->createVariable(
         asAddr(4),
         "my_var",
@@ -660,10 +666,10 @@ void testImplicitScope()
     createMemory(rs, asAddr(10), 2*sizeof(int));
     createMemory(rs, asAddr(18), 2*sizeof(int));
 
-    Address addr = asAddr(100);
+    Address       addr = asAddr(100);
     int           ptrSize = sizeof(void*);
 
-    rs->beginScope("Scope1");
+    beginScope(rs, "Scope1");
         rs->createVariable(addr+=ptrSize,"p1_to_10","mangled_p1_to_10",ts->getPointerType("SgTypeInt"), akStack, nondistributed);
         registerPointerChange(rs, "mangled_p1_to_10", asAddr(10));
 
@@ -671,17 +677,11 @@ void testImplicitScope()
         registerPointerChange(rs, "mangled_p1_to_18", asAddr(18));
 
 
-        rs->beginScope("Scope2");
+        beginScope(rs, "Scope2");
             rs->createVariable(addr+=ptrSize,"p2_to_10","mangled_p2_to_10",ts->getPointerType("SgTypeInt"), akStack, nondistributed);
             registerPointerChange(rs, "mangled_p2_to_10", asAddr(10));
         endScope(rs);
 
-        /*
-        freeMemory(rs, 10);
-        freeMemory(rs, 18);
-        registerPointerChange(rs, "p1_to_10",NULL);
-        registerPointerChange(rs, "p1_to_20",NULL);
-        */
         try{ registerPointerChange(rs, "mangled_p1_to_10", asAddr(0)); }
         TEST_CATCH(RuntimeViolation::MEM_WITHOUT_POINTER)
 
@@ -749,7 +749,7 @@ void testPointerChanged()
     // Case1: change of allocation chunk
     Address addr = asAddr(100);
     int ptrSize = sizeof(void*);
-    rs->beginScope("Scope1");
+    beginScope(rs, "Scope1");
 
         rs->createVariable(addr+=ptrSize,"p1_to_10","mangled_p1_to_10", ts->getPointerType("SgTypeInt"), akStack, nondistributed);
         registerPointerChange(rs, "mangled_p1_to_10", asAddr(10));
@@ -774,7 +774,7 @@ void testPointerChanged()
     std::cout << "--- Scope 2" << std::endl;
 
     // Case2: change of "type-chunk"
-    rs->beginScope("Scope2");
+    beginScope(rs, "Scope2");
         struct A { int arr[10]; int behindArr; };
         RsClassType * typeA = &ts->getClassType("A",sizeof(A),false);
         typeA->addMember("arr",ts->getArrayType("SgTypeInt",10 * sizeof(int)), offsetof(A,arr));
@@ -823,7 +823,7 @@ void testInvalidPointerAssign()
 
     TypeSystem * ts = rs->getTypeSystem();
 
-    rs->beginScope("Scope2");
+    beginScope(rs, "Scope2");
         // Create an instance of A on stack
         rs->createVariable(asAddr(0x42), "instanceOfA","mangled","SgTypeDouble", akStack, nondistributed);
         rs->createVariable(asAddr(0x100), "intPtr","mangled_intPtr",ts->getPointerType("SgTypeInt"), akStack, nondistributed);
@@ -847,7 +847,7 @@ void testPointerTracking()
     type->addMember("arr",ts->getArrayType("SgTypeInt",2 * sizeof(int)));
     type->addMember("intBehindArr",ts->getTypeInfo("SgTypeInt"));
 
-    rs->beginScope("TestScope");
+    beginScope(rs, "TestScope");
     rs->createVariable(asAddr(42), "instanceOfA","mangled","A", akStack, nondistributed);
 
     rs->createVariable(asAddr(100), "pointer","mangledPointer",ts->getPointerType("A"), akStack, nondistributed);
@@ -881,7 +881,7 @@ void testMultidimensionalStackArrayAccess()
     //  type array of array of int
     const RsArrayType* type = ts->getArrayType( ts->getArrayType( "SgTypeInt", 3 * intsz), 2 * 3 * sizeof(int) );
 
-    rs->beginScope("TestScope");
+    beginScope(rs, "TestScope");
 
     createArray( rs, asAddr(0x100), "array[2][3]", "mangled_array[2][3]", type );
 
@@ -913,7 +913,7 @@ void testArrayAccess()
     createMemory(rs, heapAddr+10*sizeof(int),10); //allocate second chunk directly afterwards
 
     rs -> setViolationPolicy( RuntimeViolation::INVALID_PTR_ASSIGN, ViolationPolicy::Exit );
-    rs->beginScope("Scope");
+    beginScope(rs, "Scope");
 
     Address pointerAddr = asAddr(0x100);
     rs->createVariable(asAddr(0x100),"intPointer","mangled_intPointer",ts->getPointerType("SgTypeInt"), akStack, nondistributed);
@@ -1622,7 +1622,7 @@ extern "C"
   //~ //~
           testScopeFreesStack();
           testImplicitScope();
-  //~ //~
+  //~
           testLostMemRegion();
           testLostMemRegionFromDoublePointer();
           testPointerChanged();

@@ -199,6 +199,11 @@ void RtedTransformation::executeTransformations()
                  std::bind1st(std::mem_fun(&RtedTransformation::transformPtrDerefs), this)
                );
 
+  std::for_each( callsites.begin(),
+                 callsites.end(),
+                 std::bind1st(std::mem_fun(&RtedTransformation::transformCallSites), this)
+               );
+
 
   if (RTEDDEBUG)  std::cerr << "Inserting main close call" << std::endl;
 

@@ -55,13 +55,13 @@ RtedTransformation::changeReturnStmt(ReturnInfo rinfo)
                                                             init,
                                                             scope
                                                           );
-  SgVarRefExp*          vexp = buildVarRefExp(rName, rstmt->get_scope());
+  SgVarRefExp*          vexp = buildVarRefExp(rName, scope);
   SgStatement*          newRtnStmt = buildReturnStmt( vexp );
 
   replaceStatement( rstmt, newRtnStmt );
   insertStatementBefore( newRtnStmt, newStmt );
 
-  SgStatement*          exitBlock = buildExitBlockStmt(open_blocks(rinfo), scope, rstmt->get_file_info());
+  SgStatement*          exitBlock = buildExitBlockStmt(open_blocks(rinfo), scope, scope->get_endOfConstruct());
 
   insertStatementBefore( newRtnStmt, exitBlock );
 }

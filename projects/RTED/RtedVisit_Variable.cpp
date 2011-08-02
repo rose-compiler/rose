@@ -341,7 +341,12 @@ namespace rted
     }
 
     // implicitly casts to SgScopeStatement
-    void store_scope(SgScopeStatement& n) { vt.transf->scopes.insert(&n); }
+    void store_scope(SgScopeStatement& n)
+    {
+      if (n.get_file_info()->isCompilerGenerated()) return;
+
+      vt.transf->scopes.push_back(&n);
+    }
 
     void handle(SgClassDefinition& n)
     {
@@ -373,8 +378,10 @@ namespace rted
 
     void handle(SgBasicBlock& n)
     {
-      // was: if (isSgBasicBlock(n.get_parent())) store_scope(n);
-      store_scope(n);
+      // to keep track of return values properly,
+      //   the first scope is instrumented at call sites
+      if (ia.openBlocks > 1) store_scope(n);
+
       ++ia.openBlocks;
     }
 

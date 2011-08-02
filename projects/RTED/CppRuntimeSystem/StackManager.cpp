@@ -70,7 +70,7 @@ void StackManager::endScope(size_t scopecount)
     const ScopeContainer::iterator new_top = limit - scopecount;
     const size_t                   new_stack_size = new_top->stackIndex;
 
-    scope.erase(new_top+1, limit);
+    scope.erase(new_top, limit);
 
     size_t                         curr_stack_size = stack.size();
     assert(curr_stack_size >= new_stack_size);
