@@ -491,9 +491,11 @@ Unparse_Python::unparseComprehension(SgComprehension* comp, SgUnparse_Info& info
     unparseExpression(comp->get_iter(), info);
 
     SgExprListExp* filters = comp->get_filters();
-    foreach (SgExpression* if_exp, filters->get_expressions()) {
-        curprint(" if ");
-        unparseExpression(if_exp, info);
+    if (filters != NULL) {
+        foreach (SgExpression* if_exp, filters->get_expressions()) {
+            curprint(" if ");
+            unparseExpression(if_exp, info);
+        }
     }
 }
 
