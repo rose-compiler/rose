@@ -59,9 +59,7 @@ class SageTranslator(ast.NodeVisitor):
   def visit_arguments(self, node):
     args = map(lambda arg: sage.buildInitializedName(arg.id), node.args)
     kwargs = map(self.visit, node.defaults)
-    excess_positional = node.vararg and sage.buildInitializedName(node.vararg, vararg=True)
-    excess_keywords = node.kwarg  and sage.buildInitializedName(node.kwarg, kwarg=True)
-    return sage.buildFunctionParameterList(args, kwargs, excess_positional, excess_keywords)
+    return sage.buildFunctionParameterList(args, kwargs)
 
   def visit_Assert(self, node):
     test = self.visit(node.test)
@@ -221,6 +219,7 @@ class SageTranslator(ast.NodeVisitor):
 
   def visit_keyword(self, node):
     value = self.visit(node.value)
+    print "giving name:", node.arg, type(node.arg)
     return sage.buildKeyword(node.arg, value)
 
   def visit_Lambda(self, node):
