@@ -235,7 +235,11 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2011_40.f90 \
      test2011_Rice_allocate-derived-type-scope.f90 \
      test2011_Rice_asterisk-length.f90 \
+     test2011_Rice_attrs-dimension.f90 \
+     test2011_Rice_attrs-pointer-array.f90 \
+     test2011_Rice_attrs-value-intent.f90 \
      test2011_Rice_char-array-decl-asterisk.f90 \
+     test2011_Rice_char-kind-decl.f90 \
      test2011_Rice_constructor-initializer.f90 \
      test2011_Rice_data-implied-do.f90 \
      test2011_Rice_derived-type-2d-component.f90 \
@@ -243,18 +247,26 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2011_Rice_derived-type-array.f90 \
      test2011_Rice_elseif.f90 \
      test2011_Rice_empty-string-constant.f90 \
+     test2011_Rice_eq.f90 \
+     test2011_Rice_explicit-shape1.f90 \
+     test2011_Rice_explicit-shape2.f90 \
+     test2011_Rice_forward-decl-func-type.f90 \
      test2011_Rice_forward-ref-derived-type.f90 \
      test2011_Rice_funcdecl-1.f90 \
      test2011_Rice_function-where-var-expected.f90 \
-     test2011_Rice_forward-decl-func-type.f90 \
      test2011_Rice_interface.f90 \
+     test2011_Rice_if-stop.f90 \
+     test2011_Rice_intent.f90 \
      test2011_Rice_io-implied-do-with-stride.f90 \
      test2011_Rice_keyword-arg-extra-paren-2.f90 \
      test2011_Rice_keyword-arg-extra-paren.f90 \
      test2011_Rice_lost-kindtype-1.f90 \
      test2011_Rice_lost-kindtype-2.f90 \
+     test2011_Rice_multi-char-decl.f90 \
      test2011_Rice_pause-no-stop-code.f90 \
+     test2011_Rice_pointer.f90 \
      test2011_Rice_pointer-after-dimension.f90 \
+     test2011_Rice_pointer-init.f90 \
      test2011_Rice_pointer-to-forward-ref-derived-type.f90 \
      test2011_Rice_singleton-array-constructor.f90 \
      test2011_Rice_stop-no-stop-code.f90 \
@@ -569,7 +581,11 @@ F03_TESTCODES_REQUIRED_TO_PASS = \
      test2011_32.f03 \
      test2011_33.f03 \
      test2011_34.f03 \
-     test2011_35.f03
+     test2011_35.f03 \
+     test2011_Rice_bindc-name-2.f03 \
+     test2011_Rice_bindc-name-sub.f03 \
+     test2011_Rice_bindc-name.f03 \
+     test2011_Rice_bindc.f03
 
 
 # DQ (1/18/2011): Failing tests.

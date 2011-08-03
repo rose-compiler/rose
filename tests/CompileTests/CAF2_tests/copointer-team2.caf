@@ -1,4 +1,4 @@
-program prog8
+program copointer_team2
   integer :: wrank, wsize, a(:,:)[*] 
   integer, copointer :: x(:,:)
   integer :: a(:)[*] 
