@@ -18,6 +18,10 @@ TESTCODES_REQUIRED_TO_PASS = \
     assign-2.caf \
     assumed-size-coarray-1.caf \
     assumed-size-coarray-2.caf \
+    attrs-async.caf \
+    attrs-copointer.caf \
+    attrs-external.caf \
+    attrs-pointer-coarray.caf \
     basic-1.caf \
     broadcast-3.caf \
     broadcast-4.caf \
