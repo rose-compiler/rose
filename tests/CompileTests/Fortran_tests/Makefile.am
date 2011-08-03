@@ -238,9 +238,11 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2011_Rice_attrs-dimension.f90 \
      test2011_Rice_attrs-pointer-array.f90 \
      test2011_Rice_attrs-value-intent.f90 \
+     test2011_Rice_caseSensitive.f90 \
      test2011_Rice_char-array-decl-asterisk.f90 \
      test2011_Rice_char-kind-decl.f90 \
      test2011_Rice_constructor-initializer.f90 \
+     test2011_Rice_constructor-initializer-0.f90 \
      test2011_Rice_data-implied-do.f90 \
      test2011_Rice_derived-type-2d-component.f90 \
      test2011_Rice_derived-type-3d-component.f90 \
@@ -254,6 +256,8 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2011_Rice_forward-ref-derived-type.f90 \
      test2011_Rice_funcdecl-1.f90 \
      test2011_Rice_function-where-var-expected.f90 \
+     test2011_Rice_ifConstruct.f90 \
+     test2011_Rice_ifStmt.f90 \
      test2011_Rice_interface.f90 \
      test2011_Rice_if-stop.f90 \
      test2011_Rice_intent.f90 \
@@ -268,6 +272,8 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2011_Rice_pointer-after-dimension.f90 \
      test2011_Rice_pointer-init.f90 \
      test2011_Rice_pointer-to-forward-ref-derived-type.f90 \
+     test2011_Rice_public.f90 \
+     test2011_Rice_return-with-expr.f90 \
      test2011_Rice_singleton-array-constructor.f90 \
      test2011_Rice_stop-no-stop-code.f90 \
      test2011_Rice_vector-constructor-1.f90 \
@@ -754,15 +760,9 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2011_Rice_lost-func-return-type.f90 \
      fCaller.f90 \
      triangle.f90 \
-     X-caseSensitive.f90 \
-     X-constructor-initializer.f90 \
-     X-derivedTypeArray.f90 \
+     X-comment-in-wrong-place.f90 \
      X-enddo-plus-label.f90  \
-     X-ifConstruct.f90 \
-     X-ifStmt.f90 \
-     X-pointerAttr.f90 \
-     X-print-no-output-item-list.f90 \
-     X-return-with-expr.f90
+     X-print-no-output-item-list.f90
 
 # "X-*" tests are Rice-reported bugs not yet fixed.
 # DQ(1/30/2011): test2010_150.* - test2010_168.* are Rice tests
