@@ -31,7 +31,7 @@
   type(T), dimension(10,10), cotarget :: at
   type(T), dimension(10,10), cotarget :: cat[*]
   integer :: k
-  type(T) :: t
+  type(T) :: tRec
   
 ! copointer creation
 
@@ -122,18 +122,18 @@
   cp1[](1)[9]    = k
   cp0[][9]       = k
 
-  t              = pt2[](1,1)
-  t              = pt1[](1)
-  t              = pt0[]
-  pt2[](1,1)     = t
-  pt1[](1)       = t
-  pt0[]          = t
-  t              = cpt2[](1,1)[9]
-  t              = cpt1[](1)[9]
-  t              = cpt0[][9]
-  cpt2[](1,1)[9] = t
-  cpt1[](1)[9]   = t
-  cpt0[][9]      = t
+  tRec              = pt2[](1,1)
+  tRec              = pt1[](1)
+  tRec              = pt0[]
+  pt2[](1,1)     = tRec
+  pt1[](1)       = tRec
+  pt0[]          = tRec
+  tRec              = cpt2[](1,1)[9]
+  tRec              = cpt1[](1)[9]
+  tRec              = cpt0[][9]
+  cpt2[](1,1)[9] = tRec
+  cpt1[](1)[9]   = tRec
+  cpt0[][9]      = tRec
   
 ! copointer dereferencing, indexing, and component selection
 

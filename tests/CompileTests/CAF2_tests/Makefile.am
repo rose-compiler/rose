@@ -37,18 +37,19 @@ TESTCODES_REQUIRED_TO_PASS = \
     coarray-allocation-1.caf \
     coarray-bounds-1.caf \
     coarray-bounds-2.caf \
+    coarray-decl.caf \
     coarray-semantics-1.caf \
+    copointer-components.caf \
+    copointer-array.caf \
+    copointer-coarray.caf \
     copointer-declarations.caf \
-    copointer-declarations1.caf \
-    copointer-declarations2.caf \
-    copointer-declarations3.caf \
-    copointer-declarations4.caf \
-    copointer-declarations5.caf \
-    copointer-declarations6.caf \
-    copointer-derived-types1.caf \
-    copointer-ops.caf \
+    copointer-derived-types.caf \
+    copointer-operations.caf \
+    copointer-scalar-coscalar.caf \
+    copointer-team1.caf \
+    copointer-team2.caf \
+    cotarget-declarations.caf \
     coscalar-1.caf \
-    cotarget-declarations1.caf \
     derived-type-1.caf \
     derived-type-2.caf \
     derived-type-3.caf \
@@ -80,29 +81,12 @@ TESTCODES_REQUIRED_TO_PASS = \
     remote-read-1.caf \
     remote-write-1.caf \
     team.caf \
-    test-copointer3.caf \
-    test-copointer4.caf \
-    test-copointer4_2.caf \
-    test-copointer4_2_1.caf \
-    test-copointer4_2_2.caf \
-    test-copointer4_3.caf \
-    test-copointer5.caf \
-    test-copointer5_1.caf \
-    test-copointer5_2.caf \
-    test-copointer6.caf \
-    test-copointer7.caf \
-    test-copointer8.caf \
-    test-team1.caf \
-    test-team2.caf \
     topology.caf \
     withteam.caf
 
 TESTCODE_CURRENTLY_FAILING = \
-    X-derivedtype.caf \
-    X-copointer-derived-types.caf \
-    X-copointer-operations.caf \
-    X-cotarget-declarations.caf \
-    X-test-copointer-codim1.caf \
+    X-copointer-operations-long.caf \
+    X-cotarget-declarations-long.caf \
     X-test-copointer4_1.caf
 
 # Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
