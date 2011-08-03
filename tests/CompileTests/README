@@ -29,3 +29,40 @@ C_Code:
 
 
 
+Instructions for building tests for Thrifty:
+   You can run the a992-thrifty-mips-compiler tests using the following:
+
+Thrifty installation:
+
+  /nfs/casc/overture/ROSE/git/sescutils-ins/
+
+Environment setup:
+
+export ROSE_TEST_JAVA_PATH="/usr/apps/java/jdk1.6.0_11"
+export ROSE_TEST_BOOST_PATH="/export/tmp.hudson-rose/opt/boost_1_40_0-inst"
+export THRIFTY_HOME="/nfs/casc/overture/ROSE/git/sescutils-ins/"
+
+Configure options:
+
+  --prefix=$(pwd)/install
+  --with-boost=${ROSE_TEST_BOOST_PATH} 
+  --with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib 
+  --with-java=${ROSE_TEST_JAVA_PATH} 
+  --with-CXX_DEBUG=-g 
+  --with-C_DEBUG=-g 
+  --with-CXX_WARNINGS=-Wall 
+  --with-alternate_backend_C_compiler=${THRIFTY_HOME}/bin/gcc
+  --with-alternate_backend_Cxx_compiler=${THRIFTY_HOME}/bin/g++
+
+Build:
+
+  $ make
+  $ make check
+  $ make install
+  $ make installcheck
+
+setenv ROSE_TEST_JAVA_PATH "/usr/apps/java/jdk1.6.0_11"; setenv ROSE_TEST_BOOST_PATH "/export/tmp.hudson-rose/opt/boost_1_40_0-inst"; setenv THRIFTY_HOME "/nfs/casc/overture/ROSE/git/sescutils-ins/"
+
+Configure command line for Thrifty:
+   /home/dquinlan/ROSE/git-dq-cxx-rc/configure --with-ROSE_LONG_MAKE_CHECK_RULE=yes --prefix=/home/dquinlan/ROSE/ROSE_CompileTree/git_LINUX-64bit-4.2.4-dq-cxx-rc-thrifty_install --with-boost=/home/dquinlan/local/boost_1_42_0_installTree-gxx-4.2.4 --with-alternate_backend_C_compiler=/nfs/casc/overture/ROSE/git/sescutils-ins//bin/gcc --with-alternate_backend_Cxx_compiler=/nfs/casc/overture/ROSE/git/sescutils-ins//bin/g++
+

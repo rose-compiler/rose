@@ -59,7 +59,7 @@ reverseEvents(EventProcessor* event_processor,
     
 	analysisTimer.restart();
 	StaticSingleAssignment interproceduralSsa(project);
-	interproceduralSsa.run(true);
+	interproceduralSsa.run(true, true);
 	event_processor->setInterproceduralSsa(&interproceduralSsa);
 	printf("-- Timing: Interprocedural SSA took %.2f seconds.\n", analysisTimer.elapsed());
     fflush(stdout);

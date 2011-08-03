@@ -92,6 +92,7 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (CommaOpExp,             "CommaOpExp",             "COMMA_OP" );
      NEW_TERMINAL_MACRO (LshiftOp,               "LshiftOp",               "LSHIFT_OP" );
      NEW_TERMINAL_MACRO (RshiftOp,               "RshiftOp",               "RSHIFT_OP" );
+  // DQ (7/17/2011): Added this function to support new Java ">>>" operator.
      NEW_TERMINAL_MACRO (JavaUnsignedRshiftOp,   "JavaUnsignedRshiftOp",   "JAVA_UNSIGNED_RSHIFT_OP" );
      NEW_TERMINAL_MACRO (PntrArrRefExp,          "PntrArrRefExp",          "ARRAY_OP" );
      NEW_TERMINAL_MACRO (ScopeOp,                "ScopeOp",                "SCOPE_OP" );
@@ -106,6 +107,7 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (XorAssignOp,            "XorAssignOp",            "XOR_ASSIGN_OP" );
      NEW_TERMINAL_MACRO (LshiftAssignOp,         "LshiftAssignOp",         "LSHIFT_ASSIGN_OP" );
      NEW_TERMINAL_MACRO (RshiftAssignOp,         "RshiftAssignOp",         "RSHIFT_ASSIGN_OP" );
+  // DQ (7/17/2011): Added this function to support new Java ">>>" operator.
      NEW_TERMINAL_MACRO (JavaUnsignedRshiftAssignOp, "JavaUnsignedRshiftAssignOp", "JAVA_UNSIGNED_RSHIFT_ASSIGN_OP" );
 
   // DQ (12/13/2007): Added support for Fortran string concatenation operator
@@ -216,16 +218,21 @@ Grammar::setUpExpressions ()
                             ThrowOp        | RealPartOp         | ImagPartOp | ConjugateOp     | UserDefinedUnaryOp,
                             "UnaryOp","UNARY_EXPRESSION", false);
 
+     NEW_NONTERMINAL_MACRO (CompoundAssignOp,
+                            PlusAssignOp   | MinusAssignOp    | AndAssignOp  | IorAssignOp    | MultAssignOp     |
+                            DivAssignOp    | ModAssignOp      | XorAssignOp  | LshiftAssignOp | RshiftAssignOp   |
+                            JavaUnsignedRshiftAssignOp,
+                            "CompoundAssignOp", "COMPOUND_ASSIGN_OP", false);
+
   // DQ (2/2/2006): Support for Fortran IR nodes (contributed by Rice) (adding ExponentiationOp binary operator)
      NEW_NONTERMINAL_MACRO (BinaryOp,
           ArrowExp       | DotExp           | DotStarOp       | ArrowStarOp      | EqualityOp    | LessThanOp     | 
           GreaterThanOp  | NotEqualOp       | LessOrEqualOp   | GreaterOrEqualOp | AddOp         | SubtractOp     | 
           MultiplyOp     | DivideOp         | IntegerDivideOp | ModOp            | AndOp         | OrOp           |
           BitXorOp       | BitAndOp         | BitOrOp         | CommaOpExp       | LshiftOp      | RshiftOp       |
-          JavaUnsignedRshiftOp | JavaUnsignedRshiftAssignOp |
-          PntrArrRefExp  | ScopeOp          | AssignOp        | PlusAssignOp     | MinusAssignOp | AndAssignOp    |
-          IorAssignOp    | MultAssignOp     | DivAssignOp     | ModAssignOp      | XorAssignOp   | LshiftAssignOp |
-          RshiftAssignOp | ExponentiationOp | ConcatenationOp | PointerAssignOp  | UserDefinedBinaryOp,"BinaryOp","BINARY_EXPRESSION", false);
+          PntrArrRefExp  | ScopeOp          | AssignOp        | ExponentiationOp | JavaUnsignedRshiftOp |
+          ConcatenationOp | PointerAssignOp | UserDefinedBinaryOp | CompoundAssignOp,
+                            "BinaryOp","BINARY_EXPRESSION", false);
 
      NEW_NONTERMINAL_MACRO (ValueExp,
           BoolValExp     | StringVal        | ShortVal               | CharVal         | UnsignedCharVal |
@@ -516,6 +523,8 @@ Grammar::setUpExpressions ()
                                   "../Grammar/Expression.code" );
      AssignOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
                                   "../Grammar/Expression.code" );
+     CompoundAssignOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
+                                  "../Grammar/Expression.code" );
      PlusAssignOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
                                   "../Grammar/Expression.code" );
      MinusAssignOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
@@ -604,7 +613,7 @@ Grammar::setUpExpressions ()
      ExpressionRoot.excludeFunctionPrototype ( "HEADER_PRECEDENCE", "../Grammar/Expression.code" );
      BinaryOp.setSubTreeFunctionPrototype    ( "HEADER_PRECEDENCE", "../Grammar/Expression.code" );
      BinaryOp.excludeFunctionPrototype       ( "HEADER_PRECEDENCE", "../Grammar/Expression.code" );
-
+     CompoundAssignOp.excludeFunctionPrototype ( "HEADER_PRECEDENCE", "../Grammar/Expression.code" );
 
   // DQ (2/1/2009: Added comment.
   // ***********************************************************
@@ -1408,17 +1417,7 @@ Grammar::setUpExpressions ()
 
      ScopeOp.setFunctionPrototype ( "HEADER_SCOPE_OPERATOR", "../Grammar/Expression.code" );
      AssignOp.setFunctionPrototype ( "HEADER_ASSIGNMENT_OPERATOR", "../Grammar/Expression.code" );
-     PlusAssignOp.setFunctionPrototype ( "HEADER_PLUS_ASSIGNMENT_OPERATOR", "../Grammar/Expression.code" );
-     MinusAssignOp.setFunctionPrototype ( "HEADER_MINUS_ASSIGNMENT_OPERATOR", "../Grammar/Expression.code" );
-     AndAssignOp.setFunctionPrototype ( "HEADER_AND_ASSIGNMENT_OPERATOR", "../Grammar/Expression.code" );
-     IorAssignOp.setFunctionPrototype ( "HEADER_IOR_ASSIGNMENT_OPERATOR", "../Grammar/Expression.code" );
-     MultAssignOp.setFunctionPrototype ( "HEADER_MULTIPLY_ASSIGNMENT_OPERATOR", "../Grammar/Expression.code" );
-     DivAssignOp.setFunctionPrototype ( "HEADER_DIVIDE_ASSIGNMENT_OPERATOR", "../Grammar/Expression.code" );
-     ModAssignOp.setFunctionPrototype ( "HEADER_MOD_ASSIGNMENT_OPERATOR", "../Grammar/Expression.code" );
-     XorAssignOp.setFunctionPrototype ( "HEADER_XOR_ASSIGNMENT_OPERATOR", "../Grammar/Expression.code" );
-     LshiftAssignOp.setFunctionPrototype ( "HEADER_LEFT_SHIFT_ASSIGNMENT_OPERATOR", "../Grammar/Expression.code" );
-     RshiftAssignOp.setFunctionPrototype ( "HEADER_RIGHT_SHIFT_ASSIGNEMENT_OPERATOR", "../Grammar/Expression.code" );
-     JavaUnsignedRshiftAssignOp.setFunctionPrototype ( "HEADER_JAVA_UNSIGNED_RIGHT_SHIFT_ASSIGNEMENT_OPERATOR", "../Grammar/Expression.code" );
+     CompoundAssignOp.setFunctionPrototype ( "HEADER_COMPOUND_ASSIGNMENT_OPERATOR", "../Grammar/Expression.code" );
      PointerAssignOp.setFunctionPrototype ( "HEADER_POINTER_ASSIGNMENT_OPERATOR", "../Grammar/Expression.code" );
 
      RefExp.setFunctionPrototype ( "HEADER_REFERENCE_EXPRESSION", "../Grammar/Expression.code" );
@@ -1865,18 +1864,6 @@ Grammar::setUpExpressions ()
      ThisExp.setFunctionSource ( "SOURCE_THIS_EXPRESSION","../Grammar/Expression.code" );
      ScopeOp.setFunctionSource ( "SOURCE_SCOPE_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      AssignOp.setFunctionSource  ( "SOURCE_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-  // This must be a bug since it is different from the MinusAssignOp!
-     PlusAssignOp.setFunctionSource  ( "SOURCE_PLUS_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     MinusAssignOp.setFunctionSource ( "SOURCE_MINUS_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     AndAssignOp.setFunctionSource ( "SOURCE_AND_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     IorAssignOp.setFunctionSource ( "SOURCE_IOR_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     MultAssignOp.setFunctionSource ( "SOURCE_MULTIPLY_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     DivAssignOp.setFunctionSource ( "SOURCE_DIVIDE_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     ModAssignOp.setFunctionSource ( "SOURCE_MOD_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     XorAssignOp.setFunctionSource ( "SOURCE_XOR_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     LshiftAssignOp.setFunctionSource ( "SOURCE_LEFT_SHIFT_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     RshiftAssignOp.setFunctionSource ( "SOURCE_RIGHT_SHIFT_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     JavaUnsignedRshiftAssignOp.setFunctionSource ( "SOURCE_JAVA_UNSIGNED_RIGHT_SHIFT_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      PointerAssignOp.setFunctionSource  ( "SOURCE_POINTER_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
 
      RefExp.setFunctionSource ( "SOURCE_REFERENCE_EXPRESSION","../Grammar/Expression.code" );

@@ -158,6 +158,9 @@ MPI_LOCATION = /home/dquinlan/ROSE/ROSE_TESTS/MPI_header_tests/MPI_header_tests_
 test_MPI_LAM:
 	../../testTranslator -rose:verbose 0 -I$(MPI_LOCATION)/LAM_MPI/include -c $(MPI_LOCATION)/tests/input.C
 
+# DQ (7/24/2011): These test fail the AST IO but pass the compilation tests.  Debug these for AST File I/O separately.
+failingAST_IO_tests: test2011_113.o test2011_114.o test2011_116.o
+
 print_testcodes:
 	echo $(TESTCODES)
 
@@ -167,6 +170,7 @@ check-local:
 	@$(MAKE) testBuildUsingRelativePath
 	@$(MAKE) testBuildUsingAbsolutePath
 	@echo "Tests of C++."
+	@$(MAKE) failingAST_IO_tests
 	@$(MAKE) $(PASSING_TEST_Objects)
 #	DQ (4/6/2010): This fails on Hudson, but I don't know why!
 #	@$(MAKE) testParser

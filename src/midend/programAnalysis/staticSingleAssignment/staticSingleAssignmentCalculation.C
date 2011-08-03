@@ -32,7 +32,6 @@ using namespace ssa_private;
 using namespace boost;
 
 //Initializations of the static attribute tags
-string StaticSingleAssignment::varKeyTag = "ssa_varname_KeyTag";
 StaticSingleAssignment::VarName StaticSingleAssignment::emptyName;
 
 bool StaticSingleAssignment::isBuiltinVar(const VarName& var)
@@ -202,7 +201,7 @@ bool StaticSingleAssignment::isVarInScope(const VarName& var, SgNode* astNode)
     return false;
 }
 
-void StaticSingleAssignment::run(bool interprocedural)
+void StaticSingleAssignment::run(bool interprocedural, bool treatPointersAsStructures)
 {
     originalDefTable.clear();
     expandedDefTable.clear();
@@ -216,7 +215,8 @@ void StaticSingleAssignment::run(bool interprocedural)
 #endif
     if (getDebug())
         cout << "Running UniqueNameTraversal...\n";
-    UniqueNameTraversal uniqueTrav(SageInterface::querySubTree<SgInitializedName > (project, V_SgInitializedName));
+    UniqueNameTraversal uniqueTrav(
+        SageInterface::querySubTree<SgInitializedName > (project, V_SgInitializedName), treatPointersAsStructures);
     uniqueTrav.traverse(project);
     if (getDebug())
         cout << "Finished UniqueNameTraversal." << endl;
@@ -243,7 +243,7 @@ void StaticSingleAssignment::run(bool interprocedural)
     time.restart();
 #endif
 
-    DefsAndUsesTraversal defUseTrav(this);
+    DefsAndUsesTraversal defUseTrav(this, treatPointersAsStructures);
 
     //Generate all local information before doing interprocedural analysis. This is so we know
     //what variables are directly modified in each function body before we do interprocedural propagation

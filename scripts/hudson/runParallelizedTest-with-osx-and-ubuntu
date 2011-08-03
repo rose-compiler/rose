@@ -182,7 +182,12 @@ if test "x$ROSE_TEST_BUILD_STYLE" = "xmake-check-install-full" ; then
   #
   #  tps : 11/12/10 - OpenGL is not installed on all nodes yet. 
   #######################################################################################
-  CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-pch  "
+  if test "x$ROSE_TEST_GCC_VERSION" = "x4.1.2" -a \
+		"x$label" = "xamd64-linux"; then
+	echo "Skipping PCH on amd64-linx, gcc4.1.2 for now."
+  else
+    CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-pch"
+  fi
 
   #######################################################################################
   #  RTED

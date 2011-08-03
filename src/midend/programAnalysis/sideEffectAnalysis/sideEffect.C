@@ -2128,17 +2128,7 @@ class MyTraversal
 #if 0
           if (expr->get_is_lvalue()) 
 #endif
-          if ( isSgAssignOp(expr) || 
-               isSgPlusAssignOp(expr) ||
-               isSgMinusAssignOp(expr) ||
-               isSgAndAssignOp(expr) ||
-               isSgIorAssignOp(expr) ||
-               isSgMultAssignOp(expr) ||
-               isSgDivAssignOp(expr) ||
-               isSgModAssignOp(expr) ||
-               isSgXorAssignOp(expr) ||
-               isSgLshiftAssignOp(expr) ||
-               isSgRshiftAssignOp(expr) )
+          if ( isSgAssignOp(expr) || isSgCompoundAssignOp(expr) )
           { 
 
             // this expression is the root of a destructive operation

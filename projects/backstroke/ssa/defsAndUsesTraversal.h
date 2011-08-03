@@ -1,6 +1,9 @@
 #pragma once
-#include "rose.h"
-#include "staticSingleAssignment.h"
+#include <rose.h>
+#include <staticSingleAssignment.h>
+#include <uniqueNameTraversal.h>
+#include <map>
+#include <virtualCFG.h>
 
 namespace ssa_private
 {
@@ -13,17 +16,18 @@ private:
 	SgVarRefExp* currentVar;
 
 	/** Stores all the varRefs that are used in the current subTree. */
-	std::vector<SgNode*> uses;
+	std::set<SgVarRefExp*> uses;
 
 public:
 
 	/** Create the attribute with no refs. 	 */
 	ChildUses() : currentVar(NULL)
-	{ }
-
-	ChildUses(SgNode* useNode, SgVarRefExp* var)
 	{
-		uses.push_back(useNode);
+	}
+
+	ChildUses(SgVarRefExp* useNode, SgVarRefExp* var)
+	{
+		uses.insert(useNode);
 		currentVar = var;
 	}
 
@@ -31,10 +35,9 @@ public:
 	 *
 	 * @param useTree The vector of uses to add, or an empty vector.
 	 */
-	ChildUses(const std::vector<SgNode*>& useTree, SgVarRefExp* var = NULL)
+	ChildUses(const std::set<SgVarRefExp*>& useTree, SgVarRefExp* var = NULL)
 	{
-		if (useTree.size() > 0)
-			uses.assign(useTree.begin(), useTree.end());
+		uses = useTree;
 		currentVar = var;
 	}
 
@@ -42,7 +45,7 @@ public:
 	 *
 	 * @return A constant reference to the use list.
 	 */
-	std::vector<SgNode*>& getUses()
+	std::set<SgVarRefExp*>& getUses()
 	{
 		return uses;
 	}
@@ -51,9 +54,9 @@ public:
 	 *
 	 * @param newUses A constant reference to the uses to copy to this node.
 	 */
-	void setUses(const std::vector<SgNode*>& newUses)
+	void setUses(const std::set<SgVarRefExp*>& newUses)
 	{
-		uses.assign(newUses.begin(), newUses.end());
+		uses = newUses;
 	}
 
 	SgVarRefExp* getCurrentVar() const
@@ -65,13 +68,25 @@ public:
 /** This class collects all the defs and uses associated with each node in the traversed CFG.
  * Note that this does not compute reachability information; it just records each instance of
  * a variable used or defined. */
-class DefsAndUsesTraversal : public AstBottomUpProcessing<ChildUses>
+class DefsAndUsesTraversal : private AstBottomUpProcessing<ChildUses>
 {
-	StaticSingleAssignment* ssa;
+public:
+	
+	typedef std::map<CFGNode, std::set<UniqueNameTraversal::VarName> > CFGNodeToVarsMap;
+
+	/** Call this method to collect defs and uses for a subtree. The additional defs and uses discovered
+	 * in the tree will be inserted in the passed data structures. */
+	static void CollectDefsAndUses(SgNode* traversalRoot, CFGNodeToVarsMap& defs, 
+		std::map<SgNode*, std::set<SgVarRefExp*> >& uses);
+	
+private:
+	//! Map from each CFG node that contains a definition to all the variables defined at the node
+	CFGNodeToVarsMap cfgNodeToDefinedVars;
+
+	//! Maps from each CFG node to the variables used by that node.
+	std::map<SgNode*, std::set<SgVarRefExp*> > astNodeToUsedVars;
 
 public:
-
-	DefsAndUsesTraversal(StaticSingleAssignment* ssa) : ssa(ssa) { }
 
 	/** Called to evaluate the synthesized attribute on every node.
 	 *
@@ -86,10 +101,11 @@ public:
 private:
 
 	/** Mark all the uses as occurring at the specified node. */
-	void addUsesToNode(SgNode* node, std::vector<SgNode*> uses);
-
-	/** Mark the given variable as being defined at the node. */
-	void addDefForVarAtNode(SgVarRefExp* currentVar, SgNode* defNode);
+	void addUsesToNode(SgNode* node, std::set<SgVarRefExp*> uses);
+	
+	//! Indicate a place where a variable is defined
+	void addDefForVarAtNode(SgVarRefExp* var, const CFGNode& node);
+	
 };
 
 } //namespace ssa_private

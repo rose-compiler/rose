@@ -1,4 +1,7 @@
 #include "spearWrap.h"
+using std::string;
+#include <sstream>
+using std::ostringstream;
 
 /*************
  * SpearType *
@@ -178,7 +181,7 @@ const int SpearOp::Concatenate     ;
 const int SpearOp::Extract         ;
 
 bool SpearOp::int2strInitialized = false;
-map<int, string> SpearOp::int2str;
+std::map<int, string> SpearOp::int2str;
 
 string SpearOp::opStr(int op)
 {
