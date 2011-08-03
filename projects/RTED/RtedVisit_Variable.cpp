@@ -380,7 +380,7 @@ namespace rted
     {
       // to keep track of return values properly,
       //   the first scope is instrumented at call sites
-      if (ia.openBlocks > 1) store_scope(n);
+      if (ia.openBlocks > 0) store_scope(n);
 
       ++ia.openBlocks;
     }

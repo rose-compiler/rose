@@ -61,9 +61,9 @@ RtedTransformation::changeReturnStmt(ReturnInfo rinfo)
   replaceStatement( rstmt, newRtnStmt );
   insertStatementBefore( newRtnStmt, newStmt );
 
-  SgStatement*          exitBlock = buildExitBlockStmt(open_blocks(rinfo), scope, scope->get_endOfConstruct());
-
-  insertStatementBefore( newRtnStmt, exitBlock );
+  /* do not do it right now */
+  // SgStatement*          exitBlock = buildExitBlockStmt(open_blocks(rinfo), scope, scope->get_endOfConstruct());
+  // insertStatementBefore( newRtnStmt, exitBlock );
 }
 
 #endif
