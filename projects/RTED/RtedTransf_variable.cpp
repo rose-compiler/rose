@@ -368,7 +368,7 @@ RtedTransformation::buildVariableCreateCallStmt(SgInitializedName* initName, boo
         ROSE_ASSERT(fn_call);
 
         SgExprStatement*   exprStmt = buildExprStatement(fn_call);
-        string             comment = "RS : Create Variable, paramaters : (name, mangl_name, type, basetype, address, sizeof, initialized, fileOpen, classname, filename, linenr, linenrTransformed)";
+        string             comment = "RS : Create Variable, parameters : (name, mangl_name, type, basetype, address, sizeof, initialized, fileOpen, classname, filename, linenr, linenrTransformed)";
 
         attachComment(exprStmt, "", PreprocessingInfo::before);
         attachComment(exprStmt, comment, PreprocessingInfo::before);
@@ -519,7 +519,7 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName, S
                 SgExpression*    funcCallExp = buildVariableInitCallExpr(initName, varRefE, stmt, allocKind);
                 SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
                 string           empty_comment;
-                string           comment = "RS : Init Variable, paramaters : (tpye, basetype, class_name, address, size, ismalloc, is_pointer_change, filename, line, linenrTransformed, error line)";
+                string           comment = "RS : Init Variable, parameters : (tpye, basetype, class_name, address, size, ismalloc, is_pointer_change, filename, line, linenrTransformed, error line)";
 
                 attachComment(exprStmt, empty_comment, PreprocessingInfo::before);
                 attachComment(exprStmt, comment, PreprocessingInfo::before);
@@ -750,7 +750,7 @@ void RtedTransformation::insertAccessVariable( SgScopeStatement* initscope,
                          stmt,
                          symbols.roseAccessVariable,
                          arg_list,
-                         "RS : Access Variable, paramaters : (address_r, sizeof(type)_r, address_w, sizeof(type)_w, r/w, filename, line, line transformed, error Str)"
+                         "RS : Access Variable, parameters : (address_r, sizeof(type)_r, address_w, sizeof(type)_w, r/w, filename, line, line transformed, error Str)"
                        );
     } // basic block
     else

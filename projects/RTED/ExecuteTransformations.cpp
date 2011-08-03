@@ -19,23 +19,11 @@
 // Do insertions LIFO, so, e.g. if we want to add stmt1; stmt2; after stmt0
 // add stmt2 first, then add stmt1
 // ---------------------------------------
-void RtedTransformation::executeTransformations() {
-
-  BOOST_FOREACH( SgReturnStmt* ret, returnstmt )
+void RtedTransformation::executeTransformations()
+{
+  BOOST_FOREACH( ReturnInfo ret, returnstmt )
+  {
     changeReturnStmt(ret);
-
-  // bracket function calls and scope statements with calls to enterScope and exitScope.
-  //
-  // Note: For function calls, this must occur before variable
-  // initialization, so that assignments of function return values happen before exitScope is called.
-  if (RTEDDEBUG) std::cerr << "\n # Elements in scopes  : " << scopes.size() << std::endl;
-  BOOST_FOREACH( ScopeMap::value_type i, scopes ) {
-    SgStatement* stmt_to_bracket = i.first;
-    SgNode*      end_of_scope = i.second;
-    ROSE_ASSERT( stmt_to_bracket && end_of_scope);
-
-    // bracket all scopes except constructors with enter/exit
-    bracketWithScopeEnterExit( stmt_to_bracket, end_of_scope->get_endOfConstruct() );
   }
 
   // bracket the bodies of constructors with enter/exit.  This is easier than
@@ -50,9 +38,6 @@ void RtedTransformation::executeTransformations() {
   //    exitScope("constructor");
   //
   BOOST_FOREACH( SgFunctionDefinition* fndef, function_definitions ) {
-    if( isConstructor( isSgMemberFunctionDeclaration(fndef -> get_declaration()) ))
-      bracketWithScopeEnterExit( fndef );
-
     // tps : 09/14/2009 : handle templates
     SgTemplateInstantiationFunctionDecl* istemplate =
       isSgTemplateInstantiationFunctionDecl(fndef->get_parent());
@@ -95,6 +80,13 @@ void RtedTransformation::executeTransformations() {
     ROSE_ASSERT( op );
     insert_pointer_change( op );
   }
+
+  // This must occur before variable
+  // initialization, so that assignments of function return values happen before exitScope is called.
+  std::for_each( callsites.begin(),
+                 callsites.end(),
+                 std::bind1st(std::mem_fun(&RtedTransformation::transformCallSites), this)
+               );
 
   InitializedVarMap::const_iterator it5 = variableIsInitialized.begin();
   for (; it5 != variableIsInitialized.end(); it5++) {
@@ -198,6 +190,18 @@ void RtedTransformation::executeTransformations() {
                  upcBlockingOps.end(),
                  std::bind1st(std::mem_fun(&RtedTransformation::transformUpcBlockingOps), this)
                );
+
+  std::for_each( sharedptr_derefs.begin(),
+                 sharedptr_derefs.end(),
+                 std::bind1st(std::mem_fun(&RtedTransformation::transformPtrDerefs), this)
+               );
+
+  // bracket scope statements with calls to enterScope and exitScope.
+  if (RTEDDEBUG) std::cerr << "\n # Elements in scopes  : " << scopes.size() << std::endl;
+  BOOST_FOREACH( ScopeContainer::value_type pseudoblock, scopes ) {
+    // bracket all scopes except constructors with enter/exit
+    bracketWithScopeEnterExit( pseudoblock, pseudoblock->get_endOfConstruct() );
+  }
 
   if (RTEDDEBUG)  std::cerr << "Inserting main close call" << std::endl;
 

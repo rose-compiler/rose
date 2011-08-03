@@ -334,7 +334,7 @@ void RtedTransformation::insertArrayCreateCall( SgExpression* const srcexp, cons
 
        std::string empty_comment = "";
        attachComment(exprStmt, empty_comment, PreprocessingInfo::before);
-       std::string comment = "RS : Create Array Variable, paramaters : (name, manglname, typr, basetype, address, sizeof(type), array size, fromMalloc, filename, linenr, linenrTransformed, dimension info ...)";
+       std::string comment = "RS : Create Array Variable, parameters : (name, manglname, typr, basetype, address, sizeof(type), array size, fromMalloc, filename, linenr, linenrTransformed, dimension info ...)";
        attachComment(exprStmt, comment, PreprocessingInfo::before);
   } else {
       const std::string    name = initName->get_mangled_name().str();
@@ -512,7 +512,7 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt, SgPntrArrRefEx
                stmt,
                symbols.roseAccessArray,
                arg_list,
-               "RS : Access Array Variable, paramaters : (name, dim 1 location, dim 2 location, read_write_mask, filename, linenr, linenrTransformed, part of error message)"
+               "RS : Access Array Variable, parameters : (name, dim 1 location, dim 2 location, read_write_mask, filename, linenr, linenrTransformed, part of error message)"
               );
 }
 

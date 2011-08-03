@@ -317,11 +317,12 @@ namespace rted
       SgType* unmodType = skip_ModifierType(n.get_type());
 
       sg::dispatch(VarTypeHandler(*vt.transf, n), unmodType);
+      ia.isVariableDecl = true;
     }
 
     void handle(SgAssignInitializer& n)
     {
-        vt.transf->visit_isAssignInitializer(&n);
+        if (!ia.isVariableDecl) vt.transf->visit_isAssignInitializer(&n);
         ia.isAssignInitializer = true;
     }
 
@@ -329,7 +330,7 @@ namespace rted
     {
       if (!n.get_expression()) return;
 
-      vt.transf->returnstmt.push_back(&n);
+      vt.transf->returnstmt.push_back(std::make_pair(&n, ia.openBlocks));
     }
 
     void handle(SgUpcBarrierStatement& n) { storeUpcBlockingOp(n); }
@@ -340,7 +341,12 @@ namespace rted
     }
 
     // implicitly casts to SgScopeStatement
-    void store_scope(SgScopeStatement& n) { vt.transf->scopes[&n] = &n; }
+    void store_scope(SgScopeStatement& n)
+    {
+      if (n.get_file_info()->isCompilerGenerated()) return;
+
+      vt.transf->scopes.push_back(&n);
+    }
 
     void handle(SgClassDefinition& n)
     {
@@ -372,7 +378,11 @@ namespace rted
 
     void handle(SgBasicBlock& n)
     {
-      if (isSgBasicBlock(n.get_parent())) store_scope(n);
+      // to keep track of return values properly,
+      //   the first scope is instrumented at call sites
+      if (ia.openBlocks > 0) store_scope(n);
+
+      ++ia.openBlocks;
     }
 
      //
@@ -383,11 +393,11 @@ namespace rted
      /// the pointer by virtue of the operator alone (e.g. ++, --)  As a heuristic,
      /// we say that such operations should not change the @e "Memory Chunk", i.e.
      /// the array the pointer refers to.
-     void push_if_ptr_movement(SgExpression& astNode, SgExpression* operand)
+     void push_if_ptr_movement(SgExpression& operand)
      {
-        if( isUsableAsSgPointerType( operand -> get_type() )) {
+        if( isUsableAsSgPointerType( operand.get_type() )) {
            // we don't care about int++, only pointers, or reference to pointers.
-           vt.transf->pointer_movements.push_back( &astNode );
+           vt.transf->pointer_movements.push_back( &operand );
         }
      }
 
@@ -401,15 +411,15 @@ namespace rted
                                  || (test_binaryop_and_forloop(n, *name, ia))
                                  || (test_assign_initializer(ia, n)         )
                                  || (test_call_argument(vt.transf, n)       )
-                              );
+                                 );
 
-    if (elide_access_guard)
-    {
-      // std::cerr << "### ELIDE " << where << " " << varref->unparseToString() << std::endl;
-      return;
-    }
+       if (elide_access_guard)
+       {
+         // std::cerr << "### ELIDE " << where << " " << varref->unparseToString() << std::endl;
+         return;
+       }
 
-    // its a plain variable access
+       // its a plain variable access
        vt.transf->variable_access_varref.push_back(&n);
      }
 
@@ -426,6 +436,11 @@ namespace rted
         // if this is a varrefexp and it is not initialized, we flag it.
         // do only if it is by itself or on right hand side of assignment
         vt.transf->visit_isSgPointerDerefExp(&n);
+
+        if (isUpcSharedPointer(n.get_operand()->get_type()))
+        {
+          vt.transf->sharedptr_derefs.push_back(&n);
+        }
      }
 
 
@@ -468,13 +483,13 @@ namespace rted
 
      void handle(SgMinusAssignOp& n)
      {
-       push_if_ptr_movement(n, n.get_lhs_operand());
+       push_if_ptr_movement(*n.get_lhs_operand());
        handle_binary(n);
      }
 
      void handle(SgPlusAssignOp& n)
      {
-       push_if_ptr_movement(n, n.get_lhs_operand());
+       push_if_ptr_movement(*n.get_lhs_operand());
        handle_binary(n);
      }
 
@@ -503,21 +518,21 @@ namespace rted
 
      void handle(SgPlusPlusOp& n)
      {
-       push_if_ptr_movement(n, n.get_operand());
+       push_if_ptr_movement(*n.get_operand());
      }
 
      void handle(SgMinusMinusOp& n)
      {
-       push_if_ptr_movement(n, n.get_operand());
+       push_if_ptr_movement(*n.get_operand());
      }
 
      void handle(SgDeleteExp& del)
      {
-        typedef RtedTransformation::Deallocations Deallocations;
+       typedef RtedTransformation::Deallocations Deallocations;
 
-        const AllocKind allocKind = (del.get_is_array() ? akCxxArrayNew : akCxxNew);
+       const AllocKind allocKind = (del.get_is_array() ? akCxxArrayNew : akCxxNew);
 
-        vt.transf->frees.push_back( Deallocations::value_type(&del, allocKind) );
+       vt.transf->frees.push_back( Deallocations::value_type(&del, allocKind) );
      }
 
      operator InheritedAttribute()
