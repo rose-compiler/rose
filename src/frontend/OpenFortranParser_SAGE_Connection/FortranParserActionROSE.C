@@ -1,4 +1,3 @@
-#include<signal.h>
 #include "sage3basic.h"
 #include "fortran_support.h"
 #include "FortranParserState.h"
@@ -9,7 +8,6 @@
 #include "rose_config.h"
 
 #define SKIP_C_ACTION_IMPLEMENTATION 0
-#define DXN_DEBUG 1
 
 using namespace std;
 
@@ -1060,7 +1058,6 @@ void c_action_imag_part(ofp_bool hasIntConstant, ofp_bool hasRealConstant, Token
 // void c_action_char_selector(int kindOrLen1, int kindOrLen2, ofp_bool hasAsterisk)
 void c_action_char_selector(Token_t * type_keyword, Token_t * optional_keyword, int kindOrLen1, int kindOrLen2, ofp_bool hasAsterisk)
    {
-    raise(SIGINT);
     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_char_selector(): type_keyword = %p = %s optional_keyword = %p = %s kindOrLen1 = %d kindOrLen2 = %d hasAsterisk = %s \n",
                type_keyword,type_keyword != NULL ? type_keyword->text : "NULL",
@@ -1070,7 +1067,7 @@ void c_action_char_selector(Token_t * type_keyword, Token_t * optional_keyword, 
   // only called for the length type parameter and not for the kind parameter. It
   // used to be called for each parameter.
 
-#if DXN_DEBUG
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("TOP of R424 list c_action_char_selector()");
 #endif
@@ -1157,7 +1154,7 @@ void c_action_char_selector(Token_t * type_keyword, Token_t * optional_keyword, 
              }
         }
 
-#if DXN_DEBUG
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R424 list c_action_char_selector()");
 #endif
@@ -2945,11 +2942,10 @@ void c_action_declaration_type_spec(Token_t * udtKeyword, int type)
 // void c_action_attr_spec(int attr)
 void c_action_attr_spec(Token_t * attrKeyword, int attr)
    {
-    raise(SIGINT);
     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In R503 c_action_attr_spec(): attrKeyword = %p = %s attr = %d \n",attrKeyword,attrKeyword != NULL ? attrKeyword->text : "NULL",attr);
 
-#if DXN_DEBUG
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R503 c_action_attr_spec()");
 #endif
@@ -3226,7 +3222,7 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
              }
         }
 
-#if DXN_DEBUG
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R503 c_action_attr_spec()");
 #endif
@@ -3244,7 +3240,6 @@ void c_action_entity_decl(Token_t * id, ofp_bool hasArraySpec, ofp_bool hasCoarr
 void c_action_entity_decl(Token_t * id)
 #endif
    {
-    raise(SIGINT);
     // This function R504 R503-F2008 is similar to R442 R438-F2008
 
   // Push the entities onto the list at the top of the stack
@@ -3270,7 +3265,7 @@ void c_action_entity_decl(Token_t * id)
 #endif
         }
 
-#if DXN_DEBUG
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R504 R503-F2008 c_action_entity_decl()");
 #endif
@@ -3460,7 +3455,7 @@ void c_action_entity_decl(Token_t * id)
 
 #endif  // !SKIP_C_ACTION_IMPLEMENTATION
 
-#if DXN_DEBUG
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R504 c_action_entity_decl()");
 #endif
@@ -3737,7 +3732,7 @@ void c_action_array_spec(int count)
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In R510 c_action_array_spec(): count = %d (building the multi-dimensional shape for the future SgArrayType) astAttributeSpecStack.size() = %zu \n",count,astAttributeSpecStack.size());
 
-#if DXN_DEBUG
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R510 #2 c_action_array_spec()");
 #endif
@@ -3753,8 +3748,7 @@ void c_action_array_spec(int count)
 
 void c_action_array_spec_element(int type)
    {
-    raise(SIGINT);
-#if DXN_DEBUG
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R510 #3 c_action_array_spec_element()");
 #endif
@@ -3852,7 +3846,7 @@ void c_action_array_spec_element(int type)
           astExpressionStack.push_front(expression);
         }
 
-#if DXN_DEBUG
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R510 #3 c_action_array_spec_element()");
 #endif
