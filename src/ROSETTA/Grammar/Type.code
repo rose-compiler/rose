@@ -4447,8 +4447,8 @@ SgTypeInt* SgTypeInt::p_builtin_type = NULL;
 
 // DQ (10/4/2010): Added support for fortran type kind expressions.
 // $CLASSNAME* $CLASSNAME::createType(int bitLength)
-$CLASSNAME*
-$CLASSNAME::createType(int bitLength, SgExpression* optional_fortran_type_kind)
+SgTypeInt*
+SgTypeInt::createType(int bitLength, SgExpression* optional_fortran_type_kind)
    {
 #if 0
      static bool firstCallToFunction = true;

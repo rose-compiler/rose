@@ -70,9 +70,16 @@ namespace ssa_private
     {
         StaticSingleAssignment* ssa;
 
+        //! If true, modifications to a value pointed to by a pointer will count as defs for the pointer itself.
+        //! For example, (delete p) would be considered to modify p.
+        const bool treatPointersAsStructs;
+        
     public:
 
-        DefsAndUsesTraversal(StaticSingleAssignment* ssa) : ssa(ssa)
+        //! @param treatPointersAsStructs If true, modifications to a value pointed to by a pointer will 
+        //!     count as defs for the pointer itself. For example, (delete p) would be considered to modify p.
+        DefsAndUsesTraversal(StaticSingleAssignment* ssa, bool treatPointersAsStructs = true) : ssa(ssa),
+                treatPointersAsStructs(treatPointersAsStructs)
         {
         }
 
