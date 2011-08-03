@@ -43,11 +43,11 @@ SgUpcBarrierStatement* buildUpcBarrierStatement();
 std::string removeSpecialChar(std::string str);
 
 /// \brief  finds the first parent that is an SgStatement node
-/// \return the parent statement or NULL if there is none
-SgStatement* getSurroundingStatement(SgExpression* n);
+/// \return the parent statement (never NULL)
+SgStatement* getSurroundingStatement(SgExpression& n);
 
 /// \overload
-SgStatement* getSurroundingStatement(SgInitializedName* n);
+SgStatement* getSurroundingStatement(SgInitializedName& n);
 
 /// \brief  determines the C++ allocation kind for type t
 /// \return akCxxArrayNew if t is an array, akCxxNew otherwise
@@ -181,8 +181,6 @@ void appendBool( SgExprListExp* arg_list, bool b );
 
 enum InsertLoc { ilAfter = 0, ilBefore = 1 };
 
-SgExprStatement* insertCheck(InsertLoc iloc, SgStatement* stmt, SgFunctionSymbol* checker, SgExprListExp* args);
-
 /// \brief   creates a statement node for calling the function checker with some arguments
 ///          and adds the check before the statement where checked_node is a part of
 /// \return  the created statement node
@@ -249,7 +247,7 @@ public:
    std::vector< SgSourceFile* >  srcfiles;
 
 private:
-   std::set< std::string >*      rtedfiles;
+   std::set< std::string >       rtedfiles;
 
    // VARIABLES ------------------------------------------------------------
    // ------------------------ array ------------------------------------
@@ -270,11 +268,6 @@ public:
 private:
    /// this vector is used to check which variables have been marked as initialized (through assignment)
    InitializedVarMap                        variableIsInitialized;
-
-   /// when traversing variables, we find some that are initialized names
-   /// instead of varrefexp, and so we create new varrefexps but we do
-   /// add them later and not during the same traversal.
-   //std::map<SgStatement*,SgStatement*>      insertThisStatementLater;
 
 public:
    /// the following stores all variables that are created (and used e.g. in functions)
@@ -381,13 +374,6 @@ private:
    // ********************* Deep copy classes in headers into source **********
    SgClassDeclaration* instrumentClassDeclarationIntoTopOfAllSourceFiles(SgProject* project, SgClassDeclaration* classDecl);
 
-   /// (temporarily) disabled
-   void moveupPreprocessingInfo(SgProject* project);
-
-   //typedef std::map<SgSourceFile*, std::pair < SgNamespaceDeclarationStatement*,
-   //                                    SgNamespaceDeclarationStatement* > > SourceFileRoseNMType;
-   //std::vector<std::string> classesInRTEDNamespace;
-
    std::map<SgClassDefinition*, SgClassDefinition*> classesInRTEDNamespace;
 
    bool hasClassConstructor(SgClassDeclaration* classdec);
@@ -490,7 +476,6 @@ private:
    // is it a variable?
    void insertCreateObjectCall( RtedClassDefinition* cdef );
    void insertVariableCreateCall(SgInitializedName* initName);
-   bool isVarInCreatedVariables(SgInitializedName* n);
    void insertInitializeVariable(SgInitializedName*, SgVarRefExp*, AllocKind);
    SgExpression* buildVariableInitCallExpr(SgInitializedName*, SgVarRefExp*, SgStatement*, AllocKind);
    SgFunctionCallExp* buildVariableCreateCallExpr(SgInitializedName* name, bool forceinit=false);
@@ -550,12 +535,10 @@ public:
 
 public:
 
-   explicit
-   RtedTransformation(bool testsupc)
+   RtedTransformation(bool testsupc, const std::set<std::string>& prjfiles)
    : symbols(),
      srcfiles(),
-     rtedfiles(NULL),
-
+     rtedfiles(prjfiles),
      create_array_define_varRef_multiArray(),
      create_array_access_call(),
      variablesUsedForArray(),
@@ -589,8 +572,8 @@ public:
    {}
 
 
-   /// \brief analyse file and apply necessary (call) transformations
-   void transform(SgProject* project, std::set<std::string> &rtedfiles);
+   /// \brief analyse project and apply necessary transformations
+   void transform(SgProject* project);
 
    /// \brief Run frontend and return project
    SgProject* parse(int argc, char** argv);

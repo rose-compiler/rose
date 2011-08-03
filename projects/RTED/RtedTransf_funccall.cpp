@@ -201,7 +201,6 @@ void RtedTransformation::insertFuncCall(RtedArguments& args)
   // 4 = SourceInfo
   // 5 = number of the following arguments (\pp ??)
 
-  //  SgStatement* stmt = getSurroundingStatement(args->varRefExp);
   SgStatement*      stmt = args.stmt;
   ROSE_ASSERT(stmt);
 
@@ -459,7 +458,6 @@ void insertAssertFunctionSignature(RtedTransformation& rt, SgFunctionCallExp* fc
   // we aren't able to check the function signature at compile time, so we
   // insert a check to do so at runtime
 
-  using SI::appendExpression;
   using SageBuilder::buildExprListExp;
   using SageBuilder::buildStringVal;
   using SageBuilder::buildIntVal;
@@ -476,8 +474,7 @@ void insertAssertFunctionSignature(RtedTransformation& rt, SgFunctionCallExp* fc
   SI::appendExpression( arg_list, buildStringVal( fnref->get_symbol()->get_name()) );
   rt.appendSignature( arg_list, fnReturn, fnArgTypes );
 
-  SgStatement*         stmt = getSurroundingStatement(fce);
-  ROSE_ASSERT(stmt);
+  SgStatement*         stmt = getSurroundingStatement(*fce);
 
   rt.appendFileInfo( arg_list, stmt->get_scope(), fce->get_file_info() );
 
@@ -513,7 +510,7 @@ void RtedTransformation::insertFreeCall(SgExpression* freeExp, AllocKind ak)
 
    // stmt wraps a call to free -- most likely an expression statement
    // alert the RTS before the call to detect errors such as double-free
-   SgStatement*  stmt = getSurroundingStatement(freeExp);
+   SgStatement*  stmt = getSurroundingStatement(*freeExp);
    SgExpression* address_expression = NULL;
 
    requiresParentIsBasicBlock(*stmt);
@@ -560,16 +557,18 @@ void RtedTransformation::insertFreeCall(SgExpression* freeExp, AllocKind ak)
 
 void RtedTransformation::insertReallocateCall(SgFunctionCallExp* realloc_call)
 {
+   ROSE_ASSERT(realloc_call);
+
    // stmt wraps a call to realloc -- most likely an expression statement
    // alert the RTS before the call
-   SgStatement*         stmt = getSurroundingStatement(realloc_call);
+   SgStatement*         stmt = getSurroundingStatement(*realloc_call);
    SgExpressionPtrList& args = realloc_call->get_args()->get_expressions();
    ROSE_ASSERT( args.size() == 2 );
 
    SgExpression* address_expression = args.front();
    SgExpression* size_expression = args.back();
 
-   ROSE_ASSERT( stmt && address_expression && size_expression );
+   ROSE_ASSERT( address_expression && size_expression );
 
    // roseReallocate( ptr, source info );
    SgExprListExp* arg_list = SB::buildExprListExp();
@@ -640,7 +639,7 @@ void RtedTransformation::addFileIOFunctionCall(SgVarRefExp* n, bool read)
    const char*                readstr = (read ? "r" : "w");
 
    SgExpression*              ex = SB::buildStringVal(readstr);
-   SgStatement*               stmt = getSurroundingStatement(n);
+   SgStatement*               stmt = getSurroundingStatement(*n);
    std::vector<SgExpression*> args;
 
    args.push_back(ex);
@@ -754,7 +753,7 @@ void FunctionCallInfo::ptrToMemberFunctionCall(SgBinaryOp& n)
 static
 void store_if_needed( RtedTransformation::UpcBlockingOpsContainer& cont, SgFunctionCallExp& call )
 {
-  SgStatement* stmt = getSurroundingStatement( &call );
+  SgStatement* stmt = getSurroundingStatement(call);
   SgStatement* last = cont.empty() ? NULL : cont.back();
 
   // if the stmt is already going to be protected, then we can skip it
@@ -822,7 +821,7 @@ void RtedTransformation::visit_isFunctionCall(SgFunctionCallExp* const fcexp)
        // this is used, e.g. with  File* fp = fopen("file","r");
        // Therefore we need to go up and see if there is an AssignmentOperator
        // and get the var on the left side
-       SgStatement*   stmt = getSurroundingStatement( fcexp );
+       SgStatement*   stmt = getSurroundingStatement( *fcexp );
        SgExpression*  varOnLeft = getExpressionLeftOfAssignmentFromChildOnRight(fcexp);
        SgExpression*  varOnLeftStr=NULL;
        if (varOnLeft) {
@@ -872,7 +871,7 @@ void RtedTransformation::visit_isFunctionCall(SgFunctionCallExp* const fcexp)
   {
      // if we're able to, use the function definition's body as the end of
      // scope (for line number complaints).  If not, the callsite is good too.
-     SgStatement*           fncallStmt = getSurroundingStatement( fcexp );
+     SgStatement*           fncallStmt = getSurroundingStatement( *fcexp );
 
      if (!fncallStmt->get_file_info()->isCompilerGenerated())
      {
@@ -908,7 +907,7 @@ void RtedTransformation::transformCallSites(CallSiteContainer::value_type fcexp)
     if (fndef) end_of_scope = fndef->get_body();
   }
 
-  SgStatement*   callstmt = getSurroundingStatement(fcexp);
+  SgStatement*   callstmt = getSurroundingStatement(*fcexp);
   SgLocatedNode* block = SI::ensureBasicBlockAsParent(callstmt);
   SgBasicBlock*  res = isSgBasicBlock(block);
 

@@ -15,7 +15,6 @@ namespace rted
     bool          isArrowExp;
     bool          isAddressOfOp;
     bool          isForStatement;
-    bool          isBinaryOp;
     size_t        openBlocks;
     SgStatement*  lastGForLoop;
     SgBinaryOp*   lastBinary;
@@ -23,7 +22,7 @@ namespace rted
     InheritedAttribute()
     : function(false),  isAssignInitializer(false), isVariableDecl(false),
       isArrowExp(false), isAddressOfOp(false), isForStatement(false),
-      isBinaryOp(false), openBlocks(0), lastGForLoop(NULL), lastBinary(NULL)
+      openBlocks(0), lastGForLoop(NULL), lastBinary(NULL)
     {}
   };
 

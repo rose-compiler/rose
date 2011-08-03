@@ -70,7 +70,8 @@ namespace rted
   }
 
   static
-  bool isUsableAsSgPointerType( SgType* type ) {
+  bool isUsableAsSgPointerType( SgType* type )
+  {
       return isSgPointerType( skip_ReferencesAndTypedefs( type ));
   }
 
@@ -101,7 +102,7 @@ namespace rted
       {
         // \pp \note the Nov'10 RTED code would skip this when we get a modifier-type
         //     something like: if (&n != initname.get_type()) return;
-        RtedArray arrayRted(&initname, getSurroundingStatement(&initname), varAllocKind(initname));
+        RtedArray arrayRted(&initname, getSurroundingStatement(initname), varAllocKind(initname));
 
         transf.populateDimensions( arrayRted, initname, arrtype );
         transf.create_array_define_varRef_multiArray_stack[&initname] = arrayRted;
@@ -159,7 +160,7 @@ namespace rted
     if ( rted::partOfUpcForallAffinityExpr(inh.lastGForLoop, varref) ) return true;
 
     // not in binary context
-    if (!inh.isBinaryOp)
+    if (!inh.lastBinary)
     {
       return rted::isInitializedNameInForStatement(inh.lastGForLoop, varname);
     }
@@ -451,7 +452,6 @@ namespace rted
         if (ia.isArrowExp || ia.isAddressOfOp) return;
 
         ia.lastBinary = &n;
-        ia.isBinaryOp = true;
      }
 
      void handle_binary(SgBinaryOp& n) { handle(n); }  // implcitely casts to SgBinaryOp
@@ -510,10 +510,10 @@ namespace rted
         //     cases relevant to UPC
         // \todo 1) make suppression unconditional (remove if)
         // \todo 2) I think the following code is obsolete
-        if (suppress_binary_for_specific_calls(n.getAssociatedFunctionDeclaration()))
-        {
-          ia.isBinaryOp = false;
-        }
+        //~ if (suppress_binary_for_specific_calls(n.getAssociatedFunctionDeclaration()))
+        //~ {
+          //~ ia.isBinaryOp = false;
+        //~ }
      }
 
      void handle(SgPlusPlusOp& n)

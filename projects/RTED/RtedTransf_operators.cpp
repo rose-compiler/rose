@@ -14,9 +14,7 @@ void RtedTransformation::insert_pointer_change( SgExpression* operand )
 {
     static const std::string comment = "RS : movePointer(typedesc, address, class_name, location)";
 
-    SgStatement*   stmt = getSurroundingStatement( operand );
-    ROSE_ASSERT( stmt );
-
+    SgStatement*   stmt = getSurroundingStatement( *operand );
     SgExprListExp* mp_args = SB::buildExprListExp();
 
     SI::appendExpression( mp_args, ctorTypeDesc(mkTypeInformation(operand->get_type(), false, false)) );

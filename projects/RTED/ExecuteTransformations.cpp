@@ -146,7 +146,7 @@ void RtedTransformation::executeTransformations()
   std::map<SgClassDefinition*,RtedClassDefinition*>::const_iterator refIt = class_definitions.begin();
   for (; refIt != class_definitions.end(); ++refIt) {
     RtedClassDefinition* rtedClass = refIt->second;
-    ROSE_ASSERT(rtedClass);
+
     insertRegisterTypeCall(rtedClass);
     insertCreateObjectCall( rtedClass );
   }
