@@ -2253,7 +2253,6 @@ class ecjASTVisitor extends ASTVisitor
 
      public void endVisit(AND_AND_Expression  node, BlockScope scope)
         {
-       // do nothing by default
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of endVisit (AND_AND_Expression,BlockScope)");
 
@@ -2324,7 +2323,6 @@ class ecjASTVisitor extends ASTVisitor
 
      public void endVisit(Assignment  node, BlockScope scope)
         {
-       // do nothing by default
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of endVisit (Assignment,BlockScope)");
 
@@ -2334,7 +2332,6 @@ class ecjASTVisitor extends ASTVisitor
 
      public void endVisit(BinaryExpression  node, BlockScope scope)
         {
-       // do nothing by default
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of endVisit (BinaryExpression,BlockScope)");
 
@@ -2352,11 +2349,21 @@ class ecjASTVisitor extends ASTVisitor
 
      public void endVisit(Block  node, BlockScope scope) 
         {
-       // do nothing by default
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of endVisit (Block,BlockScope)");
 
-          java_parser.cactionBlockEnd();
+          System.out.println("node.explicitDeclarations = " + node.explicitDeclarations);
+
+          int numberOfStatements = 0;
+          if (node.statements != null)
+               numberOfStatements = node.statements.length;
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("numberOfStatements = " + numberOfStatements);
+
+       // DQ (9/30/2011): We need to pass the number of statments so that we can pop 
+       // a pricise number of statements off of the stack (and not the whole stack).
+          java_parser.cactionBlockEnd(numberOfStatements);
         }
 
      public void endVisit(BreakStatement  node, BlockScope scope) {
@@ -2368,7 +2375,6 @@ class ecjASTVisitor extends ASTVisitor
 
      public void endVisit(CastExpression  node, BlockScope scope)
         {
-        // do nothing  by default
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of endVisit (CastExpression,BlockScope)");
 
@@ -2397,7 +2403,6 @@ class ecjASTVisitor extends ASTVisitor
 
      public void endVisit(CompoundAssignment  node, BlockScope scope)
         {
-       // do nothing  by default
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of endVisit (CompoundAssignment,BlockScope)");
 
@@ -2414,7 +2419,6 @@ class ecjASTVisitor extends ASTVisitor
 
      public void endVisit(ConditionalExpression node, BlockScope scope)
         {
-       // do nothing  by default
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of endVisit (ConditionalExpression,BlockScope)");
 
@@ -2429,10 +2433,22 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of endVisit (ConstructorDeclaration,ClassScope)");
 
-          java_parser.cactionConstructorDeclarationEnd();
+       // DQ (7/31/2011): Added more precise handling of statements to be collected from the statement stack.
+          int numberOfStatements = 0;
+          if (node.statements != null)
+             {
+               numberOfStatements = node.statements.length;
+               System.out.println("Inside of endVisit (ConstructorDeclaration,ClassScope): numberOfStatements = " + numberOfStatements);
+             }
 
-       // Not clear when we have top provide a parameter.
-          java_parser.cactionStatementEnd("ConstructorDeclaration");
+       // DQ (7/31/2011): I don't know if there is just one of these (super()) or if there could be many.
+          if (node.constructorCall != null)
+             {
+               numberOfStatements++;
+               System.out.println("Inside of endVisit (ConstructorDeclaration,ClassScope): increment the numberOfStatements = " + numberOfStatements);
+             }
+
+          java_parser.cactionConstructorDeclarationEnd(numberOfStatements);
         }
 
      public void endVisit(ContinueStatement  node, BlockScope scope)
@@ -2457,7 +2473,6 @@ class ecjASTVisitor extends ASTVisitor
 
      public void endVisit(EqualExpression  node, BlockScope scope)
         {
-       // do nothing  by default
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of endVisit (EqualExpression,BlockScope)");
 
@@ -2468,7 +2483,6 @@ class ecjASTVisitor extends ASTVisitor
 
      public void endVisit(ExplicitConstructorCall node, BlockScope scope)
         {
-       // do nothing  by default
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of endVisit (ExplicitConstructorCall,BlockScope)");
 
@@ -2515,16 +2529,34 @@ class ecjASTVisitor extends ASTVisitor
 
      public void endVisit(ForStatement  node, BlockScope scope)
         {
-       // do nothing  by default
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Inside of endVisit (ForStatement,BlockScope)");
+
+          java_parser.cactionForStatementEnd();
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (ForStatement,BlockScope)");
         }
 
      public void endVisit(IfStatement  node, BlockScope scope)
         {
-       // do nothing  by default
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of endVisit (IfStatement,BlockScope)");
 
-          java_parser.cactionIfStatementEnd();
+          int numberOfStatements = 0;
+          if (node.thenStatement != null)
+             {
+               System.out.println("Inside of visit (IfStatement,BlockScope): thenStatement detected");
+               numberOfStatements = 1;
+             }
+          
+          if (node.elseStatement != null)
+             {
+               System.out.println("Inside of visit (IfStatement,BlockScope): elseStatement detected");
+               numberOfStatements = 2;
+             }
+
+          java_parser.cactionIfStatementEnd(numberOfStatements);
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (IfStatement,BlockScope)");
@@ -2542,7 +2574,6 @@ class ecjASTVisitor extends ASTVisitor
 
      public void endVisit(InstanceOfExpression node, BlockScope scope)
         {
-       // do nothing  by default
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of endVisit (InstanceOfExpression,BlockScope)");
 
@@ -2684,7 +2715,6 @@ class ecjASTVisitor extends ASTVisitor
 
      public void endVisit(LocalDeclaration  node, BlockScope scope)
         {
-       // do nothing  by default
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (LocalDeclaration,BlockScope)");
 
@@ -2694,9 +2724,6 @@ class ecjASTVisitor extends ASTVisitor
                System.out.println("Process the initializer expression...");
                java_parser.cactionLocalDeclarationInitialization();
              }
-
-       // Not clear when we have to provide a parameter.
-          java_parser.cactionStatementEnd("LocalDeclaration");
         }
 
      public void endVisit(LongLiteral  node, BlockScope scope)
@@ -2716,15 +2743,10 @@ class ecjASTVisitor extends ASTVisitor
 
      public void endVisit(MessageSend  node, BlockScope scope)
         {
-       // do nothing  by default
-
           if (java_parser.verboseLevel > -1)
                System.out.println("Inside of endVisit (MessageSend,BlockScope)");
 
           java_parser.cactionMessageSendEnd();
-
-       // Not clear when we have to provide a parameter.
-          java_parser.cactionStatementEnd("MessageSend");
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (MessageSend,BlockScope)");
@@ -2732,21 +2754,16 @@ class ecjASTVisitor extends ASTVisitor
 
      public void endVisit(MethodDeclaration  node, ClassScope scope)
         {
-       // do nothing  by default
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (MethodDeclaration,ClassScope)");
 
-       // String name = new String("MethodDeclaration");
-       // java_parser.cactionMethodDeclarationEnd(name);
-       // java_parser.cactionMethodDeclarationEnd(name);
-       // java_parser.cactionConstructorDeclarationEnd();
+       // DQ (9/30/2011): We have to specify exactly how many statements we will collect off the stack.
+          int numberOfStatements = 0;
+          if (node.statements != null)
+               numberOfStatements = node.statements.length;
+       // System.out.println("numberOfStatements = " + numberOfStatements);
 
-       // This has to be declared as a non-static function!
-       // java_parser.cactionMethodDeclarationEnd("MethodDeclaration");
-          java_parser.cactionMethodDeclarationEnd();
-
-       // Not clear when we have to provide a parameter.
-          java_parser.cactionStatementEnd("MethodDeclaration");
+          java_parser.cactionMethodDeclarationEnd(numberOfStatements);
         }
 
      public void endVisit(StringLiteralConcatenation  node, BlockScope scope)
@@ -2766,7 +2783,6 @@ class ecjASTVisitor extends ASTVisitor
 
      public void endVisit(OR_OR_Expression  node, BlockScope scope)
         {
-       // do nothing  by default
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of endVisit (OR_OR_Expression,BlockScope)");
 
@@ -2798,7 +2814,6 @@ class ecjASTVisitor extends ASTVisitor
 
      public void endVisit(PostfixExpression  node, BlockScope scope)
         {
-       // do nothing  by default
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of endVisit (PostfixExpression,BlockScope)");
 
@@ -2812,7 +2827,6 @@ class ecjASTVisitor extends ASTVisitor
 
      public void endVisit(PrefixExpression  node, BlockScope scope)
         {
-       // do nothing  by default
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of endVisit (PrefixExpression,BlockScope)");
 
@@ -2950,7 +2964,6 @@ class ecjASTVisitor extends ASTVisitor
 
      public void endVisit(TypeDeclaration node, BlockScope scope)
         {
-       // do nothing  by default
           if (java_parser.verboseLevel > 0)
                System.out.println("endVisit TypeDeclaration -- BlockScope");
 
@@ -2962,7 +2975,6 @@ class ecjASTVisitor extends ASTVisitor
 
      public void endVisit(TypeDeclaration node, ClassScope scope)
         {
-       // do nothing  by default
           if (java_parser.verboseLevel > 0)
                System.out.println("endVisit TypeDeclaration -- ClassScope");
 
@@ -2975,7 +2987,6 @@ class ecjASTVisitor extends ASTVisitor
 
      public void endVisit(TypeDeclaration node, CompilationUnitScope scope)
         {
-       // do nothing  by default
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of endVisit (TypeDeclaration,CompilationUnitScope)");
 
@@ -2998,7 +3009,6 @@ class ecjASTVisitor extends ASTVisitor
 
      public void endVisit(UnaryExpression  node, BlockScope scope)
         {
-       // do nothing  by default
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of endVisit (UnaryExpression,BlockScope)");
 
