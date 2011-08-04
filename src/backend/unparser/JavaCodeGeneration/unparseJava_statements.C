@@ -526,6 +526,7 @@ void JavaCodeGeneration_locatedNode::unparseIfStmt(SgStatement* stmt, SgUnparse_
 void
 JavaCodeGeneration_locatedNode::unparseInitializedName(SgInitializedName* init_name, SgUnparse_Info& info) {
     unparseType(init_name->get_type(), info);
+    curprint(" ");
     unparseName(init_name->get_name(), info);
 
     if (init_name->get_initializer() != NULL) {
@@ -706,6 +707,7 @@ JavaCodeGeneration_locatedNode::unparseFunctionParameterList(SgStatement* stmt, 
             curprint(", ");
         SgInitializedName* iname = *name_it;
         unparseType(iname->get_type(), info);
+        curprint(" ");
         unparseName(iname->get_name(), info);
     }
 }
@@ -769,6 +771,7 @@ JavaCodeGeneration_locatedNode::unparseMFuncDeclStmt(SgStatement* stmt, SgUnpars
          info.unset_isTypeFirstPart();
      }
 
+     curprint(" ");
      unparseName(mfuncdecl_stmt->get_name(), info);
      curprint("(");
      unparseStatement(mfuncdecl_stmt->get_parameterList(), info);
