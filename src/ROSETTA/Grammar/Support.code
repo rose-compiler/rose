@@ -9436,15 +9436,21 @@ SgName::assembleQualifiedName(const SgName & scopeQualifiedName, const SgName & 
         }
        else 
         {
+          std::string scopeDelimiter;
+          if (SageInterface::is_Java_language())
+              scopeDelimiter = ".";
+          else
+              scopeDelimiter = "::";
+
        // Trap out the case of global scope to avoid building "::::"
-          if ( scopeQualifiedName == "::" )
+          if ( scopeQualifiedName == scopeDelimiter )
              {
             // Avoid building "::::"
                returnName = scopeQualifiedName.getString() + localName.getString();
              }
             else
              {
-               returnName = scopeQualifiedName.getString() + "::" + localName.getString();
+               returnName = scopeQualifiedName.getString() + scopeDelimiter + localName.getString();
              }
         }
 
