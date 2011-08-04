@@ -109,7 +109,8 @@ sage_buildInitializedName(PyObject* self, PyObject* args, PyObject* kwargs) {
     SgExpression *sg_init_val = NULL;
     PyObject *starred = NULL, *dstarred = NULL;
     static char *kwlist[] = {"id", "init_val", "starred", "dstarred", NULL};
-    if (! PyArg_ParseTuple(args, "s|O&OO", &id,
+    if (! PyArg_ParseTupleAndKeywords(args, kwargs, "s|O&O!O!", kwlist,
+                                         &id,
                                          SAGE_CONVERTER(SgExpression), &sg_init_val,
                                          &PyBool_Type, &starred,
                                          &PyBool_Type, &dstarred))
@@ -121,9 +122,9 @@ sage_buildInitializedName(PyObject* self, PyObject* args, PyObject* kwargs) {
     SgInitializedName* sg_init_name = SageBuilder::buildInitializedName(id, sg_type, sg_init);
 
     ROSE_ASSERT(! (starred == Py_True && dstarred == Py_True));
-    if (starred = Py_True)
+    if (starred == Py_True)
         sg_init_name->set_excess_specifier( SgInitializedName::e_excess_specifier_positionals );
-    if (dstarred = Py_True)
+    if (dstarred == Py_True)
         sg_init_name->set_excess_specifier( SgInitializedName::e_excess_specifier_keywords );
 
     return PyEncapsulate(sg_init_name);
