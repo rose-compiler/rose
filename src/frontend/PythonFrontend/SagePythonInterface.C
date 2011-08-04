@@ -261,8 +261,8 @@ sage_buildCall(PyObject *self, PyObject *args)
     if (! PyArg_ParseTuple(args, "O&O!O!O&O&", SAGE_CONVERTER(SgExpression), &sg_callable,
                                                &PyList_Type, &py_args,
                                                &PyList_Type, &py_kwargs,
-                                               SAGE_CONVERTER(SgExpression), *sg_excess_positional_arg,
-                                               SAGE_CONVERTER(SgExpression), *sg_excess_keyword_arg))
+                                               SAGE_CONVERTER(SgExpression), &sg_excess_positional_arg,
+                                               SAGE_CONVERTER(SgExpression), &sg_excess_keyword_arg))
         return NULL;
 
     std::vector<SgExpression*> sg_exprs;
