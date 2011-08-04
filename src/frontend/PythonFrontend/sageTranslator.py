@@ -100,8 +100,10 @@ class SageTranslator(ast.NodeVisitor):
   def visit_Call(self, node):
     name = self.visit(node.func)
     args = map(self.visit, node.args)
-    kwargs = map(self.visit, node.keywords)
-    return sage.buildCall(name, args, kwargs)
+    keywords = map(self.visit, node.keywords)
+    starargs = node.starargs and self.visit(node.starargs)
+    kwargs = node.kwargs and self.visit(node.kwargs)
+    return sage.buildCall(name, args, keywords, starargs, kwargs)
 
   def visit_ClassDef(self, node):
     scope = self.scopeStack.peek()
@@ -174,7 +176,11 @@ class SageTranslator(ast.NodeVisitor):
   def visit_FunctionDef(self, node):
     scope = self.scopeStack.peek()
     decorators = node.decorator_list and sage.buildExprListExp(map(self.visit, node.decorator_list))
+    stararg_id = node.args.vararg and sage.buildInitializedName(node.args.vararg, starred=True)
+    dstararg_id = node.args.kwarg  and sage.buildInitializedName(node.args.kwarg, dstarred=True)
     params = self.visit(node.args)
+    if stararg_id: params.append(stararg_id)
+    if dstararg_id: params.append(dstararg_id)
     (capsule, scope) = \
         sage.buildFunctionDef(node.name, params, decorators, scope)
     self.scopeStack.push(scope)

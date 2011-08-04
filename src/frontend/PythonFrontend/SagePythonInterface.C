@@ -256,11 +256,13 @@ sage_buildBreak(PyObject *self, PyObject *args)
 PyObject*
 sage_buildCall(PyObject *self, PyObject *args)
 {
-    SgExpression* sg_callable;
     PyObject *py_args, *py_kwargs;
-    if (! PyArg_ParseTuple(args, "O&O!O!", SAGE_CONVERTER(SgExpression), &sg_callable,
-                                             &PyList_Type, &py_args,
-                                             &PyList_Type, &py_kwargs))
+    SgExpression *sg_callable, *sg_excess_positional_arg, *sg_excess_keyword_arg;
+    if (! PyArg_ParseTuple(args, "O&O!O!O&O&", SAGE_CONVERTER(SgExpression), &sg_callable,
+                                               &PyList_Type, &py_args,
+                                               &PyList_Type, &py_kwargs,
+                                               SAGE_CONVERTER(SgExpression), *sg_excess_positional_arg,
+                                               SAGE_CONVERTER(SgExpression), *sg_excess_keyword_arg))
         return NULL;
 
     std::vector<SgExpression*> sg_exprs;
@@ -277,6 +279,16 @@ sage_buildCall(PyObject *self, PyObject *args)
     }
     SgExprListExp* sg_parameters =
         SageBuilder::buildExprListExp(sg_exprs);
+
+    if (sg_excess_positional_arg != NULL) {
+        sg_excess_positional_arg = SageBuilder::buildPointerDerefExp(sg_excess_positional_arg);
+        sg_parameters->append_expression(sg_excess_positional_arg);
+    }
+    if (sg_excess_keyword_arg != NULL) {
+        sg_excess_keyword_arg = SageBuilder::buildPointerDerefExp(sg_excess_keyword_arg);
+        sg_excess_keyword_arg = SageBuilder::buildPointerDerefExp(sg_excess_keyword_arg);
+        sg_parameters->append_expression(sg_excess_keyword_arg);
+    }
 
     SgFunctionParameterTypeList * typeList = SageBuilder::buildFunctionParameterTypeList(sg_parameters);
     SgFunctionType* func_type = SageBuilder::buildFunctionType(SageBuilder::buildVoidType(),typeList);
