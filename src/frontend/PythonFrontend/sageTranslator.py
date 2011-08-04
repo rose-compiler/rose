@@ -179,10 +179,8 @@ class SageTranslator(ast.NodeVisitor):
     stararg_id = node.args.vararg and sage.buildInitializedName(node.args.vararg, starred=True)
     dstararg_id = node.args.kwarg  and sage.buildInitializedName(node.args.kwarg, dstarred=True)
     params = self.visit(node.args)
-    if stararg_id: params.append(stararg_id)
-    if dstararg_id: params.append(dstararg_id)
     (capsule, scope) = \
-        sage.buildFunctionDef(node.name, params, decorators, scope)
+        sage.buildFunctionDef(node.name, params, decorators, stararg_id, dstararg_id, scope)
     self.scopeStack.push(scope)
     body_forest = map(self.visit, node.body)
     sage.appendStatements(capsule, body_forest)
