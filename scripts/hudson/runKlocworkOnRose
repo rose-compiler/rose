@@ -322,9 +322,11 @@ printBannerToEndStep "configure" $configure_start_time
     #                  date +build_%Y_day%j_%b%d_%I%P        =  build_2011_day109_Apr19_01pm
     #
     # rose:build_XXXX
-    HEAD_HASH=`git rev-parse HEAD`
+    HEAD_HASH="$(git rev-parse HEAD)"
+	set +e
     kwadmin load rose tables --name $HEAD_HASH
     status="$?"
+	set -e
     if [ "$status" -ne 0 ]  ; then
        printBanner "Fatal error (${status}) during 'kwadmin load rose tables --name $HEAD_HASH'. Aborting..."
        exit 3

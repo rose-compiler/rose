@@ -54,7 +54,7 @@ bool varID::init(SgNode *n)
  
 // initializes this object from the given expression (assumed that isValidVarExp(exp) is true)
 // returns true on success, false on failure
-bool varID::init(SgExpression *exp)
+bool varID::init(const SgExpression *exp)
 {
 	exp = cfgUtils::unwrapCasts(exp);
 	if(isValidVarExp(exp))
@@ -66,8 +66,8 @@ bool varID::init(SgExpression *exp)
 		/*if(isTopArrayRefExp(exp))
 			exp = getArrayNameExp(exp);*/
 		
-		SgVarRefExp* refExp;
-		SgDotExp* dotExp;
+		const SgVarRefExp* refExp;
+		const SgDotExp* dotExp;
 		if((refExp = isSgVarRefExp(exp)))
 		{
 			components.clear();
@@ -104,7 +104,7 @@ void varID::operator = (const variable &that_arg)
 
 // recursive function that pulls the SgInitializedNames of all the SgVarRefExps inside this SgDotExp
 // returns true on success, false on failure
-bool varID::collectDotComponents(SgDotExp* dotExp)
+bool varID::collectDotComponents(const SgDotExp* dotExp)
 {
 //		printf("isSgVarRefExp(dotExp->get_lhs_operand())=%d isSgDotExp(dotExp->get_lhs_operand())=%d\n", isSgVarRefExp(dotExp->get_lhs_operand()), isSgDotExp(dotExp->get_lhs_operand()));
 //		printf("isSgVarRefExp(dotExp->get_rhs_operand())=%d isSgDotExp(dotExp->get_rhs_operand())=%d\n", isSgVarRefExp(dotExp->get_rhs_operand()), isSgDotExp(dotExp->get_rhs_operand()));
@@ -166,7 +166,7 @@ SgExpression* varID::toSgExpression_rec(vector<SgInitializedName *>::const_itera
 	}
 }
 
-bool varID::isValidVarExp(SgNode* n)
+bool varID::isValidVarExp(const SgNode* n)
 {
 	if(isSgExpression(n))
 		return isValidVarExp(isSgExpression(n));
@@ -177,7 +177,7 @@ bool varID::isValidVarExp(SgNode* n)
 }		
 
 // returns true if the given expression is one that can be represented as a variable in our representation
-bool varID::isValidVarExp(SgExpression* exp)
+bool varID::isValidVarExp(const SgExpression* exp)
 {
 	ROSE_ASSERT(exp->get_parent());
 	
@@ -203,12 +203,12 @@ bool varID::isValidVarExp(SgExpression* exp)
 	         (isSgDotExp(exp) && isValidVarExp_rec(exp)));
 }
 
-bool varID::isValidVarExp(SgInitializedName* exp)
+bool varID::isValidVarExp(const SgInitializedName* exp)
 {
 	return true;
 }
 
-bool varID::isValidVarExp_rec(SgExpression* exp)
+bool varID::isValidVarExp_rec(const SgExpression* exp)
 {
 	ROSE_ASSERT(exp->get_parent());
 	
@@ -727,7 +727,7 @@ getVarReference( SgInitializedName *iN )
 }*/
 
 // Returns the varID that corresponds to the given SgExpression
-varID SgExpr2Var(SgExpression* expr) {
+varID SgExpr2Var(const SgExpression* expr) {
 	// If this expression is a use of a variable that can be represented by a varID
 	if(varID::isValidVarExp(expr)) {
 		varID var(expr);
@@ -1024,7 +1024,7 @@ bool arrayElt::operator <  (const variable &that_arg) const
 }
 
 // returns true if the given expression is one that can be represented as a variable in our representation
-bool arrayElt::isValidVarExp(SgExpression* exp)
+bool arrayElt::isValidVarExp(const SgExpression* exp)
 {
 	arrIndexLabeler::addArrayIndexAnnotations(cfgUtils::getProject());
 	return isTopArrayRefExp(exp);

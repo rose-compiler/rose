@@ -45,7 +45,7 @@ bool isFileIOVariable(SgType* type)
         SgType*     under = skip_Typedefs(type);
         std::string name = under->unparseToString();
 
-        bool res =  boost::starts_with( name, std::string("class std::basic_fstream") );
+        bool res =  boost::starts_with( name, std::string("class ::std::basic_fstream") );
 
         // std::cerr << "@@@ IOVar?" << name << " " << res << std::endl;
         return res;

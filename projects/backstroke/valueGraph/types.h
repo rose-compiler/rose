@@ -3,7 +3,7 @@
 
 #include "CFGFilter.h"
 #include <slicing/backstrokeCFG.h>
-#include <ssa/dataflowCfgFilter.h>
+#include <dataflowCfgFilter.h>
 #include <boost/dynamic_bitset.hpp>
 
 #define VG_DEBUG 

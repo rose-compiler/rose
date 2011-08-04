@@ -1,4 +1,5 @@
 #include "affineInequality.h"
+#include <algorithm>
 
 extern int analysisDebugLevel;
 
@@ -27,7 +28,7 @@ static long gcd(long u, long v)
 		v >>= 1;
 		
 		/* Now u and v are both odd, so diff(u, v) is even.
-		Let u = min(u, v), v = diff(u, v)/2. */
+		Let u = std::min(u, v), v = diff(u, v)/2. */
 		if (u <= v) {
 			v -= u;
 		} else {
@@ -1865,8 +1866,8 @@ bool affineInequality::unionUpd(const affineInequality& that)
 			a = a*that.a;
 			modified = modified || b!=b*that.a;
 			b = b*that.a;
-			modified = modified || c!=max(c*that.a, a*that.c);
-			c = max(c*that.a, a*that.c);
+			modified = modified || c != std::max(c*that.a, a*that.c);
+			c = std::max(c*that.a, a*that.c);
 			modified = normalize() || modified;
 		}
 		// Otherwise, the upper-bound cannot be represented as a line

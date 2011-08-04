@@ -32,7 +32,9 @@ private:
 public:
     /** Constructs the attribute with an empty key.
      */
-    VarUniqueName():key(),usesThis(false){}
+    VarUniqueName() : key(), usesThis(false)
+    {
+    }
 
     /** Constructs the attribute with value thisNode.
      *
@@ -63,7 +65,7 @@ public:
      *
      * @param other The attribute to copy from.
      */
-    VarUniqueName(const VarUniqueName& other):usesThis(false)
+    VarUniqueName(const VarUniqueName& other): AstAttribute(other), usesThis(false)
     {
         key.assign(other.key.begin(), other.key.end());
     }

@@ -445,13 +445,18 @@ class callEdgeRow : public dbRow
 
 
 typedef DatabaseGraph<simpleFuncRow, callEdgeRow,
-                     boost::vecS, boost::vecS, boost::bidirectionalS> CallGraph;
+                     boost::vecS, boost::vecS, boost::bidirectionalS, 
+       boost::property<boost::vertex_attribute_t, std::map<std::string, std::string> >, 
+        boost::property<boost::vertex_attribute_t, std::map<std::string, std::string> >, 
+        boost::property<boost::vertex_attribute_t, std::map<std::string, std::string> > > CallGraph;
 typedef CallGraph::dbgType Graph;
 typedef boost::graph_traits < CallGraph >::vertex_descriptor callVertex;
 typedef boost::property_map<CallGraph, boost::vertex_index_t>::const_type callVertexIndexMap;
 
 typedef DatabaseGraph<varNodeRow, callEdgeRow,
-                     boost::vecS, boost::vecS, boost::bidirectionalS> CallMultiGraph;
+                     boost::vecS, boost::vecS, boost::bidirectionalS, boost::property<boost::vertex_attribute_t, std::map<std::string, std::string> >, 
+        boost::property<boost::vertex_attribute_t, std::map<std::string, std::string> >, 
+        boost::property<boost::vertex_attribute_t, std::map<std::string, std::string> > > CallMultiGraph;
 
 
 // milki (06/16/2010) Redefine for std::string to produce
@@ -2123,17 +2128,7 @@ class MyTraversal
 #if 0
           if (expr->get_is_lvalue()) 
 #endif
-          if ( isSgAssignOp(expr) || 
-               isSgPlusAssignOp(expr) ||
-               isSgMinusAssignOp(expr) ||
-               isSgAndAssignOp(expr) ||
-               isSgIorAssignOp(expr) ||
-               isSgMultAssignOp(expr) ||
-               isSgDivAssignOp(expr) ||
-               isSgModAssignOp(expr) ||
-               isSgXorAssignOp(expr) ||
-               isSgLshiftAssignOp(expr) ||
-               isSgRshiftAssignOp(expr) )
+          if ( isSgAssignOp(expr) || isSgCompoundAssignOp(expr) )
           { 
 
             // this expression is the root of a destructive operation
@@ -2666,6 +2661,10 @@ SideEffect::solveRMOD(CallMultiGraph *multigraph, long projectId,
   
   typedef size_type cg_vertex;
   std::vector < cg_vertex > component_number_vec(num_vertices(*multigraph));
+  
+  if (component_number_vec.empty())
+          return;
+  
   boost::iterator_property_map < cg_vertex *, VertexIndexMap, cg_vertex, cg_vertex& >
     component_number(&component_number_vec[0], index_map);
   

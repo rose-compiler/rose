@@ -2,8 +2,18 @@
 // ############## CONSTRAINT GRAPHS ################
 // #################################################
 #include "ConstrGraph.h"
+using std::string;
+using std::pair;
+using std::map;
 #include <sys/time.h>
 #include <algorithm>
+#include <set>
+using std::set;
+#include <sstream>
+using std::ostringstream;
+#include <iostream>
+using std::endl;
+#include <utility>
 
 using namespace cfgUtils;
 
@@ -4473,7 +4483,7 @@ pair<ConstrGraph::levels,ConstrGraph::constrTypes> ConstrGraph::getLevel(bool no
 			}
 		}
 	}
-	return make_pair(level, constrType);
+	return std::make_pair(level, constrType);
 }
 
 // Returns true if this graph is self-consistent and false otherwise

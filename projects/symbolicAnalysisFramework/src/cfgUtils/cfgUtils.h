@@ -74,7 +74,7 @@ namespace cfgUtils
 
   // if the given SgNode is an assignment operation, adds to rhs the set of SgNodes that comprise the right-hand
   // side of this assignment
-  void getAssignmentRHS(SgNode* n, set<SgNode*>& rhs);
+  void getAssignmentRHS(SgNode* n, std::set<SgNode*>& rhs);
 
   const short none=0;
   const short add=1;
@@ -95,24 +95,24 @@ namespace cfgUtils
   //    where op may be either + (add), * (mult) or / (divide)
   //    op may be = none if the rhs has only one term
   // This function parses non-assignment expressions such as i op j or c but not i = j op c, i op= j or i++
-  bool parseExpr(SgExpression* expr, short& op, varID &i, bool &negI, varID& j, bool &negJ, long &c);
+  bool parseExpr(const SgExpression* expr, short& op, varID &i, bool &negI, varID& j, bool &negJ, long &c);
 
   // returns true if parsing was successful
   //    (expressions accepted: c, -c, j, c +/- j, j +/- c, j +/- k
   // and sets *j and *c appropriately
   // negJ=true if j is supposed to be negated and false otherwise
   // negK=true if k is supposed to be negated and false otherwise
-  bool parseAddition(SgExpression* expr, varID &j, bool &negJ, varID& k, bool &negK, long &c);
+  bool parseAddition(const SgExpression* expr, varID &j, bool &negJ, varID& k, bool &negK, long &c);
 
   // returns true if parsing was successful
   //    (expressions accepted: c, -c, j, c * j, j * c, j * k)
   // and sets *j, *k and *c appropriately
-  bool parseMultiplication(SgExpression* expr, varID &j, varID& k, long &c);
+  bool parseMultiplication(const SgExpression* expr, varID &j, varID& k, long &c);
 
   // returns true if parsing was successful
   //    (expressions accepted: c, -c, j, c / j, j / c, j / k
   // and sets *j, *k and *c appropriately
-  bool parseDivision(SgExpression* expr, varID &j, varID& k, long &c);
+  bool parseDivision(const SgExpression* expr, varID &j, varID& k, long &c);
 
   /*// returns true if the given SgValueExp is some type of integral value, rather than a string or something more complex
     bool isIntegralVal(SgValueExp* exp);
@@ -124,10 +124,10 @@ namespace cfgUtils
   // returns whether a given AST node that represents a constant is an integer and
   // sets *val to be the numeric value of that integer (all integer types are included
   // but not floating point, characters, etc.)
-  bool IsConstInt (SgExpression* rhs, long &val);
+  bool IsConstInt (const SgExpression* rhs, long &val);
 
   // pulls off all the SgCastExps that may be wrapping the given expression, returning the expression that is being wrapped
-  SgExpression* unwrapCasts(SgExpression* e);
+  const SgExpression* unwrapCasts(const SgExpression* e);
 
   // returns the DataflowNode that represents that start of the CFG of the given function's body
   DataflowNode getFuncStartCFG(SgFunctionDefinition* func);
@@ -136,10 +136,10 @@ namespace cfgUtils
   DataflowNode getFuncEndCFG(SgFunctionDefinition* func);
 
   // returns a string containing a unique name that is not otherwise used inside this project
-  string genUniqueName();
+  std::string genUniqueName();
 
   // returns the SgFunctionDeclaration for the function with the given name
-  SgFunctionDeclaration* getFuncDecl(string name);
+  SgFunctionDeclaration* getFuncDecl(std::string name);
 
   // given a function's declaration, returns the function's definition.
   // handles the case where decl->get_definition()==NULL

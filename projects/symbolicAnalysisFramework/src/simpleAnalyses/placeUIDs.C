@@ -1,4 +1,8 @@
 #include "placeUIDs.h"
+#include <string>
+using std::string;
+#include <sstream>
+using std::ostringstream;
 
 /* Assigns a unique numeric ID to each DataflowNode. IDs are unique only within each function and 
    may be repeated across functions. */
