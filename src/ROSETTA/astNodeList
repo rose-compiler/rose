@@ -304,6 +304,7 @@ SgCommonBlock
 SgCommonBlockObject
 SgCommonSymbol
 SgComplexVal
+SgCompoundAssignOp
 SgComputedGotoStatement
 SgConcatenationOp
 SgConditionalExp
@@ -564,6 +565,11 @@ SgSymbolTable
 SgTemplateArgument
 SgTemplateArgumentList
 SgTemplateDeclaration
+SgTemplateClassDeclaration
+SgTemplateFunctionDeclaration
+SgTemplateMemberFunctionDeclaration
+SgTemplateClassDefinition
+SgTemplateFunctionDefinition
 SgTemplateInstantiationDecl
 SgTemplateInstantiationDefn
 SgTemplateInstantiationDirectiveStatement

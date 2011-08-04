@@ -27,7 +27,7 @@ template <class Node>
 void BuildCFG ( AstInterface& fa, const AstNodePtr& head, BuildCFGConfig<Node>& g);
 template <class Node>
 void BuildCFG ( AstInterface& fa, const AstInterface::AstNodeList& head, BuildCFGConfig<Node>& g);
-};
+}
 
 
 namespace OpenAnalysis {
@@ -46,7 +46,7 @@ void OA2ROSE_CFG_Translate ( ROSE_CFG_Wrap& wrap, BuildCFGConfig<Node>& ng);
 
 template <class Node>
 void BuildCFG ( AstInterface& fa, const AstNodePtr& head, BuildCFGConfig<Node>& g);
-};
+}
 
 bool debug_cfg();
 
