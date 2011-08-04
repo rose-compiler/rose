@@ -604,11 +604,14 @@ sage_buildFunctionDef(PyObject *self, PyObject *args)
     char *name;
     SgFunctionParameterList *sg_params;
     SgExprListExp *sg_decorators;
+    SgInitializedName *sg_star_name, *sg_dstar_name;
     SgScopeStatement *sg_scope;
 
-    if (! PyArg_ParseTuple(args, "sO&O&O&", &name,
+    if (! PyArg_ParseTuple(args, "sO&O&O&O&O&", &name,
                                             SAGE_CONVERTER(SgFunctionParameterList), &sg_params,
                                             SAGE_CONVERTER(SgExprListExp), &sg_decorators,
+                                            SAGE_CONVERTER(SgInitializedName), &sg_star_name,
+                                            SAGE_CONVERTER(SgInitializedName), &sg_dstar_name,
                                             SAGE_CONVERTER(SgScopeStatement), &sg_scope))
         return NULL;
 
@@ -618,6 +621,9 @@ sage_buildFunctionDef(PyObject *self, PyObject *args)
                 sg_params,
                 sg_scope,
                 sg_decorators);
+
+    if (sg_star_name != NULL) sg_func_decl->append_arg(sg_star_name);
+    if (sg_dstar_name != NULL) sg_func_decl->append_arg(sg_dstar_name);
 
     PyObject *py_func_decl = PyEncapsulate(sg_func_decl);
     PyObject *py_func_def = PyEncapsulate(sg_func_decl->get_definition());
