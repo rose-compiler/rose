@@ -104,17 +104,28 @@ sage_appendStatements(PyObject *self, PyObject *args)
 }
 
 PyObject*
-sage_buildInitializedName(PyObject* self, PyObject* args) {
+sage_buildInitializedName(PyObject* self, PyObject* args, PyObject* kwargs) {
     char *id;
     SgExpression *sg_init_val = NULL;
-    if (! PyArg_ParseTuple(args, "s|O&", &id,
-                                         SAGE_CONVERTER(SgExpression), &sg_init_val))
+    PyObject *starred = NULL, *dstarred = NULL;
+    static char *kwlist[] = {"id", "init_val", "starred", "dstarred", NULL};
+    if (! PyArg_ParseTuple(args, "s|O&OO", &id,
+                                         SAGE_CONVERTER(SgExpression), &sg_init_val,
+                                         &PyBool_Type, &starred,
+                                         &PyBool_Type, &dstarred))
         return NULL;
 
     SgType* sg_type = SageBuilder::buildVoidType();
     SgInitializer* sg_init = (sg_init_val == NULL) ?
         NULL : SageBuilder::buildAssignInitializer(sg_init_val);
     SgInitializedName* sg_init_name = SageBuilder::buildInitializedName(id, sg_type, sg_init);
+
+    ROSE_ASSERT(! (starred == Py_True && dstarred == Py_True));
+    if (starred = Py_True)
+        sg_init_name->set_excess_specifier( SgInitializedName::e_excess_specifier_positionals );
+    if (dstarred = Py_True)
+        sg_init_name->set_excess_specifier( SgInitializedName::e_excess_specifier_keywords );
+
     return PyEncapsulate(sg_init_name);
 }
 
