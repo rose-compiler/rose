@@ -223,7 +223,6 @@ class SageTranslator(ast.NodeVisitor):
 
   def visit_keyword(self, node):
     value = self.visit(node.value)
-    print "giving name:", node.arg, type(node.arg)
     return sage.buildKeyword(node.arg, value)
 
   def visit_Lambda(self, node):
