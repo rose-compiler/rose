@@ -32,7 +32,7 @@ PyObject* sage_buildGlobal(PyObject *self, PyObject *args);
 PyObject* sage_buildIf(PyObject *self, PyObject *args);
 PyObject* sage_buildIfExp(PyObject *self, PyObject *args);
 PyObject* sage_buildImport(PyObject *self, PyObject *args);
-PyObject* sage_buildInitializedName(PyObject *self, PyObject *args);
+PyObject* sage_buildInitializedName(PyObject *self, PyObject *args, PyObject* kwargs);
 PyObject* sage_buildKeyword(PyObject *self, PyObject *args);
 PyObject* sage_buildKeyDatumPair(PyObject *self, PyObject *args);
 PyObject* sage_buildLongIntVal(PyObject *self, PyObject *args);
@@ -86,7 +86,6 @@ static PyMethodDef SageBuilderMethods[] = {
     {"buildIf", sage_buildIf, METH_VARARGS, "Builds an if stmt node."},
     {"buildIfExp", sage_buildIfExp, METH_VARARGS, "Builds an if exp node."},
     {"buildImport", sage_buildImport, METH_VARARGS, "Builds an import stmt  node."},
-    {"buildInitializedName", sage_buildInitializedName, METH_VARARGS, "Builds an initialized name node."},
     {"buildKeyword", sage_buildKeyword, METH_VARARGS, "Builds a keyword node."},
     {"buildKeyDatumPair", sage_buildKeyDatumPair, METH_VARARGS, "Builds a key datum pair node."},
     {"buildLongIntVal", sage_buildLongIntVal, METH_VARARGS, "Builds an SgIntVal node."},
@@ -112,6 +111,7 @@ static PyMethodDef SageBuilderMethods[] = {
     {"buildYield", sage_buildYield, METH_VARARGS, "Builds a yield node."},
 
     {"appendStatements", (PyCFunction)sage_appendStatements, METH_VARARGS | METH_KEYWORDS, "Add children to a given SgNode."},
+    {"buildInitializedName", (PyCFunction)sage_buildInitializedName, METH_VARARGS|METH_KEYWORDS, "Builds an initialized name node."},
 
     {NULL, NULL, 0, NULL}
 };
