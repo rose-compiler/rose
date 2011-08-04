@@ -28,12 +28,9 @@ namespace ssa_private
 /** This filter determines which function declarations get processed in the analysis. */
 struct FunctionFilter
 {
-	bool operator()(SgFunctionDeclaration* funcDecl)
+	bool operator()(SgFunctionDeclaration * funcDecl)
 	{
 		ROSE_ASSERT(funcDecl != NULL);
-
-		//Don't process any built-in functions
-		std::string filename = funcDecl->get_file_info()->get_filename();
 
 		//Exclude compiler generated functions, but keep template instantiations
 		if (funcDecl->get_file_info()->isCompilerGenerated() && !isSgTemplateInstantiationFunctionDecl(funcDecl)
@@ -65,7 +62,7 @@ private:
 	SgProject* project;
 
 public:
-	
+
 	/** A compound variable name as used by the variable renaming.  */
 	typedef std::vector<SgInitializedName*> VarName;
 
@@ -76,38 +73,38 @@ public:
 
 	typedef std::map<CFGNode, std::set<VarName> > CFGNodeToVarNamesMap;
 	
-	typedef std::map<SgNode*, std::set<VarName> > ASTNodeToVarNamesMap;
-	
 	typedef std::map<SgNode*, std::set<SgVarRefExp*> > ASTNodeToVarRefsMap;
 	
 	typedef std::map<CFGNode, NodeReachingDefTable> CFGNodeToDefTableMap;
 	
 private:
-
+	
 	ASTNodeToVarRefsMap astNodeToUses;
 
 	/** Map from each node to all the variables defined at that node. If there are no variables defined at the node,
-      * the corresponding entry is empty. */
+	 * the corresponding entry is empty. */
 	CFGNodeToDefTableMap localDefTable;
-	
-    /** Map from each node to all the reaching definitions at that node. If a definition occurs at the node itself,
-     * it is not considered to reach the node. */
+
+	/** Map from each node to all the reaching definitions at that node. If a definition occurs at the node itself,
+	 * it is not considered to reach the node. */
 	CFGNodeToDefTableMap reachingDefTable;
-	
-    /** Map from each node to the reaching definitions at the end of the node. If no definitions occur at the node,
-     * its entry in this table should be the same as its entry in the reachingDef table. */
-    CFGNodeToDefTableMap outgoingDefTable;
-    
+
+	/** Map from each node to the reaching definitions at the end of the node. If no definitions occur at the node,
+	 * its entry in this table should be the same as its entry in the reachingDef table. */
+	CFGNodeToDefTableMap outgoingDefTable;
+
 public:
 
-	StaticSingleAssignment(SgProject* proj) : project(proj) { }
+	StaticSingleAssignment(SgProject* proj) : project(proj)
+	{
+	}
 
-	~StaticSingleAssignment() { }
+	~StaticSingleAssignment()
+	{
+	}
 
-	/** Run the analysis. If interprocedural analysis is not enabled, function call expressions (SgFunctionCallExp) will not
-	 * count as definitions of any variables.
-	 * @param interprocedural true to enable interprocedural analysis, false to perform no interprocedural analysis. */
-	void run(bool interprocedural);
+	/** Run the analysis. */
+	void run();
 
 	static bool getDebug()
 	{
@@ -121,7 +118,7 @@ public:
 
 private:
 	/** Once all the local definitions have been inserted in the ssaLocalDefsTable and phi functions have been inserted
-	  * in the reaching defs table, propagate reaching definitions along the CFG. */
+	 * in the reaching defs table, propagate reaching definitions along the CFG. */
 	void runDefUseDataFlow(SgFunctionDefinition* func);
 
 	/** Returns true if the variable is implicitly defined at the function entry by the compiler. */
@@ -141,7 +138,7 @@ private:
 	 *       o.a.b = 5;     //Def for o.a.b, o.a, o
 	 */
 	void expandParentMemberDefinitions(const CFGNodeToVarNamesMap& defs);
-	
+
 	/** Find all uses of compound variable names and insert expanded defs for them when their
 	 * parents are defined. E.g. for a.x, all defs of a will have a def of a.x inserted.
 	 * Note that there might be other child expansions of a, such as a.y, that we do not insert since
@@ -157,7 +154,7 @@ private:
 	 * @param cfgNodesInPostOrder all the CFG nodes of the function
 	 * @returns the control dependencies. */
 	std::multimap< CFGNode, std::pair<CFGNode, CFGEdge> > insertPhiFunctions(SgFunctionDefinition* function,
-						const std::vector<CFGNode>& cfgNodesInPostOrder);
+			const std::vector<CFGNode>& cfgNodesInPostOrder);
 
 	/** Give numbers to all the reachingDef objects. Should be called after phi functions are inserted
 	 * and the local def table is populated, but before dataflow propagates the definitions. 
@@ -177,68 +174,6 @@ private:
 	 * Reverse postorder is the most efficient order for dataflow propagation. */
 	static std::vector<CFGNode> getCfgNodesInPostorder(SgFunctionDefinition* func);
 
-	//------------ INTERPROCEDURAL ANALYSIS FUNCTIONS ------------ //
-
-	/** Insert definitions at function call sites for all variables defined interprocedurally. Iterates on the
-	 * call graph until the definitions converge (hence it works with recursion).
-	 * @param interestinFunctions all functions that should be analyzed. */
-	void interproceduralDefPropagation(const boost::unordered_set<SgFunctionDefinition*>& interestingFunctions);
-
-	/** This function returns the order in which functions should be processed so that callees are processed before
-	 * callers whenever possible (this is sometimes not possible due to recursion). Internally, it builds a call graph
-	 * and constructs a depth-first ordering of it. */
-	std::vector<SgFunctionDefinition*> calculateInterproceduralProcessingOrder(
-					const boost::unordered_set<SgFunctionDefinition*>& interestingFunctions);
-
-	/** Add all the callees of the function to the processing list, then add the function itself. Does nothing
-	  * if the function is already in the list. */
-	void processCalleesThenFunction(SgFunctionDefinition* targetFunction, SgIncidenceDirectedGraph* callGraph,
-		boost::unordered_map<SgFunctionDefinition*, SgGraphNode*> graphNodeToFunction,
-		std::vector<SgFunctionDefinition*> &processingOrder);
-
-	/** Add definitions at function call expressions for variables that are modified interprocedurally.
-	 * The definitions are inserted in the original def table.
-	 * @param funcDef function whose body should be queries for function calls
-	 * @param processed all the functions completely processed by SSA. If a callee is one of these functions,
-	 *			we can use exact information.
-	 * @return true if new defs were inserted, false otherwise. */
-	bool insertInterproceduralDefs(SgFunctionDefinition* funcDef, const boost::unordered_set<SgFunctionDefinition*>& processed,
-		ClassHierarchyWrapper* classHierarchy);
-
-	/** Insert the interprocedural defs at a particular call site for a particular callee. This function may be called
-	 * multiple times for the same call site with different callees (e.g. in the case of virtual functions).
-	 * The call site should either be a SgFunctionCallExp or SgConstructorInitializer
-	 * @param processed functions already processed by SSA */
-	void processOneCallSite(SgExpression* callSite, SgFunctionDeclaration* callee,
-				const boost::unordered_set<SgFunctionDefinition*>& processed, ClassHierarchyWrapper* classHierarchy);
-
-	/** Given a variable that is in a callee's scope, returns true if the caller can access the same variable, false otherwise.
-	 * @param callSite either a SgFunctionCallExp or SgConstructorInitializer. */
-	static bool isVarAccessibleFromCaller(const VarName& var, SgExpression* callSite, SgFunctionDeclaration* callee);
-
-	/** Returns true if the variable is a nonstatic class variable, so it hass to be accessed by the
-	 * "this" pointer. */
-	static bool varRequiresThisPointer(const VarName& var);
-
-	/** Returns true if the callee is acting on the same object instance as the caller. */
-	static bool isThisPointerSameInCallee(SgFunctionCallExp* callSite, SgMemberFunctionDeclaration* callee);
-
-	/** Returns true of the given expression evaluates to the 'this' pointer. False otherwise.
-	 * This function is conservative; it will return false if it cannot statically determine that the
-	 * expression is equivalent to the 'This' pointe. */
-	static bool isThisPointer(SgExpression* expression);
-
-	//! True if the type is a const pointer pointing to a const object.
-	//! Expanded recursively
-	static bool isDeepConstPointer(SgType* type);
-
-	//! True if the type is a pointer pointing to a const object.
-	//! Expanded recursively.
-	static bool isPointerToDeepConst(SgType* type);
-
-	/** Returns true if the given formal parameter is a reference or a nonconst pointer, so that it
-	 * its value is aliased between function calls. */
-	static bool isArgumentNonConstReferenceOrPointer(SgInitializedName* formalArgument);
 
 	//------------ GRAPH OUTPUT FUNCTIONS ------------ //
 
@@ -272,10 +207,27 @@ public:
 
 	//------------ DEF/USE TABLE ACCESS FUNCTIONS ------------ //
 
+	//! Returns the reaching definitions *before* the given node was executed.
+	const NodeReachingDefTable& getReachingDefsBefore(const CFGNode& node) const;
 
+	//! Returns the reaching definitions *after* the given node was executed.
+	//! If there are no local defs at the node (i.e. getDefsAtNode returns empty), then the reaching defs
+	//! After a node are identical to the reaching defs before the node.
+	const NodeReachingDefTable& getReachingDefsAfter(const CFGNode& node) const;
+
+	//! Returns the definitions that occur at the given node. If no definitions occur at the node,
+	//! the result is empty
+	const NodeReachingDefTable& getDefsAtNode(const CFGNode& node) const;
+
+	//! Get the reaching definitions before the given AST node is executed. This method
+	//! is equivalent to looking up the reaching definitions before astNode->cfgForBeginning()
+	const NodeReachingDefTable& getReachingDefsBefore(SgNode* astNode) const;
+
+	//! Get the reaching definitions after the given AST node is executed. This method is 
+	//! equivalent to looking up the reaching definitions after astNode->cfgForEnd()
+	const NodeReachingDefTable& getReachingDefsAfter(SgNode* astNode) const;
 
 	//------------ STATIC UTILITY FUNCTIONS FUNCTIONS ------------ //
-
 
 	/** Find if the given prefix is a prefix of the given name.
 	 *
@@ -316,17 +268,13 @@ public:
 	 */
 	static SgExpression* buildVariableReference(const VarName& var, SgScopeStatement* scope = NULL);
 
-	/** Finds the scope of the given node, and returns true if the given
-	 * variable is accessible there. False if the variable is not accessible. */
-	static bool isVarInScope(const VarName& var, SgNode* scope);
-
 	/** Get a string representation of a varName.
 	 *
 	 * @param vec varName to get string for.
 	 * @return String for given varName.
 	 */
 	static std::string varnameToString(const VarName& vec);
-	
+
 	static void printNodeDefTable(const NodeReachingDefTable& table);
 	static void printFullDefTable(const CFGNodeToDefTableMap& defTable);
 };
