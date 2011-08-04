@@ -165,9 +165,32 @@ test2010_16.C \
 test2010_17.C \
 test2010_22.C \
 test2010_27.C \
+test2011_01.C \
+test2011_02.C \
+test2011_05.C \
+test2011_06.C \
+test2011_07.C \
+test2011_08.C \
+test2011_09.C \
+test2011_10.C \
+test2011_11.C \
+test2011_12.C \
+test2011_13.C \
+test2011_14.C \
+test2011_15.C \
+test2011_16.C \
+test2011_17.C \
+test2011_18.C \
 longFile.C \
 certSignalExample.C \
 test2010_26.C
 
 # test2010_23.C \
 # eof
+
+
+# Failing AST File I/O tests (7/24/2011):
+TESTCODE_CURRENTLY_FAILING += \
+ test2011_113.C \
+ test2011_114.C \
+ test2011_116.C 

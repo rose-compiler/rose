@@ -1924,6 +1924,7 @@ TestAstForUniqueStatementsInScopes::visit ( SgNode* node )
                printf ("Error: duplicate statements in scope = %p = %s \n",scope,scope->class_name().c_str());
                scope->get_file_info()->display("Error: duplicate statements in scope");
              }
+
           ROSE_ASSERT(pass);
         }
    }
@@ -2946,10 +2947,10 @@ TestExpressionTypes::visit ( SgNode* node )
      SgExpression* expression = isSgExpression(node);
      if (expression != NULL)
         {
+       // printf ("TestExpressionTypes::visit(): calling expression->get_type() on expression = %p = %s \n",expression,expression->class_name().c_str());
           SgType* type = expression->get_type();
           ROSE_ASSERT(type != NULL);
-       // printf ("TestExpressionTypes::visit(): calling expression->get_type() on expression = %p = %s type = %s \n",
-       //      expression,expression->class_name().c_str(),type->class_name().c_str());
+       // printf ("TestExpressionTypes::visit(): calling expression->get_type() on expression = %p = %s type = %s \n",expression,expression->class_name().c_str(),type->class_name().c_str());
 
        // PC (10/12/2009): The following test verifies that array types properly decay to pointer types
        //  From C99 6.3.2.1p3:
@@ -2958,6 +2959,7 @@ TestExpressionTypes::visit ( SgNode* node )
           converted to an expression with type ‚Äò‚Äòpointer to type‚Äô‚Äô that points to the initial element of
           the array object and is not an lvalue. */
           type = type->stripTypedefsAndModifiers();
+          ROSE_ASSERT(type != NULL);
           if (type->variantT() == V_SgArrayType || type->variantT() == V_SgTypeString)
              {
                SgExpression *parentExpr = isSgExpression(expression->get_parent());

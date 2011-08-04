@@ -7,11 +7,18 @@ public class test2011_19
         {
           int x = 7;
           int y = 8;
+          boolean boolean_x = true;
+          boolean boolean_y = false;
 
-          x = !y;
+          boolean_x = !boolean_y;
           x = ~y;
           x = -y;
           x = +y;
 
+          x = y++;
+          x = y--;
+
+          x = ++y;
+          x = --y;
         }
    }
