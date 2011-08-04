@@ -150,6 +150,7 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
         case V_SgUnaryAddOp:
         case V_SgMinusOp:
         case V_SgBitComplementOp:
+        case V_SgPointerDerefExp:
             unparseUnaryOp( isSgUnaryOp(stmt), info );
             break;
 
@@ -716,6 +717,11 @@ void
 Unparse_Python::unparseInitializedName(SgInitializedName* init_name,
                                        SgUnparse_Info& info)
 {
+    if (init_name->get_excess_specifier() == SgInitializedName::e_excess_specifier_positionals)
+        curprint("*");
+    if (init_name->get_excess_specifier() == SgInitializedName::e_excess_specifier_keywords)
+        curprint("**");
+
     curprint(init_name->get_name().str());
     if (init_name->get_initializer() != NULL) {
         unparseExpression(init_name->get_initializer(), info);
@@ -826,6 +832,14 @@ Unparse_Python::unparsePntrArrRefExp(SgPntrArrRefExp* ref,
     curprint("[");
     unparseExpression(ref->get_rhs_operand(), info);
     curprint("]");
+}
+
+void
+Unparse_Python::unparsePointerDerefExp(SgPointerDerefExp* exp,
+                                     SgUnparse_Info& info)
+{
+    curprint("*");
+    unparseExpression(exp->get_operand(), info);
 }
 
 void
