@@ -980,6 +980,7 @@ Unparse_Python::unparseUnaryOp(SgUnaryOp* unary_op,
         case V_SgUnaryAddOp:      curprint("+"); break;
         case V_SgMinusOp:         curprint("-"); break;
         case V_SgBitComplementOp: curprint("~"); break;
+        case V_SgPointerDerefExp: curprint("*"); break;
         default: {
             cerr << "Unhandled SgUnaryOp: " << unary_op->class_name() << endl;
             ROSE_ABORT();
