@@ -1,22 +1,21 @@
+#include "simpleA++.h"
 #include "stdio.h"
-#define BOUNDS_CHECK 1
-#include "A++.h"
+//#define BOUNDS_CHECK 1
 
 #define N 10
 
-int main(int argc, char** argv)
-{
-	Index::setBoundsCheck (On);
+int main(int argc, char** argv) {
+
 	doubleArray A(N);
 	A = 0;
 	doubleArray B(N);
-	Range I(0,N-1,1);
+	Range I(0, N - 1, 1);
 
-	B=2;
+	//B = 2;
 
-	A(I) = B(I);
+	A(I) = A(I) + B(I);
 
 	//A.display(" This is object of A");
-	
-	return 0;	
+
+	return 0;
 }

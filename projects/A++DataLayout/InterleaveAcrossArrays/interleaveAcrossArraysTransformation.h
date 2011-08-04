@@ -11,7 +11,7 @@
 #include <set>
 #include <string>
 #include "rose.h"
-#include "../transformationWorklist.h"
+#include "transformationWorklist.h"
 
 typedef bool SynthesizedAttribute;
 
@@ -29,12 +29,14 @@ class interleaveAcrossArraysTraversal : public AstBottomUpProcessing<Synthesized
 
  private:
 	  void processArrayDeclarations();
-	  void processArrayRefExp();
+	  //void processArrayRefExp();
+	  void processPntrArrRefExp();
+	  void storePntrArrRefExp(SgPntrArrRefExp* node);
 
 	  Transformation* transformation;
 	  string outputName;
 	  vector<SgVariableDeclaration*> varDeclList;
-	  vector<SgVarRefExp*> varRefExpList;
+	  vector<SgPntrArrRefExp*> pntrArrRefExpList;
 	  SgVariableDeclaration* replaceVarDecl;
 };
 

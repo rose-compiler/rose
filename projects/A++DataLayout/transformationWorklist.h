@@ -8,20 +8,26 @@
 #ifndef TRANSFORMATIONWORKLIST_H_
 #define TRANSFORMATIONWORKLIST_H_
 
-#include "transformationOptions.h"
+#include <iostream>
+#include <string>
+#include <vector>
+
+#include "layoutOptions.h"
+
+using namespace std;
 
 class Transformation
 {
 public:
-	Transformation(TransformationOptions::LayoutType _option, vector<string> _input, vector<string> _output);
+	Transformation(LayoutOptions::LayoutType _option, vector<string> _input, vector<string> _output);
 	bool containsInput(string name);
 	int getInputIndex( string name );
-	TransformationOptions::LayoutType getOption();
+	LayoutOptions::LayoutType getOption();
 	vector<string> getInput();
 	vector<string> getOutput();
 
 private:
-	TransformationOptions::LayoutType option;
+	LayoutOptions::LayoutType option;
 	vector<string> input;
 	vector<string> output;
 };
@@ -30,9 +36,10 @@ class TransformationWorklist
 {
 public:
 	TransformationWorklist();
-	void addToWorklist (TransformationOptions::LayoutType option, vector<string> input, vector<string> output);
+	void addToWorklist (LayoutOptions::LayoutType option, vector<string> input, vector<string> output);
 	Transformation getTransformation( int index );
 	vector<Transformation> getWorklist();
+	int size();
 
 private:
 	vector<Transformation> worklist;

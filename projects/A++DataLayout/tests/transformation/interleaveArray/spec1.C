@@ -7,6 +7,8 @@
 
 #include "A++LayoutSpecification.h"
 
+int mapA()
+
 void layoutTransformations()
 {
 	doubleArray A;

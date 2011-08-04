@@ -11,7 +11,7 @@
 #include <set>
 #include <string>
 #include "rose.h"
-#include "../transformationWorklist.h"
+#include "transformationWorklist.h"
 
 using namespace std;
 

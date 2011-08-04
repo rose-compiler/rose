@@ -29,19 +29,16 @@ using namespace std;
  * Case 2. Multiple declarations of same array
  */
 
-
-interleaveArrayCheck::interleaveArrayCheck(Transformation* t)
-{
+interleaveArrayCheck::interleaveArrayCheck(Transformation* t) {
 	isArrayRefInFunctionCall = false;
 	ROSE_ASSERT( t->getOption() == TransformationOptions::InterleaveArray);
 	transformation = t;
 }
 
-void
-interleaveArrayCheck::storeArrayReference(SgInitializedName* var, string variableName, string type)
-{
+void interleaveArrayCheck::storeArrayReference(SgInitializedName* var, string variableName,
+		string type) {
 	// Check if variable is present in transformation
-	if(!transformation->containsInput(variableName))
+	if (!transformation->containsInput(variableName))
 		return;
 
 	SgConstructorInitializer* constInit = isSgConstructorInitializer(var->get_initializer());
@@ -49,14 +46,14 @@ interleaveArrayCheck::storeArrayReference(SgInitializedName* var, string variabl
 	string dimensions = constInit->get_args()->unparseToString();
 	ArrayRef arrayRef(variableName, type, dimensions);
 
-	for(vector<ArrayRef>::iterator iter = arrayRefList.begin(); iter!=arrayRefList.end() ; iter ++)
-	{
+	for (vector<ArrayRef>::iterator iter = arrayRefList.begin(); iter != arrayRefList.end();
+			iter++) {
 		ArrayRef curArrayRef = *iter;
 
 		// Case 2
-		if(curArrayRef.name == variableName)
-		{
-			cout << " ERROR: Variable Name: " << variableName << " Type: " << type << " duplicate entry found " << endl;
+		if (curArrayRef.name == variableName) {
+			cout << " ERROR: Variable Name: " << variableName << " Type: " << type
+					<< " duplicate entry found " << endl;
 			ROSE_ABORT();
 		}
 
@@ -67,28 +64,25 @@ interleaveArrayCheck::storeArrayReference(SgInitializedName* var, string variabl
 	return;
 }
 
-InterleaveAcrossArraysCheckSynthesizedAttributeType
-interleaveArrayCheck::evaluateSynthesizedAttribute ( SgNode* n, SynthesizedAttributesList childAttributes )
-{
+InterleaveAcrossArraysCheckSynthesizedAttributeType interleaveArrayCheck::evaluateSynthesizedAttribute(
+		SgNode* n, SynthesizedAttributesList childAttributes) {
 	cout << " Node: " << n->unparseToString() << endl;
 
 	InterleaveAcrossArraysCheckSynthesizedAttributeType localResult;
 
-	for (SynthesizedAttributesList::reverse_iterator child = childAttributes.rbegin(); child != childAttributes.rend(); child++)
-	{
+	for (SynthesizedAttributesList::reverse_iterator child = childAttributes.rbegin();
+			child != childAttributes.rend(); child++) {
 		InterleaveAcrossArraysCheckSynthesizedAttributeType childResult = *child;
 		localResult.isArrayRef |= childResult.isArrayRef;
 		localResult.isFunctionRefExp |= childResult.isFunctionRefExp;
 	}
 
-
-	if(isSgVariableDeclaration(n))
-	{
+	if (isSgVariableDeclaration(n)) {
 		SgVariableDeclaration* varDecl = isSgVariableDeclaration(n);
 		SgInitializedNamePtrList & varList = varDecl->get_variables();
 
-		for(SgInitializedNamePtrList::iterator initIter = varList.begin(); initIter!=varList.end() ; initIter++)
-		{
+		for (SgInitializedNamePtrList::iterator initIter = varList.begin();
+				initIter != varList.end(); initIter++) {
 			SgInitializedName* var = *initIter;
 			ROSE_ASSERT(var!=NULL);
 			SgType *variableType = var->get_type();
@@ -96,18 +90,16 @@ interleaveArrayCheck::evaluateSynthesizedAttribute ( SgNode* n, SynthesizedAttri
 			string type = TransformationSupport::getTypeName(variableType);
 			string variableName = var->get_name().str();
 
-			if(type!="doubleArray" && type !="floatArray" && type!="intArray")
+			if (type != "doubleArray" && type != "floatArray" && type != "intArray")
 				return localResult;
 
-			#if DEBUG
-				cout << " Var Name: " << variableName << " Type: " << type << endl;
-			#endif
+#if DEBUG
+			cout << " Var Name: " << variableName << " Type: " << type << endl;
+#endif
 
-			storeArrayReference(var, variableName, type );
+			storeArrayReference(var, variableName, type);
 		}
-	}
-	else if(isSgVarRefExp(n))
-	{
+	} else if (isSgVarRefExp(n)) {
 		SgVarRefExp* varRefExp = isSgVarRefExp(n);
 		ROSE_ASSERT (varRefExp != NULL);
 		SgVariableSymbol* variableSymbol = varRefExp->get_symbol();
@@ -120,45 +112,38 @@ interleaveArrayCheck::evaluateSynthesizedAttribute ( SgNode* n, SynthesizedAttri
 		string typeName = TransformationSupport::getTypeName(type);
 
 		// A++ Supported Arrays
-		if(typeName !="doubleArray" && typeName !="floatArray" && typeName !="intArray")
+		if (typeName != "doubleArray" && typeName != "floatArray" && typeName != "intArray")
 			return localResult;
 
 		// Check if variableName matches the input list
-		if(transformation->containsInput(variableName))
+		if (transformation->containsInput(variableName))
 			localResult.isArrayRef = true;
-	}
-	else if(isSgFunctionCallExp(n))
-	{
+	} else if (isSgFunctionCallExp(n)) {
 		// Case 1
 		// Check for array being present in function Call
-		if(localResult.isFunctionRefExp && localResult.isArrayRef)
-		{
+		if (localResult.isFunctionRefExp && localResult.isArrayRef) {
 			cout << " ERROR: Array Reference present in a function call " << endl;
 			ROSE_ABORT();
 		}
-	}
-	else if(isSgFunctionRefExp(n))
-	{
+	} else if (isSgFunctionRefExp(n)) {
 		localResult.isFunctionRefExp = true;
 	}
 
 	return localResult;
 }
 
-void interleaveArrayCheck::atTraversalStart()
-   {
+void interleaveArrayCheck::atTraversalStart() {
 
-	#if DEBUG
-		 printf (" ============ interleaveArrayCheck Start ================= \n");
-	#endif
+#if DEBUG
+	printf (" ============ interleaveArrayCheck Start ================= \n");
+#endif
 
-   }
+}
 
-void interleaveArrayCheck::atTraversalEnd()
-   {
+void interleaveArrayCheck::atTraversalEnd() {
 
-	#if DEBUG
-		 printf (" ============ interleaveArrayCheck End ================= \n");
-	#endif
+#if DEBUG
+	printf (" ============ interleaveArrayCheck End ================= \n");
+#endif
 
-   }
+}

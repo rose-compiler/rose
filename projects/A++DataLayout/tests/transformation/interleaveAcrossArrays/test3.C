@@ -1,12 +1,11 @@
 #include "stdio.h"
 #define BOUNDS_CHECK 1
-#include "A++.h"
+#include "simpleA++.h"
 
 #define N 10
 
 int main(int argc, char** argv)
 {
-	Index::setBoundsCheck (On);
 	doubleArray A(N);
 	intArray B(N);
 	Range I(0,N-1,1);

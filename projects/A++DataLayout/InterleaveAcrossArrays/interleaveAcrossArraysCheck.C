@@ -19,7 +19,7 @@
 #include "rose.h"
 #include "interleaveAcrossArraysCheck.h"
 #include "transformationSupport.h"
-#include "../transformationWorklist.h"
+#include "transformationWorklist.h"
 
 using namespace std;
 
@@ -43,7 +43,7 @@ interleaveAcrossArraysCheck::interleaveAcrossArraysCheck(Transformation* t)
 	//fileNames = _fileNames;
 	isContigousDecl = false;
 	isArrayRefInFunctionCall = false;
-	ROSE_ASSERT( t->getOption() == TransformationOptions::InterleaveAcrossArrays);
+	ROSE_ASSERT( t->getOption() == LayoutOptions::InterleaveAcrossArrays);
 	transformation = t;
 	ROSE_ASSERT ( t->getOutput().size() == 1);
 	outputName = t->getOutput().at(0);
@@ -143,26 +143,29 @@ interleaveAcrossArraysCheck::evaluateSynthesizedAttribute ( SgNode* n, Synthesiz
 			storeArrayReference(var, variableName, type );
 		}
 	}
-	else if(isSgVarRefExp(n))
+	else if(isSgPntrArrRefExp(n))
 	{
-		SgVarRefExp* varRefExp = isSgVarRefExp(n);
-		ROSE_ASSERT (varRefExp != NULL);
-		SgVariableSymbol* variableSymbol = varRefExp->get_symbol();
-		ROSE_ASSERT (variableSymbol != NULL);
-		SgInitializedName* initializedName = variableSymbol->get_declaration();
-		ROSE_ASSERT (initializedName != NULL);
-		string variableName = initializedName->get_name().str();
-		SgType* type = variableSymbol->get_type();
-		ROSE_ASSERT (type != NULL);
-		string typeName = TransformationSupport::getTypeName(type);
+		SgVarRefExp* varRefExp = isSgVarRefExp(isSgPntrArrRefExp(n)->get_lhs_operand());
 
-		// A++ Supported Arrays
-		if(typeName !="doubleArray" && typeName !="floatArray" && typeName !="intArray")
-			return localResult;
+		if(varRefExp != NULL)
+		{
+			SgVariableSymbol* variableSymbol = varRefExp->get_symbol();
+			ROSE_ASSERT (variableSymbol != NULL);
+			SgInitializedName* initializedName = variableSymbol->get_declaration();
+			ROSE_ASSERT (initializedName != NULL);
+			string variableName = initializedName->get_name().str();
+			SgType* type = variableSymbol->get_type();
+			ROSE_ASSERT (type != NULL);
+			string typeName = TransformationSupport::getTypeName(type);
 
-		// Check if variableName matches the input list
-		if(transformation->containsInput(variableName))
-			localResult.isArrayRef = true;
+			// A++ Supported Arrays
+			if(typeName !="doubleArray" && typeName !="floatArray" && typeName !="intArray")
+				return localResult;
+
+			// Check if variableName matches the input list
+			if(transformation->containsInput(variableName))
+				localResult.isArrayRef = true;
+		}
 	}
 	else if(isSgFunctionCallExp(n))
 	{

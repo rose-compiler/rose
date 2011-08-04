@@ -5,14 +5,13 @@
  *      Author: sharma9
  */
 
-#ifndef TRANSFORMATIONOPTIONS_H_
-#define TRANSFORMATIONOPTIONS_H_
+#ifndef LAYOUTOPTIONS_H_
+#define LAYOUTOPTIONS_H_
 
 #include <string>
 
-using namespace std;
 
-class TransformationOptions
+class LayoutOptions
 {
 public:
 	enum LayoutType
@@ -22,7 +21,7 @@ public:
 	};
 
 	static std::string getOptionString ( int i );
-	static LayoutType getLayoutType( string name);
+	static LayoutType getLayoutType( std::string name);
 };
 
-#endif /* TRANSFORMATIONOPTIONS_H_ */
+#endif /* LAYOUTOPTIONS_H_ */

@@ -7,9 +7,8 @@
 
 #include "A++LayoutSpecification.h"
 
-void layoutTransformations()
-{
-	doubleArray A,B,C;
+void layoutTransformations() {
+	doubleArray A, B, C;
 
-	C = interleaveAcrossArrays(A,B);
+	C = interleaveAcrossArrays(A, B);
 }
