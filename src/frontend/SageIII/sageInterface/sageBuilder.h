@@ -922,6 +922,7 @@ SgExecStatement* buildExecStatement_nfi(SgExpression* executable, SgExpression* 
 
 // ! Build a python print statement
 SgPythonPrintStmt* buildPythonPrintStmt(SgExpression* dest = NULL, SgExprListExp* values = NULL);
+SgPythonPrintStmt* buildPythonPrintStmt_nfi(SgExpression* dest = NULL, SgExprListExp* values = NULL);
 
 // DQ (4/30/2010): Added support for building asm statements.
 //! Build a NULL statement
