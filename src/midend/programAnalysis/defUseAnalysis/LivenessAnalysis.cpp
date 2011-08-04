@@ -772,3 +772,48 @@ LivenessAnalysis::fixupStatementsINOUT(SgFunctionDefinition* funcDecl) {
         bottomUpOUT->traverse(root);
 
 }
+
+
+
+// DQ (6/25/2011): Moved function definition to source file (function definitions should not be in the header files).
+// std::string getAppName(SgFunctionDeclaration* functionDeclaration) {
+std::string
+Support::getAppName(SgFunctionDeclaration* functionDeclaration)
+   {
+    std::string nodeNameApp = "";
+    std::vector<SgNode*> children = functionDeclaration->get_parameterList()->get_traversalSuccessorContainer();
+    for (unsigned int i=0; i< children.size(); i++) {
+      SgInitializedName* initName = (SgInitializedName*)children[i];
+      nodeNameApp = nodeNameApp + ""+initName->get_type()->unparseToString();
+      if (i!=(children.size()-1))
+        nodeNameApp = nodeNameApp + ", ";
+      // yed can not handle & signs.. replacing
+      while (nodeNameApp.find("&")!=std::string::npos) {
+        int pos = nodeNameApp.find("&");
+        nodeNameApp.replace(pos,1,"?");
+      }
+    }
+    std::string retVal = "("+nodeNameApp+")"; //+"-"+NodeToString(functionDeclaration);
+    return retVal;
+   }
+
+// DQ (6/25/2011): Moved function definition to source file (function definitions should not be in the header files).
+// std::string getFullName(SgFunctionDefinition* functionDef);
+std::string
+Support::getFullName(SgFunctionDefinition* functionDef)
+  {
+    SgFunctionDeclaration* functionDeclaration = functionDef->get_declaration();
+    ::std::string fullName = functionDeclaration->get_qualified_name().str();
+
+    if ((fullName.find("std::") != std::string::npos) ||
+        (fullName.find("__") != std::string::npos) ||
+        (fullName.find("operator") != std::string::npos)
+        ) return ""; // Explicitly ignore all nodes in the ::std namespace
+
+    std::string filename = getFileNameString(functionDeclaration->get_file_info()->get_filename());
+    if ((filename.find("/usr/") != std::string::npos)
+        ) return ""; // Explicitly ignore all nodes in the ::std namespace
+    fullName = fullName+getAppName(functionDeclaration);
+    return fullName;
+  }
+

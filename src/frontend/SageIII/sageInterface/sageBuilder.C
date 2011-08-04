@@ -1798,8 +1798,10 @@ BUILD_BINARY_DEF(OrOp)
 BUILD_BINARY_DEF(PlusAssignOp)
 BUILD_BINARY_DEF(PntrArrRefExp)
 BUILD_BINARY_DEF(RshiftAssignOp)
+BUILD_BINARY_DEF(JavaUnsignedRshiftAssignOp)
 
 BUILD_BINARY_DEF(RshiftOp)
+BUILD_BINARY_DEF(JavaUnsignedRshiftOp)
 BUILD_BINARY_DEF(ScopeOp)
 BUILD_BINARY_DEF(SubtractOp)
 BUILD_BINARY_DEF(XorAssignOp)
@@ -2038,6 +2040,35 @@ SgSizeOfOp* SageBuilder::buildSizeOfOp_nfi(SgType* type /* = NULL*/)
   return result;
 }
 
+
+
+// DQ (7/18/2011): Added support for SgJavaInstanceOfOp
+//! This is part of Java specific operator support.
+SgJavaInstanceOfOp* SageBuilder::buildJavaInstanceOfOp(SgExpression* exp, SgType* type)
+   {
+  // Not sure what should be the correct type of the SgJavaInstanceOfOp expression...
+     SgType* exp_type = NULL;
+
+  // I think this should evaluate to be a boolean type (typically used in conditionals).
+  // if (exp != NULL) exp_type = exp->get_type();
+
+  // Warn that this support in not finished.
+     printf ("WARNING: Support for SgJavaInstanceOfOp is incomplete, expression type not specified, should it be SgTypeBool? \n");
+
+     SgJavaInstanceOfOp* result = new SgJavaInstanceOfOp(exp,type, exp_type);
+     ROSE_ASSERT(result);
+     if (exp != NULL)
+        {
+          exp->set_parent(result);
+          markLhsValues(result);
+        }
+
+     setOneSourcePositionForTransformation(result);
+     return result;
+   }
+
+
+
 SgExprListExp * SageBuilder::buildExprListExp(SgExpression * expr1, SgExpression* expr2, SgExpression* expr3, SgExpression* expr4, SgExpression* expr5, SgExpression* expr6, SgExpression* expr7, SgExpression* expr8, SgExpression* expr9, SgExpression* expr10)
 {
   SgExprListExp* expList = new SgExprListExp();
@@ -2139,7 +2170,10 @@ SageBuilder::buildVarRefExp(const SgName& name, SgScopeStatement* scope/*=NULL*/
      SgVariableSymbol* varSymbol = NULL;
 
      if (scope != NULL)
+        {
           symbol = lookupSymbolInParentScopes(name,scope); 
+          printf ("In SageBuilder::buildVarRefExp(): scope = %p = %s symbpl = %p \n",scope,scope->class_name().c_str(),symbol);
+        }
 
      if (symbol != NULL) 
         {
@@ -2751,52 +2785,72 @@ SgForInitStatement * SageBuilder::buildForInitStatement_nfi(SgStatementPtrList &
 //! Based on the contribution from Pradeep Srinivasa@ LANL
 //Liao, 8/27/2008
 SgForStatement * SageBuilder::buildForStatement(SgStatement* initialize_stmt, SgStatement * test, SgExpression * increment, SgStatement * loop_body)
-{
-  SgForStatement * result = new SgForStatement(test,increment, loop_body);
-  ROSE_ASSERT(result);
+   {
+     SgForStatement * result = new SgForStatement(test,increment, loop_body);
+     ROSE_ASSERT(result);
 
- // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
-  if (symbol_table_case_insensitive_semantics == true)
-       result->setCaseInsensitive(true);
+  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+     if (symbol_table_case_insensitive_semantics == true)
+          result->setCaseInsensitive(true);
 
-  setOneSourcePositionForTransformation(result);
-  if (test) 
-    test->set_parent(result);
-  if (loop_body) 
-    loop_body->set_parent(result);
-  if (increment) 
-    increment->set_parent(result);
+     setOneSourcePositionForTransformation(result);
+     if (test) 
+          test->set_parent(result);
+     if (loop_body) 
+          loop_body->set_parent(result);
+     if (increment) 
+          increment->set_parent(result);
 
   // CH (5/13/2010): If the initialize_stmt is an object of SgForInitStatement, we can directly put it 
   // into for statement. Or else, there will be two semicolons after unparsing.
-  if (SgForInitStatement* for_init_stmt = isSgForInitStatement(initialize_stmt))
-  {
-    result->set_for_init_stmt(for_init_stmt);
-    for_init_stmt->set_parent(result);
-    return result;
-  }
+     if (SgForInitStatement* for_init_stmt = isSgForInitStatement(initialize_stmt))
+        {
+          printf ("Handled a proper SgForInitStatement as input! \n");
+       // DQ (7/30/2011): We have to delete the the SgForInitStatement build within the SgForStatement::post_constructor_initialization()
+       // to avoid causing errors in the AST consistancy checking later.
+          if (result->get_for_init_stmt() != NULL)
+             {
+               printf ("Deleting the old one build in SgForStatement::post_constructor_initialization() \n");
+               delete result->get_for_init_stmt();
+               result->set_for_init_stmt(NULL);
+             }
 
-  SgForInitStatement* init_stmt = new SgForInitStatement();
-  ROSE_ASSERT(init_stmt);
-  setOneSourcePositionForTransformation(init_stmt);
-  result->set_for_init_stmt(init_stmt);   
-  init_stmt->set_parent(result);
+          result->set_for_init_stmt(for_init_stmt);
+          for_init_stmt->set_parent(result);
+          return result;
+        }
 
-  if (initialize_stmt) 
-  {
-    init_stmt->append_init_stmt(initialize_stmt);
-    // Support for "for (int i=0; )", Liao, 3/11/2009
-    // The symbols are inserted into the symbol table attached to SgForStatement
-    if (isSgVariableDeclaration(initialize_stmt))
-    {
-      fixVariableDeclaration(isSgVariableDeclaration(initialize_stmt),result);
-      // fix varRefExp to the index variable used in increment, conditional expressions
-      fixVariableReferences(result);
-    }
-  }
+     SgForInitStatement* init_stmt = new SgForInitStatement();
+     ROSE_ASSERT(init_stmt);
+     setOneSourcePositionForTransformation(init_stmt);
 
-  return result;
-}
+  // DQ (7/30/2011): We have to delete the the SgForInitStatement build within the SgForStatement::post_constructor_initialization().
+  // to avoid causeing errors in the AST consistancy checking later.
+     if (result->get_for_init_stmt() != NULL)
+        {
+          delete result->get_for_init_stmt();
+          result->set_for_init_stmt(NULL);
+        }
+
+     result->set_for_init_stmt(init_stmt);
+     init_stmt->set_parent(result);
+
+     if (initialize_stmt) 
+        {
+          init_stmt->append_init_stmt(initialize_stmt);
+       // Support for "for (int i=0; )", Liao, 3/11/2009
+       // The symbols are inserted into the symbol table attached to SgForStatement
+          if (isSgVariableDeclaration(initialize_stmt))
+             {
+               fixVariableDeclaration(isSgVariableDeclaration(initialize_stmt),result);
+            // fix varRefExp to the index variable used in increment, conditional expressions
+               fixVariableReferences(result);
+             }
+        }
+
+     return result;
+   }
+
 
 //! Based on the contribution from Pradeep Srinivasa@ LANL
 //Liao, 8/27/2008
