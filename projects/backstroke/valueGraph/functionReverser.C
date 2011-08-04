@@ -1970,7 +1970,7 @@ void reverseFunctions(const set<SgFunctionDefinition*>& funcDefs)
     SgProject* project = SageInterface::getProject();
     
     StaticSingleAssignment* ssa = new StaticSingleAssignment(project);
-    ssa->run(true);
+    ssa->run(true, true);
 
     set<SgGlobal*> globalScopes;
 
