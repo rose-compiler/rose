@@ -30,21 +30,22 @@ libCppRuntimeSystem_la_SOURCES = CppRuntimeSystem.cpp \
 
 if ROSE_WITH_UPC
 
-libUpcRuntimeSystem_la_SOURCES = CppRuntimeSystem-upc.cpp \
-                                 FileManager-upc.cpp \
-                                 Util-upc.cpp \
-                                 MemoryManager-upc.cpp \
-                                 CStdLibManager-upc.cpp \
-                                 VariablesType-upc.cpp\
-                                 RsType-upc.cpp\
-                                 TypeSystem-upc.cpp \
-                                 PointerManager-upc.cpp\
-                                 StackManager-upc.cpp \
-                                 ptrops-upc.upc \
-                                 workzone-upc.upc \
-                                 rtedsync-upc.upc
+nodist_libUpcRuntimeSystem_la_SOURCES = CppRuntimeSystem-upc.cpp \
+			                                  FileManager-upc.cpp \
+			                                  Util-upc.cpp \
+			                                  MemoryManager-upc.cpp \
+			                                  CStdLibManager-upc.cpp \
+			                                  VariablesType-upc.cpp\
+			                                  RsType-upc.cpp\
+			                                  TypeSystem-upc.cpp \
+			                                  PointerManager-upc.cpp\
+			                                  StackManager-upc.cpp \
+			                                  ptrops-upc.upc \
+			                                  workzone-upc.upc \
+			                                  rtedsync-upc.upc
 
 libUpcRuntimeSystem_la_LIBTOOLFLAGS = --tag=CXX
+endif
 
 ptrops-upc.upc: $(srcdir)/ptrops.c
 	cp $< $@
@@ -54,8 +55,6 @@ ptrops-upc.upc: $(srcdir)/ptrops.c
 
 %-upc.upc: $(srcdir)/%.upc
 	cp $< $@
-
-endif
 
 
 if ROSE_WITH_ROSEQT
