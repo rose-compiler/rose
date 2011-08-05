@@ -4,9 +4,9 @@ include c_test_codes.inc
 
 all-am: Clang2Dot ../../testTranslator
 
-check-am: $(C_TEST_CODES_dot) $(C_TEST_CODES_obj) 
+check-am: $(C_TEST_CODES_dot) $(C_TEST_CODES_obj) $(C_TEST_CODES_rose_dot) 
 
-png: $(C_TEST_CODES_png)
+png: $(C_TEST_CODES_png) $(C_TEST_CODES_rose_png)
 
 INCLUDES = $(ROSE_INCLUDES)
 
@@ -20,5 +20,11 @@ dist_include_HEADERS = DotConsumer.h DotVisitor.h
 
 ../../testTranslator: ../../testTranslator.C
 	make -C ../../ testTranslator
+
+../../../tutorial/wholeASTGraphGenerator:
+	make -C ../../../tutorial/ wholeASTGraphGenerator
+
+clean-am:
+	rm -f *.dot *.c *.C *.png *.o Clang2Dot
 
 EXTRA_DIST = CMakeLists.txt

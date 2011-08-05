@@ -5,7 +5,7 @@ short b = 05;
 
 unsigned c = 0x4D;
 
-long d = 1548965784123645;
+long d = 15489655;
 
 char e = 'e';
 

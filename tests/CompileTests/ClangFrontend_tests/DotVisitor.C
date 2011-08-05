@@ -358,9 +358,25 @@ bool DotVisitor::VisitFunctionDecl(clang::FunctionDecl * function_decl) {
         cnt++;
     }
 
+    if (function_decl->isThisDeclarationADefinition())
     dot_node_it->second.setChild(
         "body",
         genNameForNode(function_decl->getBody())
+    );
+
+    dot_node_it->second.setChild(
+        "first_decl",
+        genNameForNode(function_decl->getFirstDeclaration())
+    );
+
+    dot_node_it->second.setChild(
+        "most_recent_decl",
+        genNameForNode(function_decl->getMostRecentDeclaration())
+    );
+
+    dot_node_it->second.setChild(
+        "previous_decl",
+        genNameForNode(function_decl->getPreviousDeclaration())
     );
 
     dot_node_it->second.setChild(

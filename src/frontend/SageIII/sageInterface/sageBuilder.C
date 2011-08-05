@@ -244,6 +244,10 @@ SgVariableDeclaration*
 SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, SgInitializer * varInit, SgScopeStatement* scope)
  //(const SgName & name, SgType* type, SgInitializer * varInit= NULL, SgScopeStatement* scope = NULL)
 {
+  if (scope == NULL) {
+      scope = SageBuilder::topScopeStack();
+  }
+
   ROSE_ASSERT (scope != NULL);
    ROSE_ASSERT(type != NULL);
 
