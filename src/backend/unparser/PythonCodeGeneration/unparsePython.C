@@ -61,6 +61,7 @@ Unparse_Python::unparseLanguageSpecificStatement(SgStatement* stmt,
         CASE_DISPATCH_AND_BREAK(ForStatement);
         CASE_DISPATCH_AND_BREAK(IfStmt);
         CASE_DISPATCH_AND_BREAK(ImportStatement);
+        CASE_DISPATCH_AND_BREAK(PythonGlobalStmt);
         CASE_DISPATCH_AND_BREAK(PythonPrintStmt);
         CASE_DISPATCH_AND_BREAK(PassStatement);
         CASE_DISPATCH_AND_BREAK(ReturnStmt);
@@ -847,6 +848,21 @@ Unparse_Python::unparsePassStatement(SgPassStatement* pass_stmt,
                                      SgUnparse_Info& info)
 {
     curprint("pass");
+}
+
+void
+Unparse_Python::unparsePythonGlobalStmt(SgPythonGlobalStmt* stmt,
+                                        SgUnparse_Info& info)
+{
+    curprint("global ");
+
+    SgInitializedNamePtrList& names = stmt->get_names();
+    SgInitializedNamePtrList::iterator name_it;
+    for (name_it = names.begin(); name_it != names.end(); name_it++) {
+        if (name_it != names.begin())
+            curprint(", ");
+        unparseInitializedName(*name_it, info);
+    }
 }
 
 void
