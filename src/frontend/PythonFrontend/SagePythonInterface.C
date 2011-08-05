@@ -631,11 +631,33 @@ sage_buildFunctionDef(PyObject *self, PyObject *args)
 }
 
 /*
+ */
+PyObject*
+sage_buildGlobal(PyObject *self, PyObject *args)
+{
+    PyObject* py_names;
+    if (! PyArg_ParseTuple(args, "O!", &PyList_Type, &py_names))
+        return NULL;
+
+    SgInitializedNamePtrList sg_names;
+    Py_ssize_t namec = PyList_Size(py_names);
+    for(int i = 0; i < namec; i++) {
+        PyObject* py_name = PyList_GetItem(py_names, i);
+        SgInitializedName* sg_name = PyDecapsulate<SgInitializedName>(py_name);
+        sg_names.push_back(sg_name);
+    }
+
+    SgPythonGlobalStmt* sg_global_keyword =
+        SageBuilder::buildPythonGlobalStmt(sg_names);
+    return PyEncapsulate(sg_global_keyword);
+}
+
+/*
  * Build an SgGlobal node from the given list of Python statements.
  *  - PyObject* args = ( [PyObject*, PyObject*, ...], )
  */
 PyObject*
-sage_buildGlobal(PyObject *self, PyObject *args)
+sage_buildGlobalScope(PyObject *self, PyObject *args)
 {
     char *filename;
     if (! PyArg_ParseTuple(args, "s", &filename))

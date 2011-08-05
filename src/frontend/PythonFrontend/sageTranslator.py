@@ -187,6 +187,10 @@ class SageTranslator(ast.NodeVisitor):
     self.scopeStack.pop(scope)
     return capsule
 
+  def visit_Global(self, node):
+    names = map(sage.buildInitializedName, node.names)
+    return sage.buildGlobal(names)
+
   def visit_If(self, node):
     test = self.visit(node.test)
     body = map(self.visit, node.body)
@@ -249,7 +253,7 @@ class SageTranslator(ast.NodeVisitor):
     return sage.buildLongIntVal(n)
 
   def visit_Module(self, node):
-    scope = sage.buildGlobal(self.filename)
+    scope = sage.buildGlobalScope(self.filename)
 
     self.scopeStack.push(scope)
     subforest = self.generic_visit(node)
