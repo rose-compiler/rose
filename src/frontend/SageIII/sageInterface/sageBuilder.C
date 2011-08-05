@@ -7,7 +7,11 @@
 #include "sageBuilder.h"
 #include <fstream>
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/foreach.hpp>
 #include "Outliner.hh"
+
+#define foreach BOOST_FOREACH
+
 using namespace std;
 using namespace SageInterface;
 //---------------------------------------------
