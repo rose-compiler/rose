@@ -24,6 +24,7 @@ class baz:
     print 7, x, y
     y += 1
     print 8, x, y
+    foo()
 
 print 9, x, y, z
 foo()
