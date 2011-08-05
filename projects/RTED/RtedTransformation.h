@@ -43,11 +43,11 @@ SgUpcBarrierStatement* buildUpcBarrierStatement();
 std::string removeSpecialChar(std::string str);
 
 /// \brief  finds the first parent that is an SgStatement node
-/// \return the parent statement or NULL if there is none
-SgStatement* getSurroundingStatement(SgExpression* n);
+/// \return the parent statement (never NULL)
+SgStatement* getSurroundingStatement(SgExpression& n);
 
 /// \overload
-SgStatement* getSurroundingStatement(SgInitializedName* n);
+SgStatement* getSurroundingStatement(SgInitializedName& n);
 
 /// \brief  determines the C++ allocation kind for type t
 /// \return akCxxArrayNew if t is an array, akCxxNew otherwise
@@ -160,6 +160,12 @@ long upcBlocksize(const SgType* n);
 ///              shared int* p;
 bool isUpcShared(const SgType* n);
 
+/// \brief returns true, iff t is a UPC shared pointer
+///        e.g., shared int* shared p;
+///            *but not*
+///              shared int* p;
+bool isUpcSharedPointer(SgType* t);
+
 /// \brief returns the region where the variable n is allocated
 ///        either akStack, akGlobal, or akUpcSharedGlobal
 AllocKind varAllocKind(const SgInitializedName& n);
@@ -174,8 +180,6 @@ void appendBool( SgExprListExp* arg_list, bool b );
 // helper functions to insert rted checks
 
 enum InsertLoc { ilAfter = 0, ilBefore = 1 };
-
-SgExprStatement* insertCheck(InsertLoc iloc, SgStatement* stmt, SgFunctionSymbol* checker, SgExprListExp* args);
 
 /// \brief   creates a statement node for calling the function checker with some arguments
 ///          and adds the check before the statement where checked_node is a part of
@@ -214,6 +218,8 @@ void appendConstructors(SgClassDefinition* cdef, SgMemberFunctionDeclarationPtrL
  * so that runtime errors are caught at runtime before they happen
  * -----------------------------------------------------------*/
 
+typedef std::pair<SgReturnStmt*, size_t> ReturnInfo;
+
 class RtedTransformation
 {
    typedef std::map<SgVarRefExp*,std::pair< SgInitializedName*, AllocKind> > InitializedVarMap;
@@ -231,15 +237,17 @@ private:
    // references to nodes in other files
 
 public:
-   typedef std::vector< std::pair<SgExpression*, AllocKind> >         Deallocations;
-   typedef std::map<SgStatement*, SgNode*>                            ScopeMap;
-   typedef std::map<SgSourceFile*, SgNamespaceDeclarationStatement* > SourceFileRoseNMType;
+   typedef std::vector< std::pair<SgExpression*, AllocKind> >        Deallocations;
+   typedef std::vector<SgScopeStatement*>                            ScopeContainer;
+   typedef std::map<SgSourceFile*, SgNamespaceDeclarationStatement*> SourceFileRoseNMType;
+   typedef std::vector<SgPointerDerefExp*>                           SharedPtrDerefContainer;
+   typedef std::vector<SgFunctionCallExp*>                           CallSiteContainer;
 
    RtedSymbols                   symbols;
    std::vector< SgSourceFile* >  srcfiles;
 
 private:
-   std::set< std::string >*      rtedfiles;
+   std::set< std::string >       rtedfiles;
 
    // VARIABLES ------------------------------------------------------------
    // ------------------------ array ------------------------------------
@@ -250,17 +258,20 @@ private:
    /// remember variables that were used to create an array. These cant be reused for array usage calls
    std::vector<SgVarRefExp*>                variablesUsedForArray;
 
+public:
+   /// stores deref expressions of shared pointers
+   SharedPtrDerefContainer                  sharedptr_derefs;
+
+   /// stores call sites that need to be instrumented
+   CallSiteContainer                        callsites;
+
+private:
    /// this vector is used to check which variables have been marked as initialized (through assignment)
    InitializedVarMap                        variableIsInitialized;
 
-   /// when traversing variables, we find some that are initialized names
-   /// instead of varrefexp, and so we create new varrefexps but we do
-   /// add them later and not during the same traversal.
-   //std::map<SgStatement*,SgStatement*>      insertThisStatementLater;
-
 public:
    /// the following stores all variables that are created (and used e.g. in functions)
-   /// We need to store the name, type and intialized value
+   /// We need to store the name, type and initialized value
    /// We need to store the variables that are being accessed
    std::map<SgInitializedName*, RtedArray>  create_array_define_varRef_multiArray_stack;
    std::vector<SgVarRefExp*>                variable_access_varref;
@@ -271,7 +282,7 @@ public:
    Deallocations                            frees;
 
    /// return statements that need to be changed
-   std::vector< SgReturnStmt*>              returnstmt;
+   std::vector<ReturnInfo>                  returnstmt;
 
    /// Track pointer arithmetic, e.g. ++, --
    std::vector< SgExpression* >             pointer_movements;
@@ -297,7 +308,7 @@ private:
 
 public:
    /// what statements we need to bracket with enter/exit scope calls
-   ScopeMap                                          scopes;
+   ScopeContainer                                    scopes;
 
    /// store all classdefinitions found
    std::map<SgClassDefinition*,RtedClassDefinition*> class_definitions;
@@ -362,13 +373,6 @@ private:
 
    // ********************* Deep copy classes in headers into source **********
    SgClassDeclaration* instrumentClassDeclarationIntoTopOfAllSourceFiles(SgProject* project, SgClassDeclaration* classDecl);
-
-   /// (temporarily) disabled
-   void moveupPreprocessingInfo(SgProject* project);
-
-   //typedef std::map<SgSourceFile*, std::pair < SgNamespaceDeclarationStatement*,
-   //                                    SgNamespaceDeclarationStatement* > > SourceFileRoseNMType;
-   //std::vector<std::string> classesInRTEDNamespace;
 
    std::map<SgClassDefinition*, SgClassDefinition*> classesInRTEDNamespace;
 
@@ -449,13 +453,6 @@ public:
    void insertArrayAccessCall(SgPntrArrRefExp* arrayExp, const RtedArray& value);
    void insertArrayAccessCall(SgStatement* stmt, SgPntrArrRefExp* arrayExp, const RtedArray& array);
 
-   //~ std::pair<SgInitializedName*,SgVarRefExp*> getRightOfDotStar(SgDotStarOp* dot , std::string str, SgVarRefExp* varRef);
-   //~ std::pair<SgInitializedName*,SgVarRefExp*> getRightOfArrow(SgArrowExp* arrow , std::string str, SgVarRefExp* varRef);
-   //~ std::pair<SgInitializedName*,SgVarRefExp*> getRightOfArrowStar(SgArrowStarOp* arrowstar, std::string str, SgVarRefExp* varRef);
-   //~ std::pair<SgInitializedName*,SgVarRefExp*> getPlusPlusOp(SgPlusPlusOp* plus ,std::string str, SgVarRefExp* varRef);
-   //~ std::pair<SgInitializedName*,SgVarRefExp*> getMinusMinusOp(SgMinusMinusOp* minus ,std::string str, SgVarRefExp* varRef);
-   //~ std::pair<SgInitializedName*,SgVarRefExp*> getRightOfPointerDeref(SgPointerDerefExp* dot, std::string str, SgVarRefExp* varRef);
-
    bool isVarRefInCreateArray(SgInitializedName* search);
    void insertFuncCall(RtedArguments& args);
    void insertIOFuncCall(RtedArguments& args);
@@ -473,14 +470,12 @@ private:
    SgFunctionCallExp* convertIntToString(SgExpression* i);
 
    // simple scope handling
-   void bracketWithScopeEnterExit( SgFunctionDefinition* fndef );
-   void bracketWithScopeEnterExit( SgStatement* stmt_or_block, Sg_File_Info* exit_file_info );
+   void bracketWithScopeEnterExit( SgScopeStatement* stmt_or_block, Sg_File_Info* exit_file_info );
 
 
    // is it a variable?
    void insertCreateObjectCall( RtedClassDefinition* cdef );
    void insertVariableCreateCall(SgInitializedName* initName);
-   bool isVarInCreatedVariables(SgInitializedName* n);
    void insertInitializeVariable(SgInitializedName*, SgVarRefExp*, AllocKind);
    SgExpression* buildVariableInitCallExpr(SgInitializedName*, SgVarRefExp*, SgStatement*, AllocKind);
    SgFunctionCallExp* buildVariableCreateCallExpr(SgInitializedName* name, bool forceinit=false);
@@ -507,7 +502,16 @@ private:
    /// Renames the original main function
    /// copied from projects/UpcTranslation/upc_translation.C
    void renameMain(SgFunctionDeclaration * sg_func);
-   void changeReturnStmt(SgReturnStmt * rstmt);
+   void changeReturnStmt(ReturnInfo rstmt);
+   void insertExitBlock(SgStatement& stmt, size_t openblocks);
+
+   /// builds a call to rtedExitBlock
+   /// \param blocks number of blocks to close (e.g., for return statements, etc.)
+   SgExprStatement* buildExitBlockStmt(size_t blocks, SgScopeStatement*, Sg_File_Info*);
+
+   /// builds a call to rtedEnterBlock
+   /// \param scopename name helps users debugging
+   SgExprStatement* buildEnterBlockStmt(const std::string& scopename);
 
    /// factors commonalities of heap allocations
    void arrayHeapAlloc(SgInitializedName*, SgVarRefExp*, SgExpression*, AllocKind);
@@ -531,15 +535,15 @@ public:
 
 public:
 
-   explicit
-   RtedTransformation(bool testsupc)
+   RtedTransformation(bool testsupc, const std::set<std::string>& prjfiles)
    : symbols(),
      srcfiles(),
-     rtedfiles(NULL),
-
+     rtedfiles(prjfiles),
      create_array_define_varRef_multiArray(),
      create_array_access_call(),
      variablesUsedForArray(),
+     sharedptr_derefs(),
+     callsites(),
      variableIsInitialized(),
      create_array_define_varRef_multiArray_stack(),
      variable_access_varref(),
@@ -568,8 +572,8 @@ public:
    {}
 
 
-   /// \brief analyse file and apply necessary (call) transformations
-   void transform(SgProject* project, std::set<std::string> &rtedfiles);
+   /// \brief analyse project and apply necessary transformations
+   void transform(SgProject* project);
 
    /// \brief Run frontend and return project
    SgProject* parse(int argc, char** argv);
@@ -639,11 +643,15 @@ public:
    // implemented in RtedTransf_Upc.cpp
    void transformUpcBlockingOps(SgStatement* stmt);
 
+   /// wraps UPC shared ptr to shared derefs by a lock
+   ///   to guarantee consistency
+   void transformPtrDerefs(SharedPtrDerefContainer::value_type ptrderef);
+
+   /// wraps function calls in beginScope / endScope
+   void transformCallSites(CallSiteContainer::value_type callexp);
+
    /// \brief transforms a UPC barrier statement
    // void transformUpcBarriers(SgUpcBarrierStatement* stmt);
-
-   /// \brief transforms pointer
-   // void transformPtrDerefs(PtrDerefContainer::value_type stmt);
 };
 
 

@@ -36,6 +36,8 @@ void snd_MovePointer(rted_TypeDesc, rted_Address, rted_Address, const char*, rte
 /// \brief initializes the runtime system
 void rted_UpcAllInitialize(void);
 
+void rted_PrintStats(void);
+
 #else /* WITH_UPC */
 
 #define UNUSEDARG(X) ((void) &(X)) /* we write for C and C++ compilers ;) */
@@ -75,6 +77,10 @@ void snd_MovePointer(rted_TypeDesc td, rted_Address addr, rted_Address haddr, co
 /// \todo remove
 static inline
 void rted_UpcAllInitialize(void)
+{}
+
+static inline
+void rted_PrintStats(void)
 {}
 
 #endif /* WITH_UPC */

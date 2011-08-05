@@ -160,7 +160,7 @@ void rted_ReallocateMemory( void* ptr, size_t size, rted_SourceInfo si );
 // memory and possibly complain if the local was the last var pointing to some
 // memory)
 void rted_EnterScope(const char* scope_name);
-void rted_ExitScope(const char*, rted_SourceInfo si);
+void rted_ExitScope(size_t scopecount, rted_SourceInfo si);
 
 /***************************** SCOPE *************************************/
 

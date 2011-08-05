@@ -12,11 +12,22 @@
 
 class VariablesType;
 
+struct ScopeInfo
+{
+    ScopeInfo( const std::string & _name, int index)
+    : name(_name), stackIndex(index)
+    {}
+
+    std::string name;        /// description of scope, either function-name or something like "for-loop"
+    size_t      stackIndex;  /// index in stack-array where this scope starts
+};
+
 
 struct StackManager
 {
         typedef Address                     Location;
         typedef std::vector<VariablesType*> VariableStack;
+        typedef std::vector<ScopeInfo>      ScopeContainer;
 
         StackManager();
         ~StackManager() {}
@@ -30,7 +41,7 @@ struct StackManager
 
         /// Closes a scope and deletes all variables which where created via registerVariable()
         /// from the stack, tests for
-        void endScope ();
+        void endScope(size_t scopecount);
 
 
         // Access to variables/scopes
@@ -59,19 +70,9 @@ struct StackManager
     protected:
         typedef std::map<Location, VariablesType*> AddrToVarMap;
 
-        struct ScopeInfo
-        {
-            ScopeInfo( const std::string & _name, int index)
-            : name(_name), stackIndex(index)
-            {}
-
-            std::string name;        /// description of scope, either function-name or something like "for-loop"
-            int         stackIndex;  /// index in stack-array where this scope starts
-        };
-
-        std::vector<ScopeInfo>  scope;
-        VariableStack           stack;
-        AddrToVarMap            addrToVarMap;
+        ScopeContainer     scope;
+        VariableStack      stack;
+        AddrToVarMap       addrToVarMap;
 };
 
 #endif

@@ -106,8 +106,10 @@ outside.
 The internal ROSE Git repository (Fig.~\ref{fig:rose-git-hudson}) is hosted under
 \textit{/nfs/casc/overture/ROSE/git/ROSE.git}. External collaborators can access
 this NFS path through any of these internal LLNL hosts: \texttt{tuxblue[1-6|9-13]}.
+Your LLNL account must be in the casc, overture, and rose POSIX groups(contact
+4HELP to be added to these groups).
 \begin{verbatim}
-    \$ git clone ssh://<user>@tuxblue[1-6|9-13]/nfs/casc/overture/ROSE/git/ROSE.git
+    $ git clone ssh://<user>@tuxblue[1-6|9-13]/nfs/casc/overture/ROSE/git/ROSE.git
 \end{verbatim}
 
 Updates to the "Release Candidate" (*-rc) branches in this internal repository
