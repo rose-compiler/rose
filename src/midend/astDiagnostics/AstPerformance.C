@@ -569,6 +569,8 @@ struct rusage
           i++;
         }
 
+#if 0
+ // DQ (6/22/2011): Now that the code associated with these variables has been removed, these are no longer needed.
     printf ("\n\n");
 
     printf ("Hidden list timing information: \n");
@@ -610,6 +612,7 @@ struct rusage
 
     reportAccumulatedTime("Hidden List computation: CreateNewStackFrame Time",Hidden_List_Computation::accumulatedCreateNewStackFrameTime,Hidden_List_Computation::accumulatedCreateNewStackFrameCalls);
     reportAccumulatedTime("Hidden List computation: UpdateScopeWithClass Time",Hidden_List_Computation::accumulatedUpdateScopeWithClassTime,Hidden_List_Computation::accumulatedUpdateScopeWithClassCalls);
+#endif
 
     printf ("\n\n");
    }

@@ -3,8 +3,9 @@
 unparser_headers=\
 	$(unparserPath)/unparser.h \
 	$(unparserPath)/unparse_sym.h \
-	$(unparserPath)/astUnparseAttribute.h
-
+	$(unparserPath)/astUnparseAttribute.h \
+	$(unparserPath)/IncludedFilesUnparser.h \
+	$(unparserPath)/nameQualificationSupport.h
 
 unparser_sources=\
 	$(unparser_headers:.h=.C)

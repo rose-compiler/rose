@@ -94,6 +94,7 @@ libroseLibraries = \
    $(libroseEDGlibraries) \
    $(libroseBinaryLibraries) \
    $(top_builddir)/src/midend/abstractHandle/libabstractHandle.la \
+   $(top_builddir)/src/midend/abstractMemoryObject/libabstractMemoryObject.la \
    $(top_builddir)/src/midend/astDiagnostics/libastDiagnostics.la \
    $(top_builddir)/src/midend/astProcessing/libastprocessing.la \
    $(top_builddir)/src/midend/astQuery/libquery.la \

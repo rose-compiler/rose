@@ -3,26 +3,16 @@
 #ifndef ASTDOTGENERATION_TEMPLATES_C
 #define ASTDOTGENERATION_TEMPLATES_C
 
-// if we included rose.h, then we need these files
-#ifdef ROSE_H
-// otherwise, we just include rose.h
-#       define __STDC_FORMAT_MACROS
-#       include <inttypes.h>
-#else
-#       ifndef SAGE3_CLASSES_BASIC__H
-#               include "sage3basic.h"
-#       endif
-//      #include "AstConsistencyTests.h"
-#       ifndef __STDC_FORMAT_MACROS
-#               define __STDC_FORMAT_MACROS
-//#             define PRIx64 "I64x"
-#       endif
-#       include <inttypes.h>
-#  ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-#          include "AsmUnparser_compat.h"
+// if we didn't include rose.h, then we need these files
+#ifndef ROSE_H
+#  ifndef SAGE3_CLASSES_BASIC__H
+#    include "sage3basic.h"
 #  endif
-#       include "wholeAST_API.h"
-#       include "sageInterface.h"
+#  ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#    include "AsmUnparser_compat.h"
+#  endif
+#  include "wholeAST_API.h"
+#  include "sageInterface.h"
 #endif
 
 template <typename ExtraNodeInfo_t, typename ExtraNodeOptions_t, typename ExtraEdgeInfo_t, typename ExtraEdgeOptions_t>
@@ -143,15 +133,10 @@ AstDOTGenerationExtended<ExtraNodeInfo_t, ExtraNodeOptions_t, ExtraEdgeInfo_t, E
           SgAsmDwarfLine* asmDwarfLine = isSgAsmDwarfLine(node);
           if (asmDwarfLine != NULL)
                  {
-                   char buffer[100];
-
                 // It does not work to embed the "\n" into the single sprintf parameter.
-                // sprintf(buffer," Addr: 0x%08"PRIx64" \n line: %d col: %d ",asmDwarfLine->get_address(),asmDwarfLine->get_line(),asmDwarfLine->get_column());
-
-                   sprintf(buffer,"Addr: 0x%08"PRIx64,asmDwarfLine->get_address());
-                   name = buffer;
-                   sprintf(buffer,"line: %d col: %d",asmDwarfLine->get_line(),asmDwarfLine->get_column());
-                   name += string("\\n") + buffer;
+                     name = "Addr: " + StringUtility::addrToString(asmDwarfLine->get_address()) +
+                            "\\nline: " + StringUtility::numberToString(asmDwarfLine->get_line()) +
+                            " col: " + StringUtility::numberToString(asmDwarfLine->get_column());
                  }
 
           SgAsmDwarfConstruct* asmDwarfConstruct = isSgAsmDwarfConstruct(node);

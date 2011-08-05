@@ -42,9 +42,14 @@ class AstDOTGeneration : public DOTGeneration<SgNode*>
 
 
 namespace AstDOTGenerationExtended_Defaults
-{
-        struct NamedExtraNodeInfo
+   {
+     struct NamedExtraNodeInfo
         {
+#if 1
+       // DQ (6/25/2011): Put the function definition into the source file (avoid function definitions in header files).
+          std::string operator()(SgNode* node);
+#else
+       // std::string AstDOTGenerationExtended_Defaults::NamedExtraNodeInfo::operator()(SgNode* node)
                 std::string operator()(SgNode* node)
                 {
                         std::ostringstream ss;
@@ -90,6 +95,7 @@ namespace AstDOTGenerationExtended_Defaults
 
                         return ss.str();
                 }
+#endif
         };
 
         struct AddressExtraNodeInfo
@@ -120,7 +126,12 @@ namespace AstDOTGenerationExtended_Defaults
 
         struct LValueExtraNodeInfo
         {
-                std::string operator()(SgNode* node)
+#if 1
+       // DQ (6/25/2011): Put the function definition into the source file (avoid function definitions in header files).
+          std::string operator()(SgNode* node);
+#else
+       // std::string AstDOTGenerationExtended_Defaults::LValueExtraNodeInfo::operator()(SgNode* node)
+             std::string operator()(SgNode* node)
                 {
                         std::ostringstream ss;
 
@@ -132,11 +143,17 @@ namespace AstDOTGenerationExtended_Defaults
 
                         return ss.str();
                 }
+#endif
         };
 
         struct TypeExtraNodeInfo
         {
-                std::string operator()(SgNode* node)
+#if 1
+       // DQ (6/25/2011): Put the function definition into the source file (avoid function definitions in header files).
+          std::string operator()(SgNode* node);
+#else
+       // std::string AstDOTGenerationExtended_Defaults::TypeExtraNodeInfo::operator()(SgNode* node)
+              std::string operator()(SgNode* node)
                 {
                         std::ostringstream ss;
 
@@ -147,6 +164,7 @@ namespace AstDOTGenerationExtended_Defaults
 
                         return ss.str();
                 }
+#endif
         };
 
         struct DefaultExtraNodeInfo
@@ -190,21 +208,24 @@ namespace AstDOTGenerationExtended_Defaults
 // Note: aditionalEdgeInfo andadditionalEdgeOptions are inherited.
 // Note: EdgeInfo and EdgeOptions are not used because they come into play
 //       for functions in the base class which are not virtual.
-template <typename ExtraNodeInfo_t = AstDOTGenerationExtended_Defaults::DefaultExtraNodeInfo, typename ExtraNodeOptions_t = AstDOTGenerationExtended_Defaults::DefaultExtraNodeOptions, typename ExtraEdgeInfo_t = AstDOTGenerationExtended_Defaults::DefaultExtraEdgeInfo, typename ExtraEdgeOptions_t = AstDOTGenerationExtended_Defaults::DefaultExtraEdgeOptions>
+template <typename ExtraNodeInfo_t = AstDOTGenerationExtended_Defaults::DefaultExtraNodeInfo, 
+          typename ExtraNodeOptions_t = AstDOTGenerationExtended_Defaults::DefaultExtraNodeOptions, 
+          typename ExtraEdgeInfo_t = AstDOTGenerationExtended_Defaults::DefaultExtraEdgeInfo, 
+          typename ExtraEdgeOptions_t = AstDOTGenerationExtended_Defaults::DefaultExtraEdgeOptions>
 class AstDOTGenerationExtended : public AstDOTGeneration
-{
-        protected:
-                ExtraNodeInfo_t eni;
-                ExtraNodeOptions_t eno;
-                ExtraEdgeInfo_t eei;
-                ExtraEdgeOptions_t eeo;
-        public:
-                AstDOTGenerationExtended(ExtraNodeInfo_t eni_ = ExtraNodeInfo_t(), ExtraNodeOptions_t eno_ = ExtraNodeOptions_t(), ExtraEdgeInfo_t eei_ = ExtraEdgeInfo_t(), ExtraEdgeOptions_t eeo_ = ExtraEdgeOptions_t())
-                        : eni(eni_), eno(eno_), eei(eei_), eeo(eeo_)
-                { }
-//              virtual DOTInheritedAttribute evaluateInheritedAttribute(SgNode* node, DOTInheritedAttribute ia);
-                virtual DOTSynthesizedAttribute evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribute ia, SubTreeSynthesizedAttributes l);
-};
+   {
+     protected:
+          ExtraNodeInfo_t eni;
+          ExtraNodeOptions_t eno;
+          ExtraEdgeInfo_t eei;
+          ExtraEdgeOptions_t eeo;
+     public:
+          AstDOTGenerationExtended(ExtraNodeInfo_t eni_ = ExtraNodeInfo_t(), ExtraNodeOptions_t eno_ = ExtraNodeOptions_t(), ExtraEdgeInfo_t eei_ = ExtraEdgeInfo_t(), ExtraEdgeOptions_t eeo_ = ExtraEdgeOptions_t())
+             : eni(eni_), eno(eno_), eei(eei_), eeo(eeo_)
+             { }
+       // virtual DOTInheritedAttribute evaluateInheritedAttribute(SgNode* node, DOTInheritedAttribute ia);
+          virtual DOTSynthesizedAttribute evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribute ia, SubTreeSynthesizedAttributes l);
+   };
 
 #endif
 
