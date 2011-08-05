@@ -3667,8 +3667,8 @@ SgCatchOptionStmt* SageBuilder::buildCatchOptionStmt(SgVariableDeclaration* cond
 SgPythonPrintStmt*
 SageBuilder::buildPythonPrintStmt(SgExpression* dest, SgExprListExp* values) {
     SgPythonPrintStmt* result = new SgPythonPrintStmt(dest, values);
-    dest->set_parent(result);
-    values->set_parent(result);
+    if (dest) dest->set_parent(result);
+    if (values) values->set_parent(result);
     setOneSourcePositionForTransformation(result);
     return result;
 }
@@ -3676,8 +3676,26 @@ SageBuilder::buildPythonPrintStmt(SgExpression* dest, SgExprListExp* values) {
 SgPythonPrintStmt*
 SageBuilder::buildPythonPrintStmt_nfi(SgExpression* dest, SgExprListExp* values) {
     SgPythonPrintStmt* result = new SgPythonPrintStmt(dest, values);
-    dest->set_parent(result);
-    values->set_parent(result);
+    if (dest) dest->set_parent(result);
+    if (values) values->set_parent(result);
+    setOneSourcePositionNull(result);
+    return result;
+}
+
+SgPythonGlobalStmt*
+SageBuilder::buildPythonGlobalStmt(SgInitializedNamePtrList& names) {
+    SgPythonGlobalStmt* result = new SgPythonGlobalStmt();
+    foreach (SgInitializedName* name, names)
+        result->append_name(name);
+    setOneSourcePositionForTransformation(result);
+    return result;
+}
+
+SgPythonGlobalStmt*
+SageBuilder::buildPythonGlobalStmt_nfi(SgInitializedNamePtrList& names) {
+    SgPythonGlobalStmt* result = new SgPythonGlobalStmt();
+    foreach (SgInitializedName* name, names)
+        result->append_name(name);
     setOneSourcePositionNull(result);
     return result;
 }

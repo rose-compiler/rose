@@ -924,6 +924,10 @@ SgExecStatement* buildExecStatement_nfi(SgExpression* executable, SgExpression* 
 SgPythonPrintStmt* buildPythonPrintStmt(SgExpression* dest = NULL, SgExprListExp* values = NULL);
 SgPythonPrintStmt* buildPythonPrintStmt_nfi(SgExpression* dest = NULL, SgExprListExp* values = NULL);
 
+// ! Build a python global statement
+SgPythonGlobalStmt* buildPythonGlobalStmt(SgInitializedNamePtrList& names);
+SgPythonGlobalStmt* buildPythonGlobalStmt_nfi(SgInitializedNamePtrList& names);
+
 // DQ (4/30/2010): Added support for building asm statements.
 //! Build a NULL statement
 SgAsmStmt* buildAsmStatement(std::string s);
