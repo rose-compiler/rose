@@ -113,11 +113,6 @@ InitializeExplicitScopes::visit ( SgNode *node)
                               SgFunctionParameterList* parameterList = isSgFunctionParameterList(parentNode);
                               ROSE_ASSERT(parameterList != NULL);
 
-                              if (SageInterface::is_Python_language() && isSgLambdaRefExp(parameterList->get_parent())) {
-                                  std::cerr << "warning: python. Allowing SgLambdaRefExp as parent of SgFunctionParameterList" << std::endl;
-                                  return;
-                              }
-
                               SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(parameterList->get_parent());
                               ROSE_ASSERT(functionDeclaration != NULL);
                            // printf ("functionDeclaration->get_definition() = %p \n",functionDeclaration->get_definition());
