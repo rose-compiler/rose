@@ -188,7 +188,7 @@ SgExpression*
 buildReference(char* id, SgScopeStatement* scope) {
     ROSE_ASSERT(scope != NULL);
 
-    SgSymbol* sg_sym = scope->lookup_symbol( SgName(id) );
+    SgSymbol* sg_sym = SageInterface::lookupSymbolInParentScopes( SgName(id), scope );
     if (sg_sym == NULL) {
         return SageBuilder::buildOpaqueVarRefExp(id, scope);
     }
