@@ -199,6 +199,12 @@ InitializeExplicitScopes::visit ( SgNode *node)
                               break;
                             }
 
+                         case V_SgPythonGlobalStmt:
+                            {
+                                scope = SageInterface::getGlobalScope(parentNode);
+                                break;
+                            }
+
                          default:
                             {
                               printf ("Error: default reached initializedName->get_parent() = %s \n",
