@@ -29,6 +29,7 @@ PyObject* sage_buildFloat(PyObject *self, PyObject *args);
 PyObject* sage_buildFor(PyObject *self, PyObject *args);
 PyObject* sage_buildFunctionDef(PyObject *self, PyObject *args);
 PyObject* sage_buildGlobal(PyObject *self, PyObject *args);
+PyObject* sage_buildGlobalScope(PyObject *self, PyObject *args);
 PyObject* sage_buildIf(PyObject *self, PyObject *args);
 PyObject* sage_buildIfExp(PyObject *self, PyObject *args);
 PyObject* sage_buildImport(PyObject *self, PyObject *args);
@@ -82,7 +83,8 @@ static PyMethodDef SageBuilderMethods[] = {
     {"buildFor", sage_buildFor, METH_VARARGS, "Builds a for stmt."},
     {"buildFunctionDef", sage_buildFunctionDef, METH_VARARGS, "Builds an SgFunctionDeclaration node."},
     {"buildFunctionParameterList", sage_buildFunctionParameterList, METH_VARARGS, "Builds an SgFunctionParameterList node."},
-    {"buildGlobal", sage_buildGlobal, METH_VARARGS, "Builds an SgGlobal node."},
+    {"buildGlobal", sage_buildGlobal, METH_VARARGS, "Builds an SgPythonGlobalStmt node."},
+    {"buildGlobalScope", sage_buildGlobalScope, METH_VARARGS, "Builds an SgGlobal node."},
     {"buildIf", sage_buildIf, METH_VARARGS, "Builds an if stmt node."},
     {"buildIfExp", sage_buildIfExp, METH_VARARGS, "Builds an if exp node."},
     {"buildImport", sage_buildImport, METH_VARARGS, "Builds an import stmt  node."},
