@@ -236,8 +236,6 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2011_Rice_allocate-derived-type-scope.f90 \
      test2011_Rice_asterisk-length.f90 \
      test2011_Rice_attrs-dimension.f90 \
-     test2011_Rice_attrs-pointer-array.f90 \
-     test2011_Rice_attrs-value-intent.f90 \
      test2011_Rice_caseSensitive.f90 \
      test2011_Rice_char-array-decl-asterisk.f90 \
      test2011_Rice_char-kind-decl.f90 \
@@ -588,6 +586,8 @@ F03_TESTCODES_REQUIRED_TO_PASS = \
      test2011_33.f03 \
      test2011_34.f03 \
      test2011_35.f03 \
+     test2011_Rice_attrs-pointer-array.f03 \
+     test2011_Rice_attrs-value-intent.f03 \
      test2011_Rice_bindc-name-2.f03 \
      test2011_Rice_bindc-name-sub.f03 \
      test2011_Rice_bindc-name.f03 \
