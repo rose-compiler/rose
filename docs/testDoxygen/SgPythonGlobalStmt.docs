@@ -1,0 +1,64 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgPythonGlobalStmt
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgPythonGlobalStmt
+\brief This class represents the concept of a 'global' stmt in Python
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgPythonGlobalStmt data members
+/////////////////////////////////////////////////////////////////////////
+
+/*! \var SgPythonGlobalStmt::p_names
+\brief This is a list of SgInitializedNames that are imported into the inner scope.
+
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgPythonGlobalStmt member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+
+/*!
+\fn SgPythonGlobalStmt::~SgPythonGlobalStmt()
+\brief This is the destructor.
+
+*/
+
+/*!
+\fn SgPythonGlobalStmt::isSgPythonGlobalStmt (SgNode *s)
+\brief Cast function (from derived class to SgPythonGlobalStmt pointer).
+
+   This functions returns a SgPythonGlobalStmt pointer for any input of a 
+pointer to an object derived from a SgPythonGlobalStmt.
+
+\return Returns valid pointer to SgPythonGlobalStmt if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgPythonGlobalStmt::isSgPythonGlobalStmt (const SgNode *s)
+\brief Cast function (from derived class to SgPythonGlobalStmt pointer).
+
+   This functions returns a SgPythonGlobalStmt pointer for any input of a 
+pointer to an object derived from a SgPythonGlobalStmt.
+
+\return Returns valid pointer to SgPythonGlobalStmt if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgPythonGlobalStmt::copy(const SgCopyHelp & help)
+\brief Makes a copy (deap of shallow depending on SgCopyHelp).
+
+\return Returns pointer to copy of SgPythonGlobalStmt.
+*/
+
+/*!
+\fn SgPythonGlobalStmt::append_name(SgIntializedName* name)
+\brief Append a name to the list of identifiers imported into the inner scope.
+*/
+
+/*!
+\fn SgPythonGlobalStmt::prepend_name(SgIntializedName* name)
+\brief Prepend a name to the list of identifiers imported into the inner scope.
+*/

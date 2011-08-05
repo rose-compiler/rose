@@ -2054,6 +2054,10 @@ HEADER_GOTO_STATEMENT_START
 
 HEADER_GOTO_STATEMENT_END
 
+HEADER_PYTHON_GLOBAL_STMT_START
+HEADER_LIST_DECLARATIONS
+HEADER_PYTHON_GLOBAL_STMT_END
+
 HEADER_PYTHON_PRINT_STMT_START
 HEADER_PYTHON_PRINT_STMT_END
 
@@ -12163,9 +12167,35 @@ SOURCE_GOTO_STATEMENT_END
 SOURCE_PYTHON_PRINT_STMT_START
 
 void
-SgPythonPrintStmt::post_construction_initialization() {}
+SgPythonPrintStmt::post_construction_initialization() {
+    if (get_destination() != NULL)
+        get_destination()->set_parent(this);
+    if (get_values() != NULL)
+        get_values()->set_parent(this);
+}
 
 SOURCE_PYTHON_PRINT_STMT_END
+
+SOURCE_PYTHON_GLOBAL_STMT_START
+
+void
+SgPythonGlobalStmt::post_construction_initialization() {}
+
+void
+SgPythonGlobalStmt::append_name(SgInitializedName* name) {
+    ROSE_ASSERT(name);
+    name->set_parent(this);
+    get_names().push_back(name);
+}
+
+void
+SgPythonGlobalStmt::prepend_name(SgInitializedName* name) {
+    ROSE_ASSERT(name);
+    name->set_parent(this);
+    get_names().insert(get_names().begin(), name);
+}
+
+SOURCE_PYTHON_GLOBAL_STMT_END
 
 SOURCE_ASM_STATEMENT_START
 

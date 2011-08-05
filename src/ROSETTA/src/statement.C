@@ -129,6 +129,7 @@ Grammar::setUpStatements ()
 
   // driscoll6 (6/27/11): Support for Python
      NEW_TERMINAL_MACRO (WithStatement,             "WithStatement",             "WITH_STATEMENT" );
+     NEW_TERMINAL_MACRO (PythonGlobalStmt,          "PythonGlobalStmt",          "PYTHON_GLOBAL_STMT" );
      NEW_TERMINAL_MACRO (PythonPrintStmt,           "PythonPrintStmt",           "PYTHON_PRINT_STMT" );
      NEW_TERMINAL_MACRO (PassStatement,             "PassStatement",             "PASS_STATEMENT" );
      NEW_TERMINAL_MACRO (AssertStmt,                "AssertStmt",                "ASSERT_STMT" );
@@ -448,7 +449,7 @@ Grammar::setUpStatements ()
              UpcWaitStatement     | UpcBarrierStatement    | UpcFenceStatement               | 
              OmpBarrierStatement  | OmpTaskwaitStatement   |  OmpFlushStatement              | OmpBodyStatement      |
              SequenceStatement    | WithStatement          | PythonPrintStmt                 | PassStatement         |
-             AssertStmt           | ExecStatement,
+             AssertStmt           | ExecStatement          | PythonGlobalStmt,
                             "Statement","StatementTag", false);
 
   // DQ (11/24/2007): These have been moved to be declarations, so they can appear where only declaration statements are allowed
@@ -3079,6 +3080,17 @@ Grammar::setUpStatements ()
              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      PythonPrintStmt.setDataPrototype     ( "SgExprListExp*", "values", "= NULL",
              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     PythonGlobalStmt.setFunctionPrototype ( "HEADER_PYTHON_GLOBAL_STMT", "../Grammar/Statement.code" );
+     PythonGlobalStmt.setFunctionSource    ( "SOURCE_PYTHON_GLOBAL_STMT", "../Grammar/Statement.code" );
+     PythonGlobalStmt.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
+     PythonGlobalStmt.editSubstitute      ( "LIST_DATA_TYPE", "SgInitializedNamePtrList" );
+     PythonGlobalStmt.editSubstitute      ( "LIST_NAME", "names" );
+     PythonGlobalStmt.editSubstitute      ( "LIST_FUNCTION_RETURN_TYPE", "SgInitializedNamePtrList::iterator" );
+     PythonGlobalStmt.editSubstitute      ( "LIST_FUNCTION_NAME", "name" );
+     PythonGlobalStmt.editSubstitute      ( "LIST_ELEMENT_DATA_TYPE", "SgInitializedName*" );
+     PythonGlobalStmt.setDataPrototype    ( "SgInitializedNamePtrList", "names", "",
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      PassStatement.setFunctionSource        ( "SOURCE_PASS_STATEMENT", "../Grammar/Statement.code" );
 
