@@ -26,20 +26,6 @@ using namespace SageBuilder;
 
 // ------------------------ VARIABLE SPECIFIC CODE --------------------------
 
-bool RtedTransformation::isVarInCreatedVariables(SgInitializedName* n) {
-        bool ret = false;
-        ROSE_ASSERT(n);
-        SgInitializedNamePtrList::const_iterator it=variable_declarations.begin();
-        for (;it!=variable_declarations.end();++it) {
-                SgInitializedName* initName = *it;
-                if (initName==n) {
-                        ret=true;
-                        break;
-                }
-        }
-        return ret;
-}
-
 bool isFileIOVariable(SgType* type)
 {
         SgType*     under = skip_Typedefs(type);
@@ -186,7 +172,7 @@ void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName)
 {
         ROSE_ASSERT(initName);
 
-        SgStatement*      stmt = getSurroundingStatement(initName);
+        SgStatement*      stmt = getSurroundingStatement(*initName);
 
         // extern variables are not handled; they will be handled in the
         // defining translation unit.
@@ -368,7 +354,7 @@ RtedTransformation::buildVariableCreateCallStmt(SgInitializedName* initName, boo
         ROSE_ASSERT(fn_call);
 
         SgExprStatement*   exprStmt = buildExprStatement(fn_call);
-        string             comment = "RS : Create Variable, paramaters : (name, mangl_name, type, basetype, address, sizeof, initialized, fileOpen, classname, filename, linenr, linenrTransformed)";
+        string             comment = "RS : Create Variable, parameters : (name, mangl_name, type, basetype, address, sizeof, initialized, fileOpen, classname, filename, linenr, linenrTransformed)";
 
         attachComment(exprStmt, "", PreprocessingInfo::before);
         attachComment(exprStmt, comment, PreprocessingInfo::before);
@@ -436,9 +422,9 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName, S
 
         SgStatement* stmt = NULL;
         if (varRefE->get_parent()) // we created a verRef for AssignInitializers which do not have a parent
-                stmt = getSurroundingStatement(varRefE);
+                stmt = getSurroundingStatement(*varRefE);
         else
-                stmt = getSurroundingStatement(initName);
+                stmt = getSurroundingStatement(*initName);
 
         ROSE_ASSERT(stmt);
 
@@ -519,7 +505,7 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName, S
                 SgExpression*    funcCallExp = buildVariableInitCallExpr(initName, varRefE, stmt, allocKind);
                 SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
                 string           empty_comment;
-                string           comment = "RS : Init Variable, paramaters : (tpye, basetype, class_name, address, size, ismalloc, is_pointer_change, filename, line, linenrTransformed, error line)";
+                string           comment = "RS : Init Variable, parameters : (tpye, basetype, class_name, address, size, ismalloc, is_pointer_change, filename, line, linenrTransformed, error line)";
 
                 attachComment(exprStmt, empty_comment, PreprocessingInfo::before);
                 attachComment(exprStmt, comment, PreprocessingInfo::before);
@@ -541,11 +527,11 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName, S
 
 void RtedTransformation::insertCheckIfThisNull(SgThisExp* texp)
 {
+        ROSE_ASSERT(texp);
+
         cerr << "access to this : " << texp->unparseToString() << endl;
 
-        SgStatement*      stmt = getSurroundingStatement(texp);
-        ROSE_ASSERT(stmt);
-
+        SgStatement*      stmt = getSurroundingStatement(*texp);
         SgScopeStatement* scope = stmt->get_scope();
         ROSE_ASSERT(scope);
 
@@ -558,7 +544,6 @@ void RtedTransformation::insertCheckIfThisNull(SgThisExp* texp)
                 appendExpression(arg_list, buildThisExp(texp->get_class_symbol()));
                 appendFileInfo(arg_list, stmt);
 
-                ROSE_ASSERT(symbols.roseCheckIfThisNULL);
                 insertCheck( ilBefore,
                              stmt,
                              symbols.roseCheckIfThisNULL,
@@ -579,16 +564,20 @@ void RtedTransformation::insertCheckIfThisNull(SgThisExp* texp)
 
 void RtedTransformation::insertAccessVariable(SgThisExp* varRefE, SgExpression* derefExp)
 {
-        SgStatement* stmt = getSurroundingStatement(varRefE);
+        ROSE_ASSERT(varRefE);
+
+        SgStatement*        stmt = getSurroundingStatement(*varRefE);
         SgClassDeclaration* decl = varRefE->get_class_symbol()->get_declaration();
         ROSE_ASSERT(decl);
-        SgScopeStatement* scope = decl->get_scope();
+        SgScopeStatement*   scope = decl->get_scope();
         insertAccessVariable(scope, derefExp, stmt, varRefE);
 }
 
 void RtedTransformation::insertAccessVariable(SgVarRefExp* varRefE, SgExpression* derefExp)
 {
-        SgStatement* stmt = getSurroundingStatement(varRefE);
+        ROSE_ASSERT(varRefE);
+
+        SgStatement* stmt = getSurroundingStatement(*varRefE);
         // make sure there is no extern in front of stmt
         SgInitializedName* initName = varRefE->get_symbol()->get_declaration();
         SgScopeStatement* initNamescope = initName->get_scope();
@@ -743,21 +732,16 @@ void RtedTransformation::insertAccessVariable( SgScopeStatement* initscope,
             appendExpression(arg_list, buildIntVal(read_write_mask));
             appendFileInfo(arg_list, stmt);
 
-            // appendExpression(arg_list, buildStringVal(removeSpecialChar(stmt->unparseToString())));
-
-            ROSE_ASSERT(symbols.roseAccessVariable);
             insertCheck( ilBefore,
                          stmt,
                          symbols.roseAccessVariable,
                          arg_list,
-                         "RS : Access Variable, paramaters : (address_r, sizeof(type)_r, address_w, sizeof(type)_w, r/w, filename, line, line transformed, error Str)"
+                         "RS : Access Variable, parameters : (address_r, sizeof(type)_r, address_w, sizeof(type)_w, r/w, filename, line, line transformed, error Str)"
                        );
     } // basic block
     else
     {
-            cerr
-                            << " -----------> RuntimeInstrumentation :: unexpected (unhandled) scope! : "
-            //<< name
+            cerr            << " -----------> RuntimeInstrumentation :: unexpected (unhandled) scope! : "
                             << " : " << scope->class_name() << "  - "
                             << stmt->unparseToString() << endl;
             ROSE_ASSERT(isSgNamespaceDefinitionStatement(scope));
@@ -806,55 +790,43 @@ void RtedTransformation::visit_isAssignInitializer(SgAssignInitializer* const as
         cerr << ">>>>>>> Setting this var to be assign initialized : "
                         << initName->unparseToString() << "  and assignInit: "
                         << assign->unparseToString() << endl;
-        SgStatement*         stmt = getSurroundingStatement(initName);
-        ROSE_ASSERT(stmt);
+        SgStatement*         stmt = getSurroundingStatement(*initName);
         SgScopeStatement*    scope = stmt->get_scope();
         ROSE_ASSERT(scope);
         //      SgType* type = initName->get_type();
 
         // dont do this if the variable is global or an enum constant
         // \pp why not for global variables
-        if (isSgGlobal(initName->get_scope()) || isSgEnumDeclaration(initName->get_parent())) {
-        } else {
-                SgVarRefExp* const varRef = buildVarRefExp(initName, scope);
+        if (!isSgGlobal(initName->get_scope()) && !isSgEnumDeclaration(initName->get_parent()))
+        {
+            SgVarRefExp* const varRef = buildVarRefExp(initName, scope);
 
-                // \pp \todo do we need the following line?
-                varRef->get_file_info()->unsetOutputInCodeGeneration();
+            // \pp \todo do we need the following line?
+            varRef->get_file_info()->unsetOutputInCodeGeneration();
 
-                const AllocInfo    allocInfo = sg::dispatch(AllocInfo(akStack), assign->get_operand());
+            const AllocInfo    allocInfo = sg::dispatch(AllocInfo(akStack), assign->get_operand());
 
-                cerr << "Adding variable init : " << varRef->unparseToString() << endl;
-                variableIsInitialized[varRef] = InitializedVarMap::mapped_type(initName, allocInfo.allocKind);
+            cerr << "Adding variable init : " << varRef->unparseToString() << endl;
+            variableIsInitialized[varRef] = InitializedVarMap::mapped_type(initName, allocInfo.allocKind);
 
-                // tps (09/15/2009): The following code handles AssignInitializers for SgNewExp
-                // e.g. int *p = new int;
-                // \pp \todo the following block could be pushed into AllocInfo
-                if (allocInfo.newtype) {
-                        // TODO 2: This handles new assign initializers, but not malloc assign
-                        //          initializers.  Consider, e.g:
-                        //
-                        //          int* x = (int*) malloc( sizeof( int ));
-                        SgExpression* sizeExp = buildSizeOfOp(allocInfo.newtype);
-                        RtedArray     arr(initName, getSurroundingStatement(initName), allocInfo.allocKind, sizeExp);
+            // tps (09/15/2009): The following code handles AssignInitializers for SgNewExp
+            // e.g. int *p = new int;
+            // \pp \todo the following block could be pushed into AllocInfo
+            if (allocInfo.newtype)
+            {
+                // TODO 2: This handles new assign initializers, but not malloc assign
+                //          initializers.  Consider, e.g:
+                //
+                //          int* x = (int*) malloc( sizeof( int ));
+                SgExpression* sizeExp = buildSizeOfOp(allocInfo.newtype);
+                RtedArray     arr(initName, getSurroundingStatement(*initName), allocInfo.allocKind, sizeExp);
 
-                        variablesUsedForArray.push_back(varRef);
-                        create_array_define_varRef_multiArray[varRef] = arr;
+                variablesUsedForArray.push_back(varRef);
+                create_array_define_varRef_multiArray[varRef] = arr;
 
-
-
-                        cerr << ">> Setting this var to be initialized : "
-                             << initName->unparseToString() << endl;
-
-                        // \pp \todo I believe that the following code
-                        //           can be safely removed as it duplicates
-                        //           the previous store to
-                        //           variableIsInitialized ...
-                        //~ assert(variableIsInitialized[varRef] == InitializedVarMap::mapped_type(initName, allocInfo.allocKind));
-                        //~ variableIsInitialized[varRef] = InitializedVarMap::mapped_type(initName, allocInfo.allocKind);
-                }
+                cerr << ">> Setting this var to be initialized : " << initName->unparseToString() << endl;
+            }
         }
-
-        // ---------------------------------------------
 }
 
 

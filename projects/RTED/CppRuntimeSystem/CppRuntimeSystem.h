@@ -317,7 +317,7 @@ struct RuntimeSystem
 
         /// Closes a scope and deletes all variables which where created via registerVariable()
         /// from the stack, testing for memory leaks (@ref registerPointerChange).
-        void endScope ();
+        void endScope(size_t scopecount);
 
 
 
