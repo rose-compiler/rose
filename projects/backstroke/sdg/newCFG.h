@@ -5,7 +5,7 @@
 #include <boost/function.hpp>
 #include <boost/graph/adjacency_list.hpp>
 
-namespace Backstroke
+namespace SystemDependenceGraph
 {
 
 typedef boost::function<bool(const VirtualCFG::CFGNode&)> CFGNodeFilter;
@@ -46,14 +46,14 @@ protected:
 	//! The function definition of this CFG.
 	SgFunctionDefinition* funcDef_;
 
+    //! The CFG node filter.
+    CFGNodeFilter filter_;
+    
 	//! The entry node.
 	Vertex entry_;
 
 	//! The exit node.
 	Vertex exit_;
-    
-    //! The CFG node filter.
-    CFGNodeFilter filter_;
 
 	//! A map from a CFG node to the corresponding vertex
 	std::map<CFGNode, Vertex> nodesToVertices_;
@@ -69,9 +69,9 @@ public:
 	//! The default constructor.
 	ControlFlowGraph()
 	:	funcDef_(NULL),
+        filter_(DefaultFilter()),
 		entry_(GraphTraits::null_vertex()),
-		exit_(GraphTraits::null_vertex()),
-        filter_(DefaultFilter())
+		exit_(GraphTraits::null_vertex())
 	{
 	}
 
@@ -80,9 +80,9 @@ public:
             SgFunctionDefinition* funcDef, 
             const CFGNodeFilter& cfgNodeFilter = DefaultFilter())
 	:	funcDef_(funcDef),
+        filter_(cfgNodeFilter),
 		entry_(GraphTraits::null_vertex()),
-		exit_(GraphTraits::null_vertex()),
-        filter_(cfgNodeFilter)
+		exit_(GraphTraits::null_vertex())
 	{
 		build(funcDef);
 	}
@@ -202,7 +202,7 @@ void writeCFGNode(std::ostream& out, const CFGNode& cfgNode);
 void writeCFGEdge(std::ostream& out, const CFGEdge& e);
 
 
-} // end of namespace
+} // end of namespace SystemDependenceGraph
 
 
 #endif	/* ________CFG_H__________ */

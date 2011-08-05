@@ -8,7 +8,7 @@
 #define foreach BOOST_FOREACH
 
 
-namespace Backstroke
+namespace SystemDependenceGraph
 {
 
 

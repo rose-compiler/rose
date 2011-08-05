@@ -10,7 +10,7 @@
 
 
 
-namespace Backstroke
+namespace SystemDependenceGraph
 {
 
 
@@ -32,7 +32,7 @@ void ControlDependenceGraph::build(const ControlFlowGraph& cfg)
 	// Remove all nodes and edges.
 	this->clear();
     
-    // Build a table from Virtual::CFG edge to the edge in the given CFG.
+    // Build a table from CFG edges to edge discriptors in the given CFG.
     // Then we can look up edges from reverse CFG to normal CFG.
     std::map<CFGEdgePtr, CFGEdgeT> edgeTable;
     foreach (const CFGEdgeT& edge, boost::edges(cfg))

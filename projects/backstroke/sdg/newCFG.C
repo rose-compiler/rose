@@ -13,7 +13,7 @@
 #define foreach BOOST_FOREACH
 
 
-namespace Backstroke
+namespace SystemDependenceGraph
 {
 
 
@@ -361,4 +361,4 @@ void writeCFGEdge(std::ostream& out, const CFGEdge& e)
 
 
 
-} // end of namespace
+} // end of namespace SystemDependenceGraph

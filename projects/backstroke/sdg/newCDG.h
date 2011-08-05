@@ -3,7 +3,7 @@
 
 #include "newCFG.h"
 
-namespace Backstroke
+namespace SystemDependenceGraph
 {
 
 

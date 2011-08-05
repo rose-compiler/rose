@@ -3,7 +3,7 @@
 
 #include "newCFG.h"
 
-namespace Backstroke
+namespace SystemDependenceGraph
 {
 
 
@@ -52,7 +52,7 @@ protected:
 };
 
 
-} // end of namespace
+} // end of namespace SystemDependenceGraph
 
 
 #endif	/* _______DDG_H__________ */

@@ -4,8 +4,18 @@
 #include "newCDG.h"
 #include "newDDG.h"
 
-namespace Backstroke
+namespace SystemDependenceGraph
 {
+
+
+typedef std::vector<SgInitializedName*> VarName;
+        
+struct PDGNode
+{
+    bool isEntry;
+    CFGNodePtr cfgNode;
+};
+
 
 //! Define the edge type of PDG.
 
@@ -15,15 +25,36 @@ struct PDGEdge
 {
 	//typedef std::vector<SgInitializedName*> VarName;
 	
-	enum PDGEdgeType
+	enum EdgeType
 	{
 		ControlDependence,
 		DataDependence
 	};
 
 	//! Indicate the type of this edge, whether control or data dependence.
-	PDGEdgeType type;
+	EdgeType type;
+    
+    /**************************************************************************/    
+    // Control dependence
+    
+    //! The condition attached to edges in the CDG.
+    VirtualCFG::EdgeConditionKind condition;
 
+    //! If the condition is a case edge, this expression is the case value.
+    SgExpression* caseLabel;
+
+    /**************************************************************************/  
+    
+    
+    
+    /**************************************************************************/    
+    // Data dependence
+    
+	//! All variable names in data dependence of this edge.
+	std::set<VarName> varNames;
+    
+    /**************************************************************************/    
+    
 	//! A control dependence edge.
 	CDGEdge cdEdge;
 
@@ -41,6 +72,16 @@ public:
 	typedef boost::graph_traits<ProgramDependenceGraph>::vertex_descriptor Vertex;
 	typedef boost::graph_traits<ProgramDependenceGraph>::edge_descriptor   Edge;
 
+protected:
+    typedef ControlFlowGraph::Vertex CFGVertex;
+	typedef ControlFlowGraph::Edge   CFGEdge;
+    
+    
+    //! The entry of the PDG. Vertices which postdominate the entry of the CFG are
+    //! control dependent on this vectex with label T.
+    Vertex entry_;
+    
+public:
 	//! The default constructor.
 	ProgramDependenceGraph() {}
 
@@ -59,16 +100,34 @@ public:
 
 	//! Build the PDG from the given CFG.
 	void build(const ControlFlowGraph& cfg);
+    
+    //! Build the PDG from the given CFG.
+	void build2(const ControlFlowGraph& cfg);
 
 	//! Write the PDG to a dot file.
 	void toDot(const std::string& filename) const;
+    
+    Vertex getEntry() const { return entry_; }
 
 protected:
 
+    void addControlDependenceEdges(
+        const std::map<CFGVertex, Vertex>& cfgVerticesToPdgVertices,
+        const ControlFlowGraph& cfg);
+    
+    void addDataDependenceEdges(
+        const std::map<CFGVertex, Vertex>& cfgVerticesToPdgVertices,
+        const ControlFlowGraph& cfg);
+    
 	//! This function helps to write the DOT file for vertices.
 	void writeGraphNode(std::ostream& out, const Vertex& node) const
 	{
-		writeCFGNode(out, *(*this)[node]);
+        if (node == entry_)
+        {
+            out << "[label=\"ENTRY\"]";
+        }
+        else
+            writeCFGNode(out, *(*this)[node]);
 	}
 
 	//! This function helps to write the DOT file for edges.
@@ -77,7 +136,7 @@ protected:
 
 
 
-} // end of namespace
+} // end of namespace SystemDependenceGraph
 
 
 
