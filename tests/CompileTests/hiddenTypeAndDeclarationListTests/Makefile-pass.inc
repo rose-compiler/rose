@@ -19,8 +19,11 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
      test16.C test19.C  test20.C  test21.C \
      test42.C test43.C  test44.C  test45.C \
      test47.C test48.C  test50.C  test53.C \
-     test56.C test57.C  test58.C  \
+     test56.C test58.C  \
      test60.C
+
+# DQ (6/22/2011): Moved this to the the Cxx_tests directory (for separate testing).
+# test57.C
 
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS_SHORT = \
      test07.C test09.C  test10.C  test11.C \

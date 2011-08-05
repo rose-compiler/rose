@@ -71,6 +71,7 @@ C_TESTCODES_REQUIRED_TO_RUN = \
         nestedpar.c \
         nestedpar1.c \
         masterSingle.c \
+	multiple_return.c \
         ordered.c \
         ordered2.c \
         omp1.c \

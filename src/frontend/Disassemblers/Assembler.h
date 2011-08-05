@@ -73,7 +73,7 @@ public:
         {
         ET_SHORTEST,            /**< Returns the shortest possible encoding. This is the default. */
         ET_LONGEST,             /**< Returns the longest encoding. */
-        ET_MATCHES,             /**< Returns an encoding that matches the SgAsmInstruction::p_raw_bytes. This is used mainly
+        ET_MATCHES             /**< Returns an encoding that matches the SgAsmInstruction::p_raw_bytes. This is used mainly
                                  *   for testing that the assembler can produce the same encoding that was originally
                                  *   used by the disassembler when the instruction was created. */
     };

@@ -477,11 +477,12 @@ void PointerManager::invalidatePointerToRegion(const MemoryType& mt)
       // \todo check if setTargetAddress does not already erase the element
       //       from the map
       pi->setTargetAddress( nullLoc );
-      targetToPointerMap.erase( range.iter() );
+	  
+	  TargetToPointerMap::iterator toErase = range.iter();
+	  range.next(); //Once we erase the iterator it's invalid and we can't call next()
+      targetToPointerMap.erase( toErase );
 
       insert(targetToPointerMap, TargetToPointerMap::value_type(nullLoc, pi)) /* insert */;
-
-      range.next();
     }
 }
 
