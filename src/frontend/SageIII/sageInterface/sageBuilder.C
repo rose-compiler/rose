@@ -904,6 +904,7 @@ SgMemberFunctionDeclaration* SageBuilder::buildNondefiningMemberFunctionDeclarat
   return result;
 }
 
+#if 0
 SgMemberFunctionDeclaration*
 SageBuilder::buildNondefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgFunctionParameterList* paralist, SgScopeStatement* scope)
    {
@@ -1045,6 +1046,7 @@ SageBuilder::buildNondefiningMemberFunctionDeclaration (const SgName & name, SgM
 
      return func;  
    }
+#endif
 
 SgMemberFunctionDeclaration*
 SageBuilder::buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgScopeStatement* scope)

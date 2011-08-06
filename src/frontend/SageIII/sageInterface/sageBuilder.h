@@ -645,9 +645,9 @@ buildNondefiningFunctionDeclaration (const SgFunctionDeclaration* funcdecl, SgSc
 SgMemberFunctionDeclaration *
 buildNondefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL);
 
-//! Build a prototype member function declaration
-SgMemberFunctionDeclaration *
-buildNondefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgFunctionParameterList* paralist, SgScopeStatement* scope=NULL);
+////! Build a prototype member function declaration
+//SgMemberFunctionDeclaration *
+//buildNondefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgFunctionParameterList* paralist, SgScopeStatement* scope=NULL);
 
 //! Build a defining ( non-prototype) member function declaration
 SgMemberFunctionDeclaration *
