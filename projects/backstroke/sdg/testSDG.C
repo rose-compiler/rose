@@ -2,6 +2,7 @@
 #include "newCDG.h"
 #include "newDDG.h"
 #include "newPDG.h"
+#include "SDG.h"
 
 using namespace SystemDependenceGraph;
 
