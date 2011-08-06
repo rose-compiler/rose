@@ -1,0 +1,12 @@
+! copointer to 1-dim and 2-dim coarrays
+program copointer_coarray
+  integer, dimension(:), copointer :: cp1[*]
+  integer, copointer, dimension(:) :: cp2[*]
+  integer, copointer :: cp3(:)[*]
+  integer, copointer:: cp4(:,:)[*]
+  n = cp4[] (1, 2) [5]  
+  cp3[](1)[2] = 9  
+  cp1[](2)[1] = 999  
+  cp2[](1)[2] = 99  
+end program
+
