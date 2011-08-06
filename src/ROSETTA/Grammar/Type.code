@@ -1024,6 +1024,33 @@ SOURCE_GET_MANGLED_STRING_TYPE_START
 SgName
 SgTypeString::get_mangled (void) const
    {
+#if 1
+
+    // DXN (08/01/2011): add type kind to the mangled name
+     SgName mangled_name;
+     SgValueExp* lenValExp = isSgValueExp(p_lengthExpression);
+     SgName mangled_length_name = lenValExp? lenValExp->get_constant_folded_value_as_string():
+                                             SageInterface::generateUniqueName(p_lengthExpression,false);
+     if (p_type_kind)
+        {        
+          SgValueExp* kindValExp = isSgValueExp(p_type_kind);
+          SgName mangled_kind_name = kindValExp? kindValExp->get_constant_folded_value_as_string(): 
+                                            SageInterface::generateUniqueName(p_type_kind,false);
+          mangled_name << "__" << "MANGLED_ID_STRING" << "b__" // start tag
+                  << mangled_length_name.str ()  // length
+                  << "__" << mangled_kind_name.str() // kind
+                  << "__" << "MANGLED_ID_STRING" << "e__"; // end tag
+        }
+     else
+        {
+          mangled_name << "__" << "MANGLED_ID_STRING" << "b__" // start tag
+                  << mangled_length_name.str ()  // length
+                  << "__" << "MANGLED_ID_STRING" << "e__"; // end tag
+        }
+
+     return mangled_name;
+
+#else
   // DQ (10/5/2010): Note that we do not include the type_kind data member in the mangled name,
   // but for Fortran this value must always be "1" and the data member is only relevant for Fortran.
 
@@ -1074,6 +1101,7 @@ SgTypeString::get_mangled (void) const
   // printf ("LEAVING: In SgTypeString::get_mangled(): definedUsingScalarLength = %s lengthScalar = %zu lengthExpression = %p mangled_name = %s \n",p_definedUsingScalarLength ? "true" : "false",p_lengthScalar,p_lengthExpression,mangled_name.str());
 
      return mangled_name;
+#endif
    }
 
 SOURCE_GET_MANGLED_STRING_TYPE_END

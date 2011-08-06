@@ -2587,7 +2587,7 @@ buildImplicitVariableDeclaration( const SgName & variableName )
 
      astNameStack.pop_front();
      astNodeStack.push_front(initializedName);
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("Calling buildVariableDeclaration to build an implicitly defined variable from trace_back_through_parent_scopes_lookup_variable_symbol()");
 #endif
@@ -2627,7 +2627,7 @@ buildImplicitVariableDeclaration( const SgName & variableName )
   // DQ (1/17/2011): Adding an additional test based on debugging test2007_94.f90.
      ROSE_ASSERT(initializedName->get_scope()->lookup_variable_symbol(variableName) != NULL);
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of building an implicitly defined variable from trace_back_through_parent_scopes_lookup_variable_symbol()");
 #endif
@@ -3140,7 +3140,7 @@ buildVariableDeclaration (Token_t * label, bool buildingImplicitVariable )
      variableDeclaration->get_declarationModifier().get_accessModifier().setUndefined();
 
   // DQ (11/18/2007): Save the attributes used and clear the astAttributeSpecStack for this declaration
-     while (astAttributeSpecStack.empty() == false)
+     while (astAttributeSpecStack.empty() == false)   // DXN: TODO use the global VarAttrSpec instead
         {
        // printf ("In buildVariableDeclaration(): Process attribute spec %d ",astAttributeSpecStack.front());
           setDeclarationAttributeSpec(variableDeclaration,astAttributeSpecStack.front());
@@ -4147,7 +4147,6 @@ setDeclarationAttributeSpec ( SgDeclarationStatement* variableDeclaration, int a
                processBindingAttribute(variableDeclaration);
 
             // printf ("Exiting after processing AttrSpec_language_binding = %d \n",(int)AttrSpec_language_binding);
-            // ROSE_ASSERT(false);
                break;
              }
 
@@ -4163,7 +4162,6 @@ setDeclarationAttributeSpec ( SgDeclarationStatement* variableDeclaration, int a
                outputState("In setDeclarationAttributeSpec()");
 #endif
             // printf ("Exiting after processing AttrSpec_PUBLIC = %d \n",(int)AttrSpec_PUBLIC);
-            // ROSE_ASSERT(false);
                break;
 
           case AttrSpec_PRIVATE:      variableDeclaration->get_declarationModifier().get_accessModifier().setPrivate();   break;
@@ -4192,9 +4190,23 @@ setDeclarationAttributeSpec ( SgDeclarationStatement* variableDeclaration, int a
              }
 
        // These represent special Fortran specific support in ROSE.
-          case AttrSpec_ALLOCATABLE:  variableDeclaration->get_declarationModifier().get_typeModifier().setAllocatable();  break;
+          case AttrSpec_ALLOCATABLE:
+          case ComponentAttrSpec_allocatable:
+              variableDeclaration->get_declarationModifier().get_typeModifier().setAllocatable();
+              break;
           case AttrSpec_ASYNCHRONOUS: variableDeclaration->get_declarationModifier().get_typeModifier().setAsynchronous(); break;
-          case AttrSpec_DIMENSION:    variableDeclaration->get_declarationModifier().get_typeModifier().setDimension();    break;
+          case AttrSpec_DIMENSION:
+          case ComponentAttrSpec_dimension:
+              variableDeclaration->get_declarationModifier().get_typeModifier().setDimension();
+              break;
+          case AttrSpec_CODIMENSION:
+          case ComponentAttrSpec_codimension:
+             {
+               // DXN: TODO - there is no codimension attribute specifier for SgTypeModifier.
+               // setDefault for now.
+               variableDeclaration->get_declarationModifier().get_typeModifier().setDefault();
+               break;
+             }
           case AttrSpec_INTENT:
              {
                ROSE_ASSERT(astIntentSpecStack.empty() == false);
@@ -4261,7 +4273,9 @@ setDeclarationAttributeSpec ( SgDeclarationStatement* variableDeclaration, int a
                break;
 
           case AttrSpec_POINTER:
-            // printf ("Error: POINTER is an attribute specifier that effects the associated type (no flag is provided) \n");
+          case AttrSpec_COPOINTER:
+          case ComponentAttrSpec_pointer:
+            // POINTER/COPOINTER are attribute specifiers that affect the associated type (no flag is provided);
                break;
 
           case AttrSpec_PASS:
@@ -4271,27 +4285,12 @@ setDeclarationAttributeSpec ( SgDeclarationStatement* variableDeclaration, int a
             // printf ("Error: Are these F08 attribute specs? astAttributeSpec = %d \n",astAttributeSpec);
                break;
 
-          case ComponentAttrSpec_pointer:
-            // DQ (8/29/2010): This should be enabled so that we can at least see that it is not implemented.
-            // FMZ 6/15/2009 : this should be ok
-               if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
-                    printf ("Error: POINTER (ComponentAttrSpec_pointer) is an attribute specifier that effects the associated type (no flag is provided) \n");
-            // ROSE_ASSERT(false);
-               break;
-
-          case ComponentAttrSpec_allocatable:
-               printf ("Error: ComponentAttrSpec_allocatable used as an attribute specifier (unclear how to process this) \n");
-               ROSE_ASSERT(false);
-               break;
-
           case ComponentAttrSpec_access_spec:
                printf ("Error: ComponentAttrSpec_access_spec used as an attribute specifier (unclear how to process this) \n");
-            // ROSE_ASSERT(false);
                break;
 
           case ComponentAttrSpec_kind:
                printf ("Error: ComponentAttrSpec_kind used as an attribute specifier (unclear how to process this) \n");
-            // ROSE_ASSERT(false);
                break;
 
           case ComponentAttrSpec_len:
@@ -4301,24 +4300,9 @@ setDeclarationAttributeSpec ( SgDeclarationStatement* variableDeclaration, int a
                ROSE_ASSERT(false);
                break;
 
-       // DQ (8/29/2010): Added support for new enum values
-          case ComponentAttrSpec_codimension:
-               printf ("Error: ComponentAttrSpec_codimension used as an attribute specifier (unclear how to process this) \n");
-               ROSE_ASSERT(false);
-               break;
-
-       // DQ (8/29/2010): Added support for new enum values
           case ComponentAttrSpec_contiguous:
                printf ("Error: ComponentAttrSpec_contiguous used as an attribute specifier (unclear how to process this) \n");
                ROSE_ASSERT(false);
-               break;
-
-       // DQ (8/29/2010): Added support for new enum values
-          case ComponentAttrSpec_dimension:
-               if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
-                    printf ("Error: ComponentAttrSpec_dimension used as an attribute specifier (unclear how to process this) \n");
-            // ROSE_ASSERT(false);
-               variableDeclaration->get_declarationModifier().get_typeModifier().setDimension();
                break;
 
           default:
@@ -4475,7 +4459,7 @@ convertTypeOnStackToArrayType( int count )
      if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
           printf ("In convertTypeOnStackToArrayType(count = %d) \n",count);
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of convertTypeOnStackToArrayType()");
 #endif
@@ -5459,6 +5443,9 @@ buildVariableDeclarationAndCleanupTypeStack( Token_t * label )
   // I am trying to have variable built earlier than before since the Fortran "include"
   // mechanism can be called before this R501 rule and that causes problems.  Basically
   // each new include file needs to be started with an empty stack(s).
+
+    //    if (!astNodeStack.empty())
+
      if (astNodeStack.empty() == false && astBaseTypeStack.empty() == false)
         {
 #if 1
@@ -6341,7 +6328,7 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
 
                     ROSE_ASSERT(!astBaseTypeStack.empty());
 
-                    if (!astTypeStack.empty()) astTypeStack.pop_front();
+                    // if (!astTypeStack.empty()) astTypeStack.pop_front();  // DXN (06/13/2011)
 
                     SgPointerType* pointerType = astTypeStack.empty()?
                             new SgPointerType(astBaseTypeStack.front()):
@@ -6530,3 +6517,4 @@ buildInitializedNameAndPutOntoStack(const SgName & name, SgType* type, SgInitial
 
      return initializedName;
    }
+

@@ -1,0 +1,82 @@
+! attributes that can be used with ALLOCATABLE are
+! DIMENSION (with deferred shape), PRIVATE, PUBLIC, SAVE, TARGET
+! POINTER is often used in conjunction with ALLOCATABLE.
+! Attributes compatible with POINTER are 
+! DIMENSION (with deferred shape), OPTIONAL, SAVE, PUBLIC, PRIVATE
+! CAF 2.0 allows pointer to coarray
+!
+! BUG: translation of complex numbers is incorrect (1, 2) -> ((1,2))
+MODULE attrs_pointer_coarray
+!
+  REAL, ALLOCATABLE, PRIVATE, SAVE, TARGET, CODIMENSION[*] :: a (:, :) 
+  LOGICAL, SAVE, TARGET, DIMENSION (:), ALLOCATABLE, PUBLIC :: b[*]
+  REAL, SAVE, PRIVATE, POINTER, CODIMENSION[*], DIMENSION(:,:) :: gp => NULL()
+!  
+  TYPE :: Rec
+    PRIVATE
+    ! an allocatable 1-dim coarray of 1-dim array of logical  
+    LOGICAL, DIMENSION (:), ALLOCATABLE, CODIMENSION[*], PUBLIC :: a
+    
+    ! an allocatable 1-dim coarray of 2-dim real array
+    REAL,  PUBLIC, ALLOCATABLE :: b (:, :)[*]
+    
+    ! a pointer to a 1-dim coarray of integer
+    INTEGER,CODIMENSION[*],  PUBLIC, POINTER :: pci
+    
+    ! a pointer to a 1-dim coarray of 2-dim complex array.
+    COMPLEX, POINTER, PUBLIC :: pc1c(:)[*]
+  END TYPE
+!  
+  CONTAINS
+!  
+  SUBROUTINE MySub(n, m, d, c)
+  !
+    INTEGER n, m
+    REAL, OPTIONAL, DIMENSION(:, :), POINTER :: c[*]
+    LOGICAL, POINTER, CODIMENSION[*] :: d(:)
+    ALLOCATE(a(n,n)[5])
+    ALLOCATE(b(m)[])
+    IF (PRESENT(c)) THEN 
+      c => a
+    ELSE
+      c => gp
+    ENDIF
+    d => b
+  !
+  END SUBROUTINE
+!
+END MODULE
+
+PROGRAM prog
+USE attrs_pointer_coarray
+!
+REAL, POINTER, DIMENSION(:,:), CODIMENSION[*] :: pa
+LOGICAL, POINTER :: pb(:)[*]
+TYPE(Rec), SAVE, POINTER :: p
+REAL r
+INTEGER k
+LOGICAL f
+COMPLEX x
+!
+CALL MySub(2, 3, pb, pa)
+CALL MySub(4, 5, pb)
+pa(6,7) = 7.8
+pb(9) = .true.
+!
+ALLOCATE(p)
+ALLOCATE(p%a(6)[]) ! allocate a coarray of 1-dim logical array of size 6 on all processors
+ALLOCATE(p%b(7,11)[10]) ! allocate a coarray of 2-dim real array of shape (7,11) on 10 processors
+ALLOCATE(p%pci) ! allocate a pointer to a coarray of integer
+ALLOCATE(p%pc1c) ! p%pc1c is a pointer to a coarray of 1-dim array of complex
+ALLOCATE(p%pc1c(99)[2]) ! allocate a coarray of 1-dim array of complex of size 99 on 2 processors
+
+p%a(5) = .true.
+p%a(5)[6] = .false.
+p%pci = 10
+k = p%pci[3]
+r = p%b(3,4)
+r = p%b(3,4)[7]
+p%pc1c(88) = (1.0, 2.0)  ! BUG: rhs translated as ((1.0, 2.0))
+x = p%pc1c(99)[10]
+!
+END

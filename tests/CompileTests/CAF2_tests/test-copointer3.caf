@@ -1,6 +1,0 @@
-! copointer to scalar
-program prog3
- integer, copointer:: cp
- cp[] = 5
-end program
-

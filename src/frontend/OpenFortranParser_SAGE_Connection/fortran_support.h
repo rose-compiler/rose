@@ -138,7 +138,7 @@ class MultipartReferenceType
           SgName name;
           bool hasSelectionSubscriptList;
           bool hasImageSelector;
-          bool hasCo_deref;  // DXN (04/22/2011): for copointer derefencing
+          bool hasCo_deref;  // DXN (04/22/2011): for copointer dereference
 
           MultipartReferenceType ( const SgName & input_name = "", const bool & input_hasSelectionSubscriptList = false, const bool & input_hasImageSelector = false,
                                    const bool & input_hasCo_deref = false)  // DXN (04/22/2011): add default values to avoid writing a separate default constructor
@@ -284,7 +284,7 @@ extern void buildAttributeSpecificationStatement ( SgAttributeSpecificationState
 // void setDeclarationAttributeSpec ( SgVariableDeclaration* variableDeclaration, int astAttributeSpec );
 void setDeclarationAttributeSpec ( SgDeclarationStatement* variableDeclaration, int astAttributeSpec );
 
-SgArrayType* convertTypeOnStackToArrayType ( int count );
+SgArrayType* convertTypeOnStackToArrayType ( int count = 1 );
 
 void processBindingAttribute( SgDeclarationStatement* declaration);
 
@@ -382,6 +382,8 @@ void convertBaseTypeToArrayWhereAppropriate();
 
 //! Refactored code to support R504.
 SgInitializedName* buildInitializedNameAndPutOntoStack(const SgName & name, SgType* type, SgInitializer* initializer);
+
+
 
 // endif for ROSE_FORTRAN_SUPPORT
 #endif
