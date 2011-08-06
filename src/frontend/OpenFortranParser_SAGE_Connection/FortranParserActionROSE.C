@@ -3481,6 +3481,7 @@ void c_action_entity_decl(Token_t * id)
                  // restricted to function calls uses as initializers.
 
                     size_t astExpressionStackSize = astExpressionStack.size();
+#if IGNORE_CER_CHANGES
                     bool useAggregateInitializer = true;
                     if (astExpressionStackSize == 1)
                        {
@@ -3491,10 +3492,23 @@ void c_action_entity_decl(Token_t * id)
                               useAggregateInitializer = false;
                             }
                        }
+#else
+                 // CER (8/1/2011): Arrays can be initialized by: 1. a scalar; 2. or an array
+                 // initialization expression.  If an array initialization, then the initializer
+                 // expression will be an SgAggregateInitializer, otherwise build a
+                 // SgAssignInitializer.  This allows the initializer to be unparsed as a scalar.
+
+                    bool useAggregateInitializer = false;
+                    if (isSgAggregateInitializer(astExpressionStack.front()) != NULL)
+                       {
+                         useAggregateInitializer = true;
+                       }
+#endif
 
                  // printf ("In R504 R503-F2008 c_action_entity_decl(): useAggregateInitializer = %s \n",useAggregateInitializer ? "true" : "false");
                     if (useAggregateInitializer == true)
                        {
+#if IGNORE_CER_CHANGES
                          SgExprListExp* exprList = new SgExprListExp();
                          setSourcePosition(exprList);
 
@@ -3508,15 +3522,26 @@ void c_action_entity_decl(Token_t * id)
                       // Use a SgAggregateInitializer
                          initializer = new SgAggregateInitializer(exprList, NULL);
                          setSourcePosition(initializer);
+
+                         astExpressionStack.clear();
+#else
+                      // CER (8/3/2011): The front of the stack is an SgAggregateInitializer
+                      // so use it as the initializer (the code protected by IGNORE_CER_CHANGES
+                      // introduces a bug because a new SgAggregateInitializer is created that
+                      // contains the original SgAggregateInitializer).
+
+                         initializer = isSgAggregateInitializer(astExpressionStack.front());
+                         ROSE_ASSERT(initializer != NULL);
+                         astExpressionStack.pop_front();
+#endif
                        }
                       else
                        {
                          ROSE_ASSERT(astExpressionStackSize == 1);
                          initializer = new SgAssignInitializer(astExpressionStack.front(),NULL);
                          setSourcePosition(initializer);
+                         astExpressionStack.clear();
                        }
-
-                    astExpressionStack.clear();
 
                  // printf ("In R504 R503-F2008 c_action_entity_decl(): ################# Built a SgAggregateInitializer (%p) \n",initializer);
 
