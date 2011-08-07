@@ -1,0 +1,103 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgCallExpression
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgCallExpression
+\brief This class represents the concept of a generic call expression.
+
+    This IR node is intended for use with languages that allow calls of arbitary
+expressions, even when the called expression does not resolve to a function type. For
+statically-typed languages, use SgFunctionCallExp.
+
+    Note that a function call is assembled from a function expression and arguments.
+The two are bound together in a function call, function expressions are never called
+directly (the function call argument list can be empty).
+
+\internal When overloaded operators are used the function name becomes the name of the
+    operator (e.g. "operator+").  In these cases the precedence of the operator is that
+    of the operator being overloaded and is different from a normal function call.  Most
+    of this detail is hidden since operands in the expression tree are represented by functions
+    with parameter lists (represented by a SgExprListExp), and not simple expression trees.
+
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgCallExpression data members
+/////////////////////////////////////////////////////////////////////////
+
+/*! \var SgCallExpression::p_function
+\brief This pointer points to the expression being assembled with argments for be a
+    function call.
+
+    Note that this is not always a SgFunctionRefExp or a SgMemberFunctionRefExp
+and can be quite complex where pointers are referenced and function calls assembled using
+pointers to functions and member functions.
+
+    This member is named 'p_function' for historical reasons, but it can point to any
+arbitrary expression.
+
+\internal Derived classes may restrict the list of acceptable types of IR nodes here.
+    They are listed and tested in the AST consistency tests
+    (see src/midend/astDiagnostics/AstConsistencyTests.C for details).
+
+*/
+
+/*! \var SgCallExpression::p_args
+\brief This is a pointer to a SgExprListExp (list of function arguments)
+
+*/
+
+/*! \var SgCallExpression::p_expression_type
+\brief This is the type of the return value of the function.
+
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgCallExpression member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+
+/*!
+\fn SgCallExpression::get_type()
+\brief The type of this call expression.
+
+    If the 'p_function' data member resolves to a function type, this expression returns the corresponding return type. Otherwise, the return value is undefined.
+*/
+
+/*!
+\fn SgCallExpression::SgCallExpression ( Sg_File_Info* startOfConstruct = NULL, SgClassSymbol *symbol = NULL )
+\brief This is the constructor.
+
+   This constructor builds the SgCallExpression base class.
+
+\param startOfConstruct represents the position in the source code
+*/
+
+/*!
+\fn SgCallExpression::~SgCallExpression()
+\brief This is the destructor.
+
+   There are a lot of things to delete, but nothing is deleted in this destructor.
+*/
+
+/*!
+\fn SgCallExpression::isSgCallExpression (SgNode *s)
+\brief Cast function (from derived class to SgCallExpression pointer).
+
+   This functions returns a SgCallExpression pointer for any input of a 
+pointer to an object derived from a SgCallExpression.
+
+\return Returns valid pointer to SgCallExpression if input is derived from a SgLocatedNode.
+*/
+
+/*!
+\fn SgCallExpression::isSgCallExpression (const SgNode *s)
+\brief Cast function (from derived class to SgCallExpression pointer).
+
+   This functions returns a SgCallExpression pointer for any input of a 
+pointer to an object derived from a SgCallExpression.
+
+\return Returns valid pointer to SgCallExpression if input is derived from a SgLocatedNode.
+*/
+
