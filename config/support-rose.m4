@@ -2352,6 +2352,7 @@ tests/RunTests/A++Tests/Makefile
 tests/RunTests/AstDeleteTests/Makefile
 tests/RunTests/FortranTests/Makefile
 tests/RunTests/FortranTests/LANL_POP/Makefile
+tests/RunTests/PythonTests/Makefile
 tests/PerformanceTests/Makefile
 tests/CompilerOptionsTests/Makefile
 tests/CompilerOptionsTests/testCpreprocessorOption/Makefile

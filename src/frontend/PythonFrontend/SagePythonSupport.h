@@ -38,7 +38,44 @@ sage_appendStatements(PyObject *self, PyObject *args);
  * Build a SgFunctionParameterList from the given Python
  * Arg object.
  */
-SgFunctionParameterList*
-buildFunctionParameterList(PyObject* args, PyObject* py_defaults_list);
+PyObject*
+sage_buildFunctionParameterList(PyObject* args, PyObject* kwargs);
+
+/**
+ * Build a reference to the name in the given scope. If no such name
+ * exists, build an opaque VarRefExp.
+ */
+SgExpression* buildReference(char* id, SgScopeStatement* scope);
+
+/**
+ * Convenience function for wrapping arbitrary statements in
+ * SgDeclarationStatements, so that any statement can be placed in
+ * global or class scope.
+ */
+SgDeclarationStatement* normalizeToDeclarationStatement(SgStatement* stmt);
+
+template <typename SgNode_T>
+static int sage_converter(PyObject* object, void** address) {
+    if (! PyObject_IsTrue(object)) {
+        *address = NULL;
+        return true;
+    }
+
+    if (! PyCapsule_CheckExact(object)) {
+        PyErr_SetString(PyExc_TypeError, "expected 'capsule' type");
+        return false;
+    }
+
+    SgNode_T* sg_node = PyDecapsulate<SgNode_T>(object);
+    if (! dynamic_cast<SgNode_T*>(sg_node)) {
+        PyErr_SetString(PyExc_TypeError, "capsule contained wrong SgNode type");
+        return false;
+    }
+
+    *address = sg_node;
+    return true;
+}
+#define SAGE_CONVERTER(sg_t) \
+  (int (*)(PyObject*,void**)) &sage_converter<sg_t>
 
 #endif /* SAGE_PYTHON_SUPPORT_H_ */
