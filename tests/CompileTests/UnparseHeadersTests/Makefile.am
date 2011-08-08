@@ -6,14 +6,14 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 
 TESTCODES_REQUIRED_TO_PASS = \
-     test1/Simple.C
-     #test2/Simple.C \
-     #test3/Simple.C \
-     #test4/Simple.C \
-     #test5/Simple.C \
-     #test6/subdir/Simple.C \
-     #test7/Simple.C \
-     #test8/Simple.C
+     test1/Simple.C \
+     test2/Simple.C \
+     test3/Simple.C \
+     test4/Simple.C \
+     test5/Simple.C \
+     test6/subdir/Simple.C \
+     test7/Simple.C \
+     test8/Simple.C
 
 TESTCODES_CURRENTLY_FAILING =
 
@@ -41,14 +41,14 @@ TestUnparseHeaders_SOURCES = UnparseHeadersTransformVisitor.C TestUnparseHeaders
 
 include_HEADERS = UnparseHeadersTransformVisitor.h
 
-EXTRA_DIST = test1
+#EXTRA_DIST = test1
 #TODO: Use a wildcard instead of specifying each folder separately.
-#EXTRA_DIST = test1 test2 test3 test4 test5 test6 test7 test8
+EXTRA_DIST = test1 test2 test3 test4 test5 test6 test7 test8
 
 # Note that although all tests are run with the same -I paths, it is fine as long as we
 # ensure that the file names inside the -I paths are unique for each test.
-TEST_INCLUDE_PATHS =
-#TEST_INCLUDE_PATHS = -I$(srcdir)/test8/subdir
+#TEST_INCLUDE_PATHS =
+TEST_INCLUDE_PATHS = -I$(srcdir)/test8/subdir
 
 # Add the dependence upon the source file to trigger recompilation each time the makefile is run!
 $(TEST_Objects): TestUnparseHeaders 
