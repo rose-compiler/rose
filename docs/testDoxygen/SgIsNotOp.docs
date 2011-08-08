@@ -1,0 +1,376 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgIsNotOp
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgIsNotOp
+\brief This class represents the physical disequality (often called pointer disequality) operator
+for languages that also define a content disequality operator.
+
+This node is intended for use
+with Python, where it represents the "is not" token. It should not be confused with the
+SgNotEqualOp operator, which represents the "!=" token in Python and is used for content disquality.
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgNode data members
+/////////////////////////////////////////////////////////////////////////
+
+/*!
+\var SgNode::p_parent
+\brief This is the pointer to the parent IR node in the AST.
+
+   This is the pointer to the parent IR node.  It is a valid pointer
+on all nodes that are traversed (SgExpressions, SgStatements, SgInitializedName, etc.)
+However it is not set on SgTypes and SgSymbols,both of which are shared internally.
+This pointer is mostly set in post processing of the Sage III AST, until
+this point it is not reliable.
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgInitializedName member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+/*!
+\fn SgNode::copy(const SgCopyHelp & help ) const
+\brief This function clones the current IR node object recursively or not, depending on the argument
+
+   This function performs a copy based on the specification of the input parameter.
+The input parameter is used to determin which data members are copied by reference
+and which are copied by value.
+
+\param help - If this argument is of type SgTreeCopy, then the
+IR node is cloned recursively. If its of type SgShallowCopy
+only the first level of the IR node is copied, everything else is 
+left pointing to the the original IR node's object's data members.
+\return a pointer to the new clone.
+
+\internal It appears the the copy functions don't set the parents of anything that they do
+    a deep copy of! This can cause AST tests to fail. In particular some functions that
+    require the parent pointers to be valid will return NULL pointers (e.g. SgInitializedName::get_declaration()). 
+    It might be that we should allow this to be done as part of the
+    SgCopyHelp::clone function or perhaps another member function of SgCopyHelp would be
+    useful for this support.  It is not serious if the AST post processing is done since
+    that will set any NULL pointers that are found within its traversal.
+
+\exception none No exceptions are thrown by this function.
+
+*/
+
+/*!
+\fn SgNode::SgNode()
+\brief This is the constructor
+
+   This constructor builds a SgNode, always used as a base class.
+All Sage III IR nodes are derived from this class.
+
+\sa 
+\ref SgNode_usage "Example:create an SgNode object"
+*/
+
+/*!
+\fn SgNode::~SgNode()
+\brief This is the destructor.
+
+   There is nothing to delete in this object.
+*/
+
+/*!
+\fn SgNode::sage_class_name() const
+\brief generates string representing the class name: (e.g. for SgNode returns "SgNode").
+
+   This function is useful for debugging and error reporting.  It
+returns the name of the IR node.
+
+\deprecated Use class_name() which returns a C++ string object.
+
+\return a char* pointer to a C style string.
+*/
+
+/*!
+\fn string SgNode::class_name() const
+\brief generates string representing the class name: (e.g. for SgNode returns "SgNode").
+
+   This function is useful for debugging and error reporting.  It
+returns the name of the IR node.
+
+\return a C++ string object.
+*/
+
+/*!
+\fn SgNode::variant() const
+\brief Older version function returns enum value "NODE"
+
+   This function is an older version of the variant function.
+This function is useful for debugging and error reporting.  It
+returns the name of the IR node.
+
+\return an int value.
+\deprecated Use Tvariant() instead.  Older enum values have inconsistant 
+            names and are being removed.
+*/
+
+/*!
+\fn SgNode::getVariant() const
+\brief Older version function returns enum value "NODE"
+
+   This function is an older version of the variant function.
+This function is useful for debugging and error reporting.  It
+returns the name of the IR node.
+
+\return an int value.
+\deprecated Use Tvariant() instead.  Older enum values have inconsistant 
+            names and are being removed.
+*/
+
+/*!
+\fn SgNode::variantT() const
+\brief returns enum value "V_SgNode"
+
+   This function is useful for debugging and error reporting.  It
+returns the name of the IR node.
+
+\return an enum value (type: VariantT).
+\deprecated Use Tvariant() instead.  Older enum values have inconsistant 
+            names and are being removed.
+*/
+
+/*
+        REMOVED FROM C++ SOURCE CODE
+\fn SgNode::error()
+\brief tests for internal errors.
+
+\internal Only a few tests are done.
+
+\deprecated This function does not appear to be used.
+\return Returns bool; true if there is an error, and false if OK.
+*/
+
+/*!
+\fn SgNode::get_isModified() const
+\brief \b FOR \b INTERNAL \b USE All nodes in the AST contain a isModified flag.
+
+     This flag can be set but this is typically an internal function used to track the updates to AST.
+
+\return Returns bool; true if IR node has been modified.
+*/
+
+/*!
+\fn SgNode::set_isModified(bool isModified)
+\brief Acess function for isModified flag.
+
+    This flag records if the current IR node has been modified. It is set to false after
+    and ROSE front-end processing.
+*/
+
+/*! \name Traversal Support
+    @{
+*/
+/*!
+\fn SgNode::get_isVisited() const
+\brief DOCS IN SgNode.docs: Access function for p_isVisited flag used previously by the AST traversals.
+
+\deprecated This function is not used and will be removed.
+\return Returns bool; true if previously visited within current AST traversal.
+*/
+
+/*!
+\fn SgNode::set_isVisited(bool isVisited)
+\brief Access function for p_isVisited flag used previously by the AST traversals.
+
+\deprecated This function is not used and will be removed.
+*/
+/*@}*/
+
+/*
+\fn SgNode::get_referenceCount() const
+\brief Access function for p_referenceCount value used to support memory management.
+
+\deprecated This function is not used and will likely be removed.
+\return Returns int; 0 if not referenced, 1 or greater for more references.
+*/
+
+/*
+\fn SgNode::set_referenceCount(int referenceCount)
+\brief Access function for p_referenceCount value used to support memory management.
+
+\deprecated This function is not used and will likely be removed.
+*/
+
+/*
+\fn SgNode::get_singleAttribute () const
+\brief Access function for p_singleAttribute used in OLD Sage II attribute mechanism.
+
+\deprecated This function is not used and will likely be removed.
+*/
+
+/*
+\fn SgNode::set_singleAttribute (SgAttribute *singleAttribute)
+\brief Access function for p_singleAttribute used in OLD Sage II attribute mechanism.
+
+\deprecated This function is not used and will likely be removed.
+*/
+
+/*
+\fn SgNode::get_uattributes () const
+\brief Access function for p_uattributes used in OLD Sage II attribute mechanism.
+
+\deprecated This function is not used and will likely be removed.
+*/
+ 	
+/*
+\fn SgNode::set_uattributes (SgAttributePtrList uattributes)
+\brief Access function for p_uattributes used in OLD Sage II attribute mechanism.
+
+\deprecated This function is not used and will likely be removed.
+*/
+
+ 	
+/*!
+\fn SgNode::isSgNode (SgNode *s)
+\brief Cast function (from derived class to SgNode pointer).
+
+   This functions returns a SgNode pointer for any input of a 
+pointer to an object derived from a SgNode.
+
+\return Returns valid pointer to SgNode if input is derived from a SgNode.
+*/
+
+/*!
+\fn SgNode::isSgNode (const SgNode *s)
+\brief Cast function (from derived class to SgNode pointer).
+
+   This functions returns a SgNode pointer for any input of a 
+pointer to an object derived from a SgNode.
+
+\return Returns valid pointer to SgNode if input is derived from a SgNode.
+*/
+
+/*!
+\fn SgNode::set_parent (SgNode *parent)
+\brief Sets parent node for any IR node.
+   The parent node in the AST can be set but this is typically 
+an internal function used to build the AST.
+
+\param parent - Pointer to parent node to store within the current IR node.
+
+\return returns void.
+*/
+
+/*!
+\fn SgNode::get_parent() const
+\brief Access function for parent node in AST.
+
+   The parent node in the AST can be accessed, in general only the project node, symbols and 
+types should be NULL.  Since parent nodes are set within post processing
+(and using the ROSE AST traveral mechanism) the parents are guarenteed to
+match the traversal, and no other concept of what could be a parent within
+the AST (e.g a parent concept based on scope).  Because the traversal is based
+on the source code layout, what is a parent is similarly based on the source
+code layout and not any concept of scope.  Note that the scope of relavant
+IR nodes is stored explicitly in the AST, precisely because it is not always
+related to the layout of the source code (and thus not related to the concept 
+of parent in the AST).
+
+\return Returns pointer to SgNode
+*/
+
+/*!
+\fn SgNode::unparseToString( SgUnparse_Info* info )
+\brief This function unparses the AST node (source code only, excluding comments and white space)
+
+\parm info is optional (used only to specify code generation options).
+
+   This function is useful for converting AST nodes to strings as part of general
+debugging or the construction of other strings for use as input to the AST rewrite
+mechansims which accepts source code strings.  See tutorial for examples of this.
+
+  This function uses the SgUnparse_Info as an inherited attribute internally
+and using this attribute it will correctly handled many subtle details that
+will be ignored if the attribute is not provided.  For example, the SgUnparse_Info
+can record if the statement is in a conditional and if so then the trailing ";"
+will be omitted in the generated code. See the SgUnparse_Info documentation for
+the numerous other internal settings that can effect the generated code.  Because
+of these details, the unparseToString() function can not always be used to generate
+compiliable code.
+
+
+\return Returns std::string
+*/
+
+/*!
+\fn SgNode::unparseToCompleteString()
+\brief This function unparses the AST node (including comments and white space)
+
+   This function is a complement to the unparseToString() function and includes
+any associated comments and preprocessor control directives.  Because C preprocessor
+control directive can be included string generated using this function may or may 
+not be appropriate for use as input to the AST rewrite mechanism.
+
+\todo This function needs a better name since it is unclear what the "complete" string is.
+
+\return Returns std::string
+*/
+
+
+/*!
+\fn SgNode::get_traversalSuccessorContainer()
+\brief \b FOR \b INTERNAL \b USE within ROSE traverals mechanism only.  
+
+   This function builds and returns a copy of ordered container 
+holding pointers to children of this node in a traversal. It is 
+associated with the definition of a tree that is travered by the
+AST traversal mechanism; a tree that is embeded in the AST (which
+is a more general graph).  This function is used within the implementation
+of the AST traversal and has a semantics may change in subtle ways 
+that makes it difficult to use in user code.  It can return unexpected
+data members and thus the order and the number of elements is unpredicable
+and subject to change.
+
+\warning This function can return unexpected data members and thus the 
+         order and the number of elements is unpredicable and subject 
+         to change.
+
+\return Returns ordered STL Container of pointers to children nodes in AST.
+*/
+
+
+/*!
+\fn SgNode::get_traversalSuccessorNamesContainer()
+\brief \b FOR \b INTERNAL \b USE within ROSE traverals mechanism only.
+
+   This function builds and returns a copy of ordered container 
+holding strings used to name data members that are traversed in the IR 
+node. It is associated with the definition of a tree that is travered by the
+AST traversal mechanism; a tree that is embeded in the AST (which
+is a more general graph).  This function is used within the implementation
+of the AST traversal and has a semantics may change in subtle ways 
+that makes it difficult to use in user code.  It can return unexpected
+data members and thus the order and the number of elements is unpredicable
+and subject to change.
+
+\warning This function can return unexpected data members and thus the 
+         order and the number of elements is unpredicable and subject 
+         to change.
+
+Each string is a name of a member variable holding a pointer to a 
+child in the AST. The names are the same as used in the generated enums for 
+accessing attributes in a traversal. The order is the same in which they are 
+traversed and the same in which the access enums are defined. Therefore this 
+method can be used to get the corresponding name (string) of an access enum 
+which allows to produce more meaningful messages for attribute computations.
+
+\return Returns ordered STL container of names (strings) of access names to children nodes in AST.
+*/
+
+
+/*!
+\fn SgNode::roseRTI ()
+\brief \b FOR \b INTERNAL \b USE Access to Runtime Type Information (RTI) for this IR nodes.
+
+     This function provides runtime type information for accessing the
+structure of the current node.  It is useful for generating code which 
+would dump out or rebuild IR nodes.
+
+\return Returns a RTIReturnType object (runtime type information).
+*/
+

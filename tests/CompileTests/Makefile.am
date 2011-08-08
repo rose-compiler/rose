@@ -11,7 +11,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 #      A++Tests OvertureCode P++Tests A++Code ElsaTestCases \
 #      ExpressionTemplateExample_tests hiddenTypeAndDeclarationListTests \
 #      sizeofOperation_tests MicrosoftWindows_tests nameQualificationAndTypeElaboration_tests \
-#      NewEDGInterface_C_tests
+#      NewEDGInterface_C_tests UnparseHeadersTests
 
 # DQ (12/5/2007): Removed A++Code because this takes a long time (about 1 minute).
 
@@ -52,7 +52,7 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
       OvertureCode P++Tests A++Code \
       ExpressionTemplateExample_tests hiddenTypeAndDeclarationListTests \
       sizeofOperation_tests MicrosoftWindows_tests nameQualificationAndTypeElaboration_tests \
-      NewEDGInterface_C_tests
+      NewEDGInterface_C_tests UnparseHeadersTests
 
 # TOO (2/16/2011): Errors with Tensilica's Xtensa compilers as alternative backend compilers. We can
 # gradually enable these tests at a later stage if necessary.
