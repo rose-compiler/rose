@@ -1129,16 +1129,17 @@ sage_buildWhile(PyObject *self, PyObject *args)
 PyObject*
 sage_buildWith(PyObject *self, PyObject *args)
 {
-    SgExpression *expr;
-    SgStatement *body;
-    SgStatement *vars = NULL;
-    if (! PyArg_ParseTuple(args, "O&O&|O&", SAGE_CONVERTER(SgExpression), &expr,
-                                            SAGE_CONVERTER(SgStatement), &body,
-                                            SAGE_CONVERTER(SgStatement), &vars))
+    SgStatement *sg_body;
+    SgExpression *sg_exp, *sg_target;
+    if (! PyArg_ParseTuple(args, "O&O&O&", SAGE_CONVERTER(SgExpression), &sg_exp,
+                                           SAGE_CONVERTER(SgExpression), &sg_target,
+                                           SAGE_CONVERTER(SgStatement),  &sg_body))
         return NULL;
 
-    std::vector<SgVariableDeclaration*> no_vars; //PyDecapsulate<SgStatement>(py_vars);
-    SgWithStatement* sg_with_stmt = SageBuilder::buildWithStatement(expr, no_vars, body);
+    SgExpression* sg_with_item = (sg_target == NULL) ? sg_exp :
+        SageBuilder::buildAssignOp(sg_target, sg_exp);
+
+    SgWithStatement* sg_with_stmt = SageBuilder::buildWithStatement(sg_with_item, sg_body);
     return PyEncapsulate(sg_with_stmt);
 }
 
