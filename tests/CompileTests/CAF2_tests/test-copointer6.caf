@@ -1,9 +1,0 @@
-program prog6
-  integer :: coI[*]
-  integer, copointer:: cp
-  coI[2] = 99
-  coI[6@team_default] = 77
-  cp => coI[3]
-  cp[] = 5
-end program
-

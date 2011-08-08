@@ -28,10 +28,16 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
+#include "IncludedFilesUnparser.h"
+#include "FileHelper.h"
+
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 
 // extern ROSEAttributesList *getPreprocessorDirectives( char *fileName); // [DT] 3/16/2000
+
+// DQ (6/25/2011): Forward declaration for new name qualification support.
+void generateNameQualificationSupport( SgNode* node, std::set<SgNode*> & referencedNameSet );
 
 //-----------------------------------------------------------------------------------
 //  Unparser::Unparser
@@ -246,7 +252,7 @@ Unparser::unparseProject ( SgProject* project, SgUnparse_Info& info )
 
 // DQ (9/2/2008): Seperate out the details of unparsing source files from binary files.
 void
-Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info )
+Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStatement* unparseScope )
    {
   // ROSE_ASSERT(file != NULL);
   // unparseFile (file,info);
@@ -270,7 +276,8 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info )
      file->display("file: Unparser::unparseFile");
 #endif
 
-#if 1
+  // DQ (5/15/2011): Moved this to be called in the postProcessingSupport() (before resetTemplateNames() else template names will not be set properly).
+
   // DQ (11/10/2007): Moved computation of hidden list from astPostProcessing.C to unparseFile so that 
   // it will be called AFTER any transformations and immediately before code generation where it is 
   // really required.  This part of a fix for Liao's outliner, but should be useful for numerous 
@@ -281,13 +288,28 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info )
         {
        // DQ (5/22/2007): Moved from SgProject::parse() function to here so that propagateHiddenListData() could be called afterward.
        // DQ (5/8/2007): Now build the hidden lists for types and declarations (Robert Preissl's work)
+#if 0
+       // DQ (6/25/2011): This will be the default (the old system for name qualification so that initial transition windows will provide backward compatability).
           Hidden_List_Computation::buildHiddenTypeAndDeclarationLists(file);
+#else
+       // DQ (5/15/2011): Test clearing the mangled name map.
+       // printf ("Calling SgNode::clearGlobalMangledNameMap() \n");
+
+       // DQ (6/25/2011): Test if this is required...it works, I think we don't need to clear the global managled name table...
+       // SgNode::clearGlobalMangledNameMap();
+
+        // Build the local set to use to record when declaration that might required qualified references have been seen.
+          std::set<SgNode*> referencedNameSet;
+
+       // printf ("Developing a new implementation of the name qualification support. \n");
+          generateNameQualificationSupport(file,referencedNameSet);
+       // printf ("DONE: new name qualification support built. \n*************************\n\n");
+#endif
 
        // DQ (6/5/2007): We actually need this now since the hidden lists are not pushed to lower scopes where they are required.
        // DQ (5/22/2007): Added support for passing hidden list information about types, declarations and elaborated types to child scopes.
           propagateHiddenListData(file);
         }
-#endif
 
   // Turn ON the error checking which triggers an if the default SgUnparse_Info constructor is called
      SgUnparse_Info::set_forceDefaultConstructorToTriggerError(true);
@@ -322,7 +344,29 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info )
                ( (file->get_outputLanguage() == SgFile::e_C_output_language) || (file->get_outputLanguage() == SgFile::e_Cxx_output_language) ) )
              {
             // Unparse using C/C++ unparser by default
-               u_exprStmt->unparseStatement(globalScope, info);
+               // negara1 (06/29/2011): If unparseScope is provided, unparse it. Otherwise, unparse the global scope (the default behavior).
+               if (unparseScope != NULL) {                   
+                   if (isSgGlobal(unparseScope) != NULL || isSgClassDefinition(unparseScope) != NULL) {                       
+                       info.set_current_scope(unparseScope);
+                       const SgDeclarationStatementPtrList& declarations = unparseScope -> getDeclarationList();
+                       for (SgDeclarationStatementPtrList::const_iterator declaration = declarations.begin(); declaration != declarations.end(); declaration++) {
+                           u_exprStmt -> unparseStatement(*declaration, info);
+                       }
+                   } else {
+                       //Simulate that the unparsed scope is global in order to unparse an included file.
+                       SgGlobal* fakeGlobal = new SgGlobal(); 
+                       fakeGlobal -> set_file_info(unparseScope -> get_file_info());
+                       info.set_current_scope(fakeGlobal);
+
+                       const SgStatementPtrList& statements = unparseScope -> getStatementList();
+                       for (SgStatementPtrList::const_iterator statement = statements.begin(); statement != statements.end(); statement++) {
+                           u_exprStmt -> unparseStatement(*statement, info);
+                       }
+                   }
+                   info.set_current_scope(NULL);
+               } else {
+                   u_exprStmt->unparseStatement(globalScope, info);
+               }
              }
             else
              {
@@ -347,9 +391,9 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info )
                        {
                            if (file->get_Python_only())
                               {
-#if ROSE_USE_PYTHON
+#ifdef ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
                                   Unparse_Python unparser(this,file->get_unparse_output_filename());
-                                  unparser.unparseStatement(globalScope, info);
+                                  unparser.unparseGlobalStmt(globalScope, info);
 #else
                                   ROSE_ABORT("unparsing Python requires ROSE_USE_PYTHON be set");
 #endif
@@ -974,7 +1018,7 @@ globalUnparseToString ( const SgNode* astNode, SgUnparse_Info* inputUnparseInfoP
 #pragma omp critical (unparser)
 #endif
      {
-       returnString=globalUnparseToString_OpenMPSafe(astNode,inputUnparseInfoPointer);
+       returnString = globalUnparseToString_OpenMPSafe(astNode,inputUnparseInfoPointer);
      }
      return returnString;
    }
@@ -1127,6 +1171,9 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
                inheritedAttributeInfoPointer->set_current_scope(TransformationSupport::getGlobalScope(astNode));
              }
 #endif
+
+       // DQ (5/19/2011): Allow compiler generated statements to be unparsed by default.
+          inheritedAttributeInfoPointer->set_outputCompilerGeneratedStatements();
         }
 
      ROSE_ASSERT (inheritedAttributeInfoPointer != NULL);
@@ -1169,7 +1216,7 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
             // ROSE_ASSERT(false);
 
                SgScopeStatement* scope = templateArgument->get_scope();
-               printf ("SgTemplateArgument case: scope = %p = %s \n",scope,scope->class_name().c_str());
+            // printf ("SgTemplateArgument case: scope = %p = %s \n",scope,scope->class_name().c_str());
                inheritedAttributeInfo.set_current_scope(scope);
              }
 #endif
@@ -1181,7 +1228,6 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
   // Turn ON the error checking which triggers an error if the default SgUnparse_Info constructor is called
   // SgUnparse_Info::forceDefaultConstructorToTriggerError = true;
 
-#if 1
   // DQ (10/19/2004): Cleaned up this code, remove this dead code after we are sure that this worked properly
   // Actually, this code is required to be this way, since after this branch the current function returns and
   // some data must be cleaned up differently!  So put this back and leave it this way, and remove the
@@ -1220,7 +1266,6 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
              }
         }
        else
-#endif
         {
        // DQ (1/12/2003): Only now try to trap use of SgUnparse_Info default constructor
        // Turn ON the error checking which triggers an error if the default SgUnparse_Info constructor is called
@@ -1243,6 +1288,8 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
                  else
                   {
                  // Unparse as a C/C++ code.
+                 // printf ("Calling roseUnparser.u_exprStmt->unparseStatement() stmt = %s \n",stmt->class_name().c_str());
+                 // roseUnparser.u_exprStmt->curprint ("Output from curprint");
                     roseUnparser.u_exprStmt->unparseStatement ( const_cast<SgStatement*>(stmt), inheritedAttributeInfo );
                   }
              }
@@ -1385,24 +1432,27 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
 
                  // Perhaps the support for SgFile and SgProject shoud be moved to this location?
                     default:
-                         printf ("Error: default reached in node derived from SgSupport astNode = %s \n",astNode->sage_class_name());
+                       {
+                         printf ("Error: default reached in node derived from SgSupport astNode = %s \n",astNode->class_name().c_str());
                          ROSE_ABORT();
-                }
+                       }
+                  }
              }
-             // Liao 11/5/2010 move out of SgSupport
-             if (isSgInitializedName(astNode)) //       case V_SgInitializedName:
-              {
-             // DQ (8/6/2007): This should just unparse the name (fully qualified if required).
-             // QY: not sure how to implement this
-             // DQ (7/23/2004): This should unparse as a declaration (type and name with initializer).
-                const SgInitializedName* initializedName = isSgInitializedName(astNode);
-             // roseUnparser.get_output_stream() << initializedName->get_qualified_name().str();
-                SgScopeStatement* scope = initializedName->get_scope();
-                if (isSgGlobal(scope) == NULL && scope->containsOnlyDeclarations() == true)
+
+       // Liao 11/5/2010 move out of SgSupport
+          if (isSgInitializedName(astNode)) //       case V_SgInitializedName:
+             {
+            // DQ (8/6/2007): This should just unparse the name (fully qualified if required).
+            // QY: not sure how to implement this
+            // DQ (7/23/2004): This should unparse as a declaration (type and name with initializer).
+               const SgInitializedName* initializedName = isSgInitializedName(astNode);
+            // roseUnparser.get_output_stream() << initializedName->get_qualified_name().str();
+               SgScopeStatement* scope = initializedName->get_scope();
+               if (isSgGlobal(scope) == NULL && scope->containsOnlyDeclarations() == true)
                      roseUnparser.get_output_stream() << roseUnparser.u_exprStmt->trimGlobalScopeQualifier ( scope->get_qualified_name().getString() ) << "::";
-                roseUnparser.get_output_stream() << initializedName->get_name().str();
-                //break;
-              }
+               roseUnparser.get_output_stream() << initializedName->get_name().str();
+            // break;
+             }
 
 
        // Liao, 8/28/2009, support for SgLocatedNodeSupport
@@ -1436,53 +1486,20 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
                delete inheritedAttributeInfoPointer;
         }
 
+  // printf ("In globalUnparseToString_OpenMPSafe(): returnString = %s \n",returnString.c_str());
+
      return returnString;
    }
 
 string get_output_filename( SgFile& file)
    {
-#if 1
   // DQ (10/15/2005): This can now be made to be a simpler function!
-      if (file.get_unparse_output_filename().empty() == true)
-         {
-           printf ("Error: no output file name specified, use \"-o <output filename>\" option on commandline (see --help for options) \n");
-         }
+     if (file.get_unparse_output_filename().empty() == true)
+        {
+          printf ("Error: no output file name specified, use \"-o <output filename>\" option on commandline (see --help for options) \n");
+        }
      ROSE_ASSERT(file.get_unparse_output_filename().empty() == false);
      return file.get_unparse_output_filename();
-#else
-  // Use the filename with ".rose" suffix for the output file from ROSE (the unparsed C++ code file)
-  // This allows Makefiles to have suffix rules drive the generation of the *.C.rose from from ROSE
-  // and then permits the C++ compiler to be called to generate the *.o file from the *.C.rose file
-     char outputFilename[256];
-
-  // if (file.get_unparse_output_filename() != NULL)
-     if (file.get_unparse_output_filename().empty() == false)
-        {
-       // allow the user to specify the name of the output file
-#if 0
-          printf ("VALID file.get_unparse_output_filename() found: %s \n",
-               file.get_unparse_output_filename());
-#endif
-          sprintf(outputFilename,"%s",file.get_unparse_output_filename());
-        }
-       else
-        {
-       // use a prefix plus the original input file name to name the output file
-#if 0
-          printf ("NO VALID file.get_unparse_output_filename() found, using filename to build one: rose_<%s> \n",
-               file.getFileName());
-#endif
-          sprintf(outputFilename,"rose_%s",file.getFileName());
-
-          printf ("I think this case is never used! Exiting ... \n");
-          ROSE_ASSERT (false);
-        }
-#if 1
-     if ( file.get_verbose() == true )
-          printf ("\nROSE unparsed outputFile name is %s \n\n",outputFilename);
-#endif
-     return string(outputFilename);
-#endif
    }
 
 // DQ (10/11/2007): I think this is redundant with the Unparser::unparseFile() member function
@@ -1490,7 +1507,7 @@ string get_output_filename( SgFile& file)
 
 // Later we might want to move this to the SgProject or SgFile support class (generated by ROSETTA)
 void
-unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unparseDelegate )
+unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unparseDelegate, SgScopeStatement* unparseScope )
    {
   // DQ (1/24/2010): Refactored code to cal this more directly (part of support for SgDirectory).
   // DQ (7/12/2005): Introduce tracking of performance of ROSE.
@@ -1666,7 +1683,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
                case V_SgSourceFile:
                   {
                     SgSourceFile* sourceFile = isSgSourceFile(file);
-                    roseUnparser.unparseFile(sourceFile,inheritedAttributeInfo);
+                    roseUnparser.unparseFile(sourceFile,inheritedAttributeInfo, unparseScope);
                     break;
                   }
 
@@ -1699,6 +1716,65 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
         }
    }
 
+void prependIncludeOptionsToCommandLine(SgProject* project, const list<string>& includeCompilerOptions) {
+    SgStringList argumentList = project -> get_originalCommandLineArgumentList();
+    //Note: Insert -I options starting from the second argument, because the first argument is the name of the executable.
+    argumentList.insert(++argumentList.begin(), includeCompilerOptions.begin(), includeCompilerOptions.end());
+    project -> set_originalCommandLineArgumentList(argumentList);
+    const SgFilePtrList& fileList = project -> get_fileList();
+    for (SgFilePtrList::const_iterator sgFilePtr = fileList.begin(); sgFilePtr != fileList.end(); sgFilePtr++) {
+        argumentList = (*sgFilePtr) -> get_originalCommandLineArgumentList();
+        argumentList.insert(++argumentList.begin(), includeCompilerOptions.begin(), includeCompilerOptions.end());
+        (*sgFilePtr) -> set_originalCommandLineArgumentList(argumentList);
+    }
+}
+
+void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparseDelegate) { 
+    ROSE_ASSERT(project != NULL);
+    //Proceed only if there are input files and they require header files unparsing.
+    if (!project -> get_fileList().empty() && (*(project -> get_fileList()).begin()) -> get_unparseHeaderFiles()) {
+        if (SgProject::get_verbose() >= 1) {
+            cout << endl << "***HEADER FILES UNPARSING***" << endl << endl;
+        }
+        IncludedFilesUnparser includedFilesUnparser(project);
+        includedFilesUnparser.unparse();
+        const string& unparseRootPath = includedFilesUnparser.getUnparseRootPath();
+        const map<string, string>& unparseMap = includedFilesUnparser.getUnparseMap();
+        const map<string, SgScopeStatement*>& unparseScopesMap = includedFilesUnparser.getUnparseScopesMap();
+
+        prependIncludeOptionsToCommandLine(project, includedFilesUnparser.getIncludeCompilerOptions());
+
+        for (map<string, string>::const_iterator unparseMapEntry = unparseMap.begin(); unparseMapEntry != unparseMap.end(); unparseMapEntry++) {
+            SgSourceFile* unparsedFile = new SgSourceFile();
+            unparsedFile -> set_Cxx_only(true); //TODO: Generalize this hard coded trick.
+            const string& originalFileName = unparseMapEntry -> first;
+            if (!includedFilesUnparser.isInputFile(originalFileName)) { //Unparse here only files that would not be unparsed otherwise.
+                if (SgProject::get_verbose() >= 1) {
+                    cout << "Unparsing included file:" << originalFileName << endl;
+                }
+                map<string, SgScopeStatement*>::const_iterator unparseScopesMapEntry = unparseScopesMap.find(originalFileName);
+                ROSE_ASSERT(unparseScopesMapEntry != unparseScopesMap.end());
+
+                unparsedFile -> set_sourceFileNameWithoutPath(FileHelper::getFileName(originalFileName));
+                unparsedFile -> set_sourceFileNameWithPath(originalFileName);
+                const string& outputFileName = FileHelper::concatenatePaths(unparseRootPath, unparseMapEntry -> second);
+                FileHelper::ensureParentFolderExists(outputFileName);
+                unparsedFile -> set_unparse_output_filename(outputFileName);
+
+                Sg_File_Info* unparsedFileInfo = new Sg_File_Info(originalFileName, 0,0);
+                unparsedFile -> set_file_info(unparsedFileInfo);
+
+                //Set SgGlobal to avoid problems with checks during unparsing.
+                SgGlobal* fakeGlobal = new SgGlobal();
+                fakeGlobal -> set_file_info(unparsedFileInfo);                 
+                unparsedFile -> set_globalScope(fakeGlobal);
+
+                unparseFile(unparsedFile, unparseFormatHelp, unparseDelegate, unparseScopesMapEntry -> second);
+            }
+        }
+    }    
+}
+
 // DQ (10/11/2007): I think this is redundant with the Unparser::unparseProject() member function
 // But it is allowed to call it directly from the user's translator if compilation using the backend 
 // is not required!  So we have to allow it to be here.
@@ -1706,7 +1782,8 @@ void unparseProject ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, 
    {
      ROSE_ASSERT(project != NULL);
 
-     // negara1 (07/13/2011) - test comment
+     // negara1 (06/27/2011) 
+     unparseIncludedFiles(project, unparseFormatHelp, unparseDelegate);
 
 #if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
 #error "This implementation of the support for the older interface has been refactored"

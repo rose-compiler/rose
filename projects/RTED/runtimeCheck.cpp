@@ -22,11 +22,11 @@
 namespace boostfs = boost::filesystem;
 
 void
-runtimeCheck(int argc, char** argv, std::set<std::string>& rtedfiles, bool withupc)
+runtimeCheck(int argc, char** argv, const std::set<std::string>& rtedfiles, bool withupc)
 {
    // PARSE AND TRANSFORM - 1rst round--------------------------------
    // Init Transformation object
-   RtedTransformation rted(withupc);
+   RtedTransformation rted(withupc, rtedfiles);
    // Start parsing the project and insert header files
    SgProject* project= NULL;
 
@@ -42,7 +42,7 @@ runtimeCheck(int argc, char** argv, std::set<std::string>& rtedfiles, bool withu
    // perform all necessary transformations (calls)
    if (RTEDDEBUG)
       std::cerr << "Conducting transformations... " << std::endl;
-   rted.transform(project, rtedfiles);
+   rted.transform(project);
 
    // call backend and create a new rose_rose_filename.c source file
    if (RTEDDEBUG)

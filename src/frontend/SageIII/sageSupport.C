@@ -13,6 +13,10 @@
 #include "Partitioner.h"
 #include "sageBuilder.h"
 
+#include "CollectionHelper.h"
+#include "CompilerOutputParser.h"
+#include "IncludingPreprocessingInfosCollector.h"
+
 #ifdef _MSC_VER
 //#pragma message ("WARNING: wait.h header file not available in MSVC.")
 #else
@@ -92,6 +96,8 @@ using namespace SageInterface;
 using namespace SageBuilder;
 using namespace OmpSupport;
 
+
+const string FileHelper::pathDelimiter = "/";
 
 // DQ (9/17/2009): This appears to only be required for the GNU 4.1.x compiler (not for any earlier or later versions).
 extern const std::string ROSE_GFORTRAN_PATH;
@@ -491,15 +497,17 @@ bool roseInstallPrefix(std::string& result) {
     if (libroseName == NULL) goto default_check;
     char* libdir = dirname(libroseName);
     if (libdir == NULL) {free(libroseName); goto default_check;}
-    char* libdirCopy = strdup(libdir);
-    if (libdirCopy == NULL) {free(libroseName); free(libdirCopy); goto default_check;}
-    char* libdirBasenameCS = basename(libdirCopy);
-    if (libdirBasenameCS == NULL) {free(libroseName); free(libdirCopy); goto default_check;}
+    char* libdirCopy1 = strdup(libdir);
+    char* libdirCopy2 = strdup(libdir);
+    if (libdirCopy1 == NULL || libdirCopy2 == NULL) { free(libroseName); free(libdirCopy1); free(libdirCopy2); goto default_check;}
+    char* libdirBasenameCS = basename(libdirCopy1);
+    if (libdirBasenameCS == NULL) {free(libroseName); free(libdirCopy1); free(libdirCopy2); goto default_check;}
     string libdirBasename = libdirBasenameCS;
-    free(libdirCopy);
-    char* prefixCS = dirname(libdir);
+    free(libdirCopy1);
+    char* prefixCS = dirname(libdirCopy2);
     if (prefixCS == NULL) {free(libroseName); goto default_check;}
     string prefix = prefixCS;
+    free(libdirCopy2); 
     free(libroseName);
 // Liao, 12/2/2009
 // Check the librose's parent directory name to tell if it is within a build or installation tree
@@ -1852,6 +1860,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
        // Skip all processing of comments
           set_skip_commentsAndDirectives(true);
           set_collectAllCommentsAndDirectives(false);
+          set_unparseHeaderFiles(false);
         }
 
   //
@@ -1972,6 +1981,14 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
      if ( CommandlineProcessing::isOption(argv,"-rose:","(collectAllCommentsAndDirectives)",true) == true )
         {
        // printf ("option -rose:collectAllCommentsAndDirectives found \n");
+          set_collectAllCommentsAndDirectives(true);
+        }
+
+     // negara1 (07/08/2011): Made unparsing of header files optional. 
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(unparseHeaderFiles)",true) == true )
+        {
+          set_unparseHeaderFiles(true);
+          //To support header files unparsing, it is always needed to collect all directives.
           set_collectAllCommentsAndDirectives(true);
         }
 
@@ -2309,6 +2326,7 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(unparse_binary_file_format)",1);
 
      optionCount = sla(argv, "-rose:", "($)", "(collectAllCommentsAndDirectives)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(unparseHeaderFiles)",1);
      optionCount = sla(argv, "-rose:", "($)", "(skip_commentsAndDirectives)",1);
      optionCount = sla(argv, "-rose:", "($)", "(skipfinalCompileStep)",1);
      optionCount = sla(argv, "-rose:", "($)", "(prelink)",1);
@@ -2635,6 +2653,17 @@ SgSourceFile::initializeGlobalScope()
 
      set_globalScope( new SgGlobal( globalScopeFileInfo ) );
      ROSE_ASSERT (get_globalScope() != NULL);
+
+#if 0
+  // DQ (6/23/2011): Changed my mind, I would like to avoid using this if possible.
+  // DQ (6/15/2011): Added scope to hold unhandled declarations (see test2011_80.C).
+     Sg_File_Info* holdingScopeFileInfo = new Sg_File_Info(sourceFilename,0,0);
+     ROSE_ASSERT (holdingScopeFileInfo != NULL);
+     set_temp_holding_scope( new SgGlobal( holdingScopeFileInfo ) );
+     ROSE_ASSERT (get_temp_holding_scope() != NULL);
+
+     get_temp_holding_scope()->set_parent(this);
+#endif
 
      if (SageBuilder::symbol_table_case_insensitive_semantics == true)
         {
@@ -4253,6 +4282,31 @@ SgProject::parse(const vector<string>& argv)
      ROSE_ASSERT(SgNode::get_globalTypeTable()->get_parent() != NULL);
 #endif
 
+     // negara1 (06/23/2011): Collect information about the included files to support unparsing of those that are modified.
+     //Proceed only if there are input files and they require header files unparsing.
+     if (!get_fileList().empty() && (*get_fileList().begin()) -> get_unparseHeaderFiles()) {
+         if (SgProject::get_verbose() >= 1){
+             cout << endl << "***HEADER FILES ANALYSIS***" << endl << endl;
+         }
+         CompilerOutputParser compilerOutputParser(this);
+         const pair<list<string>, list<string> >& includedFilesSearchPaths = compilerOutputParser.collectIncludedFilesSearchPaths();
+         const map<string, set<string> >& includedFilesMap = compilerOutputParser.collectIncludedFilesMap();
+
+         IncludingPreprocessingInfosCollector includingPreprocessingInfosCollector(this, includedFilesSearchPaths, includedFilesMap);
+         const map<string, set<PreprocessingInfo*> >& includingPreprocessingInfosMap = includingPreprocessingInfosCollector.collect();
+
+         set_includingPreprocessingInfosMap(includingPreprocessingInfosMap);
+
+         if (SgProject::get_verbose() >= 1){
+             CollectionHelper::printList(includedFilesSearchPaths.first, "\nQuoted includes search paths:", "Path:");
+             CollectionHelper::printList(includedFilesSearchPaths.second, "\nBracketed includes search paths:", "Path:");
+
+             CollectionHelper::printMapOfSets(includedFilesMap, "\nIncluded files map:", "File:", "Included file:");
+
+             CollectionHelper::printMapOfSets(includingPreprocessingInfosMap, "\nIncluding files map:", "File:", "Including file:");
+         }
+     }
+
      return errorCode;
    }
 
@@ -4263,6 +4317,9 @@ SgSourceFile::SgSourceFile ( vector<string> & argv , SgProject* project )
   // printf ("In the SgSourceFile constructor \n");
 
      set_globalScope(NULL);
+
+  // DQ (6/15/2011): Added scope to hold unhandled declarations (see test2011_80.C).
+     set_temp_holding_scope(NULL);
 
   // This constructor actually makes the call to EDG/OFP to build the AST (via callFrontEnd()).
   // printf ("In SgSourceFile::SgSourceFile(): Calling doSetupForConstructor() \n");
@@ -6281,10 +6338,118 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
 
      ROSE_ASSERT(get_requires_C_preprocessor() == false);
 
+  // *******************************************************
+
+  // DQ (9/19/2011): This is what I thought, but it does not appear to be true or we tie into ECJ at the
+  // the wrong location so that we don't get any syntax checking.  So we need to introduce a pass using
+  // the backend compiler to support the syntax checking for Java.
   // DQ (10/11/2010): We don't need syntax checking because ECJ will do that.
   // bool syntaxCheckInputCode = (get_skip_syntax_check() == false);
   // bool syntaxCheckInputCode = false;
+     bool syntaxCheckInputCode = (get_skip_syntax_check() == false);
   // printf ("In build_Java_AST(): syntaxCheckInputCode = %s \n",syntaxCheckInputCode ? "true" : "false");
+
+     if (syntaxCheckInputCode == true)
+        {
+       // Introduce tracking of performance of ROSE.
+          TimingPerformance timer ("Java syntax checking of input:");
+
+       // DQ (9/19/2011): For Java we want to run the backend javacc compiler to do the syntax checking.
+          string backendJavaCompiler = BACKEND_JAVA_COMPILER_NAME_WITH_PATH;
+          if ( get_verbose() > 2 )
+             {
+               printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Setting up Java Syntax check @@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+               printf ("BACKEND_JAVA_COMPILER_NAME_WITH_PATH = %s \n",backendJavaCompiler.c_str());
+             }
+
+          vector<string> javaCommandLine;
+          javaCommandLine.push_back(backendJavaCompiler);
+
+       // Use "-d ." option to force class files to be generated in the current directory (instead of the source directory.
+       // this semantics matches the support of the other languages in ROSE and privents "make check" from trying to write
+       // to the source directory which is an error.  It might be different from the samantics of the SUN javac and other 
+       // java compilers.  I am unclear on this point.
+
+       // Use C system function to get the current directory.
+       // char currentDirectory[PATH_MAX];
+       // char currentDirectory[MAX_PATH];
+          char currentDirectory[8096];
+          getcwd(currentDirectory, sizeof(currentDirectory));
+          string currentDirectoryString = currentDirectory;
+
+       // DQ (7/20/2011): We can't build a striang with spaces, I don't know why.  Each part of the option 
+       // for "-sourcepath <path>" or "-d <path>" must be pushed onto the javaCommandLine seperately.
+
+          if ( get_verbose() > 2 )
+               javaCommandLine.push_back("-verbose");
+
+       // Better to use "-d" than to specify the "-sourcepath" option.  I think.
+       // javaCommandLine.push_back("-sourcepath");
+       // javaCommandLine.push_back(StringUtility::getPathFromFileName(get_sourceFileNameWithPath()));
+          javaCommandLine.push_back("-d");
+          javaCommandLine.push_back(currentDirectoryString);
+
+          if (get_output_warnings() == true)
+             {
+            // Specify warnings for javac compiler.
+               if (backendJavaCompiler == "javac")
+                  {
+                    javaCommandLine.push_back("-Xlint");
+                  }
+                 else
+                  {
+                    printf ("Currently only the javac compiler backend is supported backendCompilerSystem = %s \n",backendJavaCompiler.c_str());
+                    ROSE_ASSERT(false);
+                  }
+             }
+
+#if 1
+          if ( get_verbose() > 0 )
+             {
+               printf ("Checking syntax of input program using gfortran: syntaxCheckingCommandline = %s \n",CommandlineProcessing::generateStringFromArgList(javaCommandLine,false,false).c_str());
+             }
+#endif
+       // Call the OS with the commandline defined by: syntaxCheckingCommandline
+          javaCommandLine.push_back(get_sourceFileNameWithPath());
+
+       // At this point we have the full command line with the source file name
+          if ( get_verbose() > 0 )
+             {
+               printf ("Checking syntax of input program using gfortran: syntaxCheckingCommandline = %s \n",CommandlineProcessing::generateStringFromArgList(javaCommandLine,false,false).c_str());
+             }
+
+          int returnValueForSyntaxCheckUsingBackendCompiler = 0;
+#if USE_GFORTRAN_IN_ROSE
+          returnValueForSyntaxCheckUsingBackendCompiler = systemFromVector (javaCommandLine);
+#else
+          printf ("backend java compiler (javac) unavailable ... (not an error) \n");
+#endif
+
+       // Check that there are no errors, I think that warnings are ignored!
+          if (returnValueForSyntaxCheckUsingBackendCompiler != 0)
+             {
+            // printf ("Syntax errors detected in input java program ... \n");
+               printf ("Syntax errors detected in input java program ... status = %d \n",returnValueForSyntaxCheckUsingBackendCompiler);
+
+            // We should define some convention for error codes returned by ROSE
+               exit(1);
+             }
+          ROSE_ASSERT(returnValueForSyntaxCheckUsingBackendCompiler == 0);
+
+          if ( get_verbose() > 2 )
+             {
+               printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@ DONE: Setting up Java Syntax check @@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+             }
+
+#if 0
+       // Debugging code.
+          printf ("Exiting as a test ... (after syntax check) \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
+  // *******************************************************
+
 
   // Build the classpath list for Java support.
      const string classpath = build_classpath();
@@ -6334,25 +6499,8 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
   // printf ("get_exit_after_parser() = %s \n",get_exit_after_parser() ? "true" : "false");
      if (get_exit_after_parser() == true)
         {
-          printf("Sorry, not implemented: exit_after_parser option is not supported for Java yet. \n");
-          ROSE_ASSERT(false);
+           int errorCode = 0;
 
-       // DQ (1/19/2008): New version of OFP requires different calling syntax.
-       // string OFPCommandLineString = std::string("java parser.java.FortranMain") + " " + get_sourceFileNameWithPath();
-          vector<string> OFPCommandLine;
-          OFPCommandLine.push_back(JAVA_JVM_PATH);
-          OFPCommandLine.push_back(classpath);
-       // OFPCommandLine.push_back("fortran.ofp.FrontEnd");
-          OFPCommandLine.push_back("JavaTraversal");
-
-#if 0
-          printf ("exit_after_parser: OFPCommandLine = %s \n",StringUtility::listToString(OFPCommandLine).c_str());
-#endif
-
-       // Some security checking here could be helpful!!!
-          int errorCode = systemFromVector (OFPCommandLine);
-
-       // DQ (9/30/2008): Added error checking of return value
           if (errorCode != 0)
              {
                printf ("Using option -rose:exit_after_parser (errorCode = %d) \n",errorCode);
@@ -6546,11 +6694,15 @@ SgSourceFile_processCppLinemarkers::LinemarkerTraversal::LinemarkerTraversal( co
      sourcePositionStack.push_front( pair<int,int>(line,fileId) );
    }
 
+
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+     extern SgSourceFile* OpenFortranParser_globalFilePointer;
+#endif
+
 void
 SgSourceFile_processCppLinemarkers::LinemarkerTraversal::visit ( SgNode* astNode )
    {
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-     extern SgSourceFile* OpenFortranParser_globalFilePointer;
 
     // DXN (02/21/2011): Consider the case of SgInterfaceBody.
     // TODO: revise SgInterfaceBody::get_numberOfTraversalSuccessor() to return 1 and
@@ -7386,7 +7538,12 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
        // the input source file's path has to be the first one to be searched for header!
        // This is required since one of the SPEC CPU 2006 benchmarks: gobmk relies on this to be compiled.
        // insert before the position
-       compilerNameString.insert(iter, std::string("-I") + oldFileNamePathOnly); 
+
+       // negara1 (07/14/2011): The functionality of header files unparsing takes care of this, so this is needed
+       // only when header files unparsing is not enabled.
+       if (!this -> get_unparseHeaderFiles()) {
+         compilerNameString.insert(iter, std::string("-I") + oldFileNamePathOnly); 
+       }
      }
         }
 
@@ -8218,6 +8375,9 @@ SgFile::usage ( int status )
 "     -rose:collectAllCommentsAndDirectives\n"
 "                             store all comments and CPP directives in header\n"
 "                             files into the AST\n"
+"     -rose:unparseHeaderFiles\n"
+"                             unparse all directly or indirectly modified\n"
+"                             header files\n"
 "     -rose:excludeCommentsAndDirectives PATH\n"
 "                             provide path to exclude when using the\n"
 "                             collectAllCommentsAndDirectives option\n"

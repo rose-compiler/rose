@@ -290,7 +290,7 @@ bool isArrayIndex(SgNode* n)
 // returns true the given SgPntrArrRefExp node this is a top-level SgPntrArrRefExp that is not part 
 // of a larger SgPntrArrRefExp
 // (i.e. given a[b[i][j]][k][l], it is either a[b[i][j]][k][l] or b[i][j])
-bool isTopArrayRefExp(SgNode* n)
+bool isTopArrayRefExp(const SgNode* n)
 {
 	ROSE_ASSERT(n->getAttribute("ArrayIndex"));
 	return ((arrIndexAttribute*)(n->getAttribute("ArrayIndex")))->topArrayRefExpFlag;

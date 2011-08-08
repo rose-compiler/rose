@@ -96,7 +96,7 @@ RtedTransformation::insertIOFuncCall(RtedArguments& args)
     arg_1 = buildAddressOfOp(SI::deepCopy(roseArgs.front()));
     arg_2 = buildStringVal("NULL");
   }
-  else if (args.f_name=="std::fstream")
+  else if (args.f_name=="::std::fstream")
   {
     // \pp this code seems to be broken ...
     //     not sure what we should test with C++ fstreams

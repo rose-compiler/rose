@@ -1,6 +1,8 @@
 #ifndef LOGICAL_H
 #define LOGICAL_H
 
+#include <string>
+
 class LogicalCond
 {
 	public:
@@ -29,7 +31,7 @@ class LogicalCond
 	// returns a copy of this LogicalCond object
 	virtual LogicalCond* copy()=0;
 	
-	virtual string str(string indent="")=0;
+	virtual std::string str(std::string indent="")=0;
 	
 	virtual ~LogicalCond() {}
 };

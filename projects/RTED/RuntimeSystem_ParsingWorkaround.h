@@ -34,7 +34,7 @@
 
 //#ifdef __cplusplus
 // to cope with tests written in old style C++
-// using namespace std;
+//using namespace std;
 //#endif
 
 #endif

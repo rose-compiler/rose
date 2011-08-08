@@ -2,12 +2,6 @@
 #define PARTITIONED_ANALYSIS_H
 
 #include "rose.h"
-#include <list>
-#include <sstream>
-#include <iostream>
-#include <fstream>
-#include <string.h>
-using namespace std;
 
 #include "common.h"
 #include "variables.h"
@@ -20,6 +14,13 @@ using namespace std;
 #include "VirtualCFGIterator.h"
 #include "logical.h"
 #include "printAnalysisStates.h"
+
+#include <list>
+#include <sstream>
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <vector>
 
 //class partition
 //{
@@ -38,7 +39,7 @@ class IntraPartitionDataflowCheckpoint;
 class partSplit
 {
 	public:
-	set<IntraPartitionDataflow*> splitSet;
+	std::set<IntraPartitionDataflow*> splitSet;
 	IntraPartitionDataflow* master;
 	
 	partSplit(IntraPartitionDataflow* master)
@@ -52,13 +53,13 @@ class partSplit
 		splitSet.insert(child);
 	}
 	
-	string str(string indent="")
+	std::string str(std::string indent="")
 	{
-		ostringstream oss;
+          std::ostringstream oss;
 		
 		oss << indent << "[partSplit:\n";
 		oss << indent << "    splitSet = <";
-		for(set<IntraPartitionDataflow*>::iterator it=splitSet.begin(); it!=splitSet.end(); )
+		for(std::set<IntraPartitionDataflow*>::iterator it=splitSet.begin(); it!=splitSet.end(); )
 		{
 			oss << (*it);
 			it++;
@@ -74,24 +75,24 @@ class partSplit
 class PartitionedAnalysis : virtual public IntraProceduralAnalysis
 {
 	// the partitions that are currently executing
-	set<IntraPartitionDataflow*> activeParts;
+	std::set<IntraPartitionDataflow*> activeParts;
 	// the set of partitions that are currently blocked and need to be explicitly
 	// unblocked before they may resume execution
-	//set<IntraPartitionDataflow*> blockedParts;
+	//std::set<IntraPartitionDataflow*> blockedParts;
 	// the set of partitions that have called join and are simply waiting to be joined
 	// to the master partitions that they split from
-	set<IntraPartitionDataflow*> joinParts;
+	std::set<IntraPartitionDataflow*> joinParts;
 	
 	// Maps partitions to their respective splits. A given partition may be split
 	// multiple times in a hierarchical fashion (split-join). The first split
 	// in the list corresponds to the outer-most split and the last split
 	// is the inner-most split. Thus, if a given partition performs a join,
 	// the jointed split is the last/inner-most split in parts2splits.
-	map<IntraPartitionDataflow*, list<partSplit*> > parts2splits;
+	std::map<IntraPartitionDataflow*, std::list<partSplit*> > parts2splits;
 	
 	// Maps analysis partitions to their respective current execution states
 	// (these are only upto-date for analyses that are currently stopped)
-	map<IntraPartitionDataflow*, IntraPartitionDataflowCheckpoint*> parts2chkpts;
+	std::map<IntraPartitionDataflow*, IntraPartitionDataflowCheckpoint*> parts2chkpts;
 	
 	// Sample interprocedural analysis object that we'll use as a factory to create more such objects
 	IntraPartitionDataflow* intraFactory;
@@ -119,7 +120,7 @@ class PartitionedAnalysis : virtual public IntraProceduralAnalysis
 	// If newPartActive==true, the newly-generated partitions will be made initially active. If not,
 	//    they will start out in joined status.
 	// Returns the set of newly-created partitions.
-	set<IntraPartitionDataflow*> split(IntraPartitionDataflow* origA, vector<IntraPartitionDataflowCheckpoint*> partitionChkpts,
+	std::set<IntraPartitionDataflow*> split(IntraPartitionDataflow* origA, std::vector<IntraPartitionDataflowCheckpoint*> partitionChkpts,
 	                                   const Function& func, NodeState* fState, bool newSplit, bool newPartActive);
 	
 	// Joins all the analysis partitions in a given split into a single partition, unioning
@@ -132,14 +133,14 @@ class PartitionedAnalysis : virtual public IntraProceduralAnalysis
 	//    processing of their state prior to the release or join.
 	// Returns the set of partitions that will remain in joined status after this join. If all partitions in the split
 	//    set are on this list, they are all joined(all but one will be deleted). Any remaining partitions will be released.
-	virtual set<IntraPartitionDataflow*> preJoin(partSplit* s, const Function& func, NodeState* fState,
-	                                             const map<IntraPartitionDataflow*, 
+	virtual std::set<IntraPartitionDataflow*> preJoin(partSplit* s, const Function& func, NodeState* fState,
+	                                             const std::map<IntraPartitionDataflow*, 
 	                                             IntraPartitionDataflowCheckpoint*>& parts2chkpts)=0;
 	
 	// Called by the base PartitionedAnalysis class when all partitions in a given split have 
 	//    finished their respective executions.
 	virtual void postFinish(partSplit* s, 
-	                        const map<IntraPartitionDataflow*, IntraPartitionDataflowCheckpoint*>& parts2chkpts)=0;
+	                        const std::map<IntraPartitionDataflow*, IntraPartitionDataflowCheckpoint*>& parts2chkpts)=0;
 	
 	// runs the intra-procedural analysis on the given function, returns true if 
 	// the function's NodeState gets modified as a result and false otherwise
@@ -173,14 +174,14 @@ class partitionDFAnalysisState: virtual public UnstructuredPassIntraAnalysis
 // The results are associated on each CFG node with the master analysis.
 class unionDFAnalysisStatePartitions: virtual public UnstructuredPassIntraAnalysis
 {
-	set<Analysis*> unionSet;
+	std::set<Analysis*> unionSet;
 	Analysis* master;
 	
 	public:
 	unionDFAnalysisStatePartitions(
-		set<Analysis*>& unionSet, Analysis* master)
+		std::set<Analysis*>& unionSet, Analysis* master)
 	{
-		for(set<Analysis*>::iterator it = unionSet.begin(); it!=unionSet.end(); it++)
+		for(std::set<Analysis*>::iterator it = unionSet.begin(); it!=unionSet.end(); it++)
 		{ this->unionSet.insert(*it); }
 		//this->unionSet = unionSet;
 		this->master = master;
@@ -192,17 +193,17 @@ class unionDFAnalysisStatePartitions: virtual public UnstructuredPassIntraAnalys
 // Deletes all the state associated with the given analyses
 class deleteDFAnalysisState: virtual public UnstructuredPassIntraAnalysis
 {
-	set<IntraPartitionDataflow*> tgtA;
+	std::set<IntraPartitionDataflow*> tgtA;
 	
 	public:
-	deleteDFAnalysisState(set<IntraPartitionDataflow*>& tgtA)
+	deleteDFAnalysisState(std::set<IntraPartitionDataflow*>& tgtA)
 	{
 		this->tgtA = tgtA;
 	}
 	
 	void visit(const Function& func, const DataflowNode& n, NodeState& state)
 	{
-		for(set<IntraPartitionDataflow*>::iterator it = tgtA.begin(); it!=tgtA.end(); it++)
+		for(std::set<IntraPartitionDataflow*>::iterator it = tgtA.begin(); it!=tgtA.end(); it++)
 			state.deleteState((Analysis*)*it);
 	}
 };
@@ -273,7 +274,7 @@ class IntraPartitionDataflow : virtual public IntraProceduralDataflow
 	// Called when a partition is created to allow a specific analysis to initialize
 	// its dataflow information from the partition condition
 	virtual void initDFfromPartCond(const Function& func, const DataflowNode& n, NodeState& state, 
-	                                const vector<Lattice*>& dfInfo, const vector<NodeFact*>& facts,
+	                                const std::vector<Lattice*>& dfInfo, const std::vector<NodeFact*>& facts,
 	                                /*LogicalCond*/printable* partitionCond) {}
 };
 
@@ -283,7 +284,7 @@ class IntraPartitionDataflowCheckpoint
 	// A checkpoint of the dataflow state associated with the given state of the dataflow analysis
 	dataflow::checkpoint dfChkpt;
 	// Set of nodes that this analysis has blocked progress on until the next join point
-	set<DataflowNode>    joinNodes;
+	std::set<DataflowNode>    joinNodes;
 	// The DataflowNode that that analysis was processing when the checkpoint was taken
 	DataflowNode*        curNode;
 	// The logical condition that is an invariant of all the states of the dataflow analysis
@@ -310,7 +311,7 @@ class IntraPartitionDataflowCheckpoint
 		this->fState         = that.fState;
 	}
 	
-	IntraPartitionDataflowCheckpoint(dataflow::checkpoint& dfChkpt, const set<DataflowNode>& joinNodes, 
+	IntraPartitionDataflowCheckpoint(dataflow::checkpoint& dfChkpt, const std::set<DataflowNode>& joinNodes, 
 	                                 const DataflowNode* curNode,
 	                                 /*LogicalCond*/printable* partitionCond, int partitionIndex, 
 	                                 const Function& func, NodeState* fState) : 
@@ -334,9 +335,9 @@ class IntraPartitionDataflowCheckpoint
 			delete curNode;
 	}
 	
-	string str(string indent="")
+	std::string str(std::string indent="")
 	{
-		ostringstream outs;
+          std::ostringstream outs;
 		outs << indent << "[IntraPartitionDataflowCheckpoint : \n"; //fflush(stdout);
 		outs << indent << "    dfChkpt = \n"<<dfChkpt.str(indent+"    ")<<"\n";
 		if(curNode)
@@ -349,7 +350,7 @@ class IntraPartitionDataflowCheckpoint
       else
       {
       	outs << indent << "    joinNodes = \n";
-			for(set<DataflowNode>::iterator it=joinNodes.begin(); it!=joinNodes.end(); it++)
+			for(std::set<DataflowNode>::iterator it=joinNodes.begin(); it!=joinNodes.end(); it++)
 			{ outs << indent << "        <"<<(*it).getNode()->class_name()<<" | "<<(*it).getNode()->unparseToString()<<">\n"; }
 		}
 		if(partitionCond)
@@ -366,10 +367,10 @@ class IntraPartitionDataflowCheckpoint
 class IntraPartitionFWDataflow  : public virtual IntraPartitionDataflow
 {
 	protected:
-	//vector<Lattice*> initState;
+	//std::vector<<Lattice*> initState;
 	
-	//map <DataflowNode, Lattice*> nodeState;
-	//map<DataflowNode, list<Lattice*> > nodeState;
+	//std::map <DataflowNode, Lattice*> nodeState;
+	//std::map<DataflowNode, std::list<Lattice*> > nodeState;
 	
 	public:
 	IntraPartitionFWDataflow(PartitionedAnalysis* parent): IntraPartitionDataflow(parent)
@@ -405,13 +406,13 @@ class IntraPartitionFWDataflow  : public virtual IntraPartitionDataflow
 	//            requesting to be joined.
 	// Returns true if any of the input lattices changed as a result of the transfer function and
 	//    false otherwise.
-	virtual bool transfer(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo, 
-	                      splitType& splitAnalysis, vector</*LogicalCond*/printable*>& splitConditions, /*bool& joinAnalysis, */bool& joinNode)=0;
+	virtual bool transfer(const Function& func, const DataflowNode& n, NodeState& state, const std::vector<Lattice*>& dfInfo, 
+	                      splitType& splitAnalysis, std::vector</*LogicalCond*/printable*>& splitConditions, /*bool& joinAnalysis, */bool& joinNode)=0;
 	
 	// Runs the intra-procedural analysis on the given function. Returns true if 
 	// the function's NodeState gets modified as a result and false otherwise.
 	// state - the function's NodeState
-	bool runAnalysis(const Function& func, NodeState* fState, bool analyzeDueToCallers, set<Function> calleesUpdated);
+	bool runAnalysis(const Function& func, NodeState* fState, bool analyzeDueToCallers, std::set<Function> calleesUpdated);
 	
 	// Runs the intra-procedural analysis on the given function. 
 	// Returns true if the function's NodeState gets modified as a result and false otherwise.
@@ -428,14 +429,14 @@ class IntraPartitionFWDataflow  : public virtual IntraPartitionDataflow
 
 	partitionTranferRet partitionTranfer(
 	                           const Function& func, NodeState* fState, const DataflowNode& n, NodeState* state, VirtualCFG::dataflow& dfIt,
-	                           const vector<Lattice*>& dfInfoBelow, bool& splitPart, set<DataflowNode>& joinNodes, 
+	                           const std::vector<Lattice*>& dfInfoBelow, bool& splitPart, std::set<DataflowNode>& joinNodes, 
 	                           IntraPartitionDataflowCheckpoint*& outChkpt);
 	
 	// propagates the forward dataflow info from the current node's NodeState (curNodeState) to the next node's 
 	// NodeState (nextNodeState)
 	bool propagateFWStateToNextNode(
-             const vector<Lattice*>& curNodeState, DataflowNode curDFNode, int nodeIndex,
-             const vector<Lattice*>& nextNodeState, DataflowNode nextDFNode);
+             const std::vector<Lattice*>& curNodeState, DataflowNode curDFNode, int nodeIndex,
+             const std::vector<Lattice*>& nextNodeState, DataflowNode nextDFNode);
 };
 
 #endif

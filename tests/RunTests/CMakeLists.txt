@@ -4,6 +4,7 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 add_subdirectory(A++Tests)
 add_subdirectory(AstDeleteTests)
 add_subdirectory(FortranTests)
+add_subdirectory(PythonTests)
 
 
 ########### install files ###############

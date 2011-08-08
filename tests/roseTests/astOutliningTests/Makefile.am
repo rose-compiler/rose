@@ -87,6 +87,12 @@ CXX_TESTCODES_REQUIRED_TO_PASS = \
 	moreTest6.cpp \
 	moreTest7.cpp
 
+# DQ (6/23/2011): The test code moreTest3.cpp does not output it's outlined function when we get the name qualification correct.
+# However, if the name qualification on the friend declaration is wrong, then the outlined function will be output.  I don't
+# understand this, but I think it is a bug in the outlining.  This is consistant with the previous version of ROSE before
+# adding the new name qualification support.
+
+
 # triangle.cpp: TODO AST copy does not support class member across files.
 # polygon.cpp: TODO recursively find super classes for a dependent class
 TESTCODE_CURRENTLY_FAILING = \
