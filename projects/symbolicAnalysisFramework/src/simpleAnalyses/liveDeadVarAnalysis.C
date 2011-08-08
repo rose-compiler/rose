@@ -866,7 +866,8 @@ void VarsExprsProductLattice::incorporateVars(Lattice* that_arg)
 	
 	VarsExprsProductLattice* that = dynamic_cast<VarsExprsProductLattice*>(that_arg); ROSE_ASSERT(that);
 	// Both lattices need to be talking about variables in the same function
-	ROSE_ASSERT((&n == &that->n) && (&state == &that->state));
+	//ROSE_ASSERT(&n == &that->n);
+        //ROSE_ASSERT(&state == &that->state);
 	if(that->allVarLattice) { 
 		ROSE_ASSERT(allVarLattice);
 		this->allVarLattice->copy(that->allVarLattice);
