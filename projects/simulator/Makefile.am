@@ -262,8 +262,17 @@ run_symbolic_2_grep: symbolic_2 grep_sample_1
 run_symbolic_2_strcmp: symbolic_2 glibc_strcmp
 	./symbolic_2 --debug --trigger=main --analysis-func=glibc_strcmp --take-branch=n ./glibc_strcmp
 run_symbolic_2_grep_strcmp: symbolic_2 $(32BIT_REPO)/grep
-	LD_BIND_NOW=y ./symbolic_2 --debug --trigger=0x08049508 --analysis-func=0x8049908 --take-branch=y $(32BIT_REPO)/grep x /dev/null
-
+	: 0x08049508 is __libc_start_main@plt
+	: 0x08049908 is strcmp@plt
+	LD_BIND_NOW=y ./symbolic_2 --debug --trigger=0x08049508 --analysis-func=0x08049908 --take-branch=y $(32BIT_REPO)/grep x /dev/null
+run_symbolic_2_vim_strcmp: symbolic_2 $(32BIT_REPO)/vim.tiny
+	: 0x08049b50 is __libc_start_main@plt
+	: 0x0804a100 is strcmp@plt
+	LD_BIND_NOW=y ./symbolic_2 --debug --trigger=0x08049b50 --analysis-func=0x0804a100 --take-branch=y $(32BIT_REPO)/vim.tiny
+run_symbolic_2_grep_strchr: symbolic_2 $(32BIT_REPO)/grep
+	: 0x08049508 is __libc_start_main@plt
+	: 0x08049488 is strchr@plt
+	LD_BIND_NOW=y ./symbolic_2 --debug --trigger=0x08049508 --analysis-func=0x08049488 --take-branch=nnnnnnyy $(32BIT_REPO)/grep x /dev/null
 
 
 ###############################################################################################################################
