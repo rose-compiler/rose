@@ -71,7 +71,8 @@ namespace BinaryAnalysis {
      *          SgAsmFunctionDeclaration *func = isSgAsmFunctionDeclaration(node);
      *          if (func) {
      *              ControlFlow::Graph cfg = cfg_analysis.build_cfg_from_ast<ControlFlow::Graph>(func);
-     *              ControlFlow::Vertex entry = 0; // first vertex is function entry block
+     *              typedef boost::graph_traits<ControlFlow::Graph>::vertex_descriptor CFG_Vertex;
+     *              CFG_Vertex entry = 0; // first vertex is function entry block
      *              assert(get(boost::vertex_name, cfg, entry) == func->get_entry_block());
      *              Dominance::Graph dg = dom_analysis.build_idom_graph_from_cfg<Dominance::Graph>(cfg, entry);
      *              dom_analysis.clear_ast(func);
