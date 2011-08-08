@@ -10,7 +10,7 @@
 
 
 
-namespace SystemDependenceGraph
+namespace SDG
 {
 
 

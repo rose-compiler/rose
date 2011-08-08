@@ -4,7 +4,7 @@
 #include "newCDG.h"
 #include "newDDG.h"
 
-namespace SystemDependenceGraph
+namespace SDG
 {
 
 

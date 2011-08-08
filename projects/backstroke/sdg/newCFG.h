@@ -5,7 +5,7 @@
 #include <boost/function.hpp>
 #include <boost/graph/adjacency_list.hpp>
 
-namespace SystemDependenceGraph
+namespace SDG
 {
 
 typedef boost::function<bool(const VirtualCFG::CFGNode&)> CFGNodeFilter;

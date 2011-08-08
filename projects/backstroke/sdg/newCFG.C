@@ -13,7 +13,7 @@
 #define foreach BOOST_FOREACH
 
 
-namespace SystemDependenceGraph
+namespace SDG
 {
 
 

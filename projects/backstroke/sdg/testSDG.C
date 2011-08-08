@@ -4,7 +4,7 @@
 #include "newPDG.h"
 #include "SDG.h"
 
-using namespace SystemDependenceGraph;
+using namespace SDG;
 
 bool filterCfgNode(const VirtualCFG::CFGNode& cfgNode)
 {
@@ -16,6 +16,9 @@ bool filterCfgNode(const VirtualCFG::CFGNode& cfgNode)
     
     if (SgExpression* expr = isSgExpression(astNode))
     {
+        if (isSgFunctionCallExp(expr))
+            return true;
+        
         SgNode* parent = expr->get_parent();
         if (isSgExpression(parent) ||
                 isSgReturnStmt(parent))
@@ -74,6 +77,11 @@ int main(int argc, char *argv[])
         ProgramDependenceGraph pdg(cfg);
         pdg.toDot("PDG.dot");
         
+        
         break;
     }
+
+
+    SDG::SystemDependenceGraph sdg(project, filterCfgNode);
+    sdg.toDot("SDG.dot");
 }
