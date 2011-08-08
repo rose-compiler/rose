@@ -2352,6 +2352,7 @@ tests/RunTests/A++Tests/Makefile
 tests/RunTests/AstDeleteTests/Makefile
 tests/RunTests/FortranTests/Makefile
 tests/RunTests/FortranTests/LANL_POP/Makefile
+tests/RunTests/PythonTests/Makefile
 tests/PerformanceTests/Makefile
 tests/CompilerOptionsTests/Makefile
 tests/CompilerOptionsTests/testCpreprocessorOption/Makefile
@@ -2409,6 +2410,7 @@ tests/CompileTests/sizeofOperation_tests/Makefile
 tests/CompileTests/MicrosoftWindows_tests/Makefile
 tests/CompileTests/nameQualificationAndTypeElaboration_tests/Makefile
 tests/CompileTests/NewEDGInterface_C_tests/Makefile
+tests/CompileTests/UnparseHeadersTests/Makefile
 tests/CompileTests/CudaTests/Makefile
 tests/CompileTests/OpenClTests/Makefile
 tests/CompileTests/EDG_4_x/Makefile
