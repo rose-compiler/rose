@@ -21,12 +21,30 @@ void RtedTransformation::transformUpcBlockingOps(SgStatement* const stmt)
   static const std::string exitwz_msg("RS: UpcExitWorkzone()");
   static const std::string enterwz_msg("RS: UpcEnterWorkzone()");
 
-  ROSE_ASSERT( stmt && symbols.roseUpcEnterWorkzone && symbols.roseUpcExitWorkzone );
+  ROSE_ASSERT( stmt );
 
   requiresParentIsBasicBlock(*stmt);
 
   insertCheck(ilBefore, stmt, symbols.roseUpcExitWorkzone,  SB::buildExprListExp(), exitwz_msg);
   insertCheck(ilAfter,  stmt, symbols.roseUpcEnterWorkzone, SB::buildExprListExp(), enterwz_msg);
+}
+
+void RtedTransformation::transformPtrDerefs(SharedPtrDerefContainer::value_type ptrderef)
+{
+    ROSE_ASSERT(ptrderef);
+
+    SgExpression* operand = ptrderef->get_operand();
+    ROSE_ASSERT ( isUpcSharedPointer(operand->get_type()) );
+
+    SgStatement*   stmt = getSurroundingStatement(*ptrderef);
+    SgExprListExp* lock_args   = SB::buildExprListExp();
+    SgExprListExp* unlock_args = SB::buildExprListExp();
+
+    SI::appendExpression(lock_args,   SI::deepCopy(operand));
+    SI::appendExpression(unlock_args, SI::deepCopy(operand));
+
+    insertCheck(ilBefore, stmt, symbols.roseUpcEnterSharedPtr, lock_args);
+    insertCheck(ilAfter,  stmt, symbols.roseUpcExitSharedPtr,  unlock_args);
 }
 
 

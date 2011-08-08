@@ -1,0 +1,8 @@
+! 
+program test_coarray_decl
+   integer :: X[*]
+   integer, allocatable, dimension(:) :: X2[*]
+   integer, allocatable :: X3(:)[*]
+   integer, allocatable, dimension(:) :: X4[*], Y(:,:)[*], Z
+   integer, target :: X5(6)[*], Y2(2,3)[*], Z2
+end program
