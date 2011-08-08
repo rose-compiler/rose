@@ -68,6 +68,7 @@ Unparse_Python::unparseLanguageSpecificStatement(SgStatement* stmt,
         CASE_DISPATCH_AND_BREAK(StmtDeclarationStatement);
         CASE_DISPATCH_AND_BREAK(TryStmt);
         CASE_DISPATCH_AND_BREAK(WhileStmt);
+        CASE_DISPATCH_AND_BREAK(WithStatement);
         default: {
             cerr << "unparse Statement (" << stmt->class_name()
                  << "*) is unimplemented." << endl;
@@ -1027,6 +1028,29 @@ Unparse_Python::unparseWhileStmt(SgWhileStmt* while_stmt,
         curprint_indented("else:\n", info);
         unparseAsSuite(while_stmt->get_else_body(), info);
     }
+}
+
+void
+Unparse_Python::unparseWithStatement(SgWithStatement* with_stmt,
+                                     SgUnparse_Info& info)
+{
+    curprint("with ");
+
+    // special handling for targetted with stmts ('with X as Y: ...')
+    // in targetting with expressions, SgWithStatement::p_expression is
+    // an SgAssignOp with lhs=Y and rhs=X.
+    SgAssignOp* assign_op = isSgAssignOp(with_stmt->get_expression());
+    if (assign_op != NULL) {
+        unparseExpression(assign_op->get_rhs_operand(), info);
+        curprint(" as ");
+        unparseExpression(assign_op->get_lhs_operand(), info);
+    } else {
+        unparseExpression(with_stmt->get_expression(), info);
+    }
+
+    curprint(":\n");
+
+    unparseAsSuite(with_stmt->get_body(), info);
 }
 
 void
