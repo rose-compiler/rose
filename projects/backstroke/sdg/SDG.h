@@ -3,7 +3,7 @@
 
 #include "newPDG.h"
 
-namespace Backstroke
+namespace SystemDependenceGraph
 {
 
 struct SDGNode
