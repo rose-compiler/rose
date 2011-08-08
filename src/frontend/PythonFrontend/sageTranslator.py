@@ -337,10 +337,10 @@ class SageTranslator(ast.NodeVisitor):
     return sage.buildWhile(test, body, orelse)
 
   def visit_With(self, node):
-    expr = self.visit(node.test)
-    vars = map(self.visit, node.optional_vars)
+    exp = self.visit(node.context_expr)
+    var = node.optional_vars and self.visit(node.optional_vars)
     body = sage.buildSuite(map(self.visit, node.body))
-    return sage.buildWith(expr, vars, body)
+    return sage.buildWith(exp, var, body)
 
   def visit_Yield(self, node):
     value = self.visit(node.value)
