@@ -1780,10 +1780,6 @@ HEADER_LABEL_STATEMENT_START
 HEADER_LABEL_STATEMENT_END
 
 HEADER_WITH_STATEMENT_START
-
-SgDeclarationStatementPtrList& get_variables();
-const SgDeclarationStatementPtrList& get_variables() const;
-
 HEADER_WITH_STATEMENT_END
 
 HEADER_WHILE_STATEMENT_START
@@ -11628,20 +11624,6 @@ SgWhileStmt::get_mangled_name(void) const
 SOURCE_WHILE_STATEMENT_END
 
 SOURCE_WITH_STATEMENT_START
-
-SgDeclarationStatementPtrList&
-SgWithStatement::get_variables()
-{
-    return p_variables;
-}
-
-
-const SgDeclarationStatementPtrList&
-SgWithStatement::get_variables() const
-{
-    return p_variables;
-}
-
 SOURCE_WITH_STATEMENT_END
 
 SOURCE_DO_WHILE_STATEMENT_START
