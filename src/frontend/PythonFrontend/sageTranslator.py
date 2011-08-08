@@ -2,12 +2,6 @@ import sys, ast
 
 import sage
 
-UNARY_OPERATOR_MAP = {
-    ast.UAdd:     "+",
-    ast.USub:     "-",
-    ast.Invert:   "~"
-}
-
 class FileInfo():
 
   def __init__(self, filename, node):
@@ -107,7 +101,8 @@ class SageTranslator(ast.NodeVisitor):
 
   def visit_ClassDef(self, node):
     scope = self.scopeStack.peek()
-    #bases = node.bases
+    bases = node.bases
+    print bases, type(bases), map(self.visit, bases)
     decorators = node.decorator_list and sage.buildExprListExp(map(self.visit, node.decorator_list))
     class_decl, scope = \
         sage.buildClassDef(node.name, decorators, scope)
