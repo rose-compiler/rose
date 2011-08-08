@@ -189,6 +189,11 @@ namespace OmpSupport
       {
         SgStatement *targetBB= isSgStatement((*i)->get_parent());
         ROSE_ASSERT(targetBB != NULL);
+        if (i!=rtList.begin()) // for 2nd, 3rd, etc occurrences. We should always build a new statement instead of sharing a statement! 
+        {
+          expStmt2= buildFunctionCallStmt (SgName("XOMP_terminate"),
+              buildVoidType(),exp_list_exp2,mainDef->get_body());
+        }
         insertStatement(isSgStatement(*i),expStmt2);
       }
     }

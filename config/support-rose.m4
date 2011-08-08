@@ -2091,6 +2091,7 @@ src/frontend/SageIII/astHiddenTypeAndDeclarationLists/Makefile
 src/frontend/SageIII/astVisualization/Makefile
 src/frontend/SageIII/GENERATED_CODE_DIRECTORY_Cxx_Grammar/Makefile
 src/frontend/SageIII/astFromString/Makefile
+src/frontend/SageIII/includeDirectivesProcessing/Makefile
 src/frontend/CxxFrontend/Makefile
 src/frontend/OpenFortranParser_SAGE_Connection/Makefile
 src/frontend/ECJ_ROSE_Connection/Makefile
@@ -2102,6 +2103,7 @@ src/frontend/BinaryFormats/Makefile
 src/frontend/Disassemblers/Makefile
 src/midend/Makefile
 src/midend/abstractHandle/Makefile
+src/midend/abstractMemoryObject/Makefile
 src/midend/astUtil/Makefile
 src/midend/astQuery/Makefile
 src/midend/astProcessing/Makefile
@@ -2350,6 +2352,7 @@ tests/RunTests/A++Tests/Makefile
 tests/RunTests/AstDeleteTests/Makefile
 tests/RunTests/FortranTests/Makefile
 tests/RunTests/FortranTests/LANL_POP/Makefile
+tests/RunTests/PythonTests/Makefile
 tests/PerformanceTests/Makefile
 tests/CompilerOptionsTests/Makefile
 tests/CompilerOptionsTests/testCpreprocessorOption/Makefile
@@ -2407,6 +2410,7 @@ tests/CompileTests/sizeofOperation_tests/Makefile
 tests/CompileTests/MicrosoftWindows_tests/Makefile
 tests/CompileTests/nameQualificationAndTypeElaboration_tests/Makefile
 tests/CompileTests/NewEDGInterface_C_tests/Makefile
+tests/CompileTests/UnparseHeadersTests/Makefile
 tests/CompileTests/CudaTests/Makefile
 tests/CompileTests/OpenClTests/Makefile
 tests/CompileTests/EDG_4_x/Makefile

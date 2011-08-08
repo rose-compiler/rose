@@ -1,0 +1,53 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgTupleExp
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgTupleExp
+\brief This class represents a tuple display.
+
+This class represents the concept of a tuple object in the input language. Currently, this IR node only works with Python input files.
+
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgTupleExp data members
+/////////////////////////////////////////////////////////////////////////
+
+/*! \var SgTupleExp::p_elements
+\brief The list of elements contained in this tuple.
+
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgTupleExp member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+
+/*!
+\fn SgTupleExp::SgTupleExp ()
+\brief This is the constructor.
+
+   This constructor builds the SgTupleExp base class.
+
+*/
+
+/*!
+\fn SgTupleExp::isSgTupleExp (SgNode *s)
+\brief Cast function (from derived class to SgTupleExp pointer).
+
+   This functions returns a SgTupleExp pointer for any input of a
+pointer to an object derived from a SgTupleExp.
+
+\return Returns valid pointer to SgTupleExp if input is derived from a SgTupleExp.
+*/
+
+/*!
+\fn SgTupleExp::isSgTupleExp (const SgNode *s)
+\brief Cast function (from derived class to SgTupleExp pointer).
+
+   This functions returns a SgTupleExp pointer for any input of a
+pointer to an object derived from a SgTupleExp.
+
+\return Returns valid pointer to SgTupleExp if input is derived from a SgTupleExp.
+*/
