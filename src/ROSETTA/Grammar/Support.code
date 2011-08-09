@@ -4016,6 +4016,15 @@ HEADER_INITIALIZED_NAME_START
                e_last_gnu_variable_attribute /*!< last value (upper bound on range of values, used in error checking) */
              };
 
+        // driscoll6 (8/4/11): support for excess specifiers in python (*args and **kwargs)
+          enum excess_specifier_enum
+             {
+               e_excess_specifier_none = 0,
+               e_excess_specifier_positionals,
+               e_excess_specifier_keywords,
+               e_excess_specifier_last /* sentry */
+             };
+
           bool checkBit ( unsigned int bit ) const;
           void setBit ( unsigned int bit );
           void unsetBit ( unsigned int bit );

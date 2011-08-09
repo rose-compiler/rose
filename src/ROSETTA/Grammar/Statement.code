@@ -725,8 +725,8 @@ HEADER_TEMPLATE_SPECIALIZATION_SUPPORT_END
 
 HEADER_LIST_DECLARATIONS_START
      public:
-          void append_LIST_FUNCTION_NAME  ( LIST_ELEMENT_DATA_TYPE element );
-          void prepend_LIST_FUNCTION_NAME ( LIST_ELEMENT_DATA_TYPE element );
+          virtual void append_LIST_FUNCTION_NAME  ( LIST_ELEMENT_DATA_TYPE element );
+          virtual void prepend_LIST_FUNCTION_NAME ( LIST_ELEMENT_DATA_TYPE element );
 
      public:
        // New functions added
@@ -1666,6 +1666,10 @@ HEADER_LIST_DECLARATIONS_2
 
 HEADER_CLASS_DEFINITION_STATEMENT_END
 
+HEADER_STMT_DECLARATION_STATEMENT_START
+          virtual SgName get_mangled_name (void) const;
+HEADER_STMT_DECLARATION_STATEMENT_END
+
 HEADER_TEMPLATE_INSTANTIATION_DEFINITION_STATEMENT_START
 
        // DQ (3/18/2004): Generate template name with arguments
@@ -1775,6 +1779,8 @@ HEADER_LABEL_STATEMENT_START
 
 HEADER_LABEL_STATEMENT_END
 
+HEADER_WITH_STATEMENT_START
+HEADER_WITH_STATEMENT_END
 
 HEADER_WHILE_STATEMENT_START
        // void post_construction_initialization();
@@ -2044,6 +2050,12 @@ HEADER_GOTO_STATEMENT_START
 
 HEADER_GOTO_STATEMENT_END
 
+HEADER_PYTHON_GLOBAL_STMT_START
+HEADER_LIST_DECLARATIONS
+HEADER_PYTHON_GLOBAL_STMT_END
+
+HEADER_PYTHON_PRINT_STMT_START
+HEADER_PYTHON_PRINT_STMT_END
 
 HEADER_ASM_STATEMENT_START
 
@@ -2081,6 +2093,14 @@ HEADER_NULL_STATEMENT_START
 
 HEADER_NULL_STATEMENT_END
 
+HEADER_PASS_STATEMENT_START
+HEADER_PASS_STATEMENT_END
+
+HEADER_ASSERT_STMT_START
+HEADER_ASSERT_STMT_END
+
+HEADER_EXEC_STATEMENT_START
+HEADER_EXEC_STATEMENT_END
 
 HEADER_VARIANT_STATEMENT_START
 
@@ -3266,6 +3286,14 @@ SgStatement::get_scope(void) const
              {
             // Handle case of SgFunctionDeclaration or SgMemberFunctionDeclaration
                ROSE_ASSERT (stmt->get_parent() != NULL);
+
+               if ( SageInterface::is_Python_language() && isSgLambdaRefExp(stmt->get_parent()) ) {
+                   std::cout << "warning: python. Fetching scope of lambda parameters from lambda's scope." << std::endl;
+                   returnScope = SageInterface::getScope(stmt->get_parent());
+                   ROSE_ASSERT( returnScope != NULL );
+                   break;
+               }
+
                SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(stmt->get_parent());
                ROSE_ASSERT (functionDeclaration != NULL);
 #if 0
@@ -10659,6 +10687,15 @@ SgClassDeclaration::compute_classDefinition() const
 
 SOURCE_CLASS_DECLARATION_STATEMENT_END
 
+SOURCE_STMT_DECLARATION_STATEMENT_START
+
+SgName
+SgStmtDeclarationStatement::get_mangled_name (void) const {
+    return SgName("__stmt__decl__stmt__");
+}
+
+SOURCE_STMT_DECLARATION_STATEMENT_END
+
 SOURCE_TEMPLATE_INSTANTIATION_DECLARATION_STATEMENT_START
 void
 SgTemplateInstantiationDecl::post_construction_initialization()
@@ -11592,6 +11629,8 @@ SgWhileStmt::get_mangled_name(void) const
 
 SOURCE_WHILE_STATEMENT_END
 
+SOURCE_WITH_STATEMENT_START
+SOURCE_WITH_STATEMENT_END
 
 SOURCE_DO_WHILE_STATEMENT_START
 void
@@ -12113,6 +12152,38 @@ SgGotoStatement::replace_child(SgStatement *target,SgStatement *newstmt, bool ex
 
 SOURCE_GOTO_STATEMENT_END
 
+SOURCE_PYTHON_PRINT_STMT_START
+
+void
+SgPythonPrintStmt::post_construction_initialization() {
+    if (get_destination() != NULL)
+        get_destination()->set_parent(this);
+    if (get_values() != NULL)
+        get_values()->set_parent(this);
+}
+
+SOURCE_PYTHON_PRINT_STMT_END
+
+SOURCE_PYTHON_GLOBAL_STMT_START
+
+void
+SgPythonGlobalStmt::post_construction_initialization() {}
+
+void
+SgPythonGlobalStmt::append_name(SgInitializedName* name) {
+    ROSE_ASSERT(name);
+    name->set_parent(this);
+    get_names().push_back(name);
+}
+
+void
+SgPythonGlobalStmt::prepend_name(SgInitializedName* name) {
+    ROSE_ASSERT(name);
+    name->set_parent(this);
+    get_names().insert(get_names().begin(), name);
+}
+
+SOURCE_PYTHON_GLOBAL_STMT_END
 
 SOURCE_ASM_STATEMENT_START
 
@@ -12217,6 +12288,24 @@ SgNullStatement::post_construction_initialization()
 
 SOURCE_NULL_STATEMENT_END
 
+SOURCE_PASS_STATEMENT_START
+
+void
+SgPassStatement::post_construction_initialization()
+   {}
+
+SOURCE_PASS_STATEMENT_END
+
+SOURCE_ASSERT_STMT_START
+
+void
+SgAssertStmt::post_construction_initialization()
+   {}
+
+SOURCE_ASSERT_STMT_END
+
+SOURCE_EXEC_STATEMENT_START
+SOURCE_EXEC_STATEMENT_END
 
 SOURCE_VARIANT_STATEMENT_START
 
