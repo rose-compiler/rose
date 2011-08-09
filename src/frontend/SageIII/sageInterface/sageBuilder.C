@@ -3372,18 +3372,25 @@ SgWhileStmt * SageBuilder::buildWhileStmt_nfi(SgStatement *  condition, SgStatem
   return result;
 }
 
-SgWithStatement* SageBuilder::buildWithStatement(SgExpression* expr,
-        const std::vector<SgVariableDeclaration*>& vars, SgStatement *body)
+SgWithStatement* SageBuilder::buildWithStatement(SgExpression* expr, SgStatement *body)
 {
-  ROSE_ASSERT(expr);
-  ROSE_ASSERT(body);
-  SgWithStatement* result = new SgWithStatement();
-  ROSE_ASSERT(result);
-
+  ROSE_ASSERT(expr != NULL && body != NULL);
+  SgWithStatement* result = new SgWithStatement(expr, body);
   expr->set_parent(result);
   body->set_parent(result);
 
   setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgWithStatement* SageBuilder::buildWithStatement_nfi(SgExpression* expr, SgStatement *body)
+{
+  ROSE_ASSERT(expr != NULL && body != NULL);
+  SgWithStatement* result = new SgWithStatement(expr, body);
+  expr->set_parent(result);
+  body->set_parent(result);
+
+  setOneSourcePositionNull(result);
   return result;
 }
 
