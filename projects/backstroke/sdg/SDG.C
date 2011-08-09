@@ -5,13 +5,12 @@
 #include <boost/foreach.hpp>
 #include <boost/lambda/lambda.hpp>
 #include <boost/graph/graphviz.hpp>
+#include <boost/unordered_map.hpp>
 
 
 #define foreach BOOST_FOREACH
 
 using namespace std;
-using namespace boost;
-
 
 namespace SDG
 {
@@ -215,7 +214,7 @@ bool SystemDependenceGraph::isParaPassedByRef(SgType* type) const
 
 
 void SystemDependenceGraph::addControlDependenceEdges(
-        const std::map<CFGVertex, Vertex>& cfgVerticesToSdgVertices,
+        const map<CFGVertex, Vertex>& cfgVerticesToSdgVertices,
         const ControlFlowGraph& cfg,
         Vertex entry)
 {
@@ -236,11 +235,11 @@ void SystemDependenceGraph::addControlDependenceEdges(
         ROSE_ASSERT(cfgVerticesToSdgVertices.count(from));
         src = cfgVerticesToSdgVertices.find(from)->second;
 
-		typedef std::pair<CFGVertex, std::vector<CFGEdge> > VertexEdges;
+		typedef pair<CFGVertex, vector<CFGEdge> > VertexEdges;
 		foreach (const VertexEdges& vertexEdges, vertices.second)
 		{            
 			CFGVertex to = vertexEdges.first;
-			const std::vector<CFGEdge>& cdEdges = vertexEdges.second;
+			const vector<CFGEdge>& cdEdges = vertexEdges.second;
             
             ROSE_ASSERT(cfgVerticesToSdgVertices.count(to));
             tar = cfgVerticesToSdgVertices.find(to)->second;
@@ -275,25 +274,104 @@ void SystemDependenceGraph::addControlDependenceEdges(
     }
 }
 
+namespace 
+{
+    bool isBasicStatement(SgNode* node)
+    {
+        return isSgExpression(node) || isSgVariableDeclaration(node);
+    }
+}
 
 void SystemDependenceGraph::addDataDependenceEdges(
-        const std::map<CFGVertex, Vertex>& cfgVerticesToSdgVertices,
+        const map<CFGVertex, Vertex>& cfgVerticesToSdgVertices,
         const ControlFlowGraph& cfg)
 {
+    // Get the def-use chains from the generator.
+    ROSE_ASSERT(!defUseChainGenerator_.empty());
+    DefUseChains defUseChains;
+    defUseChainGenerator_(defUseChains);
+    
+    // Convert the CFGnode-SDGnode table to ASTnode-SDGnode table.
+    map<SgNode*, Vertex> astNodesToSdgVertices;
+    typedef pair<CFGVertex, Vertex> T;
+    foreach (const T& nodes, cfgVerticesToSdgVertices)
+        astNodesToSdgVertices[cfg[nodes.first]->getNode()] = nodes.second;
+    
+    // Once we have Def-Use chains, we can add data dependence edges to SDG.
+    // We only add edges between basic statements like expressions and declarations.
+    
+    // A table mapping each AST node to all SDG vertices which contains basic statements of it.
+    typedef boost::unordered_map<SgNode*, vector<Vertex> > ASTNodeToVertices;
+    typedef ASTNodeToVertices::iterator Iter;
+    ASTNodeToVertices nodesToVerticesTable;
+    
+    // Build the table above.
+    
+    foreach (const DefUseChain& defUse, defUseChains)
+    {
+        SgNode* def = defUse.first;
+        Iter iter = nodesToVerticesTable.find(def);
+        if (iter == nodesToVerticesTable.end())
+        {
+            vector<Vertex>& nodes = nodesToVerticesTable[def];
+            while (isBasicStatement(def))
+            {
+                map<SgNode*, Vertex>::iterator it = astNodesToSdgVertices.find(def);
+                if (it != astNodesToSdgVertices.end())
+                    nodes.push_back(it->second);
+                def = def->get_parent();
+            }
+        }
+        
+        foreach (SgNode* use, defUse.second)
+        {
+            Iter iter = nodesToVerticesTable.find(use);
+            if (iter == nodesToVerticesTable.end())
+            {
+                vector<Vertex>& nodes = nodesToVerticesTable[use];
+                while (isBasicStatement(use))
+                {
+                    map<SgNode*, Vertex>::iterator it = astNodesToSdgVertices.find(use);
+                    if (it != astNodesToSdgVertices.end())
+                        nodes.push_back(it->second);
+                    use = use->get_parent();
+                }
+            }
+        }
+    }
+    
+    // Add data dependence edges.
+    
+    foreach (const DefUseChain& defUse, defUseChains)
+    {
+        SgNode* def = defUse.first;
+        
+        foreach (Vertex src, nodesToVerticesTable.at(def))
+        {
+            foreach (SgNode* use, defUse.second)
+            {
+                foreach (Vertex tgt, nodesToVerticesTable.at(use))
+                {
+                    SDGEdge* newEdge = new SDGEdge(SDGEdge::DataDependence);
+                    addEdge(src, tgt, newEdge);
+                }
+            }
+        } 
+    }
 
 }
 
 
-void SystemDependenceGraph::toDot(const std::string& filename) const
+void SystemDependenceGraph::toDot(const string& filename) const
 {
-	std::ofstream ofile(filename.c_str(), std::ios::out);
+	ofstream ofile(filename.c_str(), ios::out);
 	boost::write_graphviz(ofile, *this,
 		boost::bind(&SystemDependenceGraph::writeGraphNode, this, ::_1, ::_2),
 		boost::bind(&SystemDependenceGraph::writeGraphEdge, this, ::_1, ::_2),
         boost::bind(&SystemDependenceGraph::writeGraphProperty, this, ::_1));
 }
 
-void SystemDependenceGraph::writeGraphProperty(std::ostream& out) const
+void SystemDependenceGraph::writeGraphProperty(ostream& out) const
 {
     map<string, pair<string, vector<int> > > subgraphNodes;
     
@@ -327,7 +405,7 @@ void SystemDependenceGraph::writeGraphProperty(std::ostream& out) const
 }
 
 
-void SystemDependenceGraph::writeGraphNode(std::ostream& out, const Vertex& vertex) const
+void SystemDependenceGraph::writeGraphNode(ostream& out, const Vertex& vertex) const
 {
     //if (node == entry_)
     //{
@@ -364,7 +442,7 @@ void SystemDependenceGraph::writeGraphNode(std::ostream& out, const Vertex& vert
 
         if (!isSgScopeStatement(node) && !isSgCaseOptionStmt(node) && !isSgDefaultOptionStmt(node))
         {
-            std::string content = node->unparseToString();
+            string content = node->unparseToString();
             boost::replace_all(content, "\"", "\\\"");
             boost::replace_all(content, "\\n", "\\\\n");
             label += content;
@@ -422,9 +500,9 @@ void SystemDependenceGraph::writeGraphNode(std::ostream& out, const Vertex& vert
     
 }
 
-void SystemDependenceGraph::writeGraphEdge(std::ostream& out, const Edge& edge) const
+void SystemDependenceGraph::writeGraphEdge(ostream& out, const Edge& edge) const
 {
-	std::string label, style;
+	string label, style;
 	SDGEdge* sdgEdge = (*this)[edge];
     
     switch (sdgEdge->type)

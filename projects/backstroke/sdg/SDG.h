@@ -2,6 +2,7 @@
 #define	_______SDG_H_______
 
 #include "newPDG.h"
+#include <boost/function.hpp>
 
 namespace SDG
 {
@@ -84,6 +85,9 @@ protected:
     typedef ControlFlowGraph::Vertex CFGVertex;
 	typedef ControlFlowGraph::Edge   CFGEdge;
     
+    typedef std::pair<SgNode*, std::vector<SgNode*> > DefUseChain;
+    typedef std::vector<DefUseChain> DefUseChains;
+    
 protected:
     //! The CFG node filter which controls which AST nodes appear in CFG.
     CFGNodeFilter cfgNodefilter_;
@@ -93,6 +97,8 @@ protected:
     
     //! A table mapping each function to its entry in SDG.
     std::map<SgFunctionDeclaration*, Vertex> functionsToEntries_;
+    
+    boost::function<void(DefUseChains&)> defUseChainGenerator_;
     
 public:
     SystemDependenceGraph(SgProject* project, CFGNodeFilter filter)
