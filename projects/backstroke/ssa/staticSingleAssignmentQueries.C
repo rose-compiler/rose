@@ -1,7 +1,6 @@
 //Author: George Vulov <georgevulov@hotmail.com>
-//Based on work by Justin Frye <jafrye@tamu.edu>
 #include "staticSingleAssignment.h"
-#include "rose.h"
+#include <rose.h>
 #include <boost/foreach.hpp>
 #include <queue>
 
@@ -536,3 +535,30 @@ const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getR
 	return getReachingDefsAfter(astNode->cfgForEnd());
 }
 
+const static set<SgVarRefExp*> emptyVarRefSet;
+
+const set<SgVarRefExp*>& StaticSingleAssignment::getUsesAtNode(SgNode* astNode) const
+{
+	ASTNodeToVarRefsMap::const_iterator uses = astNodeToUses.find(astNode);
+	if (uses == astNodeToUses.end())
+		return emptyVarRefSet;
+	else
+		return uses->second;
+}
+
+const StaticSingleAssignment::ReachingDefPtr StaticSingleAssignment::getDefinitionForUse(SgVarRefExp* astNode) const
+{
+	const VarName& varName = getVarName(astNode);
+	if (varName == emptyName)
+		return ReachingDefPtr();
+	
+	const NodeReachingDefTable& varReachingDefs = getReachingDefsBefore(astNode);
+	
+	//Look up the var name in the reaching defs to find the corresponding def
+	NodeReachingDefTable::const_iterator reachingDef = varReachingDefs.find(varName);
+	
+	if (reachingDef == varReachingDefs.end())
+		return ReachingDefPtr();
+	else
+		return reachingDef->second;
+}

@@ -1,6 +1,4 @@
 //Author: George Vulov <georgevulov@hotmail.com>
-//Based on work by Justin Frye <jafrye@tamu.edu>
-
 #pragma once
 
 #include <rose.h>
@@ -226,7 +224,15 @@ public:
 	//! Get the reaching definitions after the given AST node is executed. This method is 
 	//! equivalent to looking up the reaching definitions after astNode->cfgForEnd()
 	const NodeReachingDefTable& getReachingDefsAfter(SgNode* astNode) const;
+	
+	//! Returns all the SgVarRef objects that are used in the execution of the given AST node.
+	//! Each of the SgVarRef objects returned corresponds to a variable name
+	const std::set<SgVarRefExp*>& getUsesAtNode(SgNode* astNode) const;
 
+	//! Given a use obtained through getUsesAtNode, resolve its corresponding def.
+	//! This function may return NULL for SgVarRef objects not returned by getUsesAtNode
+	const ReachingDefPtr getDefinitionForUse(SgVarRefExp* astNode) const;
+	
 	//------------ STATIC UTILITY FUNCTIONS FUNCTIONS ------------ //
 
 	/** Find if the given prefix is a prefix of the given name.
