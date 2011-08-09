@@ -187,7 +187,7 @@ int main(int argc, char** argv)
 
 	//Run the SSA analysis intraprocedurally
 	StaticSingleAssignment ssa(project);
-	ssa.run(false);
+	ssa.run();
 	
 	return 0;
 	
@@ -216,7 +216,7 @@ int main(int argc, char** argv)
 
 	//Also test the interprocedural analysis
 	StaticSingleAssignment ssaInterprocedural(project);
-	ssaInterprocedural.run(true);
+	ssaInterprocedural.run();
 
 	if (SgProject::get_verbose() > 0)
 	{

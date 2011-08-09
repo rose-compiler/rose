@@ -4,8 +4,6 @@
 #include <map>
 #include <set>
 #include <rose.h>
-#include "dataflowCfgFilter.h"
-
 
 
 class ReachingDef
@@ -29,8 +27,6 @@ public:
 	};
 	
 	typedef boost::shared_ptr<ReachingDef> ReachingDefPtr;
-	
-	typedef FilteredCFGEdge<ssa_private::DataflowCfgFilter> FilteredCfgEdge;
 
 private:
 	/** The type of this definition. */
