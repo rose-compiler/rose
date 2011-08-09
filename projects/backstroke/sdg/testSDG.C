@@ -84,7 +84,8 @@ int main(int argc, char *argv[])
 
 
     SDG::SystemDependenceGraph sdg(project, filterCfgNode);
-    sdg.setDefUseChainsGenerator(generateDefUseChainsFromVariableRenaming);
+    //sdg.setDefUseChainsGenerator(generateDefUseChainsFromVariableRenaming);
+    sdg.setDefUseChainsGenerator(generateDefUseChainsFromSSA);
     sdg.build();
     sdg.toDot("SDG.dot");
 }

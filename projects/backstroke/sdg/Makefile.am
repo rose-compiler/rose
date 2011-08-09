@@ -10,7 +10,8 @@ noinst_PROGRAMS = testSDG
 
 testSDG_SOURCES = newCFG.C newCDG.C newDDG.C newPDG.C SDG.C testSDG.C util.C defUseChains.C
 testSDG_LDADD = $(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.a \
-				$(LIBS_WITH_RPATH) $(ROSE_LIBS)
+		$(top_builddir)/projects/backstroke/ssa/libSSA.a \
+		$(LIBS_WITH_RPATH) $(ROSE_LIBS)
 testSDG_include_HEADERS = newCFG.h newCDG.h newDDG.h newPDG.h util.h defUseChains.h
 testSDG_includedir = $(includedir)/backstroke
 

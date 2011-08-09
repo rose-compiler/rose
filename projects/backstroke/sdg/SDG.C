@@ -280,7 +280,8 @@ namespace
 {
     bool isBasicStatement(SgNode* node)
     {
-        return isSgExpression(node) || isSgDeclarationStatement(node);
+        return node;
+        //return isSgExpression(node) || isSgDeclarationStatement(node);
     }
 }
 
