@@ -1,6 +1,7 @@
 #include "SDG.h"
 #include "util.h"
 #include <VariableRenaming.h>
+#include <boost/algorithm/string.hpp>
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lambda/lambda.hpp>

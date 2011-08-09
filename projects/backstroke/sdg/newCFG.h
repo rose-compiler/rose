@@ -3,6 +3,7 @@
 
 #include <rose.h>
 #include <boost/function.hpp>
+#include <boost/shared_ptr.hpp>
 #include <boost/graph/adjacency_list.hpp>
 
 namespace SDG
