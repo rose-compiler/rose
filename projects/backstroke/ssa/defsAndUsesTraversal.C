@@ -278,7 +278,7 @@ ChildUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node, Synth
             return ChildUses();
         }
 	}
-	else if (isSgStatement(node))
+	else if (isSgStatement(node) && !isSgDeclarationStatement(node))
 	{
 		//Don't propagate uses up to the statement level
 		return ChildUses();
