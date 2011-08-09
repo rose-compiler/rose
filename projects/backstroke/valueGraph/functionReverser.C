@@ -26,7 +26,7 @@ EventReverser::EventReverser(SgFunctionDefinition* funcDef)
 
     cfg_ = new BackstrokeCFG(funcDef_);
     ssa_ = new SSA(SageInterface::getProject());
-    ssa_->run(true);
+    ssa_->run(true, true);
 
     pathNumManager_ = new PathNumManager(cfg_);
 }

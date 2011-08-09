@@ -431,8 +431,14 @@ HEADER_UPC_THREADS_EXPRESSION_END
 HEADER_UPC_MYTHREAD_EXPRESSION_START
 HEADER_UPC_MYTHREAD_EXPRESSION_END
 
-HEADER_FUNCTION_CALL_EXPRESSION_START
+HEADER_YIELD_EXPRESSION_START
+HEADER_YIELD_EXPRESSION_END
+
+HEADER_CALL_EXPRESSION_START
 HEADER_LIST_DECLARATIONS
+HEADER_CALL_EXPRESSION_END
+
+HEADER_FUNCTION_CALL_EXPRESSION_START
 
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
@@ -550,6 +556,44 @@ HEADER_INTEGER_DIVIDE_OPERATOR_END
 HEADER_MOD_OPERATOR_START
 HEADER_MOD_OPERATOR_END
 
+HEADER_MEMBERSHIP_OP_START
+HEADER_BOOLEAN_GET_TYPE_MEMBER_FUNCTION
+HEADER_MEMBERSHIP_OP_END
+
+HEADER_NON_MEMBERSHIP_OP_START
+HEADER_BOOLEAN_GET_TYPE_MEMBER_FUNCTION
+HEADER_NON_MEMBERSHIP_OP_END
+
+HEADER_IS_OP_START
+HEADER_BOOLEAN_GET_TYPE_MEMBER_FUNCTION
+HEADER_IS_OP_END
+
+HEADER_IS_NOT_OP_START
+HEADER_BOOLEAN_GET_TYPE_MEMBER_FUNCTION
+HEADER_IS_NOT_OP_END
+
+HEADER_NARY_OP_START
+
+    SgExpressionPtrList& get_operands();
+    const SgExpressionPtrList& get_operands() const;
+
+    VariantTList& get_operators();
+    const VariantTList& get_operators() const;
+
+    virtual void append_operation(VariantT sg_operator, SgExpression* operand); 
+
+HEADER_NARY_OP_END
+
+HEADER_NARY_COMPARISON_OP_START
+    virtual SgType* get_type() const;
+HEADER_NARY_COMPARISON_OP_END
+
+HEADER_NARY_BOOLEAN_OP_START
+    virtual SgType* get_type() const;
+HEADER_NARY_BOOLEAN_OP_END
+
+HEADER_BOOLEAN_GET_TYPE_MEMBER_FUNCTION
+HEADER_IS_NOT_OP_END
 
 HEADER_AND_OPERATOR_START
           SgType* get_type() const;
@@ -820,6 +864,35 @@ HEADER_THIS_EXPRESSION_START
 
 HEADER_THIS_EXPRESSION_END
 
+HEADER_TUPLE_EXP_START
+HEADER_TUPLE_EXP_END
+
+HEADER_LIST_EXP_START
+HEADER_LIST_EXP_END
+
+HEADER_COMPREHENSION_START
+HEADER_COMPREHENSION_END
+
+HEADER_LIST_COMPREHENSION_START
+HEADER_LIST_COMPREHENSION_END
+
+HEADER_SET_COMPREHENSION_START
+HEADER_SET_COMPREHENSION_END
+
+HEADER_DICTIONARY_COMPREHENSION_START
+HEADER_DICTIONARY_COMPREHENSION_END
+
+HEADER_DICTIONARY_EXP_START
+SgKeyDatumPairPtrList& get_key_datum_pairs();
+const SgKeyDatumPairPtrList& get_key_datum_pairs() const;
+void append_pair(SgKeyDatumPair *what);
+HEADER_DICTIONARY_EXP_END
+
+HEADER_KEY_DATUM_PAIR_START
+HEADER_KEY_DATUM_PAIR_END
+
+HEADER_STRING_CONVERSION_START
+HEADER_STRING_CONVERSION_END
 
 HEADER_SCOPE_OPERATOR_START
        // get lvalue
@@ -837,103 +910,13 @@ HEADER_ASSIGNMENT_OPERATOR_START
 HEADER_ASSIGNMENT_OPERATOR_END
 
 
-HEADER_PLUS_ASSIGNMENT_OPERATOR_START
+HEADER_COMPOUND_ASSIGNMENT_OPERATOR_START
 
        // get lvalue
           virtual bool isLValue() const;
           virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
-HEADER_PLUS_ASSIGNMENT_OPERATOR_END
-
-
-HEADER_MINUS_ASSIGNMENT_OPERATOR_START
-
-       // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
-
-HEADER_MINUS_ASSIGNMENT_OPERATOR_END
-
-
-HEADER_AND_ASSIGNMENT_OPERATOR_START
-
-       // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
-
-HEADER_AND_ASSIGNMENT_OPERATOR_END
-
-
-HEADER_IOR_ASSIGNMENT_OPERATOR_START
-
-       // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
-
-HEADER_IOR_ASSIGNMENT_OPERATOR_END
-
-
-HEADER_MULTIPLY_ASSIGNMENT_OPERATOR_START
-
-       // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
-
-HEADER_MULTIPLY_ASSIGNMENT_OPERATOR_END
-
-
-HEADER_DIVIDE_ASSIGNMENT_OPERATOR_START
-
-       // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
-
-HEADER_DIVIDE_ASSIGNMENT_OPERATOR_END
-
-
-HEADER_MOD_ASSIGNMENT_OPERATOR_START
-
-       // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
-
-HEADER_MOD_ASSIGNMENT_OPERATOR_END
-
-
-HEADER_XOR_ASSIGNMENT_OPERATOR_START
-
-       // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
-
-HEADER_XOR_ASSIGNMENT_OPERATOR_END
-
-
-HEADER_LEFT_SHIFT_ASSIGNMENT_OPERATOR_START
-
-       // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
-
-HEADER_LEFT_SHIFT_ASSIGNMENT_OPERATOR_END
-
-
-HEADER_RIGHT_SHIFT_ASSIGNEMENT_OPERATOR_START
-
-       // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
-
-HEADER_RIGHT_SHIFT_ASSIGNEMENT_OPERATOR_END
-
-
-HEADER_JAVA_UNSIGNED_RIGHT_SHIFT_ASSIGNEMENT_OPERATOR_START
-
-       // get lvalue
-          virtual bool isLValue() const;
-          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
-
-HEADER_JAVA_UNSIGNED_RIGHT_SHIFT_ASSIGNEMENT_OPERATOR_END
+HEADER_COMPOUND_ASSIGNMENT_OPERATOR_END
 
 
 HEADER_POINTER_ASSIGNMENT_OPERATOR_START
@@ -943,6 +926,11 @@ HEADER_POINTER_ASSIGNMENT_OPERATOR_START
 
 HEADER_POINTER_ASSIGNMENT_OPERATOR_END
 
+HEADER_INTEGER_DIVIDE_ASSIGN_OP_START
+HEADER_INTEGER_DIVIDE_ASSIGN_OP_END
+
+HEADER_EXPONENTIATION_ASSIGN_OP_START
+HEADER_EXPONENTIATION_ASSIGN_OP_END
 
 HEADER_REFERENCE_EXPRESSION_START
 HEADER_REFERENCE_EXPRESSION_END
@@ -1221,6 +1209,12 @@ HEADER_CO_EXPRESSION_START
 
 HEADER_CO_EXPRESSION_END
 
+HEADER_LAMBDA_REF_EXP_START
+
+    SgFunctionParameterList* get_parameterList();
+    SgStatement* get_body();
+
+HEADER_LAMBDA_REF_EXP_END
 
 HEADER_CUDA_KERNEL_EXEC_CONFIG_START
 HEADER_CUDA_KERNEL_EXEC_CONFIG_END
@@ -1363,6 +1357,7 @@ SgExpression::get_type() const
   // This catches any IR nodes where the fucntion should have been overwritten and was not.
 
      cerr << "Call to undefined $CLASSNAME::get_type(): aborting" << endl;
+     cerr << "dynamic type: " << this->class_name() << endl;
      ROSE_ASSERT(false);
 
      return 0;
@@ -2682,19 +2677,41 @@ SOURCE_UPC_THREADS_EXPRESSION_END
 SOURCE_UPC_MYTHREAD_EXPRESSION_START
 SOURCE_UPC_MYTHREAD_EXPRESSION_END
 
-SOURCE_FUNCTION_CALL_EXPRESSION_START
+SOURCE_YIELD_EXPRESSION_START
+SOURCE_YIELD_EXPRESSION_END
+
+SOURCE_CALL_EXPRESSION_START
 
 void
-SgFunctionCallExp::post_construction_initialization() 
+SgCallExpression::post_construction_initialization()
    {
      if (p_function != NULL)
           p_function->set_parent(this);
    }
 
+
+SgExpression*
+SgCallExpression::get_next(int& n) const
+   {
+     if(n==0)
+        {
+          n++;
+          return get_function();
+        } 
+       else 
+          if(p_args && n==1)
+             {
+               n++;
+               return get_args();
+             }
+
+     return 0;
+   }
+
 #if 1
 // DQ: trying to remove the nested iterator class
 void
-SgFunctionCallExp::append_arg(SgExpression* what)
+SgCallExpression::append_arg(SgExpression* what)
    {
      assert(this != NULL);
 
@@ -2718,32 +2735,15 @@ SgFunctionCallExp::append_arg(SgExpression* what)
 // DQ: trying to remove the nested iterator class
 // $CLASSNAME::insert_arg(const SgExpression::iterator& where, SgExpression* what)
 void
-SgFunctionCallExp::insert_arg(const SgExpressionPtrList::iterator& where, SgExpression* what)
+SgCallExpression::insert_arg(const SgExpressionPtrList::iterator& where, SgExpression* what)
    {
      p_args->insert_expression(where,what); 
    }
 #endif
 
-SgExpression*
-SgFunctionCallExp::get_next(int& n) const
-   {
-     if(n==0)
-        {
-          n++;
-          return get_function();
-        } 
-       else 
-          if(p_args && n==1)
-             {
-               n++;
-               return get_args();
-             }
-
-     return 0;
-   }
 
 int
-SgFunctionCallExp::replace_expression(SgExpression *o, SgExpression *n)
+SgCallExpression::replace_expression(SgExpression *o, SgExpression *n)
    {
   // DQ (12/17/2006): This function should have the semantics that it will represent a  
   // structural change to the AST, thus it is free to set the parent of the new expression.
@@ -2774,6 +2774,23 @@ SgFunctionCallExp::replace_expression(SgExpression *o, SgExpression *n)
 
      return 0;
    }
+
+SgType*
+SgCallExpression::get_type() const
+   {
+       return SageBuilder::buildVoidType(); //TODO this is wrong
+   }
+
+SOURCE_CALL_EXPRESSION_END
+
+SOURCE_FUNCTION_CALL_EXPRESSION_START
+
+void
+SgFunctionCallExp::post_construction_initialization()
+   {
+       SgCallExpression::post_construction_initialization();
+   }
+
 
 SgType*
 SgFunctionCallExp::get_type() const
@@ -3079,7 +3096,6 @@ SOURCE_EQUALITY_OPERATOR_EXPRESSION_START
 SOURCE_BOOLEAN_GET_TYPE_MEMBER_FUNCTION
 SOURCE_EQUALITY_OPERATOR_EXPRESSION_END
 
-
 SOURCE_LESS_THAN_OPERATOR_EXPRESSION_START
 SOURCE_BOOLEAN_GET_TYPE_MEMBER_FUNCTION
 SOURCE_LESS_THAN_OPERATOR_EXPRESSION_END
@@ -3132,6 +3148,90 @@ SOURCE_INTEGER_DIVIDE_OPERATOR_EXPRESSION_END
 SOURCE_MOD_OPERATOR_EXPRESSION_START
 SOURCE_MOD_OPERATOR_EXPRESSION_END
 
+SOURCE_MEMBERSHIP_OP_START
+SOURCE_BOOLEAN_GET_TYPE_MEMBER_FUNCTION
+SOURCE_MEMBERSHIP_OP_END
+
+SOURCE_NON_MEMBERSHIP_OP_START
+SOURCE_BOOLEAN_GET_TYPE_MEMBER_FUNCTION
+SOURCE_NON_MEMBERSHIP_OP_END
+
+SOURCE_IS_OP_START
+SOURCE_BOOLEAN_GET_TYPE_MEMBER_FUNCTION
+SOURCE_IS_OP_END
+
+SOURCE_IS_NOT_OP_START
+SOURCE_BOOLEAN_GET_TYPE_MEMBER_FUNCTION
+SOURCE_IS_NOT_OP_END
+
+SOURCE_NARY_OP_START
+
+SgExpressionPtrList&
+SgNaryOp::get_operands()
+   { return p_operands; }
+
+const SgExpressionPtrList&
+SgNaryOp::get_operands() const
+   { return p_operands; }
+
+VariantTList&
+SgNaryOp::get_operators()
+   { return p_operators; }
+
+const VariantTList&
+SgNaryOp::get_operators() const
+   { return p_operators; }
+
+void
+SgNaryOp::append_operation(VariantT sg_operator, SgExpression* operand) {
+    ROSE_ASSERT(operand != NULL);
+    get_operands().push_back(operand);
+    get_operators().push_back(sg_operator);
+    operand->set_parent(this);
+}
+
+int
+SgNaryOp::replace_expression(SgExpression *o, SgExpression *n) {
+    SgExpressionPtrList::iterator i;
+    for (i = get_operands().begin(); i != get_operands().end(); ++i) {
+        if( (*i) == o) {
+            *i = n;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int
+SgNaryOp::length() const {
+     return get_operands().size();
+}
+
+SgExpression*
+SgNaryOp::get_next(int& i) const {
+    return get_operands()[i++];
+}
+
+bool
+SgNaryOp::empty() const {
+    return get_operands().empty();
+}
+
+SOURCE_NARY_OP_END
+
+SOURCE_NARY_COMPARISON_OP_START
+SgType*
+SgNaryComparisonOp::get_type() const {
+    return SageBuilder::buildBoolType();
+}
+SOURCE_NARY_COMPARISON_OP_END
+
+SOURCE_NARY_BOOLEAN_OP_START
+SgType*
+SgNaryBooleanOp::get_type() const {
+    return SageBuilder::buildVoidType();
+}
+SOURCE_NARY_BOOLEAN_OP_END
 
 SOURCE_AND_OPERATOR_EXPRESSION_START
 
@@ -4188,6 +4288,45 @@ SOURCE_DELETE_OPERATOR_EXPRESSION_END
 SOURCE_THIS_EXPRESSION_START
 SOURCE_THIS_EXPRESSION_END
 
+SOURCE_TUPLE_EXP_START
+SOURCE_TUPLE_EXP_END
+
+SOURCE_LIST_EXP_START
+SOURCE_LIST_EXP_END
+
+SOURCE_COMPREHENSION_START
+SOURCE_COMPREHENSION_END
+
+SOURCE_LIST_COMPREHENSION_START
+SOURCE_LIST_COMPREHENSION_END
+
+SOURCE_SET_COMPREHENSION_START
+SOURCE_SET_COMPREHENSION_END
+
+SOURCE_DICTIONARY_COMPREHENSION_START
+SOURCE_DICTIONARY_COMPREHENSION_END
+
+SOURCE_DICTIONARY_EXP_START
+
+SgKeyDatumPairPtrList&
+SgDictionaryExp::get_key_datum_pairs()
+   { return p_key_datum_pairs; }
+
+const SgKeyDatumPairPtrList&
+SgDictionaryExp::get_key_datum_pairs() const
+   { return p_key_datum_pairs; }
+
+void
+SgDictionaryExp::append_pair(SgKeyDatumPair *what)
+   { what->set_parent(this); p_key_datum_pairs.push_back(what); }
+
+SOURCE_DICTIONARY_EXP_END
+
+SOURCE_KEY_DATUM_PAIR_START
+SOURCE_KEY_DATUM_PAIR_END
+
+SOURCE_STRING_CONVERSION_START
+SOURCE_STRING_CONVERSION_END
 
 SOURCE_SCOPE_OPERATOR_EXPRESSION_START
 SOURCE_SCOPE_OPERATOR_EXPRESSION_END
@@ -4197,53 +4336,14 @@ SOURCE_ASSIGN_OPERATOR_EXPRESSION_START
 SOURCE_ASSIGN_OPERATOR_EXPRESSION_END
 
 
-SOURCE_PLUS_ASSIGN_OPERATOR_EXPRESSION_START
-SOURCE_PLUS_ASSIGN_OPERATOR_EXPRESSION_END
-
-
-SOURCE_MINUS_ASSIGN_OPERATOR_EXPRESSION_START
-SOURCE_MINUS_ASSIGN_OPERATOR_EXPRESSION_END
-
-
-SOURCE_AND_ASSIGN_OPERATOR_EXPRESSION_START
-SOURCE_AND_ASSIGN_OPERATOR_EXPRESSION_END
-
-
-SOURCE_IOR_ASSIGN_OPERATOR_EXPRESSION_START
-SOURCE_IOR_ASSIGN_OPERATOR_EXPRESSION_END
-
-
-SOURCE_MULTIPLY_ASSIGN_OPERATOR_EXPRESSION_START
-SOURCE_MULTIPLY_ASSIGN_OPERATOR_EXPRESSION_END
-
-
-SOURCE_DIVIDE_ASSIGN_OPERATOR_EXPRESSION_START
-SOURCE_DIVIDE_ASSIGN_OPERATOR_EXPRESSION_END
-
-
-SOURCE_MOD_ASSIGN_OPERATOR_EXPRESSION_START
-SOURCE_MOD_ASSIGN_OPERATOR_EXPRESSION_END
-
-
-SOURCE_XOR_ASSIGN_OPERATOR_EXPRESSION_START
-SOURCE_XOR_ASSIGN_OPERATOR_EXPRESSION_END
-
-
-SOURCE_LEFT_SHIFT_ASSIGN_OPERATOR_EXPRESSION_START
-SOURCE_LEFT_SHIFT_ASSIGN_OPERATOR_EXPRESSION_END
-
-
-SOURCE_RIGHT_SHIFT_ASSIGN_OPERATOR_EXPRESSION_START
-SOURCE_RIGHT_SHIFT_ASSIGN_OPERATOR_EXPRESSION_END
-
-
-SOURCE_JAVA_UNSIGNED_RIGHT_SHIFT_ASSIGN_OPERATOR_EXPRESSION_START
-SOURCE_JAVA_UNSIGNED_RIGHT_SHIFT_ASSIGN_OPERATOR_EXPRESSION_END
-
-
 SOURCE_POINTER_ASSIGN_OPERATOR_EXPRESSION_START
 SOURCE_POINTER_ASSIGN_OPERATOR_EXPRESSION_END
 
+SOURCE_INTEGER_DIVIDE_ASSIGN_OP_START
+SOURCE_INTEGER_DIVIDE_ASSIGN_OP_END
+
+SOURCE_EXPONENTIATION_ASSIGN_OP_START
+SOURCE_EXPONENTIATION_ASSIGN_OP_END
 
 SOURCE_REFERENCE_EXPRESSION_START
 SOURCE_REFERENCE_EXPRESSION_END
@@ -4857,6 +4957,7 @@ SgType*
 
 $CLASSNAME::get_type() const
    { 
+     ROSE_ASSERT(this != NULL);
      return SgTypeDefault::createType();
    }
 
@@ -4868,6 +4969,7 @@ SOURCE_GET_TYPE_FROM_SYMBOL_START
 SgType*
 $CLASSNAME::get_type() const
    {
+     ROSE_ASSERT(this != NULL);
      ROSE_ASSERT(get_symbol() != NULL);
   // DQ (9/27/2006): Added assertion
      ROSE_ASSERT(get_symbol()->get_type() != NULL);
@@ -5767,6 +5869,44 @@ SgPseudoDestructorRefExp::post_construction_initialization()
 SOURCE_PSEUDO_DESTRUCTOR_REF_END
 
 
+SOURCE_LAMBDA_REF_EXP_START
+
+SgType* SgLambdaRefExp::get_type() const {
+	return SageBuilder::buildVoidType();
+}
+
+void
+SgLambdaRefExp::post_construction_initialization() {
+
+}
+
+SgFunctionParameterList*
+SgLambdaRefExp::get_parameterList() {
+    ROSE_ASSERT(this != NULL);
+
+    SgFunctionDeclaration* func_decl =
+        this->get_functionDeclaration();
+    ROSE_ASSERT(func_decl != NULL);
+
+    return func_decl->get_parameterList();
+}
+
+SgStatement*
+SgLambdaRefExp::get_body() {
+    ROSE_ASSERT(this != NULL);
+
+    SgFunctionDeclaration* func_decl =
+        this->get_functionDeclaration();
+    ROSE_ASSERT(func_decl != NULL);
+
+    SgFunctionDefinition* func_def =
+        func_decl->get_definition();
+    ROSE_ASSERT(func_def != NULL);
+
+    return func_def->get_body();
+}
+
+SOURCE_LAMBDA_REF_EXP_END
 
 SOURCE_CUDA_KERNEL_EXEC_CONFIG_START
 SOURCE_CUDA_KERNEL_EXEC_CONFIG_END

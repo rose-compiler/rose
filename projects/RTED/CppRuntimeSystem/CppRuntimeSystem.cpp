@@ -191,7 +191,7 @@ void RuntimeSystem::violationHandler(RuntimeViolation & vio)  throw (RuntimeViol
 void RuntimeSystem::doProgramExitChecks()
 {
   // exit global scope
-  stackManager.endScope();
+  stackManager.endScope(1);
 
   // allows you to call doProgramExitChecks but then keep going without first
   // calling clearStatus.  Convenient for testing, but not generally
@@ -277,10 +277,11 @@ void RuntimeSystem::checkBounds(Address addr, Address accaddr, size_t size) cons
 bool
 RuntimeSystem::checkMemWrite(Address addr, size_t size, const RsType* t)
 {
-    std::pair<MemoryType*, bool> res = memManager.checkWrite(addr, size, t);
+    std::pair<MemoryType*, int>  res = memManager.checkWrite(addr, size, t);
     AllocKind                    ak = res.first->howCreated();
 
-    return res.second && (ak & akUpcShared);
+    if ((ak & akUpcShared) == 0) return 0;
+    return res.second;
 }
 
 
@@ -454,9 +455,9 @@ void RuntimeSystem::beginScope(const std::string & name)
     stackManager.beginScope(name);
 }
 
-void RuntimeSystem::endScope ()
+void RuntimeSystem::endScope(size_t scopecount)
 {
-    stackManager.endScope();
+    stackManager.endScope(scopecount);
 }
 
 

@@ -5,6 +5,11 @@ AC_INIT(ROSE, 0.9.5a)
 AC_PREREQ([2.59])
 
 AC_CONFIG_SRCDIR([README])
+if test -e "README"; then
+  echo "Error: ROSE cannot be built in the source tree yet.  Please run $0 \
+in another directory outside of the source tree."
+  exit 1
+fi
 
 AC_CONFIG_AUX_DIR([config])
 

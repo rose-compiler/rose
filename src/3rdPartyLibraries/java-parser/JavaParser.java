@@ -56,8 +56,9 @@ class JavaParser  implements Callable<Boolean>
 
   // Need to change the names of the function parameters (should not all be "filename").
      public native void cactionConstructorDeclaration(String filename);
-     public native void cactionConstructorDeclarationEnd();
+     public native void cactionConstructorDeclarationEnd(int java_numberOfStatements);
      public native void cactionExplicitConstructorCall(String filename);
+     public native void cactionExplicitConstructorCallEnd(String filename);
      public native void cactionMethodDeclaration(String filename);
      public native void cactionSingleTypeReference(String filename);
      public native void cactionArgument(String argumentName, int modifiers);
@@ -86,7 +87,7 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionBinaryExpression();
      public native void cactionBinaryExpressionEnd(int java_operator_kind);
      public native void cactionBlock();
-     public native void cactionBlockEnd();
+     public native void cactionBlockEnd(int java_numberOfStatements);
      public native void cactionBreakStatement();
      public native void cactionCaseStatement();
      public native void cactionCastExpression();
@@ -112,8 +113,9 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionFloatLiteral();
      public native void cactionForeachStatement();
      public native void cactionForStatement();
+     public native void cactionForStatementEnd();
      public native void cactionIfStatement();
-     public native void cactionIfStatementEnd();
+     public native void cactionIfStatementEnd(int java_numberOfStatements);
 
   // DQ (4/16/2011): I can't seem to get Boolean values to pass through the JNI C++ interface (so I will use an integer since that works fine).
   // public native void cactionImportReference(String path);
@@ -216,7 +218,8 @@ class JavaParser  implements Callable<Boolean>
      public static native void cactionStatementEnd(String typeName);
 
   // public native void cactionMethodDeclarationEnd(String methodName);
-     public native void cactionMethodDeclarationEnd();
+  // public native void cactionMethodDeclarationEnd();
+     public native void cactionMethodDeclarationEnd(int java_numberOfStatements);
 
   // Build an array type using the base type that will be found on the astJavaTypeStack.
      public static native void cactionGenerateArrayType();

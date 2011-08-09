@@ -96,7 +96,7 @@ RTED_C_LOCAL_TEST_DIRS = \
 		 $(srcdir)/tests/C/types
 
 RTED_CPP_LOCAL_TEST_DIRS = \
-   $(srcdir)/tests/Cxx/io 
+   $(srcdir)/tests/Cxx/io
 
 FULL_RTED_CPP_LOCAL_TEST_DIRS = \
 		 $(srcdir)/tests/Cxx/memory \
@@ -106,9 +106,9 @@ FULL_RTED_CPP_LOCAL_TEST_DIRS = \
 		 $(srcdir)/tests/Cxx/types
 
 # DQ (7/16/2011): rted_source/tests/Cxx/io/cxx_stream2.cpp is failing.
-#  $(srcdir)/tests/Cxx/io 
+#  $(srcdir)/tests/Cxx/io
 RTED_CPP_LOCAL_TEST_DIRS_NQ_TEST = \
-   $(srcdir)/tests/Cxx/io 
+   $(srcdir)/tests/Cxx/io
 
 #				 $(srcdir)/tests/Cxx/templates # temporarily removed b/c unparsed code
 #                                      # cannot be fed into GCC4.3
@@ -1230,7 +1230,7 @@ deleteAllbinfiles:
 	rm -rf rted_source
 
 
-#checkfast:	runtimeCheck 
+#checkfast:	runtimeCheck
 checkfast:	runtimeCheck \
 				$(patsubst $(srcdir)/%, run/%, $(RTED_C_LOCAL_TEST_DIRS)) \
 				$(patsubst $(srcdir)/%, run/%, $(RTED_CPP_LOCAL_TEST_DIRS)) \
@@ -1240,7 +1240,7 @@ checkfast:	runtimeCheck \
 	@echo "---------------------------------------------------------------------------------------"
 
 # DQ (7/16/2011): These are the tests that are failing with the new name qualification.
-#				$(patsubst $(srcdir)/%, run/%, $(RTED_CPP_LOCAL_TEST_DIRS)) 
+#				$(patsubst $(srcdir)/%, run/%, $(RTED_CPP_LOCAL_TEST_DIRS))
 
 clean-local:
 	rm -rf $(CXX_TEMPLATE_OBJECTS) test_bin* *.o rose_*.C rose_*.c *.dot Templates.DB *~ rose_rose* test *.bin *.txt *.c *.cpp rted_source
@@ -1252,7 +1252,7 @@ clean-local:
 # test_name_qualification_1: $(patsubst $(srcdir)/%, run/%, $(RTED_CPP_LOCAL_TEST_DIRS_NQ_TEST))
 test_name_qualification_1: $(patsubst $(srcdir)/%, run/%, $(RTED_CPP_LOCAL_TEST_DIRS))
 
-test_name_qualification_2: run/C++/array_index_out_of_bound 
+test_name_qualification_2: run/C++/array_index_out_of_bound
 
 if ROSE_USE_RTED
 # run/C/floating_point_errors
@@ -1276,7 +1276,7 @@ check-local: runtimeCheck checkfast \
 	@echo "***************************************************************************************"
 
 # DQ (7/16/2011): Something in here fails
-#				run/C++/array_index_out_of_bound 
+#				run/C++/array_index_out_of_bound
 
 else
 # DQ (11/10/2009): Comment out, with permission from Thomas, the RTED test until we

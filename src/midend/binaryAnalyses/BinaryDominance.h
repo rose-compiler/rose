@@ -71,7 +71,8 @@ namespace BinaryAnalysis {
      *          SgAsmFunctionDeclaration *func = isSgAsmFunctionDeclaration(node);
      *          if (func) {
      *              ControlFlow::Graph cfg = cfg_analysis.build_cfg_from_ast<ControlFlow::Graph>(func);
-     *              ControlFlow::Vertex entry = 0; // first vertex is function entry block
+     *              typedef boost::graph_traits<ControlFlow::Graph>::vertex_descriptor CFG_Vertex;
+     *              CFG_Vertex entry = 0; // first vertex is function entry block
      *              assert(get(boost::vertex_name, cfg, entry) == func->get_entry_block());
      *              Dominance::Graph dg = dom_analysis.build_idom_graph_from_cfg<Dominance::Graph>(cfg, entry);
      *              dom_analysis.clear_ast(func);
@@ -114,6 +115,16 @@ namespace BinaryAnalysis {
          *  When a dominance graph is built from a control flow graph, the vertices of the dominance graph will correspond with
          *  the vertices of the control flow graph.  That is, vertex V in the dominance graph points to the same basic block as
          *  vertex V in the control flow graph.
+         *
+         *  It is common to need a type for the vertices and edges.  Boost graphs store this information in graph_traits and
+         *  users should use that to obtain those types.  Doing so will, in the long run, make your code more extensible since
+         *  the only datatype you're depending on is the graph itself--change the graph type and the vertex and edge types will
+         *  automatically adjust.  See Boost Graph Library documentation for all the available types.  The most common are:
+         *
+         *  @code
+         *  typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;
+         *  typedef boost::graph_traits<Graph>::edge_descriptor Edge;
+         *  @endcode
          */
         typedef boost::adjacency_list<boost::listS,     /* edge storage */
                                       boost::vecS,      /* vertex storage */

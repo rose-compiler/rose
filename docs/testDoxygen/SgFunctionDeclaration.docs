@@ -102,6 +102,14 @@ the Sage III AST.
 
 */
 
+/*! \var SgFunctionDeclaration::p_decoratorList
+\brief This variable stores a list of decorators.
+
+   This variable stores a list of expressions that decorate this function. This member
+is intended for use with Python, and should be NULL otherwise.
+
+*/
+
 /*! \var SgFunctionDeclaration::p_forwardDefinition
 \brief This variable stores the SgFunctionDefinition.
 

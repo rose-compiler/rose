@@ -112,6 +112,7 @@ InitializeExplicitScopes::visit ( SgNode *node)
                             {
                               SgFunctionParameterList* parameterList = isSgFunctionParameterList(parentNode);
                               ROSE_ASSERT(parameterList != NULL);
+
                               SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(parameterList->get_parent());
                               ROSE_ASSERT(functionDeclaration != NULL);
                            // printf ("functionDeclaration->get_definition() = %p \n",functionDeclaration->get_definition());
@@ -196,6 +197,12 @@ InitializeExplicitScopes::visit ( SgNode *node)
                               scope = parentScopeStatement;
                               ROSE_ASSERT(scope != NULL);
                               break;
+                            }
+
+                         case V_SgPythonGlobalStmt:
+                            {
+                                scope = SageInterface::getGlobalScope(parentNode);
+                                break;
                             }
 
                          default:

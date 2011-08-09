@@ -1,4 +1,4 @@
-public final class test2011_24 // BadInstanceOf 
+public final class test2011_24
    {
      private static class Animal {}
      private static final class Fish extends Animal { void swim(){}  }
@@ -18,4 +18,5 @@ public final class test2011_24 // BadInstanceOf
                  // spider.crawl();
                   }
         }
+   }
 

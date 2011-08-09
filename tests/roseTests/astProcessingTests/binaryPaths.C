@@ -44,7 +44,8 @@ class visitorTraversal : public SgGraphTraversal<InheritedAttribute, Synthesized
 struct GraphvizVertexWriter {
     const BinaryAnalysis::ControlFlow::Graph &cfg;
     GraphvizVertexWriter(BinaryAnalysis::ControlFlow::Graph &cfg): cfg(cfg) {}
-    void operator()(std::ostream &output, const BinaryAnalysis::ControlFlow::Vertex &v) {
+    typedef boost::graph_traits<BinaryAnalysis::ControlFlow::Graph>::vertex_descriptor Vertex;
+    void operator()(std::ostream &output, const Vertex &v) {
         SgAsmBlock *block = get(boost::vertex_name, cfg, v);
         output <<"[ label=\"" <<StringUtility::addrToString(block->get_address()) <<"\" ]";
     }
@@ -86,9 +87,10 @@ int main(int argc, char *argv[]) {
     /* Calculate plain old CFG. */
     //if (algorithm=="A") {
         BinaryAnalysis::ControlFlow cfg_analyzer;
-        BinaryAnalysis::ControlFlow::Graph* cfg = new BinaryAnalysis::ControlFlow::Graph;
+        typedef BinaryAnalysis::ControlFlow::Graph CFG;
+        CFG *cfg = new CFG;
 
-        *cfg = cfg_analyzer.build_graph(interps.back());
+        *cfg = cfg_analyzer.build_cfg_from_ast<CFG>(interps.back());
         std::ofstream mf;
         mf.open("analysis.dot");
         boost::write_graphviz(mf, *cfg, GraphvizVertexWriter(*cfg));
