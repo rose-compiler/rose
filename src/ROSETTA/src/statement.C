@@ -2141,10 +2141,10 @@ Grammar::setUpStatements ()
                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      WithStatement.setFunctionPrototype      ( "HEADER_WITH_STATEMENT", "../Grammar/Statement.code" );
-     WithStatement.setDataPrototype("SgDeclarationStatementPtrList", "variables", "",
-                                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     WithStatement.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_FUNCTIONS", "../Grammar/Expression.code" );
-     WithStatement.editSubstitute       ( "LIST_NAME", "variable" );
+     WithStatement.setDataPrototype("SgExpression*", "expression", "= NULL",
+                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     WithStatement.setDataPrototype("SgStatement*", "body", "= NULL",
+                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      PassStatement.setFunctionPrototype  ( "HEADER_PASS_STATEMENT", "../Grammar/Statement.code" );
 

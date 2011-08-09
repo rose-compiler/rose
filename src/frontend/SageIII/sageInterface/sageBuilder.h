@@ -785,7 +785,9 @@ inline SgWhileStmt * buildWhileStmt(SgExpression *  condition, SgStatement *body
 }
 SgWhileStmt * buildWhileStmt_nfi(SgStatement *  condition, SgStatement *body, SgStatement *else_body = NULL);
 
-SgWithStatement* buildWithStatement(SgExpression* expr, const std::vector<SgVariableDeclaration*>& vars, SgStatement* body);
+//! Build a with statement
+SgWithStatement* buildWithStatement(SgExpression* expr, SgStatement* body);
+SgWithStatement* buildWithStatement_nfi(SgExpression* expr, SgStatement* body);
 
 //! Build do-while statement
 SgDoWhileStmt * buildDoWhileStmt(SgStatement *  body, SgStatement *condition);
