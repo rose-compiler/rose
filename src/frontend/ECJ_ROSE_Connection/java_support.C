@@ -370,19 +370,6 @@ memberFunctionSetup (SgName & name, SgClassDefinition* classDefinition, SgFuncti
      ROSE_ASSERT(return_type != NULL);
      astJavaTypeStack.pop_front();
 
-#if 0
-  // Loop over the types in the astJavaTypeStack (the rest of the stack).
-     while (astJavaTypeStack.empty() == false)
-        {
-          SgType* parameterType = astJavaTypeStack.front();
-          ROSE_ASSERT(parameterType != NULL);
-
-       // Note certain this is the correct order (we might need to insert instead of append).
-          typeList->append_argument(parameterType);
-
-          astJavaTypeStack.pop_front();
-        }
-#else
   // Loop over the types in the astJavaTypeStack (the rest of the stack).
      while (astJavaInitializedNameStack.empty() == false)
         {
@@ -400,7 +387,6 @@ memberFunctionSetup (SgName & name, SgClassDefinition* classDefinition, SgFuncti
 
           astJavaInitializedNameStack.pop_front();
         }
-#endif
 
   // Specify if this is const, volatile, or restrict (0 implies normal member function).
      unsigned int mfunc_specifier = 0;
@@ -591,11 +577,17 @@ buildJavaClass (const SgName & className, SgScopeStatement* scope )
      ROSE_ASSERT(classDefinition->get_declaration()->get_symbol_from_symbol_table() == NULL);
      ROSE_ASSERT(classDefinition->get_declaration()->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table() != NULL);
 
-#if 0
+#if 1
   // Ignore this requirement while we are debugging...
 
   // DQ (3/25/2011): Changed this to a non-defining declaration.
   // Add "super()" member function.
+
+  // Push a dummy type to stand for the return type of the member function to be built.
+  // This allows us to use a common member function support for constrcutors and the "super" function.
+     SgTypeVoid* voidType = SgTypeVoid::createType();
+     astJavaTypeStack.push_front(voidType);
+
   // SgMemberFunctionDeclaration* functionDeclaration = buildSimpleMemberFunction("super",classDefinition);
      SgMemberFunctionDeclaration* functionDeclaration = buildNonDefiningMemberFunction("super",classDefinition);
      ROSE_ASSERT(functionDeclaration != NULL);
@@ -915,12 +907,6 @@ buildImplicitClass (const SgName & className)
    {
      bool implicitClass = true;
      buildClassSupport (className,implicitClass);
-
-#if 0
-  // DQ (4/14/2011): This is a test, if it works then we should not have pushed the scope onto the stack in the first place!
-     astJavaScopeStack.pop_front();
-     outputJavaState("In buildImplicitClass(): Pop the class built implicitly from the stack.");
-#endif
    }
 
 void
@@ -1248,36 +1234,85 @@ appendStatement(SgStatement* statement)
              {
                ifStatement->set_false_body(statement);
              }
+
+          ROSE_ASSERT(statement->get_parent() != NULL);
         }
        else
         {
           astJavaScopeStack.front()->append_statement(statement);
+
+          ROSE_ASSERT(statement->get_parent() != NULL);
         }
 
      ROSE_ASSERT(statement->get_parent() != NULL);
    }
 
 
+// void appendStatementStack()
 void
-appendStatementStack()
+appendStatementStack(int numberOfStatements)
    {
+  // DQ (9/30/2011): Modified to only pop a precise number of statements off the of the stack.
+
   // This function is used to dump all statements accumulated on the astJavaStatementStack
   // into the current scope (called as part of closing off the scope where functions that 
   // don't call the function to close off statements).
 
   // Reverse the list to avoid acesses to the stack from the bottom, 
   // which would be confusing and violate stack semantics.
+     int counter = 0;
      list<SgStatement*> reverseStatementList;
-     while (astJavaStatementStack.empty() == false)
+
+  // DQ (7/30/2011): We want to be more exact in the future, if possible.  This allows
+  // for the number of statements to be larger than the statck size and if so we take
+  // everything on the stack, but don't trigger an error.
+     while (astJavaStatementStack.empty() == false && counter < numberOfStatements)
         {
           reverseStatementList.push_front(astJavaStatementStack.front());
           astJavaStatementStack.pop_front();
+
+          counter++;
         }
 
      while (reverseStatementList.empty() == false)
         {
           appendStatement(reverseStatementList.front());
+
+          ROSE_ASSERT(reverseStatementList.front()->get_parent() != NULL);
+          ROSE_ASSERT(reverseStatementList.front()->get_parent()->get_startOfConstruct() != NULL);
+
           reverseStatementList.pop_front();
         }
    }
+
+
+
+SgClassDefinition*
+getCurrentClassDefinition()
+   {
+     SgClassDefinition* classDefinition = NULL;
+     std::list<SgScopeStatement*>::reverse_iterator i = astJavaScopeStack.rbegin();
+     while (i != astJavaScopeStack.rend() && isSgClassDefinition(*i) == NULL)
+        {
+          i++;
+        }
+
+     if (i != astJavaScopeStack.rend())
+        {
+          classDefinition = isSgClassDefinition(*i);
+          string className = classDefinition->get_declaration()->get_name();
+       // printf ("Current class is className = %s \n",className.c_str());
+        }
+       else
+        {
+          printf ("Error in getCurrentClassDefinition(): SgClassDefinition not found \n");
+          ROSE_ASSERT(false);
+        }
+
+     ROSE_ASSERT(classDefinition != NULL);
+     return classDefinition;
+   }
+
+
+
 

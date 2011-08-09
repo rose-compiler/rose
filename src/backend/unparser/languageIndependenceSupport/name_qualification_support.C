@@ -75,6 +75,10 @@ Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
              {
             // SgTemplateArgument* node = isSgTemplateArgument(referencedNode);
             // nameQualifier = node->get_qualified_name_prefix_for_type();
+#if 0
+               SgTemplateArgument* node = isSgTemplateArgument(referencedNode);
+               nameQualifier = node->get_qualified_name_prefix_for_type();
+#endif
                break;
              }
 
