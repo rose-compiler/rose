@@ -139,10 +139,6 @@ void RtedTransformation::insertNamespaceIntoSourceFile( SgProject* project )
 
      ++classaa;
    }
-
-   // \pp not sure why moveupPreprocessingInfo is needed
-   //     commented out for now.
-   // moveupPreprocessingInfo(project);
 }
 
 /// \brief  starting from n returns the first AST node that is an SgStatement
@@ -156,53 +152,6 @@ SgStatement* getStatementLevelNode(SgLocatedNode& n)
 
   return &sg::ancestor<SgStatement>(n);
 }
-
-
-void RtedTransformation::moveupPreprocessingInfo(SgProject* project)
-{
-   std::vector<SgSourceFile*>::const_iterator aa = srcfiles.begin();
-   std::vector<SgSourceFile*>::const_iterator zz = srcfiles.end();
-   for (; aa != zz; ++aa)
-   {
-      SgSourceFile* sf = *aa;
-
-      if (!isInInstrumentedFile(sf)) continue;
-
-      // if the first located node has the preprocessing info then we are fine
-      // otherwise move the info up to the first one
-      if (RTEDDEBUG) cerr << "Moving up preprocessing info for file : "        << sf->get_file_info()->get_filename() << endl;
-
-      // \pp this flattens the entire tree ...
-      const SgNodePtrList&            nodes = NodeQuery::querySubTree(sf, V_SgLocatedNode);
-      if (nodes.empty()) continue; // go to next file
-
-      SgNodePtrList::const_iterator   nodesIT = nodes.begin();
-      SgLocatedNode*                  firstNode = isSgLocatedNode(*nodesIT);
-      AttachedPreprocessingInfoType*  info =  firstNode->getAttachedPreprocessingInfo();
-
-      // if the first node already has the preprocessing info we are done
-      if (info && info->size() > 0) continue; // we are done
-
-      // otherwise find located node with info and move up
-      // \pp \todo insert ++nodesIT b/c the node is already handled anyway
-      for (; nodesIT != nodes.end(); ++nodesIT)
-      {
-        SgLocatedNode* node = isSgLocatedNode(*nodesIT);
-        ROSE_ASSERT(node);
-        info = node->getAttachedPreprocessingInfo();
-        //if (info!=NULL)
-        //  cerr << "     node  -  info = " << info << "   size = " << info->size() << endl;
-        if (info && info->size() > 0) {
-           //cerr << " firstNode : " << firstNode->class_name() << " surr(firstNode) : " << getSurroundingStatement(firstNode)->class_name() <<
-           //  " node : " << node->class_name() << " surr(node) : " << getSurroundingStatement(node)->class_name() << endl;
-           SageInterface::moveUpPreprocessingInfo(
-                 getStatementLevelNode(*firstNode),
-                 getStatementLevelNode(*node));
-        }
-      }
-   }
-}
-
 
 void RtedTransformation::insertNamespaceIntoSourceFile(SgSourceFile* sf) {
    cerr << "Building Namespace RTED" << endl;

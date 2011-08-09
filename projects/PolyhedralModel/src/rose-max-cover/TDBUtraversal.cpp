@@ -165,8 +165,17 @@ SgExpression * develop(SgExpression * e) {
 	}
 }
 
+Expression<Symbol> * genExpression(SgExpression * sg_expr_, PolyhedralElement * elem, SymbolTable * st) {
+	Expression<Symbol> * expr = NULL;
 
-bool genLinearExpression(SgExpression * e, LinearExpression & le, PolyhedralElement * elem, SymbolTable * st) {
+	SgExpression * sg_expr = develop(sg_expr_);
+
+	// TODO
+
+	return expr;
+}
+
+bool genLinearExpression(SgExpression * e, LinearExpression_ppl & le, PolyhedralElement * elem, SymbolTable * st) {
 #if DEBUG_LINEAR_EXPRESSION
 	std::cerr << "ENTER genLinearExpression(e=" << e << ", le=0, elem=" << elem << ", st=" << st << ")" << std::endl;
 #endif /* DEBUG_LINEAR_EXPRESSION */
@@ -283,7 +292,7 @@ bool genLinearExpression(SgExpression * e, LinearExpression & le, PolyhedralElem
 	return true;
 }
 
-bool genLinearConstraint(Symbol * iterator, SgExpression * e, std::vector<std::pair<LinearExpression, bool> > & le_vect, bool inc, bool positive, PolyhedralElement * elem, SymbolTable * st) {
+bool genLinearConstraint(Symbol * iterator, SgExpression * e, std::vector<std::pair<LinearExpression_ppl, bool> > & le_vect, bool inc, bool positive, PolyhedralElement * elem, SymbolTable * st) {
 #if DEBUG_LINEAR_EXPRESSION
 	std::cerr << "ENTER genLinearConstraint(iterator=" << iterator << ", e=" << e << ", le_vect, inc=" << inc << ", positive=" << positive << ", elem=" << elem << ", st=" << st << ")" << std::endl;
 #endif /* DEBUG_LINEAR_EXPRESSION */
@@ -307,9 +316,9 @@ bool genLinearConstraint(Symbol * iterator, SgExpression * e, std::vector<std::p
 			SgExpression * lhs = bin_op->get_lhs_operand_i();
 			SgExpression * rhs = bin_op->get_rhs_operand_i();
 
-			LinearExpression le_lhs;
-			LinearExpression le_rhs;
-			LinearExpression le;
+			LinearExpression_ppl le_lhs;
+			LinearExpression_ppl le_rhs;
+			LinearExpression_ppl le;
 			
 			bool is_equality = false;
 
@@ -370,7 +379,7 @@ bool genLinearConstraint(Symbol * iterator, SgExpression * e, std::vector<std::p
 				if (plus_one)
 					le += 1;
 				
-				le_vect.push_back(std::pair<LinearExpression, bool>(le, is_equality));
+				le_vect.push_back(std::pair<LinearExpression_ppl, bool>(le, is_equality));
 			}
 			else res = false;
 		}
@@ -468,6 +477,8 @@ Access * generateAccess(SgExpression * e, PolyhedralElement * elem, SymbolTable 
 			ROSE_ASSERT(poly_func != NULL);
 
 			res = new ParametrizedAccess(elem, poly_func);
+
+			// TODO associate parameters to the symbols
 		}
 	}
 	else if (var_ref_exp != NULL || arr_ref_exp != NULL || arrow_exp != NULL || dot_exp != NULL || addr_of_op != NULL || deref_op != NULL) {
@@ -486,15 +497,16 @@ Access * generateAccess(SgExpression * e, PolyhedralElement * elem, SymbolTable 
 #endif /* DEBUG_DATA_ACCESS_GENERATION */
 		}
 		else if (var_ref_exp != NULL) {
-			ROSE_ASSERT(DEBUG_TODO == 0); // TODO I am not sure that something have to be done here
+			ROSE_ASSERT(DEBUG_TODO == 0); // TODO
 		}
 		else if (arr_ref_exp != NULL) {
 			
 			unsigned int dim_cnt = 0;
 			do {
-				LinearExpression subscript_le;
+				LinearExpression_ppl subscript_le;
 				SgExpression * subscript_exp = arr_ref_exp->get_rhs_operand_i();
 
+				// TODO Expression<Symbol> * genExpression(SgExpression *, PolyhedralElement *, SymbolTable *)
 				if (genLinearExpression(subscript_exp, subscript_le, elem, st)) {
 					data_access->restrainAccessedDomain(subscript_le, dim_cnt, equality);
 				}
@@ -1223,7 +1235,7 @@ DataAccess::DataAccess(PolyhedralElement * elem, AccessType type, Symbol * s) :
 
 DataAccess::~DataAccess() {}
 	
-void DataAccess::restrainAccessedDomain(LinearExpression & le, unsigned int dim, constraint_type_e type) {
+void DataAccess::restrainAccessedDomain(LinearExpression_ppl & le, unsigned int dim, constraint_type_e type) {
 	ROSE_ASSERT(DEBUG_TODO == 0); // TODO DataAccess::restrainAccessedDomain
 }
 
@@ -1351,14 +1363,14 @@ PolyhedralElement * PolyhedralModelisation::evaluate(SgNode * n, PolyhedralContr
 			SgStatementPtrList & for_init_stmt_list = for_init_stmt->get_init_stmt();
 			
 			Symbol * iterator;
-			LinearExpression lower_bound;
-			LinearExpression upper_bound;
+			LinearExpression_ppl lower_bound;
+			LinearExpression_ppl upper_bound;
 			int increment;
 			
 			if (for_init_stmt_list.size() != 1) is_static_control = false;
 			else {
-				LinearExpression lower_bound;
-				LinearExpression upper_bound;
+				LinearExpression_ppl lower_bound;
+				LinearExpression_ppl upper_bound;
 			
 				SgExpression * init_rhs_expr;
 				SgStatement * init_stmt = for_init_stmt_list[0];
@@ -1419,7 +1431,7 @@ PolyhedralElement * PolyhedralModelisation::evaluate(SgNode * n, PolyhedralContr
 				
 				is_static_control = is_static_control && test_stmt_ != NULL;
 
-				std::vector<std::pair<LinearExpression, bool> > constraint_set;
+				std::vector<std::pair<LinearExpression_ppl, bool> > constraint_set;
 				is_static_control = is_static_control && genLinearConstraint(
 										iterator,
 										test_stmt_->get_expression(),
@@ -1504,7 +1516,7 @@ PolyhedralElement * PolyhedralModelisation::evaluate(SgNode * n, PolyhedralContr
 			SgExpression * cond_expr = NULL;
 			if (cond_expr_stmt != NULL) cond_expr = cond_expr_stmt->get_expression();
 
-			std::vector<std::pair<LinearExpression, bool> > constraint_set;
+			std::vector<std::pair<LinearExpression_ppl, bool> > constraint_set;
 			bool is_static_control = cond_expr != NULL && genLinearConstraint(
 						NULL,
 						cond_expr,
@@ -1528,7 +1540,7 @@ PolyhedralElement * PolyhedralModelisation::evaluate(SgNode * n, PolyhedralContr
 			if (is_static_control) {
 				inh_control->false_statement = new PolyhedralControl(inh_control); // before all other modification (it's a copy)
 				
-				std::vector<std::pair<LinearExpression, bool> >::iterator it;
+				std::vector<std::pair<LinearExpression_ppl, bool> >::iterator it;
 				for (it = constraint_set.begin(); it != constraint_set.end(); it++)
 					if (it->second == false)
 						inh_control->refineDomain(it->first >= 0);

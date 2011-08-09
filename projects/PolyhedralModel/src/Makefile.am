@@ -86,8 +86,7 @@ if ROSE_USE_CLOOG
   libPolyModelRosePragma_la_CXXFLAGS     += -DCLOOG_INT_GMP -I$(CLOOG_PATH)/include
 endif
 libPolyModelRosePragma_la_LIBADD          = \
-  libPolyModelRose.la \
-  ../../pragmaParsing/libStringParser.la
+  libPolyModelRose.la
 if ROSE_USE_CLOOG
   libPolyModelRosePragma_la_LIBADD       += -L$(CLOOG_PATH)/lib -lcloog-isl
 endif

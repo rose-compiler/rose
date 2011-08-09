@@ -674,14 +674,14 @@ void rted_EnterScope(const char* name)
   rs->beginScope( name );
 }
 
-void rted_ExitScope(const char*, SourceInfo si)
+void rted_ExitScope(size_t scopecount, rted_SourceInfo si)
 {
   rted_ProcessMsg();
 
   RuntimeSystem* rs = RuntimeSystem::instance();
 
   checkpoint( rs, SourcePosition(si), primaryLoc );
-  rs->endScope();
+  rs->endScope(scopecount);
 }
 
 
@@ -814,7 +814,7 @@ int _rted_InitVariable( rted_TypeDesc    td,
   }
 
   const RsType& rs_type = rs_simpleGetType(*rs->getTypeSystem(), td.name, td.base, class_name, td.desc);
-  bool          sendupd = rs->checkMemWrite( address, size, &rs_type );
+  int           sendupd = rs->checkMemWrite( address, size, &rs_type );
 
   // This assumes roseInitVariable is called after the assignment has taken
   // place (otherwise we wouldn't get the new heap address).
