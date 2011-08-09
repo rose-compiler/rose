@@ -22,6 +22,11 @@ void SystemDependenceGraph::build(SgProject* project)
 {
     map<CFGVertex, Vertex> cfgVerticesToSdgVertices;
     map<SgFunctionCallExp*, vector<SDGNode*> > funcCallToArgs;
+    map<SgInitializedName*, vector<Vertex> > actualInParameters;
+    map<SgInitializedName*, vector<Vertex> > actualOutParameters;
+    
+    map<SgInitializedName*, Vertex> formalInParameters;
+    map<SgInitializedName*, Vertex> formalOutParameters;
     
     vector<SgFunctionDefinition*> funcDefs = SageInterface::querySubTree<SgFunctionDefinition>(project, V_SgFunctionDefinition);
     foreach (SgFunctionDefinition* funcDef, funcDefs)
@@ -31,9 +36,40 @@ void SystemDependenceGraph::build(SgProject* project)
         
         // For each function, build an entry node for it.
         SDGNode* entry = new SDGNode(SDGNode::Entry);
-        entry->funcDef = funcDef;
+        entry->astNode = funcDef;
+        //entry->funcDef = funcDef;
         functionsToEntries_[funcDef] = entry;
         Vertex entryVertex = addVertex(entry);
+        
+        // Add all formal parameters to SDG.
+        SgFunctionDeclaration* funcDecl = funcDef->get_declaration();
+        const SgInitializedNamePtrList& formalArgs = funcDecl->get_args();
+        foreach (SgInitializedName* initName, formalArgs)
+        {
+            SDGNode* formalInNode = new SDGNode(SDGNode::FormalIn);
+            formalInNode->astNode = initName;
+            Vertex formalInVertex = addVertex(formalInNode);
+            formalInParameters[initName] = formalInVertex;
+            
+            // Add a CD edge from call node to this formal-in node.
+            SDGEdge* newEdge = new SDGEdge(SDGEdge::ControlDependence);
+            newEdge->setTrue();
+            addEdge(entryVertex, formalInVertex, newEdge);
+            
+            // If the parameter is passed by reference, create a formal-out node.
+            if (isParaPassedByRef(initName->get_type()))
+            {
+                SDGNode* formalOutNode = new SDGNode(SDGNode::FormalOut);
+                formalOutNode->astNode = initName;
+                Vertex formalOutVertex = addVertex(formalOutNode);
+                formalOutParameters[initName] = formalOutVertex;
+                
+                // Add a CD edge from call node to this formal-out node.
+                SDGEdge* newEdge = new SDGEdge(SDGEdge::ControlDependence);
+                newEdge->setTrue();
+                addEdge(entryVertex, formalOutVertex, newEdge);
+            }
+        }
         
         // Add all CFG vertices to SDG.
         foreach (CFGVertex cfgVertex, boost::vertices(*cfg))
@@ -60,21 +96,46 @@ void SystemDependenceGraph::build(SgProject* project)
                 newSdgNode->type = SDGNode::FunctionCall;
                 vector<SDGNode*> argsNodes;
                 
+                // Get the associated function declaration.
+                SgFunctionDeclaration* funcDecl = funcCallExpr->getAssociatedFunctionDeclaration();
+                const SgInitializedNamePtrList& formalArgs = funcDecl->get_args();
+                
                 SgExprListExp* args = funcCallExpr->get_args();
-                foreach (SgExpression* arg, args->get_expressions())
+                const SgExpressionPtrList& actualArgs = args->get_expressions();
+                
+                for (int i = 0, s = actualArgs.size(); i < s; ++i)
                 {
-                    SDGNode* paraNode = new SDGNode(SDGNode::ActualIn);
-                    paraNode->astNode = arg;
-                    argsNodes.push_back(paraNode);
+                    SDGNode* paraInNode = new SDGNode(SDGNode::ActualIn);
+                    paraInNode->astNode = actualArgs[i];
+                    //argsNodes.push_back(paraInNode);
                     
                     // Add a actual-in parameter node.
-                    Vertex paraVertex = addVertex(paraNode);
+                    Vertex paraInVertex = addVertex(paraInNode);
+                    actualInParameters[formalArgs[i]].push_back(paraInVertex);
                     
                     // Add a CD edge from call node to this actual-in node.
-                    SDGEdge* paraInEdge = new SDGEdge(SDGEdge::ControlDependence);
-                    paraInEdge->setTrue();
-                    addEdge(sdgVertex, paraVertex, paraInEdge);
+                    SDGEdge* newEdge = new SDGEdge(SDGEdge::ControlDependence);
+                    newEdge->setTrue();
+                    addEdge(sdgVertex, paraInVertex, newEdge);
+                    
+                    // If the parameter is passed by reference, create a parameter-out node.
+                    if (isParaPassedByRef(formalArgs[i]->get_type()))
+                    {
+                        SDGNode* paraOutNode = new SDGNode(SDGNode::ActualOut);
+                        paraOutNode->astNode = actualArgs[i];
+                        //argsNodes.push_back(paraInNode);
+                        
+                        // Add a actual-in parameter node.
+                        Vertex paraOutVertex = addVertex(paraOutNode);
+                        actualOutParameters[formalArgs[i]].push_back(paraOutVertex);
+
+                        // Add a CD edge from call node to this actual-out node.
+                        SDGEdge* newEdge = new SDGEdge(SDGEdge::ControlDependence);
+                        newEdge->setTrue();
+                        addEdge(sdgVertex, paraOutVertex, newEdge);
+                    }
                 }
+                
                 funcCallToArgs[funcCallExpr] = argsNodes;
             }
         }
@@ -90,11 +151,37 @@ void SystemDependenceGraph::build(SgProject* project)
     // Add call edges.
     
     // Add parameter-in edges.
+    typedef pair<SgInitializedName*, Vertex> InitNameVertex;
+    
+    foreach (const InitNameVertex& initNameToVertex, formalInParameters)
+    {
+        foreach (Vertex vertex, actualInParameters[initNameToVertex.first])
+        {
+            addEdge(vertex, initNameToVertex.second, new SDGEdge(SDGEdge::ParameterIn));
+        }
+    }
     
     // Add parameter-out edges.
+    foreach (const InitNameVertex& initNameToVertex, formalOutParameters)
+    {
+        foreach (Vertex vertex, actualOutParameters[initNameToVertex.first])
+        {
+            addEdge(initNameToVertex.second, vertex, new SDGEdge(SDGEdge::ParameterOut));
+        }
+    }
     
     // Compute summary edges and add them.
 }
+
+
+bool SystemDependenceGraph::isParaPassedByRef(SgType* type) const
+{
+    type = type->stripType(SgType::STRIP_TYPEDEF_TYPE);
+    return SageInterface::isPointerType(type) 
+            || SageInterface::isReferenceType(type)
+            || isSgArrayType(type);
+}
+
 
 void SystemDependenceGraph::addControlDependenceEdges(
         const std::map<CFGVertex, Vertex>& cfgVerticesToSdgVertices,
@@ -171,8 +258,43 @@ void SystemDependenceGraph::toDot(const std::string& filename) const
 	std::ofstream ofile(filename.c_str(), std::ios::out);
 	boost::write_graphviz(ofile, *this,
 		boost::bind(&SystemDependenceGraph::writeGraphNode, this, ::_1, ::_2),
-		boost::bind(&SystemDependenceGraph::writeGraphEdge, this, ::_1, ::_2));
+		boost::bind(&SystemDependenceGraph::writeGraphEdge, this, ::_1, ::_2),
+        boost::bind(&SystemDependenceGraph::writeGraphProperty, this, ::_1));
 }
+
+void SystemDependenceGraph::writeGraphProperty(std::ostream& out) const
+{
+    map<string, pair<string, vector<int> > > subgraphNodes;
+    
+    foreach (Vertex vertex, boost::vertices(*this))
+    {
+        SDGNode* sdgNode = (*this)[vertex];
+    
+        if (sdgNode->astNode)
+        {
+            SgFunctionDeclaration* funcDecl = SageInterface::getEnclosingFunctionDeclaration(sdgNode->astNode);
+            if (funcDecl)
+            {
+                string name = funcDecl->get_name();
+                string mangledName = funcDecl->get_mangled_name();
+                subgraphNodes[mangledName].first = name;
+                subgraphNodes[mangledName].second.push_back(vertex);
+            }
+        }
+    }
+    
+    typedef pair<string, pair<string, vector<int> > > T;
+    foreach (const T& subgraph, subgraphNodes)
+    {
+        out << "subgraph cluster_" << subgraph.first << " {label=\"" << subgraph.second.first << "\";";
+        foreach (int i, subgraph.second.second)
+        {
+            out << i << "; "; 
+        }
+        out << "}\n";
+    }
+}
+
 
 void SystemDependenceGraph::writeGraphNode(std::ostream& out, const Vertex& vertex) const
 {
@@ -183,16 +305,17 @@ void SystemDependenceGraph::writeGraphNode(std::ostream& out, const Vertex& vert
     //else
     //    writeCFGNode(out, *(*this)[node]);
     
-    std::string nodeColor = "black";
-    std::string label;
-            
-    SDGNode* sdgNode = (*this)[vertex];
+    string nodeColor = "black";
+    string label;
+    
+    SDGNode* sdgNode = (*this)[vertex];        
+        
     switch (sdgNode->type)
     {
     case SDGNode::Entry:
         label = "Entry\\n";
-        ROSE_ASSERT(sdgNode->funcDef);
-        label += sdgNode->funcDef->get_declaration()->get_name();
+        ROSE_ASSERT(isSgFunctionDefinition(sdgNode->astNode));
+        label += isSgFunctionDefinition(sdgNode->astNode)->get_declaration()->get_name();
         nodeColor = "orange";
         break;
 
@@ -231,19 +354,31 @@ void SystemDependenceGraph::writeGraphNode(std::ostream& out, const Vertex& vert
         break;
         
     case SDGNode::ActualIn:
-        label = "ActualIn";
+        label = "Actual-In\\n";
+        ROSE_ASSERT(sdgNode->astNode);
+        label += sdgNode->astNode->unparseToString();
+        nodeColor = "sienna";
         break;
         
     case SDGNode::ActualOut:
-        label = "ActualOut";
+        label = "Actual-Out\\n";
+        ROSE_ASSERT(sdgNode->astNode);
+        label += sdgNode->astNode->unparseToString();
+        nodeColor = "turquoise";
         break;
         
     case SDGNode::FormalIn:
-        label = "FormalIn";
+        label = "Formal-In\\n";
+        ROSE_ASSERT(sdgNode->astNode);
+        label += sdgNode->astNode->unparseToString();
+        nodeColor = "sienna";
         break;
         
     case SDGNode::FormalOut:
-        label = "FormalOut";
+        label = "Formal-Out\\n";
+        ROSE_ASSERT(sdgNode->astNode);
+        label += sdgNode->astNode->unparseToString();
+        nodeColor = "turquoise";
         break;
         
     default:
@@ -251,6 +386,9 @@ void SystemDependenceGraph::writeGraphNode(std::ostream& out, const Vertex& vert
     }
 	
 	out << "[label=\""  << label << "\", color=\"" << nodeColor << "\"]";
+    
+    // Draw subgraphs.
+    
 }
 
 void SystemDependenceGraph::writeGraphEdge(std::ostream& out, const Edge& edge) const

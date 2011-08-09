@@ -21,7 +21,7 @@ struct SDGNode
         FormalOut
     };
     
-    SDGNode(NodeType t) : type(t), astNode(NULL), funcDef(NULL) {}
+    SDGNode(NodeType t) : type(t), astNode(NULL) {}
     
     NodeType type;
     
@@ -29,8 +29,8 @@ struct SDGNode
     
     SgNode* astNode;
     
-    //! The function definition for an entry node.
-    SgFunctionDefinition* funcDef;
+    ////! The function definition for an entry node.
+    //SgFunctionDefinition* funcDef;
     
 };
 
@@ -124,6 +124,9 @@ protected:
         return newEdge;
     }
     
+    //! Check if a parameter of the given type in a function call is passed by reference or not.
+    bool isParaPassedByRef(SgType* type) const;
+    
     void addControlDependenceEdges(
         const std::map<CFGVertex, Vertex>& cfgVerticesToSdgVertices,
         const ControlFlowGraph& cfg, Vertex entry);
@@ -137,6 +140,9 @@ protected:
 
 	//! This function helps to write the DOT file for edges.
 	void writeGraphEdge(std::ostream& out, const Edge& edge) const;
+    
+    //! This function helps to write the DOT file for the whole graph.
+    void writeGraphProperty(std::ostream& out) const;
     
 };
 
