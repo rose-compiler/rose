@@ -89,10 +89,10 @@ protected:
     CFGNodeFilter cfgNodefilter_;
     
     //! A table mapping each function to its CFG.
-    std::map<SgFunctionDefinition*, ControlFlowGraph*> functionsToCFGs_;
+    std::map<SgFunctionDeclaration*, ControlFlowGraph*> functionsToCFGs_;
     
     //! A table mapping each function to its entry in SDG.
-    std::map<SgFunctionDefinition*, SDGNode*> functionsToEntries_;
+    std::map<SgFunctionDeclaration*, Vertex> functionsToEntries_;
     
 public:
     SystemDependenceGraph(SgProject* project, CFGNodeFilter filter)

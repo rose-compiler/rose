@@ -17,11 +17,25 @@ namespace SDG
 {
 
 
+struct CallSiteInfo
+{
+    typedef SystemDependenceGraph::Vertex Vertex;
+    
+    SgFunctionCallExp* funcCall;
+    Vertex vertex;
+    vector<Vertex> inPara;
+    vector<Vertex> outPara;
+};
+
 
 void SystemDependenceGraph::build(SgProject* project)
 {
     map<CFGVertex, Vertex> cfgVerticesToSdgVertices;
-    map<SgFunctionCallExp*, vector<SDGNode*> > funcCallToArgs;
+    //map<SgFunctionCallExp*, vector<SDGNode*> > funcCallToArgs;
+    
+    vector<CallSiteInfo> functionCalls;
+    
+    
     map<SgInitializedName*, vector<Vertex> > actualInParameters;
     map<SgInitializedName*, vector<Vertex> > actualOutParameters;
     
@@ -31,18 +45,19 @@ void SystemDependenceGraph::build(SgProject* project)
     vector<SgFunctionDefinition*> funcDefs = SageInterface::querySubTree<SgFunctionDefinition>(project, V_SgFunctionDefinition);
     foreach (SgFunctionDefinition* funcDef, funcDefs)
     {
+        SgFunctionDeclaration* funcDecl = funcDef->get_declaration();
+        
         ControlFlowGraph* cfg = new ControlFlowGraph(funcDef, cfgNodefilter_);
-        functionsToCFGs_[funcDef] = cfg;
+        functionsToCFGs_[funcDecl] = cfg;
         
         // For each function, build an entry node for it.
         SDGNode* entry = new SDGNode(SDGNode::Entry);
         entry->astNode = funcDef;
         //entry->funcDef = funcDef;
-        functionsToEntries_[funcDef] = entry;
         Vertex entryVertex = addVertex(entry);
+        functionsToEntries_[funcDecl] = entryVertex;
         
         // Add all formal parameters to SDG.
-        SgFunctionDeclaration* funcDecl = funcDef->get_declaration();
         const SgInitializedNamePtrList& formalArgs = funcDecl->get_args();
         foreach (SgInitializedName* initName, formalArgs)
         {
@@ -92,6 +107,10 @@ void SystemDependenceGraph::build(SgProject* project)
             
             if (SgFunctionCallExp* funcCallExpr = isSgFunctionCallExp(astNode))
             {
+                CallSiteInfo callInfo;
+                callInfo.funcCall = funcCallExpr;
+                callInfo.vertex = sdgVertex;
+                
                 // Change the node type.
                 newSdgNode->type = SDGNode::FunctionCall;
                 vector<SDGNode*> argsNodes;
@@ -112,6 +131,7 @@ void SystemDependenceGraph::build(SgProject* project)
                     // Add a actual-in parameter node.
                     Vertex paraInVertex = addVertex(paraInNode);
                     actualInParameters[formalArgs[i]].push_back(paraInVertex);
+                    callInfo.inPara.push_back(paraInVertex);
                     
                     // Add a CD edge from call node to this actual-in node.
                     SDGEdge* newEdge = new SDGEdge(SDGEdge::ControlDependence);
@@ -128,6 +148,7 @@ void SystemDependenceGraph::build(SgProject* project)
                         // Add a actual-in parameter node.
                         Vertex paraOutVertex = addVertex(paraOutNode);
                         actualOutParameters[formalArgs[i]].push_back(paraOutVertex);
+                        callInfo.outPara.push_back(paraOutVertex);
 
                         // Add a CD edge from call node to this actual-out node.
                         SDGEdge* newEdge = new SDGEdge(SDGEdge::ControlDependence);
@@ -136,7 +157,8 @@ void SystemDependenceGraph::build(SgProject* project)
                     }
                 }
                 
-                funcCallToArgs[funcCallExpr] = argsNodes;
+                functionCalls.push_back(callInfo);
+                //funcCallToArgs[funcCallExpr] = argsNodes;
             }
         }
         
@@ -149,6 +171,15 @@ void SystemDependenceGraph::build(SgProject* project)
     }
     
     // Add call edges.
+    foreach (const CallSiteInfo& callInfo, functionCalls)
+    {
+        SgFunctionDeclaration* funcDecl = callInfo.funcCall->getAssociatedFunctionDeclaration();
+        ROSE_ASSERT(funcDecl);
+        if (functionsToEntries_.count(funcDecl))
+            addEdge(callInfo.vertex, functionsToEntries_[funcDecl], new SDGEdge(SDGEdge::Call));
+        else
+            ROSE_ASSERT(false);
+    }
     
     // Add parameter-in edges.
     typedef pair<SgInitializedName*, Vertex> InitNameVertex;
@@ -393,11 +424,12 @@ void SystemDependenceGraph::writeGraphNode(std::ostream& out, const Vertex& vert
 
 void SystemDependenceGraph::writeGraphEdge(std::ostream& out, const Edge& edge) const
 {
-	std::string str, style;
+	std::string label, style;
 	SDGEdge* sdgEdge = (*this)[edge];
-	if (sdgEdge->type == SDGEdge::ControlDependence)
-	{
-        std::string label;
+    
+    switch (sdgEdge->type)
+    {
+    case SDGEdge::ControlDependence:
         switch (sdgEdge->condition)
         {
             case VirtualCFG::eckTrue:
@@ -415,15 +447,32 @@ void SystemDependenceGraph::writeGraphEdge(std::ostream& out, const Edge& edge) 
             default:
                 break;
         }
-        out << "[label=\"" << label << "\", style=\"" << "solid" << "\"]";
-	}
-	else
-	{
-		foreach (const VarName& varName, (*this)[edge]->varNames)
-			str += VariableRenaming::keyToString(varName) + " ";
+        break;
+        
+    case SDGEdge::DataDependence:
+        foreach (const VarName& varName, (*this)[edge]->varNames)
+			label += VariableRenaming::keyToString(varName) + " ";
 		style = "dotted";
-		out << "[label=\"" << str << "\", style=\"" << style << "\"]";
-	}
+        break;
+        
+    case SDGEdge::Call:
+        //style = "invis";
+        break;
+        
+    case SDGEdge::ParameterIn:
+    case SDGEdge::ParameterOut:
+        style = "dashed";
+        break;
+        
+    case SDGEdge::Summary:
+        style = "bold";
+        break;
+        
+    default:
+        break;
+    }
+        
+    out << "[label=\"" << label << "\", style=\"" << style << "\"]";
 }
 
 
