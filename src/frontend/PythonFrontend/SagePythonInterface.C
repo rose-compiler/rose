@@ -304,20 +304,24 @@ PyObject*
 sage_buildClassDef(PyObject *self, PyObject *args)
 {
     char *name;
-    PyObject *py_members;
+    PyObject *py_bases;
     SgScopeStatement *scope;
     SgExprListExp *decoratorList;
-    if (! PyArg_ParseTuple(args, "sO&O&", &name,
-                                          SAGE_CONVERTER(SgExprListExp), &decoratorList,
-                                          SAGE_CONVERTER(SgScopeStatement), &scope))
+    if (! PyArg_ParseTuple(args, "sO!O&O&", &name,
+                                            &PyList_Type, &py_bases,
+                                            SAGE_CONVERTER(SgExprListExp), &decoratorList,
+                                            SAGE_CONVERTER(SgScopeStatement), &scope))
         return NULL;
 
     SgClassDeclaration* sg_class_decl =
         SageBuilder::buildDefiningClassDeclaration(SgName(name), scope);
 
-    // TODO handle base clases
+    Py_ssize_t basec = PyList_Size(py_bases);
+    for (int i = 0; i < basec; i++) {
+        PyObject* py_base = PyList_GetItem(py_bases, i);
+        SgExpression* sg_base = PyDecapsulate<SgExpression>(py_base);
+    }
 
-    // TODO add decoratorList arg to sageBuilder
     if (decoratorList != NULL) {
         sg_class_decl->set_decoratorList(decoratorList);
         decoratorList->set_parent(sg_class_decl);
@@ -1129,16 +1133,17 @@ sage_buildWhile(PyObject *self, PyObject *args)
 PyObject*
 sage_buildWith(PyObject *self, PyObject *args)
 {
-    SgExpression *expr;
-    SgStatement *body;
-    SgStatement *vars = NULL;
-    if (! PyArg_ParseTuple(args, "O&O&|O&", SAGE_CONVERTER(SgExpression), &expr,
-                                            SAGE_CONVERTER(SgStatement), &body,
-                                            SAGE_CONVERTER(SgStatement), &vars))
+    SgStatement *sg_body;
+    SgExpression *sg_exp, *sg_target;
+    if (! PyArg_ParseTuple(args, "O&O&O&", SAGE_CONVERTER(SgExpression), &sg_exp,
+                                           SAGE_CONVERTER(SgExpression), &sg_target,
+                                           SAGE_CONVERTER(SgStatement),  &sg_body))
         return NULL;
 
-    std::vector<SgVariableDeclaration*> no_vars; //PyDecapsulate<SgStatement>(py_vars);
-    SgWithStatement* sg_with_stmt = SageBuilder::buildWithStatement(expr, no_vars, body);
+    SgExpression* sg_with_item = (sg_target == NULL) ? sg_exp :
+        SageBuilder::buildAssignOp(sg_target, sg_exp);
+
+    SgWithStatement* sg_with_stmt = SageBuilder::buildWithStatement(sg_with_item, sg_body);
     return PyEncapsulate(sg_with_stmt);
 }
 
