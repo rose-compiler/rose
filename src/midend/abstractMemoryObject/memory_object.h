@@ -23,6 +23,7 @@ namespace AbstractMemoryObject
   // users to reuse the default implementation as much as possible
   class ObjSet
   {
+    virtual ~ObjSet();
     // True if this set includes memory objects what May be the same
     virtual bool maySet() = 0;
 

@@ -108,6 +108,7 @@ namespace AbstractHandle{
         case V_SgPragmaDeclaration:
         case V_SgFunctionParameterList:
         case V_SgUsingDirectiveStatement:
+        case V_SgStmtDeclarationStatement:
           {
             break;
           }
