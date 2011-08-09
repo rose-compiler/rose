@@ -233,6 +233,10 @@ public:
 	//! This function may return NULL for SgVarRef objects not returned by getUsesAtNode
 	const ReachingDefPtr getDefinitionForUse(SgVarRefExp* astNode) const;
 	
+	//! Returns the entire use table, mapping each non-statement AST node to the variables
+	//! used in its execution. 
+	const ASTNodeToVarRefsMap& getUseTable() const;
+	
 	//------------ STATIC UTILITY FUNCTIONS FUNCTIONS ------------ //
 
 	/** Find if the given prefix is a prefix of the given name.

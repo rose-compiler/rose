@@ -562,3 +562,8 @@ const StaticSingleAssignment::ReachingDefPtr StaticSingleAssignment::getDefiniti
 	else
 		return reachingDef->second;
 }
+
+const StaticSingleAssignment::ASTNodeToVarRefsMap& StaticSingleAssignment::getUseTable() const
+{
+	return astNodeToUses;
+}

@@ -48,7 +48,7 @@ public:
 	//---------CONSTRUCTORS---------
 
 	/** Creates a new reaching def. */
-	ReachingDef(CFGNode defNode, Type type);
+	ReachingDef(const CFGNode& defNode, Type type);
 
 	//---------ACCESSORS---------
 
