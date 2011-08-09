@@ -27,7 +27,7 @@ struct CallSiteInfo
 };
 
 
-void SystemDependenceGraph::build(SgProject* project)
+void SystemDependenceGraph::build()
 {
     map<CFGVertex, Vertex> cfgVerticesToSdgVertices;
     //map<SgFunctionCallExp*, vector<SDGNode*> > funcCallToArgs;
@@ -41,7 +41,8 @@ void SystemDependenceGraph::build(SgProject* project)
     map<SgInitializedName*, Vertex> formalInParameters;
     map<SgInitializedName*, Vertex> formalOutParameters;
     
-    vector<SgFunctionDefinition*> funcDefs = SageInterface::querySubTree<SgFunctionDefinition>(project, V_SgFunctionDefinition);
+    vector<SgFunctionDefinition*> funcDefs = 
+            SageInterface::querySubTree<SgFunctionDefinition>(project_, V_SgFunctionDefinition);
     foreach (SgFunctionDefinition* funcDef, funcDefs)
     {
         SgFunctionDeclaration* funcDecl = funcDef->get_declaration();
@@ -278,7 +279,7 @@ namespace
 {
     bool isBasicStatement(SgNode* node)
     {
-        return isSgExpression(node) || isSgVariableDeclaration(node);
+        return isSgExpression(node) || isSgDeclarationStatement(node);
     }
 }
 
@@ -289,7 +290,7 @@ void SystemDependenceGraph::addDataDependenceEdges(
     // Get the def-use chains from the generator.
     ROSE_ASSERT(!defUseChainGenerator_.empty());
     DefUseChains defUseChains;
-    defUseChainGenerator_(defUseChains);
+    defUseChainGenerator_(project_, defUseChains);
     
     // Convert the CFGnode-SDGnode table to ASTnode-SDGnode table.
     map<SgNode*, Vertex> astNodesToSdgVertices;
@@ -307,7 +308,7 @@ void SystemDependenceGraph::addDataDependenceEdges(
     
     // Build the table above.
     
-    foreach (const DefUseChain& defUse, defUseChains)
+    foreach (const DefUseChains::value_type& defUse, defUseChains)
     {
         SgNode* def = defUse.first;
         Iter iter = nodesToVerticesTable.find(def);
@@ -342,7 +343,10 @@ void SystemDependenceGraph::addDataDependenceEdges(
     
     // Add data dependence edges.
     
-    foreach (const DefUseChain& defUse, defUseChains)
+    map<pair<Vertex, Vertex>, set<VarName> > dataDependenceEdges;
+    
+    // First collect all defs on each DD edge.
+    foreach (const DefUseChains::value_type& defUse, defUseChains)
     {
         SgNode* def = defUse.first;
         
@@ -352,11 +356,20 @@ void SystemDependenceGraph::addDataDependenceEdges(
             {
                 foreach (Vertex tgt, nodesToVerticesTable.at(use))
                 {
-                    SDGEdge* newEdge = new SDGEdge(SDGEdge::DataDependence);
-                    addEdge(src, tgt, newEdge);
+                    dataDependenceEdges[make_pair(src, tgt)];
+                    //SDGEdge* newEdge = new SDGEdge(SDGEdge::DataDependence);
+                    //addEdge(src, tgt, newEdge);
                 }
             }
         } 
+    }
+    
+    // Build those edges.
+    typedef map<pair<Vertex, Vertex>, set<VarName> >::value_type T2;
+    foreach (const T2& edges, dataDependenceEdges)
+    {
+        SDGEdge* newEdge = new SDGEdge(SDGEdge::DataDependence);
+        addEdge(edges.first.first, edges.first.second, newEdge);
     }
 
 }

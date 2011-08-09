@@ -3,6 +3,7 @@
 #include "newDDG.h"
 #include "newPDG.h"
 #include "SDG.h"
+#include "defUseChains.h"
 
 using namespace SDG;
 
@@ -83,5 +84,7 @@ int main(int argc, char *argv[])
 
 
     SDG::SystemDependenceGraph sdg(project, filterCfgNode);
+    sdg.setDefUseChainsGenerator(generateDefUseChainsFromVariableRenaming);
+    sdg.build();
     sdg.toDot("SDG.dot");
 }

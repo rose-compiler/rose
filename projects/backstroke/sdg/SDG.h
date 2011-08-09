@@ -85,10 +85,15 @@ protected:
     typedef ControlFlowGraph::Vertex CFGVertex;
 	typedef ControlFlowGraph::Edge   CFGEdge;
     
-    typedef std::pair<SgNode*, std::vector<SgNode*> > DefUseChain;
-    typedef std::vector<DefUseChain> DefUseChains;
+    typedef std::map<SgNode*, std::set<SgNode*> > DefUseChains;
+    typedef boost::function<void(SgProject*, DefUseChains&)> DefUseChainsGen;
+    //typedef std::vector<DefUseChain> DefUseChains;
     
 protected:
+    
+    //! The ROSE project object.
+    SgProject* project_;
+    
     //! The CFG node filter which controls which AST nodes appear in CFG.
     CFGNodeFilter cfgNodefilter_;
     
@@ -98,18 +103,21 @@ protected:
     //! A table mapping each function to its entry in SDG.
     std::map<SgFunctionDeclaration*, Vertex> functionsToEntries_;
     
-    boost::function<void(DefUseChains&)> defUseChainGenerator_;
+    boost::function<void(SgProject*, DefUseChains&)> defUseChainGenerator_;
     
 public:
     SystemDependenceGraph(SgProject* project, CFGNodeFilter filter)
-    : cfgNodefilter_(filter)
-	{ build(project); }
+    : project_(project), cfgNodefilter_(filter)
+	{}
     
-    //! Build a SDG from a SgProject.
-    void build(SgProject* project);
+    //! Build the SDG.
+    void build();
     
     void setCFGNodeFilter(CFGNodeFilter filter)
     { cfgNodefilter_ = filter; }
+    
+    void setDefUseChainsGenerator(const DefUseChainsGen& defUseChainsGen)
+    { defUseChainGenerator_ = defUseChainsGen; }
     
     
 	//! Write the PDG to a dot file.
