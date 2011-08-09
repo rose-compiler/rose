@@ -109,7 +109,7 @@ int main(int argc, char *argv[]) {
         BinaryAnalysis::ControlFlow cfg_analyzer;
         BinaryAnalysis::ControlFlow::Graph* cfg = new BinaryAnalysis::ControlFlow::Graph;
 //builds the graph
-        *cfg = cfg_analyzer.build_cfg_from_ast(interps.back());
+        *cfg = cfg_analyzer.build_cfg_from_ast<BinaryAnalysis::ControlFlow::Graph>(interps.back());
 //not necessary, just making a dot file for later analysis, graph traversal is not dependent on this
         std::ofstream mf;
         mf.open("analysis.dot");
