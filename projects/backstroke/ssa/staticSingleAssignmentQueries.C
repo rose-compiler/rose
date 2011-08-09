@@ -567,3 +567,9 @@ const StaticSingleAssignment::ASTNodeToVarRefsMap& StaticSingleAssignment::getUs
 {
 	return astNodeToUses;
 }
+
+//! Get the final versions of all the variables at the end of the given function.
+const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getLastVersions(SgFunctionDefinition* astNode) const
+{
+	return getReachingDefsAfter(astNode);
+}

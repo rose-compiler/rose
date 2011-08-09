@@ -225,6 +225,9 @@ public:
 	//! equivalent to looking up the reaching definitions after astNode->cfgForEnd()
 	const NodeReachingDefTable& getReachingDefsAfter(SgNode* astNode) const;
 	
+	//! Get the final versions of all the variables at the end of the given function.
+	const NodeReachingDefTable& getLastVersions(SgFunctionDefinition* astNode) const;
+	
 	//! Returns all the SgVarRef objects that are used in the execution of the given AST node.
 	//! Each of the SgVarRef objects returned corresponds to a variable name
 	const std::set<SgVarRefExp*>& getUsesAtNode(SgNode* astNode) const;
