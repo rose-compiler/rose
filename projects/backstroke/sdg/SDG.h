@@ -114,6 +114,18 @@ protected:
     std::map<SgFunctionDeclaration*, Vertex> functionsToEntries_;
     
     boost::function<void(SgProject*, DefUseChains&)> defUseChainGenerator_;
+
+
+    struct CallSiteInfo
+    {
+        typedef SystemDependenceGraph::Vertex Vertex;
+
+        SgFunctionCallExp* funcCall;
+        Vertex vertex;
+        std::vector<Vertex> inPara;
+        std::vector<Vertex> outPara;
+        Vertex returned;
+    };
     
 public:
     SystemDependenceGraph(SgProject* project, CFGNodeFilter filter)
@@ -156,8 +168,8 @@ protected:
         const ControlFlowGraph& cfg, Vertex entry);
     
     void addDataDependenceEdges(
-        const boost::unordered_map<CFGVertex, Vertex>& cfgVerticesToSdgVertices,
-        const ControlFlowGraph& cfg,
+        const boost::unordered_map<SgNode*, Vertex>& astNodesToSdgVertices,
+        const std::vector<CallSiteInfo>& callSiteInfo,
         const std::map<SgNode*, Vertex>& formalOutPara);
     
     //! This function helps to write the DOT file for vertices.

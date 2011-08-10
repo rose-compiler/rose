@@ -17,15 +17,6 @@ namespace SDG
 {
 
 
-struct CallSiteInfo
-{
-    typedef SystemDependenceGraph::Vertex Vertex;
-    
-    SgFunctionCallExp* funcCall;
-    Vertex vertex;
-    vector<Vertex> inPara;
-    vector<Vertex> outPara;
-};
 
 //! A DFS visitor used in depth first search.
 template <typename VertexT> 
@@ -245,6 +236,7 @@ void SystemDependenceGraph::build()
                     Vertex paraOutVertex = addVertex(paraOutNode);
                     actualOutParameters[funcDecl].push_back(paraOutVertex);
                     callInfo.outPara.push_back(paraOutVertex);
+                    callInfo.returned = paraOutVertex;
 
                     // Add a CD edge from call node to this actual-out node.
                     addTrueCDEdge(sdgVertex, paraOutVertex);
@@ -257,11 +249,12 @@ void SystemDependenceGraph::build()
         
         // Add control dependence edges.
         addControlDependenceEdges(cfgVerticesToSdgVertices, *cfg, entryVertex);
-    
-        // Add data dependence edges.
-        addDataDependenceEdges(cfgVerticesToSdgVertices, *cfg, formalOutParameters);
-        
     }
+    
+    
+    // Add data dependence edges.
+    addDataDependenceEdges(astNodesToSdgVertices, functionCalls, formalOutParameters);
+    
     
     //=============================================================================================//
     // Add call edges.
@@ -406,20 +399,14 @@ namespace
 }
 
 void SystemDependenceGraph::addDataDependenceEdges(
-        const boost::unordered_map<CFGVertex, Vertex>& cfgVerticesToSdgVertices,
-        const ControlFlowGraph& cfg,
+        const boost::unordered_map<SgNode*, Vertex>& astNodesToSdgVertices,
+        const vector<CallSiteInfo>& callSiteInfo,
         const map<SgNode*, Vertex>& formalOutPara)
 {
     // Get the def-use chains from the generator.
     ROSE_ASSERT(!defUseChainGenerator_.empty());
     DefUseChains defUseChains;
     defUseChainGenerator_(project_, defUseChains);
-    
-    // Convert the CFGnode-SDGnode table to ASTnode-SDGnode table.
-    map<SgNode*, Vertex> astNodesToSdgVertices;
-    typedef pair<CFGVertex, Vertex> T;
-    foreach (const T& nodes, cfgVerticesToSdgVertices)
-        astNodesToSdgVertices[cfg[nodes.first]->getNode()] = nodes.second;
     
     // Once we have Def-Use chains, we can add data dependence edges to SDG.
     // We only add edges between basic statements like expressions and declarations.
@@ -444,7 +431,8 @@ void SystemDependenceGraph::addDataDependenceEdges(
                 vector<Vertex>& nodes = nodesToVerticesTable[use];
                 while (isBasicStatement(use))
                 {
-                    map<SgNode*, Vertex>::iterator it = astNodesToSdgVertices.find(use);
+                    boost::unordered_map<SgNode*, Vertex>::const_iterator it = 
+                            astNodesToSdgVertices.find(use);
                     if (it != astNodesToSdgVertices.end())
                         nodes.push_back(it->second);
                     use = use->get_parent();
@@ -481,6 +469,22 @@ void SystemDependenceGraph::addDataDependenceEdges(
                 }
             }
         } 
+    }
+    
+    // Add an edge from returned result of each function call to all uses of this function call.
+    foreach (const CallSiteInfo& callInfo, callSiteInfo)
+    {
+        SgNode* node = (*this)[callInfo.returned]->astNode;
+        if (isSgFunctionCallExp(node))
+        {
+            do
+            {
+                node = node->get_parent();
+                if (astNodesToSdgVertices.count(node))
+                    dataDependenceEdges[make_pair(callInfo.returned, astNodesToSdgVertices.at(node))];
+            } 
+            while (isBasicStatement(node));
+        }
     }
     
     // Add those edges.
