@@ -167,7 +167,8 @@ void SystemDependenceGraph::build()
             
             
             // Connect a vertex containing the return statement to the formal-out return vertex.
-            if (isSgReturnStmt(astNode->get_parent()))
+            if (isSgReturnStmt(astNode)
+                    || isSgReturnStmt(astNode->get_parent()))
             {
                 SDGEdge* newEdge = new SDGEdge(SDGEdge::DataDependence);
                 addEdge(sdgVertex, returnVertex, newEdge);                
@@ -295,6 +296,24 @@ void SystemDependenceGraph::build()
     // Compute summary edges and add them.
     
     size_t verticesNum = boost::num_vertices(*this);
+
+
+    // Check if this Actual-In vertex has any out-going edges. If not, the corresponding
+    // function definition of this function does not exit. To be conservative, we have to
+    // assume that each Actual-In parameter can affect the value of all Actual-Out parameters.
+    foreach (const CallSiteInfo& callInfo, functionCalls)
+    {
+        ROSE_ASSERT(callInfo.inPara.size());
+        int outDegree = boost::out_degree(callInfo.inPara[0], *this);
+        if (outDegree > 0)
+            continue;
+        
+        foreach (Vertex actualIn, callInfo.inPara)
+        {
+            foreach (Vertex actualOut, callInfo.outPara)
+                addEdge(actualIn, actualOut, new SDGEdge(SDGEdge::Summary));
+        }
+    }
     
     foreach (const CallSiteInfo& callInfo, functionCalls)
     {
@@ -312,7 +331,10 @@ void SystemDependenceGraph::build()
             foreach (Vertex actualOut, callInfo.outPara)
             {
                 if (vertices.count(actualOut))
-                    addEdge(actualIn, actualOut, new SDGEdge(SDGEdge::Summary));
+                {
+                    if (!boost::edge(actualIn, actualOut, *this).second)
+                        addEdge(actualIn, actualOut, new SDGEdge(SDGEdge::Summary));
+                }
             }
         }
     }

@@ -59,6 +59,56 @@ bool filterCfgNode(const VirtualCFG::CFGNode& cfgNode)
     return true;
 }
 
+bool filterCFGNodesByKeepingStmt(const VirtualCFG::CFGNode& cfgNode)
+{
+#if 1
+    if (!cfgNode.isInteresting())
+        return false;
+    
+    
+    SgNode* astNode = cfgNode.getNode();
+    
+    if (SgExpression* expr = isSgExpression(astNode))
+    {
+        if (isSgFunctionCallExp(expr))
+            return true;
+        
+        SgNode* parent = expr->get_parent();
+        if (isSgConditionalExp(parent)
+                || isSgExprListExp(parent))
+            return true;
+
+        //if (isSgExpression(parent))
+        return false;
+    }
+    
+    if (isSgFunctionDefinition(astNode))
+        return true;
+    
+    if (isSgScopeStatement(astNode))
+        return false;
+    
+    // Keep function parameters.
+    if (isSgInitializedName(astNode) 
+            && isSgFunctionParameterList(astNode->get_parent()))
+        return true;
+    
+    switch (astNode->variantT())
+    {
+    case V_SgInitializedName:
+    case V_SgCaseOptionStmt:
+    case V_SgDefaultOptionStmt:
+    case V_SgFunctionParameterList:
+    case V_SgBreakStmt:
+    case V_SgContinueStmt:
+        return false;
+    default:
+        break;
+    }
+#endif
+    return true;  
+}
+
 int main(int argc, char *argv[])
 {
     // Build the AST used by ROSE
@@ -93,7 +143,7 @@ int main(int argc, char *argv[])
     }
 
 
-    SDG::SystemDependenceGraph sdg(project, filterCfgNode);
+    SDG::SystemDependenceGraph sdg(project, filterCFGNodesByKeepingStmt);
     //sdg.setDefUseChainsGenerator(generateDefUseChainsFromVariableRenaming);
     sdg.setDefUseChainsGenerator(generateDefUseChainsFromSSA);
     sdg.build();
