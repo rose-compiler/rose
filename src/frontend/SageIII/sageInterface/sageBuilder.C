@@ -734,7 +734,6 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType*
 
   // DQ (2/24/2009): Delete the old parameter list build by the actualFunction (template argument) constructor.
      ROSE_ASSERT(func->get_parameterList() != NULL);
-     cout << "dELETING" << endl;
      delete func->get_parameterList();
      func->set_parameterList(NULL);
 
