@@ -10,10 +10,6 @@
 #define CASE_DISPATCH_AND_BREAK(sg_t) \
   case V_Sg ##sg_t : unparse ##sg_t (isSg##sg_t (stmt),info); break;
 
-#define PY_UNPARSE_NO_PRECEDENCE -1
-#define PY_UNPARSE_LEFT_ASSOC     1
-#define PY_UNPARSE_RIGHT_ASSOC   -1
-
 using namespace std;
 
 
@@ -181,19 +177,6 @@ Unparse_Python::unparseStatement(SgStatement* stmt, SgUnparse_Info& info) {
     unparseLanguageSpecificStatement(stmt, info);
 }
 
-bool
-Unparse_Python::requiresParentheses(SgExpression* expr) {
-    int exprPrecedence = getPrecedence(expr->variantT());
-    int parentPrecedence = getPrecedence(expr->get_parent()->variantT());
-    int assoc = getAssociativity(expr->get_parent()->variantT());
-    if      (exprPrecedence == PY_UNPARSE_NO_PRECEDENCE)      return false;
-    else if (parentPrecedence == PY_UNPARSE_NO_PRECEDENCE)    return false;
-    else if (assoc == PY_UNPARSE_RIGHT_ASSOC && exprPrecedence >  parentPrecedence) return false;
-    else if (assoc == PY_UNPARSE_LEFT_ASSOC  && exprPrecedence >= parentPrecedence) return false;
-    else if (assoc == PY_UNPARSE_LEFT_ASSOC  && exprPrecedence <  parentPrecedence) return true;
-    else if (assoc == PY_UNPARSE_RIGHT_ASSOC && exprPrecedence <= parentPrecedence) return true;
-    else ROSE_ASSERT(!"cant determine if parens are required");
-}
 
 void
 Unparse_Python::unparseGlobalStmt(SgStatement* stmt, SgUnparse_Info& info) {
@@ -296,16 +279,16 @@ Unparse_Python::unparseOperator(VariantT variant, bool pad) {
 }
 
 int
-Unparse_Python::getAssociativity(int variant) {
-    if (variant == V_SgExponentiationOp)
-        return PY_UNPARSE_RIGHT_ASSOC;
+Unparse_Python::getAssociativity(SgExpression* exp) {
+    if (exp->variantT() == V_SgExponentiationOp)
+        return ROSE_UNPARSER_RIGHT_ASSOC;
     else
-        return PY_UNPARSE_LEFT_ASSOC;
+        return ROSE_UNPARSER_LEFT_ASSOC;
 }
 
 int
-Unparse_Python::getPrecedence(int variant) {
-    switch (variant) {
+Unparse_Python::getPrecedence(SgExpression* exp) {
+    switch (exp->variantT()) {
         case V_SgLambdaRefExp:         return 1;
         case V_SgConditionalExp:       return 2;
         case V_SgOrOp:                 return 3;
@@ -357,7 +340,7 @@ Unparse_Python::getPrecedence(int variant) {
         case V_SgSetComprehension:     return 16;
         case V_SgDictionaryComprehension: return 16;
     }
-    return PY_UNPARSE_NO_PRECEDENCE;
+    return ROSE_UNPARSER_NO_PRECEDENCE;
 }
 
 void
