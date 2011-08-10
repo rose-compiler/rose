@@ -101,6 +101,8 @@ bool filterCFGNodesByKeepingStmt(const VirtualCFG::CFGNode& cfgNode)
     case V_SgFunctionParameterList:
     case V_SgBreakStmt:
     case V_SgContinueStmt:
+    case V_SgClassDeclaration:
+    case V_SgEnumDeclaration:
         return false;
     default:
         break;

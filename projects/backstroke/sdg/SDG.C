@@ -303,7 +303,9 @@ void SystemDependenceGraph::build()
     // assume that each Actual-In parameter can affect the value of all Actual-Out parameters.
     foreach (const CallSiteInfo& callInfo, functionCalls)
     {
-        ROSE_ASSERT(callInfo.inPara.size());
+        if (callInfo.inPara.empty())
+            continue;
+        
         int outDegree = boost::out_degree(callInfo.inPara[0], *this);
         if (outDegree > 0)
             continue;
