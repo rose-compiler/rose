@@ -122,6 +122,7 @@ JavaCodeGeneration_locatedNode::unparseLanguageSpecificExpression(SgExpression* 
        // case ASM_OP:                  { unparseAsmOp (expr, info); break; }
           case DESIGNATED_INITIALIZER:  { unparseDesignatedInitializer(expr, info); break; }
           case PSEUDO_DESTRUCTOR_REF:   { unparsePseudoDtorRef(expr, info); break; }
+          case JAVA_INSTANCEOF_OP:      { unparseJavaInstanceOfOp(expr, info); break; }
 
           default:
              {
@@ -1173,6 +1174,15 @@ JavaCodeGeneration_locatedNode::unparseThrowOp(SgExpression* expr, SgUnparse_Inf
 void
 JavaCodeGeneration_locatedNode::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Info & info)
    {
+   }
+
+void
+JavaCodeGeneration_locatedNode::unparseJavaInstanceOfOp(SgExpression* expr, SgUnparse_Info & info)
+   {
+       SgJavaInstanceOfOp* inst_op = isSgJavaInstanceOfOp(expr);
+       ROSE_ASSERT(inst_op != NULL);
+
+       curprint("INSTANCEOF");
    }
 
 void

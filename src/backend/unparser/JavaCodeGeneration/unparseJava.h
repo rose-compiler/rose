@@ -153,6 +153,7 @@ class JavaCodeGeneration_locatedNode : public UnparseLanguageIndependentConstruc
        // virtual void unparseVarArgCopyOp            (SgExpression* expr, SgUnparse_Info& info);
           virtual void unparseDesignatedInitializer   (SgExpression* expr, SgUnparse_Info& info);
           virtual void unparsePseudoDtorRef           (SgExpression* expr, SgUnparse_Info& info);
+          virtual void unparseJavaInstanceOfOp        (SgExpression* expr, SgUnparse_Info& info);
 
           virtual void unparseBasicBlockStmt   (SgStatement* stmt, SgUnparse_Info& info);
 
