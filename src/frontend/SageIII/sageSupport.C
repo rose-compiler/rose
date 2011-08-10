@@ -1479,6 +1479,19 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
              }
         }
 
+  // driscoll6 (8/8/11): python support
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(py|python|Python)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("Python only mode ON \n");
+          set_Python_only(true);
+          if (get_sourceFileUsesPythonFileExtension() == false)
+             {
+               printf ("Warning, Non Python source file name specificed with explicit -rose:python Python language option! \n");
+               set_Python_only(false);
+             }
+        }
+
   // DQ (12/27/2007): Allow defaults to be set based on filename extension.
   // set_Fortran_only(false);
   // ROSE_ASSERT (get_Fortran_only() == false);
@@ -8306,6 +8319,8 @@ SgFile::usage ( int status )
 "                             follow C++ 89 standard\n"
 "     -rose:Java, -rose:java, -rose:J, -rose:j\n"
 "                             compile Java code (work in progress)\n"
+"     -rose:Python, -rose:python, -rose:py\n"
+"                             compile Python code\n"
 "     -rose:OpenMP, -rose:openmp\n"
 "                             follow OpenMP 3.0 specification for C/C++ and Fortran, perform one of the following actions:\n"
 "     -rose:OpenMP:parse_only, -rose:openmp:parse_only\n"
