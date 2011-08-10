@@ -375,3 +375,15 @@ clean-local:
 	rm -f *.dot *.class *.java rose_performance_report_lockfile.lock *.out
 #	Remove any generated JVM log files that could have been generated (these are rare).
 	rm -f *.log
+
+# driscoll6 (8/10/11) convenience target for inspecting unparser output from all test files
+check-view: $(TEST_Objects:.o=.view)
+
+# driscoll6 (8/10/11) convenience target for inspecting unparser output from a particular file
+%.view: ../../testTranslator
+	@echo "============ TRANSLATING ==========="
+	$(testTranslator) $(ROSE_FLAGS) $(srcdir)/$(@:.view=.java) -rose:o $(@:.view=.java)
+	@echo "------------- UNPARSED -------------"
+	@cat $(srcdir)/$(@:.view=.java)
+	@echo "------------- ORIGINAL -------------"
+	@cat $(@:.view=.java)
