@@ -62,6 +62,8 @@ sub is_generated {
   return 1 if m(/src/frontend/SageIII/ompparser\.h$);
   return 1 if m(/src/frontend/SageIII/string\.[Ch]$);
   return 1 if m(/src/roseIndependentSupport/dot2gml/parseDotGrammar\.h$);
+  return 1 if m(/\.#); # Emacs temporary file
+  return 1 if m(~$); # Emacs backup file
   return 0;
 }
 

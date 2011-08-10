@@ -55,7 +55,7 @@ class visitorTraversal : public SgGraphTraversal<InheritedAttribute, Synthesized
 struct GraphvizVertexWriter {
     const BinaryAnalysis::ControlFlow::Graph &cfg;
     GraphvizVertexWriter(BinaryAnalysis::ControlFlow::Graph &cfg): cfg(cfg) {}
-    void operator()(std::ostream &output, const BinaryAnalysis::ControlFlow::Vertex &v) {
+    void operator()(std::ostream &output, const Vertex &v) {
         SgAsmBlock *block = get(boost::vertex_name, cfg, v);
         output <<"[ label=\"" <<StringUtility::addrToString(block->get_address()) <<"\" ]";
     }
@@ -106,9 +106,10 @@ int main(int argc, char *argv[]) {
 
 //Basic starting point for getting the necessary graph to be evaluated
         BinaryAnalysis::ControlFlow cfg_analyzer;
-        BinaryAnalysis::ControlFlow::Graph* cfg = new BinaryAnalysis::ControlFlow::Graph;
+        typedef BinaryAnalysis::ControlFlow::Graph CFG;
+        CFG* cfg = new CFG;
 //builds the graph
-        *cfg = cfg_analyzer.build_graph(interps.back());
+        *cfg = cfg_analyzer.build_cfg_from_ast<CFG>(interps.back());
 //not necessary, just making a dot file for later analysis, graph traversal is not dependent on this
         std::ofstream mf;
         mf.open("analysis.dot");
