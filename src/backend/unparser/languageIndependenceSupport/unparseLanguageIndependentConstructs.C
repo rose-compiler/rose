@@ -3642,11 +3642,15 @@ void UnparseLanguageIndependentConstructs::unparseOmpGenericStatement (SgStateme
 
 int
 UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr) {
+    cout << "getPrecedence() is unimplemented for " << languageName() << endl;
+    ROSE_ASSERT(false);
     return 0;
 }
 
 int
 UnparseLanguageIndependentConstructs::getAssociativity(SgExpression* expr) {
+    cout << "getAssociativity() is unimplemented for " << languageName() << endl;
+    ROSE_ASSERT(false);
     return 0;
 }
 
