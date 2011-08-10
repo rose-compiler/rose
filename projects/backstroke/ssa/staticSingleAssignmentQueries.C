@@ -321,8 +321,8 @@ void StaticSingleAssignment::printToFilteredDOT(SgSourceFile* source, ofstream& 
 		return;
 	}
 
-	typedef FilteredCFGNode<DataflowCfgFilter> cfgNode;
-	typedef FilteredCFGEdge<DataflowCfgFilter> cfgEdge;
+	typedef InterestingNode cfgNode;
+	typedef InterestingEdge cfgEdge;
 
 	typedef vector<SgFunctionDefinition*> funcDefVec;
 	funcDefVec funcs = SageInterface::querySubTree<SgFunctionDefinition > (source, V_SgFunctionDefinition);
@@ -561,4 +561,15 @@ const StaticSingleAssignment::ReachingDefPtr StaticSingleAssignment::getDefiniti
 		return ReachingDefPtr();
 	else
 		return reachingDef->second;
+}
+
+const StaticSingleAssignment::ASTNodeToVarRefsMap& StaticSingleAssignment::getUseTable() const
+{
+	return astNodeToUses;
+}
+
+//! Get the final versions of all the variables at the end of the given function.
+const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getLastVersions(SgFunctionDefinition* astNode) const
+{
+	return getReachingDefsAfter(astNode);
 }

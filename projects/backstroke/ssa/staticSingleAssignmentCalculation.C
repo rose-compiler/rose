@@ -207,6 +207,9 @@ void StaticSingleAssignment::run()
 			cout << "Running DefUse Data Flow on function: " << SageInterface::get_name(func) << func << endl;
 		runDefUseDataFlow(func);
 
+		//Mark the last definitions of variables that have gone out of scope as out of scope (modifies ReachingDef objects)
+		detectOutOfScopeVariables(func);
+		
 		if (getDebugExtra())
 		{
 			ofstream file((func->get_declaration()->get_name() + "_unfiltered.dot").str());
@@ -636,6 +639,25 @@ void StaticSingleAssignment::renumberAllDefinitions(SgFunctionDefinition* func, 
 
 				reachingDef->setRenamingNumber(index);
 			}
+		}
+	}
+}
+
+void StaticSingleAssignment::detectOutOfScopeVariables(SgFunctionDefinition* func)
+{
+	const NodeReachingDefTable& lastDefs = getLastVersions(func);
+	
+	foreach(const NodeReachingDefTable::value_type& varDefPair, lastDefs)
+	{
+		ReachingDefPtr lastDef = varDefPair.second;
+		
+		//We can detect out of scope variables because they have a phi function as their last definition,
+		//but only one incoming edge into the phi. The reason is that the dominance frontier algorithm assumes all variables
+		//are globally defined, so there's an implicit definition from the function entry being merged at the point at which
+		//the variable goes out of scope. 
+		if (lastDef->isPhiFunction() && lastDef->getJoinedDefs().size() == 1)
+		{
+			lastDef->setType(ReachingDef::OUT_OF_SCOPE);
 		}
 	}
 }

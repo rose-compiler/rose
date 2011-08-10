@@ -15,10 +15,8 @@
 #include "filteredCFG.h"
 #include <boost/unordered_map.hpp>
 #include "reachingDef.h"
-#include "controlPredicate.h"
-#include "dataflowCfgFilter.h"
 #include "CallGraph.h"
-#include "uniqueNameTraversal.h"
+#include <uniqueNameTraversal.h>
 
 namespace ssa_private
 {
@@ -167,6 +165,10 @@ private:
 	/** Performs the data-flow update for one individual node, populating the reachingDefsTable for that node.
 	 * @returns true if the OUT defs from the node changed, false if they stayed the same. */
 	bool propagateDefs(const CFGNode& cfgNode);
+	
+	//! Finds all variables that have gone out of scope and marks their last definition as an OUT_OF_SCOPE
+	//! definition, rather than a PHI definition.
+	void detectOutOfScopeVariables(SgFunctionDefinition* func);
 
 	/** Iterates all the CFG nodes in the function and returns them in postorder, according to depth-first search.
 	 * Reverse postorder is the most efficient order for dataflow propagation. */
@@ -225,6 +227,9 @@ public:
 	//! equivalent to looking up the reaching definitions after astNode->cfgForEnd()
 	const NodeReachingDefTable& getReachingDefsAfter(SgNode* astNode) const;
 	
+	//! Get the final versions of all the variables at the end of the given function.
+	const NodeReachingDefTable& getLastVersions(SgFunctionDefinition* astNode) const;
+	
 	//! Returns all the SgVarRef objects that are used in the execution of the given AST node.
 	//! Each of the SgVarRef objects returned corresponds to a variable name
 	const std::set<SgVarRefExp*>& getUsesAtNode(SgNode* astNode) const;
@@ -232,6 +237,10 @@ public:
 	//! Given a use obtained through getUsesAtNode, resolve its corresponding def.
 	//! This function may return NULL for SgVarRef objects not returned by getUsesAtNode
 	const ReachingDefPtr getDefinitionForUse(SgVarRefExp* astNode) const;
+	
+	//! Returns the entire use table, mapping each non-statement AST node to the variables
+	//! used in its execution. 
+	const ASTNodeToVarRefsMap& getUseTable() const;
 	
 	//------------ STATIC UTILITY FUNCTIONS FUNCTIONS ------------ //
 

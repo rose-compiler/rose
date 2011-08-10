@@ -228,12 +228,14 @@ ChildUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node, Synth
 				
 				CFGNode definingNode;
 				
-				if (unaryOp->get_mode() == SgUnaryOp::prefix)
-					definingNode = unaryOp->cfgForBeginning();
-				else if (unaryOp->get_mode() == SgUnaryOp::postfix)
+				//We always make the definition of a ++ or -- op appear after the operand is evaluated, regardless
+				//of whether it's a pre- or post- op. Otherwise, the operand may get the wrong reaching definition
+				//if (unaryOp->get_mode() == SgUnaryOp::prefix)
+				//	definingNode = unaryOp->cfgForBeginning();
+				//else if (unaryOp->get_mode() == SgUnaryOp::postfix)
 					definingNode = unaryOp->cfgForEnd();
-				else
-					ROSE_ASSERT(false);
+				//else
+				//	ROSE_ASSERT(false);
 				
 				
 				addDefForVarAtNode(currentVar, definingNode);
