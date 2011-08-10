@@ -22,8 +22,10 @@ bool filterCfgNode(const VirtualCFG::CFGNode& cfgNode)
             return true;
         
         SgNode* parent = expr->get_parent();
-        if (isSgConditionalExp(parent))
+        if (isSgConditionalExp(parent)
+                || isSgExprListExp(parent))
             return true;
+
         if (isSgExpression(parent))
             return false;
     }

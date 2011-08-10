@@ -2,12 +2,11 @@
 #define	SDG_DEFUSECHAINS_H
 
 #include <rose.h>
+#include "SDG.h"
 
 
 namespace SDG
 {
-
-typedef std::map<SgNode*, std::set<SgNode*> > DefUseChains;
 
 void generateDefUseChainsFromVariableRenaming(SgProject*, DefUseChains&);
 

@@ -3,12 +3,14 @@
 
 #include "newPDG.h"
 #include <boost/function.hpp>
+#include <boost/unordered_map.hpp>
 
 namespace SDG
 {
 
 typedef std::vector<SgInitializedName*> VarName;
-
+typedef std::map<SgNode*, std::set<SgNode*> > DefUseChains;
+    
 struct SDGNode
 {
     enum NodeType
@@ -94,7 +96,6 @@ protected:
     typedef ControlFlowGraph::Vertex CFGVertex;
 	typedef ControlFlowGraph::Edge   CFGEdge;
     
-    typedef std::map<SgNode*, std::set<SgNode*> > DefUseChains;
     typedef boost::function<void(SgProject*, DefUseChains&)> DefUseChainsGen;
     //typedef std::vector<DefUseChain> DefUseChains;
     
@@ -151,11 +152,11 @@ protected:
     void addTrueCDEdge(Vertex src, Vertex tgt);
         
     void addControlDependenceEdges(
-        const std::map<CFGVertex, Vertex>& cfgVerticesToSdgVertices,
+        const boost::unordered_map<CFGVertex, Vertex>& cfgVerticesToSdgVertices,
         const ControlFlowGraph& cfg, Vertex entry);
     
     void addDataDependenceEdges(
-        const std::map<CFGVertex, Vertex>& cfgVerticesToSdgVertices,
+        const boost::unordered_map<CFGVertex, Vertex>& cfgVerticesToSdgVertices,
         const ControlFlowGraph& cfg,
         const std::map<SgNode*, Vertex>& formalOutPara);
     

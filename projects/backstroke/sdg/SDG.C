@@ -7,7 +7,6 @@
 #include <boost/lambda/lambda.hpp>
 #include <boost/graph/depth_first_search.hpp>
 #include <boost/graph/graphviz.hpp>
-#include <boost/unordered_map.hpp>
 
 
 #define foreach BOOST_FOREACH
@@ -64,7 +63,9 @@ void SDGEdge::setCondition(VirtualCFG::EdgeConditionKind cond, SgExpression* exp
 
 void SystemDependenceGraph::build()
 {
-    map<CFGVertex, Vertex> cfgVerticesToSdgVertices;
+    boost::unordered_map<CFGVertex, Vertex> cfgVerticesToSdgVertices;
+    boost::unordered_map<SgNode*, Vertex>   astNodesToSdgVertices;
+    
     //map<SgFunctionCallExp*, vector<SDGNode*> > funcCallToArgs;
     
     vector<CallSiteInfo> functionCalls;
@@ -155,7 +156,9 @@ void SystemDependenceGraph::build()
                 formalInNode->astNode = initName;
                 Vertex formalInVertex = addVertex(formalInNode);
                 formalInParameters[initName] = formalInVertex;
+                
                 cfgVerticesToSdgVertices[cfgVertex] = formalInVertex;
+                astNodesToSdgVertices[astNode] = formalInVertex;
 
                 // Add a CD edge from call node to this formal-in node.
                 addTrueCDEdge(entryVertex, formalInVertex);
@@ -167,7 +170,9 @@ void SystemDependenceGraph::build()
             //newSdgNode->cfgNode = (*cfg)[cfgVertex];
             newSdgNode->astNode = astNode;
             Vertex sdgVertex = addVertex(newSdgNode);
+            
             cfgVerticesToSdgVertices[cfgVertex] = sdgVertex;
+            astNodesToSdgVertices[astNode] = sdgVertex;
             
             
             // Connect a vertex containing the return statement to the formal-out return vertex.
@@ -199,12 +204,14 @@ void SystemDependenceGraph::build()
                 
                 for (int i = 0, s = actualArgs.size(); i < s; ++i)
                 {
-                    SDGNode* paraInNode = new SDGNode(SDGNode::ActualIn);
-                    paraInNode->astNode = actualArgs[i];
-                    //argsNodes.push_back(paraInNode);
+                    // Make sure that this parameter node is added to SDG then we
+                    // change its node type from normal AST node to a ActualIn arg.
+                    ROSE_ASSERT(astNodesToSdgVertices.count(actualArgs[i]));
                     
-                    // Add a actual-in parameter node.
-                    Vertex paraInVertex = addVertex(paraInNode);
+                    Vertex paraInVertex = astNodesToSdgVertices.at(actualArgs[i]);
+                    SDGNode* paraInNode = (*this)[paraInVertex]; 
+                    paraInNode->type = SDGNode::ActualIn;
+                    
                     actualInParameters[formalArgs[i]].push_back(paraInVertex);
                     callInfo.inPara.push_back(paraInVertex);
                     
@@ -265,7 +272,7 @@ void SystemDependenceGraph::build()
         if (functionsToEntries_.count(funcDecl))
             addEdge(callInfo.vertex, functionsToEntries_[funcDecl], new SDGEdge(SDGEdge::Call));
         else
-            ROSE_ASSERT(false);
+            ;//ROSE_ASSERT(false);
     }
     
     //=============================================================================================//
@@ -328,7 +335,7 @@ void SystemDependenceGraph::addTrueCDEdge(Vertex src, Vertex tgt)
 
 
 void SystemDependenceGraph::addControlDependenceEdges(
-        const map<CFGVertex, Vertex>& cfgVerticesToSdgVertices,
+        const boost::unordered_map<CFGVertex, Vertex>& cfgVerticesToSdgVertices,
         const ControlFlowGraph& cfg,
         Vertex entry)
 {
@@ -391,13 +398,15 @@ namespace
 {
     inline bool isBasicStatement(SgNode* node)
     {
+        if (isSgFunctionCallExp(node))
+            return false;
         return node;
         //return isSgExpression(node) || isSgDeclarationStatement(node);
     }
 }
 
 void SystemDependenceGraph::addDataDependenceEdges(
-        const map<CFGVertex, Vertex>& cfgVerticesToSdgVertices,
+        const boost::unordered_map<CFGVertex, Vertex>& cfgVerticesToSdgVertices,
         const ControlFlowGraph& cfg,
         const map<SgNode*, Vertex>& formalOutPara)
 {
