@@ -58,10 +58,11 @@ void SystemDependenceGraph::build()
         Vertex entryVertex = addVertex(entry);
         functionsToEntries_[funcDecl] = entryVertex;
         
-        // Add all formal parameters to SDG.
+        // Add all out formal parameters to SDG.
         const SgInitializedNamePtrList& formalArgs = funcDecl->get_args();
         foreach (SgInitializedName* initName, formalArgs)
         {
+#if 0
             SDGNode* formalInNode = new SDGNode(SDGNode::FormalIn);
             formalInNode->astNode = initName;
             Vertex formalInVertex = addVertex(formalInNode);
@@ -71,6 +72,7 @@ void SystemDependenceGraph::build()
             SDGEdge* newEdge = new SDGEdge(SDGEdge::ControlDependence);
             newEdge->setTrue();
             addEdge(entryVertex, formalInVertex, newEdge);
+#endif
             
             // If the parameter is passed by reference, create a formal-out node.
             if (isParaPassedByRef(initName->get_type()))
@@ -81,10 +83,23 @@ void SystemDependenceGraph::build()
                 formalOutParameters[initName] = formalOutVertex;
                 
                 // Add a CD edge from call node to this formal-out node.
-                SDGEdge* newEdge = new SDGEdge(SDGEdge::ControlDependence);
-                newEdge->setTrue();
-                addEdge(entryVertex, formalOutVertex, newEdge);
+                addTrueCDEdge(entryVertex, formalOutVertex);
             }
+        }
+        
+        // A vertex representing the returned value.
+        Vertex returnVertex;
+        // If the function returns something, build a formal-out node.
+        if (!isSgTypeVoid(funcDecl->get_type()->get_return_type()))
+        {
+            SDGNode* formalOutNode = new SDGNode(SDGNode::FormalOut);
+            // Assign the function declaration to the AST node of this vertex to make
+            // it possible to classify this node into the subgraph of this function.
+            formalOutNode->astNode = funcDecl;
+            returnVertex = addVertex(formalOutNode);
+
+            // Add a CD edge from call node to this formal-out node.
+            addTrueCDEdge(entryVertex, returnVertex);
         }
         
         // Add all CFG vertices to SDG.
@@ -95,6 +110,22 @@ void SystemDependenceGraph::build()
 
             SgNode* astNode = (*cfg)[cfgVertex]->getNode();
             
+            // If this node is an initialized name and it is a parameter, make it 
+            // as a formal in node.
+            SgInitializedName* initName = isSgInitializedName(astNode);
+            if (initName && isSgFunctionParameterList(initName->get_parent()))
+            {
+                SDGNode* formalInNode = new SDGNode(SDGNode::FormalIn);
+                formalInNode->astNode = initName;
+                Vertex formalInVertex = addVertex(formalInNode);
+                formalInParameters[initName] = formalInVertex;
+                cfgVerticesToSdgVertices[cfgVertex] = formalInVertex;
+
+                // Add a CD edge from call node to this formal-in node.
+                addTrueCDEdge(entryVertex, formalInVertex);
+                continue;
+            }
+            
             // Add a new node to SDG.
             SDGNode* newSdgNode = new SDGNode(SDGNode::ASTNode);
             newSdgNode->cfgNode = (*cfg)[cfgVertex];
@@ -102,11 +133,18 @@ void SystemDependenceGraph::build()
             Vertex sdgVertex = addVertex(newSdgNode);
             cfgVerticesToSdgVertices[cfgVertex] = sdgVertex;
             
+            
+            // Connect a vertex containing the return statement to the formal-out return vertex.
+            if (SgReturnStmt* returnStmt = isSgReturnStmt(astNode))
+            {
+                SDGEdge* newEdge = new SDGEdge(SDGEdge::DataDependence);
+                addEdge(sdgVertex, returnVertex, newEdge);                
+            }
 
             // If this CFG node contains a function call expression, extract its all parameters
             // and make them as actual-in nodes.
             
-            if (SgFunctionCallExp* funcCallExpr = isSgFunctionCallExp(astNode))
+            else if (SgFunctionCallExp* funcCallExpr = isSgFunctionCallExp(astNode))
             {
                 CallSiteInfo callInfo;
                 callInfo.funcCall = funcCallExpr;
@@ -135,9 +173,7 @@ void SystemDependenceGraph::build()
                     callInfo.inPara.push_back(paraInVertex);
                     
                     // Add a CD edge from call node to this actual-in node.
-                    SDGEdge* newEdge = new SDGEdge(SDGEdge::ControlDependence);
-                    newEdge->setTrue();
-                    addEdge(sdgVertex, paraInVertex, newEdge);
+                    addTrueCDEdge(sdgVertex, paraInVertex);
                     
                     // If the parameter is passed by reference, create a parameter-out node.
                     if (isParaPassedByRef(formalArgs[i]->get_type()))
@@ -152,9 +188,7 @@ void SystemDependenceGraph::build()
                         callInfo.outPara.push_back(paraOutVertex);
 
                         // Add a CD edge from call node to this actual-out node.
-                        SDGEdge* newEdge = new SDGEdge(SDGEdge::ControlDependence);
-                        newEdge->setTrue();
-                        addEdge(sdgVertex, paraOutVertex, newEdge);
+                        addTrueCDEdge(sdgVertex, paraOutVertex);
                     }
                 }
                 
@@ -205,6 +239,12 @@ void SystemDependenceGraph::build()
     // Compute summary edges and add them.
 }
 
+void SystemDependenceGraph::addTrueCDEdge(Vertex src, Vertex tgt)
+{
+    SDGEdge* newEdge = new SDGEdge(SDGEdge::ControlDependence);
+    newEdge->setTrue();
+    addEdge(src, tgt, newEdge);
+}
 
 bool SystemDependenceGraph::isParaPassedByRef(SgType* type) const
 {
@@ -278,7 +318,7 @@ void SystemDependenceGraph::addControlDependenceEdges(
 
 namespace 
 {
-    bool isBasicStatement(SgNode* node)
+    inline bool isBasicStatement(SgNode* node)
     {
         return node;
         //return isSgExpression(node) || isSgDeclarationStatement(node);
@@ -396,7 +436,9 @@ void SystemDependenceGraph::writeGraphProperty(ostream& out) const
     
         if (sdgNode->astNode)
         {
-            SgFunctionDeclaration* funcDecl = SageInterface::getEnclosingFunctionDeclaration(sdgNode->astNode);
+            SgFunctionDeclaration* funcDecl = isSgFunctionDeclaration(sdgNode->astNode);
+            if (!funcDecl)
+                funcDecl = SageInterface::getEnclosingFunctionDeclaration(sdgNode->astNode);
             if (funcDecl)
             {
                 string name = funcDecl->get_name();
@@ -500,8 +542,14 @@ void SystemDependenceGraph::writeGraphNode(ostream& out, const Vertex& vertex) c
         
     case SDGNode::FormalOut:
         label = "Formal-Out\\n";
-        ROSE_ASSERT(sdgNode->astNode);
-        label += sdgNode->astNode->unparseToString();
+        // The return formal-out node has a SgFunctionDeclaration inside.
+        if (sdgNode->astNode)
+        {
+            if (isSgFunctionDeclaration(sdgNode->astNode))
+                label += "Return";
+            else
+                label += sdgNode->astNode->unparseToString();
+        }
         nodeColor = "turquoise";
         break;
         

@@ -138,6 +138,9 @@ protected:
         return newEdge;
     }
     
+    //! Add a Control Dependence edge with True label.
+    void addTrueCDEdge(Vertex src, Vertex tgt);
+    
     //! Check if a parameter of the given type in a function call is passed by reference or not.
     bool isParaPassedByRef(SgType* type) const;
     

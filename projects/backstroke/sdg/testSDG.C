@@ -21,8 +21,9 @@ bool filterCfgNode(const VirtualCFG::CFGNode& cfgNode)
             return true;
         
         SgNode* parent = expr->get_parent();
-        if (isSgExpression(parent) ||
-                isSgReturnStmt(parent))
+        if (isSgConditionalExp(parent))
+            return true;
+        if (isSgExpression(parent))
             return false;
     }
     
@@ -31,6 +32,11 @@ bool filterCfgNode(const VirtualCFG::CFGNode& cfgNode)
     
     if (isSgScopeStatement(astNode))
         return false;
+    
+    // Keep function parameters.
+    if (isSgInitializedName(astNode) 
+            && isSgFunctionParameterList(astNode->get_parent()))
+        return true;
     
     switch (astNode->variantT())
     {
