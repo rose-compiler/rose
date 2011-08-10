@@ -47,11 +47,14 @@ EXTRA_DIST = test1 test2 test3 test4 test5 test6 test7 test8
 # ensure that the file names inside the -I paths are unique for each test.
 TEST_INCLUDE_PATHS = -I../$(srcdir)/test8/subdir
 
+TestDir = $(patsubst %subdir/,%,$(dir $@))
+
 # Add the dependence upon the source file to trigger recompilation each time the makefile is run!
 $(TEST_Objects): TestUnparseHeaders 
 	@echo "Calling Test: "
-	mkdir -p $(patsubst %subdir/,%,$(dir $@))
-	cd $(patsubst %subdir/,%,$(dir $@)); ../TestUnparseHeaders $(TEST_INCLUDE_PATHS) $(ROSE_FLAGS) -c ../$(srcdir)/$(@:.o=.C)
+	mkdir -p $(TestDir)
+	cd $(TestDir); ../TestUnparseHeaders $(TEST_INCLUDE_PATHS) $(ROSE_FLAGS) -c ../$(srcdir)/$(@:.o=.C)
+	rm -rf $(TestDir)
 
 check-local:
 	@echo "Tests for unparsing header files."
