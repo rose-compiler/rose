@@ -15,6 +15,8 @@ DominanceFrontiersT;
 //! Build dominance frontiers for all nodes in the given CFG.
 DominanceFrontiersT buildDominanceFrontiers(const ControlFlowGraph& cfg);
 
+//! Check if a parameter of the given type in a function call is passed by reference or not.
+bool isParaPassedByRef(SgType* type);
 
 } // end of namespace SystemDependenceGraph
 

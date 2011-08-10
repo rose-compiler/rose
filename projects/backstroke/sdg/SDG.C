@@ -36,11 +36,11 @@ void SystemDependenceGraph::build()
     vector<CallSiteInfo> functionCalls;
     
     
-    map<SgInitializedName*, vector<Vertex> > actualInParameters;
-    map<SgInitializedName*, vector<Vertex> > actualOutParameters;
+    map<SgNode*, vector<Vertex> > actualInParameters;
+    map<SgNode*, vector<Vertex> > actualOutParameters;
     
-    map<SgInitializedName*, Vertex> formalInParameters;
-    map<SgInitializedName*, Vertex> formalOutParameters;
+    map<SgNode*, Vertex> formalInParameters;
+    map<SgNode*, Vertex> formalOutParameters;
     
     vector<SgFunctionDefinition*> funcDefs = 
             SageInterface::querySubTree<SgFunctionDefinition>(project_, V_SgFunctionDefinition);
@@ -89,6 +89,7 @@ void SystemDependenceGraph::build()
         
         // A vertex representing the returned value.
         Vertex returnVertex;
+        
         // If the function returns something, build a formal-out node.
         if (!isSgTypeVoid(funcDecl->get_type()->get_return_type()))
         {
@@ -97,6 +98,7 @@ void SystemDependenceGraph::build()
             // it possible to classify this node into the subgraph of this function.
             formalOutNode->astNode = funcDecl;
             returnVertex = addVertex(formalOutNode);
+            formalOutParameters[funcDecl] = returnVertex;
 
             // Add a CD edge from call node to this formal-out node.
             addTrueCDEdge(entryVertex, returnVertex);
@@ -135,7 +137,7 @@ void SystemDependenceGraph::build()
             
             
             // Connect a vertex containing the return statement to the formal-out return vertex.
-            if (SgReturnStmt* returnStmt = isSgReturnStmt(astNode))
+            if (isSgReturnStmt(astNode))
             {
                 SDGEdge* newEdge = new SDGEdge(SDGEdge::DataDependence);
                 addEdge(sdgVertex, returnVertex, newEdge);                
@@ -182,7 +184,7 @@ void SystemDependenceGraph::build()
                         paraOutNode->astNode = actualArgs[i];
                         //argsNodes.push_back(paraInNode);
                         
-                        // Add a actual-in parameter node.
+                        // Add a actual-out parameter node.
                         Vertex paraOutVertex = addVertex(paraOutNode);
                         actualOutParameters[formalArgs[i]].push_back(paraOutVertex);
                         callInfo.outPara.push_back(paraOutVertex);
@@ -190,6 +192,21 @@ void SystemDependenceGraph::build()
                         // Add a CD edge from call node to this actual-out node.
                         addTrueCDEdge(sdgVertex, paraOutVertex);
                     }
+                }
+                
+                if (!isSgTypeVoid(funcDecl->get_type()->get_return_type())) 
+                {
+                    // If this function returns a value, create a actual-out vertex.
+                    SDGNode* paraOutNode = new SDGNode(SDGNode::ActualOut);
+                    paraOutNode->astNode = funcCallExpr;
+
+                    // Add a actual-out parameter node.
+                    Vertex paraOutVertex = addVertex(paraOutNode);
+                    actualOutParameters[funcDecl].push_back(paraOutVertex);
+                    //callInfo.outPara.push_back(paraOutVertex);
+
+                    // Add a CD edge from call node to this actual-out node.
+                    addTrueCDEdge(sdgVertex, paraOutVertex);
                 }
                 
                 functionCalls.push_back(callInfo);
@@ -201,7 +218,7 @@ void SystemDependenceGraph::build()
         addControlDependenceEdges(cfgVerticesToSdgVertices, *cfg, entryVertex);
     
         // Add data dependence edges.
-        addDataDependenceEdges(cfgVerticesToSdgVertices, *cfg);
+        addDataDependenceEdges(cfgVerticesToSdgVertices, *cfg, formalOutParameters);
         
     }
     
@@ -217,22 +234,22 @@ void SystemDependenceGraph::build()
     }
     
     // Add parameter-in edges.
-    typedef pair<SgInitializedName*, Vertex> InitNameVertex;
+    typedef pair<SgNode*, Vertex> NodeVertex;
     
-    foreach (const InitNameVertex& initNameToVertex, formalInParameters)
+    foreach (const NodeVertex& nodeToVertex, formalInParameters)
     {
-        foreach (Vertex vertex, actualInParameters[initNameToVertex.first])
+        foreach (Vertex vertex, actualInParameters[nodeToVertex.first])
         {
-            addEdge(vertex, initNameToVertex.second, new SDGEdge(SDGEdge::ParameterIn));
+            addEdge(vertex, nodeToVertex.second, new SDGEdge(SDGEdge::ParameterIn));
         }
     }
     
     // Add parameter-out edges.
-    foreach (const InitNameVertex& initNameToVertex, formalOutParameters)
+    foreach (const NodeVertex& nodeToVertex, formalOutParameters)
     {
-        foreach (Vertex vertex, actualOutParameters[initNameToVertex.first])
+        foreach (Vertex vertex, actualOutParameters[nodeToVertex.first])
         {
-            addEdge(initNameToVertex.second, vertex, new SDGEdge(SDGEdge::ParameterOut));
+            addEdge(nodeToVertex.second, vertex, new SDGEdge(SDGEdge::ParameterOut));
         }
     }
     
@@ -244,14 +261,6 @@ void SystemDependenceGraph::addTrueCDEdge(Vertex src, Vertex tgt)
     SDGEdge* newEdge = new SDGEdge(SDGEdge::ControlDependence);
     newEdge->setTrue();
     addEdge(src, tgt, newEdge);
-}
-
-bool SystemDependenceGraph::isParaPassedByRef(SgType* type) const
-{
-    type = type->stripType(SgType::STRIP_TYPEDEF_TYPE);
-    return SageInterface::isPointerType(type) 
-            || SageInterface::isReferenceType(type)
-            || isSgArrayType(type);
 }
 
 
@@ -327,7 +336,8 @@ namespace
 
 void SystemDependenceGraph::addDataDependenceEdges(
         const map<CFGVertex, Vertex>& cfgVerticesToSdgVertices,
-        const ControlFlowGraph& cfg)
+        const ControlFlowGraph& cfg,
+        const map<SgNode*, Vertex>& formalOutPara)
 {
     // Get the def-use chains from the generator.
     ROSE_ASSERT(!defUseChainGenerator_.empty());
@@ -352,25 +362,14 @@ void SystemDependenceGraph::addDataDependenceEdges(
     
     foreach (const DefUseChains::value_type& defUse, defUseChains)
     {
-        SgNode* def = defUse.first;
-        Iter iter = nodesToVerticesTable.find(def);
-        if (iter == nodesToVerticesTable.end())
-        {
-            vector<Vertex>& nodes = nodesToVerticesTable[def];
-            while (isBasicStatement(def))
-            {
-                map<SgNode*, Vertex>::iterator it = astNodesToSdgVertices.find(def);
-                if (it != astNodesToSdgVertices.end())
-                    nodes.push_back(it->second);
-                def = def->get_parent();
-            }
-        }
+        set<SgNode*> defUses = defUse.second;
+        defUses.insert(defUse.first);
         
-        foreach (SgNode* use, defUse.second)
+        foreach (SgNode* use, defUses)
         {
             Iter iter = nodesToVerticesTable.find(use);
             if (iter == nodesToVerticesTable.end())
-            {
+            {     
                 vector<Vertex>& nodes = nodesToVerticesTable[use];
                 while (isBasicStatement(use))
                 {
@@ -398,6 +397,13 @@ void SystemDependenceGraph::addDataDependenceEdges(
             {
                 foreach (Vertex tgt, nodesToVerticesTable.at(use))
                 {
+                    // If the target is a formal-in node, we should retarget it to a formal-out node.
+                    SDGNode* sdgNode = (*this)[tgt];
+                    if (sdgNode->type == SDGNode::FormalIn)
+                    {
+                        ROSE_ASSERT(formalOutPara.count(sdgNode->astNode));
+                        tgt = formalOutPara.find(sdgNode->astNode)->second;
+                    }
                     dataDependenceEdges[make_pair(src, tgt)];
                     //SDGEdge* newEdge = new SDGEdge(SDGEdge::DataDependence);
                     //addEdge(src, tgt, newEdge);
@@ -406,7 +412,7 @@ void SystemDependenceGraph::addDataDependenceEdges(
         } 
     }
     
-    // Build those edges.
+    // Add those edges.
     typedef map<pair<Vertex, Vertex>, set<VarName> >::value_type T2;
     foreach (const T2& edges, dataDependenceEdges)
     {

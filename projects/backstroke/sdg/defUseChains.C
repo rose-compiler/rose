@@ -1,4 +1,5 @@
 #include "defUseChains.h"
+#include "util.h"
 #include <ssa/staticSingleAssignment.h>
 #include <VariableRenaming.h>
 #include <boost/foreach.hpp>
@@ -49,6 +50,45 @@ void generateDefUseChainsFromSSA(SgProject* project, DefUseChains& defUseChains)
             {
                 defUseChains[cfgNode.getNode()].insert(varRef);
             }
+        }
+    }
+    
+    // For each function, find all reaching defs at the end of the function, and add Def-Use chains from
+    // the def of parameters which are passed by reference to parameters themselves.
+    vector<SgFunctionDefinition*> funcDefs = 
+            SageInterface::querySubTree<SgFunctionDefinition>(project, V_SgFunctionDefinition);
+    foreach (SgFunctionDefinition* funcDef, funcDefs)
+    {
+        SgFunctionDeclaration* funcDecl = funcDef->get_declaration();
+    
+        set<SgInitializedName*> argsPassedByRef;
+        
+        // Get all parameters passed by reference.
+        const SgInitializedNamePtrList& args = funcDecl->get_args();
+        foreach (SgInitializedName* initName, args)
+        {   
+            // If the parameter is passed by reference, create a formal-out node.
+            if (isParaPassedByRef(initName->get_type()))
+                argsPassedByRef.insert(initName);
+        }
+
+        
+        typedef StaticSingleAssignment::NodeReachingDefTable NodeReachingDefTable;
+        const NodeReachingDefTable& reachingDefs = ssa.getLastVersions(funcDef);
+        foreach (const NodeReachingDefTable::value_type& varAndDefs, reachingDefs)
+        {
+            if (varAndDefs.first.size() > 1)
+                continue;
+            SgInitializedName* initName = varAndDefs.first[0];
+            
+            if (argsPassedByRef.count(initName) == 0)
+                continue;
+            
+            set<VirtualCFG::CFGNode> defs = varAndDefs.second->getActualDefinitions();
+            foreach (const VirtualCFG::CFGNode& cfgNode, defs)
+            {
+                defUseChains[cfgNode.getNode()].insert(initName);
+            }     
         }
     }
 }

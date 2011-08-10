@@ -140,17 +140,15 @@ protected:
     
     //! Add a Control Dependence edge with True label.
     void addTrueCDEdge(Vertex src, Vertex tgt);
-    
-    //! Check if a parameter of the given type in a function call is passed by reference or not.
-    bool isParaPassedByRef(SgType* type) const;
-    
+        
     void addControlDependenceEdges(
         const std::map<CFGVertex, Vertex>& cfgVerticesToSdgVertices,
         const ControlFlowGraph& cfg, Vertex entry);
     
     void addDataDependenceEdges(
         const std::map<CFGVertex, Vertex>& cfgVerticesToSdgVertices,
-        const ControlFlowGraph& cfg);
+        const ControlFlowGraph& cfg,
+        const std::map<SgNode*, Vertex>& formalOutPara);
     
     //! This function helps to write the DOT file for vertices.
 	void writeGraphNode(std::ostream& out, const Vertex& vertex) const;

@@ -120,4 +120,12 @@ DominanceFrontiersT buildDominanceFrontiers(const ControlFlowGraph& cfg)
 	return domFrontiers;
 }
 
+bool isParaPassedByRef(SgType* type)
+{
+    type = type->stripType(SgType::STRIP_TYPEDEF_TYPE);
+    return SageInterface::isPointerType(type) 
+            || SageInterface::isReferenceType(type)
+            || isSgArrayType(type);
+}
+
 }
