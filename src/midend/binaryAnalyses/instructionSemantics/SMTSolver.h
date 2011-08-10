@@ -45,6 +45,10 @@ public:
     /** Obtain current debugging setting. */
     FILE *get_debug() const { return debug; }
 
+    /** Returns the number of times satisfiable() was called.  This is a class method that returns the total number of SMT
+     * solver calls across all SMT solvers. */
+    static size_t get_ncalls() const { return total_calls; }
+
 protected:
     /** Generates an input file for for the solver. Usually the input file will be SMT-LIB format, but subclasses might
      *  override this to generate some other kind of input. Throws Excecption if the solver does not support an operation that
