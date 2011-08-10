@@ -282,8 +282,8 @@ TEST_Objects = ${ALL_TESTCODES:.java=.o}
 
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 
-# testTranslator=../../testTranslator
-testTranslator=../../testGraphGeneration
+testTranslator=../../testTranslator
+#testTranslator=../../testGraphGeneration
 
 ../../testTranslator:
 	cd ../..; $(MAKE) testTranslator
