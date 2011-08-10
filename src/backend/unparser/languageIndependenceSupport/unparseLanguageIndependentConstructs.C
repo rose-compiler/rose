@@ -3640,4 +3640,29 @@ void UnparseLanguageIndependentConstructs::unparseOmpGenericStatement (SgStateme
 
 } // end unparseOmpGenericStatement
 
+int
+UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr) {
+    return 0;
+}
 
+int
+UnparseLanguageIndependentConstructs::getAssociativity(SgExpression* expr) {
+    return 0;
+}
+
+bool
+UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr) {
+    SgExpression* parent = isSgExpression(expr->get_parent());
+    if (parent == NULL) return false;
+
+    int exprPrecedence = getPrecedence(expr);
+    int parentPrecedence = getPrecedence(parent);
+    int assoc = getAssociativity(parent);
+    if      (exprPrecedence == ROSE_UNPARSER_NO_PRECEDENCE)      return false;
+    else if (parentPrecedence == ROSE_UNPARSER_NO_PRECEDENCE)    return false;
+    else if (assoc == ROSE_UNPARSER_RIGHT_ASSOC && exprPrecedence >  parentPrecedence) return false;
+    else if (assoc == ROSE_UNPARSER_LEFT_ASSOC  && exprPrecedence >= parentPrecedence) return false;
+    else if (assoc == ROSE_UNPARSER_LEFT_ASSOC  && exprPrecedence <  parentPrecedence) return true;
+    else if (assoc == ROSE_UNPARSER_RIGHT_ASSOC && exprPrecedence <= parentPrecedence) return true;
+    else ROSE_ASSERT(!"cannot determine if parens are required");
+}

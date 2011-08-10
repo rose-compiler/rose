@@ -8,6 +8,10 @@
 #ifndef UNPARSER_LANGUAGE_INDEPENDENT_SUPPORT
 #define UNPARSER_LANGUAGE_INDEPENDENT_SUPPORT
 
+#define ROSE_UNPARSER_NO_PRECEDENCE -1
+#define ROSE_UNPARSER_LEFT_ASSOC     1
+#define ROSE_UNPARSER_RIGHT_ASSOC   -1
+
 
 #include "unparser.h"
 
@@ -378,6 +382,13 @@ class UnparseLanguageIndependentConstructs
        // This should go into the unparser.h, since it is an interface function for the unparser generally.
       //! begin the unparser (unparser.C)
       //  void run_unparser();
+      //
+
+       // Support for language-independent precedence
+          virtual bool requiresParentheses(SgExpression* expr);
+          virtual int getPrecedence(SgExpression* exp);
+          virtual int getAssociativity(SgExpression* exp);
+
 };
 
 #endif
