@@ -767,7 +767,7 @@ JavaCodeGeneration_locatedNode::unparseMFuncDeclStmt(SgStatement* stmt, SgUnpars
      // unparse type, unless this a constructor
      if (!special.isConstructor() && !name_match) {
          info.set_isTypeFirstPart();
-         unp->u_type->unparseType(mfuncdecl_stmt->get_type(), info);
+         unparseType(mfuncdecl_stmt->get_type(), info);
          info.unset_isTypeFirstPart();
      }
 
