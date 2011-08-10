@@ -26,7 +26,7 @@ struct SDGNode
     
     NodeType type;
     
-    CFGNodePtr cfgNode;
+    //CFGNodePtr cfgNode;
     
     SgNode* astNode;
     
@@ -48,6 +48,14 @@ struct SDGEdge
         Summary
     };
     
+    enum ControlDependenceType
+    {
+        cdTrue,
+        cdFalse,
+        cdCase,
+        cdDefault
+    };
+    
     SDGEdge(EdgeType t) : type(t) {}
     
     //! Indicate the type of this edge, whether control or data dependence.
@@ -55,11 +63,12 @@ struct SDGEdge
     
     //============================================================================//
     // Control dependence
-    void setTrue()  { condition = VirtualCFG::eckTrue; }
-    void setFalse() { condition = VirtualCFG::eckFalse; }
+    void setTrue()  { condition = cdTrue; }
+    void setFalse() { condition = cdFalse; }
+    void setCondition(VirtualCFG::EdgeConditionKind cond, SgExpression* expr = NULL);
     
     //! The condition attached to edges in the CDG.
-    VirtualCFG::EdgeConditionKind condition;
+    ControlDependenceType condition;
 
     //! If the condition is a case edge, this expression is the case value.
     SgExpression* caseLabel;

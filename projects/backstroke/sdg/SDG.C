@@ -5,6 +5,7 @@
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lambda/lambda.hpp>
+#include <boost/graph/depth_first_search.hpp>
 #include <boost/graph/graphviz.hpp>
 #include <boost/unordered_map.hpp>
 
@@ -27,6 +28,39 @@ struct CallSiteInfo
     vector<Vertex> outPara;
 };
 
+//! A DFS visitor used in depth first search.
+template <typename VertexT> 
+struct DFSVisitor : public boost::default_dfs_visitor
+{
+    DFSVisitor(set<VertexT>& vertices) : vertices_(vertices) {}
+    template <typename Vertex, typename Graph>
+    void discover_vertex(Vertex u, const Graph & g)
+    { vertices_.insert(u); }
+    set<VertexT>& vertices_;
+};
+
+
+void SDGEdge::setCondition(VirtualCFG::EdgeConditionKind cond, SgExpression* expr)
+{
+    switch (cond)
+    {
+    case VirtualCFG::eckTrue:
+        condition = cdTrue;
+        break;
+    case VirtualCFG::eckFalse:
+        condition = cdFalse;
+        break;
+    case VirtualCFG::eckCaseLabel:
+        condition = cdCase;
+        caseLabel = expr;
+        break;
+    case VirtualCFG::eckDefault:
+        condition = cdDefault;
+        break;
+    default:
+        break;
+    }
+}
 
 void SystemDependenceGraph::build()
 {
@@ -130,14 +164,14 @@ void SystemDependenceGraph::build()
             
             // Add a new node to SDG.
             SDGNode* newSdgNode = new SDGNode(SDGNode::ASTNode);
-            newSdgNode->cfgNode = (*cfg)[cfgVertex];
+            //newSdgNode->cfgNode = (*cfg)[cfgVertex];
             newSdgNode->astNode = astNode;
             Vertex sdgVertex = addVertex(newSdgNode);
             cfgVerticesToSdgVertices[cfgVertex] = sdgVertex;
             
             
             // Connect a vertex containing the return statement to the formal-out return vertex.
-            if (isSgReturnStmt(astNode))
+            if (isSgReturnStmt(astNode->get_parent()))
             {
                 SDGEdge* newEdge = new SDGEdge(SDGEdge::DataDependence);
                 addEdge(sdgVertex, returnVertex, newEdge);                
@@ -184,7 +218,7 @@ void SystemDependenceGraph::build()
                         paraOutNode->astNode = actualArgs[i];
                         //argsNodes.push_back(paraInNode);
                         
-                        // Add a actual-out parameter node.
+                        // Add an actual-out parameter node.
                         Vertex paraOutVertex = addVertex(paraOutNode);
                         actualOutParameters[formalArgs[i]].push_back(paraOutVertex);
                         callInfo.outPara.push_back(paraOutVertex);
@@ -200,10 +234,10 @@ void SystemDependenceGraph::build()
                     SDGNode* paraOutNode = new SDGNode(SDGNode::ActualOut);
                     paraOutNode->astNode = funcCallExpr;
 
-                    // Add a actual-out parameter node.
+                    // Add an actual-out parameter node.
                     Vertex paraOutVertex = addVertex(paraOutNode);
                     actualOutParameters[funcDecl].push_back(paraOutVertex);
-                    //callInfo.outPara.push_back(paraOutVertex);
+                    callInfo.outPara.push_back(paraOutVertex);
 
                     // Add a CD edge from call node to this actual-out node.
                     addTrueCDEdge(sdgVertex, paraOutVertex);
@@ -222,6 +256,7 @@ void SystemDependenceGraph::build()
         
     }
     
+    //=============================================================================================//
     // Add call edges.
     foreach (const CallSiteInfo& callInfo, functionCalls)
     {
@@ -233,6 +268,7 @@ void SystemDependenceGraph::build()
             ROSE_ASSERT(false);
     }
     
+    //=============================================================================================//
     // Add parameter-in edges.
     typedef pair<SgNode*, Vertex> NodeVertex;
     
@@ -244,6 +280,7 @@ void SystemDependenceGraph::build()
         }
     }
     
+    //=============================================================================================//
     // Add parameter-out edges.
     foreach (const NodeVertex& nodeToVertex, formalOutParameters)
     {
@@ -253,7 +290,33 @@ void SystemDependenceGraph::build()
         }
     }
     
+    
+    //=============================================================================================//
     // Compute summary edges and add them.
+    
+    size_t verticesNum = boost::num_vertices(*this);
+    
+    foreach (const CallSiteInfo& callInfo, functionCalls)
+    {
+        foreach (Vertex actualIn, callInfo.inPara)
+        {
+            set<Vertex> vertices;
+
+            // Create a DFS visitor in which we add all nodes to vertices set.
+            DFSVisitor<Vertex> dfsVisitor(vertices);
+            // Build a vector of colors and set all initial colors to white.
+            std::vector<boost::default_color_type> colors(verticesNum, boost::white_color);
+            // Do a DFS.
+            boost::depth_first_visit(*this, actualIn, dfsVisitor, &colors[0]);
+            
+            foreach (Vertex actualOut, callInfo.outPara)
+            {
+                if (vertices.count(actualOut))
+                    addEdge(actualIn, actualOut, new SDGEdge(SDGEdge::Summary));
+            }
+        }
+    }
+   
 }
 
 void SystemDependenceGraph::addTrueCDEdge(Vertex src, Vertex tgt)
@@ -301,8 +364,7 @@ void SystemDependenceGraph::addControlDependenceEdges(
 				Edge edge = boost::add_edge(tar, src, *this).first;
                 //(*this)[edge].cfgEdge   = edgeTable[rvsCfg[cdEdge]];
                 (*this)[edge] = new SDGEdge(SDGEdge::ControlDependence);
-				(*this)[edge]->condition = rvsCfg[cdEdge]->condition();
-				(*this)[edge]->caseLabel = rvsCfg[cdEdge]->caseLabel();
+				(*this)[edge]->setCondition(rvsCfg[cdEdge]->condition(), rvsCfg[cdEdge]->caseLabel());
 			}
 		}
 	}
@@ -320,7 +382,7 @@ void SystemDependenceGraph::addControlDependenceEdges(
             Edge edge = boost::add_edge(entry, sdgVertex, *this).first;
             //(*this)[edge].cfgEdge   = edgeTable[rvsCfg[cdEdge]];
             (*this)[edge] = new SDGEdge(SDGEdge::ControlDependence);
-            (*this)[edge]->condition = VirtualCFG::eckTrue;
+            (*this)[edge]->setTrue();
         }
     }
 }
@@ -579,19 +641,19 @@ void SystemDependenceGraph::writeGraphEdge(ostream& out, const Edge& edge) const
     case SDGEdge::ControlDependence:
         switch (sdgEdge->condition)
         {
-            case VirtualCFG::eckTrue:
+        case SDGEdge::cdTrue:
                 label = "T";
                 break;
-            case VirtualCFG::eckFalse:
+        case SDGEdge::cdFalse:
                 label = "F";
                 break;
-            case VirtualCFG::eckCaseLabel:
+        case SDGEdge::cdCase:
                 label = "case " + sdgEdge->caseLabel->unparseToString();
                 break;
-            case VirtualCFG::eckDefault:
+        case SDGEdge::cdDefault:
                 label = "default";
                 break;
-            default:
+        default:
                 break;
         }
         break;

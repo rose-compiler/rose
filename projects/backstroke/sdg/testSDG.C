@@ -9,6 +9,7 @@ using namespace SDG;
 
 bool filterCfgNode(const VirtualCFG::CFGNode& cfgNode)
 {
+#if 1
     if (!cfgNode.isInteresting())
         return false;
     
@@ -47,11 +48,12 @@ bool filterCfgNode(const VirtualCFG::CFGNode& cfgNode)
     case V_SgFunctionParameterList:
     case V_SgBreakStmt:
     case V_SgContinueStmt:
+    case V_SgReturnStmt:
         return false;
     default:
         break;
     }
-    
+#endif
     return true;
 }
 
