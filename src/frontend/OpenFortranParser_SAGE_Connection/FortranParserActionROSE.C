@@ -18468,10 +18468,11 @@ void c_action_coarray_spec(int count)
 
     if (count != 1 || !isSgAsteriskShapeExp(astExpressionStack.front()))
     {
-      cout << "WARNING (Rice CoArray Fortran 2.0): the co-rank specification must be an asterisk." << endl;
+      cout << "ERROR (Rice CoArray Fortran 2.0): the co-rank specification must be an asterisk." << endl;
+      // ROSE_ASSERT(false);
     }
     astExpressionStack.pop_front();  // pop the asterisk expression.
-    // Push an empty SgExprListExp on the astExpressionStack to serve as comdimsion info.
+    // Push an empty SgExprListExp on the astExpressionStack to serve as comdimension info.
     SgExprListExp* expresssionList = new SgExprListExp();
     setSourcePosition(expresssionList);
     astExpressionStack.push_front(expresssionList);
