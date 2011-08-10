@@ -134,6 +134,84 @@ JavaCodeGeneration_locatedNode::unparseLanguageSpecificExpression(SgExpression* 
         }
    }
 
+int
+JavaCodeGeneration_locatedNode::getPrecedence(SgExpression* expr) {
+    switch (expr->variantT()) {
+        case V_SgPlusPlusOp:
+        case V_SgMinusMinusOp:
+            return (isSgUnaryOp(expr)->get_mode() == SgUnaryOp::postfix) ? 14 : 13;
+
+        case V_SgUnaryAddOp:                   return 13;
+        case V_SgMinusOp:                      return 13;
+        case V_SgBitComplementOp:              return 13;
+        case V_SgNotOp:                        return 13;
+
+        case V_SgMultiplyOp:                   return 12;
+        case V_SgDivideOp:                     return 12;
+        case V_SgModOp:                        return 12;
+
+        case V_SgAddOp:                        return 11;
+        case V_SgSubtractOp:                   return 11;
+
+        case V_SgRshiftOp:                     return 10;
+        case V_SgLshiftOp:                     return 10;
+        case V_SgJavaUnsignedRshiftOp:         return 10;
+
+        case V_SgLessThanOp:                   return 9;
+        case V_SgGreaterThanOp:                return 9;
+        case V_SgLessOrEqualOp:                return 9;
+        case V_SgGreaterOrEqualOp:             return 9;
+        case V_SgJavaInstanceOfOp:             return 9;
+
+        case V_SgEqualityOp:                   return 8;
+        case V_SgNotEqualOp:                   return 8;
+
+        case V_SgBitAndOp:                     return 7;
+        case V_SgBitXorOp:                     return 6;
+        case V_SgBitOrOp:                      return 5;
+        case V_SgAndOp:                        return 4;
+        case V_SgOrOp:                         return 3;
+        case V_SgConditionalExp:               return 2;
+
+        case V_SgAssignOp:                     return 1;
+        case V_SgPlusAssignOp:                 return 1;
+        case V_SgMinusAssignOp:                return 1;
+        case V_SgMultAssignOp:                 return 1;
+        case V_SgDivAssignOp:                  return 1;
+        case V_SgModAssignOp:                  return 1;
+        case V_SgAndAssignOp:                  return 1;
+        case V_SgXorAssignOp:                  return 1;
+        case V_SgIorAssignOp:                  return 1;
+        case V_SgRshiftAssignOp:               return 1;
+        case V_SgLshiftAssignOp:               return 1;
+        case V_SgJavaUnsignedRshiftAssignOp:   return 1;
+
+        default:                               return ROSE_UNPARSER_NO_PRECEDENCE;
+    }
+}
+
+int
+JavaCodeGeneration_locatedNode::getAssociativity(SgExpression* expr) {
+    switch (expr->variantT()) {
+        case V_SgAssignOp:
+        case V_SgPlusAssignOp:
+        case V_SgMinusAssignOp:
+        case V_SgMultAssignOp:
+        case V_SgDivAssignOp:
+        case V_SgModAssignOp:
+        case V_SgAndAssignOp:
+        case V_SgXorAssignOp:
+        case V_SgIorAssignOp:
+        case V_SgRshiftAssignOp:
+        case V_SgLshiftAssignOp:
+        case V_SgJavaUnsignedRshiftAssignOp:
+            return ROSE_UNPARSER_RIGHT_ASSOC;
+
+        default:
+            return ROSE_UNPARSER_LEFT_ASSOC;
+    }
+}
+
 
 // DQ (2/16/2005): This function has been moved to this file from unparse_type.C
 void

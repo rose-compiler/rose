@@ -238,6 +238,9 @@ class JavaCodeGeneration_locatedNode : public UnparseLanguageIndependentConstruc
           virtual void curprint_indented(const std::string str, SgUnparse_Info& info) const;
 
           virtual void unparseNestedStatement(SgStatement* stmt, SgUnparse_Info& info);
+
+          virtual int getPrecedence(SgExpression* exp);
+          virtual int getAssociativity(SgExpression* exp);
    };
 
 #endif
