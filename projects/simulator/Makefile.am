@@ -83,7 +83,7 @@ x86robb_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 #  DEMOS
 ###############################################################################################################################
 
-EXTRA_DIST += demos/README SignAnalysisExample.h
+EXTRA_DIST += demos/README demos/SignAnalysisExample.h
 
 #------------------------------------------------------------------------------------------------------------------------------
 # demo 1: branching to an uncalled function
