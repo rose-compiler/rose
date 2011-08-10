@@ -15,10 +15,8 @@
 #include "filteredCFG.h"
 #include <boost/unordered_map.hpp>
 #include "reachingDef.h"
-#include "controlPredicate.h"
-#include "dataflowCfgFilter.h"
 #include "CallGraph.h"
-#include "uniqueNameTraversal.h"
+#include <uniqueNameTraversal.h>
 
 namespace ssa_private
 {
@@ -167,6 +165,10 @@ private:
 	/** Performs the data-flow update for one individual node, populating the reachingDefsTable for that node.
 	 * @returns true if the OUT defs from the node changed, false if they stayed the same. */
 	bool propagateDefs(const CFGNode& cfgNode);
+	
+	//! Finds all variables that have gone out of scope and marks their last definition as an OUT_OF_SCOPE
+	//! definition, rather than a PHI definition.
+	void detectOutOfScopeVariables(SgFunctionDefinition* func);
 
 	/** Iterates all the CFG nodes in the function and returns them in postorder, according to depth-first search.
 	 * Reverse postorder is the most efficient order for dataflow propagation. */
