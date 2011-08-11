@@ -1110,18 +1110,6 @@ JavaCodeGeneration_locatedNode::unparseScopeOp(SgExpression* expr, SgUnparse_Inf
    }
 
 void JavaCodeGeneration_locatedNode::unparseAssnOp(SgExpression* expr, SgUnparse_Info& info)       { unparseBinaryOperator(expr, "=",   info); }
-void JavaCodeGeneration_locatedNode::unparsePlusAssnOp(SgExpression* expr, SgUnparse_Info& info)   { unparseBinaryOperator(expr, "+=",  info); } 
-void JavaCodeGeneration_locatedNode::unparseMinusAssnOp(SgExpression* expr, SgUnparse_Info& info)  { unparseBinaryOperator(expr, "-=",  info); }
-void JavaCodeGeneration_locatedNode::unparseAndAssnOp(SgExpression* expr, SgUnparse_Info& info)    { unparseBinaryOperator(expr, "&=",  info); }
-void JavaCodeGeneration_locatedNode::unparseIOrAssnOp(SgExpression* expr, SgUnparse_Info& info)    { unparseBinaryOperator(expr, "|=",  info); }
-void JavaCodeGeneration_locatedNode::unparseMultAssnOp(SgExpression* expr, SgUnparse_Info& info)   { unparseBinaryOperator(expr, "*=",  info); }
-void JavaCodeGeneration_locatedNode::unparseDivAssnOp(SgExpression* expr, SgUnparse_Info& info)    { unparseBinaryOperator(expr, "/=",  info); }
-void JavaCodeGeneration_locatedNode::unparseModAssnOp(SgExpression* expr, SgUnparse_Info& info)    { unparseBinaryOperator(expr, "%=",  info); }
-void JavaCodeGeneration_locatedNode::unparseXorAssnOp(SgExpression* expr, SgUnparse_Info& info)    { unparseBinaryOperator(expr, "^=",  info); }
-
-void JavaCodeGeneration_locatedNode::unparseLShiftAssnOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, "<<=",  info); }
-void JavaCodeGeneration_locatedNode::unparseRShiftAssnOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, ">>=", info); }
-void JavaCodeGeneration_locatedNode::unparseJavaUnsignedRshiftAssignOp(SgExpression* expr, SgUnparse_Info& info)   { unparseBinaryOperator(expr, ">>>=",  info); } 
 
 void JavaCodeGeneration_locatedNode::unparseForDeclOp(SgExpression* expr, SgUnparse_Info& info) {}
 

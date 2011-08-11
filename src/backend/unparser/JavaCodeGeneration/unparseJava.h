@@ -104,7 +104,6 @@ class JavaCodeGeneration_locatedNode : public UnparseLanguageIndependentConstruc
           virtual void unparseLShiftOp                (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseRShiftOp                (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseJavaUnsignedRshiftOp    (SgExpression* expr, SgUnparse_Info& info);
-          virtual void unparseJavaUnsignedRshiftAssignOp (SgExpression* expr, SgUnparse_Info& info);
           virtual void unparseUnaryMinusOp            (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseUnaryAddOp              (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseSizeOfOp                (SgExpression* expr, SgUnparse_Info& info);  
@@ -130,16 +129,6 @@ class JavaCodeGeneration_locatedNode : public UnparseLanguageIndependentConstruc
           virtual void unparseThisNode                (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseScopeOp                 (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseAssnOp                  (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparsePlusAssnOp              (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseMinusAssnOp             (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseAndAssnOp               (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseIOrAssnOp               (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseMultAssnOp              (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseDivAssnOp               (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseModAssnOp               (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseXorAssnOp               (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseLShiftAssnOp            (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseRShiftAssnOp            (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseForDeclOp               (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseTypeRef                 (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseVConst                  (SgExpression* expr, SgUnparse_Info& info);  
