@@ -369,7 +369,12 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
        //                 in design with handling of templates in ROSE.
        // if(!(funcdecl_stmt->get_from_template() && !funcdecl_stmt->isForward()))
        // if ( !funcdecl_stmt->isForward() )
-          curprint( "=");
+         
+       // Cong (6/28/2011): When unparsing an initializer for a function parameter, we should add a space before '='.
+       // Or else, foo(const int& = 1) will be unparsed to foo(const int&=1) which contains an operator '&=", which is 
+       // incorrect.
+          //curprint( "=");
+          curprint( " = ");
           unp->u_exprStmt->unparseExpression(tmp_init, ninfo3);
         }
    }
