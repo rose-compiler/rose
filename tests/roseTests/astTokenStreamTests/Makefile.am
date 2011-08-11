@@ -27,7 +27,7 @@ $(TEST_Linearization): testLinearization $(srcdir)/$(@:.o=.C)
 	rm -f $(@:.o=.c).out
 	./testLinearization --edg:no_warnings -c $(srcdir)/tests/$(@:.o=.c)
 	if [ ! -f $(@:.o=.c).linearization.out ]; then exit 1; fi
-	if [ "`diff $(srcdir)/tests/$(@:.o=.c).out $(@:.o=.c).linearization.out | wc -l`" != "0" ]; then exit 1; fi
+	if [ `diff $(srcdir)/tests/$(@:.o=.c).out $(@:.o=.c).linearization.out | wc -l` != "0" ]; then exit 1; fi
 
 
 check-local:
