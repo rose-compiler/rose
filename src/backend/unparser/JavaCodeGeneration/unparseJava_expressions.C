@@ -96,44 +96,42 @@ JavaCodeGeneration_locatedNode::unparseLanguageSpecificExpression(SgExpression* 
           case THIS_NODE:               { unparseThisNode(expr, info); break; }
           case SCOPE_OP:                { unparseScopeOp(expr, info); break; }
           case ASSIGN_OP:               { unparseAssnOp(expr, info); break; }
-          case PLUS_ASSIGN_OP:          { unparsePlusAssnOp(expr, info); break; }
-          case MINUS_ASSIGN_OP:         { unparseMinusAssnOp(expr, info); break; }
-          case AND_ASSIGN_OP:           { unparseAndAssnOp(expr, info); break; }
-          case IOR_ASSIGN_OP:           { unparseIOrAssnOp(expr, info); break; }
-          case MULT_ASSIGN_OP:          { unparseMultAssnOp(expr, info); break; }
-          case DIV_ASSIGN_OP:           { unparseDivAssnOp(expr, info); break; }
-          case MOD_ASSIGN_OP:           { unparseModAssnOp(expr, info); break; }
-          case XOR_ASSIGN_OP:           { unparseXorAssnOp(expr, info); break; }
-          case LSHIFT_ASSIGN_OP:        { unparseLShiftAssnOp(expr, info); break; }
-          case RSHIFT_ASSIGN_OP:        { unparseRShiftAssnOp(expr, info); break; }
-          case JAVA_UNSIGNED_RSHIFT_ASSIGN_OP: { unparseJavaUnsignedRshiftAssignOp(expr, info); break; }
+
           case TYPE_REF:                { unparseTypeRef(expr, info); break; }
           case EXPR_INIT:               { unparseExprInit(expr, info); break; }
           case AGGREGATE_INIT:          { unparseAggrInit(expr, info); break; }
           case CONSTRUCTOR_INIT:        { unparseConInit(expr, info); break; }
           case ASSIGN_INIT:             { unparseAssnInit(expr, info); break; }
           case THROW_OP:                { unparseThrowOp(expr, info); break; }
-       // case VA_START_OP:             { unparseVarArgStartOp(expr, info); break; }
-       // case VA_START_ONE_OPERAND_OP: { unparseVarArgStartOneOperandOp(expr, info); break; }
-       // case VA_OP:                   { unparseVarArgOp(expr, info); break; }
-       // case VA_END_OP:               { unparseVarArgEndOp(expr, info); break; }
-       // case VA_COPY_OP:              { unparseVarArgCopyOp(expr, info); break; }
-       // case NULL_EXPR:               { unparseNullExpression(expr, info); break; }
-       // case STMT_EXPR:               { unparseStatementExpression(expr, info); break; }
-       // case ASM_OP:                  { unparseAsmOp (expr, info); break; }
           case DESIGNATED_INITIALIZER:  { unparseDesignatedInitializer(expr, info); break; }
           case PSEUDO_DESTRUCTOR_REF:   { unparsePseudoDtorRef(expr, info); break; }
           case JAVA_INSTANCEOF_OP:      { unparseJavaInstanceOfOp(expr, info); break; }
           case JAVA_UNSIGNED_RSHIFT_OP: { unparseJavaUnsignedRshiftOp(expr, info); break; }
 
           default:
-             {
-            // printf ("Default reached in switch statement for unparsing expressions! expr = %p = %s \n",expr,expr->class_name().c_str());
-               printf ("Default reached in switch statement for unparsing expressions! expr = %p = %s \n",expr,expr->class_name().c_str());
+
+     // migrate the above switch stmt to use variantT() instead on variant(). The former has much
+     // more consistent names
+     switch (expr->variantT()) {
+         case V_SgPlusAssignOp:
+         case V_SgMinusAssignOp:
+         case V_SgMultAssignOp:
+         case V_SgDivAssignOp:
+         case V_SgModAssignOp:
+         case V_SgAndAssignOp:
+         case V_SgXorAssignOp:
+         case V_SgIorAssignOp:
+         case V_SgRshiftAssignOp:
+         case V_SgLshiftAssignOp:
+         case V_SgJavaUnsignedRshiftAssignOp:
+             unparseCompoundAssignOp( isSgCompoundAssignOp(expr), info ); break;
+
+         default:
+               cout << "error: unparseExpression() is unimplemented for " << expr->class_name() << endl;
                ROSE_ASSERT(false);
                break;
-             }
-        }
+     }
+    }
    }
 
 PrecedenceSpecifier
@@ -1271,4 +1269,28 @@ void
 JavaCodeGeneration_locatedNode::unparsePseudoDtorRef(SgExpression* expr, SgUnparse_Info & info)
    {
    }
+
+void
+JavaCodeGeneration_locatedNode::unparseCompoundAssignOp(SgCompoundAssignOp* op,
+                                                        SgUnparse_Info & info) {
+    unparseExpression(op->get_lhs_operand(), info);
+    switch (op->variantT()) {
+        case V_SgPlusAssignOp:               curprint(" += ");   break;
+        case V_SgMinusAssignOp:              curprint(" -= ");   break;
+        case V_SgMultAssignOp:               curprint(" *= ");   break;
+        case V_SgDivAssignOp:                curprint(" /= ");   break;
+        case V_SgModAssignOp:                curprint(" %= ");   break;
+        case V_SgAndAssignOp:                curprint(" &= ");   break;
+        case V_SgXorAssignOp:                curprint(" ^= ");   break;
+        case V_SgIorAssignOp:                curprint(" |= ");   break;
+        case V_SgRshiftAssignOp:             curprint(" >>= ");  break;
+        case V_SgLshiftAssignOp:             curprint(" <<= ");  break;
+        case V_SgJavaUnsignedRshiftAssignOp: curprint(" >>>= "); break;
+        default: {
+             cout << "error: unhandled compound assign op: " << op->class_name() << endl;
+             ROSE_ASSERT(false);
+        }
+    }
+    unparseExpression(op->get_rhs_operand(), info);
+}
 
