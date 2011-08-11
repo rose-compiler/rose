@@ -271,8 +271,7 @@ JavaCodeGeneration_locatedNode::unparseVarRef(SgExpression* expr, SgUnparse_Info
      SgVarRefExp* var_ref = isSgVarRefExp(expr);
      ROSE_ASSERT(var_ref != NULL);
 
-     unparseSymbol(var_ref->get_symbol(), info);
-     cout << "UNPARSER -=-=-=-=- " << var_ref->get_symbol()->get_name().getString() << endl;
+     unparseName(var_ref->get_symbol()->get_name(), info);
 }
 
 void
@@ -1270,10 +1269,4 @@ JavaCodeGeneration_locatedNode::unparseBinaryOp(SgBinaryOp* op,
         }
     }
     unparseExpression(op->get_rhs_operand(), info);
-}
-
-void
-JavaCodeGeneration_locatedNode::unparseSymbol(SgSymbol* sym,
-                                              SgUnparse_Info & info) {
-    unparseName(sym->get_name(), info);
 }
