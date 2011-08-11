@@ -1594,6 +1594,66 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompoundAssignmentEnd(JNIEnv *env,
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionDoStatement(JNIEnv *env, jobject xxx)
    {
+     if (SgProject::get_verbose() > 2)
+          printf ("Inside of Java_JavaParser_cactionDoStatement() \n");
+
+     outputJavaState("At TOP of cactionDoStatement");
+
+     SgNullStatement*  testStatement       = SageBuilder::buildNullStatement();
+     SgNullStatement*  bodyStatement       = SageBuilder::buildNullStatement();
+
+  // It might be that we should build this on the way down so that we can have it on the stack 
+  // before the body would be pushed onto the scope stack if a block is used.
+  // SgForStatement* forStatement = SageBuilder::buildForStatement(assignmentStatement,testStatement,incrementExpression,bodyStatement);
+     SgDoWhileStmt* doWhileStatement = SageBuilder::buildDoWhileStmt(bodyStatement,testStatement);
+     ROSE_ASSERT(doWhileStatement != NULL);
+
+  // DQ (7/30/2011): For the build interface to work we have to initialize the parent pointer to the SgForStatement.
+     doWhileStatement->set_parent(astJavaScopeStack.front());
+
+     astJavaScopeStack.push_front(doWhileStatement);
+
+     outputJavaState("At BOTTOM of cactionDoStatement");
+   }
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionDoStatementEnd(JNIEnv *env, jobject xxx)
+   {
+     if (SgProject::get_verbose() > 2)
+          printf ("Inside of Java_JavaParser_cactionDoStatementEnd() \n");
+
+     outputJavaState("At TOP of cactionDoStatementEnd");
+
+  // If we DO put all body's onto the statement stack then we process it this way.
+     ROSE_ASSERT(astJavaStatementStack.empty() == false);
+     SgStatement* bodyStatement = astJavaStatementStack.front();
+     ROSE_ASSERT(bodyStatement != NULL);
+     astJavaStatementStack.pop_front();
+
+     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
+     SgExpression* testExpression = astJavaExpressionStack.front();
+     ROSE_ASSERT(testExpression != NULL);
+     astJavaExpressionStack.pop_front();
+
+     SgExprStatement* testStatement = SageBuilder::buildExprStatement(testExpression);
+
+     SgDoWhileStmt* originalDoWhileStatement = isSgDoWhileStmt(astJavaScopeStack.front());
+     ROSE_ASSERT(originalDoWhileStatement != NULL);
+
+     originalDoWhileStatement->set_body(bodyStatement);
+     bodyStatement->set_parent(originalDoWhileStatement);
+     ROSE_ASSERT(bodyStatement->get_parent() == originalDoWhileStatement);
+
+     originalDoWhileStatement->set_condition(testStatement);
+     testStatement->set_parent(originalDoWhileStatement);
+     ROSE_ASSERT(testStatement->get_parent() == originalDoWhileStatement);
+
+     astJavaStatementStack.push_front(originalDoWhileStatement);
+
+  // Remove the SgWhileStmt on the scope stack...
+     astJavaScopeStack.pop_front();
+
+     outputJavaState("At BOTTOM of cactionDoStatementEnd");
    }
 
 
@@ -2644,18 +2704,18 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionWhileStatementEnd(JNIEnv *env, job
      SgWhileStmt* originalWhileStatement = isSgWhileStmt(astJavaScopeStack.front());
      ROSE_ASSERT(originalWhileStatement != NULL);
 
-     SgWhileStmt* whileStatement = SageBuilder::buildWhileStmt(testStatement,bodyStatement,NULL);
-     ROSE_ASSERT(whileStatement != NULL);
+     originalWhileStatement->set_body(bodyStatement);
+     bodyStatement->set_parent(originalWhileStatement);
+     ROSE_ASSERT(bodyStatement->get_parent() == originalWhileStatement);
 
-     astJavaStatementStack.push_front(whileStatement);
+     originalWhileStatement->set_condition(testStatement);
+     testStatement->set_parent(originalWhileStatement);
+     ROSE_ASSERT(testStatement->get_parent() == originalWhileStatement);
+
+     astJavaStatementStack.push_front(originalWhileStatement);
 
   // Remove the SgWhileStmt on the scope stack...
      astJavaScopeStack.pop_front();
-
-     delete originalWhileStatement;
-
-     ROSE_ASSERT(testExpression->get_parent() != NULL);
-     ROSE_ASSERT(testStatement->get_parent() != NULL);
 
      outputJavaState("At BOTTOM of cactionWhileStatementEnd");
    }

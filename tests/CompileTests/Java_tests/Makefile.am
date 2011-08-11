@@ -39,6 +39,8 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2011_32.java \
      test2011_33.java \
      test2011_34.java \
+     test2011_35.java \
+     test2011_36.java \
      simple.java
 
 
