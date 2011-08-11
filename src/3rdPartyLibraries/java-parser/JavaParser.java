@@ -194,6 +194,7 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionUnaryExpression();
      public native void cactionUnaryExpressionEnd(int java_operator_kind);
      public native void cactionWhileStatement();
+     public native void cactionWhileStatementEnd();
      public native void cactionWildcard();
      public native void cactionWildcardClassScope();
 

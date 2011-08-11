@@ -3078,6 +3078,7 @@ SgWhileStmt * SageBuilder::buildWhileStmt(SgStatement *  condition, SgStatement 
   condition->set_parent(result);
   body->set_parent(result);
 
+// DQ (8/10/2011): This is added by Michael to support a Python specific feature.
   if (else_body != NULL) {
       result->set_else_body(else_body);
       else_body->set_parent(result);
@@ -3099,6 +3100,7 @@ SgWhileStmt * SageBuilder::buildWhileStmt_nfi(SgStatement *  condition, SgStatem
   if (condition) condition->set_parent(result);
   if (body) body->set_parent(result);
 
+// DQ (8/10/2011): This is added by Michael to support a Python specific feature.
   if (else_body != NULL) {
       result->set_else_body(else_body);
       else_body->set_parent(result);
