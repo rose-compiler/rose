@@ -123,6 +123,7 @@ JavaCodeGeneration_locatedNode::unparseLanguageSpecificExpression(SgExpression* 
           case DESIGNATED_INITIALIZER:  { unparseDesignatedInitializer(expr, info); break; }
           case PSEUDO_DESTRUCTOR_REF:   { unparsePseudoDtorRef(expr, info); break; }
           case JAVA_INSTANCEOF_OP:      { unparseJavaInstanceOfOp(expr, info); break; }
+          case JAVA_UNSIGNED_RSHIFT_OP: { unparseJavaUnsignedRshiftOp(expr, info); break; }
 
           default:
              {
@@ -659,6 +660,7 @@ void JavaCodeGeneration_locatedNode::unparseBitOrOp(SgExpression* expr, SgUnpars
 void JavaCodeGeneration_locatedNode::unparseCommaOp(SgExpression* expr, SgUnparse_Info& info) { curprint("("); unparseBinaryOperator(expr, ",", info); curprint(")"); }
 void JavaCodeGeneration_locatedNode::unparseLShiftOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, "<<", info); }
 void JavaCodeGeneration_locatedNode::unparseRShiftOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, ">>", info); }
+void JavaCodeGeneration_locatedNode::unparseJavaUnsignedRshiftOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, ">>>", info); }
 void JavaCodeGeneration_locatedNode::unparseUnaryMinusOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "-", info); }
 void JavaCodeGeneration_locatedNode::unparseUnaryAddOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "+", info); }
 

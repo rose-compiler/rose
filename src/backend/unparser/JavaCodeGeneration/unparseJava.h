@@ -103,6 +103,7 @@ class JavaCodeGeneration_locatedNode : public UnparseLanguageIndependentConstruc
           virtual void unparseCommaOp                 (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseLShiftOp                (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseRShiftOp                (SgExpression* expr, SgUnparse_Info& info);  
+          virtual void unparseJavaUnsignedRshiftOp    (SgExpression* expr, SgUnparse_Info& info);
           virtual void unparseUnaryMinusOp            (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseUnaryAddOp              (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseSizeOfOp                (SgExpression* expr, SgUnparse_Info& info);  
