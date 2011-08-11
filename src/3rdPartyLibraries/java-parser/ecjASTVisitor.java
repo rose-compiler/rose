@@ -2500,6 +2500,11 @@ class ecjASTVisitor extends ASTVisitor
         {
        // do nothing  by default
           if (java_parser.verboseLevel > 0)
+               System.out.println("Inside of endVisit (DoStatement,BlockScope)");
+
+          java_parser.cactionDoStatementEnd();
+
+          if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (DoStatement,BlockScope)");
         }
 
