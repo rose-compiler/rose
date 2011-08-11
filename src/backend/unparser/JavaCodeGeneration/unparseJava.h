@@ -26,12 +26,12 @@ class SgAsmOp;
 // using namespace std;
 class Unparser;
 
-class JavaCodeGeneration_locatedNode : public UnparseLanguageIndependentConstructs
+class Unparse_Java : public UnparseLanguageIndependentConstructs
    {
      public:
-          JavaCodeGeneration_locatedNode(Unparser* unp, std::string fname);
+          Unparse_Java(Unparser* unp, std::string fname);
 
-          virtual ~JavaCodeGeneration_locatedNode();
+          virtual ~Unparse_Java();
 
        // DQ (3/13/2004): Added to support templates
           virtual void unparseTemplateParameter(SgTemplateParameter* templateParameter, SgUnparse_Info& info);

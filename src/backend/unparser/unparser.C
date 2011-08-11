@@ -370,7 +370,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
                   {
                     if (file->get_Java_only())
                        {
-                         JavaCodeGeneration_locatedNode unparser(this, file->getFileName());
+                         Unparse_Java unparser(this, file->getFileName());
                          unparser.unparseStatement(globalScope, info);
                        }
                       else
