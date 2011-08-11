@@ -106,6 +106,7 @@ JavaCodeGeneration_locatedNode::unparseLanguageSpecificExpression(SgExpression* 
           case XOR_ASSIGN_OP:           { unparseXorAssnOp(expr, info); break; }
           case LSHIFT_ASSIGN_OP:        { unparseLShiftAssnOp(expr, info); break; }
           case RSHIFT_ASSIGN_OP:        { unparseRShiftAssnOp(expr, info); break; }
+          case JAVA_UNSIGNED_RSHIFT_ASSIGN_OP: { unparseJavaUnsignedRshiftAssignOp(expr, info); break; }
           case TYPE_REF:                { unparseTypeRef(expr, info); break; }
           case EXPR_INIT:               { unparseExprInit(expr, info); break; }
           case AGGREGATE_INIT:          { unparseAggrInit(expr, info); break; }
@@ -1122,6 +1123,7 @@ void JavaCodeGeneration_locatedNode::unparseXorAssnOp(SgExpression* expr, SgUnpa
 
 void JavaCodeGeneration_locatedNode::unparseLShiftAssnOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, "<<=",  info); }
 void JavaCodeGeneration_locatedNode::unparseRShiftAssnOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, ">>=", info); }
+void JavaCodeGeneration_locatedNode::unparseJavaUnsignedRshiftAssignOp(SgExpression* expr, SgUnparse_Info& info)   { unparseBinaryOperator(expr, ">>>=",  info); } 
 
 void JavaCodeGeneration_locatedNode::unparseForDeclOp(SgExpression* expr, SgUnparse_Info& info) {}
 
