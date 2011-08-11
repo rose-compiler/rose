@@ -88,18 +88,6 @@ void SystemDependenceGraph::build()
         const SgInitializedNamePtrList& formalArgs = funcDecl->get_args();
         foreach (SgInitializedName* initName, formalArgs)
         {
-#if 0
-            SDGNode* formalInNode = new SDGNode(SDGNode::FormalIn);
-            formalInNode->astNode = initName;
-            Vertex formalInVertex = addVertex(formalInNode);
-            formalInParameters[initName] = formalInVertex;
-            
-            // Add a CD edge from call node to this formal-in node.
-            SDGEdge* newEdge = new SDGEdge(SDGEdge::ControlDependence);
-            newEdge->setTrue();
-            addEdge(entryVertex, formalInVertex, newEdge);
-#endif
-            
             // If the parameter is passed by reference, create a formal-out node.
             if (isParaPassedByRef(initName->get_type()))
             {
