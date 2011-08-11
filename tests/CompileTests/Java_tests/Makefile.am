@@ -383,7 +383,7 @@ check-view: $(TEST_Objects:.o=.view)
 %.view: ../../testTranslator
 	@echo "============ TRANSLATING ==========="
 	$(testTranslator) $(ROSE_FLAGS) $(srcdir)/$(@:.view=.java) -rose:o $(@:.view=.java)
-	@echo "------------- UNPARSED -------------"
-	@cat $(srcdir)/$(@:.view=.java)
 	@echo "------------- ORIGINAL -------------"
+	@cat $(srcdir)/$(@:.view=.java)
+	@echo "------------- UNPARSED -------------"
 	@cat $(@:.view=.java)
