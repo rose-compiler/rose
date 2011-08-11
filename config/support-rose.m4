@@ -2257,6 +2257,7 @@ projects/backstroke/normalizations/Makefile
 projects/backstroke/slicing/Makefile
 projects/backstroke/ssa/Makefile
 projects/backstroke/valueGraph/Makefile
+projects/backstroke/valueGraph/headerUnparser/Makefile
 projects/backstroke/pluggableReverser/Makefile
 projects/backstroke/testCodeGeneration/Makefile
 projects/backstroke/restrictedLanguage/Makefile
@@ -2269,6 +2270,7 @@ projects/backstroke/tests/pluggableReverserTest/Makefile
 projects/backstroke/tests/restrictedLanguageTest/Makefile
 projects/backstroke/tests/testCodeBuilderTest/Makefile
 projects/backstroke/utilities/Makefile
+projects/backstroke/sdg/Makefile
 projects/binCompass/Makefile
 projects/binCompass/analyses/Makefile
 projects/binCompass/graphanalyses/Makefile
