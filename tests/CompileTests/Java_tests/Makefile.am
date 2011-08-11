@@ -387,3 +387,5 @@ check-view: $(TEST_Objects:.o=.view)
 	@cat $(srcdir)/$(@:.view=.java)
 	@echo "------------- UNPARSED -------------"
 	@cat $(@:.view=.java)
+	@echo "-------------- JAVAC ---------------"
+	$(JAVAC) $(@:.view=.java)
