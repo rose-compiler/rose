@@ -652,6 +652,7 @@ int GetPrecedence(int variant)
           case V_SgGreaterOrEqualOp: return 10;
           case V_SgLshiftOp:         return 11;
           case V_SgRshiftOp:         return 11;
+          case V_SgJavaUnsignedRshiftOp: return 11;
           case V_SgAddOp:            return 12;
 
        // DQ (2/1/2009): Added operator (which should have been here before)
