@@ -526,7 +526,6 @@ void JavaCodeGeneration_locatedNode::unparseIfStmt(SgStatement* stmt, SgUnparse_
 void
 JavaCodeGeneration_locatedNode::unparseInitializedName(SgInitializedName* init_name, SgUnparse_Info& info) {
     unparseType(init_name->get_type(), info);
-    curprint(" ");
     unparseName(init_name->get_name(), info);
 
     if (init_name->get_initializer() != NULL) {
