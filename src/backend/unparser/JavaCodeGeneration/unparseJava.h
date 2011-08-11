@@ -84,15 +84,10 @@ class Unparse_Java : public UnparseLanguageIndependentConstructs
 
           virtual void unparseTypeIdOp                (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseNotOp                   (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseDerefOp                 (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseAddrOp                  (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseMinusMinusOp            (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparsePlusPlusOp              (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseAbstractOp              (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseBitCompOp               (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseRealPartOp              (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseImagPartOp              (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseConjugateOp             (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseExprCond                (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseClassInitOp             (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseDyCastOp                (SgExpression* expr, SgUnparse_Info& info);  
