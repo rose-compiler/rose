@@ -14,13 +14,35 @@ namespace Backstroke
 
 
 //! Define the edge type of CDG.
+template <class CFGType>
 struct CDGEdge
 {
-	//! The condition attached to edges in the CDG.
-	VirtualCFG::EdgeConditionKind condition;
+    //! The corresponding CFG edge.
+    typename CFGType::Edge cfgEdge;
+    
+    //! The condition attached to edges in the CDG.
+    VirtualCFG::EdgeConditionKind condition;
 
-	//! If the condition is a case edge, this expression is the case value.
-	SgExpression* caseLabel;
+    //! If the condition is a case edge, this expression is the case value.
+    SgExpression* caseLabel;
+    
+    std::string toString() const 
+    {
+        switch (condition) 
+        {
+        case eckTrue:
+            return "T";
+        case eckFalse:
+            return "F";
+        case eckCaseLabel:
+            return "case" + caseLabel->unparseToString();
+        case eckDefault:
+            return "default";
+        default: 
+            break;
+        }
+        return "";
+    }
 
 //	//! Defines the edge kind in a CDG. There are four kinds of control dependences in a CDG:
 //	//! true, false, case and default. The latter two are for switch statement.
@@ -36,19 +58,42 @@ struct CDGEdge
 	//int caseValue;
 };
 
+
 //! A class holding a Control Dependence Graph.
 
 //! In the CDG, if node a is control dependent on node b, there is an edge a->b.
 
 template <class CFGType>
 class CDG : public boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
-		typename CFGType::CFGNodePtr, CDGEdge>
+		typename CFGType::CFGNodePtr, CDGEdge<CFGType> >
 {
 public:
 	typedef typename CFGType::CFGNodePtr CFGNodePtr;
+    
+    typedef typename CFGType::CFGNodePtr CDGNodeType;
+    typedef CDGEdge<CFGType>             CDGEdgeType;
+    
+    typedef typename boost::graph_traits<CDG<CFGType> > GraphTraits;
+	typedef typename GraphTraits::vertex_descriptor Vertex;
+	typedef typename GraphTraits::edge_descriptor   Edge;
 
-	typedef typename boost::graph_traits<CDG<CFGType> >::vertex_descriptor Vertex;
-	typedef typename boost::graph_traits<CDG<CFGType> >::edge_descriptor Edge;
+
+    struct ControlDependence 
+    {
+        ControlDependence(const CDGEdge<CFGType>& edge, SgNode* node)
+        : cdEdge(edge), cdNode(node) {}
+
+        //! Control dependence edge.
+        CDGEdge<CFGType> cdEdge;
+
+        ////! Control dependence graph node.
+        //CDGNode cdNode;
+
+        //! Control dependence node.
+        SgNode* cdNode;
+    };
+
+    typedef std::vector<ControlDependence> ControlDependences;
 
 	//! The default constructor.
 	CDG() {}
@@ -61,13 +106,24 @@ public:
 
 	//! Build the CDG from the given CFG.
 	void buildCDG(const CFGType& cfg);
+    
+    //! Given a CFG node, return all its control dependences.
+    ControlDependences getControlDependences(CFGNodePtr cfgNode);
+    
+    //! Given a AST node, return all its control dependences.
+    ControlDependences getControlDependences(SgNode* astNode);
+    
+    //! Given an AST node, return its corresponding CDG node. Note that it is possile
+    //! that there are several CDG nodes containing the same AST node, in which case
+    //! we just return one of them, since they have the same control dependence.
+    Vertex getCDGVertex(SgNode* astNode);
 
 	//! Write the CDG to a dot file.
 	void toDot(const std::string& filename) const;
 
 	//! This function helps to write the DOT file for edges.
 	//! It's a static function which can be used by other classes (PDG for example).
-	static void writeGraphEdge(std::ostream& out, const CDGEdge& edge);
+	static void writeGraphEdge(std::ostream& out, const CDGEdge<CFGType>& edge);
 	
 protected:
 
@@ -125,6 +181,12 @@ void CDG<CFGType>::buildCDG(const CFGType& cfg)
 	
 	// Remove all nodes and edges.
 	this->clear();
+    
+    // Build a table from Virtual::CFG edge to the edge in the given CFG.
+    // Then we can look up edges from reverse CFG to normal CFG.
+    std::map<typename CFGType::CFGEdgePtr, CFGEdgeT> edgeTable;
+    foreach (const CFGEdgeT& edge, boost::edges(cfg))
+        edgeTable[cfg[edge]] = edge;
 
 	// First, build a reverse CFG.
 	CFGType rvsCfg = cfg.makeReverseCopy();
@@ -186,11 +248,63 @@ void CDG<CFGType>::buildCDG(const CFGType& cfg)
 			{
 				// Add the edge.
 				Edge edge = boost::add_edge(src, tar, *this).first;
+                (*this)[edge].cfgEdge   = edgeTable[rvsCfg[cdEdge]];
 				(*this)[edge].condition = rvsCfg[cdEdge]->condition();
 				(*this)[edge].caseLabel = rvsCfg[cdEdge]->caseLabel();
 			}
 		}
 	}
+}
+
+template <class CFGType>
+typename CDG<CFGType>::Vertex 
+CDG<CFGType>::getCDGVertex(SgNode* astNode)
+{
+    foreach (Vertex node, boost::vertices(*this))
+    {
+        if ((*this)[node]->getNode() == astNode) 
+            return node;
+    }    
+    return GraphTraits::null_vertex();
+}
+
+template <class CFGType>
+typename CDG<CFGType>::ControlDependences 
+CDG<CFGType>::getControlDependences(CFGNodePtr cfgNode)
+{
+    ControlDependences controlDeps;
+    
+    foreach (Vertex node, boost::vertices(*this))
+    {
+        if ((*this)[node] != cfgNode) continue;
+        
+        foreach (const Edge& edge, boost::out_edges(node, *this))
+        {
+            Vertex tgt = boost::target(edge, *this);
+            controlDeps.push_back(ControlDependence((*this)[edge], (*this)[tgt]->getNode()));
+        }
+        return controlDeps;
+    }
+    
+    return controlDeps;
+}
+
+template <class CFGType>
+typename CDG<CFGType>::ControlDependences 
+CDG<CFGType>::getControlDependences(SgNode* astNode)
+{
+    ControlDependences controlDeps;
+    
+    Vertex node = getCDGVertex(astNode);
+    
+    ROSE_ASSERT(node != GraphTraits::null_vertex());
+    
+    foreach (const Edge& edge, boost::out_edges(node, *this))
+    {
+        Vertex tgt = boost::target(edge, *this);
+        controlDeps.push_back(ControlDependence((*this)[edge], (*this)[tgt]->getNode()));
+    }
+    return controlDeps;
 }
 
 template <class CFGType>
@@ -307,7 +421,7 @@ CDG<CFGType>::buildDominanceFrontiers(
 }
 
 template <class CFGType>
-void CDG<CFGType>::writeGraphEdge(std::ostream& out, const CDGEdge& edge)
+void CDG<CFGType>::writeGraphEdge(std::ostream& out, const CDGEdge<CFGType>& edge)
 {
 	std::string label;
 	switch (edge.condition)

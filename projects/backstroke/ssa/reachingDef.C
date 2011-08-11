@@ -10,7 +10,7 @@
 using namespace std;
 using namespace boost;
 
-ReachingDef::ReachingDef(CFGNode defNode, Type type) : defType(type), thisNode(defNode), renamingNumer(-1)
+ReachingDef::ReachingDef(const CFGNode& defNode, Type type) : defType(type), thisNode(defNode), renamingNumer(-1)
 {
 }
 
