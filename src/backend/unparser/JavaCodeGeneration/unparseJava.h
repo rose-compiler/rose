@@ -240,8 +240,8 @@ class JavaCodeGeneration_locatedNode : public UnparseLanguageIndependentConstruc
 
           virtual void unparseNestedStatement(SgStatement* stmt, SgUnparse_Info& info);
 
-          virtual int getPrecedence(SgExpression* exp);
-          virtual int getAssociativity(SgExpression* exp);
+          virtual PrecedenceSpecifier getPrecedence(SgExpression* exp);
+          virtual AssociativitySpecifier getAssociativity(SgExpression* exp);
    };
 
 #endif

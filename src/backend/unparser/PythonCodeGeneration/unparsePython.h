@@ -27,8 +27,8 @@ class Unparse_Python : public UnparseLanguageIndependentConstructs
        // DQ (9/6/2010): Mark the derived class to support debugging.
           virtual std::string languageName() const { return "Python Unparser"; }
 
-          virtual int getPrecedence(SgExpression* exp);
-          virtual int getAssociativity(SgExpression* exp);
+          virtual PrecedenceSpecifier getPrecedence(SgExpression* exp);
+          virtual AssociativitySpecifier getAssociativity(SgExpression* exp);
           virtual void curprint_indented(std::string txt, SgUnparse_Info& info);
 
      protected:

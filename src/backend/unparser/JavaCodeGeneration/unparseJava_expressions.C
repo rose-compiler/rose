@@ -135,7 +135,7 @@ JavaCodeGeneration_locatedNode::unparseLanguageSpecificExpression(SgExpression* 
         }
    }
 
-int
+PrecedenceSpecifier
 JavaCodeGeneration_locatedNode::getPrecedence(SgExpression* expr) {
     switch (expr->variantT()) {
         case V_SgPlusPlusOp:
@@ -191,7 +191,7 @@ JavaCodeGeneration_locatedNode::getPrecedence(SgExpression* expr) {
     }
 }
 
-int
+AssociativitySpecifier
 JavaCodeGeneration_locatedNode::getAssociativity(SgExpression* expr) {
     switch (expr->variantT()) {
         case V_SgAssignOp:
@@ -206,10 +206,10 @@ JavaCodeGeneration_locatedNode::getAssociativity(SgExpression* expr) {
         case V_SgRshiftAssignOp:
         case V_SgLshiftAssignOp:
         case V_SgJavaUnsignedRshiftAssignOp:
-            return ROSE_UNPARSER_RIGHT_ASSOC;
+            return e_assoc_right;
 
         default:
-            return ROSE_UNPARSER_LEFT_ASSOC;
+            return e_assoc_left;
     }
 }
 

@@ -278,15 +278,15 @@ Unparse_Python::unparseOperator(VariantT variant, bool pad) {
     if (pad) curprint(" ");
 }
 
-int
+AssociativitySpecifier
 Unparse_Python::getAssociativity(SgExpression* exp) {
     if (exp->variantT() == V_SgExponentiationOp)
-        return ROSE_UNPARSER_RIGHT_ASSOC;
+        return e_assoc_right;
     else
-        return ROSE_UNPARSER_LEFT_ASSOC;
+        return e_assoc_left;
 }
 
-int
+PrecedenceSpecifier
 Unparse_Python::getPrecedence(SgExpression* exp) {
     switch (exp->variantT()) {
         case V_SgLambdaRefExp:         return 1;
