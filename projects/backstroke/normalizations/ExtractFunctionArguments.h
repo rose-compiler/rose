@@ -91,7 +91,7 @@ private:
           * expression should be pulled out into a temporary variable on a separate line.
           * E.g. if the expression contains a function call, it needs to be normalized, while if it
           * is a constant, there is no need to change it. */
-        static bool FunctionArgumentNeedsNormalization(SgExpression* argument);
+        static bool FunctionArgumentNeedsNormalization(SgExpression*& argument);
 
         /** Returns true if any of the arguments of the given function call will need to
           * be extracted. */
