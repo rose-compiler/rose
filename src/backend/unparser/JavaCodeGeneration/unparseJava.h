@@ -237,6 +237,8 @@ class JavaCodeGeneration_locatedNode : public UnparseLanguageIndependentConstruc
       //! Convenience method for unparsing types using unp->u_type
           virtual void unparseType(SgType* type, SgUnparse_Info& info);
 
+          virtual void unparseCompoundAssignOp(SgCompoundAssignOp* op, SgUnparse_Info& info);
+
           virtual void curprint_indented(const std::string str, SgUnparse_Info& info) const;
 
           virtual void unparseNestedStatement(SgStatement* stmt, SgUnparse_Info& info);
