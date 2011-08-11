@@ -38,6 +38,7 @@ public:
     int wait(int mno);
     int erase(rose_addr_t key, size_t member_number, LockStatus locked);
     int signal(rose_addr_t key, uint32_t bitset, int nprocs, LockStatus locked);
+    void dump(FILE*, const std::string &title="", const std::string &prefix="");
 
 private:
     void ctor(const std::string &name, bool do_unlink);

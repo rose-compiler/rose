@@ -3,6 +3,9 @@
 
 #ifdef ROSE_ENABLE_SIMULATOR
 
+/* Define RSIM_FUTEX_CHECKING if you want lots of extra assertions on the futex table. */
+//#define RSIM_FUTEX_CHECKING
+
 void
 RSIM_FutexTable::ctor(const std::string &name, bool do_unlink)
 {
@@ -41,6 +44,10 @@ RSIM_FutexTable::ctor(const std::string &name, bool do_unlink)
             }
             if (created) {
                 err = init_table();
+#ifdef RSIM_FUTEX_CHECKING
+                assert(!err);
+                assert(0==check_table());
+#endif
             } else {
                 err = check_table();
             }
@@ -96,33 +103,94 @@ RSIM_FutexTable::init_table()
 int
 RSIM_FutexTable::check_table()
 {
-    if (!table)
-        return -EFAULT;
-    if (table->magic != MAGIC)
-        return -EINVAL;
+    static bool show = false;                   // show the table contents
+    static bool verbose = true;                 // describe errors as well as returning failure
     
-    std::vector<bool> seen(false, NMEMBERS);
+    static const char *prefix = "RSIM_FutexTable::check_table";
+
+    if (!table) {
+        if (verbose)
+            fprintf(stderr, "%s: no table loaded\n", prefix);
+        return -EFAULT;
+    }
+
+    if (table->magic != MAGIC) {
+        if (verbose)
+            fprintf(stderr, "%s: bad magic number\n", prefix);
+        return -EINVAL;
+    }
+    
+    std::vector<bool> seen(NMEMBERS, false);
     for (size_t i=0; i<=NBUCKETS; i++) {
         size_t j = i<NBUCKETS ? table->bucket[i] : table->free_head;
         size_t prev = 0;
+        if (show && j!=0)
+            fprintf(stderr, "%s: bucket %zu%s = { ", prefix, i, i==NBUCKETS?" (free list)":"");
         for (/*void*/; j!=0; j=table->member[j].next) {
-            if (j>=NMEMBERS || seen[j])
+            if (show)
+                fprintf(stderr, "%zu ", j);
+            if (j>=NMEMBERS) {
+                if (verbose)
+                    fprintf(stderr, "%s%s: table member %zu of bucket %zu is out of range\n", show?"...\n":"", prefix, j, i);
                 return -EINVAL;
-            if (table->member[j].prev!=prev)
+            }
+            if (seen[j]) {
+                if (verbose)
+                    fprintf(stderr, "%s%s: table member %zu of bucket %zu is a duplicate\n", show?"...\n":"", prefix, j, i);
                 return -EINVAL;
+            }
+            if (table->member[j].prev!=prev) {
+                if (verbose)
+                    fprintf(stderr, "%s%s: table member %zu of bucket %zu has bad linkage\n", show?"...\n":"", prefix, j, i);
+                return -EINVAL;
+            }
             seen[j] = true;
             prev = j;
         }
+        if (show && 0!=(i<NBUCKETS?table->bucket[i]:table->free_head))
+            fprintf(stderr, "}\n");
     }
 
     if (seen[0])
         return -EINVAL;
     for (size_t i=1; i<NMEMBERS; i++) {
-        if (!seen[i])
+        if (!seen[i]) {
+            if (verbose)
+                fprintf(stderr, "%s: table member %zu is orphaned\n", prefix, i);
             return -EINVAL;
+        }
     }
 
     return 0;
+}
+
+/* Lock must have already been obtained. */
+void
+RSIM_FutexTable::dump(FILE *f, const std::string &title, const std::string &prefix)
+{
+
+    if (!title.empty())
+        fprintf(f, "%s\n", title.c_str());
+    if (!table) {
+        fprintf(f, "%sNo table loaded.\n", prefix.c_str());
+    } else if (table->magic!=MAGIC) {
+        fprintf(f, "%sBad magic number.\n", prefix.c_str());
+    } else if (check_table()!=0) {
+        fprintf(f, "%sTable structure error.\n", prefix.c_str());
+    } else {
+        fprintf(f, "%sFile descriptor = %d\n", prefix.c_str(), fd);
+        for (size_t i=0; i<NBUCKETS; i++) {
+            if (table->bucket[i]) {
+                fprintf(f, "%s  bucket[%zu] = {", prefix.c_str(), i);
+                for (size_t j=table->bucket[i]; j!=0; j=table->member[j].next) {
+                    fprintf(f, "\n%s    { key=0x%08"PRIx64", next=%u, prev=%u, bitset=0x%08"PRIx32" }",
+                            prefix.c_str(), table->member[j].key, table->member[j].next, table->member[j].prev,
+                            table->member[j].bitset);
+                }
+                fprintf(f, "}\n");
+            }
+        }
+    }
 }
 
 /* Insert a new key into a wait queue and return its index.  Lock is acquired/released by this function. */
@@ -135,12 +203,16 @@ RSIM_FutexTable::insert(rose_addr_t key, uint32_t bitset, LockStatus lock_state)
         return -EINVAL;
 
     /* Obtain lock if necessary */
+    assert(table && table->magic==MAGIC);
     if (UNLOCKED==lock_state) {
         int status = sem_wait(semaphore);
         assert(0==status);
     }
 
-    assert(table && table->magic==MAGIC);
+#ifdef RSIM_FUTEX_CHECKING
+    assert(0==check_table());
+#endif
+
     size_t bno = key % NBUCKETS;
     size_t mno = table->free_head;
     do {
@@ -154,16 +226,22 @@ RSIM_FutexTable::insert(rose_addr_t key, uint32_t bitset, LockStatus lock_state)
 
         /* Link new member into bucket. */
         size_t old_head = table->bucket[bno];
+        table->bucket[bno] = mno;
         table->member[mno].next = old_head;
         table->member[mno].prev = 0;
         if (old_head>0)
             table->member[old_head].prev = mno;
 
         /* Initialize the member. */
+        table->member[mno].key = key;
         table->member[mno].bitset = bitset;
         int status = sem_init(&table->member[mno].sem, 1, 0);
         assert(0==status);
     } while (0);
+
+#ifdef RSIM_FUTEX_CHECKING
+    assert(0==check_table());
+#endif
 
     /* Release lock if we aquired it here. */
     if (UNLOCKED==lock_state) {
@@ -188,11 +266,15 @@ int
 RSIM_FutexTable::erase(rose_addr_t key, size_t member_number, LockStatus lock_state)
 {
     /* Obtain lock if necessary */
+    assert(table && table->magic==MAGIC);
     if (UNLOCKED==lock_state) {
         int status = sem_wait(semaphore);
         assert(0==status);
     }
-    assert(table && table->magic==MAGIC);
+
+#ifdef RSIM_FUTEX_CHECKING
+    assert(0==check_table());
+#endif
 
     size_t bno = key % NBUCKETS;
     bool erased = false;
@@ -228,6 +310,10 @@ RSIM_FutexTable::erase(rose_addr_t key, size_t member_number, LockStatus lock_st
         assert(0==status);
     }
 
+#ifdef RSIM_FUTEX_CHECKING
+    assert(0==check_table());
+#endif
+
     /* Release lock if we acquired it here. */
     if (UNLOCKED==lock_state) {
         int status = sem_post(semaphore);
@@ -246,14 +332,17 @@ RSIM_FutexTable::signal(rose_addr_t key, uint32_t bitset, int nprocs, LockStatus
         return 0;
 
     /* Obtain lock if necessary */
+    assert(table && table->magic==MAGIC);
     if (UNLOCKED==lock_state) {
         int status = sem_wait(semaphore);
         assert(0==status);
     }
-    assert(table && table->magic==MAGIC);
+
+#ifdef RSIM_FUTEX_CHECKING
+    assert(0==check_table());
+#endif
 
     size_t bno = key % NBUCKETS;
-
     for (size_t mno=table->bucket[bno]; mno!=0 && retval>=0 && retval<nprocs; mno=table->member[mno].next) {
         if (table->member[mno].key==key && 0!=(table->member[mno].bitset & bitset)) {
             table->member[mno].key = 0;
@@ -261,6 +350,10 @@ RSIM_FutexTable::signal(rose_addr_t key, uint32_t bitset, int nprocs, LockStatus
             retval++;
         }
     }
+
+#ifdef RSIM_FUTEX_CHECKING
+    assert(0==check_table());
+#endif
 
     /* Release lock if we acquired it here. */
     if (UNLOCKED==lock_state) {
