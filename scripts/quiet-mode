@@ -12,7 +12,8 @@
 #     It seems that this might be an error on the part of automake since it bypasses libtool. [RPM 2009-04-04]
 #
 
-find .  \( -type d -name 'libharu-*' -prune -false \) \
+find .  -follow \
+        \( -type d -name 'libharu-*' -prune -false \) \
      -o \( -type d -name 'netcdf-*'  -prune -false \) \
      -o -name Makefile.in -print0 |\
     xargs -0 sed -i~ \
