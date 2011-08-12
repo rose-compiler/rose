@@ -275,7 +275,7 @@ $(TESTCODE_CURRENTLY_FAILING)
 
 # The use of -rose:java is redundent, the source langauge can now be determined from the file suffix.
 # ROSE_FLAGS = -rose:java -rose:verbose 0 -rose:skipfinalCompileStep
-ROSE_FLAGS = -rose:verbose 0 -rose:skipfinalCompileStep
+ROSE_FLAGS = -rose:verbose 0 -rose:skipfinalCompileStep -rose:skip_syntax_check
 
 PASSING_TEST_Objects = ${TESTCODES:.java=.o}
 TEST_Objects = ${ALL_TESTCODES:.java=.o}
