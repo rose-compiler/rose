@@ -2035,9 +2035,10 @@ src/frontend/CxxFrontend/EDG/edg43Rose/Makefile
 ])], [])
 
 
-# End macro ROSE_SUPPORT_ROSE_PART_6.
+# End macro ROSE_SUPPORT_ROSE_PART_5.
 ]
 )
+
 
 #-----------------------------------------------------------------------------
 AC_DEFUN([ROSE_SUPPORT_ROSE_PART_6],
