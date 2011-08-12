@@ -7811,7 +7811,13 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
              }
 
        // Call the backend compiler. For Fortran inputs, if ROSE is configured with Java this can cause the backend fortran compiler to be called.
-          returnValueForCompiler = systemFromVector (compilerNameString);
+       // driscoll6 (8/11/11) debugging java backend
+          if (get_Java_only() == true) {
+               printf ("SgFile::compileOutput(): debugging java backend: compilerNameString = %s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
+              returnValueForCompiler = 0;
+          } else {
+              returnValueForCompiler = systemFromVector (compilerNameString);
+          }
         }
        else
         {
