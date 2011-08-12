@@ -5,13 +5,13 @@ SUBDIRS =
 INCLUDES = $(ROSE_INCLUDES) 
 
 # Build a library of all the reverser code
-noinst_LIBRARIES =  libBackstrokeUtilities.a
+noinst_LTLIBRARIES =  libBackstrokeUtilities.la
 
 libBackstrokeUtilities_ladir = .
-libBackstrokeUtilities_a_DEPENDENCIES =
-libBackstrokeUtilities_a_SOURCES = utilities.C
-libBackstrokeUtilities_a_include_HEADERS = utilities.h types.h
-libBackstrokeUtilities_a_includedir = $(includedir)/backstroke
+libBackstrokeUtilities_la_DEPENDENCIES =
+libBackstrokeUtilities_la_SOURCES = utilities.C
+libBackstrokeUtilities_la_include_HEADERS = utilities.h types.h
+libBackstrokeUtilities_la_includedir = $(includedir)/backstroke
 noinst_HEADERS = cppDefinesAndNamespaces.h
 
 

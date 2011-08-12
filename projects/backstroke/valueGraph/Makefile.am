@@ -5,14 +5,14 @@ LINK	 = $(CXXLINK)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 
-# noinst_LIBRARIES lists all the librarlies that should be built, but not installed
-#noinst_LIBRARIES =  libBackstrokeValueGraph.a
+# noinst_LTLIBRARIES lists all the librarlies that should be built, but not installed
+#noinst_LTLIBRARIES =  libBackstrokeValueGraph.a
 noinst_PROGRAMS = valueGraph
 
 valueGraph_SOURCES = valueGraphNode.C valueGraph.C graphSearch.C functionReverser.C \
 		pathNumGenerator.C CFGFilter.C codeGeneration.C test.C
-valueGraph_LDADD = $(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.a \
-		$(top_builddir)/projects/backstroke/normalizations/libBackstrokeNormalizations.a \
+valueGraph_LDADD = $(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.la \
+		$(top_builddir)/projects/backstroke/normalizations/libBackstrokeNormalizations.la \
 		$(LIBS_WITH_RPATH) $(ROSE_LIBS)
 valueGraph_include_HEADERS = valueGraph.h valueGraphNode.h pathNumGenerator.h functionReverser.h \
 			CFGFilter.h types.h

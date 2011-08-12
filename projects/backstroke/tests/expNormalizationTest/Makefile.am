@@ -3,12 +3,12 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 SUBDIRS = 
 
 INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke
-LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(top_builddir)/projects/backstroke/normalizations/libBackstrokeNormalizations.a $(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.a
+LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(top_builddir)/projects/backstroke/normalizations/libBackstrokeNormalizations.la $(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.la
 
 # Liao 10/1/2010, support out of order parallel build
-$(top_builddir)/projects/backstroke/normalizations/libBackstrokeNormalizations.a:
+$(top_builddir)/projects/backstroke/normalizations/libBackstrokeNormalizations.la:
 	$(MAKE) -C $(top_builddir)/projects/backstroke/normalizations/
-$(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.a:
+$(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.la:
 	$(MAKE) -C $(top_builddir)/projects/backstroke/utilities/
 
 noinst_PROGRAMS = expNormTest

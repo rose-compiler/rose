@@ -2,18 +2,18 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 INCLUDES = $(ROSE_INCLUDES) 
 
-# noinst_LIBRARIES lists all the librarlies that should be built, but not installed
-noinst_LIBRARIES =  libSSA.a
+# noinst_LTLIBRARIES lists all the librarlies that should be built, but not installed
+noinst_LTLIBRARIES =  libSSA.la
 
-libSSA_a_DEPENDENCIES =
-libSSA_a_SOURCES = staticSingleAssignmentCalculation.C staticSingleAssignmentQueries.C  defsAndUsesTraversal.C \
+libSSA_la_DEPENDENCIES =
+libSSA_la_SOURCES = staticSingleAssignmentCalculation.C staticSingleAssignmentQueries.C  defsAndUsesTraversal.C \
 		reachingDef.C
 include_HEADERS = staticSingleAssignment.h defsAndUsesTraversal.h iteratedDominanceFrontier.h \
 		reachingDef.h controlDependence.h boostGraphCFG.h
 
 noinst_PROGRAMS= ssaTestHarness
 ssaTestHarness_SOURCES = ssaTestHarness.C
-ssaTestHarness_LDADD = libSSA.a $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+ssaTestHarness_LDADD = libSSA.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 # EXTRA_DIST are files that are not compiled or installed. These include readme's, internal header files, etc.
 EXTRA_DIST = 

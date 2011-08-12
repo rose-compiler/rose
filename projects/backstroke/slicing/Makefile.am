@@ -5,12 +5,12 @@ LINK	 = $(CXXLINK)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 
-# noinst_LIBRARIES lists all the librarlies that should be built, but not installed
-#noinst_LIBRARIES =  libBackstrokeSlicing.a
+# noinst_LTLIBRARIES lists all the librarlies that should be built, but not installed
+#noinst_LTLIBRARIES =  libBackstrokeSlicing.a
 noinst_PROGRAMS = slicing
 
 slicing_SOURCES = backstrokeSlicer.C test.C
-slicing_LDADD = $(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.a \
+slicing_LDADD = $(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.la \
 		$(LIBS_WITH_RPATH) $(ROSE_LIBS)
 slicing_include_HEADERS = backstrokeCFG.h backstrokeCDG.h backstrokeDDG.h backstrokePDG.h \
 							backstrokeSlicer.h backstrokeCFGNode.h
