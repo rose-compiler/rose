@@ -4,8 +4,6 @@
 #include <map>
 #include <set>
 #include <rose.h>
-#include "dataflowCfgFilter.h"
-
 
 
 class ReachingDef
@@ -25,12 +23,14 @@ public:
 		
 		/** This is not a real definition; this variable is external to the scope being analyzed and
 		 * this def represents the existing value of the variable at the beginning of the scope. */
-		EXTERNAL_DEF
+		EXTERNAL_DEF,
+		
+		//! This variable has gone out of scope and this definition represents the first location where it is no longer
+		//! in scope. 
+		OUT_OF_SCOPE
 	};
 	
 	typedef boost::shared_ptr<ReachingDef> ReachingDefPtr;
-	
-	typedef FilteredCFGEdge<ssa_private::DataflowCfgFilter> FilteredCfgEdge;
 
 private:
 	/** The type of this definition. */
@@ -52,7 +52,7 @@ public:
 	//---------CONSTRUCTORS---------
 
 	/** Creates a new reaching def. */
-	ReachingDef(CFGNode defNode, Type type);
+	ReachingDef(const CFGNode& defNode, Type type);
 
 	//---------ACCESSORS---------
 
@@ -98,4 +98,6 @@ public:
 
 	/** Set the renaming number (SSA index) of this def. */
 	void setRenamingNumber(int n);
+	
+	void setType(Type t) { defType = t; }
 };

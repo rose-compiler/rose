@@ -472,7 +472,7 @@ HEADER_CV_TYPE_MODIFIER_START
 
           std::string displayString() const;
           void display ( std::string label ) const;
-          friend std::ostream & operator<< ( std::ostream & os, SgConstVolatileModifier & m );
+          friend std::ostream & operator<< ( std::ostream & os, const SgConstVolatileModifier & m );
           friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
@@ -623,7 +623,7 @@ HEADER_STORAGE_MODIFIER_START
 
           std::string displayString() const;
           void display ( std::string label ) const;
-          friend std::ostream & operator<< ( std::ostream & os, SgStorageModifier & m );
+          friend std::ostream & operator<< ( std::ostream & os, const SgStorageModifier & m );
 		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
@@ -682,7 +682,7 @@ HEADER_ACCESS_MODIFIER_START
 
           std::string displayString() const;
           void display ( std::string label ) const;
-          friend std::ostream & operator<< ( std::ostream & os, SgAccessModifier & m );
+          friend std::ostream & operator<< ( std::ostream & os, const SgAccessModifier & m );
 		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
@@ -916,7 +916,7 @@ HEADER_FUNCTION_MODIFIER_START
 
           std::string displayString() const;
           void display ( std::string label ) const;
-          friend std::ostream & operator<< ( std::ostream & os, SgFunctionModifier & m );
+          friend std::ostream & operator<< ( std::ostream & os, const SgFunctionModifier & m );
 		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
@@ -972,7 +972,7 @@ HEADER_UPC_ACCESS_MODIFIER_START
 
           std::string displayString() const;
           void display ( std::string label ) const;
-          friend std::ostream & operator<< ( std::ostream & os, SgUPC_AccessModifier & m );
+          friend std::ostream & operator<< ( std::ostream & os, const SgUPC_AccessModifier & m );
           friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechanism to clear all bits
@@ -1041,7 +1041,7 @@ HEADER_SPECIAL_FUNCTION_MODIFIER_START
 
           std::string displayString() const;
           void display ( std::string label ) const;
-          friend std::ostream & operator<< ( std::ostream & os, SgSpecialFunctionModifier & m );
+          friend std::ostream & operator<< ( std::ostream & os, const SgSpecialFunctionModifier & m );
 		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
@@ -1152,7 +1152,7 @@ HEADER_DECLARATION_MODIFIER_START
 
           std::string displayString() const;
           void display ( std::string label ) const;
-          friend std::ostream & operator<< ( std::ostream & os, SgDeclarationModifier & m );
+          friend std::ostream & operator<< ( std::ostream & os, const SgDeclarationModifier & m );
 		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
@@ -1454,7 +1454,7 @@ HEADER_TYPE_MODIFIER_START
 
           std::string displayString() const;
           void display ( std::string label ) const;
-          friend std::ostream & operator<< ( std::ostream & os, SgTypeModifier & m );
+          friend std::ostream & operator<< ( std::ostream & os, const SgTypeModifier & m );
 		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
@@ -1516,7 +1516,7 @@ HEADER_ELABORATED_TYPE_MODIFIER_START
 
           std::string displayString() const;
           void display ( std::string label ) const;
-          friend std::ostream & operator<< ( std::ostream & os, SgElaboratedTypeModifier & m );
+          friend std::ostream & operator<< ( std::ostream & os, const SgElaboratedTypeModifier & m );
 		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
@@ -1571,7 +1571,7 @@ HEADER_LINKAGE_MODIFIER_START
 
           std::string displayString() const;
           void display ( std::string label ) const;
-          friend std::ostream & operator<< ( std::ostream & os, SgLinkageModifier & m );
+          friend std::ostream & operator<< ( std::ostream & os, const SgLinkageModifier & m );
 		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
@@ -1620,7 +1620,7 @@ HEADER_BASECLASS_MODIFIER_START
 
           std::string displayString() const;
           void display ( std::string label ) const;
-          friend std::ostream & operator<< ( std::ostream & os, SgBaseClassModifier & m );
+          friend std::ostream & operator<< ( std::ostream & os, const SgBaseClassModifier & m );
 		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
@@ -2031,7 +2031,7 @@ $CLASSNAME::display ( std::string label ) const
 #endif
    }
 
-std::ostream & operator<< ( std::ostream & os, SgConstVolatileModifier & m) 
+std::ostream & operator<< ( std::ostream & os, const SgConstVolatileModifier & m) 
    {
       os << m.get_modifier(); 
      return os;
@@ -2187,7 +2187,7 @@ $CLASSNAME::display ( std::string label ) const
      printf ("%s \n",displayString().c_str());
    }
 
-std::ostream & operator<< ( std::ostream & os, SgStorageModifier & m) 
+std::ostream & operator<< ( std::ostream & os, const SgStorageModifier & m) 
    {
       os << m.get_modifier(); 
      return os;
@@ -2285,7 +2285,7 @@ SgAccessModifier::display ( std::string label ) const
      printf ("%s \n",displayString().c_str());
    }
 
-std::ostream & operator<< ( std::ostream & os, SgAccessModifier & m) 
+std::ostream & operator<< ( std::ostream & os, const SgAccessModifier & m) 
    {
       os << m.get_modifier(); 
      return os;
@@ -2520,7 +2520,7 @@ SgFunctionModifier::display ( std::string label ) const
      printf ("%s \n",displayString().c_str());
    }
 
-std::ostream & operator<< ( std::ostream & os, SgFunctionModifier & m) 
+std::ostream & operator<< ( std::ostream & os, const SgFunctionModifier & m) 
    {
       os << m.get_modifierVector(); 
      return os;
@@ -2664,7 +2664,7 @@ $CLASSNAME::display ( std::string label ) const
      printf ("%s \n",displayString().c_str());
    }
 
-std::ostream & operator<< ( std::ostream & os, SgUPC_AccessModifier & m) 
+std::ostream & operator<< ( std::ostream & os, const SgUPC_AccessModifier & m) 
    {
       os << m.get_modifier(); 
      return os;
@@ -2761,7 +2761,7 @@ $CLASSNAME::display ( std::string label ) const
      printf ("%s \n",displayString().c_str());
    }
 
-std::ostream & operator<< ( std::ostream & os, SgSpecialFunctionModifier & m) 
+std::ostream & operator<< ( std::ostream & os, const SgSpecialFunctionModifier & m) 
    {
       os << m.get_modifierVector(); 
      return os;
@@ -2889,7 +2889,7 @@ SgDeclarationModifier::display ( std::string label ) const
      printf ("%s \n",displayString().c_str());
    }
 
-std::ostream & operator<< ( std::ostream & os, SgDeclarationModifier & m) 
+std::ostream & operator<< ( std::ostream & os, const SgDeclarationModifier & m) 
    {
       os << m.get_modifierVector(); 
      return os;
@@ -3192,7 +3192,7 @@ $CLASSNAME::display ( std::string label ) const
      printf ("%s \n",displayString().c_str());
    }
 
-std::ostream& operator<< (std::ostream& os, SgTypeModifier& tm) 
+std::ostream& operator<< (std::ostream& os, const SgTypeModifier& tm) 
    {
       os << tm.get_modifierVector(); 
      return os;
@@ -3363,7 +3363,7 @@ $CLASSNAME::display ( std::string label ) const
      printf ("%s \n",displayString().c_str());
    }
 
-std::ostream & operator<< ( std::ostream & os, SgElaboratedTypeModifier & m) 
+std::ostream & operator<< ( std::ostream & os, const SgElaboratedTypeModifier & m) 
    {
       os << m.get_modifier(); 
      return os;
@@ -3446,7 +3446,7 @@ $CLASSNAME::display ( std::string label ) const
      printf ("%s \n",displayString().c_str());
    }
 
-std::ostream & operator<< ( std::ostream & os, SgLinkageModifier & m) 
+std::ostream & operator<< ( std::ostream & os, const SgLinkageModifier & m) 
    {
       os << m.get_modifier(); 
      return os;
@@ -3522,7 +3522,7 @@ $CLASSNAME::display ( std::string label ) const
      printf ("%s \n",displayString().c_str());
    }
 
-std::ostream & operator<< ( std::ostream & os, SgBaseClassModifier & m) 
+std::ostream & operator<< ( std::ostream & os, const SgBaseClassModifier & m) 
    {
       os << m.get_modifier(); 
      return os;
@@ -5913,7 +5913,7 @@ HEADER_OPENCL_ACCESS_MODE_MODIFIER_START
 
           std::string displayString() const;
           void display ( std::string label ) const;
-          friend std::ostream & operator<< ( std::ostream & os, SgStorageModifier & m );
+          friend std::ostream & operator<< ( std::ostream & os, const SgStorageModifier & m );
           
 HEADER_OPENCL_ACCESS_MODE_MODIFIER_END
 
@@ -15171,7 +15171,7 @@ void $CLASSNAME::setWriteOnly()      { p_modifier = e_write_only; }
 bool $CLASSNAME::isReadWrite() const { return p_modifier == e_read_write; }
 void $CLASSNAME::setReadWrite()      { p_modifier = e_read_write; }
 
-std::ostream & operator<< ( std::ostream & os, $CLASSNAME & m) 
+std::ostream & operator<< ( std::ostream & os, const $CLASSNAME & m) 
    {
       os << m.get_modifier(); 
      return os;

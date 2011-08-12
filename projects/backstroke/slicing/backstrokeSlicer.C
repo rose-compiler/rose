@@ -341,7 +341,7 @@ SgFunctionDeclaration* Slicer::slice()
 				continue;
 
 			// The data dependence should have the same variable.
-			if (pdg[*i].type == PDGEdge::DataDependence)
+			if (pdg[*i].type == PDGForSlicing::PDGEdgeType::DataDependence)
 			{
 				if (pdg[*i].ddEdge.varNames.count(varName) == 0)
 					continue;

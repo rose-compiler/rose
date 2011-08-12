@@ -142,5 +142,14 @@ namespace BackstrokeUtility
 	/** Given a type, remove one layer of pointers/reference types. 
 	 * If the type is a pointer-to-pointer, this function just removes the first layer. */
 	SgType* removePointerOrReferenceType(SgType* t);
+    
+    //! Given a break statement, get its enclosing switch statement.
+    SgSwitchStatement* getEnclosingSwitchStmt(SgBreakStmt* breakStmt);
+    
+    //! Returns if the given statement is a loop (while, for, do-while).
+    bool isLoopStatement(SgStatement* stmt);
+    
+    //! Given a scope statement, find all its early exits (return, break, continue, goto).
+    std::vector<SgStatement*> getEarlyExits(SgScopeStatement* scope);
 }
 

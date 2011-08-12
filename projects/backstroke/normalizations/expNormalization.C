@@ -461,24 +461,25 @@ void moveDeclarationsOut(SgNode* node)
             {
                 SgVariableDeclaration* var_decl = isSgVariableDeclaration(decl);
                 ROSE_ASSERT(var_decl);
-                new_block->append_statement(copyStatement(var_decl));
+                //appendStatement(copyStatement(var_decl), new_block);
+                appendStatement(var_decl, new_block);
                 //delete var_decl;
             }
-
+            
             // Since there is no builder function for SgForInitStatement, we build it by ourselves
-            SgForInitStatement* null_for_init = new SgForInitStatement();
-            setOneSourcePositionForTransformation(null_for_init);
+            SgForInitStatement* null_for_init = buildForInitStatement(SgStatementPtrList());
             replaceStatement(for_init_stmt, null_for_init);
 
             // It seems that 'for_init_stmt' should be deleted explicitly.
             //deepDelete(for_init_stmt);
 
-            new_block->append_statement(copyStatement(for_stmt));
+            appendStatement(copyStatement(for_stmt), new_block);
             replaceStatement(for_stmt, new_block);
             //deepDelete(for_stmt);
         }
     }
 
+#if 0
     // Separate variable's definition from its declaration
     // FIXME It is not sure that whether to permit declaration in condition of if (if the varible declared
     // is not of scalar type?).
@@ -521,13 +522,14 @@ void moveDeclarationsOut(SgNode* node)
 
                 replaceStatement(var_decl, buildExprStatement(new_exp));
                 //SgBasicBlock* block = buildBasicBlock(copyStatement(parent));
-                block->append_statement(new_decl);
-                block->append_statement(copyStatement(parent));
+                appendStatement(new_decl, block);
+                appendStatement(copyStatement(parent), block);
 
                 replaceStatement(parent, block);
             }
         }
     }
+#endif
 }
 
 void preprocess(SgNode* node)
@@ -651,6 +653,7 @@ void turnCommaOpExpIntoStmt(SgExpression* exp)
 
 			case V_SgWhileStmt:
 			{
+#if 0
 				SgExprStatement* new_stmt = buildExprStatement(copyExpression(lhs));
 				SgExpression* new_exp = copyExpression(rhs);
 				replaceExpression(comma_op, new_exp);
@@ -661,7 +664,7 @@ void turnCommaOpExpIntoStmt(SgExpression* exp)
 
 				// FIXME!: Now it's not clear how to deal with continue in while. If it's transformed into
 				// goto, then we don't have to put the side effect in condition before continue.
-				
+#endif
 				break;
 			}
 			
@@ -784,7 +787,9 @@ void turnConditionalExpIntoStmt(SgExpression* exp)
 			ROSE_ASSERT(var_decl->get_variables().size() == 1);
 
 			SgType* type = var_decl->get_variables().front()->get_type();
-			ROSE_ASSERT(isScalarType(type));
+            //cout << type->class_name() << endl;
+            type = type->stripTypedefsAndModifiers();
+			ROSE_ASSERT(isScalarType(type) || isSgEnumType(type));
 			
 			// Note that a variable declaration can appear in the condition part of if, for, etc.
 			// Here we only deal with those which are exactly in a basic block.
