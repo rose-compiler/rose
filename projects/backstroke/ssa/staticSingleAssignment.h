@@ -147,10 +147,8 @@ private:
 	/** Find where phi functions need to be inserted and insert empty phi functions at those nodes.
 	 * This updates the IN part of the reaching def table with Phi functions.
 	 * 
-	 * @param cfgNodesInPostOrder all the CFG nodes of the function
-	 * @returns the control dependencies. */
-	std::multimap< CFGNode, std::pair<CFGNode, CFGEdge> > insertPhiFunctions(SgFunctionDefinition* function,
-			const std::vector<CFGNode>& cfgNodesInPostOrder);
+	 * @param cfgNodesInPostOrder all the CFG nodes of the function. */
+	void insertPhiFunctions(SgFunctionDefinition* function, const std::vector<CFGNode>& cfgNodesInPostOrder);
 
 	/** Give numbers to all the reachingDef objects. Should be called after phi functions are inserted
 	 * and the local def table is populated, but before dataflow propagates the definitions. 
@@ -165,10 +163,6 @@ private:
 	/** Performs the data-flow update for one individual node, populating the reachingDefsTable for that node.
 	 * @returns true if the OUT defs from the node changed, false if they stayed the same. */
 	bool propagateDefs(const CFGNode& cfgNode);
-	
-	//! Finds all variables that have gone out of scope and marks their last definition as an OUT_OF_SCOPE
-	//! definition, rather than a PHI definition.
-	void detectOutOfScopeVariables(SgFunctionDefinition* func);
 
 	/** Iterates all the CFG nodes in the function and returns them in postorder, according to depth-first search.
 	 * Reverse postorder is the most efficient order for dataflow propagation. */
