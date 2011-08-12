@@ -364,6 +364,11 @@ SgNewExp * buildNewExp(SgType* type,
                        SgExpression* expr, 
                        short int val, 
                        SgFunctionDeclaration* funcDecl);
+
+SgDeleteExp* buildDeleteExp(SgExpression* variable,
+                            short is_array,
+                            short need_global_specifier,
+                            SgFunctionDeclaration* deleteOperatorDeclaration);
  
 
 #undef BUILD_UNARY_PROTO
@@ -672,9 +677,17 @@ buildNondefiningFunctionDeclaration (const SgFunctionDeclaration* funcdecl, SgSc
 SgMemberFunctionDeclaration *
 buildNondefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
 
+////! Build a prototype member function declaration
+//SgMemberFunctionDeclaration *
+//buildNondefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgFunctionParameterList* paralist, SgScopeStatement* scope=NULL);
+
 //! Build a defining ( non-prototype) member function declaration
 SgMemberFunctionDeclaration *
 buildDefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
+
+//! Build a defining ( non-prototype) member function declaration from a SgMemberFunctionType
+SgMemberFunctionDeclaration *
+buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgFunctionParameterList* paralist, SgScopeStatement* scope, SgExprListExp* decoratorList = NULL);
 
 //! Build a defining ( non-prototype) member function declaration from a SgMemberFunctionType
 SgMemberFunctionDeclaration *
@@ -752,6 +765,8 @@ inline SgIfStmt * buildIfStmt(SgExpression* conditional, SgStatement * true_body
 }
 SgIfStmt * buildIfStmt_nfi(SgStatement* conditional, SgStatement * true_body, SgStatement * false_body);
 
+//! Build a for init statement
+SgForInitStatement * buildForInitStatement(const SgStatementPtrList & statements);
 SgForInitStatement * buildForInitStatement_nfi(SgStatementPtrList & statements);
 
 //!Build a for statement, assume none of the arguments is NULL

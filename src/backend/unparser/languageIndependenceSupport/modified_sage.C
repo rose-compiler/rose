@@ -727,24 +727,6 @@ int GetPrecedence(int variant)
     //        function pointers initialisation).
           case V_SgFunctionRefExp:    return 0;
 
-    // driscoll6 (6/29/11) Support for Python
-          case V_SgLambdaRefExp:        return 0;
-          case V_SgTupleExp:            return 0;
-          case V_SgListExp:             return 0;
-          case V_SgDictionaryExp:        return 16;
-          case V_SgKeyDatumPair:        return 17;
-          case V_SgComprehension:       return 17;
-          case V_SgListComprehension:   return 16;
-          case V_SgSetComprehension:    return 16;
-          case V_SgDictionaryComprehension:   return 16;
-          case V_SgMembershipOp:        return 16;
-          case V_SgNonMembershipOp:     return 16;
-          case V_SgIsOp:                return 16;
-          case V_SgIsNotOp:             return 16;
-          case V_SgNaryComparisonOp:    return 16;
-          case V_SgNaryBooleanOp:       return 16;
-
-
 #if 0
        // Template
           case V_:              return 0;
