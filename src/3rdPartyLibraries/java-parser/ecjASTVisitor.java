@@ -495,7 +495,12 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 2)
                System.out.println("DONE: Push void as a return type for now (will be ignored because this is a constructor)");
 
-          java_parser.cactionConstructorDeclaration(name);
+          boolean isNative = node.isNative();
+          boolean isPrivate = (node.binding != null && !node.binding.isPrivate()) ? true : false;
+
+          boolean isStatic = node.isNative();
+
+          java_parser.cactionConstructorDeclaration(name,isNative);
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (ConstructorDeclaration,ClassScope)");
@@ -609,6 +614,17 @@ class ecjASTVisitor extends ASTVisitor
                   {
                     System.out.println("Sorry, not implemented in support for ExplicitConstructorCall: implicit super()");
                  // java_parser.cactionExplicitConstructorCall("ImplicitSuper");
+
+                 // We have to implement the support for an impleicit super() call, even if it is marked explicitly 
+                 // as implicit and not generated in the output source code.  It should still be explicit in the AST
+                 // as a way to simplify analysis.
+                    String name = new String("super");
+                    System.out.println("super function name = " + name);
+
+                    String associatedClassName = node.binding.toString();
+                    System.out.println("super function associatedClassName = " + associatedClassName);
+
+                    java_parser.cactionMessageSend(name,associatedClassName);
                   }
                  else
                   {
@@ -706,7 +722,55 @@ class ecjASTVisitor extends ASTVisitor
        // I think that it is enough that this is set via the LocalDeclaration.
        // boolean isFinal = node.binding.isFinal();
 
-          java_parser.cactionFieldDeclaration();
+          boolean isPrivate   = (node.binding != null && node.binding.isPrivate())   ? true : false;
+          boolean isProtected = (node.binding != null && node.binding.isProtected()) ? true : false;
+          boolean isPublic    = (node.binding != null && node.binding.isPublic())    ? true : false;
+
+          boolean isVolatile  = (node.binding != null && node.binding.isVolatile())  ? true : false;
+          boolean isSynthetic = (node.binding != null && node.binding.isSynthetic()) ? true : false;
+          boolean isStatic    = (node.binding != null && node.binding.isStatic())    ? true : false;
+          boolean isTransient = (node.binding != null && node.binding.isTransient()) ? true : false;
+
+          boolean hasInitializer = (node.initialization != null) ? true : false;
+
+          String name = new String(node.name);
+          System.out.println("node.name                     = " + name);
+
+       // String selectorName = new String(node.selector);
+       // System.out.println("node.name = " + selectorName);
+       // System.out.println("node.modfiers = " + node.modfiers);
+
+          if (java_parser.verboseLevel > 0)
+             {
+               System.out.println("node.binding                  = " + node.binding);
+               System.out.println("node.binding.type             = " + node.binding.type);
+               System.out.println("node.binding.type.id          = " + node.binding.type.id);
+               System.out.println("node.binding.type.debugName() = " + node.binding.type.debugName());
+               System.out.println("node.type                     = " + node.type);
+
+               System.out.println("isPrivate                     = " + isPrivate);
+               System.out.println("isProtected                   = " + isProtected);
+               System.out.println("isPublic                      = " + isPublic);
+
+               System.out.println("hasInitializer                = " + hasInitializer);
+             }
+
+       // Construct the type (will be constructed on the astJavaTypeStack.
+
+       // DQ (7/18/2011): Switch to using the different generateType() function (taking a TypeReference).
+       // JavaParserSupport.generateType(node.binding.type);
+          JavaParserSupport.generateType(node.type);
+
+          boolean isFinal = node.binding.isFinal();
+
+       // DQ (8/13/2011): This information is stored in the FieldReference...(not clear how to get it).
+       // boolean isPrivate = (node.binding != null && !node.binding.isPrivate()) ? true : false;
+
+       // Build the variable declaration using the type from the astJavaTypeStack.
+       // Note that this may have to handle an array of names or be even more complex in the future.
+       // java_parser.cactionLocalDeclaration(name,isFinal);
+
+          java_parser.cactionFieldDeclaration(name,hasInitializer,isFinal,isPrivate,isProtected,isPublic,isVolatile,isSynthetic,isStatic,isTransient);
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (FieldDeclaration,BlockScope)");
@@ -1341,6 +1405,9 @@ class ecjASTVisitor extends ASTVisitor
 
           boolean isFinal = node.binding.isFinal();
 
+       // DQ (8/13/2011): This information is stored in the FieldReference...(not clear how to get it).
+       // boolean isPrivate = (node.binding != null && !node.binding.isPrivate()) ? true : false;
+
        // Build the variable declaration using the type from the astJavaTypeStack.
        // Note that this may have to handle an array of names or be even more complex in the future.
           java_parser.cactionLocalDeclaration(name,isFinal);
@@ -1563,6 +1630,8 @@ class ecjASTVisitor extends ASTVisitor
           boolean isStatic   = node.isStatic();
 
           boolean isFinal    = node.binding.isFinal();
+
+          boolean isPrivate = (node.binding != null && !node.binding.isPrivate()) ? true : false;
 
        // We can build this here but we can't put the symbol into the symbol tabel until 
        // we have gathered the function parameter types so that the correct function type 
@@ -2571,6 +2640,16 @@ class ecjASTVisitor extends ASTVisitor
        // do nothing  by default
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (FieldDeclaration,BlockScope)");
+
+       // We pass the name to support debugging...
+          String name = new String(node.name);
+
+          boolean hasInitializer = (node.initialization != null) ? true : false;
+
+          java_parser.cactionFieldDeclarationEnd(name,hasInitializer);
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (FieldDeclaration,BlockScope)");
         }
 
      public void endVisit(FieldReference  node, BlockScope scope)
@@ -3162,7 +3241,7 @@ class ecjASTVisitor extends ASTVisitor
                System.out.println("endVisit TypeDeclaration -- BlockScope");
 
           String typename = new String(node.name);
-          java_parser.cactionTypeDeclarationEnd(typename);
+          java_parser.cactionTypeDeclarationEnd(typename,0);
 
           System.out.println("Leaving endVisit (TypeDeclaration,BlockScope)");
         }
@@ -3173,7 +3252,7 @@ class ecjASTVisitor extends ASTVisitor
                System.out.println("endVisit TypeDeclaration -- ClassScope");
 
           String typename = new String(node.name);
-          java_parser.cactionTypeDeclarationEnd(typename);
+          java_parser.cactionTypeDeclarationEnd(typename,0);
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (TypeDeclaration,ClassScope)");
@@ -3185,7 +3264,33 @@ class ecjASTVisitor extends ASTVisitor
                System.out.println("Inside of endVisit (TypeDeclaration,CompilationUnitScope)");
 
           String typename = new String(node.name);
-          java_parser.cactionTypeDeclarationEnd(typename);
+
+          int numberOfMethods     = 0;
+          int numberOfMemberTypes = 0;
+          int numberOfFields      = 0;
+
+          if (node.methods != null)
+             {
+               System.out.println("Inside of endVisit (TypeDeclaration,CompilationUnitScope): node.methods.length     = " + node.methods.length);
+               numberOfMethods = node.methods.length;
+             }
+
+          if (node.memberTypes != null)
+             {
+               System.out.println("Inside of endVisit (TypeDeclaration,CompilationUnitScope): node.memberTypes.length = " + node.memberTypes.length);
+               numberOfMemberTypes = node.memberTypes.length;
+             }
+
+          if (node.fields != null)
+             {
+               System.out.println("Inside of endVisit (TypeDeclaration,CompilationUnitScope): node.fields.length      = " + node.fields.length);
+               numberOfFields = node.fields.length;
+             }
+
+          int numberOfStatements = numberOfMethods + numberOfMemberTypes + numberOfFields;
+          System.out.println("Inside of endVisit (TypeDeclaration,CompilationUnitScope): numberOfStatements      = " + numberOfStatements);
+
+          java_parser.cactionTypeDeclarationEnd(typename,numberOfStatements);
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (TypeDeclaration,CompilationUnitScope)");
