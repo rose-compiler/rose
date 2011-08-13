@@ -26,6 +26,9 @@ import org.eclipse.jdt.internal.compiler.util.*;
 // DQ (10/30/2010): Added support for reflection to get methods in implicitly included objects.
 import java.lang.reflect.*;
 
+// DQ (8/13/2011): Used to support modifier handling.
+import org.eclipse.jdt.internal.compiler.classfmt.ClassFileConstants;
+
 
 class ecjASTVisitor extends ASTVisitor
    {
@@ -1631,12 +1634,55 @@ class ecjASTVisitor extends ASTVisitor
 
           boolean isFinal    = node.binding.isFinal();
 
-          boolean isPrivate = (node.binding != null && !node.binding.isPrivate()) ? true : false;
+          boolean isPrivate = (node.binding != null && node.binding.isPrivate()) ? true : false;
+
+       // These is no simple function for theses cases.
+          boolean isSynchronized = ((node.modifiers & ClassFileConstants.AccSynchronized) != 0) ? true : false;
+          boolean isPublic       = ((node.modifiers & ClassFileConstants.AccPublic)       != 0) ? true : false;
+          boolean isProtected    = ((node.modifiers & ClassFileConstants.AccProtected)    != 0) ? true : false;
+
+          boolean isStrictfp     = node.binding.isStrictfp();
+
+       // These are always false for member functions.
+          boolean isVolatile     = false;
+          boolean isTransient    = false;
+
+          if (java_parser.verboseLevel > 2)
+             {
+               System.out.println("In visit (MethodDeclaration,ClassScope): isPrivate      = " + (isPrivate      ? "true" : "false"));
+               System.out.println("In visit (MethodDeclaration,ClassScope): isSynchronized = " + (isSynchronized ? "true" : "false"));
+               System.out.println("In visit (MethodDeclaration,ClassScope): isPublic       = " + (isPublic       ? "true" : "false"));
+               System.out.println("In visit (MethodDeclaration,ClassScope): isProtected    = " + (isProtected    ? "true" : "false"));
+               System.out.println("In visit (MethodDeclaration,ClassScope): isStrictfp     = " + (isStrictfp     ? "true" : "false"));
+             }
+
+/*
+          if ((modifiers & ClassFileConstants.AccPublic) != 0)
+               output.append("public "); //$NON-NLS-1$
+          if ((modifiers & ClassFileConstants.AccPrivate) != 0)
+               output.append("private "); //$NON-NLS-1$
+          if ((modifiers & ClassFileConstants.AccProtected) != 0)
+               output.append("protected "); //$NON-NLS-1$
+          if ((modifiers & ClassFileConstants.AccStatic) != 0)
+               output.append("static "); //$NON-NLS-1$
+          if ((modifiers & ClassFileConstants.AccFinal) != 0)
+               output.append("final "); //$NON-NLS-1$
+          if ((modifiers & ClassFileConstants.AccSynchronized) != 0)
+               output.append("synchronized "); //$NON-NLS-1$
+          if ((modifiers & ClassFileConstants.AccVolatile) != 0)
+               output.append("volatile "); //$NON-NLS-1$
+          if ((modifiers & ClassFileConstants.AccTransient) != 0)
+               output.append("transient "); //$NON-NLS-1$
+          if ((modifiers & ClassFileConstants.AccNative) != 0)
+               output.append("native "); //$NON-NLS-1$
+          if ((modifiers & ClassFileConstants.AccAbstract) != 0)
+               output.append("abstract "); //$NON-NLS-1$
+*/
 
        // We can build this here but we can't put the symbol into the symbol tabel until 
        // we have gathered the function parameter types so that the correct function type 
        // can be computed.
-          java_parser.cactionMethodDeclaration(name,isAbstract,isNative,isStatic,isFinal);
+          java_parser.cactionMethodDeclaration(name,isAbstract,isNative,isStatic,isFinal,isSynchronized,isPublic,isProtected,isPrivate,isStrictfp);
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (MethodDeclaration,ClassScope)");

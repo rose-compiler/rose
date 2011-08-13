@@ -358,7 +358,10 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionExplicitConstructorCallEnd (JNIEnv
 
 // JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclaration (JNIEnv *env, jobject xxx, jstring java_string)
 // JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclaration (JNIEnv *env, jobject xxx, jstring java_string, jboolean java_is_abstract)
-JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclaration (JNIEnv *env, jobject xxx, jstring java_string, jboolean java_is_abstract, jboolean java_is_native, jboolean java_is_static, jboolean java_is_final)
+// JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclaration (JNIEnv *env, jobject xxx, jstring java_string, jboolean java_is_abstract, jboolean java_is_native, jboolean java_is_static, jboolean java_is_final)
+JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclaration (JNIEnv *env, jobject xxx, jstring java_string, 
+     jboolean java_is_abstract, jboolean java_is_native, jboolean java_is_static, jboolean java_is_final,
+     jboolean java_is_synchronized, jboolean java_is_public, jboolean java_is_protected, jboolean java_is_private, jboolean java_is_strictfp)
    {
      if (SgProject::get_verbose() > 0)
           printf ("Build a SgMemberFunctionDeclaration \n");
@@ -367,10 +370,15 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclaration (JNIEnv *env, jo
 
      SgName name = convertJavaStringToCxxString(env,java_string);
 
-     bool isAbstract = java_is_abstract;
-     bool isNative   = java_is_native;
-     bool isStatic   = java_is_static;
-     bool isFinal    = java_is_final;
+     bool isAbstract     = java_is_abstract;
+     bool isNative       = java_is_native;
+     bool isStatic       = java_is_static;
+     bool isFinal        = java_is_final;
+     bool isSynchronized = java_is_synchronized;
+     bool isPublic       = java_is_public;
+     bool isProtected    = java_is_protected;
+     bool isPrivate      = java_is_private;
+     bool isStrictfp     = java_is_strictfp;
 
      SgClassDefinition* classDefinition = isSgClassDefinition(astJavaScopeStack.front());
      ROSE_ASSERT(classDefinition != NULL);
@@ -408,8 +416,47 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclaration (JNIEnv *env, jo
      if (isFinal == true)
           functionDeclaration->get_declarationModifier().setFinal();
 
+  // DQ (8/13/2011): Added more modifiers.
+     if (isSynchronized == true)
+        {
+          if (SgProject::get_verbose() > 2)
+               printf ("Setting modifier as Synchronized \n");
+          functionDeclaration->get_functionModifier().setJavaSynchronized();
+        }
+
+  // Set the access modifiers (shared between C++ and Java).
+     if (isPublic == true)
+        {
+          if (SgProject::get_verbose() > 2)
+               printf ("Setting modifier as Public \n");
+          functionDeclaration->get_declarationModifier().get_accessModifier().setPublic();
+        }
+
+     if (isProtected == true)
+        {
+          if (SgProject::get_verbose() > 2)
+               printf ("Setting modifier as Protected \n");
+          functionDeclaration->get_declarationModifier().get_accessModifier().setProtected();
+        }
+
+     if (isPrivate == true)
+        {
+          if (SgProject::get_verbose() > 2)
+               printf ("Setting modifier as Private \n");
+          functionDeclaration->get_declarationModifier().get_accessModifier().setPrivate();
+        }
+
+  // Set the Java specific modifier for strict floating point (defined for functions).
+     if (isStrictfp == true)
+        {
+          if (SgProject::get_verbose() > 2)
+               printf ("Setting modifier as strictfp \n");
+          functionDeclaration->get_functionModifier().setJavaStrictfp();
+        }
+
      outputJavaState("At BOTTOM of cactionMethodDeclaration");
    }
+
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclarationEnd (JNIEnv *env, jobject xxx, int java_numberOfStatements /* , jstring java_string */ )
    {
