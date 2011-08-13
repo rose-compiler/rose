@@ -703,6 +703,9 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of visit (FieldDeclaration,BlockScope)");
 
+       // I think that it is enough that this is set via the LocalDeclaration.
+       // boolean isFinal = node.binding.isFinal();
+
           java_parser.cactionFieldDeclaration();
 
           if (java_parser.verboseLevel > 0)
@@ -1336,9 +1339,11 @@ class ecjASTVisitor extends ASTVisitor
        // JavaParserSupport.generateType(node.binding.type);
           JavaParserSupport.generateType(node.type);
 
+          boolean isFinal = node.binding.isFinal();
+
        // Build the variable declaration using the type from the astJavaTypeStack.
        // Note that this may have to handle an array of names or be even more complex in the future.
-          java_parser.cactionLocalDeclaration(name);
+          java_parser.cactionLocalDeclaration(name,isFinal);
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (LocalDeclaration,BlockScope)");
@@ -1539,7 +1544,7 @@ class ecjASTVisitor extends ASTVisitor
 
           if (node.returnType == null)
              {
-               System.out.println("Errro: no return type defined for the member function node.returnType = " + node.returnType);
+               System.out.println("Error: no return type defined for the member function node.returnType = " + node.returnType);
                System.exit(1);
              }
 
@@ -1552,13 +1557,17 @@ class ecjASTVisitor extends ASTVisitor
        // System.out.println("Exiting to test error handling! \n");
        // System.exit(0);
 
-       // java_parser.cactionMethodDeclaration();
-       // java_parser.cactionMethodDeclaration("MethodDeclaration_abc");
+       // Setup the function modifiers
+          boolean isAbstract = node.isAbstract();
+          boolean isNative   = node.isNative();
+          boolean isStatic   = node.isStatic();
+
+          boolean isFinal    = node.binding.isFinal();
 
        // We can build this here but we can't put the symbol into the symbol tabel until 
        // we have gathered the function parameter types so that the correct function type 
        // can be computed.
-          java_parser.cactionMethodDeclaration(name);
+          java_parser.cactionMethodDeclaration(name,isAbstract,isNative,isStatic,isFinal);
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (MethodDeclaration,ClassScope)");

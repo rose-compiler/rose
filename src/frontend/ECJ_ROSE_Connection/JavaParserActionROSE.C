@@ -240,6 +240,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclaration (JNIEnv *en
      astJavaScopeStack.push_front(functionDefinition->get_body());
      ROSE_ASSERT(astJavaScopeStack.front()->get_parent() != NULL);
 
+  // Since this is a constructor, set is explicitly as such.
+     functionDeclaration->get_specialFunctionModifier().setConstructor();
+
      outputJavaState("At BOTTOM of cactionConstructorDeclaration");
    }
 
@@ -341,7 +344,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionExplicitConstructorCallEnd (JNIEnv
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclaration (JNIEnv *env, jobject xxx, jstring java_string)
+// JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclaration (JNIEnv *env, jobject xxx, jstring java_string)
+// JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclaration (JNIEnv *env, jobject xxx, jstring java_string, jboolean java_is_abstract)
+JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclaration (JNIEnv *env, jobject xxx, jstring java_string, jboolean java_is_abstract, jboolean java_is_native, jboolean java_is_static, jboolean java_is_final)
    {
      if (SgProject::get_verbose() > 0)
           printf ("Build a SgMemberFunctionDeclaration \n");
@@ -349,6 +354,11 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclaration (JNIEnv *env, jo
      outputJavaState("At TOP of cactionMethodDeclaration");
 
      SgName name = convertJavaStringToCxxString(env,java_string);
+
+     bool isAbstract = java_is_abstract;
+     bool isNative   = java_is_native;
+     bool isStatic   = java_is_static;
+     bool isFinal    = java_is_final;
 
      SgClassDefinition* classDefinition = isSgClassDefinition(astJavaScopeStack.front());
      ROSE_ASSERT(classDefinition != NULL);
@@ -369,6 +379,22 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclaration (JNIEnv *env, jo
      ROSE_ASSERT(functionDefinition->get_body() != NULL);
      astJavaScopeStack.push_front(functionDefinition->get_body());
      ROSE_ASSERT(astJavaScopeStack.front()->get_parent() != NULL);
+
+  // Set the Java specific modifiers
+     if (isAbstract == true)
+          functionDeclaration->get_declarationModifier().setJavaAbstract();
+
+  // Set the Java specific modifiers
+     if (isNative == true)
+          functionDeclaration->get_functionModifier().setJavaNative();
+
+  // Set the specific modifier, this modifier is common to C/C++.
+     if (isStatic == true)
+          functionDeclaration->get_declarationModifier().get_storageModifier().setStatic();
+
+  // Set the modifier (shared between PHP and Java).
+     if (isFinal == true)
+          functionDeclaration->get_declarationModifier().setFinal();
 
      outputJavaState("At BOTTOM of cactionMethodDeclaration");
    }
@@ -2228,7 +2254,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionLabeledStatement(JNIEnv *env, jobj
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionLocalDeclaration(JNIEnv *env, jobject xxx, jstring variableName)
+// JNIEXPORT void JNICALL Java_JavaParser_cactionLocalDeclaration(JNIEnv *env, jobject xxx, jstring variableName)
+JNIEXPORT void JNICALL Java_JavaParser_cactionLocalDeclaration(JNIEnv *env, jobject xxx, jstring variableName, jboolean java_is_final)
    {
      if (SgProject::get_verbose() > 0)
           printf ("Inside of Java_JavaParser_cactionLocalDeclaration() \n");
@@ -2236,6 +2263,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionLocalDeclaration(JNIEnv *env, jobj
      outputJavaState("At TOP of cactionLocalDeclaration");
 
      SgName name = convertJavaStringToCxxString(env,variableName);
+
+     bool isFinal = java_is_final;
 
      printf ("Building a variable declaration for name = %s \n",name.str());
 
@@ -2258,6 +2287,10 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionLocalDeclaration(JNIEnv *env, jobj
   // We don't want to add the statement to the current scope until it is finished being built.
   // ROSE_ASSERT(astJavaScopeStack.empty() == false);
   // astJavaScopeStack.front()->append_statement(variableDeclaration);
+
+  // Set the modifiers (shared between PHP and Java)
+     if (isFinal == true)
+          variableDeclaration->get_declarationModifier().setFinal();
 
      if (SgProject::get_verbose() > 0)
           variableDeclaration->get_file_info()->display("source position in Java_JavaParser_cactionLocalDeclaration(): debug");
