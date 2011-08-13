@@ -430,6 +430,10 @@ HEADER_CV_TYPE_MODIFIER_START
                e_default,      /*!< Default value (default) */
                e_const,        /*!< Const qualifier */
                e_volatile,     /*!< Volatile qualifier */
+
+            // DQ (8/11/2011): Added support for Java "transient" modifier.
+               e_java_transient,    /*!< Java transient qualifier (specifies no serialization of declaration) */
+
                e_last_modifier /*!< last value (unused, serves as upper bound on values) */
              };
 
@@ -461,10 +465,15 @@ HEADER_CV_TYPE_MODIFIER_START
        // DQ (3/21/2005): See comment for unsetConst() above
           void unsetVolatile();
 
+       // DQ (8/11/2011): Java support.
+          bool isJavaTransient() const;
+          void setJavaTransient();
+          void unsetJavaTransient();
+
           std::string displayString() const;
           void display ( std::string label ) const;
           friend std::ostream & operator<< ( std::ostream & os, const SgConstVolatileModifier & m );
-		  friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
+          friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 
        // DQ (2/4/2006): Added mechamism to clear all bits
           void reset();
@@ -722,17 +731,20 @@ HEADER_FUNCTION_MODIFIER_START
                e_gnu_attribute__weakref__                = 24,/*!< GNU specific attribute for (GNU extension) */
                
             // TV (04/08/2010): Support for CUDA functions modifiers
-             
-               e_cuda_device				 = 25, /*!< CUDA device function */
-               e_cuda_kernel				 = 26, /*!< CUDA kernel */
-               e_cuda_host				 = 27, /*!< CUDA host function */
+               e_cuda_device                 = 25, /*!< CUDA device function */
+               e_cuda_kernel                 = 26, /*!< CUDA kernel */
+               e_cuda_host                   = 27, /*!< CUDA host function */
                
-            // TV (05/03/2010): Support for OpenCL functions modifiers
-             
-               e_opencl_kernel				 = 28, /*!< OpenCL kernel */
-               e_opencl_vec_type_hint			 = 29, /*!< OpenCL */
-               e_opencl_work_group_size_hint		 = 30, /*!< OpenCL */
-               e_opencl_work_group_size_req		 = 31, /*!< OpenCL */
+            // TV (05/03/2010): Support for OpenCL functions modifiers             
+               e_opencl_kernel				   = 28, /*!< OpenCL kernel */
+               e_opencl_vec_type_hint			= 29, /*!< OpenCL */
+               e_opencl_work_group_size_hint	= 30, /*!< OpenCL */
+               e_opencl_work_group_size_req	= 31, /*!< OpenCL */
+
+            // DQ (8/11/2011): Added support for Java specific function modifiers.
+               e_java_native                 = 32, /*!< Java native keyword used for JNI function specification */
+               e_java_synchronized           = 33, /*!< Java synchronized keyword used to only allow one thread at a time into a particular section of code */
+               e_java_strictfp               = 34, /*!< Java strictfp keyword used to specify strict floating point evaluation by JVM */
 
                e_last_modifier     /*!< last value (upper bound on range of values, used in error checking) */
              };
@@ -888,6 +900,20 @@ HEADER_FUNCTION_MODIFIER_START
           void setOpenclWorkGroupSizeReq();
           void unsetOpenclWorkGroupSizeReq();
 
+
+       // DQ (8/11/2011): Added support for Java specific function modifiers.
+          bool isJavaNative() const;
+          void setJavaNative();
+          void unsetJavaNative();
+
+          bool isJavaSynchronized() const;
+          void setJavaSynchronized();
+          void unsetJavaSynchronized();
+
+          bool isJavaStrictfp() const;
+          void setJavaStrictfp();
+          void unsetJavaStrictfp();
+
           std::string displayString() const;
           void display ( std::string label ) const;
           friend std::ostream & operator<< ( std::ostream & os, const SgFunctionModifier & m );
@@ -1036,15 +1062,19 @@ HEADER_DECLARATION_MODIFIER_START
           enum declaration_modifier_enum
              {
             // Bit values can support multiple values in a single enum type
-               e_unknown = 0,  /*!< Unknown value (error) */
-               e_default = 1,  /*!< Default value */
-               e_friend  = 2,  /*!< Friend qualifier */
-               e_typedef = 3,  /*!< Typedef qualifier (not clear if this is used, I don't think typedef is a modifier) */
-               e_export  = 4,  /*!< Export qualifier */
-               e_throw   = 5,  /*!< Exception handling support (throw) */
-               e_bind    = 6,  /*!< Fortran bind attribute for declarations (functions, variable, and classes) */
-               e_final   = 7,  /*!< PHP support for specification to not be extended (should be useful for Java, if required in the future) */
-               e_last_modifier /*!< last modifier value (upper bound on range of values, used in error checking) */
+               e_unknown       = 0,  /*!< Unknown value (error) */
+               e_default       = 1,  /*!< Default value */
+               e_friend        = 2,  /*!< Friend qualifier */
+               e_typedef       = 3,  /*!< Typedef qualifier (not clear if this is used, I don't think typedef is a modifier) */
+               e_export        = 4,  /*!< Export qualifier */
+               e_throw         = 5,  /*!< Exception handling support (throw) */
+               e_bind          = 6,  /*!< Fortran bind attribute for declarations (functions, variable, and classes) */
+               e_final         = 7,  /*!< PHP support for specification to not be extended (should be useful for Java, if required in the future) */
+
+            // DQ (8/11/2011): Added support for Java "abstract" declaration modifier.
+               e_java_abstract = 8,  /*!< abstract keyword for Java functions, classes and interfaces */
+
+               e_last_modifier       /*!< last modifier value (upper bound on range of values, used in error checking) */
              };
 
       /*! \brief GNU attribute for visability (only one value can be specified)
@@ -1110,10 +1140,15 @@ HEADER_DECLARATION_MODIFIER_START
           void setBind();
           void unsetBind();
 
-       // PHP specific attribute
+       // PHP and Java specific attribute
           bool isFinal() const;
           void setFinal();
           void unsetFinal();
+
+       // DQ (8/11/2011): Added Java specific "abstract" attribute.
+          bool isJavaAbstract() const;
+          void setJavaAbstract();
+          void unsetJavaAbstract();
 
           std::string displayString() const;
           void display ( std::string label ) const;
@@ -1964,14 +1999,20 @@ bool $CLASSNAME::isVolatile() const { return p_modifier == e_volatile; }
 void $CLASSNAME::setVolatile()      { p_modifier = e_volatile; }
 void $CLASSNAME::unsetVolatile()    { setDefault(); }
 
+// DQ (8/11/2011): Added support for Java "transient" keyword to disable serialization.
+bool $CLASSNAME::isJavaTransient() const { return p_modifier == e_java_transient; }
+void $CLASSNAME::setJavaTransient()      { p_modifier = e_java_transient; }
+void $CLASSNAME::unsetJavaTransient()    { setDefault(); }
+
 string
 $CLASSNAME::displayString() const
    {
      std::string s = "$CLASSNAME(";
-     s += std::string("isUnknown() = ")  + std::string(isUnknown()  ? "true " : "false ");
-     s += std::string("isDefault() = ")  + std::string(isDefault()  ? "true " : "false ");
-     s += std::string("isConst() = ")    + std::string(isConst()    ? "true " : "false ");
-     s += std::string("isVolatile() = ") + std::string(isVolatile() ? "true"  : "false");
+     s += std::string("isUnknown() = ")       + std::string(isUnknown()  ? "true " : "false ");
+     s += std::string("isDefault() = ")       + std::string(isDefault()  ? "true " : "false ");
+     s += std::string("isConst() = ")         + std::string(isConst()    ? "true " : "false ");
+     s += std::string("isVolatile() = ")      + std::string(isVolatile() ? "true"  : "false");
+     s += std::string("isJavaTransient() = ") + std::string(isJavaTransient() ? "true"  : "false");
      s += ")";
      return s;
    }
@@ -2409,7 +2450,6 @@ void SgFunctionModifier::setGnuAttributeWeakReference()      { setBit(e_gnu_attr
 void SgFunctionModifier::unsetGnuAttributeWeakReference()    { unsetBit(e_gnu_attribute__weakref__,p_modifierVector); }
 
 // TV (04/08/2010): Support for CUDA functions modifiers
-
 bool SgFunctionModifier::isCudaDevice() const { return checkBit(e_cuda_device,p_modifierVector); }
 void SgFunctionModifier::setCudaDevice()      { setBit(e_cuda_device,p_modifierVector); }
 void SgFunctionModifier::unsetCudaDevice()    { unsetBit(e_cuda_device,p_modifierVector); }
@@ -2422,8 +2462,7 @@ bool SgFunctionModifier::isCudaHost() const { return checkBit(e_cuda_host,p_modi
 void SgFunctionModifier::setCudaHost()      { setBit(e_cuda_host,p_modifierVector); }
 void SgFunctionModifier::unsetCudaHost()    { unsetBit(e_cuda_host,p_modifierVector); }
 
-// TV (05/03/2010): Support for OpenCL functions modifiers
-       
+// TV (05/03/2010): Support for OpenCL functions modifiers       
 bool SgFunctionModifier::isOpenclKernel() const { return checkBit(e_opencl_kernel, p_modifierVector); }
 void SgFunctionModifier::setOpenclKernel()      { setBit(e_opencl_kernel, p_modifierVector); }
 void SgFunctionModifier::unsetOpenclKernel()    { unsetBit(e_opencl_kernel, p_modifierVector); }
@@ -2440,19 +2479,36 @@ bool SgFunctionModifier::hasOpenclWorkGroupSizeReq() const { return checkBit(e_o
 void SgFunctionModifier::setOpenclWorkGroupSizeReq()       { setBit(e_opencl_work_group_size_req,p_modifierVector);}
 void SgFunctionModifier::unsetOpenclWorkGroupSizeReq()     { unsetBit(e_opencl_work_group_size_req, p_modifierVector); }
 
+// DQ (8/11/2011): Added support for Java specific function modifiers.
+bool SgFunctionModifier::isJavaNative() const { return checkBit(e_java_native, p_modifierVector); }
+void SgFunctionModifier::setJavaNative()      { setBit(e_java_native, p_modifierVector); }
+void SgFunctionModifier::unsetJavaNative()    { unsetBit(e_java_native, p_modifierVector); }
+
+// DQ (8/11/2011): Added support for Java specific function modifiers.
+bool SgFunctionModifier::isJavaSynchronized() const { return checkBit(e_java_synchronized, p_modifierVector); }
+void SgFunctionModifier::setJavaSynchronized()      { setBit(e_java_synchronized, p_modifierVector); }
+void SgFunctionModifier::unsetJavaSynchronized()    { unsetBit(e_java_synchronized, p_modifierVector); }
+
+// DQ (8/11/2011): Added support for Java specific function modifiers.
+bool SgFunctionModifier::isJavaStrictfp() const { return checkBit(e_java_strictfp, p_modifierVector); }
+void SgFunctionModifier::setJavaStrictfp()      { setBit(e_java_strictfp, p_modifierVector); }
+void SgFunctionModifier::unsetJavaStrictfp()    { unsetBit(e_java_strictfp, p_modifierVector); }
 
 string
 SgFunctionModifier::displayString() const
    {
      std::string s = "SgFunctionModifier(";
-     s += std::string("isUnknown() = ")     + std::string(isUnknown()     ? "true " : "false ");
-     s += std::string("isDefault() = ")     + std::string(isDefault()     ? "true " : "false ");
-     s += std::string("isInline() = ")      + std::string(isInline()      ? "true " : "false ");
-     s += std::string("isVirtual() = ")     + std::string(isVirtual()     ? "true " : "false ");
-     s += std::string("isPureVirtual() = ") + std::string(isPureVirtual() ? "true " : "false ");
-     s += std::string("isExplicit() = ")    + std::string(isExplicit()    ? "true"  : "false");
-  // s += std::string("isBind() = ")        + std::string(isBind()        ? "true " : "false ");
-     s += std::string("isPure() = ")        + std::string(isPure()        ? "true " : "false ");
+     s += std::string("isUnknown() = ")          + std::string(isUnknown()          ? "true " : "false ");
+     s += std::string("isDefault() = ")          + std::string(isDefault()          ? "true " : "false ");
+     s += std::string("isInline() = ")           + std::string(isInline()           ? "true " : "false ");
+     s += std::string("isVirtual() = ")          + std::string(isVirtual()          ? "true " : "false ");
+     s += std::string("isPureVirtual() = ")      + std::string(isPureVirtual()      ? "true " : "false ");
+     s += std::string("isExplicit() = ")         + std::string(isExplicit()         ? "true"  : "false");
+  // s += std::string("isBind() = ")             + std::string(isBind()             ? "true " : "false ");
+     s += std::string("isPure() = ")             + std::string(isPure()             ? "true " : "false ");
+     s += std::string("isJavaNative() = ")       + std::string(isJavaNative()       ? "true " : "false ");
+     s += std::string("isJavaSynchronized() = ") + std::string(isJavaSynchronized() ? "true " : "false ");
+     s += std::string("isJavaStrictfp() = ")     + std::string(isJavaStrictfp()     ? "true " : "false ");
      s += ")";
      return s;
    }
@@ -2519,6 +2575,9 @@ bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
 	       (lhs.hasOpenclVecTypeHint()       == rhs.hasOpenclVecTypeHint()      ) &&
 	       (lhs.hasOpenclWorkGroupSizeHint() == rhs.hasOpenclWorkGroupSizeHint()) &&
 	       (lhs.hasOpenclWorkGroupSizeReq()  == rhs.hasOpenclWorkGroupSizeReq() ) &&
+	       (lhs.isJavaNative()               == rhs.isJavaNative()              ) &&
+	       (lhs.isJavaSynchronized()         == rhs.isJavaSynchronized()        ) &&
+	       (lhs.isJavaStrictfp()             == rhs.isJavaStrictfp()            ) &&
 		   true;
 }
 
@@ -2533,6 +2592,10 @@ void SgFunctionModifier::reset()
      unsetExplicit();
   // unsetBind();
      unsetPure();
+
+     unsetJavaNative();
+     unsetJavaSynchronized();
+     unsetJavaStrictfp();
 
   // Set this bit to indicate the default value (we want a value of all zero bits to be an error)
      setDefault();
@@ -2793,19 +2856,26 @@ bool SgDeclarationModifier::isFinal() const { return checkBit(e_final,p_modifier
 void SgDeclarationModifier::setFinal()      { setBit(e_final,p_modifierVector); }
 void SgDeclarationModifier::unsetFinal()    { unsetBit(e_final,p_modifierVector); }
 
+// DQ (8/11/2011): Added support for Java "abstract" declaration modifier.
+bool SgDeclarationModifier::isJavaAbstract() const { return checkBit(e_java_abstract,p_modifierVector); }
+void SgDeclarationModifier::setJavaAbstract()      { setBit(e_java_abstract,p_modifierVector); }
+void SgDeclarationModifier::unsetJavaAbstract()    { unsetBit(e_java_abstract,p_modifierVector); }
+
+
 string
 SgDeclarationModifier::displayString() const
    {
      std::string s = "SgDeclarationModifier(";
-     s += std::string("isUnknown() = ") + std::string(isUnknown() ? "true " : "false ");
-     s += std::string("isDefault() = ") + std::string(isDefault() ? "true " : "false ");
-     s += std::string("isFriend() = ")  + std::string(isFriend()  ? "true " : "false ");
-     s += std::string("isTypedef() = ") + std::string(isTypedef() ? "true " : "false ");
-     s += std::string("isExport() = ")  + std::string(isExport()  ? "true " : "false ");
-     s += std::string("isThrow() = ")   + std::string(isThrow()   ? "true " : "false ");
-     s += std::string("isBind() = ")    + std::string(isBind()    ? "true " : "false ");
-     s += std::string("isFinal() = ")   + std::string(isFinal()   ? "true " : "false ");
-     s += std::string("\n     ") + get_typeModifier().displayString() + " ";
+     s += std::string("isUnknown() = ")      + std::string(isUnknown()      ? "true " : "false ");
+     s += std::string("isDefault() = ")      + std::string(isDefault()      ? "true " : "false ");
+     s += std::string("isFriend() = ")       + std::string(isFriend()       ? "true " : "false ");
+     s += std::string("isTypedef() = ")      + std::string(isTypedef()      ? "true " : "false ");
+     s += std::string("isExport() = ")       + std::string(isExport()       ? "true " : "false ");
+     s += std::string("isThrow() = ")        + std::string(isThrow()        ? "true " : "false ");
+     s += std::string("isBind() = ")         + std::string(isBind()         ? "true " : "false ");
+     s += std::string("isFinal() = ")        + std::string(isFinal()        ? "true " : "false ");
+     s += std::string("isJavaAbstract() = ") + std::string(isJavaAbstract() ? "true " : "false ");
+     s += std::string("\n     ") + get_typeModifier().displayString()   + " ";
      s += std::string("\n     ") + get_accessModifier().displayString() + " ";
      s += std::string("\n     ") + get_storageModifier().displayString();
      s += ")";
@@ -2826,21 +2896,22 @@ std::ostream & operator<< ( std::ostream & os, const SgDeclarationModifier & m)
    }
 
 bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
-{
-	return
-		   (lhs.get_typeModifier()    == rhs.get_typeModifier()   ) &&
-		   (lhs.get_accessModifier()  == rhs.get_accessModifier() ) &&
-		   (lhs.get_storageModifier() == rhs.get_storageModifier()) &&
-	       (lhs.isUnknown() == rhs.isUnknown()) &&
-	       (lhs.isDefault() == rhs.isDefault()) &&
-	       (lhs.isFriend()  == rhs.isFriend() ) &&
-	       (lhs.isTypedef() == rhs.isTypedef()) &&
-	       (lhs.isExport()  == rhs.isExport() ) &&
-	       (lhs.isThrow()   == rhs.isThrow()  ) &&
-	       (lhs.isBind()    == rhs.isBind()   ) &&
-	       (lhs.isFinal()   == rhs.isFinal()  ) &&
-		   true;
-}
+   {
+     return
+          (lhs.get_typeModifier()    == rhs.get_typeModifier()   ) &&
+          (lhs.get_accessModifier()  == rhs.get_accessModifier() ) &&
+          (lhs.get_storageModifier() == rhs.get_storageModifier()) &&
+	       (lhs.isUnknown()           == rhs.isUnknown()) &&
+	       (lhs.isDefault()           == rhs.isDefault()) &&
+	       (lhs.isFriend()            == rhs.isFriend() ) &&
+	       (lhs.isTypedef()           == rhs.isTypedef()) &&
+	       (lhs.isExport()            == rhs.isExport() ) &&
+	       (lhs.isThrow()             == rhs.isThrow()  ) &&
+	       (lhs.isBind()              == rhs.isBind()   ) &&
+	       (lhs.isFinal()             == rhs.isFinal()  ) &&
+	       (lhs.isJavaAbstract()      == rhs.isJavaAbstract() ) &&
+          true;
+   }
 
 SgTypeModifier &
 SgDeclarationModifier::get_typeModifier ()
