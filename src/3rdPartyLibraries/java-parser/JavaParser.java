@@ -59,7 +59,7 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionConstructorDeclarationEnd(int java_numberOfStatements);
      public native void cactionExplicitConstructorCall(String filename);
      public native void cactionExplicitConstructorCallEnd(String filename);
-     public native void cactionMethodDeclaration(String filename);
+     public native void cactionMethodDeclaration(String filename, boolean java_is_abstract, boolean java_is_native, boolean java_is_static, boolean java_is_final);
      public native void cactionSingleTypeReference(String filename);
      public native void cactionArgument(String argumentName, int modifiers);
      public native void cactionArrayTypeReference(String filename);
@@ -153,7 +153,7 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionJavadocSingleTypeReference();
      public native void cactionJavadocSingleTypeReferenceClassScope();
      public native void cactionLabeledStatement();
-     public native void cactionLocalDeclaration(String variableName);
+     public native void cactionLocalDeclaration(String variableName, boolean java_is_final);
      public native void cactionLocalDeclarationInitialization();
      public native void cactionLongLiteral();
      public native void cactionMarkerAnnotation();
