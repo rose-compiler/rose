@@ -183,7 +183,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclaration (JNIEnv *env, jobj
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclarationEnd (JNIEnv *env, jobject xxx, jstring java_string)
+JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclarationEnd (JNIEnv *env, jobject xxx, jstring java_string, jint java_numberOfStatements)
    {
      if (SgProject::get_verbose() > 0)
           printf ("Build a SgClassDeclaration (cactionTypeDeclarationEnd) \n");
@@ -194,7 +194,15 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclarationEnd (JNIEnv *env, j
      if (SgProject::get_verbose() > 0)
           printf ("Build class type: name = %s \n",name.str());
 
-     outputJavaState("At TOP of cactionTypeDeclaration");
+     outputJavaState("At TOP of cactionTypeDeclarationEnd");
+
+  // DQ (8/13/2011): Add more precise handling of the statement stack.
+     int numberOfStatements = java_numberOfStatements;
+
+     if (SgProject::get_verbose() > 0)
+          printf ("numberOfStatements = %d astJavaStatementStack.size() = %zu \n",numberOfStatements,astJavaStatementStack.size());
+
+     appendStatementStack(numberOfStatements);
 
      if (SgProject::get_verbose() > 0)
           printf ("We might have to be popping off the existing scope for class type: name = %s \n",name.str());
@@ -204,24 +212,24 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclarationEnd (JNIEnv *env, j
      ROSE_ASSERT(astJavaScopeStack.front() != NULL);
 
      if (SgProject::get_verbose() > 0)
-          astJavaScopeStack.front()->get_file_info()->display("source position in Java_JavaParser_cactionTypeDeclaration(): debug");
+          astJavaScopeStack.front()->get_file_info()->display("source position in Java_JavaParser_cactionTypeDeclarationEnd(): debug");
 
      outputJavaState("At BOTTOM of cactionTypeDeclaration");
 
      if (SgProject::get_verbose() > 0)
-          printf ("Leaving Java_JavaParser_cactionTypeDeclaration() (cactionTypeDeclarationEnd) \n");
+          printf ("Leaving Java_JavaParser_cactionTypeDeclarationEnd() (cactionTypeDeclarationEnd) \n");
    }
 
 
-
-JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclaration (JNIEnv *env, jobject xxx, jstring java_string)
+JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclaration (JNIEnv *env, jobject xxx, jstring java_string, jboolean java_is_native)
    {
      if (SgProject::get_verbose() > 0)
           printf ("Build a SgMemberFunctionDeclaration (constructor) \n");
 
      outputJavaState("At TOP of cactionConstructorDeclaration");
 
-     SgName name = convertJavaStringToCxxString(env,java_string);
+     SgName name   = convertJavaStringToCxxString(env,java_string);
+     bool isNative = java_is_native;
 
      SgClassDefinition* classDefinition = isSgClassDefinition(astJavaScopeStack.front());
      ROSE_ASSERT(classDefinition != NULL);
@@ -240,8 +248,12 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclaration (JNIEnv *en
      astJavaScopeStack.push_front(functionDefinition->get_body());
      ROSE_ASSERT(astJavaScopeStack.front()->get_parent() != NULL);
 
-  // Since this is a constructor, set is explicitly as such.
+  // Since this is a constructor, set it explicitly as such.
      functionDeclaration->get_specialFunctionModifier().setConstructor();
+
+  // Set the Java specific modifiers
+     if (isNative == true)
+          functionDeclaration->get_functionModifier().setJavaNative();
 
      outputJavaState("At BOTTOM of cactionConstructorDeclaration");
    }
@@ -1747,18 +1759,152 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionFalseLiteral(JNIEnv *env, jobject 
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionFieldDeclaration(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionFieldDeclaration(JNIEnv *env, jobject xxx, jstring variableName, jboolean java_hasInitializer,
+     jboolean java_is_final, jboolean java_is_private, jboolean java_is_protected, jboolean java_is_public, 
+     jboolean java_is_volatile, jboolean java_is_synthetic, jboolean java_is_static, jboolean java_is_transient)
    {
+     if (SgProject::get_verbose() > 2)
+          printf ("Inside of Java_JavaParser_cactionFieldDeclaration() \n");
+
+     outputJavaState("At TOP of cactionFieldDeclaration");
+
+     SgName name = convertJavaStringToCxxString(env,variableName);
+
+  // I think we need this in the endVisit() function (and not here).
+     bool hasInitializer = java_hasInitializer;
+
+     if (SgProject::get_verbose() > 2)
+          printf ("hasInitializer = %s (but not used except in bottom up processing) \n",hasInitializer ? "true" : "false");
+
+     bool isFinal     = java_is_final;
+     bool isPrivate   = java_is_private;
+     bool isProtected = java_is_protected;
+     bool isPublic    = java_is_public;
+     bool isVolatile  = java_is_volatile;
+     bool isSynthetic = java_is_synthetic;
+     bool isStatic    = java_is_static;
+     bool isTransient = java_is_transient;
+
+     if (SgProject::get_verbose() > 2)
+          printf ("Building a variable declaration for name = %s \n",name.str());
+
+  // Note that the type shuld have already been built and should be on the astJavaTypeStack.
+     SgVariableDeclaration* variableDeclaration = buildSimpleVariableDeclaration(name);
+     ROSE_ASSERT(variableDeclaration != NULL);
+
+  // DQ (8/13/2011): Added test for scope
+     ROSE_ASSERT(variableDeclaration->get_scope() != NULL);
+
+  // DQ (8/13/2011): This is a test to debug failing test in resetParentPointers.C:1733
+     ROSE_ASSERT(SageInterface::is_Fortran_language() == false);
+     SgInitializedName* initializedName = variableDeclaration->get_decl_item(name);
+     ROSE_ASSERT(initializedName != NULL);
+     ROSE_ASSERT(initializedName->get_scope() != NULL);
+
+  // Save it on the stack so that we can add SgInitializedNames to it.
+     astJavaStatementStack.push_front(variableDeclaration);
+
+  // Set the modifiers (shared between PHP and Java)
+     if (isFinal == true)
+          variableDeclaration->get_declarationModifier().setFinal();
+
+  // DQ (8/13/2011): Added modifier support.
+     if (isPrivate == true)
+        {
+          if (SgProject::get_verbose() > 2)
+               printf ("Setting modifier as Private \n");
+          variableDeclaration->get_declarationModifier().get_accessModifier().setPrivate();
+        }
+
+     if (isProtected == true)
+        {
+          if (SgProject::get_verbose() > 2)
+               printf ("Setting modifier as Protected \n");
+          variableDeclaration->get_declarationModifier().get_accessModifier().setProtected();
+        }
+
+     if (isPublic == true)
+        {
+          if (SgProject::get_verbose() > 2)
+               printf ("Setting modifier as Public \n");
+          variableDeclaration->get_declarationModifier().get_accessModifier().setPublic();
+        }
+
+     if (isVolatile == true)
+        {
+          if (SgProject::get_verbose() > 2)
+               printf ("Setting modifier as Volatile \n");
+          variableDeclaration->get_declarationModifier().get_typeModifier().get_constVolatileModifier().setVolatile();
+        }
+
+     if (isSynthetic == true)
+        {
+       // Synthetic is not a keyword, not clear if we want to record this explicitly.
+          printf ("Specification of isSynthetic is not supported in the IR (should it be?) \n");
+        }
+
+     if (isStatic == true)
+        {
+          if (SgProject::get_verbose() > 2)
+               printf ("Setting modifier as Static \n");
+          variableDeclaration->get_declarationModifier().get_storageModifier().setStatic();
+        }
+
+     if (isTransient == true)
+        {
+          if (SgProject::get_verbose() > 2)
+               printf ("Setting modifier as Transient \n");
+          variableDeclaration->get_declarationModifier().get_typeModifier().get_constVolatileModifier().setJavaTransient();
+        }
+
+     if (SgProject::get_verbose() > 0)
+          variableDeclaration->get_file_info()->display("source position in Java_JavaParser_cactionFieldDeclaration(): debug");
+   }
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionFieldDeclarationEnd(JNIEnv *env, jobject xxx, jstring variableName, jboolean java_hasInitializer )
+   {
+  // DQ (8/13/2011): The initializer has to be set in the endVisit() function.
+
+     SgName name = convertJavaStringToCxxString(env,variableName);
+     bool hasInitializer = java_hasInitializer;
+
+     ROSE_ASSERT(astJavaStatementStack.empty() == false);
+     SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(astJavaStatementStack.front());
+     ROSE_ASSERT(variableDeclaration != NULL);
+
+     SgInitializedName* initializedName = variableDeclaration->get_decl_item(name);
+     ROSE_ASSERT(initializedName != NULL);
+
+     if (hasInitializer == true)
+        {
+          ROSE_ASSERT(astJavaExpressionStack.empty() == false);
+          SgExpression* expr = astJavaExpressionStack.front();
+
+       // Must wrap this has an initializer.
+          SgInitializer* initializer = SageBuilder::buildAssignInitializer(expr);
+          ROSE_ASSERT(initializer != NULL);
+
+          initializedName->set_initptr(initializer);
+
+          expr->set_parent(initializedName);
+
+          astJavaExpressionStack.pop_front();
+        }
    }
 
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionFieldReference(JNIEnv *env, jobject xxx)
    {
+     if (SgProject::get_verbose() > 2)
+          printf ("Inside of Java_JavaParser_cactionFieldReference() \n");
    }
 
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionFieldReferenceClassScope(JNIEnv *env, jobject xxx)
    {
+     if (SgProject::get_verbose() > 2)
+          printf ("Inside of Java_JavaParser_cactionFieldReferenceClassScope() \n");
    }
 
 

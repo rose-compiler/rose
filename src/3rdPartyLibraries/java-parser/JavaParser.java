@@ -52,10 +52,10 @@ class JavaParser  implements Callable<Boolean>
   // These are used in the ecjASTVisitor (which is derived from the ECJ ASTVisitor class).
      public native void cactionCompilationUnitDeclaration(String filename);
      public native void cactionTypeDeclaration(String filename);
-     public native void cactionTypeDeclarationEnd(String filename);
+     public native void cactionTypeDeclarationEnd(String filename,int java_numberOfStatements);
 
   // Need to change the names of the function parameters (should not all be "filename").
-     public native void cactionConstructorDeclaration(String filename);
+     public native void cactionConstructorDeclaration(String filename, boolean java_is_native);
      public native void cactionConstructorDeclarationEnd(int java_numberOfStatements);
      public native void cactionExplicitConstructorCall(String filename);
      public native void cactionExplicitConstructorCallEnd(String filename);
@@ -108,7 +108,8 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionEqualExpressionEnd(int java_operator_kind);
      public native void cactionExtendedStringLiteral();
      public native void cactionFalseLiteral();
-     public native void cactionFieldDeclaration();
+     public native void cactionFieldDeclaration(String variableName, boolean java_hasInitializer, boolean java_is_final, boolean java_is_private, boolean java_is_protected, boolean java_is_public, boolean java_is_volatile, boolean java_is_synthetic, boolean java_is_static, boolean java_is_transient);
+     public native void cactionFieldDeclarationEnd(String variableName, boolean java_hasInitializer);
      public native void cactionFieldReference();
      public native void cactionFieldReferenceClassScope();
      public native void cactionFloatLiteral();
