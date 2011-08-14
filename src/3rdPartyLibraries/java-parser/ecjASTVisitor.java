@@ -37,10 +37,42 @@ class ecjASTVisitor extends ASTVisitor
 
      final JavaParser java_parser;
 
-     ecjASTVisitor (JavaParser x)
+     private final JavaSourcePositionInformationFactory posFactory;
+
+  // This is the older version oc the constructor, before Vincent's work
+  // to support the source code position.
+  /* ecjASTVisitor (JavaParser x)
         {
           java_parser = x;
         }
+  */
+
+  // *************************************************
+  // Support for source code position (from Vincent).
+  // *************************************************
+     public ecjASTVisitor(JavaParser javaParser, CompilationUnitDeclaration unit) {
+        this.java_parser = javaParser;
+        this.posFactory = new JavaSourcePositionInformationFactory(unit);
+     }
+     
+     public JavaToken createJavaToken(ASTNode node) {
+    	 JavaSourcePositionInformation pos = getPosInfoFactory().createPosInfo(node);
+    	 // For now we return dummy text
+    	 return new JavaToken("Dummy JavaToken (see createJavaToken)", pos);
+     }
+
+     public JavaToken createJavaToken(AbstractMethodDeclaration node) {
+    	 System.out.println("Create JAVA TOKEN FOR METHOD BODY"); 
+    	 JavaSourcePositionInformation pos = getPosInfoFactory().createPosInfo(node);
+    	 // For now we return dummy text
+    	 return new JavaToken("Dummy JavaToken (see createJavaToken)", pos);
+     }
+
+     protected JavaSourcePositionInformationFactory getPosInfoFactory() {
+         return this.posFactory;
+     }
+
+  // *************************************************
 
   // visitor = new ASTVisitor()
      public boolean visit(AllocationExpression node,BlockScope scope)
@@ -908,20 +940,23 @@ class ecjASTVisitor extends ASTVisitor
           int    col_start  = 42;
           int    col_end    = 42;
 
-          System.out.println("Building a JavaToken("+text+","+line_start+","+col_start+")");
-          JavaToken token = new JavaToken(text,line_start,col_start);
-          System.out.println("DONE: Building a JavaToken("+text+","+line_start+","+col_start+")");
+       // DQ (8/14/2011): This code is inconsistant with the new design for source code position inforamtion support.
+       // System.out.println("Building a JavaToken("+text+","+line_start+","+col_start+")");
+       // JavaToken token = new JavaToken(text,line_start,col_start);
+       // System.out.println("DONE: Building a JavaToken("+text+","+line_start+","+col_start+")");
 
+       // DQ (8/14/2011): This code is inconsistant with the new design for source code position inforamtion support.
        // Use the newer source code position information (we can build it on the stack).
-          JavaSourcePositionInformation sourcePositionInfo = new JavaSourcePositionInformation(line_start,line_end,col_start,col_end);
-          java_parser.cactionSetSourcePosition(sourcePositionInfo);
+       // JavaSourcePositionInformation sourcePositionInfo = new JavaSourcePositionInformation(line_start,line_end,col_start,col_end);
+       // java_parser.cactionSetSourcePosition(sourcePositionInfo);
 
        // DQ (4/15/2011): I could not get the passing of a boolean to work, so I am just passing an integer.
           int containsWildcard_integer = containsWildcard ? 1 : 0;
-          java_parser.cactionImportReference(importReferenceWithoutWildcard,containsWildcard_integer);
+       // java_parser.cactionImportReference(importReferenceWithoutWildcard,containsWildcard_integer);
+          java_parser.cactionImportReference(importReferenceWithoutWildcard,containsWildcard_integer,this.createJavaToken(node));
 
        // Use the token to set the source code position for ROSE.
-          java_parser.cactionGenerateToken(token);
+       // java_parser.cactionGenerateToken(token);
 
 /*
        // I now do not think this is worth doing at this point.  Basically, we will treat the "import" statement
@@ -1048,7 +1083,8 @@ class ecjASTVisitor extends ASTVisitor
              System.out.println("Inside of visit (IntLiteral,BlockScope) value = " + node.toString());
 
        // java_parser.cactionIntLiteral();
-          java_parser.cactionIntLiteral(node.value);
+       // java_parser.cactionIntLiteral(node.value);
+          java_parser.cactionIntLiteral(node.constant.intValue(), this.createJavaToken(node));
 
           if (java_parser.verboseLevel > -1)
                System.out.println("Leaving visit (IntLiteral,BlockScope)");
