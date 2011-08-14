@@ -13,7 +13,7 @@ if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
   lib_LTLIBRARIES = libJavaTraversal.la
 endif
 
-noinst_LTLIBRARIES = libroseJava.la
+#noinst_LTLIBRARIES = libroseJava.la
 
 JavaTraversal.C: JavaTraversal.h
 
@@ -28,31 +28,27 @@ JavaTraversal.h:
 	cd ${top_builddir}/src/3rdPartyLibraries/java-parser; $(MAKE) extract_rose_required_ecj_source_files
 
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
- # libroseJava_la_SOURCES = JavaParserActionROSE.C java_support.C openJavaParser_main.C ecj.C
- # libroseJava_la_SOURCES = java_support.C openJavaParser_main.C ecj.C
-   libroseJava_la_SOURCES = java_support.C openJavaParser_main.C ecj.C
-
-if !ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
- # Handle case of Java language support specified and Fortran language support NOT specified.
-   libroseJava_la_SOURCES += $(srcdir)/../OpenFortranParser_SAGE_Connection/jserver.C
-endif
-
-else
- # Compile using a function that represents the API of the Open Fortran Parser
-   libroseJava_la_SOURCES = dummy_openJavaParser_main.C
-endif
-
-if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
- # libJavaTraversal_la_SOURCES = JavaTraversal.C 
-   libJavaTraversal_la_SOURCES = JavaParserActionROSE.C JavaTraversal.C token.C jni_token.C JavaSourceCodePosition.C jni_JavaSourceCodePosition.C
-
+   libJavaTraversal_la_SOURCES = JavaParserActionROSE.C JavaTraversal.C token.C jni_token.C jni_utils.C JavaSourceCodePosition.C jni_JavaSourceCodePosition.C java_support.C openJavaParser_main.C ecj.C VisitorContext.C
  # DQ (10/11/2010): Put any required header files here.
-   include_HEADERS = ecj.h java_support.h token.h jni_token.h JavaSourceCodePosition.h jni_JavaSourceCodePosition.h
+   include_HEADERS = ecj.h java_support.h token.h JavaSourceCodePosition.h jni_utils.h jni_token.h jni_JavaSourceCodePosition.h  VisitorContext.h
 
 # JavaParserActionROSE.C: $(ECJ_DIR)/token.h $(ECJ_DIR)/ActionEnums.h $(ECJ_DIR)/jni_token_funcs.h
 # JavaParserActionROSE.C:
 
 extract_rose_required_ecj_source_files:
 	cd ${top_builddir}/src/3rdPartyLibraries/java-parser; $(MAKE) extract_rose_required_ecj_source_files
+
+#libjavaEcj_la_SOURCES = openJavaParser_main.C ecj.C
+
+if !ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+ # Handle case of Java language support specified and Fortran language support NOT specified.
+ # libjavaEcj_la_SOURCES += $(srcdir)/../OpenFortranParser_SAGE_Connection/jserver.C
+ # This trick is not working when rose is configured with --with-java-only
+   libJavaTraversal_la_SOURCES += $(srcdir)/../OpenFortranParser_SAGE_Connection/jserver.C
+endif
+
+else
+ # Compile using a function that represents the API of the Open Fortran Parser
+   libJavaTraversal_la_SOURCES = dummy_openJavaParser_main.C
 endif
 

@@ -66,6 +66,7 @@ void generateDOTforMultipleFile ( const SgProject & project, std::string filenam
 // DQ (6/14/2007): Support for whole AST graphs output with attributes (types, symbols, all edges, etc.)
 // We define a default value for the maximum graph size (number of nodes).
 void generateAstGraph ( const SgProject* project, int maxSize = 2000, std::string filenameSuffix = "" );
+// void generateAstGraph ( const SgProject* project, int maxSize, std::string filenameSuffix = "", CustomMemoryPoolDOTGeneration::s_Filter_Flags* filter_flags = NULL)
 
 // output of EDG AST (useful for debugging connection to SAGE)
 //void pdfPrintAbstractSyntaxTreeEDG ( SgFile *file );

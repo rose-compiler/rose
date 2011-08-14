@@ -18,17 +18,20 @@
 
 // Support functions so that this file can be restricted to be just parser (AST traversal) rules.
 #include "java_support.h"
+#include "jni_utils.h"
+#include "VisitorContext.h"
+
 
 // DQ (4/16/2011): Support for JNI function for tokens (source code position).
 // #include "token.h"
-#include "jni_token.h"
-#include "jni_JavaSourceCodePosition.h"
+// #include "jni_token.h"
+// #include "jni_JavaSourceCodePosition.h"
 // #include "JavaSourceCodePosition.h"
 
 using namespace std;
 
 
-
+/*
 JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateToken(JNIEnv *env, jclass xxx, jobject java_token)
    {
      if (SgProject::get_verbose() > -1)
@@ -48,7 +51,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateToken(JNIEnv *env, jclass 
 
      outputJavaState("At BOTTOM of cactionGenerateToken");
    }
+*/
 
+/*
 JNIEXPORT void JNICALL Java_JavaParser_cactionSetSourcePosition(JNIEnv *env, jclass xxx, jobject java_source_postion)
    {
   // This function is called by the ECJ Java traversal and pushes a JavaSourceCodePosition object onto 
@@ -69,7 +74,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionSetSourcePosition(JNIEnv *env, jcl
      JavaSourceCodePosition* sourcePosition = convert_Java_SourcePosition(env,java_source_postion);
      ROSE_ASSERT(sourcePosition != NULL);
 
-     printf ("sourcePosition : line_start = %d line_end = %d col_start = %d col_end = %d \n",sourcePosition->getLineStart(),sourcePosition->getLineEnd(),sourcePosition->getColStart(),sourcePosition->getColEnd());
+    // printf ("sourcePosition : line_start = %d line_end = %d col_start = %d col_end = %d \n",sourcePosition->getLineStart(),sourcePosition->getLineEnd(),sourcePosition->getColStart(),sourcePosition->getColEnd());
 
   // Update the global source code position information. Or we could push it onto a stack...
   // The advantage of a stack is that we could always reference the top of the stack, and 
@@ -87,7 +92,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionSetSourcePosition(JNIEnv *env, jcl
 
      outputJavaState("At BOTTOM of cactionSetSourcePosition");
    }
-
+*/
 
 
 /*
@@ -2220,7 +2225,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionIfStatementEnd(JNIEnv *env, jobjec
 // JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jclass xxx, jstring java_string, jboolean java_containsWildcard)
 // JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jobject xxx, jstring java_string, jboolean java_containsWildcard)
 // JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jobject xxx, jstring java_string)
-JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jobject xxx, jstring java_string, jint java_containsWildcard)
+// JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jobject xxx, jstring java_string, jint java_containsWildcard)
+JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jobject thisObj, jstring java_string, jint java_containsWildcard, jobject jToken)
    {
   // This is the import statement.  The semantics is to include the named file and add its 
   // declarations to the global scope so that they can be referenced by the current file.
@@ -2296,7 +2302,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionInstanceOfExpressionEnd(JNIEnv *en
 
 
 // JNIEXPORT void JNICALL Java_JavaParser_cactionIntLiteral(JNIEnv *env, jobject xxx)
-JNIEXPORT void JNICALL Java_JavaParser_cactionIntLiteral(JNIEnv *env, jobject xxx, jint java_int_value)
+// JNIEXPORT void JNICALL Java_JavaParser_cactionIntLiteral(JNIEnv *env, jobject xxx, jint java_int_value)
+JNIEXPORT void JNICALL Java_JavaParser_cactionIntLiteral(JNIEnv *env, jobject xxx, jint java_int_value, jobject jToken)
    {
      if (SgProject::get_verbose() > 0)
           printf ("Build support for implicit class (end) \n");
@@ -2315,7 +2322,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionIntLiteral(JNIEnv *env, jobject xx
      ROSE_ASSERT(integerValue != NULL);
 
   // Set the source code position (default values for now).
-     setJavaSourcePosition(integerValue);
+  // setJavaSourcePosition(integerValue);
+     Token_t * token = create_token(env, jToken);
+     pushAndSetSourceCodePosition(token->getSourcecodePosition(), integerValue);
 
      astJavaExpressionStack.push_front(integerValue);
      ROSE_ASSERT(astJavaExpressionStack.empty() == false);

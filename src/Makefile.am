@@ -25,7 +25,9 @@ else
 endif
 
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
-   libroseJavaParserlibraries = frontend/ECJ_ROSE_Connection/libroseJava.la
+ # DQ (8/14/2011): Need this change to match Makefile changes in ECJ_ROSE_Connection/Makefile.am
+ # libroseJavaParserlibraries = frontend/ECJ_ROSE_Connection/libroseJava.la
+   libroseJavaParserlibraries = frontend/ECJ_ROSE_Connection/libJavaTraversal.la
 else
    libroseJavaParserlibraries =
 endif

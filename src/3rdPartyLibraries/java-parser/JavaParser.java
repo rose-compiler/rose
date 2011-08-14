@@ -52,6 +52,7 @@ class JavaParser  implements Callable<Boolean>
   // These are used in the ecjASTVisitor (which is derived from the ECJ ASTVisitor class).
      public native void cactionCompilationUnitDeclaration(String filename);
      public native void cactionTypeDeclaration(String filename);
+  // public native void cactionTypeDeclaration(String filename, JavaToken jToken);
      public native void cactionTypeDeclarationEnd(String filename,int java_numberOfStatements);
 
   // Need to change the names of the function parameters (should not all be "filename").
@@ -122,13 +123,15 @@ class JavaParser  implements Callable<Boolean>
   // DQ (4/16/2011): I can't seem to get Boolean values to pass through the JNI C++ interface (so I will use an integer since that works fine).
   // public native void cactionImportReference(String path);
   // public native void cactionImportReference(String path , Boolean inputContainsWildcard );
-     public native void cactionImportReference(String path , int java_ContainsWildcard );
+  // public native void cactionImportReference(String path , int java_ContainsWildcard );
+     public native void cactionImportReference(String path , int java_ContainsWildcard, JavaToken jToken);
 
      public native void cactionInitializer();
      public native void cactionInstanceOfExpression();
      public native void cactionInstanceOfExpressionEnd();
   // public native void cactionIntLiteral();
-     public native void cactionIntLiteral(int value);
+  // public native void cactionIntLiteral(int value);
+     public native void cactionIntLiteral(int value, JavaToken jToken);
      public native void cactionJavadoc();
      public native void cactionJavadocClassScope();
      public native void cactionJavadocAllocationExpression();
@@ -274,7 +277,9 @@ class JavaParser  implements Callable<Boolean>
 
             // Example of how to call the traversal using a better design that isolates out the traversal of the ECJ AST from the parser.
             // "final" is required because the traverse function requires the visitor to be final.
-               final ecjASTVisitor visitor = new ecjASTVisitor(this);
+            // final ecjASTVisitor visitor = new ecjASTVisitor(this);
+               ecjASTVisitor visitor = new ecjASTVisitor(this, unit);
+
                unit.traverse(visitor,unit.scope);
 
             // Experiment with error on Java side...catch on C++ side...
