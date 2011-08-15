@@ -15,6 +15,7 @@ namespace Backstroke
 
 //! Note that in this structure, if its type is "ControlDependence", only the member
 //! "key" is used, else only the member "varNames" is used.
+template <class CFGType>
 struct PDGEdge
 {
 	//typedef std::vector<SgInitializedName*> VarName;
@@ -29,7 +30,7 @@ struct PDGEdge
 	PDGEdgeType type;
 
 	//! A control dependence edge.
-	CDGEdge cdEdge;
+	CDGEdge<CFGType> cdEdge;
 
 	//! A data dependence edge.
 	DDGEdge ddEdge;
@@ -45,14 +46,17 @@ struct PDGEdge
 
 template <class CFGType>
 class PDG : public boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
-		typename CFGType::CFGNodePtr, PDGEdge>
+		typename CFGType::CFGNodePtr, PDGEdge<CFGType> >
 {
 public:
 	typedef typename CFGType::CFGNodeType CFGNodeType;
-	typedef typename CFGType::CFGNodePtr CFGNodePtr;
+	typedef typename CFGType::CFGNodePtr  CFGNodePtr;
+    
+    typedef typename CFGType::CFGNodePtr  PDGNodeType;
+    typedef PDGEdge<CFGType>              PDGEdgeType;
 
 	typedef typename boost::graph_traits<PDG<CFGType> >::vertex_descriptor Vertex;
-	typedef typename boost::graph_traits<PDG<CFGType> >::edge_descriptor Edge;
+	typedef typename boost::graph_traits<PDG<CFGType> >::edge_descriptor   Edge;
 
 	//! The default constructor.
 	PDG() {}
@@ -136,8 +140,8 @@ void PDG<CFGType>::buildPDG(const CFGType& cfg)
 		Vertex tar = cfgNodesToVertices[cdg[boost::target(e, cdg)]].get<2>();
 		Edge newEdge = boost::add_edge(src, tar, *this).first;
 
-		PDGEdge& pdgEdge = (*this)[newEdge];
-		pdgEdge.type = PDGEdge::ControlDependence;
+		PDGEdge<CFGType>& pdgEdge = (*this)[newEdge];
+		pdgEdge.type = PDGEdge<CFGType>::ControlDependence;
 		pdgEdge.cdEdge = cdg[e];
 	}
 
@@ -148,8 +152,8 @@ void PDG<CFGType>::buildPDG(const CFGType& cfg)
 		Vertex tar = cfgNodesToVertices[ddg[boost::target(e, ddg)]].get<2>();
 		Edge edge = boost::add_edge(src, tar, *this).first;
 
-		PDGEdge& pdgEdge = (*this)[edge];
-		pdgEdge.type = PDGEdge::DataDependence;
+		PDGEdge<CFGType>& pdgEdge = (*this)[edge];
+		pdgEdge.type = PDGEdge<CFGType>::DataDependence;
 		pdgEdge.ddEdge = ddg[e];
 	}
 #endif
@@ -170,8 +174,8 @@ template <class CFGType>
 void PDG<CFGType>::writeGraphEdge(std::ostream& out, const Edge& edge) const
 {
 	std::string str, style;
-	const PDGEdge& pdgEdge = (*this)[edge];
-	if (pdgEdge.type == PDGEdge::ControlDependence)
+	const PDGEdge<CFGType>& pdgEdge = (*this)[edge];
+	if (pdgEdge.type == PDGEdge<CFGType>::ControlDependence)
 	{
 		//str = pdgEdge.key ? "T" : "F";
 		CDG<CFGType>::writeGraphEdge(out, pdgEdge.cdEdge);
