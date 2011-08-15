@@ -6362,7 +6362,9 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
      bool syntaxCheckInputCode = (get_skip_syntax_check() == false);
   // printf ("In build_Java_AST(): syntaxCheckInputCode = %s \n",syntaxCheckInputCode ? "true" : "false");
 
-     if (syntaxCheckInputCode == true)
+     //if (syntaxCheckInputCode == true)
+     printf ("java unparser: skipping syntax check.\n");
+     if (false)
         {
        // Introduce tracking of performance of ROSE.
           TimingPerformance timer ("Java syntax checking of input:");
