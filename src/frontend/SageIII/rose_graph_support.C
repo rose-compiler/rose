@@ -428,6 +428,39 @@ SgIncidenceDirectedGraph::addDirectedEdge( SgDirectedGraphEdge* edge )
      return edge;
    }
 
+bool SgIncidenceDirectedGraph::removeDirectedEdge( SgDirectedGraphEdge* edge  ) {
+    
+    if(exists(edge) ) {
+        
+        int edge_index = edge->get_index();
+        p_edge_index_to_edge_map.erase(edge_index);
+        
+        
+        int node_index_first  = edge->get_node_A()->get_index();
+        int node_index_second = edge->get_node_B()->get_index();
+        
+        for(rose_graph_integerpair_edge_hash_multimap::const_iterator it = p_node_index_pair_to_edge_multimap.begin() ;
+                it != p_node_index_pair_to_edge_multimap.end(); it++) {
+            if(it->second == edge) {
+                
+                p_node_index_pair_to_edge_multimap.erase(it);
+                break;
+            }
+        }
+        
+        get_node_index_to_edge_multimap_edgesOut().erase(get_node_index_to_edge_multimap_edgesOut().find(node_index_first));
+        
+        
+        get_node_index_to_edge_multimap_edgesIn().erase(get_node_index_to_edge_multimap_edgesIn().find(node_index_second));
+        
+        if(edge->get_name().empty() == false)
+            p_string_to_edge_index_multimap.erase(edge->get_name());
+        return true;
+        
+    }   
+ 
+    return false;
+}
 
 void
 SgGraph::display_node_index_to_node_map() const

@@ -176,6 +176,46 @@ bool is_functions_types_equal(SgFunctionType* f1, SgFunctionType* f2)
   return functions_are_equal;
 };
 
+SgFunctionDeclaration * is_function_exists(SgClassDefinition *cls, SgMemberFunctionDeclaration *memberFunctionDeclaration) {
+      
+      SgFunctionDeclaration *resultDecl = NULL;
+      string f1 = memberFunctionDeclaration->get_name().getString();
+      string f2;
+      
+      SgDeclarationStatementPtrList &clsMembers = cls->get_members();
+      for ( SgDeclarationStatementPtrList::iterator it_cls_mb = clsMembers.begin(); it_cls_mb != clsMembers.end(); it_cls_mb++ )
+      {
+        SgMemberFunctionDeclaration *cls_mb_decl = isSgMemberFunctionDeclaration( *it_cls_mb );
+        if (cls_mb_decl == NULL) continue;
+
+        ROSE_ASSERT(cls_mb_decl != NULL);
+        SgMemberFunctionType* funcType1 = isSgMemberFunctionType(memberFunctionDeclaration->get_type());
+        SgMemberFunctionType* funcType2 = isSgMemberFunctionType(cls_mb_decl->get_type());
+        f2 = cls_mb_decl->get_name().getString();
+        
+        if(f1 != f2) continue;
+        if (funcType1 == NULL || funcType2 == NULL) continue;
+        if ( is_functions_types_equal(funcType1, funcType2) )
+        {
+          SgMemberFunctionDeclaration *nonDefDecl =
+            isSgMemberFunctionDeclaration( cls_mb_decl->get_firstNondefiningDeclaration() );
+          SgMemberFunctionDeclaration *defDecl =
+            isSgMemberFunctionDeclaration( cls_mb_decl->get_definingDeclaration() );
+
+          // ROSE_ASSERT ( (!nonDefDecl && defDecl == cls_mb_decl) || (nonDefDecl == cls_mb_decl && nonDefDecl) );
+          
+          resultDecl = (nonDefDecl) ? nonDefDecl : defDecl;
+          ROSE_ASSERT ( resultDecl );
+          if ( !( resultDecl->get_functionModifier().isPureVirtual() ) )
+          {
+              return resultDecl;
+            //resultDecl = functionDeclarationInClass;
+            //functionList.push_back( functionDeclarationInClass );
+          }
+        }
+      }
+    return resultDecl;
+}
 
 bool 
 dummyFilter::operator() (SgFunctionDeclaration* node) const{
@@ -892,7 +932,65 @@ FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration,
         }
     }
 }
+SgFunctionDeclaration * CallTargetSet::getFirstVirtualFunctionDefinitionFromAncestors(SgClassType *crtClass, 
+        SgMemberFunctionDeclaration *memberFunctionDeclaration, ClassHierarchyWrapper *classHierarchy)  {
 
+    SgFunctionDeclaration *resultDecl = NULL;
+
+    ROSE_ASSERT ( memberFunctionDeclaration && classHierarchy );
+  //  memberFunctionDeclaration->get_file_info()->display( "Member function we are considering" );
+    SgDeclarationStatement *nonDefDeclInClass = NULL;
+    
+  nonDefDeclInClass = memberFunctionDeclaration->get_firstNondefiningDeclaration();
+  SgMemberFunctionDeclaration *functionDeclarationInClass = NULL;
+
+  // memberFunctionDeclaration is outside the class
+  if ( nonDefDeclInClass)   {
+   functionDeclarationInClass = isSgMemberFunctionDeclaration( nonDefDeclInClass );
+  }
+  // in class declaration, since there is no non-defining declaration
+  else {
+    functionDeclarationInClass = memberFunctionDeclaration;
+    //      functionDeclarationInClass->get_file_info()->display("declaration in class already");
+  }
+
+  ROSE_ASSERT ( functionDeclarationInClass );
+
+   if(!(functionDeclarationInClass->get_functionModifier().isVirtual())) return NULL;
+    // for virtual functions, we need to search down in the hierarchy of classes
+    // and retrieve all declarations of member functions with the same type
+
+  SgClassDefinition *crtClsDef = NULL;
+
+  if ( crtClass )  {
+      SgClassDeclaration *tmp = isSgClassDeclaration( crtClass->get_declaration() );
+      ROSE_ASSERT ( tmp );
+      SgClassDeclaration* tmp2 = isSgClassDeclaration(tmp->get_definingDeclaration());
+      ROSE_ASSERT (tmp2);
+      crtClsDef = tmp2->get_definition();
+      ROSE_ASSERT ( crtClsDef );
+  }  else  {
+      crtClsDef = isSgClassDefinition( memberFunctionDeclaration->get_scope() );
+      ROSE_ASSERT ( crtClsDef );
+  }
+  
+    functionDeclarationInClass = NULL;
+    vector<SgClassDefinition*> worklist;
+    worklist.push_back(crtClsDef);
+    
+    while(!worklist.empty()) {
+        SgClassDefinition* ancestor = worklist.back();
+        worklist.pop_back();
+        SgClassDefinition *cls = isSgClassDefinition( ancestor );
+        resultDecl = is_function_exists(cls, memberFunctionDeclaration );
+        if(resultDecl != NULL)
+              return resultDecl;
+        const ClassHierarchyWrapper::ClassDefSet& ancestors = classHierarchy->getAncestorClasses( cls );
+        worklist.insert(worklist.end(), ancestors.begin(), ancestors.end());
+    }
+
+    return NULL;
+}
 
 void
 CallGraphBuilder::buildCallGraph (){

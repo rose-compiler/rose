@@ -11,7 +11,7 @@ INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/programAnalysis -I$(top_s
 ## The grammar generator (ROSETTA) should use its own template repository
 # CXX_TEMPLATE_REPOSITORY_PATH = .
 
-bin_PROGRAMS = CFGTest DataFlowTest StmtRefTest PtrAnalTest steensgaardTest1 steensgaardTest2
+bin_PROGRAMS = CFGTest DataFlowTest StmtRefTest PtrAnalTest steensgaardTest1 steensgaardTest2 VirtualFunctionAnalysisTest
 
 # DQ: Removed this because it was failing and I could not figure out why
 # AnnotationLanguageParserTest
@@ -39,6 +39,9 @@ CFGTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 DataFlowTest_SOURCES = DataFlowTest.C
 DataFlowTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+VirtualFunctionAnalysisTest_SOURCES = VirtualFunctionAnalysisTest.C
+VirtualFunctionAnalysisTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 StmtRefTest_SOURCES = StmtRefTest.C
 StmtRefTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)

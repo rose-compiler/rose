@@ -127,6 +127,30 @@ const ClassHierarchyWrapper::ClassDefSet& ClassHierarchyWrapper::getDirectSubcla
     return *result;
 }
 
+const ClassHierarchyWrapper::ClassDefSet& ClassHierarchyWrapper::getDirectAncestorclasses(SgClassDefinition * cls) const
+{
+    if (cls->get_declaration()->get_definingDeclaration() != NULL)
+    {
+        cls = isSgClassDefinition(isSgClassDeclaration(cls->get_declaration()->get_definingDeclaration())->get_definition());
+        ROSE_ASSERT(cls != NULL);
+    }
+
+    const ClassDefSet* result = NULL;
+
+    ClassDefToClassDefsMap::const_iterator children = directParents.find(cls);
+    if (children == directParents.end())
+    {
+        static ClassDefSet emptySet;
+        result = &emptySet;
+    }
+    else
+    {
+        result = &children->second;
+    }
+
+    return *result;
+}
+
 
 void ClassHierarchyWrapper::buildAncestorsMap(const ClassDefToClassDefsMap& parents, ClassDefToClassDefsMap& transitiveParents)
 {
