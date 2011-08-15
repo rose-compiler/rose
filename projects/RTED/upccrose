@@ -46,6 +46,6 @@ CMD="$upc $upcflags $newOption -c $inpfiles"
 echo "$CMD"
 $CMD
 
-CMD="../../scripts/upc++link -dwarf-2-upc $executable $objfiles $rtedlib"
+CMD="upc++link -dwarf-2-upc $executable $objfiles $rtedlib"
 echo "$CMD"
 $CMD
