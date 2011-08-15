@@ -1,0 +1,78 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgExecStatement
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgExecStatement
+\brief This class represents the concept of the dynamic execution of a string,
+file, or code object. This node is intended for use with Python.
+
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgExecStatement data members
+/////////////////////////////////////////////////////////////////////////
+
+/*!
+\var SgExecStatement::p_executable
+\brief The object to be executed.
+
+    This expression is evaluated and executed dynamically.
+
+*/
+
+/*!
+\var SgExecStatement::p_globals
+\brief The global execution environment.
+
+*/
+
+/*!
+\var SgExecStatement::p_locals
+\brief The local execution environment.
+
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgExecStatement member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+
+/*!
+\fn SgExecStatement::SgExecStatement ( SgExpression* executable, SgExpression* globals, SgExpression* locals)
+\brief This is the constructor.
+
+   This constructor builds the SgExecStatement base class.
+
+*/
+/*
+\sa 
+\ref SgExecStatement_create "Example:create an SgExecStatement object"
+*/
+
+/*!
+\fn SgExecStatement::~SgExecStatement()
+\brief This is the destructor.
+
+*/
+
+/*!
+\fn SgExecStatement::isSgExecStatement (SgNode *s)
+\brief Cast function (from derived class to SgExecStatement pointer).
+
+   This functions returns a SgExecStatement pointer for any input of a 
+pointer to an object derived from a SgExecStatement.
+
+\return Returns valid pointer to SgExecStatement if input is derived from a SgExecStatement.
+*/
+
+/*!
+\fn SgExecStatement::isSgExecStatement (const SgNode *s)
+\brief Cast function (from derived class to SgExecStatement pointer).
+
+   This functions returns a SgExecStatement pointer for any input of a 
+pointer to an object derived from a SgExecStatement.
+
+\return Returns valid pointer to SgExecStatement if input is derived from a SgExecStatement.
+*/
+

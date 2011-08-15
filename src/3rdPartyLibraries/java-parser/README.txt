@@ -51,3 +51,46 @@ Changes to ECJ:
 				target="1.5"
       Note that this change might not be required now.
 
+
+
+
+Modifier support for Java in ROSE:
+
+   These are the modified required to be supported in ROSE for Java.
+
+                    Modifiers-Elements Matrix in Java element 	
+
+Modifier Data field 	Method 	Constructor 	     Class            Interface
+ 	                                        top level 	nested  	top level nested
+                                             (outer)  (inner)   (outer)  (inner)
+
+abstract      no        yes 	       no 	        yes 	  yes 	   yes 	   yes
+final        yes        yes          no           yes      yes        no       no
+native 	     no        yes          no            no       no        no       no
+private      yes        yes         yes            no      yes        no      yes
+protected    yes        yes         yes            no      yes        no      yes
+public       yes        yes         yes           yes      yes       yes      yes
+static       yes        yes          no            no      yes        no      yes
+synchronized  no        yes          no            no       no        no       no
+transient    yes         no          no            no       no        no       no
+volatile     yes         no          no            no       no        no       no
+strictfp      no        yes          no           yes      yes       yes      yes
+
+
+*abstract:     Should be supported in declaration modifier (already in type modifier for F90)
+final:        Already supported in declaration modifier (used for PHP, but used similarly)
+*native:       Part if JNI interface specification; should be part of function modifier.
+private:      Already in access modifier.
+protected:    Already in access modifier.
+public:       Already in access modifier.
+static:       Already in storage modifier
+*synchronized: Should be added to function modifier
+*transient:    Implies that the variable should not be serialized. Should be added to const-volatile modifier
+volatile:     Already in const-volatile modifier
+*strictfp:     Should be added to function modifier
+
+
+
+
+
+

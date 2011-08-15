@@ -725,6 +725,7 @@ int GetPrecedence(int variant)
     //        expression tree field (especially the case of FunctionRefExp used for
     //        function pointers initialisation).
           case V_SgFunctionRefExp:    return 0;
+
 #if 0
        // Template
           case V_:              return 0;

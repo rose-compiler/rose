@@ -11,64 +11,69 @@ using namespace std;
 using namespace SageBuilder;
 using namespace SageInterface;
 
-namespace
+string getVarNameString(const VarName& var)
 {
-    //! Build a variable expression from a value node in the value graph.
-    SgExpression* buildVariable(ValueNode* node)
+    string name = var[0]->get_name();
+    for (int i = 1, s = var.size(); i < s; ++i)
+        name += "_" + var[i]->get_name();  
+    return name;
+}
+
+//! Build a variable expression from a value node in the value graph.
+SgExpression* buildVariable(ValueNode* node)
+{
+    SgExpression* var;
+    if (node->isAvailable())
+        var = SageInterface::copyExpression(isSgExpression(node->astNode));
+    else
     {
-        SgExpression* var;
-        if (node->isAvailable())
-            var = SageInterface::copyExpression(isSgExpression(node->astNode));
-        else
-        {
+        if (node->isStateVar)
             var = node->var.getVarRefExp();
-            //var = buildVarRefExp(node->str);
-        }
-        return var;
+        else
+            var = buildVarRefExp(getVarNameString(node->var.name));
     }
-
-    SgStatement* getAncestorStatement(SgNode* node)
-    {
-        SgStatement* stmt;
-        while (!(stmt = isSgStatement(node)))
-        {
-            node = node->get_parent();
-            if (node == NULL)
-                return NULL;
-        }
-        return stmt;
-    }
-
-} // end of anonymous
+    return var;
+}
 
 SgStatement* buildVarDeclaration(ValueNode* newVar, SgExpression* expr)
 {
     SgAssignInitializer* init = expr ? buildAssignInitializer(expr) : NULL;
-    return buildVariableDeclaration(newVar->str,
+    return buildVariableDeclaration(newVar->var.name[0]->get_name(),
                                     newVar->getType(),
+                                    init);
+}
+
+SgStatement* buildVarDeclaration(const VarName& newVar, SgExpression* expr)
+{
+    SgAssignInitializer* init = expr ? buildAssignInitializer(expr) : NULL;
+    return buildVariableDeclaration(getVarNameString(newVar),
+                                    newVar.back()->get_type(),
                                     init);
 }
 
 void instrumentPushFunction(ValueNode* valNode, SgNode* astNode)
 {
-    cout << astNode->class_name() << endl;
+    //cout << astNode->class_name() << endl;
+    
     // Build push function call.
-	SgExprListExp* parameters = buildExprListExp(valNode->var.getVarRefExp());
-	SgExpression* pushFunc = buildFunctionCallExp("push", buildVoidType(), parameters);    
+	//SgExprListExp* parameters = buildExprListExp(valNode->var.getVarRefExp());
+	//SgExpression* pushFunc = buildFunctionCallExp("push", buildVoidType(), parameters);    
+    SgExpression* pushFunc = buildPushFunctionCall(valNode->var.getVarRefExp());
     SgStatement* pushFuncStmt = buildExprStatement(pushFunc);
     
-    SgStatement* stmt = getAncestorStatement(astNode);
+    SgStatement* stmt = SageInterface::getEnclosingStatement(astNode);
     SageInterface::insertStatementBefore(stmt, pushFuncStmt); 
 }
 
-void instrumentPushFunction(ValueNode* node, SgFunctionDefinition* funcDef)
+void instrumentPushFunction(ValueNode* valNode, SgFunctionDefinition* funcDef)
 {
     // Build push function call.
-	SgExprListExp* parameters = buildExprListExp(node->var.getVarRefExp());
-	SgExpression* pushFunc = buildFunctionCallExp("push", buildVoidType(), parameters);
+	//SgExprListExp* parameters = buildExprListExp(valNode->var.getVarRefExp());
+	//SgExpression* pushFunc = buildFunctionCallExp("push", buildVoidType(), parameters);
+    SgExpression* pushFunc = buildPushFunctionCall(valNode->var.getVarRefExp());
     //return buildExprStatement(pushFunc);
 
-    SgNode* varNode = node->astNode;
+    SgNode* varNode = valNode->astNode;
     if (SgExpression* expr = isSgExpression(varNode))
     {
         // If the target node is an expression, we have to find a proper place
@@ -110,22 +115,94 @@ void instrumentPushFunction(ValueNode* node, SgFunctionDefinition* funcDef)
                 ROSE_ASSERT(!"Declaration in conditions is not handled yet!");
         }
 
-        cout << initName->get_parent()->class_name() << endl;
+        //cout << initName->get_parent()->class_name() << endl;
     }
+}
+
+SgExpression* buildPushFunctionCall(SgExpression* para)
+{
+    return buildFunctionCallExp("push", buildVoidType(), 
+            SageBuilder::buildExprListExp(para));
+}
+
+SgExpression* buildStoreFunctionCall(SgExpression* para)
+{
+    return buildFunctionCallExp("__store__", buildVoidType(), 
+            SageBuilder::buildExprListExp(para));
+}
+
+SgExpression* buildRestoreFunctionCall(SgExpression* para)
+{
+    return buildFunctionCallExp("__restore__", buildVoidType(), 
+            SageBuilder::buildExprListExp(para));
+}
+
+SgStatement* buildPushStatement(ValueNode* valNode)
+{
+    return buildExprStatement(buildPushFunctionCall(valNode->var.getVarRefExp()));
+}
+
+SgStatement* buildPushStatementForPointerType(ValueNode* valNode)
+{
+#if 0
+    SgExpression* var = buildPointerDerefExp(valNode->var.getVarRefExp());
+    SgExprListExp* exprList = buildExprListExp(var);
+    SgPointerType* ptrType = isSgPointerType(valNode->getType());
+    ROSE_ASSERT(ptrType);
+    SgType* type = ptrType->get_base_type();
+    SgConstructorInitializer* initializer = 
+            buildConstructorInitializer(0, exprList, type, 0, 0, 1, 0);
+    SgNewExp* newExp = buildNewExp(type, 0, initializer, 0, 0, 0);
+#endif
+        
+    return buildExprStatement(
+            buildPushFunctionCall(
+                buildCloneFunctionCall(valNode->var.getVarRefExp(), valNode->getType())));
+}
+
+SgExpression* buildCloneFunctionCall(SgExpression* exp, SgType* type)
+{
+    SgExprListExp* exprList = buildExprListExp(exp);
+    return buildFunctionCallExp("__clone__", type, exprList); 
+}
+
+SgExpression* buildDestroyFunctionCall(SgExpression* exp)
+{
+    SgExprListExp* exprList = buildExprListExp(exp);
+    return buildFunctionCallExp("__destroy__", buildVoidType(), exprList); 
 }
 
 SgExpression* buildPopFunctionCall(SgType* type)
 {
-    return buildFunctionCallExp("pop< " + get_type_name(type) + " >",
+    return buildFunctionCallExp("__pop__< " + get_type_name(type) + " >",
             type, SageBuilder::buildExprListExp());
+}
+
+SgStatement* buildPopStatement(SgType* type)
+{
+    return buildExprStatement(buildPopFunctionCall(type));
+}
+
+SgExpression* buildRestorationExp(ValueNode* node)
+{
+    SgType* type = node->getType();
+	SgExpression* popFunc = buildPopFunctionCall(type);
+    return buildAssignOp(buildVariable(node), popFunc);
 }
 
 SgStatement* buildRestorationStmt(ValueNode* node)
 {
-    SgType* type = node->getType();
-	SgExpression* popFunc = buildPopFunctionCall(type);
-    return buildExprStatement(buildAssignOp(buildVariable(node), popFunc));
+    return buildExprStatement(buildRestorationExp(node));
 }
+
+#if 0
+SgExpression* buildVirtualFunctionCall(const string& funcName, SgType* returnType)
+{
+    SgExpression* funcCall = buildFunctionCallExp(funcName, returnType);
+    return buildArrowOp(buildThis)
+        cmtStmt = buildExprStatement(cmtFuncCall);
+}
+#endif
 
 SgStatement* buildAssignOpertaion(ValueNode* lhs, ValueNode* rhs)
 {
@@ -135,10 +212,18 @@ SgStatement* buildAssignOpertaion(ValueNode* lhs, ValueNode* rhs)
         expr = lhs->var.getVarRefExp();
     else
         expr = buildVariable(rhs);
+    
+#if 0
+    if (isSgInitializedName(lhs->astNode) || lhs->isTemp())
+    {
+        SgAssignInitializer* assignInit = buildAssignInitializer(expr, expr->get_type());
+        return buildVariableDeclaration(lhs->str, lhs->getType(), assignInit);
+    }
+#endif
     return buildExprStatement(buildAssignOp(buildVariable(lhs), expr));
 }
 
-SgStatement* buildOperation(
+SgStatement* buildOperationStatement(
         ValueNode* result,
         VariantT type,
         ValueNode* lhs,
@@ -242,6 +327,10 @@ case V_Sg##suffix: opExpr = build##suffix(lhsExpr, rhsExpr); break;
         }
     }
 
+    // For ++ and -- operators, no assignment is needed.
+    if (type == V_SgMinusMinusOp || type == V_SgPlusPlusOp)
+        return buildExprStatement(opExpr);
+    
     return buildExprStatement(buildAssignOp(buildVariable(result), opExpr));
 }
 

@@ -1,5 +1,0 @@
-program test_team1
-  integer :: coI[*]
-  team team1
-end program
-

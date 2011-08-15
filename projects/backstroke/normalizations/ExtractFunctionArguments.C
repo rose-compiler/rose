@@ -75,7 +75,11 @@ bool ExtractFunctionArguments::RewriteFunctionCallArguments(const FunctionCallIn
 	SgExprListExp* functionArgs = functionCall->get_args();
 	ROSE_ASSERT(functionArgs != NULL);
 
-	SgExpressionPtrList& argumentList = functionArgs->get_expressions();
+	SgExpressionPtrList argumentList = functionArgs->get_expressions();
+
+    // We also normalize the caller if the fucntion called is a member function.
+    if (SgBinaryOp* binExp = isSgBinaryOp(functionCall->get_function()))
+        argumentList.push_back(binExp->get_lhs_operand());
 
 	//Go over all the function arguments, pull them out
 	foreach (SgExpression* arg, argumentList)
@@ -91,7 +95,7 @@ bool ExtractFunctionArguments::RewriteFunctionCallArguments(const FunctionCallIn
 		SgVariableDeclaration* tempVarDeclaration;
 		SgAssignOp* tempVarAssignment;
 		SgExpression* tempVarReference;
-		tie(tempVarDeclaration, tempVarAssignment, tempVarReference) = BackstrokeUtility::CreateTempVariableForExpression(arg, scope, false);
+		tie(tempVarDeclaration, tempVarAssignment, tempVarReference) = BackstrokeUtility::CreateTempVariableForExpression(arg, scope, true);
 
 		//Insert the temporary variable declaration
 		InsertStatement(tempVarDeclaration, functionCallInfo.tempVarDeclarationLocation, functionCallInfo.tempVarDeclarationInsertionMode);
@@ -99,12 +103,14 @@ bool ExtractFunctionArguments::RewriteFunctionCallArguments(const FunctionCallIn
 		//Replace the argument with the new temporary variable
 		SageInterface::replaceExpression(arg, tempVarReference);
 
+#if 1
 		//Build a CommaOp that evaluates the temporary variable and proceeds to the original function call expression
 		SgExpression* placeholderExp = SageBuilder::buildIntVal(7);
 		SgCommaOpExp* comma = SageBuilder::buildCommaOpExp(tempVarAssignment, placeholderExp);
 		SageInterface::replaceExpression(functionCall, comma, true);
 		ROSE_ASSERT(functionCall->get_parent() == NULL);
 		SageInterface::replaceExpression(placeholderExp, functionCall);
+#endif
 	}
 
 	return true;
@@ -115,16 +121,23 @@ bool ExtractFunctionArguments::RewriteFunctionCallArguments(const FunctionCallIn
  * expression should be pulled out into a temporary variable on a separate line.
  * E.g. if the expression contains a function call, it needs to be normalized, while if it
  * is a constant, there is no need to change it. */
-bool ExtractFunctionArguments::FunctionArgumentNeedsNormalization(SgExpression* argument)
+bool ExtractFunctionArguments::FunctionArgumentNeedsNormalization(SgExpression*& argument)
 {
     while ((isSgPointerDerefExp(argument) || isSgCastExp(argument) || isSgAddressOfOp(argument)))
 	{
         argument = isSgUnaryOp(argument)->get_operand();
     }
 
+    SgArrowExp* arrowExp = isSgArrowExp(argument);
+    if (arrowExp && isSgThisExp(arrowExp->get_lhs_operand()))
+        argument = arrowExp->get_rhs_operand();
+
+    // Cong: For variable reference, now only SgVerRefExp need not to be normalized.
 	//For right now, move everything but a constant value or an explicit variable access
-	if (BackstrokeUtility::isVariableReference(argument) || isSgValueExp(argument) || isSgFunctionRefExp(argument)
-            || isSgMemberFunctionRefExp(argument))
+	//if (BackstrokeUtility::isVariableReference(argument) || isSgValueExp(argument) || isSgFunctionRefExp(argument)
+    //        || isSgMemberFunctionRefExp(argument))
+	if (isSgVarRefExp(argument) || isSgValueExp(argument) || isSgFunctionRefExp(argument)
+            || isSgMemberFunctionRefExp(argument) || isSgThisExp(argument))
 		return false;
 
 	return true;
@@ -155,7 +168,7 @@ bool ExtractFunctionArguments::SubtreeNeedsNormalization(SgNode* top)
 	Rose_STL_Container<SgNode*> functionCalls = NodeQuery::querySubTree(top, V_SgFunctionCallExp);
 	for (Rose_STL_Container<SgNode*>::const_iterator iter = functionCalls.begin(); iter != functionCalls.end(); iter++)
 	{
-		SgFunctionCallExp* functionCall = isSgFunctionCallExp(*iter);
+		SgExpression* functionCall = isSgFunctionCallExp(*iter);
 		ROSE_ASSERT(functionCall != NULL);
 		if (FunctionArgumentNeedsNormalization(functionCall))
 			return true;
