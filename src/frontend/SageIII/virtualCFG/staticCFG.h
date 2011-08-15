@@ -46,9 +46,11 @@ public:
     CFG() : graph_(NULL), start_(NULL), entry_(NULL), exit_(NULL) {}
 
     //! Turn a graph node into a CFGNode which is defined in VirtualCFG namespace.
-
     CFGNode toCFGNode(SgGraphNode* node);
-
+    
+    //! Turn a CFG node into a GraphNode which is defined in VirtualCFG namespace.
+    SgGraphNode *toGraphNode(CFGNode &n) { return all_nodes_.at(n);}
+    
     //! The constructor building the CFG.
     /*! The valid nodes are SgProject, SgStatement, SgExpression and SgInitializedName. */
     CFG(SgNode* node, bool is_filtered = false)

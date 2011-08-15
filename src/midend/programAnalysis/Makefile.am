@@ -16,6 +16,7 @@ include $(srcdir)/annotationLanguageParser/Makefile_variables
 include $(srcdir)/CallGraphAnalysis/Makefile_variables
 include $(srcdir)/CFG/Makefile_variables
 include $(srcdir)/dataflowAnalysis/Makefile_variables
+include $(srcdir)/VirtualFunctionAnalysis/Makefile_variables
 include $(srcdir)/defUseAnalysis/Makefile_variables
 include $(srcdir)/distributedMemoryAnalysis/Makefile_variables
 include $(srcdir)/dominanceAnalysis/Makefile_variables
@@ -32,6 +33,7 @@ mpaAnnotationLanguageParserPath=$(srcdir)/annotationLanguageParser#
 mpaCallGraphAnalysisPath=$(srcdir)/CallGraphAnalysis#
 mpaCFGPath=$(srcdir)/CFG#
 mpaDataflowAnalysisPath=$(srcdir)/dataflowAnalysis#
+mpaVirtualFunctionAnalysisPath=$(srcdir)/VirtualFunctionAnalysis#
 mpaDefUseAnalysisPath=$(srcdir)/defUseAnalysis#
 mpaDistributedMemoryAnalysisPath=$(srcdir)/distributedMemoryAnalysis#
 mpaDominanceAnalysisPath=$(srcdir)/dominanceAnalysis#
@@ -60,6 +62,7 @@ INCLUDES=\
 	$(mpaCallGraphAnalysis_includes) \
 	$(mpaCFG_includes) \
 	$(mpaDataflowAnalysis_includes) \
+	$(mpaVirtualFunctionAnalysis_includes) \
 	$(mpaDefUseAnalysis_includes) \
 	$(mpaDistributedMemoryAnalysis_includes) \
 	$(mpaOAWrap_includes) \
@@ -86,6 +89,7 @@ libprogramAnalysis_la_SOURCES=\
 	$(mpaCallGraphAnalysis_la_sources) \
 	$(mpaCFG_la_sources) \
 	$(mpaDataflowAnalysis_la_sources) \
+	$(mpaVirtualFunctionAnalysis_la_sources) \
 	$(mpaDefUseAnalysis_la_sources) \
 	$(mpaGraphAnalysis_la_sources) \
 	$(mpaOAWrap_la_sources) \
@@ -100,6 +104,7 @@ include_HEADERS=\
 	$(mpaCallGraphAnalysis_includeHeaders) \
 	$(mpaCFG_includeHeaders) \
 	$(mpaDataflowAnalysis_includeHeaders) \
+	$(mpaVirtualFunctionAnalysis_includeHeaders) \
 	$(mpaDefUseAnalysis_includeHeaders) \
 	$(mpaDistributedMemoryAnalysis_includeHeaders) \
 	$(mpaDominanceAnalysis_includeHeaders) \
@@ -124,6 +129,7 @@ EXTRA_DIST=\
 	$(mpaCallGraphAnalysis_extraDist) \
 	$(mpaCFG_extraDist) \
 	$(mpaDataflowAnalysis_extraDist) \
+	$(mpaVirtualFunctionAnalysis_extraDist) \
 	$(mpaDefUseAnalysis_extraDist) \
 	$(mpaDistributedMemoryAnalysis_extraDist) \
 	$(mpaDominanceAnalysis_extraDist) \
@@ -142,6 +148,7 @@ clean-local:
 	$(mpaCallGraphAnalysis_cleanLocal)
 	$(mpaCFG_cleanLocal)
 	$(mpaDataflowAnalysis_cleanLocal)
+	$(mpaVirtualFunctionAnalysis_cleanLocal)
 	$(mpaDefUseAnalysis_cleanLocal)
 	$(mpaDominanceAnalysis_cleanLocal)
 	$(mpaGraphAnalysis_cleanLocal)
@@ -157,6 +164,7 @@ distclean-local:
 	$(mpaCallGraphAnalysis_distCleanLocal)
 	$(mpaCFG_distCleanLocal)
 	$(mpaDataflowAnalysis_distCleanLocal)
+	$(mpaVirtualFunctionAnalysis_distCleanLocal)
 	$(mpaDefUseAnalysis_distCleanLocal)
 	$(mpaDominanceAnalysis_distCleanLocal)
 	$(mpaGraphAnalysis_distCleanLocal)

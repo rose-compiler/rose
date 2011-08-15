@@ -11,6 +11,7 @@ add_subdirectory(CFG)
 endif (NOT WIN32)
 
 add_subdirectory(dataflowAnalysis)
+add_subdirectory(VirtualFunctionAnalysis)
 add_subdirectory(valuePropagation)
 add_subdirectory(defUseAnalysis)
 add_subdirectory(dominanceAnalysis)

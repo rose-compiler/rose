@@ -32,6 +32,7 @@ public:
     ClassHierarchyWrapper(SgNode *node);
     const ClassDefSet& getSubclasses(SgClassDefinition *) const;
     const ClassDefSet& getDirectSubclasses(SgClassDefinition *) const;
+    const ClassDefSet& getDirectAncestorclasses(SgClassDefinition *) const;
     const ClassDefSet& getAncestorClasses(SgClassDefinition *) const;
 
 private:
