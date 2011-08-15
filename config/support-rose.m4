@@ -2257,6 +2257,7 @@ projects/backstroke/normalizations/Makefile
 projects/backstroke/slicing/Makefile
 projects/backstroke/ssa/Makefile
 projects/backstroke/valueGraph/Makefile
+projects/backstroke/valueGraph/headerUnparser/Makefile
 projects/backstroke/pluggableReverser/Makefile
 projects/backstroke/testCodeGeneration/Makefile
 projects/backstroke/restrictedLanguage/Makefile
@@ -2269,6 +2270,7 @@ projects/backstroke/tests/pluggableReverserTest/Makefile
 projects/backstroke/tests/restrictedLanguageTest/Makefile
 projects/backstroke/tests/testCodeBuilderTest/Makefile
 projects/backstroke/utilities/Makefile
+projects/backstroke/sdg/Makefile
 projects/binCompass/Makefile
 projects/binCompass/analyses/Makefile
 projects/binCompass/graphanalyses/Makefile
@@ -2352,6 +2354,7 @@ tests/RunTests/A++Tests/Makefile
 tests/RunTests/AstDeleteTests/Makefile
 tests/RunTests/FortranTests/Makefile
 tests/RunTests/FortranTests/LANL_POP/Makefile
+tests/RunTests/PythonTests/Makefile
 tests/PerformanceTests/Makefile
 tests/CompilerOptionsTests/Makefile
 tests/CompilerOptionsTests/testCpreprocessorOption/Makefile
@@ -2409,6 +2412,7 @@ tests/CompileTests/sizeofOperation_tests/Makefile
 tests/CompileTests/MicrosoftWindows_tests/Makefile
 tests/CompileTests/nameQualificationAndTypeElaboration_tests/Makefile
 tests/CompileTests/NewEDGInterface_C_tests/Makefile
+tests/CompileTests/UnparseHeadersTests/Makefile
 tests/CompileTests/CudaTests/Makefile
 tests/CompileTests/OpenClTests/Makefile
 tests/CompileTests/EDG_4_x/Makefile

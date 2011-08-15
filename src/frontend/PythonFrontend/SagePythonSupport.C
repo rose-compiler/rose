@@ -66,88 +66,145 @@ void set_File_Info(SgNode* sg_node, PyObject* py_file_info) {
 PyObject*
 sage_appendStatements(PyObject *self, PyObject *args)
 {
-
-    PyObject* py_target = PyTuple_GetItem(args, 0);
-    PyObject* py_stmts  = PyTuple_GetItem(args, 1);
-
-    SgScopeStatement* sg_target =
-        PyDecapsulate<SgScopeStatement>(py_target);
-    ROSE_ASSERT(sg_target != NULL);
+    PyObject *py_stmts;
+    SgScopeStatement *sg_target;
+    if (! PyArg_ParseTuple(args, "O&O!", SAGE_CONVERTER(SgScopeStatement), &sg_target,
+                                         &PyList_Type, &py_stmts))
+        return NULL;
 
     Py_ssize_t stmtc = PyList_Size(py_stmts);
     for (int i = 0; i < stmtc; i++) {
         PyObject* capsule = PyList_GetItem(py_stmts, i);
+        ROSE_ASSERT(PyCapsule_CheckExact(capsule));
+
         SgStatement* sg_child = PyDecapsulate<SgStatement>(capsule);
-        // SageInterface::appendStatement calls functions that assert because of
-        // (the lack of)? declaration statements in the given scopes. Until I suppress
-        // this behavior for Python, use this simple version of the appendStatement
-        // implementation:
-        //SageInterface::appendStatement(sg_child, sg_target);
         switch (sg_target->variantT()) {
-            case V_SgGlobal: {
-              if (isSgDeclarationStatement(sg_child) == NULL) {
-                  cerr << "adding non-declaration statements to the global scope is not yet supported" << endl;
-              } else {
-                  isSgGlobal(sg_target)->get_declarations().push_back(isSgDeclarationStatement(sg_child));
-                  sg_child->set_parent(sg_target);
-              }
+            case V_SgBasicBlock:
+              break;
+            case V_SgFunctionDeclaration:
+              sg_target = isSgFunctionDeclaration(sg_target)->get_definition()->get_body();
+              break;
+            case V_SgLambdaRefExp:
+              sg_target = isSgLambdaRefExp(sg_target)->get_functionDeclaration()->get_definition()->get_body();
+              break;
+            case V_SgGlobal:
+            case V_SgClassDefinition:
+              sg_child = normalizeToDeclarationStatement(sg_child);
+              break;
+            default: {
+              cout << "Unhandled node type in sage_appendStatements: " << sg_target->class_name() << endl;
+              ROSE_ASSERT(false);
               break;
             }
-            case V_SgFunctionDeclaration: {
-              SgBasicBlock* body = isSgFunctionDeclaration(sg_target)->get_definition()->get_body();
-              body->append_statement(sg_child);
-              sg_child->set_parent(body);
-              break;
-            }
-            default:
-              cerr << "Unhandled node type in sage_appendStatements: " << sg_target->class_name() << endl;
-              break;
         }
+        SageInterface::appendStatement(sg_child, sg_target);
     }
 
     return Py_None;
 }
 
-SgFunctionParameterList*
-buildFunctionParameterList(PyObject* args, PyObject* py_defaults_list) {
-    PyObject* py_args = PyObject_GetAttrString(args, "args");
+PyObject*
+sage_buildInitializedName(PyObject* self, PyObject* args, PyObject* kwargs) {
+    char *id;
+    SgExpression *sg_init_val = NULL;
+    PyObject *starred = NULL, *dstarred = NULL;
+    static char *kwlist[] = {"id", "init_val", "starred", "dstarred", NULL};
+    if (! PyArg_ParseTupleAndKeywords(args, kwargs, "s|O&O!O!", kwlist,
+                                         &id,
+                                         SAGE_CONVERTER(SgExpression), &sg_init_val,
+                                         &PyBool_Type, &starred,
+                                         &PyBool_Type, &dstarred))
+        return NULL;
+
+    SgType* sg_type = SageBuilder::buildVoidType();
+    SgInitializer* sg_init = (sg_init_val == NULL) ?
+        NULL : SageBuilder::buildAssignInitializer(sg_init_val);
+    SgInitializedName* sg_init_name = SageBuilder::buildInitializedName(id, sg_type, sg_init);
+
+    ROSE_ASSERT(! (starred == Py_True && dstarred == Py_True));
+    if (starred == Py_True)
+        sg_init_name->set_excess_specifier( SgInitializedName::e_excess_specifier_positionals );
+    if (dstarred == Py_True)
+        sg_init_name->set_excess_specifier( SgInitializedName::e_excess_specifier_keywords );
+
+    return PyEncapsulate(sg_init_name);
+}
+
+PyObject*
+sage_buildFunctionParameterList(PyObject* self, PyObject* args) {
+    PyObject *py_args, *py_defaults;
+    if (! PyArg_ParseTuple(args, "O!O!", &PyList_Type, &py_args,
+                                         &PyList_Type, &py_defaults))
+        return NULL;
+
     SgFunctionParameterList* sg_params =
         SageBuilder::buildFunctionParameterList();
 
     Py_ssize_t py_argc = PyList_Size(py_args);
-    Py_ssize_t py_defaults_argc = PyList_Size(py_defaults_list);
+    Py_ssize_t py_defaults_argc = (py_defaults != NULL) ?
+        PyList_Size(py_defaults) : 0;
     Py_ssize_t py_simples_argc = py_argc - py_defaults_argc;
 
-    /* Handle simple parameters */
+    /* Handle positional parameters */
     for (int i = 0; i < py_simples_argc; i++) {
         PyObject* py_name = PyList_GetItem(py_args, i);
-        PyObject* py_id = PyObject_GetAttrString(py_name, "id");
-        char* id = PyString_AsString(py_id);
-
-        SgType* sg_type = SageBuilder::buildVoidType();
-        SgInitializedName* sg_name =
-            SageBuilder::buildInitializedName(id, sg_type);
-
-        sg_params->append_arg(sg_name);
+        SgInitializedName* sg_init_name =
+            PyDecapsulate<SgInitializedName>(py_name);
+        sg_params->append_arg(sg_init_name);
     }
 
     /* Handle default parameters */
     for (int i = 0; i < py_defaults_argc; i++) {
         PyObject* py_name = PyList_GetItem(py_args, py_simples_argc+i);
-        PyObject* py_default = PyList_GetItem(py_defaults_list, i);
-        PyObject* py_id = PyObject_GetAttrString(py_name, "id");
-        char* id = PyString_AsString(py_id);
+        SgInitializedName* sg_name =
+            PyDecapsulate<SgInitializedName>(py_name);
 
+        PyObject* py_default = PyList_GetItem(py_defaults, i);
         SgExpression* sg_default = PyDecapsulate<SgExpression>(py_default);
-        SgType* sg_type = SageBuilder::buildVoidType();
         SgInitializer* sg_init =
             SageBuilder::buildAssignInitializer(sg_default);
-        SgInitializedName* sg_name =
-            SageBuilder::buildInitializedName(id, sg_type, sg_init);
+
+        sg_name->set_initptr(sg_init);
+        sg_init->set_parent(sg_name);
 
         sg_params->append_arg(sg_name);
     }
 
-    return sg_params;
+    return PyEncapsulate(sg_params);
 }
 
+SgDeclarationStatement*
+normalizeToDeclarationStatement(SgStatement* stmt) {
+    ROSE_ASSERT(stmt != NULL);
+
+    SgDeclarationStatement* decl_stmt = isSgDeclarationStatement(stmt);
+    if (decl_stmt == NULL)
+        decl_stmt = SageBuilder::buildStmtDeclarationStatement(stmt);
+
+    return decl_stmt;
+}
+
+SgExpression*
+buildReference(char* id, SgScopeStatement* scope) {
+    ROSE_ASSERT(scope != NULL);
+
+    SgSymbol* sg_sym = SageInterface::lookupSymbolInParentScopes( SgName(id), scope );
+    if (sg_sym == NULL) {
+        return SageBuilder::buildOpaqueVarRefExp(id, scope);
+    }
+    else switch (sg_sym->variantT()) {
+        case V_SgFunctionSymbol:
+            return SageBuilder::buildFunctionRefExp( isSgFunctionSymbol(sg_sym) );
+        case V_SgVariableSymbol:
+            return SageBuilder::buildVarRefExp( isSgVariableSymbol(sg_sym) );
+        case V_SgClassSymbol:
+            return SageBuilder::buildClassNameRefExp( isSgClassSymbol(sg_sym) );
+        default: {
+            cout << "error: unable to convert python name: " << id
+                 << ". Corresponding symbol had type: " << sg_sym->class_name() << endl;
+            ROSE_ASSERT(false);
+            break;
+        }
+    }
+    return NULL;
+}

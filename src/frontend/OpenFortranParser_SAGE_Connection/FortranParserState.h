@@ -4,6 +4,7 @@
 // DQ (10/11/2010): We only require this include to support the type: AstNameListType.
 #include "fortran_support.h"
 
+#define DeclAttributes               (FortranParserState::getDeclAttrSpec())
 #define astScopeStack                 (*(FortranParserState::getCurrentScopeStack()))
 #define astExpressionStack            (*(FortranParserState::getCurrentExpressionStack()))
 #define astNodeStack                  (*(FortranParserState::getCurrentNodeStack()))
@@ -37,6 +38,201 @@ using std::stack;
 using std::list;
 using std::vector;
 
+// Class to record Fortran attributes in a type declaration statement or in a derived type statement
+class AttributeRec
+{
+private:
+
+    SgDeclarationStatement* declaration;
+    SgType* baseType;
+    SgExpression* charLenExpr;
+    bool hasAccessSpec; int accessAttr; int accessType;
+    bool isPublic; int publicAttr;
+    bool isPrivate; int privateAttr;
+    bool isAllocatable; int allocatableAttr;
+    bool isAsynchronous; int asyncAttr;
+    bool hasCodimension; int codimAttr; SgExprListExp* codimExp;
+    bool isContiguous; int contiguousAttr;
+    bool hasDimension; int dimAttr; SgExprListExp* dimExp;
+    bool isExternal; int externalAttr;
+    bool hasIntent; int intentAttr; int intent;
+    bool isIntrinsic; int intrinsicAttr;
+    bool hasLangBinding;  int bindingAttr;
+    bool hasBindC; int bindCAttr;
+    bool isOptional; int optionalAttr;
+    bool hasParameter; int parameterAttr;
+    bool isPointer; int pointerAttr;
+    bool isCopointer; int copointerAttr;
+    bool isProtected; int protectedAttr;
+    bool isSave; int saveAttr;
+    bool isTarget; int targetAttr;
+    bool isCotarget; int cotargetAttr;
+    bool isValue; int valueAttr;
+    bool isVolatile; int volatileAttr;
+    bool isPass; int passAttr;
+    bool isNoPass; int noPassAttr;
+    bool isNonOverridable; int nonOverrideAttr;
+    bool isDeferred; int deferredAttr;
+
+public:
+    AttributeRec(): declaration(NULL), baseType(NULL), charLenExpr(NULL),
+                hasAccessSpec(false), accessAttr(-1), accessType(-1),
+                isPublic(false), publicAttr(-1), isPrivate(false), privateAttr(-1),
+                isAllocatable(false), allocatableAttr(-1), isAsynchronous(false), asyncAttr(-1),
+                hasCodimension(false), codimAttr(-1), codimExp(NULL), isContiguous(false), contiguousAttr(-1),
+                hasDimension(false), dimAttr(-1), dimExp(NULL), isExternal(false), externalAttr(-1),
+                hasIntent(false), intentAttr(-1), intent(-1), isIntrinsic(false), intrinsicAttr(-1),
+                hasLangBinding(false), bindingAttr(-1), hasBindC(false), bindCAttr(-1),
+                isOptional(false), optionalAttr(-1), hasParameter(false), parameterAttr(-1),
+                isPointer(false), pointerAttr(-1), isCopointer(false), copointerAttr(-1),
+                isProtected(false), protectedAttr(-1), isSave(false), saveAttr(-1),
+                isTarget(false), targetAttr(-1), isCotarget(false), cotargetAttr(-1),
+                isValue(false), valueAttr(-1), isVolatile(false), volatileAttr(-1),
+                isPass(false), passAttr(-1), isNoPass(false), noPassAttr(-1),
+                isNonOverridable(false), nonOverrideAttr(-1), isDeferred(false), deferredAttr(-1)
+    { }
+
+    SgDeclarationStatement* getDeclaration();
+    void setDeclaration(SgDeclarationStatement* decl);
+    SgType* getBaseType();
+    void setBaseType(SgType* newType);
+    SgExpression* getLenExpr ();
+    void setLenExpr(SgExpression* exp);
+    bool getHasAccessSpec ();
+    void setHasAccessSpec (bool hasAccSpec);
+    int getAccessAttr();
+    void setAccessAttr(int accAttr);
+    int getAccessType();
+    void setAccessType(int accType);
+    bool getIsPublic();
+    void setIsPublic(int isPub);
+    int getPublicAttr();
+    void setPublicAttr(int attr);
+    bool getIsPrivate();
+    void setIsPrivate(bool isPriv);
+        int getPrivateAttr();
+        void setPrivateAttr(int privAttr);
+    bool getIsAllocatable();
+    void setIsAllocatable(bool isAlloc);
+    int getAllocatableAttr();
+    void setAllocatableAttr(int allocAttr);
+    bool getIsAsynchronous();
+    void setIsAsynchronous(bool isAsync);
+    int getAsyncAttr();
+    void setAsyncAttr(int attr);
+    bool getHasCodimension();
+    void setHasCodimension(int hasCodim);
+    int getCodimAtt();
+    void setCodimAttr(int attr);
+    SgExprListExp* getCodimExp();
+    void setCodimExp(SgExprListExp* exp);
+    bool getIsContiguous() ;
+    void setIsContiguous(bool isContig);
+    int getContiguousAttr() ;
+    void setContiguousAttr(int attr) ;
+    bool getHasDimension();
+    void setHasDimension(bool hasDim) ;
+    int getDimAttr();
+    void setDimAttr(int attr) ;
+    SgExprListExp* getDimExp();
+    void setDimExp(SgExprListExp* exp);
+    bool getIsExternal() ;
+    void setIsExternal(int isExt) ;
+    int getExternalAttr();
+    void setExternalAttr(int externAttr);
+    bool getHasIntent();
+    void setHasIntent(bool hasInt);
+    int getIntentAttr();
+    void setIntentAttr(int attr);
+    int getIntent() ;
+    void setIntent(int inout);
+    bool getIsIntrinsic();
+    void setIsIntrinsic(bool isIntrin) ;
+    int getIntrinsicAttr() ;
+    void setIntrinsicAttr(int attr);
+    bool getHasLangBinding();
+    void setHasLangBinding(bool hasBind);
+    int getBindingAttr();
+    void setBindingAttr(int attr);
+    bool getHasBindC();
+    void setHasBindC(bool bindC);
+    int getBindCAttr();
+    void setBindCAttr(int attr);
+    bool getIsOptional();
+    void setIsOptional(bool isOption) ;
+    int getOptionalAttr();
+    void setOptionalAttr(int attr);
+    bool getHasParameter() ;
+    void setHasParameter(bool hasParam);
+    int getParameterAttr();
+    void setParameterAttr(int attr);
+    bool getIsPointer();
+    void setIsPointer(bool isPoint);
+    int getPointerAttr();
+    void setPointerAttr(int attr);
+    bool getIsCopointer();
+    void setIsCopointer(bool isCopoint);
+    int getCopointrAttr();
+    void setCopointerAttr(int attr);
+    bool getIsProtected();
+    void setIsProtected(bool isProt);
+    int getProtecedAttr() ;
+    void setProtectedAttr(int attr) ;
+    bool getIsSave() ;
+    void setIsSave(bool saveFlag) ;
+    int getSaveAttr() ;
+    void setSaveAttr(int attr) ;
+    bool getIsTarget() ;
+    void setIsTarget(bool targetFlag) ;
+    int getTargetAttr() ;
+    void setTargetAttr(int attr) ;
+    bool getIsCotarget() ;
+    void setIsCotarget(bool cotargetFlag) ;
+    int getCotargetAttr();
+    void setCotargetAttr(int attr) ;
+    bool getIsValue() ;
+    void setIsValue(bool valueFlag) ;
+    int getValueAttr() ;
+    void setValueAttr(int attr) ;
+    bool getIsVolatile() ;
+    void setIsVolatile(bool volatileFlag) ;
+    int getVolatileAttr();
+    void setVolatileAttr(int attr) ;
+    bool getIsPass() ;
+    void setIsPass (bool passFlag) ;
+    int getPassAttr();
+    void setPassAttr(int attr) ;
+    bool getIsNoPass() ;
+    void setIsNoPass(bool noPassFlag) ;
+    int getNoPassAttr() ;
+    void setNoPassAttr(int attr);
+    bool getIsNonOverridable() ;
+    void setIsNonOverridable(bool nonOverrideFlag) ;
+    int getNonOverrideAttr();
+    void setNonOverrideAttr(int attr) ;
+    bool getIsDeferred() ;
+    void setIsDeferred(bool isDeferFlag);
+    int getDeferredAttr() ;
+    void setDeferredAttr(int attr) ;
+
+
+
+    void reset();
+
+    // Sets all the existing attributes for varDeclaration.
+    // Pre-condition: varDeclaration != NULL;
+    void setDeclAttrSpecs();
+
+    SgType* computeEntityType();
+
+    // Builds a SgArrayType object with dimExp as dim_info
+    // Pre-condition: dimExp != NULL
+    SgArrayType* buildArrayType();
+
+    // Transforms baseType into a coarray with codimensionAttr as codim_info
+    // Pre-condition: codimensionAttr != NULL
+    void makeBaseTypeCoArray();
+};
 
 class FortranParserState
    {
@@ -45,6 +241,9 @@ class FortranParserState
 
      private:
        static stack<FortranParserState*>  statesStack;
+
+       // The declared attributes on the left-hand-side of the "::" in a type declaration statement or in a derived type statement
+       static  AttributeRec* DeclAttrSpec;
 
      private:
        list<SgScopeStatement*> currScopeStack;
@@ -76,6 +275,11 @@ class FortranParserState
        void clearStacks();
 
      public:
+
+       static AttributeRec& getDeclAttrSpec()
+       {
+           return *DeclAttrSpec;
+       }
 
      // DQ (7/30/2010): Added empty function to if there are entries in the stack
         static bool empty()
