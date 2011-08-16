@@ -8,101 +8,134 @@ namespace AbstractMemoryObject
 
   // A simple implementation of the abstract memory object interface
   // Four categories: scalar, labeled aggregate, array, and pointer
-  class scalar_Impl : public scalar 
+  class Scalar_Impl : public Scalar 
   {
+    public:
+      virtual size_t objCount();    
+  };
+
+  class LabeledAggregate_Impl : public LabeledAggregate
+  {
+    public:
+      virtual size_t objCount();    
 
   };
 
-  class labeledAggregate_Impl : public labeledAggregate
+  class Array_Impl : public Array
   {
-
+    public:
+      virtual size_t objCount();    
   };
 
-  class array_Impl : public array
+  class Pointer_Impl: public Pointer 
   {
+    public:
+      virtual size_t objCount();    
   };
 
-  class pointer_Impl: public pointer 
-  {
-
-  };
-
+  // The connection to the ROSE AST, all concrete type, size , etc. information come from this side
+  //
   // Three kinds of memory objects in ROSE AST: each of them can be one of the four categories above.
   // 1) SgExpression temporary variables: each SgExpression which is not named memory objects 
   // 2) named memory objects : one object for each named variable 
   // 3) aliased memory objects: one object for each type
 
-  class ExprObj 
+  class ExprObj // one object for each SgExpression which does not have a corresponding symbol
   { 
     public:
-      SgExpression* anchor; 
+      SgExpression* anchor_exp; 
       SgType* type; 
       ObjSet* parent; // Can we decide that the parent mem object is always ExprObj?? 
-      ExprObj (SgExpression* a, SgType* t, ObjSet* p): anchor(a), type(t),parent(p){};
+                       // Does a parent ever exist for ExprObj???     
+      ExprObj (SgExpression* a, SgType* t, ObjSet* p): anchor_exp(a), type(t),parent(p){};
+      SgType* getType() {return type;}
   };
 
-  class NamedObj 
+  class NamedObj  // one object for each named variable with a symbol
   { 
     public:
-      SgSymbol* anchor; 
+      SgSymbol* anchor_symbol; 
       SgType* type; 
-      ObjSet* parent;  //Is this always true that the parent of a named object must be an expr object?
-      NamedObj (SgSymbol* a, SgType* t, ObjSet* p):anchor(a), type(t),parent(p){};
+      ObjSet* parent;  //Only exists for compound variables like a.b, where a is b's parent
+      //Is this always true that the parent of a named object must be an expr object?
+      NamedObj (SgSymbol* a, SgType* t, ObjSet* p):anchor_symbol(a), type(t),parent(p){};
+      SgType* getType() {return type;}
   };
 
-  class AliasedObj { 
+  class AliasedObj 
+  {  // One object for each type
     public: 
     SgType* type; 
     AliasedObj (SgType* t): type(t) {};
+    SgType* getType() {return type;}
   };
 
   //Derived classes for each kind of each category
-  // expression object
-  class scalarExprObj: public scalar_Impl, public ExprObj
+  // expression object ------------------------------
+  class ScalarExprObj: public Scalar_Impl, public ExprObj
   {
   };
 
-  class labeledAggregateExprObj: public labeledAggregate_Impl, public ExprObj
+  class LabeledAggregateExprObj: public LabeledAggregate_Impl, public ExprObj
   {
   };
 
-  class arrayExprObj: public array_Impl, public ExprObj
+  class ArrayExprObj: public Array_Impl, public ExprObj
   {};
 
-  class pointerExprbj: public pointer_Impl, public ExprObj
+  class PointerExprbj: public Pointer_Impl, public ExprObj
   {};
 
-  // named object
-   class scalarNamedObj: public scalar_Impl, public NamedObj 
+  // named object --------------------------------
+   class ScalarNamedObj: public Scalar_Impl, public NamedObj 
   {
   };
 
-  class labeledAggregateNamedObj: public labeledAggregate_Impl, public NamedObj
+  class LabeledAggregateNamedObj: public LabeledAggregate_Impl, public NamedObj
   {
   };
 
-  class arrayNamedObj: public array_Impl, public NamedObj
+  class ArrayNamedObj: public Array_Impl, public NamedObj
   {};
 
-  class pointerNamedObj: public pointer_Impl, public NamedObj
+  class PointerNamedObj: public Pointer_Impl, public NamedObj
   {};
+
 
  
-  // aliased object
-   class scalarAliasedObj: public scalar_Impl, public AliasedObj
+  // aliased object -----------------------------
+   class ScalarAliasedObj: public Scalar_Impl, public AliasedObj
   {
+    public:
+      ScalarAliasedObj (SgType* t): AliasedObj(t){}
+      std::set<SgType*> getType();
   };
 
-  class labeledAggregateAliasedObj:public  labeledAggregate_Impl, public AliasedObj
+  class LabeledAggregateAliasedObj : public  LabeledAggregate_Impl, public AliasedObj
   {
+    public:
+    LabeledAggregateAliasedObj (SgType* t): AliasedObj(t){}
+    std::set<SgType*> getType();
   };
 
-  class arrayAliasedObj: public array_Impl, public AliasedObj
-  {};
+  class ArrayAliasedObj: public Array_Impl, public AliasedObj
+  {
+    public:
+      ArrayAliasedObj (SgType* t): AliasedObj(t){}
+      std::set<SgType*> getType();
+  };
 
-  class pointerAliasedObj: public pointer_Impl, public AliasedObj
-  {};
+  class PointerAliasedObj: public Pointer_Impl, public AliasedObj
+  {
+    public:
+      PointerAliasedObj (SgType* t): AliasedObj(t){}
+      std::set<SgType*> getType();
+  };
 
+  // builder for different objects -----------------------
+  ObjSet* createAliasedObjSet(SgType*t);  // One object per type, Type based alias analysis
+  ObjSet* createNamedObjSet(SgSymbol* anchor_symbol, SgType* t, ObjSet* parent); // any 
+  ObjSet* createExpressionObjSet(SgExpression* anchor_exp, SgType*t, ObjSet* parent); 
 
 } // end namespace
 
