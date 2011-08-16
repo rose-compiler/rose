@@ -115,9 +115,9 @@ SgMemberFunctionDeclaration* buildNonDefiningMemberFunction(const SgName & input
 SgMemberFunctionDeclaration* buildDefiningMemberFunction   (const SgName & inputName, SgClassDefinition* classDefinition);
 
 // Build a simple class in the current scope and set the scope to be the class definition.
-void buildClass (const SgName & className);
+void buildClass (const SgName & className, Token_t* token);
 void buildImplicitClass (const SgName & className);
-void buildClassSupport (const SgName & className, bool implicitClass);
+void buildClassSupport (const SgName & className, bool implicitClass, Token_t* token);
 
 SgVariableDeclaration* buildSimpleVariableDeclaration(const SgName & name);
 

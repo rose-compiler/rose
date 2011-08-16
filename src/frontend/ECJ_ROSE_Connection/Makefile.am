@@ -30,7 +30,8 @@ JavaTraversal.h:
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
  # libroseJava_la_SOURCES = JavaParserActionROSE.C java_support.C openJavaParser_main.C ecj.C
  # libroseJava_la_SOURCES = java_support.C openJavaParser_main.C ecj.C
-   libroseJava_la_SOURCES = java_support.C openJavaParser_main.C ecj.C
+ # libroseJava_la_SOURCES = java_support.C openJavaParser_main.C ecj.C jni_utils.C 
+   libroseJava_la_SOURCES = openJavaParser_main.C ecj.C
 
 if !ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
  # Handle case of Java language support specified and Fortran language support NOT specified.
@@ -44,15 +45,12 @@ endif
 
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
  # libJavaTraversal_la_SOURCES = JavaTraversal.C 
-
- # DQ (8/14/2011): Added files required in Rice version that include more source position information.
+ # libJavaTraversal_la_SOURCES = JavaParserActionROSE.C JavaTraversal.C token.C jni_token.C jni_utils.C JavaSourceCodePosition.C jni_JavaSourceCodePosition.C java_support.C openJavaParser_main.C ecj.C VisitorContext.C
  # libJavaTraversal_la_SOURCES = JavaParserActionROSE.C JavaTraversal.C token.C jni_token.C JavaSourceCodePosition.C jni_JavaSourceCodePosition.C
-   libJavaTraversal_la_SOURCES = JavaParserActionROSE.C JavaTraversal.C token.C jni_token.C jni_utils.C JavaSourceCodePosition.C jni_JavaSourceCodePosition.C java_support.C openJavaParser_main.C ecj.C VisitorContext.C
- # libJavaTraversal_la_SOURCES = JavaParserActionROSE.C token.C jni_token.C jni_utils.C JavaSourceCodePosition.C jni_JavaSourceCodePosition.C java_support.C openJavaParser_main.C ecj.C VisitorContext.C
+   libJavaTraversal_la_SOURCES = JavaParserActionROSE.C JavaTraversal.C token.C jni_token.C JavaSourceCodePosition.C jni_JavaSourceCodePosition.C VisitorContext.C jni_utils.C java_support.C
 
- # DQ (8/14/2011): Added files required in Rice version that include more source position information.
- # include_HEADERS = ecj.h java_support.h token.h jni_token.h JavaSourceCodePosition.h jni_JavaSourceCodePosition.h
-   include_HEADERS = ecj.h java_support.h token.h JavaSourceCodePosition.h jni_utils.h jni_token.h jni_JavaSourceCodePosition.h  VisitorContext.h
+ # DQ (10/11/2010): Put any required header files here.
+   include_HEADERS = ecj.h java_support.h token.h jni_token.h JavaSourceCodePosition.h jni_JavaSourceCodePosition.h jni_utils.h jni_token.h jni_JavaSourceCodePosition.h  VisitorContext.h
 
 # JavaParserActionROSE.C: $(ECJ_DIR)/token.h $(ECJ_DIR)/ActionEnums.h $(ECJ_DIR)/jni_token_funcs.h
 # JavaParserActionROSE.C:

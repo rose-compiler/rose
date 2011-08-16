@@ -14,7 +14,10 @@
 
 using namespace std;
 
-
+#if 0
+// DQ (8/15/2011): Moved to openJavaParser_main.C to
+// separate the work on Java from the rest of ROSE and support the ROSE
+// configuration language only options.
 // DQ (10/21/2010): If Fortran is being supported then there will
 // be a definition of this pointer there.  Note that we currently
 // use only one pointer so that we can simplify how the JVM support 
@@ -22,10 +25,14 @@ using namespace std;
 #ifndef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 SgSourceFile* OpenFortranParser_globalFilePointer = NULL;
 #endif
+#endif
 
-
+// DQ (8/15/2011): This declaration was moved to openJavaParser_main.C to
+// separate the work on Java from the rest of ROSE and support the ROSE
+// configuration language only options.
 // Global stack of scopes
-list<SgScopeStatement*> astJavaScopeStack;
+// list<SgScopeStatement*> astJavaScopeStack;
+extern list<SgScopeStatement*> astJavaScopeStack;
 
 // Global stack of expressions 
 list<SgExpression*> astJavaExpressionStack;
@@ -186,6 +193,10 @@ bool isStatementContext(VisitorContext * ctx) {
         return (dynamic_cast<CallVisitorContext*>(ctx) == NULL);
 }
 
+#if 0
+// DQ (8/15/2011): These function were moved to openJavaParser_main.C to
+// separate the work on Java from the rest of ROSE and support the ROSE
+// configuration language only options.
 bool
 emptyJavaStateStack()
    {
@@ -202,6 +213,8 @@ getTopOfJavaScopeStack()
 
      return topOfStack;
    }
+#endif
+
 
 SgGlobal*
 getGlobalScope()
@@ -713,7 +726,7 @@ buildJavaClass (const SgName & className, SgScopeStatement* scope )
    }
 
 void
-buildClassSupport (const SgName & className, bool implicitClass)
+buildClassSupport (const SgName & className, bool implicitClass, Token_t* token)
    {
   // This is mid level support for building a Java class. It is used by both the 
   // buildClass() and buildImplicitClass() functions.  This function calls the 
@@ -979,6 +992,10 @@ buildClassSupport (const SgName & className, bool implicitClass)
        // Here we build the class and associate it with the correct code (determined differently based on if this is an implicit or non-implicit class.
           SgClassDeclaration* declaration = buildJavaClass(name, outerScope );
 
+       // Handle the token to support setting the source position.
+          ROSE_ASSERT(token != NULL);
+          pushAndSetSourceCodePosition(token->getSourcecodePosition(), declaration);
+
        // Add the class declaration to the current scope.  This might not be appropriate for implicit classes, but it helps in debugging the AST for now.
           ROSE_ASSERT(outerScope != NULL);
 
@@ -1013,14 +1030,15 @@ void
 buildImplicitClass (const SgName & className)
    {
      bool implicitClass = true;
-     buildClassSupport (className,implicitClass);
+     Token_t* token = NULL;
+     buildClassSupport (className,implicitClass,token);
    }
 
 void
-buildClass (const SgName & className)
+buildClass (const SgName & className, Token_t* token)
    {
      bool implicitClass = false;
-     buildClassSupport (className,implicitClass);
+     buildClassSupport (className,implicitClass,token);
    }
 
 
