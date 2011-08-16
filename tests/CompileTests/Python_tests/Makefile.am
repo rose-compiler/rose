@@ -36,7 +36,7 @@ ALL_PYTHON_TESTCODES = \
 TEST_Objects = $(notdir ${ALL_PYTHON_TESTCODES:.py=.py-o})
 
 $(TEST_Objects): ../../testTranslator
-	../../testTranslator $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.py-o=.py) -rose:output $@
+	../../testTranslator $(ROSE_FLAGS) $(srcdir)/$(@:.py-o=.py) -rose:output $@
 
 ../../testTranslator:
 	$(MAKE) -C ../.. testTranslator

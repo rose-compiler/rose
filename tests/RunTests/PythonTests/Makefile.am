@@ -41,10 +41,9 @@ TEST_Objects = $(ALL_PYTHON_TESTCODES:.py=.done)
 
 $(TEST_Objects): ../../testTranslator
     bname = $(basename $@)
-	@echo "  TEST $(bname).py"
-	@../../testTranslator $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(bname).py -rose:output $(bname).py-r
-	@$(PYTHON) $(srcdir)/$(bname).py   > $(bname).py-o
+	../../testTranslator $(srcdir)/$(bname).py -rose:output $(bname).py-r -rose:skipfinalCompileStep
 	@$(PYTHON)           $(bname).py-r > $(bname).py-ro
+	@$(PYTHON) $(srcdir)/$(bname).py   > $(bname).py-o
 	@diff $(bname).py-o $(bname).py-ro
 	@touch $(bname).done
 
@@ -59,6 +58,6 @@ check-local:
 	@echo "***********************************************************************************************"
 
 clean-local:
-	rm -f *-o *-ro *-r *.done
+	rm -f *-o *-r *-ro *.done
 
 EXTRA_DIST = $(ALL_PYTHON_TESTCODES)
