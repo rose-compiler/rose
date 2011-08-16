@@ -139,7 +139,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitList (JNIEnv *env, 
  * Method:    cactionCompilationUnitDeclaration
  * Signature: (java/lang/String;)
  */
-JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitDeclaration (JNIEnv *env, jobject xxx, jstring compilationUnitFilename)
+JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitDeclaration (JNIEnv *env, jobject xxx, jstring compilationUnitFilename, jobject jToken)
    {
      if (SgProject::get_verbose() > 0)
           printf ("Inside of Java_JavaParser_cactionCompilationUnitDeclaration() \n");
@@ -160,7 +160,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitDeclaration (JNIEnv
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclaration (JNIEnv *env, jobject xxx, jstring java_string)
+JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclaration (JNIEnv *env, jobject xxx, jstring java_string, jobject jToken)
    {
      if (SgProject::get_verbose() > 0)
           printf ("Build a SgClassDeclaration \n");
@@ -173,8 +173,11 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclaration (JNIEnv *env, jobj
 
      outputJavaState("At TOP of cactionTypeDeclaration");
 
+     Token_t * token = create_token(env, jToken);
+     ROSE_ASSERT(token != NULL);
+
   // This builds the associated class in the curren scope as defined by the astJavaScopeStack.
-     buildClass(name);
+     buildClass(name,token);
 
      ROSE_ASSERT(astJavaScopeStack.front() != NULL);
 
@@ -188,7 +191,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclaration (JNIEnv *env, jobj
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclarationEnd (JNIEnv *env, jobject xxx, jstring java_string, jint java_numberOfStatements)
+JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclarationEnd (JNIEnv *env, jobject xxx, jstring java_string, jint java_numberOfStatements, jobject jToken)
    {
      if (SgProject::get_verbose() > 0)
           printf ("Build a SgClassDeclaration (cactionTypeDeclarationEnd) \n");
@@ -226,7 +229,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclarationEnd (JNIEnv *env, j
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclaration (JNIEnv *env, jobject xxx, jstring java_string, jboolean java_is_native)
+JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclaration (JNIEnv *env, jobject xxx, jstring java_string, jboolean java_is_native, jobject jToken)
    {
      if (SgProject::get_verbose() > 0)
           printf ("Build a SgMemberFunctionDeclaration (constructor) \n");
@@ -264,7 +267,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclaration (JNIEnv *en
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclarationEnd (JNIEnv *env, jobject xxx, jint java_numberOfStatements)
+JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclarationEnd (JNIEnv *env, jobject xxx, jint java_numberOfStatements, jobject jToken)
    {
      if (SgProject::get_verbose() > 0)
           printf ("End of SgMemberFunctionDeclaration (constructor) \n");
@@ -289,7 +292,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclarationEnd (JNIEnv 
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionExplicitConstructorCall (JNIEnv *env, jobject xxx, jstring java_string)
+JNIEXPORT void JNICALL Java_JavaParser_cactionExplicitConstructorCall (JNIEnv *env, jobject xxx, jstring java_string, jobject jToken)
    {
   // Build a member function call...
      if (SgProject::get_verbose() > 0)
@@ -330,7 +333,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionExplicitConstructorCall (JNIEnv *e
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionExplicitConstructorCallEnd (JNIEnv *env, jobject xxx, jstring java_string)
+JNIEXPORT void JNICALL Java_JavaParser_cactionExplicitConstructorCallEnd (JNIEnv *env, jobject xxx, jstring java_string, jobject jToken)
    {
   // Build a member function call...
      if (SgProject::get_verbose() > 0)
@@ -366,7 +369,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionExplicitConstructorCallEnd (JNIEnv
 // JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclaration (JNIEnv *env, jobject xxx, jstring java_string, jboolean java_is_abstract, jboolean java_is_native, jboolean java_is_static, jboolean java_is_final)
 JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclaration (JNIEnv *env, jobject xxx, jstring java_string, 
      jboolean java_is_abstract, jboolean java_is_native, jboolean java_is_static, jboolean java_is_final,
-     jboolean java_is_synchronized, jboolean java_is_public, jboolean java_is_protected, jboolean java_is_private, jboolean java_is_strictfp)
+     jboolean java_is_synchronized, jboolean java_is_public, jboolean java_is_protected, jboolean java_is_private, jboolean java_is_strictfp, jobject jToken)
    {
      if (SgProject::get_verbose() > 0)
           printf ("Build a SgMemberFunctionDeclaration \n");
@@ -463,7 +466,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclaration (JNIEnv *env, jo
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclarationEnd (JNIEnv *env, jobject xxx, int java_numberOfStatements /* , jstring java_string */ )
+JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclarationEnd (JNIEnv *env, jobject xxx, int java_numberOfStatements /* , jstring java_string */ , jobject jToken)
    {
      if (SgProject::get_verbose() > 0)
           printf ("End of SgMemberFunctionDeclaration (method) \n");
@@ -492,7 +495,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclarationEnd (JNIEnv *env,
 
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionSingleTypeReference (JNIEnv *, jobject, jstring)
+JNIEXPORT void JNICALL Java_JavaParser_cactionSingleTypeReference (JNIEnv *, jobject, jstring, jobject jToken)
    {
      if (SgProject::get_verbose() > 0)
           printf ("Build a type \n");
@@ -504,7 +507,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionSingleTypeReference (JNIEnv *, job
   // Build a type and add it to the declaration on the declaration stack.
    }
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionArgument (JNIEnv *env, jobject xxx, jstring java_argument_name, jint java_modifiers)
+JNIEXPORT void JNICALL Java_JavaParser_cactionArgument (JNIEnv *env, jobject xxx, jstring java_argument_name, jint java_modifiers, jobject jToken)
    {
      if (SgProject::get_verbose() > 0)
           printf ("Build a function argument \n");
@@ -543,13 +546,13 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionArgument (JNIEnv *env, jobject xxx
 #endif
    }
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionArrayTypeReference (JNIEnv *, jobject, jstring)
+JNIEXPORT void JNICALL Java_JavaParser_cactionArrayTypeReference (JNIEnv *, jobject, jstring, jobject jToken)
    {
      if (SgProject::get_verbose() > 0)
           printf ("Build a array type \n");
    }
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSend (JNIEnv *env, jobject xxx, jstring functionName, jstring associatedClassName)
+JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSend (JNIEnv *env, jobject xxx, jstring functionName, jstring associatedClassName, jobject jToken)
    {
   // This code is the same as that in cactionExplicitConstructorCall
      if (SgProject::get_verbose() > 1)
@@ -643,7 +646,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSend (JNIEnv *env, jobject 
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSendEnd (JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSendEnd (JNIEnv *env, jobject xxx, jobject jToken)
    {
   // Unclear if this should be a function call statement or a function call expression.
   // When it is a statement there does not appear to be any thing to provide a clue 
@@ -765,13 +768,13 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSendEnd (JNIEnv *env, jobje
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedNameReference (JNIEnv * env, jobject xxx, jstring java_string)
+JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedNameReference (JNIEnv * env, jobject xxx, jstring java_string, jobject jToken)
    {
      if (SgProject::get_verbose() > 0)
           printf ("Build a qualified name reference \n");
    }
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionStringLiteral (JNIEnv *env, jobject xxx, jstring java_string)
+JNIEXPORT void JNICALL Java_JavaParser_cactionStringLiteral (JNIEnv *env, jobject xxx, jstring java_string, jobject jToken)
    {
      if (SgProject::get_verbose() > 0)
           printf ("Build a SgStringVal \n");
@@ -800,6 +803,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionStringLiteral (JNIEnv *env, jobjec
 
 // DQ: Note that the function signature is abby-normal...jclass instead of jobject (because they are 
 // declared "public static native" instead of "public native" in the Java side of the JNI interface.
+// JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportStart (JNIEnv* env, jclass xxx, jstring java_string, jobject jToken)
 JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportStart (JNIEnv* env, jclass xxx, jstring java_string)
    {
      if (SgProject::get_verbose() > 0)
@@ -862,6 +866,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportStart (JN
 
 // DQ: Note that the function signature is abby-normal...jclass instead of jobject (because they are 
 // declared "public static native" instead of "public native" in the Java side of the JNI interface.
+// JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportEnd (JNIEnv* env, jclass xxx, jstring java_string, jobject jToken)
 JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportEnd (JNIEnv* env, jclass xxx, jstring java_string)
    {
      SgName name = convertJavaStringToCxxString(env,java_string);
@@ -906,6 +911,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportEnd (JNIE
 
 // DQ: Note that the function signature is abby-normal...jclass instead of jobject (because they are 
 // declared "public static native" instead of "public native" in the Java side of the JNI interface.
+// JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitMethodSupport (JNIEnv* env, jclass xxx, jstring java_string, jobject jToken)
 JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitMethodSupport (JNIEnv* env, jclass xxx, jstring java_string)
    {
      if (SgProject::get_verbose() > 0)
@@ -1139,6 +1145,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateType (JNIEnv* env, jclass 
 #endif
    }
 
+// JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateClassType (JNIEnv* env, jclass xxx, jstring java_string, jobject jToken)
 JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateClassType (JNIEnv* env, jclass xxx, jstring java_string)
    {
      if (SgProject::get_verbose() > 0)
@@ -1168,7 +1175,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateClassType (JNIEnv* env, jc
 #endif
    }
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionStatementEnd(JNIEnv *env, jclass xxx, jstring java_string /* JNIEnv *env, jobject xxx */ )
+JNIEXPORT void JNICALL Java_JavaParser_cactionStatementEnd(JNIEnv *env, jclass xxx, jstring java_string /* JNIEnv *env, jobject xxx */ , jobject jToken)
    {
      string label = convertJavaStringToCxxString(env,java_string);
 
@@ -1203,6 +1210,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionStatementEnd(JNIEnv *env, jclass x
 
 
 
+// JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateArrayType(JNIEnv *env, jclass xxx, jobject jToken)
 JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateArrayType(JNIEnv *env, jclass xxx)
    {
      if (SgProject::get_verbose() > 2)
@@ -1222,11 +1230,11 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateArrayType(JNIEnv *env, jcl
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionAllocationExpression(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionAllocationExpression(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionANDANDExpression(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionANDANDExpression(JNIEnv *env, jobject xxx, jobject jToken)
    {
      if (SgProject::get_verbose() > 0)
           printf ("Inside of Java_JavaParser_cactionANDANDExpression() \n");
@@ -1235,7 +1243,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionANDANDExpression(JNIEnv *env, jobj
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionANDANDExpressionEnd(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionANDANDExpressionEnd(JNIEnv *env, jobject xxx, jobject jToken)
    {
      if (SgProject::get_verbose() > 0)
           printf ("Inside of Java_JavaParser_cactionANDANDExpressionEnd() \n");
@@ -1248,57 +1256,57 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionANDANDExpressionEnd(JNIEnv *env, j
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionAnnotationMethodDeclaration(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionAnnotationMethodDeclaration(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionArgumentClassScope(JNIEnv *, jobject, jstring)
+JNIEXPORT void JNICALL Java_JavaParser_cactionArgumentClassScope(JNIEnv *, jobject, jstring, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionArrayAllocationExpression(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionArrayAllocationExpression(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionArrayInitializer(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionArrayInitializer(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionArrayQualifiedTypeReference(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionArrayQualifiedTypeReference(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionArrayQualifiedTypeReferenceClassScope(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionArrayQualifiedTypeReferenceClassScope(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionArrayReference(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionArrayReference(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionArrayTypeReferenceClassScope(JNIEnv *, jobject, jstring)
+JNIEXPORT void JNICALL Java_JavaParser_cactionArrayTypeReferenceClassScope(JNIEnv *, jobject, jstring, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionAssertStatement(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionAssertStatement(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionAssignment(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionAssignment(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionAssignmentEnd(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionAssignmentEnd(JNIEnv *env, jobject xxx, jobject jToken)
    {
   // This function builds an assignement statement (not an expression).
 
@@ -1332,13 +1340,13 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionAssignmentEnd(JNIEnv *env, jobject
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionBinaryExpression(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionBinaryExpression(JNIEnv *env, jobject xxx, jobject jToken)
    {
   // I don't think we need this function.
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionBinaryExpressionEnd(JNIEnv *env, jobject xxx, jint java_operator_kind)
+JNIEXPORT void JNICALL Java_JavaParser_cactionBinaryExpressionEnd(JNIEnv *env, jobject xxx, jint java_operator_kind, jobject jToken)
    {
      if (SgProject::get_verbose() > 2)
           printf ("Build an Binary Expression End \n");
@@ -1412,7 +1420,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBinaryExpressionEnd(JNIEnv *env, j
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionBlock(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionBlock(JNIEnv *env, jobject xxx, jobject jToken)
    {
      if (SgProject::get_verbose() > 2)
           printf ("Build an SgBasicBlock scope \n");
@@ -1485,7 +1493,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBlock(JNIEnv *env, jobject xxx)
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionBlockEnd(JNIEnv *env, jobject xxx, jint java_numberOfStatements)
+JNIEXPORT void JNICALL Java_JavaParser_cactionBlockEnd(JNIEnv *env, jobject xxx, jint java_numberOfStatements, jobject jToken)
    {
      if (SgProject::get_verbose() > 2)
           printf ("Pop the current SgBasicBlock scope off the scope stack...\n");
@@ -1514,7 +1522,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBlockEnd(JNIEnv *env, jobject xxx,
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionBreakStatement(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionBreakStatement(JNIEnv *env, jobject xxx, jobject jToken)
    {
      SgBreakStmt* stmt = SageBuilder::buildBreakStmt();
      ROSE_ASSERT(stmt != NULL);
@@ -1522,17 +1530,17 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBreakStatement(JNIEnv *env, jobjec
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionCaseStatement(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionCaseStatement(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionCastExpression(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionCastExpression(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionCastExpressionEnd(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionCastExpressionEnd(JNIEnv *env, jobject xxx, jobject jToken)
    {
      if (SgProject::get_verbose() > 2)
           printf ("Inside of Java_JavaParser_cactionCastExpressionEnd() \n");
@@ -1556,27 +1564,27 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCastExpressionEnd(JNIEnv *env, job
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionCharLiteral(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionCharLiteral(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionClassLiteralAccess(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionClassLiteralAccess(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionClinit(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionClinit(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionConditionalExpression(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionConditionalExpression(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionConditionalExpressionEnd(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionConditionalExpressionEnd(JNIEnv *env, jobject xxx, jobject jToken)
    {
      if (SgProject::get_verbose() > 0)
           printf ("Inside of Java_JavaParser_cactionConditionalExpressionEnd() \n");
@@ -1608,7 +1616,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionConditionalExpressionEnd(JNIEnv *e
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionContinueStatement(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionContinueStatement(JNIEnv *env, jobject xxx, jobject jToken)
    {
      SgContinueStmt* stmt = SageBuilder::buildContinueStmt();
      ROSE_ASSERT(stmt != NULL);
@@ -1616,12 +1624,12 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionContinueStatement(JNIEnv *env, job
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionCompoundAssignment(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionCompoundAssignment(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionCompoundAssignmentEnd(JNIEnv *env, jobject xxx, jint java_operator_kind)
+JNIEXPORT void JNICALL Java_JavaParser_cactionCompoundAssignmentEnd(JNIEnv *env, jobject xxx, jint java_operator_kind, jobject jToken)
    {
      if (SgProject::get_verbose() > 0)
           printf ("Inside of Java_JavaParser_cactionCompoundAssignmentEnd() \n");
@@ -1682,7 +1690,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompoundAssignmentEnd(JNIEnv *env,
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionDoStatement(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionDoStatement(JNIEnv *env, jobject xxx, jobject jToken)
    {
      if (SgProject::get_verbose() > 2)
           printf ("Inside of Java_JavaParser_cactionDoStatement() \n");
@@ -1707,7 +1715,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionDoStatement(JNIEnv *env, jobject x
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionDoStatementEnd(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionDoStatementEnd(JNIEnv *env, jobject xxx, jobject jToken)
    {
      if (SgProject::get_verbose() > 2)
           printf ("Inside of Java_JavaParser_cactionDoStatementEnd() \n");
@@ -1747,24 +1755,24 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionDoStatementEnd(JNIEnv *env, jobjec
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionDoubleLiteral(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionDoubleLiteral(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionEmptyStatement(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionEmptyStatement(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionEqualExpression(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionEqualExpression(JNIEnv *env, jobject xxx, jobject jToken)
    {
      if (SgProject::get_verbose() > 0)
           printf ("Inside of Java_JavaParser_cactionEqualExpression() \n");
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionEqualExpressionEnd(JNIEnv *env, jobject xxx, jint java_operator_kind)
+JNIEXPORT void JNICALL Java_JavaParser_cactionEqualExpressionEnd(JNIEnv *env, jobject xxx, jint java_operator_kind, jobject jToken)
    {
      if (SgProject::get_verbose() > 0)
           printf ("Inside of Java_JavaParser_cactionEqualExpressionEnd() \n");
@@ -1799,12 +1807,12 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionEqualExpressionEnd(JNIEnv *env, jo
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionExtendedStringLiteral(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionExtendedStringLiteral(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionFalseLiteral(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionFalseLiteral(JNIEnv *env, jobject xxx, jobject jToken)
    {
      SgExpression* expression = SageBuilder::buildBoolValExp(false);
      astJavaExpressionStack.push_front(expression);
@@ -1813,7 +1821,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionFalseLiteral(JNIEnv *env, jobject 
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionFieldDeclaration(JNIEnv *env, jobject xxx, jstring variableName, jboolean java_hasInitializer,
      jboolean java_is_final, jboolean java_is_private, jboolean java_is_protected, jboolean java_is_public, 
-     jboolean java_is_volatile, jboolean java_is_synthetic, jboolean java_is_static, jboolean java_is_transient)
+     jboolean java_is_volatile, jboolean java_is_synthetic, jboolean java_is_static, jboolean java_is_transient, jobject jToken)
    {
      if (SgProject::get_verbose() > 2)
           printf ("Inside of Java_JavaParser_cactionFieldDeclaration() \n");
@@ -1914,7 +1922,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionFieldDeclaration(JNIEnv *env, jobj
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionFieldDeclarationEnd(JNIEnv *env, jobject xxx, jstring variableName, jboolean java_hasInitializer )
+JNIEXPORT void JNICALL Java_JavaParser_cactionFieldDeclarationEnd(JNIEnv *env, jobject xxx, jstring variableName, jboolean java_hasInitializer, jobject jToken )
    {
   // DQ (8/13/2011): The initializer has to be set in the endVisit() function.
 
@@ -1946,31 +1954,31 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionFieldDeclarationEnd(JNIEnv *env, j
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionFieldReference(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionFieldReference(JNIEnv *env, jobject xxx, jobject jToken)
    {
      if (SgProject::get_verbose() > 2)
           printf ("Inside of Java_JavaParser_cactionFieldReference() \n");
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionFieldReferenceClassScope(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionFieldReferenceClassScope(JNIEnv *env, jobject xxx, jobject jToken)
    {
      if (SgProject::get_verbose() > 2)
           printf ("Inside of Java_JavaParser_cactionFieldReferenceClassScope() \n");
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionFloatLiteral(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionFloatLiteral(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionForeachStatement(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionForeachStatement(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionForStatement(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionForStatement(JNIEnv *env, jobject xxx, jobject jToken)
    {
      if (SgProject::get_verbose() > 2)
           printf ("Inside of Java_JavaParser_cactionForStatement() \n");
@@ -2012,7 +2020,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionForStatement(JNIEnv *env, jobject 
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionForStatementEnd(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionForStatementEnd(JNIEnv *env, jobject xxx, jobject jToken)
    {
      if (SgProject::get_verbose() > 2)
           printf ("Inside of Java_JavaParser_cactionForStatementEnd() \n");
@@ -2125,7 +2133,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionForStatementEnd(JNIEnv *env, jobje
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionIfStatement(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionIfStatement(JNIEnv *env, jobject xxx, jobject jToken)
    {
      if (SgProject::get_verbose() > 2)
           printf ("Inside of Java_JavaParser_cactionIfStatement() \n");
@@ -2151,7 +2159,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionIfStatement(JNIEnv *env, jobject x
      outputJavaState("At BOTTOM of cactionIfStatement");
    }
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionIfStatementEnd(JNIEnv *env, jobject xxx, jint java_numberOfStatements)
+JNIEXPORT void JNICALL Java_JavaParser_cactionIfStatementEnd(JNIEnv *env, jobject xxx, jint java_numberOfStatements, jobject jToken)
    {
      if (SgProject::get_verbose() > 2)
           printf ("Inside of Java_JavaParser_cactionIfStatementEnd() \n");
@@ -2266,19 +2274,19 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jobje
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionInitializer(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionInitializer(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionInstanceOfExpression(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionInstanceOfExpression(JNIEnv *env, jobject xxx, jobject jToken)
    {
      if (SgProject::get_verbose() > 0)
           printf ("Inside of Java_JavaParser_cactionInstanceOfExpression() \n");
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionInstanceOfExpressionEnd(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionInstanceOfExpressionEnd(JNIEnv *env, jobject xxx, jobject jToken)
    {
      if (SgProject::get_verbose() > 0)
           printf ("Inside of Java_JavaParser_cactionInstanceOfExpressionEnd() \n");
@@ -2331,133 +2339,133 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionIntLiteral(JNIEnv *env, jobject xx
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionJavadoc(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionJavadoc(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocClassScope(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocClassScope(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocAllocationExpression(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocAllocationExpression(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocAllocationExpressionClassScope(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocAllocationExpressionClassScope(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocArgumentExpression(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocArgumentExpression(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocArgumentExpressionClassScope(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocArgumentExpressionClassScope(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocArrayQualifiedTypeReference(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocArrayQualifiedTypeReference(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocArrayQualifiedTypeReferenceClassScope(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocArrayQualifiedTypeReferenceClassScope(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocArraySingleTypeReference(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocArraySingleTypeReference(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocArraySingleTypeReferenceClassScope(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocArraySingleTypeReferenceClassScope(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocFieldReference(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocFieldReference(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocFieldReferenceClassScope(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocFieldReferenceClassScope(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocImplicitTypeReference(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocImplicitTypeReference(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocImplicitTypeReferenceClassScope(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocImplicitTypeReferenceClassScope(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocMessageSend(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocMessageSend(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocMessageSendClassScope(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocMessageSendClassScope(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocQualifiedTypeReference(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocQualifiedTypeReference(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocQualifiedTypeReferenceClassScope(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocQualifiedTypeReferenceClassScope(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocReturnStatement(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocReturnStatement(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocReturnStatementClassScope(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocReturnStatementClassScope(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocSingleNameReference(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocSingleNameReference(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocSingleNameReferenceClassScope(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocSingleNameReferenceClassScope(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocSingleTypeReference(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocSingleTypeReference(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocSingleTypeReferenceClassScope(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocSingleTypeReferenceClassScope(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionLabeledStatement(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionLabeledStatement(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
 // JNIEXPORT void JNICALL Java_JavaParser_cactionLocalDeclaration(JNIEnv *env, jobject xxx, jstring variableName)
-JNIEXPORT void JNICALL Java_JavaParser_cactionLocalDeclaration(JNIEnv *env, jobject xxx, jstring variableName, jboolean java_is_final)
+JNIEXPORT void JNICALL Java_JavaParser_cactionLocalDeclaration(JNIEnv *env, jobject xxx, jstring variableName, jboolean java_is_final, jobject jToken)
    {
      if (SgProject::get_verbose() > 0)
           printf ("Inside of Java_JavaParser_cactionLocalDeclaration() \n");
@@ -2498,7 +2506,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionLocalDeclaration(JNIEnv *env, jobj
           variableDeclaration->get_file_info()->display("source position in Java_JavaParser_cactionLocalDeclaration(): debug");
    }
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionLocalDeclarationInitialization(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionLocalDeclarationInitialization(JNIEnv *env, jobject xxx, jobject jToken)
    {
      if (SgProject::get_verbose() > 0)
           printf ("Inside of Java_JavaParser_cactionLocalDeclarationInitialization() \n");
@@ -2534,37 +2542,37 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionLocalDeclarationInitialization(JNI
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionLongLiteral(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionLongLiteral(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionMarkerAnnotation(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionMarkerAnnotation(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionMemberValuePair(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionMemberValuePair(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionStringLiteralConcatenation(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionStringLiteralConcatenation(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionNormalAnnotation(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionNormalAnnotation(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionNullLiteral(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionNullLiteral(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionORORExpression(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionORORExpression(JNIEnv *env, jobject xxx, jobject jToken)
    {
      if (SgProject::get_verbose() > 0)
           printf ("Inside of Java_JavaParser_cactionORORExpression() \n");
@@ -2573,7 +2581,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionORORExpression(JNIEnv *env, jobjec
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionORORExpressionEnd(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionORORExpressionEnd(JNIEnv *env, jobject xxx, jobject jToken)
    {
      if (SgProject::get_verbose() > 0)
           printf ("Inside of Java_JavaParser_cactionORORExpressionEnd() \n");
@@ -2586,31 +2594,31 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionORORExpressionEnd(JNIEnv *env, job
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionParameterizedQualifiedTypeReference(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionParameterizedQualifiedTypeReference(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionParameterizedQualifiedTypeReferenceClassScope(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionParameterizedQualifiedTypeReferenceClassScope(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionParameterizedSingleTypeReference(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionParameterizedSingleTypeReference(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionParameterizedSingleTypeReferenceClassScope(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionParameterizedSingleTypeReferenceClassScope(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionPostfixExpression(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionPostfixExpression(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionPostfixExpressionEnd(JNIEnv *env, jobject xxx, jint java_operator_kind)
+JNIEXPORT void JNICALL Java_JavaParser_cactionPostfixExpressionEnd(JNIEnv *env, jobject xxx, jint java_operator_kind, jobject jToken)
    {
      if (SgProject::get_verbose() > 0)
           printf ("Inside of Java_JavaParser_cactionPostfixExpressionEnd() \n");
@@ -2650,12 +2658,12 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionPostfixExpressionEnd(JNIEnv *env, 
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionPrefixExpression(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionPrefixExpression(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionPrefixExpressionEnd(JNIEnv *env, jobject xxx, jint java_operator_kind)
+JNIEXPORT void JNICALL Java_JavaParser_cactionPrefixExpressionEnd(JNIEnv *env, jobject xxx, jint java_operator_kind, jobject jToken)
    {
      if (SgProject::get_verbose() > 0)
           printf ("Inside of Java_JavaParser_cactionPrefixExpressionEnd() \n");
@@ -2695,52 +2703,52 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionPrefixExpressionEnd(JNIEnv *env, j
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedAllocationExpression(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedAllocationExpression(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedSuperReference(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedSuperReference(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedSuperReferenceClassScope(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedSuperReferenceClassScope(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedThisReference(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedThisReference(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedThisReferenceClassScope(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedThisReferenceClassScope(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedTypeReference(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedTypeReference(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedTypeReferenceClassScope(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedTypeReferenceClassScope(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionReturnStatement(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionReturnStatement(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionSingleMemberAnnotation(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionSingleMemberAnnotation(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionSingleNameReference(JNIEnv *env, jobject xxx, jstring variableName)
+JNIEXPORT void JNICALL Java_JavaParser_cactionSingleNameReference(JNIEnv *env, jobject xxx, jstring variableName, jobject jToken)
    {
      outputJavaState("At TOP of cactionSingleNameReference");
 
@@ -2775,27 +2783,27 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionSingleNameReference(JNIEnv *env, j
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionSingleNameReferenceClassScope(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionSingleNameReferenceClassScope(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionSuperReference(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionSuperReference(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionSwitchStatement(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionSwitchStatement(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionSynchronizedStatement(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionSynchronizedStatement(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionThisReference(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionThisReference(JNIEnv *env, jobject xxx, jobject jToken)
    {
      SgClassDefinition* classDefinition = getCurrentClassDefinition();
      string className = classDefinition->get_declaration()->get_name();
@@ -2812,46 +2820,46 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionThisReference(JNIEnv *env, jobject
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionThisReferenceClassScope(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionThisReferenceClassScope(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionThrowStatement(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionThrowStatement(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionTrueLiteral(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionTrueLiteral(JNIEnv *env, jobject xxx, jobject jToken)
    {
      SgExpression* expression = SageBuilder::buildBoolValExp(true);
      astJavaExpressionStack.push_front(expression);
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionTryStatement(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionTryStatement(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionTypeParameter(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionTypeParameter(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionTypeParameterClassScope(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionTypeParameterClassScope(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionUnaryExpression(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionUnaryExpression(JNIEnv *env, jobject xxx, jobject jToken)
    {
      if (SgProject::get_verbose() > 2)
           printf ("Build an Unary Expression \n");
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionUnaryExpressionEnd(JNIEnv *env, jobject xxx, jint java_operator_kind)
+JNIEXPORT void JNICALL Java_JavaParser_cactionUnaryExpressionEnd(JNIEnv *env, jobject xxx, jint java_operator_kind, jobject jToken)
    {
      if (SgProject::get_verbose() > 2)
           printf ("Build an Unary Expression End \n");
@@ -2890,7 +2898,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionUnaryExpressionEnd(JNIEnv *env, jo
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionWhileStatement(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionWhileStatement(JNIEnv *env, jobject xxx, jobject jToken)
    {
      if (SgProject::get_verbose() > 2)
           printf ("Inside of Java_JavaParser_cactionWhileStatement() \n");
@@ -2915,7 +2923,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionWhileStatement(JNIEnv *env, jobjec
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionWhileStatementEnd(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionWhileStatementEnd(JNIEnv *env, jobject xxx, jobject jToken)
    {
      if (SgProject::get_verbose() > 2)
           printf ("Inside of Java_JavaParser_cactionWhileStatementEnd() \n");
@@ -2956,12 +2964,12 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionWhileStatementEnd(JNIEnv *env, job
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionWildcard(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionWildcard(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionWildcardClassScope(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionWildcardClassScope(JNIEnv *env, jobject xxx, jobject jToken)
    {
    }
 
