@@ -3619,7 +3619,9 @@ SgPointerDerefExp::get_type() const
              {
             // DQ (8/17/2010): I think this is redundant.
                returnType = SgTypeInt::createType();
-               printf ("Warning: I think we should be short circuiting redundant call to SgTypeInt::createType() \n");
+               if (SgProject::get_verbose() > 0) {
+                   printf ("Warning: I think we should be short circuiting redundant call to SgTypeInt::createType() \n");
+               }
                break;
              }
 

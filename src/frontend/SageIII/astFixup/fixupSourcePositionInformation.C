@@ -674,7 +674,9 @@ FixupSourcePositionConstructs::visit(SgNode* node)
           ROSE_ASSERT(locatedNode->get_startOfConstruct() != NULL);
           if (locatedNode->get_endOfConstruct() == NULL)
              {
-               printf ("FixupSourcePositionConstructs::visit(): Building a matching endOfConstruct to the available startOfConstruct for locatedNode = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
+                 if (SgProject::get_verbose() > 0) {
+                     printf ("FixupSourcePositionConstructs::visit(): Building a matching endOfConstruct to the available startOfConstruct for locatedNode = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
+                 }
                locatedNode->set_endOfConstruct( new Sg_File_Info (* ( locatedNode->get_startOfConstruct() ) ) );
              }
           ROSE_ASSERT(locatedNode->get_endOfConstruct() != NULL);
