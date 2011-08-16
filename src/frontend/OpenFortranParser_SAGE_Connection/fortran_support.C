@@ -2108,8 +2108,73 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
      return variableSymbol;
    }
 
+// DXN (08/15/2011)
+// Refactored code to find the scope of a given SgClassType;
+void findClassTypeStructureScope (SgClassType* classType, SgScopeStatement*& structureScope) {
+    SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
+    ROSE_ASSERT(classDeclaration != NULL);
+    SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(classDeclaration->get_definingDeclaration());
+    ROSE_ASSERT(definingClassDeclaration != NULL);
+    SgClassDefinition* classDefinition = definingClassDeclaration->get_definition();
+    ROSE_ASSERT(classDefinition != NULL);
+    structureScope = classDefinition;
+}
 
-// DQ (12/27/2010): We have to maek the return type std::vector<SgSymbol*> so that we have 
+// DXN (08/15/2011)
+// Refactored code to find the scope of a given type;
+// Called by trace_back_through_parent_scopes_lookup_member_variable_symbol.
+void findStructureScope (SgType* type, SgScopeStatement*& structureScope)
+{
+    switch (type->variantT())
+    {
+    // This type will continue the search for multi-type references.
+       case V_SgClassType:
+          {
+            findClassTypeStructureScope(isSgClassType(type), structureScope);
+            break;
+          }
+
+       case V_SgArrayType:
+          {
+            SgArrayType* arrayType = isSgArrayType(type);
+            SgType* baseType = arrayType->get_base_type();
+            ROSE_ASSERT(baseType != NULL);
+            findStructureScope(baseType, structureScope);
+            break;
+          }
+
+       case V_SgPointerType:
+          {
+            SgPointerType* pointerType = isSgPointerType(type);
+            SgType* baseType = pointerType->get_base_type();
+            ROSE_ASSERT(baseType != NULL);
+            findStructureScope(baseType, structureScope);
+            break;
+          }
+
+    // DQ (12/29/2010): Added new types...
+       case V_SgTypeDouble:
+       case V_SgTypeChar:
+
+    // These types will terminate the search for names from multi-part references.
+       case V_SgTypeString:
+       case V_SgTypeFloat:
+       case V_SgTypeBool:
+       case V_SgTypeInt:
+          {
+            structureScope = NULL;
+         // printf ("Set structureScope to NULL (for primative types) \n");
+            break;
+          }
+
+    // All currently unhandled types
+       default:
+          {
+            structureScope = NULL;
+          }
+    }
+}
+// DQ (12/27/2010): We have to maek the return type std::vector<SgSymbol*> so that we have
 // include SgFunctionSymbols to handle function return value initialization for defined types.
 // DQ (12/14/2010): New support for structure members.
 // std::vector<SgVariableSymbol*>
@@ -2184,197 +2249,7 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
 #if 0
                     printf ("associated variable type = %s \n",type->class_name().c_str());
 #endif
-                 // DQ (12/23/2010): I think a better implementation would strip off SgArrayType and SgPointerType as needed to get the the SgClassType
-                 // I am unclear how many cases we will have to handle here.
-
-                 // DQ (12/29/2010): I promise to refactor this code as soon as possible (but maybe after vacation)!
-                 // printf ("Refactor this code!!! \n");
-
-                    switch (type->variantT())
-                       {
-                      // This type will continue the search fo multi-type references.
-                         case V_SgClassType:
-                            {
-                              SgClassType* classType = isSgClassType(type);
-                              ROSE_ASSERT(classType->get_declaration() != NULL);
-                              SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
-                              ROSE_ASSERT(classDeclaration != NULL);
-
-                           // Get the defining declaration!
-                              SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(classDeclaration->get_definingDeclaration());
-                              ROSE_ASSERT(definingClassDeclaration != NULL);
-                              SgClassDefinition* classDefinition = definingClassDeclaration->get_definition();
-                              ROSE_ASSERT(classDefinition != NULL);
-
-                              structureScope = classDefinition;
-                           // printf ("Set structureScope to %p (case of class type) \n",structureScope);
-                              break;
-                            }
-
-                         case V_SgArrayType:
-                            {
-                              SgArrayType* arrayType = isSgArrayType(type);
-                              SgType* baseType = arrayType->get_base_type();
-                              ROSE_ASSERT(baseType != NULL);
-#if 0
-                              printf ("baseType = %p = %s \n",baseType,baseType->class_name().c_str());
-#endif
-                              SgClassType* classType = isSgClassType(baseType);
-                              if (classType != NULL)
-                                 {
-                                   ROSE_ASSERT(classType->get_declaration() != NULL);
-                                   SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
-                                   ROSE_ASSERT(classDeclaration != NULL);
-
-                                // Get the defining declaration!
-                                   SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(classDeclaration->get_definingDeclaration());
-                                   ROSE_ASSERT(definingClassDeclaration != NULL);
-                                   SgClassDefinition* classDefinition = definingClassDeclaration->get_definition();
-                                   ROSE_ASSERT(classDefinition != NULL);
-
-                                   structureScope = classDefinition;
-                                 }
-                                else
-                                 {
-                                   SgPointerType* pointerType = isSgPointerType(baseType);
-                                   if (pointerType != NULL)
-                                      {
-                                     // printf ("Case of array of pointers \n");
-                                     // ROSE_ASSERT(false);
-
-                                        SgType* baseType = pointerType->get_base_type();
-                                        ROSE_ASSERT(baseType != NULL);
-#if 0
-                                        printf ("baseType = %p = %s \n",baseType,baseType->class_name().c_str());
-#endif
-                                        SgClassType* classType = isSgClassType(baseType);
-                                        if (classType != NULL)
-                                           {
-                                             ROSE_ASSERT(classType->get_declaration() != NULL);
-                                             SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
-                                             ROSE_ASSERT(classDeclaration != NULL);
-
-                                          // Get the defining declaration!
-                                             SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(classDeclaration->get_definingDeclaration());
-                                             ROSE_ASSERT(definingClassDeclaration != NULL);
-                                             SgClassDefinition* classDefinition = definingClassDeclaration->get_definition();
-                                             ROSE_ASSERT(classDefinition != NULL);
-
-                                             structureScope = classDefinition;
-                                           }
-                                          else
-                                           {
-                                             structureScope = NULL;
-                                           }
-                                      }
-                                     else
-                                      {
-                                        structureScope = NULL;
-                                      }
-                                 }
-                           // printf ("Set structureScope to %p (case of array type) \n",structureScope);
-                              break;
-                            }
-
-                         case V_SgPointerType:
-                            {
-                              SgPointerType* pointerType = isSgPointerType(type);
-                              SgType* baseType = pointerType->get_base_type();
-                              ROSE_ASSERT(baseType != NULL);
-#if 0
-                              printf ("baseType = %p = %s \n",baseType,baseType->class_name().c_str());
-#endif
-                           // This is the same code for handling the class type as in the "case V_SgArrayType:" above.
-                              SgClassType* classType = isSgClassType(baseType);
-                              if (classType != NULL)
-                                 {
-                                   ROSE_ASSERT(classType->get_declaration() != NULL);
-                                   SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
-                                   ROSE_ASSERT(classDeclaration != NULL);
-
-                                // Get the defining declaration!
-                                   SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(classDeclaration->get_definingDeclaration());
-                                   ROSE_ASSERT(definingClassDeclaration != NULL);
-                                   SgClassDefinition* classDefinition = definingClassDeclaration->get_definition();
-                                   ROSE_ASSERT(classDefinition != NULL);
-
-                                   structureScope = classDefinition;
-                                 }
-                                else
-                                 {
-                                // Note that this could be recursive...
-                                // structureScope = NULL;
-                                   SgArrayType* arrayType = isSgArrayType(baseType);
-                                   if (arrayType != NULL)
-                                      {
-                                        SgType* baseType = arrayType->get_base_type();
-                                        ROSE_ASSERT(baseType != NULL);
-#if 0
-                                        printf ("In the array: baseType = %p = %s \n",baseType,baseType->class_name().c_str());
-#endif
-                                        SgClassType* classType = isSgClassType(baseType);
-                                        if (classType != NULL)
-                                           {
-                                             ROSE_ASSERT(classType->get_declaration() != NULL);
-                                             SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
-                                             ROSE_ASSERT(classDeclaration != NULL);
-
-                                          // Get the defining declaration!
-                                             SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(classDeclaration->get_definingDeclaration());
-                                             ROSE_ASSERT(definingClassDeclaration != NULL);
-                                             SgClassDefinition* classDefinition = definingClassDeclaration->get_definition();
-                                             ROSE_ASSERT(classDefinition != NULL);
-
-                                             structureScope = classDefinition;
-                                           }
-                                          else
-                                           {
-                                          // DQ (1/13/2011): Added checking for possible SgTypeDefault that should have been fixed up by fixup_forward_type_declarations().
-                                             SgTypeDefault* defaultType = isSgTypeDefault(baseType);
-                                             if (defaultType != NULL)
-                                                {
-                                                  printf ("Error: SgTypeDefault identified in array base-type (result of unfixed up reference to type defined after initial reference). \n");
-                                               // ROSE_ASSERT(false);
-                                                }
-                                               else
-                                                {
-                                                  structureScope = NULL;
-                                                }
-                                           }
-                                      }
-                                     else
-                                      {
-                                        structureScope = NULL;
-                                      }
-                                 }
-                           // printf ("Set structureScope to %p (case of pointr type) \n",structureScope);
-                              break;
-                            }
-
-                      // DQ (12/29/2010): Added new types...
-                         case V_SgTypeDouble:
-                         case V_SgTypeChar:
-
-                      // These types will terminate the search for names from multi-part references.
-                         case V_SgTypeString:
-                         case V_SgTypeFloat:
-                         case V_SgTypeBool:
-                         case V_SgTypeInt:
-                            {
-                              structureScope = NULL;
-                           // printf ("Set structureScope to NULL (for primative types) \n");
-                              break;
-                            }
-
-                      // All currently unhandled types
-                         default:
-                            {
-                              structureScope = NULL;
-                           // printf ("Set structureScope to NULL \n");
-                           // printf ("Warning: what is this type, associated variable type = %s \n",type->class_name().c_str());
-                           // ROSE_ASSERT(false);
-                            }
-                       }
+                    findStructureScope(type, structureScope);  // DXN (08/12/2011)
 
                  // Returning an empty list (returnSymbolList) is how we would return the equivalant of "variableSymbol == NULL".
                     if (variableSymbol != NULL)
@@ -2408,17 +2283,7 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
                          if (classType != NULL)
                             {
                            // printf ("Found a function with SgClassType return type! \n");
-                              ROSE_ASSERT(classType->get_declaration() != NULL);
-                              SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
-                              ROSE_ASSERT(classDeclaration != NULL);
-
-                           // Get the defining declaration!
-                              SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(classDeclaration->get_definingDeclaration());
-                              ROSE_ASSERT(definingClassDeclaration != NULL);
-                              SgClassDefinition* classDefinition = definingClassDeclaration->get_definition();
-                              ROSE_ASSERT(classDefinition != NULL);
-
-                              structureScope = classDefinition;
+                             findClassTypeStructureScope(classType, structureScope);
                            // printf ("Set structureScope to %p \n",structureScope);
 
                               returnSymbolList.push_back(functionSymbol);

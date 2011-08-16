@@ -1668,12 +1668,13 @@ void c_action_component_attr_spec(Token_t * attrKeyword, int specType)
              {
                if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                     printf ("found a ComponentAttrSpec_codimension spec \n");
-               DeclAttributes.setHasCodimension(true);
+
                DeclAttributes.setCodimAttr(ComponentAttrSpec_codimension);
-               SgExprListExp* codimExpr = isSgExprListExp(astExpressionStack.front());
+               SgExprListExp* codimExpr = DeclAttributes.buildDimensionInfo();
                ROSE_ASSERT(codimExpr);
                DeclAttributes.setCodimExp(codimExpr);
-               astExpressionStack.pop_front();
+               DeclAttributes.setHasCodimension(true);
+
                break;
              }
 
@@ -1689,20 +1690,11 @@ void c_action_component_attr_spec(Token_t * attrKeyword, int specType)
                if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                     printf ("found a ComponentAttrSpec_dimension spec \n");
 
-               DeclAttributes.setHasDimension(true);
                DeclAttributes.setDimAttr(ComponentAttrSpec_dimension);
-               // transfer the array spec from the astExpressionStack to the AttrSpec record.
-               SgIntVal * intVal = isSgIntVal(astExpressionStack.front());
-               ROSE_ASSERT(intVal);  // astExpressionStack.front() contains the number of array spec elements for the dimension attribute
-               int count = intVal->get_value();
-               delete intVal;  // must remove it from AST
-               astExpressionStack.pop_front();
-               processMultidimensionalSubscriptsIntoExpressionList(count);  // the dimension attribute is now on top of astExpressionStack
-               SgExprListExp* dimExpr = isSgExprListExp(astExpressionStack.front());
+               SgExprListExp* dimExpr = DeclAttributes.buildDimensionInfo();
                ROSE_ASSERT(dimExpr);
                DeclAttributes.setDimExp(dimExpr);
-               astExpressionStack.pop_front();
-
+               DeclAttributes.setHasDimension(true);
                break;
              }
 #endif
@@ -1731,7 +1723,7 @@ void c_action_component_attr_spec_list__begin()
    {
     // I think this is the correct assertion, but the rest of this rule is not implemented!
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R441 c_action_component_attr_spec_list__begin()");
 #endif
@@ -3023,30 +3015,21 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
                if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                     printf ("found a DIMENSION spec \n");
 
-               DeclAttributes.setHasDimension(true);
                DeclAttributes.setDimAttr(AttrSpec_DIMENSION);
-               // transfer the array spec from the astExpressionStack to the AttrSpec record.
-               SgIntVal * intVal = isSgIntVal(astExpressionStack.front());
-               ROSE_ASSERT(intVal);  // astExpressionStack.front() contains the number of array spec elements for the dimension attribute
-               int count = intVal->get_value();
-               delete intVal;  // must remove it from AST
-               astExpressionStack.pop_front();
-               processMultidimensionalSubscriptsIntoExpressionList(count);  // the dimension attribute is now on top of astExpressionStack
-               SgExprListExp* dimExpr = isSgExprListExp(astExpressionStack.front());
+               SgExprListExp* dimExpr = DeclAttributes.buildDimensionInfo();
                ROSE_ASSERT(dimExpr);
                DeclAttributes.setDimExp(dimExpr);
-               astExpressionStack.pop_front();
+               DeclAttributes.setHasDimension(true);
                break;
              }
 
            case AttrSpec_CODIMENSION:
              {
-              DeclAttributes.setHasCodimension(true);
               DeclAttributes.setCodimAttr(AttrSpec_CODIMENSION);
-              SgExprListExp* codimExpr = isSgExprListExp(astExpressionStack.front());
+              SgExprListExp* codimExpr = DeclAttributes.buildDimensionInfo();
               ROSE_ASSERT(codimExpr);
               DeclAttributes.setCodimExp(codimExpr);
-              astExpressionStack.pop_front();
+              DeclAttributes.setHasCodimension(true);
               break;
              }
 
@@ -3240,6 +3223,7 @@ void c_action_entity_decl(Token_t * id, ofp_bool hasArraySpec, ofp_bool hasCoarr
 void c_action_entity_decl(Token_t * id)
 #endif
    {
+    //raise(SIGINT);
     // This function R504 R503-F2008 is similar to R442 R438-F2008
 
   // Push the entities onto the list at the top of the stack
@@ -3289,26 +3273,17 @@ void c_action_entity_decl(Token_t * id)
     }
     if (hasCoarraySpec)
     {
-      ROSE_ASSERT(!astExpressionStack.empty());  // astExpressionStack.front() contains all codimension specs
-      SgExprListExp* coarraySpec = isSgExprListExp(astExpressionStack.front());
+      SgExprListExp* coarraySpec = entityAttr.buildDimensionInfo();
       ROSE_ASSERT(coarraySpec);
       entityAttr.setCodimExp(coarraySpec);
-      astExpressionStack.pop_front();
       entityAttr.setHasCodimension(true);
     }
     if (hasArraySpec)
     {
-      SgIntVal * intVal = isSgIntVal(astExpressionStack.front());
-      ROSE_ASSERT(intVal);  // astExpressionStack.front() contains the number of array spec elements for the dimension info
-      int count = intVal->get_value();
-      delete intVal;  // must remove it from AST
-      astExpressionStack.pop_front();
-      processMultidimensionalSubscriptsIntoExpressionList(count);  // the dimension info is now on top of astExpressionStack
-      SgExprListExp* arraySpec = isSgExprListExp(astExpressionStack.front());
-      ROSE_ASSERT(arraySpec);
-      entityAttr.setDimExp(arraySpec);
-      astExpressionStack.pop_front();
-      entityAttr.setHasDimension(true);
+        SgExprListExp* arraySpec = entityAttr.buildDimensionInfo();
+        ROSE_ASSERT(arraySpec);
+        entityAttr.setDimExp(arraySpec);
+        entityAttr.setHasDimension(true);
     }
     // Now, we are ready to build the type the entity-decl:
     SgType* entityType = entityAttr.computeEntityType();
@@ -4114,18 +4089,9 @@ void c_action_allocatable_decl(Token_t *id, ofp_bool hasArraySpec, ofp_bool hasC
 #endif
 
         DeclAttributes.setBaseType(baseType);
-        SgIntVal * intVal = isSgIntVal(astExpressionStack.front());
-        ROSE_ASSERT(intVal);  // astExpressionStack.front() contains the number of array spec elements for the dimension info
-        int count = intVal->get_value();
-        delete intVal;  // must remove it from AST
-        astExpressionStack.pop_front();
-        processMultidimensionalSubscriptsIntoExpressionList(count);  // the dimension info is now on top of astExpressionStack
-        SgExprListExp* dimInfo = isSgExprListExp(astExpressionStack.front());
+        SgExprListExp* dimInfo = DeclAttributes.buildDimensionInfo();
         ROSE_ASSERT(dimInfo);
-        DeclAttributes.setDimExp(dimInfo);
-        astExpressionStack.pop_front();
-        DeclAttributes.setHasDimension(true);
-        SgArrayType* arrayType = DeclAttributes.buildArrayType();
+        SgArrayType* arrayType = DeclAttributes.buildArrayType(dimInfo);
         DeclAttributes.reset();
 
 #if 0
@@ -4908,22 +4874,12 @@ void c_action_dimension_decl(Token_t *id, ofp_bool hasArraySpec, ofp_bool hasCoA
      ROSE_ASSERT(arrayVariable != NULL);
      SgType* arrayVariableBaseType = arrayVariable->get_type();
      ROSE_ASSERT(arrayVariableBaseType != NULL);
-
-    DeclAttributes.setBaseType(arrayVariableBaseType);
-    SgIntVal * intVal = isSgIntVal(astExpressionStack.front());
-    ROSE_ASSERT(intVal);  // astExpressionStack.front() contains the number of array spec elements for the dimension info
-    int count = intVal->get_value();
-    delete intVal;  // must remove it from AST
-    astExpressionStack.pop_front();
-    processMultidimensionalSubscriptsIntoExpressionList(count);  // the dimension info is now on top of astExpressionStack
-    SgExprListExp* dimInfo = isSgExprListExp(astExpressionStack.front());
-    ROSE_ASSERT(dimInfo);
-    DeclAttributes.setDimExp(dimInfo);
-    astExpressionStack.pop_front();
-    DeclAttributes.setHasDimension(true);
-    SgArrayType* arrayVariableType = DeclAttributes.buildArrayType();
-    arrayVariable->set_type(arrayVariableType);
-    DeclAttributes.reset();
+     DeclAttributes.setBaseType(arrayVariableBaseType);
+     SgExprListExp* dimInfo = DeclAttributes.buildDimensionInfo();
+     ROSE_ASSERT(dimInfo);
+     SgArrayType* arrayVariableType = DeclAttributes.buildArrayType(dimInfo);
+     arrayVariable->set_type(arrayVariableType);
+     DeclAttributes.reset();
 
 #if 0
   // Output debugging information about saved state (stack) information.
@@ -6461,7 +6417,7 @@ void c_action_data_ref(int numPartRef)
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In R612 c_action_data_ref(): (variable built here) numPartRef = %d \n",numPartRef);
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R612 c_action_data_ref()");
 #endif
@@ -18471,11 +18427,9 @@ void c_action_coarray_spec(int count)
       cout << "ERROR (Rice CoArray Fortran 2.0): the co-rank specification must be an asterisk." << endl;
       // ROSE_ASSERT(false);
     }
-    astExpressionStack.pop_front();  // pop the asterisk expression.
-    // Push an empty SgExprListExp on the astExpressionStack to serve as comdimension info.
-    SgExprListExp* expresssionList = new SgExprListExp();
-    setSourcePosition(expresssionList);
-    astExpressionStack.push_front(expresssionList);
+
+    // Analogous to c_action_array_spec
+    astExpressionStack.push_front(new SgIntVal(count, ""));
 
 #if 0
   // Output debugging information about saved state (stack) information.
@@ -18513,7 +18467,7 @@ void c_action_allocate_coarray_spec()
 */
 void c_action_rice_image_selector(Token_t *team_id) 
     {
-     if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+    if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
         printf ("In c_action_rice_image_selector(), team_id = %p \n",team_id);
 
      SgVarRefExp* teamIdReference = NULL;
