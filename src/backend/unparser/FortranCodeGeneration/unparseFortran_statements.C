@@ -13,7 +13,6 @@
 // Interestingly it must be at the top of the list of include files.
 #include "rose_config.h"
 
-
 using namespace std;
 
 FortranCodeGeneration_locatedNode::FortranCodeGeneration_locatedNode(Unparser* unp, std::string fname)
@@ -3684,6 +3683,63 @@ FortranCodeGeneration_locatedNode::unparseInitNamePtrList(SgInitializedNamePtrLi
 //----------------------------------------------------------------------------
 //  Declarations helpers
 //----------------------------------------------------------------------------
+void FortranCodeGeneration_locatedNode::unparseArrayAttr(SgArrayType* type, SgUnparse_Info& info)
+{
+    curprint("(");
+    unparseExpression(type->get_dim_info(), info);
+    curprint(")");
+}
+
+void FortranCodeGeneration_locatedNode::unparseStringAttr(SgTypeString* type, SgUnparse_Info& info)
+{
+    curprint("*");
+    curprint("(");
+    unparseExpression(type->get_lengthExpression(), info);
+    curprint(")");
+}
+
+void FortranCodeGeneration_locatedNode::unparseEntityTypeAttr(SgType* type, SgUnparse_Info& info)
+{
+    if (type->get_isCoArray())
+    {
+        SgType* baseType;
+        if (isSgPointerType(type))
+            baseType = isSgPointerType(type)->get_base_type();
+        else  // type must be an SgArrayType
+            baseType = isSgArrayType(type)->get_base_type();
+        if (isSgPointerType(type))
+            unparseEntityTypeAttr(baseType, info);
+        else if (isSgTypeString(baseType))
+        {
+            curprint("[*]");
+            unparseStringAttr(isSgTypeString(baseType), info);
+        }
+        else if (isSgArrayType(baseType))
+        {
+            SgArrayType* arrayType = isSgArrayType(baseType);
+            unparseArrayAttr(arrayType, info);
+            curprint("[*]");
+            SgTypeString* stringType = isSgTypeString(arrayType->get_base_type());
+            if (stringType)
+                unparseStringAttr(stringType, info);
+        }
+        else
+            curprint("[*]");
+    }
+    else if (isSgArrayType(type))
+    {
+        SgArrayType* arrayType = isSgArrayType(type);
+        unparseArrayAttr(arrayType, info);
+        SgTypeString* stringType = isSgTypeString(arrayType->get_base_type());
+        if (stringType)
+            unparseStringAttr(stringType, info);
+    }
+    else if (isSgPointerType(type))
+        unparseEntityTypeAttr(isSgPointerType(type)->get_base_type(), info);
+    else if (isSgTypeString(type))
+        unparseStringAttr(isSgTypeString(type), info);
+}
+
 
 void
 FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializedName* initializedName, SgUnparse_Info& info)
@@ -3706,28 +3762,11 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
         {
        // printf ("In unparseVarDecl(): calling unparseType on type = %p = %s \n",type,type->class_name().c_str());
 
-#if 0
-       // DQ (3/23/2008): If this is a SgPointerType then just output the 
-       // base type (since the declaration will use the "POINTER" attribute).
-       // unp->u_fortran_type->unparseType(type, info);
-          SgPointerType* pointerType = isSgPointerType(type);
-          if (pointerType != NULL)
-             {
-               SgType* baseType = pointerType->get_base_type();
-               ROSE_ASSERT(baseType != NULL);
-               unp->u_fortran_type->unparseType(baseType, info);
-             }
-            else
-             {
-               unp->u_fortran_type->unparseType(type, info);
-             }
-#else
           // DXN (06/19/2011): only unparse the base type:
           SgType* baseType = type->stripType(SgType::STRIP_ARRAY_TYPE);
           unp->u_fortran_type->unparseType(baseType, info);
-          // unp->u_fortran_type->unparseType(type, info);
-#endif
-       // DQ (11/18/2007): Added support for ALLOCATABLE declaration attribute
+
+          // DQ (11/18/2007): Added support for ALLOCATABLE declaration attribute
           SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(stmt);
           ROSE_ASSERT(variableDeclaration != NULL);
 
@@ -3909,126 +3948,36 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
       // FIXME: currenly use "prev_decl_item" to denote the pointee
      curprint(name.str());
 
-     if (isSgTypeCrayPointer(type) != NULL) {
-          SgInitializedName *pointeeVar = initializedName->get_prev_decl_item();
-          ROSE_ASSERT(pointeeVar != NULL);
-          SgName pointeeName = pointeeVar->get_name();
-          curprint(",");
-          curprint(pointeeName.str());
-          curprint(") ");
-     }
-
-  // Fortran permits alternative use of type attributes instead of explicit declaration for each variable when handle groups of variables in a declaration.
-     if (info.useTypeAttributes() == false)
-        {
-          SgArrayType* arrayType = isSgArrayType(type);
-          if (arrayType != NULL && arrayType->get_rank() > 0)  // "coscalar", a scalar coarray, is implemented as an array of rank 0.
-             {// output the dim_info expressions
-               curprint("(");
-               unparseExpression(arrayType->get_dim_info(), info);
-               curprint(")");
-               SgTypeString* stringType = isSgTypeString(arrayType->get_base_type());
-               if (stringType)
-                  {
-                    curprint("*");
-                    curprint("(");
-                    unparseExpression(stringType->get_lengthExpression(), info);
-                    curprint(")");
-                  }
-             }
-          SgTypeString* stringType = isSgTypeString(type);
-          if (stringType)
-             {
-               curprint("*");
-               curprint("(");
-               unparseExpression(stringType->get_lengthExpression(), info);
-               curprint(")");
-             }
-        }
-
-     // The entity type follows the following ordering: pointer < copointer < codimension < dimension
-     SgPointerType* pType = isSgPointerType(type);
-     if (pType)
-     { // pType may points to a copointer or may be a copointer itself, so look at its base type
-//       SgPointerType* pointeeType = isSgPointerType(pType->get_base_type());
-       if (isSgPointerType(pType->get_base_type()))
-       {   // pType is a pointer to a copointer
-           SgPointerType* pointeeType = isSgPointerType(pType->get_base_type());
-           SgArrayType* pointeeBase = isSgArrayType(pointeeType->get_base_type());
-           if (pointeeBase != NULL && pointeeBase->get_rank() > 0)  // the base type is an array of rank >= 1.
-           {
-             curprint("(");
-             unparseExpression(pointeeBase->get_dim_info(), info);
-             curprint(")");
-             if (pointeeBase->get_isCoArray())
-             {
-               curprint("[*]");
-             }
-           }
-           else if (pointeeType->get_base_type()->get_isCoArray())
-           {
-             curprint("[*]");  // a scalar/derived-type coarray is implemented as a rank 0 array of the given type.
-           }
-       }
-       else if (isSgArrayType(pType->get_base_type()))
-       {   // if the base type of pType is a coarray or an array, print the appropriate coarray or array info
-           SgArrayType* pTypeBase = isSgArrayType(pType->get_base_type());
-           if (pTypeBase != NULL && pTypeBase->get_rank() > 0)  // the base type is an array of rank >= 1.
-           {
-             curprint("(");
-             unparseExpression(pTypeBase->get_dim_info(), info);
-             curprint(")");
-             SgTypeString* stringType = isSgTypeString(pTypeBase->get_base_type());
-             if (stringType)
-             {
-               curprint("*");
-               curprint("(");
-               unparseExpression(stringType->get_lengthExpression(), info);
-               curprint(")");
-             }
-             if (pTypeBase->get_isCoArray())
-             {
-               curprint("[*]");
-             }
-           }
-           else if (pType->get_base_type()->get_isCoArray())
-           {
-             curprint("[*]");  // a scalar/derived-type coarray is implemented as a rank 0 array of the given type.
-           }
-
-       }
-       else if (isSgTypeString(pType->get_base_type()))
-       {  // print the character length
-           SgTypeString* stringType = isSgTypeString(pType->get_base_type());
-           curprint("*");
-           curprint("(");
-           unparseExpression(stringType->get_lengthExpression(), info);
-           curprint(")");
-       }
-     }
-     else if (type->get_isCoArray())  // type is not a pointer, but is a coarray type
+     if (isSgTypeCrayPointer(type) != NULL)
      {
-       curprint("[*]");
-     }
+           SgInitializedName *pointeeVar = initializedName->get_prev_decl_item();
+           ROSE_ASSERT(pointeeVar != NULL);
+           SgName pointeeName = pointeeVar->get_name();
+           curprint(",");
+           curprint(pointeeName.str());
+           curprint(") ");
+      }
+      else
+          unparseEntityTypeAttr(type, info);
 
-  // Unparse the initializers if any exist
-  // printf ("In FortranCodeGeneration_locatedNode::unparseVarDecl(initializedName=%p): variable initializer = %p \n",initializedName,init);
-     if (init != NULL)
-        {
-         if (pType)
-            {  // this is a pointer null-init; OFP 0.8.2 has yet to implement pointer => init-data-object
+       // Unparse the initializers if any exist
+       // printf ("In FortranCodeGeneration_locatedNode::unparseVarDecl(initializedName=%p): variable initializer = %p \n",initializedName,init);
+      if (init != NULL)
+      {
+           if (isSgPointerType(type))
+           {  // this is a pointer null-init; OFP 0.8.2 has yet to implement pointer => init-data-object
                // TODO: need an IR to model pointer initialization, something like SgPointerInitializer.
-              curprint(" => NULL()");
+               curprint(" => NULL()");
 
-            }
-         else
-            {
-              curprint(" = ");
-              SgInitializer* initializer = isSgInitializer(init);
-              ROSE_ASSERT(initializer != NULL);
-              unparseExpression(initializer, info);
-            }
-        }
+           }
+           else
+           {
+               curprint(" = ");
+               SgInitializer* initializer = isSgInitializer(init);
+               ROSE_ASSERT(initializer != NULL);
+               unparseExpression(initializer, info);
+           }
+      }
    }
 
 //----------------------------------------------------------------------------

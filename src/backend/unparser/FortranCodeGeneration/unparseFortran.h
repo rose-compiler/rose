@@ -424,8 +424,16 @@ class FortranCodeGeneration_locatedNode : public UnparseLanguageIndependentConst
           virtual void unparseOmpBeginDirectiveClauses     (SgStatement* stmt,SgUnparse_Info& info);
           virtual void unparseOmpEndDirectiveClauses       (SgStatement* stmt,     SgUnparse_Info& info);
           virtual void unparseOmpEndDirectivePrefixAndName (SgStatement* stmt, SgUnparse_Info& info);
-      
 
+     private: // DXN (08/12/2011)
+          // Unparses dimension attribute of the given array type and other attributes of its base type.
+          void unparseArrayAttr(SgArrayType* type, SgUnparse_Info& info);
+
+          // Unparses character length attribute of the given string type
+          void unparseStringAttr(SgTypeString* type, SgUnparse_Info& info);
+
+          // Unparses attributes for the given entity type
+          void unparseEntityTypeAttr(SgType* type, SgUnparse_Info& info);
 };
 
 #endif

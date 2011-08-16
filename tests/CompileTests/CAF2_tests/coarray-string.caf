@@ -1,0 +1,7 @@
+! 
+program coarray_string
+   character(len =3) :: X[*]
+   character :: Y[*]*3
+   character(len =4), dimension(:) :: X1[*]
+   character :: Y1(:)[*]*4
+end program

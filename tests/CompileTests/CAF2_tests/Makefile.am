@@ -43,6 +43,7 @@ TESTCODES_REQUIRED_TO_PASS = \
     coarray-bounds-2.caf \
     coarray-decl.caf \
     coarray-semantics-1.caf \
+    coarray-string.caf \
     copointer-components.caf \
     copointer-array.caf \
     copointer-coarray.caf \
@@ -80,6 +81,7 @@ TESTCODES_REQUIRED_TO_PASS = \
     module-1-mod1.caf \
     module-2-module_table.caf \
     pointer-1.caf \
+    pointer-coarray-derived-type.caf \
     put-1.caf \
     put-3.caf \
     remote-read-1.caf \
