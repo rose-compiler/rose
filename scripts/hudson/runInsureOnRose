@@ -43,7 +43,11 @@ fi
 
 if test "x$ROSE_TEST_BUILD_STEP" = "xanalyze" ; then
   if test \! \( "$ROSE_TEST_BUILD_DIRECTORY" = "tests/CompileTests/Cxx_tests" -o \
-                "$ROSE_TEST_BUILD_DIRECTORY" = "tests/CompileTests/Fortran_tests" \) ; then
+                "$ROSE_TEST_BUILD_DIRECTORY" = "tests/CompileTests/Fortran_tests" -o \
+                "$ROSE_TEST_BUILD_DIRECTORY" = "tests/CompileTests/Fortran_tests/LANL_POP" -o \
+                "$ROSE_TEST_BUILD_DIRECTORY" = "tests/CompileTests/Fortran_tests/gfortranTestSuite" -o \
+                "$ROSE_TEST_BUILD_DIRECTORY" = "tests/roseTests/astFileIOTests" -o \
+                "$ROSE_TEST_BUILD_DIRECTORY" = "tests/RunTests/AstDeleteTests" \) ; then
     echo "Error: This hudson script has not been configured to support this build directory for Insure++ analysis: $ROSE_TEST_BUILD_DIRECTORY"
     exit 1
   fi
@@ -307,11 +311,11 @@ case "$ROSE_TEST_BUILD_STEP" in
 
     # Make sure the ROSE-Insure++ build tree exists
     set +e
-    ssh hudson-rose@hudson-rose-23 test -d ${ROSE_INSURE_BUILD_TREE}
-    if [ $? -ne 0 ] ; then
-	echo "Error: no build tree found at hudson-rose@hudson-rose-23:${ROSE_INSURE_BUILD_TREE}"
-	exit 1
-    fi
+		ssh hudson-rose@hudson-rose-23 test -d ${ROSE_INSURE_BUILD_TREE}
+		if [ $? -ne 0 ] ; then
+			echo "Error: no build tree found at hudson-rose@hudson-rose-23:${ROSE_INSURE_BUILD_TREE}"
+			exit 1
+		fi
     set -e
 
     # TOO (4/23/2011): Use the same Insure++ ROSE build tree that was created during test-insure-build
@@ -327,14 +331,17 @@ case "$ROSE_TEST_BUILD_STEP" in
         echo "$workspace is invalid and could cause problems when issuing 'rm -rf' on it"
         exit 1
       fi
-      rm -rf ${workspace}
-      mkdir -p ${workspace}
+      rm -rf ${workspace} && mkdir -p ${workspace}
       cd ${workspace}
       # Need the source Makefile.am's
-      scp -r hudson-rose@hudson-rose-23:${workspace}/hudson-rose-23 .
+      #scp -r hudson-rose@hudson-rose-23:${workspace}/hudson-rose-23 .
+      rsync -avz --exclude=".git" hudson-rose@hudson-rose-23:${workspace}/hudson-rose-23 .  
+	  [ $? -ne 0 ] && echo "Error code: $?"
       cd hudson-rose-23
     else
-      scp -r hudson-rose@hudson-rose-23:${ROSE_INSURE_BUILD_TREE} .
+      rsync -avz --exclude=".git" ${ROSE_INSURE_BUILD_TREE} . 
+	  [ $? -ne 0 ] && echo "$?"
+      #scp -r hudson-rose@hudson-rose-23:${ROSE_INSURE_BUILD_TREE} .
     fi
 
     cd ROSE-build
@@ -359,6 +366,9 @@ case "$ROSE_TEST_BUILD_STEP" in
     BUILD_TARGET=check
     if test "$ROSE_TEST_BUILD_DIRECTORY" = "tests/CompileTests/Fortran_tests" ; then
       BUILD_TARGET=tests
+    elif test "$ROSE_TEST_BUILD_DIRECTORY" = "tests/roseTests/astFileIOTests" ; then
+      # TOO (5/6/2011): Just testing how long this would take
+      BUILD_TARGET=check
     fi
 
   # DQ (4/30/2011): For the Fortran work run it is serial since it appears to be a problem to run in parallel.

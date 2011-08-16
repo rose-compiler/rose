@@ -31,9 +31,14 @@ VisitEveryNode::VisitEveryNode(std::ostream& outS)
 
 void VisitEveryNode::visit ( SgNode* node )
    {
+     //We don't want to unparse the whole file; this pulls in built-in functions which are different
+     //between platforms
+     if (isSgSourceFile(node) || isSgGlobal(node))
+          return;
+   
      std::vector<SgNode*> linearizedSubtree = linearize_subtree(node);
 
-     outStream  << "Unparsed: " << node->unparseToString() << std::endl;
+     outStream  << "Unparsed: " << node->class_name() << " " << node->unparseToString() << std::endl;
      outStream  << "          ";
      for (std::vector<SgNode*>::iterator it_sub =  linearizedSubtree.begin();
          it_sub != linearizedSubtree.end(); ++ it_sub){

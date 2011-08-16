@@ -1790,18 +1790,26 @@ SgAsmBlock *
 Partitioner::build_ast()
 {
     /* Build a function to hold all the unassigned instructions.  Update documentation if changing the name of
-     * this generated function! */
+     * this generated function!  We do this by traversing the instructions and obtaining a basic block for each one.  If the
+     * basic block doesn't belong to a function yet, we add it to this special one.  Note that we cannot traverse the list of
+     * instructions directly because creating the basic block might cause additional instructions to be created. */
     Function *catchall = NULL;
     if ((func_heuristics & SgAsmFunctionDeclaration::FUNC_LEFTOVERS)) {
-        for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
-            BasicBlock *bb = find_bb_containing(ii->first);
-            ROSE_ASSERT(bb!=NULL);
-            if (!bb->function) {
-                if (!catchall)
-                    catchall = add_function(ii->first, SgAsmFunctionDeclaration::FUNC_LEFTOVERS, "***uncategorized blocks***");
-                append(catchall, bb);
+        bool process_instructions;
+        do {
+            process_instructions = false;
+            Disassembler::InstructionMap insns_copy = insns;
+            for (Disassembler::InstructionMap::iterator ii=insns_copy.begin(); ii!=insns_copy.end(); ++ii) {
+                BasicBlock *bb = find_bb_containing(ii->first);
+                ROSE_ASSERT(bb!=NULL);
+                if (!bb->function) {
+                    if (!catchall)
+                        catchall = add_function(ii->first, SgAsmFunctionDeclaration::FUNC_LEFTOVERS, "***uncategorized blocks***");
+                    append(catchall, bb);
+                    process_instructions = true;
+                }
             }
-        }
+        } while (process_instructions);            
     }
 
     /* Build the AST */

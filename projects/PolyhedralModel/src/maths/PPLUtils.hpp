@@ -12,7 +12,7 @@
 #define PRIx64 "I64x" // Using PPL undefined this macro which is needed by a template file include by rose.h
 
 typedef Parma_Polyhedra_Library::Variable VariableID;
-typedef Parma_Polyhedra_Library::Linear_Expression LinearExpression;
+typedef Parma_Polyhedra_Library::Linear_Expression LinearExpression_ppl;
 typedef Parma_Polyhedra_Library::Constraint Constraint;
 typedef Parma_Polyhedra_Library::Constraint_System ConstraintSystem;
 typedef Parma_Polyhedra_Library::C_Polyhedron Polyhedron;
