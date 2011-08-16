@@ -197,6 +197,14 @@ class Unparse_Java : public UnparseLanguageIndependentConstructs
           virtual void unparseCompoundAssignOp(SgCompoundAssignOp* op, SgUnparse_Info& info);
           virtual void unparseBinaryOp(SgBinaryOp* op, SgUnparse_Info& info);
 
+      //! Support for unparsing modifiers
+          virtual void unparseDeclarationModifier   (SgDeclarationModifier& mod,   SgUnparse_Info& info);
+          virtual void unparseAccessModifier        (SgAccessModifier& mod,        SgUnparse_Info& info);
+          virtual void unparseStorageModifier       (SgStorageModifier& mod,       SgUnparse_Info& info);
+          virtual void unparseConstVolatileModifier (SgConstVolatileModifier& mod, SgUnparse_Info& info);
+          virtual void unparseTypeModifier          (SgTypeModifier& mod,          SgUnparse_Info& info);
+          virtual void unparseFunctionModifier      (SgFunctionModifier& mod,      SgUnparse_Info& info);
+
           virtual void curprint_indented(const std::string str, SgUnparse_Info& info) const;
 
           virtual void unparseNestedStatement(SgStatement* stmt, SgUnparse_Info& info);
