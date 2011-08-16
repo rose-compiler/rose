@@ -27,4 +27,5 @@ dist_include_HEADERS = DotConsumer.h DotVisitor.h
 clean-am:
 	rm -f *.dot *.c *.C *.png *.o Clang2Dot
 
-EXTRA_DIST = CMakeLists.txt
+EXTRA_DIST =
+ 

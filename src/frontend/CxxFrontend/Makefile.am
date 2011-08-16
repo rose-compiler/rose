@@ -1,10 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIRS = 
-
-if ROSE_USE_CLANG_FRONTEND
-  SUBDIRS += Clang
-endif
+SUBDIRS = Clang
 
 release_binary_compatibility_signature=$(shell ${top_srcdir}/scripts/bincompat-sig)
 # BINARY_EDG_DIRNAME=roseBinaryEDG-${build_triplet_without_redhat}-${GENERATED_COMPILER_NAME_AND_VERSION_SUFFIX}-${release_binary_compatibility_signature}
@@ -56,7 +52,8 @@ ALL_TARBALLS = $(foreach ARCH,$(ALL_ARCHS),$(foreach COMPILER,$(COMPILERS_$(subs
 #   no binaries distributed as EXTRA_DIST
 EXTRA_DIST = $(if $(findstring all,$(DIST_EDG)), $(ALL_TARBALLS), $(if $(findstring current,$(DIST_EDG)), $(BINARY_EDG_DIRNAME).tar.gz))
 
-DIST_SUBDIRS= 
+# !!! Don't distribute EDG !!!
+DIST_SUBDIRS= Clang 
 
 # if tarballs for all-archs and compiler combinations are available
 #    move 
@@ -121,7 +118,7 @@ upload_edg_binary:
 else 
 #------------------- no EDG sources
 
-all: EDG/libroseEDG.la
+all-am: EDG/libroseEDG.la
 
 
 #extract EDG tar-balls for the current architecture if that has not already been done

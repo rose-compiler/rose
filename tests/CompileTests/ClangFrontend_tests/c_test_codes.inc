@@ -9,7 +9,7 @@ test_5.c \
 test_6.c \
 test_7.c \
 test_8.c \
-test_9.c \ 
+test_9.c \
 test_10.c \
 test_11.c
 
