@@ -20,12 +20,14 @@ mpaDataflowAnalysis_includes=\
 mpaDataflowAnalysis_la_sources=\
 	$(mpaDataflowAnalysisPath)/DataFlowAnalysis.C \
 	$(mpaDataflowAnalysisPath)/DefUseChain.C \
+	$(mpaDataflowAnalysisPath)/ReachingDefinitionFacade.C \
 	$(mpaDataflowAnalysisPath)/ReachingDefinition.C
 
 
 mpaDataflowAnalysis_includeHeaders=\
 	$(mpaDataflowAnalysisPath)/DataFlowAnalysis.h \
 	$(mpaDataflowAnalysisPath)/DefUseChain.h \
+	$(mpaDataflowAnalysisPath)/ReachingDefinitionFacade.h \	
 	$(mpaDataflowAnalysisPath)/ReachingDefinition.h
 
 

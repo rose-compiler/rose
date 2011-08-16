@@ -7,7 +7,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/util ${CMAKE_SOURCE_DIR}/src/util/su
 
 ########### install files ###############
 
-install(FILES  DataFlowAnalysis.h DefUseChain.h ReachingDefinition.h DESTINATION ${INCLUDE_INSTALL_DIR})
+install(FILES  DataFlowAnalysis.h DefUseChain.h ReachingDefinition.h ReachingDefinitionFacade.h DESTINATION ${INCLUDE_INSTALL_DIR})
 
 
 

@@ -1,6 +1,5 @@
 #include "IntraProcAliasAnalysis.h"
 #include "CommandOptions.h"
-#include <AstInterface_ROSE.h>
 
 void CompactRepresentation::computeAliases (SgGraphNode *node, int derefLevel, vector<SgGraphNode *> & sol) {
     
@@ -489,9 +488,6 @@ bool IntraProcAliasAnalysis::runCheck() {
 
         }
 
-        
-        
-        std::cout << "10\n";
             CompReprPtr c_out = getCFGOutData(cfgNodes[cfgNodes.size()-1]);
             setFunctionExit(c_out);
             
@@ -523,7 +519,7 @@ void IntraProcAliasAnalysis::getFunctionParametersAliasRelations(SgFunctionCallE
             
             for (; i != actual.end(); ++j, i++) {
                 
-                CollectAliasRelations::processLHS(*j, leftARNode);
+                ProcessExpression::processLHS(*j, leftARNode);
                 
                 if((*i)->variantT() == V_SgFunctionCallExp) {
                     SgFunctionCallExp *funcCall = isSgFunctionCallExp(*i);
@@ -539,7 +535,7 @@ void IntraProcAliasAnalysis::getFunctionParametersAliasRelations(SgFunctionCallE
                     }
                     rightARNode.var = NULL;
                 } else 
-                        CollectAliasRelations::processRHS(*i, rightARNode);
+                        ProcessExpression::processRHS(*i, rightARNode);
                 
                 if(leftARNode.var != NULL && rightARNode.var != NULL) {
                    arg_relations.push_back(make_pair(leftARNode, rightARNode)); 
@@ -553,7 +549,7 @@ void IntraProcAliasAnalysis::getFunctionParametersAliasRelations(SgFunctionCallE
             switch(f_exp->get_parent()->variantT()) {
                 case V_SgAssignOp:
                     if(SageInterface::isAssignmentStatement(f_exp->get_parent(),&lhs, &rhs)) {
-                        CollectAliasRelations::processLHS(lhs,arNode);
+                        ProcessExpression::processLHS(lhs,arNode);
                     }
                     break;
                 case V_SgAssignInitializer:
@@ -563,7 +559,7 @@ void IntraProcAliasAnalysis::getFunctionParametersAliasRelations(SgFunctionCallE
 
                     lhs = static_cast<SgExpression *> (assgn_i->get_parent());
                     if(lhs != NULL)
-                        CollectAliasRelations::processLHS(lhs,arNode);
+                        ProcessExpression::processLHS(lhs,arNode);
                 }   
                 break;
                 default:
@@ -604,7 +600,7 @@ void IntraProcAliasAnalysis::getConstructorParametersAliasRelations(SgConstructo
             
             for (; i != actual.end(); ++j, i++) {
                 
-                CollectAliasRelations::processLHS(*j, leftARNode);
+                ProcessExpression::processLHS(*j, leftARNode);
 
                 if((*i)->variantT() == V_SgFunctionCallExp) {
                     SgFunctionCallExp *funcCall = isSgFunctionCallExp(*i);
@@ -620,7 +616,7 @@ void IntraProcAliasAnalysis::getConstructorParametersAliasRelations(SgConstructo
                     }
                     rightARNode.var = NULL;
                 } else 
-                      CollectAliasRelations::processRHS(*i, rightARNode);
+                      ProcessExpression::processRHS(*i, rightARNode);
                 
                 if(leftARNode.var != NULL && rightARNode.var != NULL) {
                    arg_relations.push_back(make_pair(leftARNode, rightARNode)); 
@@ -723,7 +719,7 @@ bool IntraProcAliasAnalysis::updateVirtualFunctionInCallGraph (SgFunctionCallExp
           {
               //parse the LHS
               leftSide = isSgBinaryOp(funcExp)->get_lhs_operand();
-              CollectAliasRelations::processLHS(leftSide, leftNode);
+              ProcessExpression::processLHS(leftSide, leftNode);
               
               // a->  equivalent to (*a).
               leftNode.derefLevel = leftNode.derefLevel + 1;
@@ -733,7 +729,7 @@ bool IntraProcAliasAnalysis::updateVirtualFunctionInCallGraph (SgFunctionCallExp
           {
               //parse the LHS
               leftSide = isSgBinaryOp(funcExp)->get_lhs_operand();
-              CollectAliasRelations::processLHS(leftSide, leftNode);
+              ProcessExpression::processLHS(leftSide, leftNode);
           }
           break;
           default:
@@ -816,7 +812,7 @@ std::vector<SgGraphNode *> IntraProcAliasAnalysis::getPredecessors(SgGraphNode *
   }
 
 
-void CollectAliasRelations::processLHS(SgNode *node, struct AliasRelationNode &arNode) {
+void ProcessExpression::processLHS(SgNode *node, struct AliasRelationNode &arNode) {
 
     SgVariableSymbol *sym = NULL;
     SgVarRefExp *var_exp;
@@ -862,7 +858,7 @@ void CollectAliasRelations::processLHS(SgNode *node, struct AliasRelationNode &a
                 derefLevel++;
             }
             
-            processLHS(deref_exp->get_operand(), arNode);
+            ProcessExpression::processLHS(deref_exp->get_operand(), arNode);
             arNode.derefLevel += derefLevel;
             
             return;
@@ -875,7 +871,7 @@ void CollectAliasRelations::processLHS(SgNode *node, struct AliasRelationNode &a
         {    
             SgBinaryOp *bin_exp = isSgBinaryOp(node);
             if(bin_exp != NULL) {
-                processLHS(bin_exp->get_rhs_operand(), arNode);
+                ProcessExpression::processLHS(bin_exp->get_rhs_operand(), arNode);
                 return;
             }
         }
@@ -897,7 +893,7 @@ void CollectAliasRelations::processLHS(SgNode *node, struct AliasRelationNode &a
     
 }
 
-void CollectAliasRelations::processRHS(SgNode *node, struct AliasRelationNode &arNode) {
+void ProcessExpression::processRHS(SgNode *node, struct AliasRelationNode &arNode) {
     SgVariableSymbol *sym = NULL;
     SgVarRefExp *var_exp;
     int derefLevel = 0;
@@ -935,7 +931,7 @@ void CollectAliasRelations::processRHS(SgNode *node, struct AliasRelationNode &a
                 
                 derefLevel++;
             }
-            processRHS(deref_exp->get_operand(), arNode);
+            ProcessExpression::processRHS(deref_exp->get_operand(), arNode);
             arNode.derefLevel += derefLevel;
             return;
             
@@ -949,7 +945,7 @@ void CollectAliasRelations::processRHS(SgNode *node, struct AliasRelationNode &a
  
             assert(add_exp != NULL);
             
-            processRHS(add_exp->get_operand(), arNode);
+            ProcessExpression::processRHS(add_exp->get_operand(), arNode);
 
             sym = arNode.var;
             derefLevel = arNode.derefLevel-1;
@@ -962,7 +958,7 @@ void CollectAliasRelations::processRHS(SgNode *node, struct AliasRelationNode &a
         {    
             SgBinaryOp *bin_exp = isSgBinaryOp(node);
             if(bin_exp != NULL) {
-                processRHS(bin_exp->get_rhs_operand(), arNode);
+                ProcessExpression::processRHS(bin_exp->get_rhs_operand(), arNode);
                 return;
             }
         }
@@ -975,7 +971,7 @@ void CollectAliasRelations::processRHS(SgNode *node, struct AliasRelationNode &a
             if(SageInterface::isAssignmentStatement(node,&lhs, &rhs)){
                 
                 assert(rhs != NULL);
-                processRHS(rhs, arNode);
+                ProcessExpression::processRHS(rhs, arNode);
                 return;
             }
        }
@@ -984,7 +980,7 @@ void CollectAliasRelations::processRHS(SgNode *node, struct AliasRelationNode &a
        case V_SgCastExp:
        {
            SgCastExp *cast_exp = isSgCastExp(node);
-           processRHS(cast_exp->get_operand(), arNode);
+           ProcessExpression::processRHS(cast_exp->get_operand(), arNode);
            return;
        }
        break;
@@ -1091,7 +1087,7 @@ void CollectAliasRelations::processNode(SgGraphNode* g_node){
             rhs  = returnStmt ->get_expression();
             
             //std::cout << "Return for processing : " << rhs->unparseToCompleteString() << std::endl;
-            processRHS(rhs, rightARNode);
+            ProcessExpression::processRHS(rhs, rightARNode);
             g->addReturnStmt(rightARNode);
             return;
         }
@@ -1103,10 +1099,10 @@ void CollectAliasRelations::processNode(SgGraphNode* g_node){
     }
 
     if(lhs != NULL)
-        processLHS(lhs, leftARNode);  
+        ProcessExpression::processLHS(lhs, leftARNode);  
     
     if(rhs != NULL)
-    processRHS(rhs, rightARNode);
+        ProcessExpression::processRHS(rhs, rightARNode);
 
     if(leftARNode.var != NULL && rightARNode.var != NULL) {
             

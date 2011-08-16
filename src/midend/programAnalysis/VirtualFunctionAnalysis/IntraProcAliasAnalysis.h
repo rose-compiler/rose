@@ -4,7 +4,6 @@
 #include "sage3basic.h"
 
 #include "IntraProcDataFlowAnalysis.h"
-#include "BitVectorRepr.h"
 #include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
 #include "customFilteredCFG.h"
@@ -19,8 +18,6 @@
 
 using namespace boost;
 using namespace std;
-typedef BitVectorRepr AliasDefinitions;
-
 
 struct AliasRelationNode{
     SgVariableSymbol *var;
@@ -166,6 +163,11 @@ public :
     
 };
 
+namespace ProcessExpression {
+    void processLHS(SgNode *node, struct AliasRelationNode &arNode) ;
+    void processRHS(SgNode *node, struct AliasRelationNode &arNode) ;
+}
+
 class CollectAliasRelations {
 
       StaticCFG::CFG *cfg;
@@ -178,8 +180,6 @@ class CollectAliasRelations {
       
       CollectAliasRelations(StaticCFG::CFG *_cfg, AliasInfoGenerator *_g ) : cfg(_cfg), g(_g) { }
       vector<SgGraphNode *> getCFGNodes() {  return nodes;  }
-      static void processLHS(SgNode *node, struct AliasRelationNode &arNode) ;
-      static void processRHS(SgNode *node, struct AliasRelationNode &arNode) ;
       void run();
   private:
       void recursiveCollect(SgGraphNode *, unordered_map<SgGraphNode*, CollectAliasRelations::COLOR> &);
