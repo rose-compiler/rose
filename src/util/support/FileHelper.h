@@ -65,6 +65,17 @@ public:
         return normalizePath(path1).compare(normalizePath(path2)) == 0;
     }
 
+    static string getIncludedFilePath(const list<string>& prefixPaths, const string& includedPath) {
+        for (list<string>::const_iterator prefixPathPtr = prefixPaths.begin(); prefixPathPtr != prefixPaths.end(); prefixPathPtr++) {
+            string potentialPath = concatenatePaths(*prefixPathPtr, includedPath);
+            if (fileExists(potentialPath)) {
+                return potentialPath;
+            }
+        }
+        //The included file was not found, so return an empty string.
+        return "";
+    }
+
     //Assumes that both arguments are absolute and normalized.
     //Argument toPath can be either a folder or a file.
     static string getRelativePath(const string& fromFolder, const string& toPath) {

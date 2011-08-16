@@ -14,6 +14,7 @@
 #include "sageBuilder.h"
 
 #include "CollectionHelper.h"
+#include "IncludeDirective.h"
 #include "CompilerOutputParser.h"
 #include "IncludingPreprocessingInfosCollector.h"
 
@@ -4295,31 +4296,6 @@ SgProject::parse(const vector<string>& argv)
      ROSE_ASSERT(SgNode::get_globalTypeTable()->get_parent() != NULL);
 #endif
 
-     // negara1 (06/23/2011): Collect information about the included files to support unparsing of those that are modified.
-     //Proceed only if there are input files and they require header files unparsing.
-     if (!get_fileList().empty() && (*get_fileList().begin()) -> get_unparseHeaderFiles()) {
-         if (SgProject::get_verbose() >= 1){
-             cout << endl << "***HEADER FILES ANALYSIS***" << endl << endl;
-         }
-         CompilerOutputParser compilerOutputParser(this);
-         const pair<list<string>, list<string> >& includedFilesSearchPaths = compilerOutputParser.collectIncludedFilesSearchPaths();
-         const map<string, set<string> >& includedFilesMap = compilerOutputParser.collectIncludedFilesMap();
-
-         IncludingPreprocessingInfosCollector includingPreprocessingInfosCollector(this, includedFilesSearchPaths, includedFilesMap);
-         const map<string, set<PreprocessingInfo*> >& includingPreprocessingInfosMap = includingPreprocessingInfosCollector.collect();
-
-         set_includingPreprocessingInfosMap(includingPreprocessingInfosMap);
-
-         if (SgProject::get_verbose() >= 1){
-             CollectionHelper::printList(includedFilesSearchPaths.first, "\nQuoted includes search paths:", "Path:");
-             CollectionHelper::printList(includedFilesSearchPaths.second, "\nBracketed includes search paths:", "Path:");
-
-             CollectionHelper::printMapOfSets(includedFilesMap, "\nIncluded files map:", "File:", "Included file:");
-
-             CollectionHelper::printMapOfSets(includingPreprocessingInfosMap, "\nIncluding files map:", "File:", "Including file:");
-         }
-     }
-
      return errorCode;
    }
 
@@ -4527,6 +4503,24 @@ SgProject::parse()
         }
 #endif
 
+     // negara1 (06/23/2011): Collect information about the included files to support unparsing of those that are modified.
+     //In the first step, get the include search paths, which will be used while attaching include preprocessing infos.
+     //Proceed only if there are input files and they require header files unparsing.
+     if (!get_fileList().empty() && (*get_fileList().begin()) -> get_unparseHeaderFiles()) { 
+         if (SgProject::get_verbose() >= 1){
+             cout << endl << "***HEADER FILES ANALYSIS***" << endl << endl;
+         }
+         CompilerOutputParser compilerOutputParser(this);
+         const pair<list<string>, list<string> >& includedFilesSearchPaths = compilerOutputParser.collectIncludedFilesSearchPaths();  
+         set_quotedIncludesSearchPaths(includedFilesSearchPaths.first);
+         set_bracketedIncludesSearchPaths(includedFilesSearchPaths.second);
+
+         if (SgProject::get_verbose() >= 1) {
+             CollectionHelper::printList(get_quotedIncludesSearchPaths(), "\nQuoted includes search paths:", "Path:");
+             CollectionHelper::printList(get_bracketedIncludesSearchPaths(), "\nBracketed includes search paths:", "Path:");
+         }
+     }     
+
   // GB (9/4/2009): Moved the secondary pass over source files (which
   // attaches the preprocessing information) to this point. This way, the
   // secondary pass over each file runs after all fixes have been done. This
@@ -4541,6 +4535,24 @@ SgProject::parse()
           file->secondaryPassOverSourceFile();
         }
 
+     // negara1 (06/23/2011): Collect information about the included files to support unparsing of those that are modified.
+     //In the second step (after preprocessing infos are already attached), collect the including files map.
+     //Proceed only if there are input files and they require header files unparsing.
+     if (!get_fileList().empty() && (*get_fileList().begin()) -> get_unparseHeaderFiles()) { 
+         CompilerOutputParser compilerOutputParser(this);
+         const map<string, set<string> >& includedFilesMap = compilerOutputParser.collectIncludedFilesMap();
+
+         IncludingPreprocessingInfosCollector includingPreprocessingInfosCollector(this, includedFilesMap);
+         const map<string, set<PreprocessingInfo*> >& includingPreprocessingInfosMap = includingPreprocessingInfosCollector.collect();
+
+         set_includingPreprocessingInfosMap(includingPreprocessingInfosMap);
+         
+         if (SgProject::get_verbose() >= 1) {
+             CollectionHelper::printMapOfSets(includedFilesMap, "\nIncluded files map:", "File:", "Included file:");
+             CollectionHelper::printMapOfSets(get_includingPreprocessingInfosMap(), "\nIncluding files map:", "File:", "Including file:");
+         }
+     }
+     
      if ( get_verbose() > 0 )
         {
        // Report the error code if it is non-zero (but only in verbose mode)
@@ -4574,6 +4586,34 @@ SgProject::parse()
      return errorCode;
    }
 
+//negara1 (07/29/2011)
+//The returned file path is not normalized. 
+//TODO: Return the normalized path after the bug in ROSE is fixed. The bug manifests itself when the same header file is included in 
+//multiple places using different paths. In such a case, ROSE treats the same file as different files and generates different IDs for them.
+string SgProject::findIncludedFile(PreprocessingInfo* preprocessingInfo) {
+    IncludeDirective includeDirective(preprocessingInfo -> getString());
+    const string& includedPath = includeDirective.getIncludedPath();
+    if (FileHelper::isAbsolutePath(includedPath)) {
+        //the path is absolute, so no need to search for the file
+        if (FileHelper::fileExists(includedPath)) {
+            return includedPath;
+        }
+        return ""; //file does not exist, so return an empty string
+    }
+    if (includeDirective.isQuotedInclude()) {
+        //start looking from the current folder, then proceed with the quoted includes search paths
+        //TODO: Consider the presence of -I- option, which disables looking in the current folder for quoted includes.
+        string currentFolder = FileHelper::getParentFolder(preprocessingInfo -> get_file_info() -> get_filenameString());
+        p_quotedIncludesSearchPaths.insert(p_quotedIncludesSearchPaths.begin(), currentFolder);
+        string includedFilePath = FileHelper::getIncludedFilePath(p_quotedIncludesSearchPaths, includedPath);
+        p_quotedIncludesSearchPaths.erase(p_quotedIncludesSearchPaths.begin()); //remove the previously inserted current folder (for other files it might be different)
+        if (!includedFilePath.empty()) {
+            return includedFilePath;
+        }
+    }
+    //For bracketed includes and for not yet found quoted includes proceed with the bracketed includes search paths
+    return FileHelper::getIncludedFilePath(p_bracketedIncludesSearchPaths, includedPath);
+}
 
 void
 SgSourceFile::doSetupForConstructor(const vector<string>& argv, SgProject* project)

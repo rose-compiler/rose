@@ -13,7 +13,12 @@ TESTCODES_REQUIRED_TO_PASS = \
      test5/Simple.C \
      test6/subdir/Simple.C \
      test7/Simple.C \
-     test8/Simple.C
+     test8/Simple.C \
+     test9/Simple.C \
+     test10/Simple.C \
+     test11/Simple.C \
+     test12/Simple.C \
+     test13/Simple.C
 
 TESTCODES_CURRENTLY_FAILING =
 
@@ -41,7 +46,7 @@ TestUnparseHeaders_SOURCES = UnparseHeadersTransformVisitor.C TestUnparseHeaders
 
 include_HEADERS = UnparseHeadersTransformVisitor.h
 
-EXTRA_DIST = test1 test2 test3 test4 test5 test6 test7 test8
+EXTRA_DIST = test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13
 
 # Note that although all tests are run with the same -I paths, it is fine as long as we
 # ensure that the file names inside the -I paths are unique for each test.

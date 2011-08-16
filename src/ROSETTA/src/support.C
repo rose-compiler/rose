@@ -1574,6 +1574,13 @@ Grammar::setUpSupport ()
      Project.setDataPrototype("std::map<std::string, std::set<PreprocessingInfo*> >", "includingPreprocessingInfosMap", "",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);    
 
+  // negara1 (07/29/2011): The following two fields track include paths that compiler searches for quoted and bracketed includes correspondingly.
+     Project.setDataPrototype("std::list<std::string>", "quotedIncludesSearchPaths", "",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     Project.setDataPrototype("std::list<std::string>", "bracketedIncludesSearchPaths", "",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);          
+
      Attribute.setDataPrototype    ( "std::string"  , "name", "= \"\"",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
    //  Attribute.setAutomaticGenerationOfCopyFunction(false);
