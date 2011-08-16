@@ -205,12 +205,6 @@ Unparse_Java::unparseName(SgName name, SgUnparse_Info& info)
    }
 
 void
-Unparse_Java::unparseType(SgType* type, SgUnparse_Info& info)
-   {
-       unp->u_type->unparseType(type, info);
-   }
-
-void
 Unparse_Java::unparseNamespaceDeclarationStatement (SgStatement* stmt, SgUnparse_Info& info)
    {
   // There is a SgNamespaceDefinition, but it is not unparsed except through the SgNamespaceDeclaration

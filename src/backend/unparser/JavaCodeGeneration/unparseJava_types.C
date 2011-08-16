@@ -1,4 +1,4 @@
-/* unparseJava_type.C
+/* Unparse_Java.C
  * This C file contains the general function to unparse types as well as
  * functions to unparse every kind of type.
  */
@@ -18,21 +18,6 @@ using namespace std;
 #define OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES 0
 #define OUTPUT_DEBUGGING_FUNCTION_INTERNALS 0
 #define OUTPUT_DEBUGGING_UNPARSE_INFO 0
-
-UnparseJava_type::UnparseJava_type(Unparser* unp)
-   : unp(unp)
-   {
-  // Nothing to do here!
-   }
-
-UnparseJava_type::~UnparseJava_type()
-   {
-  // Nothing to do here!
-   }
-
-void UnparseJava_type::curprint (std::string str) {
-  unp->u_sage->curprint(str);
-}
 
 string get_java_type_name(SgType* t)
    {
@@ -256,27 +241,27 @@ string get_java_type_name(SgType* t)
    }
 
 //-----------------------------------------------------------------------------------
-//  void UnparseJava_type::unparseType
+//  void Unparse_Java::unparseType
 //
 //  General function that gets called when unparsing a C++ type. Then it routes
 //  to the appropriate function to unparse each C++ type.
 //-----------------------------------------------------------------------------------
 void
-UnparseJava_type::unparseType(SgType* type, SgUnparse_Info& info)
+Unparse_Java::unparseType(SgType* type, SgUnparse_Info& info)
    {
      ROSE_ASSERT(type != NULL);
 
 #if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
      string firstPartString  = (info.isTypeFirstPart()  == true) ? "true" : "false";
      string secondPartString = (info.isTypeSecondPart() == true) ? "true" : "false";
-     printf ("In UnparseJava_type::unparseType(): type->sage_class_name() = %s firstPart = %s secondPart = %s \n",
+     printf ("In Unparse_Java::unparseType(): type->sage_class_name() = %s firstPart = %s secondPart = %s \n",
           type->sage_class_name(),firstPartString.c_str(),secondPartString.c_str());
      curprint ( string("\n/* Top of unparseType name ") + type->sage_class_name()
          + " firstPart " + firstPartString + " secondPart " + secondPartString + " */ \n");
 #endif
 
 #if 0
-     printf ("In UnparseJava_type::unparseType(): type->sage_class_name() = %s \n",type->sage_class_name());
+     printf ("In Unparse_Java::unparseType(): type->sage_class_name() = %s \n",type->sage_class_name());
      curprint ( string("\n/* Top of unparseType: sage_class_name() = ") + type->sage_class_name() + " */ \n");
 #endif
 
@@ -337,14 +322,14 @@ UnparseJava_type::unparseType(SgType* type, SgUnparse_Info& info)
 
           default:
              {
-               printf("Error: UnparseJava_type::unparseType(): Default case reached in switch: Unknown type %p = %s \n",type,type->class_name().c_str());
+               printf("Error: Unparse_Java::unparseType(): Default case reached in switch: Unknown type %p = %s \n",type,type->class_name().c_str());
                ROSE_ASSERT(false);
                break;
              }
         }
 
 #if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
-     printf ("Leaving UnparseJava_type::unparseType(): type->sage_class_name() = %s firstPart = %s secondPart = %s \n",
+     printf ("Leaving Unparse_Java::unparseType(): type->sage_class_name() = %s firstPart = %s secondPart = %s \n",
           type->sage_class_name(),firstPartString.c_str(),secondPartString.c_str());
      curprint ( string("\n/* Bottom of unparseType name ") + type->sage_class_name()
          + " firstPart  " + firstPartString + " secondPart " + secondPartString + " */ \n");
@@ -353,7 +338,7 @@ UnparseJava_type::unparseType(SgType* type, SgUnparse_Info& info)
 
 #if 1
 void
-UnparseJava_type::unparseQualifiedNameType ( SgType* type, SgUnparse_Info& info )
+Unparse_Java::unparseQualifiedNameType ( SgType* type, SgUnparse_Info& info )
    {
 #if 1
      printf ("Error: This function should not be called, it represents the wrong approach to the design of the IR \n");
@@ -378,13 +363,13 @@ UnparseJava_type::unparseQualifiedNameType ( SgType* type, SgUnparse_Info& info 
 #endif
 
 void
-UnparseJava_type::unparsePointerType(SgType* type, SgUnparse_Info& info)
+Unparse_Java::unparsePointerType(SgType* type, SgUnparse_Info& info)
    {
-  // printf ("Inside of UnparseJava_type::unparsePointerType \n");
-  // curprint ( "\n/* Inside of UnparseJava_type::unparsePointerType */ \n";
+  // printf ("Inside of Unparse_Java::unparsePointerType \n");
+  // curprint ( "\n/* Inside of Unparse_Java::unparsePointerType */ \n";
 
 #if 0
-     info.display("Inside of UnparseJava_type::unparsePointerType");
+     info.display("Inside of Unparse_Java::unparsePointerType");
 #endif
 
      SgPointerType* pointer_type = isSgPointerType(type);
@@ -434,11 +419,11 @@ UnparseJava_type::unparsePointerType(SgType* type, SgUnparse_Info& info)
         {
           if (info.isTypeSecondPart() == true)
              {
-            // printf ("In UnparseJava_type::unparsePointerType(): unparse 2nd part of type \n");
-            // curprint ( "\n/* In UnparseJava_type::unparsePointerType(): unparse 2nd part of type */ \n";
+            // printf ("In Unparse_Java::unparsePointerType(): unparse 2nd part of type \n");
+            // curprint ( "\n/* In Unparse_Java::unparsePointerType(): unparse 2nd part of type */ \n";
                unparseType(pointer_type->get_base_type(), info);
-            // printf ("DONE: UnparseJava_type::unparsePointerType(): unparse 2nd part of type \n");
-            // curprint ( "\n/* DONE: UnparseJava_type::unparsePointerType(): unparse 2nd part of type */ \n";
+            // printf ("DONE: Unparse_Java::unparsePointerType(): unparse 2nd part of type \n");
+            // curprint ( "\n/* DONE: Unparse_Java::unparsePointerType(): unparse 2nd part of type */ \n";
              }
             else
              {
@@ -450,12 +435,12 @@ UnparseJava_type::unparsePointerType(SgType* type, SgUnparse_Info& info)
              }
         }
 
-  // printf ("Leaving of UnparseJava_type::unparsePointerType \n");
-  // curprint ( "\n/* Leaving of UnparseJava_type::unparsePointerType */ \n";
+  // printf ("Leaving of Unparse_Java::unparsePointerType \n");
+  // curprint ( "\n/* Leaving of Unparse_Java::unparsePointerType */ \n";
    }
 
 void 
-UnparseJava_type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
+Unparse_Java::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
    {
      SgPointerMemberType* mpointer_type = isSgPointerMemberType(type);
      ROSE_ASSERT(mpointer_type != NULL);
@@ -562,7 +547,7 @@ UnparseJava_type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
    }
 
 void
-UnparseJava_type::unparseReferenceType(SgType* type, SgUnparse_Info& info)
+Unparse_Java::unparseReferenceType(SgType* type, SgUnparse_Info& info)
    {
      SgReferenceType* ref_type = isSgReferenceType(type);
      ROSE_ASSERT(ref_type != NULL);
@@ -604,14 +589,14 @@ UnparseJava_type::unparseReferenceType(SgType* type, SgUnparse_Info& info)
    }
 
 void
-UnparseJava_type::unparseClassType(SgType* type, SgUnparse_Info& info)
+Unparse_Java::unparseClassType(SgType* type, SgUnparse_Info& info)
    {
 #if 0
-     printf ("Inside of UnparseJava_type::unparseClassType \n");
+     printf ("Inside of Unparse_Java::unparseClassType \n");
 #endif
 
 #if 0
-     info.display("Inside of UnparseJava_type::unparseClassType");
+     info.display("Inside of Unparse_Java::unparseClassType");
 #endif
 
      SgClassType* class_type = isSgClassType(type);
@@ -770,7 +755,7 @@ UnparseJava_type::unparseClassType(SgType* type, SgUnparse_Info& info)
 
 
 void
-UnparseJava_type::unparseEnumType(SgType* type, SgUnparse_Info& info)
+Unparse_Java::unparseEnumType(SgType* type, SgUnparse_Info& info)
    {
      SgEnumType* enum_type = isSgEnumType(type);
      ROSE_ASSERT(enum_type);
@@ -898,13 +883,13 @@ UnparseJava_type::unparseEnumType(SgType* type, SgUnparse_Info& info)
 
 
 void
-UnparseJava_type::unparseTypedefType(SgType* type, SgUnparse_Info& info)
+Unparse_Java::unparseTypedefType(SgType* type, SgUnparse_Info& info)
    {
      SgTypedefType* typedef_type = isSgTypedefType(type);
      ROSE_ASSERT(typedef_type != NULL);
 
-  // printf ("Inside of UnparseJava_type::unparseTypedefType name = %p = %s \n",typedef_type,typedef_type->get_name().str());
-  // curprint ( "\n/* Inside of UnparseJava_type::unparseTypedefType */ \n";
+  // printf ("Inside of Unparse_Java::unparseTypedefType name = %p = %s \n",typedef_type,typedef_type->get_name().str());
+  // curprint ( "\n/* Inside of Unparse_Java::unparseTypedefType */ \n";
 
 #if 0
      curprint ( string("\n /* info.isWithType()       = ") + ((info.isWithType()       == true) ? "true" : "false") + " */ \n");
@@ -920,8 +905,8 @@ UnparseJava_type::unparseTypedefType(SgType* type, SgUnparse_Info& info)
      if ((info.isWithType() && info.SkipBaseType()) || info.isTypeSecondPart())
         {
        /* do nothing */;
-       // printf ("Inside of UnparseJava_type::unparseTypedefType (do nothing) \n");
-       // curprint ( "\n /* Inside of UnparseJava_type::unparseTypedefType (do nothing) */ \n");
+       // printf ("Inside of Unparse_Java::unparseTypedefType (do nothing) \n");
+       // curprint ( "\n /* Inside of Unparse_Java::unparseTypedefType (do nothing) */ \n");
         }
        else
         {
@@ -929,7 +914,7 @@ UnparseJava_type::unparseTypedefType(SgType* type, SgUnparse_Info& info)
        // check if currrent type's parent type is the same as the context type */
        // SgNamedType *ptype = NULL;
 
-       // curprint ( "\n /* Inside of UnparseJava_type::unparseTypedefType (normal handling) */ \n";
+       // curprint ( "\n /* Inside of Unparse_Java::unparseTypedefType (normal handling) */ \n";
 
           SgTypedefDeclaration *tdecl = isSgTypedefDeclaration(typedef_type->get_declaration());
           ROSE_ASSERT (tdecl != NULL);
@@ -967,21 +952,21 @@ UnparseJava_type::unparseTypedefType(SgType* type, SgUnparse_Info& info)
              }
         }
 
-  // printf ("Leaving UnparseJava_type::unparseTypedefType \n");
-  // curprint ( "\n/* Leaving UnparseJava_type::unparseTypedefType */ \n";
+  // printf ("Leaving Unparse_Java::unparseTypedefType \n");
+  // curprint ( "\n/* Leaving Unparse_Java::unparseTypedefType */ \n";
    }
 
 
-void UnparseJava_type::unparseModifierType(SgType* type, SgUnparse_Info& info)
+void Unparse_Java::unparseModifierType(SgType* type, SgUnparse_Info& info)
    {
      SgModifierType* mod_type = isSgModifierType(type);
      ROSE_ASSERT(mod_type != NULL);
 
-  // printf ("Top of UnparseJava_type::unparseModifierType \n");
-  // curprint ( "\n/* Top of UnparseJava_type::unparseModifierType */ \n";
+  // printf ("Top of Unparse_Java::unparseModifierType \n");
+  // curprint ( "\n/* Top of Unparse_Java::unparseModifierType */ \n";
 
 #if 0
-  // mod_type->get_typeModifier().display("called from UnparseJava_type::unparseModifierType()");
+  // mod_type->get_typeModifier().display("called from Unparse_Java::unparseModifierType()");
      printf ("modifier values (at %p): %s \n",mod_type,mod_type->get_typeModifier().displayString().c_str());
 #endif
 
@@ -1024,12 +1009,12 @@ void UnparseJava_type::unparseModifierType(SgType* type, SgUnparse_Info& info)
              }
         }
 
-  // printf ("Leaving UnparseJava_type::unparseModifierType \n");
-  // curprint ( "\n/* Leaving UnparseJava_type::unparseModifierType */ \n";
+  // printf ("Leaving Unparse_Java::unparseModifierType \n");
+  // curprint ( "\n/* Leaving Unparse_Java::unparseModifierType */ \n";
    }
 
 void
-UnparseJava_type::unparseFunctionType(SgType* type, SgUnparse_Info& info)
+Unparse_Java::unparseFunctionType(SgType* type, SgUnparse_Info& info)
    {
      SgFunctionType* func_type = isSgFunctionType(type);
      ROSE_ASSERT (func_type != NULL);
@@ -1121,7 +1106,7 @@ UnparseJava_type::unparseFunctionType(SgType* type, SgUnparse_Info& info)
    }
 
 void
-UnparseJava_type::unparseMemberFunctionType(SgType* type, SgUnparse_Info& info)
+Unparse_Java::unparseMemberFunctionType(SgType* type, SgUnparse_Info& info)
    {
      SgMemberFunctionType* mfunc_type = isSgMemberFunctionType(type);
      ROSE_ASSERT(mfunc_type != NULL);
@@ -1188,7 +1173,7 @@ UnparseJava_type::unparseMemberFunctionType(SgType* type, SgUnparse_Info& info)
    }
 
 void
-UnparseJava_type::unparseArrayType(SgType* type, SgUnparse_Info& info)
+Unparse_Java::unparseArrayType(SgType* type, SgUnparse_Info& info)
    {
      SgArrayType* array_type = isSgArrayType(type);
      ROSE_ASSERT(array_type != NULL);
