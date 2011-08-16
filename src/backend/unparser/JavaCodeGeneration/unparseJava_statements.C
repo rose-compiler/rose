@@ -749,28 +749,22 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
          return;
      }
 
-     //TODO more complete handling of modifiers
-     SgStorageModifier& storage = mfuncdecl_stmt->get_declarationModifier().get_storageModifier();
-     SgAccessModifier& access = mfuncdecl_stmt->get_declarationModifier().get_accessModifier();
-     SgSpecialFunctionModifier& special = mfuncdecl_stmt->get_specialFunctionModifier();
-     if (access.isPublic()) curprint("public ");
-     if (storage.isStatic()) curprint("static ");
+     unparseDeclarationModifier(mfuncdecl_stmt->get_declarationModifier(), info);
 
      //TODO remove when specialFxnModifier.isConstructor works
      bool name_match = mfuncdecl_stmt->get_name() == mfuncdecl_stmt->get_associatedClassDeclaration()->get_name();
-     if (name_match && !special.isConstructor()) {
+     if (name_match && !mfuncdecl_stmt->get_specialFunctionModifier().isConstructor()) {
          cout << "unparser: method " << mfuncdecl_stmt->get_qualified_name().getString()
               << " should be marked isConstructor" << endl;
      }
 
      // unparse type, unless this a constructor
-     if (!special.isConstructor() && !name_match) {
+     if (!mfuncdecl_stmt->get_specialFunctionModifier().isConstructor() && !name_match) {
          info.set_isTypeFirstPart();
          unparseType(mfuncdecl_stmt->get_type(), info);
          info.unset_isTypeFirstPart();
      }
 
-     curprint(" ");
      unparseName(mfuncdecl_stmt->get_name(), info);
      curprint("(");
      unparseStatement(mfuncdecl_stmt->get_parameterList(), info);
@@ -1083,7 +1077,42 @@ void
 Unparse_Java::unparseTemplateDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
    }
- 
 
+void
+Unparse_Java::unparseDeclarationModifier(SgDeclarationModifier& mod, SgUnparse_Info& info) {
+       unparseAccessModifier(mod.get_accessModifier(), info);
+       unparseTypeModifier(mod.get_typeModifier(), info);
+       unparseStorageModifier(mod.get_storageModifier(), info);
+}
+
+void
+Unparse_Java::unparseAccessModifier(SgAccessModifier& mod, SgUnparse_Info& info) {
+    if      (mod.isPublic())    curprint("public ");
+    else if (mod.isProtected()) curprint("protected ");
+    else if (mod.isPrivate())   curprint("private ");
+}
+
+void
+Unparse_Java::unparseStorageModifier(SgStorageModifier& mod, SgUnparse_Info& info) {
+    if (mod.isStatic()) curprint("static ");
+}
+
+void
+Unparse_Java::unparseConstVolatileModifier(SgConstVolatileModifier& mod, SgUnparse_Info& info) {
+    if (mod.isVolatile()) curprint("volatile ");
+}
+
+void
+Unparse_Java::unparseTypeModifier(SgTypeModifier& mod, SgUnparse_Info& info) {
+    if (mod.isAbstract()) curprint("abstract ");
+    unparseConstVolatileModifier(mod.get_constVolatileModifier(), info);
+}
+
+void
+Unparse_Java::unparseFunctionModifier(SgFunctionModifier& mod, SgUnparse_Info& info) {
+    if (mod.isJavaSynchronized()) curprint("synchronized ");
+    if (mod.isJavaNative()) curprint("native ");
+    if (mod.isJavaStrictfp()) curprint("strictfp ");
+}
 
 
