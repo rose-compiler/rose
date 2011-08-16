@@ -24,7 +24,6 @@
 #include "unparseFortran_types.h"
 
 #include "unparseJava.h"
-#include "unparseJava_types.h"
 
 #include "unparsePHP.h"
 

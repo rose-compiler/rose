@@ -191,9 +191,6 @@ class Unparse_Java : public UnparseLanguageIndependentConstructs
           virtual void unparseInitializedName(SgInitializedName* init_name, SgUnparse_Info& info);
           virtual void unparseName(SgName name, SgUnparse_Info& info);
 
-      //! Convenience method for unparsing types using unp->u_type
-          virtual void unparseType(SgType* type, SgUnparse_Info& info);
-
           virtual void unparseCompoundAssignOp(SgCompoundAssignOp* op, SgUnparse_Info& info);
           virtual void unparseBinaryOp(SgBinaryOp* op, SgUnparse_Info& info);
 
@@ -211,6 +208,20 @@ class Unparse_Java : public UnparseLanguageIndependentConstructs
 
           virtual PrecedenceSpecifier getPrecedence(SgExpression* exp);
           virtual AssociativitySpecifier getAssociativity(SgExpression* exp);
+
+      //! Support for unparsing types
+          virtual void unparseType(SgType* type, SgUnparse_Info& info);
+          virtual void unparsePointerType(SgType* type, SgUnparse_Info& info);
+          virtual void unparseMemberPointerType(SgType* type, SgUnparse_Info& info);
+          virtual void unparseReferenceType(SgType* type, SgUnparse_Info& info);
+          virtual void unparseClassType(SgType* type, SgUnparse_Info& info);
+          virtual void unparseEnumType(SgType* type, SgUnparse_Info& info);
+          virtual void unparseTypedefType(SgType* type, SgUnparse_Info& info);
+          virtual void unparseModifierType(SgType* type, SgUnparse_Info& info);
+          virtual void unparseFunctionType(SgType* type, SgUnparse_Info& info);
+          virtual void unparseMemberFunctionType(SgType* type, SgUnparse_Info& info);
+          virtual void unparseArrayType(SgType* type, SgUnparse_Info& info);
+          virtual void unparseQualifiedNameType(SgType* type, SgUnparse_Info& info );
    };
 
 #endif
