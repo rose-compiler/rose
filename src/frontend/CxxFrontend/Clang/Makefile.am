@@ -2,6 +2,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 INCLUDES = $(ROSE_INCLUDES)
 
+if ROSE_USE_CLANG_FRONTEND
+
 noinst_LTLIBRARIES = libroseClangFrontend.la
 
 libroseClangFrontend_la_DEPENDENCIES =
@@ -13,5 +15,7 @@ dist_include_HEADERS = ClangFrontend.h ClangFrontend-private.h
 
 include_HEADERS =
 
+endif
 
-EXTRA_DIST = CMakeLists.txt
+EXTRA_DIST =
+

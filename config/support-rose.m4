@@ -328,7 +328,7 @@ AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4, [test "x$enable_edg_version4" = xyes])
 AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4_3, [test "x$enable_edg_version43" = xyes])
 
 AC_ARG_ENABLE(clang-frontend, AS_HELP_STRING([--enable-clang-frontend], [Use Clang frontend instead of EDG]))
-AM_CONDITIONAL(ROSE_USE_CLANG, [test "x$enable_clang_frontend" = xyes])
+AM_CONDITIONAL(ROSE_USE_CLANG_FRONTEND, [test "x$enable_clang_frontend" = xyes])
 if test "x$enable_clang_frontend" = "xyes"; then
   ROSE_SUPPORT_CLANG
 else
