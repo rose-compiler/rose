@@ -746,17 +746,17 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      unparseDeclarationModifier(mfuncdecl_stmt->get_declarationModifier(), info);
 
      //TODO remove when specialFxnModifier.isConstructor works
+     bool constructor = mfuncdecl_stmt->get_specialFunctionModifier().isConstructor();
      bool name_match = mfuncdecl_stmt->get_name() == mfuncdecl_stmt->get_associatedClassDeclaration()->get_name();
-     if (name_match && !mfuncdecl_stmt->get_specialFunctionModifier().isConstructor()) {
+     if (name_match && !constructor) {
          cout << "unparser: method " << mfuncdecl_stmt->get_qualified_name().getString()
               << " should be marked isConstructor" << endl;
+         constructor = true;
      }
 
      // unparse type, unless this a constructor
-     if (!mfuncdecl_stmt->get_specialFunctionModifier().isConstructor() && !name_match) {
-         info.set_isTypeFirstPart();
-         unparseType(mfuncdecl_stmt->get_type(), info);
-         info.unset_isTypeFirstPart();
+     if (! constructor) {
+         unparseType(mfuncdecl_stmt->get_type()->get_return_type(), info);
      }
 
      unparseName(mfuncdecl_stmt->get_name(), info);
