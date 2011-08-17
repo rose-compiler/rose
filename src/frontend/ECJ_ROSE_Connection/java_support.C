@@ -67,30 +67,77 @@ list<JavaSourceCodePosition*> astJavaSourceCodePositionStack;
 // when visiting a node that may need to be remember on the end visit
 list<VisitorContext *> astVisitorContextStack;
 
+
+
+SgGlobal*
+getGlobalScope()
+   {
+     ROSE_ASSERT(astJavaScopeStack.empty() == false);
+     SgScopeStatement* bottomOfStack = astJavaScopeStack.back();
+     ROSE_ASSERT(bottomOfStack != NULL);
+
+     SgGlobal* globalScope = isSgGlobal(bottomOfStack);
+     ROSE_ASSERT(globalScope != NULL);
+
+     return globalScope;
+   }
+
+#if 1
+string
+getCurrentJavaFilename()
+   {
+  // DQ (8/16/2011): Generate the filename of the current file being processed.
+
+     string filename;
+
+  // Look on the scope stack and trace through parent to find the SgSourceFile.
+     ROSE_ASSERT(astJavaScopeStack.empty() == false);
+
+     SgGlobal* globalScope = getGlobalScope();
+     ROSE_ASSERT(globalScope != NULL);
+     SgSourceFile* sourceFile = isSgSourceFile(globalScope->get_parent());
+     ROSE_ASSERT(sourceFile != NULL);
+
+     filename = sourceFile->getFileName();
+
+     return filename;
+   }
+#endif
+
 /*
  * Wrapper to create an Sg_File_Info from line/col info
  */
 Sg_File_Info *
-createSgFileInfo(int line, int col) {
-    Sg_File_Info* sg_fi = Sg_File_Info::generateDefaultFileInfo();
-    sg_fi->set_line(line);
-    sg_fi->set_col(col);
-    return sg_fi;
-}
+createSgFileInfo(int line, int col)
+   {
+  // Sg_File_Info* sg_fi = Sg_File_Info::generateDefaultFileInfo();
+     Sg_File_Info* sg_fi = new Sg_File_Info(getCurrentJavaFilename(),line,col);
+  // sg_fi->set_line(line);
+  // sg_fi->set_col(col);
+
+     ROSE_ASSERT(sg_fi->isTransformation()    == false);
+     ROSE_ASSERT(sg_fi->isCompilerGenerated() == false);
+
+     return sg_fi;
+   }
 
 Token_t *
-create_token(JNIEnv * env, jobject jToken) {
-    if (SgProject::get_verbose() > -1)
-         printf ("Create C-based representation of a JavaToken\n");
-        return convert_Java_token(env, jToken);
-}
+create_token(JNIEnv * env, jobject jToken)
+   {
+  // if (SgProject::get_verbose() > -1)
+  //      printf ("Create C-based representation of a JavaToken\n");
+
+     return convert_Java_token(env, jToken);
+   }
 
 /**
  * 1) Converts java source code position from java to c type
  * 2) Pushes position info on the astJavaSourceCodePositionStack
  * 3) Transfer java source code position information to the SgNode's Sg_FileInfo
  */
-void pushAndSetSourceCodePosition(JavaSourceCodePosition * pos, SgLocatedNode * sgnode) {
+void
+pushAndSetSourceCodePosition(JavaSourceCodePosition * pos, SgLocatedNode * sgnode)
+   {
     // This function is called by the ECJ Java traversal and pushes a JavaSourceCodePosition object onto
     // the astJavaSourceCodePositionStack.  The processing of ROSE IR nodes uses and removes these objects
     // from the top of the stack.  The stack depth should never be more than 1, if everything is working.
@@ -101,34 +148,35 @@ void pushAndSetSourceCodePosition(JavaSourceCodePosition * pos, SgLocatedNode * 
     // position information and tightening the constrains to have it always only be a small depth
     // (e.g. size == 1) would be possible in an iterative way as the implementation develops.
 
-    if (SgProject::get_verbose() > -1)
-         printf ("Process the source position to set the source code position... \n");
+     outputJavaState("At TOP of pushAndSetSourceCodePosition");
+     ROSE_ASSERT(pos != NULL);
 
-    outputJavaState("At TOP of pushAndSetSourceCodePosition");
-    ROSE_ASSERT(pos != NULL);
-
-    printf ("pos : line_start = %d line_end = %d col_start = %d col_end = %d \n",
-                pos->getLineStart(),pos->getLineEnd(),pos->getColStart(),pos->getColEnd());
+     if (SgProject::get_verbose() > 4)
+        {
+          printf ("Process the source position to set the source code position... \n");
+          printf ("pos : line_start = %d line_end = %d col_start = %d col_end = %d \n",
+               pos->getLineStart(),pos->getLineEnd(),pos->getColStart(),pos->getColEnd());
+        }
 
   // DQ (8/14/2011): Skipping push to stack since we have not implemented any support to pop from the stack.
-    // Update the global source code position information. Or we could push it onto a stack...
-    // The advantage of a stack is that we could always reference the top of the stack, and
-    // monitor the depth of the stack, and make sure that we never deleted the last entry in
-    // the stack until the end of the program.
-    // astJavaSourceCodePositionStack.push_front(pos);
+  // Update the global source code position information. Or we could push it onto a stack...
+  // The advantage of a stack is that we could always reference the top of the stack, and
+  // monitor the depth of the stack, and make sure that we never deleted the last entry in
+  // the stack until the end of the program.
+  // astJavaSourceCodePositionStack.push_front(pos);
 
-    setJavaSourcePosition(sgnode, pos);
+     setJavaSourcePosition(sgnode, pos);
 
-    // Check if there are too many on the stack (ROSE processing should clear them as they are used).
-    ROSE_ASSERT(astJavaSourceCodePositionStack.size() < 10);
+  // Check if there are too many on the stack (ROSE processing should clear them as they are used).
+     ROSE_ASSERT(astJavaSourceCodePositionStack.size() < 10);
 
-    outputJavaState("At BOTTOM of pushAndSetSourceCodePosition");
-}
+     outputJavaState("At BOTTOM of pushAndSetSourceCodePosition");
+   }
 
 void
 setJavaSourcePosition( SgLocatedNode* locatedNode)
    {
-     setJavaSourcePosition(locatedNode, NULL);
+     setJavaSourcePosition(locatedNode, (JavaSourceCodePosition*)NULL);
    }
 
 void
@@ -148,19 +196,156 @@ setJavaSourcePosition( SgLocatedNode* locatedNode, JavaSourceCodePosition * posI
      if (locatedNode->get_endOfConstruct() != NULL || locatedNode->get_startOfConstruct() != NULL)
         {
           printf ("In setSourcePosition(SgLocatedNode* locatedNode): Warning about existing file info data at locatedNode = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
+
+          if (locatedNode->get_startOfConstruct() != NULL)
+             {
+               delete locatedNode->get_startOfConstruct();
+               locatedNode->set_startOfConstruct(NULL);
+             }
+
+          if (locatedNode->get_endOfConstruct() != NULL)
+             {
+               delete locatedNode->get_endOfConstruct();
+               locatedNode->set_endOfConstruct(NULL);
+             }
+
         }
 
-     if (posInfo == NULL) {
-  // Call a mechanism defined in the SageInterface support
-     SageInterface::setSourcePosition(locatedNode);
-     } else {
-         // java position info is available
-         Sg_File_Info* start_fileInfo = createSgFileInfo(posInfo->getLineStart(), posInfo->getColStart());
-         Sg_File_Info* end_fileInfo = createSgFileInfo(posInfo->getLineEnd(), posInfo->getColEnd());
-         // updating the sgnode
-         locatedNode->set_startOfConstruct(start_fileInfo);
-         locatedNode->set_endOfConstruct(end_fileInfo);
-     }
+  // DQ (8/16/2011): Added support for setting the operator source code position 
+  // (Note that for expressions get_file_info() returns get_operatorPosition()).
+     SgExpression* expression = isSgExpression(locatedNode);
+     if (expression != NULL)
+        {
+          if (expression->get_operatorPosition() != NULL)
+             {
+               delete expression->get_operatorPosition();
+               expression->set_operatorPosition(NULL);
+             }
+        }
+
+     if (posInfo == NULL)
+        {
+       // Call a mechanism defined in the SageInterface support
+
+          printf ("ERROR: JavaSourceCodePosition * posInfo == NULL triggering use of SageInterface::setSourcePosition() (locatedNode = %p = %s) \n",locatedNode,locatedNode->class_name().c_str());
+          ROSE_ASSERT(false);
+
+          SageInterface::setSourcePosition(locatedNode);
+        } 
+       else
+        {
+       // java position info is available
+          Sg_File_Info* start_fileInfo = createSgFileInfo(posInfo->getLineStart(), posInfo->getColStart());
+          Sg_File_Info* end_fileInfo   = createSgFileInfo(posInfo->getLineEnd(), posInfo->getColEnd());
+
+          ROSE_ASSERT(start_fileInfo->isTransformation() == false);
+          ROSE_ASSERT(end_fileInfo->isTransformation() == false);
+
+       // updating the sgnode
+          locatedNode->set_startOfConstruct(start_fileInfo);
+          locatedNode->set_endOfConstruct(end_fileInfo);
+
+          ROSE_ASSERT(start_fileInfo->isTransformation() == false);
+          ROSE_ASSERT(end_fileInfo->isTransformation() == false);
+
+          ROSE_ASSERT(locatedNode->get_startOfConstruct()->isTransformation() == false);
+          ROSE_ASSERT(locatedNode->get_endOfConstruct()->isTransformation() == false);
+
+       // DQ (8/16/2011): Added support for setting the operator source code position 
+       // (Note that for expressions get_file_info() returns get_operatorPosition()).
+       // SgExpression* expression = isSgExpression(locatedNode);
+          if (expression != NULL)
+             {
+               Sg_File_Info* operator_fileInfo = createSgFileInfo(posInfo->getLineStart(), posInfo->getColStart());
+               expression->set_operatorPosition(operator_fileInfo);
+
+               ROSE_ASSERT(locatedNode->get_file_info()->isTransformation() == false);
+             }
+
+          ROSE_ASSERT(locatedNode->get_file_info()->isTransformation() == false);
+        }
+
+     ROSE_ASSERT(locatedNode->get_file_info()->isTransformation() == false);
+     ROSE_ASSERT(locatedNode->get_startOfConstruct()->isTransformation() == false);
+     ROSE_ASSERT(locatedNode->get_endOfConstruct()->isTransformation() == false);
+   }
+
+
+void
+setJavaSourcePosition( SgLocatedNode* locatedNode, JNIEnv *env, jobject jToken)
+   {
+     Token_t* token = create_token(env, jToken);
+
+     ROSE_ASSERT(locatedNode != NULL);
+     pushAndSetSourceCodePosition(token->getSourcecodePosition(), locatedNode);
+
+  // printf ("In setJavaSourcePosition(): locatedNode->get_file_info()->isTransformation() = %s \n",locatedNode->get_file_info()->isTransformation() ? "true" : "false");
+     ROSE_ASSERT(locatedNode->get_file_info()->isTransformation() == false);
+   }
+
+
+void
+setJavaSourcePositionUnavailableInFrontend( SgLocatedNode* locatedNode )
+   {
+     ROSE_ASSERT(locatedNode != NULL);
+     ROSE_ASSERT(locatedNode->get_startOfConstruct() != NULL);
+     ROSE_ASSERT(locatedNode->get_endOfConstruct()   != NULL);
+
+  // This is redundant for non-expression IR nodes.
+     ROSE_ASSERT(locatedNode->get_file_info() != NULL);
+
+     locatedNode->get_startOfConstruct()->setSourcePositionUnavailableInFrontend();
+     locatedNode->get_endOfConstruct()->setSourcePositionUnavailableInFrontend();
+
+     locatedNode->get_startOfConstruct()->unsetTransformation();
+     locatedNode->get_endOfConstruct()->unsetTransformation();
+
+     locatedNode->get_startOfConstruct()->unsetCompilerGenerated();
+     locatedNode->get_endOfConstruct()->unsetCompilerGenerated();
+
+  // DQ (8/16/2011): Added support for setting the operator source code position 
+  // (Note that for expressions get_file_info() returns get_operatorPosition()).
+     SgExpression* expression = isSgExpression(locatedNode);
+     if (expression != NULL)
+        {
+          ROSE_ASSERT(expression->get_operatorPosition() != NULL);
+          expression->get_operatorPosition()->setSourcePositionUnavailableInFrontend();
+
+          expression->get_operatorPosition()->unsetTransformation();
+          expression->get_operatorPosition()->unsetCompilerGenerated();
+        }
+   }
+
+void
+setJavaCompilerGenerated( SgLocatedNode* locatedNode )
+   {
+     ROSE_ASSERT(locatedNode != NULL);
+     ROSE_ASSERT(locatedNode->get_startOfConstruct() != NULL);
+     ROSE_ASSERT(locatedNode->get_endOfConstruct()   != NULL);
+
+  // This is redundant for non-expression IR nodes.
+     ROSE_ASSERT(locatedNode->get_file_info() != NULL);
+
+     locatedNode->get_startOfConstruct()->setCompilerGenerated();
+     locatedNode->get_endOfConstruct()->setCompilerGenerated();
+
+     locatedNode->get_startOfConstruct()->unsetTransformation();
+     locatedNode->get_endOfConstruct()->unsetTransformation();
+
+     locatedNode->get_startOfConstruct()->unsetSourcePositionUnavailableInFrontend();
+     locatedNode->get_endOfConstruct()->unsetSourcePositionUnavailableInFrontend();
+
+  // DQ (8/16/2011): Added support for setting the operator source code position 
+  // (Note that for expressions get_file_info() returns get_operatorPosition()).
+     SgExpression* expression = isSgExpression(locatedNode);
+     if (expression != NULL)
+        {
+          ROSE_ASSERT(expression->get_operatorPosition() != NULL);
+          expression->get_operatorPosition()->setCompilerGenerated();
+
+          expression->get_operatorPosition()->unsetTransformation();
+          expression->get_operatorPosition()->unsetSourcePositionUnavailableInFrontend();
+        }
    }
 
 VisitorContext * getCurrentContext() {
@@ -215,19 +400,6 @@ getTopOfJavaScopeStack()
    }
 #endif
 
-
-SgGlobal*
-getGlobalScope()
-   {
-     ROSE_ASSERT(astJavaScopeStack.empty() == false);
-     SgScopeStatement* bottomOfStack = astJavaScopeStack.back();
-     ROSE_ASSERT(bottomOfStack != NULL);
-
-     SgGlobal* globalScope = isSgGlobal(bottomOfStack);
-     ROSE_ASSERT(globalScope != NULL);
-
-     return globalScope;
-   }
 
 void
 outputJavaStateSupport( const std::string & s, int fieldWidth )
@@ -480,6 +652,10 @@ memberFunctionSetup (SgName & name, SgClassDefinition* classDefinition, SgFuncti
      parameterlist = SageBuilder::buildFunctionParameterList();
      ROSE_ASSERT(parameterlist != NULL);
 
+  // DQ (8/16/2011): Mark this as implicit (we may later find more source position infroamtion for this).
+  // setJavaCompilerGenerated(parameterlist);
+     setJavaSourcePositionUnavailableInFrontend(parameterlist);
+
      ROSE_ASSERT(astJavaTypeStack.empty() == false);
 
   // This is the return type for the member function (top of the stack).
@@ -493,6 +669,8 @@ memberFunctionSetup (SgName & name, SgClassDefinition* classDefinition, SgFuncti
         {
           SgInitializedName* initializedName = astJavaInitializedNameStack.front();
           ROSE_ASSERT(initializedName != NULL);
+
+          setJavaSourcePositionUnavailableInFrontend(initializedName);
 
           SgType* parameterType = initializedName->get_type();
           ROSE_ASSERT(parameterType != NULL);
@@ -575,6 +753,22 @@ memberFunctionTest (const SgName & name, SgClassDefinition* classDefinition, SgM
      ROSE_ASSERT(classDefinition->get_declaration()->get_firstNondefiningDeclaration() != NULL);
      ROSE_ASSERT(classDefinition->get_declaration()->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table() != NULL);
      ROSE_ASSERT(functionDeclaration->get_symbol_from_symbol_table() != NULL);
+
+#if 1
+  // DQ (8/16/2011): Mark this as implicit (compiler generated, to support the type system).
+     setJavaCompilerGenerated(functionDeclaration);
+     ROSE_ASSERT(functionDeclaration->get_parameterList() != NULL);
+     setJavaCompilerGenerated(functionDeclaration->get_parameterList());
+     ROSE_ASSERT(functionDeclaration->get_CtorInitializerList() != NULL);
+     setJavaCompilerGenerated(functionDeclaration->get_CtorInitializerList());
+#else
+  // DQ (8/16/2011): Mark this as implicit (compiler generated, to support the type system).
+     setJavaSourcePositionUnavailableInFrontend(functionDeclaration);
+     ROSE_ASSERT(functionDeclaration->get_parameterList() != NULL);
+     setJavaSourcePositionUnavailableInFrontend(functionDeclaration->get_parameterList());
+     ROSE_ASSERT(functionDeclaration->get_CtorInitializerList() != NULL);
+     setJavaSourcePositionUnavailableInFrontend(functionDeclaration->get_CtorInitializerList());
+#endif
    }
 
 SgMemberFunctionDeclaration*
@@ -586,7 +780,7 @@ buildNonDefiningMemberFunction(const SgName & inputName, SgClassDefinition* clas
      SgMemberFunctionType* memberFunctionType = NULL;
   // SgType* return_type = NULL;
 
-        printf("Build non defining member function %s\n", inputName.str());
+  // printf("Build non defining member function %s\n", inputName.str());
   // Refactored code.
      memberFunctionSetup (name,classDefinition,parameterlist,memberFunctionType);
 
@@ -623,7 +817,7 @@ buildDefiningMemberFunction(const SgName & inputName, SgClassDefinition* classDe
      SgFunctionParameterList* parameterlist = NULL;
      SgMemberFunctionType* memberFunctionType = NULL;
 
-        printf("Build defining member function %s\n", inputName.str());
+  // printf("Build defining member function %s\n", inputName.str());
   // Refactored code.
      memberFunctionSetup (name,classDefinition,parameterlist,memberFunctionType);
 
@@ -711,6 +905,13 @@ buildJavaClass (const SgName & className, SgScopeStatement* scope )
   // SgMemberFunctionDeclaration* functionDeclaration = buildSimpleMemberFunction("super",classDefinition);
      SgMemberFunctionDeclaration* functionDeclaration = buildNonDefiningMemberFunction("super",classDefinition);
      ROSE_ASSERT(functionDeclaration != NULL);
+
+  // DQ (8/16/2011): Mark this as implicit (compiler generated, to support the type system).
+     setJavaCompilerGenerated(functionDeclaration);
+     ROSE_ASSERT(functionDeclaration->get_parameterList() != NULL);
+     setJavaCompilerGenerated(functionDeclaration->get_parameterList());
+     ROSE_ASSERT(functionDeclaration->get_CtorInitializerList() != NULL);
+     setJavaCompilerGenerated(functionDeclaration->get_CtorInitializerList());
 
      size_t declarationListSize = classDefinition->generateStatementList().size();
 
@@ -814,6 +1015,11 @@ buildClassSupport (const SgName & className, bool implicitClass, Token_t* token)
                     ROSE_ASSERT(implicitDeclaration != NULL);
                     ROSE_ASSERT(implicitDeclaration->get_definition() != NULL);
 
+                 // DQ (8/16/2011): Mark this as implicit (compiler generated, to support the type system).
+                    setJavaCompilerGenerated(implicitDeclaration);
+                    ROSE_ASSERT(implicitDeclaration->get_definition() != NULL);
+                    setJavaCompilerGenerated(implicitDeclaration->get_definition());
+
                     outputJavaState("DONE: Building a new class (inside of loop)");
 
                     if (SgProject::get_verbose() > 0)
@@ -905,6 +1111,12 @@ buildClassSupport (const SgName & className, bool implicitClass, Token_t* token)
             // Here we build the class and associate it with the correct code (determined differently based on if this is an implicit or non-implicit class.
             // SgClassDeclaration* declaration = buildJavaClass(name, outerScope );
                declaration = buildJavaClass(name, outerScope );
+               ROSE_ASSERT(declaration != NULL);
+
+            // DQ (8/16/2011): Mark this as implicit (compiler generated, to support the type system).
+               setJavaCompilerGenerated(declaration);
+               ROSE_ASSERT(declaration->get_definition() != NULL);
+               setJavaCompilerGenerated(declaration->get_definition());
 
                outputJavaState("DONE: Building a new class (outside of loop)");
 
@@ -1287,7 +1499,7 @@ lookupSymbolFromQualifiedName(string className)
             else
              {
             // This is OK when we are only processing a small part of the implicit class space (debugging mode) and have not built all the SgClassDeclarations. 
-               printf ("WARNING: SgClassSymbol NOT FOUND in lookupSymbolFromQualifiedName(): name = %s \n",className.c_str());
+            // printf ("WARNING: SgClassSymbol NOT FOUND in lookupSymbolFromQualifiedName(): name = %s \n",className.c_str());
                previousClassSymbol = NULL;
              }
         }
@@ -1329,7 +1541,7 @@ lookupTypeFromQualifiedName(string className)
        else
         {
        // This is OK when we are only processing a small part of the implicit class space (debugging mode) and have not built all the SgClassDeclaration IR nodes. 
-          printf ("WARNING: SgClassSymbol NOT FOUND in lookupTypeFromQualifiedName(): className = %s (returning NULL) \n",className.c_str());
+       // printf ("WARNING: SgClassSymbol NOT FOUND in lookupTypeFromQualifiedName(): className = %s (returning NULL) \n",className.c_str());
 #if 0
           printf ("ERROR: type not found \n");
           ROSE_ASSERT(false);
