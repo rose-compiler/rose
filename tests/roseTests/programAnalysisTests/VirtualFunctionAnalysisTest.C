@@ -42,13 +42,32 @@ main(int argc, char * argv[]) {
     generateDOT(*project);
     generateAstGraph(project, 20000);
 
+    CallGraphBuilder builder(project);
+    builder.buildCallGraph();
+    // Generate call graph in dot format
+    AstDOTGeneration dotgen;
+    dotgen.writeIncidenceGraphToDOTFile(builder.getGraph(), "full_call_graph.dot");
+
 
     SageInterface::changeAllLoopBodiesToBlocks(project);
+
+    SgFunctionDeclaration *mainDecl = SageInterface::findMain(project);
+    if(mainDecl == NULL) {
+            std::cerr<< "Can't execute Virtual Function Analysis without main function\n";
+            return 0;
+     }
+
 
     
     VirtualFunctionAnalysis *anal = new VirtualFunctionAnalysis(project);
     anal->run();
     
+    
+     anal->pruneCallGraph(builder);
+     
+     AstDOTGeneration dotgen2;
+     dotgen2.writeIncidenceGraphToDOTFile(builder.getGraph(), "pruned_call_graph.dot");
+
     
 
     

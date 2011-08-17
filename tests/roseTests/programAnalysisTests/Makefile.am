@@ -8,6 +8,35 @@ SUBDIRS = testCallGraphAnalysis defUseAnalysisTests variableLivenessTests static
 INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/programAnalysis -I$(top_srcdir)/src/midend/programAnalysis/pointerAnal -I${top_srcdir}/src/midend/programAnalysis/CFG -I${top_srcdir}/src/midend/programAnalysis/dataflowAnalysis -I$(top_srcdir)/src/util/support -I$(top_srcdir)/src/util/graphs -I$(top_srcdir)/src/midend/astUtil/astSupport -I$(top_srcdir)/src/midend/astUtil/astInterface -I$(top_srcdir)/src/midend/astUtil -I$(top_srcdir)/src/midend/programAnalysis/ 
 #-I$(top_srcdir)/src/midend/programAnalysis/ptrTrace/GAI/ICFG/
 
+include $(srcdir)/../../CompileTests/Cxx_tests/Makefile-pass.inc
+
+#if ROSE_USE_LONG_MAKE_CHECK_RULE
+
+# This is the long test of ROSE (takes a while!)
+TESTCODES_REQUIRED_TO_PASS = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS)
+
+#else # !ROSE_USE_LONG_MAKE_CHECK_RULE
+
+# Shorten the list of code to compile to simplify checks using "make distcheck"
+# Note that the tests test2001_02.C and test2001_03.C are required because the
+# tests in ../C_subset_of_Cxx use them and that test2004_116.C is required 
+# because the tests in ROSE/tests/roseTests/programTransformationTests use it.
+#TESTCODES_REQUIRED_TO_PASS = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS_SHORT)
+
+#endif # ROSE_USE_LONG_MAKE_CHECK_RULE
+
+TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
+
+# Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
+TESTCODES = $(TESTCODES_REQUIRED_TO_PASS)
+ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 --edg:restrict
+
+CXX_FILES = ${TESTCODES_REQUIRED_TO_PASS:.C=.CXX-o}
+
+
+
+
+
 ## The grammar generator (ROSETTA) should use its own template repository
 # CXX_TEMPLATE_REPOSITORY_PATH = .
 
@@ -57,6 +86,11 @@ StmtRefTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 # This is specific to compiling AnnotationLanguageParserTest.C
 AM_CXXFLAGS = -D__LOCALSTL_H
 
+
+$(CXX_FILES): VirtualFunctionAnalysisTest
+	./VirtualFunctionAnalysisTest  $(ROSE_FLAGS) -I$(srcdir)/../../CompileTests/Cxx_tests $(TESTCODE_INCLUDES) -c $(srcdir)/../../CompileTests/Cxx_tests/$(@:.CXX-o=.C) && touch $@
+
+
 FORCE_TEST_CODES_TO_RUN:
 	$(srcdir)/TestDriver $(srcdir)
 
@@ -68,6 +102,8 @@ EXTRA_DIST = TestDriver testfile1.c testfile1.c.cfg testfile1.c.du testfile1.c.r
              PtrAnalTest.out1  steensgaardTest1.outx   steensgaardTest2.out2 \
              PtrAnalTest.out2  steensgaardTest2.out1
              #trustedAnnotationOutput annotationLanguageParserInputFile.ann
+
+check-vfa: $(CXX_FILES)
 
 # to deactivate tests comment out check-local
 # check-local:

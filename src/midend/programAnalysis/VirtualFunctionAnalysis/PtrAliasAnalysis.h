@@ -11,14 +11,13 @@ using namespace boost;
 class PtrAliasAnalysis : public InterProcDataFlowAnalysis{
 
 protected:
-    SgProject *project;
     SgIncidenceDirectedGraph *callGraph;
     
     boost::unordered_map<SgFunctionDeclaration *, IntraProcAliasAnalysis *> intraAliases;
     boost::unordered_map<SgExpression *, std::vector<SgFunctionDeclaration*> > resolver;
     ClassHierarchyWrapper *classHierarchy;
-     // Map FunctionDefintion-> GraphNode
     CallGraphBuilder *cgBuilder;
+    
 
 public:
     enum COLOR {WHITE=0, GREY, BLACK};
@@ -27,8 +26,9 @@ public:
     PtrAliasAnalysis(SgProject *__project);
     ~PtrAliasAnalysis();
     SgIncidenceDirectedGraph * getCallGraph() {return callGraph;}
-    virtual void run();
-    virtual void rebuildCallGraph();
+    void run();
+    void getFunctionDeclarations(std::vector<SgFunctionDeclaration*> &);
+    bool runAndCheckIntraProcAnalysis(SgFunctionDeclaration *);
 
 private:
     void SortCallGraphRecursive(SgFunctionDeclaration* targetFunction, SgIncidenceDirectedGraph* callGraph,
@@ -43,7 +43,7 @@ private:
     void computeCallGraphNodes(SgFunctionDeclaration* targetFunction, SgIncidenceDirectedGraph* callGraph,
                 std::vector<SgFunctionDeclaration*> &processingOrder, PtrAliasAnalysis::TRAVERSAL_TYPE order);
     
-    
+  TRAVERSAL_TYPE order;  
 };
 
 #endif

@@ -54,7 +54,7 @@ struct OnlyNonCompilerGenerated : public std::unary_function<bool, SgFunctionDec
     }
 };
 
- PtrAliasAnalysis:: PtrAliasAnalysis(SgProject* __project) : project(__project) {
+ PtrAliasAnalysis:: PtrAliasAnalysis(SgProject* __project) : InterProcDataFlowAnalysis(__project) {
         intraAliases.clear();
         classHierarchy = new ClassHierarchyWrapper(project);
         // Create the Call Graph
@@ -64,17 +64,13 @@ struct OnlyNonCompilerGenerated : public std::unary_function<bool, SgFunctionDec
         callGraph = cgBuilder->getGraph();
         
         AstDOTGeneration dotgen;
-        CallGraphBuilder cg2(project);
-        cg2.buildCallGraph();
-         
         dotgen.writeIncidenceGraphToDOTFile(cgBuilder->getGraph(), "init_call_graph.dot");
-        dotgen.writeIncidenceGraphToDOTFile(cg2.getGraph(), "original_call_graph.dot");
-        
+#if 0        
         typedef boost::unordered_map<SgFunctionDeclaration*, SgGraphNode*> res_map;    
-        foreach (res_map::value_type it, cgBuilder->getGraphNodesMapping()) {
+        foreach (res_map::value_type it, cg2.getGraphNodesMapping()) {
             std::cout << it.first <<" - "<< isSgFunctionDeclaration(it.first->get_definingDeclaration()) << " - " << it.first->get_name().getString() << std::endl;
         }
-        
+#endif        
  }
  PtrAliasAnalysis::~PtrAliasAnalysis() {
 
@@ -82,7 +78,29 @@ struct OnlyNonCompilerGenerated : public std::unary_function<bool, SgFunctionDec
         foreach (map::value_type it, intraAliases) {
                 delete ((IntraProcAliasAnalysis *)it.second);
         }
-    }
+}
+ 
+ bool PtrAliasAnalysis::runAndCheckIntraProcAnalysis(SgFunctionDeclaration* funcDecl) {
+     if(intraAliases.count(funcDecl) == 0) {
+         std::cerr << funcDecl->get_qualified_name().getString() << " not found in IntraProcAnalysis.\n";
+         ROSE_ASSERT(false);
+     }
+     return (((IntraProcAliasAnalysis *)(intraAliases[funcDecl]))->runCheck());
+ }
+ 
+ void PtrAliasAnalysis::getFunctionDeclarations(std::vector<SgFunctionDeclaration*> &processingOrder) {
+
+     // Get the main funciton declaration
+        SgFunctionDeclaration *mainDecl = SageInterface::findMain(project);
+
+        computeCallGraphNodes(mainDecl, callGraph, processingOrder, order);
+            //SortCallGraphNodes(mainDef, callGraph, graphNodeToFunction, processingOrder, order);
+            
+        // Order the graph nodes in alternate fashion
+        order =  (order == TOPOLOGICAL) ? REVERSE_TOPOLOGICAL : TOPOLOGICAL;
+
+ 
+ }
 
 void PtrAliasAnalysis:: SortCallGraphRecursive(SgFunctionDeclaration* targetFunction, SgIncidenceDirectedGraph* callGraph,
                unordered_map<SgFunctionDeclaration*, SgGraphNode*> &graphNodeToFunction, unordered_map<SgGraphNode*, COLOR> &colors,
@@ -169,19 +187,11 @@ void PtrAliasAnalysis::computeCallGraphNodes(SgFunctionDeclaration* targetFuncti
 
 void PtrAliasAnalysis::run()  {
         
-        // Get all the nodes of the graph
-        //VariantVector vv(V_SgFunctionDeclaration);
-        //GetOneFuncDeclarationPerFunction defFunc;
-        //Rose_STL_Container<SgNode *> allFunctions = NodeQuery::queryMemoryPool(defFunc, &vv);
-    
         
         CallGraphBuilder fullCallGraph(project);
         fullCallGraph.buildCallGraph();
         std::set<SgGraphNode *>allNodes =  fullCallGraph.getGraph()->computeNodeSet();
 
-        // Initialize all the functions irrespective of whether they are part of the call graph or not
-        std::cout << "Number of Functions: "<< allNodes.size() << std::endl;
-        
         foreach(SgGraphNode *node, allNodes) {
             
             SgFunctionDeclaration *funcDecl = isSgFunctionDeclaration(node->get_SgNode());
@@ -192,63 +202,27 @@ void PtrAliasAnalysis::run()  {
                     || isSgFunctionDeclaration(funcDecl->get_definingDeclaration())->get_definition() == NULL)
                 continue;
                 
-            
+                
             IntraProcAliasAnalysis *intra = new IntraProcAliasAnalysis(funcDecl, classHierarchy, cgBuilder, intraAliases, resolver);
             intra->init();
             intraAliases[funcDecl] = intra;
-//                std::cout << "-->>>Function Name :" << funcDef->get_mangled_name().getString() << std::endl;
+
         }
         
         
          
-        TRAVERSAL_TYPE order = TOPOLOGICAL;
+        order = TOPOLOGICAL;
         
         // Get the main funciton declaration
         SgFunctionDeclaration *mainDecl = SageInterface::findMain(project);
-        assert(mainDecl != NULL);
-            
         
-        bool change;
-        int iteration =0, extra_iteration =0;;
-        do {
-            change = false;
-            std::cout << "Starting InterProcedural iteration: " << iteration << std::endl;
-            vector<SgFunctionDeclaration*> processingOrder;        
-            
-            computeCallGraphNodes(mainDecl, callGraph, processingOrder, order);
-            //SortCallGraphNodes(mainDef, callGraph, graphNodeToFunction, processingOrder, order);
-            
-            
-            // Order the graph nodes in alternate fashion
-            order =  (order == TOPOLOGICAL) ? REVERSE_TOPOLOGICAL : TOPOLOGICAL;
-            
-            
-            std::cout << "Number of items in ProcessingOrder: "<< processingOrder.size()<< std::endl;
-            
-           
-            foreach (SgFunctionDeclaration* funcDecl, processingOrder) {
-                std::cout << funcDecl->get_name().getString() << std::endl;
-                change |= (((IntraProcAliasAnalysis *)(intraAliases[funcDecl]))->runCheck());
-            }
-            iteration++;
-            if(!change) {
-                     
-                typedef boost::unordered_map<SgExpression *, std::vector<SgFunctionDeclaration*> > res_map;
-                foreach (res_map::value_type it, resolver) {
-                    if(it.second.size() == 0) { change = true; break;}
-                }
-                extra_iteration++;
-                if(extra_iteration >2) break;
-            }
-        } while (change);
+        ROSE_ASSERT(mainDecl != NULL);
         
-        std::cout << "Total InterProcedural iterations: " << iteration << std::endl;
-        std::cout << "Extra iterations: " << extra_iteration << std::endl;
-        
-    
-    
-    }
+        InterProcDataFlowAnalysis::run();
+            
+ }
 
+#if 0
 void PtrAliasAnalysis::rebuildCallGraph() {
                 typedef boost::unordered_map<SgExpression *, std::vector<SgFunctionDeclaration*> > res_map;
                 SgGraphNode *fromNode, *toNode;
@@ -294,3 +268,4 @@ void PtrAliasAnalysis::rebuildCallGraph() {
                 }
 
 }
+#endif
