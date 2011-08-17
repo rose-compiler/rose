@@ -739,9 +739,9 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      //TODO should there be forward declarations or nondefining declarations?
      if (mfuncdecl_stmt->isForward()) {
-         cout << "unparser: skipping forward mfuncdecl: "
-              << mfuncdecl_stmt->get_qualified_name().getString()
-              << endl;
+         //cout << "unparser: skipping forward mfuncdecl: "
+         //   << mfuncdecl_stmt->get_qualified_name().getString()
+         //   << endl;
          return;
      } else if (mfuncdecl_stmt->get_definition() == NULL) {
          cout << "unparser: skipping nondefining mfuncdecl: "
