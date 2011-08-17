@@ -61,7 +61,7 @@ JavaSourcePositionInformation.class: ${srcdir}/JavaSourcePositionInformation.jav
 	$(JAVAC) -cp ${srcdir}/ecjROSE.jar:${srcdir}:. JavaSourcePositionInformation.java
 
 
-EXTRA_DIST = CMakeLists.txt ecjROSE.jar JavaTraversal.java JavaParser.java JavaParserSupport.java ecjASTVisitor.java JavaToken.java JavaSourcePositionInformation.java
+EXTRA_DIST = CMakeLists.txt ecjROSE.jar JavaTraversal.java JavaParser.java JavaParserSupport.java ecjASTVisitor.java JavaToken.java JavaSourcePositionInformation.java JavaSourcePositionInformationFactory.java
 
 clean-local:
 	rm -f *.dot ecjROSE.jar *.class *.java *.h
