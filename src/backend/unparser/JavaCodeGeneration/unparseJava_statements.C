@@ -168,6 +168,13 @@ Unparse_Java::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Info
                 printSemicolon = false;
         }
         if (printSemicolon) curprint(";");
+
+        bool printNewline = true;
+        switch (stmt->variantT()) {
+            case V_SgFunctionParameterList:
+                printNewline = false;
+        }
+        if (printNewline) unp->cur.insert_newline();
    }
 
 void
