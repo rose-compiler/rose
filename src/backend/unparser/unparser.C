@@ -370,6 +370,11 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
                   {
                     if (file->get_Java_only())
                        {
+                         // for now, force output of compiler generated statements. Most statements are
+                         // not unparsed because they fail the
+                         // UnparseLanguageIndependentConstructs::statementFromFile() test.
+                         info.set_outputCompilerGeneratedStatements();
+
                          Unparse_Java unparser(this, file->getFileName());
                          unparser.unparseStatement(globalScope, info);
                        }
