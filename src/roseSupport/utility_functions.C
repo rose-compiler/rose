@@ -7,6 +7,8 @@
 #include "AstDOTGeneration.h"
 #include "wholeAST_API.h"
 
+// #include "wholeAST.h"
+
 #ifdef _MSC_VER
 #include <direct.h>     // getcwd
 #endif
@@ -636,8 +638,8 @@ generateDOTforMultipleFile ( const SgProject & project, std::string filenamePost
      generateDOT_withIncludes(project,filenamePostfix);
    }
 
-void
-generateAstGraph ( const SgProject* project, int maxSize, std::string filenameSuffix )
+void generateAstGraph ( const SgProject* project, int maxSize, std::string filenameSuffix )
+// void generateAstGraph ( const SgProject* project, int maxSize, std::string filenameSuffix, CustomMemoryPoolDOTGeneration::s_Filter_Flags* filter_flags)
    {
   // DQ (6/14/2007): Added support for timing of the generateAstGraph() function.
      TimingPerformance timer ("ROSE generateAstGraph():");
@@ -657,7 +659,14 @@ generateAstGraph ( const SgProject* project, int maxSize, std::string filenameSu
   // Compute the number of IR nodes for the AST
      if (numberOfASTnodes < maxSize)
         {
-          generateWholeGraphOfAST(filename);
+       // generateWholeGraphOfAST(filename);
+
+       // Added support to handle options to control filtering of Whole AST graphs.
+       // std::vector<std::string>  argvList (argv, argv+ argc);
+          std::vector<std::string>  argvList = project->get_originalCommandLineArgumentList();
+          CustomMemoryPoolDOTGeneration::s_Filter_Flags* filter_flags = new CustomMemoryPoolDOTGeneration::s_Filter_Flags(argvList);
+
+          generateWholeGraphOfAST(filename,filter_flags);
         }
        else
         {
