@@ -786,6 +786,7 @@ Unparse_Java::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgVariableDeclaration* vardecl_stmt = isSgVariableDeclaration(stmt);
      ROSE_ASSERT(vardecl_stmt != NULL);
 
+     unparseDeclarationModifier(vardecl_stmt->get_declarationModifier(), info);
      foreach (SgInitializedName* init_name, vardecl_stmt->get_variables())
          unparseInitializedName(init_name, info);
    }
