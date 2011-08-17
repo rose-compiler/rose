@@ -815,7 +815,8 @@ Unparse_Java::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgClassDeclaration* classdecl_stmt = isSgClassDeclaration(stmt);
      ROSE_ASSERT(classdecl_stmt != NULL);
 
-     //TODO access modifiers
+     unparseDeclarationModifier(classdecl_stmt->get_declarationModifier(), info);
+
      curprint("class ");
      unparseName(classdecl_stmt->get_name(), info);
      //TODO inheritance
