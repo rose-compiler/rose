@@ -38,12 +38,19 @@ Unparse_Java::unparseType(SgType* type, SgUnparse_Info& info) {
          case V_SgArrayType:  unparseArrayType( isSgArrayType(type), info); break;
          case V_SgClassType:  unparseClassType( isSgClassType(type), info); break;
          case V_SgEnumType:   unparseEnumType( isSgEnumType(type), info); break;
+         case V_SgModifierType: unparseModifierType( isSgModifierType(type), info); break;
 
          default:
             cout << "Unparse_Java::unparseType(" << type->class_name() << "*,info) is unimplemented." << endl;
             ROSE_ASSERT(false);
             break;
      }
+}
+
+void
+Unparse_Java::unparseModifierType(SgModifierType* type, SgUnparse_Info& info) {
+    unparseTypeModifier(type->get_typeModifier(), info);
+    unparseType(type->get_base_type(), info);
 }
 
 void
