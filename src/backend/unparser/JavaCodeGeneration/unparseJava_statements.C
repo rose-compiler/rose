@@ -1081,6 +1081,7 @@ Unparse_Java::unparseTemplateDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
 void
 Unparse_Java::unparseDeclarationModifier(SgDeclarationModifier& mod, SgUnparse_Info& info) {
+       if (mod.isJavaAbstract()) curprint("abstract ");
        unparseAccessModifier(mod.get_accessModifier(), info);
        unparseTypeModifier(mod.get_typeModifier(), info);
        unparseStorageModifier(mod.get_storageModifier(), info);
@@ -1105,7 +1106,6 @@ Unparse_Java::unparseConstVolatileModifier(SgConstVolatileModifier& mod, SgUnpar
 
 void
 Unparse_Java::unparseTypeModifier(SgTypeModifier& mod, SgUnparse_Info& info) {
-    if (mod.isAbstract()) curprint("abstract ");
     unparseConstVolatileModifier(mod.get_constVolatileModifier(), info);
 }
 
