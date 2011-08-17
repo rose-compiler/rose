@@ -78,4 +78,10 @@ namespace  AbstractMemoryObject
     return false;  
   }
 
+  std::string ObjSet::toString()
+  {
+    cerr<<"Error. Direct call to base class's toString() is not allowed."<<endl;
+    assert (false);
+    return "";  
+  }
 }

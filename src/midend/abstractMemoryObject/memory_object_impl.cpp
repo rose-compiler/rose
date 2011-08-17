@@ -10,6 +10,13 @@ namespace AbstractMemoryObject {
  size_t Array_Impl::objCount() {return 1;}
  size_t Pointer_Impl::objCount() {return 1;}
 
+ std::string AliasedObj::toString()  
+ {
+   string rt;
+   if (type != NULL )
+     rt += type->unparseToString() + " @ " + StringUtility::numberToString(type); 
+   return rt;
+ } 
   std::set<SgType*> ScalarAliasedObj::getType()
   {
     std::set<SgType*> rt;
@@ -38,15 +45,43 @@ namespace AbstractMemoryObject {
     return rt;
   }
 
+  // toString()
+  string ScalarAliasedObj::toString()
+  {
+     string rt = "ScalarAliasedObj @ " + StringUtility::numberToString(this)+ " "+ AliasedObj::toString();
+     return rt;
+  }
+   string LabeledAggregateAliasedObj::toString()
+  {
+     string rt = "LabeledAggregateAliasedObj @ " + StringUtility::numberToString(this)+ " "+ AliasedObj::toString();
+     return rt;
+  }
+    string ArrayAliasedObj::toString()
+  {
+     string rt = "ArrayAliasedObj @ " + StringUtility::numberToString(this)+ " "+ AliasedObj::toString();
+     return rt;
+  }
+    string PointerAliasedObj::toString()
+  {
+     string rt = "PointerAliasedObj @ " + StringUtility::numberToString(this)+ " "+ AliasedObj::toString();
+     return rt;
+  }
+ 
 
 
  // A map to store aliased obj set
  // This can provide quick lookup for existing aliased objset to avoid duplicated creation
   map<SgType*, ObjSet*> aliased_objset_map; 
 
+   void dump_aliased_objset_map ()
+   {
+     cout<<"Not yet implemented."<<endl;
+
+   }
   // builder for different objects
   ObjSet* createAliasedObjSet(SgType*t)  // One object per type, Type based alias analysis
   {
+    bool assert_flag = true; 
     assert (t!= NULL);
     ObjSet* rt = NULL;
     map<SgType*, ObjSet*>::const_iterator iter;
@@ -70,16 +105,20 @@ namespace AbstractMemoryObject {
       else
       {
         cerr<<"Warning: createAliasedObjSet(): unhandled type:"<<t->class_name()<<endl;
+        assert_flag = false;
       }  
 
-      // update the map 
-      aliased_objset_map[t]= rt;
+      // update the map  only if something has been created
+      if (rt != NULL) 
+        aliased_objset_map[t]= rt;
     }
     else // Found one, return it directly
     {
       rt = (*iter).second; 
     }  
-    assert (rt != NULL);
+
+    if (assert_flag)
+      assert (rt != NULL); // we cannot assert this since not all SgType are supported now
     return rt;
   } 
   
