@@ -2539,7 +2539,7 @@ SageBuilder::buildVarRefExp(const SgName& name, SgScopeStatement* scope/*=NULL*/
      if (scope != NULL)
         {
           symbol = lookupSymbolInParentScopes(name,scope); 
-          printf ("In SageBuilder::buildVarRefExp(): scope = %p = %s symbpl = %p \n",scope,scope->class_name().c_str(),symbol);
+       // printf ("In SageBuilder::buildVarRefExp(): scope = %p = %s symbpl = %p \n",scope,scope->class_name().c_str(),symbol);
         }
 
      if (symbol != NULL) 
@@ -3032,6 +3032,37 @@ SageBuilder::buildAssignStatement(SgExpression* lhs,SgExpression* rhs)
    // some child nodes are transparently generated, using recursive setting is safer
   setSourcePositionForTransformation(exp);
   //setOneSourcePositionForTransformation(exp);
+  assignOp->set_parent(exp);
+  return exp;
+}
+
+// DQ (8/16/2011): This is an AST translate specific version (see not below). 
+// We would like to phase out the version above if possible (but we watn to 
+// test this later).
+SgExprStatement*
+SageBuilder::buildAssignStatement_ast_translate(SgExpression* lhs,SgExpression* rhs)
+{
+  ROSE_ASSERT(lhs != NULL); 
+  ROSE_ASSERT(rhs != NULL); 
+  
+  //SgAssignOp* assignOp = new SgAssignOp(lhs,rhs,lhs->get_type());
+// SgBinaryOp::get_type() assume p_expression_type is not set
+  SgAssignOp* assignOp = new SgAssignOp(lhs,rhs,NULL);
+  ROSE_ASSERT(assignOp);
+  setOneSourcePositionForTransformation(assignOp);
+  lhs->set_parent(assignOp);
+  rhs->set_parent(assignOp);
+  
+  lhs->set_lvalue (true);
+  SgExprStatement* exp = new SgExprStatement(assignOp);
+  ROSE_ASSERT(exp);
+
+// DQ (8/16/2011): Modified to avoid recursive call to reset source position information 
+// (this version is required for the Java support where we have set source code position
+// information on the lhs and rhs and we don't want it to be reset as a transformation.
+// some child nodes are transparently generated, using recursive setting is safer
+// setSourcePositionForTransformation(exp);
+  setOneSourcePositionForTransformation(exp);
   assignOp->set_parent(exp);
   return exp;
 }
