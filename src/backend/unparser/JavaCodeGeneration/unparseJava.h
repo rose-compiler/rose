@@ -214,8 +214,8 @@ class Unparse_Java : public UnparseLanguageIndependentConstructs
 
           virtual void unparseTypeVoid(SgTypeVoid* type, SgUnparse_Info& info);
 
-          //virtual void unparseTypeByte(SgTypeByte* type, SgUnparse_Info& info);
-          virtual void unparseTypeChar(SgTypeChar* type, SgUnparse_Info& info);
+          virtual void unparseTypeWchar(SgTypeWchar* type, SgUnparse_Info& info);
+          virtual void unparseTypeSignedChar(SgTypeSignedChar* type, SgUnparse_Info& info);
           virtual void unparseTypeShort(SgTypeShort* type, SgUnparse_Info& info);
           virtual void unparseTypeInt(SgTypeInt* type, SgUnparse_Info& info);
           virtual void unparseTypeLong(SgTypeLong* type, SgUnparse_Info& info);
