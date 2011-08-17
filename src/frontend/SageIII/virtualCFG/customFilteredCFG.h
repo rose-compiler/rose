@@ -6,7 +6,7 @@
  */
 
 #ifndef CUSTOMFILTEREDCFG_H
-#define	CUSTOMFILTEREDCFG_H
+#define CUSTOMFILTEREDCFG_H
 
 #include "staticCFG.h"
 
@@ -45,5 +45,5 @@ private:
     };
 
 }
-#endif	/* CUSTOMFILTEREDCFG_H */
+#endif  /* CUSTOMFILTEREDCFG_H */
 

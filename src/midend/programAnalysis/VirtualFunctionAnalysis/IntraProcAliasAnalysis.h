@@ -154,7 +154,10 @@ public :
     void init(SgGraphNode *n);
     CompReprPtr getEntryData(SgGraphNode *node) {   return ins.at(node);    }
     void setEntryData(SgGraphNode *node, CompReprPtr en) {    ins[node] = en;    }
-    CompReprPtr getExitData(SgGraphNode *node) {  return outs.at(node);    }
+    CompReprPtr getExitData(SgGraphNode *node) {  
+        if(outs.count(node) == 0)
+            std::cout<< node->get_SgNode()->unparseToCompleteString() << std::endl;
+        return outs.at(node);    }
     void setExitData(SgGraphNode *node, CompReprPtr en) {  outs[node] = en;   }
     std::vector <std::pair<AliasRelationNode, AliasRelationNode> > getAliasRelations(SgGraphNode *node);
     void addNewAliasRelation(SgGraphNode *node, std::pair<AliasRelationNode, AliasRelationNode> a_relation) ;
