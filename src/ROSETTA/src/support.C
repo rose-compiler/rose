@@ -1581,6 +1581,10 @@ Grammar::setUpSupport ()
      Project.setDataPrototype("std::list<std::string>", "bracketedIncludesSearchPaths", "",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);          
 
+  // negara1 (08/17/2011): Added to permit specifying an optional root folder for header files unparsing.
+     Project.setDataPrototype("std::string", "unparseHeaderFilesRootFolder", "= \"\"",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);          
+     
      Attribute.setDataPrototype    ( "std::string"  , "name", "= \"\"",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
    //  Attribute.setAutomaticGenerationOfCopyFunction(false);

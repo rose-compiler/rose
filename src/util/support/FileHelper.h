@@ -115,6 +115,10 @@ public:
         return exists(fullFileName);
     }
 
+    static bool isNotEmptyFolder(const string& fullFolderName) {
+        return exists(fullFolderName) && !is_empty(fullFolderName);
+    }
+    
     static string normalizePath(const string& aPath) {
         path boostPath(aPath);
         string normalizedPath = boostPath.normalize().string();
