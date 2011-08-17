@@ -1,11 +1,9 @@
 #ifndef CPP_RUNTIMESYSTEM_H
 #define CPP_RUNTIMESYSTEM_H
 
-#include <iostream>
+#include <iosfwd>
 #include <string>
 #include <map>
-#include <set>
-#include <list>
 #include <vector>
 #include <cassert>
 #include <fstream>
@@ -38,7 +36,7 @@
  *      - Check Functions:      check if certain memory allocations are safe/valid
  *
  * Features of RuntimeSystem include:
- *      - @b Checking @b memory @b reads.  
+ *      - @b Checking @b memory @b reads.
  *              Reads can be checked to ensure memory is readable (i.e. an
  *              address refers to allocated memory), initialized, and
  *              type-consistent.
@@ -77,14 +75,21 @@
  *      -#  That size is determined when the @em RuntimeSystem is compiled.
  *
  * Singleton
+ *
+ * \note the constness on functions indicates whether the state of the system
+ *       (e.g., MemoryManager, PointerManager, etc. is changed)
+ *       This does *NOT* include changes to the violation reporting system.
+ *       I.e., One could argue that program termination (or error reporting)
+ *             on a singleton changes the state of the system. We do not
+ *             follow such a strict interpretation. Merely the constness
+ *             serves as hint when we need to communicate updates to
+ *             concurrent runtime systems (for UPC). (\pp)
  */
-class RuntimeSystem
+struct RuntimeSystem
 {
-    public:
+        typedef std::vector< const RsType* > TypeList;
 
         static RuntimeSystem* instance();
-        ~RuntimeSystem() {}
-
 
         /// Gets called when a violation is detected
         /// this function decides what to do (message printing, aborting program)
@@ -98,7 +103,6 @@ class RuntimeSystem
         void checkpoint(const SourcePosition & pos) ;
 
         const SourcePosition & getCodePosition() const {return curPos; }
-        void setCodePosition(SourcePosition &  sp) {curPos=sp; }
 
         /// if testing mode is true exceptions are thrown when a violations occurs
         /// otherwise abort is called, default false
@@ -107,7 +111,7 @@ class RuntimeSystem
         /// Switches the Qt-Debugger on/off (works only if compiled with ROSE_WITH_ROSEQT)
         void setQtDebuggerEnabled(bool b) { qtDebugger = b; }
 
-        bool isQtDebuggerEnabled() { return qtDebugger; }
+        bool isQtDebuggerEnabled() const { return qtDebugger; }
 
         /// Changes the violation policy for the given violation type.
         void setViolationPolicy( RuntimeViolation::Type, ViolationPolicy::Type );
@@ -115,13 +119,19 @@ class RuntimeSystem
 
         // access a specific manager
 
-        CStdLibManager * getCStdLibManager() { return &cstdlibManager; }
+        CStdLibManager*       getCStdLibManager()       { return &cstdlibManager;  }
+        MemoryManager*        getMemManager()           { return & memManager;     }
+        FileManager*          getFileManager()          { return & fileManager;    }
+        TypeSystem*           getTypeSystem()           { return & typeSystem;     }
+        StackManager*         getStackManager()         { return & stackManager;   }
+        PointerManager*       getPointerManager()       { return & pointerManager; }
 
-        MemoryManager * getMemManager()     { return & memManager;     }
-        FileManager   * getFileManager()    { return & fileManager;    }
-        TypeSystem    * getTypeSystem()     { return & typeSystem;     }
-        StackManager  * getStackManager()   { return & stackManager;   }
-        PointerManager* getPointerManager() { return & pointerManager; }
+        const CStdLibManager* getCStdLibManager() const { return &cstdlibManager;  }
+        const MemoryManager*  getMemManager()     const { return & memManager;     }
+        const FileManager*    getFileManager()    const { return & fileManager;    }
+        const TypeSystem*     getTypeSystem()     const { return & typeSystem;     }
+        const StackManager*   getStackManager()   const { return & stackManager;   }
+        const PointerManager* getPointerManager() const { return & pointerManager; }
 
         // ---------------------------------  Register Functions ------------------------------------------------------------
 
@@ -151,7 +161,7 @@ class RuntimeSystem
          @endcode
          *
          * Using a std::string for the type is a convenience.  Calling
-         * createVariable( addr_type, const std::string&, const std::string&, RsType*)
+         * createVariable( Address, const std::string&, const std::string&, RsType*)
          * is preferred.
          *
          * @param address       The (stack) address of the variable.
@@ -159,33 +169,48 @@ class RuntimeSystem
          *                      debugger and/or output, not to detect violations.
          * @param typeString    A valid RsType string.
          */
-        void createVariable(addr_type address,
-                            const std::string & name,
-                            const std::string & mangledName,
-                            const std::string & typeString);
+        void createVariable( Address            address,
+                             const std::string& name,
+                             const std::string& mangledName,
+                             const std::string& typeString,
+                             AllocKind          ak,
+                             long               blocksize
+                           );
 
-        void createVariable(addr_type address,
-                            const std::string & name,
-                            const std::string & mangledName,
-                            RsType *  type);
+        void createVariable( Address            address,
+                             const std::string& name,
+                             const std::string& mangledName,
+                             const RsType*      type,
+                             AllocKind          ak,
+                             long               blocksize
+                           );
 
 
-        void createArray(   addr_type address,
-                            const std::string & name,
-                            const std::string & mangledName,
-                            const std::string & baseType,
-                            size_t size);
+        void createArray(   Address            address,
+                            const std::string& name,
+                            const std::string& mangledName,
+                            const std::string& baseType,
+                            size_t             size,
+                            AllocKind          ak,
+                            long               blocksize
+                        );
 
-        void createArray(   addr_type address,
-                            const std::string & name,
-                            const std::string & mangledName,
-                            RsType * baseType,
-                            size_t size);
+        void createArray(   Address            address,
+                            const std::string& name,
+                            const std::string& mangledName,
+                            const RsType*      baseType,
+                            size_t             size,
+                            AllocKind          ak,
+                            long               blocksize
+                        );
 
-        void createArray(   addr_type address,
-                            const std::string & name,
-                            const std::string & mangledName,
-                            RsArrayType * type);
+        void createArray(   Address            address,
+                            const std::string& name,
+                            const std::string& mangledName,
+                            const RsArrayType* type,
+                            AllocKind          ak,
+                            long               blocksize
+                        );
 
         /** Notifies the RTS that a C++ object has been created.  This will
          * typically be called in the constructor, so that the RTS is aware of
@@ -199,39 +224,34 @@ class RuntimeSystem
          * same (and not an offset in an existing @c MemoryType) and the type is
          * a subtype, then the type of the memory layout is updated.
          */
-        void createObject(  addr_type address,
-                            RsClassType* type );
+        void createObject( Address address, const RsClassType* type );
 
 
 
         /** Notify the runtime system that memory has been allocated, usually
          * via @c malloc or @c new.
          *
-         * @param addr          The base address of the newly allocated memory.
-         * @param size          The size of the newly allocated memory.
-         * @param onStack       Whether the memory is on the stack or not.  @ref
-         *                      createMemory should be called for stack
-         *                      variables, in which case @c onStack should be @c
-         *                      true.  The runtime system will detect invalid
-         *                      frees to stack memory.
-         * @param fromMalloc    Whether the memory was created via a C-style
-         *                      allocation such as @c malloc, as opposed to a
-         *                      C++ style allocation such as @c new.  Ignored if
-         *                      onstack is true.
-         * @param type          What type information is known about the memory,
-         *                      if any.  If and when memory becomes typed, calls
-         *                      to @ref checkMemRead and @ref checkMemWrite can
-         *                      verify that memory is used in a type-consistent
-         *                      way.
+         * @param addr         The base address of the newly allocated memory.
+         * @param size         The size of the newly allocated memory.
+         * @param kind         Describes where and how the memory was allocated
+         *                     e.g., stack, new, malloc, upc_alloc, ...
+         * @param distributed  true, if the memory is distributed across threads
+         *                     as in global shared arrays in UPC
+         * @param type         What type information is known about the memory,
+         *                     if any.  If and when memory becomes typed, calls
+         *                     to @ref checkMemRead and @ref checkMemWrite can
+         *                     verify that memory is used in a type-consistent
+         *                     way.
          */
-        void createMemory(addr_type addr, size_t size,bool onStack = false, bool fromMalloc = false, RsType * type=NULL);
+        void createMemory(Address addr, size_t size, MemoryType::AllocKind kind, long blocksize, const RsType* type);
+
         /// this version creates stackmemory, of given type
-        void createStackMemory(addr_type addr, size_t size,const std::string & type);
+        void createStackMemory(Address addr, size_t size,const std::string & type);
 
 
         /** Symmetric to @ref createMemory.
          */
-        void freeMemory(addr_type startAddress, bool onStack = false, bool fromMalloc = false);
+        void freeMemory(Address startAddress, MemoryType::AllocKind kind);
 
 
         /** Registers that a pointer, at address @c sourceAddress has just been
@@ -265,17 +285,30 @@ class RuntimeSystem
          *      computable (e.g. if one stores an int with a fixed offset from
          *      the address).
          */
-        void registerPointerChange( addr_type sourceAddress, addr_type targetAddress, bool checkPointerMove=false, bool checkMemLeaks=true);
-        /// for documentation see PointerManager::registerPointerChange()
-        void registerPointerChange( addr_type sourceAddress, addr_type targetAddress, RsType * type, bool checkPointerMove=false, bool checkMemLeaks=true);
+        void registerPointerChange( Address     src,
+                                    Address     target,
+                                    bool        checkPointerMove,
+                                    bool        checkMemLeaks
+                                  );
 
+        /// for documentation see PointerManager::registerPointerChange()
+        void registerPointerChange( Address              src,
+                                    Address              tgt,
+                                    const RsPointerType* type,
+                                    bool                 checkPointerMove, //=false,
+                                    bool                 checkMemLeaks //=true
+                                  );
+
+#if OBSOLETE_CODE
         /// Convenience function which takes mangledName instead of sourceAddress
-        void registerPointerChange( const std::string & mangledName, addr_type targetAddress, bool checkPointerMove=false, bool checkMemLeaks=true);
+        void registerPointerChange( const std::string & mangledName, Address targetAddress, bool checkPointerMove=false, bool checkMemLeaks=true);
 
         /// Checks if two addresses lie in the same "typed chunk"
         /// equivalent to the check which is done on registerPointerChange
-        void checkPointerDereference( addr_type sourceAddress, addr_type derefed_address );
-        void checkIfThisisNULL(void* thisExp);
+        void checkPointerDereference( Address src, AddressDesc src_desc, Address derefed_address, AddressDesc derefed_desc );
+#endif /* OBSOLETE_CODE */
+
+        void checkIfThisisNULL(void* thisExp) const;
 
 
         /// Each variable is associated with a scope, use this function to create a new scope
@@ -284,7 +317,7 @@ class RuntimeSystem
 
         /// Closes a scope and deletes all variables which where created via registerVariable()
         /// from the stack, testing for memory leaks (@ref registerPointerChange).
-        void endScope ();
+        void endScope(size_t scopecount);
 
 
 
@@ -308,23 +341,31 @@ class RuntimeSystem
          *                 type.  The first item should be the return type
          *                 (SgVoidType if void), and the remaining, the types
          *                 of the parameters.
+         *                 (types is messed up (!= empty) in the call)
          */
-        void expectFunctionSignature( const std::string & name, const std::vector< RsType* > types );
+        void expectFunctionSignature( std::string name, TypeList& types );
+
         /** This function should be called at all function definitions, to
          * verify the signature of separately compiled callsites, if necessary.
          * Only applicable to C programs.
          */
-        void confirmFunctionSignature( const std::string & name, const std::vector< RsType* > types );
+        void confirmFunctionSignature( const std::string & name, const TypeList& types ) const;
 
         // --------------------------------  Check Functions ------------------------------------------------------------
 
         /// Checks if a specific memory region can be read (useful to check pointer derefs)
         /// true when region lies in allocated and initialized memory chunk
-        void checkMemRead(addr_type addr, size_t length, RsType * t = NULL);
+        void checkMemRead(Address addr, size_t size) const;
+
+        /// Checks if the specified memory region is allocated
+        void checkMemLoc(Address addr, size_t size) const;
+
+        /// Checks if the specified memory region is allocated
+        void checkBounds(Address addr, Address accaddr, size_t size) const;
 
         /// Checks if a specific memory region can be safely written
         /// true when region lies in allocated memory chunk
-        void checkMemWrite(addr_type addr, size_t length, RsType * t = NULL);
+        bool checkMemWrite(Address addr, size_t size, const RsType* t = NULL);
 
 
 
@@ -346,7 +387,7 @@ class RuntimeSystem
         //
         //  Each function checks that a call to its associated cstdlib function
         //  would be legal, relative certain classes of errors, including:
-        //      
+        //
         //      1.  Ensuring that when necessary, strings have been properly
         //          initialized and a null terminator exists in the same memory
         //          region that the pointer refers to.
@@ -354,12 +395,12 @@ class RuntimeSystem
         //      2.  Ensuring that destinations for writes are large enough, and
         //          do not overlap with sources, when doing so is inappropriate.
 
-        void check_memcpy ( void* destination , const void* source , size_t num ) { cstdlibManager.check_memcpy( destination , source , num );};
-        void check_memmove ( void* destination , const void* source , size_t num ) { cstdlibManager.check_memmove( destination , source , num );};
-        void check_strcpy ( char* destination , const char* source ) { cstdlibManager.check_strcpy( destination , source );};
-        void check_strncpy ( char* destination , const char* source , size_t num ) { cstdlibManager.check_strncpy( destination , source , num );};
-        void check_strcat ( char* destination , const char* source ) { cstdlibManager.check_strcat( destination , source );};
-        void check_strncat ( char* destination , const char* source , size_t num ) { cstdlibManager.check_strncat( destination , source , num );};
+        void check_memcpy ( const void* destination , const void* source , size_t num ) { cstdlibManager.check_memcpy( destination , source , num );};
+        void check_memmove ( const void* destination , const void* source , size_t num ) { cstdlibManager.check_memmove( destination , source , num );};
+        void check_strcpy ( const char* destination , const char* source ) { cstdlibManager.check_strcpy( destination , source );};
+        void check_strncpy ( const char* destination , const char* source , size_t num ) { cstdlibManager.check_strncpy( destination , source , num );};
+        void check_strcat ( const char* destination , const char* source ) { cstdlibManager.check_strcat( destination , source );};
+        void check_strncat ( const char* destination , const char* source , size_t num ) { cstdlibManager.check_strncat( destination , source , num );};
         void check_strchr ( const char* str1 , int character ) { cstdlibManager.check_strchr( str1 , character );};
         void check_strpbrk ( const char* str1 , const char* str2 ) { cstdlibManager.check_strpbrk( str1 , str2 );};
         void check_strspn ( const char* str1 , const char* str2 ) { cstdlibManager.check_strspn( str1 , str2 );};
@@ -384,8 +425,8 @@ class RuntimeSystem
         void setOutputFile(const std::string & file);
 
 
-        void log(const std::string & msg)  { (*defaultOutStr) << msg; }
-        std::ostream & log()               { return (*defaultOutStr); }
+        void log(const std::string& msg)  { log() << msg; }
+        std::ostream& log();
 
         // Printing of RuntimeSystem status
         void printOpenFiles(std::ostream & os) const  { fileManager.print(os);    }
@@ -400,14 +441,19 @@ class RuntimeSystem
         void printPointer  () const  { printPointer  (*defaultOutStr); }
 
         // Access to variables/scopes
-        int                 getScopeCount()     const;
-        const std::string & getScopeName(int i) const;
+        int                getScopeCount()     const;
+        const std::string& getScopeName(int i) const;
 
-        typedef std::vector<VariablesType*>::const_iterator VariableIter;
-        VariableIter variablesBegin(int scopeId) const;
-        VariableIter variablesEnd(int scopeId)   const;
+        void printMessage(const std::string& message);
 
-        void printMessage(std::string message);
+        bool testing() const { return testingMode; }
+
+        const ViolationPolicy::Type& vioPolicy(const RuntimeViolation::Type& key)
+        {
+          return violationTypePolicy[key];
+        }
+
+
 
     private:
 
@@ -421,7 +467,7 @@ class RuntimeSystem
         MemoryManager memManager;
         /// Class to track all opened files and file-accesses
         FileManager fileManager;
-        /// Class to check arguments to certain cstdlib functions   
+        /// Class to check arguments to certain cstdlib functions
         CStdLibManager cstdlibManager;
         /// Class for managing all known types
         TypeSystem typeSystem;
@@ -471,9 +517,40 @@ class RuntimeSystem
 
         // members related to function signature verification
         std::string nextCallFunctionName;
-        std::vector< RsType* > nextCallFunctionTypes;
+        TypeList    nextCallFunctionTypes;
+};
 
-    friend class PointerManager;
+inline
+RuntimeSystem* rtedRTS(void *)
+{
+  return RuntimeSystem::instance();
+}
+
+inline
+const RuntimeSystem* rtedRTS(const void *)
+{
+  return RuntimeSystem::instance();
+}
+
+
+struct diagnostics
+{
+  enum Kind
+  {
+    memory = 1,
+    variable = 1 << 1,
+    type = 1 << 2,
+    location = 1 << 3,
+    all = (1 << 4) - 1
+  };
+
+  static int status;
+
+  static
+  bool message(Kind k) { return ((status & k) == k); }
+
+  static
+  bool warning(Kind k = all) { return (k == k); }
 };
 
 

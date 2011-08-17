@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
 	cout << num_vertices(cfg) << endl;
 
     // Find all loops.
-    vector<CFG::Vertex> headers = cfg.getAllLoopHeaders();
+    set<CFG::Vertex> headers = cfg.getAllLoopHeaders();
     foreach (CFG::Vertex v, headers)
     {
         Backstroke::writeCFGNode(cout, *cfg[v]);

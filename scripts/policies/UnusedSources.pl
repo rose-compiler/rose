@@ -23,7 +23,7 @@ push @{$index{lc((/([^\/]+)$/)[0])}||=[]}, $_ for grep {/\.(h|hh|hpp|c|C|cpp)$/}
 # from the %index.
 my $files = FileLister->new(@ARGV);
 while (my $file = $files->next_file) {
-  next unless $file =~ /\/(Makefile\.am|CMakeList\.txt|make_rule\.inc)$/;
+  next unless $file =~ /\/(Makefile\.am|CMakeList\.txt|make_rule\.inc|Makefile-.*\.inc)$/;
   if (open FILE, "<", $file) {
     while (<FILE>) {
       s/#.*//;
@@ -39,6 +39,7 @@ $warning = "" if @remaining > 1480; # as of 2010-10-18 there are 1480 violations
 print $desc if @remaining;
 print "  $_$warning\n" for sort @remaining;
 
+print "Number of remaining unused source files: " . @remaining . ".\n";
 
 
 exit(@remaining ? ($warning?128:1) : 0);

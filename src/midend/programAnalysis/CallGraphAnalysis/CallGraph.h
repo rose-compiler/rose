@@ -41,7 +41,8 @@ namespace CallTargetSet
 
   // returns the list of declarations of all functions that may get called via a
   // member function (non/polymorphic) call
-  std::vector<SgFunctionDeclaration*> solveMemberFunctionCall ( SgClassType *, ClassHierarchyWrapper *, SgMemberFunctionDeclaration *, bool );
+  std::vector<SgFunctionDeclaration*> solveMemberFunctionCall ( 
+          SgClassType *, ClassHierarchyWrapper *, SgMemberFunctionDeclaration *, bool , bool includePureVirtualFunc = false );
 
   //! Returns the list of all constructors that may get called via an initialization.
   //! FIXME: There is a bug in this function. 
@@ -52,7 +53,8 @@ namespace CallTargetSet
   // Populates functionList with Properties of all functions that may get called.
   void getPropertiesForExpression(SgExpression* exp,
                                     ClassHierarchyWrapper* classHierarchy,
-                                    Rose_STL_Container<SgFunctionDeclaration*>& propList);
+                                    Rose_STL_Container<SgFunctionDeclaration*>& propList,
+                                    bool includePureVirtualFunc = false);
 
   //! Populates functionList with definitions of all functions that may get called. This
   //! is basically a wrapper around getPropertiesForExpression that extracts the
@@ -66,7 +68,8 @@ namespace CallTargetSet
   //! is basically a wrapper around getPropertiesForExpression.
   void getDeclarationsForExpression(SgExpression* exp,
                                     ClassHierarchyWrapper* classHierarchy,
-                                    Rose_STL_Container<SgFunctionDeclaration*>& calleeList);
+                                    Rose_STL_Container<SgFunctionDeclaration*>& calleeList,
+                                    bool includePureVirtualFunc = false);
 
   // Gets a vector of SgExpressions that are associated with the current SgFunctionDefinition.
   // This functionality is necessary for virtual, interprocedural control flow graphs. However, 
@@ -241,40 +244,29 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
 
         BOOST_FOREACH(SgFunctionDeclaration* calleeDeclaration, functionCallees)
         {
-            // if we have a pointer (no function declaration) or a virtual function, create dummy node
-            if (calleeDeclaration == NULL)
-            {
-                ROSE_ASSERT(false); //I'm not sure if this case ever happens
-                SgGraphNode *dummy;
-                dummy = new SgGraphNode("DUMMY");
-                dummy->set_SgNode(calleeDeclaration);
+                        ROSE_ASSERT(calleeDeclaration != NULL);
 
-                returnGraph->addNode(dummy);
-                returnGraph->addDirectedEdge(startingNode, dummy);
-            }
-            else
-            {
-                //This function has been filtered out
-                if (pred(calleeDeclaration) == false)
-                {
-                    continue;
-                }
+                        //This function has been filtered out
+                        if (pred(calleeDeclaration) == false)
+                        {
+                                continue;
+                        }
 
-                iter = graphNodes.find(calleeDeclaration);
-                ROSE_ASSERT(iter != graphNodes.end());
-                SgGraphNode *endNode = iter->second;
+                        iter = graphNodes.find(calleeDeclaration);
+                        ROSE_ASSERT(iter != graphNodes.end());
+                        SgGraphNode *endNode = iter->second;
 
-                if (returnGraph->checkIfDirectedGraphEdgeExists(startingNode, endNode) == false)
-                {
-                    ROSE_ASSERT(startingNode != NULL && endNode != NULL);
-                    returnGraph->addDirectedEdge(startingNode, endNode);
-                }
-                else if (SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL)
-                {
-                    std::cout << "Did not add edge since it already exist" << std::endl;
-                    std::cout << "\tEndNode " << calleeDeclaration->get_name().str() << "\n";
-                }
-            }
+                        if (returnGraph->checkIfDirectedGraphEdgeExists(startingNode, endNode) == false)
+                        {
+                                ROSE_ASSERT(startingNode != NULL && endNode != NULL);
+                                returnGraph->addDirectedEdge(startingNode, endNode);
+                        }
+                        else if (SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL)
+                        {
+                                std::cout << "Did not add edge since it already exist" << std::endl;
+                                std::cout << "\tEndNode " << calleeDeclaration->get_name().str() << "\n";
+                        }
+
             totEdges++;
         }
     }
@@ -283,7 +275,7 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
         std::cout << "Total number of edges: " << totEdges << "\n";
 
     graph = returnGraph;
-};
+}
 
 // endif for CALL_GRAPH_H
 #endif

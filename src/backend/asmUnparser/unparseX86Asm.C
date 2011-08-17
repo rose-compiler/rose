@@ -58,7 +58,11 @@ static std::string x86ValToLabel(uint64_t val, const AsmUnparser::LabelMap *labe
 }
 
 static std::string x86TypeToPtrName(SgAsmType* ty) {
-    ROSE_ASSERT(ty != NULL);
+    if (NULL==ty) {
+        std::cerr <<"x86TypeToPtrName: null type" <<std::endl;
+        return "BAD_TYPE";
+    }
+
     switch (ty->variantT()) {
         case V_SgAsmTypeByte: return "BYTE";
         case V_SgAsmTypeWord: return "WORD";

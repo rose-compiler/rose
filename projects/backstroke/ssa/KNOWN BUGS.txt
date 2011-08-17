@@ -1,12 +1,6 @@
 BUGS
 ----
 
--SERIOUS INTERPROCEDURAL BUG: Interprocedural definitions are P-defs, or possible definitions, rather than D-defs (definite
-	definitions. As such, they should not (always) kill the previous reaching definition!
-
--For post-increment ops, such as i++, the uses are incorrectly matched to the post-increment op. Instead, uses should be matched
-   to the definition that comes before the increment.
-
 -Bodies of catch statements are not analyzed. This is a shortcoming of the ROSE virtual CFG (to be fixed by Michael)
 
 -Variables used to define the dimensions inside an array declaration are not detected as uses
@@ -14,30 +8,4 @@ BUGS
 -The analysis repeatedly traverses the virtual CFG, instead of building a static CFG up front. While this does not impact
    correctness, it is a serious performance detriment
 
--Interprocedural SSA always does two passes, even if no new defs have to be propagated. This doubles its runtime.
-
--Serious bug: If a variable goes out of scope, there is not necessarily a phi node that defines its last version. 
- For example,
-
-	void foo()
-	{
-		{
-			int a;
-			if (a)
-				a = 0;
-			else
-				a = 1;
-		}  //a goes out of scope here
-		3; //phi node is not inserted here because a is out of scope. Now 'a' has no valid final version
-	}
-
--Memory leak with the grall graph - the SgIncidenceDirectedGraph object is not deleted
-
-TODO (in addition to fixing the above bugs)
------
-
--Add more query functions
-
--Add a classification for expanded defs, as either expanded from prefix or expanded from a member
-
--Add a method to allow analyzing a single function
+-Operands of the sizeof operator are considered uses, and t hey should not be.

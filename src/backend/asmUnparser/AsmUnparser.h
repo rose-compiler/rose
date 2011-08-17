@@ -394,6 +394,8 @@ public:
         init();
     }
 
+    virtual ~AsmUnparser() {}
+
     /** Determines if a node can be unparsed.
      *
      *  The AsmUnparser only handles certain node types, namely those that correspond to binary functions, blocks, and

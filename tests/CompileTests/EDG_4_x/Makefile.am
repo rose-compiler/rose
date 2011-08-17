@@ -6,14 +6,14 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 bin_PROGRAMS = EDG_4_x_Translator
 
-# This tests the ability to read and regnerate the input application and compile it using the backend compiler.
+# This tests the ability to read and regenerate the input application and compile it using the backend compiler.
 EDG_4_x_Translator_SOURCES = EDG_4_x_Translator.C
 
 # Use names set in ROSE/config/Makefile.for.ROSE.includes.and.libs
 INCLUDES = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-EXTRA_DIST = C-tests.inc C-tests.inc
+EXTRA_DIST = C-tests.inc Cxx-tests.inc
 
 check-local:
 	@echo "****************************************************************************************************"

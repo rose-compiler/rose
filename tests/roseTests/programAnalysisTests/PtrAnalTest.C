@@ -1,5 +1,5 @@
 
-#include "sage3basic.h"
+#include <sage3.h>
 
 #include <StmtInfoCollect.h>
 #include <AstInterface_ROSE.h>
@@ -185,6 +185,7 @@ main ( int argc,  char * argv[] )
    for (int i = 0; i < filenum; ++i) {
 
      SgSourceFile* sageFile = isSgSourceFile(sageProject.get_fileList()[i]);
+     std::string filename = sageFile->get_file_info()->get_filename();
      ROSE_ASSERT(sageFile != NULL);
      SgGlobal *root = sageFile->get_globalScope();
 
@@ -197,6 +198,8 @@ main ( int argc,  char * argv[] )
              continue;
           SgFunctionDefinition *defn = func->get_definition();
           if (defn == 0)
+             continue;
+          if (defn->get_file_info()->get_filename() != filename)
              continue;
           op(fa, defn);
      }

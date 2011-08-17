@@ -5,7 +5,7 @@
 #include "CallGraph.h"
 #include <set>
 #include <list>
-
+#include <string>
 
 //namespace CallGraph
 //{
@@ -22,7 +22,7 @@ class Function
 	public:
 	Function();
 	
-	Function(string name);
+	Function(std::string name);
 	
 	Function(SgFunctionDeclaration* sample);
 	
@@ -67,17 +67,17 @@ class Function
 	// returns the parameters of this function
 	SgInitializedNamePtrList get_params() const;
 	
-	string str(string indent="") const;
+	std::string str(std::string indent="") const;
 };
 
 // extension of the generic function class that also contains all the SgGraphNodes that refer to the function
 class CGFunction : public Function
 {
-	set<SgGraphNode*> cgNodes;
+	std::set<SgGraphNode*> cgNodes;
 	SgIncidenceDirectedGraph* graph;
 	
 	public:
-	CGFunction(string name, SgIncidenceDirectedGraph* graph);
+	CGFunction(std::string name, SgIncidenceDirectedGraph* graph);
 	
 	CGFunction(SgFunctionDeclaration* sample, SgIncidenceDirectedGraph* graph);
 	
@@ -115,13 +115,13 @@ class CGFunction : public Function
 		protected:
 		direction dir;
 		
-		set<SgGraphNode*>::iterator itn;
-		set<SgDirectedGraphEdge*> edges; // The current SgGraphNode's (*itn) incoming or outgoing edges
-		set<SgDirectedGraphEdge*>::iterator ite; // The current edge in edges
+		std::set<SgGraphNode*>::iterator itn;
+		std::set<SgDirectedGraphEdge*> edges; // The current SgGraphNode's (*itn) incoming or outgoing edges
+		std::set<SgDirectedGraphEdge*>::iterator ite; // The current edge in edges
 			
 		// The set the SgGraphNodes that have already been visited by this iterator
 		// used to eliminate duplicates
-		set<SgGraphNode*> visitedCGNodes;
+		std::set<SgGraphNode*> visitedCGNodes;
 			
 		const CGFunction* func;
 		
@@ -151,7 +151,7 @@ class CGFunction : public Function
 		
 		// Returns a reference to CGFunction that matches the current SgGraphNode that this iterator refers to,
 		// pulling the reference from the given set of CGFunctions
-		const CGFunction* getTarget(set<CGFunction> &functions)
+		const CGFunction* getTarget(std::set<CGFunction> &functions)
 		{
 			//printf("getTarget finished=%d\n", finished);
 			SgGraphNode* target = (dir == fw ? (*ite)->get_to() : (*ite)->get_from());
@@ -161,7 +161,7 @@ class CGFunction : public Function
 			if(isSgFunctionDeclaration(target->get_SgNode())->get_file_info()->isCompilerGenerated()) return NULL;
 			
 			// Find the CGFunction in functions that matches the target SgGraphNode
-			for(set<CGFunction>::const_iterator it = functions.begin(); it!=functions.end(); it++)
+			for(std::set<CGFunction>::const_iterator it = functions.begin(); it!=functions.end(); it++)
 			{
 				//printf("    iteration. current: %s isCompilerGenerated=%d, target=%s, isCompilerGenerated=%d\n", (*it).get_name().str(), (*it).get_declaration()->get_file_info()->isCompilerGenerated(), target->functionDeclaration->get_name().str(), target->functionDeclaration->get_file_info()->isCompilerGenerated());
 				// If the target SgGraphNode can be found in the current CGFunction
@@ -238,7 +238,7 @@ class CGFunction : public Function
 			}
 		}
 		
-		bool operator == (iterator that)
+		bool operator == (const iterator& that)
 		{
 			// if either iterators are finished, then they're equal iff the other is finished, ignoring any other fields
 			if(finished) return that.finished;
@@ -252,7 +252,7 @@ class CGFunction : public Function
 			       (func == that.func);
 		}
 		
-		bool operator != (iterator that)
+		bool operator != (const iterator& that)
 		{ return !((*this) == that); }
 	};
 	
@@ -293,20 +293,20 @@ class TraverseCallGraph
 	SgIncidenceDirectedGraph* graph;
 	// maps each SgFunctionDefinition to its associated SgGraphNodes
 	//   (there may be more than one such node for a given SgFunctionDefinition)
-	//map<SgFunctionDefinition*, set<SgGraphNode*> > decl2CFNode;
+	//map<SgFunctionDefinition*, std::set<SgGraphNode*> > decl2CFNode;
 	
 	// The set of functions in this program
-	set<CGFunction> functions;
+	std::set<CGFunction> functions;
 	
 	// The number of functions that call each given function
-	//map<SgFunctionDefinition*, int> numCallers;
-	map<const CGFunction*, int> numCallers;
+	//std::map<SgFunctionDefinition*, int> numCallers;
+	std::map<const CGFunction*, int> numCallers;
 	
 	// set of all the SgFunctionDefinition for all functions that are not called from other functions
 	//set<SgFunctionDefinition*> noPred;
 	// Set of functions that are not called from other functions.
 	// Just contains pointers to the CGFunction objects inside the functions set.
-	set<const CGFunction*> noPred;
+	std::set<const CGFunction*> noPred;
 	
 	public:
 	TraverseCallGraph(SgIncidenceDirectedGraph* graph);
@@ -340,7 +340,7 @@ class TraverseCallGraphTopDown : public TraverseCallGraph
 	{
 		public:
 		// the inherited attributes passed down from callers
-		list<InheritedAttribute> fromCallers;
+		std::list<InheritedAttribute> fromCallers;
 	};
 	
 	public:
@@ -348,14 +348,14 @@ class TraverseCallGraphTopDown : public TraverseCallGraph
 	
 	void traverse();
 	
-	virtual InheritedAttribute visit(const CGFunction* func, list<InheritedAttribute>& fromCallers)=0;
+	virtual InheritedAttribute visit(const CGFunction* func, std::list<InheritedAttribute>& fromCallers)=0;
 	
 	virtual InheritedAttribute defaultAttrVal() { InheritedAttribute val; return val; }
 	
 	protected:
 	void traverse_rec(const CGFunction* fd, 
-	                  map<const CGFunction*, funcRecord> &visitRecords, 
-	                  set<pair<const CGFunction*, const CGFunction*> > &touchedEdges,
+	                  std::map<const CGFunction*, funcRecord> &visitRecords, 
+	                  std::set<std::pair<const CGFunction*, const CGFunction*> > &touchedEdges,
 	                  InheritedAttribute &fromCaller);
 
 	public:
@@ -371,14 +371,14 @@ class TraverseCallGraphBottomUp : public TraverseCallGraph
 	
 	void traverse();
 	
-	virtual SynthesizedAttribute visit(const CGFunction* func, list<SynthesizedAttribute> fromCallees)=0;
+	virtual SynthesizedAttribute visit(const CGFunction* func, std::list<SynthesizedAttribute> fromCallees)=0;
 	
 	virtual SynthesizedAttribute defaultAttrVal() { SynthesizedAttribute val; return val; }
 
 	protected:
 	SynthesizedAttribute traverse_rec(const CGFunction* fd, 
-                  map<const CGFunction*, SynthesizedAttribute> &visitRecords, 
-                  set<pair<const CGFunction*, const CGFunction*> > &touchedEdges);
+                  std::map<const CGFunction*, SynthesizedAttribute> &visitRecords, 
+                  std::set<std::pair<const CGFunction*, const CGFunction*> > &touchedEdges);
 	
 	public:
 	virtual ~TraverseCallGraphBottomUp();
@@ -391,7 +391,7 @@ class TraverseCallGraphDataflow : public TraverseCallGraph
 {
 	public:
 	// list of functions that still remain to be processed;
-	list<const CGFunction*> remaining;
+	std::list<const CGFunction*> remaining;
 		
 	TraverseCallGraphDataflow(SgIncidenceDirectedGraph* graph);
 	
@@ -453,7 +453,7 @@ int getNumCallers(const Function* fDecl);
 	
 	// maps each function to the list of its callers, each caller record is a pair, containing the SgFunctionCallExp 
 	// that is the function call and the function that this call is inside of
-	map<Function, list<pair<SgFunctionCallExp*, Function> > > callersMap;
+	std::map<Function, std::list<std::pair<SgFunctionCallExp*, Function> > > callersMap;
 	
 	void analyze()
 	{
@@ -471,7 +471,7 @@ int getNumCallers(const Function* fDecl);
 	}
 	
 	
-	list<pair<SgFunctionCallExp*, Function> > getFuncCallers()
+	std::list<pair<SgFunctionCallExp*, Function> > getFuncCallers()
 	{
 		
 	}

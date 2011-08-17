@@ -72,7 +72,7 @@ TESTCODES = \
 # QMTest allows both passing and failing tests.
 ALL_TESTCODES = \
    $(TESTCODES) \
-$(TESTCODE_CURRENTLY_FAILING)
+	 $(TESTCODE_CURRENTLY_FAILING)
 
 # Liao (6/11/2008) --edg:upc and --edg:restrict are not required since ROSE can add them internally based on the file suffix (.upc) , no backend compilation since GCC does not recognize UPC .
 if ROSE_USE_NEW_EDG_INTERFACE

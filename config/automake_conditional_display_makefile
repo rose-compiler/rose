@@ -184,6 +184,11 @@ if ROSE_BUILD_PHP_LANGUAGE_SUPPORT
 else
 	@echo "Automake conditional ROSE_BUILD_PHP_LANGUAGE_SUPPORT: NOT defined"
 endif
+if ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
+	@echo "Automake conditional ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT: DEFINED"
+else
+	@echo "Automake conditional ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT: NOT defined"
+endif
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
 	@echo "Automake conditional ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT: DEFINED"
 else
@@ -348,6 +353,11 @@ if ROSE_USE_PHP
 	@echo "Automake conditional ROSE_USE_PHP: DEFINED"
 else
 	@echo "Automake conditional ROSE_USE_PHP: NOT defined"
+endif
+if ROSE_USE_PYTHON
+	@echo "Automake conditional ROSE_USE_PYTHON: DEFINED"
+else
+	@echo "Automake conditional ROSE_USE_PYTHON: NOT defined"
 endif
 if ROSE_USE_PPL
 	@echo "Automake conditional ROSE_USE_PPL: DEFINED"

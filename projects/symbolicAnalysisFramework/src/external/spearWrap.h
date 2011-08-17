@@ -6,6 +6,9 @@
 #include "logical.h"
 #include "variables.h"
 
+#include <string>
+#include <map>
+#include <list>
 
 #ifdef THREADED
 #include <pthread.h>
@@ -21,13 +24,13 @@ class SpearType
 	SpearType(const SpearType& type);
 	
 	// returns the Spear name of this type
-	string typeName() const;
+	std::string typeName() const;
 	
 	// returns the number of bits in this type
 	int numBits() const;
 	
 	// returns the Spear name of a type with this many bits
-	static string typeName(int numBits);
+	static std::string typeName(int numBits);
 };
 
 // Represents a Spear variable or constant, including its name and type
@@ -36,10 +39,10 @@ class SpearAbstractVar
 	public:
 	
 	// Returns the variable's name
-	virtual string getName()=0;
+	virtual std::string getName()=0;
 	
 	// Returns the declaration of this variable
-	virtual string varDecl()=0;
+	virtual std::string varDecl()=0;
 	
 	// Returns the type of this variable
 	virtual SpearType getType()=0;
@@ -66,31 +69,31 @@ class SpearAbstractVar
 // Represents a Spear variable, including its name and type
 class SpearVar: public virtual SpearAbstractVar
 {
-	string    name;
+	std::string    name;
 	SpearType type;
 	
 	public:
-	SpearVar(string varName, SpearType type, int seUID);
+	SpearVar(std::string varName, SpearType type, int seUID);
 	
-	SpearVar(string varName, int numBits, int seUID);
+	SpearVar(std::string varName, int numBits, int seUID);
 	
 	SpearVar(varID var, SpearType type, int seUID);
 	
 	SpearVar(varID var, int numBits, int seUID);
 	
-	SpearVar(string varName, SpearType type);
+	SpearVar(std::string varName, SpearType type);
 	
-	SpearVar(string varName, int numBits);
+	SpearVar(std::string varName, int numBits);
 	
 	SpearVar(varID var, SpearType type);
 	
 	SpearVar(varID var, int numBits);
 	
 	// Returns the declaration of this variable
-	string varDecl();
+	std::string varDecl();
 	
 	// Returns the variable's name
-	string getName();
+	std::string getName();
 	
 	// Returns the type of this variable
 	SpearType getType();
@@ -108,10 +111,10 @@ class SpearConst: public virtual SpearAbstractVar
 	SpearConst(int val, int numBits);
 	
 	// Returns the declaration of this constant
-	string varDecl();
+	std::string varDecl();
 	
 	// Returns the constant's name
-	string getName();
+	std::string getName();
 	
 	// Returns the type of this variable
 	SpearType getType();
@@ -160,9 +163,9 @@ class SpearOp
 	
 	private:
 	static bool int2strInitialized;
-	static map<int, string> int2str;
+	static std::map<int, std::string> int2str;
 	public:
-	static string opStr(int op);
+	static std::string opStr(int op);
 	
 	private:
 	int op;
@@ -172,7 +175,7 @@ class SpearOp
 	void setOp(int op) { this->op = op; }
 	bool isOp(int op) const { return this->op == op; }
 	bool operator == (const SpearOp& that) { return op == that.op; }
-	string opStr() const;
+	std::string opStr() const;
 };
 
 // Parent class for objects that represent logical expressions that can be solved using Spear
@@ -207,18 +210,18 @@ class SpearExpr
 	public:	
 	// returns a list of the names of all the variables needed to represent the logical 
 	// expression in this object
-	virtual const list<SpearAbstractVar*>& getVars()=0;
+	virtual const std::list<SpearAbstractVar*>& getVars()=0;
 	
 	// returns the variable that represents the result of this expression
 	virtual SpearAbstractVar* getOutVar()=0;
 	
 	// returns the SPEAR Format expression that represents the constraint in this object
-	virtual const string& getExpr()=0;	
+	virtual const std::string& getExpr()=0;	
 	
 	// Returns a human-readable string representation of this expression.
 	// Every line of this string must be prefixed by indent.
 	// The last character of the returned string should not be '\n', even if it is a multi-line string.
-	virtual string str(string indent="")=0;
+	virtual std::string str(std::string indent="")=0;
 	
 	virtual SpearExpr* copy()=0;
 

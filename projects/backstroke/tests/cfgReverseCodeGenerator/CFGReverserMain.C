@@ -25,7 +25,8 @@ struct IsEvent
 			string className = classDecl->get_name();
 
 			if (className == "UDPSink" || className == "InterfaceReal" || className == "L2Proto802_11" 
-					|| className == "WirelessLink" || className == "InterfaceReal" || className == "Timer")
+					|| className == "WirelessLink" || className == "InterfaceReal" || className == "Timer"
+                    || className == "CBRApplication" || className == "LinkReal")
 			{
 				return true;
 			}
@@ -57,8 +58,26 @@ struct VariableReversalFilter : public IVariableFilter
 			type = getPointerBaseType(type);
 
 		string typeName = SageInterface::get_name(type);
+		if (typeName == "Simulator"/* || typeName == "Event"*/)
+			return false;
+		
+		//Don't save event objects
+//		if (SgClassType* classType = isSgClassType(type))
+//		{
+//			SgClassDeclaration* typeDecl = (SgClassDeclaration*)classType->get_declaration()->get_definingDeclaration();
+//			ROSE_ASSERT(typeDecl != NULL);
+//			SgClassDefinition* classDef = typeDecl->get_definition();
+//			ROSE_ASSERT(classDef != NULL);
+//			const ClassHierarchyWrapper::ClassDefSet& superclasses = classHierarchy->getAncestorClasses(classDef);
+//			
+//			foreach (SgClassDefinition* superclass, superclasses)
+//			{
+//				if (SageInterface::get_name(superclass->get_declaration()->get_type()) == "Event")
+//					return false;
+//			}
+//		}
 
-		return (typeName != "DESEngine");
+		return true;
 	}
 };
 
@@ -66,8 +85,8 @@ int main(int argc, char** argv)
 {
 	//Add the preinclude option
 	vector<string> commandArguments(argv, argv + argc);
-	commandArguments.push_back("-include");
-	commandArguments.push_back("rctypes.h");
+	//commandArguments.push_back("-include");
+	//commandArguments.push_back("rctypes.h");
 
 	SgProject* project = frontend(commandArguments);
 	AstTests::runAllTests(project);

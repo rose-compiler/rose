@@ -4,7 +4,7 @@
 #include "types.h"
 #include "valueGraphNode.h"
 #include "pathNumGenerator.h"
-#include <ssa/staticSingleAssignment.h>
+#include <staticSingleAssignment.h>
 #include <boost/function.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/filtered_graph.hpp>
@@ -18,44 +18,56 @@ typedef boost::adjacency_list<boost::listS, boost::listS, boost::bidirectionalS,
 class EventReverser
 {
 public:
-	typedef boost::graph_traits<ValueGraph>::vertex_descriptor VGVertex;
-	typedef boost::graph_traits<ValueGraph>::edge_descriptor   VGEdge;
+    typedef boost::graph_traits<ValueGraph>::vertex_descriptor VGVertex;
+    typedef boost::graph_traits<ValueGraph>::edge_descriptor   VGEdge;
 
 private:
     //typedef std::pair<int, PathSet> PathSetWithIndex;
-	typedef StaticSingleAssignment SSA;
-	typedef SSA::VarName           VarName;
+    typedef StaticSingleAssignment SSA;
+    typedef SSA::VarName VarName;
     typedef boost::filtered_graph<
-        ValueGraph,
-        boost::function<bool(const VGEdge&)>,
-        boost::function<bool(const VGVertex&)> > SubValueGraph;
+            ValueGraph,
+            boost::function<bool(const VGEdge&) >,
+            boost::function<bool(const VGVertex&) > > SubValueGraph;
 
-    typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
-		std::pair<PathSet, std::vector<VGEdge> >, PathSet> ReverseCFG;
-    typedef boost::graph_traits<ReverseCFG>::vertex_descriptor RvsCFGVertex;
-	typedef boost::graph_traits<ReverseCFG>::edge_descriptor   RvsCFGEdge;
+    typedef BackstrokeCFG::Vertex CFGVertex;
+    typedef BackstrokeCFG::Edge   CFGEdge;
     
+    struct ReverseCFGNode
+    {
+        ReverseCFGNode() : dagIndex(0) {}
+        PathInfo paths;
+        std::vector<VGEdge> edges;
+        int dagIndex;
+    };
+    
+public:
+    typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
+        ReverseCFGNode, PathInfo> ReverseCFG;
+    typedef boost::graph_traits<ReverseCFG>::vertex_descriptor RvsCFGVertex;
+    typedef boost::graph_traits<ReverseCFG>::edge_descriptor RvsCFGEdge;
+      
+private:
     //! A functor to compare two route graph edges according to their indices from 
     //! the table passed in.
     struct RouteGraphEdgeComp
     {
-        RouteGraphEdgeComp(const ValueGraph& routeG, const std::map<PathSet, int>& pathsIdx)
-        : routeGraph(routeG), pathsIndexTable(pathsIdx) {}
+        RouteGraphEdgeComp(
+            const ValueGraph& routeG, int dagIdx, const std::map<SgNode*, int>& nodeIdx)
+        : routeGraph(routeG), dagIndex(dagIdx), nodeIndexTable(nodeIdx) {}
+ 
+        // For each VG edge, get the according AST node whose order in CFG decides the order of 
+        // this edge in reverse CFG.
+        SgNode* getAstNode(const VGEdge& edge) const;
         
-        bool operator ()(const VGEdge& edge1, const VGEdge& edge2) const;
-//        {
-//            using namespace std;
-//            cout << routeGraph[edge1]->paths << endl;
-//            cout << routeGraph[edge2]->paths << endl;
-//            
-//            ROSE_ASSERT(pathsIndexTable.count(routeGraph[edge1]->paths));
-//            ROSE_ASSERT(pathsIndexTable.count(routeGraph[edge2]->paths));
-//            return pathsIndexTable.find(routeGraph[edge1]->paths)->second > 
-//                   pathsIndexTable.find(routeGraph[edge2]->paths)->second;
-//        }
+        int getEdgeValue(const VGEdge& edge) const;
+        
+        bool operator()(const VGEdge& edge1, const VGEdge& edge2) const;
         
         const ValueGraph& routeGraph;
-        const std::map<PathSet, int>& pathsIndexTable;
+        int dagIndex;
+        //const std::map<PathSet, int>& pathsIndexTable;
+        const std::map<SgNode*, int>& nodeIndexTable;
     };
 
 private:
@@ -74,14 +86,20 @@ private:
     //! The CFG of the event function.
     BackstrokeCFG* cfg_;
     
-	//! The SSA form of the function definition.
-	SSA* ssa_;
-
-	//! The value graph object.
-	ValueGraph valueGraph_;
+    //! The full CFG of the event function.
+    Backstroke::FullCFG* fullCfg_;
     
-	//! A special node in VG whose in edges are state saving edges.
-	VGVertex root_;
+    //! The CDG of the event function.
+    BackstrokeCDG* cdg_;
+    
+    //! The SSA form of the function definition.
+    SSA* ssa_;
+
+    //! The value graph object.
+    ValueGraph valueGraph_;
+
+    //! A special node in VG whose in edges are state saving edges.
+    VGVertex root_;
     
     //! The graph representing the search result, which we call route.
     ValueGraph routeGraph_;
@@ -92,27 +110,29 @@ private:
     //! This object manages the path information of the function.
     PathNumManager* pathNumManager_;
 	
-	//! A map from SgNode to vertex of Value Graph.
-	std::map<SgNode*, VGVertex> nodeVertexMap_;
+    //! A map from SgNode to vertex of Value Graph.
+    std::map<SgNode*, VGVertex> nodeVertexMap_;
 
-	//! A map from variable with version to vertex of Value Graph.
-	std::map<VersionedVariable, VGVertex> varVertexMap_;
+    //! A map from variable with version to vertex of Value Graph.
+    std::map<VersionedVariable, VGVertex> varVertexMap_;
 
-//	//! A map from variable with version to its reaching def object.
-//	//! This map is only for pseudo defs.
-//	std::map<VersionedVariable, SSA::ReachingDefPtr> pseudoDefMap_;
+    //! A map from each phi node to its reaching def object.
+    //! This map is only for pseudo defs.
+    std::map<VGVertex, SSA::ReachingDefPtr> pseudoDefMap_;
 
-	//! All values which need to be restored (state variables).
-	std::vector<VGVertex> valuesToRestore_;
+    //! All values which need to be restored (state variables).
+    //std::vector<VGVertex> valuesToRestore_;
+    std::vector<std::set<VGVertex> > valuesToRestore_;
 
-	//! All available values, including constant and state variables (last version).
-	std::set<VGVertex> availableValues_;
-
-    //!
-    std::set<VGVertex> varsKilledAtEventEnd_;
+    //! All available values, including constant and state variables (last version).
+    //std::set<VGVertex> availableValues_
+    std::vector<std::set<VGVertex> > availableValues_;
+    
+    ////!
+    //std::set<VGVertex> varsKilledAtEventEnd_;
 
 	//! All state variables.
-	std::set<VarName> stateVariables_;
+	std::set<SgInitializedName*> stateVariables_;
 
 	//! All edges in the VG which are used to reverse values.
 	std::vector<VGEdge> dagEdges_;
@@ -127,14 +147,22 @@ private:
     std::map<std::pair<int, int>,
              std::pair<std::set<VGVertex>,
                        std::set<VGEdge> > > routeNodesAndEdges_;
+    
+    //! A table storing the original expressions and their replacement.
+    std::map<SgExpression*, SgExpression*> replaceTable_;
+    
+    ////! All backedges in the CFG.
+    //std::set<CFGEdge> backEdges_;
 
 
 public:
     //! The constructor.
-    EventReverser(SgFunctionDefinition* funcDef);
+    EventReverser(SSA* ssa);
 
     //! The destructor.
     ~EventReverser();
+    
+    void reverseEvent(SgFunctionDefinition* funcDef);
 
 	//! Build the value graph for the given function.
 	void buildValueGraph();
@@ -153,12 +181,43 @@ public:
 //                 const std::vector<VGVertex>& valuesToRestore);
 	
 private:
+    
+    ValueGraphNode* getSource(const VGEdge& edge) const
+    { return valueGraph_[boost::source(edge, valueGraph_)]; }
+    
+    ValueGraphNode* getTarget(const VGEdge& edge) const
+    { return valueGraph_[boost::target(edge, valueGraph_)]; }
 
     //! Build the main part of the value graph.
     void buildBasicValueGraph();
     
+    //! Process all data members of a class by adding them into state variables set.
+    void processClassDataMembers(SgClassDefinition* classDef);
+    
+    // The following functions are used to build the value graph.
+    void processStatement(SgStatement* stmt);
+    void processExpression(SgExpression* expr);
+    void processVariableReference(SgExpression* var);
+    
+    //! Add the given vertex as an available value.
+    void addAvailableValue(VGVertex val)
+    { availableValues_[0].insert(val); }
+    
+    //! Returns if a value is available.
+    bool isAvailableValue(VGVertex val) const
+    { return availableValues_[0].find(val) != availableValues_[0].end(); }
+    
+    //! Collect all available values for all DAGs.
+    void collectAvailableValues();
+    
+    //! Build the path number declaration for DAGs.
+    void buildPathNumDeclForRvsCmtFunc(
+        const std::string& pathNumName, 
+        SgScopeStatement* rvsScope,
+        SgScopeStatement* cmtScope);
+    
     //! Build the route graph representing search result.
-    void buildRouteGraph(const std::map<VGEdge, PathSet>& routes);
+    void buildRouteGraph(const std::map<VGEdge, PathInfos>& routes);
     
     //! Remove phi nodes from the route graph to facilitate code generation.
     void removePhiNodesFromRouteGraph();
@@ -182,7 +241,7 @@ private:
     void insertFunctions();
     
     //! Remove empty if statements.
-    void removeEmptyIfStmt();
+    void removeEmptyIfStmt(SgNode* node);
 
     /** Given a VG node with a def, returns all VG nodes whose defs kill the given def.
      *  @param killedNode The value graph node which must contains a value node or phi node.
@@ -194,6 +253,16 @@ private:
 //    PathSetWithIndex addPathsForPhiNodes(VGVertex phiNode,
 //                                         std::set<VGVertex>& processedPhiNodes);
 
+    //! Add state saving edges for those killed by the given var. The second parameter
+    //! is the AST ndoe which defines the first parameter.
+    void addStateSavingEdges(const VarName& varName, SgNode* astNode);
+    
+    //! A temporary function creating a value node which is not created for some reasons.
+    VGVertex createForgottenValueNode(const VersionedVariable& var);
+    
+    //! Create a value node from the given AST node. This node must be a use.
+    VGVertex createValueNode(SgNode* node);
+    
     /** Create a value node from the given AST node.
 	 *
 	 *  @param lhsNode The AST node which contains a lvalue.
@@ -202,9 +271,18 @@ private:
 	 */
 	VGVertex createValueNode(SgNode* lhsNode, SgNode* rhsNode);
     
+    //! Create an VG node for a functioin call expression. If this function call
+    //! modifies a value, create a value node for it, and add an edge between the
+    //! value node and function call node.
+    VGVertex createFunctionCallNode(SgFunctionCallExp* funcCallExp);
+    
+    //! Create an VG node for this expression.
+    VGVertex createThisExpNode(SgThisExp* thisExp);
+    
     //! Create an operation node, plus two or three edges.
+    //! The AST node passed in represents its corresponding AST node.
 	VGVertex createOperatorNode(
-            VariantT t,
+            VariantT t, SgNode* astNode,
             VGVertex result, VGVertex lhs, VGVertex rhs = nullVertex(),
             ValueGraphEdge* edgeToCopy = NULL);
 
@@ -215,10 +293,20 @@ private:
     //! Handle all final defs at the end of the event. This step is needed because
     //! we cannot get the phi node if it is not used. New phi node is added to VG,
     //! and all available variables are found.
-    void processLastVersions();
+    void addAvailableAndTargetValues();
 
     //! Returns if the given edge belongs to the given path.
     bool edgeBelongsToPath(const VGEdge& e, int dagIndex, int pathIndex) const;
+    
+    /** Get the final route in the given subgraph. The route connects each variable
+     *  to store to the root node in the value graph.
+	 *  @param dagIndex The DAG index, which represents a region in CFG.
+     *  @param valuesToRestore All variables to restore in the subgraph.
+     *  @returns reversalRoute The search result.
+	 */
+    std::map<VGEdge, PathInfo> getReversalRoute(
+        int dagIndex,
+        const std::set<VGVertex>& valsToRestore);
 
     /** Get the final route in the given subgraph. The route connects each variable
      *  to store to the root node in the value graph.
@@ -229,17 +317,12 @@ private:
 	 */
     std::set<VGEdge> getReversalRoute(int dagIndex, int pathIndex,
                                    const SubValueGraph& subgraph,
-                                   const std::vector<VGVertex>& valuesToRestore);
+                                   const std::set<VGVertex>& valuesToRestore,
+                                   const std::set<VGVertex>& availableNodes);
 
-	void writeValueGraphNode(std::ostream& out, const VGVertex& node) const
-	{
-		out << "[label=\"" << valueGraph_[node]->toString() << "\"]";
-	}
+	void writeValueGraphNode(std::ostream& out, VGVertex node) const;
 
-	void writeValueGraphEdge(std::ostream& out, const VGEdge& edge) const
-	{
-		out << "[label=\"" << valueGraph_[edge]->toString() << "\"]";
-	}
+	void writeValueGraphEdge(std::ostream& out, const VGEdge& edge) const;
 
 	/** Add a new vertex to the value graph.
 	 *
@@ -256,6 +339,15 @@ private:
 	 *  @returns The new added edge.
 	 */
     VGEdge addValueGraphEdge(VGVertex src, VGVertex tar, ValueGraphEdge* edgeToCopy = NULL);
+    
+    /** Add a new edge to the value graph.
+	 *
+	 *  @param src The source vertex.
+	 *  @param tar The target vertex.
+	 *  @param paths This path information.
+	 *  @returns The new added edge.
+	 */
+    VGEdge addValueGraphEdge(VGVertex src, VGVertex tar, const PathInfos& paths);
 
     /** Add a new edge coming from a phi node to the value graph.
 	 *
@@ -264,7 +356,7 @@ private:
 	 *  @param cfgEdges CFG edges from which the path information is calculated.
 	 */
     void addValueGraphPhiEdge(VGVertex src, VGVertex tar,
-        const std::set<ReachingDef::FilteredCfgEdge>& cfgEdges);
+        const BackstrokeCFG::CFGEdgeType& cfgEdge);
 
 	/** Add a new ordered edge to the value graph.
 	 *
@@ -276,7 +368,7 @@ private:
 	 */
 	VGEdge addValueGraphOrderedEdge(VGVertex src, VGVertex tar, int index);
     
-    void addValueGraphStateSavingEdges(VGVertex src, SgNode* killer);
+    void addValueGraphStateSavingEdges(VGVertex src, SgNode* killer, bool scopeKiller = false);
 
     /** Add new state saving edges to the value graph. The target is the root.
 	 *
@@ -284,7 +376,7 @@ private:
      *  @param pathNum The visible incomplete path number on this edge.
 	 *  @returns The new added edges.
 	 */
-    std::vector<VGEdge> addValueGraphStateSavingEdges(VGVertex src);
+    //std::vector<VGEdge> addValueGraphStateSavingEdges(VGVertex src);
 
 	//! Add a phi node to the value graph.
 	//VGVertex createPhiNode(VersionedVariable& var);
@@ -292,17 +384,31 @@ private:
 
 	//! Connect each variable node to the root with cost.
 	void addStateSavingEdges();
+    
+    //! Connect all phi nodes to their defs.
+    void addPhiEdges();
+    
+    //! Add a state variable.
+    void addStateVariable(SgInitializedName* name)
+    { stateVariables_.insert(name); }
+    
+    //! Check if a variable is a state variable.
+	bool isStateVariable(SgInitializedName* name) const
+	{ return stateVariables_.find(name) != stateVariables_.end(); }
 
     //! Check if a variable is a state variable.
-	bool isStateVariable(const VarName& name)
-	{ return stateVariables_.count(name) > 0; }
+	bool isStateVariable(const VarName& name) const
+	{
+        if (name.empty()) return false;
+        return isStateVariable(name[0]);
+    }
 
 	/** Given a SgNode, return its variable name and version.
 	 * 
 	 *  @param node A SgNode which should be a variable (either a var ref or a declaration).
 	 *  @param isUse Inidicate if the variable is a use or a def.
 	 */
-	VersionedVariable getVersionedVariable(SgNode* node, bool isUse = true);
+	VersionedVariable getVersionedVariable(SgNode* node, bool isUse = true, SgNode* defNode = NULL);
 
     //! For each path, find its corresponding subgraph.
     std::set<VGEdge> getRouteFromSubGraph(int dagIndex, int pathIndex);
@@ -326,9 +432,10 @@ private:
     
     //! Add a node to reverse CFG. Called by buildReverseCFG().
     void addReverseCFGNode(
-        const PathSet& paths, const VGEdge* edge, ReverseCFG& rvsCFG,
-        std::map<PathSet, RvsCFGVertex>& rvsCFGBasicBlock,
-        std::map<PathSet, PathSet>& parentTable);
+        const PathInfo& paths, const VGEdge* edge, ReverseCFG& rvsCFG,
+        std::map<PathInfo, RvsCFGVertex>& rvsCFGBasicBlock,
+        std::map<PathInfo, PathInfo>& parentTable,
+        std::set<int>& dagAdded);
     
     //! Given a DAG index, return all edges of its reversal in the proper order.
     //! This order is decided by topological order from both CFG and route graph.
@@ -337,12 +444,14 @@ private:
     //! Generate code in a basic block of the reverse CFG.
     void generateCodeForBasicBlock(
             const std::vector<VGEdge>& edges,
-            SgScopeStatement* scope);
+            SgScopeStatement* rvsScope,
+            SgScopeStatement* cmtScope);
 
     void generateCode(
-            size_t dagIndex,
-            const ReverseCFG& rvsCFG,
-            SgBasicBlock* rvsFuncBody,
+            int dagIndex,
+            const std::vector<ReverseCFG>& rvsCFGs,
+            SgScopeStatement* rvsFuncBody,
+            SgScopeStatement* cmtFuncBody,
             const std::string& pathNumName);
     
 	static VGVertex nullVertex()
@@ -371,8 +480,13 @@ private:
     }
 };
 
+
+void reverseFunctions(const std::set<SgFunctionDefinition*>& funcDefs);
+
+
 } // End of namespace Backstroke
 
 
 
 #endif // BACKSTROKE_VALUE_GRAPH
+

@@ -6,8 +6,6 @@
 #include "CallGraphTraverse.h"
 #include <set>
 
-using namespace std;
-
 class FunctionState
 {
 	friend class CollectFunctions;
@@ -18,8 +16,8 @@ class FunctionState
 	NodeState retState;
 
 	private:
-	static set<FunctionState*> allDefinedFuncs;	
-	static set<FunctionState*> allFuncs;
+	static std::set<FunctionState*> allDefinedFuncs;	
+	static std::set<FunctionState*> allFuncs;
 	static bool allFuncsComputed;
 		
 	public:
@@ -31,10 +29,10 @@ class FunctionState
 	Function& getFunc();
 	
 	// returns a set of all the functions whose bodies are in the project
-	static set<FunctionState*>& getAllDefinedFuncs();
+	static std::set<FunctionState*>& getAllDefinedFuncs();
 	
 	// returns a set of all the functions whose declarations are in the project
-	static set<FunctionState*>& getAllFuncs();
+	static std::set<FunctionState*>& getAllFuncs();
 	
 	// returns the FunctionState associated with the given function
 	// func may be any defined function
@@ -46,11 +44,11 @@ class FunctionState
 	
 	// given a function call, sets argParamMap to map all simple arguments to this function to their 
 	// corresponding parameters
-	static void setArgParamMap(SgFunctionCallExp* call, map<varID, varID>& argParamMap);
+	static void setArgParamMap(SgFunctionCallExp* call, std::map<varID, varID>& argParamMap);
 	
 	// given a function call, sets argParamMap to map all the parameters of this function to their 
 	// corresponding simple arguments, if those arguments are passed by reference
-	static void setParamArgByRefMap(SgFunctionCallExp* call, map<varID, varID>& paramArgByRefMap);
+	static void setParamArgByRefMap(SgFunctionCallExp* call, std::map<varID, varID>& paramArgByRefMap);
 };
 
 class CollectFunctions : public TraverseCallGraphUnordered/*TraverseCallGraphBottomUp<int>*/

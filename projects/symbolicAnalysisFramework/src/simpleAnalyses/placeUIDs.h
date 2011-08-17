@@ -29,7 +29,7 @@ class NodeID: public NodeFact
 	// The string that represents this object.
 	// Every line of this string must be prefixed by indent.
 	// The last character of the returned string must not be '\n', even if it is a multi-line string.
-	string str(string indent="");
+        std::string str(std::string indent="");
 	
 	// returns a copy of this node fact
 	NodeFact* copy() const;

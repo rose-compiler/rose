@@ -63,6 +63,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	masterSingle.c \
 	matrix_vector.c \
 	md_open_mp.c \
+	multiple_return.c \
 	nestedpar1.c \
 	nestedpar.c \
 	omp1.c \

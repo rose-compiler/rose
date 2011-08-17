@@ -1,0 +1,70 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgStringConversion
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgStringConversion
+\brief This class represents the conversion of an arbitrary expression to
+a string. This node is intended for use with Python.
+
+This node should not be confused with the cast operation found in other
+languages. See SgCastExp for more info.
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgStringConversion data members
+/////////////////////////////////////////////////////////////////////////
+
+/*!
+\var SgStringConversion::p_expression
+\brief The expression to be converted to a string.
+*/
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgStringConversion member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+
+/*
+\fn SgStringConversion::SgStringConversion (const SgStringConversion &X)
+\brief Copy constructor
+*/
+
+/*!
+\fn SgStringConversion::SgStringConversion ( SgExpression* exp )
+\brief This is the constructor.
+
+   This constructor builds the SgStringConversion base class.
+
+\param exp The expression to be converted to a string.
+*/
+
+/*!
+\fn SgStringConversion::~SgStringConversion()
+\brief This is the destructor.
+
+*/
+
+/*!
+\fn SgStringConversion::isSgStringConversion (SgNode *s)
+\brief Cast function (from derived class to SgStringConversion pointer).
+
+   This functions returns a SgStringConversion pointer for any input of a 
+pointer to an object derived from a SgStringConversion.
+
+\return Returns valid pointer to SgStringConversion if input is derived from a SgStringConversion.
+*/
+
+/*!
+\fn SgStringConversion::isSgStringConversion (const SgNode *s)
+\brief Cast function (from derived class to SgStringConversion pointer).
+
+   This functions returns a SgStringConversion pointer for any input of a 
+pointer to an object derived from a SgStringConversion.
+
+\return Returns valid pointer to SgStringConversion if input is derived from a SgStringConversion.
+*/
+
+
+
+

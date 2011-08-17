@@ -19,34 +19,28 @@ class ArrayInterface
 
   virtual bool IsArrayRef( CPPAstInterface& fa, const AstNodePtr& t);
   bool IsArray( CPPAstInterface& fa, const AstNodePtr& s) ;
-  // Inherited from ArrayAbstractionInterface
   virtual bool IsArrayAccess( AstInterface& fa,
                                  const AstNodePtr& s, AstNodePtr* array = 0,
                                  AstInterface::AstNodeList* index = 0) ;
-  // Inherited from ArrayAbstractionInterface
   virtual bool GetArrayBound( AstInterface& fa,
                                  const AstNodePtr& array,
                                  int dim, int &lb, int &ub) ;
-  // Inherited from ArrayAbstractionInterface
+
   virtual AstNodePtr CreateArrayAccess(AstInterface& fa, 
                                        const AstNodePtr& arr, 
                                        AstInterface::AstNodeList& index);
   bool get_array_opt(CPPAstInterface& fa, const AstNodePtr& array, ArrayOptDescriptor& d);
  public:
   ArrayInterface( ArrayAnnotation& a) : aliasCollect(&a) {}
-  //! Collect alias variables and propagate values
   void initialize( AstInterface& fa, const AstNodePtr& h);
   void observe( AstInterface& fa) ;
   void stop_observe( AstInterface& fa) ;
   bool may_alias(AstInterface& fa, const AstNodePtr& r1, const AstNodePtr& r2);
-  //! Check if an expression is an array access expression, return its number of dimensions
-  // and symbolic functions for length of each dimension
+
   bool is_array_exp( CPPAstInterface& fa, const AstNodePtr& array, 
                      int *dimp = 0, SymbolicFunctionDeclarationGroup *len = 0, 
                      bool *changeshape = 0);
-  //! Set the dimension of an array                  
   void set_array_dimension( const AstNodePtr& arrayexp, int dim);
-  
   bool is_array_mod_op( CPPAstInterface& fa, const AstNodePtr& arrayExp, 
                         AstNodePtr* modArray = 0, int *dimp = 0, 
                         SymbolicFunctionDeclarationGroup *len = 0, SymbolicFunctionDeclarationGroup* elem = 0, 
