@@ -68,6 +68,7 @@ namespace AbstractMemoryObject
     SgType* type; 
     AliasedObj (SgType* t): type(t) {};
     SgType* getType() {return type;}
+    std::string toString(); 
   };
 
   //Derived classes for each kind of each category
@@ -109,13 +110,15 @@ namespace AbstractMemoryObject
     public:
       ScalarAliasedObj (SgType* t): AliasedObj(t){}
       std::set<SgType*> getType();
+      std::string toString();
   };
 
   class LabeledAggregateAliasedObj : public  LabeledAggregate_Impl, public AliasedObj
   {
     public:
-    LabeledAggregateAliasedObj (SgType* t): AliasedObj(t){}
-    std::set<SgType*> getType();
+      LabeledAggregateAliasedObj (SgType* t): AliasedObj(t){}
+      std::set<SgType*> getType();
+      std::string toString();
   };
 
   class ArrayAliasedObj: public Array_Impl, public AliasedObj
@@ -123,6 +126,7 @@ namespace AbstractMemoryObject
     public:
       ArrayAliasedObj (SgType* t): AliasedObj(t){}
       std::set<SgType*> getType();
+      std::string toString();
   };
 
   class PointerAliasedObj: public Pointer_Impl, public AliasedObj
@@ -130,12 +134,18 @@ namespace AbstractMemoryObject
     public:
       PointerAliasedObj (SgType* t): AliasedObj(t){}
       std::set<SgType*> getType();
+      std::string toString();
   };
 
   // builder for different objects -----------------------
+  // Create an aliased obj set from a type. It can return NULL since not all types are supported.
   ObjSet* createAliasedObjSet(SgType*t);  // One object per type, Type based alias analysis
+
   ObjSet* createNamedObjSet(SgSymbol* anchor_symbol, SgType* t, ObjSet* parent); // any 
   ObjSet* createExpressionObjSet(SgExpression* anchor_exp, SgType*t, ObjSet* parent); 
+  
+  // Helper functions for debugging
+  void dump_aliased_objset_map (); 
 
 } // end namespace
 

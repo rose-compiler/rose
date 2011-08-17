@@ -15,6 +15,7 @@
 #include "sage3basic.h"
 #include <climits>
 #include <set>
+#include <string>
 
 namespace AbstractMemoryObject
 {
@@ -68,6 +69,9 @@ namespace AbstractMemoryObject
       virtual bool operator <= ( const ObjSet& o2);
       virtual bool operator > ( const ObjSet& o2);
       virtual bool operator >= ( const ObjSet& o2);
+
+
+      virtual std::string toString(); // pretty print for the object
   }; // end class ObjSet
 
   //memory object that has no internal structure
