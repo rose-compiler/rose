@@ -2006,6 +2006,12 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_collectAllCommentsAndDirectives(true);
         }
 
+     // negara1 (08/16/2011): A user may optionally specify the root folder for the unparsed header files.  
+     if (CommandlineProcessing::isOptionWithParameter(argv, "-rose:", "(unparseHeaderFilesRootFolder)", stringParameter, true) == true) {
+         //Although it is specified per file, it should be the same for the whole project.         
+         get_project() -> set_unparseHeaderFilesRootFolder(stringParameter);
+     }
+     
   //
   // skip_commentsAndDirectives option: if analysis that does not use comments or CPP directives is required
   // then this option can improve the performance of the compilation.
@@ -2362,6 +2368,9 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)^", "test", &integerOption, 1);
      optionCount = sla(argv, "-rose:", "($)", "(skipfinalCompileStep)",1);
      optionCount = sla(argv, "-rose:", "($)", "(prelink)",1);
+
+     char* unparseHeaderFilesRootFolderOption = NULL;
+     optionCount = sla(argv, "-rose:", "($)^", "(unparseHeaderFilesRootFolder)", unparseHeaderFilesRootFolderOption, 1);
 
      char* templateInstationationOption = NULL;
      optionCount = sla(argv, "-rose:", "($)^", "(instantiation)",templateInstationationOption,1);
@@ -4917,6 +4926,9 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           argument == "-rose:excludeFile" ||
           argument == "-rose:astMergeCommandFile" ||
 
+       // negara1 (08/16/2011)
+          argument == "-rose:unparseHeaderFilesRootFolder" ||
+             
        // DQ (8/20/2008): Add support for Qing's options!
           argument == "-annot" ||
           argument == "-bs" ||
@@ -8596,6 +8608,12 @@ SgFile::usage ( int status )
 "                               in either fixed/free format (fortran only)\n"
 "                               options are: fixedOutput|fixedFormatOutput or \n"
 "                                            freeOutput|freeFormatOutput\n"
+"     -rose:unparseHeaderFilesRootFolder FOLDERNAME\n"
+"                             A relative or an absolute path to the root folder,\n"
+"                             in which unparsed header files are stored.\n"
+"                             Note that the folder must be empty (or does not exist).\n"
+"                             If not specified, the default relative location _rose_ \n"
+"                             is used.\n"                  
 "\n"
 "Testing Options:\n"
 "     -rose:negative_test     test ROSE using input that is expected to fail\n"
