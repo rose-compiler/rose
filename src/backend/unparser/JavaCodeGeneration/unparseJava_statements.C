@@ -850,27 +850,7 @@ Unparse_Java::unparseExprStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgExprStatement* expr_stmt = isSgExprStatement(stmt);
      ROSE_ASSERT(expr_stmt != NULL);
 
-     SgUnparse_Info newinfo(info);
-
-  // Expressions are another place where a class definition should NEVER be unparsed
-     newinfo.set_SkipClassDefinition();
-
-     if (expr_stmt->get_expression())
-        {
-          unparseExpression(expr_stmt->get_expression(), newinfo);
-        }
-       else
-          assert(false);
-
-     if (newinfo.inVarDecl())
-        {
-          curprint ( string(","));
-        }
-       else
-          if (!newinfo.inConditional() && !newinfo.SkipSemiColon())
-             {
-               curprint ( string(";"));
-             }
+     unparseExpression(expr_stmt->get_expression(), info);
    }
 
 void Unparse_Java::unparseLabelStmt(SgStatement* stmt, SgUnparse_Info& info)

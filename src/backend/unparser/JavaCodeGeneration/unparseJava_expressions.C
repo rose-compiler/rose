@@ -35,10 +35,7 @@ Unparse_Java::unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_In
         {
           case UNARY_EXPRESSION:  { unparseUnaryExpr (expr, info); break; }
           case BINARY_EXPRESSION: { unparseBinaryExpr(expr, info); break; }
-          case VAR_REF: { unparseVarRef(expr, info); break; }
           case CLASSNAME_REF: { unparseClassRef(expr, info); break; }
-          case FUNCTION_REF: { unparseFuncRef(expr, info); break; }
-          case MEMBER_FUNCTION_REF: { unparseMFuncRef(expr, info); break; }
 
           case UNSIGNED_INT_VAL: { unparseUIntVal(expr, info); break; }
           case LONG_INT_VAL: { unparseLongIntVal(expr, info); break; }
@@ -116,6 +113,10 @@ Unparse_Java::unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_In
          case V_SgRshiftOp:
          case V_SgSubtractOp:
              unparseBinaryOp( isSgBinaryOp(expr), info ); break;
+
+         case V_SgVarRefExp:             { unparseVarRef(expr, info); break; }
+         case V_SgFunctionRefExp:        { unparseFuncRef(expr, info); break; }
+         case V_SgMemberFunctionRefExp:  { unparseMFuncRef(expr, info); break; }
 
          default:
                cout << "error: unparseExpression() is unimplemented for " << expr->class_name() << endl;
@@ -283,15 +284,19 @@ Unparse_Java::unparseFuncRef(SgExpression* expr, SgUnparse_Info& info)
    {
      SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
      ROSE_ASSERT(func_ref != NULL);
+
+     cout << "unparser: warning. SgFunctionRef should be SgMemberFunctionRef: "
+          << func_ref->get_symbol()->get_name().getString() << endl;
+     unparseName(func_ref->get_symbol()->get_name(), info);
    }
 
 void
 Unparse_Java::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
    {
-#if 0
-     printf ("Leaving unparseMFuncRef \n");
-     curprint ( "\n/* leaving unparseMFuncRef */ \n");
-#endif
+     SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
+     ROSE_ASSERT(mfunc_ref != NULL);
+
+     unparseName(mfunc_ref->get_symbol()->get_name(), info);
    }
 
 void
@@ -596,19 +601,13 @@ Unparse_Java::unparseComplexVal(SgExpression* expr, SgUnparse_Info& info)
 void
 Unparse_Java::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
    {
-#if 0
-     printf ("In Unparse_Java::unparseFuncCall expr = %p unp->opt.get_overload_opt() = %s \n",expr,(unp->opt.get_overload_opt() == true) ? "true" : "false");
-     curprint ( "\n/* In unparseFuncCall */ \n");
-#endif
-
      SgFunctionCallExp* func_call = isSgFunctionCallExp(expr);
      ROSE_ASSERT(func_call != NULL);
-     SgUnparse_Info newinfo(info);
 
-#if 0
-  // printf ("Leaving Unparse_Java::unparseFuncCall \n");
-     curprint ( "\n/* Leaving Unparse_Java::unparseFuncCall */ \n");
-#endif
+     unparseExpression(func_call->get_function(), info);
+     curprint("(");
+     unparseExpression(func_call->get_args(), info);
+     curprint(")");
    }
 
 void Unparse_Java::unparseUnaryMinusOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "-", info); }
