@@ -24,11 +24,20 @@ Unparse_Java::unparseType(SgType* type, SgUnparse_Info& info) {
 
      ROSE_ASSERT(type != NULL);
      switch (type->variantT()) {
-         case V_SgTypeVoid:          unparseTypeVoid( isSgTypeVoid(type), info); break;
-         case V_SgTypeInt:           unparseTypeInt( isSgTypeInt(type), info); break;
-         case V_SgArrayType:         unparseArrayType( isSgArrayType(type), info); break;
-         case V_SgClassType:         unparseClassType( isSgClassType(type), info); break;
-         case V_SgEnumType:          unparseEnumType( isSgEnumType(type), info); break;
+         case V_SgTypeVoid:   unparseTypeVoid( isSgTypeVoid(type), info); break;
+
+         //case V_SgTypeByte:   unparseTypeByte( isSgTypeByte(type), info); break;
+         case V_SgTypeChar:   unparseTypeChar( isSgTypeChar(type), info); break;
+         case V_SgTypeShort:  unparseTypeShort( isSgTypeShort(type), info); break;
+         case V_SgTypeInt:    unparseTypeInt( isSgTypeInt(type), info); break;
+         case V_SgTypeLong:   unparseTypeLong( isSgTypeLong(type), info); break;
+         case V_SgTypeFloat:  unparseTypeFloat( isSgTypeFloat(type), info); break;
+         case V_SgTypeDouble: unparseTypeDouble( isSgTypeDouble(type), info); break;
+         case V_SgTypeBool:   unparseTypeBool( isSgTypeBool(type), info); break;
+
+         case V_SgArrayType:  unparseArrayType( isSgArrayType(type), info); break;
+         case V_SgClassType:  unparseClassType( isSgClassType(type), info); break;
+         case V_SgEnumType:   unparseEnumType( isSgEnumType(type), info); break;
 
          default:
             cout << "Unparse_Java::unparseType(" << type->class_name() << "*,info) is unimplemented." << endl;
@@ -174,5 +183,11 @@ Unparse_Java::unparseArrayType(SgArrayType* type, SgUnparse_Info& info)
      curprint("[]");
    }
 
-void Unparse_Java::unparseTypeVoid(SgTypeVoid* type, SgUnparse_Info& info)        { curprint("void "); }
-void Unparse_Java::unparseTypeInt(SgTypeInt* type, SgUnparse_Info& info)          { curprint("int "); }
+void Unparse_Java::unparseTypeVoid(SgTypeVoid* type, SgUnparse_Info& info)     { curprint("void "); }
+void Unparse_Java::unparseTypeChar(SgTypeChar* type, SgUnparse_Info& info)     { curprint("char "); }
+void Unparse_Java::unparseTypeShort(SgTypeShort* type, SgUnparse_Info& info)   { curprint("short "); }
+void Unparse_Java::unparseTypeInt(SgTypeInt* type, SgUnparse_Info& info)       { curprint("int "); }
+void Unparse_Java::unparseTypeLong(SgTypeLong* type, SgUnparse_Info& info)     { curprint("long "); }
+void Unparse_Java::unparseTypeFloat(SgTypeFloat* type, SgUnparse_Info& info)   { curprint("float "); }
+void Unparse_Java::unparseTypeDouble(SgTypeDouble* type, SgUnparse_Info& info) { curprint("double "); }
+void Unparse_Java::unparseTypeBool(SgTypeBool* type, SgUnparse_Info& info)     { curprint("bool "); }

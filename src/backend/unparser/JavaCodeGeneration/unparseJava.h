@@ -211,8 +211,18 @@ class Unparse_Java : public UnparseLanguageIndependentConstructs
 
       //! Support for unparsing types
           virtual void unparseType(SgType* type, SgUnparse_Info& info);
+
           virtual void unparseTypeVoid(SgTypeVoid* type, SgUnparse_Info& info);
+
+          //virtual void unparseTypeByte(SgTypeByte* type, SgUnparse_Info& info);
+          virtual void unparseTypeChar(SgTypeChar* type, SgUnparse_Info& info);
+          virtual void unparseTypeShort(SgTypeShort* type, SgUnparse_Info& info);
           virtual void unparseTypeInt(SgTypeInt* type, SgUnparse_Info& info);
+          virtual void unparseTypeLong(SgTypeLong* type, SgUnparse_Info& info);
+          virtual void unparseTypeFloat(SgTypeFloat* type, SgUnparse_Info& info);
+          virtual void unparseTypeDouble(SgTypeDouble* type, SgUnparse_Info& info);
+          virtual void unparseTypeBool(SgTypeBool* type, SgUnparse_Info& info);
+
           virtual void unparseClassType(SgClassType* type, SgUnparse_Info& info);
           virtual void unparseEnumType(SgEnumType* type, SgUnparse_Info& info);
           virtual void unparseArrayType(SgArrayType* type, SgUnparse_Info& info);
