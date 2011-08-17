@@ -20,7 +20,9 @@ extern "C" {
 } /* End extern C. */
 #endif
 
-#include "JavaSourceCodePosition.h"
+#include "jni_JavaSourceCodePosition.h"
+#include "token.h"
+#include "VisitorContext.h"
 
 // Control output from Fortran parser
 #define DEBUG_JAVA_SUPPORT true
@@ -62,12 +64,42 @@ extern std::list<JavaSourceCodePosition*> astJavaSourceCodePositionStack;
 
 SgGlobal* getGlobalScope();
 
-
 // Function used by SgType::getCurrentScope()
 bool emptyJavaStateStack();
 
-void setJavaSourcePosition  ( SgLocatedNode* locatedNode );
+// *********************************************
+// Support for source code position???
+// *********************************************
+VisitorContext * getCurrentContext();
+void pushContextStack(VisitorContext * ctx);
+VisitorContext * popContextStack();
 
+template <class VisitorContextType>
+VisitorContextType * popContextStack_T() {
+        VisitorContext * ctx_ = popContextStack();
+        ROSE_ASSERT ((dynamic_cast<VisitorContextType*>(ctx_) != NULL) && "ERROR: Should have context on stack");
+        VisitorContextType * ctx = (VisitorContextType*) ctx_;
+        return ctx;
+}
+
+bool isStatementContext(VisitorContext * ctx);
+
+std::list<SgStatement*> pop_from_stack_and_reverse(std::list<SgStatement*> &l, int nb_pop);
+
+/* Create a token from a JavaToken jni object. Also converts JavaSourceCodeInformation to C */
+Token_t * create_token(JNIEnv * env, jobject jToken);
+
+void pushAndSetSourceCodePosition(JavaSourceCodePosition * pos, SgLocatedNode * sgnode);
+
+// Duplicated setJavaSourcePosition signature.
+// Not sure why but JNI wasn't happy if posInfo was assigned to a default value
+void setJavaSourcePosition( SgLocatedNode* locatedNode);
+void setJavaSourcePosition( SgLocatedNode* locatedNode, JavaSourceCodePosition * posInfo);
+
+// *********************************************
+
+
+// Debug function to inspect the stacks used to support AST translation.
 void outputJavaState( const std::string label );
 
 std::string convertJavaStringToCxxString  (JNIEnv *env, const jstring & java_string);
@@ -83,9 +115,9 @@ SgMemberFunctionDeclaration* buildNonDefiningMemberFunction(const SgName & input
 SgMemberFunctionDeclaration* buildDefiningMemberFunction   (const SgName & inputName, SgClassDefinition* classDefinition);
 
 // Build a simple class in the current scope and set the scope to be the class definition.
-void buildClass (const SgName & className);
+void buildClass (const SgName & className, Token_t* token);
 void buildImplicitClass (const SgName & className);
-void buildClassSupport (const SgName & className, bool implicitClass);
+void buildClassSupport (const SgName & className, bool implicitClass, Token_t* token);
 
 SgVariableDeclaration* buildSimpleVariableDeclaration(const SgName & name);
 

@@ -41,7 +41,8 @@ namespace CallTargetSet
 
   // returns the list of declarations of all functions that may get called via a
   // member function (non/polymorphic) call
-  std::vector<SgFunctionDeclaration*> solveMemberFunctionCall ( SgClassType *, ClassHierarchyWrapper *, SgMemberFunctionDeclaration *, bool );
+  std::vector<SgFunctionDeclaration*> solveMemberFunctionCall ( 
+          SgClassType *, ClassHierarchyWrapper *, SgMemberFunctionDeclaration *, bool , bool includePureVirtualFunc = false );
 
   //! Returns the list of all constructors that may get called via an initialization.
   //! FIXME: There is a bug in this function. 
@@ -52,7 +53,8 @@ namespace CallTargetSet
   // Populates functionList with Properties of all functions that may get called.
   void getPropertiesForExpression(SgExpression* exp,
                                     ClassHierarchyWrapper* classHierarchy,
-                                    Rose_STL_Container<SgFunctionDeclaration*>& propList);
+                                    Rose_STL_Container<SgFunctionDeclaration*>& propList,
+                                    bool includePureVirtualFunc = false);
 
   //! Populates functionList with definitions of all functions that may get called. This
   //! is basically a wrapper around getPropertiesForExpression that extracts the
@@ -66,7 +68,8 @@ namespace CallTargetSet
   //! is basically a wrapper around getPropertiesForExpression.
   void getDeclarationsForExpression(SgExpression* exp,
                                     ClassHierarchyWrapper* classHierarchy,
-                                    Rose_STL_Container<SgFunctionDeclaration*>& calleeList);
+                                    Rose_STL_Container<SgFunctionDeclaration*>& calleeList,
+                                    bool includePureVirtualFunc = false);
 
   // Gets a vector of SgExpressions that are associated with the current SgFunctionDefinition.
   // This functionality is necessary for virtual, interprocedural control flow graphs. However, 
