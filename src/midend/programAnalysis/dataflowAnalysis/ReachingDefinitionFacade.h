@@ -14,7 +14,7 @@
 #include <AstInterface_ROSE.h>
 
 #ifndef REACHINGDEFINITIONFACADE_H
-#define	REACHINGDEFINITIONFACADE_H
+#define REACHINGDEFINITIONFACADE_H
 
 class ReachingDefinitionFacade {
 
@@ -32,5 +32,5 @@ public:
 
 
 
-#endif	/* REACHINGDEFINITIONFACADE_H */
+#endif  /* REACHINGDEFINITIONFACADE_H */
 

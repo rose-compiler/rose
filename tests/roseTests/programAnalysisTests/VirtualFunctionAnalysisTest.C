@@ -56,8 +56,13 @@ main(int argc, char * argv[]) {
             std::cerr<< "Can't execute Virtual Function Analysis without main function\n";
             return 0;
      }
-
-
+#if 1
+    SgFunctionDefinition *mainDef = mainDecl->get_definition();
+    StaticCFG::CustomFilteredCFG<AliasCfgFilter> *cfg;
+    cfg = new StaticCFG::CustomFilteredCFG<AliasCfgFilter>(mainDef);
+    cfg->buildFilteredCFG();
+    cfg->cfgToDot(mainDef, "cfg.dot");
+#endif
     
     VirtualFunctionAnalysis *anal = new VirtualFunctionAnalysis(project);
     anal->run();

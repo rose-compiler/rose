@@ -5,7 +5,7 @@
  * Created on August 15, 2011, 10:28 AM
  */
 #ifndef INTRAPROCDATAFLOWANALYIS_H
-#define	INTRAPROCDATAFLOWANALYIS_H
+#define INTRAPROCDATAFLOWANALYIS_H
 
 #include "sage3basic.h"
 
@@ -44,5 +44,5 @@ protected:
   
 };
 
-#endif	/* INTRAPROCDATAFLOWANALYIS_H */
+#endif  /* INTRAPROCDATAFLOWANALYIS_H */
 

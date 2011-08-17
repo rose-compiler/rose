@@ -5,7 +5,7 @@
  * Created on August 15, 2011, 11:06 AM
  */
 #ifndef INTERPROCDATAFLOWANALYSIS_H
-#define	INTERPROCDATAFLOWANALYSIS_H
+#define INTERPROCDATAFLOWANALYSIS_H
 #include <vector>
 #include "sage3basic.h"
 
@@ -25,5 +25,5 @@ public:
 
 
 
-#endif	/* INTERPROCDATAFLOWANALYSIS_H */
+#endif  /* INTERPROCDATAFLOWANALYSIS_H */
 
