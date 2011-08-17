@@ -41,6 +41,9 @@ MarkTransformationsForOutput::evaluateInheritedAttribute (
                printf ("MarkTransformationsForOutput: stmt = %p = %s = %s \n",stmt,stmt->class_name().c_str(),SageInterface::get_name(stmt).c_str());
              }
 #endif
+#if 0
+          printf ("MarkTransformationsForOutput: node = %p = %s = %s fileinfo = %p insideTransformationToOutput = %s fileInfo->isTransformation() = %s \n",node,node->class_name().c_str(),SageInterface::get_name(node).c_str(),fileInfo,returnAttribute.insideTransformationToOutput ? "true" : "false",fileInfo->isTransformation() ? "true" : "false");
+#endif
           if (returnAttribute.insideTransformationToOutput == true)
              {
                // Liao 4/32/2011
@@ -67,6 +70,9 @@ MarkTransformationsForOutput::evaluateInheritedAttribute (
             // Mark the IR node as a transformation if it is not already marked.
                if ( fileInfo->isTransformation() == false && !bkeep)
                   {
+#if 0
+                    printf ("MarkTransformationsForOutput: Reset the fileInfo to be a transformation \n");
+#endif
                  // Mark the IR node as a transformation.
                     fileInfo->setTransformation();
 
@@ -83,9 +89,34 @@ MarkTransformationsForOutput::evaluateInheritedAttribute (
                   {
                  // Mark the inherited attribute so that this whole subtree 
                  // (from this IR node down) will be marked as a transformation.
+#if 0
+                    printf ("MarkTransformationsForOutput: Reset the subtree to be a transformation \n");
+#endif
                     returnAttribute.insideTransformationToOutput = true;
                   }
              }
+
+#if 1
+       // DQ (8/16/2011): Debugging support added to output file info as part of the source position support for Java.
+          if (SgProject::get_verbose() > 3)
+             {
+            // DQ (8/16/2011): Debugging output to make sure that we get all of the IR nodes set properly for Java.
+               if (fileInfo->isTransformation() == true)
+                  {
+                    printf ("MarkTransformationsForOutput (isTransformation() == true): node = %p = %s = %s fileinfo = %p insideTransformationToOutput = %s \n",node,node->class_name().c_str(),SageInterface::get_name(node).c_str(),fileInfo,returnAttribute.insideTransformationToOutput ? "true" : "false");
+                  }
+
+               if (fileInfo->isCompilerGenerated() == true)
+                  {
+                    printf ("MarkTransformationsForOutput (isCompilerGenerated() == true): node = %p = %s = %s fileinfo = %p \n",node,node->class_name().c_str(),SageInterface::get_name(node).c_str(),fileInfo);
+                  }
+
+               if (fileInfo->isCompilerGenerated() == false && fileInfo->isTransformation() == false)
+                  {
+                    printf ("MarkTransformationsForOutput (normal): node = %p = %s = %s fileinfo = %p \n",node,node->class_name().c_str(),SageInterface::get_name(node).c_str(),fileInfo);
+                  }
+             }
+#endif
         }
 
      return returnAttribute;
