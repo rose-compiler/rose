@@ -91,6 +91,12 @@ volatile:     Already in const-volatile modifier
 
 
 
+My little TODO list (Dan):
+
+   Types:
+      Array types (e.g. String[] in test2011_02.java) is built as SgClassType, but not a SgArrayType of String).
+
+
 
 
 

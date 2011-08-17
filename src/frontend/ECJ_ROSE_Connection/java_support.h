@@ -96,6 +96,13 @@ void pushAndSetSourceCodePosition(JavaSourceCodePosition * pos, SgLocatedNode * 
 void setJavaSourcePosition( SgLocatedNode* locatedNode);
 void setJavaSourcePosition( SgLocatedNode* locatedNode, JavaSourceCodePosition * posInfo);
 
+// DQ (8/16/2011): Added support using the jToken object.
+void setJavaSourcePosition( SgLocatedNode* locatedNode, JNIEnv *env, jobject jToken);
+
+// DQ (8/16/2011): Added support for marking nodes as compiler generated (implicit in Java).
+void setJavaCompilerGenerated( SgLocatedNode* locatedNode );
+void setJavaSourcePositionUnavailableInFrontend( SgLocatedNode* locatedNode );
+
 // *********************************************
 
 
