@@ -119,6 +119,7 @@ CONFIGURE_FLAGS="\
 	--with-boost=${ROSE_TEST_BOOST_PATH} \
 	--with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib \
 	--with-java=${ROSE_TEST_JAVA_PATH} \
+    --with-python=${ROSE_TEST_PYTHON_PATH} \
 	--with-ROSE_LONG_MAKE_CHECK_RULE=yes \
 	--with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall"
 #########################################################################################
