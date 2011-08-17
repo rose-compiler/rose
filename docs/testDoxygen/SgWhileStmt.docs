@@ -30,6 +30,13 @@
 
 */
 
+/*! \var SgWhileStmt::p_else_body
+\brief This pointer to an SgStatement holds the body of the 'else' block.
+
+    This member is intended for use with Python, and should be NULL otherwise.
+
+*/
+
 //////////////////////////////////////////////////////////////////////////
 // Documentation for class SgWhileStmt member functions (methods)
 /////////////////////////////////////////////////////////////////////////

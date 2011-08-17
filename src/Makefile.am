@@ -25,7 +25,10 @@ else
 endif
 
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
+ # DQ (8/15/2011): Revert back to what we had before to fix Hudson java only test.
+ # DQ (8/14/2011): Need this change to match Makefile changes in ECJ_ROSE_Connection/Makefile.am
    libroseJavaParserlibraries = frontend/ECJ_ROSE_Connection/libroseJava.la
+ # libroseJavaParserlibraries = frontend/ECJ_ROSE_Connection/libJavaTraversal.la
 else
    libroseJavaParserlibraries =
 endif
@@ -34,6 +37,12 @@ if ROSE_BUILD_PHP_LANGUAGE_SUPPORT
    librosePHPlibraries = frontend/PHPFrontend/librosePHPFrontend.la
 else
    librosePHPlibraries =
+endif
+
+if ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
+   librosePythonlibraries = frontend/PythonFrontend/librosePythonFrontend.la
+else
+   librosePythonlibraries =
 endif
 
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
@@ -79,9 +88,11 @@ libroseLibraries = \
    $(libroseOpenFortranParserlibraries) \
    $(libroseJavaParserlibraries) \
    $(librosePHPlibraries) \
+   $(librosePythonlibraries) \
    $(libroseEDGlibraries) \
    $(libroseBinaryLibraries) \
    $(top_builddir)/src/midend/abstractHandle/libabstractHandle.la \
+   $(top_builddir)/src/midend/abstractMemoryObject/libabstractMemoryObject.la \
    $(top_builddir)/src/midend/astDiagnostics/libastDiagnostics.la \
    $(top_builddir)/src/midend/astProcessing/libastprocessing.la \
    $(top_builddir)/src/midend/astQuery/libquery.la \
@@ -97,6 +108,7 @@ libroseLibraries = \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/outsideInterface/libarrayOptimization.la \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/prepostTransformation/libprepostloop.la \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/slicing/libslicing.la \
+   $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la \
    $(top_builddir)/src/midend/programTransformation/ompLowering/libompLowering.la \
    $(top_builddir)/src/midend/programTransformation/constantFolding/libconstantFolding.la \
    $(top_builddir)/src/midend/programTransformation/finiteDifferencing/libfiniteDifferencing.la \
@@ -158,8 +170,8 @@ endif
 
 
 librose_la_SOURCES = dummyCppFileForLibrose.C
-librose_la_LIBADD = $(libroseLibraries) $(JAVA_JVM_FLAGS) $(LIB_QT) -lm $(RT_LIBS) \
-                    $(BOOST_LDFLAGS) $(BOOST_DATE_TIME_LIB) \
+librose_la_LIBADD = $(BOOST_LDFLAGS) $(libroseLibraries) $(JAVA_JVM_FLAGS) $(LIB_QT) -lm $(RT_LIBS) \
+                    $(BOOST_DATE_TIME_LIB) \
 		    $(BOOST_THREAD_LIB) $(BOOST_FILESYSTEM_LIB) \
 		    $(BOOST_PROGRAM_OPTIONS_LIB) $(BOOST_REGEX_LIB) \
 		    $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB) \

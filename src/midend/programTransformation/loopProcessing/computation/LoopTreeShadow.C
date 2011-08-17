@@ -1,4 +1,3 @@
-
 #include <LoopTreeShadow.h>
 
 LoopTreeShadowNode ::

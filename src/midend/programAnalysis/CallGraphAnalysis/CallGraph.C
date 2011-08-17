@@ -417,7 +417,7 @@ CallTargetSet::solveMemberFunctionPointerCall(SgExpression *functionExp, ClassHi
 
   std::vector<SgFunctionDeclaration*>
 CallTargetSet::solveMemberFunctionCall( SgClassType *crtClass, ClassHierarchyWrapper *classHierarchy,
-    SgMemberFunctionDeclaration *memberFunctionDeclaration, bool polymorphic )
+    SgMemberFunctionDeclaration *memberFunctionDeclaration, bool polymorphic, bool includePureVirtualFunc )
 {
   std::vector<SgFunctionDeclaration*> functionList;
   ROSE_ASSERT ( memberFunctionDeclaration && classHierarchy );
@@ -453,7 +453,7 @@ CallTargetSet::solveMemberFunctionCall( SgClassType *crtClass, ClassHierarchyWra
 
     // if it's not pure virtual then
     // the current function declaration is a candidate function to be called
-    if ( functionDefinition )
+    if ( includePureVirtualFunc || functionDefinition )
     {
       functionList.push_back( functionDeclarationInClass );
     }
@@ -512,7 +512,7 @@ CallTargetSet::solveMemberFunctionCall( SgClassType *crtClass, ClassHierarchyWra
           
           functionDeclarationInClass = (nonDefDecl) ? nonDefDecl : defDecl;
           ROSE_ASSERT ( functionDeclarationInClass );
-          if ( !( functionDeclarationInClass->get_functionModifier().isPureVirtual() ) )
+          if ( includePureVirtualFunc || !( functionDeclarationInClass->get_functionModifier().isPureVirtual() ) )
           {
             functionList.push_back( functionDeclarationInClass );
           }
@@ -652,7 +652,8 @@ getPropertiesForSgConstructorInitializer(SgConstructorInitializer* sgCtorInit,
 void
 getPropertiesForSgFunctionCallExp(SgFunctionCallExp* sgFunCallExp,
         ClassHierarchyWrapper* classHierarchy,
-        Rose_STL_Container<SgFunctionDeclaration*>& functionList)
+        Rose_STL_Container<SgFunctionDeclaration*>& functionList,
+        bool includePureVirtualFunc = false)
 {
     SgExpression* functionExp = sgFunCallExp->get_function();
     ROSE_ASSERT(functionExp != NULL);
@@ -754,7 +755,7 @@ getPropertiesForSgFunctionCallExp(SgFunctionCallExp* sgFunCallExp,
                     polymorphic = true;
 
                 std::vector<SgFunctionDeclaration*> fD =
-                        CallTargetSet::solveMemberFunctionCall(crtClass, classHierarchy, memberFunctionDeclaration, polymorphic);
+                        CallTargetSet::solveMemberFunctionCall(crtClass, classHierarchy, memberFunctionDeclaration, polymorphic, includePureVirtualFunc);
                 functionList.insert(functionList.end(), fD.begin(), fD.end());
             }
         }
@@ -800,13 +801,13 @@ getPropertiesForSgFunctionCallExp(SgFunctionCallExp* sgFunCallExp,
 
 void
 CallTargetSet::getPropertiesForExpression(SgExpression* sgexp, ClassHierarchyWrapper* classHierarchy,
-        Rose_STL_Container<SgFunctionDeclaration*>& functionList)
+        Rose_STL_Container<SgFunctionDeclaration*>& functionList, bool includePureVirtualFunc)
 {
     switch (sgexp->variantT())
     {
         case V_SgFunctionCallExp:
         {
-            getPropertiesForSgFunctionCallExp(isSgFunctionCallExp(sgexp), classHierarchy, functionList);
+            getPropertiesForSgFunctionCallExp(isSgFunctionCallExp(sgexp), classHierarchy, functionList, includePureVirtualFunc);
             break;
         }
         case V_SgConstructorInitializer:
@@ -824,10 +825,11 @@ CallTargetSet::getPropertiesForExpression(SgExpression* sgexp, ClassHierarchyWra
 
 void CallTargetSet::getDeclarationsForExpression(SgExpression* exp,
                 ClassHierarchyWrapper* classHierarchy,
-                Rose_STL_Container<SgFunctionDeclaration*>& defList)
+                Rose_STL_Container<SgFunctionDeclaration*>& defList,
+                bool includePureVirtualFunc)
 {
         Rose_STL_Container<SgFunctionDeclaration*> props;
-        CallTargetSet::getPropertiesForExpression(exp, classHierarchy, props);
+        CallTargetSet::getPropertiesForExpression(exp, classHierarchy, props, includePureVirtualFunc);
 
         foreach(SgFunctionDeclaration* candidateDecl, props)
         {

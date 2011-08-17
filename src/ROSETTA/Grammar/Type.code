@@ -201,6 +201,8 @@ HEADER_START
        // procesing so that the local type table in each scope can be referenced.
           static SgScopeStatement* getCurrentScope();
 
+          SgDeclarationStatement* getAssociatedDeclaration() const;
+
 HEADER_END
 
 
@@ -1022,6 +1024,33 @@ SOURCE_GET_MANGLED_STRING_TYPE_START
 SgName
 SgTypeString::get_mangled (void) const
    {
+#if 1
+
+    // DXN (08/01/2011): add type kind to the mangled name
+     SgName mangled_name;
+     SgValueExp* lenValExp = isSgValueExp(p_lengthExpression);
+     SgName mangled_length_name = lenValExp? lenValExp->get_constant_folded_value_as_string():
+                                             SageInterface::generateUniqueName(p_lengthExpression,false);
+     if (p_type_kind)
+        {        
+          SgValueExp* kindValExp = isSgValueExp(p_type_kind);
+          SgName mangled_kind_name = kindValExp? kindValExp->get_constant_folded_value_as_string(): 
+                                            SageInterface::generateUniqueName(p_type_kind,false);
+          mangled_name << "__" << "MANGLED_ID_STRING" << "b__" // start tag
+                  << mangled_length_name.str ()  // length
+                  << "__" << mangled_kind_name.str() // kind
+                  << "__" << "MANGLED_ID_STRING" << "e__"; // end tag
+        }
+     else
+        {
+          mangled_name << "__" << "MANGLED_ID_STRING" << "b__" // start tag
+                  << mangled_length_name.str ()  // length
+                  << "__" << "MANGLED_ID_STRING" << "e__"; // end tag
+        }
+
+     return mangled_name;
+
+#else
   // DQ (10/5/2010): Note that we do not include the type_kind data member in the mangled name,
   // but for Fortran this value must always be "1" and the data member is only relevant for Fortran.
 
@@ -1072,6 +1101,7 @@ SgTypeString::get_mangled (void) const
   // printf ("LEAVING: In SgTypeString::get_mangled(): definedUsingScalarLength = %s lengthScalar = %zu lengthExpression = %p mangled_name = %s \n",p_definedUsingScalarLength ? "true" : "false",p_lengthScalar,p_lengthExpression,mangled_name.str());
 
      return mangled_name;
+#endif
    }
 
 SOURCE_GET_MANGLED_STRING_TYPE_END
@@ -1981,6 +2011,34 @@ SgType::getCurrentScope()
   // ROSE_ASSERT(isSgScopeStatement(currentScope) != NULL);
 
      return currentScope;
+   }
+
+SgDeclarationStatement*
+SgType::getAssociatedDeclaration() const
+   {
+     SgDeclarationStatement* declaration = NULL;
+
+  // printf ("In SgType::getAssociatedDeclaration(): type = %s \n",class_name().c_str());
+
+  // Resolve to the base type (but not past typedef types).  Note that a subtle point is that 
+  // we want to avoid expressing typedefs that are private in functions that are public.
+     SgType* strippedType = this->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE);
+     ROSE_ASSERT(strippedType != NULL);
+
+  // printf ("In getAssociatedDeclaration(): strippedType = %s \n",strippedType->class_name().c_str());
+
+  // Check if this is a named type (either SgClassType, SgEnumType, or SgTypedefType).
+     SgNamedType* namedType = isSgNamedType(strippedType);
+     if (namedType != NULL)
+        {
+       // Look for the declaration and evaluate if it required qualification.
+          declaration = namedType->get_declaration();
+          ROSE_ASSERT(declaration != NULL);
+
+       // printf ("In HiddenListTraversal::getDeclarationAssociatedWithType(): declaration = %p = %s \n",declaration,declaration->class_name().c_str());
+        }
+
+     return declaration;
    }
 
 
@@ -4417,8 +4475,8 @@ SgTypeInt* SgTypeInt::p_builtin_type = NULL;
 
 // DQ (10/4/2010): Added support for fortran type kind expressions.
 // $CLASSNAME* $CLASSNAME::createType(int bitLength)
-$CLASSNAME*
-$CLASSNAME::createType(int bitLength, SgExpression* optional_fortran_type_kind)
+SgTypeInt*
+SgTypeInt::createType(int bitLength, SgExpression* optional_fortran_type_kind)
    {
 #if 0
      static bool firstCallToFunction = true;

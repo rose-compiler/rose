@@ -361,7 +361,8 @@ endif (HAVE_DLFCN_H)
      ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/astFixup 
      ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/astPostProcessing 
      ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/astMerge 
-     ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/astVisualization 
+     ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/astVisualization
+     ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/includeDirectivesProcessing 
      ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/astFileIO 
      ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/sageInterface 
      ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/virtualCFG 
@@ -371,6 +372,7 @@ endif (HAVE_DLFCN_H)
      ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/astFromString 
      ${ROSE_TOP_SRC_DIR}/src/frontend/OpenFortranParser_SAGE_Connection 
      ${ROSE_TOP_SRC_DIR}/src/frontend/PHPFrontend 
+     ${ROSE_TOP_SRC_DIR}/src/frontend/PythonFrontend 
      ${ROSE_TOP_SRC_DIR}/src/frontend/BinaryFormats 
      ${ROSE_TOP_SRC_DIR}/src/frontend/BinaryLoader
      ${ROSE_TOP_SRC_DIR}/src/frontend/BinaryDisassembly 
@@ -383,6 +385,7 @@ endif (HAVE_DLFCN_H)
      ${ROSE_TOP_SRC_DIR}/src/backend/unparser/FortranCodeGeneration 
      ${ROSE_TOP_SRC_DIR}/src/backend/unparser/JavaCodeGeneration 
      ${ROSE_TOP_SRC_DIR}/src/backend/unparser/PHPCodeGeneration 
+     ${ROSE_TOP_SRC_DIR}/src/backend/unparser/PythonCodeGeneration 
      ${ROSE_TOP_SRC_DIR}/src/backend/asmUnparser 
      ${ROSE_TOP_SRC_DIR}/src/util 
      ${ROSE_TOP_SRC_DIR}/src/util/support 
@@ -390,6 +393,7 @@ endif (HAVE_DLFCN_H)
      ${ROSE_TOP_SRC_DIR}/src/util/stringSupport 
      ${ROSE_TOP_SRC_DIR}/src/util/commandlineProcessing 
      ${ROSE_TOP_SRC_DIR}/src/midend/abstractHandle 
+     ${ROSE_TOP_SRC_DIR}/src/midend/abstractMemoryObject
      ${ROSE_TOP_SRC_DIR}/src/midend/astDiagnostics 
      ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/astInlining 
      ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/astOutlining  
@@ -437,6 +441,7 @@ endif (HAVE_DLFCN_H)
      ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/libharu-2.1.0/include 
      ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/qrose/Framework 
      ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/qrose/Widgets  
+     ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/POET
      ${ROSE_TOP_SRC_DIR}/projects/dataBase 
      ${ROSE_TOP_SRC_DIR}/src/util/graphs 
      ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/libharu-2.1.0/win32/include/
