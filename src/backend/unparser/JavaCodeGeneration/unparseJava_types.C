@@ -198,4 +198,4 @@ void Unparse_Java::unparseTypeInt(SgTypeInt* type, SgUnparse_Info& info)       {
 void Unparse_Java::unparseTypeLong(SgTypeLong* type, SgUnparse_Info& info)     { curprint("long"); }
 void Unparse_Java::unparseTypeFloat(SgTypeFloat* type, SgUnparse_Info& info)   { curprint("float"); }
 void Unparse_Java::unparseTypeDouble(SgTypeDouble* type, SgUnparse_Info& info) { curprint("double"); }
-void Unparse_Java::unparseTypeBool(SgTypeBool* type, SgUnparse_Info& info)     { curprint("bool"); }
+void Unparse_Java::unparseTypeBool(SgTypeBool* type, SgUnparse_Info& info)     { curprint("boolean");
