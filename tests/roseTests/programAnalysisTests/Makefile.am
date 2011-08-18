@@ -10,20 +10,20 @@ INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/programAnalysis -I$(top_s
 
 include $(srcdir)/../../CompileTests/Cxx_tests/Makefile-pass.inc
 
-#if ROSE_USE_LONG_MAKE_CHECK_RULE
+if ROSE_USE_LONG_MAKE_CHECK_RULE
 
 # This is the long test of ROSE (takes a while!)
 TESTCODES_REQUIRED_TO_PASS = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS)
 
-#else # !ROSE_USE_LONG_MAKE_CHECK_RULE
+else # !ROSE_USE_LONG_MAKE_CHECK_RULE
 
 # Shorten the list of code to compile to simplify checks using "make distcheck"
 # Note that the tests test2001_02.C and test2001_03.C are required because the
 # tests in ../C_subset_of_Cxx use them and that test2004_116.C is required 
 # because the tests in ROSE/tests/roseTests/programTransformationTests use it.
-#TESTCODES_REQUIRED_TO_PASS = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS_SHORT)
+TESTCODES_REQUIRED_TO_PASS = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS_SHORT)
 
-#endif # ROSE_USE_LONG_MAKE_CHECK_RULE
+endif # ROSE_USE_LONG_MAKE_CHECK_RULE
 
 TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
 
@@ -110,7 +110,7 @@ check-vfa: $(CXX_FILES)
 # check-local:
 #	AnnotationLanguageParserTestRule
 #	$(MAKE) FORCE_TEST_CODES_TO_RUN
-check-local:
+check-local: check-vfa
 	$(MAKE) FORCE_TEST_CODES_TO_RUN
 	@echo "*************************************************************************************************"
 	@echo "*** ROSE/tests/roseTests/programAnalysisTests: make check rule complete (terminated normally) ***"

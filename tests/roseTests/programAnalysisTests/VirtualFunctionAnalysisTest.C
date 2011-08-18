@@ -38,9 +38,6 @@ main(int argc, char * argv[]) {
         return -1;
     }
     SgProject* project = frontend(argc, argv);
-    std::cout <<"Generating AST dot\n";
-    generateDOT(*project);
-    generateAstGraph(project, 20000);
 
     CallGraphBuilder builder(project);
     builder.buildCallGraph();
@@ -56,13 +53,6 @@ main(int argc, char * argv[]) {
             std::cerr<< "Can't execute Virtual Function Analysis without main function\n";
             return 0;
      }
-#if 1
-    SgFunctionDefinition *mainDef = mainDecl->get_definition();
-    StaticCFG::CustomFilteredCFG<AliasCfgFilter> *cfg;
-    cfg = new StaticCFG::CustomFilteredCFG<AliasCfgFilter>(mainDef);
-    cfg->buildFilteredCFG();
-    cfg->cfgToDot(mainDef, "cfg.dot");
-#endif
     
     VirtualFunctionAnalysis *anal = new VirtualFunctionAnalysis(project);
     anal->run();
@@ -70,8 +60,12 @@ main(int argc, char * argv[]) {
     
      anal->pruneCallGraph(builder);
      
+     std::string filename;
+     filename = string(strrchr(mainDecl->get_definition()->get_file_info()->get_filename() ,'/')+1);
+     filename = filename + ".callGraph.dot";
+     
      AstDOTGeneration dotgen2;
-     dotgen2.writeIncidenceGraphToDOTFile(builder.getGraph(), "pruned_call_graph.dot");
+     dotgen2.writeIncidenceGraphToDOTFile(builder.getGraph(), filename);
 
     
 

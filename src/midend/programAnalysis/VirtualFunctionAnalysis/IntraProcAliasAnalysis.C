@@ -248,10 +248,6 @@ void CompactRepresentation::printEdge(std::ostream & o, SgDirectedGraphEdge* edg
             "\", style=\"" << "solid" << "\"];\n";
 }
 
-void CompReprPtr::addAliasRelation(const AliasRelationNode &left, const AliasRelationNode &right) {
-        get()->addMustAliasRelation(left,right);
-}
-
 bool CompReprPtr::operator==(const CompReprPtr &that) const {
         CompactRepresentation *a = (static_cast<CompactRepresentation *>(ptr.get()));
         CompactRepresentation *b = (static_cast<CompactRepresentation *>(that.get()));
@@ -294,6 +290,22 @@ void AliasInfoGenerator::addNewAliasRelation(SgGraphNode *node, std::pair<AliasR
       if(!found)
         aliasRelations.at(node).push_back(a_relation);
 }
+CompReprPtr AliasInfoGenerator::getExitData(SgGraphNode *node) {  
+    /** This is to for the bug in StaticCFG look at file test2001_14.C*/    
+    //ROSE_ASSERT(outs.count(node) != 0);
+    if(outs.count(node) == 0)
+            outs[node] = CompReprPtr(new CompactRepresentation);
+        return outs.at(node);    
+}
+CompReprPtr AliasInfoGenerator::getEntryData(SgGraphNode *node) {  
+    /** This is for  the bug in StaticCFG look at file test2001_14.C*/    
+    //ROSE_ASSERT(ins.count(node) != 0);
+    if(ins.count(node) == 0)
+            ins[node] = CompReprPtr(new CompactRepresentation);
+        return ins.at(node);    
+}
+
+
 std::vector <std::pair<AliasRelationNode, AliasRelationNode> > AliasInfoGenerator::getAliasRelations(SgGraphNode *node){
       return aliasRelations.at(node);
 }
@@ -310,10 +322,7 @@ void IntraProcAliasAnalysis::buildCFG() {
         
         cfg->buildFilteredCFG();
         
-        graph = cfg->getGraph();        
-
         // run a bfs and list the nodes
-        
         cfgNodes.clear();
         std::queue<SgGraphNode *> workQ;
         //boost::unordered_map<SgGraphNode* , bool> visited;
@@ -350,7 +359,7 @@ IntraProcAliasAnalysis::IntraProcAliasAnalysis(SgNode *head, ClassHierarchyWrapp
         
         checkPointHash = 0;
         gen = new AliasInfoGenerator;
-        car = new CollectAliasRelations(cfg, gen);
+        CollectAliasRelations *car = new CollectAliasRelations(cfg, gen);
         car->run();
 };  
 
@@ -358,7 +367,6 @@ void IntraProcAliasAnalysis:: run() {
     
     std::cout<< "IntraProcedural Analysis for : " << std::endl;
     std::cout<< head->unparseToCompleteString() << std::endl;
-    vector<SgGraphNode *> nodes = car->getCFGNodes();
     
     if(gen->getEntryData(cfg->getEntry()).get()  == NULL) {
         entry = CompReprPtr(new CompactRepresentation);
@@ -426,6 +434,10 @@ bool IntraProcAliasAnalysis::runCheck() {
             SgFunctionCallExp *funcCall = functionCalls[index];    
             cfgn = funcCall->cfgForBeginning();
             graphNode = cfg->toGraphNode(cfgn);
+            if(graphNode == NULL) {
+                // example: function call inside catch block is not added on controlflow graph
+                continue;
+            }
             CompReprPtr callSiteIN =  getCFGInData(graphNode);
             ROSE_ASSERT(resolver.count(funcCall) != 0);
             //std::cout << funcCall->unp
@@ -460,7 +472,7 @@ bool IntraProcAliasAnalysis::runCheck() {
                 getFunctionParametersAliasRelations(funcCall, resolver.at(funcCall)[j], arg_relations, return_relations);
                 // add the parameters to the alias relations to the function entry
                 for(unsigned int i=0; i< arg_relations.size(); i++) 
-                   mapping.at(declaration)->getFunctionEntry().addAliasRelation(arg_relations[i].first, arg_relations[i].second);
+                   mapping.at(declaration)->getFunctionEntry().get()->addMustAliasRelation(arg_relations[i].first, arg_relations[i].second);
 
                 for(unsigned int i=0; i< return_relations.size(); i++) 
                     gen->addNewAliasRelation(graphNode, return_relations[i]);
@@ -486,8 +498,11 @@ bool IntraProcAliasAnalysis::runCheck() {
                     std::cout << "Defining declaration not found for " << con->unparseToCompleteString()<<  std::endl;
                     continue;
                 }
-                
-                ROSE_ASSERT(mapping.count(declaration) != 0);
+
+                if(mapping.count(declaration) == 0) {
+                    // Compiler Generated functions;
+                    continue;
+                }
                 
                 mapping.at(declaration)->setFunctionEntry(callSiteIN);
                 
@@ -498,7 +513,7 @@ bool IntraProcAliasAnalysis::runCheck() {
                 
                 // add the parameters to the alias relations to the function entry
                 for(unsigned int i=0; i< arg_relations.size(); i++) 
-                   mapping.at(declaration)->getFunctionEntry().addAliasRelation(arg_relations[i].first, arg_relations[i].second);
+                   mapping.at(declaration)->getFunctionEntry().get()->addMustAliasRelation(arg_relations[i].first, arg_relations[i].second);
             }
             
 
@@ -507,7 +522,7 @@ bool IntraProcAliasAnalysis::runCheck() {
             CompReprPtr c_out = getCFGOutData(cfgNodes[cfgNodes.size()-1]);
             setFunctionExit(c_out);
             
-            c_out.get()->toDot(isSgFunctionDeclaration(head)->get_mangled_name()+".dot");
+            //c_out.get()->toDot(isSgFunctionDeclaration(head)->get_mangled_name()+".dot");
             
             unsigned long thisEndHash = getFunctionExit().get()->getHash();
             change  |= (checkPointHash != thisEndHash);
@@ -533,7 +548,7 @@ void IntraProcAliasAnalysis::getFunctionParametersAliasRelations(SgFunctionCallE
             AliasRelationNode leftARNode, rightARNode;
             unsigned int index =0;
             
-            for (; i != actual.end(); ++j, i++) {
+            for (; i != actual.end() && j != formal.end(); ++j, i++) {
                 
                 ProcessExpression::processLHS(*j, leftARNode);
                 
@@ -756,8 +771,6 @@ bool IntraProcAliasAnalysis::updateVirtualFunctionInCallGraph (SgFunctionCallExp
         delete cfg;
         cfg = NULL;
         
-        delete graph;
-        graph = NULL;
         
         delete gen;
         gen = NULL;
@@ -810,7 +823,7 @@ bool IntraProcAliasAnalysis::updateVirtualFunctionInCallGraph (SgFunctionCallExp
 
 std::vector<SgGraphNode *> IntraProcAliasAnalysis::getPredecessors(SgGraphNode *n) {
       std::vector<SgGraphNode *> nodes;
-      graph->getPredecessors(n, nodes);
+      cfg->getGraph()->getPredecessors(n, nodes);
       return nodes;
   }
 
@@ -1044,8 +1057,6 @@ void ProcessExpression::processRHS(SgNode *node, struct AliasRelationNode &arNod
 void CollectAliasRelations::processNode(SgGraphNode* g_node){
     
     SgNode *node = g_node->get_SgNode();    
-    nodes.push_back(g_node);
-    
     g->init(g_node);
     
 
@@ -1163,90 +1174,6 @@ void CollectAliasRelations::run() {
     
 
 }
-
-void IntraProcAliasAnalysis::processLeftSide(SgNode *node, AliasRelationNode &arNode) {
-
-    ROSE_ASSERT(node != NULL);
-
-    SgVariableSymbol *sym = NULL;
-    SgVarRefExp *var_exp;
-    int depth = 0;
-    switch (node->variantT()) {
-
-        case V_SgInitializedName:
-        {
-            SgInitializedName *init_exp = isSgInitializedName(node);
-            
-            ROSE_ASSERT(init_exp != NULL);
-            
-            sym = static_cast<SgVariableSymbol *>(init_exp->get_symbol_from_symbol_table());
-        
-        }
-        break;   
-
-        case V_SgVarRefExp:
-        {    
-             var_exp = isSgVarRefExp(node);
-             ROSE_ASSERT(var_exp != NULL);
-        
-            // get the variable symbol
-            sym = var_exp->get_symbol();
-        }   
-        break;
-            
-        case V_SgPointerDerefExp:
-        {   
-            SgPointerDerefExp *tmp = isSgPointerDerefExp(node);
-            
-            SgPointerDerefExp *deref_exp = NULL;
-            
-
-            ROSE_ASSERT(tmp != NULL);
-            
-            while(tmp != NULL) {
-                
-                deref_exp = tmp;
-                
-                tmp = isSgPointerDerefExp(deref_exp->get_operand());
-                
-                depth++;
-            }
-            
-            processLeftSide(deref_exp->get_operand(), arNode);
-            arNode.derefLevel += depth;
-            
-            return;
-
-        }    
-        break;
-
-        case V_SgDotExp:
-        case V_SgArrowExp:
-        {    
-            SgBinaryOp *bin_exp = isSgBinaryOp(node);
-            if(bin_exp != NULL) {
-                processLeftSide(bin_exp->get_rhs_operand(), arNode);
-                return;
-            }
-        }
-        break;
-
-        default:
-            sym = NULL;
-    }; 
-
-    if(sym != NULL && 
-            (SageInterface::isPointerType(sym->get_type()) == false && SageInterface::isReferenceType(sym->get_type()) == false) )
-                sym = NULL;
-    
-    arNode.var = sym;
-    arNode.derefLevel = depth;
-
-    
-    
-
-}
-
 
 
 void IntraProcAliasAnalysis::applyCFGTransferFunction(SgGraphNode* s) {
