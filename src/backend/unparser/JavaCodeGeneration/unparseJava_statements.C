@@ -1007,7 +1007,7 @@ Unparse_Java::unparseBreakStmt(SgStatement* stmt, SgUnparse_Info& info) {
   SgBreakStmt* break_stmt = isSgBreakStmt(stmt);
   ROSE_ASSERT(break_stmt != NULL);
 
-  curprint ( string("break; "));
+  curprint ("break");
 }
 
 void
@@ -1015,7 +1015,7 @@ Unparse_Java::unparseContinueStmt(SgStatement* stmt, SgUnparse_Info& info) {
   SgContinueStmt* continue_stmt = isSgContinueStmt(stmt);
   ROSE_ASSERT(continue_stmt != NULL);
 
-  curprint ( string("continue; "));
+  curprint ("continue");
 }
 
 void
@@ -1024,18 +1024,12 @@ Unparse_Java::unparseReturnStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgReturnStmt* return_stmt = isSgReturnStmt(stmt);
      ROSE_ASSERT(return_stmt != NULL);
 
-     curprint ( string("return "));
-     SgUnparse_Info ninfo(info);
+     curprint ("return");
 
-     if (return_stmt->get_expression())
-        {
-          unparseExpression(return_stmt->get_expression(), ninfo);
-        }
-
-     if (!ninfo.SkipSemiColon())
-        {
-          curprint ( string(";"));
-        }
+     if (return_stmt->get_expression()) {
+         curprint(" ");
+         unparseExpression(return_stmt->get_expression(), info);
+     }
    }
 
 void
