@@ -13,7 +13,7 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 
 # DQ (7/2/2011): Fixed this to only handle binary work when binary support is available.
 # bin_PROGRAMS  = astTraversalTest processnew3Down4SgIncGraph processnew3Down4 binaryPaths
-bin_PROGRAMS  = astTraversalTest processnew3Down4SgIncGraph processnew3Down4
+bin_PROGRAMS  = astTraversalTest processnew3Down4SgIncGraph2 strictGraphTest
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 bin_PROGRAMS += binaryPaths
 endif
@@ -25,15 +25,15 @@ ROSE_DEVELOPMENT_LIBS = $(ROSE_SEPARATE_LIBS)
 astTraversalTest_SOURCES      = astTraversalTest.C
 astTraversalTest_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
 
-processnew3Down4_SOURCES      = processnew3Down4.C
-processnew3Down4_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-
-
-processnew3Down4SgIncGraph_SOURCES      = processnew3Down4SgIncGraph.C
-processnew3Down4SgIncGraph_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+processnew3Down4SgIncGraph2_SOURCES      = processnew3Down4SgIncGraph2.C
+processnew3Down4SgIncGraph2_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
 
 binaryPaths_SOURCES = binaryPaths.C
 binaryPaths_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+
+strictGraphTest_SOURCES = strictGraphTest.C
+strictGraphTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+
 
 # source files don't contain anything that would be merged
 # TESTCODES = $(srcdir)/performanceTest.C
@@ -41,28 +41,27 @@ binaryPaths_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
 testTraversals: astTraversalTest
 	./astTraversalTest -edg:w -c $(srcdir)/input1.C
 
-testRunExamples: processnew3Down4
-	./processnew3Down4 $(srcdir)/test11.C
-	./processnew3Down4 $(srcdir)/test12.C
-	./processnew3Down4 $(srcdir)/test13.C
-	./processnew3Down4 $(srcdir)/test14.C
+testRunExamples2: processnew3Down4SgIncGraph2
+	./processnew3Down4SgIncGraph2 $(srcdir)/test11.C
+	./processnew3Down4SgIncGraph2 $(srcdir)/test12.C
+	./processnew3Down4SgIncGraph2 $(srcdir)/test13.C
+	./processnew3Down4SgIncGraph2 $(srcdir)/test14.C
 	rm *.dot
-testRunExamples2: processnew3Down4SgIncGraph
-	./processnew3Down4SgIncGraph $(srcdir)/test11.C
-	./processnew3Down4SgIncGraph $(srcdir)/test12.C
-	./processnew3Down4SgIncGraph $(srcdir)/test13.C
-	./processnew3Down4SgIncGraph $(srcdir)/test14.C
-	rm *.dot
+
 testRunExamplesBin: binaryPaths
 	./binaryPaths $(srcdir)/t1
 	./binaryPaths $(srcdir)/t2
 	./binaryPaths $(srcdir)/t3
 	./binaryPaths $(srcdir)/t4
 	rm *.dot
+
+strictGraph: strictGraphTest
+	./strictGraphTest
+
 check-local:
 	@$(MAKE) testTraversals
-	@$(MAKE) testRunExamples
 	@$(MAKE) testRunExamples2
+	@$(MAKE) strictGraph
 	@echo "***********************************************************************************************"
 	@echo "*** ROSE/tests/roseTests/astProcessingTests: make check rule complete (terminated normally) ***"
 	@echo "***********************************************************************************************"
