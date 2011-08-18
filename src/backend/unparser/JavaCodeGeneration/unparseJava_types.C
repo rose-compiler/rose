@@ -190,12 +190,12 @@ Unparse_Java::unparseArrayType(SgArrayType* type, SgUnparse_Info& info)
      curprint("[]");
    }
 
-void Unparse_Java::unparseTypeSignedChar(SgTypeSignedChar* type, SgUnparse_Info& info) { curprint("byte "); }
-void Unparse_Java::unparseTypeWchar(SgTypeWchar* type, SgUnparse_Info& info)   { curprint("char "); }
-void Unparse_Java::unparseTypeVoid(SgTypeVoid* type, SgUnparse_Info& info)     { curprint("void "); }
-void Unparse_Java::unparseTypeShort(SgTypeShort* type, SgUnparse_Info& info)   { curprint("short "); }
-void Unparse_Java::unparseTypeInt(SgTypeInt* type, SgUnparse_Info& info)       { curprint("int "); }
-void Unparse_Java::unparseTypeLong(SgTypeLong* type, SgUnparse_Info& info)     { curprint("long "); }
-void Unparse_Java::unparseTypeFloat(SgTypeFloat* type, SgUnparse_Info& info)   { curprint("float "); }
-void Unparse_Java::unparseTypeDouble(SgTypeDouble* type, SgUnparse_Info& info) { curprint("double "); }
-void Unparse_Java::unparseTypeBool(SgTypeBool* type, SgUnparse_Info& info)     { curprint("bool "); }
+void Unparse_Java::unparseTypeSignedChar(SgTypeSignedChar* type, SgUnparse_Info& info) { curprint("byte"); }
+void Unparse_Java::unparseTypeWchar(SgTypeWchar* type, SgUnparse_Info& info)   { curprint("char"); }
+void Unparse_Java::unparseTypeVoid(SgTypeVoid* type, SgUnparse_Info& info)     { curprint("void"); }
+void Unparse_Java::unparseTypeShort(SgTypeShort* type, SgUnparse_Info& info)   { curprint("short"); }
+void Unparse_Java::unparseTypeInt(SgTypeInt* type, SgUnparse_Info& info)       { curprint("int"); }
+void Unparse_Java::unparseTypeLong(SgTypeLong* type, SgUnparse_Info& info)     { curprint("long"); }
+void Unparse_Java::unparseTypeFloat(SgTypeFloat* type, SgUnparse_Info& info)   { curprint("float"); }
+void Unparse_Java::unparseTypeDouble(SgTypeDouble* type, SgUnparse_Info& info) { curprint("double"); }
+void Unparse_Java::unparseTypeBool(SgTypeBool* type, SgUnparse_Info& info)     { curprint("bool"); }
