@@ -16,8 +16,6 @@ class IntraProcDataFlowAnalysis
   
   virtual Data meet_data( const Data& d1, const Data& d2) = 0;
   
-  virtual Data get_empty_data() const = 0;
-  
   virtual Data getCFGInData(Node *) = 0;
   
   virtual Data getCFGOutData(Node *) = 0;
