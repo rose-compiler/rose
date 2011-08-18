@@ -28,10 +28,7 @@ FINISH TEMPFLATPATH CODE
 *Current Implementation
 ***********************
 
-*This implementation uses BOOSTs graph structure to analyze the paths of the graph and uses an InheritedAttribute solver
-
-*The inheritedAttribute solver calculates a value for CFG nodes determined by its parents, the actual
-value determined is specified by the user via evaluateInheritedAttribute
+*This implementation uses BOOSTs graph structure to analyze the paths of the graph
 
 *The path analyzer sends the user paths to be evaluated by the "analyzePath" function that is user defined
 
@@ -138,14 +135,6 @@ public:
 
 
 };
-/**
-Gets in edges with integer inputs, internal use only
-SgGraphTraversal::getInEdges
-Input:
-@param[node] const int, integer representation of the node to get the in edges from
-@param[g] const CFG* g, CFG
-*/
-
 
 
 template<class CFG>
@@ -174,6 +163,13 @@ SgGraphTraversal<CFG>::
 
 #endif
 
+/**
+    Gets the source of an edge
+    SgGraphTraversal::getSource
+    Input:
+    @param[edge] int& integer representation of edge in quesution
+    @param[g] CFG*& the CFG used
+*/
 template<class CFG>
 inline int
 SgGraphTraversal<CFG>::
@@ -183,6 +179,15 @@ getSource(int& edge, CFG*& g)
     Vertex v = boost::source(e, *g);
     return(vertintmap[v]);
 }
+
+/**
+    Gets the target of an edge
+    SgGraphTraversal::getTarget
+    Input:
+    @param[edge] int& integer representation of edge in quesution
+    @param[g] the CFG*& CFG used
+*/
+
 
 template<class CFG>
 inline int
@@ -198,8 +203,8 @@ getTarget(int& edge, CFG*& g)
 Gets out edges with integer inputs, internal use only
 SgGraphTraversal::getInEdges
 Input:
-@param[node] const int, integer representation of the node to get the in edges from
-@param[g] const CFG* g, CFG
+@param[node] int, integer representation of the node to get the in edges from
+@param[g] CFG* g, CFG
 */
 
 template<class CFG>
@@ -221,8 +226,8 @@ getInEdges(int& node, CFG*& g)
 Gets out edges with integer inputs, internal use only
 SgGraphTraversal::getOutEdges
 Input:
-@param[node] const int, integer representation of the node to get the out edges from
-@param[g] const CFG* g, CFG
+@param[node] int, integer representation of the node to get the out edges from
+@param[g] CFG* g, CFG
 */
 
 
@@ -251,8 +256,6 @@ Input:
 @param[begin] Vertex, starting node
 @param[end] Vertex, endnode
 @param[g] CFG* g, CFG calculated previously
-@param[keep] bool, true if you want to keep the data available (for multiple analyses)
-@param[subgraph] bool, if you want parallel computation 
 */
 
 
@@ -362,19 +365,7 @@ computeSubGraphs(const int& begin, const int &end, CFG*& g, int depthDifferentia
         return;
 }
 
-
-/**
-This is the function that preps the graph for traversal, can be used in the users program directly
-but this requires 
-
-SgGraphTraversal::prepareGraph
-Input:
-@param[begin] Vertex, starting node
-@param[end] Vertex, endnode 
-@param[g] CFG*& g, CFG calculated previously
-*/
-
-
+//internal functions
         template<class CFG>
         void
         SgGraphTraversal<CFG>::
@@ -423,6 +414,15 @@ Input:
         }
 
 
+/**
+This is the function that preps the graph for traversal
+
+SgGraphTraversal::prepareGraph
+Input:
+@param[g] CFG*& g, CFG calculated previously
+*/
+
+
 template<class CFG>
 void
 SgGraphTraversal<CFG>::
@@ -432,6 +432,16 @@ prepareGraph(CFG*& g) {
     findClosuresAndMarkersAndEnumerate(g);
    // computeOrder(g, sources[0]);
 }
+
+
+/** 
+This is the function that preps the graph for traversal, currently this one isn't used but for many traversals on one visitor
+may necessitate
+ 
+SgGraphTraversal::firstPrepGraph 
+Input: 
+@param[g] CFG*& g, CFG calculated previously 
+*/ 
 
 
 template<class CFG>
@@ -500,6 +510,11 @@ findClosuresAndMarkersAndEnumerate(CFG*& g)
     return;
 }
 
+/** Currently unused but will be necessary for parallelization in progress
+SgGraphTraversal::computeOrder
+@param[g] CFG* cfg in question
+@parm[begin] const int, integer representation of source node
+*/
 template<class CFG>
 void
 SgGraphTraversal<CFG>::
@@ -562,6 +577,15 @@ computeOrder(CFG*& g, const int& begin) {
         return;
 }
 
+/**
+Converts the path calculated by this algorithm to Vertices so users can
+access data
+SgGraphTraversal::getVertexPath
+@param[path] integer representation of path
+@param[g] CFG*, cfg in question
+@param[vertexPath] for some reason this can't be a return value so it is changed via pass by reference
+*/
+
 template<class CFG>
 void
 SgGraphTraversal<CFG>::
@@ -576,6 +600,11 @@ getVertexPath(std::vector<int> path, CFG*& g, std::vector<Vertex>& vertexPath) {
         
 }
 
+/**
+Currently unused, may eventually be modified for optimal storage purposes
+SgGraphTraversal::storeCompact
+@param[compactPath] path to be compactified
+*/
 template<class CFG>
 void
 SgGraphTraversal<CFG>::
@@ -586,7 +615,15 @@ return;
 
 
 
-
+/**
+Traversal function
+SgGraphTraversal::traversePath
+@param[begin] integer representation of the source node
+@param[end] the final node
+@param[loop] bool, tells the program whether or not it's traversing a loop
+so that loops aren't returned by themselves as paths but rather are incorporated
+into complete paths
+*/
 template<class CFG>
 std::set<std::vector<int> > 
 SgGraphTraversal<CFG>::
@@ -695,11 +732,11 @@ traversed maximally once what is the greatest number of steps taken to reach the
                     }
                     for (unsigned int nP = 0; nP < nPaths.size(); nP++) {
                         if (!loop) {
-                         std::cout << "assumed path: " << std::endl;
-                        for (unsigned int k5 = 0; k5 < nPaths[nP].size(); k5++) {
-                            std::cout << nPaths[nP][k5] << ", ";
-                        }
-                        std::cout << std::endl;
+                        // std::cout << "assumed path: " << std::endl;
+                        //for (unsigned int k5 = 0; k5 < nPaths[nP].size(); k5++) {
+                        //    std::cout << nPaths[nP][k5] << ", ";
+                       // }
+                       // std::cout << std::endl;
                         std::vector<Vertex> vertPath;
                         getVertexPath(nPaths[nP], g, vertPath);
                         //std::cout << "vertPath size: " << vertPath.size() << std::endl; 

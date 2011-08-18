@@ -270,6 +270,7 @@ to build customized analyses using ROSE.}
 \input{loopRecognition}
 \input{virtualCFG}
 \input{buildCFG}
+\input{CFGTraversalTutorial}
 \input{defuseAnalysis}
 \input{buildCallGraph}
 \input{buildVFA}
