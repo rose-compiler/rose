@@ -164,8 +164,10 @@ Unparse_Java::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Info
             case V_SgMemberFunctionDeclaration:
             case V_SgFunctionDefinition:
             case V_SgFunctionParameterList:
+            case V_SgForInitStatement:
             case V_SgBasicBlock:
             case V_SgWhileStmt:
+            case V_SgForStatement:
                 printSemicolon = false;
                 break;
             default:
@@ -175,6 +177,7 @@ Unparse_Java::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Info
 
         bool printNewline;
         switch (stmt->variantT()) {
+            case V_SgForInitStatement:
             case V_SgFunctionParameterList:
                 printNewline = false;
                 break;
@@ -543,112 +546,47 @@ Unparse_Java::unparseInitializedName(SgInitializedName* init_name, SgUnparse_Inf
 }
 
 void
-Unparse_Java::unparseForInitStmt (SgStatement* stmt, SgUnparse_Info& info)
-   {
-  // printf ("Unparse for loop initializers \n");
-     SgForInitStatement* forInitStmt = isSgForInitStatement(stmt);
-     ROSE_ASSERT(forInitStmt != NULL);
+Unparse_Java::unparseForInitStmt (SgStatement* stmt, SgUnparse_Info& info) {
+    SgForInitStatement* forInitStmt = isSgForInitStatement(stmt);
+    ROSE_ASSERT(forInitStmt != NULL);
 
-     SgStatementPtrList::iterator i = forInitStmt->get_init_stmt().begin();
+    SgStatementPtrList& stmts = forInitStmt->get_init_stmt();
+    SgStatementPtrList::iterator stmt_it;
+    for (stmt_it = stmts.begin(); stmt_it != stmts.end(); stmt_it++) {
+        if (stmt_it != stmts.begin())
+            curprint(", ");
 
-     SgUnparse_Info newinfo(info);
+        SgExprStatement* stmt = isSgExprStatement(*stmt_it);
+        ROSE_ASSERT(stmt != NULL && "expected an SgExprStatement in SgForInitStmt");
 
-     while(i != forInitStmt->get_init_stmt().end())
-        {
-       // curprint(" /* unparseForInitStmt: " + (*i)->class_name() + " */ ");
-          unparseStatement(*i, newinfo);
-          i++;
-
-       // After unparsing the first variable declaration with the type 
-       // we want to unparse the rest without the base type.
-          newinfo.set_SkipBaseType();
-
-          if (i != forInitStmt->get_init_stmt().end())
-             {
-               curprint ( string(", "));
-             }
-        }
-
-     curprint ( string("; "));
-   }
+        unparseExpression(stmt->get_expression(), info);
+    }
+}
 
 void
-Unparse_Java::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
-   {
-  // printf ("Unparse for loop \n");
-     SgForStatement* for_stmt = isSgForStatement(stmt);
-     ROSE_ASSERT(for_stmt != NULL);
+Unparse_Java::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info) {
+    SgForStatement* for_stmt = isSgForStatement(stmt);
+    ROSE_ASSERT(for_stmt != NULL);
 
-     curprint ( string("for ("));
-     SgUnparse_Info newinfo(info);
-     newinfo.set_SkipSemiColon();
-     newinfo.set_inConditional();  // set to prevent printing line and file information
+    SgExprStatement* test_stmt = isSgExprStatement(for_stmt->get_test());
+    ROSE_ASSERT(test_stmt != NULL && "expected SgForStatement::p_test to be an SgExprStatement");
+    SgExpression* test_exp = test_stmt->get_expression();
 
-  // curprint(" /* initializer */ ");
-     SgStatement *tmp_stmt = for_stmt->get_for_init_stmt();
-  // curprint(" /* initializer: " + tmp_stmt->class_name() + " */ ");
-  // ROSE_ASSERT(tmp_stmt != NULL);
-     if (tmp_stmt != NULL)
-        {
-          unparseStatement(tmp_stmt,newinfo);
-        }
-       else
-        {
-          printf ("Warning in unparseForStmt(): for_stmt->get_for_init_stmt() == NULL \n");
-          curprint ( string("; "));
-        }
-     newinfo.unset_inConditional();
+    curprint("for (");
+    unparseStatement(for_stmt->get_for_init_stmt(), info);
+    curprint("; ");
+    unparseExpression(test_exp, info);
+    curprint("; ");
+    unparseExpression(for_stmt->get_increment(), info);
+    curprint(")");
 
-     SgStatement *test_stmt = for_stmt->get_test();
-     ROSE_ASSERT(test_stmt != NULL);
-  // if ( test_stmt != NULL )
-     SgUnparse_Info testinfo(info);
-     testinfo.set_SkipSemiColon();
-     testinfo.set_inConditional();
-  // printf ("Output the test in the for statement format testinfo.inConditional() = %s \n",testinfo.inConditional() ? "true" : "false");
-     unparseStatement(test_stmt, testinfo);
-
-     curprint ( string("; "));
-
-  // curprint ( string(" /* increment */ ";
-  // SgExpression *increment_expr = for_stmt->get_increment_expr();
-     SgExpression *increment_expr = for_stmt->get_increment();
-     ROSE_ASSERT(increment_expr != NULL);
-     if ( increment_expr != NULL )
-          unparseExpression(increment_expr, info);
-     curprint ( string(") "));
-
-  // Added support to output the header without the body to support the addition 
-  // of more context in the prefix used with the AST Rewrite Mechanism.
-  // if ( (tmp_stmt = for_stmt->get_loop_body()) )
-
-     SgStatement* loopBody = for_stmt->get_loop_body();
-     ROSE_ASSERT(loopBody != NULL);
-  // printf ("loopBody = %p         = %s \n",loopBody,loopBody->class_name().c_str());
-  // printf ("info.SkipBasicBlock() = %s \n",info.SkipBasicBlock() ? "true" : "false");
-
-  // if ( (tmp_stmt = for_stmt->get_loop_body()) && !info.SkipBasicBlock())
-     if ( (loopBody != NULL) && !info.SkipBasicBlock())
-        {
-       // printf ("Unparse the for loop body \n");
-       // curprint ( string("\n/* Unparse the for loop body */ \n";
-       // unparseStatement(tmp_stmt, info);
-
-          unp->cur.format(loopBody, info, FORMAT_BEFORE_NESTED_STATEMENT);
-          unparseStatement(loopBody, info);
-          unp->cur.format(loopBody, info, FORMAT_AFTER_NESTED_STATEMENT);
-       // curprint ( string("\n/* DONE: Unparse the for loop body */ \n";
-        }
-       else
-        {
-       // printf ("No for loop body to unparse! \n");
-       // curprint ( string("\n/* No for loop body to unparse! */ \n";
-          if (!info.SkipSemiColon())
-             {
-               curprint ( string(";"));
-             }
-        }
-   }
+    if (for_stmt->get_loop_body() != NULL) {
+        curprint(" ");
+        unparseStatement(for_stmt->get_loop_body(), info);
+    } else {
+        curprint(";");
+    }
+}
 
 
 void
