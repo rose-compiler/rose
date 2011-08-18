@@ -272,6 +272,7 @@ to build customized analyses using ROSE.}
 \input{buildCFG}
 \input{defuseAnalysis}
 \input{buildCallGraph}
+\input{buildVFA}
 \input{classHierarchyGraph}
 \input{dataBaseSupport}
 \input{customGraphs} 
