@@ -89,5 +89,6 @@ clean-local:
 	rm -f *.o rose_*.[cC] *.out
 	rm -rf test* _rose_unparsed_headers_
 
-distclean-local:
-	rm -rf test* _rose_unparsed_headers_
+#At some point in past I thought I had to add this to avoid a problem with dist-check, which complained about a not removed directory.
+#distclean-local:
+#	rm -rf test* _rose_unparsed_headers_
