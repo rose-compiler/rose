@@ -27,12 +27,18 @@ astTraversalTest_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
 
 processnew3Down4SgIncGraph2_SOURCES      = processnew3Down4SgIncGraph2.C
 processnew3Down4SgIncGraph2_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+processnew3Down4SgIncGraph2_LDFLAGS = -O3
 
 binaryPaths_SOURCES = binaryPaths.C
 binaryPaths_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+binaryPaths_LDFLAGS = -O3
 
 strictGraphTest_SOURCES = strictGraphTest.C
 strictGraphTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+strictGraphTest_LDFLAGS = -O3
+
+#smtlibParser_SOURCES = smtlibParser.C
+#smtlibParser_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
 
 
 # source files don't contain anything that would be merged
@@ -57,6 +63,9 @@ testRunExamplesBin: binaryPaths
 
 strictGraph: strictGraphTest
 	./strictGraphTest
+
+#smtParse: smtlibParser
+#	./smtlibParser $(srcdir)/test11.C
 
 check-local:
 	@$(MAKE) testTraversals
