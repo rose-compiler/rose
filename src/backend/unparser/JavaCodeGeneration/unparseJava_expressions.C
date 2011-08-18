@@ -53,8 +53,6 @@ Unparse_Java::unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_In
 
           case TYPEID_OP: { unparseTypeIdOp(expr, info); break; }
           case NOT_OP: { unparseNotOp(expr, info); break; }
-          case MINUSMINUS_OP: { unparseMinusMinusOp(expr, info); break; }
-          case PLUSPLUS_OP: { unparsePlusPlusOp(expr, info); break; }
           case BIT_COMPLEMENT_OP: { unparseBitCompOp(expr, info); break; }
           case EXPR_CONDITIONAL: { unparseExprCond(expr, info); break; }
           case CAST_OP:                 { unparseCastOp(expr, info); break; }
@@ -113,6 +111,10 @@ Unparse_Java::unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_In
          case V_SgRshiftOp:
          case V_SgSubtractOp:
              unparseBinaryOp( isSgBinaryOp(expr), info ); break;
+
+         case V_SgPlusPlusOp:
+         case V_SgMinusMinusOp:
+             unparseUnaryOp( isSgUnaryOp(expr), info ); break;
 
          case V_SgVarRefExp:             { unparseVarRef(expr, info); break; }
          case V_SgFunctionRefExp:        { unparseFuncRef(expr, info); break; }
@@ -663,8 +665,6 @@ Unparse_Java::unparseTypeIdOp(SgExpression* expr, SgUnparse_Info& info)
    }
 
 void Unparse_Java::unparseNotOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "!", info); }
-void Unparse_Java::unparseMinusMinusOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "--", info); }
-void Unparse_Java::unparsePlusPlusOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "++", info); }
 void Unparse_Java::unparseAbstractOp(SgExpression* expr, SgUnparse_Info& info) {}
 void Unparse_Java::unparseBitCompOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "~", info); }
 
@@ -1228,7 +1228,7 @@ Unparse_Java::unparseCompoundAssignOp(SgCompoundAssignOp* op,
 
 void
 Unparse_Java::unparseBinaryOp(SgBinaryOp* op,
-                                                SgUnparse_Info & info) {
+                              SgUnparse_Info & info) {
     unparseExpression(op->get_lhs_operand(), info);
     switch (op->variantT()) {
         case V_SgAddOp:                curprint(" + ");   break;
@@ -1258,4 +1258,11 @@ Unparse_Java::unparseBinaryOp(SgBinaryOp* op,
         }
     }
     unparseExpression(op->get_rhs_operand(), info);
+}
+
+void
+Unparse_Java::unparseUnaryOp(SgUnaryOp* op,
+                             SgUnparse_Info & info) {
+    curprint("UNARY: ");
+    curprint(op->class_name());
 }
