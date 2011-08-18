@@ -758,6 +758,7 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      }
 
      unparseDeclarationModifier(mfuncdecl_stmt->get_declarationModifier(), info);
+     unparseFunctionModifier(mfuncdecl_stmt->get_functionModifier(), info);
 
      //TODO remove when specialFxnModifier.isConstructor works
      bool constructor = mfuncdecl_stmt->get_specialFunctionModifier().isConstructor();
