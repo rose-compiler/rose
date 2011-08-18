@@ -633,10 +633,14 @@ class JavaParserSupport
 
           assert(node != null);
 
-          System.out.println("Inside of generateType(TypeReference) TypeReference node                            = " + node);
-          System.out.println("Inside of generateType(TypeReference) TypeReference node.implicitConversion         = " + node.implicitConversion);
-          System.out.println("Inside of generateType(TypeReference) TypeReference node.resolvedType               = " + node.resolvedType);
-          System.out.println("Inside of generateType(TypeReference) TypeReference node.resolvedType.isArrayType() = " + node.resolvedType.isArrayType());
+          if (verboseLevel > 0)
+             {
+               System.out.println("Inside of generateType(TypeReference) TypeReference node                            = " + node);
+               System.out.println("Inside of generateType(TypeReference) TypeReference node.implicitConversion         = " + node.implicitConversion);
+               System.out.println("Inside of generateType(TypeReference) TypeReference node.resolvedType               = " + node.resolvedType);
+               System.out.println("Inside of generateType(TypeReference) TypeReference node.resolvedType.isArrayType() = " + node.resolvedType.isArrayType());
+             }
+
           if (node.resolvedType.isArrayType() == true)
              {
             // TypeBinding baseType = ((ArrayBinding) node.resolvedType).leafComponentType;
@@ -655,7 +659,9 @@ class JavaParserSupport
              {
             // NOTE: It would be more elegant to not depend upon the debugName() function.
                String name = node.resolvedType.debugName();
-               System.out.println("Inside of generateType(TypeReference): NOT an array type so build SgIntType -- TypeReference node = " + name);
+
+               if (verboseLevel > 0)
+                    System.out.println("Inside of generateType(TypeReference): NOT an array type so build SgIntType -- TypeReference node = " + name);
 
                JavaParser.cactionGenerateType(name);
 

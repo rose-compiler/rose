@@ -43,8 +43,6 @@ int runECJ (int argc, char **argv);
 // #define OVERWRITE_LD_LIBRARY_PATH 1
 #define OVERWRITE_LD_LIBRARY_PATH 1
 
-
-#if 1
 // DQ (8/15/2011): Moved to openJavaParser_main.C to
 // separate the work on Java from the rest of ROSE and support the ROSE
 // configuration language only options.
@@ -77,7 +75,8 @@ getTopOfJavaScopeStack()
 
      return topOfStack;
    }
-#endif
+
+
 
 /* DQ (8/16/2007): This is what we want ROSE to call so that we can run the Java based OpenJavaParser from C++. */
 int openJavaParser_main(int argc, char **argv)

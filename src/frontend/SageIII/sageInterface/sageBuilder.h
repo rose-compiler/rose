@@ -812,6 +812,10 @@ SgBasicBlock * buildBasicBlock_nfi(const std::vector<SgStatement*>&);
 SgExprStatement* 
 buildAssignStatement(SgExpression* lhs,SgExpression* rhs);
 
+// DQ (8/16/2011): Generated a new version of this function to define consistant semantics.
+//! This version does not recursively reset the file info as a transformation.
+SgExprStatement* buildAssignStatement_ast_translate(SgExpression* lhs,SgExpression* rhs);
+
 //! Build a break statement
 SgBreakStmt* buildBreakStmt();
 SgBreakStmt* buildBreakStmt_nfi();
