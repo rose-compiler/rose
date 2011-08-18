@@ -1249,7 +1249,7 @@ Unparse_Java::unparseBinaryOp(SgBinaryOp* op,
         case V_SgBitOrOp:              curprint(" | ");   break;
         case V_SgBitXorOp:             curprint(" ^ ");   break;
         case V_SgDivideOp:             curprint(" / ");   break;
-        case V_SgDotExp:               curprint(" . ");   break;
+        case V_SgDotExp:               curprint(".");     break;
         case V_SgEqualityOp:           curprint(" == ");  break;
         case V_SgGreaterOrEqualOp:     curprint(" >= ");  break;
         case V_SgGreaterThanOp:        curprint(" > ");   break;
