@@ -168,6 +168,7 @@ Unparse_Java::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Info
             case V_SgBasicBlock:
             case V_SgWhileStmt:
             case V_SgForStatement:
+            case V_SgIfStmt:
                 printSemicolon = false;
                 break;
             default:
@@ -464,75 +465,30 @@ static size_t countElsesNeededToPreventDangling(SgStatement* s) {
   }
 }
 
-void Unparse_Java::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
-   {
+void Unparse_Java::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info) {
+    SgIfStmt* if_stmt = isSgIfStmt(stmt);
+    ROSE_ASSERT(stmt != NULL);
 
-  // printf ("Unparse if statement stmt = %p \n",stmt);
+    SgExprStatement* cond_stmt = isSgExprStatement(if_stmt->get_conditional());
+    ROSE_ASSERT(cond_stmt != NULL && "expected an SgExprStatement in SgIfStmt::p_conditional");
+    SgExpression* conditional = cond_stmt->get_expression();
 
-     SgIfStmt* if_stmt = isSgIfStmt(stmt);
-     assert (if_stmt != NULL);
+    curprint("if (");
+    unparseExpression(conditional, info);
+    curprint(")");
 
-     while (if_stmt != NULL)
-        {
-          SgStatement *tmp_stmt = NULL;
-          curprint ( string("if ("));
-          SgUnparse_Info testInfo(info);
-          testInfo.set_SkipSemiColon();
-          testInfo.set_inConditional();
-       // info.set_inConditional();
-          if ( (tmp_stmt = if_stmt->get_conditional()) )
-             {
-            // Unparse using base class function so we get any required comments and CPP directives.
-            // unparseStatement(tmp_stmt, testInfo);
-               UnparseLanguageIndependentConstructs::unparseStatement(tmp_stmt, testInfo);
-             }
-          testInfo.unset_inConditional();
-          curprint ( string(") "));
+    if (if_stmt->get_true_body() != NULL) {
+        curprint(" ");
+        unparseStatement(if_stmt->get_true_body(), info);
+    } else {
+        curprint(";");
+    }
 
-          if ( (tmp_stmt = if_stmt->get_true_body()) ) 
-             {
-            // printf ("Unparse the if true body \n");
-            // curprint ( string("\n/* Unparse the if true body */ \n") );
-               unp->cur.format(tmp_stmt, info, FORMAT_BEFORE_NESTED_STATEMENT);
-
-            // Unparse using base class function so we get any required comments and CPP directives.
-            // unparseStatement(tmp_stmt, info);
-               UnparseLanguageIndependentConstructs::unparseStatement(tmp_stmt, info);
-
-               unp->cur.format(tmp_stmt, info, FORMAT_AFTER_NESTED_STATEMENT);
-            // curprint ( string("\n/* DONE: Unparse the if true body */ \n") );
-             }
-
-          if ( (tmp_stmt = if_stmt->get_false_body()) )
-             {
-               size_t elsesNeededForInnerIfs = countElsesNeededToPreventDangling(if_stmt->get_true_body());
-               for (size_t i = 0; i < elsesNeededForInnerIfs; ++i) {
-                 curprint ( string(" else {}") ); // Ensure this else does not match an inner if statement
-               }
-               unp->cur.format(if_stmt, info, FORMAT_BEFORE_STMT);
-               curprint ( string("else "));
-               if_stmt = isSgIfStmt(tmp_stmt);
-               if (if_stmt == NULL) {
-                 unp->cur.format(tmp_stmt, info, FORMAT_BEFORE_NESTED_STATEMENT);
-
-              // curprint ( string("\n/* Unparse the if false body */ \n") );
-              // Unparse using base class function so we get any required comments and CPP directives.
-              // unparseStatement(tmp_stmt, info);
-                 UnparseLanguageIndependentConstructs::unparseStatement(tmp_stmt, info);
-              // curprint ( string("\n/* DONE: Unparse the if false body */ \n") );
-
-                 unp->cur.format(tmp_stmt, info, FORMAT_AFTER_NESTED_STATEMENT);
-               }
-             }
-            else
-             {
-               if_stmt = NULL;
-             }
-
-          if (if_stmt != NULL)
-               unparseAttachedPreprocessingInfo(if_stmt, info, PreprocessingInfo::before);
-        }
-   }
+    if (if_stmt->get_false_body() != NULL) {
+        curprint_indented("else ", info);
+        unparseStatement(if_stmt->get_false_body(), info);
+    }
+}
 
 void
 Unparse_Java::unparseInitializedName(SgInitializedName* init_name, SgUnparse_Info& info) {
