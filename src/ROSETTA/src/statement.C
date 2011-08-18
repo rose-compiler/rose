@@ -89,6 +89,12 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (GotoStatement,             "GotoStatement",             "GOTO_STMT" );
      NEW_TERMINAL_MACRO (SpawnStmt,                 "SpawnStmt",                 "SPAWN_STMT" );
 
+  // Added Java specific "throw" statement since it is a proper part of the Java Grammar (not true for C++ where it is only an expression).
+     NEW_TERMINAL_MACRO (JavaThrowStatement,        "JavaThrowStatement",        "JAVE_THROW_STMT" );
+     NEW_TERMINAL_MACRO (JavaForEachStatement,      "JavaForEachStatement",      "JAVA_FOREACH_STMT");
+     NEW_TERMINAL_MACRO (JavaSynchronizedStatement, "JavaSynchronizedStatement", "JAVA_SYNC_STMT");
+
+
   // DQ (12/13/2005): Added support for empty statement (and empty expression).
      NEW_TERMINAL_MACRO (NullStatement,             "NullStatement",             "NULL_STMT" );
 
@@ -340,7 +346,7 @@ Grammar::setUpStatements ()
           Global                       | BasicBlock           | IfStmt             | ForStatement    | FunctionDefinition |
           ClassDefinition              | WhileStmt            | DoWhileStmt        | SwitchStatement | CatchOptionStmt    |
           NamespaceDefinitionStatement | BlockDataStatement   | AssociateStatement | FortranDo       | ForAllStatement    |
-          UpcForAllStatement           | CAFWithTeamStatement
+          UpcForAllStatement           | CAFWithTeamStatement | JavaForEachStatement
        /* | TemplateInstantiationDefn */,
           "ScopeStatement","SCOPE_STMT", false);
 
@@ -438,19 +444,20 @@ Grammar::setUpStatements ()
 
   // DQ (2/2/2006): Support for Fortran IR nodes (contributed by Rice)
      NEW_NONTERMINAL_MACRO (Statement,
-             ScopeStatement       | FunctionTypeTable      | DeclarationStatement            | ExprStatement         |
-             LabelStatement       | CaseOptionStmt         | TryStmt                         | DefaultOptionStmt     |
-             BreakStmt            | ContinueStmt           | ReturnStmt                      | GotoStatement         |
-             SpawnStmt            | NullStatement          | VariantStatement                | ForInitStatement      | 
-             CatchStatementSeq    | StopOrPauseStatement   | IOStatement                     | 
-             WhereStatement       | ElseWhereStatement     | NullifyStatement                | ArithmeticIfStatement |
-             AssignStatement      | ComputedGotoStatement  | AssignedGotoStatement           |
-          /* FortranDo            | */ AllocateStatement   | DeallocateStatement             | UpcNotifyStatement    | 
-             UpcWaitStatement     | UpcBarrierStatement    | UpcFenceStatement               | 
-             OmpBarrierStatement  | OmpTaskwaitStatement   |  OmpFlushStatement              | OmpBodyStatement      |
-             SequenceStatement    | WithStatement          | PythonPrintStmt                 | PassStatement         |
-             AssertStmt           | ExecStatement          | PythonGlobalStmt,
-                            "Statement","StatementTag", false);
+             ScopeStatement            | FunctionTypeTable      | DeclarationStatement            | ExprStatement         |
+             LabelStatement            | CaseOptionStmt         | TryStmt                         | DefaultOptionStmt     |
+             BreakStmt                 | ContinueStmt           | ReturnStmt                      | GotoStatement         |
+             SpawnStmt                 | NullStatement          | VariantStatement                | ForInitStatement      | 
+             CatchStatementSeq         | StopOrPauseStatement   | IOStatement                     | 
+             WhereStatement            | ElseWhereStatement     | NullifyStatement                | ArithmeticIfStatement |
+             AssignStatement           | ComputedGotoStatement  | AssignedGotoStatement           |
+          /* FortranDo                 | */ AllocateStatement   | DeallocateStatement             | UpcNotifyStatement    | 
+             UpcWaitStatement          | UpcBarrierStatement    | UpcFenceStatement               | 
+             OmpBarrierStatement       | OmpTaskwaitStatement   |  OmpFlushStatement              | OmpBodyStatement      |
+             SequenceStatement         | WithStatement          | PythonPrintStmt                 | PassStatement         |
+             AssertStmt                | ExecStatement          | PythonGlobalStmt                | JavaThrowStatement    |
+             JavaSynchronizedStatement,
+             "Statement","StatementTag", false);
 
   // DQ (11/24/2007): These have been moved to be declarations, so they can appear where only declaration statements are allowed
   // InterfaceStatement   | ModuleStatement        | UseStatement                    | ContainsStatement     |
@@ -1951,6 +1958,27 @@ Grammar::setUpStatements ()
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #endif
 
+  // DQ (8/17/2011):  Added Java "throw" statement support (constructor required SgExpression pointer).
+     JavaThrowStatement.setFunctionPrototype  ( "HEADER_JAVA_THROW_STATEMENT", "../Grammar/Statement.code" );
+     JavaThrowStatement.setDataPrototype ( "SgThrowOp*", "throwOp", "= NULL",
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/17/2011):  Added Java "foreach" statement support (constructor required SgExpression pointer).
+     JavaForEachStatement.setFunctionPrototype  ( "HEADER_JAVA_FOREACH_STATEMENT", "../Grammar/Statement.code" );
+     JavaForEachStatement.setDataPrototype ( "SgInitializedName*", "element", "= NULL",
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     JavaForEachStatement.setDataPrototype ( "SgExpression*", "collection", "= NULL",
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     JavaForEachStatement.setDataPrototype ( "SgStatement*", "loop_body",   "= NULL",
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/17/2011):  Added Java "throw" statement support (constructor required SgExpression pointer).
+     JavaSynchronizedStatement.setFunctionPrototype  ( "HEADER_JAVA_SYNCHRONIZED_STATEMENT", "../Grammar/Statement.code" );
+     JavaSynchronizedStatement.setDataPrototype ( "SgExpression*", "expression", "= NULL",
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     JavaSynchronizedStatement.setDataPrototype ( "SgStatement*", "body",   "= NULL",
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
   // DQ (12/13/2005): Added support for empty statement (and empty expression).
      NullStatement.setFunctionPrototype  ( "HEADER_NULL_STATEMENT", "../Grammar/Statement.code" );
 
@@ -3028,6 +3056,11 @@ Grammar::setUpStatements ()
      GotoStatement.setFunctionSource        ( "SOURCE_GOTO_STATEMENT", "../Grammar/Statement.code" );
      AsmStmt.setFunctionSource              ( "SOURCE_ASM_STATEMENT", "../Grammar/Statement.code" );
      SpawnStmt.setFunctionSource            ( "SOURCE_SPAWN_STATEMENT", "../Grammar/Statement.code" );
+
+  // DQ (8/17/2011):  Added Java "throw" statement support.
+     JavaThrowStatement.setFunctionSource        ( "SOURCE_JAVA_THROW_STATEMENT",        "../Grammar/Statement.code" );
+     JavaForEachStatement.setFunctionSource      ( "SOURCE_JAVA_FOREACH_STATEMENT",      "../Grammar/Statement.code" );
+     JavaSynchronizedStatement.setFunctionSource ( "SOURCE_JAVA_SYNCHRONIZED_STATEMENT", "../Grammar/Statement.code" );
 
   // DQ (12/13/2005): Added support for empty statement (and empty expression).
      NullStatement.setFunctionSource        ( "SOURCE_NULL_STATEMENT", "../Grammar/Statement.code" );

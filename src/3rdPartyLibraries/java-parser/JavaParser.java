@@ -72,6 +72,7 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionStringLiteral(String filename, JavaToken jToken);
 
      public native void cactionAllocationExpression(JavaToken jToken);
+     public native void cactionAllocationExpressionEnd(String nameOfType, JavaToken jToken);
      public native void cactionANDANDExpression(JavaToken jToken);
      public native void cactionANDANDExpressionEnd(JavaToken jToken);
      public native void cactionAnnotationMethodDeclaration(JavaToken jToken);

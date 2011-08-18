@@ -420,7 +420,7 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 1)
                System.out.println("Calling buildImplicitClassSupport for java.lang.System");
 
-       // We now read in classes on demand as they are references, if they are references.  All classes are read as 
+       // We now read in classes on demand as they are references, if there are references.  All classes are read as 
        // required to resolved all types in the program and the implicitly read classes.  Interestingly, there
        // are nearly 3000 classes in the 135 packages in the J2SE 1.4.2 standard class library (over 3000 classes 
        // in 165 packages in J2SE 5.0). Commercial class libraries that you might use add many more packages. 
@@ -2425,7 +2425,34 @@ class ecjASTVisitor extends ASTVisitor
   // DQ (3/25/2011): I think we do need them.
      public void endVisit(AllocationExpression node, BlockScope scope)
         {
-        // do nothing by default
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Inside of endVisit (AllocationExpression,BlockScope)");
+
+       // String nameString = new String(node.type);
+          String nameString = node.type.toString();
+          if (java_parser.verboseLevel > 0)
+             {
+               System.out.println(" name      = " + nameString);
+               System.out.println(" type      = " + node.type);
+             }
+
+          if (node.typeArguments != null)
+             {
+               for (int i = 0, typeArgumentsLength = node.typeArguments.length; i < typeArgumentsLength; i++)
+                  {
+
+                  }
+             }
+
+       // Generate the associated type and Push it onto the stack
+          JavaParserSupport.generateType(node.type);
+
+       // Call the Java side of the JNI function.
+          java_parser.cactionAllocationExpressionEnd(nameString,this.createJavaToken(node));
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (AllocationExpression,BlockScope)");
+
         }
 
      public void endVisit(AND_AND_Expression  node, BlockScope scope)
