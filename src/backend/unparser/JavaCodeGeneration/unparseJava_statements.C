@@ -157,7 +157,7 @@ Unparse_Java::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Info
              }
         }
 
-        bool printSemicolon = true;
+        bool printSemicolon;
         switch (stmt->variantT()) {
             case V_SgClassDeclaration:
             case V_SgClassDefinition:
@@ -166,13 +166,19 @@ Unparse_Java::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Info
             case V_SgFunctionParameterList:
             case V_SgBasicBlock:
                 printSemicolon = false;
+                break;
+            default:
+                printSemicolon = true;
         }
         if (printSemicolon) curprint(";");
 
-        bool printNewline = true;
+        bool printNewline;
         switch (stmt->variantT()) {
             case V_SgFunctionParameterList:
                 printNewline = false;
+                break;
+            default:
+                printNewline = true;
         }
         if (printNewline) unp->cur.insert_newline();
    }
