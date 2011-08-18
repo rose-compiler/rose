@@ -165,6 +165,7 @@ Unparse_Java::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Info
             case V_SgFunctionDefinition:
             case V_SgFunctionParameterList:
             case V_SgBasicBlock:
+            case V_SgWhileStmt:
                 printSemicolon = false;
                 break;
             default:
@@ -874,19 +875,21 @@ Unparse_Java::unparseWhileStmt(SgStatement* stmt, SgUnparse_Info& info) {
   SgWhileStmt* while_stmt = isSgWhileStmt(stmt);
   ROSE_ASSERT(while_stmt != NULL);
 
-  curprint ( string("while" ) + "(");
-  info.set_inConditional();
-  
-  unparseStatement(while_stmt->get_condition(), info);
-  info.unset_inConditional();
-  curprint ( string(")"));
-  if(while_stmt->get_body()) {
-    unp->cur.format(while_stmt->get_body(), info, FORMAT_BEFORE_NESTED_STATEMENT);
-    unparseStatement(while_stmt->get_body(), info);
-    unp->cur.format(while_stmt->get_body(), info, FORMAT_AFTER_NESTED_STATEMENT);
-  }
-  else if (!info.SkipSemiColon()) { curprint ( string(";")); }
+  SgExprStatement* cond_stmt = isSgExprStatement(while_stmt->get_condition());
+  ROSE_ASSERT(cond_stmt != NULL && "Expecting an SgExprStatement in member SgWhileStmt::p_condition.");
+  SgExpression* cond = cond_stmt->get_expression();
+  ROSE_ASSERT(cond != NULL);
 
+  curprint("while (");
+  unparseExpression(cond, info);
+  curprint(")");
+
+  if(while_stmt->get_body()) {
+      curprint(" ");
+      unparseStatement(while_stmt->get_body(), info);
+  } else {
+      curprint(";");
+  }
 }
 
 void
