@@ -114,6 +114,9 @@ Unparse_Java::unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_In
 
          case V_SgPlusPlusOp:
          case V_SgMinusMinusOp:
+         case V_SgUnaryAddOp:
+         case V_SgMinusOp:
+         case V_SgNotOp:
              unparseUnaryOp( isSgUnaryOp(expr), info ); break;
 
          case V_SgVarRefExp:             { unparseVarRef(expr, info); break; }
@@ -1263,6 +1266,20 @@ Unparse_Java::unparseBinaryOp(SgBinaryOp* op,
 void
 Unparse_Java::unparseUnaryOp(SgUnaryOp* op,
                              SgUnparse_Info & info) {
-    curprint("UNARY: ");
-    curprint(op->class_name());
+    if (op->get_mode() == SgUnaryOp::postfix)
+        unparseExpression(op->get_operand(), info);
+
+    switch (op->variantT()) {
+        case V_SgPlusPlusOp:     curprint("++");   break;
+        case V_SgMinusMinusOp:   curprint("--");   break;
+        case V_SgUnaryAddOp:     curprint("+");    break;
+        case V_SgMinusOp:        curprint("-");    break;
+        case V_SgNotOp:          curprint("!");    break;
+        default:
+            cout << "error: unparseUnaryOp(" << op->class_name() << "*,info) is unimplemented." << endl;
+            break;
+    }
+
+    if (op->get_mode() == SgUnaryOp::prefix)
+        unparseExpression(op->get_operand(), info);
 }
