@@ -621,9 +621,7 @@ endif
 
 # DXN (as of 08/10/2011):
 F90_TESTCODES_REQUIRED_TO_PASS += \
-     test2007_46.f90 \
      test2007_107.f90 \
-     test2007_108.f90 \
      test2007_131.f90 \
      test2007_144.f90 \
      test2007_165.f90 \
@@ -731,8 +729,6 @@ F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS += \
 F03_TESTCODES_REQUIRED_TO_PASS += \
      test2007_172.f03 \
      test2007_173.f03 \
-     test2010_75.f03 \
-     test2010_76.f03 \
      test2010_77.f03 \
      test2010_106.f03 \
      test2010_171.f03 \
@@ -745,6 +741,8 @@ F03_TESTCODES_REQUIRED_TO_PASS += \
 
 ## Cray pointer Tests
 F90_TESTCODES_CURRENTLY_FAILING = \
+     test2007_108.f90 \
+     test2007_46.f90 \
      test2007_81.f90 \
      test2007_82.f90 \
      test2007_83.f90 \
@@ -803,6 +801,7 @@ F90_TESTCODES_CURRENTLY_FAILING += \
      triangle.f90 \
      X-comment-in-wrong-place.f90 \
      X-enddo-plus-label.f90  \
+     X-multi-linebreaks.f90 \
      X-print-no-output-item-list.f90
 
 # "X-*" tests are Rice-reported bugs not yet fixed.
@@ -835,6 +834,8 @@ F03_TESTCODES_CURRENTLY_FAILING = \
      test2007_180.f03 \
      test2010_27.f03 \
      test2010_74.f03 \
+     test2010_75.f03 \
+     test2010_76.f03 \
      test2010_104.f03 \
      test2010_126.f03 \
      test2011_26.f03 
