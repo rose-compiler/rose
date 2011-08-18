@@ -1192,13 +1192,21 @@ Unparse_Java::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Info & 
    }
 
 void
-Unparse_Java::unparseJavaInstanceOfOp(SgExpression* expr, SgUnparse_Info & info)
-   {
-       SgJavaInstanceOfOp* inst_op = isSgJavaInstanceOfOp(expr);
-       ROSE_ASSERT(inst_op != NULL);
+Unparse_Java::unparseJavaInstanceOfOp(SgExpression* expr, SgUnparse_Info & info) {
+    SgJavaInstanceOfOp* inst_op = isSgJavaInstanceOfOp(expr);
+    ROSE_ASSERT(inst_op != NULL);
 
-       curprint("INSTANCEOF");
-   }
+    unparseExpression(inst_op->get_operand_expr(), info);
+    curprint(" instanceof ");
+
+    //TODO p_operand_type should be defined. Until it always is, complain.
+    if (inst_op->get_operand_type() != NULL) {
+        unparseType(inst_op->get_operand_type(), info);
+    } else {
+        cout << "error: SgJavaInstanceOfOp::p_operand_type is NULL" << endl;
+        curprint("NULL_TYPE_IN_AST");
+    }
+}
 
 void
 Unparse_Java::unparsePseudoDtorRef(SgExpression* expr, SgUnparse_Info & info)
