@@ -571,6 +571,9 @@ SgSizeOfOp
 SgJavaInstanceOfOp
 SgSourceFile
 SgSpawnStmt
+SgJavaThrowStatement
+SgJavaForEachStatement
+SgJavaSynchronizedStatement
 SgSpecialFunctionModifier
 SgStatement
 SgStmtDeclarationStatement
