@@ -897,22 +897,16 @@ Unparse_Java::unparseDoWhileStmt(SgStatement* stmt, SgUnparse_Info& info) {
   SgDoWhileStmt* dowhile_stmt = isSgDoWhileStmt(stmt);
   ROSE_ASSERT(dowhile_stmt != NULL);
 
-  curprint ( string("do "));
-  unp->cur.format(dowhile_stmt->get_body(), info, FORMAT_BEFORE_NESTED_STATEMENT);
+  SgExprStatement* cond_stmt = isSgExprStatement(dowhile_stmt->get_condition());
+  ROSE_ASSERT(cond_stmt != NULL && "Expecting an SgExprStatement in member SgDoWhileStmt::p_condition.");
+  SgExpression* cond = cond_stmt->get_expression();
+  ROSE_ASSERT(cond != NULL);
+
+  curprint("do ");
   unparseStatement(dowhile_stmt->get_body(), info);
-  unp->cur.format(dowhile_stmt->get_body(), info, FORMAT_AFTER_NESTED_STATEMENT);
-  curprint ( string("while " ) + "(");
-  SgUnparse_Info ninfo(info);
-  ninfo.set_inConditional();
-
-  //we need to keep the properties of the prevnode (The next prevnode will set the
-  //line back to where "do" was printed) 
-// SgLocatedNode* tempnode = prevnode;
-
-  unparseStatement(dowhile_stmt->get_condition(), ninfo);
-  ninfo.unset_inConditional();
-  curprint ( string(")")); 
-  if (!info.SkipSemiColon()) { curprint ( string(";")); }
+  curprint_indented("while (", info);
+  unparseExpression(cond, info);
+  curprint(")");
 }
 
 void
