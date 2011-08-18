@@ -4888,6 +4888,7 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
        // AS (02/20/08):  When used with -M or -MM, -MF specifies a file to write
        // the dependencies to. Need to tell ROSE to ignore that output paramater
           argument == "-MF" ||
+          argument == "-MT" || argument == "-MQ" ||
           argument == "-outputdir" ||  // FMZ (12/22/1009) added for caf compiler
           argument == "-rose:disassembler_search" ||
           argument == "-rose:partitioner_search" ||
