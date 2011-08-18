@@ -493,6 +493,7 @@ void Unparse_Java::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info) {
 void
 Unparse_Java::unparseInitializedName(SgInitializedName* init_name, SgUnparse_Info& info) {
     unparseType(init_name->get_type(), info);
+    curprint(" ");
     unparseName(init_name->get_name(), info);
 
     if (init_name->get_initializer() != NULL) {
@@ -666,6 +667,7 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      // unparse type, unless this a constructor
      if (! constructor) {
          unparseType(mfuncdecl_stmt->get_type()->get_return_type(), info);
+         curprint(" ");
      }
 
      unparseName(mfuncdecl_stmt->get_name(), info);
