@@ -37,6 +37,9 @@ void VirtualFunctionAnalysis::run(){
  }
 
 void VirtualFunctionAnalysis::resolveFunctionCall(SgExpression *call_exp, std::vector<SgFunctionDeclaration*> &functions) {
+     if(isExecuted == false)
+         run();
+
     ROSE_ASSERT(call_exp != NULL);
     ROSE_ASSERT(resolver.count(call_exp) != 0);
     functions.clear();
@@ -92,4 +95,10 @@ void VirtualFunctionAnalysis::pruneCallGraph(CallGraphBuilder& builder) {
           
         }
 
+}
+
+void VirtualFunctionAnalysis::reset() {
+     isExecuted = false;
+     resolver.clear();
+             
 }

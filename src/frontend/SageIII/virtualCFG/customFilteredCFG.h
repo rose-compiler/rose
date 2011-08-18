@@ -12,7 +12,7 @@
 
 namespace StaticCFG 
 {
-
+//! A CFG implementation with Custom filters
 template <typename _Filter>
 class CustomFilteredCFG : public CFG {
     
@@ -25,6 +25,7 @@ public:
         
         
 protected:        
+        //! Virtual function Overloaded to print the Custom Filtered CFG Edges
         virtual void printEdge(std::ostream & o, SgDirectedGraphEdge* edge, bool isInEdge) {
         
                 AstAttribute* attr = edge->getAttribute("info");
