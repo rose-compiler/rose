@@ -424,24 +424,43 @@ public:
 public:
     
     /** Wait for a futex.  Verifies that the aligned memory at @p va contains the value @p oldval and sleeps, waiting
-     * sys_futex_wake on this address.  Returns zero on success; negative error number on failure.  See manpage futex(2) for
-     * details about the return value, although the return values here are negative error numbers rather than -1 with errno
-     * set.
+     *  sys_futex_wake on this address.  Returns zero on success; negative error number on failure.  See manpage futex(2) for
+     *  details about the return value, although the return values here are negative error numbers rather than -1 with errno
+     *  set.
      *
-     * The @p bitset value is a bit vector added to the wait queue.  When waking threads that are blocked, we wake only those
-     * threads where the intersection of the wait and wake bitsets is non-empty.
+     *  The @p bitset value is a bit vector added to the wait queue.  When waking threads that are blocked, we wake only those
+     *  threads where the intersection of the wait and wake bitsets is non-empty.
      *
-     * Thread safety:  This method is thread safe. */
+     *  Thread safety:  This method is thread safe. */
     int futex_wait(rose_addr_t va, uint32_t oldval, uint32_t bitset=0xffffffff);
 
     /** Wakes blocked processes.  Wakes at most @p nprocs processes waiting for the specified address.  Returns the number of
-     * processes woken up; negative error number on failure.
+     *  processes woken up; negative error number on failure.
      *
-     * The @p bitset value is a bit vector used when waking blocked threads.  Only threads where the intersection of the wait
-     * bitset with this wake bitset is non-empty are awoken.
+     *  The @p bitset value is a bit vector used when waking blocked threads.  Only threads where the intersection of the wait
+     *  bitset with this wake bitset is non-empty are awoken.
      *
-     * Thread safety:  This method is thread safe. */
+     *  Thread safety:  This method is thread safe. */
     int futex_wake(rose_addr_t va, int nprocs, uint32_t bitset=0xffffffff);
+
+private:
+    /** Obtain a key for a futex.  Futex queues are based on real addresses, not process virtual addresses.  In other words,
+     *  the same futex can have two different addresses in two different processes.  In fact, it could even have two or more
+     *  addresses in a single processes.  We can't figure out real addresses, so we map the specimen's futex address into the
+     *  corresponding simulator address.  Then, in order to handle the case where the simulator's address is in shared memory,
+     *  we look up the address in /proc/self/maps, and if we find it belongs to a file, we generate a hash based on the file's
+     *  device and inode numbers and the offset of the futex within the file.
+     *
+     *  Upon successful return, val_ptr will point to the address in simulator memory where the futex value is stored.  This
+     *  means that the specimen futex is required to occupy a single region of memory--it cannot span two different mapped
+     *  regions.
+     *
+     *  Returns zero on failure, non-zero on success.
+     *
+     *  Thread safety:  This method is not thread safe. We are assuming that the calling function has already surrounded this
+     *  call with a mutex that protects this function from being entered concurrently by any other thread of the calling
+     *  process. */
+    rose_addr_t futex_key(rose_addr_t va, uint32_t **val_ptr);
     
 
     /**************************************************************************************************************************

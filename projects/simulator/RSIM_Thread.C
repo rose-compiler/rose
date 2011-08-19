@@ -1103,6 +1103,91 @@ RSIM_Thread::emulate_syscall()
     callbacks.call_syscall_callbacks(RSIM_Callbacks::AFTER, this, callno, cb_status);
 }
 
+/* Not thread safe; obtain a process-wide lock first */
+rose_addr_t
+RSIM_Thread::futex_key(rose_addr_t va, uint32_t **val_ptr)
+{
+    RTS_Message *trace = tracing(TRACE_FUTEX);
+
+    /* Futexes must be word aligned */
+    if (va & 3)
+        return 0;
+
+    /* Find the simulator address. */
+    *val_ptr = (uint32_t*)process->my_addr(va, 4);
+    rose_addr_t addr = (rose_addr_t)*val_ptr;
+    trace->mesg("futex: specimen va 0x%08"PRIx64" is at simulator address 0x%08"PRIx64, va, addr);
+
+    /* Does the simulator address fall inside a file? */
+    FILE *f = fopen("/proc/self/maps", "r");
+    assert(f!=NULL);
+    char *line = NULL;
+    size_t lsize = 0;
+    while (getline(&line, &lsize, f)>0) {
+        char *s=line, *rest;
+
+        rose_addr_t lo_addr = strtoull(s, &rest, 16);
+        assert(rest && *rest=='-');
+        s = rest+1;
+        
+        rose_addr_t hi_addr = strtoull(s, &rest, 16);
+        assert(rest && *rest==' ');
+        s = rest+1;
+
+        bool readable=false, writable=false, executable=false, shared=true;
+        if (*s++ == 'r')
+            readable = true;
+        if (*s++ == 'w')
+            writable = true;
+        if (*s++ == 'x')
+            executable = true;
+        if (*s++ == 'p')
+            shared = false;
+        assert(' '==*s);
+        s++;
+
+        rose_addr_t map_offset = strtoull(s, &rest, 16);
+        assert(rest && *rest==' ');
+        s = rest+1;
+
+        unsigned devno = strtoul(s, &rest, 16);
+        assert(rest && *rest==':');
+        s = rest+1;
+        devno += (devno<<16) + strtoul(s, &rest, 16);
+        assert(rest && *rest==' ');
+        s = rest+1;
+
+        unsigned __attribute__((unused)) filesz = strtoull(s, &rest, 16);
+        assert(rest && *rest==' ');
+        s = rest+1;
+        
+        while (' '==*s) s++;
+        assert(*s);
+        char *filename = s;
+        s[strlen(s)-1] = '\0'; // chomp linefeed
+
+        if (devno!=0 && addr>=lo_addr && addr+4<=hi_addr) {
+            struct stat sb;
+            if (stat(filename, &sb)<0) {
+                trace->mesg("futex: cannot stat file \"%s\"", filename);
+                break;
+            }
+
+            rose_addr_t addr_in_file = (addr - lo_addr) + map_offset;
+            trace->mesg("futex: simulator address 0x%08"PRIx64" is at %s+0x%08"PRIx64, addr, filename, addr_in_file);
+            addr = - ((map_offset<<16) + addr_in_file);
+            addr ^= sb.st_ino;
+            addr &= 0xffffffff;
+            addr |= 1; // so as not to conflict with simulator addresses, which are most likely word aligned.
+            assert(0!=addr);
+            trace->mesg("futex: using generated address 0x%08"PRIx64, addr);
+            break;
+        }
+    }
+    fclose(f);
+    return addr;
+}
+
 int
 RSIM_Thread::futex_wait(rose_addr_t va, uint32_t oldval, uint32_t bitset)
 {
@@ -1115,24 +1200,19 @@ RSIM_Thread::futex_wait(rose_addr_t va, uint32_t oldval, uint32_t bitset)
     int status = sem_wait(process->get_simulator()->get_semaphore());
     assert(0==status);
 
-    /* Futex queues are based on real addresses, not process virtual addresses.  In other words, the same futex can have two
-     * different addresses in two different processes.  The closest we can come to that is to use the simulator's address for
-     * the specimen's futex.  This will at least work in cases where the two processes have a parent/child relationship via
-     * fork and the futex is in shared memory -- it won't work when each process individually mmaps a file to contain the
-     * futex, since each simulator will likely get different addresses for the file mapping. */
-    uint32_t *futex = (uint32_t*)process->my_addr(va, 4);
-    trace->mesg("futex wait: specimen futex 0x%08"PRIx64" is at simulator address 0x%08"PRIx64, va, (rose_addr_t)futex);
-    if (!futex) {
+    uint32_t *futex_ptr = NULL;
+    rose_addr_t key = futex_key(va, &futex_ptr);
+    if (!key || !futex_ptr) {
         retval = -EFAULT;
-    } else if (oldval != *futex) {
-        trace->mesg("futex wait: futex value %"PRIu32" but need %"PRIu32, *futex, oldval);
+    } else if (oldval != *futex_ptr) {
+        trace->mesg("futex wait: futex value %"PRIu32" but need %"PRIu32, *futex_ptr, oldval);
         retval = -EWOULDBLOCK;
     }
 
     /* Place this process on the futex waiting queue. */
     int futex_number = -1;
     if (0==retval) {
-        futex_number = process->get_futexes()->insert((rose_addr_t)futex, bitset, RSIM_FutexTable::LOCKED);
+        futex_number = process->get_futexes()->insert(key, bitset, RSIM_FutexTable::LOCKED);
         if (futex_number<0)
             retval = futex_number;
     }
@@ -1149,7 +1229,7 @@ RSIM_Thread::futex_wait(rose_addr_t va, uint32_t oldval, uint32_t bitset)
         trace->mesg("futex wait: resumed");
 
         /* Remove the semaphore from the table. */
-        status = process->get_futexes()->erase((rose_addr_t)futex, futex_number, RSIM_FutexTable::UNLOCKED);
+        status = process->get_futexes()->erase(key, futex_number, RSIM_FutexTable::UNLOCKED);
         assert(0==status);
     }
 
@@ -1167,15 +1247,14 @@ RSIM_Thread::futex_wake(rose_addr_t va, int nprocs, uint32_t bitset)
     int status = sem_wait(process->get_simulator()->get_semaphore());
     assert(0==status);
 
-    /* Use simulators address as the key for the wait queue. See futex_wait() for details. */
-    uint32_t *futex = (uint32_t*)process->my_addr(va, 4);
-    trace->mesg("futex wake: specimen futex 0x%08"PRIx64" is at simulator address 0x%08"PRIx64, va, (rose_addr_t)futex);
-    if (!futex) {
+    uint32_t *futex_ptr = NULL;
+    rose_addr_t key = futex_key(va, &futex_ptr);
+    if (!key || !futex_ptr) {
         retval = -EFAULT;
     }
     
     /* Wake processes that are waiting on this semaphore */
-    retval = process->get_futexes()->signal((rose_addr_t)futex, bitset, nprocs, RSIM_FutexTable::LOCKED);
+    retval = process->get_futexes()->signal(key, bitset, nprocs, RSIM_FutexTable::LOCKED);
     if (retval<0) {
         trace->mesg("futex wake: failed with error %d", retval);
     } else {
