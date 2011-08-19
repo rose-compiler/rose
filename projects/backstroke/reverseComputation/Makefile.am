@@ -8,9 +8,9 @@ INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke
 noinst_LTLIBRARIES =  libBackstrokeReverser.la
 
 libBackstrokeReverser_la_DEPENDENCIES = 
-libBackstrokeReverser_la_SOURCES = eventReverser.C expAndStmtProcessor.C facilityBuilder.C stateSaver.C 
+libBackstrokeReverser_la_SOURCES = reverser.C expAndStmtProcessor.C facilityBuilder.C stateSaver.C 
 libBackstrokeReverser_la_includedir = $(includedir)/backstroke
-libBackstrokeReverser_la_include_HEADERS = eventReverser.h facilityBuilder.h stateSaver.h
+libBackstrokeReverser_la_include_HEADERS = reverser.h facilityBuilder.h stateSaver.h
 
 
 # Build the reverse code generator
