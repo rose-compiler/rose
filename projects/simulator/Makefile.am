@@ -80,10 +80,10 @@ x86robb_CPPFLAGS = $(ROSE_INCLUDES)
 x86robb_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 # Dump contents of an RSIM_FutexTable
-noinst_PROGRAMS += x86show_futex_table
-x86show_futex_table_SOURCES = x86show_futex_table.C
-x86show_futex_table_CPPFLAGS = $(ROSE_INCLUDES)
-x86show_futex_table_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+noinst_PROGRAMS += x86futex
+x86futex_SOURCES = x86futex.C
+x86futex_CPPFLAGS = $(ROSE_INCLUDES)
+x86futex_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 
 ###############################################################################################################################
