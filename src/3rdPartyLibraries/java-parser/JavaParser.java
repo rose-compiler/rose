@@ -72,6 +72,7 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionStringLiteral(String filename, JavaToken jToken);
 
      public native void cactionAllocationExpression(JavaToken jToken);
+     public native void cactionAllocationExpressionEnd(String nameOfType, JavaToken jToken);
      public native void cactionANDANDExpression(JavaToken jToken);
      public native void cactionANDANDExpressionEnd(JavaToken jToken);
      public native void cactionAnnotationMethodDeclaration(JavaToken jToken);
@@ -170,6 +171,7 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionParameterizedQualifiedTypeReference(JavaToken jToken);
      public native void cactionParameterizedQualifiedTypeReferenceClassScope(JavaToken jToken);
      public native void cactionParameterizedSingleTypeReference(JavaToken jToken);
+     public native void cactionParameterizedSingleTypeReferenceEnd(int java_numberOfTypeArguments, JavaToken jToken);
      public native void cactionParameterizedSingleTypeReferenceClassScope(JavaToken jToken);
      public native void cactionPostfixExpression(JavaToken jToken);
      public native void cactionPostfixExpressionEnd(int java_operator_kind, JavaToken jToken);
