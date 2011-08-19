@@ -991,7 +991,7 @@ Unparse_Java::unparseJavaInstanceOfOp(SgExpression* expr, SgUnparse_Info & info)
     if (inst_op->get_operand_type() != NULL) {
         unparseType(inst_op->get_operand_type(), info);
     } else {
-        cout << "error: SgJavaInstanceOfOp::p_operand_type is NULL" << endl;
+        cout << "unparser: error. SgJavaInstanceOfOp::p_operand_type is NULL" << endl;
         curprint("NULL_TYPE_IN_AST");
     }
 }
