@@ -19,7 +19,6 @@ JavaTraversal.C: JavaTraversal.h
 
 # Make this dependent on files that will be unpacked (untared) 
 # from the src/3rdPartyLibraries/java-parser/ecjROSE.jar file.
-# JavaParserActionROSE.C: JavaTraversal.h $(ECJ_DIR)/JavaParser.h
 JavaParserActionROSE.C: JavaTraversal.h
 
 # This rule will build both: $(ECJ_DIR)/JavaTraversal.h and $(ECJ_DIR)/JavaParser.h
@@ -28,9 +27,6 @@ JavaTraversal.h:
 	cd ${top_builddir}/src/3rdPartyLibraries/java-parser; $(MAKE) extract_rose_required_ecj_source_files
 
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
- # libroseJava_la_SOURCES = JavaParserActionROSE.C java_support.C openJavaParser_main.C ecj.C
- # libroseJava_la_SOURCES = java_support.C openJavaParser_main.C ecj.C
- # libroseJava_la_SOURCES = java_support.C openJavaParser_main.C ecj.C jni_utils.C 
    libroseJava_la_SOURCES = openJavaParser_main.C ecj.C
 
 if !ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
@@ -44,16 +40,9 @@ else
 endif
 
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
- # libJavaTraversal_la_SOURCES = JavaTraversal.C 
- # libJavaTraversal_la_SOURCES = JavaParserActionROSE.C JavaTraversal.C token.C jni_token.C jni_utils.C JavaSourceCodePosition.C jni_JavaSourceCodePosition.C java_support.C openJavaParser_main.C ecj.C VisitorContext.C
- # libJavaTraversal_la_SOURCES = JavaParserActionROSE.C JavaTraversal.C token.C jni_token.C JavaSourceCodePosition.C jni_JavaSourceCodePosition.C
    libJavaTraversal_la_SOURCES = JavaParserActionROSE.C JavaTraversal.C token.C jni_token.C JavaSourceCodePosition.C jni_JavaSourceCodePosition.C VisitorContext.C jni_utils.C java_support.C
 
- # DQ (10/11/2010): Put any required header files here.
-   include_HEADERS = ecj.h java_support.h token.h jni_token.h JavaSourceCodePosition.h jni_JavaSourceCodePosition.h jni_utils.h jni_token.h jni_JavaSourceCodePosition.h  VisitorContext.h
-
-# JavaParserActionROSE.C: $(ECJ_DIR)/token.h $(ECJ_DIR)/ActionEnums.h $(ECJ_DIR)/jni_token_funcs.h
-# JavaParserActionROSE.C:
+   include_HEADERS = ecj.h java_support.h token.h jni_token.h JavaSourceCodePosition.h jni_JavaSourceCodePosition.h jni_utils.h VisitorContext.h
 
 extract_rose_required_ecj_source_files:
 	cd ${top_builddir}/src/3rdPartyLibraries/java-parser; $(MAKE) extract_rose_required_ecj_source_files
