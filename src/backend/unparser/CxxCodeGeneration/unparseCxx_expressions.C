@@ -3580,3 +3580,21 @@ void Unparse_ExprStmt::unparseCudaKernelCall(SgExpression* expr, SgUnparse_Info&
      }
      curprint ( ")");
 }
+
+bool
+Unparse_ExprStmt::requiresParentheses(SgExpression* expr, SgUnparse_Info& info) {
+    ROSE_ASSERT(!"UnparseCxx::requiresParentheses");
+    return true;
+}
+
+PrecedenceSpecifier
+Unparse_ExprStmt::getPrecedence(SgExpression* exp) {
+    ROSE_ASSERT(!"UnparseCxx::getPrecedence");
+    return 0;
+}
+
+AssociativitySpecifier
+Unparse_ExprStmt::getAssociativity(SgExpression* exp) {
+    ROSE_ASSERT(!"UnparseCxx::getAssociativity");
+    return e_assoc_left;
+}

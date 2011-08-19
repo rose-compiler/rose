@@ -166,7 +166,7 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
 
 void
 Unparse_Python::unparseExpression(SgExpression* expr, SgUnparse_Info& info) {
-    bool parenthesize = requiresParentheses(expr);
+    bool parenthesize = requiresParentheses(expr, info);
     if (parenthesize) curprint("(");
     unparseLanguageSpecificExpression(expr, info);
     if (parenthesize) curprint(")");
