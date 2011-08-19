@@ -718,7 +718,18 @@ Unparse_Java::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      curprint("class ");
      unparseName(classdecl_stmt->get_name(), info);
-     //TODO inheritance
+
+     SgClassDefinition* class_def = classdecl_stmt->get_definition();
+     ROSE_ASSERT(class_def != NULL);
+     SgBaseClassPtrList& bases = class_def->get_inheritances();
+     ROSE_ASSERT(bases.size() <= 1 && "java classes only support single inheritance");
+     if (bases.size() == 1) {
+         curprint(" extends ");
+         unparseBaseClass(bases[0], info);
+     }
+
+     //todo 'implements <typelist>'
+
      unparseStatement(classdecl_stmt->get_definition(), info);
    }
 
@@ -989,4 +1000,10 @@ Unparse_Java::unparseFunctionModifier(SgFunctionModifier& mod, SgUnparse_Info& i
     if (mod.isJavaStrictfp()) curprint("strictfp ");
 }
 
+void
+Unparse_Java::unparseBaseClass(SgBaseClass* base, SgUnparse_Info& info) {
+    ROSE_ASSERT(base != NULL);
 
+    SgClassDeclaration* base_class = base->get_base_class();
+    unparseName(base_class->get_name(), info);
+}
