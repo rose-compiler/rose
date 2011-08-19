@@ -189,6 +189,15 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                   {
                     statementInFile = true;
                   }
+               
+               //negara1 (08/15/2011): Make a special consideration for header file bodies in include directive statements.
+               //TODO: Change when SgIncludeDirectiveStatement is used instead of attached PreprocessingInfo.
+               SgIncludeDirectiveStatement* includeDirectiveStatement = isSgIncludeDirectiveStatement(stmt);
+               if (includeDirectiveStatement != NULL) {
+                   if (includeDirectiveStatement -> get_headerFileBody() -> get_file_info() -> get_filenameString() == sourceFilename) {
+                       statementInFile = true;
+                   }
+               }               
              }
 #if 0
           printf ("In Unparser::statementFromFile (statementInFile = %s output = %s stmt = %p = %s = %s in file = %s sourceFilename = %s ) \n",
@@ -1364,7 +1373,8 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
 
        // DQ (7/19/2008): Allow expressions to have there associated comments unparsed.
        // Liao 11/9/2010: allow SgInitializedName also
-          infoSaysGoAhead = (infoSaysGoAhead == true) || (isSgExpression(stmt) != NULL) || (isSgInitializedName (stmt) != NULL) ;
+       // negara1 (08/15/2011): Allow SgHeaderFileBody as well.
+          infoSaysGoAhead = (infoSaysGoAhead == true) || (isSgExpression(stmt) != NULL) || (isSgInitializedName (stmt) != NULL) || (isSgHeaderFileBody(stmt) != NULL);
 
 #if 0
           printf ("infoSaysGoAhead = %s \n",infoSaysGoAhead ? "true" : "false");
@@ -2882,9 +2892,16 @@ UnparseLanguageIndependentConstructs::unparseIncludeDirectiveStatement (SgStatem
    {
      SgIncludeDirectiveStatement* directive = isSgIncludeDirectiveStatement(stmt);
      ROSE_ASSERT(directive != NULL);
-     curprint(directive->get_directiveString());
-  // unp->u_sage->curprint_newline();
-     unp->cur.insert_newline(1);
+     
+     //negara1 (08/15/2011): Do not unparse the directive string as long as there are PreprocessorInfos attached to nodes in order to avoid double unparsing.
+     //Also, note that it might belong to a different file since the code can reach here when the include directive statement's header file body belongs to the unparsed file.     
+     //curprint(directive->get_directiveString());
+     //unp->cur.insert_newline(1);
+     
+     SgHeaderFileBody* headerFileBody = directive -> get_headerFileBody();
+     if (headerFileBody -> get_file_info() -> get_filenameString() == getFileName()) {
+        unparseAttachedPreprocessingInfo(headerFileBody, info, PreprocessingInfo::after); //Its always "after" if attached to a header file body.
+     }
    }
 
 void 
@@ -3640,4 +3657,33 @@ void UnparseLanguageIndependentConstructs::unparseOmpGenericStatement (SgStateme
 
 } // end unparseOmpGenericStatement
 
+PrecedenceSpecifier
+UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr) {
+    cout << "getPrecedence() is unimplemented for " << languageName() << endl;
+    ROSE_ASSERT(false);
+    return 0;
+}
 
+AssociativitySpecifier
+UnparseLanguageIndependentConstructs::getAssociativity(SgExpression* expr) {
+    cout << "getAssociativity() is unimplemented for " << languageName() << endl;
+    ROSE_ASSERT(false);
+    return e_assoc_none;
+}
+
+bool
+UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr) {
+    SgExpression* parent = isSgExpression(expr->get_parent());
+    if (parent == NULL) return false;
+
+    PrecedenceSpecifier exprPrecedence = getPrecedence(expr);
+    PrecedenceSpecifier parentPrecedence = getPrecedence(parent);
+    AssociativitySpecifier assoc = getAssociativity(parent);
+    if      (exprPrecedence == ROSE_UNPARSER_NO_PRECEDENCE)      return false;
+    else if (parentPrecedence == ROSE_UNPARSER_NO_PRECEDENCE)    return false;
+    else if (assoc == e_assoc_right && exprPrecedence >  parentPrecedence) return false;
+    else if (assoc == e_assoc_left  && exprPrecedence >= parentPrecedence) return false;
+    else if (assoc == e_assoc_left  && exprPrecedence <  parentPrecedence) return true;
+    else if (assoc == e_assoc_right && exprPrecedence <= parentPrecedence) return true;
+    else ROSE_ASSERT(!"cannot determine if parens are required");
+}

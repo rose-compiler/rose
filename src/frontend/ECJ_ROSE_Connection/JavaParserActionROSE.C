@@ -30,8 +30,9 @@
 
 using namespace std;
 
-
 /*
+DQ: Old Code that we might not need anymore...
+
 JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateToken(JNIEnv *env, jclass xxx, jobject java_token)
    {
      if (SgProject::get_verbose() > -1)
@@ -131,6 +132,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitList (JNIEnv *env, 
 
   // Verify that the parent is set, these AST nodes are already setup by ROSE before calling this function.
      ROSE_ASSERT(astJavaScopeStack.front()->get_parent() != NULL);
+
+     if (SgProject::get_verbose() > 0)
+          printf ("Leaving Java_JavaParser_cactionCompilationUnitList \n");
    }
 
 
@@ -180,6 +184,13 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclaration (JNIEnv *env, jobj
      buildClass(name,token);
 
      ROSE_ASSERT(astJavaScopeStack.front() != NULL);
+
+     SgClassDefinition* classDefinition = isSgClassDefinition(astJavaScopeStack.front());
+     ROSE_ASSERT(classDefinition != NULL);
+
+     setJavaSourcePosition(classDefinition,env,jToken);
+     ROSE_ASSERT(classDefinition->get_declaration() != NULL);
+     setJavaSourcePosition(classDefinition->get_declaration(),env,jToken);
 
      if (SgProject::get_verbose() > 0)
           astJavaScopeStack.front()->get_file_info()->display("source position in Java_JavaParser_cactionTypeDeclaration(): debug");
@@ -246,8 +257,12 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclaration (JNIEnv *en
   // SgMemberFunctionDeclaration* functionDeclaration = buildSimpleMemberFunction(name,classDefinition);
      SgMemberFunctionDeclaration* functionDeclaration = buildDefiningMemberFunction(name,classDefinition);
 
+     setJavaSourcePosition(functionDeclaration,env,jToken);
+
      SgFunctionDefinition* functionDefinition = functionDeclaration->get_definition();
      ROSE_ASSERT(functionDefinition != NULL);
+
+     setJavaSourcePosition(functionDefinition,env,jToken);
 
      astJavaScopeStack.push_front(functionDefinition);
      ROSE_ASSERT(astJavaScopeStack.front()->get_parent() != NULL);
@@ -255,6 +270,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclaration (JNIEnv *en
      ROSE_ASSERT(functionDefinition->get_body() != NULL);
      astJavaScopeStack.push_front(functionDefinition->get_body());
      ROSE_ASSERT(astJavaScopeStack.front()->get_parent() != NULL);
+
+     setJavaSourcePosition(functionDefinition->get_body(),env,jToken);
 
   // Since this is a constructor, set it explicitly as such.
      functionDeclaration->get_specialFunctionModifier().setConstructor();
@@ -354,6 +371,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionExplicitConstructorCallEnd (JNIEnv
           SgExprStatement* expressionStatement = SageBuilder::buildExprStatement(functionCallExp);
           ROSE_ASSERT(expressionStatement != NULL);
 
+          setJavaSourcePosition(functionCallExp,env,jToken);
+          setJavaSourcePosition(expressionStatement,env,jToken);
+
        // DQ (7/31/2011): This should be left on the stack instead of being added to the current scope before the end of the scope.
        // printf ("Previously calling appendStatement in cactionExplicitConstructorCallEnd() \n");
        // appendStatement(expressionStatement);
@@ -397,9 +417,13 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclaration (JNIEnv *env, jo
      SgMemberFunctionDeclaration* functionDeclaration = buildDefiningMemberFunction(name,classDefinition);
      ROSE_ASSERT(functionDeclaration != NULL);
 
+     setJavaSourcePosition(functionDeclaration,env,jToken);
+
   // This is not a defining function declaration so we can't identify the SgFunctionDefinition and push it's body onto the astJavaScopeStack.
      SgFunctionDefinition* functionDefinition = functionDeclaration->get_definition();
      ROSE_ASSERT(functionDefinition != NULL);
+
+     setJavaSourcePosition(functionDefinition,env,jToken);
 
      astJavaScopeStack.push_front(functionDefinition);
      ROSE_ASSERT(astJavaScopeStack.front()->get_parent() != NULL);
@@ -407,6 +431,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclaration (JNIEnv *env, jo
      ROSE_ASSERT(functionDefinition->get_body() != NULL);
      astJavaScopeStack.push_front(functionDefinition->get_body());
      ROSE_ASSERT(astJavaScopeStack.front()->get_parent() != NULL);
+
+     setJavaSourcePosition(functionDefinition->get_body(),env,jToken);
 
   // Set the Java specific modifiers
      if (isAbstract == true)
@@ -530,6 +556,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionArgument (JNIEnv *env, jobject xxx
      SgInitializedName* initializedName = SageBuilder::buildInitializedName(argument_name,type,NULL);
      ROSE_ASSERT(initializedName != NULL);
 
+     setJavaSourcePosition(initializedName,env,jToken);
+
   // DQ (4/6/2011): Instead of assuming there is a function declaration available, we 
   // want to put each SgInitializedName onto the stack so that they can be assembled
   // into the parameter list as part of building the function declaration afterwards.
@@ -571,7 +599,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSend (JNIEnv *env, jobject 
      if (name == "super")
         {
        // Handle case of super class.
-          printf ("Handle case of super class. \n");
+       // printf ("Handle case of super class. \n");
 
        // Refactored the support for getting the current class scope.
           SgClassDefinition* classDefinition = getCurrentClassDefinition();
@@ -619,20 +647,20 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSend (JNIEnv *env, jobject 
         }
      ROSE_ASSERT(targetClassScope != NULL);
 
-     printf ("Looking for the function = %s in class parent scope = %p = %s \n",name.str(),targetClassScope,targetClassScope->class_name().c_str());
+  // printf ("Looking for the function = %s in class parent scope = %p = %s \n",name.str(),targetClassScope,targetClassScope->class_name().c_str());
      SgFunctionSymbol* functionSymbol = targetClassScope->lookup_function_symbol(name);
-     ROSE_ASSERT(functionSymbol != NULL);
+  // ROSE_ASSERT(functionSymbol != NULL);
 
      if (functionSymbol != NULL)
         {
-          printf ("FOUND function symbol = %p \n",functionSymbol);
+       // printf ("FOUND function symbol = %p \n",functionSymbol);
 
        // This is OK for now, but might not be good enough for a non-statement function call expression (not clear yet in ECJ AST).
           SgExprListExp* parameters = NULL;
-       // SgExprStatement* expressionStatement = SageBuilder::buildFunctionCallStmt(name,SgTypeVoid::createType(),parameters,astJavaScopeStack.front());
 
-       // SgFunctionCallExp* func_call_expr     = SageBuilder::buildFunctionCallExp(name,SgTypeVoid::createType(),parameters,astJavaScopeStack.front());
-          SgFunctionCallExp* func_call_expr     = SageBuilder::buildFunctionCallExp(functionSymbol,parameters);
+          SgFunctionCallExp* func_call_expr = SageBuilder::buildFunctionCallExp(functionSymbol,parameters);
+
+          setJavaSourcePosition(func_call_expr,env,jToken);
 
        // Push the expression onto the stack so that the cactionMessageSendEnd can find it 
        // and any function arguments and add the arguments to the function call expression.
@@ -640,6 +668,10 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSend (JNIEnv *env, jobject 
         }
        else
         {
+       // If this is a function not found (and assuming it is a legal code) then it is because 
+       // the associated class's member functions and data members have not been read and 
+       // translated into the ROSE AST.
+
           printf ("ERROR: functionSymbol == NULL \n");
           ROSE_ASSERT(false);
         }
@@ -653,7 +685,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSendEnd (JNIEnv *env, jobje
   // about this, so we will assume it is a statement and do more testing.
 
   // This code is the same as that in cactionExplicitConstructorCall
-     if (SgProject::get_verbose() > -1)
+     if (SgProject::get_verbose() > 2)
           printf ("Inside of Java_JavaParser_cactionMessageSendEnd() \n");
 
      outputJavaState("At TOP of cactionMessageSendEnd");
@@ -703,6 +735,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSendEnd (JNIEnv *env, jobje
           SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(functionCallExp->get_function());
           ROSE_ASSERT(functionRefExp != NULL);
        // printf ("functionRefExp from functionCallExp = %p = %s \n",functionRefExp,functionRefExp->class_name().c_str());
+
+          setJavaSourcePosition(functionRefExp,env,jToken);
 
           SgSymbol* symbol = functionRefExp->get_symbol();
           ROSE_ASSERT(symbol != NULL);
@@ -791,7 +825,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionStringLiteral (JNIEnv *env, jobjec
      ROSE_ASSERT(stringValue != NULL);
 
   // Set the source code position (default values for now).
-     setJavaSourcePosition(stringValue);
+  // setJavaSourcePosition(stringValue);
+     setJavaSourcePosition(stringValue,env,jToken);
 
      astJavaExpressionStack.push_front(stringValue);
      ROSE_ASSERT(astJavaExpressionStack.empty() == false);
@@ -933,6 +968,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitMethodSupport (JNIEnv
      SgMemberFunctionDeclaration* functionDeclaration = buildNonDefiningMemberFunction(name, classDefinition);
      ROSE_ASSERT(functionDeclaration != NULL);
 
+     setJavaCompilerGenerated(functionDeclaration);
+
   // Add the types to the non-defining function.
 
      outputJavaState("At BOTTOM of cactionBuildImplicitMethodSupport");
@@ -952,6 +989,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitFieldSupport (JNIEnv*
 
      SgVariableDeclaration* variableDeclaration = buildSimpleVariableDeclaration(name);
      ROSE_ASSERT(variableDeclaration != NULL);
+
+     setJavaCompilerGenerated(variableDeclaration);
 
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
 
@@ -1056,54 +1095,6 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateType (JNIEnv* env, jclass 
        // This is the same sort of void type as in C/C++.
           astJavaTypeStack.push_front(SgTypeVoid::createType());
         }
-    // else if (name == "String")
-       else if (name == "java.lang.String")
-        {
-       // DQ (4/9/2011): Added support for "String" type.
-       // This should maybe be a SgClassType specific to the String class, instead of using the SgTypeString for Java.
-       // astJavaTypeStack.push_front(SgTypeString::createType());
-
-          SgClassType* classType = lookupTypeFromQualifiedName(name);
-          if (classType == NULL)
-             {
-            // If the "String" class was not found then it is likely because we are in a debug mode which limits the number of implecit classes.
-               printf ("Build a class for String: name = %s\n",name.str());
-               outputJavaState("In cactionGenerateType case of java.lang.String");
-
-               buildImplicitClass(name);
-               printf ("DONE: Build a class for String: name = %s\n",name.str());
-
-               outputJavaState("DONE: In cactionGenerateType case of java.lang.String");
-
-            // We need to leave a SgType on the astJavaTypeStack, we need to build the class to build 
-            // the SgClassType, but we don't want to leave a SgClassDefinition on the astJavaScopeStack.
-               printf ("When we just build a type we don't want the new class definition on the stack. \n");
-               astJavaScopeStack.pop_front();
-
-               SgClassType* classType = lookupTypeFromQualifiedName(name);
-               if (classType == NULL)
-                  {
-                    printf ("Build a SgTypeInt in the stack since the class was not built (debugging mode): name = %s\n",name.str());
-                    astJavaTypeStack.push_front(SgTypeInt::createType());
-                  }
-                 else
-                  {
-                 // The associated type was found (after being explicitly built, after not being found the first time)) and is pushed onto the stack.
-                    printf ("On the second search for the class = %s (after building it explicitly) it was found! \n",name.str());
-                    astJavaTypeStack.push_front(classType);
-                  }
-             }
-            else
-             {
-            // The associated type was found and is pushed onto the stack.
-               astJavaTypeStack.push_front(classType);
-             }
-
-#if 0
-          printf ("Exiting as a test in Java_JavaParser_cactionGenerateType() \n");
-          ROSE_ASSERT(false);
-#endif
-        }
        else if (name == "null")
         {
        // There is also a special null type, the type of the expression null, which has no name. Because the null type has 
@@ -1118,18 +1109,78 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateType (JNIEnv* env, jclass 
           printf ("Error: SgTypeNull (Java null type) support not implemented (name = %s) \n",name.str());
           ROSE_ASSERT(false);
         }
-       else
+       else 
         {
-          printf ("I think this is a user defined class (so we have to look it up) (name = %s) \n",name.str());
+       // DQ (8/17/2011): This should be any implicit type defined in Java (so test for the prefix "java.").
+       // else if (name == "String")
+       // else if (name == "java.lang.String")
 
-          SgClassType* classType = lookupTypeFromQualifiedName(name);
-          ROSE_ASSERT(classType != NULL);
+          string nameString = name;
 
-          astJavaTypeStack.push_front(classType);
+          printf ("nameString = %s \n",nameString.c_str());
+
+       // Check if the typename starts with "java."
+          if (nameString.find("java.",0) == 0)
+             {
+            // DQ (4/9/2011): Added support for "String" type.
+            // This should maybe be a SgClassType specific to the String class, instead of using the SgTypeString for Java.
+            // astJavaTypeStack.push_front(SgTypeString::createType());
+
+               SgClassType* classType = lookupTypeFromQualifiedName(name);
+               if (classType == NULL)
+                  {
+                 // If the "String" class was not found then it is likely because we are in a debug mode which limits the number of implecit classes.
+                 // printf ("Build a class for String: name = %s\n",name.str());
+                    outputJavaState("In cactionGenerateType case of java.lang.String");
+
+                    buildImplicitClass(name);
+                 // printf ("DONE: Build a class for String: name = %s\n",name.str());
+
+                    outputJavaState("DONE: In cactionGenerateType case of java.lang.String");
+
+                 // We need to leave a SgType on the astJavaTypeStack, we need to build the class to build 
+                 // the SgClassType, but we don't want to leave a SgClassDefinition on the astJavaScopeStack.
+                    printf ("When we just build a type we don't want the new class definition on the stack. \n");
+                    astJavaScopeStack.pop_front();
+
+                    SgClassType* classType = lookupTypeFromQualifiedName(name);
+                    if (classType == NULL)
+                       {
+                         printf ("Build a SgTypeInt in the stack since the class was not built (debugging mode): name = %s\n",name.str());
+                         astJavaTypeStack.push_front(SgTypeInt::createType());
+                       }
+                      else
+                       {
+                      // The associated type was found (after being explicitly built, after not being found the first time)) and is pushed onto the stack.
+                      // printf ("On the second search for the class = %s (after building it explicitly) it was found! \n",name.str());
+                         astJavaTypeStack.push_front(classType);
+                       }
+                  }
+                 else
+                  {
+                 // The associated type was found and is pushed onto the stack.
+                    astJavaTypeStack.push_front(classType);
+                  }
+
 #if 0
-          printf ("Error: default reached in switch in Java_JavaParser_cactionGenerateType() (name = %s) \n",name.str());
-          ROSE_ASSERT(false);
+               printf ("Exiting as a test in Java_JavaParser_cactionGenerateType() \n");
+               ROSE_ASSERT(false);
 #endif
+             }
+            else
+             {
+            // This is the last chance to resolve the type.
+               printf ("I think this is a user defined class (so we have to look it up) (name = %s) \n",name.str());
+
+               SgClassType* classType = lookupTypeFromQualifiedName(name);
+               ROSE_ASSERT(classType != NULL);
+
+               astJavaTypeStack.push_front(classType);
+#if 0
+               printf ("Error: default reached in switch in Java_JavaParser_cactionGenerateType() (name = %s) \n",name.str());
+               ROSE_ASSERT(false);
+#endif
+             }
         }
 
   // There should be a type on the stack!
@@ -1232,6 +1283,42 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateArrayType(JNIEnv *env, jcl
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionAllocationExpression(JNIEnv *env, jobject xxx, jobject jToken)
    {
+     if (SgProject::get_verbose() > 0)
+          printf ("Inside of Java_JavaParser_cactionAllocationExpression() \n");
+
+     outputJavaState("At TOP of cactionAllocationExpression");
+   }
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionAllocationExpressionEnd(JNIEnv *env, jobject xxx, jstring java_string, jobject jToken)
+   {
+     if (SgProject::get_verbose() > 0)
+          printf ("Inside of Java_JavaParser_cactionAllocationExpressionEnd() \n");
+
+     outputJavaState("At TOP of cactionAllocationExpressionEnd");
+
+     SgName name = convertJavaStringToCxxString(env,java_string);
+
+     printf ("Build a new operator for type name = %s \n",name.str());
+
+     ROSE_ASSERT(astJavaTypeStack.empty() == false);
+     SgType* type = astJavaTypeStack.front();
+     astJavaTypeStack.pop_front();
+
+  // For the simple case, we only need the type as input to build SgNewExp.
+     SgExprListExp* exprListExp          = NULL;
+     SgConstructorInitializer* constInit = NULL;
+     SgExpression* expr                  = NULL;
+     short int val                       = 0;
+     SgFunctionDeclaration* funcDecl     = NULL;
+
+     SgNewExp* newExpression = SageBuilder::buildNewExp(type, exprListExp, constInit, expr, val, funcDecl);
+     ROSE_ASSERT(newExpression != NULL);
+
+     setJavaSourcePosition(newExpression,env,jToken);
+
+     astJavaExpressionStack.push_front(newExpression);
+
+     outputJavaState("At BOTTOM of cactionAllocationExpressionEnd");
    }
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionANDANDExpression(JNIEnv *env, jobject xxx, jobject jToken)
@@ -1251,6 +1338,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionANDANDExpressionEnd(JNIEnv *env, j
      outputJavaState("At TOP of cactionANDANDExpressionEnd");
 
      binaryExpressionSupport<SgAndOp>();
+
+     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
+     setJavaSourcePosition(astJavaExpressionStack.front(),env,jToken);
 
      outputJavaState("At BOTTOM of cactionANDANDExpressionEnd");
    }
@@ -1327,14 +1417,20 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionAssignmentEnd(JNIEnv *env, jobject
      astJavaExpressionStack.pop_front();
 
   // This is an assignement statement so we have to build a statement and push it onto the stack.
-     SgExprStatement* assignmentStatement = SageBuilder::buildAssignStatement(lhs,rhs);
+
+  // DQ (8/16/2011): I had to build a special version of this function to avoid the recursive call
+  // in SageBuilder::buildAssignStatement() which will reset the file info as a transformation.
+  // This is a bug in the buildAssignStatement() function but will likely breack other code if we 
+  // fix it now.  This will have to be revisitied later.
+  // SgExprStatement* assignmentStatement = SageBuilder::buildAssignStatement(lhs,rhs);
+     SgExprStatement* assignmentStatement = SageBuilder::buildAssignStatement_ast_translate(lhs,rhs);
      ROSE_ASSERT(assignmentStatement != NULL);
 
-  // DQ (7/16/2011): We can't assert this since it will be false if a conditional from an if...statement is to be processed.
-  // ROSE_ASSERT(astJavaExpressionStack.empty() == true);
+     setJavaSourcePosition(assignmentStatement,env,jToken);
+     ROSE_ASSERT(assignmentStatement->get_expression() != NULL);
+     setJavaSourcePosition(assignmentStatement->get_expression(),env,jToken);
 
      astJavaStatementStack.push_front(assignmentStatement);
-  // astJavaScopeStack.front()->append_statement(assignmentStatement);
 
      outputJavaState("At BOTTOM of cactionAssignmentEnd");
    }
@@ -1410,11 +1506,13 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBinaryExpressionEnd(JNIEnv *env, j
 
           default:
              {
-            // binaryExpressionSupport<SgAddOp>();
                printf ("Error: default reached in cactionBinaryExpressionEnd() operator_kind = %d \n",operator_kind);
                ROSE_ASSERT(false);
              }
         }
+
+     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
+     setJavaSourcePosition(astJavaExpressionStack.front(),env,jToken);
 
      outputJavaState("At BOTTOM of cactionBinaryExpressionEnd");
    }
@@ -1483,6 +1581,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBlock(JNIEnv *env, jobject xxx, jo
              }
         }
      ROSE_ASSERT(block != NULL);
+
+     setJavaSourcePosition(block,env,jToken);
 
      block->set_parent(astJavaScopeStack.front());
      ROSE_ASSERT(block->get_parent() != NULL);
@@ -1636,9 +1736,6 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompoundAssignmentEnd(JNIEnv *env,
 
      outputJavaState("At TOP of cactionCompoundAssignmentEnd");
 
-  // This will be a family of operators.
-  // binaryAssignmentStatementSupport<SgPlusAssignOp>();
-
   // These are the operator code values directly from ECJ.
      enum ops
         {
@@ -1680,10 +1777,19 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompoundAssignmentEnd(JNIEnv *env,
 
           default:
              {
-            // binaryExpressionSupport<SgAddOp>();
                printf ("Error: default reached in cactionCompoundAssignmentEnd() operator_kind = %d \n",operator_kind);
                ROSE_ASSERT(false);
              }
+        }
+
+     ROSE_ASSERT(astJavaStatementStack.empty() == false);
+     setJavaSourcePosition(astJavaStatementStack.front(),env,jToken);
+
+  // Also set the source position of the nested expression in the expression statement.
+     SgExprStatement* exprStatement = isSgExprStatement(astJavaStatementStack.front());
+     if (exprStatement != NULL)
+        {
+          setJavaSourcePosition(exprStatement,env,jToken);
         }
 
      outputJavaState("At BOTTOM of cactionCompoundAssignmentEnd");
@@ -1735,6 +1841,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionDoStatementEnd(JNIEnv *env, jobjec
 
      SgExprStatement* testStatement = SageBuilder::buildExprStatement(testExpression);
 
+     setJavaSourcePosition(testExpression,env,jToken);
+     setJavaSourcePosition(testStatement,env,jToken);
+
      SgDoWhileStmt* originalDoWhileStatement = isSgDoWhileStmt(astJavaScopeStack.front());
      ROSE_ASSERT(originalDoWhileStatement != NULL);
 
@@ -1745,6 +1854,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionDoStatementEnd(JNIEnv *env, jobjec
      originalDoWhileStatement->set_condition(testStatement);
      testStatement->set_parent(originalDoWhileStatement);
      ROSE_ASSERT(testStatement->get_parent() == originalDoWhileStatement);
+
+     setJavaSourcePosition(originalDoWhileStatement,env,jToken);
 
      astJavaStatementStack.push_front(originalDoWhileStatement);
 
@@ -1788,7 +1899,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionEqualExpressionEnd(JNIEnv *env, jo
           LAST_OPERATOR };
 
      int operator_kind = java_operator_kind;
-     printf ("operator_kind = %d \n",operator_kind);
+  // printf ("operator_kind = %d \n",operator_kind);
 
      switch(operator_kind)
         {
@@ -1802,6 +1913,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionEqualExpressionEnd(JNIEnv *env, jo
                ROSE_ASSERT(false);
              }
         }
+
+     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
+     setJavaSourcePosition(astJavaExpressionStack.front(),env,jToken);
 
      outputJavaState("At BOTTOM of cactionEqualExpressionEnd");
    }
@@ -1860,6 +1974,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionFieldDeclaration(JNIEnv *env, jobj
      SgInitializedName* initializedName = variableDeclaration->get_decl_item(name);
      ROSE_ASSERT(initializedName != NULL);
      ROSE_ASSERT(initializedName->get_scope() != NULL);
+
+     setJavaSourcePosition(initializedName,env,jToken);
+     setJavaSourcePosition(variableDeclaration,env,jToken);
 
   // Save it on the stack so that we can add SgInitializedNames to it.
      astJavaStatementStack.push_front(variableDeclaration);
@@ -1944,6 +2061,11 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionFieldDeclarationEnd(JNIEnv *env, j
        // Must wrap this has an initializer.
           SgInitializer* initializer = SageBuilder::buildAssignInitializer(expr);
           ROSE_ASSERT(initializer != NULL);
+
+          setJavaSourcePosition(initializer,env,jToken);
+
+          printf ("In cactionFieldDeclarationEnd(): initializer = %p = %s \n",initializer,initializer->class_name().c_str());
+          initializer->get_file_info()->display("cactionFieldDeclarationEnd()");
 
           initializedName->set_initptr(initializer);
 
@@ -2152,6 +2274,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionIfStatement(JNIEnv *env, jobject x
 
      ifStatement->set_parent(astJavaScopeStack.front());
 
+     setJavaSourcePosition(ifStatement,env,jToken);
+
   // Push the SgIfStmt onto the stack, but not the true block.
      astJavaScopeStack.push_front(ifStatement);
      ROSE_ASSERT(astJavaScopeStack.front()->get_parent() != NULL);
@@ -2177,10 +2301,14 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionIfStatementEnd(JNIEnv *env, jobjec
      ROSE_ASSERT(ifStatement != NULL);
      ROSE_ASSERT(ifStatement->get_parent() != NULL);
 
+     setJavaSourcePosition(ifStatement,env,jToken);
+
      SgExpression* condititonalExpr = astJavaExpressionStack.front();
      ROSE_ASSERT(condititonalExpr != NULL);
 
      SgExprStatement* exprStatement = SageBuilder::buildExprStatement(condititonalExpr);
+
+     setJavaSourcePosition(exprStatement,env,jToken);
 
      ROSE_ASSERT(exprStatement != NULL);
      ROSE_ASSERT(condititonalExpr->get_parent() != NULL);
@@ -2270,7 +2398,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jobje
      importStatement->set_parent(astJavaScopeStack.front());
 
   // importStatement->set_parent(astJavaScopeStack.front());
-     setJavaSourcePosition(importStatement);
+  // setJavaSourcePosition(importStatement);
+     setJavaSourcePosition(importStatement,env,jToken);
    }
 
 
@@ -2319,20 +2448,17 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionIntLiteral(JNIEnv *env, jobject xx
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
      outputJavaState("cactionIntLiteral");
 
-  // int value          = 42;
-  // string valueString = "42";
      int value          = java_int_value;
+
+  // Later we want to take the string from the token, but this is fine for now.
      string valueString = StringUtility::numberToString(value);
 
-     printf ("Building an integer value expression = %d = %s \n",value,valueString.c_str());
+  // printf ("Building an integer value expression = %d = %s \n",value,valueString.c_str());
 
      SgIntVal* integerValue = new SgIntVal(value,valueString);
      ROSE_ASSERT(integerValue != NULL);
 
-  // Set the source code position (default values for now).
-  // setJavaSourcePosition(integerValue);
-     Token_t * token = create_token(env, jToken);
-     pushAndSetSourceCodePosition(token->getSourcecodePosition(), integerValue);
+     setJavaSourcePosition(integerValue,env,jToken);
 
      astJavaExpressionStack.push_front(integerValue);
      ROSE_ASSERT(astJavaExpressionStack.empty() == false);
@@ -2476,11 +2602,14 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionLocalDeclaration(JNIEnv *env, jobj
 
      bool isFinal = java_is_final;
 
-     printf ("Building a variable declaration for name = %s \n",name.str());
+     if (SgProject::get_verbose() > 2)
+          printf ("Building a variable declaration for name = %s \n",name.str());
 
   // Note that the type shuld have already been built and should be on the astJavaTypeStack.
      SgVariableDeclaration* variableDeclaration = buildSimpleVariableDeclaration(name);
      ROSE_ASSERT(variableDeclaration != NULL);
+
+     setJavaSourcePosition(variableDeclaration,env,jToken);
 
   // DQ (7/16/2011): Added test for scope
      ROSE_ASSERT(variableDeclaration->get_scope() != NULL);
@@ -2490,6 +2619,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionLocalDeclaration(JNIEnv *env, jobj
      SgInitializedName* initializedName = variableDeclaration->get_decl_item (name);
      ROSE_ASSERT(initializedName != NULL);
      ROSE_ASSERT(initializedName->get_scope() != NULL);
+
+     setJavaSourcePosition(initializedName,env,jToken);
+     setJavaSourcePosition(variableDeclaration,env,jToken);
 
   // Save it on the stack so that we can add SgInitializedNames to it.
      astJavaStatementStack.push_front(variableDeclaration);
@@ -2505,6 +2637,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionLocalDeclaration(JNIEnv *env, jobj
      if (SgProject::get_verbose() > 0)
           variableDeclaration->get_file_info()->display("source position in Java_JavaParser_cactionLocalDeclaration(): debug");
    }
+
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionLocalDeclarationInitialization(JNIEnv *env, jobject xxx, jobject jToken)
    {
@@ -2530,6 +2663,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionLocalDeclarationInitialization(JNI
 
      SgAssignInitializer* initializer = SageBuilder::buildAssignInitializer(expression,initializedName->get_type());
      ROSE_ASSERT(initializer != NULL);
+
+     setJavaSourcePosition(initializer,env,jToken);
+     setJavaSourcePosition(expression,env,jToken);
 
      initializedName->set_initptr(initializer);
      initializer->set_parent(initializedName);
@@ -2590,6 +2726,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionORORExpressionEnd(JNIEnv *env, job
 
      binaryExpressionSupport<SgOrOp>();
 
+     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
+     setJavaSourcePosition(astJavaExpressionStack.front(),env,jToken);
+
      outputJavaState("At BOTTOM of cactionORORExpressionEnd");
    }
 
@@ -2606,6 +2745,38 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionParameterizedQualifiedTypeReferenc
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionParameterizedSingleTypeReference(JNIEnv *env, jobject xxx, jobject jToken)
    {
+     if (SgProject::get_verbose() > 0)
+          printf ("Inside of Java_JavaParser_cactionParameterizedSingleTypeReference() \n");
+
+     outputJavaState("At TOP of cactionParameterizedSingleTypeReference");
+
+  // outputJavaState("At BOTTOM of cactionParameterizedSingleTypeReference");
+   }
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionParameterizedSingleTypeReferenceEnd(JNIEnv *env, jobject xxx, int java_numberOfTypeArguments, jobject jToken)
+   {
+     if (SgProject::get_verbose() > 0)
+          printf ("Inside of Java_JavaParser_cactionParameterizedSingleTypeReferenceEnd() \n");
+
+     outputJavaState("At TOP of cactionParameterizedSingleTypeReferenceEnd");
+
+     int numberOfTypeArguments = java_numberOfTypeArguments;
+
+     for (int i = 0; i < numberOfTypeArguments; i++)
+        {
+          ROSE_ASSERT(astJavaTypeStack.empty() == false);
+
+          astJavaTypeStack.pop_front();
+        }
+
+  // ROSE_ASSERT(astJavaExpressionStack.empty() == false);
+  // setJavaSourcePosition(astJavaExpressionStack.front(),env,jToken);
+
+     outputJavaState("At BOTTOM of cactionParameterizedSingleTypeReferenceEnd");
+
+     printf ("Exiting as a test in cactionParameterizedSingleTypeReferenceEnd() \n");
+     exit(1);
    }
 
 
@@ -2634,7 +2805,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionPostfixExpressionEnd(JNIEnv *env, 
           LAST_OPERATOR };
 
      int operator_kind = java_operator_kind;
-     printf ("operator_kind = %d \n",operator_kind);
+  // printf ("operator_kind = %d \n",operator_kind);
 
      switch(operator_kind)
         {
@@ -2653,6 +2824,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionPostfixExpressionEnd(JNIEnv *env, 
      SgUnaryOp* unaryOp = isSgUnaryOp(astJavaExpressionStack.front());
      ROSE_ASSERT(unaryOp != NULL);
      unaryOp->set_mode(SgUnaryOp::postfix);
+
+     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
+     setJavaSourcePosition(astJavaExpressionStack.front(),env,jToken);
 
      outputJavaState("At BOTTOM of cactionPostfixExpressionEnd");
    }
@@ -2679,7 +2853,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionPrefixExpressionEnd(JNIEnv *env, j
           LAST_OPERATOR };
 
      int operator_kind = java_operator_kind;
-     printf ("operator_kind = %d \n",operator_kind);
+  // printf ("operator_kind = %d \n",operator_kind);
 
      switch(operator_kind)
         {
@@ -2698,6 +2872,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionPrefixExpressionEnd(JNIEnv *env, j
      SgUnaryOp* unaryOp = isSgUnaryOp(astJavaExpressionStack.front());
      ROSE_ASSERT(unaryOp != NULL);
      unaryOp->set_mode(SgUnaryOp::prefix);
+
+     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
+     setJavaSourcePosition(astJavaExpressionStack.front(),env,jToken);
 
      outputJavaState("At BOTTOM of cactionPrefixExpressionEnd");
    }
@@ -2776,6 +2953,12 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionSingleNameReference(JNIEnv *env, j
           varRefExp = SageBuilder::buildVarRefExp(name,astJavaScopeStack.front());
           ROSE_ASSERT(varRefExp != NULL);
           printf ("In cactionSingleNameReference(): varRefExp = %p type = %p = %s \n",varRefExp,varRefExp->get_type(),varRefExp->get_type()->class_name().c_str());
+
+          setJavaSourcePosition(varRefExp,env,jToken);
+
+          ROSE_ASSERT(varRefExp->get_file_info()->isTransformation()    == false);
+          ROSE_ASSERT(varRefExp->get_file_info()->isCompilerGenerated() == false);
+
           astJavaExpressionStack.push_front(varRefExp);
         }
 
@@ -2877,7 +3060,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionUnaryExpressionEnd(JNIEnv *env, jo
           LAST_OPERATOR };
 
      int operator_kind = java_operator_kind;
-     printf ("operator_kind = %d \n",operator_kind);
+  // printf ("operator_kind = %d \n",operator_kind);
 
      switch(operator_kind)
         {
@@ -2893,6 +3076,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionUnaryExpressionEnd(JNIEnv *env, jo
                ROSE_ASSERT(false);
              }
         }
+
+     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
+     setJavaSourcePosition(astJavaExpressionStack.front(),env,jToken);
 
      outputJavaState("At BOTTOM of cactionUnaryExpressionEnd");
    }
@@ -2954,6 +3140,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionWhileStatementEnd(JNIEnv *env, job
      originalWhileStatement->set_condition(testStatement);
      testStatement->set_parent(originalWhileStatement);
      ROSE_ASSERT(testStatement->get_parent() == originalWhileStatement);
+
+     setJavaSourcePosition(originalWhileStatement,env,jToken);
 
      astJavaStatementStack.push_front(originalWhileStatement);
 
