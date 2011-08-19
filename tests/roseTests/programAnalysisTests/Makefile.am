@@ -122,10 +122,10 @@ AnnotationLanguageParserTestRule: trustedAnnotationOutput
 #	diff annotationOutput trustedAnnotationOutput || exit
 
 clean-local:
-	rm -rf Templates.DB ii_files ti_files cxx_templates
+	rm -rf Templates.DB ii_files ti_files cxx_templates *.CXX-o *.dot *.ti
 
 distclean-local:
-	rm -rf Templates.DB
+	rm -rf Templates.DB *.CXX-o *.dot *.ti
 
 
 

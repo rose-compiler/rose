@@ -1,20 +1,11 @@
 #include "sage3basic.h"
 
-#include <StmtInfoCollect.h>
-#include <AstInterface_ROSE.h>
-
-#include <DefUseChain.h>
 #include <string>
 #include <iostream>
 #include <CommandOptions.h>
-#include <GraphIO.h>
-
-#include "DataFlowAnalysis.h"
-#include "BitVectorRepr.h"
-#include "AnalysisInterface.h"
-#include "VirtualFunctionAnalysis.h"
-#include <GraphDotOutput.h>
 #include <CallGraph.h>
+
+#include "VirtualFunctionAnalysis.h"
 using namespace boost;
 
 #define foreach BOOST_FOREACH

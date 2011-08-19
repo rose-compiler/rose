@@ -1,5 +1,5 @@
-#include "VirtualFunctionAnalysis.h"
 #include <algorithm>
+#include "VirtualFunctionAnalysis.h"
 void VirtualFunctionAnalysis::run(){
     
         vector<SgExpression*> callSites = SageInterface::querySubTree<SgExpression> (project, V_SgFunctionCallExp);
