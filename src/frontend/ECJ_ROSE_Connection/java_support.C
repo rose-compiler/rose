@@ -148,7 +148,7 @@ pushAndSetSourceCodePosition(JavaSourceCodePosition * pos, SgLocatedNode * sgnod
     // position information and tightening the constrains to have it always only be a small depth
     // (e.g. size == 1) would be possible in an iterative way as the implementation develops.
 
-     outputJavaState("At TOP of pushAndSetSourceCodePosition");
+  // outputJavaState("At TOP of pushAndSetSourceCodePosition");
      ROSE_ASSERT(pos != NULL);
 
      if (SgProject::get_verbose() > 4)
@@ -170,7 +170,7 @@ pushAndSetSourceCodePosition(JavaSourceCodePosition * pos, SgLocatedNode * sgnod
   // Check if there are too many on the stack (ROSE processing should clear them as they are used).
      ROSE_ASSERT(astJavaSourceCodePositionStack.size() < 10);
 
-     outputJavaState("At BOTTOM of pushAndSetSourceCodePosition");
+  // outputJavaState("At BOTTOM of pushAndSetSourceCodePosition");
    }
 
 void
