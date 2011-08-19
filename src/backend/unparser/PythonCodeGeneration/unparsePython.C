@@ -1046,3 +1046,20 @@ Unparse_Python::unparseYieldExpression(SgYieldExpression* yield_exp,
     unparseExpression(yield_exp->get_value(), info);
     if (atom) curprint(")");
 }
+
+bool
+Unparse_Python::requiresParentheses(SgExpression* expr, SgUnparse_Info& info) {
+    SgExpression* parent = isSgExpression(expr->get_parent());
+    if (parent == NULL) return false;
+
+    PrecedenceSpecifier exprPrecedence = getPrecedence(expr);
+    PrecedenceSpecifier parentPrecedence = getPrecedence(parent);
+    AssociativitySpecifier assoc = getAssociativity(parent);
+    if      (exprPrecedence == ROSE_UNPARSER_NO_PRECEDENCE)      return false;
+    else if (parentPrecedence == ROSE_UNPARSER_NO_PRECEDENCE)    return false;
+    else if (assoc == e_assoc_right && exprPrecedence >  parentPrecedence) return false;
+    else if (assoc == e_assoc_left  && exprPrecedence >= parentPrecedence) return false;
+    else if (assoc == e_assoc_left  && exprPrecedence <  parentPrecedence) return true;
+    else if (assoc == e_assoc_right && exprPrecedence <= parentPrecedence) return true;
+    else ROSE_ASSERT(!"cannot determine if parens are required in UnparseLanguageIndependentConstructs::requiresParentheses");
+}
