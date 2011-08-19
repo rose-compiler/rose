@@ -5637,7 +5637,13 @@ SgGlobal::get_qualified_name() const
   // DQ (10/11/2006): Under the new name qualification, we must traverse all the way
   // to global scope, and include global scope to get test2006_157.C correct.
   // return SgName ("");
-     return SgName ("::");
+
+     std::string globalScopeDelimiter;
+     if (SageInterface::is_Java_language())
+         globalScopeDelimiter = "";
+     else
+         globalScopeDelimiter = "::";
+     return SgName (globalScopeDelimiter);
    }
 
 SgName
