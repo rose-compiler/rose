@@ -1,3 +1,4 @@
+#include "sage3basic.h"
 #include <algorithm>
 #include "VirtualFunctionAnalysis.h"
 void VirtualFunctionAnalysis::run(){

@@ -1,3 +1,6 @@
+#ifndef TEMPLATE_ONLY
+#include "sage3basic.h"
+#endif
 #include "IntraProcDataFlowAnalysis.h"
           
 template<class Node, class Data>

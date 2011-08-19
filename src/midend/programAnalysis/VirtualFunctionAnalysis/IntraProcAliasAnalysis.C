@@ -1,3 +1,4 @@
+#include "sage3basic.h"
 #include "IntraProcAliasAnalysis.h"
 
 
