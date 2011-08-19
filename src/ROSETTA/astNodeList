@@ -574,6 +574,7 @@ SgSpawnStmt
 SgJavaThrowStatement
 SgJavaForEachStatement
 SgJavaSynchronizedStatement
+SgJavaParameterizedType
 SgSpecialFunctionModifier
 SgStatement
 SgStmtDeclarationStatement

@@ -6,12 +6,11 @@ public class test2011_42
    {
      public void foo()
         {
-       // List v; // = new ArrayList();
-          List v; // = new ArrayList();
+          List v;
           List w = new ArrayList();
 
-       // This is an error, since we don't include the member functions of List into the AST (must fix this).
-       // w.add("test");
+       // Call a member function of List, this is fixed now (but the graph is too large for dot to visualize).
+          w.add("test");
 
        // Integer i = (Integer)v.get(0); // Run time error
         }
