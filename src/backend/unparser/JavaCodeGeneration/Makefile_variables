@@ -6,8 +6,7 @@ unparseJavaCodeGeneration_la_sources=\
 
 
 unparseJavaCodeGeneration_includeHeaders=\
-	$(javaCodeGenerationPath)/unparseJava.h \
-	$(javaCodeGenerationPath)/unparseJava_types.h
+	$(javaCodeGenerationPath)/unparseJava.h
 
 
 unparseJavaCodeGeneration_extraDist=\
