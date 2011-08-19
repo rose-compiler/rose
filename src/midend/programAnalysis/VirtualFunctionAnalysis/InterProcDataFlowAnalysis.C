@@ -1,3 +1,4 @@
+#include "sage3basic.h"
 #include "InterProcDataFlowAnalysis.h"
 #include <boost/foreach.hpp>
 #define foreach BOOST_FOREACH

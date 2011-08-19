@@ -4,7 +4,6 @@
 #include "customFilteredCFG.h"
 #include "ClassHierarchyGraph.h"
 #include "CallGraph.h"
-#include <sage3basic.h>
 #include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/unordered_map.hpp>
