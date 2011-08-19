@@ -420,7 +420,7 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 1)
                System.out.println("Calling buildImplicitClassSupport for java.lang.System");
 
-       // We now read in classes on demand as they are references, if they are references.  All classes are read as 
+       // We now read in classes on demand as they are references, if there are references.  All classes are read as 
        // required to resolved all types in the program and the implicitly read classes.  Interestingly, there
        // are nearly 3000 classes in the 135 packages in the J2SE 1.4.2 standard class library (over 3000 classes 
        // in 165 packages in J2SE 5.0). Commercial class libraries that you might use add many more packages. 
@@ -1530,8 +1530,11 @@ class ecjASTVisitor extends ASTVisitor
              }
         */
 
-          String name                = new String(node.selector);
-          String associatedClassName = node.receiver.toString();
+          String name                        = new String(node.selector);
+          String associatedClassVariableName = node.receiver.toString();
+
+       // String associatedClassName = node.actualReceiverType.toString();
+          String associatedClassName = node.actualReceiverType.debugName();
 
           if (java_parser.verboseLevel > 0)
              {
@@ -1539,13 +1542,14 @@ class ecjASTVisitor extends ASTVisitor
 
                System.out.println("     --- function call name = " + name);
 
-               System.out.println("     --- function call from class name (binding)         = " + node.binding);
-               System.out.println("     --- function call from class name (receiver)        = " + node.receiver);
-               System.out.println("     --- function call from class name (associatedClass) = " + associatedClassName);
+               System.out.println("     --- function call from class name (binding)            = " + node.binding);
+               System.out.println("     --- function call from class name (receiver)           = " + node.receiver);
+               System.out.println("     --- function call from class name (associatedClassVar) = " + associatedClassVariableName);
+               System.out.println("     --- function call from class name (associatedClass)    = " + associatedClassName);
 
                if (node.typeArguments != null)
                   {
-                 // System.out.println("Sorry, not implemented in support for MessageSend: typeArguments");
+                    System.out.println("Sorry, not implemented in support for MessageSend: typeArguments");
                     for (int i = 0, typeArgumentsLength = node.typeArguments.length; i < typeArgumentsLength; i++)
                        {
                       // node.typeArguments[i].traverse(visitor, blockScope);
@@ -1555,7 +1559,7 @@ class ecjASTVisitor extends ASTVisitor
 
                if (node.arguments != null)
                   {
-                 // System.out.println("Sorry, not implemented in support for MessageSend: arguments");
+                    System.out.println("Sorry, not implemented in support for MessageSend: arguments");
                     int argumentsLength = node.arguments.length;
                     for (int i = 0; i < argumentsLength; i++)
                        {
@@ -1565,9 +1569,15 @@ class ecjASTVisitor extends ASTVisitor
                   }
              }
 
-       // Build this as an implicit class (if it is already built it will be detected adn not rebuilt).
+       // Build this as an implicit class (if it is already built it will be detected and not rebuilt).
        // System.out.println("Calling buildImplicitClassSupport for associatedClassName = " + associatedClassName);
-       // buildImplicitClassSupport(associatedClassName);
+
+       // DQ (8/18/2011): check if the name starts with "java", if so it is an implicit class.
+       // JavaParserSupport.buildImplicitClassSupport(associatedClassName);
+          if (associatedClassName.startsWith("java") == true)
+             {
+               JavaParserSupport.buildImplicitClassSupport(associatedClassName);
+             }
 
        // This is an error for test2001_04.java when println is found since it is not located in "java.lang" but is in java.io"
        // Maybe we need to process ""java.lang.System" and "java.io.String" and a few other classes explicitly.
@@ -1576,8 +1586,11 @@ class ecjASTVisitor extends ASTVisitor
        // JavaParserSupport.buildImplicitClassSupport("java.lang.System");
        // System.out.println("DONE: Calling buildImplicitClassSupport for associatedClassName = " + associatedClassName);
 
+       // System.out.println("Exiting after test...");
+       // System.exit(1);
+
        // java_parser.cactionExplicitConstructorCall("super");
-          java_parser.cactionMessageSend(name,associatedClassName, this.createJavaToken(node));
+          java_parser.cactionMessageSend(name,associatedClassVariableName, this.createJavaToken(node));
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (MessageSend,BlockScope)");
@@ -1821,7 +1834,8 @@ class ecjASTVisitor extends ASTVisitor
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(ParameterizedSingleTypeReference  node, BlockScope scope) {
+     public boolean visit(ParameterizedSingleTypeReference  node, BlockScope scope)
+        {
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of visit (ParameterizedSingleTypeReference,BlockScope)");
 
@@ -1830,9 +1844,11 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (ParameterizedSingleTypeReference,BlockScope)");
 
-         return true; // do nothing by  node, keep traversing
-     }
-     public boolean visit(ParameterizedSingleTypeReference  node, ClassScope scope) {
+          return true; // do nothing by  node, keep traversing
+        }
+
+     public boolean visit(ParameterizedSingleTypeReference  node, ClassScope scope)
+        {
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of visit (ParameterizedSingleTypeReference,ClassScope)");
 
@@ -1841,8 +1857,8 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (ParameterizedSingleTypeReference,ClassScope)");
 
-         return true; // do nothing by  node, keep traversing
-     }
+          return true; // do nothing by  node, keep traversing
+        }
 
      public boolean visit(PostfixExpression  node, BlockScope scope)
         {
@@ -2150,6 +2166,9 @@ class ecjASTVisitor extends ASTVisitor
         {
        // java_parser.cactionSingleTypeReference("abc");
 
+/*
+          Moved to the endVisit() function.
+
           if (node.resolvedType != null)
              {
                java_parser.cactionSingleTypeReference("SingleTypeReference_block_abc", this.createJavaToken(node));
@@ -2162,12 +2181,14 @@ class ecjASTVisitor extends ASTVisitor
 
             // DQ (7/17/2011): I think we need a typeReferenceExpression specific to Java.
             // System.out.println("--- We need to build a reference to a type as an expression to be used in instanceof operator (for expressions)");
+
+               JavaParserSupport.generateType(node);
              }
             else
              {
                System.out.println("Sorry, not implemented SingleTypeReference: node.resolvedType == NULL");
              }
-
+*/
           return true; // do nothing by  node, keep traversing
         }
 
@@ -2425,7 +2446,34 @@ class ecjASTVisitor extends ASTVisitor
   // DQ (3/25/2011): I think we do need them.
      public void endVisit(AllocationExpression node, BlockScope scope)
         {
-        // do nothing by default
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Inside of endVisit (AllocationExpression,BlockScope)");
+
+       // String nameString = new String(node.type);
+          String nameString = node.type.toString();
+          if (java_parser.verboseLevel > 0)
+             {
+               System.out.println(" name      = " + nameString);
+               System.out.println(" type      = " + node.type);
+             }
+
+          if (node.typeArguments != null)
+             {
+               for (int i = 0, typeArgumentsLength = node.typeArguments.length; i < typeArgumentsLength; i++)
+                  {
+
+                  }
+             }
+
+       // Generate the associated type and Push it onto the stack
+          JavaParserSupport.generateType(node.type);
+
+       // Call the Java side of the JNI function.
+          java_parser.cactionAllocationExpressionEnd(nameString,this.createJavaToken(node));
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (AllocationExpression,BlockScope)");
+
         }
 
      public void endVisit(AND_AND_Expression  node, BlockScope scope)
@@ -3130,7 +3178,15 @@ class ecjASTVisitor extends ASTVisitor
 
      public void endVisit(ParameterizedSingleTypeReference  node, BlockScope scope)
         {
-       // do nothing  by default
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (ParameterizedSingleTypeReference,BlockScope)");
+
+          int numberOfTypeArguments = 0;
+          if (node.typeArguments != null)
+               numberOfTypeArguments = node.typeArguments.length;
+
+          java_parser.cactionParameterizedSingleTypeReferenceEnd(numberOfTypeArguments,this.createJavaToken(node));
+
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (ParameterizedSingleTypeReference,BlockScope)");
         }
@@ -3264,6 +3320,26 @@ class ecjASTVisitor extends ASTVisitor
        // do nothing  by default
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (SingleTypeReference,BlockScope)");
+
+          if (node.resolvedType != null)
+             {
+               java_parser.cactionSingleTypeReference("SingleTypeReference_block_abc", this.createJavaToken(node));
+            // char[][] char_string = node.getTypeName();
+            // System.out.println(char_string);
+            // String typename = new String(node.getTypeName().toString());
+            // String typename = node.getTypeName().toString();
+               String typename = node.toString();
+               System.out.println("Sorry, not implemented SingleTypeReference (node.resolvedType != NULL): typename = " + typename);
+
+            // DQ (7/17/2011): I think we need a typeReferenceExpression specific to Java.
+            // System.out.println("--- We need to build a reference to a type as an expression to be used in instanceof operator (for expressions)");
+
+               JavaParserSupport.generateType(node);
+             }
+            else
+             {
+               System.out.println("Sorry, not implemented SingleTypeReference: node.resolvedType == NULL");
+             }
         }
 
      public void endVisit(SingleTypeReference node, ClassScope scope)
