@@ -2874,6 +2874,10 @@ Grammar::setUpStatements ()
      C_PreprocessorDirectiveStatement.setDataPrototype     ( "std::string"   , "directiveString", "= \"\"",
                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // negara1 (08/12/2011): Added header file body as a field of include directive statement.
+     IncludeDirectiveStatement.setDataPrototype( "SgHeaderFileBody*", "headerFileBody", "= NULL",
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     
 #if 0
   // DQ (11/23/2008): I am unclear why this is here, these are not used anywhere.
      IncludeDirectiveStatement.setDataPrototype     ( "std::string"   , "dummyString3", "= \"\"",

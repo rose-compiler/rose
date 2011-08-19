@@ -425,6 +425,7 @@ SgIntVal
 SgIntegerDivideOp
 SgIntegerDivideAssignOp
 SgInterfaceBody
+SgHeaderFileBody
 SgInterfaceStatement
 SgInterfaceSymbol
 SgIntrinsicSymbol

@@ -8,8 +8,17 @@
 #ifndef UNPARSER_LANGUAGE_INDEPENDENT_SUPPORT
 #define UNPARSER_LANGUAGE_INDEPENDENT_SUPPORT
 
-
 #include "unparser.h"
+
+/* support for handling precedence and associativity */
+typedef int PrecedenceSpecifier;
+#define ROSE_UNPARSER_NO_PRECEDENCE -1
+enum AssociativitySpecifier {
+    e_assoc_none = 0,
+    e_assoc_right,
+    e_assoc_left,
+    e_assoc_last
+};
 
 // DQ (8/13/2007): This should not be in a header file!
 // using namespace std;
@@ -378,6 +387,13 @@ class UnparseLanguageIndependentConstructs
        // This should go into the unparser.h, since it is an interface function for the unparser generally.
       //! begin the unparser (unparser.C)
       //  void run_unparser();
+      //
+
+       // Support for language-independent precedence
+          virtual bool requiresParentheses(SgExpression* expr);
+          virtual PrecedenceSpecifier getPrecedence(SgExpression* exp);
+          virtual AssociativitySpecifier getAssociativity(SgExpression* exp);
+
 };
 
 #endif

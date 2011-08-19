@@ -5284,6 +5284,9 @@ HEADER_APPLICATION_PROJECT_START
           const SgStringList & get_excludeFileList() const;
           void set_excludeFileList(const SgStringList & excludeFileList);
 
+       // negara1 (07/29/2011)
+          std::string findIncludedFile(PreprocessingInfo* preprocessingInfo);
+
 #if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
 #else
        // DQ (1/21/2010): In this case we want to support the previous interface so that we can transition easily.
@@ -9516,15 +9519,21 @@ SgName::assembleQualifiedName(const SgName & scopeQualifiedName, const SgName & 
         }
        else 
         {
+          std::string scopeDelimiter;
+          if (SageInterface::is_Java_language())
+              scopeDelimiter = ".";
+          else
+              scopeDelimiter = "::";
+
        // Trap out the case of global scope to avoid building "::::"
-          if ( scopeQualifiedName == "::" )
+          if ( scopeQualifiedName == scopeDelimiter )
              {
             // Avoid building "::::"
                returnName = scopeQualifiedName.getString() + localName.getString();
              }
             else
              {
-               returnName = scopeQualifiedName.getString() + "::" + localName.getString();
+               returnName = scopeQualifiedName.getString() + scopeDelimiter + localName.getString();
              }
         }
 

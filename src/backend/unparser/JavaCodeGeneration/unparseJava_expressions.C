@@ -23,22 +23,19 @@ using namespace std;
 
 
 void
-JavaCodeGeneration_locatedNode::unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_Info& info)
+Unparse_Java::unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_Info& info)
    {
   // This is the Java specific expression code generation
 
 #if 0
-     printf ("In JavaCodeGeneration_locatedNode::unparseLanguageSpecificExpression ( expr = %p = %s ) language = %s \n",expr,expr->class_name().c_str(),languageName().c_str());
+     printf ("In Unparse_Java::unparseLanguageSpecificExpression ( expr = %p = %s ) language = %s \n",expr,expr->class_name().c_str(),languageName().c_str());
 #endif
 
      switch (expr->variant())
         {
           case UNARY_EXPRESSION:  { unparseUnaryExpr (expr, info); break; }
           case BINARY_EXPRESSION: { unparseBinaryExpr(expr, info); break; }
-          case VAR_REF: { unparseVarRef(expr, info); break; }
           case CLASSNAME_REF: { unparseClassRef(expr, info); break; }
-          case FUNCTION_REF: { unparseFuncRef(expr, info); break; }
-          case MEMBER_FUNCTION_REF: { unparseMFuncRef(expr, info); break; }
 
           case UNSIGNED_INT_VAL: { unparseUIntVal(expr, info); break; }
           case LONG_INT_VAL: { unparseLongIntVal(expr, info); break; }
@@ -49,30 +46,6 @@ JavaCodeGeneration_locatedNode::unparseLanguageSpecificExpression(SgExpression* 
           case LONG_DOUBLE_VAL: { unparseLongDoubleVal(expr, info); break; }
 
           case FUNC_CALL: { unparseFuncCall(expr, info); break; }
-          case POINTST_OP: { unparsePointStOp(expr, info); break; }
-          case RECORD_REF: { unparseRecRef(expr, info); break; }
-          case DOTSTAR_OP: { unparseDotStarOp(expr, info); break; }
-          case ARROWSTAR_OP: { unparseArrowStarOp(expr, info); break; }
-          case EQ_OP: { unparseEqOp(expr, info); break; }
-          case LT_OP: { unparseLtOp(expr, info); break; }
-          case GT_OP: { unparseGtOp(expr, info); break; }
-          case NE_OP: { unparseNeOp(expr, info); break; }
-          case LE_OP: { unparseLeOp(expr, info); break; }
-          case GE_OP: { unparseGeOp(expr, info); break; }
-          case ADD_OP: { unparseAddOp(expr, info); break; }
-          case SUBT_OP: { unparseSubtOp(expr, info); break; }
-          case MULT_OP: { unparseMultOp(expr, info); break; }
-          case DIV_OP: { unparseDivOp(expr, info); break; }
-          case INTEGER_DIV_OP: { unparseIntDivOp(expr, info); break; }
-          case MOD_OP: { unparseModOp(expr, info); break; }
-          case AND_OP: { unparseAndOp(expr, info); break; }
-          case OR_OP: { unparseOrOp(expr, info); break; }
-          case BITXOR_OP: { unparseBitXOrOp(expr, info); break; }
-          case BITAND_OP: { unparseBitAndOp(expr, info); break; }
-          case BITOR_OP: { unparseBitOrOp(expr, info); break; }
-          case COMMA_OP: { unparseCommaOp(expr, info); break; }
-          case LSHIFT_OP: { unparseLShiftOp(expr, info); break; }
-          case RSHIFT_OP: { unparseRShiftOp(expr, info); break; }
           case UNARY_MINUS_OP: { unparseUnaryMinusOp(expr, info); break; }
           case UNARY_ADD_OP: { unparseUnaryAddOp(expr, info); break; }
 
@@ -80,69 +53,167 @@ JavaCodeGeneration_locatedNode::unparseLanguageSpecificExpression(SgExpression* 
 
           case TYPEID_OP: { unparseTypeIdOp(expr, info); break; }
           case NOT_OP: { unparseNotOp(expr, info); break; }
-          case DEREF_OP: { unparseDerefOp(expr, info); break; }
-          case ADDRESS_OP: { unparseAddrOp(expr, info); break; }
           case MINUSMINUS_OP: { unparseMinusMinusOp(expr, info); break; }
           case PLUSPLUS_OP: { unparsePlusPlusOp(expr, info); break; }
           case BIT_COMPLEMENT_OP: { unparseBitCompOp(expr, info); break; }
-          case REAL_PART_OP: { unparseRealPartOp(expr, info); break; }
-          case IMAG_PART_OP: { unparseImagPartOp(expr, info); break; }
-          case CONJUGATE_OP: { unparseConjugateOp(expr, info); break; }
           case EXPR_CONDITIONAL: { unparseExprCond(expr, info); break; }
           case CAST_OP:                 { unparseCastOp(expr, info); break; }
           case ARRAY_OP:                { unparseArrayOp(expr, info); break; }
           case NEW_OP:                  { unparseNewOp(expr, info); break; }
           case DELETE_OP:               { unparseDeleteOp(expr, info); break; }
           case THIS_NODE:               { unparseThisNode(expr, info); break; }
-          case SCOPE_OP:                { unparseScopeOp(expr, info); break; }
-          case ASSIGN_OP:               { unparseAssnOp(expr, info); break; }
-          case PLUS_ASSIGN_OP:          { unparsePlusAssnOp(expr, info); break; }
-          case MINUS_ASSIGN_OP:         { unparseMinusAssnOp(expr, info); break; }
-          case AND_ASSIGN_OP:           { unparseAndAssnOp(expr, info); break; }
-          case IOR_ASSIGN_OP:           { unparseIOrAssnOp(expr, info); break; }
-          case MULT_ASSIGN_OP:          { unparseMultAssnOp(expr, info); break; }
-          case DIV_ASSIGN_OP:           { unparseDivAssnOp(expr, info); break; }
-          case MOD_ASSIGN_OP:           { unparseModAssnOp(expr, info); break; }
-          case XOR_ASSIGN_OP:           { unparseXorAssnOp(expr, info); break; }
-          case LSHIFT_ASSIGN_OP:        { unparseLShiftAssnOp(expr, info); break; }
-          case RSHIFT_ASSIGN_OP:        { unparseRShiftAssnOp(expr, info); break; }
+
           case TYPE_REF:                { unparseTypeRef(expr, info); break; }
           case EXPR_INIT:               { unparseExprInit(expr, info); break; }
           case AGGREGATE_INIT:          { unparseAggrInit(expr, info); break; }
           case CONSTRUCTOR_INIT:        { unparseConInit(expr, info); break; }
           case ASSIGN_INIT:             { unparseAssnInit(expr, info); break; }
           case THROW_OP:                { unparseThrowOp(expr, info); break; }
-       // case VA_START_OP:             { unparseVarArgStartOp(expr, info); break; }
-       // case VA_START_ONE_OPERAND_OP: { unparseVarArgStartOneOperandOp(expr, info); break; }
-       // case VA_OP:                   { unparseVarArgOp(expr, info); break; }
-       // case VA_END_OP:               { unparseVarArgEndOp(expr, info); break; }
-       // case VA_COPY_OP:              { unparseVarArgCopyOp(expr, info); break; }
-       // case NULL_EXPR:               { unparseNullExpression(expr, info); break; }
-       // case STMT_EXPR:               { unparseStatementExpression(expr, info); break; }
-       // case ASM_OP:                  { unparseAsmOp (expr, info); break; }
           case DESIGNATED_INITIALIZER:  { unparseDesignatedInitializer(expr, info); break; }
           case PSEUDO_DESTRUCTOR_REF:   { unparsePseudoDtorRef(expr, info); break; }
+          case JAVA_INSTANCEOF_OP:      { unparseJavaInstanceOfOp(expr, info); break; }
 
           default:
-             {
-            // printf ("Default reached in switch statement for unparsing expressions! expr = %p = %s \n",expr,expr->class_name().c_str());
-               printf ("Default reached in switch statement for unparsing expressions! expr = %p = %s \n",expr,expr->class_name().c_str());
+
+     // migrate the above switch stmt to use variantT() instead on variant(). The former has much
+     // more consistent names
+     switch (expr->variantT()) {
+         case V_SgPlusAssignOp:
+         case V_SgMinusAssignOp:
+         case V_SgMultAssignOp:
+         case V_SgDivAssignOp:
+         case V_SgModAssignOp:
+         case V_SgAndAssignOp:
+         case V_SgXorAssignOp:
+         case V_SgIorAssignOp:
+         case V_SgRshiftAssignOp:
+         case V_SgLshiftAssignOp:
+         case V_SgJavaUnsignedRshiftAssignOp:
+             unparseCompoundAssignOp( isSgCompoundAssignOp(expr), info ); break;
+
+         case V_SgAddOp:
+         case V_SgAndOp:
+         case V_SgAssignOp:
+         case V_SgBitAndOp:
+         case V_SgBitOrOp:
+         case V_SgBitXorOp:
+         case V_SgDivideOp:
+         case V_SgDotExp:
+         case V_SgEqualityOp:
+         case V_SgGreaterOrEqualOp:
+         case V_SgGreaterThanOp:
+         case V_SgJavaUnsignedRshiftOp:
+         case V_SgLessOrEqualOp:
+         case V_SgLessThanOp:
+         case V_SgLshiftOp:
+         case V_SgModOp:
+         case V_SgMultiplyOp:
+         case V_SgOrOp:
+         case V_SgNotEqualOp:
+         case V_SgRshiftOp:
+         case V_SgSubtractOp:
+             unparseBinaryOp( isSgBinaryOp(expr), info ); break;
+
+         case V_SgVarRefExp:             { unparseVarRef(expr, info); break; }
+         case V_SgFunctionRefExp:        { unparseFuncRef(expr, info); break; }
+         case V_SgMemberFunctionRefExp:  { unparseMFuncRef(expr, info); break; }
+
+         default:
+               cout << "error: unparseExpression() is unimplemented for " << expr->class_name() << endl;
                ROSE_ASSERT(false);
                break;
-             }
-        }
+     }
+    }
    }
+
+PrecedenceSpecifier
+Unparse_Java::getPrecedence(SgExpression* expr) {
+    switch (expr->variantT()) {
+        case V_SgPlusPlusOp:
+        case V_SgMinusMinusOp:
+            return (isSgUnaryOp(expr)->get_mode() == SgUnaryOp::postfix) ? 14 : 13;
+
+        case V_SgUnaryAddOp:                   return 13;
+        case V_SgMinusOp:                      return 13;
+        case V_SgBitComplementOp:              return 13;
+        case V_SgNotOp:                        return 13;
+
+        case V_SgMultiplyOp:                   return 12;
+        case V_SgDivideOp:                     return 12;
+        case V_SgModOp:                        return 12;
+
+        case V_SgAddOp:                        return 11;
+        case V_SgSubtractOp:                   return 11;
+
+        case V_SgRshiftOp:                     return 10;
+        case V_SgLshiftOp:                     return 10;
+        case V_SgJavaUnsignedRshiftOp:         return 10;
+
+        case V_SgLessThanOp:                   return 9;
+        case V_SgGreaterThanOp:                return 9;
+        case V_SgLessOrEqualOp:                return 9;
+        case V_SgGreaterOrEqualOp:             return 9;
+        case V_SgJavaInstanceOfOp:             return 9;
+
+        case V_SgEqualityOp:                   return 8;
+        case V_SgNotEqualOp:                   return 8;
+
+        case V_SgBitAndOp:                     return 7;
+        case V_SgBitXorOp:                     return 6;
+        case V_SgBitOrOp:                      return 5;
+        case V_SgAndOp:                        return 4;
+        case V_SgOrOp:                         return 3;
+        case V_SgConditionalExp:               return 2;
+
+        case V_SgAssignOp:                     return 1;
+        case V_SgPlusAssignOp:                 return 1;
+        case V_SgMinusAssignOp:                return 1;
+        case V_SgMultAssignOp:                 return 1;
+        case V_SgDivAssignOp:                  return 1;
+        case V_SgModAssignOp:                  return 1;
+        case V_SgAndAssignOp:                  return 1;
+        case V_SgXorAssignOp:                  return 1;
+        case V_SgIorAssignOp:                  return 1;
+        case V_SgRshiftAssignOp:               return 1;
+        case V_SgLshiftAssignOp:               return 1;
+        case V_SgJavaUnsignedRshiftAssignOp:   return 1;
+
+        default:                               return ROSE_UNPARSER_NO_PRECEDENCE;
+    }
+}
+
+AssociativitySpecifier
+Unparse_Java::getAssociativity(SgExpression* expr) {
+    switch (expr->variantT()) {
+        case V_SgAssignOp:
+        case V_SgPlusAssignOp:
+        case V_SgMinusAssignOp:
+        case V_SgMultAssignOp:
+        case V_SgDivAssignOp:
+        case V_SgModAssignOp:
+        case V_SgAndAssignOp:
+        case V_SgXorAssignOp:
+        case V_SgIorAssignOp:
+        case V_SgRshiftAssignOp:
+        case V_SgLshiftAssignOp:
+        case V_SgJavaUnsignedRshiftAssignOp:
+            return e_assoc_right;
+
+        default:
+            return e_assoc_left;
+    }
+}
 
 
 // DQ (2/16/2005): This function has been moved to this file from unparse_type.C
 void
-JavaCodeGeneration_locatedNode::unparseTemplateName(SgTemplateInstantiationDecl* templateInstantiationDeclaration, SgUnparse_Info& info)
+Unparse_Java::unparseTemplateName(SgTemplateInstantiationDecl* templateInstantiationDeclaration, SgUnparse_Info& info)
    {
      ROSE_ASSERT (templateInstantiationDeclaration != NULL);
    }
 
 void
-JavaCodeGeneration_locatedNode::unparseTemplateParameter(SgTemplateParameter* templateParameter, SgUnparse_Info& info)
+Unparse_Java::unparseTemplateParameter(SgTemplateParameter* templateParameter, SgUnparse_Info& info)
    {
      ROSE_ASSERT(templateParameter != NULL);
      printf ("unparseTemplateParameter(): Sorry, not implemented! \n");
@@ -151,14 +222,14 @@ JavaCodeGeneration_locatedNode::unparseTemplateParameter(SgTemplateParameter* te
 
 
 void
-JavaCodeGeneration_locatedNode::unparseTemplateArgument(SgTemplateArgument* templateArgument, SgUnparse_Info& info)
+Unparse_Java::unparseTemplateArgument(SgTemplateArgument* templateArgument, SgUnparse_Info& info)
    {
       ROSE_ASSERT(templateArgument != NULL);
    }
 
 
 void
-JavaCodeGeneration_locatedNode::unparseUnaryOperator(SgExpression* expr, const char* op, SgUnparse_Info & info)
+Unparse_Java::unparseUnaryOperator(SgExpression* expr, const char* op, SgUnparse_Info & info)
    {
   //
   // Flag to keep to original state of the "this" option
@@ -187,35 +258,20 @@ JavaCodeGeneration_locatedNode::unparseUnaryOperator(SgExpression* expr, const c
    }
 
 void
-JavaCodeGeneration_locatedNode::unparseBinaryOperator(SgExpression* expr, const char* op, SgUnparse_Info& info)
-   {
-     SgUnparse_Info newinfo(info);
-     newinfo.set_operator_name(op);
-#if 0
-     curprint ( string("\n /* Inside of unparseBinaryOperator(") + expr->sage_class_name() + "," + op + ",SgUnparse_Info) */ \n");
-#endif
-     unparseBinaryExpr(expr, newinfo);
-   }
-
-
-void
-JavaCodeGeneration_locatedNode::unparseAssnExpr(SgExpression* expr, SgUnparse_Info& info) 
+Unparse_Java::unparseAssnExpr(SgExpression* expr, SgUnparse_Info& info) 
    {
    }
 
 void
-JavaCodeGeneration_locatedNode::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
-   {
+Unparse_Java::unparseVarRef(SgExpression* expr, SgUnparse_Info& info) {
      SgVarRefExp* var_ref = isSgVarRefExp(expr);
      ROSE_ASSERT(var_ref != NULL);
 
-#if 0
-     printf ("Leaving Unparse_ExprStmt::unparseVarRef() \n");
-#endif
-   }
+     unparseName(var_ref->get_symbol()->get_name(), info);
+}
 
 void
-JavaCodeGeneration_locatedNode::unparseClassRef(SgExpression* expr, SgUnparse_Info& info)
+Unparse_Java::unparseClassRef(SgExpression* expr, SgUnparse_Info& info)
    {
      SgClassNameRefExp* classname_ref = isSgClassNameRefExp(expr);
      ROSE_ASSERT(classname_ref != NULL);
@@ -224,23 +280,27 @@ JavaCodeGeneration_locatedNode::unparseClassRef(SgExpression* expr, SgUnparse_In
    }
 
 void
-JavaCodeGeneration_locatedNode::unparseFuncRef(SgExpression* expr, SgUnparse_Info& info)
+Unparse_Java::unparseFuncRef(SgExpression* expr, SgUnparse_Info& info)
    {
      SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
      ROSE_ASSERT(func_ref != NULL);
+
+     cout << "unparser: warning. SgFunctionRef should be SgMemberFunctionRef: "
+          << func_ref->get_symbol()->get_name().getString() << endl;
+     unparseName(func_ref->get_symbol()->get_name(), info);
    }
 
 void
-JavaCodeGeneration_locatedNode::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
+Unparse_Java::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
    {
-#if 0
-     printf ("Leaving unparseMFuncRef \n");
-     curprint ( "\n/* leaving unparseMFuncRef */ \n");
-#endif
+     SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
+     ROSE_ASSERT(mfunc_ref != NULL);
+
+     unparseName(mfunc_ref->get_symbol()->get_name(), info);
    }
 
 void
-JavaCodeGeneration_locatedNode::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
+Unparse_Java::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
    {
      SgStringVal* str_val = isSgStringVal(expr);
      ROSE_ASSERT(str_val != NULL);
@@ -279,7 +339,7 @@ JavaCodeGeneration_locatedNode::unparseStringVal(SgExpression* expr, SgUnparse_I
 
 
 void
-JavaCodeGeneration_locatedNode::unparseUIntVal(SgExpression* expr, SgUnparse_Info& info)
+Unparse_Java::unparseUIntVal(SgExpression* expr, SgUnparse_Info& info)
    {
      SgUnsignedIntVal* uint_val = isSgUnsignedIntVal(expr);
      ROSE_ASSERT(uint_val != NULL);
@@ -300,7 +360,7 @@ JavaCodeGeneration_locatedNode::unparseUIntVal(SgExpression* expr, SgUnparse_Inf
    }
 
 void
-JavaCodeGeneration_locatedNode::unparseLongIntVal(SgExpression* expr, SgUnparse_Info& info)
+Unparse_Java::unparseLongIntVal(SgExpression* expr, SgUnparse_Info& info)
    {
      SgLongIntVal* longint_val = isSgLongIntVal(expr);
      ROSE_ASSERT(longint_val != NULL);
@@ -321,7 +381,7 @@ JavaCodeGeneration_locatedNode::unparseLongIntVal(SgExpression* expr, SgUnparse_
    }
 
 void
-JavaCodeGeneration_locatedNode::unparseLongLongIntVal(SgExpression* expr, SgUnparse_Info& info)
+Unparse_Java::unparseLongLongIntVal(SgExpression* expr, SgUnparse_Info& info)
    {
      SgLongLongIntVal* longlongint_val = isSgLongLongIntVal(expr);
      ROSE_ASSERT(longlongint_val != NULL);
@@ -342,7 +402,7 @@ JavaCodeGeneration_locatedNode::unparseLongLongIntVal(SgExpression* expr, SgUnpa
    }
 
 void
-JavaCodeGeneration_locatedNode::unparseULongLongIntVal(SgExpression* expr, SgUnparse_Info& info)
+Unparse_Java::unparseULongLongIntVal(SgExpression* expr, SgUnparse_Info& info)
    {
      SgUnsignedLongLongIntVal* ulonglongint_val = isSgUnsignedLongLongIntVal(expr);
      ROSE_ASSERT(ulonglongint_val != NULL);
@@ -363,7 +423,7 @@ JavaCodeGeneration_locatedNode::unparseULongLongIntVal(SgExpression* expr, SgUnp
    }
 
 void
-JavaCodeGeneration_locatedNode::unparseULongIntVal(SgExpression* expr, SgUnparse_Info& info)
+Unparse_Java::unparseULongIntVal(SgExpression* expr, SgUnparse_Info& info)
    {
      SgUnsignedLongVal* ulongint_val = isSgUnsignedLongVal(expr);
      ROSE_ASSERT(ulongint_val != NULL);
@@ -384,7 +444,7 @@ JavaCodeGeneration_locatedNode::unparseULongIntVal(SgExpression* expr, SgUnparse
    }
 
 void
-JavaCodeGeneration_locatedNode::unparseFloatVal(SgExpression* expr, SgUnparse_Info& info)
+Unparse_Java::unparseFloatVal(SgExpression* expr, SgUnparse_Info& info)
    {
      SgFloatVal* float_val = isSgFloatVal(expr);
      ROSE_ASSERT(float_val != NULL);
@@ -459,7 +519,7 @@ JavaCodeGeneration_locatedNode::unparseFloatVal(SgExpression* expr, SgUnparse_In
 
 
 void
-JavaCodeGeneration_locatedNode::unparseLongDoubleVal(SgExpression* expr, SgUnparse_Info& info)
+Unparse_Java::unparseLongDoubleVal(SgExpression* expr, SgUnparse_Info& info)
    {
      SgLongDoubleVal* longdbl_val = isSgLongDoubleVal(expr);
      ROSE_ASSERT(longdbl_val != NULL);
@@ -507,7 +567,7 @@ JavaCodeGeneration_locatedNode::unparseLongDoubleVal(SgExpression* expr, SgUnpar
    }
 
 void
-JavaCodeGeneration_locatedNode::unparseComplexVal(SgExpression* expr, SgUnparse_Info& info)
+Unparse_Java::unparseComplexVal(SgExpression* expr, SgUnparse_Info& info)
    {
      SgComplexVal* complex_val = isSgComplexVal(expr);
      ROSE_ASSERT(complex_val != NULL);
@@ -539,52 +599,22 @@ JavaCodeGeneration_locatedNode::unparseComplexVal(SgExpression* expr, SgUnparse_
 //  is turned on. 
 //-----------------------------------------------------------------------------------
 void
-JavaCodeGeneration_locatedNode::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
+Unparse_Java::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
    {
-#if 0
-     printf ("In JavaCodeGeneration_locatedNode::unparseFuncCall expr = %p unp->opt.get_overload_opt() = %s \n",expr,(unp->opt.get_overload_opt() == true) ? "true" : "false");
-     curprint ( "\n/* In unparseFuncCall */ \n");
-#endif
-
      SgFunctionCallExp* func_call = isSgFunctionCallExp(expr);
      ROSE_ASSERT(func_call != NULL);
-     SgUnparse_Info newinfo(info);
 
-#if 0
-  // printf ("Leaving JavaCodeGeneration_locatedNode::unparseFuncCall \n");
-     curprint ( "\n/* Leaving JavaCodeGeneration_locatedNode::unparseFuncCall */ \n");
-#endif
+     unparseExpression(func_call->get_function(), info);
+     curprint("(");
+     unparseExpression(func_call->get_args(), info);
+     curprint(")");
    }
 
-void JavaCodeGeneration_locatedNode::unparsePointStOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, "->", info); }
-void JavaCodeGeneration_locatedNode::unparseRecRef(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, ".",info); }
-void JavaCodeGeneration_locatedNode::unparseDotStarOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, ".*", info); }
-void JavaCodeGeneration_locatedNode::unparseArrowStarOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, "->*", info); }
-void JavaCodeGeneration_locatedNode::unparseEqOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, "==", info); }
-void JavaCodeGeneration_locatedNode::unparseLtOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, "<", info); }
-void JavaCodeGeneration_locatedNode::unparseGtOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, ">", info); }
-void JavaCodeGeneration_locatedNode::unparseNeOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, "!=", info); }
-void JavaCodeGeneration_locatedNode::unparseLeOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, "<=", info); }
-void JavaCodeGeneration_locatedNode::unparseGeOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, ">=", info); }
-void JavaCodeGeneration_locatedNode::unparseAddOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, "+", info); }
-void JavaCodeGeneration_locatedNode::unparseSubtOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, "-", info); }
-void JavaCodeGeneration_locatedNode::unparseMultOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, "*", info); }
-void JavaCodeGeneration_locatedNode::unparseDivOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, "/", info); }
-void JavaCodeGeneration_locatedNode::unparseIntDivOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, "/", info); }
-void JavaCodeGeneration_locatedNode::unparseModOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, "%", info); }
-void JavaCodeGeneration_locatedNode::unparseAndOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, "&&", info); }
-void JavaCodeGeneration_locatedNode::unparseOrOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, "||", info); }
-void JavaCodeGeneration_locatedNode::unparseBitXOrOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, "^", info); }
-void JavaCodeGeneration_locatedNode::unparseBitAndOp(SgExpression* expr, SgUnparse_Info& info) {unparseBinaryOperator(expr, "&", info); }
-void JavaCodeGeneration_locatedNode::unparseBitOrOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, "|", info); }
-void JavaCodeGeneration_locatedNode::unparseCommaOp(SgExpression* expr, SgUnparse_Info& info) { curprint("("); unparseBinaryOperator(expr, ",", info); curprint(")"); }
-void JavaCodeGeneration_locatedNode::unparseLShiftOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, "<<", info); }
-void JavaCodeGeneration_locatedNode::unparseRShiftOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, ">>", info); }
-void JavaCodeGeneration_locatedNode::unparseUnaryMinusOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "-", info); }
-void JavaCodeGeneration_locatedNode::unparseUnaryAddOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "+", info); }
+void Unparse_Java::unparseUnaryMinusOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "-", info); }
+void Unparse_Java::unparseUnaryAddOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "+", info); }
 
 void
-JavaCodeGeneration_locatedNode::unparseSizeOfOp(SgExpression* expr, SgUnparse_Info & info)
+Unparse_Java::unparseSizeOfOp(SgExpression* expr, SgUnparse_Info & info)
    {
      SgSizeOfOp* sizeof_op = isSgSizeOfOp(expr);
      ROSE_ASSERT(sizeof_op != NULL);
@@ -609,7 +639,7 @@ JavaCodeGeneration_locatedNode::unparseSizeOfOp(SgExpression* expr, SgUnparse_In
    }
 
 void
-JavaCodeGeneration_locatedNode::unparseTypeIdOp(SgExpression* expr, SgUnparse_Info& info)
+Unparse_Java::unparseTypeIdOp(SgExpression* expr, SgUnparse_Info& info)
    {
      SgTypeIdOp* typeid_op = isSgTypeIdOp(expr);
      ROSE_ASSERT(typeid_op != NULL);
@@ -632,19 +662,14 @@ JavaCodeGeneration_locatedNode::unparseTypeIdOp(SgExpression* expr, SgUnparse_In
       curprint ( ")");
    }
 
-void JavaCodeGeneration_locatedNode::unparseNotOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "!", info); }
-void JavaCodeGeneration_locatedNode::unparseDerefOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "*", info); }
-void JavaCodeGeneration_locatedNode::unparseAddrOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "&", info); }
-void JavaCodeGeneration_locatedNode::unparseMinusMinusOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "--", info); }
-void JavaCodeGeneration_locatedNode::unparsePlusPlusOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "++", info); }
-void JavaCodeGeneration_locatedNode::unparseAbstractOp(SgExpression* expr, SgUnparse_Info& info) {}
-void JavaCodeGeneration_locatedNode::unparseBitCompOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "~", info); }
-void JavaCodeGeneration_locatedNode::unparseRealPartOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "__real__ ", info); }
-void JavaCodeGeneration_locatedNode::unparseImagPartOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "__imag__ ", info); }
-void JavaCodeGeneration_locatedNode::unparseConjugateOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "~", info); }
+void Unparse_Java::unparseNotOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "!", info); }
+void Unparse_Java::unparseMinusMinusOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "--", info); }
+void Unparse_Java::unparsePlusPlusOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "++", info); }
+void Unparse_Java::unparseAbstractOp(SgExpression* expr, SgUnparse_Info& info) {}
+void Unparse_Java::unparseBitCompOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "~", info); }
 
 void
-JavaCodeGeneration_locatedNode::unparseExprCond(SgExpression* expr, SgUnparse_Info& info)
+Unparse_Java::unparseExprCond(SgExpression* expr, SgUnparse_Info& info)
    {
      SgConditionalExp* expr_cond = isSgConditionalExp(expr);
      ROSE_ASSERT(expr_cond != NULL);
@@ -657,17 +682,17 @@ JavaCodeGeneration_locatedNode::unparseExprCond(SgExpression* expr, SgUnparse_In
    }
 
 void
-JavaCodeGeneration_locatedNode::unparseClassInitOp(SgExpression* expr, SgUnparse_Info& info)
+Unparse_Java::unparseClassInitOp(SgExpression* expr, SgUnparse_Info& info)
    {
    } 
 
 void
-JavaCodeGeneration_locatedNode::unparseDyCastOp(SgExpression* expr, SgUnparse_Info& info)
+Unparse_Java::unparseDyCastOp(SgExpression* expr, SgUnparse_Info& info)
    {
    }
 
 void
-JavaCodeGeneration_locatedNode::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
+Unparse_Java::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
    {
      SgCastExp* cast_op = isSgCastExp(expr);
      ROSE_ASSERT(cast_op != NULL);
@@ -890,13 +915,14 @@ JavaCodeGeneration_locatedNode::unparseCastOp(SgExpression* expr, SgUnparse_Info
    }
 
 void
-JavaCodeGeneration_locatedNode::unparseArrayOp(SgExpression* expr, SgUnparse_Info& info)
+Unparse_Java::unparseArrayOp(SgExpression* expr, SgUnparse_Info& info)
    { 
-     unparseBinaryOperator(expr, "[]", info); 
+     //unparseBinaryOperator(expr, "[]", info); 
+     ROSE_ASSERT(!"unimplemented");
    }
 
 void
-JavaCodeGeneration_locatedNode::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
+Unparse_Java::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
    {
   // printf ("In Unparse_ExprStmt::unparseNewOp \n");
   // curprint ( "\n /* In Unparse_ExprStmt::unparseNewOp */ \n";
@@ -982,7 +1008,7 @@ JavaCodeGeneration_locatedNode::unparseNewOp(SgExpression* expr, SgUnparse_Info&
    }
 
 void
-JavaCodeGeneration_locatedNode::unparseDeleteOp(SgExpression* expr, SgUnparse_Info& info)
+Unparse_Java::unparseDeleteOp(SgExpression* expr, SgUnparse_Info& info)
    {
      SgDeleteExp* delete_op = isSgDeleteExp(expr);
      ROSE_ASSERT(delete_op != NULL);
@@ -1002,7 +1028,7 @@ JavaCodeGeneration_locatedNode::unparseDeleteOp(SgExpression* expr, SgUnparse_In
    }
 
 void
-JavaCodeGeneration_locatedNode::unparseThisNode(SgExpression* expr, SgUnparse_Info& info) 
+Unparse_Java::unparseThisNode(SgExpression* expr, SgUnparse_Info& info) 
    {
      SgThisExp* this_node = isSgThisExp(expr);
 
@@ -1017,7 +1043,7 @@ JavaCodeGeneration_locatedNode::unparseThisNode(SgExpression* expr, SgUnparse_In
    }
 
 void
-JavaCodeGeneration_locatedNode::unparseScopeOp(SgExpression* expr, SgUnparse_Info& info)
+Unparse_Java::unparseScopeOp(SgExpression* expr, SgUnparse_Info& info)
    {
      SgScopeOp* scope_op = isSgScopeOp(expr);
      ROSE_ASSERT(scope_op != NULL);
@@ -1029,23 +1055,10 @@ JavaCodeGeneration_locatedNode::unparseScopeOp(SgExpression* expr, SgUnparse_Inf
      unparseExpression(scope_op->get_rhs_operand(), info);
    }
 
-void JavaCodeGeneration_locatedNode::unparseAssnOp(SgExpression* expr, SgUnparse_Info& info)       { unparseBinaryOperator(expr, "=",   info); }
-void JavaCodeGeneration_locatedNode::unparsePlusAssnOp(SgExpression* expr, SgUnparse_Info& info)   { unparseBinaryOperator(expr, "+=",  info); } 
-void JavaCodeGeneration_locatedNode::unparseMinusAssnOp(SgExpression* expr, SgUnparse_Info& info)  { unparseBinaryOperator(expr, "-=",  info); }
-void JavaCodeGeneration_locatedNode::unparseAndAssnOp(SgExpression* expr, SgUnparse_Info& info)    { unparseBinaryOperator(expr, "&=",  info); }
-void JavaCodeGeneration_locatedNode::unparseIOrAssnOp(SgExpression* expr, SgUnparse_Info& info)    { unparseBinaryOperator(expr, "|=",  info); }
-void JavaCodeGeneration_locatedNode::unparseMultAssnOp(SgExpression* expr, SgUnparse_Info& info)   { unparseBinaryOperator(expr, "*=",  info); }
-void JavaCodeGeneration_locatedNode::unparseDivAssnOp(SgExpression* expr, SgUnparse_Info& info)    { unparseBinaryOperator(expr, "/=",  info); }
-void JavaCodeGeneration_locatedNode::unparseModAssnOp(SgExpression* expr, SgUnparse_Info& info)    { unparseBinaryOperator(expr, "%=",  info); }
-void JavaCodeGeneration_locatedNode::unparseXorAssnOp(SgExpression* expr, SgUnparse_Info& info)    { unparseBinaryOperator(expr, "^=",  info); }
-
-void JavaCodeGeneration_locatedNode::unparseLShiftAssnOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, "<<=",  info); }
-void JavaCodeGeneration_locatedNode::unparseRShiftAssnOp(SgExpression* expr, SgUnparse_Info& info) { unparseBinaryOperator(expr, ">>=", info); }
-
-void JavaCodeGeneration_locatedNode::unparseForDeclOp(SgExpression* expr, SgUnparse_Info& info) {}
+void Unparse_Java::unparseForDeclOp(SgExpression* expr, SgUnparse_Info& info) {}
 
 void
-JavaCodeGeneration_locatedNode::unparseTypeRef(SgExpression* expr, SgUnparse_Info& info)
+Unparse_Java::unparseTypeRef(SgExpression* expr, SgUnparse_Info& info)
    {
      SgRefExp* type_ref = isSgRefExp(expr);
      ROSE_ASSERT(type_ref != NULL);
@@ -1059,8 +1072,8 @@ JavaCodeGeneration_locatedNode::unparseTypeRef(SgExpression* expr, SgUnparse_Inf
      unp->u_type->unparseType(type_ref->get_type_name(), newinfo);
    }
 
-void JavaCodeGeneration_locatedNode::unparseVConst(SgExpression* expr, SgUnparse_Info& info) {}
-void JavaCodeGeneration_locatedNode::unparseExprInit(SgExpression* expr, SgUnparse_Info& info) {}
+void Unparse_Java::unparseVConst(SgExpression* expr, SgUnparse_Info& info) {}
+void Unparse_Java::unparseExprInit(SgExpression* expr, SgUnparse_Info& info) {}
 
 // Liao 11/3/2010
 // Sometimes initializers can from an included file
@@ -1108,7 +1121,7 @@ static bool isFromAnotherFile (SgLocatedNode* lnode)
 }
 
 void
-JavaCodeGeneration_locatedNode::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
+Unparse_Java::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
    {
     // Skip the entire thing if the initializer is from an included file
      if (isFromAnotherFile (expr))
@@ -1141,48 +1154,26 @@ JavaCodeGeneration_locatedNode::unparseAggrInit(SgExpression* expr, SgUnparse_In
    }
 
 void
-JavaCodeGeneration_locatedNode::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
+Unparse_Java::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
 {
 #if 0
-  printf ("In JavaCodeGeneration_locatedNode::unparseConInit expr = %p \n",expr);
-  printf ("WARNING: This is redundent with the JavaCodeGeneration_locatedNode::unp->u_sage->unparseOneElemConInit (This function does not handle qualidied names!) \n");
+  printf ("In Unparse_Java::unparseConInit expr = %p \n",expr);
+  printf ("WARNING: This is redundent with the Unparse_Java::unp->u_sage->unparseOneElemConInit (This function does not handle qualidied names!) \n");
 #endif
 }
 
 void
-JavaCodeGeneration_locatedNode::unparseAssnInit(SgExpression* expr, SgUnparse_Info& info)
+Unparse_Java::unparseAssnInit(SgExpression* expr, SgUnparse_Info& info)
    {
      SgAssignInitializer* assn_init = isSgAssignInitializer(expr);
      ROSE_ASSERT(assn_init != NULL);
-  /* code inserted from specification */
 
-  // printf ("In unparseAssnInit(): assn_init->get_is_explicit_cast() = %s \n",(assn_init->get_is_explicit_cast() == true) ? "true" : "false");
-
-     if (assn_init->get_is_explicit_cast() == true)
-        {
-          unparseExpression(assn_init->get_operand(), info);
-        }
-       else
-        {
-          SgCastExp* castExp = isSgCastExp(assn_init->get_operand());
-          if ( castExp != NULL)
-             {
-            // curprint ( "\n/* Skip the CAST in unparsing SgAssignInitializer */ \n";
-               unparseExpression(castExp->get_operand(), info);
-             }
-            else
-             {
-            // temp backup in case operand is not a cast!
-               printf ("Warning: unparseAssnInit operand was marked as implicit cast but didn't contain a SgCastExp object \n");
-            // ROSE_ASSERT(false);
-
-               unparseExpression(assn_init->get_operand(), info);
-             }
-        }
+     curprint("= ");
+     unparseExpression(assn_init->get_operand_i(), info);
    }
 
 void
-JavaCodeGeneration_locatedNode::unparseThrowOp(SgExpression* expr, SgUnparse_Info& info)
+Unparse_Java::unparseThrowOp(SgExpression* expr, SgUnparse_Info& info)
    {
      SgThrowOp* throw_op = isSgThrowOp(expr);
      ROSE_ASSERT(throw_op != NULL);
@@ -1193,12 +1184,78 @@ JavaCodeGeneration_locatedNode::unparseThrowOp(SgExpression* expr, SgUnparse_Inf
 
 
 void
-JavaCodeGeneration_locatedNode::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Info & info)
+Unparse_Java::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Info & info)
    {
    }
 
 void
-JavaCodeGeneration_locatedNode::unparsePseudoDtorRef(SgExpression* expr, SgUnparse_Info & info)
+Unparse_Java::unparseJavaInstanceOfOp(SgExpression* expr, SgUnparse_Info & info)
+   {
+       SgJavaInstanceOfOp* inst_op = isSgJavaInstanceOfOp(expr);
+       ROSE_ASSERT(inst_op != NULL);
+
+       curprint("INSTANCEOF");
+   }
+
+void
+Unparse_Java::unparsePseudoDtorRef(SgExpression* expr, SgUnparse_Info & info)
    {
    }
 
+void
+Unparse_Java::unparseCompoundAssignOp(SgCompoundAssignOp* op,
+                                                        SgUnparse_Info & info) {
+    unparseExpression(op->get_lhs_operand(), info);
+    switch (op->variantT()) {
+        case V_SgPlusAssignOp:               curprint(" += ");   break;
+        case V_SgMinusAssignOp:              curprint(" -= ");   break;
+        case V_SgMultAssignOp:               curprint(" *= ");   break;
+        case V_SgDivAssignOp:                curprint(" /= ");   break;
+        case V_SgModAssignOp:                curprint(" %= ");   break;
+        case V_SgAndAssignOp:                curprint(" &= ");   break;
+        case V_SgXorAssignOp:                curprint(" ^= ");   break;
+        case V_SgIorAssignOp:                curprint(" |= ");   break;
+        case V_SgRshiftAssignOp:             curprint(" >>= ");  break;
+        case V_SgLshiftAssignOp:             curprint(" <<= ");  break;
+        case V_SgJavaUnsignedRshiftAssignOp: curprint(" >>>= "); break;
+        default: {
+             cout << "error: unhandled compound assign op: " << op->class_name() << endl;
+             ROSE_ASSERT(false);
+        }
+    }
+    unparseExpression(op->get_rhs_operand(), info);
+}
+
+void
+Unparse_Java::unparseBinaryOp(SgBinaryOp* op,
+                                                SgUnparse_Info & info) {
+    unparseExpression(op->get_lhs_operand(), info);
+    switch (op->variantT()) {
+        case V_SgAddOp:                curprint(" + ");   break;
+        case V_SgAndOp:                curprint(" && ");  break;
+        case V_SgAssignOp:             curprint(" = ");   break;
+        case V_SgBitAndOp:             curprint(" & ");   break;
+        case V_SgBitOrOp:              curprint(" | ");   break;
+        case V_SgBitXorOp:             curprint(" ^ ");   break;
+        case V_SgDivideOp:             curprint(" / ");   break;
+        case V_SgDotExp:               curprint(" . ");   break;
+        case V_SgEqualityOp:           curprint(" == ");  break;
+        case V_SgGreaterOrEqualOp:     curprint(" >= ");  break;
+        case V_SgGreaterThanOp:        curprint(" > ");   break;
+        case V_SgJavaUnsignedRshiftOp: curprint(" >>> "); break;
+        case V_SgLessOrEqualOp:        curprint(" <= ");  break;
+        case V_SgLessThanOp:           curprint(" < ");   break;
+        case V_SgLshiftOp:             curprint(" << ");  break;
+        case V_SgModOp:                curprint(" % ");   break;
+        case V_SgMultiplyOp:           curprint(" * ");   break;
+        case V_SgOrOp:                 curprint(" || ");  break;
+        case V_SgNotEqualOp:           curprint(" != ");  break;
+        case V_SgRshiftOp:             curprint(" >> ");  break;
+        case V_SgSubtractOp:           curprint(" - ");   break;
+        default: {
+             cout << "error: cannot unparse binary op: " << op->class_name() << endl;
+             ROSE_ASSERT(false);
+        }
+    }
+    unparseExpression(op->get_rhs_operand(), info);
+}
