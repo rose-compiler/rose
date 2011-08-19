@@ -204,16 +204,11 @@ Unparse_Java::curprint_indented(const string str, SgUnparse_Info& info) const {
 void
 Unparse_Java::unparseImportDeclarationStatement (SgStatement* stmt, SgUnparse_Info& info)
    {
-  // There is a SgNamespaceDefinition, but it is not unparsed except through the SgNamespaceDeclaration
-
      SgJavaImportStatement* importDeclaration = isSgJavaImportStatement(stmt);
      ROSE_ASSERT (importDeclaration != NULL);
-     curprint ( string("import "));
 
-  // This can be an empty string (in the case of an unnamed namespace)
-     SgName name = importDeclaration->get_path();
-     curprint ( name.str());
-     curprint ("; ");
+     curprint("import ");
+     unparseName(importDeclaration->get_path(), info);
    }
 
 void
