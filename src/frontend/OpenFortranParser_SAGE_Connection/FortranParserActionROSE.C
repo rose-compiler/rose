@@ -871,10 +871,38 @@ void c_action_kind_param(Token_t * kind)
  * boz_literal_constant
  *
  */
-void c_action_boz_literal_constant(Token_t * constant)
+void c_action_boz_literal_constant(Token_t * boz_const)
    {
+  // CER (8/7/2011): A boz constant is typeless so I'm not sure converting
+  // to an integer type is the correct thing to do.  Perhaps it deserves a
+  // type of its own because it doesn't have a value until it is assigned
+  // to some typed variable.
+
+     long long val;
+     int base = 0;
+
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-          printf ("In c_action_boz_literal_constant(): constant = %p = %s \n",constant,constant != NULL ? constant->text : "NULL");
+          printf ("In c_action_boz_literal_constant(): boz_const = %p = %s \n",boz_const,boz_const != NULL ? boz_const->text : "NULL");
+
+     ROSE_ASSERT(boz_const != NULL);
+     ROSE_ASSERT(boz_const->text != NULL);
+
+     switch (boz_const->text[0])
+        {
+          case 'Z':
+          case 'z': base = 16; break;
+          case 'O':
+          case 'o': base =  8; break;
+          case 'B':
+          case 'b': base =  2; break;
+       // grammar guarantees switch doesn't fall through to here
+        }
+     val = strtoll(&boz_const->text[2], NULL, base);
+
+     SgValueExp* pValueExp = new SgLongLongIntVal(val, boz_const->text);
+     setSourcePosition(pValueExp, boz_const);
+
+     astExpressionStack.push_front(pValueExp);
    }
 
 /** R416

@@ -50,6 +50,9 @@ Grammar::setUpTypes ()
   // with a TemplateInstantiationType derived from it.
      NEW_TERMINAL_MACRO ( ClassType           , "ClassType",            "T_CLASS" );
 
+  // DQ (8/18/2011): Java specific support for generics.
+     NEW_TERMINAL_MACRO ( JavaParameterizedType , "JavaParameterizedType", "T_JAVA_PARAM" );
+
      //
      // [DT] 5/11/2000 -- Added TemplateType.  Should it be called TemplateInstantiationType
      //      to maintain symmetry with TemplateInstantiationDecl and TemplateInstantiationSymbol?
@@ -115,7 +118,7 @@ Grammar::setUpTypes ()
   //                        ClassType | TemplateInstantiationType | EnumType | TypedefType,
   //                        "NamedType","T_NAME");
      NEW_NONTERMINAL_MACRO (NamedType,
-                            ClassType | EnumType | TypedefType,
+                            ClassType | JavaParameterizedType | EnumType | TypedefType,
                             "NamedType","T_NAME", false);
 
   // DQ (5/11/2011): This is no longer used, and has not be used since the 3rd rewite of the name qualification
@@ -142,7 +145,7 @@ Grammar::setUpTypes ()
           ReferenceType    | NamedType         | ModifierType      | FunctionType         |
           ArrayType        | TypeEllipse       | TemplateType      | QualifiedNameType    |
           TypeComplex      | TypeImaginary     | TypeDefault       | TypeCAFTeam          |
-          TypeCrayPointer  | TypeLabel , "Type","TypeTag", false);
+          TypeCrayPointer  | TypeLabel, "Type","TypeTag", false);
 
 #if 1
   // ***********************************************************************
@@ -252,15 +255,6 @@ Grammar::setUpTypes ()
 
   // DQ (1/31/2006): Need to support addition of builtin_type pointers into the IR using ROSETTA
   // static $CLASSNAME* builtin_type;
-
-#define CUSTOM_CREATE_TYPE_MACRO(typeObjectName,sourceCodeName,parameterString) \
-        typeObjectName.excludeFunctionPrototype ( "HEADER_COMMON_CREATE_TYPE", "../Grammar/Type.code" ); \
-        typeObjectName.excludeFunctionSource    ( "SOURCE_COMMON_CREATE_TYPE", "../Grammar/Type.code" ); \
-        typeObjectName.setFunctionPrototype     ( "HEADER_CREATE_TYPE_WITH_PARAMETER", "../Grammar/Type.code" ); \
-        typeObjectName.editSubstitute           ( "CREATE_TYPE_PARAMETER", parameterString ); \
-        typeObjectName.setFunctionSource        ( sourceCodeName, "../Grammar/Type.code" ); \
-        typeObjectName.setFunctionPrototype     ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" ); \
-        typeObjectName.setFunctionSource        ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
 
   // Use simple "static CLASSNAME builtin_type;" on most classed derived from Type
      Type.setSubTreeFunctionPrototype ( "HEADER_COMMON_CREATE_TYPE", "../Grammar/Type.code" );
@@ -381,10 +375,22 @@ Grammar::setUpTypes ()
   // DQ (2/1/2011): Added label type to support Fortran alternative return arguments in function declarations.
      TypeLabel.setDataPrototype            ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
+  // DQ (8/18/2011): Java specific support for generics.
+  // JavaParameterizedType.setDataPrototype             ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
   // DQ (8/25/2006): We can't specify an initializer if this is a static pointer type 
   // (since this triggers the output of the initialization code in the constructor).
   // DQ (8/10/2006): Added support for different kinds of complex types (float,double, and long double)
   // JJW (11/22/2008): Changed to a static variable in a function for the builtin complex and imaginary type caches
+
+#define CUSTOM_CREATE_TYPE_MACRO(typeObjectName,sourceCodeName,parameterString) \
+        typeObjectName.excludeFunctionPrototype ( "HEADER_COMMON_CREATE_TYPE", "../Grammar/Type.code" ); \
+        typeObjectName.excludeFunctionSource    ( "SOURCE_COMMON_CREATE_TYPE", "../Grammar/Type.code" ); \
+        typeObjectName.setFunctionPrototype     ( "HEADER_CREATE_TYPE_WITH_PARAMETER", "../Grammar/Type.code" ); \
+        typeObjectName.editSubstitute           ( "CREATE_TYPE_PARAMETER", parameterString ); \
+        typeObjectName.setFunctionSource        ( sourceCodeName, "../Grammar/Type.code" ); \
+        typeObjectName.setFunctionPrototype     ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" ); \
+        typeObjectName.setFunctionSource        ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
 
      CUSTOM_CREATE_TYPE_MACRO(TypeInt,
             "SOURCE_CREATE_TYPE_FOR_TYPE_INT_TYPE",
@@ -403,9 +409,12 @@ Grammar::setUpTypes ()
      CUSTOM_CREATE_TYPE_MACRO(ClassType,
             "SOURCE_CREATE_TYPE_FOR_CLASS_TYPE",
             "SgClassDeclaration* decl = NULL");
+     CUSTOM_CREATE_TYPE_MACRO(JavaParameterizedType,
+            "SOURCE_CREATE_TYPE_FOR_JAVA_PARAMETERIZED_TYPE",
+            "SgClassDeclaration* decl = NULL");
      CUSTOM_CREATE_TYPE_MACRO(TemplateType,
-          "SOURCE_CREATE_TYPE_FOR_TEMPLATE_TYPE",
-          "SgTemplateInstantiationDecl* decl = NULL");
+            "SOURCE_CREATE_TYPE_FOR_TEMPLATE_TYPE",
+            "SgTemplateInstantiationDecl* decl = NULL");
      CUSTOM_CREATE_TYPE_MACRO(EnumType,
             "SOURCE_CREATE_TYPE_FOR_ENUM_TYPE",
             "SgEnumDeclaration* decl = NULL");
@@ -490,6 +499,11 @@ Grammar::setUpTypes ()
 
      ClassType.setFunctionPrototype ("HEADER_CLASS_TYPE", "../Grammar/Type.code" );
      ClassType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
+
+     JavaParameterizedType.setFunctionPrototype ("HEADER_JAVA_PARAMETERIZED_TYPE", "../Grammar/Type.code" );
+     JavaParameterizedType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
+     JavaParameterizedType.setDataPrototype     ("SgTemplateParameterList*","parameter_list","= NULL",
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // TemplateInstantiationType.setFunctionPrototype ("HEADER_TEMPLATE_INSTANTIATION_TYPE", "../Grammar/Type.code" );
      TemplateType.setFunctionPrototype ("HEADER_TEMPLATE_TYPE", "../Grammar/Type.code" );
@@ -693,6 +707,9 @@ Grammar::setUpTypes ()
      QualifiedNameType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
 
      ClassType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
+
+     JavaParameterizedType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
+
   // TemplateInstantiationType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
      EnumType.excludeFunctionSource     ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
 
@@ -746,7 +763,9 @@ Grammar::setUpTypes ()
      EnumType.setFunctionSource            ( "SOURCE_ENUM_TYPE", "../Grammar/Type.code");
      FunctionType.setFunctionSource        ( "SOURCE_FUNCTION_TYPE", "../Grammar/Type.code");
 
-     ClassType.setFunctionSource           ( "SOURCE_CLASS_TYPE", "../Grammar/Type.code");
+     ClassType.setFunctionSource             ( "SOURCE_CLASS_TYPE", "../Grammar/Type.code");
+     JavaParameterizedType.setFunctionSource ( "SOURCE_JAVA_PARAMETERIZED_TYPE", "../Grammar/Type.code");
+
      TemplateType.setFunctionSource        ( "SOURCE_TEMPLATE_TYPE", "../Grammar/Type.code");
 
      PointerType.setFunctionSource         ( "SOURCE_POINTER_TYPE", "../Grammar/Type.code");
