@@ -1343,20 +1343,43 @@ RSIM_Process::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char *argv[]
         mem_write(random_data, random_data_va, sizeof random_data);
 
 
-
-        /* Initialize stack with auxv, where each entry is two words in the pointers vector.  The order and values were
-         * determined by running the simulator with the "--showauxv" switch on hudson-rose-07. */
+        /* Find the virtual address of the ELF Segment Table.  We actually only know its file offset directly, but the segment
+         * table is also always included in one of the PT_LOAD segments, so we can compute its virtual address by finding the
+         * PT_LOAD segment tha contains the table, and then looking at the table file offset relative to the segment offset. */
         struct T1: public SgSimpleProcessing {
-            rose_addr_t phdr_rva;
-            T1(): phdr_rva(0) {}
+            rose_addr_t segtab_offset;
+            size_t segtab_size;
+            T1(): segtab_offset(0), segtab_size(0) {}
             void visit(SgNode *node) {
-                SgAsmElfSection *section = isSgAsmElfSection(node);
-                SgAsmElfSegmentTableEntry *entry = section ? section->get_segment_entry() : NULL;
-                if (0==phdr_rva && entry && entry->get_type()==SgAsmElfSegmentTableEntry::PT_PHDR)
-                    phdr_rva = section->get_mapped_preferred_rva();
+                SgAsmElfSegmentTable *segtab = isSgAsmElfSegmentTable(node);
+                if (0==segtab_offset && segtab!=NULL) {
+                    segtab_offset = segtab->get_offset();
+                    segtab_size = segtab->get_size();
+                }
             }
         } t1;
         t1.traverse(fhdr, preorder);
+        assert(t1.segtab_offset>0 && t1.segtab_size>0); /* all ELF executables have a segment table */
+
+        struct T2: public SgSimpleProcessing {
+            rose_addr_t segtab_offset, segtab_va;
+            size_t segtab_size;
+            T2(rose_addr_t segtab_offset, size_t segtab_size)
+                : segtab_offset(segtab_offset), segtab_va(0), segtab_size(segtab_size)
+                {}
+            void visit(SgNode *node) {
+                SgAsmElfSection *section = isSgAsmElfSection(node);
+                SgAsmElfSegmentTableEntry *entry = section ? section->get_segment_entry() : NULL;
+                if (entry && section->get_offset()<=segtab_offset &&
+                    section->get_offset()+section->get_size()>=segtab_offset+segtab_size)
+                    segtab_va = section->get_mapped_actual_va() + segtab_offset - section->get_offset();
+            }
+        } t2(t1.segtab_offset, t1.segtab_size);
+        t2.traverse(fhdr, preorder);
+        assert(t2.segtab_va>0); /* all ELF executables include the segment table in one of the segments */
+        
+        /* Initialize stack with auxv, where each entry is two words in the pointers vector.  The order and values were
+         * determined by running the simulator with the "--showauxv" switch on hudson-rose-07. */
         auxv.clear();
 
         if (vdso_mapped_va!=0) {
@@ -1394,7 +1417,7 @@ RSIM_Process::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char *argv[]
 
         /* AT_PHDR */
         auxv.push_back(3); /*AT_PHDR*/
-        auxv.push_back(t1.phdr_rva + fhdr->get_base_va());
+        auxv.push_back(t2.segtab_va);
         if (trace)
             fprintf(trace, "AT_PHDR:          0x%08"PRIx32"\n", auxv.back());
 
