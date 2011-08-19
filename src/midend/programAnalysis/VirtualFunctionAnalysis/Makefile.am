@@ -5,7 +5,7 @@ INCLUDES =  $(ROSE_INCLUDES) -I$(srcdir)/.. -I$(srcdir)/../CFG -I$(top_srcdir)/s
 ## The grammar generator (ROSETTA) should use its own template repository
 CXX_TEMPLATE_REPOSITORY_PATH = .
 
-libVirtualFunctionAnalysisSources =  VirtualFunctionAnalysis.C PtrAliasAnalysis.C IntraProcAliasAnalysis.C IntraProcDataFlowAnalysis.C InterProcDataFlowAnalysis.C
+libVirtualFunctionAnalysisSources = IntraProcDataFlowAnalysis.C InterProcDataFlowAnalysis.C  IntraProcAliasAnalysis.C PtrAliasAnalysis.C VirtualFunctionAnalysis.C
 
 
 noinst_LTLIBRARIES = libVirtualFunctionAnalysis.la
@@ -17,7 +17,7 @@ clean-local:
 distclean-local:
 	rm -rf Templates.DB
 
-include_HEADERS = VirtualFunctionAnalysis.h PtrAliasAnalysis.h IntraProcAliasAnalysis.h IntraProcDataFlowAnalysis.h InterProcDataFlowAnalysis.h
+include_HEADERS = IntraProcDataFlowAnalysis.h InterProcDataFlowAnalysis.h IntraProcAliasAnalysis.h PtrAliasAnalysis.h VirtualFunctionAnalysis.h 
 
 
 
