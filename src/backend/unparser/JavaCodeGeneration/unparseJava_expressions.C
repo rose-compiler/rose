@@ -676,12 +676,12 @@ Unparse_Java::unparseExprCond(SgExpression* expr, SgUnparse_Info& info)
    {
      SgConditionalExp* expr_cond = isSgConditionalExp(expr);
      ROSE_ASSERT(expr_cond != NULL);
-  /* code inserted from specification */
 
-#if 0
-     printf ("In unparseExprCond(): info.get_nested_expression() = %d \n",info.get_nested_expression());
-#endif
-
+     unparseExpression(expr_cond->get_conditional_exp(), info);
+     curprint(" ? ");
+     unparseExpression(expr_cond->get_true_exp(), info);
+     curprint(" : ");
+     unparseExpression(expr_cond->get_false_exp(), info);
    }
 
 void
