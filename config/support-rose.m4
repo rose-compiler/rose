@@ -2196,10 +2196,6 @@ projects/BinaryCloneDetection/gui/Makefile
 projects/C_to_Promela/Makefile
 projects/CertSecureCodeProject/Makefile
 projects/CloneDetection/Makefile
-projects/DataFaultTolerance/Makefile
-projects/DataFaultTolerance/src/Makefile
-projects/DataFaultTolerance/test/array/transformation/Makefile
-projects/DataFaultTolerance/test/array/faultCheck/Makefile
 projects/DatalogAnalysis/Makefile
 projects/DatalogAnalysis/relationTranslatorGenerator/Makefile
 projects/DatalogAnalysis/src/DBFactories/Makefile
