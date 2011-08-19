@@ -132,6 +132,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitList (JNIEnv *env, 
 
   // Verify that the parent is set, these AST nodes are already setup by ROSE before calling this function.
      ROSE_ASSERT(astJavaScopeStack.front()->get_parent() != NULL);
+
+     if (SgProject::get_verbose() > 0)
+          printf ("Leaving Java_JavaParser_cactionCompilationUnitList \n");
    }
 
 
@@ -646,7 +649,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSend (JNIEnv *env, jobject 
 
   // printf ("Looking for the function = %s in class parent scope = %p = %s \n",name.str(),targetClassScope,targetClassScope->class_name().c_str());
      SgFunctionSymbol* functionSymbol = targetClassScope->lookup_function_symbol(name);
-     ROSE_ASSERT(functionSymbol != NULL);
+  // ROSE_ASSERT(functionSymbol != NULL);
 
      if (functionSymbol != NULL)
         {
@@ -665,6 +668,10 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSend (JNIEnv *env, jobject 
         }
        else
         {
+       // If this is a function not found (and assuming it is a legal code) then it is because 
+       // the associated class's member functions and data members have not been read and 
+       // translated into the ROSE AST.
+
           printf ("ERROR: functionSymbol == NULL \n");
           ROSE_ASSERT(false);
         }
@@ -818,7 +825,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionStringLiteral (JNIEnv *env, jobjec
      ROSE_ASSERT(stringValue != NULL);
 
   // Set the source code position (default values for now).
-     setJavaSourcePosition(stringValue);
+  // setJavaSourcePosition(stringValue);
+     setJavaSourcePosition(stringValue,env,jToken);
 
      astJavaExpressionStack.push_front(stringValue);
      ROSE_ASSERT(astJavaExpressionStack.empty() == false);
@@ -2737,6 +2745,38 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionParameterizedQualifiedTypeReferenc
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionParameterizedSingleTypeReference(JNIEnv *env, jobject xxx, jobject jToken)
    {
+     if (SgProject::get_verbose() > 0)
+          printf ("Inside of Java_JavaParser_cactionParameterizedSingleTypeReference() \n");
+
+     outputJavaState("At TOP of cactionParameterizedSingleTypeReference");
+
+  // outputJavaState("At BOTTOM of cactionParameterizedSingleTypeReference");
+   }
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionParameterizedSingleTypeReferenceEnd(JNIEnv *env, jobject xxx, int java_numberOfTypeArguments, jobject jToken)
+   {
+     if (SgProject::get_verbose() > 0)
+          printf ("Inside of Java_JavaParser_cactionParameterizedSingleTypeReferenceEnd() \n");
+
+     outputJavaState("At TOP of cactionParameterizedSingleTypeReferenceEnd");
+
+     int numberOfTypeArguments = java_numberOfTypeArguments;
+
+     for (int i = 0; i < numberOfTypeArguments; i++)
+        {
+          ROSE_ASSERT(astJavaTypeStack.empty() == false);
+
+          astJavaTypeStack.pop_front();
+        }
+
+  // ROSE_ASSERT(astJavaExpressionStack.empty() == false);
+  // setJavaSourcePosition(astJavaExpressionStack.front(),env,jToken);
+
+     outputJavaState("At BOTTOM of cactionParameterizedSingleTypeReferenceEnd");
+
+     printf ("Exiting as a test in cactionParameterizedSingleTypeReferenceEnd() \n");
+     exit(1);
    }
 
 

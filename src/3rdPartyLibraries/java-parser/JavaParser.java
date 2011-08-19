@@ -171,6 +171,7 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionParameterizedQualifiedTypeReference(JavaToken jToken);
      public native void cactionParameterizedQualifiedTypeReferenceClassScope(JavaToken jToken);
      public native void cactionParameterizedSingleTypeReference(JavaToken jToken);
+     public native void cactionParameterizedSingleTypeReferenceEnd(int java_numberOfTypeArguments, JavaToken jToken);
      public native void cactionParameterizedSingleTypeReferenceClassScope(JavaToken jToken);
      public native void cactionPostfixExpression(JavaToken jToken);
      public native void cactionPostfixExpressionEnd(int java_operator_kind, JavaToken jToken);
