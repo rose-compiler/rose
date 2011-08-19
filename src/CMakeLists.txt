@@ -197,6 +197,9 @@ set(virtualCFG_SRC
     ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/virtualCFG/virtualBinCFG.C 
     ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/virtualCFG/cfgToDot.C 
     ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/virtualCFG/memberFunctions.C
+    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/virtualCFG/staticCFG.C
+    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/virtualCFG/customFilteredCFG.C
+
    )
 
 set( binaryFrontend_SRC 
