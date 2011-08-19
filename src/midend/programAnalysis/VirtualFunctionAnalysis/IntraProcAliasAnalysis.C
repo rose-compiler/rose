@@ -1,5 +1,5 @@
 #include "IntraProcAliasAnalysis.h"
-#include "CommandOptions.h"
+
 
 void CompactRepresentation::computeAliases (SgGraphNode *node, int derefLevel, vector<SgGraphNode *> & sol) {
     

@@ -6,8 +6,9 @@
  */
 #ifndef INTERPROCDATAFLOWANALYSIS_H
 #define INTERPROCDATAFLOWANALYSIS_H
-#include <vector>
 #include "sage3basic.h"
+#include <vector>
+
 
 class InterProcDataFlowAnalysis {
 protected:

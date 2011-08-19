@@ -1,6 +1,7 @@
-#include "PtrAliasAnalysis.h"
-#include <CallGraph.h>
 #include "sage3basic.h"
+#include <CallGraph.h>
+#include "PtrAliasAnalysis.h"
+
 #define foreach BOOST_FOREACH
 #define reverse_foreach BOOST_REVERSE_FOREACH
 

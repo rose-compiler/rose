@@ -1,8 +1,10 @@
 #ifndef PTR_ALIAS_ANALYSIS
 #define PTR_ALIAS_ANALYSIS
-#include "InterProcDataFlowAnalysis.h"
-#include "IntraProcAliasAnalysis.h"
 #include "ClassHierarchyGraph.h"
+#include "IntraProcAliasAnalysis.h"
+#include "InterProcDataFlowAnalysis.h"
+
+
 
 using namespace std;
 using namespace boost;
