@@ -283,7 +283,7 @@ $(TESTCODE_CURRENTLY_FAILING)
 
 # The use of -rose:java is redundent, the source langauge can now be determined from the file suffix.
 # ROSE_FLAGS = -rose:java -rose:verbose 0 -rose:skipfinalCompileStep
-ROSE_FLAGS = -rose:verbose 0 -rose:skipfinalCompileStep
+ROSE_FLAGS = -rose:verbose 0 -rose:skipfinalCompileStep -rose:skip_syntax_check
 
 PASSING_TEST_Objects = ${TESTCODES:.java=.o}
 TEST_Objects = ${ALL_TESTCODES:.java=.o}
@@ -389,3 +389,30 @@ clean-local:
 	rm -f *.dot *.class *.java rose_performance_report_lockfile.lock *.out
 #	Remove any generated JVM log files that could have been generated (these are rare).
 	rm -f *.log
+
+# driscoll6 (8/10/11) convenience target for inspecting unparser output from all test files
+check-view: $(TEST_Objects:.o=.view)
+
+# driscoll6 (8/10/11) convenience target for inspecting unparser output from a particular file
+%.view: ../../testTranslator
+	@echo "============ TRANSLATING ==========="
+	$(testTranslator) $(ROSE_FLAGS) $(srcdir)/$(@:.view=.java) -rose:o $(@:.view=.java)
+	@echo "------------- ORIGINAL -------------"
+	@cat $(srcdir)/$(@:.view=.java)
+	@echo "------------- UNPARSED -------------"
+	@cat $(@:.view=.java)
+	@echo "-------------- JAVAC ---------------"
+	$(JAVAC) $(@:.view=.java)
+
+# DQ (8/17/2011): This is a fix for a interesting problem caused by the VPATH make system.
+# The generated java files will be copied from the current build directory instead of the
+# source directory.
+# Since the generated java files have the same name as in the srcdir, VPATH will
+# cause the builddir versions to be copied to the distdir if they exist.  They
+# will exist if the "make check" has been run, which is the case for the
+# java only language tests.
+dist-hook:
+	@echo "Removing what might be the wrong versions of the files if make check has been run."
+	rm $(distdir)/*.java
+	@echo "Copying the correct versions of the java file from the srcdir = $(srcdir) to the distdir = $(distdir)"
+	cp -p $(srcdir)/*.java $(distdir)
