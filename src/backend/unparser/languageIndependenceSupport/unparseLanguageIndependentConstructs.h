@@ -9,6 +9,7 @@
 #define UNPARSER_LANGUAGE_INDEPENDENT_SUPPORT
 
 #include "unparser.h"
+#include "modified_sage.h"
 
 /* support for handling precedence and associativity */
 typedef int PrecedenceSpecifier;
