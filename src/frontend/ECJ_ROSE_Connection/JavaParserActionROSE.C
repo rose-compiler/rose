@@ -132,6 +132,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitList (JNIEnv *env, 
 
   // Verify that the parent is set, these AST nodes are already setup by ROSE before calling this function.
      ROSE_ASSERT(astJavaScopeStack.front()->get_parent() != NULL);
+
+     if (SgProject::get_verbose() > 0)
+          printf ("Leaving Java_JavaParser_cactionCompilationUnitList \n");
    }
 
 
@@ -646,7 +649,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSend (JNIEnv *env, jobject 
 
   // printf ("Looking for the function = %s in class parent scope = %p = %s \n",name.str(),targetClassScope,targetClassScope->class_name().c_str());
      SgFunctionSymbol* functionSymbol = targetClassScope->lookup_function_symbol(name);
-     ROSE_ASSERT(functionSymbol != NULL);
+  // ROSE_ASSERT(functionSymbol != NULL);
 
      if (functionSymbol != NULL)
         {
@@ -665,6 +668,10 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSend (JNIEnv *env, jobject 
         }
        else
         {
+       // If this is a function not found (and assuming it is a legal code) then it is because 
+       // the associated class's member functions and data members have not been read and 
+       // translated into the ROSE AST.
+
           printf ("ERROR: functionSymbol == NULL \n");
           ROSE_ASSERT(false);
         }
@@ -818,7 +825,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionStringLiteral (JNIEnv *env, jobjec
      ROSE_ASSERT(stringValue != NULL);
 
   // Set the source code position (default values for now).
-     setJavaSourcePosition(stringValue);
+  // setJavaSourcePosition(stringValue);
+     setJavaSourcePosition(stringValue,env,jToken);
 
      astJavaExpressionStack.push_front(stringValue);
      ROSE_ASSERT(astJavaExpressionStack.empty() == false);
@@ -1087,54 +1095,6 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateType (JNIEnv* env, jclass 
        // This is the same sort of void type as in C/C++.
           astJavaTypeStack.push_front(SgTypeVoid::createType());
         }
-    // else if (name == "String")
-       else if (name == "java.lang.String")
-        {
-       // DQ (4/9/2011): Added support for "String" type.
-       // This should maybe be a SgClassType specific to the String class, instead of using the SgTypeString for Java.
-       // astJavaTypeStack.push_front(SgTypeString::createType());
-
-          SgClassType* classType = lookupTypeFromQualifiedName(name);
-          if (classType == NULL)
-             {
-            // If the "String" class was not found then it is likely because we are in a debug mode which limits the number of implecit classes.
-            // printf ("Build a class for String: name = %s\n",name.str());
-               outputJavaState("In cactionGenerateType case of java.lang.String");
-
-               buildImplicitClass(name);
-            // printf ("DONE: Build a class for String: name = %s\n",name.str());
-
-               outputJavaState("DONE: In cactionGenerateType case of java.lang.String");
-
-            // We need to leave a SgType on the astJavaTypeStack, we need to build the class to build 
-            // the SgClassType, but we don't want to leave a SgClassDefinition on the astJavaScopeStack.
-               printf ("When we just build a type we don't want the new class definition on the stack. \n");
-               astJavaScopeStack.pop_front();
-
-               SgClassType* classType = lookupTypeFromQualifiedName(name);
-               if (classType == NULL)
-                  {
-                    printf ("Build a SgTypeInt in the stack since the class was not built (debugging mode): name = %s\n",name.str());
-                    astJavaTypeStack.push_front(SgTypeInt::createType());
-                  }
-                 else
-                  {
-                 // The associated type was found (after being explicitly built, after not being found the first time)) and is pushed onto the stack.
-                 // printf ("On the second search for the class = %s (after building it explicitly) it was found! \n",name.str());
-                    astJavaTypeStack.push_front(classType);
-                  }
-             }
-            else
-             {
-            // The associated type was found and is pushed onto the stack.
-               astJavaTypeStack.push_front(classType);
-             }
-
-#if 0
-          printf ("Exiting as a test in Java_JavaParser_cactionGenerateType() \n");
-          ROSE_ASSERT(false);
-#endif
-        }
        else if (name == "null")
         {
        // There is also a special null type, the type of the expression null, which has no name. Because the null type has 
@@ -1149,18 +1109,78 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateType (JNIEnv* env, jclass 
           printf ("Error: SgTypeNull (Java null type) support not implemented (name = %s) \n",name.str());
           ROSE_ASSERT(false);
         }
-       else
+       else 
         {
-          printf ("I think this is a user defined class (so we have to look it up) (name = %s) \n",name.str());
+       // DQ (8/17/2011): This should be any implicit type defined in Java (so test for the prefix "java.").
+       // else if (name == "String")
+       // else if (name == "java.lang.String")
 
-          SgClassType* classType = lookupTypeFromQualifiedName(name);
-          ROSE_ASSERT(classType != NULL);
+          string nameString = name;
 
-          astJavaTypeStack.push_front(classType);
+          printf ("nameString = %s \n",nameString.c_str());
+
+       // Check if the typename starts with "java."
+          if (nameString.find("java.",0) == 0)
+             {
+            // DQ (4/9/2011): Added support for "String" type.
+            // This should maybe be a SgClassType specific to the String class, instead of using the SgTypeString for Java.
+            // astJavaTypeStack.push_front(SgTypeString::createType());
+
+               SgClassType* classType = lookupTypeFromQualifiedName(name);
+               if (classType == NULL)
+                  {
+                 // If the "String" class was not found then it is likely because we are in a debug mode which limits the number of implecit classes.
+                 // printf ("Build a class for String: name = %s\n",name.str());
+                    outputJavaState("In cactionGenerateType case of java.lang.String");
+
+                    buildImplicitClass(name);
+                 // printf ("DONE: Build a class for String: name = %s\n",name.str());
+
+                    outputJavaState("DONE: In cactionGenerateType case of java.lang.String");
+
+                 // We need to leave a SgType on the astJavaTypeStack, we need to build the class to build 
+                 // the SgClassType, but we don't want to leave a SgClassDefinition on the astJavaScopeStack.
+                    printf ("When we just build a type we don't want the new class definition on the stack. \n");
+                    astJavaScopeStack.pop_front();
+
+                    SgClassType* classType = lookupTypeFromQualifiedName(name);
+                    if (classType == NULL)
+                       {
+                         printf ("Build a SgTypeInt in the stack since the class was not built (debugging mode): name = %s\n",name.str());
+                         astJavaTypeStack.push_front(SgTypeInt::createType());
+                       }
+                      else
+                       {
+                      // The associated type was found (after being explicitly built, after not being found the first time)) and is pushed onto the stack.
+                      // printf ("On the second search for the class = %s (after building it explicitly) it was found! \n",name.str());
+                         astJavaTypeStack.push_front(classType);
+                       }
+                  }
+                 else
+                  {
+                 // The associated type was found and is pushed onto the stack.
+                    astJavaTypeStack.push_front(classType);
+                  }
+
 #if 0
-          printf ("Error: default reached in switch in Java_JavaParser_cactionGenerateType() (name = %s) \n",name.str());
-          ROSE_ASSERT(false);
+               printf ("Exiting as a test in Java_JavaParser_cactionGenerateType() \n");
+               ROSE_ASSERT(false);
 #endif
+             }
+            else
+             {
+            // This is the last chance to resolve the type.
+               printf ("I think this is a user defined class (so we have to look it up) (name = %s) \n",name.str());
+
+               SgClassType* classType = lookupTypeFromQualifiedName(name);
+               ROSE_ASSERT(classType != NULL);
+
+               astJavaTypeStack.push_front(classType);
+#if 0
+               printf ("Error: default reached in switch in Java_JavaParser_cactionGenerateType() (name = %s) \n",name.str());
+               ROSE_ASSERT(false);
+#endif
+             }
         }
 
   // There should be a type on the stack!
@@ -1263,6 +1283,42 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateArrayType(JNIEnv *env, jcl
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionAllocationExpression(JNIEnv *env, jobject xxx, jobject jToken)
    {
+     if (SgProject::get_verbose() > 0)
+          printf ("Inside of Java_JavaParser_cactionAllocationExpression() \n");
+
+     outputJavaState("At TOP of cactionAllocationExpression");
+   }
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionAllocationExpressionEnd(JNIEnv *env, jobject xxx, jstring java_string, jobject jToken)
+   {
+     if (SgProject::get_verbose() > 0)
+          printf ("Inside of Java_JavaParser_cactionAllocationExpressionEnd() \n");
+
+     outputJavaState("At TOP of cactionAllocationExpressionEnd");
+
+     SgName name = convertJavaStringToCxxString(env,java_string);
+
+     printf ("Build a new operator for type name = %s \n",name.str());
+
+     ROSE_ASSERT(astJavaTypeStack.empty() == false);
+     SgType* type = astJavaTypeStack.front();
+     astJavaTypeStack.pop_front();
+
+  // For the simple case, we only need the type as input to build SgNewExp.
+     SgExprListExp* exprListExp          = NULL;
+     SgConstructorInitializer* constInit = NULL;
+     SgExpression* expr                  = NULL;
+     short int val                       = 0;
+     SgFunctionDeclaration* funcDecl     = NULL;
+
+     SgNewExp* newExpression = SageBuilder::buildNewExp(type, exprListExp, constInit, expr, val, funcDecl);
+     ROSE_ASSERT(newExpression != NULL);
+
+     setJavaSourcePosition(newExpression,env,jToken);
+
+     astJavaExpressionStack.push_front(newExpression);
+
+     outputJavaState("At BOTTOM of cactionAllocationExpressionEnd");
    }
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionANDANDExpression(JNIEnv *env, jobject xxx, jobject jToken)
@@ -2689,6 +2745,38 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionParameterizedQualifiedTypeReferenc
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionParameterizedSingleTypeReference(JNIEnv *env, jobject xxx, jobject jToken)
    {
+     if (SgProject::get_verbose() > 0)
+          printf ("Inside of Java_JavaParser_cactionParameterizedSingleTypeReference() \n");
+
+     outputJavaState("At TOP of cactionParameterizedSingleTypeReference");
+
+  // outputJavaState("At BOTTOM of cactionParameterizedSingleTypeReference");
+   }
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionParameterizedSingleTypeReferenceEnd(JNIEnv *env, jobject xxx, int java_numberOfTypeArguments, jobject jToken)
+   {
+     if (SgProject::get_verbose() > 0)
+          printf ("Inside of Java_JavaParser_cactionParameterizedSingleTypeReferenceEnd() \n");
+
+     outputJavaState("At TOP of cactionParameterizedSingleTypeReferenceEnd");
+
+     int numberOfTypeArguments = java_numberOfTypeArguments;
+
+     for (int i = 0; i < numberOfTypeArguments; i++)
+        {
+          ROSE_ASSERT(astJavaTypeStack.empty() == false);
+
+          astJavaTypeStack.pop_front();
+        }
+
+  // ROSE_ASSERT(astJavaExpressionStack.empty() == false);
+  // setJavaSourcePosition(astJavaExpressionStack.front(),env,jToken);
+
+     outputJavaState("At BOTTOM of cactionParameterizedSingleTypeReferenceEnd");
+
+     printf ("Exiting as a test in cactionParameterizedSingleTypeReferenceEnd() \n");
+     exit(1);
    }
 
 

@@ -1260,7 +1260,19 @@ class JavaTraversal  implements Callable<Boolean>
                          unit = main.batchCompiler.unitsToProcess[i];
                          try
                             {
+                              if (unit == null)
+                                 {
+                                   System.out.println("Warning: unit == null");
+                                 }
+
+                              if (verboseLevel > 2)
+                                   System.out.println("calling main.batchCompiler.process(unit, i) ...");
+
                               main.batchCompiler.process(unit, i);
+
+                              if (verboseLevel > 2)
+                                   System.out.println("calling jt.traverseAST(unit) ...");
+
                               jt.traverseAST(unit); /*tps this is a better place for the traversal */
 
                               if (verboseLevel > 2)
