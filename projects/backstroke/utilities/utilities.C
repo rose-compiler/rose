@@ -1,7 +1,6 @@
 #include "utilities.h"
 #include "cppDefinesAndNamespaces.h"
 
-#include "rose.h"
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
 
@@ -113,6 +112,10 @@ tuple<SgVariableDeclaration*, SgAssignOp*, SgExpression*> CreateTempVariableForE
 		SgType* expressionBaseType = expressionType->stripType(SgType::STRIP_TYPEDEF_TYPE | SgType::STRIP_REFERENCE_TYPE);
 		variableType = SageBuilder::buildPointerType(expressionBaseType);
 	}
+
+    // If the expression is a dereferenced pointer, use a reference to hold it.
+    if (isSgPointerDerefExp(expression))
+        variableType = SageBuilder::buildReferenceType(variableType);
 
 	//Generate a unique variable name
 	string name = BackstrokeUtility::GenerateUniqueVariableName(scope);
@@ -748,6 +751,83 @@ SgType* removePointerOrReferenceType(SgType* t)
 	
 	t = cleanModifersAndTypeDefs(t);
 	return t;
+}
+
+bool isLoopStatement(SgStatement* stmt)
+{
+    if (isSgDoWhileStmt(stmt) || isSgForStatement(stmt) || isSgWhileStmt(stmt))
+        return true;
+    return false;
+}
+
+SgSwitchStatement* getEnclosingSwitchStmt(SgBreakStmt* breakStmt)
+{
+    SgNode* parent = breakStmt->get_parent();
+    while (parent)
+    {
+        SgStatement* stmt = isSgStatement(parent);
+        if (!stmt)
+        {
+            parent = parent->get_parent();
+            continue;
+        }
+        
+        if (isLoopStatement(stmt))
+            return NULL;
+        
+        if (SgSwitchStatement* switchStmt = isSgSwitchStatement(parent))
+            return switchStmt;
+
+        parent = parent->get_parent();
+    }
+    
+    return NULL;
+}
+
+vector<SgStatement*> getEarlyExits(SgScopeStatement* scope)
+{
+    vector<SgStatement*> exits;
+    
+    vector<SgStatement*> stmts = querySubTree<SgStatement>(scope);
+    
+    foreach (SgStatement* stmt, stmts)
+    {
+        if (isSgReturnStmt(stmt))
+            exits.push_back(stmt);
+        
+        else if (SgBreakStmt* breakStmt = isSgBreakStmt(stmt))
+        {
+            
+            if (SgStatement* loop = getEnclosingLoopBody(breakStmt))
+            {
+                if (SageInterface::isAncestor(loop, scope) || loop == scope)
+                    exits.push_back(stmt);
+            }
+            
+            else if (SgSwitchStatement* switchStmt = getEnclosingSwitchStmt(breakStmt))
+            {
+                if (SageInterface::isAncestor(switchStmt, scope) || switchStmt == scope)
+                    exits.push_back(stmt);
+            }
+        }
+        
+        else if (isSgContinueStmt(stmt))
+        {
+            if (SgStatement* loop = getEnclosingLoopBody(stmt))
+            {
+                if (SageInterface::isAncestor(loop, scope) || loop == scope)
+                    exits.push_back(stmt);
+            }
+        }
+        
+        else if (SgGotoStatement* gotoStmt = isSgGotoStatement(stmt))
+        {
+            if (!SageInterface::isAncestor(scope, gotoStmt->get_label()))
+                exits.push_back(stmt);
+        }
+    }
+    
+    return exits;
 }
 
 } // namespace backstroke_util

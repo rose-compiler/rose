@@ -652,6 +652,7 @@ int GetPrecedence(int variant)
           case V_SgGreaterOrEqualOp: return 10;
           case V_SgLshiftOp:         return 11;
           case V_SgRshiftOp:         return 11;
+          case V_SgJavaUnsignedRshiftOp: return 11;
           case V_SgAddOp:            return 12;
 
        // DQ (2/1/2009): Added operator (which should have been here before)
@@ -725,24 +726,6 @@ int GetPrecedence(int variant)
     //        expression tree field (especially the case of FunctionRefExp used for
     //        function pointers initialisation).
           case V_SgFunctionRefExp:    return 0;
-
-    // driscoll6 (6/29/11) Support for Python
-          case V_SgLambdaRefExp:        return 0;
-          case V_SgTupleExp:            return 0;
-          case V_SgListExp:             return 0;
-          case V_SgDictionaryExp:        return 16;
-          case V_SgKeyDatumPair:        return 17;
-          case V_SgComprehension:       return 17;
-          case V_SgListComprehension:   return 16;
-          case V_SgSetComprehension:    return 16;
-          case V_SgDictionaryComprehension:   return 16;
-          case V_SgMembershipOp:        return 16;
-          case V_SgNonMembershipOp:     return 16;
-          case V_SgIsOp:                return 16;
-          case V_SgIsNotOp:             return 16;
-          case V_SgNaryComparisonOp:    return 16;
-          case V_SgNaryBooleanOp:       return 16;
-
 
 #if 0
        // Template

@@ -76,15 +76,6 @@ Unparser::Unparser( ostream* nos, string fname, Unparser_Opt nopt, UnparseFormat
      u_fortran_type = new UnparseFortran_type(this);
      u_fortran_locatedNode = new FortranCodeGeneration_locatedNode(this, fname);
 
-#if 0
-     u_java_type = NULL;
-     u_java_locatedNode = NULL;
-#else
-  // DQ (4/16/2011): Added the Java support symetric to the Fortran unparser support.
-     u_java_type = new UnparseJava_type(this);
-     u_java_locatedNode = new JavaCodeGeneration_locatedNode(this, fname);
-#endif
-
   // ROSE_ASSERT(nfile != NULL);
      ROSE_ASSERT(nos != NULL);
 
@@ -345,8 +336,8 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
              {
             // Unparse using C/C++ unparser by default
                // negara1 (06/29/2011): If unparseScope is provided, unparse it. Otherwise, unparse the global scope (the default behavior).
-               if (unparseScope != NULL) {                   
-                   if (isSgGlobal(unparseScope) != NULL || isSgClassDefinition(unparseScope) != NULL) {                       
+               if (unparseScope != NULL) {
+                   if (isSgGlobal(unparseScope) != NULL || isSgClassDefinition(unparseScope) != NULL) {
                        info.set_current_scope(unparseScope);
                        const SgDeclarationStatementPtrList& declarations = unparseScope -> getDeclarationList();
                        for (SgDeclarationStatementPtrList::const_iterator declaration = declarations.begin(); declaration != declarations.end(); declaration++) {
@@ -354,7 +345,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
                        }
                    } else {
                        //Simulate that the unparsed scope is global in order to unparse an included file.
-                       SgGlobal* fakeGlobal = new SgGlobal(); 
+                       SgGlobal* fakeGlobal = new SgGlobal();
                        fakeGlobal -> set_file_info(unparseScope -> get_file_info());
                        info.set_current_scope(fakeGlobal);
 
@@ -379,13 +370,13 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
                   {
                     if (file->get_Java_only())
                        {
-                      // Unparse using the new Fortran unparser!
-                         ROSE_ASSERT(u_java_locatedNode != NULL);
+                         // for now, force output of compiler generated statements. Most statements are
+                         // not unparsed because they fail the
+                         // UnparseLanguageIndependentConstructs::statementFromFile() test.
+                         info.set_outputCompilerGeneratedStatements();
 
-                      // printf ("This is the unparser support for Java (exiting as a test) \n");
-                      // ROSE_ASSERT(false);
-
-                         u_java_locatedNode->unparseStatement(globalScope, info);
+                         Unparse_Java unparser(this, file->getFileName());
+                         unparser.unparseStatement(globalScope, info);
                        }
                       else
                        {

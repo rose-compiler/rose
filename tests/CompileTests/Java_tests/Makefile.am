@@ -36,6 +36,18 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2011_29.java \
      test2011_30.java \
      test2011_31.java \
+     test2011_32.java \
+     test2011_33.java \
+     test2011_34.java \
+     test2011_35.java \
+     test2011_36.java \
+     test2011_37.java \
+     test2011_38.java \
+     test2011_39.java \
+     test2011_40.java \
+     test2011_41.java \
+     test2011_42.java \
+     test2011_43.java \
      simple.java
 
 
@@ -275,15 +287,15 @@ $(TESTCODE_CURRENTLY_FAILING)
 
 # The use of -rose:java is redundent, the source langauge can now be determined from the file suffix.
 # ROSE_FLAGS = -rose:java -rose:verbose 0 -rose:skipfinalCompileStep
-ROSE_FLAGS = -rose:verbose 0 -rose:skipfinalCompileStep
+ROSE_FLAGS = -rose:verbose 0 -rose:skipfinalCompileStep -rose:skip_syntax_check
 
 PASSING_TEST_Objects = ${TESTCODES:.java=.o}
 TEST_Objects = ${ALL_TESTCODES:.java=.o}
 
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 
-# testTranslator=../../testTranslator
-testTranslator=../../testGraphGeneration
+testTranslator=../../testTranslator
+# testTranslator=../../testGraphGeneration
 
 ../../testTranslator:
 	cd ../..; $(MAKE) testTranslator
@@ -293,7 +305,7 @@ testTranslator=../../testGraphGeneration
 
 # Add the dependence upon the source file to trigger recompilation each time the makefile is run!
 # $(TEST_Objects): ../../testTranslator $(srcdir)/$(@:.o=.java)
-$(TEST_Objects): $(testTranslator) ../../testTranslator
+$(TEST_Objects): $(testTranslator) ../../testTranslator ../../testGraphGeneration
 	$(testTranslator) $(ROSE_FLAGS) $(srcdir)/$(@:.o=.java)
 
 testJavaTraversal:
@@ -309,6 +321,12 @@ testJavaTraversal:
 #	java -Djava.library.path=$(top_builddir)/src/frontend/ECJ_ROSE_Connection/.libs -cp $(top_srcdir)/src/3rdPartyLibraries/java-parser/ecjROSE.jar:. JavaTraversal
 #	java -cp $(top_srcdir)/src/3rdPartyLibraries/java-parser/ecjROSE.jar -Djava.library.path=$(top_builddir)/src/frontend/ECJ_ROSE_Connection/.libs JavaTraversal
 	java -Djava.library.path=$(top_builddir)/src/frontend/ECJ_ROSE_Connection/.libs -cp $(top_builddir)/src/3rdPartyLibraries/java-parser/ecjROSE.jar:$(top_builddir)/src/3rdPartyLibraries/java-parser:. JavaTraversal $(srcdir)/simple.java
+
+
+# DQ (8/14/2011): Rule to build whole AST graphs with all of the file info objects.
+# This is useful for debugging the source code position information.
+graphWithFileInfo: ../../testGraphGeneration
+	../../testGraphGeneration -rose:dotgraph:fileInfoFilter $(ROSE_FLAGS) $(srcdir)/test2011_39.java
 
 workingJava:
 	java -cp $(top_srcdir)/src/3rdPartyLibraries/java-parser/ecjROSE.jar
@@ -330,7 +348,7 @@ testWithoutJavaSpecification:
 	$(testTranslator) $(ROSE_FLAGS) $(srcdir)/testWithoutJavaSpecification.java
 
 # Build a rule to allow running all tests in parallel...
-extraTests: testWithJavaSpecification testWithoutJavaSpecification testECJ_help_option
+extraTests: testWithJavaSpecification testWithoutJavaSpecification testECJ_help_option graphWithFileInfo
 
 # Execute the java file using: java -Djava.library.path=. HelloWorld
 
@@ -375,3 +393,30 @@ clean-local:
 	rm -f *.dot *.class *.java rose_performance_report_lockfile.lock *.out
 #	Remove any generated JVM log files that could have been generated (these are rare).
 	rm -f *.log
+
+# driscoll6 (8/10/11) convenience target for inspecting unparser output from all test files
+check-view: $(TEST_Objects:.o=.view)
+
+# driscoll6 (8/10/11) convenience target for inspecting unparser output from a particular file
+%.view: ../../testTranslator
+	@echo "============ TRANSLATING ==========="
+	$(testTranslator) $(ROSE_FLAGS) $(srcdir)/$(@:.view=.java) -rose:o $(@:.view=.java)
+	@echo "------------- ORIGINAL -------------"
+	@cat $(srcdir)/$(@:.view=.java)
+	@echo "------------- UNPARSED -------------"
+	@cat $(@:.view=.java)
+	@echo "-------------- JAVAC ---------------"
+	$(JAVAC) $(@:.view=.java)
+
+# DQ (8/17/2011): This is a fix for a interesting problem caused by the VPATH make system.
+# The generated java files will be copied from the current build directory instead of the
+# source directory.
+# Since the generated java files have the same name as in the srcdir, VPATH will
+# cause the builddir versions to be copied to the distdir if they exist.  They
+# will exist if the "make check" has been run, which is the case for the
+# java only language tests.
+dist-hook:
+	@echo "Removing what might be the wrong versions of the files if make check has been run."
+	rm $(distdir)/*.java
+	@echo "Copying the correct versions of the java file from the srcdir = $(srcdir) to the distdir = $(distdir)"
+	cp -p $(srcdir)/*.java $(distdir)
