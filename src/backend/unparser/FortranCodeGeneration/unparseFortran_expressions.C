@@ -1920,21 +1920,3 @@ FortranCodeGeneration_locatedNode::unparseCoArrayExpression (SgExpression* expr,
     if (hasImageSelec)
         curprint("]");
   }
-
-bool
-FortranCodeGeneration_locatedNode::requiresParentheses(SgExpression* expr, SgUnparse_Info& info) {
-    ROSE_ASSERT(!"UnparseFortran::requiresParentheses");
-    return true;
-}
-
-PrecedenceSpecifier
-FortranCodeGeneration_locatedNode::getPrecedence(SgExpression* exp) {
-    ROSE_ASSERT(!"UnparseFortran::getPrecedence");
-    return 0;
-}
-
-AssociativitySpecifier
-FortranCodeGeneration_locatedNode::getAssociativity(SgExpression* exp) {
-    ROSE_ASSERT(!"UnparseFortran::getAssociativity");
-    return e_assoc_left;
-}
