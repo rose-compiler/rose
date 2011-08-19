@@ -355,7 +355,9 @@ public:
                                                  *   or RSIM_Process::mem_write().  If the intersection is empty then this
                                                  *   callback will not be triggered. */
 
-    MemoryAccessWatcher(rose_addr_t va, size_t nbytes, unsigned how, unsigned req_perms, RTS_Message *mesg=NULL)
+    MemoryAccessWatcher(rose_addr_t va, size_t nbytes,
+                        unsigned how=MemoryMap::MM_PROT_ANY, unsigned req_perms=MemoryMap::MM_PROT_ANY,
+                        RTS_Message *mesg=NULL)
         : mesg(mesg), va(va), nbytes(nbytes), how(how), req_perms(req_perms) {
         if (!mesg)
             this->mesg = new RTS_Message(stderr, NULL);
