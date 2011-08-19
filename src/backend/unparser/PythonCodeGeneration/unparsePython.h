@@ -92,6 +92,7 @@ class Unparse_Python : public UnparseLanguageIndependentConstructs
           virtual void unparseOperator(VariantT variant, bool pad = true);
 
        // Support for language-independent precedence
+          virtual bool requiresParentheses(SgExpression* expr, SgUnparse_Info& info);
           virtual PrecedenceSpecifier getPrecedence(SgExpression* exp);
           virtual AssociativitySpecifier getAssociativity(SgExpression* exp);
    };
