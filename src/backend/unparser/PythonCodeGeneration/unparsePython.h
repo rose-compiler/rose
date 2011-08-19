@@ -27,8 +27,6 @@ class Unparse_Python : public UnparseLanguageIndependentConstructs
        // DQ (9/6/2010): Mark the derived class to support debugging.
           virtual std::string languageName() const { return "Python Unparser"; }
 
-          virtual PrecedenceSpecifier getPrecedence(SgExpression* exp);
-          virtual AssociativitySpecifier getAssociativity(SgExpression* exp);
           virtual void curprint_indented(std::string txt, SgUnparse_Info& info);
 
      protected:
@@ -92,6 +90,10 @@ class Unparse_Python : public UnparseLanguageIndependentConstructs
           virtual std::string ws_prefix(int nesting_level);
           virtual void unparseAsSuite(SgStatement* stmt, SgUnparse_Info&);
           virtual void unparseOperator(VariantT variant, bool pad = true);
+
+       // Support for language-independent precedence
+          virtual PrecedenceSpecifier getPrecedence(SgExpression* exp);
+          virtual AssociativitySpecifier getAssociativity(SgExpression* exp);
    };
 
 #define ROSE_PYTHON_AND_OP  "and"

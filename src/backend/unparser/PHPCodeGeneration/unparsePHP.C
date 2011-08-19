@@ -33,3 +33,21 @@ void
 Unparse_PHP::unparseStringVal(SgExpression*, SgUnparse_Info&)
 {
 }
+
+bool
+Unparse_PHP::requiresParentheses(SgExpression* expr, SgUnparse_Info& info) {
+    ROSE_ASSERT(!"UnparsePHP::requiresParentheses");
+    return true;
+}
+
+PrecedenceSpecifier
+Unparse_PHP::getPrecedence(SgExpression* exp) {
+    ROSE_ASSERT(!"UnparsePHP::getPrecedence");
+    return 0;
+}
+
+AssociativitySpecifier
+Unparse_PHP::getAssociativity(SgExpression* exp) {
+    ROSE_ASSERT(!"UnparsePHP::getAssociativity");
+    return e_assoc_left;
+}

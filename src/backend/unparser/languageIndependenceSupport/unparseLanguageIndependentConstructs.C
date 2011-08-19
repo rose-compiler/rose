@@ -917,7 +917,7 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
         {
        // DQ (5/21/2004): revised need_paren handling in EDG/SAGE III and within SAGE III IR)
        // QY (7/9/2004): revised to use the new unp->u_sage->PrintStartParen test
-          bool printParen = unp->u_sage->PrintStartParen(expr,info);
+          bool printParen = requiresParentheses(expr,info);
 #if 0
        // DQ (8/21/2005): Suppress comments when unparsing to build type names
           if ( !info.SkipComments() || !info.SkipCPPDirectives() )
@@ -3655,7 +3655,7 @@ UnparseLanguageIndependentConstructs::getAssociativity(SgExpression* expr) {
 }
 
 bool
-UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr) {
+UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, SgUnparse_Info& info) {
     SgExpression* parent = isSgExpression(expr->get_parent());
     if (parent == NULL) return false;
 
@@ -3668,5 +3668,5 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr) {
     else if (assoc == e_assoc_left  && exprPrecedence >= parentPrecedence) return false;
     else if (assoc == e_assoc_left  && exprPrecedence <  parentPrecedence) return true;
     else if (assoc == e_assoc_right && exprPrecedence <= parentPrecedence) return true;
-    else ROSE_ASSERT(!"cannot determine if parens are required");
+    else ROSE_ASSERT(!"cannot determine if parens are required in UnparseLanguageIndependentConstructs::requiresParentheses");
 }

@@ -22,6 +22,11 @@ class Unparse_PHP : public UnparseLanguageIndependentConstructs
 
        // DQ (9/6/2010): Mark the derived class to support debugging.
           virtual std::string languageName() const { return "PHP Unparser"; }
+
+       // Support for language-independent precedence
+          virtual bool requiresParentheses(SgExpression* expr, SgUnparse_Info& info);
+          virtual PrecedenceSpecifier getPrecedence(SgExpression* exp);
+          virtual AssociativitySpecifier getAssociativity(SgExpression* exp);
    };
 
 #endif

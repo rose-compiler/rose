@@ -424,8 +424,11 @@ class FortranCodeGeneration_locatedNode : public UnparseLanguageIndependentConst
           virtual void unparseOmpBeginDirectiveClauses     (SgStatement* stmt,SgUnparse_Info& info);
           virtual void unparseOmpEndDirectiveClauses       (SgStatement* stmt,     SgUnparse_Info& info);
           virtual void unparseOmpEndDirectivePrefixAndName (SgStatement* stmt, SgUnparse_Info& info);
-      
 
+       // Support for language-independent precedence
+          virtual bool requiresParentheses(SgExpression* expr, SgUnparse_Info& info);
+          virtual PrecedenceSpecifier getPrecedence(SgExpression* exp);
+          virtual AssociativitySpecifier getAssociativity(SgExpression* exp);
 };
 
 #endif
