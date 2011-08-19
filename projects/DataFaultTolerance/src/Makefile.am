@@ -4,6 +4,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 INCLUDES = $(ROSE_INCLUDES) -I$(srcdir)/includes \
 	 -I$(top_srcdir)/projects/DataFaultTolerance/includes
 
+Other_SOURCES = faultToleranceArrayLibUtility.C	pragmaHandling.C 
+
 
 CXX_TEMPLATE_REPOSITORY_PATH = .
 CXXFLAGS += -DDEBUG

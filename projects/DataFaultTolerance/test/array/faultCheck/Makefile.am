@@ -1,5 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+Other_SOURCES = rose_ErrtestSample.C rose_testCode.C rose_testSample.C rose_test_10Elem.C rose_test_1Elem.C
 
 CXX_TESTCODES_REQUIRED_TO_PASS = \
 rose_testSample \
