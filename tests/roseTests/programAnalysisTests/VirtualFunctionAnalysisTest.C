@@ -51,12 +51,14 @@ main(int argc, char * argv[]) {
     
      anal->pruneCallGraph(builder);
      
+#if 0     
      std::string filename;
      filename = string(strrchr(mainDecl->get_definition()->get_file_info()->get_filename() ,'/')+1);
      filename = filename + ".callGraph.dot";
+#endif
      
      AstDOTGeneration dotgen2;
-     dotgen2.writeIncidenceGraphToDOTFile(builder.getGraph(), filename);
+     dotgen2.writeIncidenceGraphToDOTFile(builder.getGraph(), "call_graph.dot");
 
     
 
