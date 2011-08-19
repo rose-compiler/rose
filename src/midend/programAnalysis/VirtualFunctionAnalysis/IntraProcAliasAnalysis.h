@@ -1,15 +1,14 @@
 #ifndef INTRA_PROC_ALIAS_ANALYSIS_H
 #define INTRA_PROC_ALIAS_ANALYSIS_H
-
-#include "sage3basic.h"
+#include <sage3basic.h>
+#include "IntraProcDataFlowAnalysis.h"
+#include "customFilteredCFG.h"
 #include "ClassHierarchyGraph.h"
 #include "CallGraph.h"
-#include "customFilteredCFG.h"
 #include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/unordered_map.hpp>
 #include <algorithm>
-#include "IntraProcDataFlowAnalysis.h"
 
 #define foreach BOOST_FOREACH
 #define reverse_foreach BOOST_REVERSE_FOREACH
@@ -399,9 +398,9 @@ public:
     void setCFGInData(SgGraphNode*a, CompReprPtr &b) {      gen->setEntryData(a, b);  }
     
     //! Apply the Transfer function to a node
-    //! For an expression “pi = qj”
+    //! For an expression ‚Äúpi = qj‚Äù
     //! OutC =TransferFunction(InC)
-    //!      = (InC – Must(Alias(p,i))  U (*a, b)where  a ε Alias(p,i) and b ε Alias(q,j);
+    //!      = (InC ‚Äì Must(Alias(p,i))  U (*a, b)where  a Œµ Alias(p,i) and b Œµ Alias(q,j);
 
     void applyCFGTransferFunction(SgGraphNode* s);
 

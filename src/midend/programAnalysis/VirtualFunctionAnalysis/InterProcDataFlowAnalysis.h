@@ -6,7 +6,7 @@
  */
 #ifndef INTERPROCDATAFLOWANALYSIS_H
 #define INTERPROCDATAFLOWANALYSIS_H
-#include "sage3basic.h"
+#include <sage3basic.h>
 #include <vector>
 
 

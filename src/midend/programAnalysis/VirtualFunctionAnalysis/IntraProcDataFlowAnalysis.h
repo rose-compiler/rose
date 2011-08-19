@@ -6,8 +6,7 @@
  */
 #ifndef INTRAPROCDATAFLOWANALYIS_H
 #define INTRAPROCDATAFLOWANALYIS_H
-
-#include "sage3basic.h"
+#include <sage3basic.h>
 
 
 template<class Node,class Data>
