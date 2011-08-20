@@ -53,8 +53,6 @@ Unparse_Java::unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_In
 
           case TYPEID_OP: { unparseTypeIdOp(expr, info); break; }
           case NOT_OP: { unparseNotOp(expr, info); break; }
-          case MINUSMINUS_OP: { unparseMinusMinusOp(expr, info); break; }
-          case PLUSPLUS_OP: { unparsePlusPlusOp(expr, info); break; }
           case BIT_COMPLEMENT_OP: { unparseBitCompOp(expr, info); break; }
           case EXPR_CONDITIONAL: { unparseExprCond(expr, info); break; }
           case CAST_OP:                 { unparseCastOp(expr, info); break; }
@@ -113,6 +111,14 @@ Unparse_Java::unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_In
          case V_SgRshiftOp:
          case V_SgSubtractOp:
              unparseBinaryOp( isSgBinaryOp(expr), info ); break;
+
+         case V_SgPlusPlusOp:
+         case V_SgMinusMinusOp:
+         case V_SgUnaryAddOp:
+         case V_SgMinusOp:
+         case V_SgNotOp:
+         case V_SgBitComplementOp:
+             unparseUnaryOp( isSgUnaryOp(expr), info ); break;
 
          case V_SgVarRefExp:             { unparseVarRef(expr, info); break; }
          case V_SgFunctionRefExp:        { unparseFuncRef(expr, info); break; }
@@ -663,8 +669,6 @@ Unparse_Java::unparseTypeIdOp(SgExpression* expr, SgUnparse_Info& info)
    }
 
 void Unparse_Java::unparseNotOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "!", info); }
-void Unparse_Java::unparseMinusMinusOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "--", info); }
-void Unparse_Java::unparsePlusPlusOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "++", info); }
 void Unparse_Java::unparseAbstractOp(SgExpression* expr, SgUnparse_Info& info) {}
 void Unparse_Java::unparseBitCompOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "~", info); }
 
@@ -673,12 +677,12 @@ Unparse_Java::unparseExprCond(SgExpression* expr, SgUnparse_Info& info)
    {
      SgConditionalExp* expr_cond = isSgConditionalExp(expr);
      ROSE_ASSERT(expr_cond != NULL);
-  /* code inserted from specification */
 
-#if 0
-     printf ("In unparseExprCond(): info.get_nested_expression() = %d \n",info.get_nested_expression());
-#endif
-
+     unparseExpression(expr_cond->get_conditional_exp(), info);
+     curprint(" ? ");
+     unparseExpression(expr_cond->get_true_exp(), info);
+     curprint(" : ");
+     unparseExpression(expr_cond->get_false_exp(), info);
    }
 
 void
@@ -692,227 +696,15 @@ Unparse_Java::unparseDyCastOp(SgExpression* expr, SgUnparse_Info& info)
    }
 
 void
-Unparse_Java::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
-   {
-     SgCastExp* cast_op = isSgCastExp(expr);
-     ROSE_ASSERT(cast_op != NULL);
-  /* code inserted from specification */
+Unparse_Java::unparseCastOp(SgExpression* expr, SgUnparse_Info& info) {
+    SgCastExp* cast = isSgCastExp(expr);
+    ROSE_ASSERT(cast != NULL);
 
-     SgUnparse_Info newinfo(info);
-     newinfo.unset_PrintName();
-     newinfo.unset_isTypeFirstPart();
-     newinfo.unset_isTypeSecondPart();
-
-  // DQ (10/8/2004): Never unparse the declaration from within a cast expression (see testcode2001_28.C)!
-     newinfo.set_SkipDefinition();
-
-     newinfo.unset_SkipBaseType();
-
-  // printf ("In unparseCastOp(): cast_op->cast_type() = %d \n",cast_op->cast_type());
-  // curprint ( "/* In unparseCastOp(): cast_op->cast_type() = " + cast_op->cast_type() + " */";
-
-  // DQ (6/19/2006): Constant folding happens within casts and we have to address this.
-  // more info can be found in the documentation for the addition of the 
-  // SgCastExp::p_originalExpressionTree data member in ROSE/src/ROSETTA/expressions.C
-     SgExpression* expressionTree = cast_op->get_originalExpressionTree();
-     if (expressionTree != NULL && info.SkipConstantFoldedExpressions() == false)
-        {
-#if 0
-          printf ("Found and expression tree representing a cast expression (unfolded constant expression requiring a cast) expressionTree = %p = %s \n",
-               expressionTree,expressionTree->class_name().c_str());
-#endif
-
-       // Use the saved alternative (original) cast expression (should always be a cast 
-       // expression as well). Note that we still have to deal with where this is a cast 
-       // to an un-named type (e.g. un-named enum: test2006_75.C).
-          cast_op = isSgCastExp(expressionTree);
-#if 0
-       // ROSE_ASSERT(cast_op != NULL);
-          //if (cast_op == NULL)
-          if (cast_op != NULL) // Liao, 11/2/2010, we should use the original expression tree here!!
-             {
-            // Jeremiah has submitted the following example: int x[2]; char* y = (char*)x + 1; and the expressionTree is just "x+1".
-               unparseExpression(expressionTree,info);
-
-            // Don't continue processing this as a cast!
-               return;
-             }
-           else 
-             cast_op = isSgCastExp(expr); // restore to the original non-null value otherwise
-#else
-             // Liao, 11/8/2010, we should now always unparse the original expression tree, regardless its Variant_T value
-               unparseExpression(expressionTree,info);
-               return;
-
-#endif             
-        }
-
-     bool addParens = false;
-     switch(cast_op->cast_type())
-        {
-          case SgCastExp::e_unknown:
-             {
-               printf ("SgCastExp::e_unknown found \n");
-               ROSE_ASSERT(false);
-               break; 
-             }
-
-          case SgCastExp::e_default:
-             {
-               printf ("SgCastExp::e_default found \n");
-               ROSE_ASSERT(false);
-               break; 
-             }
-
-          case SgCastExp::e_dynamic_cast:
-             {
-            // dynamic_cast <P *> (expr)
-               curprint ( "dynamic_cast < ");
-
-            // DQ (1/14/2006): p_expression_type is no longer stored (type is computed instead)
-            // unp->u_type->unparseType(cast_op->get_expression_type(), newinfo); // first/second part
-               unp->u_type->unparseType(cast_op->get_type(), newinfo); // first/second part
-
-               curprint ( " > "); // paren are in operand_i
-               addParens = true;
-               break; 
-             }
-
-          case SgCastExp::e_reinterpret_cast:
-             {
-            // reinterpret_cast <P *> (expr)
-               curprint ( "reinterpret_cast < ");
-
-            // DQ (1/14/2006): p_expression_type is no longer stored (type is computed instead)
-            // unp->u_type->unparseType(cast_op->get_expression_type(), newinfo);
-               unp->u_type->unparseType(cast_op->get_type(), newinfo);
-
-               curprint ( " > ");
-               addParens = true;
-               break;
-             }
-
-          case SgCastExp::e_const_cast:
-             {
-            // const_cast <P *> (expr)
-               curprint ( "const_cast < ");
-
-            // DQ (1/14/2006): p_expression_type is no longer stored (type is computed instead)
-            // unp->u_type->unparseType(cast_op->get_expression_type(), newinfo);
-               unp->u_type->unparseType(cast_op->get_type(), newinfo);
-
-               curprint ( " > ");
-               addParens = true;
-               break;
-             }
-
-          case SgCastExp::e_static_cast:
-             {
-            // static_cast <P *> (expr)
-               curprint ( "static_cast < ");
-
-            // DQ (1/14/2006): p_expression_type is no longer stored (type is computed instead)
-            // unp->u_type->unparseType(cast_op->get_expression_type(), newinfo);
-               unp->u_type->unparseType(cast_op->get_type(), newinfo);
-
-               curprint ( " > ");
-               addParens = true;
-               break;
-             }
-
-       // case SgCastExp::e_const_cast:
-          case SgCastExp::e_C_style_cast:
-             {
-#if 0
-               if (cast_op->get_file_info()->isCompilerGenerated() == true)
-                  {
-                     curprint ( "\n /* unparseCastOp compiler generated cast = " 
-                         + StringUtility::numberToString(cast_op) 
-                         + ") file info = " 
-                         + StringUtility::numberToString((void*)(cast_op->get_file_info())) 
-                         + " */ \n");
-                  }
-                 else
-                  {
-                    curprint ( "\n /* unparseCastOp explicitly specified cast */ \n"); 
-                  }
-#endif
-#if 0
-            // This error checking code is in unparseExpression() already.
-               if (expr->get_file_info()->isCompilerGenerated() != expr->get_startOfConstruct()->isCompilerGenerated())
-                  {
-                    printf ("In unparseCastOp(): Detected error expr->get_file_info()->isCompilerGenerated() != expr->get_startOfConstruct()->isCompilerGenerated() \n");
-                    expr->get_file_info()->display("expr->get_file_info(): debug");
-                    expr->get_startOfConstruct()->display("expr->get_startOfConstruct(): debug");
-                  }
-#endif
-            // DQ (2/28/2005): Only output the cast if it is NOT compiler generated (implicit in the source code)
-            // this avoids redundant casts in the output code and avoid errors in the generated code caused by an 
-            // implicit cast to a private type (see test2005_12.C).
-            // if (cast_op->get_file_info()->isCompilerGenerated() == false)
-               if (cast_op->get_startOfConstruct()->isCompilerGenerated() == false)
-                  {
-                 // (P *) expr
-                 // check if the expression that we are casting is not a string
-                 // curprint ( "\n /* explicit cast: cast_op->get_operand_i() = " + cast_op->get_operand_i()->sage_class_name() + " */ \n";
-                    if (cast_op->get_operand_i()->variant() != STRING_VAL)
-                       {
-                      // it is not a string, so we always cast
-                      // curprint ( "/* unparseCastOp SgCastExp::c_cast_e nonstring */ "; 
-                         curprint ( "(");
-
-                      // DQ (1/14/2006): p_expression_type is no longer stored (type is computed instead)
-                      // unp->u_type->unparseType(cast_op->get_expression_type(), newinfo);
-                         unp->u_type->unparseType(cast_op->get_type(), newinfo);
-
-                         curprint ( ")");
-                       }
-                 // cast_op->get_operand_i()->variant() == STRING_VAL
-                 // it is a string, so now check if the cast is not a "const char* "
-                 // or if the caststring option is on. If any of these are true,
-                 // then unparse the cast. Both must be false to not unparse the cast.
-                      else
-                       {
-                      // DQ (1/14/2006): p_expression_type is no longer stored (type is computed instead)
-                      // if (!unp->u_sage->isCast_ConstCharStar(cast_op->get_expression_type()) || unp->opt.get_caststring_opt())
-                         if (!unp->u_sage->isCast_ConstCharStar(cast_op->get_type()) || unp->opt.get_caststring_opt())
-                            {
-                           // curprint ( "/* unparseCastOp SgCastExp::c_cast_e case string */ ";
-                              curprint ( "(");
-
-                           // DQ (1/14/2006): p_expression_type is no longer stored (type is computed instead)
-                           // unp->u_type->unparseType(cast_op->get_expression_type(), newinfo);
-                              unp->u_type->unparseType(cast_op->get_type(), newinfo);
-
-                              curprint ( ")");
-                            }
-                       }
-                  }
-                 else
-                  {
-                 // curprint ( "/* compiler generated cast not output */";
-                  }
-               break; 
-             }
-
-          default:
-             {
-               printf ("Default reached in cast_op->cast_type() = %d \n",cast_op->cast_type());
-               ROSE_ASSERT(false);
-               break; 
-             }
-        }
-
-  // curprint ( "/* unparse the cast's operand: get_need_paren() = " + (cast_op->get_operand()->get_need_paren() ? "true" : "false") + " */";
-
-  // DQ (6/15/2005): reinterpret_cast always needs parens
-     if (addParens == true)
-          curprint ( "/* part of cast */ (");
-     unparseExpression(cast_op->get_operand(), info); 
-
-     if (addParens == true)
-          curprint ( ")");
-   }
+    curprint("(");
+    unparseType(cast->get_type(), info);
+    curprint(") ");
+    unparseExpression(cast->get_operand(), info);
+}
 
 void
 Unparse_Java::unparseArrayOp(SgExpression* expr, SgUnparse_Info& info)
@@ -1189,13 +981,21 @@ Unparse_Java::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Info & 
    }
 
 void
-Unparse_Java::unparseJavaInstanceOfOp(SgExpression* expr, SgUnparse_Info & info)
-   {
-       SgJavaInstanceOfOp* inst_op = isSgJavaInstanceOfOp(expr);
-       ROSE_ASSERT(inst_op != NULL);
+Unparse_Java::unparseJavaInstanceOfOp(SgExpression* expr, SgUnparse_Info & info) {
+    SgJavaInstanceOfOp* inst_op = isSgJavaInstanceOfOp(expr);
+    ROSE_ASSERT(inst_op != NULL);
 
-       curprint("INSTANCEOF");
-   }
+    unparseExpression(inst_op->get_operand_expr(), info);
+    curprint(" instanceof ");
+
+    //TODO p_operand_type should be defined. Until it always is, complain.
+    if (inst_op->get_operand_type() != NULL) {
+        unparseType(inst_op->get_operand_type(), info);
+    } else {
+        cout << "unparser: error. SgJavaInstanceOfOp::p_operand_type is NULL" << endl;
+        curprint("NULL_TYPE_IN_AST");
+    }
+}
 
 void
 Unparse_Java::unparsePseudoDtorRef(SgExpression* expr, SgUnparse_Info & info)
@@ -1228,7 +1028,7 @@ Unparse_Java::unparseCompoundAssignOp(SgCompoundAssignOp* op,
 
 void
 Unparse_Java::unparseBinaryOp(SgBinaryOp* op,
-                                                SgUnparse_Info & info) {
+                              SgUnparse_Info & info) {
     unparseExpression(op->get_lhs_operand(), info);
     switch (op->variantT()) {
         case V_SgAddOp:                curprint(" + ");   break;
@@ -1238,7 +1038,7 @@ Unparse_Java::unparseBinaryOp(SgBinaryOp* op,
         case V_SgBitOrOp:              curprint(" | ");   break;
         case V_SgBitXorOp:             curprint(" ^ ");   break;
         case V_SgDivideOp:             curprint(" / ");   break;
-        case V_SgDotExp:               curprint(" . ");   break;
+        case V_SgDotExp:               curprint(".");     break;
         case V_SgEqualityOp:           curprint(" == ");  break;
         case V_SgGreaterOrEqualOp:     curprint(" >= ");  break;
         case V_SgGreaterThanOp:        curprint(" > ");   break;
@@ -1258,4 +1058,26 @@ Unparse_Java::unparseBinaryOp(SgBinaryOp* op,
         }
     }
     unparseExpression(op->get_rhs_operand(), info);
+}
+
+void
+Unparse_Java::unparseUnaryOp(SgUnaryOp* op,
+                             SgUnparse_Info & info) {
+    if (op->get_mode() == SgUnaryOp::postfix)
+        unparseExpression(op->get_operand(), info);
+
+    switch (op->variantT()) {
+        case V_SgPlusPlusOp:     curprint("++");   break;
+        case V_SgMinusMinusOp:   curprint("--");   break;
+        case V_SgUnaryAddOp:     curprint("+");    break;
+        case V_SgMinusOp:        curprint("-");    break;
+        case V_SgNotOp:          curprint("!");    break;
+        case V_SgBitComplementOp:curprint("~");    break;
+        default:
+            cout << "error: unparseUnaryOp(" << op->class_name() << "*,info) is unimplemented." << endl;
+            break;
+    }
+
+    if (op->get_mode() == SgUnaryOp::prefix)
+        unparseExpression(op->get_operand(), info);
 }
