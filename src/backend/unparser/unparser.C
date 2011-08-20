@@ -370,10 +370,14 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
                   {
                     if (file->get_Java_only())
                        {
-                         // for now, force output of compiler generated statements. Most statements are
-                         // not unparsed because they fail the
-                         // UnparseLanguageIndependentConstructs::statementFromFile() test.
-                         info.set_outputCompilerGeneratedStatements();
+                      // DQ (8/19/2011): Now that the unparser is working better and we generate a more 
+                      // correct AST for Java, we want to use better mechanisms to control the output of 
+                      // different parts of the AST (implicit vs. explicit classes in Java).
+
+                      // for now, force output of compiler generated statements. Most statements are
+                      // not unparsed because they fail the
+                      // UnparseLanguageIndependentConstructs::statementFromFile() test.
+                      // info.set_outputCompilerGeneratedStatements();
 
                          Unparse_Java unparser(this, file->getFileName());
                          unparser.unparseStatement(globalScope, info);
@@ -1115,7 +1119,7 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
      SgUnparse_Info* inheritedAttributeInfoPointer = NULL;
      if (inputUnparseInfoPointer != NULL)
         {
-       // printf ("Using the input inputUnparseInfoPointer object \n");
+          printf ("Using the input inputUnparseInfoPointer object \n");
 
        // Use the user provided SgUnparse_Info object
           inheritedAttributeInfoPointer = inputUnparseInfoPointer;
@@ -1124,7 +1128,7 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
         {
        // DEFINE DEFAULT BEHAVIOUR FOR THE CASE WHEN NO inputUnparseInfoPointer (== NULL) IS 
        // PASSED AS ARGUMENT TO THE FUNCTION
-       // printf ("Building a new Unparse_Info object \n");
+          printf ("Building a new Unparse_Info object \n");
 
        // If no input parameter has been specified then allocate one
        // inheritedAttributeInfoPointer = new SgUnparse_Info (NO_UNPARSE_INFO);
@@ -1515,9 +1519,8 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
 
      ROSE_ASSERT(file != NULL);
 
-     // FMZ (12/21/2009) the imported files by "use" statements should not be unparsed 
+  // FMZ (12/21/2009) the imported files by "use" statements should not be unparsed 
      if (file->get_skip_unparse()==true) return;
-
 
 #if 0
   // DQ (5/31/2006): It is a message that I think we can ignore (was a problem for Yarden)
@@ -1663,6 +1666,8 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
        // information that is passed down through the tree (inherited attribute)
        // SgUnparse_Info inheritedAttributeInfo (NO_UNPARSE_INFO);
           SgUnparse_Info inheritedAttributeInfo;
+
+       // inheritedAttributeInfo.display("Inside of unparseFile(SgFile* file)");
 
        // Call member function to start the unparsing process
        // roseUnparser.run_unparser();
