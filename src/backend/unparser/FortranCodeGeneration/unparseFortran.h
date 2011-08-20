@@ -409,15 +409,14 @@ class FortranCodeGeneration_locatedNode : public UnparseLanguageIndependentConst
           void unparseAllocateStatement(SgStatement* stmt, SgUnparse_Info& info); 
           void unparseDeallocateStatement(SgStatement* stmt, SgUnparse_Info& info);
 
-       // FMZ (2/17/200(): Added support for co-array fortran "withteam" stmt
-          void unparseWithTeamStatement(SgStatement* stmt, SgUnparse_Info& info); 
-
       //! begin the unparser (unparser.C)
           void run_unparser();
 
-      //FMZ (2/10/2009): Added support for unparsing SgCoExpresson
+       // support for Rice Coarray Fortran 2.0
+          void unparseWithTeamStatement(SgStatement* stmt, SgUnparse_Info& info); 
           void unparseCoArrayExpression      (SgExpression* expr, SgUnparse_Info& info);
           void curprint(const std::string&) const;
+
        // Liao 10/20/2010 common unparsing support for OpenMP AST 
           virtual void unparseOmpPrefix          (SgUnparse_Info& info);
           virtual void unparseOmpDoStatement     (SgStatement* stmt, SgUnparse_Info& info);
@@ -425,7 +424,7 @@ class FortranCodeGeneration_locatedNode : public UnparseLanguageIndependentConst
           virtual void unparseOmpEndDirectiveClauses       (SgStatement* stmt,     SgUnparse_Info& info);
           virtual void unparseOmpEndDirectivePrefixAndName (SgStatement* stmt, SgUnparse_Info& info);
 
-     private: // DXN (08/12/2011)
+     private:
           // Unparses dimension attribute of the given array type and other attributes of its base type.
           void unparseArrayAttr(SgArrayType* type, SgUnparse_Info& info);
 
