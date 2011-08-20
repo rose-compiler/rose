@@ -1119,7 +1119,7 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
      SgUnparse_Info* inheritedAttributeInfoPointer = NULL;
      if (inputUnparseInfoPointer != NULL)
         {
-          printf ("Using the input inputUnparseInfoPointer object \n");
+       // printf ("Using the input inputUnparseInfoPointer object \n");
 
        // Use the user provided SgUnparse_Info object
           inheritedAttributeInfoPointer = inputUnparseInfoPointer;
