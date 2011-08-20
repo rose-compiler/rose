@@ -9,6 +9,7 @@
 #define UNPARSER_LANGUAGE_INDEPENDENT_SUPPORT
 
 #include "unparser.h"
+#include "modified_sage.h"
 
 /* support for handling precedence and associativity */
 typedef int PrecedenceSpecifier;
@@ -390,7 +391,7 @@ class UnparseLanguageIndependentConstructs
       //
 
        // Support for language-independent precedence
-          virtual bool requiresParentheses(SgExpression* expr);
+          virtual bool requiresParentheses(SgExpression* expr, SgUnparse_Info& info);
           virtual PrecedenceSpecifier getPrecedence(SgExpression* exp);
           virtual AssociativitySpecifier getAssociativity(SgExpression* exp);
 
