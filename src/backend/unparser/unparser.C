@@ -373,10 +373,6 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
                       // DQ (8/19/2011): Now that the unparser is working better and we generate a more 
                       // correct AST for Java, we want to use better mechanisms to control the output of 
                       // different parts of the AST (implicit vs. explicit classes in Java).
-
-                      // for now, force output of compiler generated statements. Most statements are
-                      // not unparsed because they fail the
-                      // UnparseLanguageIndependentConstructs::statementFromFile() test.
                       // info.set_outputCompilerGeneratedStatements();
 
                          Unparse_Java unparser(this, file->getFileName());
