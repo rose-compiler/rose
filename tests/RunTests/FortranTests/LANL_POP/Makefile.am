@@ -86,7 +86,7 @@ $(netcdf_lib): hudson-environment.sh
 	@set -e $(SETX);						\
 	echo "  BUILD   NetCDF";					\
 	source hudson-environment.sh;					\
-	cp -pdR $(netcdf_srcdir) $(netcdf_blddir);			\
+	cp -pPR $(netcdf_srcdir) $(netcdf_blddir);			\
 	chmod -R u+w $(netcdf_blddir);					\
 	cd $(netcdf_blddir);						\
         ./configure --prefix=$(netcdf_prefix) --disable-netcdf-4	\
@@ -141,7 +141,7 @@ pop_pristine_blddir_stamp pop_modified_blddir_stamp pop_modified_srcdir_stamp: h
 	@set -e $(SETX);							\
 	source hudson-environment.sh;						\
 	blddir=$(patsubst %_stamp,%,$@);					\
-	cp -pdR $(pop_srcdir) $$blddir;						\
+	cp -pPR $(pop_srcdir) $$blddir;						\
 	chmod -R u+w $$blddir;							\
 	ARCHDIR=hudson $(srcdir)/setup_run_dir.ROSE $(pop_srcdir) $$blddir/run;	\
 	touch $@
@@ -286,7 +286,7 @@ endif
 #       explicitly copy these directories.
 EXTRA_DIST = hudson.gnu make_rmod_deps.pl setup_run_dir.ROSE
 dist-hook:
-	cp -pdRv $(netcdf_srcdir) $(pop_srcdir) $(distdir)
+	cp -pPRv $(netcdf_srcdir) $(pop_srcdir) $(distdir)
 
 clean-local:
 	rm -rf $(netcdf_blddir)

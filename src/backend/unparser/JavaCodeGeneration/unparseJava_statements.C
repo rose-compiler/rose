@@ -157,22 +157,33 @@ Unparse_Java::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Info
              }
         }
 
-        bool printSemicolon = true;
+        bool printSemicolon;
         switch (stmt->variantT()) {
             case V_SgClassDeclaration:
             case V_SgClassDefinition:
             case V_SgMemberFunctionDeclaration:
             case V_SgFunctionDefinition:
             case V_SgFunctionParameterList:
+            case V_SgForInitStatement:
             case V_SgBasicBlock:
+            case V_SgWhileStmt:
+            case V_SgForStatement:
+            case V_SgIfStmt:
                 printSemicolon = false;
+                break;
+            default:
+                printSemicolon = true;
         }
         if (printSemicolon) curprint(";");
 
-        bool printNewline = true;
+        bool printNewline;
         switch (stmt->variantT()) {
+            case V_SgForInitStatement:
             case V_SgFunctionParameterList:
                 printNewline = false;
+                break;
+            default:
+                printNewline = true;
         }
         if (printNewline) unp->cur.insert_newline();
    }
@@ -193,16 +204,11 @@ Unparse_Java::curprint_indented(const string str, SgUnparse_Info& info) const {
 void
 Unparse_Java::unparseImportDeclarationStatement (SgStatement* stmt, SgUnparse_Info& info)
    {
-  // There is a SgNamespaceDefinition, but it is not unparsed except through the SgNamespaceDeclaration
-
      SgJavaImportStatement* importDeclaration = isSgJavaImportStatement(stmt);
      ROSE_ASSERT (importDeclaration != NULL);
-     curprint ( string("import "));
 
-  // This can be an empty string (in the case of an unnamed namespace)
-     SgName name = importDeclaration->get_path();
-     curprint ( name.str());
-     curprint ("; ");
+     curprint("import ");
+     unparseName(importDeclaration->get_path(), info);
    }
 
 void
@@ -454,79 +460,35 @@ static size_t countElsesNeededToPreventDangling(SgStatement* s) {
   }
 }
 
-void Unparse_Java::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
-   {
+void Unparse_Java::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info) {
+    SgIfStmt* if_stmt = isSgIfStmt(stmt);
+    ROSE_ASSERT(stmt != NULL);
 
-  // printf ("Unparse if statement stmt = %p \n",stmt);
+    SgExprStatement* cond_stmt = isSgExprStatement(if_stmt->get_conditional());
+    ROSE_ASSERT(cond_stmt != NULL && "expected an SgExprStatement in SgIfStmt::p_conditional");
+    SgExpression* conditional = cond_stmt->get_expression();
 
-     SgIfStmt* if_stmt = isSgIfStmt(stmt);
-     assert (if_stmt != NULL);
+    curprint("if (");
+    unparseExpression(conditional, info);
+    curprint(")");
 
-     while (if_stmt != NULL)
-        {
-          SgStatement *tmp_stmt = NULL;
-          curprint ( string("if ("));
-          SgUnparse_Info testInfo(info);
-          testInfo.set_SkipSemiColon();
-          testInfo.set_inConditional();
-       // info.set_inConditional();
-          if ( (tmp_stmt = if_stmt->get_conditional()) )
-             {
-            // Unparse using base class function so we get any required comments and CPP directives.
-            // unparseStatement(tmp_stmt, testInfo);
-               UnparseLanguageIndependentConstructs::unparseStatement(tmp_stmt, testInfo);
-             }
-          testInfo.unset_inConditional();
-          curprint ( string(") "));
+    if (if_stmt->get_true_body() != NULL) {
+        curprint(" ");
+        unparseStatement(if_stmt->get_true_body(), info);
+    } else {
+        curprint(";");
+    }
 
-          if ( (tmp_stmt = if_stmt->get_true_body()) ) 
-             {
-            // printf ("Unparse the if true body \n");
-            // curprint ( string("\n/* Unparse the if true body */ \n") );
-               unp->cur.format(tmp_stmt, info, FORMAT_BEFORE_NESTED_STATEMENT);
-
-            // Unparse using base class function so we get any required comments and CPP directives.
-            // unparseStatement(tmp_stmt, info);
-               UnparseLanguageIndependentConstructs::unparseStatement(tmp_stmt, info);
-
-               unp->cur.format(tmp_stmt, info, FORMAT_AFTER_NESTED_STATEMENT);
-            // curprint ( string("\n/* DONE: Unparse the if true body */ \n") );
-             }
-
-          if ( (tmp_stmt = if_stmt->get_false_body()) )
-             {
-               size_t elsesNeededForInnerIfs = countElsesNeededToPreventDangling(if_stmt->get_true_body());
-               for (size_t i = 0; i < elsesNeededForInnerIfs; ++i) {
-                 curprint ( string(" else {}") ); // Ensure this else does not match an inner if statement
-               }
-               unp->cur.format(if_stmt, info, FORMAT_BEFORE_STMT);
-               curprint ( string("else "));
-               if_stmt = isSgIfStmt(tmp_stmt);
-               if (if_stmt == NULL) {
-                 unp->cur.format(tmp_stmt, info, FORMAT_BEFORE_NESTED_STATEMENT);
-
-              // curprint ( string("\n/* Unparse the if false body */ \n") );
-              // Unparse using base class function so we get any required comments and CPP directives.
-              // unparseStatement(tmp_stmt, info);
-                 UnparseLanguageIndependentConstructs::unparseStatement(tmp_stmt, info);
-              // curprint ( string("\n/* DONE: Unparse the if false body */ \n") );
-
-                 unp->cur.format(tmp_stmt, info, FORMAT_AFTER_NESTED_STATEMENT);
-               }
-             }
-            else
-             {
-               if_stmt = NULL;
-             }
-
-          if (if_stmt != NULL)
-               unparseAttachedPreprocessingInfo(if_stmt, info, PreprocessingInfo::before);
-        }
-   }
+    if (if_stmt->get_false_body() != NULL) {
+        curprint_indented("else ", info);
+        unparseStatement(if_stmt->get_false_body(), info);
+    }
+}
 
 void
 Unparse_Java::unparseInitializedName(SgInitializedName* init_name, SgUnparse_Info& info) {
     unparseType(init_name->get_type(), info);
+    curprint(" ");
     unparseName(init_name->get_name(), info);
 
     if (init_name->get_initializer() != NULL) {
@@ -536,112 +498,47 @@ Unparse_Java::unparseInitializedName(SgInitializedName* init_name, SgUnparse_Inf
 }
 
 void
-Unparse_Java::unparseForInitStmt (SgStatement* stmt, SgUnparse_Info& info)
-   {
-  // printf ("Unparse for loop initializers \n");
-     SgForInitStatement* forInitStmt = isSgForInitStatement(stmt);
-     ROSE_ASSERT(forInitStmt != NULL);
+Unparse_Java::unparseForInitStmt (SgStatement* stmt, SgUnparse_Info& info) {
+    SgForInitStatement* forInitStmt = isSgForInitStatement(stmt);
+    ROSE_ASSERT(forInitStmt != NULL);
 
-     SgStatementPtrList::iterator i = forInitStmt->get_init_stmt().begin();
+    SgStatementPtrList& stmts = forInitStmt->get_init_stmt();
+    SgStatementPtrList::iterator stmt_it;
+    for (stmt_it = stmts.begin(); stmt_it != stmts.end(); stmt_it++) {
+        if (stmt_it != stmts.begin())
+            curprint(", ");
 
-     SgUnparse_Info newinfo(info);
+        SgExprStatement* stmt = isSgExprStatement(*stmt_it);
+        ROSE_ASSERT(stmt != NULL && "expected an SgExprStatement in SgForInitStmt");
 
-     while(i != forInitStmt->get_init_stmt().end())
-        {
-       // curprint(" /* unparseForInitStmt: " + (*i)->class_name() + " */ ");
-          unparseStatement(*i, newinfo);
-          i++;
-
-       // After unparsing the first variable declaration with the type 
-       // we want to unparse the rest without the base type.
-          newinfo.set_SkipBaseType();
-
-          if (i != forInitStmt->get_init_stmt().end())
-             {
-               curprint ( string(", "));
-             }
-        }
-
-     curprint ( string("; "));
-   }
+        unparseExpression(stmt->get_expression(), info);
+    }
+}
 
 void
-Unparse_Java::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
-   {
-  // printf ("Unparse for loop \n");
-     SgForStatement* for_stmt = isSgForStatement(stmt);
-     ROSE_ASSERT(for_stmt != NULL);
+Unparse_Java::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info) {
+    SgForStatement* for_stmt = isSgForStatement(stmt);
+    ROSE_ASSERT(for_stmt != NULL);
 
-     curprint ( string("for ("));
-     SgUnparse_Info newinfo(info);
-     newinfo.set_SkipSemiColon();
-     newinfo.set_inConditional();  // set to prevent printing line and file information
+    SgExprStatement* test_stmt = isSgExprStatement(for_stmt->get_test());
+    ROSE_ASSERT(test_stmt != NULL && "expected SgForStatement::p_test to be an SgExprStatement");
+    SgExpression* test_exp = test_stmt->get_expression();
 
-  // curprint(" /* initializer */ ");
-     SgStatement *tmp_stmt = for_stmt->get_for_init_stmt();
-  // curprint(" /* initializer: " + tmp_stmt->class_name() + " */ ");
-  // ROSE_ASSERT(tmp_stmt != NULL);
-     if (tmp_stmt != NULL)
-        {
-          unparseStatement(tmp_stmt,newinfo);
-        }
-       else
-        {
-          printf ("Warning in unparseForStmt(): for_stmt->get_for_init_stmt() == NULL \n");
-          curprint ( string("; "));
-        }
-     newinfo.unset_inConditional();
+    curprint("for (");
+    unparseStatement(for_stmt->get_for_init_stmt(), info);
+    curprint("; ");
+    unparseExpression(test_exp, info);
+    curprint("; ");
+    unparseExpression(for_stmt->get_increment(), info);
+    curprint(")");
 
-     SgStatement *test_stmt = for_stmt->get_test();
-     ROSE_ASSERT(test_stmt != NULL);
-  // if ( test_stmt != NULL )
-     SgUnparse_Info testinfo(info);
-     testinfo.set_SkipSemiColon();
-     testinfo.set_inConditional();
-  // printf ("Output the test in the for statement format testinfo.inConditional() = %s \n",testinfo.inConditional() ? "true" : "false");
-     unparseStatement(test_stmt, testinfo);
-
-     curprint ( string("; "));
-
-  // curprint ( string(" /* increment */ ";
-  // SgExpression *increment_expr = for_stmt->get_increment_expr();
-     SgExpression *increment_expr = for_stmt->get_increment();
-     ROSE_ASSERT(increment_expr != NULL);
-     if ( increment_expr != NULL )
-          unparseExpression(increment_expr, info);
-     curprint ( string(") "));
-
-  // Added support to output the header without the body to support the addition 
-  // of more context in the prefix used with the AST Rewrite Mechanism.
-  // if ( (tmp_stmt = for_stmt->get_loop_body()) )
-
-     SgStatement* loopBody = for_stmt->get_loop_body();
-     ROSE_ASSERT(loopBody != NULL);
-  // printf ("loopBody = %p         = %s \n",loopBody,loopBody->class_name().c_str());
-  // printf ("info.SkipBasicBlock() = %s \n",info.SkipBasicBlock() ? "true" : "false");
-
-  // if ( (tmp_stmt = for_stmt->get_loop_body()) && !info.SkipBasicBlock())
-     if ( (loopBody != NULL) && !info.SkipBasicBlock())
-        {
-       // printf ("Unparse the for loop body \n");
-       // curprint ( string("\n/* Unparse the for loop body */ \n";
-       // unparseStatement(tmp_stmt, info);
-
-          unp->cur.format(loopBody, info, FORMAT_BEFORE_NESTED_STATEMENT);
-          unparseStatement(loopBody, info);
-          unp->cur.format(loopBody, info, FORMAT_AFTER_NESTED_STATEMENT);
-       // curprint ( string("\n/* DONE: Unparse the for loop body */ \n";
-        }
-       else
-        {
-       // printf ("No for loop body to unparse! \n");
-       // curprint ( string("\n/* No for loop body to unparse! */ \n";
-          if (!info.SkipSemiColon())
-             {
-               curprint ( string(";"));
-             }
-        }
-   }
+    if (for_stmt->get_loop_body() != NULL) {
+        curprint(" ");
+        unparseStatement(for_stmt->get_loop_body(), info);
+    } else {
+        curprint(";");
+    }
+}
 
 
 void
@@ -751,6 +648,7 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      }
 
      unparseDeclarationModifier(mfuncdecl_stmt->get_declarationModifier(), info);
+     unparseFunctionModifier(mfuncdecl_stmt->get_functionModifier(), info);
 
      //TODO remove when specialFxnModifier.isConstructor works
      bool constructor = mfuncdecl_stmt->get_specialFunctionModifier().isConstructor();
@@ -764,6 +662,7 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      // unparse type, unless this a constructor
      if (! constructor) {
          unparseType(mfuncdecl_stmt->get_type()->get_return_type(), info);
+         curprint(" ");
      }
 
      unparseName(mfuncdecl_stmt->get_name(), info);
@@ -819,7 +718,18 @@ Unparse_Java::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      curprint("class ");
      unparseName(classdecl_stmt->get_name(), info);
-     //TODO inheritance
+
+     SgClassDefinition* class_def = classdecl_stmt->get_definition();
+     ROSE_ASSERT(class_def != NULL);
+     SgBaseClassPtrList& bases = class_def->get_inheritances();
+     ROSE_ASSERT(bases.size() <= 1 && "java classes only support single inheritance");
+     if (bases.size() == 1) {
+         curprint(" extends ");
+         unparseBaseClass(bases[0], info);
+     }
+
+     //todo 'implements <typelist>'
+
      unparseStatement(classdecl_stmt->get_definition(), info);
    }
 
@@ -868,19 +778,21 @@ Unparse_Java::unparseWhileStmt(SgStatement* stmt, SgUnparse_Info& info) {
   SgWhileStmt* while_stmt = isSgWhileStmt(stmt);
   ROSE_ASSERT(while_stmt != NULL);
 
-  curprint ( string("while" ) + "(");
-  info.set_inConditional();
-  
-  unparseStatement(while_stmt->get_condition(), info);
-  info.unset_inConditional();
-  curprint ( string(")"));
-  if(while_stmt->get_body()) {
-    unp->cur.format(while_stmt->get_body(), info, FORMAT_BEFORE_NESTED_STATEMENT);
-    unparseStatement(while_stmt->get_body(), info);
-    unp->cur.format(while_stmt->get_body(), info, FORMAT_AFTER_NESTED_STATEMENT);
-  }
-  else if (!info.SkipSemiColon()) { curprint ( string(";")); }
+  SgExprStatement* cond_stmt = isSgExprStatement(while_stmt->get_condition());
+  ROSE_ASSERT(cond_stmt != NULL && "Expecting an SgExprStatement in member SgWhileStmt::p_condition.");
+  SgExpression* cond = cond_stmt->get_expression();
+  ROSE_ASSERT(cond != NULL);
 
+  curprint("while (");
+  unparseExpression(cond, info);
+  curprint(")");
+
+  if(while_stmt->get_body()) {
+      curprint(" ");
+      unparseStatement(while_stmt->get_body(), info);
+  } else {
+      curprint(";");
+  }
 }
 
 void
@@ -888,22 +800,16 @@ Unparse_Java::unparseDoWhileStmt(SgStatement* stmt, SgUnparse_Info& info) {
   SgDoWhileStmt* dowhile_stmt = isSgDoWhileStmt(stmt);
   ROSE_ASSERT(dowhile_stmt != NULL);
 
-  curprint ( string("do "));
-  unp->cur.format(dowhile_stmt->get_body(), info, FORMAT_BEFORE_NESTED_STATEMENT);
+  SgExprStatement* cond_stmt = isSgExprStatement(dowhile_stmt->get_condition());
+  ROSE_ASSERT(cond_stmt != NULL && "Expecting an SgExprStatement in member SgDoWhileStmt::p_condition.");
+  SgExpression* cond = cond_stmt->get_expression();
+  ROSE_ASSERT(cond != NULL);
+
+  curprint("do ");
   unparseStatement(dowhile_stmt->get_body(), info);
-  unp->cur.format(dowhile_stmt->get_body(), info, FORMAT_AFTER_NESTED_STATEMENT);
-  curprint ( string("while " ) + "(");
-  SgUnparse_Info ninfo(info);
-  ninfo.set_inConditional();
-
-  //we need to keep the properties of the prevnode (The next prevnode will set the
-  //line back to where "do" was printed) 
-// SgLocatedNode* tempnode = prevnode;
-
-  unparseStatement(dowhile_stmt->get_condition(), ninfo);
-  ninfo.unset_inConditional();
-  curprint ( string(")")); 
-  if (!info.SkipSemiColon()) { curprint ( string(";")); }
+  curprint_indented("while (", info);
+  unparseExpression(cond, info);
+  curprint(")");
 }
 
 void
@@ -1003,7 +909,7 @@ Unparse_Java::unparseBreakStmt(SgStatement* stmt, SgUnparse_Info& info) {
   SgBreakStmt* break_stmt = isSgBreakStmt(stmt);
   ROSE_ASSERT(break_stmt != NULL);
 
-  curprint ( string("break; "));
+  curprint ("break");
 }
 
 void
@@ -1011,7 +917,7 @@ Unparse_Java::unparseContinueStmt(SgStatement* stmt, SgUnparse_Info& info) {
   SgContinueStmt* continue_stmt = isSgContinueStmt(stmt);
   ROSE_ASSERT(continue_stmt != NULL);
 
-  curprint ( string("continue; "));
+  curprint ("continue");
 }
 
 void
@@ -1020,18 +926,12 @@ Unparse_Java::unparseReturnStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgReturnStmt* return_stmt = isSgReturnStmt(stmt);
      ROSE_ASSERT(return_stmt != NULL);
 
-     curprint ( string("return "));
-     SgUnparse_Info ninfo(info);
+     curprint ("return");
 
-     if (return_stmt->get_expression())
-        {
-          unparseExpression(return_stmt->get_expression(), ninfo);
-        }
-
-     if (!ninfo.SkipSemiColon())
-        {
-          curprint ( string(";"));
-        }
+     if (return_stmt->get_expression()) {
+         curprint(" ");
+         unparseExpression(return_stmt->get_expression(), info);
+     }
    }
 
 void
@@ -1100,4 +1000,10 @@ Unparse_Java::unparseFunctionModifier(SgFunctionModifier& mod, SgUnparse_Info& i
     if (mod.isJavaStrictfp()) curprint("strictfp ");
 }
 
+void
+Unparse_Java::unparseBaseClass(SgBaseClass* base, SgUnparse_Info& info) {
+    ROSE_ASSERT(base != NULL);
 
+    SgClassDeclaration* base_class = base->get_base_class();
+    unparseName(base_class->get_name(), info);
+}

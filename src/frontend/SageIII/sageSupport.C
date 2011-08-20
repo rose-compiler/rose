@@ -6618,6 +6618,12 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
      frontEndCommandLine.push_back(".");
 #endif
 
+  // Set the default Java version to be supported in ROSE:
+  // DQ (8/20/2011): Make the default for ROSE to use Java version 1.6 since our syntax checking
+  // and backend compiler is using javac 1.6 (thought this could be upgraded to 1.7 at any point).
+  // Since the langauge does not change between 1.5 and 1.7, this should not be an issue for ROSE.
+     frontEndCommandLine.push_back("-1.6");
+
   // DQ (4/1/2011): Added ecj option handling (similar to how EDG option handling is supported).
   // This allows ECJ specific option to be set on the command line for ROSE translators.
 
