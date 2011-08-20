@@ -103,6 +103,10 @@ void setJavaSourcePosition( SgLocatedNode* locatedNode, JNIEnv *env, jobject jTo
 void setJavaCompilerGenerated( SgLocatedNode* locatedNode );
 void setJavaSourcePositionUnavailableInFrontend( SgLocatedNode* locatedNode );
 
+//! This is how Java implicit classes are marked so that they can be avoided in output.
+void setJavaFrontendSpecific( SgLocatedNode* locatedNode );
+
+
 // *********************************************
 
 

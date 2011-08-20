@@ -6414,9 +6414,7 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
      bool syntaxCheckInputCode = (get_skip_syntax_check() == false);
   // printf ("In build_Java_AST(): syntaxCheckInputCode = %s \n",syntaxCheckInputCode ? "true" : "false");
 
-     //if (syntaxCheckInputCode == true)
-     printf ("java unparser: skipping syntax check.\n");
-     if (false)
+     if (syntaxCheckInputCode == true)
         {
        // Introduce tracking of performance of ROSE.
           TimingPerformance timer ("Java syntax checking of input:");
@@ -6471,16 +6469,16 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
              }
 
 #if 1
-          if ( get_verbose() > 0 )
+          if (get_verbose() > -1)
              {
-               printf ("Checking syntax of input program using gfortran: syntaxCheckingCommandline = %s \n",CommandlineProcessing::generateStringFromArgList(javaCommandLine,false,false).c_str());
+               printf ("Checking syntax of input program using javac: syntaxCheckingCommandline = %s \n",CommandlineProcessing::generateStringFromArgList(javaCommandLine,false,false).c_str());
              }
 #endif
        // Call the OS with the commandline defined by: syntaxCheckingCommandline
           javaCommandLine.push_back(get_sourceFileNameWithPath());
 
        // At this point we have the full command line with the source file name
-          if ( get_verbose() > 0 )
+          if ( get_verbose() > -1 )
              {
                printf ("Checking syntax of input program using gfortran: syntaxCheckingCommandline = %s \n",CommandlineProcessing::generateStringFromArgList(javaCommandLine,false,false).c_str());
              }
@@ -6489,6 +6487,7 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
 #if USE_GFORTRAN_IN_ROSE
           returnValueForSyntaxCheckUsingBackendCompiler = systemFromVector (javaCommandLine);
 #else
+       // ROSE can be configured withouth Java support, in which case it is not an error to avoid the syntax checking of a java file.
           printf ("backend java compiler (javac) unavailable ... (not an error) \n");
 #endif
 
@@ -6619,7 +6618,6 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
      frontEndCommandLine.push_back(".");
 #endif
 
-#if 1
   // DQ (4/1/2011): Added ecj option handling (similar to how EDG option handling is supported).
   // This allows ECJ specific option to be set on the command line for ROSE translators.
 
@@ -6658,7 +6656,6 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
   // Handle ecj options taking a parameter (string or integer)
      ecjOptionList = CommandlineProcessing::generateOptionWithNameParameterList (argv,"--ecj_parameter:");
      CommandlineProcessing::addListToCommandLine(frontEndCommandLine,"--",ecjOptionList);
-#endif
 
   // Java does not use include files, so we can enforce this.
      ROSE_ASSERT(get_project()->get_includeDirectorySpecifierList().empty() == true);
@@ -6697,9 +6694,6 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
      printf ("To enable the use of Fortran support in ROSE don't use --enable-ssl on configure command line. \n");
      printf ("********************************************************************************************** \n");
 #else
-
-  // frontendErrorLevel = openFortranParser_main (numberOfCommandLineArguments, inputCommandLine);
-  // int frontendErrorLevel = openFortranParser_main (openFortranParser_argc, openFortranParser_argv);
      int frontendErrorLevel = openJavaParser_main (openJavaParser_argc, openJavaParser_argv);
 #endif
 
@@ -7010,12 +7004,12 @@ SgBinaryComposite::buildAsmAST(string executableFileName)
  *    - optionally disassembles instructions (SgAsmInterpretation nodes) */
 int
 SgBinaryComposite::buildAST(vector<string> /*argv*/, vector<string> /*inputCommandLine*/)
-{
+   {
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
     /* Parse the specified binary file to create the AST. Do not disassemble instructions yet. If the file is dynamically
      * linked then optionally load (i.e., parse the container, map sections into process address space, and perform relocation
      * fixups) all dependencies also.  See the BinaryLoader class for details. */
-    if (get_isLibraryArchive()) {
+     if (get_isLibraryArchive()) {
         ROSE_ASSERT(get_libraryArchiveObjectFileNameList().empty() == false);
         ROSE_ASSERT(get_libraryArchiveObjectFileNameList().empty() == (get_isLibraryArchive() == false));
 
@@ -7042,9 +7036,10 @@ SgBinaryComposite::buildAST(vector<string> /*argv*/, vector<string> /*inputComma
     // DQ (1/22/2008): The generated unparsed assemble code can not currently be compiled because the
     // addresses are unparsed (see Jeremiah for details).
     // Skip running gnu assemble on the output since we include text that would make this a problem.
-    if (get_verbose() > 1)
-        printf("set_skipfinalCompileStep(true) because we are on a binary '%s'\n", this->get_sourceFileNameWithoutPath().c_str());
-    this->set_skipfinalCompileStep(true);
+     if (get_verbose() > 1)
+          printf("set_skipfinalCompileStep(true) because we are on a binary '%s'\n", this->get_sourceFileNameWithoutPath().c_str());
+
+     this->set_skipfinalCompileStep(true);
 
     // This is now done below in the Secondary file processing phase.
     // Generate the ELF executable format structure into the AST
@@ -7054,9 +7049,9 @@ SgBinaryComposite::buildAST(vector<string> /*argv*/, vector<string> /*inputComma
      ROSE_ASSERT(false);
 #endif
 
-    int frontendErrorLevel = 0;
-    return frontendErrorLevel;
-}
+     int frontendErrorLevel = 0;
+     return frontendErrorLevel;
+   }
 
 
 #if 0
@@ -7863,7 +7858,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
             // I need the exact command line used to compile the generate code with the backendcompiler (so that I can reuse it to test the generated code).
                printf ("SgFile::compileOutput(): compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
              }
-
+#if 0
        // Call the backend compiler. For Fortran inputs, if ROSE is configured with Java this can cause the backend fortran compiler to be called.
        // driscoll6 (8/11/11) debugging java backend
           if (get_Java_only() == true) {
@@ -7872,6 +7867,9 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
           } else {
               returnValueForCompiler = systemFromVector (compilerNameString);
           }
+#else
+          returnValueForCompiler = systemFromVector (compilerNameString);
+#endif
         }
        else
         {

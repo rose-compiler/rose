@@ -968,7 +968,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitMethodSupport (JNIEnv
      SgMemberFunctionDeclaration* functionDeclaration = buildNonDefiningMemberFunction(name, classDefinition);
      ROSE_ASSERT(functionDeclaration != NULL);
 
-     setJavaCompilerGenerated(functionDeclaration);
+  // setJavaCompilerGenerated(functionDeclaration);
+     setJavaFrontendSpecific(functionDeclaration);
 
   // Add the types to the non-defining function.
 
@@ -990,7 +991,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitFieldSupport (JNIEnv*
      SgVariableDeclaration* variableDeclaration = buildSimpleVariableDeclaration(name);
      ROSE_ASSERT(variableDeclaration != NULL);
 
-     setJavaCompilerGenerated(variableDeclaration);
+  // setJavaCompilerGenerated(variableDeclaration);
+     setJavaFrontendSpecific(variableDeclaration);
 
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
 

@@ -162,6 +162,10 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
        // DQ (5/19/2011): Output generated code... (allows unparseToString() to be used with template instantations to support name qualification).
           bool forceOutputOfGeneratedCode = info.outputCompilerGeneratedStatements();
 
+       // printf ("Inside of statementFromFile(): stmt = %p = %s isOutputInCodeGeneration   = %s \n",stmt,stmt->class_name().c_str(),isOutputInCodeGeneration   ? "true" : "false");
+       // printf ("Inside of statementFromFile(): stmt = %p = %s forceOutputOfGeneratedCode = %s \n",stmt,stmt->class_name().c_str(),forceOutputOfGeneratedCode ? "true" : "false");
+       // info.display("Inside of statementFromFile()");
+
        // DQ (1/11/2006): OutputCodeGeneration is not set to be true where transformations 
        // require it.  Transformation to include header files don't set the OutputCodeGeneration flag.
        // if (isOutputInCodeGeneration || isTransformation)
@@ -197,7 +201,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                    if (includeDirectiveStatement -> get_headerFileBody() -> get_file_info() -> get_filenameString() == sourceFilename) {
                        statementInFile = true;
                    }
-               }               
+               }
              }
 #if 0
           printf ("In Unparser::statementFromFile (statementInFile = %s output = %s stmt = %p = %s = %s in file = %s sourceFilename = %s ) \n",
