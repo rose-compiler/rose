@@ -289,6 +289,7 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
 # yet so I am just commenting them out for now. They pass with gfortran 4.4.1
 #     test2007_108.f90
 #     test2010_03.f90
+#     test2010_81.f90
      
 # DQ (4/10/2011): If it is not gfortran 4.5, then add this test code (these fail syntax checking with 4.5).
 if !ROSE_USING_GFORTRAN_VERSION_4_5
@@ -651,7 +652,6 @@ F90_TESTCODES_REQUIRED_TO_PASS += \
      test2010_73.f90 \
      test2010_78.f90 \
      test2010_79.f90 \
-     test2010_81.f90 \
      test2010_82.f90 \
      test2010_84.f90 \
      test2010_85.f90 \
