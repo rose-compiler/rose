@@ -3683,61 +3683,71 @@ FortranCodeGeneration_locatedNode::unparseInitNamePtrList(SgInitializedNamePtrLi
 //----------------------------------------------------------------------------
 //  Declarations helpers
 //----------------------------------------------------------------------------
-void FortranCodeGeneration_locatedNode::unparseArrayAttr(SgArrayType* type, SgUnparse_Info& info)
+void FortranCodeGeneration_locatedNode::unparseArrayAttr(SgArrayType* type, SgUnparse_Info& info, bool oneVarOnly)
 {
-    curprint("(");
-    unparseExpression(type->get_dim_info(), info);
-    curprint(")");
+    if (!oneVarOnly)
+    {
+      curprint(type->get_isCoArray()? "[": "(");
+      unparseExpression(type->get_dim_info(), info);
+      curprint(type->get_isCoArray()? "]": ")");
+    }
 }
 
-void FortranCodeGeneration_locatedNode::unparseStringAttr(SgTypeString* type, SgUnparse_Info& info)
+void FortranCodeGeneration_locatedNode::unparseStringAttr(SgTypeString* type, SgUnparse_Info& info, bool oneVarOnly)
 {
-    curprint("*");
-    curprint("(");
-    unparseExpression(type->get_lengthExpression(), info);
-    curprint(")");
+    if (!oneVarOnly)
+    {
+      curprint("*");
+      curprint("(");
+      unparseExpression(type->get_lengthExpression(), info);
+      curprint(")");
+    }
 }
 
-void FortranCodeGeneration_locatedNode::unparseEntityTypeAttr(SgType* type, SgUnparse_Info& info)
+void FortranCodeGeneration_locatedNode::unparseEntityTypeAttr(SgType* type, SgUnparse_Info& info, bool oneVarOnly)
 {
     if (type->get_isCoArray())
     {
         SgType* baseType;
+        SgArrayType* arrayType = NULL;
         if (isSgPointerType(type))
             baseType = isSgPointerType(type)->get_base_type();
-        else  // type must be an SgArrayType
-            baseType = isSgArrayType(type)->get_base_type();
+        else
+        {
+            arrayType = isSgArrayType(type);
+            baseType = arrayType->get_base_type();
+        }
         if (isSgPointerType(type))
-            unparseEntityTypeAttr(baseType, info);
+            unparseEntityTypeAttr(baseType, info, oneVarOnly);
         else if (isSgTypeString(baseType))
         {
-            curprint("[*]");
-            unparseStringAttr(isSgTypeString(baseType), info);
+            unparseArrayAttr(arrayType, info, oneVarOnly);  // print codimension
+            unparseStringAttr(isSgTypeString(baseType), info, oneVarOnly);
         }
         else if (isSgArrayType(baseType))
         {
-            SgArrayType* arrayType = isSgArrayType(baseType);
-            unparseArrayAttr(arrayType, info);
-            curprint("[*]");
-            SgTypeString* stringType = isSgTypeString(arrayType->get_base_type());
+            SgArrayType* arrayBaseType = isSgArrayType(baseType);
+            unparseArrayAttr(arrayBaseType, info, oneVarOnly);
+            unparseArrayAttr(arrayType, info, oneVarOnly);  // print codimension
+            SgTypeString* stringType = isSgTypeString(arrayBaseType->get_base_type());
             if (stringType)
-                unparseStringAttr(stringType, info);
+                unparseStringAttr(stringType, info, oneVarOnly);
         }
         else
-            curprint("[*]");
+            unparseArrayAttr(arrayType, info, oneVarOnly);  // print codimension
     }
     else if (isSgArrayType(type))
     {
         SgArrayType* arrayType = isSgArrayType(type);
-        unparseArrayAttr(arrayType, info);
+        unparseArrayAttr(arrayType, info, oneVarOnly);
         SgTypeString* stringType = isSgTypeString(arrayType->get_base_type());
         if (stringType)
-            unparseStringAttr(stringType, info);
+            unparseStringAttr(stringType, info, oneVarOnly);
     }
     else if (isSgPointerType(type))
-        unparseEntityTypeAttr(isSgPointerType(type)->get_base_type(), info);
+        unparseEntityTypeAttr(isSgPointerType(type)->get_base_type(), info, oneVarOnly);
     else if (isSgTypeString(type))
-        unparseStringAttr(isSgTypeString(type), info);
+        unparseStringAttr(isSgTypeString(type), info, oneVarOnly);
 }
 
 
@@ -3753,7 +3763,11 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
      SgType* type        = initializedName->get_type();
      SgInitializer* init = initializedName->get_initializer();  
      ROSE_ASSERT(type);
-  
+
+     // Find out how many variables are declared in the given stmt:
+     SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(stmt);
+     ROSE_ASSERT(variableDeclaration != NULL);
+     int numVar = variableDeclaration->get_variables().size();
   // FIXME: eventually we will probably use this
   // SgStorageModifier& storage = initializedName->get_storageModifier();
 
@@ -3762,13 +3776,18 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
         {
        // printf ("In unparseVarDecl(): calling unparseType on type = %p = %s \n",type,type->class_name().c_str());
 
-          // DXN (06/19/2011): only unparse the base type:
-          SgType* baseType = type->stripType(SgType::STRIP_ARRAY_TYPE);
-          unp->u_fortran_type->unparseType(baseType, info);
+          // DXN (08/19/2011): unparse the base type when there are more than one declared variables
+         if (numVar > 1)
+         {
+            SgType* baseType = type->stripType(SgType::STRIP_ARRAY_TYPE);
+            unp->u_fortran_type->unparseType(baseType, info, false);  // do not print len for string type
+         }
+         else
+            unp->u_fortran_type->unparseType(type, info, true);  // print len if length expression exists
 
           // DQ (11/18/2007): Added support for ALLOCATABLE declaration attribute
-          SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(stmt);
-          ROSE_ASSERT(variableDeclaration != NULL);
+          // SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(stmt);
+          // ROSE_ASSERT(variableDeclaration != NULL);
 
        // DIMENSION is already handled (within the unparsing of the type)
        // DQ (3/23/2008): Likely POINTER should also be handled in the unparsing of the type!
@@ -3958,7 +3977,7 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
            curprint(") ");
       }
       else
-          unparseEntityTypeAttr(type, info);
+          unparseEntityTypeAttr(type, info, numVar == 1);
 
        // Unparse the initializers if any exist
        // printf ("In FortranCodeGeneration_locatedNode::unparseVarDecl(initializedName=%p): variable initializer = %p \n",initializedName,init);
