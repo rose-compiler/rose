@@ -363,10 +363,13 @@ setJavaFrontendSpecific( SgLocatedNode* locatedNode )
      ROSE_ASSERT(locatedNode->get_startOfConstruct() != NULL);
      ROSE_ASSERT(locatedNode->get_endOfConstruct()   != NULL);
 
+#if 0
+  // These IR nodes (marked this way) will not be visualized.
+  // So we want to be able to alternatively mark the to be
+  // visualized for some debugging.
+
   // This is redundant for non-expression IR nodes.
      ROSE_ASSERT(locatedNode->get_file_info() != NULL);
-
- 
 
      locatedNode->get_startOfConstruct()->setFrontendSpecific();
      locatedNode->get_endOfConstruct()->setFrontendSpecific();
@@ -396,6 +399,10 @@ setJavaFrontendSpecific( SgLocatedNode* locatedNode )
           expression->get_operatorPosition()->unsetTransformation();
           expression->get_operatorPosition()->unsetSourcePositionUnavailableInFrontend();
         }
+#else
+  // This will cause implicit classes (Java specific) to be marks to permit visualization.
+     setJavaCompilerGenerated(locatedNode);
+#endif
 
   // locatedNode->get_startOfConstruct()->display("In setJavaFrontendSpecific():debug");
    }
@@ -1446,7 +1453,9 @@ stripQualifiers (const SgName & classNameWithQualification)
    {
   // printf ("Calling generateQualifierList(): classNameWithQualification = %s \n",classNameWithQualification.str());
      list<SgName> l = generateQualifierList(classNameWithQualification);
+
   // printf ("DONE: calling generateQualifierList(): classNameWithQualification = %s \n",classNameWithQualification.str());
+
      ROSE_ASSERT(l.empty() == false);
 
      if (SgProject::get_verbose() > 0)
@@ -1466,6 +1475,9 @@ lookupSymbolFromQualifiedName(string className)
   // the AST for even a trivial Java program rather large.
 
      list<SgName> qualifiedClassName = generateQualifierList(className);
+
+  // printf ("DONE: generateQualifierList() called from lookupSymbolFromQualifiedName(%s) \n",className.c_str());
+
      SgClassSymbol* previousClassSymbol = NULL;
      SgScopeStatement* previousClassScope = astJavaScopeStack.front();
      ROSE_ASSERT(previousClassScope != NULL);
@@ -1479,7 +1491,7 @@ lookupSymbolFromQualifiedName(string className)
           ROSE_ASSERT(previousClassScope != NULL);
 
           if (SgProject::get_verbose() > 2)
-               printf ("Lookup SgSymbol for name = %s i scope = %p = %s = %s \n",(*i).str(),previousClassScope,previousClassScope->class_name().c_str(),SageInterface::get_name(previousClassScope).c_str());
+               printf ("Lookup SgSymbol for name = %s in scope = %p = %s = %s \n",(*i).str(),previousClassScope,previousClassScope->class_name().c_str(),SageInterface::get_name(previousClassScope).c_str());
 
           SgSymbol* tmpSymbol = SageInterface::lookupSymbolInParentScopes(*i,previousClassScope);
 
@@ -1734,6 +1746,34 @@ getCurrentClassDefinition()
      return classDefinition;
    }
 
+
+SgName
+processNameOfRawType(SgName name)
+   {
+     string nameString = name;
+     printf ("nameString = %s \n",nameString.c_str());
+
+     ROSE_ASSERT(nameString.length() >= 4);
+     size_t startOfRawSuffix = nameString.find("#RAW",nameString.length()-4);
+     if (startOfRawSuffix != string::npos)
+        {
+          nameString = nameString.substr(0,startOfRawSuffix);
+
+       // List and ArrayList are in java.util class, but we don't want to have to know this.
+       // nameString = "java.lang." + nameString;
+          nameString = "java.util." + nameString;
+
+          printf ("Found raw type (generic type without type parameter) nameString = %s \n",nameString.c_str());
+
+          name = nameString;
+        }
+       else
+        {
+          printf ("Not a raw type: nameString = %s \n",nameString.c_str());
+        }
+
+     return name;
+   }
 
 
 
