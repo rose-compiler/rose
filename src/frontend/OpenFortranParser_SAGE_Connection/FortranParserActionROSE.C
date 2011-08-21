@@ -1,3 +1,4 @@
+#include <signal.h>
 #include "sage3basic.h"
 #include "fortran_support.h"
 #include "FortranParserState.h"
@@ -8,6 +9,9 @@
 #include "rose_config.h"
 
 #define SKIP_C_ACTION_IMPLEMENTATION 0
+
+#define DXN_DEBUG 0
+#define DXN_CODE 1
 
 using namespace std;
 
@@ -578,7 +582,7 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
           printf ("In c_action_intrinsic_type_spec(): keyword1 = %p = %s keyword2 = %p = %s type = %d, hasKindSelector = %s \n",
                keyword1,keyword1 != NULL ? keyword1->text : "NULL",keyword2,keyword2 != NULL ? keyword2->text : "NULL",type,hasKindSelector ? "true" : "false");
 
-#if 0
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R403 c_action_intrinsic_type_spec()");
 #endif
@@ -752,7 +756,7 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
      ROSE_ASSERT(astBaseTypeStack.empty() == false);
 #endif
 
-#if 0
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R403 c_action_intrinsic_type_spec()");
 #endif
@@ -2799,7 +2803,7 @@ void c_action_declaration_type_spec(Token_t * udtKeyword, int type)
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In R502 c_action_declaration_type_spec() udtKeyword = %p = %s type = %d \n",udtKeyword,udtKeyword != NULL ? udtKeyword->text : "NULL",type);
 
-#if 0
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R502 c_action_declaration_type_spec()");
 #endif
@@ -2902,7 +2906,7 @@ void c_action_declaration_type_spec(Token_t * udtKeyword, int type)
           ROSE_ASSERT(astBaseTypeStack.empty() == false);
         }
 
-#if 0
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R502 c_action_declaration_type_spec()");
 #endif
@@ -3223,7 +3227,6 @@ void c_action_entity_decl(Token_t * id, ofp_bool hasArraySpec, ofp_bool hasCoarr
 void c_action_entity_decl(Token_t * id)
 #endif
    {
-    //raise(SIGINT);
     // This function R504 R503-F2008 is similar to R442 R438-F2008
 
   // Push the entities onto the list at the top of the stack
@@ -6168,7 +6171,7 @@ void c_action_common_block_object(Token_t *id, ofp_bool hasShapeSpecList)
  */
 void c_action_variable()
    {
-  // I think that this just defines the previously built SgVarRefExp as an l-value and that the creation of the SgVarRefExp should be moved to R612.
+    // I think that this just defines the previously built SgVarRefExp as an l-value and that the creation of the SgVarRefExp should be moved to R612.
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_variable() \n");
@@ -6417,7 +6420,7 @@ void c_action_data_ref(int numPartRef)
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In R612 c_action_data_ref(): (variable built here) numPartRef = %d \n",numPartRef);
 
-#if 0
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R612 c_action_data_ref()");
 #endif
@@ -6902,7 +6905,7 @@ void c_action_data_ref(int numPartRef)
           if (isSgVariableSymbol(tempSymbol) != NULL)
              {
             // This is the typical case.
-#if 0
+#if DXN_DEBUG
                printf ("Variable name = %s \n",tempSymbol->get_name().str());
 #endif
              }
@@ -6922,7 +6925,7 @@ void c_action_data_ref(int numPartRef)
                if (astExpressionStack.empty() == false)
                     printf ("astExpressionStack.front() = %s \n",astExpressionStack.front()->class_name().c_str());
              }
-#if 0
+#if DXN_DEBUG
        // Output debugging information about saved state (stack) information.
           outputState("At variableSymbol != NULL of R612 c_action_data_ref()");
 #endif
@@ -6947,7 +6950,7 @@ void c_action_data_ref(int numPartRef)
                    temp_var->set_parent(variable);
               }
               else
-                   variable = new SgVarRefExp(temp_variableSymbol);
+                   variable = new SgVarRefExp(temp_variableSymbol);  // DXN (08/19. 2011): TODO should use the top of astNameStack
               setSourcePosition(variable, nameToken);
           }
 
@@ -7141,7 +7144,7 @@ void c_action_data_ref(int numPartRef)
           }
         }
 
-#if 0
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("Before removing names from astNameStack at BOTTOM of R612 c_action_data_ref()");
 #endif
@@ -7151,7 +7154,7 @@ void c_action_data_ref(int numPartRef)
      size_t intermediateExpresionListSize = intermediateExpresionList.size();
      for (size_t i = 0; i < intermediateExpresionListSize; i++)
         {
-#if 0
+#if DXN_DEBUG
           printf ("intermediateExpresionList.front() = %p = %s \n",intermediateExpresionList.front(),intermediateExpresionList.front()->class_name().c_str());
 #endif
           astExpressionStack.push_front(intermediateExpresionList.back());
@@ -7183,7 +7186,7 @@ void c_action_data_ref(int numPartRef)
         }
 #endif
 
-#if 0
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("After removing names from astNameStack at BOTTOM of R612 c_action_data_ref()");
 #endif
@@ -7233,7 +7236,7 @@ void c_action_data_ref(int numPartRef)
           astExpressionStack.push_front(recordReference);
         }
 
-#if 0
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R612 c_action_data_ref()");
 #endif
@@ -7424,7 +7427,7 @@ void c_action_part_ref(Token_t * id, ofp_bool hasSelectionSubscriptList, ofp_boo
      astMultipartReferenceStack.push_front(MultipartReferenceType(id_name,hasSelectionSubscriptList,hasImageSelector));
 #endif
 
-#if 0
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R613 c_action_part_ref()");
 #endif
@@ -9189,7 +9192,7 @@ void c_action_assignment_stmt(Token_t *label, Token_t *eos)
     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_assignment_stmt(): label = %p = %s \n",label,label ? label->text : "NULL");
 
-#if 0
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R734 c_action_assignment_stmt()");
 #endif
@@ -15511,7 +15514,7 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
                hasOnly ? "true" : "false");
         }
 
-#if 1
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R1109 c_action_use_stmt()");
 #endif
@@ -15762,7 +15765,7 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
 
           SgClassDefinition* classDefinition = moduleStatement->get_definition();
           ROSE_ASSERT(classDefinition != NULL);
-#if 1
+#if DXN_DEBUG
           outputState("In R1109 c_action_use_stmt(): hasOnly == true");
 #endif
           if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
@@ -15844,7 +15847,7 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
                  // Increment to the next symbol in the module's symbol table
                     symbol = classDefinition->next_any_symbol();
                   }
-#if 1
+#if DXN_DEBUG
                outputState("In R1109 c_action_use_stmt(): hasOnly == true");
 #endif
              }
@@ -15879,7 +15882,7 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
 
   // astScopeStack.front()->print_symboltable("Output from R1109 c_action_use_stmt()");
 
-#if 1
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R1109 c_action_use_stmt()");
 #endif
@@ -15914,7 +15917,7 @@ void c_action_module_nature(Token_t *nature)
  */
 void c_action_rename(Token_t *id1, Token_t *id2, Token_t *op1, Token_t *defOp1, Token_t *op2, Token_t *defOp2)
    {
-     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+    if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_rename(): id1 = %p = %s id2 = %p = %s op1 = %p = %s defOp1 = %p = %s op2 = %p = %s defOp2 = %p = %s \n",
                id1,id1 != NULL ? id1->text : "NULL",
                id2,id2 != NULL ? id2->text : "NULL",
@@ -16094,7 +16097,7 @@ void c_action_only_list(int count)
              }
           ROSE_ASSERT(astNameStack.empty() == true);
         }
-#if 0
+#if DXN_DEBUG
      outputState("At BOTTOM of R1112 list c_action_only_list()");
 #endif
    }
@@ -17284,7 +17287,7 @@ void c_action_function_stmt(Token_t * label, Token_t * keyword, Token_t * name, 
           printf ("In c_action_function_stmt(): label = %p (function name) name = %s hasGenericNameList = %s hasSuffix = %s \n",
                label,name ? name->text : "NULL",hasGenericNameList ? "true" : "false",hasSuffix ? "true" : "false");
 
-#if 0
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R1224 c_action_function_stmt()");
 #endif
@@ -17358,7 +17361,7 @@ void c_action_function_stmt(Token_t * label, Token_t * keyword, Token_t * name, 
         }
      ROSE_ASSERT(astTypeStack.empty() == true);
 
-#if 0
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R1224 c_action_function_stmt()");
 #endif
@@ -18229,6 +18232,7 @@ void c_action_start_of_file(const char *filename, const char *filepath)
 void c_action_start_of_file(const char *filepath)
 #endif
    {
+    //raise(SIGINT);
     // New function to support Fortran include mechanism
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_start_of_file(%s) \n",filepath);

@@ -426,14 +426,27 @@ class FortranCodeGeneration_locatedNode : public UnparseLanguageIndependentConst
           virtual void unparseOmpEndDirectivePrefixAndName (SgStatement* stmt, SgUnparse_Info& info);
 
      private: // DXN (08/12/2011)
-          // Unparses dimension attribute of the given array type and other attributes of its base type.
-          void unparseArrayAttr(SgArrayType* type, SgUnparse_Info& info);
+          /**
+          * For unparsing the dimension attribute of an entity in a type declaration.
+          * @param oneVarOnly - true means there is only one declared variable in the type declaration.
+          * If oneVarOnly is false , unparses dimension attribute of the given array type and other
+          * attributes of its base type.
+          */
+          void unparseArrayAttr(SgArrayType* type, SgUnparse_Info& info, bool oneVarOnly);
 
-          // Unparses character length attribute of the given string type
-          void unparseStringAttr(SgTypeString* type, SgUnparse_Info& info);
+          /**
+          * For unparsing the length attribute of an entity in a type declaration.
+          * @param oneVarOnly - true means there is only one declared variable in the type declaration.
+          * If oneVarOnly is false , unparses length attribute of the given string type
+          */
+          void unparseStringAttr(SgTypeString* type, SgUnparse_Info& info, bool oneVarOnly);
 
-          // Unparses attributes for the given entity type
-          void unparseEntityTypeAttr(SgType* type, SgUnparse_Info& info);
+          /**
+          * For unparsing the attributes of an entity in a type declaration.
+          * @param oneVarOnly - true means there is only one declared variable in the type declaration.
+          * If oneVarOnly is false , unparses relevant attributes of the given type.
+          */
+          void unparseEntityTypeAttr(SgType* type, SgUnparse_Info& info, bool oneVarOnly);
 };
 
 #endif
