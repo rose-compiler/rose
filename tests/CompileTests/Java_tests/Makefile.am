@@ -48,6 +48,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2011_41.java \
      test2011_42.java \
      test2011_43.java \
+     test2011_44.java \
      simple.java
 
 
@@ -287,7 +288,8 @@ $(TESTCODE_CURRENTLY_FAILING)
 
 # The use of -rose:java is redundent, the source langauge can now be determined from the file suffix.
 # ROSE_FLAGS = -rose:java -rose:verbose 0 -rose:skipfinalCompileStep
-ROSE_FLAGS = -rose:verbose 0 -rose:skipfinalCompileStep -rose:skip_syntax_check
+# ROSE_FLAGS = -rose:verbose 0 -rose:skipfinalCompileStep -rose:skip_syntax_check
+ROSE_FLAGS = -rose:verbose 0 -rose:skipfinalCompileStep
 
 PASSING_TEST_Objects = ${TESTCODES:.java=.o}
 TEST_Objects = ${ALL_TESTCODES:.java=.o}
@@ -306,7 +308,10 @@ testTranslator=../../testTranslator
 # Add the dependence upon the source file to trigger recompilation each time the makefile is run!
 # $(TEST_Objects): ../../testTranslator $(srcdir)/$(@:.o=.java)
 $(TEST_Objects): $(testTranslator) ../../testTranslator ../../testGraphGeneration
+	@echo "Test using Java 1.6 (default) version support."
 	$(testTranslator) $(ROSE_FLAGS) $(srcdir)/$(@:.o=.java)
+	@echo "Test using Java 1.4 version support."
+	$(testTranslator) -ecj:1.4 $(ROSE_FLAGS) $(srcdir)/$(@:.o=.java)
 
 testJavaTraversal:
 #	Java library path specifies where the *.so file is located (JavaTraversal.so)
@@ -346,6 +351,9 @@ testWithJavaSpecification:
 # Test without the "-rose:java" specification (ROSE can alternatively obtain the source language from the file suffix).
 testWithoutJavaSpecification:
 	$(testTranslator) $(ROSE_FLAGS) $(srcdir)/testWithoutJavaSpecification.java
+
+testJava_option:
+	$(testTranslator) -ecj:1.7 -rose:verbose 0 -rose:skipfinalCompileStep -c $(srcdir)/test2011_44.java
 
 # Build a rule to allow running all tests in parallel...
 extraTests: testWithJavaSpecification testWithoutJavaSpecification testECJ_help_option graphWithFileInfo
