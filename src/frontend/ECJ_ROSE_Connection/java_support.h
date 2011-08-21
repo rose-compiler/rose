@@ -103,6 +103,10 @@ void setJavaSourcePosition( SgLocatedNode* locatedNode, JNIEnv *env, jobject jTo
 void setJavaCompilerGenerated( SgLocatedNode* locatedNode );
 void setJavaSourcePositionUnavailableInFrontend( SgLocatedNode* locatedNode );
 
+//! This is how Java implicit classes are marked so that they can be avoided in output.
+void setJavaFrontendSpecific( SgLocatedNode* locatedNode );
+
+
 // *********************************************
 
 
@@ -147,6 +151,8 @@ void appendStatementStack(int numberOfStatements);
 //! Support to get current class scope.
 SgClassDefinition* getCurrentClassDefinition();
 
+//! Strips off "#RAW" suffix from raw types (support for Java 1.5 and greater).
+SgName processNameOfRawType(SgName name);
 
 
 

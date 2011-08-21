@@ -370,6 +370,11 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
                   {
                     if (file->get_Java_only())
                        {
+                      // DQ (8/19/2011): Now that the unparser is working better and we generate a more 
+                      // correct AST for Java, we want to use better mechanisms to control the output of 
+                      // different parts of the AST (implicit vs. explicit classes in Java).
+                      // info.set_outputCompilerGeneratedStatements();
+
                          Unparse_Java unparser(this, file->getFileName());
                          unparser.unparseStatement(globalScope, info);
                        }
@@ -1510,9 +1515,8 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
 
      ROSE_ASSERT(file != NULL);
 
-     // FMZ (12/21/2009) the imported files by "use" statements should not be unparsed 
+  // FMZ (12/21/2009) the imported files by "use" statements should not be unparsed 
      if (file->get_skip_unparse()==true) return;
-
 
 #if 0
   // DQ (5/31/2006): It is a message that I think we can ignore (was a problem for Yarden)
@@ -1658,6 +1662,8 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
        // information that is passed down through the tree (inherited attribute)
        // SgUnparse_Info inheritedAttributeInfo (NO_UNPARSE_INFO);
           SgUnparse_Info inheritedAttributeInfo;
+
+       // inheritedAttributeInfo.display("Inside of unparseFile(SgFile* file)");
 
        // Call member function to start the unparsing process
        // roseUnparser.run_unparser();
