@@ -82,12 +82,10 @@ getGlobalScope()
      return globalScope;
    }
 
-#if 1
 string
 getCurrentJavaFilename()
    {
   // DQ (8/16/2011): Generate the filename of the current file being processed.
-
      string filename;
 
   // Look on the scope stack and trace through parent to find the SgSourceFile.
@@ -102,7 +100,6 @@ getCurrentJavaFilename()
 
      return filename;
    }
-#endif
 
 /*
  * Wrapper to create an Sg_File_Info from line/col info
@@ -117,6 +114,16 @@ createSgFileInfo(int line, int col)
 
      ROSE_ASSERT(sg_fi->isTransformation()    == false);
      ROSE_ASSERT(sg_fi->isCompilerGenerated() == false);
+
+     if (line == 0 && col == 0)
+        {
+          if (SgProject::get_verbose() > 2)
+               printf ("Found source position info (line == 0 && col == 0) indicating compiler generated code \n");
+
+          sg_fi->setCompilerGenerated();
+
+       // sg_fi->display("Found source position info (line == 0 && col == 0) indicating compiler generated code");
+        }
 
      return sg_fi;
    }
@@ -195,7 +202,10 @@ setJavaSourcePosition( SgLocatedNode* locatedNode, JavaSourceCodePosition * posI
   // Check the endOfConstruct first since it is most likely NULL (helpful in debugging)
      if (locatedNode->get_endOfConstruct() != NULL || locatedNode->get_startOfConstruct() != NULL)
         {
-          printf ("In setSourcePosition(SgLocatedNode* locatedNode): Warning about existing file info data at locatedNode = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
+          if (SgProject::get_verbose() > 1)
+             {
+               printf ("In setSourcePosition(SgLocatedNode* locatedNode): Warning about existing file info data at locatedNode = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
+             }
 
           if (locatedNode->get_startOfConstruct() != NULL)
              {
@@ -793,7 +803,8 @@ memberFunctionTest (const SgName & name, SgClassDefinition* classDefinition, SgM
      size_t declarationListSize = classDefinition->generateStatementList().size();
      if (SgProject::get_verbose() > 0)
           printf ("declarationListSize = %zu \n",declarationListSize);
-     ROSE_ASSERT(declarationListSize > 0);
+  // ROSE_ASSERT(declarationListSize > 0);
+  // ROSE_ASSERT(declarationListSize == 0);
 
      if (SgProject::get_verbose() > 0)
           printf ("Test to make sure the SgFunctionSymbol is in the symbol table. \n");
@@ -853,8 +864,9 @@ buildNonDefiningMemberFunction(const SgName & inputName, SgClassDefinition* clas
      ROSE_ASSERT(functionDeclaration->get_definingDeclaration() == NULL);
      ROSE_ASSERT(functionDeclaration->get_definition() == NULL);
 
+  // DQ (8/21/2011): We would like to have this end up on the statement stack and be appended at the end of the processing for the scope.
   // Add the member function to the class scope (this is a required second step after building the function declaration).
-     classDefinition->append_statement(functionDeclaration);
+  // classDefinition->append_statement(functionDeclaration);
 
   // Refactored code.
      memberFunctionTest(name,classDefinition,functionDeclaration);
@@ -889,8 +901,9 @@ buildDefiningMemberFunction(const SgName & inputName, SgClassDefinition* classDe
      ROSE_ASSERT(functionDeclaration->get_definingDeclaration() != NULL);
      ROSE_ASSERT(functionDeclaration->get_definition() != NULL);
 
+  // DQ (8/21/2011): We would like to have this end up on the statement stack and be appended at the end of the processing for the scope.
   // Add the member function to the class scope (this is a required second step after building the function declaration).
-     classDefinition->append_statement(functionDeclaration);
+  // classDefinition->append_statement(functionDeclaration);
 
   // Refactored code.
      memberFunctionTest(name,classDefinition,functionDeclaration);
@@ -984,7 +997,8 @@ buildJavaClass (const SgName & className, SgScopeStatement* scope )
 
      if (SgProject::get_verbose() > 0)
           printf ("declarationListSize = %zu \n",declarationListSize);
-     ROSE_ASSERT(declarationListSize > 0);
+  // ROSE_ASSERT(declarationListSize > 0);
+     ROSE_ASSERT(declarationListSize == 0);
 #else
      if (SgProject::get_verbose() > 0)
           printf ("WARNING: Skipping addition of \"super\" member function for each class.\n");
@@ -1298,8 +1312,10 @@ buildClassSupport (const SgName & className, bool implicitClass, Token_t* token)
           if (SgProject::get_verbose() > 0)
                printf ("outerScopeClassDefinition = %p = %s \n",outerScopeClassDefinition,outerScopeClassDefinition == NULL ? "NULL" : outerScopeClassDefinition->get_declaration()->get_name().str());
 
-          outerScope->append_statement(declaration);
-          ROSE_ASSERT(outerScope->generateStatementList().size() > 0);
+       // DQ (8/21/2011): Fixup to be more bottom up now that we have better support (but set the parent explicitly).
+       // outerScope->append_statement(declaration);
+       // ROSE_ASSERT(outerScope->generateStatementList().size() > 0);
+          declaration->set_parent(outerScope);
 
           ROSE_ASSERT(declaration->get_parent() != NULL);
        // declaration->set_parent(outerScope);
@@ -1349,6 +1365,12 @@ buildSimpleVariableDeclaration(const SgName & name)
   // We are not supporting an initialized at this point in the implementation of the Java support.
      SgVariableDeclaration* variableDeclaration = SageBuilder::buildVariableDeclaration (name, type, NULL, astJavaScopeStack.front() );
      ROSE_ASSERT(variableDeclaration != NULL);
+
+  // DQ (8/21/2011): Note that the default access permission is default, but this is the same enum value as public.
+  // Most language support ignores this in the unparser, but we might want to set it better than this.
+
+  // DQ (8/21/2011): Debugging declarations in local function should (should not be marked as public).
+  // ROSE_ASSERT(variableDeclaration->get_declarationModifier().get_accessModifier().isPublic() == false);
 
   // DQ (7/16/2011): This is a test to debug failing test in resetParentPointers.C:1733
      ROSE_ASSERT(SageInterface::is_Fortran_language() == false);
@@ -1555,7 +1577,7 @@ lookupSymbolFromQualifiedName(string className)
                          SgFunctionSymbol* functionSymbol = isSgFunctionSymbol(tmpSymbol);
                          if (functionSymbol != NULL)
                             {
-                              printf ("This could/should the constructor for the class we want, we just want the class... \n");
+                           // printf ("This could/should the constructor for the class we want, we just want the class... \n");
 
                            // Get the class directly since it is likely a parent class of the current scope.
                               classSymbol = SageInterface::lookupClassSymbolInParentScopes(*i,previousClassScope);
@@ -1751,7 +1773,7 @@ SgName
 processNameOfRawType(SgName name)
    {
      string nameString = name;
-     printf ("nameString = %s \n",nameString.c_str());
+  // printf ("nameString = %s \n",nameString.c_str());
 
      ROSE_ASSERT(nameString.length() >= 4);
      size_t startOfRawSuffix = nameString.find("#RAW",nameString.length()-4);
@@ -1763,13 +1785,15 @@ processNameOfRawType(SgName name)
        // nameString = "java.lang." + nameString;
           nameString = "java.util." + nameString;
 
-          printf ("Found raw type (generic type without type parameter) nameString = %s \n",nameString.c_str());
+          if (SgProject::get_verbose() > 2)
+               printf ("Found raw type (generic type without type parameter) nameString = %s \n",nameString.c_str());
 
           name = nameString;
         }
        else
         {
-          printf ("Not a raw type: nameString = %s \n",nameString.c_str());
+          if (SgProject::get_verbose() > 2)
+               printf ("Not a raw type: nameString = %s \n",nameString.c_str());
         }
 
      return name;
