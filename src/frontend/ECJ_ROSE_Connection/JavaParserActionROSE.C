@@ -927,18 +927,18 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportEnd (JNIE
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
 
   // DQ (8/20/2011): This is the class that we just built implicitly
-  // astJavaScopeStack.pop_front();
+     astJavaScopeStack.pop_front();
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
 
   // DQ (7/31/2011): Collection up all of the statements and append to the current scope.
   // Later I would like to do this more precisely, but for now collect all statements.
-  // printf ("Appending the statments on the Statement stack (size = %zu) to the current scope = %p = %s \n",astJavaStatementStack.size(),astJavaScopeStack.front(),astJavaScopeStack.front()->class_name().c_str());
+     printf ("Appending the statments on the Statement stack (size = %zu) to the current scope = %p = %s \n",astJavaStatementStack.size(),astJavaScopeStack.front(),astJavaScopeStack.front()->class_name().c_str());
      int numberOfStatements = astJavaStatementStack.size();
      appendStatementStack(numberOfStatements);
 
   // Pop the class definition off the scope stack...
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
-     astJavaScopeStack.pop_front();
+  // astJavaScopeStack.pop_front();
 
   // At this point we should still at least have the global scope on the stack.
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
