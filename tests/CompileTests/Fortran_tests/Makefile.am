@@ -251,6 +251,7 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2011_Rice_explicit-shape2.f90 \
      test2011_Rice_forward-decl-func-type.f90 \
      test2011_Rice_forward-ref-derived-type.f90 \
+     test2011_Rice_func-char-len.f90 \
      test2011_Rice_funcdecl-1.f90 \
      test2011_Rice_function-where-var-expected.f90 \
      test2011_Rice_ifConstruct.f90 \
