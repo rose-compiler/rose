@@ -26,7 +26,7 @@ class JavaParserSupport
   // DQ (8/20/2011): Added a simple way to control the number of data members, constructors, and member functions built.
   // 0: No significant limits applied to number of constructs in the AST.
   // 1: Limits the number to be built into the enerated AST
-     static boolean VISUALIZE_AST = false;
+     static boolean VISUALIZE_AST = true;
 
      static int implicitClassCounterBound     = VISUALIZE_AST ? 1   : 1000;
      static int methodCounterBound            = VISUALIZE_AST ? 2   : 1000;
@@ -673,12 +673,24 @@ class JavaParserSupport
                if (verboseLevel > -1)
                     System.out.println("Inside of generateType(TypeReference): NOT an array type so build SgIntType -- TypeReference node = " + name);
 
-               JavaParser.cactionGenerateType(name);
+            // DQ (8/20/2011): Moved to be after buildImplicitClassSupport().
+            // JavaParser.cactionGenerateType(name);
 
                System.out.println("AAAA After building the class we have to build the data members and member functions (built type name " + name + " by default) in generateType(TypeReference)");
 
             // System.out.println("Calling processType() to recursively build the class structure with member declarations.");
+            // This does not work...
             // processType(node.resolvedType);
+
+            // DQ (8/20/2011): Need a better way to handle detecting if this is an implicit class...
+            // Maybe we could detect if it is a supported type in the global type map.
+
+            /* Not clear how to generate a typeClass from the TypeReference???
+               if (setOfClasses.contains(typeClass) == false)
+                  {
+                 // Investigate any new type.
+                  }
+            */
 
             // if (node.resolvedType.isClass() == true)
             // if (name == "List#RAW")
@@ -691,6 +703,9 @@ class JavaParserSupport
                  // System.out.println("Exiting after buildImplicitClassSupport() (built type name " + name + " by default) in generateType(TypeReference)");
                  // System.exit(1);
                   }
+
+            // DQ (8/20/2011): Moved to be after buildImplicitClassSupport().
+               JavaParser.cactionGenerateType(name);
 
             // System.out.println("Exiting as a test (built type name " + name + " by default) in generateType(TypeReference)");
             // System.exit(1);
