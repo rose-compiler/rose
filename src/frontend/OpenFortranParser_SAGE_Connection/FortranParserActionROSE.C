@@ -3251,7 +3251,6 @@ void c_action_entity_decl(Token_t * id, ofp_bool hasArraySpec, ofp_bool hasCoarr
 void c_action_entity_decl(Token_t * id)
 #endif
    {
-    //raise(SIGINT);
     // This function R504 R503-F2008 is similar to R442 R438-F2008
 
   // Push the entities onto the list at the top of the stack
@@ -6196,7 +6195,7 @@ void c_action_common_block_object(Token_t *id, ofp_bool hasShapeSpecList)
  */
 void c_action_variable()
    {
-  // I think that this just defines the previously built SgVarRefExp as an l-value and that the creation of the SgVarRefExp should be moved to R612.
+    // I think that this just defines the previously built SgVarRefExp as an l-value and that the creation of the SgVarRefExp should be moved to R612.
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_variable() \n");
@@ -6975,7 +6974,7 @@ void c_action_data_ref(int numPartRef)
                    temp_var->set_parent(variable);
               }
               else
-                   variable = new SgVarRefExp(temp_variableSymbol);
+                   variable = new SgVarRefExp(temp_variableSymbol);  // DXN (08/19. 2011): TODO should use the top of astNameStack
               setSourcePosition(variable, nameToken);
           }
 
@@ -15539,7 +15538,7 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
                hasOnly ? "true" : "false");
         }
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R1109 c_action_use_stmt()");
 #endif
@@ -15790,7 +15789,7 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
 
           SgClassDefinition* classDefinition = moduleStatement->get_definition();
           ROSE_ASSERT(classDefinition != NULL);
-#if 1
+#if 0
           outputState("In R1109 c_action_use_stmt(): hasOnly == true");
 #endif
           if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
@@ -15872,7 +15871,7 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
                  // Increment to the next symbol in the module's symbol table
                     symbol = classDefinition->next_any_symbol();
                   }
-#if 1
+#if 0
                outputState("In R1109 c_action_use_stmt(): hasOnly == true");
 #endif
              }
@@ -15907,7 +15906,7 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
 
   // astScopeStack.front()->print_symboltable("Output from R1109 c_action_use_stmt()");
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R1109 c_action_use_stmt()");
 #endif
@@ -15942,7 +15941,7 @@ void c_action_module_nature(Token_t *nature)
  */
 void c_action_rename(Token_t *id1, Token_t *id2, Token_t *op1, Token_t *defOp1, Token_t *op2, Token_t *defOp2)
    {
-     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+    if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_rename(): id1 = %p = %s id2 = %p = %s op1 = %p = %s defOp1 = %p = %s op2 = %p = %s defOp2 = %p = %s \n",
                id1,id1 != NULL ? id1->text : "NULL",
                id2,id2 != NULL ? id2->text : "NULL",
@@ -18257,6 +18256,7 @@ void c_action_start_of_file(const char *filename, const char *filepath)
 void c_action_start_of_file(const char *filepath)
 #endif
    {
+    //raise(SIGINT);
     // New function to support Fortran include mechanism
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_start_of_file(%s) \n",filepath);
