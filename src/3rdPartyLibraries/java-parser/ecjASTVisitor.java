@@ -661,7 +661,7 @@ class ecjASTVisitor extends ASTVisitor
                  // System.out.println("super function name = " + name);
 
                     String associatedClassName = node.binding.toString();
-                 // System.out.println("super function associatedClassName = " + associatedClassName);
+                    System.out.println("super function associatedClassName = " + associatedClassName);
 
                     java_parser.cactionMessageSend(name,associatedClassName, this.createJavaToken(node));
                   }
@@ -1590,7 +1590,8 @@ class ecjASTVisitor extends ASTVisitor
        // System.exit(1);
 
        // java_parser.cactionExplicitConstructorCall("super");
-          java_parser.cactionMessageSend(name,associatedClassVariableName, this.createJavaToken(node));
+       // java_parser.cactionMessageSend(name,associatedClassVariableName, this.createJavaToken(node));
+          java_parser.cactionMessageSend(name,associatedClassName, this.createJavaToken(node));
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (MessageSend,BlockScope)");

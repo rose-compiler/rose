@@ -596,6 +596,11 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSend (JNIEnv *env, jobject 
      SgName name      = convertJavaStringToCxxString(env,functionName);
      SgName className = convertJavaStringToCxxString(env,associatedClassName);
 
+  // For Java 1.5 and greater we need to process raw type names to remove the "#RAW" suffix.
+     className = processNameOfRawType(className);
+
+     string classNameString = className;
+
      if (name == "super")
         {
        // Handle case of super class.
@@ -608,6 +613,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSend (JNIEnv *env, jobject 
 
      if (SgProject::get_verbose() > 1)
           printf ("building function call: name = %s from class name = %s \n",name.str(),className.str());
+
+  // DQ (8/20/2011): Detect if this is a #RAW type (should have been processed to be "java.lang.<class name>".
+     ROSE_ASSERT(classNameString.length() < 4 || classNameString.find("#RAW",classNameString.length()-4) == string::npos);
 
   // Refactored this code to "lookupSymbolFromQualifiedName()" so it could be used to generate class types.
      SgClassSymbol* targetClassSymbol = lookupSymbolFromQualifiedName(className);
@@ -641,13 +649,14 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSend (JNIEnv *env, jobject 
 
           SgClassDeclaration* classDeclaration = isSgClassDeclaration(targetClassSymbol->get_declaration()->get_definingDeclaration());
           ROSE_ASSERT(classDeclaration != NULL);
+
        // SgScopeStatement* targetClassScope = classDeclaration->get_definition();
           targetClassScope = classDeclaration->get_definition();
           ROSE_ASSERT(targetClassScope != NULL);
         }
      ROSE_ASSERT(targetClassScope != NULL);
 
-  // printf ("Looking for the function = %s in class parent scope = %p = %s \n",name.str(),targetClassScope,targetClassScope->class_name().c_str());
+     printf ("Looking for the function = %s in class parent scope = %p = %s \n",name.str(),targetClassScope,targetClassScope->class_name().c_str());
      SgFunctionSymbol* functionSymbol = targetClassScope->lookup_function_symbol(name);
   // ROSE_ASSERT(functionSymbol != NULL);
 
@@ -673,7 +682,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSend (JNIEnv *env, jobject 
        // translated into the ROSE AST.
 
           printf ("ERROR: functionSymbol == NULL \n");
-          ROSE_ASSERT(false);
+       // ROSE_ASSERT(false);
         }
    }
 
@@ -909,25 +918,27 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportEnd (JNIE
      if (SgProject::get_verbose() > 0)
         printf ("Build support for implicit class (end) for class = %s \n",name.str());
 
-
-
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
-     outputJavaState("cactionBuildImplicitClassSupportEnd");
+     outputJavaState("At TOP of cactionBuildImplicitClassSupportEnd");
 
   // Experiment with ERROR on C++ side...communicated to Java...and back to C++ side where the JVM is called by ROSE...
   // ROSE_ASSERT(false);
 
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
 
+  // DQ (8/20/2011): This is the class that we just built implicitly
+     astJavaScopeStack.pop_front();
+     ROSE_ASSERT(astJavaScopeStack.empty() == false);
+
   // DQ (7/31/2011): Collection up all of the statements and append to the current scope.
   // Later I would like to do this more precisely, but for now collect all statements.
-  // printf ("Appending the statments on the Statement stack (size = %zu) to the current scope = %p = %s \n",astJavaStatementStack.size(),astJavaScopeStack.front(),astJavaScopeStack.front()->class_name().c_str());
+     printf ("Appending the statments on the Statement stack (size = %zu) to the current scope = %p = %s \n",astJavaStatementStack.size(),astJavaScopeStack.front(),astJavaScopeStack.front()->class_name().c_str());
      int numberOfStatements = astJavaStatementStack.size();
      appendStatementStack(numberOfStatements);
 
   // Pop the class definition off the scope stack...
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
-     astJavaScopeStack.pop_front();
+  // astJavaScopeStack.pop_front();
 
   // At this point we should still at least have the global scope on the stack.
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
@@ -941,6 +952,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportEnd (JNIE
                printf ("   --- implicit class = %s \n",(*i).str());
              }
         }
+
+     outputJavaState("At BOTTOM of cactionBuildImplicitClassSupportEnd");
    }
 
 
@@ -968,7 +981,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitMethodSupport (JNIEnv
      SgMemberFunctionDeclaration* functionDeclaration = buildNonDefiningMemberFunction(name, classDefinition);
      ROSE_ASSERT(functionDeclaration != NULL);
 
-     setJavaCompilerGenerated(functionDeclaration);
+  // setJavaCompilerGenerated(functionDeclaration);
+     setJavaFrontendSpecific(functionDeclaration);
 
   // Add the types to the non-defining function.
 
@@ -990,7 +1004,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitFieldSupport (JNIEnv*
      SgVariableDeclaration* variableDeclaration = buildSimpleVariableDeclaration(name);
      ROSE_ASSERT(variableDeclaration != NULL);
 
-     setJavaCompilerGenerated(variableDeclaration);
+  // setJavaCompilerGenerated(variableDeclaration);
+     setJavaFrontendSpecific(variableDeclaration);
 
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
 
@@ -1115,9 +1130,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateType (JNIEnv* env, jclass 
        // else if (name == "String")
        // else if (name == "java.lang.String")
 
+       // Strip off the suffix "#RAW" on the class name that is an artifact of Java versions 1.5 and greater???
+          name = processNameOfRawType(name);
           string nameString = name;
-
-          printf ("nameString = %s \n",nameString.c_str());
 
        // Check if the typename starts with "java."
           if (nameString.find("java.",0) == 0)
@@ -1127,16 +1142,23 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateType (JNIEnv* env, jclass 
             // astJavaTypeStack.push_front(SgTypeString::createType());
 
                SgClassType* classType = lookupTypeFromQualifiedName(name);
+
+               printf ("In Java_JavaParser_cactionGenerateType(): classType = %p \n",classType);
                if (classType == NULL)
                   {
                  // If the "String" class was not found then it is likely because we are in a debug mode which limits the number of implecit classes.
-                 // printf ("Build a class for String: name = %s\n",name.str());
-                    outputJavaState("In cactionGenerateType case of java.lang.String");
+                    printf ("Build a class for java.<class name>.<type name>: name = %s\n",name.str());
+                    outputJavaState("In cactionGenerateType case of java.lang.<type name>");
 
+                 // We build the class but we need the declarations in the class.
                     buildImplicitClass(name);
-                 // printf ("DONE: Build a class for String: name = %s\n",name.str());
+                    printf ("DONE: Build a class for java.<class name>.<type name>: name = %s\n",name.str());
 
-                    outputJavaState("DONE: In cactionGenerateType case of java.lang.String");
+                    outputJavaState("DONE: In cactionGenerateType case of java.lang.<type name>");
+
+                 // DQ (8/20/2011): The new class is on the stack, we want to get it's data members into place so that they will be available to be called.
+                 // Can we call Java to force the members to be traversed?  Not clear how to do this!
+
 
                  // We need to leave a SgType on the astJavaTypeStack, we need to build the class to build 
                  // the SgClassType, but we don't want to leave a SgClassDefinition on the astJavaScopeStack.

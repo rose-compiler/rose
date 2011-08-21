@@ -297,6 +297,9 @@ setJavaSourcePositionUnavailableInFrontend( SgLocatedNode* locatedNode )
      locatedNode->get_startOfConstruct()->setSourcePositionUnavailableInFrontend();
      locatedNode->get_endOfConstruct()->setSourcePositionUnavailableInFrontend();
 
+     locatedNode->get_startOfConstruct()->setOutputInCodeGeneration();
+     locatedNode->get_endOfConstruct()->setOutputInCodeGeneration();
+
      locatedNode->get_startOfConstruct()->unsetTransformation();
      locatedNode->get_endOfConstruct()->unsetTransformation();
 
@@ -310,6 +313,7 @@ setJavaSourcePositionUnavailableInFrontend( SgLocatedNode* locatedNode )
         {
           ROSE_ASSERT(expression->get_operatorPosition() != NULL);
           expression->get_operatorPosition()->setSourcePositionUnavailableInFrontend();
+          expression->get_operatorPosition()->setOutputInCodeGeneration();
 
           expression->get_operatorPosition()->unsetTransformation();
           expression->get_operatorPosition()->unsetCompilerGenerated();
@@ -325,6 +329,9 @@ setJavaCompilerGenerated( SgLocatedNode* locatedNode )
 
   // This is redundant for non-expression IR nodes.
      ROSE_ASSERT(locatedNode->get_file_info() != NULL);
+
+     locatedNode->get_startOfConstruct()->unsetOutputInCodeGeneration();
+     locatedNode->get_endOfConstruct()->unsetOutputInCodeGeneration();
 
      locatedNode->get_startOfConstruct()->setCompilerGenerated();
      locatedNode->get_endOfConstruct()->setCompilerGenerated();
@@ -343,9 +350,61 @@ setJavaCompilerGenerated( SgLocatedNode* locatedNode )
           ROSE_ASSERT(expression->get_operatorPosition() != NULL);
           expression->get_operatorPosition()->setCompilerGenerated();
 
+          expression->get_operatorPosition()->unsetOutputInCodeGeneration();
           expression->get_operatorPosition()->unsetTransformation();
           expression->get_operatorPosition()->unsetSourcePositionUnavailableInFrontend();
         }
+   }
+
+void
+setJavaFrontendSpecific( SgLocatedNode* locatedNode )
+   {
+     ROSE_ASSERT(locatedNode != NULL);
+     ROSE_ASSERT(locatedNode->get_startOfConstruct() != NULL);
+     ROSE_ASSERT(locatedNode->get_endOfConstruct()   != NULL);
+
+#if 0
+  // These IR nodes (marked this way) will not be visualized.
+  // So we want to be able to alternatively mark the to be
+  // visualized for some debugging.
+
+  // This is redundant for non-expression IR nodes.
+     ROSE_ASSERT(locatedNode->get_file_info() != NULL);
+
+     locatedNode->get_startOfConstruct()->setFrontendSpecific();
+     locatedNode->get_endOfConstruct()->setFrontendSpecific();
+
+     locatedNode->get_startOfConstruct()->unsetOutputInCodeGeneration();
+     locatedNode->get_endOfConstruct()->unsetOutputInCodeGeneration();
+
+     locatedNode->get_startOfConstruct()->unsetCompilerGenerated();
+     locatedNode->get_endOfConstruct()->unsetCompilerGenerated();
+
+     locatedNode->get_startOfConstruct()->unsetTransformation();
+     locatedNode->get_endOfConstruct()->unsetTransformation();
+
+     locatedNode->get_startOfConstruct()->unsetSourcePositionUnavailableInFrontend();
+     locatedNode->get_endOfConstruct()->unsetSourcePositionUnavailableInFrontend();
+
+  // DQ (8/16/2011): Added support for setting the operator source code position 
+  // (Note that for expressions get_file_info() returns get_operatorPosition()).
+     SgExpression* expression = isSgExpression(locatedNode);
+     if (expression != NULL)
+        {
+          ROSE_ASSERT(expression->get_operatorPosition() != NULL);
+          expression->get_operatorPosition()->setFrontendSpecific();
+
+          expression->get_operatorPosition()->unsetOutputInCodeGeneration();
+          expression->get_operatorPosition()->unsetCompilerGenerated();
+          expression->get_operatorPosition()->unsetTransformation();
+          expression->get_operatorPosition()->unsetSourcePositionUnavailableInFrontend();
+        }
+#else
+  // This will cause implicit classes (Java specific) to be marks to permit visualization.
+     setJavaCompilerGenerated(locatedNode);
+#endif
+
+  // locatedNode->get_startOfConstruct()->display("In setJavaFrontendSpecific():debug");
    }
 
 VisitorContext * getCurrentContext() {
@@ -754,7 +813,7 @@ memberFunctionTest (const SgName & name, SgClassDefinition* classDefinition, SgM
      ROSE_ASSERT(classDefinition->get_declaration()->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table() != NULL);
      ROSE_ASSERT(functionDeclaration->get_symbol_from_symbol_table() != NULL);
 
-#if 1
+#if 0
   // DQ (8/16/2011): Mark this as implicit (compiler generated, to support the type system).
      setJavaCompilerGenerated(functionDeclaration);
      ROSE_ASSERT(functionDeclaration->get_parameterList() != NULL);
@@ -763,11 +822,11 @@ memberFunctionTest (const SgName & name, SgClassDefinition* classDefinition, SgM
      setJavaCompilerGenerated(functionDeclaration->get_CtorInitializerList());
 #else
   // DQ (8/16/2011): Mark this as implicit (compiler generated, to support the type system).
-     setJavaSourcePositionUnavailableInFrontend(functionDeclaration);
+     setJavaFrontendSpecific(functionDeclaration);
      ROSE_ASSERT(functionDeclaration->get_parameterList() != NULL);
-     setJavaSourcePositionUnavailableInFrontend(functionDeclaration->get_parameterList());
+     setJavaFrontendSpecific(functionDeclaration->get_parameterList());
      ROSE_ASSERT(functionDeclaration->get_CtorInitializerList() != NULL);
-     setJavaSourcePositionUnavailableInFrontend(functionDeclaration->get_CtorInitializerList());
+     setJavaFrontendSpecific(functionDeclaration->get_CtorInitializerList());
 #endif
    }
 
@@ -906,12 +965,20 @@ buildJavaClass (const SgName & className, SgScopeStatement* scope )
      SgMemberFunctionDeclaration* functionDeclaration = buildNonDefiningMemberFunction("super",classDefinition);
      ROSE_ASSERT(functionDeclaration != NULL);
 
+#if 0
   // DQ (8/16/2011): Mark this as implicit (compiler generated, to support the type system).
      setJavaCompilerGenerated(functionDeclaration);
      ROSE_ASSERT(functionDeclaration->get_parameterList() != NULL);
      setJavaCompilerGenerated(functionDeclaration->get_parameterList());
      ROSE_ASSERT(functionDeclaration->get_CtorInitializerList() != NULL);
      setJavaCompilerGenerated(functionDeclaration->get_CtorInitializerList());
+#else
+     setJavaFrontendSpecific(functionDeclaration);
+     ROSE_ASSERT(functionDeclaration->get_parameterList() != NULL);
+     setJavaFrontendSpecific(functionDeclaration->get_parameterList());
+     ROSE_ASSERT(functionDeclaration->get_CtorInitializerList() != NULL);
+     setJavaFrontendSpecific(functionDeclaration->get_CtorInitializerList());
+#endif
 
      size_t declarationListSize = classDefinition->generateStatementList().size();
 
@@ -1016,9 +1083,15 @@ buildClassSupport (const SgName & className, bool implicitClass, Token_t* token)
                     ROSE_ASSERT(implicitDeclaration->get_definition() != NULL);
 
                  // DQ (8/16/2011): Mark this as implicit (compiler generated, to support the type system).
+#if 0
                     setJavaCompilerGenerated(implicitDeclaration);
                     ROSE_ASSERT(implicitDeclaration->get_definition() != NULL);
                     setJavaCompilerGenerated(implicitDeclaration->get_definition());
+#else
+                    setJavaFrontendSpecific(implicitDeclaration);
+                    ROSE_ASSERT(implicitDeclaration->get_definition() != NULL);
+                    setJavaFrontendSpecific(implicitDeclaration->get_definition());
+#endif
 
                     outputJavaState("DONE: Building a new class (inside of loop)");
 
@@ -1114,9 +1187,15 @@ buildClassSupport (const SgName & className, bool implicitClass, Token_t* token)
                ROSE_ASSERT(declaration != NULL);
 
             // DQ (8/16/2011): Mark this as implicit (compiler generated, to support the type system).
+#if 0
                setJavaCompilerGenerated(declaration);
                ROSE_ASSERT(declaration->get_definition() != NULL);
                setJavaCompilerGenerated(declaration->get_definition());
+#else
+               setJavaFrontendSpecific(declaration);
+               ROSE_ASSERT(declaration->get_definition() != NULL);
+               setJavaFrontendSpecific(declaration->get_definition());
+#endif
 
                outputJavaState("DONE: Building a new class (outside of loop)");
 
@@ -1374,7 +1453,9 @@ stripQualifiers (const SgName & classNameWithQualification)
    {
   // printf ("Calling generateQualifierList(): classNameWithQualification = %s \n",classNameWithQualification.str());
      list<SgName> l = generateQualifierList(classNameWithQualification);
+
   // printf ("DONE: calling generateQualifierList(): classNameWithQualification = %s \n",classNameWithQualification.str());
+
      ROSE_ASSERT(l.empty() == false);
 
      if (SgProject::get_verbose() > 0)
@@ -1394,6 +1475,9 @@ lookupSymbolFromQualifiedName(string className)
   // the AST for even a trivial Java program rather large.
 
      list<SgName> qualifiedClassName = generateQualifierList(className);
+
+  // printf ("DONE: generateQualifierList() called from lookupSymbolFromQualifiedName(%s) \n",className.c_str());
+
      SgClassSymbol* previousClassSymbol = NULL;
      SgScopeStatement* previousClassScope = astJavaScopeStack.front();
      ROSE_ASSERT(previousClassScope != NULL);
@@ -1407,7 +1491,7 @@ lookupSymbolFromQualifiedName(string className)
           ROSE_ASSERT(previousClassScope != NULL);
 
           if (SgProject::get_verbose() > 2)
-               printf ("Lookup SgSymbol for name = %s i scope = %p = %s = %s \n",(*i).str(),previousClassScope,previousClassScope->class_name().c_str(),SageInterface::get_name(previousClassScope).c_str());
+               printf ("Lookup SgSymbol for name = %s in scope = %p = %s = %s \n",(*i).str(),previousClassScope,previousClassScope->class_name().c_str(),SageInterface::get_name(previousClassScope).c_str());
 
           SgSymbol* tmpSymbol = SageInterface::lookupSymbolInParentScopes(*i,previousClassScope);
 
@@ -1662,6 +1746,34 @@ getCurrentClassDefinition()
      return classDefinition;
    }
 
+
+SgName
+processNameOfRawType(SgName name)
+   {
+     string nameString = name;
+     printf ("nameString = %s \n",nameString.c_str());
+
+     ROSE_ASSERT(nameString.length() >= 4);
+     size_t startOfRawSuffix = nameString.find("#RAW",nameString.length()-4);
+     if (startOfRawSuffix != string::npos)
+        {
+          nameString = nameString.substr(0,startOfRawSuffix);
+
+       // List and ArrayList are in java.util class, but we don't want to have to know this.
+       // nameString = "java.lang." + nameString;
+          nameString = "java.util." + nameString;
+
+          printf ("Found raw type (generic type without type parameter) nameString = %s \n",nameString.c_str());
+
+          name = nameString;
+        }
+       else
+        {
+          printf ("Not a raw type: nameString = %s \n",nameString.c_str());
+        }
+
+     return name;
+   }
 
 
 
