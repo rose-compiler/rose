@@ -6618,12 +6618,6 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
      frontEndCommandLine.push_back(".");
 #endif
 
-  // Set the default Java version to be supported in ROSE:
-  // DQ (8/20/2011): Make the default for ROSE to use Java version 1.6 since our syntax checking
-  // and backend compiler is using javac 1.6 (thought this could be upgraded to 1.7 at any point).
-  // Since the langauge does not change between 1.5 and 1.7, this should not be an issue for ROSE.
-     frontEndCommandLine.push_back("-1.6");
-
   // DQ (4/1/2011): Added ecj option handling (similar to how EDG option handling is supported).
   // This allows ECJ specific option to be set on the command line for ROSE translators.
 
@@ -6636,6 +6630,18 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
   // Resets modifiedArgc and allocates memory to modifiedArgv
      Rose_STL_Container<string> ecjOptionList = CommandlineProcessing::generateOptionList (argv,"-ecj:");
      CommandlineProcessing::addListToCommandLine(frontEndCommandLine,"-",ecjOptionList);
+
+  // Test for explicit specification of support for Java version number.
+     bool redundantVersionSpecification = false;
+     if ( (find(ecjOptionList.begin(),ecjOptionList.end(),"1.3") != ecjOptionList.end()) ||
+          (find(ecjOptionList.begin(),ecjOptionList.end(),"1.4") != ecjOptionList.end()) ||
+          (find(ecjOptionList.begin(),ecjOptionList.end(),"1.5") != ecjOptionList.end()) ||
+          (find(ecjOptionList.begin(),ecjOptionList.end(),"1.6") != ecjOptionList.end()) ||
+          (find(ecjOptionList.begin(),ecjOptionList.end(),"1.7") != ecjOptionList.end()) )
+        {
+       // If any of these were specified explicitly then don't set the default version on the ECJ command line redundantly (an error detected by ECJ).
+          redundantVersionSpecification = true;
+        }
 
   // *******************************************************************
   // Handle general ecj options (--xxx)
@@ -6662,6 +6668,15 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
   // Handle ecj options taking a parameter (string or integer)
      ecjOptionList = CommandlineProcessing::generateOptionWithNameParameterList (argv,"--ecj_parameter:");
      CommandlineProcessing::addListToCommandLine(frontEndCommandLine,"--",ecjOptionList);
+
+  // Set the default Java version to be supported in ROSE:
+  // DQ (8/20/2011): Make the default for ROSE to use Java version 1.6 since our syntax checking
+  // and backend compiler is using javac 1.6 (thought this could be upgraded to 1.7 at any point).
+  // Since the langauge does not change between 1.5 and 1.7, this should not be an issue for ROSE.
+     if (redundantVersionSpecification == false)
+        {
+          frontEndCommandLine.push_back("-1.6");
+        }
 
   // Java does not use include files, so we can enforce this.
      ROSE_ASSERT(get_project()->get_includeDirectorySpecifierList().empty() == true);

@@ -151,6 +151,8 @@ void appendStatementStack(int numberOfStatements);
 //! Support to get current class scope.
 SgClassDefinition* getCurrentClassDefinition();
 
+//! Strips off "#RAW" suffix from raw types (support for Java 1.5 and greater).
+SgName processNameOfRawType(SgName name);
 
 
 
