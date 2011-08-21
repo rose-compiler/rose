@@ -284,9 +284,10 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      canonicalExample.f90 
 
 
-# SKW 8/17/2011: this test fails in 4.1.2, but there is no 'ROSE_USING_GFORTRAN_VERSION_4_1_2' variable
-# so I am just commenting it out for now.
+# SKW 8/21/2011: these test fails with gfortran 4.1.2, but there is no 'ROSE_USING_GFORTRAN_VERSION_4_1_2'
+# yet so I am just commenting them out for now. They pass with gfortran 4.4.1
 #     test2007_108.f90
+#     test2010_03.f90
      
 # DQ (4/10/2011): If it is not gfortran 4.5, then add this test code (these fail syntax checking with 4.5).
 if !ROSE_USING_GFORTRAN_VERSION_4_5
@@ -448,9 +449,6 @@ if ROSE_USING_GFORTRAN_VERSION_4_4
 # test2010_161.f90 
 endif
 
-# DQ (3/29/2011): This is now passing the LLVM tests, so I will leave it alone and thus leave it in to run on all platforms.
-# test2011_Rice_alternate-return-argument.f90
-
 F90_TESTCODES_REQUIRING_PREPROCESSOR_REQUIRED_TO_PASS =
 
 
@@ -601,9 +599,6 @@ F03_TESTCODES_REQUIRED_TO_PASS = \
 # DQ (1/18/2011): Failing tests.
 #     test2007_133.f03 
 
-# DQ (1/20/2011): Failing tests.
-#     test2007_133.f03 
-
 # DQ (4/3/2010): Added test code used in Fortran OpenMP tests.
 OPENMP_TESTS_F77_TESTCODES_REQUIRED_TO_PASS = \
      jacobi.f \
@@ -637,7 +632,6 @@ F90_TESTCODES_REQUIRED_TO_PASS += \
      test2007_257.f90 \
      test2008_30.f90 \
      test2009_1.f90 \
-     test2010_03.f90 \
      test2010_04.f90 \
      test2010_05.f90 \
      test2010_17.f90 \
