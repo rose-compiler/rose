@@ -1124,7 +1124,7 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
         {
        // DEFINE DEFAULT BEHAVIOUR FOR THE CASE WHEN NO inputUnparseInfoPointer (== NULL) IS 
        // PASSED AS ARGUMENT TO THE FUNCTION
-          printf ("Building a new Unparse_Info object \n");
+       // printf ("Building a new Unparse_Info object \n");
 
        // If no input parameter has been specified then allocate one
        // inheritedAttributeInfoPointer = new SgUnparse_Info (NO_UNPARSE_INFO);
