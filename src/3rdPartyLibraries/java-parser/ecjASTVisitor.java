@@ -308,7 +308,8 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of visit (BreakStatement,BlockScope)");
 
-          java_parser.cactionBreakStatement(this.createJavaToken(node));
+          java_parser.cactionBreakStatement((node.label == null ? "" : new String(node.label)),
+        		                            this.createJavaToken(node));
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (BreakStatement,BlockScope)");
@@ -552,7 +553,8 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of visit (ContinueStatement,BlockScope)");
 
-          java_parser.cactionContinueStatement(this.createJavaToken(node));
+          java_parser.cactionContinueStatement((node.label == null ? "" : new String(node.label)),
+        		                                          this.createJavaToken(node));
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (ContinueStatement,BlockScope)");
