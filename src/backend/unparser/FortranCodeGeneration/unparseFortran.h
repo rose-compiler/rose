@@ -409,23 +409,43 @@ class FortranCodeGeneration_locatedNode : public UnparseLanguageIndependentConst
           void unparseAllocateStatement(SgStatement* stmt, SgUnparse_Info& info); 
           void unparseDeallocateStatement(SgStatement* stmt, SgUnparse_Info& info);
 
-       // FMZ (2/17/200(): Added support for co-array fortran "withteam" stmt
-          void unparseWithTeamStatement(SgStatement* stmt, SgUnparse_Info& info); 
-
       //! begin the unparser (unparser.C)
           void run_unparser();
 
-      //FMZ (2/10/2009): Added support for unparsing SgCoExpresson
+       // support for Rice Coarray Fortran 2.0
+          void unparseWithTeamStatement(SgStatement* stmt, SgUnparse_Info& info); 
           void unparseCoArrayExpression      (SgExpression* expr, SgUnparse_Info& info);
           void curprint(const std::string&) const;
+
        // Liao 10/20/2010 common unparsing support for OpenMP AST 
           virtual void unparseOmpPrefix          (SgUnparse_Info& info);
           virtual void unparseOmpDoStatement     (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseOmpBeginDirectiveClauses     (SgStatement* stmt,SgUnparse_Info& info);
           virtual void unparseOmpEndDirectiveClauses       (SgStatement* stmt,     SgUnparse_Info& info);
           virtual void unparseOmpEndDirectivePrefixAndName (SgStatement* stmt, SgUnparse_Info& info);
-      
 
+     private:
+          /**
+          * For unparsing the dimension attribute of an entity in a type declaration.
+          * @param oneVarOnly - true means there is only one declared variable in the type declaration.
+          * If oneVarOnly is false , unparses dimension attribute of the given array type and other
+          * attributes of its base type.
+          */
+          void unparseArrayAttr(SgArrayType* type, SgUnparse_Info& info, bool oneVarOnly);
+
+          /**
+          * For unparsing the length attribute of an entity in a type declaration.
+          * @param oneVarOnly - true means there is only one declared variable in the type declaration.
+          * If oneVarOnly is false , unparses length attribute of the given string type
+          */
+          void unparseStringAttr(SgTypeString* type, SgUnparse_Info& info, bool oneVarOnly);
+
+          /**
+          * For unparsing the attributes of an entity in a type declaration.
+          * @param oneVarOnly - true means there is only one declared variable in the type declaration.
+          * If oneVarOnly is false , unparses relevant attributes of the given type.
+          */
+          void unparseEntityTypeAttr(SgType* type, SgUnparse_Info& info, bool oneVarOnly);
 };
 
 #endif

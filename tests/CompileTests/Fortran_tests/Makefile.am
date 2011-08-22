@@ -251,6 +251,7 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2011_Rice_explicit-shape2.f90 \
      test2011_Rice_forward-decl-func-type.f90 \
      test2011_Rice_forward-ref-derived-type.f90 \
+     test2011_Rice_func-char-len.f90 \
      test2011_Rice_funcdecl-1.f90 \
      test2011_Rice_function-where-var-expected.f90 \
      test2011_Rice_ifConstruct.f90 \
@@ -281,8 +282,15 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2011_Rice_wrong-func-type.f90 \
      test2011_Rice_wrong-func-type-2.f90 \
      test2011_Rice_wrong-func-type-3.f90 \
-     canonicalExample.f90
+     canonicalExample.f90 
 
+
+# SKW 8/21/2011: these test fails with gfortran 4.1.2, but there is no 'ROSE_USING_GFORTRAN_VERSION_4_1_2'
+# yet so I am just commenting them out for now. They pass with gfortran 4.4.1
+#     test2007_108.f90
+#     test2010_03.f90
+#     test2010_81.f90
+     
 # DQ (4/10/2011): If it is not gfortran 4.5, then add this test code (these fail syntax checking with 4.5).
 if !ROSE_USING_GFORTRAN_VERSION_4_5
    F90_TESTCODES_REQUIRED_TO_PASS += \
@@ -443,9 +451,6 @@ if ROSE_USING_GFORTRAN_VERSION_4_4
 # test2010_161.f90 
 endif
 
-# DQ (3/29/2011): This is now passing the LLVM tests, so I will leave it alone and thus leave it in to run on all platforms.
-# test2011_Rice_alternate-return-argument.f90
-
 F90_TESTCODES_REQUIRING_PREPROCESSOR_REQUIRED_TO_PASS =
 
 
@@ -596,9 +601,6 @@ F03_TESTCODES_REQUIRED_TO_PASS = \
 # DQ (1/18/2011): Failing tests.
 #     test2007_133.f03 
 
-# DQ (1/20/2011): Failing tests.
-#     test2007_133.f03 
-
 # DQ (4/3/2010): Added test code used in Fortran OpenMP tests.
 OPENMP_TESTS_F77_TESTCODES_REQUIRED_TO_PASS = \
      jacobi.f \
@@ -618,46 +620,26 @@ if !ROSE_USING_GFORTRAN_VERSION_4_1
 #   F03_TESTCODES_REQUIRED_TO_PASS += test2007_43.f03
 endif
 
-# #######################
-#      FAILING TESTS
-# #######################
-
-F90_TESTCODES_CURRENTLY_FAILING = \
-     test2007_46.f90 \
-     test2007_70.f90 \
-     test2007_81.f90 \
-     test2007_82.f90 \
-     test2007_83.f90 \
-     test2007_84.f90 \
-     test2007_87.f90 \
-     test2007_88.f90 \
+# DXN (as of 08/10/2011):
+F90_TESTCODES_REQUIRED_TO_PASS += \
      test2007_107.f90 \
-     test2007_108.f90 \
      test2007_131.f90 \
      test2007_144.f90 \
-     test2007_152.f90 \
      test2007_165.f90 \
      test2007_166.f90 \
      test2007_170.f90 \
-     test2007_177.f90 \
-     test2007_237.f90 \
      test2007_240.f90 \
      test2007_254.f90 \
      test2007_255.f90 \
      test2007_257.f90 \
-     test2007_LANL.f90 \
-     test2007_example.f90 \
      test2008_30.f90 \
      test2009_1.f90 \
-     test2010_03.f90 \
      test2010_04.f90 \
      test2010_05.f90 \
      test2010_17.f90 \
-     test2010_19.f90 \
      test2010_21.f90 \
      test2010_22.f90 \
      test2010_24.f90 \
-     test2010_26.f90 \
      test2010_31.f90 \
      test2010_36.f90 \
      test2010_43.f90 \
@@ -666,38 +648,19 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2010_65.f90 \
      test2010_66.f90 \
      test2010_67.f90 \
-     test2010_71.f90 \
      test2010_72.f90 \
      test2010_73.f90 \
      test2010_78.f90 \
      test2010_79.f90 \
-     test2010_80.f90 \
-     test2010_81.f90 \
      test2010_82.f90 \
-     test2010_83.f90 \
      test2010_84.f90 \
      test2010_85.f90 \
      test2010_86.f90 \
-     test2010_87.f90 \
-     test2010_88.f90 \
-     test2010_89.f90 \
      test2010_90.f90 \
-     test2010_91.f90 \
-     test2010_92.f90 \
-     test2010_93.f90 \
-     test2010_94.f90 \
-     test2010_95.f90 \
-     test2010_96.f90 \
-     test2010_97.f90 \
-     test2010_99.f90 \
      test2010_100.f90 \
-     test2010_101.f90 \
-     test2010_102.f90 \
-     test2010_103.f90 \
      test2010_107.f90 \
      test2010_108.f90 \
      test2010_109.f90 \
-     test2010_110.f90 \
      test2010_116.f90 \
      test2010_117.f90 \
      test2010_130.f90 \
@@ -710,49 +673,125 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2010_161.f90 \
      test2010_169.f90 \
      test2010_170.f90 \
-     test2010_175.f90 \
      test2011_03.f90 \
-     test2011_11.f90 \
      test2011_18.f90 \
      test2011_21.f90 \
      test2011_22.f90 \
-     test2011_23.f90 \
-     test2011_38.f90 \
      test2011_41.f90 \
-     test2011_42.f90 \
      test2011_43.f90 \
      test2011_44.f90 \
      test2011_45.f90 \
      test2011_46.f90 \
-     test2011_47.f90 \
-     test2011_48.f90 \
-     test2011_49.f90 \
      test2011_50.f90 \
      test2011_51.f90 \
      test2011_52.f90 \
      test2011_53.f90 \
      test2011_54.f90 \
      test2011_55.f90 \
-     test2011_56.f90 \
      test2011_57.f90 \
-     test2011_58.f90 \
-     test2011_59.f90 \
      test2011_60.f90 \
-     test2011_61.f90 \
      test2011_62.f90 \
      test2011_63.f90 \
      test2011_64.f90 \
-     test2011_65.f90 \
      test2011_66.f90 \
-     test2011_67.f90 \
      test2011_68.f90 \
      test2011_69.f90 \
-     test2011_70.f90 \
      test2011_71.f90 \
      test2011_72.f90 \
-     test2011_73.f90 \
      test2011_75.f90 \
-     test2011_76.f90 \
+     test2011_76.f90 
+
+
+# DXN (as of 08/10/2011):
+F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS += \
+     test2007_86.f \
+     test2007_142.f \
+     test2007_147.f \
+     test2007_199.f \
+     test2007_203.f \
+     test2007_225.f \
+     test2007_235.f \
+     test2007_241.f \
+     test2007_252.f \
+     test2008_02.f \
+     test2008_03.f \
+     test2010_52.f \
+     test2010_53.f \
+     test2010_54.f \
+     test2010_70.f \
+     test2010_105.f \
+     test2010_157.f \
+     test2011_94.f 
+
+
+# DXN (as of 08/10/2011):
+F03_TESTCODES_REQUIRED_TO_PASS += \
+     test2007_172.f03 \
+     test2007_173.f03 \
+     test2010_77.f03 \
+     test2010_106.f03 \
+     test2010_171.f03 \
+     test2011_74.f03
+
+
+# #######################
+#      FAILING TESTS
+# #######################
+
+## Cray pointer Tests
+F90_TESTCODES_CURRENTLY_FAILING = \
+     test2007_108.f90 \
+     test2007_46.f90 \
+     test2007_81.f90 \
+     test2007_82.f90 \
+     test2007_83.f90 \
+     test2007_84.f90 
+
+
+F90_TESTCODES_CURRENTLY_FAILING += \
+     test2007_70.f90 \
+     test2007_87.f90 \
+     test2007_88.f90 \
+     test2007_152.f90 \
+     test2007_177.f90 \
+     test2007_237.f90 \
+     test2007_LANL.f90 \
+     test2007_example.f90 \
+     test2010_19.f90 \
+     test2010_26.f90 \
+     test2010_71.f90 \
+     test2010_80.f90 \
+     test2010_83.f90 \
+     test2010_87.f90 \
+     test2010_88.f90 \
+     test2010_89.f90 \
+     test2010_91.f90 \
+     test2010_92.f90 \
+     test2010_93.f90 \
+     test2010_94.f90 \
+     test2010_95.f90 \
+     test2010_96.f90 \
+     test2010_97.f90 \
+     test2010_99.f90 \
+     test2010_101.f90 \
+     test2010_102.f90 \
+     test2010_103.f90 \
+     test2010_110.f90 \
+     test2010_175.f90 \
+     test2011_11.f90 \
+     test2011_23.f90 \
+     test2011_38.f90 \
+     test2011_42.f90 \
+     test2011_47.f90 \
+     test2011_48.f90 \
+     test2011_49.f90 \
+     test2011_56.f90 \
+     test2011_58.f90 \
+     test2011_59.f90 \
+     test2011_61.f90 \
+     test2011_65.f90 \
+     test2011_67.f90 \
+     test2011_73.f90 \
      test2011_Rice_A-cant-assert-keyword-nonnull.f90 \
      test2011_Rice_B-cant-assert-keyword-nonnull.f90 \
      test2011_Rice_C-cant-assert-keyword-nonnull.f90 \
@@ -761,6 +800,7 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      triangle.f90 \
      X-comment-in-wrong-place.f90 \
      X-enddo-plus-label.f90  \
+     X-multi-linebreaks.f90 \
      X-print-no-output-item-list.f90
 
 # "X-*" tests are Rice-reported bugs not yet fixed.
@@ -779,49 +819,25 @@ F90_TESTCODES_REQUIRING_PREPROCESSOR_CURRENTLY_FAILING =  \
 
 F77_FIXED_FORMAT_TESTCODES_CURRENTLY_FAILING = \
      test2007_85.f \
-     test2007_86.f \
-     test2007_142.f \
      test2007_146.f \
-     test2007_147.f \
      test2007_167.f \
-     test2007_199.f \
-     test2007_203.f \
      test2007_210.f \
-     test2007_225.f \
      test2007_233.f \
-     test2007_235.f \
-     test2007_241.f \
-     test2007_252.f \
-     test2008_02.f \
-     test2008_03.f \
-     test2010_52.f \
-     test2010_53.f \
-     test2010_54.f \
      test2010_55.f \
      test2010_56.f \
-     test2010_57.f \
-     test2010_70.f \
-     test2010_105.f \
-     test2010_157.f \
-     test2011_94.f 
+     test2010_57.f 
 
 F03_TESTCODES_CURRENTLY_FAILING = \
      test2007_18.f03 \
      test2007_171.f03 \
-     test2007_172.f03 \
-     test2007_173.f03 \
      test2007_180.f03 \
      test2010_27.f03 \
      test2010_74.f03 \
      test2010_75.f03 \
      test2010_76.f03 \
-     test2010_77.f03 \
      test2010_104.f03 \
-     test2010_106.f03 \
      test2010_126.f03 \
-     test2010_171.f03 \
-     test2011_26.f03 \
-     test2011_74.f03
+     test2011_26.f03 
 
 F08_TESTCODES_CURRENTLY_FAILING = \
      test2010_98.f08
@@ -836,7 +852,7 @@ F77_TESTCODES = \
 $(F77_TESTCODES_REQUIRED_TO_PASS)
 
 F77_FIXED_FORMAT_TESTCODES = \
-$(F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS)
+$(F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS) 
 
 F03_TESTCODES = \
 $(F03_TESTCODES_REQUIRED_TO_PASS)

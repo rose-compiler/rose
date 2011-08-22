@@ -14,6 +14,80 @@
 #include <set>
 #include <vector>
 
+// *************************************************
+// FIXME move to maths/Polynome.hpp                *
+
+template <class T>
+class Expression {};
+
+template <class T>
+class LinearExpression : public Expression<T> {};
+
+template <class T>
+class BilinearExpression : public Expression<T> {};
+
+template <class T>
+class PolynomialExpression : public Expression<T> {};
+
+//                                                 *
+// *************************************************
+
+// *************************************************
+// FIXME move to .../ArrayDescriptor.hpp           *
+
+template <class T>
+struct ArrayShape {
+	public:
+		unsigned dimension;
+		std::vector<Expression<T> *> lower_bound;
+		std::vector<Expression<T> *> upper_bound;
+
+	public:
+		bool operator == (const ArrayShape<T> &) const;
+		bool operator <  (const ArrayShape<T> &) const;
+};
+
+template <class T>
+class Subscript {
+	public:
+		std::vector<Expression<T> *> p_subscripts;
+
+	public:
+		// TODO
+
+		// TODO Subscript & operator + - * [] (Subscript, int Subscript) = 0;
+};
+
+template <class T>
+struct SubscriptTranslator {
+	public:
+		// TODO
+
+	public:
+		// TODO
+
+		Subscript<T> & operator () (Subscript<T> &) const;
+};
+
+// TODO obtains informations on an array (symbol) that may be use to solve a polynomial access...
+template <class T>
+class ArrayDescriptor {
+	protected:
+		std::vector<ArrayShape<T> > p_saw_as;
+
+	public:
+		ArrayDescriptor();
+		virtual ~ArrayDescriptor();
+
+		ArrayShape<T> & minimalShape() const;
+
+		SubscriptTranslator<T> & toMinimalShape() const;
+		SubscriptTranslator<T> & toMaximalShape() const;
+};
+
+//                                                 *
+// *************************************************
+
 enum constraint_type_e {
 	equality,
 	greater_equal,
@@ -71,7 +145,14 @@ class FunctionTable {
 		std::set<PolyhedralFunction *> & get();
 };
 
+// FIXME only 2 kind of access: 1 element (1 Subscript<Symbol>) or 1 domain (2 Subscript<Symbol>). 
 class Access {
+	public:
+		enum AccessType {
+			read,
+			write
+		};
+
 	public:
 		PolyhedralElement * associated_element;
 
@@ -84,12 +165,6 @@ class Access {
 
 class DataAccess : public Access {
 	public:
-		enum AccessType {
-			read,
-			write
-		};
-
-	public:
 		AccessType access_type;
 		Symbol * symbol;
 
@@ -101,7 +176,7 @@ class DataAccess : public Access {
 		DataAccess(PolyhedralElement *, AccessType, Symbol *);
 		virtual ~DataAccess();
 		
-		void restrainAccessedDomain(LinearExpression &, unsigned int, constraint_type_e = equality);
+		void restrainAccessedDomain(LinearExpression_ppl &, unsigned int, constraint_type_e = equality);
 		
 		void addAccessDimension();
 		unsigned int getAccessDimension() const;
@@ -119,6 +194,17 @@ class ParametrizedAccess : public Access {
 		virtual ~ParametrizedAccess();
 		
 		virtual void print(std::ostream &, std::string = std::string());
+};
+
+class PolynomialAccess : public Access {
+	public:
+		std::vector<PolynomialExpression<Symbol> > p_polynomial_subscript;
+
+	public:
+		PolynomialAccess(PolyhedralElement *, AccessType, Symbol *);
+		virtual ~PolynomialAccess();
+
+		// TODO
 };
 
 class PolyhedralPredicate;
@@ -248,7 +334,8 @@ struct Symbol {
 	
 	bool privatized; // indicated wether or not this symbol refers to a privatized variable
 	
-	unsigned int dimension; // for array only
+	unsigned int dimension; // for array only, TODO remove
+	ArrayDescriptor<Symbol> * array_descriptor; // always present, TODO move dimension here
 	
 	unsigned int id;
 
@@ -326,3 +413,4 @@ class PolyhedralModelisation {
 };
 
 #endif /* _TDBU_TRAVERSAL_HPP_ */
+

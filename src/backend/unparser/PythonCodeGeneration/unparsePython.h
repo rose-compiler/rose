@@ -16,10 +16,6 @@ class Unparse_Python : public UnparseLanguageIndependentConstructs
           Unparse_Python(Unparser* unp, std::string fname);
           virtual ~Unparse_Python();
 
-          // Override the default set of operator precedences
-          virtual int getPrecedence(int variant);
-          virtual int getAssociativity(int variant);
-
           virtual void unparseLanguageSpecificStatement(SgStatement*, SgUnparse_Info&);
           virtual void unparseLanguageSpecificExpression(SgExpression*, SgUnparse_Info&);
           virtual void unparseExpression(SgExpression*, SgUnparse_Info&);
@@ -31,7 +27,6 @@ class Unparse_Python : public UnparseLanguageIndependentConstructs
        // DQ (9/6/2010): Mark the derived class to support debugging.
           virtual std::string languageName() const { return "Python Unparser"; }
 
-          virtual bool requiresParentheses(SgExpression* expr);
           virtual void curprint_indented(std::string txt, SgUnparse_Info& info);
 
      protected:
@@ -89,11 +84,17 @@ class Unparse_Python : public UnparseLanguageIndependentConstructs
           virtual void unparseUnaryOp(SgUnaryOp*, SgUnparse_Info&);
           virtual void unparseVarRefExp(SgVarRefExp*, SgUnparse_Info&);
           virtual void unparseWhileStmt(SgWhileStmt*, SgUnparse_Info&);
+          virtual void unparseWithStatement(SgWithStatement*, SgUnparse_Info&);
           virtual void unparseYieldExpression(SgYieldExpression*, SgUnparse_Info&);
 
           virtual std::string ws_prefix(int nesting_level);
           virtual void unparseAsSuite(SgStatement* stmt, SgUnparse_Info&);
           virtual void unparseOperator(VariantT variant, bool pad = true);
+
+       // Support for language-independent precedence
+          virtual bool requiresParentheses(SgExpression* expr, SgUnparse_Info& info);
+          virtual PrecedenceSpecifier getPrecedence(SgExpression* exp);
+          virtual AssociativitySpecifier getAssociativity(SgExpression* exp);
    };
 
 #define ROSE_PYTHON_AND_OP  "and"

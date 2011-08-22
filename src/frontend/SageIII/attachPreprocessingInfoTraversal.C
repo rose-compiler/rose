@@ -72,6 +72,14 @@ using namespace std;
 // Debug flag
 #define DEBUG_ATTACH_PREPROCESSING_INFO 0
 
+
+//It is needed because otherwise, the default destructor breaks something.
+
+AttachPreprocessingInfoTreeTrav::~AttachPreprocessingInfoTreeTrav() {
+    //do nothing
+}
+
+
 // DQ (11/30/2008): Refactored this code out of the simpler function to isolate 
 // the Wave specific handling.  
 
@@ -260,7 +268,8 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
   // DQ (12/23/2008): Note: I think that this should be turned into a while loop (starting at start_index, 
   // to lineNumber when location == PreprocessingInfo::before, and to the sizeOfCurrentListOfAttributes 
   // when location == PreprocessingInfo::after).
-   if (!isFortranBlockAndBeforePoisition) 
+   if (!isFortranBlockAndBeforePoisition) {
+     list<pair<SgIncludeDirectiveStatement*, SgStatement*> > localStatementsToInsertAfter;
      for ( int i = start_index; i < sizeOfCurrentListOfAttributes; i++ )
 #if 0
   // DQ (12/23/2008): This is tighter control over the number of iterations required.
@@ -318,7 +327,9 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
             // It might make more sense to remove it from the list so it doesn't have 
             // to be traversed next time.
             // currentPreprocessingInfoPtr->setHasBeenCopied();
-               currentListOfAttributes->getList()[i] = NULL;
+               
+            // negara1 (08/05/2011): Do not set to NULL such that we can reuse it for multiple inclusions of the same header file.
+            // currentListOfAttributes->getList()[i] = NULL;
 
             // DQ (4/13/2007): If we are going to invalidate the list of accumulated attributes then we can start 
             // next time at the next index (at least).  This removes the order n^2 complexity of traversing over the whole loop.
@@ -335,6 +346,63 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
             // This uses the old code to attach comments and CPP directives to the AST as attributes.
             // printf ("Attaching CPP directives %s to IR nodes as attributes. \n",PreprocessingInfo::directiveTypeName(currentPreprocessingInfoPtr->getTypeOfDirective()).c_str());
                locatedNode->addToAttachedPreprocessingInfo(currentPreprocessingInfoPtr);
+               
+            // negara1 (08/05/2011): If currentPreprocessingInfoPtr is an include directive, get the included file.
+               //If the included file exists, append all its trailing preprocessor directives to its last node and reset its 
+               //start index to the first preprocessor directive.
+               //Proceed only if header files unparsing is enabled.
+               if (sourceFile -> get_unparseHeaderFiles()) {
+                   if (currentPreprocessingInfoPtr -> getTypeOfDirective() == PreprocessingInfo::CpreprocessorIncludeDeclaration) {
+                       string includedFileName = sourceFile -> get_project() -> findIncludedFile(currentPreprocessingInfoPtr);
+                       if (includedFileName.length() > 0) { //found the included file
+                            const int OneBillion = 1000000000;
+                            int fileNameId = Sg_File_Info::getIDFromFilename(includedFileName);
+                            //A header file might not be present in the map at this point if it contains only preprocessor directives and comments.
+                            if (fileNameId < 0) { 
+                                fileNameId = Sg_File_Info::addFilenameToMap(includedFileName);
+                            }
+                            //Currently, ROSE supports unparsing of header files only when #include directives do not appear inside expressions.
+                            //The only exception is SgHeaderFileBody, whose parent SgIncludeDirectiveStatement is used instead.
+                            SgStatement* locatedStatement;
+                            if (isSgHeaderFileBody(locatedNode) != NULL) {
+                                locatedStatement = isSgStatement(locatedNode -> get_parent());
+                            } else {
+                                locatedStatement = isSgStatement(locatedNode);
+                            }
+                            if (locatedStatement == NULL) {
+                                cout << "Can not handle #include directives inside expressions for header files unpasing:" << locatedNode -> class_name() << endl;
+                                ROSE_ASSERT(false);
+                            }
+                            SgIncludeDirectiveStatement* includeDirectiveStatement = new SgIncludeDirectiveStatement();
+                            includeDirectiveStatement -> set_file_info(locatedNode -> get_file_info());
+                            includeDirectiveStatement -> set_directiveString(currentPreprocessingInfoPtr -> getString()); //Set, but not used in the current implementation.
+                            SgHeaderFileBody* headerFileBody = new SgHeaderFileBody();
+                            headerFileBody -> set_file_info(new Sg_File_Info(includedFileName));
+                            headerFileBody -> set_parent(includeDirectiveStatement);
+                            includeDirectiveStatement -> set_headerFileBody(headerFileBody);
+                            if (location == PreprocessingInfo::before) {
+                                statementsToInsertBefore.push_back(pair<SgIncludeDirectiveStatement*, SgStatement*>(includeDirectiveStatement, locatedStatement));
+                            } else {
+                                //push_front in order to preserve the order when these include statements are inserted in the AST.
+                                localStatementsToInsertAfter.push_front(pair<SgIncludeDirectiveStatement*, SgStatement*>(includeDirectiveStatement, locatedStatement));
+                            }
+                            SgLocatedNode* targetNode = NULL;
+                            if (previousLocatedNodeMap.find(fileNameId) != previousLocatedNodeMap.end()) {
+                                targetNode = previousLocatedNodeMap[fileNameId];
+                            }
+                            if (targetNode == NULL) { //Can be NULL either because it is not found or because it was previously reset.
+                                targetNode = headerFileBody;
+                            }
+                            bool reset_start_index = false;
+                            iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
+                               ( targetNode, OneBillion, PreprocessingInfo::after, reset_start_index, getListOfAttributes(fileNameId));
+                            //Reset the pointer to the previous located node and reset the start index.
+                            previousLocatedNodeMap[fileNameId] = NULL;
+                            startIndexMap[fileNameId] = 0;
+                        }
+                   }
+               }
+               
 #else
             // Removed older equivalent code!
 #endif
@@ -354,6 +422,11 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
           currentPreprocessingInfoPtr = (*currentListOfAttributes)[i];
 #endif
         }
+     
+     // negara1 (08/15/2011): After the iteration is over, add local list of statements to "insert after" to the global list. Two lists are used in order to
+     //insert in front of the local list and then, insert the local list in front of the global list such that we preserve the relative order of inserted nodes. 
+     statementsToInsertAfter.insert(statementsToInsertAfter.begin(), localStatementsToInsertAfter.begin(), localStatementsToInsertAfter.end());
+    }
 
   // DQ (12/12/2008): We should not need this state, so why support resetting it, unless the traversal needs to be called multiple times.
   // DQ (4/13/2007): The evaluation of the synthesized attribute for a SgFile will trigger the reset of the start index to 0.
@@ -1104,7 +1177,8 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                                }
 
                          // Iterate over the list of comments and directives and add them to the AST
-                            bool reset_start_index = true;
+                         // negara1 (07/28/2011): Changed to false, since we might need to re-visit some header files.
+                            bool reset_start_index = false;
                             iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber
                                ( targetNode, lineOfClosingBrace, PreprocessingInfo::after, reset_start_index, currentListOfAttributes );
 
@@ -1153,6 +1227,27 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                          // DQ (12/19/2008): I think this should be true, but check it!
                             ROSE_ASSERT(previousLocatedNodeMap.size() == startIndexMap.size());
 
+                         // negara1 (08/12/2011): We reached the last AST node, so its safe to insert nodes for header files bodies.
+                            for (list<pair<SgIncludeDirectiveStatement*, SgStatement*> >::const_iterator it = statementsToInsertBefore.begin(); it != statementsToInsertBefore.end(); it++) {
+                                SageInterface::insertStatementBefore(it -> second, it -> first, false);
+                            }
+                            for (list<pair<SgIncludeDirectiveStatement*, SgStatement*> >::const_iterator it = statementsToInsertAfter.begin(); it != statementsToInsertAfter.end(); it++) {
+                                SgClassDefinition* classDefinition = isSgClassDefinition(it -> second);
+                                if (classDefinition != NULL) {
+                                    //Since the parent of SgClassDefinition is SgClassDeclaration, whose implementation for child insertion is not provided, insert after the
+                                    //last statement of SgClassDefinition instead.
+                                    SgDeclarationStatement* lastMember = (classDefinition -> get_members()).back();
+                                    SageInterface::insertStatementAfter(lastMember, it -> first, false);
+                                } else {
+                                    SgBasicBlock* basicBlock = isSgBasicBlock(it -> second);
+                                    if (basicBlock != NULL) {
+                                        //Do not insert after a basic block, but rather insert as the last statement of the basic block.
+                                        SageInterface::insertStatementAfter(basicBlock -> lastStatement(), it -> first, false);
+                                    } else {
+                                        SageInterface::insertStatementAfter(it -> second, it -> first, false);
+                                    }
+                                }
+                            }
                             break;
                           }
 

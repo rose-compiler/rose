@@ -1,3 +1,4 @@
+#define BOOST_FILESYSTEM_VERSION 2
 #include "rose.h"
 #include <boost/program_options.hpp>
 #include "boost/filesystem/operations.hpp"
