@@ -161,6 +161,13 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
   SgVariableDeclaration * varDecl = new SgVariableDeclaration(name, type, varInit);
   ROSE_ASSERT(varDecl);
 
+// DQ (8/21/2011): Note that the default is to set the declaration modifier's access modifier to be 
+// default (which is the same as public).  So the effect it to set it to be public.  This is ignored
+// by the unparser for most languguages in ROSE.
+
+// DQ (8/21/2011): Debugging declarations should have default settings (should not be marked as public).
+// ROSE_ASSERT(varDecl->get_declarationModifier().get_accessModifier().isPublic() == false);
+
   varDecl->set_firstNondefiningDeclaration(varDecl);
 
   if (scope!=NULL) 
@@ -2897,19 +2904,47 @@ SageBuilder::buildFunctionCallExp(const SgName& name,
 SgFunctionCallExp* 
 SageBuilder::buildFunctionCallExp(SgFunctionSymbol* sym, 
                                   SgExprListExp* parameters/*=NULL*/)
-{
-  ROSE_ASSERT (sym);
-  if (parameters == NULL)
-    parameters = buildExprListExp();
-  ROSE_ASSERT (parameters);
-  SgFunctionRefExp* func_ref = buildFunctionRefExp(sym);
-  SgFunctionCallExp * func_call_expr = new SgFunctionCallExp(func_ref,parameters,func_ref->get_type());
-  func_ref->set_parent(func_call_expr);
-  parameters->set_parent(func_call_expr);
-  setOneSourcePositionForTransformation(func_call_expr);
-  ROSE_ASSERT(func_call_expr);
-  return func_call_expr;  
-}
+   {
+     ROSE_ASSERT (sym);
+     if (parameters == NULL)
+          parameters = buildExprListExp();
+     ROSE_ASSERT (parameters);
+
+  // DQ (8/21/2011): We want to preserve the support for member functions to be built as SgMemberFunctionRefExp.
+  // This is important for the Java support and the C++ support else we will be lowering all mmember function calls
+  // to function calls which will be a proble for eht analysis of object oriented languages.
+  // SgFunctionRefExp* func_ref = buildFunctionRefExp(sym);
+  // SgFunctionCallExp * func_call_expr = new SgFunctionCallExp(func_ref,parameters,func_ref->get_type());
+  // func_ref->set_parent(func_call_expr);
+     SgFunctionCallExp * func_call_expr = NULL;
+     SgMemberFunctionSymbol* memberFunctionSymbol = isSgMemberFunctionSymbol(sym);
+     if (memberFunctionSymbol != NULL)
+        {
+       // Note that we can't at this point be sure this is not a virtual function.
+          bool virtual_call = false;
+
+       // Name qualificaiton is handled separately from the setting of this variable (old API).
+          bool need_qualifier = false;
+
+          SgMemberFunctionRefExp* member_func_ref = buildMemberFunctionRefExp(memberFunctionSymbol,virtual_call,need_qualifier);
+          func_call_expr = new SgFunctionCallExp(member_func_ref,parameters,member_func_ref->get_type());
+          member_func_ref->set_parent(func_call_expr);
+        }
+       else
+        {
+          SgFunctionRefExp * func_ref = buildFunctionRefExp(sym);
+          func_call_expr = new SgFunctionCallExp(func_ref,parameters,func_ref->get_type());
+          func_ref->set_parent(func_call_expr);
+        }
+
+
+     parameters->set_parent(func_call_expr);
+
+     setOneSourcePositionForTransformation(func_call_expr);
+
+     ROSE_ASSERT(func_call_expr);
+     return func_call_expr;  
+   }
 
 SgFunctionCallExp* 
 SageBuilder::buildFunctionCallExp_nfi(SgExpression* f, SgExprListExp* parameters /*=NULL*/)
