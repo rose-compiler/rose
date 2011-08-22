@@ -91,7 +91,7 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionBinaryExpressionEnd(int java_operator_kind, JavaToken jToken);
      public native void cactionBlock(JavaToken jToken);
      public native void cactionBlockEnd(int java_numberOfStatement, JavaToken jTokens);
-     public native void cactionBreakStatement(JavaToken jToken);
+     public native void cactionBreakStatement(String labelName, JavaToken jToken);
      public native void cactionCaseStatement(JavaToken jToken);
      public native void cactionCastExpression(JavaToken jToken);
      public native void cactionCastExpressionEnd(JavaToken jToken);
@@ -100,7 +100,7 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionClinit(JavaToken jToken);
      public native void cactionConditionalExpression(JavaToken jToken);
      public native void cactionConditionalExpressionEnd(JavaToken jToken);
-     public native void cactionContinueStatement(JavaToken jToken);
+     public native void cactionContinueStatement(String labelName, JavaToken jToken);
      public native void cactionCompoundAssignment(JavaToken jToken);
      public native void cactionCompoundAssignmentEnd(int java_operator_kind, JavaToken jToken);
      public native void cactionDoStatement(JavaToken jToken);

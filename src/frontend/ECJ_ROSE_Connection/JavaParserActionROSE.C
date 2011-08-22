@@ -1725,10 +1725,16 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBlockEnd(JNIEnv *env, jobject xxx,
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionBreakStatement(JNIEnv *env, jobject xxx, jobject jToken)
+JNIEXPORT void JNICALL Java_JavaParser_cactionBreakStatement(JNIEnv *env, jobject xxx, jstring java_string, jobject jToken)
    {
      SgBreakStmt* stmt = SageBuilder::buildBreakStmt();
      ROSE_ASSERT(stmt != NULL);
+
+     string label_name = convertJavaStringToCxxString(env, java_string);
+     if (label_name.length() > 0) {
+         stmt -> set_do_string_label(label_name);
+     }
+
      astJavaStatementStack.push_front(stmt);
    }
 
@@ -1819,10 +1825,16 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionConditionalExpressionEnd(JNIEnv *e
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionContinueStatement(JNIEnv *env, jobject xxx, jobject jToken)
+JNIEXPORT void JNICALL Java_JavaParser_cactionContinueStatement(JNIEnv *env, jobject xxx, jstring java_string, jobject jToken)
    {
      SgContinueStmt* stmt = SageBuilder::buildContinueStmt();
      ROSE_ASSERT(stmt != NULL);
+
+     string label_name = convertJavaStringToCxxString(env,java_string);
+     if (label_name.length() > 0) {
+         stmt -> set_do_string_label(label_name);
+     }
+
      astJavaStatementStack.push_front(stmt);
    }
 
