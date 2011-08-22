@@ -651,7 +651,7 @@ class ecjASTVisitor extends ASTVisitor
              {
                if (node.accessMode == ExplicitConstructorCall.ImplicitSuper)
                   {
-                    System.out.println("Sorry, not implemented in support for ExplicitConstructorCall: implicit super()");
+                 // System.out.println("Sorry, not implemented in support for ExplicitConstructorCall: implicit super()");
                  // java_parser.cactionExplicitConstructorCall("ImplicitSuper");
 
                  // We have to implement the support for an impleicit super() call, even if it is marked explicitly 
@@ -1590,7 +1590,8 @@ class ecjASTVisitor extends ASTVisitor
        // System.exit(1);
 
        // java_parser.cactionExplicitConstructorCall("super");
-          java_parser.cactionMessageSend(name,associatedClassVariableName, this.createJavaToken(node));
+       // java_parser.cactionMessageSend(name,associatedClassVariableName, this.createJavaToken(node));
+          java_parser.cactionMessageSend(name,associatedClassName, this.createJavaToken(node));
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (MessageSend,BlockScope)");
@@ -2597,7 +2598,8 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of endVisit (Block,BlockScope)");
 
-          System.out.println("node.explicitDeclarations = " + node.explicitDeclarations);
+          if (java_parser.verboseLevel > 1)
+               System.out.println("node.explicitDeclarations = " + node.explicitDeclarations);
 
           int numberOfStatements = 0;
           if (node.statements != null)
@@ -2659,9 +2661,31 @@ class ecjASTVisitor extends ASTVisitor
 
      public void endVisit(CompilationUnitDeclaration node, CompilationUnitScope scope)
         {
-       // do nothing by default
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of endVisit (CompilationUnitDeclaration,CompilationUnitScope)");
+
+          int numberOfStatements = 0;
+          if (node.types != null)
+             {
+               numberOfStatements += node.types.length;
+               if (java_parser.verboseLevel > 0)
+                    System.out.println("node.types.length = " + node.types.length);
+             }
+
+          if (node.imports != null)
+             {
+               numberOfStatements += node.imports.length;
+               if (java_parser.verboseLevel > 0)
+                    System.out.println("node.imports.length = " + node.imports.length);
+             }
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("numberOfStatements = " + numberOfStatements);
+
+          java_parser.cactionCompilationUnitDeclarationEnd(numberOfStatements, this.createJavaToken(node));
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (CompilationUnitDeclaration,CompilationUnitScope)");
         }
 
      public void endVisit(CompoundAssignment  node, BlockScope scope)
@@ -3076,10 +3100,14 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (LocalDeclaration,BlockScope)");
 
-          System.out.println("If there is an expression on the stack it is the initializer...");
+          if (java_parser.verboseLevel > 0)
+               System.out.println("If there is an expression on the stack it is the initializer...");
+
           if (node.initialization != null)
              {
-               System.out.println("Process the initializer expression...");
+               if (java_parser.verboseLevel > 0)
+                    System.out.println("Process the initializer expression...");
+
                java_parser.cactionLocalDeclarationInitialization(this.createJavaToken(node));
              }
         }
@@ -3329,7 +3357,7 @@ class ecjASTVisitor extends ASTVisitor
             // String typename = new String(node.getTypeName().toString());
             // String typename = node.getTypeName().toString();
                String typename = node.toString();
-               System.out.println("Sorry, not implemented SingleTypeReference (node.resolvedType != NULL): typename = " + typename);
+            // System.out.println("Sorry, not implemented SingleTypeReference (node.resolvedType != NULL): typename = " + typename);
 
             // DQ (7/17/2011): I think we need a typeReferenceExpression specific to Java.
             // System.out.println("--- We need to build a reference to a type as an expression to be used in instanceof operator (for expressions)");

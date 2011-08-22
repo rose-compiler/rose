@@ -111,6 +111,11 @@ MarkTransformationsForOutput::evaluateInheritedAttribute (
                     printf ("MarkTransformationsForOutput (isCompilerGenerated() == true): node = %p = %s = %s fileinfo = %p \n",node,node->class_name().c_str(),SageInterface::get_name(node).c_str(),fileInfo);
                   }
 
+               if (fileInfo->isFrontendSpecific() == true)
+                  {
+                    printf ("MarkTransformationsForOutput (isFrontendSpecific() == true): node = %p = %s = %s fileinfo = %p \n",node,node->class_name().c_str(),SageInterface::get_name(node).c_str(),fileInfo);
+                  }
+
                if (fileInfo->isCompilerGenerated() == false && fileInfo->isTransformation() == false)
                   {
                     printf ("MarkTransformationsForOutput (normal): node = %p = %s = %s fileinfo = %p \n",node,node->class_name().c_str(),SageInterface::get_name(node).c_str(),fileInfo);
