@@ -54,10 +54,12 @@ main( int argc, char * argv[] )
      validValue = 92;
 #endif
 #if __GNUC__ == 4 && __GNUC_MINOR__ <= 2
-     validValue = 92;
+  // validValue = 92;
+     validValue = 413;
 #endif
 #if __GNUC__ == 4 && __GNUC_MINOR__ > 2
-     validValue = 94;
+//   validValue = 94;
+     validValue = 415;
 #endif
 
      NodeQuerySynthesizedAttributeType returnList = NodeQuery::querySubTree(project, V_SgFunctionDeclaration);
