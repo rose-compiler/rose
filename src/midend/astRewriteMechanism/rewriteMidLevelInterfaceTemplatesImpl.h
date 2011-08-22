@@ -246,6 +246,9 @@ MidLevelRewrite<ASTNodeCollection>::generatePrefixAndSuffix (
 #endif
    }
 
+#if 0
+// DQ (8/7/2011): Test where this is required since it leads to linking errors when ROSE is configured using "--enable-static --disable-shared"
+// multiple definition of `MidLevelRewrite<MidLevelInterfaceNodeCollection>::replace(SgStatement*, std::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)'
 template <>
 void
 MidLevelRewrite<MidLevelInterfaceNodeCollection>::replace ( SgStatement* target, const std::string & transformationString )
@@ -258,6 +261,7 @@ MidLevelRewrite<MidLevelInterfaceNodeCollection>::replace ( SgStatement* target,
   // remove(target);
      insert(target,transformationString,MidLevelInterfaceNodeCollection::SurroundingScope,MidLevelInterfaceNodeCollection::ReplaceCurrentPosition);
    }
+#endif
 
 template <class ASTNodeCollection>
 void
