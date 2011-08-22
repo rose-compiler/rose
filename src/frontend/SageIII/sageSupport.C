@@ -6468,8 +6468,8 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
                   }
              }
 
-#if 1
-          if (get_verbose() > -1)
+#if 0
+          if (get_verbose() > 2)
              {
                printf ("Checking syntax of input program using javac: syntaxCheckingCommandline = %s \n",CommandlineProcessing::generateStringFromArgList(javaCommandLine,false,false).c_str());
              }
@@ -6478,17 +6478,19 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
           javaCommandLine.push_back(get_sourceFileNameWithPath());
 
        // At this point we have the full command line with the source file name
-          if ( get_verbose() > -1 )
+          if (get_verbose() > 1)
              {
-               printf ("Checking syntax of input program using gfortran: syntaxCheckingCommandline = %s \n",CommandlineProcessing::generateStringFromArgList(javaCommandLine,false,false).c_str());
+               printf ("Checking syntax of input program using javac: syntaxCheckingCommandline = %s \n",CommandlineProcessing::generateStringFromArgList(javaCommandLine,false,false).c_str());
              }
 
           int returnValueForSyntaxCheckUsingBackendCompiler = 0;
+
+// Note the both the Fortran and Java support require the Jave JVM support (which is what USE_GFORTRAN_IN_ROSE implies).
 #if USE_GFORTRAN_IN_ROSE
           returnValueForSyntaxCheckUsingBackendCompiler = systemFromVector (javaCommandLine);
 #else
        // ROSE can be configured withouth Java support, in which case it is not an error to avoid the syntax checking of a java file.
-          printf ("backend java compiler (javac) unavailable ... (not an error) \n");
+          printf ("backend java compiler (javac) unavailable ... (not an error: ROSE has been configured this way) \n");
 #endif
 
        // Check that there are no errors, I think that warnings are ignored!

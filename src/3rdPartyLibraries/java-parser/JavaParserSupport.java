@@ -26,7 +26,7 @@ class JavaParserSupport
   // DQ (8/20/2011): Added a simple way to control the number of data members, constructors, and member functions built.
   // 0: No significant limits applied to number of constructs in the AST.
   // 1: Limits the number to be built into the enerated AST
-     static boolean VISUALIZE_AST = true;
+     static boolean VISUALIZE_AST = false;
 
      static int implicitClassCounterBound     = VISUALIZE_AST ? 1   : 1000;
      static int methodCounterBound            = VISUALIZE_AST ? 2   : 1000;
@@ -293,7 +293,7 @@ class JavaParserSupport
             // Class cls = Class.forName("java.lang.String");
             // Class cls = Class.forName("java.lang."+node.receiver.toString());
 
-               if (verboseLevel > -1)
+               if (verboseLevel > 1)
                     System.out.println("Generate the implicit Java class for className = " + className + " implicitClassCounter = " + implicitClassCounter);
 
             // Note that "java.lang" does not appear to be a class (so is that root of all implicitly included classes?).
@@ -330,6 +330,7 @@ class JavaParserSupport
             // This is a way to limit the number of fields to be traversed and thus control the complexity of the implicitly defined class structure.
                int numberOfFields = fieldlist.length;
 
+               int dataMemberCounter = 0;
                for (int i = 0; i < numberOfFields; i++)
                   {
                     Field fld = fieldlist[i];
@@ -395,7 +396,8 @@ class JavaParserSupport
                     if (verboseLevel > 2)
                          System.out.println("Build the implicit type for the data member (field) of type = " + nestedClassName);
 
-                    if (i < dataMemberCounterBound)
+                 // Note that i == dataMemberCounter
+                    if (dataMemberCounter < dataMemberCounterBound)
                        {
                       // System.out.println("#############################################################################################");
                       // System.out.println("This call to JavaParserSupport.generateType() appears to be a problem: nestedClassName = " + nestedClassName);
@@ -426,6 +428,8 @@ class JavaParserSupport
                          System.out.println("Exiting as a test implicitClassCounter = " + implicitClassCounter);
                          System.exit(1);
                        }
+
+                    dataMemberCounter++;
                   }
 
             // A traversal over the constructors will have to look at all types of constructor arguments 
@@ -610,8 +614,14 @@ class JavaParserSupport
                     interfaceCounter++;
                   }
 
+            // Compute the total number of statements that we will have be poped from the stack to complete the class definition for ROSE.
+               int numberOfStatements = methodCounter + constructorMethodCounter + dataMemberCounter + interfaceCounter;
+
+               if (verboseLevel > 1)
+                    System.out.println("Implicit class support: numberOfStatements = " + numberOfStatements + " for className = " + className);
+
             // This wraps up the details of processing all of the child classes (such as forming SgAliasSymbols for them in the global scope).
-               JavaParser.cactionBuildImplicitClassSupportEnd(className);
+               JavaParser.cactionBuildImplicitClassSupportEnd(numberOfStatements,className);
              }
 
        // try ... catch is required for using the reflection support in Java.
@@ -655,14 +665,18 @@ class JavaParserSupport
              {
             // TypeBinding baseType = ((ArrayBinding) node.resolvedType).leafComponentType;
                ArrayBinding arrayType = (ArrayBinding) node.resolvedType;
-               System.out.println("Inside of generateType(TypeReference) ArrayBinding dimensions = " + arrayType.dimensions);
+               if (verboseLevel > 1)
+                    System.out.println("Inside of generateType(TypeReference) ArrayBinding dimensions = " + arrayType.dimensions);
                TypeBinding baseType = arrayType.leafComponentType;
 
             // This outputs the declartion for the whole class.
             // System.out.println("Inside of generateType(TypeReference) ArrayBinding baseType   = " + baseType);
-               System.out.println("Inside of generateType(TypeReference) ArrayBinding baseType (debugName) = " + baseType.debugName());
+               if (verboseLevel > 1)
+                  {
+                    System.out.println("Inside of generateType(TypeReference) ArrayBinding baseType (debugName) = " + baseType.debugName());
+                    System.out.println("Inside of generateType(TypeReference) recursive call to generateType()");
+                  }
 
-               System.out.println("Inside of generateType(TypeReference) recursive call to generateType()");
                generateType(baseType);
              }
             else
@@ -670,13 +684,14 @@ class JavaParserSupport
             // NOTE: It would be more elegant to not depend upon the debugName() function.
                String name = node.resolvedType.debugName();
 
-               if (verboseLevel > -1)
+               if (verboseLevel > 1)
                     System.out.println("Inside of generateType(TypeReference): NOT an array type so build SgIntType -- TypeReference node = " + name);
 
             // DQ (8/20/2011): Moved to be after buildImplicitClassSupport().
             // JavaParser.cactionGenerateType(name);
 
-               System.out.println("AAAA After building the class we have to build the data members and member functions (built type name " + name + " by default) in generateType(TypeReference)");
+               if (verboseLevel > 1)
+                    System.out.println("After building the class we have to build the data members and member functions (built type name " + name + " by default) in generateType(TypeReference)");
 
             // System.out.println("Calling processType() to recursively build the class structure with member declarations.");
             // This does not work...

@@ -164,6 +164,37 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitDeclaration (JNIEnv
    }
 
 
+JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitDeclarationEnd (JNIEnv *env, jobject xxx, jint java_numberOfStatements, jobject jToken)
+   {
+     if (SgProject::get_verbose() > 0)
+          printf ("Inside of Java_JavaParser_cactionCompilationUnitDeclarationEnd() \n");
+
+     outputJavaState("At TOP of cactionCompilationUnitDeclarationEnd");
+
+     ROSE_ASSERT(astJavaScopeStack.empty() == false);
+
+  // DQ (8/13/2011): Add more precise handling of the statement stack.
+     int numberOfStatements = java_numberOfStatements;
+
+     if (SgProject::get_verbose() > 0)
+          printf ("cactionCompilationUnitDeclarationEnd(): numberOfStatements = %d astJavaStatementStack.size() = %zu \n",numberOfStatements,astJavaStatementStack.size());
+
+     appendStatementStack(numberOfStatements);
+
+     if (SgProject::get_verbose() > 0)
+          printf ("Now we pop off the global scope! \n");
+
+     astJavaScopeStack.pop_front();
+
+     ROSE_ASSERT(astJavaScopeStack.empty() == true);
+
+     outputJavaState("At BOTTOM of cactionCompilationUnitDeclarationEnd");
+
+     if (SgProject::get_verbose() > 0)
+          printf ("Leaving Java_JavaParser_cactionCompilationUnitDeclarationEnd() \n");
+   }
+
+
 JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclaration (JNIEnv *env, jobject xxx, jstring java_string, jobject jToken)
    {
      if (SgProject::get_verbose() > 0)
@@ -219,21 +250,31 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclarationEnd (JNIEnv *env, j
      int numberOfStatements = java_numberOfStatements;
 
      if (SgProject::get_verbose() > 0)
-          printf ("numberOfStatements = %d astJavaStatementStack.size() = %zu \n",numberOfStatements,astJavaStatementStack.size());
+          printf ("cactionTypeDeclarationEnd(): numberOfStatements = %d astJavaStatementStack.size() = %zu \n",numberOfStatements,astJavaStatementStack.size());
 
      appendStatementStack(numberOfStatements);
 
      if (SgProject::get_verbose() > 0)
           printf ("We might have to be popping off the existing scope for class type: name = %s \n",name.str());
 
+     ROSE_ASSERT(astJavaScopeStack.front() != NULL);
+     SgClassDefinition* classDefinition = isSgClassDefinition(astJavaScopeStack.front());
+     ROSE_ASSERT(classDefinition != NULL);
+
      astJavaScopeStack.pop_front();
+
+     SgClassDeclaration* classDeclaration = classDefinition->get_declaration();
+     ROSE_ASSERT(classDeclaration != NULL);
+
+  // Push the class declaration onto the statement stack.
+     astJavaStatementStack.push_front(classDeclaration);
 
      ROSE_ASSERT(astJavaScopeStack.front() != NULL);
 
      if (SgProject::get_verbose() > 0)
           astJavaScopeStack.front()->get_file_info()->display("source position in Java_JavaParser_cactionTypeDeclarationEnd(): debug");
 
-     outputJavaState("At BOTTOM of cactionTypeDeclaration");
+     outputJavaState("At BOTTOM of cactionTypeDeclarationEnd");
 
      if (SgProject::get_verbose() > 0)
           printf ("Leaving Java_JavaParser_cactionTypeDeclarationEnd() (cactionTypeDeclarationEnd) \n");
@@ -294,16 +335,30 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclarationEnd (JNIEnv 
   // DQ (7/31/2011): Add more precise handling of the statement stack.
   // This does not count (include) explicit constructor calls...
      int numberOfStatements = java_numberOfStatements;
-     printf ("numberOfStatements = %d astJavaStatementStack.size() = %zu \n",numberOfStatements,astJavaStatementStack.size());
+
+     if (SgProject::get_verbose() > 0)
+          printf ("cactionConstructorDeclarationEnd(): numberOfStatements = %d astJavaStatementStack.size() = %zu \n",numberOfStatements,astJavaStatementStack.size());
+
      appendStatementStack(numberOfStatements);
 
   // Pop the constructor body...
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
      astJavaScopeStack.pop_front();
- 
-  // Pop the fuction definition...
+
+  // Check for the fuction definition...
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
+
+     SgFunctionDefinition* memberFunctionDefinition = isSgFunctionDefinition(astJavaScopeStack.front());
+     ROSE_ASSERT(memberFunctionDefinition != NULL);
+
+  // Pop the fuction definition...
      astJavaScopeStack.pop_front();
+
+     ROSE_ASSERT(memberFunctionDefinition->get_declaration() != NULL);
+     SgMemberFunctionDeclaration* memberFunctionDeclaration = isSgMemberFunctionDeclaration(memberFunctionDefinition->get_declaration());
+     ROSE_ASSERT(memberFunctionDeclaration != NULL);
+
+     astJavaStatementStack.push_front(memberFunctionDeclaration);
 
      outputJavaState("At BOTTOM of cactionConstructorDeclarationEnd");
    }
@@ -504,14 +559,34 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclarationEnd (JNIEnv *env,
 
   // appendStatementStack();
      int numberOfStatements = java_numberOfStatements;
-     printf ("In cactionMethodDeclarationEnd(): numberOfStatements = %d astJavaStatementStack.size() = %zu \n",numberOfStatements,astJavaStatementStack.size());
+
+     if (SgProject::get_verbose() > 0)
+          printf ("In cactionMethodDeclarationEnd(): numberOfStatements = %d astJavaStatementStack.size() = %zu \n",numberOfStatements,astJavaStatementStack.size());
+
      appendStatementStack(numberOfStatements);
 
      astJavaScopeStack.pop_front();
- 
+
+#if 0 
   // Pop the fuction definition...
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
      astJavaScopeStack.pop_front();
+#else
+  // Check for the fuction definition...
+     ROSE_ASSERT(astJavaScopeStack.empty() == false);
+
+     SgFunctionDefinition* memberFunctionDefinition = isSgFunctionDefinition(astJavaScopeStack.front());
+     ROSE_ASSERT(memberFunctionDefinition != NULL);
+
+  // Pop the fuction definition...
+     astJavaScopeStack.pop_front();
+
+     ROSE_ASSERT(memberFunctionDefinition->get_declaration() != NULL);
+     SgMemberFunctionDeclaration* memberFunctionDeclaration = isSgMemberFunctionDeclaration(memberFunctionDefinition->get_declaration());
+     ROSE_ASSERT(memberFunctionDeclaration != NULL);
+
+     astJavaStatementStack.push_front(memberFunctionDeclaration);
+#endif
 
      outputJavaState("At BOTTOM of cactionMethodDeclarationEnd");
 
@@ -656,7 +731,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSend (JNIEnv *env, jobject 
         }
      ROSE_ASSERT(targetClassScope != NULL);
 
-     printf ("Looking for the function = %s in class parent scope = %p = %s \n",name.str(),targetClassScope,targetClassScope->class_name().c_str());
+     if (SgProject::get_verbose() > 1)
+          printf ("Looking for the function = %s in class parent scope = %p = %s \n",name.str(),targetClassScope,targetClassScope->class_name().c_str());
+
      SgFunctionSymbol* functionSymbol = targetClassScope->lookup_function_symbol(name);
   // ROSE_ASSERT(functionSymbol != NULL);
 
@@ -741,7 +818,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSendEnd (JNIEnv *env, jobje
        // DQ (7/18/2011): Some of these entries in "arguments" from the stack are arguments 
        // and some are associated with the object whose member function is being called.
        // SgExpression* functionRefExp = functionCallExp->get_function();
-          SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(functionCallExp->get_function());
+       // SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(functionCallExp->get_function());
+          SgMemberFunctionRefExp* functionRefExp = isSgMemberFunctionRefExp(functionCallExp->get_function());
           ROSE_ASSERT(functionRefExp != NULL);
        // printf ("functionRefExp from functionCallExp = %p = %s \n",functionRefExp,functionRefExp->class_name().c_str());
 
@@ -750,7 +828,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSendEnd (JNIEnv *env, jobje
           SgSymbol* symbol = functionRefExp->get_symbol();
           ROSE_ASSERT(symbol != NULL);
        // printf ("symbol from functionRefExp = %p = %s \n",symbol,symbol->class_name().c_str());
-          SgFunctionSymbol* functionSymbol = isSgFunctionSymbol(symbol);
+          SgMemberFunctionSymbol* functionSymbol = isSgMemberFunctionSymbol(symbol);
           ROSE_ASSERT(functionSymbol != NULL);
 
           SgFunctionDeclaration* functionDeclaration = functionSymbol->get_declaration();
@@ -911,7 +989,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportStart (JN
 // DQ: Note that the function signature is abby-normal...jclass instead of jobject (because they are 
 // declared "public static native" instead of "public native" in the Java side of the JNI interface.
 // JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportEnd (JNIEnv* env, jclass xxx, jstring java_string, jobject jToken)
-JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportEnd (JNIEnv* env, jclass xxx, jstring java_string)
+JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportEnd (JNIEnv* env, jclass xxx, jint java_numberOfStatements, jstring java_string)
    {
      SgName name = convertJavaStringToCxxString(env,java_string);
 
@@ -932,8 +1010,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportEnd (JNIE
 
   // DQ (7/31/2011): Collection up all of the statements and append to the current scope.
   // Later I would like to do this more precisely, but for now collect all statements.
-     printf ("Appending the statments on the Statement stack (size = %zu) to the current scope = %p = %s \n",astJavaStatementStack.size(),astJavaScopeStack.front(),astJavaScopeStack.front()->class_name().c_str());
-     int numberOfStatements = astJavaStatementStack.size();
+  // printf ("Appending all of the statments on the Statement stack (size = %zu) to the current scope = %p = %s \n",astJavaStatementStack.size(),astJavaScopeStack.front(),astJavaScopeStack.front()->class_name().c_str());
+  // int numberOfStatements = astJavaStatementStack.size();
+     int numberOfStatements = java_numberOfStatements;
      appendStatementStack(numberOfStatements);
 
   // Pop the class definition off the scope stack...
@@ -1143,26 +1222,25 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateType (JNIEnv* env, jclass 
 
                SgClassType* classType = lookupTypeFromQualifiedName(name);
 
-               printf ("In Java_JavaParser_cactionGenerateType(): classType = %p \n",classType);
+            // printf ("In Java_JavaParser_cactionGenerateType(): classType = %p \n",classType);
                if (classType == NULL)
                   {
                  // If the "String" class was not found then it is likely because we are in a debug mode which limits the number of implecit classes.
-                    printf ("Build a class for java.<class name>.<type name>: name = %s\n",name.str());
+                 // printf ("Build a class for java.<class name>.<type name>: name = %s\n",name.str());
                     outputJavaState("In cactionGenerateType case of java.lang.<type name>");
 
                  // We build the class but we need the declarations in the class.
                     buildImplicitClass(name);
-                    printf ("DONE: Build a class for java.<class name>.<type name>: name = %s\n",name.str());
+                 // printf ("DONE: Build a class for java.<class name>.<type name>: name = %s\n",name.str());
 
                     outputJavaState("DONE: In cactionGenerateType case of java.lang.<type name>");
 
                  // DQ (8/20/2011): The new class is on the stack, we want to get it's data members into place so that they will be available to be called.
                  // Can we call Java to force the members to be traversed?  Not clear how to do this!
 
-
                  // We need to leave a SgType on the astJavaTypeStack, we need to build the class to build 
                  // the SgClassType, but we don't want to leave a SgClassDefinition on the astJavaScopeStack.
-                    printf ("When we just build a type we don't want the new class definition on the stack. \n");
+                 // printf ("When we just build a type we don't want the new class definition on the stack. \n");
                     astJavaScopeStack.pop_front();
 
                     SgClassType* classType = lookupTypeFromQualifiedName(name);
@@ -1192,7 +1270,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateType (JNIEnv* env, jclass 
             else
              {
             // This is the last chance to resolve the type.
-               printf ("I think this is a user defined class (so we have to look it up) (name = %s) \n",name.str());
+               if (SgProject::get_verbose() > 0)
+                    printf ("I think this is a user defined class (so we have to look it up) (name = %s) \n",name.str());
 
                SgClassType* classType = lookupTypeFromQualifiedName(name);
                ROSE_ASSERT(classType != NULL);
@@ -1623,7 +1702,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBlockEnd(JNIEnv *env, jobject xxx,
      outputJavaState("At TOP of cactionBlockEnd");
 
      int numberOfStatements = java_numberOfStatements;
-     printf ("In cactionBlockEnd(): numberOfStatements = %d \n",numberOfStatements);
+
+     if (SgProject::get_verbose() > 2)
+          printf ("In cactionBlockEnd(): numberOfStatements = %d \n",numberOfStatements);
 
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
 
@@ -2145,7 +2226,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionForStatement(JNIEnv *env, jobject 
   // We need to set the source code position information
      SageInterface::setOneSourcePositionForTransformation(forInitStatement);
      ROSE_ASSERT(forInitStatement->get_startOfConstruct() != NULL);
-     printf ("forInitStatement = %p \n",forInitStatement);
+  // printf ("forInitStatement = %p \n",forInitStatement);
 
   // It might be that we should build this on the way down so that we can have it on the stack 
   // before the body would be pushed onto the scope stack if a block is used.
@@ -2155,7 +2236,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionForStatement(JNIEnv *env, jobject 
 
      ROSE_ASSERT(forInitStatement->get_startOfConstruct() != NULL);
 
-     printf ("forStatement->get_for_init_stmt() = %p \n",forStatement->get_for_init_stmt());
+  // printf ("forStatement->get_for_init_stmt() = %p \n",forStatement->get_for_init_stmt());
 
   // DQ (7/30/2011): For the build interface to wrk we have to initialize the parent pointer to the SgForStatement.
      forStatement->set_parent(astJavaScopeStack.front());
@@ -2188,9 +2269,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionForStatementEnd(JNIEnv *env, jobje
           SgExpression* exp = exprStatement->get_expression();
           ROSE_ASSERT(exp != NULL);
 
-          printf ("exprStatement->get_expression() = %p = %s \n",exp,exp->class_name().c_str());
+       // printf ("exprStatement->get_expression() = %p = %s \n",exp,exp->class_name().c_str());
           ROSE_ASSERT(exp->get_type() != NULL);
-          printf ("exp->get_type() = %p = %s \n",exp->get_type(),exp->get_type()->class_name().c_str());
+       // printf ("exp->get_type() = %p = %s \n",exp->get_type(),exp->get_type()->class_name().c_str());
         }
        else
         {
@@ -2654,7 +2735,15 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionLocalDeclaration(JNIEnv *env, jobj
 
   // Set the modifiers (shared between PHP and Java)
      if (isFinal == true)
+        {
           variableDeclaration->get_declarationModifier().setFinal();
+        }
+
+  // Local declarations have no definition for this (default is public so we need to explicity mark this as undefined).
+     variableDeclaration->get_declarationModifier().get_accessModifier().setUndefined();
+
+  // DQ (8/21/2011): Debugging declarations in local function should (should not be marked as public).
+     ROSE_ASSERT(variableDeclaration->get_declarationModifier().get_accessModifier().isPublic() == false);
 
      if (SgProject::get_verbose() > 0)
           variableDeclaration->get_file_info()->display("source position in Java_JavaParser_cactionLocalDeclaration(): debug");
@@ -2961,7 +3050,10 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionSingleNameReference(JNIEnv *env, j
   // ROSE_ASSERT(varRefExp != NULL);
      SgVarRefExp* varRefExp = NULL;
      SgClassSymbol* className = SageInterface::lookupClassSymbolInParentScopes(name,astJavaScopeStack.front());
-     printf ("In cactionSingleNameReference(): className = %p \n",className);
+
+     if (SgProject::get_verbose() > 0)
+          printf ("In cactionSingleNameReference(): className = %p \n",className);
+
      if (className != NULL)
         {
        // DQ (7/18/2011): test2011_24.java demonstrates that this can be a type.  So check for a type first...
@@ -2974,7 +3066,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionSingleNameReference(JNIEnv *env, j
        // What is the type!
           varRefExp = SageBuilder::buildVarRefExp(name,astJavaScopeStack.front());
           ROSE_ASSERT(varRefExp != NULL);
-          printf ("In cactionSingleNameReference(): varRefExp = %p type = %p = %s \n",varRefExp,varRefExp->get_type(),varRefExp->get_type()->class_name().c_str());
+
+          if (SgProject::get_verbose() > 0)
+               printf ("In cactionSingleNameReference(): varRefExp = %p type = %p = %s \n",varRefExp,varRefExp->get_type(),varRefExp->get_type()->class_name().c_str());
 
           setJavaSourcePosition(varRefExp,env,jToken);
 
