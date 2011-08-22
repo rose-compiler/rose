@@ -161,6 +161,13 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
   SgVariableDeclaration * varDecl = new SgVariableDeclaration(name, type, varInit);
   ROSE_ASSERT(varDecl);
 
+// DQ (8/21/2011): Note that the default is to set the declaration modifier's access modifier to be 
+// default (which is the same as public).  So the effect it to set it to be public.  This is ignored
+// by the unparser for most languguages in ROSE.
+
+// DQ (8/21/2011): Debugging declarations should have default settings (should not be marked as public).
+// ROSE_ASSERT(varDecl->get_declarationModifier().get_accessModifier().isPublic() == false);
+
   varDecl->set_firstNondefiningDeclaration(varDecl);
 
   if (scope!=NULL) 
@@ -529,10 +536,12 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
      if (typeInTable==NULL)
           fTable->insert_function_type(typeName,funcType);
 
-  // DQ (1/21/2009): TODO: Need to mark the function type as const, volatile, 
-  // or restrict (assert that none are set for now).
-     ROSE_ASSERT(mfunc_specifier == 0);
+  //// DQ (1/21/2009): TODO: Need to mark the function type as const, volatile, 
+  //// or restrict (assert that none are set for now).
+  //   ROSE_ASSERT(mfunc_specifier == 0);
 
+     funcType->set_mfunc_specifier(mfunc_specifier);
+     
      return funcType;
    }
 #endif
@@ -734,7 +743,6 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType*
 
   // DQ (2/24/2009): Delete the old parameter list build by the actualFunction (template argument) constructor.
      ROSE_ASSERT(func->get_parameterList() != NULL);
-     cout << "dELETING" << endl;
      delete func->get_parameterList();
      func->set_parameterList(NULL);
 
@@ -913,6 +921,150 @@ SgMemberFunctionDeclaration* SageBuilder::buildNondefiningMemberFunctionDeclarat
   return result;
 }
 
+#if 0
+SgMemberFunctionDeclaration*
+SageBuilder::buildNondefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgFunctionParameterList* paralist, SgScopeStatement* scope)
+   {
+     if (scope == NULL)
+          scope = SageBuilder::topScopeStack();
+
+     ROSE_ASSERT(name.is_null() == false);
+     ROSE_ASSERT(func_type != NULL);
+
+     SgClassDefinition *struct_name = isSgClassDefinition(scope);
+     ROSE_ASSERT(struct_name != NULL);
+
+
+  // function declaration
+     SgMemberFunctionDeclaration* func = NULL;
+
+  // search before using the function type to create the function declaration 
+  // TODO only search current scope or all ancestor scope??
+  // We don't have lookup_member_function_symbol  yet
+  // SgFunctionSymbol *func_symbol = scope->lookup_function_symbol(name,func_type);
+     SgFunctionSymbol *func_symbol = NULL;
+     if (scope != NULL)
+          func_symbol = scope->lookup_function_symbol(name,func_type);
+
+  // printf ("In SageBuilder::buildNondefiningFunctionDeclaration_T(): scope = %p func_symbol = %p \n",scope,func_symbol);
+     if (func_symbol == NULL)
+        {
+       // first prototype declaration
+          func = new SgMemberFunctionDeclaration (name,func_type,NULL);
+          ROSE_ASSERT(func != NULL);
+
+       // NOTE: we want to allow the input scope to be NULL (and even the SageBuilder::topScopeStack() == NULL)
+       // so that function can be built bottom up style.  However this means that the symbol tables in the 
+       // scope of the returned function declaration will have to be setup separately.
+          if (scope != NULL)
+             {
+            // function symbol table
+               func_symbol = new SgMemberFunctionSymbol(func);
+
+            // printf ("In SageBuilder::buildNondefiningFunctionDeclaration_T(): scope = %p func_symbol = %p = %s = %s \n",scope,func_symbol,func_symbol->class_name().c_str(),SageInterface::get_name(func_symbol).c_str());
+               ROSE_ASSERT(func_symbol != NULL);
+
+               scope->insert_symbol(name, func_symbol);
+
+            // ROSE_ASSERT(scope->lookup_function_symbol(name,func_type) != NULL);
+
+            // DQ (2/26/2009): uncommented assertion.
+               ROSE_ASSERT(scope->lookup_function_symbol(name) != NULL); // Did not pass for member function? Should we have used the mangled name?
+             }
+
+          func->set_firstNondefiningDeclaration(func);
+          func->set_definingDeclaration(NULL);
+
+          ROSE_ASSERT(func->get_definingDeclaration() == NULL);
+        }
+       else 
+        {
+          ROSE_ASSERT(scope != NULL);
+
+       // 2nd, or 3rd... prototype declaration
+       // reuse function type, function symbol of previous declaration
+
+       // std::cout<<"debug:SageBuilder.C: 267: "<<"found func_symbol!"<<std::endl;
+       // delete (func_type-> get_argument_list ());
+       // delete func_type; // bug 189
+   
+          func_type = isSgMemberFunctionType(func_symbol->get_declaration()->get_type());
+          func = new SgMemberFunctionDeclaration(name,func_type,NULL);
+          ROSE_ASSERT(func);
+   
+       // we don't care if it is member function or function here for a pointer
+          SgFunctionDeclaration* prevDecl = NULL;
+          prevDecl = func_symbol->get_declaration();
+          ROSE_ASSERT(prevDecl != NULL);
+
+       // printf ("In SageBuilder::buildNondefiningFunctionDeclaration_T(): prevDecl = %p \n",prevDecl);
+
+          if (prevDecl == prevDecl->get_definingDeclaration())
+             {
+            // The symbol points to a defining declaration and now that we have added a non-defining 
+            // declaration we should have the symbol point to the new non-defining declaration.
+            // printf ("Switching declaration in functionSymbol to point to the non-defining declaration \n");
+
+               func_symbol->set_declaration(func);
+             }
+
+       // If this is the first non-defining declaration then set the associated data member.
+          SgDeclarationStatement* nondefiningDeclaration = prevDecl->get_firstNondefiningDeclaration();
+          if (nondefiningDeclaration == NULL)
+             {
+               nondefiningDeclaration = func;
+             }
+
+          ROSE_ASSERT(nondefiningDeclaration != NULL);
+
+       // func->set_firstNondefiningDeclaration(prevDecl->get_firstNondefiningDeclaration());
+          func->set_firstNondefiningDeclaration(nondefiningDeclaration);
+          func->set_definingDeclaration(prevDecl->get_definingDeclaration());
+        }
+
+  // parameter list
+     //SgFunctionParameterList* paralist = buildFunctionParameterList(func_type->get_argument_list());
+     setParameterList(func, paralist);
+
+     SgInitializedNamePtrList argList = paralist->get_args();
+     Rose_STL_Container<SgInitializedName*>::iterator argi;
+     for(argi=argList.begin(); argi!=argList.end(); argi++)
+        {
+       // std::cout<<"patching argument's scope.... "<<std::endl;
+          (*argi)->set_scope(scope);
+
+       // DQ (2/23/2009): Also set the declptr (to NULL)
+       // (*argi)->set_declptr(NULL);
+        }
+  // TODO double check if there are exceptions
+     func->set_scope(scope);
+
+     // DQ (1/5/2009): This is not always true (should likely use SageBuilder::topScopeStack() instead)
+     if (SageBuilder::topScopeStack()!= NULL) // This comparison only makes sense when topScopeStack() returns non-NULL value
+       // since  stack scope is totally optional in SageBuilder.
+       if (scope != SageBuilder::topScopeStack())
+       {
+         printf ("Warning: SageBuilder::buildNondefiningFunctionDeclaration_T(): scope parameter may not be the same as the topScopeStack() (e.g. for member functions) \n");
+       }
+
+     func->set_parent(scope);
+
+  // DQ (2/21/2009): We can't assert that this is always NULL or non-NULL.
+  // ROSE_ASSERT(func->get_definingDeclaration() == NULL);
+
+  // DQ (2/21/2009): Added assertion
+     ROSE_ASSERT(func->get_firstNondefiningDeclaration() != NULL);
+
+  // mark as a forward declartion
+     func->setForward();
+
+  // set File_Info as transformation generated
+     setSourcePositionForTransformation(func);
+
+     return func;  
+   }
+#endif
+
 SgMemberFunctionDeclaration*
 SageBuilder::buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgScopeStatement* scope, SgExprListExp* decoratorList)
 {
@@ -920,6 +1072,101 @@ SageBuilder::buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemb
     SgFunctionParameterList* paralist = buildFunctionParameterList(func_type->get_argument_list());
 
     return SageBuilder::buildDefiningMemberFunctionDeclaration(name, return_type, paralist, scope, decoratorList);
+}
+
+SgMemberFunctionDeclaration*
+SageBuilder::buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgFunctionParameterList* paralist, SgScopeStatement* scope, SgExprListExp* decoratorList)
+{
+  if (scope == NULL)
+    scope = SageBuilder::topScopeStack();
+  ROSE_ASSERT(scope != NULL);
+  ROSE_ASSERT(name.is_null() == false);
+  ROSE_ASSERT(func_type != NULL);
+
+  SgMemberFunctionDeclaration * func;
+
+ //  symbol table and non-defining 
+  SgMemberFunctionSymbol *func_symbol = 
+      isSgMemberFunctionSymbol(scope->lookup_function_symbol(name,func_type));
+  if (func_symbol ==NULL)
+  {
+    // new defining declaration
+//    func = new SgFunctionDeclaration(name,func_type,NULL);
+    func = new SgMemberFunctionDeclaration(name,func_type,NULL);
+    ROSE_ASSERT(func);
+    SgMemberFunctionSymbol *func_symbol = new SgMemberFunctionSymbol(func);
+    scope->insert_symbol(name, func_symbol);
+    func->set_firstNondefiningDeclaration(NULL);
+  } else
+  {
+    // defining declaration after nondefining declaration
+    //reuse function type, function symbol
+
+//    delete func_type;// bug 189
+
+    // Cong (10/25/2010): Make sure in this situation there is no defining declaration for this symbol.
+    //ROSE_ASSERT(func_symbol->get_declaration()->get_definingDeclaration() == NULL);
+
+    func_type = isSgMemberFunctionType(func_symbol->get_declaration()->get_type());
+    //func = new SgFunctionDeclaration(name,func_type,NULL);
+    func = new SgMemberFunctionDeclaration(name,func_type,NULL);
+    ROSE_ASSERT(func);
+
+    func->set_firstNondefiningDeclaration(func_symbol->get_declaration()->get_firstNondefiningDeclaration());
+
+    // fix up defining declarations before current statement
+    func_symbol->get_declaration()->set_definingDeclaration(func);
+    //for the rare case that two or more prototype declaration exist
+    // cannot do anything until append/prepend_statment() is invoked
+  }
+
+  // handle decorators
+  if (decoratorList != NULL)
+  {
+      func->set_decoratorList(decoratorList);
+      decoratorList->set_parent(func);
+  }
+
+  // definingDeclaration 
+  func->set_definingDeclaration(func);
+
+  // function body and definition are created before setting argument list 
+  SgBasicBlock * func_body = new SgBasicBlock();
+  ROSE_ASSERT(func_body);
+  SgFunctionDefinition * func_def = new SgFunctionDefinition(func,func_body);
+  ROSE_ASSERT(func_def);
+
+  // DQ (11/28/2010): Added specification of case insensitivity (e.g. Fortran).
+  if (symbol_table_case_insensitive_semantics == true)
+     {
+       func_def->setCaseInsensitive(true);
+       func_body->setCaseInsensitive(true);
+     }
+
+  func_def->set_parent(func);
+  func_def->set_body(func_body);
+  func_body->set_parent(func_def);
+
+   // parameter list,
+   //TODO consider the difference between C++ and Fortran
+  //SgFunctionParameterList* paralist = buildFunctionParameterList(func_type->get_argument_list());
+  setParameterList(func,paralist);
+         // fixup the scope and symbol of arguments,
+  SgInitializedNamePtrList& argList = paralist->get_args();
+  Rose_STL_Container<SgInitializedName*>::iterator argi;
+  for(argi=argList.begin(); argi!=argList.end(); argi++)
+  {
+//    std::cout<<"patching defining function argument's scope and symbol.... "<<std::endl;
+    (*argi)->set_scope(func_def);
+    func_def->insert_symbol((*argi)->get_name(), new SgVariableSymbol(*argi) );
+  }
+
+  func->set_parent(scope);
+  func->set_scope(scope);
+
+  // set File_Info as transformation generated
+  setSourcePositionForTransformation(func);
+  return func;
 }
 
 SgMemberFunctionDeclaration*
@@ -1737,6 +1984,18 @@ SgNewExp * SageBuilder::buildNewExp(SgType* type,
   return result;
 }
 
+SgDeleteExp* SageBuilder::buildDeleteExp(SgExpression* variable,
+                                         short is_array,
+                                         short need_global_specifier,
+                                         SgFunctionDeclaration* deleteOperatorDeclaration)
+{
+  SgDeleteExp* result = new SgDeleteExp(variable, is_array, 
+          need_global_specifier, deleteOperatorDeclaration);
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
 SgCastExp * SageBuilder::buildCastExp_nfi(SgExpression *  operand_i,
                 SgType * expression_type,
                 SgCastExp::cast_type_enum cast_type)
@@ -2286,7 +2545,7 @@ SageBuilder::buildVarRefExp(const SgName& name, SgScopeStatement* scope/*=NULL*/
      if (scope != NULL)
         {
           symbol = lookupSymbolInParentScopes(name,scope); 
-          printf ("In SageBuilder::buildVarRefExp(): scope = %p = %s symbpl = %p \n",scope,scope->class_name().c_str(),symbol);
+       // printf ("In SageBuilder::buildVarRefExp(): scope = %p = %s symbpl = %p \n",scope,scope->class_name().c_str(),symbol);
         }
 
      if (symbol != NULL) 
@@ -2645,19 +2904,47 @@ SageBuilder::buildFunctionCallExp(const SgName& name,
 SgFunctionCallExp* 
 SageBuilder::buildFunctionCallExp(SgFunctionSymbol* sym, 
                                   SgExprListExp* parameters/*=NULL*/)
-{
-  ROSE_ASSERT (sym);
-  if (parameters == NULL)
-    parameters = buildExprListExp();
-  ROSE_ASSERT (parameters);
-  SgFunctionRefExp* func_ref = buildFunctionRefExp(sym);
-  SgFunctionCallExp * func_call_expr = new SgFunctionCallExp(func_ref,parameters,func_ref->get_type());
-  func_ref->set_parent(func_call_expr);
-  parameters->set_parent(func_call_expr);
-  setOneSourcePositionForTransformation(func_call_expr);
-  ROSE_ASSERT(func_call_expr);
-  return func_call_expr;  
-}
+   {
+     ROSE_ASSERT (sym);
+     if (parameters == NULL)
+          parameters = buildExprListExp();
+     ROSE_ASSERT (parameters);
+
+  // DQ (8/21/2011): We want to preserve the support for member functions to be built as SgMemberFunctionRefExp.
+  // This is important for the Java support and the C++ support else we will be lowering all mmember function calls
+  // to function calls which will be a proble for eht analysis of object oriented languages.
+  // SgFunctionRefExp* func_ref = buildFunctionRefExp(sym);
+  // SgFunctionCallExp * func_call_expr = new SgFunctionCallExp(func_ref,parameters,func_ref->get_type());
+  // func_ref->set_parent(func_call_expr);
+     SgFunctionCallExp * func_call_expr = NULL;
+     SgMemberFunctionSymbol* memberFunctionSymbol = isSgMemberFunctionSymbol(sym);
+     if (memberFunctionSymbol != NULL)
+        {
+       // Note that we can't at this point be sure this is not a virtual function.
+          bool virtual_call = false;
+
+       // Name qualificaiton is handled separately from the setting of this variable (old API).
+          bool need_qualifier = false;
+
+          SgMemberFunctionRefExp* member_func_ref = buildMemberFunctionRefExp(memberFunctionSymbol,virtual_call,need_qualifier);
+          func_call_expr = new SgFunctionCallExp(member_func_ref,parameters,member_func_ref->get_type());
+          member_func_ref->set_parent(func_call_expr);
+        }
+       else
+        {
+          SgFunctionRefExp * func_ref = buildFunctionRefExp(sym);
+          func_call_expr = new SgFunctionCallExp(func_ref,parameters,func_ref->get_type());
+          func_ref->set_parent(func_call_expr);
+        }
+
+
+     parameters->set_parent(func_call_expr);
+
+     setOneSourcePositionForTransformation(func_call_expr);
+
+     ROSE_ASSERT(func_call_expr);
+     return func_call_expr;  
+   }
 
 SgFunctionCallExp* 
 SageBuilder::buildFunctionCallExp_nfi(SgExpression* f, SgExprListExp* parameters /*=NULL*/)
@@ -2783,6 +3070,37 @@ SageBuilder::buildAssignStatement(SgExpression* lhs,SgExpression* rhs)
   return exp;
 }
 
+// DQ (8/16/2011): This is an AST translate specific version (see not below). 
+// We would like to phase out the version above if possible (but we watn to 
+// test this later).
+SgExprStatement*
+SageBuilder::buildAssignStatement_ast_translate(SgExpression* lhs,SgExpression* rhs)
+{
+  ROSE_ASSERT(lhs != NULL); 
+  ROSE_ASSERT(rhs != NULL); 
+  
+  //SgAssignOp* assignOp = new SgAssignOp(lhs,rhs,lhs->get_type());
+// SgBinaryOp::get_type() assume p_expression_type is not set
+  SgAssignOp* assignOp = new SgAssignOp(lhs,rhs,NULL);
+  ROSE_ASSERT(assignOp);
+  setOneSourcePositionForTransformation(assignOp);
+  lhs->set_parent(assignOp);
+  rhs->set_parent(assignOp);
+  
+  lhs->set_lvalue (true);
+  SgExprStatement* exp = new SgExprStatement(assignOp);
+  ROSE_ASSERT(exp);
+
+// DQ (8/16/2011): Modified to avoid recursive call to reset source position information 
+// (this version is required for the Java support where we have set source code position
+// information on the lhs and rhs and we don't want it to be reset as a transformation.
+// some child nodes are transparently generated, using recursive setting is safer
+// setSourcePositionForTransformation(exp);
+  setOneSourcePositionForTransformation(exp);
+  assignOp->set_parent(exp);
+  return exp;
+}
+
 
 SgLabelStatement * SageBuilder::buildLabelStatement(const SgName& name,  SgStatement * stmt/*=NULL*/, SgScopeStatement* scope /*=NULL*/)
 {
@@ -2883,6 +3201,18 @@ SgIfStmt * SageBuilder::buildIfStmt_nfi(SgStatement* conditional, SgStatement * 
   if (true_body) true_body->set_parent(ifstmt);
   if (false_body) false_body->set_parent(ifstmt);
   return ifstmt;
+}
+
+SgForInitStatement * SageBuilder::buildForInitStatement(const SgStatementPtrList & statements) 
+{
+  SgForInitStatement * result = new SgForInitStatement();
+  result->get_init_stmt() = statements;
+
+  for (SgStatementPtrList::iterator it = result->get_init_stmt().begin(); it != result->get_init_stmt().end(); it++)
+    (*it)->set_parent(result);
+
+  setOneSourcePositionForTransformation(result);
+  return result;
 }
 
 SgForInitStatement * SageBuilder::buildForInitStatement_nfi(SgStatementPtrList & statements) {
@@ -3078,6 +3408,7 @@ SgWhileStmt * SageBuilder::buildWhileStmt(SgStatement *  condition, SgStatement 
   condition->set_parent(result);
   body->set_parent(result);
 
+// DQ (8/10/2011): This is added by Michael to support a Python specific feature.
   if (else_body != NULL) {
       result->set_else_body(else_body);
       else_body->set_parent(result);
@@ -3099,6 +3430,7 @@ SgWhileStmt * SageBuilder::buildWhileStmt_nfi(SgStatement *  condition, SgStatem
   if (condition) condition->set_parent(result);
   if (body) body->set_parent(result);
 
+// DQ (8/10/2011): This is added by Michael to support a Python specific feature.
   if (else_body != NULL) {
       result->set_else_body(else_body);
       else_body->set_parent(result);
