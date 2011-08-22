@@ -17,7 +17,7 @@
 //----------------------------------------------------------------------------
 
 void
-UnparseFortran_type::unparseType(SgType* type, SgUnparse_Info& info)
+UnparseFortran_type::unparseType(SgType* type, SgUnparse_Info& info, bool withLen)
    {
      ROSE_ASSERT(type != NULL);
 
@@ -73,7 +73,7 @@ UnparseFortran_type::unparseType(SgType* type, SgUnparse_Info& info)
 
        // DQ (8/15/2010): I think we were not using the SgStringType before now.
        // case V_SgTypeString:           curprint("CHARACTER(LEN=*)"); break;
-          case V_SgTypeString:           unparseStringType(type, info); break;
+          case V_SgTypeString:           unparseStringType(type, info, withLen); break;
 
        // scalar integral types
           case V_SgTypeChar:             unparseBaseType(type,"CHARACTER",info); break;
@@ -192,7 +192,7 @@ UnparseFortran_type::unparseBaseType(SgType* type, const std::string & nameOfTyp
    }
 
 void 
-UnparseFortran_type::unparseStringType(SgType* type, SgUnparse_Info& info)
+UnparseFortran_type::unparseStringType(SgType* type, SgUnparse_Info& info, bool withLen)
    {
   // printf ("Inside of UnparserFort::unparseStringType \n");
   // cur << "\n/* Inside of UnparserFort::unparseStringType */\n";
@@ -200,9 +200,10 @@ UnparseFortran_type::unparseStringType(SgType* type, SgUnparse_Info& info)
      SgTypeString* string_type = isSgTypeString(type);
      ROSE_ASSERT(string_type != NULL);
      curprint ("CHARACTER");
-     // Do not unparse the length since it will be printed as part of the entity_decl.
-    unparseTypeKind(type, info);
-    // unparseTypeLengthAndKind(string_type,string_type->get_lengthExpression(),info);
+     if (withLen)
+        unparseTypeLengthAndKind(string_type,string_type->get_lengthExpression(),info);
+     else // for the case when the length is printed as part of the entity_decl.
+        unparseTypeKind(type, info);
 
   // printf ("Leaving of UnparserFortran_type::unparseStringType \n");
   // cur << "\n/* Leaving of UnparserFort::unparseStringType */\n";
@@ -304,12 +305,19 @@ UnparseFortran_type::unparseArrayType(SgType* type, SgUnparse_Info& info)
         }
 #else
      ROSE_ASSERT(array_type->get_rank() >= 1);
-     curprint(", DIMENSION");
+     curprint(array_type->get_isCoArray()? ", CODIMENSION": ", DIMENSION");
 
      ROSE_ASSERT(unp != NULL);
      ROSE_ASSERT(unp->u_fortran_locatedNode != NULL);
 
-     unp->u_fortran_locatedNode->unparseExprList(array_type->get_dim_info(),info,/* output parens */ true);
+     if (array_type->get_isCoArray())
+     {  // print codimension info
+         curprint("[");
+         unp->u_fortran_locatedNode->unparseExprList(array_type->get_dim_info(),info,/* do not output parens */ false);
+         curprint("]");
+     }
+     else  // print dimension info
+         unp->u_fortran_locatedNode->unparseExprList(array_type->get_dim_info(),info,/* output parens */ true);
 
   // DQ (1/16/2011): Plus unparse the base type...(unless it will just output the stripped types name).
      if (array_type->get_base_type()->containsInternalTypes() == true)
@@ -396,7 +404,7 @@ UnparseFortran_type::unparsePointerType(SgType* type, SgUnparse_Info& info)
   // DQ (1/16/2011): Plus unparse the base type...(unless it will just output the stripped types name).
      if (pointer_type->get_base_type()->containsInternalTypes() == true)
         {
-          if (!isSgArrayType(pointer_type->get_base_type()))  // DXN (06/19/2011): do not unparse array base type
+         // if (!isSgArrayType(pointer_type->get_base_type()))  // DXN (06/19/2011): do not unparse array base type
              unparseType(pointer_type->get_base_type(), info);
         }
 #endif

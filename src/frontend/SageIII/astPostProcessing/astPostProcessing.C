@@ -15,6 +15,7 @@
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 
+
 // DQ (8/20/2005): Make this local so that it can't be called externally!
 void postProcessingSupport (SgNode* node);
 
@@ -333,7 +334,7 @@ void postProcessingSupport (SgNode* node)
   // driscoll6 (6/10/11): this traversal sets p_firstNondefiningDeclaration for defining declarations, which
   // causes justifiable failures in AstConsistencyTests. Until this is resolved, skip this test for Python.
      if (SageInterface::is_Python_language()) {
-         cerr << "warning: python. Skipping fixupDeclarations() in astPostProcessing.C" << endl;
+         //cerr << "warning: python. Skipping fixupDeclarations() in astPostProcessing.C" << endl;
      } else {
          fixupDeclarations(node);
      }

@@ -1780,10 +1780,6 @@ HEADER_LABEL_STATEMENT_START
 HEADER_LABEL_STATEMENT_END
 
 HEADER_WITH_STATEMENT_START
-
-SgDeclarationStatementPtrList& get_variables();
-const SgDeclarationStatementPtrList& get_variables() const;
-
 HEADER_WITH_STATEMENT_END
 
 HEADER_WHILE_STATEMENT_START
@@ -2087,6 +2083,21 @@ HEADER_ASM_STATEMENT_END
 HEADER_SPAWN_STATEMENT_START
 
 HEADER_SPAWN_STATEMENT_END
+
+
+HEADER_JAVA_THROW_STATEMENT_START
+
+HEADER_JAVA_THROW_STATEMENT_END
+
+
+HEADER_JAVA_FOREACH_STATEMENT_START
+
+HEADER_JAVA_FOREACH_STATEMENT_END
+
+
+HEADER_JAVA_SYNCHRONIZED_STATEMENT_START
+
+HEADER_JAVA_SYNCHRONIZED_STATEMENT_END
 
 
 HEADER_NULL_STATEMENT_START
@@ -5626,7 +5637,13 @@ SgGlobal::get_qualified_name() const
   // DQ (10/11/2006): Under the new name qualification, we must traverse all the way
   // to global scope, and include global scope to get test2006_157.C correct.
   // return SgName ("");
-     return SgName ("::");
+
+     std::string globalScopeDelimiter;
+     if (SageInterface::is_Java_language())
+         globalScopeDelimiter = "";
+     else
+         globalScopeDelimiter = "::";
+     return SgName (globalScopeDelimiter);
    }
 
 SgName
@@ -11628,20 +11645,6 @@ SgWhileStmt::get_mangled_name(void) const
 SOURCE_WHILE_STATEMENT_END
 
 SOURCE_WITH_STATEMENT_START
-
-SgDeclarationStatementPtrList&
-SgWithStatement::get_variables()
-{
-    return p_variables;
-}
-
-
-const SgDeclarationStatementPtrList&
-SgWithStatement::get_variables() const
-{
-    return p_variables;
-}
-
 SOURCE_WITH_STATEMENT_END
 
 SOURCE_DO_WHILE_STATEMENT_START
@@ -12290,6 +12293,33 @@ SgSpawnStmt::post_construction_initialization()
    {}
 
 SOURCE_SPAWN_STATEMENT_END
+
+
+SOURCE_JAVA_THROW_STATEMENT_START
+
+void
+SgJavaThrowStatement::post_construction_initialization()
+   {}
+
+SOURCE_JAVA_THROW_STATEMENT_END
+
+
+SOURCE_JAVA_FOREACH_STATEMENT_START
+
+void
+SgJavaForEachStatement::post_construction_initialization()
+   {}
+
+SOURCE_JAVA_FOREACH_STATEMENT_END
+
+SOURCE_JAVA_SYNCHRONIZED_STATEMENT_START
+
+void
+SgJavaSynchronizedStatement::post_construction_initialization()
+   {}
+
+SOURCE_JAVA_SYNCHRONIZED_STATEMENT_END
+
 
 
 SOURCE_NULL_STATEMENT_START

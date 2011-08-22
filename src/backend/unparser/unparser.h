@@ -24,7 +24,6 @@
 #include "unparseFortran_types.h"
 
 #include "unparseJava.h"
-#include "unparseJava_types.h"
 
 #include "unparsePHP.h"
 
@@ -128,10 +127,6 @@ class Unparser
        // DQ (8/14/2007): I have added this here to be consistant, but I question if this is a good design!
           UnparseFortran_type* u_fortran_type;
           FortranCodeGeneration_locatedNode* u_fortran_locatedNode;
-
-       // DQ (4/16/2011): Added the Java support semetric to the Fortran unparser support.
-          UnparseJava_type* u_java_type;
-          JavaCodeGeneration_locatedNode* u_java_locatedNode;
 
      private:
 

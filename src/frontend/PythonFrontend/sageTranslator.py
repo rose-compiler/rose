@@ -2,12 +2,6 @@ import sys, ast
 
 import sage
 
-UNARY_OPERATOR_MAP = {
-    ast.UAdd:     "+",
-    ast.USub:     "-",
-    ast.Invert:   "~"
-}
-
 class FileInfo():
 
   def __init__(self, filename, node):
@@ -107,10 +101,10 @@ class SageTranslator(ast.NodeVisitor):
 
   def visit_ClassDef(self, node):
     scope = self.scopeStack.peek()
-    #bases = node.bases
+    bases = [] # node.bases and map(self.visit, node.bases)
     decorators = node.decorator_list and sage.buildExprListExp(map(self.visit, node.decorator_list))
     class_decl, scope = \
-        sage.buildClassDef(node.name, decorators, scope)
+        sage.buildClassDef(node.name, bases, decorators, scope)
 
     self.scopeStack.push(scope)
     body = map(self.visit, node.body)
@@ -337,10 +331,10 @@ class SageTranslator(ast.NodeVisitor):
     return sage.buildWhile(test, body, orelse)
 
   def visit_With(self, node):
-    expr = self.visit(node.test)
-    vars = map(self.visit, node.optional_vars)
+    exp = self.visit(node.context_expr)
+    var = node.optional_vars and self.visit(node.optional_vars)
     body = sage.buildSuite(map(self.visit, node.body))
-    return sage.buildWith(expr, vars, body)
+    return sage.buildWith(exp, var, body)
 
   def visit_Yield(self, node):
     value = self.visit(node.value)

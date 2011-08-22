@@ -28,6 +28,9 @@ Makefile.in
 /config/py-compile
 /config/ROSE_SOURCES
 
+# OS X Finder files
+.DS_Store
+
 # compiled python files
 *.pyc
 *.pyo

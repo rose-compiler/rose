@@ -364,6 +364,11 @@ SgNewExp * buildNewExp(SgType* type,
                        SgExpression* expr, 
                        short int val, 
                        SgFunctionDeclaration* funcDecl);
+
+SgDeleteExp* buildDeleteExp(SgExpression* variable,
+                            short is_array,
+                            short need_global_specifier,
+                            SgFunctionDeclaration* deleteOperatorDeclaration);
  
 
 #undef BUILD_UNARY_PROTO
@@ -672,9 +677,17 @@ buildNondefiningFunctionDeclaration (const SgFunctionDeclaration* funcdecl, SgSc
 SgMemberFunctionDeclaration *
 buildNondefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
 
+////! Build a prototype member function declaration
+//SgMemberFunctionDeclaration *
+//buildNondefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgFunctionParameterList* paralist, SgScopeStatement* scope=NULL);
+
 //! Build a defining ( non-prototype) member function declaration
 SgMemberFunctionDeclaration *
 buildDefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
+
+//! Build a defining ( non-prototype) member function declaration from a SgMemberFunctionType
+SgMemberFunctionDeclaration *
+buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgFunctionParameterList* paralist, SgScopeStatement* scope, SgExprListExp* decoratorList = NULL);
 
 //! Build a defining ( non-prototype) member function declaration from a SgMemberFunctionType
 SgMemberFunctionDeclaration *
@@ -752,6 +765,8 @@ inline SgIfStmt * buildIfStmt(SgExpression* conditional, SgStatement * true_body
 }
 SgIfStmt * buildIfStmt_nfi(SgStatement* conditional, SgStatement * true_body, SgStatement * false_body);
 
+//! Build a for init statement
+SgForInitStatement * buildForInitStatement(const SgStatementPtrList & statements);
 SgForInitStatement * buildForInitStatement_nfi(SgStatementPtrList & statements);
 
 //!Build a for statement, assume none of the arguments is NULL
@@ -770,7 +785,9 @@ inline SgWhileStmt * buildWhileStmt(SgExpression *  condition, SgStatement *body
 }
 SgWhileStmt * buildWhileStmt_nfi(SgStatement *  condition, SgStatement *body, SgStatement *else_body = NULL);
 
-SgWithStatement* buildWithStatement(SgExpression* expr, const std::vector<SgVariableDeclaration*>& vars, SgStatement* body);
+//! Build a with statement
+SgWithStatement* buildWithStatement(SgExpression* expr, SgStatement* body);
+SgWithStatement* buildWithStatement_nfi(SgExpression* expr, SgStatement* body);
 
 //! Build do-while statement
 SgDoWhileStmt * buildDoWhileStmt(SgStatement *  body, SgStatement *condition);
@@ -794,6 +811,10 @@ SgBasicBlock * buildBasicBlock_nfi(const std::vector<SgStatement*>&);
 //! Build an assignment statement from lefthand operand and right hand operand 
 SgExprStatement* 
 buildAssignStatement(SgExpression* lhs,SgExpression* rhs);
+
+// DQ (8/16/2011): Generated a new version of this function to define consistant semantics.
+//! This version does not recursively reset the file info as a transformation.
+SgExprStatement* buildAssignStatement_ast_translate(SgExpression* lhs,SgExpression* rhs);
 
 //! Build a break statement
 SgBreakStmt* buildBreakStmt();

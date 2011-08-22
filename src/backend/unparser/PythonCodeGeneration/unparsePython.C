@@ -10,10 +10,6 @@
 #define CASE_DISPATCH_AND_BREAK(sg_t) \
   case V_Sg ##sg_t : unparse ##sg_t (isSg##sg_t (stmt),info); break;
 
-#define PY_UNPARSE_NO_PRECEDENCE -1
-#define PY_UNPARSE_LEFT_ASSOC     1
-#define PY_UNPARSE_RIGHT_ASSOC   -1
-
 using namespace std;
 
 
@@ -68,6 +64,7 @@ Unparse_Python::unparseLanguageSpecificStatement(SgStatement* stmt,
         CASE_DISPATCH_AND_BREAK(StmtDeclarationStatement);
         CASE_DISPATCH_AND_BREAK(TryStmt);
         CASE_DISPATCH_AND_BREAK(WhileStmt);
+        CASE_DISPATCH_AND_BREAK(WithStatement);
         default: {
             cerr << "unparse Statement (" << stmt->class_name()
                  << "*) is unimplemented." << endl;
@@ -169,7 +166,7 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
 
 void
 Unparse_Python::unparseExpression(SgExpression* expr, SgUnparse_Info& info) {
-    bool parenthesize = requiresParentheses(expr);
+    bool parenthesize = requiresParentheses(expr, info);
     if (parenthesize) curprint("(");
     unparseLanguageSpecificExpression(expr, info);
     if (parenthesize) curprint(")");
@@ -180,19 +177,6 @@ Unparse_Python::unparseStatement(SgStatement* stmt, SgUnparse_Info& info) {
     unparseLanguageSpecificStatement(stmt, info);
 }
 
-bool
-Unparse_Python::requiresParentheses(SgExpression* expr) {
-    int exprPrecedence = getPrecedence(expr->variantT());
-    int parentPrecedence = getPrecedence(expr->get_parent()->variantT());
-    int assoc = getAssociativity(expr->get_parent()->variantT());
-    if      (exprPrecedence == PY_UNPARSE_NO_PRECEDENCE)      return false;
-    else if (parentPrecedence == PY_UNPARSE_NO_PRECEDENCE)    return false;
-    else if (assoc == PY_UNPARSE_RIGHT_ASSOC && exprPrecedence >  parentPrecedence) return false;
-    else if (assoc == PY_UNPARSE_LEFT_ASSOC  && exprPrecedence >= parentPrecedence) return false;
-    else if (assoc == PY_UNPARSE_LEFT_ASSOC  && exprPrecedence <  parentPrecedence) return true;
-    else if (assoc == PY_UNPARSE_RIGHT_ASSOC && exprPrecedence <= parentPrecedence) return true;
-    else ROSE_ASSERT(!"cant determine if parens are required");
-}
 
 void
 Unparse_Python::unparseGlobalStmt(SgStatement* stmt, SgUnparse_Info& info) {
@@ -294,17 +278,17 @@ Unparse_Python::unparseOperator(VariantT variant, bool pad) {
     if (pad) curprint(" ");
 }
 
-int
-Unparse_Python::getAssociativity(int variant) {
-    if (variant == V_SgExponentiationOp)
-        return PY_UNPARSE_RIGHT_ASSOC;
+AssociativitySpecifier
+Unparse_Python::getAssociativity(SgExpression* exp) {
+    if (exp->variantT() == V_SgExponentiationOp)
+        return e_assoc_right;
     else
-        return PY_UNPARSE_LEFT_ASSOC;
+        return e_assoc_left;
 }
 
-int
-Unparse_Python::getPrecedence(int variant) {
-    switch (variant) {
+PrecedenceSpecifier
+Unparse_Python::getPrecedence(SgExpression* exp) {
+    switch (exp->variantT()) {
         case V_SgLambdaRefExp:         return 1;
         case V_SgConditionalExp:       return 2;
         case V_SgOrOp:                 return 3;
@@ -356,7 +340,7 @@ Unparse_Python::getPrecedence(int variant) {
         case V_SgSetComprehension:     return 16;
         case V_SgDictionaryComprehension: return 16;
     }
-    return PY_UNPARSE_NO_PRECEDENCE;
+    return ROSE_UNPARSER_NO_PRECEDENCE;
 }
 
 void
@@ -1030,6 +1014,29 @@ Unparse_Python::unparseWhileStmt(SgWhileStmt* while_stmt,
 }
 
 void
+Unparse_Python::unparseWithStatement(SgWithStatement* with_stmt,
+                                     SgUnparse_Info& info)
+{
+    curprint("with ");
+
+    // special handling for targetted with stmts ('with X as Y: ...')
+    // in targetting with expressions, SgWithStatement::p_expression is
+    // an SgAssignOp with lhs=Y and rhs=X.
+    SgAssignOp* assign_op = isSgAssignOp(with_stmt->get_expression());
+    if (assign_op != NULL) {
+        unparseExpression(assign_op->get_rhs_operand(), info);
+        curprint(" as ");
+        unparseExpression(assign_op->get_lhs_operand(), info);
+    } else {
+        unparseExpression(with_stmt->get_expression(), info);
+    }
+
+    curprint(":\n");
+
+    unparseAsSuite(with_stmt->get_body(), info);
+}
+
+void
 Unparse_Python::unparseYieldExpression(SgYieldExpression* yield_exp,
                                       SgUnparse_Info& info)
 {
@@ -1038,4 +1045,21 @@ Unparse_Python::unparseYieldExpression(SgYieldExpression* yield_exp,
     curprint("yield ");
     unparseExpression(yield_exp->get_value(), info);
     if (atom) curprint(")");
+}
+
+bool
+Unparse_Python::requiresParentheses(SgExpression* expr, SgUnparse_Info& info) {
+    SgExpression* parent = isSgExpression(expr->get_parent());
+    if (parent == NULL) return false;
+
+    PrecedenceSpecifier exprPrecedence = getPrecedence(expr);
+    PrecedenceSpecifier parentPrecedence = getPrecedence(parent);
+    AssociativitySpecifier assoc = getAssociativity(parent);
+    if      (exprPrecedence == ROSE_UNPARSER_NO_PRECEDENCE)      return false;
+    else if (parentPrecedence == ROSE_UNPARSER_NO_PRECEDENCE)    return false;
+    else if (assoc == e_assoc_right && exprPrecedence >  parentPrecedence) return false;
+    else if (assoc == e_assoc_left  && exprPrecedence >= parentPrecedence) return false;
+    else if (assoc == e_assoc_left  && exprPrecedence <  parentPrecedence) return true;
+    else if (assoc == e_assoc_right && exprPrecedence <= parentPrecedence) return true;
+    else ROSE_ASSERT(!"cannot determine if parens are required in UnparseLanguageIndependentConstructs::requiresParentheses");
 }
