@@ -13,7 +13,7 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 
 # DQ (7/2/2011): Fixed this to only handle binary work when binary support is available.
 # bin_PROGRAMS  = astTraversalTest processnew3Down4SgIncGraph processnew3Down4 binaryPaths
-bin_PROGRAMS  = astTraversalTest processnew3Down4SgIncGraph2 strictGraphTest
+bin_PROGRAMS  = astTraversalTest processnew3Down4SgIncGraph2 strictGraphTest smtlibParser
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 bin_PROGRAMS += binaryPaths
 endif
@@ -37,9 +37,9 @@ strictGraphTest_SOURCES = strictGraphTest.C
 strictGraphTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
 strictGraphTest_LDFLAGS = -O3
 
-#smtlibParser_SOURCES = smtlibParser.C
-#smtlibParser_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-
+smtlibParser_SOURCES = smtlibParser.C
+smtlibParser_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+smtlibParser_LDFLAGS = -O3
 
 # source files don't contain anything that would be merged
 # TESTCODES = $(srcdir)/performanceTest.C
@@ -64,13 +64,14 @@ testRunExamplesBin: binaryPaths
 strictGraph: strictGraphTest
 	./strictGraphTest
 
-#smtParse: smtlibParser
-#	./smtlibParser $(srcdir)/test11.C
+smtParse: smtlibParser
+	./smtlibParser $(srcdir)/test11.C
 
 check-local:
 	@$(MAKE) testTraversals
 	@$(MAKE) testRunExamples2
 	@$(MAKE) strictGraph
+	@$(MAKE) smtParse
 	@echo "***********************************************************************************************"
 	@echo "*** ROSE/tests/roseTests/astProcessingTests: make check rule complete (terminated normally) ***"
 	@echo "***********************************************************************************************"

@@ -26,10 +26,12 @@ typedef myGraph::edge_descriptor EdgeID;
 //myGraph* instantiateGraph(SgIncidencedDirectedGraph* g, StaticCFG::CFG cfg);
 std::pair<std::vector<SgGraphNode*>, std::vector<SgDirectedGraphEdge*> > getAllNodesAndEdges(SgIncidenceDirectedGraph* g, SgGraphNode* start);
 
+std::map<SgGraphNode*, VertexID> VSlink;
+
 myGraph* instantiateGraph(SgIncidenceDirectedGraph*& g, StaticCFG::CFG& cfg) {
     SgGraphNode* start = cfg.getEntry();
     myGraph* graph = new myGraph;
-    std::map<SgGraphNode*, VertexID> VSlink;
+    //std::map<SgGraphNode*, VertexID> VSlink;
     std::pair<std::vector<SgGraphNode*>, std::vector<SgDirectedGraphEdge*> > alledsnds = getAllNodesAndEdges(g, start);
     std::vector<SgGraphNode*> nods = alledsnds.first;
     std::vector<SgDirectedGraphEdge*> eds = alledsnds.second;
