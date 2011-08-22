@@ -5397,27 +5397,39 @@ FortranCodeGeneration_locatedNode::curprint(const std::string & str) const
 
     if( unp->currentFile != NULL && unp->currentFile->get_Fortran_only() )
     {
-        /// determine line wrapping parameters
+        // determine line wrapping parameters -- 'pos' variables are one-based
         bool is_fixed_format = unp->currentFile->get_outputFormat() == SgFile::e_fixed_form_output_format;
         bool is_free_format  = unp->currentFile->get_outputFormat() == SgFile::e_free_form_output_format;
-        int max_pos = ( is_fixed_format ? MAX_F90_LINE_LEN_FIXED
-                      : is_free_format  ? MAX_F90_LINE_LEN_FREE
-                      : unp->cur.get_linewrap() );
+        int max_cols = ( is_fixed_format ? MAX_F90_LINE_LEN_FIXED
+                       : is_free_format  ? MAX_F90_LINE_LEN_FREE
+                       : unp->cur.get_linewrap() );
 
         // check whether line wrapping is needed
-        int cur_pos = unp->cur.current_col();
-        int new_pos = cur_pos + str.size();
-        if( new_pos >= max_pos )
+        int used_cols = unp->cur.current_col();   // 'current_col' is zero-based
+        int free_cols = max_cols - used_cols;
+        if( str.size() > free_cols )
         {
             if( is_fixed_format )
-                printf("Warning: line too long for Fortran fixed format (fixed format wrapping not implemented)\n");
+            {
+                // only noncomment lines need wrapping
+                if( ! (used_cols == 0 && str[0] == 'C' ) )
+                {
+                    // warn if successful wrapping is impossible
+                    if( 6 + str.size() > max_cols )
+                        printf("Warning: can't wrap long line in Fortran fixed format (continuation + text is longer than a line)\n");
+
+                    // emit fixed-format line continuation
+                    unp->cur.insert_newline(1);
+                    unp->u_sage->curprint("     &");
+                }
+            }
             else if( is_free_format )
             {
-                // warn if successful wrapping is impossible in the current state
-                if( cur_pos + 1 > max_pos )
-                    printf("Warning: can't wrap long line in Fortran free format (no room for '&')\n");
-                else if( str.size() > (unsigned int) max_pos-1 )
-                    printf("Warning: can't wrap long line in Fortran free format (incoming string too long for a line)\n");
+                // warn if successful wrapping is impossible
+                if( 1 + str.size() > max_cols )
+                    printf("Warning: can't wrap long line in Fortran free format ('&' + text is longer than a line)\n");
+                else if( 1 > free_cols )
+                    printf("Warning: can't wrap long line in Fortran free format (no room for final '&')\n");
 
                 // emit free-format line continuation even if result will still be too long
                 unp->u_sage->curprint("&");
@@ -5429,7 +5441,7 @@ FortranCodeGeneration_locatedNode::curprint(const std::string & str) const
         }
     }
 
-   unp->u_sage->curprint(str);
+    unp->u_sage->curprint(str);
      
 #else  // ! USE_RICE_FORTRAN_WRAPPING
 
