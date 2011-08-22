@@ -499,7 +499,7 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
                             "va=0x%08"PRIx64" + 0x%08"PRIx64" = 0x%08"PRIx64"\n",
                             total, a, n, a+n);
                 }
-                MemoryMap::MapElement me(a, n, mapperms);
+                MemoryMap::MapElement me(a, n, mapperms|MemoryMap::MM_PROT_PRIVATE);
                 me.set_name(melmt_name);
                 map->insert(me);
                 mem_size -= n;
@@ -514,7 +514,7 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
                     fprintf(debug, "    %-41s va=0x%08"PRIx64" + 0x%08"PRIx64" = 0x%08"PRIx64"\n",
                             "Mapping part beyond end of section:", a, n, a+n);
                 }
-                MemoryMap::MapElement me(a, n, mapperms);
+                MemoryMap::MapElement me(a, n, mapperms|MemoryMap::MM_PROT_PRIVATE);
                 me.set_name(melmt_name);
                 map->insert(me);
                 mem_size -= n;
@@ -528,7 +528,7 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
                     fprintf(debug, "    %-41s va=0x%08"PRIx64" + 0x%08"PRIx64" = 0x%08"PRIx64"\n",
                             "Mapping part before beginning of section:", a, n, a+n);
                 }
-                MemoryMap::MapElement me(a, n, mapperms);
+                MemoryMap::MapElement me(a, n, mapperms|MemoryMap::MM_PROT_PRIVATE);
                 me.set_name(melmt_name);
                 map->insert(me);
                 mem_size -= n;
@@ -547,7 +547,7 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
                 if (map_private) {
                     uint8_t *storage = new uint8_t[mem_size];
                     memcpy(storage, &(file->get_data()[offset]), mem_size);
-                    MemoryMap::MapElement me(va, mem_size, storage, 0, mapperms);
+                    MemoryMap::MapElement me(va, mem_size, storage, 0, mapperms|MemoryMap::MM_PROT_PRIVATE);
                     me.set_name(melmt_name);
                     map->insert(me);
                 } else {

@@ -15,16 +15,24 @@ class MemoryMap {
 public:
     /** Mapping permissions. */
     enum Protection {
-        MM_PROT_READ    = 0x1,          /**< Pages can be read. */
-        MM_PROT_WRITE   = 0x2,          /**< Pages can be written. */
-        MM_PROT_EXEC    = 0x4,          /**< Pages can be executed. */
-        MM_PROT_NONE    = 0x0,          /**< Pages cannot be accessed. */
-        MM_PROT_ANY     = 0x7,          /**< Any access */
+        /* Protection bits */
+        MM_PROT_BITS    = 0x00000007,    /**< Bits used to indication memory region protections. */ /*NO_STRINGIFY*/
+        MM_PROT_READ    = 0x00000001,    /**< Pages can be read. */
+        MM_PROT_WRITE   = 0x00000002,    /**< Pages can be written. */
+        MM_PROT_EXEC    = 0x00000004,    /**< Pages can be executed. */
 
-        /* Convenience stuff */
+        /* Protection convenience stuff */
+        MM_PROT_NONE    = 0x00000000,    /**< Pages cannot be accessed. */
+        MM_PROT_ANY     = 0x00000007,    /**< Any access. */
         MM_PROT_RW      = (MM_PROT_READ|MM_PROT_WRITE), /**< Read or write. */                  /*NO_STRINGIFY*/
         MM_PROT_RX      = (MM_PROT_READ|MM_PROT_EXEC),  /**< Read or execute. */                /*NO_STRINGIFY*/
         MM_PROT_RWX     = (MM_PROT_ANY),                                                        /*NO_STRINGIFY*/
+
+        /* Other flags. These generally aren't interpreted by MemoryMap, but can be used to pass info.  When merging memory
+         * regions, MemoryMap::MapElement::consistent() will not treat two regions as being consistent if they have different
+         * bits set. */
+        MM_PROT_FLAGS   = 0xfffffff0,   /**< Mask of protection bits that are available for use by other layers. */
+        MM_PROT_PRIVATE = 0x00000010,   /**< Pages are not shared between mapped regions. */
     };
 
     /** Data structure for memory map names.  Often, memory map element names used for debugging are of the form
