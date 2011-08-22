@@ -128,6 +128,7 @@ public:
     typedef typename boost::graph_traits<CFG>::out_edge_iterator out_edge_iterator;
     typedef typename boost::graph_traits<CFG>::in_edge_iterator in_edge_iterator;
     typedef typename boost::graph_traits<CFG>::edge_iterator edge_iterator;
+    bool bound;
     SgGraphTraversal();
     virtual ~SgGraphTraversal();
    SgGraphTraversal( SgGraphTraversal &);
@@ -271,10 +272,12 @@ constructPathAnalyzer(CFG* g, Vertex begin, Vertex end) {
     if (!subgraph) {
         //run traverse on the whole graph
             if (end && begin) {
+                bound = true;
                 traversePath(vertintmap[begin],vertintmap[end], g);
             }
         //if begin and end are not specified, run from all sources to one end node (equivalently run to all end nodes)
             else {
+                bound = false;
                 for (unsigned int j = 0; j < sources.size(); j++) {
                     traversePath(sources[j], -1, g);
                 }
@@ -738,9 +741,17 @@ traversed maximally once what is the greatest number of steps taken to reach the
                        // }
                        // std::cout << std::endl;
                         std::vector<Vertex> vertPath;
+                        std::vector<int> pathNP = nPaths[nP];
                         getVertexPath(nPaths[nP], g, vertPath);
                         //std::cout << "vertPath size: " << vertPath.size() << std::endl; 
-                        analyzePath(vertPath);
+                        if (bound) {
+                            if (pathNP.front() == begin && pathNP.back() == end) {
+                                analyzePath(vertPath);
+                            }
+                        }
+                        else {
+                            analyzePath(vertPath);
+                        }
                        // std::cout << "pathcount: " << pathcount << std::endl;
                         pathcount++;
                         }
