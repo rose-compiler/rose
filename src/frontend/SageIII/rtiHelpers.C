@@ -8,10 +8,10 @@
 
 using namespace std;
 
-std::ostream& operator<<(std::ostream& os, SgName& n) {
+std::ostream& operator<<(std::ostream& os, const SgName& n) {
    return os << "\"" << n.str() << "\"";
 }
-std::ostream& operator<<(std::ostream& os, SgAsmStmt::AsmRegisterNameList & bv) 
+std::ostream& operator<<(std::ostream& os, const SgAsmStmt::AsmRegisterNameList & bv) 
    {
       for (unsigned int i=0; i < bv.size(); i++) {
         if (i != 0) os << ", ";
@@ -19,27 +19,27 @@ std::ostream& operator<<(std::ostream& os, SgAsmStmt::AsmRegisterNameList & bv)
       }
      return os;
    }
-std::ostream& operator<<(std::ostream& os, SgDataStatementObjectPtrList& bv) 
+std::ostream& operator<<(std::ostream& os, const SgDataStatementObjectPtrList& bv) 
    {
       return os;
    }
-std::ostream& operator<<(std::ostream& os, SgDataStatementValuePtrList& bv) 
+std::ostream& operator<<(std::ostream& os, const SgDataStatementValuePtrList& bv) 
    {
       return os;
    }
-std::ostream& operator<<(std::ostream& os, SgCommonBlockObjectPtrList& bv) 
+std::ostream& operator<<(std::ostream& os, const SgCommonBlockObjectPtrList& bv) 
    {
       return os;
    }
-std::ostream& operator<<(std::ostream& os, SgDimensionObjectPtrList& bv) 
+std::ostream& operator<<(std::ostream& os, const SgDimensionObjectPtrList& bv) 
    {
       return os;
    }
-std::ostream& operator<<(std::ostream& os, SgLabelSymbolPtrList& bv) 
+std::ostream& operator<<(std::ostream& os, const SgLabelSymbolPtrList& bv) 
    {
       return os;
    }
-std::ostream& operator<<(std::ostream& os, SgFormatItemPtrList& bv) 
+std::ostream& operator<<(std::ostream& os, const SgFormatItemPtrList& bv) 
    {
       return os;
    }
