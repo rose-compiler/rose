@@ -39,8 +39,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2011_38.java \
      test2011_39.java \
      test2011_40.java \
-     test2011_41.java \
-     test2011_43.java 
+     test2011_41.java 
 
 
 TESTCODE_CURRENTLY_FAILING = 
@@ -58,8 +57,15 @@ TESTCODES_REQUIRED_TO_PASS_FAILING_BACKEND_COMPILE = \
      test2011_27.java \
      test2011_28.java \
      test2011_42.java \
-     test2011_44.java \
      simple.java
+
+
+# This is where the Java generics tests are put (currently not required to pass all phases).
+TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6 = \
+     test2011_43.java \
+     test2011_44.java \
+     test2011_45.java 
+
 
 
 # Later we will move these tests to the gcjTestSuite subdirectory.
@@ -303,6 +309,10 @@ TEST_Objects = ${ALL_TESTCODES:.java=.o}
 # Add tests for where we can compiler and generate code, but the generated code does not yet compiler with the backend compiler (javac).
 TESTCODES_REQUIRED_TO_PASS_FAILING_BACKEND_COMPILE_Objects = ${TESTCODES_REQUIRED_TO_PASS_FAILING_BACKEND_COMPILE:.java=.o}
 
+# Tests for Java generics
+TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6_Objects = ${TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6:.java=.o}
+
+
 
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 
@@ -329,6 +339,11 @@ $(TESTCODES_REQUIRED_TO_PASS_FAILING_BACKEND_COMPILE_Objects): $(testTranslator)
 	$(testTranslator) $(ROSE_FLAGS_SKIP_FINAL_COMPILATION) $(srcdir)/$(@:.o=.java)
 	@echo "Test using Java 1.4 version support."
 	$(testTranslator) -ecj:1.4 $(ROSE_FLAGS_SKIP_FINAL_COMPILATION) $(srcdir)/$(@:.o=.java)
+
+# Tests that pass all but the final compilation using the backend compiler (javac)
+$(TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6_Objects): $(testTranslator) ../../testTranslator ../../testGraphGeneration
+	@echo "Test using Java 1.6 (default) version support."
+	$(testTranslator) $(ROSE_FLAGS_SKIP_FINAL_COMPILATION) $(srcdir)/$(@:.o=.java)
 
 
 
@@ -357,6 +372,8 @@ testJavaTraversal:
 # to the backend compiler and cause an error.
 graphWithFileInfo: ../../testGraphGeneration
 	../../testGraphGeneration -rose:dotgraph:fileInfoFilter $(ROSE_FLAGS_SKIP_FINAL_COMPILATION) $(srcdir)/test2011_39.java
+
+testGenerics: $(TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6_Objects)
 
 workingJava:
 	java -cp $(top_srcdir)/src/3rdPartyLibraries/java-parser/ecjROSE.jar
@@ -405,12 +422,13 @@ testGCJ: $(gcjTests_passing_Objects)
 # ********************************************************************************
 
 
-check-local:
+check-local: extraTests
 	@echo "Tests for Java."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
-	@$(MAKE) $(TESTCODES_REQUIRED_TO_PASS_FAILING_BACKEND_COMPILE_Objects) extraTests
-	@$(MAKE) $(PASSING_TEST_Objects) extraTests
+	@$(MAKE) $(TESTCODES_REQUIRED_TO_PASS_FAILING_BACKEND_COMPILE_Objects)
+	@$(MAKE) $(PASSING_TEST_Objects)
+#	@$(MAKE) $(TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6_Objects)
 	@echo "************************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/Java_tests: make check rule complete (terminated normally) ******"
 	@echo "************************************************************************************************"
