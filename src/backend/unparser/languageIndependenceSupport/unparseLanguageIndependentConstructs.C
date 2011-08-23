@@ -51,7 +51,7 @@ UnparseLanguageIndependentConstructs::curprint (const std::string & str) const
             if( is_fixed_format )
             {
                 // only noncomment lines need wrapping
-                if( ! (used_cols == 0 && str[0] == 'C' ) )
+                if( ! (used_cols == 0 && str[0] != ' ' ) )
                 {
                     // warn if successful wrapping is impossible
                     if( 6 + str.size() > max_cols )
