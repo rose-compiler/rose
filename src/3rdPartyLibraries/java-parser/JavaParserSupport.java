@@ -707,6 +707,11 @@ class JavaParserSupport
                   }
             */
 
+
+            // DQ (8/22/2011): The reason why we need this is that the import statement allows for the names to be used unqualified.
+            // Once we implement proper support for the import statement then we will be able to search the symbol tables for any type
+            // names that we can't identify because they lack name qualification!!!
+
             // if (node.resolvedType.isClass() == true)
             // if (name == "List#RAW")
                if (name.startsWith("List") == true)
