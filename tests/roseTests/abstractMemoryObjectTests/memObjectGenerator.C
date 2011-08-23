@@ -25,17 +25,32 @@ int main(int argc, char * argv[])
     cout<<n->class_name()<<endl; // all SgFunctionTypeSymbol
   }
 #endif
+
+  // Test AliasedObj
+  AliasedObj* prev_obj = NULL;
+
   Rose_STL_Container <SgNode*> type_list = NodeQuery::querySubTree (project, V_SgType);
-   Rose_STL_Container <SgNode*>::iterator iter;
-   cout<<"Found "<<type_list.size()<<" types." <<endl;
-   for (iter = type_list.begin(); iter !=type_list.end(); iter ++)
-   {
-     SgType* t = isSgType(*iter);
-//     cout<<t->class_name()<<endl;
-     ObjSet* mem_obj = createAliasedObjSet (t);
-     if (mem_obj != NULL)
-       cout<<mem_obj->toString()<<endl;
-   }
+  Rose_STL_Container <SgNode*>::iterator iter;
+  cout<<"Found "<<type_list.size()<<" types." <<endl;
+  for (iter = type_list.begin(); iter !=type_list.end(); iter ++)
+  {
+    SgType* t = isSgType(*iter);
+    //     cout<<t->class_name()<<endl;
+    ObjSet* mem_obj = createAliasedObjSet (t);
+    if (mem_obj != NULL)
+    {
+      cout<<mem_obj->toString()<<endl;
+
+      // test operator == for two consecutive aliased ObjSet
+      if (prev_obj != NULL)
+      {
+        cout<< "operator==:"<<((*prev_obj) == (*mem_obj)) ;
+        cout<< "  operator<:"<<((*prev_obj) < (*(dynamic_cast <AliasedObj*> (mem_obj)))) <<endl;
+      }
+
+      prev_obj = dynamic_cast <AliasedObj*> (mem_obj);
+    }
+  }
   return backend(project);
 }
 

@@ -11,12 +11,16 @@ namespace AbstractMemoryObject
   class Scalar_Impl : public Scalar 
   {
     public:
+      virtual bool maySet();
+      virtual bool mustSet();
       virtual size_t objCount();    
   };
 
   class LabeledAggregate_Impl : public LabeledAggregate
   {
     public:
+      virtual bool maySet();
+      virtual bool mustSet();
       virtual size_t objCount();    
 
   };
@@ -24,16 +28,21 @@ namespace AbstractMemoryObject
   class Array_Impl : public Array
   {
     public:
+      virtual bool maySet();
+      virtual bool mustSet();
       virtual size_t objCount();    
   };
 
   class Pointer_Impl: public Pointer 
   {
     public:
+      virtual bool maySet();
+      virtual bool mustSet();
       virtual size_t objCount();    
   };
 
   // The connection to the ROSE AST, all concrete type, size , etc. information come from this side
+  // -----------------------------------------------------------------------------------------------
   //
   // Three kinds of memory objects in ROSE AST: each of them can be one of the four categories above.
   // 1) SgExpression temporary variables: each SgExpression which is not named memory objects 
@@ -65,11 +74,15 @@ namespace AbstractMemoryObject
   class AliasedObj 
   {  // One object for each type
     public: 
-    SgType* type; 
-    AliasedObj (SgType* t): type(t) {};
-    SgType* getType() {return type;}
-    std::string toString(); 
+      SgType* type; 
+      AliasedObj (SgType* t): type(t) {};
+      SgType* getType() {return type;}
+      std::string toString(); 
+   bool operator == (ObjSet& o2) ;
+   bool operator == (AliasedObj & o2) ;
+   bool operator < ( AliasedObj& o2);
   };
+
 
   //Derived classes for each kind of each category
   // expression object ------------------------------
@@ -110,7 +123,9 @@ namespace AbstractMemoryObject
     public:
       ScalarAliasedObj (SgType* t): AliasedObj(t){}
       std::set<SgType*> getType();
+      bool operator == (ObjSet& o2) ; 
       std::string toString();
+
   };
 
   class LabeledAggregateAliasedObj : public  LabeledAggregate_Impl, public AliasedObj
@@ -118,6 +133,7 @@ namespace AbstractMemoryObject
     public:
       LabeledAggregateAliasedObj (SgType* t): AliasedObj(t){}
       std::set<SgType*> getType();
+      bool operator == (ObjSet& o2);
       std::string toString();
   };
 
@@ -126,6 +142,7 @@ namespace AbstractMemoryObject
     public:
       ArrayAliasedObj (SgType* t): AliasedObj(t){}
       std::set<SgType*> getType();
+      bool operator == (ObjSet& o2);
       std::string toString();
   };
 
@@ -134,6 +151,7 @@ namespace AbstractMemoryObject
     public:
       PointerAliasedObj (SgType* t): AliasedObj(t){}
       std::set<SgType*> getType();
+      bool operator == (ObjSet& o2);
       std::string toString();
   };
 
