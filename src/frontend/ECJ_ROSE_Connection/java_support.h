@@ -4,22 +4,6 @@
 // This is used for both Fortran and Java support to point to the current SgSourceFile.
 extern SgSourceFile* OpenFortranParser_globalFilePointer;
 
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#if 0
-// DQ (1/14/2011): Later I would like to provide some similar support for source position inforamtion.
-#include "ActionEnums.h"
-#include "token.h"
-#include "JavaParserAction.h"
-#endif
-
-#ifdef __cplusplus
-} /* End extern C. */
-#endif
-
 #include "jni_JavaSourceCodePosition.h"
 #include "token.h"
 #include "VisitorContext.h"

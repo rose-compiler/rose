@@ -1775,10 +1775,16 @@ processNameOfRawType(SgName name)
      string nameString = name;
   // printf ("nameString = %s \n",nameString.c_str());
 
-     ROSE_ASSERT(nameString.length() >= 4);
-     size_t startOfRawSuffix = nameString.find("#RAW",nameString.length()-4);
-     if (startOfRawSuffix != string::npos)
+  // DQ (8/22/2011): This is not a reasonable assertion (fails for test2011_42.java).
+  // DQ (8/20/2011): Detect if this is a #RAW type (should have been processed to be "java.lang.<class name>".
+  // ROSE_ASSERT(nameString.length() < 4 || nameString.find("#RAW",nameString.length()-4) == string::npos);
+
+  // ROSE_ASSERT(nameString.length() >= 4);
+  // size_t startOfRawSuffix = nameString.find("#RAW",nameString.length()-4);
+  // if (startOfRawSuffix != string::npos)
+     if (nameString.length() >= 4 && nameString.find("#RAW",nameString.length()-4) != string::npos)
         {
+          size_t startOfRawSuffix = nameString.find("#RAW",nameString.length()-4);
           nameString = nameString.substr(0,startOfRawSuffix);
 
        // List and ArrayList are in java.util class, but we don't want to have to know this.
