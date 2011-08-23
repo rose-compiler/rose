@@ -169,6 +169,9 @@ Unparse_Java::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Info
             case V_SgWhileStmt:
             case V_SgForStatement:
             case V_SgIfStmt:
+            case V_SgSwitchStatement:
+            case V_SgCaseOptionStmt:
+            case V_SgDefaultOptionStmt:
                 printSemicolon = false;
                 break;
             default:
@@ -633,7 +636,6 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgMemberFunctionDeclaration* mfuncdecl_stmt = isSgMemberFunctionDeclaration(stmt);
      ROSE_ASSERT(mfuncdecl_stmt != NULL);
-
      //TODO should there be forward declarations or nondefining declarations?
      if (mfuncdecl_stmt->isForward()) {
          //cout << "unparser: skipping forward mfuncdecl: "
@@ -667,7 +669,10 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      unparseName(mfuncdecl_stmt->get_name(), info);
      curprint("(");
-     unparseStatement(mfuncdecl_stmt->get_parameterList(), info);
+     //     unparseStatement(mfuncdecl_stmt->get_parameterList(), info);
+     foreach (SgInitializedName* name, mfuncdecl_stmt->get_args()) {
+         unparseInitializedName(name, info);
+     }
      curprint(") ");
      unparseStatement(mfuncdecl_stmt->get_definition(), info);
 
@@ -820,12 +825,9 @@ Unparse_Java::unparseSwitchStmt(SgStatement* stmt, SgUnparse_Info& info)
      ROSE_ASSERT(switch_stmt != NULL);
 
      curprint ( string("switch("));
-  // unparseExpression(switch_stmt->get_item_selector(), info);
      
-     SgUnparse_Info ninfo(info);
-     ninfo.set_SkipSemiColon();
-     ninfo.set_inConditional();
-     unparseStatement(switch_stmt->get_item_selector(), ninfo);
+     unparseExpression(((SgExprStatement *) switch_stmt->get_item_selector())-> get_expression(), info);
+
      curprint ( string(")"));
 
      if ( (switch_stmt->get_body() != NULL) && !info.SkipBasicBlock())

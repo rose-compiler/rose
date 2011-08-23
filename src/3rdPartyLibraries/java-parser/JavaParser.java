@@ -92,7 +92,10 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionBlock(JavaToken jToken);
      public native void cactionBlockEnd(int java_numberOfStatement, JavaToken jTokens);
      public native void cactionBreakStatement(String labelName, JavaToken jToken);
-     public native void cactionCaseStatement(JavaToken jToken);
+
+     public native void cactionCaseStatement(boolean hasCaseExpression, JavaToken jToken);
+     public native void cactionCaseStatementEnd(boolean hasCaseExpression, JavaToken jToken);
+
      public native void cactionCastExpression(JavaToken jToken);
      public native void cactionCastExpressionEnd(JavaToken jToken);
      public native void cactionCharLiteral(JavaToken jToken);
@@ -152,6 +155,7 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionJavadocMessageSendClassScope(JavaToken jToken);
      public native void cactionJavadocQualifiedTypeReference(JavaToken jToken);
      public native void cactionJavadocQualifiedTypeReferenceClassScope(JavaToken jToken);
+
      public native void cactionJavadocReturnStatement(JavaToken jToken);
      public native void cactionJavadocReturnStatementClassScope(JavaToken jToken);
      public native void cactionJavadocSingleNameReference(JavaToken jToken);
@@ -185,18 +189,30 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionQualifiedThisReferenceClassScope(JavaToken jToken);
      public native void cactionQualifiedTypeReference(JavaToken jToken);
      public native void cactionQualifiedTypeReferenceClassScope(JavaToken jToken);
+
      public native void cactionReturnStatement(JavaToken jToken);
+     public native void cactionReturnStatementEnd(boolean hasExpression, JavaToken jToken);
+
      public native void cactionSingleMemberAnnotation(JavaToken jToken);
      public native void cactionSingleNameReference(String variableName, JavaToken jToken);
      public native void cactionSingleNameReferenceClassScope(JavaToken jToken);
      public native void cactionSuperReference(JavaToken jToken);
+
      public native void cactionSwitchStatement(JavaToken jToken);
+     public native void cactionSwitchStatementEnd(int numCases, boolean hasDefault, JavaToken jToken);
+
      public native void cactionSynchronizedStatement(JavaToken jToken);
      public native void cactionThisReference(JavaToken jToken);
      public native void cactionThisReferenceClassScope(JavaToken jToken);
+
      public native void cactionThrowStatement(JavaToken jToken);
+     public native void cactionThrowStatementEnd(JavaToken jToken);
+
      public native void cactionTrueLiteral(JavaToken jToken);
-     public native void cactionTryStatement(JavaToken jToken);
+
+     public native void cactionTryStatement(int numCatchBlocks, boolean hasFinallyBlock, JavaToken jToken);
+     public native void cactionTryStatementEnd(int numCatchBlocks, boolean hasFinallyBlock, JavaToken jToken);
+
      public native void cactionTypeParameter(JavaToken jToken);
      public native void cactionTypeParameterClassScope(JavaToken jToken);
      public native void cactionUnaryExpression(JavaToken jToken);

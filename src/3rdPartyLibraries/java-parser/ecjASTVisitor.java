@@ -322,7 +322,7 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of visit (CaseStatement,BlockScope)");
 
-          java_parser.cactionCaseStatement(this.createJavaToken(node));
+          java_parser.cactionCaseStatement(node.constantExpression != null, this.createJavaToken(node));
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (CaseStatement,BlockScope)");
@@ -2317,7 +2317,7 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of visit (TryStatement,BlockScope)");
 
-          java_parser.cactionTryStatement(this.createJavaToken(node));
+          java_parser.cactionTryStatement(node.catchBlocks.length, node.finallyBlock != null, this.createJavaToken(node));
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (TryStatement,BlockScope)");
@@ -2625,6 +2625,11 @@ class ecjASTVisitor extends ASTVisitor
      public void endVisit(CaseStatement  node, BlockScope scope)
         {
        // do nothing  by default
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (CaseStatement,BlockScope)");
+
+          java_parser.cactionCaseStatementEnd(node.constantExpression != null, this.createJavaToken(node));
+
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (CaseStatement,BlockScope)");
         }
@@ -3398,6 +3403,11 @@ class ecjASTVisitor extends ASTVisitor
        // do nothing  by default
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (SwitchStatement,BlockScope)");
+
+          java_parser.cactionSwitchStatementEnd(node.caseCount, node.defaultCase != null, this.createJavaToken(node));
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (SwitchStatement,BlockScope)");
         }
 
      public void endVisit(SynchronizedStatement node, BlockScope scope)
@@ -3438,6 +3448,11 @@ class ecjASTVisitor extends ASTVisitor
      public void endVisit(TryStatement  node, BlockScope scope)
         {
        // do nothing  by default
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (TryStatement,BlockScope)");
+
+          java_parser.cactionTryStatementEnd(node.catchBlocks.length, node.finallyBlock != null, this.createJavaToken(node));
+
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (TryStatement,BlockScope)");
         }
