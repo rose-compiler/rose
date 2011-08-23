@@ -1228,11 +1228,13 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateType (JNIEnv* env, jclass 
                  // If the "String" class was not found then it is likely because we are in a debug mode which limits the number of implecit classes.
                  // printf ("Build a class for java.<class name>.<type name>: name = %s\n",name.str());
                     outputJavaState("In cactionGenerateType case of java.lang.<type name>");
-
+#if 1
                  // We build the class but we need the declarations in the class.
                     buildImplicitClass(name);
                  // printf ("DONE: Build a class for java.<class name>.<type name>: name = %s\n",name.str());
-
+#else
+                    printf ("Skipping call to buildImplicitClass(name = %s); \n",name.str());
+#endif
                     outputJavaState("DONE: In cactionGenerateType case of java.lang.<type name>");
 
                  // DQ (8/20/2011): The new class is on the stack, we want to get it's data members into place so that they will be available to be called.
