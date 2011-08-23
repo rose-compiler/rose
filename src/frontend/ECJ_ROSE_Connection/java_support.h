@@ -96,6 +96,17 @@ void pushAndSetSourceCodePosition(JavaSourceCodePosition * pos, SgLocatedNode * 
 void setJavaSourcePosition( SgLocatedNode* locatedNode);
 void setJavaSourcePosition( SgLocatedNode* locatedNode, JavaSourceCodePosition * posInfo);
 
+// DQ (8/16/2011): Added support using the jToken object.
+void setJavaSourcePosition( SgLocatedNode* locatedNode, JNIEnv *env, jobject jToken);
+
+// DQ (8/16/2011): Added support for marking nodes as compiler generated (implicit in Java).
+void setJavaCompilerGenerated( SgLocatedNode* locatedNode );
+void setJavaSourcePositionUnavailableInFrontend( SgLocatedNode* locatedNode );
+
+//! This is how Java implicit classes are marked so that they can be avoided in output.
+void setJavaFrontendSpecific( SgLocatedNode* locatedNode );
+
+
 // *********************************************
 
 
@@ -140,6 +151,8 @@ void appendStatementStack(int numberOfStatements);
 //! Support to get current class scope.
 SgClassDefinition* getCurrentClassDefinition();
 
+//! Strips off "#RAW" suffix from raw types (support for Java 1.5 and greater).
+SgName processNameOfRawType(SgName name);
 
 
 

@@ -424,8 +424,6 @@ class FortranCodeGeneration_locatedNode : public UnparseLanguageIndependentConst
           virtual void unparseOmpBeginDirectiveClauses     (SgStatement* stmt,SgUnparse_Info& info);
           virtual void unparseOmpEndDirectiveClauses       (SgStatement* stmt,     SgUnparse_Info& info);
           virtual void unparseOmpEndDirectivePrefixAndName (SgStatement* stmt, SgUnparse_Info& info);
-      
-
 };
 
 #endif
