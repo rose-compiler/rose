@@ -2505,8 +2505,35 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jobje
   // importStatement->set_parent(astJavaScopeStack.front());
   // setJavaSourcePosition(importStatement);
      setJavaSourcePosition(importStatement,env,jToken);
+
+  // DQ (8/22/2011): The Java generics support is tied to the handling of the import statement so that we can find
+  // the parameterized class from the name when it appears without name qualification.
+  // The import statement should act like the using namespace directive in C++ to bring in a class or set of classes
+  // so that they will be visible in the current scope.  On the Java side the classes have all been read.  Now we
+  // just have to build the SgAliasSymbol in the current scope (do this tomorrow morning).
+     printf ("Now build the SgAliasSymbol in the current scope \n");
+
+#if 0
+     printf ("Exiting as a test in cactionImportReference() \n");
+     ROSE_ASSERT(false);
+#endif
+
+     if (SgProject::get_verbose() > 1)
+          printf ("Leaving Java_JavaParser_cactionImportReference() \n");
    }
 
+#if 0
+JNIEXPORT void JNICALL Java_JavaParser_cactionImportReferenceEnd(JNIEnv *env, jobject thisObj, jstring java_string, jint java_containsWildcard, jobject jToken)
+   {
+     if (SgProject::get_verbose() > -1)
+          printf ("Inside of Java_JavaParser_cactionImportReferenceEnd() \n");
+
+  // We could separate the construction of the classes from the processing of the namespace.
+
+     if (SgProject::get_verbose() > 1)
+          printf ("Leaving Java_JavaParser_cactionImportReferenceEnd() \n");
+   }
+#endif
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionInitializer(JNIEnv *env, jobject xxx, jobject jToken)
    {
