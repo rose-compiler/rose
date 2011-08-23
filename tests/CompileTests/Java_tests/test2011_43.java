@@ -7,6 +7,10 @@ public class test2011_43
      public void foo()
         {
 //        List<String> v;
+          java.util.List<String> v;
+//        java.util.List v;
+//        List v;
+//        String w;
 /*
           List<String> v = new ArrayList<String>();
           v.add("test");
