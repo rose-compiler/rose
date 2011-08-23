@@ -38,6 +38,7 @@ namespace AbstractMemoryObject
       virtual size_t objCount(); // the number of real memory locations the abstract ObjSet corresponds to
       // TODO should we have an interface function to return the starting address of the mem object?
 
+      //TODO not in use for now
       virtual size_t memSize(); // the number of bytes of this objset takes up within memory
 
       // Type of memory
@@ -59,7 +60,7 @@ namespace AbstractMemoryObject
 
       // Equality relations (implemented by interface)
       // Returns true if this object set and that object set may/must refer to the same memory objects.
-      virtual bool operator == (const ObjSet& o2);
+      virtual bool operator == (const ObjSet& o2); 
 
       // Total order relations (implemented by interface)
       // General comparison operators. Provide a total order among different object types (scalar, labeledAggregate, array or pointer). 
