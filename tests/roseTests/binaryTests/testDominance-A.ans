@@ -160,10 +160,3 @@ digraph G {
 1[ label="0x080484aa" ];
 0->1 ;
 }
-
-=== testDominance-A20.dot ===
-digraph G {
-0[ label="0x08048494" ];
-1[ label="0x080484aa" ];
-0->1 ;
-}
