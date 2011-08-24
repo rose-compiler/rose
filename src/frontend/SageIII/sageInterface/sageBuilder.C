@@ -161,6 +161,13 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
   SgVariableDeclaration * varDecl = new SgVariableDeclaration(name, type, varInit);
   ROSE_ASSERT(varDecl);
 
+// DQ (8/21/2011): Note that the default is to set the declaration modifier's access modifier to be 
+// default (which is the same as public).  So the effect it to set it to be public.  This is ignored
+// by the unparser for most languguages in ROSE.
+
+// DQ (8/21/2011): Debugging declarations should have default settings (should not be marked as public).
+// ROSE_ASSERT(varDecl->get_declarationModifier().get_accessModifier().isPublic() == false);
+
   varDecl->set_firstNondefiningDeclaration(varDecl);
 
   if (scope!=NULL) 
@@ -736,7 +743,6 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType*
 
   // DQ (2/24/2009): Delete the old parameter list build by the actualFunction (template argument) constructor.
      ROSE_ASSERT(func->get_parameterList() != NULL);
-     cout << "dELETING" << endl;
      delete func->get_parameterList();
      func->set_parameterList(NULL);
 
@@ -2539,7 +2545,7 @@ SageBuilder::buildVarRefExp(const SgName& name, SgScopeStatement* scope/*=NULL*/
      if (scope != NULL)
         {
           symbol = lookupSymbolInParentScopes(name,scope); 
-          printf ("In SageBuilder::buildVarRefExp(): scope = %p = %s symbpl = %p \n",scope,scope->class_name().c_str(),symbol);
+       // printf ("In SageBuilder::buildVarRefExp(): scope = %p = %s symbpl = %p \n",scope,scope->class_name().c_str(),symbol);
         }
 
      if (symbol != NULL) 
@@ -2898,19 +2904,47 @@ SageBuilder::buildFunctionCallExp(const SgName& name,
 SgFunctionCallExp* 
 SageBuilder::buildFunctionCallExp(SgFunctionSymbol* sym, 
                                   SgExprListExp* parameters/*=NULL*/)
-{
-  ROSE_ASSERT (sym);
-  if (parameters == NULL)
-    parameters = buildExprListExp();
-  ROSE_ASSERT (parameters);
-  SgFunctionRefExp* func_ref = buildFunctionRefExp(sym);
-  SgFunctionCallExp * func_call_expr = new SgFunctionCallExp(func_ref,parameters,func_ref->get_type());
-  func_ref->set_parent(func_call_expr);
-  parameters->set_parent(func_call_expr);
-  setOneSourcePositionForTransformation(func_call_expr);
-  ROSE_ASSERT(func_call_expr);
-  return func_call_expr;  
-}
+   {
+     ROSE_ASSERT (sym);
+     if (parameters == NULL)
+          parameters = buildExprListExp();
+     ROSE_ASSERT (parameters);
+
+  // DQ (8/21/2011): We want to preserve the support for member functions to be built as SgMemberFunctionRefExp.
+  // This is important for the Java support and the C++ support else we will be lowering all mmember function calls
+  // to function calls which will be a proble for eht analysis of object oriented languages.
+  // SgFunctionRefExp* func_ref = buildFunctionRefExp(sym);
+  // SgFunctionCallExp * func_call_expr = new SgFunctionCallExp(func_ref,parameters,func_ref->get_type());
+  // func_ref->set_parent(func_call_expr);
+     SgFunctionCallExp * func_call_expr = NULL;
+     SgMemberFunctionSymbol* memberFunctionSymbol = isSgMemberFunctionSymbol(sym);
+     if (memberFunctionSymbol != NULL)
+        {
+       // Note that we can't at this point be sure this is not a virtual function.
+          bool virtual_call = false;
+
+       // Name qualificaiton is handled separately from the setting of this variable (old API).
+          bool need_qualifier = false;
+
+          SgMemberFunctionRefExp* member_func_ref = buildMemberFunctionRefExp(memberFunctionSymbol,virtual_call,need_qualifier);
+          func_call_expr = new SgFunctionCallExp(member_func_ref,parameters,member_func_ref->get_type());
+          member_func_ref->set_parent(func_call_expr);
+        }
+       else
+        {
+          SgFunctionRefExp * func_ref = buildFunctionRefExp(sym);
+          func_call_expr = new SgFunctionCallExp(func_ref,parameters,func_ref->get_type());
+          func_ref->set_parent(func_call_expr);
+        }
+
+
+     parameters->set_parent(func_call_expr);
+
+     setOneSourcePositionForTransformation(func_call_expr);
+
+     ROSE_ASSERT(func_call_expr);
+     return func_call_expr;  
+   }
 
 SgFunctionCallExp* 
 SageBuilder::buildFunctionCallExp_nfi(SgExpression* f, SgExprListExp* parameters /*=NULL*/)
@@ -3032,6 +3066,37 @@ SageBuilder::buildAssignStatement(SgExpression* lhs,SgExpression* rhs)
    // some child nodes are transparently generated, using recursive setting is safer
   setSourcePositionForTransformation(exp);
   //setOneSourcePositionForTransformation(exp);
+  assignOp->set_parent(exp);
+  return exp;
+}
+
+// DQ (8/16/2011): This is an AST translate specific version (see not below). 
+// We would like to phase out the version above if possible (but we watn to 
+// test this later).
+SgExprStatement*
+SageBuilder::buildAssignStatement_ast_translate(SgExpression* lhs,SgExpression* rhs)
+{
+  ROSE_ASSERT(lhs != NULL); 
+  ROSE_ASSERT(rhs != NULL); 
+  
+  //SgAssignOp* assignOp = new SgAssignOp(lhs,rhs,lhs->get_type());
+// SgBinaryOp::get_type() assume p_expression_type is not set
+  SgAssignOp* assignOp = new SgAssignOp(lhs,rhs,NULL);
+  ROSE_ASSERT(assignOp);
+  setOneSourcePositionForTransformation(assignOp);
+  lhs->set_parent(assignOp);
+  rhs->set_parent(assignOp);
+  
+  lhs->set_lvalue (true);
+  SgExprStatement* exp = new SgExprStatement(assignOp);
+  ROSE_ASSERT(exp);
+
+// DQ (8/16/2011): Modified to avoid recursive call to reset source position information 
+// (this version is required for the Java support where we have set source code position
+// information on the lhs and rhs and we don't want it to be reset as a transformation.
+// some child nodes are transparently generated, using recursive setting is safer
+// setSourcePositionForTransformation(exp);
+  setOneSourcePositionForTransformation(exp);
   assignOp->set_parent(exp);
   return exp;
 }
@@ -3343,6 +3408,7 @@ SgWhileStmt * SageBuilder::buildWhileStmt(SgStatement *  condition, SgStatement 
   condition->set_parent(result);
   body->set_parent(result);
 
+// DQ (8/10/2011): This is added by Michael to support a Python specific feature.
   if (else_body != NULL) {
       result->set_else_body(else_body);
       else_body->set_parent(result);
@@ -3364,6 +3430,7 @@ SgWhileStmt * SageBuilder::buildWhileStmt_nfi(SgStatement *  condition, SgStatem
   if (condition) condition->set_parent(result);
   if (body) body->set_parent(result);
 
+// DQ (8/10/2011): This is added by Michael to support a Python specific feature.
   if (else_body != NULL) {
       result->set_else_body(else_body);
       else_body->set_parent(result);

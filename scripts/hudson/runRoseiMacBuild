@@ -1,0 +1,72 @@
+#!/bin/bash
+
+# ==============================================================================
+# Global variables
+# ==============================================================================
+declare -r HUDSON_TMPDIR=/export/tmp.hudson-rose
+declare -r CCACHE_DIR="$HUDSON_TMPDIR"/caches/ccache
+declare -r SRCDIR="$(pwd)"
+declare -r BUILDDIR="./buildTree"
+declare -r INSTALLDIR="${SRCDIR}/installTree"
+
+declare -r REQUIRED_PORTS="gcc44 boost libtool graphviz wget testxxx"
+
+declare -r -i NUM_PROCESS=4
+
+# ==============================================================================
+# MacPorts toolchain
+# ==============================================================================
+source "$HUDSON_TMPDIR"/opt/macports/setup.sh
+
+if [ ! -n "$MACPORTS_INSTALL" ]; then
+	echo "!! ******************************************** !!"
+	echo
+	echo "Error: \$MACPORTS_INSTALL is not defined. This should have been"
+	echo "sourced from ${HUDSON_TMPDIR}/opt/macports/setup.sh"
+	echo
+	echo "!! ******************************************** !!"
+	exit 1
+fi
+
+MISSING_PORTS=
+for port in $REQUIRED_PORTS; do
+	if [ ! -n "$(port installed "$port")" ]; then
+		MISSING_PORTS="$MISSING_PORTS $port"
+	fi
+done
+
+if [ -n "$MISSING_PORTS" ]; then
+	echo "!! ******************************************** !!"
+	echo
+	echo "Error: missing required MacPorts software:"
+	echo
+	echo "$MISSING_PORTS"
+	echo
+	echo "!! ******************************************** !!"
+	exit 1
+fi
+
+export CCACHE_DIR
+mkdir -p "$CCACHE_DIR"
+ccache -M 10G
+ccache -s
+
+# ==============================================================================
+# Build
+# ==============================================================================
+set -ex;
+
+	./build
+
+	rm -rf "$BUILDDIR" "$INSTALLDIR"
+	mkdir "$BUILDDIR" "$INSTALLDIR"
+
+	cd "$BUILDDIR"
+
+	"$SRCDIR"/configure --prefix="$INSTALLDIR" --with-boost="$MACPORTS_INSTALL" --with-gfortran="$MACPORTS_INSTALL"/bin/gfortran-mp-4.4
+
+	make -j"$NUM_PROCESS"
+	make -j"$NUM_PROCESS" check
+
+ccache -s
+echo "Success!"
