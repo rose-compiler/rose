@@ -14,7 +14,6 @@ SgSourceFile* OpenFortranParser_globalFilePointer = NULL;
 
 using namespace std;
 
-
 std::list<SgInterfaceStatement*> astInterfaceStack;
 
 #include "token.h"
@@ -2380,7 +2379,7 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
      outputState("At BOTTOM of trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector<std::string>,SgScopeStatement*)");
 #endif
 
-#if 1
+#if 0
   // This function could have returned a NULL pointer if there was no symbol found ???
      if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
         {

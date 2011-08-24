@@ -88,6 +88,8 @@ TESTCODES_REQUIRED_TO_PASS = \
     remote-write-1.caf \
     team.caf \
     topology.caf \
+    use-only-rename.caf \
+    use-rename.caf \
     withteam.caf
 
 TESTCODE_CURRENTLY_FAILING = \
