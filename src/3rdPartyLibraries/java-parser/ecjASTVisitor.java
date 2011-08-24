@@ -308,7 +308,8 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of visit (BreakStatement,BlockScope)");
 
-          java_parser.cactionBreakStatement(this.createJavaToken(node));
+          java_parser.cactionBreakStatement((node.label == null ? "" : new String(node.label)),
+        		                            this.createJavaToken(node));
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (BreakStatement,BlockScope)");
@@ -321,7 +322,7 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of visit (CaseStatement,BlockScope)");
 
-          java_parser.cactionCaseStatement(this.createJavaToken(node));
+          java_parser.cactionCaseStatement(node.constantExpression != null, this.createJavaToken(node));
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (CaseStatement,BlockScope)");
@@ -552,7 +553,8 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of visit (ContinueStatement,BlockScope)");
 
-          java_parser.cactionContinueStatement(this.createJavaToken(node));
+          java_parser.cactionContinueStatement((node.label == null ? "" : new String(node.label)),
+        		                                          this.createJavaToken(node));
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (ContinueStatement,BlockScope)");
@@ -942,24 +944,10 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > -1)
                System.out.println("importReference (string) = " + importReference);
 
-       // Build the text for the token (not taken from the token stream in EDG, so it might be wrong to call this a token; fix later).
-          String text = "import";
-
-       // We know how to set these, but make them known values for initial testing.
-          int    line_start = 7;
-          int    line_end   = 7;
-          int    col_start  = 42;
-          int    col_end    = 42;
-
-       // DQ (8/14/2011): This code is inconsistant with the new design for source code position inforamtion support.
-       // System.out.println("Building a JavaToken("+text+","+line_start+","+col_start+")");
-       // JavaToken token = new JavaToken(text,line_start,col_start);
-       // System.out.println("DONE: Building a JavaToken("+text+","+line_start+","+col_start+")");
-
-       // DQ (8/14/2011): This code is inconsistant with the new design for source code position inforamtion support.
-       // Use the newer source code position information (we can build it on the stack).
-       // JavaSourcePositionInformation sourcePositionInfo = new JavaSourcePositionInformation(line_start,line_end,col_start,col_end);
-       // java_parser.cactionSetSourcePosition(sourcePositionInfo);
+       // DQ (8/22/2011): Read the referenced class or set of classes defined by the import statement.
+          System.out.println("In visit (ImportReference,CompilationUnitScope): Calling buildImplicitClassSupport() to recursively build the class structure with member declarations: name = " + importReferenceWithoutWildcard);
+          JavaParserSupport.buildImplicitClassSupport(importReferenceWithoutWildcard);
+          System.out.println("DONE: In visit (ImportReference,CompilationUnitScope): Calling buildImplicitClassSupport() to recursively build the class structure with member declarations: name = " + importReferenceWithoutWildcard);
 
        // DQ (4/15/2011): I could not get the passing of a boolean to work, so I am just passing an integer.
           int containsWildcard_integer = containsWildcard ? 1 : 0;
@@ -2315,7 +2303,7 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of visit (TryStatement,BlockScope)");
 
-          java_parser.cactionTryStatement(this.createJavaToken(node));
+          java_parser.cactionTryStatement(node.catchBlocks.length, node.finallyBlock != null, this.createJavaToken(node));
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (TryStatement,BlockScope)");
@@ -2623,6 +2611,11 @@ class ecjASTVisitor extends ASTVisitor
      public void endVisit(CaseStatement  node, BlockScope scope)
         {
        // do nothing  by default
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (CaseStatement,BlockScope)");
+
+          java_parser.cactionCaseStatementEnd(node.constantExpression != null, this.createJavaToken(node));
+
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (CaseStatement,BlockScope)");
         }
@@ -3396,6 +3389,11 @@ class ecjASTVisitor extends ASTVisitor
        // do nothing  by default
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (SwitchStatement,BlockScope)");
+
+          java_parser.cactionSwitchStatementEnd(node.caseCount, node.defaultCase != null, this.createJavaToken(node));
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (SwitchStatement,BlockScope)");
         }
 
      public void endVisit(SynchronizedStatement node, BlockScope scope)
@@ -3436,6 +3434,11 @@ class ecjASTVisitor extends ASTVisitor
      public void endVisit(TryStatement  node, BlockScope scope)
         {
        // do nothing  by default
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (TryStatement,BlockScope)");
+
+          java_parser.cactionTryStatementEnd(node.catchBlocks.length, node.finallyBlock != null, this.createJavaToken(node));
+
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (TryStatement,BlockScope)");
         }
