@@ -66,9 +66,10 @@ TESTCODES_REQUIRED_TO_PASS_FAILING_BACKEND_COMPILE = \
 # This is where the Java generics tests are put (currently not required to pass all phases).
 TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6 = \
      test2011_43.java \
-     test2011_44.java \
-     test2011_45.java 
+     test2011_44.java 
 
+TESTCODES_REQUIRED_TO_PASS_FAILING_FOR_JAVA_6 = \
+     test2011_45.java 
 
 
 # Later we will move these tests to the gcjTestSuite subdirectory.
@@ -431,7 +432,7 @@ check-local: extraTests
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
 	@$(MAKE) $(TESTCODES_REQUIRED_TO_PASS_FAILING_BACKEND_COMPILE_Objects)
 	@$(MAKE) $(PASSING_TEST_Objects)
-#	@$(MAKE) $(TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6_Objects)
+	@$(MAKE) $(TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6_Objects)
 	@echo "************************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/Java_tests: make check rule complete (terminated normally) ******"
 	@echo "************************************************************************************************"
