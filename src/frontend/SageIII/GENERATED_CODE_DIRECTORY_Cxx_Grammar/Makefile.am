@@ -150,7 +150,7 @@ SgAsmDwarfPackedType.C                 SgAsmLEFileHeader.C                 SgBlo
 SgAsmDwarfPartialUnit.C                SgAsmLENameTable.C                  SgBoolValExp.C                             SgFunctionCallExp.C                   SgOmpAtomicStatement.C                  SgTemplateInstantiationDecl.C                SgWhileStmt.C \
 SgAsmDwarfPointerType.C                SgAsmLEPageTable.C                  SgBreakStmt.C                              SgFunctionDeclaration.C               SgOmpBarrierStatement.C                 SgTemplateInstantiationDefn.C                SgWriteStatement.C \
 SgAsmDwarfPtrToMemberType.C            SgAsmLEPageTableEntry.C             SgCaseOptionStmt.C                         SgFunctionDefinition.C                SgOmpBodyStatement.C                    SgTemplateInstantiationDirectiveStatement.C  SgXorAssignOp.C \
-SgAsmDwarfReferenceType.C              SgAsmLERelocTable.C                 SgCastExp.C                                SgFunctionModifier.C                  SgOmpClauseBodyStatement.C              SgTemplateInstantiationFunctionDecl.C
+SgAsmDwarfReferenceType.C              SgAsmLERelocTable.C                 SgCastExp.C                                SgFunctionModifier.C                  SgOmpClauseBodyStatement.C              SgTemplateInstantiationFunctionDecl.C        SgHeaderFileBody.C
 
 
 
