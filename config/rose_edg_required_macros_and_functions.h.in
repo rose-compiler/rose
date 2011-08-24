@@ -2145,4 +2145,14 @@ int __builtin_ia32_clflush(void const *);
 int __builtin_ia32_lfence();
 int __builtin_ia32_mfence();
 
+// Builtin functions specific to GNU 4.4.1 (likely 4.4.x)
+int __builtin_ia32_psllwi(short,int);
+int __builtin_ia32_pslldi(int,int);
+int __builtin_ia32_psllqi(long long,int);
+int __builtin_ia32_psrawi(short,int);
+int __builtin_ia32_psradi(int,int);
+int __builtin_ia32_psrlwi(int,int);
+int __builtin_ia32_psrldi(int,int);
+int __builtin_ia32_psrlqi(long long,int);
+
 #endif /* !ROSE_USE_NEW_EDG_INTERFACE */
