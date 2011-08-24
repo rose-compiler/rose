@@ -1655,18 +1655,72 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBlockEnd(JNIEnv *env, jobject xxx,
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionBreakStatement(JNIEnv *env, jobject xxx, jobject jToken)
+JNIEXPORT void JNICALL Java_JavaParser_cactionBreakStatement(JNIEnv *env, jobject xxx, jstring java_string, jobject jToken)
    {
      SgBreakStmt* stmt = SageBuilder::buildBreakStmt();
      ROSE_ASSERT(stmt != NULL);
+
+     string label_name = convertJavaStringToCxxString(env, java_string);
+     if (label_name.length() > 0) {
+         stmt -> set_do_string_label(label_name);
+     }
+
      astJavaStatementStack.push_front(stmt);
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionCaseStatement(JNIEnv *env, jobject xxx, jobject jToken)
+JNIEXPORT void JNICALL Java_JavaParser_cactionCaseStatement(JNIEnv *env, jobject xxx, jboolean hasCaseExpression, jobject jToken)
    {
+     if (SgProject::get_verbose() > 2)
+          printf ("Inside of Java_JavaParser_cactionCaseStatement() \n");
+
+     outputJavaState("At TOP of cactionCaseStatement");
+
+  // 
+  // We build on the way down because the scope information and symbol table information is contained
+  // in the Ast node.  This AST node is a subclass of SgScopeStatement
+  //
+     SgStatement *caseStatement = NULL;
+     if (hasCaseExpression) {
+         caseStatement = SageBuilder::buildCaseOptionStmt(); // the body will be added later
+     }
+     else {
+         caseStatement = SageBuilder::buildDefaultOptionStmt(); // the body will be added later
+     }
+     ROSE_ASSERT(caseStatement != NULL);
+
+     setJavaSourcePosition(caseStatement,env,jToken);
+
+  // DQ (7/30/2011): For the build interface to work we have to initialize the parent pointer to the SgForStatement.
+  // PC (8/23/2011): When and why parent pointers should be set needs to be clarified. Perhaps the SageBuilder
+  // functions should be revisited?
+     caseStatement->set_parent(astJavaScopeStack.front());
+
+     outputJavaState("At BOTTOM of cactionCaseStatement");
    }
 
+JNIEXPORT void JNICALL Java_JavaParser_cactionCaseStatementEnd(JNIEnv *env, jobject xxx, jboolean hasCaseExpression, jobject jToken)
+   {
+    if (SgProject::get_verbose() > 2)
+         printf ("Inside of Java_JavaParser_cactionCaseStatementEnd() \n");
+
+    outputJavaState("At TOP of cactionCaseStatementEnd");
+
+    SgStatement *case_statement = NULL;
+    // update the Case Statement
+    if (hasCaseExpression) {
+        SgExpression *case_expression = (SgExpression *) astJavaExpressionStack.front();
+        astJavaExpressionStack.pop_front();
+        case_statement = SageBuilder::buildCaseOptionStmt(case_expression, NULL); // the body will be added later
+    }
+    else {
+        case_statement = SageBuilder::buildDefaultOptionStmt(NULL); // the body will be added later
+    }
+
+    // Pushing 'case' on the statement stack
+    astJavaStatementStack.push_front(case_statement);
+    outputJavaState("At BOTTOM of cactionCaseStatementEnd");
+}
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionCastExpression(JNIEnv *env, jobject xxx, jobject jToken)
    {
@@ -1749,10 +1803,16 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionConditionalExpressionEnd(JNIEnv *e
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionContinueStatement(JNIEnv *env, jobject xxx, jobject jToken)
+JNIEXPORT void JNICALL Java_JavaParser_cactionContinueStatement(JNIEnv *env, jobject xxx, jstring java_string, jobject jToken)
    {
      SgContinueStmt* stmt = SageBuilder::buildContinueStmt();
      ROSE_ASSERT(stmt != NULL);
+
+     string label_name = convertJavaStringToCxxString(env,java_string);
+     if (label_name.length() > 0) {
+         stmt -> set_do_string_label(label_name);
+     }
+
      astJavaStatementStack.push_front(stmt);
    }
 
@@ -3036,8 +3096,93 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionSuperReference(JNIEnv *env, jobjec
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionSwitchStatement(JNIEnv *env, jobject xxx, jobject jToken)
    {
+     if (SgProject::get_verbose() > 2)
+          printf ("Inside of Java_JavaParser_cactionSwitchStatement() \n");
+
+     outputJavaState("At TOP of cactionSwitchStatement");
+
+  // 
+  // We build on the way down because the scope information and symbol table information is contained
+  // in the Ast node.  This AST node is a subclass of SgScopeStatement
+  //
+     SgSwitchStatement* switchStatement = SageBuilder::buildSwitchStatement();
+     ROSE_ASSERT(switchStatement != NULL);
+
+     setJavaSourcePosition(switchStatement,env,jToken);
+
+  // DQ (7/30/2011): For the build interface to work we have to initialize the parent pointer to the SgForStatement.
+  // PC (8/23/2011): When and why parent pointers should be set needs to be clarified. Perhaps the SageBuilder
+  // functions should be revisited?
+     switchStatement->set_parent(astJavaScopeStack.front());
+
+     astJavaScopeStack.push_front(switchStatement);
+
+     outputJavaState("At BOTTOM of cactionSwitchStatement");
    }
 
+JNIEXPORT void JNICALL Java_JavaParser_cactionSwitchStatementEnd(JNIEnv *env, jobject thisObj, jint numCases, jboolean hasDefaultCase, jobject jToken)
+   {
+    if (SgProject::get_verbose() > 2)
+        printf ("Inside of Java_JavaParser_cactionSwitchStatementEnd() \n");
+
+    outputJavaState("At TOP of cactionSwitchStatementEnd");
+
+    // Get the conditional expr and transform it into a statement
+    SgExpression* item_selector = astJavaExpressionStack.front();
+    ROSE_ASSERT(item_selector != NULL);
+    astJavaExpressionStack.pop_front();
+
+    SgBasicBlock *switch_block = SageBuilder::buildBasicBlock();
+    switch_block -> set_parent(astJavaScopeStack.front());
+    ROSE_ASSERT(isSgSwitchStatement(astJavaScopeStack.front()));
+
+    // read 'nb_stmt' elements from the stmt stack
+    // they should be every direct statement children the block has
+    printf("Block Number of statement in stack %d\n", astJavaStatementStack.size());
+    SgDefaultOptionStmt *default_stmt = NULL;
+    for (int i = (hasDefaultCase ? numCases + 1 : numCases); i > 0; i--) {
+        SgBasicBlock *case_block = SageBuilder::buildBasicBlock();
+        case_block -> set_parent(switch_block);
+
+        SgStatement *sg_stmt = astJavaStatementStack.front();
+        astJavaStatementStack.pop_front();
+
+        while (! (isSgCaseOptionStmt(sg_stmt) || isSgDefaultOptionStmt(sg_stmt))) {
+            case_block -> prepend_statement(sg_stmt);
+
+            sg_stmt = astJavaStatementStack.front();
+            astJavaStatementStack.pop_front();
+        }
+
+        if  (isSgCaseOptionStmt(sg_stmt)) {
+            SgCaseOptionStmt *case_stmt = (SgCaseOptionStmt *) sg_stmt;
+            case_stmt -> set_body(case_block);
+            case_stmt -> set_parent(switch_block);
+            switch_block -> prepend_statement(case_stmt);
+        }
+        else {
+            ROSE_ASSERT(default_stmt == NULL); // only onde default section is expected!
+            default_stmt = (SgDefaultOptionStmt *) sg_stmt;
+            default_stmt->set_body(case_block);
+            default_stmt -> set_parent(switch_block);
+            switch_block->prepend_statement(default_stmt);
+        }
+    }
+
+    printf("AFTER Block Number of statement in stack %d\n", astJavaStatementStack.size());
+
+    // Build the final Switch Statement
+    SgSwitchStatement *switch_statement = (SgSwitchStatement *) astJavaScopeStack.front();
+    astJavaScopeStack.pop_front();
+    ROSE_ASSERT(switch_statement != NULL && isSgSwitchStatement(switch_statement));
+
+    switch_statement -> set_item_selector(SageBuilder::buildExprStatement(item_selector));
+    switch_statement -> set_body(switch_block);
+
+     // Pushing 'switch' on the statement stack
+     astJavaStatementStack.push_front(switch_statement);
+     outputJavaState("At BOTTOM of cactionSwitchStatementEnd");
+   }
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionSynchronizedStatement(JNIEnv *env, jobject xxx, jobject jToken)
    {
