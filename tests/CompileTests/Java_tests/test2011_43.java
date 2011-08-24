@@ -7,7 +7,8 @@ public class test2011_43
      public void foo()
         {
 //        List<String> v;
-          java.util.List<String> v;
+          java.util.List<String> w;
+
 //        java.util.List v;
 //        List v;
 //        String w;
