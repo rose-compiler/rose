@@ -16457,6 +16457,8 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id,
     // Actually, the c_action_only steals the result, so this does work when not using the "only" option.
     // ROSE_ASSERT(hasRenameList == false);
 
+#define RICE_S3D_WORKAROUND 1  // Rice's workaround the USE module with rename-list bug
+
     // Only supporting hasOnly == false in initial work.
     if (hasOnly == false)
     {
@@ -16544,9 +16546,10 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id,
                                 renamePair->get_local_name().str());
 
                     // Look for a match against the name used in the module
-                    if (renamePair->get_use_name() == symbol->get_name()
-                            && isPubliclyAccessible(symbol) == true)
+                    if (renamePair->get_use_name() == symbol->get_name() && isPubliclyAccessible(symbol) == true)
                     {
+#if RICE_S3D_WORKAROUND
+                        // FIXME: this is only a workaround to get S3D go through Rose.
                         SgName local_name = renamePair->get_local_name();
                         SgSymbol* aliasSymbol;
                         SgVariableSymbol* varSymbol = isSgVariableSymbol(symbol);
@@ -16560,14 +16563,23 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id,
                         else
                         {
 #if 0
-                            if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-                                printf ("R1109 (non-empty astNodeStack)Insert aliased symbol name = %s (renamed = %s)\n",declarationName.str(),isRenamed ? "true" : "false");
                             cout << "USE alias symbol for symbol type " << symbol->class_name() << endl;
 #endif
                             aliasSymbol = new SgAliasSymbol(symbol, true,local_name);
                         }
                         currentScope->insert_symbol(local_name,aliasSymbol);
                         setOfRenamedSymbols.insert(symbol);
+#else
+                        bool isRenamed = hasRenameList;
+                        SgName declarationName = renamePair->get_local_name();
+                        SgAliasSymbol* aliasSymbol = new SgAliasSymbol(symbol,/* isRenamed = true */ true,declarationName);
+#if 1
+                        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+                             printf ("R1109 (non-empty astNodeStack)Insert aliased symbol name = %s (renamed = %s)\n",declarationName.str(),isRenamed ? "true" : "false");
+#endif
+                        currentScope->insert_symbol(declarationName,aliasSymbol);
+                        setOfRenamedSymbols.insert(symbol);
+#endif
                     }
 
                     // Look at the next symbol in the module's symbol table
@@ -16675,6 +16687,8 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id,
                     // if (classDefinition->symbol_exists(local_name) == false)
                     if (currentScope->symbol_exists(local_name) == false)
                     {
+#if RICE_S3D_WORKAROUND
+                        // FIXME: this is only a workaround to get S3D go through Rose.
                         SgVariableSymbol* varSymbol = isSgVariableSymbol(symbol);
                         SgSymbol* aliasSymbol;
                         if (varSymbol)
@@ -16687,14 +16701,28 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id,
                         else
                         {
 #if 0
-                            if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-                                printf ("R1109 (hasOnly == true && astNodeStack.empty() == false) Insert aliased symbol name = %s isRenamed = %s \n",local_name.str(),isRenamed ? "true" : "false");
                             cout << "USE ONLY alias symbol for symbol type " << symbol->class_name() << endl;
 #endif
                             aliasSymbol = isRenamed? new SgAliasSymbol(symbol,true,local_name):
                                                      new SgAliasSymbol(symbol,false);
                         }
                         currentScope->insert_symbol(local_name, aliasSymbol);
+#else
+                        SgAliasSymbol* aliasSymbol = NULL;
+                        if (isRenamed == true)
+                           {
+                             aliasSymbol = new SgAliasSymbol(symbol,isRenamed,renamePair->get_local_name());
+                           }
+                          else
+                           {
+                             aliasSymbol = new SgAliasSymbol(symbol,isRenamed);
+                           }
+#if 0
+                        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+                             printf ("R1109 (hasOnly == true && astNodeStack.empty() == false) Insert aliased symbol name = %s isRenamed = %s \n",local_name.str(),isRenamed ? "true" : "false");
+#endif
+                        currentScope->insert_symbol(local_name,aliasSymbol);
+#endif
                     }
                     else
                     {
