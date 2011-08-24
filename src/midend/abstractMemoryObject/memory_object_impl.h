@@ -6,6 +6,15 @@
 namespace AbstractMemoryObject 
 {
 
+  // Big picture of this implementation
+  // How the multiple inheritance results in the classes here
+  //
+  //                      Scalar            LabeledAggregate        Array       Pointer
+  // -----------------------------------------------------------------------------
+  // Expression Objects | ScalarExp          LabAggreExp 
+  // Named objects      | ScalarNamedObj    
+  // Aliased Objects    | ScalarAliasedObj  LabeledAggregateAliasedObj ArrayAliasedObj  PointerAliasedObj
+
   // A simple implementation of the abstract memory object interface
   // Four categories: scalar, labeled aggregate, array, and pointer
   class Scalar_Impl : public Scalar 
@@ -60,17 +69,34 @@ namespace AbstractMemoryObject
       SgType* getType() {return type;}
   };
 
+ // Correspond to variables that are explicit named in the source code
+ // Including: local, global, and static variables, as well as their fields
+ // Named objects may not directly alias each other since they must be stored disjointly
+ // Two named objects are equal to each other if they correspond to the same entry in the application's symbol table. 
+ // (?? Should an implementation enforce unique named objects for a unique symbol entry??)
   class NamedObj  // one object for each named variable with a symbol
   { 
     public:
       SgSymbol* anchor_symbol; 
       SgType* type; 
       ObjSet* parent;  //Only exists for compound variables like a.b, where a is b's parent
+
       //Is this always true that the parent of a named object must be an expr object?
       NamedObj (SgSymbol* a, SgType* t, ObjSet* p):anchor_symbol(a), type(t),parent(p){};
       SgType* getType() {return type;}
+      ObjSet* getParent() {return parent; } 
+      SgSymbol* getSymbol() {return anchor_symbol;}
+
+      std::string toString(); 
+
+      bool operator == (ObjSet& o2) ;
+      bool operator == (NamedObj& o2) ;
+      bool operator < ( NamedObj& o2);
   };
 
+  //  memory regions that may be accessible via a pointer, such as heap memory
+  //  This implementation does not track accurate aliases, an aliased memory object and 
+  //  an aliased or named object may be equal if they have the same type
   class AliasedObj 
   {  // One object for each type
     public: 
@@ -78,9 +104,10 @@ namespace AbstractMemoryObject
       AliasedObj (SgType* t): type(t) {};
       SgType* getType() {return type;}
       std::string toString(); 
-   bool operator == (ObjSet& o2) ;
-   bool operator == (AliasedObj & o2) ;
-   bool operator < ( AliasedObj& o2);
+
+      bool operator == (ObjSet& o2) ;
+      bool operator == (AliasedObj & o2) ;
+      bool operator < ( AliasedObj& o2);
   };
 
 
@@ -103,6 +130,11 @@ namespace AbstractMemoryObject
   // named object --------------------------------
    class ScalarNamedObj: public Scalar_Impl, public NamedObj 
   {
+    public:
+      ScalarNamedObj (SgSymbol* s, SgType* t, ObjSet* p): NamedObj (s,t,p) {}
+      std::set<SgType*> getType();
+      bool operator == (ObjSet& o2) ;
+      std::string toString();
   };
 
   class LabeledAggregateNamedObj: public LabeledAggregate_Impl, public NamedObj
@@ -164,6 +196,11 @@ namespace AbstractMemoryObject
   
   // Helper functions for debugging
   void dump_aliased_objset_map (); 
+
+  // A helper function to decide if two types are aliased
+  // two cases: 1 they are the same type
+  //            2 they have overlap (one type is a subtype of the other)
+  bool isAliased (SgType * t1, SgType * t2 ); 
 
 } // end namespace
 
