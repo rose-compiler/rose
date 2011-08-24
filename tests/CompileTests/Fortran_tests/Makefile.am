@@ -240,6 +240,7 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2011_Rice_char-array-decl-asterisk.f90 \
      test2011_Rice_char-kind-decl.f90 \
      test2011_Rice_constructor-initializer.f90 \
+     test2011_Rice_crlf-terminated-line-continuations.f \
      test2011_Rice_data-implied-do.f90 \
      test2011_Rice_derived-type-2d-component.f90 \
      test2011_Rice_derived-type-3d-component.f90 \
@@ -258,6 +259,7 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2011_Rice_ifStmt.f90 \
      test2011_Rice_interface.f90 \
      test2011_Rice_if-stop.f90 \
+     test2011_Rice_inquire-in-ifthen.f90 \
      test2011_Rice_intent.f90 \
      test2011_Rice_io-implied-do-with-stride.f90 \
      test2011_Rice_keyword-arg-extra-paren-2.f90 \
