@@ -56,9 +56,10 @@ assemble_all(SgAsmInterpretation *interp)
                 }
                 assembler->set_debug(false);
             }
-            return;
+            //return;
         }
 
+#if 0   /* Don't worry about writing the instruction back out to the section. [RPM 2011-08-23] */
         /* We don't handle the case where an instruction grows because that could cause us to require that the section
          * containing the instruction grows, which opens a whole can of worms. */
         ROSE_ASSERT(machine_code.size() <= insn->get_raw_bytes().size());
@@ -68,6 +69,7 @@ assemble_all(SgAsmInterpretation *interp)
          * write past the end of mapped memory, nor can we write to the space (if any) between mapped memory chunks. */
         size_t nwritten = interp->get_map()->write(&(machine_code[0]), new_va, machine_code.size(), MemoryMap::MM_PROT_NONE);
         ROSE_ASSERT(nwritten==machine_code.size());
+#endif
     }
 
     std::cout <<"Assembled " <<nassembled <<" instruction" <<(1==nassembled?"":"s") <<"\n";
