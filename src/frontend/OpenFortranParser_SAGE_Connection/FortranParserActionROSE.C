@@ -14379,7 +14379,10 @@ void c_action_flush_spec_list(int count)
  * @param label The label.
  * @param boolean True if this is inquire statement of type 2.
  */
-// void c_action_inquire_stmt(Token_t * label, ofp_bool isType2)
+
+// used to communicate # inquire specs from 'c_action_inquire_spec_list' to 'c_action_inquire_stmt'
+static int inquireSpecListCount;
+
 void c_action_inquire_stmt(Token_t *label, Token_t *inquireKeyword, Token_t *id, Token_t *eos, ofp_bool isType2)
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
@@ -14430,7 +14433,7 @@ void c_action_inquire_stmt(Token_t *label, Token_t *inquireKeyword, Token_t *id,
        // This is the "INQUIRE(inquire-spec-list)" case.
 
        // printf ("Warning: Ignoring all but the 'unit' in the OpenStatement \n");
-          while (astExpressionStack.empty() == false)
+           while (inquireSpecListCount > 0 )
              {
                ROSE_ASSERT(astNameStack.empty() == false);
 
@@ -14570,6 +14573,7 @@ void c_action_inquire_stmt(Token_t *label, Token_t *inquireKeyword, Token_t *id,
                     inquireStatement->set_pending(expression);
                   }
 
+               inquireSpecListCount--;
                astNameStack.pop_front();
                astExpressionStack.pop_front();
 
@@ -14625,8 +14629,9 @@ void c_action_inquire_spec_list(int count)
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_inquire_spec_list(): count = %d \n",count);
 
-     ROSE_ASSERT(astNameStack.size() == (size_t)count);
-     ROSE_ASSERT(astExpressionStack.size() == (size_t)count);
+     inquireSpecListCount = count;
+     ROSE_ASSERT(astNameStack.size() >= (size_t)count);
+     ROSE_ASSERT(astExpressionStack.size() >= (size_t)count);
 
 #if 1
   // Output debugging information about saved state (stack) information.
