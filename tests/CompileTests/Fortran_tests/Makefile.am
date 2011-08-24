@@ -274,6 +274,8 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2011_Rice_return-with-expr.f90 \
      test2011_Rice_singleton-array-constructor.f90 \
      test2011_Rice_stop-no-stop-code.f90 \
+     test2011_Rice_use-only-rename.f90 \
+     test2011_Rice_use-rename.f90 \
      test2011_Rice_vector-constructor-1.f90 \
      test2011_Rice_vector-constructor-2.f90 \
      test2011_Rice_vector-constructor-3.f90 \
