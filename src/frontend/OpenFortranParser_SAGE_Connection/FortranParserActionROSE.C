@@ -15145,16 +15145,14 @@ void c_action_flush_spec_list(int count)
  * @param label The label.
  * @param boolean True if this is inquire statement of type 2.
  */
-// void c_action_inquire_stmt(Token_t * label, ofp_bool isType2)
-void c_action_inquire_stmt(Token_t *label, Token_t *inquireKeyword,
-        Token_t *id, Token_t *eos, ofp_bool isType2)
-{
-    if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
-        printf(
-                "In c_action_inquire_stmt(): inquireKeyword = %p = %s id = %s isType2 = %s \n",
-                inquireKeyword,
-                inquireKeyword != NULL ? inquireKeyword->text : "NULL",
-                id != NULL ? id->text : "NULL", isType2 ? "true" : "false");
+
+// used to communicate # inquire specs from 'c_action_inquire_spec_list' to 'c_action_inquire_stmt'
+static int inquireSpecListCount;
+
+void c_action_inquire_stmt(Token_t *label, Token_t *inquireKeyword, Token_t *id, Token_t *eos, ofp_bool isType2)
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        printf ("In c_action_inquire_stmt(): inquireKeyword = %p = %s id = %s isType2 = %s \n",inquireKeyword,inquireKeyword != NULL ? inquireKeyword->text : "NULL",id != NULL ? id->text : "NULL",isType2 ? "true" : "false");
 
     initialize_global_scope_if_required();
     build_implicit_program_statement_if_required();
@@ -15201,9 +15199,9 @@ void c_action_inquire_stmt(Token_t *label, Token_t *inquireKeyword,
         // This is the "INQUIRE(inquire-spec-list)" case.
 
         // printf ("Warning: Ignoring all but the 'unit' in the OpenStatement \n");
-        while (astExpressionStack.empty() == false)
-        {
-            ROSE_ASSERT(astNameStack.empty() == false);
+           while (inquireSpecListCount > 0 )
+             {
+               ROSE_ASSERT(astNameStack.empty() == false);
 
             SgExpression* expression = astExpressionStack.front();
             Token_t* name = astNameStack.front();
@@ -15211,143 +15209,143 @@ void c_action_inquire_stmt(Token_t *label, Token_t *inquireKeyword,
             // We don't need the current_IO_Control_Spec data structure in the code below.
 
             // The "unit=" string is optional, if it was not present then a token was pushed onto the stack with the text value "defaultString"
-            if (strncasecmp(name->text, "unit", 4) == 0 || strncmp(name->text,
-                    "defaultString", 13) == 0)
-            {
-                inquireStatement->set_unit(expression);
-            }
-            else if (strncasecmp(name->text, "iostat", 6) == 0)
-            {
-                inquireStatement->set_iostat(expression);
-            }
-            else if (strncasecmp(name->text, "err", 3) == 0)
-            {
-                // inquireStatement->set_err(expression);
-                ROSE_ASSERT(expression != NULL);
-                SgExpression* labelRefExp = buildLabelRefExp(expression);
-                ROSE_ASSERT(labelRefExp != NULL);
-                inquireStatement->set_err(labelRefExp);
-                labelRefExp->set_parent(inquireStatement);
-            }
-            else if (strncasecmp(name->text, "iomsg", 5) == 0)
-            {
-                inquireStatement->set_iomsg(expression);
-            }
-            else if (strncasecmp(name->text, "file", 4) == 0)
-            {
-                inquireStatement->set_file(expression);
-            }
-            else if (strncasecmp(name->text, "access", 6) == 0)
-            {
-                inquireStatement->set_access(expression);
-            }
-            else if (strncasecmp(name->text, "form", 4) == 0)
-            {
-                inquireStatement->set_form(expression);
-            }
-            else if (strncasecmp(name->text, "recl", 4) == 0)
-            {
-                inquireStatement->set_recl(expression);
-            }
-            else if (strncasecmp(name->text, "blank", 5) == 0)
-            {
-                inquireStatement->set_blank(expression);
-            }
-            else if (strncasecmp(name->text, "exist", 5) == 0)
-            {
-                inquireStatement->set_exist(expression);
-            }
-            else if (strncasecmp(name->text, "opened", 6) == 0)
-            {
-                inquireStatement->set_opened(expression);
-            }
-            else if (strncasecmp(name->text, "number", 6) == 0)
-            {
-                inquireStatement->set_number(expression);
-            }
-            else if (strncasecmp(name->text, "named", 5) == 0)
-            {
-                inquireStatement->set_named(expression);
-            }
-            else if (strncasecmp(name->text, "name", 4) == 0)
-            {
-                inquireStatement->set_name(expression);
-            }
-            else if (strncasecmp(name->text, "sequential", 10) == 0)
-            {
-                inquireStatement->set_sequential(expression);
-            }
-            else if (strncasecmp(name->text, "direct", 6) == 0)
-            {
-                inquireStatement->set_direct(expression);
-            }
-            else if (strncasecmp(name->text, "formatted", 9) == 0)
-            {
-                inquireStatement->set_formatted(expression);
-            }
-            else if (strncasecmp(name->text, "unformatted", 11) == 0)
-            {
-                inquireStatement->set_unformatted(expression);
-            }
-            else if (strncasecmp(name->text, "nextrec", 7) == 0)
-            {
-                inquireStatement->set_nextrec(expression);
-            }
-            else if (strncasecmp(name->text, "position", 8) == 0)
-            {
-                inquireStatement->set_position(expression);
-            }
-            else if (strncasecmp(name->text, "action", 6) == 0)
-            {
-                inquireStatement->set_action(expression);
-            }
-            else if (strncasecmp(name->text, "read", 4) == 0)
-            {
-                inquireStatement->set_read(expression);
-            }
-            else if (strncasecmp(name->text, "write", 5) == 0)
-            {
-                inquireStatement->set_write(expression);
-            }
-            else if (strncasecmp(name->text, "readwrite", 9) == 0)
-            {
-                inquireStatement->set_readwrite(expression);
-            }
-            else if (strncasecmp(name->text, "delim", 5) == 0)
-            {
-                inquireStatement->set_delim(expression);
-            }
-            else if (strncasecmp(name->text, "pad", 3) == 0)
-            {
-                inquireStatement->set_pad(expression);
-            }
-            else if (strncasecmp(name->text, "asynchronous", 12) == 0)
-            {
-                inquireStatement->set_asynchronous(expression);
-            }
-            else if (strncasecmp(name->text, "decimal", 7) == 0)
-            {
-                inquireStatement->set_decimal(expression);
-            }
-            else if (strncasecmp(name->text, "stream", 5) == 0)
-            {
-                inquireStatement->set_stream(expression);
-            }
-            else if (strncasecmp(name->text, "size", 4) == 0)
-            {
-                inquireStatement->set_size(expression);
-            }
-            else if (strncasecmp(name->text, "pending", 7) == 0)
-            {
-                inquireStatement->set_pending(expression);
-            }
+               if ( strncasecmp(name->text,"unit",4) == 0 || strncmp(name->text,"defaultString",13) == 0)
+                  {
+                    inquireStatement->set_unit(expression);
+                  }
+               else if ( strncasecmp(name->text,"iostat",6) == 0 )
+                  {
+                    inquireStatement->set_iostat(expression);
+                  }
+               else if ( strncasecmp(name->text,"err",3) == 0 )
+                  {
+                 // inquireStatement->set_err(expression);
+                    ROSE_ASSERT(expression != NULL);
+                    SgExpression* labelRefExp = buildLabelRefExp(expression);
+                    ROSE_ASSERT(labelRefExp != NULL);
+                    inquireStatement->set_err(labelRefExp);
+                    labelRefExp->set_parent(inquireStatement);
+                  }
+               else if ( strncasecmp(name->text,"iomsg",5) == 0 )
+                  {
+                    inquireStatement->set_iomsg(expression);
+                  }
+               else if ( strncasecmp(name->text,"file",4) == 0 )
+                  {
+                    inquireStatement->set_file(expression);
+                  }
+               else if ( strncasecmp(name->text,"access",6) == 0 )
+                  {
+                    inquireStatement->set_access(expression);
+                  }
+               else if ( strncasecmp(name->text,"form",4) == 0 )
+                  {
+                    inquireStatement->set_form(expression);
+                  }
+               else if ( strncasecmp(name->text,"recl",4) == 0 )
+                  {
+                    inquireStatement->set_recl(expression);
+                  }
+               else if ( strncasecmp(name->text,"blank",5) == 0 )
+                  {
+                    inquireStatement->set_blank(expression);
+                  }
+               else if ( strncasecmp(name->text,"exist",5) == 0 )
+                  {
+                    inquireStatement->set_exist(expression);
+                  }
+               else if ( strncasecmp(name->text,"opened",6) == 0 )
+                  {
+                    inquireStatement->set_opened(expression);
+                  }
+               else if ( strncasecmp(name->text,"number",6) == 0 )
+                  {
+                    inquireStatement->set_number(expression);
+                  }
+               else if ( strncasecmp(name->text,"named",5) == 0 )
+                  {
+                    inquireStatement->set_named(expression);
+                  }
+               else if ( strncasecmp(name->text,"name",4) == 0 )
+                  {
+                    inquireStatement->set_name(expression);
+                  }
+               else if ( strncasecmp(name->text,"sequential",10) == 0 )
+                  {
+                    inquireStatement->set_sequential(expression);
+                  }
+               else if ( strncasecmp(name->text,"direct",6) == 0 )
+                  {
+                    inquireStatement->set_direct(expression);
+                  }
+               else if ( strncasecmp(name->text,"formatted",9) == 0 )
+                  {
+                    inquireStatement->set_formatted(expression);
+                  }
+               else if ( strncasecmp(name->text,"unformatted",11) == 0 )
+                  {
+                    inquireStatement->set_unformatted(expression);
+                  }
+               else if ( strncasecmp(name->text,"nextrec",7) == 0 )
+                  {
+                    inquireStatement->set_nextrec(expression);
+                  }
+               else if ( strncasecmp(name->text,"position",8) == 0 )
+                  {
+                    inquireStatement->set_position(expression);
+                  }
+               else if ( strncasecmp(name->text,"action",6) == 0 )
+                  {
+                    inquireStatement->set_action(expression);
+                  }
+               else if ( strncasecmp(name->text,"read",4) == 0 )
+                  {
+                    inquireStatement->set_read(expression);
+                  }
+               else if ( strncasecmp(name->text,"write",5) == 0 )
+                  {
+                    inquireStatement->set_write(expression);
+                  }
+               else if ( strncasecmp(name->text,"readwrite",9) == 0 )
+                  {
+                    inquireStatement->set_readwrite(expression);
+                  }
+               else if ( strncasecmp(name->text,"delim",5) == 0 )
+                  {
+                    inquireStatement->set_delim(expression);
+                  }
+               else if ( strncasecmp(name->text,"pad",3) == 0 )
+                  {
+                    inquireStatement->set_pad(expression);
+                  }
+               else if ( strncasecmp(name->text,"asynchronous",12) == 0 )
+                  {
+                    inquireStatement->set_asynchronous(expression);
+                  }
+               else if ( strncasecmp(name->text,"decimal",7) == 0 )
+                  {
+                    inquireStatement->set_decimal(expression);
+                  }
+               else if ( strncasecmp(name->text,"stream",5) == 0 )
+                  {
+                    inquireStatement->set_stream(expression);
+                  }
+               else if ( strncasecmp(name->text,"size",4) == 0 )
+                  {
+                    inquireStatement->set_size(expression);
+                  }
+               else if ( strncasecmp(name->text,"pending",7) == 0 )
+                  {
+                    inquireStatement->set_pending(expression);
+                  }
 
-            astNameStack.pop_front();
-            astExpressionStack.pop_front();
+               inquireSpecListCount--;
+               astNameStack.pop_front();
+               astExpressionStack.pop_front();
 
-            expression->set_parent(inquireStatement);
+               expression->set_parent(inquireStatement);
+             }
         }
-    }
 
     astScopeStack.front()->append_statement(inquireStatement);
 
@@ -15398,8 +15396,9 @@ void c_action_inquire_spec_list(int count)
     if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf("In c_action_inquire_spec_list(): count = %d \n", count);
 
-    ROSE_ASSERT(astNameStack.size() == (size_t)count);
-    ROSE_ASSERT(astExpressionStack.size() == (size_t)count);
+     inquireSpecListCount = count;
+     ROSE_ASSERT(astNameStack.size() >= (size_t)count);
+     ROSE_ASSERT(astExpressionStack.size() >= (size_t)count);
 
 #if 1
     // Output debugging information about saved state (stack) information.
