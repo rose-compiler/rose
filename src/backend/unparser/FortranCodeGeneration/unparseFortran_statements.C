@@ -2016,7 +2016,6 @@ FortranCodeGeneration_locatedNode::unparseUseStmt(SgStatement* stmt, SgUnparse_I
              }
         }
 #else
-     //FMZ  curprint(", ");
      if (useStmt->get_only_option() == true)
         {
          // FMZ: move comma here
@@ -2027,6 +2026,8 @@ FortranCodeGeneration_locatedNode::unparseUseStmt(SgStatement* stmt, SgUnparse_I
         }
 
      int listSize = useStmt->get_rename_list().size();
+     if (listSize > 0 && !useStmt->get_only_option())  // need to print a comma and a space
+         curprint(", ");
      for (int i=0; i < listSize; i++)
         {
           SgRenamePair* renamePair = useStmt->get_rename_list()[i];
