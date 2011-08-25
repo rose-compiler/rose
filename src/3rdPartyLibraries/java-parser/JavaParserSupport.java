@@ -638,6 +638,28 @@ class JavaParserSupport
         }
 
 
+     public static boolean isPrimativeType ( TypeBinding typeBinding ) 
+        {
+          switch (typeBinding.id) 
+             {
+               case TypeIds.T_void:
+               case TypeIds.T_boolean:
+               case TypeIds.T_byte:
+               case TypeIds.T_char:
+               case TypeIds.T_short:
+               case TypeIds.T_double:
+               case TypeIds.T_float:
+               case TypeIds.T_int:
+               case TypeIds.T_long:
+               case TypeIds.T_JavaLangObject:
+            //	case TypeIds.T_JavaLangString:
+                    return true;
+
+               default:
+            		return false;
+             }
+   }
+
 
      public static void generateType(TypeReference node)
         {
@@ -653,12 +675,16 @@ class JavaParserSupport
 
           if (verboseLevel > 1)
              {
-               System.out.println("Inside of generateType(TypeReference) TypeReference node                            = " + node);
-               System.out.println("Inside of generateType(TypeReference) TypeReference node.implicitConversion         = " + node.implicitConversion);
-               System.out.println("Inside of generateType(TypeReference) TypeReference node.resolvedType               = " + node.resolvedType);
-               System.out.println("Inside of generateType(TypeReference) TypeReference node.resolvedType.isArrayType() = " + node.resolvedType.isArrayType());
-               System.out.println("Inside of generateType(TypeReference) TypeReference node.getTypeName()              = " + node.getTypeName());
-               System.out.println("Inside of generateType(TypeReference) TypeReference node.resolvedType.isClass()     = " + (node.resolvedType.isClass() ? "true" : "false"));
+               System.out.println("Inside of generateType(TypeReference) TypeReference node                               = " + node);
+               System.out.println("Inside of generateType(TypeReference) TypeReference node.implicitConversion            = " + node.implicitConversion);
+               System.out.println("Inside of generateType(TypeReference) TypeReference node.resolvedType                  = " + node.resolvedType);
+               System.out.println("Inside of generateType(TypeReference) TypeReference node.resolvedType.isArrayType()    = " + node.resolvedType.isArrayType());
+               System.out.println("Inside of generateType(TypeReference) TypeReference node.resolvedType.isGenericType()  = " + node.resolvedType.isGenericType());
+               System.out.println("Inside of generateType(TypeReference) TypeReference node.resolvedType.isClass()        = " + node.resolvedType.isClass());
+               System.out.println("Inside of generateType(TypeReference) TypeReference isPrimativeType(node.resolvedType) = " + isPrimativeType(node.resolvedType));
+
+               System.out.println("Inside of generateType(TypeReference) TypeReference node.getTypeName()                 = " + node.getTypeName());
+               System.out.println("Inside of generateType(TypeReference) TypeReference node.resolvedType.isClass()        = " + (node.resolvedType.isClass() ? "true" : "false"));
              }
 
           if (node.resolvedType.isArrayType() == true)
@@ -707,21 +733,40 @@ class JavaParserSupport
                   }
             */
 
-
             // DQ (8/22/2011): The reason why we need this is that the import statement allows for the names to be used unqualified.
             // Once we implement proper support for the import statement then we will be able to search the symbol tables for any type
             // names that we can't identify because they lack name qualification!!!
 
-            // if (node.resolvedType.isClass() == true)
-            // if (name == "List#RAW")
-               if (name.startsWith("List") == true)
-                  {
-                    System.out.println("Calling buildImplicitClassSupport() to recursively build the class structure with member declarations: name = " + name);
-                    buildImplicitClassSupport("java.util.List");
-                    System.out.println("DONE: Calling buildImplicitClassSupport() to recursively build the class structure with member declarations: name = " + name);
+            // If this is a generic type then the "<name>" has to be separated so we can use only the base name of the class (the raw type name).
+               String rawTypeName = name;
 
-                 // System.out.println("Exiting after buildImplicitClassSupport() (built type name " + name + " by default) in generateType(TypeReference)");
-                 // System.exit(1);
+               int firstAngleBracket = rawTypeName.indexOf("<",0);
+               int lastAngleBracket = rawTypeName.lastIndexOf(">",rawTypeName.length()-1);
+
+            // System.out.println("In generateType(TypeReference): firstAngleBracket = " + firstAngleBracket + " lastAngleBracket = " + lastAngleBracket);
+               if (firstAngleBracket > 0 && firstAngleBracket < lastAngleBracket)
+                  {
+                    rawTypeName = rawTypeName.substring(0,firstAngleBracket);
+
+                    name = rawTypeName;
+                  }
+
+            // System.out.println("In generateType(TypeReference): rawTypeName = " + rawTypeName);
+
+            // We don't really want to handl this as a special case, but from the Java side I don't know how to generate the qualified name.
+               if (rawTypeName.startsWith("List") == true)
+                    name = "java.util.List";
+
+            // System.out.println("In generateType(TypeReference): After reset (for List) name = " + name);
+
+            // buildImplicitClassSupport("java.util.List");
+
+            // DQ (8/23/2011): Note that implicit classes will evaluate to "node.resolvedType.isClass() == false" while classes define in the file will be true.
+               if (isPrimativeType(node.resolvedType) == false && node.resolvedType.isClass() == false)
+                  {
+                 // System.out.println("In generateType(TypeReference): Calling buildImplicitClassSupport() to recursively build the class structure with member declarations: name = " + name);
+                    buildImplicitClassSupport(name);
+                 // System.out.println("DONE: In generateType(TypeReference): Calling buildImplicitClassSupport() to recursively build the class structure with member declarations: name = " + name);
                   }
 
             // DQ (8/20/2011): Moved to be after buildImplicitClassSupport().
