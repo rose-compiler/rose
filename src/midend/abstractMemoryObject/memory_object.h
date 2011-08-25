@@ -127,7 +127,7 @@ namespace AbstractMemoryObject
       ObjSet* getElements(AbstractIndex* ai);
 
       // number of dimensions of the aray
-      size_t numDims();
+      size_t getNumDims();
       bool operator == (const Array & that) const;
       bool operator < (const Array & that) const;
   };

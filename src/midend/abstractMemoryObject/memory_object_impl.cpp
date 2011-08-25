@@ -376,7 +376,7 @@ namespace AbstractMemoryObject {
   } 
 
   // A map to store aliased obj set
-  // This can provide quick lookup for existing aliased objset to avoid duplicated creation
+  // This can provide quick lookup for existing named objset to avoid duplicated creation
   map<SgSymbol*, ObjSet*> named_objset_map; 
 
   // variables that are explicitly declared/named in the source code
@@ -394,10 +394,11 @@ namespace AbstractMemoryObject {
     assert (anchor_symbol != NULL);
     assert (anchor_symbol->get_type() == t);
     bool assert_flag = true; 
+
     map<SgSymbol*, ObjSet*>::const_iterator iter;
     iter = named_objset_map.find(anchor_symbol);
     if (iter == named_objset_map.end())
-    { // None found, create a new one and update the map
+    { // None found, create a new one depending on its type and update the map
       if (SageInterface::isScalarType(t))
         // We define the following SgType as scalar types: 
         // char, short, int, long , void, Wchar, Float, double, long long, string, bool, complex, imaginary 

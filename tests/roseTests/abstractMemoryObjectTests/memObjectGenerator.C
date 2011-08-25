@@ -51,6 +51,36 @@ int main(int argc, char * argv[])
       prev_obj = dynamic_cast <AliasedObj*> (mem_obj);
     }
   }
+
+  //Test NamedObj
+  // find all symbols
+  VariantVector vv (V_SgSymbol); 
+  //Rose_STL_Container <SgNode*> symbol_list  = NodeQuery::querySubTree (project, V_SgSymbol);
+  Rose_STL_Container <SgNode*> symbol_list  = NodeQuery::queryMemoryPool(vv);
+  cout<<"Found "<<symbol_list.size()<<" symbols." <<endl;
+  for (iter = symbol_list.begin(); iter !=symbol_list.end(); iter ++)
+  {
+    SgSymbol* t = isSgSymbol(*iter);
+    //     cout<<t->class_name()<<endl;
+    ObjSet* mem_obj = createNamedObjSet (t, t->get_type(), NULL); //TODO parent case??
+    if (mem_obj != NULL)
+    {
+      cout<<mem_obj->toString()<<endl;
+#if 0
+      // test operator == for two consecutive aliased ObjSet
+      if (prev_obj != NULL)
+      {
+        cout<< "operator==:"<<((*prev_obj) == (*mem_obj)) ;
+        cout<< "  operator<:"<<((*prev_obj) < (*(dynamic_cast <AliasedObj*> (mem_obj)))) <<endl;
+      }
+
+      prev_obj = dynamic_cast <AliasedObj*> (mem_obj);
+#endif
+
+    }
+  }
+
+
   return backend(project);
 }
 
