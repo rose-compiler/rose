@@ -46,6 +46,8 @@ RSIM_SemanticPolicy::cpuid()
     int code = readGPR(x86_gpr_ax).known_value();
 
     uint32_t dwords[4];
+#if 0
+    /* Prone to not compile */
     asm volatile("cpuid"
                  :
                  "=a"(*(dwords+0)),
@@ -54,6 +56,13 @@ RSIM_SemanticPolicy::cpuid()
                  "=d"(*(dwords+3))
                  :
                  "0"(code));
+#else
+    /* Return value based on an Intel model "Xeon X5680 @ 3.33GHz"; 3325.017GHz; stepping 2 */
+    dwords[0] = 0x0000000b;
+    dwords[1] = 0x756e6547;
+    dwords[2] = 0x6c65746e;
+    dwords[3] = 0x49656e69;
+#endif
 
     /* Change "GenuineIntel" to "Genuine ROSE". Doing so should cause the caller to not execute any further CPUID
      * instructions since there's no well-known definition for the rest of our CPUID semantics. */
