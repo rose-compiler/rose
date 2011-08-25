@@ -1351,3 +1351,5 @@ check-local: run-tests
 clean-local: $(SYS_TEST_CLEANUPS) $(PTHREAD_TEST_CLEANUPS)
 	-chmod -f -R a+rwx tmp-sim
 	rm -rf tmp-sim x-core.rose test-file-fchown32
+	-chmod -f -R a+rwx fchmodattestdir* fchmodattestfile*.txt
+	rm -rf             fchmodattestdir* fchmodattestfile*.txt
