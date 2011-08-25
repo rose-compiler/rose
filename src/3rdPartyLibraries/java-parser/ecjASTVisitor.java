@@ -3083,7 +3083,11 @@ class ecjASTVisitor extends ASTVisitor
 
      public void endVisit(LabeledStatement  node, BlockScope scope)
         {
-       // do nothing  by default
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (LabeledStatement,BlockScope)");
+
+          java_parser.cactionLabeledStatementEnd(new String(node.label), this.createJavaToken(node));
+
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (LabeledStatement,BlockScope)");
         }
@@ -3313,6 +3317,11 @@ class ecjASTVisitor extends ASTVisitor
        // do nothing  by default
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (ReturnStatement,BlockScope)");
+
+          java_parser.cactionReturnStatementEnd(node.expression != null, this.createJavaToken(node));
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (ReturnStatement,BlockScope)");
         }
 
      public void endVisit(SingleMemberAnnotation  node, BlockScope scope)
@@ -3399,6 +3408,11 @@ class ecjASTVisitor extends ASTVisitor
      public void endVisit(SynchronizedStatement node, BlockScope scope)
         {
        // do nothing  by default
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (SynchronizedStatement,BlockScope)");
+
+          java_parser.cactionSynchronizedStatementEnd(this.createJavaToken(node));
+
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (SynchronizedStatement,BlockScope)");
         }

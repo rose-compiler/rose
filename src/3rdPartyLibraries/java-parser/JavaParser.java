@@ -162,7 +162,10 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionJavadocSingleNameReferenceClassScope(JavaToken jToken);
      public native void cactionJavadocSingleTypeReference(JavaToken jToken);
      public native void cactionJavadocSingleTypeReferenceClassScope(JavaToken jToken);
+     
      public native void cactionLabeledStatement(JavaToken jToken);
+     public native void cactionLabeledStatementEnd(String labelName, JavaToken jToken);
+
      public native void cactionLocalDeclaration(String variableName, boolean java_is_final, JavaToken jToken);
      public native void cactionLocalDeclarationInitialization(JavaToken jToken);
      public native void cactionLongLiteral(JavaToken jToken);
@@ -202,6 +205,8 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionSwitchStatementEnd(int numCases, boolean hasDefault, JavaToken jToken);
 
      public native void cactionSynchronizedStatement(JavaToken jToken);
+     public native void cactionSynchronizedStatementEnd(JavaToken jToken);
+
      public native void cactionThisReference(JavaToken jToken);
      public native void cactionThisReferenceClassScope(JavaToken jToken);
 
