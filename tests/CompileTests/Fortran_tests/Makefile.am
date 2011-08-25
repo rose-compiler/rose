@@ -240,7 +240,6 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2011_Rice_char-array-decl-asterisk.f90 \
      test2011_Rice_char-kind-decl.f90 \
      test2011_Rice_constructor-initializer.f90 \
-     test2011_Rice_crlf-terminated-line-continuations.f \
      test2011_Rice_data-implied-do.f90 \
      test2011_Rice_derived-type-2d-component.f90 \
      test2011_Rice_derived-type-3d-component.f90 \
