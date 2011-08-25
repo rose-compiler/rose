@@ -1,1 +1,0 @@
-../../src/rose -I../../include -I. -skip_transformation -new_unparser -preinit_il -enable_cp_backend -o rose_templates_stl.C templates_stl.C
