@@ -534,7 +534,8 @@ F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
      test2010_68.f \
      test2010_69.f \
      test2011_Rice_continuation-spits-token.f \
-     test2011_Rice_initial-tab.f 
+     test2011_Rice_initial-tab.f \
+     test2011_Rice_intrinsic-mixup.f
 
 
 
