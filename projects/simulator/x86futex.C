@@ -48,4 +48,12 @@ main(int argc, char *argv[])
 }
 
 
+#else
+
+int main(int, char *argv[])
+{
+    std::cerr <<argv[0] <<": not supported on this platform" <<std::endl;
+    return 0;
+}
+
 #endif
