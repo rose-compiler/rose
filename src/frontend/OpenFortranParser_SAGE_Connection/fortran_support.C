@@ -1929,7 +1929,7 @@ trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variabl
      outputState("At BOTTOM of trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable()");
 #endif
 
-#if 1
+#if 0
   // This function could have returned a NULL pointer if there was no symbol found ???
      if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
           printf ("Leaving trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(): variableSymbol = %p functionSymbol = %p \n",variableSymbol,functionSymbol);
@@ -1954,7 +1954,7 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
   // symbols that have been imported into the associated scope of the using declarations (or use statement 
   // in fortran).
 
-#if 1
+#if 0
      if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
           printf ("In trace_back_through_parent_scopes_lookup_variable_symbol(): variableName = %s currentScope = %p \n",variableName.str(),currentScope);
 #endif
@@ -2451,7 +2451,7 @@ buildImplicitVariableDeclaration( const SgName & variableName )
 
      astNameStack.pop_front();
      astNodeStack.push_front(initializedName);
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("Calling buildVariableDeclaration to build an implicitly defined variable from trace_back_through_parent_scopes_lookup_variable_symbol()");
 #endif
@@ -2491,7 +2491,7 @@ buildImplicitVariableDeclaration( const SgName & variableName )
   // DQ (1/17/2011): Adding an additional test based on debugging test2007_94.f90.
      ROSE_ASSERT(initializedName->get_scope()->lookup_variable_symbol(variableName) != NULL);
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of building an implicitly defined variable from trace_back_through_parent_scopes_lookup_variable_symbol()");
 #endif
@@ -4323,7 +4323,7 @@ convertTypeOnStackToArrayType( int count )
      if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
           printf ("In convertTypeOnStackToArrayType(count = %d) \n",count);
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of convertTypeOnStackToArrayType()");
 #endif
@@ -4411,7 +4411,7 @@ convertTypeOnStackToArrayType( int count )
   // Remove the base_type from the astTypeStack, before we push the new arrayType
   // astTypeStack.pop_front();
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of convertTypeOnStackToArrayType()");
 #endif
@@ -4549,7 +4549,7 @@ generateFunctionRefExp( Token_t* nameToken )
        // Now build the function call and use the arguments from the ExprList on the top of the astExpressionStack!
           SgFunctionSymbol* functionSymbol = new SgFunctionSymbol(functionDeclaration);
 
-       // Insert the function into the global scope so that we can find it later.
+       // Insert the function into the global scope so that we can find it later
           currentScope->insert_symbol(functionName,functionSymbol);
 
           functionRefExp = new SgFunctionRefExp(functionSymbol,NULL);
@@ -5312,7 +5312,7 @@ buildVariableDeclarationAndCleanupTypeStack( Token_t * label )
 
      if (astNodeStack.empty() == false && astBaseTypeStack.empty() == false)
         {
-#if 1
+#if 0
        // Output debugging information about saved state (stack) information.
           outputState("At TOP of buildVariableDeclarationAndCleanupTypeStack() (before calling buildVariableDeclaration())");
 #endif
@@ -5327,7 +5327,7 @@ buildVariableDeclarationAndCleanupTypeStack( Token_t * label )
        // remove the conditionaly handling below.  See the note in R504 c_action_entity_decl()
        // for more details.
        // ROSE_ASSERT(astTypeStack.empty() == true);
-#if 1
+#if 0
           outputState("In buildVariableDeclarationAndCleanupTypeStack() (after buildVariableDeclaration())");
 #endif
        // We should have used all the types stored on the stack at this point!
@@ -5378,7 +5378,7 @@ generateAssignmentStatement(Token_t* label, bool isPointerAssignment )
   // This function builds the SgAssignOp and the SgExprStatement and 
   // inserts it into the current scope.
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of generateAssignmentStatement()");
 #endif
@@ -5453,7 +5453,7 @@ generateAssignmentStatement(Token_t* label, bool isPointerAssignment )
   // This is needed for test2007_67.f90
      astNodeStack.push_front(expressionStatement);
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of generateAssignmentStatement()");
 #endif
@@ -5636,7 +5636,7 @@ buildIntrinsicModule ( const string & name )
    {
      SgClassSymbol*  moduleSymbol = NULL;
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of buildIntrinsicModule()");
 #endif
@@ -5719,7 +5719,7 @@ buildIntrinsicModule ( const string & name )
           ROSE_ASSERT(moduleSymbol != NULL);
         }
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of buildIntrinsicModule()");
 #endif
@@ -5802,7 +5802,7 @@ fixup_possible_incomplete_function_return_type()
    {
   // DQ (12/26/2010): Factor out the fixup required for where use statements are used (e.g. function return types).
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of fixup_possible_incomplete_function_return_type()");
 #endif
@@ -5988,7 +5988,7 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
         {
        // Some attributes that are not order dependent (are there any in Fortran) should maybe we saved and put back on the stack.
 
-#if 1
+#if 0
        // Output debugging information about saved state (stack) information.
           outputState("In loop over attributes in processAttributeSpecStack()");
 #endif
@@ -6140,7 +6140,7 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
                             }
                          ROSE_ASSERT(astExpressionStack.empty() == false);
                        }
-#if 1
+#if 0
                  // Output debugging information about saved state (stack) information.
                     outputState("In processAttributeSpecStack(): After processing type for AttrSpec_DIMENSION");
 #endif
@@ -6149,7 +6149,7 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
                        {
                          i++;
                        }
-#if 1
+#if 0
                  // Output debugging information about saved state (stack) information.
                     outputState("After processing AttrSpec_DIMENSION in loop over attributes in R504 R503-F2008 c_action_entity_decl()");
 #endif
@@ -6239,7 +6239,7 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
 
        // printf ("At bottom of loop over the attrubutes (next attribute = %d = %s ) \n",i != astAttributeSpecStack.end() ? *i : -1,i != astAttributeSpecStack.end() ? "valid" : "end of list");
 
-#if 1
+#if 0
        // Output debugging information about saved state (stack) information.
           outputState("In BOTTOM of loop over attributes in processAttributeSpecStack()");
 #endif
