@@ -128,6 +128,7 @@ namespace AbstractMemoryObject
   {};
 
   // named object --------------------------------
+  //
    class ScalarNamedObj: public Scalar_Impl, public NamedObj 
   {
     public:
@@ -165,6 +166,9 @@ namespace AbstractMemoryObject
     public:
       LabeledAggregateAliasedObj (SgType* t): AliasedObj(t){}
       std::set<SgType*> getType();
+      //TODO
+      // size_t fieldCount();
+      // std::list<LabeledAggregateField*> getElements() const;
       bool operator == (ObjSet& o2);
       std::string toString();
   };
@@ -174,6 +178,12 @@ namespace AbstractMemoryObject
     public:
       ArrayAliasedObj (SgType* t): AliasedObj(t){}
       std::set<SgType*> getType();
+      
+      //TODO
+      // ObjSet* getElements();
+      //  ObjSet* getElements(AbstractIndex* ai);
+      //  getNumDims();
+
       bool operator == (ObjSet& o2);
       std::string toString();
   };
@@ -182,6 +192,9 @@ namespace AbstractMemoryObject
   {
     public:
       PointerAliasedObj (SgType* t): AliasedObj(t){}
+      // TODO ObjSet* getDereference () const;
+      // ObjSet * getElements() const;
+      // bool equalPoints(const Pointer & that);
       std::set<SgType*> getType();
       bool operator == (ObjSet& o2);
       std::string toString();
