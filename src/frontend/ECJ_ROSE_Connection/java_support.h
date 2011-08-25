@@ -138,8 +138,21 @@ SgClassDefinition* getCurrentClassDefinition();
 //! Strips off "#RAW" suffix from raw types (support for Java 1.5 and greater).
 SgName processNameOfRawType(SgName name);
 
+//! Support for identification of symbols using qualified names (used by the import statement).
+SgSymbol* lookupSymbolInParentScopesUsingQualifiedName( SgName qualifiedName, SgScopeStatement* currentScope);
+
+//! Refactored support to extraction of associated scope from symbol (where possible, i.e. SgClassSymbol, etc.).
+SgScopeStatement* get_scope_from_symbol( SgSymbol* returnSymbol );
+
+//! Parse the parameterized type names into parts.
+std::list<SgName> generateGenericTypeNameList (const SgName & parameterizedTypeName);
 
 
+
+
+// ***********************************************************
+//  Template Definitions (required to be in the header files)
+// ***********************************************************
 
 template< class T >
 void

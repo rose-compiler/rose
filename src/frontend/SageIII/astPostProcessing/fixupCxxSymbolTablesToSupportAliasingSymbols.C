@@ -30,6 +30,7 @@ fixupAstSymbolTablesToSupportAliasedSymbols (SgNode* node)
    }
 
 
+// DQ (8/23/2011): Made this a static function so that I could call it from the Java support.
 void
 FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeIntoCurrentScope ( SgScopeStatement* referencedScope, SgScopeStatement* currentScope, SgAccessModifier::access_modifier_enum accessLevel )
    {
