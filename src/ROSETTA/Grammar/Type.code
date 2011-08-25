@@ -351,9 +351,16 @@ HEADER_CLASS_TYPE_START
           SgClassType ( const SgClassType & X );
 HEADER_CLASS_TYPE_END
 
+
+HEADER_JAVA_PARAMETERIZED_TYPE_START
+          SgJavaParameterizedType ( const SgJavaParameterizedType & X );
+HEADER_JAVA_PARAMETERIZED_TYPE_END
+
+
 HEADER_ENUM_TYPE_START
           SgEnumType ( const SgEnumType & X );
 HEADER_ENUM_TYPE_END
+
 
 HEADER_TEMPLATE_TYPE_START
 HEADER_TEMPLATE_TYPE_END
@@ -2676,6 +2683,66 @@ $CLASSNAME::get_mangled(SgUnparse_Info&)
 
 SOURCE_CLASS_TYPE_END
 
+
+SOURCE_JAVA_PARAMETERIZED_TYPE_START
+SgJavaParameterizedType::SgJavaParameterizedType ( const SgJavaParameterizedType & X )
+   : SgNamedType(X)
+   {
+   }
+
+
+SgName
+SgJavaParameterizedType::get_name() const
+   {
+     if(get_declaration())
+          return isSgClassDeclaration(get_declaration())->get_name();
+       else
+          return SgName((char *)0L);
+   }
+
+// DQ (8/18/2011): This function is copied from the version from SgClassType.
+SgName
+$CLASSNAME::get_mangled(void) const
+   {
+     ROSE_ASSERT(this != NULL);
+
+  // printf ("In $CLASSNAME::get_mangled(): get_name() = %s \n",get_name().str());
+
+     SgName mangled_name;
+  // if (get_name().get_length() != 0) // not anonymous
+     if (get_name().is_null() == false) // not anonymous
+        {
+          const SgClassDeclaration* class_decl = isSgClassDeclaration(get_declaration());
+       // printf ("In $CLASSNAME::get_mangled(): class_decl = %p = %s \n",class_decl, ((class_decl == NULL) ? "NULL" : class_decl->class_name().c_str()) );
+          if (class_decl != NULL)
+             {
+            // DQ (7/29/2010): Template instantiation declarations can differ on template parameters so we have to dig a little farther.
+               const SgTemplateInstantiationDecl* template_class_decl = isSgTemplateInstantiationDecl(get_declaration());
+               if (template_class_decl != NULL)
+                  {
+                    mangled_name = template_class_decl->get_mangled_name();
+#if 0
+                    printf ("In $CLASSNAME::get_mangled(): SgTemplateInstantiationDecl mangled_name = %s \n",mangled_name.str());
+#endif
+#if 0
+                    printf ("Need to get the mangled names of the template arguments \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+                 else
+                  {
+                 // This is for just a simple SgClassDeclaration.
+                    mangled_name = class_decl->get_mangled_name();
+                 // printf ("In $CLASSNAME::get_mangled(): SgClassDeclaration mangled_name = %s \n",mangled_name.str());
+                  }
+             }
+        }
+
+     return mangled_name;
+   }
+SOURCE_JAVA_PARAMETERIZED_TYPE_END
+
+
 SOURCE_TEMPLATE_TYPE_START
 
 SOURCE_TEMPLATE_TYPE_END
@@ -4783,6 +4850,23 @@ SgClassType::createType(SgClassDeclaration * cd, SgExpression* optional_fortran_
    }
 
 SOURCE_CREATE_TYPE_FOR_CLASS_TYPE_END
+
+
+SOURCE_CREATE_TYPE_FOR_JAVA_PARAMETERIZED_TYPE_START
+
+// SgClassType* SgClassType::createType(SgClassDeclaration * cd)
+SgJavaParameterizedType*
+SgJavaParameterizedType::createType(SgClassDeclaration * cd, SgExpression* optional_fortran_type_kind)
+   {
+     ROSE_ASSERT(cd != NULL);
+
+  // DQ (10/4/2010): I think that pointer types can't have a kind parameter, so this should be NULL.
+     ROSE_ASSERT(optional_fortran_type_kind == NULL);
+
+     return ($CLASSNAME*) cd->get_type();
+   }
+
+SOURCE_CREATE_TYPE_FOR_JAVA_PARAMETERIZED_TYPE_END
 
 
 SOURCE_CREATE_TYPE_FOR_TEMPLATE_TYPE_START

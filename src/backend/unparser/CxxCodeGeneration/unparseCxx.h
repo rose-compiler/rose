@@ -415,6 +415,7 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
        
        // TV (05/06/2010): SgCudaKernelCallExp
           virtual void unparseCudaKernelCall(SgExpression* expr, SgUnparse_Info& info);
+
    };
 
 #endif

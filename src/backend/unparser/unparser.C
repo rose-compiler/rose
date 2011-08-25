@@ -76,15 +76,6 @@ Unparser::Unparser( ostream* nos, string fname, Unparser_Opt nopt, UnparseFormat
      u_fortran_type = new UnparseFortran_type(this);
      u_fortran_locatedNode = new FortranCodeGeneration_locatedNode(this, fname);
 
-#if 0
-     u_java_type = NULL;
-     u_java_locatedNode = NULL;
-#else
-  // DQ (4/16/2011): Added the Java support symetric to the Fortran unparser support.
-     u_java_type = new UnparseJava_type(this);
-     u_java_locatedNode = new JavaCodeGeneration_locatedNode(this, fname);
-#endif
-
   // ROSE_ASSERT(nfile != NULL);
      ROSE_ASSERT(nos != NULL);
 
@@ -345,8 +336,8 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
              {
             // Unparse using C/C++ unparser by default
                // negara1 (06/29/2011): If unparseScope is provided, unparse it. Otherwise, unparse the global scope (the default behavior).
-               if (unparseScope != NULL) {                   
-                   if (isSgGlobal(unparseScope) != NULL || isSgClassDefinition(unparseScope) != NULL) {                       
+               if (unparseScope != NULL) {
+                   if (isSgGlobal(unparseScope) != NULL || isSgClassDefinition(unparseScope) != NULL) {
                        info.set_current_scope(unparseScope);
                        const SgDeclarationStatementPtrList& declarations = unparseScope -> getDeclarationList();
                        for (SgDeclarationStatementPtrList::const_iterator declaration = declarations.begin(); declaration != declarations.end(); declaration++) {
@@ -354,7 +345,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
                        }
                    } else {
                        //Simulate that the unparsed scope is global in order to unparse an included file.
-                       SgGlobal* fakeGlobal = new SgGlobal(); 
+                       SgGlobal* fakeGlobal = new SgGlobal();
                        fakeGlobal -> set_file_info(unparseScope -> get_file_info());
                        info.set_current_scope(fakeGlobal);
 
@@ -379,13 +370,13 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
                   {
                     if (file->get_Java_only())
                        {
-                      // Unparse using the new Fortran unparser!
-                         ROSE_ASSERT(u_java_locatedNode != NULL);
+                      // DQ (8/19/2011): Now that the unparser is working better and we generate a more 
+                      // correct AST for Java, we want to use better mechanisms to control the output of 
+                      // different parts of the AST (implicit vs. explicit classes in Java).
+                      // info.set_outputCompilerGeneratedStatements();
 
-                      // printf ("This is the unparser support for Java (exiting as a test) \n");
-                      // ROSE_ASSERT(false);
-
-                         u_java_locatedNode->unparseStatement(globalScope, info);
+                         Unparse_Java unparser(this, file->getFileName());
+                         unparser.unparseStatement(globalScope, info);
                        }
                       else
                        {
@@ -1524,9 +1515,8 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
 
      ROSE_ASSERT(file != NULL);
 
-     // FMZ (12/21/2009) the imported files by "use" statements should not be unparsed 
+  // FMZ (12/21/2009) the imported files by "use" statements should not be unparsed 
      if (file->get_skip_unparse()==true) return;
-
 
 #if 0
   // DQ (5/31/2006): It is a message that I think we can ignore (was a problem for Yarden)
@@ -1672,6 +1662,8 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
        // information that is passed down through the tree (inherited attribute)
        // SgUnparse_Info inheritedAttributeInfo (NO_UNPARSE_INFO);
           SgUnparse_Info inheritedAttributeInfo;
+
+       // inheritedAttributeInfo.display("Inside of unparseFile(SgFile* file)");
 
        // Call member function to start the unparsing process
        // roseUnparser.run_unparser();

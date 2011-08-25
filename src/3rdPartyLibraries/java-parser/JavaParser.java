@@ -51,6 +51,7 @@ class JavaParser  implements Callable<Boolean>
 
   // These are used in the ecjASTVisitor (which is derived from the ECJ ASTVisitor class).
      public native void cactionCompilationUnitDeclaration(String filename, JavaToken jToken);
+     public native void cactionCompilationUnitDeclarationEnd(int java_numberOfStatements, JavaToken jToken);
      public native void cactionTypeDeclaration(String filename, JavaToken jToken);
   // public native void cactionTypeDeclaration(String filename, JavaToken jToken);
      public native void cactionTypeDeclarationEnd(String filename,int java_numberOfStatements, JavaToken jToken);
@@ -72,6 +73,7 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionStringLiteral(String filename, JavaToken jToken);
 
      public native void cactionAllocationExpression(JavaToken jToken);
+     public native void cactionAllocationExpressionEnd(String nameOfType, JavaToken jToken);
      public native void cactionANDANDExpression(JavaToken jToken);
      public native void cactionANDANDExpressionEnd(JavaToken jToken);
      public native void cactionAnnotationMethodDeclaration(JavaToken jToken);
@@ -89,8 +91,11 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionBinaryExpressionEnd(int java_operator_kind, JavaToken jToken);
      public native void cactionBlock(JavaToken jToken);
      public native void cactionBlockEnd(int java_numberOfStatement, JavaToken jTokens);
-     public native void cactionBreakStatement(JavaToken jToken);
-     public native void cactionCaseStatement(JavaToken jToken);
+     public native void cactionBreakStatement(String labelName, JavaToken jToken);
+
+     public native void cactionCaseStatement(boolean hasCaseExpression, JavaToken jToken);
+     public native void cactionCaseStatementEnd(boolean hasCaseExpression, JavaToken jToken);
+
      public native void cactionCastExpression(JavaToken jToken);
      public native void cactionCastExpressionEnd(JavaToken jToken);
      public native void cactionCharLiteral(JavaToken jToken);
@@ -98,7 +103,7 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionClinit(JavaToken jToken);
      public native void cactionConditionalExpression(JavaToken jToken);
      public native void cactionConditionalExpressionEnd(JavaToken jToken);
-     public native void cactionContinueStatement(JavaToken jToken);
+     public native void cactionContinueStatement(String labelName, JavaToken jToken);
      public native void cactionCompoundAssignment(JavaToken jToken);
      public native void cactionCompoundAssignmentEnd(int java_operator_kind, JavaToken jToken);
      public native void cactionDoStatement(JavaToken jToken);
@@ -141,7 +146,7 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionJavadocArrayQualifiedTypeReference(JavaToken jToken);
      public native void cactionJavadocArrayQualifiedTypeReferenceClassScope(JavaToken jToken);
      public native void cactionJavadocArraySingleTypeReference(JavaToken jToken);
-         public native void cactionJavadocArraySingleTypeReferenceClassScope(JavaToken jToken);
+     public native void cactionJavadocArraySingleTypeReferenceClassScope(JavaToken jToken);
      public native void cactionJavadocFieldReference(JavaToken jToken);
      public native void cactionJavadocFieldReferenceClassScope(JavaToken jToken);
      public native void cactionJavadocImplicitTypeReference(JavaToken jToken);
@@ -150,6 +155,7 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionJavadocMessageSendClassScope(JavaToken jToken);
      public native void cactionJavadocQualifiedTypeReference(JavaToken jToken);
      public native void cactionJavadocQualifiedTypeReferenceClassScope(JavaToken jToken);
+
      public native void cactionJavadocReturnStatement(JavaToken jToken);
      public native void cactionJavadocReturnStatementClassScope(JavaToken jToken);
      public native void cactionJavadocSingleNameReference(JavaToken jToken);
@@ -170,6 +176,7 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionParameterizedQualifiedTypeReference(JavaToken jToken);
      public native void cactionParameterizedQualifiedTypeReferenceClassScope(JavaToken jToken);
      public native void cactionParameterizedSingleTypeReference(JavaToken jToken);
+     public native void cactionParameterizedSingleTypeReferenceEnd(int java_numberOfTypeArguments, JavaToken jToken);
      public native void cactionParameterizedSingleTypeReferenceClassScope(JavaToken jToken);
      public native void cactionPostfixExpression(JavaToken jToken);
      public native void cactionPostfixExpressionEnd(int java_operator_kind, JavaToken jToken);
@@ -182,18 +189,30 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionQualifiedThisReferenceClassScope(JavaToken jToken);
      public native void cactionQualifiedTypeReference(JavaToken jToken);
      public native void cactionQualifiedTypeReferenceClassScope(JavaToken jToken);
+
      public native void cactionReturnStatement(JavaToken jToken);
+     public native void cactionReturnStatementEnd(boolean hasExpression, JavaToken jToken);
+
      public native void cactionSingleMemberAnnotation(JavaToken jToken);
      public native void cactionSingleNameReference(String variableName, JavaToken jToken);
      public native void cactionSingleNameReferenceClassScope(JavaToken jToken);
      public native void cactionSuperReference(JavaToken jToken);
+
      public native void cactionSwitchStatement(JavaToken jToken);
+     public native void cactionSwitchStatementEnd(int numCases, boolean hasDefault, JavaToken jToken);
+
      public native void cactionSynchronizedStatement(JavaToken jToken);
      public native void cactionThisReference(JavaToken jToken);
      public native void cactionThisReferenceClassScope(JavaToken jToken);
+
      public native void cactionThrowStatement(JavaToken jToken);
+     public native void cactionThrowStatementEnd(JavaToken jToken);
+
      public native void cactionTrueLiteral(JavaToken jToken);
-     public native void cactionTryStatement(JavaToken jToken);
+
+     public native void cactionTryStatement(int numCatchBlocks, boolean hasFinallyBlock, JavaToken jToken);
+     public native void cactionTryStatementEnd(int numCatchBlocks, boolean hasFinallyBlock, JavaToken jToken);
+
      public native void cactionTypeParameter(JavaToken jToken);
      public native void cactionTypeParameterClassScope(JavaToken jToken);
      public native void cactionUnaryExpression(JavaToken jToken);
@@ -207,7 +226,7 @@ class JavaParser  implements Callable<Boolean>
   // does not have a reference of the JavaParser object..  Not clear if it should.
   // Also it might be that all of the JNI functions should be static.
      public static native void cactionBuildImplicitClassSupportStart(String className);
-     public static native void cactionBuildImplicitClassSupportEnd(String className);
+     public static native void cactionBuildImplicitClassSupportEnd(int java_numberOfStatements, String className);
      public static native void cactionBuildImplicitMethodSupport(String methodName);
      public static native void cactionBuildImplicitFieldSupport(String fieldName);
 
