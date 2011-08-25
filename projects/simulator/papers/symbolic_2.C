@@ -68,7 +68,7 @@ public:
 
             // We deactive the simulator while we're doing this analysis.  If the simulator remains activated, then the SIGCHLD
             // that are generated from running the Yices executable will be sent to the specimen.  That probably wouldn't cause
-            // problems for the specimen, but the messages are anoying.
+            // problems for the specimen, but the messages are annoying.
             args.thread->get_process()->get_simulator()->deactivate();
 
             // Create the policy that holds the analysis state which is modified by each instruction.  Then plug the policy
