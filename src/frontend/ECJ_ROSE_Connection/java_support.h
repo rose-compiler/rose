@@ -4,22 +4,6 @@
 // This is used for both Fortran and Java support to point to the current SgSourceFile.
 extern SgSourceFile* OpenFortranParser_globalFilePointer;
 
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#if 0
-// DQ (1/14/2011): Later I would like to provide some similar support for source position inforamtion.
-#include "ActionEnums.h"
-#include "token.h"
-#include "JavaParserAction.h"
-#endif
-
-#ifdef __cplusplus
-} /* End extern C. */
-#endif
-
 #include "jni_JavaSourceCodePosition.h"
 #include "token.h"
 #include "VisitorContext.h"
@@ -96,6 +80,17 @@ void pushAndSetSourceCodePosition(JavaSourceCodePosition * pos, SgLocatedNode * 
 void setJavaSourcePosition( SgLocatedNode* locatedNode);
 void setJavaSourcePosition( SgLocatedNode* locatedNode, JavaSourceCodePosition * posInfo);
 
+// DQ (8/16/2011): Added support using the jToken object.
+void setJavaSourcePosition( SgLocatedNode* locatedNode, JNIEnv *env, jobject jToken);
+
+// DQ (8/16/2011): Added support for marking nodes as compiler generated (implicit in Java).
+void setJavaCompilerGenerated( SgLocatedNode* locatedNode );
+void setJavaSourcePositionUnavailableInFrontend( SgLocatedNode* locatedNode );
+
+//! This is how Java implicit classes are marked so that they can be avoided in output.
+void setJavaFrontendSpecific( SgLocatedNode* locatedNode );
+
+
 // *********************************************
 
 
@@ -140,9 +135,24 @@ void appendStatementStack(int numberOfStatements);
 //! Support to get current class scope.
 SgClassDefinition* getCurrentClassDefinition();
 
+//! Strips off "#RAW" suffix from raw types (support for Java 1.5 and greater).
+SgName processNameOfRawType(SgName name);
+
+//! Support for identification of symbols using qualified names (used by the import statement).
+SgSymbol* lookupSymbolInParentScopesUsingQualifiedName( SgName qualifiedName, SgScopeStatement* currentScope);
+
+//! Refactored support to extraction of associated scope from symbol (where possible, i.e. SgClassSymbol, etc.).
+SgScopeStatement* get_scope_from_symbol( SgSymbol* returnSymbol );
+
+//! Parse the parameterized type names into parts.
+std::list<SgName> generateGenericTypeNameList (const SgName & parameterizedTypeName);
 
 
 
+
+// ***********************************************************
+//  Template Definitions (required to be in the header files)
+// ***********************************************************
 
 template< class T >
 void

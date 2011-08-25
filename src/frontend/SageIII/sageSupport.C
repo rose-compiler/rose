@@ -14,6 +14,7 @@
 #include "sageBuilder.h"
 
 #include "CollectionHelper.h"
+#include "IncludeDirective.h"
 #include "CompilerOutputParser.h"
 #include "IncludingPreprocessingInfosCollector.h"
 
@@ -2005,6 +2006,12 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_collectAllCommentsAndDirectives(true);
         }
 
+     // negara1 (08/16/2011): A user may optionally specify the root folder for the unparsed header files.  
+     if (CommandlineProcessing::isOptionWithParameter(argv, "-rose:", "(unparseHeaderFilesRootFolder)", stringParameter, true) == true) {
+         //Although it is specified per file, it should be the same for the whole project.         
+         get_project() -> set_unparseHeaderFilesRootFolder(stringParameter);
+     }
+     
   //
   // skip_commentsAndDirectives option: if analysis that does not use comments or CPP directives is required
   // then this option can improve the performance of the compilation.
@@ -2361,6 +2368,9 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)^", "test", &integerOption, 1);
      optionCount = sla(argv, "-rose:", "($)", "(skipfinalCompileStep)",1);
      optionCount = sla(argv, "-rose:", "($)", "(prelink)",1);
+
+     char* unparseHeaderFilesRootFolderOption = NULL;
+     optionCount = sla(argv, "-rose:", "($)^", "(unparseHeaderFilesRootFolder)", unparseHeaderFilesRootFolderOption, 1);
 
      char* templateInstationationOption = NULL;
      optionCount = sla(argv, "-rose:", "($)^", "(instantiation)",templateInstationationOption,1);
@@ -4292,31 +4302,6 @@ SgProject::parse(const vector<string>& argv)
      ROSE_ASSERT(SgNode::get_globalTypeTable()->get_parent() != NULL);
 #endif
 
-     // negara1 (06/23/2011): Collect information about the included files to support unparsing of those that are modified.
-     //Proceed only if there are input files and they require header files unparsing.
-     if (!get_fileList().empty() && (*get_fileList().begin()) -> get_unparseHeaderFiles()) {
-         if (SgProject::get_verbose() >= 1){
-             cout << endl << "***HEADER FILES ANALYSIS***" << endl << endl;
-         }
-         CompilerOutputParser compilerOutputParser(this);
-         const pair<list<string>, list<string> >& includedFilesSearchPaths = compilerOutputParser.collectIncludedFilesSearchPaths();
-         const map<string, set<string> >& includedFilesMap = compilerOutputParser.collectIncludedFilesMap();
-
-         IncludingPreprocessingInfosCollector includingPreprocessingInfosCollector(this, includedFilesSearchPaths, includedFilesMap);
-         const map<string, set<PreprocessingInfo*> >& includingPreprocessingInfosMap = includingPreprocessingInfosCollector.collect();
-
-         set_includingPreprocessingInfosMap(includingPreprocessingInfosMap);
-
-         if (SgProject::get_verbose() >= 1){
-             CollectionHelper::printList(includedFilesSearchPaths.first, "\nQuoted includes search paths:", "Path:");
-             CollectionHelper::printList(includedFilesSearchPaths.second, "\nBracketed includes search paths:", "Path:");
-
-             CollectionHelper::printMapOfSets(includedFilesMap, "\nIncluded files map:", "File:", "Included file:");
-
-             CollectionHelper::printMapOfSets(includingPreprocessingInfosMap, "\nIncluding files map:", "File:", "Including file:");
-         }
-     }
-
      return errorCode;
    }
 
@@ -4524,6 +4509,24 @@ SgProject::parse()
         }
 #endif
 
+     // negara1 (06/23/2011): Collect information about the included files to support unparsing of those that are modified.
+     //In the first step, get the include search paths, which will be used while attaching include preprocessing infos.
+     //Proceed only if there are input files and they require header files unparsing.
+     if (!get_fileList().empty() && (*get_fileList().begin()) -> get_unparseHeaderFiles()) { 
+         if (SgProject::get_verbose() >= 1){
+             cout << endl << "***HEADER FILES ANALYSIS***" << endl << endl;
+         }
+         CompilerOutputParser compilerOutputParser(this);
+         const pair<list<string>, list<string> >& includedFilesSearchPaths = compilerOutputParser.collectIncludedFilesSearchPaths();  
+         set_quotedIncludesSearchPaths(includedFilesSearchPaths.first);
+         set_bracketedIncludesSearchPaths(includedFilesSearchPaths.second);
+
+         if (SgProject::get_verbose() >= 1) {
+             CollectionHelper::printList(get_quotedIncludesSearchPaths(), "\nQuoted includes search paths:", "Path:");
+             CollectionHelper::printList(get_bracketedIncludesSearchPaths(), "\nBracketed includes search paths:", "Path:");
+         }
+     }     
+
   // GB (9/4/2009): Moved the secondary pass over source files (which
   // attaches the preprocessing information) to this point. This way, the
   // secondary pass over each file runs after all fixes have been done. This
@@ -4538,6 +4541,24 @@ SgProject::parse()
           file->secondaryPassOverSourceFile();
         }
 
+     // negara1 (06/23/2011): Collect information about the included files to support unparsing of those that are modified.
+     //In the second step (after preprocessing infos are already attached), collect the including files map.
+     //Proceed only if there are input files and they require header files unparsing.
+     if (!get_fileList().empty() && (*get_fileList().begin()) -> get_unparseHeaderFiles()) { 
+         CompilerOutputParser compilerOutputParser(this);
+         const map<string, set<string> >& includedFilesMap = compilerOutputParser.collectIncludedFilesMap();
+
+         IncludingPreprocessingInfosCollector includingPreprocessingInfosCollector(this, includedFilesMap);
+         const map<string, set<PreprocessingInfo*> >& includingPreprocessingInfosMap = includingPreprocessingInfosCollector.collect();
+
+         set_includingPreprocessingInfosMap(includingPreprocessingInfosMap);
+         
+         if (SgProject::get_verbose() >= 1) {
+             CollectionHelper::printMapOfSets(includedFilesMap, "\nIncluded files map:", "File:", "Included file:");
+             CollectionHelper::printMapOfSets(get_includingPreprocessingInfosMap(), "\nIncluding files map:", "File:", "Including file:");
+         }
+     }
+     
      if ( get_verbose() > 0 )
         {
        // Report the error code if it is non-zero (but only in verbose mode)
@@ -4571,6 +4592,34 @@ SgProject::parse()
      return errorCode;
    }
 
+//negara1 (07/29/2011)
+//The returned file path is not normalized. 
+//TODO: Return the normalized path after the bug in ROSE is fixed. The bug manifests itself when the same header file is included in 
+//multiple places using different paths. In such a case, ROSE treats the same file as different files and generates different IDs for them.
+string SgProject::findIncludedFile(PreprocessingInfo* preprocessingInfo) {
+    IncludeDirective includeDirective(preprocessingInfo -> getString());
+    const string& includedPath = includeDirective.getIncludedPath();
+    if (FileHelper::isAbsolutePath(includedPath)) {
+        //the path is absolute, so no need to search for the file
+        if (FileHelper::fileExists(includedPath)) {
+            return includedPath;
+        }
+        return ""; //file does not exist, so return an empty string
+    }
+    if (includeDirective.isQuotedInclude()) {
+        //start looking from the current folder, then proceed with the quoted includes search paths
+        //TODO: Consider the presence of -I- option, which disables looking in the current folder for quoted includes.
+        string currentFolder = FileHelper::getParentFolder(preprocessingInfo -> get_file_info() -> get_filenameString());
+        p_quotedIncludesSearchPaths.insert(p_quotedIncludesSearchPaths.begin(), currentFolder);
+        string includedFilePath = FileHelper::getIncludedFilePath(p_quotedIncludesSearchPaths, includedPath);
+        p_quotedIncludesSearchPaths.erase(p_quotedIncludesSearchPaths.begin()); //remove the previously inserted current folder (for other files it might be different)
+        if (!includedFilePath.empty()) {
+            return includedFilePath;
+        }
+    }
+    //For bracketed includes and for not yet found quoted includes proceed with the bracketed includes search paths
+    return FileHelper::getIncludedFilePath(p_bracketedIncludesSearchPaths, includedPath);
+}
 
 void
 SgSourceFile::doSetupForConstructor(const vector<string>& argv, SgProject* project)
@@ -4874,6 +4923,9 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           argument == "-rose:excludeFile" ||
           argument == "-rose:astMergeCommandFile" ||
 
+       // negara1 (08/16/2011)
+          argument == "-rose:unparseHeaderFilesRootFolder" ||
+             
        // DQ (8/20/2008): Add support for Qing's options!
           argument == "-annot" ||
           argument == "-bs" ||
@@ -6413,26 +6465,29 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
                   }
              }
 
-#if 1
-          if ( get_verbose() > 0 )
+#if 0
+          if (get_verbose() > 2)
              {
-               printf ("Checking syntax of input program using gfortran: syntaxCheckingCommandline = %s \n",CommandlineProcessing::generateStringFromArgList(javaCommandLine,false,false).c_str());
+               printf ("Checking syntax of input program using javac: syntaxCheckingCommandline = %s \n",CommandlineProcessing::generateStringFromArgList(javaCommandLine,false,false).c_str());
              }
 #endif
        // Call the OS with the commandline defined by: syntaxCheckingCommandline
           javaCommandLine.push_back(get_sourceFileNameWithPath());
 
        // At this point we have the full command line with the source file name
-          if ( get_verbose() > 0 )
+          if (get_verbose() > 1)
              {
-               printf ("Checking syntax of input program using gfortran: syntaxCheckingCommandline = %s \n",CommandlineProcessing::generateStringFromArgList(javaCommandLine,false,false).c_str());
+               printf ("Checking syntax of input program using javac: syntaxCheckingCommandline = %s \n",CommandlineProcessing::generateStringFromArgList(javaCommandLine,false,false).c_str());
              }
 
           int returnValueForSyntaxCheckUsingBackendCompiler = 0;
+
+// Note the both the Fortran and Java support require the Jave JVM support (which is what USE_GFORTRAN_IN_ROSE implies).
 #if USE_GFORTRAN_IN_ROSE
           returnValueForSyntaxCheckUsingBackendCompiler = systemFromVector (javaCommandLine);
 #else
-          printf ("backend java compiler (javac) unavailable ... (not an error) \n");
+       // ROSE can be configured withouth Java support, in which case it is not an error to avoid the syntax checking of a java file.
+          printf ("backend java compiler (javac) unavailable ... (not an error: ROSE has been configured this way) \n");
 #endif
 
        // Check that there are no errors, I think that warnings are ignored!
@@ -6562,7 +6617,6 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
      frontEndCommandLine.push_back(".");
 #endif
 
-#if 1
   // DQ (4/1/2011): Added ecj option handling (similar to how EDG option handling is supported).
   // This allows ECJ specific option to be set on the command line for ROSE translators.
 
@@ -6575,6 +6629,18 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
   // Resets modifiedArgc and allocates memory to modifiedArgv
      Rose_STL_Container<string> ecjOptionList = CommandlineProcessing::generateOptionList (argv,"-ecj:");
      CommandlineProcessing::addListToCommandLine(frontEndCommandLine,"-",ecjOptionList);
+
+  // Test for explicit specification of support for Java version number.
+     bool redundantVersionSpecification = false;
+     if ( (find(ecjOptionList.begin(),ecjOptionList.end(),"1.3") != ecjOptionList.end()) ||
+          (find(ecjOptionList.begin(),ecjOptionList.end(),"1.4") != ecjOptionList.end()) ||
+          (find(ecjOptionList.begin(),ecjOptionList.end(),"1.5") != ecjOptionList.end()) ||
+          (find(ecjOptionList.begin(),ecjOptionList.end(),"1.6") != ecjOptionList.end()) ||
+          (find(ecjOptionList.begin(),ecjOptionList.end(),"1.7") != ecjOptionList.end()) )
+        {
+       // If any of these were specified explicitly then don't set the default version on the ECJ command line redundantly (an error detected by ECJ).
+          redundantVersionSpecification = true;
+        }
 
   // *******************************************************************
   // Handle general ecj options (--xxx)
@@ -6601,7 +6667,15 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
   // Handle ecj options taking a parameter (string or integer)
      ecjOptionList = CommandlineProcessing::generateOptionWithNameParameterList (argv,"--ecj_parameter:");
      CommandlineProcessing::addListToCommandLine(frontEndCommandLine,"--",ecjOptionList);
-#endif
+
+  // Set the default Java version to be supported in ROSE:
+  // DQ (8/20/2011): Make the default for ROSE to use Java version 1.6 since our syntax checking
+  // and backend compiler is using javac 1.6 (thought this could be upgraded to 1.7 at any point).
+  // Since the langauge does not change between 1.5 and 1.7, this should not be an issue for ROSE.
+     if (redundantVersionSpecification == false)
+        {
+          frontEndCommandLine.push_back("-1.6");
+        }
 
   // Java does not use include files, so we can enforce this.
      ROSE_ASSERT(get_project()->get_includeDirectorySpecifierList().empty() == true);
@@ -6640,9 +6714,6 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
      printf ("To enable the use of Fortran support in ROSE don't use --enable-ssl on configure command line. \n");
      printf ("********************************************************************************************** \n");
 #else
-
-  // frontendErrorLevel = openFortranParser_main (numberOfCommandLineArguments, inputCommandLine);
-  // int frontendErrorLevel = openFortranParser_main (openFortranParser_argc, openFortranParser_argv);
      int frontendErrorLevel = openJavaParser_main (openJavaParser_argc, openJavaParser_argv);
 #endif
 
@@ -6953,12 +7024,12 @@ SgBinaryComposite::buildAsmAST(string executableFileName)
  *    - optionally disassembles instructions (SgAsmInterpretation nodes) */
 int
 SgBinaryComposite::buildAST(vector<string> /*argv*/, vector<string> /*inputCommandLine*/)
-{
+   {
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
     /* Parse the specified binary file to create the AST. Do not disassemble instructions yet. If the file is dynamically
      * linked then optionally load (i.e., parse the container, map sections into process address space, and perform relocation
      * fixups) all dependencies also.  See the BinaryLoader class for details. */
-    if (get_isLibraryArchive()) {
+     if (get_isLibraryArchive()) {
         ROSE_ASSERT(get_libraryArchiveObjectFileNameList().empty() == false);
         ROSE_ASSERT(get_libraryArchiveObjectFileNameList().empty() == (get_isLibraryArchive() == false));
 
@@ -6985,9 +7056,10 @@ SgBinaryComposite::buildAST(vector<string> /*argv*/, vector<string> /*inputComma
     // DQ (1/22/2008): The generated unparsed assemble code can not currently be compiled because the
     // addresses are unparsed (see Jeremiah for details).
     // Skip running gnu assemble on the output since we include text that would make this a problem.
-    if (get_verbose() > 1)
-        printf("set_skipfinalCompileStep(true) because we are on a binary '%s'\n", this->get_sourceFileNameWithoutPath().c_str());
-    this->set_skipfinalCompileStep(true);
+     if (get_verbose() > 1)
+          printf("set_skipfinalCompileStep(true) because we are on a binary '%s'\n", this->get_sourceFileNameWithoutPath().c_str());
+
+     this->set_skipfinalCompileStep(true);
 
     // This is now done below in the Secondary file processing phase.
     // Generate the ELF executable format structure into the AST
@@ -6997,9 +7069,9 @@ SgBinaryComposite::buildAST(vector<string> /*argv*/, vector<string> /*inputComma
      ROSE_ASSERT(false);
 #endif
 
-    int frontendErrorLevel = 0;
-    return frontendErrorLevel;
-}
+     int frontendErrorLevel = 0;
+     return frontendErrorLevel;
+   }
 
 
 #if 0
@@ -7809,9 +7881,18 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
             // I need the exact command line used to compile the generate code with the backendcompiler (so that I can reuse it to test the generated code).
                printf ("SgFile::compileOutput(): compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
              }
-
+#if 0
        // Call the backend compiler. For Fortran inputs, if ROSE is configured with Java this can cause the backend fortran compiler to be called.
+       // driscoll6 (8/11/11) debugging java backend
+          if (get_Java_only() == true) {
+               printf ("SgFile::compileOutput(): debugging java backend: compilerNameString = %s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
+              returnValueForCompiler = 0;
+          } else {
+              returnValueForCompiler = systemFromVector (compilerNameString);
+          }
+#else
           returnValueForCompiler = systemFromVector (compilerNameString);
+#endif
         }
        else
         {
@@ -8556,6 +8637,12 @@ SgFile::usage ( int status )
 "                               in either fixed/free format (fortran only)\n"
 "                               options are: fixedOutput|fixedFormatOutput or \n"
 "                                            freeOutput|freeFormatOutput\n"
+"     -rose:unparseHeaderFilesRootFolder FOLDERNAME\n"
+"                             A relative or an absolute path to the root folder,\n"
+"                             in which unparsed header files are stored.\n"
+"                             Note that the folder must be empty (or does not exist).\n"
+"                             If not specified, the default relative location _rose_ \n"
+"                             is used.\n"                  
 "\n"
 "Testing Options:\n"
 "     -rose:negative_test     test ROSE using input that is expected to fail\n"
