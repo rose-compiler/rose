@@ -2466,12 +2466,12 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jobje
   // containsWildcard = (bool) (env->CallStaticBooleanMethod(xxx,java_containsWildcard) == 1);
   // containsWildcard = (java_containsWildcard == 1);
 
-     SgName name           = convertJavaStringToCxxString(env,java_string);
+     SgName qualifiedName  = convertJavaStringToCxxString(env,java_string);
      bool containsWildcard = java_containsWildcard;
 
-     printf ("import name = %s containsWildcard = %s \n",name.str(),containsWildcard ? "true" : "false");
+     printf ("import qualifiedName = %s containsWildcard = %s \n",qualifiedName.str(),containsWildcard ? "true" : "false");
 
-     SgJavaImportStatement* importStatement = new SgJavaImportStatement(name,containsWildcard);
+     SgJavaImportStatement* importStatement = new SgJavaImportStatement(qualifiedName,containsWildcard);
      ROSE_ASSERT(importStatement != NULL);
 
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
@@ -2498,8 +2498,41 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jobje
   // DQ (8/23/2011): This is part of the AST post-processing, but it has to be done as we process the Java import 
   // statements (top down) so that the symbol tables will be correct and variable, function, and type references 
   // will be resolved correctly.
-  // FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeIntoCurrentScope ( SgScopeStatement* referencedScope, SgScopeStatement* currentScope, SgAccessModifier::access_modifier_enum accessLevel );
-  // FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeIntoCurrentScope ( SgScopeStatement* referencedScope, SgScopeStatement* currentScope, SgAccessModifier::access_modifier_enum accessLevel );
+
+  // This is most likely global scope (where import statements are typically used).
+     SgScopeStatement* currentScope = astJavaScopeStack.front();
+     ROSE_ASSERT(currentScope != NULL);
+
+     SgSymbol* importClassSymbol = lookupSymbolInParentScopesUsingQualifiedName(qualifiedName,currentScope);
+     ROSE_ASSERT(importClassSymbol != NULL);
+
+     if (containsWildcard == true)
+        {
+          printf ("WARNING: The use of wildecards in import statements requires additional symbol table support so that all of the specified members of a class can be incerted into the current scope. \n");
+
+       // Note that the enum values for e_default and e_public are equal.
+       // SgAccessModifier::access_modifier_enum accessLevel = SgAccessModifier::e_default;
+          SgAccessModifier::access_modifier_enum accessLevel = SgAccessModifier::e_public;
+
+          SgScopeStatement* referencedScope = get_scope_from_symbol(importClassSymbol);
+          ROSE_ASSERT(referencedScope != NULL);
+
+          FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeIntoCurrentScope(referencedScope,currentScope,accessLevel);
+        }
+       else
+        {
+          printf ("Find the referenced class and insert its symbol as an alias into the current scope. \n");
+
+          SgAliasSymbol* aliasSymbol = new SgAliasSymbol(importClassSymbol);
+
+       // Use the current name and the alias to the symbol
+          list<SgName> qualifiedNameList = generateQualifierList(qualifiedName);
+          SgName unqualifiedName = *(qualifiedNameList.rbegin());
+
+          printf ("Building an alias (SgAliasSymbol) for unqualifiedName = %s in qualifiedName = %s \n",unqualifiedName.str(),qualifiedName.str());
+
+          currentScope->insert_symbol(unqualifiedName, aliasSymbol);
+        }
 
 #if 0
      printf ("Exiting as a test in cactionImportReference() \n");
