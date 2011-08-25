@@ -25,6 +25,7 @@ using namespace std;
 void
 Unparse_Java::unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_Info& info)
    {
+
   // This is the Java specific expression code generation
 
 #if 0
@@ -123,6 +124,8 @@ Unparse_Java::unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_In
          case V_SgVarRefExp:             { unparseVarRef(expr, info); break; }
          case V_SgFunctionRefExp:        { unparseFuncRef(expr, info); break; }
          case V_SgMemberFunctionRefExp:  { unparseMFuncRef(expr, info); break; }
+
+         case V_SgNullExpression:        { curprint ("null"); break; }
 
          default:
                cout << "error: unparseExpression() is unimplemented for " << expr->class_name() << endl;
@@ -777,7 +780,27 @@ Unparse_Java::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
        // printf ("In Unparse_ExprStmt::unparseNewOp: Now unparse new_op->get_constructor_args() \n");
           unparseExpression(new_op->get_constructor_args(), newinfo);
         }
+     else curprint ( "()"); // charles4: Still need parentheses for empty argument list.
 
+//
+// chares4: I don't understand what the purpose of the unreachable "else" block below is.
+//          I added the "else " alternative above because it is required for the Unparser
+//          to generate correct code.  If it turns out that the else block below is important
+//          then its creator should merge it with the else statement that I added above like this:
+//
+// -----------------------------------------------------------------------------------------------
+//
+//               else
+//                {
+//                  curprint ( "()"); // charles4: Still need parentheses for empty argument list.
+//        #if 0
+//               // printf ("In Unparse_ExprStmt::unparseNewOp: Call unparse type \n");
+//                  unp->u_type->unparseType(new_op->get_type(), newinfo);
+//        #endif
+//                }
+//
+// -----------------------------------------------------------------------------------------------
+//
 #if 0
        else
         {

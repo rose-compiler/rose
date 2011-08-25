@@ -42,7 +42,10 @@ TESTCODES_REQUIRED_TO_PASS = \
                       \
      pgc_test2011_00.java \
      pgc_test2011_01.java \
-     pgc_test2011_02.java
+     pgc_test2011_02.java \
+     pgc_test2011_03.java \
+     pgc_test2011_04.java \
+     pgc_test2011_05.java
 
 TESTCODE_CURRENTLY_FAILING = 
 
