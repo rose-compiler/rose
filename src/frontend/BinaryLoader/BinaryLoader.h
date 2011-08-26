@@ -349,6 +349,9 @@ public:
      *        values @p anon_lo and @p anon_hi determine whether ROSE will map file contents (false) or zeros (true)
      *        below and above the section when the section is smaller than the mapped region.  Zeros are always
      *        used for areas that are beyond the end of the file.</li>
+     *    <li>Allocation: If map_private is true upon return, then the memory map will point to a copy of the file contents
+     *        rather than directly into the file.  This simulates "private" mappings.  The default (if align_values() doesn't
+     *        change it, is false.</li>
      *    <li>Conflicts: If an attempt is made to map a region into part of the address space that already has
      *        a mapping, then one of three things can happen: (1) a MemoryMap::Inconsistent exception is thrown,
      *        (2) a hole can be created by first unmapping the space in conflict, or (3) a new mapping can be chosen
@@ -368,7 +371,7 @@ public:
     virtual MappingContribution align_values(SgAsmGenericSection*, MemoryMap*,
                                              rose_addr_t *malign_lo, rose_addr_t *malign_hi,
                                              rose_addr_t *va, rose_addr_t *mem_size,
-                                             rose_addr_t *offset, rose_addr_t *file_size,
+                                             rose_addr_t *offset, rose_addr_t *file_size, bool *map_private,
                                              rose_addr_t *va_offset, bool *anon_lo, bool *anon_hi,
                                              ConflictResolution *resolve);
     

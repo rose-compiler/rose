@@ -98,6 +98,12 @@ int
 RSIM_Simulator::configure(int argc, char **argv, char **envp)
 {
     int argno = 1;
+
+    if (argno>=argc) {
+        fprintf(stderr, "usage: %s [SIMULATOR_SWITCHES...] [--] SPECIMEN [SPECIMEN_ARGS...]\n", argv[0]);
+        exit(1);
+    }
+
     while (argno<argc && '-'==argv[argno][0]) {
         if (!strcmp(argv[argno], "--")) {
             argno++;
@@ -142,9 +148,11 @@ RSIM_Simulator::configure(int argc, char **argv, char **envp)
                     tracing_flags |= tracingFacilityBit(TRACE_PROGRESS);
                 } else if (word=="thread") {
                     tracing_flags |= tracingFacilityBit(TRACE_THREAD);
+                } else if (word=="futex") {
+                    tracing_flags |= tracingFacilityBit(TRACE_FUTEX);
                 } else {
                     fprintf(stderr, "%s: debug words must be from the set: "
-                            "all, insn, state, mem, mmap, syscall, signal, loader, progress, thread\n",
+                            "all, insn, state, mem, mmap, syscall, signal, loader, progress, thread, futex\n",
                             argv[0]);
                     exit(1);
                 }
@@ -152,10 +160,7 @@ RSIM_Simulator::configure(int argc, char **argv, char **envp)
             argno++;
 
         } else if (!strcmp(argv[argno], "--debug")) {
-            tracing_flags = tracingFacilityBit(TRACE_MISC)    |
-                            tracingFacilityBit(TRACE_INSN)    |
-                            tracingFacilityBit(TRACE_SYSCALL) |
-                            tracingFacilityBit(TRACE_SIGNAL);
+            tracing_flags = tracingFacilityBit(TRACE_MISC);
             argno++;
 
         } else if (!strncmp(argv[argno], "--core=", 7)) {
@@ -184,6 +189,18 @@ RSIM_Simulator::configure(int argc, char **argv, char **envp)
                 vdso_paths.push_back(std::string(s, colon?colon-s:strlen(s)));
                 s = colon ? colon+1 : NULL;
             }
+            argno++;
+            
+        } else if (!strncmp(argv[argno], "--semaphore=", 12)) {
+            std::string semname = argv[argno]+12;
+            if (semname[0]!='/')
+                semname = "/" + semname;
+            if (semname.find_first_of('/', 1)!=std::string::npos) {
+                fprintf(stderr, "%s: invalid semaphore name: \"%s\" should not contain internal slashes\n",
+                        argv[0], argv[argno]+12);
+                exit(1);
+            }
+            set_semaphore_name(argv[argno]+12);
             argno++;
 
         } else if (!strcmp(argv[argno], "--showauxv")) {
@@ -262,6 +279,8 @@ RSIM_Simulator::configure(int argc, char **argv, char **envp)
 int
 RSIM_Simulator::exec(int argc, char **argv)
 {
+    assert(argc>0);
+
     create_process();
 
     SgAsmGenericHeader *fhdr = process->load(argv[0]);
@@ -563,5 +582,39 @@ RSIM_Simulator::syscall_define(int callno,
         syscall_implementation(callno)->leave.append(new SystemCall::Function(leave));
 }
 
+bool
+RSIM_Simulator::set_semaphore_name(const std::string &name, bool do_unlink/*=false*/)
+{
+    if (global_semaphore)
+        return false; // can't change the name if we've already created the semaphore
+    global_semaphore_name = name;
+    global_semaphore_unlink = do_unlink;
+    return true;
+}
+
+const std::string &
+RSIM_Simulator::get_semaphore_name() const
+{
+    return global_semaphore_name;
+}
+
+sem_t *
+RSIM_Simulator::get_semaphore(bool *unlinked/*=NULL*/)
+{
+    if (NULL==global_semaphore) {
+        if (global_semaphore_name.empty()) {
+            global_semaphore_name = "/ROSE_simulator-pid=" + StringUtility::numberToString(getpid());
+            global_semaphore_unlink = true;
+        }
+        fprintf(stderr, "RSIM_Simulator::get_semaphore() is using %s\n", global_semaphore_name.c_str());
+        global_semaphore = sem_open(global_semaphore_name.c_str(), O_CREAT, 0666, 1);
+        assert(SEM_FAILED!=global_semaphore);
+        if (global_semaphore_unlink)
+            sem_unlink(global_semaphore_name.c_str()); /* unlink now, destroyed when all closed (at simulator process exit) */
+    }
+    if (unlinked)
+        *unlinked = global_semaphore_unlink;
+    return global_semaphore;
+}
 
 #endif /* ROSE_ENABLE_SIMULATOR */
