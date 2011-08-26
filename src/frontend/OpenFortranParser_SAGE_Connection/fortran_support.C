@@ -284,8 +284,16 @@ setSourcePosition  ( SgLocatedNode* locatedNode, Token_t* token )
      ROSE_ASSERT(token != NULL);
 
   // DQ (12/11/2007): Modified to permit tokens to be built (as in R1219)
-     ROSE_ASSERT(token->line > 0);
-  // ROSE_ASSERT(token->line >= 0);
+  //   ROSE_ASSERT(token->line > 0);
+     ROSE_ASSERT(token->line >= 0);  // DXN (08/25/ 2011): FIXME - Workaround OFP bug that incorrectly returns a token with line number = 0, as in the following example:
+     /*       subroutine FOURT()
+      *       DO 125 I1=1, 2
+      *       DO 125 I3= 3, 4
+      * 125   CONTINUE
+      *       END
+      *
+      *  Here the token is the label 125; when this label is parsed the second time around, label->line = 0 and label->col = -1
+      */
 
      if (locatedNode->get_startOfConstruct() != NULL)
         {
@@ -1464,7 +1472,16 @@ buildNumericLabelSymbolAndAssociateWithStatement(SgStatement* stmt, Token_t* lab
   // with "end" for example).
 
      ROSE_ASSERT(label != NULL);
-     ROSE_ASSERT(label->line > 0);
+     // ROSE_ASSERT(label->line > 0);
+     ROSE_ASSERT(label->line >= 0);  // DXN: FIXME - workaround OFP bug where label->line = 0 as in the following example:
+                                     /*       subroutine FOURT()
+                                      *       DO 125 I1=1, 2
+                                      *       DO 125 I3= 3, 4
+                                      * 125   CONTINUE
+                                      *       END
+                                      *
+                                      *  When label is parsed the second time around, label->line = 0 and label->col = -1
+                                      */
      ROSE_ASSERT(label->text != NULL);
 
   // Assumes simple string based representation of integer
@@ -1532,7 +1549,6 @@ buildNumericLabelSymbolAndAssociateWithStatement(SgStatement* stmt, Token_t* lab
                delete tempStatement;
                tempStatement = NULL;
              }
-
           label_symbol->set_fortran_statement(NULL);
           label_symbol->set_fortran_statement(stmt);
         }
@@ -1651,7 +1667,16 @@ setStatementNumericLabel(SgStatement* stmt, Token_t* label)
    {
      if (label != NULL)
         {
-          ROSE_ASSERT(label->line > 0);
+         // ROSE_ASSERT(label->line >= 0);
+         ROSE_ASSERT(label->line >= 0);  // DXN: FIXME - workaround OFP bug where label->line = 0 as in the following example:
+                                          /*       subroutine FOURT()
+                                           *       DO 125 I1=1, 2
+                                           *       DO 125 I3= 3, 4
+                                           * 125   CONTINUE
+                                           *       END
+                                           *
+                                           *  When label is parsed the second time around, label->line = 0 and label->col = -1
+                                           */
           ROSE_ASSERT(label->text != NULL);
 
        // DQ (2/18/2008): There are two mechanisms for setting labels, make sure that if 
