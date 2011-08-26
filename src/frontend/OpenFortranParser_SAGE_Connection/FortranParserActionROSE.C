@@ -12889,12 +12889,11 @@ void c_action_continue_stmt(Token_t *label, Token_t *continueKeyword,
     }
     else
     {
-        // this is NOT the first time this CONTINUE statement is encountered: workaround OFP bug!
         // DXN: FIXME - workaround OFP bug where label->line = 0 as in the following example:
         /*       subroutine FOURT()
          *       DO 125 I1=1, 2
          *       DO 125 I3= 3, 4
-         * 125   N = 4
+         * 125   CONTINUE
          *       END
          *
          *  When label is parsed the second time around, label->line = 0 and label->col = -1
