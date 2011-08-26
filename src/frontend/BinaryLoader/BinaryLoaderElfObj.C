@@ -29,13 +29,13 @@ BinaryLoader::MappingContribution
 BinaryLoaderElfObj::align_values(SgAsmGenericSection *section, MemoryMap *map,
                                  rose_addr_t *malign_lo_p, rose_addr_t *malign_hi_p,
                                  rose_addr_t *va_p, rose_addr_t *mem_size_p,
-                                 rose_addr_t *offset_p, rose_addr_t *file_size_p,
+                                 rose_addr_t *offset_p, rose_addr_t *file_size_p, bool *map_private_p,
                                  rose_addr_t *va_offset_p, bool *anon_lo_p, bool *anon_hi_p, 
                                  ConflictResolution *resolve_p)
 {
     if (section->is_mapped())
         return BinaryLoaderElf::align_values(section, map, malign_lo_p, malign_hi_p, va_p, mem_size_p,
-                                             offset_p, file_size_p, va_offset_p, anon_lo_p, anon_hi_p,
+                                             offset_p, file_size_p, map_private_p, va_offset_p, anon_lo_p, anon_hi_p,
                                              resolve_p);
     
     if (section->get_contains_code()) {
@@ -47,6 +47,7 @@ BinaryLoaderElfObj::align_values(SgAsmGenericSection *section, MemoryMap *map,
         *malign_lo_p = *malign_hi_p = mem_alignment;
         *va_p = map->find_free(0, size, mem_alignment);
         *mem_size_p = *file_size_p = size;
+        *map_private_p = false;
         *offset_p = section->get_offset();
         *va_offset_p = 0;
         *anon_lo_p = *anon_hi_p = true;

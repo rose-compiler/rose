@@ -463,7 +463,7 @@ struct X86InstructionSemantics {
                         }
                     }
                     case x86_regclass_segment: {
-                        if (0!=rre->get_descriptor().get_offset() || 32!=rre->get_descriptor().get_nbits())
+                        if (0!=rre->get_descriptor().get_offset() || 16!=rre->get_descriptor().get_nbits())
                             throw Exception("size not implemented", current_instruction);
                         X86SegmentRegister sr = (X86SegmentRegister)(rre->get_descriptor().get_minor());
                         Word(16) value = policy.readSegreg(sr);
@@ -1716,6 +1716,51 @@ struct X86InstructionSemantics {
                 break;
             }
 
+            case x86_bt: {              /* Bit test */
+                if (operands.size()!=2)
+                    throw Exception("instruction must have two operands", insn);
+                
+                /* All flags except CF are undefined */
+                policy.writeFlag(x86_flag_of, policy.undefined_());
+                policy.writeFlag(x86_flag_sf, policy.undefined_());
+                policy.writeFlag(x86_flag_zf, policy.undefined_());
+                policy.writeFlag(x86_flag_af, policy.undefined_());
+                policy.writeFlag(x86_flag_pf, policy.undefined_());
+                
+                if (isSgAsmMemoryReferenceExpression(operands[0]) && isSgAsmx86RegisterReferenceExpression(operands[1])) {
+                    /* Special case allowing multi-word offsets into memory */
+                    Word(32) addr = readEffectiveAddress(operands[0]);
+                    int numBytes = numBytesInAsmType(operands[1]->get_type());
+                    Word(32) bitnum = numBytes == 2 ? signExtend<16, 32>(read16(operands[1])) : read32(operands[1]);
+                    Word(32) adjustedAddr = policy.add(addr, signExtend<29, 32>(extract<3, 32>(bitnum)));
+                    Word(8) val = readMemory<8>(getSegregFromMemoryReference(isSgAsmMemoryReferenceExpression(operands[0])),
+                                                adjustedAddr, policy.true_());
+                    Word(1) bitval = extract<0, 1>(policy.rotateRight(val, extract<0, 3>(bitnum)));
+                    policy.writeFlag(x86_flag_cf, bitval);
+                } else {
+                    /* Simple case */
+                    switch (numBytesInAsmType(operands[0]->get_type())) {
+                        case 2: {
+                            Word(16) op0 = read16(operands[0]);
+                            Word(4) bitnum = extract<0, 4>(read16(operands[1]));
+                            Word(1) bitval = extract<0, 1>(policy.rotateRight(op0, bitnum));
+                            policy.writeFlag(x86_flag_cf, bitval);
+                            break;
+                        }
+                        case 4: {
+                            Word(32) op0 = read32(operands[0]);
+                            Word(5) bitnum = extract<0, 5>(read32(operands[1]));
+                            Word(1) bitval = extract<0, 1>(policy.rotateRight(op0, bitnum));
+                            policy.writeFlag(x86_flag_cf, bitval);
+                            break;
+                        }
+                        default:
+                            throw Exception("size not implemented", insn);
+                    }
+                }
+                break;
+            }
+                
             case x86_btr: {             /* Bit test and reset */
                 if (operands.size()!=2)
                     throw Exception("instruction must have two operands", insn);
@@ -2149,8 +2194,8 @@ struct X86InstructionSemantics {
                     throw Exception("size not implemented", insn);
                 Word(32) oldSp = policy.readGPR(x86_gpr_sp);
                 Word(32) newSp = policy.add(oldSp, number<32>(4));
-                write32(operands[0], readMemory<32>(x86_segreg_ss, oldSp, policy.true_()));
                 policy.writeGPR(x86_gpr_sp, newSp);
+                write32(operands[0], readMemory<32>(x86_segreg_ss, oldSp, policy.true_()));
                 break;
             }
 
@@ -2469,6 +2514,13 @@ struct X86InstructionSemantics {
                     throw Exception("instruction must have no operands", insn);
                 policy.hlt();
                 policy.writeIP(number<32>((uint32_t)(insn->get_address())));
+                break;
+            }
+
+            case x86_cpuid: {
+                if (operands.size()!=0)
+                    throw Exception("instruction must have no operands", insn);
+                policy.cpuid();
                 break;
             }
 

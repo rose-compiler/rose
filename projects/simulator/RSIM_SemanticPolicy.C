@@ -12,14 +12,15 @@ RSIM_SemanticPolicy::ctor()
         writeFlag((X86Flag)i, 0);
     writeIP(0);
     writeFlag((X86Flag)1, true_());
-    writeGPR(x86_gpr_sp, 0xbffff000ul);     /* high end of stack, exclusive */
+
+    writeGPR(x86_gpr_sp, 0xc0000000ul); /* high end of stack, exclusive */
 
     writeSegreg(x86_segreg_cs, 0x23);
     writeSegreg(x86_segreg_ds, 0x2b);
     writeSegreg(x86_segreg_es, 0x2b);
     writeSegreg(x86_segreg_ss, 0x2b);
-    writeSegreg(x86_segreg_fs, 0x2b);
-    writeSegreg(x86_segreg_gs, 0x2b);
+    writeSegreg(x86_segreg_fs, 0);
+    writeSegreg(x86_segreg_gs, 0);
 
 }
 
@@ -37,6 +38,45 @@ RSIM_SemanticPolicy::interrupt(uint8_t num)
         abort();
     }
     thread->emulate_syscall();
+}
+
+void
+RSIM_SemanticPolicy::cpuid()
+{
+    int code = readGPR(x86_gpr_ax).known_value();
+
+    uint32_t dwords[4];
+#if 0
+    /* Prone to not compile */
+    asm volatile("cpuid"
+                 :
+                 "=a"(*(dwords+0)),
+                 "=b"(*(dwords+1)),
+                 "=c"(*(dwords+2)),
+                 "=d"(*(dwords+3))
+                 :
+                 "0"(code));
+#else
+    /* Return value based on an Intel model "Xeon X5680 @ 3.33GHz"; 3325.017GHz; stepping 2 */
+    dwords[0] = 0x0000000b;
+    dwords[1] = 0x756e6547;
+    dwords[2] = 0x6c65746e;
+    dwords[3] = 0x49656e69;
+#endif
+
+    /* Change "GenuineIntel" to "Genuine ROSE". Doing so should cause the caller to not execute any further CPUID
+     * instructions since there's no well-known definition for the rest of our CPUID semantics. */
+    if (0==code) {
+        dwords[3] &= 0x00ffffff; dwords[3] |= 0x20000000;           /* ' ' */
+        dwords[2] =  0x45534f52;                                    /* "ROSE" */
+    } else {
+        fprintf(stderr, "CPUID-%d probably should not have been executed!", code);
+    }
+
+    writeGPR(x86_gpr_ax, number<32>(dwords[0]));
+    writeGPR(x86_gpr_bx, number<32>(dwords[1]));
+    writeGPR(x86_gpr_cx, number<32>(dwords[2]));
+    writeGPR(x86_gpr_dx, number<32>(dwords[3]));
 }
 
 void
@@ -125,7 +165,7 @@ RSIM_SemanticPolicy::pop()
 void
 RSIM_SemanticPolicy::writeSegreg(X86SegmentRegister sr, const VirtualMachineSemantics::ValueType<16> &val)
 {
-    ROSE_ASSERT(3 == (val.known_value() & 7)); /*GDT and privilege level 3*/
+    ROSE_ASSERT(0==val.known_value() || 3 == (val.known_value() & 7)); /*GDT and privilege level 3*/
     VirtualMachineSemantics::Policy::writeSegreg(sr, val);
     load_sr_shadow(sr, val.known_value()>>3);
 }
@@ -136,10 +176,10 @@ RSIM_SemanticPolicy::startInstruction(SgAsmInstruction* insn)
     RTS_Message *mesg = tracing(TRACE_INSN);
     if (mesg->get_file()) {
         if (isatty(fileno(mesg->get_file()))) {
-            fprintf(mesg->get_file(), "\033[K\n[%07zu] %s\033[K\r\033[1A",
-                    get_ninsns(), unparseInstructionWithAddress(insn).c_str());
+            fprintf(mesg->get_file(), "\033[K\n%s\033[K\r\033[1A",
+                    unparseInstructionWithAddress(insn).c_str());
         } else {
-            mesg->mesg("[#%07zu] : %s\n", get_ninsns(), unparseInstruction(insn).c_str());
+            mesg->mesg("%s", unparseInstruction(insn).c_str());
         }
     }
     VirtualMachineSemantics::Policy::startInstruction(insn);
@@ -150,7 +190,7 @@ RSIM_SemanticPolicy::load_sr_shadow(X86SegmentRegister sr, unsigned gdt_num)
 {
     user_desc_32 *info = thread->gdt_entry(gdt_num);
     sr_shadow[sr] = *info;
-    ROSE_ASSERT(sr_shadow[sr].present);
+    //ROSE_ASSERT(sr_shadow[sr].present); //checked when used
 }
 
 #endif /* ROSE_ENABLE_SIMULATOR */

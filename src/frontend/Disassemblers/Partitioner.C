@@ -925,10 +925,8 @@ Partitioner::mark_elf_plt_entries(SgAsmGenericHeader *fhdr)
     const SgAsmGenericSectionPtrList &sections = elf->get_sections()->get_sections();
     for (SgAsmGenericSectionPtrList::const_iterator si=sections.begin(); si!=sections.end(); ++si) {
         SgAsmElfRelocSection *reloc_section = isSgAsmElfRelocSection(*si);
-        if (reloc_section) {
-            ROSE_ASSERT(isSgAsmElfSymbolSection(reloc_section->get_linked_section()));
+        if (reloc_section)
             rsects.insert(reloc_section);
-        }
     }
     if (rsects.empty()) return;
 
@@ -959,8 +957,8 @@ Partitioner::mark_elf_plt_entries(SgAsmGenericHeader *fhdr)
         for (std::set<SgAsmElfRelocSection*>::iterator ri=rsects.begin(); ri!=rsects.end() && name.empty(); ++ri) {
             SgAsmElfRelocEntryList *entries = (*ri)->get_entries();
             SgAsmElfSymbolSection *symbol_section = isSgAsmElfSymbolSection((*ri)->get_linked_section());
-            SgAsmElfSymbolList *symbols = symbol_section->get_symbols();
-            for (size_t ei=0; ei<entries->get_entries().size() && name.empty(); ++ei) {
+            SgAsmElfSymbolList *symbols = symbol_section ? symbol_section->get_symbols() : NULL;
+            for (size_t ei=0; ei<entries->get_entries().size() && name.empty() && symbols; ++ei) {
                 SgAsmElfRelocEntry *rel = entries->get_entries()[ei];
                 if (rel->get_r_offset()==gotplt_va) {
                     unsigned long symbol_idx = rel->get_sym();
@@ -1319,10 +1317,8 @@ Partitioner::name_plt_entries(SgAsmGenericHeader *fhdr)
          si!=elf->get_sections()->get_sections().end(); 
          si++) {
         SgAsmElfRelocSection *reloc_section = isSgAsmElfRelocSection(*si);
-        if (reloc_section) {
-            ROSE_ASSERT(isSgAsmElfSymbolSection(reloc_section->get_linked_section()));
+        if (reloc_section)
             rsects.insert(reloc_section);
-        }
     }
     if (rsects.empty()) return;
 
@@ -1358,14 +1354,16 @@ Partitioner::name_plt_entries(SgAsmGenericHeader *fhdr)
         for (std::set<SgAsmElfRelocSection*>::iterator ri=rsects.begin(); ri!=rsects.end() && fi->second->name==""; ri++) {
             SgAsmElfRelocEntryList *entries = (*ri)->get_entries();
             SgAsmElfSymbolSection *symbol_section = isSgAsmElfSymbolSection((*ri)->get_linked_section());
-            SgAsmElfSymbolList *symbols = symbol_section->get_symbols();
-            for (size_t ei=0; ei<entries->get_entries().size() && fi->second->name==""; ei++) {
-                SgAsmElfRelocEntry *rel = entries->get_entries()[ei];
-                if (rel->get_r_offset()==gotplt_va) {
-                    unsigned long symbol_idx = rel->get_sym();
-                    ROSE_ASSERT(symbol_idx < symbols->get_symbols().size());
-                    SgAsmElfSymbol *symbol = symbols->get_symbols()[symbol_idx];
-                    fi->second->name = symbol->get_name()->get_string() + "@plt";
+            if (symbol_section) {
+                SgAsmElfSymbolList *symbols = symbol_section->get_symbols();
+                for (size_t ei=0; ei<entries->get_entries().size() && fi->second->name==""; ei++) {
+                    SgAsmElfRelocEntry *rel = entries->get_entries()[ei];
+                    if (rel->get_r_offset()==gotplt_va) {
+                        unsigned long symbol_idx = rel->get_sym();
+                        ROSE_ASSERT(symbol_idx < symbols->get_symbols().size());
+                        SgAsmElfSymbol *symbol = symbols->get_symbols()[symbol_idx];
+                        fi->second->name = symbol->get_name()->get_string() + "@plt";
+                    }
                 }
             }
         }
