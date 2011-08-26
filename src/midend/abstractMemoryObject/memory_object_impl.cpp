@@ -179,7 +179,7 @@ namespace AbstractMemoryObject {
 
   std::string PointerNamedObj::toString()
   {
-    string rt = "PointerNamedObj @" + StringUtility::numberToString(this)+ " "+ NamedObj::toString();
+    string rt = "PointerNamedObj @" + StringUtility::numberToString(this)+ " "+ NamedObj::toString() ;
     return rt;
   }
 
@@ -464,14 +464,14 @@ namespace AbstractMemoryObject {
         assert (rt != NULL);
       }
 /* //TODO
-      else if (isSgArrayType(t))
-      {
-        rt = new ArrayNamedObj (t);
-        assert (rt != NULL);
-      }
       else if (isSgClassType(t))
       {
         rt = new   LabeledAggregateNamedObj (t);
+        assert (rt != NULL);
+      }
+      else if (isSgArrayType(t))
+      {
+        rt = new ArrayNamedObj (t);
         assert (rt != NULL);
       }
 */
