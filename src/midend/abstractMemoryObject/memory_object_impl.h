@@ -146,9 +146,20 @@ namespace AbstractMemoryObject
   {};
 
   class PointerNamedObj: public Pointer_Impl, public NamedObj
-  {};
-
-
+  {
+    public:
+      PointerNamedObj   (SgSymbol* s, SgType* t, ObjSet* p): NamedObj (s,t,p) {}
+      std::set<SgType*> getType();
+     // used for a pointer to non-array
+      ObjSet* getDereference () ;
+      // used for a pointer to an array
+      ObjSet * getElements() ;
+     // Returns true if this pointer refers to the same abstract object as that pointer.
+      bool equalPoints(Pointer & that);
+     // Returns true if this object and that object may/must refer to the same pointer memory object.
+      bool operator == (ObjSet& o2) ;
+      std::string toString();
+  };
  
   // aliased object -----------------------------
    class ScalarAliasedObj: public Scalar_Impl, public AliasedObj
@@ -205,6 +216,7 @@ namespace AbstractMemoryObject
   ObjSet* createAliasedObjSet(SgType*t);  // One object per type, Type based alias analysis
 
   ObjSet* createNamedObjSet(SgSymbol* anchor_symbol, SgType* t, ObjSet* parent); // any 
+  ObjSet* createObjSet(SgVarRefExp* r); // create NamedObjSet or AliasedObjSet (for pointer type) from a variable reference 
   ObjSet* createExpressionObjSet(SgExpression* anchor_exp, SgType*t, ObjSet* parent); 
   
   // Helper functions for debugging
@@ -214,6 +226,10 @@ namespace AbstractMemoryObject
   // two cases: 1 they are the same type
   //            2 they have overlap (one type is a subtype of the other)
   bool isAliased (SgType * t1, SgType * t2 ); 
+
+  // a helper function to check if a symbol is corresponding to a member variable declaration within SgClassDefinition or not
+  bool isMemberVariableDeclarationSymbol(SgSymbol * s);
+
 
 } // end namespace
 
