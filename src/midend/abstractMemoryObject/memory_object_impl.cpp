@@ -135,6 +135,54 @@ namespace AbstractMemoryObject {
     return rt;
   }
 
+  //------------------
+  std::set<SgType*> PointerNamedObj::getType()
+  {
+    std::set<SgType*> rt;
+    rt.insert (NamedObj::getType());
+    return rt;
+  }
+
+  ObjSet* PointerNamedObj::getDereference() 
+  {
+    // simplest type-based implementation
+    SgType* t = NamedObj::getType();
+    SgPointerType* p_t = isSgPointerType(t);
+    assert (p_t != NULL);
+    return createAliasedObjSet (p_t);
+  }
+
+  ObjSet* PointerNamedObj::getElements() // in case it is a pointer to array
+  {
+    ObjSet* rt = NULL;
+    //TODO
+    assert (false);
+
+    return rt;
+    
+  }
+
+  bool  PointerNamedObj::equalPoints (Pointer & that)
+  {
+    // type based: same base type, sa
+    SgType* this_type = *(this->getType().begin()); 
+    SgType* that_type = *(that.getType().begin());
+    return (this_type == that_type);
+  }
+
+  bool PointerNamedObj::operator == (ObjSet& o2)
+  {
+   NamedObj& o1 = dynamic_cast<NamedObj&> (*this);
+    return (o1==o2);
+  } 
+
+
+  std::string PointerNamedObj::toString()
+  {
+    string rt = "PointerNamedObj @" + StringUtility::numberToString(this)+ " "+ NamedObj::toString();
+    return rt;
+  }
+
 
   // --------------------- Aliased Object --------------------
   std::string AliasedObj::toString()  
@@ -321,6 +369,7 @@ namespace AbstractMemoryObject {
   void dump_aliased_objset_map ()
   {
     cout<<"Not yet implemented."<<endl;
+    assert (false);
 
   }
   // builder for different objects
@@ -375,9 +424,11 @@ namespace AbstractMemoryObject {
     return rt;
   } 
 
-  // A map to store aliased obj set
+  // A map to store named obj set
   // This can provide quick lookup for existing named objset to avoid duplicated creation
-  map<SgSymbol*, ObjSet*> named_objset_map; 
+  // SgSymbol associated with class/struct data member is shared among all class/struct instances
+  // so we have to use two keys (parent ObjSet and SgSymbol) to ensure the uniqueness of named objects
+  map<ObjSet*,  map<SgSymbol*, ObjSet*> > named_objset_map; 
 
   // variables that are explicitly declared/named in the source code
   // local, global, static variables,
@@ -395,9 +446,10 @@ namespace AbstractMemoryObject {
     assert (anchor_symbol->get_type() == t);
     bool assert_flag = true; 
 
-    map<SgSymbol*, ObjSet*>::const_iterator iter;
-    iter = named_objset_map.find(anchor_symbol);
-    if (iter == named_objset_map.end())
+//    map<SgSymbol*, ObjSet*>::const_iterator iter;
+//    iter = named_objset_map.find(anchor_symbol);
+//    if (iter == named_objset_map.end())
+    if (named_objset_map[parent][anchor_symbol] == NULL)
     { // None found, create a new one depending on its type and update the map
       if (SageInterface::isScalarType(t))
         // We define the following SgType as scalar types: 
@@ -406,36 +458,38 @@ namespace AbstractMemoryObject {
         rt = new ScalarNamedObj(anchor_symbol, t, parent);
         assert (rt != NULL);
       }
-/* //TODO
       else if (isSgPointerType(t))
       {
-        rt = new PointerAliasedObj(t);
+        rt = new PointerNamedObj(anchor_symbol,t, parent);
         assert (rt != NULL);
       }
+/* //TODO
       else if (isSgArrayType(t))
       {
-        rt = new ArrayAliasedObj (t);
+        rt = new ArrayNamedObj (t);
         assert (rt != NULL);
       }
       else if (isSgClassType(t))
       {
-        rt = new   LabeledAggregateAliasedObj (t);
+        rt = new   LabeledAggregateNamedObj (t);
         assert (rt != NULL);
       }
 */
       else
       {
-        cerr<<"Warning: createNamedObjSet(): unhandled symbol:"<<anchor_symbol->class_name()<<endl;
+        cerr<<"Warning: createNamedObjSet(): unhandled symbol:"<<anchor_symbol->class_name() << 
+          " name: " <<  anchor_symbol->get_name().getString() << " type: "<< t->class_name()<< " @ "<<StringUtility::numberToString(anchor_symbol) <<endl;
         assert_flag = false;
       }
 
       // update the map  only if something has been created
       if (rt != NULL)
-        named_objset_map[anchor_symbol]= rt;
+        named_objset_map[parent][anchor_symbol]= rt;
     }
     else // Found one, return it directly
     {
-      rt = (*iter).second;
+      //rt = (*iter).second;
+      rt = named_objset_map[parent][anchor_symbol];
     }
   
     if (assert_flag)
@@ -443,11 +497,99 @@ namespace AbstractMemoryObject {
     return rt;
   }
 
+  // For a SgVarRef, find the corresponding symbol first
+  // 1. if is a instance symbol. It corresponding to real top level instances of types. Create NamedObj as we see each of them, NULL as parent
+  //     They are the symbols with declarations not under SgClassDefinition
+  // 2. if it is a symbol within a class definition, two cases
+  //    a. the symbol has a pointer type, we don't track pointer aliasing, so we create AliasedObj for it
+  //    b. other types: a child of an instance, check if is the rhs of SgDotExp/SgArrowExp, if not assert
+  //        use lhs of SgDotExp/SgArrowExp as parent
+  //            lhs could be SgVarRefExp: find the corresponding NamedObj as parent (top level object, labeled aggregate)
+  //            lhs could be another SgDotExp: find its rhs's NamedObj as parent
 
+  ObjSet* createObjSet(SgVarRefExp* r) // create NamedObjSet from a variable reference 
+  {
+    assert (r!=NULL);
+    SgVariableSymbol * s = r->get_symbol();
+    assert (s != NULL);
+    SgType * t = s->get_type();
+    assert (t != NULL);
+    //TODO think again about if we want to break the chain here   
+#if 0  
+    if (isSgPointerType(t)) // pointer type is taken care already by iterating through SgType from memory pools
+    {
+      //we don't track pointer aliasing, so we create AliasedObj for it
+      return createAliasedObjSet (t);
+    }
+#endif    
+    if (isMemberVariableDeclarationSymbol (s))
+    { // symbol within SgClassDefinition
+      //I think a reference to a data memory can only happen through . or -> operator
+      SgExpression* parent = isSgExpression(r->get_parent());
+      assert (parent != NULL);
+      SgDotExp * d_e = isSgDotExp (parent);
+      SgArrowExp * a_e = isSgArrowExp (parent);
+      assert (d_e != NULL || a_e != NULL);
+      SgBinaryOp* b_e = isSgBinaryOp (parent);
+      assert (b_e != NULL);
+      assert (b_e->get_rhs_operand_i() == r);
+
+      // First, get ObjSet for its parent part
+      ObjSet* p_obj = NULL; 
+      SgExpression * lhs = b_e ->get_lhs_operand_i();
+      assert (lhs != NULL);
+      if (isSgVarRefExp(lhs))
+      {
+        p_obj = createObjSet (isSgVarRefExp(lhs)); // recursion here
+      }
+      else if (isSgBinaryOp (lhs)) // another SgDotExp or SgArrowExp
+      { // find its rhs's NamedObj as parent
+        SgDotExp * d_e2 = isSgDotExp (lhs);
+        SgArrowExp * a_e2 = isSgArrowExp (lhs);
+        assert (d_e2 != NULL || a_e2 != NULL);
+        SgExpression* rhs = isSgBinaryOp (lhs) -> get_rhs_operand_i();
+        assert (isSgVarRefExp (rhs) != NULL); // there might be some more cases!!
+        p_obj = createObjSet (isSgVarRefExp(rhs));
+      }
+      // now create the child mem obj
+      ObjSet* mem_obj = createNamedObjSet (s, s->get_type(), p_obj); 
+      // assert (mem_obj != NULL); // we may return NULL for cases not yet handled
+      return mem_obj;
+
+    }
+    else // other symbols
+    {
+      ObjSet* mem_obj = createNamedObjSet (s, s->get_type(), NULL); 
+      // assert (mem_obj != NULL); // We may return NULL for cases not yet handled
+      return mem_obj;
+    }
+
+  }
+
+  
   ObjSet* createExpressionObjSet(SgExpression* anchor_exp, SgType*t, ObjSet* parent)
   {
     ObjSet* rt = NULL;
+    //TODO 
     return rt;
   }
+
+  // a helper function to check if a symbol is corresponding to a member variable declaration within SgClassDefinition or not
+  bool isMemberVariableDeclarationSymbol(SgSymbol * s)
+  {
+    bool rt = false; 
+    assert (s!=NULL);
+    // Only relevant for SgVariableSymbol for now
+    SgVariableSymbol* vs = isSgVariableSymbol (s); 
+    if (vs != NULL)
+    {
+      SgInitializedName* i_name = vs->get_declaration();
+      assert  (i_name != NULL);
+      if (isSgClassDefinition(i_name->get_scope()))
+        rt = true;
+    }
+    return rt; 
+  }
+
 
 } // end namespace

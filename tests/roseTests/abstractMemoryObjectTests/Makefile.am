@@ -13,7 +13,8 @@ memObjectGenerator_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 C_TESTCODES_REQUIRED_TO_COMPILE = 
 
 CXX_TESTCODES_REQUIRED_TO_COMPILE = \
-     test_2011_08_15.cpp
+     test_2011_08_15.cpp \
+     test_2011_08_26.cpp
 
 TESTCODE_CURRENTLY_FAILING = 
 
@@ -56,7 +57,7 @@ check-local: memObjectGenerator
 clean-local:
 	rm -f *.o test*.C rose_*.c rose_*.cpp rose_*.C *.pdf OUT_* *.dot *.out 
 
-EXTRA_DIST = 
+EXTRA_DIST =  $(ALL_TESTCODES)
 
 CLEANFILES = 
 
