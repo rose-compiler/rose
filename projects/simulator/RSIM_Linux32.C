@@ -30,7 +30,6 @@
 #include <errno.h>
 #include <sys/time.h>
 #include <linux/types.h>
-#include <linux/dirent.h>
 #include <sys/stat.h>
 #include <sys/utsname.h>
 #include <fcntl.h>
@@ -45,250 +44,270 @@
 /* This leave callback just prints using the "d" format and is used by lots of system calls. */
 static void syscall_default_leave(RSIM_Thread *t, int callno);
 
-static void syscall_exit_enter(RSIM_Thread *t, int callno);
-static void syscall_exit(RSIM_Thread *t, int callno);
-static void syscall_exit_leave(RSIM_Thread *t, int callno);
-static void syscall_read_enter(RSIM_Thread *t, int callno);
-static void syscall_read(RSIM_Thread *t, int callno);
-static void syscall_read_leave(RSIM_Thread*, int callno);
-static void syscall_write_enter(RSIM_Thread *t, int callno);
-static void syscall_write(RSIM_Thread *t, int callno);
-static void syscall_open_enter(RSIM_Thread *t, int callno);
-static void syscall_open(RSIM_Thread *t, int callno);
-static void syscall_close_enter(RSIM_Thread *t, int callno);
-static void syscall_close(RSIM_Thread *t, int callno);
-static void syscall_waitpid_enter(RSIM_Thread *t, int callno);
-static void syscall_waitpid(RSIM_Thread *t, int callno);
-static void syscall_waitpid_leave(RSIM_Thread *t, int callno);
-static void syscall_creat_enter(RSIM_Thread *t, int callno);
-static void syscall_creat(RSIM_Thread *t, int callno);
-static void syscall_link_enter(RSIM_Thread *t, int callno);
-static void syscall_link(RSIM_Thread *t, int callno);
-static void syscall_unlink_enter(RSIM_Thread *t, int callno);
-static void syscall_unlink(RSIM_Thread *t, int callno);
-static void syscall_execve_enter(RSIM_Thread *t, int callno);
-static void syscall_execve(RSIM_Thread *t, int callno);
-static void syscall_chdir_enter(RSIM_Thread *t, int callno);
-static void syscall_chdir(RSIM_Thread *t, int callno);
-static void syscall_time_enter(RSIM_Thread *t, int callno);
-static void syscall_time(RSIM_Thread *t, int callno);
-static void syscall_time_leave(RSIM_Thread *t, int callno);
-static void syscall_mknod_enter(RSIM_Thread *t, int callno);
-static void syscall_mknod(RSIM_Thread *t, int callno);
-static void syscall_chmod_enter(RSIM_Thread *t, int callno);
-static void syscall_chmod(RSIM_Thread *t, int callno);
-static void syscall_lseek_enter(RSIM_Thread *t, int callno);
-static void syscall_lseek(RSIM_Thread *t, int callno);
-static void syscall_getpid_enter(RSIM_Thread *t, int callno);
-static void syscall_getpid(RSIM_Thread *t, int callno);
-static void syscall_getuid_enter(RSIM_Thread *t, int callno);
-static void syscall_getuid(RSIM_Thread *t, int callno);
-static void syscall_alarm_enter(RSIM_Thread *t, int callno);
-static void syscall_alarm(RSIM_Thread *t, int callno);
-static void syscall_pause_enter(RSIM_Thread *t, int callno);
-static void syscall_pause(RSIM_Thread *t, int callno);
-static void syscall_pause_leave(RSIM_Thread *t, int callno);
-static void syscall_utime_enter(RSIM_Thread *t, int callno);
-static void syscall_utime(RSIM_Thread *t, int callno);
-static void syscall_access_enter(RSIM_Thread *t, int callno);
 static void syscall_access(RSIM_Thread *t, int callno);
-static void syscall_sync_enter(RSIM_Thread *t, int callno);
-static void syscall_sync(RSIM_Thread *t, int callno);
-static void syscall_kill_enter(RSIM_Thread *t, int callno);
-static void syscall_kill(RSIM_Thread *t, int callno);
-static void syscall_rename_enter(RSIM_Thread *t, int callno);
-static void syscall_rename(RSIM_Thread *t, int callno);
-static void syscall_mkdir_enter(RSIM_Thread *t, int callno);
-static void syscall_mkdir(RSIM_Thread *t, int callno);
-static void syscall_rmdir_enter(RSIM_Thread *t, int callno);
-static void syscall_rmdir(RSIM_Thread *t, int callno);
-static void syscall_dup_enter(RSIM_Thread *t, int callno);
-static void syscall_dup(RSIM_Thread *t, int callno);
-static void syscall_pipe_enter(RSIM_Thread *t, int callno);
-static void syscall_pipe(RSIM_Thread *t, int callno);
-static void syscall_brk_enter(RSIM_Thread *t, int callno);
+static void syscall_access_enter(RSIM_Thread *t, int callno);
+static void syscall_alarm(RSIM_Thread *t, int callno);
+static void syscall_alarm_enter(RSIM_Thread *t, int callno);
 static void syscall_brk(RSIM_Thread *t, int callno);
+static void syscall_brk_enter(RSIM_Thread *t, int callno);
 static void syscall_brk_leave(RSIM_Thread *t, int callno);
-static void syscall_getgid_enter(RSIM_Thread *t, int callno);
-static void syscall_getgid(RSIM_Thread *t, int callno);
-static void syscall_geteuid_enter(RSIM_Thread *t, int callno);
-static void syscall_geteuid(RSIM_Thread *t, int callno);
-static void syscall_getegid_enter(RSIM_Thread *t, int callno);
-static void syscall_getegid(RSIM_Thread *t, int callno);
-static void syscall_ioctl_enter(RSIM_Thread *t, int callno);
-static void syscall_ioctl(RSIM_Thread *t, int callno);
-static void syscall_ioctl_leave(RSIM_Thread *t, int callno);
-static void syscall_setpgid_enter(RSIM_Thread *t, int callno);
-static void syscall_setpgid(RSIM_Thread *t, int callno);
-static void syscall_umask_enter(RSIM_Thread *t, int callno);
-static void syscall_umask(RSIM_Thread *t, int callno);
-static void syscall_dup2_enter(RSIM_Thread *t, int callno);
-static void syscall_dup2(RSIM_Thread *t, int callno);
-static void syscall_getppid_enter(RSIM_Thread *t, int callno);
-static void syscall_getppid(RSIM_Thread *t, int callno);
-static void syscall_getpgrp_enter(RSIM_Thread *t, int callno);
-static void syscall_getpgrp(RSIM_Thread *t, int callno);
-static void syscall_setrlimit_enter(RSIM_Thread *t, int callno);
-static void syscall_setrlimit(RSIM_Thread *t, int callno);
-static void syscall_ugetrlimit_enter(RSIM_Thread *t, int callno);
-static void syscall_ugetrlimit(RSIM_Thread *t, int callno);
-static void syscall_ugetrlimit_leave(RSIM_Thread *t, int callno);
-static void syscall_getrlimit_enter(RSIM_Thread *t, int callno);
-static void syscall_getrlimit(RSIM_Thread *t, int callno);
-static void syscall_getrlimit_leave(RSIM_Thread *t, int callno);
-static void syscall_gettimeofday_enter(RSIM_Thread *t, int callno);
-static void syscall_gettimeofday(RSIM_Thread *t, int callno);
-static void syscall_gettimeofday_leave(RSIM_Thread *t, int callno);
-static void syscall_symlink_enter(RSIM_Thread *t, int callno);
-static void syscall_symlink(RSIM_Thread *t, int callno);
-static void syscall_readlink_enter(RSIM_Thread *t, int callno);
-static void syscall_readlink(RSIM_Thread *t, int callno);
-static void syscall_munmap_enter(RSIM_Thread *t, int callno);
-static void syscall_munmap(RSIM_Thread *t, int callno);
-static void syscall_ftruncate_enter(RSIM_Thread *t, int callno);
-static void syscall_ftruncate(RSIM_Thread *t, int callno);
-static void syscall_fchmod_enter(RSIM_Thread *t, int callno);
-static void syscall_fchmod(RSIM_Thread *t, int callno);
-static void syscall_fchown_enter(RSIM_Thread *t, int callno);
-static void syscall_fchown(RSIM_Thread *t, int callno);
-static void syscall_statfs_enter(RSIM_Thread *t, int callno);
-static void syscall_statfs(RSIM_Thread *t, int callno);
-static void syscall_statfs_leave(RSIM_Thread *t, int callno);
-static void syscall_fstatfs_enter(RSIM_Thread *t, int callno);
-static void syscall_fstatfs(RSIM_Thread *t, int callno);
-static void syscall_fstatfs_leave(RSIM_Thread *t, int callno);
-static void syscall_socketcall_enter(RSIM_Thread *t, int callno);
-static void syscall_socketcall(RSIM_Thread *t, int callno);
-static void syscall_socketcall_leave(RSIM_Thread *t, int callno);
-static void syscall_wait4_enter(RSIM_Thread *t, int callno);
-static void syscall_wait4(RSIM_Thread *t, int callno);
-static void syscall_wait4_leave(RSIM_Thread *t, int callno);
-static void syscall_sysinfo_enter(RSIM_Thread *t, int callno);
-static void syscall_sysinfo(RSIM_Thread *t, int callno);
-static void syscall_ipc_enter(RSIM_Thread *t, int callno);
-static void syscall_ipc(RSIM_Thread *t, int callno);
-static void syscall_ipc_leave(RSIM_Thread *t, int callno);
-static void syscall_fsync_enter(RSIM_Thread *t, int callno);
-static void syscall_fsync(RSIM_Thread *t, int callno);
-static void syscall_sigreturn_enter(RSIM_Thread *t, int callno);
-static void syscall_sigreturn(RSIM_Thread *t, int callno);
-static void syscall_sigreturn_leave(RSIM_Thread *t, int callno);
-static void syscall_clone_enter(RSIM_Thread *t, int callno);
-static void syscall_clone(RSIM_Thread *t, int callno);
-static void syscall_clone_leave(RSIM_Thread *t, int callno);
-static void syscall_uname_enter(RSIM_Thread *t, int callno);
-static void syscall_uname(RSIM_Thread *t, int callno);
-static void syscall_fchdir_enter(RSIM_Thread *t, int callno);
-static void syscall_fchdir(RSIM_Thread *t, int callno);
-static void syscall_mprotect_enter(RSIM_Thread *t, int callno);
-static void syscall_mprotect(RSIM_Thread *t, int callno);
-static void syscall_mprotect_leave(RSIM_Thread *t, int callno);
-static void syscall_llseek_enter(RSIM_Thread *t, int callno);
-static void syscall_llseek(RSIM_Thread *t, int callno);
-static void syscall_getdents_enter(RSIM_Thread *t, int callno);
-static void syscall_getdents(RSIM_Thread *t, int callno);
-static void syscall_getdents_leave(RSIM_Thread *t, int callno);
-static void syscall_select_enter(RSIM_Thread *t, int callno);
-static void syscall_select(RSIM_Thread *t, int callno);
-static void syscall_select_leave(RSIM_Thread *t, int callno);
-static void syscall_msync_enter(RSIM_Thread *t, int callno);
-static void syscall_msync(RSIM_Thread *t, int callno);
-static void syscall_writev_enter(RSIM_Thread *t, int callno);
-static void syscall_writev(RSIM_Thread *t, int callno);
-static void syscall_sched_setparam_enter(RSIM_Thread *t, int callno);
-static void syscall_sched_setparam(RSIM_Thread *t, int callno);
-static void syscall_sched_setscheduler_enter(RSIM_Thread *t, int callno);
-static void syscall_sched_setscheduler(RSIM_Thread *t, int callno);
-static void syscall_sched_getscheduler_enter(RSIM_Thread *t, int callno);
-static void syscall_sched_getscheduler(RSIM_Thread *t, int callno);
-static void syscall_sched_getscheduler_leave(RSIM_Thread *t, int callno);
-static void syscall_sched_yield_enter(RSIM_Thread *t, int callno);
-static void syscall_sched_yield(RSIM_Thread *t, int callno);
-static void syscall_sched_get_priority_max_enter(RSIM_Thread *t, int callno);
-static void syscall_sched_get_priority_max(RSIM_Thread *t, int callno);
-static void syscall_sched_get_priority_min_enter(RSIM_Thread *t, int callno);
-static void syscall_sched_get_priority_min(RSIM_Thread *t, int callno);
-static void syscall_nanosleep_enter(RSIM_Thread *t, int callno);
-static void syscall_nanosleep(RSIM_Thread *t, int callno);
-static void syscall_nanosleep_leave(RSIM_Thread *t, int callno);
-static void syscall_rt_sigreturn_enter(RSIM_Thread *t, int callno);
-static void syscall_rt_sigreturn(RSIM_Thread *t, int callno);
-static void syscall_rt_sigreturn_leave(RSIM_Thread *t, int callno);
-static void syscall_rt_sigaction_enter(RSIM_Thread *t, int callno);
-static void syscall_rt_sigaction(RSIM_Thread *t, int callno);
-static void syscall_rt_sigaction_leave(RSIM_Thread *t, int callno);
-static void syscall_rt_sigprocmask_enter(RSIM_Thread *t, int callno);
-static void syscall_rt_sigprocmask(RSIM_Thread *t, int callno);
-static void syscall_rt_sigprocmask_leave(RSIM_Thread *t, int callno);
-static void syscall_rt_sigpending_enter(RSIM_Thread *t, int callno);
-static void syscall_rt_sigpending(RSIM_Thread *t, int callno);
-static void syscall_rt_sigpending_leave(RSIM_Thread *t, int callno);
-static void syscall_rt_sigsuspend_enter(RSIM_Thread *t, int callno);
-static void syscall_rt_sigsuspend(RSIM_Thread *t, int callno);
-static void syscall_rt_sigsuspend_leave(RSIM_Thread *t, int callno);
-static void syscall_getcwd_enter(RSIM_Thread *t, int callno);
-static void syscall_getcwd(RSIM_Thread *t, int callno);
-static void syscall_getcwd_leave(RSIM_Thread *t, int callno);
-static void syscall_sigaltstack_enter(RSIM_Thread *t, int callno);
-static void syscall_sigaltstack(RSIM_Thread *t, int callno);
-static void syscall_sigaltstack_leave(RSIM_Thread *t, int callno);
-static void syscall_mmap2_enter(RSIM_Thread *t, int callno);
-static void syscall_mmap2(RSIM_Thread *t, int callno);
-static void syscall_mmap2_leave(RSIM_Thread *t, int callno);
-static void syscall_stat64_enter(RSIM_Thread *t, int callno);
-static void syscall_stat64(RSIM_Thread *t, int callno);
-static void syscall_stat64_leave(RSIM_Thread *t, int callno);
-static void syscall_getuid32_enter(RSIM_Thread *t, int callno);
-static void syscall_getuid32(RSIM_Thread *t, int callno);
-static void syscall_getgid32_enter(RSIM_Thread *t, int callno);
-static void syscall_getgid32(RSIM_Thread *t, int callno);
-static void syscall_geteuid32_enter(RSIM_Thread *t, int callno);
-static void syscall_geteuid32(RSIM_Thread *t, int callno);
-static void syscall_getegid32_enter(RSIM_Thread *t, int callno);
-static void syscall_getegid32(RSIM_Thread *t, int callno);
-static void syscall_fchown32_enter(RSIM_Thread *t, int callno);
-static void syscall_fchown32(RSIM_Thread *t, int callno);
-static void syscall_chown_enter(RSIM_Thread *t, int callno);
+static void syscall_chdir(RSIM_Thread *t, int callno);
+static void syscall_chdir_enter(RSIM_Thread *t, int callno);
+static void syscall_chmod(RSIM_Thread *t, int callno);
+static void syscall_chmod_enter(RSIM_Thread *t, int callno);
 static void syscall_chown(RSIM_Thread *t, int callno);
-static void syscall_getdents64_enter(RSIM_Thread *t, int callno);
-static void syscall_getdents64(RSIM_Thread *t, int callno);
-static void syscall_getdents64_leave(RSIM_Thread *t, int callno);
-static void syscall_fcntl_enter(RSIM_Thread *t, int callno);
-static void syscall_fcntl(RSIM_Thread *t, int callno);
-static void syscall_fcntl_leave(RSIM_Thread *t, int callno);
-static void syscall_gettid_enter(RSIM_Thread *t, int callno);
-static void syscall_gettid(RSIM_Thread *t, int callno);
-static void syscall_futex_enter(RSIM_Thread *t, int callno);
-static void syscall_futex(RSIM_Thread *t, int callno);
-static void syscall_sched_getaffinity_enter(RSIM_Thread *t, int callno);
-static void syscall_sched_getaffinity(RSIM_Thread *t, int callno);
-static void syscall_sched_getaffinity_leave(RSIM_Thread *t, int callno);
-static void syscall_set_thread_area_enter(RSIM_Thread *t, int callno);
-static void syscall_set_thread_area(RSIM_Thread *t, int callno);
-static void syscall_exit_group_enter(RSIM_Thread *t, int callno);
-static void syscall_exit_group(RSIM_Thread *t, int callno);
-static void syscall_exit_group_leave(RSIM_Thread *t, int callno);
-static void syscall_set_tid_address_enter(RSIM_Thread *t, int callno);
-static void syscall_set_tid_address(RSIM_Thread *t, int callno);
-static void syscall_clock_settime_enter(RSIM_Thread *t, int callno);
-static void syscall_clock_settime(RSIM_Thread *t, int callno);
-static void syscall_clock_gettime_enter(RSIM_Thread *t, int callno);
-static void syscall_clock_gettime(RSIM_Thread *t, int callno);
-static void syscall_clock_gettime_leave(RSIM_Thread *t, int callno);
-static void syscall_clock_getres_enter(RSIM_Thread *t, int callno);
+static void syscall_chown_enter(RSIM_Thread *t, int callno);
 static void syscall_clock_getres(RSIM_Thread *t, int callno);
+static void syscall_clock_getres_enter(RSIM_Thread *t, int callno);
 static void syscall_clock_getres_leave(RSIM_Thread *t, int callno);
-static void syscall_statfs64_enter(RSIM_Thread *t, int callno);
-static void syscall_statfs64(RSIM_Thread *t, int callno);
-static void syscall_statfs64_leave(RSIM_Thread *t, int callno);
-static void syscall_tgkill_enter(RSIM_Thread *t, int callno);
-static void syscall_tgkill(RSIM_Thread *t, int callno);
-static void syscall_utimes_enter(RSIM_Thread *t, int callno);
-static void syscall_utimes(RSIM_Thread *t, int callno);
-static void syscall_fchmodat_enter(RSIM_Thread *t, int callno);
+static void syscall_clock_gettime(RSIM_Thread *t, int callno);
+static void syscall_clock_gettime_enter(RSIM_Thread *t, int callno);
+static void syscall_clock_gettime_leave(RSIM_Thread *t, int callno);
+static void syscall_clock_settime(RSIM_Thread *t, int callno);
+static void syscall_clock_settime_enter(RSIM_Thread *t, int callno);
+static void syscall_clone(RSIM_Thread *t, int callno);
+static void syscall_clone_enter(RSIM_Thread *t, int callno);
+static void syscall_clone_leave(RSIM_Thread *t, int callno);
+static void syscall_close(RSIM_Thread *t, int callno);
+static void syscall_close_enter(RSIM_Thread *t, int callno);
+static void syscall_creat(RSIM_Thread *t, int callno);
+static void syscall_creat_enter(RSIM_Thread *t, int callno);
+static void syscall_dup(RSIM_Thread *t, int callno);
+static void syscall_dup2(RSIM_Thread *t, int callno);
+static void syscall_dup2_enter(RSIM_Thread *t, int callno);
+static void syscall_dup_enter(RSIM_Thread *t, int callno);
+static void syscall_execve(RSIM_Thread *t, int callno);
+static void syscall_execve_enter(RSIM_Thread *t, int callno);
+static void syscall_exit(RSIM_Thread *t, int callno);
+static void syscall_exit_enter(RSIM_Thread *t, int callno);
+static void syscall_exit_group(RSIM_Thread *t, int callno);
+static void syscall_exit_group_enter(RSIM_Thread *t, int callno);
+static void syscall_exit_group_leave(RSIM_Thread *t, int callno);
+static void syscall_exit_leave(RSIM_Thread *t, int callno);
+static void syscall_fchdir(RSIM_Thread *t, int callno);
+static void syscall_fchdir_enter(RSIM_Thread *t, int callno);
+static void syscall_fchmod(RSIM_Thread *t, int callno);
+static void syscall_fchmod_enter(RSIM_Thread *t, int callno);
 static void syscall_fchmodat(RSIM_Thread *t, int callno);
-static void syscall_set_robust_list_enter(RSIM_Thread *t, int callno);
+static void syscall_fchmodat_enter(RSIM_Thread *t, int callno);
+static void syscall_fchown(RSIM_Thread *t, int callno);
+static void syscall_fchown32(RSIM_Thread *t, int callno);
+static void syscall_fchown32_enter(RSIM_Thread *t, int callno);
+static void syscall_fchown_enter(RSIM_Thread *t, int callno);
+static void syscall_fcntl(RSIM_Thread *t, int callno);
+static void syscall_fcntl_enter(RSIM_Thread *t, int callno);
+static void syscall_fcntl_leave(RSIM_Thread *t, int callno);
+static void syscall_fstatfs(RSIM_Thread *t, int callno);
+static void syscall_fstatfs_enter(RSIM_Thread *t, int callno);
+static void syscall_fstatfs_leave(RSIM_Thread *t, int callno);
+static void syscall_fstatfs64(RSIM_Thread *t, int callno);
+static void syscall_fstatfs64_enter(RSIM_Thread *t, int callno);
+static void syscall_fstatfs64_leave(RSIM_Thread *t, int callno);
+static void syscall_fsync(RSIM_Thread *t, int callno);
+static void syscall_fsync_enter(RSIM_Thread *t, int callno);
+static void syscall_ftruncate(RSIM_Thread *t, int callno);
+static void syscall_ftruncate_enter(RSIM_Thread *t, int callno);
+static void syscall_futex(RSIM_Thread *t, int callno);
+static void syscall_futex_enter(RSIM_Thread *t, int callno);
+static void syscall_futex_leave(RSIM_Thread *t, int callno);
+static void syscall_getcwd(RSIM_Thread *t, int callno);
+static void syscall_getcwd_enter(RSIM_Thread *t, int callno);
+static void syscall_getcwd_leave(RSIM_Thread *t, int callno);
+static void syscall_getdents(RSIM_Thread *t, int callno);
+static void syscall_getdents64(RSIM_Thread *t, int callno);
+static void syscall_getdents64_enter(RSIM_Thread *t, int callno);
+static void syscall_getdents64_leave(RSIM_Thread *t, int callno);
+static void syscall_getdents_enter(RSIM_Thread *t, int callno);
+static void syscall_getdents_leave(RSIM_Thread *t, int callno);
+static void syscall_getegid(RSIM_Thread *t, int callno);
+static void syscall_getegid32(RSIM_Thread *t, int callno);
+static void syscall_getegid32_enter(RSIM_Thread *t, int callno);
+static void syscall_getegid_enter(RSIM_Thread *t, int callno);
+static void syscall_geteuid(RSIM_Thread *t, int callno);
+static void syscall_geteuid32(RSIM_Thread *t, int callno);
+static void syscall_geteuid32_enter(RSIM_Thread *t, int callno);
+static void syscall_geteuid_enter(RSIM_Thread *t, int callno);
+static void syscall_getgid(RSIM_Thread *t, int callno);
+static void syscall_getgid32(RSIM_Thread *t, int callno);
+static void syscall_getgid32_enter(RSIM_Thread *t, int callno);
+static void syscall_getgid_enter(RSIM_Thread *t, int callno);
+static void syscall_getpgrp(RSIM_Thread *t, int callno);
+static void syscall_getpgrp_enter(RSIM_Thread *t, int callno);
+static void syscall_getpid(RSIM_Thread *t, int callno);
+static void syscall_getpid_enter(RSIM_Thread *t, int callno);
+static void syscall_getppid(RSIM_Thread *t, int callno);
+static void syscall_getppid_enter(RSIM_Thread *t, int callno);
+static void syscall_getrlimit(RSIM_Thread *t, int callno);
+static void syscall_getrlimit_enter(RSIM_Thread *t, int callno);
+static void syscall_getrlimit_leave(RSIM_Thread *t, int callno);
+static void syscall_gettid(RSIM_Thread *t, int callno);
+static void syscall_gettid_enter(RSIM_Thread *t, int callno);
+static void syscall_gettimeofday(RSIM_Thread *t, int callno);
+static void syscall_gettimeofday_enter(RSIM_Thread *t, int callno);
+static void syscall_gettimeofday_leave(RSIM_Thread *t, int callno);
+static void syscall_getuid(RSIM_Thread *t, int callno);
+static void syscall_getuid32(RSIM_Thread *t, int callno);
+static void syscall_getuid32_enter(RSIM_Thread *t, int callno);
+static void syscall_getuid_enter(RSIM_Thread *t, int callno);
+static void syscall_ioctl(RSIM_Thread *t, int callno);
+static void syscall_ioctl_enter(RSIM_Thread *t, int callno);
+static void syscall_ioctl_leave(RSIM_Thread *t, int callno);
+static void syscall_ipc(RSIM_Thread *t, int callno);
+static void syscall_ipc_enter(RSIM_Thread *t, int callno);
+static void syscall_ipc_leave(RSIM_Thread *t, int callno);
+static void syscall_kill(RSIM_Thread *t, int callno);
+static void syscall_kill_enter(RSIM_Thread *t, int callno);
+static void syscall_link(RSIM_Thread *t, int callno);
+static void syscall_link_enter(RSIM_Thread *t, int callno);
+static void syscall_llseek(RSIM_Thread *t, int callno);
+static void syscall_llseek_enter(RSIM_Thread *t, int callno);
+static void syscall_lseek(RSIM_Thread *t, int callno);
+static void syscall_lseek_enter(RSIM_Thread *t, int callno);
+static void syscall_madvise(RSIM_Thread *t, int callno);
+static void syscall_madvise_enter(RSIM_Thread *t, int callno);
+static void syscall_mkdir(RSIM_Thread *t, int callno);
+static void syscall_mkdir_enter(RSIM_Thread *t, int callno);
+static void syscall_mknod(RSIM_Thread *t, int callno);
+static void syscall_mknod_enter(RSIM_Thread *t, int callno);
+static void syscall_mmap(RSIM_Thread *t, int callno);
+static void syscall_mmap_enter(RSIM_Thread *t, int callno);
+static void syscall_mmap_leave(RSIM_Thread *t, int callno);
+static void syscall_mmap2(RSIM_Thread *t, int callno);
+static void syscall_mmap2_enter(RSIM_Thread *t, int callno);
+static void syscall_mmap2_leave(RSIM_Thread *t, int callno);
+static void syscall_modify_ldt(RSIM_Thread *t, int callno);
+static void syscall_modify_ldt_enter(RSIM_Thread *t, int callno);
+static void syscall_modify_ldt_leave(RSIM_Thread *t, int callno);
+static void syscall_mprotect(RSIM_Thread *t, int callno);
+static void syscall_mprotect_enter(RSIM_Thread *t, int callno);
+static void syscall_mprotect_leave(RSIM_Thread *t, int callno);
+static void syscall_msync(RSIM_Thread *t, int callno);
+static void syscall_msync_enter(RSIM_Thread *t, int callno);
+static void syscall_munmap(RSIM_Thread *t, int callno);
+static void syscall_munmap_enter(RSIM_Thread *t, int callno);
+static void syscall_nanosleep(RSIM_Thread *t, int callno);
+static void syscall_nanosleep_enter(RSIM_Thread *t, int callno);
+static void syscall_nanosleep_leave(RSIM_Thread *t, int callno);
+static void syscall_open(RSIM_Thread *t, int callno);
+static void syscall_open_enter(RSIM_Thread *t, int callno);
+static void syscall_pause(RSIM_Thread *t, int callno);
+static void syscall_pause_enter(RSIM_Thread *t, int callno);
+static void syscall_pause_leave(RSIM_Thread *t, int callno);
+static void syscall_pipe(RSIM_Thread *t, int callno);
+static void syscall_pipe_enter(RSIM_Thread *t, int callno);
+static void syscall_pipe_leave(RSIM_Thread *t, int callno);
+static void syscall_prctl(RSIM_Thread *t, int callno);
+static void syscall_prctl_enter(RSIM_Thread *t, int callno);
+static void syscall_pread64(RSIM_Thread *t, int callno);
+static void syscall_pread64_enter(RSIM_Thread *t, int callno);
+static void syscall_pread64_leave(RSIM_Thread *t, int callno);
+static void syscall_read(RSIM_Thread *t, int callno);
+static void syscall_read_enter(RSIM_Thread *t, int callno);
+static void syscall_read_leave(RSIM_Thread*, int callno);
+static void syscall_readlink(RSIM_Thread *t, int callno);
+static void syscall_readlink_enter(RSIM_Thread *t, int callno);
+static void syscall_rename(RSIM_Thread *t, int callno);
+static void syscall_rename_enter(RSIM_Thread *t, int callno);
+static void syscall_rmdir(RSIM_Thread *t, int callno);
+static void syscall_rmdir_enter(RSIM_Thread *t, int callno);
+static void syscall_rt_sigaction(RSIM_Thread *t, int callno);
+static void syscall_rt_sigaction_enter(RSIM_Thread *t, int callno);
+static void syscall_rt_sigaction_leave(RSIM_Thread *t, int callno);
+static void syscall_rt_sigpending(RSIM_Thread *t, int callno);
+static void syscall_rt_sigpending_enter(RSIM_Thread *t, int callno);
+static void syscall_rt_sigpending_leave(RSIM_Thread *t, int callno);
+static void syscall_rt_sigprocmask(RSIM_Thread *t, int callno);
+static void syscall_rt_sigprocmask_enter(RSIM_Thread *t, int callno);
+static void syscall_rt_sigprocmask_leave(RSIM_Thread *t, int callno);
+static void syscall_rt_sigreturn(RSIM_Thread *t, int callno);
+static void syscall_rt_sigreturn_enter(RSIM_Thread *t, int callno);
+static void syscall_rt_sigreturn_leave(RSIM_Thread *t, int callno);
+static void syscall_rt_sigsuspend(RSIM_Thread *t, int callno);
+static void syscall_rt_sigsuspend_enter(RSIM_Thread *t, int callno);
+static void syscall_rt_sigsuspend_leave(RSIM_Thread *t, int callno);
+static void syscall_sched_get_priority_max(RSIM_Thread *t, int callno);
+static void syscall_sched_get_priority_max_enter(RSIM_Thread *t, int callno);
+static void syscall_sched_get_priority_min(RSIM_Thread *t, int callno);
+static void syscall_sched_get_priority_min_enter(RSIM_Thread *t, int callno);
+static void syscall_sched_getaffinity(RSIM_Thread *t, int callno);
+static void syscall_sched_getaffinity_enter(RSIM_Thread *t, int callno);
+static void syscall_sched_getaffinity_leave(RSIM_Thread *t, int callno);
+static void syscall_sched_getscheduler(RSIM_Thread *t, int callno);
+static void syscall_sched_getscheduler_enter(RSIM_Thread *t, int callno);
+static void syscall_sched_getscheduler_leave(RSIM_Thread *t, int callno);
+static void syscall_sched_setparam(RSIM_Thread *t, int callno);
+static void syscall_sched_setparam_enter(RSIM_Thread *t, int callno);
+static void syscall_sched_setscheduler(RSIM_Thread *t, int callno);
+static void syscall_sched_setscheduler_enter(RSIM_Thread *t, int callno);
+static void syscall_sched_yield(RSIM_Thread *t, int callno);
+static void syscall_sched_yield_enter(RSIM_Thread *t, int callno);
+static void syscall_select(RSIM_Thread *t, int callno);
+static void syscall_select_enter(RSIM_Thread *t, int callno);
+static void syscall_select_leave(RSIM_Thread *t, int callno);
 static void syscall_set_robust_list(RSIM_Thread *t, int callno);
+static void syscall_set_robust_list_enter(RSIM_Thread *t, int callno);
+static void syscall_set_thread_area(RSIM_Thread *t, int callno);
+static void syscall_set_thread_area_enter(RSIM_Thread *t, int callno);
+static void syscall_set_thread_area_leave(RSIM_Thread *t, int callno);
+static void syscall_set_tid_address(RSIM_Thread *t, int callno);
+static void syscall_set_tid_address_enter(RSIM_Thread *t, int callno);
+static void syscall_setpgid(RSIM_Thread *t, int callno);
+static void syscall_setpgid_enter(RSIM_Thread *t, int callno);
+static void syscall_setrlimit(RSIM_Thread *t, int callno);
+static void syscall_setrlimit_enter(RSIM_Thread *t, int callno);
+static void syscall_sigaltstack(RSIM_Thread *t, int callno);
+static void syscall_sigaltstack_enter(RSIM_Thread *t, int callno);
+static void syscall_sigaltstack_leave(RSIM_Thread *t, int callno);
+static void syscall_sigreturn(RSIM_Thread *t, int callno);
+static void syscall_sigreturn_enter(RSIM_Thread *t, int callno);
+static void syscall_sigreturn_leave(RSIM_Thread *t, int callno);
+static void syscall_socketcall(RSIM_Thread *t, int callno);
+static void syscall_socketcall_enter(RSIM_Thread *t, int callno);
+static void syscall_socketcall_leave(RSIM_Thread *t, int callno);
+static void syscall_stat64(RSIM_Thread *t, int callno);
+static void syscall_stat64_enter(RSIM_Thread *t, int callno);
+static void syscall_stat64_leave(RSIM_Thread *t, int callno);
+static void syscall_statfs(RSIM_Thread *t, int callno);
+static void syscall_statfs64(RSIM_Thread *t, int callno);
+static void syscall_statfs64_enter(RSIM_Thread *t, int callno);
+static void syscall_statfs64_leave(RSIM_Thread *t, int callno);
+static void syscall_statfs_enter(RSIM_Thread *t, int callno);
+static void syscall_statfs_leave(RSIM_Thread *t, int callno);
+static void syscall_symlink(RSIM_Thread *t, int callno);
+static void syscall_symlink_enter(RSIM_Thread *t, int callno);
+static void syscall_sync(RSIM_Thread *t, int callno);
+static void syscall_sync_enter(RSIM_Thread *t, int callno);
+static void syscall_sysinfo(RSIM_Thread *t, int callno);
+static void syscall_sysinfo_enter(RSIM_Thread *t, int callno);
+static void syscall_tgkill(RSIM_Thread *t, int callno);
+static void syscall_tgkill_enter(RSIM_Thread *t, int callno);
+static void syscall_time(RSIM_Thread *t, int callno);
+static void syscall_time_enter(RSIM_Thread *t, int callno);
+static void syscall_time_leave(RSIM_Thread *t, int callno);
+static void syscall_ugetrlimit(RSIM_Thread *t, int callno);
+static void syscall_ugetrlimit_enter(RSIM_Thread *t, int callno);
+static void syscall_ugetrlimit_leave(RSIM_Thread *t, int callno);
+static void syscall_umask(RSIM_Thread *t, int callno);
+static void syscall_umask_enter(RSIM_Thread *t, int callno);
+static void syscall_uname(RSIM_Thread *t, int callno);
+static void syscall_uname_enter(RSIM_Thread *t, int callno);
+static void syscall_uname_leave(RSIM_Thread *t, int callno);
+static void syscall_unlink(RSIM_Thread *t, int callno);
+static void syscall_unlink_enter(RSIM_Thread *t, int callno);
+static void syscall_utime(RSIM_Thread *t, int callno);
+static void syscall_utime_enter(RSIM_Thread *t, int callno);
+static void syscall_utimes(RSIM_Thread *t, int callno);
+static void syscall_utimes_enter(RSIM_Thread *t, int callno);
+static void syscall_wait4(RSIM_Thread *t, int callno);
+static void syscall_wait4_enter(RSIM_Thread *t, int callno);
+static void syscall_wait4_leave(RSIM_Thread *t, int callno);
+static void syscall_waitpid(RSIM_Thread *t, int callno);
+static void syscall_waitpid_enter(RSIM_Thread *t, int callno);
+static void syscall_waitpid_leave(RSIM_Thread *t, int callno);
+static void syscall_write(RSIM_Thread *t, int callno);
+static void syscall_write_enter(RSIM_Thread *t, int callno);
+static void syscall_writev(RSIM_Thread *t, int callno);
+static void syscall_writev_enter(RSIM_Thread *t, int callno);
 
 void
 RSIM_Linux32::ctor()
@@ -325,7 +344,7 @@ RSIM_Linux32::ctor()
     SC_REG(39,  mkdir,                          default);
     SC_REG(40,  rmdir,                          default);
     SC_REG(41,  dup,                            default);
-    SC_REG(42,  pipe,                           default);
+    SC_REG(42,  pipe,                           pipe);
     SC_REG(45,  brk,                            brk);
     SC_REG(47,  getgid,                         default);
     SC_REG(49,  geteuid,                        default);
@@ -341,6 +360,7 @@ RSIM_Linux32::ctor()
     SC_REG(78,  gettimeofday,                   gettimeofday);
     SC_REG(83,  symlink,                        default);
     SC_REG(85,  readlink,                       default);               // FIXME: probably needs an explicit leave
+    SC_REG(90,  mmap,                           mmap);
     SC_REG(91,  munmap,                         default);
     SC_REG(93,  ftruncate,                      default);
     SC_REG(94,  fchmod,                         default);
@@ -354,7 +374,8 @@ RSIM_Linux32::ctor()
     SC_REG(118, fsync,                          default);
     SC_REG(119, sigreturn,                      sigreturn);
     SC_REG(120, clone,                          clone);
-    SC_REG(122, uname,                          default);               // FIXME: probably needs an explicit leave
+    SC_REG(122, uname,                          uname);
+    SC_REG(123, modify_ldt,                     modify_ldt);
     SC_REG(125, mprotect,                       mprotect);
     SC_REG(133, fchdir,                         default);
     SC_REG(140, llseek,                         default);
@@ -369,11 +390,13 @@ RSIM_Linux32::ctor()
     SC_REG(159, sched_get_priority_max,         default);
     SC_REG(160, sched_get_priority_min,         default);
     SC_REG(162, nanosleep,                      nanosleep);
+    SC_REG(172, prctl,                          default);
     SC_REG(173, rt_sigreturn,                   rt_sigreturn);
     SC_REG(174, rt_sigaction,                   rt_sigaction);
     SC_REG(175, rt_sigprocmask,                 rt_sigprocmask);
     SC_REG(176, rt_sigpending,                  rt_sigpending);
     SC_REG(179, rt_sigsuspend,                  rt_sigsuspend);
+    SC_REG(180, pread64,                        pread64);
     SC_REG(183, getcwd,                         getcwd);
     SC_REG(186, sigaltstack,                    sigaltstack);
     SC_REG(191, ugetrlimit,                     ugetrlimit);
@@ -387,18 +410,20 @@ RSIM_Linux32::ctor()
     SC_REG(202, getegid32,                      default);
     SC_REG(207, fchown32,                       default);
     SC_REG(212, chown,                          default);
+    SC_REG(219, madvise,                        default);
     SC_REG(220, getdents64,                     getdents64);
     SC_REG(221, fcntl,                          fcntl);
     SC_REG(224, gettid,                         default);
-    SC_REG(240, futex,                          default);
+    SC_REG(240, futex,                          futex);
     SC_REG(242, sched_getaffinity,              sched_getaffinity);
-    SC_REG(243, set_thread_area,                default);
+    SC_REG(243, set_thread_area,                set_thread_area);
     SC_REG(252, exit_group,                     exit_group);
     SC_REG(258, set_tid_address,                default);
     SC_REG(264, clock_settime,                  default);
     SC_REG(265, clock_gettime,                  clock_gettime);
     SC_REG(266, clock_getres,                   clock_getres);
     SC_REG(268, statfs64,                       statfs64);
+    SC_REG(269, fstatfs64,                      fstatfs64);
     SC_REG(270, tgkill,                         default);
     SC_REG(271, utimes,                         default);
     SC_REG(306, fchmodat,                       default);
@@ -429,7 +454,7 @@ syscall_exit(RSIM_Thread *t, int callno)
         uint32_t zero = 0;
         size_t n = t->get_process()->mem_write(&zero, t->clear_child_tid, sizeof zero);
         ROSE_ASSERT(n==sizeof zero);
-        int nwoke = t->futex_wake(t->clear_child_tid);
+        int nwoke = t->futex_wake(t->clear_child_tid, INT_MAX);
         ROSE_ASSERT(nwoke>=0);
     }
 
@@ -527,12 +552,18 @@ syscall_open(RSIM_Thread *t, int callno)
         t->syscall_return(-EFAULT);
         return;
     }
+
     uint32_t flags=t->syscall_arg(1), mode=(flags & O_CREAT)?t->syscall_arg(2):0;
     int fd = open(filename.c_str(), flags, mode);
     if (-1==fd) {
         t->syscall_return(-errno);
         return;
     }
+
+    std::string prohibited = "/proc/self/";
+    assert(0!=strncmp(filename.c_str(), prohibited.c_str(), prohibited.size()));
+    prohibited = "/proc/" + StringUtility::numberToString(getpid()) + "/";
+    assert(0!=strncmp(filename.c_str(), prohibited.c_str(), prohibited.size()));
 
     t->syscall_return(fd);
 }
@@ -732,6 +763,9 @@ syscall_execve(RSIM_Thread *t, int callno)
     for (unsigned int i = 0; i < envp.size(); ++i)
         sys_envp.push_back(&envp[i][0]);
     sys_envp.push_back(NULL);
+
+    /* Signal the clear_tid address if necessary, since this is sort of like a child exit. */
+    t->do_clear_child_tid();
 
     /* The real system call */
     int result = execve(&filename[0], &sys_argv[0], &sys_envp[0]);
@@ -1135,19 +1169,30 @@ syscall_pipe_enter(RSIM_Thread *t, int callno)
 static void
 syscall_pipe(RSIM_Thread *t, int callno)
 {
-    int32_t filedes_kernel[2];
-    size_t  size_filedes = sizeof(int32_t)*2;
+    int32_t guest[2];
+    int host[2];
+    int result = pipe(host);
+    if (-1==result) {
+        t->syscall_return(-errno);
+        return;
+    }
 
-    int filedes[2];
-    int result = pipe(filedes);
+    guest[0] = host[0];
+    guest[1] = host[1];
+    if (sizeof(guest)!=t->get_process()->mem_write(guest, t->syscall_arg(0), sizeof guest)) {
+        close(host[0]);
+        close(host[1]);
+        t->syscall_return(-EFAULT);
+        return;
+    }
 
-    filedes_kernel[0] = filedes[0];
-    filedes_kernel[1] = filedes[1];
-
-    t->get_process()->mem_write(filedes_kernel, t->syscall_arg(0), size_filedes);
-
-    if (-1==result) result = -errno;
     t->syscall_return(result);
+}
+
+static void
+syscall_pipe_leave(RSIM_Thread *t, int callno)
+{
+    t->syscall_leave("dP", (size_t)8, print_int_32);
 }
 
 /*******************************************************************************************************************************/
@@ -1401,6 +1446,11 @@ syscall_ioctl(RSIM_Thread *t, int callno)
             t->syscall_return(result);
             break;
         }
+
+        case 0x82187201: /* VFAT_IOCTL_READDIR_BOTH */
+            /* FIXME: For now assume that we have no vfat filesystems mounted. */
+            t->syscall_return(-ENOTTY);
+            break;
 
         default: {
             fprintf(stderr, "  unhandled ioctl: %u\n", cmd);
@@ -1677,6 +1727,36 @@ syscall_readlink(RSIM_Thread *t, int callno)
 /*******************************************************************************************************************************/
 
 static void
+syscall_mmap_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("mmap", "P", sizeof(mmap_arg_struct_32), print_mmap_arg_struct_32);
+}
+
+/* See also: syscall_mmap2 */
+static void
+syscall_mmap(RSIM_Thread *t, int callno)
+{
+    mmap_arg_struct_32 args;
+    uint32_t args_va = t->syscall_arg(0);
+    if (sizeof(args)!=t->get_process()->mem_read(&args, args_va, sizeof args)) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+
+    uint32_t result = t->get_process()->mem_map(args.addr, args.len, args.prot, args.flags, args.offset, args.fd);
+    t->syscall_return(result);
+}
+
+static void
+syscall_mmap_leave(RSIM_Thread *t, int callno)
+{
+    t->syscall_leave("Dp");
+    t->get_process()->mem_showmap(t->tracing(TRACE_MMAP), "  memory map after mmap syscall:\n");
+}
+
+/*******************************************************************************************************************************/
+
+static void
 syscall_munmap_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("munmap", "pd");
@@ -1847,6 +1927,224 @@ syscall_fstatfs_leave(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
+/** Returns the first control message header if the control message buffer is large enough to contain a header.  The returned
+ * header is therefore always a complete header, but the control message buffer might not be large enough to contain the
+ * ancillary data that follows the header.  */
+template<class ControlHeader>
+static ControlHeader *cmsg_first(void *control, size_t controllen) {
+    assert(control!=NULL || 0==controllen);
+    return sizeof(ControlHeader)<=controllen ? (ControlHeader*)control : NULL;
+}
+template<class ControlHeader>
+static const ControlHeader *cmsg_first(const void *control, size_t controllen) {
+    assert(control!=NULL || 0==controllen);
+    return sizeof(ControlHeader)<=controllen ? (const ControlHeader*)control : NULL;
+}
+
+/** Returns the next control message header if the control message buffer is large enough to contain a header.  The returned
+ * header is therefore always a complete header, but the control message buffer might not be large enough to contain the
+ * ancillary data that follows the header. */
+template<class ControlHeader>
+static ControlHeader *cmsg_next(void *control, size_t controllen, ControlHeader *cur) {
+    if (!cur) return NULL;
+    assert(control!=NULL && (uint8_t*)cur>=(uint8_t*)control);
+    assert(cur->cmsg_len >= sizeof(ControlHeader));
+    size_t offset = (uint8_t*)cur - (uint8_t*)control + ALIGN_UP(cur->cmsg_len, sizeof(cur->cmsg_len));
+    return offset+sizeof(ControlHeader)<=controllen ? (ControlHeader*)((uint8_t*)control+offset) : NULL;
+}
+template<class ControlHeader>
+static const ControlHeader *cmsg_next(const void *control, size_t controllen, const ControlHeader *cur) {
+    if (!cur) return NULL;
+    assert(control!=NULL && (const uint8_t*)cur>=(const uint8_t*)control);
+    assert(cur->cmsg_len >= sizeof(ControlHeader));
+    size_t offset = (const uint8_t*)cur - (const uint8_t*)control + ALIGN_UP(cur->cmsg_len, sizeof(cur->cmsg_len));
+    return offset+sizeof(ControlHeader)<=controllen ? (const ControlHeader*)((const uint8_t*)control+offset) : NULL;
+}
+
+/** Returns true if the control buffer is large enough to contain the control message's ancillary data. */
+template<class ControlHeader>
+static bool cmsg_payload_complete(const void *control, size_t controllen, const ControlHeader *cur) {
+    assert(cur && (uint8_t*)cur>=(const uint8_t*)control);
+    return (size_t)((uint8_t*)cur-(const uint8_t*)control) + cur->cmsg_len <= controllen;
+}
+
+/** Count the number of control message headers in the control buffer.  The buffer might not be large enough to contain all the
+ *  ancillary data of the last mesage. */
+template<class ControlHeader>
+static size_t cmsg_nmessages(const void *control, size_t controllen) {
+    size_t count=0;
+    for (ControlHeader *ctl=cmsg_first<ControlHeader>(control, controllen);
+         ctl!=NULL;
+         ctl=cmsg_next<ControlHeader>(control, controllen, ctl)) {
+        count++;
+    }
+    return count;
+}
+
+/** Returns the size of the ancillary data for a control message.  The payload might be larger than the control message
+ *  buffer. */
+template<class ControlHeader>
+static size_t cmsg_payload_size(const ControlHeader *ctl) {
+    assert(ctl!=NULL);
+    assert(ctl->cmsg_len >= sizeof(ControlHeader));
+    return ctl->cmsg_len - sizeof(ControlHeader);
+}
+
+/** Returns the size of the ancillary data for a control message, limited by the size of the control message buffer. */
+template<class ControlHeader>
+static size_t cmsg_payload_size(const void *control, size_t controllen, const ControlHeader *ctl) {
+    assert(ctl!=NULL && control!=NULL);
+    assert((uint8_t*)ctl >= (const uint8_t*)control && (uint8_t*)(ctl+1) <= (const uint8_t*)control+controllen);
+    size_t payload_offset = (uint8_t*)(ctl+1) - (const uint8_t*)control;
+    size_t payload_size = cmsg_payload_size(ctl);
+    size_t payload_avail = controllen - payload_offset;
+    return std::min(payload_size, payload_avail);
+}
+
+/** Return the sizeof the buffer needed to hold control messages.  If the payload of the last message is trunctated in the
+ * source, then it will also be truncated in the destination. */
+template<class SourceType, class DestinationType>
+static size_t cmsg_needed(const void *control, size_t controllen)
+{
+    size_t retval = 0;
+    static const DestinationType *dst = NULL; // only used for sizeof(dst->cmsg_len)
+    for (const SourceType *ctl=cmsg_first<SourceType>(control, controllen);
+         ctl!=NULL;
+         ctl=cmsg_next<SourceType>(control, controllen, ctl)) {
+        retval = ALIGN_UP(retval, sizeof(dst->cmsg_len));
+        retval += sizeof(DestinationType) + cmsg_payload_size(control, controllen, ctl);
+    }
+    return retval;
+}
+
+template<class ControlHeader>
+static void cmsg_dump(const void *control, size_t controllen, FILE *f, const std::string prefix="")
+{
+    std::string hexdump_prefix = prefix + "            ";
+    HexdumpFormat fmt;
+    fmt.prefix = hexdump_prefix.c_str();
+    fmt.addr_fmt = "0x%02x:";
+    fmt.multiline = true;
+    fmt.pad_chars = false;
+
+    size_t i = 0;
+    for (const ControlHeader *ctl=cmsg_first<ControlHeader>(control, controllen);
+         ctl!=NULL;
+         ctl=cmsg_next<ControlHeader>(control, controllen, ctl)) {
+        size_t payload_advertised_len = cmsg_payload_size(ctl);
+        size_t payload_actual_len = cmsg_payload_size(control, controllen, ctl);
+        fprintf(f, "%smessage #%zd: size: total=%zu; payload=%zu; actual_payload=%zu\n",
+                prefix.c_str(), i++, (size_t)ctl->cmsg_len, payload_advertised_len, payload_actual_len);
+        SgAsmExecutableFileFormat::hexdump(f, 0, (const unsigned char*)(ctl+1), payload_actual_len, fmt);
+    }
+}
+
+/** Copy the source control message to the destination control message. If the source payload is truncated then the destination
+ *  payload will also be truncated. */
+template<class SourceType, class DestinationType>
+static void cmsg_copy1(const void *src_control, size_t src_controllen, const SourceType *src_ctl,
+                       void *dst_control, size_t dst_controllen, DestinationType *dst_ctl)
+{
+    assert(src_ctl && src_control &&
+           (const uint8_t*)src_ctl>=(const uint8_t*)src_control &&
+           (const uint8_t*)(src_ctl+1)<=(const uint8_t*)src_control+src_controllen);
+    assert(dst_ctl && dst_control &&
+           (uint8_t*)dst_ctl>=(uint8_t*)dst_control &&
+           (uint8_t*)(dst_ctl+1)<=(uint8_t*)dst_control+dst_controllen);
+    dst_ctl->cmsg_len = sizeof(DestinationType) + cmsg_payload_size(src_ctl);
+    dst_ctl->cmsg_level = src_ctl->cmsg_level;
+    dst_ctl->cmsg_type = src_ctl->cmsg_type;
+
+    size_t to_copy = std::min(cmsg_payload_size(src_control, src_controllen, src_ctl),
+                              cmsg_payload_size(dst_control, dst_controllen, dst_ctl));
+    memcpy(dst_ctl+1, src_ctl+1, to_copy);
+}
+
+/** Copy a guest msghdr_32.msg_control array to a host msghdr.msg_control array, allocating space and initializing the host's
+ *  relevant members in its msghdr struct.  Returns zero on success, negative errno on failure. */
+static int
+cmsg_copy_all(RSIM_Thread *t, const msghdr_32 &guest, msghdr &host)
+{
+    int retval = 0;
+    host.msg_control = NULL;
+    host.msg_controllen = 0;
+
+    /* Read the guest control messages */
+    void *guest_control = new uint8_t[guest.msg_controllen];
+    size_t nread = t->get_process()->mem_read(guest_control, guest.msg_control, guest.msg_controllen);
+    if (nread !=guest.msg_controllen)
+        retval = -EFAULT;
+
+    /* Allocate the host buffer */
+    host.msg_controllen = cmsg_needed<cmsghdr_32, cmsghdr>(guest_control, guest.msg_controllen);
+    if (0==host.msg_controllen)
+        return 0;
+    host.msg_control = new uint8_t[host.msg_controllen];
+
+    /* Copy each message from guest to host */
+    cmsghdr_32 *guest_cmsg = cmsg_first<cmsghdr_32>(guest_control,    guest.msg_controllen);
+    cmsghdr    *host_cmsg  = cmsg_first<cmsghdr   >(host.msg_control, host.msg_controllen);
+    while (guest_cmsg) {
+        if (!cmsg_payload_complete(guest_control, guest.msg_controllen, guest_cmsg)) {
+            retval = -EFAULT;
+            break;
+        }
+        cmsg_copy1(guest_control,    guest.msg_controllen, guest_cmsg,
+                   host.msg_control, host.msg_controllen,  host_cmsg);
+                  
+        guest_cmsg = cmsg_next(guest_control,    guest.msg_controllen, guest_cmsg);
+        host_cmsg  = cmsg_next(host.msg_control, host.msg_controllen,  host_cmsg);
+    }
+
+    if (retval) {
+        delete[] (uint8_t*)guest_control;
+        delete[] (uint8_t*)host.msg_control;
+        host.msg_control = NULL;
+        host.msg_controllen = 0;
+    }
+    return retval;
+}
+
+/** Copy host msghdr.msg_control to the guest.  Returns zero on success, negative errno on failure.  Truncation of a message
+ *  due to the guest not supplying a large enough buffer is not an error, but rather results in setting the MSG_CTRUNC flag
+ *  in the msghdr_32 struct. */
+static int
+cmsg_copy_all(RSIM_Thread *t, const msghdr &host, msghdr_32 &guest)
+{
+    int retval = 0;
+
+    size_t guest_controllen = cmsg_needed<cmsghdr, cmsghdr_32>(host.msg_control, host.msg_controllen);
+    if (0==guest_controllen) {
+        guest.msg_controllen = 0;
+        return 0;
+    }
+    
+    guest_controllen = std::min(guest_controllen, (size_t)guest.msg_controllen);
+    void *guest_control = new uint8_t[guest_controllen];
+
+    cmsghdr_32 *guest_cmsg = cmsg_first<cmsghdr_32>(guest_control,    guest_controllen);
+    cmsghdr    *host_cmsg  = cmsg_first<cmsghdr   >(host.msg_control, host.msg_controllen);
+    while (host_cmsg) {
+        assert(guest_cmsg);
+        cmsg_copy1(host.msg_control, host.msg_controllen, host_cmsg,
+                   guest_control,    guest_controllen,    guest_cmsg);
+        if (!cmsg_payload_complete(guest_control, guest_controllen, guest_cmsg))
+            guest.msg_flags |= MSG_CTRUNC;
+        guest_cmsg = cmsg_next(guest_control, guest_controllen, guest_cmsg);
+        host_cmsg = cmsg_next(host.msg_control, host.msg_controllen, host_cmsg);
+    }
+
+    size_t nwritten = t->get_process()->mem_write(guest_control, guest.msg_control, guest_controllen);
+    guest.msg_controllen = nwritten;
+    if (nwritten<guest_controllen) {
+        guest.msg_flags |= MSG_CTRUNC;
+        retval = -EFAULT;
+    }
+
+    delete[] (uint8_t*)guest_control;
+    return retval;
+}
+
 static void
 syscall_socketcall_enter(RSIM_Thread *t, int callno)
 {
@@ -1880,9 +2178,55 @@ syscall_socketcall_enter(RSIM_Thread *t, int callno)
                 t->syscall_enter("socketcall", "fp", socketcall_commands);
             }
             break;
+        case 8: /* SYS_SOCKETPAIR */
+            if (16==t->get_process()->mem_read(a, t->syscall_arg(1), 16)) {
+                t->syscall_enter(a, "socketpair", "dddp");
+            } else {
+                t->syscall_enter("socketcall", "fp", socketcall_commands);
+            }
+            break;
         case 10: /* SYS_RECV */
             if (16==t->get_process()->mem_read(a, t->syscall_arg(1), 16)) {
                 t->syscall_enter(a, "recv", "dpdd");
+            } else {
+                t->syscall_enter("socketcall", "fp", socketcall_commands);
+            }
+            break;
+        case 16: /* SYS_SENDMSG */
+            if (12==t->get_process()->mem_read(a, t->syscall_arg(1), 12)) {
+                t->syscall_enter(a, "sendmsg", "dPd", sizeof(msghdr_32), print_msghdr_32);
+                RTS_Message *trace = t->tracing(TRACE_SYSCALL);
+                msghdr_32 msghdr;
+                if (trace->get_file() && sizeof(msghdr)==t->get_process()->mem_read(&msghdr, a[1], sizeof msghdr)) {
+                    for (unsigned i=0; i<msghdr.msg_iovlen && i<100; i++) {
+                        uint32_t vasz[2];
+                        if (8==t->get_process()->mem_read(vasz, msghdr.msg_iov+i*8, 8)) {
+                            uint8_t *buf = new uint8_t[vasz[1]];
+                            if (vasz[1]==t->get_process()->mem_read(buf, vasz[0], vasz[1])) {
+                                trace->more("\n    iov #%u: ", i);
+                                print_buffer(trace, vasz[0], buf, vasz[1], 1024);
+                                trace->more("; %"PRIu32" byte%s", vasz[1], 1==vasz[1]?"":"s");
+                            } else {
+                                trace->more("\n    iov #%u: short read of data", i);
+                            }
+                            delete[] buf;
+                        } else {
+                            trace->more("\n    iov #%u: short read of iov", i);
+                            break;
+                        }
+                    }
+                    if (msghdr.msg_iovlen>100)
+                        trace->more("\n    iov ... (%zu in total)\n", (size_t)msghdr.msg_iovlen);
+                    if (msghdr.msg_iovlen>0)
+                        trace->more("\n");
+
+                    if (msghdr.msg_controllen>0 && msghdr.msg_controllen<4096) {
+                        uint8_t control[msghdr.msg_controllen];
+                        size_t nread = t->get_process()->mem_read(control, msghdr.msg_control, msghdr.msg_controllen);
+                        if (nread==msghdr.msg_controllen)
+                            cmsg_dump<cmsghdr_32>((void*)control, msghdr.msg_controllen, trace->get_file(), std::string(16, ' '));
+                    }
+                }
             } else {
                 t->syscall_enter("socketcall", "fp", socketcall_commands);
             }
@@ -1961,6 +2305,35 @@ sys_listen(RSIM_Thread *t, int fd, int backlog)
 }
 
 static void
+sys_socketpair(RSIM_Thread *t, int family, int type, int protocol, uint32_t sockvec_va)
+{
+    int sockets[2];
+#ifdef SYS_socketcall /* i686 */
+    ROSE_ASSERT(4==sizeof(int));
+    int a[4];
+    a[0] = family;
+    a[1] = type;
+    a[2] = protocol;
+    a[3] = (int)sockets;
+    int result = syscall(SYS_socketcall, 8/*SYS_SOCKETPAIR*/, a);
+#else /* amd64 */
+    int result = syscall(SYS_socketpair, family, type, protocol, sockets);
+#endif
+    if (-1==result) {
+        t->syscall_return(-errno);
+        return;
+    }
+
+    assert(8==sizeof sockets);
+    if (sizeof(sockets)!=t->get_process()->mem_write(sockets, sockvec_va, sizeof sockets)) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+
+    t->syscall_return(result);
+}
+
+static void
 sys_connect(RSIM_Thread *t, int fd, uint32_t addr_va, uint32_t addrlen)
 {
     sockaddr_32 guest;
@@ -2036,6 +2409,76 @@ sys_recvfrom(RSIM_Thread *t, int fd, uint32_t buf_va, uint32_t buf_sz, int flags
 }
 
 static void
+sys_sendmsg(RSIM_Thread *t, int fd, uint32_t msghdr_va, int flags)
+{
+    int retval = 0;
+    RTS_Message *strace = t->tracing(TRACE_SYSCALL);
+
+    /* Read guest information */
+    msghdr_32 guest;
+    if (sizeof(msghdr_32)!=t->get_process()->mem_read(&guest, msghdr_va, sizeof guest)) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+    if (guest.msg_iovlen<0 || guest.msg_iovlen>1024) {
+        t->syscall_return(-EINVAL);
+        return;
+    }
+    assert(0==guest.msg_namelen);       /* FIXME: not implemented yet [RPM 2011-06-14] */
+
+    if (0==guest.msg_iovlen) {
+        t->syscall_return(0);
+        return;
+    }
+    iovec_32 *guest_iov = new iovec_32[guest.msg_iovlen];
+    size_t guest_iov_sz = guest.msg_iovlen * sizeof(iovec_32);
+    if (guest_iov_sz!=t->get_process()->mem_read(guest_iov, guest.msg_iov, guest_iov_sz)) {
+        strace->more("<segfault reading iov>");
+        retval = -EFAULT;
+    }
+
+    /* Build the host data structure */
+    msghdr host;
+    memset(&host, 0, sizeof host);
+    if (0==retval) {
+        host.msg_name = NULL;
+        host.msg_namelen = 0;
+        host.msg_flags = guest.msg_flags;
+        host.msg_iovlen = guest.msg_iovlen;
+        host.msg_iov = new iovec[guest.msg_iovlen];
+        memset(host.msg_iov, 0, guest.msg_iovlen*sizeof(iovec));
+        for (unsigned i=0; i<guest.msg_iovlen; i++) {
+            host.msg_iov[i].iov_len = guest_iov[i].iov_len;
+            host.msg_iov[i].iov_base = new uint8_t[guest_iov[i].iov_len];
+            size_t nread = t->get_process()->mem_read(host.msg_iov[i].iov_base, guest_iov[i].iov_base, guest_iov[i].iov_len);
+            if (nread<guest_iov[i].iov_len) {
+                retval = -EFAULT;
+                break;
+            }
+        }
+        cmsg_copy_all(t, guest, host);
+    }
+
+    /* The real syscall */
+    if (0==retval) {
+        retval = sendmsg(fd, &host, flags);
+        if (-1==retval)
+            retval = -errno;
+    }
+
+    /* Clean up */
+    if (host.msg_iov) {
+        for (unsigned i=0; i<host.msg_iovlen; i++)
+            delete[] (uint8_t*)host.msg_iov[i].iov_base;
+        delete[] host.msg_iov;
+    }
+    delete[] (uint8_t*)host.msg_control;
+    delete[] guest_iov;
+
+    t->syscall_return(retval);
+}
+
+static void
 sys_recvmsg(RSIM_Thread *t, int fd, uint32_t msghdr_va, int flags)
 {
     int retval = 0;
@@ -2063,10 +2506,10 @@ sys_recvmsg(RSIM_Thread *t, int fd, uint32_t msghdr_va, int flags)
     /* Copy to host */
     msghdr host;
     memset(&host, 0, sizeof host);
-    if (0==retval && (host.msg_controllen = guest.msg_controllen) > 0) {
+    if (0==retval && guest.msg_controllen>0) {
+        host.msg_controllen = guest.msg_controllen + (guest.msg_controllen/sizeof(cmsghdr_32))*4; // estimate
         host.msg_control = new uint8_t[host.msg_controllen];
-        if (host.msg_controllen!=t->get_process()->mem_read(host.msg_control, guest.msg_control, guest.msg_controllen))
-            retval = -EFAULT;
+        memset(host.msg_control, 0, host.msg_controllen);
     }
     if (0==retval && (host.msg_iovlen = guest.msg_iovlen) > 0) {
         host.msg_iov = new iovec[guest.msg_iovlen];
@@ -2096,16 +2539,14 @@ sys_recvmsg(RSIM_Thread *t, int fd, uint32_t msghdr_va, int flags)
         }
     }
 
-    /* Copy control into the guest */
-    if (retval>=0 &&
-        (guest.msg_controllen=host.msg_controllen)>0 &&
-        host.msg_controllen!=t->get_process()->mem_write(host.msg_control, guest.msg_control, host.msg_controllen))
-        retval = -EFAULT;
-
-    /* Copy msghdr into the guest */
-    guest.msg_flags = host.msg_flags;
-    if (retval>=0 && sizeof(guest)!=t->get_process()->mem_write(&guest, msghdr_va, sizeof guest))
-        retval = -EFAULT;
+    /* Copy into the guest */
+    if (retval>=0) {
+        guest.msg_flags = host.msg_flags;
+        if (cmsg_copy_all(t, host, guest)<0)
+            retval = -EFAULT;
+        if (sizeof(guest)!=t->get_process()->mem_write(&guest, msghdr_va, sizeof guest))
+            retval = -EFAULT;
+    }
 
     /* Cleanup */
     for (unsigned idx=0; idx<host.msg_iovlen; idx++)
@@ -2160,6 +2601,15 @@ syscall_socketcall(RSIM_Thread *t, int callno)
             break;
         }
 
+        case 8: { /* SYS_SOCKETPAIR */
+            if (16!=t->get_process()->mem_read(a, t->syscall_arg(1), 16)) {
+                t->syscall_return(-EFAULT);
+            } else {
+                sys_socketpair(t, a[0], a[1], a[2], a[3]);
+            }
+            break;
+        }
+
         case 10: { /* SYS_RECV */
             if (16!=t->get_process()->mem_read(a, t->syscall_arg(1), 16)) {
                 t->syscall_return(-EFAULT);
@@ -2169,6 +2619,15 @@ syscall_socketcall(RSIM_Thread *t, int callno)
             break;
         }
 
+        case 16: {/* SYS_SENDMSG */
+            if (12!=t->get_process()->mem_read(a, t->syscall_arg(1), 12)) {
+                t->syscall_return(-EFAULT);
+            } else {
+                sys_sendmsg(t, a[0], a[1], a[2]);
+            }
+            break;
+        }
+            
         case 17: { /* SYS_RECVMSG */
             if (12!=t->get_process()->mem_read(a, t->syscall_arg(1), 12)) {
                 t->syscall_return(-EFAULT);
@@ -2181,14 +2640,12 @@ syscall_socketcall(RSIM_Thread *t, int callno)
         case 5: /* SYS_ACCEPT */
         case 6: /* SYS_GETSOCKNAME */
         case 7: /* SYS_GETPEERNAME */
-        case 8: /* SYS_SOCKETPAIR */
         case 9: /* SYS_SEND */
         case 11: /* SYS_SENDTO */
         case 12: /* SYS_RECVFROM */
         case 13: /* SYS_SHUTDOWN */
         case 14: /* SYS_SETSOCKOPT */
         case 15: /* SYS_GETSOCKOPT */
-        case 16: /* SYS_SENDMSG */
         case 18: /* SYS_ACCEPT4 */
         case 19: /* SYS_RECVMMSG */
             t->syscall_return(-ENOSYS);
@@ -2206,6 +2663,12 @@ syscall_socketcall_leave(RSIM_Thread *t, int callno)
     a[0] = t->syscall_arg(-1);
 
     switch (t->syscall_arg(0)) {
+        case 8: /* SYS_SOCKETPAIR */
+            if (16==t->get_process()->mem_read(a+1, t->syscall_arg(1), 16)) {
+                t->syscall_leave(a, "d---P", (size_t)8, print_int_32);
+                return;
+            }
+            break;
         case 17: /* SYS_RECVMSG */
             if (12==t->get_process()->mem_read(a+1, t->syscall_arg(1), 12)) {
                 t->syscall_leave(a, "d-P-", sizeof(msghdr_32), print_msghdr_32);
@@ -2216,7 +2679,7 @@ syscall_socketcall_leave(RSIM_Thread *t, int callno)
                     sizeof(msghdr)==t->get_process()->mem_read(&msghdr, a[2], sizeof msghdr)) {
                     trace->multipart("recvmsg", "");
                     uint32_t nbytes = a[0];
-                    for (unsigned i=0; i<msghdr.msg_iovlen && i<1024 && nbytes>0; i++) {
+                    for (unsigned i=0; i<msghdr.msg_iovlen && i<100 && nbytes>0; i++) {
                         uint32_t vasz[2];
                         if (8==t->get_process()->mem_read(vasz, msghdr.msg_iov+i*8, 8)) {
                             uint32_t nused = std::min(nbytes, vasz[1]);
@@ -2229,6 +2692,14 @@ syscall_socketcall_leave(RSIM_Thread *t, int callno)
                             }
                             delete[] buf;
                         }
+                    }
+                    if (msghdr.msg_iovlen>100)
+                        trace->more("    iov... (%zu in total)\n", (size_t)msghdr.msg_iovlen);
+                    if (msghdr.msg_controllen>0 && msghdr.msg_controllen<4096) {
+                        uint8_t control[msghdr.msg_controllen];
+                        size_t nread = t->get_process()->mem_read(control, msghdr.msg_control, msghdr.msg_controllen);
+                        if (nread==msghdr.msg_controllen)
+                            cmsg_dump<cmsghdr_32>((void*)control, msghdr.msg_controllen, trace->get_file(), std::string(16, ' '));
                     }
                     trace->multipart_end();
                 }
@@ -3419,8 +3890,13 @@ syscall_clone_enter(RSIM_Thread *t, int callno)
     /* From linux arch/x86/kernel/process.c:
      *    long sys_clone(unsigned long clone_flags, unsigned long newsp,
      *                   void __user *parent_tid, void __user *child_tid, struct pt_regs *regs)
+     *    {
+     *        if (!newsp)
+     *            newsp = regs->sp;
+     *        return do_fork(clone_flags, newsp, regs, 0, parent_tid, child_tid);
+     *    }
      *
-     * The fourth argument, child_tls_va, varies depending on clone_flags. Linux doesn't appear to require that
+     * The fourth argument, child_tid, varies depending on clone_flags. Linux doesn't appear to require that
      * these are mutually exclusive.  It appears as though the CLONE_SETTLS happens before CLONE_CHILD_SETTID.
      *   CLONE_CHILD_SETTID:  it is an address where the child's TID is written when the child is created
      *   CLONE_SETTLS:        it is an address of a user_desc_32 which will be loaded into the GDT.
@@ -3558,15 +4034,24 @@ static void
 syscall_uname(RSIM_Thread *t, int callno)
 {
     uint32_t dest_va=t->syscall_arg(0);
-    char buf[6*65];
-    memset(buf, ' ', sizeof buf);
-    strcpy(buf+0*65, "Linux");                                  /*sysname*/
-    strcpy(buf+1*65, "mymachine.example.com");                  /*nodename*/
-    strcpy(buf+2*65, "2.6.9");                                  /*release*/
-    strcpy(buf+3*65, "#1 SMP Wed Jun 18 12:35:02 EDT 2008");    /*version*/
-    strcpy(buf+4*65, "i386");                                   /*machine*/
-    strcpy(buf+5*65, "example.com");                            /*domainname*/
-    size_t nwritten = t->get_process()->mem_write(buf, dest_va, sizeof buf);
+    new_utsname_32 buf;
+    memset(&buf, ' ', sizeof buf);
+#if 0
+    strcpy(buf.sysname,         "Linux");
+    strcpy(buf.nodename,        "mymachine.example.com");
+    strcpy(buf.release,         "2.6.18");
+    strcpy(buf.version,         "#1 SMP Wed Jun 18 12:35:02 EDT 2008");
+    strcpy(buf.macine,          "i386");
+    strcpy(buf.domainname,      "example.com");
+#else
+    syscall(SYS_uname, &buf);
+    char *s;
+    if ((s=strstr(buf.release, "-amd64")))
+        *s = '\0';
+    strcpy(buf.machine, "i386");
+#endif
+
+    size_t nwritten = t->get_process()->mem_write(&buf, dest_va, sizeof buf);
     if( nwritten <= 0 ) {
         t->syscall_return(-EFAULT);
         return;
@@ -3574,6 +4059,32 @@ syscall_uname(RSIM_Thread *t, int callno)
 
     ROSE_ASSERT(nwritten==sizeof buf);
     t->syscall_return(0);
+}
+
+static void
+syscall_uname_leave(RSIM_Thread *t, int callno)
+{
+    t->syscall_leave("dP", sizeof(new_utsname_32), print_new_utsname_32);
+}
+
+/*******************************************************************************************************************************/
+
+static void
+syscall_modify_ldt_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("modify_ldt", "dpd");
+}
+
+static void
+syscall_modify_ldt(RSIM_Thread *t, int callno)
+{
+    assert(!"not implemented yet");
+}
+
+static void
+syscall_modify_ldt_leave(RSIM_Thread *t, int callno)
+{
+    t->syscall_leave("d---"); // FIXME
 }
 
 /*******************************************************************************************************************************/
@@ -3599,8 +4110,7 @@ syscall_fchdir(RSIM_Thread *t, int callno)
 static void
 syscall_mprotect_enter(RSIM_Thread *t, int callno)
 {
-    static const Translate pflags[] = { TF(PROT_READ), TF(PROT_WRITE), TF(PROT_EXEC), TF(PROT_NONE), T_END };
-    t->syscall_enter("mprotect", "pdf", pflags);
+    t->syscall_enter("mprotect", "pdf", mmap_pflags);
 }
 
 static void
@@ -3801,6 +4311,7 @@ syscall_writev_enter(RSIM_Thread *t, int callno)
 static void
 syscall_writev(RSIM_Thread *t, int callno)
 {
+    RTS_Message *strace = t->tracing(TRACE_SYSCALL);
     uint32_t fd=t->syscall_arg(0), iov_va=t->syscall_arg(1);
     int niov=t->syscall_arg(2), idx=0;
     int retval = 0;
@@ -3808,64 +4319,58 @@ syscall_writev(RSIM_Thread *t, int callno)
         retval = -EINVAL;
     } else {
         if (niov>0)
-            t->tracing(TRACE_SYSCALL)->more("\n");
+            strace->more("\n");
         for (idx=0; idx<niov; idx++) {
             /* Obtain buffer address and size */
-            uint32_t buf_va;
-            if (4 != t->get_process()->mem_read(&buf_va, iov_va+idx*8+0, 4)) {
+            strace->more("    iov %d: ", idx);
+
+            iovec_32 iov;
+            if (sizeof(iov)!=t->get_process()->mem_read(&iov, iov_va+idx*sizeof(iov), sizeof(iov))) {
                 if (0==idx)
                     retval = -EFAULT;
-                t->tracing(TRACE_SYSCALL)->more("    #%d: segmentation fault reading address\n", idx);
+                strace->more("<segfault reading iovec>\n");
                 break;
             }
-
-            uint32_t buf_sz;
-            if (4 != t->get_process()->mem_read(&buf_sz, iov_va+idx*8+4, 4)) {
-                if (0==idx)
-                    retval = -EFAULT;
-                t->tracing(TRACE_SYSCALL)->more("    #%d: segmentation fault reading size\n", idx);
-                break;
-            }
-
-            t->tracing(TRACE_SYSCALL)->more("    #%d: va=0x%08"PRIx32", size=0x%08"PRIx32, idx, buf_va, buf_sz);
 
             /* Make sure total size doesn't overflow a ssize_t */
-            if ((buf_sz & 0x80000000) || ((uint32_t)retval+buf_sz) & 0x80000000) {
+            if ((iov.iov_len & 0x80000000) || ((uint32_t)retval+iov.iov_len) & 0x80000000) {
                 if (0==idx)
                     retval = -EINVAL;
-                t->tracing(TRACE_SYSCALL)->more(" size overflow\n");
+                strace->more("<size overflow>\n");
                 break;
             }
 
             /* Copy data from guest to host because guest memory might not be contiguous in the host. Perhaps a more
              * efficient way to do this would be to copy chunks of host-contiguous data in a loop instead. */
-            uint8_t buf[buf_sz];
-            if (buf_sz != t->get_process()->mem_read(buf, buf_va, buf_sz)) {
+            uint8_t buf[iov.iov_len];
+            if (iov.iov_len != t->get_process()->mem_read(buf, iov.iov_base, iov.iov_len)) {
                 if (0==idx)
                     retval = -EFAULT;
-                t->tracing(TRACE_SYSCALL)->more(" segmentation fault\n");
+                strace->more("<seg fault reading buffer>\n");
                 break;
             }
+            print_buffer(strace, iov.iov_base, buf, iov.iov_len, 1024);
+            strace->more(" (size=%"PRIu32")", iov.iov_len);
 
             /* Write data to the file */
-            ssize_t nwritten = write(fd, buf, buf_sz);
+            ssize_t nwritten = write(fd, buf, iov.iov_len);
             if (-1==nwritten) {
                 if (0==idx)
                     retval = -errno;
-                t->tracing(TRACE_SYSCALL)->more(" write failed (%s)\n", strerror(errno));
+                strace->more(" <write failed (%s)>\n", strerror(errno));
                 break;
             }
             retval += nwritten;
-            if ((uint32_t)nwritten<buf_sz) {
-                t->tracing(TRACE_SYSCALL)->more(" short write (%zd bytes)\n", nwritten);
+            if ((uint32_t)nwritten<iov.iov_len) {
+                strace->more(" <short write of %zd bytes>\n", nwritten);
                 break;
             }
-            t->tracing(TRACE_SYSCALL)->more("\n");
+            strace->more("\n");
         }
     }
     t->syscall_return(retval);
     if (niov>0 && niov<=1024)
-        t->tracing(TRACE_SYSCALL)->more("writev return");
+        strace->more("writev return");
 }
 
 /*******************************************************************************************************************************/
@@ -4032,6 +4537,44 @@ syscall_nanosleep_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave("d-P", sizeof(timespec_32), print_timespec_32);
 }
+
+/*******************************************************************************************************************************/
+
+static void
+syscall_prctl_enter(RSIM_Thread *t, int callno)
+{
+    switch (t->syscall_arg(0)) {
+        case PR_SET_NAME:
+            t->syscall_enter("prctl", "es", prctl_options);
+            break;
+        default:
+            t->syscall_enter("prctl", "exxxx");
+            break;
+    }
+}
+
+static void
+syscall_prctl(RSIM_Thread *t, int callno)
+{
+    int option = t->syscall_arg(0);
+    switch (option) {
+        case PR_SET_NAME: {
+            bool error;
+            std::string name = t->get_process()->read_string(t->syscall_arg(1), 17, &error);
+            if (error) {
+                t->syscall_return(-EFAULT);
+                return;
+            }
+            int result = prctl(PR_SET_NAME, name.c_str());
+            t->syscall_return(-1==result ? -errno : result);
+            break;
+        }
+        default:
+            t->syscall_return(-ENOSYS); // FIXME
+            break;
+    }
+}
+
 
 /*******************************************************************************************************************************/
 
@@ -4218,6 +4761,42 @@ syscall_rt_sigsuspend_leave(RSIM_Thread *t, int callno)
 /*******************************************************************************************************************************/
 
 static void
+syscall_pread64_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("pread64", "dpdd");
+}
+
+static void
+syscall_pread64(RSIM_Thread *t, int callno)
+{
+    int fd              = t->syscall_arg(0);
+    uint32_t buf_va     = t->syscall_arg(1);
+    uint32_t size       = t->syscall_arg(2);
+    uint32_t offset     = t->syscall_arg(3);
+
+    uint8_t *buf = new uint8_t[size];
+    ssize_t nread = pread64(fd, buf, size, offset);
+    if (-1==nread) {
+        t->syscall_return(-errno);
+    } else if ((size_t)nread != t->get_process()->mem_write(buf, buf_va, (size_t)nread)) {
+        t->syscall_return(-EFAULT);
+    } else {
+        t->syscall_return(nread);
+    }
+
+    delete[] buf;
+}
+
+static void
+syscall_pread64_leave(RSIM_Thread *t, int callno)
+{
+    ssize_t nread = t->syscall_arg(-1);
+    t->syscall_leave("d-b", nread>0?nread:0);
+}
+
+/*******************************************************************************************************************************/
+
+static void
 syscall_getcwd_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("getcwd", "pd");
@@ -4297,15 +4876,7 @@ syscall_sigaltstack_leave(RSIM_Thread *t, int callno)
 static void
 syscall_mmap2_enter(RSIM_Thread *t, int callno)
 {
-    static const Translate pflags[] = { TF(PROT_READ), TF(PROT_WRITE), TF(PROT_EXEC), TF(PROT_NONE), T_END };
-    static const Translate mflags[] = { TF(MAP_SHARED), TF(MAP_PRIVATE), TF(MAP_ANONYMOUS), TF(MAP_DENYWRITE),
-                                        TF(MAP_EXECUTABLE), TF(MAP_FILE), TF(MAP_FIXED), TF(MAP_GROWSDOWN),
-                                        TF(MAP_LOCKED), TF(MAP_NONBLOCK), TF(MAP_NORESERVE),
-#ifdef MAP_32BIT
-                                        TF(MAP_32BIT),
-#endif
-                                        TF(MAP_POPULATE), T_END };
-    t->syscall_enter("mmap2", "pdffdd", pflags, mflags);
+    t->syscall_enter("mmap2", "pdffdd", mmap_pflags, mmap_mflags);
 }
 
 static void
@@ -4321,7 +4892,7 @@ syscall_mmap2(RSIM_Thread *t, int callno)
 static void
 syscall_mmap2_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave("p");
+    t->syscall_leave("Dp");
     t->get_process()->mem_showmap(t->tracing(TRACE_MMAP), "  memory map after mmap2 syscall:\n");
 }
 
@@ -4536,6 +5107,70 @@ syscall_chown(RSIM_Thread *t, int callno)
 /*******************************************************************************************************************************/
 
 static void
+syscall_madvise_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("madvise", "xde", madvise_behaviors);
+}
+
+static void
+syscall_madvise(RSIM_Thread *t, int callno)
+{
+    uint32_t start = t->syscall_arg(0);
+    uint32_t size = t->syscall_arg(1);
+    int behavior = t->syscall_arg(2);
+
+    /* See linux kernel madvise_behavior_valid() */
+    switch (behavior) {
+        case MADV_DOFORK:
+        case MADV_DONTFORK:
+        case MADV_NORMAL:
+        case MADV_SEQUENTIAL:
+        case MADV_RANDOM:
+        case MADV_REMOVE:
+        case MADV_WILLNEED:
+        case MADV_DONTNEED:
+            break;
+        default:
+            t->syscall_return(-EINVAL);
+            return;
+    }
+
+    /* Start must be page aligned */
+    if (start % PAGE_SIZE) {
+        t->syscall_return(-EINVAL);
+        return;
+    }
+    if (start + size < start) {
+        t->syscall_return(-EINVAL); /*overflow*/
+        return;
+    }
+
+    /* If pages are unmapped, return -ENOMEM */
+    ExtentMap mapped_mem;
+    RTS_READ(t->get_process()->rwlock()) {
+        mapped_mem = t->get_process()->get_memory()->va_extents();
+    } RTS_READ_END;
+    ExtentMap unmapped = mapped_mem.subtract_from(start, size);
+    if (unmapped.size()>0) {
+        t->syscall_return(-ENOMEM);
+        return;
+    }
+
+    /* From the madvise manpage: "This call does not influence the semantics of the application (except in the case of
+     * MADV_DONTNEED), but may influence its performance.  The kernel is free to ignore the advice."  So we ignore the advise
+     * in the simulator. */
+    if (behavior==MADV_DONTNEED) {
+        t->syscall_return(-ENOSYS);
+        return;
+    }
+
+    t->syscall_return(0);
+    return;
+}
+
+/*******************************************************************************************************************************/
+
+static void
 syscall_getdents64_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("getdents64", "dpd");
@@ -4711,6 +5346,7 @@ syscall_futex_enter(RSIM_Thread *t, int callno)
     static const Translate opflags[] = {
         TF3(0xff, 0x80, FUTEX_PRIVATE_FLAG|FUTEX_WAIT),
         TF3(0x80, 0x80, FUTEX_PRIVATE_FLAG),
+        TF3(0x100, 0x100, FUTEX_CLOCK_REALTIME),
         TF3(0x7f, 0, FUTEX_WAIT),
         TF3(0x7f, 1, FUTEX_WAKE),
         TF3(0x7f, 2, FUTEX_FD),
@@ -4742,6 +5378,9 @@ syscall_futex_enter(RSIM_Thread *t, int callno)
         case 4: /*FUTEX_CMP_REQUEUE*/
             t->syscall_enter("futex", "Pfd-Pd", (size_t)4, print_int_32, opflags, (size_t)4, print_int_32);
             break;
+        case 9: /*FUTEX_WAIT_BITSET*/
+            t->syscall_enter("futex", "PfdP-x", (size_t)4, print_int_32, opflags, sizeof(timespec_32), print_timespec_32);
+            break;
         default:
             t->syscall_enter("futex", "PfdPPd", (size_t)4, print_int_32, opflags, sizeof(timespec_32), print_timespec_32, 
                              (size_t)4, print_int_32);
@@ -4759,44 +5398,50 @@ syscall_futex(RSIM_Thread *t, int callno)
     uint32_t timeout_va = 0;                    /* arg 3 when present */
     uint32_t futex2_va = 0;                     /* arg 4 when present */
     uint32_t val3 = 0;                          /* arg 5 when present */
+
+    int result = -ENOSYS;
     switch (op & 0x7f) {
         case 0: /*FUTEX_WAIT*/
             timeout_va = t->syscall_arg(3);
+            assert(0==timeout_va); // NOT HANDLED YET
+            result = t->futex_wait(futex1_va, val1);
             break;
         case 1: /*FUTEX_WAKE*/
+            result = t->futex_wake(futex1_va, val1);
+            break;
         case 2: /*FUTEX_FD*/
+            assert(0); // NOT HANDLED YET
             break;
         case 3: /*FUTEX_REQUEUE*/
             futex2_va = t->syscall_arg(4);
+            assert(0); // NOT HANDLED YET
             break;
         case 4: /*FUTEX_CMP_REQUEUE*/
             futex2_va = t->syscall_arg(4);
             val3 = t->syscall_arg(5);
+            assert(0); // NOT HANDLED YET
+            break;
+        case 9: /*FUTEX_WAIT_BITSET*/
+            timeout_va = t->syscall_arg(3);
+            assert(0==timeout_va); // NOT HANDLED YET
+            val3 = t->syscall_arg(5);
+            result = t->futex_wait(futex1_va, val1, val3/*bitset*/);
             break;
         default:
             timeout_va =t->syscall_arg(3);
             futex2_va = t->syscall_arg(4);
             val3 = t->syscall_arg(5);
+            assert(0); // NOT HANDLED YET
             break;
     }
 
-    assert(sizeof(int)==sizeof(uint32_t));
-    int *futex1 = futex1_va ? (int*)t->get_process()->my_addr(futex1_va, 4) : NULL;
-    int *futex2 = futex2_va ? (int*)t->get_process()->my_addr(futex2_va, 4) : NULL;
-    struct timespec timespec_buf, *timespec=NULL;
-    if (timeout_va) {
-        timespec_32 ts;
-        if (sizeof(ts) != t->get_process()->mem_read(&ts, timeout_va, sizeof ts)) {
-            t->syscall_return(-EFAULT);
-            return;
-        }
-        timespec_buf.tv_sec = ts.tv_sec;
-        timespec_buf.tv_nsec = ts.tv_nsec;
-        timespec = &timespec_buf;
-    }
-
-    int result = syscall(SYS_futex, futex1, op, val1, timespec, futex2, val3);
     t->syscall_return(-1==result ? -errno : result);
+}
+
+static void
+syscall_futex_leave(RSIM_Thread *t, int callno)
+{
+    t->syscall_leave("dP", (size_t)4, print_int_32);
 }
 
 /*******************************************************************************************************************************/
@@ -4869,6 +5514,13 @@ syscall_set_thread_area(RSIM_Thread *t, int callno)
     t->syscall_return(0);
 }
 
+static void
+syscall_set_thread_area_leave(RSIM_Thread *t, int callno)
+{
+    t->syscall_leave("dP", sizeof(user_desc_32), print_user_desc_32);
+}
+
+
 /*******************************************************************************************************************************/
 
 static void
@@ -4888,7 +5540,7 @@ syscall_exit_group(RSIM_Thread *t, int callno)
         uint32_t zero = 0;
         size_t n = t->get_process()->mem_write(&zero, t->clear_child_tid, sizeof zero);
         ROSE_ASSERT(n==sizeof zero);
-        int nwoke = t->futex_wake(t->clear_child_tid);
+        int nwoke = t->futex_wake(t->clear_child_tid, INT_MAX);
         ROSE_ASSERT(nwoke>=0);
     }
 
@@ -5058,6 +5710,51 @@ syscall_statfs64(RSIM_Thread *t, int callno)
 
 static void
 syscall_statfs64_leave(RSIM_Thread *t, int callno)
+{
+    t->syscall_leave("d--P", sizeof(statfs64_32), print_statfs64_32);
+}
+
+/*******************************************************************************************************************************/
+
+static void
+syscall_fstatfs64_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("fstatfs64", "ddp");
+}
+
+static void
+syscall_fstatfs64(RSIM_Thread *t, int callno)
+{
+    int fd              = t->syscall_arg(0);
+    size_t sb_sz        = t->syscall_arg(1);
+    uint32_t sb_va      = t->syscall_arg(2);
+
+    assert(sb_sz==sizeof(statfs64_32));
+
+    statfs64_32 guest_statfs;
+#ifdef SYS_statfs64 /* host is a 32-bit machine */
+    static statfs64_native host_statfs;
+    int result = syscall(SYS_fstatfs64, fd, sizeof host_statfs, &host_statfs);
+    convert(&guest_statfs, &host_statfs);
+#else           /* host is 64-bit machine */
+    static statfs_native host_statfs;
+    int result = syscall(SYS_statfs, fd, &host_statfs);
+    convert(&guest_statfs, &host_statfs);
+#endif
+    if (-1==result) {
+        t->syscall_return(-errno);
+        return;
+    }
+    if (sizeof(guest_statfs)!=t->get_process()->mem_write(&guest_statfs, sb_va, sizeof guest_statfs)) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+
+    t->syscall_return(result);
+}
+
+static void
+syscall_fstatfs64_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave("d--P", sizeof(statfs64_32), print_statfs64_32);
 }

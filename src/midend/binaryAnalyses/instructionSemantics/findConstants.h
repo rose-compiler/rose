@@ -1016,6 +1016,8 @@ struct FindConstantsPolicy {
 
     void hlt() {} // FIXME
 
+    void cpuid() {} // FIXME
+
     void interrupt(uint8_t num) {
         currentRset.setToBottom();
     }

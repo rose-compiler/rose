@@ -8,9 +8,11 @@
 #include <syscall.h>
 
 #include <sys/user.h>
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/sem.h>
 
 size_t RSIM_Thread::next_sequence_number = 1;
-RTS_mutex_t RSIM_Thread::insn_mutex = RTS_MUTEX_INITIALIZER(RTS_LAYER_RSIM_THREAD_CLASS);
 
 /* Constructor */
 void
@@ -239,185 +241,194 @@ RSIM_Thread::syscall_arg(int idx)
 
 /* Deliver the specified signal. The signal is not removed from the signal_pending vector, nor is it added if it's masked. */
 int
-RSIM_Thread::signal_deliver(const RSIM_SignalHandling::siginfo_32 &info)
+RSIM_Thread::signal_deliver(const RSIM_SignalHandling::siginfo_32 &_info)
 {
+    RSIM_SignalHandling::siginfo_32 info = _info;
     int signo = info.si_signo;
-    assert(signo>0 && signo<=64);
 
-    RTS_Message *mesg = tracing(TRACE_SIGNAL);
-    sigaction_32 sa;
-    int status = get_process()->sys_sigaction(signo, NULL, &sa);
-    assert(status>=0);
+    bool cb_status = get_callbacks().call_signal_callbacks(RSIM_Callbacks::BEFORE, this, signo, &info,
+                                                           RSIM_Callbacks::SignalCallback::DELIVERY, true);
 
-    if (sa.handler_va==(uint32_t)(uint64_t)SIG_IGN) { /* double cast to avoid gcc warning */
-        /* The signal action may have changed since the signal was generated, so we need to check this again. */
-        mesg->multipart("delivery", "signal delivery ignored: ");
-        print_siginfo_32(mesg, (const uint8_t*)&info, sizeof info);
-        mesg->multipart_end();
+    if (cb_status && signo>0) {
+        assert(signo<=64);
 
-    } else if (sa.handler_va==(uint32_t)(uint64_t)SIG_DFL) {
-        mesg->multipart("delivery", "signal delivery via default: ");
-        print_siginfo_32(mesg, (const uint8_t*)&info, sizeof info);
-        mesg->multipart_end();
-
-        switch (signo) {
-            case SIGFPE:
-            case SIGILL:
-            case SIGSEGV:
-            case SIGBUS:
-            case SIGABRT:
-            case SIGTRAP:
-            case SIGSYS:
-                /* Exit process with core dump */
-                tracing(TRACE_MISC)->mesg("dumping core...\n");
-                get_process()->dump_core(signo);
-                report_stack_frames(tracing(TRACE_MISC));
-                throw RSIM_Process::Exit((signo & 0x7f) | __WCOREFLAG, true);
-            case SIGTERM:
-            case SIGINT:
-            case SIGQUIT:
-            case SIGKILL:
-            case SIGHUP:
-            case SIGALRM:
-            case SIGVTALRM:
-            case SIGPROF:
-            case SIGPIPE:
-            case SIGXCPU:
-            case SIGXFSZ:
-            case SIGUSR1:
-            case SIGUSR2:
-                /* Exit without core dump */
-                throw RSIM_Process::Exit(signo & 0x7f, true);
-            case SIGIO:
-            case SIGURG:
-            case SIGCHLD:
-            case SIGCONT:
-            case SIGSTOP:
-            case SIGTTIN:
-            case SIGTTOU:
-            case SIGWINCH:
-                /* Signal is ignored by default */
-                return 0;
-            default:
-                /* Exit without a core dump */
-                throw RSIM_Process::Exit(signo & 0x7f, true);
-        }
-
-    } else {
-        /* Most of the code here is based on __setup_frame() in Linux arch/x86/kernel/signal.c */
-        mesg->multipart("delivery", "signal delivery to 0x%08"PRIx32": ", sa.handler_va);
-        print_siginfo_32(mesg, (const uint8_t*)&info, sizeof info);
-        mesg->multipart_end();
-
-        pt_regs_32 regs = get_regs();
-        RSIM_SignalHandling::sigset_32 signal_mask;
-        status = sighand.sigprocmask(0, NULL, &signal_mask);
+        RTS_Message *mesg = tracing(TRACE_SIGNAL);
+        sigaction_32 sa;
+        int status = get_process()->sys_sigaction(signo, NULL, &sa);
         assert(status>=0);
-        uint32_t frame_va = 0;
 
-        if (sa.flags & SA_SIGINFO) {
-            /* Use the extended signal handler frame */
-            RSIM_SignalHandling::rt_sigframe_32 frame;
-            memset(&frame, 0, sizeof frame);
-            stack_32 stack; /* signal alternate stack */
-            int status = sighand.sigaltstack(NULL, &stack, regs.sp);
-            assert(status>=0);
-            frame_va = sighand.get_sigframe(&sa, sizeof frame, regs.sp);
+        if (sa.handler_va==(uint32_t)(uint64_t)SIG_IGN) { /* double cast to avoid gcc warning */
+            /* The signal action may have changed since the signal was generated, so we need to check this again. */
+            mesg->multipart("delivery", "signal delivery ignored: ");
+            print_siginfo_32(mesg, (const uint8_t*)&info, sizeof info);
+            mesg->multipart_end();
 
-            frame.signo = signo;
-            frame.pinfo = frame_va + OFFSET_OF_MEMBER(frame, info);
-            frame.puc = frame_va + OFFSET_OF_MEMBER(frame, uc);
+        } else if (sa.handler_va==(uint32_t)(uint64_t)SIG_DFL) {
+            mesg->multipart("delivery", "signal delivery via default: ");
+            print_siginfo_32(mesg, (const uint8_t*)&info, sizeof info);
+            mesg->multipart_end();
 
-            frame.info = info;
-
-            frame.uc.uc_flags = 0; /* zero unless cpu_has_xsave; see Linux ia32_setup_rt_frame() */
-            frame.uc.uc_link_va = 0;
-            frame.uc.uc_stack.ss_sp = stack.ss_sp;
-            frame.uc.uc_stack.ss_flags = sighand.on_signal_stack(frame_va) ? SS_ONSTACK : SS_DISABLE;
-            frame.uc.uc_stack.ss_size = stack.ss_size;
-            sighand.setup_sigcontext(&frame.uc.uc_mcontext, regs, signal_mask);
-            frame.uc.uc_sigmask = signal_mask;
-
-            /* Restorer. If sa_flags 0x04000000 is set, then stack frame "pretcode" is set to the sa_restorer address passed to
-             * sigaction. Otherwise pretcode points either to the "retcode" member of the stack frame (eight bytes of x86 code
-             * that invoke syscall 119) or to the rt_sigreturn address in the VDSO. */
-            if (sa.flags & 0x04000000/*SA_RESTORER, deprecated*/) {
-                frame.pretcode = sa.restorer_va;
-            } else {
-                frame.pretcode = SIGHANDLER_RT_RETURN; /* or could point to frame.retcode */
-                //frame.preturn = frame_va + OFFSET_OF_MEMBER(frame, retcode);
-                //frame.preturn = VDSO32_SYMBOL(vdso, rt_sigreturn); /* NOT IMPLEMENTED YET */
+            switch (signo) {
+                case SIGFPE:
+                case SIGILL:
+                case SIGSEGV:
+                case SIGBUS:
+                case SIGABRT:
+                case SIGTRAP:
+                case SIGSYS:
+                    /* Exit process with core dump */
+                    tracing(TRACE_MISC)->mesg("dumping core...\n");
+                    get_process()->dump_core(signo);
+                    report_stack_frames(tracing(TRACE_MISC));
+                    throw RSIM_Process::Exit((signo & 0x7f) | __WCOREFLAG, true);
+                case SIGTERM:
+                case SIGINT:
+                case SIGQUIT:
+                case SIGKILL:
+                case SIGHUP:
+                case SIGALRM:
+                case SIGVTALRM:
+                case SIGPROF:
+                case SIGPIPE:
+                case SIGXCPU:
+                case SIGXFSZ:
+                case SIGUSR1:
+                case SIGUSR2:
+                    /* Exit without core dump */
+                    throw RSIM_Process::Exit(signo & 0x7f, true);
+                case SIGIO:
+                case SIGURG:
+                case SIGCHLD:
+                case SIGCONT:
+                case SIGSTOP:
+                case SIGTTIN:
+                case SIGTTOU:
+                case SIGWINCH:
+                    /* Signal is ignored by default */
+                    return 0;
+                default:
+                    /* Exit without a core dump */
+                    throw RSIM_Process::Exit(signo & 0x7f, true);
             }
-        
-            /* Signal handler return code. For pre-2.6 kernels, this was an eight-byte chunk of x86 code that calls
-             * sys_sigreturn().  Newer kernels still push these bytes but never execute them. GDB uses them as a magic number
-             * to recognize that it's at a signal stack frame. Instead, pretcode is the address of sigreturn in the VDSO.  For
-             * now, we hard code it to a value that will be recognized by RSIM_Thread::main() as a
-             * return-from-signal-handler. */
-            frame.retcode[0] = 0xb8;    /* b8 ad 00 00 00 | mov eax, 119 */
-            frame.retcode[1] = 0xad;
-            frame.retcode[2] = 0x00;
-            frame.retcode[3] = 0x00;
-            frame.retcode[4] = 0x00;
-            frame.retcode[5] = 0xcd;    /* cd 80          | int 80 */
-            frame.retcode[6] = 0x80;
-            frame.retcode[7] = 0x00;    /* 00             | padding; not reached */
 
-            /* Write frame to stack */
-            if (sizeof(frame)!=process->mem_write(&frame, frame_va, sizeof frame))
-                return -EFAULT;
         } else {
-            /* Use the plain signal handler frame */
-            RSIM_SignalHandling::sigframe_32 frame;
-            memset(&frame, 0, sizeof frame);
-            frame_va = sighand.get_sigframe(&sa, sizeof frame, regs.sp);
-            
-            frame.signo = signo;
-            sighand.setup_sigcontext(&frame.sc, regs, signal_mask);
-            frame.extramask = signal_mask >> 32;
-            if (sa.flags & 0x04000000/*SA_RESTORER, deprecated*/) {
-                frame.pretcode = sa.restorer_va;
+            /* Most of the code here is based on __setup_frame() in Linux arch/x86/kernel/signal.c */
+            mesg->multipart("delivery", "signal delivery to 0x%08"PRIx32": ", sa.handler_va);
+            print_siginfo_32(mesg, (const uint8_t*)&info, sizeof info);
+            mesg->multipart_end();
+
+            pt_regs_32 regs = get_regs();
+            RSIM_SignalHandling::sigset_32 signal_mask;
+            status = sighand.sigprocmask(0, NULL, &signal_mask);
+            assert(status>=0);
+            uint32_t frame_va = 0;
+
+            if (sa.flags & SA_SIGINFO) {
+                /* Use the extended signal handler frame */
+                RSIM_SignalHandling::rt_sigframe_32 frame;
+                memset(&frame, 0, sizeof frame);
+                stack_32 stack; /* signal alternate stack */
+                int status = sighand.sigaltstack(NULL, &stack, regs.sp);
+                assert(status>=0);
+                frame_va = sighand.get_sigframe(&sa, sizeof frame, regs.sp);
+
+                frame.signo = signo;
+                frame.pinfo = frame_va + OFFSET_OF_MEMBER(frame, info);
+                frame.puc = frame_va + OFFSET_OF_MEMBER(frame, uc);
+
+                frame.info = info;
+
+                frame.uc.uc_flags = 0; /* zero unless cpu_has_xsave; see Linux ia32_setup_rt_frame() */
+                frame.uc.uc_link_va = 0;
+                frame.uc.uc_stack.ss_sp = stack.ss_sp;
+                frame.uc.uc_stack.ss_flags = sighand.on_signal_stack(frame_va) ? SS_ONSTACK : SS_DISABLE;
+                frame.uc.uc_stack.ss_size = stack.ss_size;
+                sighand.setup_sigcontext(&frame.uc.uc_mcontext, regs, signal_mask);
+                frame.uc.uc_sigmask = signal_mask;
+
+                /* Restorer. If sa_flags 0x04000000 is set, then stack frame "pretcode" is set to the sa_restorer address
+                 * passed to sigaction. Otherwise pretcode points either to the "retcode" member of the stack frame (eight
+                 * bytes of x86 code that invoke syscall 119) or to the rt_sigreturn address in the VDSO. */
+                if (sa.flags & 0x04000000/*SA_RESTORER, deprecated*/) {
+                    frame.pretcode = sa.restorer_va;
+                } else {
+                    frame.pretcode = SIGHANDLER_RT_RETURN; /* or could point to frame.retcode */
+                    //frame.preturn = frame_va + OFFSET_OF_MEMBER(frame, retcode);
+                    //frame.preturn = VDSO32_SYMBOL(vdso, rt_sigreturn); /* NOT IMPLEMENTED YET */
+                }
+
+                /* Signal handler return code. For pre-2.6 kernels, this was an eight-byte chunk of x86 code that calls
+                 * sys_sigreturn().  Newer kernels still push these bytes but never execute them. GDB uses them as a magic
+                 * number to recognize that it's at a signal stack frame. Instead, pretcode is the address of sigreturn in the
+                 * VDSO.  For now, we hard code it to a value that will be recognized by RSIM_Thread::main() as a
+                 * return-from-signal-handler. */
+                frame.retcode[0] = 0xb8;    /* b8 ad 00 00 00 | mov eax, 119 */
+                frame.retcode[1] = 0xad;
+                frame.retcode[2] = 0x00;
+                frame.retcode[3] = 0x00;
+                frame.retcode[4] = 0x00;
+                frame.retcode[5] = 0xcd;    /* cd 80          | int 80 */
+                frame.retcode[6] = 0x80;
+                frame.retcode[7] = 0x00;    /* 00             | padding; not reached */
+
+                /* Write frame to stack */
+                if (sizeof(frame)!=process->mem_write(&frame, frame_va, sizeof frame))
+                    return -EFAULT;
             } else {
-                frame.pretcode = SIGHANDLER_RETURN; /* or could point to frame.retcode */
-                //frame.preturn = frame_va + OFFSET_OF_MEMBER(frame, retcode);
-                //frame.preturn = VDSO32_SYMBOL(vdso, rt_sigreturn); /* NOT IMPLEMENTED YET */
+                /* Use the plain signal handler frame */
+                RSIM_SignalHandling::sigframe_32 frame;
+                memset(&frame, 0, sizeof frame);
+                frame_va = sighand.get_sigframe(&sa, sizeof frame, regs.sp);
+
+                frame.signo = signo;
+                sighand.setup_sigcontext(&frame.sc, regs, signal_mask);
+                frame.extramask = signal_mask >> 32;
+                if (sa.flags & 0x04000000/*SA_RESTORER, deprecated*/) {
+                    frame.pretcode = sa.restorer_va;
+                } else {
+                    frame.pretcode = SIGHANDLER_RETURN; /* or could point to frame.retcode */
+                    //frame.preturn = frame_va + OFFSET_OF_MEMBER(frame, retcode);
+                    //frame.preturn = VDSO32_SYMBOL(vdso, rt_sigreturn); /* NOT IMPLEMENTED YET */
+                }
+
+                frame.retcode[0] = 0x58;    /* 58             | pop eax */
+                frame.retcode[1] = 0xb8;    /* b8 77 00 00 00 | mov eax, 119 */
+                frame.retcode[2] = 0x77;
+                frame.retcode[3] = 0x00;
+                frame.retcode[4] = 0x00;
+                frame.retcode[5] = 0x00;
+                frame.retcode[6] = 0xcd;    /* cd 80          | int 80 */
+                frame.retcode[7] = 0x80;
+
+                /* Write the frame to the stack */
+                if (sizeof(frame)!=process->mem_write(&frame, frame_va, sizeof frame))
+                    return -EFAULT;
             }
 
-            frame.retcode[0] = 0x58;    /* 58             | pop eax */
-            frame.retcode[1] = 0xb8;    /* b8 77 00 00 00 | mov eax, 119 */
-            frame.retcode[2] = 0x77;
-            frame.retcode[3] = 0x00;
-            frame.retcode[4] = 0x00;
-            frame.retcode[5] = 0x00;
-            frame.retcode[6] = 0xcd;    /* cd 80          | int 80 */
-            frame.retcode[7] = 0x80;
+            /* New signal mask */
+            signal_mask |= sa.mask;
+            signal_mask |= (uint64_t)1 << (signo-1);
+            sighand.sigprocmask(SIG_SETMASK, &signal_mask, NULL);
 
-            /* Write the frame to the stack */
-            if (sizeof(frame)!=process->mem_write(&frame, frame_va, sizeof frame))
-                return -EFAULT;
+            /* Clear flags per ABI for function entry. */
+            policy.writeFlag(x86_flag_df, policy.false_());
+            policy.writeFlag(x86_flag_tf, policy.false_());
+
+            /* Set up registers for signal handler */
+            policy.writeGPR(x86_gpr_ax, policy.number<32>(signo));
+            policy.writeGPR(x86_gpr_dx, policy.number<32>(0));
+            policy.writeGPR(x86_gpr_cx, policy.number<32>(0));
+            policy.writeSegreg(x86_segreg_ds, 0x2b);        /* see RSIM_SemanticPolicy::ctor() */
+            policy.writeSegreg(x86_segreg_es, 0x2b);        /* see RSIM_SemanticPolicy::ctor() */
+            policy.writeSegreg(x86_segreg_ss, 0x2b);        /* see RSIM_SemanticPolicy::ctor() */
+            policy.writeSegreg(x86_segreg_cs, 0x23);        /* see RSIM_SemanticPolicy::ctor() */
+            policy.writeGPR(x86_gpr_sp, policy.number<32>(frame_va));
+            policy.writeIP(policy.number<32>(sa.handler_va)); /* we're now executing in the signal handler... */
         }
-
-        /* New signal mask */
-        signal_mask |= sa.mask;
-        signal_mask |= (uint64_t)1 << (signo-1);
-        sighand.sigprocmask(SIG_SETMASK, &signal_mask, NULL);
-
-        /* Clear flags per ABI for function entry. */
-        policy.writeFlag(x86_flag_df, policy.false_());
-        policy.writeFlag(x86_flag_tf, policy.false_());
-
-        /* Set up registers for signal handler */
-        policy.writeGPR(x86_gpr_ax, policy.number<32>(signo));
-        policy.writeGPR(x86_gpr_dx, policy.number<32>(0));
-        policy.writeGPR(x86_gpr_cx, policy.number<32>(0));
-        policy.writeSegreg(x86_segreg_ds, 0x2b);        /* see RSIM_SemanticPolicy::ctor() */
-        policy.writeSegreg(x86_segreg_es, 0x2b);        /* see RSIM_SemanticPolicy::ctor() */
-        policy.writeSegreg(x86_segreg_ss, 0x2b);        /* see RSIM_SemanticPolicy::ctor() */
-        policy.writeSegreg(x86_segreg_cs, 0x23);        /* see RSIM_SemanticPolicy::ctor() */
-        policy.writeGPR(x86_gpr_sp, policy.number<32>(frame_va));
-        policy.writeIP(policy.number<32>(sa.handler_va)); /* we're now executing in the signal handler... */
     }
 
+    get_callbacks().call_signal_callbacks(RSIM_Callbacks::AFTER, this, signo, &info,
+                                          RSIM_Callbacks::SignalCallback::DELIVERY, cb_status);
     return 0;
 }
 
@@ -508,8 +519,9 @@ RSIM_Thread::sys_sigprocmask(int how, const RSIM_SignalHandling::sigset_32 *in, 
 }
 
 int
-RSIM_Thread::signal_accept(const RSIM_SignalHandling::siginfo_32 &info)
+RSIM_Thread::signal_accept(const RSIM_SignalHandling::siginfo_32 &_info)
 {
+    RSIM_SignalHandling::siginfo_32 info = _info; /* non-const copy because callbacks may modify it */
     RSIM_SignalHandling::sigset_32 mask;
     int status = sighand.sigprocmask(0, NULL, &mask);
     if (status<0)
@@ -518,7 +530,15 @@ RSIM_Thread::signal_accept(const RSIM_SignalHandling::siginfo_32 &info)
     if ((sighand.mask_of(info.si_signo) & mask))
         return -EAGAIN;
 
-    return sighand.generate(info, get_process(), tracing(TRACE_SIGNAL));
+    int retval = 0;
+    bool cb_status = get_callbacks().call_signal_callbacks(RSIM_Callbacks::BEFORE, this, info.si_signo, &info,
+                                                           RSIM_Callbacks::SignalCallback::ARRIVAL, true);
+    if (cb_status)
+        retval = sighand.generate(info, get_process(), tracing(TRACE_SIGNAL));
+    get_callbacks().call_signal_callbacks(RSIM_Callbacks::AFTER, this, info.si_signo, &info,
+                                          RSIM_Callbacks::SignalCallback::ARRIVAL, cb_status);
+
+    return retval;
 }
 
 int
@@ -551,32 +571,52 @@ RSIM_Thread::report_progress_maybe()
 }
 
 void
-RSIM_Thread::report_stack_frames(RTS_Message *mesg)
+RSIM_Thread::report_stack_frames(RTS_Message *mesg, const std::string &title/*=""*/, bool bp_not_saved/*=false*/)
 {
     if (!mesg || !mesg->get_file())
         return;
     RTS_WRITE(get_process()->rwlock()) {
-        mesg->multipart("stack", "stack frames:\n");
-        uint32_t bp = policy.readGPR(x86_gpr_bp).known_value();
-        uint32_t retaddr, next_bp;
-        for (int i=0; i<32; i++, bp=next_bp) {
-            if (4!=process->mem_read(&retaddr, bp+4, 4))
-                break;
-            if (4!=process->mem_read(&next_bp, bp, 4))
-                break;
-            mesg->more("  #%d: bp=0x%08"PRIx32" ret=0x%08"PRIx32, i, bp, retaddr);
+        if (title.empty()) {
+            mesg->multipart("stack", "stack frames:");
+        } else {
+            mesg->multipart("stack", "%s", title.c_str());
+        }
 
-            /* Try to get the instruction at the return address and print the name of the function in which it appears, if
-             * any. */
-            SgAsmInstruction *insn = process->get_instruction(retaddr);
+        uint32_t bp = policy.readGPR(x86_gpr_bp).known_value();
+        uint32_t ip = policy.readIP().known_value();
+
+        for (int i=0; i<32; i++) {
+            mesg->more("\n  #%d: bp=0x%08"PRIx32" ip=0x%08"PRIx32, i, bp, ip);
+            SgAsmInstruction *insn = NULL;
+            try {
+                insn = process->get_instruction(ip);
+            } catch (const Disassembler::Exception&) {
+                /* IP is probably pointing to non-executable memory or a bad address. */
+            }
             SgAsmFunctionDeclaration *func = SageInterface::getEnclosingNode<SgAsmFunctionDeclaration>(insn);
             const MemoryMap::MapElement *me = NULL;
-            if (func && !func->get_name().empty()) {
-                mesg->more(" in function %s\n", func->get_name().c_str());
-            } else if ((me=process->get_memory()->find(retaddr)) && !me->get_name().empty()) {
-                mesg->more(" in memory region %s\n", me->get_name().c_str());
+            if (func && !func->get_name().empty() && 0==(func->get_reason() & SgAsmFunctionDeclaration::FUNC_LEFTOVERS)) {
+                mesg->more(" in function %s", func->get_name().c_str());
+            } else if ((me=process->get_memory()->find(ip)) && !me->get_name().empty()) {
+                mesg->more(" in memory region %s", me->get_name().c_str());
+            }
+
+            if (bp_not_saved) {
+                /* Presumably being called after a CALL but before EBP is saved on the stack.  In this case, the return address
+                 * of the inner-most function should be at ss:[esp], and containing functions have set up their stack
+                 * frames. */
+                uint32_t sp = policy.readGPR(x86_gpr_sp).known_value();
+                if (4!=process->mem_read(&ip, sp, 4))
+                    break;
+                bp_not_saved = false;
+                mesg->more(" [no stack frame]");
             } else {
-                mesg->more("\n");
+                /* This function has stored its incoming EBP on the stack at ss:[ebp].  This is usually accomplished by the
+                 * instructions PUSH EBP; MOV EBP, ESP. */
+                if (4!=process->mem_read(&ip, bp+4, 4))
+                    break;
+                if (4!=process->mem_read(&bp, bp, 4))
+                    break;
             }
         }
         mesg->multipart_end();
@@ -626,14 +666,21 @@ RSIM_Thread::main()
             if (signal_dequeue(&info)>0)
                 signal_deliver(info);
 
-            /* Simulate an instruction */
+            /* Simulate an instruction.  In order to make our simulated instructions atomic (at least among the simulators) we
+             * use a shared semaphore that was created in RSIM_Thread::ctor(). */
             SgAsmx86Instruction *insn = current_insn();
             bool cb_status = callbacks.call_insn_callbacks(RSIM_Callbacks::BEFORE, this, insn, true);
             if (cb_status) {
                 process->binary_trace_add(this, insn);
-                RTS_MUTEX(insn_mutex) {
-                    semantics.processInstruction(insn);
-                } RTS_MUTEX_END;
+                int status = sem_wait(process->get_simulator()->get_semaphore());
+                assert(0==status);
+                insn_semaphore_posted = false;
+                semantics.processInstruction(insn);             // blocking syscalls will post, and set insn_semaphore_posted
+                if (!insn_semaphore_posted) {
+                    status = sem_post(process->get_simulator()->get_semaphore());
+                    assert(0==status);
+                    insn_semaphore_posted = true;
+                }
             }
             callbacks.call_insn_callbacks(RSIM_Callbacks::AFTER, this, insn, cb_status);
 
@@ -641,6 +688,11 @@ RSIM_Thread::main()
             if (mesg->get_file())
                 policy.dump_registers(mesg);
         } catch (const Disassembler::Exception &e) {
+            if (!insn_semaphore_posted) {
+                int status = sem_post(process->get_simulator()->get_semaphore());
+                assert(0==status);
+                insn_semaphore_posted = true;
+            }
             std::ostringstream s;
             s <<e;
             tracing(TRACE_MISC)->mesg("caught Disassembler::Exception: %s\n", s.str().c_str());
@@ -650,6 +702,11 @@ RSIM_Thread::main()
             abort();
         } catch (const RSIM_Semantics::Exception &e) {
             /* Thrown for instructions whose semantics are not implemented yet. */
+            if (!insn_semaphore_posted) {
+                int status = sem_post(process->get_simulator()->get_semaphore());
+                assert(0==status);
+                insn_semaphore_posted = true;
+            }
             std::ostringstream s;
             s <<e;
             tracing(TRACE_MISC)->mesg("caught RSIM_Semantics::Exception: %s\n", s.str().c_str());
@@ -659,9 +716,15 @@ RSIM_Thread::main()
             report_stack_frames(tracing(TRACE_MISC));
             abort();
 #else
+            report_stack_frames(tracing(TRACE_MISC));
             tracing(TRACE_MISC)->mesg("exception ignored; continuing with a corrupt state...\n");
 #endif
         } catch (const RSIM_SEMANTIC_POLICY::Exception &e) {
+            if (!insn_semaphore_posted) {
+                int status = sem_post(process->get_simulator()->get_semaphore());
+                assert(0==status);
+                insn_semaphore_posted = true;
+            }
             std::ostringstream s;
             s <<e;
             tracing(TRACE_MISC)->mesg("caught semantic policy exception: %s\n", s.str().c_str());
@@ -670,11 +733,27 @@ RSIM_Thread::main()
             report_stack_frames(tracing(TRACE_MISC));
             abort();
         } catch (const RSIM_Process::Exit &e) {
+            if (!insn_semaphore_posted) {
+                int status = sem_post(process->get_simulator()->get_semaphore());
+                assert(0==status);
+                insn_semaphore_posted = true;
+            }
             sys_exit(e);
             return NULL;
-        } catch (const RSIM_SignalHandling::siginfo_32 &e) {
-            if (e.si_signo)
-                sighand.generate(e, process, tracing(TRACE_SIGNAL));
+        } catch (RSIM_SignalHandling::siginfo_32 &e) {
+            if (!insn_semaphore_posted) {
+                int status = sem_post(process->get_simulator()->get_semaphore());
+                assert(0==status);
+                insn_semaphore_posted = true;
+            }
+            if (e.si_signo) {
+                bool cb_status = get_callbacks().call_signal_callbacks(RSIM_Callbacks::BEFORE, this, e.si_signo, &e,
+                                                                       RSIM_Callbacks::SignalCallback::ARRIVAL, true);
+                if (cb_status)
+                    sighand.generate(e, process, tracing(TRACE_SIGNAL));
+                get_callbacks().call_signal_callbacks(RSIM_Callbacks::AFTER, this, e.si_signo, &e,
+                                                      RSIM_Callbacks::SignalCallback::ARRIVAL, cb_status);
+            }
         }
     }
 }
@@ -787,23 +866,6 @@ RSIM_Thread::set_thread_area(user_desc_32 *info, bool can_allocate)
 }
 
 int
-RSIM_Thread::futex_wake(uint32_t va)
-{
-    /* We need the process-wide read lock so no other thread unmaps the memory while we're signaling the futex. */
-    int retval;
-    assert(4==sizeof(int));
-    RTS_READ(get_process()->rwlock()) {
-        int *addr = (int*)get_process()->my_addr(va, sizeof(int));
-        if (!addr) {
-            retval = -EFAULT;
-        } else if (-1 == (retval = syscall(SYS_futex, addr, 1/*FUTEX_WAKE*/, 1/*nwake*/, 0/*timeout*/, 0/*addr2*/, 0/*val3*/))) {
-            retval = -errno;
-        }
-    } RTS_READ_END;
-    return retval;
-}
-
-int
 RSIM_Thread::handle_futex_death(uint32_t futex_va, RTS_Message *trace)
 {
     uint32_t futex;
@@ -827,7 +889,7 @@ RSIM_Thread::handle_futex_death(uint32_t futex_va, RTS_Message *trace)
         /* Wake another thread there's one waiting */
         if (futex & 0x80000000) {
             trace->more("    waking futex 0x%08"PRIx32"\n", futex_va);
-            int result = futex_wake(futex_va);
+            int result = futex_wake(futex_va, 1);
             if (result<0) {
                 trace->more("      wake failed for futex at 0x%08"PRIu32"\n", futex_va);
                 return result;
@@ -882,6 +944,24 @@ RSIM_Thread::exit_robust_list()
     return retval;
 }
 
+void
+RSIM_Thread::do_clear_child_tid()
+{
+    if (clear_child_tid) {
+        tracing(TRACE_SYSCALL)->mesg("clearing child tid...");
+        uint32_t zero = 0;
+        size_t n = get_process()->mem_write(&zero, clear_child_tid, sizeof zero);
+        if (n!=sizeof zero) {
+            tracing(TRACE_SYSCALL)->mesg("cannot write clear_child_tid address 0x%08"PRIx32, clear_child_tid);
+        } else {
+            tracing(TRACE_SYSCALL)->mesg("waking futex 0x%08"PRIx32, clear_child_tid);
+            int nwoke = futex_wake(clear_child_tid, INT_MAX);
+            if (nwoke<0)
+                tracing(TRACE_SYSCALL)->mesg("wake futex 0x%08"PRIx32" failed with %d\n", clear_child_tid, nwoke);
+        }
+    }
+}
+
 int
 RSIM_Thread::sys_exit(const RSIM_Process::Exit &e)
 {
@@ -893,19 +973,7 @@ RSIM_Thread::sys_exit(const RSIM_Process::Exit &e)
     exit_robust_list();
 
     /* Clear and signal child TID if necessary (CLONE_CHILD_CLEARTID) */
-    if (clear_child_tid) {
-        tracing(TRACE_SYSCALL)->mesg("clearing child tid...");
-        uint32_t zero = 0;
-        size_t n = process->mem_write(&zero, clear_child_tid, sizeof zero);
-        if (n!=sizeof zero) {
-            tracing(TRACE_SYSCALL)->mesg("cannot write clear_child_tid address 0x%08"PRIx32, clear_child_tid);
-        } else {
-            tracing(TRACE_SYSCALL)->mesg("waking futex 0x%08"PRIx32, clear_child_tid);
-            int nwoke = futex_wake(clear_child_tid);
-            if (nwoke<0)
-                tracing(TRACE_SYSCALL)->mesg("wake futex 0x%08"PRIx32" failed with %d\n", clear_child_tid, nwoke);
-        }
-    }
+    do_clear_child_tid();
 
     /* Remove the child from the process. */
     process->remove_thread(this); /* thread safe */
@@ -933,11 +1001,16 @@ RSIM_Thread::sys_tgkill(pid_t pid, pid_t tid, int signo)
         RSIM_Thread *thread = process->get_thread(tid);
         if (!thread) {
             retval = -ESRCH;
-        } else if (thread==this) {
-            retval = sighand.generate(info, process, tracing(TRACE_SIGNAL));
         } else {
-            thread->sighand.generate(info, process, thread->tracing(TRACE_SIGNAL));
-            retval = syscall(SYS_tgkill, pid, tid, RSIM_SignalHandling::SIG_WAKEUP);
+            bool cb_status = get_callbacks().call_signal_callbacks(RSIM_Callbacks::BEFORE, thread, signo, &info,
+                                                                   RSIM_Callbacks::SignalCallback::ARRIVAL, true);
+            if (cb_status)
+                retval = thread->sighand.generate(info, process, thread->tracing(TRACE_SIGNAL));
+
+            thread->get_callbacks().call_signal_callbacks(RSIM_Callbacks::AFTER, thread, signo, &info,
+                                                          RSIM_Callbacks::SignalCallback::ARRIVAL, cb_status);
+            if (thread!=this && retval>=0)
+                retval = syscall(SYS_tgkill, pid, tid, RSIM_SignalHandling::SIG_WAKEUP);
         }
     } else {
         retval = sys_kill(pid, info);
@@ -998,43 +1071,201 @@ RSIM_Thread::post_fork()
 void
 RSIM_Thread::emulate_syscall()
 {
-    int err = RTS_mutex_unlock(&insn_mutex);
-    assert(!err);
+    /* Post the instruction semphore because some system calls can block indefinitely. */
+    int status = sem_post(get_process()->get_simulator()->get_semaphore());
+    assert(0==status);
+    insn_semaphore_posted = true;
 
-    try {
-        unsigned callno = policy.readGPR(x86_gpr_ax).known_value();
-        bool cb_status = callbacks.call_syscall_callbacks(RSIM_Callbacks::BEFORE, this, callno, true);
-        if (cb_status) {
-            RSIM_Simulator *sim = get_process()->get_simulator();
-            if (sim->syscall_is_implemented(callno)) {
-                RSIM_Simulator::SystemCall *sc = sim->syscall_implementation(callno);
-                sc->enter.apply(true, RSIM_Simulator::SystemCall::Callback::Args(this, callno));
-                sc->body .apply(true, RSIM_Simulator::SystemCall::Callback::Args(this, callno));
-                sc->leave.apply(true, RSIM_Simulator::SystemCall::Callback::Args(this, callno));
-            } else {
-                char name[32];
-                sprintf(name, "syscall_%u", callno);
-                tracing(TRACE_MISC)->multipart(name, "syscall_%u(", callno);
-                for (int i=0; i<6; i++)
-                    tracing(TRACE_MISC)->more("%s0x%08"PRIx32, i?", ":"", syscall_arg(i));
-                tracing(TRACE_MISC)->more(") is not implemented yet");
-                tracing(TRACE_MISC)->multipart_end();
+    unsigned callno = policy.readGPR(x86_gpr_ax).known_value();
+    bool cb_status = callbacks.call_syscall_callbacks(RSIM_Callbacks::BEFORE, this, callno, true);
+    if (cb_status) {
+        RSIM_Simulator *sim = get_process()->get_simulator();
+        if (sim->syscall_is_implemented(callno)) {
+            RSIM_Simulator::SystemCall *sc = sim->syscall_implementation(callno);
+            sc->enter.apply(true, RSIM_Simulator::SystemCall::Callback::Args(this, callno));
+            sc->body .apply(true, RSIM_Simulator::SystemCall::Callback::Args(this, callno));
+            sc->leave.apply(true, RSIM_Simulator::SystemCall::Callback::Args(this, callno));
+        } else {
+            char name[32];
+            sprintf(name, "syscall_%u", callno);
+            tracing(TRACE_MISC)->multipart(name, "syscall_%u(", callno);
+            for (int i=0; i<6; i++)
+                tracing(TRACE_MISC)->more("%s0x%08"PRIx32, i?", ":"", syscall_arg(i));
+            tracing(TRACE_MISC)->more(") is not implemented yet");
+            tracing(TRACE_MISC)->multipart_end();
 
-                tracing(TRACE_MISC)->mesg("dumping core...\n");
-                get_process()->dump_core(SIGSYS);
-                report_stack_frames(tracing(TRACE_MISC));
-                abort();
-            }
+            tracing(TRACE_MISC)->mesg("dumping core...\n");
+            get_process()->dump_core(SIGSYS);
+            report_stack_frames(tracing(TRACE_MISC));
+            abort();
         }
-        callbacks.call_syscall_callbacks(RSIM_Callbacks::AFTER, this, callno, cb_status);
-    } catch (...) {
-        err = RTS_mutex_lock(&insn_mutex);
-        assert(!err);
-        throw;
+    }
+    callbacks.call_syscall_callbacks(RSIM_Callbacks::AFTER, this, callno, cb_status);
+}
+
+/* Not thread safe; obtain a process-wide lock first */
+rose_addr_t
+RSIM_Thread::futex_key(rose_addr_t va, uint32_t **val_ptr)
+{
+    RTS_Message *trace = tracing(TRACE_FUTEX);
+
+    /* Futexes must be word aligned */
+    if (va & 3)
+        return 0;
+
+    /* Find the simulator address. */
+    *val_ptr = (uint32_t*)process->my_addr(va, 4);
+    rose_addr_t addr = (rose_addr_t)*val_ptr;
+    trace->mesg("futex: specimen va 0x%08"PRIx64" is at simulator address 0x%08"PRIx64, va, addr);
+
+    /* Does the simulator address fall inside a file? */
+    FILE *f = fopen("/proc/self/maps", "r");
+    assert(f!=NULL);
+    char *line = NULL;
+    size_t lsize = 0;
+    while (getline(&line, &lsize, f)>0) {
+        char *s=line, *rest;
+
+        rose_addr_t lo_addr = strtoull(s, &rest, 16);
+        assert(rest && *rest=='-');
+        s = rest+1;
+        
+        rose_addr_t hi_addr = strtoull(s, &rest, 16);
+        assert(rest && *rest==' ');
+        s = rest+1;
+
+        bool readable=false, writable=false, executable=false, shared=true;
+        if (*s++ == 'r')
+            readable = true;
+        if (*s++ == 'w')
+            writable = true;
+        if (*s++ == 'x')
+            executable = true;
+        if (*s++ == 'p')
+            shared = false;
+        assert(' '==*s);
+        s++;
+
+        rose_addr_t map_offset = strtoull(s, &rest, 16);
+        assert(rest && *rest==' ');
+        s = rest+1;
+
+        unsigned devno = strtoul(s, &rest, 16);
+        assert(rest && *rest==':');
+        s = rest+1;
+        devno += (devno<<16) + strtoul(s, &rest, 16);
+        assert(rest && *rest==' ');
+        s = rest+1;
+
+        unsigned __attribute__((unused)) filesz = strtoull(s, &rest, 16);
+        assert(rest && *rest==' ');
+        s = rest+1;
+        
+        while (' '==*s) s++;
+        assert(*s);
+        char *filename = s;
+        s[strlen(s)-1] = '\0'; // chomp linefeed
+
+        if (devno!=0 && addr>=lo_addr && addr+4<=hi_addr) {
+            struct stat sb;
+            if (stat(filename, &sb)<0) {
+                trace->mesg("futex: cannot stat file \"%s\"", filename);
+                break;
+            }
+
+            rose_addr_t addr_in_file = (addr - lo_addr) + map_offset;
+            trace->mesg("futex: simulator address 0x%08"PRIx64" is at %s+0x%08"PRIx64, addr, filename, addr_in_file);
+            addr = - ((map_offset<<16) + addr_in_file);
+            addr ^= sb.st_ino;
+            addr &= 0xffffffff;
+            addr |= 1; // so as not to conflict with simulator addresses, which are most likely word aligned.
+            assert(0!=addr);
+            trace->mesg("futex: using generated address 0x%08"PRIx64, addr);
+            break;
+        }
+    }
+    fclose(f);
+    return addr;
+}
+
+int
+RSIM_Thread::futex_wait(rose_addr_t va, uint32_t oldval, uint32_t bitset)
+{
+    int retval = 0;
+    RTS_Message *trace = tracing(TRACE_FUTEX);
+
+    /* We need to access the futex memory atomically with respect to instructions from other threads and/or processes.  So we'll
+     * use the simulator's global semaphore for that purpose. */
+    assert(insn_semaphore_posted);
+    int status = sem_wait(process->get_simulator()->get_semaphore());
+    assert(0==status);
+
+    uint32_t *futex_ptr = NULL;
+    rose_addr_t key = futex_key(va, &futex_ptr);
+    if (!key || !futex_ptr) {
+        retval = -EFAULT;
+    } else if (oldval != *futex_ptr) {
+        trace->mesg("futex wait: futex value %"PRIu32" but need %"PRIu32, *futex_ptr, oldval);
+        retval = -EWOULDBLOCK;
     }
 
-    err = RTS_mutex_lock(&insn_mutex);
-    assert(!err);
+    /* Place this process on the futex waiting queue. */
+    int futex_number = -1;
+    if (0==retval) {
+        futex_number = process->get_futexes()->insert(key, bitset, RSIM_FutexTable::LOCKED);
+        if (futex_number<0)
+            retval = futex_number;
+    }
+
+    /* Release the global semaphore. */
+    status = sem_post(process->get_simulator()->get_semaphore());
+    assert(0==status);
+
+    if (futex_number>=0) {
+        /* Block until we're signaled */
+        trace->mesg("futex wait: about to block...");
+        status = process->get_futexes()->wait(futex_number);
+        assert(0==status);
+        trace->mesg("futex wait: resumed");
+
+        /* Remove the semaphore from the table. */
+        status = process->get_futexes()->erase(key, futex_number, RSIM_FutexTable::UNLOCKED);
+        assert(0==status);
+    }
+
+    return retval;
+}
+
+int
+RSIM_Thread::futex_wake(rose_addr_t va, int nprocs, uint32_t bitset)
+{
+    int retval = 0;
+    RTS_Message *trace = tracing(TRACE_FUTEX);
+
+    /* The futex wait queues are protected by the simulator global semaphore (the same one used to make instructions atomic). */
+    assert(insn_semaphore_posted);
+    int status = sem_wait(process->get_simulator()->get_semaphore());
+    assert(0==status);
+
+    uint32_t *futex_ptr = NULL;
+    rose_addr_t key = futex_key(va, &futex_ptr);
+    if (!key || !futex_ptr) {
+        retval = -EFAULT;
+    }
+    
+    /* Wake processes that are waiting on this semaphore */
+    retval = process->get_futexes()->signal(key, bitset, nprocs, RSIM_FutexTable::LOCKED);
+    if (retval<0) {
+        trace->mesg("futex wake: failed with error %d", retval);
+    } else {
+        trace->mesg("futex wake: %d proc%s have been signaled", retval, 1==retval?"":"s");
+    }
+
+    /* Release the lock */
+    status = sem_post(process->get_simulator()->get_semaphore());
+    assert(0==status);
+
+    return retval;
 }
 
 #endif /* ROSE_ENABLE_SIMULATOR */

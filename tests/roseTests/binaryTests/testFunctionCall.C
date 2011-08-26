@@ -16,6 +16,14 @@ struct GraphvizVertexWriter {
     }
 };
 
+/* Filter that rejects basic block that are uncategorized.  I.e., those blocks that were disassemble but not ultimately
+ * linked into the list of known functions.  We excluded these because their control flow information is often nonsensical. */
+struct ExcludeLeftovers: public BinaryAnalysis::FunctionCall::VertexFilter {
+    bool operator()(BinaryAnalysis::FunctionCall *analyzer, SgAsmFunctionDeclaration *func) {
+        return func && 0==(func->get_reason() & SgAsmFunctionDeclaration::FUNC_LEFTOVERS);
+    }
+};
+
 int
 main(int argc, char *argv[])
 {
@@ -33,10 +41,13 @@ main(int argc, char *argv[])
         exit(1);
     }
 
+    ExcludeLeftovers exclude_leftovers;
+
     /* Calculate plain old CG over entire interpretation. */
     if (algorithm=="A") {
         typedef BinaryAnalysis::FunctionCall::Graph CG;
         BinaryAnalysis::FunctionCall cg_analyzer;
+        cg_analyzer.set_vertex_filter(&exclude_leftovers);
         CG cg = cg_analyzer.build_cg_from_ast<CG>(interps.back());
         boost::write_graphviz(std::cout, cg, GraphvizVertexWriter<CG>(cg));
     }
@@ -47,6 +58,7 @@ main(int argc, char *argv[])
         typedef BinaryAnalysis::FunctionCall::Graph CG;
         CFG cfg = BinaryAnalysis::ControlFlow().build_cfg_from_ast<CFG>(interps.back());
         BinaryAnalysis::FunctionCall cg_analyzer;
+        cg_analyzer.set_vertex_filter(&exclude_leftovers);
         CG cg = cg_analyzer.build_cg_from_cfg<CG>(cfg);
         boost::write_graphviz(std::cout, cg, GraphvizVertexWriter<CG>(cg));
     }

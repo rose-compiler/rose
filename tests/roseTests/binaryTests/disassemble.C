@@ -713,17 +713,15 @@ dump_CFG_CG(SgNode *ast)
     /* Create the control flow graph, but exclude blocks that are part of the "unassigned blocks" function. Note that if the
      * "-rose:partitioner_search -unassigned" switch is passed to the disassembler then the unassigned blocks will already
      * have been pruned from the AST anyway. */
-    CFG global_cfg = BinaryAnalysis::ControlFlow().build_cfg_from_ast<CFG>(ast);
-    {
-        boost::graph_traits<CFG>::vertex_iterator vi, vi_end;
-        for (boost::tie(vi, vi_end)=vertices(global_cfg); vi!=vi_end; ++vi) {
-            SgAsmFunctionDeclaration *func = get(boost::vertex_name, global_cfg, *vi)->get_enclosing_function();
-            if (!func || 0!=(func->get_reason() & SgAsmFunctionDeclaration::FUNC_LEFTOVERS)) {
-                clear_vertex(*vi, global_cfg);
-                remove_vertex(*vi, global_cfg);
-            }
+    struct UnassignedBlockFilter: public BinaryAnalysis::ControlFlow::VertexFilter {
+        bool operator()(BinaryAnalysis::ControlFlow*, SgAsmBlock *block) {
+            SgAsmFunctionDeclaration *func = block ? block->get_enclosing_function() : NULL;
+            return !func || 0==(func->get_reason() & SgAsmFunctionDeclaration::FUNC_LEFTOVERS);
         }
-    }
+    } unassigned_block_filter;
+    BinaryAnalysis::ControlFlow cfg_analyzer;
+    cfg_analyzer.set_vertex_filter(&unassigned_block_filter);
+    CFG global_cfg = cfg_analyzer.build_cfg_from_ast<CFG>(ast);
 
     /* Get the base name for the output files. */
     SgFile *srcfile = NULL;
@@ -1246,7 +1244,7 @@ main(int argc, char *argv[])
         };
         BinaryAnalysis::ControlFlow cfg_analysis;
         BinaryAnalysis::Dominance   dom_analysis;
-        dom_analysis.set_debug(stderr);
+        //dom_analysis.set_debug(stderr);
         CalculateDominance(cfg_analysis, dom_analysis).traverse(interp, preorder);
     }
 #elif 0
@@ -1451,8 +1449,8 @@ main(int argc, char *argv[])
      * Final statistics
      *------------------------------------------------------------------------------------------------------------------------*/
     
-    if (SMTSolver::total_calls>0)
-        printf("SMT solver was called %zu time%s\n", SMTSolver::total_calls, 1==SMTSolver::total_calls?"":"s");
+    if (SMTSolver::get_ncalls()>0)
+        printf("SMT solver was called %zu time%s\n", SMTSolver::get_ncalls(), 1==SMTSolver::get_ncalls()?"":"s");
     return 0;
 }
 
