@@ -937,6 +937,10 @@ SgTryStmt* buildTryStmt(SgStatement* body,
                         SgCatchOptionStmt* catch3=NULL,
                         SgCatchOptionStmt* catch4=NULL);
 
+// charles4 (8/25/2011): Adding support for Java Synchronized stmts.
+// ! Build a Java Synchronized statement.
+SgJavaSynchronizedStatement *buildJavaSynchronizedStatement(SgExpression *, SgBasicBlock *);
+
 // ! Build an exec statement
 SgExecStatement* buildExecStatement(SgExpression* executable, SgExpression* globals = NULL, SgExpression* locals = NULL);
 SgExecStatement* buildExecStatement_nfi(SgExpression* executable, SgExpression* globals = NULL, SgExpression* locals = NULL);

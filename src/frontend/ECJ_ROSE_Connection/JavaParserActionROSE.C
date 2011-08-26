@@ -1692,7 +1692,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCaseStatement(JNIEnv *env, jobject
      setJavaSourcePosition(caseStatement,env,jToken);
 
   // DQ (7/30/2011): For the build interface to work we have to initialize the parent pointer to the SgForStatement.
-  // PC (8/23/2011): When and why parent pointers should be set needs to be clarified. Perhaps the SageBuilder
+  // Charles4 (8/23/2011): When and why parent pointers should be set needs to be clarified. Perhaps the SageBuilder
   // functions should be revisited?
      caseStatement->set_parent(astJavaScopeStack.front());
 
@@ -2729,6 +2729,50 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionLabeledStatement(JNIEnv *env, jobj
    }
 
 
+JNIEXPORT void JNICALL Java_JavaParser_cactionLabeledStatementEnd(JNIEnv *env, jobject xxx, jstring labelName, jobject jToken)
+   {
+    if (SgProject::get_verbose() > 2)
+         printf ("Inside of Java_JavaParser_cactionLabelStatementEnd() \n");
+
+    outputJavaState("At TOP of cactionLabelStatementEnd");
+
+    //
+    // Charles4 8/17/2001: TODO: Need to wrap the labelStatement in a scope statement.
+    //                     Should we wrap it in a basic block?
+    // ... Would be better if the SglabeledStatement was a subclass of SgScopeStatement.
+    //
+    // For now, the function declaration scope is used. (See the buildLabelStatement is
+    // implemented when a null scope is passed to it.) That actually violates the rules of Java!
+    //
+    SgName label_name = convertJavaStringToCxxString(env, labelName);
+    SgStatement *statement = astJavaStatementStack.front();
+    astJavaStatementStack.pop_front();
+
+    // SgNode *parent = statement -> get_parent();
+    // cerr << "The original parent the statement is "
+    //      << ((unsigned long) parent)
+    //      << endl;
+    SgLabelStatement *labelStatement = SageBuilder::buildLabelStatement(label_name, statement, NULL);
+    labelStatement -> set_parent(astJavaScopeStack.front());
+    // cerr << "The parent scope of the label statement is "
+    //      << ((unsigned long) astJavaScopeStack.front())
+    //      << endl;
+    // cerr << "The final parent the statement is "
+    //      << ((unsigned long) statement -> get_parent())
+    //      << endl;
+    //  if (isSgScopeStatement(statement) && statement -> get_parent() != parent) {
+    //   cerr << "AHA!!!"
+    //        <<endl;
+    //   statement -> set_parent(parent);
+    //  }
+
+    setJavaSourcePosition(labelStatement, env, jToken);
+    // Pushing 'label' on the statement stack
+    astJavaStatementStack.push_front(labelStatement);
+    outputJavaState("At BOTTOM of cactionLabelStatementEnd");
+   }
+
+
 JNIEXPORT void JNICALL Java_JavaParser_cactionLocalDeclaration(JNIEnv *env, jobject xxx, jstring variableName, jboolean java_is_final, jobject jToken)
    {
      if (SgProject::get_verbose() > 0)
@@ -2851,6 +2895,16 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionNormalAnnotation(JNIEnv *env, jobj
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionNullLiteral(JNIEnv *env, jobject xxx, jobject jToken)
    {
+     if (SgProject::get_verbose() > 0)
+          printf ("Build support for null literal \n");
+
+     outputJavaState("cactionNullLiteral");
+
+     SgNullExpression *null_expression = SageBuilder::buildNullExpression();
+     setJavaSourcePosition(null_expression, env, jToken);
+
+     astJavaExpressionStack.push_front(null_expression);
+     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
    }
 
 
@@ -3065,6 +3119,26 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionReturnStatement(JNIEnv *env, jobje
    {
    }
 
+JNIEXPORT void JNICALL Java_JavaParser_cactionReturnStatementEnd(JNIEnv *env, jobject thisObj, jboolean hasExpression, jobject jToken)
+   {
+    if (SgProject::get_verbose() > 2)
+         printf ("Inside of Java_JavaParser_cactionReturnStatementEnd() \n");
+
+    outputJavaState("At TOP of cactionReturnStatementEnd");
+
+    // Build the Return Statement
+    SgExpression *expression = NULL;
+    if (hasExpression) {
+        expression = (SgExpression *) astJavaExpressionStack.front();
+        astJavaExpressionStack.pop_front();
+    }
+    SgReturnStmt *returnStatement = SageBuilder::buildReturnStmt(expression);
+    setJavaSourcePosition(returnStatement, env, jToken);
+
+    // Pushing 'return' on the statement stack
+    astJavaStatementStack.push_front(returnStatement);
+    outputJavaState("At BOTTOM of cactionReturnStatementEnd");
+   }
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionSingleMemberAnnotation(JNIEnv *env, jobject xxx, jobject jToken)
    {
@@ -3144,7 +3218,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionSwitchStatement(JNIEnv *env, jobje
      setJavaSourcePosition(switchStatement,env,jToken);
 
   // DQ (7/30/2011): For the build interface to work we have to initialize the parent pointer to the SgForStatement.
-  // PC (8/23/2011): When and why parent pointers should be set needs to be clarified. Perhaps the SageBuilder
+  // Charles4 (8/23/2011): When and why parent pointers should be set needs to be clarified. Perhaps the SageBuilder
   // functions should be revisited?
      switchStatement->set_parent(astJavaScopeStack.front());
 
@@ -3161,8 +3235,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionSwitchStatementEnd(JNIEnv *env, jo
     outputJavaState("At TOP of cactionSwitchStatementEnd");
 
     // Get the conditional expr and transform it into a statement
-    SgExpression* item_selector = astJavaExpressionStack.front();
-    ROSE_ASSERT(item_selector != NULL);
+    SgExpression *expr_selector = astJavaExpressionStack.front();
+    ROSE_ASSERT(expr_selector != NULL);
     astJavaExpressionStack.pop_front();
 
     SgBasicBlock *switch_block = SageBuilder::buildBasicBlock();
@@ -3209,7 +3283,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionSwitchStatementEnd(JNIEnv *env, jo
     astJavaScopeStack.pop_front();
     ROSE_ASSERT(switch_statement != NULL && isSgSwitchStatement(switch_statement));
 
-    switch_statement -> set_item_selector(SageBuilder::buildExprStatement(item_selector));
+    SgExprStatement *item_selector = SageBuilder::buildExprStatement(expr_selector);
+    item_selector -> set_parent(switch_statement);
+    switch_statement -> set_item_selector(item_selector);
     switch_statement -> set_body(switch_block);
 
      // Pushing 'switch' on the statement stack
@@ -3219,6 +3295,28 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionSwitchStatementEnd(JNIEnv *env, jo
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionSynchronizedStatement(JNIEnv *env, jobject xxx, jobject jToken)
    {
+   }
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionSynchronizedStatementEnd(JNIEnv *env, jobject xxx, jobject jToken)
+   {
+    if (SgProject::get_verbose() > 2)
+         printf ("Inside of Java_JavaParser_cactionSynchronizedStatementEnd() \n");
+
+    outputJavaState("At TOP of cactionSynchronizedStatementEnd");
+
+    // Build the Synchronized Statement
+    SgExpression *expression = (SgExpression *) astJavaExpressionStack.front();
+    astJavaExpressionStack.pop_front();
+    SgBasicBlock *body = (SgBasicBlock *) astJavaStatementStack.front();
+    astJavaStatementStack.pop_front();
+
+    SgJavaSynchronizedStatement *synchronizedStatement = SageBuilder::buildJavaSynchronizedStatement(expression, body);
+      // SageBuilder::buildJavaSynchronizedStatement(expression, body);
+    setJavaSourcePosition(synchronizedStatement, env, jToken);
+
+    // Pushing 'synchronized' on the statement stack
+    astJavaStatementStack.push_front(synchronizedStatement);
+    outputJavaState("At BOTTOM of cactionSynchronizedStatementEnd");
    }
 
 
