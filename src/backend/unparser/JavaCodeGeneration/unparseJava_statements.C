@@ -72,6 +72,7 @@ Unparse_Java::unparseOneElemConInit(SgConstructorInitializer* con_init, SgUnpars
 void
 Unparse_Java::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Info& info)
    {
+
   // This function unparses the language specific parse not handled by the base class unparseStatement() member function
 
      ROSE_ASSERT(stmt != NULL);
@@ -89,6 +90,7 @@ Unparse_Java::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Info
        // executable statements, control flow
           case V_SgBasicBlock:             unparseBasicBlockStmt (stmt, info); break;
           case V_SgIfStmt:                 unparseIfStmt         (stmt, info); break;
+          case V_SgJavaSynchronizedStatement: unparseSynchronizedStmt (stmt, info); break;
 
           case V_SgWhileStmt:              unparseWhileStmt      (stmt, info); break;
           case V_SgSwitchStatement:        unparseSwitchStmt     (stmt, info); break;
@@ -172,6 +174,8 @@ Unparse_Java::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Info
             case V_SgSwitchStatement:
             case V_SgCaseOptionStmt:
             case V_SgDefaultOptionStmt:
+            case V_SgLabelStatement:
+            case V_SgJavaSynchronizedStatement:
                 printSemicolon = false;
                 break;
             default:
@@ -488,6 +492,17 @@ void Unparse_Java::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info) {
     }
 }
 
+void Unparse_Java::unparseSynchronizedStmt(SgStatement* stmt, SgUnparse_Info& info) {
+    SgJavaSynchronizedStatement *sync_stmt = isSgJavaSynchronizedStatement(stmt);
+    ROSE_ASSERT(stmt != NULL);
+
+    curprint("synchronized (");
+    unparseExpression(sync_stmt->get_expression(), info);
+    curprint(")");
+
+    unparseStatement(sync_stmt->get_body(), info);
+}
+
 void
 Unparse_Java::unparseInitializedName(SgInitializedName* init_name, SgUnparse_Info& info) {
     unparseType(init_name->get_type(), info);
@@ -663,6 +678,8 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      // unparse type, unless this a constructor
      if (! constructor) {
+         ROSE_ASSERT(mfuncdecl_stmt->get_type());
+         ROSE_ASSERT(mfuncdecl_stmt->get_type()->get_return_type());
          unparseType(mfuncdecl_stmt->get_type()->get_return_type(), info);
          curprint(" ");
      }
@@ -776,6 +793,7 @@ void Unparse_Java::unparseLabelStmt(SgStatement* stmt, SgUnparse_Info& info)
      ROSE_ASSERT(label_stmt != NULL);
 
      curprint ( string(label_stmt->get_label().str()) + ":");
+     unparseStatement(label_stmt->get_statement(), info); // charles4: 8/25/2001 process the real stmt
    }
 
 void
