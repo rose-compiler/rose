@@ -4026,6 +4026,20 @@ SgCatchOptionStmt* SageBuilder::buildCatchOptionStmt(SgVariableDeclaration* cond
   return result;
 }
 
+SgJavaSynchronizedStatement *SageBuilder::buildJavaSynchronizedStatement(SgExpression *expression, SgBasicBlock *body)
+{
+  ROSE_ASSERT(expression);
+  ROSE_ASSERT(body);
+  SgJavaSynchronizedStatement *sync_stmt = new SgJavaSynchronizedStatement(expression, body);
+  ROSE_ASSERT(sync_stmt);
+
+  expression->set_parent(sync_stmt);
+  body->set_parent(sync_stmt);
+
+  return sync_stmt;
+}
+
+
 SgPythonPrintStmt*
 SageBuilder::buildPythonPrintStmt(SgExpression* dest, SgExprListExp* values) {
     SgPythonPrintStmt* result = new SgPythonPrintStmt(dest, values);
