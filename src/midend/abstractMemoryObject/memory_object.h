@@ -87,12 +87,20 @@ namespace AbstractMemoryObject
       bool operator < (const Scalar& that) const; 
   };
 
+  class LabeledAggregate;
   class LabeledAggregateField
   {
     public:
-      std::string name; // field name
-      size_t index; // The field's index within its parent object. The first field has index 0.
-      ObjSet* field; // Pointer to an abstract description of the field
+      virtual std::string getName(); // field name
+      virtual size_t getIndex(); // The field's index within its parent object. The first field has index 0.
+
+      virtual ObjSet* getField(); // Pointer to an abstract description of the field
+      virtual void setField( ObjSet* f); // Pointer to an abstract description of the field
+
+      virtual LabeledAggregate* getParent(); // the parent obj this field belongs to
+      virtual void setParent(LabeledAggregate* p) ; // the parent obj this field belongs to
+
+      virtual std::string toString(); // pretty print for the object
   };
 
   // a memory object that contains a finite number of explicitly labeled memory objects, such as structs, classes and bitfields
@@ -100,14 +108,14 @@ namespace AbstractMemoryObject
   {
     public:
       // number of fields
-      size_t fieldCount();
+      virtual size_t fieldCount();
 
       // Returns a list of field
-      std::list<LabeledAggregateField*> getElements() const; 
+      virtual std::vector<LabeledAggregateField*> getElements() const; 
       // Returns true if this object and that object may/must refer to the same labeledAggregate memory object.
-      bool operator == (const LabeledAggregate& that) const;
+      virtual bool operator == (const LabeledAggregate& that) const;
       //Total order relations (implemented by interface)
-      bool operator < (const LabeledAggregate& that) const;
+      virtual bool operator < (const LabeledAggregate& that) const;
   };
 
   // represents d-dimensional integral vectors. It encapsulates a variety of abstract representations for such vectors 
