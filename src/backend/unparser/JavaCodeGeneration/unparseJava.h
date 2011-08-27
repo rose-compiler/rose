@@ -118,6 +118,7 @@ class Unparse_Java : public UnparseLanguageIndependentConstructs
           virtual void unparseImportDeclarationStatement (SgStatement* stmt, SgUnparse_Info& info);
 
           virtual void unparseIfStmt           (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseSynchronizedStmt (SgStatement* stmt, SgUnparse_Info& info);
        // virtual void unparseWhereStmt        (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseForInitStmt      (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseForStmt          (SgStatement* stmt, SgUnparse_Info& info);
