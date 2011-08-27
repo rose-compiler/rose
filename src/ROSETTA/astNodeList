@@ -437,6 +437,7 @@ SgCudaKernelExecConfig
 SgCudaKernelCallExp
 SgLabelRefExp
 SgLabelStatement
+SgJavaLabelStatement
 SgLabelSymbol
 SgLambdaRefExp
 SgLessOrEqualOp
