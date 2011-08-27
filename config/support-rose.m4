@@ -2420,6 +2420,7 @@ tests/CompilerOptionsTests/collectAllCommentsAndDirectives_tests/Makefile
 tests/CompilerOptionsTests/preinclude_tests/Makefile
 tests/CompilerOptionsTests/tokenStream_tests/Makefile
 tests/roseTests/Makefile
+tests/roseTests/abstractMemoryObjectTests/Makefile
 tests/roseTests/PHPTests/Makefile
 tests/roseTests/astFileIOTests/Makefile
 tests/roseTests/astInliningTests/Makefile
