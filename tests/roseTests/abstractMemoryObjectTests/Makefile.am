@@ -15,7 +15,8 @@ C_TESTCODES_REQUIRED_TO_COMPILE =
 CXX_TESTCODES_REQUIRED_TO_COMPILE = \
      test_2011_08_15.cpp \
      test_2011_08_26.cpp \
-     pointer.cpp
+     pointer.cpp \
+     labeledAggregate.cpp
 
 TESTCODE_CURRENTLY_FAILING = 
 
