@@ -1,4 +1,3 @@
-#include <signal.h>
 #include "sage3basic.h"
 #include "fortran_support.h"
 #include "FortranParserState.h"
@@ -9,10 +8,6 @@
 #include "rose_config.h"
 
 #define SKIP_C_ACTION_IMPLEMENTATION 0
-
-#define DXN_DEBUG 0
-#define DXN_CODE 0
-#define DXN_CODE_1 1  // label list and computed goto bug fix
 
 using namespace std;
 
@@ -471,12 +466,11 @@ void c_action_extended_intrinsic_op()
  */
 void c_action_label(Token_t * lbl)
 {
-    //raise(SIGINT);
     if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
 
         ROSE_ASSERT(lbl != NULL);
     // astNameStack.push_front(lbl);
-#if DXN_DEBUG
+#if 0
     // Output debugging information about saved state (stack) information.
     outputState("At TOP of R313 c_action_label()");
 #endif
@@ -506,7 +500,7 @@ void c_action_label(Token_t * lbl)
         printf("WARNING: label = %p found with empty text string! \n", lbl);
     }
 
-#if DXN_DEBUG
+#if 0
     // Output debugging information about saved state (stack) information.
     outputState("At BOTTOM of R313 c_action_label()");
 #endif
@@ -528,11 +522,8 @@ void c_action_label_list__begin()
 }
 void c_action_label_list(int count)
 {
-    //raise(SIGINT);
     if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf("In c_action_label_list(): count = %d \n", count);
-
-#if DXN_CODE_1
 
     // DXN (0826/2011): Build the label list here and not in computed_goto_stmt
     SgExprListExp* labelList = new SgExprListExp();
@@ -548,8 +539,6 @@ void c_action_label_list(int count)
         astLabelSymbolStack.pop_front();
     }
     astExpressionStack.push_front(labelList);
-
-#endif
 }
 
 /** R402
@@ -4868,7 +4857,7 @@ void c_action_data_i_do_object_list(int count)
         astExpressionStack.pop_front();
 
         // Add (accumlate) the implied_do_object into the implied_do_object_list
-        implied_do_object_list->append_expression(implied_do_object);
+        implied_do_object_list->prepend_expression(implied_do_object);
     }
 
     // Push both back onto the stack
@@ -6832,7 +6821,7 @@ void c_action_data_ref(int numPartRef)
                 "In R612 c_action_data_ref(): (variable built here) numPartRef = %d \n",
                 numPartRef);
 
-#if DXN_DEBUG
+#if 0
     // Output debugging information about saved state (stack) information.
     outputState("At TOP of R612 c_action_data_ref()");
 #endif
@@ -7413,7 +7402,7 @@ void c_action_data_ref(int numPartRef)
                 printf("astExpressionStack.front() = %s \n",
                         astExpressionStack.front()->class_name().c_str());
         }
-#if DXN_DEBUG
+#if 0
         // Output debugging information about saved state (stack) information.
         outputState("At variableSymbol != NULL of R612 c_action_data_ref()");
 #endif
@@ -7650,7 +7639,7 @@ void c_action_data_ref(int numPartRef)
         }
     }
 
-#if DXN_DEBUG
+#if 0
     // Output debugging information about saved state (stack) information.
     outputState("Before removing names from astNameStack at BOTTOM of R612 c_action_data_ref()");
 #endif
@@ -7660,7 +7649,7 @@ void c_action_data_ref(int numPartRef)
     size_t intermediateExpresionListSize = intermediateExpresionList.size();
     for (size_t i = 0; i < intermediateExpresionListSize; i++)
     {
-#if DXN_DEBUG
+#if 0
         printf ("intermediateExpresionList.front() = %p = %s \n",intermediateExpresionList.front(),intermediateExpresionList.front()->class_name().c_str());
 #endif
         astExpressionStack.push_front(intermediateExpresionList.back());
@@ -7692,7 +7681,7 @@ void c_action_data_ref(int numPartRef)
     }
 #endif
 
-#if DXN_DEBUG
+#if 0
     // Output debugging information about saved state (stack) information.
     outputState("After removing names from astNameStack at BOTTOM of R612 c_action_data_ref()");
 #endif
@@ -7742,7 +7731,7 @@ void c_action_data_ref(int numPartRef)
         astExpressionStack.push_front(recordReference);
     }
 
-#if DXN_DEBUG
+#if 0
     // Output debugging information about saved state (stack) information.
     outputState("At BOTTOM of R612 c_action_data_ref()");
 #endif
@@ -7809,7 +7798,7 @@ void c_action_part_ref(Token_t * id, ofp_bool hasSelectionSubscriptList,
         // Also this R613 is called to process "N" within "write (1) N (i,i=1,100)" so it could also be a scalar.
         // And even if it didn't have a "()" it could still be a function in a function call (see test2010_169.f90).
 
-#if DXN_DEBUG
+#if 0
         // Output debugging information about saved state (stack) information.
         outputState("At TOP of R613 c_action_part_ref() hasSelectionSubscriptList == true");
 #endif
@@ -7950,7 +7939,7 @@ void c_action_part_ref(Token_t * id, ofp_bool hasSelectionSubscriptList,
                     hasImageSelector));
 #endif
 
-#if DXN_DEBUG
+#if 0
     // Output debugging information about saved state (stack) information.
     outputState("At BOTTOM of R613 c_action_part_ref()");
 #endif
@@ -9776,12 +9765,11 @@ void c_action_defined_binary_op(Token_t *binaryOp)
 // void c_action_assignment_stmt(Token_t * label)
 void c_action_assignment_stmt(Token_t *label, Token_t *eos)
 {
-    //raise(SIGINT);
     if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf("In c_action_assignment_stmt(): label = %p = %s \n", label,
                 label ? label->text : "NULL");
 
-#if DXN_DEBUG
+#if 0
     // Output debugging information about saved state (stack) information.
     outputState("At TOP of R734 c_action_assignment_stmt()");
 #endif
@@ -11847,7 +11835,6 @@ void c_action_block_do_construct()
 void c_action_do_stmt(Token_t *label, Token_t *id, Token_t *doKeyword,
         Token_t *digitString, Token_t *eos, ofp_bool hasLoopControl)
 {
-    //raise(SIGINT);
     if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
     {
         printf("In c_action_do_stmt(): hasLoopControl = %s \n",
@@ -11864,7 +11851,7 @@ void c_action_do_stmt(Token_t *label, Token_t *id, Token_t *doKeyword,
                 (eos != NULL) ? eos->text : "NULL");
     }
 
-#if DXN_DEBUG
+#if 0
     // Output debugging information about saved state (stack) information.
     outputState("At TOP of R827 c_action_do_stmt()");
 #endif
@@ -11984,7 +11971,7 @@ void c_action_do_stmt(Token_t *label, Token_t *id, Token_t *doKeyword,
             }
         }
 
-#if DXN_DEBUG
+#if 0
         // Output debugging information about saved state (stack) information.
         outputState("Middle of R827 c_action_do_stmt()");
 #endif
@@ -12118,7 +12105,7 @@ void c_action_do_stmt(Token_t *label, Token_t *id, Token_t *doKeyword,
 
     ROSE_ASSERT(body->get_parent() == loopStatement);
 
-#if DXN_DEBUG
+#if 0
     // Output debugging information about saved state (stack) information.
     outputState("At BOTTOM of R827 c_action_do_stmt()");
 #endif
@@ -12343,7 +12330,6 @@ void c_action_end_do_stmt(Token_t *label, Token_t *endKeyword,
 void c_action_do_term_action_stmt(Token_t *label, Token_t *endKeyword,
         Token_t *doKeyword, Token_t *id, Token_t *eos)
 {
-    //raise(SIGINT);
     if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf("In R838 c_action_do_term_action_stmt() \n");
 
@@ -12554,7 +12540,6 @@ void c_action_goto_stmt(Token_t *label, Token_t *goKeyword, Token_t *toKeyword,
 void c_action_computed_goto_stmt(Token_t *label, Token_t *goKeyword,
         Token_t *toKeyword, Token_t *eos)
 {
-    //raise(SIGINT);
     if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf(
                 "In c_action_computed_goto_stmt() label = %p = %s goKeyword = %p = %s toKeyword = %p = %s \n",
@@ -12562,13 +12547,12 @@ void c_action_computed_goto_stmt(Token_t *label, Token_t *goKeyword,
                 goKeyword != NULL ? goKeyword->text : "NULL", toKeyword,
                 toKeyword != NULL ? toKeyword->text : "NULL");
 
-#if DXN_DEBUG
+#if 0
     // Output debugging information about saved state (stack) information.
     outputState("At TOP of R846 c_action_computed_goto_stmt()");
 #endif
 
-#if DXN_CODE_1
-
+    // the index expression is on top of the astExpressionStack
     ROSE_ASSERT(astExpressionStack.empty() == false);
     SgExpression* index_expression = astExpressionStack.front();
     astExpressionStack.pop_front();
@@ -12579,46 +12563,13 @@ void c_action_computed_goto_stmt(Token_t *label, Token_t *goKeyword,
     ROSE_ASSERT(labelList);
     astExpressionStack.pop_front();
 
-#else
-
-    // DQ (12/30/2007): This is now modified due to the introduction of the SgLabelRefExp.
-    // SgLabelSymbolPtrList labelList;
-    SgExprListExp* labelList = new SgExprListExp();
-    setSourcePosition(labelList);
-
-    // printf ("astLabelSymbolStack.size() = %zu \n",astLabelSymbolStack.size());
-    while (astLabelSymbolStack.empty() == false)
-    {
-        // labelList.insert(labelList.begin(),astLabelSymbolStack.front());
-        SgLabelRefExp* labelRefExp = new SgLabelRefExp(
-                astLabelSymbolStack.front());
-        setSourcePosition(labelRefExp);
-        labelList->prepend_expression(labelRefExp);
-
-        // Clear off the top of the stack
-        astLabelSymbolStack.pop_front();
-
-#if OFP_LABEL_BUG
-        // DQ (2/18/2008): I think this might be fixed now!
-        // Due to a bug in OFP, where labels are processed twice by R313, we have to pop two elements from the stack.
-        ROSE_ASSERT(astLabelSymbolStack.empty() == false);
-        astLabelSymbolStack.pop_front();
-#endif
-    }
-
-    ROSE_ASSERT(astExpressionStack.empty() == false);
-    SgExpression* index_expression = astExpressionStack.front();
-    astExpressionStack.pop_front();
-
-#endif
-
     SgComputedGotoStatement* computedGoto = new SgComputedGotoStatement(labelList, index_expression);
 
     // At least the goKeyword should be a valid pointer.
     ROSE_ASSERT(goKeyword != NULL);
     setSourcePosition(computedGoto, goKeyword);
 
-    // DXN: TODO - need to add numeric label o computedGoto if appropriate
+    // add numeric label to computedGoto if appropriate
     if (!astLabelSymbolStack.empty())
     {
         SgLabelSymbol *labelSymbolFromStack = astLabelSymbolStack.front();
@@ -12636,7 +12587,7 @@ void c_action_computed_goto_stmt(Token_t *label, Token_t *goKeyword,
     // printf ("CLEAR THE astLabelSymbolStack (c_action_computed_goto_stmt) \n");
     astLabelSymbolStack.clear();
 
-#if DXN_DEBUG
+#if 0
     // Output debugging information about saved state (stack) information.
     outputState("At BOTTOM of R846 c_action_computed_goto_stmt()");
 #endif
@@ -12855,7 +12806,6 @@ void c_action_arithmetic_if_stmt(Token_t *label, Token_t *ifKeyword,
 void c_action_continue_stmt(Token_t *label, Token_t *continueKeyword,
         Token_t *eos)
 {
-    //raise(SIGINT);
     // A Fortran "CONTINUE" statement is mapped to a C "label" statement, so we use the existing SgLabelStatement IR node.
 
     if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
@@ -12864,132 +12814,16 @@ void c_action_continue_stmt(Token_t *label, Token_t *continueKeyword,
                 label, label != NULL ? label->text : "NULL", continueKeyword,
                 continueKeyword != NULL ? continueKeyword->text : "NULL");
 
-#if DXN_DEBUG
+#if 0
     outputState("At TOP of R848 c_action_continue_stmt()");
 #endif
 
-#if DXN_CODE
-
-    ROSE_ASSERT(continueKeyword);
-    SgName name = label? label->text : "";
-    SgLabelStatement* labelStatement = NULL;
-    if (label != NULL)
-    {
-        labelStatement = new SgLabelStatement(name, NULL);
-        setStatementNumericLabel(labelStatement, label);
-        setSourcePosition(labelStatement, label);
-        ROSE_ASSERT(false);
-    }
-    else if (astLabelSymbolStack.empty())
-    {
-        // there is no label for this continue statement
-        labelStatement = new SgLabelStatement(name, NULL);
-        ROSE_ASSERT(false);
-    }
-    else if (continueKeyword->line > 0)
-    {
-        // this is the first time this CONTINUE statement is encountered
-        labelStatement = new SgLabelStatement(name, NULL);
-        setSourcePosition(labelStatement, continueKeyword);
-        SgLabelSymbol *labelSymbolFromStack = astLabelSymbolStack.front();
-        labelSymbolFromStack->set_label_type(SgLabelSymbol::e_start_label_type);
-        labelSymbolFromStack->set_declaration(labelStatement);
-        SgLabelRefExp* labelRefExp = new SgLabelRefExp(labelSymbolFromStack);
-        labelStatement->set_numeric_label(labelRefExp);
-        labelRefExp->set_parent(labelStatement);
-        setSourcePosition(labelRefExp);
-
-        // Reset the statement referenced by this label (was previously referenced to a
-        // statement which referenced it but was not that statement's numerical_label).
-        labelSymbolFromStack->set_fortran_statement(labelStatement);
-
-        //SgFunctionDefinition* currentFunctionScope = TransformationSupport::getFunctionDefinition(astScopeStack.front());
-        //ROSE_ASSERT(currentFunctionScope != NULL);
-        //labelStatement->set_scope(currentFunctionScope);
-        //ROSE_ASSERT(labelStatement->get_scope() != NULL);
-
-        ROSE_ASSERT(astScopeStack.empty() == false);
-        astScopeStack.front()->append_statement(labelStatement);
-
-        // DQ (10/10/2010): Mark the end of the do loop scope using the continueKeyword token.
-        resetEndingSourcePosition(astScopeStack.front(), continueKeyword);
-    }
-    else
-    {
-        // DXN: FIXME - workaround OFP bug where label->line = 0 as in the following example:
-        /*       subroutine FOURT()
-         *       DO 125 I1=1, 2
-         *       DO 125 I3= 3, 4
-         * 125   CONTINUE
-         *       END
-         *
-         *  When label is parsed the second time around, label->line = 0 and label->col = -1
-         */
-        continueKeyword->line = astScopeStack.front()->get_startOfConstruct()->get_line();
-        continueKeyword->col = astScopeStack.front()->get_startOfConstruct()->get_col();
-        resetEndingSourcePosition(astScopeStack.front(), continueKeyword);
-
-        SgLabelSymbol *labelSymbolFromStack = astLabelSymbolStack.front();
-        labelStatement = labelSymbolFromStack->get_declaration();
-        if (!labelStatement)
-        {
-            labelStatement = new SgLabelStatement(name, NULL);
-            setSourcePosition(labelStatement, continueKeyword);
-        }
-        labelSymbolFromStack->set_label_type(SgLabelSymbol::e_start_label_type);
-        labelSymbolFromStack->set_declaration(labelStatement);
-        SgLabelRefExp* labelRefExp = new SgLabelRefExp(labelSymbolFromStack);
-        labelStatement->set_numeric_label(labelRefExp);
-        labelRefExp->set_parent(labelStatement);
-        setSourcePosition(labelRefExp);
-
-        // Reset the statement referenced by this label (was previously referenced to a
-        // statement which referenced it but was not that statement's numerical_label).
-        labelSymbolFromStack->set_fortran_statement(labelStatement);
-
-        //SgFunctionDefinition* currentFunctionScope = TransformationSupport::getFunctionDefinition(astScopeStack.front());
-        //ROSE_ASSERT(currentFunctionScope != NULL);
-        //labelStatement->set_scope(astScopeStack.front());
-        // need to connect this labelStatement to the appropriate do-statement
-    }
-
-    SgFunctionDefinition* currentFunctionScope = TransformationSupport::getFunctionDefinition(astScopeStack.front());
-    ROSE_ASSERT(currentFunctionScope != NULL);
-    labelStatement->set_scope(currentFunctionScope);
-    ROSE_ASSERT(labelStatement->get_scope() != NULL);
-
-    if (!astLabelSymbolStack.empty())
-    {
-        astLabelSymbolStack.pop_front();
-    }
-
-#else
 
     SgName name = label != NULL ? label->text : "";
     // printf ("In c_action_continue_stmt(): name of SgLabelStatement = %s \n",name.str());
     SgLabelStatement* labelStatement = new SgLabelStatement(name, NULL);
 
     ROSE_ASSERT(continueKeyword != NULL);
-    //    if (continueKeyword->line == 0)
-    //    {
-    // DXN: FIXME - workaround OFP bug where label->line = 0 as in the following example:
-    /*       subroutine FOURT()
-     *       DO 125 I1=1, 2
-     *       DO 125 I3= 3, 4
-     * 125   CONTINUE
-     *       END
-     *
-     *  When label is parsed the second time around, label->line = 0 and label->col = -1
-     */
-    //        continueKeyword->line = astScopeStack.front()->get_startOfConstruct()->get_line();
-    //        continueKeyword->col = astScopeStack.front()->get_startOfConstruct()->get_col();
-    //    }
-    //    setSourcePosition(labelStatement, continueKeyword);
-
-    // setSourcePosition(labelStatement);
-
-    // setStatementNumericLabel(labelStatement,label);
-    // printf ("In c_action_continue_stmt(): label = %p \n",label);
     if (label != NULL)
     {
         setStatementNumericLabel(labelStatement, label);
@@ -13029,7 +12863,7 @@ void c_action_continue_stmt(Token_t *label, Token_t *continueKeyword,
     labelStatement->set_scope(currentFunctionScope);
     ROSE_ASSERT(labelStatement->get_scope() != NULL);
 
-#if DXN_DEBUG
+#if 0
     outputState("Middle of R848 c_action_continue_stmt(, before adding SgLabelStatement to the top of the scope stack:)");
 #endif
 
@@ -13081,9 +12915,7 @@ void c_action_continue_stmt(Token_t *label, Token_t *continueKeyword,
     ROSE_ASSERT(continueKeyword != NULL);
     resetEndingSourcePosition(astScopeStack.front(), continueKeyword);
 
-#endif
-
-#if DXN_DEBUG
+#if 0
     // Output debugging information about saved state (stack) information.
     outputState("At BOTTOM of R848 c_action_continue_stmt()");
 #endif
@@ -18986,7 +18818,7 @@ void c_action_subroutine_stmt(Token_t * label, Token_t * keyword,
     // ROSE_ASSERT(local_symbol != NULL);
 #endif
 
-#if DXN_DEBUG
+#if 0
     // Output debugging information about saved state (stack) information.
     outputState("At BOTTOM of R1232 c_action_subroutine_stmt()");
 #endif
