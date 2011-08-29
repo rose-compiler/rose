@@ -34,6 +34,28 @@ namespace AbstractMemoryObject
 
   };
 
+  class NamedObj; 
+  class LabeledAggregateField_Impl : public LabeledAggregateField
+  {
+    public:
+      LabeledAggregateField_Impl ( ObjSet* f, LabeledAggregate* p): field (f), parent(p) {}
+      std::string getName(); // field name
+      size_t getIndex(); // The field's index within its parent object. The first field has index 0.
+
+      ObjSet* getField() { return field;}; // Pointer to an abstract description of the field
+      void setField(ObjSet* f) {field = f;}; // Pointer to an abstract description of the field
+
+      LabeledAggregate* getParent() {return parent;};
+      void setParent(LabeledAggregate* p) {parent = p; };
+
+      std::string toString();
+
+    private:
+      ObjSet* field; // this should be a named obj 
+      LabeledAggregate* parent; 
+  };
+
+
   class Array_Impl : public Array
   {
     public:
@@ -86,6 +108,8 @@ namespace AbstractMemoryObject
       SgType* getType() {return type;}
       ObjSet* getParent() {return parent; } 
       SgSymbol* getSymbol() {return anchor_symbol;}
+
+      std::string getName() {return anchor_symbol->get_name().getString(); }
 
       std::string toString(); 
 
@@ -140,6 +164,21 @@ namespace AbstractMemoryObject
 
   class LabeledAggregateNamedObj: public LabeledAggregate_Impl, public NamedObj
   {
+    public:
+      LabeledAggregateNamedObj (SgSymbol* s, SgType* t, ObjSet* p);
+      std::set<SgType*> getType();
+      size_t fieldCount() {return elements.size(); };
+      // Returns a list of field
+      std::vector<LabeledAggregateField*> getElements() const {return elements;};
+
+      // Returns true if this object and that object may/must refer to the same labeledAggregate memory object.
+     // TODO bool operator == (const LabeledAggregate& that) const;
+      //Total order relations (implemented by interface)
+      //bool operator < (const LabeledAggregate& that) const;
+
+      std::string toString();
+    private:
+      std::vector<LabeledAggregateField*> elements; 
   };
 
   class ArrayNamedObj: public Array_Impl, public NamedObj

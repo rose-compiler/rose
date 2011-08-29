@@ -84,4 +84,79 @@ namespace  AbstractMemoryObject
     assert (false);
     return "";  
   }
+  std::vector<LabeledAggregateField*> LabeledAggregate::getElements() const 
+  {
+    std::vector<LabeledAggregateField*> rt;
+    cerr<<"Error. Direct call to base class's getElements() is not allowed."<<endl;
+    assert (false);
+    return rt;
+  }
+
+  size_t LabeledAggregate::fieldCount()
+  {
+    cerr<<"Error. Direct call to base class's filedCount() is not allowed."<<endl;
+    assert (false);
+    return 0;
+  }
+
+  bool LabeledAggregate:: operator == (const LabeledAggregate& o2) const
+  {
+    cerr<<"Error. Direct call to base class's operator == () is not allowed."<<endl;
+    assert (false);
+    return false;  
+  }
+
+  bool LabeledAggregate::operator < ( const LabeledAggregate& o2) const
+  {
+    cerr<<"Error. Direct call to base class's operator <() is not allowed."<<endl;
+    assert (false);
+    return false;  
+  }
+ 
+   std::string LabeledAggregateField::getName()
+   {
+    cerr<<"Error. Direct call to base class's getName() is not allowed."<<endl;
+    assert (false);
+    return "";  
+   }
+
+   ObjSet * LabeledAggregateField::getField()
+   {
+
+    cerr<<"Error. Direct call to base class's getField() is not allowed."<<endl;
+    assert (false);
+    return NULL;  
+   }
+   size_t LabeledAggregateField::getIndex()
+   {
+
+     cerr<<"Error. Direct call to base class's getIndex() is not allowed."<<endl;
+     assert (false);
+     return 0;
+   }
+   std::string LabeledAggregateField::toString()
+   {
+     
+    cerr<<"Error. Direct call to base class's toString() is not allowed."<<endl;
+    assert (false);
+    return "";  
+   }
+   void LabeledAggregateField::setField(ObjSet* f)
+   {
+     cerr<<"Error. Direct call to base class's setField() is not allowed."<<endl;
+     assert (false);
+   }
+
+   void LabeledAggregateField::setParent(LabeledAggregate* p)
+   {
+    cerr<<"Error. Direct call to base class's setParent() is not allowed."<<endl;
+    assert (false);
+   }
+
+   LabeledAggregate* LabeledAggregateField::getParent()
+   {
+     cerr<<"Error. Direct call to base class's getParent() is not allowed."<<endl;
+     assert (false);
+     return NULL;  
+   }
 }

@@ -22,6 +22,34 @@ namespace AbstractMemoryObject {
   bool Array_Impl::mustSet() { return true; }
   bool Pointer_Impl::mustSet() { return true; }
 
+  std::string LabeledAggregateField_Impl::getName()
+  {
+    ObjSet* f = getField();
+    NamedObj * nn = dynamic_cast <NamedObj*> (f);
+    assert (nn != NULL);
+    return nn->getName(); 
+  }
+
+  size_t LabeledAggregateField_Impl::getIndex()
+  {
+    LabeledAggregate* parent = getParent();
+    std::vector<LabeledAggregateField *> elements = parent->getElements();
+    size_t i =0;
+    for (i=0; i++; i< elements.size())
+    {
+      if (this == elements[i])
+        break;
+    }
+    assert (i !=  elements.size()); // must find it!
+    return i;
+  }
+  std::string LabeledAggregateField_Impl::toString()
+  {
+    string rt;
+    rt = "LabeledAggregateField_Impl: parent @" + StringUtility::numberToString(parent)  + " field @ " 
+      + StringUtility::numberToString (field) + field->toString();
+    return rt;
+  }
 
   // --------------------- Named Object --------------------
   
@@ -183,6 +211,59 @@ namespace AbstractMemoryObject {
     return rt;
   }
 
+   //---------------------
+    LabeledAggregateNamedObj::LabeledAggregateNamedObj (SgSymbol* s, SgType* t, ObjSet* p): NamedObj (s,t,p) 
+  {
+    assert (s != NULL);
+    assert (t != NULL);
+    //TODO put this into post_initialization()?
+    assert (s->get_type() == t);
+    SgClassType * c_t = isSgClassType(t);
+    assert (c_t != NULL);
+    SgDeclarationStatement * decl = c_t ->get_declaration();
+    assert (decl != NULL);
+    SgClassDeclaration* c_decl = isSgClassDeclaration(decl);
+    assert (c_decl != NULL);
+    SgClassDefinition * c_def = isSgClassDefinition(c_decl->get_definingDeclaration());
+    //  assert (c_def != NULL); // forward class decl will have no definition
+    if (c_def != NULL )
+    {   
+      assert (this != NULL);
+      // get members and insert LabeledAggregateField_Impl
+      SgDeclarationStatementPtrList stmt_list = c_def->get_members();
+      SgDeclarationStatementPtrList::iterator iter;
+      for (iter = stmt_list.begin(); iter != stmt_list.end(); iter ++)
+      {
+        SgDeclarationStatement * decl_stmt = *iter;
+        SgVariableDeclaration * var_decl = isSgVariableDeclaration (decl_stmt);
+        if (var_decl)
+        {
+          SgVariableSymbol * s = SageInterface::getFirstVarSym(var_decl);
+          ObjSet* field_obj = createNamedObjSet (s, s->get_type(), this);
+          LabeledAggregateField_Impl * f = new LabeledAggregateField_Impl (field_obj, this);
+          elements.push_back(f);
+        }  
+      }
+    }
+  }
+
+  std::set<SgType*> LabeledAggregateNamedObj::getType()
+  {
+    std::set<SgType*> rt;
+    rt.insert (NamedObj::getType());
+    return rt;
+  }
+
+   std::string LabeledAggregateNamedObj::toString()
+   {
+     std::string rt = "LabeledAggregateNamedObj @ " + StringUtility::numberToString (this);
+     rt += " "+ NamedObj::toString();
+     for (int i =0; i< elements.size(); i++)
+     {
+       rt += elements[i]->toString();
+     }
+     return rt; 
+   }
 
   // --------------------- Aliased Object --------------------
   std::string AliasedObj::toString()  
@@ -463,12 +544,12 @@ namespace AbstractMemoryObject {
         rt = new PointerNamedObj(anchor_symbol,t, parent);
         assert (rt != NULL);
       }
-/* //TODO
       else if (isSgClassType(t))
       {
-        rt = new   LabeledAggregateNamedObj (t);
+        rt = new LabeledAggregateNamedObj (anchor_symbol,t, parent);
         assert (rt != NULL);
       }
+/* //TODO
       else if (isSgArrayType(t))
       {
         rt = new ArrayNamedObj (t);
