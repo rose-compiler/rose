@@ -239,6 +239,7 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2011_Rice_caseSensitive.f90 \
      test2011_Rice_char-array-decl-asterisk.f90 \
      test2011_Rice_char-kind-decl.f90 \
+     test2011_Rice_char-star1-function.f \
      test2011_Rice_char-star2-function.f \
      test2011_Rice_constructor-initializer.f90 \
      test2011_Rice_data-implied-do.f90 \
