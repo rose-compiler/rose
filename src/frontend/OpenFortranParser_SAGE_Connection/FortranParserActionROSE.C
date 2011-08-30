@@ -8725,6 +8725,12 @@ void c_action_primary()
         printf("In c_action_primary() \n");
 }
 
+void c_action_parenthesized_expr()
+{
+    if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
+        printf("In c_action_parenthesized_expr() \n");
+}
+
 /** R702
  * level_1_expr
  *  : (defined_unary_op)? primary
