@@ -46,8 +46,8 @@ namespace AbstractMemoryObject {
   std::string LabeledAggregateField_Impl::toString()
   {
     string rt;
-    rt = "LabeledAggregateField_Impl: parent @" + StringUtility::numberToString(parent)  + " field @ " 
-      + StringUtility::numberToString (field) + field->toString();
+    rt = "LabeledAggregateField_Impl: parent @ " + StringUtility::numberToString(parent)  + " field " 
+      + field->toString();
     return rt;
   }
 
@@ -137,7 +137,8 @@ namespace AbstractMemoryObject {
       rt += "  type: NULL";
 
     if (parent != NULL )
-      rt += "  parent:" + parent->toString() + " @ " + StringUtility::numberToString(parent);
+//      rt += "  parent:" + parent->toString() + " @ " + StringUtility::numberToString(parent); // Cannot do this since it will cause infinite recursion
+      rt += "  parent: @ " + StringUtility::numberToString(parent); // use address is sufficient
      else
        rt += "  parent: NULL";
 
@@ -224,10 +225,11 @@ namespace AbstractMemoryObject {
     assert (decl != NULL);
     SgClassDeclaration* c_decl = isSgClassDeclaration(decl);
     assert (c_decl != NULL);
-    SgClassDefinition * c_def = isSgClassDefinition(c_decl->get_definingDeclaration());
-    //  assert (c_def != NULL); // forward class decl will have no definition
-    if (c_def != NULL )
+    SgClassDeclaration* def_decl = isSgClassDeclaration(c_decl->get_definingDeclaration()); 
+    if (def_decl != NULL )
     {   
+      SgClassDefinition * c_def = def_decl->get_definition();
+      assert (c_def != NULL);
       assert (this != NULL);
       // get members and insert LabeledAggregateField_Impl
       SgDeclarationStatementPtrList stmt_list = c_def->get_members();
@@ -258,9 +260,10 @@ namespace AbstractMemoryObject {
    {
      std::string rt = "LabeledAggregateNamedObj @ " + StringUtility::numberToString (this);
      rt += " "+ NamedObj::toString();
+     rt += "   with " + StringUtility::numberToString(elements.size()) + " fields:\n";
      for (int i =0; i< elements.size(); i++)
      {
-       rt += elements[i]->toString();
+       rt += "\t" + elements[i]->toString() + "\n";
      }
      return rt; 
    }
