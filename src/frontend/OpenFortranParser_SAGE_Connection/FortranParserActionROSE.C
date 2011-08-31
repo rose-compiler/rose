@@ -12320,22 +12320,46 @@ void c_action_end_do_stmt(Token_t *label, Token_t *endKeyword,
 
 /** R838
  * do_term_action_stmt
- *
- * Try requiring an action_stmt and then we can simply insert the new
- * T_LABEL_DO_TERMINAL during the Sale's prepass.  T_EOS is in action_stmt.
- * added the T_END T_DO and T_ENDDO options to this rule because of the
- * token T_LABEL_DO_TERMINAL that is inserted if they end a labeled DO.
- *
- * :  label T_LABEL_DO_TERMINAL 
- *              (action_stmt | ( (T_END T_DO | T_ENDDO) (T_IDENT)? ) T_EOS)
- *
- * @param label The label, which must be present.
- * @param id The identifier, if present. Otherwise, null.
  */
-// void c_action_do_term_action_stmt(Token_t * label, Token_t * id)
 void c_action_do_term_action_stmt(Token_t *label, Token_t *endKeyword,
-        Token_t *doKeyword, Token_t *id, Token_t *eos)
+        Token_t *doKeyword, Token_t *id, Token_t *eos, ofp_bool inserted)
 {
+#if 1 //=======================================================================================================
+#if 1
+    // Output debugging information about saved state (stack) information.
+    outputState("At TOP of R838 c_action_do_term_action_stmt()");
+#endif
+
+    // This rule can be called even where the end-do does not exist (in this case, the endKeyword == NULL).
+    if (endKeyword != NULL)
+    {
+        markDoLoopAsUsingEndDo();
+        resetEndingSourcePosition(astScopeStack.front(), endKeyword);
+    }
+
+    if (endKeyword == NULL && label != NULL)
+        resetEndingSourcePosition(astScopeStack.front(), label);
+
+    // it is correct to set the label after the scope is popped.
+    ROSE_ASSERT(astScopeStack.empty() == false);
+    ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct() != NULL);
+    ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
+    astScopeStack.pop_front();
+
+    if( inserted )
+    {
+        // this is an artificial do-terminator inserted by the scanner and 'label' has no position info
+        label->line = astScopeStack.front()->get_startOfConstruct()->get_line();
+        label->col = astScopeStack.front()->get_startOfConstruct()->get_col();
+    }
+    setStatementNumericLabel(astScopeStack.front(), label);
+    processLabelOnStack(astScopeStack.front());
+
+#if 1
+    // Output debugging information about saved state (stack) information.
+    outputState("At BOTTOM of R838 c_action_do_term_action_stmt()");
+#endif
+#else //=======================================================================================================
     if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf("In R838 c_action_do_term_action_stmt() \n");
 
@@ -12421,6 +12445,7 @@ void c_action_do_term_action_stmt(Token_t *label, Token_t *endKeyword,
 
     // printf ("Should this label be set before or after astScopeStack.pop_front() \n");
     // ROSE_ASSERT(false);
+#endif //=======================================================================================================
 }
 
 /** R843
