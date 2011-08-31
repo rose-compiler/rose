@@ -10,7 +10,8 @@ INCLUDES = $(ROSE_INCLUDES)
 memObjectGenerator_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 # Put test codes without main() entry here
-C_TESTCODES_REQUIRED_TO_COMPILE = 
+C_TESTCODES_REQUIRED_TO_COMPILE =  \
+     struct_simplest.c
 
 CXX_TESTCODES_REQUIRED_TO_COMPILE = \
      test_2011_08_15.cpp \
@@ -39,11 +40,11 @@ PASSING_CXX_TEST_Objects = $(CXX_TESTCODES_REQUIRED_TO_COMPILE:.cpp=.o)
 
 # rules to build .o from .c for OpenMP test codes
 $(PASSING_C_TEST_Objects): %.o: %.c memObjectGenerator
-	./memObjectGenerator$(EXEEXT) ${TEST_FLAGS} -c $<
+	./memObjectGenerator$(EXEEXT) ${TEST_FLAGS} -c $< &>$(@:.o=.out)
 
 
 $(PASSING_CXX_TEST_Objects): %.o: %.cpp memObjectGenerator
-	./memObjectGenerator$(EXEEXT) ${TEST_FLAGS} -c $<
+	./memObjectGenerator$(EXEEXT) ${TEST_FLAGS} -c $< &>$(@:.o=.out)
 
 
 check-local: memObjectGenerator

@@ -140,6 +140,7 @@ int main(int argc, char * argv[])
   // assumption here is that NodeQuery::querySubTree() uses preorder traversal so a mem obj for a parent part (e.g., a.b)
   // is always created before it is used to create a child part's mem obj (e.g., a.b.c)
   Rose_STL_Container <SgNode*> ref_list = NodeQuery::querySubTree (project, V_SgVarRefExp);
+  cout<<"----------------------------------------------------"<<endl;
   cout<<"Found "<<ref_list.size()<<" SgVarRef." <<endl;
   for (iter = ref_list.begin(); iter != ref_list.end(); iter ++)
   {
