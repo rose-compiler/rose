@@ -542,6 +542,7 @@ F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
      test2011_Rice_continuation-spits-token.f \
      test2011_Rice_initial-tab.f \
      test2011_Rice_intrinsic-mixup.f \
+     test2011_Rice_lost-func-return-type.f \
      test2011_Rice_shared_continue.f \
      test2011_Rice_shared_label_stmt.f 
 
