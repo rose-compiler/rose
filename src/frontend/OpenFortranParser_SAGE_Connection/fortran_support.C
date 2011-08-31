@@ -6406,4 +6406,3 @@ buildInitializedNameAndPutOntoStack(const SgName & name, SgType* type, SgInitial
 
      return initializedName;
    }
-

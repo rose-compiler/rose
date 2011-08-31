@@ -1,3 +1,4 @@
+#include <signal.h>
 #include "sage3basic.h"
 #include "fortran_support.h"
 #include "FortranParserState.h"
@@ -8,6 +9,7 @@
 #include "rose_config.h"
 
 #define SKIP_C_ACTION_IMPLEMENTATION 0
+
 
 using namespace std;
 
@@ -3429,6 +3431,7 @@ void c_action_entity_decl(Token_t * id, ofp_bool hasArraySpec,
 void c_action_entity_decl(Token_t * id)
 #endif
 {
+    //raise(SIGINT);
     // This function R504 R503-F2008 is similar to R442 R438-F2008
 
     // Push the entities onto the list at the top of the stack
@@ -3507,8 +3510,7 @@ void c_action_entity_decl(Token_t * id)
     {
         if (isSgClassType(entityType))
         { // if entityType is a derived type then the initialzer must be a SgConstructorInitializer.
-            SgConstructorInitializer* constructorInitializer =
-                    isSgConstructorInitializer(initialization);
+            SgConstructorInitializer* constructorInitializer = isSgConstructorInitializer(initialization);
             ROSE_ASSERT(constructorInitializer);
             initializer = constructorInitializer;
         }
@@ -3528,17 +3530,20 @@ void c_action_entity_decl(Token_t * id)
     SgClassSymbol* classSymbol = NULL;
     SgScopeStatement* currentScope = astScopeStack.front();
     ROSE_ASSERT(currentScope != NULL);
-    trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(
-            name, currentScope, variableSymbol, functionSymbol, classSymbol);
+    trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(name, currentScope, variableSymbol, functionSymbol, classSymbol);
     SgClassDefinition* classDef = isSgClassDefinition(currentScope);
+
     // This entity decl may be part of a type declaration that defines the return type of a function,
     // in which case, fix up the return type of the function in question; however if this entity decl is a compoent decl
     // then it has nothing to do with the functions in enclosing scopes and so do not fix up the return type of any function.
-    if (functionSymbol != NULL && !classDef)
+    // If the entity_decl is inside of a function, check to see if it matches the function's name;
+    // If matched, then need to update the function type.
+    SgFunctionDefinition* funcDef = isSgFunctionDefinition(currentScope->get_scope());
+    bool needFuncTypeUpdate = functionSymbol && functionSymbol->get_declaration()->get_definition()  == funcDef && !classDef;
+    if (needFuncTypeUpdate)
     {
         ROSE_ASSERT(initializer == NULL);
-        SgFunctionType* functionType = isSgFunctionType(
-                functionSymbol->get_type());
+        SgFunctionType* functionType = isSgFunctionType(functionSymbol->get_type());
         ROSE_ASSERT(functionType != NULL);
         functionType->set_return_type(entityType);
         functionType->set_orig_return_type(entityType);
@@ -3551,13 +3556,10 @@ void c_action_entity_decl(Token_t * id)
         initializedName = variableSymbol->get_declaration();
         ROSE_ASSERT(initializedName != NULL);
         ROSE_ASSERT(initializedName->get_scope() != NULL);
-        SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(
-                initializedName->get_scope());
+        SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(initializedName->get_scope());
         if (functionDefinition != NULL)
         {
-            SgProcedureHeaderStatement* functionDeclaration =
-                    isSgProcedureHeaderStatement(
-                            functionDefinition->get_parent());
+            SgProcedureHeaderStatement* functionDeclaration = isSgProcedureHeaderStatement(functionDefinition->get_parent());
             ROSE_ASSERT(functionDeclaration != NULL);
             if (functionDeclaration->get_result_name() == initializedName)
             {
@@ -3572,41 +3574,32 @@ void c_action_entity_decl(Token_t * id)
         else
         {
             if (currentScope != initializedName->get_scope())
-            {
-                initializedName = buildInitializedNameAndPutOntoStack(name,
-                        entityType, initializer);
-            }
+                initializedName = buildInitializedNameAndPutOntoStack(name, entityType, initializer);
             else
-            {
                 initializedName->set_type(entityType);
-            }
         }
         ROSE_ASSERT(initializedName != NULL);
     }
     else
     {
-        if (functionSymbol != NULL && !classDef)
+        if (needFuncTypeUpdate)
         { // only applies to non component entities.
             ROSE_ASSERT(initializedName == NULL);
             initializedName = new SgInitializedName(name, entityType,
                     initializer, NULL, NULL);
-            SgProcedureHeaderStatement* functionDeclaration =
-                    isSgProcedureHeaderStatement(
-                            functionSymbol->get_declaration());
+            SgProcedureHeaderStatement* functionDeclaration = isSgProcedureHeaderStatement(functionSymbol->get_declaration());
             functionDeclaration->set_result_name(initializedName);
         }
         else
         {
-            initializedName = buildInitializedNameAndPutOntoStack(name,
-                    entityType, initializer);
+            initializedName = buildInitializedNameAndPutOntoStack(name, entityType, initializer);
         }
     }
     ROSE_ASSERT(initializedName != NULL);
     setSourcePosition(initializedName, id);
 
     // Now that we have the initialized name corresponding to the entiy-decl, add it to the current variable declaration:
-    SgVariableDeclaration* varDecl = isSgVariableDeclaration(
-            DeclAttributes.getDeclaration());
+    SgVariableDeclaration* varDecl = isSgVariableDeclaration(DeclAttributes.getDeclaration());
     if (!varDecl)
     {
         cerr << "ERROR: line " << id->line << ", col " << id->col
@@ -3615,8 +3608,7 @@ void c_action_entity_decl(Token_t * id)
         ROSE_ASSERT(false);
     }
     initializedName->set_declptr(varDecl);
-    varDecl->append_variable(initializedName,
-            initializedName->get_initializer());
+    varDecl->append_variable(initializedName, initializedName->get_initializer());
 
     // Make sure that the variable name corresponding to the initialized name is in the appropriate scope
     // with appropriate symbol table information: (see buildVariableDeclaration in fortran_support.C)
@@ -3626,17 +3618,14 @@ void c_action_entity_decl(Token_t * id)
     SgName variableName = initializedName->get_name();
     if (functionDefinition != NULL)
     {
-        variableSymbol = functionDefinition->lookup_variable_symbol(
-                variableName);
+        variableSymbol = functionDefinition->lookup_variable_symbol(variableName);
         if (variableSymbol != NULL)
         {
             // This variable symbol has already been placed into the function definition's symbol table
             // Link the SgInitializedName in the variable declaration with its entry in the function parameter list.
-            initializedName->set_prev_decl_item(
-                    variableSymbol->get_declaration());
+            initializedName->set_prev_decl_item(variableSymbol->get_declaration());
             // Set the referenced type in the function parameter to be the same as that in the declaration being processed.
-            variableSymbol->get_declaration()->set_type(
-                    initializedName->get_type());
+            variableSymbol->get_declaration()->set_type(initializedName->get_type());
             // Function parameters are in the scope of the function definition (same for C/C++)
             initializedName->set_scope(functionDefinition);
         }
@@ -3644,8 +3633,7 @@ void c_action_entity_decl(Token_t * id)
     // If not just set above then this is not a function parameter, but it could have been built in a common block
     if (variableSymbol == NULL)
     {
-        variableSymbol = getTopOfScopeStack()->lookup_variable_symbol(
-                variableName);
+        variableSymbol = getTopOfScopeStack()->lookup_variable_symbol(variableName);
         initializedName->set_scope(astScopeStack.front());
         if (variableSymbol == NULL)
         {
@@ -3709,8 +3697,7 @@ void c_action_entity_decl_list__begin()
     DeclAttributes.setDeclaration(new SgVariableDeclaration());
     setSourcePosition(DeclAttributes.getDeclaration());
     DeclAttributes.getDeclaration()->set_parent(getTopOfScopeStack());
-    DeclAttributes.getDeclaration()->set_definingDeclaration(
-            DeclAttributes.getDeclaration());
+    DeclAttributes.getDeclaration()->set_definingDeclaration(DeclAttributes.getDeclaration());
     DeclAttributes.getDeclaration()->get_declarationModifier().get_accessModifier().setUndefined();
     DeclAttributes.setDeclAttrSpecs();
     DeclAttributes.setBaseType(astBaseTypeStack.front());
@@ -7747,8 +7734,7 @@ void c_action_data_ref(int numPartRef)
  * @param hasSelectionSubscriptList True if a selection-subscript-list is present
  * @param hasImageSelector Ture if an image-selector is present
  */
-void c_action_part_ref(Token_t * id, ofp_bool hasSelectionSubscriptList,
-        ofp_bool hasImageSelector)
+void c_action_part_ref(Token_t * id, ofp_bool hasSelectionSubscriptList, ofp_bool hasImageSelector)
 {
     // This is a part of a variable reference (any likely used many other places as well)
 
@@ -17691,7 +17677,7 @@ void c_action_external_stmt(Token_t *label, Token_t *externalKeyword,
     // (see test2007_147.f, the original Fortran I code from the IBM 704 Fortran Manual).
     build_implicit_program_statement_if_required();
 
-#if 1
+#if 0
     // Output debugging information about saved state (stack) information.
     outputState("At TOP of R1210 c_action_external_stmt()");
 #endif
@@ -17734,22 +17720,20 @@ void c_action_external_stmt(Token_t *label, Token_t *externalKeyword,
         }
     }
 
-#if 1
+#if 0
     // Output debugging information about saved state (stack) information.
     outputState(
             "Before buildAttributeSpecificationStatement() in R1210 c_action_external_stmt()");
 #endif
 
-    buildAttributeSpecificationStatement(
-            SgAttributeSpecificationStatement::e_externalStatement, label,
-            externalKeyword);
+    buildAttributeSpecificationStatement(SgAttributeSpecificationStatement::e_externalStatement, label, externalKeyword);
 
 #if 0
     ROSE_ASSERT(astScopeStack.empty() == false);
     astScopeStack.front()->print_symboltable("In c_action_external_stmt()");
 #endif
 
-#if 1
+#if 0
     // Output debugging information about saved state (stack) information.
     outputState("At BOTTOM of R1210 c_action_external_stmt()");
 #endif
@@ -18422,8 +18406,7 @@ void c_action_function_stmt(Token_t * label, Token_t * keyword, Token_t * name,
 #endif
 
     // Note that a ProcedureHeaderStatement is derived from a SgFunctionDeclaration (and is Fortran specific).
-    SgProcedureHeaderStatement* functionDeclaration =
-            new SgProcedureHeaderStatement(tempName, functionType, NULL);
+    SgProcedureHeaderStatement* functionDeclaration = new SgProcedureHeaderStatement(tempName, functionType, NULL);
 
     // DQ (1/21/2008): Set the source position to avoid it being set without accurate token position information
     // setSourcePosition(functionDeclaration,name);
@@ -18433,8 +18416,7 @@ void c_action_function_stmt(Token_t * label, Token_t * keyword, Token_t * name,
 
     // Mark this as NOT a subroutine, thus it is a function.
     // functionDeclaration->set_is_a_function(true);
-    functionDeclaration->set_subprogram_kind(
-            SgProcedureHeaderStatement::e_function_subprogram_kind);
+    functionDeclaration->set_subprogram_kind(SgProcedureHeaderStatement::e_function_subprogram_kind);
 
     processFunctionPrefix(functionDeclaration);
 
@@ -18604,6 +18586,7 @@ void c_action_result_name()
 void c_action_end_function_stmt(Token_t * label, Token_t * keyword1,
         Token_t * keyword2, Token_t * name, Token_t * eos)
 {
+    //raise(SIGINT);
     if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
     {
         printf(
@@ -18637,13 +18620,11 @@ void c_action_end_function_stmt(Token_t * label, Token_t * keyword1,
 
     // Pop off the function definition (SgFunctionDefinition)
     ROSE_ASSERT(astScopeStack.empty() == false);
-    SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(
-            getTopOfScopeStack());
+    SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(getTopOfScopeStack());
 
     // FMZ(6/9/2010): with "implicit none" presented, a function must have type explicitly declared
     ROSE_ASSERT(functionDefinition != NULL);
-    SgProcedureHeaderStatement* func_decl = isSgProcedureHeaderStatement(
-            functionDefinition->get_declaration());
+    SgProcedureHeaderStatement* func_decl = isSgProcedureHeaderStatement(functionDefinition->get_declaration());
     string func_name = func_decl->get_name().str();
     bool isAnImplicitScope = isImplicitNoneScope();
 
