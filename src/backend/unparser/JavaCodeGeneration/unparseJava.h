@@ -1,4 +1,3 @@
-
 #ifndef UNPARSER_JAVA
 #define UNPARSER_JAVA
 
@@ -119,6 +118,8 @@ class Unparse_Java : public UnparseLanguageIndependentConstructs
 
           virtual void unparseIfStmt           (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseSynchronizedStmt (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseThrowStmt        (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseForEachStmt      (SgStatement* stmt, SgUnparse_Info& info);
        // virtual void unparseWhereStmt        (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseForInitStmt      (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseForStmt          (SgStatement* stmt, SgUnparse_Info& info);
@@ -142,6 +143,7 @@ class Unparse_Java : public UnparseLanguageIndependentConstructs
           virtual void unparseBreakStmt        (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseContinueStmt     (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseReturnStmt       (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseAssertStmt       (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseGotoStmt         (SgStatement* stmt, SgUnparse_Info& info);
        // virtual void unparseAsmStmt          (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseTypeDefStmt      (SgStatement* stmt, SgUnparse_Info& info);

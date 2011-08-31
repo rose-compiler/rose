@@ -84,7 +84,10 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionArrayQualifiedTypeReferenceClassScope(JavaToken jToken);
      public native void cactionArrayReference(JavaToken jToken);
      public native void cactionArrayTypeReferenceClassScope(String filename, JavaToken jToken);
+     
      public native void cactionAssertStatement(JavaToken jToken);
+     public native void cactionAssertStatementEnd(boolean hasExceptionArgument, JavaToken jToken);
+     
      public native void cactionAssignment(JavaToken jToken);
      public native void cactionAssignmentEnd(JavaToken jToken);
      public native void cactionBinaryExpression(JavaToken jToken);
@@ -109,7 +112,10 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionDoStatement(JavaToken jToken);
      public native void cactionDoStatementEnd(JavaToken jToken);
      public native void cactionDoubleLiteral(JavaToken jToken);
+
      public native void cactionEmptyStatement(JavaToken jToken);
+     public native void cactionEmptyStatementEnd(JavaToken jToken);
+
      public native void cactionEqualExpression(JavaToken jToken);
      public native void cactionEqualExpressionEnd(int java_operator_kind, JavaToken jToken);
      public native void cactionExtendedStringLiteral(JavaToken jToken);
@@ -119,7 +125,10 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionFieldReference(JavaToken jToken);
      public native void cactionFieldReferenceClassScope(JavaToken jToken);
      public native void cactionFloatLiteral(JavaToken jToken);
+     
      public native void cactionForeachStatement(JavaToken jToken);
+     public native void cactionForeachStatementEnd(JavaToken jToken);
+     
      public native void cactionForStatement(JavaToken jToken);
      public native void cactionForStatementEnd(JavaToken jToken);
      public native void cactionIfStatement(JavaToken jToken);
