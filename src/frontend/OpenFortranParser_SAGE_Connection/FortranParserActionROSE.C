@@ -8729,6 +8729,10 @@ void c_action_parenthesized_expr()
 {
     if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf("In c_action_parenthesized_expr() \n");
+
+    ROSE_ASSERT(!astExpressionStack.empty());
+    cout << "PARENTHESES NOTED FOR EXPR " << astExpressionStack.front() << endl;    // SKW DEBUG
+    astExpressionStack.front()->set_need_paren(true);
 }
 
 /** R702
