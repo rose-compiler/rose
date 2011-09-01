@@ -270,6 +270,7 @@ SgAttribute
 SgAttributeSpecificationStatement
 SgBackspaceStatement
 SgBaseClass
+SgExpBaseClass
 SgBaseClassModifier
 SgBasicBlock
 SgBidirectionalGraph
@@ -425,6 +426,7 @@ SgIntVal
 SgIntegerDivideOp
 SgIntegerDivideAssignOp
 SgInterfaceBody
+SgHeaderFileBody
 SgInterfaceStatement
 SgInterfaceSymbol
 SgIntrinsicSymbol
@@ -571,6 +573,10 @@ SgSizeOfOp
 SgJavaInstanceOfOp
 SgSourceFile
 SgSpawnStmt
+SgJavaThrowStatement
+SgJavaForEachStatement
+SgJavaSynchronizedStatement
+SgJavaParameterizedType
 SgSpecialFunctionModifier
 SgStatement
 SgStmtDeclarationStatement

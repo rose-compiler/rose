@@ -34,7 +34,7 @@ void AssemblerX86::initAssemblyRules_part1() {
     define(defn);
     // D5 ib          (No mnemonic)     Invalid        Valid      Adjust AX before division to
     //                                                            number base imm8.
-    defn = new InsnDefn("aad",    x86_aad,     0x01, 0xd5, od_ib);
+    defn = new InsnDefn("aad",    x86_aad,     0x01, 0xd5, od_ib, od_imm8);
     defn->set_location("x86-InstructionSetReference-AM.pdf, page 3-30");
     define(defn);
 
@@ -45,7 +45,7 @@ void AssemblerX86::initAssemblyRules_part1() {
     define(defn);
     // D4 ib          (No mnemonic)    Invalid    Valid          Adjust AX after multiply to number
     //                                                           base imm8.
-    defn = new InsnDefn("aam",    x86_aam,     0x01, 0xd4, od_ib);
+    defn = new InsnDefn("aam",    x86_aam,     0x01, 0xd4, od_ib, od_imm8);
     defn->set_location("x86-InstructionSetReference-AM.pdf, page 3-32");
     define(defn);
 

@@ -9,12 +9,15 @@
  * 
  * REMEMBER: For types and symbols, we still call the original unparse function 
  * defined in sage since they dont have file_info. For expressions, 
- * JavaCodeGeneration_locatedNode::unparse is called, and for statements, 
- * JavaCodeGeneration_locatedNode::unparseStatement is called.
+ * Unparse_Java::unparse is called, and for statements, 
+ * Unparse_Java::unparseStatement is called.
  *
  */
 #include "sage3basic.h"
 #include "unparser.h"
+
+#include <boost/foreach.hpp>
+#define foreach BOOST_FOREACH
 
 #define ROSE_TRACK_PROGRESS_OF_ROSE_COMPILING_ROSE 0
 
@@ -30,13 +33,13 @@ using namespace std;
 #define OUTPUT_HIDDEN_LIST_DATA 0
 
 
-JavaCodeGeneration_locatedNode::JavaCodeGeneration_locatedNode(Unparser* unp, std::string fname)
+Unparse_Java::Unparse_Java(Unparser* unp, std::string fname)
    : UnparseLanguageIndependentConstructs(unp,fname)
    {
   // Nothing to do here!
    }
 
-JavaCodeGeneration_locatedNode::~JavaCodeGeneration_locatedNode()
+Unparse_Java::~Unparse_Java()
    {
   // Nothing to do here!
    }
@@ -50,182 +53,31 @@ JavaCodeGeneration_locatedNode::~JavaCodeGeneration_locatedNode()
 //  the excessive printing of parenthesis). 
 //-----------------------------------------------------------------------------------
 void 
-JavaCodeGeneration_locatedNode::unparseOneElemConInit(SgConstructorInitializer* con_init, SgUnparse_Info& info)
+Unparse_Java::unparseOneElemConInit(SgConstructorInitializer* con_init, SgUnparse_Info& info)
    {
      ROSE_ASSERT(con_init != NULL);
   /* code inserted from specification */
 
 #if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
-     printf ("\n\nInside of JavaCodeGeneration_locatedNode::unparseOneElemConInit (%p) \n",con_init);
-     curprint( "\n /* Inside of JavaCodeGeneration_locatedNode::unparseOneElemConInit */ \n");
+     printf ("\n\nInside of Unparse_Java::unparseOneElemConInit (%p) \n",con_init);
+     curprint( "\n /* Inside of Unparse_Java::unparseOneElemConInit */ \n");
 #endif
 
 #if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
-     printf ("Leaving of JavaCodeGeneration_locatedNode::unparseOneElemConInit \n\n\n");
-     curprint( "\n /* Leaving of JavaCodeGeneration_locatedNode::unparseOneElemConInit */ \n");
+     printf ("Leaving of Unparse_Java::unparseOneElemConInit \n\n\n");
+     curprint( "\n /* Leaving of Unparse_Java::unparseOneElemConInit */ \n");
 #endif
    }
 
-
 void
-JavaCodeGeneration_locatedNode::unparseFunctionParameterDeclaration ( 
-   SgFunctionDeclaration* funcdecl_stmt, 
-   SgInitializedName* initializedName,
-   bool outputParameterDeclaration,
-   SgUnparse_Info& info )
+Unparse_Java::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Info& info)
    {
-     ROSE_ASSERT (funcdecl_stmt != NULL);
 
-     SgName        tmp_name  = initializedName->get_name();
-     SgInitializer *tmp_init = initializedName->get_initializer();
-  // SgType        *tmp_type = initializedName->get_type();
-     ROSE_ASSERT (initializedName!= NULL);
-
-     SgStorageModifier & storage = initializedName->get_storageModifier();
-     if (storage.isExtern())
-        {
-          curprint( "extern ");
-        }
-
-     ROSE_ASSERT(storage.isStatic() == false);
-
-  // This was a bug mistakenly reported by Isaac
-     ROSE_ASSERT(storage.get_modifier() >= 0);
-
-     if (storage.isStatic())
-        {
-          curprint( "static ");
-        }
-
-     if (storage.isMutable())
-        {
-          curprint( "mutable ");
-        }
-
-     if (storage.isTypedef())
-        {
-          curprint( "typedef ");
-        }
- 
-     SgUnparse_Info ninfo3(info);
-     ninfo3.unset_inArgList();
-
-     bool outputInitializer = true;
-     if (funcdecl_stmt->get_scope() != funcdecl_stmt->get_parent())
-        {
-       // This function declaration is appearing in a different scope there where it was first 
-       // declared so avoid output of the default initializers of any function parameters!
-       // printf ("Skipping output of initializer since this is not the original declaration! \n");
-          outputInitializer = false;
-        }
-
-  // Add an initializer if it exists
-     if ( outputInitializer == true && tmp_init != NULL )
-        {
-          curprint( "=");
-          unp->u_exprStmt->unparseExpression(tmp_init, ninfo3);
-        }
-   }
-
-void
-JavaCodeGeneration_locatedNode::unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUnparse_Info& info)
-   {
-     ROSE_ASSERT (funcdecl_stmt != NULL);
-
-#if 0
-     printf ("funcdecl_stmt->get_args().size() = %zu \n",funcdecl_stmt->get_args().size());
-     curprint( "\n/* funcdecl_stmt->get_args().size() = " << (int)(funcdecl_stmt->get_args().size()) << " */ \n");
-#endif
-
-     SgInitializedNamePtrList::iterator p = funcdecl_stmt->get_args().begin();
-     while ( p != funcdecl_stmt->get_args().end() )
-        {
-       // Liao 11/9/2010, 
-       // Skip duplicated unparsing of the attached information for C function arguments declared in old style.
-       // They usually should be unparsed when unparsing the arguments which are outside of the parameter list
-       //  are outside of the parameter list
-       // See example code: tests/CompileTests/C_tests/test2010_10.c
-          if (funcdecl_stmt->get_oldStyleDefinition() == false)
-               unparseAttachedPreprocessingInfo(*p, info, PreprocessingInfo::before);
-          unparseFunctionParameterDeclaration (funcdecl_stmt,*p,false,info);
-
-       // Move to the next argument
-          p++;
-
-       // Check if this is the last argument (output a "," separator if not)
-          if (p != funcdecl_stmt->get_args().end())
-             {
-               curprint( ",");
-             }
-        }
-   }
-
-//-----------------------------------------------------------------------------------
-//  void JavaCodeGeneration_locatedNode::unparse_helper
-//
-//  prints out the function parameters in a function declaration or function
-//  call. For now, all parameters are printed on one line since there is no
-//  file information for each parameter.
-//-----------------------------------------------------------------------------------
-void
-JavaCodeGeneration_locatedNode::unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse_Info& info)
-   {
-     ROSE_ASSERT (funcdecl_stmt != NULL);
-
-  // printf ("End of function JavaCodeGeneration_locatedNode::unparse_helper() \n");
-   }
-
-
-
-void
-JavaCodeGeneration_locatedNode::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Info& info)
-   {
   // This function unparses the language specific parse not handled by the base class unparseStatement() member function
 
      ROSE_ASSERT(stmt != NULL);
 
-#if 0
-  // Debugging support
-     SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(stmt);
-     if (declarationStatement != NULL)
-        {
-          curprint( "/* In unparseLanguageSpecificStatement(): declarationStatement->get_declarationModifier().isFriend() = ");
-          declarationStatement->get_declarationModifier().isFriend() ? curprint("true") : curprint("false");
-          curprint( "*/ \n ");
-        }
-#endif
-
-#if 0
-     curprint ( string("\n/* Top of unparseLanguageSpecificStatement (JavaCodeGeneration_locatedNode) " ) + stmt->class_name() + " */\n ");
-     ROSE_ASSERT(stmt->get_startOfConstruct() != NULL);
-  // ROSE_ASSERT(stmt->getAttachedPreprocessingInfo() != NULL);
-     int numberOfComments = -1;
-     if (stmt->getAttachedPreprocessingInfo() != NULL)
-          numberOfComments = stmt->getAttachedPreprocessingInfo()->size();
-     curprint ( string("/* startOfConstruct: file = " ) + stmt->get_startOfConstruct()->get_filenameString()
-         + " raw filename = " + stmt->get_startOfConstruct()->get_raw_filename()
-         + " raw line = "     + StringUtility::numberToString(stmt->get_startOfConstruct()->get_raw_line())
-         + " raw column = "   + StringUtility::numberToString(stmt->get_startOfConstruct()->get_raw_col())
-         + " #comments = "    + StringUtility::numberToString(numberOfComments)
-         + " */\n ");
-#endif
-
-#if ROSE_TRACK_PROGRESS_OF_ROSE_COMPILING_ROSE
-     printf ("In unparseLanguageSpecificStatement(): file = %s line = %d \n",stmt->get_startOfConstruct()->get_filenameString().c_str(),stmt->get_startOfConstruct()->get_line());
-#endif
-
-#if 0
-  // Debugging support
-     SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(stmt);
-     if (declarationStatement != NULL)
-        {
-          curprint ( string("\n/* Inside of JavaCodeGeneration_locatedNode::unparseLanguageSpecificStatement (" ) + StringUtility::numberToString(stmt) + "): sage_class_name() = " + stmt->sage_class_name() + " */ \n");
-        }
-#endif
-
-  // DQ (added comments) this is where the new lines are introduced before statements.
-     unp->cur.format(stmt, info, FORMAT_BEFORE_STMT);
-
+     curprint_indented("", info);
      switch (stmt->variantT())
         {
        // DQ (3/14/2011): Need to move the Java specific unparse member functions from the base class to this function.
@@ -238,6 +90,9 @@ JavaCodeGeneration_locatedNode::unparseLanguageSpecificStatement(SgStatement* st
        // executable statements, control flow
           case V_SgBasicBlock:             unparseBasicBlockStmt (stmt, info); break;
           case V_SgIfStmt:                 unparseIfStmt         (stmt, info); break;
+          case V_SgJavaSynchronizedStatement: unparseSynchronizedStmt (stmt, info); break;
+          case V_SgJavaThrowStatement:     unparseThrowStmt      (stmt, info); break;
+          case V_SgJavaForEachStatement:   unparseForEachStmt    (stmt, info); break;
 
           case V_SgWhileStmt:              unparseWhileStmt      (stmt, info); break;
           case V_SgSwitchStatement:        unparseSwitchStmt     (stmt, info); break;
@@ -247,6 +102,8 @@ JavaCodeGeneration_locatedNode::unparseLanguageSpecificStatement(SgStatement* st
           case V_SgLabelStatement:         unparseLabelStmt      (stmt, info); break;
           case V_SgGotoStatement:          unparseGotoStmt       (stmt, info); break;
           case V_SgReturnStmt:             unparseReturnStmt     (stmt, info); break;
+          case V_SgAssertStmt:             unparseAssertStmt     (stmt, info); break;
+          case V_SgNullStatement:          curprint("");/* Tab over for stmt*/ break;
 
           case V_SgForStatement:           unparseForStmt(stmt, info);          break; 
           case V_SgFunctionDeclaration:    unparseFuncDeclStmt(stmt, info);     break;
@@ -278,7 +135,7 @@ JavaCodeGeneration_locatedNode::unparseLanguageSpecificStatement(SgStatement* st
           case V_SgForInitStatement:                   unparseForInitStmt(stmt, info); break;
 
           case V_SgCatchStatementSeq:     // CATCH_STATEMENT_SEQ:
-          case V_SgFunctionParameterList: // FUNCTION_PARAMETER_LIST:
+          case V_SgFunctionParameterList:  unparseFunctionParameterList(stmt, info); break;
           case V_SgCtorInitializerList:   // CTOR_INITIALIZER_LIST:
 #if PRINT_DEVELOPER_WARNINGS
              printf ("Ignore these newly implemented cases (case of %s) \n",stmt->sage_class_name());
@@ -300,30 +157,79 @@ JavaCodeGeneration_locatedNode::unparseLanguageSpecificStatement(SgStatement* st
 
           default:
              {
-               printf("JavaCodeGeneration_locatedNode::unparseLanguageSpecificStatement: Error: No handler for %s (variant: %d)\n",stmt->sage_class_name(), stmt->variantT());
+               printf("Unparse_Java::unparseLanguageSpecificStatement: Error: No handler for %s (variant: %d)\n",stmt->sage_class_name(), stmt->variantT());
                ROSE_ASSERT(false);
                break;
              }
         }
+
+        bool printSemicolon;
+        switch (stmt->variantT()) {
+            case V_SgClassDeclaration:
+            case V_SgClassDefinition:
+            case V_SgMemberFunctionDeclaration:
+            case V_SgFunctionDefinition:
+            case V_SgFunctionParameterList:
+            case V_SgForInitStatement:
+            case V_SgBasicBlock:
+            case V_SgWhileStmt:
+            case V_SgForStatement:
+            case V_SgIfStmt:
+            case V_SgSwitchStatement:
+            case V_SgCaseOptionStmt:
+            case V_SgDefaultOptionStmt:
+            case V_SgLabelStatement:
+            case V_SgJavaSynchronizedStatement:
+                printSemicolon = false;
+                break;
+            default:
+                printSemicolon = true;
+        }
+        if (printSemicolon) curprint(";");
+
+        bool printNewline;
+        switch (stmt->variantT()) {
+            case V_SgForInitStatement:
+            case V_SgFunctionParameterList:
+                printNewline = false;
+                break;
+            default:
+                printNewline = true;
+        }
+        if (printNewline) unp->cur.insert_newline();
    }
 
 void
-JavaCodeGeneration_locatedNode::unparseImportDeclarationStatement (SgStatement* stmt, SgUnparse_Info& info)
-   {
-  // There is a SgNamespaceDefinition, but it is not unparsed except through the SgNamespaceDeclaration
+Unparse_Java::unparseNestedStatement(SgStatement* stmt, SgUnparse_Info& info) {
+    info.inc_nestingLevel();
+    unparseStatement(stmt, info);
+    info.dec_nestingLevel();
+}
 
+void
+Unparse_Java::curprint_indented(const string str, SgUnparse_Info& info) const {
+    unp->cur.insert_newline(0, 4 * info.get_nestingLevel());
+    curprint(str);
+}
+
+void
+Unparse_Java::unparseImportDeclarationStatement (SgStatement* stmt, SgUnparse_Info& info)
+   {
      SgJavaImportStatement* importDeclaration = isSgJavaImportStatement(stmt);
      ROSE_ASSERT (importDeclaration != NULL);
-     curprint ( string("import "));
 
-  // This can be an empty string (in the case of an unnamed namespace)
-     SgName name = importDeclaration->get_path();
-     curprint ( name.str());
-     curprint ("; ");
+     curprint("import ");
+     unparseName(importDeclaration->get_path(), info);
    }
 
 void
-JavaCodeGeneration_locatedNode::unparseNamespaceDeclarationStatement (SgStatement* stmt, SgUnparse_Info& info)
+Unparse_Java::unparseName(SgName name, SgUnparse_Info& info)
+   {
+        curprint(name.getString());
+   }
+
+void
+Unparse_Java::unparseNamespaceDeclarationStatement (SgStatement* stmt, SgUnparse_Info& info)
    {
   // There is a SgNamespaceDefinition, but it is not unparsed except through the SgNamespaceDeclaration
 
@@ -339,7 +245,7 @@ JavaCodeGeneration_locatedNode::unparseNamespaceDeclarationStatement (SgStatemen
    }
 
 void
-JavaCodeGeneration_locatedNode::unparseNamespaceDefinitionStatement ( SgStatement* stmt, SgUnparse_Info & info )
+Unparse_Java::unparseNamespaceDefinitionStatement ( SgStatement* stmt, SgUnparse_Info & info )
    {
      ROSE_ASSERT (stmt != NULL);
      SgNamespaceDefinitionStatement* namespaceDefinition = isSgNamespaceDefinitionStatement(stmt);
@@ -396,7 +302,7 @@ JavaCodeGeneration_locatedNode::unparseNamespaceDefinitionStatement ( SgStatemen
    }
 
 void
-JavaCodeGeneration_locatedNode::unparseNamespaceAliasDeclarationStatement (SgStatement* stmt, SgUnparse_Info& info)
+Unparse_Java::unparseNamespaceAliasDeclarationStatement (SgStatement* stmt, SgUnparse_Info& info)
    {
      SgNamespaceAliasDeclarationStatement* namespaceAliasDeclaration = isSgNamespaceAliasDeclarationStatement(stmt);
      ROSE_ASSERT (namespaceAliasDeclaration != NULL);
@@ -410,14 +316,14 @@ JavaCodeGeneration_locatedNode::unparseNamespaceAliasDeclarationStatement (SgSta
    }
 
 void
-JavaCodeGeneration_locatedNode::unparseUsingDirectiveStatement (SgStatement* stmt, SgUnparse_Info& info)
+Unparse_Java::unparseUsingDirectiveStatement (SgStatement* stmt, SgUnparse_Info& info)
    {
      SgUsingDirectiveStatement* usingDirective = isSgUsingDirectiveStatement(stmt);
      ROSE_ASSERT (usingDirective != NULL);
    }
 
 void
-JavaCodeGeneration_locatedNode::unparseUsingDeclarationStatement (SgStatement* stmt, SgUnparse_Info& info)
+Unparse_Java::unparseUsingDeclarationStatement (SgStatement* stmt, SgUnparse_Info& info)
    {
      SgUsingDeclarationStatement* usingDeclaration = isSgUsingDeclarationStatement(stmt);
      ROSE_ASSERT (usingDeclaration != NULL);
@@ -428,7 +334,7 @@ JavaCodeGeneration_locatedNode::unparseUsingDeclarationStatement (SgStatement* s
    }
 
 void 
-JavaCodeGeneration_locatedNode::unparseTemplateInstantiationDirectiveStmt (SgStatement* stmt, SgUnparse_Info& info)
+Unparse_Java::unparseTemplateInstantiationDirectiveStmt (SgStatement* stmt, SgUnparse_Info& info)
    {
      SgTemplateInstantiationDirectiveStatement* templateInstantiationDirective = isSgTemplateInstantiationDirectiveStatement(stmt);
      ROSE_ASSERT(templateInstantiationDirective != NULL);
@@ -439,7 +345,7 @@ JavaCodeGeneration_locatedNode::unparseTemplateInstantiationDirectiveStmt (SgSta
 
 
 void
-JavaCodeGeneration_locatedNode::unparseTemplateInstantiationDeclStmt (SgStatement* stmt, SgUnparse_Info& info)
+Unparse_Java::unparseTemplateInstantiationDeclStmt (SgStatement* stmt, SgUnparse_Info& info)
    {
      SgTemplateInstantiationDecl* templateInstantiationDeclaration = isSgTemplateInstantiationDecl(stmt);
      ROSE_ASSERT(templateInstantiationDeclaration != NULL);
@@ -464,7 +370,7 @@ JavaCodeGeneration_locatedNode::unparseTemplateInstantiationDeclStmt (SgStatemen
 
 
 void
-JavaCodeGeneration_locatedNode::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stmt, SgUnparse_Info& info)
+Unparse_Java::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stmt, SgUnparse_Info& info)
    {
      SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDeclaration = 
           isSgTemplateInstantiationFunctionDecl(stmt);
@@ -490,7 +396,7 @@ JavaCodeGeneration_locatedNode::unparseTemplateInstantiationFunctionDeclStmt (Sg
    }
 
 void
-JavaCodeGeneration_locatedNode::unparseTemplateInstantiationMemberFunctionDeclStmt (SgStatement* stmt, SgUnparse_Info& info)
+Unparse_Java::unparseTemplateInstantiationMemberFunctionDeclStmt (SgStatement* stmt, SgUnparse_Info& info)
    {
   // Rules for output of member templates functions:
   //  1) When we unparse the template declaration as a string EDG removes the member 
@@ -518,45 +424,18 @@ JavaCodeGeneration_locatedNode::unparseTemplateInstantiationMemberFunctionDeclSt
 
 
 void
-JavaCodeGeneration_locatedNode::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
+Unparse_Java::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgBasicBlock* basic_stmt = isSgBasicBlock(stmt);
      ROSE_ASSERT(basic_stmt != NULL);
 
-  // unparseAttachedPreprocessingInfo(basic_stmt, info, PreprocessingInfo::before);
-
-     unp->cur.format(basic_stmt, info, FORMAT_BEFORE_BASIC_BLOCK1);
-     curprint ( string("{"));
-     unp->cur.format(basic_stmt, info, FORMAT_AFTER_BASIC_BLOCK1);
-
-     if (basic_stmt->get_asm_function_body().empty() == false)
-        {
-       // This is an asm function body.
-          curprint (basic_stmt->get_asm_function_body());
-
-       // Make sure this is a function definition.
-          ROSE_ASSERT(isSgFunctionDefinition(basic_stmt->get_parent()) != NULL);
-        }
-
-#if OUTPUT_HIDDEN_LIST_DATA
-     outputHiddenListData (basic_stmt);
-#endif
-
-     SgStatementPtrList::iterator p = basic_stmt->get_statements().begin();
-     while(p != basic_stmt->get_statements().end())
-        { 
-          ROSE_ASSERT((*p) != NULL);
-
-          unparseStatement((*p), info);
-
-          p++;
-        }
-
-     unparseAttachedPreprocessingInfo(basic_stmt, info, PreprocessingInfo::inside);
-
-     unp->cur.format(basic_stmt, info, FORMAT_BEFORE_BASIC_BLOCK2);
-     curprint ( string("}"));
-     unp->cur.format(basic_stmt, info, FORMAT_AFTER_BASIC_BLOCK2);
+     curprint ("{");
+     unp->cur.insert_newline();
+     foreach (SgStatement* stmt, basic_stmt->get_statements()) {
+         unparseNestedStatement(stmt, info);
+         unp->cur.insert_newline();
+     }
+     curprint_indented ("}", info);
    }
 
 
@@ -592,188 +471,120 @@ static size_t countElsesNeededToPreventDangling(SgStatement* s) {
   }
 }
 
-void JavaCodeGeneration_locatedNode::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
-   {
+void Unparse_Java::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info) {
+    SgIfStmt* if_stmt = isSgIfStmt(stmt);
+    ROSE_ASSERT(if_stmt != NULL);
 
-  // printf ("Unparse if statement stmt = %p \n",stmt);
+    SgExprStatement* cond_stmt = isSgExprStatement(if_stmt->get_conditional());
+    ROSE_ASSERT(cond_stmt != NULL && "expected an SgExprStatement in SgIfStmt::p_conditional");
+    SgExpression* conditional = cond_stmt->get_expression();
 
-     SgIfStmt* if_stmt = isSgIfStmt(stmt);
-     assert (if_stmt != NULL);
+    curprint("if (");
+    unparseExpression(conditional, info);
+    curprint(")");
 
-     while (if_stmt != NULL)
-        {
-          SgStatement *tmp_stmt = NULL;
-          curprint ( string("if ("));
-          SgUnparse_Info testInfo(info);
-          testInfo.set_SkipSemiColon();
-          testInfo.set_inConditional();
-       // info.set_inConditional();
-          if ( (tmp_stmt = if_stmt->get_conditional()) )
-             {
-            // Unparse using base class function so we get any required comments and CPP directives.
-            // unparseStatement(tmp_stmt, testInfo);
-               UnparseLanguageIndependentConstructs::unparseStatement(tmp_stmt, testInfo);
-             }
-          testInfo.unset_inConditional();
-          curprint ( string(") "));
+    if (if_stmt->get_true_body() != NULL) {
+        curprint(" ");
+        unparseStatement(if_stmt->get_true_body(), info);
+    } else {
+        curprint(";");
+    }
 
-          if ( (tmp_stmt = if_stmt->get_true_body()) ) 
-             {
-            // printf ("Unparse the if true body \n");
-            // curprint ( string("\n/* Unparse the if true body */ \n") );
-               unp->cur.format(tmp_stmt, info, FORMAT_BEFORE_NESTED_STATEMENT);
+    if (if_stmt->get_false_body() != NULL) {
+        curprint_indented("else ", info);
+        unparseStatement(if_stmt->get_false_body(), info);
+    }
+}
 
-            // Unparse using base class function so we get any required comments and CPP directives.
-            // unparseStatement(tmp_stmt, info);
-               UnparseLanguageIndependentConstructs::unparseStatement(tmp_stmt, info);
+void Unparse_Java::unparseSynchronizedStmt(SgStatement* stmt, SgUnparse_Info& info) {
+    SgJavaSynchronizedStatement *sync_stmt = isSgJavaSynchronizedStatement(stmt);
+    ROSE_ASSERT(sync_stmt != NULL);
 
-               unp->cur.format(tmp_stmt, info, FORMAT_AFTER_NESTED_STATEMENT);
-            // curprint ( string("\n/* DONE: Unparse the if true body */ \n") );
-             }
+    curprint("synchronized (");
+    unparseExpression(sync_stmt->get_expression(), info);
+    curprint(")");
 
-          if ( (tmp_stmt = if_stmt->get_false_body()) )
-             {
-               size_t elsesNeededForInnerIfs = countElsesNeededToPreventDangling(if_stmt->get_true_body());
-               for (size_t i = 0; i < elsesNeededForInnerIfs; ++i) {
-                 curprint ( string(" else {}") ); // Ensure this else does not match an inner if statement
-               }
-               unp->cur.format(if_stmt, info, FORMAT_BEFORE_STMT);
-               curprint ( string("else "));
-               if_stmt = isSgIfStmt(tmp_stmt);
-               if (if_stmt == NULL) {
-                 unp->cur.format(tmp_stmt, info, FORMAT_BEFORE_NESTED_STATEMENT);
+    unparseStatement(sync_stmt->get_body(), info);
+}
 
-              // curprint ( string("\n/* Unparse the if false body */ \n") );
-              // Unparse using base class function so we get any required comments and CPP directives.
-              // unparseStatement(tmp_stmt, info);
-                 UnparseLanguageIndependentConstructs::unparseStatement(tmp_stmt, info);
-              // curprint ( string("\n/* DONE: Unparse the if false body */ \n") );
+void Unparse_Java::unparseThrowStmt(SgStatement* stmt, SgUnparse_Info& info) {
+    SgJavaThrowStatement *throw_stmt = isSgJavaThrowStatement(stmt);
+    ROSE_ASSERT(throw_stmt != NULL);
 
-                 unp->cur.format(tmp_stmt, info, FORMAT_AFTER_NESTED_STATEMENT);
-               }
-             }
-            else
-             {
-               if_stmt = NULL;
-             }
+    curprint("throw ");
+    unparseExpression(throw_stmt->get_throwOp()->get_operand(), info);
+}
 
-          if (if_stmt != NULL)
-               unparseAttachedPreprocessingInfo(if_stmt, info, PreprocessingInfo::before);
-        }
-   }
+void Unparse_Java::unparseForEachStmt(SgStatement* stmt, SgUnparse_Info& info) {
+    SgJavaForEachStatement *foreach_stmt = isSgJavaForEachStatement(stmt);
+    ROSE_ASSERT(foreach_stmt != NULL);
+
+    curprint("for (");
+    unparseInitializedName(foreach_stmt -> get_element(), info);
+    curprint(" : ");
+    unparseExpression(foreach_stmt -> get_collection(), info);
+    curprint(")");
+    unparseStatement(foreach_stmt -> get_loop_body(), info);
+}
+
+void
+Unparse_Java::unparseInitializedName(SgInitializedName* init_name, SgUnparse_Info& info) {
+    unparseType(init_name->get_type(), info);
+    curprint(" ");
+    unparseName(init_name->get_name(), info);
+
+    if (init_name->get_initializer() != NULL) {
+        curprint(" ");
+        unparseExpression(init_name->get_initializer(), info);
+    }
+}
+
+void
+Unparse_Java::unparseForInitStmt (SgStatement* stmt, SgUnparse_Info& info) {
+    SgForInitStatement* forInitStmt = isSgForInitStatement(stmt);
+    ROSE_ASSERT(forInitStmt != NULL);
+
+    SgStatementPtrList& stmts = forInitStmt->get_init_stmt();
+    SgStatementPtrList::iterator stmt_it;
+    for (stmt_it = stmts.begin(); stmt_it != stmts.end(); stmt_it++) {
+        if (stmt_it != stmts.begin())
+            curprint(", ");
+
+        SgExprStatement* stmt = isSgExprStatement(*stmt_it);
+        ROSE_ASSERT(stmt != NULL && "expected an SgExprStatement in SgForInitStmt");
+
+        unparseExpression(stmt->get_expression(), info);
+    }
+}
+
+void
+Unparse_Java::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info) {
+    SgForStatement* for_stmt = isSgForStatement(stmt);
+    ROSE_ASSERT(for_stmt != NULL);
+
+    SgExprStatement* test_stmt = isSgExprStatement(for_stmt->get_test());
+    ROSE_ASSERT(test_stmt != NULL && "expected SgForStatement::p_test to be an SgExprStatement");
+    SgExpression* test_exp = test_stmt->get_expression();
+
+    curprint("for (");
+    unparseStatement(for_stmt->get_for_init_stmt(), info);
+    curprint("; ");
+    unparseExpression(test_exp, info);
+    curprint("; ");
+    unparseExpression(for_stmt->get_increment(), info);
+    curprint(")");
+
+    if (for_stmt->get_loop_body() != NULL) {
+        curprint(" ");
+        unparseStatement(for_stmt->get_loop_body(), info);
+    } else {
+        curprint(";");
+    }
+}
 
 
 void
-JavaCodeGeneration_locatedNode::unparseForInitStmt (SgStatement* stmt, SgUnparse_Info& info)
-   {
-  // printf ("Unparse for loop initializers \n");
-     SgForInitStatement* forInitStmt = isSgForInitStatement(stmt);
-     ROSE_ASSERT(forInitStmt != NULL);
-
-     SgStatementPtrList::iterator i = forInitStmt->get_init_stmt().begin();
-
-     SgUnparse_Info newinfo(info);
-
-     while(i != forInitStmt->get_init_stmt().end())
-        {
-       // curprint(" /* unparseForInitStmt: " + (*i)->class_name() + " */ ");
-          unparseStatement(*i, newinfo);
-          i++;
-
-       // After unparsing the first variable declaration with the type 
-       // we want to unparse the rest without the base type.
-          newinfo.set_SkipBaseType();
-
-          if (i != forInitStmt->get_init_stmt().end())
-             {
-               curprint ( string(", "));
-             }
-        }
-
-     curprint ( string("; "));
-   }
-
-void
-JavaCodeGeneration_locatedNode::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
-   {
-  // printf ("Unparse for loop \n");
-     SgForStatement* for_stmt = isSgForStatement(stmt);
-     ROSE_ASSERT(for_stmt != NULL);
-
-     curprint ( string("for ("));
-     SgUnparse_Info newinfo(info);
-     newinfo.set_SkipSemiColon();
-     newinfo.set_inConditional();  // set to prevent printing line and file information
-
-  // curprint(" /* initializer */ ");
-     SgStatement *tmp_stmt = for_stmt->get_for_init_stmt();
-  // curprint(" /* initializer: " + tmp_stmt->class_name() + " */ ");
-  // ROSE_ASSERT(tmp_stmt != NULL);
-     if (tmp_stmt != NULL)
-        {
-          unparseStatement(tmp_stmt,newinfo);
-        }
-       else
-        {
-          printf ("Warning in unparseForStmt(): for_stmt->get_for_init_stmt() == NULL \n");
-          curprint ( string("; "));
-        }
-     newinfo.unset_inConditional();
-
-     SgStatement *test_stmt = for_stmt->get_test();
-     ROSE_ASSERT(test_stmt != NULL);
-  // if ( test_stmt != NULL )
-     SgUnparse_Info testinfo(info);
-     testinfo.set_SkipSemiColon();
-     testinfo.set_inConditional();
-  // printf ("Output the test in the for statement format testinfo.inConditional() = %s \n",testinfo.inConditional() ? "true" : "false");
-     unparseStatement(test_stmt, testinfo);
-
-     curprint ( string("; "));
-
-  // curprint ( string(" /* increment */ ";
-  // SgExpression *increment_expr = for_stmt->get_increment_expr();
-     SgExpression *increment_expr = for_stmt->get_increment();
-     ROSE_ASSERT(increment_expr != NULL);
-     if ( increment_expr != NULL )
-          unparseExpression(increment_expr, info);
-     curprint ( string(") "));
-
-  // Added support to output the header without the body to support the addition 
-  // of more context in the prefix used with the AST Rewrite Mechanism.
-  // if ( (tmp_stmt = for_stmt->get_loop_body()) )
-
-     SgStatement* loopBody = for_stmt->get_loop_body();
-     ROSE_ASSERT(loopBody != NULL);
-  // printf ("loopBody = %p         = %s \n",loopBody,loopBody->class_name().c_str());
-  // printf ("info.SkipBasicBlock() = %s \n",info.SkipBasicBlock() ? "true" : "false");
-
-  // if ( (tmp_stmt = for_stmt->get_loop_body()) && !info.SkipBasicBlock())
-     if ( (loopBody != NULL) && !info.SkipBasicBlock())
-        {
-       // printf ("Unparse the for loop body \n");
-       // curprint ( string("\n/* Unparse the for loop body */ \n";
-       // unparseStatement(tmp_stmt, info);
-
-          unp->cur.format(loopBody, info, FORMAT_BEFORE_NESTED_STATEMENT);
-          unparseStatement(loopBody, info);
-          unp->cur.format(loopBody, info, FORMAT_AFTER_NESTED_STATEMENT);
-       // curprint ( string("\n/* DONE: Unparse the for loop body */ \n";
-        }
-       else
-        {
-       // printf ("No for loop body to unparse! \n");
-       // curprint ( string("\n/* No for loop body to unparse! */ \n";
-          if (!info.SkipSemiColon())
-             {
-               curprint ( string(";"));
-             }
-        }
-   }
-
-
-void
-JavaCodeGeneration_locatedNode::unparseExceptionSpecification(const SgTypePtrList& exceptionSpecifierList, SgUnparse_Info& info)
+Unparse_Java::unparseExceptionSpecification(const SgTypePtrList& exceptionSpecifierList, SgUnparse_Info& info)
    {
 #if 0
      printf ("Inside of unparseExceptionSpecification() \n");
@@ -806,43 +617,42 @@ JavaCodeGeneration_locatedNode::unparseExceptionSpecification(const SgTypePtrLis
 
 
 void
-JavaCodeGeneration_locatedNode::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
+Unparse_Java::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
-#if 0
-     printf ("Inside of unparseFuncDeclStmt() \n");
-     curprint ( string("\n/* Inside of JavaCodeGeneration_locatedNode::unparseFuncDeclStmt (" ) + StringUtility::numberToString(stmt) + "): sage_class_name() = " + stmt->sage_class_name() + " */ \n");
-
-     stmt->get_startOfConstruct()->display("Inside of unparseFuncDeclStmt()");
-#endif
-
-#if 0
-  // curprint ( string("/* End of JavaCodeGeneration_locatedNode::unparseFuncDeclStmt */";
-     curprint ( string("\n/* End of JavaCodeGeneration_locatedNode::unparseFuncDeclStmt (" ) + StringUtility::numberToString(stmt) 
-         + "): sage_class_name() = " + stmt->sage_class_name() + " */ \n");
-     printf ("End of JavaCodeGeneration_locatedNode::unparseFuncDeclStmt() \n");
-#endif
+     ROSE_ASSERT(!"Unexpected function declaration. All java functions should be SgMemberFunctions");
    }
 
 
 // NOTE: Bug in Sage: No file information provided for FuncDeclStmt. 
 void
-JavaCodeGeneration_locatedNode::unparseFuncDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
+Unparse_Java::unparseFuncDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
-#if 0
-     printf ("Inside of unparseFuncDefnStmt() \n");
-     curprint ( string("/* Inside of JavaCodeGeneration_locatedNode::unparseFuncDefnStmt */"));
-#endif
-
      SgFunctionDefinition* funcdefn_stmt = isSgFunctionDefinition(stmt);
      ROSE_ASSERT(funcdefn_stmt != NULL);
 
-  // Unparse any comments of directives attached to the SgFunctionParameterList
-     unparseAttachedPreprocessingInfo(funcdefn_stmt->get_declaration()->get_parameterList(), info, PreprocessingInfo::after);
+     unparseStatement(funcdefn_stmt->get_body(), info);
    }
 
+void
+Unparse_Java::unparseFunctionParameterList(SgStatement* stmt, SgUnparse_Info& info)
+{
+    SgFunctionParameterList* param_list = isSgFunctionParameterList(stmt);
+    ROSE_ASSERT(param_list != NULL);
+
+    SgInitializedNamePtrList& names = param_list->get_args();
+    SgInitializedNamePtrList::iterator name_it;
+    for (name_it = names.begin(); name_it != names.end(); name_it++) {
+        if (name_it != names.begin())
+            curprint(", ");
+        SgInitializedName* iname = *name_it;
+        unparseType(iname->get_type(), info);
+        curprint(" ");
+        unparseName(iname->get_name(), info);
+    }
+}
 
 string
-JavaCodeGeneration_locatedNode::trimGlobalScopeQualifier ( string qualifiedName )
+Unparse_Java::trimGlobalScopeQualifier ( string qualifiedName )
    {
      string s = qualifiedName;
      size_t subStringLocationOfScopeQualifier = s.find("::");
@@ -861,14 +671,52 @@ JavaCodeGeneration_locatedNode::trimGlobalScopeQualifier ( string qualifiedName 
 
 
 void
-JavaCodeGeneration_locatedNode::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
+Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgMemberFunctionDeclaration* mfuncdecl_stmt = isSgMemberFunctionDeclaration(stmt);
      ROSE_ASSERT(mfuncdecl_stmt != NULL);
 
-#if 0
-     curprint ( string("\n/* Inside of JavaCodeGeneration_locatedNode::unparseMFuncDeclStmt */ \n") ); 
-#endif
+     //TODO should there be forward declarations or nondefining declarations?
+     if (mfuncdecl_stmt->isForward()) {
+         //cout << "unparser: skipping forward mfuncdecl: "
+         //   << mfuncdecl_stmt->get_qualified_name().getString()
+         //   << endl;
+         return;
+     } else if (mfuncdecl_stmt->get_definition() == NULL) {
+         cout << "unparser: skipping nondefining mfuncdecl: "
+              << mfuncdecl_stmt->get_qualified_name().getString()
+              << endl;
+         return;
+     }
+
+     unparseDeclarationModifier(mfuncdecl_stmt->get_declarationModifier(), info);
+     unparseFunctionModifier(mfuncdecl_stmt->get_functionModifier(), info);
+
+     //TODO remove when specialFxnModifier.isConstructor works
+     bool constructor = mfuncdecl_stmt->get_specialFunctionModifier().isConstructor();
+     bool name_match = mfuncdecl_stmt->get_name() == mfuncdecl_stmt->get_associatedClassDeclaration()->get_name();
+     if (name_match && !constructor) {
+         cout << "unparser: method " << mfuncdecl_stmt->get_qualified_name().getString()
+              << " should be marked isConstructor" << endl;
+         constructor = true;
+     }
+
+     // unparse type, unless this a constructor
+     if (! constructor) {
+         ROSE_ASSERT(mfuncdecl_stmt->get_type());
+         ROSE_ASSERT(mfuncdecl_stmt->get_type()->get_return_type());
+         unparseType(mfuncdecl_stmt->get_type()->get_return_type(), info);
+         curprint(" ");
+     }
+
+     unparseName(mfuncdecl_stmt->get_name(), info);
+     curprint("(");
+     //     unparseStatement(mfuncdecl_stmt->get_parameterList(), info);
+     foreach (SgInitializedName* name, mfuncdecl_stmt->get_args()) {
+         unparseInitializedName(name, info);
+     }
+     curprint(") ");
+     unparseStatement(mfuncdecl_stmt->get_definition(), info);
 
 #if OUTPUT_DEBUGGING_FUNCTION_NAME
      printf ("Inside of unparseMFuncDeclStmt() name = %s  transformed = %s prototype = %s \n",
@@ -876,42 +724,29 @@ JavaCodeGeneration_locatedNode::unparseMFuncDeclStmt(SgStatement* stmt, SgUnpars
          isTransformed (mfuncdecl_stmt) ? "true" : "false",
          (mfuncdecl_stmt->get_definition() == NULL) ? "true" : "false");
 #endif
-
-  // Unparse any comments of directives attached to the SgCtorInitializerList
-     if (mfuncdecl_stmt->get_CtorInitializerList() != NULL)
-          unparseAttachedPreprocessingInfo(mfuncdecl_stmt->get_CtorInitializerList(), info, PreprocessingInfo::after);
    }
 
 void
-JavaCodeGeneration_locatedNode::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
+Unparse_Java::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
-#if 0
-     printf ("Inside of unparseVarDeclStmt(%p) \n",stmt);
-     ROSE_ASSERT(info.get_current_scope() != NULL);
-     printf ("An the current scope is (from info): info.get_current_scope() = %p = %s = %s \n",info.get_current_scope(),info.get_current_scope()->class_name().c_str(),SageInterface::get_name(info.get_current_scope()).c_str());
-     curprint ( string("\n /* Inside of unparseVarDeclStmt() */ \n"));
-#endif
-
      SgVariableDeclaration* vardecl_stmt = isSgVariableDeclaration(stmt);
      ROSE_ASSERT(vardecl_stmt != NULL);
 
-#if 0
-     printf ("Leaving unparseVarDeclStmt() \n");
-     curprint ( string("/* Leaving unparseVarDeclStmt() */ \n";
-#endif
+     unparseDeclarationModifier(vardecl_stmt->get_declarationModifier(), info);
+     foreach (SgInitializedName* init_name, vardecl_stmt->get_variables())
+         unparseInitializedName(init_name, info);
    }
 
 
 void
-JavaCodeGeneration_locatedNode::unparseVarDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
+Unparse_Java::unparseVarDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgVariableDefinition* vardefn_stmt = isSgVariableDefinition(stmt);
      ROSE_ASSERT(vardefn_stmt != NULL);
    }
 
-
 void
-JavaCodeGeneration_locatedNode::initializeDeclarationsFromParent ( 
+Unparse_Java::initializeDeclarationsFromParent ( 
    SgDeclarationStatement* declarationStatement,
    SgClassDefinition* & cdefn,
    SgNamespaceDefinitionStatement* & namespaceDefn, int debugSupport )
@@ -921,37 +756,47 @@ JavaCodeGeneration_locatedNode::initializeDeclarationsFromParent (
 
 
 void
-JavaCodeGeneration_locatedNode::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
+Unparse_Java::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgClassDeclaration* classdecl_stmt = isSgClassDeclaration(stmt);
      ROSE_ASSERT(classdecl_stmt != NULL);
 
-#if 0
-  // printf ("Inside of JavaCodeGeneration_locatedNode::unparseClassDeclStmt(): classdecl_stmt->get_from_template() = %s \n",
-  //      classdecl_stmt->get_from_template() ? "true" : "false");
-     if (classdecl_stmt->get_from_template() == true)
-          curprint ( string("/* Unparser comment: Templated Class Declaration Function */"));
-     Sg_File_Info* classDeclarationfileInfo = classdecl_stmt->get_file_info();
-     ROSE_ASSERT ( classDeclarationfileInfo != NULL );
-     if ( classDeclarationfileInfo->isCompilerGenerated() == false)
-          curprint ( string("\n/* file: " ) + classDeclarationfileInfo->get_filename() + " line: " + classDeclarationfileInfo->get_line() + " col: " + classDeclarationfileInfo->get_col() + " */ \n");
-#endif
+     unparseDeclarationModifier(classdecl_stmt->get_declarationModifier(), info);
 
+     curprint("class ");
+     unparseName(classdecl_stmt->get_name(), info);
+
+     SgClassDefinition* class_def = classdecl_stmt->get_definition();
+     ROSE_ASSERT(class_def != NULL);
+     SgBaseClassPtrList& bases = class_def->get_inheritances();
+     ROSE_ASSERT(bases.size() <= 1 && "java classes only support single inheritance");
+     if (bases.size() == 1) {
+         curprint(" extends ");
+         unparseBaseClass(bases[0], info);
+     }
+
+     //todo 'implements <typelist>'
+
+     unparseStatement(classdecl_stmt->get_definition(), info);
    }
 
 void
-JavaCodeGeneration_locatedNode::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
+Unparse_Java::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
-  // printf ("Inside of unparseClassDefnStmt \n");
-  // curprint ( string("/* Inside of unparseClassDefnStmt */ \n";
-
      SgClassDefinition* classdefn_stmt = isSgClassDefinition(stmt);
      ROSE_ASSERT(classdefn_stmt != NULL);
+
+     curprint(" {");
+     unp->cur.insert_newline();
+     foreach (SgDeclarationStatement* child, classdefn_stmt->get_members()) {
+         unparseNestedStatement(child, info);
+     }
+     curprint_indented("}", info);
    }
 
 
 void
-JavaCodeGeneration_locatedNode::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
+Unparse_Java::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgEnumDeclaration* enum_stmt = isSgEnumDeclaration(stmt);
      ROSE_ASSERT(enum_stmt != NULL);
@@ -959,99 +804,73 @@ JavaCodeGeneration_locatedNode::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse
    }
 
 void
-JavaCodeGeneration_locatedNode::unparseExprStmt(SgStatement* stmt, SgUnparse_Info& info)
+Unparse_Java::unparseExprStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgExprStatement* expr_stmt = isSgExprStatement(stmt);
      ROSE_ASSERT(expr_stmt != NULL);
 
-     SgUnparse_Info newinfo(info);
-
-  // Expressions are another place where a class definition should NEVER be unparsed
-     newinfo.set_SkipClassDefinition();
-
-     if (expr_stmt->get_expression())
-        {
-          unparseExpression(expr_stmt->get_expression(), newinfo);
-        }
-       else
-          assert(false);
-
-     if (newinfo.inVarDecl())
-        {
-          curprint ( string(","));
-        }
-       else
-          if (!newinfo.inConditional() && !newinfo.SkipSemiColon())
-             {
-               curprint ( string(";"));
-             }
+     unparseExpression(expr_stmt->get_expression(), info);
    }
 
-void JavaCodeGeneration_locatedNode::unparseLabelStmt(SgStatement* stmt, SgUnparse_Info& info)
+void Unparse_Java::unparseLabelStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgLabelStatement* label_stmt = isSgLabelStatement(stmt);
      ROSE_ASSERT(label_stmt != NULL);
 
      curprint ( string(label_stmt->get_label().str()) + ":");
+     unparseStatement(label_stmt->get_statement(), info); // charles4: 8/25/2001 process the real stmt
    }
 
 void
-JavaCodeGeneration_locatedNode::unparseWhileStmt(SgStatement* stmt, SgUnparse_Info& info) {
+Unparse_Java::unparseWhileStmt(SgStatement* stmt, SgUnparse_Info& info) {
   SgWhileStmt* while_stmt = isSgWhileStmt(stmt);
   ROSE_ASSERT(while_stmt != NULL);
 
-  curprint ( string("while" ) + "(");
-  info.set_inConditional();
-  
-  unparseStatement(while_stmt->get_condition(), info);
-  info.unset_inConditional();
-  curprint ( string(")"));
-  if(while_stmt->get_body()) {
-    unp->cur.format(while_stmt->get_body(), info, FORMAT_BEFORE_NESTED_STATEMENT);
-    unparseStatement(while_stmt->get_body(), info);
-    unp->cur.format(while_stmt->get_body(), info, FORMAT_AFTER_NESTED_STATEMENT);
-  }
-  else if (!info.SkipSemiColon()) { curprint ( string(";")); }
+  SgExprStatement* cond_stmt = isSgExprStatement(while_stmt->get_condition());
+  ROSE_ASSERT(cond_stmt != NULL && "Expecting an SgExprStatement in member SgWhileStmt::p_condition.");
+  SgExpression* cond = cond_stmt->get_expression();
+  ROSE_ASSERT(cond != NULL);
 
+  curprint("while (");
+  unparseExpression(cond, info);
+  curprint(")");
+
+  if(while_stmt->get_body()) {
+      curprint(" ");
+      unparseStatement(while_stmt->get_body(), info);
+  } else {
+      curprint(";");
+  }
 }
 
 void
-JavaCodeGeneration_locatedNode::unparseDoWhileStmt(SgStatement* stmt, SgUnparse_Info& info) {
+Unparse_Java::unparseDoWhileStmt(SgStatement* stmt, SgUnparse_Info& info) {
   SgDoWhileStmt* dowhile_stmt = isSgDoWhileStmt(stmt);
   ROSE_ASSERT(dowhile_stmt != NULL);
 
-  curprint ( string("do "));
-  unp->cur.format(dowhile_stmt->get_body(), info, FORMAT_BEFORE_NESTED_STATEMENT);
+  SgExprStatement* cond_stmt = isSgExprStatement(dowhile_stmt->get_condition());
+  ROSE_ASSERT(cond_stmt != NULL && "Expecting an SgExprStatement in member SgDoWhileStmt::p_condition.");
+  SgExpression* cond = cond_stmt->get_expression();
+  ROSE_ASSERT(cond != NULL);
+
+  curprint("do ");
   unparseStatement(dowhile_stmt->get_body(), info);
-  unp->cur.format(dowhile_stmt->get_body(), info, FORMAT_AFTER_NESTED_STATEMENT);
-  curprint ( string("while " ) + "(");
-  SgUnparse_Info ninfo(info);
-  ninfo.set_inConditional();
-
-  //we need to keep the properties of the prevnode (The next prevnode will set the
-  //line back to where "do" was printed) 
-// SgLocatedNode* tempnode = prevnode;
-
-  unparseStatement(dowhile_stmt->get_condition(), ninfo);
-  ninfo.unset_inConditional();
-  curprint ( string(")")); 
-  if (!info.SkipSemiColon()) { curprint ( string(";")); }
+  curprint_indented("while (", info);
+  unparseExpression(cond, info);
+  curprint(")");
 }
 
 void
-JavaCodeGeneration_locatedNode::unparseSwitchStmt(SgStatement* stmt, SgUnparse_Info& info)
+Unparse_Java::unparseSwitchStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgSwitchStatement* switch_stmt = isSgSwitchStatement(stmt);
   
      ROSE_ASSERT(switch_stmt != NULL);
 
      curprint ( string("switch("));
-  // unparseExpression(switch_stmt->get_item_selector(), info);
      
-     SgUnparse_Info ninfo(info);
-     ninfo.set_SkipSemiColon();
-     ninfo.set_inConditional();
-     unparseStatement(switch_stmt->get_item_selector(), ninfo);
+     unparseExpression(((SgExprStatement *) switch_stmt->get_item_selector())-> get_expression(), info);
+
      curprint ( string(")"));
 
      if ( (switch_stmt->get_body() != NULL) && !info.SkipBasicBlock())
@@ -1059,7 +878,7 @@ JavaCodeGeneration_locatedNode::unparseSwitchStmt(SgStatement* stmt, SgUnparse_I
    }
 
 void
-JavaCodeGeneration_locatedNode::unparseCaseStmt(SgStatement* stmt, SgUnparse_Info& info)
+Unparse_Java::unparseCaseStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgCaseOptionStmt* case_stmt = isSgCaseOptionStmt(stmt);
      ROSE_ASSERT(case_stmt != NULL);
@@ -1074,7 +893,7 @@ JavaCodeGeneration_locatedNode::unparseCaseStmt(SgStatement* stmt, SgUnparse_Inf
    }
 
 void
-JavaCodeGeneration_locatedNode::unparseTryStmt(SgStatement* stmt, SgUnparse_Info& info)
+Unparse_Java::unparseTryStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgTryStmt* try_stmt = isSgTryStmt(stmt);
      ROSE_ASSERT(try_stmt != NULL);
@@ -1094,7 +913,7 @@ JavaCodeGeneration_locatedNode::unparseTryStmt(SgStatement* stmt, SgUnparse_Info
    }
 
 void
-JavaCodeGeneration_locatedNode::unparseCatchStmt(SgStatement* stmt, SgUnparse_Info& info)
+Unparse_Java::unparseCatchStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgCatchOptionStmt* catch_statement = isSgCatchOptionStmt(stmt);
      ROSE_ASSERT(catch_statement != NULL);
@@ -1119,7 +938,7 @@ JavaCodeGeneration_locatedNode::unparseCatchStmt(SgStatement* stmt, SgUnparse_In
    }
 
 void
-JavaCodeGeneration_locatedNode::unparseDefaultStmt(SgStatement* stmt, SgUnparse_Info& info)
+Unparse_Java::unparseDefaultStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgDefaultOptionStmt* default_stmt = isSgDefaultOptionStmt(stmt);
      ROSE_ASSERT(default_stmt != NULL);
@@ -1131,43 +950,56 @@ JavaCodeGeneration_locatedNode::unparseDefaultStmt(SgStatement* stmt, SgUnparse_
    }
 
 void
-JavaCodeGeneration_locatedNode::unparseBreakStmt(SgStatement* stmt, SgUnparse_Info& info) {
+Unparse_Java::unparseBreakStmt(SgStatement* stmt, SgUnparse_Info& info) {
   SgBreakStmt* break_stmt = isSgBreakStmt(stmt);
   ROSE_ASSERT(break_stmt != NULL);
 
-  curprint ( string("break; "));
+  curprint ("break");
 }
 
 void
-JavaCodeGeneration_locatedNode::unparseContinueStmt(SgStatement* stmt, SgUnparse_Info& info) {
+Unparse_Java::unparseContinueStmt(SgStatement* stmt, SgUnparse_Info& info) {
   SgContinueStmt* continue_stmt = isSgContinueStmt(stmt);
   ROSE_ASSERT(continue_stmt != NULL);
 
-  curprint ( string("continue; "));
+  curprint ("continue");
 }
 
 void
-JavaCodeGeneration_locatedNode::unparseReturnStmt(SgStatement* stmt, SgUnparse_Info& info)
+Unparse_Java::unparseReturnStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgReturnStmt* return_stmt = isSgReturnStmt(stmt);
      ROSE_ASSERT(return_stmt != NULL);
 
-     curprint ( string("return "));
-     SgUnparse_Info ninfo(info);
+     curprint ("return");
 
-     if (return_stmt->get_expression())
-        {
-          unparseExpression(return_stmt->get_expression(), ninfo);
-        }
-
-     if (!ninfo.SkipSemiColon())
-        {
-          curprint ( string(";"));
-        }
+     if (return_stmt->get_expression()) {
+         curprint(" ");
+         unparseExpression(return_stmt->get_expression(), info);
+     }
    }
 
 void
-JavaCodeGeneration_locatedNode::unparseGotoStmt(SgStatement* stmt, SgUnparse_Info& info) {
+Unparse_Java::unparseAssertStmt(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgAssertStmt* assert_stmt = isSgAssertStmt(stmt);
+     ROSE_ASSERT(assert_stmt != NULL);
+
+     curprint ("assert ");
+
+     unparseExpression(assert_stmt->get_test(), info);
+
+     //
+     // charles4: 8/20/2011 - TODO: We need to add an extra expression field to SgAssertStmt for Java.
+     //
+     //     if (assert_stmt->get_exception_argument()) {
+     //         curprint(" : ");
+     //         unparseExpression(assert_stmt->get_exception_argument(), info);
+     //     }
+   }
+
+void
+Unparse_Java::unparseGotoStmt(SgStatement* stmt, SgUnparse_Info& info) {
   SgGotoStatement* goto_stmt = isSgGotoStatement(stmt);
   ROSE_ASSERT(goto_stmt != NULL);
 
@@ -1177,7 +1009,7 @@ JavaCodeGeneration_locatedNode::unparseGotoStmt(SgStatement* stmt, SgUnparse_Inf
 
 
 void
-JavaCodeGeneration_locatedNode::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
+Unparse_Java::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgTypedefDeclaration* typedef_stmt = isSgTypedefDeclaration(stmt);
      ROSE_ASSERT(typedef_stmt != NULL);
@@ -1189,10 +1021,53 @@ JavaCodeGeneration_locatedNode::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_
    }
 
 void
-JavaCodeGeneration_locatedNode::unparseTemplateDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
+Unparse_Java::unparseTemplateDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
    }
- 
 
+void
+Unparse_Java::unparseDeclarationModifier(SgDeclarationModifier& mod, SgUnparse_Info& info) {
+       if (mod.isJavaAbstract()) curprint("abstract ");
+       if (mod.isFinal()) curprint("final ");
+       unparseAccessModifier(mod.get_accessModifier(), info);
+       unparseTypeModifier(mod.get_typeModifier(), info);
+       unparseStorageModifier(mod.get_storageModifier(), info);
+}
 
+void
+Unparse_Java::unparseAccessModifier(SgAccessModifier& mod, SgUnparse_Info& info) {
+    if      (mod.isPublic())    curprint("public ");
+    else if (mod.isProtected()) curprint("protected ");
+    else if (mod.isPrivate())   curprint("private ");
+}
 
+void
+Unparse_Java::unparseStorageModifier(SgStorageModifier& mod, SgUnparse_Info& info) {
+    if (mod.isStatic()) curprint("static ");
+}
+
+void
+Unparse_Java::unparseConstVolatileModifier(SgConstVolatileModifier& mod, SgUnparse_Info& info) {
+    if (mod.isVolatile()) curprint("volatile ");
+    if (mod.isJavaTransient()) curprint("transient ");
+}
+
+void
+Unparse_Java::unparseTypeModifier(SgTypeModifier& mod, SgUnparse_Info& info) {
+    unparseConstVolatileModifier(mod.get_constVolatileModifier(), info);
+}
+
+void
+Unparse_Java::unparseFunctionModifier(SgFunctionModifier& mod, SgUnparse_Info& info) {
+    if (mod.isJavaSynchronized()) curprint("synchronized ");
+    if (mod.isJavaNative()) curprint("native ");
+    if (mod.isJavaStrictfp()) curprint("strictfp ");
+}
+
+void
+Unparse_Java::unparseBaseClass(SgBaseClass* base, SgUnparse_Info& info) {
+    ROSE_ASSERT(base != NULL);
+
+    SgClassDeclaration* base_class = base->get_base_class();
+    unparseName(base_class->get_name(), info);
+}

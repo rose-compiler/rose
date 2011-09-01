@@ -572,9 +572,11 @@ AssemblerX86::matches(OperandDefn od, SgAsmExpression *expr, SgAsmInstruction *i
             throw Exception("operand types ptr16:16, ptr16:32, ptr16:64 not implemented", insn);
 
         case od_m16_16:
+            return mre && isSgAsmTypeWord(mre->get_type());
         case od_m16_32:
+            return mre && isSgAsmTypeDoubleWord(mre->get_type());
         case od_m16_64:
-            throw Exception("operand types m16:16, m16:32, m16:64 not implemented", insn);
+            return mre && isSgAsmTypeQuadWord(mre->get_type());
 
         case od_reg:
             throw Exception("operand type reg not implemented", insn);
@@ -669,10 +671,14 @@ AssemblerX86::matches(OperandDefn od, SgAsmExpression *expr, SgAsmInstruction *i
             throw Exception("m128 not implemented", insn);
 
         case od_m16a16:
-        case od_m16a32:
+            return mre && isSgAsmTypeWord(mre->get_type());
+
         case od_m32a32:
+            return mre && isSgAsmTypeDoubleWord(mre->get_type());
+
+        case od_m16a32:
         case od_m16a64:
-            throw Exception("m16&16, m16&32, m32&32, m16&64 not implemented", insn);
+            throw Exception("operand types m16&32 and m16&64 not implemented", insn);
 
         case od_moffs8:
             if (mre && isSgAsmTypeByte(mre->get_type()) && isSgAsmValueExpression(mre->get_address())) {
@@ -974,6 +980,9 @@ AssemblerX86::build_modrm(const InsnDefn *defn, SgAsmx86Instruction *insn, size_
         case od_m64fp:
         case od_m80fp:
         case od_m2byte:
+        case od_m16_16:
+        case od_m16_32:
+        case od_m16_64:
             break;
         default:
             throw Exception("operand does not affect ModR/M byte", insn);
@@ -1442,6 +1451,9 @@ AssemblerX86::assemble(SgAsmx86Instruction *insn, const InsnDefn *defn)
             case od_m64fp:
             case od_m80fp:
             case od_m2byte:
+            case od_m16_16:
+            case od_m16_32:
+            case od_m16_64:
                 if (modrm_defined)
                     throw Exception("multiple ModR/M-affecting operands", insn);
                 modrm = build_modrm(defn, insn, i, &sib, &displacement, &rex_byte);

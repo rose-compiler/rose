@@ -3983,6 +3983,11 @@ HEADER_BASECLASS_START
 
 HEADER_BASECLASS_END
 
+HEADER_EXP_BASE_CLASS_START
+     public:
+          void post_construction_initialization();
+HEADER_EXP_BASE_CLASS_END
+
 
 HEADER_SYMBOL_TABLE_POSTDECLARATION_START
 HEADER_SYMBOL_TABLE_POSTDECLARATION_END
@@ -5283,6 +5288,9 @@ HEADER_APPLICATION_PROJECT_START
           SgStringList & get_excludeFileList();
           const SgStringList & get_excludeFileList() const;
           void set_excludeFileList(const SgStringList & excludeFileList);
+
+       // negara1 (07/29/2011)
+          std::string findIncludedFile(PreprocessingInfo* preprocessingInfo);
 
 #if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
 #else
@@ -8469,6 +8477,12 @@ SgBaseClass::get_qualified_name_prefix() const
  
 SOURCE_BASECLASS_END
 
+SOURCE_EXP_BASE_CLASS_START
+void
+SgExpBaseClass::post_construction_initialization()
+   {
+   }
+SOURCE_EXP_BASE_CLASS_END
 
 SOURCE_X_INITIALIZED_NAME_START
 
@@ -9516,15 +9530,21 @@ SgName::assembleQualifiedName(const SgName & scopeQualifiedName, const SgName & 
         }
        else 
         {
+          std::string scopeDelimiter;
+          if (SageInterface::is_Java_language())
+              scopeDelimiter = ".";
+          else
+              scopeDelimiter = "::";
+
        // Trap out the case of global scope to avoid building "::::"
-          if ( scopeQualifiedName == "::" )
+          if ( scopeQualifiedName == scopeDelimiter )
              {
             // Avoid building "::::"
                returnName = scopeQualifiedName.getString() + localName.getString();
              }
             else
              {
-               returnName = scopeQualifiedName.getString() + "::" + localName.getString();
+               returnName = scopeQualifiedName.getString() + scopeDelimiter + localName.getString();
              }
         }
 

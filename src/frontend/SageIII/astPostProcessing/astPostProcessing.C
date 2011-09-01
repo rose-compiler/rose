@@ -15,6 +15,7 @@
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 
+
 // DQ (8/20/2005): Make this local so that it can't be called externally!
 void postProcessingSupport (SgNode* node);
 
@@ -147,7 +148,9 @@ void postProcessingSupport (SgNode* node)
 #ifdef ROSE_USE_NEW_EDG_INTERFACE
 
   // Only do AST post-processing for C/C++
-     bool doPostprocessing = (SageInterface::is_Fortran_language() == true) || (SageInterface::is_PHP_language() == true);
+     bool doPostprocessing = (SageInterface::is_Fortran_language() == true) ||
+                             (SageInterface::is_PHP_language() == true) ||
+                             (SageInterface::is_Python_language() == true);
 
   // If this is C or C++ then we are using the new EDG translation and althrough fewer 
   // fixups should be required, some are still required.
