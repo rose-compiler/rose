@@ -19,6 +19,8 @@ else
    AX_PYTHON_DEVEL([2.7.0], [3.0.0])
 fi
 
+AC_DEFINE_UNQUOTED([BACKEND_PYTHON_INTERPRETER_NAME_WITH_PATH],"$PYTHON",[Path to the backend python interpreter])
+
 # End macro ROSE_SUPPORT_PYTHON.
 ]
 )
