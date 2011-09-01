@@ -1,4 +1,3 @@
-#include <signal.h>
 #include "sage3basic.h"
 #include "fortran_support.h"
 #include "FortranParserState.h"
@@ -127,16 +126,14 @@ void c_action_generic_name_list_part(Token_t * ident)
  * @param numDeclConstructs  Number of declaration constructs.
  */
 #if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
-void c_action_specification_part(int numUseStmts, int numImportStmts,
-        int numImplStmts, int numDeclConstructs)
+void c_action_specification_part(int numUseStmts, int numImportStmts, int numImplStmts, int numDeclConstructs)
 #else
 void c_action_specification_part(int numUseStmts, int numImportStmts, int numDeclConstructs)
 #endif
 {
-    // Not clear what to do here, no IR nodes really need to be built.
-
-    // DQ (5/17/2008): When processing the statement: write (1) N (i,i=1,100)
-    // (see test2008_30.f03)
+#if 0
+    outputState("At top of R204 c_action_specification_part()");
+#endif
 
     if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
     {
@@ -171,6 +168,22 @@ void c_action_specification_part(int numUseStmts, int numImportStmts, int numDec
         printf(
                 "################################################################################# \n");
         printf("\n\n");
+    }
+
+    // If this is the specification part of a function, and if the result name does not exist,
+    // create implicit result_name for function here.
+    // Look at the scope stack to determine whether or not this the specification part of a function.
+    SgFunctionDefinition* funcDef = isSgFunctionDefinition(astScopeStack.front()->get_scope());
+    SgProcedureHeaderStatement* funcDecl = funcDef? isSgProcedureHeaderStatement(funcDef->get_declaration()) : NULL;
+    if (funcDecl && !funcDecl->get_result_name())
+    {
+        SgInitializedName* resultName =
+                new SgInitializedName(funcDecl->get_name(), funcDecl->get_type()->get_return_type(), NULL, NULL, NULL);
+        funcDecl->set_result_name(resultName);
+        resultName->set_scope(astScopeStack.front());
+        setSourcePosition(resultName);
+        SgVariableSymbol*  variableSymbol = new SgVariableSymbol(resultName);
+        astScopeStack.front()->insert_symbol(resultName->get_name(),variableSymbol);
     }
 
 #if 0
@@ -3431,7 +3444,6 @@ void c_action_entity_decl(Token_t * id, ofp_bool hasArraySpec,
 void c_action_entity_decl(Token_t * id)
 #endif
 {
-    //raise(SIGINT);
     // This function R504 R503-F2008 is similar to R442 R438-F2008
 
     // Push the entities onto the list at the top of the stack
@@ -3563,8 +3575,7 @@ void c_action_entity_decl(Token_t * id)
             ROSE_ASSERT(functionDeclaration != NULL);
             if (functionDeclaration->get_result_name() == initializedName)
             {
-                SgFunctionType* functionType = isSgFunctionType(
-                        functionDeclaration->get_type());
+                SgFunctionType* functionType = isSgFunctionType(functionDeclaration->get_type());
                 ROSE_ASSERT(functionType != NULL);
                 functionType->set_return_type(entityType);
                 functionType->set_orig_return_type(entityType);
@@ -3585,8 +3596,7 @@ void c_action_entity_decl(Token_t * id)
         if (needFuncTypeUpdate)
         { // only applies to non component entities.
             ROSE_ASSERT(initializedName == NULL);
-            initializedName = new SgInitializedName(name, entityType,
-                    initializer, NULL, NULL);
+            initializedName = new SgInitializedName(name, entityType, initializer, NULL, NULL);
             SgProcedureHeaderStatement* functionDeclaration = isSgProcedureHeaderStatement(functionSymbol->get_declaration());
             functionDeclaration->set_result_name(initializedName);
         }
@@ -3612,8 +3622,7 @@ void c_action_entity_decl(Token_t * id)
 
     // Make sure that the variable name corresponding to the initialized name is in the appropriate scope
     // with appropriate symbol table information: (see buildVariableDeclaration in fortran_support.C)
-    SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(
-            astScopeStack.front()->get_parent());
+    SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(astScopeStack.front()->get_parent());
     variableSymbol = NULL;
     SgName variableName = initializedName->get_name();
     if (functionDefinition != NULL)
@@ -6852,10 +6861,8 @@ void c_action_data_ref(int numPartRef)
     // Look for the symbol associated with the variable given by the name starting
     // at the current scope and working backwards through the parent scopes.
     std::vector<SgSymbol*> variableSymbolList =
-            trace_back_through_parent_scopes_lookup_member_variable_symbol(
-                    qualifiedNameList, getTopOfScopeStack());
-    SgVariableSymbol* variableSymbol = variableSymbolList.empty() ? NULL
-            : isSgVariableSymbol(variableSymbolList[0]);
+            trace_back_through_parent_scopes_lookup_member_variable_symbol(qualifiedNameList, getTopOfScopeStack());
+    SgVariableSymbol* variableSymbol = variableSymbolList.empty()? NULL : isSgVariableSymbol(variableSymbolList[0]);
 
     if (SgProject::get_verbose() > DEBUG_COMMENT_LEVEL)
     {
@@ -6889,8 +6896,7 @@ void c_action_data_ref(int numPartRef)
         // TODO: check that coExpr is present here only if in the context of a Rice CAF2 'spawn' statement.
         if (qualifiedNameList[0].hasImageSelector)
         {
-            rice_dataref_coexpr = isSgCAFCoExpression(
-                    astExpressionStack.front());
+            rice_dataref_coexpr = isSgCAFCoExpression(astExpressionStack.front());
             astExpressionStack.pop_front();
             qualifiedNameList[0].hasImageSelector = false; // avoid processing the image selector twice
         }
@@ -6901,11 +6907,9 @@ void c_action_data_ref(int numPartRef)
 
         // This is a variable that has not been previously declared (Fortran allows this inplicit declaration),
         // but first check to make sure it is not an implicit function.
-        bool isAnIntrinsicFunction = matchAgainstIntrinsicFunctionList(
-                nameToken->text);
+        bool isAnIntrinsicFunction = matchAgainstIntrinsicFunctionList(nameToken->text);
 
-        if ((variableSymbolList.empty() == false) && (isSgFunctionSymbol(
-                variableSymbolList[0]) != NULL))
+        if ((variableSymbolList.empty() == false) && (isSgFunctionSymbol(variableSymbolList[0]) != NULL))
         {
             // This is the case of an initialization of a function return type for a derived type (see test2010_176.f90 for an example).
             // functionSymbol = isSgFunctionSymbol(variableSymbolList[0]);
@@ -6923,18 +6927,14 @@ void c_action_data_ref(int numPartRef)
             ROSE_ASSERT(numPartRef == 1);
 
             // Note that this function call would not make sense if numPartRef > 1 since the input scope would be wrong.
-            functionSymbol
-                    = trace_back_through_parent_scopes_lookup_function_symbol(
-                            variableName, getTopOfScopeStack());
+            functionSymbol = trace_back_through_parent_scopes_lookup_function_symbol(variableName, getTopOfScopeStack());
         }
         // DQ (4/29/2008): Added support for detecting derived types
         SgClassSymbol* classSymbol = NULL;
         if (numPartRef == 1)
         {
             // This function call only makes since if numPartRef == 1 since only then is the scope reasonable.
-            classSymbol
-                    = trace_back_through_parent_scopes_lookup_derived_type_symbol(
-                            variableName, getTopOfScopeStack());
+            classSymbol = trace_back_through_parent_scopes_lookup_derived_type_symbol(variableName, getTopOfScopeStack());
         }
 
         bool isANonIntrinsicFunction = (functionSymbol != NULL); // DXN: && !isAnIntrinsicFunction
@@ -6955,8 +6955,7 @@ void c_action_data_ref(int numPartRef)
                     variableSymbol, functionSymbol, classSymbol);
         }
 
-        if ((isAnIntrinsicFunction == true)
-                || (isANonIntrinsicFunction == true))
+        if ((isAnIntrinsicFunction == true) || (isANonIntrinsicFunction == true))
         {
             // DQ (4/29/2008): If it is to be handled as a function then is must not be a derived type.
             ROSE_ASSERT(isADerivedType == false);
@@ -6995,8 +6994,7 @@ void c_action_data_ref(int numPartRef)
 
                         // This does not build a variable, but it does build a SgVariableSymbol.
                         // printf ("Building a SgVariableSymbol, though not building a SgVarRefExp \n");
-                        trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(
-                                variableName, currentScope, variableSymbol,
+                        trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(variableName, currentScope, variableSymbol,
                                 functionSymbol, classSymbol);
                         ROSE_ASSERT(variableSymbol != NULL);
 
@@ -7036,9 +7034,7 @@ void c_action_data_ref(int numPartRef)
                     functionSymbol = generateFunctionCall(nameToken);
 
                     // variableSymbolList.push_back(functionSymbol);
-                    if (find(variableSymbolList.begin(),
-                            variableSymbolList.end(), functionSymbol)
-                            == variableSymbolList.end())
+                    if (find(variableSymbolList.begin(), variableSymbolList.end(), functionSymbol) == variableSymbolList.end())
                     {
                         // printf ("Adding functionSymbol to variableSymbolList since it was not present. \n");
                         variableSymbolList.push_back(functionSymbol);
@@ -7054,7 +7050,6 @@ void c_action_data_ref(int numPartRef)
 #if 0
                 // Output debugging information about saved state (stack) information.
                 outputState("Build the implicit function call in R612 c_action_data_ref()");
-                // ROSE_ASSERT(false);
 #endif
             }
             else
@@ -7121,9 +7116,7 @@ void c_action_data_ref(int numPartRef)
                         // DQ (5/15/2008): test the exclusion of this code!
                         if (functionArguments != NULL)
                         {
-                            SgFunctionCallExp* functionCallExp =
-                                    new SgFunctionCallExp(functionRefExp,
-                                            functionArguments, NULL);
+                            SgFunctionCallExp* functionCallExp =  new SgFunctionCallExp(functionRefExp, functionArguments, NULL);
                             setSourcePosition(functionCallExp, nameToken);
                             astExpressionStack.push_front(functionCallExp);
                         }
@@ -7136,9 +7129,7 @@ void c_action_data_ref(int numPartRef)
                     // DQ (12/29/2010): Add to the variableSymbolList to try to enforce one-to-one mapping to input number of parts in multi-part references.
                     ROSE_ASSERT(functionSymbol != NULL);
                     // variableSymbolList.push_back(functionSymbol);
-                    if (find(variableSymbolList.begin(),
-                            variableSymbolList.end(), functionSymbol)
-                            == variableSymbolList.end())
+                    if (find(variableSymbolList.begin(), variableSymbolList.end(), functionSymbol) == variableSymbolList.end())
                     {
                         // printf ("Adding functionSymbol to variableSymbolList since it was not present. \n");
                         variableSymbolList.push_back(functionSymbol);
@@ -7178,29 +7169,23 @@ void c_action_data_ref(int numPartRef)
                 SgClassType* classType = isSgClassType(type);
 
                 // DQ (5/14/2008): The top of astExpressionStack should be a SgExprListExp IR node
-                SgExprListExp* exprList = isSgExprListExp(
-                        astExpressionStack.front());
+                SgExprListExp* exprList = isSgExprListExp(astExpressionStack.front());
                 ROSE_ASSERT(exprList != NULL);
                 astExpressionStack.pop_front();
 
                 // Copied from R504, please refactor this code!
                 SgName functionName = "fortran_constructor_function";
                 ROSE_ASSERT(classType != NULL);
-                SgFunctionType* functionType = new SgFunctionType(classType,
-                        false);
+                SgFunctionType* functionType = new SgFunctionType(classType, false);
 #if 0
                 printf ("#########################################  functionType = %p ####################################### \n",functionType);
 #endif
                 SgName mangledName = functionType->get_mangled_type();
-                SgNode::get_globalFunctionTypeTable()->insert_function_type(
-                        mangledName, functionType);
+                SgNode::get_globalFunctionTypeTable()->insert_function_type(mangledName, functionType);
 
-                SgMemberFunctionDeclaration* memberfuncdecl =
-                        new SgMemberFunctionDeclaration(functionName,
-                                functionType, NULL);
+                SgMemberFunctionDeclaration* memberfuncdecl = new SgMemberFunctionDeclaration(functionName, functionType, NULL);
                 ROSE_ASSERT(classType->get_declaration() != NULL);
-                SgScopeStatement* typeDeclarationScope =
-                        classType->get_declaration()->get_scope();
+                SgScopeStatement* typeDeclarationScope =  classType->get_declaration()->get_scope();
                 ROSE_ASSERT(typeDeclarationScope != NULL);
                 memberfuncdecl->set_scope(typeDeclarationScope);
                 memberfuncdecl->set_parent(typeDeclarationScope);
@@ -7220,8 +7205,7 @@ void c_action_data_ref(int numPartRef)
                 // DQ (12/29/2010): Debugging gfortranTestSuite/gfortran.dg/array_constructor_35.f90
                 // A member function symbol might make more sense here.
                 ROSE_ASSERT(classSymbol != NULL);
-                SgMemberFunctionSymbol* memberFunctionSymbol =
-                        new SgMemberFunctionSymbol(memberfuncdecl);
+                SgMemberFunctionSymbol* memberFunctionSymbol = new SgMemberFunctionSymbol(memberfuncdecl);
 
                 if (SgProject::get_verbose() > DEBUG_COMMENT_LEVEL)
                     printf(
@@ -7242,8 +7226,7 @@ void c_action_data_ref(int numPartRef)
 
                 // DQ (1/18/2011): In general everything is a function unless there is a hint that it is an array.
                 // DQ (1/17/2011): Check if this is supposed to be a function or a variable.
-                SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(
-                        variableName, astScopeStack.front());
+                SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(variableName, astScopeStack.front());
                 bool interpretAsVariable;
                 if (isSgVariableSymbol(symbol) == NULL)
                 {
@@ -7254,9 +7237,7 @@ void c_action_data_ref(int numPartRef)
                     else
                     {
                         // If this is not clearly a variable and it has parameters then it is to be interpreted to be a function.
-                        bool
-                                hasSelectionSubscriptList =
-                                        qualifiedNameList[(numPartRef - 1)].hasSelectionSubscriptList;
+                        bool hasSelectionSubscriptList = qualifiedNameList[(numPartRef - 1)].hasSelectionSubscriptList;
                         if (hasSelectionSubscriptList == true)
                         {
                             // Found a parameter list, this is a function!
@@ -7288,8 +7269,7 @@ void c_action_data_ref(int numPartRef)
                     buildImplicitVariableDeclaration(variableName);
 
                     // Add the new variableSymbol to the list so that the processing of the list can be properly triggered.
-                    trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(
-                            variableName, currentScope, variableSymbol,
+                    trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(variableName, currentScope, variableSymbol,
                             functionSymbol, classSymbol);
                     ROSE_ASSERT(variableSymbol != NULL);
                     variableSymbolList.push_back(variableSymbol);
@@ -7351,10 +7331,8 @@ void c_action_data_ref(int numPartRef)
         SgSymbol* tempSymbol = variableSymbolList[lastElement - i];
         ROSE_ASSERT(tempSymbol);
 
-        bool hasSelectionSubscriptList =
-                qualifiedNameList[lastElement - i].hasSelectionSubscriptList;
-        bool hasImageSelector =
-                qualifiedNameList[lastElement - i].hasImageSelector;
+        bool hasSelectionSubscriptList = qualifiedNameList[lastElement - i].hasSelectionSubscriptList;
+        bool hasImageSelector = qualifiedNameList[lastElement - i].hasImageSelector;
         bool hasCo_deref = qualifiedNameList[lastElement - i].hasCo_deref;
         SgCAFCoExpression* coExpr;
         if (hasImageSelector)
@@ -7401,8 +7379,7 @@ void c_action_data_ref(int numPartRef)
         // Rice CAF: handle a possible copointer dereference, but only for a leading variable (not a function)
         if (variableType->variantT() != V_SgFunctionType)
         {
-            SgVariableSymbol* temp_variableSymbol = isSgVariableSymbol(
-                    tempSymbol);
+            SgVariableSymbol* temp_variableSymbol = isSgVariableSymbol(tempSymbol);
             ROSE_ASSERT(temp_variableSymbol);
             if (hasCo_deref)
             {
@@ -7442,14 +7419,11 @@ void c_action_data_ref(int numPartRef)
                     // printf ("#################### variable name = %s indexExpression->get_type() = %s stackHoldsAnIndexExpression = %s \n",variableSymbol->get_name().str(),indexExpression->get_type()->class_name().c_str(),stackHoldsAnIndexExpression ? "true" : "false");
 
                     // Don't allow arrays to be index by arrays (can we do that).
-                    SgArrayType* arrayType = isSgArrayType(
-                            indexExpression->get_type());
-                    if (arrayType == NULL && stackHoldsAnIndexExpression
-                            == true)
+                    SgArrayType* arrayType = isSgArrayType(indexExpression->get_type());
+                    if (arrayType == NULL && stackHoldsAnIndexExpression == true)
                     {
                         astExpressionStack.pop_front();
-                        variable = new SgPntrArrRefExp(arrayVariable,
-                                indexExpression, NULL);
+                        variable = new SgPntrArrRefExp(arrayVariable, indexExpression, NULL);
                     }
                     else
                     {
@@ -7482,14 +7456,12 @@ void c_action_data_ref(int numPartRef)
                 // printf ("#################### variable name = %s indexExpression->get_type() = %s stackHoldsAnIndexExpression = %s \n",variableSymbol->get_name().str(),indexExpression->get_type()->class_name().c_str(),stackHoldsAnIndexExpression ? "true" : "false");
 
                 // Don't allow arrays to be index by arrays (can we do that).
-                SgArrayType* arrayType = isSgArrayType(
-                        indexExpression->get_type());
+                SgArrayType* arrayType = isSgArrayType(indexExpression->get_type());
                 // if (arrayType == NULL)
                 if (arrayType == NULL && stackHoldsAnIndexExpression == true)
                 {
                     astExpressionStack.pop_front();
-                    variable = new SgPntrArrRefExp(arrayVariable,
-                            indexExpression, NULL);
+                    variable = new SgPntrArrRefExp(arrayVariable, indexExpression, NULL);
                 }
                 else
                 {
@@ -7518,8 +7490,7 @@ void c_action_data_ref(int numPartRef)
                 SgFunctionType* functionType = isSgFunctionType(
                         functionSymbol->get_declaration()->get_type());
                 ROSE_ASSERT(functionType != NULL);
-                SgExpression* functionReference = new SgFunctionRefExp(
-                        functionSymbol, functionType);
+                SgExpression* functionReference = new SgFunctionRefExp(functionSymbol, functionType);
                 ROSE_ASSERT(functionReference != NULL);
 
                 setSourcePosition(functionReference, nameToken);
@@ -7548,18 +7519,15 @@ void c_action_data_ref(int numPartRef)
                     // DQ (1/24/2011): Default name for procedure to use as declaration for symbol needed for function reference...(where required)...
                     SgName programName = "procedure";
                     ROSE_ASSERT(globalScope->symbol_exists(programName) == true);
-                    functionSymbol = globalScope->lookup_function_symbol(
-                            programName);
+                    functionSymbol = globalScope->lookup_function_symbol(programName);
                     ROSE_ASSERT(functionSymbol != NULL);
 
                     ROSE_ASSERT(functionSymbol->get_declaration() != NULL);
                     ROSE_ASSERT(functionSymbol->get_declaration()->get_type() != NULL);
-                    SgFunctionType* functionType = isSgFunctionType(
-                            functionSymbol->get_declaration()->get_type());
+                    SgFunctionType* functionType = isSgFunctionType(functionSymbol->get_declaration()->get_type());
 
                     ROSE_ASSERT(functionType != NULL);
-                    SgExpression* functionReference = new SgFunctionRefExp(
-                            functionSymbol, functionType);
+                    SgExpression* functionReference = new SgFunctionRefExp(functionSymbol, functionType);
                     ROSE_ASSERT(functionReference != NULL);
 
                     setSourcePosition(functionReference, nameToken);
@@ -7569,15 +7537,13 @@ void c_action_data_ref(int numPartRef)
                             astExpressionStack.front());
                     ROSE_ASSERT(argumentList != NULL);
                     astExpressionStack.pop_front();
-                    SgFunctionCallExp* functionCall = new SgFunctionCallExp(
-                            functionReference, argumentList,
+                    SgFunctionCallExp* functionCall = new SgFunctionCallExp(functionReference, argumentList,
                             SgTypeVoid::createType());
                     variable = functionCall;
                 }
                 else
                 {
-                    SgExpression* arrayVariable = new SgVarRefExp(
-                            variableSymbol);
+                    SgExpression* arrayVariable = new SgVarRefExp(variableSymbol);
                     setSourcePosition(arrayVariable, nameToken);
                     variable = arrayVariable;
                 }
@@ -18423,7 +18389,7 @@ void c_action_function_stmt(Token_t * label, Token_t * keyword, Token_t * name,
     // This does not do everything required to build a function or subroutine, but it does as much as possible
     // (factors out code so that it can be called for R1117, R1224, and R1232.
     bool hasDummyArgList = hasGenericNameList;
-    buildProcedureSupport(functionDeclaration, hasDummyArgList);
+    buildProcedureSupport(functionDeclaration, hasDummyArgList);  // DXN: use the flag hasSuffix and build the result name here instead.
 #endif
 
     // DQ (11/30/2007): This should be true here. We have just build a function and so all the working stacks should be empty (except astScopeStack)!
@@ -18554,11 +18520,7 @@ void c_action_result_name()
 
     // printf ("Warning: type for return parameter to function assumed to be integer (arg_name = %s) \n",arg_name.str());
 
-    // Build a SgInitializedName with a SgTypeDefault and fixup the type later when we see the declaration inside the subroutine.
-    // SgInitializedName* initializedName = new SgInitializedName(arg_name,SgTypeDefault::createType());
-    // SgInitializedName* initializedName = new SgInitializedName(arg_name,SgTypeInt::createType());
-    SgInitializedName* initializedName = new SgInitializedName(arg_name,
-            generateImplicitType(arg_name.str()));
+    SgInitializedName* initializedName = new SgInitializedName(arg_name, generateImplicitType(arg_name.str()));
 
     // printf ("In c_action_result_name(): initializedName = %p = %s \n",initializedName,initializedName->get_name().str());
     astNodeStack.push_front(initializedName);
@@ -18586,7 +18548,6 @@ void c_action_result_name()
 void c_action_end_function_stmt(Token_t * label, Token_t * keyword1,
         Token_t * keyword2, Token_t * name, Token_t * eos)
 {
-    //raise(SIGINT);
     if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
     {
         printf(
@@ -18632,7 +18593,6 @@ void c_action_end_function_stmt(Token_t * label, Token_t * keyword1,
     {
         SgFunctionType* func_type = func_decl->get_type();
         SgType* func_return_type = func_type->get_return_type();
-
         if (isSgTypeVoid(func_return_type) != NULL)
         {
             if (isAnImplicitScope == true)
@@ -18642,10 +18602,12 @@ void c_action_end_function_stmt(Token_t * label, Token_t * keyword1,
             }
             else
             {
-                SgFunctionType* implicit_type = generateImplicitFunctionType(
-                        func_name);
+                SgFunctionType* implicit_type = generateImplicitFunctionType(func_name);
                 ROSE_ASSERT(implicit_type != NULL);
                 func_decl->set_type(implicit_type);
+                // c_action_specification_part creates an implicit result nane if necessary;
+                // as a result, we need to reset the type of the result name accordingly.
+                func_decl->get_result_name()->set_type(implicit_type->get_return_type());
             }
         }
     }
@@ -18658,21 +18620,12 @@ void c_action_end_function_stmt(Token_t * label, Token_t * keyword1,
     resetEndingSourcePosition(astScopeStack.front(), keyword1);
 
     ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
-
     astScopeStack.pop_front();
-
-    // SgScopeStatement* topOfStack = getTopOfScopeStack();
-    // printf ("topOfStack = %p = %s \n",topOfStack,topOfStack->class_name().c_str());
-
-    // DQ (2/1/2008): This does not have to be true since a function can be defined as a nested
-    // function in an existing function (SgProgramHeaderStatement).
-    // ROSE_ASSERT(topOfStack->variantT() == V_SgGlobal);
 
     if (name != NULL)
     {
         // If the id is NULL then the name was not provided.
-        SgFunctionDeclaration* functionDeclaration =
-                functionDefinition->get_declaration();
+        SgFunctionDeclaration* functionDeclaration = functionDefinition->get_declaration();
         ROSE_ASSERT(functionDeclaration != NULL);
 
         functionDeclaration->set_named_in_end_statement(true);
