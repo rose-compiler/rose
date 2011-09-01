@@ -41,7 +41,7 @@ class Unparser_Nameq;
 #define ANONYMOUS_TYPEDEF_FIX false
 
 // Whether to use Rice's code to wrap long lines in Fortran.
-#define USE_RICE_FORTRAN_WRAPPING  1  // 1 if you're Rice, 0 if you want to get through Jenkins
+#define USE_RICE_FORTRAN_WRAPPING  0  // 1 if you're Rice, 0 if you want to get through Jenkins
 
 // Maximum line lengths for Fortran fixed source form and free source form, per the F90 specification.
 #if USE_RICE_FORTRAN_WRAPPING

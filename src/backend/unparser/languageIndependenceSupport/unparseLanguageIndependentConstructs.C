@@ -39,13 +39,13 @@ UnparseLanguageIndependentConstructs::curprint (const std::string & str) const
         // determine line wrapping parameters -- 'pos' variables are one-based
         bool is_fixed_format = unp->currentFile->get_outputFormat() == SgFile::e_fixed_form_output_format;
         bool is_free_format  = unp->currentFile->get_outputFormat() == SgFile::e_free_form_output_format;
-        int max_cols = ( is_fixed_format ? MAX_F90_LINE_LEN_FIXED
-                       : is_free_format  ? MAX_F90_LINE_LEN_FREE
-                       : unp->cur.get_linewrap() );
+        int usable_cols = ( is_fixed_format ? MAX_F90_LINE_LEN_FIXED
+                          : is_free_format  ? MAX_F90_LINE_LEN_FREE - 1 // reserve a column in free-format for possible trailing '&'
+                          : unp->cur.get_linewrap() );
 
         // check whether line wrapping is needed
-        int used_cols = unp->cur.current_col();   // 'current_col' is zero-based
-        int free_cols = max_cols - used_cols;
+        int used_cols = unp->cur.current_col();     // 'current_col' is zero-based
+        int free_cols = usable_cols - used_cols;
         if( str.size() > free_cols )
         {
             if( is_fixed_format )
@@ -54,7 +54,7 @@ UnparseLanguageIndependentConstructs::curprint (const std::string & str) const
                 if( ! (used_cols == 0 && str[0] != ' ' ) )
                 {
                     // warn if successful wrapping is impossible
-                    if( 6 + str.size() > max_cols )
+                    if( 6 + str.size() > usable_cols )
                         printf("Warning: can't wrap long line in Fortran fixed format (continuation + text is longer than a line)\n");
 
                     // emit fixed-format line continuation
@@ -65,9 +65,9 @@ UnparseLanguageIndependentConstructs::curprint (const std::string & str) const
             else if( is_free_format )
             {
                 // warn if successful wrapping is impossible
-                if( 1 + str.size() > max_cols )
-                    printf("Warning: can't wrap long line in Fortran free format ('&' + text is longer than a line)\n");
-                else if( 1 > free_cols )
+                if( str.size() > usable_cols )
+                    printf("Warning: can't wrap long line in Fortran free format (text is longer than a line)\n");
+                else if( free_cols < 1 )
                     printf("Warning: can't wrap long line in Fortran free format (no room for final '&')\n");
 
                 // emit free-format line continuation even if result will still be too long
@@ -3883,17 +3883,12 @@ bool
 UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, SgUnparse_Info& info) {
      ROSE_ASSERT(expr != NULL);
 
-  // DQ (9/29/2007): Fortran subscript expressions should not be parenthesized, I think.
-  // DXN (02/11/2011): or dot expressions, co-array expressions, or SgPntrArrRefExp
      if (isSgSubscriptExpression(expr) != NULL || isSgDotExp(expr) || isSgCAFCoExpression(expr) || isSgPntrArrRefExp(expr) )
         {
           return false;
         }
 
      SgExpression* parentExpr = isSgExpression(expr->get_parent());
-
-  // DQ (8/4/2005): Added assertion (can be false!)
-  // ROSE_ASSERT(parentExpr != NULL);
 
 #define DEBUG_PARENTHESIS_PLACEMENT 0
 #if DEBUG_PARENTHESIS_PLACEMENT && 1
@@ -3915,16 +3910,11 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
         }
 #endif
 
-  // DQ (8/22/2005): Curprintrently "myVector b = a / (a.norm() + 1);" unparse to "myVector b = a / a.norm() + 1;"
-  // So use the information that we store from EDG to know when to return parens for subexpressions.  The problem
-  // with this solution is that in general it adds too many parentheses.  The problem with the code below is that
-  // it does not correctly account for the presedence of subexpressions that mix overloaded operators (which appear as
-  // functions) with operators for primiative types (which have a fixed precedence).  We need a pass over the AST to
-  // interpret the presedence of the overloaded operators.
      if ( (isSgBinaryOp(expr) != NULL) && (expr->get_need_paren() == true) )
+//   if ( expr->get_need_paren() )  // SKW WORK IN PROGRESS
         {
 #if DEBUG_PARENTHESIS_PLACEMENT
-          printf ("     Special case of (isSgBinaryOp(expr) != NULL) && (expr->get_need_paren() == true): (return true) \n");
+          printf ("     Special case of expr->get_need_paren(): (return true) \n");
 #endif
           return true;
         }
@@ -3941,9 +3931,6 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
         }
 #endif
 
-  // DQ (11/9/2009): Debugging test2009_40.C)
-  // if ( parentExpr == NULL || parentExpr->variantT() == V_SgExpressionRoot || expr->variantT() == V_SgExprListExp || expr->variantT() == V_SgConstructorInitializer || expr->variantT() == V_SgDesignatedInitializer)
-  // if ( parentExpr == NULL || parentExpr->variantT() == V_SgExpressionRoot || expr->variantT() == V_SgExprListExp || /* expr->variantT() == V_SgConstructorInitializer || */ expr->variantT() == V_SgDesignatedInitializer)
      if ( parentExpr == NULL || parentExpr->variantT() == V_SgExpressionRoot || expr->variantT() == V_SgExprListExp || expr->variantT() == V_SgConstructorInitializer || expr->variantT() == V_SgDesignatedInitializer)
         {
 #if DEBUG_PARENTHESIS_PLACEMENT
@@ -3967,44 +3954,11 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
      }
 #endif
 
-     // TV (04/25/11): I think this is not needed anymore as original expression are unparse directly instead of their parents
-/*
-     // Liao 11/5/2010,another tricky case: the current expression is the original expression tree of its parent
-     // we should not introduce additional ( ) when switching from current SgCastExp to its original SgCastExp
-     // This is true at least for SgCastExp
-     if (SgCastExp * cast_p = isSgCastExp(parentExpr))
-       if (cast_p->get_originalExpressionTree() == expr )
-         return false;
-*/
-
      // TV (04/24/11): As compiler generated cast are not unparsed they don't need additional parenthesis.
      if (isSgCastExp(expr) && expr->get_startOfConstruct()->isCompilerGenerated())
        return false;     
-#if 0
-  // DQ (8/8/2006): Changed as a temporary test!
-  // This will need to be fixed for test2006_115.C (when run with the inliner) and needs
-  // to be fixed in a next release.  The problem with this fix is that it introduced
-  // too many parentheses into the generated code.  To avoid these special cases
-  // we should handle precedence more generally within overloaded operators as well
-  // as the defined operators for primative types which are curprintrently handled.
-     if (parentExpr != NULL && parentExpr->variantT() == V_SgAssignInitializer)
-        {
-#if DEBUG_PARENTHESIS_PLACEMENT
-          printf ("     Special case of parentExpr == SgAssignInitializer (return true) \n");
-#endif
 
-       // DQ (8/2/2005): It would be great if we could avoid parenthesis here!
-          return true;
-       // printf ("Change to case of where parent expression is a SgAssignInitializer in PrintStartParen(%s) (skip the parenthesis) \n",expr->sage_class_name());
-       // return false;
-        }
-#else
   // DQ (8/6/2005): Never output "()" where the parent is a SgAssignInitializer
-  // DQ (8/2/2005): It would be great if we could avoid parenthesis here,
-  // only output it if this is part of a constructor initialization list!
-  // I fixed up the case of constructor initializers so that "()" is always
-  // output there instead of here.
-  // printf ("skip output of parenthesis for rhs of all SgAssignInitializer objects \n");
      if (parentExpr != NULL && parentExpr->variantT() == V_SgAssignInitializer)
         {
 #if DEBUG_PARENTHESIS_PLACEMENT
@@ -4012,28 +3966,9 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
 #endif
           return false;
         }
-#endif
-
-#if 0
-  // DQ (8/22/2005): This fails to handle the case where the expression list is used for
-  // function parameters of overloaded operators.
-  // Return false for any parameter of an expression list (which will be comma separated).
-     if (parentExpr != NULL && parentExpr->variantT() == V_SgExprListExp)
-        {
-#if DEBUG_PARENTHESIS_PLACEMENT
-          printf ("     Special case of parentExpr == SgExprListExp (return false) \n");
-#endif
-          return false;
-        }
-#endif
 
      switch (expr->variant())
         {
-       // DQ (12/2/2004): Added case which should not have surrounding parenthesis (BAD FIX!)
-       // case POINTST_OP:
-       // case RECORD_REF:
-       // case DEREF_OP:
-
        // DQ (11/18/2007): Don't use parens for these cases
           case TEMP_ColonShapeExp:
           case TEMP_AsteriskShapeExp:
@@ -4062,13 +3997,10 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
           case DOUBLE_VAL:
           case LONG_DOUBLE_VAL:
           case AGGREGATE_INIT:
-       // DQ (3/17/2005): We need this commented out to avoid doubleArray *arrayPtr1 = (new doubleArray 42);
-       // case ASSIGN_INIT:
              {
 #if DEBUG_PARENTHESIS_PLACEMENT
                printf ("     case statements return false \n");
 #endif
-            // curprint( "\n /* In PrintStartParen(): return false */ \n");
                return false;
              }
 
@@ -4082,7 +4014,6 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
 #if DEBUG_PARENTHESIS_PLACEMENT
                     printf ("     parentVariant  == V_SgPntrArrRefExp && first != expr (return false) \n");
 #endif
-                 // curprint( "\n /* In PrintStartParen(): return false */ \n");
                     return false;
                   }
 
@@ -4096,7 +4027,6 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
 #if DEBUG_PARENTHESIS_PLACEMENT
                     printf ("     parentPrecedence == 0 return true \n");
 #endif
-                 // curprint( "\n /* In PrintStartParen(): return true */ \n");
                     return true;
                   }
 
@@ -4111,7 +4041,6 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
 #if DEBUG_PARENTHESIS_PLACEMENT
                     printf ("     exprPrecedence > parentPrecedence return false \n");
 #endif
-                 // curprint( "\n /* In PrintStartParen(): return false */ \n");
                     return false;
                   }
                  else
@@ -4123,7 +4052,6 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
 #if DEBUG_PARENTHESIS_PLACEMENT
                               printf ("     exprPrecedence == parentPrecedence return true \n");
 #endif
-                           // curprint( "\n /* In PrintStartParen(): exprPrecedence == parentPrecedence return true */ \n");
                               return true;
                             }
                          AssociativitySpecifier assoc =  getAssociativity(parentExpr);
@@ -4132,7 +4060,6 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
 #if DEBUG_PARENTHESIS_PLACEMENT
                               printf ("     assoc > 0 && first != expr return false \n");
 #endif
-                           // curprint( "\n /* In PrintStartParen(): assoc > 0 && first != expr return false */ \n");
                               return false;
                             }
                          if (assoc == e_assoc_right && first == expr)
@@ -4140,67 +4067,11 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
 #if DEBUG_PARENTHESIS_PLACEMENT
                               printf ("     assoc < 0 && first == expr return false \n");
 #endif
-                           // curprint( "\n /* In PrintStartParen(): return false */ \n");
                               return false;
                             }
                        }
                       else
                        {
-#if 0
-                      // DQ (2/22/2005): By removing this case we can eliminate the explicit introduction of parens
-                      // in the Unparse_MOD_SAGE::unparseBinaryExpr(SgExpression* expr, SgUnparse_Info& info) function.
-#if DEBUG_PARENTHESIS_PLACEMENT
-                         printf ("Special case (unparse skips over the \"operator->()\" and it's EDG normalization to \"(*this).\"! \n");
-#endif
-                      // DQ (12/3/2004): This is the case of special handling to account for how the unparser skips
-                      // over the "x->" and implements "(*x)."  The better fix for this is to fixup the AST directly,
-                      // we will implement that next.  The best fix would be the prevent the EDG normalization
-                      // of such expressions.  The mechanism within the unparser is only done when
-                      // unp->opt.get_overload_opt() if false (the default setting).
-                         if (!unp->opt.get_overload_opt())
-                            {
-                              SgPointerDerefExp* pointerDeref = isSgPointerDerefExp(expr);
-#if 1
-                           // DQ (12/11/2004): Use this subtree recognition function because the operator->() member
-                           // function can be accessed either as "x.operator->();" or "x->operator->();"
-                           // and we want to avoid parenthesis so that we don't generate either
-                           // "(x.)operator->();" or "(x->)operator->();" (as I recall).
-                              if ( isUnaryOperatorArrowSubtree(pointerDeref) == true )
-                                 {
-#if DEBUG_PARENTHESIS_PLACEMENT
-                                   printf ("Found the special case we are looking for! \n");
-#endif
-                                   return false;
-                                 }
-#else
-                              if ( (pointerDeref != NULL) && (isSgDotExp(parentExpr) != NULL) )
-                                 {
-                                   SgFunctionCallExp* functionCall = isSgFunctionCallExp(pointerDeref->get_operand());
-                                   if (functionCall != NULL)
-                                      {
-                                        SgDotExp* dotExp = isSgDotExp(functionCall->get_function());
-                                        if (dotExp != NULL)
-                                           {
-                                             ROSE_ASSERT(dotExp->get_rhs_operand() != NULL);
-                                             if (isOverloadedArrowOperator(dotExp->get_rhs_operand()) == true)
-                                                {
-#if DEBUG_PARENTHESIS_PLACEMENT
-                                                  printf ("Found the special case we are looking for! \n");
-#endif
-                                                  return false;
-                                                }
-                                               else
-                                                {
-#if DEBUG_PARENTHESIS_PLACEMENT
-                                                  printf ("Did NOT find the special case we are looking for! \n");
-#endif
-                                                }
-                                           }
-                                      }
-                                 }
-#endif
-                            }
-#endif
                        }
                   }
              }
@@ -4209,6 +4080,5 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
 #if DEBUG_PARENTHESIS_PLACEMENT
      printf ("     base of function return true \n");
 #endif
-  // curprint( "\n /* In PrintStartParen(): return true */ \n");
      return true;
 }
