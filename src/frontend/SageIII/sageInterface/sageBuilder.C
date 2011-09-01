@@ -2048,6 +2048,19 @@ SgPlusPlusOp *SageBuilder::buildPlusPlusOp_nfi(SgExpression* operand_i, SgUnaryO
   return result;
 }
 
+SgThrowOp *SageBuilder::buildThrowOp(SgExpression *operand_i, SgThrowOp::e_throw_kind throwKind)
+{
+  SgThrowOp* result = new SgThrowOp(operand_i, operand_i -> get_type(), throwKind);
+  if (operand_i != NULL) {
+      markLhsValues(result);
+  }
+  setOneSourcePositionForTransformation(result);
+  operand_i -> set_parent(result);
+  ROSE_ASSERT(result);
+  return result;
+}
+
+
 //---------------------binary expressions-----------------------
 
 template <class T>
@@ -4039,6 +4052,27 @@ SgJavaSynchronizedStatement *SageBuilder::buildJavaSynchronizedStatement(SgExpre
   return sync_stmt;
 }
 
+SgJavaThrowStatement *SageBuilder::buildJavaThrowStatement(SgThrowOp *op)
+{
+  ROSE_ASSERT(op);
+  SgJavaThrowStatement *throw_stmt = new SgJavaThrowStatement(op);
+  ROSE_ASSERT(throw_stmt);
+
+  op->set_parent(throw_stmt);
+
+  return throw_stmt;
+}
+
+SgJavaForEachStatement *SageBuilder::buildJavaForEachStatement(SgInitializedName *variable, SgExpression *collection, SgStatement *body)
+{
+  SgJavaForEachStatement *foreach_stmt = new SgJavaForEachStatement(variable, collection, body);
+  ROSE_ASSERT(foreach_stmt);
+  if (variable) variable -> set_parent(foreach_stmt);
+  if (collection) collection -> set_parent(foreach_stmt);
+  if (body) body -> set_parent(foreach_stmt);
+
+  return foreach_stmt;
+}
 
 SgPythonPrintStmt*
 SageBuilder::buildPythonPrintStmt(SgExpression* dest, SgExprListExp* values) {
