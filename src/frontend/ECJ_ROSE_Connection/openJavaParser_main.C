@@ -43,6 +43,41 @@ int runECJ (int argc, char **argv);
 // #define OVERWRITE_LD_LIBRARY_PATH 1
 #define OVERWRITE_LD_LIBRARY_PATH 1
 
+// DQ (8/15/2011): Moved to openJavaParser_main.C to
+// separate the work on Java from the rest of ROSE and support the ROSE
+// configuration language only options.
+// DQ (10/21/2010): If Fortran is being supported then there will
+// be a definition of this pointer there.  Note that we currently
+// use only one pointer so that we can simplify how the JVM support 
+// is used for either Fortran or Java language support.
+#ifndef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+SgSourceFile* OpenFortranParser_globalFilePointer = NULL;
+#endif
+
+// DQ (8/15/2011): These functions were moved to openJavaParser_main.C to
+// separate the work on Java from the rest of ROSE and support the ROSE
+// configuration language only options.
+list<SgScopeStatement*> astJavaScopeStack;
+
+bool
+emptyJavaStateStack()
+   {
+  // Use the scope stack to indicate if we have a value scope available as part of Java lanaguage processing.
+     return astJavaScopeStack.empty();
+   }
+
+
+SgScopeStatement*
+getTopOfJavaScopeStack()
+   {
+     ROSE_ASSERT(astJavaScopeStack.empty() == false);
+     SgScopeStatement* topOfStack = astJavaScopeStack.front();
+
+     return topOfStack;
+   }
+
+
+
 /* DQ (8/16/2007): This is what we want ROSE to call so that we can run the Java based OpenJavaParser from C++. */
 int openJavaParser_main(int argc, char **argv)
   {

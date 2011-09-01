@@ -10,10 +10,6 @@
 #define CASE_DISPATCH_AND_BREAK(sg_t) \
   case V_Sg ##sg_t : unparse ##sg_t (isSg##sg_t (stmt),info); break;
 
-#define PY_UNPARSE_NO_PRECEDENCE -1
-#define PY_UNPARSE_LEFT_ASSOC     1
-#define PY_UNPARSE_RIGHT_ASSOC   -1
-
 using namespace std;
 
 
@@ -170,7 +166,7 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
 
 void
 Unparse_Python::unparseExpression(SgExpression* expr, SgUnparse_Info& info) {
-    bool parenthesize = requiresParentheses(expr);
+    bool parenthesize = requiresParentheses(expr, info);
     if (parenthesize) curprint("(");
     unparseLanguageSpecificExpression(expr, info);
     if (parenthesize) curprint(")");
@@ -181,19 +177,6 @@ Unparse_Python::unparseStatement(SgStatement* stmt, SgUnparse_Info& info) {
     unparseLanguageSpecificStatement(stmt, info);
 }
 
-bool
-Unparse_Python::requiresParentheses(SgExpression* expr) {
-    int exprPrecedence = getPrecedence(expr->variantT());
-    int parentPrecedence = getPrecedence(expr->get_parent()->variantT());
-    int assoc = getAssociativity(expr->get_parent()->variantT());
-    if      (exprPrecedence == PY_UNPARSE_NO_PRECEDENCE)      return false;
-    else if (parentPrecedence == PY_UNPARSE_NO_PRECEDENCE)    return false;
-    else if (assoc == PY_UNPARSE_RIGHT_ASSOC && exprPrecedence >  parentPrecedence) return false;
-    else if (assoc == PY_UNPARSE_LEFT_ASSOC  && exprPrecedence >= parentPrecedence) return false;
-    else if (assoc == PY_UNPARSE_LEFT_ASSOC  && exprPrecedence <  parentPrecedence) return true;
-    else if (assoc == PY_UNPARSE_RIGHT_ASSOC && exprPrecedence <= parentPrecedence) return true;
-    else ROSE_ASSERT(!"cant determine if parens are required");
-}
 
 void
 Unparse_Python::unparseGlobalStmt(SgStatement* stmt, SgUnparse_Info& info) {
@@ -295,17 +278,17 @@ Unparse_Python::unparseOperator(VariantT variant, bool pad) {
     if (pad) curprint(" ");
 }
 
-int
-Unparse_Python::getAssociativity(int variant) {
-    if (variant == V_SgExponentiationOp)
-        return PY_UNPARSE_RIGHT_ASSOC;
+AssociativitySpecifier
+Unparse_Python::getAssociativity(SgExpression* exp) {
+    if (exp->variantT() == V_SgExponentiationOp)
+        return e_assoc_right;
     else
-        return PY_UNPARSE_LEFT_ASSOC;
+        return e_assoc_left;
 }
 
-int
-Unparse_Python::getPrecedence(int variant) {
-    switch (variant) {
+PrecedenceSpecifier
+Unparse_Python::getPrecedence(SgExpression* exp) {
+    switch (exp->variantT()) {
         case V_SgLambdaRefExp:         return 1;
         case V_SgConditionalExp:       return 2;
         case V_SgOrOp:                 return 3;
@@ -357,7 +340,7 @@ Unparse_Python::getPrecedence(int variant) {
         case V_SgSetComprehension:     return 16;
         case V_SgDictionaryComprehension: return 16;
     }
-    return PY_UNPARSE_NO_PRECEDENCE;
+    return ROSE_UNPARSER_NO_PRECEDENCE;
 }
 
 void
@@ -420,6 +403,20 @@ Unparse_Python::unparseBasicBlock(SgBasicBlock* bblock,
         curprint("\n");
     }
 }
+void
+Unparse_Python::unparseBaseClassPtrList(SgBaseClassPtrList& inheritances,
+                                        SgUnparse_Info& info) {
+    SgBaseClassPtrList::iterator base_it;
+    for (base_it = inheritances.begin(); base_it != inheritances.end(); base_it++) {
+        SgExpBaseClass* exp_base = isSgExpBaseClass(*base_it);
+        ROSE_ASSERT(exp_base != NULL && "base class objects for python support must be of type SgExpBaseClass");
+
+        if (base_it != inheritances.begin())
+            curprint(", ");
+        ROSE_ASSERT(exp_base->get_base_class_exp() != NULL);
+        unparseExpression(exp_base->get_base_class_exp(), info);
+    }
+}
 
 void
 Unparse_Python::unparseBinaryOp(SgBinaryOp* bin_op,
@@ -477,7 +474,13 @@ Unparse_Python::unparseClassDeclaration(SgClassDeclaration* class_decl,
 
     curprint_indented("class ", info);
     curprint(class_decl->get_name().getString());
-    curprint("():\n");
+
+    curprint("(");
+    ROSE_ASSERT(class_decl->get_definition() != NULL);
+    SgBaseClassPtrList& inheritances = class_decl->get_definition()->get_inheritances();
+    unparseBaseClassPtrList(inheritances, info);
+    curprint("):\n");
+
     unparseStatement(class_decl->get_definition(), info);
 }
 
@@ -1062,4 +1065,21 @@ Unparse_Python::unparseYieldExpression(SgYieldExpression* yield_exp,
     curprint("yield ");
     unparseExpression(yield_exp->get_value(), info);
     if (atom) curprint(")");
+}
+
+bool
+Unparse_Python::requiresParentheses(SgExpression* expr, SgUnparse_Info& info) {
+    SgExpression* parent = isSgExpression(expr->get_parent());
+    if (parent == NULL) return false;
+
+    PrecedenceSpecifier exprPrecedence = getPrecedence(expr);
+    PrecedenceSpecifier parentPrecedence = getPrecedence(parent);
+    AssociativitySpecifier assoc = getAssociativity(parent);
+    if      (exprPrecedence == ROSE_UNPARSER_NO_PRECEDENCE)      return false;
+    else if (parentPrecedence == ROSE_UNPARSER_NO_PRECEDENCE)    return false;
+    else if (assoc == e_assoc_right && exprPrecedence >  parentPrecedence) return false;
+    else if (assoc == e_assoc_left  && exprPrecedence >= parentPrecedence) return false;
+    else if (assoc == e_assoc_left  && exprPrecedence <  parentPrecedence) return true;
+    else if (assoc == e_assoc_right && exprPrecedence <= parentPrecedence) return true;
+    else ROSE_ASSERT(!"cannot determine if parens are required in UnparseLanguageIndependentConstructs::requiresParentheses");
 }

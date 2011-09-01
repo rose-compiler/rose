@@ -1491,7 +1491,7 @@ EXTRA_DIST = CMakeLists.txt \
 # disabled this one due to problem with copy mechanism, Liao
 #   inputCode_varSubstCopy.C 
 
-CLEANFILES = rose_bin_example.s callgraph.gml
+CLEANFILES = rose_bin_example.s rose_bin_example.s.* callgraph.gml
 
 docs: $(noinst_PROGRAMS) $(bin_PROGRAMS) $(generatedCodeExamples)
 	@echo ""

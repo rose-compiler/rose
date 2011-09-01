@@ -85,6 +85,15 @@ CONFIGURE_FLAGS="\
 
 #########################################################################################
 #
+#  Language-specific configure flags
+#
+#########################################################################################
+if test "x$ROSE_TEST_LANGUAGE_OPTION" = "xpython" ; then
+    CONFIGURE_FLAGS="$CONFIGURE_FLAGS --with-python=${ROSE_TEST_PYTHON_PATH}"
+fi
+
+#########################################################################################
+#
 ##
    dumpHudsonEnvironment "${LOG_LOCATION}/HudsonEnvironment-before-tests.log"
 ##

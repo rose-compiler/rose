@@ -14,7 +14,7 @@ int main( int argc, char * argv[] )
 
   // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
      const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 8000;
-     generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH);
+     generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH,"");
 
   // regenerate the source code and call the vendor 
   // compiler, only backend error code is reported.

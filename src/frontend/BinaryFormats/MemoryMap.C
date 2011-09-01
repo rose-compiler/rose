@@ -655,11 +655,12 @@ MemoryMap::dump(FILE *f, const char *prefix) const
             }
         }
 
-        fprintf(f, "%sva 0x%08"PRIx64" + 0x%08zx = 0x%08"PRIx64" %c%c%c at %-9s + 0x%08"PRIx64,
+        fprintf(f, "%sva 0x%08"PRIx64" + 0x%08zx = 0x%08"PRIx64" %c%c%c%c at %-9s + 0x%08"PRIx64,
                 prefix, me.get_va(), me.get_size(), me.get_va()+me.get_size(),
                 0==(me.get_mapperms()&MM_PROT_READ) ?'-':'r',
                 0==(me.get_mapperms()&MM_PROT_WRITE)?'-':'w',
                 0==(me.get_mapperms()&MM_PROT_EXEC) ?'-':'x',
+                0==(me.get_mapperms()&MM_PROT_PRIVATE)?'-':'p',
                 basename.c_str(), elements[i].get_offset());
 
         if (!me.name.empty()) {
@@ -810,11 +811,12 @@ MemoryMap::load(const std::string &basename)
             if (','==*s) s++;
             while (isspace(*s)) s++;
             unsigned perm = 0;
-            while (strchr("rwx-", *s)) {
+            while (strchr("rwxp-", *s)) {
                 switch (*s++) {
                     case 'r': perm |= MM_PROT_READ; break;
                     case 'w': perm |= MM_PROT_WRITE; break;
                     case 'x': perm |= MM_PROT_EXEC; break;
+                    case 'p': perm |= MM_PROT_PRIVATE; break;
                     case '-': break;
                     default: break; /*to suppress a compiler warning*/
                 }

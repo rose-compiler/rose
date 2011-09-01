@@ -4,12 +4,12 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # These are C testcodes targeting aspects of C that might not be a subset of C++ #
 ##################################################################################
 
+# These test pass the compilation using ROSE, all AST tests, unparsing to generate 
+# Java code, and the final compilation of that code using a backend compiler (javac).
 TESTCODES_REQUIRED_TO_PASS = \
      test2011_01.java \
      test2011_02.java \
      test2011_03.java \
-     test2011_04.java \
-     test2011_05.java \
      test2011_06.java \
      test2011_07.java \
      test2011_08.java \
@@ -25,14 +25,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2011_18.java \
      test2011_19.java \
      test2011_20.java \
-     test2011_21.java \
-     test2011_22.java \
-     test2011_23.java \
-     test2011_24.java \
-     test2011_25.java \
      test2011_26.java \
-     test2011_27.java \
-     test2011_28.java \
      test2011_29.java \
      test2011_30.java \
      test2011_31.java \
@@ -41,14 +34,51 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2011_34.java \
      test2011_35.java \
      test2011_36.java \
-     simple.java
-
-
-# This class does not match the file name.
-#    simple_fortran.java
+     test2011_37.java \
+     test2011_38.java \
+     test2011_39.java \
+     test2011_40.java \
+     test2011_41.java \
+                      \
+     pgc_2011_30.java \
+     pgc_2011_30.java \
+                      \
+     pgc_test2011_00.java \
+     pgc_test2011_01.java \
+     pgc_test2011_02.java \
+     pgc_test2011_03.java \
+     pgc_test2011_04.java \
+     pgc_test2011_05.java \
+     pgc_test2011_06.java \
+     pgc_test2011_07.java \
+     pgc_test2011_08.java 
 
 TESTCODE_CURRENTLY_FAILING = 
 
+
+# These tests pass the compilation using ROSE, all AST tests, and unparsing to generate 
+# Java code, but fails the final compilation step of the generated Java code.
+TESTCODES_REQUIRED_TO_PASS_FAILING_BACKEND_COMPILE = \
+     test2011_04.java \
+     test2011_05.java \
+     test2011_21.java \
+     test2011_22.java \
+     test2011_23.java \
+     test2011_24.java \
+     test2011_25.java \
+     test2011_27.java \
+     test2011_28.java \
+     test2011_42.java \
+     simple.java
+
+
+# This is where the Java generics tests are put (currently not required to pass all phases).
+TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6 = \
+     test2011_43.java \
+     test2011_44.java 
+
+TESTCODES_REQUIRED_TO_PASS_FAILING_FOR_JAVA_6 = \
+     test2011_45.java 
 
 
 # Later we will move these tests to the gcjTestSuite subdirectory.
@@ -280,10 +310,22 @@ $(TESTCODE_CURRENTLY_FAILING)
 
 # The use of -rose:java is redundent, the source langauge can now be determined from the file suffix.
 # ROSE_FLAGS = -rose:java -rose:verbose 0 -rose:skipfinalCompileStep
-ROSE_FLAGS = -rose:verbose 0 -rose:skipfinalCompileStep
+# ROSE_FLAGS = -rose:verbose 0 -rose:skipfinalCompileStep -rose:skip_syntax_check
+# ROSE_FLAGS = -rose:verbose 0 -rose:skipfinalCompileStep
+ROSE_FLAGS = -rose:verbose 0
+ROSE_FLAGS_SKIP_FINAL_COMPILATION = -rose:verbose 0 -rose:skipfinalCompileStep
+
 
 PASSING_TEST_Objects = ${TESTCODES:.java=.o}
 TEST_Objects = ${ALL_TESTCODES:.java=.o}
+
+# Add tests for where we can compiler and generate code, but the generated code does not yet compiler with the backend compiler (javac).
+TESTCODES_REQUIRED_TO_PASS_FAILING_BACKEND_COMPILE_Objects = ${TESTCODES_REQUIRED_TO_PASS_FAILING_BACKEND_COMPILE:.java=.o}
+
+# Tests for Java generics
+TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6_Objects = ${TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6:.java=.o}
+
+
 
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 
@@ -298,8 +340,29 @@ testTranslator=../../testTranslator
 
 # Add the dependence upon the source file to trigger recompilation each time the makefile is run!
 # $(TEST_Objects): ../../testTranslator $(srcdir)/$(@:.o=.java)
-$(TEST_Objects): $(testTranslator) ../../testTranslator
+$(TEST_Objects): $(testTranslator) ../../testTranslator ../../testGraphGeneration
+	@echo "Test using Java 1.6 (default) version support."
 	$(testTranslator) $(ROSE_FLAGS) $(srcdir)/$(@:.o=.java)
+	@echo "Test using Java 1.4 version support."
+	$(testTranslator) -ecj:1.4 $(ROSE_FLAGS) $(srcdir)/$(@:.o=.java)
+
+# Tests that pass all but the final compilation using the backend compiler (javac)
+$(TESTCODES_REQUIRED_TO_PASS_FAILING_BACKEND_COMPILE_Objects): $(testTranslator) ../../testTranslator ../../testGraphGeneration
+	@echo "Test using Java 1.6 (default) version support."
+	$(testTranslator) $(ROSE_FLAGS_SKIP_FINAL_COMPILATION) $(srcdir)/$(@:.o=.java)
+	@echo "Test using Java 1.4 version support."
+	$(testTranslator) -ecj:1.4 $(ROSE_FLAGS_SKIP_FINAL_COMPILATION) $(srcdir)/$(@:.o=.java)
+
+# Tests that pass all but the final compilation using the backend compiler (javac)
+$(TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6_Objects): $(testTranslator) ../../testTranslator ../../testGraphGeneration
+	@echo "Test using Java 1.6 (default) version support."
+	$(testTranslator) $(ROSE_FLAGS_SKIP_FINAL_COMPILATION) $(srcdir)/$(@:.o=.java)
+
+
+
+
+
+
 
 testJavaTraversal:
 #	Java library path specifies where the *.so file is located (JavaTraversal.so)
@@ -314,6 +377,16 @@ testJavaTraversal:
 #	java -Djava.library.path=$(top_builddir)/src/frontend/ECJ_ROSE_Connection/.libs -cp $(top_srcdir)/src/3rdPartyLibraries/java-parser/ecjROSE.jar:. JavaTraversal
 #	java -cp $(top_srcdir)/src/3rdPartyLibraries/java-parser/ecjROSE.jar -Djava.library.path=$(top_builddir)/src/frontend/ECJ_ROSE_Connection/.libs JavaTraversal
 	java -Djava.library.path=$(top_builddir)/src/frontend/ECJ_ROSE_Connection/.libs -cp $(top_builddir)/src/3rdPartyLibraries/java-parser/ecjROSE.jar:$(top_builddir)/src/3rdPartyLibraries/java-parser:. JavaTraversal $(srcdir)/simple.java
+
+
+# DQ (8/14/2011): Rule to build whole AST graphs with all of the file info objects.
+# This is useful for debugging the source code position information. We have to 
+# skip the final compilation because the -rose:dotgraph:fileInfoFilter will be passed
+# to the backend compiler and cause an error.
+graphWithFileInfo: ../../testGraphGeneration
+	../../testGraphGeneration -rose:dotgraph:fileInfoFilter $(ROSE_FLAGS_SKIP_FINAL_COMPILATION) $(srcdir)/test2011_39.java
+
+testGenerics: $(TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6_Objects)
 
 workingJava:
 	java -cp $(top_srcdir)/src/3rdPartyLibraries/java-parser/ecjROSE.jar
@@ -334,8 +407,12 @@ testWithJavaSpecification:
 testWithoutJavaSpecification:
 	$(testTranslator) $(ROSE_FLAGS) $(srcdir)/testWithoutJavaSpecification.java
 
+# Test using the specification of Java 1.7 compatability.
+testJava_option:
+	$(testTranslator) -ecj:1.7 -rose:verbose 0 -rose:skipfinalCompileStep -c $(srcdir)/test2011_44.java
+
 # Build a rule to allow running all tests in parallel...
-extraTests: testWithJavaSpecification testWithoutJavaSpecification testECJ_help_option
+extraTests: testWithJavaSpecification testWithoutJavaSpecification testECJ_help_option testJava_option graphWithFileInfo
 
 # Execute the java file using: java -Djava.library.path=. HelloWorld
 
@@ -358,11 +435,13 @@ testGCJ: $(gcjTests_passing_Objects)
 # ********************************************************************************
 
 
-check-local:
+check-local: extraTests
 	@echo "Tests for Java."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
-	@$(MAKE) $(PASSING_TEST_Objects) extraTests
+	@$(MAKE) $(TESTCODES_REQUIRED_TO_PASS_FAILING_BACKEND_COMPILE_Objects)
+	@$(MAKE) $(PASSING_TEST_Objects)
+	@$(MAKE) $(TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6_Objects)
 	@echo "************************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/Java_tests: make check rule complete (terminated normally) ******"
 	@echo "************************************************************************************************"
@@ -380,3 +459,30 @@ clean-local:
 	rm -f *.dot *.class *.java rose_performance_report_lockfile.lock *.out
 #	Remove any generated JVM log files that could have been generated (these are rare).
 	rm -f *.log
+
+# driscoll6 (8/10/11) convenience target for inspecting unparser output from all test files
+check-view: $(TEST_Objects:.o=.view)
+
+# driscoll6 (8/10/11) convenience target for inspecting unparser output from a particular file
+%.view: ../../testTranslator
+	@echo "============ TRANSLATING ==========="
+	$(testTranslator) $(ROSE_FLAGS) $(srcdir)/$(@:.view=.java) -rose:o $(@:.view=.java)
+	@echo "------------- ORIGINAL -------------"
+	@cat $(srcdir)/$(@:.view=.java)
+	@echo "------------- UNPARSED -------------"
+	@cat $(@:.view=.java)
+	@echo "-------------- JAVAC ---------------"
+	$(JAVAC) $(@:.view=.java)
+
+# DQ (8/17/2011): This is a fix for a interesting problem caused by the VPATH make system.
+# The generated java files will be copied from the current build directory instead of the
+# source directory.
+# Since the generated java files have the same name as in the srcdir, VPATH will
+# cause the builddir versions to be copied to the distdir if they exist.  They
+# will exist if the "make check" has been run, which is the case for the
+# java only language tests.
+dist-hook:
+	@echo "Removing what might be the wrong versions of the files if make check has been run."
+	rm $(distdir)/*.java
+	@echo "Copying the correct versions of the java file from the srcdir = $(srcdir) to the distdir = $(distdir)"
+	cp -p $(srcdir)/*.java $(distdir)

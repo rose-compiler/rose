@@ -8,7 +8,7 @@ Functions detected from binary executable:
     Num  Low-Addr   End-Addr  Insns/Bytes   Reason        Kind   Name
     --- ---------- ---------- ------------ ----------- -------- --------------------------------
       1 0x080482c8 0x080482df     8/23     .C..SP.....  unknown _init
-      2 0x080482df 0x0804854b    55/210    .........DL  unknown ***uncategorized blocks***
+      2 0x080482df 0x08048fff  1036/2862   .........DL  unknown ***uncategorized blocks***
       3 0x080482f0 0x080482f6     1/6      .C.I.......  unknown signal@plt
       4 0x08048300 0x08048306     1/6      .C.I.......  unknown puts@plt
       5 0x08048310 0x08048316     1/6      .C.I.......  unknown __libc_start_main@plt
