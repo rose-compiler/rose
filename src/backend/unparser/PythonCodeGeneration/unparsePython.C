@@ -403,6 +403,20 @@ Unparse_Python::unparseBasicBlock(SgBasicBlock* bblock,
         curprint("\n");
     }
 }
+void
+Unparse_Python::unparseBaseClassPtrList(SgBaseClassPtrList& inheritances,
+                                        SgUnparse_Info& info) {
+    SgBaseClassPtrList::iterator base_it;
+    for (base_it = inheritances.begin(); base_it != inheritances.end(); base_it++) {
+        SgExpBaseClass* exp_base = isSgExpBaseClass(*base_it);
+        ROSE_ASSERT(exp_base != NULL && "base class objects for python support must be of type SgExpBaseClass");
+
+        if (base_it != inheritances.begin())
+            curprint(", ");
+        ROSE_ASSERT(exp_base->get_base_class_exp() != NULL);
+        unparseExpression(exp_base->get_base_class_exp(), info);
+    }
+}
 
 void
 Unparse_Python::unparseBinaryOp(SgBinaryOp* bin_op,
@@ -460,7 +474,13 @@ Unparse_Python::unparseClassDeclaration(SgClassDeclaration* class_decl,
 
     curprint_indented("class ", info);
     curprint(class_decl->get_name().getString());
-    curprint("():\n");
+
+    curprint("(");
+    ROSE_ASSERT(class_decl->get_definition() != NULL);
+    SgBaseClassPtrList& inheritances = class_decl->get_definition()->get_inheritances();
+    unparseBaseClassPtrList(inheritances, info);
+    curprint("):\n");
+
     unparseStatement(class_decl->get_definition(), info);
 }
 
