@@ -148,7 +148,9 @@ void postProcessingSupport (SgNode* node)
 #ifdef ROSE_USE_NEW_EDG_INTERFACE
 
   // Only do AST post-processing for C/C++
-     bool doPostprocessing = (SageInterface::is_Fortran_language() == true) || (SageInterface::is_PHP_language() == true);
+     bool doPostprocessing = (SageInterface::is_Fortran_language() == true) ||
+                             (SageInterface::is_PHP_language() == true) ||
+                             (SageInterface::is_Python_language() == true);
 
   // If this is C or C++ then we are using the new EDG translation and althrough fewer 
   // fixups should be required, some are still required.
