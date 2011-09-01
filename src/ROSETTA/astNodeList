@@ -270,6 +270,7 @@ SgAttribute
 SgAttributeSpecificationStatement
 SgBackspaceStatement
 SgBaseClass
+SgExpBaseClass
 SgBaseClassModifier
 SgBasicBlock
 SgBidirectionalGraph
