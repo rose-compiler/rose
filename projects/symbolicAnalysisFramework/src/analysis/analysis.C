@@ -1359,7 +1359,19 @@ void ContextInsensitiveInterProceduralDataflow::visit(const CGFunction* funcCG)
 	if(func.get_definition())
 	{
 		FunctionState* fState = FunctionState::getDefinedFuncState(func);
-		
+                
+                IntraProceduralDataflow *intraDataflow = dynamic_cast<IntraProceduralDataflow *>(intraAnalysis);
+                if (intraDataflow->visited.find(func) == intraDataflow->visited.end()) {
+                        vector<Lattice*>  initLats;
+                        vector<NodeFact*> initFacts;
+                        intraDataflow->genInitState(func, cfgUtils::getFuncStartCFG(func.get_definition()),
+                                                    fState->state, initLats, initFacts);
+                        //                        intraAnalysis->genInitState(func, cfgUtils::getFuncEndCFG(func.get_definition()),
+                        //                            fState->state, initLats, initFacts);
+                        fState->state.setLattices(intraAnalysis, initLats);
+                        fState->state.setFacts(intraAnalysis, initFacts);
+                }
+
 		if(analysisDebugLevel>=1){
 			Dbg::dbg << "ContextInsensitiveInterProceduralDataflow function "<<func.get_name().getString()<<endl;
 		}
