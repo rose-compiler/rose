@@ -926,9 +926,11 @@ Lattice* VarsExprsProductLattice::project(SgExpression* expr)
 	
 	// Copy over the lattice associated with exprVar
 	if(varLatticeIndex.find(exprVar) != varLatticeIndex.end()) {
-		exprState->varLatticeIndex[exprVar] = 0;
-		ROSE_ASSERT(lattices[varLatticeIndex[exprVar]]);
-		exprState->lattices.push_back(lattices[varLatticeIndex[exprVar]]->copy());
+          int index = varLatticeIndex[exprVar];
+          ROSE_ASSERT(lattices[index]);
+
+          exprState->varLatticeIndex[varID("$")] = 0;
+          exprState->lattices.push_back(lattices[index]->copy());
 	}
 	
 	return exprState;
@@ -946,16 +948,19 @@ bool VarsExprsProductLattice::unProject(SgExpression* expr, Lattice* exprState_a
 	ROSE_ASSERT(exprState);
 	
 	// Make sure that exprState has a mapping for exprVar
-	ROSE_ASSERT(exprState->varLatticeIndex.find(exprVar) != exprState->varLatticeIndex.end());
-	ROSE_ASSERT(exprState->lattices[exprState->varLatticeIndex[exprVar]]);
+        varID thatVar("$");
+	ROSE_ASSERT(exprState->varLatticeIndex.find(thatVar) != exprState->varLatticeIndex.end());
+        int thatIndex = exprState->varLatticeIndex[thatVar];
+        Lattice *thatLattice = exprState->lattices[thatIndex];
+	ROSE_ASSERT(thatLattice);
 	
 	// If This lattice has a mapping for exprVar, meet its Lattice in This with its lattice in exprState 
 	if(varLatticeIndex.find(exprVar) != varLatticeIndex.end()) {
 		ROSE_ASSERT(lattices[varLatticeIndex[exprVar]]);
-		return lattices[varLatticeIndex[exprVar]]->meetUpdate(exprState->lattices[exprState->varLatticeIndex[exprVar]]);
+		return lattices[varLatticeIndex[exprVar]]->meetUpdate(thatLattice);
 	// Else, if This lattice has no mapping for exprVar, simply copy it from exprState to This
 	} else {
-		addVar(exprVar, exprState->lattices[exprState->varLatticeIndex[exprVar]]);
+		addVar(exprVar, thatLattice);
 		return true;
 	}
 }
