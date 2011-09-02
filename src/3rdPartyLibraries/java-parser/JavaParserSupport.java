@@ -47,6 +47,16 @@ class JavaParserSupport
   // This is used to save a history of what implecit classes have been seen.
      private static Set<Class> setOfClasses;
 
+  // DQ (8/24/2011): This is the support for information on the Java side that 
+  // we would know on the C++ side, but require on the Java side to support the 
+  // introspection (which requires fully qualified names).
+  // We use a hashmap to store fully qualified names associated with class names.
+  // This is used to translate class names used in type references into fully
+  // qualified names where they are implicit classes and we require introspection 
+  // to support reading them to translate their member data dn function into JNI
+  // calls that will force the ROSE AST to be built.
+     private static HashMap<String,String> hashmapOfQualifiedNamesOfClasses;
+
   // Counter for recursive function call...debugging support.
      private static int implicitClassCounter = 0;
 
@@ -57,8 +67,11 @@ class JavaParserSupport
         {
        // This has to be set first (required to support source position translation).
           rose_compilationResult = x;
-          setOfClasses = new HashSet<Class>();
-          implicitClassCounter = 0;
+          setOfClasses           = new HashSet<Class>();
+          implicitClassCounter   = 0;
+
+       // DQ (8/24/2011): Added hashmap to support mapping of unqualified class names to qualified class names.
+          hashmapOfQualifiedNamesOfClasses = new HashMap<String,String>();
 
        // Set the verbose level (passed in from ROSE's "-rose:verbose n")
           verboseLevel = input_verboseLevel;
@@ -168,6 +181,11 @@ class JavaParserSupport
 
                       // Add this to the set of classes that we have seen... so that we will not try to process it more than once...
                          setOfClasses.add(typeClass);
+
+                         String unqualifiedClassName = "X" + nestedClassName;
+
+                      // Add a map from the class name to its fully qualified name (used in type lookup).
+                         hashmapOfQualifiedNamesOfClasses.put(unqualifiedClassName,nestedClassName);
 
                       // Control the level of recursion so that we can debug this...it seems that
                       // this is typically as high as 47 to process the implicitly included classes.
