@@ -43,6 +43,7 @@
 #include "roseAdapter.h"
 
 #include "memory_object.h"
+//#include "memory_object_impl.h"
 
 //Liao, 2/8/2008. SAGE III node building interface
 #include "sageBuilder.h"
