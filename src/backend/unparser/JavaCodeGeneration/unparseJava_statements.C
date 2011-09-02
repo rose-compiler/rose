@@ -91,6 +91,8 @@ Unparse_Java::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Info
           case V_SgBasicBlock:             unparseBasicBlockStmt (stmt, info); break;
           case V_SgIfStmt:                 unparseIfStmt         (stmt, info); break;
           case V_SgJavaSynchronizedStatement: unparseSynchronizedStmt (stmt, info); break;
+          case V_SgJavaThrowStatement:     unparseThrowStmt      (stmt, info); break;
+          case V_SgJavaForEachStatement:   unparseForEachStmt    (stmt, info); break;
 
           case V_SgWhileStmt:              unparseWhileStmt      (stmt, info); break;
           case V_SgSwitchStatement:        unparseSwitchStmt     (stmt, info); break;
@@ -100,6 +102,8 @@ Unparse_Java::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Info
           case V_SgLabelStatement:         unparseLabelStmt      (stmt, info); break;
           case V_SgGotoStatement:          unparseGotoStmt       (stmt, info); break;
           case V_SgReturnStmt:             unparseReturnStmt     (stmt, info); break;
+          case V_SgAssertStmt:             unparseAssertStmt     (stmt, info); break;
+          case V_SgNullStatement:          curprint("");/* Tab over for stmt*/ break;
 
           case V_SgForStatement:           unparseForStmt(stmt, info);          break; 
           case V_SgFunctionDeclaration:    unparseFuncDeclStmt(stmt, info);     break;
@@ -469,7 +473,7 @@ static size_t countElsesNeededToPreventDangling(SgStatement* s) {
 
 void Unparse_Java::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info) {
     SgIfStmt* if_stmt = isSgIfStmt(stmt);
-    ROSE_ASSERT(stmt != NULL);
+    ROSE_ASSERT(if_stmt != NULL);
 
     SgExprStatement* cond_stmt = isSgExprStatement(if_stmt->get_conditional());
     ROSE_ASSERT(cond_stmt != NULL && "expected an SgExprStatement in SgIfStmt::p_conditional");
@@ -494,13 +498,33 @@ void Unparse_Java::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info) {
 
 void Unparse_Java::unparseSynchronizedStmt(SgStatement* stmt, SgUnparse_Info& info) {
     SgJavaSynchronizedStatement *sync_stmt = isSgJavaSynchronizedStatement(stmt);
-    ROSE_ASSERT(stmt != NULL);
+    ROSE_ASSERT(sync_stmt != NULL);
 
     curprint("synchronized (");
     unparseExpression(sync_stmt->get_expression(), info);
     curprint(")");
 
     unparseStatement(sync_stmt->get_body(), info);
+}
+
+void Unparse_Java::unparseThrowStmt(SgStatement* stmt, SgUnparse_Info& info) {
+    SgJavaThrowStatement *throw_stmt = isSgJavaThrowStatement(stmt);
+    ROSE_ASSERT(throw_stmt != NULL);
+
+    curprint("throw ");
+    unparseExpression(throw_stmt->get_throwOp()->get_operand(), info);
+}
+
+void Unparse_Java::unparseForEachStmt(SgStatement* stmt, SgUnparse_Info& info) {
+    SgJavaForEachStatement *foreach_stmt = isSgJavaForEachStatement(stmt);
+    ROSE_ASSERT(foreach_stmt != NULL);
+
+    curprint("for (");
+    unparseInitializedName(foreach_stmt -> get_element(), info);
+    curprint(" : ");
+    unparseExpression(foreach_stmt -> get_collection(), info);
+    curprint(")");
+    unparseStatement(foreach_stmt -> get_loop_body(), info);
 }
 
 void
@@ -651,6 +675,7 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgMemberFunctionDeclaration* mfuncdecl_stmt = isSgMemberFunctionDeclaration(stmt);
      ROSE_ASSERT(mfuncdecl_stmt != NULL);
+
      //TODO should there be forward declarations or nondefining declarations?
      if (mfuncdecl_stmt->isForward()) {
          //cout << "unparser: skipping forward mfuncdecl: "
@@ -952,6 +977,25 @@ Unparse_Java::unparseReturnStmt(SgStatement* stmt, SgUnparse_Info& info)
          curprint(" ");
          unparseExpression(return_stmt->get_expression(), info);
      }
+   }
+
+void
+Unparse_Java::unparseAssertStmt(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgAssertStmt* assert_stmt = isSgAssertStmt(stmt);
+     ROSE_ASSERT(assert_stmt != NULL);
+
+     curprint ("assert ");
+
+     unparseExpression(assert_stmt->get_test(), info);
+
+     //
+     // charles4: 8/20/2011 - TODO: We need to add an extra expression field to SgAssertStmt for Java.
+     //
+     //     if (assert_stmt->get_exception_argument()) {
+     //         curprint(" : ");
+     //         unparseExpression(assert_stmt->get_exception_argument(), info);
+     //     }
    }
 
 void

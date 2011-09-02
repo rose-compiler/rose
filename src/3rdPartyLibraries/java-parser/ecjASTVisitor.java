@@ -154,7 +154,7 @@ class ecjASTVisitor extends ASTVisitor
        // In general we want to have rules that are specific to IR nodes and pass any constructed
        // IR nodes via the stack (rules called should have generated the constructed IR nodes on 
        // the stack within ROSE).
-       // java_parser.cactionArgument(nameString,node.modifiers);
+       // java_parser.cactionArgument(nameString, node.modifiers, this.createJavaToken(node));
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (Argument,BlockScope)");
@@ -2207,17 +2207,17 @@ class ecjASTVisitor extends ASTVisitor
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(TryStatement  node, BlockScope scope)
+     public boolean visit(TryStatement node, BlockScope scope)
         {
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of visit (TryStatement,BlockScope)");
 
           java_parser.cactionTryStatement(node.catchBlocks.length, node.finallyBlock != null, this.createJavaToken(node));
-
+          
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (TryStatement,BlockScope)");
 
-          return true; // do nothing by  node, keep traversing
+          return false; // do nothing by  node, keep traversing
         }
 
      public boolean visit(TypeDeclaration node,BlockScope scope)
@@ -2462,6 +2462,11 @@ class ecjASTVisitor extends ASTVisitor
        // do nothing by default
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (AssertStatement,BlockScope)");
+
+          java_parser.cactionAssertStatementEnd(node.exceptionArgument != null, this.createJavaToken(node));
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (AssertStatement,BlockScope)");
         }
 
      public void endVisit(Assignment  node, BlockScope scope)
@@ -2673,6 +2678,11 @@ class ecjASTVisitor extends ASTVisitor
        // do nothing  by default
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (EmptyStatement,BlockScope)");
+
+          java_parser.cactionEmptyStatementEnd(this.createJavaToken(node));
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (EmptyStatement,BlockScope)");
         }
 
      public void endVisit(EqualExpression  node, BlockScope scope)
@@ -2751,6 +2761,11 @@ class ecjASTVisitor extends ASTVisitor
      public void endVisit(ForeachStatement  node, BlockScope scope)
         {
        // do nothing  by default
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (ForeachStatement,BlockScope)");
+
+          java_parser.cactionForeachStatementEnd(this.createJavaToken(node));
+
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (ForeachStatement,BlockScope)");
         }
@@ -3340,12 +3355,17 @@ class ecjASTVisitor extends ASTVisitor
                System.out.println("Leaving endVisit (ThisReference,ClassScope)");
         }
 
-     public void endVisit(ThrowStatement  node, BlockScope scope)
+     public void endVisit(ThrowStatement node, BlockScope scope)
         {
        // do nothing  by default
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (ThrowStatement,BlockScope)");
-        }
+
+          java_parser.cactionThrowStatementEnd(this.createJavaToken(node));
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (ThrowStatement,BlockScope)");
+}
 
      public void endVisit(TrueLiteral  node, BlockScope scope)
         {
