@@ -325,8 +325,9 @@ bool IntraFWDataflow::runAnalysis(const Function& func, NodeState* fState, bool 
 	for(set<Function>::iterator f=visited.begin(); f!=visited.end(); f++)
 		Dbg::dbg << "    "<<f->str("        ")<<endl;*/
 	
+        bool firstVisit = visited.find(func) == visited.end();
 	// Initialize the lattices used by this analysis, if this is the first time the analysis visits this function
-	if(visited.find(func) == visited.end())
+	if(firstVisit)
 	{
 		//Dbg::dbg << "Initializing Dataflow State"<<endl; 
 		InitDataflowState ids(this/*, initState*/);
@@ -369,9 +370,10 @@ bool IntraFWDataflow::runAnalysis(const Function& func, NodeState* fState, bool 
 	// Initialize the set of nodes that this dataflow will iterate over
 	VirtualCFG::dataflow it(funcCFGEnd);
 	
-	// If we're analyzing this function because the dataflow information coming in from its callers
-	// has changed, add the function's entry point
-	if(analyzeDueToCallers) it.add(funcCFGStart);
+	// If we're analyzing this function for the first time or because the dataflow information coming in from its
+	// callers has changed, add the function's entry point
+	if(firstVisit || analyzeDueToCallers)
+                it.add(funcCFGStart);
 	
 	// If we're analyzing this function because of a change in the exit dataflow states of some of the 
 	// functions called by this function (these functions are recorded in calleesUpdated), add the calls
