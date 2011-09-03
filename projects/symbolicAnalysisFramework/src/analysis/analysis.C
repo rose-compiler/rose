@@ -716,7 +716,7 @@ bool IntraBWDataflow::runAnalysis(const Function& func, NodeState* fState, bool 
 			{
 				vector<Lattice*>* retState;
 				dynamic_cast<InterProceduralDataflow*>(interAnalysis)->
-				      transfer(func, n, *state, dfInfoAbove, &retState, true);
+				      transfer(func, n, *state, dfInfoAbove, &retState, false);
 				
 				// NEED TO INCORPORATE INFORMATION ABOUT RETURN INTO DATAFLOW SOMEHOW
 			}
