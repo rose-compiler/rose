@@ -1401,11 +1401,15 @@ TestAstTemplateProperties::visit ( SgNode* astNode )
         ROSE_ASSERT(classDefinition != NULL);
 
         SgBaseClassPtrList::iterator i = classDefinition->get_inheritances().begin();
-        while ( i != classDefinition->get_inheritances().end() )
+        for ( ; i != classDefinition->get_inheritances().end(); ++i)
         {
           // Check the parent pointer to make sure it is properly set
           ROSE_ASSERT( (*i)->get_parent() != NULL);
           ROSE_ASSERT( (*i)->get_parent() == classDefinition);
+
+          // skip this check for SgExpBaseClasses, which don't need to define p_base_class 
+          if (isSgExpBaseClass(*i) != NULL)
+              continue;
 
           // Calling resetTemplateName()
           SgClassDeclaration* baseClassDeclaration = (*i)->get_base_class();
@@ -1417,8 +1421,6 @@ TestAstTemplateProperties::visit ( SgNode* astNode )
             // printf ("In AST Consistancy test: templateInstantiation->get_templateName() = %s \n",templateInstantiation->get_templateName().str());
             ROSE_ASSERT(templateInstantiation->get_nameResetFromMangledForm() == true);
           }
-
-          i++;
         }
         break;
       }
@@ -3775,6 +3777,7 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
                case V_SgFunctionParameterTypeList:
                case V_SgPragma:
                case V_SgBaseClass:
+               case V_SgExpBaseClass:
                   {
                     SgNode* parent = support->get_parent();
                     if (parent == NULL)
