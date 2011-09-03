@@ -400,7 +400,7 @@ testECJ_help_option:
 	$(testTranslator) -rose:java -rose:verbose 0 -rose:skipfinalCompileStep -ecj:help -c $(srcdir)/simple.java
 
 # Test with the "-rose:java" specification (one way to specify the language in ROSE).
-testWithJavaSpecification:
+testWithJavaSpecification: $(testTranslator)
 	$(testTranslator) -rose:java $(ROSE_FLAGS) $(srcdir)/testWithJavaSpecification.java
 
 # Test without the "-rose:java" specification (ROSE can alternatively obtain the source language from the file suffix).
