@@ -2280,6 +2280,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionForeachStatementEnd(JNIEnv *env, j
     astJavaScopeStack.pop_front();
     ROSE_ASSERT(foreach_statement != NULL && isSgJavaForEachStatement(foreach_statement));
 
+#if 0
     //
     // charles4 8/29/2011: TODO: change the JavaForEachStatement to accept a VariableDeclaration instead of
     // an SgInitializedName
@@ -2288,6 +2289,12 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionForeachStatementEnd(JNIEnv *env, j
     ROSE_ASSERT(variables.size() == 1);
     foreach_statement -> set_element(variables[0]);
     variables[0] -> set_parent(foreach_statement);
+#else
+ // DQ (9/3/2011): Change API as suggested by Philippe.
+    foreach_statement->set_element(variable_declaration);
+    variable_declaration->set_parent(foreach_statement);
+#endif
+
     foreach_statement -> set_collection(collection);
     collection -> set_parent(foreach_statement);
     foreach_statement -> set_loop_body(action);
