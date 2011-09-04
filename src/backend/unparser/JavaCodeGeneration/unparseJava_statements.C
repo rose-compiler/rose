@@ -520,7 +520,12 @@ void Unparse_Java::unparseForEachStmt(SgStatement* stmt, SgUnparse_Info& info) {
     ROSE_ASSERT(foreach_stmt != NULL);
 
     curprint("for (");
-    unparseInitializedName(foreach_stmt -> get_element(), info);
+
+ // DQ (9/3/2011): Change to API for this IR node.
+ // unparseInitializedName(foreach_stmt -> get_element(), info);
+    ROSE_ASSERT(foreach_stmt -> get_element()->get_variables().size() == 1);
+    unparseInitializedName(foreach_stmt -> get_element()->get_variables()[0], info);
+
     curprint(" : ");
     unparseExpression(foreach_stmt -> get_collection(), info);
     curprint(")");
