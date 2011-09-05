@@ -315,30 +315,6 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionExplicitConstructorCall (JNIEnv *e
      ROSE_ASSERT(false);
   // ****************************************************
   // ****************************************************
-
-/*
-  // Should this be a SgBasicBlock or just a SgScopeStatement?
-     SgBasicBlock* basicBlock = isSgBasicBlock(astJavaScopeStack.front());
-     ROSE_ASSERT(basicBlock != NULL);
-     ROSE_ASSERT(basicBlock->get_parent() != NULL);
-
-     SgName name = convertJavaStringToCxxString(env,java_string);
-
-     if (SgProject::get_verbose() > 0)
-          printf ("building function call: name = %s \n",name.str());
-
-     SgExprListExp* parameters = NULL;
-     SgExprStatement* expressionStatement = SageBuilder::buildFunctionCallStmt(name,SgTypeVoid::createType(),parameters,astJavaScopeStack.front());
-     ROSE_ASSERT(expressionStatement != NULL);
-
-     ROSE_ASSERT(astJavaScopeStack.empty() == false);
-     appendStatement(expressionStatement);
-
-     ROSE_ASSERT(expressionStatement->get_parent() != NULL);
-
-     printf ("In cactionExplicitConstructorCall: Number of statements in current scope = %zu \n",astJavaScopeStack.front()->generateStatementList().size());
-     outputJavaState("At BOTTOM of cactionExplicitConstructorCall");
-*/
    }
 
 
@@ -596,20 +572,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionArrayTypeReferenceEnd (JNIEnv* env
      SgType* baseType = astJavaTypeStack.front();
      astJavaTypeStack.pop_front();
 
-  // Note that we have not specified the deminsion of the array.
+  // TODO: Note that we have not specified the deminsion of the array.
      SgArrayType* arrayType = SageBuilder::buildArrayType(baseType);
      astJavaTypeStack.push_front(arrayType);
-
-#if 0
-#if 1
-  // DQ (9/5/2011): Test with none array type
-     printf ("Build a SgTypeInt in the stack since the class was not built (debugging mode): name = %s\n",name.str());
-     astJavaTypeStack.push_front(SgTypeInt::createType());
-#else
-     printf ("ERROR: array type not yet built \n");
-     ROSE_ASSERT(false);
-#endif
-#endif
 
      outputJavaState("At BOTTOM of cactionArrayTypeReferenceEnd");
    }
@@ -828,7 +793,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSendEnd (JNIEnv *env, jobje
         }
 
      ROSE_ASSERT(statement != NULL);
-     
+
   // DQ (7/31/2011): This should be left on the stack instead of being added to the current scope before the end of the scope.
   // printf ("Previously calling appendStatement in cactionMessageSendEnd() \n");
   // appendStatement(statement);
@@ -854,6 +819,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedNameReference (JNIEnv * e
           printf ("Build a qualified name reference \n");
    }
 
+
 JNIEXPORT void JNICALL Java_JavaParser_cactionStringLiteral (JNIEnv *env, jobject xxx, jstring java_string, jobject jToken)
    {
      if (SgProject::get_verbose() > 0)
@@ -877,9 +843,6 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionStringLiteral (JNIEnv *env, jobjec
      astJavaExpressionStack.push_front(stringValue);
      ROSE_ASSERT(astJavaExpressionStack.empty() == false);
    }
-
-
-
 
 
 // DQ: Note that the function signature is abby-normal...jclass instead of jobject (because they are 
@@ -2257,6 +2220,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionFieldDeclarationEnd(JNIEnv *env, j
    }
 
 #if 0
+// DQ (9/5/2011): Old version of code from when we tid mostly top down processing.
 JNIEXPORT void JNICALL Java_JavaParser_cactionFieldDeclarationEnd(JNIEnv *env, jobject xxx, jstring variableName, jboolean java_hasInitializer, jobject jToken )
    {
   // DQ (8/13/2011): The initializer has to be set in the endVisit() function.
@@ -3184,8 +3148,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionParameterizedSingleTypeReferenceEn
 
      int numberOfTypeArguments = java_numberOfTypeArguments;
 
-     printf ("Inside of Java_JavaParser_cactionParameterizedSingleTypeReferenceEnd(): numberOfTypeArguments   = %d  \n",numberOfTypeArguments);
-     printf ("Inside of Java_JavaParser_cactionParameterizedSingleTypeReferenceEnd(): astJavaTypeStack.size() = %zu \n",astJavaTypeStack.size());
+  // printf ("Inside of Java_JavaParser_cactionParameterizedSingleTypeReferenceEnd(): numberOfTypeArguments   = %d  \n",numberOfTypeArguments);
+  // printf ("Inside of Java_JavaParser_cactionParameterizedSingleTypeReferenceEnd(): astJavaTypeStack.size() = %zu \n",astJavaTypeStack.size());
 
   // Need to find the type with the associated name.
      printf ("Looking for parameterized type name = %s \n",name.str());

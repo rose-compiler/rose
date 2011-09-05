@@ -3249,17 +3249,21 @@ class ecjASTVisitor extends ASTVisitor
              }
 
           int numberOfDimensions = node.dimensions;
-          System.out.println("At top of endVisit (ParameterizedSingleTypeReference,BlockScope) numberOfDimensions = " + numberOfDimensions);
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("At top of endVisit (ParameterizedSingleTypeReference,BlockScope) numberOfDimensions = " + numberOfDimensions);
 
           String name = new String(node.token);
-          System.out.println("At top of endVisit (ParameterizedSingleTypeReference,BlockScope) name = " + name);
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("At top of endVisit (ParameterizedSingleTypeReference,BlockScope) name = " + name);
 
        // We need to find the qualified name for the associated type name (it should be unique).
        // This has to be handled on the Java side...
 
           String qualifiedTypeName = JavaParserSupport.hashmapOfQualifiedNamesOfClasses.get(name);
 
-          if (java_parser.verboseLevel > -1)
+          if (java_parser.verboseLevel > 0)
                System.out.println("At top of endVisit (ParameterizedSingleTypeReference,BlockScope) qualifiedTypeName = " + qualifiedTypeName);
 
           java_parser.cactionParameterizedSingleTypeReferenceEnd(qualifiedTypeName,numberOfTypeArguments,this.createJavaToken(node));
