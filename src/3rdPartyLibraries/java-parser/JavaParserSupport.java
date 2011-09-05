@@ -26,8 +26,10 @@ class JavaParserSupport
   // DQ (8/20/2011): Added a simple way to control the number of data members, constructors, and member functions built.
   // 0: No significant limits applied to number of constructs in the AST.
   // 1: Limits the number to be built into the enerated AST
-     static boolean VISUALIZE_AST = false;
+  // static boolean VISUALIZE_AST = false;
+     static boolean VISUALIZE_AST = true;
 
+  // I assume that 1000 is a sufficent bound to include all data members and member functions.
      static int implicitClassCounterBound     = VISUALIZE_AST ? 1   : 1000;
      static int methodCounterBound            = VISUALIZE_AST ? 2   : 1000;
      static int constructorMethodCounterBound = VISUALIZE_AST ? 2   : 1000;
@@ -804,6 +806,7 @@ class JavaParserSupport
                  // DQ (9/3/2011): Check if this is a type (class) that has already been handled.
                  // if (setOfClasses.contains(node.resolvedType) == false)
 
+/*
                      System.out.println("In generateType(TypeReference): Output set of entries in hashmapOfQualifiedNamesOfClasses for name = " + name);
                      Set<Map.Entry<String,String>> set = hashmapOfQualifiedNamesOfClasses.entrySet();
                      Iterator i = set.iterator();
@@ -814,10 +817,12 @@ class JavaParserSupport
                           System.out.print("Hashmap hashmapOfQualifiedNamesOfClasses entry: " + me.getKey() + ": ");
                           System.out.println(me.getValue());
                         }
+*/
 
-
-                  // DQ (/4/2011): This code is a problem, I think that the set types are inconsistant so this predicate is always false.
-                     if (hashmapOfQualifiedNamesOfClasses.entrySet().contains(rawTypeName) == false)
+                  // DQ (9/5/2011): Fixed this to use containsKey() member function.
+                  // DQ (9/4/2011): This code is a problem, I think that the set types are inconsistant so this predicate is always false.
+                  // if (hashmapOfQualifiedNamesOfClasses.entrySet().contains(rawTypeName) == false)
+                     if (hashmapOfQualifiedNamesOfClasses.containsKey(rawTypeName) == false)
                        {
                          System.out.println("In generateType(TypeReference): This class has not been seen previously: name = " + name);
                          buildImplicitClassSupport(name);

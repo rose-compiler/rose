@@ -6,6 +6,8 @@ public class test2011_48
    {
      public void foo()
         {
-          java.util.List<Integer> w;
+          int t;
+       // java.util.List<String> v;
+          List<String> w;
         }
    }

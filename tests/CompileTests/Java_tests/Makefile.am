@@ -39,6 +39,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2011_39.java \
      test2011_40.java \
      test2011_41.java \
+     test2011_47.java \
                       \
      pgc_2011_30.java \
                       \
@@ -78,7 +79,8 @@ TESTCODES_REQUIRED_TO_PASS_FAILING_BACKEND_COMPILE = \
 TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6 = \
      test2011_43.java \
      test2011_44.java \
-     test2011_46.java 
+     test2011_46.java \
+     test2011_48.java 
 
 TESTCODES_REQUIRED_TO_PASS_FAILING_FOR_JAVA_6 = \
      test2011_45.java 
