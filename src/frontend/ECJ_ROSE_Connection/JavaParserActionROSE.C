@@ -2230,7 +2230,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionFloatLiteral(JNIEnv *env, jobject 
 JNIEXPORT void JNICALL Java_JavaParser_cactionForeachStatement(JNIEnv *env, jobject xxx, jobject jToken)
    {
      // charles4 - 8/20/2011
-     ROSE_ASSERT(! "yet know how to process ForEach Statement");
+     //ROSE_ASSERT(! "yet know how to process ForEach Statement");
 
      if (SgProject::get_verbose() > 2)
           printf ("Inside of Java_JavaParser_cactionForeachStatement() \n");
@@ -2858,19 +2858,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionLabeledStatementEnd(JNIEnv *env, j
     // cerr << "The original parent the statement is "
     //      << ((unsigned long) parent)
     //      << endl;
-    SgLabelStatement *labelStatement = SageBuilder::buildLabelStatement(label_name, statement, NULL);
+    SgLabelStatement *labelStatement = SageBuilder::buildLabelStatement(label_name, statement);
     labelStatement -> set_parent(astJavaScopeStack.front());
-    // cerr << "The parent scope of the label statement is "
-    //      << ((unsigned long) astJavaScopeStack.front())
-    //      << endl;
-    // cerr << "The final parent the statement is "
-    //      << ((unsigned long) statement -> get_parent())
-    //      << endl;
-    //  if (isSgScopeStatement(statement) && statement -> get_parent() != parent) {
-    //   cerr << "AHA!!!"
-    //        <<endl;
-    //   statement -> set_parent(parent);
-    //  }
 
     setJavaSourcePosition(labelStatement, env, jToken);
     // Pushing 'label' on the statement stack

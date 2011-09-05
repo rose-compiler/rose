@@ -952,6 +952,10 @@ SgJavaThrowStatement *buildJavaThrowStatement(SgThrowOp *);
 // ! Build a Java Foreach statement.
 SgJavaForEachStatement *buildJavaForEachStatement(SgInitializedName * = NULL, SgExpression * = NULL, SgStatement * = NULL);
 
+// charles4 (8/25/2011): Adding support for Java Label stmts.
+// ! Build a Java Label statement.
+SgJavaLabelStatement *buildJavaLabelStatement(const SgName &,  SgStatement * = NULL);
+
 // ! Build an exec statement
 SgExecStatement* buildExecStatement(SgExpression* executable, SgExpression* globals = NULL, SgExpression* locals = NULL);
 SgExecStatement* buildExecStatement_nfi(SgExpression* executable, SgExpression* globals = NULL, SgExpression* locals = NULL);
