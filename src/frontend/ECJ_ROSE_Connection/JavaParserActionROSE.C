@@ -956,7 +956,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportEnd (JNIE
   // int numberOfStatements = astJavaStatementStack.size();
      int numberOfStatements = java_numberOfStatements;
 
-     printf ("Appending only %d of the statments on the Statement stack (size = %zu) \n",numberOfStatements,astJavaStatementStack.size());
+     if (SgProject::get_verbose() > 2)
+          printf ("Appending only %d of the statments on the Statement stack (size = %zu) \n",numberOfStatements,astJavaStatementStack.size());
 
      appendStatementStack(numberOfStatements);
 
@@ -988,13 +989,10 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitMethodSupport (JNIEnv
    {
      SgName name = convertJavaStringToCxxString(env,java_string);
 
-     if (SgProject::get_verbose() > -1)
+     if (SgProject::get_verbose() > 1)
         printf ("Build support for implicit class member function (method) name = %s \n",name.str());
 
      outputJavaState("At TOP of cactionBuildImplicitMethodSupport");
-
-     if (SgProject::get_verbose() > 0)
-          printf ("Build support for implicit class member function (method) = %s \n",name.str());
 
   // Not sure if we want anything specific to implicit class handling to touch the astJavaScopeStack!
      SgClassDefinition* classDefinition = isSgClassDefinition(astJavaScopeStack.front());
@@ -1014,7 +1012,10 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitMethodSupport (JNIEnv
 
   // printf ("At bottom of cactionBuildImplicitMethodSupport(): astJavaTypeStack.size() = %zu \n",astJavaTypeStack.size());
 
-#if 1
+#if 0
+  // DQ (9/5/2011): This is a debugging aid since the processing of implicit types can cause 
+  // thousands of type entries to be pushed to the the astJavaTypeStack.  Clearing them at 
+  // this point in the processing does not cause problems and makes the code easier to debug.
      printf ("WARNING: clearing the astJavaTypeStack \n");
      astJavaTypeStack.clear();
 #endif
@@ -1176,7 +1177,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateType (JNIEnv* env, jclass 
 
                SgClassType* classType = lookupTypeFromQualifiedName(name);
 
-               printf ("In Java_JavaParser_cactionGenerateType(): classType = %p \n",classType);
+            // printf ("In Java_JavaParser_cactionGenerateType(): classType = %p \n",classType);
                if (classType == NULL)
                   {
                  // If the "String" class was not found then it is likely because we are in a debug mode which limits the number of implecit classes.
@@ -1185,7 +1186,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateType (JNIEnv* env, jclass 
 #if 1
                  // We build the class but we need the declarations in the class.
                     buildImplicitClass(name);
-                    printf ("DONE: Build a class for java.<class name>.<type name>: name = %s\n",name.str());
+                 // printf ("DONE: Build a class for java.<class name>.<type name>: name = %s\n",name.str());
 #else
                     printf ("Skipping call to buildImplicitClass(name = %s); \n",name.str());
 #endif
@@ -1196,7 +1197,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateType (JNIEnv* env, jclass 
 
                  // We need to leave a SgType on the astJavaTypeStack, we need to build the class to build 
                  // the SgClassType, but we don't want to leave a SgClassDefinition on the astJavaScopeStack.
-                    printf ("When we just build a type we don't want the new class definition on the stack. \n");
+                 // printf ("When we just build a type we don't want the new class definition on the stack. \n");
                     astJavaScopeStack.pop_front();
 
                     SgClassType* classType = lookupTypeFromQualifiedName(name);
@@ -2596,7 +2597,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jobje
   // The import directive tells the compiler where to look for the class definitions 
   // when it comes upon a class that it cannot find in the default java.lang package.
 
-     if (SgProject::get_verbose() > -1)
+     if (SgProject::get_verbose() > 1)
           printf ("Inside of Java_JavaParser_cactionImportReference() \n");
 
   // I could not debug passing a Java "Boolean" variable, but "int" works fine.
@@ -2609,7 +2610,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jobje
      SgName qualifiedName  = convertJavaStringToCxxString(env,java_string);
      bool containsWildcard = java_containsWildcard;
 
-     printf ("import qualifiedName = %s containsWildcard = %s \n",qualifiedName.str(),containsWildcard ? "true" : "false");
+  // printf ("import qualifiedName = %s containsWildcard = %s \n",qualifiedName.str(),containsWildcard ? "true" : "false");
 
      SgJavaImportStatement* importStatement = new SgJavaImportStatement(qualifiedName,containsWildcard);
      ROSE_ASSERT(importStatement != NULL);
@@ -2633,7 +2634,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jobje
   // The import statement should act like the using namespace directive in C++ to bring in a class or set of classes
   // so that they will be visible in the current scope.  On the Java side the classes have all been read.  Now we
   // just have to build the SgAliasSymbol in the current scope (do this tomorrow morning).
-     printf ("Now build the SgAliasSymbol in the current scope \n");
+  // printf ("Now build the SgAliasSymbol in the current scope \n");
 
   // DQ (8/23/2011): This is part of the AST post-processing, but it has to be done as we process the Java import 
   // statements (top down) so that the symbol tables will be correct and variable, function, and type references 
@@ -2648,6 +2649,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jobje
 
      if (containsWildcard == true)
         {
+       // This processing requires that we inject alias symbols from the reference class for all of its data members and member functions. 
+
           printf ("WARNING: The use of wildecards in import statements requires additional symbol table support so that all of the specified members of a class can be incerted into the current scope. \n");
 
        // Note that the enum values for e_default and e_public are equal.
@@ -2661,7 +2664,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jobje
         }
        else
         {
-          printf ("Find the referenced class and insert its symbol as an alias into the current scope. \n");
+       // Find the referenced class and insert its symbol as an alias into the current scope.
+
+       // printf ("Find the referenced class and insert its symbol as an alias into the current scope. \n");
 
           SgAliasSymbol* aliasSymbol = new SgAliasSymbol(importClassSymbol);
 
@@ -2669,7 +2674,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jobje
           list<SgName> qualifiedNameList = generateQualifierList(qualifiedName);
           SgName unqualifiedName = *(qualifiedNameList.rbegin());
 
-          printf ("Building an alias (SgAliasSymbol) for unqualifiedName = %s in qualifiedName = %s \n",unqualifiedName.str(),qualifiedName.str());
+       // printf ("Building an alias (SgAliasSymbol) for unqualifiedName = %s in qualifiedName = %s \n",unqualifiedName.str(),qualifiedName.str());
 
           currentScope->insert_symbol(unqualifiedName, aliasSymbol);
         }

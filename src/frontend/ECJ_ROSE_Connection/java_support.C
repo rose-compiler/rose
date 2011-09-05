@@ -1845,7 +1845,7 @@ lookupSymbolInParentScopesUsingQualifiedName( SgName qualifiedName, SgScopeState
 
      list<SgName>::iterator i = qualifiedNameList.begin();
 
-     printf ("In lookupSymbolInParentScopesUsingQualifiedName(): Seaching for symbol for qualifiedName = %s name = %s (inital name) \n",qualifiedName.str(),(*i).str());
+  // printf ("In lookupSymbolInParentScopesUsingQualifiedName(): Seaching for symbol for qualifiedName = %s name = %s (inital name) \n",qualifiedName.str(),(*i).str());
 
   // Lookup the first name using the parent scopes, but then drill down into the identified scopes only.
      SgSymbol* returnSymbol = SageInterface::lookupSymbolInParentScopes(*i,currentScope);
@@ -1857,7 +1857,7 @@ lookupSymbolInParentScopesUsingQualifiedName( SgName qualifiedName, SgScopeState
   // If there are more names in the list, then drill down in to each to find the next class.
      while (i != qualifiedNameList.end())
         {
-          printf ("In lookupSymbolInParentScopesUsingQualifiedName(): Seaching for symbol for name = %s \n",(*i).str());
+       // printf ("In lookupSymbolInParentScopesUsingQualifiedName(): Seaching for symbol for name = %s \n",(*i).str());
 
           currentScope = get_scope_from_symbol(returnSymbol);
           ROSE_ASSERT(currentScope != NULL);
@@ -1867,7 +1867,6 @@ lookupSymbolInParentScopesUsingQualifiedName( SgName qualifiedName, SgScopeState
 
           i++;
         }
-
 
      return returnSymbol;
    }

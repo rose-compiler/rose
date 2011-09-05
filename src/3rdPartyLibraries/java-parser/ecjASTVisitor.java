@@ -922,7 +922,7 @@ class ecjASTVisitor extends ASTVisitor
           for (int i = 0, tokenArrayLength = node.tokens.length; i < tokenArrayLength; i++)
              {
                String tokenString = new String(node.tokens[i]);
-               System.out.println("     --- ImportReference tokens = " + tokenString);
+            // System.out.println("     --- ImportReference tokens = " + tokenString);
 
                if (i > 0)
                     importReference += '.';
@@ -935,8 +935,7 @@ class ecjASTVisitor extends ASTVisitor
           String importReferenceWithoutWildcard = importReference;
           if (withOnDemand && ((node.bits & node.OnDemand) != 0))
              {
-            // output.append(".*");
-               System.out.println("     --- ImportReference tokens = *");
+            // System.out.println("     --- ImportReference tokens = *");
                importReference += ".*";
                containsWildcard = true;
              }
@@ -1347,7 +1346,7 @@ class ecjASTVisitor extends ASTVisitor
                System.out.println("node.type                     = " + node.type);
              }
 
-       // Construct the type (will be constructed on the astJavaTypeStack.
+       // Construct the type (will be constructed on the astJavaTypeStack).
 
        // DQ (7/18/2011): Switch to using the different generateType() function (taking a TypeReference).
        // JavaParserSupport.generateType(node.binding.type);
