@@ -922,7 +922,7 @@ class ecjASTVisitor extends ASTVisitor
           for (int i = 0, tokenArrayLength = node.tokens.length; i < tokenArrayLength; i++)
              {
                String tokenString = new String(node.tokens[i]);
-               System.out.println("     --- ImportReference tokens = " + tokenString);
+            // System.out.println("     --- ImportReference tokens = " + tokenString);
 
                if (i > 0)
                     importReference += '.';
@@ -935,8 +935,7 @@ class ecjASTVisitor extends ASTVisitor
           String importReferenceWithoutWildcard = importReference;
           if (withOnDemand && ((node.bits & node.OnDemand) != 0))
              {
-            // output.append(".*");
-               System.out.println("     --- ImportReference tokens = *");
+            // System.out.println("     --- ImportReference tokens = *");
                importReference += ".*";
                containsWildcard = true;
              }
@@ -1347,7 +1346,7 @@ class ecjASTVisitor extends ASTVisitor
                System.out.println("node.type                     = " + node.type);
              }
 
-       // Construct the type (will be constructed on the astJavaTypeStack.
+       // Construct the type (will be constructed on the astJavaTypeStack).
 
        // DQ (7/18/2011): Switch to using the different generateType() function (taking a TypeReference).
        // JavaParserSupport.generateType(node.binding.type);
@@ -3128,13 +3127,29 @@ class ecjASTVisitor extends ASTVisitor
      public void endVisit(ParameterizedSingleTypeReference  node, BlockScope scope)
         {
           if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (ParameterizedSingleTypeReference,BlockScope)");
+               System.out.println("At top of endVisit (ParameterizedSingleTypeReference,BlockScope)");
 
           int numberOfTypeArguments = 0;
           if (node.typeArguments != null)
+             {
                numberOfTypeArguments = node.typeArguments.length;
+             }
 
-          java_parser.cactionParameterizedSingleTypeReferenceEnd(numberOfTypeArguments,this.createJavaToken(node));
+          int numberOfDimensions = node.dimensions;
+          System.out.println("At top of endVisit (ParameterizedSingleTypeReference,BlockScope) numberOfDimensions = " + numberOfDimensions);
+
+          String name = new String(node.token);
+          System.out.println("At top of endVisit (ParameterizedSingleTypeReference,BlockScope) name = " + name);
+
+       // We need to find the qualified name for the associated type name (it should be unique).
+       // This has to be handled on the Java side...
+
+          String qualifiedTypeName = JavaParserSupport.hashmapOfQualifiedNamesOfClasses.get(name);
+
+          if (java_parser.verboseLevel > -1)
+               System.out.println("At top of endVisit (ParameterizedSingleTypeReference,BlockScope) qualifiedTypeName = " + qualifiedTypeName);
+
+          java_parser.cactionParameterizedSingleTypeReferenceEnd(qualifiedTypeName,numberOfTypeArguments,this.createJavaToken(node));
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (ParameterizedSingleTypeReference,BlockScope)");

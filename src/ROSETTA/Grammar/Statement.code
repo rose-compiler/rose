@@ -4284,6 +4284,9 @@ SgScopeStatement::containsOnlyDeclarations() const
      bool returnValue = false;
      switch ( variantT() )
         {
+       // DQ (9/5/2011): Added support for SgJavaLabelStatement
+          case V_SgJavaLabelStatement:
+
        // DQ (11/30/2007): Added more Fortran support.
           case V_SgAssociateStatement:
 
@@ -5045,6 +5048,14 @@ SgScopeStatement::getStatementList () const
                break;
              }
 
+       // DQ (9/5/2011): Added support for SgJavaLabelStatement, but not certain if this is correct implementation.
+          case V_SgJavaLabelStatement:
+             {
+               const SgJavaLabelStatement* javaLabelStatement = isSgJavaLabelStatement(currentScope);
+               ROSE_ASSERT (javaLabelStatement != NULL);
+               return isSgBasicBlock(javaLabelStatement->get_statement()) ? isSgBasicBlock(javaLabelStatement->get_statement())->getStatementList() : emptyStatementList;
+               break;
+             }
 
           default:
                printf ("ERROR: default reached in switch (getStatementList() const) currentScope = %s \n",currentScope->sage_class_name());
