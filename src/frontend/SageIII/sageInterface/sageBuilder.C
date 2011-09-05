@@ -4074,6 +4074,30 @@ SgJavaForEachStatement *SageBuilder::buildJavaForEachStatement(SgInitializedName
   return foreach_stmt;
 }
 
+SgJavaLabelStatement *SageBuilder::buildJavaLabelStatement(const SgName& name,  SgStatement *stmt /* = NULL */)
+{
+    SgJavaLabelStatement *label_stmt = new SgJavaLabelStatement(name, stmt);
+    ROSE_ASSERT(label_stmt);
+    setOneSourcePositionForTransformation(label_stmt);
+  
+    if(stmt!=NULL) 
+        stmt -> set_parent(label_stmt);
+
+    //
+    // charles4 9/3/2011 - TODO: Can't create an SgLabelSymbol because its constructor
+    // only accepts an SgLabelStatement.
+    //
+    // SgLabelSymbol *lsymbol = label_stmt -> lookup_label_symbol(name);
+    // if (! lsymbol) // Should be an Assertion - always true!
+    // {
+    //     lsymbol= new SgLabelSymbol(label_stmt);
+    //     ROSE_ASSERT(lsymbol);
+    //     label_stmt -> insert_symbol(lsymbol -> get_name(), lsymbol);
+    // }
+
+    return label_stmt;
+}
+
 SgPythonPrintStmt*
 SageBuilder::buildPythonPrintStmt(SgExpression* dest, SgExprListExp* values) {
     SgPythonPrintStmt* result = new SgPythonPrintStmt(dest, values);
