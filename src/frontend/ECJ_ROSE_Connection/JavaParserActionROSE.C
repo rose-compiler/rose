@@ -577,10 +577,41 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionArgument (JNIEnv *env, jobject xxx
 #endif
    }
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionArrayTypeReference (JNIEnv *, jobject, jstring, jobject jToken)
+JNIEXPORT void JNICALL Java_JavaParser_cactionArrayTypeReference (JNIEnv* env, jobject xxx, jstring java_name, jobject jToken)
    {
      if (SgProject::get_verbose() > 0)
           printf ("Build a array type \n");
+   }
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionArrayTypeReferenceEnd (JNIEnv* env, jobject xxx, jstring java_name, jobject jToken)
+   {
+     if (SgProject::get_verbose() > 0)
+          printf ("Build a array type \n");
+
+     outputJavaState("At TOP of cactionArrayTypeReferenceEnd");
+
+     SgName name = convertJavaStringToCxxString(env,java_name);
+
+     ROSE_ASSERT(astJavaTypeStack.empty() == false);
+     SgType* baseType = astJavaTypeStack.front();
+     astJavaTypeStack.pop_front();
+
+  // Note that we have not specified the deminsion of the array.
+     SgArrayType* arrayType = SageBuilder::buildArrayType(baseType);
+     astJavaTypeStack.push_front(arrayType);
+
+#if 0
+#if 1
+  // DQ (9/5/2011): Test with none array type
+     printf ("Build a SgTypeInt in the stack since the class was not built (debugging mode): name = %s\n",name.str());
+     astJavaTypeStack.push_front(SgTypeInt::createType());
+#else
+     printf ("ERROR: array type not yet built \n");
+     ROSE_ASSERT(false);
+#endif
+#endif
+
+     outputJavaState("At BOTTOM of cactionArrayTypeReferenceEnd");
    }
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSend (JNIEnv *env, jobject xxx, jstring functionName, jstring associatedClassName, jobject jToken)
@@ -1035,6 +1066,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitFieldSupport (JNIEnv*
 
      SgName name = convertJavaStringToCxxString(env,java_string);
 
+     ROSE_ASSERT(astJavaTypeStack.empty() == false);
+
      SgVariableDeclaration* variableDeclaration = buildSimpleVariableDeclaration(name);
      ROSE_ASSERT(variableDeclaration != NULL);
 
@@ -1209,7 +1242,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateType (JNIEnv* env, jclass 
                       else
                        {
                       // The associated type was found (after being explicitly built, after not being found the first time)) and is pushed onto the stack.
-                         printf ("On the second search for the class = %s (after building it explicitly) it was found! \n",name.str());
+                      // printf ("On the second search for the class = %s (after building it explicitly) it was found! \n",name.str());
                          astJavaTypeStack.push_front(classType);
                        }
                   }
@@ -2093,22 +2126,23 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionFalseLiteral(JNIEnv *env, jobject 
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionFieldDeclaration(JNIEnv *env, jobject xxx, jstring variableName, jboolean java_hasInitializer,
+// DQ (9/5/2011): This was changed to be processed bottom up (so there is no Java_JavaParser_cactionFieldDeclaration() function now.
+JNIEXPORT void JNICALL Java_JavaParser_cactionFieldDeclarationEnd(JNIEnv *env, jobject xxx, jstring variableName, jboolean java_hasInitializer,
      jboolean java_is_final, jboolean java_is_private, jboolean java_is_protected, jboolean java_is_public, 
      jboolean java_is_volatile, jboolean java_is_synthetic, jboolean java_is_static, jboolean java_is_transient, jobject jToken)
    {
      if (SgProject::get_verbose() > 2)
-          printf ("Inside of Java_JavaParser_cactionFieldDeclaration() \n");
+          printf ("Inside of Java_JavaParser_cactionFieldDeclarationEnd() \n");
 
-     outputJavaState("At TOP of cactionFieldDeclaration");
+     outputJavaState("At TOP of cactionFieldDeclarationEnd");
 
      SgName name = convertJavaStringToCxxString(env,variableName);
 
   // I think we need this in the endVisit() function (and not here).
      bool hasInitializer = java_hasInitializer;
 
-     if (SgProject::get_verbose() > 2)
-          printf ("hasInitializer = %s (but not used except in bottom up processing) \n",hasInitializer ? "true" : "false");
+  // if (SgProject::get_verbose() > 2)
+  //      printf ("hasInitializer = %s (but not used except in bottom up processing) \n",hasInitializer ? "true" : "false");
 
      bool isFinal     = java_is_final;
      bool isPrivate   = java_is_private;
@@ -2122,7 +2156,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionFieldDeclaration(JNIEnv *env, jobj
      if (SgProject::get_verbose() > 2)
           printf ("Building a variable declaration for name = %s \n",name.str());
 
-  // Note that the type shuld have already been built and should be on the astJavaTypeStack.
+     ROSE_ASSERT(astJavaTypeStack.empty() == false);
+
+  // Note that the type should have already been built and should be on the astJavaTypeStack.
      SgVariableDeclaration* variableDeclaration = buildSimpleVariableDeclaration(name);
      ROSE_ASSERT(variableDeclaration != NULL);
 
@@ -2195,10 +2231,32 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionFieldDeclaration(JNIEnv *env, jobj
         }
 
      if (SgProject::get_verbose() > 0)
-          variableDeclaration->get_file_info()->display("source position in Java_JavaParser_cactionFieldDeclaration(): debug");
+          variableDeclaration->get_file_info()->display("source position in Java_JavaParser_cactionFieldDeclarationEnd(): debug");
+
+  // DQ (9/5/2011): Added from previous Java_JavaParser_cactionFieldDeclarationEnd() function.
+     if (hasInitializer == true)
+        {
+          ROSE_ASSERT(astJavaExpressionStack.empty() == false);
+          SgExpression* expr = astJavaExpressionStack.front();
+
+       // Must wrap this has an initializer.
+          SgInitializer* initializer = SageBuilder::buildAssignInitializer(expr);
+          ROSE_ASSERT(initializer != NULL);
+
+          setJavaSourcePosition(initializer,env,jToken);
+
+          printf ("In cactionFieldDeclarationEnd(): initializer = %p = %s \n",initializer,initializer->class_name().c_str());
+          initializer->get_file_info()->display("cactionFieldDeclarationEnd()");
+
+          initializedName->set_initptr(initializer);
+
+          expr->set_parent(initializedName);
+
+          astJavaExpressionStack.pop_front();
+        }
    }
 
-
+#if 0
 JNIEXPORT void JNICALL Java_JavaParser_cactionFieldDeclarationEnd(JNIEnv *env, jobject xxx, jstring variableName, jboolean java_hasInitializer, jobject jToken )
    {
   // DQ (8/13/2011): The initializer has to be set in the endVisit() function.
@@ -2234,7 +2292,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionFieldDeclarationEnd(JNIEnv *env, j
           astJavaExpressionStack.pop_front();
         }
    }
-
+#endif
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionFieldReference(JNIEnv *env, jobject xxx, jobject jToken)
    {
@@ -2941,6 +2999,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionLocalDeclarationEnd(JNIEnv *env, j
 
      if (SgProject::get_verbose() > 2)
           printf ("Building a variable declaration for name = %s \n",name.str());
+
+     ROSE_ASSERT(astJavaTypeStack.empty() == false);
 
   // Note that the type should have already been built and should be on the astJavaTypeStack.
      SgVariableDeclaration* variableDeclaration = buildSimpleVariableDeclaration(name);
