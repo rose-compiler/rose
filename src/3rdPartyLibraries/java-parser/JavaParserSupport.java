@@ -26,8 +26,8 @@ class JavaParserSupport
   // DQ (8/20/2011): Added a simple way to control the number of data members, constructors, and member functions built.
   // 0: No significant limits applied to number of constructs in the AST.
   // 1: Limits the number to be built into the enerated AST
-  // static boolean VISUALIZE_AST = false;
-     static boolean VISUALIZE_AST = true;
+     static boolean VISUALIZE_AST = false;
+  // static boolean VISUALIZE_AST = true;
 
   // I assume that 1000 is a sufficent bound to include all data members and member functions.
      static int implicitClassCounterBound     = VISUALIZE_AST ? 1   : 1000;
