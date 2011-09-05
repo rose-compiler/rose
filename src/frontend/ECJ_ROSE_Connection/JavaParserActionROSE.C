@@ -2924,6 +2924,17 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionLocalDeclaration(JNIEnv *env, jobj
           printf ("Inside of Java_JavaParser_cactionLocalDeclaration() \n");
 
      outputJavaState("At TOP of cactionLocalDeclaration");
+   }
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionLocalDeclarationEnd(JNIEnv *env, jobject xxx, jstring variableName, jboolean java_is_final, jobject jToken)
+   {
+  // DQ (9/5/2011): This function is added as part of a move to process local declarations bottom up.
+
+     if (SgProject::get_verbose() > 0)
+          printf ("Inside of Java_JavaParser_cactionLocalDeclarationEnd() \n");
+
+     outputJavaState("At TOP of cactionLocalDeclarationEnd");
 
      SgName name = convertJavaStringToCxxString(env,variableName);
      bool isFinal = java_is_final;
@@ -2931,7 +2942,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionLocalDeclaration(JNIEnv *env, jobj
      if (SgProject::get_verbose() > 2)
           printf ("Building a variable declaration for name = %s \n",name.str());
 
-  // Note that the type shuld have already been built and should be on the astJavaTypeStack.
+  // Note that the type should have already been built and should be on the astJavaTypeStack.
      SgVariableDeclaration* variableDeclaration = buildSimpleVariableDeclaration(name);
      ROSE_ASSERT(variableDeclaration != NULL);
 
@@ -2969,7 +2980,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionLocalDeclaration(JNIEnv *env, jobj
      ROSE_ASSERT(variableDeclaration->get_declarationModifier().get_accessModifier().isPublic() == false);
 
      if (SgProject::get_verbose() > 0)
-          variableDeclaration->get_file_info()->display("source position in Java_JavaParser_cactionLocalDeclaration(): debug");
+          variableDeclaration->get_file_info()->display("source position in Java_JavaParser_cactionLocalDeclarationEnd(): debug");
    }
 
 

@@ -176,7 +176,9 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionLabeledStatementEnd(String labelName, JavaToken jToken);
 
      public native void cactionLocalDeclaration(String variableName, boolean java_is_final, JavaToken jToken);
+     public native void cactionLocalDeclarationEnd(String variableName, boolean java_is_final, JavaToken jToken);
      public native void cactionLocalDeclarationInitialization(JavaToken jToken);
+
      public native void cactionLongLiteral(JavaToken jToken);
      public native void cactionMarkerAnnotation(JavaToken jToken);
      public native void cactionMemberValuePair(JavaToken jToken);

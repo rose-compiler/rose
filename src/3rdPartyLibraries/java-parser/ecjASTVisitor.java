@@ -1330,6 +1330,7 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of visit (LocalDeclaration,BlockScope)");
 
+/*
           String name = new String(node.name);
 
        // String selectorName = new String(node.selector);
@@ -1360,7 +1361,7 @@ class ecjASTVisitor extends ASTVisitor
        // Build the variable declaration using the type from the astJavaTypeStack.
        // Note that this may have to handle an array of names or be even more complex in the future.
           java_parser.cactionLocalDeclaration(name,isFinal, this.createJavaToken(node));
-
+*/
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (LocalDeclaration,BlockScope)");
 
@@ -3022,6 +3023,37 @@ class ecjASTVisitor extends ASTVisitor
 
           if (java_parser.verboseLevel > 0)
                System.out.println("If there is an expression on the stack it is the initializer...");
+
+          String name = new String(node.name);
+
+       // String selectorName = new String(node.selector);
+       // System.out.println("node.name = " + selectorName);
+       // System.out.println("node.modfiers = " + node.modfiers);
+
+          if (java_parser.verboseLevel > 0)
+             {
+               System.out.println("node.name                     = " + name);
+               System.out.println("node.binding                  = " + node.binding);
+               System.out.println("node.binding.type             = " + node.binding.type);
+               System.out.println("node.binding.type.id          = " + node.binding.type.id);
+               System.out.println("node.binding.type.debugName() = " + node.binding.type.debugName());
+               System.out.println("node.type                     = " + node.type);
+             }
+
+       // Construct the type (it should already be present on the astJavaTypeStack).
+
+       // DQ (7/18/2011): Switch to using the different generateType() function (taking a TypeReference).
+       // JavaParserSupport.generateType(node.binding.type);
+       // JavaParserSupport.generateType(node.type);
+
+          boolean isFinal = node.binding.isFinal();
+
+       // DQ (8/13/2011): This information is stored in the FieldReference...(not clear how to get it).
+       // boolean isPrivate = (node.binding != null && !node.binding.isPrivate()) ? true : false;
+
+       // Build the variable declaration using the type from the astJavaTypeStack.
+       // Note that this may have to handle an array of names or be even more complex in the future.
+          java_parser.cactionLocalDeclarationEnd(name,isFinal, this.createJavaToken(node));
 
           if (node.initialization != null)
              {

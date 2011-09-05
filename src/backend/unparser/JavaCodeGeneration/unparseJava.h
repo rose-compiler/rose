@@ -230,6 +230,8 @@ class Unparse_Java : public UnparseLanguageIndependentConstructs
           virtual void unparseEnumType(SgEnumType* type, SgUnparse_Info& info);
           virtual void unparseArrayType(SgArrayType* type, SgUnparse_Info& info);
           virtual void unparseModifierType(SgModifierType* type, SgUnparse_Info& info);
+
+          virtual void unparseJavaParameterizedType(SgJavaParameterizedType* type, SgUnparse_Info& info);
    };
 
 #endif
