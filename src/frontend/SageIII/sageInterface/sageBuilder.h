@@ -950,7 +950,8 @@ SgJavaThrowStatement *buildJavaThrowStatement(SgThrowOp *);
 
 // charles4 (8/25/2011): Adding support for Java Foreach stmts.
 // ! Build a Java Foreach statement.
-SgJavaForEachStatement *buildJavaForEachStatement(SgInitializedName * = NULL, SgExpression * = NULL, SgStatement * = NULL);
+// SgJavaForEachStatement *buildJavaForEachStatement(SgInitializedName * = NULL, SgExpression * = NULL, SgStatement * = NULL);
+SgJavaForEachStatement *buildJavaForEachStatement(SgVariableDeclaration * = NULL, SgExpression * = NULL, SgStatement * = NULL);
 
 // charles4 (8/25/2011): Adding support for Java Label stmts.
 // ! Build a Java Label statement.
