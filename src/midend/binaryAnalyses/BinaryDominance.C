@@ -1,6 +1,3 @@
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
-
 #include "sage3basic.h"
 #include "BinaryDominance.h"
 
