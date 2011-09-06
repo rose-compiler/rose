@@ -168,7 +168,6 @@ void InitDataflowState::visit(const Function& func, const DataflowNode& n, NodeS
 		Dbg::dbg << "InitDataflowState::visit() sgn="<<sgn<<"["<<sgn->class_name()<<" | "<<Dbg::escape(sgn->unparseToString())<<"], dfAnalysis="<<dfAnalysis<<endl;
 	
 	// generate a new initial state for this node
-	//vector<Lattice*> initLats = dfAnalysis->genInitState(func, n, state);
 	vector<Lattice*>  initLats;
 	vector<NodeFact*> initFacts;
 	dfAnalysis->genInitState(func, n, state, initLats, initFacts);
@@ -635,8 +634,6 @@ bool IntraBWDataflow::runAnalysis(const Function& func, NodeState* fState, bool 
 		InitDataflowState ids(this/*, initState*/);
 		ids.runAnalysis(func, fState);
 
-		//UnstructuredPassInterAnalysis upia_ids(ids);
-		//upia_ids.runAnalysis();
 		visited.insert(func);
 	}
 
