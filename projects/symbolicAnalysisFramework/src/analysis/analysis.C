@@ -1171,13 +1171,20 @@ ContextInsensitiveInterProceduralDataflow::ContextInsensitiveInterProceduralData
 	
 	// Record as part of each FunctionState the merged lattice states above the function's return statements
 	set<FunctionState*> allFuncs = FunctionState::getAllDefinedFuncs();
-	for(set<FunctionState*>::iterator it=allFuncs.begin(); it!=allFuncs.end(); it++)	
+	for(set<FunctionState*>::iterator it=allFuncs.begin(); it!=allFuncs.end(); it++)
 	{
 		FunctionState* funcS = *it;
-		if(funcS->func.get_definition())
+		if(funcS->func.get_definition()) {
 //DFStateAtReturns NEED REFERENCES TO vector<Lattice*>'S RATHER THAN COPIES OF THEM
+                        std::vector<Lattice *> empty;
+                        funcS->state.setLattices(intraDataflowAnalysis, empty);
+                        funcS->retState.setLattices(intraDataflowAnalysis, empty);
 			funcS->state.addFact(this, 0, new DFStateAtReturns(funcS->state.getLatticeBelowMod((Analysis*)intraDataflowAnalysis), 
 			                                                   funcS->retState.getLatticeBelowMod((Analysis*)intraDataflowAnalysis)));
+                        Dbg::dbg << "Return state for function " << funcS << " " << funcS->func.get_name().getString() << endl
+                                 << "funcS->state" << funcS->state.str(intraDataflowAnalysis) << endl;
+                        //                                 << "funcS->retState="<<  funcS->retState.str(intraDataflowAnalysis) << endl;
+                }
 	}
 	
 /*	set<FunctionState*> allFuncs = FunctionState::getAllDefinedFuncs();
