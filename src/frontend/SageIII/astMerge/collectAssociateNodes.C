@@ -217,6 +217,60 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
                break;
              }
 
+       // DQ (9/5/2011): Added support for SgJavaParameterizedType.
+          case V_SgJavaParameterizedType:
+             {
+               SgJavaParameterizedType* javaParameterizedType = isSgJavaParameterizedType(type);
+               ROSE_ASSERT(javaParameterizedType != NULL);
+               if (javaParameterizedType->get_raw_type() != NULL)
+                  {
+                    nodeList.insert(javaParameterizedType->get_raw_type());
+                    addAssociatedNodes(javaParameterizedType->get_raw_type(),nodeList,markMemberNodesDefinedToBeDeleted);
+                  }
+               ROSE_ASSERT(nodeList.find(NULL) == nodeList.end());
+
+               if (javaParameterizedType->get_type_list() != NULL)
+                  {
+                    SgTemplateParameterList* type_list = javaParameterizedType->get_type_list();
+                    for (size_t i = 0; i < type_list->get_args().size(); i++)
+                       {
+                         SgType* argumentType = NULL;
+                         SgTemplateParameter* templateParameter = type_list->get_args()[i];
+                         ROSE_ASSERT(templateParameter != NULL);
+                         if (templateParameter->get_parameterType() == SgTemplateParameter::type_parameter)
+                            {
+                              if (templateParameter->get_type() != NULL)
+                                 {
+                                   argumentType = templateParameter->get_type();
+                                 }
+                                else
+                                 {
+                                // Do we need to support the default type when the type is not explicit.
+                                 }
+                            }
+                           else
+                            {
+                           // This was not a type parameter (but it might be a template declaration or something work paying attention to).
+                            }
+
+                      // There are a number of way in which the argumentType can be set (but maybe a restricted set of ways for Java).
+                         if (argumentType != NULL)
+                            {
+                              nodeList.insert(argumentType);
+                              addAssociatedNodes(argumentType,nodeList,markMemberNodesDefinedToBeDeleted);
+                            }
+                           else
+                            {
+                           // It might be that this branch should be an error for Java. But likely caught elsewhere in ROSE.
+                            }
+                       }
+                  }
+
+               ROSE_ASSERT(nodeList.find(NULL) == nodeList.end());
+
+               break;
+             }
+
           case V_SgQualifiedNameType:
           case V_SgTemplateType:
 #ifndef ROSE_USE_NEW_EDG_INTERFACE 

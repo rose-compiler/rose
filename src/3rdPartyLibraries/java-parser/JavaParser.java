@@ -65,6 +65,7 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionSingleTypeReference(String filename, JavaToken jToken);
      public native void cactionArgument(String argumentName, int modifiers, JavaToken jToken);
      public native void cactionArrayTypeReference(String filename, JavaToken jToken);
+     public native void cactionArrayTypeReferenceEnd(String filename, JavaToken jToken);
      public native void cactionMessageSend(String functionName, String associatedClassName, JavaToken jToken);
 
      public native void cactionMessageSendEnd(JavaToken jToken);
@@ -120,8 +121,11 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionEqualExpressionEnd(int java_operator_kind, JavaToken jToken);
      public native void cactionExtendedStringLiteral(JavaToken jToken);
      public native void cactionFalseLiteral(JavaToken jToken);
-     public native void cactionFieldDeclaration(String variableName, boolean java_hasInitializer, boolean java_is_final, boolean java_is_private, boolean java_is_protected, boolean java_is_public, boolean java_is_volatile, boolean java_is_synthetic, boolean java_is_static, boolean java_is_transient, JavaToken jToken);
-     public native void cactionFieldDeclarationEnd(String variableName, boolean java_hasInitializer, JavaToken jToken);
+
+  // public native void cactionFieldDeclaration(String variableName, boolean java_hasInitializer, boolean java_is_final, boolean java_is_private, boolean java_is_protected, boolean java_is_public, boolean java_is_volatile, boolean java_is_synthetic, boolean java_is_static, boolean java_is_transient, JavaToken jToken);
+  // public native void cactionFieldDeclarationEnd(String variableName, boolean java_hasInitializer, JavaToken jToken);
+     public native void cactionFieldDeclarationEnd(String variableName, boolean java_hasInitializer, boolean java_is_final, boolean java_is_private, boolean java_is_protected, boolean java_is_public, boolean java_is_volatile, boolean java_is_synthetic, boolean java_is_static, boolean java_is_transient, JavaToken jToken);
+
      public native void cactionFieldReference(JavaToken jToken);
      public native void cactionFieldReferenceClassScope(JavaToken jToken);
      public native void cactionFloatLiteral(JavaToken jToken);
@@ -176,7 +180,9 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionLabeledStatementEnd(String labelName, JavaToken jToken);
 
      public native void cactionLocalDeclaration(String variableName, boolean java_is_final, JavaToken jToken);
+     public native void cactionLocalDeclarationEnd(String variableName, boolean java_is_final, JavaToken jToken);
      public native void cactionLocalDeclarationInitialization(JavaToken jToken);
+
      public native void cactionLongLiteral(JavaToken jToken);
      public native void cactionMarkerAnnotation(JavaToken jToken);
      public native void cactionMemberValuePair(JavaToken jToken);

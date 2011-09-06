@@ -40,6 +40,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2011_40.java \
      test2011_41.java \
      test2011_47.java \
+     test2011_50.java \
                       \
      pgc_2011_30.java \
                       \
@@ -80,7 +81,8 @@ TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6 = \
      test2011_43.java \
      test2011_44.java \
      test2011_46.java \
-     test2011_48.java 
+     test2011_48.java \
+     test2011_49.java 
 
 TESTCODES_REQUIRED_TO_PASS_FAILING_FOR_JAVA_6 = \
      test2011_45.java 
