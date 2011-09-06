@@ -254,6 +254,12 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2011_Rice_forward-ref-derived-type.f90 \
      test2011_Rice_func-char-len.f90 \
      test2011_Rice_funcdecl-1.f90 \
+     test2011_Rice_function-implicit-result-1.f90 \
+     test2011_Rice_function-implicit-result-2.f90 \
+     test2011_Rice_function-no-result-1.f90 \
+     test2011_Rice_function-no-result-2.f90 \
+     test2011_Rice_function-result-1.f90 \
+     test2011_Rice_function-result-2.f90 \
      test2011_Rice_function-where-var-expected.f90 \
      test2011_Rice_ifConstruct.f90 \
      test2011_Rice_ifStmt.f90 \
