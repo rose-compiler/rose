@@ -141,7 +141,7 @@ public:
                     // Is this path feasible?  We don't really need to check it now; we could wait until the end.
                     InternalNode *c = new InternalNode(32, OP_EQ, policy.readIP().expr, LeafNode::create_integer(32, target));
                     constraints.push_back(c); // shouldn't really have to do this again if we could save some state
-                    if (smt_solver.satisfiable(c)) {
+                    if (smt_solver.satisfiable(constraints)) {
                         policy.writeIP(SymbolicSemantics::ValueType<32>(target));
                     } else {
                         trace->mesg("%s: chosen control flow path is not feasible.", name);
