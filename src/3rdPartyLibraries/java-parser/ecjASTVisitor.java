@@ -241,7 +241,14 @@ class ecjASTVisitor extends ASTVisitor
 
      public boolean visit(ArrayTypeReference  node, BlockScope scope)
         {
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Inside of visit (ArrayTypeReference,BlockScope)");
+
           java_parser.cactionArrayTypeReference("ArrayTypeReference_block_abc", this.createJavaToken(node));
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving visit (ArrayTypeReference,BlockScope)");
+
           return true; // do nothing by  node, keep traversing
         }
 
@@ -766,6 +773,8 @@ class ecjASTVisitor extends ASTVisitor
         {
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of visit (FieldDeclaration,BlockScope)");
+/*
+       // DQ (9/5/2011): Old code from before this was processed bottom up.
 
        // I think that it is enough that this is set via the LocalDeclaration.
        // boolean isFinal = node.binding.isFinal();
@@ -819,7 +828,7 @@ class ecjASTVisitor extends ASTVisitor
        // java_parser.cactionLocalDeclaration(name,isFinal);
 
           java_parser.cactionFieldDeclaration(name,hasInitializer,isFinal,isPrivate,isProtected,isPublic,isVolatile,isSynthetic,isStatic,isTransient, this.createJavaToken(node));
-
+*/
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (FieldDeclaration,BlockScope)");
 
@@ -1330,6 +1339,7 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of visit (LocalDeclaration,BlockScope)");
 
+/*
           String name = new String(node.name);
 
        // String selectorName = new String(node.selector);
@@ -1360,7 +1370,7 @@ class ecjASTVisitor extends ASTVisitor
        // Build the variable declaration using the type from the astJavaTypeStack.
        // Note that this may have to handle an array of names or be even more complex in the future.
           java_parser.cactionLocalDeclaration(name,isFinal, this.createJavaToken(node));
-
+*/
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (LocalDeclaration,BlockScope)");
 
@@ -2444,7 +2454,22 @@ class ecjASTVisitor extends ASTVisitor
 
      public void endVisit(ArrayTypeReference  node, BlockScope scope)
         {
-       // do nothing by default
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Inside of endVisit (ArrayTypeReference,BlockScope)");
+
+          String type_name = new String(node.token);
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Inside of endVisit (ArrayTypeReference,BlockScope): type name = " + type_name);
+
+       // This will generate the base type
+          JavaParserSupport.generateType(node);
+
+       // This will use the base type from the stack and implement the array type.
+       // TODO: Currently no dimenion information is passed, this should likely be fixed.
+       //       Also, the name of the base type is passed, but not used except for debugging.
+          java_parser.cactionArrayTypeReferenceEnd(type_name, this.createJavaToken(node));
+
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (ArrayTypeReference,BlockScope)");
         }
@@ -2723,7 +2748,9 @@ class ecjASTVisitor extends ASTVisitor
         {
        // do nothing  by default
           if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (FieldDeclaration,BlockScope)");
+               System.out.println("Inside of endVisit (FieldDeclaration,BlockScope)");
+/*
+       // DQ (9/5/2011): Old code from before this was processed bottom up.
 
        // We pass the name to support debugging...
           String name = new String(node.name);
@@ -2731,6 +2758,61 @@ class ecjASTVisitor extends ASTVisitor
           boolean hasInitializer = (node.initialization != null) ? true : false;
 
           java_parser.cactionFieldDeclarationEnd(name,hasInitializer, this.createJavaToken(node));
+*/
+
+       // I think that it is enough that this is set via the LocalDeclaration.
+       // boolean isFinal = node.binding.isFinal();
+
+          boolean isPrivate   = (node.binding != null && node.binding.isPrivate())   ? true : false;
+          boolean isProtected = (node.binding != null && node.binding.isProtected()) ? true : false;
+          boolean isPublic    = (node.binding != null && node.binding.isPublic())    ? true : false;
+
+          boolean isVolatile  = (node.binding != null && node.binding.isVolatile())  ? true : false;
+          boolean isSynthetic = (node.binding != null && node.binding.isSynthetic()) ? true : false;
+          boolean isStatic    = (node.binding != null && node.binding.isStatic())    ? true : false;
+          boolean isTransient = (node.binding != null && node.binding.isTransient()) ? true : false;
+
+          boolean hasInitializer = (node.initialization != null) ? true : false;
+
+          String name = new String(node.name);
+
+       // String selectorName = new String(node.selector);
+       // System.out.println("node.name = " + selectorName);
+       // System.out.println("node.modfiers = " + node.modfiers);
+
+          if (java_parser.verboseLevel > 0)
+             {
+               System.out.println("node.name                     = " + name);
+               System.out.println("node.binding                  = " + node.binding);
+               System.out.println("node.binding.type             = " + node.binding.type);
+               System.out.println("node.binding.type.id          = " + node.binding.type.id);
+               System.out.println("node.binding.type.debugName() = " + node.binding.type.debugName());
+               System.out.println("node.type                     = " + node.type);
+
+               System.out.println("isPrivate                     = " + isPrivate);
+               System.out.println("isProtected                   = " + isProtected);
+               System.out.println("isPublic                      = " + isPublic);
+
+               System.out.println("hasInitializer                = " + hasInitializer);
+             }
+
+       // Construct the type (will be constructed on the astJavaTypeStack.
+
+       // DQ (9/5/2011): Now that we process this bottom up, we can expect the type be already be on the stack.
+       // DQ (7/18/2011): Switch to using the different generateType() function (taking a TypeReference).
+       // JavaParserSupport.generateType(node.binding.type);
+       // JavaParserSupport.generateType(node.type);
+
+          boolean isFinal = node.binding.isFinal();
+
+       // DQ (8/13/2011): This information is stored in the FieldReference...(not clear how to get it).
+       // boolean isPrivate = (node.binding != null && !node.binding.isPrivate()) ? true : false;
+
+       // Build the variable declaration using the type from the astJavaTypeStack.
+       // Note that this may have to handle an array of names or be even more complex in the future.
+       // java_parser.cactionLocalDeclaration(name,isFinal);
+
+          java_parser.cactionFieldDeclarationEnd(name,hasInitializer,isFinal,isPrivate,isProtected,isPublic,isVolatile,isSynthetic,isStatic,isTransient, this.createJavaToken(node));
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (FieldDeclaration,BlockScope)");
@@ -3023,6 +3105,37 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 0)
                System.out.println("If there is an expression on the stack it is the initializer...");
 
+          String name = new String(node.name);
+
+       // String selectorName = new String(node.selector);
+       // System.out.println("node.name = " + selectorName);
+       // System.out.println("node.modfiers = " + node.modfiers);
+
+          if (java_parser.verboseLevel > 0)
+             {
+               System.out.println("node.name                     = " + name);
+               System.out.println("node.binding                  = " + node.binding);
+               System.out.println("node.binding.type             = " + node.binding.type);
+               System.out.println("node.binding.type.id          = " + node.binding.type.id);
+               System.out.println("node.binding.type.debugName() = " + node.binding.type.debugName());
+               System.out.println("node.type                     = " + node.type);
+             }
+
+       // Construct the type (it should already be present on the astJavaTypeStack).
+
+       // DQ (7/18/2011): Switch to using the different generateType() function (taking a TypeReference).
+       // JavaParserSupport.generateType(node.binding.type);
+       // JavaParserSupport.generateType(node.type);
+
+          boolean isFinal = node.binding.isFinal();
+
+       // DQ (8/13/2011): This information is stored in the FieldReference...(not clear how to get it).
+       // boolean isPrivate = (node.binding != null && !node.binding.isPrivate()) ? true : false;
+
+       // Build the variable declaration using the type from the astJavaTypeStack.
+       // Note that this may have to handle an array of names or be even more complex in the future.
+          java_parser.cactionLocalDeclarationEnd(name,isFinal, this.createJavaToken(node));
+
           if (node.initialization != null)
              {
                if (java_parser.verboseLevel > 0)
@@ -3055,7 +3168,7 @@ class ecjASTVisitor extends ASTVisitor
 
      public void endVisit(MessageSend  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > -1)
+          if (java_parser.verboseLevel > 0)
                System.out.println("Inside of endVisit (MessageSend,BlockScope)");
 
           java_parser.cactionMessageSendEnd(this.createJavaToken(node));
@@ -3136,17 +3249,21 @@ class ecjASTVisitor extends ASTVisitor
              }
 
           int numberOfDimensions = node.dimensions;
-          System.out.println("At top of endVisit (ParameterizedSingleTypeReference,BlockScope) numberOfDimensions = " + numberOfDimensions);
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("At top of endVisit (ParameterizedSingleTypeReference,BlockScope) numberOfDimensions = " + numberOfDimensions);
 
           String name = new String(node.token);
-          System.out.println("At top of endVisit (ParameterizedSingleTypeReference,BlockScope) name = " + name);
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("At top of endVisit (ParameterizedSingleTypeReference,BlockScope) name = " + name);
 
        // We need to find the qualified name for the associated type name (it should be unique).
        // This has to be handled on the Java side...
 
           String qualifiedTypeName = JavaParserSupport.hashmapOfQualifiedNamesOfClasses.get(name);
 
-          if (java_parser.verboseLevel > -1)
+          if (java_parser.verboseLevel > 0)
                System.out.println("At top of endVisit (ParameterizedSingleTypeReference,BlockScope) qualifiedTypeName = " + qualifiedTypeName);
 
           java_parser.cactionParameterizedSingleTypeReferenceEnd(qualifiedTypeName,numberOfTypeArguments,this.createJavaToken(node));
