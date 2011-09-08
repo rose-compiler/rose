@@ -13,8 +13,9 @@
 #
 
 find .  -follow \
-        \( -type d -name 'libharu-*' -prune -false \) \
-     -o \( -type d -name 'netcdf-*'  -prune -false \) \
+        \( -type d -name 'libharu-*'   -prune -false \) \
+     -o \( -type d -name 'netcdf-*'    -prune -false \) \
+     -o \( -type d -name 'rose-0.9.5a' -prune -false \) \
      -o -name Makefile.in -print0 |\
     xargs -0 sed -i~ \
 	    -e '/echo.*COMPILE/!s/^\(LT\)\{0,1\}\(CXX\)\{0,1\}COMPILE =/& @echo "  COMPILE $@";/' \
