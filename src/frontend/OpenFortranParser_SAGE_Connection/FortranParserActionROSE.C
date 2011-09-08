@@ -8991,8 +8991,10 @@ void c_action_signed_operand(Token_t *addOp)
         astExpressionStack.push_front(expr);
     }
 
-    // printf ("ERROR: Unimplemented OFP 0.8.2 function \n");
-    // ROSE_ASSERT(false);
+#if 0
+    // Output debugging information about saved state (stack) information.
+    outputState("At BOTTOM of R705 c_action_signed_operand()");
+#endif
 }
 #endif
 
@@ -9004,6 +9006,11 @@ void c_action_add_operand__add_op(Token_t * addOp)
     if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf("In c_action_add_operand__add_op():addOp->text = %s \n",
                 addOp->text);
+
+#if 0
+    // Output debugging information about saved state (stack) information.
+    outputState("At TOP of c_action_add_operand__add_op()");
+#endif
 
 #if !SKIP_C_ACTION_IMPLEMENTATION
     ROSE_ASSERT(astExpressionStack.empty() == false);
@@ -9047,6 +9054,10 @@ void c_action_add_operand__add_op(Token_t * addOp)
 
     // Save the expression on the stack
     astExpressionStack.push_front(expr);
+#endif
+#if 0
+    // Output debugging information about saved state (stack) information.
+    outputState("At Bottom of c_action_add_operand__add_op()");
 #endif
 }
 
