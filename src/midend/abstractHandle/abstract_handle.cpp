@@ -158,9 +158,19 @@ namespace AbstractHandle{
      switch (stype)
      {
        case e_numbering:
-         svalue.int_v = node->getNumbering(p_handle->getNode());
-         m_specifier = new specifier (stype, svalue);
-         break;
+         {
+           if (p_handle != NULL)
+           {
+             svalue.int_v = node->getNumbering(p_handle->getNode());
+             m_specifier = new specifier (stype, svalue);
+           }
+           else
+           {
+             cerr<<"Error: NULL p_handle when trying to create a numbering handle."<<endl;
+             assert (false);
+           }
+           break;
+         }
        case e_name:
          strcpy(svalue.str_v,(node->getName()).c_str());
          m_specifier = new specifier (stype, svalue);
