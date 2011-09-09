@@ -99,7 +99,7 @@ Unparse_Java::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Info
           case V_SgCaseOptionStmt:         unparseCaseStmt       (stmt, info); break;
           case V_SgDefaultOptionStmt:      unparseDefaultStmt    (stmt, info); break;
           case V_SgBreakStmt:              unparseBreakStmt      (stmt, info); break;
-          case V_SgLabelStatement:         unparseLabelStmt      (stmt, info); break;
+          case V_SgJavaLabelStatement:     unparseLabelStmt      (stmt, info); break;
           case V_SgGotoStatement:          unparseGotoStmt       (stmt, info); break;
           case V_SgReturnStmt:             unparseReturnStmt     (stmt, info); break;
           case V_SgAssertStmt:             unparseAssertStmt     (stmt, info); break;
@@ -178,7 +178,7 @@ Unparse_Java::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Info
             case V_SgSwitchStatement:
             case V_SgCaseOptionStmt:
             case V_SgDefaultOptionStmt:
-            case V_SgLabelStatement:
+            case V_SgJavaLabelStatement:
             case V_SgJavaSynchronizedStatement:
                 printSemicolon = false;
                 break;
@@ -454,7 +454,7 @@ static size_t countElsesNeededToPreventDangling(SgStatement* s) {
       return countElsesNeededToPreventDangling(seq.back());
     }
     case V_SgDefaultOptionStmt: return countElsesNeededToPreventDangling(isSgCaseOptionStmt(s)->get_body());
-    case V_SgLabelStatement: return countElsesNeededToPreventDangling(isSgLabelStatement(s)->get_statement());
+    case V_SgJavaLabelStatement: return countElsesNeededToPreventDangling(isSgJavaLabelStatement(s)->get_statement());
     case V_SgCatchOptionStmt: return countElsesNeededToPreventDangling(isSgCatchOptionStmt(s)->get_body());
     case V_SgForStatement: return countElsesNeededToPreventDangling(isSgForStatement(s)->get_loop_body());
     case V_SgIfStmt: {
@@ -819,7 +819,7 @@ Unparse_Java::unparseExprStmt(SgStatement* stmt, SgUnparse_Info& info)
 
 void Unparse_Java::unparseLabelStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
-     SgLabelStatement* label_stmt = isSgLabelStatement(stmt);
+     SgJavaLabelStatement* label_stmt = isSgJavaLabelStatement(stmt);
      ROSE_ASSERT(label_stmt != NULL);
 
      curprint ( string(label_stmt->get_label().str()) + ":");

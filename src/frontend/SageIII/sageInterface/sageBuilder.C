@@ -4082,7 +4082,7 @@ SgJavaLabelStatement *SageBuilder::buildJavaLabelStatement(const SgName& name,  
     ROSE_ASSERT(label_stmt);
     setOneSourcePositionForTransformation(label_stmt);
   
-    if(stmt!=NULL) 
+    if (stmt != NULL) 
         stmt -> set_parent(label_stmt);
 
     //

@@ -2893,6 +2893,11 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocSingleTypeReferenceClassSco
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionLabeledStatement(JNIEnv *env, jobject xxx, jobject jToken)
    {
+    SgJavaLabelStatement *labelStatement = SageBuilder::buildJavaLabelStatement("");
+    ROSE_ASSERT(labelStatement != NULL);
+    setJavaSourcePosition(labelStatement, env, jToken);
+    labelStatement->set_parent(astJavaScopeStack.front());
+    astJavaScopeStack.push_front(labelStatement);
    }
 
 
@@ -2904,7 +2909,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionLabeledStatementEnd(JNIEnv *env, j
     outputJavaState("At TOP of cactionLabelStatementEnd");
 
     //
-    // Charles4 8/17/2001: TODO: Need to wrap the labelStatement in a scope statement.
+    // charles4 8/17/2001: TODO: Need to wrap the labelStatement in a scope statement.
     //                     Should we wrap it in a basic block?
     // ... Would be better if the SglabeledStatement was a subclass of SgScopeStatement.
     //
@@ -2915,14 +2920,12 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionLabeledStatementEnd(JNIEnv *env, j
     SgStatement *statement = astJavaStatementStack.front();
     astJavaStatementStack.pop_front();
 
-    // SgNode *parent = statement -> get_parent();
-    // cerr << "The original parent the statement is "
-    //      << ((unsigned long) parent)
-    //      << endl;
-    SgLabelStatement *labelStatement = SageBuilder::buildLabelStatement(label_name, statement);
-    labelStatement -> set_parent(astJavaScopeStack.front());
+    SgJavaLabelStatement *labelStatement = (SgJavaLabelStatement *) astJavaScopeStack.front();
+    astJavaScopeStack.pop_front();
 
-    setJavaSourcePosition(labelStatement, env, jToken);
+    labelStatement -> set_label(label_name);
+    labelStatement -> set_statement(statement);
+
     // Pushing 'label' on the statement stack
     astJavaStatementStack.push_front(labelStatement);
     outputJavaState("At BOTTOM of cactionLabelStatementEnd");
