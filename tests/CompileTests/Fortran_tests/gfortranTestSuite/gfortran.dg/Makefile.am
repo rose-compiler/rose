@@ -1631,31 +1631,30 @@ TEST_F03_Objects = ${ALL_F03_TESTCODES:.f03=.o}
 PASSING_TEST_Objects = $(PASSING_TEST_F90_Objects) $(PASSING_TEST_F77_Objects) $(PASSING_TEST_F77_FIXED_FORMAT_Objects) $(PASSING_TEST_F03_Objects) 
 
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+TEST_TRANSLATOR=$(top_builddir)/tests/testTranslator
 
 # Go back and build the translator we are using to test Fortran (in case make check 
 # is run directly in this directory before make has been run from the root of the 
 # ROSE directory structure).  This does not appear to work!
-../../testTranslator:
-	cd ../..; $(MAKE) testTranslator
+$(TEST_TRANSLATOR):
+	cd $(dir $@); $(MAKE) testTranslator
 
-testTranslator: ../../testTranslator
-
-$(TEST_F90_Objects): ../../../../testTranslator ${ALL_TESTCODES}
-	$(VALGRIND) ../../../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90) && touch $@
-#	$(VALGRIND) ../../../../testCodeGeneration $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
-#	$(VALGRIND) ../../../../testParser $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
+$(TEST_F90_Objects): $(TEST_TRANSLATOR) ${ALL_TESTCODES}
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90) && touch $@
+#	$(VALGRIND) $(top_builddir)/tests/testCodeGeneration $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
+#	$(VALGRIND) $(top_builddir)/tests/testParser $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
 #	ls -l $@
 
-$(TEST_F77_Objects): ../../../../testTranslator ${ALL_TESTCODES}
-#	$(VALGRIND) ../../../../testTranslator $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f77)
-#	$(VALGRIND) ../../../../testParser $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f77)
-	$(VALGRIND) ../../../../testTranslator $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f77) && touch $@ 
+$(TEST_F77_Objects): $(TEST_TRANSLATOR) ${ALL_TESTCODES}
+#	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f77)
+#	$(VALGRIND) $(top_builddir)/tests/testParser $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f77)
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f77) && touch $@ 
 #	ls -l $@
 
-$(TEST_F77_FIXED_FORMAT_Objects): ../../../../testTranslator ${ALL_TESTCODES}
-	$(VALGRIND) ../../../../testTranslator $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f) && touch $@
-#	$(VALGRIND) ../../../../testTranslator $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f)
-#	$(VALGRIND) ../../../../testParser $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f)
+$(TEST_F77_FIXED_FORMAT_Objects): $(TEST_TRANSLATOR) ${ALL_TESTCODES}
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f) && touch $@
+#	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f)
+#	$(VALGRIND) $(top_builddir)/tests/testParser $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f)
 #	ls -l $@
 
 # Note: If using gfortran version greater then 4.1, we can't call it with Fortran 2003 code since it is so buggy.
@@ -1663,8 +1662,8 @@ $(TEST_F77_FIXED_FORMAT_Objects): ../../../../testTranslator ${ALL_TESTCODES}
 #       to avoid processing the generated code (which would have the same problem).  It is easier to just use
 #       the version 4.1 gfortran which has better Fortran 2003 syntax checking support. This problem is confirmed 
 #       on versions of gfortran 4.2 and 4.3.
-$(TEST_F03_Objects): ../../../../testTranslator
-	$(VALGRIND) ../../../../testTranslator $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/$(@:.o=.f03)
+$(TEST_F03_Objects): $(TEST_TRANSLATOR)
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/$(@:.o=.f03)
 #	Since gfortran does not support F03, and thus we skip the compileation using the backend gfortran compiler, we have to force the generation of an object file. 
 #	Build a object file since gfortran fails to do so (avoids remaking the makefile target)
 	@echo "   ...force generation of $@, because gfortran compiler does not handle fortran 2003 standard (and the makefile needs $@ to avoid recompilation)."
