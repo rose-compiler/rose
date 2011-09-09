@@ -1014,7 +1014,7 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // regular (shared) paramete
         // must compare to the original init name (i_name), not the local copy (local_var_init)
         if (readOnlyVars.find(const_cast<SgInitializedName*> (i_name))==readOnlyVars.end() && isLiveOut)   // variables not in read-only set have to be restored
         {
-          if (Outliner::enable_debug)
+          if (Outliner::enable_debug && local_var_init != NULL)
             cout<<"Generating restoring statement for non-read-only variable:"<<local_var_init->unparseToString()<<endl;
 
           SgExprStatement* pack_stmt = createPackStmt (local_var_init);
@@ -1023,12 +1023,12 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // regular (shared) paramete
         }
         else
         {
-          if (Outliner::enable_debug)
+          if (Outliner::enable_debug && local_var_init != NULL)
             cout<<"skipping a read-only variable for restoring its value:"<<local_var_init->unparseToString()<<endl;
         }
       } else
       {
-        if (Outliner::enable_debug)
+        if (Outliner::enable_debug && local_var_init != NULL)
           cout<<"skipping a variable using pointer-dereferencing for restoring its value:"<<local_var_init->unparseToString()<<endl;
       }
     }
