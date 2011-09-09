@@ -27,7 +27,9 @@ class JavaParserSupport
   // 0: No significant limits applied to number of constructs in the AST.
   // 1: Limits the number to be built into the enerated AST
      static boolean VISUALIZE_AST = false;
+  // static boolean VISUALIZE_AST = true;
 
+  // I assume that 1000 is a sufficent bound to include all data members and member functions.
      static int implicitClassCounterBound     = VISUALIZE_AST ? 1   : 1000;
      static int methodCounterBound            = VISUALIZE_AST ? 2   : 1000;
      static int constructorMethodCounterBound = VISUALIZE_AST ? 2   : 1000;
@@ -47,6 +49,17 @@ class JavaParserSupport
   // This is used to save a history of what implecit classes have been seen.
      private static Set<Class> setOfClasses;
 
+  // DQ (8/24/2011): This is the support for information on the Java side that 
+  // we would know on the C++ side, but require on the Java side to support the 
+  // introspection (which requires fully qualified names).
+  // We use a hashmap to store fully qualified names associated with class names.
+  // This is used to translate class names used in type references into fully
+  // qualified names where they are implicit classes and we require introspection 
+  // to support reading them to translate their member data dn function into JNI
+  // calls that will force the ROSE AST to be built.
+  // private static HashMap<String,String> hashmapOfQualifiedNamesOfClasses;
+     public static HashMap<String,String> hashmapOfQualifiedNamesOfClasses;
+
   // Counter for recursive function call...debugging support.
      private static int implicitClassCounter = 0;
 
@@ -57,8 +70,11 @@ class JavaParserSupport
         {
        // This has to be set first (required to support source position translation).
           rose_compilationResult = x;
-          setOfClasses = new HashSet<Class>();
-          implicitClassCounter = 0;
+          setOfClasses           = new HashSet<Class>();
+          implicitClassCounter   = 0;
+
+       // DQ (8/24/2011): Added hashmap to support mapping of unqualified class names to qualified class names.
+          hashmapOfQualifiedNamesOfClasses = new HashMap<String,String>();
 
        // Set the verbose level (passed in from ROSE's "-rose:verbose n")
           verboseLevel = input_verboseLevel;
@@ -168,6 +184,21 @@ class JavaParserSupport
 
                       // Add this to the set of classes that we have seen... so that we will not try to process it more than once...
                          setOfClasses.add(typeClass);
+
+                      // String unqualifiedClassName = "X" + nestedClassName;
+
+                         int startOfUnqualifiedClassName = nestedClassName.lastIndexOf(".");
+
+                         if (verboseLevel > 1)
+                              System.out.println("startOfUnqualifiedClassName = " + startOfUnqualifiedClassName);
+
+                         String unqualifiedClassName = nestedClassName.substring(startOfUnqualifiedClassName+1);
+
+                      // Add a map from the class name to its fully qualified name (used in type lookup).
+                         if (verboseLevel > 1)
+                              System.out.println("############# Set entry in hashmapOfQualifiedNamesOfClasses: unqualifiedClassName = " + unqualifiedClassName + " nestedClassName = " + nestedClassName);
+
+                         hashmapOfQualifiedNamesOfClasses.put(unqualifiedClassName,nestedClassName);
 
                       // Control the level of recursion so that we can debug this...it seems that
                       // this is typically as high as 47 to process the implicitly included classes.
@@ -677,7 +708,10 @@ class JavaParserSupport
              {
                System.out.println("Inside of generateType(TypeReference) TypeReference node                               = " + node);
                System.out.println("Inside of generateType(TypeReference) TypeReference node.implicitConversion            = " + node.implicitConversion);
-               System.out.println("Inside of generateType(TypeReference) TypeReference node.resolvedType                  = " + node.resolvedType);
+
+            // DQ (9/3/2011): This causes too much output.
+            // System.out.println("Inside of generateType(TypeReference) TypeReference node.resolvedType                  = " + node.resolvedType);
+
                System.out.println("Inside of generateType(TypeReference) TypeReference node.resolvedType.isArrayType()    = " + node.resolvedType.isArrayType());
                System.out.println("Inside of generateType(TypeReference) TypeReference node.resolvedType.isGenericType()  = " + node.resolvedType.isGenericType());
                System.out.println("Inside of generateType(TypeReference) TypeReference node.resolvedType.isClass()        = " + node.resolvedType.isClass());
@@ -765,7 +799,40 @@ class JavaParserSupport
                if (isPrimativeType(node.resolvedType) == false && node.resolvedType.isClass() == false)
                   {
                  // System.out.println("In generateType(TypeReference): Calling buildImplicitClassSupport() to recursively build the class structure with member declarations: name = " + name);
-                    buildImplicitClassSupport(name);
+                 // buildImplicitClassSupport(name);
+
+                 // DQ (9/4/2011): This does not work well enough since the set is interms of the internal types instead of type names.
+                 // So use the rawTypeName and the hashmapOfQualifiedNamesOfClasses instead (since it is clearer test to debug).
+                 // DQ (9/3/2011): Check if this is a type (class) that has already been handled.
+                 // if (setOfClasses.contains(node.resolvedType) == false)
+
+/*
+                     System.out.println("In generateType(TypeReference): Output set of entries in hashmapOfQualifiedNamesOfClasses for name = " + name);
+                     Set<Map.Entry<String,String>> set = hashmapOfQualifiedNamesOfClasses.entrySet();
+                     Iterator i = set.iterator();
+                  // Display elements
+                     while(i.hasNext())
+                        {
+                          Map.Entry<String,String> me = (Map.Entry<String,String>)i.next();
+                          System.out.print("Hashmap hashmapOfQualifiedNamesOfClasses entry: " + me.getKey() + ": ");
+                          System.out.println(me.getValue());
+                        }
+*/
+
+                  // DQ (9/5/2011): Fixed this to use containsKey() member function.
+                  // DQ (9/4/2011): This code is a problem, I think that the set types are inconsistant so this predicate is always false.
+                  // if (hashmapOfQualifiedNamesOfClasses.entrySet().contains(rawTypeName) == false)
+                     if (hashmapOfQualifiedNamesOfClasses.containsKey(rawTypeName) == false)
+                       {
+                         System.out.println("In generateType(TypeReference): This class has not been seen previously: name = " + name);
+                         buildImplicitClassSupport(name);
+                         System.out.println("DONE: In generateType(TypeReference): This class has not been seen previously: name = " + name);
+                       }
+                      else
+                       {
+                         System.out.println("In generateType(TypeReference): This class already been handled: name = " + name);
+                       }
+
                  // System.out.println("DONE: In generateType(TypeReference): Calling buildImplicitClassSupport() to recursively build the class structure with member declarations: name = " + name);
                   }
 

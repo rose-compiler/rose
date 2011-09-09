@@ -495,7 +495,8 @@ void outputJavaState( const std::string label )
   //      astDeclarationStatementStack,
   //      astInitializerStack, 
 
-     if ( SgProject::get_verbose() <= 3 )
+  // if ( SgProject::get_verbose() <= 3 )
+     if ( SgProject::get_verbose() <= 3 && label.find("debug") == string::npos )
         {
        // Skip output of stack data for verbose levels less than or equal to 2
           return;
@@ -1249,6 +1250,13 @@ buildClassSupport (const SgName & className, bool implicitClass, Token_t* token)
                ROSE_ASSERT(outerScope->symbol_exists(name,classSymbol) == false);
 
                outerScope->insert_symbol(name,classSymbol);
+
+#if 0
+            // DQ (9/4/2011): Moved this code to avoid leaving a declaration on the stack when 
+            // this is a class that has been previously handled (see test2011_48.java).
+               ROSE_ASSERT(declaration->get_definition() != NULL);
+               astJavaScopeStack.push_front(declaration->get_definition());
+#endif
              }
             else
              {
@@ -1273,7 +1281,9 @@ buildClassSupport (const SgName & className, bool implicitClass, Token_t* token)
        // Note that this pushed only the new implicit class definition onto the stack 
        // and none of the parent class scopes. Is this going to be OK?
           ROSE_ASSERT(declaration->get_definition() != NULL);
+#if 1
           astJavaScopeStack.push_front(declaration->get_definition());
+#endif
           ROSE_ASSERT(astJavaScopeStack.front()->get_parent() != NULL);
 
           ROSE_ASSERT(declaration->get_parent() != NULL);
@@ -1835,7 +1845,7 @@ lookupSymbolInParentScopesUsingQualifiedName( SgName qualifiedName, SgScopeState
 
      list<SgName>::iterator i = qualifiedNameList.begin();
 
-     printf ("In lookupSymbolInParentScopesUsingQualifiedName(): Seaching for symbol for qualifiedName = %s name = %s (inital name) \n",qualifiedName.str(),(*i).str());
+  // printf ("In lookupSymbolInParentScopesUsingQualifiedName(): Seaching for symbol for qualifiedName = %s name = %s (inital name) \n",qualifiedName.str(),(*i).str());
 
   // Lookup the first name using the parent scopes, but then drill down into the identified scopes only.
      SgSymbol* returnSymbol = SageInterface::lookupSymbolInParentScopes(*i,currentScope);
@@ -1847,7 +1857,7 @@ lookupSymbolInParentScopesUsingQualifiedName( SgName qualifiedName, SgScopeState
   // If there are more names in the list, then drill down in to each to find the next class.
      while (i != qualifiedNameList.end())
         {
-          printf ("In lookupSymbolInParentScopesUsingQualifiedName(): Seaching for symbol for name = %s \n",(*i).str());
+       // printf ("In lookupSymbolInParentScopesUsingQualifiedName(): Seaching for symbol for name = %s \n",(*i).str());
 
           currentScope = get_scope_from_symbol(returnSymbol);
           ROSE_ASSERT(currentScope != NULL);
@@ -1857,7 +1867,6 @@ lookupSymbolInParentScopesUsingQualifiedName( SgName qualifiedName, SgScopeState
 
           i++;
         }
-
 
      return returnSymbol;
    }

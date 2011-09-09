@@ -4063,7 +4063,9 @@ SgJavaThrowStatement *SageBuilder::buildJavaThrowStatement(SgThrowOp *op)
   return throw_stmt;
 }
 
-SgJavaForEachStatement *SageBuilder::buildJavaForEachStatement(SgInitializedName *variable, SgExpression *collection, SgStatement *body)
+// DQ (9/3/2011): Changed the API to conform to the Java grammar.
+// SgJavaForEachStatement *SageBuilder::buildJavaForEachStatement(SgInitializedName *variable, SgExpression *collection, SgStatement *body)
+SgJavaForEachStatement *SageBuilder::buildJavaForEachStatement(SgVariableDeclaration *variable, SgExpression *collection, SgStatement *body)
 {
   SgJavaForEachStatement *foreach_stmt = new SgJavaForEachStatement(variable, collection, body);
   ROSE_ASSERT(foreach_stmt);
