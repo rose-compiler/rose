@@ -52,15 +52,15 @@ TESTCODES_REQUIRED_TO_PASS = \
      pgc_test2011_05.java \
      pgc_test2011_06.java \
      pgc_test2011_07.java \
-     pgc_test2011_08.java 
+     pgc_test2011_08.java \
+     pgc_test2011_09.java
 
 # DQ (9/3/2011): This test code was listed twice...
 #    pgc_2011_30.java
 #
 # These test pass the compilation using ROSE, all AST tests, unparsing to generate 
 # Java code, and the final compilation of that code using a backend compiler (javac).
-TESTCODE_CURRENTLY_FAILING = \
-     pgc_test2011_09.java
+TESTCODE_CURRENTLY_FAILING =
 
 # These tests pass the compilation using ROSE, all AST tests, and unparsing to generate 
 # Java code, but fails the final compilation step of the generated Java code.
