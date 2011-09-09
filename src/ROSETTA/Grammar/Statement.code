@@ -1779,6 +1779,32 @@ HEADER_LABEL_STATEMENT_START
 
 HEADER_LABEL_STATEMENT_END
 
+
+HEADER_JAVA_LABEL_STATEMENT_START
+
+/*
+// DQ (8/26/2011): Uncomment these when we need them.  For now support the AST construction.
+
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
+#if ALT_FIXUP_COPY
+       // DQ (11/7/2007): These need to be called separately (see documentation)
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+#else
+       // DQ (10/5/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
+          virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
+#endif
+*/
+      //! Support for where the scope is explicitly required
+          virtual bool hasExplicitScope() const;
+
+HEADER_JAVA_LABEL_STATEMENT_END
+
+
 HEADER_WITH_STATEMENT_START
 HEADER_WITH_STATEMENT_END
 
@@ -4258,6 +4284,9 @@ SgScopeStatement::containsOnlyDeclarations() const
      bool returnValue = false;
      switch ( variantT() )
         {
+       // DQ (9/5/2011): Added support for SgJavaLabelStatement
+          case V_SgJavaLabelStatement:
+
        // DQ (11/30/2007): Added more Fortran support.
           case V_SgAssociateStatement:
 
@@ -5019,6 +5048,14 @@ SgScopeStatement::getStatementList () const
                break;
              }
 
+       // DQ (9/5/2011): Added support for SgJavaLabelStatement, but not certain if this is correct implementation.
+          case V_SgJavaLabelStatement:
+             {
+               const SgJavaLabelStatement* javaLabelStatement = isSgJavaLabelStatement(currentScope);
+               ROSE_ASSERT (javaLabelStatement != NULL);
+               return isSgBasicBlock(javaLabelStatement->get_statement()) ? isSgBasicBlock(javaLabelStatement->get_statement())->getStatementList() : emptyStatementList;
+               break;
+             }
 
           default:
                printf ("ERROR: default reached in switch (getStatementList() const) currentScope = %s \n",currentScope->sage_class_name());
@@ -11595,6 +11632,24 @@ SgLabelStatement::get_symbol_from_symbol_table() const
    }
 
 SOURCE_LABEL_STATEMENT_END
+
+
+SOURCE_JAVA_LABEL_STATEMENT_START
+
+bool
+SgJavaLabelStatement::hasExplicitScope() const
+   {
+  // This function reports that this IR node stores its scope explicitly.
+
+     return true;
+   }
+
+void
+SgJavaLabelStatement::post_construction_initialization()
+   {
+   }
+
+SOURCE_JAVA_LABEL_STATEMENT_END
 
 
 SOURCE_WHILE_STATEMENT_START
