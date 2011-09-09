@@ -61,13 +61,9 @@ namespace
 
     MemoryType* findContainingMem(Location addr, size_t sz) const
     {
-      int i = CACHEELEMS;
-
-      while ( i && cache[i] )
+      for (CacheIdx i = 0; i < CACHEELEMS; ++i)
       {
-        if (cache[i]->containsMemArea(addr, sz)) return cache[i];
-
-        --i;
+        if (cache[i] && cache[i]->containsMemArea(addr, sz)) return cache[i];
       }
 
       return NULL;
@@ -83,7 +79,7 @@ namespace
     {
       for (CacheIdx i = 0; i < CACHEELEMS; ++i)
       {
-        if (cache[i] == &mt) cache[i] = NULL;
+        if (cache[i] == &mt) cache[i] = 0;
       }
     }
   };

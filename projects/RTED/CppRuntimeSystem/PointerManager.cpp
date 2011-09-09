@@ -277,6 +277,10 @@ void PointerManager::deletePointerInRegion( const MemoryType& mt )
     Location       to(mt.lastValidAddress());
     PointerInfo    objFrom(from);
     PointerInfo    objTo(to);
+
+    // \klocworkbug Iterator 'toDelete' retrieved for container 'this->pointerInfoSet' at line 284
+    //              is dereferenced when it can be equal to value returned by call to [r]end().
+    // \pp          not sure what this refers to?
     PointerSetIter lb = pointerInfoSet.lower_bound(&objFrom);
     PointerSetIter ub = pointerInfoSet.upper_bound(&objTo  );
 
@@ -477,9 +481,9 @@ void PointerManager::invalidatePointerToRegion(const MemoryType& mt)
       // \todo check if setTargetAddress does not already erase the element
       //       from the map
       pi->setTargetAddress( nullLoc );
-	  
-	  TargetToPointerMap::iterator toErase = range.iter();
-	  range.next(); //Once we erase the iterator it's invalid and we can't call next()
+
+    TargetToPointerMap::iterator toErase = range.iter();
+    range.next(); //Once we erase the iterator it's invalid and we can't call next()
       targetToPointerMap.erase( toErase );
 
       insert(targetToPointerMap, TargetToPointerMap::value_type(nullLoc, pi)) /* insert */;
