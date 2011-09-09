@@ -398,7 +398,7 @@ bool DivLattice::incr(long increment)
 	if(level == valKnown)
 		value += increment;
 	else if(level == divKnown)
-		rem = (rem+increment)/div;
+		rem = (rem+increment)%div;
 	else
 		return false;
 	
