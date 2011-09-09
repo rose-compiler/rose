@@ -37,8 +37,6 @@ void NodeState::addLattice(const Analysis* analysis, int latticeName, Lattice* l
 	addLattice_ex(dfInfoBelow, analysis, latticeName, l->copy());
 }*/
 
-// Sets this node's lattices for this analysis, making copies of the provided lattices.
-// This call takes the actual provided lattices and does not make a copy of them.
 void NodeState::setLattices(const Analysis* analysis, vector<Lattice*>& lattices)
 {
 	vector<Lattice*> tmp;
@@ -119,8 +117,6 @@ void NodeState::setLattices(const Analysis* analysis, vector<Lattice*>& lattices
 	initialized((Analysis*)analysis);
 }
 
-// Sets this node's above lattices for this analysis to the given vector of lattices, 
-// deleting any previous mapping (the previous Lattices are freed)
 void NodeState::setLatticeAbove(const Analysis* analysis, vector<Lattice*>& lattices)
 {
 	// if the analysis currently has a mapping in dfInfoAbove
@@ -162,8 +158,6 @@ void NodeState::setLatticeAbove(const Analysis* analysis, vector<Lattice*>& latt
 	initialized((Analysis*)analysis);
 }
 
-// Sets this node's below lattices for this analysis to the given vector of lattices, 
-// deleting any previous mapping (the previous Lattices are freed)
 void NodeState::setLatticeBelow(const Analysis* analysis, vector<Lattice*>& lattices)
 {
 	// if the analysis currently has a mapping in dfInfoBelow
