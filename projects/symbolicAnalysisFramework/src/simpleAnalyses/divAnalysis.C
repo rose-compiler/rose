@@ -601,10 +601,29 @@ void DivAnalysisTransfer::visit(SgAddOp *sgn)         { transferArith(sgn, boost
 void DivAnalysisTransfer::visit(SgSubtractOp *sgn)    { transferArith(sgn, boost::bind(&DivAnalysisTransfer::transferAdditive, _1, _2, _3, _4, false)); }
 
 void DivAnalysisTransfer::transferIncrement(SgUnaryOp *sgn) {
-  DivLattice *arg1Lat, *arg2Lat = NULL, *resLat;
-  if (getLattices(sgn, arg1Lat, arg2Lat, resLat))
-    transferAdditive(arg1Lat, arg2Lat, resLat, isSgPlusPlusOp(sgn));
-  delete arg2Lat; // Allocated by getLattices
+  DivLattice *arg1Lat, *arg2Lat, *resLat;
+  getLattices(sgn, arg1Lat, arg2Lat, resLat);
+
+  if (!arg1Lat) {
+    ROSE_ASSERT(!resLat);
+    return;
+  }
+  
+  long increment = isSgPlusPlusOp(sgn) ? 1 : -1;
+
+  if (sgn->get_mode() == SgUnaryOp::prefix) {
+    //arg1Lat->incr(increment);
+    transferAdditive(arg1Lat, arg2Lat, arg1Lat, isSgPlusPlusOp(sgn));
+    if (resLat)
+      resLat->copy(arg1Lat);
+  } else {
+    if (resLat)
+      resLat->copy(arg1Lat);
+    transferAdditive(arg1Lat, arg2Lat, arg1Lat, isSgPlusPlusOp(sgn));
+    //arg1Lat->incr(increment);
+  }
+
+  delete arg2Lat;
 }
 void DivAnalysisTransfer::visit(SgPlusPlusOp *sgn) { transferIncrement(sgn); }
 void DivAnalysisTransfer::visit(SgMinusMinusOp *sgn) { transferIncrement(sgn); }
