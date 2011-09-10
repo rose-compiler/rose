@@ -424,6 +424,12 @@ class FortranCodeGeneration_locatedNode : public UnparseLanguageIndependentConst
           virtual void unparseOmpEndDirectiveClauses       (SgStatement* stmt,     SgUnparse_Info& info);
           virtual void unparseOmpEndDirectivePrefixAndName (SgStatement* stmt, SgUnparse_Info& info);
 
+         /**
+          * override to make unary plus/minus expressions have the same precedence as binary plus;
+          * everything else remains the same.
+          */
+          virtual PrecedenceSpecifier getPrecedence(SgExpression* exp);
+
      private:
           /**
           * For unparsing the dimension attribute of an entity in a type declaration.

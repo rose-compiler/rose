@@ -4259,7 +4259,8 @@ FortranCodeGeneration_locatedNode::unparseProcHdrStmt(SgStatement* stmt, SgUnpar
           unparseBindAttribute(procedureHeader);
 
        // Unparse the result(<name>) suffix if present
-          if (procedureHeader->get_result_name() != NULL && procedureHeader->get_name().str() != result_name_str)
+          if (procedureHeader->get_result_name() != NULL &&
+                  procedureHeader->get_name()!= procedureHeader->get_result_name()->get_name())
              {
                curprint(" result(");
                curprint(procedureHeader->get_result_name()->get_name());
