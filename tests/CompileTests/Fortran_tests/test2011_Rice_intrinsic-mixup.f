@@ -1,7 +1,7 @@
-      subroutine XE ()
-      LP = index('fortran', 'r')
+      subroutine foo ()
+      LP = index('fortran', 'r') 
       end
 
-      subroutine YGE ()
-         index = 4
+      subroutine bar ()
+         index = 4  ! ROSE assertion failure due to mixup with intrinsic function INDEX
       end

@@ -256,6 +256,12 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2011_Rice_forward-ref-derived-type.f90 \
      test2011_Rice_func-char-len.f90 \
      test2011_Rice_funcdecl-1.f90 \
+     test2011_Rice_function-implicit-result-1.f90 \
+     test2011_Rice_function-implicit-result-2.f90 \
+     test2011_Rice_function-no-result-1.f90 \
+     test2011_Rice_function-no-result-2.f90 \
+     test2011_Rice_function-result-1.f90 \
+     test2011_Rice_function-result-2.f90 \
      test2011_Rice_function-where-var-expected.f90 \
      test2011_Rice_ifConstruct.f90 \
      test2011_Rice_ifStmt.f90 \
@@ -278,6 +284,7 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2011_Rice_return-with-expr.f90 \
      test2011_Rice_singleton-array-constructor.f90 \
      test2011_Rice_stop-no-stop-code.f90 \
+     test2011_Rice_unary-plus-minus.f90 \
      test2011_Rice_use-only-rename.f90 \
      test2011_Rice_use-rename.f90 \
      test2011_Rice_vector-constructor-1.f90 \
@@ -544,6 +551,7 @@ F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
      test2011_Rice_continuation-spits-token.f \
      test2011_Rice_initial-tab.f \
      test2011_Rice_intrinsic-mixup.f \
+     test2011_Rice_lost-func-return-type.f \
      test2011_Rice_shared_continue.f \
      test2011_Rice_shared_label_stmt.f 
 

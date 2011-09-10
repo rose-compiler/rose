@@ -1,5 +1,5 @@
      PROGRAM P
-     CHARACTER IATOM(2)
-     REAL ATOM(2)
-     DATA (IATOM(I),ATOM(I),I=1,2) / 'H',  1.00797, 'E',  4.00260 /
+     CHARACTER c(2)
+     REAL a(2)
+     DATA (c(I),a(I),I=1,2) / 'H',  1.00797, 'E',  4.00260 /
      END PROGRAM

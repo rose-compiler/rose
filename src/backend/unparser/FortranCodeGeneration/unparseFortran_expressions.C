@@ -1896,3 +1896,15 @@ void FortranCodeGeneration_locatedNode::unparseCoArrayExpression (SgExpression *
     }
     curprint("]");
 }
+
+
+// Same as in base class, except unary plus/minus have equal precedence with binary plus.
+PrecedenceSpecifier FortranCodeGeneration_locatedNode::getPrecedence(SgExpression* exp)
+{
+    SgAddOp * addOp = new SgAddOp(NULL, NULL, NULL, NULL);
+    PrecedenceSpecifier addOpPrec = UnparseLanguageIndependentConstructs::getPrecedence(addOp);
+    delete addOp;
+    return (isSgMinusOp(exp) || isSgUnaryAddOp(exp) ? addOpPrec : UnparseLanguageIndependentConstructs::getPrecedence(exp));
+}
+
+

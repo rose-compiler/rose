@@ -3675,7 +3675,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpGenericStatement (SgStateme
 
 PrecedenceSpecifier
 UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr) {
-  // DQ (11/24/2007): This is a redundant mechanism for computing the precidence of expressions
+  // DQ (11/24/2007): This is a redundant mechanism for computing the precedence of expressions
 #if PRINT_DEVELOPER_WARNINGS
      printf ("This is a redundant mechanism for computing the precedence of expressions \n");
 #endif
