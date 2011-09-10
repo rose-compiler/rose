@@ -1867,56 +1867,32 @@ FortranCodeGeneration_locatedNode::unparseUserDefinedBinaryOp (SgExpression* exp
    }
 
 
-//FMZ (02/02/2009): Added for unparsing co_expression
-void
-FortranCodeGeneration_locatedNode::unparseCoArrayExpression (SgExpression* expr, SgUnparse_Info& info)
-   {
-    
-    // printf("unparseCoArrayExpression\n");
- 
-    bool hasImageSelec = false;
+void FortranCodeGeneration_locatedNode::unparseCoArrayExpression (SgExpression * expr, SgUnparse_Info & info)
+{
+    // get subparts
+    SgCAFCoExpression * coExpr     = isSgCAFCoExpression(expr);
+    SgExpression *      referData  = coExpr->get_referData();
+    SgExpression *      teamRank   = coExpr->get_teamRank();
+    SgVarRefExp *       teamVarRef = coExpr->get_teamId();
 
-    SgCAFCoExpression* coExpr = isSgCAFCoExpression(expr);  
+    // print the data reference
+    ROSE_ASSERT(referData);
+    unparseLanguageSpecificExpression(referData, info);
 
-    ROSE_ASSERT(coExpr != NULL);
-
-    SgExpression *dataExpr = coExpr->get_referData();
-   
-    ROSE_ASSERT(dataExpr != NULL);
-
-    SgExpression *teamRank = coExpr->get_teamRank();
-
-    unparseLanguageSpecificExpression(dataExpr,info);
-
-    //SgName teamID = coExpr->get_teamId();
-    SgVarRefExp* teamIdRef = coExpr->get_teamId();
-
-     SgInitializedName* teamDecl = NULL;
-    
-    if (teamIdRef) {
-        teamDecl  = teamIdRef->get_symbol()->get_declaration();
-     }
-
-    hasImageSelec =  teamDecl || teamRank;
-
-    if (hasImageSelec) 
-        curprint("[");
-
-    if (teamRank) { 
-        SgIntVal* intRank = isSgIntVal(teamRank);
-
-        if (intRank)
-           unparseIntVal(intRank, info);
+    // print the image selector
+    curprint("[");
+    if( teamRank )
+    {
+        SgIntVal * val = isSgIntVal(teamRank);
+        if( val )
+            unparseIntVal(val, info);
         else
-           unparseLanguageSpecificExpression(teamRank,info);
+            unparseLanguageSpecificExpression(teamRank, info);
     }
-
-
-    if (teamDecl) {
+    if( teamVarRef )
+    {
         curprint("@");
-        curprint(teamDecl->get_name().str());
+        curprint(teamVarRef->get_symbol()->get_declaration()->get_name().str());
     }
-
-    if (hasImageSelec)
-        curprint("]");
-  }
+    curprint("]");
+}

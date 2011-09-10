@@ -8246,7 +8246,6 @@ void c_action_section_subscript_list(int count)
  * @param hasTypeSpec True if type-spec is present
  * @param hasAllocOptList True if alloc-opt-list is present
  */
-// void c_action_allocate_stmt(Token_t * label, ofp_bool hasTypeSpec, ofp_bool hasAllocOptList)
 void c_action_allocate_stmt(Token_t *label, Token_t *allocateKeyword,
         Token_t *eos, ofp_bool hasTypeSpec, ofp_bool hasAllocOptList)
 {
@@ -8307,8 +8306,7 @@ void c_action_allocate_stmt(Token_t *label, Token_t *allocateKeyword,
                     }
                     else
                     {
-                        // Error
-                        printf("Unknown dealloc option: %s \n", text.c_str());
+                        printf("Unknown allocate option: %s \n", text.c_str());
                         ROSE_ASSERT(false);
                     }
                 }
@@ -8731,7 +8729,6 @@ void c_action_parenthesized_expr()
         printf("In c_action_parenthesized_expr() \n");
 
     ROSE_ASSERT(!astExpressionStack.empty());
-    cout << "PARENTHESES NOTED FOR EXPR " << astExpressionStack.front() << endl;    // SKW DEBUG
     astExpressionStack.front()->set_need_paren(true);
 }
 
@@ -19612,7 +19609,7 @@ void c_action_cleanUp()
 //------------------------------------------------------------------------
 // RICE IMPLEMENTATION
 //------------------------------------------------------------------------
-#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
+
 void c_action_coarray_spec(int count)
 {
 #if 0
@@ -19636,11 +19633,13 @@ void c_action_coarray_spec(int count)
 #endif
 }
 
+
 void c_action_rice_co_shape_spec(const char *arg)
 {
     if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf("In c_action_co_shape_spec() \n");
 }
+
 
 void c_action_allocate_coarray_spec()
 {
@@ -19648,7 +19647,6 @@ void c_action_allocate_coarray_spec()
         printf("In c_action_allocate_co_array_spec() \n");
 }
 
-#endif
 
 /**
  * carg_0 is a flag about the coarray status:
@@ -19684,7 +19682,6 @@ void c_action_rice_image_selector(Token_t *team_id)
 
             if (teamName == teamWorld || teamName == teamDefault)
                 teamId = add_external_team_decl(teamName);
-
         }
 
         if (teamId != NULL)
@@ -19699,7 +19696,6 @@ void c_action_rice_image_selector(Token_t *team_id)
     if (astExpressionStack.empty() == false)
     {
         rankExpr = astExpressionStack.front();
-        // pop out the expresison of the "rank"
         astExpressionStack.pop_front();
     }
 
@@ -19709,6 +19705,7 @@ void c_action_rice_image_selector(Token_t *team_id)
             rankExpr, dataExpr);
     astExpressionStack.push_front(coExpr);
 }
+
 
 /**
  * Copointer dereference.
@@ -19720,73 +19717,76 @@ void c_action_rice_co_dereference_op(Token_t *leftBracket,
     mprt.hasCo_deref = true;
 }
 
+
 /**
- * carg_0 is a flag about the coarray status:
- *   0 --> no team image
- *   1 --> using a team
- *   .... --> unused
+ * Coarray shape spec.
+ *
+ * 'flag' indicates the form of the coarray-shape-spec:
+ *      0 => '[*]'
+ *      1 => '[@team]' or '[@]' shorthand
+ * 'team_id' is the specified team if any, otherwise null
+ *
  */
-//FMZ (2/12/2009): Added CoArray image team ID
-void c_action_rice_allocate_coarray_spec(int type, Token_t *team_id)
+void c_action_rice_allocate_coarray_spec(int flag, Token_t * team_id)
 {
-    if (SgProject::get_verbose() > DEBUG_COMMENT_LEVEL)
+    if( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
         printf("In c_action_rice_allocate_co_array_spec() \n");
 
-    SgVarRefExp* teamIdReference = NULL;
-
-    if (team_id)
+    // determine the team name if any
+    string teamName;
+    if( flag == 0 )
+        teamName = "team_world";
+    else
     {
-        SgVariableSymbol* teamId =
-                trace_back_through_parent_scopes_lookup_variable_symbol(
-                        team_id->text, astScopeStack.front());
-        if (teamId == NULL)
+        if( team_id )
         {
+            teamName = team_id->text;
+            std::transform(teamName.begin(), teamName.end(), teamName.begin(), ::tolower);
+        }
+        else
+            teamName = "";
+    }
 
-            string teamName = team_id->text;
-            string teamWorld = "team_world";
-            string teamDefault = "team_default";
-
-            std::transform(teamName.begin(), teamName.end(), teamName.begin(),
-                    ::tolower);
-
-            if (teamName == teamWorld || teamName == teamDefault)
-            {
-                teamId = add_external_team_decl(teamName);
-            }
-
+    // compute a corresponding variable reference (or NULL)
+    SgVarRefExp * teamVarRef;
+    if( teamName != "" )
+    {
+        SgVariableSymbol * teamSymbol = trace_back_through_parent_scopes_lookup_variable_symbol(teamName, astScopeStack.front());
+        if( !teamSymbol )
+        {
+            if( teamName == "team_world" || teamName == "team_default" )
+                teamSymbol = add_external_team_decl(teamName);
+            else
+                cout << "FATAL ERROR: undeclared team variable '" << teamName << "' in allocate statement" << endl;
         }
 
-        teamIdReference = new SgVarRefExp(teamId);
-        setSourcePosition(teamIdReference, team_id);
-    }
-
-    SgExpression* dataExpr = astExpressionStack.front();
-    astExpressionStack.pop_front();
-
-    //SgCAFCoExpression* coExpr = new SgCAFCoExpression(team_id->text,NULL,dataExpr);
-    SgCAFCoExpression* coExpr = new SgCAFCoExpression(teamIdReference, NULL,
-            dataExpr);
-    coExpr->set_parent(dataExpr->get_parent());
-
-    dataExpr->set_parent(coExpr);
-
-    if (team_id == NULL)
-    { //set the  position based on the subexpression's location
-        // laksono 2009.01.06: when there is no team id provided, the resetSourcePosition will fail
-        //      adding setSourcePosition before reset will solve this.
-        setSourcePosition(coExpr);
-        resetSourcePosition(coExpr, dataExpr);
+        ROSE_ASSERT(teamSymbol);
+        teamVarRef = new SgVarRefExp(teamSymbol);
     }
     else
-    { //set the position based on the Token_t
-        setSourcePosition(coExpr, team_id);
-    }
+        teamVarRef = NULL;
+
+    // convert expression on top of stack to a coarray-reference expression
+
+    SgExpression * dataExpr = astExpressionStack.front();
+    astExpressionStack.pop_front();
+
+    SgCAFCoExpression * coExpr = new SgCAFCoExpression(teamVarRef, NULL, dataExpr);
+    coExpr->set_parent(dataExpr->get_parent());
+    dataExpr->set_parent(coExpr);
 
     astExpressionStack.push_front(coExpr);
+
+    // set source positions of new constructs
+    // -- team_id may not be available, dataExpr was not known earlier, 'reset...' requires prior 'set...'
+    if( teamVarRef )
+        { setSourcePosition(teamVarRef); resetSourcePosition(teamVarRef, dataExpr); }
+    setSourcePosition(coExpr); resetSourcePosition(coExpr, dataExpr);
 }
 
+
 /**
- * Rice's with team statemetn:
+ * Rice's with team statement:
  * @param label: label of the statement
  * @param team_id: the team ID
  */
@@ -19795,13 +19795,9 @@ void c_action_rice_co_with_team_stmt(Token_t *label, Token_t *team_id)
     if (team_id == NULL)
         printf("ERROR: Rice 'with team' statement without identifier\n");
 
-    SgBasicBlock * body = new SgBasicBlock(
-            Sg_File_Info::generateDefaultFileInfo());
+    SgBasicBlock * body = new SgBasicBlock(Sg_File_Info::generateDefaultFileInfo());
     ROSE_ASSERT(body != NULL);
-
-    // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
     body->setCaseInsensitive(true);
-
     setSourcePosition(body, team_id);
 
     SgVariableSymbol* teamId =
@@ -19809,9 +19805,8 @@ void c_action_rice_co_with_team_stmt(Token_t *label, Token_t *team_id)
                     team_id->text, astScopeStack.front());
     if (teamId == NULL)
     {
-        printf(
-                "ERROR(CAF): The team selector:\"%s\" must be declared with \"Team\" statement.\n",
-                team_id->text);
+        printf("ERROR(CAF): The team selector:\"%s\" must be declared with \"Team\" statement.\n",
+               team_id->text);
         ROSE_ASSERT(false);
     }
 
@@ -19822,42 +19817,34 @@ void c_action_rice_co_with_team_stmt(Token_t *label, Token_t *team_id)
 
     SgCAFWithTeamStatement *withTeam = new SgCAFWithTeamStatement(
             teamIdReference, body);
-
-    // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
     withTeam->setCaseInsensitive(true);
-
     setSourcePosition(withTeam, team_id);
 
     SgScopeStatement* currentScope = getTopOfScopeStack();
-
-    withTeam->set_parent(currentScope);
-
+    withTeam->set_parent(getTopOfScopeStack());
     currentScope->append_statement(withTeam);
 
     body->set_parent(withTeam);
 
-    ROSE_ASSERT(astScopeStack.empty() == false);
-
+    ROSE_ASSERT(!astScopeStack.empty());
     astScopeStack.push_front(withTeam);
-
     astScopeStack.push_front(body);
 
 }
+
 
 /**
  * Rice's end with team statement:
  * @param label: label of the statement
  * @param team_id: the team ID (optional)
  */
-void c_action_rice_end_with_team_stmt(Token_t *label, Token_t *team_id,
-        Token_t *eos)
+void c_action_rice_end_with_team_stmt(Token_t *label, Token_t *team_id, Token_t *eos)
 {
-
-    ROSE_ASSERT(astScopeStack.empty() == false);
+    ROSE_ASSERT(!astScopeStack.empty());
     setSourceEndPosition(getTopOfScopeStack(), eos);
     astScopeStack.pop_front();
-
 }
+
 
 /**
  * Rice's finish statement:
@@ -19871,14 +19858,6 @@ static const char * ENDFINISH_SUBR_NAME = "CAF_END_FINISH";
 
 void c_action_rice_finish_stmt(Token_t *label, Token_t *teamToken, Token_t *eos)
 {
-#if 1
-    const char * s_label = (label ? label->text : "<no label>");
-    const char * s_team = (teamToken ? teamToken->text : "<no team>");
-    const char * s_eos = eos->text;
-    printf("In c_action_rice_finish_stmt(%s, %s, %s)", s_label, s_team, s_eos);
-    outputState("At TOP of c_action_rice_finish_stmt()");
-#endif
-
     finish_stack.push(teamToken);
 
     // add translation to current scope
@@ -19920,6 +19899,7 @@ void c_action_rice_finish_stmt(Token_t *label, Token_t *teamToken, Token_t *eos)
 #endif
 }
 
+
 /**
  * Rice's end finish statement:
  * @param label Optional statement label.
@@ -19930,13 +19910,6 @@ static const char * SPAWN_SUBR_NAME = "CAF_SPAWN";
 
 void c_action_rice_end_finish_stmt(Token_t *label, Token_t *eos)
 {
-#if 1
-    const char * s_label = (label ? label->text : "<no label>");
-    const char * s_eos = (eos ? eos->text : "no eos");
-    printf("In c_action_rice_end_finish_stmt(%s, %s)", s_label, s_eos);
-    outputState("At TOP of c_action_rice_end_finish_stmt()");
-#endif
-
     // scope for enclosed statements has already been removed by 'c_action_block'
 
     // pop finish construct off our stack
@@ -20068,6 +20041,7 @@ void c_action_rice_spawn_stmt(Token_t * label, Token_t * spawn, Token_t * eos,
 #endif
 }
 
+
 // DQ (10/1/2009): Added these functions because the NMI platforms complain about it being undefined.
 // It appears that it is strict.
 void c_action_component_initialization()
@@ -20106,16 +20080,9 @@ void c_action_forall_body_construct()
 void c_action_forall_construct()
 {
 }
-
-#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
 void c_action_image_selector(Token_t *leftBracket, Token_t *rightBracket)
 {
 }
-#else
-void c_action_image_selector(int carg_0)
-{}
-#endif
-
 void c_action_pointer_object()
 {
 }
@@ -20198,11 +20165,11 @@ void c_action_cosubscript_list__begin()
         printf("In c_action_cosubscript_list__begin. \n");
 }
 
-void c_action_cosubscript_list(int carg_0, Token_t* team_id)
+void c_action_cosubscript_list(int count, Token_t* team_id)
 {
     if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
-        printf("In c_action_cosubscript_list,co_rank = %d \n", carg_0);
-    ROSE_ASSERT(carg_0 ==1); // DXN: TODO - remove this restriction
+        printf("In c_action_cosubscript_list,co_rank = %d \n", count);
+    ROSE_ASSERT(count == 1); // DXN: TODO - remove this restriction
     c_action_rice_image_selector(team_id);
 }
 

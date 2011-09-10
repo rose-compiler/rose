@@ -53,6 +53,7 @@ TESTCODES_REQUIRED_TO_PASS = \
     copointer-scalar-coscalar.caf \
     copointer-team1.caf \
     copointer-team2.caf \
+    coshape.caf \
     cotarget-declarations.caf \
     coscalar-1.caf \
     derived-type-1.caf \
