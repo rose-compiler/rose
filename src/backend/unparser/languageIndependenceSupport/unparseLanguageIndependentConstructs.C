@@ -3792,15 +3792,11 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr) {
           case V_:              return 0;
 #endif
 
-       // DQ (11/24/2007): Added default case!
           default:
              {
 #if PRINT_DEVELOPER_WARNINGS | 1
                printf ("Warning: GetPrecedence() in modified_sage.C: Undefined expression variant = %d = %s \n",variant,Cxx_GrammarTerminalNames[variant].name.c_str());
 #endif
-
-            // DQ (2/1/2009): Make this an error, so that we avoid unnecessary debugging.
-            // ROSE_ASSERT(false);
              }
         }
 
@@ -3859,20 +3855,12 @@ UnparseLanguageIndependentConstructs::getAssociativity(SgExpression* expr) {
           case V_SgDotExp:
               return e_assoc_right;
 
-       // DQ (2/1/2009): Added support for Fortran operator.
-       // case V_SgExponentiationOp: return 0;
-
-       // DQ (11/24/2007): Added default case!
           default:
              {
             // The implementation of this function assumes unhandled cases are not associative.
-
-            // DQ (2/1/2009): Modified to output a message when not handled!
 #if PRINT_DEVELOPER_WARNINGS
                printf ("getAssociativity(): Undefined expression variant = %d = %s \n",variant,Cxx_GrammarTerminalNames[variant].name.c_str());
 #endif
-            // DQ (2/1/2009): Make this an error, so that we avoid unnecessary debugging.
-            // ROSE_ASSERT(false);
              }
         }
 
@@ -3911,7 +3899,6 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
 #endif
 
      if ( (isSgBinaryOp(expr) != NULL) && (expr->get_need_paren() == true) )
-//   if ( expr->get_need_paren() )  // SKW WORK IN PROGRESS
         {
 #if DEBUG_PARENTHESIS_PLACEMENT
           printf ("     Special case of expr->get_need_paren(): (return true) \n");
@@ -3921,15 +3908,6 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
 
   // DQ (11/9/2009): I think this can no longer be true since we have removed the use of SgExpressionRoot.
      ROSE_ASSERT(parentExpr == NULL || parentExpr->variantT() != V_SgExpressionRoot);
-
-#if 0
-  // DQ (11/9/2009): Debugging test2009_40.C, but not this causes test2001_01.C to fail!
-  // if (parentExpr != NULL && parentExpr->variantT() == V_SgConstructorInitializer)
-     if (expr->variantT() == V_SgConstructorInitializer)
-        {
-          return true;
-        }
-#endif
 
      if ( parentExpr == NULL || parentExpr->variantT() == V_SgExpressionRoot || expr->variantT() == V_SgExprListExp || expr->variantT() == V_SgConstructorInitializer || expr->variantT() == V_SgDesignatedInitializer)
         {

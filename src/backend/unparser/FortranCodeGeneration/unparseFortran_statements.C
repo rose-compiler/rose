@@ -5268,31 +5268,11 @@ FortranCodeGeneration_locatedNode::unparseClassDefnStmt(SgStatement* stmt, SgUnp
                classdefn_stmt->get_endOfConstruct()->get_line());
 #endif
           unparseAttachedPreprocessingInfo(classdefn_stmt, info, PreprocessingInfo::inside);
-
-#if 0
-       // DQ (10/6/2008): This adds blank lines to the unparsed output (and is not required for Fortran support).
-          curprint("! Comment in unparseClassDefnStmt() (before packing pragma) ");
-          unp->cur.format(classdefn_stmt, info, FORMAT_BEFORE_BASIC_BLOCK2);
-       // curprint ( string("}"));
-
-       // DQ (6/14/2006): Add packing pragma support (reset the packing 
-       // alignment to the default, part of packing pragma normalization).
-          if (packingAlignment != 0)
-             {
-               curprint ( string("\n#pragma pack()"));
-             }
-
-          curprint("! Comment in unparseClassDefnStmt() (after packing pragma) ");
-          unp->cur.format(classdefn_stmt, info, FORMAT_AFTER_BASIC_BLOCK2);
-#endif
         }
 
   // DQ (6/13/2007): Set to null before resetting to non-null value 
      ninfo.set_current_context(NULL);
      ninfo.set_current_context(saved_context);
-
-  // curprint ( string("/* Leaving unparseClassDefnStmt */ \n";
-  // printf ("Leaving unparseClassDefnStmt \n");
    }
 
 void
