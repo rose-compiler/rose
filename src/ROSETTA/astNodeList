@@ -440,6 +440,7 @@ SgLabelRefExp
 SgLabelStatement
 SgJavaLabelStatement
 SgLabelSymbol
+SgJavaLabelSymbol
 SgLambdaRefExp
 SgLessOrEqualOp
 SgLessThanOp

@@ -83,7 +83,7 @@ class JavaTraversal  implements Callable<Boolean>
     /* tps: Add nodes into a HashMap. We need this to connect edges between Nodes for DOT */
      public int getHashValue(ASTNode current) 
         {
-          int valc=0;
+          int valc = 0;
           Integer hashc = (Integer)hashm.get(current.hashCode()); 
           if (hashc!=null)
              {
@@ -91,7 +91,7 @@ class JavaTraversal  implements Callable<Boolean>
              }
             else
              {
-               valc=hashcounter;
+               valc = hashcounter;
                hashm.put(current.hashCode(),hashcounter++);
              }
           return valc;
@@ -1150,7 +1150,7 @@ class JavaTraversal  implements Callable<Boolean>
                System.out.println("Compiling ...");
 
        // DQ (10/12/2010) Comment this out for now while we debug this.
-          if (true)
+       // if (true)
              {
             // This line of code will run, but the first use of "main" fails ...working now!
                main = new Main(new PrintWriter(System.out), new PrintWriter(System.err), true/*systemExit*/,  null/*options*/, null/*progress*/);
@@ -1258,12 +1258,10 @@ class JavaTraversal  implements Callable<Boolean>
 	                 for (int i = 0; i < main.batchCompiler.totalUnits; i++)
                        {
                          unit = main.batchCompiler.unitsToProcess[i];
+
                          try
                             {
-                              if (unit == null)
-                                 {
-                                   System.out.println("Warning: unit == null");
-                                 }
+                              assert(unit != null);
 
                               if (verboseLevel > 2)
                                    System.out.println("calling main.batchCompiler.process(unit, i) ...");
@@ -1327,11 +1325,13 @@ class JavaTraversal  implements Callable<Boolean>
                   {
                     System.err.println("Error: " + e.getMessage());
                   }
+/*
              }
             else
              {
                System.out.println("Skipping major internal parts of ECJ frontend");
              }
+*/
 
           if (verboseLevel > 2)
                System.out.println("Done compiling");
@@ -1341,21 +1341,11 @@ class JavaTraversal  implements Callable<Boolean>
   // DQ (10/12/2010): Implemented abstract baseclass "call()" member function (similar to OFP).
      public Boolean call() throws Exception
         {
-       // boolean error = false;
-          boolean error   = true;
-          boolean verbose = true;
+          if (verboseLevel > 0)
+               System.out.println("Parser exiting normally");
 
-          if (error != false)
-             {
-               System.out.println("Parser failed");
-             }
-            else
-             {
-               if (verbose)
-                    System.out.println("Parser exiting normally");
-             }// end else(parser exited normally)
-
-          return new Boolean(error);
+       // return new Boolean(error);
+          return Boolean.TRUE;
         }// end call()
 
   // DQ (10/12/2010): Added boolean value to report error to C++ calling program (similar to OFP).
