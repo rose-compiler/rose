@@ -402,20 +402,26 @@ class ecjASTVisitor extends ASTVisitor
              }
 
        // Ouput some information about the CompilationUnitScope (we don't use the package name currently).
-          String packageReference = "";
+       // DQ (9/11/2011): Static analysis tools suggest using StringBuffer instead of String.
+       // String packageReference = "";
+          StringBuffer packageReference = new StringBuffer();
           for (int i = 0, tokenArrayLength = scope.currentPackageName.length; i < tokenArrayLength; i++)
              {
                String tokenString = new String(scope.currentPackageName[i]);
                System.out.println("     --- packageReference tokens = " + tokenString);
 
                if (i > 0)
-                    packageReference += '.';
+                  {
+                 // packageReference += '.';
+                     packageReference.append('.');
+                  }
 
-               packageReference += tokenString;
+            // packageReference += tokenString;
+               packageReference.append(tokenString);
              }
 
           if (java_parser.verboseLevel > 0)
-               System.out.println("Package name = " + packageReference);
+             System.out.println("Package name = " + packageReference.toString());
 
        // Call the Java side of the JNI function.
        // This function only does a few tests on the C++ side to make sure that it is ready to construct the ROSE AST.
@@ -658,6 +664,7 @@ class ecjASTVisitor extends ASTVisitor
              }
             else
              {
+               String name = "super";
                if (node.accessMode == ExplicitConstructorCall.ImplicitSuper)
                   {
                  // System.out.println("Sorry, not implemented in support for ExplicitConstructorCall: implicit super()");
@@ -666,7 +673,7 @@ class ecjASTVisitor extends ASTVisitor
                  // We have to implement the support for an impleicit super() call, even if it is marked explicitly 
                  // as implicit and not generated in the output source code.  It should still be explicit in the AST
                  // as a way to simplify analysis.
-                    String name = new String("super");
+                 // String name = new String("super");
                  // System.out.println("super function name = " + name);
 
                     String associatedClassName = node.binding.toString();
@@ -681,7 +688,8 @@ class ecjASTVisitor extends ASTVisitor
                          System.out.println("Sorry, not implemented in support for ExplicitConstructorCall: super()");
                       // java_parser.cactionExplicitConstructorCall("super");
 
-                         String name = new String("super");
+                      // String name = new String("super");
+                      // String name = "super";
 
                          if (java_parser.verboseLevel > 0)
                             {
@@ -837,28 +845,28 @@ class ecjASTVisitor extends ASTVisitor
 
           public boolean visit(FieldReference node, BlockScope scope) 
              {
-               System.out.println("Sorry, not implemented in support for FieldReference(BlockScope): xxx");
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (FieldReference,BlockScope)");
+            // System.out.println("Sorry, not implemented in support for FieldReference(BlockScope): xxx");
+               if (java_parser.verboseLevel > 0)
+                    System.out.println("Inside of visit (FieldReference,BlockScope)");
 
-          java_parser.cactionFieldReference(this.createJavaToken(node));
+               java_parser.cactionFieldReference(this.createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (FieldReference,BlockScope)");
+               if (java_parser.verboseLevel > 0)
+                    System.out.println("Leaving visit (FieldReference,BlockScope)");
 
                return true; // do nothing by  node, keep traversing
              }
 
           public boolean visit(FieldReference  node, ClassScope scope)
              {
-               System.out.println("Sorry, not implemented in support for FieldReference(ClassScope): xxx");
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (FieldReference,ClassScope)");
+            // System.out.println("Sorry, not implemented in support for FieldReference(ClassScope): xxx");
+               if (java_parser.verboseLevel > 0)
+                    System.out.println("Inside of visit (FieldReference,ClassScope)");
 
-          java_parser.cactionFieldReferenceClassScope(this.createJavaToken(node));
+               java_parser.cactionFieldReferenceClassScope(this.createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (FieldReference,ClassScope)");
+               if (java_parser.verboseLevel > 0)
+                    System.out.println("Leaving visit (FieldReference,ClassScope)");
 
                return true; // do nothing by  node, keep traversing
              }
@@ -927,30 +935,34 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 1)
                System.out.println("Inside of visit (ImportReference,CompilationUnitScope)");
 
-          String importReference = "";
+       // DQ (9/11/2011): Static analysis tools suggest using StringBuffer instead of String.
+       // String importReference = "";
+          StringBuffer importReference = new StringBuffer();
           for (int i = 0, tokenArrayLength = node.tokens.length; i < tokenArrayLength; i++)
              {
                String tokenString = new String(node.tokens[i]);
             // System.out.println("     --- ImportReference tokens = " + tokenString);
 
                if (i > 0)
-                    importReference += '.';
+                  {
+                    importReference.append('.');
+                  }
 
-               importReference += tokenString;
+               importReference.append(tokenString);
              }
 
           boolean withOnDemand = true;
           boolean containsWildcard = false;
-          String importReferenceWithoutWildcard = importReference;
+          String importReferenceWithoutWildcard = importReference.toString();
           if (withOnDemand && ((node.bits & node.OnDemand) != 0))
              {
             // System.out.println("     --- ImportReference tokens = *");
-               importReference += ".*";
+               importReference.append(".*");
                containsWildcard = true;
              }
 
           if (java_parser.verboseLevel > 1)
-               System.out.println("importReference (string) = " + importReference);
+             System.out.println("importReference (string) = " + importReference.toString());
 
        // DQ (8/22/2011): Read the referenced class or set of classes defined by the import statement.
        // System.out.println("In visit (ImportReference,CompilationUnitScope): Calling buildImplicitClassSupport() to recursively build the class structure with member declarations: name = " + importReferenceWithoutWildcard);
