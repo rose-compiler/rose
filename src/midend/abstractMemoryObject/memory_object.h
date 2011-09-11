@@ -120,8 +120,11 @@ namespace AbstractMemoryObject
 
   // represents d-dimensional integral vectors. It encapsulates a variety of abstract representations for such vectors 
   // such as polyhedral constraints and strided indexes.
-  class AbstractIndex
+  class IndexVector
   {
+    public:
+      // the index vector's length
+      size_t getSize();
     
   };
 
@@ -132,9 +135,9 @@ namespace AbstractMemoryObject
       ObjSet* getElements();
       // Returns the memory object that corresponds to the elements described by the given abstract index, 
       // which represents one or more indexes within the array
-      ObjSet* getElements(AbstractIndex* ai);
+      ObjSet* getElements(IndexVector* ai);
 
-      // number of dimensions of the aray
+      // number of dimensions of the array
       size_t getNumDims();
       bool operator == (const Array & that) const;
       bool operator < (const Array & that) const;
@@ -158,7 +161,7 @@ namespace AbstractMemoryObject
   class ObjSetFactory
   {
     public:
-      //TODO smart pointer
+      //TODO smart pointer ?
       static ObjSet* createObjSet(SgNode*); 
   };
 
