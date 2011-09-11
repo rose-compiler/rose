@@ -83,7 +83,7 @@ class JavaTraversal  implements Callable<Boolean>
     /* tps: Add nodes into a HashMap. We need this to connect edges between Nodes for DOT */
      public int getHashValue(ASTNode current) 
         {
-          int valc=0;
+          int valc = 0;
           Integer hashc = (Integer)hashm.get(current.hashCode()); 
           if (hashc!=null)
              {
@@ -91,7 +91,7 @@ class JavaTraversal  implements Callable<Boolean>
              }
             else
              {
-               valc=hashcounter;
+               valc = hashcounter;
                hashm.put(current.hashCode(),hashcounter++);
              }
           return valc;
@@ -1149,188 +1149,180 @@ class JavaTraversal  implements Callable<Boolean>
           if (verboseLevel > 0)
                System.out.println("Compiling ...");
 
-       // DQ (10/12/2010) Comment this out for now while we debug this.
-          if (true)
+       // This line of code will run, but the first use of "main" fails ...working now!
+          main = new Main(new PrintWriter(System.out), new PrintWriter(System.err), true/*systemExit*/,  null/*options*/, null/*progress*/);
+
+       // This is the last message printed to the console ...
+          if (verboseLevel > 0)
+               System.out.println("test 1 .... (note call to main.configure(args); fails silently)");
+
+       // DQ (4/1/2011): Added try...catch to debug command line handling.
+       // We want to support the ECJ command line options where possible.
+       // This line of code will fail when run with unknown arguments...working now only with just the filename as an argument!
+       // main.configure(args);
+          try 
              {
-            // This line of code will run, but the first use of "main" fails ...working now!
-               main = new Main(new PrintWriter(System.out), new PrintWriter(System.err), true/*systemExit*/,  null/*options*/, null/*progress*/);
+               main.configure(args);
+             }
+          catch (Exception e) 
+             {
+               System.err.println("Error in main.configure(args): " + e.getMessage()); 
+               System.exit(1);
+             }
 
-            // This is the last message printed to the console ...
-               if (verboseLevel > 0)
-                    System.out.println("test 1 .... (note call to main.configure(args); fails silently)");
+          if (verboseLevel > 0)
+               System.out.println("test 2 ...");
 
-            // DQ (4/1/2011): Added try...catch to debug command line handling.
-            // We want to support the ECJ command line options where possible.
-            // This line of code will fail when run with unknown arguments...working now only with just the filename as an argument!
-            // main.configure(args);
-               try 
+          FileSystem environment = main.getLibraryAccess();
+
+          if (verboseLevel > 0)
+               System.out.println("test 3 ...");
+
+          main.compilerOptions = new CompilerOptions(main.options);
+          main.compilerOptions.performMethodsFullRecovery = false;
+          main.compilerOptions.performStatementsRecovery = false;
+
+          if (verboseLevel > 2)
+               System.out.println("test 4 ...");
+
+          main.batchCompiler =  new Compiler(  environment,
+               main.getHandlingPolicy(),
+               main.compilerOptions,
+               main.getBatchRequestor(),
+               main.getProblemFactory(),
+               null,
+               main.progress);
+
+          if (verboseLevel > 2)
+               System.out.println("test 5 ...");
+
+       /* tps : handle compilation units--------------------------------------------- */
+          ICompilationUnit[] sourceUnits = main.getCompilationUnits();
+          int maxUnits = sourceUnits.length;
+          main.batchCompiler.totalUnits = 0;
+          main.batchCompiler.unitsToProcess = new CompilationUnitDeclaration[maxUnits];
+
+       /* tps : Debug: print Compilation units --------------------------- */
+          if (verboseLevel > 2)
+               System.out.println("We got "+maxUnits+" compilation units");
+
+          CompilationUnit[] units = main.getCompilationUnits();
+
+          if (verboseLevel > 2)
+             {
+               System.out.println("Nr of Compilation Units : "+units.length);
+
+               for (CompilationUnit myunit : units)
                   {
-                    main.configure(args);
-                  }
-               catch (Exception e) 
-                  {
-                    System.err.println("Error in main.configure(args): " + e.getMessage()); 
-                    System.exit(1);
-                  }
-
-               if (verboseLevel > 0)
-                    System.out.println("test 2 ...");
-
-               FileSystem environment = main.getLibraryAccess();
-
-               if (verboseLevel > 0)
-                    System.out.println("test 3 ...");
-
-               main.compilerOptions = new CompilerOptions(main.options);
-               main.compilerOptions.performMethodsFullRecovery = false;
-               main.compilerOptions.performStatementsRecovery = false;
-
-               if (verboseLevel > 2)
-                    System.out.println("test 4 ...");
-
-               main.batchCompiler =  new Compiler(  environment,
-                   main.getHandlingPolicy(),
-                   main.compilerOptions,
-                   main.getBatchRequestor(),
-                   main.getProblemFactory(),
-                   null,
-                   main.progress);
-
-               if (verboseLevel > 2)
-                    System.out.println("test 5 ...");
-
-            /* tps : handle compilation units--------------------------------------------- */
-               ICompilationUnit[] sourceUnits = main.getCompilationUnits();
-               int maxUnits = sourceUnits.length;
-               main.batchCompiler.totalUnits = 0;
-               main.batchCompiler.unitsToProcess = new CompilationUnitDeclaration[maxUnits];
-
-            /* tps : Debug: print Compilation units --------------------------- */
-               if (verboseLevel > 2)
-                    System.out.println("We got "+maxUnits+" compilation units");
-
-               CompilationUnit[] units = main.getCompilationUnits();
-
-               if (verboseLevel > 2)
-                  {
-                    System.out.println("Nr of Compilation Units : "+units.length);
-
-                    for (CompilationUnit myunit : units)
-                       {
-                         System.out.println("File : "+myunit);
-                       }
-                  }
-
-            /* tps : start parsing ------------------------------------------------------- */
-               main.batchCompiler.internalBeginToCompile(sourceUnits, maxUnits);
-            // main.batchCompiler.compile(sourceUnits);
-
-               CompilationUnitDeclaration unit = null;
-               JavaTraversal jt = new JavaTraversal();
-               jt.invokeINIT();
-               try { // writing to the DOT file
-                    FileWriter fstream = new FileWriter("ast.dot");
-                    out = new BufferedWriter(fstream);
-                    out.write("Digraph G {\n");
-                   }
-               catch (Exception e) { System.err.println("Error: " + e.getMessage()); }
-
-            /* tps : compile the files and produce class files --------------------------- */
-               ProcessTaskManager processingTask = null;
-
-               if (verboseLevel > 2)
-                    System.out.println("test 6 ...");
-
-            // Calling the parser to build the ROSE AST from a traversal of the ECJ AST.
-               try
-                  {
-                 // Added support for verbose levels to be set to control debugginf I/O from Java code in ECJ/ROSE translation.
-                    JavaParser java_parser = new JavaParser(verboseLevel);
-
-                    if (verboseLevel > 2)
-                         System.out.println("test 7 ...");
-
-                    java_parser.cactionCompilationUnitList(main.batchCompiler.totalUnits,args);
-
-                    if (verboseLevel > 2)
-                         System.out.println("test 8 ...");
-
-	                 for (int i = 0; i < main.batchCompiler.totalUnits; i++)
-                       {
-                         unit = main.batchCompiler.unitsToProcess[i];
-                         try
-                            {
-                              if (unit == null)
-                                 {
-                                   System.out.println("Warning: unit == null");
-                                 }
-
-                              if (verboseLevel > 2)
-                                   System.out.println("calling main.batchCompiler.process(unit, i) ...");
-
-                              main.batchCompiler.process(unit, i);
-
-                              if (verboseLevel > 2)
-                                   System.out.println("calling jt.traverseAST(unit) ...");
-
-                              jt.traverseAST(unit); /*tps this is a better place for the traversal */
-
-                              if (verboseLevel > 2)
-                                   System.out.println("test 9 ...");
-
-                           // **************************************************
-                           // This is where the traveral of the ECJ AST is done.
-                           // **************************************************
-                              java_parser.startParsingAST(unit);
-
-                              if (verboseLevel > 2)
-                                   System.out.println("test 10 ...");
-                            }
-
-                         catch (Exception e)
-                            {
-                              System.err.println("Error in JavaTraversal::main() (nested catch before finally): " + e.getMessage());
-
-                           // This should output the call stack.
-                              System.err.println("Error in JavaTraversal::main() (nested catch before finally): " + e);
-                            }
-
-                         finally
-                            {
-                           // cleanup compilation unit result
-                              unit.cleanUp();
-                            }
-                         main.batchCompiler.unitsToProcess[i] = null; // release reference to processed unit declaration
-                         main.batchCompiler.stats.lineCount += unit.compilationResult.lineSeparatorPositions.length;
-                         main.batchCompiler.requestor.acceptResult(unit.compilationResult.tagAsAccepted());
-                       }
-                  }
-
-               catch (Exception e)
-                  {
-                 // DQ (11/1/2010): Added more aggressive termination of program...
-                    System.err.println("Error in JavaTraversal::main(): " + e.getMessage());
-                 // System.exit(1);
-
-                    hasErrorOccurred = true;
-                    return;
-                  }
-
-               jt.invokeEND();
-               try 
-                  {
-                 // closing the DOT file
-                    out.write("}\n");
-                    out.close();
-                  } 
-               catch (Exception e) 
-                  {
-                    System.err.println("Error: " + e.getMessage());
+                    System.out.println("File : "+myunit);
                   }
              }
-            else
+
+       /* tps : start parsing ------------------------------------------------------- */
+          main.batchCompiler.internalBeginToCompile(sourceUnits, maxUnits);
+       // main.batchCompiler.compile(sourceUnits);
+
+          CompilationUnitDeclaration unit = null;
+          JavaTraversal jt = new JavaTraversal();
+          jt.invokeINIT();
+          try 
              {
-               System.out.println("Skipping major internal parts of ECJ frontend");
+            // writing to the DOT file
+               FileWriter fstream = new FileWriter("ast.dot");
+               out = new BufferedWriter(fstream);
+               out.write("Digraph G {\n");
+             }
+          catch (Exception e) { System.err.println("Error: " + e.getMessage()); }
+
+       /* tps : compile the files and produce class files --------------------------- */
+          ProcessTaskManager processingTask = null;
+
+          if (verboseLevel > 2)
+               System.out.println("test 6 ...");
+
+       // Calling the parser to build the ROSE AST from a traversal of the ECJ AST.
+          try
+             {
+            // Added support for verbose levels to be set to control debugginf I/O from Java code in ECJ/ROSE translation.
+               JavaParser java_parser = new JavaParser(verboseLevel);
+
+               if (verboseLevel > 2)
+                    System.out.println("test 7 ...");
+
+               java_parser.cactionCompilationUnitList(main.batchCompiler.totalUnits,args);
+
+               if (verboseLevel > 2)
+                    System.out.println("test 8 ...");
+
+	            for (int i = 0; i < main.batchCompiler.totalUnits; i++)
+                  {
+                    unit = main.batchCompiler.unitsToProcess[i];
+
+                    try
+                       {
+                         assert(unit != null);
+
+                         if (verboseLevel > 2)
+                              System.out.println("calling main.batchCompiler.process(unit, i) ...");
+
+                         main.batchCompiler.process(unit, i);
+
+                         if (verboseLevel > 2)
+                              System.out.println("calling jt.traverseAST(unit) ...");
+
+                         jt.traverseAST(unit); /*tps this is a better place for the traversal */
+
+                         if (verboseLevel > 2)
+                              System.out.println("test 9 ...");
+
+                      // **************************************************
+                      // This is where the traveral of the ECJ AST is done.
+                      // **************************************************
+                         java_parser.startParsingAST(unit);
+
+                         if (verboseLevel > 2)
+                              System.out.println("test 10 ...");
+                       }
+
+                    catch (Exception e)
+                       {
+                         System.err.println("Error in JavaTraversal::main() (nested catch before finally): " + e.getMessage());
+
+                      // This should output the call stack.
+                         System.err.println("Error in JavaTraversal::main() (nested catch before finally): " + e);
+                       }
+
+                    finally
+                       {
+                      // cleanup compilation unit result
+                         unit.cleanUp();
+                       }
+                    main.batchCompiler.unitsToProcess[i] = null; // release reference to processed unit declaration
+                    main.batchCompiler.stats.lineCount += unit.compilationResult.lineSeparatorPositions.length;
+                    main.batchCompiler.requestor.acceptResult(unit.compilationResult.tagAsAccepted());
+                  }
+             }
+
+          catch (Exception e)
+             {
+            // DQ (11/1/2010): Added more aggressive termination of program...
+               System.err.println("Error in JavaTraversal::main(): " + e.getMessage());
+            // System.exit(1);
+
+               hasErrorOccurred = true;
+               return;
+             }
+
+          jt.invokeEND();
+          try 
+             {
+            // closing the DOT file
+               out.write("}\n");
+               out.close();
+             } 
+          catch (Exception e) 
+             {
+               System.err.println("Error: " + e.getMessage());
              }
 
           if (verboseLevel > 2)
@@ -1341,21 +1333,11 @@ class JavaTraversal  implements Callable<Boolean>
   // DQ (10/12/2010): Implemented abstract baseclass "call()" member function (similar to OFP).
      public Boolean call() throws Exception
         {
-       // boolean error = false;
-          boolean error   = true;
-          boolean verbose = true;
+          if (verboseLevel > 0)
+               System.out.println("Parser exiting normally");
 
-          if (error != false)
-             {
-               System.out.println("Parser failed");
-             }
-            else
-             {
-               if (verbose)
-                    System.out.println("Parser exiting normally");
-             }// end else(parser exited normally)
-
-          return new Boolean(error);
+       // return new Boolean(error);
+          return Boolean.TRUE;
         }// end call()
 
   // DQ (10/12/2010): Added boolean value to report error to C++ calling program (similar to OFP).
