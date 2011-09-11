@@ -685,7 +685,7 @@ class ecjASTVisitor extends ASTVisitor
                   {
                     if (node.accessMode == ExplicitConstructorCall.Super)
                        {
-                         System.out.println("Sorry, not implemented in support for ExplicitConstructorCall: super()");
+                      // System.out.println("Sorry, not implemented in support for ExplicitConstructorCall: super()");
                       // java_parser.cactionExplicitConstructorCall("super");
 
                       // String name = new String("super");
