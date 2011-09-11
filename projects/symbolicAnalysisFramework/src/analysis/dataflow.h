@@ -38,6 +38,12 @@ class IntraProceduralDataflow : virtual public IntraProceduralAnalysis
 	virtual void genInitState(const Function& func, const DataflowNode& n, const NodeState& state,
 	                          std::vector<Lattice*>& initLattices, std::vector<NodeFact*>& initFacts)=0;
 	
+		
+	// Set of functions that have already been visited by this analysis, used
+	// to make sure that the dataflow state of previously-visited functions is
+	// not re-initialized when they are visited again.
+	std::set<Function> visited;
+
 	void setInterAnalysis(InterProceduralDataflow* interDataflowAnalysis)
 	{ this->interAnalysis = (InterProceduralAnalysis*)interDataflowAnalysis; }
 	
@@ -197,13 +203,6 @@ class IntraUniDirectionalDataflow : public IntraUnitDataflow
 /* Forward Intra-Procedural Dataflow Analysis */
 class IntraFWDataflow  : public IntraUniDirectionalDataflow
 {
-	protected:
-		
-	// Set of functions that have already been visited by this analysis, used
-	// to make sure that the dataflow state of previously-visited functions is
-	// not re-initialized when they are visited again.
-	std::set<Function> visited;
-	
 	public:
 	
 	IntraFWDataflow()
@@ -218,13 +217,6 @@ class IntraFWDataflow  : public IntraUniDirectionalDataflow
 /* Backward Intra-Procedural Dataflow Analysis */
 class IntraBWDataflow  : public IntraUniDirectionalDataflow
 {
-	protected:
-		
-	// Set of functions that have already been visited by this analysis, used
-	// to make sure that the dataflow state of previously-visited functions is
-	// not re-initialized when they are visited again.
-	std::set<Function> visited;
-	
 	public:
 	
 	IntraBWDataflow()

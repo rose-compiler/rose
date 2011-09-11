@@ -746,6 +746,31 @@ void VarsExprsProductLattice::copy(const VarsExprsProductLattice* that)
 	//Dbg::dbg << "    "<<str("        ")<<endl;
 }
 
+bool VarsExprsProductLattice::meetUpdate(Lattice *lThat)
+{
+  bool modified = false;
+  VarsExprsProductLattice *that = dynamic_cast<VarsExprsProductLattice *>(lThat);
+  ROSE_ASSERT(that);
+
+  int newLevel = std::max(level, that->level);
+  if (newLevel != level) {
+    modified = true;
+    level = newLevel;
+  }
+
+  for (map<varID, int>::iterator i_that = that->varLatticeIndex.begin(); i_that != that->varLatticeIndex.end(); ++i_that) {
+    map<varID, int>::iterator i_this = varLatticeIndex.find(i_that->first);
+    if (varLatticeIndex.end() == i_this) {
+      Dbg::dbg << "VarsExprsProductLattice::meetUpdate is missing variable w/ ID" << i_that->first << endl;
+      continue; // XXX: Perhaps this should be an assertion failure? Must *this contain at least the elements of *that?
+    }
+
+    modified = lattices[i_this->second]->meetUpdate(that->lattices[i_that->second]) || modified;
+  }
+
+  return modified;
+}
+
 // Called by analyses to create a copy of this lattice. However, if this lattice maintains any 
 //    information on a per-variable basis, these per-variable mappings must be converted from 
 //    the current set of variables to another set. This may be needed during function calls, 
@@ -841,7 +866,8 @@ void VarsExprsProductLattice::incorporateVars(Lattice* that_arg)
 	
 	VarsExprsProductLattice* that = dynamic_cast<VarsExprsProductLattice*>(that_arg); ROSE_ASSERT(that);
 	// Both lattices need to be talking about variables in the same function
-	ROSE_ASSERT((&n == &that->n) && (&state == &that->state));
+	//ROSE_ASSERT(&n == &that->n);
+        //ROSE_ASSERT(&state == &that->state);
 	if(that->allVarLattice) { 
 		ROSE_ASSERT(allVarLattice);
 		this->allVarLattice->copy(that->allVarLattice);
@@ -900,9 +926,11 @@ Lattice* VarsExprsProductLattice::project(SgExpression* expr)
 	
 	// Copy over the lattice associated with exprVar
 	if(varLatticeIndex.find(exprVar) != varLatticeIndex.end()) {
-		exprState->varLatticeIndex[exprVar] = 0;
-		ROSE_ASSERT(lattices[varLatticeIndex[exprVar]]);
-		exprState->lattices.push_back(lattices[varLatticeIndex[exprVar]]->copy());
+          int index = varLatticeIndex[exprVar];
+          ROSE_ASSERT(lattices[index]);
+
+          exprState->varLatticeIndex[varID("$")] = 0;
+          exprState->lattices.push_back(lattices[index]->copy());
 	}
 	
 	return exprState;
@@ -920,16 +948,19 @@ bool VarsExprsProductLattice::unProject(SgExpression* expr, Lattice* exprState_a
 	ROSE_ASSERT(exprState);
 	
 	// Make sure that exprState has a mapping for exprVar
-	ROSE_ASSERT(exprState->varLatticeIndex.find(exprVar) != exprState->varLatticeIndex.end());
-	ROSE_ASSERT(exprState->lattices[exprState->varLatticeIndex[exprVar]]);
+        varID thatVar("$");
+	ROSE_ASSERT(exprState->varLatticeIndex.find(thatVar) != exprState->varLatticeIndex.end());
+        int thatIndex = exprState->varLatticeIndex[thatVar];
+        Lattice *thatLattice = exprState->lattices[thatIndex];
+	ROSE_ASSERT(thatLattice);
 	
 	// If This lattice has a mapping for exprVar, meet its Lattice in This with its lattice in exprState 
 	if(varLatticeIndex.find(exprVar) != varLatticeIndex.end()) {
 		ROSE_ASSERT(lattices[varLatticeIndex[exprVar]]);
-		return lattices[varLatticeIndex[exprVar]]->meetUpdate(exprState->lattices[exprState->varLatticeIndex[exprVar]]);
+		return lattices[varLatticeIndex[exprVar]]->meetUpdate(thatLattice);
 	// Else, if This lattice has no mapping for exprVar, simply copy it from exprState to This
 	} else {
-		addVar(exprVar, exprState->lattices[exprState->varLatticeIndex[exprVar]]);
+		addVar(exprVar, thatLattice);
 		return true;
 	}
 }

@@ -1,6 +1,6 @@
 
 #include "broadway.h"
-
+#include <cassert>
 using namespace std;
 
 // ------------------------------------------------------------
@@ -791,6 +791,7 @@ void procedureAnn::add_global_structures(Annotations * annotations,
       // current node's name (which is basically the field name).
 
       if (parent_node->op() == structureTreeAnn::Dot) {
+        assert (parent_var != NULL);
 	string child_name = parent_var->name() + "." + child_node->name();
 	child_var = annotations->add_one_global(child_name,
 						child_node->is_io());
