@@ -53,6 +53,11 @@ namespace
     MemTypeCache()
     : pos(0)
     {
+      clear();
+    }
+
+    void clear()
+    {
       for (CacheIdx i = 0; i < CACHEELEMS; ++i)
       {
         cache[i] = 0;
@@ -63,7 +68,9 @@ namespace
     {
       for (CacheIdx i = 0; i < CACHEELEMS; ++i)
       {
-        if (cache[i] && cache[i]->containsMemArea(addr, sz)) return cache[i];
+        MemoryType* candidate = cache[i];
+
+        if (candidate && candidate->containsMemArea(addr, sz)) return candidate;
       }
 
       return NULL;
@@ -736,13 +743,13 @@ MemoryType* MemoryManager::allocateMemory(Location adrObj, size_t szObj, MemoryT
 {
     if (szObj == 0)
     {
-        RuntimeSystem::instance()->violationHandler(RuntimeViolation::EMPTY_ALLOCATION,"Tried to call malloc/new with size 0\n");
+        RuntimeSystem::instance()->violationHandler(RuntimeViolation::EMPTY_ALLOCATION, "Tried to call malloc/new with size 0\n");
         return NULL;
     }
 
     if (existOverlappingMem(adrObj, szObj, blocksize))
     {
-        // the start address of new chunk lies in already allocated area
+        // the start address of new chunk lies in an already allocated area
         RuntimeSystem::instance()->violationHandler(RuntimeViolation::DOUBLE_ALLOCATION);
         return NULL;
     }
@@ -751,8 +758,10 @@ MemoryType* MemoryManager::allocateMemory(Location adrObj, size_t szObj, MemoryT
     MemoryTypeSet::value_type v(adrObj, tmp);
     MemoryType&               res = mem.insert(v).first->second;
 
-    memtypecache.store(res);
+    const size_t              sz = mem.size();
+    std::cout << "|mem| = " << sz << "  dealloc " << &res << std::endl;
 
+    memtypecache.store(res);
     return &res;
 }
 
@@ -893,6 +902,9 @@ void MemoryManager::freeMemory(MemoryType* m, MemoryType::AllocKind freekind)
 void MemoryManager::freeHeapMemory(Location addr, MemoryType::AllocKind freekind)
 {
     MemoryType* mt = findContainingMem(addr, 1);
+
+    const size_t              sz = mem.size();
+    std::cout << "|mem| = " << sz << "  dealloc " << mt << std::endl;
 
     checkDeallocationAddress(mt, addr, freekind);
     memtypecache.clear(*mt);
@@ -1283,6 +1295,12 @@ MemoryType* MemoryManager::getMemoryType(Location addr)
 const MemoryType* MemoryManager::getMemoryType(Location addr) const
 {
   return ::checkStartAddress( findPossibleMemMatch(addr), addr );
+}
+
+void MemoryManager::clearStatus()
+{
+  mem.clear();
+  memtypecache.clear();
 }
 
 
