@@ -130,6 +130,53 @@ Unparser::~Unparser()
      delete u_fortran_locatedNode;
    }
 
+
+Unparser::Unparser(const Unparser & X)
+   {
+  // DQ (9/11/2011): Added explicit copy constructor to avoid possible double free of formatHelpInfo (reported by static analysis).
+  // DQ (9/11/2011): This function is provided to make this code better so that can be analyized using static analysis 
+  // (static analysis tools don't understand access functions).
+
+  // Call the operator=() member function.
+     *this = X;
+
+     printf ("Error: I think we likely don't want to be using this constructor (UnparseFormat(const UnparseFormat & X)). \n");
+     ROSE_ASSERT(false);
+   }
+
+Unparser & Unparser::operator=(const Unparser & X)
+   {
+  // DQ (9/11/2011): Added explicit operator=() to avoid possible double free of formatHelpInfo (reported by static analysis).
+  // DQ (9/11/2011): This function is provided to make this code better so that can be analyized using static analysis 
+  // (static analysis tools don't understand access functions).
+
+     u_type      = NULL; // new Unparse_Type(this);
+     u_name      = NULL; // new Unparser_Nameq(this);
+     u_sym       = NULL; // new Unparse_Sym(this);
+     u_debug     = NULL; // new Unparse_Debug(this);
+     u_sage      = NULL; // new Unparse_MOD_SAGE(this);
+     u_exprStmt  = NULL; // new Unparse_ExprStmt(this, fname);
+
+     opt         = X.opt;
+     cur_index   = 0;
+     currentFile = NULL;
+
+     prevdir_was_cppDeclaration = false;
+
+     cur         = X.cur;
+     repl        = X.repl;
+
+     embedColorCodesInGeneratedCode = 0;
+     generateSourcePositionCodes    = 0;
+
+     p_resetSourcePosition = false;
+
+     printf ("Error: I think we likely don't want to be using this operator (UnparseFormat::operator=(const UnparseFormat & X)). \n");
+     ROSE_ASSERT(false);
+
+     return *this;
+   }
+
 UnparseFormat& Unparser::get_output_stream()
    {
      return cur;
