@@ -1222,7 +1222,6 @@ class JavaTraversal  implements Callable<Boolean>
           main.batchCompiler.internalBeginToCompile(sourceUnits, maxUnits);
        // main.batchCompiler.compile(sourceUnits);
 
-          CompilationUnitDeclaration unit = null;
           JavaTraversal jt = new JavaTraversal();
           jt.invokeINIT();
           try 
@@ -1235,7 +1234,7 @@ class JavaTraversal  implements Callable<Boolean>
           catch (Exception e) { System.err.println("Error: " + e.getMessage()); }
 
        /* tps : compile the files and produce class files --------------------------- */
-          ProcessTaskManager processingTask = null;
+       // ProcessTaskManager processingTask = null;
 
           if (verboseLevel > 2)
                System.out.println("test 6 ...");
@@ -1256,7 +1255,7 @@ class JavaTraversal  implements Callable<Boolean>
 
 	            for (int i = 0; i < main.batchCompiler.totalUnits; i++)
                   {
-                    unit = main.batchCompiler.unitsToProcess[i];
+                    CompilationUnitDeclaration unit = main.batchCompiler.unitsToProcess[i];
 
                     try
                        {
