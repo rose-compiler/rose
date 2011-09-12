@@ -822,7 +822,7 @@ memberFunctionTest (const SgName & name, SgClassDefinition* classDefinition, SgM
      ROSE_ASSERT(classDefinition->get_declaration()->get_symbol_from_symbol_table() == NULL);
 
      ROSE_ASSERT(classDefinition->get_declaration()->get_firstNondefiningDeclaration() != NULL);
-     ROSE_ASSERT(classDefinition->get_declaration()->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table() != NULL);
+     ROSE_ASSERT(classDefinition->get_declaration()->get_firstNondefiningDeclaration() != NULL && classDefinition->get_declaration()->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table() != NULL);
      ROSE_ASSERT(functionDeclaration->get_symbol_from_symbol_table() != NULL);
 
 #if 0
@@ -961,8 +961,9 @@ buildJavaClass (const SgName & className, SgScopeStatement* scope )
 
   // DQ (3/25/2011): Added testing.
      ROSE_ASSERT(classDefinition->get_declaration() == declaration);
-     ROSE_ASSERT(classDefinition->get_declaration()->get_symbol_from_symbol_table() == NULL);
-     ROSE_ASSERT(classDefinition->get_declaration()->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table() != NULL);
+     ROSE_ASSERT(classDefinition->get_declaration() != NULL);
+     ROSE_ASSERT(classDefinition->get_declaration() != NULL && classDefinition->get_declaration()->get_symbol_from_symbol_table() == NULL);
+     ROSE_ASSERT(classDefinition->get_declaration() != NULL && classDefinition->get_declaration()->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table() != NULL);
 
 #if 1
   // Ignore this requirement while we are debugging...
@@ -1744,7 +1745,7 @@ appendStatementStack(int numberOfStatements)
           appendStatement(reverseStatementList.front());
 
           ROSE_ASSERT(reverseStatementList.front()->get_parent() != NULL);
-          ROSE_ASSERT(reverseStatementList.front()->get_parent()->get_startOfConstruct() != NULL);
+          ROSE_ASSERT(reverseStatementList.front()->get_parent() != NULL && reverseStatementList.front()->get_parent()->get_startOfConstruct() != NULL);
 
           reverseStatementList.pop_front();
         }

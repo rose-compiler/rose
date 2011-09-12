@@ -70,6 +70,12 @@ HEADER_LABEL_SYMBOL_START
 
 HEADER_LABEL_SYMBOL_END
 
+
+HEADER_JAVA_LABEL_SYMBOL_START
+// DQ (9/9/2011): Not clear yet what member functions we might require.
+HEADER_JAVA_LABEL_SYMBOL_END
+
+
 HEADER_ALIAS_SYMBOL_START
        // SgName  get_name() const;
        // SgType* get_type() const;
@@ -422,8 +428,42 @@ SgLabelSymbol::SgLabelSymbol ( SgInitializedName* initializedName )
      set_fortran_alternate_return_parameter(initializedName);
    }
 
-
 SOURCE_LABEL_SYMBOL_END
+
+
+SOURCE_JAVA_LABEL_SYMBOL_START
+
+// DQ (9/9/2011): Not clear yet what member functions we might require.
+
+SgName
+SgJavaLabelSymbol::get_name() const
+   {
+     ROSE_ASSERT(get_declaration() != NULL);
+
+  // Calling get_label() is the perfered API.
+  // SgName name = get_declaration()->get_name();
+     SgName name = get_declaration()->get_label();
+
+     return name;
+   }
+
+SgNode*
+SgJavaLabelSymbol::get_symbol_basis() const
+   {
+     SgLocatedNode* returnStatement = get_declaration();
+     ROSE_ASSERT(returnStatement != NULL);
+     return returnStatement;
+   }
+
+SgType*
+SgJavaLabelSymbol::get_type() const 
+   {
+  // DQ (9/9/2011): Use the common SgLabelType for both SgLableStatment and SgJavaLabelStatment.
+  // At least until we can reason about why this is a bad idea.
+     return SgTypeLabel::createType();
+   }
+
+SOURCE_JAVA_LABEL_SYMBOL_END
 
 
 SOURCE_DECLARATION_START

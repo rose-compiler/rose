@@ -54,7 +54,7 @@ namespace AbstractHandle{
 
   typedef union u_specifier_value
      {
-       char str_v[PATH_MAX+255];
+       char str_v[PATH_MAX+256];
        size_t int_v; 
        source_position_pair positions;
      } specifier_value_t;
