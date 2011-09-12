@@ -54,6 +54,60 @@ UnparseFormat::~UnparseFormat()
           delete formatHelpInfo;
    }
 
+
+UnparseFormat::UnparseFormat(const UnparseFormat & X)
+   {
+  // DQ (9/11/2011): Added explicit copy constructor to avoid possible double free of formatHelpInfo (reported by static analysis).
+  // DQ (9/11/2011): This function is provided to make this code better so that can be analyized using static analysis 
+  // (static analysis tools don't understand access functions).
+
+#if 0
+     currentLine    = 0;            //! stores current line number being unparsed
+     currentIndent  = 0;            //! indent of the current line
+     chars_on_line  = 0;            //! the number of characters printed on the line
+     stmtIndent     = 0;            //! the current indent for statement
+     linewrap       = X.linewrap;   //! the characters allowed perline before wraping the line
+     indentstop     = X.indentstop; //! the number of spaces allowed for indenting
+     prevnode       = NULL;         //! The previous SgLocatedNode unparsed
+     os             = X.os;         //! the directed output for the current file
+
+  // Don't copy this else the destructor will cause a double free.
+     formatHelpInfo = NULL;
+#else
+  // Call the operator=() member function.
+     *this = X;
+#endif
+
+     printf ("Error: I think we likely don't want to be using this constructor (UnparseFormat(const UnparseFormat & X)). \n");
+     ROSE_ASSERT(false);
+   }
+
+UnparseFormat & UnparseFormat::operator=(const UnparseFormat & X)
+   {
+  // DQ (9/11/2011): Added explicit operator=() to avoid possible double free of formatHelpInfo (reported by static analysis).
+  // DQ (9/11/2011): This function is provided to make this code better so that can be analyized using static analysis 
+  // (static analysis tools don't understand access functions).
+
+     currentLine    = 0;            //! stores current line number being unparsed
+     currentIndent  = 0;            //! indent of the current line
+     chars_on_line  = 0;            //! the number of characters printed on the line
+     stmtIndent     = 0;            //! the current indent for statement
+     linewrap       = X.linewrap;   //! the characters allowed perline before wraping the line
+     indentstop     = X.indentstop; //! the number of spaces allowed for indenting
+     prevnode       = NULL;         //! The previous SgLocatedNode unparsed
+     os             = X.os;         //! the directed output for the current file
+
+  // Don't copy this else the destructor will cause a double free.
+     formatHelpInfo = NULL;
+
+     printf ("Error: I think we likely don't want to be using this operator (UnparseFormat::operator=(const UnparseFormat & X)). \n");
+     ROSE_ASSERT(false);
+
+  // return UnparseFormat(X);
+     return *this;
+   }
+
+
 //-----------------------------------------------------------------------------------
 //  void Unparser::insert_newline
 //
