@@ -1667,7 +1667,7 @@ Grammar::setUpStatements ()
 
      LabelStatement.setFunctionPrototype ( "HEADER_LABEL_STATEMENT", "../Grammar/Statement.code" );
      LabelStatement.setDataPrototype     ( "SgName", "label", "= \"\"",
-                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      LabelStatement.setDataPrototype     ( "SgScopeStatement*", "scope", "= NULL",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -1687,6 +1687,8 @@ Grammar::setUpStatements ()
 
   // DQ (8/26/2011): Added Java Label statement (it is a scope) different from C/C++.
      JavaLabelStatement.setFunctionPrototype ( "HEADER_JAVA_LABEL_STATEMENT", "../Grammar/Statement.code" );
+     JavaLabelStatement.setDataPrototype     ( "SgName", "label", "= \"\"",
+                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      JavaLabelStatement.setDataPrototype     ( "SgStatement*", "statement", "= NULL",
                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
