@@ -393,6 +393,12 @@ int main(int argc, char**argv)
     classCount = atoi (argv[1]);
     fileCount = atoi(argv[2]);
     float edgeRate = atof(argv[3]);
+
+    ROSE_ASSERT(classCount >= 0 && classCount < 10000);
+    ROSE_ASSERT(fileCount >= 0 && fileCount < 10000);
+
+    ROSE_ASSERT(edgeRate >= 0.0 && edgeRate < 10000.0);
+
     outputFolderName = string(argv[4]);
 
     if(classCount<fileCount)
