@@ -172,13 +172,13 @@ class InitDataflowState : public UnstructuredPassIntraAnalysis
 class FindAllFunctionCalls : public UnstructuredPassIntraAnalysis
 {
 	// The set of functions that we wish to find the calls to
-	std::set<Function>& funcsToFind;
+	const std::set<Function>& funcsToFind;
 	
 	// Maps each function in funcsToFind to a set of DataflowNodes that hold calls to this function
 	std::map<Function, std::set<DataflowNode> > funcCalls;
 	
 	public:
-	FindAllFunctionCalls(std::set<Function>& funcsToFind): funcsToFind(funcsToFind)
+	FindAllFunctionCalls(const std::set<Function>& funcsToFind): funcsToFind(funcsToFind)
 	{ }
 	
 	void visit(const Function& func, const DataflowNode& n, NodeState& state);

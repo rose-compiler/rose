@@ -220,7 +220,7 @@ void FindAllFunctionCalls::visit(const Function& func, const DataflowNode& n, No
 	// If this is a function call, find the function that is being called and if it is 
 	// in funcsToFind, record the call in funcCalls
 	if(isSgFunctionCallExp(sgn)) {
-		for(set<Function>::iterator func=funcsToFind.begin(); func!=funcsToFind.end(); func++) {
+		for(set<Function>::const_iterator func=funcsToFind.begin(); func!=funcsToFind.end(); func++) {
 			if((*func).get_declaration() == isSgFunctionCallExp(sgn)->getAssociatedFunctionDeclaration()) {
 				funcCalls[*func].insert(n);
 				break;
