@@ -451,6 +451,10 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
 #if 0
                printf ("declaration = %p definingDeclaration = %p \n",declaration,definingDeclaration);
 #endif
+
+            // DQ (9/12/2011): Static analysis wants an assertion here.
+               ROSE_ASSERT(definingDeclaration != NULL);
+
             // if (declaration->get_scope() != definingDeclaration->get_scope())
                if (declaration->hasExplicitScope() == true && declaration->get_scope() != definingDeclaration->get_scope())
                   {

@@ -150,6 +150,12 @@ Unparser & Unparser::operator=(const Unparser & X)
   // DQ (9/11/2011): This function is provided to make this code better so that can be analyized using static analysis 
   // (static analysis tools don't understand access functions).
 
+  // DQ (9/12/2011): This avoids the memory leak that could happend with self assignment.
+     if (&X == this)
+        {
+          return *this;
+        }
+      
      u_type      = NULL; // new Unparse_Type(this);
      u_name      = NULL; // new Unparser_Nameq(this);
      u_sym       = NULL; // new Unparse_Sym(this);
@@ -1427,6 +1433,7 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
                          const SgTemplateParameter* templateParameter = isSgTemplateParameter(astNode);
 
                       // DQ (2/2/2007): Note that we should modify the unparser to take the IR nodes as const pointers, but this is a bigger job than I want to do now!
+                         ROSE_ASSERT(roseUnparser.u_exprStmt != NULL);
                          roseUnparser.u_exprStmt->unparseTemplateParameter(const_cast<SgTemplateParameter*>(templateParameter),inheritedAttributeInfo);
                          break;
                        }
@@ -1435,6 +1442,7 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
                          const SgTemplateArgument* templateArgument = isSgTemplateArgument(astNode);
 
                       // DQ (2/2/2007): Note that we should modify the unparser to take the IR nodes as const pointers, but this is a bigger job than I want to do now!
+                         ROSE_ASSERT(roseUnparser.u_exprStmt != NULL);
                          roseUnparser.u_exprStmt->unparseTemplateArgument(const_cast<SgTemplateArgument*>(templateArgument),inheritedAttributeInfo);
                          break;
                        }
@@ -1451,6 +1459,7 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
                          const SgPragma* pr = isSgPragma(astNode);
                          SgPragmaDeclaration* decl = isSgPragmaDeclaration(pr->get_parent());
                          ROSE_ASSERT (decl);
+                         ROSE_ASSERT(roseUnparser.u_exprStmt != NULL);
                          roseUnparser.u_exprStmt->unparseStatement ( decl, inheritedAttributeInfo );
                          break;
                        }
@@ -1509,6 +1518,7 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
                     SgOmpClause * omp_clause = const_cast<SgOmpClause*>(isSgOmpClause(astNode));
                     ROSE_ASSERT(omp_clause);
 
+                    ROSE_ASSERT(roseUnparser.u_exprStmt != NULL);
                     roseUnparser.u_exprStmt->unparseOmpClause(omp_clause, inheritedAttributeInfo);
                   }
              }

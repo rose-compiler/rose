@@ -46,7 +46,9 @@ procedureAnn::procedureAnn(parserID * id, parserid_list * params,
     _temp_deletes(new parserid_list())
 {
   // annVariable * nl = lookup(string("null"), true);
-     annVariable * ret = lookup(string("return"), true);
+
+  // DQ (9/12/2011): Unused variable warning from compiler.
+  // annVariable * ret = lookup(string("return"), true);
 
   if (params) {
     int count = 0;
@@ -807,6 +809,8 @@ void procedureAnn::add_global_structures(Annotations * annotations,
 	_on_entry.push_back(new_struc);
       }
 
+   // DQ (9/12/2011): Static analysis reports that this could be NULL, check for it explicitly.
+      assert(child_node != NULL);
       if (child_node->targets())
 	add_global_structures(annotations, child_var, child_node);
     }
