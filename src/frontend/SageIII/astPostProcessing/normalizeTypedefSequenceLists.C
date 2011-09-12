@@ -165,8 +165,12 @@ NormalizeTypedefSequenceLists::generateKey(SgTypedefSeq* typedefSeq)
 
                SgType* previousBaseType = baseType;
                keepGoing = (isSgPointerType(baseType) != NULL) || (isSgReferenceType(baseType) != NULL) || (isSgArrayType(baseType) != NULL) || (isSgModifierType(baseType) != NULL);
+
+            // DQ (9/12/2011): Static analysis wants an assertion here.
+               ROSE_ASSERT(baseType != NULL);
                baseType = baseType->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_POINTER_TYPE | SgType::STRIP_ARRAY_TYPE);
-               if (baseType == previousBaseType) baseType = NULL;
+               if (baseType == previousBaseType)
+                    baseType = NULL;
 
             // Error checking to make sure that this will terminate with an error if the type is too complex (unlikely in real life).
                counter++;
