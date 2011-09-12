@@ -1029,13 +1029,16 @@ void c_action_complex_literal_constant()
 
      ROSE_ASSERT(astExpressionStack.empty() == false);
      SgValueExp* imaginaryValue = isSgValueExp(astExpressionStack.front());
+     ROSE_ASSERT(imaginaryValue != NULL);
      astExpressionStack.pop_front();
 
      ROSE_ASSERT(astExpressionStack.empty() == false);
      SgValueExp* realValue = isSgValueExp(astExpressionStack.front());
+     ROSE_ASSERT(realValue != NULL);
      astExpressionStack.pop_front();
 
      SgValueExp* complexValue = new SgComplexVal(realValue,imaginaryValue,realValue->get_type(),"");
+     ROSE_ASSERT(complexValue != NULL);
      setSourcePosition(complexValue);
 
   // Push the complex value onto the expression stack
@@ -4122,6 +4125,8 @@ void c_action_allocatable_decl(Token_t *id, ofp_bool hasArraySpec, ofp_bool hasC
     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_allocatable_decl() id = %p = %s hasArraySpec = %s hasCoArraySpec = %s \n",id,id != NULL ? id->text : "NULL",hasArraySpec ? "true" : "false",hasCoArraySpec ? "true" : "false");
 
+     ROSE_ASSERT(id != NULL);
+     ROSE_ASSERT(id->text != NULL);
      SgVariableSymbol* variableSymbol = trace_back_through_parent_scopes_lookup_variable_symbol ( id->text , astScopeStack.front() );
      ROSE_ASSERT(variableSymbol != NULL);
      SgVarRefExp* variableReference = new SgVarRefExp(variableSymbol);
@@ -5274,6 +5279,10 @@ void c_action_cray_pointer_assoc(Token_t *crayPtrId, Token_t *targetId)
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of c_action_cray_pointer_assoc()");
 #endif
+  // DQ (9/11/2011): Added error checking pointed out from static analysis.
+     ROSE_ASSERT(crayPtrId != NULL);
+     ROSE_ASSERT(targetId  != NULL);
+
      ROSE_ASSERT(getTopOfScopeStack()->variantT() == V_SgBasicBlock || getTopOfScopeStack()->variantT() == V_SgClassDefinition);
      SgVariableSymbol* pTargetVarSymbol = SageInterface::lookupVariableSymbolInParentScopes(targetId->text, getTopOfScopeStack()) ;
      ROSE_ASSERT(pTargetVarSymbol != NULL);
@@ -8383,6 +8392,8 @@ void c_action_mult_operand__mult_op(Token_t * multOp)
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_mult_operand__mult_op(): multOp = %p \n",multOp);
 
+     ROSE_ASSERT(multOp != NULL);
+
 #if !SKIP_C_ACTION_IMPLEMENTATION
      ROSE_ASSERT(astExpressionStack.empty() == false);
      SgExpression* rhs = astExpressionStack.front();
@@ -8567,6 +8578,9 @@ void c_action_add_operand__add_op(Token_t * addOp)
   // expression I have elected to build the expression here.
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_add_operand__add_op():addOp->text = %s \n",addOp->text);
+
+  // DQ (9/11/2011): Added error checking (pointer out by static analysis).
+     ROSE_ASSERT(addOp != NULL);
 
 #if !SKIP_C_ACTION_IMPLEMENTATION
      ROSE_ASSERT(astExpressionStack.empty() == false);
@@ -15090,6 +15104,9 @@ void c_action_program_stmt(Token_t *label, Token_t *programKeyword, Token_t *id,
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_program_stmt(): label = %s id = %s \n",label ? label->text : "NULL", id ? id->text : "NULL");
 
+  // DQ (9/11/2011): Added error checking (pointer out by static analysis).
+     ROSE_ASSERT(id != NULL);
+
 #if !SKIP_C_ACTION_IMPLEMENTATION
      SgScopeStatement* topOfStack = getTopOfScopeStack();
   // printf ("topOfStack = %p = %s \n",topOfStack,topOfStack->class_name().c_str());
@@ -15107,6 +15124,9 @@ void c_action_program_stmt(Token_t *label, Token_t *programKeyword, Token_t *id,
      if (label != NULL) 
           tokenList.push_back(label);
      tokenList.push_back(id);
+
+     ROSE_ASSERT(id != NULL);
+     ROSE_ASSERT(id->text != NULL);
 
   // printf ("programStatement name = %s \n",id->text);
      SgName programName = id->text;
@@ -18258,10 +18278,13 @@ void c_action_stmt_function_stmt(Token_t *label, Token_t *functionName, Token_t 
 
 void c_action_end_of_stmt(Token_t * eos)
    {
-        if ( SgProject::get_verbose() > 0)
+  // DQ (9/11/2011): Added error checking (issue pointed out by static analysis).
+     ROSE_ASSERT(eos != NULL);
+
+     if ( SgProject::get_verbose() > 0)
           printf("^^^^^^^^^^^^^^^^^^^^^^^^^^ c_action_end_of_stmt: line %d col %d\n", eos->line, eos->col);
 
-        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_end_of_stmt() astNodeStack size = %zu astExpressionStack size = %zu \n",astNodeStack.size(),astExpressionStack.size());
 
   // DQ (1/28/2009): If at this point we have not yet setup the function scope (see
@@ -18707,6 +18730,9 @@ void c_action_rice_co_with_team_stmt(Token_t *label, Token_t *team_id) {
  */
 void c_action_rice_end_with_team_stmt(Token_t *label, Token_t *team_id, Token_t *eos) {
 
+  // DQ (9/11/2011): Added error checking (issue pointed out by static analysis).
+     ROSE_ASSERT(eos != NULL);
+
      ROSE_ASSERT(astScopeStack.empty() == false);
      setSourceEndPosition(getTopOfScopeStack(), eos);
      astScopeStack.pop_front();
@@ -18727,6 +18753,11 @@ static const char * ENDFINISH_SUBR_NAME = "CAF_END_FINISH";
 void c_action_rice_finish_stmt(Token_t *label, Token_t *teamToken, Token_t *eos)
 {
 #if 1
+  // DQ (9/11/2011): Added error checking (issue pointed out by static analysis).
+     ROSE_ASSERT(eos != NULL);
+     ROSE_ASSERT(label == NULL || label->text != NULL);
+     ROSE_ASSERT(teamToken == NULL || teamToken->text != NULL);
+
         const char * s_label = (label     ? label->text     : "<no label>");
         const char * s_team  = (teamToken ? teamToken->text : "<no team>" );
         const char * s_eos   = eos->text;
@@ -18786,6 +18817,10 @@ static const char * SPAWN_SUBR_NAME = "CAF_SPAWN";
 void c_action_rice_end_finish_stmt(Token_t *label, Token_t *eos)
 {
 #if 1
+     // DQ (9/11/2011): Asserions to support use of static analysis tools.
+        ROSE_ASSERT(label == NULL || label->text != NULL);
+        ROSE_ASSERT(eos   == NULL || eos->text   != NULL);
+
         const char * s_label    = (label      ? label->text  : "<no label>");
         const char * s_eos      = (eos        ? eos->text    : "no eos"    );
         printf("In c_action_rice_end_finish_stmt(%s, %s)", s_label, s_eos);
@@ -18802,6 +18837,8 @@ void c_action_rice_end_finish_stmt(Token_t *label, Token_t *eos)
                 printf("ERROR(CAF): 'end finish' without matching 'finish'\n");
                 ROSE_ASSERT(false);
         }
+
+        ROSE_ASSERT(eos != NULL);
 
         // add translation to current scope
         Token * caf_end_finish = create_token(eos->line, eos->col, 0, ENDFINISH_SUBR_NAME);
@@ -18832,6 +18869,9 @@ void c_action_rice_spawn_stmt(Token_t * label, Token_t * spawn, Token_t * eos, o
 #if 0
         outputState("At TOP of c_action_rice_spawn_stmt()");
 #endif
+
+  // DQ (9/11/2011): Added error checking (issue pointed out by static analysis).
+     ROSE_ASSERT(spawn != NULL);
 
         // get the function reference and its arg list
     ROSE_ASSERT(astExpressionStack.empty() == false);
@@ -18955,6 +18995,9 @@ void c_action_next_token(Token_t *token)
    {
   // This parser action is used in a separate mode to read the tokens from 
   // the file as part of a separate pass over the AST.
+
+  // DQ (9/11/2011): Added error checking (issue pointed out by static analysis).
+     ROSE_ASSERT(token != NULL);
 
      string text            = token->text;
      string currentFilename = getCurrentFilename();
