@@ -27,6 +27,7 @@ Makefile.in
 /config/ylwrap
 /config/py-compile
 /config/ROSE_SOURCES
+/config/support-projects.m4
 
 # OS X Finder files
 .DS_Store
