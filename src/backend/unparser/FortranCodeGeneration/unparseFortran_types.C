@@ -155,7 +155,6 @@ UnparseFortran_type::unparseTypeLengthAndKind(SgType* type, SgExpression* length
   // DQ (12/1/2007): This has been moved to the SgModifierType
      SgExpression* kindExpression = type->get_type_kind();
   // printf ("In UnparseFortran_type::unparseType(): type->get_type_kind() = %p \n",type->get_type_kind());
-
      if (lengthExpression != NULL || kindExpression != NULL)
         {
           curprint("(");
@@ -200,32 +199,10 @@ UnparseFortran_type::unparseStringType(SgType* type, SgUnparse_Info& info)
   
      SgTypeString* string_type = isSgTypeString(type);
      ROSE_ASSERT(string_type != NULL);
-#if 0
-  // curprint("CHARACTER(LEN=*)");
-     curprint("CHARACTER(LEN=");
-
-  // DQ (8/17/2010): Changed the name of this variable (only used in Fortran codes).
-  // SgExpression* lengthExpression = string_type->get_index();
-     if (string_type->get_definedUsingScalarLength())
-        {
-       // Output the scalar integer value
-          curprint(StringUtility::numberToString(string_type->get_lengthScalar()));
-        }
-       else
-        {
-       // Output the integer expression.
-          SgExpression* lengthExpression = string_type->get_lengthExpression();
-          ROSE_ASSERT(lengthExpression != NULL);
-
-       // UnparseLanguageIndependentConstructs::unparseExpression(lengthExpression,info);
-          unp->u_fortran_locatedNode->unparseExpression(lengthExpression,info);
-        }
-
-     curprint(")");
-#else
-     curprint ("character");
-     unparseTypeLengthAndKind(string_type,string_type->get_lengthExpression(),info);
-#endif
+     curprint ("CHARACTER");
+     // Do not unparse the length since it will be printed as part of the entity_decl.
+    unparseTypeKind(type, info);
+    // unparseTypeLengthAndKind(string_type,string_type->get_lengthExpression(),info);
 
   // printf ("Leaving of UnparserFortran_type::unparseStringType \n");
   // cur << "\n/* Leaving of UnparserFort::unparseStringType */\n";
@@ -419,7 +396,8 @@ UnparseFortran_type::unparsePointerType(SgType* type, SgUnparse_Info& info)
   // DQ (1/16/2011): Plus unparse the base type...(unless it will just output the stripped types name).
      if (pointer_type->get_base_type()->containsInternalTypes() == true)
         {
-          unparseType(pointer_type->get_base_type(), info);
+          if (!isSgArrayType(pointer_type->get_base_type()))  // DXN (06/19/2011): do not unparse array base type
+             unparseType(pointer_type->get_base_type(), info);
         }
 #endif
 

@@ -1,7 +1,7 @@
 AC_DEFUN([ROSE_SUPPORT_PYTHON],
 [
 
-if test ! "$enable_python" = yes; then
+if test "$support_python_language" != yes; then
    AC_MSG_NOTICE([Skipping use of Python support!])
 else
    AC_DEFINE([USE_ROSE_PYTHON_SUPPORT],
@@ -18,6 +18,8 @@ else
    #   PYTHON_VERSION
    AX_PYTHON_DEVEL([2.7.0], [3.0.0])
 fi
+
+AC_DEFINE_UNQUOTED([BACKEND_PYTHON_INTERPRETER_NAME_WITH_PATH],"$PYTHON",[Path to the backend python interpreter])
 
 # End macro ROSE_SUPPORT_PYTHON.
 ]

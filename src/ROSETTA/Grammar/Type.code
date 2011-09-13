@@ -201,6 +201,8 @@ HEADER_START
        // procesing so that the local type table in each scope can be referenced.
           static SgScopeStatement* getCurrentScope();
 
+          SgDeclarationStatement* getAssociatedDeclaration() const;
+
 HEADER_END
 
 
@@ -349,9 +351,16 @@ HEADER_CLASS_TYPE_START
           SgClassType ( const SgClassType & X );
 HEADER_CLASS_TYPE_END
 
+
+HEADER_JAVA_PARAMETERIZED_TYPE_START
+          SgJavaParameterizedType ( const SgJavaParameterizedType & X );
+HEADER_JAVA_PARAMETERIZED_TYPE_END
+
+
 HEADER_ENUM_TYPE_START
           SgEnumType ( const SgEnumType & X );
 HEADER_ENUM_TYPE_END
+
 
 HEADER_TEMPLATE_TYPE_START
 HEADER_TEMPLATE_TYPE_END
@@ -1022,6 +1031,33 @@ SOURCE_GET_MANGLED_STRING_TYPE_START
 SgName
 SgTypeString::get_mangled (void) const
    {
+#if 1
+
+    // DXN (08/01/2011): add type kind to the mangled name
+     SgName mangled_name;
+     SgValueExp* lenValExp = isSgValueExp(p_lengthExpression);
+     SgName mangled_length_name = lenValExp? lenValExp->get_constant_folded_value_as_string():
+                                             SageInterface::generateUniqueName(p_lengthExpression,false);
+     if (p_type_kind)
+        {        
+          SgValueExp* kindValExp = isSgValueExp(p_type_kind);
+          SgName mangled_kind_name = kindValExp? kindValExp->get_constant_folded_value_as_string(): 
+                                            SageInterface::generateUniqueName(p_type_kind,false);
+          mangled_name << "__" << "MANGLED_ID_STRING" << "b__" // start tag
+                  << mangled_length_name.str ()  // length
+                  << "__" << mangled_kind_name.str() // kind
+                  << "__" << "MANGLED_ID_STRING" << "e__"; // end tag
+        }
+     else
+        {
+          mangled_name << "__" << "MANGLED_ID_STRING" << "b__" // start tag
+                  << mangled_length_name.str ()  // length
+                  << "__" << "MANGLED_ID_STRING" << "e__"; // end tag
+        }
+
+     return mangled_name;
+
+#else
   // DQ (10/5/2010): Note that we do not include the type_kind data member in the mangled name,
   // but for Fortran this value must always be "1" and the data member is only relevant for Fortran.
 
@@ -1072,6 +1108,7 @@ SgTypeString::get_mangled (void) const
   // printf ("LEAVING: In SgTypeString::get_mangled(): definedUsingScalarLength = %s lengthScalar = %zu lengthExpression = %p mangled_name = %s \n",p_definedUsingScalarLength ? "true" : "false",p_lengthScalar,p_lengthExpression,mangled_name.str());
 
      return mangled_name;
+#endif
    }
 
 SOURCE_GET_MANGLED_STRING_TYPE_END
@@ -1983,6 +2020,34 @@ SgType::getCurrentScope()
      return currentScope;
    }
 
+SgDeclarationStatement*
+SgType::getAssociatedDeclaration() const
+   {
+     SgDeclarationStatement* declaration = NULL;
+
+  // printf ("In SgType::getAssociatedDeclaration(): type = %s \n",class_name().c_str());
+
+  // Resolve to the base type (but not past typedef types).  Note that a subtle point is that 
+  // we want to avoid expressing typedefs that are private in functions that are public.
+     SgType* strippedType = this->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE);
+     ROSE_ASSERT(strippedType != NULL);
+
+  // printf ("In getAssociatedDeclaration(): strippedType = %s \n",strippedType->class_name().c_str());
+
+  // Check if this is a named type (either SgClassType, SgEnumType, or SgTypedefType).
+     SgNamedType* namedType = isSgNamedType(strippedType);
+     if (namedType != NULL)
+        {
+       // Look for the declaration and evaluate if it required qualification.
+          declaration = namedType->get_declaration();
+          ROSE_ASSERT(declaration != NULL);
+
+       // printf ("In HiddenListTraversal::getDeclarationAssociatedWithType(): declaration = %p = %s \n",declaration,declaration->class_name().c_str());
+        }
+
+     return declaration;
+   }
+
 
 bool
 SgType::containsInternalTypes()
@@ -2617,6 +2682,66 @@ $CLASSNAME::get_mangled(SgUnparse_Info&)
 #endif
 
 SOURCE_CLASS_TYPE_END
+
+
+SOURCE_JAVA_PARAMETERIZED_TYPE_START
+SgJavaParameterizedType::SgJavaParameterizedType ( const SgJavaParameterizedType & X )
+   : SgNamedType(X)
+   {
+   }
+
+
+SgName
+SgJavaParameterizedType::get_name() const
+   {
+     if(get_declaration())
+          return isSgClassDeclaration(get_declaration())->get_name();
+       else
+          return SgName((char *)0L);
+   }
+
+// DQ (8/18/2011): This function is copied from the version from SgClassType.
+SgName
+$CLASSNAME::get_mangled(void) const
+   {
+     ROSE_ASSERT(this != NULL);
+
+  // printf ("In $CLASSNAME::get_mangled(): get_name() = %s \n",get_name().str());
+
+     SgName mangled_name;
+  // if (get_name().get_length() != 0) // not anonymous
+     if (get_name().is_null() == false) // not anonymous
+        {
+          const SgClassDeclaration* class_decl = isSgClassDeclaration(get_declaration());
+       // printf ("In $CLASSNAME::get_mangled(): class_decl = %p = %s \n",class_decl, ((class_decl == NULL) ? "NULL" : class_decl->class_name().c_str()) );
+          if (class_decl != NULL)
+             {
+            // DQ (7/29/2010): Template instantiation declarations can differ on template parameters so we have to dig a little farther.
+               const SgTemplateInstantiationDecl* template_class_decl = isSgTemplateInstantiationDecl(get_declaration());
+               if (template_class_decl != NULL)
+                  {
+                    mangled_name = template_class_decl->get_mangled_name();
+#if 0
+                    printf ("In $CLASSNAME::get_mangled(): SgTemplateInstantiationDecl mangled_name = %s \n",mangled_name.str());
+#endif
+#if 0
+                    printf ("Need to get the mangled names of the template arguments \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+                 else
+                  {
+                 // This is for just a simple SgClassDeclaration.
+                    mangled_name = class_decl->get_mangled_name();
+                 // printf ("In $CLASSNAME::get_mangled(): SgClassDeclaration mangled_name = %s \n",mangled_name.str());
+                  }
+             }
+        }
+
+     return mangled_name;
+   }
+SOURCE_JAVA_PARAMETERIZED_TYPE_END
+
 
 SOURCE_TEMPLATE_TYPE_START
 
@@ -4417,8 +4542,8 @@ SgTypeInt* SgTypeInt::p_builtin_type = NULL;
 
 // DQ (10/4/2010): Added support for fortran type kind expressions.
 // $CLASSNAME* $CLASSNAME::createType(int bitLength)
-$CLASSNAME*
-$CLASSNAME::createType(int bitLength, SgExpression* optional_fortran_type_kind)
+SgTypeInt*
+SgTypeInt::createType(int bitLength, SgExpression* optional_fortran_type_kind)
    {
 #if 0
      static bool firstCallToFunction = true;
@@ -4725,6 +4850,23 @@ SgClassType::createType(SgClassDeclaration * cd, SgExpression* optional_fortran_
    }
 
 SOURCE_CREATE_TYPE_FOR_CLASS_TYPE_END
+
+
+SOURCE_CREATE_TYPE_FOR_JAVA_PARAMETERIZED_TYPE_START
+
+// SgClassType* SgClassType::createType(SgClassDeclaration * cd)
+SgJavaParameterizedType*
+SgJavaParameterizedType::createType(SgClassDeclaration * cd, SgExpression* optional_fortran_type_kind)
+   {
+     ROSE_ASSERT(cd != NULL);
+
+  // DQ (10/4/2010): I think that pointer types can't have a kind parameter, so this should be NULL.
+     ROSE_ASSERT(optional_fortran_type_kind == NULL);
+
+     return ($CLASSNAME*) cd->get_type();
+   }
+
+SOURCE_CREATE_TYPE_FOR_JAVA_PARAMETERIZED_TYPE_END
 
 
 SOURCE_CREATE_TYPE_FOR_TEMPLATE_TYPE_START

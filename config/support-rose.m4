@@ -169,6 +169,7 @@ else
     AC_MSG_RESULT([skipping])
 fi
 
+  ROSE_SUPPORT_UPC
 
 ##
 #########################################################################################
@@ -498,6 +499,7 @@ AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_44,test "x$rose_boost_version" = "x104
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_45,test "x$rose_boost_version" = "x104500" -o "x$_version" = "x1.45")
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_46,test "x$rose_boost_version" = "x104600" -o "x$_version" = "x1.46")
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_46,test "x$rose_boost_version" = "x104601" -o "x$_version" = "x1.46")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_47,test "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.47")
 
 # DQ (10/18/2010): Error checking for Boost version.
 if test "x$rose_boost_version" = "x103600" -o "x$_version" = "x1.36" \
@@ -511,7 +513,8 @@ if test "x$rose_boost_version" = "x103600" -o "x$_version" = "x1.36" \
    -o "x$rose_boost_version" = "x104400" -o "x$_version" = "x1.44" \
    -o "x$rose_boost_version" = "x104500" -o "x$_version" = "x1.45" \
    -o "x$rose_boost_version" = "x104600" -o "x$_version" = "x1.46" \
-   -o "x$rose_boost_version" = "x104601" -o "x$_version" = "x1.46"; then
+   -o "x$rose_boost_version" = "x104601" -o "x$_version" = "x1.46" \
+   -o "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.47"; then 
 echo "Reasonable version of Boost found!"
 else
 echo "No identifiable version of boost recognised!"
@@ -967,9 +970,6 @@ fi
 AC_SUBST(glut_path)
 
 
-
-# Call supporting macro for python
-ROSE_SUPPORT_PYTHON
 
 AC_CHECK_PROGS(PERL, [perl])
 
@@ -2088,6 +2088,7 @@ src/frontend/SageIII/astHiddenTypeAndDeclarationLists/Makefile
 src/frontend/SageIII/astVisualization/Makefile
 src/frontend/SageIII/GENERATED_CODE_DIRECTORY_Cxx_Grammar/Makefile
 src/frontend/SageIII/astFromString/Makefile
+src/frontend/SageIII/includeDirectivesProcessing/Makefile
 src/frontend/CxxFrontend/Makefile
 src/frontend/OpenFortranParser_SAGE_Connection/Makefile
 src/frontend/ECJ_ROSE_Connection/Makefile
@@ -2099,6 +2100,7 @@ src/frontend/BinaryFormats/Makefile
 src/frontend/Disassemblers/Makefile
 src/midend/Makefile
 src/midend/abstractHandle/Makefile
+src/midend/abstractMemoryObject/Makefile
 src/midend/astUtil/Makefile
 src/midend/astQuery/Makefile
 src/midend/astProcessing/Makefile
@@ -2106,6 +2108,7 @@ src/midend/astRewriteMechanism/Makefile
 src/midend/astDiagnostics/Makefile
 src/midend/binaryAnalyses/Makefile
 src/midend/programAnalysis/Makefile
+src/midend/programAnalysis/staticSingleAssignment/Makefile
 src/midend/programTransformation/Makefile
 src/midend/programTransformation/astInlining/Makefile
 src/midend/programTransformation/astOutlining/Makefile
@@ -2251,6 +2254,7 @@ projects/backstroke/normalizations/Makefile
 projects/backstroke/slicing/Makefile
 projects/backstroke/ssa/Makefile
 projects/backstroke/valueGraph/Makefile
+projects/backstroke/valueGraph/headerUnparser/Makefile
 projects/backstroke/pluggableReverser/Makefile
 projects/backstroke/testCodeGeneration/Makefile
 projects/backstroke/restrictedLanguage/Makefile
@@ -2263,6 +2267,7 @@ projects/backstroke/tests/pluggableReverserTest/Makefile
 projects/backstroke/tests/restrictedLanguageTest/Makefile
 projects/backstroke/tests/testCodeBuilderTest/Makefile
 projects/backstroke/utilities/Makefile
+projects/backstroke/sdg/Makefile
 projects/binCompass/Makefile
 projects/binCompass/analyses/Makefile
 projects/binCompass/graphanalyses/Makefile
@@ -2346,6 +2351,7 @@ tests/RunTests/A++Tests/Makefile
 tests/RunTests/AstDeleteTests/Makefile
 tests/RunTests/FortranTests/Makefile
 tests/RunTests/FortranTests/LANL_POP/Makefile
+tests/RunTests/PythonTests/Makefile
 tests/PerformanceTests/Makefile
 tests/CompilerOptionsTests/Makefile
 tests/CompilerOptionsTests/testCpreprocessorOption/Makefile
@@ -2403,6 +2409,7 @@ tests/CompileTests/sizeofOperation_tests/Makefile
 tests/CompileTests/MicrosoftWindows_tests/Makefile
 tests/CompileTests/nameQualificationAndTypeElaboration_tests/Makefile
 tests/CompileTests/NewEDGInterface_C_tests/Makefile
+tests/CompileTests/UnparseHeadersTests/Makefile
 tests/CompileTests/CudaTests/Makefile
 tests/CompileTests/OpenClTests/Makefile
 tests/CompileTests/EDG_4_x/Makefile
@@ -2410,6 +2417,7 @@ tests/CompilerOptionsTests/collectAllCommentsAndDirectives_tests/Makefile
 tests/CompilerOptionsTests/preinclude_tests/Makefile
 tests/CompilerOptionsTests/tokenStream_tests/Makefile
 tests/roseTests/Makefile
+tests/roseTests/abstractMemoryObjectTests/Makefile
 tests/roseTests/PHPTests/Makefile
 tests/roseTests/astFileIOTests/Makefile
 tests/roseTests/astInliningTests/Makefile
@@ -2439,6 +2447,7 @@ tests/roseTests/programAnalysisTests/staticInterproceduralSlicingTests/Makefile
 tests/roseTests/programAnalysisTests/testCallGraphAnalysis/Makefile
 tests/roseTests/programAnalysisTests/variableLivenessTests/Makefile
 tests/roseTests/programAnalysisTests/variableRenamingTests/Makefile
+tests/roseTests/programAnalysisTests/staticSingleAssignmentTests/Makefile
 tests/roseTests/programTransformationTests/Makefile
 tests/roseTests/roseHPCToolkitTests/Makefile
 tests/roseTests/roseHPCToolkitTests/data/01/ANALYSIS/Makefile

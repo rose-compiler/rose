@@ -63,6 +63,10 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
        // DQ (11/27/2004): Added to support unparsing of pointers to nested template arguments 
           virtual void unparseTemplateName(SgTemplateInstantiationDecl* templateInstantiationDeclaration, SgUnparse_Info& info);
 
+       // DQ (6/21/2011): Refactored support for unparing names with template arguments.
+          void unparseTemplateFunctionName ( SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDeclaration, SgUnparse_Info& info );
+          void unparseTemplateArgumentList ( const SgTemplateArgumentPtrList& templateArgListPtr, SgUnparse_Info& info );
+
        // DQ (2/16/2004): Added to refactor code and add support for old-style K&R C
           void unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUnparse_Info& info);
           void unparseFunctionParameterDeclaration ( SgFunctionDeclaration* funcdecl_stmt, 
@@ -330,7 +334,11 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
 
       // DQ (7/22/2006): Added support for asm operands.
          virtual void unparseAsmOp (SgExpression* expr, SgUnparse_Info& info);
+
+// DQ (6/25/2011): Can we modify this to perm it to be compiler withouth seeing the enum definition?
+//       virtual void unparse_asm_operand_modifier(SgAsmOp::asm_operand_modifier_enum flags);
          virtual void unparse_asm_operand_modifier(SgAsmOp::asm_operand_modifier_enum flags);
+
          std::string unparse_register_name (SgInitializedName::asm_register_name_enum register_name);
 
        // DQ (2/29/2004): Added to support unparsing of template instantiations (similar to class declarations)
@@ -379,11 +387,11 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
 //#if UPC_EXTENSIONS_ALLOWED
 //#if USE_UPC_IR_NODES
       // Liao, 6/13/2008, support UPC nodes
-       virtual void unparseUpcNotifyStatement (SgStatement* stmt, SgUnparse_Info& info);
-       virtual void unparseUpcWaitStatement (SgStatement* stmt, SgUnparse_Info& info);
-       virtual void unparseUpcBarrierStatement (SgStatement* stmt, SgUnparse_Info& info);
-       virtual void unparseUpcFenceStatement (SgStatement* stmt, SgUnparse_Info& info);
-       virtual void unparseUpcForAllStatement (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseUpcNotifyStatement (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseUpcWaitStatement (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseUpcBarrierStatement (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseUpcFenceStatement (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseUpcForAllStatement (SgStatement* stmt, SgUnparse_Info& info);
 //#endif       
        // Liao 5/31/2009, OpenMP nodes
          virtual void unparseOmpPrefix                     (SgUnparse_Info& info); 
@@ -406,9 +414,9 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
        // void run_unparser();
        
        // TV (05/06/2010): SgCudaKernelCallExp
-       virtual void unparseCudaKernelCall(SgExpression* expr, SgUnparse_Info& info);
+          virtual void unparseCudaKernelCall(SgExpression* expr, SgUnparse_Info& info);
 
-};
+   };
 
 #endif
 

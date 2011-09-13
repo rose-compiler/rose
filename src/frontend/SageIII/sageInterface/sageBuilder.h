@@ -204,7 +204,7 @@ Expressions are usually built using bottomup approach, i.e. buiding operands fir
   - Value string is not included in the argument list for simplicty. It can be set afterwards using set_valueString()
   - Expression builders are organized roughtly in the order of class hierarchy list of ROSE Web Reference
   - default values for arguments are provided to support top-down construction. Should use SageInterface::setOperand(),setLhsOperand(), setRhsOperand() etc to set operands and handle side effects.
-  \todo SgActualArgumentExpression, SgAsmOp, SgAsteriskShapeExp, 
+  \todo SgAsmOp, SgAsteriskShapeExp,
   SgValueExp, SgEnumVal,
   SgThrowOp,
 */
@@ -307,6 +307,9 @@ SgUpcMythread* buildUpcMythread_nfi();
 SgThisExp* buildThisExp(SgClassSymbol* sym);
 SgThisExp* buildThisExp_nfi(SgClassSymbol* sym);
 
+//! Build lambda expression
+SgLambdaRefExp* buildLambdaRefExp(SgType* return_type, SgFunctionParameterList* params, SgScopeStatement* scope);
+
 //!  Template function to build a unary expression of type T. Instantiated functions include:buildAddressOfOp(),buildBitComplementOp(),buildBitComplementOp(),buildMinusOp(),buildNotOp(),buildPointerDerefExp(),buildUnaryAddOp(),buildMinusMinusOp(),buildPlusPlusOp().  They are also used for the unary vararg operators (which are not technically unary operators).
 /*! The instantiated functions' prototypes are not shown since they are expanded using macros.
  * Doxygen is not smart enough to handle macro expansion. 
@@ -355,12 +358,20 @@ SgMinusMinusOp *buildMinusMinusOp_nfi(SgExpression* operand_i, SgUnaryOp::Sgop_m
 SgPlusPlusOp* buildPlusPlusOp(SgExpression* operand_i, SgUnaryOp::Sgop_mode  a_mode);
 SgPlusPlusOp* buildPlusPlusOp_nfi(SgExpression* operand_i, SgUnaryOp::Sgop_mode  a_mode);
 
+//! Build a ThrowOp expression
+SgThrowOp* buildThrowOp(SgExpression *, SgThrowOp::e_throw_kind);
+
 SgNewExp * buildNewExp(SgType* type, 
                        SgExprListExp* exprListExp, 
                        SgConstructorInitializer* constInit, 
                        SgExpression* expr, 
                        short int val, 
                        SgFunctionDeclaration* funcDecl);
+
+SgDeleteExp* buildDeleteExp(SgExpression* variable,
+                            short is_array,
+                            short need_global_specifier,
+                            SgFunctionDeclaration* deleteOperatorDeclaration);
  
 
 #undef BUILD_UNARY_PROTO
@@ -399,29 +410,37 @@ BUILD_BINARY_PROTO(DotStarOp)
 BUILD_BINARY_PROTO(EqualityOp)
 
 BUILD_BINARY_PROTO(ExponentiationOp)
+BUILD_BINARY_PROTO(ExponentiationAssignOp)
 BUILD_BINARY_PROTO(GreaterOrEqualOp)
 BUILD_BINARY_PROTO(GreaterThanOp)
 BUILD_BINARY_PROTO(IntegerDivideOp)
+BUILD_BINARY_PROTO(IntegerDivideAssignOp)
 BUILD_BINARY_PROTO(IorAssignOp)
+BUILD_BINARY_PROTO(IsOp)
+BUILD_BINARY_PROTO(IsNotOp)
 
 BUILD_BINARY_PROTO(LessOrEqualOp)
 BUILD_BINARY_PROTO(LessThanOp)
 BUILD_BINARY_PROTO(LshiftAssignOp)
 BUILD_BINARY_PROTO(LshiftOp)
 
+BUILD_BINARY_PROTO(MembershipOp)
 BUILD_BINARY_PROTO(MinusAssignOp)
 BUILD_BINARY_PROTO(ModAssignOp)
 BUILD_BINARY_PROTO(ModOp)
 BUILD_BINARY_PROTO(MultAssignOp)
 BUILD_BINARY_PROTO(MultiplyOp)
 
+BUILD_BINARY_PROTO(NonMembershipOp)
 BUILD_BINARY_PROTO(NotEqualOp)
 BUILD_BINARY_PROTO(OrOp)
 BUILD_BINARY_PROTO(PlusAssignOp)
 BUILD_BINARY_PROTO(PntrArrRefExp)
 BUILD_BINARY_PROTO(RshiftAssignOp)
+BUILD_BINARY_PROTO(JavaUnsignedRshiftAssignOp)
 
 BUILD_BINARY_PROTO(RshiftOp)
+BUILD_BINARY_PROTO(JavaUnsignedRshiftOp)
 BUILD_BINARY_PROTO(ScopeOp)
 BUILD_BINARY_PROTO(SubtractOp)
 BUILD_BINARY_PROTO(XorAssignOp)
@@ -441,6 +460,29 @@ SgExprListExp * buildExprListExp(const std::vector<SgExpression*>& exprs);
 SgExprListExp * buildExprListExp_nfi();
 SgExprListExp * buildExprListExp_nfi(const std::vector<SgExpression*>& exprs);
 
+//! Build a SgTupleExp
+SgTupleExp * buildTupleExp(SgExpression * expr1 = NULL, SgExpression* expr2 = NULL, SgExpression* expr3 = NULL, SgExpression* expr4 = NULL, SgExpression* expr5 = NULL, SgExpression* expr6 = NULL, SgExpression* expr7 = NULL, SgExpression* expr8 = NULL, SgExpression* expr9 = NULL, SgExpression* expr10 = NULL);
+SgTupleExp * buildTupleExp(const std::vector<SgExpression*>& exprs);
+SgTupleExp * buildTupleExp_nfi();
+SgTupleExp * buildTupleExp_nfi(const std::vector<SgExpression*>& exprs);
+
+//! Build a SgListExp
+SgListExp * buildListExp(SgExpression * expr1 = NULL, SgExpression* expr2 = NULL, SgExpression* expr3 = NULL, SgExpression* expr4 = NULL, SgExpression* expr5 = NULL, SgExpression* expr6 = NULL, SgExpression* expr7 = NULL, SgExpression* expr8 = NULL, SgExpression* expr9 = NULL, SgExpression* expr10 = NULL);
+SgListExp * buildListExp(const std::vector<SgExpression*>& exprs);
+SgListExp * buildListExp_nfi();
+SgListExp * buildListExp_nfi(const std::vector<SgExpression*>& exprs);
+
+SgComprehension * buildComprehension(SgExpression *target, SgExpression *iter, SgExprListExp *ifs);
+SgComprehension * buildComprehension_nfi(SgExpression *target, SgExpression *iter, SgExprListExp *ifs);
+
+SgListComprehension * buildListComprehension(SgExpression *elt, SgExprListExp *generators);
+SgListComprehension * buildListComprehension_nfi(SgExpression *elt, SgExprListExp *generators);
+
+SgSetComprehension * buildSetComprehension(SgExpression *elt, SgExprListExp *generators);
+SgSetComprehension * buildSetComprehension_nfi(SgExpression *elt, SgExprListExp *generators);
+
+SgDictionaryComprehension * buildDictionaryComprehension(SgKeyDatumPair *kd_pair, SgExprListExp *generators);
+SgDictionaryComprehension * buildDictionaryComprehension_nfi(SgKeyDatumPair *kd_pair, SgExprListExp *generators);
 
 //! Build SgVarRefExp based on a variable's Sage name. It will lookup symbol table internally starting from scope. A variable name is unique so type can be inferred (double check this).
 
@@ -540,6 +582,9 @@ SgSizeOfOp* buildSizeOfOp_nfi(SgExpression* exp);
 SgSizeOfOp* buildSizeOfOp(SgType* type = NULL);
 SgSizeOfOp* buildSizeOfOp_nfi(SgType* type);
 
+// DQ (7/18/2011): Added support for SgJavaInstanceOfOp
+//! This is part of Java specific operator support.
+SgJavaInstanceOfOp* buildJavaInstanceOfOp(SgExpression* exp = NULL, SgType* type = NULL);
 
 
 //@}
@@ -621,46 +666,54 @@ buildFunctionParameterList_nfi(SgFunctionParameterTypeList * paraTypeList);
 //! A template function for function prototype declaration builders
 template <class actualFunction>
 actualFunction*
-buildNondefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, bool isMemberFunction, SgScopeStatement* scope=NULL);
+buildNondefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, bool isMemberFunction, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
 
 //! Build a prototype for a function, handle function type, symbol etc transparently
 SgFunctionDeclaration *
-buildNondefiningFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL);
+buildNondefiningFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
 
 //! Build a prototype for an existing function declaration (defining or nondefining is fine) 
 SgFunctionDeclaration *
-buildNondefiningFunctionDeclaration (const SgFunctionDeclaration* funcdecl, SgScopeStatement* scope=NULL);
+buildNondefiningFunctionDeclaration (const SgFunctionDeclaration* funcdecl, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
 
 //! Build a prototype member function declaration
 SgMemberFunctionDeclaration *
-buildNondefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL);
+buildNondefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
+
+////! Build a prototype member function declaration
+//SgMemberFunctionDeclaration *
+//buildNondefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgFunctionParameterList* paralist, SgScopeStatement* scope=NULL);
 
 //! Build a defining ( non-prototype) member function declaration
 SgMemberFunctionDeclaration *
-buildDefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL);
+buildDefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
 
 //! Build a defining ( non-prototype) member function declaration from a SgMemberFunctionType
 SgMemberFunctionDeclaration *
-buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgScopeStatement* scope);
+buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgFunctionParameterList* paralist, SgScopeStatement* scope, SgExprListExp* decoratorList = NULL);
+
+//! Build a defining ( non-prototype) member function declaration from a SgMemberFunctionType
+SgMemberFunctionDeclaration *
+buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgScopeStatement* scope, SgExprListExp* decoratorList = NULL);
 
 //! Build a prototype for an existing member function declaration (defining or nondefining is fine) 
 SgMemberFunctionDeclaration *
-buildNondefiningMemberFunctionDeclaration (const SgMemberFunctionDeclaration* funcdecl, SgScopeStatement* scope=NULL);
+buildNondefiningMemberFunctionDeclaration (const SgMemberFunctionDeclaration* funcdecl, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
 
 //! A template function for function declaration builders
 template <class actualFunction>
 actualFunction *
-buildDefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * parlist, SgScopeStatement* scope=NULL);
+buildDefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
 
 //! Build a function declaration with a function body
 SgFunctionDeclaration *
-buildDefiningFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * parlist, SgScopeStatement* scope=NULL);
+buildDefiningFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
 
 SgFunctionDeclaration *
-buildDefiningFunctionDeclaration (const std::string & name, SgType* return_type, SgFunctionParameterList * parlist, SgScopeStatement* scope=NULL);
+buildDefiningFunctionDeclaration (const std::string & name, SgType* return_type, SgFunctionParameterList * parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
 
 SgFunctionDeclaration *
-buildDefiningFunctionDeclaration (const char* name, SgType* return_type, SgFunctionParameterList * parlist, SgScopeStatement* scope=NULL);
+buildDefiningFunctionDeclaration (const char* name, SgType* return_type, SgFunctionParameterList * parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
 
 //! Build a Fortran subroutine or procedure
 SgProcedureHeaderStatement* 
@@ -715,23 +768,29 @@ inline SgIfStmt * buildIfStmt(SgExpression* conditional, SgStatement * true_body
 }
 SgIfStmt * buildIfStmt_nfi(SgStatement* conditional, SgStatement * true_body, SgStatement * false_body);
 
+//! Build a for init statement
+SgForInitStatement * buildForInitStatement(const SgStatementPtrList & statements);
 SgForInitStatement * buildForInitStatement_nfi(SgStatementPtrList & statements);
 
 //!Build a for statement, assume none of the arguments is NULL
-SgForStatement * buildForStatement(SgStatement* initialize_stmt,  SgStatement * test, SgExpression * increment, SgStatement * loop_body);
-SgForStatement * buildForStatement_nfi(SgStatement* initialize_stmt, SgStatement * test, SgExpression * increment, SgStatement * loop_body);
-SgForStatement * buildForStatement_nfi(SgForInitStatement * init_stmt, SgStatement * test, SgExpression * increment, SgStatement * loop_body);
+SgForStatement * buildForStatement(SgStatement* initialize_stmt,  SgStatement * test, SgExpression * increment, SgStatement * loop_body, SgStatement * else_body = NULL);
+SgForStatement * buildForStatement_nfi(SgStatement* initialize_stmt, SgStatement * test, SgExpression * increment, SgStatement * loop_body, SgStatement * else_body = NULL);
+SgForStatement * buildForStatement_nfi(SgForInitStatement * init_stmt, SgStatement * test, SgExpression * increment, SgStatement * loop_body, SgStatement * else_body = NULL);
 
 //! Build a UPC forall statement
 SgUpcForAllStatement * buildUpcForAllStatement_nfi(SgStatement* initialize_stmt, SgStatement * test, SgExpression * increment, SgExpression* affinity, SgStatement * loop_body);
 SgUpcForAllStatement * buildUpcForAllStatement_nfi(SgForInitStatement * init_stmt, SgStatement * test, SgExpression * increment, SgExpression* affinity, SgStatement * loop_body);
 
 //! Build while statement
-SgWhileStmt * buildWhileStmt(SgStatement *  condition, SgStatement *body);
-inline SgWhileStmt * buildWhileStmt(SgExpression *  condition, SgStatement *body) {
-  return buildWhileStmt(buildExprStatement(condition), body);
+SgWhileStmt * buildWhileStmt(SgStatement *  condition, SgStatement *body, SgStatement *else_body = NULL);
+inline SgWhileStmt * buildWhileStmt(SgExpression *  condition, SgStatement *body, SgStatement* else_body = NULL) {
+  return buildWhileStmt(buildExprStatement(condition), body, else_body);
 }
-SgWhileStmt * buildWhileStmt_nfi(SgStatement *  condition, SgStatement *body);
+SgWhileStmt * buildWhileStmt_nfi(SgStatement *  condition, SgStatement *body, SgStatement *else_body = NULL);
+
+//! Build a with statement
+SgWithStatement* buildWithStatement(SgExpression* expr, SgStatement* body);
+SgWithStatement* buildWithStatement_nfi(SgExpression* expr, SgStatement* body);
 
 //! Build do-while statement
 SgDoWhileStmt * buildDoWhileStmt(SgStatement *  body, SgStatement *condition);
@@ -756,6 +815,10 @@ SgBasicBlock * buildBasicBlock_nfi(const std::vector<SgStatement*>&);
 SgExprStatement* 
 buildAssignStatement(SgExpression* lhs,SgExpression* rhs);
 
+// DQ (8/16/2011): Generated a new version of this function to define consistant semantics.
+//! This version does not recursively reset the file info as a transformation.
+SgExprStatement* buildAssignStatement_ast_translate(SgExpression* lhs,SgExpression* rhs);
+
 //! Build a break statement
 SgBreakStmt* buildBreakStmt();
 SgBreakStmt* buildBreakStmt_nfi();
@@ -763,6 +826,34 @@ SgBreakStmt* buildBreakStmt_nfi();
 //! Build a continue statement
 SgContinueStmt* buildContinueStmt();
 SgContinueStmt* buildContinueStmt_nfi();
+
+//! Build a pass statement
+SgPassStatement* buildPassStatement();
+SgPassStatement* buildPassStatement_nfi();
+
+//! Build a Assert statement
+SgAssertStmt* buildAssertStmt(SgExpression* test);
+SgAssertStmt* buildAssertStmt_nfi(SgExpression* test);
+
+//! Build a yield statement
+SgYieldExpression* buildYieldExpression(SgExpression* value);
+SgYieldExpression* buildYieldExpression_nfi(SgExpression* value);
+
+//! Build a key-datum pair
+SgKeyDatumPair* buildKeyDatumPair    (SgExpression* key, SgExpression* datum);
+SgKeyDatumPair* buildKeyDatumPair_nfi(SgExpression* key, SgExpression* datum);
+
+//! Build a list of key-datum pairs
+SgDictionaryExp* buildDictionaryExp    (std::vector<SgKeyDatumPair*> pairs);
+SgDictionaryExp* buildDictionaryExp_nfi(std::vector<SgKeyDatumPair*> pairs);
+
+//! Build an Actual Argument Expression
+SgActualArgumentExpression* buildActualArgumentExpression(SgName arg_name, SgExpression* arg);
+SgActualArgumentExpression* buildActualArgumentExpression_nfi(SgName arg_name, SgExpression* arg);
+
+//! Build a delete statement
+SgDeleteExp* buildDeleteExp(SgExpression *target, bool is_array = false, bool need_global_specifier = false, SgFunctionDeclaration *deleteOperatorDeclaration = NULL);
+SgDeleteExp* buildDeleteExp_nfi(SgExpression *target, bool is_array = false, bool need_global_specifier = false, SgFunctionDeclaration *deleteOperatorDeclaration = NULL);
 
 //! Build a class definition scope statement
 SgClassDefinition* buildClassDefinition(SgClassDeclaration *d = NULL);
@@ -788,10 +879,23 @@ SgClassDeclaration * buildStructDeclaration(const SgName& name, SgScopeStatement
 SgClassDeclaration * buildStructDeclaration(const std::string& name, SgScopeStatement* scope=NULL);
 SgClassDeclaration * buildStructDeclaration(const char* name, SgScopeStatement* scope=NULL);
 
+//! Build a StmtDeclarationStmt
+SgStmtDeclarationStatement* buildStmtDeclarationStatement(SgStatement* stmt);
+SgStmtDeclarationStatement* buildStmtDeclarationStatement_nfi(SgStatement* stmt);
+
 // tps (09/02/2009) : Added support for building namespaces
 SgNamespaceDeclarationStatement *  buildNamespaceDeclaration(const SgName& name, SgScopeStatement* scope=NULL);
 SgNamespaceDeclarationStatement *  buildNamespaceDeclaration_nfi(const SgName& name, bool unnamednamespace, SgScopeStatement* scope );
 SgNamespaceDefinitionStatement * buildNamespaceDefinition(SgNamespaceDeclarationStatement* d=NULL);
+
+// driscoll6 (7/20/11) : Support n-ary operators for python
+SgNaryComparisonOp* buildNaryComparisonOp(SgExpression* lhs);
+SgNaryComparisonOp* buildNaryComparisonOp_nfi(SgExpression* lhs);
+SgNaryBooleanOp* buildNaryBooleanOp(SgExpression* lhs);
+SgNaryBooleanOp* buildNaryBooleanOp_nfi(SgExpression* lhs);
+
+SgStringConversion* buildStringConversion(SgExpression* exp);
+SgStringConversion* buildStringConversion_nfi(SgExpression* exp);
 
 
 // DQ (1/24/2009): Added this "_nfi" function but refactored buildStructDeclaration to also use it (thsi needs to be done uniformally).
@@ -830,11 +934,40 @@ SgCatchOptionStmt* buildCatchOptionStmt(SgVariableDeclaration* condition, SgStat
 // driscoll6 (6/9/2011): Adding support for try stmts.
 // ! Build a try statement.
 SgTryStmt* buildTryStmt(SgStatement* body,
-                        SgCatchOptionStmt* catch0,
+                        SgCatchOptionStmt* catch0=NULL,
                         SgCatchOptionStmt* catch1=NULL,
                         SgCatchOptionStmt* catch2=NULL,
                         SgCatchOptionStmt* catch3=NULL,
                         SgCatchOptionStmt* catch4=NULL);
+
+// charles4 (8/25/2011): Adding support for Java Synchronized stmts.
+// ! Build a Java Synchronized statement.
+SgJavaSynchronizedStatement *buildJavaSynchronizedStatement(SgExpression *, SgBasicBlock *);
+
+// charles4 (8/25/2011): Adding support for Java Throw stmts.
+// ! Build a Java Throw statement.
+SgJavaThrowStatement *buildJavaThrowStatement(SgThrowOp *);
+
+// charles4 (8/25/2011): Adding support for Java Foreach stmts.
+// ! Build a Java Foreach statement.
+// SgJavaForEachStatement *buildJavaForEachStatement(SgInitializedName * = NULL, SgExpression * = NULL, SgStatement * = NULL);
+SgJavaForEachStatement *buildJavaForEachStatement(SgVariableDeclaration * = NULL, SgExpression * = NULL, SgStatement * = NULL);
+
+// charles4 (8/25/2011): Adding support for Java Label stmts.
+// ! Build a Java Label statement.
+SgJavaLabelStatement *buildJavaLabelStatement(const SgName &,  SgStatement * = NULL);
+
+// ! Build an exec statement
+SgExecStatement* buildExecStatement(SgExpression* executable, SgExpression* globals = NULL, SgExpression* locals = NULL);
+SgExecStatement* buildExecStatement_nfi(SgExpression* executable, SgExpression* globals = NULL, SgExpression* locals = NULL);
+
+// ! Build a python print statement
+SgPythonPrintStmt* buildPythonPrintStmt(SgExpression* dest = NULL, SgExprListExp* values = NULL);
+SgPythonPrintStmt* buildPythonPrintStmt_nfi(SgExpression* dest = NULL, SgExprListExp* values = NULL);
+
+// ! Build a python global statement
+SgPythonGlobalStmt* buildPythonGlobalStmt(SgInitializedNamePtrList& names);
+SgPythonGlobalStmt* buildPythonGlobalStmt_nfi(SgInitializedNamePtrList& names);
 
 // DQ (4/30/2010): Added support for building asm statements.
 //! Build a NULL statement

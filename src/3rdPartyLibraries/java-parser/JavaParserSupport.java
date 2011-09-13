@@ -19,9 +19,23 @@ import org.eclipse.jdt.internal.compiler.util.*;
 // DQ (10/30/2010): Added support for reflection to get methods in implicitly included objects.
 import java.lang.reflect.*;
 
+
 // DQ (11/1/2010): This improved design separates out the parsing support, from the ECJ AST traversal, and the parser.
 class JavaParserSupport
    {
+  // DQ (8/20/2011): Added a simple way to control the number of data members, constructors, and member functions built.
+  // 0: No significant limits applied to number of constructs in the AST.
+  // 1: Limits the number to be built into the enerated AST
+     static boolean VISUALIZE_AST = false;
+  // static boolean VISUALIZE_AST = true;
+
+  // I assume that 1000 is a sufficent bound to include all data members and member functions.
+     static int implicitClassCounterBound     = VISUALIZE_AST ? 1   : 1000;
+     static int methodCounterBound            = VISUALIZE_AST ? 2   : 1000;
+     static int constructorMethodCounterBound = VISUALIZE_AST ? 2   : 1000;
+     static int dataMemberCounterBound        = VISUALIZE_AST ? 2   : 1000;
+     static int interfaceCounterBound         = VISUALIZE_AST ? 2   : 1000;
+
   // This class is intended to contain functions to support the JNI specific in src/frontend/ECJ_ROSE_Connection/JavaParserActionROSE.C.
   // Note that the functions in JavaParserActionROSE.C are JNI functions that are called by the Java
   // code in src/3rdPartyLibraries/java-parser/ecjASTVisitor.java, this layout of code is similar to the handling of the Fortran support 
@@ -35,6 +49,17 @@ class JavaParserSupport
   // This is used to save a history of what implecit classes have been seen.
      private static Set<Class> setOfClasses;
 
+  // DQ (8/24/2011): This is the support for information on the Java side that 
+  // we would know on the C++ side, but require on the Java side to support the 
+  // introspection (which requires fully qualified names).
+  // We use a hashmap to store fully qualified names associated with class names.
+  // This is used to translate class names used in type references into fully
+  // qualified names where they are implicit classes and we require introspection 
+  // to support reading them to translate their member data dn function into JNI
+  // calls that will force the ROSE AST to be built.
+  // private static HashMap<String,String> hashmapOfQualifiedNamesOfClasses;
+     public static HashMap<String,String> hashmapOfQualifiedNamesOfClasses;
+
   // Counter for recursive function call...debugging support.
      private static int implicitClassCounter = 0;
 
@@ -45,8 +70,11 @@ class JavaParserSupport
         {
        // This has to be set first (required to support source position translation).
           rose_compilationResult = x;
-          setOfClasses = new HashSet<Class>();
-          implicitClassCounter = 0;
+          setOfClasses           = new HashSet<Class>();
+          implicitClassCounter   = 0;
+
+       // DQ (8/24/2011): Added hashmap to support mapping of unqualified class names to qualified class names.
+          hashmapOfQualifiedNamesOfClasses = new HashMap<String,String>();
 
        // Set the verbose level (passed in from ROSE's "-rose:verbose n")
           verboseLevel = input_verboseLevel;
@@ -107,23 +135,26 @@ class JavaParserSupport
              {
             // This code is part of an interogation of the data in the field and needs to be hidden yet available to support debugging.
             // ******************************************************************************
-               System.out.println("type = " + typeClass);
+            // System.out.println("type = " + typeClass);
 
-               System.out.println("fld.getType().isAnnotation()                 = " + typeClass.isAnnotation());
-            // System.out.println("fld.getType().isAnnotationPresent(Class<? extends Annotation> annotationClass) = " + fld.getType().isAnnotationPresent(fld.getType()));
-               System.out.println("fld.getType().isAnonymousClass()             = " + typeClass.isAnonymousClass());
-               System.out.println("fld.getType().isArray()                      = " + typeClass.isArray());
-            // Not clear what class to use as a test input for isAssignableFrom(Class<?> cls) function...
-               System.out.println("fld.getType().isAssignableFrom(Class<?> cls) = " + typeClass.isAssignableFrom(typeClass));
-               System.out.println("fld.getType().isEnum()                       = " + typeClass.isEnum());
-               System.out.println("fld.getType().isInstance(Object obj)         = " + typeClass.isInstance(typeClass));
-               System.out.println("fld.getType().isInterface()                  = " + typeClass.isInterface());
-               System.out.println("fld.getType().isLocalClass()                 = " + typeClass.isLocalClass());
-               System.out.println("fld.getType().isMemberClass()                = " + typeClass.isMemberClass());
-               System.out.println("fld.getType().isPrimitive()                  = " + typeClass.isPrimitive());
-               System.out.println("fld.getType().isSynthetic()                  = " + typeClass.isSynthetic());
-               System.out.println("-----");
-            // ******************************************************************************
+               if (verboseLevel > 5)
+                  {
+                    System.out.println("fld.getType().isAnnotation()                 = " + typeClass.isAnnotation());
+                 // System.out.println("fld.getType().isAnnotationPresent(Class<? extends Annotation> annotationClass) = " + fld.getType().isAnnotationPresent(fld.getType()));
+                    System.out.println("fld.getType().isAnonymousClass()             = " + typeClass.isAnonymousClass());
+                    System.out.println("fld.getType().isArray()                      = " + typeClass.isArray());
+                 // Not clear what class to use as a test input for isAssignableFrom(Class<?> cls) function...
+                    System.out.println("fld.getType().isAssignableFrom(Class<?> cls) = " + typeClass.isAssignableFrom(typeClass));
+                    System.out.println("fld.getType().isEnum()                       = " + typeClass.isEnum());
+                    System.out.println("fld.getType().isInstance(Object obj)         = " + typeClass.isInstance(typeClass));
+                    System.out.println("fld.getType().isInterface()                  = " + typeClass.isInterface());
+                    System.out.println("fld.getType().isLocalClass()                 = " + typeClass.isLocalClass());
+                    System.out.println("fld.getType().isMemberClass()                = " + typeClass.isMemberClass());
+                    System.out.println("fld.getType().isPrimitive()                  = " + typeClass.isPrimitive());
+                    System.out.println("fld.getType().isSynthetic()                  = " + typeClass.isSynthetic());
+                    System.out.println("-----");
+                 // ******************************************************************************
+                  }
              }
 
        // We don't have to support Java primative types as classes in the AST (I think).
@@ -154,9 +185,23 @@ class JavaParserSupport
                       // Add this to the set of classes that we have seen... so that we will not try to process it more than once...
                          setOfClasses.add(typeClass);
 
+                      // String unqualifiedClassName = "X" + nestedClassName;
+
+                         int startOfUnqualifiedClassName = nestedClassName.lastIndexOf(".");
+
+                         if (verboseLevel > 1)
+                              System.out.println("startOfUnqualifiedClassName = " + startOfUnqualifiedClassName);
+
+                         String unqualifiedClassName = nestedClassName.substring(startOfUnqualifiedClassName+1);
+
+                      // Add a map from the class name to its fully qualified name (used in type lookup).
+                         if (verboseLevel > 1)
+                              System.out.println("############# Set entry in hashmapOfQualifiedNamesOfClasses: unqualifiedClassName = " + unqualifiedClassName + " nestedClassName = " + nestedClassName);
+
+                         hashmapOfQualifiedNamesOfClasses.put(unqualifiedClassName,nestedClassName);
+
                       // Control the level of recursion so that we can debug this...it seems that
                       // this is typically as high as 47 to process the implicitly included classes.
-                         int implicitClassCounterBound = 1000;
                          if (implicitClassCounter < implicitClassCounterBound)
                             {
                            // DQ (11/2/2010): comment out this recursive call for now.
@@ -164,13 +209,14 @@ class JavaParserSupport
                             }
                            else
                             {
-                              System.out.println("WARNING: Exceeded recursion level " + implicitClassCounter + " nestedClassName = " + nestedClassName);
+                              if (verboseLevel > 5)
+                                   System.out.println("WARNING: Exceeded recursion level " + implicitClassCounter + " nestedClassName = " + nestedClassName);
                             }
                        }
                   }
                  else
                   {
-                    if (verboseLevel > 2)
+                    if (verboseLevel > 4)
                          System.out.println("This class has been seen previously: nestedClassName = " + nestedClassName);
                  // setOfClasses.add(typeClass);
                   }
@@ -179,7 +225,7 @@ class JavaParserSupport
              {
             // We might actually do have to include these since they are classes in Java... 
             // What member functions are there on primative types?
-               if (verboseLevel > 2)
+               if (verboseLevel > 4)
                     System.out.println("This class is a primitive type (sorry not implemented): type name = " + nestedClassName);
              }
         }
@@ -278,7 +324,7 @@ class JavaParserSupport
             // Class cls = Class.forName("java.lang.String");
             // Class cls = Class.forName("java.lang."+node.receiver.toString());
 
-               if (verboseLevel > -1)
+               if (verboseLevel > 1)
                     System.out.println("Generate the implicit Java class for className = " + className + " implicitClassCounter = " + implicitClassCounter);
 
             // Note that "java.lang" does not appear to be a class (so is that root of all implicitly included classes?).
@@ -313,9 +359,9 @@ class JavaParserSupport
                Field fieldlist[] = cls.getDeclaredFields();
 
             // This is a way to limit the number of fields to be traversed and thus control the complexity of the implicitly defined class structure.
-            // int numberOfFields = 2;
                int numberOfFields = fieldlist.length;
 
+               int dataMemberCounter = 0;
                for (int i = 0; i < numberOfFields; i++)
                   {
                     Field fld = fieldlist[i];
@@ -350,7 +396,8 @@ class JavaParserSupport
                  // Get the class associated with the field (all types in Java are a class, so this is only strange relative to C++).
                     Class typeClass = fld.getType();
 
-                    Type genericType = fld.getGenericType();
+                 // DQ (9/9/2011): Bug fix this is not referenced.
+                 // Type genericType = fld.getGenericType();
 
                  // Note that if we use "nestedClassName = fld.getType().toString();" nestedClassName has the
                  // name "class " as a prefix and this causes an error, so use "typeClass.getName()" instead.
@@ -381,9 +428,8 @@ class JavaParserSupport
                     if (verboseLevel > 2)
                          System.out.println("Build the implicit type for the data member (field) of type = " + nestedClassName);
 
-                    int dataMemberCounterBound = 1000;
-                 // int dataMemberCounterBound = 1000;
-                    if (i < dataMemberCounterBound)
+                 // Note that i == dataMemberCounter
+                    if (dataMemberCounter < dataMemberCounterBound)
                        {
                       // System.out.println("#############################################################################################");
                       // System.out.println("This call to JavaParserSupport.generateType() appears to be a problem: nestedClassName = " + nestedClassName);
@@ -414,6 +460,8 @@ class JavaParserSupport
                          System.out.println("Exiting as a test implicitClassCounter = " + implicitClassCounter);
                          System.exit(1);
                        }
+
+                    dataMemberCounter++;
                   }
 
             // A traversal over the constructors will have to look at all types of constructor arguments 
@@ -458,8 +506,7 @@ class JavaParserSupport
                  // Simplify the generated AST by skipping the construction of all the member functions in each class.
                  // We might only want to build those member functions that are referenced in the input program (as an option).
                  // JavaParser.cactionBuildImplicitMethodSupport(ct.getName());
-                    int constructorMethodCounterBound = 1000;
-                 // int constructorMethodCounterBound = 1000;
+
                     if (constructorMethodCounter < constructorMethodCounterBound)
                        {
                       // Note that we only want to build types for those function that we want to build.
@@ -477,9 +524,15 @@ class JavaParserSupport
                                    System.out.println("DONE: This call to JavaParserSupport.generateType() pushes a type onto the astJavaTypeStack (constructor): type = " + pvec[j].getName());
                             }
 
+                         if (verboseLevel > 2)
+                              System.out.println("Push void as a return type for now (ignored because this is a constructor)");
+
                       // Push a type to serve as the return type which will be ignored for the case of a constructor
                       // (this allows us to reuse the general member function support).
                          JavaParser.cactionGenerateType("void");
+
+                         if (verboseLevel > 2)
+                              System.out.println("DONE: Push void as a return type for now (ignored because this is a constructor)");
 
                          JavaParser.cactionBuildImplicitMethodSupport(ct.getName());
                        }
@@ -515,7 +568,7 @@ class JavaParserSupport
                     Class pvec[] = m.getParameterTypes();
 
                  // Note that I am ignoring the constructor parameter types at the moment.
-                    if (verboseLevel > 2)
+                    if (verboseLevel > 5)
                        {
                          System.out.println("method name = " + m.getName());
                          System.out.println("   method return type = " + m.getReturnType());
@@ -531,10 +584,10 @@ class JavaParserSupport
                  // System.out.println("method name = " + m.getName());
                     for (int j = 0; j < pvec.length; j++)
                        {
-                         if (verboseLevel > 2)
+                         if (verboseLevel > 4)
                               System.out.println("   method return type = " + m.getReturnType());
 
-                         if (verboseLevel > 2)
+                         if (verboseLevel > 4)
                               System.out.println("   method parameter type = " + pvec[j]);
 
                       // Process the paramter type (add a class if this is not already in the ROSE AST).
@@ -543,8 +596,7 @@ class JavaParserSupport
 
                  // Simplify the generated AST by skipping the construction of all the member functions in each class.
                  // We might only want to build those member functions that are referenced in the input program (as an option).
-                    int methodCounterBound = 1000;
-                 // int methodCounterBound = 1000;
+
                     if (methodCounter < methodCounterBound)
                        {
                       // System.out.println("method name = " + m.getName());
@@ -569,7 +621,7 @@ class JavaParserSupport
                        }
                       else
                        {
-                         if (verboseLevel > 2)
+                         if (verboseLevel > 4)
                               System.out.println("WARNING: Exceeded method handling iteration count " + methodCounter + " className = " + className);
                        }
 
@@ -585,8 +637,6 @@ class JavaParserSupport
                          System.out.println("interface name = " + interfaceList[i].getName());
                        }
 
-                    int interfaceCounterBound = 5;
-                 // int interfaceCounterBound = 1000;
                     if (interfaceCounter < interfaceCounterBound)
                        {
                       // Process the interface type (add a class if this is not already in the ROSE AST).
@@ -596,8 +646,14 @@ class JavaParserSupport
                     interfaceCounter++;
                   }
 
+            // Compute the total number of statements that we will have be poped from the stack to complete the class definition for ROSE.
+               int numberOfStatements = methodCounter + constructorMethodCounter + dataMemberCounter + interfaceCounter;
+
+               if (verboseLevel > 1)
+                    System.out.println("Implicit class support: numberOfStatements = " + numberOfStatements + " for className = " + className);
+
             // This wraps up the details of processing all of the child classes (such as forming SgAliasSymbols for them in the global scope).
-               JavaParser.cactionBuildImplicitClassSupportEnd(className);
+               JavaParser.cactionBuildImplicitClassSupportEnd(numberOfStatements,className);
              }
 
        // try ... catch is required for using the reflection support in Java.
@@ -614,6 +670,28 @@ class JavaParserSupport
         }
 
 
+     public static boolean isPrimativeType ( TypeBinding typeBinding ) 
+        {
+          switch (typeBinding.id) 
+             {
+               case TypeIds.T_void:
+               case TypeIds.T_boolean:
+               case TypeIds.T_byte:
+               case TypeIds.T_char:
+               case TypeIds.T_short:
+               case TypeIds.T_double:
+               case TypeIds.T_float:
+               case TypeIds.T_int:
+               case TypeIds.T_long:
+               case TypeIds.T_JavaLangObject:
+            //	case TypeIds.T_JavaLangString:
+                    return true;
+
+               default:
+            		return false;
+             }
+   }
+
 
      public static void generateType(TypeReference node)
         {
@@ -625,30 +703,141 @@ class JavaParserSupport
           if (verboseLevel > 0)
                System.out.println("Inside of generateType(TypeReference)");
 
-          System.out.println("Inside of generateType(TypeReference) TypeReference node                            = " + node);
-          System.out.println("Inside of generateType(TypeReference) TypeReference node.implicitConversion         = " + node.implicitConversion);
-          System.out.println("Inside of generateType(TypeReference) TypeReference node.resolvedType               = " + node.resolvedType);
-          System.out.println("Inside of generateType(TypeReference) TypeReference node.resolvedType.isArrayType() = " + node.resolvedType.isArrayType());
+          assert(node != null);
+
+          if (verboseLevel > 1)
+             {
+               System.out.println("Inside of generateType(TypeReference) TypeReference node                               = " + node);
+               System.out.println("Inside of generateType(TypeReference) TypeReference node.implicitConversion            = " + node.implicitConversion);
+
+            // DQ (9/3/2011): This causes too much output.
+            // System.out.println("Inside of generateType(TypeReference) TypeReference node.resolvedType                  = " + node.resolvedType);
+
+               System.out.println("Inside of generateType(TypeReference) TypeReference node.resolvedType.isArrayType()    = " + node.resolvedType.isArrayType());
+               System.out.println("Inside of generateType(TypeReference) TypeReference node.resolvedType.isGenericType()  = " + node.resolvedType.isGenericType());
+               System.out.println("Inside of generateType(TypeReference) TypeReference node.resolvedType.isClass()        = " + node.resolvedType.isClass());
+               System.out.println("Inside of generateType(TypeReference) TypeReference isPrimativeType(node.resolvedType) = " + isPrimativeType(node.resolvedType));
+
+               System.out.println("Inside of generateType(TypeReference) TypeReference node.getTypeName()                 = " + node.getTypeName());
+               System.out.println("Inside of generateType(TypeReference) TypeReference node.resolvedType.isClass()        = " + (node.resolvedType.isClass() ? "true" : "false"));
+             }
+
           if (node.resolvedType.isArrayType() == true)
              {
             // TypeBinding baseType = ((ArrayBinding) node.resolvedType).leafComponentType;
                ArrayBinding arrayType = (ArrayBinding) node.resolvedType;
-               System.out.println("Inside of generateType(TypeReference) ArrayBinding dimensions = " + arrayType.dimensions);
+               if (verboseLevel > 1)
+                    System.out.println("Inside of generateType(TypeReference) ArrayBinding dimensions = " + arrayType.dimensions);
                TypeBinding baseType = arrayType.leafComponentType;
 
             // This outputs the declartion for the whole class.
             // System.out.println("Inside of generateType(TypeReference) ArrayBinding baseType   = " + baseType);
-               System.out.println("Inside of generateType(TypeReference) ArrayBinding baseType (debugName) = " + baseType.debugName());
+               if (verboseLevel > 1)
+                  {
+                    System.out.println("Inside of generateType(TypeReference) ArrayBinding baseType (debugName) = " + baseType.debugName());
+                    System.out.println("Inside of generateType(TypeReference) recursive call to generateType()");
+                  }
 
-               System.out.println("Inside of generateType(TypeReference) recursive call to generateType()");
                generateType(baseType);
              }
             else
              {
             // NOTE: It would be more elegant to not depend upon the debugName() function.
                String name = node.resolvedType.debugName();
-               System.out.println("Inside of generateType(TypeReference): NOT an array type so build SgIntType -- TypeReference node = " + name);
 
+               if (verboseLevel > 1)
+                    System.out.println("Inside of generateType(TypeReference): NOT an array type so build SgIntType -- TypeReference node = " + name);
+
+            // DQ (8/20/2011): Moved to be after buildImplicitClassSupport().
+            // JavaParser.cactionGenerateType(name);
+
+               if (verboseLevel > 1)
+                    System.out.println("After building the class we have to build the data members and member functions (built type name " + name + " by default) in generateType(TypeReference)");
+
+            // System.out.println("Calling processType() to recursively build the class structure with member declarations.");
+            // This does not work...
+            // processType(node.resolvedType);
+
+            // DQ (8/20/2011): Need a better way to handle detecting if this is an implicit class...
+            // Maybe we could detect if it is a supported type in the global type map.
+
+            /* Not clear how to generate a typeClass from the TypeReference???
+               if (setOfClasses.contains(typeClass) == false)
+                  {
+                 // Investigate any new type.
+                  }
+            */
+
+            // DQ (8/22/2011): The reason why we need this is that the import statement allows for the names to be used unqualified.
+            // Once we implement proper support for the import statement then we will be able to search the symbol tables for any type
+            // names that we can't identify because they lack name qualification!!!
+
+            // If this is a generic type then the "<name>" has to be separated so we can use only the base name of the class (the raw type name).
+               String rawTypeName = name;
+
+               int firstAngleBracket = rawTypeName.indexOf("<",0);
+               int lastAngleBracket = rawTypeName.lastIndexOf(">",rawTypeName.length()-1);
+
+            // System.out.println("In generateType(TypeReference): firstAngleBracket = " + firstAngleBracket + " lastAngleBracket = " + lastAngleBracket);
+               if (firstAngleBracket > 0 && firstAngleBracket < lastAngleBracket)
+                  {
+                    rawTypeName = rawTypeName.substring(0,firstAngleBracket);
+
+                    name = rawTypeName;
+                  }
+
+            // System.out.println("In generateType(TypeReference): rawTypeName = " + rawTypeName);
+
+            // We don't really want to handl this as a special case, but from the Java side I don't know how to generate the qualified name.
+               if (rawTypeName.startsWith("List") == true)
+                    name = "java.util.List";
+
+            // System.out.println("In generateType(TypeReference): After reset (for List) name = " + name);
+
+            // buildImplicitClassSupport("java.util.List");
+
+            // DQ (8/23/2011): Note that implicit classes will evaluate to "node.resolvedType.isClass() == false" while classes define in the file will be true.
+               if (isPrimativeType(node.resolvedType) == false && node.resolvedType.isClass() == false)
+                  {
+                 // System.out.println("In generateType(TypeReference): Calling buildImplicitClassSupport() to recursively build the class structure with member declarations: name = " + name);
+                 // buildImplicitClassSupport(name);
+
+                 // DQ (9/4/2011): This does not work well enough since the set is interms of the internal types instead of type names.
+                 // So use the rawTypeName and the hashmapOfQualifiedNamesOfClasses instead (since it is clearer test to debug).
+                 // DQ (9/3/2011): Check if this is a type (class) that has already been handled.
+                 // if (setOfClasses.contains(node.resolvedType) == false)
+
+/*
+                     System.out.println("In generateType(TypeReference): Output set of entries in hashmapOfQualifiedNamesOfClasses for name = " + name);
+                     Set<Map.Entry<String,String>> set = hashmapOfQualifiedNamesOfClasses.entrySet();
+                     Iterator i = set.iterator();
+                  // Display elements
+                     while(i.hasNext())
+                        {
+                          Map.Entry<String,String> me = (Map.Entry<String,String>)i.next();
+                          System.out.print("Hashmap hashmapOfQualifiedNamesOfClasses entry: " + me.getKey() + ": ");
+                          System.out.println(me.getValue());
+                        }
+*/
+
+                  // DQ (9/5/2011): Fixed this to use containsKey() member function.
+                  // DQ (9/4/2011): This code is a problem, I think that the set types are inconsistant so this predicate is always false.
+                  // if (hashmapOfQualifiedNamesOfClasses.entrySet().contains(rawTypeName) == false)
+                     if (hashmapOfQualifiedNamesOfClasses.containsKey(rawTypeName) == false)
+                       {
+                         System.out.println("In generateType(TypeReference): This class has not been seen previously: name = " + name);
+                         buildImplicitClassSupport(name);
+                         System.out.println("DONE: In generateType(TypeReference): This class has not been seen previously: name = " + name);
+                       }
+                      else
+                       {
+                         System.out.println("In generateType(TypeReference): This class already been handled: name = " + name);
+                       }
+
+                 // System.out.println("DONE: In generateType(TypeReference): Calling buildImplicitClassSupport() to recursively build the class structure with member declarations: name = " + name);
+                  }
+
+            // DQ (8/20/2011): Moved to be after buildImplicitClassSupport().
                JavaParser.cactionGenerateType(name);
 
             // System.out.println("Exiting as a test (built type name " + name + " by default) in generateType(TypeReference)");
@@ -866,7 +1055,8 @@ class JavaParserSupport
 
      public static void generateType(TypeBinding node)
         {
-       // TypeBindings are used in variable declarations (I think that these are the primative types .
+       // TypeBindings are used in variable declarations (I think that these are the primative types).
+       // No, they can be class types, and when they are this is a current problem.
 
        // This function traverses the type and calls JNI functions to 
        // at the end of the function define a type built in the ROSE 
@@ -983,7 +1173,8 @@ class JavaParserSupport
 
                default:
                   {
-                    System.out.println("Error: unknown type in generateType()");
+                    System.out.println("Error: unknown type in generateType(): id = " + id);
+                 // System.abort(1);
                     System.exit(1);
                     break;
                   }

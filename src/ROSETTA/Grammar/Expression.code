@@ -65,7 +65,7 @@ HEADER_START
           virtual bool isUsedAsDefinable() const;
           virtual bool isLValue() const;
           virtual bool isUsedAsLValue() const; // Calls parent.isChildUsedAsLValue(this)
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
        // DQ (11/6/2006): use this to return the operatorPosition 
        // (instead of the startOfConstruct as it is used for SgStatement objects)
@@ -81,6 +81,25 @@ HEADER_START
        // DQ (11/1/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
 #endif
+
+       // DQ (5/29/2011): Added to support for new qualified name generation
+      //! This function generates the qualified name prefix to be used with the type referenced by this expression.
+          SgName get_qualified_name_prefix() const;
+
+       // DQ (6/2/2011): Added to support for new qualified name generation
+      //! This function generates the qualified name prefix to be used with the type referenced by this expression.
+          SgName get_qualified_name_prefix_for_referenced_type() const;
+
+       // DQ (6/2/2011): Added virtual functions so that we can define specialized versions at specific IR nodes.
+          virtual int get_name_qualification_length () const;
+          virtual void set_name_qualification_length ( int name_qualification_length );
+          virtual bool get_type_elaboration_required () const;
+          virtual void set_type_elaboration_required ( bool type_elaboration_required );
+          virtual bool get_global_qualification_required () const;
+          virtual void set_global_qualification_required ( bool global_qualification_required );
+
+       // DQ (6/21/2011): Get the original expression if this is an IR node where it is defined and it is a valid pointer.
+          SgExpression* get_originalExpressionTree() const;
 
 HEADER_END
 
@@ -177,7 +196,7 @@ HEADER_BINARY_EXPRESSION_START
           void set_rhs_operand(SgExpression * exp);
           SgType* get_type() const;
 
-	  virtual unsigned int cfgIndexForEnd() const;
+          virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
@@ -220,7 +239,7 @@ HEADER_LIST_DECLARATIONS
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
        // get lvalue
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 HEADER_EXPRESSION_LIST_EXPRESSION_END
 
 
@@ -236,7 +255,7 @@ HEADER_VAR_REF_EXPRESSION_START
        // get lvalue
           virtual bool isDefinable() const;
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_VAR_REF_EXPRESSION_END
 
@@ -285,7 +304,7 @@ HEADER_FUNCTION_REF_EXPRESSION_START
 
 //       // get lvalue
 //          virtual bool isLValue() const;
-//		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+//          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_FUNCTION_REF_EXPRESSION_END
 
@@ -305,7 +324,7 @@ HEADER_MEMBER_FUNCTION_REF_EXPRESSION_START
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_MEMBER_FUNCTION_REF_EXPRESSION_END
 
@@ -334,7 +353,7 @@ HEADER_STRING_VALUE_EXPRESSION_START
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_STRING_VALUE_EXPRESSION_END
 
@@ -412,8 +431,14 @@ HEADER_UPC_THREADS_EXPRESSION_END
 HEADER_UPC_MYTHREAD_EXPRESSION_START
 HEADER_UPC_MYTHREAD_EXPRESSION_END
 
-HEADER_FUNCTION_CALL_EXPRESSION_START
+HEADER_YIELD_EXPRESSION_START
+HEADER_YIELD_EXPRESSION_END
+
+HEADER_CALL_EXPRESSION_START
 HEADER_LIST_DECLARATIONS
+HEADER_CALL_EXPRESSION_END
+
+HEADER_FUNCTION_CALL_EXPRESSION_START
 
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
@@ -433,7 +458,7 @@ HEADER_LIST_DECLARATIONS
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_FUNCTION_CALL_EXPRESSION_END
 
@@ -443,7 +468,7 @@ HEADER_ARROW_EXPRESSION_START
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_ARROW_EXPRESSION_END
 
@@ -453,7 +478,7 @@ HEADER_DOT_EXPRESSION_START
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_DOT_EXPRESSION_END
 
@@ -463,7 +488,7 @@ HEADER_DOT_STAR_OPERATOR_START
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_DOT_STAR_OPERATOR_END
 
@@ -473,7 +498,7 @@ HEADER_ARROW_STAR_OPERATOR_START
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_ARROW_STAR_OPERATOR_END
 
@@ -531,6 +556,44 @@ HEADER_INTEGER_DIVIDE_OPERATOR_END
 HEADER_MOD_OPERATOR_START
 HEADER_MOD_OPERATOR_END
 
+HEADER_MEMBERSHIP_OP_START
+HEADER_BOOLEAN_GET_TYPE_MEMBER_FUNCTION
+HEADER_MEMBERSHIP_OP_END
+
+HEADER_NON_MEMBERSHIP_OP_START
+HEADER_BOOLEAN_GET_TYPE_MEMBER_FUNCTION
+HEADER_NON_MEMBERSHIP_OP_END
+
+HEADER_IS_OP_START
+HEADER_BOOLEAN_GET_TYPE_MEMBER_FUNCTION
+HEADER_IS_OP_END
+
+HEADER_IS_NOT_OP_START
+HEADER_BOOLEAN_GET_TYPE_MEMBER_FUNCTION
+HEADER_IS_NOT_OP_END
+
+HEADER_NARY_OP_START
+
+    SgExpressionPtrList& get_operands();
+    const SgExpressionPtrList& get_operands() const;
+
+    VariantTList& get_operators();
+    const VariantTList& get_operators() const;
+
+    virtual void append_operation(VariantT sg_operator, SgExpression* operand); 
+
+HEADER_NARY_OP_END
+
+HEADER_NARY_COMPARISON_OP_START
+    virtual SgType* get_type() const;
+HEADER_NARY_COMPARISON_OP_END
+
+HEADER_NARY_BOOLEAN_OP_START
+    virtual SgType* get_type() const;
+HEADER_NARY_BOOLEAN_OP_END
+
+HEADER_BOOLEAN_GET_TYPE_MEMBER_FUNCTION
+HEADER_IS_NOT_OP_END
 
 HEADER_AND_OPERATOR_START
           SgType* get_type() const;
@@ -569,7 +632,7 @@ HEADER_COMMA_OPERATOR_EXPRESSION_START
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_COMMA_OPERATOR_EXPRESSION_END
 
@@ -581,6 +644,8 @@ HEADER_LEFT_SHIFT_OPERATOR_END
 HEADER_RIGHT_SHIFT_OPERATOR_START
 HEADER_RIGHT_SHIFT_OPERATOR_END
 
+HEADER_JAVA_UNSIGNED_RIGHT_SHIFT_OPERATOR_START
+HEADER_JAVA_UNSIGNED_RIGHT_SHIFT_OPERATOR_END
 
 HEADER_MINUS_OPERATOR_START
 HEADER_MINUS_OPERATOR_END
@@ -592,12 +657,19 @@ HEADER_UNARY_ADD_OPERATOR_END
 
 HEADER_SIZEOF_OPERATOR_START
  // Liao, 11/17/2009
- int replace_expression(SgExpression*, SgExpression*) ROSE_DEPRECATED_FUNCTION;
+          int replace_expression(SgExpression*, SgExpression*) ROSE_DEPRECATED_FUNCTION;
 
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 HEADER_SIZEOF_OPERATOR_END
+
+
+HEADER_JAVA_INSTANCEOF_OPERATOR_START
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+HEADER_JAVA_INSTANCEOF_OPERATOR_END
 
 
 HEADER_TYPE_ID_OPERATOR_START
@@ -607,7 +679,7 @@ HEADER_TYPE_ID_OPERATOR_START
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_TYPE_ID_OPERATOR_END
 
@@ -647,7 +719,7 @@ HEADER_POINTER_DEREF_EXPRESSION_START
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_POINTER_DEREF_EXPRESSION_END
 
@@ -657,7 +729,7 @@ HEADER_ADDRESS_OF_OPERATOR_START
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_ADDRESS_OF_OPERATOR_END
 
@@ -668,7 +740,7 @@ HEADER_MINUS_MINUS_OPERATOR_START
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_MINUS_MINUS_OPERATOR_END
 
@@ -679,7 +751,7 @@ HEADER_PLUS_PLUS_OPERATOR_START
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_PLUS_PLUS_OPERATOR_END
 
@@ -709,7 +781,7 @@ HEADER_CONDITIONAL_EXPRESSION_START
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_CONDITIONAL_EXPRESSION_END
 
@@ -742,14 +814,14 @@ HEADER_CAST_EXPRESSION_START
        // (one of the few places where we have to store the expression type explicitly).
           SgType* get_type() const;
 
-	  virtual unsigned int cfgFindChildIndex(SgNode* n); // CFG children do not match traversalSuccessorContainer
+          virtual unsigned int cfgFindChildIndex(SgNode* n); // CFG children do not match traversalSuccessorContainer
 
        // DQ (1/17/2008): Added to permit the type to be set.
           void set_type (SgType* type);
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_CAST_EXPRESSION_END
 
@@ -761,7 +833,7 @@ HEADER_POINTER_ARRAY_REFERENCE_EXPRESSION_START
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_POINTER_ARRAY_REFERENCE_EXPRESSION_END
 
@@ -792,11 +864,40 @@ HEADER_THIS_EXPRESSION_START
 
 HEADER_THIS_EXPRESSION_END
 
+HEADER_TUPLE_EXP_START
+HEADER_TUPLE_EXP_END
+
+HEADER_LIST_EXP_START
+HEADER_LIST_EXP_END
+
+HEADER_COMPREHENSION_START
+HEADER_COMPREHENSION_END
+
+HEADER_LIST_COMPREHENSION_START
+HEADER_LIST_COMPREHENSION_END
+
+HEADER_SET_COMPREHENSION_START
+HEADER_SET_COMPREHENSION_END
+
+HEADER_DICTIONARY_COMPREHENSION_START
+HEADER_DICTIONARY_COMPREHENSION_END
+
+HEADER_DICTIONARY_EXP_START
+SgKeyDatumPairPtrList& get_key_datum_pairs();
+const SgKeyDatumPairPtrList& get_key_datum_pairs() const;
+void append_pair(SgKeyDatumPair *what);
+HEADER_DICTIONARY_EXP_END
+
+HEADER_KEY_DATUM_PAIR_START
+HEADER_KEY_DATUM_PAIR_END
+
+HEADER_STRING_CONVERSION_START
+HEADER_STRING_CONVERSION_END
 
 HEADER_SCOPE_OPERATOR_START
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 HEADER_SCOPE_OPERATOR_END
 
 
@@ -804,99 +905,18 @@ HEADER_ASSIGNMENT_OPERATOR_START
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_ASSIGNMENT_OPERATOR_END
 
 
-HEADER_PLUS_ASSIGNMENT_OPERATOR_START
+HEADER_COMPOUND_ASSIGNMENT_OPERATOR_START
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
-HEADER_PLUS_ASSIGNMENT_OPERATOR_END
-
-
-HEADER_MINUS_ASSIGNMENT_OPERATOR_START
-
-       // get lvalue
-          virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
-
-HEADER_MINUS_ASSIGNMENT_OPERATOR_END
-
-
-HEADER_AND_ASSIGNMENT_OPERATOR_START
-
-       // get lvalue
-          virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
-
-HEADER_AND_ASSIGNMENT_OPERATOR_END
-
-
-HEADER_IOR_ASSIGNMENT_OPERATOR_START
-
-       // get lvalue
-          virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
-
-HEADER_IOR_ASSIGNMENT_OPERATOR_END
-
-
-HEADER_MULTIPLY_ASSIGNMENT_OPERATOR_START
-
-       // get lvalue
-          virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
-
-HEADER_MULTIPLY_ASSIGNMENT_OPERATOR_END
-
-
-HEADER_DIVIDE_ASSIGNMENT_OPERATOR_START
-
-       // get lvalue
-          virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
-
-HEADER_DIVIDE_ASSIGNMENT_OPERATOR_END
-
-
-HEADER_MOD_ASSIGNMENT_OPERATOR_START
-
-       // get lvalue
-          virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
-
-HEADER_MOD_ASSIGNMENT_OPERATOR_END
-
-
-HEADER_XOR_ASSIGNMENT_OPERATOR_START
-
-       // get lvalue
-          virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
-
-HEADER_XOR_ASSIGNMENT_OPERATOR_END
-
-
-HEADER_LEFT_SHIFT_ASSIGNMENT_OPERATOR_START
-
-       // get lvalue
-          virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
-
-HEADER_LEFT_SHIFT_ASSIGNMENT_OPERATOR_END
-
-
-HEADER_RIGHT_SHIFT_ASSIGNEMENT_OPERATOR_START
-
-       // get lvalue
-          virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
-
-HEADER_RIGHT_SHIFT_ASSIGNEMENT_OPERATOR_END
+HEADER_COMPOUND_ASSIGNMENT_OPERATOR_END
 
 
 HEADER_POINTER_ASSIGNMENT_OPERATOR_START
@@ -906,6 +926,11 @@ HEADER_POINTER_ASSIGNMENT_OPERATOR_START
 
 HEADER_POINTER_ASSIGNMENT_OPERATOR_END
 
+HEADER_INTEGER_DIVIDE_ASSIGN_OP_START
+HEADER_INTEGER_DIVIDE_ASSIGN_OP_END
+
+HEADER_EXPONENTIATION_ASSIGN_OP_START
+HEADER_EXPONENTIATION_ASSIGN_OP_END
 
 HEADER_REFERENCE_EXPRESSION_START
 HEADER_REFERENCE_EXPRESSION_END
@@ -976,7 +1001,7 @@ HEADER_ASSIGNMENT_INITIALIZER_EXPRESSION_START
 
        // get lvalue
           virtual bool isLValue() const;
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_ASSIGNMENT_INITIALIZER_EXPRESSION_END
 
@@ -1184,6 +1209,12 @@ HEADER_CO_EXPRESSION_START
 
 HEADER_CO_EXPRESSION_END
 
+HEADER_LAMBDA_REF_EXP_START
+
+    SgFunctionParameterList* get_parameterList();
+    SgStatement* get_body();
+
+HEADER_LAMBDA_REF_EXP_END
 
 HEADER_CUDA_KERNEL_EXEC_CONFIG_START
 HEADER_CUDA_KERNEL_EXEC_CONFIG_END
@@ -1240,6 +1271,56 @@ SgExpression::set_file_info(Sg_File_Info* fileInfo)
      return set_operatorPosition(fileInfo);
    }
 
+SgName
+SgExpression::get_qualified_name_prefix() const
+   {
+  // DQ (5/29/2011): Added to support for new qualified name generation.
+  // This only applies to specific SgSupport IR nodes:
+  //    SgVarRefExp
+  //    SgFunctionRefExp
+  //    SgMemberFunctionRefExp
+
+  // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
+  // different and so it depends upon where the type is referenced.  Thus the qualified name is 
+  // stored in a map to the IR node that references the type.
+     SgName nameQualifier;
+     std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForNames().find(const_cast<SgExpression*>(this));
+  // ROSE_ASSERT(i != SgNode::get_globalQualifiedNameMapForNames().end());
+
+     if (i != SgNode::get_globalQualifiedNameMapForNames().end())
+        {
+          nameQualifier = i->second;
+       // printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+        }
+
+  // printf ("nameQualifier for SgExpression = %p = %p = %s = %s \n",this,const_cast<SgExpression*>(this),class_name().c_str(),nameQualifier.str());
+
+     return nameQualifier;
+   }
+ 
+SgName
+SgExpression::get_qualified_name_prefix_for_referenced_type() const
+   {
+  // DQ (6/2/2011): Added to support for new qualified name generation.
+
+  // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
+  // different and so it depends upon where the type is referenced.  Thus the qualified name is 
+  // stored in a map to the IR node that references the type.
+     SgName nameQualifier;
+     std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(const_cast<SgExpression*>(this));
+
+     if (i != SgNode::get_globalQualifiedNameMapForTypes().end())
+        {
+          nameQualifier = i->second;
+       // printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+        }
+
+  // printf ("nameQualifier for SgExpression referenced type = %s = %s \n",class_name().c_str(),nameQualifier.str());
+
+     return nameQualifier;
+   }
+
+
 void
 SgExpression::post_construction_initialization()
    {
@@ -1276,6 +1357,7 @@ SgExpression::get_type() const
   // This catches any IR nodes where the fucntion should have been overwritten and was not.
 
      cerr << "Call to undefined $CLASSNAME::get_type(): aborting" << endl;
+     cerr << "dynamic type: " << this->class_name() << endl;
      ROSE_ASSERT(false);
 
      return 0;
@@ -1555,6 +1637,105 @@ remove_user_attribute(SgAttributePtrList& pattr, char *attr_name)
      return 0;
    }
 #endif
+
+
+int 
+SgExpression::get_name_qualification_length () const
+   {
+     ROSE_ASSERT (this != NULL);
+
+     printf ("Error: base class virtual function called by mistake on node = %p = %s \n",this,this->class_name().c_str());
+     ROSE_ASSERT(false);
+
+     return 0; // p_name_qualification_length;
+   }
+
+void
+SgExpression::set_name_qualification_length ( int name_qualification_length )
+   {
+     ROSE_ASSERT (this != NULL);
+     set_isModified(true);
+     
+     printf ("Error: base class virtual function called by mistake on node = %p = %s \n",this,this->class_name().c_str());
+     ROSE_ASSERT(false);
+
+  // p_name_qualification_length = name_qualification_length;
+   }
+
+
+bool 
+SgExpression::get_type_elaboration_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+
+     printf ("Error: base class virtual function called by mistake on node = %p = %s \n",this,this->class_name().c_str());
+     ROSE_ASSERT(false);
+
+     return false; // p_type_elaboration_required;
+   }
+
+void
+SgExpression::set_type_elaboration_required ( bool type_elaboration_required )
+   {
+     ROSE_ASSERT (this != NULL);
+     set_isModified(true);
+     
+     printf ("Error: base class virtual function called by mistake on node = %p = %s \n",this,this->class_name().c_str());
+     ROSE_ASSERT(false);
+
+  // p_type_elaboration_required = type_elaboration_required;
+   }
+
+bool 
+SgExpression::get_global_qualification_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+
+     printf ("Error: base class virtual function called by mistake on node = %p = %s \n",this,this->class_name().c_str());
+     ROSE_ASSERT(false);
+
+     return false; // p_global_qualification_required;
+   }
+
+void
+SgExpression::set_global_qualification_required ( bool global_qualification_required )
+   {
+     ROSE_ASSERT (this != NULL);
+     set_isModified(true);
+     
+     printf ("Error: base class virtual function called by mistake on node = %p = %s \n",this,this->class_name().c_str());
+     ROSE_ASSERT(false);
+
+  // p_global_qualification_required = global_qualification_required;
+   }
+
+SgExpression*
+SgExpression::get_originalExpressionTree() const
+   {
+  // DQ (6/21/2011): Get the original expression if this is an IR node where it is defined and it is a valid pointer.
+  // The p_originalExpressionTree datamember exists only on these IR nodes:
+  //    SgBinaryOp
+  //    SgValueExp
+  //    SgFunctionRefExp
+  //    SgValueExp
+  //    SgCastExp
+
+     SgExpression* originalExpressionTree = NULL;
+     switch(variantT())
+        {
+          case V_SgBinaryOp:       originalExpressionTree = isSgBinaryOp(this)->get_originalExpressionTree();       break;
+          case V_SgValueExp:       originalExpressionTree = isSgValueExp(this)->get_originalExpressionTree();       break;
+          case V_SgFunctionRefExp: originalExpressionTree = isSgFunctionRefExp(this)->get_originalExpressionTree(); break;
+          case V_SgCastExp:        originalExpressionTree = isSgCastExp(this)->get_originalExpressionTree();        break;
+
+          default:
+             {
+            // For all other cases do nothing, since there is no originalExpressionTree data member.
+             }
+        }
+
+     return originalExpressionTree;
+   }
 
 SOURCE_BASECLASS_EXPRESSION_END
 
@@ -2496,19 +2677,41 @@ SOURCE_UPC_THREADS_EXPRESSION_END
 SOURCE_UPC_MYTHREAD_EXPRESSION_START
 SOURCE_UPC_MYTHREAD_EXPRESSION_END
 
-SOURCE_FUNCTION_CALL_EXPRESSION_START
+SOURCE_YIELD_EXPRESSION_START
+SOURCE_YIELD_EXPRESSION_END
+
+SOURCE_CALL_EXPRESSION_START
 
 void
-SgFunctionCallExp::post_construction_initialization() 
+SgCallExpression::post_construction_initialization()
    {
      if (p_function != NULL)
           p_function->set_parent(this);
    }
 
+
+SgExpression*
+SgCallExpression::get_next(int& n) const
+   {
+     if(n==0)
+        {
+          n++;
+          return get_function();
+        } 
+       else 
+          if(p_args && n==1)
+             {
+               n++;
+               return get_args();
+             }
+
+     return 0;
+   }
+
 #if 1
 // DQ: trying to remove the nested iterator class
 void
-SgFunctionCallExp::append_arg(SgExpression* what)
+SgCallExpression::append_arg(SgExpression* what)
    {
      assert(this != NULL);
 
@@ -2532,32 +2735,15 @@ SgFunctionCallExp::append_arg(SgExpression* what)
 // DQ: trying to remove the nested iterator class
 // $CLASSNAME::insert_arg(const SgExpression::iterator& where, SgExpression* what)
 void
-SgFunctionCallExp::insert_arg(const SgExpressionPtrList::iterator& where, SgExpression* what)
+SgCallExpression::insert_arg(const SgExpressionPtrList::iterator& where, SgExpression* what)
    {
      p_args->insert_expression(where,what); 
    }
 #endif
 
-SgExpression*
-SgFunctionCallExp::get_next(int& n) const
-   {
-     if(n==0)
-        {
-          n++;
-          return get_function();
-        } 
-       else 
-          if(p_args && n==1)
-             {
-               n++;
-               return get_args();
-             }
-
-     return 0;
-   }
 
 int
-SgFunctionCallExp::replace_expression(SgExpression *o, SgExpression *n)
+SgCallExpression::replace_expression(SgExpression *o, SgExpression *n)
    {
   // DQ (12/17/2006): This function should have the semantics that it will represent a  
   // structural change to the AST, thus it is free to set the parent of the new expression.
@@ -2588,6 +2774,23 @@ SgFunctionCallExp::replace_expression(SgExpression *o, SgExpression *n)
 
      return 0;
    }
+
+SgType*
+SgCallExpression::get_type() const
+   {
+       return SageBuilder::buildVoidType(); //TODO this is wrong
+   }
+
+SOURCE_CALL_EXPRESSION_END
+
+SOURCE_FUNCTION_CALL_EXPRESSION_START
+
+void
+SgFunctionCallExp::post_construction_initialization()
+   {
+       SgCallExpression::post_construction_initialization();
+   }
+
 
 SgType*
 SgFunctionCallExp::get_type() const
@@ -2893,7 +3096,6 @@ SOURCE_EQUALITY_OPERATOR_EXPRESSION_START
 SOURCE_BOOLEAN_GET_TYPE_MEMBER_FUNCTION
 SOURCE_EQUALITY_OPERATOR_EXPRESSION_END
 
-
 SOURCE_LESS_THAN_OPERATOR_EXPRESSION_START
 SOURCE_BOOLEAN_GET_TYPE_MEMBER_FUNCTION
 SOURCE_LESS_THAN_OPERATOR_EXPRESSION_END
@@ -2946,6 +3148,90 @@ SOURCE_INTEGER_DIVIDE_OPERATOR_EXPRESSION_END
 SOURCE_MOD_OPERATOR_EXPRESSION_START
 SOURCE_MOD_OPERATOR_EXPRESSION_END
 
+SOURCE_MEMBERSHIP_OP_START
+SOURCE_BOOLEAN_GET_TYPE_MEMBER_FUNCTION
+SOURCE_MEMBERSHIP_OP_END
+
+SOURCE_NON_MEMBERSHIP_OP_START
+SOURCE_BOOLEAN_GET_TYPE_MEMBER_FUNCTION
+SOURCE_NON_MEMBERSHIP_OP_END
+
+SOURCE_IS_OP_START
+SOURCE_BOOLEAN_GET_TYPE_MEMBER_FUNCTION
+SOURCE_IS_OP_END
+
+SOURCE_IS_NOT_OP_START
+SOURCE_BOOLEAN_GET_TYPE_MEMBER_FUNCTION
+SOURCE_IS_NOT_OP_END
+
+SOURCE_NARY_OP_START
+
+SgExpressionPtrList&
+SgNaryOp::get_operands()
+   { return p_operands; }
+
+const SgExpressionPtrList&
+SgNaryOp::get_operands() const
+   { return p_operands; }
+
+VariantTList&
+SgNaryOp::get_operators()
+   { return p_operators; }
+
+const VariantTList&
+SgNaryOp::get_operators() const
+   { return p_operators; }
+
+void
+SgNaryOp::append_operation(VariantT sg_operator, SgExpression* operand) {
+    ROSE_ASSERT(operand != NULL);
+    get_operands().push_back(operand);
+    get_operators().push_back(sg_operator);
+    operand->set_parent(this);
+}
+
+int
+SgNaryOp::replace_expression(SgExpression *o, SgExpression *n) {
+    SgExpressionPtrList::iterator i;
+    for (i = get_operands().begin(); i != get_operands().end(); ++i) {
+        if( (*i) == o) {
+            *i = n;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int
+SgNaryOp::length() const {
+     return get_operands().size();
+}
+
+SgExpression*
+SgNaryOp::get_next(int& i) const {
+    return get_operands()[i++];
+}
+
+bool
+SgNaryOp::empty() const {
+    return get_operands().empty();
+}
+
+SOURCE_NARY_OP_END
+
+SOURCE_NARY_COMPARISON_OP_START
+SgType*
+SgNaryComparisonOp::get_type() const {
+    return SageBuilder::buildBoolType();
+}
+SOURCE_NARY_COMPARISON_OP_END
+
+SOURCE_NARY_BOOLEAN_OP_START
+SgType*
+SgNaryBooleanOp::get_type() const {
+    return SageBuilder::buildVoidType();
+}
+SOURCE_NARY_BOOLEAN_OP_END
 
 SOURCE_AND_OPERATOR_EXPRESSION_START
 
@@ -3023,6 +3309,9 @@ SOURCE_LEFT_SHIFT_OPERATOR_EXPRESSION_END
 SOURCE_RIGHT_SHIFT_OPERATOR_EXPRESSION_START
 SOURCE_RIGHT_SHIFT_OPERATOR_EXPRESSION_END
 
+SOURCE_JAVA_UNSIGNED_RIGHT_SHIFT_OPERATOR_EXPRESSION_START
+SOURCE_JAVA_UNSIGNED_RIGHT_SHIFT_OPERATOR_EXPRESSION_END
+
 SOURCE_MINUS_OPERATOR_EXPRESSION_START
 SOURCE_MINUS_OPERATOR_EXPRESSION_END
 
@@ -3067,6 +3356,47 @@ SgSizeOfOp::replace_expression (SgExpression *o, SgExpression *n)
    } 
 
 SOURCE_SIZE_OF_OPERATOR_EXPRESSION_END
+
+SOURCE_JAVA_INSTANCEOF_OPERATOR_EXPRESSION_START
+
+SgType*
+$CLASSNAME::get_type() const
+   {
+  // This function returns an unsigned integer representing the size of type 
+  // (the unsigned int should match size_t, which may or may not be defined).
+
+     ROSE_ASSERT(p_operand_expr != NULL || p_operand_type != NULL);
+     SgType* returnType = SgTypeUnsignedInt::createType();
+
+     ROSE_ASSERT(returnType != NULL);
+     return returnType;
+   }
+
+#if 0
+// Liao, 11/17/2009
+int
+SgJavaInstanceOfOp::replace_expression (SgExpression *o, SgExpression *n)
+   {
+  // DQ (12/17/2006): This function should have the semantics that it will represent a  
+  // structural change to the AST, thus it is free to set the parent of the new expression.
+
+     ROSE_ASSERT(o != NULL);
+     ROSE_ASSERT(n != NULL);
+
+     if (get_operand_expr() == o)
+        {
+          set_operand_expr(n);
+          return 1;
+        }
+       else
+        {
+          printf ("Warning: inside of SgSizeOfOp::replace_expression original SgExpression unidentified \n");
+          return 0;
+        }
+   }
+#endif
+
+SOURCE_JAVA_INSTANCEOF_OPERATOR_EXPRESSION_END
 
 SOURCE_TYPE_ID_OPERATOR_EXPRESSION_START
 
@@ -3289,7 +3619,9 @@ SgPointerDerefExp::get_type() const
              {
             // DQ (8/17/2010): I think this is redundant.
                returnType = SgTypeInt::createType();
-               printf ("Warning: I think we should be short circuiting redundant call to SgTypeInt::createType() \n");
+               if (SgProject::get_verbose() > 0) {
+                   printf ("Warning: I think we should be short circuiting redundant call to SgTypeInt::createType() \n");
+               }
                break;
              }
 
@@ -3958,6 +4290,45 @@ SOURCE_DELETE_OPERATOR_EXPRESSION_END
 SOURCE_THIS_EXPRESSION_START
 SOURCE_THIS_EXPRESSION_END
 
+SOURCE_TUPLE_EXP_START
+SOURCE_TUPLE_EXP_END
+
+SOURCE_LIST_EXP_START
+SOURCE_LIST_EXP_END
+
+SOURCE_COMPREHENSION_START
+SOURCE_COMPREHENSION_END
+
+SOURCE_LIST_COMPREHENSION_START
+SOURCE_LIST_COMPREHENSION_END
+
+SOURCE_SET_COMPREHENSION_START
+SOURCE_SET_COMPREHENSION_END
+
+SOURCE_DICTIONARY_COMPREHENSION_START
+SOURCE_DICTIONARY_COMPREHENSION_END
+
+SOURCE_DICTIONARY_EXP_START
+
+SgKeyDatumPairPtrList&
+SgDictionaryExp::get_key_datum_pairs()
+   { return p_key_datum_pairs; }
+
+const SgKeyDatumPairPtrList&
+SgDictionaryExp::get_key_datum_pairs() const
+   { return p_key_datum_pairs; }
+
+void
+SgDictionaryExp::append_pair(SgKeyDatumPair *what)
+   { what->set_parent(this); p_key_datum_pairs.push_back(what); }
+
+SOURCE_DICTIONARY_EXP_END
+
+SOURCE_KEY_DATUM_PAIR_START
+SOURCE_KEY_DATUM_PAIR_END
+
+SOURCE_STRING_CONVERSION_START
+SOURCE_STRING_CONVERSION_END
 
 SOURCE_SCOPE_OPERATOR_EXPRESSION_START
 SOURCE_SCOPE_OPERATOR_EXPRESSION_END
@@ -3967,49 +4338,14 @@ SOURCE_ASSIGN_OPERATOR_EXPRESSION_START
 SOURCE_ASSIGN_OPERATOR_EXPRESSION_END
 
 
-SOURCE_PLUS_ASSIGN_OPERATOR_EXPRESSION_START
-SOURCE_PLUS_ASSIGN_OPERATOR_EXPRESSION_END
-
-
-SOURCE_MINUS_ASSIGN_OPERATOR_EXPRESSION_START
-SOURCE_MINUS_ASSIGN_OPERATOR_EXPRESSION_END
-
-
-SOURCE_AND_ASSIGN_OPERATOR_EXPRESSION_START
-SOURCE_AND_ASSIGN_OPERATOR_EXPRESSION_END
-
-
-SOURCE_IOR_ASSIGN_OPERATOR_EXPRESSION_START
-SOURCE_IOR_ASSIGN_OPERATOR_EXPRESSION_END
-
-
-SOURCE_MULTIPLY_ASSIGN_OPERATOR_EXPRESSION_START
-SOURCE_MULTIPLY_ASSIGN_OPERATOR_EXPRESSION_END
-
-
-SOURCE_DIVIDE_ASSIGN_OPERATOR_EXPRESSION_START
-SOURCE_DIVIDE_ASSIGN_OPERATOR_EXPRESSION_END
-
-
-SOURCE_MOD_ASSIGN_OPERATOR_EXPRESSION_START
-SOURCE_MOD_ASSIGN_OPERATOR_EXPRESSION_END
-
-
-SOURCE_XOR_ASSIGN_OPERATOR_EXPRESSION_START
-SOURCE_XOR_ASSIGN_OPERATOR_EXPRESSION_END
-
-
-SOURCE_LEFT_SHIFT_ASSIGN_OPERATOR_EXPRESSION_START
-SOURCE_LEFT_SHIFT_ASSIGN_OPERATOR_EXPRESSION_END
-
-
-SOURCE_RIGHT_SHIFT_ASSIGN_OPERATOR_EXPRESSION_START
-SOURCE_RIGHT_SHIFT_ASSIGN_OPERATOR_EXPRESSION_END
-
-
 SOURCE_POINTER_ASSIGN_OPERATOR_EXPRESSION_START
 SOURCE_POINTER_ASSIGN_OPERATOR_EXPRESSION_END
 
+SOURCE_INTEGER_DIVIDE_ASSIGN_OP_START
+SOURCE_INTEGER_DIVIDE_ASSIGN_OP_END
+
+SOURCE_EXPONENTIATION_ASSIGN_OP_START
+SOURCE_EXPONENTIATION_ASSIGN_OP_END
 
 SOURCE_REFERENCE_EXPRESSION_START
 SOURCE_REFERENCE_EXPRESSION_END
@@ -4623,6 +4959,7 @@ SgType*
 
 $CLASSNAME::get_type() const
    { 
+     ROSE_ASSERT(this != NULL);
      return SgTypeDefault::createType();
    }
 
@@ -4634,6 +4971,7 @@ SOURCE_GET_TYPE_FROM_SYMBOL_START
 SgType*
 $CLASSNAME::get_type() const
    {
+     ROSE_ASSERT(this != NULL);
      ROSE_ASSERT(get_symbol() != NULL);
   // DQ (9/27/2006): Added assertion
      ROSE_ASSERT(get_symbol()->get_type() != NULL);
@@ -5533,6 +5871,44 @@ SgPseudoDestructorRefExp::post_construction_initialization()
 SOURCE_PSEUDO_DESTRUCTOR_REF_END
 
 
+SOURCE_LAMBDA_REF_EXP_START
+
+SgType* SgLambdaRefExp::get_type() const {
+	return SageBuilder::buildVoidType();
+}
+
+void
+SgLambdaRefExp::post_construction_initialization() {
+
+}
+
+SgFunctionParameterList*
+SgLambdaRefExp::get_parameterList() {
+    ROSE_ASSERT(this != NULL);
+
+    SgFunctionDeclaration* func_decl =
+        this->get_functionDeclaration();
+    ROSE_ASSERT(func_decl != NULL);
+
+    return func_decl->get_parameterList();
+}
+
+SgStatement*
+SgLambdaRefExp::get_body() {
+    ROSE_ASSERT(this != NULL);
+
+    SgFunctionDeclaration* func_decl =
+        this->get_functionDeclaration();
+    ROSE_ASSERT(func_decl != NULL);
+
+    SgFunctionDefinition* func_def =
+        func_decl->get_definition();
+    ROSE_ASSERT(func_def != NULL);
+
+    return func_def->get_body();
+}
+
+SOURCE_LAMBDA_REF_EXP_END
 
 SOURCE_CUDA_KERNEL_EXEC_CONFIG_START
 SOURCE_CUDA_KERNEL_EXEC_CONFIG_END

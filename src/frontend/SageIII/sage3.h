@@ -1,3 +1,5 @@
+// DQ (6/25/2011): remove to isolate name qualification error
+#if 1
 
 /*
  * this includes the forward declarations of all the sage node classes
@@ -40,6 +42,9 @@
 #include "abstract_handle.h"
 #include "roseAdapter.h"
 
+#include "memory_object.h"
+//#include "memory_object_impl.h"
+
 //Liao, 2/8/2008. SAGE III node building interface
 #include "sageBuilder.h"
 #include "sageBuilderAsm.h"
@@ -73,7 +78,8 @@
 
 #endif
 
-
+// DQ (6/25/2011): remove to isolate name qualification error
+#endif
 
 
 

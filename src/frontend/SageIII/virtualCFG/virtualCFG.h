@@ -1,6 +1,7 @@
 #ifndef VIRTUAL_CFG_H
 #define VIRTUAL_CFG_H
 
+#include <string>
 #include <vector>
 #include <assert.h>
 
@@ -276,6 +277,7 @@ namespace VirtualCFG {
     std::string toStringForDebugging() const {return n.toStringForDebugging();}
     std::string id() const {return n.id();}
     SgNode* getNode() const {return n.getNode();}
+        const CFGNode& toNode() const { return n; }
     unsigned int getIndex() const {return n.getIndex();}
     std::vector<InterestingEdge> outEdges() const;
     std::vector<InterestingEdge> inEdges() const;
