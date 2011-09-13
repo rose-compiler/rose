@@ -37,7 +37,8 @@ HEADER_BINARY_START
      All Asm Instructions are derived from this class and thus contain the following functionality.
   */
 
-     private:
+  // private:
+     public:
        // DQ (9/13/2011): This copy constructor was built because static analysis tools (made it private to force compile time error if used).
           SgAsmNode ( const SgAsmNode & X );
 
@@ -4534,19 +4535,17 @@ SgAsmNode::SgAsmNode ( const SgAsmNode & X )
   // This explicit definition of this constructor avoid a call to the implicitly built copy constructor that would share the 
   // pointers used internally and for which then the descructor would perform the 2nd free.
 
-     printf ("Error: SgAsmNode ( const SgAsmNode & X ) copy constructor shoudl not be called \n");
-     ROSE_ASSERT(false);
+  // printf ("Error: SgAsmNode ( const SgAsmNode & X ) copy constructor shoudl not be called \n");
+  // ROSE_ASSERT(false);
 
-     p_attachedPreprocessingInfoPtr = NULL;
-     p_asmAttributeMechanism = NULL;
-     p_attributeMechanism = NULL;
-
-  // Test the variant virtual function
-     assert(AsmNodeTag == variant());
-     post_construction_initialization();
-
-  // Test the isSgAsmNode() function since it has been problematic
-     assert(isSgAsmNode(this) != NULL);
+  // DQ (9/13/2011): This is the default behavior for implicit copy constructors.
+  // But it is likely not the behavior that we really want since it shares data 
+  // that the destructor might deete more than once.  Lilely this is not being used 
+  // this way (else it would have been a problem before now), but we should fix 
+  // this better.
+     p_attachedPreprocessingInfoPtr = X.p_attachedPreprocessingInfoPtr;
+     p_asmAttributeMechanism        = X.p_asmAttributeMechanism;
+     p_attributeMechanism           = X.p_attributeMechanism;
    }
 
 SOURCE_BINARY_END
