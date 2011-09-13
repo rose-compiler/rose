@@ -817,10 +817,25 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
         {
           printf ("In unparseExpression(%s): Detected error expr->get_file_info()->isCompilerGenerated() != expr->get_startOfConstruct()->isCompilerGenerated() \n",expr->class_name().c_str());
           printf ("     expr->get_file_info() = %p expr->get_operatorPosition() = %p expr->get_startOfConstruct() = %p \n",expr->get_file_info(),expr->get_operatorPosition(),expr->get_startOfConstruct());
-          ROSE_ASSERT(expr->get_file_info()->get_parent() != NULL);
-          printf ("parent of file info = %p = %s \n",expr->get_file_info()->get_parent(),expr->get_file_info()->get_parent()->class_name().c_str());
-          expr->get_file_info()->display("expr->get_file_info(): debug");
-          expr->get_startOfConstruct()->display("expr->get_startOfConstruct(): debug");
+
+       // DQ (9/11/2011): Reorganize to make this better code that can be analyized using static analysis (static analysis tools don't understand access functions).
+       // ROSE_ASSERT(expr->get_file_info()->get_parent() != NULL);
+       // printf ("parent of file info = %p = %s \n",expr->get_file_info()->get_parent(),expr->get_file_info()->get_parent()->class_name().c_str());
+          ROSE_ASSERT(expr != NULL);
+          Sg_File_Info* fileInfo = expr->get_file_info();
+          ROSE_ASSERT(fileInfo != NULL);
+          SgNode* fileInfoParent = fileInfo->get_parent();
+          ROSE_ASSERT(fileInfoParent != NULL);
+          printf ("parent of file info = %p = %s \n",fileInfoParent,fileInfoParent->class_name().c_str());
+
+       // DQ (9/11/2011): Reorganize to make this better code that can be analyized using static analysis (static analysis tools don't understand access functions).
+       // expr->get_file_info()->display("expr->get_file_info(): debug");
+       // expr->get_startOfConstruct()->display("expr->get_startOfConstruct(): debug");
+          fileInfo->display("expr->get_file_info(): debug");
+
+          Sg_File_Info* startOfConstructFileInfo = expr->get_file_info();
+          ROSE_ASSERT(startOfConstructFileInfo != NULL);
+          startOfConstructFileInfo->display("expr->get_startOfConstruct(): debug");
         }
      ROSE_ASSERT(expr->get_file_info()->isCompilerGenerated() == expr->get_startOfConstruct()->isCompilerGenerated());
 
@@ -2077,6 +2092,9 @@ UnparseLanguageIndependentConstructs::unparseValue(SgExpression* expr, SgUnparse
    {
   // DQ (11/9/2005): refactored handling of expression trees stemming from the folding of constants.
      SgValueExp* valueExp = isSgValueExp(expr);
+
+  // DQ (9/11/2011): Added error checking pointed out from static analysis.
+     ROSE_ASSERT(valueExp != NULL);
 
 #if 0
      printf ("Inside of unparseValue = %p \n",valueExp);

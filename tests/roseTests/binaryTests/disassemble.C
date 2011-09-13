@@ -83,7 +83,7 @@ Description:\n\
 \n\
   --protection=PROTBITS\n\
     Normally the disassembler will only consider data in memory that has\n\
-    execute permission.  This switch allows allows the disassembler to use a\n\
+    execute permission.  This switch allows the disassembler to use a\n\
     different set of protection bits, all of which must be set on any memory\n\
     which is being considered for disassembly.  The PROTBITS argument is one\n\
     or more of the letters: r (read), w (write), or x (execute), or '-'\n\
@@ -713,17 +713,15 @@ dump_CFG_CG(SgNode *ast)
     /* Create the control flow graph, but exclude blocks that are part of the "unassigned blocks" function. Note that if the
      * "-rose:partitioner_search -unassigned" switch is passed to the disassembler then the unassigned blocks will already
      * have been pruned from the AST anyway. */
-    CFG global_cfg = BinaryAnalysis::ControlFlow().build_cfg_from_ast<CFG>(ast);
-    {
-        boost::graph_traits<CFG>::vertex_iterator vi, vi_end;
-        for (boost::tie(vi, vi_end)=vertices(global_cfg); vi!=vi_end; ++vi) {
-            SgAsmFunctionDeclaration *func = get(boost::vertex_name, global_cfg, *vi)->get_enclosing_function();
-            if (!func || 0!=(func->get_reason() & SgAsmFunctionDeclaration::FUNC_LEFTOVERS)) {
-                clear_vertex(*vi, global_cfg);
-                remove_vertex(*vi, global_cfg);
-            }
+    struct UnassignedBlockFilter: public BinaryAnalysis::ControlFlow::VertexFilter {
+        bool operator()(BinaryAnalysis::ControlFlow*, SgAsmBlock *block) {
+            SgAsmFunctionDeclaration *func = block ? block->get_enclosing_function() : NULL;
+            return !func || 0==(func->get_reason() & SgAsmFunctionDeclaration::FUNC_LEFTOVERS);
         }
-    }
+    } unassigned_block_filter;
+    BinaryAnalysis::ControlFlow cfg_analyzer;
+    cfg_analyzer.set_vertex_filter(&unassigned_block_filter);
+    CFG global_cfg = cfg_analyzer.build_cfg_from_ast<CFG>(ast);
 
     /* Get the base name for the output files. */
     SgFile *srcfile = NULL;
@@ -1187,7 +1185,7 @@ main(int argc, char *argv[])
 
     /* If the partitioner needs to execute a success program (defined in an IPD file) then it must be able to provide the
      * program with a window into the specimen's memory.  We do that by supplying the same memory map that was used for
-     * disassembly. It is redundant to call set_map() with an activer paritioner, but doesn't hurt anything. */
+     * disassembly. It is redundant to call set_map() with an active partitioner, but doesn't hurt anything. */
     partitioner->set_map(map);
 
     printf("using this memory map for disassembly:\n");
@@ -1236,7 +1234,7 @@ main(int argc, char *argv[])
                 SgAsmFunctionDeclaration *func = isSgAsmFunctionDeclaration(node);
                 if (func) {
                     CFG cfg = cfg_analysis.build_cfg_from_ast<CFG>(func);
-                    CFG_Vertex entry = 0; /* see build_graph() */
+                    CFG_Vertex entry = 0; /* see build_cfg_from_ast() */
                     assert(get(boost::vertex_name, cfg, entry) == func->get_entry_block());
                     Dominance::Graph dg = dom_analysis.build_idom_graph_from_cfg<Dominance::Graph>(cfg, entry);
                     dom_analysis.clear_ast(func);
@@ -1246,7 +1244,7 @@ main(int argc, char *argv[])
         };
         BinaryAnalysis::ControlFlow cfg_analysis;
         BinaryAnalysis::Dominance   dom_analysis;
-        dom_analysis.set_debug(stderr);
+        //dom_analysis.set_debug(stderr);
         CalculateDominance(cfg_analysis, dom_analysis).traverse(interp, preorder);
     }
 #elif 0
@@ -1451,8 +1449,8 @@ main(int argc, char *argv[])
      * Final statistics
      *------------------------------------------------------------------------------------------------------------------------*/
     
-    if (SMTSolver::total_calls>0)
-        printf("SMT solver was called %zu time%s\n", SMTSolver::total_calls, 1==SMTSolver::total_calls?"":"s");
+    if (SMTSolver::get_ncalls()>0)
+        printf("SMT solver was called %zu time%s\n", SMTSolver::get_ncalls(), 1==SMTSolver::get_ncalls()?"":"s");
     return 0;
 }
 

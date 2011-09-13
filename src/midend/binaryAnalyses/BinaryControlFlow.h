@@ -35,7 +35,7 @@ namespace BinaryAnalysis {
      *  @code
      *  // Create a filter that rejects all edges except those whose target
      *  // is a function entry block.
-     *  struct OnlyCallEdges: public EdgeFilter {
+     *  struct OnlyCallEdges: public ControlFlow::EdgeFilter {
      *      bool operator()(ControlFlow *analyzer, SgAsmBlock *src, SgAsmBlock *dst) {
      *          SgAsmFunctionDeclaration *func = dst->get_enclosing_function();
      *          return func && dst == func->get_entry_block();

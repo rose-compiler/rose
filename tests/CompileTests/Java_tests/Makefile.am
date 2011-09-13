@@ -4,12 +4,12 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # These are C testcodes targeting aspects of C that might not be a subset of C++ #
 ##################################################################################
 
+# These test pass the compilation using ROSE, all AST tests, unparsing to generate 
+# Java code, and the final compilation of that code using a backend compiler (javac).
 TESTCODES_REQUIRED_TO_PASS = \
      test2011_01.java \
      test2011_02.java \
      test2011_03.java \
-     test2011_04.java \
-     test2011_05.java \
      test2011_06.java \
      test2011_07.java \
      test2011_08.java \
@@ -25,14 +25,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2011_18.java \
      test2011_19.java \
      test2011_20.java \
-     test2011_21.java \
-     test2011_22.java \
-     test2011_23.java \
-     test2011_24.java \
-     test2011_25.java \
      test2011_26.java \
-     test2011_27.java \
-     test2011_28.java \
      test2011_29.java \
      test2011_30.java \
      test2011_31.java \
@@ -46,17 +39,54 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2011_39.java \
      test2011_40.java \
      test2011_41.java \
+     test2011_47.java \
+     test2011_50.java \
+                      \
+     pgc_2011_30.java \
+                      \
+     pgc_test2011_00.java \
+     pgc_test2011_01.java \
+     pgc_test2011_02.java \
+     pgc_test2011_03.java \
+     pgc_test2011_04.java \
+     pgc_test2011_05.java \
+     pgc_test2011_06.java \
+     pgc_test2011_07.java \
+     pgc_test2011_08.java \
+     pgc_test2011_09.java
+
+# DQ (9/3/2011): This test code was listed twice...
+#    pgc_2011_30.java
+#
+# These test pass the compilation using ROSE, all AST tests, unparsing to generate 
+# Java code, and the final compilation of that code using a backend compiler (javac).
+TESTCODE_CURRENTLY_FAILING =
+
+# These tests pass the compilation using ROSE, all AST tests, and unparsing to generate 
+# Java code, but fails the final compilation step of the generated Java code.
+TESTCODES_REQUIRED_TO_PASS_FAILING_BACKEND_COMPILE = \
+     test2011_04.java \
+     test2011_05.java \
+     test2011_21.java \
+     test2011_22.java \
+     test2011_23.java \
+     test2011_24.java \
+     test2011_25.java \
+     test2011_27.java \
+     test2011_28.java \
      test2011_42.java \
-     test2011_43.java \
-     test2011_44.java \
      simple.java
 
+# This is where the Java generics tests are put (currently not required to pass all phases).
+TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6 = \
+     test2011_43.java \
+     test2011_44.java \
+     test2011_46.java \
+     test2011_48.java \
+     test2011_49.java 
 
-# This class does not match the file name.
-#    simple_fortran.java
-
-TESTCODE_CURRENTLY_FAILING = 
-
+TESTCODES_REQUIRED_TO_PASS_FAILING_FOR_JAVA_6 = \
+     test2011_45.java 
 
 
 # Later we will move these tests to the gcjTestSuite subdirectory.
@@ -289,10 +319,21 @@ $(TESTCODE_CURRENTLY_FAILING)
 # The use of -rose:java is redundent, the source langauge can now be determined from the file suffix.
 # ROSE_FLAGS = -rose:java -rose:verbose 0 -rose:skipfinalCompileStep
 # ROSE_FLAGS = -rose:verbose 0 -rose:skipfinalCompileStep -rose:skip_syntax_check
-ROSE_FLAGS = -rose:verbose 0 -rose:skipfinalCompileStep
+# ROSE_FLAGS = -rose:verbose 0 -rose:skipfinalCompileStep
+ROSE_FLAGS = -rose:verbose 0
+ROSE_FLAGS_SKIP_FINAL_COMPILATION = -rose:verbose 0 -rose:skipfinalCompileStep
+
 
 PASSING_TEST_Objects = ${TESTCODES:.java=.o}
 TEST_Objects = ${ALL_TESTCODES:.java=.o}
+
+# Add tests for where we can compiler and generate code, but the generated code does not yet compiler with the backend compiler (javac).
+TESTCODES_REQUIRED_TO_PASS_FAILING_BACKEND_COMPILE_Objects = ${TESTCODES_REQUIRED_TO_PASS_FAILING_BACKEND_COMPILE:.java=.o}
+
+# Tests for Java generics
+TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6_Objects = ${TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6:.java=.o}
+
+
 
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 
@@ -313,6 +354,24 @@ $(TEST_Objects): $(testTranslator) ../../testTranslator ../../testGraphGeneratio
 	@echo "Test using Java 1.4 version support."
 	$(testTranslator) -ecj:1.4 $(ROSE_FLAGS) $(srcdir)/$(@:.o=.java)
 
+# Tests that pass all but the final compilation using the backend compiler (javac)
+$(TESTCODES_REQUIRED_TO_PASS_FAILING_BACKEND_COMPILE_Objects): $(testTranslator) ../../testTranslator ../../testGraphGeneration
+	@echo "Test using Java 1.6 (default) version support."
+	$(testTranslator) $(ROSE_FLAGS_SKIP_FINAL_COMPILATION) $(srcdir)/$(@:.o=.java)
+	@echo "Test using Java 1.4 version support."
+	$(testTranslator) -ecj:1.4 $(ROSE_FLAGS_SKIP_FINAL_COMPILATION) $(srcdir)/$(@:.o=.java)
+
+# Tests that pass all but the final compilation using the backend compiler (javac)
+$(TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6_Objects): $(testTranslator) ../../testTranslator ../../testGraphGeneration
+	@echo "Test using Java 1.6 (default) version support."
+	$(testTranslator) $(ROSE_FLAGS_SKIP_FINAL_COMPILATION) $(srcdir)/$(@:.o=.java)
+
+
+
+
+
+
+
 testJavaTraversal:
 #	Java library path specifies where the *.so file is located (JavaTraversal.so)
 #	The class path (-cp) the ROSE version of the ECJ Java front-end.
@@ -329,9 +388,13 @@ testJavaTraversal:
 
 
 # DQ (8/14/2011): Rule to build whole AST graphs with all of the file info objects.
-# This is useful for debugging the source code position information.
+# This is useful for debugging the source code position information. We have to 
+# skip the final compilation because the -rose:dotgraph:fileInfoFilter will be passed
+# to the backend compiler and cause an error.
 graphWithFileInfo: ../../testGraphGeneration
-	../../testGraphGeneration -rose:dotgraph:fileInfoFilter $(ROSE_FLAGS) $(srcdir)/test2011_39.java
+	../../testGraphGeneration -rose:dotgraph:fileInfoFilter $(ROSE_FLAGS_SKIP_FINAL_COMPILATION) $(srcdir)/test2011_39.java
+
+testGenerics: $(TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6_Objects)
 
 workingJava:
 	java -cp $(top_srcdir)/src/3rdPartyLibraries/java-parser/ecjROSE.jar
@@ -341,22 +404,23 @@ testECJ:
 
 # Test for help option to ECJ (some ECJ options not supported via ROSE).
 # DQ (7/21/2011): Currently a file must be specified, but this should be fixed later.
-testECJ_help_option:
+testECJ_help_option: $(testTranslator)
 	$(testTranslator) -rose:java -rose:verbose 0 -rose:skipfinalCompileStep -ecj:help -c $(srcdir)/simple.java
 
 # Test with the "-rose:java" specification (one way to specify the language in ROSE).
-testWithJavaSpecification:
+testWithJavaSpecification: $(testTranslator)
 	$(testTranslator) -rose:java $(ROSE_FLAGS) $(srcdir)/testWithJavaSpecification.java
 
 # Test without the "-rose:java" specification (ROSE can alternatively obtain the source language from the file suffix).
-testWithoutJavaSpecification:
+testWithoutJavaSpecification: $(testTranslator)
 	$(testTranslator) $(ROSE_FLAGS) $(srcdir)/testWithoutJavaSpecification.java
 
-testJava_option:
+# Test using the specification of Java 1.7 compatability.
+testJava_option: $(testTranslator)
 	$(testTranslator) -ecj:1.7 -rose:verbose 0 -rose:skipfinalCompileStep -c $(srcdir)/test2011_44.java
 
 # Build a rule to allow running all tests in parallel...
-extraTests: testWithJavaSpecification testWithoutJavaSpecification testECJ_help_option graphWithFileInfo
+extraTests: testWithJavaSpecification testWithoutJavaSpecification testECJ_help_option testJava_option graphWithFileInfo
 
 # Execute the java file using: java -Djava.library.path=. HelloWorld
 
@@ -370,7 +434,7 @@ gcjTests_Objects = ${GCJ_TESTCODES:.java=.class}
 
 # Test the GCJ test code by only doing syntax checking on them using ROSE (calling only the 
 # backend javac to do the syntax checking). This is more of a test of the Makefile than ROSE.
-$(gcjTests_Objects): $(testTranslator) ../../testTranslator
+$(gcjTests_Objects): $(testTranslator)
 	$(testTranslator) $(ROSE_FLAGS) -rose:exit_after_parser $(srcdir)/gcjTestSuite/$(@:.class=.java)
 
 # This test evaluates the GCJ test code to make sure that they compile with ECJ (all but 2 pass).
@@ -379,11 +443,13 @@ testGCJ: $(gcjTests_passing_Objects)
 # ********************************************************************************
 
 
-check-local:
+check-local: extraTests
 	@echo "Tests for Java."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
-	@$(MAKE) $(PASSING_TEST_Objects) extraTests
+	@$(MAKE) $(TESTCODES_REQUIRED_TO_PASS_FAILING_BACKEND_COMPILE_Objects)
+	@$(MAKE) $(PASSING_TEST_Objects)
+	@$(MAKE) $(TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6_Objects)
 	@echo "************************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/Java_tests: make check rule complete (terminated normally) ******"
 	@echo "************************************************************************************************"

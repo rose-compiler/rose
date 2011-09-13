@@ -38,7 +38,7 @@ BinaryLoader::MappingContribution
 BinaryLoaderPe::align_values(SgAsmGenericSection *section, MemoryMap *map,
                              rose_addr_t *malign_lo_p, rose_addr_t *malign_hi_p,
                              rose_addr_t *va_p, rose_addr_t *mem_size_p,
-                             rose_addr_t *offset_p, rose_addr_t *file_size_p,
+                             rose_addr_t *offset_p, rose_addr_t *file_size_p, bool *map_private_p,
                              rose_addr_t *va_offset_p, bool *anon_lo_p, bool *anon_hi_p,
                              ConflictResolution *resolve_p)
 {
@@ -76,6 +76,7 @@ BinaryLoaderPe::align_values(SgAsmGenericSection *section, MemoryMap *map,
     *mem_size_p = mapped_size;
     *offset_p = file_offset;
     *file_size_p = mapped_size;
+    *map_private_p = false;
     *va_offset_p = 0;
     *anon_lo_p = *anon_hi_p = true;
     *resolve_p = RESOLVE_OVERMAP;

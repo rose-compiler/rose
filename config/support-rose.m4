@@ -971,9 +971,6 @@ AC_SUBST(glut_path)
 
 
 
-# Call supporting macro for python
-ROSE_SUPPORT_PYTHON
-
 AC_CHECK_PROGS(PERL, [perl])
 
 # DQ (9/4/2009): Added checking for indent command (common in Linux, but not on some platforms).
@@ -2038,9 +2035,10 @@ src/frontend/CxxFrontend/EDG/edg43Rose/Makefile
 ])], [])
 
 
-# End macro ROSE_SUPPORT_ROSE_PART_6.
+# End macro ROSE_SUPPORT_ROSE_PART_5.
 ]
 )
+
 
 #-----------------------------------------------------------------------------
 AC_DEFUN([ROSE_SUPPORT_ROSE_PART_6],
@@ -2420,6 +2418,7 @@ tests/CompilerOptionsTests/collectAllCommentsAndDirectives_tests/Makefile
 tests/CompilerOptionsTests/preinclude_tests/Makefile
 tests/CompilerOptionsTests/tokenStream_tests/Makefile
 tests/roseTests/Makefile
+tests/roseTests/abstractMemoryObjectTests/Makefile
 tests/roseTests/PHPTests/Makefile
 tests/roseTests/astFileIOTests/Makefile
 tests/roseTests/astInliningTests/Makefile

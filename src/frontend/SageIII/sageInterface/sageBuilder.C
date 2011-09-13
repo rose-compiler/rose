@@ -161,6 +161,13 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
   SgVariableDeclaration * varDecl = new SgVariableDeclaration(name, type, varInit);
   ROSE_ASSERT(varDecl);
 
+// DQ (8/21/2011): Note that the default is to set the declaration modifier's access modifier to be 
+// default (which is the same as public).  So the effect it to set it to be public.  This is ignored
+// by the unparser for most languguages in ROSE.
+
+// DQ (8/21/2011): Debugging declarations should have default settings (should not be marked as public).
+// ROSE_ASSERT(varDecl->get_declarationModifier().get_accessModifier().isPublic() == false);
+
   varDecl->set_firstNondefiningDeclaration(varDecl);
 
   if (scope!=NULL) 
@@ -2041,6 +2048,19 @@ SgPlusPlusOp *SageBuilder::buildPlusPlusOp_nfi(SgExpression* operand_i, SgUnaryO
   return result;
 }
 
+SgThrowOp *SageBuilder::buildThrowOp(SgExpression *operand_i, SgThrowOp::e_throw_kind throwKind)
+{
+  SgThrowOp* result = new SgThrowOp(operand_i, operand_i -> get_type(), throwKind);
+  if (operand_i != NULL) {
+      markLhsValues(result);
+  }
+  setOneSourcePositionForTransformation(result);
+  operand_i -> set_parent(result);
+  ROSE_ASSERT(result);
+  return result;
+}
+
+
 //---------------------binary expressions-----------------------
 
 template <class T>
@@ -2897,19 +2917,47 @@ SageBuilder::buildFunctionCallExp(const SgName& name,
 SgFunctionCallExp* 
 SageBuilder::buildFunctionCallExp(SgFunctionSymbol* sym, 
                                   SgExprListExp* parameters/*=NULL*/)
-{
-  ROSE_ASSERT (sym);
-  if (parameters == NULL)
-    parameters = buildExprListExp();
-  ROSE_ASSERT (parameters);
-  SgFunctionRefExp* func_ref = buildFunctionRefExp(sym);
-  SgFunctionCallExp * func_call_expr = new SgFunctionCallExp(func_ref,parameters,func_ref->get_type());
-  func_ref->set_parent(func_call_expr);
-  parameters->set_parent(func_call_expr);
-  setOneSourcePositionForTransformation(func_call_expr);
-  ROSE_ASSERT(func_call_expr);
-  return func_call_expr;  
-}
+   {
+     ROSE_ASSERT (sym);
+     if (parameters == NULL)
+          parameters = buildExprListExp();
+     ROSE_ASSERT (parameters);
+
+  // DQ (8/21/2011): We want to preserve the support for member functions to be built as SgMemberFunctionRefExp.
+  // This is important for the Java support and the C++ support else we will be lowering all mmember function calls
+  // to function calls which will be a proble for eht analysis of object oriented languages.
+  // SgFunctionRefExp* func_ref = buildFunctionRefExp(sym);
+  // SgFunctionCallExp * func_call_expr = new SgFunctionCallExp(func_ref,parameters,func_ref->get_type());
+  // func_ref->set_parent(func_call_expr);
+     SgFunctionCallExp * func_call_expr = NULL;
+     SgMemberFunctionSymbol* memberFunctionSymbol = isSgMemberFunctionSymbol(sym);
+     if (memberFunctionSymbol != NULL)
+        {
+       // Note that we can't at this point be sure this is not a virtual function.
+          bool virtual_call = false;
+
+       // Name qualificaiton is handled separately from the setting of this variable (old API).
+          bool need_qualifier = false;
+
+          SgMemberFunctionRefExp* member_func_ref = buildMemberFunctionRefExp(memberFunctionSymbol,virtual_call,need_qualifier);
+          func_call_expr = new SgFunctionCallExp(member_func_ref,parameters,member_func_ref->get_type());
+          member_func_ref->set_parent(func_call_expr);
+        }
+       else
+        {
+          SgFunctionRefExp * func_ref = buildFunctionRefExp(sym);
+          func_call_expr = new SgFunctionCallExp(func_ref,parameters,func_ref->get_type());
+          func_ref->set_parent(func_call_expr);
+        }
+
+
+     parameters->set_parent(func_call_expr);
+
+     setOneSourcePositionForTransformation(func_call_expr);
+
+     ROSE_ASSERT(func_call_expr);
+     return func_call_expr;  
+   }
 
 SgFunctionCallExp* 
 SageBuilder::buildFunctionCallExp_nfi(SgExpression* f, SgExprListExp* parameters /*=NULL*/)
@@ -3989,6 +4037,67 @@ SgCatchOptionStmt* SageBuilder::buildCatchOptionStmt(SgVariableDeclaration* cond
   body->set_parent(result);
   setOneSourcePositionForTransformation(result);
   return result;
+}
+
+SgJavaSynchronizedStatement *SageBuilder::buildJavaSynchronizedStatement(SgExpression *expression, SgBasicBlock *body)
+{
+  ROSE_ASSERT(expression);
+  ROSE_ASSERT(body);
+  SgJavaSynchronizedStatement *sync_stmt = new SgJavaSynchronizedStatement(expression, body);
+  ROSE_ASSERT(sync_stmt);
+
+  expression->set_parent(sync_stmt);
+  body->set_parent(sync_stmt);
+
+  return sync_stmt;
+}
+
+SgJavaThrowStatement *SageBuilder::buildJavaThrowStatement(SgThrowOp *op)
+{
+  ROSE_ASSERT(op);
+  SgJavaThrowStatement *throw_stmt = new SgJavaThrowStatement(op);
+  ROSE_ASSERT(throw_stmt);
+
+  op->set_parent(throw_stmt);
+
+  return throw_stmt;
+}
+
+// DQ (9/3/2011): Changed the API to conform to the Java grammar.
+// SgJavaForEachStatement *SageBuilder::buildJavaForEachStatement(SgInitializedName *variable, SgExpression *collection, SgStatement *body)
+SgJavaForEachStatement *SageBuilder::buildJavaForEachStatement(SgVariableDeclaration *variable, SgExpression *collection, SgStatement *body)
+{
+  SgJavaForEachStatement *foreach_stmt = new SgJavaForEachStatement(variable, collection, body);
+  ROSE_ASSERT(foreach_stmt);
+  if (variable) variable -> set_parent(foreach_stmt);
+  if (collection) collection -> set_parent(foreach_stmt);
+  if (body) body -> set_parent(foreach_stmt);
+
+  return foreach_stmt;
+}
+
+SgJavaLabelStatement *SageBuilder::buildJavaLabelStatement(const SgName& name,  SgStatement *stmt /* = NULL */)
+{
+    SgJavaLabelStatement *label_stmt = new SgJavaLabelStatement(name, stmt);
+    ROSE_ASSERT(label_stmt);
+    setOneSourcePositionForTransformation(label_stmt);
+  
+    if (stmt != NULL) 
+        stmt -> set_parent(label_stmt);
+
+    //
+    // charles4 9/3/2011 - TODO: Can't create an SgLabelSymbol because its constructor
+    // only accepts an SgLabelStatement.
+    //
+    // SgLabelSymbol *lsymbol = label_stmt -> lookup_label_symbol(name);
+    // if (! lsymbol) // Should be an Assertion - always true!
+    // {
+    //     lsymbol= new SgLabelSymbol(label_stmt);
+    //     ROSE_ASSERT(lsymbol);
+    //     label_stmt -> insert_symbol(lsymbol -> get_name(), lsymbol);
+    // }
+
+    return label_stmt;
 }
 
 SgPythonPrintStmt*

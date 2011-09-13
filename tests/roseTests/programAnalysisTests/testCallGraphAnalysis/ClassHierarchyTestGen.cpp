@@ -32,6 +32,7 @@
 
 #include <boost/filesystem.hpp>
 
+#include <assert.h>
 
 using namespace std;
 using namespace boost;
@@ -393,6 +394,12 @@ int main(int argc, char**argv)
     classCount = atoi (argv[1]);
     fileCount = atoi(argv[2]);
     float edgeRate = atof(argv[3]);
+
+ // DQ (9/12/2011): Enforce checking on inputs (issue detected by static analysis).
+    assert(classCount >= 0  && classCount < 10000);
+    assert(fileCount  >= 0  && fileCount  < 10000);
+    assert(edgeRate  >= 0.0 && edgeRate   < 10000.0);
+
     outputFolderName = string(argv[4]);
 
     if(classCount<fileCount)

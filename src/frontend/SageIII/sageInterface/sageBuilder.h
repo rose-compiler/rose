@@ -358,6 +358,9 @@ SgMinusMinusOp *buildMinusMinusOp_nfi(SgExpression* operand_i, SgUnaryOp::Sgop_m
 SgPlusPlusOp* buildPlusPlusOp(SgExpression* operand_i, SgUnaryOp::Sgop_mode  a_mode);
 SgPlusPlusOp* buildPlusPlusOp_nfi(SgExpression* operand_i, SgUnaryOp::Sgop_mode  a_mode);
 
+//! Build a ThrowOp expression
+SgThrowOp* buildThrowOp(SgExpression *, SgThrowOp::e_throw_kind);
+
 SgNewExp * buildNewExp(SgType* type, 
                        SgExprListExp* exprListExp, 
                        SgConstructorInitializer* constInit, 
@@ -936,6 +939,23 @@ SgTryStmt* buildTryStmt(SgStatement* body,
                         SgCatchOptionStmt* catch2=NULL,
                         SgCatchOptionStmt* catch3=NULL,
                         SgCatchOptionStmt* catch4=NULL);
+
+// charles4 (8/25/2011): Adding support for Java Synchronized stmts.
+// ! Build a Java Synchronized statement.
+SgJavaSynchronizedStatement *buildJavaSynchronizedStatement(SgExpression *, SgBasicBlock *);
+
+// charles4 (8/25/2011): Adding support for Java Throw stmts.
+// ! Build a Java Throw statement.
+SgJavaThrowStatement *buildJavaThrowStatement(SgThrowOp *);
+
+// charles4 (8/25/2011): Adding support for Java Foreach stmts.
+// ! Build a Java Foreach statement.
+// SgJavaForEachStatement *buildJavaForEachStatement(SgInitializedName * = NULL, SgExpression * = NULL, SgStatement * = NULL);
+SgJavaForEachStatement *buildJavaForEachStatement(SgVariableDeclaration * = NULL, SgExpression * = NULL, SgStatement * = NULL);
+
+// charles4 (8/25/2011): Adding support for Java Label stmts.
+// ! Build a Java Label statement.
+SgJavaLabelStatement *buildJavaLabelStatement(const SgName &,  SgStatement * = NULL);
 
 // ! Build an exec statement
 SgExecStatement* buildExecStatement(SgExpression* executable, SgExpression* globals = NULL, SgExpression* locals = NULL);

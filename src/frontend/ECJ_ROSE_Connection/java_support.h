@@ -4,22 +4,6 @@
 // This is used for both Fortran and Java support to point to the current SgSourceFile.
 extern SgSourceFile* OpenFortranParser_globalFilePointer;
 
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#if 0
-// DQ (1/14/2011): Later I would like to provide some similar support for source position inforamtion.
-#include "ActionEnums.h"
-#include "token.h"
-#include "JavaParserAction.h"
-#endif
-
-#ifdef __cplusplus
-} /* End extern C. */
-#endif
-
 #include "jni_JavaSourceCodePosition.h"
 #include "token.h"
 #include "VisitorContext.h"
@@ -154,8 +138,21 @@ SgClassDefinition* getCurrentClassDefinition();
 //! Strips off "#RAW" suffix from raw types (support for Java 1.5 and greater).
 SgName processNameOfRawType(SgName name);
 
+//! Support for identification of symbols using qualified names (used by the import statement).
+SgSymbol* lookupSymbolInParentScopesUsingQualifiedName( SgName qualifiedName, SgScopeStatement* currentScope);
+
+//! Refactored support to extraction of associated scope from symbol (where possible, i.e. SgClassSymbol, etc.).
+SgScopeStatement* get_scope_from_symbol( SgSymbol* returnSymbol );
+
+//! Parse the parameterized type names into parts.
+std::list<SgName> generateGenericTypeNameList (const SgName & parameterizedTypeName);
 
 
+
+
+// ***********************************************************
+//  Template Definitions (required to be in the header files)
+// ***********************************************************
 
 template< class T >
 void

@@ -424,6 +424,13 @@ class ReplaceExtendibleParam : public SymbolicVisitor
         lb = atoi( (*(++i)).toString().c_str());
         ub = atoi( (*(++i)).toString().c_str());
         SymbolicVal cur = *(++i);
+
+     // DQ (9/12/2011): Enforce some reasonable bounds checking on input from the command line.
+     // Not sure what is reasonable nere, likely something much smaller.  Static analysis
+     // is suggesting some input validation, likely this is enough for now.
+        assert(lb > -1000 && lb < 1000);
+        assert(ub > -1000 && ub < 1000);
+
         for (int j = lb; j <= ub; ++j) {
           SymbolicVal tmp= ReplaceVal( cur, SymbolicVar(buf, AST_NULL), SymbolicConst(j));
           orig = tmp;

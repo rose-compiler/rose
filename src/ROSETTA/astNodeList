@@ -270,6 +270,7 @@ SgAttribute
 SgAttributeSpecificationStatement
 SgBackspaceStatement
 SgBaseClass
+SgExpBaseClass
 SgBaseClassModifier
 SgBasicBlock
 SgBidirectionalGraph
@@ -437,7 +438,9 @@ SgCudaKernelExecConfig
 SgCudaKernelCallExp
 SgLabelRefExp
 SgLabelStatement
+SgJavaLabelStatement
 SgLabelSymbol
+SgJavaLabelSymbol
 SgLambdaRefExp
 SgLessOrEqualOp
 SgLessThanOp
