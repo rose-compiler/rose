@@ -26,6 +26,7 @@ class iterator/* : public virtual BaseCFG::iterator*/
 	iterator();
 	
 	iterator(const DataflowNode &start);
+        virtual ~iterator() { }
 	
 	void init(const DataflowNode &start);
 
@@ -39,7 +40,7 @@ class iterator/* : public virtual BaseCFG::iterator*/
 	void advance(bool fwDir, bool pushAllChildren);
 	
 	public:
-	void operator ++ (int);
+	virtual void operator ++ (int);
 	
 	bool eq(const iterator& other_it) const;
 	

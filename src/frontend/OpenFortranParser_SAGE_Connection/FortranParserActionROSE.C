@@ -1396,9 +1396,9 @@ void c_action_derived_type_stmt(Token_t * label, Token_t * keyword, Token_t * id
 #endif
 
 #if !SKIP_C_ACTION_IMPLEMENTATION
-
      SgScopeStatement* currentScope = getTopOfScopeStack();
      ROSE_ASSERT(currentScope != NULL);
+     ROSE_ASSERT(id != NULL);
      SgDerivedTypeStatement* derivedTypeStatement = buildDerivedTypeStatementAndDefinition(id->text,currentScope);
      ROSE_ASSERT(keyword != NULL);
      setSourcePosition(derivedTypeStatement,keyword);
@@ -1589,7 +1589,7 @@ void c_action_data_component_def_stmt(Token_t *label, Token_t *eos, ofp_bool has
           printf ("In c_action_data_component_def_stmt(): label = %p hasSpec = %s \n",label,hasSpec ? "true" : "false");
 
 #if !SKIP_C_ACTION_IMPLEMENTATION
-
+     ROSE_ASSERT(eos != NULL);
      setStatementNumericLabel(DeclAttributes.getDeclaration(),label);
      SgVariableDeclaration* varDecl = isSgVariableDeclaration(DeclAttributes.getDeclaration());
      if (!varDecl)
@@ -1606,7 +1606,6 @@ void c_action_data_component_def_stmt(Token_t *label, Token_t *eos, ofp_bool has
      *(DeclAttributes.getDeclaration()->get_startOfConstruct()) = *(firstInitializedNameForSourcePosition->get_startOfConstruct());
      *(DeclAttributes.getDeclaration()->get_endOfConstruct())   = *(lastInitializedNameForSourcePosition->get_startOfConstruct());
      DeclAttributes.reset();
-
 #endif
    }
 
@@ -2775,7 +2774,7 @@ c_action_scalar_int_variable()
 void
 c_action_type_declaration_stmt(Token_t * label, int numAttributes, Token_t * eos)
    {
-        // This function is similar to R441 component-attr-spec-list
+  // This function is similar to R441 component-attr-spec-list
 
   // This is a variable declaration (build the SgVariableDeclaration and populate it using data saved on the stack).
 
@@ -2783,6 +2782,8 @@ c_action_type_declaration_stmt(Token_t * label, int numAttributes, Token_t * eos
           printf ("In c_action_type_declaration_stmt: numAttributes = %d \n",numAttributes);
 
 #if !SKIP_C_ACTION_IMPLEMENTATION
+     ROSE_ASSERT(eos != NULL);
+
   // DQ (9/15/2007): Moved from the associated __begin() function which was removed
   // Refactored the code to build support function
      initialize_global_scope_if_required();
