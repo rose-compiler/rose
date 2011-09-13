@@ -278,8 +278,9 @@ void PointerManager::deletePointerInRegion( const MemoryType& mt )
     PointerInfo    objFrom(from);
     PointerInfo    objTo(to);
 
-    // \klocworkbug Iterator 'toDelete' retrieved for container 'this->pointerInfoSet' at line 284
-    //              is dereferenced when it can be equal to value returned by call to [r]end().
+    // \klocworkbug Iterator 'toDelete' retrieved for container 'this->pointerInfoSet'
+    //              at line 284 is dereferenced when it can be equal to value returned
+    //              by call to [r]end().
     // \pp          not sure what this refers to?
     PointerSetIter lb = pointerInfoSet.lower_bound(&objFrom);
     PointerSetIter ub = pointerInfoSet.upper_bound(&objTo  );
