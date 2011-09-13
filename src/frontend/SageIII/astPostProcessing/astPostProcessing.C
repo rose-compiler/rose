@@ -15,6 +15,7 @@
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 
+
 // DQ (8/20/2005): Make this local so that it can't be called externally!
 void postProcessingSupport (SgNode* node);
 
@@ -147,7 +148,9 @@ void postProcessingSupport (SgNode* node)
 #ifdef ROSE_USE_NEW_EDG_INTERFACE
 
   // Only do AST post-processing for C/C++
-     bool doPostprocessing = (SageInterface::is_Fortran_language() == true) || (SageInterface::is_PHP_language() == true);
+     bool doPostprocessing = (SageInterface::is_Fortran_language() == true) ||
+                             (SageInterface::is_PHP_language() == true) ||
+                             (SageInterface::is_Python_language() == true);
 
   // If this is C or C++ then we are using the new EDG translation and althrough fewer 
   // fixups should be required, some are still required.
@@ -253,6 +256,22 @@ void postProcessingSupport (SgNode* node)
      if ( SgProject::get_verbose() >= AST_POST_PROCESSING_VERBOSE_LEVEL )
           cout << "/* AST Postprocessing reset template names */" << endl;
 
+#if 0
+  // DQ (5/15/2011): I don't feel comfortable with this being called before the AST is finied being post processed.
+  // This used to be called in the unparser, but that is after resetTemplateNames() below and that is a problem
+  // because template names have already been generated.
+     void newBuildHiddenTypeAndDeclarationLists( SgNode* node );
+     printf ("Developing a new implementation of the name qualification support. \n");
+     newBuildHiddenTypeAndDeclarationLists(node);
+     printf ("DONE: new name qualification support built. \n");
+
+     printf ("Calling SgNode::clearGlobalMangledNameMap() \n");
+     SgNode::clearGlobalMangledNameMap();
+#endif
+
+  // DQ (5/15/2011): This causes template names to be computed as strings and and without name qualification 
+  // if we don't call the name qualification before here. Or we reset the template names after we do the 
+  // analysis to support the name qualification.
   // reset the names of template class declarations
      resetTemplateNames(node);
 
@@ -317,7 +336,7 @@ void postProcessingSupport (SgNode* node)
   // driscoll6 (6/10/11): this traversal sets p_firstNondefiningDeclaration for defining declarations, which
   // causes justifiable failures in AstConsistencyTests. Until this is resolved, skip this test for Python.
      if (SageInterface::is_Python_language()) {
-         cerr << "warning: python. skipping fixupDeclarations() in astPostProcessing.C" << endl;
+         //cerr << "warning: python. Skipping fixupDeclarations() in astPostProcessing.C" << endl;
      } else {
          fixupDeclarations(node);
      }

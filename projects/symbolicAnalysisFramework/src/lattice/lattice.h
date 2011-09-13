@@ -1,11 +1,10 @@
 #ifndef LATTICE_H
 #define LATTICE_H
 
-#include <string>
-#include <map>
 #include "CallGraphTraverse.h"
 #include "variables.h"
-using namespace std;
+#include <string>
+#include <map>
 
 class Lattice : public printable
 {
@@ -26,7 +25,7 @@ class Lattice : public printable
 	// varNameMap - maps all variable names that have changed, in each mapping pair, pair->first is the 
 	//              old variable and pair->second is the new variable
 	// func - the function that the copy Lattice will now be associated with
-	virtual /*Lattice**/void remapVars(const map<varID, varID>& varNameMap, const Function& newFunc) {} 
+	virtual /*Lattice**/void remapVars(const std::map<varID, varID>& varNameMap, const Function& newFunc) {} 
 	
 	// Called by analyses to copy over from the that Lattice dataflow information into this Lattice.
 	// that contains data for a set of variables and incorporateVars must overwrite the state of just

@@ -18,7 +18,7 @@ void PrintUsage( const string& name)
   std::cerr << "-norawarray : don't rewrite to C-style raw array form \n";
   std::cerr << "-noobj: don't enable the backend compiler \n";
   std::cerr << ReadAnnotation::OptionString();
-  PrintLoopTransformUsage(std::cerr);
+  LoopTransformInterface::PrintTransformUsage(std::cerr);
 }
 
 int
@@ -30,13 +30,9 @@ main ( int argc,  char * argv[] )
      }
     vector<string> argvList(argv, argv + argc);
    // Read and set loop transformation specific options, such as -fs2 
-    SetLoopTransformOptions(argvList);
-
-    // Save -annot file .. etc, used internally in ReadAnnotation
     CmdOptions::GetInstance()->SetOptions(argvList);
     // Handle and remove other custom options 
     bool noRawArray= isOption(argvList,"","-norawarray",true);
-    bool noObj = isOption(argvList,"","-gobj",true);
     bool dumpAnnot = isOption(argvList,"","-dumpannot",true);
 
     // Read into all annotation files 
@@ -45,9 +41,8 @@ main ( int argc,  char * argv[] )
     ReadAnnotation::get_inst()->read();
     if (dumpAnnot)    
        annot->Dump();
-
-    // Strip off custom options and their values to enable backend compiler 
-    removeArgsWithParameters(argvList,"-annot");
+    LoopTransformInterface::set_sideEffectInfo(annot);
+    LoopTransformInterface::cmdline_configure(argvList);
 
     // ROSE part
     SgProject* sageProject = new SgProject( argvList);
@@ -67,6 +62,8 @@ main ( int argc,  char * argv[] )
          SgBasicBlock* body = defn->get_body();
          AstInterfaceImpl scope(body);
          CPPAstInterface fa(&scope);
+         LoopTransformInterface::set_astInterface(fa);
+ 
          // Replace operators with their equivalent counterparts defined 
          // in "inline" annotations
          OperatorInlineRewrite()( fa, AstNodePtrImpl(body));
@@ -76,36 +73,31 @@ main ( int argc,  char * argv[] )
          anal.initialize(fa, AstNodePtrImpl(defn));
          anal.observe(fa);
 
+         LoopTransformInterface::set_aliasInfo(&anal);
+         LoopTransformInterface::set_arrayInfo(&anal);
+ 
 	 // Write collective operations into explicit loops with 
 	 // array element accesses using element access member functions
-         RewriteToArrayAst toArray(anal);
-         AstNodePtr r = TransformAstTraverse( fa, AstNodePtrImpl(body), toArray);
+         RewriteToArrayAst toArray( anal);
+         RewriteFromArrayAst fromArray( anal); 
+
+         AstNodePtr r = TransformAstTraverse( fa, AstNodePtrImpl(body),toArray);
          fa.SetRoot(r);
          
-	 // Conduct loop transformation as requested 
-	 // LoopTransformTraverse( AstInterface& fa, 
-	 //			   const AstNodePtr& head, 
-         //                        AliasAnalysisInterface& aliasInfo,       // provided by ArrayInterface
-         //                        FunctionSideEffectInterface* funcInfo=0, // provided by ArrayAnnotation
-         //                        ArrayAbstractionInterface* arrayInfo = 0);// provided by ArrayInterface
-         r = LoopTransformTraverse( fa, r, anal, annot, &anal);
+	 /* Conduct loop transformation as requested */
+         r = LoopTransformInterface::TransformTraverse(scope, r);
          fa.SetRoot(r);
 
          // Replace high level array class object reference with 
          // equivalent C-style raw array accesses
          if (!noRawArray) {
             RewriteFromArrayAst fromArray( anal); 
-             TransformAstTraverse( fa, AstNodePtrImpl(defn), fromArray);
+            TransformAstTraverse( fa, AstNodePtrImpl(defn), fromArray);
           }
      }
    }
   // Generate the final C++ source code from the potentially modified SAGE AST
- if (noObj)
-  { 
-     sageProject->unparse();
-     return 0;
-  }  
-  else
-    return backend(sageProject);
+  sageProject->unparse();
+  return 0;
 }
 

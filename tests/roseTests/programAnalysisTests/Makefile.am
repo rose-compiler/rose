@@ -2,7 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # Need to add sibdirectory for annotation parser tests as well
 SUBDIRS = testCallGraphAnalysis defUseAnalysisTests variableLivenessTests staticInterproceduralSlicingTests sideEffectAnalysisTests \
-		variableRenamingTests
+		variableRenamingTests staticSingleAssignmentTests
 #ptrTraceDriver
 
 INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/programAnalysis -I$(top_srcdir)/src/midend/programAnalysis/pointerAnal -I${top_srcdir}/src/midend/programAnalysis/CFG -I${top_srcdir}/src/midend/programAnalysis/dataflowAnalysis -I$(top_srcdir)/src/util/support -I$(top_srcdir)/src/util/graphs -I$(top_srcdir)/src/midend/astUtil/astSupport -I$(top_srcdir)/src/midend/astUtil/astInterface -I$(top_srcdir)/src/midend/astUtil -I$(top_srcdir)/src/midend/programAnalysis/ 
@@ -60,8 +60,9 @@ EXTRA_DIST = TestDriver testfile1.c testfile1.c.cfg testfile1.c.du testfile1.c.r
              testfile3.c testfile3.c.cfg testfile3.c.du testfile3.c.ref \
              testfile4.c testfile4.c.du  testPtr1.C testPtr2.C \
              PtrAnalTest.out1  steensgaardTest1.outx   steensgaardTest2.out2 \
-             PtrAnalTest.out2  steensgaardTest2.out1
-             #trustedAnnotationOutput annotationLanguageParserInputFile.ann
+             PtrAnalTest.out2  steensgaardTest2.out1 
+#	     steensgaardTest1.out - .out has a special suffix meaning
+#	     trustedAnnotationOutput annotationLanguageParserInputFile.ann
 
 # to deactivate tests comment out check-local
 # check-local:

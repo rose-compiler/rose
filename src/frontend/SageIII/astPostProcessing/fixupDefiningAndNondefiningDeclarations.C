@@ -203,6 +203,10 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                            // ROSE_ASSERT (definingScope->symbol_exists(symbolToMove) == false);
                               if (definingScope->symbol_exists(symbolToMove) == false)
                                  {
+#if 0
+                                   printf ("After existence tesst: calling insert symbolToMove = %p = %s = %s into newScope = %p = %s \n",
+                                        symbolToMove,symbolToMove->class_name().c_str(),symbolToMove->get_name().str(),definingScope,definingScope->class_name().c_str());
+#endif
                                    definingScope->insert_symbol(symbolToMove->get_name(),symbolToMove);
 
                                 // DQ (3/5/2007): This will be caught later if we don't catch it now.
@@ -447,6 +451,10 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
 #if 0
                printf ("declaration = %p definingDeclaration = %p \n",declaration,definingDeclaration);
 #endif
+
+            // DQ (9/12/2011): Static analysis wants an assertion here.
+               ROSE_ASSERT(definingDeclaration != NULL);
+
             // if (declaration->get_scope() != definingDeclaration->get_scope())
                if (declaration->hasExplicitScope() == true && declaration->get_scope() != definingDeclaration->get_scope())
                   {

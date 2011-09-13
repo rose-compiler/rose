@@ -162,6 +162,16 @@ struct hash_nodeptr
                                                          const SgType* t,
                                                          SgScopeStatement *currentScope=NULL);
 
+// DQ (5/7/2011): Added support for SgClassSymbol (used in name qualification support).
+   SgClassSymbol*     lookupClassSymbolInParentScopes    (const SgName & name, SgScopeStatement *currentScope = NULL);
+   SgTypedefSymbol*   lookupTypedefSymbolInParentScopes  (const SgName & name, SgScopeStatement *currentScope = NULL);
+   SgTemplateSymbol*  lookupTemplateSymbolInParentScopes (const SgName & name, SgScopeStatement *currentScope = NULL);
+   SgEnumSymbol*      lookupEnumSymbolInParentScopes     (const SgName & name, SgScopeStatement *currentScope = NULL);
+   SgNamespaceSymbol* lookupNamespaceSymbolInParentScopes(const SgName & name, SgScopeStatement *currentScope = NULL);
+
+// DQ (7/17/2011): Added function from cxx branch that I need here for the Java support.
+// SgClassSymbol* lookupClassSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope);
+
    /*! \brief set_name of symbol in symbol table.
 
        This function extracts the symbol from the relavant symbol table,
@@ -994,7 +1004,6 @@ std::vector<SgBreakStmt*> findBreakStmts(SgStatement* code, const std::string& f
 
   // 2. return all nodes of type VariantT following the source node
   std::vector<SgNode*> getAllNextSgNode( const SgNode* astSourceNode, VariantT=V_SgNode, SgNode* astEndNode=NULL);
-
 #endif
 
 //@}

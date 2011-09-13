@@ -6,7 +6,9 @@ include_HEADERS = \
      rose_stdarg.h \
      rose_varargs.h \
      rose-g++-headerfilefixup.h \
-     rose_specific_cdefs.h
+     rose_specific_cdefs.h \
+     rose_specific_emmintrin.h \
+     rose_specific_xmmintrin.h
 
 # DQ (9/15/2010): Added UPC header files.
 # DQ (8/14/2010): Added modified header file iomanip-gnu-4.5 to fix code in new 4.5 header files 
@@ -31,7 +33,9 @@ EXTRA_DIST = CMakeLists.txt \
      get_compiler_header_dirs \
      iomanip-gnu-4.5 \
      upc.h upc_relaxed.h upc_strict.h upc_collective.h upc_io.h bupc_extensions.h \
-     automake_conditional_display_makefile
+     automake_conditional_display_makefile \
+     preinclude-cuda.h \
+     preinclude-opencl.h
 
 # DQ (9/3/2006): I think that if we have config.guess, depend, install-sh, and dirincludes; then we don't need "missing"
 # missing

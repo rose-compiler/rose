@@ -81,6 +81,7 @@ RSIM_SemanticPolicy::readMemory(X86SegmentRegister sr, const VirtualMachineSeman
     ROSE_ASSERT(0==Len % 8 && Len<=64);
     RSIM_Process *process = thread->get_process();
     uint32_t offset = addr.known_value();
+    ROSE_ASSERT(sr_shadow[sr].present);
     ROSE_ASSERT(offset <= sr_shadow[sr].limit);
     ROSE_ASSERT(offset + (Len/8) - 1 <= sr_shadow[sr].limit);
 
@@ -115,6 +116,7 @@ RSIM_SemanticPolicy::writeMemory(X86SegmentRegister sr, const VirtualMachineSema
     ROSE_ASSERT(0==Len % 8 && Len<=64);
     RSIM_Process *process = thread->get_process();
     uint32_t offset = addr.known_value();
+    ROSE_ASSERT(sr_shadow[sr].present);
     ROSE_ASSERT(offset <= sr_shadow[sr].limit);
     ROSE_ASSERT(offset + (Len/8) - 1 <= sr_shadow[sr].limit);
     ROSE_ASSERT(data.is_known());

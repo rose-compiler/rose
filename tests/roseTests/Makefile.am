@@ -32,7 +32,7 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
               astProcessingTests astQueryTests astRewriteTests astSymbolTableTests astTokenStreamTests \
               programTransformationTests \
               graph_tests mergeTraversal_tests \
-	       	  astLValueTests
+	      astLValueTests abstractMemoryObjectTests
 if !ROSE_USE_INSURE
  SUBDIRS += roseHPCToolkitTests 
 endif

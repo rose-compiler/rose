@@ -24,7 +24,6 @@
 #include "unparseFortran_types.h"
 
 #include "unparseJava.h"
-#include "unparseJava_types.h"
 
 #include "unparsePHP.h"
 
@@ -42,7 +41,7 @@ class Unparser_Nameq;
 #define ANONYMOUS_TYPEDEF_FIX false
 
 // Whether to use Rice's code to wrap long lines in Fortran.
-#define USE_RICE_FORTRAN_WRAPPING  0  // 1 if you're Rice, 0 if you want to get through Hudson
+#define USE_RICE_FORTRAN_WRAPPING  0  // 1 if you're Rice, 0 if you want to get through Jenkins
 
 // Maximum line lengths for Fortran fixed source form and free source form, per the F90 specification.
 #if USE_RICE_FORTRAN_WRAPPING
@@ -52,32 +51,7 @@ class Unparser_Nameq;
   #define MAX_F90_LINE_LEN      1024
 #endif
 
-// DQ (2/6/03):
-// The unparser should not write to (modify) the AST.  This fix skips and locations
-// in the unparser when the AST is modified.  It is an experimental fix.
-// DQ (3/18/2004): This fix has works well for over a year now so I think we can 
-// at some point remove code which was previously modifying the AST. Might
-// want to check the locations of forward declarations of classes where they
-// appear in the same file as their class definitions!
-#define UNPARSER_IS_READ_ONLY
-
 #define KAI_NONSTD_IOSTREAM 1
-
-// DQ (3/18/2004): This is not removed as part of the newly added template support.
-// #ifndef UNPARSE_TEMPLATES
-// [DT] 
-// #define UNPARSE_TEMPLATES true
-// #define UNPARSE_TEMPLATES false
-// #endif /* UNPARSE_TEMPLATES */
-
-#ifndef UNPARSER_VERBOSE
-// [DT] 8/14/2000 -- Toggle some of my debug output in the unparser.
-//#define UNPARSER_VERBOSE true
-  #define UNPARSER_VERBOSE false
-#endif /* UNPARSER_VERBOSE */
-
-// optionally turn off all directive processing (for debugging)
-// define SKIP_UNPARSING_DIRECTIVES
 
 // typedef map<int,int,less<int>,allocator<int> > X;
 // typedef multimap<int,int,less<int>,allocator<int> > X;
@@ -153,10 +127,6 @@ class Unparser
        // DQ (8/14/2007): I have added this here to be consistant, but I question if this is a good design!
           UnparseFortran_type* u_fortran_type;
           FortranCodeGeneration_locatedNode* u_fortran_locatedNode;
-
-       // DQ (4/16/2011): Added the Java support semetric to the Fortran unparser support.
-          UnparseJava_type* u_java_type;
-          JavaCodeGeneration_locatedNode* u_java_locatedNode;
 
      private:
 
@@ -234,6 +204,12 @@ class Unparser
       //! destructor
           virtual ~Unparser();
 
+       // DQ (9/11/2011): Added copy constructor.
+          Unparser(const Unparser & X);
+
+       // DQ (9/11/2011): Added operator==() to fix issue detected in static analysis.
+          Unparser & operator=(const Unparser & X);
+
       //! get the output stream wrapper
           UnparseFormat& get_output_stream(); 
 
@@ -259,7 +235,7 @@ class Unparser
 
        // void unparseProject ( SgProject* project, SgUnparse_Info& info );
        // void unparseFile       ( SgFile* file, SgUnparse_Info& info );
-          void unparseFile ( SgSourceFile* file, SgUnparse_Info& info );
+          void unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStatement* unparseScope = NULL );
           void unparseFile ( SgBinaryComposite*, SgUnparse_Info& info );
 
        // Unparses a single physical file
@@ -296,7 +272,10 @@ void resetSourcePositionToGeneratedCode( SgFile* file, UnparseFormatHelp *unpars
 // called by the user if backend compilation using the vendor compiler is not required.
 
 //! User callable function available if compilation using the backend compiler is not required.
-void unparseFile   ( SgFile*    file,    UnparseFormatHelp* unparseHelp = NULL, UnparseDelegate *repl  = NULL );
+void unparseFile   ( SgFile*    file,    UnparseFormatHelp* unparseHelp = NULL, UnparseDelegate *repl  = NULL, SgScopeStatement* unparseScope = NULL );
+
+//! User callable function available if compilation using the backend compiler is not required.
+void unparseIncludedFiles( SgProject* project, UnparseFormatHelp* unparseHelp = NULL, UnparseDelegate *repl  = NULL );
 
 //! User callable function available if compilation using the backend compiler is not required.
 void unparseProject( SgProject* project, UnparseFormatHelp* unparseHelp = NULL, UnparseDelegate *repl  = NULL );

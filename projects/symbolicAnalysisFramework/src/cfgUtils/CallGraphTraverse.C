@@ -705,8 +705,8 @@ TraverseCallGraphDataflow::TraverseCallGraphDataflow(SgIncidenceDirectedGraph* g
 void TraverseCallGraphDataflow::traverse()
 {
 	// start the traversal from the nodes that are called from no other node
-	for(set<const CGFunction*>::iterator it = noPred.begin(); it!=noPred.end(); it++)
-		remaining.push_back(*it);
+	for(set<CGFunction>::iterator it = functions.begin(); it!=functions.end(); it++)
+          remaining.push_back(&(*it));
 	
 	// traverse functions for as long as visit keeps adding them to remaining
 	while(remaining.size()>0)

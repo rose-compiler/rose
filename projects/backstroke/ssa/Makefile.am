@@ -1,15 +1,15 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke/slicing
+INCLUDES = $(ROSE_INCLUDES) 
 
 # noinst_LIBRARIES lists all the librarlies that should be built, but not installed
 noinst_LIBRARIES =  libSSA.a
 
 libSSA_a_DEPENDENCIES =
-libSSA_a_SOURCES = staticSingleAssignmentCalculation.C staticSingleAssignmentQueries.C uniqueNameTraversal.C defsAndUsesTraversal.C \
-		reachingDef.C staticSingleAssignmentInterprocedural.C
-include_HEADERS = staticSingleAssignment.h uniqueNameTraversal.h defsAndUsesTraversal.h iteratedDominanceFrontier.h \
-		reachingDef.h controlDependence.h controlPredicate.h dataflowCfgFilter.h
+libSSA_a_SOURCES = staticSingleAssignmentCalculation.C staticSingleAssignmentQueries.C  defsAndUsesTraversal.C \
+		reachingDef.C
+include_HEADERS = staticSingleAssignment.h defsAndUsesTraversal.h iteratedDominanceFrontier.h \
+		reachingDef.h controlDependence.h boostGraphCFG.h
 
 noinst_PROGRAMS= ssaTestHarness
 ssaTestHarness_SOURCES = ssaTestHarness.C

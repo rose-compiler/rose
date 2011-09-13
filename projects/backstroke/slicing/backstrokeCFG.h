@@ -3,15 +3,16 @@
 
 
 #include <rose.h>
-#include <boost/graph/adjacency_list.hpp>
+#include <boost/algorithm/string.hpp>
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
-#include <boost/tuple/tuple.hpp>
-#include <boost/graph/graphviz.hpp>
+#include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/dominator_tree.hpp>
+#include <boost/graph/graphviz.hpp>
 #include <boost/graph/reverse_graph.hpp>
 #include <boost/graph/transpose_graph.hpp>
-#include <boost/algorithm/string.hpp>
+#include <boost/tuple/tuple.hpp>
+
 
 
 namespace Backstroke
@@ -129,6 +130,7 @@ public:
 	typedef typename GraphTraits::edge_descriptor Edge;
 
 	typedef std::map<Vertex, Vertex> VertexVertexMap;
+    typedef std::set<Vertex> Vertices;
 
 protected:
 
@@ -145,10 +147,10 @@ protected:
 	std::map<CFGNodeType, Vertex> nodesToVertices_;
 
     //! The dominator tree of this CFG.
-    VertexVertexMap dominatorTree_;
+    mutable VertexVertexMap dominatorTree_;
 
     //! The postdominator tree of this CFG.
-    VertexVertexMap postdominatorTree_;
+    mutable VertexVertexMap postdominatorTree_;
 
 public:
 
@@ -177,19 +179,23 @@ public:
 	{ return funcDef_; }
 
 	//! Get the entry node of the CFG
-	const Vertex& getEntry() const
-	{ return entry_; }
-
+	Vertex getEntry() const { return entry_; }
+    
 	//! Get the exit node of the CFG
-	const Vertex& getExit() const
-	{ return exit_; }
+	Vertex getExit() const { return exit_; }
+    
+    //! Set the entry node of the CFG
+    void setEntry(Vertex entry) { entry_ = entry; }
+    
+    //! Set the exit node of the CFG
+    void setExit(Vertex exit) { exit_ = exit; }
 
 	//! Build the dominator tree of this CFG.
 	//! @returns A map from each node to its immediate dominator.
-	const VertexVertexMap& getDominatorTree();
+	const VertexVertexMap& getDominatorTree() const;
 
 	//! Build the postdominator tree of this CFG.
-	const VertexVertexMap& getPostdominatorTree();
+	const VertexVertexMap& getPostdominatorTree() const;
 
 	//! Build a reverse CFG.
 	CFG<CFGNodeFilter> makeReverseCopy() const;
@@ -212,10 +218,14 @@ public:
     bool isReducible() const { return true; }
 
     //! Get all back edges in the CFG. A back edge is one whose target dominates its source.
-    std::vector<Edge> getAllBackEdges();
+    std::set<Edge> getAllBackEdges() const;
 
     //! Get all loop headers in this CFG. A natural loop only has one header.
-    std::vector<Vertex> getAllLoopHeaders();
+    Vertices getAllLoopHeaders() const;
+    
+    //! Get all loops in this CFG. Each loop is represented by its header and all CFG nodes 
+    //! belonging to it.
+    std::map<Vertex, Vertices> getAllLoops() const;
 
 protected:
 
@@ -396,7 +406,7 @@ void CFG<CFGNodeFilter>::buildCFG(
 }
 
 template <class CFGNodeFilter>
-const typename CFG<CFGNodeFilter>::VertexVertexMap& CFG<CFGNodeFilter>::getDominatorTree()
+const typename CFG<CFGNodeFilter>::VertexVertexMap& CFG<CFGNodeFilter>::getDominatorTree() const
 {
     if (!dominatorTree_.empty())
         return dominatorTree_;
@@ -409,7 +419,7 @@ const typename CFG<CFGNodeFilter>::VertexVertexMap& CFG<CFGNodeFilter>::getDomin
 }
 
 template <class CFGNodeFilter>
-const typename CFG<CFGNodeFilter>::VertexVertexMap& CFG<CFGNodeFilter>::getPostdominatorTree()
+const typename CFG<CFGNodeFilter>::VertexVertexMap& CFG<CFGNodeFilter>::getPostdominatorTree() const
 {
     if (!postdominatorTree_.empty())
         return postdominatorTree_;
@@ -470,9 +480,10 @@ typename CFG<CFGNodeFilter>::Vertex CFG<CFGNodeFilter>::getVertexForNode(const C
 }
 
 template <class CFGNodeFilter>
-std::vector<typename CFG<CFGNodeFilter>::Edge> CFG<CFGNodeFilter>::getAllBackEdges()
+std::set<typename CFG<CFGNodeFilter>::Edge> 
+CFG<CFGNodeFilter>::getAllBackEdges() const
 {
-    std::vector<Edge> backEdges;
+    std::set<Edge> backEdges;
 
     // If the dominator tree is not built yet, build it now.
     getDominatorTree();
@@ -488,7 +499,7 @@ std::vector<typename CFG<CFGNodeFilter>::Edge> CFG<CFGNodeFilter>::getAllBackEdg
         {
             if (iter->second == tar)
             {
-                backEdges.push_back(e);
+                backEdges.insert(e);
                 break; // break the while loop
             }
             iter = dominatorTree_.find(iter->second);
@@ -499,13 +510,62 @@ std::vector<typename CFG<CFGNodeFilter>::Edge> CFG<CFGNodeFilter>::getAllBackEdg
 }
 
 template <class CFGNodeFilter>
-std::vector<typename CFG<CFGNodeFilter>::Vertex> CFG<CFGNodeFilter>::getAllLoopHeaders()
+typename CFG<CFGNodeFilter>::Vertices
+CFG<CFGNodeFilter>::getAllLoopHeaders() const
 {
-    std::vector<Edge> backEdges = getAllBackEdges();
-    std::vector<Vertex> headers;
+    std::set<Edge> backEdges = getAllBackEdges();
+    Vertices headers;
     foreach (Edge e, backEdges)
-        headers.push_back(boost::target(e, *this));
+        headers.insert(boost::target(e, *this));
     return headers;
+}
+
+//! A DFS visitor used in depth first search.
+template <typename VertexT> 
+struct DFSVisitor : public boost::default_dfs_visitor
+{
+    DFSVisitor(std::set<VertexT>& vertices) : vertices_(vertices) {}
+    template <typename Vertex, typename Graph>
+    void discover_vertex(Vertex u, const Graph & g)
+    { vertices_.insert(u); }
+    std::set<VertexT>& vertices_;
+};
+
+
+template <class CFGNodeFilter>
+std::map<typename CFG<CFGNodeFilter>::Vertex, typename CFG<CFGNodeFilter>::Vertices>
+CFG<CFGNodeFilter>::getAllLoops() const
+{
+    std::set<Edge> backEdges = getAllBackEdges();
+    std::map<Vertex, Vertices> loops;
+    
+    // Build a reverse CFG.
+    CFG<CFGNodeFilter> rvsCFG = makeReverseCopy();
+    size_t verticesNum = boost::num_vertices(rvsCFG);
+    
+    // For each back edge, make the target (loop header) visited then
+    // do a DFS from the source of this edge on the reverse CFG.
+    foreach (const Edge& edge, backEdges)
+    {
+        Vertex root = boost::source(edge, rvsCFG);
+        Vertex header = boost::target(edge, rvsCFG);
+        Vertices vertices;
+        
+        // Create a DFS visitor in which we add all nodes to vertices set.
+        DFSVisitor<Vertex> dfsVisitor(vertices);
+        // Build a vector of colors and set all initial colors to white.
+        std::vector<boost::default_color_type> colors(verticesNum, boost::white_color);
+        // Set the color of the header to black.
+        colors[header] = boost::black_color;
+
+        // Do a DFS.
+        boost::depth_first_visit(rvsCFG, root, dfsVisitor, &colors[0]);
+        
+        Vertices& verticesInLoop = loops[header];
+        verticesInLoop.insert(vertices.begin(), vertices.end());
+        //verticesInLoop.insert(header);
+    }
+    return loops;
 }
 
 #undef foreach

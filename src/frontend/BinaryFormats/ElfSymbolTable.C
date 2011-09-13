@@ -66,28 +66,29 @@ SgAsmElfSymbol::parse_common()
 {
     /* Binding */
     switch (get_elf_binding()) {
-      case STB_LOCAL:   p_binding = SYM_LOCAL;  break;
-      case STB_GLOBAL:  p_binding = SYM_GLOBAL; break;
-      case STB_WEAK:    p_binding = SYM_WEAK;   break;
-      default:
-        fprintf(stderr, "unknown elf symbol binding: %u\n", get_elf_binding());
-        ROSE_ASSERT(0);
-        break;
+        case STB_LOCAL:   p_binding = SYM_LOCAL;  break;
+        case STB_GLOBAL:  p_binding = SYM_GLOBAL; break;
+        case STB_WEAK:    p_binding = SYM_WEAK;   break;
+        default:
+            fprintf(stderr, "unknown elf symbol binding: %u\n", get_elf_binding());
+            ROSE_ASSERT(0);
+            break;
     }
 
     /* Type */
     switch (get_elf_type()) {
-      case STT_NOTYPE:  p_type = SYM_NO_TYPE; break;
-      case STT_OBJECT:  p_type = SYM_DATA;    break;
-      case STT_FUNC:    p_type = SYM_FUNC;    break;
-      case STT_SECTION: p_type = SYM_SECTION; break;
-      case STT_FILE:    p_type = SYM_FILE;    break;
-      case STT_COMMON:  p_type = SYM_COMMON;  break;
-      case STT_TLS:     p_type = SYM_TLS;     break;
-      default:
-        fprintf(stderr, "unknown elf symbol type: %u\n", get_elf_type());
-        ROSE_ASSERT(0);
-        break;
+        case STT_NOTYPE:  p_type = SYM_NO_TYPE; break;
+        case STT_OBJECT:  p_type = SYM_DATA;    break;
+        case STT_FUNC:    p_type = SYM_FUNC;    break;
+        case STT_SECTION: p_type = SYM_SECTION; break;
+        case STT_FILE:    p_type = SYM_FILE;    break;
+        case STT_COMMON:  p_type = SYM_COMMON;  break;
+        case STT_TLS:     p_type = SYM_TLS;     break;
+        case STT_IFUNC:   p_type = SYM_IFUNC;   break;
+        default:
+            fprintf(stderr, "unknown elf symbol type: %u\n", get_elf_type());
+            ROSE_ASSERT(0);
+            break;
     }
 
     /* Definition state */
@@ -112,8 +113,8 @@ SgAsmElfSymbol::to_string(ElfSymBinding val)
 #ifndef _MSC_VER
     return stringifySgAsmElfSymbolElfSymBinding(val);
 #else
-        ROSE_ASSERT(false);
-        return "";
+    ROSE_ASSERT(false);
+    return "";
 #endif
 }
 
@@ -123,8 +124,8 @@ SgAsmElfSymbol::to_string(ElfSymType val)
 #ifndef _MSC_VER
     return stringifySgAsmElfSymbolElfSymType(val);
 #else
-        ROSE_ASSERT(false);
-        return "";
+    ROSE_ASSERT(false);
+    return "";
 #endif
 }  
 

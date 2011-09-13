@@ -716,11 +716,31 @@ make: *** [all] Error 2
          {\tt ../ROSE/configure --prefix=`pwd` --with-boost=[BOOST\_installTree]} \\
          Configure in the current directory so that installation will also happen in the
          current  directory (a {\tt install} subdirectory will be built).
-   \item Turning on compiler debugging options (\textbf{strongly recommended}) \\
+   \item Debugging \\
+         Note that all possible debug modes are turned on by default. These include:
+         \begin{itemize}
+            \item {\tt -g } (compiler debug flag), and
+            \item {\tt -Wall} (compiler warnings flag).
+         \end{itemize}
+         Additional modes are possible, one of which is now tested within ROSE internal
+         release level testing:
+         \begin{itemize}
+            \item {\tt -D\_GLIBCXX\_DEBUG} (stl and other stdlib debug flag (used)),
+            \item {\tt -D\_GLIBCXX\_DEBUG\_PEDANTIC"} (another stl debug flag we consider excessive (not used)).
+         \end{itemize}
+         But these last flags require a specially compiled version of Boost (because they
+         change the size of iterators). 
+         The use of these tests are eqvivalent to the configure line: \\
          {\tt ../ROSE/configure --with-CXX\_DEBUG="-g  -D\_GLIBCXX\_DEBUG -D\_GLIBCXX\_DEBUG\_PEDANTIC" --with-CXX\_WARNINGS=-Wall --prefix=`pwd`--with-boost=[BOOST\_installTree]} \\
-         Configure as above, but with debugging and warnings turned on.
-          Note that if you compile ROSE with \verb!_GLIBCXX_DEBUG!, you should also compile
-         boost with the same debug flag (Section \ref{gettingStarted:BOOST}). 
+         Configure as above, if you like, but with debugging and warnings turned on.
+         Note that if you compile ROSE with \verb!_GLIBCXX_DEBUG!, you should also compile
+         boost with the same debug flag (Section \ref{gettingStarted:BOOST}). As mentioned
+         the default is to turn on the use of {\tt -g } and {\tt -Wall} only.
+%   \item Turning on compiler debugging options (\textbf{strongly recommended}) \\
+%         {\tt ../ROSE/configure --with-CXX\_DEBUG="-g  -D\_GLIBCXX\_DEBUG -D\_GLIBCXX\_DEBUG\_PEDANTIC" --with-CXX\_WARNINGS=-Wall --prefix=`pwd`--with-boost=[BOOST\_installTree]} \\
+%         Configure as above, but with debugging and warnings turned on.
+%          Note that if you compile ROSE with \verb!_GLIBCXX_DEBUG!, you should also compile
+%         boost with the same debug flag (Section \ref{gettingStarted:BOOST}). 
    \item Adding Fortran support \\
          {\tt ../ROSE/configure --prefix=`pwd` --with-boost=[BOOST\_installTree] --with-java} \\
          The Open Fortran Parser will also be enabled, allowing ROSE to process Fortran

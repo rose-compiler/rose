@@ -1,0 +1,162 @@
+test A in function <_init> at 0x08048278
+test A in function <malloc@plt> at 0x080482a0
+test A in function <__libc_start_main@plt> at 0x080482b0
+test A in function <_start> at 0x080482c0
+test A in function <> at 0x080482e2
+test A in function <call_gmon_start> at 0x080482e4
+test A in function <> at 0x08048305
+test A in function <__do_global_dtors_aux> at 0x08048310
+test A in function <> at 0x0804833f
+test A in function <frame_dummy> at 0x08048340
+test A in function <> at 0x08048363
+test A in function <main> at 0x08048364
+test A in function <> at 0x0804836e
+test A in function <__libc_csu_init> at 0x080483c0
+test A in function <__libc_csu_fini> at 0x08048414
+test A in function <> at 0x08048456
+test A in function <__do_global_ctors_aux> at 0x08048460
+test A in function <> at 0x08048491
+test A in function <_fini> at 0x08048494
+
+=== testDominance-A1.dot ===
+digraph G {
+0[ label="0x08048278" ];
+1[ label="0x08048283" ];
+2[ label="0x08048288" ];
+3[ label="0x0804828d" ];
+0->1 ;
+1->2 ;
+2->3 ;
+}
+
+=== testDominance-A2.dot ===
+digraph G {
+0[ label="0x080482a0" ];
+}
+
+=== testDominance-A3.dot ===
+digraph G {
+0[ label="0x080482b0" ];
+}
+
+=== testDominance-A4.dot ===
+digraph G {
+0[ label="0x080482c0" ];
+1[ label="0x080482e1" ];
+0->1 ;
+}
+
+=== testDominance-A5.dot ===
+digraph G {
+0[ label="0x080482e2" ];
+}
+
+=== testDominance-A6.dot ===
+digraph G {
+0[ label="0x080482e4" ];
+1[ label="0x080482ff" ];
+2[ label="0x08048301" ];
+0->1 ;
+0->2 ;
+}
+
+=== testDominance-A7.dot ===
+digraph G {
+0[ label="0x08048305" ];
+}
+
+=== testDominance-A8.dot ===
+digraph G {
+0[ label="0x08048310" ];
+1[ label="0x0804831f" ];
+2[ label="0x08048321" ];
+3[ label="0x0804832b" ];
+4[ label="0x08048336" ];
+5[ label="0x0804833d" ];
+0->1 ;
+3->2 ;
+0->3 ;
+3->4 ;
+0->5 ;
+}
+
+=== testDominance-A9.dot ===
+digraph G {
+0[ label="0x0804833f" ];
+}
+
+=== testDominance-A10.dot ===
+digraph G {
+0[ label="0x08048340" ];
+1[ label="0x0804834f" ];
+2[ label="0x08048361" ];
+0->1 ;
+0->2 ;
+}
+
+=== testDominance-A11.dot ===
+digraph G {
+0[ label="0x08048363" ];
+}
+
+=== testDominance-A12.dot ===
+digraph G {
+0[ label="0x08048364" ];
+}
+
+=== testDominance-A13.dot ===
+digraph G {
+0[ label="0x0804836e" ];
+1[ label="0x08048381" ];
+2[ label="0x08048394" ];
+3[ label="0x080483a6" ];
+4[ label="0x080483ac" ];
+0->1 ;
+3->2 ;
+1->3 ;
+3->4 ;
+}
+
+=== testDominance-A14.dot ===
+digraph G {
+0[ label="0x080483c0" ];
+1[ label="0x080483da" ];
+0->1 ;
+}
+
+=== testDominance-A15.dot ===
+digraph G {
+0[ label="0x08048414" ];
+1[ label="0x0804844e" ];
+0->1 ;
+}
+
+=== testDominance-A16.dot ===
+digraph G {
+0[ label="0x08048456" ];
+}
+
+=== testDominance-A17.dot ===
+digraph G {
+0[ label="0x08048460" ];
+1[ label="0x08048476" ];
+2[ label="0x08048480" ];
+3[ label="0x08048485" ];
+4[ label="0x0804848c" ];
+0->1 ;
+1->2 ;
+2->3 ;
+0->4 ;
+}
+
+=== testDominance-A18.dot ===
+digraph G {
+0[ label="0x08048491" ];
+}
+
+=== testDominance-A19.dot ===
+digraph G {
+0[ label="0x08048494" ];
+1[ label="0x080484aa" ];
+0->1 ;
+}

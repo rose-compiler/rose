@@ -3,73 +3,50 @@
 
 #include "RtedTransformation.h"
 
-
 // Build an inherited attribute for the tree traversal to test the rewrite mechanism
 
-class InheritedAttribute
-   {
-     public:
-      // Depth in AST
+namespace rted
+{
+  struct InheritedAttribute
+  {
+    bool          function;
+    bool          isAssignInitializer;
+    bool          isVariableDecl;
+    bool          isArrowExp;
+    bool          isAddressOfOp;
+    bool          isForStatement;
+    size_t        openBlocks;
+    SgStatement*  lastGForLoop;
+    SgBinaryOp*   lastBinary;
 
-         bool function;
-         bool isAssignInitializer;
-         bool isArrowExp;
-         bool isAddressOfOp;
-         bool isForStatement;
-         bool isBinaryOp;
-
-
- //  InheritedAttributeBools* bools;
-       // Specific constructors are required
-
-	 InheritedAttribute (bool f, bool a, bool ae, bool ao, bool i, bool bo) :
-	                                               function(f),
-	                                               isAssignInitializer(a),
-	                                               isArrowExp(ae),
-	                                               isAddressOfOp(ao),
-	                                               isForStatement(i),
-	                                               isBinaryOp(bo)
-         {};
-	 InheritedAttribute ( const InheritedAttribute & X ) : 
-	                                                       function(X.function),
-	                                                       isAssignInitializer(X.isAssignInitializer),
-	                                                       isArrowExp(X.isArrowExp),
-	                                                       isAddressOfOp(X.isAddressOfOp),
-	                                                       isForStatement(X.isForStatement),
-	                                                       isBinaryOp(X.isBinaryOp)
-	 {};
-
- //  InheritedAttribute (InheritedAttributeBools* b) : bools(b){};
- //  InheritedAttribute ( const InheritedAttribute & X ) : bools(X.bools){};
-   };
-
-typedef bool SynthesizedAttribute;
+    InheritedAttribute()
+    : function(false),  isAssignInitializer(false), isVariableDecl(false),
+      isArrowExp(false), isAddressOfOp(false), isForStatement(false),
+      openBlocks(0), lastGForLoop(NULL), lastBinary(NULL)
+    {}
+  };
 
 
+  struct VariableTraversal : public SgTopDownProcessing<InheritedAttribute>
+  {
+    typedef SgTopDownProcessing<InheritedAttribute> Base;
 
-class VariableTraversal : public SgTopDownBottomUpProcessing<InheritedAttribute,SynthesizedAttribute>
-   {
+     explicit
+     VariableTraversal(RtedTransformation* t) ;
 
-     RtedTransformation* transf;
-     std::vector<SgExpression*>* rightOfbinaryOp;
-     std::vector<SgForStatement*>* for_stmt;
-     public:
+       // Functions required
+    InheritedAttribute evaluateInheritedAttribute (SgNode* astNode, InheritedAttribute inheritedAttribute );
 
-   VariableTraversal(RtedTransformation* t) ;
-     ~VariableTraversal() {};
+    friend class InheritedAttributeHandler;
 
-     // Functions required
-     InheritedAttribute evaluateInheritedAttribute (
-						    SgNode* astNode, 
-						    InheritedAttribute inheritedAttribute );
-     
-     SynthesizedAttribute evaluateSynthesizedAttribute (
-							SgNode* astNode,
-							InheritedAttribute inheritedAttribute,
-							SubTreeSynthesizedAttributes synthesizedAttributeList );
+  private:
+    RtedTransformation* const   transf;
 
-     bool isRightOfBinaryOp(SgNode* node);
-     bool isInitializedNameInForStatement(SgForStatement* for_stmt,SgInitializedName* name);
-   };
+    // should fail when needed
+    VariableTraversal();
+    VariableTraversal(const VariableTraversal&);
+    VariableTraversal& operator=(const VariableTraversal&);
+  };
+}
 
 #endif

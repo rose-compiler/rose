@@ -17,7 +17,7 @@ extract_rose_required_ecj_source_files: JavaTraversal.class
 #	cp ${srcdir}/ecjROSE.jar ecjROSE.jar
 	@echo "In extract_rose_required_ecj_source_files: output the directory listing (debugging)."
 	@pwd
-	@echo "calling ls -l --full-time"
+	@echo "calling ls -l"
 	ls -l
 	@echo "after ls"
 
@@ -61,7 +61,7 @@ JavaSourcePositionInformation.class: ${srcdir}/JavaSourcePositionInformation.jav
 	$(JAVAC) -cp ${srcdir}/ecjROSE.jar:${srcdir}:. JavaSourcePositionInformation.java
 
 
-EXTRA_DIST = CMakeLists.txt ecjROSE.jar JavaTraversal.java JavaParser.java JavaParserSupport.java ecjASTVisitor.java JavaToken.java JavaSourcePositionInformation.java
+EXTRA_DIST = CMakeLists.txt ecjROSE.jar JavaTraversal.java JavaParser.java JavaParserSupport.java ecjASTVisitor.java JavaToken.java JavaSourcePositionInformation.java JavaSourcePositionInformationFactory.java
 
 clean-local:
 	rm -f *.dot ecjROSE.jar *.class *.java *.h

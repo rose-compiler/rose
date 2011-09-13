@@ -830,6 +830,13 @@ BEGIN NORMAL;
 
                             BEGIN NORMAL; 
                         }
+    /* negara1 (07/25/2011): Added handling of CXX comments that appear at the last line of a file. */
+<CXX_COMMENT><<EOF>>    {
+                            preprocessorList.addElement(PreprocessingInfo::CplusplusStyleComment, 
+                                    commentString,globalFileName, preproc_start_line_num, preproc_start_column_num,preproc_line_num-preproc_start_line_num); 
+
+                            yyterminate();
+                        }
         /*Actions while in a C style comment.*/
 <C_COMMENT>\n           {
                             commentString += yytext;
@@ -863,6 +870,13 @@ BEGIN NORMAL;
                     
                     preprocessorList.addElement(macrotype,macroString,globalFileName,preproc_start_line_num,preproc_start_column_num,preproc_line_num-preproc_start_line_num); 
                     BEGIN NORMAL; 
+                }
+    /* negara1 (07/25/2011): Added handling of preprocessor directives that end at the last line of a file. */
+<MACRO><<EOF>>  {
+                    macroString += yytext;
+                    
+                    preprocessorList.addElement(macrotype,macroString,globalFileName,preproc_start_line_num,preproc_start_column_num,preproc_line_num-preproc_start_line_num); 
+                    yyterminate();
                 }
 <MACRO>"\/*"    {
                     //does this cover all cases?????????

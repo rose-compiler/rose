@@ -1,6 +1,0 @@
-! copointer to 2-dim coarray
-program prog4_3
- integer, copointer:: cp(:,:)[*]
- n = cp [] (1, 2) [5]  
-end program
-

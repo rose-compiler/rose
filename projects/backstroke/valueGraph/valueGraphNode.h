@@ -1,9 +1,11 @@
-#ifndef BACKSTROKE_VALUEGRAPHNODE2_H
-#define	BACKSTROKE_VALUEGRAPHNODE2_H
+#ifndef BACKSTROKE_VALUEGRAPHNODE_H
+#define	BACKSTROKE_VALUEGRAPHNODE_H
 
 #include "types.h"
+#include <slicing/backstrokeCDG.h>
 #include <rose.h>
 #include <boost/lexical_cast.hpp>
+#include <fstream>
 
 namespace Backstroke
 {
@@ -102,9 +104,10 @@ struct ValueGraphNode
 //! A value node can hold a lvalue and a rvalue.
 struct ValueNode : ValueGraphNode
 {    
-	explicit ValueNode(SgNode* node = NULL) : ValueGraphNode(node) {}
+	explicit ValueNode(SgNode* node = NULL)
+    : ValueGraphNode(node), isStateVar(false) {}
     explicit ValueNode(const VersionedVariable& v, SgNode* node = NULL)
-    : ValueGraphNode(node), var(v) {}
+    : ValueGraphNode(node), var(v), isStateVar(false) {}
 
 	virtual std::string toString() const;
     virtual int getCost() const;
@@ -129,37 +132,66 @@ struct ValueNode : ValueGraphNode
     //! The unique name of this value node in VG which becomes
     //! the name of the corresponding variable
     std::string str;
+    
+    //! Indicates if the variable is a state one.
+    bool isStateVar;
 };
 
 //! This node represents a phi node in the SSA form CFG. The AST node inside (actually
 //! from its parent class ValueNode) only describe the place of this Phi node in the CFG.
 struct PhiNode : ValueNode
 {
-    enum GateType
-    {
-        phi,
-        mu,
-        eta
-    };
+//    enum GateType
+//    {
+//        phi,
+//        mu,
+//        eta
+//    };
 
 	PhiNode(const VersionedVariable& v, SgNode* node)
-    : ValueNode(v, node), dagIndex(0)/*, type(phi)*/ {}
+    : ValueNode(v, node) {}
 
 	//std::vector<ValueGraphNode*> nodes;
 
 	virtual std::string toString() const
-	{ return "PHI_" + var.toString(); }
+    { return "PHI_" + var.toString(); }
 
     virtual int getCost() const;
 
 //    SgType* getType() const
 //    { return var.name.back()->get_type(); }
 
-    //! The DAG index.
-    int dagIndex;
+//    //! The DAG index.
+//    int dagIndex;
+    
+    //bool mu;
 
     //! The type of this gate function
     //GateType type;
+};
+
+//! A Mu node is a special phi node which has a data dependence through a back 
+//! edge in a loop. This node is placed on the loop header node in CFG.
+struct MuNode : PhiNode
+{
+    MuNode(const VersionedVariable& v, SgNode* node)
+    : PhiNode(v, node), dagIndex(0), isCopy(false) {}
+    
+    explicit MuNode(const PhiNode& phiNode) 
+    : PhiNode(phiNode), dagIndex(0), isCopy(false) {}
+    	
+    virtual std::string toString() const
+	{ 
+        std::string str = "MU_" + var.toString() + "\\n" 
+                + boost::lexical_cast<std::string>(dagIndex);
+        return isCopy ? str + "\\nAVAILABLE" : str;
+    }
+
+    //! The DAG index.
+    int dagIndex;
+    
+    //! If it is a copy.
+    bool isCopy;
 };
 
 //! An operator node represents a unary or binary operation. It only has one in edge,
@@ -179,13 +211,39 @@ struct OperatorNode : ValueGraphNode
 
 struct FunctionCallNode: ValueGraphNode
 {
-    explicit FunctionCallNode(SgFunctionCallExp* funcCall, bool v = false)
-            : ValueGraphNode(funcCall), isVirtual(v) {}
+    typedef boost::tuple<std::string, std::string, std::string> FunctionNamesT;
+    
+    explicit FunctionCallNode(SgFunctionCallExp* funcCall, bool isRvs = false);
     
     SgFunctionCallExp* getFunctionCallExp() const
     { return isSgFunctionCallExp(astNode); }
     
+    //! Returns if a parameter is needed in the reverse functino call.
+    bool isNeededByInverse(SgInitializedName* initName) const
+    { return true; }
+    
+    FunctionNamesT getFunctionNames() const;
+    
+    virtual std::string toString() const;
+    
+    SgFunctionDeclaration* funcDecl;
+    std::string funcName;
+    
+    //! If this function call node is the reverse one.
+    bool isReverse;
+    
+    //! If this function is declared as virtual.
     bool isVirtual;
+        
+    //! If this function call is from std library.
+    bool isStd;
+    
+    //! Indicates if this function call can be reversed.
+    bool canBeReversed;
+    
+    static std::set<SgMemberFunctionDeclaration*> functionsToReverse;
+    
+    static std::ofstream os;
 };
 
 #if 0
@@ -224,9 +282,12 @@ struct BinaryOperaterNode : OperatorNode
 
 struct ValueGraphEdge
 {
-	ValueGraphEdge() : cost(0), dagIndex(0) {}
-	ValueGraphEdge(int cst, int dagIdx, const PathSet& pths)
-    : cost(cst), dagIndex(dagIdx), paths(pths) {}
+    ValueGraphEdge() : cost(TRIVIAL_COST) {}
+    ValueGraphEdge(int cst, const PathInfos& pths)
+    : cost(cst), paths(pths) {}
+    
+    //ValueGraphEdge(int cst, const PathInfos& pths, const ControlDependences& cd)
+    //: cost(cst), paths(pths), controlDependences(cd) {}
 
     virtual ~ValueGraphEdge() {}
 
@@ -235,16 +296,17 @@ struct ValueGraphEdge
     virtual ValueGraphEdge* clone() 
     { return new ValueGraphEdge(*this); }
 
+    static const int TRIVIAL_COST = 1;
+    
     //! The cost attached on this edge. The cost may come from state saving,
     //! or operations.
 	int cost;
-
-    //! A CFG may be seperated into several DAGs, and each DAG have its own path
-    //! numbers. This index represents which DAG the following paths belong to.
-    int dagIndex;
-
+    
     //! All paths on which this relationship exists.
-    PathSet paths;
+    PathInfos paths;
+    
+    ////! All immediate control dependences representing conditions in VG.
+    //ControlDependences controlDependences;
 };
 
 //! An edge coming from an operator node.
@@ -253,7 +315,8 @@ struct OrderedEdge : ValueGraphEdge
 	explicit OrderedEdge(int idx) : index(idx) {}
 
 	virtual std::string toString() const
-	{ return boost::lexical_cast<std::string>(index); }
+	{ return boost::lexical_cast<std::string>(index) 
+            + "\\n" + ValueGraphEdge::toString(); }
     
     virtual OrderedEdge* clone() 
     { return new OrderedEdge(*this); }
@@ -261,14 +324,24 @@ struct OrderedEdge : ValueGraphEdge
 	int index;
 };
 
-#if 0
+#if 1
 //! An edge coming from a phi node.
 struct PhiEdge : ValueGraphEdge
 {
-    PhiEdge(const std::set<ReachingDef::FilteredCfgEdge>* edges)
-    : ValueGraphEdge(0, dagIdx, paths), visiblePathNum(visibleNum) {}
+    PhiEdge(int cst, const PathInfos& pths)
+    : ValueGraphEdge(cst, pths), muEdge(false) {}
+    //PhiEdge(const std::set<ReachingDef::FilteredCfgEdge>* edges)
+    //: ValueGraphEdge(0, dagIdx, paths), visiblePathNum(visibleNum) {}
     //! A set of edges indicating where the target def comes from in CFG.
-    std::set<ReachingDef::FilteredCfgEdge> cfgEdges;
+    //std::set<ReachingDef::FilteredCfgEdge> cfgEdges;
+    
+    virtual std::string toString() const
+    {
+        std::string str = ValueGraphEdge::toString();
+        return muEdge ? str + "\\nMU" : str;
+    }
+    
+    bool muEdge;
 };
 #endif
 
@@ -281,14 +354,25 @@ struct StateSavingEdge : ValueGraphEdge
 //    :   ValueGraphEdge(cost, dagIdx, paths), 
 //        visiblePathNum(visibleNum), killer(killerNode) {}
     
-    StateSavingEdge(
-            int cost, int dagIdx, const PathSet& paths,
-            const std::map<int, PathSet> visiblePaths, 
-            SgNode* killerNode)
-    :   ValueGraphEdge(cost, dagIdx, paths), 
-        visiblePaths(visiblePaths), killer(killerNode) 
+    StateSavingEdge(int cost, const PathInfos& paths,
+                    SgNode* killerNode, bool isKillerScope = false)
+    :   ValueGraphEdge(cost, paths), 
+        killer(killerNode), 
+        scopeKiller(isKillerScope),
+        varStored(false) 
     {}
-
+    
+    StateSavingEdge(int cost, const PathInfos& paths,
+                    const std::map<int, PathSet> visiblePaths, 
+                    SgNode* killerNode, bool isKillerScope = false)
+    :   ValueGraphEdge(cost, paths), 
+        visiblePaths(visiblePaths), 
+        killer(killerNode), 
+        scopeKiller(isKillerScope),
+        varStored(false)
+    {}
+    
+    
 	virtual std::string toString() const;
     
     virtual StateSavingEdge* clone() 
@@ -297,6 +381,15 @@ struct StateSavingEdge : ValueGraphEdge
 	//int visiblePathNum;
     std::map<int, PathSet> visiblePaths;
     SgNode* killer;
+    
+    //! Indicate if the killer is a scope or not. If the killer is a scope, the SS
+    //! statement is inserted at the end of the scope. Or else, it is inserted before
+    //! the killer statement.
+    bool scopeKiller;
+    
+    //! If state saving is done. It is needed since a SS edge in a loop is traversed
+    //! more than once by difference DAGs.
+    bool varStored;
     
 };
 
@@ -323,6 +416,16 @@ inline ValueNode* isValueNode(ValueGraphNode* node)
 	return dynamic_cast<ValueNode*>(node);
 }
 
+inline MuNode* isMuNode(ValueGraphNode* node)
+{
+	return dynamic_cast<MuNode*>(node);
+}
+
+inline FunctionCallNode* isFunctionCallNode(ValueGraphNode* node)
+{
+	return dynamic_cast<FunctionCallNode*>(node);
+}
+
 inline OrderedEdge* isOrderedEdge(ValueGraphEdge* edge)
 {
 	return dynamic_cast<OrderedEdge*>(edge);
@@ -331,6 +434,11 @@ inline OrderedEdge* isOrderedEdge(ValueGraphEdge* edge)
 inline StateSavingEdge* isStateSavingEdge(ValueGraphEdge* edge)
 {
 	return dynamic_cast<StateSavingEdge*>(edge);
+}
+
+inline PhiEdge* isPhiEdge(ValueGraphEdge* edge)
+{
+	return dynamic_cast<PhiEdge*>(edge);
 }
 
 }  // End of namespace Backstroke

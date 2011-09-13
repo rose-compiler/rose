@@ -150,6 +150,9 @@ public:
     /* Called for the HLT instruction */
     void hlt() {} /*FIXME*/
 
+    /* Called for the CPUID instruction */
+    void cpuid() {} /*FIXME*/
+
     /* Called for the RDTSC instruction */
     VerifierValue<64> rdtsc() {return 0;} /*FIXME*/
 

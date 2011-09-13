@@ -1,7 +1,6 @@
 //Author: George Vulov <georgevulov@hotmail.com>
-//Based on work by Justin Frye <jafrye@tamu.edu>
 #include "staticSingleAssignment.h"
-#include "rose.h"
+#include <rose.h>
 #include <boost/foreach.hpp>
 #include <queue>
 
@@ -40,55 +39,67 @@ SgExpression* StaticSingleAssignment::buildVariableReference(const VarName& var,
 }
 
 //Printing functions
+
 string StaticSingleAssignment::varnameToString(const VarName& vec)
 {
+	ROSE_ASSERT(!vec.empty());
 	string name = "";
 
-	foreach(const VarName::value_type& iter, vec)
+	foreach(SgInitializedName* iter, vec)
 	{
-		if (iter != vec.front())
-		{
-			name += ":";
-		}
 		name += iter->get_name().getString();
+
+		if (iter != vec.back())
+		{
+			if (SageInterface::isPointerType(iter->get_type()))
+				name += "->";
+			else
+				name += ".";
+		}
 	}
 
 	return name;
 }
 
-void StaticSingleAssignment::printOriginalDefs(SgNode* node)
+void StaticSingleAssignment::printNodeDefTable(const NodeReachingDefTable& table)
 {
-	cout << "Original Def Table for [" << node->class_name() << ":" << node << "]:" << endl;
 
-	foreach(const VarName& definedVar, originalDefTable[node])
+	foreach(const NodeReachingDefTable::value_type& varDefPair, table)
 	{
-		cout << "  Defs for [" << varnameToString(definedVar) << "]:";
-		cout << "    -[" << node->class_name() << ":" << node << "]" << endl;
-	}
-}
+		printf("\t%s: \t", varnameToString(varDefPair.first).c_str());
 
-void StaticSingleAssignment::printOriginalDefTable()
-{
-	cout << "Original Def Table:" << endl;
-
-	pair<SgNode*, std::set<VarName> > node;
-	foreach(node, originalDefTable)
-	{
-		printOriginalDefs(node.first);
-	}
-}
-
-void StaticSingleAssignment::printLocalDefUseTable(const StaticSingleAssignment::LocalDefUseTable& table)
-{
-	foreach(const LocalDefUseTable::value_type& nodeVarsPair, table)
-	{
-		const SgNode* node = nodeVarsPair.first;
-		printf("    %s@%d: ", node->class_name().c_str(), node->get_file_info()->get_line());
-		foreach (const VarName& var, nodeVarsPair.second)
+		string defName;
+		switch (varDefPair.second->getType())
 		{
-			printf("%s, ", varnameToString(var).c_str());
+			case ReachingDef::EXPANDED_DEF:
+				defName = "EXPANDED_DEF";
+				break;
+			case ReachingDef::ORIGINAL_DEF:
+				defName = "ORIGINAL_DEF";
+				break;
+			case ReachingDef::EXTERNAL_DEF:
+				defName = "EXTERNAL_DEF";
+				break;
+			case ReachingDef::PHI_FUNCTION:
+				defName = "PHI_FUNCTION";
+				break;
+			default:
+				ROSE_ASSERT(false);
 		}
-		printf("\n");
+
+		printf("(%d)-%s\n", varDefPair.second->getRenamingNumber(), defName.c_str());
+	}
+}
+
+void StaticSingleAssignment::printFullDefTable(const CFGNodeToDefTableMap& defTable)
+{
+
+	foreach(const CFGNodeToDefTableMap::value_type& nodeDefTablePair, defTable)
+	{
+		const CFGNode& definingNode = nodeDefTablePair.first;
+
+		printf("%s\n", definingNode.toStringForDebugging().c_str());
+		printNodeDefTable(nodeDefTablePair.second);
 	}
 }
 
@@ -146,7 +157,7 @@ void StaticSingleAssignment::toFilteredDOT(const string fileName)
 	}
 }
 
-void StaticSingleAssignment::printToDOT(SgSourceFile* source, ofstream &outFile)
+void StaticSingleAssignment::printToDOT(SgNode* source, ostream &outFile)
 {
 	if (!outFile.good())
 	{
@@ -185,7 +196,7 @@ void StaticSingleAssignment::printToDOT(SgSourceFile* source, ofstream &outFile)
 				string id = current.id();
 				string nodeColor = "black";
 
-				bool uniqueName = current.getNode()->attributeExists(StaticSingleAssignment::varKeyTag);
+				bool uniqueName = current.getNode()->attributeExists(UniqueNameTraversal::varKeyTag);
 
 				if (isSgStatement(current.getNode()))
 					nodeColor = "blue";
@@ -200,14 +211,15 @@ void StaticSingleAssignment::printToDOT(SgSourceFile* source, ofstream &outFile)
 					VarUniqueName *attr = getUniqueName(current.getNode());
 					ROSE_ASSERT(attr);
 
-					name = attr->getNameString();
+					name = StaticSingleAssignment::varnameToString(attr->getKey());
 				}
 
 				//Print the defs to a string
 				stringstream defUse;
 
 				//Print defs to a string
-				foreach(NodeReachingDefTable::value_type& varDefPair, reachingDefsTable[current.getNode()].second)
+
+				foreach(NodeReachingDefTable::value_type& varDefPair, outgoingDefTable[current])
 				{
 					defUse << "Def [" << varnameToString(varDefPair.first) << "]: ";
 					defUse << varDefPair.second->getRenamingNumber() << " - "
@@ -235,8 +247,12 @@ void StaticSingleAssignment::printToDOT(SgSourceFile* source, ofstream &outFile)
 				if (isSgFunctionDefinition(current.getNode()))
 					label += ":" + escapeString(isSgFunctionDefinition(current.getNode())->get_declaration()->get_name());
 
+				int line = -1;
+				if (current.getNode()->get_file_info() != NULL)
+					line = current.getNode()->get_file_info()->get_line();
+
 				//Print this node
-				outFile << id << " [label=\"<" << label << ">:" << current.getNode()
+				outFile << id << " [label=\"<" << label << "> @ " << line
 						//Now we add the unique name information
 						<< ((name != "") ? "\\n" : "") << name
 						<< ((defUseStr != "") ? "\\n" : "") << defUseStr
@@ -305,8 +321,8 @@ void StaticSingleAssignment::printToFilteredDOT(SgSourceFile* source, ofstream& 
 		return;
 	}
 
-	typedef FilteredCFGNode<DataflowCfgFilter> cfgNode;
-	typedef FilteredCFGEdge<DataflowCfgFilter> cfgEdge;
+	typedef InterestingNode cfgNode;
+	typedef InterestingEdge cfgEdge;
 
 	typedef vector<SgFunctionDefinition*> funcDefVec;
 	funcDefVec funcs = SageInterface::querySubTree<SgFunctionDefinition > (source, V_SgFunctionDefinition);
@@ -335,7 +351,7 @@ void StaticSingleAssignment::printToFilteredDOT(SgSourceFile* source, ofstream& 
 				string id = current.id();
 				string nodeColor = "black";
 
-				bool uniqueName = current.getNode()->attributeExists(StaticSingleAssignment::varKeyTag);
+				bool uniqueName = current.getNode()->attributeExists(UniqueNameTraversal::varKeyTag);
 
 				if (isSgStatement(current.getNode()))
 					nodeColor = "blue";
@@ -350,14 +366,15 @@ void StaticSingleAssignment::printToFilteredDOT(SgSourceFile* source, ofstream& 
 					VarUniqueName *attr = getUniqueName(current.getNode());
 					ROSE_ASSERT(attr);
 
-					name = attr->getNameString();
+					name = StaticSingleAssignment::varnameToString(attr->getKey());
 				}
 
 				//Print the defs to a string
 				stringstream defUse;
 
 				//Print defs to a string
-				foreach(NodeReachingDefTable::value_type& varDefPair, reachingDefsTable[current.getNode()].second)
+
+				foreach(NodeReachingDefTable::value_type& varDefPair, outgoingDefTable[current.toNode()])
 				{
 					defUse << "Def [" << varnameToString(varDefPair.first) << "]: ";
 					defUse << varDefPair.second->getRenamingNumber() << " - "
@@ -376,7 +393,7 @@ void StaticSingleAssignment::printToFilteredDOT(SgSourceFile* source, ofstream& 
 					}
 					defUse << "\\n";
 				}
-				*/
+				 */
 
 				//Copy out the string and trim off the last '\n'
 				string defUseStr = defUse.str().substr(0, defUse.str().size() - 2);
@@ -448,11 +465,11 @@ void StaticSingleAssignment::printToFilteredDOT(SgSourceFile* source, ofstream& 
 
 VarUniqueName* StaticSingleAssignment::getUniqueName(SgNode* node)
 {
-	if (!node->attributeExists(StaticSingleAssignment::varKeyTag))
+	if (!node->attributeExists(UniqueNameTraversal::varKeyTag))
 	{
 		return NULL;
 	}
-	VarUniqueName* uName = dynamic_cast<VarUniqueName*> (node->getAttribute(StaticSingleAssignment::varKeyTag));
+	VarUniqueName* uName = dynamic_cast<VarUniqueName*> (node->getAttribute(UniqueNameTraversal::varKeyTag));
 	return uName;
 }
 
@@ -481,203 +498,78 @@ bool StaticSingleAssignment::isPrefixOfName(VarName name, VarName prefix)
 
 const static StaticSingleAssignment::NodeReachingDefTable emptyTable;
 
-const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getOutgoingDefsAtNode(SgNode* node) const
+const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getReachingDefsBefore(const CFGNode& node) const
 {
-	GlobalReachingDefTable::const_iterator reachingDefsIter = reachingDefsTable.find(node);
-	if (reachingDefsIter == reachingDefsTable.end())
-	{
+	CFGNodeToDefTableMap::const_iterator defs = reachingDefTable.find(node);
+	if (defs == reachingDefTable.end())
 		return emptyTable;
-	}
 	else
-	{
-		if (isSgFunctionDefinition(node))
-			return reachingDefsIter->second.first;
-		else
-			return reachingDefsIter->second.second;
-	}
+		return defs->second;
 }
 
-const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getReachingDefsAtNode_(SgNode* node) const
+const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getReachingDefsAfter(const CFGNode& node) const
 {
-	GlobalReachingDefTable::const_iterator reachingDefsIter = reachingDefsTable.find(node);
-	if (reachingDefsIter == reachingDefsTable.end())
-	{
+	CFGNodeToDefTableMap::const_iterator defs = outgoingDefTable.find(node);
+	if (defs == outgoingDefTable.end())
 		return emptyTable;
-	}
 	else
-	{
-		if (isSgFunctionDefinition(node))
-			return reachingDefsIter->second.second;
-		else
-			return reachingDefsIter->second.first;
-	}
+		return defs->second;
 }
 
-const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getUsesAtNode(SgNode* node) const
+const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getDefsAtNode(const CFGNode& node) const
 {
-	UseTable::const_iterator usesIter = useTable.find(node);
-	if (usesIter == useTable.end())
-	{
+	CFGNodeToDefTableMap::const_iterator defs = localDefTable.find(node);
+	if (defs == localDefTable.end())
 		return emptyTable;
-	}
 	else
-	{
-		return usesIter->second;
-	}
+		return defs->second;
 }
 
-const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getDefsAtNode(SgNode* node) const
+const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getReachingDefsBefore(SgNode* astNode) const
 {
-	boost::unordered_map<SgNode*, NodeReachingDefTable>::const_iterator defsIter = ssaLocalDefTable.find(node);
-	if (defsIter == ssaLocalDefTable.end())
-	{
-		return emptyTable;
-	}
+	return getReachingDefsBefore(astNode->cfgForBeginning());
+}
+
+const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getReachingDefsAfter(SgNode* astNode) const
+{
+	return getReachingDefsAfter(astNode->cfgForEnd());
+}
+
+const static set<SgVarRefExp*> emptyVarRefSet;
+
+const set<SgVarRefExp*>& StaticSingleAssignment::getUsesAtNode(SgNode* astNode) const
+{
+	ASTNodeToVarRefsMap::const_iterator uses = astNodeToUses.find(astNode);
+	if (uses == astNodeToUses.end())
+		return emptyVarRefSet;
 	else
-	{
-		return defsIter->second;
-	}
+		return uses->second;
 }
 
-set<StaticSingleAssignment::VarName> StaticSingleAssignment::getVarsDefinedInSubtree(SgNode* root) const
+const StaticSingleAssignment::ReachingDefPtr StaticSingleAssignment::getDefinitionForUse(SgVarRefExp* astNode) const
 {
-	class CollectDefsTraversal : public AstSimpleProcessing
-	{
-	public:
-		const StaticSingleAssignment* ssa;
-
-		//All the varNames that have uses in the function
-		set<VarName> definedNames;
-
-		void visit(SgNode* node)
-		{
-			//Vars defined on function entry are not 'really' defined. These definitions just represent the external value
-			//of the variable flowing inside the function body.
-			if (isSgFunctionDefinition(node))
-				return;
-
-			if (ssa->originalDefTable.find(node) != ssa->originalDefTable.end())
-			{
-				const LocalDefUseTable::mapped_type& nodeDefs = ssa->originalDefTable.find(node)->second;
-				definedNames.insert(nodeDefs.begin(), nodeDefs.end());
-			}
-
-			if (ssa->expandedDefTable.find(node) != ssa->expandedDefTable.end())
-			{
-				const LocalDefUseTable::mapped_type& nodeDefs = ssa->expandedDefTable.find(node)->second;
-				definedNames.insert(nodeDefs.begin(), nodeDefs.end());
-			}
-		}
-	};
-
-	CollectDefsTraversal defsTrav;
-	defsTrav.ssa = this;
-	defsTrav.traverse(root, preorder);
-
-	return defsTrav.definedNames;
-}
-
-set<StaticSingleAssignment::VarName> StaticSingleAssignment::getOriginalVarsDefinedInSubtree(SgNode* root) const
-{
-	ROSE_ASSERT(this != NULL && root != NULL);
-	class CollectDefsTraversal : public AstSimpleProcessing
-	{
-	public:
-		const StaticSingleAssignment* ssa;
-
-		//All the varNames that have uses in the function
-		set<VarName> definedNames;
-
-		void visit(SgNode* node)
-		{
-			//Vars defined on function entry are not 'really' defined. These definitions just represent the external value
-			//of the variable flowing inside the function body.
-			if (isSgFunctionDefinition(node))
-				return;
-
-			if (ssa->originalDefTable.find(node) != ssa->originalDefTable.end())
-			{
-				const LocalDefUseTable::mapped_type& nodeDefs = ssa->originalDefTable.find(node)->second;
-				definedNames.insert(nodeDefs.begin(), nodeDefs.end());
-			}
-		}
-	};
-
-	CollectDefsTraversal defsTrav;
-	defsTrav.ssa = this;
-	defsTrav.traverse(root, preorder);
-
-	return defsTrav.definedNames;
-}
-
-const StaticSingleAssignment::VarName& StaticSingleAssignment::getVarForExpression(SgNode* node)
-{
-	if (getVarName(node) != emptyName)
-		return getVarName(node);
-
-	switch (node->variantT())
-	{
-		case V_SgCommaOpExp:
-			return getVarForExpression(isSgCommaOpExp(node)->get_rhs_operand());
-		case V_SgCastExp:
-		case V_SgPointerDerefExp:
-		case V_SgAddressOfOp:
-			return getVarForExpression(isSgUnaryOp(node)->get_operand());
-		default:
-			return emptyName;
-	}
-}
-
-
-StaticSingleAssignment::NodeReachingDefTable StaticSingleAssignment::getLastVersions(SgFunctionDeclaration* func) const
-{
-	ROSE_ASSERT(func != NULL && func->get_definingDeclaration() != NULL);
-
-	class VersionsTraversal : public AstSimpleProcessing
-	{
-	public:
-		const StaticSingleAssignment* ssa;
-
-		//Map from each variable to its last definition
-		NodeReachingDefTable lastVersions;
-
-		void visit(SgNode* node)
-		{
-			const NodeReachingDefTable& reachingDefsHere = ssa->getOutgoingDefsAtNode(node);
-
-			foreach(const NodeReachingDefTable::value_type& varDefPair, reachingDefsHere)
-			{
-				const VarName& var = varDefPair.first;
-				if (lastVersions.count(var) == 0 ||
-						lastVersions[var]->getRenamingNumber() < varDefPair.second->getRenamingNumber())
-				{
-					lastVersions[var] = varDefPair.second;
-				}
-			}
-		}
-	};
-
-	VersionsTraversal defsTrav;
-	defsTrav.ssa = this;
-	defsTrav.traverse(func->get_definingDeclaration(), preorder);
-	NodeReachingDefTable& lastVersions = defsTrav.lastVersions;
+	const VarName& varName = getVarName(astNode);
+	if (varName == emptyName)
+		return ReachingDefPtr();
 	
-	//We also have to explicitly handle phi nodes inserted at the end of the function.
-	//These are stored as the IN definition of the SgFunctionDefinition node
-	ROSE_ASSERT(func->get_definition() != NULL);
-	GlobalReachingDefTable::const_iterator defsAtSgFunctionDefIter = reachingDefsTable.find(func->get_definition());
-	if (defsAtSgFunctionDefIter != reachingDefsTable.end())
-	{
-		foreach(const NodeReachingDefTable::value_type& varDefPair, defsAtSgFunctionDefIter->second.first)
-		{
-			const VarName& var = varDefPair.first;
-			ROSE_ASSERT(varDefPair.second->getRenamingNumber() >= 0);
-			if (lastVersions.count(var) == 0 || lastVersions[var]->getRenamingNumber() < varDefPair.second->getRenamingNumber())
-			{
-				lastVersions[var] = varDefPair.second;
-			}
-		}
-	}
+	const NodeReachingDefTable& varReachingDefs = getReachingDefsBefore(astNode);
 	
-	return lastVersions;
+	//Look up the var name in the reaching defs to find the corresponding def
+	NodeReachingDefTable::const_iterator reachingDef = varReachingDefs.find(varName);
+	
+	if (reachingDef == varReachingDefs.end())
+		return ReachingDefPtr();
+	else
+		return reachingDef->second;
+}
+
+const StaticSingleAssignment::ASTNodeToVarRefsMap& StaticSingleAssignment::getUseTable() const
+{
+	return astNodeToUses;
+}
+
+//! Get the final versions of all the variables at the end of the given function.
+const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getLastVersions(SgFunctionDefinition* astNode) const
+{
+	return getReachingDefsAfter(astNode);
 }

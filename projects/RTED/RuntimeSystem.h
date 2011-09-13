@@ -1,99 +1,156 @@
 #ifndef RTEDRUNTIME_H
 #define RTEDRUNTIME_H
-#include <stdio.h>
-//#include <cstdio>
+
 #include <stddef.h>
 
-#ifndef  _WIN64
-#define unsigned_long_long unsigned long
-#define signed_long_long long
-#else
-#define unsigned_long_long unsigned long long
-#define signed_long_long long long
-#endif
+#include "CppRuntimeSystem/rted_iface_structs.h"
+#include "CppRuntimeSystem/ptrops.h"
+#include "CppRuntimeSystem/rtedsync.h"
 
-typedef unsigned long addr_type;
+#include "ParallelRTS.h"
 
-
+#define EXITCODE_OK 0
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /***************************** HELPER FUNCTIONS *************************************/
-const char* RuntimeSystem_roseConvertIntToString(int t);
+// \pp \todo using convertIntToString currently leakes memory as the generated
+//           string is never freed. This could (likely) be done in the function numval...
+const char* rted_ConvertIntToString(size_t num);
+
+#ifdef ROSE_WITH_ROSEQT
 
 // USE GUI for debugging
-void Rted_debugDialog(const char* filename, int line, int lineTransformed);
+void Rted_debugDialog(rted_SourceInfo si);
 
-void RuntimeSystem_roseCheckpoint( const char* filename, const char* line, const char* lineTransformed );
+#endif /* ROSE_WITH_ROSEQT */
+
+void rted_Checkpoint(rted_SourceInfo si);
 /***************************** HELPER FUNCTIONS *************************************/
 
 
 
 /***************************** ARRAY FUNCTIONS *************************************/
-void RuntimeSystem_roseCreateHeap(
-        const char* name,
-        const char* mangl_name,
-        const char* type,
-        const char* basetype,
-        size_t indirection_level,       // how many dereferences to get to a non-pointer type
-                                        // e.g. int*** has indirection level 3
-        addr_type address,
-        long int size,
-        long int mallocSize,
-        int fromMalloc,                 // 1 if from call to malloc
-                                        // 0 otherwise, if e.g. from new
-        const char* class_name, const char* filename, const char* line,
-        const char* lineTransformed, int dimensions, ...);
 
-void RuntimeSystem_roseAccessHeap(const char* filename,
-		addr_type base_address, // &( array[ 0 ])
-		addr_type address, long int size, int read_write_mask, // 1 = read, 2 = write
-		const char* line, const char* lineTransformed);
+/// \brief   notifies the runtime system that memory for an array is allocated
+///          without involving dynamic memory utilities. For example,
+///          a global array (could be UPC shared), an array declared within
+///          function scope (could be static).
+/// \param   td          describes the type, indirections (incl. shareing)
+/// \param   address     array start
+/// \param   totalsize   sizeof(array)
+/// \param   distributed true, iff array is distributed across (UPC) threads
+/// \param   dimDescr    points to an array describing the dimensions; first entry is element count
+/// \details Since this function is called for static allocations, we do not
+///          add a UPC runtime version. (1) arrays in function scope cannot be
+///          shared; (2) global shared arrays are initialized by all UPC threads.
+void rted_CreateArray( rted_TypeDesc   td,
+                       rted_Address    address,
+                       size_t          totalsize,
+                       rted_AllocKind  allocKind,
+                       long            blocksize,
+                       int             initialized,
+                       const size_t*   dimDescr,
+                       const char*     name,
+                       const char*     mangl_name,
+                       const char*     class_name,
+                       rted_SourceInfo si
+                     );
+
+/// \brief   notifies the runtime system that dynamic memory has been
+///          allocated.
+/// \param   td          describes the type, indirections (incl. shareing)
+/// \param   address     start address
+/// \param   size        element size (unused)
+/// \param   blocksize   upc blocksize (0 if the memory is not distributed)
+/// \param   mallocSize  size of allocated memory
+/// \param   allocKind   describes which function was used to allocate memory
+/// \param   classname   string containing the name of a user defined type
+/// \param   si          describes the source locations
+/// \details Since this function is called for static allocations, we do not
+///          add a UPC runtime version. (1) arrays in function scope cannot be
+///          shared; (2) global shared arrays are initialized by all UPC threads.
+void rted_AllocMem( rted_TypeDesc   td,
+                    rted_Address    address,
+                    size_t          size,
+                    rted_AllocKind  allocKind,
+                    long            blocksize,
+                    size_t          mallocSize,
+                    const char*     class_name,
+                    rted_SourceInfo si
+                  );
+
+/// \brief   internal variant
+/// \details adds parameters heap_address and heap_desc explicitly,
+///          as those can only be computed locally (from the thread
+///          that initially invokes rted_AllocMem
+void _rted_AllocMem( rted_TypeDesc    td,
+                     rted_Address     address,
+                     rted_Address     heap_address,
+                     long             blocksize,
+                     size_t           mallocSize,
+                     rted_AllocKind   allocKind,
+                     const char*      class_name,
+                     rted_SourceInfo  si,
+                     int              originloc
+                   );
+
+void rted_AccessArray( rted_Address     base_address, // &( array[ 0 ])
+                       rted_Address     address,
+                       size_t           size,
+                       int              read_write_mask,  // 1 = read, 2 = write
+                       rted_SourceInfo  si
+                     );
+
 /***************************** ARRAY FUNCTIONS *************************************/
 
 
 
 /***************************** FUNCTION CALLS *************************************/
 
-void RuntimeSystem_roseAssertFunctionSignature(
-		const char* filename, const char* line, const char* lineTransformed,
-		const char* name, int type_count, ... );
+void rted_AssertFunctionSignature( const char*     name,
+                                   size_t          type_count,
+                                   rted_TypeDesc*  typedescs,
+                                   rted_SourceInfo si
+                                 );
 
-void RuntimeSystem_roseConfirmFunctionSignature(
-		const char* name, int type_count, ... );
+void rted_ConfirmFunctionSignature(const char* name, size_t type_count, rted_TypeDesc* types);
 
-void RuntimeSystem_handleSpecialFunctionCalls(const char* funcname,
-		const char** args, int argsSize, const char* filename,
-		const char* line, const char* lineTransformed, const char* stmtStr,
-		const char* leftHandSideVar);
+void rted_IOFunctionCall( const char*     fname,
+                          const char*     stmtStr,
+                          const char*     leftVar,
+                          void*           file,
+                          const char*     arg1,
+                          const char*     arg2,
+                          rted_SourceInfo si
+                        );
 
-void RuntimeSystem_roseIOFunctionCall(const char* funcname,
-		const char* filename, const char* line, const char* lineTransformed,
-		const char* stmtStr, const char* leftHandSideVar, void* file,
-		const char* arg1, const char* arg2);
+void rted_FunctionCall( const char*     name,
+                        const char*     unused_stmtStr,
+                        const char*     unused_leftVar,
+                        rted_SourceInfo si,
+                        size_t          argc,
+                        const char**    args
+                      );
 
-void RuntimeSystem_roseFunctionCall(int count, ...);
 /***************************** FUNCTION CALLS *************************************/
 
 
 
 /***************************** MEMORY FUNCTIONS *************************************/
-void RuntimeSystem_roseFreeMemory(
-        void* ptr,              // the address that is about to be freed
-        int fromMalloc,         // whether the free expects to be paired with
-                                // memory allocated via 'malloc'.  In short,
-                                // whether this is a call to free (1) or delete
-                                // (0)
-        const char* filename,
-        const char* line, const char* lineTransformed);
 
-void RuntimeSystem_roseReallocateMemory(void* ptr, unsigned long int size,
-		const char* filename, const char* line, const char* lineTransformed);
+/// \param addr     the address that is about to be freed
+/// \param freeKind describes the kind of allocation that this free performs.
+///                 Also indicates when ptr needs to be interpreted as shared ptr.
+/// \param si       source location
+void rted_FreeMemory(rted_Address addr, rted_AllocKind freeKind, rted_SourceInfo si);
 
-void RuntimeSystem_checkMemoryAccess(addr_type address, long int size,
-		int read_write_mask);
+/// \brief internal version
+void _rted_FreeMemory(rted_Address addr, rted_AllocKind freeKind, rted_SourceInfo si, int originloc);
+
+void rted_ReallocateMemory( void* ptr, size_t size, rted_SourceInfo si );
 /***************************** MEMORY FUNCTIONS *************************************/
 
 
@@ -102,17 +159,18 @@ void RuntimeSystem_checkMemoryAccess(addr_type address, long int size,
 // handle scopes (so we can detect when locals go out of scope, free up the
 // memory and possibly complain if the local was the last var pointing to some
 // memory)
-void RuntimeSystem_roseEnterScope(const char* scope_name);
-void RuntimeSystem_roseExitScope(const char* filename, const char* line, const char* lineTransformed,
-		const char* stmtStr);
+void rted_EnterScope(const char* scope_name);
+void rted_ExitScope(size_t scopecount, rted_SourceInfo si);
+
 /***************************** SCOPE *************************************/
 
 
-  void RuntimeSystem_roseRtedClose(char* from);
+void rted_Close(const char* from);
 
 // function used to indicate error
-void RuntimeSystem_callExit(const char* filename, const char* line,
-		const char* reason, const char* stmtStr);
+// \pp is this function used / defined?
+// void RuntimeSystem_callExit(const char* filename, const char* line,
+//    const char* reason, const char* stmtStr);
 
 extern int RuntimeSystem_original_main(int argc, char**argv, char**envp);
 /***************************** INIT AND EXIT *************************************/
@@ -121,29 +179,16 @@ extern int RuntimeSystem_original_main(int argc, char**argv, char**envp);
 
 /***************************** VARIABLES *************************************/
 
-int RuntimeSystem_roseCreateVariable(const char* name,
-		const char* mangled_name, const char* type, const char* basetype,
-		size_t indirection_level, addr_type address, unsigned int size,
-		int init, const char* className, const char* filename,
-		const char* line, const char* lineTransformed);
-
-
-#if NOT_YET_IMPLEMENTED
-// for upc
-int RuntimeSystem_roseCreateSharedVariable( const char* name,
-																						const char* mangled_name,
-																						const char* type,
-																						const char* basetype,
-																						size_t indirection_level,
-																						shared void* address,
-																						unsigned int size,
-																						int init,
-																						const char* className,
-																						const char* filename,
-																						const char* line,
-																						const char* lineTransformed
-																					);
-#endif /* NOT_YET_IMPLEMENTED */
+int rted_CreateVariable( rted_TypeDesc   td,
+                         rted_Address    address,
+                         size_t          size,
+                         int             init,
+                         rted_AllocKind  ak,
+                         const char*     name,
+                         const char*     mangled_name,
+                         const char*     class_name,
+                         rted_SourceInfo si
+                       );
 
 /**
  * Register the creation of a C++ object.  This function should only be called
@@ -151,21 +196,28 @@ int RuntimeSystem_roseCreateSharedVariable( const char* name,
  * multiple times for the same address: e.g. if called in a base class
  * constructor and a sub class constructor.
  */
-int RuntimeSystem_roseCreateObject(
-        const char* type,
-        const char* basetype,
-        size_t indirection_level,
-        addr_type address,
-        unsigned int size,
-        const char* filename,
-        const char* line,
-        const char* lineTransformed );
+int rted_CreateObject( rted_TypeDesc td, rted_Address address, size_t sz, rted_SourceInfo si );
 
-int RuntimeSystem_roseInitVariable(const char* typeOfVar2,
-		const char* baseType2, size_t indirection_level,
-		const char* class_name, addr_type address, unsigned int size,
-		int ismalloc, int pointer_changed, const char* filename,
-		const char* line, const char* lineTransformed);
+
+int rted_InitVariable( rted_TypeDesc   td,
+                       rted_Address    address,
+                       size_t          size,
+                       int             pointer_changed,
+                       const char*     class_name,
+                       rted_SourceInfo si
+                     );
+
+/// \brief internal version
+int _rted_InitVariable( rted_TypeDesc    td,
+                        rted_Address     address,
+                        rted_Address     heap_address,
+                        size_t           size,
+                        int              pointer_move,
+                        const char*      class_name,
+                        rted_SourceInfo  si,
+                        int              originloc
+                      );
+
 
 /**
  * This function is called when pointers are incremented.  For example, it will
@@ -182,46 +234,50 @@ int RuntimeSystem_roseInitVariable(const char* typeOfVar2,
        p = ...
  @endcode
  * It verifies that the pointer stays within “memory bounds”.  In particular, if
- * the pointer points to an array, RuntimeSystem_roseMovePointer checks that it
+ * the pointer points to an array, rted_MovePointer checks that it
  * isn't incremented beyond the bounds of the array, even if doing so results in
  * a pointer to allocated memory.
  */
-void RuntimeSystem_roseMovePointer(
-                addr_type address,
-                const char* type,
-                const char* base_type,
-                size_t indirection_level,
-                const char* class_name,
-                const char* filename,
-                const char* line,
-                const char* lineTransformed);
+void rted_MovePointer( rted_TypeDesc    td,
+                       rted_Address     address,
+                       const char*      class_name,
+                       rted_SourceInfo  si
+                     );
 
-void RuntimeSystem_roseAccessVariable(
-        addr_type address,
-        unsigned int size,
-        addr_type write_address,
-        unsigned int write_size,
-        int read_write_mask, //1 = read, 2 = write
-        const char* filename, const char* line,
-        const char* lineTransformed);
+/// \brief internal version
+void _rted_MovePointer( rted_TypeDesc    td,
+                        rted_Address     address,
+                        rted_Address     heap_address,
+                        const char*      class_name,
+                        rted_SourceInfo  si,
+                        int              originloc
+                      );
 
-void RuntimeSystem_roseCheckIfThisNULL(
-		void* thisExp,
-		const char* filename, const char* line,
-		const char* lineTransformed);
+void rted_AccessVariable( rted_Address    read_address,
+                          size_t          read_size,
+                          rted_Address    write_address,
+                          size_t          write_size,
+                          int             read_write_mask,
+                          rted_SourceInfo si
+                        );
+
+void rted_CheckIfThisNULL( void* thisExp, rted_SourceInfo si );
 /***************************** VARIABLES *************************************/
 
 
 
 /***************************** TYPES *************************************/
 // handle structs and classes
-void RuntimeSystem_roseRegisterTypeCall(int count, ...);
+void rted_RegisterTypeCall( const char*     nameC,
+                            const char*     unused_typeC,
+                            int             isUnion,
+                            size_t          sizeC,
+                            rted_SourceInfo si,
+                            size_t          argc,
+                            ...
+                          );
+
 /***************************** TYPES *************************************/
-
-
-
-
-
 
 
 #ifdef __cplusplus

@@ -30,8 +30,8 @@ while (<>) {
 if (keys %filtered) {
   #      --------------------------------------------------------------------------------
   print "+ NOTE: The following known warnings were suppressed from the previous autoconf\n";
-  print "        commands because we already know about them.  They are due to the way\n";
-  print "        we support multiple versions of autoconf tools.  Run the autoconf\n";
-  print "        commands by hand too see the details.\n";
-  print "$_\n" for sort keys %filtered;
+  print "commands because we already know about them.  They are due to the way\n";
+  print "we support multiple versions of autoconf tools.  Run the autoconf\n";
+  print "commands by hand too see the details.\n";
+  print "    $_\n" for sort keys %filtered;
 }

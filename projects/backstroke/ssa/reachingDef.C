@@ -10,7 +10,7 @@
 using namespace std;
 using namespace boost;
 
-ReachingDef::ReachingDef(SgNode* defNode, Type type) : defType(type), thisNode(defNode), renamingNumer(-1)
+ReachingDef::ReachingDef(const CFGNode& defNode, Type type) : defType(type), thisNode(defNode), renamingNumer(-1)
 {
 }
 
@@ -19,20 +19,20 @@ bool ReachingDef::isPhiFunction() const
 	return defType == PHI_FUNCTION;
 }
 
-const map<ReachingDef::ReachingDefPtr, set<ReachingDef::FilteredCfgEdge> >& ReachingDef::getJoinedDefs() const
+const map<ReachingDef::ReachingDefPtr, set<CFGEdge> >& ReachingDef::getJoinedDefs() const
 {
 	ROSE_ASSERT(isPhiFunction());
 	return parentDefs;
 }
 
-SgNode* ReachingDef::getDefinitionNode() const
+const CFGNode& ReachingDef::getDefinitionNode() const
 {
 	return thisNode;
 }
 
-set<SgNode*> ReachingDef::getActualDefinitions() const
+set<CFGNode> ReachingDef::getActualDefinitions() const
 {
-	set<SgNode*> result;
+	set<CFGNode> result;
 	if (!isPhiFunction())
 	{
 		result.insert(thisNode);
@@ -43,7 +43,7 @@ set<SgNode*> ReachingDef::getActualDefinitions() const
 		unordered_set<ReachingDefPtr> visited;
 		vector< ReachingDefPtr > worklist;
 		ReachingDefPtr parentDef;
-		set<FilteredCfgEdge> edges;
+		set<CFGEdge> edges;
 		foreach (tie(parentDef, edges), parentDefs)
 		{
 			worklist.push_back(parentDef);
@@ -61,7 +61,7 @@ set<SgNode*> ReachingDef::getActualDefinitions() const
 			}
 			else
 			{
-				pair<ReachingDefPtr, set<FilteredCfgEdge> > defEdgePair;
+				pair<ReachingDefPtr, set<CFGEdge> > defEdgePair;
 				foreach(defEdgePair, parentDef->getJoinedDefs())
 				{
 					if (visited.count(defEdgePair.first) == 0)
@@ -86,12 +86,12 @@ bool ReachingDef::operator==(const ReachingDef& other) const
 			(parentDefs == other.parentDefs) && (renamingNumer == other.renamingNumer);
 }
 
-void ReachingDef::setDefinitionNode(SgNode* defNode)
+void ReachingDef::setDefinitionNode(CFGNode defNode)
 {
 	thisNode = defNode;
 }
 
-void ReachingDef::addJoinedDef(shared_ptr<ReachingDef> newDef, ReachingDef::FilteredCfgEdge edge)
+void ReachingDef::addJoinedDef(shared_ptr<ReachingDef> newDef, CFGEdge edge)
 {
 	ROSE_ASSERT(isPhiFunction());
 	parentDefs[newDef].insert(edge);
