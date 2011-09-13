@@ -1812,4 +1812,11 @@ void prefetch (const __global float16 *p, size_t num_elements);
 
 #endif
 
+//I think these definitions will break on 32-bit systems
+//The built-in declarations from gcc actually specify the bit length explictly
+//e.g. int32_t __builtin_bswap32 (int32_t x)
+//However, integer types such as int32_t are not defined here.
+int __builtin_bswap32 (int x);
+long int __builtin_bswap64 (long int x);
+
 #endif /* !ROSE_USE_NEW_EDG_INTERFACE */
