@@ -269,6 +269,8 @@
 /* Name of backend Java compiler including path */
 #define BACKEND_JAVA_COMPILER_NAME_WITH_PATH "${BACKEND_JAVA_COMPILER}"
 
+/* Name of backend Python interpreter including path */
+#define BACKEND_PYTHON_INTERPRETER_NAME_WITH_PATH "${BACKEND_PYTHON_INTERPRETER_NAME_WITH_PATH}"
 
 /* Internal EDG specific consistency tests. */
 //AS FIXME

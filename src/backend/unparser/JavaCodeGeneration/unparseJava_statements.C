@@ -72,6 +72,7 @@ Unparse_Java::unparseOneElemConInit(SgConstructorInitializer* con_init, SgUnpars
 void
 Unparse_Java::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Info& info)
    {
+
   // This function unparses the language specific parse not handled by the base class unparseStatement() member function
 
      ROSE_ASSERT(stmt != NULL);
@@ -89,15 +90,20 @@ Unparse_Java::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Info
        // executable statements, control flow
           case V_SgBasicBlock:             unparseBasicBlockStmt (stmt, info); break;
           case V_SgIfStmt:                 unparseIfStmt         (stmt, info); break;
+          case V_SgJavaSynchronizedStatement: unparseSynchronizedStmt (stmt, info); break;
+          case V_SgJavaThrowStatement:     unparseThrowStmt      (stmt, info); break;
+          case V_SgJavaForEachStatement:   unparseForEachStmt    (stmt, info); break;
 
           case V_SgWhileStmt:              unparseWhileStmt      (stmt, info); break;
           case V_SgSwitchStatement:        unparseSwitchStmt     (stmt, info); break;
           case V_SgCaseOptionStmt:         unparseCaseStmt       (stmt, info); break;
           case V_SgDefaultOptionStmt:      unparseDefaultStmt    (stmt, info); break;
           case V_SgBreakStmt:              unparseBreakStmt      (stmt, info); break;
-          case V_SgLabelStatement:         unparseLabelStmt      (stmt, info); break;
+          case V_SgJavaLabelStatement:     unparseLabelStmt      (stmt, info); break;
           case V_SgGotoStatement:          unparseGotoStmt       (stmt, info); break;
           case V_SgReturnStmt:             unparseReturnStmt     (stmt, info); break;
+          case V_SgAssertStmt:             unparseAssertStmt     (stmt, info); break;
+          case V_SgNullStatement:          curprint("");/* Tab over for stmt*/ break;
 
           case V_SgForStatement:           unparseForStmt(stmt, info);          break; 
           case V_SgFunctionDeclaration:    unparseFuncDeclStmt(stmt, info);     break;
@@ -169,6 +175,11 @@ Unparse_Java::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Info
             case V_SgWhileStmt:
             case V_SgForStatement:
             case V_SgIfStmt:
+            case V_SgSwitchStatement:
+            case V_SgCaseOptionStmt:
+            case V_SgDefaultOptionStmt:
+            case V_SgJavaLabelStatement:
+            case V_SgJavaSynchronizedStatement:
                 printSemicolon = false;
                 break;
             default:
@@ -443,7 +454,7 @@ static size_t countElsesNeededToPreventDangling(SgStatement* s) {
       return countElsesNeededToPreventDangling(seq.back());
     }
     case V_SgDefaultOptionStmt: return countElsesNeededToPreventDangling(isSgCaseOptionStmt(s)->get_body());
-    case V_SgLabelStatement: return countElsesNeededToPreventDangling(isSgLabelStatement(s)->get_statement());
+    case V_SgJavaLabelStatement: return countElsesNeededToPreventDangling(isSgJavaLabelStatement(s)->get_statement());
     case V_SgCatchOptionStmt: return countElsesNeededToPreventDangling(isSgCatchOptionStmt(s)->get_body());
     case V_SgForStatement: return countElsesNeededToPreventDangling(isSgForStatement(s)->get_loop_body());
     case V_SgIfStmt: {
@@ -462,7 +473,7 @@ static size_t countElsesNeededToPreventDangling(SgStatement* s) {
 
 void Unparse_Java::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info) {
     SgIfStmt* if_stmt = isSgIfStmt(stmt);
-    ROSE_ASSERT(stmt != NULL);
+    ROSE_ASSERT(if_stmt != NULL);
 
     SgExprStatement* cond_stmt = isSgExprStatement(if_stmt->get_conditional());
     ROSE_ASSERT(cond_stmt != NULL && "expected an SgExprStatement in SgIfStmt::p_conditional");
@@ -483,6 +494,42 @@ void Unparse_Java::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info) {
         curprint_indented("else ", info);
         unparseStatement(if_stmt->get_false_body(), info);
     }
+}
+
+void Unparse_Java::unparseSynchronizedStmt(SgStatement* stmt, SgUnparse_Info& info) {
+    SgJavaSynchronizedStatement *sync_stmt = isSgJavaSynchronizedStatement(stmt);
+    ROSE_ASSERT(sync_stmt != NULL);
+
+    curprint("synchronized (");
+    unparseExpression(sync_stmt->get_expression(), info);
+    curprint(")");
+
+    unparseStatement(sync_stmt->get_body(), info);
+}
+
+void Unparse_Java::unparseThrowStmt(SgStatement* stmt, SgUnparse_Info& info) {
+    SgJavaThrowStatement *throw_stmt = isSgJavaThrowStatement(stmt);
+    ROSE_ASSERT(throw_stmt != NULL);
+
+    curprint("throw ");
+    unparseExpression(throw_stmt->get_throwOp()->get_operand(), info);
+}
+
+void Unparse_Java::unparseForEachStmt(SgStatement* stmt, SgUnparse_Info& info) {
+    SgJavaForEachStatement *foreach_stmt = isSgJavaForEachStatement(stmt);
+    ROSE_ASSERT(foreach_stmt != NULL);
+
+    curprint("for (");
+
+ // DQ (9/3/2011): Change to API for this IR node.
+ // unparseInitializedName(foreach_stmt -> get_element(), info);
+    ROSE_ASSERT(foreach_stmt -> get_element()->get_variables().size() == 1);
+    unparseInitializedName(foreach_stmt -> get_element()->get_variables()[0], info);
+
+    curprint(" : ");
+    unparseExpression(foreach_stmt -> get_collection(), info);
+    curprint(")");
+    unparseStatement(foreach_stmt -> get_loop_body(), info);
 }
 
 void
@@ -661,13 +708,18 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      // unparse type, unless this a constructor
      if (! constructor) {
+         ROSE_ASSERT(mfuncdecl_stmt->get_type());
+         ROSE_ASSERT(mfuncdecl_stmt->get_type()->get_return_type());
          unparseType(mfuncdecl_stmt->get_type()->get_return_type(), info);
          curprint(" ");
      }
 
      unparseName(mfuncdecl_stmt->get_name(), info);
      curprint("(");
-     unparseStatement(mfuncdecl_stmt->get_parameterList(), info);
+     //     unparseStatement(mfuncdecl_stmt->get_parameterList(), info);
+     foreach (SgInitializedName* name, mfuncdecl_stmt->get_args()) {
+         unparseInitializedName(name, info);
+     }
      curprint(") ");
      unparseStatement(mfuncdecl_stmt->get_definition(), info);
 
@@ -767,10 +819,11 @@ Unparse_Java::unparseExprStmt(SgStatement* stmt, SgUnparse_Info& info)
 
 void Unparse_Java::unparseLabelStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
-     SgLabelStatement* label_stmt = isSgLabelStatement(stmt);
+     SgJavaLabelStatement* label_stmt = isSgJavaLabelStatement(stmt);
      ROSE_ASSERT(label_stmt != NULL);
 
      curprint ( string(label_stmt->get_label().str()) + ":");
+     unparseStatement(label_stmt->get_statement(), info); // charles4: 8/25/2001 process the real stmt
    }
 
 void
@@ -820,12 +873,9 @@ Unparse_Java::unparseSwitchStmt(SgStatement* stmt, SgUnparse_Info& info)
      ROSE_ASSERT(switch_stmt != NULL);
 
      curprint ( string("switch("));
-  // unparseExpression(switch_stmt->get_item_selector(), info);
      
-     SgUnparse_Info ninfo(info);
-     ninfo.set_SkipSemiColon();
-     ninfo.set_inConditional();
-     unparseStatement(switch_stmt->get_item_selector(), ninfo);
+     unparseExpression(((SgExprStatement *) switch_stmt->get_item_selector())-> get_expression(), info);
+
      curprint ( string(")"));
 
      if ( (switch_stmt->get_body() != NULL) && !info.SkipBasicBlock())
@@ -932,6 +982,25 @@ Unparse_Java::unparseReturnStmt(SgStatement* stmt, SgUnparse_Info& info)
          curprint(" ");
          unparseExpression(return_stmt->get_expression(), info);
      }
+   }
+
+void
+Unparse_Java::unparseAssertStmt(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgAssertStmt* assert_stmt = isSgAssertStmt(stmt);
+     ROSE_ASSERT(assert_stmt != NULL);
+
+     curprint ("assert ");
+
+     unparseExpression(assert_stmt->get_test(), info);
+
+     //
+     // charles4: 8/20/2011 - TODO: We need to add an extra expression field to SgAssertStmt for Java.
+     //
+     //     if (assert_stmt->get_exception_argument()) {
+     //         curprint(" : ");
+     //         unparseExpression(assert_stmt->get_exception_argument(), info);
+     //     }
    }
 
 void
