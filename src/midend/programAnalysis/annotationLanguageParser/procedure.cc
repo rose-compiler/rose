@@ -740,8 +740,8 @@ void procedureAnn::add_global_structures(Annotations * annotations,
 					 annVariable * parent_var,
 					 structureTreeAnn * parent_node)
 {
-  structureAnn * new_struc = 0;
-  annVariable * child_var = 0;
+  structureAnn * new_struc = NULL;
+  annVariable * child_var = NULL;
 
   // -- Make sure we have a pointer rule
 
@@ -812,7 +812,11 @@ void procedureAnn::add_global_structures(Annotations * annotations,
    // DQ (9/12/2011): Static analysis reports that this could be NULL, check for it explicitly.
       assert(child_node != NULL);
       if (child_node->targets())
-	add_global_structures(annotations, child_var, child_node);
+         {
+        // DQ (9/13/2011): Static analysis reports that this could be NULL, check for it explicitly.
+           assert(child_var  != NULL);
+           add_global_structures(annotations, child_var, child_node);
+         }
     }
 }
 
