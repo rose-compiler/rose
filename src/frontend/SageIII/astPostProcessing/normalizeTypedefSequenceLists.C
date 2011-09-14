@@ -159,6 +159,9 @@ NormalizeTypedefSequenceLists::generateKey(SgTypedefSeq* typedefSeq)
              {
             // This loop should be a loop that always terminate
 
+            // DQ (9/13/2011): Static analysis wants an assertion here.
+               ROSE_ASSERT(baseType != NULL);
+
             // printf (" -- baseType = %p = %s \n",baseType,baseType->class_name().c_str());
 
                key.IRnodeList.push_back(baseType->variantT());
