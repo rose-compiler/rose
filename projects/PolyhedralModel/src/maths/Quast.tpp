@@ -6,11 +6,11 @@
  */
 
 template <class Type>
-QUAST<Type> * computeMaxLex(Type from, const std::vector<LinearExpression> & f_from, Type to, const std::vector<LinearExpression> & f_to) {
+QUAST<Type> * computeMaxLex(Type from, const std::vector<LinearExpression_ppl> & f_from, Type to, const std::vector<LinearExpression_ppl> & f_to) {
 	QUAST<Type> * res = makeEmpty<Type>(from);
 	
-	const std::vector<LinearExpression> & scat_from = getScattering(from);
-	const std::vector<LinearExpression> & scat_to   = getScattering(to);
+	const std::vector<LinearExpression_ppl> & scat_from = getScattering(from);
+	const std::vector<LinearExpression_ppl> & scat_to   = getScattering(to);
 	
 	size_t min = scat_from.size() < scat_to.size() ? scat_from.size() : scat_to.size();
 		
@@ -26,8 +26,8 @@ QUAST<Type> * computeMaxLex(Type from, const std::vector<LinearExpression> & f_f
 
 template <class Type>
 QUAST<Type> * computeMax(
-	Type from, const std::vector<LinearExpression> & f_from, //const std::vector<LinearExpression> * scat_from,
-	Type to  , const std::vector<LinearExpression> & f_to  , //const std::vector<LinearExpression> * scat_to,
+	Type from, const std::vector<LinearExpression_ppl> & f_from, //const std::vector<LinearExpression_ppl> * scat_from,
+	Type to  , const std::vector<LinearExpression_ppl> & f_to  , //const std::vector<LinearExpression_ppl> * scat_to,
 	size_t depth
 ) {
 	QUAST<Type> * res;
@@ -48,7 +48,7 @@ QUAST<Type> * computeMax(
 //	const ConstraintSystem & dom_from = getDomain(from).constraints();
 //	const ConstraintSystem & dom_to = getDomain(to).constraints();
 
-	LinearExpression le(0);
+	LinearExpression_ppl le(0);
 
 //	std::cout << std::endl << std::endl << depth << std::endl;
 //	std::cout << "\tTranslate 'from' domain" << std::endl;
@@ -72,7 +72,7 @@ QUAST<Type> * computeMax(
 			p.refine_with_constraint(le >= 0);
 		else
 			p.refine_with_constraint(le == 0);
-		le = LinearExpression::zero();
+		le = LinearExpression_ppl::zero();
 	}
 //	std::cout << "\tTranslate 'to' domain" << std::endl;
 	for (it_dom = dom_to.begin(); it_dom != dom_to.end(); it_dom++) {
@@ -94,7 +94,7 @@ QUAST<Type> * computeMax(
 			p.refine_with_constraint(le >= 0);
 		else
 			p.refine_with_constraint(le == 0);
-		le = LinearExpression::zero();
+		le = LinearExpression_ppl::zero();
 	}
 //	std::cout << "\tTranslate function rel" << std::endl;
 	for (size_t i = 0; i < f_from.size(); i++) {
@@ -114,15 +114,15 @@ QUAST<Type> * computeMax(
 		std::cout << le.inhomogeneous_term() << " == 0" << std::endl;
 */			
 		p.refine_with_constraint(le == 0);
-		le = LinearExpression::zero();
+		le = LinearExpression_ppl::zero();
 	}
 	// Scattering part
 	
-	const std::vector<LinearExpression> & scat_from = getScattering(from);
-	const std::vector<LinearExpression> & scat_to   = getScattering(to);
+	const std::vector<LinearExpression_ppl> & scat_from = getScattering(from);
+	const std::vector<LinearExpression_ppl> & scat_to   = getScattering(to);
 	
 //	std::cout << "\tTranslate Scattering" << std::endl;
-	le = LinearExpression::zero();
+	le = LinearExpression_ppl::zero();
 	for (int i = 0; i < depth; i++) {
 		le += scat_to[i].inhomogeneous_term() - scat_from[i].inhomogeneous_term();
 		for (size_t j = 0; j < dt && j < scat_to[i].space_dimension(); j++)
@@ -140,9 +140,9 @@ QUAST<Type> * computeMax(
 		std::cout << le.inhomogeneous_term() << " == 0" << std::endl;
 */			
 		p.refine_with_constraint(le == 0);
-		le = LinearExpression::zero();
+		le = LinearExpression_ppl::zero();
 	}
-	le = LinearExpression::zero();
+	le = LinearExpression_ppl::zero();
 	le += scat_to[depth].inhomogeneous_term() - scat_from[depth].inhomogeneous_term();
 	for (size_t j = 0; j < dt && j < scat_to[depth].space_dimension(); j++)
 		le += scat_to[depth].coefficient(VariableID(j)) * VariableID(j);
@@ -159,7 +159,7 @@ QUAST<Type> * computeMax(
 	std::cout << le.inhomogeneous_term() << " <= -1" << std::endl;
 */			
 	p.refine_with_constraint(le <= -1);
-	le = LinearExpression::zero();
+	le = LinearExpression_ppl::zero();
 	
 	// Compute Max
 	
@@ -175,7 +175,7 @@ QUAST<Type> * computeMax(
 		}
 	}
 	
-	std::vector<LinearExpression> * ml = maxlex(p, sign, dt, df, gt);
+	std::vector<LinearExpression_ppl> * ml = maxlex(p, sign, dt, df, gt);
 	
 	std::vector<Constraint> * cond = conditions(dom_to, dom_from, *ml, dt, df, gt);
 	
@@ -200,8 +200,8 @@ QUAST<Type> * computeMax(
 }
 
 template <class Type>
-std::vector<LinearExpression> * computeRelation(Type obj, std::vector<LinearExpression> & arg, size_t d) {
-	std::vector<LinearExpression> * res = new std::vector<LinearExpression>();
+std::vector<LinearExpression_ppl> * computeRelation(Type obj, std::vector<LinearExpression_ppl> & arg, size_t d) {
+	std::vector<LinearExpression_ppl> * res = new std::vector<LinearExpression_ppl>();
 	
 	size_t dim = getDimension(obj);
 	
@@ -209,10 +209,10 @@ std::vector<LinearExpression> * computeRelation(Type obj, std::vector<LinearExpr
 		throw Exception::DimensionsError("To compute a relation the object and the vector of linear expression need to have the same dimension.");
 	}
 	
-	std::vector<LinearExpression> scattering = getScattering(obj);
+	std::vector<LinearExpression_ppl> scattering = getScattering(obj);
 	
-	LinearExpression le(0);
-	std::vector<LinearExpression>::iterator it;
+	LinearExpression_ppl le(0);
+	std::vector<LinearExpression_ppl>::iterator it;
 	for (it = scattering.begin(); it != scattering.end(); it++) {
 		le += it->inhomogeneous_term();
 		
@@ -225,7 +225,7 @@ std::vector<LinearExpression> * computeRelation(Type obj, std::vector<LinearExpr
 		
 		res->push_back(le);
 		
-		le = LinearExpression::zero();
+		le = LinearExpression_ppl::zero();
 	}
 	
 	return res;
@@ -296,7 +296,7 @@ Type QUAST<Type>::Leaf() const {
 }
 
 template <class Type>
-const std::vector<LinearExpression> & QUAST<Type>::Relation() const {
+const std::vector<LinearExpression_ppl> & QUAST<Type>::Relation() const {
 	return p_relation;
 }
 
@@ -350,7 +350,7 @@ QUAST<Type> * maxQuast(QUAST<Type> * q1, QUAST<Type> * q2) {
 	
 	// q1->isLeaf() && q2->isLeaf()
 	
-	LinearExpression le(0);
+	LinearExpression_ppl le(0);
 	
 	if (q1->p_leaf == q2->p_leaf) {
 		for (int i = 0; i < q1->p_relation.size(); i++) {
@@ -365,11 +365,11 @@ QUAST<Type> * maxQuast(QUAST<Type> * q1, QUAST<Type> * q2) {
 	
 	size_t dim_source = getDimension(q1->p_source);
 	
-	std::vector<LinearExpression> * rel_q1 = computeRelation(q1->p_leaf, q1->p_relation, dim_source);
-	std::vector<LinearExpression> * rel_q2 = computeRelation(q2->p_leaf, q2->p_relation, dim_source);
+	std::vector<LinearExpression_ppl> * rel_q1 = computeRelation(q1->p_leaf, q1->p_relation, dim_source);
+	std::vector<LinearExpression_ppl> * rel_q2 = computeRelation(q2->p_leaf, q2->p_relation, dim_source);
 	
-	std::vector<LinearExpression> condition;
-	le = LinearExpression::zero();
+	std::vector<LinearExpression_ppl> condition;
+	le = LinearExpression_ppl::zero();
 	for (int i = 0; (i < rel_q1->size()) && (i < rel_q2->size()); i++) {
 		 le = rel_q1->at(i) - rel_q2->at(i);
 		 if (le.all_homogeneous_terms_are_zero()) {
@@ -377,7 +377,7 @@ QUAST<Type> * maxQuast(QUAST<Type> * q1, QUAST<Type> * q2) {
 		 }
 		 else {
 		 	condition.push_back(le);
-		 	le = LinearExpression::zero();
+		 	le = LinearExpression_ppl::zero();
 		 }
 	}
 	
@@ -483,7 +483,7 @@ QUAST<Type> * makeBranch(Type source, std::vector<Constraint> & cs, QUAST<Type> 
 }
 
 template <class Type>
-QUAST<Type> * makeLeaf(Type source, Type leaf, std::vector<LinearExpression> & iterators) {
+QUAST<Type> * makeLeaf(Type source, Type leaf, std::vector<LinearExpression_ppl> & iterators) {
 	QUAST<Type> * res = new QUAST<Type>(source);
 	res->p_is_leaf = true;
 	res->p_leaf = leaf;
@@ -496,7 +496,7 @@ void QUAST<Type>::print(std::ostream & out, std::string indent) const {
 	if (p_is_leaf) {
 		if (!isBottom<Type>(p_leaf)) {
 			out << indent << p_leaf << std::endl;
-			std::vector<LinearExpression>::const_iterator it;
+			std::vector<LinearExpression_ppl>::const_iterator it;
 			for (it = p_relation.begin(); it != p_relation.end(); it++) {
 				out << indent;
 				for (int i = 0; i < it->space_dimension(); i++) {

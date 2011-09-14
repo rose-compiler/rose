@@ -221,7 +221,7 @@ class Scattering {
 		size_t p_nbr_surr_loop; //!< Number of surrounding loops (iterators)
 		
 		// List of orderred linear expression [PPL] (scattering matrix)
-		std::vector<LinearExpression> p_equations;
+		std::vector<LinearExpression_ppl> p_equations;
 	
 	public:
 		Scattering(PolyhedralProgram<Function, Expression, VariableLBL> & polyhedral_program, Expression * expression, size_t nbr_surr_loop);
@@ -229,7 +229,7 @@ class Scattering {
 		PolyhedralProgram<Function, Expression, VariableLBL> & getPolyhedralProgram() const;
 		
 		void addEquation(std::vector<std::pair<VariableLBL, int> > & equation);
-		const std::vector<LinearExpression> & getScattering() const;
+		const std::vector<LinearExpression_ppl> & getScattering() const;
 		
 		void print(std::ostream & out);
 		
@@ -267,8 +267,8 @@ class DataAccess {
 		
 		size_t p_nbr_surr_loop; //!< Number of surrounding loops (iterators)
 		
-		std::vector<std::pair<size_t, std::vector<LinearExpression> > > p_read;
-		std::vector<std::pair<size_t, std::vector<LinearExpression> > > p_write;
+		std::vector<std::pair<size_t, std::vector<LinearExpression_ppl> > > p_read;
+		std::vector<std::pair<size_t, std::vector<LinearExpression_ppl> > > p_write;
 
 	public:
 		DataAccess(PolyhedralProgram<Function, Expression, VariableLBL> & polyhedral_program, Expression * expression, size_t nbr_surr_loop);
@@ -284,22 +284,22 @@ class DataAccess {
 		 * 	As usual NULL is used for the inhomogeneous term.
 		 */
 		void addRead(VariableLBL v, const std::vector<std::vector<std::pair<VariableLBL, int> > > & access_vector);
-		std::vector<std::vector<LinearExpression> > * getRead(VariableLBL v) const;
+		std::vector<std::vector<LinearExpression_ppl> > * getRead(VariableLBL v) const;
 		/**
 		 * \brief Declare a write access to a variable (see DataAccess::addRead for details).
 		 * 
 		 * Same than DataAccess::addRead.
 		 */
 		void addWrite(VariableLBL v, const std::vector<std::vector<std::pair<VariableLBL, int> > > & access_vector);
-		std::vector<std::vector<LinearExpression> > * getWrite(VariableLBL v) const;
+		std::vector<std::vector<LinearExpression_ppl> > * getWrite(VariableLBL v) const;
 		
 		void print(std::ostream & out);
 		
 		/**
 		 * \brief internal use, for: ScopLib translator
 		 */
-		 const std::vector<std::pair<size_t, std::vector<LinearExpression> > > & getRead() const;
-		 const std::vector<std::pair<size_t, std::vector<LinearExpression> > > & getWrite() const;
+		 const std::vector<std::pair<size_t, std::vector<LinearExpression_ppl> > > & getRead() const;
+		 const std::vector<std::pair<size_t, std::vector<LinearExpression_ppl> > > & getWrite() const;
 		
 	friend class DataDependencies<Function, Expression, VariableLBL>;
 	

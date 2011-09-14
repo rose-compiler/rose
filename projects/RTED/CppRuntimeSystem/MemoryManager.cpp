@@ -759,7 +759,7 @@ MemoryType* MemoryManager::allocateMemory(Location adrObj, size_t szObj, MemoryT
     MemoryType&               res = mem.insert(v).first->second;
 
     const size_t              sz = mem.size();
-    std::cout << "|mem| = " << sz << "  dealloc " << &res << std::endl;
+    // std::cout << "|mem| = " << sz << "  dealloc " << &res << std::endl;
 
     memtypecache.store(res);
     return &res;
@@ -904,7 +904,6 @@ void MemoryManager::freeHeapMemory(Location addr, MemoryType::AllocKind freekind
     MemoryType* mt = findContainingMem(addr, 1);
 
     const size_t              sz = mem.size();
-    std::cout << "|mem| = " << sz << "  dealloc " << mt << std::endl;
 
     checkDeallocationAddress(mt, addr, freekind);
     memtypecache.clear(*mt);
