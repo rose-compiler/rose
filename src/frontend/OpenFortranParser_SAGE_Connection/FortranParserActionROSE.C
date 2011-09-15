@@ -8972,11 +8972,6 @@ void c_action_add_operand__add_op(Token_t * addOp)
      ROSE_ASSERT(addOp != NULL);
 
 #if !SKIP_C_ACTION_IMPLEMENTATION
-     ROSE_ASSERT(astExpressionStack.empty() == false);
-     SgExpression* rhs = astExpressionStack.front();
-     astExpressionStack.pop_front();
-
-#if !SKIP_C_ACTION_IMPLEMENTATION
     ROSE_ASSERT(astExpressionStack.empty() == false);
     SgExpression* rhs = astExpressionStack.front();
     astExpressionStack.pop_front();
