@@ -5,7 +5,6 @@
 
 // What should be the behavior of the default constructor for Grammar
 
-#define ADD_ALIAS_SYMBOL 1
 
 void
 Grammar::setUpSymbols ()
@@ -40,6 +39,9 @@ Grammar::setUpSymbols ()
      NEW_TERMINAL_MACRO ( MemberFunctionSymbol, "MemberFunctionSymbol", "MEMBER_FUNC_NAME" );
      NEW_TERMINAL_MACRO ( LabelSymbol,          "LabelSymbol",          "LABEL_NAME" );
 
+  // DQ (9/9/2011): Added support for JavaLabelStatement (which has a different type of support for labels than C/C++ or Fortran).
+     NEW_TERMINAL_MACRO ( JavaLabelSymbol,      "JavaLabelSymbol",      "JAVA_LABEL_NAME" );
+
      // [DT] 6/14/2000 -- Added DefaultSymbol.
      NEW_TERMINAL_MACRO ( DefaultSymbol,        "DefaultSymbol",        "DEFAULT_NAME" );
 
@@ -70,7 +72,6 @@ Grammar::setUpSymbols ()
      NEW_TERMINAL_MACRO ( AsmBinaryDataSymbol,     "AsmBinaryDataSymbol",     "BINARY_DATA_SYMBOL" );
 
 
-#if ADD_ALIAS_SYMBOL
   // DQ (9/26/2008): Added support for references to symbols to support: "use" declaration in F90, "using" declaration in C++, and "namespace aliasing" in C++.
      NEW_TERMINAL_MACRO ( AliasSymbol,          "AliasSymbol",         "ALIAS_SYMBOL" );
 
@@ -79,16 +80,8 @@ Grammar::setUpSymbols ()
           ClassSymbol      | TemplateSymbol         | EnumSymbol             | EnumFieldSymbol    | 
           TypedefSymbol    | LabelSymbol            | DefaultSymbol          | NamespaceSymbol    |
           IntrinsicSymbol  | ModuleSymbol           | InterfaceSymbol        | CommonSymbol       | 
-          AliasSymbol      | AsmBinaryAddressSymbol | AsmBinaryDataSymbol /* | RenameSymbol*/,
+          AliasSymbol      | AsmBinaryAddressSymbol | AsmBinaryDataSymbol    | JavaLabelSymbol /* | RenameSymbol*/,
           "Symbol","SymbolTag", false);
-#else
-     NEW_NONTERMINAL_MACRO (Symbol,
-          VariableSymbol /*| TypeSymbol*/   | FunctionSymbol | FunctionTypeSymbol | 
-          ClassSymbol      | TemplateSymbol | EnumSymbol     | EnumFieldSymbol    | 
-          TypedefSymbol    | LabelSymbol    | DefaultSymbol  | NamespaceSymbol    |
-          IntrinsicSymbol  | ModuleSymbol   |InterfaceSymbol | CommonSymbol,
-          "Symbol","SymbolTag", false);
-#endif
 
   // ***********************************************************************
   // ***********************************************************************
@@ -194,6 +187,12 @@ Grammar::setUpSymbols ()
   // LabelSymbol.setFunctionPrototype     ( "HEADER_EMPTY_GET_TYPE", "../Grammar/Symbol.code" );
   // LabelSymbol.setDataPrototype         ( "SgLabelStatement*", "declaration", "= NULL");
 
+
+  // DQ (9/9/2011): Added support for JavaLabelStatement (which has a different type of support for labels than C/C++ or Fortran).
+     JavaLabelSymbol.setFunctionPrototype     ( "HEADER_JAVA_LABEL_SYMBOL", "../Grammar/Symbol.code" );
+     JavaLabelSymbol.setDataPrototype         ( "SgJavaLabelStatement*", "declaration", "= NULL",
+                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
   // DefaultSymbol.excludeFunctionPrototype ( "HEADER_GET_NAME", "../Grammar/Symbol.code" );
      DefaultSymbol.excludeFunctionPrototype ( "HEADER_GET_TYPE", "../Grammar/Symbol.code" );
 
@@ -241,7 +240,6 @@ Grammar::setUpSymbols ()
                                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
-#if ADD_ALIAS_SYMBOL
      AliasSymbol.setFunctionPrototype   ( "HEADER_ALIAS_SYMBOL", "../Grammar/Symbol.code" );
      AliasSymbol.setDataPrototype       ( "SgSymbol*", "alias", "= NULL",
                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -252,7 +250,6 @@ Grammar::setUpSymbols ()
                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AliasSymbol.setDataPrototype       ( "SgName", "new_name", "= \"\"",
                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
 
      RenameSymbol.setFunctionPrototype   ( "HEADER_RENAME_SYMBOL", "../Grammar/Symbol.code" );
      RenameSymbol.setDataPrototype       ( "SgSymbol*", "original_symbol", "= NULL",
@@ -310,6 +307,9 @@ Grammar::setUpSymbols ()
   // LabelSymbol.setFunctionSource          ( "SOURCE_SHORT_GET_NAME", "../Grammar/Symbol.code" );
      LabelSymbol.setFunctionSource          ( "SOURCE_LABEL_SYMBOL", "../Grammar/Symbol.code" );
 
+  // DQ (9/9/2011): Added support for JavaLabelStatement (which has a different type of support for labels than C/C++ or Fortran).
+     JavaLabelSymbol.setFunctionSource      ( "SOURCE_JAVA_LABEL_SYMBOL", "../Grammar/Symbol.code" );
+
   // There is really no difference between the long and short versions (just debugging code, I think)
      VariableSymbol.setFunctionSource       ( "SOURCE_LONG_GET_NAME", "../Grammar/Symbol.code" );
 
@@ -362,9 +362,7 @@ Grammar::setUpSymbols ()
   // CommonSymbol.setFunctionSource    ( "SOURCE_EMPTY_GET_TYPE", "../Grammar/Symbol.code" );
 #endif
 
-#if ADD_ALIAS_SYMBOL
      AliasSymbol.setFunctionSource          ( "SOURCE_ALIAS_SYMBOL", "../Grammar/Symbol.code" );
-#endif
 
      RenameSymbol.setFunctionSource         ( "SOURCE_RENAME_SYMBOL", "../Grammar/Symbol.code" );
 

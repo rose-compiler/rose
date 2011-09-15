@@ -400,6 +400,7 @@ FixupSourcePositionInformation::evaluateSynthesizedAttribute
              {
                printf ("Error: (*(returnAttribute.startingPosition) <= *(returnAttribute.endingPosition)) == false \n");
                SgNode* tempNode = returnAttribute.startingPosition->get_parent();
+               ROSE_ASSERT(tempNode != NULL);
                printf ("returnAttribute.startingPosition->get_parent() = %p = %s \n",tempNode,tempNode->class_name().c_str());
                returnAttribute.startingPosition->display("Leaving evaluateSynthesizedAttribute(): returnAttribute.startingPosition");
                returnAttribute.endingPosition->display("Leaving evaluateSynthesizedAttribute(): returnAttribute.endingPosition");
