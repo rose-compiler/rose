@@ -99,7 +99,7 @@ void varID::operator = (const variable &that_arg)
 	components  = that.components;
 	annotations = that.annotations;
 	varType     = that.varType;
-	name        = name;
+	name        = that.name;
 }
 
 // recursive function that pulls the SgInitializedNames of all the SgVarRefExps inside this SgDotExp
