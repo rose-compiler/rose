@@ -423,7 +423,7 @@ void printDataflowInfoPass::genInitState(const Function& func, const DataflowNod
 	
 bool printDataflowInfoPass::transfer(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo)
 {
-	Dbg::dbg << "-----------------------------------------\n";
+	Dbg::dbg << "-----#############################--------\n";
 	Dbg::dbg << "Node: ["<<Dbg::escape(n.getNode()->unparseToString())<<" | "<< n.getNode()->class_name()<<"]\n";
 	// print out all the dataflow facts associated with analysis at this node
 	
@@ -783,7 +783,7 @@ bool ContextInsensitiveInterProceduralDataflow::transfer(
 			
 		//Dbg::dbg << "        funcLatticesAfter->size()="<<funcLatticesAfter->size()<<endl;
 		if(analysisDebugLevel>=1)
-				Dbg::dbg << "      ---------------------------------------\n";
+				Dbg::dbg << "      ----%%%%%%%%%%%%%%%%%%%%---------\n";
 		
 		// Transfer the result of the function call into the dfInfo Lattices.
 		vector<Lattice*>::const_iterator itCalleeAfter, itCallerAfter;
