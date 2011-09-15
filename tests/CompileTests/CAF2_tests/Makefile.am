@@ -78,6 +78,7 @@ TESTCODES_REQUIRED_TO_PASS = \
     get-3.caf \
     lockset.caf \
     loopbound-1.caf \
+    image-selector.caf \
     memory-1.caf \
     module-1-mod1.caf \
     module-2-module_table.caf \
