@@ -1,5 +1,6 @@
 
 #include "broadway.h"
+#include <assert.h>
 
 using namespace std;
 
@@ -48,6 +49,15 @@ structureTreeAnn::~structureTreeAnn()
 
   delete _targets;
 }
+
+structureTreeAnn::structureTreeAnn(const structureTreeAnn & X)
+   : Ann(X)
+   {
+  // DQ (9/13/2011): This copy constructor was built because static analysis tools 
+  // suggested it would avoid a possible double free error.  I agree.
+     printf ("Error: it is an error to call this copy constructor. \n");
+     assert(false);
+   }
 
 void structureTreeAnn::print(int depth) const
 {
