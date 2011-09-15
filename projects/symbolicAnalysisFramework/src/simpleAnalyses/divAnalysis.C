@@ -544,6 +544,17 @@ void DivAnalysisTransfer::visit(SgValueExp *sgn) {
   if(resLat) updateModified(resLat->setTop());
 }
 
+template <typename T>
+void DivAnalysisTransfer::transferArith(SgBinaryOp *sgn, T transferOp) {
+  DivLattice *arg1Lat, *arg2Lat, *resLat;
+  if (getLattices(sgn, arg1Lat, arg2Lat, resLat)) {
+    transferOp(this, arg1Lat, arg2Lat, resLat);
+    if (isSgCompoundAssignOp(sgn))
+      arg1Lat->copy(resLat);
+  }
+}
+void DivAnalysisTransfer::transferArith(SgBinaryOp *sgn, TransferOp transferOp) { transferArith(sgn, boost::mem_fn(transferOp)); }
+
 void DivAnalysisTransfer::transferAdditive(DivLattice *arg1Lat, DivLattice *arg2Lat, DivLattice *resLat, bool isAddition) {
   // Either one Bottom
   if (arg1Lat->getLevel() == DivLattice::bottom        || arg2Lat->getLevel() == DivLattice::bottom) {
@@ -682,16 +693,6 @@ void DivAnalysisTransfer::transferDivision(DivLattice *arg1Lat, DivLattice *arg2
 void DivAnalysisTransfer::visit(SgDivideOp *sgn) { transferArith(sgn, &DivAnalysisTransfer::transferDivision); }
 void DivAnalysisTransfer::visit(SgDivAssignOp *sgn) { transferArith(sgn, &DivAnalysisTransfer::transferDivision); }
 
-template <typename T>
-void DivAnalysisTransfer::transferArith(SgBinaryOp *sgn, T transferOp) {
-  DivLattice *arg1Lat, *arg2Lat, *resLat;
-  if (getLattices(sgn, arg1Lat, arg2Lat, resLat)) {
-    transferOp(this, arg1Lat, arg2Lat, resLat);
-    if (isSgCompoundAssignOp(sgn))
-      arg1Lat->copy(resLat);
-  }
-}
-void DivAnalysisTransfer::transferArith(SgBinaryOp *sgn, TransferOp transferOp) { transferArith(sgn, boost::mem_fn(transferOp)); }
 
 void DivAnalysisTransfer::transferMod(DivLattice *arg1Lat, DivLattice *arg2Lat, DivLattice *resLat) {
   if(divAnalysisDebugLevel>=1) Dbg::dbg << "   case i = j %% k\n";
