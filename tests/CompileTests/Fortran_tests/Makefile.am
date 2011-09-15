@@ -275,6 +275,7 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2011_Rice_lost-kindtype-1.f90 \
      test2011_Rice_lost-kindtype-2.f90 \
      test2011_Rice_multi-char-decl.f90 \
+     test2011_Rice_nullify.f90 \
      test2011_Rice_pause-no-stop-code.f90 \
      test2011_Rice_pointer.f90 \
      test2011_Rice_pointer-after-dimension.f90 \

@@ -1878,6 +1878,9 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
           case V_SgAllocateStatement:
           case V_SgDeallocateStatement:
 
+       // DXN (09/14/2011):
+          case V_SgNullifyStatement:
+
        // Ignore these scope statements since they are not yet shared
           case V_SgBasicBlock:
           case V_SgNamespaceDefinitionStatement:
