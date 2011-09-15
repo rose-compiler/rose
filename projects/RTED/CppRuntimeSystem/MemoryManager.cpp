@@ -758,9 +758,6 @@ MemoryType* MemoryManager::allocateMemory(Location adrObj, size_t szObj, MemoryT
     MemoryTypeSet::value_type v(adrObj, tmp);
     MemoryType&               res = mem.insert(v).first->second;
 
-    const size_t              sz = mem.size();
-    // std::cout << "|mem| = " << sz << "  dealloc " << &res << std::endl;
-
     memtypecache.store(res);
     return &res;
 }
@@ -894,6 +891,9 @@ void MemoryManager::freeMemory(MemoryType* m, MemoryType::AllocKind freekind)
     pm->deletePointerInRegion( *m );
     pm->invalidatePointerToRegion( *m );
 
+    // remove entry from cache
+    memtypecache.clear(*m);
+
     // successful free, erase allocation info from map
     mem.erase(m->beginAddress());
 }
@@ -903,10 +903,7 @@ void MemoryManager::freeHeapMemory(Location addr, MemoryType::AllocKind freekind
 {
     MemoryType* mt = findContainingMem(addr, 1);
 
-    const size_t              sz = mem.size();
-
     checkDeallocationAddress(mt, addr, freekind);
-    memtypecache.clear(*mt);
     freeMemory( mt, freekind );
 }
 
@@ -915,7 +912,6 @@ void MemoryManager::freeStackMemory(Location addr)
     MemoryType* mt = findContainingMem(addr, 1);
 
     checkDeallocationAddress(mt, addr, akStack);
-    memtypecache.clear(*mt);
     freeMemory( mt, mt->howCreated() );
 }
 
