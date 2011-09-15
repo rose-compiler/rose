@@ -2261,7 +2261,6 @@ projects/backstroke/valueGraph/headerUnparser/Makefile
 projects/backstroke/pluggableReverser/Makefile
 projects/backstroke/testCodeGeneration/Makefile
 projects/backstroke/restrictedLanguage/Makefile
-projects/backstroke/reverseComputation/Makefile
 projects/backstroke/tests/Makefile
 projects/backstroke/tests/cfgReverseCodeGenerator/Makefile
 projects/backstroke/tests/expNormalizationTest/Makefile
