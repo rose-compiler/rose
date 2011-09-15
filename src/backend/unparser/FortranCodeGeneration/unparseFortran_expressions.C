@@ -1880,7 +1880,9 @@ void FortranCodeGeneration_locatedNode::unparseCoArrayExpression (SgExpression *
     unparseLanguageSpecificExpression(referData, info);
 
     // print the image selector
+
     curprint("[");
+
     if( teamRank )
     {
         SgIntVal * val = isSgIntVal(teamRank);
@@ -1889,18 +1891,46 @@ void FortranCodeGeneration_locatedNode::unparseCoArrayExpression (SgExpression *
         else
             unparseLanguageSpecificExpression(teamRank, info);
     }
+
+    if( teamRank && teamVarRef ) curprint(" ");
+
     if( teamVarRef )
     {
-        curprint("@");
-        curprint(teamVarRef->get_symbol()->get_declaration()->get_name().str());
+        string name = teamVarRef->get_symbol()->get_declaration()->get_name();
+        if( name == "team_world" && !teamRank )
+            curprint("*");
+        else if( name == "team_default" && !teamRank )
+            curprint("@");
+        else
+        {
+            curprint("@");
+            curprint(name);
+        }
     }
+
+    else
+        /* print nothing */ ;
+
     curprint("]");
 }
 
 
-// Same as in base class, except unary plus/minus have equal precedence with binary plus.
+bool FortranCodeGeneration_locatedNode::requiresParentheses(SgExpression* expr, SgUnparse_Info& info)
+{
+    // same as in base class except always respect 'need_paren' property of a node
+    // seems like this would be a good idea in general, but it breaks C++ unparsing for some reason
+
+    if( expr->get_need_paren() )
+        return true;
+    else
+        return UnparseLanguageIndependentConstructs::requiresParentheses(expr, info);
+}
+
+
 PrecedenceSpecifier FortranCodeGeneration_locatedNode::getPrecedence(SgExpression* exp)
 {
+    // same as in base class except unary plus/minus have equal precedence with binary plus.
+
     SgAddOp * addOp = new SgAddOp(NULL, NULL, NULL, NULL);
     PrecedenceSpecifier addOpPrec = UnparseLanguageIndependentConstructs::getPrecedence(addOp);
     delete addOp;

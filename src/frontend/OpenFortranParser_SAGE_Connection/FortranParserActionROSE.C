@@ -19717,27 +19717,20 @@ void c_action_rice_allocate_coarray_spec(int flag, Token_t * team_id)
             std::transform(teamName.begin(), teamName.end(), teamName.begin(), ::tolower);
         }
         else
-            teamName = "";
+            teamName = "team_default";
     }
 
-    // compute a corresponding variable reference (or NULL)
-    SgVarRefExp * teamVarRef;
-    if( teamName != "" )
+    // compute a corresponding variable reference
+    SgVariableSymbol * teamSymbol = trace_back_through_parent_scopes_lookup_variable_symbol(teamName, astScopeStack.front());
+    if( !teamSymbol )
     {
-        SgVariableSymbol * teamSymbol = trace_back_through_parent_scopes_lookup_variable_symbol(teamName, astScopeStack.front());
-        if( !teamSymbol )
-        {
-            if( teamName == "team_world" || teamName == "team_default" )
-                teamSymbol = add_external_team_decl(teamName);
-            else
-                cout << "FATAL ERROR: undeclared team variable '" << teamName << "' in allocate statement" << endl;
-        }
-
-        ROSE_ASSERT(teamSymbol);
-        teamVarRef = new SgVarRefExp(teamSymbol);
+        if( teamName == "team_world" || teamName == "team_default" )
+            teamSymbol = add_external_team_decl(teamName);
+        else
+            cout << "FATAL ERROR: undeclared team variable '" << teamName << "' in allocate statement" << endl;
     }
-    else
-        teamVarRef = NULL;
+    ROSE_ASSERT(teamSymbol);
+    SgVarRefExp * teamVarRef = new SgVarRefExp(teamSymbol);
 
     // convert expression on top of stack to a coarray-reference expression
 

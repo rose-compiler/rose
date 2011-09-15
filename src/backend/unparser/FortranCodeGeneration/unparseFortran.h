@@ -428,6 +428,7 @@ class FortranCodeGeneration_locatedNode : public UnparseLanguageIndependentConst
           * override to make unary plus/minus expressions have the same precedence as binary plus;
           * everything else remains the same.
           */
+          virtual bool requiresParentheses(SgExpression* expr, SgUnparse_Info& info);
           virtual PrecedenceSpecifier getPrecedence(SgExpression* exp);
 
      private:
