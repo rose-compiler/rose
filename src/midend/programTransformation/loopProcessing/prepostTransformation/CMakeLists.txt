@@ -1,5 +1,5 @@
 
-include_directories(${CMAKE_SOURCE_DIR}/src/util/support ${CMAKE_SOURCE_DIR}/src/midend/astUtil/astSupport ${CMAKE_SOURCE_DIR}/src/midend/astUtil/symbolicVal ${CMAKE_SOURCE_DIR}/src/midend/astUtil/astInterface ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/dataflowAnalysis ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/CFG ${CMAKE_SOURCE_DIR}/src/util/graphs ${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
+include_directories(${CMAKE_SOURCE_DIR}/src/util/support ${CMAKE_SOURCE_DIR}/src/midend/astUtil/astSupport ${CMAKE_SOURCE_DIR}/src/midend/astUtil/symbolicVal ${CMAKE_SOURCE_DIR}/src/midend/astUtil/astInterface ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/bitvectorDataflow ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/CFG ${CMAKE_SOURCE_DIR}/src/util/graphs ${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 
 
 ########### next target ###############
@@ -15,7 +15,7 @@ install(FILES  BreakupStmt.h  LoopUnroll.h  PrePostTransformation.h PrivatizeSca
 
 #include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 #
-#INCLUDES = -I$(srcdir)/../driver -I$(srcdir)/../depInfo -I$(top_srcdir)/src/util/support -I$(top_srcdir)/src/midend/astUtil/astSupport -I$(top_srcdir)/src/midend/astUtil/symbolicVal -I$(top_srcdir)/src/midend/astUtil/astInterface -I$(top_srcdir)/src/midend/programAnalysis/dataflowAnalysis -I$(top_srcdir)/src/midend/programAnalysis/CFG -I$(top_srcdir)/src/util/graphs
+#INCLUDES = -I$(srcdir)/../driver -I$(srcdir)/../depInfo -I$(top_srcdir)/src/util/support -I$(top_srcdir)/src/midend/astUtil/astSupport -I$(top_srcdir)/src/midend/astUtil/symbolicVal -I$(top_srcdir)/src/midend/astUtil/astInterface -I$(top_srcdir)/src/midend/programAnalysis/bitvectorDataflow -I$(top_srcdir)/src/midend/programAnalysis/CFG -I$(top_srcdir)/src/util/graphs
 #
 ### The grammar generator (ROSETTA) should use its own template repository
 #CXX_TEMPLATE_REPOSITORY_PATH = .
