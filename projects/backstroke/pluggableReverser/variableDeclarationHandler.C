@@ -21,15 +21,15 @@ StatementReversal VariableDeclarationHandler::generateReverseAST(SgStatement* st
 	if (evaluationResult.getChildResults().size() == 1)
 	{
 		ExpressionReversal initializerReversal = evaluationResult.getChildResults().front().generateReverseExpression();
-		if (initializerReversal.rvs_exp != NULL)
+		if (initializerReversal.reverseExpression != NULL)
 		{
-			reverseStatement = SageBuilder::buildExprStatement(initializerReversal.rvs_exp);
+			reverseStatement = SageBuilder::buildExprStatement(initializerReversal.reverseExpression);
 		}
 
 		//Create a new version of the initializer, possibly instrumented with state saving
 		SgExpression* originalInitializer = forwardStatement->get_variables().front()->get_initializer();
 		ROSE_ASSERT(isSgAssignInitializer(originalInitializer) && "Only assign initializers currently supported");
-		SgExpression* newInitializer = SageBuilder::buildAssignInitializer(initializerReversal.fwd_exp,
+		SgExpression* newInitializer = SageBuilder::buildAssignInitializer(initializerReversal.forwardExpression,
 				forwardStatement->get_variables().front()->get_type());
 
 		//Replace the original initializer with the new one

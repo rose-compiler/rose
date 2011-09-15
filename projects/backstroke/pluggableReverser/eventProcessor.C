@@ -107,44 +107,13 @@ vector<EvaluationResult> EventProcessor::evaluateStatement(SgStatement* stmt, co
 {
 	vector<EvaluationResult> results;
 
-	// Here we update the variable version table, remove those which are not used any more.
-	// Note that we process statements in reverse order in any scope, a variable is not used means
-	// it is not used in statements above this point. For example,
-	//  1   int t = 0;
-	//  2   a = b;
-	//  3   c = t;
-	// after processing statement 3, we can remove t from the variable version table because it's not
-	// useful for our transformation anymore.
-
-	vector<SgExpression*> vars = BackstrokeUtility::getAllVariables(stmt);
-	vector<SgExpression*> vars_to_remove;
-#if 0
-
-	foreach(SgExpression* var, vars)
-	{
-		if (stmt_pkg.var_table.isUsingFirstUse(var))
-			vars_to_remove.push_back(var);
-	}
-#endif
-
 	foreach(StatementReversalHandler* stmt_handler, stmt_handlers_)
 	{
-		vector<EvaluationResult> res = stmt_handler->evaluate(stmt, var_table);
-		ROSE_ASSERT(!res.empty());
-
-		foreach(EvaluationResult& r1, res)
-		{
-			ROSE_ASSERT(r1.getStatementInput() == stmt);
-			// Remove those variables from variable version table if they are not useful anymore.
-			foreach(SgExpression* var, vars_to_remove)
-			{
-				r1.getVarTable().removeVariable(var);
-			}
-			results.push_back(r1);
-		}
-		//results.insert(results.end(), result.begin(), result.end());
+		vector<EvaluationResult> result = stmt_handler->evaluate(stmt, var_table);
+		results.insert(results.end(), result.begin(), result.end());
 	}
-
+    ROSE_ASSERT(!results.empty());
+    
 	// If two results have the same variable table, we remove the one which has the higher cost.
 	return filterResults(results);
 }
@@ -200,52 +169,6 @@ SgExpression* EventProcessor::restoreVariable(VariableRenaming::VarName variable
 	return results.empty() ? NULL : results.front();
 }
 
-SgVarRefExp* EventProcessor::getStackVar(SgType* type)
-{
-	string type_name;
-	string stackIdentifier;
-
-	if (isSgTypeInt(type))
-	{
-		//TODO: Just cast unsigned ints to ints before pushing them
-		stackIdentifier = "int";
-		type_name = "int";
-	}
-	else if (isSgTypeBool(type))
-	{
-		stackIdentifier = "bool";
-		type_name = "bool";
-	}
-	else if (isSgTypeFloat(type))
-	{
-		stackIdentifier = "float";
-		type_name = "float";
-	}
-	else if (isSgTypeDouble(type))
-	{
-		stackIdentifier = "double";
-		type_name = "double";
-	}
-	else
-	{
-		stackIdentifier = "any";
-		type_name = "boost::any";
-	}
-
-	string stack_name = event_->get_mangled_name().getString() + "_" + stackIdentifier + "_stack";
-	if (stack_decls_.count(stack_name) == 0)
-	{
-		SgClassDeclaration* stackTypeDeclaration = SageBuilder::buildStructDeclaration("std::deque<" + type_name + ">");
-		SgType* stack_type = stackTypeDeclaration->get_type();
-		ROSE_ASSERT(stack_type);
-		//delete stackTypeDeclaration;
-		
-		stack_decls_[stack_name] = SageBuilder::buildVariableDeclaration(stack_name, stack_type);
-	}
-
-	return SageBuilder::buildVarRefExp(stack_decls_[stack_name]->get_variables()[0]);
-}
-
 bool EventProcessor::isStateVariable(SgExpression* exp)
 {
 	VariableRenaming::VarName var_name = VariableRenaming::getVarName(exp);
@@ -272,15 +195,6 @@ bool EventProcessor::isStateVariable(const VariableRenaming::VarName& var)
 
 	return false;
 #endif
-}
-
-std::vector<SgVariableDeclaration*> EventProcessor::getStackDeclarationsForLastEvent() const
-{
-	vector<SgVariableDeclaration*> output;
-	typedef std::pair<std::string, SgVariableDeclaration*> pair_t;
-	foreach(const pair_t& decl_pair, stack_decls_)
-        output.push_back(decl_pair.second);
-	return output;
 }
 
 SgExpression* EventProcessor::pushVal(SgExpression* exp, SgType* returnType)
@@ -342,10 +256,6 @@ std::vector<EventReversalResult> EventProcessor::processEvent()
 {
 	// Before processing, build a variable version table for the event function.
 	VariableVersionTable var_table(event_, var_renaming_);
-    stack_decls_.clear();
-
-	//cout << "VVT:\n";
-	//var_table.print();
 
 	SgBasicBlock* body = isSgFunctionDeclaration(event_->get_definingDeclaration())->get_definition()->get_body();
 	std::vector<EventReversalResult> outputs;
@@ -376,13 +286,14 @@ std::vector<EventReversalResult> EventProcessor::processEvent()
 		StatementReversal stmt = reversalResult.generateReverseStatement();
 
 		// Normalize the result.
-		BackstrokeUtility::removeUselessBraces(stmt.fwd_stmt);
-		BackstrokeUtility::removeUselessBraces(stmt.rvs_stmt);
-		BackstrokeUtility::removeUselessParen(stmt.fwd_stmt);
-		BackstrokeUtility::removeUselessParen(stmt.rvs_stmt);
+		BackstrokeUtility::removeUselessBraces(stmt.forwardStatement);
+		BackstrokeUtility::removeUselessBraces(stmt.reverseStatement);
+		
+		BackstrokeUtility::removeUselessParen(stmt.forwardStatement);
+		BackstrokeUtility::removeUselessParen(stmt.reverseStatement);
 
-		SageInterface::fixVariableReferences(stmt.fwd_stmt);
-		SageInterface::fixVariableReferences(stmt.rvs_stmt);
+		SageInterface::fixVariableReferences(stmt.forwardStatement);
+		SageInterface::fixVariableReferences(stmt.reverseStatement);
 
 		string counterString = lexical_cast<string> (ctr++);
 
@@ -396,7 +307,7 @@ std::vector<EventReversalResult> EventProcessor::processEvent()
 						isSgFunctionParameterList(copyStatement(event_->get_parameterList())),
 						eventScope);
 		SgFunctionDefinition* fwd_func_def = fwd_func_decl->get_definition();
-		SageInterface::replaceStatement(fwd_func_def->get_body(), isSgBasicBlock(stmt.fwd_stmt));
+		SageInterface::replaceStatement(fwd_func_def->get_body(), isSgBasicBlock(stmt.forwardStatement));
 
 		//Create the function declaration for the reverse body
 		SgName rvs_func_name = event_->get_name() + "_reverse" + counterString;
@@ -406,23 +317,10 @@ std::vector<EventReversalResult> EventProcessor::processEvent()
 						isSgFunctionParameterList(copyStatement(event_->get_parameterList())),
 						eventScope);
 		SgFunctionDefinition* rvs_func_def = rvs_func_decl->get_definition();
-		SageInterface::replaceStatement(rvs_func_def->get_body(), isSgBasicBlock(stmt.rvs_stmt));
+		SageInterface::replaceStatement(rvs_func_def->get_body(), isSgBasicBlock(stmt.reverseStatement));
 
 		SgFunctionDeclaration* commitFunctionDecl = NULL;
-		if (stmt.commitStatement != NULL)
-		{
-			//Create the function declaration for the commit method
-			SgName commitFunctionName = event_->get_name() + "_commit" + counterString;
-			commitFunctionDecl =
-					SageBuilder::buildDefiningFunctionDeclaration(
-					commitFunctionName, event_->get_orig_return_type(),
-					isSgFunctionParameterList(copyStatement(event_->get_parameterList())),
-					eventScope);
-			SgFunctionDefinition* commitFunctionDefinition = commitFunctionDecl->get_definition();
-
-			ROSE_ASSERT(isSgBasicBlock(stmt.commitStatement));
-			SageInterface::replaceStatement(commitFunctionDefinition->get_body(), isSgBasicBlock(stmt.commitStatement));
-		}
+		ROSE_ASSERT(stmt.commitStatement == NULL); //We'll worry about commit statements later
 
 		// Add the cost information as comments to generated functions.
 		string comment = "Cost: " + lexical_cast<string > (reversalResult.getCost().getCost());

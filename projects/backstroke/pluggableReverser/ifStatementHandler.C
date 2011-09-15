@@ -20,8 +20,8 @@ StatementReversal IfStatementHandler::generateReverseAST(SgStatement* stmt, cons
     StatementReversal proc_true_body = evalResult.getChildResults()[1].generateReverseStatement();
     StatementReversal proc_false_body = evalResult.getChildResults()[0].generateReverseStatement();
 
-    SgBasicBlock* fwd_true_block_body =  isSgBasicBlock(proc_true_body.fwd_stmt);
-    SgBasicBlock* fwd_false_block_body = isSgBasicBlock(proc_false_body.fwd_stmt);
+    SgBasicBlock* fwd_true_block_body =  isSgBasicBlock(proc_true_body.forwardStatement);
+    SgBasicBlock* fwd_false_block_body = isSgBasicBlock(proc_false_body.forwardStatement);
 
     ROSE_ASSERT(fwd_true_block_body);
     ROSE_ASSERT(fwd_false_block_body);
@@ -44,9 +44,9 @@ StatementReversal IfStatementHandler::generateReverseAST(SgStatement* stmt, cons
         cond_stmt = buildExprStatement(popVal(buildBoolType()));
     }
 
-    SgStatement* fwd_stmt = buildIfStmt(proc_cond.fwd_stmt, proc_true_body.fwd_stmt, proc_false_body.fwd_stmt);
-    SgStatement* rvs_stmt = buildIfStmt(cond_stmt, proc_true_body.rvs_stmt, proc_false_body.rvs_stmt);
-    rvs_stmt = buildBasicBlock(rvs_stmt, proc_cond.rvs_stmt);
+    SgStatement* fwd_stmt = buildIfStmt(proc_cond.forwardStatement, proc_true_body.forwardStatement, proc_false_body.forwardStatement);
+    SgStatement* rvs_stmt = buildIfStmt(cond_stmt, proc_true_body.reverseStatement, proc_false_body.reverseStatement);
+    rvs_stmt = buildBasicBlock(rvs_stmt, proc_cond.reverseStatement);
 
     return StatementReversal(fwd_stmt, rvs_stmt);
 }

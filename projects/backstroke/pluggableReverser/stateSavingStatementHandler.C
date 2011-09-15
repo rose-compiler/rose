@@ -466,8 +466,8 @@ StatementReversal StateSavingStatementHandler::generateReverseAST(SgStatement* s
 	if (!child_result.empty())
 	{
 		StatementReversal child_reversal = child_result[0].generateReverseStatement();
-		SageInterface::prependStatement(child_reversal.fwd_stmt, forwardBody);
-		SageInterface::appendStatement(child_reversal.rvs_stmt, reverseBody);
+		SageInterface::prependStatement(child_reversal.forwardStatement, forwardBody);
+		SageInterface::appendStatement(child_reversal.reverseStatement, reverseBody);
 	}
 	else
 	{

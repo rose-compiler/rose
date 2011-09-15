@@ -37,14 +37,14 @@ vector<EvaluationResult> StraightlineStatementHandler::evaluateExpressionStateme
 	EvaluationResult& expressionReversalOption = expressions.front();
 	ExpressionReversal expressionReversal = expressionReversalOption.generateReverseExpression();
 	SgStatement* forwardStatement = NULL;
-	if (expressionReversal.fwd_exp != NULL)
+	if (expressionReversal.forwardExpression != NULL)
 	{
-		forwardStatement = SageBuilder::buildExprStatement(expressionReversal.fwd_exp);
+		forwardStatement = SageBuilder::buildExprStatement(expressionReversal.forwardExpression);
 	}
 	SgStatement* reverseStatement = NULL;
-	if (expressionReversal.rvs_exp != NULL)
+	if (expressionReversal.reverseExpression != NULL)
 	{
-		reverseStatement = SageBuilder::buildExprStatement(expressionReversal.rvs_exp);
+		reverseStatement = SageBuilder::buildExprStatement(expressionReversal.reverseExpression);
 	}
 
 	//We just do all the work in the evaluation step and save it as an attribute
@@ -140,8 +140,8 @@ vector<EvaluationResult> StraightlineStatementHandler::evaluateBasicBlock(SgBasi
 
 		StatementReversal instrumentedStatement = possibleStatements.front().generateReverseStatement();
 		totalCost += possibleStatements.front().getCost();
-		SgStatement* forwardStatement = instrumentedStatement.fwd_stmt;
-		SgStatement* reverseStatement = instrumentedStatement.rvs_stmt;
+		SgStatement* forwardStatement = instrumentedStatement.forwardStatement;
+		SgStatement* reverseStatement = instrumentedStatement.reverseStatement;
 		currentVariableVersions = possibleStatements.front().getVarTable();
 
 		//The return statement should go at the very end of the forward statement

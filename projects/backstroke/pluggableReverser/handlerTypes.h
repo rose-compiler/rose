@@ -17,22 +17,22 @@ class IVariableFilter;
 struct ExpressionReversal
 {
 	ExpressionReversal(SgExpression* fwd, SgExpression * rvs)
-	: fwd_exp(fwd), rvs_exp(rvs) { }
+	: forwardExpression(fwd), reverseExpression(rvs) { }
 
-	SgExpression* fwd_exp;
-	SgExpression* rvs_exp;
+	SgExpression* forwardExpression;
+	SgExpression* reverseExpression;
 };
 
 struct StatementReversal
 {
 	StatementReversal(SgStatement* fwd, SgStatement * rvs)
-	: fwd_stmt(fwd), rvs_stmt(rvs), commitStatement(NULL) { }
+	: forwardStatement(fwd), reverseStatement(rvs), commitStatement(NULL) { }
 
 	StatementReversal(SgStatement* fwd, SgStatement * rvs, SgStatement* commit)
-	: fwd_stmt(fwd), rvs_stmt(rvs), commitStatement(commit) { }
+	: forwardStatement(fwd), reverseStatement(rvs), commitStatement(commit) { }
     
-	SgStatement* fwd_stmt;
-	SgStatement* rvs_stmt;
+	SgStatement* forwardStatement;
+	SgStatement* reverseStatement;
     SgStatement* commitStatement;
 };
 

@@ -18,10 +18,10 @@ StatementReversal CombinatorialExprStatementHandler::generateReverseAST(SgStatem
 
     SgStatement *fwd_stmt = NULL, *rvs_stmt = NULL;
 
-    if (exp.fwd_exp)
-        fwd_stmt = buildExprStatement(exp.fwd_exp);
-    if (exp.rvs_exp)
-        rvs_stmt = buildExprStatement(exp.rvs_exp);
+    if (exp.forwardExpression)
+        fwd_stmt = buildExprStatement(exp.forwardExpression);
+    if (exp.reverseExpression)
+        rvs_stmt = buildExprStatement(exp.reverseExpression);
 
     return StatementReversal(fwd_stmt, rvs_stmt);
 }
@@ -107,10 +107,10 @@ StatementReversal CombinatorialBasicBlockHandler::generateReverseAST(SgStatement
     {
         StatementReversal proc_stmt = childResult.generateReverseStatement();
 
-        if (proc_stmt.fwd_stmt)
-            prependStatement(proc_stmt.fwd_stmt, fwd_body);
-        if (proc_stmt.rvs_stmt)
-            appendStatement(proc_stmt.rvs_stmt, rvs_body);
+        if (proc_stmt.forwardStatement)
+            prependStatement(proc_stmt.forwardStatement, fwd_body);
+        if (proc_stmt.reverseStatement)
+            appendStatement(proc_stmt.reverseStatement, rvs_body);
     }
 
     return StatementReversal(fwd_body, rvs_body);

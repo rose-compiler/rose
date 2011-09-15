@@ -93,10 +93,10 @@ StatementReversal WhileStatementHandler::generateReverseAST(SgStatement* stmt, c
     StatementReversal body_result = eval_result.getChildResults()[0].generateReverseStatement();
 
 	SgStatement* fwd_cond = copyStatement(while_stmt->get_condition());
-	SgStatement* fwd_stmt = buildWhileStmt(fwd_cond, body_result.fwd_stmt);
+	SgStatement* fwd_stmt = buildWhileStmt(fwd_cond, body_result.forwardStatement);
 	fwd_stmt = assembleLoopCounter(fwd_stmt);
 	
-	SgStatement* rvs_stmt = buildForLoop(body_result.rvs_stmt);
+	SgStatement* rvs_stmt = buildForLoop(body_result.reverseStatement);
 
     return StatementReversal(fwd_stmt, rvs_stmt);
 }
