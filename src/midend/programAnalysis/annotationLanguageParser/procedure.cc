@@ -1,6 +1,6 @@
 
 #include "broadway.h"
-
+#include <cassert>
 using namespace std;
 
 // ------------------------------------------------------------
@@ -46,7 +46,9 @@ procedureAnn::procedureAnn(parserID * id, parserid_list * params,
     _temp_deletes(new parserid_list())
 {
   // annVariable * nl = lookup(string("null"), true);
-     annVariable * ret = lookup(string("return"), true);
+
+  // DQ (9/12/2011): Unused variable warning from compiler.
+  // annVariable * ret = lookup(string("return"), true);
 
   if (params) {
     int count = 0;
@@ -738,8 +740,8 @@ void procedureAnn::add_global_structures(Annotations * annotations,
 					 annVariable * parent_var,
 					 structureTreeAnn * parent_node)
 {
-  structureAnn * new_struc = 0;
-  annVariable * child_var = 0;
+  structureAnn * new_struc = NULL;
+  annVariable * child_var = NULL;
 
   // -- Make sure we have a pointer rule
 
@@ -791,6 +793,7 @@ void procedureAnn::add_global_structures(Annotations * annotations,
       // current node's name (which is basically the field name).
 
       if (parent_node->op() == structureTreeAnn::Dot) {
+        assert (parent_var != NULL);
 	string child_name = parent_var->name() + "." + child_node->name();
 	child_var = annotations->add_one_global(child_name,
 						child_node->is_io());
@@ -806,8 +809,14 @@ void procedureAnn::add_global_structures(Annotations * annotations,
 	_on_entry.push_back(new_struc);
       }
 
+   // DQ (9/12/2011): Static analysis reports that this could be NULL, check for it explicitly.
+      assert(child_node != NULL);
       if (child_node->targets())
-	add_global_structures(annotations, child_var, child_node);
+         {
+        // DQ (9/13/2011): Static analysis reports that this could be NULL, check for it explicitly.
+           assert(child_var  != NULL);
+           add_global_structures(annotations, child_var, child_node);
+         }
     }
 }
 

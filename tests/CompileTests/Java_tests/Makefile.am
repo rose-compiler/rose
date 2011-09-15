@@ -52,13 +52,15 @@ TESTCODES_REQUIRED_TO_PASS = \
      pgc_test2011_05.java \
      pgc_test2011_06.java \
      pgc_test2011_07.java \
-     pgc_test2011_08.java 
+     pgc_test2011_08.java \
+     pgc_test2011_09.java
 
 # DQ (9/3/2011): This test code was listed twice...
 #    pgc_2011_30.java
-
-TESTCODE_CURRENTLY_FAILING = 
-
+#
+# These test pass the compilation using ROSE, all AST tests, unparsing to generate 
+# Java code, and the final compilation of that code using a backend compiler (javac).
+TESTCODE_CURRENTLY_FAILING =
 
 # These tests pass the compilation using ROSE, all AST tests, and unparsing to generate 
 # Java code, but fails the final compilation step of the generated Java code.
@@ -74,7 +76,6 @@ TESTCODES_REQUIRED_TO_PASS_FAILING_BACKEND_COMPILE = \
      test2011_28.java \
      test2011_42.java \
      simple.java
-
 
 # This is where the Java generics tests are put (currently not required to pass all phases).
 TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6 = \
@@ -403,7 +404,7 @@ testECJ:
 
 # Test for help option to ECJ (some ECJ options not supported via ROSE).
 # DQ (7/21/2011): Currently a file must be specified, but this should be fixed later.
-testECJ_help_option:
+testECJ_help_option: $(testTranslator)
 	$(testTranslator) -rose:java -rose:verbose 0 -rose:skipfinalCompileStep -ecj:help -c $(srcdir)/simple.java
 
 # Test with the "-rose:java" specification (one way to specify the language in ROSE).
@@ -411,11 +412,11 @@ testWithJavaSpecification: $(testTranslator)
 	$(testTranslator) -rose:java $(ROSE_FLAGS) $(srcdir)/testWithJavaSpecification.java
 
 # Test without the "-rose:java" specification (ROSE can alternatively obtain the source language from the file suffix).
-testWithoutJavaSpecification:
+testWithoutJavaSpecification: $(testTranslator)
 	$(testTranslator) $(ROSE_FLAGS) $(srcdir)/testWithoutJavaSpecification.java
 
 # Test using the specification of Java 1.7 compatability.
-testJava_option:
+testJava_option: $(testTranslator)
 	$(testTranslator) -ecj:1.7 -rose:verbose 0 -rose:skipfinalCompileStep -c $(srcdir)/test2011_44.java
 
 # Build a rule to allow running all tests in parallel...
@@ -433,7 +434,7 @@ gcjTests_Objects = ${GCJ_TESTCODES:.java=.class}
 
 # Test the GCJ test code by only doing syntax checking on them using ROSE (calling only the 
 # backend javac to do the syntax checking). This is more of a test of the Makefile than ROSE.
-$(gcjTests_Objects): $(testTranslator) ../../testTranslator
+$(gcjTests_Objects): $(testTranslator)
 	$(testTranslator) $(ROSE_FLAGS) -rose:exit_after_parser $(srcdir)/gcjTestSuite/$(@:.class=.java)
 
 # This test evaluates the GCJ test code to make sure that they compile with ECJ (all but 2 pass).

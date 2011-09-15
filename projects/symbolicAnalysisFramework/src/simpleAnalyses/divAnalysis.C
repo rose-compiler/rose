@@ -398,7 +398,7 @@ bool DivLattice::incr(long increment)
 	if(level == valKnown)
 		value += increment;
 	else if(level == divKnown)
-		rem = (rem+increment)/div;
+		rem = (rem+increment)%div;
 	else
 		return false;
 	
@@ -556,16 +556,38 @@ void DivAnalysisTransfer::transferArith(SgBinaryOp *sgn, T transferOp) {
 void DivAnalysisTransfer::transferArith(SgBinaryOp *sgn, TransferOp transferOp) { transferArith(sgn, boost::mem_fn(transferOp)); }
 
 void DivAnalysisTransfer::transferAdditive(DivLattice *arg1Lat, DivLattice *arg2Lat, DivLattice *resLat, bool isAddition) {
+  int arg1Level = arg1Lat->getLevel(), arg2Level = arg2Lat->getLevel();
+
   // Either one Bottom
-  if (arg1Lat->getLevel() == DivLattice::bottom        || arg2Lat->getLevel() == DivLattice::bottom) {
+  if (arg1Level == DivLattice::bottom        || arg2Level == DivLattice::bottom) {
     updateModified(resLat->setBot());
-    // Both ValKnown
-  } else if(arg1Lat->getLevel() == DivLattice::valKnown && arg2Lat->getLevel() == DivLattice::valKnown) {
-    updateModified(resLat->set(isAddition ?
-                               arg1Lat->getValue() + arg2Lat->getValue() : 
-                               arg1Lat->getValue() - arg2Lat->getValue()));
-    // Arg1 ValKnown, Arg2 DivKnown
-  } else if(arg1Lat->getLevel() == DivLattice::valKnown && arg2Lat->getLevel() == DivLattice::divKnown) {
+    return;
+  }
+
+  if (arg1Level == DivLattice::top || arg2Level == DivLattice::top) {
+    updateModified(resLat->setTop());
+    return;
+  }
+
+  if (arg1Level == DivLattice::valKnown && arg2Level == DivLattice::valKnown) {
+    long arg1Val = arg1Lat->getValue();
+    long arg2Val = arg2Lat->getValue() * (isAddition ? 1 : -1);
+    updateModified(resLat->set(arg1Val + arg2Val));
+    return;
+  }
+
+  if(arg1Level == DivLattice::divKnown && arg2Level == DivLattice::divKnown) {
+    long newDiv, newRem;
+    
+    if(DivLattice::matchDivAddSubt(arg1Lat, arg2Lat, newDiv, newRem, isAddition)) {
+      updateModified(resLat->set(newDiv, newRem));
+    } else
+      updateModified(resLat->setTop());
+  }
+
+  // Arg1 ValKnown, Arg2 DivKnown
+  /// XXX: Copy result from DivKnown, then increment by value of ValKnown. Need to fix DivLattice::incr to handle negatives correctly
+  if(arg1Level == DivLattice::valKnown && arg2Level == DivLattice::divKnown) {
     long rem = (isAddition 
                 ? arg1Lat->getValue() + arg2Lat->getRem()
                 : arg1Lat->getValue() % arg2Lat->getDiv() - arg2Lat->getRem() + arg2Lat->getDiv())
@@ -573,28 +595,15 @@ void DivAnalysisTransfer::transferAdditive(DivLattice *arg1Lat, DivLattice *arg2
     updateModified(resLat->set(arg2Lat->getDiv(), rem));
   }
   // Arg1 DivKnown, Arg2 ValKnown
-  else if(arg1Lat->getLevel() == DivLattice::divKnown && arg2Lat->getLevel() == DivLattice::valKnown) {
-    if(isAddition)
-      modified = resLat->set(arg1Lat->getDiv(), 
-                             (arg2Lat->getValue() + arg1Lat->getRem()) %
-                             arg1Lat->getDiv()) || modified;
-    else
-      modified = resLat->set(arg1Lat->getDiv(), 
-                             (arg1Lat->getRem() - (arg2Lat->getValue()%arg1Lat->getDiv()) + arg2Lat->getDiv()) %
-                             arg1Lat->getDiv()) || modified;
-  }
-  // Both DivKnown
-  else if(arg1Lat->getLevel() == DivLattice::divKnown && arg2Lat->getLevel() == DivLattice::divKnown) {
-    long newDiv, newRem;
+  else if(arg1Level == DivLattice::divKnown && arg2Level == DivLattice::valKnown) {
+    long rem = (isAddition ?
+                (arg2Lat->getValue() + arg1Lat->getRem()) :
+                (arg1Lat->getRem() - (arg2Lat->getValue()%arg1Lat->getDiv()) + arg2Lat->getDiv()))
+      % arg1Lat->getDiv();
 
-    //if(DivLattice::matchDiv(arg1Lat, arg2Lat, newDiv, newRem))
-    if(DivLattice::matchDivAddSubt(arg1Lat, arg2Lat, newDiv, newRem, isAddition)) {
-      updateModified(resLat->set(newDiv, newRem));
-    } else
-      updateModified(resLat->setTop());
+    updateModified(resLat->set(arg1Lat->getDiv(), rem));
   }
-  // Else => Top
-  else
+  else   // Else => Top
     updateModified(resLat->setTop());
 }
 void DivAnalysisTransfer::visit(SgPlusAssignOp *sgn)  { transferArith(sgn, boost::bind(&DivAnalysisTransfer::transferAdditive, _1, _2, _3, _4, true )); }
@@ -603,10 +612,29 @@ void DivAnalysisTransfer::visit(SgAddOp *sgn)         { transferArith(sgn, boost
 void DivAnalysisTransfer::visit(SgSubtractOp *sgn)    { transferArith(sgn, boost::bind(&DivAnalysisTransfer::transferAdditive, _1, _2, _3, _4, false)); }
 
 void DivAnalysisTransfer::transferIncrement(SgUnaryOp *sgn) {
-  DivLattice *arg1Lat, *arg2Lat = NULL, *resLat;
-  if (getLattices(sgn, arg1Lat, arg2Lat, resLat))
-    transferAdditive(arg1Lat, arg2Lat, resLat, isSgPlusPlusOp(sgn));
-  delete arg2Lat; // Allocated by getLattices
+  DivLattice *arg1Lat, *arg2Lat, *resLat;
+  getLattices(sgn, arg1Lat, arg2Lat, resLat);
+
+  if (!arg1Lat) {
+    ROSE_ASSERT(!resLat);
+    return;
+  }
+  
+  long increment = isSgPlusPlusOp(sgn) ? 1 : -1;
+
+  if (sgn->get_mode() == SgUnaryOp::prefix) {
+    //arg1Lat->incr(increment);
+    transferAdditive(arg1Lat, arg2Lat, arg1Lat, isSgPlusPlusOp(sgn));
+    if (resLat)
+      resLat->copy(arg1Lat);
+  } else {
+    if (resLat)
+      resLat->copy(arg1Lat);
+    transferAdditive(arg1Lat, arg2Lat, arg1Lat, isSgPlusPlusOp(sgn));
+    //arg1Lat->incr(increment);
+  }
+
+  delete arg2Lat;
 }
 void DivAnalysisTransfer::visit(SgPlusPlusOp *sgn) { transferIncrement(sgn); }
 void DivAnalysisTransfer::visit(SgMinusMinusOp *sgn) { transferIncrement(sgn); }
