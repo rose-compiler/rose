@@ -65,7 +65,7 @@ public:
   {
     LatticeType *lhsLat, *rhsLat, *resLat;
     getLattices(sgn, lhsLat, rhsLat, resLat);
-		
+                
     if(debugLevel>=1) {
       if(resLat) Dbg::dbg << "resLat=\n    "<<resLat->str("    ")<<"\n";
       if(lhsLat) Dbg::dbg << "lhsLat=\n    "<<lhsLat->str("    ")<<"\n";
@@ -156,7 +156,7 @@ public:
   {
     LatticeType *lhsLat, *rhsLat, *resLat;
     getLattices(sgn, lhsLat, rhsLat, resLat);
-		
+                
     if (resLat) {
       resLat->copy(rhsLat);
       modified = true;

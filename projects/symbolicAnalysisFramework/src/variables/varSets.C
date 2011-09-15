@@ -79,7 +79,7 @@ namespace varSets
       localArrays[func] = arraysFilter(localVars[func]);
       localScalars[func] = scalarsFilter(localVars[func]);
       localVars_initialized[func] = true;
-    }	
+    }   
   }
 
   // returns the set of variables declared in the given function
@@ -126,7 +126,7 @@ namespace varSets
           continue;
 
         varID var(*itParams);
-    	  funcParamVars[func].insert(var);
+          funcParamVars[func].insert(var);
         funcParamArrays[func] = arraysFilter(funcParamVars[func]);
         funcParamScalars[func] = scalarsFilter(funcParamVars[func]);
         funcParams_initialized.insert(func);
@@ -173,7 +173,7 @@ namespace varSets
       refArrays[func] = arraysFilter(refVars[func]);
       refScalars[func] = scalarsFilter(refVars[func]);
       refVars_initialized[func] = true;
-    }	
+    }   
   }
 
   // returns the set of variables referenced in the given function
@@ -232,7 +232,7 @@ namespace varSets
   // adds to refVars the set of all variables referenced in the given function
   void getReferencedVars(SgFunctionDefinition* func, varIDSet &refVars)
   {
-    //	printf("getting vars of function %s, %s\n", func->get_declaration()->get_name().str(), func->get_file_info()->isCompilerGenerated()? "Compiler generated": "In Original Code");
+    //  printf("getting vars of function %s, %s\n", func->get_declaration()->get_name().str(), func->get_file_info()->isCompilerGenerated()? "Compiler generated": "In Original Code");
 
     if(!func->get_file_info()->isCompilerGenerated())
     {
