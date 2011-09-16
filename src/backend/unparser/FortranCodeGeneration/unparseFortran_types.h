@@ -15,18 +15,24 @@ class UnparseFortran_type
           void curprint (const std::string & str) const;
 
           /**
-           * @param withLen - true means in case type is a SgTypeString, print the length attribute;
-           * false means not to print the length attribute; the default is set to true so that all
-           * extant callers of this method are unaffected.
+           * @param printAttrs - true means print the type attributes such as dimension or length on the left of ::
+           * for the given type; false means not.
+           * the default is set to true so that all extant callers of this method are unaffected.
            */
-          virtual void unparseType(SgType* type, SgUnparse_Info& info, bool withLen = true);
+          virtual void unparseType(SgType* type, SgUnparse_Info& info, bool printAttrs = true);
 
        // virtual void unparseTypeForConstExprs(SgType* type, SgUnparse_Info& info);
 
       //! unparse type functions implemented in unparse_type.C
        // DQ (4/25/2005): Made this virtual so that Gabriel could build a specialized unparser.
 
-          virtual void unparsePointerType(SgType* type, SgUnparse_Info& info);
+          /**
+           * @param printAttrs - true means print the type attributes such as dimension or length on the left of ::
+           * for the given type; false means not.
+           * the default is set to true so that all extant callers of this method are unaffected.
+           */
+          virtual void unparsePointerType(SgType* type, SgUnparse_Info& info, bool printAttrs = true);
+
           virtual void unparseReferenceType(SgType* type, SgUnparse_Info& info);
 
        // This is for unparing the Fortran derived types
@@ -34,14 +40,20 @@ class UnparseFortran_type
 
           virtual void unparseModifierType(SgType* type, SgUnparse_Info& info);
           virtual void unparseFunctionType(SgType* type, SgUnparse_Info& info);
-          virtual void unparseArrayType(SgType* type, SgUnparse_Info& info);
 
           /**
-           * @param withLen - true means in case type is a SgTypeString, print the length attribute;
-           * false means not to print the length attribute; the default is set to true so that all
-           * extant callers of this method are unaffected.
+           * @param printDim - true means print the dimension attribute on the left of ::
+           * for the given type; false means not.
+           * the default is set to true so that all extant callers of this method are unaffected.
            */
-          virtual void unparseStringType(SgType* type, SgUnparse_Info& info, bool withLen = true);
+          virtual void unparseArrayType(SgType* type, SgUnparse_Info& info, bool printDim = true);
+
+          /**
+           * @param printAttrs - true means print the type attributes such as dimension or length on the left of ::
+           * for the given type; false means not.
+           * the default is set to true so that all extant callers of this method are unaffected.
+           */
+          virtual void unparseStringType(SgType* type, SgUnparse_Info& info, bool printAttrs = true);
 
        // These are C++ specific code generation functions that are not likely required for Fortran
        // virtual void unparseMemberPointerType(SgType* type, SgUnparse_Info& info);
