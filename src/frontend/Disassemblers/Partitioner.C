@@ -87,6 +87,7 @@ SgAsmFunctionDeclaration::reason_str(bool do_pad, unsigned r)
     add_to_reason_string(result, (r & FUNC_INTERPAD),    do_pad, "N", "padding");
     add_to_reason_string(result, (r & FUNC_DISCONT),     do_pad, "D", "discontiguous");
     add_to_reason_string(result, (r & FUNC_LEFTOVERS),   do_pad, "L", "leftovers");
+    add_to_reason_string(result, (r & FUNC_INTRABLOCK),  do_pad, "V", "intrablock");
     return result;
 }
 /*
@@ -1653,6 +1654,38 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
     }
 }
 
+/** Scans the intra-function addresses for additional blocks.  If the function is considered contiguous by the relaxed
+ *  definition (i.e., not interleaved with any other function), then the empty space between the instructions already assigned
+ *  to the function is consulted and basic blocks are added to the function.  Returns the number of blocks added to the
+ *  function. */
+size_t
+Partitioner::discover_intrablocks(Function *func)
+{
+    size_t nadded = 0;
+    ExtentMap extents;
+    rose_addr_t lo_addr, hi_addr;
+    if (is_contiguous(func, false) && function_extent(func, &extents, &lo_addr, &hi_addr)) {
+        const rose_addr_t max_insn_size = 16; /* FIXME: This is a kludge, but should work 99% of the time [RPM 2011-09-16] */
+        Disassembler::InstructionMap::iterator ii = insns.lower_bound(std::max(lo_addr, max_insn_size)-max_insn_size);
+        for (/*void*/; ii!=insns.end() && ii->first<hi_addr; ++ii) {
+            if (ii->first>=lo_addr) {
+                BasicBlock *bb = find_bb_containing(ii->first);
+                if (bb && !bb->function) {
+                    if (debug) {
+                        if (0==nadded)
+                            fprintf(debug, "Partitioner::discover_intrablocks() for F%08"PRIx64": added", func->entry_va);
+                        fprintf(debug, " B%08"PRIx64, address(bb));
+                    }
+                    append(func, bb);
+                    nadded++;
+                }
+            }
+        }
+    }
+    if (debug && nadded) fprintf(debug, "\n");
+    return nadded;
+}
+
 void
 Partitioner::analyze_cfg()
 {
@@ -1802,12 +1835,6 @@ Partitioner::analyze_cfg()
             if (debug) fprintf(debug, "\n");
         }
     }
-        
-    progress(debug,
-             "Partitioner completed: %zu function%s, %zu insn%s assigned to %zu block%s (ave %d insn/blk)\n",
-             functions.size(), 1==functions.size()?"":"s", insn2block.size(), 1==insn2block.size()?"":"s", 
-             blocks.size(), 1==blocks.size()?"":"s",
-             blocks.size()?(int)(1.0*insn2block.size()/blocks.size()+0.5):0);
 }
 
 void
@@ -1818,6 +1845,9 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
         create_zero_padding();
     }
 
+    if (func_heuristics & SgAsmFunctionDeclaration::FUNC_INTRABLOCK)
+        vacuum_intrafunc();
+
     if (interp) {
         const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
         /* This doesn't detect new functions, it just gives names to ELF .plt trampolines */
@@ -1825,6 +1855,75 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
             name_plt_entries(headers[i]);
         }
     }
+        
+    progress(debug,
+             "Partitioner completed: %zu function%s, %zu insn%s assigned to %zu block%s (ave %d insn/blk)\n",
+             functions.size(), 1==functions.size()?"":"s", insn2block.size(), 1==insn2block.size()?"":"s", 
+             blocks.size(), 1==blocks.size()?"":"s",
+             blocks.size()?(int)(1.0*insn2block.size()/blocks.size()+0.5):0);
+}
+
+size_t
+Partitioner::function_extent(Function *func,
+                             ExtentMap *extents/*out*/, rose_addr_t *lo_addr/*out*/, rose_addr_t *hi_addr/*out*/)
+{
+    size_t ninsns = 0;
+    if (lo_addr)
+        *lo_addr = 0;
+    if (hi_addr)
+        *hi_addr = 0;
+    for (BasicBlocks::iterator bi=func->blocks.begin(); bi!=func->blocks.end(); ++bi) {
+        BasicBlock *bb = bi->second;
+        for (std::vector<SgAsmInstruction*>::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii) {
+            if (0==ninsns++) {
+                if (lo_addr)
+                    *lo_addr = (*ii)->get_address();
+                if (hi_addr)
+                    *hi_addr = (*ii)->get_address() + (*ii)->get_raw_bytes().size();
+            } else {
+                if (lo_addr)
+                    *lo_addr = std::min(*lo_addr, (*ii)->get_address());
+                if (hi_addr)
+                    *hi_addr = std::max(*hi_addr, (*ii)->get_address() + (*ii)->get_raw_bytes().size());
+            }
+                
+            if (extents)
+                extents->insert((*ii)->get_address(), (*ii)->get_raw_bytes().size());
+        }
+    }
+    return ninsns;
+}
+
+bool
+Partitioner::is_contiguous(Function *func, bool strict)
+{
+    ExtentMap extents;
+    rose_addr_t lo_addr, hi_addr;
+    if (0==function_extent(func, &extents, &lo_addr, &hi_addr) || 1==extents.size())
+        return true;
+    if (strict)
+        return false;
+
+    /* The function is contiguous if the stuff between its extent doesn't belong to any other function. */
+    const rose_addr_t max_insn_size = 16; /* FIXME: This is a kludge, but should work 99% of the time [RPM 2011-09-16] */
+    Disassembler::InstructionMap::iterator ii = insns.lower_bound(std::max(lo_addr,max_insn_size)-max_insn_size);
+    for (/*void*/; ii!=insns.end() && ii->first<hi_addr; ++ii) {
+        if (ii->first>=lo_addr) {
+            BasicBlock *bb = find_bb_containing(ii->first, false);
+            if (bb && bb->function && bb->function!=func)
+                return false;
+        }
+    }
+
+    return true;
+}
+
+void
+Partitioner::vacuum_intrafunc()
+{
+    for (Functions::iterator fi=functions.begin(); fi!=functions.end(); ++fi)
+        if (discover_intrablocks(fi->second))
+            fi->second->reason |= SgAsmFunctionDeclaration::FUNC_INTRABLOCK;
 }
 
 void

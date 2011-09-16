@@ -474,6 +474,7 @@ protected:
     virtual void truncate(BasicBlock*, rose_addr_t);            /**< Remove instructions from end of basic block */
     virtual void discover_first_block(Function*);               /* Adds first basic block to empty function to start discovery. */
     virtual void discover_blocks(Function*, rose_addr_t);       /* Recursively discovers blocks of a function. */
+    virtual size_t discover_intrablocks(Function*);             /* Add blocks that appear in the empty space of a function. */
     virtual void pre_cfg(SgAsmInterpretation *interp=NULL);     /**< Detects functions before analyzing the CFG */
     virtual void analyze_cfg();                                 /**< Detect functions by analyzing the CFG */
     virtual void post_cfg(SgAsmInterpretation *interp=NULL);    /**< Detects functions after analyzing the CFG */
@@ -494,6 +495,20 @@ protected:
     virtual void name_plt_entries(SgAsmGenericHeader*);         /**< Assign names to ELF PLT functions */
     virtual void create_nop_padding();                          /**< Creates functions to hold NOP padding */
     virtual void create_zero_padding();                         /* Creates functions to hold zero padding */
+    virtual void vacuum_intrafunc();                            /* Add unassigned intra-function blocks to functions. */
+
+    /** Returns information about the function addresses.  Every non-empty function has a minimum (inclusive) and maximum
+     *  (exclusive) address which are returned by reference, but not all functions own all the bytes within that range of
+     *  addresses. Therefore, the exact bytes are returned by adding them to the optional ExtentMap argument.  This function
+     *  returns the number of instructions in the function.  If the function contains no instructions then the extent map is
+     *  not modified and the low and high addresses are both set to zero. */
+    virtual size_t function_extent(Function*, ExtentMap *extents=NULL, rose_addr_t *lo_addr=NULL, rose_addr_t *hi_addr=NULL);
+
+    /** Returns an indication of whether a function is contiguous.  All empty functions are contiguous. If @p strict is true,
+     *  then a function is contiguous if it owns all bytes in a contiguous range of the address space.  If @p strict is false
+     *  then the definition is relaxed so that the instructions need not be contiguous in memory as long as no other function
+     *  owns any of the bytes between this function's low and high address range. */
+    virtual bool is_contiguous(Function*, bool strict=false);
 
     /** Return the virtual address that holds the branch target for an indirect branch. For example, when called with these
      *  instructions:

@@ -4048,6 +4048,14 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
 						 *   any function.  If this bit is turned off then the instruction
 						 *   Partitioner will delete instructions that it couldn't assign to
 						 *   a function. */
+		FUNC_INTRABLOCK  = 0x2000,	/**< Function contains basic blocks that were inserted by searching the
+						 *   address space between the blocks discovered by analyzing the control flow.
+						 *   Blocks added by this algorithm do not take control flow into account, and
+						 *   therefore, the global control flow graph (CFG) may have edges into the
+						 *   middle of such blocks, or such blocks may have edges into the middle of
+						 *   other blocks, including inter-function edges.  Also, blocks added by this
+						 *   method might not represent true instructions, but rather data that was
+						 *   disassembled as instructions. */
                 FUNC_DEFAULT     = 0x1fff       /**< Default value for Partitioner class. */
         };
 
