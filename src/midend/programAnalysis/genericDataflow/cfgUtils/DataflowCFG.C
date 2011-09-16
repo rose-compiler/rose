@@ -13,7 +13,8 @@ namespace VirtualCFG {
                 return outs.str();
         }
 
-  vector<DataflowEdge> makeClosure(const vector<CFGEdge>& orig,
+  // XXX: This code is duplicated from frontend/SageIII/virtualCFG/virtualCFG.C
+  vector<DataflowEdge> makeClosureDF(const vector<CFGEdge>& orig,
                                       vector<CFGEdge> (CFGNode::*closure)() const,
                                       CFGNode (CFGPath::*otherSide)() const,
                                       CFGPath (*merge)(const CFGPath&, const CFGPath&)) {
@@ -69,11 +70,11 @@ namespace VirtualCFG {
   }
         
         vector<DataflowEdge> DataflowNode::outEdges() const {
-                return makeClosure(n.outEdges(), &CFGNode::outEdges, &CFGPath::target, &mergePaths);
+                return makeClosureDF(n.outEdges(), &CFGNode::outEdges, &CFGPath::target, &mergePaths);
         }
         
         vector<DataflowEdge> DataflowNode::inEdges() const {
-                return makeClosure(n.inEdges(), &CFGNode::inEdges, &CFGPath::source, &mergePathsReversed);
+                return makeClosureDF(n.inEdges(), &CFGNode::inEdges, &CFGPath::source, &mergePathsReversed);
         }
 
         bool DataflowNode::isInteresting() const {
