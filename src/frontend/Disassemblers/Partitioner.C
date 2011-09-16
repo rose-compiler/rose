@@ -110,9 +110,6 @@ Partitioner::set_progress_reporting(FILE *output, unsigned min_interval)
 void
 Partitioner::progress(FILE *debug, const char *fmt, ...) const
 {
-    va_list ap;
-    va_start(ap, fmt);
-
     time_t now = time(NULL);
     
     if (0==progress_time)
@@ -120,11 +117,18 @@ Partitioner::progress(FILE *debug, const char *fmt, ...) const
     
     if (progress_file!=NULL && now-progress_time >= progress_interval) {
         progress_time = now;
+        va_list ap;
+        va_start(ap, fmt);
         vfprintf(progress_file, fmt, ap);
+        va_end(ap);
     }
 
-    if (debug!=NULL)
+    if (debug!=NULL) {
+        va_list ap;
+        va_start(ap, fmt);
         vfprintf(debug, fmt, ap);
+        va_end(ap);
+    }
 }
 
 /* Parse argument for "-rose:partitioner_search" command-line swich. */
