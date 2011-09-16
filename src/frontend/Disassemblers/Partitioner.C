@@ -1608,6 +1608,8 @@ Partitioner::analyze_cfg()
             BasicBlock *return_bb = find_bb_starting(return_va);
             rose_addr_t target_va = NO_TARGET; /*call target*/
             BasicBlock *target_bb = NULL;
+            bool succs_complete;
+            Disassembler::AddressSet succs = successors(bb, &succs_complete);
 #if 0 /*DEBUG [RPM 2010-07-30]*/
             do {
                 static rose_addr_t req_call_block_va   = 0x08048364;
@@ -1678,6 +1680,28 @@ Partitioner::analyze_cfg()
                         fprintf(debug, "  Function F%08"PRIx64" returns by virtue of call fall-through at B%08"PRIx64"\n", 
                                 bb->function->entry_va, address(bb));
                     }
+                }
+            } else if (bb->function && !bb->function->returns && !is_function_call(bb, NULL) &&
+                       succs_complete && 1==succs.size() && 0!=(target_va=*succs.begin()) &&
+                       NULL!=(target_bb=find_bb_starting(target_va, false)) &&
+                       target_bb->function && target_bb->function!=bb->function &&
+                       target_va==target_bb->function->entry_va &&
+                       target_bb->function->returns) {
+                /* The block bb isn't a function call, but branches to the entry point of another function.  If that function
+                 * returns then so does this one.  This handles situations like:
+                 *      function_A:
+                 *          ...
+                 *          JMP function_B
+                 *      ...
+                 *      function_B:
+                 *          RET
+                 * We don't need to set function_A->pending because the reachability of the instruction after its JMP won't
+                 * change regardless of whether we learned that what it calls changed.
+                 */
+                bb->function->returns = true;
+                if (debug) {
+                    fprintf(debug, "  F%08"PRIx64" returns by virtue of branching to function F%08"PRIx64" which returns\n",
+                            bb->function->entry_va, target_bb->function->entry_va);
                 }
             }
         }
