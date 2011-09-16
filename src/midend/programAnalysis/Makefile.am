@@ -21,6 +21,7 @@ include $(srcdir)/bitvectorDataflow/Makefile_variables
 include $(srcdir)/defUseAnalysis/Makefile_variables
 include $(srcdir)/distributedMemoryAnalysis/Makefile_variables
 include $(srcdir)/dominanceAnalysis/Makefile_variables
+include $(srcdir)/genericDataflow/Makefile_variables
 include $(srcdir)/graphAnalysis/Makefile_variables
 include $(srcdir)/OAWrap/Makefile_variables
 include $(srcdir)/pointerAnal/Makefile_variables
@@ -37,6 +38,7 @@ mpaBitvectorDataflowPath=$(srcdir)/bitvectorDataflow#
 mpaDefUseAnalysisPath=$(srcdir)/defUseAnalysis#
 mpaDistributedMemoryAnalysisPath=$(srcdir)/distributedMemoryAnalysis#
 mpaDominanceAnalysisPath=$(srcdir)/dominanceAnalysis#
+mpaGenericDataflowPath=$(srcdir)/genericDataflow#
 mpaGraphAnalysisPath=$(srcdir)/graphAnalysis#
 mpaOAWrapPath=$(srcdir)/OAWrap#
 mpaPointerAnalPath=$(srcdir)/pointerAnal#
@@ -64,6 +66,7 @@ INCLUDES=\
 	$(mpaBitvectorDataflow_includes) \
 	$(mpaDefUseAnalysis_includes) \
 	$(mpaDistributedMemoryAnalysis_includes) \
+	$(mpaGenericDataflow_includes) \
 	$(mpaOAWrap_includes) \
 	$(mpaPointerAnal_includes) \
 	$(mpaSideEffectAnalysis_includes) \
@@ -90,6 +93,7 @@ libprogramAnalysis_la_SOURCES=\
 	$(mpaBitvectorDataflow_la_sources) \
 	$(mpaDefUseAnalysis_la_sources) \
 	$(mpaGraphAnalysis_la_sources) \
+	$(mpaGenericDataflow_la_sources) \
 	$(mpaOAWrap_la_sources) \
 	$(mpaPointerAnal_la_sources) \
 	$(mpaSideEffectAnalysis_la_sources) \
@@ -107,6 +111,7 @@ include_HEADERS=\
 	$(mpaDefUseAnalysis_includeHeaders) \
 	$(mpaDistributedMemoryAnalysis_includeHeaders) \
 	$(mpaDominanceAnalysis_includeHeaders) \
+	$(mpaGenericDataflow_includeHeaders) \
 	$(mpaGraphAnalysis_includeHeaders) \
 	$(mpaOAWrap_includeHeaders) \
 	$(mpaPointerAnal_includeHeaders) \
@@ -131,6 +136,7 @@ EXTRA_DIST=\
 	$(mpaDefUseAnalysis_extraDist) \
 	$(mpaDistributedMemoryAnalysis_extraDist) \
 	$(mpaDominanceAnalysis_extraDist) \
+	$(mpaGenericDataflow_extraDist) \
 	$(mpaGraphAnalysis_extraDist) \
 	$(mpaOAWrap_extraDist) \
 	$(mpaPointerAnal_extraDist) \
@@ -148,6 +154,7 @@ clean-local:
 	$(mpaBitvectorDataflow_cleanLocal)
 	$(mpaDefUseAnalysis_cleanLocal)
 	$(mpaDominanceAnalysis_cleanLocal)
+	$(mpaGenericDataflow_cleanLocal)
 	$(mpaGraphAnalysis_cleanLocal)
 	$(mpaOAWrap_cleanLocal)
 	$(mpaPointerAnal_cleanLocal)
@@ -163,6 +170,7 @@ distclean-local:
 	$(mpaBitvectorDataflow_distCleanLocal)
 	$(mpaDefUseAnalysis_distCleanLocal)
 	$(mpaDominanceAnalysis_distCleanLocal)
+	$(mpaGenericDataflow_distCleanLocal)
 	$(mpaGraphAnalysis_distCleanLocal)
 	$(mpaOAWrap_distCleanLocal)
 	$(mpaPointerAnal_distCleanLocal)
