@@ -10,7 +10,6 @@
 #include "genericDataflowCommon.h"
 #include "VirtualCFGIterator.h"
 #include "cfgUtils.h"
-#include "CFGRewrite.h"
 #include "CallGraphTraverse.h"
 #include "rwAccessLabeler.h"
 #include "analysisCommon.h"

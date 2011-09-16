@@ -4,7 +4,6 @@
 #include "genericDataflowCommon.h"
 #include "VirtualCFGIterator.h"
 #include "cfgUtils.h"
-#include "CFGRewrite.h"
 #include "CallGraphTraverse.h"
 #include "analysis.h"
 #include "divAnalysis.h"

@@ -1,6 +1,5 @@
 #include "variables.h"
 #include "cfgUtils.h"
-#include "CFGRewrite.h"
 #include "arrIndexLabeler.h"
 #include "rwAccessLabeler.h"
 #include <set>
@@ -13,7 +12,19 @@ map<SgFunctionDefinition*, set<varID> > allVars;
 map<SgFunctionDefinition*, set<varID> > activeVars;
 
 #define SgDefaultFile Sg_File_Info::generateDefaultFileInfoForTransformationNode()
+
+// given a SgInitializedName, returns a SgVarRefExp to the variable declared in the SgInitializedName
+SgVarRefExp* varRefFromInitName(SgInitializedName* initName)
+{
+        SgVariableSymbol* sym = new SgVariableSymbol(initName);
+        ROSE_ASSERT(sym);
+        SgVarRefExp *refExp = new SgVarRefExp(SgDefaultFile, sym);
+        ROSE_ASSERT(refExp);
+        sym->set_parent(refExp);
         
+        return refExp;
+}
+
 /*// = true only after the variables module has been initialized
 bool variables_module_initialized=false;
 

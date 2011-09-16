@@ -13,7 +13,6 @@
 
 #include "VirtualCFGIterator.h"
 #include "cfgUtils.h"
-#include "CFGRewrite.h"
 #include "CallGraphTraverse.h"
 #include "analysisCommon.h"
 #include "analysis.h"
