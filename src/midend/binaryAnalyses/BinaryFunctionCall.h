@@ -48,7 +48,7 @@ namespace BinaryAnalysis {
          */
         typedef boost::adjacency_list<boost::listS,                                 /* out-edges of each vertex in std::list */
                                       boost::vecS,                                  /* store vertices in std::vector */
-                                      boost::directedS,                             /* call graph is directed */
+                                      boost::bidirectionalS,                        /* call graph is directed */
                                       boost::property<boost::vertex_name_t, SgAsmFunctionDeclaration*>
                                      > Graph;
 
