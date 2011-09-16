@@ -1030,50 +1030,99 @@ Partitioner::mark_func_symbols(SgAsmGenericHeader *fhdr)
     }
 }
 
-/** See Partitioner::mark_func_patterns. Tries to match "push rbp; mov rbp,rsp" (or the 32-bit equivalent) */
+/** See Partitioner::mark_func_patterns. Tries to match "(mov rdi,rdi)?; push rbp; mov rbp,rsp" (or the 32-bit equivalent) */
 static Disassembler::InstructionMap::const_iterator
-pattern1(const Disassembler::InstructionMap& insns, Disassembler::InstructionMap::const_iterator ii)
+pattern1(const Disassembler::InstructionMap& insns, Disassembler::InstructionMap::const_iterator first,
+         Disassembler::AddressSet &exclude)
 {
+    Disassembler::InstructionMap::const_iterator ii = first;
+    Disassembler::AddressSet matches;
+
+    /* Look for optional "mov rdi, rdi"; if found, advance ii iterator to fall-through instruction */
+    do {
+        SgAsmx86Instruction *insn = isSgAsmx86Instruction(ii->second);
+        if (!insn || insn->get_kind()!=x86_mov)
+            break;
+        const SgAsmExpressionPtrList &opands = insn->get_operandList()->get_operands();
+        if (opands.size()!=2)
+            break;
+        SgAsmx86RegisterReferenceExpression *rre = isSgAsmx86RegisterReferenceExpression(opands[0]);
+        if (!rre ||
+            rre->get_descriptor().get_major()!=x86_regclass_gpr ||
+            rre->get_descriptor().get_minor()!=x86_gpr_di)
+            break;
+        rre = isSgAsmx86RegisterReferenceExpression(opands[1]);
+        if (!rre ||
+            rre->get_descriptor().get_major()!=x86_regclass_gpr ||
+            rre->get_descriptor().get_minor()!=x86_gpr_di)
+            break;
+        matches.insert(ii->first);
+        ii = insns.find(ii->first + insn->get_raw_bytes().size());
+    } while (0);
+
     /* Look for "push rbp" */
-    SgAsmx86Instruction *insn1 = isSgAsmx86Instruction(ii->second);
-    if (!insn1) return insns.end();
-    if (insn1->get_kind()!=x86_push) return insns.end();
-    const SgAsmExpressionPtrList &opands1 = insn1->get_operandList()->get_operands();
-    if (opands1.size()!=1) return insns.end();
-    SgAsmx86RegisterReferenceExpression *rre = isSgAsmx86RegisterReferenceExpression(opands1[0]);
-    if (!rre) return insns.end();
-    if (rre->get_descriptor().get_major()!=x86_regclass_gpr || rre->get_descriptor().get_minor()!=x86_gpr_bp) return insns.end();
+    {
+        if (ii==insns.end())
+            return insns.end();
+        SgAsmx86Instruction *insn = isSgAsmx86Instruction(ii->second);
+        if (!insn || insn->get_kind()!=x86_push)
+            return insns.end();
+        const SgAsmExpressionPtrList &opands = insn->get_operandList()->get_operands();
+        if (opands.size()!=1)
+            return insns.end();
+        SgAsmx86RegisterReferenceExpression *rre = isSgAsmx86RegisterReferenceExpression(opands[0]);
+        if (!rre ||
+            rre->get_descriptor().get_major()!=x86_regclass_gpr ||
+            rre->get_descriptor().get_minor()!=x86_gpr_bp)
+            return insns.end();
+        matches.insert(ii->first);
+        ii = insns.find(ii->first + insn->get_raw_bytes().size());
+    }
 
     /* Look for "mov rbp,rsp" */
-    Disassembler::InstructionMap::const_iterator ij=insns.find(ii->first + insn1->get_raw_bytes().size());
-    if (ij==insns.end()) return insns.end();
-    SgAsmx86Instruction *insn2 = isSgAsmx86Instruction(ij->second);
-    if (!insn2) return insns.end();
-    if (insn2->get_kind()!=x86_mov) return insns.end();
-    const SgAsmExpressionPtrList &opands2 = insn2->get_operandList()->get_operands();
-    if (opands2.size()!=2) return insns.end();
-    rre = isSgAsmx86RegisterReferenceExpression(opands2[0]);
-    if (!rre) return insns.end();
-    if (rre->get_descriptor().get_major()!=x86_regclass_gpr || rre->get_descriptor().get_minor()!=x86_gpr_bp) return insns.end();
-    rre = isSgAsmx86RegisterReferenceExpression(opands2[1]);
-    if (!rre) return insns.end();
-    if (rre->get_descriptor().get_major()!=x86_regclass_gpr || rre->get_descriptor().get_minor()!=x86_gpr_sp) return insns.end();
+    {
+        if (ii==insns.end())
+            return insns.end();
+        SgAsmx86Instruction *insn = isSgAsmx86Instruction(ii->second);
+        if (!insn || insn->get_kind()!=x86_mov)
+            return insns.end();
+        const SgAsmExpressionPtrList &opands = insn->get_operandList()->get_operands();
+        if (opands.size()!=2)
+            return insns.end();
+        SgAsmx86RegisterReferenceExpression *rre = isSgAsmx86RegisterReferenceExpression(opands[0]);
+        if (!rre ||
+            rre->get_descriptor().get_major()!=x86_regclass_gpr ||
+            rre->get_descriptor().get_minor()!=x86_gpr_bp)
+            return insns.end();
+        rre = isSgAsmx86RegisterReferenceExpression(opands[1]);
+        if (!rre ||
+            rre->get_descriptor().get_major()!=x86_regclass_gpr ||
+            rre->get_descriptor().get_minor()!=x86_gpr_sp)
+            return insns.end();
+        matches.insert(ii->first);
+    }
 
-    return ii;
+    exclude.insert(matches.begin(), matches.end());
+    return first;
 }
 
 #if 0 /*commented out in Partitioner::mark_func_patterns()*/
 /** See Partitioner::mark_func_patterns. Tries to match "nop;nop;nop" followed by something that's not a nop and returns the
  *  something that's not a nop if successful. */
 static Disassembler::InstructionMap::const_iterator
-pattern2(const Disassembler::InstructionMap& insns, Disassembler::InstructionMap::const_iterator ii)
+pattern2(const Disassembler::InstructionMap& insns, Disassembler::InstructionMap::const_iterator first,
+         Disassembler::AddressSet &exclude)
 {
+    Disassembler::InstructionMap::const_iterator ii = first;
+    Disassembler::AddressSet matches;
+
     /* Look for three "nop" instructions */
     for (size_t i=0; i<3; i++) {
         SgAsmx86Instruction *nop = isSgAsmx86Instruction(ii->second);
         if (!nop) return insns.end();
         if (nop->get_kind()!=x86_nop) return insns.end();
         if (nop->get_operandList()->get_operands().size()!=0) return insns.end(); /*only zero-arg NOPs allowed*/
+        matches.insert(ii->first);
         ii = insns.find(ii->first + nop->get_raw_bytes().size());
         if (ii==insns.end()) return insns.end();
     }
@@ -1082,6 +1131,9 @@ pattern2(const Disassembler::InstructionMap& insns, Disassembler::InstructionMap
     SgAsmx86Instruction *notnop = isSgAsmx86Instruction(ii->second);
     if (!notnop) return insns.end();
     if (notnop->get_kind()==x86_nop) return insns.end();
+    matches.insert(ii->first);
+
+    exclude.insert(matches.begin(), matches.end());
     return ii;
 }
 #endif
@@ -1089,8 +1141,12 @@ pattern2(const Disassembler::InstructionMap& insns, Disassembler::InstructionMap
 /** See Partitioner::mark_func_patterns. Tries to match "leave;ret" followed by one or more "nop" followed by a non-nop
  *  instruction and if matching, returns the iterator for the non-nop instruction. */
 static Disassembler::InstructionMap::const_iterator
-pattern3(const Disassembler::InstructionMap& insns, Disassembler::InstructionMap::const_iterator ii)
+pattern3(const Disassembler::InstructionMap& insns, Disassembler::InstructionMap::const_iterator first,
+         Disassembler::AddressSet &exclude)
 {
+    Disassembler::InstructionMap::const_iterator ii = first;
+    Disassembler::AddressSet matches;
+
     /* leave; ret; nop */
     for (size_t i=0; i<3; i++) {
         SgAsmx86Instruction *insn = isSgAsmx86Instruction(ii->second);
@@ -1099,6 +1155,7 @@ pattern3(const Disassembler::InstructionMap& insns, Disassembler::InstructionMap
             (i==1 && insn->get_kind()!=x86_ret)   ||
             (i==2 && insn->get_kind()!=x86_nop))
             return insns.end();
+        matches.insert(ii->first);
         ii = insns.find(ii->first + insn->get_raw_bytes().size());
         if (ii==insns.end()) return insns.end();
     }
@@ -1108,6 +1165,7 @@ pattern3(const Disassembler::InstructionMap& insns, Disassembler::InstructionMap
         SgAsmx86Instruction *insn = isSgAsmx86Instruction(ii->second);
         if (!insn) return insns.end();
         if (insn->get_kind()!=x86_nop) break;
+        matches.insert(ii->first);
         ii = insns.find(ii->first + insn->get_raw_bytes().size());
         if (ii==insns.end()) return insns.end();
     }
@@ -1115,6 +1173,9 @@ pattern3(const Disassembler::InstructionMap& insns, Disassembler::InstructionMap
     /* This must be something that's not a "nop", but make sure it's an x86 instruction anyway. */
     SgAsmx86Instruction *insn = isSgAsmx86Instruction(ii->second);
     if (!insn) return insns.end();
+    matches.insert(ii->first);
+
+    exclude.insert(matches.begin(), matches.end());
     return ii;
 }
         
@@ -1124,19 +1185,21 @@ pattern3(const Disassembler::InstructionMap& insns, Disassembler::InstructionMap
 void
 Partitioner::mark_func_patterns()
 {
+    Disassembler::AddressSet exclude;
+    Disassembler::InstructionMap::const_iterator found;
+
     for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
-        Disassembler::InstructionMap::const_iterator found = insns.end();
-
-        /* Try each pattern until one succeeds */
-        if (found==insns.end()) found = pattern1(insns, ii);
-#if 0   /* Disabled because NOP's sometimes legitimately appear inside functions */
-        if (found==insns.end()) found = pattern2(insns, ii);
+        if (exclude.find(ii->first)==exclude.end() && (found=pattern1(insns, ii, exclude))!=insns.end())
+            add_function(found->first, SgAsmFunctionDeclaration::FUNC_PATTERN);
+    }
+#if 0 /* Disabled because NOPs sometimes legitimately appear inside functions */
+    for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
+        if (exclude.find(ii->first)==exclude.end() && (found=pattern2(insns, ii, exclude))!=insns.end())
+            add_function(found->first, SgAsmFunctionDeclaration::FUNC_PATTERN);
+    }
 #endif
-        if (found==insns.end()) found = pattern3(insns, ii);
-
-        
-        /* We found a function entry point */
-        if (found!=insns.end())
+    for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
+        if (exclude.find(ii->first)==exclude.end() && (found=pattern3(insns, ii, exclude))!=insns.end())
             add_function(found->first, SgAsmFunctionDeclaration::FUNC_PATTERN);
     }
 }
