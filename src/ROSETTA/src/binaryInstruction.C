@@ -1988,6 +1988,8 @@ Grammar::setUpBinaryInstructions ()
      AsmFunctionDeclaration.setDataPrototype("SgAsmFunctionDeclaration::function_kind_enum",
                                              "function_kind","= SgAsmFunctionDeclaration::e_unknown",
                                              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+     AsmFunctionDeclaration.setDataPrototype("bool", "can_return", "= true", // can this function return to caller?
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmFunctionDeclaration.setDataPrototype("std::string","name_md5","= \"\"",
                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmFunctionDeclaration.setDataPrototype("SgAsmStatementPtrList","statementList","",

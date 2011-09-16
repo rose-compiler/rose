@@ -1894,6 +1894,7 @@ Partitioner::build_ast(Function* f)
     retval->set_name(f->name);
     retval->set_reason(reasons);
     retval->set_entry_va(f->entry_va);
+    retval->set_can_return(f->returns);
     return retval;
 }
 
