@@ -579,13 +579,6 @@ void dbgStream::addDOT(string imgFName, string graphName, string dot, ostream& r
         numImages++;
 }
 
-
-/*************************
- ***** namespace Dbg *****
- *************************/
-
-// Indicates that the application has entered or exited a function
-namespace Dbg {
         bool initialized=false;
         dbgStream dbg;
         
@@ -674,7 +667,6 @@ namespace Dbg {
                 }
                 return out;
         }
-}
 
 
 } // namespace Dbg
