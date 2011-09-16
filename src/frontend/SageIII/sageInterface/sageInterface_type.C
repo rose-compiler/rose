@@ -247,8 +247,8 @@ bool isPointerToNonConstType(SgType* type)
           if (arrayName!= 0)
             arrayRef = n;
           // right hand stores subscripts
-          if (subscripts != 0)
-            (*subscripts)->push_back(arr->get_rhs_operand());
+          if (subscripts != 0) // must insert to be the first here !! The last visited rhs will be the first dimension!!
+            (*subscripts)->insert( (*subscripts)->begin(),  arr->get_rhs_operand());
         } // end while
         if  (arrayName !=NULL)
         {

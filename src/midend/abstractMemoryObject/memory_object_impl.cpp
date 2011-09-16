@@ -14,6 +14,8 @@ namespace AbstractMemoryObject {
     assert (false);
   }
 
+  std::map <size_t, ConstIndexSet * >  ConstIndexSet::constIndexMap;
+  UnknownIndexSet* UnknownIndexSet::inst = NULL;
   bool IndexSet::operator=(IndexSet & other)
   {
     cerr<<"Error. Calling the base operator=() of IndexSet is not allowed. "<<endl;
@@ -59,7 +61,82 @@ namespace AbstractMemoryObject {
     }
     return rt;
   }
+ 
+  ConstIndexSet* ConstIndexSet::get_inst(SgValueExp * v_exp){
+    size_t v; 
+    assert (v_exp != NULL);
+    SgType* t = v_exp->get_type();
+    assert (t!= NULL);
+    assert (SageInterface::isStrictIntegerType (t) == true);
+    switch (v_exp->variantT())
+    { 
+      //Take advantage of the fact that the value expression is always SgUnsignedLongVal in AST
+      case V_SgUnsignedLongVal:
+      { 
+        SgUnsignedLongVal* ul_exp = isSgUnsignedLongVal (v_exp); 
+        v =  ul_exp->get_value() ; 
+        break;
+      }
+      case V_SgIntVal:
+      { 
+        SgIntVal* i_exp = isSgIntVal (v_exp); 
+        assert (i_exp->get_value() >=0);
+        v =  i_exp->get_value() ; 
+        break;
+      }
+ 
+      //TODO Handle other integer value nodes
+      default:
+      {
+        cerr<<"Error in ConstIndexSet::ConstIndexSet(), unexpected integer valued SgValueExp type: " << v_exp->class_name()<<endl;
+        assert(false);
+      }
+    }
+    return get_inst (v);
+  }
 
+  ConstIndexSet* ConstIndexSet::get_inst(size_t v)
+  {
+    ConstIndexSet* rt = constIndexMap[v];
+    if ( rt == NULL)
+    {
+      rt = new ConstIndexSet (v);
+      constIndexMap[v] = rt;
+    }
+    assert (rt != NULL);
+    return rt;   
+  }
+
+  UnknownIndexSet* UnknownIndexSet::get_inst()
+  {
+    if (inst == NULL)
+      inst = new UnknownIndexSet();
+    return inst;  
+  }
+
+  // convert std::vector<SgExpression*>* subscripts to IndexVector*  array_index_vector
+  // We only generate two kinds of IndexSet : ConstIndexSet or UnkownIndexSet
+  IndexVector * generateIndexVector (std::vector<SgExpression*>& subscripts)
+  {
+    assert (subscripts.size() >0 );
+    IndexVector_Impl * rt = new IndexVector_Impl ();  // TODO how to avoid duplicated creation here, or we don't care
+    std::vector<SgExpression*>::iterator iter;
+    
+    for (iter = subscripts.begin(); iter != subscripts.end(); iter++)
+    {
+      SgExpression* exp = *iter;
+      if (isSgValueExp (exp))
+      {
+        rt->index_vector.push_back(ConstIndexSet::get_inst(isSgValueExp (exp))); 
+      }
+      else
+      {
+        rt->index_vector.push_back(UnknownIndexSet::get_inst()); 
+      }
+    }  
+    return rt; 
+  }
+     
   //there are at least three levels resolution for modeling memory for labeled aggregates (structures, classes, etc)
   //
   //Think the following example:
@@ -126,14 +203,14 @@ namespace AbstractMemoryObject {
        SgPntrArrRefExp* r = isSgPntrArrRefExp(n);
        assert (r != NULL);
        rt = createNamedObjSet (r);
-     }  
-     if (isSgVarRefExp (n))
+     } 
+     else if (isSgVarRefExp (n))
      {
        SgVarRefExp* exp = isSgVarRefExp (n);
        assert (exp != NULL);
        rt = createNamedOrAliasedObjSet (exp);
      }
-     else if (isSgExpression(n)) // the order matters !! Must put after V_SgVarRefExp
+     else if (isSgExpression(n)) // the order matters !! Must put after V_SgVarRefExp, SgPntrArrRefExp etc.
      {
        SgExpression* exp = isSgExpression (n);
        assert (exp != NULL);
@@ -151,7 +228,8 @@ namespace AbstractMemoryObject {
        assert (s != NULL);
 
        if (!isMemberVariableDeclarationSymbol (s))
-         rt  = createNamedObjSet (s, s->get_type(), NULL); // parent should be NULL since it is not a member variable symbol
+         rt  = createNamedObjSet (s, s->get_type(), NULL, NULL); // parent should be NULL since it is not a member variable symbol
+                                                               // TODO handle array of arrays ?? , then last IndexVector* should not be NULL   
        else
        {
          // This symbol is part of an aggregate object
@@ -423,6 +501,24 @@ namespace AbstractMemoryObject {
     return false;
     
   }
+  std::string IndexVector_Impl::toString()
+  {
+    string rt;
+     std::vector<IndexSet *> ::iterator iter;
+     for (iter = index_vector.begin(); iter != index_vector.end(); iter++)
+     {
+       IndexSet* current_index_field = *iter;
+       rt += current_index_field->toString();
+     }
+     return rt;
+   }
+
+  std::string IndexSet::toString()
+  {
+    cerr<<"Error. Direct call to base class (IndexSet)'s toString() is not allowed."<<endl;
+    assert (false);
+    return "";
+  }
 
   std::string NamedObj::toString()
   {
@@ -439,10 +535,15 @@ namespace AbstractMemoryObject {
       rt += "  type: NULL";
 
     if (parent != NULL )
-//      rt += "  parent:" + parent->toString() + " @ " + StringUtility::numberToString(parent); // Cannot do this since it will cause infinite recursion
       rt += "  parent: @ " + StringUtility::numberToString(parent); // use address is sufficient
      else
        rt += "  parent: NULL";
+
+    if (array_index_vector != NULL )
+      rt += "  array_index_vector: @ " + StringUtility::numberToString(array_index_vector) + array_index_vector->toString(); // use address is sufficient
+     else
+       rt += "  array_index_vector: NULL";
+
 
     return rt;
   }
@@ -543,7 +644,7 @@ namespace AbstractMemoryObject {
         if (var_decl)
         {
           SgVariableSymbol * s = SageInterface::getFirstVarSym(var_decl);
-          ObjSet* field_obj = createNamedObjSet (s, s->get_type(), lp);
+          ObjSet* field_obj = createNamedObjSet (s, s->get_type(), lp, NULL); // we don't store explicit index  for elements for now
           LabeledAggregateField_Impl * f = new LabeledAggregateField_Impl (field_obj, lp);
           elements.push_back(f);
         }  
@@ -551,8 +652,8 @@ namespace AbstractMemoryObject {
     }
   }
 
-   //---------------------
-    LabeledAggregateNamedObj::LabeledAggregateNamedObj (SgSymbol* s, SgType* t, ObjSet* p): NamedObj (s,t,p) 
+   //----------------------
+    LabeledAggregateNamedObj::LabeledAggregateNamedObj (SgSymbol* s, SgType* t, ObjSet* p, IndexVector* iv): NamedObj (s,t,p, iv) 
   {
     assert (s != NULL);
     assert (t != NULL);
@@ -582,7 +683,7 @@ namespace AbstractMemoryObject {
      return rt; 
    }
    //---------------------
-    ArrayNamedObj::ArrayNamedObj (SgSymbol* s, SgType* t, ObjSet* p): NamedObj (s,t,p) 
+    ArrayNamedObj::ArrayNamedObj (SgSymbol* s, SgType* t, ObjSet* p, IndexVector* iv): NamedObj (s,t,p, iv) 
   {
     assert (s != NULL);
     assert (t != NULL);
@@ -867,7 +968,9 @@ namespace AbstractMemoryObject {
   // This can provide quick lookup for existing named objset to avoid duplicated creation
   // SgSymbol associated with class/struct data member is shared among all class/struct instances
   // so we have to use two keys (parent ObjSet and SgSymbol) to ensure the uniqueness of named objects
-  map<ObjSet*,  map<SgSymbol*, ObjSet*> > named_objset_map; 
+  //
+  // Array elements are represented as NamedObj also. They need one more key (IndexVector) to differentiate them
+  map<ObjSet*,  map<SgSymbol*, map <IndexVector*, ObjSet* > > > named_objset_map; 
 
   // variables that are explicitly declared/named in the source code
   // local, global, static variables,
@@ -876,37 +979,40 @@ namespace AbstractMemoryObject {
   //  Labeled aggregate
   //  Pointer
   //  Array
-  ObjSet* createNamedObjSet(SgSymbol* anchor_symbol, SgType* t, ObjSet* parent)
+  ObjSet* createNamedObjSet(SgSymbol* anchor_symbol, SgType* t, ObjSet* parent, IndexVector * iv)
   {
     ObjSet* rt = NULL;
     
     // check parameters
     assert (anchor_symbol != NULL);
-    assert (anchor_symbol->get_type() == t);
+    if (! isSgArrayType(anchor_symbol->get_type()))
+    { // only array elements can have different type from its anchor (parent) symbol
+      assert (anchor_symbol->get_type() == t);
+    }
     bool assert_flag = true; 
 
-    if (named_objset_map[parent][anchor_symbol] == NULL)
+    if (named_objset_map[parent][anchor_symbol][iv] == NULL)
     { // None found, create a new one depending on its type and update the map
       if (SageInterface::isScalarType(t))
         // We define the following SgType as scalar types: 
         // char, short, int, long , void, Wchar, Float, double, long long, string, bool, complex, imaginary 
       { 
-        rt = new ScalarNamedObj(anchor_symbol, t, parent);
+        rt = new ScalarNamedObj(anchor_symbol, t, parent, iv);
         assert (rt != NULL);
       }
       else if (isSgPointerType(t))
       {
-        rt = new PointerNamedObj(anchor_symbol,t, parent);
+        rt = new PointerNamedObj(anchor_symbol,t, parent, iv);
         assert (rt != NULL);
       }
       else if (isSgClassType(t))
       {
-        rt = new LabeledAggregateNamedObj (anchor_symbol,t, parent);
+        rt = new LabeledAggregateNamedObj (anchor_symbol,t, parent,iv);
         assert (rt != NULL);
       }
       else if (isSgArrayType(t)) // This is for the entire array variable
       {
-        rt = new ArrayNamedObj (anchor_symbol, t, parent);
+        rt = new ArrayNamedObj (anchor_symbol, t, parent, iv);
         assert (rt != NULL);
       }
       else
@@ -918,12 +1024,11 @@ namespace AbstractMemoryObject {
 
       // update the map  only if something has been created
       if (rt != NULL)
-        named_objset_map[parent][anchor_symbol]= rt;
+        named_objset_map[parent][anchor_symbol][iv]= rt;
     }
     else // Found one, return it directly
     {
-      //rt = (*iter).second;
-      rt = named_objset_map[parent][anchor_symbol];
+      rt = named_objset_map[parent][anchor_symbol][iv];
     }
   
     if (assert_flag)
@@ -987,14 +1092,14 @@ namespace AbstractMemoryObject {
         p_obj = createNamedOrAliasedObjSet (isSgVarRefExp(rhs));
       }
       // now create the child mem obj
-      ObjSet* mem_obj = createNamedObjSet (s, s->get_type(), p_obj); 
+      ObjSet* mem_obj = createNamedObjSet (s, s->get_type(), p_obj, NULL); // we don't explicitly store index for elements of labeled aggregates for now 
       // assert (mem_obj != NULL); // we may return NULL for cases not yet handled
       return mem_obj;
 
     }
     else // other symbols
     {
-      ObjSet* mem_obj = createNamedObjSet (s, s->get_type(), NULL); 
+      ObjSet* mem_obj = createNamedObjSet (s, s->get_type(), NULL, NULL); 
       // assert (mem_obj != NULL); // We may return NULL for cases not yet handled
       return mem_obj;
     }
@@ -1034,12 +1139,13 @@ namespace AbstractMemoryObject {
 
       bool is_top_array = isArrayReference (r, & arrayNameExp, & subscripts);
       SgInitializedName* array_name = convertRefToInitializedName (arrayNameExp);
+      SgVariableSymbol * s = NULL; 
       if (array_name != NULL)
       {
-        SgVariableSymbol * s = isSgVariableSymbol(array_name->get_symbol_from_symbol_table());
+        s = isSgVariableSymbol(array_name->get_symbol_from_symbol_table());
         assert (s != NULL);
         SgType * t = s->get_type();
-        assert (t != NULL);
+        assert (isSgArrayType(t) != NULL);
         whole_array_obj = ObjSetFactory::createObjSet(s);
         if (whole_array_obj == NULL)
         {
@@ -1053,7 +1159,15 @@ namespace AbstractMemoryObject {
         cerr<<"Warning. Unhandled case in createNamedObjSet(SgPntrArrRefExp*) where the array name is not a single variable."<<endl;
       }
 
-      // create the element access then
+      // create the element access then, using symbol, parent, and index
+      IndexVector * iv = generateIndexVector  (*subscripts);
+      assert (iv != 0);
+      mem_obj = named_objset_map[whole_array_obj][s][iv];
+      if (mem_obj == NULL)
+      {
+        mem_obj = createNamedObjSet (s, r->get_type(), whole_array_obj, iv);
+        named_objset_map[whole_array_obj][s][iv] = mem_obj;
+      }
     }
     else
     { 

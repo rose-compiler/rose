@@ -126,6 +126,7 @@ namespace AbstractMemoryObject
     public:
       // the index vector's length
       size_t getSize();
+      virtual std::string toString();
     
   };
 
