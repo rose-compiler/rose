@@ -217,7 +217,7 @@ string tabs(int n)
         return s;
 }
 
-dbgStream::dbgStream() : std::ostream(&buf)
+dbgStream::dbgStream() : std::ostream(&buf), initialized(false)
 {}
 
 dbgStream::dbgStream(string title, string dbgFileName, string workDir, string imgPath)
@@ -294,10 +294,14 @@ void dbgStream::init(string title, string dbgFileName, string workDir, string im
         colors.push_back("6FFF44");
         
         numImages++;
+        initialized = true;
 }
 
 dbgStream::~dbgStream()
 {
+       if (!initialized)
+         return;
+
         buf.ownerAccessing();
         printDetailFileTrailer();
         buf.userAccessing();
