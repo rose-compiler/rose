@@ -1185,7 +1185,7 @@ main(int argc, char *argv[])
 
     /* If the partitioner needs to execute a success program (defined in an IPD file) then it must be able to provide the
      * program with a window into the specimen's memory.  We do that by supplying the same memory map that was used for
-     * disassembly. It is redundant to call set_map() with an activer paritioner, but doesn't hurt anything. */
+     * disassembly. It is redundant to call set_map() with an active paritioner, but doesn't hurt anything. */
     partitioner->set_map(map);
 
     printf("using this memory map for disassembly:\n");
