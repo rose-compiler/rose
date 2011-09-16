@@ -1,6 +1,5 @@
 #include "functionState.h"
 #include "cfgUtils.h"
-#include "CallGraphTraverse.C" 
 
 #include <map>
 using std::map;
