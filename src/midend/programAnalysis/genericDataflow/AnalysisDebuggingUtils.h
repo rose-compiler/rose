@@ -98,7 +98,7 @@ class dbgStream : public std::ostream
         int numImages;
         
         std::ofstream summaryF;
-        
+        bool initialized;
 public:
         // Construct an ostream which tees output to the supplied
         // ostreams.
