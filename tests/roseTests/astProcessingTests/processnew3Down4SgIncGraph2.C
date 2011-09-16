@@ -40,7 +40,7 @@ void visitorTraversal::analyzePath(vector<VertexID>& pth) {
       //  pathstore.push_back(pth);
         tltnodes += pth.size();
         paths++;
-        std::cout << "paths: " << paths << std::endl;
+        //std::cout << "paths: " << paths << std::endl;
 
 }
 
@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
     vis->tltnodes = 0;
     vis->paths = 0;
     //vis->firstPrepGraph(constcfg);
-    vis->constructPathAnalyzer(mg);
+    vis->constructPathAnalyzer(mg, true);
     //cfg.clearNodesAndEdges();
     std::cout << "finished" << std::endl;
     std::cout << "tltnodes: " << vis->tltnodes << " paths: " << vis->paths << std::endl;

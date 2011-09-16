@@ -7,6 +7,9 @@
 #include "BinaryControlFlow.h"
 
 
+//This enumerates ALL paths, this therefore will take a while if you run a complete file through it. Be advised that even
+//small programs can have millions of paths.
+
 using namespace std;
 // you need boost to put together the graph
 using namespace boost;

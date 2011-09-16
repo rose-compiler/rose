@@ -13,9 +13,9 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 
 # DQ (7/2/2011): Fixed this to only handle binary work when binary support is available.
 # bin_PROGRAMS  = astTraversalTest processnew3Down4SgIncGraph processnew3Down4 binaryPaths
-bin_PROGRAMS  = astTraversalTest processnew3Down4SgIncGraph2 strictGraphTest smtlibParser
+bin_PROGRAMS  = astTraversalTest processnew3Down4SgIncGraph2 strictGraphTest smtlibParser sourcePTP
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-bin_PROGRAMS += binaryPaths
+bin_PROGRAMS += binaryPaths bPTP
 endif
 
 # Allow development using -lrose -ledg (simpler) or using 
@@ -25,9 +25,13 @@ ROSE_DEVELOPMENT_LIBS = $(ROSE_SEPARATE_LIBS)
 astTraversalTest_SOURCES      = astTraversalTest.C
 astTraversalTest_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
 
+bPTP_SOURCES = bPTP.C
+bPTP_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+bPTP_LDFLAGS = -O3 
+
 processnew3Down4SgIncGraph2_SOURCES      = processnew3Down4SgIncGraph2.C
 processnew3Down4SgIncGraph2_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-processnew3Down4SgIncGraph2_LDFLAGS = -O3
+processnew3Down4SgIncGraph2_LDFLAGS = -O3 
 
 binaryPaths_SOURCES = binaryPaths.C
 binaryPaths_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
@@ -35,11 +39,20 @@ binaryPaths_LDFLAGS = -O3
 
 strictGraphTest_SOURCES = strictGraphTest.C
 strictGraphTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-strictGraphTest_LDFLAGS = -O3
+strictGraphTest_LDFLAGS = -O3 
 
 smtlibParser_SOURCES = smtlibParser.C
 smtlibParser_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-smtlibParser_LDFLAGS = -O3
+smtlibParser_LDFLAGS = -O3 
+
+sourcePTP_SOURCES = sourcePTP.C
+sourcePTP_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+sourcePTP_LDFLAGS = -O3  
+
+#yicesParser_SOURCES = yicesParser.C yices_c.h
+#yicesParser_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+#yicesParser_LDFLAGS = -O3  -I/home/hoffman34/yices/yices-1.0.292/include -L/home/hoffman34/yices/yices-1.0.292/lib -lyices
+
 
 # source files don't contain anything that would be merged
 # TESTCODES = $(srcdir)/performanceTest.C
@@ -61,17 +74,35 @@ testRunExamplesBin: binaryPaths
 	./binaryPaths $(srcdir)/t4
 	rm *.dot
 
+testRunExamplesbPTP: bPTP
+	./bPTP $(srcdir)/t1
+	./bPTP $(srcdir)/t2
+	./bPTP $(srcdir)/t3
+	./bPTP $(srcdir)/t4
+
 strictGraph: strictGraphTest
 	./strictGraphTest
 
 smtParse: smtlibParser
 	./smtlibParser $(srcdir)/test11.C
 
+sourcePTPTest: sourcePTP
+	./sourcePTP $(srcdir)/test14.C
+
+#yicesParserTest: yicesParser
+#	./yicesParser $(srcdir)/t42.C 
+
 check-local:
 	@$(MAKE) testTraversals
 	@$(MAKE) testRunExamples2
 	@$(MAKE) strictGraph
 	@$(MAKE) smtParse
+	@$(MAKE) sourcePTPTest
+if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+	@$(MAKE) testRunExamplesbPTP
+	@$(MAKE) testRunExamplesBin
+endif
+
 	@echo "***********************************************************************************************"
 	@echo "*** ROSE/tests/roseTests/astProcessingTests: make check rule complete (terminated normally) ***"
 	@echo "***********************************************************************************************"

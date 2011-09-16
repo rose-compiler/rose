@@ -1,7 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <rose.h>
-//#include "interproceduralCFG.h"
+//#include "interproceduralBinaryAnalysis::ControlFlow::Graph.h"
 #include <string>
 #include <err.h>
 #include "graphProcessing.h"
@@ -15,6 +15,12 @@ using namespace boost;
 
 typedef boost::graph_traits<BinaryAnalysis::ControlFlow::Graph>::vertex_descriptor Vertex;   /**< Graph vertex type. */
 typedef boost::graph_traits<BinaryAnalysis::ControlFlow::Graph>::edge_descriptor   Edge;     /**< Graph edge type. */
+
+  typedef boost::graph_traits<BinaryAnalysis::ControlFlow::Graph>::vertex_iterator vertex_iterator;
+    typedef boost::graph_traits<BinaryAnalysis::ControlFlow::Graph>::out_edge_iterator out_edge_iterator;
+    typedef boost::graph_traits<BinaryAnalysis::ControlFlow::Graph>::in_edge_iterator in_edge_iterator;
+    typedef boost::graph_traits<BinaryAnalysis::ControlFlow::Graph>::edge_iterator edge_iterator;
+
 
 
 
@@ -48,21 +54,42 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "no binary interpretations found\n");
         exit(1);
     }
-
-    /* Calculate plain old CFG. */
+    std::vector<Vertex> nfurcations;
+    /* Calculate plain old BinaryAnalysis::ControlFlow::Graph. */
         BinaryAnalysis::ControlFlow cfg_analyzer;
         BinaryAnalysis::ControlFlow::Graph* cfg = new BinaryAnalysis::ControlFlow::Graph;
 
         cfg_analyzer.build_cfg_from_ast(interps.back(), *cfg);
+    
+   vertex_iterator v1, vend1;
+   for (tie(v1, vend1) = vertices(*cfg); v1 != vend1; ++v1)
+    {
+    int outedges = 0;
+    out_edge_iterator i, j;
+    for (boost::tie(i, j) = boost::out_edges(*v1, *cfg); i != j; ++i)
+    {
+        outedges++;
+    }
+    if (outedges > 1) {
+        nfurcations.push_back(*v1);
+    }
+    }
+
         std::ofstream mf;
         mf.open("analysis.dot");
         visitorTraversal* vis = new visitorTraversal;
         vis->tltnodes = 0;
         vis->pths = 0;
 	vis->firstPrepGraph(cfg);
-        vis->constructPathAnalyzer(cfg, true);
-        std::cout << "pths: " << vis->pths << std::endl;
-        std::cout << "tltnodes: " << vis->tltnodes << std::endl;
+        for (int i = 0; i < nfurcations.size()-1; i++) {
+            vis->tltnodes = 0;
+            vis->pths = 0;
+            vis->constructPathAnalyzer(cfg, nfurcations[i], nfurcations[i+1]);
+            cout << "from: " << nfurcations[i] << " to: " << nfurcations[i+1] << " " << vis->pths << " paths" << std::endl; 
+        }
+        //vis->constructPathAnalyzer(cfg);
+        //std::cout << "pths: " << vis->pths << std::endl;
+        //std::cout << "tltnodes: " << vis->tltnodes << std::endl;
 }
 
 

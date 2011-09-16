@@ -772,7 +772,7 @@ int main(int argc, char *argv[]) {
           if (q1 != q2) {
               vis->paths = 0;
               vis->tltnodes = 0;
-              vis->constructPathAnalyzer(mg, exprs[q1], exprs[q2]);
+              vis->constructPathAnalyzer(mg, false,exprs[q1], exprs[q2]);
               std::cout << vis->paths << " between expr" << q1 << " and expr" << q2 << std::endl;
               ptsP.push_back(vis->paths);
           }
