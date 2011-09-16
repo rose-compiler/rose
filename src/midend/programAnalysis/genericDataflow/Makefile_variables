@@ -19,7 +19,6 @@ mpaGenericDataflow_la_sources=\
 	$(mpaGenericDataflowPath)/AnalysisDebuggingUtils.C \
 	$(mpaGenericDataflowPath)/arrIndexLabeler/arrIndexLabeler.C \
 	$(mpaGenericDataflowPath)/cfgUtils/CallGraphTraverse.C \
-	$(mpaGenericDataflowPath)/cfgUtils/CFGRewrite.C \
 	$(mpaGenericDataflowPath)/cfgUtils/cfgUtils.C \
 	$(mpaGenericDataflowPath)/cfgUtils/DataflowCFG.C \
 	$(mpaGenericDataflowPath)/cfgUtils/VirtualCFGIterator.C \
@@ -52,7 +51,6 @@ mpaGenericDataflow_includeHeaders=\
 	$(mpaGenericDataflowPath)/arrIndexLabeler/arrIndexLabeler.h \
 	$(mpaGenericDataflowPath)/cfgUtils/baseCFGIterator.h \
 	$(mpaGenericDataflowPath)/cfgUtils/CallGraphTraverse.h \
-	$(mpaGenericDataflowPath)/cfgUtils/CFGRewrite.h \
 	$(mpaGenericDataflowPath)/cfgUtils/cfgUtils.h \
 	$(mpaGenericDataflowPath)/cfgUtils/DataflowCFG.h \
 	$(mpaGenericDataflowPath)/cfgUtils/VirtualCFGIterator.h \

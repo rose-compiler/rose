@@ -27,8 +27,6 @@ namespace cfgUtils
     {
       project = project_arg;
       srand(time(NULL));
-
-      initCFGRewrite(project);
     }
     else
       ROSE_ASSERT(project==project_arg);

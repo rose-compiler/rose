@@ -4,7 +4,6 @@
 #include "genericDataflowCommon.h" // for quad typedefs
 #include "variables.h"
 #include "VirtualCFGIterator.h"
-#include "CFGRewrite.h"
 #include "DataflowCFG.h"
 //#include "DataflowCFG.cfgToDot.h"
 
