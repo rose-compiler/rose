@@ -13,7 +13,13 @@ class UnparseFortran_type
           virtual ~UnparseFortran_type() {};
 
           void curprint (const std::string & str) const;
-          virtual void unparseType(SgType* type, SgUnparse_Info& info);
+
+          /**
+           * @param withLen - true means in case type is a SgTypeString, print the length attribute;
+           * false means not to print the length attribute; the default is set to true so that all
+           * extant callers of this method are unaffected.
+           */
+          virtual void unparseType(SgType* type, SgUnparse_Info& info, bool withLen = true);
 
        // virtual void unparseTypeForConstExprs(SgType* type, SgUnparse_Info& info);
 
@@ -30,7 +36,12 @@ class UnparseFortran_type
           virtual void unparseFunctionType(SgType* type, SgUnparse_Info& info);
           virtual void unparseArrayType(SgType* type, SgUnparse_Info& info);
 
-          virtual void unparseStringType(SgType* type, SgUnparse_Info& info);
+          /**
+           * @param withLen - true means in case type is a SgTypeString, print the length attribute;
+           * false means not to print the length attribute; the default is set to true so that all
+           * extant callers of this method are unaffected.
+           */
+          virtual void unparseStringType(SgType* type, SgUnparse_Info& info, bool withLen = true);
 
        // These are C++ specific code generation functions that are not likely required for Fortran
        // virtual void unparseMemberPointerType(SgType* type, SgUnparse_Info& info);
