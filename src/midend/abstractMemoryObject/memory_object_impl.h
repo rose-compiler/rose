@@ -46,7 +46,8 @@ namespace AbstractMemoryObject
       virtual bool maySet();
       virtual bool mustSet();
       virtual size_t objCount();    
-  };
+
+ };
 
   class Pointer_Impl: public Pointer 
   {
@@ -56,12 +57,52 @@ namespace AbstractMemoryObject
       virtual size_t objCount();    
   };
 
+
+  //! A set of index values, could have constant integer values or unknown values
+  class IndexSet
+  {
+    public:
+      enum Index_type {
+        Integer_type = 0,
+        Unknown_type 
+      };
+
+      Index_type getType() {return type; };
+
+      size_t getSize() {return 1;}; // Simple thing first
+
+      IndexSet (Index_type t):type(t){} 
+      // unknown index may equal to other
+      // integer index equal to another integer index if the integer values are the same
+      virtual bool operator= (IndexSet & other);
+      virtual ~IndexSet();
+
+    private:
+      Index_type type;
+  };
+
+  class ConstIndexSet: public IndexSet
+  {
+    public:
+     int value;
+     ConstIndexSet(int i):IndexSet(Integer_type), value(i) {}
+     bool operator = (IndexSet & other); 
+  };
+
+  class UnknownIndexSet: public IndexSet
+  {
+    public:
+      UnknownIndexSet (): IndexSet(Unknown_type) { }
+      bool operator = (IndexSet & other) {return true; };  // may be equal to any others
+  };
+
+
   // The most intuitive implementation of array index vector
-  class IndexVector_Impl: public IndexVector
+  class IndexVector_Impl : public IndexVector
   {
     public:
       size_t getSize() {  return index_vector.size(); };
-      std::vector<ObjSet*> index_vector; // a vector of memory objects of named objects or temp expression objects
+      std::vector<IndexSet *> index_vector; // a vector of memory objects of named objects or temp expression objects
   };
 
   class NamedObj; 
@@ -106,6 +147,7 @@ namespace AbstractMemoryObject
       // equal if and only the o2 is another ExprObj with the same SgExpression anchor
       bool operator == (ObjSet& o2) ;
       bool operator == (ExprObj& o2) ;
+      bool isConstant () {return isSgValueExp(anchor_exp); } ; // if the expression object represent a constant value (SgValueExp)
       std::string toString();
   };
 
@@ -119,7 +161,8 @@ namespace AbstractMemoryObject
     public:
       SgSymbol* anchor_symbol; 
       SgType* type; 
-      ObjSet* parent;  //Only exists for compound variables like a.b, where a is b's parent
+      ObjSet* parent;  //Only exists for compound variables like a.b, where a is b's parent, also for array element, where array is the parent
+      IndexVector*  array_index_vector; // the index vector of an array element. Ideally this data member could be reused for index of field of structure/class
 
       //Is this always true that the parent of a named object must be an expr object?
       NamedObj (SgSymbol* a, SgType* t, ObjSet* p):anchor_symbol(a), type(t),parent(p){};
@@ -225,7 +268,22 @@ namespace AbstractMemoryObject
 
   class ArrayNamedObj: public Array_Impl, public NamedObj
   {
+    public:
+      ArrayNamedObj (SgSymbol* s, SgType* t, ObjSet* p);
+      std::set <SgType*> getType();
+      std::string toString();
 
+      // Returns a memory object that corresponds to all the elements in the given array
+      ObjSet* getElements() {return this; } ; 
+      // Returns the memory object that corresponds to the elements described by the given abstract index, 
+      ObjSet* getElements(IndexVector* ai);
+
+      // number of dimensions of the array
+      size_t getNumDims();
+     //TODO 
+      bool operator == (const Array & that) const;
+      bool operator < (const Array & that) const;
+ 
   };
 
   class PointerNamedObj: public Pointer_Impl, public NamedObj
@@ -301,7 +359,9 @@ namespace AbstractMemoryObject
   ObjSet* createAliasedObjSet(SgType*t);  // One object per type, Type based alias analysis
   ObjSet* createNamedObjSet(SgSymbol* anchor_symbol, SgType* t, ObjSet* parent); // any 
   ObjSet* createNamedOrAliasedObjSet(SgVarRefExp* r); // create NamedObjSet or AliasedObjSet (for pointer type) from a variable reference 
+  ObjSet* createNamedObjSet(SgPntrArrRefExp* r); // create NamedObjSet from an array element access
   ObjSet* createExpressionObjSet(SgExpression* anchor_exp, SgType*t); 
+  // ObjSet* createObjSet(SgNode*); // top level catch all case, declared in memory_object.h
 
   // Helper functions for debugging
   void dump_aliased_objset_map (); 

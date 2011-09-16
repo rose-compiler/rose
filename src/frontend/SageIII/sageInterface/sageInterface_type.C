@@ -231,7 +231,7 @@ bool isPointerToNonConstType(SgType* type)
                 return false;
 }
 
-  //! Check if an expression is an array access. If so, return its name and subscripts if requested. Based on AstInterface::IsArrayAccess()
+  //! Check if an expression is an array access (SgPntrArrRefExp) . If so, return its name and subscripts if requested. 
   bool isArrayReference(SgExpression* ref, SgExpression** arrayName/*=NULL*/, vector<SgExpression*>** subscripts/*=NULL*/)
   {
     SgExpression* arrayRef=NULL;
