@@ -178,18 +178,10 @@ class NodeState
 	//void addLattice(const Analysis* analysis, int latticeName, Lattice* l);
 	
 	
-	// Sets this node's lattices for this analysis, making copies of the provided lattices.
-	// This call takes the actual provided lattices and does not make a copy of them.
+	// Set this node's lattices for this analysis (possibly above or below only, replacing previous mappings)
+	// These methods take ownership of the pointed-to lattices.
 	void setLattices(const Analysis* analysis, std::vector<Lattice*>& lattices);
-	
-	// Sets this node's above lattices for this analysis to the given vector of lattices, 
-	// deleting any previous mapping (the previous Lattices are freed). This call
-	// takes the actual provided lattices and does not make a copy of them.
 	void setLatticeAbove(const Analysis* analysis, std::vector<Lattice*>& lattices);
-	
-	// Sets this node's below lattices for this analysis to the given vector of lattices, 
-	// deleting any previous mapping (the previous Lattices are freed). This call
-	// takes the actual provided lattices and does not make a copy of them.
 	void setLatticeBelow(const Analysis* analysis, std::vector<Lattice*>& lattices);
 	
 	// returns the given lattice from above the node that is owned by the given analysis

@@ -1974,7 +1974,11 @@ Grammar::setUpStatements ()
 
   // DQ (8/17/2011):  Added Java "foreach" statement support (constructor required SgExpression pointer).
      JavaForEachStatement.setFunctionPrototype  ( "HEADER_JAVA_FOREACH_STATEMENT", "../Grammar/Statement.code" );
-     JavaForEachStatement.setDataPrototype ( "SgInitializedName*", "element", "= NULL",
+
+  // DQ (9/3/2011): Fixing up the new IR node to better match the grammar.
+  // JavaForEachStatement.setDataPrototype ( "SgInitializedName*", "element", "= NULL",
+  //                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     JavaForEachStatement.setDataPrototype ( "SgVariableDeclaration*", "element", "= NULL",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      JavaForEachStatement.setDataPrototype ( "SgExpression*", "collection", "= NULL",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -3146,6 +3150,9 @@ Grammar::setUpStatements ()
      AssertStmt.setFunctionSource           ( "SOURCE_ASSERT_STMT", "../Grammar/Statement.code" );
      AssertStmt.setDataPrototype            ( "SgExpression*", "test", "= NULL",
              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+  // DQ (9/2/2011): Added support for Java (which uses this IR node but requires an additional argument.
+     AssertStmt.setDataPrototype            ( "SgExpression*", "exception_argument", "= NULL",
+             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      ExecStatement.setFunctionSource           ( "SOURCE_EXEC_STATEMENT", "../Grammar/Statement.code" );
      ExecStatement.setFunctionSource ( "SOURCE_POST_CONSTRUCTION_INITIALIZATION_STATEMENT", "../Grammar/Statement.code" );

@@ -39,8 +39,9 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2011_39.java \
      test2011_40.java \
      test2011_41.java \
+     test2011_47.java \
+     test2011_50.java \
                       \
-     pgc_2011_30.java \
      pgc_2011_30.java \
                       \
      pgc_test2011_00.java \
@@ -52,6 +53,9 @@ TESTCODES_REQUIRED_TO_PASS = \
      pgc_test2011_06.java \
      pgc_test2011_07.java \
      pgc_test2011_08.java 
+
+# DQ (9/3/2011): This test code was listed twice...
+#    pgc_2011_30.java
 
 TESTCODE_CURRENTLY_FAILING = 
 
@@ -75,7 +79,10 @@ TESTCODES_REQUIRED_TO_PASS_FAILING_BACKEND_COMPILE = \
 # This is where the Java generics tests are put (currently not required to pass all phases).
 TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6 = \
      test2011_43.java \
-     test2011_44.java 
+     test2011_44.java \
+     test2011_46.java \
+     test2011_48.java \
+     test2011_49.java 
 
 TESTCODES_REQUIRED_TO_PASS_FAILING_FOR_JAVA_6 = \
      test2011_45.java 
@@ -400,7 +407,7 @@ testECJ_help_option:
 	$(testTranslator) -rose:java -rose:verbose 0 -rose:skipfinalCompileStep -ecj:help -c $(srcdir)/simple.java
 
 # Test with the "-rose:java" specification (one way to specify the language in ROSE).
-testWithJavaSpecification:
+testWithJavaSpecification: $(testTranslator)
 	$(testTranslator) -rose:java $(ROSE_FLAGS) $(srcdir)/testWithJavaSpecification.java
 
 # Test without the "-rose:java" specification (ROSE can alternatively obtain the source language from the file suffix).
