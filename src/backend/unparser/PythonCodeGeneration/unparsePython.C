@@ -339,7 +339,15 @@ Unparse_Python::getPrecedence(SgExpression* exp) {
         case V_SgListComprehension:    return 16;
         case V_SgSetComprehension:     return 16;
         case V_SgDictionaryComprehension: return 16;
+
+     // DQ (9/5/2011): Added default case to avoid warnings generated to catch such issues.
+        default:
+           {
+             return ROSE_UNPARSER_NO_PRECEDENCE;
+           }
     }
+
+ // DQ (9/5/2011): I will leave this here, but it is redundant.
     return ROSE_UNPARSER_NO_PRECEDENCE;
 }
 
