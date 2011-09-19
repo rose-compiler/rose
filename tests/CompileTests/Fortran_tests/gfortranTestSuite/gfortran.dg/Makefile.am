@@ -48,11 +48,14 @@ endif # ROSE_USE_LONG_MAKE_CHECK_RULE
 
 
 OCT_1_2010_F90_TESTCODES_REQUIRED_TO_PASS = \
-   PR19754_2.f90 \
-   PR40660.f90 \
-   Wall.f90 \
-   Wno-all.f90 \
+   access_spec_1.f90 \
+   access_spec_3.f90 \
    achar_1.f90 \
+   achar_2.f90 \
+   achar_4.f90 \
+   actual_array_constructor_3.f90 \
+   actual_array_interface_1.f90 \
+   actual_array_result_1.f90 \
    actual_pointer_function_1.f90 \
    actual_procedure_1.f90 \
    advance_1.f90 \
@@ -62,34 +65,58 @@ OCT_1_2010_F90_TESTCODES_REQUIRED_TO_PASS = \
    aint_anint_1.f90 \
    aliasing_dummy_2.f90 \
    aliasing_dummy_3.f90 \
+   aliasing_dummy_4.f90 \
    aliasing_dummy_5.f90 \
    all_bounds_1.f90 \
    alloc_alloc_expr_2.f90 \
    allocatable_dummy_1.f90 \
    allocatable_dummy_3.f90 \
    allocatable_function_1.f90 \
+   allocatable_function_3.f90 \
+   allocatable_function_4.f90 \
    allocatable_module_1.f90 \
    allocate_char_star_scalar_1.f90 \
    allocate_error_1.f90 \
+   allocate_zerosize_1.f90 \
+   allocate_zerosize_2.f90 \
+   and_or_xor.f90 \
    anint_1.f90 \
    any_all_1.f90 \
    any_all_2.f90 \
    anyallcount_1.f90 \
    append_1.f90 \
+   argument_checking_1.f90 \
    arithmetic_if.f90 \
+   array_1.f90 \
    array_2.f90 \
    array_3.f90 \
+   array_4.f90 \
    array_alloc_1.f90 \
    array_alloc_2.f90 \
    array_alloc_3.f90 \
    array_constructor_1.f90 \
+   array_constructor_10.f90 \
+   array_constructor_11.f90 \
+   array_constructor_12.f90 \
    array_constructor_13.f90 \
    array_constructor_14.f90 \
    array_constructor_15.f90 \
    array_constructor_16.f90 \
+   array_constructor_19.f90 \
+   array_constructor_22.f90 \
+   array_constructor_33.f90 \
    array_constructor_35.f90 \
+   array_constructor_4.f90 \
    array_constructor_5.f90 \
+   array_constructor_6.f90 \
+   array_constructor_7.f90 \
+   array_constructor_8.f90 \
+   array_constructor_9.f90 \
    array_function_1.f90 \
+   array_function_2.f90 \
+   array_function_3.f90 \
+   array_function_4.f90 \
+   array_initializer_2.f90 \
    array_memcpy_1.f90 \
    array_memcpy_3.f90 \
    array_memcpy_4.f90 \
@@ -97,42 +124,77 @@ OCT_1_2010_F90_TESTCODES_REQUIRED_TO_PASS = \
    array_memset_1.f90 \
    array_memset_2.f90 \
    array_reference_1.f90 \
+   array_return_value_1.f90 \
    array_section_1.f90 \
+   array_section_2.f90 \
    array_simplify_1.f90 \
    array_temporaries_1.f90 \
    array_temporaries_2.f90 \
+   array_temporaries_3.f90 \
+arrayio_1.f90 \
    arrayio_10.f90 \
    arrayio_11.f90 \
+   arrayio_12.f90 \
+   arrayio_2.f90 \
+arrayio_3.f90 \
+   arrayio_4.f90 \
+   arrayio_5.f90 \
+arrayio_6.f90 \
    arrayio_7.f90 \
    arrayio_derived_1.f90 \
    arrayio_derived_2.f90 \
+   assign_10.f90 \
+   assign_9.f90 \
    assign_func_dtcomp_1.f90 \
+   assignment_1.f90 \
    assignment_3.f90 \
    associated_1.f90 \
    associated_2.f90 \
    associated_4.f90 \
+   associated_5.f90 \
+   associated_target_2.f90 \
+   assumed_charlen_arg_1.f90 \
    assumed_charlen_function_2.f90 \
+   assumed_charlen_function_3.f90 \
+   assumed_charlen_function_5.f90 \
+   assumed_charlen_needed_1.f90 \
    assumed_charlen_sharing.f90 \
+   assumed_dummy_1.f90 \
    assumed_len.f90 \
    assumed_present.f90 \
    assumed_shape_ranks_2.f90 \
    assumed_size_refs_3.f90 \
    auto_array_1.f90 \
+   auto_char_dummy_array_1.f90 \
    auto_char_len_3.f90 \
+   auto_char_pointer_array_result_1.f90 \
+   auto_pointer_array_result_1.f90 \
    automatic_char_len_2.f90 \
    automatic_default_init_1.f90 \
    backslash_1.f90 \
    backslash_2.f90 \
    backspace_7.f90 \
+   bessel_1.f90 \
+   bessel_2.f90 \
+   besxy.f90 \
    bound_1.f90 \
+   bound_2.f90 \
    bound_3.f90 \
+   bound_4.f90 \
    bound_5.f90 \
    bound_6.f90 \
+   bound_7.f90 \
    bound_8.f90 \
+   bound_simplification_1.f90 \
+   bound_simplification_2.f90 \
+   bounds_check_1.f90 \
    bounds_check_10.f90 \
+   bounds_check_14.f90 \
    bounds_check_4.f90 \
+   bounds_check_5.f90 \
    bounds_check_6.f90 \
    bounds_check_7.f90 \
+   bounds_check_8.f90 \
    bounds_check_9.f90 \
    bounds_check_array_ctor_1.f90 \
    bounds_check_array_ctor_2.f90 \
@@ -140,48 +202,75 @@ OCT_1_2010_F90_TESTCODES_REQUIRED_TO_PASS = \
    bounds_check_array_ctor_6.f90 \
    bounds_check_array_ctor_7.f90 \
    bounds_check_array_ctor_8.f90 \
+   bounds_check_fail_2.f90 \
+   bounds_check_fail_3.f90 \
+   bounds_check_fail_4.f90 \
    bounds_check_strlen_1.f90 \
    bounds_check_strlen_2.f90 \
    bounds_check_strlen_3.f90 \
    bounds_check_strlen_4.f90 \
    bounds_check_strlen_5.f90 \
    bounds_check_strlen_6.f90 \
+   bounds_check_strlen_8.f90 \
    bounds_check_strlen_9.f90 \
    bounds_temporaries_1.f90 \
    boz_15.f90 \
    change_symbol_attributes_1.f90 \
-   char_array_constructor.f90 \
+   char_array_constructor_2.f90 \
    char_array_constructor_3.f90 \
+   char_array_constructor.f90 \
+ char_array_structure_constructor.f90 \
+   char_associated_1.f90 \
    char_bounds_check_fail_1.f90 \
+   char_cast_1.f90 \
+   char_cast_2.f90 \
    char_component_initializer_1.f90 \
    char_component_initializer_2.f90 \
    char_cons_len.f90 \
    char_cshift_3.f90 \
    char_decl_1.f90 \
    char_expr_1.f90 \
+   char_initialiser_actual.f90 \
+   char_length_10.f90 \
+   char_length_11.f90 \
+   char_length_12.f90 \
+   char_length_13.f90 \
    char_length_14.f90 \
+   char_length_15.f90 \
    char_length_16.f90 \
    char_length_17.f90 \
    char_length_18.f90 \
    char_length_4.f90 \
    char_length_6.f90 \
+   char_pointer_assign_3.f90 \
+   char_pointer_assign_4.f90 \
    char_pointer_assign_5.f90 \
+   char_pointer_assign.f90 \
    char_pointer_comp_assign.f90 \
    char_pointer_dependency.f90 \
    char_pointer_dummy.f90 \
    char_pointer_func.f90 \
+   char_result_10.f90 \
    char_result_11.f90 \
+   char_result_12.f90 \
    char_result_9.f90 \
    char_type_len.f90 \
+   character_array_constructor_1.f90 \
+   character_assign_1.f90 \
    character_comparison_3.f90 \
+   chkbits.f90 \
+   cmplx_intrinsic_1.f90 \
    common_1.f90 \
    common_12.f90 \
    common_2.f90 \
+   common_pointer_1.f90 \
    complex_int_1.f90 \
    complex_intrinsic_1.f90 \
    complex_read.f90 \
    complex_write.f90 \
+   contained_3.f90 \
    contained_equivalence_1.f90 \
+   contained_module_proc_1.f90 \
    continuation_1.f90 \
    continuation_10.f90 \
    continuation_3.f90 \
@@ -197,16 +286,22 @@ OCT_1_2010_F90_TESTCODES_REQUIRED_TO_PASS = \
    cshift_bounds_3.f90 \
    cshift_bounds_4.f90 \
    cshift_large_1.f90 \
+   cshift_nan_1.f90 \
    cshift_shift_real_2.f90 \
    ctrl-z.f90 \
    data_array_4.f90 \
    data_char_2.f90 \
+ data_components_1.f90 \
    deallocate_error_1.f90 \
    deallocate_error_2.f90 \
+   deallocate_stat.f90 \
    debug_1.f90 \
    default_format_1.f90 \
+   default_format_2.f90 \
    default_format_denormal_1.f90 \
+   default_format_denormal_2.f90 \
    default_initialization_2.f90 \
+ default_initialization_3.f90 \
    dependency_1.f90 \
    dependency_10.f90 \
    dependency_11.f90 \
@@ -220,7 +315,10 @@ OCT_1_2010_F90_TESTCODES_REQUIRED_TO_PASS = \
    dependency_2.f90 \
    dependency_20.f90 \
    dependency_21.f90 \
+   dependency_22.f90 \
    dependency_23.f90 \
+   dependency_24.f90 \
+   dependency_26.f90 \
    dependency_27.f90 \
    dependency_28.f90 \
    dependency_29.f90 \
@@ -237,15 +335,25 @@ OCT_1_2010_F90_TESTCODES_REQUIRED_TO_PASS = \
    dependency_7.f90 \
    dependency_8.f90 \
    dependency_9.f90 \
+   dependent_decls_1.f90 \
+   der_array_1.f90 \
    der_io_3.f90 \
    der_pointer_1.f90 \
    der_pointer_2.f90 \
    der_pointer_3.f90 \
    der_pointer_4.f90 \
    der_ptr_component_1.f90 \
+ derived_comp_array_ref_2.f90 \
+ derived_comp_array_ref_3.f90 \
+   derived_comp_array_ref_4.f90 \
+ derived_comp_array_ref_5.f90 \
+   derived_comp_array_ref_7.f90 \
+ derived_constructor_comps_1.f90 \
+   derived_constructor_comps_3.f90 \
    derived_init_2.f90 \
-   derived_pointer_recursion.f90 \
    derived_pointer_recursion_2.f90 \
+   derived_pointer_recursion.f90 \
+   derived_sub.f90 \
    dev_null_postprocessed.f90 \
    dfloat_1.f90 \
    direct_io_11.f90 \
@@ -261,23 +369,36 @@ OCT_1_2010_F90_TESTCODES_REQUIRED_TO_PASS = \
    do_check_1.f90 \
    do_check_2.f90 \
    do_check_4.f90 \
+   do_iterator_2.f90 \
    do_pointer_1.f90 \
    double_complex_1.f90 \
    dummy_functions_1.f90 \
+   dummy_procedure_3.f90 \
    e_d_fmt.f90 \
    edit_real_1.f90 \
+   elemental_dependency_2.f90 \
    elemental_dependency_3.f90 \
    elemental_optional_args_1.f90 \
+ elemental_scalar_args_1.f90 \
    elemental_subroutine_1.f90 \
+   elemental_subroutine_2.f90 \
+   elemental_subroutine_3.f90 \
+   elemental_subroutine_6.f90 \
    elemental_subroutine_7.f90 \
    empty_format_1.f90 \
    empty_function_1.f90 \
-   endfile_f90.f90 \
+ empty_type.f90 \
    endfile_2.f90 \
    endfile_3.f90 \
    endfile_4.f90 \
+   endfile_f90.f90 \
+   entry_11.f90 \
+   entry_12.f90 \
+   entry_14.f90 \
    entry_2.f90 \
+   entry_3.f90 \
    entry_8.f90 \
+   entry_array_specs_3.f90 \
    eof_1.f90 \
    eof_2.f90 \
    eof_3.f90 \
@@ -285,10 +406,14 @@ OCT_1_2010_F90_TESTCODES_REQUIRED_TO_PASS = \
    eor_handling_3.f90 \
    eor_handling_4.f90 \
    eor_handling_5.f90 \
-   eoshift.f90 \
    eoshift_2.f90 \
    eoshift_bounds_1.f90 \
+   eoshift_large_1.f90 \
+   eoshift.f90 \
    equiv_constraint_4.f90 \
+   equiv_substr.f90 \
+   erf.f90 \
+   erfc_scaled_1.f90 \
    error_format.f90 \
    exponent_1.f90 \
    exponent_2.f90 \
@@ -296,16 +421,21 @@ OCT_1_2010_F90_TESTCODES_REQUIRED_TO_PASS = \
    f2c_1.f90 \
    f2c_2.f90 \
    f2c_3.f90 \
+   f2c_6.f90 \
+   f2c_7.f90 \
    f2c_8.f90 \
+   f2c_9.f90 \
    fgetc_1.f90 \
    fgetc_2.f90 \
    float_1.f90 \
    fmt_colon.f90 \
    fmt_error_4.f90 \
    fmt_error_5.f90 \
+   fmt_exhaust.f90 \
    fmt_f0_1.f90 \
    fmt_float.f90 \
    fmt_huge.f90 \
+   fmt_int_sign.f90 \
    fmt_l.f90 \
    fmt_p_1.f90 \
    fmt_read.f90 \
@@ -321,80 +451,129 @@ OCT_1_2010_F90_TESTCODES_REQUIRED_TO_PASS = \
    ftell_1.f90 \
    ftell_2.f90 \
    ftell_3.f90 \
+   func_assign_2.f90 \
+   func_derived_1.f90 \
    func_derived_2.f90 \
+   func_result_1.f90 \
    func_result_2.f90 \
+   func_result_4.f90 \
+   function_charlen_1.f90 \
    function_charlen_2.f90 \
+   function_kinds_1.f90 \
+   function_types_2.f90 \
+   gamma_1.f90 \
+   gamma_4.f90 \
+   gamma_5.f90 \
    generic_1.f90 \
    generic_10.f90 \
    generic_15.f90 \
+   generic_17.f90 \
    generic_2.f90 \
+   generic_21.f90 \
    generic_3.f90 \
+generic_6.f90 \
    generic_8.f90 \
    getenv_1.f90 \
    global_references_2.f90 \
+   host_assoc_call_3.f90 \
+   host_assoc_call_5.f90 \
    host_assoc_call_6.f90 \
    host_assoc_function_2.f90 \
    host_assoc_function_3.f90 \
    host_assoc_function_4.f90 \
+   host_assoc_function_6.f90 \
+   host_assoc_types_2.f90 \
+   host_dummy_index_1.f90 \
    host_used_types_1.f90 \
+   hypot_1.f90 \
    iargc.f90 \
    ichar_2.f90 \
+   implicit_10.f90 \
+   implicit_13.f90 \
    implicit_3.f90 \
+   implicit_6.f90 \
+   implied_do_1.f90 \
    in_pack_rank7.f90 \
    include_1.f90 \
    include_4.f90 \
+ index.f90 \
    init_flag_1.f90 \
    init_flag_2.f90 \
    init_flag_3.f90 \
    init_flag_4.f90 \
    init_flag_5.f90 \
    init_flag_6.f90 \
+   init_flag_7.f90 \
    initialization_10.f90 \
    initialization_11.f90 \
    initialization_18.f90 \
    initialization_19.f90 \
+   initialization_2.f90 \
+   initialization_22.f90 \
    initialization_25.f90 \
+   initialization_26.f90 \
    initialization_27.f90 \
+   initialization_5.f90 \
+   initialization_6.f90 \
    inquire-complex.f90 \
    int_2.f90 \
+   int_3.f90 \
    int_conv_1.f90 \
    integer_exponentiation_1.f90 \
+   integer_exponentiation_2.f90 \
    intent_out_4.f90 \
    intent_out_6.f90 \
    intent_used_1.f90 \
    interface_10.f90 \
+   interface_11.f90 \
    interface_14.f90 \
    interface_17.f90 \
+   interface_18.f90 \
    interface_2.f90 \
+   interface_25.f90 \
    interface_29.f90 \
    interface_31.f90 \
    interface_9.f90 \
    interface_assignment_1.f90 \
+   interface_assignment_5.f90 \
+   interface_proc_end.f90 \
    internal_pack_1.f90 \
    internal_pack_11.f90 \
    internal_pack_2.f90 \
    internal_pack_3.f90 \
    internal_pack_4.f90 \
    internal_pack_5.f90 \
+   internal_pack_8.f90 \
    internal_references_2.f90 \
    internal_write_1.f90 \
+   intrinsic_1.f90 \
    intrinsic_2.f90 \
    intrinsic_4.f90 \
    intrinsic_5.f90 \
    intrinsic_char_1.f90 \
+   intrinsic_ifunction_1.f90 \
    intrinsic_intkinds_1.f90 \
    intrinsic_modulo_1.f90 \
+   intrinsic_pack_1.f90 \
+   intrinsic_pack_2.f90 \
+   intrinsic_pack_3.f90 \
    intrinsic_pack_4.f90 \
    intrinsic_pack_5.f90 \
    intrinsic_product_1.f90 \
    intrinsic_sign_1.f90 \
+   intrinsic_sign_2.f90 \
    intrinsic_spread_1.f90 \
    intrinsic_spread_2.f90 \
    intrinsic_spread_3.f90 \
    intrinsic_std_2.f90 \
    intrinsic_std_3.f90 \
+   intrinsic_std_4.f90 \
    intrinsic_std_6.f90 \
+   intrinsic_unpack_1.f90 \
+   intrinsic_unpack_2.f90 \
+   intrinsic_unpack_3.f90 \
    intrinsic_verify_1.f90 \
+   intrinsics_kind_argument_1.f90 \
    io_real_boz.f90 \
    io_real_boz2.f90 \
    iostat_1.f90 \
@@ -402,8 +581,11 @@ OCT_1_2010_F90_TESTCODES_REQUIRED_TO_PASS = \
    iostat_4.f90 \
    ishft_2.f90 \
    ishft_4.f90 \
+   isnan_1.f90 \
    label_4.f90 \
+   large_integer_kind_1.f90 \
    large_integer_kind_2.f90 \
+   large_real_kind_1.f90 \
    large_real_kind_form_io_1.f90 \
    large_real_kind_form_io_2.f90 \
    largeequiv_1.f90 \
@@ -428,10 +610,14 @@ OCT_1_2010_F90_TESTCODES_REQUIRED_TO_PASS = \
    ltime_gmtime_1.f90 \
    ltime_gmtime_2.f90 \
    malloc_free_1.f90 \
+   mapping_2.f90 \
+   mapping_3.f90 \
    matmul_1.f90 \
    matmul_2.f90 \
+   matmul_3.f90 \
    matmul_4.f90 \
    matmul_5.f90 \
+   matmul_6.f90 \
    matmul_7.f90 \
    matmul_bounds_2.f90 \
    matmul_bounds_3.f90 \
@@ -447,16 +633,28 @@ OCT_1_2010_F90_TESTCODES_REQUIRED_TO_PASS = \
    maxloc_bounds_7.f90 \
    maxloc_bounds_8.f90 \
    maxlocval_1.f90 \
+   maxlocval_2.f90 \
    maxlocval_3.f90 \
+   maxlocval_4.f90 \
    mclock.f90 \
    merge_char_1.f90 \
    merge_char_3.f90 \
    merge_char_const.f90 \
+   merge_init_expr.f90 \
    min_max_optional_1.f90 \
    min_max_optional_5.f90 \
+   minlocval_1.f90 \
    minlocval_2.f90 \
+   minlocval_3.f90 \
+   minlocval_4.f90 \
+   minmaxloc_1.f90 \
    minmaxloc_2.f90 \
+   minmaxloc_3.f90 \
    minmaxloc_4.f90 \
+   minmaxloc_5.f90 \
+   minmaxloc_6.f90 \
+   minmaxloc_integer_kinds_1.f90 \
+   minmaxval_1.f90 \
    missing_optional_dummy_1.f90 \
    missing_optional_dummy_2.f90 \
    missing_optional_dummy_3.f90 \
@@ -467,14 +665,20 @@ OCT_1_2010_F90_TESTCODES_REQUIRED_TO_PASS = \
    module_blank_common.f90 \
    module_commons_1.f90 \
    module_commons_2.f90 \
+   module_commons_3.f90 \
+   module_double_reuse.f90 \
+   module_equivalence_1.f90 \
    module_equivalence_2.f90 \
    module_equivalence_3.f90 \
    module_equivalence_4.f90 \
    module_equivalence_5.f90 \
    module_equivalence_6.f90 \
+   module_function_type_1.f90 \
    module_implicit_conversion.f90 \
    module_interface_1.f90 \
+   module_interface_2.f90 \
    module_md5_1.f90 \
+   module_naming_1.f90 \
    module_parameter_array_refs_1.f90 \
    module_private_array_refs_1.f90 \
    module_proc_external_dummy.f90 \
@@ -484,35 +688,73 @@ OCT_1_2010_F90_TESTCODES_REQUIRED_TO_PASS = \
    move_alloc.f90 \
    multiple_allocation_1.f90 \
    multiple_allocation_2.f90 \
+   mvbits_1.f90 \
+   mvbits_2.f90 \
    mvbits_3.f90 \
    mvbits_4.f90 \
    mvbits_5.f90 \
+   mvbits_6.f90 \
+   mvbits_7.f90 \
    mvbits_8.f90 \
    named_interface.f90 \
+   namelist_13.f90 \
+   namelist_15.f90 \
+   namelist_16.f90 \
+   namelist_17.f90 \
+   namelist_18.f90 \
+   namelist_19.f90 \
+   namelist_20.f90 \
    namelist_23.f90 \
    namelist_24.f90 \
    namelist_25.f90 \
+   namelist_29.f90 \
+   namelist_30.f90 \
+   namelist_31.f90 \
+   namelist_36.f90 \
    namelist_37.f90 \
    namelist_39.f90 \
    namelist_40.f90 \
    namelist_41.f90 \
+   namelist_42.f90 \
+   namelist_43.f90 \
+   namelist_45.f90 \
+   namelist_46.f90 \
    namelist_47.f90 \
+   namelist_48.f90 \
+   namelist_49.f90 \
+   namelist_54.f90 \
+   namelist_55.f90 \
    namelist_58.f90 \
+   namelist_59.f90 \
    namelist_60.f90 \
+   namelist_61.f90 \
    namelist_62.f90 \
+   namelist_internal.f90 \
    nan_1.f90 \
+   nan_3.f90 \
+   nan_6.f90 \
    nearest_1.f90 \
-   negative-z-descriptor.f90 \
+   nearest_3.f90 \
+   nearest_4.f90 \
    negative_automatic_size.f90 \
+   negative-z-descriptor.f90 \
    nested_array_constructor_1.f90 \
    nested_array_constructor_2.f90 \
+   nested_array_constructor_3.f90 \
+   nested_array_constructor_4.f90 \
+   nested_array_constructor_5.f90 \
+   nested_array_constructor_6.f90 \
    nested_modules_1.f90 \
+   nested_modules_2.f90 \
+   nested_modules_3.f90 \
    nested_modules_4.f90 \
    nested_modules_5.f90 \
+   nested_modules_6.f90 \
    nested_reshape.f90 \
    nesting_1.f90 \
    nesting_2.f90 \
    nesting_3.f90 \
+   new_line.f90 \
    nint_1.f90 \
    nint_2.f90 \
    no_unit_error_1.f90 \
@@ -520,49 +762,85 @@ OCT_1_2010_F90_TESTCODES_REQUIRED_TO_PASS = \
    nonreturning_statements.f90 \
    nosigned_zero_1.f90 \
    nosigned_zero_2.f90 \
+   nullify_3.f90 \
    open_access_append_1.f90 \
    open_access_append_2.f90 \
    open_new.f90 \
+   open_readonly_1.f90 \
    open_status_1.f90 \
    open_status_2.f90 \
    open_status_3.f90 \
+   operator_1.f90 \
    optional_assumed_charlen_1.f90 \
+   optional_dim_2.f90 \
+   optional_dim_3.f90 \
    output_exponents_1.f90 \
+   overload_1.f90 \
+   overload_2.f90 \
    pack_bounds_1.f90 \
    pack_mask_1.f90 \
    pad_no.f90 \
+   parameter_array_dummy.f90 \
+   parameter_array_element_1.f90 \
+   parameter_array_init_1.f90 \
+   parameter_array_init_2.f90 \
+   parameter_array_init_3.f90 \
+parameter_array_init_5.f90 \
+   parameter_array_ref_1.f90 \
    parameter_array_section_1.f90 \
+   parameter_array_section_2.f90 \
    parameter_unused.f90 \
+   parens_3.f90 \
    parens_4.f90 \
    parens_5.f90 \
    parens_6.f90 \
+   parens_7.f90 \
    parent_result_ref_1.f90 \
    parent_result_ref_2.f90 \
    parent_result_ref_3.f90 \
    parent_result_ref_4.f90 \
    past_eor.f90 \
    pointer_1.f90 \
+   pointer_assign_3.f90 \
+   pointer_assign_4.f90 \
+   pointer_check_1.f90 \
+   pointer_check_2.f90 \
+   pointer_check_3.f90 \
+   pointer_check_4.f90 \
    pointer_check_6.f90 \
    pointer_function_actual_2.f90 \
+   pointer_intent_1.f90 \
+   pointer_to_substring.f90 \
+   power.f90 \
    pr15129.f90 \
    pr15140.f90 \
    pr15324.f90 \
+   pr15957.f90 \
    pr15959.f90 \
+   pr16597.f90 \
    pr16861.f90 \
    pr16935.f90 \
    pr17090.f90 \
    pr17143.f90 \
    pr17164.f90 \
+   pr17285.f90 \
+   pr17286.f90 \
    pr17612.f90 \
    pr17615.f90 \
    pr17706.f90 \
    pr18025.f90 \
+   pr18122.f90 \
+   pr18210.f90 \
+   pr18392.f90 \
    pr19467.f90 \
+PR19754_2.f90 \
+   pr19926.f90 \
    pr19928-2.f90 \
    pr20086.f90 \
    pr20124.f90 \
    pr20257.f90 \
    pr20480.f90 \
+   pr21177.f90 \
    pr25923.f90 \
    pr26246_1.f90 \
    pr26246_2.f90 \
@@ -571,10 +849,12 @@ OCT_1_2010_F90_TESTCODES_REQUIRED_TO_PASS = \
    pr29581.f90 \
    pr29713.f90 \
    pr30391-1.f90 \
+   pr32136.f90 \
    pr32222.f90 \
    pr32238.f90 \
    pr32242.f90 \
    pr32533.f90 \
+   pr32535.f90 \
    pr32738.f90 \
    pr33074.f90 \
    pr33449.f90 \
@@ -584,14 +864,19 @@ OCT_1_2010_F90_TESTCODES_REQUIRED_TO_PASS = \
    pr35662.f90 \
    pr35944-1.f90 \
    pr35944-2.f90 \
+   pr36006-1.f90 \
+   pr36006-2.f90 \
    pr36286.f90 \
    pr37286.f90 \
+   pr38722.f90 \
    pr39666-1.f90 \
    pr39666-2.f90 \
+   PR40660.f90 \
    pr41043.f90 \
    pr41126.f90 \
    pr41212.f90 \
    pr41225.f90 \
+ pr41229.f90 \
    pr41347.f90 \
    pr42108.f90 \
    pr42166.f90 \
@@ -601,465 +886,13 @@ OCT_1_2010_F90_TESTCODES_REQUIRED_TO_PASS = \
    pr43688.f90 \
    pr43793.f90 \
    pr43796.f90 \
-   print_fmt_1.f90 \
-   private_type_5.f90 \
-   promotion.f90 \
-   pure_byref_1.f90 \
-   pure_byref_2.f90 \
-   pure_byref_3.f90 \
-   pure_formal_proc_1.f90 \
-   pure_formal_proc_2.f90 \
-   random_3.f90 \
-   read_2.f90 \
-   read_bad_advance.f90 \
-   read_eof_5.f90 \
-   read_eof_8.f90 \
-   read_eor.f90 \
-   read_float_1.f90 \
-   read_float_3.f90 \
-   read_infnan_1.f90 \
-   read_logical.f90 \
-   read_size_noadvance.f90 \
-   read_x_eof.f90 \
-   read_x_eor.f90 \
-   readwrite_unf_direct_eor_1.f90 \
-   real_const_2.f90 \
-   reassoc_1.f90 \
-   reassoc_2.f90 \
-   reassoc_3.f90 \
-   reassoc_5.f90 \
-   record_marker_1.f90 \
-   record_marker_3.f90 \
-   recursive_check_10.f90 \
-   recursive_check_11.f90 \
-   recursive_check_12.f90 \
-   recursive_check_13.f90 \
-   recursive_check_7.f90 \
-   recursive_check_8.f90 \
-   recursive_check_9.f90 \
-   recursive_stack.f90 \
-   reduction.f90 \
-   repeat_1.f90 \
-   repeat_3.f90 \
-   repeat_5.f90 \
-   reshape_4.f90 \
-   reshape_order_1.f90 \
-   reshape_order_2.f90 \
-   reshape_order_3.f90 \
-   reshape_order_4.f90 \
-   reshape_pad_1.f90 \
-   reshape_rank7.f90 \
-   ret_array_1.f90 \
-   ret_pointer_1.f90 \
-   rrspacing_1.f90 \
-   runtime_warning_1.f90 \
-   same_name_1.f90 \
-   save_2.f90 \
-   save_parameter.f90 \
-   scalar_mask_1.f90 \
-   scalar_mask_2.f90 \
-   scale_1.f90 \
-   scan_1.f90 \
-   select_1.f90 \
-   select_2.f90 \
-   select_3.f90 \
-   select_5.f90 \
-   select_char_1.f90 \
-   select_char_3.f90 \
-   selected_kind_1.f90 \
-   sequence_types_1.f90 \
-   shape_3.f90 \
-   shape_4.f90 \
-   shift-kind_2.f90 \
-   sibling_dummy_procedure_1.f90 \
-   sibling_dummy_procedure_2.f90 \
-   sibling_dummy_procedure_3.f90 \
-   simplify_modulo.f90 \
-   single_char_string.f90 \
-   size_optional_dim_1.f90 \
-   slash_1.f90 \
-   spec_expr_2.f90 \
-   spec_expr_3.f90 \
-   spec_expr_5.f90 \
-   specification_type_resolution_1.f90 \
-   specification_type_resolution_2.f90 \
-   spread_bounds_1.f90 \
-   spread_zerosize_1.f90 \
-   stat_1.f90 \
-   stat_2.f90 \
-   stfunc_1.f90 \
-   stfunc_4.f90 \
-   streamio_1.f90 \
-   streamio_11.f90 \
-   streamio_12.f90 \
-   streamio_13.f90 \
-   streamio_2.f90 \
-   streamio_4.f90 \
-   streamio_5.f90 \
-   streamio_6.f90 \
-   streamio_7.f90 \
-   string_0xfe_0xff_1.f90 \
-   string_pad_trunc.f90 \
-   substring_equivalence.f90 \
-   sum_zero_array_1.f90 \
-   temporary_1.f90 \
-   test_com_block.f90 \
-   tiny_1.f90 \
-   tiny_2.f90 \
-   tl_editing.f90 \
-   transfer_array_intrinsic_1.f90 \
-   transfer_array_intrinsic_4.f90 \
-   transfer_check_1.f90 \
-   transfer_intrinsic_1.f90 \
-   transfer_simplify_4.f90 \
-   transfer_simplify_5.f90 \
-   transfer_simplify_8.f90 \
-   transpose_1.f90 \
-   transpose_2.f90 \
-   transpose_conjg_1.f90 \
-   transpose_reshape_r10.f90 \
-   trim_optimize_1.f90 \
-   trim_optimize_2.f90 \
-   unf_read_corrupted_1.f90 \
-   unf_read_corrupted_2.f90 \
-   unf_short_record_1.f90 \
-   unformatted_recl_1.f90 \
-   unit_1.f90 \
-   unpack_bounds_1.f90 \
-   unpack_bounds_2.f90 \
-   unpack_bounds_3.f90 \
-   unpack_mask_1.f90 \
-   unused_artificial_dummies_1.f90 \
-   use_13.f90 \
-   use_allocated_1.f90 \
-   use_only_1.f90 \
-   use_only_2.f90 \
-   used_dummy_types_6.f90 \
-   used_dummy_types_7.f90 \
-   used_types_1.f90 \
-   used_types_10.f90 \
-   used_types_11.f90 \
-   used_types_13.f90 \
-   used_types_19.f90 \
-   used_types_2.f90 \
-   used_types_20.f90 \
-   used_types_6.f90 \
-   used_types_9.f90 \
-   userdef_operator_1.f90 \
-   vector_subscript_6.f90 \
-   warn_conversion_2.f90 \
-   warn_implicit_procedure_1.f90 \
-   warn_intent_out_not_set.f90 \
-   warn_std_1.f90 \
-   warn_std_2.f90 \
-   warn_std_3.f90 \
-   warn_unused_dummy_argument_1.f90 \
-   warn_unused_dummy_argument_2.f90 \
-   warn_unused_var.f90 \
-   where_nested_1.f90 \
-   where_operator_assign_2.f90 \
-   where_operator_assign_3.f90 \
-   whole_file_12.f90 \
-   whole_file_13.f90 \
-   whole_file_19.f90 \
-   whole_file_21.f90 \
-   whole_file_22.f90 \
-   whole_file_26.f90 \
-   whole_file_5.f90 \
-   whole_file_6.f90 \
-   write_0_pe_format.f90 \
-   write_direct_eor.f90 \
-   write_fmt_trim.f90 \
-   write_padding.f90 \
-   write_recursive.f90 \
-   wtruncate_f90.f90 \
-   zero_array_components_1.f90 \
-   zero_length_1.f90 \
-   zero_sized_3.f90 \
-   zero_sized_4.f90 \
-   zero_sized_5.f90
-
-# Oct 1 2010 passing tests that are now failing.
-# However, these PASS in ROSE when using both -rose:skip_syntax_check AND -rose:skipfinalCompileStep.
-# It is not clear what options should be used to run these and in
-# many cases they will run fine with the syntax checking is turned off.
-OCT_1_2010_PREVIOUSLY_PASSING_F90_TESTCODES_REQUIRED_TO_PASS = \
-   access_spec_1.f90 \
-   access_spec_3.f90 \
-   achar_2.f90 \
-   achar_4.f90 \
-   actual_array_constructor_3.f90 \
-   actual_array_interface_1.f90 \
-   actual_array_result_1.f90 \
-   aliasing_dummy_4.f90 \
-   allocatable_function_3.f90 \
-   allocatable_function_4.f90 \
-   allocate_zerosize_1.f90 \
-   allocate_zerosize_2.f90 \
-   and_or_xor.f90 \
-   argument_checking_1.f90 \
-   array_1.f90 \
-   array_4.f90 \
-   array_constructor_10.f90 \
-   array_constructor_11.f90 \
-   array_constructor_12.f90 \
-   array_constructor_19.f90 \
-   array_constructor_22.f90 \
-   array_constructor_33.f90 \
-   array_constructor_4.f90 \
-   array_constructor_6.f90 \
-   array_constructor_7.f90 \
-   array_constructor_8.f90 \
-   array_constructor_9.f90 \
-   array_function_2.f90 \
-   array_function_3.f90 \
-   array_function_4.f90 \
-   array_initializer_2.f90 \
-   array_return_value_1.f90 \
-   array_section_2.f90 \
-   array_temporaries_3.f90 \
-   arrayio_12.f90 \
-   arrayio_2.f90 \
-   arrayio_4.f90 \
-   arrayio_5.f90 \
-   assign_10.f90 \
-   assign_9.f90 \
-   assignment_1.f90 \
-   associated_5.f90 \
-   associated_target_2.f90 \
-   assumed_charlen_arg_1.f90 \
-   assumed_charlen_function_3.f90 \
-   assumed_charlen_function_5.f90 \
-   assumed_charlen_needed_1.f90 \
-   assumed_dummy_1.f90 \
-   auto_char_dummy_array_1.f90 \
-   auto_char_pointer_array_result_1.f90 \
-   auto_pointer_array_result_1.f90 \
-   bessel_1.f90 \
-   bessel_2.f90 \
-   besxy.f90 \
-   bound_2.f90 \
-   bound_4.f90 \
-   bound_7.f90 \
-   bound_simplification_1.f90 \
-   bound_simplification_2.f90 \
-   bounds_check_1.f90 \
-   bounds_check_14.f90 \
-   bounds_check_5.f90 \
-   bounds_check_8.f90 \
-   bounds_check_fail_2.f90 \
-   bounds_check_fail_3.f90 \
-   bounds_check_fail_4.f90 \
-   bounds_check_strlen_8.f90 \
-   char_array_constructor_2.f90 \
-   char_associated_1.f90 \
-   char_cast_1.f90 \
-   char_cast_2.f90 \
-   char_initialiser_actual.f90 \
-   char_length_10.f90 \
-   char_length_11.f90 \
-   char_length_12.f90 \
-   char_length_13.f90 \
-   char_length_15.f90 \
-   char_pointer_assign.f90 \
-   char_pointer_assign_3.f90 \
-   char_pointer_assign_4.f90 \
-   char_result_10.f90 \
-   char_result_12.f90 \
-   character_array_constructor_1.f90 \
-   character_assign_1.f90 \
-   chkbits.f90 \
-   cmplx_intrinsic_1.f90 \
-   common_pointer_1.f90 \
-   contained_3.f90 \
-   contained_module_proc_1.f90 \
-   cshift_nan_1.f90 \
-   deallocate_stat.f90 \
-   default_format_2.f90 \
-   default_format_denormal_2.f90 \
-   dependency_22.f90 \
-   dependency_24.f90 \
-   dependency_26.f90 \
-   dependent_decls_1.f90 \
-   der_array_1.f90 \
-   derived_comp_array_ref_4.f90 \
-   derived_comp_array_ref_7.f90 \
-   derived_constructor_comps_3.f90 \
-   derived_sub.f90 \
-   do_iterator_2.f90 \
-   dummy_procedure_3.f90 \
-   elemental_dependency_2.f90 \
-   elemental_subroutine_2.f90 \
-   elemental_subroutine_3.f90 \
-   elemental_subroutine_6.f90 \
-   entry_11.f90 \
-   entry_12.f90 \
-   entry_14.f90 \
-   entry_3.f90 \
-   entry_array_specs_3.f90 \
-   eoshift_large_1.f90 \
-   equiv_substr.f90 \
-   erf.f90 \
-   erfc_scaled_1.f90 \
-   f2c_6.f90 \
-   f2c_7.f90 \
-   f2c_9.f90 \
-   fmt_exhaust.f90 \
-   fmt_int_sign.f90 \
-   func_assign_2.f90 \
-   func_derived_1.f90 \
-   func_result_1.f90 \
-   func_result_4.f90 \
-   function_charlen_1.f90 \
-   function_kinds_1.f90 \
-   function_types_2.f90 \
-   gamma_1.f90 \
-   gamma_4.f90 \
-   gamma_5.f90 \
-   generic_17.f90 \
-   generic_21.f90 \
-   host_assoc_call_3.f90 \
-   host_assoc_call_5.f90 \
-   host_assoc_function_6.f90 \
-   host_assoc_types_2.f90 \
-   host_dummy_index_1.f90 \
-   hypot_1.f90 \
-   implicit_10.f90 \
-   implicit_13.f90 \
-   implicit_6.f90 \
-   implied_do_1.f90 \
-   init_flag_7.f90 \
-   initialization_2.f90 \
-   initialization_22.f90 \
-   initialization_26.f90 \
-   initialization_5.f90 \
-   initialization_6.f90 \
-   int_3.f90 \
-   integer_exponentiation_2.f90 \
-   interface_11.f90 \
-   interface_18.f90 \
-   interface_25.f90 \
-   interface_assignment_5.f90 \
-   interface_proc_end.f90 \
-   internal_pack_8.f90 \
-   intrinsic_1.f90 \
-   intrinsic_ifunction_1.f90 \
-   intrinsic_pack_1.f90 \
-   intrinsic_pack_2.f90 \
-   intrinsic_pack_3.f90 \
-   intrinsic_sign_2.f90 \
-   intrinsic_std_4.f90 \
-   intrinsic_unpack_1.f90 \
-   intrinsic_unpack_2.f90 \
-   intrinsic_unpack_3.f90 \
-   intrinsics_kind_argument_1.f90 \
-   isnan_1.f90 \
-   large_integer_kind_1.f90 \
-   large_real_kind_1.f90 \
-   mapping_2.f90 \
-   mapping_3.f90 \
-   matmul_3.f90 \
-   matmul_6.f90 \
-   maxlocval_2.f90 \
-   maxlocval_4.f90 \
-   merge_init_expr.f90 \
-   minlocval_1.f90 \
-   minlocval_3.f90 \
-   minlocval_4.f90 \
-   minmaxloc_1.f90 \
-   minmaxloc_3.f90 \
-   minmaxloc_5.f90 \
-   minmaxloc_6.f90 \
-   minmaxloc_integer_kinds_1.f90 \
-   minmaxval_1.f90 \
-   module_commons_3.f90 \
-   module_double_reuse.f90 \
-   module_equivalence_1.f90 \
-   module_function_type_1.f90 \
-   module_interface_2.f90 \
-   module_naming_1.f90 \
-   mvbits_1.f90 \
-   mvbits_2.f90 \
-   mvbits_6.f90 \
-   mvbits_7.f90 \
-   namelist_13.f90 \
-   namelist_15.f90 \
-   namelist_16.f90 \
-   namelist_17.f90 \
-   namelist_18.f90 \
-   namelist_19.f90 \
-   namelist_20.f90 \
-   namelist_29.f90 \
-   namelist_30.f90 \
-   namelist_31.f90 \
-   namelist_36.f90 \
-   namelist_42.f90 \
-   namelist_43.f90 \
-   namelist_45.f90 \
-   namelist_46.f90 \
-   namelist_48.f90 \
-   namelist_49.f90 \
-   namelist_54.f90 \
-   namelist_55.f90 \
-   namelist_59.f90 \
-   namelist_61.f90 \
-   namelist_internal.f90 \
-   nan_3.f90 \
-   nan_6.f90 \
-   nearest_3.f90 \
-   nearest_4.f90 \
-   nested_array_constructor_3.f90 \
-   nested_array_constructor_4.f90 \
-   nested_array_constructor_5.f90 \
-   nested_array_constructor_6.f90 \
-   nested_modules_2.f90 \
-   nested_modules_3.f90 \
-   nested_modules_6.f90 \
-   new_line.f90 \
-   nullify_3.f90 \
-   open_readonly_1.f90 \
-   operator_1.f90 \
-   optional_dim_2.f90 \
-   optional_dim_3.f90 \
-   overload_1.f90 \
-   overload_2.f90 \
-   parameter_array_dummy.f90 \
-   parameter_array_element_1.f90 \
-   parameter_array_init_1.f90 \
-   parameter_array_init_2.f90 \
-   parameter_array_init_3.f90 \
-   parameter_array_ref_1.f90 \
-   parameter_array_section_2.f90 \
-   parens_3.f90 \
-   parens_7.f90 \
-   pointer_assign_3.f90 \
-   pointer_assign_4.f90 \
-   pointer_check_1.f90 \
-   pointer_check_2.f90 \
-   pointer_check_3.f90 \
-   pointer_check_4.f90 \
-   pointer_intent_1.f90 \
-   pointer_to_substring.f90 \
-   power.f90 \
-   pr15957.f90 \
-   pr16597.f90 \
-   pr17285.f90 \
-   pr17286.f90 \
-   pr18122.f90 \
-   pr18210.f90 \
-   pr18392.f90 \
-   pr19926.f90 \
-   pr21177.f90 \
-   pr32136.f90 \
-   pr32535.f90 \
-   pr36006-1.f90 \
-   pr36006-2.f90 \
-   pr38722.f90 \
    pr43866.f90 \
    pr43984.f90 \
+   print_fmt_1.f90 \
    private_type_11.f90 \
    private_type_13.f90 \
    private_type_3.f90 \
+   private_type_5.f90 \
    private_type_8.f90 \
    proc_decl_12.f90 \
    proc_decl_13.f90 \
@@ -1081,62 +914,216 @@ OCT_1_2010_PREVIOUSLY_PASSING_F90_TESTCODES_REQUIRED_TO_PASS = \
    proc_ptr_3.f90 \
    proc_ptr_5.f90 \
    proc_ptr_9.f90 \
+   promotion.f90 \
    protected_1.f90 \
    protected_2.f90 \
+   pure_byref_1.f90 \
+   pure_byref_2.f90 \
+   pure_byref_3.f90 \
+   pure_formal_proc_1.f90 \
+   pure_formal_proc_2.f90 \
    pure_initializer_1.f90 \
+   random_3.f90 \
    random_4.f90 \
    random_5.f90 \
    random_7.f90 \
+   read_2.f90 \
+   read_bad_advance.f90 \
    read_eof_4.f90 \
+   read_eof_5.f90 \
    read_eof_7.f90 \
+   read_eof_8.f90 \
+   read_eor.f90 \
+   read_float_1.f90 \
+   read_float_3.f90 \
+   read_infnan_1.f90 \
+   read_logical.f90 \
    read_noadvance.f90 \
+   read_size_noadvance.f90 \
+   read_x_eof.f90 \
+   read_x_eor.f90 \
+   readwrite_unf_direct_eor_1.f90 \
+   real_const_2.f90 \
+   reassoc_1.f90 \
+   reassoc_2.f90 \
+   reassoc_3.f90 \
+   reassoc_5.f90 \
+   record_marker_1.f90 \
+   record_marker_3.f90 \
+   recursive_check_10.f90 \
+   recursive_check_11.f90 \
+   recursive_check_12.f90 \
+   recursive_check_13.f90 \
    recursive_check_14.f90 \
+   recursive_check_7.f90 \
+   recursive_check_8.f90 \
+   recursive_check_9.f90 \
    recursive_reference_2.f90 \
-   reshape-alloc.f90 \
-   reshape-complex.f90 \
+   recursive_stack.f90 \
+   reduction.f90 \
+   repeat_1.f90 \
+   repeat_3.f90 \
+   repeat_5.f90 \
    reshape_3.f90 \
+   reshape_4.f90 \
+   reshape_order_1.f90 \
+   reshape_order_2.f90 \
+   reshape_order_3.f90 \
+   reshape_order_4.f90 \
+   reshape_pad_1.f90 \
+   reshape_rank7.f90 \
    reshape_transpose_1.f90 \
    reshape_zerosize_1.f90 \
+   reshape-alloc.f90 \
+   reshape-complex.f90 \
+reshape.f90 \
    result_default_init_1.f90 \
    result_in_spec_2.f90 \
    result_in_spec_3.f90 \
+   ret_array_1.f90 \
+   ret_pointer_1.f90 \
+ret_pointer_2.f90 \
+   rrspacing_1.f90 \
+   runtime_warning_1.f90 \
+   same_name_1.f90 \
    save_1.f90 \
+   save_2.f90 \
    save_3.f90 \
+   save_parameter.f90 \
+   scalar_mask_1.f90 \
+   scalar_mask_2.f90 \
    scalarize_parameter_array_1.f90 \
+   scale_1.f90 \
+   scan_1.f90 \
+   select_1.f90 \
+   select_2.f90 \
+   select_3.f90 \
+   select_5.f90 \
+   select_char_1.f90 \
+   select_char_3.f90 \
+   selected_kind_1.f90 \
+   sequence_types_1.f90 \
    shape_2.f90 \
+   shape_3.f90 \
+   shape_4.f90 \
+shift-alloc.f90 \
+   shift-kind_2.f90 \
    shift-kind.f90 \
+   sibling_dummy_procedure_1.f90 \
+   sibling_dummy_procedure_2.f90 \
+   sibling_dummy_procedure_3.f90 \
+   simplify_modulo.f90 \
+   single_char_string.f90 \
    size_dim.f90 \
    size_kind.f90 \
+   size_optional_dim_1.f90 \
+   slash_1.f90 \
    sms-1.f90 \
+   spec_expr_2.f90 \
+   spec_expr_3.f90 \
+ spec_expr_4.f90 \
+   spec_expr_5.f90 \
+   specification_type_resolution_1.f90 \
+   specification_type_resolution_2.f90 \
+   spread_bounds_1.f90 \
    spread_scalar_source.f90 \
    spread_shape_1.f90 \
    spread_size_limit.f90 \
+   spread_zerosize_1.f90 \
+   stat_1.f90 \
+   stat_2.f90 \
+   stfunc_1.f90 \
+   stfunc_4.f90 \
+   streamio_1.f90 \
+   streamio_11.f90 \
+   streamio_12.f90 \
+   streamio_13.f90 \
+   streamio_2.f90 \
+   streamio_4.f90 \
+   streamio_5.f90 \
+   streamio_6.f90 \
+   streamio_7.f90 \
+streamio_9.f90 \
+   string_0xfe_0xff_1.f90 \
    string_ctor_1.f90 \
+   string_pad_trunc.f90 \
+ structure_constructor_10.f90 \
    subref_array_pointer_3.f90 \
    substr_5.f90 \
+   substring_equivalence.f90 \
+   sum_zero_array_1.f90 \
+   temporary_1.f90 \
+   test_com_block.f90 \
+   tiny_1.f90 \
+   tiny_2.f90 \
+   tl_editing.f90 \
+   transfer_array_intrinsic_1.f90 \
    transfer_array_intrinsic_3.f90 \
+   transfer_array_intrinsic_4.f90 \
+   transfer_check_1.f90 \
+   transfer_intrinsic_1.f90 \
+   transfer_simplify_4.f90 \
+   transfer_simplify_5.f90 \
    transfer_simplify_6.f90 \
+   transfer_simplify_8.f90 \
    transfer_simplify_9.f90 \
+   transpose_1.f90 \
+   transpose_2.f90 \
+   transpose_conjg_1.f90 \
+   transpose_reshape_r10.f90 \
+   trim_optimize_1.f90 \
+   trim_optimize_2.f90 \
+   unf_read_corrupted_1.f90 \
+   unf_read_corrupted_2.f90 \
+   unf_short_record_1.f90 \
+   unformatted_recl_1.f90 \
+   unit_1.f90 \
+   unpack_bounds_1.f90 \
+   unpack_bounds_2.f90 \
+   unpack_bounds_3.f90 \
+   unpack_mask_1.f90 \
    unpack_zerosize_1.f90 \
    unreferenced_use_assoc_1.f90 \
+   unused_artificial_dummies_1.f90 \
    use_11.f90 \
    use_12.f90 \
+   use_13.f90 \
+   use_allocated_1.f90 \
+   use_only_1.f90 \
+   use_only_2.f90 \
    use_rename_1.f90 \
    use_rename_2.f90 \
    use_rename_3.f90 \
    used_before_typed_5.f90 \
+ used_dummy_types_1.f90 \
+   used_dummy_types_6.f90 \
+   used_dummy_types_7.f90 \
    used_dummy_types_8.f90 \
    used_interface_ref.f90 \
+   used_types_1.f90 \
+   used_types_10.f90 \
+   used_types_11.f90 \
    used_types_12.f90 \
+   used_types_13.f90 \
    used_types_15.f90 \
    used_types_16.f90 \
    used_types_18.f90 \
+   used_types_19.f90 \
+   used_types_2.f90 \
+   used_types_20.f90 \
    used_types_21.f90 \
+ used_types_5.f90 \
+   used_types_6.f90 \
+   used_types_9.f90 \
+   userdef_operator_1.f90 \
+ value_1.f90 \
    value_test.f90 \
    vector_subscript_1.f90 \
+vector_subscript_2.f90 \
    vector_subscript_3.f90 \
    vector_subscript_4.f90 \
    vector_subscript_5.f90 \
+   vector_subscript_6.f90 \
    volatile.f90 \
    volatile10.f90 \
    volatile11.f90 \
@@ -1145,62 +1132,80 @@ OCT_1_2010_PREVIOUSLY_PASSING_F90_TESTCODES_REQUIRED_TO_PASS = \
    volatile6.f90 \
    volatile7.f90 \
    volatile9.f90 \
+   Wall.f90 \
+   warn_conversion_2.f90 \
    warn_function_without_result.f90 \
+   warn_implicit_procedure_1.f90 \
+   warn_intent_out_not_set.f90 \
+   warn_std_1.f90 \
+   warn_std_2.f90 \
+   warn_std_3.f90 \
+   warn_unused_dummy_argument_1.f90 \
+   warn_unused_dummy_argument_2.f90 \
+   warn_unused_var.f90 \
    where_2.f90 \
+   where_nested_1.f90 \
    where_operator_assign_1.f90 \
+   where_operator_assign_2.f90 \
+   where_operator_assign_3.f90 \
+ whole_file_11.f90 \
+   whole_file_12.f90 \
+   whole_file_13.f90 \
    whole_file_15.f90 \
+   whole_file_19.f90 \
+   whole_file_21.f90 \
+   whole_file_22.f90 \
+   whole_file_26.f90 \
+   whole_file_5.f90 \
+   whole_file_6.f90 \
    whole_file_9.f90 \
+   Wno-all.f90 \
+   write_0_pe_format.f90 \
    write_check3.f90 \
+   write_direct_eor.f90 \
+   write_fmt_trim.f90 \
+   write_padding.f90 \
+   write_recursive.f90 \
+   wtruncate_f90.f90 \
+   zero_array_components_1.f90 \
+   zero_length_1.f90 \
    zero_sized_1.f90 \
-   zero_sized_2.f90
+   zero_sized_2.f90 \
+   zero_sized_3.f90 \
+   zero_sized_4.f90 \
+   zero_sized_5.f90 
 
 
-# Currently failing tests (1/24/2011):
-#  proc_decl_15.f90 
-#  proc_decl_9.f90 
-#  proc_ptr_19.f90 
+# Oct 1 2010 passing tests that are now failing.
+# However, these PASS in ROSE when using both -rose:skip_syntax_check AND -rose:skipfinalCompileStep.
+# It is not clear what options should be used to run these and in
+# many cases they will run fine with the syntax checking is turned off.
+OCT_1_2010_PREVIOUSLY_PASSING_F90_TESTCODES_REQUIRED_TO_PASS = 
+
 
 # Currently failing tests (12/29/2010):
 # implicit_2.f90 
 # implicit_derived_type_1.f90
-# spec_expr_4.f90
-# whole_file_11.f90
 
 
 
 # Fails in ROSE (using both -rose:skip_syntax_check AND -rose:skipfinalCompileStep):
-# char_array_structure_constructor.f90
-# data_components_1.f90
-# default_initialization_3.f90
-# derived_comp_array_ref_2.f90
-# derived_comp_array_ref_3.f90
-# derived_comp_array_ref_5.f90
-# derived_constructor_comps_1.f90
-# elemental_scalar_args_1.f90
-# empty_type.f90
 # enum_1.f90
-# index.f90
 # iso_fortran_env_1.f90
 # iso_fortran_env_2.f90
-# pr41229.f90
 # reshape_2.f90
 # transfer_array_intrinsic_2.f90
-# structure_constructor_10.f90
-# used_dummy_types_1.f90
-# used_types_5.f90
-# value_1.f90
 
 
 OCT_1_2010_F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
-   PR19872.f \
    allocate_zerosize_3.f \
    array_constructor_type_9.f \
    backslash_3.f \
    bounds_check_13.f \
    bounds_check_2.f \
    char_comparison_1.f \
-   comma.f \
    comma_format_extension_4.f \
+   comma.f \
    common_equivalence_1.f \
    constant_substring.f \
    continuation_5.f \
@@ -1213,9 +1218,10 @@ OCT_1_2010_F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
    dollar_edit_descriptor_2.f \
    dos_eol.f \
    endfile_f77.f \
+ entry_array_specs_2.f \
    extended_char_comparison_1.f \
-   fmt_bz_bn.f \
    fmt_bz_bn_err.f \
+   fmt_bz_bn.f \
    fmt_error_9.f \
    fmt_f_an_p.f \
    fmt_missing_period_3.f \
@@ -1223,21 +1229,28 @@ OCT_1_2010_F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
    fmt_t_7.f \
    fmt_tl.f \
    fmt_with_extra.f \
+ function_charlen_3.f \
    g77_intrinsics_funcs.f \
    g77_intrinsics_sub.f \
    imag_1.f \
    itime_idate_1.f \
    itime_idate_2.f \
+ namelist_12.f \
    nested_forall_1.f \
    nullify_1.f \
    open-options-blanks.f \
    overwrite_1.f \
+ pr12884.f \
+ pr16433.f \
    pr17229.f \
    pr17472.f \
    pr19155.f \
+ pr19657.f \
+PR19872.f \
    pr20755.f \
    pr21730.f \
    pr22491.f \
+ pr24823.f \
    pr26524.f \
    pr30667.f \
    pr36206.f \
@@ -1267,34 +1280,13 @@ OCT_1_2010_F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
    write_rewind_1.f \
    write_rewind_2.f \
    wtruncate_f77.f \
-   x_slash_2.f
-
-# DQ (2/1/2011): Failing tests for new OFP (new version of 0.8.2).
-#   x_slash_1.f 
+ x_slash_1.f \
+   x_slash_2.f 
 
 # Oct 1 2010 passing tests that are now failing.
-# entry_array_specs_2.f
-# function_charlen_3.f
 # literal_character_constant_1_x.f
 # literal_character_constant_1_y.f
 # literal_character_constant_1_z.f
-# namelist_12.f
-# pr12884.f
-# pr16433.f
-# pr19657.f
-# pr24823.f
-
-# Sept 1 2010 passing tests that are now failing.
-# Failing in gfortran syntax check:
-#  entry_array_specs_2.f
-#  function_charlen_3.f 
-
-# Failing in ROSE:
-#  namelist_12.f
-#  pr12884.f
-#  pr16433.f
-#  pr19657.f
-
 
 F03_TESTCODES_REQUIRED_TO_PASS = $(OCT_1_2010_F03_TESTCODES_REQUIRED_TO_PASS)
 
@@ -1325,7 +1317,7 @@ OCT_1_2010_F03_TESTCODES_REQUIRED_TO_PASS = \
    structure_constructor_1.f03 \
    structure_constructor_2.f03 \
    structure_constructor_5.f03 \
-   value_7.f03
+   value_7.f03 
 
 # DQ (12/5/2010): Failing test as a result of newer bug fixes.
 # CER (6/7/2011): This file has been moved to FAILING list so this comment can be removed
@@ -1360,148 +1352,7 @@ OCT_1_2010_F90_TESTCODES_CURRENTLY_FAILING =
 
 # The ROSE options used didn't include using both -rose:skip_syntax_check AND -rose:skipfinalCompileStep.
 # If there were used likely most of these would pass.
-SEPT_1_2010_F90_TESTCODES_CURRENTLY_FAILING = \
-allocate_zerosize_1.f90 \
-allocate_zerosize_2.f90 \
-array_1.f90 \
-array_constructor_11.f90 \
-array_constructor_12.f90 \
-array_constructor_19.f90 \
-array_constructor_4.f90 \
-array_function_2.f90 \
-array_initializer_2.f90 \
-array_return_value_1.f90 \
-array_section_2.f90 \
-arrayio_1.f90 \
-arrayio_2.f90 \
-arrayio_3.f90 \
-arrayio_4.f90 \
-arrayio_5.f90 \
-arrayio_6.f90 \
-assign_10.f90 \
-assign_9.f90 \
-assignment_1.f90 \
-associated_5.f90 \
-associated_target_2.f90 \
-assumed_charlen_arg_1.f90 \
-assumed_charlen_needed_1.f90 \
-assumed_dummy_1.f90 \
-auto_char_dummy_array_1.f90 \
-bounds_check_1.f90 \
-bounds_check_5.f90 \
-bounds_check_8.f90 \
-bounds_check_fail_2.f90 \
-bounds_check_fail_3.f90 \
-bounds_check_fail_4.f90 \
-char_associated_1.f90 \
-char_initialiser_actual.f90 \
-char_pointer_assign.f90 \
-char_result_10.f90 \
-cmplx_intrinsic_1.f90 \
-common_pointer_1.f90 \
-cshift_nan_1.f90 \
-deallocate_stat.f90 \
-default_format_2.f90 \
-default_format_denormal_2.f90 \
-dependency_22.f90 \
-dependent_decls_1.f90 \
-der_array_1.f90 \
-derived_comp_array_ref_3.f90 \
-derived_comp_array_ref_4.f90 \
-derived_constructor_comps_1.f90 \
-do_iterator_2.f90 \
-elemental_subroutine_3.f90 \
-entry_3.f90 \
-f2c_6.f90 \
-f2c_7.f90 \
-fmt_exhaust.f90 \
-fmt_int_sign.f90 \
-func_derived_1.f90 \
-func_result_1.f90 \
-generic_6.f90 \
-implicit_10.f90 \
-implicit_6.f90 \
-implied_do_1.f90 \
-init_flag_7.f90 \
-internal_pack_8.f90 \
-intrinsic_sign_2.f90 \
-intrinsic_std_4.f90 \
-intrinsic_unpack_3.f90 \
-large_integer_kind_1.f90 \
-large_real_kind_1.f90 \
-matmul_3.f90 \
-matmul_6.f90 \
-minlocval_3.f90 \
-minmaxloc_5.f90 \
-minmaxloc_6.f90 \
-module_commons_3.f90 \
-module_double_reuse.f90 \
-module_equivalence_1.f90 \
-mvbits_1.f90 \
-mvbits_2.f90 \
-mvbits_6.f90 \
-namelist_13.f90 \
-namelist_15.f90 \
-namelist_17.f90 \
-namelist_18.f90 \
-namelist_19.f90 \
-namelist_20.f90 \
-namelist_31.f90 \
-namelist_45.f90 \
-namelist_46.f90 \
-nested_modules_2.f90 \
-nested_modules_3.f90 \
-nullify_3.f90 \
-open_readonly_1.f90 \
-overload_1.f90 \
-parameter_array_init_5.f90 \
-parens_3.f90 \
-pointer_assign_4.f90 \
-power.f90 \
-pr15957.f90 \
-pr16597.f90 \
-pr17285.f90 \
-pr17286.f90 \
-pr18122.f90 \
-pr18210.f90 \
-pr18392.f90 \
-pr19926.f90 \
-pr43866.f90 \
-read_eof_4.f90 \
-read_eof_7.f90 \
-read_noadvance.f90 \
-recursive_check_14.f90 \
-reshape-alloc.f90 \
-reshape-complex.f90 \
-reshape.f90 \
-reshape_3.f90 \
-reshape_transpose_1.f90 \
-reshape_zerosize_1.f90 \
-result_default_init_1.f90 \
-result_in_spec_2.f90 \
-ret_pointer_2.f90 \
-save_1.f90 \
-shape_2.f90 \
-shift-alloc.f90 \
-shift-kind.f90 \
-sms-1.f90 \
-spread_scalar_source.f90 \
-spread_shape_1.f90 \
-spread_size_limit.f90 \
-streamio_9.f90 \
-unpack_zerosize_1.f90 \
-use_11.f90 \
-use_rename_2.f90 \
-use_rename_3.f90 \
-used_dummy_types_1.f90 \
-used_types_12.f90 \
-used_types_5.f90 \
-vector_subscript_2.f90 \
-vector_subscript_3.f90 \
-vector_subscript_4.f90 \
-write_check3.f90 \
-zero_sized_1.f90
-
+SEPT_1_2010_F90_TESTCODES_CURRENTLY_FAILING = 
 
 
 

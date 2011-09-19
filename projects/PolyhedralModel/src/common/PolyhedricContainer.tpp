@@ -10,7 +10,7 @@ void makeLinExp(
 	PolyhedralProgram<Function, Expression, VariableLBL> & polyhedral_program,
 	Expression * expression,
 	const std::vector<std::pair<VariableLBL, int> > & inequation,
-	LinearExpression * lin_exp,
+	LinearExpression_ppl * lin_exp,
 	size_t global_offset = 0
 ) {
 	typename std::vector<std::pair<VariableLBL, int> >::const_iterator it;
@@ -302,7 +302,7 @@ PolyhedralProgram<Function, Expression, VariableLBL> & Domain<Function, Expressi
 
 template <class Function, class Expression, class VariableLBL>
 void Domain<Function, Expression, VariableLBL>::addInequation(const std::vector<std::pair<VariableLBL, int> > & inequation, bool positive) {
-	LinearExpression lin_exp(0);
+	LinearExpression_ppl lin_exp(0);
 	makeLinExp(p_polyhedral_program, p_expression, inequation, &lin_exp, p_nbr_surr_loop);
 	if (lin_exp.space_dimension() > p_domain.space_dimension())
 		p_domain.add_space_dimensions_and_embed(lin_exp.space_dimension() - p_domain.space_dimension());
@@ -382,13 +382,13 @@ PolyhedralProgram<Function, Expression, VariableLBL> & Scattering<Function, Expr
 
 template <class Function, class Expression, class VariableLBL>
 void Scattering<Function, Expression, VariableLBL>::addEquation(std::vector<std::pair<VariableLBL, int> > & equation) {
-	LinearExpression lin_exp(0);
+	LinearExpression_ppl lin_exp(0);
 	makeLinExp(p_polyhedral_program, p_expression, equation, &lin_exp, p_nbr_surr_loop);
 	p_equations.push_back(lin_exp);
 }
 
 template <class Function, class Expression, class VariableLBL>
-const std::vector<LinearExpression> & Scattering<Function, Expression, VariableLBL>::getScattering() const {
+const std::vector<LinearExpression_ppl> & Scattering<Function, Expression, VariableLBL>::getScattering() const {
 	return p_equations;
 }
 		
@@ -404,7 +404,7 @@ void Scattering<Function, Expression, VariableLBL>::print(std::ostream & out) {
 		else
 			out << std::setw(6) << toString(p_polyhedral_program.getGlobalById(i - p_nbr_surr_loop));
 	out << std::setw(6) << "1" << std::endl;
-	std::vector<LinearExpression>::iterator it;
+	std::vector<LinearExpression_ppl>::iterator it;
 	for (it = p_equations.begin(); it != p_equations.end(); it++) {
 		out << std::setw(6) << "0";
 		for (int i = 0; i < dim_max; i++)
@@ -437,22 +437,22 @@ PolyhedralProgram<Function, Expression, VariableLBL> & DataAccess<Function, Expr
 
 template <class Function, class Expression, class VariableLBL>
 void DataAccess<Function, Expression, VariableLBL>::addRead(VariableLBL v, const std::vector<std::vector<std::pair<VariableLBL, int> > > & access_vector) {
-	std::vector<LinearExpression> vect;
+	std::vector<LinearExpression_ppl> vect;
 	
 	typename std::vector<std::vector<std::pair<VariableLBL, int> > >::const_iterator it;
 	for (it = access_vector.begin(); it != access_vector.end(); it++) {
-		LinearExpression lin_exp(0);
+		LinearExpression_ppl lin_exp(0);
 		makeLinExp(p_polyhedral_program, p_expression, *it, &lin_exp, p_nbr_surr_loop);
 		vect.push_back(lin_exp);
 	}
-	p_read.push_back(std::pair<size_t, std::vector<LinearExpression> >(p_polyhedral_program.getVariableID(v), vect));
+	p_read.push_back(std::pair<size_t, std::vector<LinearExpression_ppl> >(p_polyhedral_program.getVariableID(v), vect));
 }
 
 template <class Function, class Expression, class VariableLBL>
-std::vector<std::vector<LinearExpression> > * DataAccess<Function, Expression, VariableLBL>::getRead(VariableLBL v) const {
-	std::vector<std::vector<LinearExpression> > * res = new std::vector<std::vector<LinearExpression> >();
+std::vector<std::vector<LinearExpression_ppl> > * DataAccess<Function, Expression, VariableLBL>::getRead(VariableLBL v) const {
+	std::vector<std::vector<LinearExpression_ppl> > * res = new std::vector<std::vector<LinearExpression_ppl> >();
 	
-	std::vector<std::pair<size_t, std::vector<LinearExpression> > >::const_iterator it;
+	std::vector<std::pair<size_t, std::vector<LinearExpression_ppl> > >::const_iterator it;
 	for (it = p_read.begin(); it != p_read.end(); it++)
 		if (it->first == p_polyhedral_program.getVariableID(v))
 			res->push_back(it->second);
@@ -462,22 +462,22 @@ std::vector<std::vector<LinearExpression> > * DataAccess<Function, Expression, V
 
 template <class Function, class Expression, class VariableLBL>
 void DataAccess<Function, Expression, VariableLBL>::addWrite(VariableLBL v, const std::vector<std::vector<std::pair<VariableLBL, int> > > & access_vector) {
-	std::vector<LinearExpression> vect;
+	std::vector<LinearExpression_ppl> vect;
 	
 	typename std::vector<std::vector<std::pair<VariableLBL, int> > >::const_iterator it;
 	for (it = access_vector.begin(); it != access_vector.end(); it++) {
-		LinearExpression lin_exp(0);
+		LinearExpression_ppl lin_exp(0);
 		makeLinExp(p_polyhedral_program, p_expression, *it, &lin_exp, p_nbr_surr_loop);
 		vect.push_back(lin_exp);
 	}
-	p_write.push_back(std::pair<size_t, std::vector<LinearExpression> >(p_polyhedral_program.getVariableID(v), vect));
+	p_write.push_back(std::pair<size_t, std::vector<LinearExpression_ppl> >(p_polyhedral_program.getVariableID(v), vect));
 }
 
 template <class Function, class Expression, class VariableLBL>
-std::vector<std::vector<LinearExpression> > * DataAccess<Function, Expression, VariableLBL>::getWrite(VariableLBL v) const {
-	std::vector<std::vector<LinearExpression> > * res = new std::vector<std::vector<LinearExpression> >();
+std::vector<std::vector<LinearExpression_ppl> > * DataAccess<Function, Expression, VariableLBL>::getWrite(VariableLBL v) const {
+	std::vector<std::vector<LinearExpression_ppl> > * res = new std::vector<std::vector<LinearExpression_ppl> >();
 	
-	std::vector<std::pair<size_t, std::vector<LinearExpression> > >::const_iterator it;
+	std::vector<std::pair<size_t, std::vector<LinearExpression_ppl> > >::const_iterator it;
 	for (it = p_write.begin(); it != p_write.end(); it++)
 		if (it->first == p_polyhedral_program.getVariableID(v))
 			res->push_back(it->second);
@@ -492,8 +492,8 @@ void DataAccess<Function, Expression, VariableLBL>::print(std::ostream & out) {
 	size_t dim_max = p_nbr_surr_loop + p_polyhedral_program.getNumberOfGlobals();
 	
 	size_t nbr_line = 0;
-	std::vector<std::pair<size_t, std::vector<LinearExpression> > >::iterator it1;
-	std::vector<LinearExpression>::iterator it2;
+	std::vector<std::pair<size_t, std::vector<LinearExpression_ppl> > >::iterator it1;
+	std::vector<LinearExpression_ppl>::iterator it2;
 	
 	out << "# Read acces information" << std::endl;
 	for (it1 = p_read.begin(); it1 != p_read.end(); it1++)
@@ -550,9 +550,9 @@ void DataAccess<Function, Expression, VariableLBL>::print(std::ostream & out) {
 }
 
 template <class Function, class Expression, class VariableLBL>
-const std::vector<std::pair<size_t, std::vector<LinearExpression> > > & DataAccess<Function, Expression, VariableLBL>::getRead() const { return p_read; }
+const std::vector<std::pair<size_t, std::vector<LinearExpression_ppl> > > & DataAccess<Function, Expression, VariableLBL>::getRead() const { return p_read; }
 template <class Function, class Expression, class VariableLBL>
-const std::vector<std::pair<size_t, std::vector<LinearExpression> > > & DataAccess<Function, Expression, VariableLBL>::getWrite() const { return p_write; }
+const std::vector<std::pair<size_t, std::vector<LinearExpression_ppl> > > & DataAccess<Function, Expression, VariableLBL>::getWrite() const { return p_write; }
 
 template <class Function, class Expression, class VariableLBL>
 std::ostream & operator << (std::ostream & out, DataAccess<Function, Expression, VariableLBL> & data_access) {

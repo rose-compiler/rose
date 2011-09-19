@@ -566,15 +566,6 @@ const RsType* RsCompoundType::getSubtypeAt( size_t offset ) const {
 }
 
 
-// ----------------------------------- RsTypeDef --------------------------------------
-
-void RsTypeDef::print(std::ostream & os) const
-{
-    os << "Typedef from " << refType->getName() << " to " << getName() << std::endl;
-}
-
-
-
 // ----------------------------------- RsBasicType --------------------------------------
 
 
@@ -582,7 +573,6 @@ void RsBasicType::print(std::ostream & os) const
 {
     os << "Basic Type: " << getName() << std::endl;
 }
-
 
 std::string RsBasicType::getDisplayName() const
 {
@@ -708,3 +698,17 @@ std::string RsPointerType::getDisplayName() const
 }
 
 const char RsClassType::invalidname[] = "-";
+
+
+#if CURRENTLY_NOT_USED
+
+// ----------------------------------- RsTypeDef --------------------------------------
+
+
+
+void RsTypeDef::print(std::ostream & os) const
+{
+    os << "Typedef from " << refType->getName() << " to " << getName() << std::endl;
+}
+
+#endif /* CURRENTLY_NOT_USED */

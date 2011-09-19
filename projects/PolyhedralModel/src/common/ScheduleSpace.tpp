@@ -136,7 +136,7 @@ void ScheduleSpace<Function, Expression, VariableLBL>::computePBCC() {
 template <class Function, class Expression, class VariableLBL>
 bool ScheduleSpace<Function, Expression, VariableLBL>::isValid(int ** sched) {
 	for (size_t i = 0; i < p_schedule_spaces.size(); i++) {
-		LinearExpression le;
+		LinearExpression_ppl le;
 		for (size_t j = 0; j < p_dim_space; j++)
 			le += sched[i][j] * VariableID(j);
 		if (p_schedule_spaces[i].relation_with(Generator::point(le)) == Parma_Polyhedra_Library::Poly_Gen_Relation::subsumes())
@@ -229,7 +229,7 @@ bool ScheduleSpace<Function, Expression, VariableLBL>::isValid(Schedule<Function
 	for (size_t i = 0; i < dim_sched; i++) {
 		sched[i] = &(data[i * p_dim_space]);
 		for (size_t j = 0; j < p_dim_space; j++) {
-			const std::vector<LinearExpression> & sched_j = sched_.getSchedule(p_coef_info[j].statement+1);
+			const std::vector<LinearExpression_ppl> & sched_j = sched_.getSchedule(p_coef_info[j].statement+1);
 			if (sched_j.size() < i)
 				sched[i][j] = 0;
 			else

@@ -396,7 +396,8 @@ class JavaParserSupport
                  // Get the class associated with the field (all types in Java are a class, so this is only strange relative to C++).
                     Class typeClass = fld.getType();
 
-                    Type genericType = fld.getGenericType();
+                 // DQ (9/9/2011): Bug fix this is not referenced.
+                 // Type genericType = fld.getGenericType();
 
                  // Note that if we use "nestedClassName = fld.getType().toString();" nestedClassName has the
                  // name "class " as a prefix and this causes an error, so use "typeClass.getName()" instead.

@@ -27,7 +27,7 @@ void QuastToDependency(
 		
 			Polyhedron dependency(st + sf + sg);
 		
-			LinearExpression le(0);
+			LinearExpression_ppl le(0);
 			ConstraintSystem::const_iterator it0;
 			for (it0 = dom_to.begin(); it0 != dom_to.end(); it0++) {
 				le += it0->inhomogeneous_term();
@@ -39,7 +39,7 @@ void QuastToDependency(
 					dependency.refine_with_constraint(le == 0);
 				else
 					dependency.refine_with_constraint(le >= 0);
-				le = LinearExpression::zero();
+				le = LinearExpression_ppl::zero();
 			}
 			for (it0 = dom_from.begin(); it0 != dom_from.end(); it0++) {
 				le += it0->inhomogeneous_term();
@@ -51,7 +51,7 @@ void QuastToDependency(
 					dependency.refine_with_constraint(le == 0);
 				else
 					dependency.refine_with_constraint(le >= 0);
-				le = LinearExpression::zero();
+				le = LinearExpression_ppl::zero();
 			}
 			
 			ChainedList<std::pair<Constraint, bool> > * cond_it = conditions;
@@ -65,12 +65,12 @@ void QuastToDependency(
 					dependency.refine_with_constraint(le >= 0);
 				else
 					dependency.refine_with_constraint(le <= -1);
-				le = LinearExpression::zero();
+				le = LinearExpression_ppl::zero();
 				
 				cond_it = cond_it->getNext();
 			}
 			
-			std::vector<LinearExpression>::const_iterator it2;
+			std::vector<LinearExpression_ppl>::const_iterator it2;
 			size_t cnt = 0;
 			for (it2 = q->Relation().begin(); it2 != q->Relation().end(); it2++) {
 				le += it2->inhomogeneous_term();
@@ -79,7 +79,7 @@ void QuastToDependency(
 				for (int i = 0; (i < sg) && (sf + i < it2->space_dimension()); i++)
 					le += it2->coefficient(VariableID(sf + i)) * VariableID(st + sf + i);
 				dependency.refine_with_constraint(VariableID(cnt) == le);
-				le = LinearExpression::zero();
+				le = LinearExpression_ppl::zero();
 				cnt++;
 			}
 			if (dependency.contains_integer_point())
@@ -158,9 +158,9 @@ std::vector<Dependency<Function, Expression, VariableLBL> *> * ComputeRaR(const 
 	
 	const std::vector<Expression *> & exp_l = polyhedral_program.getExpressions();
 	
-	std::vector<std::vector<LinearExpression> > * r_e1;
-	std::vector<std::vector<LinearExpression> > * r_e2;
-	std::vector<std::vector<LinearExpression> >::const_iterator av1, av2;
+	std::vector<std::vector<LinearExpression_ppl> > * r_e1;
+	std::vector<std::vector<LinearExpression_ppl> > * r_e2;
+	std::vector<std::vector<LinearExpression_ppl> >::const_iterator av1, av2;
 	VariableLBL v;
 	QUAST<std::pair<Expression *, size_t> > * rar;
 	size_t from_pos;
@@ -209,9 +209,9 @@ std::vector<Dependency<Function, Expression, VariableLBL> *> * ComputeRaW(const 
 	
 	const std::vector<Expression *> & exp_l = polyhedral_program.getExpressions();
 	
-	std::vector<std::vector<LinearExpression> > * r_e1;
-	std::vector<std::vector<LinearExpression> > * w_e2;
-	std::vector<std::vector<LinearExpression> >::const_iterator av1, av2;
+	std::vector<std::vector<LinearExpression_ppl> > * r_e1;
+	std::vector<std::vector<LinearExpression_ppl> > * w_e2;
+	std::vector<std::vector<LinearExpression_ppl> >::const_iterator av1, av2;
 	VariableLBL v;
 	QUAST<std::pair<Expression *, size_t> > * raw;
 	size_t from_pos;
@@ -261,9 +261,9 @@ std::vector<Dependency<Function, Expression, VariableLBL> *> * ComputeWaR(const 
 	
 	const std::vector<Expression *> & exp_l = polyhedral_program.getExpressions();
 	
-	std::vector<std::vector<LinearExpression> > * w_e1;
-	std::vector<std::vector<LinearExpression> > * r_e2;
-	std::vector<std::vector<LinearExpression> >::const_iterator av1, av2;
+	std::vector<std::vector<LinearExpression_ppl> > * w_e1;
+	std::vector<std::vector<LinearExpression_ppl> > * r_e2;
+	std::vector<std::vector<LinearExpression_ppl> >::const_iterator av1, av2;
 	VariableLBL v;
 	QUAST<std::pair<Expression *, size_t> > * war;
 	size_t from_pos;
@@ -313,9 +313,9 @@ std::vector<Dependency<Function, Expression, VariableLBL> *> * ComputeWaW(const 
 	
 	const std::vector<Expression *> & exp_l = polyhedral_program.getExpressions();
 	
-	std::vector<std::vector<LinearExpression> > * w_e1;
-	std::vector<std::vector<LinearExpression> > * w_e2;
-	std::vector<std::vector<LinearExpression> >::const_iterator av1, av2;
+	std::vector<std::vector<LinearExpression_ppl> > * w_e1;
+	std::vector<std::vector<LinearExpression_ppl> > * w_e2;
+	std::vector<std::vector<LinearExpression_ppl> >::const_iterator av1, av2;
 	VariableLBL v;
 	QUAST<std::pair<Expression *, size_t> > * waw;
 	size_t from_pos;

@@ -1,0 +1,36 @@
+! Rice coexpression image selectors
+
+program p
+  integer, allocatable :: a[*]
+  integer, allocatable :: b(10)[*]
+  integer, copointer :: ca[*]
+  integer, copointer :: cb(10)[*]
+  team :: myteam
+  integer k
+  
+  k = a
+  k = b(10)
+  k = ca[]
+  k = cb[](10)
+  
+  k = a[k+3]
+  k = b(10)[k+3]
+  k = ca[][k+3]
+  k = cb[](10)[k+3]
+  
+  k = a[k+3 @ team_world]
+  k = b(10)[k+3 @ team_world]
+  k = ca[][k+3 @ team_world]
+  k = cb[](10)[k+3 @ team_world]
+  
+  k = a[k+3 @ team_default]
+  k = b(10)[k+3 @ team_default]
+  k = ca[][k+3 @ team_default]
+  k = cb[](10)[k+3 @ team_default]
+  
+  k = a[k+3 @ myteam]
+  k = b(10)[k+3 @ myteam]
+  k = ca[][k+3 @ myteam]
+  k = cb[](10)[k+3 @ myteam]
+  
+end program
