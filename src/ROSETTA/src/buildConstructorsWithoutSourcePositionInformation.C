@@ -40,6 +40,7 @@ Grammar::markNodeForConstructorWithoutSourcePositionInformation ( Terminal & nod
              }
 #else
           GrammarString* returnValue = getNamedDataMember ( node, "startOfConstruct" );
+          ROSE_ASSERT(returnValue != NULL);
           returnValue->isInConstructorParameterList = NO_CONSTRUCTOR_PARAMETER;
 #endif
        // ROSE_ASSERT(false);

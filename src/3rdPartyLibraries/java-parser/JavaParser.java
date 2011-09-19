@@ -350,22 +350,14 @@ class JavaParser  implements Callable<Boolean>
      public Boolean call() throws Exception
         {
        // boolean error = false;
-          boolean error   = true;
-       // boolean verbose = true;
+       // boolean error = true;
 
-          if (error != false)
-             {
-               System.out.println("Parser failed");
-             } 
-            else
-             {
-            // Use the class's verbose level option to control output.
-            // if (verbose)
-               if (verboseLevel > 0)
-                    System.out.println("Parser exiting normally");
-             }// end else(parser exited normally)
+          if (verboseLevel > 0)
+               System.out.println("Parser exiting normally");
 
-          return new Boolean(error);
+       // return new Boolean(error);
+       // return Boolean.valueOf(error);
+          return Boolean.TRUE;
         } // end call()
 
   // DQ (10/30/2010): Added boolean value to report error to C++ calling program (similar to OFP).

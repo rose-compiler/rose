@@ -13,7 +13,6 @@
 // Interestingly it must be at the top of the list of include files.
 #include "rose_config.h"
 
-
 using namespace std;
 
 FortranCodeGeneration_locatedNode::FortranCodeGeneration_locatedNode(Unparser* unp, std::string fname)
@@ -336,8 +335,6 @@ FortranCodeGeneration_locatedNode::unparseFortranIncludeLine (SgStatement* stmt,
 #if USE_GFORTRAN_IN_ROSE
      if (fortranCompilerName == "gfortran")
         {
-       // DQ (9/15/2009): This failed for the gfortran version 4.0.x because the major
-       // and minor version number were not generated in configure correctly.
           if ( (BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER == 3) || 
                ( (BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER >= 4) && (BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER <= 1) ) )
              {
@@ -2017,7 +2014,6 @@ FortranCodeGeneration_locatedNode::unparseUseStmt(SgStatement* stmt, SgUnparse_I
              }
         }
 #else
-     //FMZ  curprint(", ");
      if (useStmt->get_only_option() == true)
         {
          // FMZ: move comma here
@@ -2028,6 +2024,8 @@ FortranCodeGeneration_locatedNode::unparseUseStmt(SgStatement* stmt, SgUnparse_I
         }
 
      int listSize = useStmt->get_rename_list().size();
+     if (listSize > 0 && !useStmt->get_only_option())  // need to print a comma and a space
+         curprint(", ");
      for (int i=0; i < listSize; i++)
         {
           SgRenamePair* renamePair = useStmt->get_rename_list()[i];
@@ -3684,6 +3682,73 @@ FortranCodeGeneration_locatedNode::unparseInitNamePtrList(SgInitializedNamePtrLi
 //----------------------------------------------------------------------------
 //  Declarations helpers
 //----------------------------------------------------------------------------
+void FortranCodeGeneration_locatedNode::unparseArrayAttr(SgArrayType* type, SgUnparse_Info& info, bool oneVarOnly)
+{
+    if (!oneVarOnly)
+    {
+      curprint(type->get_isCoArray()? "[": "(");
+      unparseExpression(type->get_dim_info(), info);
+      curprint(type->get_isCoArray()? "]": ")");
+    }
+}
+
+void FortranCodeGeneration_locatedNode::unparseStringAttr(SgTypeString* type, SgUnparse_Info& info, bool oneVarOnly)
+{
+    if (!oneVarOnly)
+    {
+      curprint("*");
+      curprint("(");
+      unparseExpression(type->get_lengthExpression(), info);
+      curprint(")");
+    }
+}
+
+void FortranCodeGeneration_locatedNode::unparseEntityTypeAttr(SgType* type, SgUnparse_Info& info, bool oneVarOnly)
+{
+    if (type->get_isCoArray())
+    {
+        SgType* baseType;
+        SgArrayType* arrayType = NULL;
+        if (isSgPointerType(type))
+            baseType = isSgPointerType(type)->get_base_type();
+        else
+        {
+            arrayType = isSgArrayType(type);
+            baseType = arrayType->get_base_type();
+        }
+        if (isSgPointerType(type))
+            unparseEntityTypeAttr(baseType, info, oneVarOnly);
+        else if (isSgTypeString(baseType))
+        {
+            unparseArrayAttr(arrayType, info, oneVarOnly);  // print codimension
+            unparseStringAttr(isSgTypeString(baseType), info, oneVarOnly);
+        }
+        else if (isSgArrayType(baseType))
+        {
+            SgArrayType* arrayBaseType = isSgArrayType(baseType);
+            unparseArrayAttr(arrayBaseType, info, oneVarOnly);
+            unparseArrayAttr(arrayType, info, oneVarOnly);  // print codimension
+            SgTypeString* stringType = isSgTypeString(arrayBaseType->get_base_type());
+            if (stringType)
+                unparseStringAttr(stringType, info, oneVarOnly);
+        }
+        else
+            unparseArrayAttr(arrayType, info, oneVarOnly);  // print codimension
+    }
+    else if (isSgArrayType(type))
+    {
+        SgArrayType* arrayType = isSgArrayType(type);
+        unparseArrayAttr(arrayType, info, oneVarOnly);
+        SgTypeString* stringType = isSgTypeString(arrayType->get_base_type());
+        if (stringType)
+            unparseStringAttr(stringType, info, oneVarOnly);
+    }
+    else if (isSgPointerType(type))
+        unparseEntityTypeAttr(isSgPointerType(type)->get_base_type(), info, oneVarOnly);
+    else if (isSgTypeString(type))
+        unparseStringAttr(isSgTypeString(type), info, oneVarOnly);
+}
+
 
 void
 FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializedName* initializedName, SgUnparse_Info& info)
@@ -3697,7 +3762,11 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
      SgType* type        = initializedName->get_type();
      SgInitializer* init = initializedName->get_initializer();  
      ROSE_ASSERT(type);
-  
+
+     // Find out how many variables are declared in the given stmt:
+     SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(stmt);
+     ROSE_ASSERT(variableDeclaration != NULL);
+     int numVar = variableDeclaration->get_variables().size();
   // FIXME: eventually we will probably use this
   // SgStorageModifier& storage = initializedName->get_storageModifier();
 
@@ -3706,30 +3775,18 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
         {
        // printf ("In unparseVarDecl(): calling unparseType on type = %p = %s \n",type,type->class_name().c_str());
 
-#if 0
-       // DQ (3/23/2008): If this is a SgPointerType then just output the 
-       // base type (since the declaration will use the "POINTER" attribute).
-       // unp->u_fortran_type->unparseType(type, info);
-          SgPointerType* pointerType = isSgPointerType(type);
-          if (pointerType != NULL)
-             {
-               SgType* baseType = pointerType->get_base_type();
-               ROSE_ASSERT(baseType != NULL);
-               unp->u_fortran_type->unparseType(baseType, info);
-             }
-            else
-             {
-               unp->u_fortran_type->unparseType(type, info);
-             }
-#else
-          // DXN (06/19/2011): only unparse the base type:
-          SgType* baseType = type->stripType(SgType::STRIP_ARRAY_TYPE);
-          unp->u_fortran_type->unparseType(baseType, info);
-          // unp->u_fortran_type->unparseType(type, info);
-#endif
-       // DQ (11/18/2007): Added support for ALLOCATABLE declaration attribute
-          SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(stmt);
-          ROSE_ASSERT(variableDeclaration != NULL);
+          // DXN (08/19/2011): unparse the base type when there are more than one declared variables
+         if (numVar > 1)
+         {
+            SgType* baseType = type->stripType(SgType::STRIP_ARRAY_TYPE);
+            unp->u_fortran_type->unparseType(baseType, info, false);  // do not print len for string type
+         }
+         else
+            unp->u_fortran_type->unparseType(type, info, true);  // print len if length expression exists
+
+          // DQ (11/18/2007): Added support for ALLOCATABLE declaration attribute
+          // SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(stmt);
+          // ROSE_ASSERT(variableDeclaration != NULL);
 
        // DIMENSION is already handled (within the unparsing of the type)
        // DQ (3/23/2008): Likely POINTER should also be handled in the unparsing of the type!
@@ -3909,126 +3966,36 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
       // FIXME: currenly use "prev_decl_item" to denote the pointee
      curprint(name.str());
 
-     if (isSgTypeCrayPointer(type) != NULL) {
-          SgInitializedName *pointeeVar = initializedName->get_prev_decl_item();
-          ROSE_ASSERT(pointeeVar != NULL);
-          SgName pointeeName = pointeeVar->get_name();
-          curprint(",");
-          curprint(pointeeName.str());
-          curprint(") ");
-     }
-
-  // Fortran permits alternative use of type attributes instead of explicit declaration for each variable when handle groups of variables in a declaration.
-     if (info.useTypeAttributes() == false)
-        {
-          SgArrayType* arrayType = isSgArrayType(type);
-          if (arrayType != NULL && arrayType->get_rank() > 0)  // "coscalar", a scalar coarray, is implemented as an array of rank 0.
-             {// output the dim_info expressions
-               curprint("(");
-               unparseExpression(arrayType->get_dim_info(), info);
-               curprint(")");
-               SgTypeString* stringType = isSgTypeString(arrayType->get_base_type());
-               if (stringType)
-                  {
-                    curprint("*");
-                    curprint("(");
-                    unparseExpression(stringType->get_lengthExpression(), info);
-                    curprint(")");
-                  }
-             }
-          SgTypeString* stringType = isSgTypeString(type);
-          if (stringType)
-             {
-               curprint("*");
-               curprint("(");
-               unparseExpression(stringType->get_lengthExpression(), info);
-               curprint(")");
-             }
-        }
-
-     // The entity type follows the following ordering: pointer < copointer < codimension < dimension
-     SgPointerType* pType = isSgPointerType(type);
-     if (pType)
-     { // pType may points to a copointer or may be a copointer itself, so look at its base type
-//       SgPointerType* pointeeType = isSgPointerType(pType->get_base_type());
-       if (isSgPointerType(pType->get_base_type()))
-       {   // pType is a pointer to a copointer
-           SgPointerType* pointeeType = isSgPointerType(pType->get_base_type());
-           SgArrayType* pointeeBase = isSgArrayType(pointeeType->get_base_type());
-           if (pointeeBase != NULL && pointeeBase->get_rank() > 0)  // the base type is an array of rank >= 1.
-           {
-             curprint("(");
-             unparseExpression(pointeeBase->get_dim_info(), info);
-             curprint(")");
-             if (pointeeBase->get_isCoArray())
-             {
-               curprint("[*]");
-             }
-           }
-           else if (pointeeType->get_base_type()->get_isCoArray())
-           {
-             curprint("[*]");  // a scalar/derived-type coarray is implemented as a rank 0 array of the given type.
-           }
-       }
-       else if (isSgArrayType(pType->get_base_type()))
-       {   // if the base type of pType is a coarray or an array, print the appropriate coarray or array info
-           SgArrayType* pTypeBase = isSgArrayType(pType->get_base_type());
-           if (pTypeBase != NULL && pTypeBase->get_rank() > 0)  // the base type is an array of rank >= 1.
-           {
-             curprint("(");
-             unparseExpression(pTypeBase->get_dim_info(), info);
-             curprint(")");
-             SgTypeString* stringType = isSgTypeString(pTypeBase->get_base_type());
-             if (stringType)
-             {
-               curprint("*");
-               curprint("(");
-               unparseExpression(stringType->get_lengthExpression(), info);
-               curprint(")");
-             }
-             if (pTypeBase->get_isCoArray())
-             {
-               curprint("[*]");
-             }
-           }
-           else if (pType->get_base_type()->get_isCoArray())
-           {
-             curprint("[*]");  // a scalar/derived-type coarray is implemented as a rank 0 array of the given type.
-           }
-
-       }
-       else if (isSgTypeString(pType->get_base_type()))
-       {  // print the character length
-           SgTypeString* stringType = isSgTypeString(pType->get_base_type());
-           curprint("*");
-           curprint("(");
-           unparseExpression(stringType->get_lengthExpression(), info);
-           curprint(")");
-       }
-     }
-     else if (type->get_isCoArray())  // type is not a pointer, but is a coarray type
+     if (isSgTypeCrayPointer(type) != NULL)
      {
-       curprint("[*]");
-     }
+           SgInitializedName *pointeeVar = initializedName->get_prev_decl_item();
+           ROSE_ASSERT(pointeeVar != NULL);
+           SgName pointeeName = pointeeVar->get_name();
+           curprint(",");
+           curprint(pointeeName.str());
+           curprint(") ");
+      }
+      else
+          unparseEntityTypeAttr(type, info, numVar == 1);
 
-  // Unparse the initializers if any exist
-  // printf ("In FortranCodeGeneration_locatedNode::unparseVarDecl(initializedName=%p): variable initializer = %p \n",initializedName,init);
-     if (init != NULL)
-        {
-         if (pType)
-            {  // this is a pointer null-init; OFP 0.8.2 has yet to implement pointer => init-data-object
+       // Unparse the initializers if any exist
+       // printf ("In FortranCodeGeneration_locatedNode::unparseVarDecl(initializedName=%p): variable initializer = %p \n",initializedName,init);
+      if (init != NULL)
+      {
+           if (isSgPointerType(type))
+           {  // this is a pointer null-init; OFP 0.8.2 has yet to implement pointer => init-data-object
                // TODO: need an IR to model pointer initialization, something like SgPointerInitializer.
-              curprint(" => NULL()");
+               curprint(" => NULL()");
 
-            }
-         else
-            {
-              curprint(" = ");
-              SgInitializer* initializer = isSgInitializer(init);
-              ROSE_ASSERT(initializer != NULL);
-              unparseExpression(initializer, info);
-            }
-        }
+           }
+           else
+           {
+               curprint(" = ");
+               SgInitializer* initializer = isSgInitializer(init);
+               ROSE_ASSERT(initializer != NULL);
+               unparseExpression(initializer, info);
+           }
+      }
    }
 
 //----------------------------------------------------------------------------
@@ -4292,7 +4259,8 @@ FortranCodeGeneration_locatedNode::unparseProcHdrStmt(SgStatement* stmt, SgUnpar
           unparseBindAttribute(procedureHeader);
 
        // Unparse the result(<name>) suffix if present
-          if (procedureHeader->get_result_name() != NULL && procedureHeader->get_name().str() != result_name_str)
+          if (procedureHeader->get_result_name() != NULL &&
+                  procedureHeader->get_name()!= procedureHeader->get_result_name()->get_name())
              {
                curprint(" result(");
                curprint(procedureHeader->get_result_name()->get_name());
@@ -5301,31 +5269,11 @@ FortranCodeGeneration_locatedNode::unparseClassDefnStmt(SgStatement* stmt, SgUnp
                classdefn_stmt->get_endOfConstruct()->get_line());
 #endif
           unparseAttachedPreprocessingInfo(classdefn_stmt, info, PreprocessingInfo::inside);
-
-#if 0
-       // DQ (10/6/2008): This adds blank lines to the unparsed output (and is not required for Fortran support).
-          curprint("! Comment in unparseClassDefnStmt() (before packing pragma) ");
-          unp->cur.format(classdefn_stmt, info, FORMAT_BEFORE_BASIC_BLOCK2);
-       // curprint ( string("}"));
-
-       // DQ (6/14/2006): Add packing pragma support (reset the packing 
-       // alignment to the default, part of packing pragma normalization).
-          if (packingAlignment != 0)
-             {
-               curprint ( string("\n#pragma pack()"));
-             }
-
-          curprint("! Comment in unparseClassDefnStmt() (after packing pragma) ");
-          unp->cur.format(classdefn_stmt, info, FORMAT_AFTER_BASIC_BLOCK2);
-#endif
         }
 
   // DQ (6/13/2007): Set to null before resetting to non-null value 
      ninfo.set_current_context(NULL);
      ninfo.set_current_context(saved_context);
-
-  // curprint ( string("/* Leaving unparseClassDefnStmt */ \n";
-  // printf ("Leaving unparseClassDefnStmt \n");
    }
 
 void
@@ -5429,27 +5377,39 @@ FortranCodeGeneration_locatedNode::curprint(const std::string & str) const
 
     if( unp->currentFile != NULL && unp->currentFile->get_Fortran_only() )
     {
-        /// determine line wrapping parameters
+        // determine line wrapping parameters -- 'pos' variables are one-based
         bool is_fixed_format = unp->currentFile->get_outputFormat() == SgFile::e_fixed_form_output_format;
         bool is_free_format  = unp->currentFile->get_outputFormat() == SgFile::e_free_form_output_format;
-        int max_pos = ( is_fixed_format ? MAX_F90_LINE_LEN_FIXED
-                      : is_free_format  ? MAX_F90_LINE_LEN_FREE
-                      : unp->cur.get_linewrap() );
+        int usable_cols = ( is_fixed_format ? MAX_F90_LINE_LEN_FIXED
+                          : is_free_format  ? MAX_F90_LINE_LEN_FREE - 1 // reserve a column in free-format for possible trailing '&'
+                          : unp->cur.get_linewrap() );
 
         // check whether line wrapping is needed
-        int cur_pos = unp->cur.current_col();
-        int new_pos = cur_pos + str.size();
-        if( new_pos >= max_pos )
+        int used_cols = unp->cur.current_col();     // 'current_col' is zero-based
+        int free_cols = usable_cols - used_cols;
+        if( str.size() > free_cols )
         {
             if( is_fixed_format )
-                printf("Warning: line too long for Fortran fixed format (fixed format wrapping not implemented)\n");
+            {
+                // only noncomment lines need wrapping
+                if( ! (used_cols == 0 && str[0] != ' ' ) )
+                {
+                    // warn if successful wrapping is impossible
+                    if( 6 + str.size() > usable_cols )
+                        printf("Warning: can't wrap long line in Fortran fixed format (continuation + text is longer than a line)\n");
+
+                    // emit fixed-format line continuation
+                    unp->cur.insert_newline(1);
+                    unp->u_sage->curprint("     &");
+                }
+            }
             else if( is_free_format )
             {
-                // warn if successful wrapping is impossible in the current state
-                if( cur_pos + 1 > max_pos )
-                    printf("Warning: can't wrap long line in Fortran free format (no room for '&')\n");
-                else if( str.size() > (unsigned int) max_pos-1 )
-                    printf("Warning: can't wrap long line in Fortran free format (incoming string too long for a line)\n");
+                // warn if successful wrapping is impossible
+                if( str.size() > usable_cols )
+                    printf("Warning: can't wrap long line in Fortran free format (text is longer than a line)\n");
+                else if( free_cols < 1 )
+                    printf("Warning: can't wrap long line in Fortran free format (no room for final '&')\n");
 
                 // emit free-format line continuation even if result will still be too long
                 unp->u_sage->curprint("&");
@@ -5461,7 +5421,7 @@ FortranCodeGeneration_locatedNode::curprint(const std::string & str) const
         }
     }
 
-   unp->u_sage->curprint(str);
+    unp->u_sage->curprint(str);
      
 #else  // ! USE_RICE_FORTRAN_WRAPPING
 
