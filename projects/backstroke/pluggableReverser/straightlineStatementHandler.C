@@ -86,7 +86,7 @@ vector<EvaluationResult> StraightlineStatementHandler::evaluateBasicBlock(SgBasi
 		// basic block and retrieve their values. Store values of all local
 		// variables in the end of of forward basic block.
 		// Also refer to the function "processVariableDeclaration"
-		if (SgVariableDeclaration * variableDeclaration = isSgVariableDeclaration(statement))
+		if (SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(statement))
 		{
 			foreach(SgInitializedName* localVar, variableDeclaration->get_variables())
 			{
@@ -95,7 +95,8 @@ vector<EvaluationResult> StraightlineStatementHandler::evaluateBasicBlock(SgBasi
 				varName.push_back(localVar);
 				SgFunctionDefinition* enclosingFunction = SageInterface::getEnclosingFunctionDefinition(basicBlock);
 				VariableRenaming::NumNodeRenameEntry definitions = getVariableRenaming()->getReachingDefsAtFunctionEndForName(enclosingFunction, varName);
-
+				currentVariableVersions.removeVariable(varName);
+				
 				SgExpression* restoredValue = restoreVariable(varName, currentVariableVersions, definitions);
 				SgAssignInitializer* reverseVarInitializer;
 				if (restoredValue != NULL)
@@ -117,7 +118,7 @@ vector<EvaluationResult> StraightlineStatementHandler::evaluateBasicBlock(SgBasi
 				}
 
 				SgVariableDeclaration* reverseDeclaration = SageBuilder::buildVariableDeclaration(localVar->get_name(),
-						localVar->get_type(), reverseVarInitializer);
+						localVar->get_type(), reverseVarInitializer, reverseBody);
 				localVarDeclarations.push_back(reverseDeclaration);
 
 				//Update the variable version table to indicate that this variable has been restored

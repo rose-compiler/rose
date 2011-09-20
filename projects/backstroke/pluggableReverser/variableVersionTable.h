@@ -64,6 +64,11 @@ public:
 	/** Remove a variable from the current table. */
 	void removeVariable(SgNode* node)
 	{ table_.erase(VariableRenaming::getVarName(node)); }
+	
+	void removeVariable(const VariableRenaming::VarName& var)
+	{
+		table_.erase(var);
+	}
 
 
 	//! This function gets two variable version tables for true/false bodies in an if statement.

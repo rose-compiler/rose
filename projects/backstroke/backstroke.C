@@ -79,7 +79,6 @@ vector<ProcessedEvent> reverseEvents(EventProcessor* event_processor,
 
 		SgGlobal* globalScope = SageInterface::getEnclosingNode<SgGlobal > (eventFunction);
 		allGlobalScopes.insert(globalScope);
-		SageBuilder::pushScopeStack(globalScope);
 
 		ProcessedEvent processed_event;
 		processed_event.event = eventFunction;
@@ -88,18 +87,18 @@ vector<ProcessedEvent> reverseEvents(EventProcessor* event_processor,
 		processed_event.fwd_rvs_events = event_processor->processEvent(eventFunction);
 		ROSE_ASSERT(!processed_event.fwd_rvs_events.empty());
 
-		reverse_foreach(const EventReversalResult& fwd_rvs_event, processed_event.fwd_rvs_events)
+		reverse_foreach(const EventReversalResult& inverseEventTuple, processed_event.fwd_rvs_events)
 		{
 			// Put the generated statement after the normalized event.
 			SgFunctionDeclaration* originalEvent = isSgFunctionDeclaration(eventFunction->get_definingDeclaration());
 
-			//We will ignore the commit method for now, because of the new way to implement commit methose
-			ROSE_ASSERT(fwd_rvs_event.commitMethod == NULL);
-			//SageInterface::insertStatementAfter(originalEvent, fwd_rvs_event.commitMethod);
+			//We will ignore the commit method for now, because of the new way to implement commit methods
+			ROSE_ASSERT(inverseEventTuple.commitMethod == NULL);
+			//SageInterface::insertStatementAfter(originalEvent, inverseEventTuple.commitMethod);
 			
-			ROSE_ASSERT(fwd_rvs_event.reverseEvent != NULL && fwd_rvs_event.forwardEvent != NULL);
-			SageInterface::insertStatementAfter(originalEvent, fwd_rvs_event.reverseEvent);
-			SageInterface::insertStatementAfter(originalEvent, fwd_rvs_event.forwardEvent);
+			ROSE_ASSERT(inverseEventTuple.reverseEvent != NULL && inverseEventTuple.forwardEvent != NULL);
+			SageInterface::insertStatementAfter(originalEvent, inverseEventTuple.reverseEvent);
+			SageInterface::insertStatementAfter(originalEvent, inverseEventTuple.forwardEvent);
 		}
 
 		output.push_back(processed_event);
@@ -107,8 +106,6 @@ vector<ProcessedEvent> reverseEvents(EventProcessor* event_processor,
 		printf("-- Timing: Reversing event \"%s\" took %.2f seconds.\n", get_name(processed_event.event).c_str(),
 				analysisTimer.elapsed());
 		fflush(stdout);
-
-		SageBuilder::popScopeStack();
 	}
 
 	foreach(SgGlobal* globalScope, allGlobalScopes)

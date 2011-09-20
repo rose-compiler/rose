@@ -136,9 +136,9 @@ protected:
 	* at the given version.
 	*
 	* @param variable name of the variable to be restored
-	* @param availableVariables variables whos values are currently available
+	* @param availableVariables variables whose values are currently available
 	* @param definitions the version of the variable which should be restored
-	* @return expession that when evaluated will produce the desired version of the variable
+	* @return expression that when evaluated will produce the desired version of the variable
 	*/
 	SgExpression* restoreVariable(VariableRenaming::VarName variable, const VariableVersionTable& availableVariables,
 			VariableRenaming::NumNodeRenameEntry definitions);

@@ -24,16 +24,16 @@ StatementReversal VariableDeclarationHandler::generateReverseAST(SgStatement* st
 		if (initializerReversal.reverseExpression != NULL)
 		{
 			reverseStatement = SageBuilder::buildExprStatement(initializerReversal.reverseExpression);
+			
+			//Create a new version of the initializer, possibly instrumented with state saving
+			SgExpression* originalInitializer = forwardStatement->get_variables().front()->get_initializer();
+			ROSE_ASSERT(isSgAssignInitializer(originalInitializer) && "Only assign initializers currently supported");
+			SgExpression* newInitializer = SageBuilder::buildAssignInitializer(initializerReversal.forwardExpression,
+					forwardStatement->get_variables().front()->get_type());
+
+			//Replace the original initializer with the new one
+			SageInterface::replaceExpression(originalInitializer, newInitializer);
 		}
-
-		//Create a new version of the initializer, possibly instrumented with state saving
-		SgExpression* originalInitializer = forwardStatement->get_variables().front()->get_initializer();
-		ROSE_ASSERT(isSgAssignInitializer(originalInitializer) && "Only assign initializers currently supported");
-		SgExpression* newInitializer = SageBuilder::buildAssignInitializer(initializerReversal.forwardExpression,
-				forwardStatement->get_variables().front()->get_type());
-
-		//Replace the original initializer with the new one
-		SageInterface::replaceExpression(originalInitializer, newInitializer);
 	}
 
 	// Remove the attached preprocessing info from this statement. This is to prevent the following case:

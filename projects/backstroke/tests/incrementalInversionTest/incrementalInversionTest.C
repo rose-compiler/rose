@@ -34,8 +34,8 @@ int main(int argc, char** argv)
 {
 	//Add the preinclude option
 	vector<string> commandArguments(argv, argv + argc);
-	//commandArguments.push_back("-include");
-	//commandArguments.push_back("rctypes.h");
+	commandArguments.push_back("-include");
+	commandArguments.push_back("backstrokeRuntime.h");
 
 	SgProject* project = frontend(commandArguments);
 	AstTests::runAllTests(project);

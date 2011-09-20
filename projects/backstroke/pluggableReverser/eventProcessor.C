@@ -143,7 +143,7 @@ SgExpression* EventProcessor::restoreVariable(VariableRenaming::VarName variable
 	}
 	else
 	{
-		//Call the variable value restoreration handlers
+		//Call the variable value restoration handlers
 		foreach(VariableValueRestorer* variableRestorer, variableValueRestorers)
 		{
 			vector<SgExpression*> restorerOutput = variableRestorer->restoreVariable(variable, availableVariables, definitions);
@@ -199,13 +199,17 @@ bool EventProcessor::isStateVariable(const VariableRenaming::VarName& var)
 
 SgExpression* EventProcessor::pushVal(SgExpression* exp, SgType* returnType)
 {
+	SgScopeStatement* scope = isSgScopeStatement(event_->get_parent());
+	ROSE_ASSERT(scope != NULL);
 	SgExprListExp* parameters = SageBuilder::buildExprListExp(exp);
-	return buildFunctionCallExp("push< " + get_type_name(returnType) + " >", returnType, parameters);
+	return SageBuilder::buildFunctionCallExp("__push< " + get_type_name(returnType) + " >", returnType, parameters, scope);
 }
 
 SgExpression* EventProcessor::popVal(SgType* type)
 {
-	return buildFunctionCallExp("pop< " + get_type_name(type) + " >", type);
+	SgScopeStatement* scope = isSgScopeStatement(event_->get_parent());
+	ROSE_ASSERT(scope != NULL);
+	return SageBuilder::buildFunctionCallExp("__pop_back< " + get_type_name(type) + " >", type, NULL, scope);
 }
 
 SgExpression* EventProcessor::popVal_front(SgType* type)
