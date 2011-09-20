@@ -269,6 +269,8 @@ Partitioner::IPDParser::parse_BlockDecl()
     cur_block = new BlockConfig;
     cur_block->ninsns = ninsns;
     partitioner->block_config.insert(std::make_pair(va, cur_block));
+    if (cur_func)
+        cur_func->heads.insert(va);
     parse_BlockBody();
     return true;
 }

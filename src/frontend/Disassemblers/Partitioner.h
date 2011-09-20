@@ -208,6 +208,7 @@ protected:
         BasicBlocks blocks;                     /**< Basic blocks belonging to this function */
         bool pending;                           /**< True if we need to (re)discover the basic blocks */
         rose_addr_t entry_va;                   /**< Entry virtual address */
+        Disassembler::AddressSet heads;         /**< CFG heads, excluding func entry: addresses of additional blocks */
         bool returns;                           /**< Does this function return? */
     };
     typedef std::map<rose_addr_t, Function*> Functions;
@@ -603,12 +604,13 @@ protected:
     virtual BasicBlock* find_bb_starting(rose_addr_t, bool create=true);   /* Find or create block starting at specified address */
     virtual Disassembler::AddressSet successors(BasicBlock*, bool *complete=NULL); /* Calculates known successors */
     virtual rose_addr_t call_target(BasicBlock*);               /* Returns address if block could be a function call */
-    virtual void append(Function*, BasicBlock*);                /**< Append basic block to function */
+    virtual void append(Function*, BasicBlock*, bool keep=false); /* Append basic block to function */
     virtual BasicBlock* discard(BasicBlock*);                   /**< Delete a basic block and return null */
     virtual void remove(Function*, BasicBlock*);                /**< Remove basic block from function */
     virtual rose_addr_t address(BasicBlock*) const;             /**< Return starting address of basic block */
     virtual void truncate(BasicBlock*, rose_addr_t);            /**< Remove instructions from end of basic block */
     virtual void discover_first_block(Function*);               /* Adds first basic block to empty function to start discovery. */
+    virtual void discover_blocks(Function*);                    /* Start to recursively discover blocks of a function. */
     virtual void discover_blocks(Function*, rose_addr_t);       /* Recursively discovers blocks of a function. */
     virtual void pre_cfg(SgAsmInterpretation *interp=NULL);     /**< Detects functions before analyzing the CFG */
     virtual void analyze_cfg();                                 /**< Detect functions by analyzing the CFG */

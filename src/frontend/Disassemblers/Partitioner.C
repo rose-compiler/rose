@@ -516,12 +516,23 @@ Partitioner::append(BasicBlock* bb, SgAsmInstruction* insn)
     insn2block[insn->get_address()] = bb;
 }
 
-/* Append basic block to function */
+/** Append basic block to function.  This method is a bit of a misnomer because the order that blocks are appended to a
+ *  function is irrelevant -- the blocks are stored in a map by order of block entry address.  The block being appended must
+ *  not already belong to some other function, but it's fine if the block already belongs to the function to which it is being
+ *  appended (it is not added a second time).
+ *
+ *  If the @p keep argument is true, then the block's entry address is also added to the function's list of control flow graph
+ *  (CFG) heads.  These are the addresses of blocks which are used to start the recursive CFG analysis phase of function block
+ *  discovery.  The function's entry address is always considered a CFG head even if it doesn't appear in the set of heads. */
 void
-Partitioner::append(Function* f, BasicBlock *bb)
+Partitioner::append(Function* f, BasicBlock *bb, bool keep/*=false*/)
 {
     ROSE_ASSERT(f);
     ROSE_ASSERT(bb);
+
+    if (keep)
+        f->heads.insert(address(bb));
+
     if (bb->function==f) return;
     ROSE_ASSERT(bb->function==NULL);
     bb->function = f;
@@ -1379,14 +1390,16 @@ Partitioner::InterFuncInsnPadding::operator()(bool enabled, const Args &args)
     if (must_span_all_space && args.insn_end && va!=args.insn_end->get_address())
         return true;
 
-    /* All OK, build function from the basic blocks of the padding instructions. */
+    /* All OK, build function from the basic blocks of the padding instructions.  All blocks are added to the function as CFG
+     * heads, which causes the block to remain with the function even though it might not be reachable by the CFG starting from
+     * the function's entry point.  This is especially true for padding like x86 "INT3", which has no known CFG successors. */
     Function *func = p->add_function(padding[0]->get_address(), SgAsmFunctionDeclaration::FUNC_INTERPAD);
     p->find_bb_starting(padding.front()->get_address()); // split first block if necessary
     p->find_bb_starting(va); // split last block if necessary
     for (size_t i=0; i<padding.size(); i++) {
         BasicBlock *bb = p->find_bb_containing(padding[i]->get_address());
-        assert(bb!=NULL);
-        p->append(func, bb);
+        if (bb && !bb->function)
+            p->append(func, bb, true/*head of CFG subgraph*/);
     }
 
     /* Other inter-function padding callbacks don't need to run for this contiguous instruction sequence. */
@@ -1413,7 +1426,9 @@ Partitioner::IntraFunctionBlocks::operator()(bool enabled, const Args &args)
         return true;
 
     /* Find the basic blocks for this sequence of instructions and add them all to the function as long as they're not already
-     * in some other function (they shouldn't be, unless a previous callback added them). */
+     * in some other function (they shouldn't be, unless a previous callback added them).   New blocks are added as CFG heads
+     * in order to keep them inside the function since we couldn't reach them by following the CFG from the function entry
+     * point. */
     size_t nadded = 0;
     rose_addr_t va = args.insn_begin->get_address();
     for (size_t i=0; i<args.ninsns; i++) {
@@ -1425,7 +1440,7 @@ Partitioner::IntraFunctionBlocks::operator()(bool enabled, const Args &args)
                     fprintf(p->debug, "Partitioner::IntraFunctionBlocks: for F%08"PRIx64": added", func->entry_va);
                 fprintf(p->debug, " B%08"PRIx64, p->address(bb));
             }
-            p->append(func, bb);
+            p->append(func, bb, true/*head of CFG subgraph*/);
             ++nadded;
         }
         
@@ -1777,6 +1792,15 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
 }
 
 void
+Partitioner::discover_blocks(Function *f)
+{
+    Disassembler::AddressSet heads = f->heads;
+    heads.insert(f->entry_va);
+    for (Disassembler::AddressSet::iterator hi=heads.begin(); hi!=heads.end(); ++hi)
+        discover_blocks(f, *hi);
+}
+
+void
 Partitioner::analyze_cfg()
 {
     for (size_t pass=1; true; pass++) {
@@ -1918,7 +1942,7 @@ Partitioner::analyze_cfg()
                         pending[i]->entry_va, pending[i]->name.c_str(), pass);
             }
             try {
-                discover_blocks(pending[i], pending[i]->entry_va);
+                discover_blocks(pending[i]);
             } catch (const AbandonFunctionDiscovery&) {
                 /* thrown when discover_blocks() decides it needs to start over on a function */
             }
@@ -1954,6 +1978,9 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
         cblist.append(&pad2);
 
         scan_interfunc_insns(cblist);
+
+        progress(debug, "Partitioner is rerunning CFG analysis after finding function padding.\n");
+        analyze_cfg();
     }
 
     if (interp) {
