@@ -1393,6 +1393,50 @@ Partitioner::InterFuncInsnPadding::operator()(bool enabled, const Args &args)
     return false;
 }
 
+/* Addes unassigned intra-function blocks to surrounding function. */
+bool
+Partitioner::IntraFunctionBlocks::operator()(bool enabled, const Args &args)
+{
+    if (!enabled)
+        return false;
+    Partitioner *p = args.partitioner;
+
+    assert(args.insn_prev!=NULL); // must be called from scan_intrafunc_insns()
+    BasicBlock *prev_bb = p->find_bb_containing(args.insn_prev->get_address());
+    Function *func = prev_bb ? prev_bb->function : NULL;
+    assert(func!=NULL); // must be called from scan_intrafunc_insns()
+
+    /* If this function is interleaved with another then how can we know that the instructions in question should actually
+     * belong to this function?  If we're interleaved with one other function, then we could very easily be interleaved with
+     * additional functions and this block could belong to any of them. */
+    if (!p->is_contiguous(func, false))
+        return true;
+
+    /* Find the basic blocks for this sequence of instructions and add them all to the function as long as they're not already
+     * in some other function (they shouldn't be, unless a previous callback added them). */
+    size_t nadded = 0;
+    rose_addr_t va = args.insn_begin->get_address();
+    for (size_t i=0; i<args.ninsns; i++) {
+        BasicBlock *bb = p->find_bb_containing(va);
+        assert(bb!=NULL); // because we know va is an instruction
+        if (!bb->function) {
+            if (p->debug) {
+                if (0==nadded)
+                    fprintf(p->debug, "Partitioner::IntraFunctionBlocks: for F%08"PRIx64": added", func->entry_va);
+                fprintf(p->debug, " B%08"PRIx64, p->address(bb));
+            }
+            p->append(func, bb);
+            ++nadded;
+        }
+        
+        SgAsmInstruction *insn = p->find_instruction(va);
+        assert(insn!=NULL);
+        va += insn->get_raw_bytes().size();
+    }
+
+    return true;
+}
+
 /* class method */
 rose_addr_t
 Partitioner::value_of(SgAsmValueExpression *e)
@@ -1732,38 +1776,6 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
     }
 }
 
-/** Scans the intra-function addresses for additional blocks.  If the function is considered contiguous by the relaxed
- *  definition (i.e., not interleaved with any other function), then the empty space between the instructions already assigned
- *  to the function is consulted and basic blocks are added to the function.  Returns the number of blocks added to the
- *  function. */
-size_t
-Partitioner::discover_intrablocks(Function *func)
-{
-    size_t nadded = 0;
-    ExtentMap extents;
-    rose_addr_t lo_addr, hi_addr;
-    if (is_contiguous(func, false) && function_extent(func, &extents, &lo_addr, &hi_addr)) {
-        const rose_addr_t max_insn_size = 16; /* FIXME: This is a kludge, but should work 99% of the time [RPM 2011-09-16] */
-        Disassembler::InstructionMap::iterator ii = insns.lower_bound(std::max(lo_addr, max_insn_size)-max_insn_size);
-        for (/*void*/; ii!=insns.end() && ii->first<hi_addr; ++ii) {
-            if (ii->first>=lo_addr) {
-                BasicBlock *bb = find_bb_containing(ii->first);
-                if (bb && !bb->function) {
-                    if (debug) {
-                        if (0==nadded)
-                            fprintf(debug, "Partitioner::discover_intrablocks() for F%08"PRIx64": added", func->entry_va);
-                        fprintf(debug, " B%08"PRIx64, address(bb));
-                    }
-                    append(func, bb);
-                    nadded++;
-                }
-            }
-        }
-    }
-    if (debug && nadded) fprintf(debug, "\n");
-    return nadded;
-}
-
 void
 Partitioner::analyze_cfg()
 {
@@ -1918,8 +1930,13 @@ Partitioner::analyze_cfg()
 void
 Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
 {
-    if (func_heuristics & SgAsmFunctionDeclaration::FUNC_INTRABLOCK)
-        vacuum_intrafunc();
+    /* Add unassigned intra-function blocks to the surrounding function. */
+    if (func_heuristics & SgAsmFunctionDeclaration::FUNC_INTRABLOCK) {
+        InsnRangeCallbacks cblist;
+        IntraFunctionBlocks cb;
+        cblist.append(&cb);
+        scan_intrafunc_insns(cblist);
+    }
 
     /* Detect inter-function padding */
     if (func_heuristics & SgAsmFunctionDeclaration::FUNC_INTERPAD) {
@@ -2007,14 +2024,6 @@ Partitioner::is_contiguous(Function *func, bool strict)
     }
 
     return true;
-}
-
-void
-Partitioner::vacuum_intrafunc()
-{
-    for (Functions::iterator fi=functions.begin(); fi!=functions.end(); ++fi)
-        if (discover_intrablocks(fi->second))
-            fi->second->reason |= SgAsmFunctionDeclaration::FUNC_INTRABLOCK;
 }
 
 void

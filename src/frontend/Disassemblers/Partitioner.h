@@ -582,6 +582,14 @@ public:
         virtual bool operator()(bool enabled, const Args &args);        /**< The actual callback function. */
     };
 
+    /** Callback to insert unreachable intra-function blocks.  This callback can be passed to the scan_intrafunc_insns()
+     *  method's callback list.  Whenever it detects a block of unassigned instructions between blocks that both belong to the
+     *  same function and the function is considered contiguous via the non-strict version of the is_contiguous() method, then
+     *  the block in question is added to the function. */
+    struct IntraFunctionBlocks: public InsnRangeCallback {
+        virtual bool operator()(bool enabled, const Args &args);        /**< The actual callback function. */
+    };
+
     /*************************************************************************************************************************
      *                                                 Low-level Functions
      *************************************************************************************************************************/
@@ -602,7 +610,6 @@ protected:
     virtual void truncate(BasicBlock*, rose_addr_t);            /**< Remove instructions from end of basic block */
     virtual void discover_first_block(Function*);               /* Adds first basic block to empty function to start discovery. */
     virtual void discover_blocks(Function*, rose_addr_t);       /* Recursively discovers blocks of a function. */
-    virtual size_t discover_intrablocks(Function*);             /* Add blocks that appear in the empty space of a function. */
     virtual void pre_cfg(SgAsmInterpretation *interp=NULL);     /**< Detects functions before analyzing the CFG */
     virtual void analyze_cfg();                                 /**< Detect functions by analyzing the CFG */
     virtual void post_cfg(SgAsmInterpretation *interp=NULL);    /**< Detects functions after analyzing the CFG */
@@ -621,7 +628,6 @@ protected:
     virtual void mark_func_symbols(SgAsmGenericHeader*);        /**< Seeds functions that correspond to function symbols */
     virtual void mark_func_patterns();                          /* Seeds functions according to instruction patterns */
     virtual void name_plt_entries(SgAsmGenericHeader*);         /**< Assign names to ELF PLT functions */
-    virtual void vacuum_intrafunc();                            /* Add unassigned intra-function blocks to functions. */
 
     /** Returns information about the function addresses.  Every non-empty function has a minimum (inclusive) and maximum
      *  (exclusive) address which are returned by reference, but not all functions own all the bytes within that range of
