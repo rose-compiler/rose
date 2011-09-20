@@ -1,6 +1,9 @@
 #ifndef ROSE_DISASSEMBLER_PARTITIONER_H
 #define ROSE_DISASSEMBLER_PARTITIONER_H
+
+#include "callbacks.h"
 #include "Disassembler.h"
+
 /** Partitions instructions into basic blocks and functions.
  *
  *  The Partitioner classes are responsible for assigning instructions to basic blocks, and basic blocks to functions.  A
@@ -453,7 +456,132 @@ public:
      *  block pointers point to actual blocks.  The update only happens for SgAsmTarget objects that don't already have a node
      *  pointer. */
     virtual void update_targets(SgNode *ast);
+
+    /**************************************************************************************************************************
+     *                                  Functions for scanning through memory
+     **************************************************************************************************************************/
+public:
+
+    class InsnRangeCallback {
+    public:
+        struct Args {
+            Args(Partitioner *partitioner, SgAsmInstruction *insn_prev, SgAsmInstruction *insn_begin,
+                 SgAsmInstruction *insn_end, size_t ninsns)
+                : partitioner(partitioner), insn_prev(insn_prev), insn_begin(insn_begin), insn_end(insn_end),
+                  ninsns(ninsns) {}
+            Partitioner *partitioner;
+            SgAsmInstruction *insn_prev;                /**< Previous instruction not in range, or null. */
+            SgAsmInstruction *insn_begin;               /**< First instruction in range of instructions. */
+            SgAsmInstruction *insn_end;                 /**< First subsequent instruction not in range, or null. */
+            size_t ninsns;                              /**< Number of instructions in range. */
+        };
+
+        /** The actual callback function.  This needs to be defined in subclasses. */
+        virtual bool operator()(bool enabled, const Args &args) = 0;
+    };
+
+    typedef ROSE_Callbacks::List<InsnRangeCallback> InsnRangeCallbacks;
+
+    /** Scans contiguous sequences of instructions.  The specified callbacks are invoked for each contiguous sequence of
+     *  instructions in the specified instruction map.  At each iteration of the loop, we choose the instruction with the
+     *  lowest address and the subsequent instructions that are contiguous in memory, build up the callback argument list,
+     *  invoke the callbacks on the list, and remove those instructions from consideration by subsequent iterations of the
+     *  loop.
+     *
+     *  The callback arguments are built from the supplied values of @p insn_prev and @p insn_end.  The @p insn_begin member is
+     *  the instruction with the lowest address in this iteration and @p ninsns is the number of contiguous instructions. */
+    virtual void scan_contiguous_insns(Disassembler::InstructionMap insns, InsnRangeCallbacks &cblist,
+                                       SgAsmInstruction *insn_prev, SgAsmInstruction *insn_end);
+
+    /** Scans ranges of unassigned instructions.  Scans through the list of existing instructions that are not assigned to any
+     *  function and invokes all of the specified callbacks on each range of such instructions.  The ranges of unassigned
+     *  instructions are not necessarily contiguous or non-overlapping but are bounded by the @p insn_begin (inclusive) and @p
+     *  insn_end (exclusive, or null) callback arguments. The callbacks are invoked via the scan_contiguous_insns() method with
+     *  a different @p insn_begin for each call.
+     *
+     *  Callbacks are allowed to disassemble additional instructions and/or assign/break associations between instructions and
+     *  functions.  Only the instructions that are already disassembled at the beginning of this call are considered by the
+     *  iterators, but the instruction/function associations may change during the iteration.
+     *
+     *  All callbacks should honor their "enabled" argument and do nothing if it is clear.  This feature is used by some of the
+     *  other instruction scanning methods to filter out certain ranges of instructions.  For instance, the
+     *  scan_intrafunc_insns() will set "enabled" to true only for ranges of unassigned instructions whose closest surrounding
+     *  assigned instructions both belong to the same function. */
+    virtual void scan_unassigned_insns(InsnRangeCallbacks &callbacks);
+
+    /** Scans the unassigned instructions within a function.  The specified callbacks are invoked for each range of unassigned
+     *  instructions whose closest surrounding assigned instructions both belong to the same function.  This can be used, for
+     *  example, to discover instructions that should probably be considered part of the same function as the surrounding
+     *  instructions.
+     *
+     *  This method operates by making a temporary copy of @p callbacks, prepending a filtering callback, and then invoking
+     *  scan_unassigned_insns().  Therefore, the callbacks supplied by the user should all honor their "enabled" argument. */
+    virtual void scan_intrafunc_insns(InsnRangeCallbacks &callbacks);
     
+    /** Scans the instructions between functions.  The specified callbacks are invoked for each set of instructions (not
+     *  necessarily contiguous in memory) that fall "between" two functions.  Instruction I(x) at address x is between two
+     *  functions, Fa and Fb, if there exists a lower address a<x such that I(a) belongs to Fa and there exists a higher
+     *  address b>x such that I(b) belongs to Fb; and for all instructions I(y) for a<y<b, I(y) does not belong to any
+     *  function.
+     *
+     *  Additionally, if no I(a) exists that belongs to a function, and/or no I(b) exists that belongs to a function, then I(x)
+     *  is also considered part of an inter-function region and the lower and/or upper functions are undefined. In other words,
+     *  instructions appearing before all functions or after all functions are also considered to be between functions, and all
+     *  instructions are considered to be between functions if there are no functions.
+     *
+     *  Only instructions that have already been disassembled are considered.
+     */
+    virtual void scan_interfunc_insns(InsnRangeCallbacks &callbacks);
+
+    /** Callback to create inter-function instruction padding.  This callback can be passed to the scan_interfunc_insns()
+     *  method's callback list.  Whenever it detects a contiguous sequence of one or more of the specified instructions (in any
+     *  order) immediately after the end of a function it will create a new SgAsmFunctionDeclaration::FUNC_INTERPAD function to
+     *  hold the padding.
+     *
+     *  Here's an example of how to use this (see the post_cfg() method for actual use):
+     *  @code
+     *  // Create the callback object and specify that padding
+     *  // consists of any combination of x86 NOP and INT3 instructions.
+     *  InterFuncInsnPadding pad1;
+     *  pad1.x86_kind.insert(x86_nop);
+     *  pad1.x86_kind.insert(x86_int3);
+     *
+     *  // Create a second callback that looks for instructions of
+     *  // any architecture that consist of all zero bytes.
+     *  InterFuncInsnPadding pad2;
+     *  SgUnsignedCharList zero;
+     *  zero.push_back(0x00);
+     *  pad2.byte_patterns.push_back(zero);
+     *
+     *  // Build the callback list
+     *  InsnRangeCallbacks cblist;
+     *  cblist.append(&pad1);
+     *  cblist.append(&pad2);
+     *
+     *  // Run the callback(s) on the list, invoking them for
+     *  // contiguous sequences of instructions that are not yet
+     *  // assigned to functions and which appear between two
+     *  // functions.
+     *  scan_interfunc_insns(cblist);
+     *  @endcode
+     *
+     *  If we want padding to be a sequence of either NOP instructions or INT3 instructions but not a mixture of both, then
+     *  we would create two callback objects, one for NOP and one for INT3.  They can both be added to the callback list for a
+     *  single invocation of scan_interfunc_insns(), or we can make two separate calls to scan_interfunc_insns(). Likewise,
+     *  if we had added the zero byte pattern to the first callback instead of creating a second callback, the padding could
+     *  consist of any combination of NOP, INT3, or zero bytes.
+     */
+    struct InterFuncInsnPadding: public InsnRangeCallback {
+        std::set<X86InstructionKind> x86_kinds;                         /**< Kinds of x86 instructions allowed. */
+        std::vector<SgUnsignedCharList> byte_patterns;                  /**< Match instructions with specified byte patterns. */
+        bool must_follow_immediately;                                   /**< Must the padding immediately follow the function? */
+        bool must_span_all_space;                                       /**< Must padding span the whole inter-function space? */
+
+        InterFuncInsnPadding()
+            : must_follow_immediately(true), must_span_all_space(true) {}
+        virtual bool operator()(bool enabled, const Args &args);        /**< The actual callback function. */
+    };
+
     /*************************************************************************************************************************
      *                                                 Low-level Functions
      *************************************************************************************************************************/
@@ -493,8 +621,6 @@ protected:
     virtual void mark_func_symbols(SgAsmGenericHeader*);        /**< Seeds functions that correspond to function symbols */
     virtual void mark_func_patterns();                          /* Seeds functions according to instruction patterns */
     virtual void name_plt_entries(SgAsmGenericHeader*);         /**< Assign names to ELF PLT functions */
-    virtual void create_nop_padding();                          /**< Creates functions to hold NOP padding */
-    virtual void create_zero_padding();                         /* Creates functions to hold zero padding */
     virtual void vacuum_intrafunc();                            /* Add unassigned intra-function blocks to functions. */
 
     /** Returns information about the function addresses.  Every non-empty function has a minimum (inclusive) and maximum

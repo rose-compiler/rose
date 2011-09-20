@@ -1222,97 +1222,175 @@ Partitioner::mark_call_insns()
     }
 }
 
-/* Look for NOP padding between functions */
+/* Scan through ranges of contiguous instructions */
 void
-Partitioner::create_nop_padding()
+Partitioner::scan_contiguous_insns(Disassembler::InstructionMap insns, InsnRangeCallbacks &cblist,
+                                   SgAsmInstruction *prev, SgAsmInstruction *end)
 {
-
-    /* Find no-op blocks that follow known functions and which are not already part of a function */
-    Disassembler::AddressSet new_functions;
-    for (Functions::iterator fi=functions.begin(); fi!=functions.end(); fi++) {
-        Function *func = fi->second;
-        if (func->reason & SgAsmFunctionDeclaration::FUNC_INTERPAD) continue; /*some other kind of padding*/
-        if (0==func->blocks.size()) continue;
-        SgAsmInstruction *last_insn = func->last_block()->last_insn();
-        rose_addr_t va = last_insn->get_address() + last_insn->get_raw_bytes().size();
-        BasicBlock *bb = find_bb_containing(va);
-        if (!bb || bb->function!=NULL) continue;
-
-        /* FIXME: We should have a more portable way to find blocks that are no-ops. */
-        bool is_noop=true;
-        for (size_t i=0; i<bb->insns.size() && is_noop; i++) {
-            SgAsmx86Instruction     *insn_x86 = isSgAsmx86Instruction(bb->insns[i]);
-            SgAsmArmInstruction     *insn_arm = isSgAsmArmInstruction(bb->insns[i]);
-            SgAsmPowerpcInstruction *insn_ppc = isSgAsmPowerpcInstruction(bb->insns[i]);
-            ROSE_ASSERT(insn_x86 || insn_arm || insn_ppc);
-            is_noop = (insn_x86 && insn_x86->get_kind()==x86_nop); /*only x86 has NOPs*/
+    while (!insns.empty()) {
+        SgAsmInstruction *first = insns.begin()->second;
+        rose_addr_t va = first->get_address();
+        Disassembler::InstructionMap::iterator ii = insns.find(va);
+        std::vector<SgAsmInstruction*> contig;
+        while (ii!=insns.end()) {
+            contig.push_back(ii->second);
+            va += ii->second->get_raw_bytes().size();
+            ii = insns.find(va);
         }
-        if (!is_noop) continue;
-        new_functions.insert(va);
-    }
-    
-    /* Create functions */
-    for (Disassembler::AddressSet::iterator ai=new_functions.begin(); ai!=new_functions.end(); ++ai) {
-        Function *padfunc = add_function(*ai, SgAsmFunctionDeclaration::FUNC_INTERPAD);
-        BasicBlock *bb = find_bb_containing(*ai);
-        ROSE_ASSERT(bb!=NULL);
-        append(padfunc, bb);
+        cblist.apply(true, InsnRangeCallback::Args(this, prev, first, end, contig.size()));
+        for (size_t i=0; i<contig.size(); i++)
+            insns.erase(contig[i]->get_address());
     }
 }
 
-/** Creates functions to hold zero padding. This is done by looking at existing instructions only -- not disassembling any new
- *  instructions. */
+/* Scan through all unassigned instructions */
 void
-Partitioner::create_zero_padding()
+Partitioner::scan_unassigned_insns(InsnRangeCallbacks &cblist) 
 {
-    /* Find the address ranges that contain zero padding, irrespective of basic blocks. */
-    std::map<rose_addr_t/*begin_va*/, rose_addr_t/*end_va*/> new_functions;
-    for (Functions::iterator fi=functions.begin(); fi!=functions.end(); fi++) {
-        Function *left_func = fi->second;
-        if (left_func->reason & SgAsmFunctionDeclaration::FUNC_INTERPAD) continue; /*some other kind of padding*/
-        if (0==left_func->blocks.size()) continue;
-        SgAsmInstruction *insn = left_func->last_block()->last_insn();
-        rose_addr_t begin_va = insn->get_address() + insn->get_raw_bytes().size();
-        
-        rose_addr_t end_va = (rose_addr_t)-1;
-        Functions::iterator fi2 = fi;
-        ++fi2;
-        if (fi2!=functions.end())
-            end_va = fi2->first;
+    if (cblist.empty())
+        return;
 
-        /* Are all bytes between begin_va (inclusive) and end_va (exclusive) zero? */
-        bool all_zero = true;
-        for (rose_addr_t va=begin_va; va<end_va && all_zero; /*void*/) {
-            SgAsmInstruction *i2 = find_instruction(va, false); /*do not disassemble more*/
-            if (NULL==i2) {
-                end_va = va;
-                break;
+    /* We can't iterate over the instruction list while invoking callbacks because one of them might change the instruction
+     * list.  Therefore, iterate over a copy of the list.  Instructions are never deleted by the partitioner (only added), so
+     * this is safe to do. */
+    Disassembler::InstructionMap all = this->insns;
+    Disassembler::InstructionMap range;
+    SgAsmInstruction *prev = NULL;
+    for (Disassembler::InstructionMap::iterator ai=all.begin(); ai!=all.end(); ++ai) {
+        BasicBlock *bb = find_bb_containing(ai->first, false);
+        Function *func = bb ? bb->function : NULL;
+        if (func) {
+            if (!range.empty()) {
+                scan_contiguous_insns(range, cblist, prev, ai->second);
+                range.clear();
             }
-            size_t nbytes = std::min((rose_addr_t)i2->get_raw_bytes().size(), end_va-va);
-            for (size_t i=0; i<nbytes && all_zero; i++)
-                all_zero = (i2->get_raw_bytes()[i]==0);
-            va += i2->get_raw_bytes().size();
-        }
-        if (all_zero && begin_va<end_va)
-            new_functions[begin_va] = end_va;
-    }
-    
-    /* For ranges of zero bytes, find the blocks containing those instructions and add them to the padding function. The
-     * blocks are allowed to extend beyond the range of zeros and contain non-zero bytes. */
-    for (std::map<rose_addr_t, rose_addr_t>::iterator fi=new_functions.begin(); fi!=new_functions.end(); ++fi) {
-        rose_addr_t begin_va = fi->first;
-        rose_addr_t end_va = fi->second;
-        Function *padfunc = NULL;
-        for (rose_addr_t va=begin_va; va<end_va; /*void*/) {
-            BasicBlock *bb = find_bb_containing(va);
-            if (!bb || bb->function) break;
-            if (!padfunc)
-                padfunc = add_function(begin_va, SgAsmFunctionDeclaration::FUNC_INTERPAD);
-            append(padfunc, bb);
-            SgAsmInstruction *last_insn = bb->last_insn();
-            va = last_insn->get_address() + last_insn->get_raw_bytes().size();
+            prev = ai->second;
+        } else {
+            range.insert(*ai);
         }
     }
+    if (!range.empty())
+        scan_contiguous_insns(range, cblist, prev, NULL);
+}
+
+/* Similar to scan_unassigned_insns except only invokes callbacks when the "prev" and "end" instructions belong to different
+ * functions or one of them doesn't exist. */
+void
+Partitioner::scan_interfunc_insns(InsnRangeCallbacks &cblist)
+{
+    if (cblist.empty())
+        return;
+
+    struct Filter: public InsnRangeCallback {
+        virtual bool operator()(bool enabled, const Args &args) {
+            if (enabled) {
+                if (!args.insn_prev || !args.insn_end)
+                    return true;
+                BasicBlock *bb_lt = args.partitioner->find_bb_containing(args.insn_prev->get_address(), false);
+                BasicBlock *bb_rt = args.partitioner->find_bb_containing(args.insn_end->get_address(), false);
+                assert(bb_lt && bb_lt->function); // because we're invoked from scan_unassigned_insns
+                assert(bb_rt && bb_rt->function); // ditto
+                enabled = bb_lt->function != bb_rt->function;
+            }
+            return enabled;
+        }
+    } filter;
+    InsnRangeCallbacks cblist2 = cblist;
+    cblist2.prepend(&filter);
+    scan_unassigned_insns(cblist2);
+}
+
+/* Similar to scan_unassigned_insns except only invokes callbacks when "prev" and "end" instructions belong to the same
+ * function. */
+void
+Partitioner::scan_intrafunc_insns(InsnRangeCallbacks &cblist)
+{
+    if (cblist.empty())
+        return;
+
+    struct Filter: public InsnRangeCallback {
+        virtual bool operator()(bool enabled, const Args &args) {
+            if (enabled) {
+                if (!args.insn_prev || !args.insn_end)
+                    return false;
+                BasicBlock *bb_lt = args.partitioner->find_bb_containing(args.insn_prev->get_address(), false);
+                BasicBlock *bb_rt = args.partitioner->find_bb_containing(args.insn_end->get_address(), false);
+                assert(bb_lt && bb_lt->function); // because we're invoked from scan_unassigned_insns
+                assert(bb_rt && bb_rt->function); // ditto
+                enabled = bb_lt->function == bb_rt->function;
+            }
+            return enabled;
+        }
+    } filter;
+    InsnRangeCallbacks cblist2 = cblist;
+    cblist2.prepend(&filter);
+    scan_unassigned_insns(cblist2);
+}
+
+/* Create functions for inter-function padding instruction sequences.  Returns true if we did not find interfunction padding
+ * and other padding callbacks should proceed; returns false if we did find padding and the others should be skipped. */
+bool
+Partitioner::InterFuncInsnPadding::operator()(bool enabled, const Args &args)
+{
+    if (!enabled)
+        return false;
+    if (!args.insn_prev)
+        return true;
+    assert(args.ninsns>0);
+    assert(args.insn_prev!=NULL);
+    assert(args.insn_begin!=NULL);
+
+    if (must_follow_immediately &&
+        args.insn_begin->get_address()!=args.insn_prev->get_address()+args.insn_prev->get_raw_bytes().size())
+        return true;
+
+    /* All instructions in this contiguous sequence must be of the desired kind */
+    std::vector<SgAsmInstruction*> padding;
+    Partitioner *p = args.partitioner;
+    rose_addr_t va = args.insn_begin->get_address();
+    for (size_t i=0; i<args.ninsns; i++) {
+        bool matches = false;
+        SgAsmInstruction *insn = p->find_instruction(va);
+        assert(insn!=NULL); // callback is being invoked over instructions
+        BasicBlock *bb = p->find_bb_containing(va, false);
+        if (bb && bb->function)
+            break; // insn is already assigned to a function
+
+        SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(p->find_instruction(va));
+        if (!matches && insn_x86) {
+            if (x86_kinds.find(insn_x86->get_kind())!=x86_kinds.end())
+                matches = true;
+        }
+
+        for (size_t i=0; !matches && i<byte_patterns.size(); i++) {
+            if (byte_patterns[i]==insn->get_raw_bytes())
+                matches = true;
+        }
+
+
+        if (!matches)
+            break;
+        padding.push_back(insn);
+        va += insn->get_raw_bytes().size();
+    }
+
+    if (padding.empty())
+        return true;
+    if (must_span_all_space && args.insn_end && va!=args.insn_end->get_address())
+        return true;
+
+    /* All OK, build function from the basic blocks of the padding instructions. */
+    Function *func = p->add_function(padding[0]->get_address(), SgAsmFunctionDeclaration::FUNC_INTERPAD);
+    p->find_bb_starting(padding.front()->get_address()); // split first block if necessary
+    p->find_bb_starting(va); // split last block if necessary
+    for (size_t i=0; i<padding.size(); i++) {
+        BasicBlock *bb = p->find_bb_containing(padding[i]->get_address());
+        assert(bb!=NULL);
+        p->append(func, bb);
+    }
+
+    /* Other inter-function padding callbacks don't need to run for this contiguous instruction sequence. */
+    return false;
 }
 
 /* class method */
@@ -1840,13 +1918,26 @@ Partitioner::analyze_cfg()
 void
 Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
 {
-    if (func_heuristics & SgAsmFunctionDeclaration::FUNC_INTERPAD) {
-        create_nop_padding();
-        create_zero_padding();
-    }
-
     if (func_heuristics & SgAsmFunctionDeclaration::FUNC_INTRABLOCK)
         vacuum_intrafunc();
+
+    /* Detect inter-function padding */
+    if (func_heuristics & SgAsmFunctionDeclaration::FUNC_INTERPAD) {
+        InsnRangeCallbacks cblist;
+
+        InterFuncInsnPadding pad1;
+        pad1.x86_kinds.insert(x86_nop);
+        pad1.x86_kinds.insert(x86_int3);
+        cblist.append(&pad1);
+
+        SgUnsignedCharList bytes2;
+        bytes2.push_back(0x00);
+        InterFuncInsnPadding pad2;
+        pad2.byte_patterns.push_back(bytes2);
+        cblist.append(&pad2);
+
+        scan_interfunc_insns(cblist);
+    }
 
     if (interp) {
         const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
