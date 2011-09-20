@@ -420,6 +420,33 @@ C99_TESTCODES_REQUIRED_TO_PASS = \
      test2006_143.c \
      test2008_01.c
 
+JAVA_TESTCODES_REQUIRED_TO_PASS = \
+     cave3_IntLit0.java \
+     cave3_LoadDep0.java \
+     cave3_block0.java \
+     cave3_constructor0.java \
+     cave3_constructor1.java \
+     cave3_constructor2.java \
+     cave3_if0.java \
+     cave3_if1.java \
+     cave3_nameResolution0.java \
+     cave3_while0.java \
+     cave3_while2.java
+
+#     cave3_DoubleLit0.java
+#     cave3_call0.java
+#     cave3_call1.java
+#     cave3_dowhile0.java
+#     cave3_for0.java
+#     cave3_for1.java
+#     cave3_for2.java
+#     cave3_for3.java
+#     cave3_for4.java
+#     cave3_for5.java
+#     cave3_for6.java
+#     cave3_mthParam0.java
+#     cave3_while1.java
+
 
 # Configure-time automake conditional
 if ROSE_USE_LONG_MAKE_CHECK_RULE
@@ -458,6 +485,7 @@ C99_FILES = ${C99_TESTCODES_REQUIRED_TO_PASS:.c=.C99-o}
 F90_FILES = ${F90_TESTCODES_REQUIRED_TO_PASS:.f90=.F90-o}
 F77_FILES = ${F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS:.f=.F-o}
 F03_FILES = ${F03_TESTCODES_REQUIRED_TO_PASS:.f03=.F03-o}
+JAVA_FILES = ${JAVA_TESTCODES_REQUIRED_TO_PASS:.java=.java-o}
 
 $(CXX_FILES): testVirtualCFG
 	./testVirtualCFG $(ROSE_FLAGS) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(srcdir)/../Cxx_tests/$(@:.CXX-o=.C) && touch $@
@@ -483,6 +511,14 @@ $(F77_FILES): ./testVirtualCFG
 $(F03_FILES): ./testVirtualCFG
 #	./testVirtualCFG $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/../Fortran_tests/$(@:.F03-o=.f03) && touch $@
 
+#$(JAVA_FILES): testVirtualCFG $(srcdir)/../Java_tests/$(@:.java-o=.java)
+#	cp $(srcdir)/../Java_tests/$(@:.java-o=.java) $(@:.java-o=.temp.java)
+#	./testVirtualCFG $(ROSE_FLAGS) -I$(srcdir)/../Java_tests -c $(@:.java-o=.temp.java) && touch $@
+
+$(JAVA_FILES): testVirtualCFG
+	cp $(srcdir)/../Java_tests/$(@:.java-o=.java) $(@:.java-o=.java)
+	./testVirtualCFG $(ROSE_FLAGS) -c $(@:.java-o=.java) && touch $@
+
 
 QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}
 
@@ -502,6 +538,7 @@ check-c99: $(C99_FILES)
 check-f90: $(F90_FILES)
 check-f77: $(F77_FILES)
 check-f03: $(F03_FILES)
+check-java: $(JAVA_FILES)
 # if ROSE_USE_OPEN_FORTRAN_PARSER
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 check-fortran: check-f90 check-f77 check-f03
@@ -509,7 +546,7 @@ else
 check-fortran:
 endif
 
-check-local: check-cxx check-c check-c99 check-fortran
+check-local: check-cxx check-c check-c99 check-fortran check-java
 # check-local: $(CXX_FILES) $(C_FILES)
 	@echo "******************************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/virtualCFG_tests: make check rule complete (terminated normally) ******"
