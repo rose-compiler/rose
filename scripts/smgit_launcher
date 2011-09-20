@@ -68,7 +68,11 @@ if [ ! -d "$rose" ]; then
 fi
 
 # Run smgit if possible
-if (cd $rose && git rev-parse $branch:scripts/smgit) >/dev/null 2>&1; then
+if [ "$branch" = "workdir" ]; then
+    echo "smgit_launcher: running smgit from working dir: $rose/scripts/smgit" >&2
+    exec perl $rose/scripts/smgit --name="$0" "$@"
+    exit 1
+elif (cd $rose && git rev-parse $branch:scripts/smgit) >/dev/null 2>&1; then
     echo "smgit_launcher: running smgit from $branch..."
     exec perl <(cd $rose && git show $branch:scripts/smgit) --name="$0" "$@"
     exit 1
