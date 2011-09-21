@@ -73,9 +73,10 @@ AsmUnparser::init()
         .append(&insnComment)
         .append(&insnLineTermination);
 
-    //basicblock_callbacks.pre
+    basicblock_callbacks.pre
         //.append(&basicBlockNoopUpdater)       /* Disabled by default for speed. */
-        //.append(&basicBlockNoopWarning);      /* No-op if basicBlockNoopUpdater isn't used. */
+        //.append(&basicBlockNoopWarning)       /* No-op if basicBlockNoopUpdater isn't used. */
+        .append(&basicBlockReasons);
     basicblock_callbacks.unparse
         .append(&basicBlockBody);
     basicblock_callbacks.post
@@ -353,6 +354,14 @@ AsmUnparser::BasicBlockNoopWarning::operator()(bool enabled, const BasicBlockArg
                         <<nnoops <<" instruction" <<(1==nnoops?"":"s") <<" as no-op sequences from this block.\n";
         }
     }
+    return enabled;
+}
+
+bool
+AsmUnparser::BasicBlockReasons::operator()(bool enabled, const BasicBlockArgs &args)
+{
+    if (enabled)
+        args.output <<"Basic block: " <<args.block->reason_str(false) <<"\n";
     return enabled;
 }
 

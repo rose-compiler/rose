@@ -49,6 +49,7 @@ class SgAsmInterpretation;
  *     </li>
  *     <li>Basic blocks:
  *        <ol>
+ *           <li>BasicBlockReasons (pre): emits the reasons why this block is part of the function.</li>
  *           <li>BasicBlockBody (unparse): unparses each instruction of the basic block.</li>
  *           <li>BasicBlockSuccessors (post): emits addresses of basic block successors.</li>
  *           <li>BasicBlockLineTermination (post): emits a linefeed at the end of each basic block.</li>
@@ -250,6 +251,12 @@ public:
      *                                  Basic Block Callbacks
      **************************************************************************************************************************/
 
+    /** Functor to emit reasons this block is part of a function. */
+    class BasicBlockReasons: public UnparserCallback {
+    public:
+        virtual bool operator()(bool enabled, const BasicBlockArgs &args);
+    };
+
     /** Functor to update unparser's is_noop array. */
     class BasicBlockNoopUpdater: public UnparserCallback {
     public:
@@ -367,6 +374,7 @@ public:
     InsnComment insnComment;
     InsnLineTermination insnLineTermination;
 
+    BasicBlockReasons basicBlockReasons;
     BasicBlockNoopUpdater basicBlockNoopUpdater;
     BasicBlockNoopWarning basicBlockNoopWarning;
     BasicBlockBody basicBlockBody;
