@@ -633,7 +633,7 @@ public:
      *  the debugging file regardless of the elapsed time. The arguments are the same as fprintf().
      *
      *  Thread safety: This method is thread safe. */
-    void progress(FILE*, const char *fmt, ...) const;
+    void progress(FILE*, const char *fmt, ...) const __attribute__((format(gnu_printf, 3, 4)));
 
     /** Makes an unknown instruction from an exception.
      *
