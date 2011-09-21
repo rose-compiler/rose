@@ -41,9 +41,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2011_41.java \
      test2011_47.java \
      test2011_50.java \
-                      \
      pgc_2011_30.java \
-                      \
      pgc_test2011_00.java \
      pgc_test2011_01.java \
      pgc_test2011_02.java \
@@ -53,15 +51,42 @@ TESTCODES_REQUIRED_TO_PASS = \
      pgc_test2011_06.java \
      pgc_test2011_07.java \
      pgc_test2011_08.java \
-     pgc_test2011_09.java
+     pgc_test2011_09.java \
+     cave3_IntLit0.java \
+     cave3_LoadDep0.java \
+     cave3_block0.java \
+     cave3_constructor0.java \
+     cave3_constructor1.java \
+     cave3_constructor2.java \
+     cave3_constructor3.java \
+     cave3_if0.java \
+     cave3_if1.java \
+     cave3_mthParam0.java \
+     cave3_nameResolution0.java \
+     cave3_while0.java \
+     cave3_while2.java
+
+#     
 
 # DQ (9/3/2011): This test code was listed twice...
 #    pgc_2011_30.java
 #
 # These test pass the compilation using ROSE, all AST tests, unparsing to generate 
 # Java code, and the final compilation of that code using a backend compiler (javac).
-TESTCODE_CURRENTLY_FAILING =
-
+TESTCODE_CURRENTLY_FAILING = \
+	 cave3_DoubleLit0.java \
+	 cave3_call0.java \
+     cave3_call1.java \
+     cave3_dowhile0.java \
+     cave3_for0.java \
+     cave3_for1.java \
+     cave3_for2.java \
+     cave3_for3.java \
+     cave3_for4.java \
+     cave3_for5.java \
+     cave3_for6.java \
+     cave3_while1.java
+	 
 # These tests pass the compilation using ROSE, all AST tests, and unparsing to generate 
 # Java code, but fails the final compilation step of the generated Java code.
 TESTCODES_REQUIRED_TO_PASS_FAILING_BACKEND_COMPILE = \
