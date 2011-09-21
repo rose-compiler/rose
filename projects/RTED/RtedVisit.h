@@ -27,9 +27,9 @@ namespace rted
   };
 
 
-  struct VariableTraversal : public SgTopDownProcessing<InheritedAttribute>
+  struct VariableTraversal : public AstTopDownProcessing<InheritedAttribute>
   {
-    typedef SgTopDownProcessing<InheritedAttribute> Base;
+     typedef AstTopDownProcessing<InheritedAttribute> Base;
 
      explicit
      VariableTraversal(RtedTransformation* t) ;
