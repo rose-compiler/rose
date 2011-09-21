@@ -564,19 +564,25 @@ Partitioner::append(BasicBlock* bb, SgAsmInstruction* insn)
  *  not already belong to some other function, but it's fine if the block already belongs to the function to which it is being
  *  appended (it is not added a second time).
  *
+ *  Whenever a block is added to a function, we should supply a reason for adding it.  The @p reasons bit vector are those
+ *  reasons.  The bits are from the SgAsmBlock::Reason enum.
+ *
  *  If the @p keep argument is true, then the block's entry address is also added to the function's list of control flow graph
  *  (CFG) heads.  These are the addresses of blocks which are used to start the recursive CFG analysis phase of function block
  *  discovery.  The function's entry address is always considered a CFG head even if it doesn't appear in the set of heads. */
 void
-Partitioner::append(Function* f, BasicBlock *bb, bool keep/*=false*/)
+Partitioner::append(Function* f, BasicBlock *bb, unsigned reason, bool keep/*=false*/)
 {
     ROSE_ASSERT(f);
     ROSE_ASSERT(bb);
 
     if (keep)
         f->heads.insert(address(bb));
+    bb->reason |= reason;
 
-    if (bb->function==f) return;
+    if (bb->function==f)
+        return;
+
     ROSE_ASSERT(bb->function==NULL);
     bb->function = f;
     f->blocks[address(bb)] = bb;
@@ -1442,7 +1448,7 @@ Partitioner::InterFuncInsnPadding::operator()(bool enabled, const Args &args)
     for (size_t i=0; i<padding.size(); i++) {
         BasicBlock *bb = p->find_bb_containing(padding[i]->get_address());
         if (bb && !bb->function)
-            p->append(func, bb, true/*head of CFG subgraph*/);
+            p->append(func, bb, SgAsmBlock::BLK_PADDING, true/*head of CFG subgraph*/);
     }
 
     /* Other inter-function padding callbacks don't need to run for this contiguous instruction sequence. */
@@ -1483,7 +1489,7 @@ Partitioner::IntraFunctionBlocks::operator()(bool enabled, const Args &args)
                     fprintf(p->debug, "Partitioner::IntraFunctionBlocks: for F%08"PRIx64": added", func->entry_va);
                 fprintf(p->debug, " B%08"PRIx64, p->address(bb));
             }
-            p->append(func, bb, true/*head of CFG subgraph*/);
+            p->append(func, bb, SgAsmBlock::BLK_INTRAFUNC, true/*head of CFG subgraph*/);
             ++nadded;
         }
         
@@ -1705,7 +1711,7 @@ Partitioner::discover_first_block(Function *func)
     }
 
     if (bb) {
-        append(func, bb);
+        append(func, bb, SgAsmBlock::BLK_ENTRY_POINT);
         if (debug) fprintf(debug, "added %zu instruction%s\n", bb->insns.size(), 1==bb->insns.size()?"":"s");
     } else if (debug) {
         fprintf(debug, "no instruction at function entry address\n");
@@ -1717,7 +1723,7 @@ Partitioner::discover_first_block(Function *func)
  *  function then it's either a function call (if it branches to the entry point of that function) or it's a collision.
  *  Collisions are resolved by discarding and rediscovering the blocks of the other function. */
 void
-Partitioner::discover_blocks(Function *f, rose_addr_t va)
+Partitioner::discover_blocks(Function *f, rose_addr_t va, unsigned reason)
 {
     if (debug) fprintf(debug, " B%08"PRIx64, va);
     SgAsmInstruction *insn = find_instruction(va);
@@ -1798,7 +1804,7 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
         /* Call to a known target */
         if (debug) fprintf(debug, "[call F%08"PRIx64"]", target_va);
 
-        append(f, bb);
+        append(f, bb, reason);
         BasicBlock *target_bb = find_bb_containing(target_va);
 
         /* Optionally create or add reason flags to called function. */
@@ -1821,35 +1827,37 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
         const Disassembler::AddressSet &suc = successors(bb);
         for (Disassembler::AddressSet::const_iterator si=suc.begin(); si!=suc.end(); ++si) {
             if (*si!=f->entry_va)
-                discover_blocks(f, *si);
+                discover_blocks(f, *si, reason);
         }
 
     } else {
-        append(f, bb);
+        append(f, bb, reason);
         const Disassembler::AddressSet& suc = successors(bb);
         for (Disassembler::AddressSet::const_iterator si=suc.begin(); si!=suc.end(); ++si) {
             if (*si!=f->entry_va)
-                discover_blocks(f, *si);
+                discover_blocks(f, *si, reason);
         }
     }
 }
 
 void
-Partitioner::discover_blocks(Function *f)
+Partitioner::discover_blocks(Function *f, unsigned reason)
 {
     Disassembler::AddressSet heads = f->heads;
     heads.insert(f->entry_va);
     for (Disassembler::AddressSet::iterator hi=heads.begin(); hi!=heads.end(); ++hi)
-        discover_blocks(f, *hi);
+        discover_blocks(f, *hi, reason);
 }
 
 void
-Partitioner::analyze_cfg()
+Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
 {
     for (size_t pass=1; true; pass++) {
         if (debug) fprintf(debug, "========== Partitioner::analyze_cfg() pass %zu ==========\n", pass);
-        progress(debug, "Partitioner: starting pass %zu: %zu function%s, %zu insn%s assigned to %zu block%s (ave %d insn/blk)\n",
-                 pass, functions.size(), 1==functions.size()?"":"s", insn2block.size(), 1==insn2block.size()?"":"s", 
+        progress(debug, "Partitioner: starting %s pass %zu: "
+                 "%zu function%s, %zu insn%s assigned to %zu block%s (ave %d insn/blk)\n",
+                 stringifySgAsmBlockReason(reason, "BLK_").c_str(), pass,
+                 functions.size(), 1==functions.size()?"":"s", insn2block.size(), 1==insn2block.size()?"":"s", 
                  blocks.size(), 1==blocks.size()?"":"s",
                  blocks.size()?(int)(1.0*insn2block.size()/blocks.size()+0.5):0);
 
@@ -1985,7 +1993,7 @@ Partitioner::analyze_cfg()
                         pending[i]->entry_va, pending[i]->name.c_str(), pass);
             }
             try {
-                discover_blocks(pending[i]);
+                discover_blocks(pending[i], reason);
             } catch (const AbandonFunctionDiscovery&) {
                 /* thrown when discover_blocks() decides it needs to start over on a function */
             }
@@ -2021,9 +2029,6 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
         cblist.append(&pad2);
 
         scan_interfunc_insns(cblist);
-
-        progress(debug, "Partitioner is rerunning CFG analysis after finding function padding.\n");
-        analyze_cfg();
     }
 
     if (interp) {
@@ -2034,6 +2039,20 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
         }
     }
         
+
+    /* Run one last analysis of the CFG because we may need to fix some things up after having added more blocks from the
+     * post-cfg analyses we did above. If nothing happened above, then analyze_cfg() should be fast. */
+    progress(debug, "Partitioner is rerunning CFG analysis after finding function padding.\n");
+    analyze_cfg(SgAsmBlock::BLK_GRAPH2);
+
+    /* Add the BLK_CFGHEAD reason to all blocks that are also in the function's CFG head list. */
+    for (BasicBlocks::iterator bi=blocks.begin(); bi!=blocks.end(); ++bi) {
+        BasicBlock *bb = bi->second;
+        if (bb->function && 0==(bb->function->reason & SgAsmFunctionDeclaration::FUNC_LEFTOVERS) &&
+            bb->function->heads.find(address(bb))!=bb->function->heads.end())
+            bb->reason |= SgAsmBlock::BLK_CFGHEAD;
+    }
+
     progress(debug,
              "Partitioner completed: %zu function%s, %zu insn%s assigned to %zu block%s (ave %d insn/blk)\n",
              functions.size(), 1==functions.size()?"":"s", insn2block.size(), 1==insn2block.size()?"":"s", 
@@ -2163,7 +2182,7 @@ Partitioner::build_ast()
                 if (!bb->function) {
                     if (!catchall)
                         catchall = add_function(ii->first, SgAsmFunctionDeclaration::FUNC_LEFTOVERS, "***uncategorized blocks***");
-                    append(catchall, bb);
+                    append(catchall, bb, SgAsmBlock::BLK_LEFTOVERS);
                     process_instructions = true;
                 }
             }
@@ -2236,6 +2255,8 @@ Partitioner::build_ast(BasicBlock* bb)
     SgAsmBlock *retval = new SgAsmBlock;
     retval->set_id(bb->insns.front()->get_address());
     retval->set_address(bb->insns.front()->get_address());
+    retval->set_reason(bb->reason);
+
     for (std::vector<SgAsmInstruction*>::const_iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii) {
         retval->get_statementList().push_back(*ii);
         (*ii)->set_parent(retval);
@@ -2259,7 +2280,7 @@ Partitioner::partition(SgAsmInterpretation* interp/*=NULL*/, const Disassembler:
     disassembler = NULL;
     add_instructions(insns);
     pre_cfg(interp);
-    analyze_cfg();
+    analyze_cfg(SgAsmBlock::BLK_GRAPH1);
     post_cfg(interp);
     return build_ast();
 }
@@ -2273,7 +2294,7 @@ Partitioner::partition(SgAsmInterpretation* interp/*=NULL*/, Disassembler *d, Me
     ROSE_ASSERT(m!=NULL);
     set_map(m);
     pre_cfg(interp);
-    analyze_cfg();
+    analyze_cfg(SgAsmBlock::BLK_GRAPH1);
     post_cfg(interp);
     return build_ast();
 }

@@ -172,7 +172,7 @@ protected:
     struct BasicBlock {
         /** Constructor. This constructor should not be called directly since the Partitioner has other pointers that it needs
          *  to establish to this block.  Instead, call Partitioner::find_bb_containing(). */
-        BasicBlock(): function(NULL) {}
+        BasicBlock(): reason(SgAsmBlock::BLK_NONE), function(NULL) {}
 
         /** Destructor. This destructor should not be called directly since there are other pointers to this block that the
          *  block does not know about. Instead, call Partitioner::discard(). */
@@ -188,6 +188,7 @@ protected:
         void validate_cache() { cache.age=insns.size(); }
 
         SgAsmInstruction* last_insn() const;    /**< Returns the last executed (exit) instruction of the block */
+        unsigned reason;                        /**< Reasons this block was created; SgAsmBlock::Reason bit flags */
         std::vector<SgAsmInstruction*> insns;   /**< Non-empty set of instructions composing this basic block, in address order */
         BlockAnalysisCache cache;               /**< Cached results of local analyses */
         Function* function;                     /**< Function to which this basic block is assigned, or null */
@@ -604,16 +605,16 @@ protected:
     virtual BasicBlock* find_bb_starting(rose_addr_t, bool create=true);   /* Find or create block starting at specified address */
     virtual Disassembler::AddressSet successors(BasicBlock*, bool *complete=NULL); /* Calculates known successors */
     virtual rose_addr_t call_target(BasicBlock*);               /* Returns address if block could be a function call */
-    virtual void append(Function*, BasicBlock*, bool keep=false); /* Append basic block to function */
+    virtual void append(Function*, BasicBlock*, unsigned reasons, bool keep=false); /* Append basic block to function */
     virtual BasicBlock* discard(BasicBlock*);                   /**< Delete a basic block and return null */
     virtual void remove(Function*, BasicBlock*);                /**< Remove basic block from function */
     virtual rose_addr_t address(BasicBlock*) const;             /**< Return starting address of basic block */
     virtual void truncate(BasicBlock*, rose_addr_t);            /**< Remove instructions from end of basic block */
     virtual void discover_first_block(Function*);               /* Adds first basic block to empty function to start discovery. */
-    virtual void discover_blocks(Function*);                    /* Start to recursively discover blocks of a function. */
-    virtual void discover_blocks(Function*, rose_addr_t);       /* Recursively discovers blocks of a function. */
+    virtual void discover_blocks(Function*, unsigned reason);   /* Start to recursively discover blocks of a function. */
+    virtual void discover_blocks(Function*, rose_addr_t, unsigned reason); /* Recursively discovers blocks of a function. */
     virtual void pre_cfg(SgAsmInterpretation *interp=NULL);     /**< Detects functions before analyzing the CFG */
-    virtual void analyze_cfg();                                 /**< Detect functions by analyzing the CFG */
+    virtual void analyze_cfg(SgAsmBlock::Reason);               /**< Detect functions by analyzing the CFG */
     virtual void post_cfg(SgAsmInterpretation *interp=NULL);    /**< Detects functions after analyzing the CFG */
     virtual SgAsmFunctionDeclaration* build_ast(Function*);     /**< Build AST for a single function */
     virtual SgAsmBlock* build_ast(BasicBlock*);                 /**< Build AST for a single basic block */
