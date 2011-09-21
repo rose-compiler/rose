@@ -647,9 +647,10 @@ Unparse_Java::unparseFunctionParameterList(SgStatement* stmt, SgUnparse_Info& in
     SgInitializedNamePtrList& names = param_list->get_args();
     SgInitializedNamePtrList::iterator name_it;
     for (name_it = names.begin(); name_it != names.end(); name_it++) {
-        if (name_it != names.begin())
+    	if (name_it != names.begin()) {
             curprint(", ");
-        SgInitializedName* iname = *name_it;
+        }
+    	SgInitializedName* iname = *name_it;
         unparseType(iname->get_type(), info);
         curprint(" ");
         unparseName(iname->get_name(), info);
@@ -716,10 +717,17 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      unparseName(mfuncdecl_stmt->get_name(), info);
      curprint("(");
-     //     unparseStatement(mfuncdecl_stmt->get_parameterList(), info);
-     foreach (SgInitializedName* name, mfuncdecl_stmt->get_args()) {
-         unparseInitializedName(name, info);
+     unparseStatement(mfuncdecl_stmt->get_parameterList(), info);
+
+     SgInitializedNamePtrList& names = mfuncdecl_stmt->get_args();
+     SgInitializedNamePtrList::iterator name_it;
+     for (name_it = names.begin(); name_it != names.end(); name_it++) {
+    	 if (name_it != names.begin()) {
+             curprint(", ");
+         }
+    	 unparseInitializedName(*name_it, info);
      }
+
      curprint(") ");
      unparseStatement(mfuncdecl_stmt->get_definition(), info);
 
