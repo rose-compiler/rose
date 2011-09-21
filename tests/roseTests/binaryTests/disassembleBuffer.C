@@ -56,7 +56,7 @@ public:
         set_search(SgAsmFunctionDeclaration::FUNC_DEFAULT & ~SgAsmFunctionDeclaration::FUNC_LEFTOVERS);
         add_instructions(insns);
         add_function(entry_va, SgAsmFunctionDeclaration::FUNC_ENTRY_POINT, name);
-        analyze_cfg();
+        analyze_cfg(SgAsmBlock::BLK_GRAPH1);
         return build_ast();
     }
 };

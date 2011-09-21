@@ -22,46 +22,56 @@ using this memory map for disassembly:
     va 0x080496d4 + 0x0000092c = 0x0804a000 rw-p at anon null + 0x00000000 i686-test1.O0.bin(.bss+LOAD#3)
 disassembled 256 instructions and 1 failure (use --show-bad to see errors)
 0x080482c8: ============================ Function (function call, symbol) <_init>
+Basic block: entry point, graph-1
 0x080482c8: 55                |U     |   push   ebp
 0x080482c9: 89 e5             |..    |   mov    ebp, esp
 0x080482cb: 83 ec 08          |...   |   sub    esp, 0x08
 0x080482ce: e8 91 00 00 00    |..... |   call   0x08048364<call_gmon_start>
             (successors: 0x080482d3 0x08048364)
 
+Basic block: graph-1
 0x080482d3: e8 f8 00 00 00    |..... |   call   0x080483d0<frame_dummy>
             (dominator 0x080482c8)
             (successors: 0x080482d8 0x080483d0)
 
+Basic block: graph-1
 0x080482d8: e8 83 02 00 00    |..... |   call   0x08048560<__do_global_ctors_aux>
             (dominator 0x080482d3)
             (successors: 0x080482dd 0x08048560)
 
+Basic block: graph-1
 0x080482dd: c9                |.     |   leave  
 0x080482de: c3                |.     |   ret    
             (dominator 0x080482d8)
             (successors:...)
 
 0x080482f0: ============================ Function (function call, import) <signal@plt>
+Basic block: entry point, graph-1
 0x080482f0: ff 25 b4 96 04 08 |.%....|   jmp    DWORD PTR ds:[0x080496b4]
             (successors:...)
 
 0x08048300: ============================ Function (function call, import) <puts@plt>
+Basic block: entry point, graph-1
 0x08048300: ff 25 b8 96 04 08 |.%....|   jmp    DWORD PTR ds:[0x080496b8]
             (successors:...)
 
 0x08048310: ============================ Function (function call, import) <__libc_start_main@plt>
+Basic block: entry point, graph-1
 0x08048310: ff 25 bc 96 04 08 |.%....|   jmp    DWORD PTR ds:[0x080496bc]
             (successors:...)
 
 0x08048320: ============================ Function (function call, import) <_exit@plt>
+Basic block: entry point, graph-1
 0x08048320: ff 25 c0 96 04 08 |.%....|   jmp    DWORD PTR ds:[0x080496c0]
             (successors:...)
 
 0x08048330: ============================ Function (function call, import) <__gmon_start__@plt>
+Basic block: entry point, graph-1
 0x08048330: ff 25 c4 96 04 08 |.%....|   jmp    DWORD PTR ds:[0x080496c4]
             (successors:...)
 
 0x08048340: ============================ Function (entry point, symbol) <_start>
+Basic block: entry point, graph-1
 0x08048340: 31 ed             |1.    |   xor    ebp, ebp
 0x08048342: 5e                |^     |   pop    esi
 0x08048343: 89 e1             |..    |   mov    ecx, esp
@@ -77,16 +87,19 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
 0x0804835c: e8 af ff ff ff    |..... |   call   0x08048310<__libc_start_main@plt>
             (successors: 0x08048310 0x08048361)
 
+Basic block: graph-1
 0x08048361: f4                |.     |   hlt    
             (dominator 0x08048340)
             (successors:)
 
 0x08048362: ============================ Function (padding) unknown name
+Basic block: padding, CFG head
 0x08048362: 90                |.     |   nop    
 0x08048363: 90                |.     |   nop    
             (successors: 0x08048364)
 
 0x08048364: ============================ Function (function call, symbol) <call_gmon_start>
+Basic block: entry point, graph-1
 0x08048364: 55                |U     |   push   ebp
 0x08048365: 89 e5             |..    |   mov    ebp, esp
 0x08048367: 53                |S     |   push   ebx
@@ -99,10 +112,12 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
 0x0804837d: 74 05             |t.    |   je     0x08048384
             (successors: 0x0804837f 0x08048384)
 
+Basic block: graph-1
 0x0804837f: e8 ac ff ff ff    |..... |   call   0x08048330<__gmon_start__@plt>
             (dominator 0x08048364)
             (successors: 0x08048330 0x08048384)
 
+Basic block: graph-1
 0x08048384: 58                |X     |   pop    eax
 0x08048385: 5b                |[     |   pop    ebx
 0x08048386: c9                |.     |   leave  
@@ -111,6 +126,7 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
             (successors:...)
 
 0x08048388: ============================ Function (padding) unknown name
+Basic block: padding, CFG head
 0x08048388: 90                |.     |   nop    
 0x08048389: 90                |.     |   nop    
 0x0804838a: 90                |.     |   nop    
@@ -122,6 +138,7 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
             (successors: 0x08048390)
 
 0x08048390: ============================ Function (function call, symbol) <__do_global_dtors_aux>
+Basic block: entry point, graph-1
 0x08048390: 55                |U     |   push   ebp
 0x08048391: 89 e5             |..    |   mov    ebp, esp
 0x08048393: 83 ec 08          |...   |   sub    esp, 0x08
@@ -130,6 +147,7 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
 0x0804839d: 75 2d             |u-    |   jne    0x080483cc
             (successors: 0x0804839f 0x080483cc)
 
+Basic block: graph-1
 0x0804839f: a1 d0 96 04 08    |..... |   mov    eax, DWORD PTR ds:[0x080496d0]
 0x080483a4: 8b 10             |..    |   mov    edx, DWORD PTR ds:[eax]
 0x080483a6: 85 d2             |..    |   test   edx, edx
@@ -137,16 +155,19 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
             (dominator 0x08048390)
             (successors: 0x080483aa 0x080483c5)
 
+Basic block: graph-1
 0x080483aa: 8d b6 00 00 00 00 |......|   lea    esi, [esi + 0x00000000]
             (dominator 0x0804839f)
             (successors: 0x080483b0)
 
+Basic block: graph-1
 0x080483b0: 83 c0 04          |...   |   add    eax, 0x04
 0x080483b3: a3 d0 96 04 08    |..... |   mov    DWORD PTR ds:[0x080496d0], eax
 0x080483b8: ff d2             |..    |   call   edx
             (dominator 0x080483aa)
             (successors: 0x080483ba...)
 
+Basic block: graph-1
 0x080483ba: a1 d0 96 04 08    |..... |   mov    eax, DWORD PTR ds:[0x080496d0]
 0x080483bf: 8b 10             |..    |   mov    edx, DWORD PTR ds:[eax]
 0x080483c1: 85 d2             |..    |   test   edx, edx
@@ -154,17 +175,20 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
             (dominator 0x080483b0)
             (successors: 0x080483b0 0x080483c5)
 
+Basic block: graph-1
 0x080483c5: c6 05 d4 96 04 08 |......|
 0x080483cb: 01                |.     |   mov    BYTE PTR ds:[0x080496d4], 0x01
             (dominator 0x0804839f)
             (successors: 0x080483cc)
 
+Basic block: graph-1
 0x080483cc: c9                |.     |   leave  
 0x080483cd: c3                |.     |   ret    
             (dominator 0x08048390)
             (successors:...)
 
 0x080483d0: ============================ Function (function call, symbol, discontiguous) <frame_dummy>
+Basic block: entry point, graph-1
 0x080483d0: 55                |U     |   push   ebp
 0x080483d1: 89 e5             |..    |   mov    ebp, esp
 0x080483d3: 83 ec 08          |...   |   sub    esp, 0x08
@@ -173,12 +197,14 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
 0x080483dd: 74 21             |t!    |   je     0x08048400
             (successors: 0x080483df 0x08048400)
 
+Basic block: graph-1
 0x080483df: b8 00 00 00 00    |..... |   mov    eax, 0x00000000
 0x080483e4: 85 c0             |..    |   test   eax, eax
 0x080483e6: 74 18             |t.    |   je     0x08048400
             (dominator 0x080483d0)
             (successors: 0x08048400)
 
+Basic block: graph-1
 0x08048400: 89 ec             |..    |   mov    esp, ebp
 0x08048402: 5d                |]     |   pop    ebp
 0x08048403: c3                |.     |   ret    
@@ -186,6 +212,7 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
             (successors:...)
 
 0x08048404: ============================ Function (function call, symbol) <bar>
+Basic block: entry point, graph-1
 0x08048404: 55                |U     |   push   ebp
 0x08048405: 89 e5             |..    |   mov    ebp, esp
 0x08048407: 83 ec 08          |...   |   sub    esp, 0x08
@@ -194,18 +221,21 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
 0x08048411: e8 ea fe ff ff    |..... |   call   0x08048300<puts@plt>
             (successors: 0x08048300 0x08048416)
 
+Basic block: graph-1
 0x08048416: c9                |.     |   leave  
 0x08048417: c3                |.     |   ret    
             (dominator 0x08048404)
             (successors:...)
 
 0x08048418: ============================ Function (function call, symbol) <foo>
+Basic block: entry point, graph-1
 0x08048418: 55                |U     |   push   ebp
 0x08048419: 89 e5             |..    |   mov    ebp, esp
 0x0804841b: 83 ec 08          |...   |   sub    esp, 0x08
 0x0804841e: e8 e1 ff ff ff    |..... |   call   0x08048404<bar>
             (successors: 0x08048404 0x08048423)
 
+Basic block: graph-1
 0x08048423: c7 04 24 00 00 00 |..$...|
 0x08048429: 00                |.     |   mov    DWORD PTR ss:[esp], 0x00000000
 0x0804842a: e8 f1 fe ff ff    |..... |   call   0x08048320<_exit@plt>
@@ -213,6 +243,7 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
             (successors: 0x08048320)
 
 0x0804842f: ============================ Function (symbol) <handler>
+Basic block: entry point, graph-1
 0x0804842f: 55                |U     |   push   ebp
 0x08048430: 89 e5             |..    |   mov    ebp, esp
 0x08048432: 83 ec 08          |...   |   sub    esp, 0x08
@@ -221,6 +252,7 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
             (successors: 0x08048418)
 
 0x0804845b: ============================ Function (symbol) <main>
+Basic block: entry point, graph-1
 0x0804845b: 55                |U     |   push   ebp
 0x0804845c: 89 e5             |..    |   mov    ebp, esp
 0x0804845e: 83 ec 08          |...   |   sub    esp, 0x08
@@ -234,6 +266,7 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
 0x0804847a: e8 71 fe ff ff    |.q... |   call   0x080482f0<signal@plt>
             (successors: 0x080482f0 0x0804847f)
 
+Basic block: graph-1
 0x0804847f: b8 00 00 00 00    |..... |   mov    eax, 0x00000000
 0x08048484: c9                |.     |   leave  
 0x08048485: c3                |.     |   ret    
@@ -241,6 +274,7 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
             (successors:...)
 
 0x08048486: ============================ Function (padding) unknown name
+Basic block: padding, CFG head
 0x08048486: 90                |.     |   nop    
 0x08048487: 90                |.     |   nop    
 0x08048488: 90                |.     |   nop    
@@ -254,6 +288,7 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
             (successors: 0x08048490)
 
 0x08048490: ============================ Function (symbol) <__libc_csu_init>
+Basic block: entry point, graph-1
 0x08048490: 55                |U     |   push   ebp
 0x08048491: 89 e5             |..    |   mov    ebp, esp
 0x08048493: 57                |W     |   push   edi
@@ -266,6 +301,7 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
 0x080484a5: e8 1e fe ff ff    |..... |   call   0x080482c8<_init>
             (successors: 0x080482c8 0x080484aa)
 
+Basic block: graph-1
 0x080484aa: 8d 83 20 ff ff ff |.. ...|   lea    eax, [ebx + 0xffffff20<-0x000000e0>]
 0x080484b0: 8d 93 20 ff ff ff |.. ...|   lea    edx, [ebx + 0xffffff20<-0x000000e0>]
 0x080484b6: 29 d0             |).    |   sub    eax, edx
@@ -282,6 +318,7 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
             (successors:...)
 
 0x08048500: ============================ Function (symbol, discontiguous) <__libc_csu_fini>
+Basic block: entry point, graph-1
 0x08048500: 55                |U     |   push   ebp
 0x08048501: 89 e5             |..    |   mov    ebp, esp
 0x08048503: 57                |W     |   push   edi
@@ -302,6 +339,7 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
 0x0804854b: e8 40 00 00 00    |.@... |   call   0x08048590<_fini>
             (successors: 0x08048550 0x08048590)
 
+Basic block: graph-1
 0x08048550: 83 c4 0c          |...   |   add    esp, 0x0c
 0x08048553: 5b                |[     |   pop    ebx
 0x08048554: 5e                |^     |   pop    esi
@@ -312,6 +350,7 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
             (successors:...)
 
 0x08048558: ============================ Function (padding) unknown name
+Basic block: padding, CFG head
 0x08048558: 90                |.     |   nop    
 0x08048559: 90                |.     |   nop    
 0x0804855a: 90                |.     |   nop    
@@ -323,6 +362,7 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
             (successors: 0x08048560)
 
 0x08048560: ============================ Function (function call, symbol) <__do_global_ctors_aux>
+Basic block: entry point, graph-1
 0x08048560: 55                |U     |   push   ebp
 0x08048561: 89 e5             |..    |   mov    ebp, esp
 0x08048563: 53                |S     |   push   ebx
@@ -333,23 +373,27 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
 0x08048574: 74 16             |t.    |   je     0x0804858c
             (successors: 0x08048576 0x0804858c)
 
+Basic block: graph-1
 0x08048576: 8d 76 00          |.v.   |   lea    esi, [esi + 0x00]
 0x08048579: 8d bc 27 00 00 00 |..'...|
 0x0804857f: 00                |.     |   lea    edi, [edi + 0x00000000]
             (dominator 0x08048560)
             (successors: 0x08048580)
 
+Basic block: graph-1
 0x08048580: 83 eb 04          |...   |   sub    ebx, 0x04
 0x08048583: ff d0             |..    |   call   eax
             (dominator 0x08048576)
             (successors: 0x08048585...)
 
+Basic block: graph-1
 0x08048585: 8b 03             |..    |   mov    eax, DWORD PTR ds:[ebx]
 0x08048587: 83 f8 ff          |...   |   cmp    eax, 0xff<-0x01>
 0x0804858a: 75 f4             |u.    |   jne    0x08048580
             (dominator 0x08048580)
             (successors: 0x08048580 0x0804858c)
 
+Basic block: graph-1
 0x0804858c: 58                |X     |   pop    eax
 0x0804858d: 5b                |[     |   pop    ebx
 0x0804858e: 5d                |]     |   pop    ebp
@@ -358,6 +402,7 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
             (successors:...)
 
 0x08048590: ============================ Function (function call, symbol) <_fini>
+Basic block: entry point, graph-1
 0x08048590: 55                |U     |   push   ebp
 0x08048591: 89 e5             |..    |   mov    ebp, esp
 0x08048593: 53                |S     |   push   ebx
@@ -368,16 +413,13 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
 0x080485a1: e8 ea fd ff ff    |..... |   call   0x08048390<__do_global_dtors_aux>
             (successors: 0x08048390 0x080485a6)
 
+Basic block: graph-1
 0x080485a6: 58                |X     |   pop    eax
 0x080485a7: 5b                |[     |   pop    ebx
 0x080485a8: c9                |.     |   leave  
 0x080485a9: c3                |.     |   ret    
             (dominator 0x08048590)
             (successors:...)
-
-0x080485aa: ============================ Function (padding) unknown name
-0x080485aa: 00 00             |..    |   add    BYTE PTR ds:[eax], al
-            (successors: 0x080485ac)
 
 
 
