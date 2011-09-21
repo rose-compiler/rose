@@ -3979,11 +3979,34 @@ HEADER_BINARY_TARGET_LIST_START
 HEADER_BINARY_TARGET_LIST_END
 
 HEADER_BINARY_BLOCK_START
+	// Please update SgAsmBlock::reason_str() if you change this enum!
+	/** Reasons why a basic block might have been assigned to a function. */
+	enum Reason {
+		BLK_NONE	= 0x0000,	/**< No particular reason.  Mostly just for initialization. */
+		BLK_ENTRY_POINT	= 0x0001,	/**< Block is an entry point for the function. */
+		BLK_PADDING	= 0x0002,	/**< Block is used for padding. */
+		BLK_INTRAFUNC	= 0x0008,	/**< This block was created because it appears within the boundaries of an
+						 *   otherwise contiguous function. See also FUNC_INTRABLOCK. */
+		BLK_CFGHEAD	= 0x0010,	/**< Block serves as an explicit starting point for CFG analysis. */
+		BLK_USERDEF	= 0x0020,	/**< User says block belongs to the function. */
+		BLK_LEFTOVERS	= 0x0040,	/**< Block is being assigned to a FUNC_LEFTOVERS function because it could
+						 *   not be assigned to any other function. */
+
+		BLK_GRAPH1	= 0x0100,	/**< Block was added by the main CFG analysis. */
+		BLK_GRAPH2	= 0x0200,	/**< Block was added by a second pass of CFG analysis. */
+
+		BLK_DEFAULT	= BLK_NONE	//NO_STRINGIFY
+	};
+
         void append_statement( SgAsmStatement* statement );
         void remove_statement( SgAsmStatement* statement );
         void remove_children (  );
         rose_addr_t get_fallthrough_va(); /*implemented in Disassembler.C*/
 	SgAsmFunctionDeclaration *get_enclosing_function() const;
+
+	/** Returns a very short string describing the reason mask. */
+	std::string reason_str(bool pad) const;
+	static std::string reason_str(bool pad, unsigned reason);
 HEADER_BINARY_BLOCK_END
 
 

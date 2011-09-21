@@ -248,7 +248,7 @@ public:
      *
      *  \deprecated This function is deprecated.  Basic blocks are now represented by Partitioner::BasicBlock
      *  and the insn2block map. */
-    BasicBlockStarts detectBasicBlocks(const Disassembler::InstructionMap&) const;
+    BasicBlockStarts detectBasicBlocks(const Disassembler::InstructionMap&) const __attribute__((deprecated));
 
     /** Information about each function starting address.
      *
@@ -270,7 +270,7 @@ public:
      *
      *  \deprecated This function has been replaced by pre_cfg(), analyze_cfg(), and post_cfg() */
     FunctionStarts detectFunctions(SgAsmInterpretation*, const Disassembler::InstructionMap &insns,
-                                   BasicBlockStarts &bb_starts/*out*/) const;
+                                   BasicBlockStarts &bb_starts/*out*/) const __attribute__((deprecated));
 
 
     /*************************************************************************************************************************

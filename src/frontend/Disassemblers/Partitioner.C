@@ -10,6 +10,7 @@
 #include "AssemblerX86.h"
 #include "AsmUnparser_compat.h"
 #include "VirtualMachineSemantics.h"
+#include "stringify.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -24,11 +25,11 @@ std::ostream& operator<<(std::ostream &o, const Partitioner::Exception &e)
     return o;
 }
 
-/********************************************************************************************************************************
- * These SgAsmFunctionDeclaration methods have no other home, so they're here for now. Do not move them into
- * src/ROSETTA/Grammar/BinaryInstruction.code because then they can't be indexed by C-aware tools.
- *
- */
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// These SgAsmFunctionDeclaration methods have no other home, so they're here for now. Do not move them into
+// src/ROSETTA/Grammar/BinaryInstruction.code because then they can't be indexed by C-aware tools.
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static void
 add_to_reason_string(std::string &result, bool isset, bool do_pad, const std::string &abbr, const std::string &full) {
     if (isset) {
@@ -88,6 +89,48 @@ SgAsmFunctionDeclaration::reason_str(bool do_pad, unsigned r)
     add_to_reason_string(result, (r & FUNC_DISCONT),     do_pad, "D", "discontiguous");
     add_to_reason_string(result, (r & FUNC_LEFTOVERS),   do_pad, "L", "leftovers");
     add_to_reason_string(result, (r & FUNC_INTRABLOCK),  do_pad, "V", "intrablock");
+    return result;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// These SgAsmBlock methods have no other home, so they're here for now. Do not move them into
+// src/ROSETTA/Grammar/BinaryInstruction.code because then they can't be indexed by C-aware tools.
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Returns reason string for this block. */
+std::string
+SgAsmBlock::reason_str(bool do_pad) const
+{
+    return reason_str(do_pad, get_reason());
+}
+
+/** Class method that converts a reason bit vector to a human-friendly string. The second argument is the bit vector of
+ *  SgAsmBlock::Reason bits.  Some of the positions in the padded return value are used for more than one bit.  For instance,
+ *  the first character can be "L" for leftovers, "N" for padding, "E" for entry point, or "-" for none of the above. */
+std::string
+SgAsmBlock::reason_str(bool do_pad, unsigned r)
+{
+    std::string result;
+
+    if (r & BLK_LEFTOVERS) {
+        add_to_reason_string(result, true, do_pad, "L", "leftovers");
+    } else if (r & BLK_PADDING) {
+        add_to_reason_string(result, true, do_pad, "N", "padding");
+    } else if (r & BLK_INTRAFUNC) {
+        add_to_reason_string(result, true,    do_pad, "V", "intrafunc"); // because V is used for FUNC_INTRABLOCK
+    } else {
+        add_to_reason_string(result, (r & BLK_ENTRY_POINT),  do_pad, "E", "entry point");
+    }
+
+    if (r & BLK_CFGHEAD) {
+        add_to_reason_string(result, true, do_pad, "H", "CFG head");
+    } else if (r & BLK_GRAPH1) {
+        add_to_reason_string(result, true, do_pad, "1", "graph-1");
+    } else {
+        add_to_reason_string(result, (r & BLK_GRAPH2), do_pad, "2", "graph-2");
+    }
+
+    add_to_reason_string(result, (r & BLK_USERDEF),      do_pad, "U", "user defined");
     return result;
 }
 /*

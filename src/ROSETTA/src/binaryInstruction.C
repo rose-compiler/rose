@@ -531,6 +531,8 @@ Grammar::setUpBinaryInstructions ()
                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmBlock.setDataPrototype("rose_addr_t","id","= 0",
                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+     AsmBlock.setDataPrototype("unsigned", "reason", "= SgAsmBlock::BLK_NONE", // why this block exists
+                               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmBlock.setDataPrototype("SgAsmStatementPtrList","statementList","", //in order of execution
                                NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AsmBlock.setDataPrototype("SgAsmTargetPtrList", "successors", "",
