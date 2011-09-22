@@ -357,7 +357,11 @@ bool isStaticVariable(const SgInitializedName& n)
 
 AllocKind varAllocKind(const SgInitializedName& n)
 {
-  if (!isSgGlobal(n.get_scope()) && !isStaticVariable(n)) return akStack;
+  std::cout << "@@@ " << n.get_name() << std::endl;
+
+  const bool global = isSgGlobal(n.get_scope());
+
+  if (!global && !isStaticVariable(n)) return akStack;
 
   if (isUpcShared(n.get_type())) return akUpcSharedGlobal;
 

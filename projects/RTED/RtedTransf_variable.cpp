@@ -309,12 +309,15 @@ RtedTransformation::buildVariableCreateCallExpr(SgVarRefExp* var_ref, const stri
 {
         ROSE_ASSERT( var_ref );
 
+        SgInitializedName* initName = var_ref -> get_symbol() -> get_declaration();
+        std::cerr << "..." << initName->get_name() << std::endl;
+
         SgType*            varType = var_ref -> get_type();
 
         // variables are handled by buildArrayCreateCall
         ROSE_ASSERT ( "SgArrayType" != skip_ModifierType(varType)->class_name() );
 
-        SgInitializedName* initName = var_ref -> get_symbol() -> get_declaration();
+
 
         // build the function call : runtimeSystem-->createArray(params); ---------------------------
         SgExprListExp*     arg_list = buildExprListExp();

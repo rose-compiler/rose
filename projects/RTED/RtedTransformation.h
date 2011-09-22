@@ -546,7 +546,7 @@ public:
 private:
    /// Renames the original main function
    /// copied from projects/UpcTranslation/upc_translation.C
-   void renameMain(SgFunctionDeclaration * sg_func);
+   void renameMain(SgFunctionDefinition& sg_func);
    void changeReturnStmt(ReturnInfo rstmt);
    void insertExitBlock(SgStatement& stmt, size_t openblocks);
 

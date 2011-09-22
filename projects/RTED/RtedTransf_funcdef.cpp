@@ -38,6 +38,10 @@ RtedTransformation::insertVariableCreateInitForParams( SgFunctionDefinition* fnd
       if ( isSgReferenceType(initType) || isSgArrayType(skip_ModifierType(initType)) )
         continue;
 
+      SgFunctionDeclaration* fndecl = fndef->get_declaration();
+      std::cerr << ">>> " << fndecl->get_name() << std::endl;
+      ROSE_ASSERT(isSgFunctionDefinition(param->get_scope()));
+
       body->prepend_statement( buildVariableCreateCallStmt(param, true) );
     }
 }
