@@ -4005,6 +4005,7 @@ HEADER_BINARY_BLOCK_START
 	SgAsmFunctionDeclaration *get_enclosing_function() const;
 
 	/** Returns a very short string describing the reason mask. */
+	static std::string reason_key(const std::string &prefix="");
 	std::string reason_str(bool pad) const;
 	static std::string reason_str(bool pad, unsigned reason);
 HEADER_BINARY_BLOCK_END
@@ -4089,9 +4090,10 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
                 FUNC_DEFAULT     = 0x1fff       /**< Default value for Partitioner class. */
         };
 
-      /** Returns a very short string describing the reason mask. */
-          std::string reason_str(bool pad) const;
-          static std::string reason_str(bool pad, unsigned reason);
+        /** Returns a very short string describing the reason mask. */
+	static std::string reason_key(const std::string &prefix="");
+        std::string reason_str(bool pad) const;
+        static std::string reason_str(bool pad, unsigned reason);
 
       //! enum declaration as specified in proposed Sabre database schema
           enum function_kind_enum {

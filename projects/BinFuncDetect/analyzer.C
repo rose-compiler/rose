@@ -607,6 +607,7 @@ main(int argc, char *argv[])
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     std::cerr <<"Generating output...\n";
+    std::cout <<"Key for reasons why basic blocks are inside a particular function:\n" <<SgAsmBlock::reason_key("    ") <<"\n";
     MyUnparser<BinaryAnalysis::FunctionCall::Graph> unparser(cg, ida);
     for (Disassembler::InstructionMap::iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
         unparser.unparse(std::cout, ii->second);

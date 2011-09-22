@@ -44,6 +44,21 @@ add_to_reason_string(std::string &result, bool isset, bool do_pad, const std::st
     }
 }
 
+/** Returns a multi-line string describing the letters used for function reasons.  The letters are returned by the padding
+ *  version of reason_str(). */
+std::string
+SgAsmFunctionDeclaration::reason_key(const std::string &prefix)
+{
+    return (prefix + "E = entry address         H = CFG head             C = function call(*)\n" +
+            prefix + "X = exception frame       T = thunk                I = imported/dyn-linked\n" +
+            prefix + "S = function symbol       P = instruction pattern  G = CFG graph analysis\n" +
+            prefix + "U = user-def detection    N = NOP/zero padding     D = discontiguous blocks\n" +
+            prefix + "V = intra-function block  L = leftover blocks\n" +
+            prefix + "Note: \"c\" means this is the target of a call-like instruction or instruction\n" +
+            prefix + "      sequence but the call is not present in the global control flow graph, while\n" +
+            prefix + "      \"C\" means the call is in the CFG.\n");
+}
+
 /** Returns reason string for this function. */
 std::string
 SgAsmFunctionDeclaration::reason_str(bool do_pad) const
@@ -100,6 +115,16 @@ SgAsmFunctionDeclaration::reason_str(bool do_pad, unsigned r)
 // These SgAsmBlock methods have no other home, so they're here for now. Do not move them into
 // src/ROSETTA/Grammar/BinaryInstruction.code because then they can't be indexed by C-aware tools.
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Returns a multi-line string describing the letters used for basic block reasons.  The letters are returned by the padding
+ *  version of reason_str(). */
+std::string
+SgAsmBlock::reason_key(const std::string &prefix)
+{
+    return (prefix + "L = left over blocks   N = NOP/zero padding     V = intrafunction block\n" +
+            prefix + "H = CFG head           1 = first CFG traversal  2 = second CFG traversal\n" +
+            prefix + "U = user-def reason\n");
+}
 
 /** Returns reason string for this block. */
 std::string
