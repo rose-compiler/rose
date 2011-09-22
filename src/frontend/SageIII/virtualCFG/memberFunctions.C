@@ -3,7 +3,6 @@
 #include "sageInterface.h" // for isConstType
 #include "CallGraph.h"
 #include <vector>
-
 #include <boost/foreach.hpp>
 #define foreach BOOST_FOREACH
 using namespace std;
@@ -277,7 +276,7 @@ bool SgBasicBlock::cfgIsIndexInteresting(unsigned int idx) const {
 std::vector<CFGEdge> SgBasicBlock::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   if (idx == this->get_statements().size()) {
-    makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
+	makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
   } else if (idx < this->get_statements().size()) {
     makeEdge(CFGNode(this, idx), this->get_statements()[idx]->cfgForBeginning(), result);
   } else ROSE_ASSERT (!"Bad index for SgBasicBlock");
@@ -2888,7 +2887,7 @@ SgJavaInstanceOfOp::cfgOutEdges(unsigned int idx) {
                         makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
                         break;
                 default: 
-                        ROSE_ASSERT (!"Bad index for SgUnaryOp");
+                        ROSE_ASSERT (!"Bad index for SgJavaInstanceOfOp");
         }
         return result;
 }
@@ -2907,7 +2906,7 @@ SgJavaInstanceOfOp::cfgInEdges(unsigned int idx) {
                                 makeEdge(CFGNode(this, idx-1), CFGNode(this, idx), result);
                         break;
                 default: 
-                        ROSE_ASSERT (!"Bad index for SgUnaryOp");
+                        ROSE_ASSERT (!"Bad index for SgJavaInstanceOfOp");
         }
         return result;
 }
@@ -4894,4 +4893,3 @@ bool SgReturnStmt::isChildUsedAsLValue(const SgExpression* child) const
         ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgReturnStmt");
         return false;
 }
-
