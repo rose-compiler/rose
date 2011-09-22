@@ -620,6 +620,23 @@ public:
         virtual bool operator()(bool enabled, const Args &args);        /**< The actual callback function. */
     };
 
+    /** Callback to find thunks.  Creates functions whose only instruction is a JMP to the entry point of another function.
+     *  This should be called by scan_unassigned_insns() before the PostFunctionBlocks callback.
+     *
+     *  Note: This is highly experimental. [RPM 2011-09-22] */
+    struct FindThunks: public InsnRangeCallback {
+        virtual bool operator()(bool enabled, const Args &args);
+    };
+
+    /** Callback to add post-function instructions to the preceding function.  It should be called by the
+     *  scan_interfunc_insns() method after inter-function padding is found.
+     *
+     *  Note: This is highly experimental. [RPM 2011-09-22] */
+    struct PostFunctionBlocks: public InsnRangeCallback {
+        virtual bool operator()(bool enabled, const Args &args);
+    };
+
+
     /*************************************************************************************************************************
      *                                                 Low-level Functions
      *************************************************************************************************************************/
@@ -650,6 +667,7 @@ protected:
     virtual void update_analyses(BasicBlock*);                  /* Makes sure cached analysis results are current. */
     virtual rose_addr_t canonic_block(rose_addr_t);             /**< Follow alias links in basic blocks. */
     virtual bool is_function_call(BasicBlock*, rose_addr_t*);   /* True if basic block appears to call a function. */
+    virtual bool is_thunk(Function*);                           /* True if function is a thunk. */
 
     virtual void mark_call_insns();                             /**< Naive marking of CALL instruction targets as functions */
     virtual void mark_ipd_configuration();                      /**< Seeds partitioner with IPD configuration information */

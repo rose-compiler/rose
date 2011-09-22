@@ -1540,6 +1540,7 @@ Partitioner::IntraFunctionBlocks::operator()(bool enabled, const Args &args)
                 fprintf(p->debug, " B%08"PRIx64, p->address(bb));
             }
             p->append(func, bb, SgAsmBlock::BLK_INTRAFUNC, true/*head of CFG subgraph*/);
+            func->pending = true;
             ++nadded;
         }
         
@@ -1548,6 +1549,122 @@ Partitioner::IntraFunctionBlocks::operator()(bool enabled, const Args &args)
         va += insn->get_raw_bytes().size();
     }
 
+    return true;
+}
+
+/* Create functions for any basic blocks that consist of only a JMP to another function. */
+bool
+Partitioner::FindThunks::operator()(bool enabled, const Args &args)
+{
+    if (!enabled)
+        return false;
+
+    Partitioner *p = args.partitioner;
+    rose_addr_t va = args.insn_begin->get_address();
+    for (size_t i=0; i<args.ninsns; i++) {
+        SgAsmInstruction *insn = p->find_instruction(va);
+        assert(insn!=NULL);
+        BasicBlock *bb = p->find_bb_starting(va);
+        assert(bb!=NULL);
+        SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn);
+        
+        if (!bb->function && 1==bb->insns.size() &&
+            insn_x86 && (insn_x86->get_kind()==x86_jmp || insn_x86->get_kind()==x86_farjmp)) {
+            bool complete;
+            Disassembler::AddressSet succs = p->successors(bb, &complete);
+            if (complete && 1==succs.size()) {
+                rose_addr_t target_va = *succs.begin();
+                Functions::iterator fi = p->functions.find(target_va);
+                if (fi!=p->functions.end() && 0==(fi->second->reason & SgAsmFunctionDeclaration::FUNC_INTERPAD)) {
+                    Function *func = p->add_function(va, SgAsmFunctionDeclaration::FUNC_THUNK);
+                    p->append(func, bb, SgAsmBlock::BLK_ENTRY_POINT);
+                }
+            }
+        }
+
+        va += insn->get_raw_bytes().size();
+    }
+
+    return true;
+}
+
+/** Determines if function is a thunk.  A thunk is a small piece of code (a function) whose only purpose is to branch to
+ *  another function.   This predicate should not be confused with the SgAsmFunctionDeclaration::FUNC_THUNK reason bit; the
+ *  latter is only an indication of why the function was originally created.  A thunk (as defined by this predicate) might not
+ *  have the FUNC_THUNK reason bit set if this function was detected by other means (such as being a target of a function
+ *  call). Conversely, a function that has the FUNC_THUNK reason bit set might not qualify as being a thunk by the definition
+ *  implemented in this predicate (additional blocks or instructions might have been discovered that disqualify this function
+ *  even though it was originally thought to be a thunk). */
+bool
+Partitioner::is_thunk(Function *func)
+{
+    assert(func);
+    if (1!=func->blocks.size())
+        return false;
+
+    BasicBlock *bb = func->blocks.begin()->second;
+    if (1!=bb->insns.size())
+        return false;
+
+    SgAsmInstruction *insn = bb->insns.front();
+    SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn);
+    if (!insn_x86 || (insn_x86->get_kind()!=x86_jmp && insn_x86->get_kind()!=x86_farjmp))
+        return false;
+
+    bool complete;
+    Disassembler::AddressSet succs = successors(bb, &complete);
+    if (!complete || 1!=succs.size())
+        return false;
+
+    rose_addr_t target_va = *succs.begin();
+    Functions::iterator fi = functions.find(target_va);
+    Function *target_func = fi==functions.end() ? NULL : fi->second;
+    if (!target_func)
+        return false;
+
+    if (0!=(target_func->reason & SgAsmFunctionDeclaration::FUNC_LEFTOVERS) ||
+        0!=(fi->second->reason & SgAsmFunctionDeclaration::FUNC_INTERPAD))
+        return false;
+
+    return true;
+}
+
+bool
+Partitioner::PostFunctionBlocks::operator()(bool enabled, const Args &args)
+{
+    if (!enabled)
+        return false;
+    if (!args.insn_prev || args.insn_begin->get_address()!=args.insn_prev->get_address()+args.insn_prev->get_raw_bytes().size())
+        return true;
+    Partitioner *p = args.partitioner;
+    BasicBlock *bb = p->find_bb_containing(args.insn_prev->get_address());
+    if (!bb || !bb->function)
+        return true;
+    Function *func = bb->function;
+    if (0!=(func->reason & SgAsmFunctionDeclaration::FUNC_INTERPAD) ||
+        0!=(func->reason & SgAsmFunctionDeclaration::FUNC_THUNK))
+        return true; // don't append instructions to certain "functions"
+
+    size_t nadded = 0;
+    rose_addr_t va = args.insn_begin->get_address();
+    for (size_t i=0; i<args.ninsns; i++) {
+        bb = p->find_bb_containing(va);
+        assert(bb!=NULL); // because we know va is an instruction
+        if (!bb->function) {
+            if (p->debug) {
+                if (0==nadded)
+                    fprintf(p->debug, "Partitioner::PostFunctionBlocks: for F%08"PRIx64": added", func->entry_va);
+                fprintf(p->debug, " B%08"PRIx64, p->address(bb));
+            }
+            p->append(func, bb, SgAsmBlock::BLK_USERDEF, true/*head of CFG subgraph*/);
+            func->pending = true;
+            ++nadded;
+        }
+
+        SgAsmInstruction *insn = p->find_instruction(va);
+        assert(insn!=NULL);
+        va += insn->get_raw_bytes().size();
+    }
     return true;
 }
 
@@ -2083,15 +2200,22 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
         scan_interfunc_insns(cblist);
     }
 
+    /* Find thunks */
+    FindThunks find_thunks;
+    scan_unassigned_insns(&find_thunks);
+
+    /* Add unassigned instructions to the immediately preceding function. */
+    PostFunctionBlocks post_function_blocks;
+    scan_interfunc_insns(&post_function_blocks);
+
+    /* Give existing functions names from symbol tables. Don't create more functions. */
     if (interp) {
         const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
-        /* This doesn't detect new functions, it just gives names to ELF .plt trampolines */
         for (size_t i=0; i<headers.size(); i++) {
-            name_plt_entries(headers[i]);
+            name_plt_entries(headers[i]); // give names to ELF .plt trampolines
         }
     }
         
-
     /* Run one last analysis of the CFG because we may need to fix some things up after having added more blocks from the
      * post-cfg analyses we did above. If nothing happened above, then analyze_cfg() should be fast. */
     progress(debug, "Partitioner is rerunning CFG analysis after finding function padding.\n");
