@@ -1307,6 +1307,13 @@ C99_TESTCODES_REQUIRED_TO_PASS = \
 FAILING_C99_TESTS = \
      test2008_01.c
 
+
+
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS_SHORT = \
+test2001_02.C \
+test2001_03.C \
+test2004_116.C
+
 # Configure-time automake conditional
 if ROSE_USE_LONG_MAKE_CHECK_RULE
 
@@ -1374,7 +1381,9 @@ $(F77_FILES): $(TEST_TRANSLATOR)
 $(F03_FILES): $(TEST_TRANSLATOR)
 	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/../../../CompileTests/Fortran_tests/$(@:.F03-o=.f03) && touch $@
 
-EXTRA_DIST = $(TESTCODES)
+
+# DQ (9/22/2011): All of the test codes are from other directories, so we don't what thim in the EXTRA_DIST rule.
+# EXTRA_DIST = $(TESTCODES)
 
 
 check-cxx: $(CXX_FILES)
