@@ -576,11 +576,11 @@ public:
     struct InterFuncInsnPadding: public InsnRangeCallback {
         std::set<X86InstructionKind> x86_kinds;                         /**< Kinds of x86 instructions allowed. */
         std::vector<SgUnsignedCharList> byte_patterns;                  /**< Match instructions with specified byte patterns. */
-        bool must_follow_immediately;                                   /**< Must the padding immediately follow the function? */
-        bool must_span_all_space;                                       /**< Must padding span the whole inter-function space? */
+        bool begins_contiguously;                                       /**< Must immediately follow the end of a function? */
+        bool ends_contiguously;                                         /**< Must immediately precede the beginning of a func? */
 
         InterFuncInsnPadding()
-            : must_follow_immediately(true), must_span_all_space(true) {}
+            : begins_contiguously(true), ends_contiguously(true) {}
         virtual bool operator()(bool enabled, const Args &args);        /**< The actual callback function. */
     };
 

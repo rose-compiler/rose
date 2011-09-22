@@ -1429,17 +1429,19 @@ Partitioner::InterFuncInsnPadding::operator()(bool enabled, const Args &args)
     assert(args.insn_prev!=NULL);
     assert(args.insn_begin!=NULL);
 
-    if (must_follow_immediately &&
+    if (begins_contiguously &&
         args.insn_begin->get_address()!=args.insn_prev->get_address()+args.insn_prev->get_raw_bytes().size())
         return true;
 
-    /* All instructions in this contiguous sequence must be of the desired kind */
+    bool retval = true;
     std::vector<SgAsmInstruction*> padding;
     Partitioner *p = args.partitioner;
     rose_addr_t va = args.insn_begin->get_address();
-    for (size_t i=0; i<args.ninsns; i++) {
+    SgAsmInstruction *insn = p->find_instruction(va);
+    for (size_t i=0; i<args.ninsns && insn!=NULL; i++) {
+
+        /* Does this instruction match? */
         bool matches = false;
-        SgAsmInstruction *insn = p->find_instruction(va);
         assert(insn!=NULL); // callback is being invoked over instructions
         BasicBlock *bb = p->find_bb_containing(va, false);
         if (bb && bb->function)
@@ -1451,37 +1453,56 @@ Partitioner::InterFuncInsnPadding::operator()(bool enabled, const Args &args)
                 matches = true;
         }
 
-        for (size_t i=0; !matches && i<byte_patterns.size(); i++) {
-            if (byte_patterns[i]==insn->get_raw_bytes())
+        for (size_t j=0; !matches && j<byte_patterns.size(); j++) {
+            if (byte_patterns[j]==insn->get_raw_bytes())
                 matches = true;
         }
 
 
-        if (!matches)
-            break;
-        padding.push_back(insn);
+        /* Advance to next instruction, or null. We do this inside the loop so we only need one copy of the code that inserts
+         * the basic blocks for padding. */
         va += insn->get_raw_bytes().size();
+        if (matches)
+            padding.push_back(insn);
+        insn = i+1<args.ninsns ? p->find_instruction(va) : NULL;
+
+        /* Do we have padding to insert, and are we at the end of that padding? If not, then continue looping. */
+        if ((matches && insn) || padding.empty())
+            continue; // try to grab more padding instructions
+        if (begins_contiguously &&
+            padding.front()->get_address()!=args.insn_prev->get_address()+args.insn_prev->get_raw_bytes().size())
+            return true; // no point in even continuing the loop, since we're already past the first instruction now.
+        if (ends_contiguously) {
+            if (!matches) {
+                padding.clear();
+                continue;
+            } else if (args.insn_end) {
+                if (padding.back()->get_address()+padding.back()->get_raw_bytes().size() != args.insn_end->get_address()) {
+                    padding.clear();
+                    continue;
+                }
+            } else if (i+1<args.ninsns) {
+                padding.clear();
+                continue;
+            }
+        }
+
+        /* If we get here, then the instructions in "padding" need to be added to the function. All blocks are added to the
+         * function as CFG heads, which causes the block to remain with the function even though it might not be reachable by
+         * the CFG starting from the function's entry point.  This is especially true for padding like x86 "INT3", which has no
+         * known CFG successors. */
+        Function *func = p->add_function(padding.front()->get_address(), SgAsmFunctionDeclaration::FUNC_INTERPAD);
+        p->find_bb_starting(padding.front()->get_address()); // split first block if necessary
+        p->find_bb_starting(va); // split last block if necessary
+        for (size_t i=0; i<padding.size(); i++) {
+            BasicBlock *bb = p->find_bb_containing(padding[i]->get_address());
+            if (bb && !bb->function)
+                p->append(func, bb, SgAsmBlock::BLK_PADDING, true/*head of CFG subgraph*/);
+        }
+        retval = padding.size()!=args.ninsns; // allow other callbacks to run only if we didn't suck up all the instructions
+        padding.clear();
     }
-
-    if (padding.empty())
-        return true;
-    if (must_span_all_space && args.insn_end && va!=args.insn_end->get_address())
-        return true;
-
-    /* All OK, build function from the basic blocks of the padding instructions.  All blocks are added to the function as CFG
-     * heads, which causes the block to remain with the function even though it might not be reachable by the CFG starting from
-     * the function's entry point.  This is especially true for padding like x86 "INT3", which has no known CFG successors. */
-    Function *func = p->add_function(padding[0]->get_address(), SgAsmFunctionDeclaration::FUNC_INTERPAD);
-    p->find_bb_starting(padding.front()->get_address()); // split first block if necessary
-    p->find_bb_starting(va); // split last block if necessary
-    for (size_t i=0; i<padding.size(); i++) {
-        BasicBlock *bb = p->find_bb_containing(padding[i]->get_address());
-        if (bb && !bb->function)
-            p->append(func, bb, SgAsmBlock::BLK_PADDING, true/*head of CFG subgraph*/);
-    }
-
-    /* Other inter-function padding callbacks don't need to run for this contiguous instruction sequence. */
-    return false;
+    return retval;
 }
 
 /* Addes unassigned intra-function blocks to surrounding function. */
@@ -2049,12 +2070,16 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
         InterFuncInsnPadding pad1;
         pad1.x86_kinds.insert(x86_nop);
         pad1.x86_kinds.insert(x86_int3);
+        pad1.begins_contiguously = false;
+        pad1.ends_contiguously = false;
         cblist.append(&pad1);
 
         SgUnsignedCharList bytes2;
         bytes2.push_back(0x00);
         InterFuncInsnPadding pad2;
         pad2.byte_patterns.push_back(bytes2);
+        pad2.begins_contiguously = true;
+        pad2.ends_contiguously = true;
         cblist.append(&pad2);
 
         scan_interfunc_insns(cblist);
@@ -2074,7 +2099,8 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
     progress(debug, "Partitioner is rerunning CFG analysis after finding function padding.\n");
     analyze_cfg(SgAsmBlock::BLK_GRAPH2);
 
-    /* Add the BLK_CFGHEAD reason to all blocks that are also in the function's CFG head list. */
+    /* Add the BLK_CFGHEAD reason to all blocks that are also in the function's CFG head list.  We do this once here rather
+     * than searching the heads list in each pass of analyze_cfg(). */
     for (BasicBlocks::iterator bi=blocks.begin(); bi!=blocks.end(); ++bi) {
         BasicBlock *bb = bi->second;
         if (bb->function && 0==(bb->function->reason & SgAsmFunctionDeclaration::FUNC_LEFTOVERS) &&
