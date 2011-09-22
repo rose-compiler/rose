@@ -2864,25 +2864,35 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
           if (functionDeclaration != NULL)
              {
                SgStatement* currentStatement = TransformationSupport::getStatement(functionRefExp);
-               ROSE_ASSERT(currentStatement != NULL);
 
-               SgScopeStatement* currentScope = currentStatement->get_scope();
-               ROSE_ASSERT(currentScope != NULL);
-
-               int amountOfNameQualificationRequired = nameQualificationDepth(functionDeclaration,currentScope,currentStatement);
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-               printf ("SgFunctionCallExp's function name: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
-#endif
-            // DQ (6/9/2011): Support for test2011_78.C (we only qualify function call references where the function has been declared in 
-            // a scope where it could be expected to be defined (e.g. not using a forward declaration in a SgBasicBlock, since the function
-            // definition could not live in the SgBasicBlock.
-               bool skipNameQualification = skipNameQualificationIfNotProperlyDeclaredWhereDeclarationIsDefinable(functionDeclaration);
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-               printf ("Test of functionRefExp: skipNameQualification = %s \n",skipNameQualification ? "true" : "false");
-#endif
-               if (skipNameQualification == false)
+            // DQ (9/17/2011); Added escape for where the currentStatement == NULL (fails for STL code when the original expression trees are used to eliminate the constant folded values).
+            // ROSE_ASSERT(currentStatement != NULL);
+               if (currentStatement != NULL)
                   {
-                    setNameQualification(functionRefExp,functionDeclaration,amountOfNameQualificationRequired);
+                 // DQ (9/17/2011): this is the original case we want to restore later...
+                    SgScopeStatement* currentScope = currentStatement->get_scope();
+                 // ROSE_ASSERT(currentScope != NULL);
+               
+                    int amountOfNameQualificationRequired = nameQualificationDepth(functionDeclaration,currentScope,currentStatement);
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    printf ("SgFunctionCallExp's function name: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
+#endif
+                 // DQ (6/9/2011): Support for test2011_78.C (we only qualify function call references where the function has been declared in 
+                 // a scope where it could be expected to be defined (e.g. not using a forward declaration in a SgBasicBlock, since the function
+                 // definition could not live in the SgBasicBlock.
+                    bool skipNameQualification = skipNameQualificationIfNotProperlyDeclaredWhereDeclarationIsDefinable(functionDeclaration);
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    printf ("Test of functionRefExp: skipNameQualification = %s \n",skipNameQualification ? "true" : "false");
+#endif
+                    if (skipNameQualification == false)
+                       {
+                         setNameQualification(functionRefExp,functionDeclaration,amountOfNameQualificationRequired);
+                       }
+                  }
+                 else
+                  {
+                 // DQ (9/17/2011): Added this case, print a warning and fix thiat after debugging the constant folding value elimination..
+                    printf ("WARNING: SgFunctionRefExp name qualification not handled for the case of currentStatement == NULL \n");
                   }
              }
             else
@@ -3141,17 +3151,31 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
             // If the enum value is contained in an index expression then currentStatement will be NULL.
             // But then the current scope should be known explicitly.
                currentScope = explictlySpecifiedCurrentScope;
-               ROSE_ASSERT(currentScope != NULL);
+
+            // DQ (9/17/2011); Added escape for where the currentScope == NULL (fails for STL code when the original expression trees are used to eliminate the constant folded values).
+            // ROSE_ASSERT(currentScope != NULL);
 
             // Use the currentScope as the currentStatement
                currentStatement = currentScope;
              }
 
-          int amountOfNameQualificationRequired = nameQualificationDepth(enumDeclaration,currentScope,currentStatement);
+       // DQ (9/17/2011); Added escape for where the currentScope == NULL (fails for STL code when the original expression trees are used to eliminate the constant folded values).
+       // ROSE_ASSERT(currentScope != NULL);
+          if (currentScope != NULL)
+             {
+            // DQ (9/17/2011): this is the original case we waant to restore later...
+               ROSE_ASSERT(currentScope != NULL);
+               int amountOfNameQualificationRequired = nameQualificationDepth(enumDeclaration,currentScope,currentStatement);
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-          printf ("SgEnumVal: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
+               printf ("SgEnumVal: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
 #endif
-          setNameQualification(enumVal,enumDeclaration,amountOfNameQualificationRequired);
+               setNameQualification(enumVal,enumDeclaration,amountOfNameQualificationRequired);
+             }
+            else
+             {
+            // DQ (9/17/2011): Added this case, print a warning and fix thiat after debugging the constant folding value elimination..
+               printf ("WARNING: SgEnumVal name qualification not handled for the case of currentScope == NULL \n");
+             }
         }
 
   // DQ (6/2/2011): Handle the range of expressions that can reference types that might require name qualification...

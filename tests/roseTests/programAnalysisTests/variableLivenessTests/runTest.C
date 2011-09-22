@@ -967,6 +967,13 @@ int main( int argc, char * argv[] )
       // ------------------------------ TESTCASE 25 -----------------------------------------
       argvList[1]=srcdir+"tests/jacobi_seq.C";
       results.clear();  outputResults.clear();
+   // DQ (9/22/2011): Restoring to original test so that I can introduce changes to the original expression tree handling 
+   // more gradually as part of debugging a few failing test codes (like this one).
+   // DQ (9/19/2011): Changed to reflect work to eliminate the original expression tree and make the AST more consistant.
+   // Not sure if this should be changed since I tried to restore the original work before the change to fixup constant
+   // folding and yet I still get different results now.
+   // testOneFunction("::jacobi", argvList, debug, 264, results,outputResults);
+   // testOneFunction("::jacobi", argvList, debug, 274, results,outputResults);
       testOneFunction("::jacobi", argvList, debug, 264, results,outputResults);
       testOneFunction("::main", argvList, debug, 24, results,outputResults);
     }

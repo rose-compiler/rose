@@ -1588,7 +1588,12 @@ Grammar::setUpSupport ()
 
   // negara1 (08/17/2011): Added to permit specifying an optional root folder for header files unparsing.
      Project.setDataPrototype("std::string", "unparseHeaderFilesRootFolder", "= \"\"",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (9/18/2011): Added support for specification of frontend constant folding (only supported in C/C++ using EDG).
+     Project.setDataPrototype("bool", "frontendConstantFolding", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);          
+
      
      Attribute.setDataPrototype    ( "std::string"  , "name", "= \"\"",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);

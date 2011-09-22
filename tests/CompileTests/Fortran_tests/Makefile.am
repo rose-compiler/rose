@@ -1140,6 +1140,10 @@ bug3:
 bug4:
 	../../testTranslator $(ROSE_FLAGS) -rose:output_parser_actions -I$(srcdir) -c $(srcdir)/verify.f
 
+# DQ (9/19/2011): Added Cray pointer test using test code from Imperial College London.
+crayPointerTest: testTranslator test2011_imperial_crayPointers.f90
+	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f90 -rose:cray_pointer_support -rose:skip_syntax_check -rose:skipfinalCompileStep -c $(srcdir)/test2011_imperial_crayPointers.f90
+	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f90 -rose:skip_syntax_check -rose:skipfinalCompileStep -c $(srcdir)/test2011_imperial_crayPointers.f90
 
 # DQ (4/9/2011): Let's at least run these in parallel (more important for the Insure++ tests).
 extra_tests: $(PASSING_MODULE_TEST_Objects) testCPP_Defines testMPItypes testMultipleFortranFiles

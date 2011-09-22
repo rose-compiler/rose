@@ -87,7 +87,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      mergeTest_86.C \
      mergeTest_87.C \
      mergeTest_88.C \
-     mergeTest_90.C \
      mergeTest_91.C \
      mergeTest_92.C \
      mergeTest_94.C \
@@ -112,7 +111,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      mergeTest_119.C \
      mergeTest_120.C \
      mergeTest_121.C \
-     mergeTest_124.C \
      mergeTest_128.C \
      mergeTest_129.C \
      mergeTest_130.C \
@@ -120,6 +118,11 @@ TESTCODES_REQUIRED_TO_PASS = \
      mergeTest_133.C \
      mergeTest_134.C \
      mergeTest_135.C 
+
+# DQ (9/18/2011): Failing tests after new contant folding default to subsitute original expression tress for constant values.
+#    mergeTest_90.C
+#    mergeTest_124.C 
+TESTCODES_REQUIRED_TO_PASS += mergeTest_90.C mergeTest_124.C
 
 
 # This fails for GNU g++ version 4.3
