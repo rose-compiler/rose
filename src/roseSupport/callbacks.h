@@ -85,6 +85,11 @@ namespace ROSE_Callbacks {
             RTS_mutex_init(&mutex, RTS_LAYER_ROSE_CALLBACKS_LIST_OBJ, NULL);
         }
 
+        explicit List(CallbackType *callback) {
+            RTS_mutex_init(&mutex, RTS_LAYER_ROSE_CALLBACKS_LIST_OBJ, NULL);
+            append(callback);
+        }
+
         /** Returns the number of callbacks in the list.
          *
          *  Thread safety: This method is thread safe. */
