@@ -421,6 +421,41 @@ C99_TESTCODES_REQUIRED_TO_PASS = \
      test2008_01.c
 
 JAVA_TESTCODES_REQUIRED_TO_PASS = \
+    test2011_01.java \
+     test2011_02.java \
+     test2011_03.java \
+     test2011_06.java \
+     test2011_07.java \
+     test2011_08.java \
+     test2011_09.java \
+     test2011_10.java \
+     test2011_11.java \
+     test2011_12.java \
+     test2011_13.java \
+     test2011_14.java \
+     test2011_15.java \
+     test2011_16.java \
+     test2011_17.java \
+     test2011_18.java \
+     test2011_19.java \
+     test2011_20.java \
+     test2011_26.java \
+     test2011_29.java \
+     test2011_30.java \
+     test2011_31.java \
+     test2011_32.java \
+     test2011_33.java \
+     test2011_34.java \
+     test2011_35.java \
+     test2011_36.java \
+     test2011_37.java \
+     test2011_38.java \
+     test2011_39.java \
+     test2011_40.java \
+     test2011_47.java \
+     test2011_50.java \
+     pgc_test2011_03.java \
+     pgc_test2011_08.java \
      cave3_IntLit0.java \
      cave3_LoadDep0.java \
      cave3_block0.java \
@@ -433,6 +468,8 @@ JAVA_TESTCODES_REQUIRED_TO_PASS = \
      cave3_while0.java \
      cave3_while2.java
 
+# Not yet fully supported in java frontend:
+#     cave3_synchronized0.java
 #     cave3_DoubleLit0.java
 #     cave3_call0.java
 #     cave3_call1.java
@@ -444,9 +481,15 @@ JAVA_TESTCODES_REQUIRED_TO_PASS = \
 #     cave3_for4.java
 #     cave3_for5.java
 #     cave3_for6.java
+#     cave3_instanceof0.java \
 #     cave3_mthParam0.java
 #     cave3_while1.java
-
+#     cave3_instanceof0.java \
+#
+# Buggy cfg implementation
+#     test2011_41.java \
+#     pgc_2011_30.java \
+#
 
 # Configure-time automake conditional
 if ROSE_USE_LONG_MAKE_CHECK_RULE
