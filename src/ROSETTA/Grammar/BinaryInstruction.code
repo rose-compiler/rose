@@ -4079,6 +4079,13 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
 						 *   other blocks, including inter-function edges.  Also, blocks added by this
 						 *   method might not represent true instructions, but rather data that was
 						 *   disassembled as instructions. */
+		FUNC_THUNK	 = 0x4000,	/**< Function is a thunk.  Thunks are small pieces of code whose only purpose
+						 *   is to branch to another function.  Depending on how the disassembler and
+						 *   partitioner are run, a thunk can exist either as its own function or the
+						 *   thunk's instructions will be subsumed by the called function.  The
+						 *   partitioner only sets this flag for functions that are created due to
+						 *   the thunk recognition pass; other functions that don't have this bit set
+						 *   might also be thunks. */
                 FUNC_DEFAULT     = 0x1fff       /**< Default value for Partitioner class. */
         };
 

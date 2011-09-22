@@ -79,7 +79,11 @@ SgAsmFunctionDeclaration::reason_str(bool do_pad, unsigned r)
         add_to_reason_string(result, (r & FUNC_CALL_INSN), do_pad, "c", "call instruction");
     }
 
-    add_to_reason_string(result, (r & FUNC_EH_FRAME),    do_pad, "X", "exception frame");
+    if (r & FUNC_EH_FRAME) {
+        add_to_reason_string(result, true,               do_pad, "X", "exception frame");
+    } else {
+        add_to_reason_string(result, (r & FUNC_THUNK),   do_pad, "T", "thunk");
+    }
     add_to_reason_string(result, (r & FUNC_IMPORT),      do_pad, "I", "import");
     add_to_reason_string(result, (r & FUNC_SYMBOL),      do_pad, "S", "symbol");
     add_to_reason_string(result, (r & FUNC_PATTERN),     do_pad, "P", "pattern");
