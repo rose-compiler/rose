@@ -85,8 +85,15 @@ TESTCODE_CURRENTLY_FAILING = \
      cave3_for4.java \
      cave3_for5.java \
      cave3_for6.java \
-     cave3_while1.java
-	 
+     cave3_import0.java \
+     cave3_instanceof0.java \
+     cave3_while1.java \
+	 cave3_import0.java \
+	 cave3_import1.java \
+	 cave3_import2.java \
+	 cave3_import3.java \
+     cave3_synchronized0.java
+
 # These tests pass the compilation using ROSE, all AST tests, and unparsing to generate 
 # Java code, but fails the final compilation step of the generated Java code.
 TESTCODES_REQUIRED_TO_PASS_FAILING_BACKEND_COMPILE = \
