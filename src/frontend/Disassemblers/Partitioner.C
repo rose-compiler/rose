@@ -2057,10 +2057,8 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
 {
     /* Add unassigned intra-function blocks to the surrounding function. */
     if (func_heuristics & SgAsmFunctionDeclaration::FUNC_INTRABLOCK) {
-        InsnRangeCallbacks cblist;
-        IntraFunctionBlocks cb;
-        cblist.append(&cb);
-        scan_intrafunc_insns(cblist);
+        IntraFunctionBlocks ifb;
+        scan_intrafunc_insns(&ifb);
     }
 
     /* Detect inter-function padding */

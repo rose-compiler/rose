@@ -491,9 +491,17 @@ public:
      *  loop.
      *
      *  The callback arguments are built from the supplied values of @p insn_prev and @p insn_end.  The @p insn_begin member is
-     *  the instruction with the lowest address in this iteration and @p ninsns is the number of contiguous instructions. */
+     *  the instruction with the lowest address in this iteration and @p ninsns is the number of contiguous instructions.
+     *
+     *  @{ */
     virtual void scan_contiguous_insns(Disassembler::InstructionMap insns, InsnRangeCallbacks &cblist,
                                        SgAsmInstruction *insn_prev, SgAsmInstruction *insn_end);
+    void scan_contiguous_insns(const Disassembler::InstructionMap &insns, InsnRangeCallback *callback,
+                               SgAsmInstruction *insn_prev, SgAsmInstruction *insn_end) {
+        InsnRangeCallbacks cblist(callback);
+        scan_contiguous_insns(insns, cblist, insn_prev, insn_end);
+    }
+    /** @} */
 
     /** Scans ranges of unassigned instructions.  Scans through the list of existing instructions that are not assigned to any
      *  function and invokes all of the specified callbacks on each range of such instructions.  The ranges of unassigned
@@ -508,8 +516,15 @@ public:
      *  All callbacks should honor their "enabled" argument and do nothing if it is clear.  This feature is used by some of the
      *  other instruction scanning methods to filter out certain ranges of instructions.  For instance, the
      *  scan_intrafunc_insns() will set "enabled" to true only for ranges of unassigned instructions whose closest surrounding
-     *  assigned instructions both belong to the same function. */
+     *  assigned instructions both belong to the same function.
+     *
+     *  @{ */
     virtual void scan_unassigned_insns(InsnRangeCallbacks &callbacks);
+    void scan_unassigned_insns(InsnRangeCallback *callback) {
+        InsnRangeCallbacks cblist(callback);
+        scan_unassigned_insns(cblist);
+    }
+    /** @} */
 
     /** Scans the unassigned instructions within a function.  The specified callbacks are invoked for each range of unassigned
      *  instructions whose closest surrounding assigned instructions both belong to the same function.  This can be used, for
@@ -517,8 +532,15 @@ public:
      *  instructions.
      *
      *  This method operates by making a temporary copy of @p callbacks, prepending a filtering callback, and then invoking
-     *  scan_unassigned_insns().  Therefore, the callbacks supplied by the user should all honor their "enabled" argument. */
+     *  scan_unassigned_insns().  Therefore, the callbacks supplied by the user should all honor their "enabled" argument.
+     *
+     *  @{ */
     virtual void scan_intrafunc_insns(InsnRangeCallbacks &callbacks);
+    void scan_intrafunc_insns(InsnRangeCallback *callback) {
+        InsnRangeCallbacks cblist(callback);
+        scan_intrafunc_insns(cblist);
+    }
+    /** @} */
     
     /** Scans the instructions between functions.  The specified callbacks are invoked for each set of instructions (not
      *  necessarily contiguous in memory) that fall "between" two functions.  Instruction I(x) at address x is between two
@@ -532,8 +554,14 @@ public:
      *  instructions are considered to be between functions if there are no functions.
      *
      *  Only instructions that have already been disassembled are considered.
-     */
+     *
+     *  @{ */
     virtual void scan_interfunc_insns(InsnRangeCallbacks &callbacks);
+    void scan_interfunc_insns(InsnRangeCallback *callback) {
+        InsnRangeCallbacks cblist(callback);
+        scan_interfunc_insns(cblist);
+    }
+    /** @} */
 
     /** Callback to create inter-function instruction padding.  This callback can be passed to the scan_interfunc_insns()
      *  method's callback list.  Whenever it detects a contiguous sequence of one or more of the specified instructions (in any
