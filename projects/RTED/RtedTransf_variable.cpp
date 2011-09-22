@@ -327,10 +327,14 @@ RtedTransformation::buildVariableCreateCallExpr(SgVarRefExp* var_ref, const stri
 
         appendAddressAndSize(arg_list, Whole, scope, var_ref, NULL);
 
-        const bool     var_init = initb && !isFileIOVariable(varType);
         AllocKind      allocKind = varAllocKind(*initName);
         SgExpression*  callName = buildStringVal(debug_name);
         SgExpression*  callNameExp = buildStringVal(debug_name);
+
+        // \todo check C++ rules for global init
+        initb = initb || ((allocKind & akGlobal) != 0);
+
+        const bool     var_init = initb && !isFileIOVariable(varType);
 
         appendBool      (arg_list, var_init);
         appendAllocKind (arg_list, allocKind);
