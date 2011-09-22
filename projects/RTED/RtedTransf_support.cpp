@@ -1587,4 +1587,125 @@ RtedTransformation::getGlobalVariableForClass(SgGlobal* gl,
 
 }
 
+
+
+////
+// \todo move into SageInterface or SageBuilder
+////
+
+  SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl)
+  {
+    ROSE_ASSERT(vardecl.get_variables().size());
+
+    return *vardecl.get_variables().front();
+  }
+
+  /// \brief  clones a function parameter list @params and uses the function
+  ///         definition @fundef as new scope
+  /// \return a copy of a function parameter list
+  /// \param  params the original list
+  /// \param  fundef the function definition with which the new parameter list
+  ///         will be associated (indirectly through the function declaration).
+  ///         fundef can be NULL.
+  static
+  SgFunctionParameterList&
+  cloneParameterList(const SgFunctionParameterList& params, SgFunctionDefinition* fundef = NULL)
+  {
+    namespace SB = SageBuilder;
+
+    SgFunctionParameterList&          copy = *SB::buildFunctionParameterList();
+    const SgInitializedNamePtrList&   orig_decls = params.get_args();
+
+    std::transform( orig_decls.begin(), orig_decls.end(), sg::sage_inserter(copy), sg::InitNameCloner(copy, fundef) );
+
+    return copy;
+  }
+
+  /// \brief swaps the "defining elements" of two function declarations
+  static
+  void swapDefiningElements(SgFunctionDeclaration& ll, SgFunctionDeclaration& rr)
+  {
+    namespace SB = SageBuilder;
+
+    // swap definitions
+    sg::swap_child(ll, rr, &SgFunctionDeclaration::get_definition,    &SgFunctionDeclaration::set_definition);
+    sg::swap_child(ll, rr, &SgFunctionDeclaration::get_parameterList, &SgFunctionDeclaration::set_parameterList);
+
+    // \todo do we need to swap also exception spec, decorator_list, etc. ?
+  }
+
+  std::pair<SgStatement*, SgInitializedName*>
+  wrapFunction(SgFunctionDeclaration& definingDeclaration, SgName newName)
+  {
+    namespace SB = SageBuilder;
+    namespace SI = SageInterface;
+
+    // handles freestanding functions only
+    ROSE_ASSERT(typeid(SgFunctionDeclaration) == typeid(definingDeclaration));
+    ROSE_ASSERT(definingDeclaration.get_definingDeclaration() == &definingDeclaration);
+
+    // clone function parameter list
+    SgFunctionParameterList&  param_list = cloneParameterList(*definingDeclaration.get_parameterList());
+
+    // create new function definition/declaration in the same scope
+    SgScopeStatement*         containing_scope = definingDeclaration.get_scope();
+    SgType*                   result_type = definingDeclaration.get_type()->get_return_type();
+    SgExprListExp*            decorators = SI::deepCopy( definingDeclaration.get_decoratorList() );
+    SgFunctionDeclaration*    wrapperfn = SB::buildDefiningFunctionDeclaration(newName, result_type, &param_list, containing_scope, decorators);
+    SgFunctionDefinition*     wrapperdef = wrapperfn->get_definition();
+    ROSE_ASSERT(wrapperdef);
+
+    // copy the exception specification
+    wrapperfn->set_exceptionSpecification(definingDeclaration.get_exceptionSpecification());
+
+    // swap the original's function definition w/ the clone's function def
+    //  and the original's func parameter list w/ the clone's parameters
+    swapDefiningElements(definingDeclaration, *wrapperfn);
+
+    // call original function from within the defining decl's body
+    SgBasicBlock*             body = wrapperdef->get_body();
+    SgExprListExp*            args = SB::buildExprListExp();
+    SgInitializedNamePtrList& param_decls = param_list.get_args();
+
+    std::transform( param_decls.begin(), param_decls.end(), sg::sage_inserter(*args), sg::VarRefBuilder(*wrapperdef) );
+
+    SgFunctionCallExp*        callWrapped = SB::buildFunctionCallExp( newName, result_type, args, body );
+    SgInitializedName*        resultName = NULL;
+    SgStatement*              callStatement = NULL;
+
+    // \todo skip legal qualifiers that could be on top of void
+    if (!isSgTypeVoid(result_type))
+    {
+      // add call to original function and assign result to variable
+      SgVariableDeclaration*  res = SB::buildVariableDeclaration( "res", result_type, SB::buildAssignInitializer(callWrapped), body );
+      SgVarRefExp*            resref = SB::buildVarRefExp( res );
+
+      SI::appendStatement(res, body);
+
+      // add return statement, returning result
+      resultName    = &getFirstVariable(*res);
+      callStatement = res;
+
+      SI::appendStatement(SB::buildReturnStmt(resref), body);
+    }
+    else
+    {
+      // add function call statement to original function
+      callStatement = SB::buildExprStatement(callWrapped);
+      SI::appendStatement(callStatement, body);
+    }
+
+    ROSE_ASSERT(callStatement);
+
+    // create non defining declaration
+    SgExprListExp*            decorator_proto = SI::deepCopy( decorators );
+    SgFunctionDeclaration*    wrapperfn_proto = SB::buildNondefiningFunctionDeclaration(wrapperfn, containing_scope, decorator_proto);
+
+    // add the new functions at the proper location of the surrounding scope
+    SI::insertStatementBefore(&definingDeclaration, wrapperfn_proto);
+    SI::insertStatementAfter (&definingDeclaration, wrapperfn);
+
+    return std::make_pair(callStatement, resultName);
+  }
+
 #endif
