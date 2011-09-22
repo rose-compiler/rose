@@ -11,6 +11,7 @@
 #include <boost/algorithm/string.hpp>
 
 #include "sageGeneric.hpp"
+#include "sageFunctors.h"
 
 #include "RtedSymbols.h"
 #include "DataStructures.h"
