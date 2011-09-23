@@ -21,7 +21,7 @@ using this memory map for disassembly:
     va 0x080496a4 + 0x00000030 = 0x080496d4 rw-- at base aae  + 0x000006a4 i686-test1.O0.bin(.data+.got+.got.plt)
     va 0x080496d4 + 0x0000092c = 0x0804a000 rw-p at anon null + 0x00000000 i686-test1.O0.bin(.bss+LOAD#3)
 disassembled 256 instructions and 1 failure (use --show-bad to see errors)
-0x080482c8: ============================ Function (function call, symbol) <_init>
+0x080482c8: ============================ Function (function call, symbol, discontiguous) <_init>
 Basic block: entry point, graph-1
 0x080482c8: 55                |U     |   push   ebp
 0x080482c9: 89 e5             |..    |   mov    ebp, esp
@@ -45,30 +45,96 @@ Basic block: graph-1
             (dominator 0x080482d8)
             (successors:...)
 
+Basic block: CFG head, user defined
+0x080482df: 00 ff             |..    |   add    bh, bh
+            (successors: 0x080482e1)
+
+Basic block: CFG head, user defined
+0x080482e1: 35 ac 96 04 08    |5.... |   xor    eax, 0x080496ac
+            (successors: 0x080482e6)
+
+Basic block: CFG head, user defined
+0x080482ec: 00 00             |..    |   add    BYTE PTR ds:[eax], al
+            (successors: 0x080482ee)
+
+Basic block: CFG head, user defined
+0x080482ee: 00 00             |..    |   add    BYTE PTR ds:[eax], al
+            (successors: 0x080482f0)
+
+0x080482e0: ============================ Function (graph) unknown name
+Basic block: entry point, graph-2
+0x080482e0: ff 35 ac 96 04 08 |.5....|   push   DWORD PTR ds:[0x080496ac]
+            (successors: 0x080482e6)
+
+0x080482e6: ============================ Function (graph) unknown name
+Basic block: entry point, graph-2, user defined
+0x080482e6: ff 25 b0 96 04 08 |.%....|   jmp    DWORD PTR ds:[0x080496b0]
+            (successors:...)
+
 0x080482f0: ============================ Function (function call, import) <signal@plt>
 Basic block: entry point, graph-1
 0x080482f0: ff 25 b4 96 04 08 |.%....|   jmp    DWORD PTR ds:[0x080496b4]
             (successors:...)
+
+Basic block: CFG head, user defined
+0x080482f6: 68 00 00 00 00    |h.... |   push   0x00000000
+            (successors: 0x080482fb)
+
+Basic block: CFG head, user defined
+0x080482fb: e9 e0 ff ff ff    |..... |   jmp    0x080482e0
+            (successors: 0x080482e0)
 
 0x08048300: ============================ Function (function call, import) <puts@plt>
 Basic block: entry point, graph-1
 0x08048300: ff 25 b8 96 04 08 |.%....|   jmp    DWORD PTR ds:[0x080496b8]
             (successors:...)
 
+Basic block: CFG head, user defined
+0x08048306: 68 08 00 00 00    |h.... |   push   0x00000008
+            (successors: 0x0804830b)
+
+Basic block: CFG head, user defined
+0x0804830b: e9 d0 ff ff ff    |..... |   jmp    0x080482e0
+            (successors: 0x080482e0)
+
 0x08048310: ============================ Function (function call, import) <__libc_start_main@plt>
 Basic block: entry point, graph-1
 0x08048310: ff 25 bc 96 04 08 |.%....|   jmp    DWORD PTR ds:[0x080496bc]
             (successors:...)
+
+Basic block: CFG head, user defined
+0x08048316: 68 10 00 00 00    |h.... |   push   0x00000010
+            (successors: 0x0804831b)
+
+Basic block: CFG head, user defined
+0x0804831b: e9 c0 ff ff ff    |..... |   jmp    0x080482e0
+            (successors: 0x080482e0)
 
 0x08048320: ============================ Function (function call, import) <_exit@plt>
 Basic block: entry point, graph-1
 0x08048320: ff 25 c0 96 04 08 |.%....|   jmp    DWORD PTR ds:[0x080496c0]
             (successors:...)
 
+Basic block: CFG head, user defined
+0x08048326: 68 18 00 00 00    |h.... |   push   0x00000018
+            (successors: 0x0804832b)
+
+Basic block: CFG head, user defined
+0x0804832b: e9 b0 ff ff ff    |..... |   jmp    0x080482e0
+            (successors: 0x080482e0)
+
 0x08048330: ============================ Function (function call, import) <__gmon_start__@plt>
 Basic block: entry point, graph-1
 0x08048330: ff 25 c4 96 04 08 |.%....|   jmp    DWORD PTR ds:[0x080496c4]
             (successors:...)
+
+Basic block: CFG head, user defined
+0x08048336: 68 20 00 00 00    |h ... |   push   0x00000020
+            (successors: 0x0804833b)
+
+Basic block: CFG head, user defined
+0x0804833b: e9 a0 ff ff ff    |..... |   jmp    0x080482e0
+            (successors: 0x080482e0)
 
 0x08048340: ============================ Function (entry point, symbol) <_start>
 Basic block: entry point, graph-1
@@ -187,6 +253,10 @@ Basic block: graph-1
             (dominator 0x08048390)
             (successors:...)
 
+Basic block: CFG head, user defined
+0x080483ce: 89 f6             |..    |   mov    esi, esi
+            (successors: 0x080483d0)
+
 0x080483d0: ============================ Function (function call, symbol, discontiguous) <frame_dummy>
 Basic block: entry point, graph-1
 0x080483d0: 55                |U     |   push   ebp
@@ -250,6 +320,32 @@ Basic block: entry point, graph-1
 0x08048435: ff 05 d8 96 04 08 |......|   inc    DWORD PTR ds:[0x080496d8]
 0x0804843b: e8 d8 ff ff ff    |..... |   call   0x08048418<foo>
             (successors: 0x08048418)
+
+Basic block: CFG head, user defined
+0x08048440: e8 d3 ff ff ff    |..... |   call   0x08048418<foo>
+            (successors: 0x08048418)
+
+Basic block: CFG head, user defined
+0x08048445: c7 44 24 04 2f 84 |.D$./.|
+0x0804844b: 04 08             |..    |   mov    DWORD PTR ss:[esp + 0x04], 0x0804842f<handler>
+            (successors: 0x0804844d)
+
+Basic block: CFG head, user defined
+0x0804844d: c7 04 24 0a 00 00 |..$...|
+0x08048453: 00                |.     |   mov    DWORD PTR ss:[esp], 0x0000000a
+            (successors: 0x08048454)
+
+Basic block: CFG head, user defined
+0x08048454: e8 97 fe ff ff    |..... |   call   0x080482f0<signal@plt>
+            (successors: 0x080482f0 0x08048459)
+
+Basic block: CFG head, user defined
+0x08048459: c9                |.     |   leave  
+            (successors: 0x0804845a)
+
+Basic block: CFG head, user defined
+0x0804845a: c3                |.     |   ret    
+            (successors:...)
 
 0x0804845b: ============================ Function (symbol) <main>
 Basic block: entry point, graph-1
@@ -315,6 +411,88 @@ Basic block: graph-1
 0x080484c6: 5d                |]     |   pop    ebp
 0x080484c7: c3                |.     |   ret    
             (dominator 0x08048490)
+            (successors:...)
+
+0x080484c8: ============================ Function (padding) unknown name
+Basic block: padding, CFG head
+0x080484c8: 90                |.     |   nop    
+0x080484c9: 8d b4 26 00 00 00 |..&...|
+0x080484cf: 00                |.     |   lea    esi, [esi + 0x00000000]
+            (successors: 0x080484d0)
+
+Basic block: graph-2
+0x080484d0: 31 ff             |1.    |   xor    edi, edi
+            (dominator 0x080484c8)
+            (successors: 0x080484d2)
+
+Basic block: graph-2
+0x080484d2: 89 d6             |..    |   mov    esi, edx
+            (dominator 0x080484d0)
+            (successors: 0x080484d4)
+
+Basic block: graph-2
+0x080484d4: 8d b6 00 00 00 00 |......|   lea    esi, [esi + 0x00000000]
+            (dominator 0x080484d2)
+            (successors: 0x080484da)
+
+Basic block: graph-2
+0x080484da: 8d bf 00 00 00 00 |......|   lea    edi, [edi + 0x00000000]
+            (dominator 0x080484d4)
+            (successors: 0x080484e0)
+
+Basic block: graph-2
+0x080484e0: ff 16             |..    |   call   DWORD PTR ds:[esi]
+            (dominator 0x080484da)
+            (successors: 0x080484e2...)
+
+Basic block: graph-2
+0x080484e2: 47                |G     |   inc    edi
+            (dominator 0x080484e0)
+            (successors: 0x080484e3)
+
+Basic block: graph-2
+0x080484e3: 83 c6 04          |...   |   add    esi, 0x04
+            (dominator 0x080484e2)
+            (successors: 0x080484e6)
+
+Basic block: graph-2
+0x080484e6: 3b 7d f0          |;}.   |   cmp    edi, DWORD PTR ss:[ebp + 0xf0<-0x10>]
+            (dominator 0x080484e3)
+            (successors: 0x080484e9)
+
+Basic block: graph-2
+0x080484e9: 72 f5             |r.    |   jb     0x080484e0
+            (dominator 0x080484e6)
+            (successors: 0x080484e0 0x080484eb)
+
+Basic block: graph-2
+0x080484eb: 83 c4 0c          |...   |   add    esp, 0x0c
+            (dominator 0x080484e9)
+            (successors: 0x080484ee)
+
+Basic block: graph-2
+0x080484ee: 5b                |[     |   pop    ebx
+            (dominator 0x080484eb)
+            (successors: 0x080484ef)
+
+Basic block: graph-2
+0x080484ef: 5e                |^     |   pop    esi
+            (dominator 0x080484ee)
+            (successors: 0x080484f0)
+
+Basic block: graph-2
+0x080484f0: 5f                |_     |   pop    edi
+            (dominator 0x080484ef)
+            (successors: 0x080484f1)
+
+Basic block: graph-2
+0x080484f1: 5d                |]     |   pop    ebp
+            (dominator 0x080484f0)
+            (successors: 0x080484f2)
+
+Basic block: graph-2
+0x080484f2: c3                |.     |   ret    
+            (dominator 0x080484f1)
             (successors:...)
 
 0x08048500: ============================ Function (symbol, discontiguous) <__libc_csu_fini>
@@ -420,6 +598,10 @@ Basic block: graph-1
 0x080485a9: c3                |.     |   ret    
             (dominator 0x08048590)
             (successors:...)
+
+Basic block: CFG head, user defined
+0x080485aa: 00 00             |..    |   add    BYTE PTR ds:[eax], al
+            (successors: 0x080485ac)
 
 
 
