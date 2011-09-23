@@ -223,28 +223,28 @@ mypath3.push_back(fifth36);
 //int myints37[] = {7, 5, 4, 6, 7, 5, 4, 6, 7, 5, 8};
 //std::vector<int> fifth37 (myints37, myints37 + sizeof(myints37) / sizeof(int) );
 //mypath3.push_back(fifth37);
-int myints38[] {7, 5, 8};
+int myints38[] = {7, 5, 8};
 std::vector<int> fifth38 (myints38, myints38 + sizeof(myints38) / sizeof(int) );
 mypath3.push_back(fifth38);
-int myints39[] {7, 4, 2, 3, 5, 4, 6, 7, 4, 6, 8};
+int myints39[] = {7, 4, 2, 3, 5, 4, 6, 7, 4, 6, 8};
 std::vector<int> fifth39 (myints39, myints39 + sizeof(myints39) / sizeof(int) );
 mypath3.push_back(fifth39);
-int myints40[] {7, 4, 6, 7, 4, 6, 8};
+int myints40[] = {7, 4, 6, 7, 4, 6, 8};
 std::vector<int> fifth40 (myints40, myints40 + sizeof(myints40) / sizeof(int) );
 mypath3.push_back(fifth40);
-int myints41[] {7, 5, 4, 2, 3, 5, 4, 6, 7, 4, 6, 8};
+int myints41[] = {7, 5, 4, 2, 3, 5, 4, 6, 7, 4, 6, 8};
 std::vector<int> fifth41 (myints41, myints41 + sizeof(myints41) / sizeof(int) );
 mypath3.push_back(fifth41);
 
-int myints42[] {7, 4, 2, 3, 5, 4, 6, 8};
+int myints42[] = {7, 4, 2, 3, 5, 4, 6, 8};
 std::vector<int> fifth42 (myints42, myints42 + sizeof(myints42) / sizeof(int) );
 mypath3.push_back(fifth42);
 
-int myints43[] {7, 4, 2, 3, 5, 4, 6, 7, 4, 2, 3, 5, 8};
+int myints43[] = {7, 4, 2, 3, 5, 4, 6, 7, 4, 2, 3, 5, 8};
 std::vector<int> fifth43 (myints43, myints43 + sizeof(myints43) / sizeof(int) );
 mypath3.push_back(fifth43);
 
-int myints44[] {7, 5, 4, 2, 3, 5, 4, 6, 7, 4, 2, 3, 5, 8};
+int myints44[] = {7, 5, 4, 2, 3, 5, 4, 6, 7, 4, 2, 3, 5, 8};
 std::vector<int> fifth44 (myints44, myints44 + sizeof(myints44) / sizeof(int) );
 mypath3.push_back(fifth44);
 
