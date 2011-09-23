@@ -75,9 +75,9 @@ Grammar::setUpBinaryInstructions ()
 
 
 
-     NEW_TERMINAL_MACRO ( AsmFunctionDeclaration      , "AsmFunctionDeclaration",      "AsmFunctionDeclarationTag" );
+     NEW_TERMINAL_MACRO ( AsmFunction      , "AsmFunction",      "AsmFunctionTag" );
 
-     NEW_NONTERMINAL_MACRO ( AsmDeclaration, AsmFunctionDeclaration, "AsmDeclaration", "AsmDeclarationTag", false );
+     NEW_NONTERMINAL_MACRO ( AsmDeclaration, AsmFunction, "AsmDeclaration", "AsmDeclarationTag", false );
 
      NEW_NONTERMINAL_MACRO ( AsmStatement, AsmDeclaration | AsmBlock | AsmInstruction, "AsmStatement", "AsmStatementTag", false );
 
@@ -1974,32 +1974,32 @@ Grammar::setUpBinaryInstructions ()
 
 
      // Binaries have many easily resolved functions so we use this to represent these
-     AsmFunctionDeclaration.setFunctionPrototype("HEADER_BINARY_FUNCTION_DECLARATION", "../Grammar/BinaryInstruction.code");
-     AsmFunctionDeclaration.setDataPrototype("std::string","name","= \"\"",
-                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmFunctionDeclaration.setDataPrototype("unsigned", "reason", "= SgAsmFunctionDeclaration::FUNC_NONE", /*bit flags*/
-                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmFunctionDeclaration.setDataPrototype("SgAsmFunctionDeclaration::function_kind_enum",
-                                             "function_kind","= SgAsmFunctionDeclaration::e_unknown",
-                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-     AsmFunctionDeclaration.setDataPrototype("bool", "can_return", "= true", // can this function return to caller?
-                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmFunctionDeclaration.setDataPrototype("std::string","name_md5","= \"\"",
-                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmFunctionDeclaration.setDataPrototype("SgAsmStatementPtrList","statementList","",
-                                             NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     AsmFunctionDeclaration.setDataPrototype("SgAsmStatementPtrList","dest","",
-                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmFunctionDeclaration.setDataPrototype("rose_addr_t", "entry_va", "= 0",  /*entry point virtual address*/
+     AsmFunction.setFunctionPrototype("HEADER_BINARY_FUNCTION_DECLARATION", "../Grammar/BinaryInstruction.code");
+     AsmFunction.setDataPrototype("std::string","name","= \"\"",
+                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmFunction.setDataPrototype("unsigned", "reason", "= SgAsmFunction::FUNC_NONE", /*bit flags*/
+                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmFunction.setDataPrototype("SgAsmFunction::function_kind_enum",
+                                  "function_kind","= SgAsmFunction::e_unknown",
+                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+     AsmFunction.setDataPrototype("bool", "can_return", "= true", // can this function return to caller?
+                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmFunction.setDataPrototype("std::string","name_md5","= \"\"",
+                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmFunction.setDataPrototype("SgAsmStatementPtrList","statementList","",
+                                  NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AsmFunction.setDataPrototype("SgAsmStatementPtrList","dest","",
+                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmFunction.setDataPrototype("rose_addr_t", "entry_va", "= 0",  /*entry point virtual address*/
                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      // DQ (5/3/2010): Added symbol table support to the binary analysis within ROSE.  Values that
      // are addresses or references to data will have symbols in a function symbol table.  All other 
      // values are assumed to be literals and will not have associated symbols.
-     AsmFunctionDeclaration.setDataPrototype("SgSymbolTable*", "symbol_table", "= NULL",
-                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE,
-                                             NO_COPY_DATA);
-     AsmFunctionDeclaration.setDataPrototype("size_t", "cached_vertex", "= (size_t)(-1)", // see BinaryAnalysis::FunctionCall
-                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmFunction.setDataPrototype("SgSymbolTable*", "symbol_table", "= NULL",
+                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE,
+                                  NO_COPY_DATA);
+     AsmFunction.setDataPrototype("size_t", "cached_vertex", "= (size_t)(-1)", // see BinaryAnalysis::FunctionCall
+                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
 
@@ -2109,7 +2109,7 @@ Grammar::setUpBinaryInstructions ()
       *        only in a couple of files in src/midend/binaryAnalsyses (and elsewhere only for converting a SgAsmExpression to
       *        a string). It seems to hold the name of a function, such as "_malloc" or "malloc@plt" for branch instructions.
       *        It should be possible to obtain the function name by looking up the instruction at the branch target and then
-      *        following parent links in the AST until we reach the SgAsmFunctionDeclaration node, which has a get_name()
+      *        following parent links in the AST until we reach the SgAsmFunction node, which has a get_name()
       *        method. [RPM 2009-07-16]. */
      AsmExpression.setFunctionPrototype("HEADER_BINARY_EXPRESSION", "../Grammar/BinaryInstruction.code");
      AsmExpression.setDataPrototype("std::string", "replacement", "= \"\"",
@@ -2373,7 +2373,7 @@ Grammar::setUpBinaryInstructions ()
      AsmTarget.setFunctionSource                   ( "SOURCE_BINARY_TARGET", "../Grammar/BinaryInstruction.code");
      AsmOperandList.setFunctionSource              ( "SOURCE_BINARY_OPERAND_LIST", "../Grammar/BinaryInstruction.code");
      AsmInstruction.setFunctionSource              ( "SOURCE_BINARY_INSTRUCTION", "../Grammar/BinaryInstruction.code");
-     AsmFunctionDeclaration.setFunctionSource      ( "SOURCE_BINARY_FUNCTION_DECLARATION", "../Grammar/BinaryInstruction.code");
+     AsmFunction.setFunctionSource                 ( "SOURCE_BINARY_FUNCTION_DECLARATION", "../Grammar/BinaryInstruction.code");
      AsmNode.setFunctionSource                     ( "SOURCE_BINARY_NODE", "../Grammar/BinaryInstruction.code");
      Asmx86Instruction.setFunctionSource           ( "SOURCE_BINARY_X86_INSTRUCTION", "../Grammar/BinaryInstruction.code");
   // AsmArmInstruction.setFunctionSource           ( "SOURCE_BINARY_ARM_INSTRUCTION", "../Grammar/BinaryInstruction.code");

@@ -108,7 +108,7 @@ AsmUnparser::add_function_labels(SgNode *node)
         T1(AsmUnparser *unparser)
             : unparser(unparser) {}
         void visit(SgNode *node) {
-            SgAsmFunctionDeclaration *func = isSgAsmFunctionDeclaration(node);
+            SgAsmFunction *func = isSgAsmFunction(node);
             if (func)
                 unparser->labels[func->get_entry_va()] = func->get_name();
         }
@@ -119,7 +119,7 @@ AsmUnparser::add_function_labels(SgNode *node)
 bool
 AsmUnparser::is_unparsable_node(SgNode *node)
 {
-    if (isSgAsmFunctionDeclaration(node) || isSgAsmInstruction(node) || isSgAsmInterpretation(node))
+    if (isSgAsmFunction(node) || isSgAsmInstruction(node) || isSgAsmInterpretation(node))
         return true;
 
     SgAsmBlock *block = isSgAsmBlock(node);
@@ -198,7 +198,7 @@ AsmUnparser::unparse(std::ostream &output, SgNode *ast)
             continue;
         }
 
-        SgAsmFunctionDeclaration *func = isSgAsmFunctionDeclaration(node);
+        SgAsmFunction *func = isSgAsmFunction(node);
         if (func) {
             unparse_function(true, output, func);
             continue;
@@ -241,7 +241,7 @@ AsmUnparser::unparse_basicblock(bool enabled, std::ostream &output, SgAsmBlock *
 }
 
 bool
-AsmUnparser::unparse_function(bool enabled, std::ostream &output, SgAsmFunctionDeclaration *func)
+AsmUnparser::unparse_function(bool enabled, std::ostream &output, SgAsmFunction *func)
 {
     UnparserCallback::FunctionArgs args(this, output, func);
     enabled = function_callbacks.pre    .apply(enabled, args);
