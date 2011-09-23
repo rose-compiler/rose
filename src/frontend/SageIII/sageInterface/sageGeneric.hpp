@@ -1514,10 +1514,6 @@ namespace sg
         Dispatcher::dispatch(rv, assume_sage_type<SgAsmInstruction>(*n));
         break;
 
-      case V_SgAsmDeclaration:
-        Dispatcher::dispatch(rv, assume_sage_type<SgAsmDeclaration>(*n));
-        break;
-
       case V_SgAsmStatement:
         Dispatcher::dispatch(rv, assume_sage_type<SgAsmStatement>(*n));
         break;

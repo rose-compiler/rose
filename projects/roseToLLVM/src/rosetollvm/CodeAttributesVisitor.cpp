@@ -1436,8 +1436,7 @@ void CodeAttributesVisitor::preOrderVisit(SgNode *node) {
      //         SgAliasSymbol
      //     SgAsmNode:
      //         SgAsmStatement:
-     //             SgAsmDeclaration:
-     //                 SgAsmFunction
+     //             SgAsmFunction
      //             SgAsmBlock
      //             SgAsmInstruction:
      //                 SgAsmx86Instruction
@@ -3460,8 +3459,7 @@ void CodeAttributesVisitor::postOrderVisit(SgNode *node) {
      //         SgAliasSymbol
      //     SgAsmNode:
      //         SgAsmStatement:
-     //             SgAsmDeclaration:
-     //                 SgAsmFunction
+     //             SgAsmFunction
      //             SgAsmBlock
      //             SgAsmInstruction:
      //                 SgAsmx86Instruction
