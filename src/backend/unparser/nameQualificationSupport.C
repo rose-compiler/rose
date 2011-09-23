@@ -650,6 +650,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #endif
         {
        // Note that there can be more than one symbol if the name is hidden in a base class scope (and thus there are SgAliasSymbols using the same name).
+          ROSE_ASSERT(currentScope != NULL);
           SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(name,currentScope);
 
        // This is used to count the number of symbols of the same type in a single scope.

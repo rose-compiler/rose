@@ -4391,6 +4391,23 @@ SgSymbol *SageInterface:: lookupSymbolInParentScopes (const SgName &  name, SgSc
   // printf ("In SageInterface:: lookupSymbolInParentScopes(): cscope = %p = %s \n",cscope,cscope->class_name().c_str());
      while ((cscope != NULL) && (symbol == NULL))
         {
+          if (cscope->get_symbol_table() == NULL)
+             {
+               printf ("Error: cscope->get_symbol_table() == NULL for cscope = %p = %s \n",cscope,cscope->class_name().c_str());
+               cscope->get_startOfConstruct()->display("cscope->p_symbol_table == NULL: debug");
+#if 0
+               ROSE_ASSERT(cscope->get_parent() != NULL);
+               SgNode* parent = cscope->get_parent();
+               while (parent != NULL)
+                  {
+                    printf ("Error: cscope->get_symbol_table() == NULL for parent = %p = %s \n",parent,parent->class_name().c_str());
+                    parent->get_startOfConstruct()->display("parent == NULL: debug");
+                    parent = parent->get_parent();
+                  }
+#endif
+             }
+          ROSE_ASSERT(cscope->get_symbol_table() != NULL);
+
        // printf ("   --- In SageInterface:: lookupSymbolInParentScopes(): cscope = %p = %s \n",cscope,cscope->class_name().c_str());
           symbol = cscope->lookup_symbol(name);
 
@@ -13222,6 +13239,11 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
 
      ROSE_ASSERT(sourceBlock->get_symbol_table() != NULL);
      sourceBlock->set_symbol_table(NULL);
+
+  // DQ (9/23/2011): Reset with a valid symbol table.
+     sourceBlock->set_symbol_table(new SgSymbolTable());
+     sourceBlock->get_symbol_table()->set_parent(sourceBlock);
+
      // Liao 2/4/2009
      // Finally , move preprocessing information attached inside the source block to the target block
      // Outliner uses this function to move a code block to the outlined function.

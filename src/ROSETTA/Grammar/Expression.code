@@ -98,10 +98,11 @@ HEADER_START
           virtual bool get_global_qualification_required () const;
           virtual void set_global_qualification_required ( bool global_qualification_required );
 
+       // DQ (9/23/2011): Use the vitual function version so that we can test within ROSE (part of incremental testing of new original expression tree support).
        // DQ (9/19/2011): Put back the original code (non-virtual functions) so that we can test against previously passing tests.
        // DQ (9/16/2011): Modified to make this a virtual function and added set_originalExpressionTree().
        // DQ (6/21/2011): Get the original expression if this is an IR node where it is defined and it is a valid pointer.
-#if 0
+#if 1
           virtual SgExpression* get_originalExpressionTree() const;
 #else
           SgExpression* get_originalExpressionTree() const;
@@ -1722,8 +1723,9 @@ SgExpression::set_global_qualification_required ( bool global_qualification_requ
   // p_global_qualification_required = global_qualification_required;
    }
 
+// DQ (9/23/2011): Use the vitual function version so that we can test within ROSE (part of incremental testing of new original expression tree support).
 // DQ (9/19/2011): Put back the original code (non-virtual functions) so that we can test against previously passing tests.
-#if 1
+#if 0
 SgExpression*
 SgExpression::get_originalExpressionTree() const
    {
