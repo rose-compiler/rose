@@ -76,10 +76,8 @@ Grammar::setUpBinaryInstructions ()
 
 
      NEW_TERMINAL_MACRO ( AsmFunctionDeclaration      , "AsmFunctionDeclaration",      "AsmFunctionDeclarationTag" );
-     NEW_TERMINAL_MACRO ( AsmFieldDeclaration         , "AsmFieldDeclaration",         "AsmFieldDeclarationTag" );
 
-     NEW_NONTERMINAL_MACRO ( AsmDeclaration, AsmFunctionDeclaration |
-                             AsmFieldDeclaration, "AsmDeclaration", "AsmDeclarationTag", false );
+     NEW_NONTERMINAL_MACRO ( AsmDeclaration, AsmFunctionDeclaration, "AsmDeclaration", "AsmDeclarationTag", false );
 
      NEW_NONTERMINAL_MACRO ( AsmStatement, AsmDeclaration | AsmBlock | AsmInstruction, "AsmStatement", "AsmStatementTag", false );
 
@@ -2004,13 +2002,6 @@ Grammar::setUpBinaryInstructions ()
                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
-
-  // These are used as data members in AsmDataStructureDeclaration
-     AsmFieldDeclaration.setDataPrototype("std::string","name","= \"\"",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // Not clear if we want to store the offset explicitly
-     AsmFieldDeclaration.setDataPrototype("uint64_t","offset","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AsmByteValueExpression.setDataPrototype("uint8_t","value","= 0x0",
                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
