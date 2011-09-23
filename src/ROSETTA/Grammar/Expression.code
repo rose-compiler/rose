@@ -106,7 +106,8 @@ HEADER_START
 #else
           SgExpression* get_originalExpressionTree() const;
 #endif
-#if 0
+#if 1
+       // DQ (9/19/2011): Modify this to be virtual as a single step for testing ROSE.
           virtual void set_originalExpressionTree(SgExpression* X);
 #else
        // DQ (9/19/2011): Added non-virtual set_originalExpressionTree() function so that code in fixupConstantFoldedValues.C would compile.
