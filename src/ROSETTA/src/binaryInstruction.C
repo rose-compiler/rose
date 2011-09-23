@@ -77,9 +77,7 @@ Grammar::setUpBinaryInstructions ()
 
      NEW_TERMINAL_MACRO ( AsmFunction      , "AsmFunction",      "AsmFunctionTag" );
 
-     NEW_NONTERMINAL_MACRO ( AsmDeclaration, AsmFunction, "AsmDeclaration", "AsmDeclarationTag", false );
-
-     NEW_NONTERMINAL_MACRO ( AsmStatement, AsmDeclaration | AsmBlock | AsmInstruction, "AsmStatement", "AsmStatementTag", false );
+     NEW_NONTERMINAL_MACRO ( AsmStatement, AsmFunction | AsmBlock | AsmInstruction, "AsmStatement", "AsmStatementTag", false );
 
   // DQ (3/30/2007): Fixed up the names where were "AsmUnaryAdd"
      NEW_TERMINAL_MACRO ( AsmBinaryAdd    ,  "AsmBinaryAdd",  "AsmBinaryAddTag" );
@@ -1964,11 +1962,6 @@ Grammar::setUpBinaryInstructions ()
 
 
 
-
-
-
-     // There are several sorts of declarations within a binary
-     AsmDeclaration.setFunctionPrototype("HEADER_BINARY_DECLARATION", "../Grammar/BinaryInstruction.code");
 
 
 

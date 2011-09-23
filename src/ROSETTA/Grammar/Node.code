@@ -470,10 +470,6 @@ typedef SgAsmExpressionPtrList*              SgAsmExpressionPtrListPtr;
 typedef Rose_STL_Container<SgAsmTarget*> SgAsmTargetPtrList;
 typedef SgAsmTargetPtrList* 		 SgAsmTargetPtrListPtr;
 
-// DQ (3/15/2007): Added support for binaries.
-typedef Rose_STL_Container<SgAsmDeclaration*> SgAsmDeclarationPtrList;
-typedef SgAsmDeclarationPtrList*              SgAsmDeclarationPtrListPtr;
-
 // JJW (3/19/2008): Added support for containers of x86 instructions
 typedef Rose_STL_Container<SgAsmx86Instruction*> SgAsmx86InstructionPtrList;
 // JJW (3/21/2008): Added support for containers of Arm instructions
