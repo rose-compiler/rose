@@ -4137,17 +4137,6 @@ HEADER_BINARY_FUNCTION_DECLARATION_END
 
 
 
-HEADER_BINARY_DATA_STRUCTURE_START
-          void append_declaration( SgAsmDeclaration* declaration );
-
-       // SgAsmDeclarationPtrList & get_declarationList();
-
-     protected:
-
-          SgAsmDeclarationPtrList p_declarationList;
-
-     public:
-HEADER_BINARY_DATA_STRUCTURE_END
 
 
 
@@ -4618,14 +4607,6 @@ SgAsmOperandList::append_operand( SgAsmExpression* operand )
 SOURCE_BINARY_OPERAND_LIST_END
 
 
-SOURCE_BINARY_DATA_STRUCTURE_START
-void
-SgAsmDataStructureDeclaration::append_declaration( SgAsmDeclaration* declaration )
-   {
-     p_declarationList.push_back(declaration);
-   }
-
-SOURCE_BINARY_DATA_STRUCTURE_END
 
 
 SOURCE_BINARY_FUNCTION_DECLARATION_START

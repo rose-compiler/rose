@@ -75,11 +75,10 @@ Grammar::setUpBinaryInstructions ()
 
 
 
-     NEW_TERMINAL_MACRO ( AsmDataStructureDeclaration , "AsmDataStructureDeclaration", "AsmDataStructureDeclarationTag" );
      NEW_TERMINAL_MACRO ( AsmFunctionDeclaration      , "AsmFunctionDeclaration",      "AsmFunctionDeclarationTag" );
      NEW_TERMINAL_MACRO ( AsmFieldDeclaration         , "AsmFieldDeclaration",         "AsmFieldDeclarationTag" );
 
-     NEW_NONTERMINAL_MACRO ( AsmDeclaration, AsmDataStructureDeclaration | AsmFunctionDeclaration |
+     NEW_NONTERMINAL_MACRO ( AsmDeclaration, AsmFunctionDeclaration |
                              AsmFieldDeclaration, "AsmDeclaration", "AsmDeclarationTag", false );
 
      NEW_NONTERMINAL_MACRO ( AsmStatement, AsmDeclaration | AsmBlock | AsmInstruction, "AsmStatement", "AsmStatementTag", false );
@@ -1972,11 +1971,6 @@ Grammar::setUpBinaryInstructions ()
 
      // There are several sorts of declarations within a binary
      AsmDeclaration.setFunctionPrototype("HEADER_BINARY_DECLARATION", "../Grammar/BinaryInstruction.code");
-     AsmDataStructureDeclaration.setFunctionPrototype("HEADER_BINARY_DATA_STRUCTURE", "../Grammar/BinaryInstruction.code");
-     // DQ (3/15/2007): I can't seem to get this to compile so I will leave it out for now!
-     // Binaries have some easily resolved data structures so we use this to represent these
-     // AsmDataStructureDeclaration.setDataPrototype("std::list<SgAsmDeclaration*>","declarationList","",
-     //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
 
 
 
@@ -2387,7 +2381,6 @@ Grammar::setUpBinaryInstructions ()
      AsmBlock.setFunctionSource                    ( "SOURCE_BINARY_BLOCK", "../Grammar/BinaryInstruction.code");
      AsmTarget.setFunctionSource                   ( "SOURCE_BINARY_TARGET", "../Grammar/BinaryInstruction.code");
      AsmOperandList.setFunctionSource              ( "SOURCE_BINARY_OPERAND_LIST", "../Grammar/BinaryInstruction.code");
-     AsmDataStructureDeclaration.setFunctionSource ( "SOURCE_BINARY_DATA_STRUCTURE", "../Grammar/BinaryInstruction.code");
      AsmInstruction.setFunctionSource              ( "SOURCE_BINARY_INSTRUCTION", "../Grammar/BinaryInstruction.code");
      AsmFunctionDeclaration.setFunctionSource      ( "SOURCE_BINARY_FUNCTION_DECLARATION", "../Grammar/BinaryInstruction.code");
      AsmNode.setFunctionSource                     ( "SOURCE_BINARY_NODE", "../Grammar/BinaryInstruction.code");
