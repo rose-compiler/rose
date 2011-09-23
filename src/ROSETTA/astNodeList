@@ -156,7 +156,6 @@ SgAsmElfSymverSection
 SgAsmExecutableFileFormat
 SgAsmExprListExp
 SgAsmExpression
-SgAsmFieldDeclaration
 SgAsmFunctionDeclaration
 SgAsmGenericArchitecture
 SgAsmGenericDLL
