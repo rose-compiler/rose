@@ -53,9 +53,9 @@ class MyPartitioner: public Partitioner {
 public:
     SgAsmBlock* partition(const Disassembler::InstructionMap& insns, rose_addr_t entry_va, const std::string& name) {
         clear();
-        set_search(SgAsmFunctionDeclaration::FUNC_DEFAULT & ~SgAsmFunctionDeclaration::FUNC_LEFTOVERS);
+        set_search(SgAsmFunction::FUNC_DEFAULT & ~SgAsmFunction::FUNC_LEFTOVERS);
         add_instructions(insns);
-        add_function(entry_va, SgAsmFunctionDeclaration::FUNC_ENTRY_POINT, name);
+        add_function(entry_va, SgAsmFunction::FUNC_ENTRY_POINT, name);
         analyze_cfg(SgAsmBlock::BLK_GRAPH1);
         return build_ast();
     }

@@ -1,5 +1,5 @@
 /* Algorithms to detect what instructions make up basic blocks and which blocks make up functions, and how to create the
- * necessary SgAsmBlock and SgAsmFunctionDeclaration IR nodes from this information. */
+ * necessary SgAsmBlock and SgAsmFunction IR nodes from this information. */
 #define __STDC_FORMAT_MACROS
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
@@ -26,7 +26,7 @@ std::ostream& operator<<(std::ostream &o, const Partitioner::Exception &e)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// These SgAsmFunctionDeclaration methods have no other home, so they're here for now. Do not move them into
+// These SgAsmFunction methods have no other home, so they're here for now. Do not move them into
 // src/ROSETTA/Grammar/BinaryInstruction.code because then they can't be indexed by C-aware tools.
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -47,7 +47,7 @@ add_to_reason_string(std::string &result, bool isset, bool do_pad, const std::st
 /** Returns a multi-line string describing the letters used for function reasons.  The letters are returned by the padding
  *  version of reason_str(). */
 std::string
-SgAsmFunctionDeclaration::reason_key(const std::string &prefix)
+SgAsmFunction::reason_key(const std::string &prefix)
 {
     return (prefix + "E = entry address         H = CFG head             C = function call(*)\n" +
             prefix + "X = exception frame       T = thunk                I = imported/dyn-linked\n" +
@@ -61,15 +61,15 @@ SgAsmFunctionDeclaration::reason_key(const std::string &prefix)
 
 /** Returns reason string for this function. */
 std::string
-SgAsmFunctionDeclaration::reason_str(bool do_pad) const
+SgAsmFunction::reason_str(bool do_pad) const
 {
     return reason_str(do_pad, get_reason());
 }
 
 /** Class method that converts a reason bit vector to a human-friendly string. The second argument is the bit vector of
- *  SgAsmFunctionDeclaration::FunctionReason bits. */
+ *  SgAsmFunction::FunctionReason bits. */
 std::string
-SgAsmFunctionDeclaration::reason_str(bool do_pad, unsigned r)
+SgAsmFunction::reason_str(bool do_pad, unsigned r)
 {
     std::string result;
 
@@ -233,25 +233,25 @@ Partitioner::parse_switches(const std::string &s, unsigned flags)
         
         unsigned bits = 0;
         if (word=="entry" || word=="entry_point") {
-            bits = SgAsmFunctionDeclaration::FUNC_ENTRY_POINT;
+            bits = SgAsmFunction::FUNC_ENTRY_POINT;
         } else if (word=="call" || word=="call_target") {
-            bits = SgAsmFunctionDeclaration::FUNC_CALL_TARGET;
+            bits = SgAsmFunction::FUNC_CALL_TARGET;
         } else if (word=="eh" || word=="eh_frame") {
-            bits = SgAsmFunctionDeclaration::FUNC_EH_FRAME;
+            bits = SgAsmFunction::FUNC_EH_FRAME;
         } else if (word=="import") {
-            bits = SgAsmFunctionDeclaration::FUNC_IMPORT;
+            bits = SgAsmFunction::FUNC_IMPORT;
         } else if (word=="symbol") {
-            bits = SgAsmFunctionDeclaration::FUNC_SYMBOL;
+            bits = SgAsmFunction::FUNC_SYMBOL;
         } else if (word=="pattern") {
-            bits = SgAsmFunctionDeclaration::FUNC_PATTERN;
+            bits = SgAsmFunction::FUNC_PATTERN;
         } else if (word=="userdef") {
-            bits = SgAsmFunctionDeclaration::FUNC_USERDEF;
+            bits = SgAsmFunction::FUNC_USERDEF;
         } else if (word=="pad" || word=="padding" || word=="interpad") {
-            bits = SgAsmFunctionDeclaration::FUNC_INTERPAD;
+            bits = SgAsmFunction::FUNC_INTERPAD;
         } else if (word=="unassigned" || word=="unclassified" || word=="leftover" || word=="leftovers") {
-            bits = SgAsmFunctionDeclaration::FUNC_LEFTOVERS;
+            bits = SgAsmFunction::FUNC_LEFTOVERS;
         } else if (word=="default") {
-            bits = SgAsmFunctionDeclaration::FUNC_DEFAULT;
+            bits = SgAsmFunction::FUNC_DEFAULT;
             if (howset==NOT_SPECIFIED) howset = SET_VALUE;
         } else if (isdigit(word[0])) {
             bits = strtol(word.c_str(), NULL, 0);
@@ -713,7 +713,7 @@ Partitioner::find_bb_containing(rose_addr_t va, bool create/*true*/)
         if (insn->terminatesBasicBlock()) { /*naively terminates?*/
             bool complete;
             const Disassembler::AddressSet& sucs = successors(bb, &complete);
-            if ((func_heuristics & SgAsmFunctionDeclaration::FUNC_CALL_TARGET) && is_function_call(bb, NULL)) {
+            if ((func_heuristics & SgAsmFunction::FUNC_CALL_TARGET) && is_function_call(bb, NULL)) {
                 /* When we are detecting functions based on x86 CALL instructions (or similar for other architectures) then
                  * the instruction after the CALL should never be part of this basic block. Otherwise allow the call to be
                  * part of the basic block initially and we'll split the block later if we need to. */
@@ -973,7 +973,7 @@ Partitioner::mark_entry_targets(SgAsmGenericHeader *fhdr)
     for (size_t i=0; i<entries.size(); i++) {
         rose_addr_t entry_va = entries[i].get_rva() + fhdr->get_base_va();
         if (find_instruction(entry_va))
-            add_function(entry_va, SgAsmFunctionDeclaration::FUNC_ENTRY_POINT);
+            add_function(entry_va, SgAsmFunction::FUNC_ENTRY_POINT);
     }
 }
 
@@ -993,7 +993,7 @@ Partitioner::mark_eh_frames(SgAsmGenericHeader *fhdr)
                     SgAsmElfEHFrameEntryFD *fde = fd_entries->get_entries()[k];
                     rose_addr_t target = fde->get_begin_rva().get_rva();
                     if (find_instruction(target))
-                        add_function(target, SgAsmFunctionDeclaration::FUNC_EH_FRAME);
+                        add_function(target, SgAsmFunction::FUNC_EH_FRAME);
                 }
             }
         }
@@ -1064,7 +1064,7 @@ Partitioner::mark_elf_plt_entries(SgAsmGenericHeader *fhdr)
             }
         }
         
-        Function *plt_func = add_function(insn->get_address(), SgAsmFunctionDeclaration::FUNC_IMPORT, name);
+        Function *plt_func = add_function(insn->get_address(), SgAsmFunction::FUNC_IMPORT, name);
 
         /* FIXME: Assume that most PLT functions return. We make this assumption for now because the PLT table contains an
          *        indirect jump through the .plt.got data area and we don't yet do static analysis of the data.  Because of
@@ -1106,7 +1106,7 @@ Partitioner::mark_func_symbols(SgAsmGenericHeader *fhdr)
                 symbol->get_value()!=0) {
                 rose_addr_t value = symbol->get_value();
                 if (find_instruction(value))
-                    add_function(value, SgAsmFunctionDeclaration::FUNC_SYMBOL, symbol->get_name()->get_string());
+                    add_function(value, SgAsmFunction::FUNC_SYMBOL, symbol->get_name()->get_string());
 
                 /* Sometimes weak symbol values are offsets from a section (this code handles that), but other times they're
                  * the value is used directly (the above code handled that case). */            
@@ -1114,7 +1114,7 @@ Partitioner::mark_func_symbols(SgAsmGenericHeader *fhdr)
                 if (section && symbol->get_binding()==SgAsmGenericSymbol::SYM_WEAK)
                     value += section->get_mapped_actual_va();
                 if (find_instruction(value))
-                    add_function(value, SgAsmFunctionDeclaration::FUNC_SYMBOL, symbol->get_name()->get_string());
+                    add_function(value, SgAsmFunction::FUNC_SYMBOL, symbol->get_name()->get_string());
             }
         }
     }
@@ -1280,17 +1280,17 @@ Partitioner::mark_func_patterns()
 
     for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
         if (exclude.find(ii->first)==exclude.end() && (found=pattern1(insns, ii, exclude))!=insns.end())
-            add_function(found->first, SgAsmFunctionDeclaration::FUNC_PATTERN);
+            add_function(found->first, SgAsmFunction::FUNC_PATTERN);
     }
 #if 0 /* Disabled because NOPs sometimes legitimately appear inside functions */
     for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
         if (exclude.find(ii->first)==exclude.end() && (found=pattern2(insns, ii, exclude))!=insns.end())
-            add_function(found->first, SgAsmFunctionDeclaration::FUNC_PATTERN);
+            add_function(found->first, SgAsmFunction::FUNC_PATTERN);
     }
 #endif
     for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
         if (exclude.find(ii->first)==exclude.end() && (found=pattern3(insns, ii, exclude))!=insns.end())
-            add_function(found->first, SgAsmFunctionDeclaration::FUNC_PATTERN);
+            add_function(found->first, SgAsmFunction::FUNC_PATTERN);
     }
 }
 
@@ -1306,7 +1306,7 @@ Partitioner::mark_call_insns()
         rose_addr_t target_va=NO_TARGET;
         if (ii->second->is_function_call(iv, &target_va) && target_va!=NO_TARGET &&
             target_va!=ii->first + ii->second->get_raw_bytes().size()) {
-            add_function(target_va, SgAsmFunctionDeclaration::FUNC_CALL_TARGET, "");
+            add_function(target_va, SgAsmFunction::FUNC_CALL_TARGET, "");
         }
     }
 }
@@ -1491,7 +1491,7 @@ Partitioner::InterFuncInsnPadding::operator()(bool enabled, const Args &args)
          * function as CFG heads, which causes the block to remain with the function even though it might not be reachable by
          * the CFG starting from the function's entry point.  This is especially true for padding like x86 "INT3", which has no
          * known CFG successors. */
-        Function *func = p->add_function(padding.front()->get_address(), SgAsmFunctionDeclaration::FUNC_INTERPAD);
+        Function *func = p->add_function(padding.front()->get_address(), SgAsmFunction::FUNC_INTERPAD);
         p->find_bb_starting(padding.front()->get_address()); // split first block if necessary
         p->find_bb_starting(va); // split last block if necessary
         for (size_t i=0; i<padding.size(); i++) {
@@ -1575,8 +1575,8 @@ Partitioner::FindThunks::operator()(bool enabled, const Args &args)
             if (complete && 1==succs.size()) {
                 rose_addr_t target_va = *succs.begin();
                 Functions::iterator fi = p->functions.find(target_va);
-                if (fi!=p->functions.end() && 0==(fi->second->reason & SgAsmFunctionDeclaration::FUNC_INTERPAD)) {
-                    Function *func = p->add_function(va, SgAsmFunctionDeclaration::FUNC_THUNK);
+                if (fi!=p->functions.end() && 0==(fi->second->reason & SgAsmFunction::FUNC_INTERPAD)) {
+                    Function *func = p->add_function(va, SgAsmFunction::FUNC_THUNK);
                     p->append(func, bb, SgAsmBlock::BLK_ENTRY_POINT);
                 }
             }
@@ -1589,7 +1589,7 @@ Partitioner::FindThunks::operator()(bool enabled, const Args &args)
 }
 
 /** Determines if function is a thunk.  A thunk is a small piece of code (a function) whose only purpose is to branch to
- *  another function.   This predicate should not be confused with the SgAsmFunctionDeclaration::FUNC_THUNK reason bit; the
+ *  another function.   This predicate should not be confused with the SgAsmFunction::FUNC_THUNK reason bit; the
  *  latter is only an indication of why the function was originally created.  A thunk (as defined by this predicate) might not
  *  have the FUNC_THUNK reason bit set if this function was detected by other means (such as being a target of a function
  *  call). Conversely, a function that has the FUNC_THUNK reason bit set might not qualify as being a thunk by the definition
@@ -1622,8 +1622,8 @@ Partitioner::is_thunk(Function *func)
     if (!target_func)
         return false;
 
-    if (0!=(target_func->reason & SgAsmFunctionDeclaration::FUNC_LEFTOVERS) ||
-        0!=(fi->second->reason & SgAsmFunctionDeclaration::FUNC_INTERPAD))
+    if (0!=(target_func->reason & SgAsmFunction::FUNC_LEFTOVERS) ||
+        0!=(fi->second->reason & SgAsmFunction::FUNC_INTERPAD))
         return false;
 
     return true;
@@ -1641,8 +1641,8 @@ Partitioner::PostFunctionBlocks::operator()(bool enabled, const Args &args)
     if (!bb || !bb->function)
         return true;
     Function *func = bb->function;
-    if (0!=(func->reason & SgAsmFunctionDeclaration::FUNC_INTERPAD) ||
-        0!=(func->reason & SgAsmFunctionDeclaration::FUNC_THUNK))
+    if (0!=(func->reason & SgAsmFunction::FUNC_INTERPAD) ||
+        0!=(func->reason & SgAsmFunction::FUNC_THUNK))
         return true; // don't append instructions to certain "functions"
 
     size_t nadded = 0;
@@ -1800,23 +1800,23 @@ Partitioner::pre_cfg(SgAsmInterpretation *interp/*=NULL*/)
     if (interp) {
         const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
         for (size_t i=0; i<headers.size(); i++) {
-            if (func_heuristics & SgAsmFunctionDeclaration::FUNC_ENTRY_POINT)
+            if (func_heuristics & SgAsmFunction::FUNC_ENTRY_POINT)
                 mark_entry_targets(headers[i]);
-            if (func_heuristics & SgAsmFunctionDeclaration::FUNC_EH_FRAME)
+            if (func_heuristics & SgAsmFunction::FUNC_EH_FRAME)
                 mark_eh_frames(headers[i]);
-            if (func_heuristics & SgAsmFunctionDeclaration::FUNC_SYMBOL)
+            if (func_heuristics & SgAsmFunction::FUNC_SYMBOL)
                 mark_func_symbols(headers[i]);
-            if (func_heuristics & SgAsmFunctionDeclaration::FUNC_IMPORT)
+            if (func_heuristics & SgAsmFunction::FUNC_IMPORT)
                 mark_elf_plt_entries(headers[i]);
         }
     }
-    if (func_heuristics & SgAsmFunctionDeclaration::FUNC_PATTERN)
+    if (func_heuristics & SgAsmFunction::FUNC_PATTERN)
         mark_func_patterns();
-    if (func_heuristics & SgAsmFunctionDeclaration::FUNC_CALL_INSN)
+    if (func_heuristics & SgAsmFunction::FUNC_CALL_INSN)
         mark_call_insns();
 
     /* Run user-defined function detectors, making sure that the basic block starts are up-to-date for each call. */
-    if (func_heuristics & SgAsmFunctionDeclaration::FUNC_USERDEF) {
+    if (func_heuristics & SgAsmFunction::FUNC_USERDEF) {
         if (interp) {
             const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
             for (size_t i=0; i<user_detectors.size(); i++) {
@@ -1855,7 +1855,7 @@ Partitioner::discover_first_block(Function *func)
 {
     if (debug) {
         fprintf(debug, "1st block %s F%08"PRIx64" \"%s\": B%08"PRIx64" ",
-                SgAsmFunctionDeclaration::reason_str(true, func->reason).c_str(),
+                SgAsmFunction::reason_str(true, func->reason).c_str(),
                 func->entry_va, func->name.c_str(), func->entry_va);
     }
     BasicBlock *bb = find_bb_containing(func->entry_va);
@@ -1958,7 +1958,7 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va, unsigned reason)
              *     block in conflict, but rather mark both functions as pending and abandon until the next pass.  Otherwise we
              *     assume the block in conflict really is in conflict and we'll create a FUNC_GRAPH function. */
             if (functions.find(va)==functions.end() && !bb->function->pending) {
-                add_function(va, SgAsmFunctionDeclaration::FUNC_GRAPH);
+                add_function(va, SgAsmFunction::FUNC_GRAPH);
                 if (debug) fprintf(debug, "[conflict F%08"PRIx64" \"%s\"]", bb->function->entry_va, bb->function->name.c_str());
             } else if (debug) {
                 fprintf(debug, "[possible conflict F%08"PRIx64" \"%s\"]", bb->function->entry_va, bb->function->name.c_str());
@@ -1976,10 +1976,10 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va, unsigned reason)
 
         /* Optionally create or add reason flags to called function. */
         Function *new_function = NULL;
-        if ((func_heuristics & SgAsmFunctionDeclaration::FUNC_CALL_TARGET)) {
-            new_function = add_function(target_va, SgAsmFunctionDeclaration::FUNC_CALL_TARGET);
+        if ((func_heuristics & SgAsmFunction::FUNC_CALL_TARGET)) {
+            new_function = add_function(target_va, SgAsmFunction::FUNC_CALL_TARGET);
         } else if (find_function(target_va)!=NULL) {
-            find_function(target_va)->reason |= SgAsmFunctionDeclaration::FUNC_CALL_TARGET;
+            find_function(target_va)->reason |= SgAsmFunction::FUNC_CALL_TARGET;
         }
 
         /* If the call target is part of a function (the current function or some other) and it's not the entry block then we
@@ -2156,7 +2156,7 @@ Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
         for (size_t i=0; i<pending.size(); ++i) {
             if (debug) {
                 fprintf(debug, "analyzing %s F%08"PRIx64" \"%s\" pass %zu: ",
-                        SgAsmFunctionDeclaration::reason_str(true, pending[i]->reason).c_str(),
+                        SgAsmFunction::reason_str(true, pending[i]->reason).c_str(),
                         pending[i]->entry_va, pending[i]->name.c_str(), pass);
             }
             try {
@@ -2173,13 +2173,13 @@ void
 Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
 {
     /* Add unassigned intra-function blocks to the surrounding function. */
-    if (func_heuristics & SgAsmFunctionDeclaration::FUNC_INTRABLOCK) {
+    if (func_heuristics & SgAsmFunction::FUNC_INTRABLOCK) {
         IntraFunctionBlocks ifb;
         scan_intrafunc_insns(&ifb);
     }
 
     /* Detect inter-function padding */
-    if (func_heuristics & SgAsmFunctionDeclaration::FUNC_INTERPAD) {
+    if (func_heuristics & SgAsmFunction::FUNC_INTERPAD) {
         InsnRangeCallbacks cblist;
 
         InterFuncInsnPadding pad1;
@@ -2225,7 +2225,7 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
      * than searching the heads list in each pass of analyze_cfg(). */
     for (BasicBlocks::iterator bi=blocks.begin(); bi!=blocks.end(); ++bi) {
         BasicBlock *bb = bi->second;
-        if (bb->function && 0==(bb->function->reason & SgAsmFunctionDeclaration::FUNC_LEFTOVERS) &&
+        if (bb->function && 0==(bb->function->reason & SgAsmFunction::FUNC_LEFTOVERS) &&
             bb->function->heads.find(address(bb))!=bb->function->heads.end())
             bb->reason |= SgAsmBlock::BLK_CFGHEAD;
     }
@@ -2348,7 +2348,7 @@ Partitioner::build_ast()
      * basic block doesn't belong to a function yet, we add it to this special one.  Note that we cannot traverse the list of
      * instructions directly because creating the basic block might cause additional instructions to be created. */
     Function *catchall = NULL;
-    if ((func_heuristics & SgAsmFunctionDeclaration::FUNC_LEFTOVERS)) {
+    if ((func_heuristics & SgAsmFunction::FUNC_LEFTOVERS)) {
         bool process_instructions;
         do {
             process_instructions = false;
@@ -2358,7 +2358,7 @@ Partitioner::build_ast()
                 ROSE_ASSERT(bb!=NULL);
                 if (!bb->function) {
                     if (!catchall)
-                        catchall = add_function(ii->first, SgAsmFunctionDeclaration::FUNC_LEFTOVERS, "***uncategorized blocks***");
+                        catchall = add_function(ii->first, SgAsmFunction::FUNC_LEFTOVERS, "***uncategorized blocks***");
                     append(catchall, bb, SgAsmBlock::BLK_LEFTOVERS);
                     process_instructions = true;
                 }
@@ -2369,7 +2369,7 @@ Partitioner::build_ast()
     /* Build the AST */
     SgAsmBlock *retval = new SgAsmBlock;
     for (Functions::const_iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
-        SgAsmFunctionDeclaration *func_decl = build_ast(fi->second);
+        SgAsmFunction *func_decl = build_ast(fi->second);
         if (!func_decl) continue;
         retval->get_statementList().push_back(func_decl);
         func_decl->set_parent(retval);
@@ -2386,7 +2386,7 @@ Partitioner::build_ast()
     return retval;
 }
 
-SgAsmFunctionDeclaration *
+SgAsmFunction *
 Partitioner::build_ast(Function* f)
 {
     if (f->blocks.size()==0) {
@@ -2394,14 +2394,14 @@ Partitioner::build_ast(Function* f)
         return NULL;
     }
     
-    SgAsmFunctionDeclaration *retval = new SgAsmFunctionDeclaration;
+    SgAsmFunction *retval = new SgAsmFunction;
     rose_addr_t next_block_va = f->entry_va;
     unsigned reasons = f->reason;
     
     for (BasicBlocks::iterator bi=f->blocks.begin(); bi!=f->blocks.end(); ++bi) {
         BasicBlock *bb = bi->second;
         if (address(bb)!=next_block_va)
-            reasons |= SgAsmFunctionDeclaration::FUNC_DISCONT;
+            reasons |= SgAsmFunction::FUNC_DISCONT;
         SgAsmBlock *block = build_ast(bb);
         retval->get_statementList().push_back(block);
         block->set_parent(retval);
@@ -2410,9 +2410,9 @@ Partitioner::build_ast(Function* f)
 
         /* The function is discontiguous if blocks do not follow one another or the instructions within a block are
          * discontiguous. The former was checked above; the latter we check here. */
-        for (size_t i=1; 0==(reasons & SgAsmFunctionDeclaration::FUNC_DISCONT) && i<bb->insns.size(); ++i) {
+        for (size_t i=1; 0==(reasons & SgAsmFunction::FUNC_DISCONT) && i<bb->insns.size(); ++i) {
             if (bb->insns[i-1]->get_address() + bb->insns[i-1]->get_raw_bytes().size() != bb->insns[i]->get_address()) {
-                reasons |= SgAsmFunctionDeclaration::FUNC_DISCONT;
+                reasons |= SgAsmFunction::FUNC_DISCONT;
             }
         }
     }

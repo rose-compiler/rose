@@ -50,7 +50,7 @@
  *  execute bit must be set.
  *
  *  While the main purpose of the Disassembler class is to disassemble instructions, it also needs to be able to group those
- *  instructions into basic blocks (SgAsmBlock) and functions (SgAsmFunctionDeclaration). It uses an instance of the
+ *  instructions into basic blocks (SgAsmBlock) and functions (SgAsmFunction). It uses an instance of the
  *  Partitioner class to do so.  The user can supply a partitioner to the disassembler or have the disassembler create a
  *  default partitioner on the fly.  The user is also free to call the partitioner directly on the InstructionMap object
  *  returned by most of the disassembler methods. As described in the Partitioner documentation, the output of a Disassembler
@@ -92,7 +92,7 @@
  *      MyDisassembler(size_t wordsize): DisassemblerX86(wordsize) {
  *          Partitioner *p = new Partitioner();
  *          unsigned h = p->get_heuristics();
- *          7 &= ~SgAsmFunctionDeclaration::FUNC_PATTERN;
+ *          7 &= ~SgAsmFunction::FUNC_PATTERN;
  *          p->set_heuristics(h);
  *          set_partitioner(p);
  *      }

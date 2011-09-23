@@ -203,7 +203,7 @@ Partitioner::IPDParser::parse_FuncDecl()
     rose_addr_t entry_va = match_number();
     std::string name = is_string() ? match_string() : "";
     try {
-        cur_func = partitioner->add_function(entry_va, SgAsmFunctionDeclaration::FUNC_USERDEF, name);
+        cur_func = partitioner->add_function(entry_va, SgAsmFunction::FUNC_USERDEF, name);
         parse_FuncBody();
         cur_func = NULL;
     } catch (const Exception&) {

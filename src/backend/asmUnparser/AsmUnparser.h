@@ -7,7 +7,7 @@
 
 class SgAsmInstruction;
 class SgAsmBlock;
-class SgAsmFunctionDeclaration;
+class SgAsmFunction;
 class SgAsmInterpretation;
 
 
@@ -166,11 +166,11 @@ public:
 
         /** Arguments passed to function unparsing callbacks. */
         struct FunctionArgs {
-            FunctionArgs(AsmUnparser *unparser, std::ostream &output, SgAsmFunctionDeclaration *func)
+            FunctionArgs(AsmUnparser *unparser, std::ostream &output, SgAsmFunction *func)
                 : unparser(unparser), output(output), func(func) {}
             AsmUnparser *unparser;      /**< The object doing the unparsing, from which this callback is invoked. */
             std::ostream &output;       /**< Where output should be sent. */
-            SgAsmFunctionDeclaration *func; /**< The function being unparsed. */
+            SgAsmFunction *func;        /**< The function being unparsed. */
         };
 
         /** Arguments passed to interpretation unparsing callbacks. */
@@ -449,7 +449,7 @@ public:
      *  @{ */
     virtual bool unparse_insn(bool enabled, std::ostream&, SgAsmInstruction*, size_t position_in_block=0);
     virtual bool unparse_basicblock(bool enabled, std::ostream&, SgAsmBlock*);
-    virtual bool unparse_function(bool enabled, std::ostream&, SgAsmFunctionDeclaration*);
+    virtual bool unparse_function(bool enabled, std::ostream&, SgAsmFunction*);
     virtual bool unparse_interpretation(bool enabled, std::ostream&, SgAsmInterpretation*);
     /** @} */
 

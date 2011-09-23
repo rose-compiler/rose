@@ -3,7 +3,7 @@
 
 #include "BinaryControlFlow.h"
 
-class SgAsmFunctionDeclaration;
+class SgAsmFunction;
 
 namespace BinaryAnalysis {
 
@@ -25,8 +25,8 @@ namespace BinaryAnalysis {
         /** The default function call graph type.
          *
          *  A function call graph is simply a Boost graph whose vertex descriptors are integers and whose vertices point to
-         *  SgAsmFunctionDeclaration nodes in the AST (via the boost::vertex_name property).  The graph edges represent
-         *  function calls from one SgAsmFunctionDeclaration to another.  Since this graph is a Boost graph, it is endowed with
+         *  SgAsmFunction nodes in the AST (via the boost::vertex_name property).  The graph edges represent
+         *  function calls from one SgAsmFunction to another.  Since this graph is a Boost graph, it is endowed with
          *  all the features of a Boost graph and can be the operand of the various Boost graph algorithms.  See build_cg() for
          *  specifics about what is included in such a graph.
          *
@@ -34,7 +34,7 @@ namespace BinaryAnalysis {
          *  (BinaryAnalysis::ControlFlowGraph) to include only the edges (and their incident vertices) that flow from one
          *  function to another.  The advantage of using a control flow graph to represent function call information is that
          *  each call site will be included in the function call graph due to the fact that the control flow graph vertices are
-         *  blocks (SgAsmBlock) rather than functions (SgAsmFunctionDeclaration).
+         *  blocks (SgAsmBlock) rather than functions (SgAsmFunction).
          *
          *  It is common to need a type for the vertices and edges.  Boost graphs store this information in graph_traits and
          *  users should use that to obtain those types.  Doing so will, in the long run, make your code more extensible since
@@ -49,7 +49,7 @@ namespace BinaryAnalysis {
         typedef boost::adjacency_list<boost::listS,                                 /* out-edges of each vertex in std::list */
                                       boost::vecS,                                  /* store vertices in std::vector */
                                       boost::bidirectionalS,                        /* call graph is directed */
-                                      boost::property<boost::vertex_name_t, SgAsmFunctionDeclaration*>
+                                      boost::property<boost::vertex_name_t, SgAsmFunction*>
                                      > Graph;
 
 
@@ -60,12 +60,12 @@ namespace BinaryAnalysis {
 
         /** Filter for vertices.
          *
-         *  This class can be specialized in order to filter out functions (SgAsmFunctionDeclaration) that satisfy an arbitrary
+         *  This class can be specialized in order to filter out functions (SgAsmFunction) that satisfy an arbitrary
          *  condition.  See set_vertex_filter() for details. */
         class VertexFilter {
         public:
             virtual ~VertexFilter() {}
-            virtual bool operator()(FunctionCall*, SgAsmFunctionDeclaration*) = 0;
+            virtual bool operator()(FunctionCall*, SgAsmFunction*) = 0;
         };
 
         /** Filter for edges.
@@ -75,7 +75,7 @@ namespace BinaryAnalysis {
         class EdgeFilter {
         public:
             virtual ~EdgeFilter() {}
-            virtual bool operator()(FunctionCall*, SgAsmFunctionDeclaration *source, SgAsmFunctionDeclaration *target) = 0;
+            virtual bool operator()(FunctionCall*, SgAsmFunction *source, SgAsmFunction *target) = 0;
         };
 
         /** Manipulate the vertex filter.
@@ -104,10 +104,10 @@ namespace BinaryAnalysis {
          *  Returns true if the vertex would be filtered out by being rejected by the current vertex filter.
          *
          *  @{ */
-        bool is_vertex_filtered(SgAsmFunctionDeclaration *func, VertexFilter *filter) {
+        bool is_vertex_filtered(SgAsmFunction *func, VertexFilter *filter) {
             return filter && !(*filter)(this, func);
         }
-        bool is_vertex_filtered(SgAsmFunctionDeclaration *func) {
+        bool is_vertex_filtered(SgAsmFunction *func) {
             return is_vertex_filtered(func, vertex_filter);
         }
         /** @} */
@@ -117,10 +117,10 @@ namespace BinaryAnalysis {
          *  Returns true if the edge would be filtered out by being rejected by the current edge filter.
          *
          *  @{ */
-        bool is_edge_filtered(SgAsmFunctionDeclaration *src, SgAsmFunctionDeclaration *dst, EdgeFilter *filter) {
+        bool is_edge_filtered(SgAsmFunction *src, SgAsmFunction *dst, EdgeFilter *filter) {
             return filter && !(*filter)(this, src, dst);
         }
-        bool is_edge_filtered(SgAsmFunctionDeclaration *src, SgAsmFunctionDeclaration *dst) {
+        bool is_edge_filtered(SgAsmFunction *src, SgAsmFunction *dst) {
             return is_edge_filtered(src, dst, edge_filter);
         }
         /** @} */
@@ -136,14 +136,14 @@ namespace BinaryAnalysis {
 
         /** Cache vertex descriptors in AST.
          *
-         *  The vertices of a function call graph are of type Vertex, and point at the functions (SgAsmFunctionDeclaration) of
-         *  the AST. Although most graph algorithms will only need to map Vertex to SgAsmFunctionDeclaration, the inverse
+         *  The vertices of a function call graph are of type Vertex, and point at the functions (SgAsmFunction) of
+         *  the AST. Although most graph algorithms will only need to map Vertex to SgAsmFunction, the inverse
          *  mapping is also sometimes useful.  That mapping can be stored into an std::map via graph traversal, or stored in
-         *  the AST itself attached to each SgAsmFunctionDeclaration.  Using an std::map requires an O(log N) lookup each time
+         *  the AST itself attached to each SgAsmFunction.  Using an std::map requires an O(log N) lookup each time
          *  we need to get the vertex descriptor for a function, while storing the vertex descriptor in the AST requires O(1)
          *  lookup time.
          *
-         *  The vertex descriptors are available via SgAsmFunctionDeclaration::get_cached_vertex().  Other graph types (e.g.,
+         *  The vertex descriptors are available via SgAsmFunction::get_cached_vertex().  Other graph types (e.g.,
          *  dominance graphs) might also use the same cache line.  The cached vertex is stored as a size_t, which is the same
          *  underlying type for function call graph vertices.
          *
@@ -177,7 +177,7 @@ namespace BinaryAnalysis {
         /** Build a function call graph from an AST.
          *
          *  Given an AST, traverse the AST beginning at @p root and build a function call graph (CG).  The function call graph
-         *  will contain only SgAsmFunctionDeclaration vertices that are in the specified subtree and which are not filtered
+         *  will contain only SgAsmFunction vertices that are in the specified subtree and which are not filtered
          *  out by the current vertex filter.  Edges also must pass the edge filter to be included in the graph.
          *
          *  The following two methods of constructing a CG should result in identical graphs (although vertex and edge order
@@ -239,7 +239,7 @@ BinaryAnalysis::FunctionCall::cache_vertex_descriptors(const FunctionCallGraph &
 {
     typename boost::graph_traits<FunctionCallGraph>::vertex_iterator vi, vi_end;
     for (boost::tie(vi, vi_end)=vertices(cg); vi!=vi_end; ++vi) {
-        SgAsmFunctionDeclaration *func = get(boost::vertex_name, cg, *vi);
+        SgAsmFunction *func = get(boost::vertex_name, cg, *vi);
         if (func && !is_vertex_filtered(func))
             func->set_cached_vertex(*vi);
     }
@@ -251,7 +251,7 @@ BinaryAnalysis::FunctionCall::build_cg_from_cfg(const ControlFlowGraph &cfg, Fun
 {
     typedef typename boost::graph_traits<FunctionCallGraph>::vertex_descriptor CG_Vertex;
     typedef typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor CFG_Vertex;
-    typedef std::map<SgAsmFunctionDeclaration*, CG_Vertex> FunctionVertexMap;
+    typedef std::map<SgAsmFunction*, CG_Vertex> FunctionVertexMap;
 
     cg.clear();
 
@@ -260,7 +260,7 @@ BinaryAnalysis::FunctionCall::build_cg_from_cfg(const ControlFlowGraph &cfg, Fun
     typename boost::graph_traits<ControlFlowGraph>::vertex_iterator vi, vi_end;
     for (boost::tie(vi, vi_end)=vertices(cfg); vi!=vi_end; ++vi) {
         SgAsmBlock *block = get(boost::vertex_name, cfg, *vi);
-        SgAsmFunctionDeclaration *func = block->get_enclosing_function();
+        SgAsmFunction *func = block->get_enclosing_function();
         if (!is_vertex_filtered(func)) {
             typename FunctionVertexMap::iterator fi=fv_map.find(func);
             if (func && fi==fv_map.end()) {
@@ -278,8 +278,8 @@ BinaryAnalysis::FunctionCall::build_cg_from_cfg(const ControlFlowGraph &cfg, Fun
         CFG_Vertex cfg_b = target(*ei, cfg);
         SgAsmBlock *block_a = get(boost::vertex_name, cfg, cfg_a);
         SgAsmBlock *block_b = get(boost::vertex_name, cfg, cfg_b);
-        SgAsmFunctionDeclaration *func_a = block_a->get_enclosing_function();
-        SgAsmFunctionDeclaration *func_b = block_b->get_enclosing_function();
+        SgAsmFunction *func_a = block_a->get_enclosing_function();
+        SgAsmFunction *func_b = block_b->get_enclosing_function();
         if (func_a && func_b && block_b==func_b->get_entry_block() && !is_edge_filtered(func_a, func_b)) {
             typename FunctionVertexMap::iterator fi_a = fv_map.find(func_a);
             if (fi_a!=fv_map.end()) {
@@ -305,7 +305,7 @@ void
 BinaryAnalysis::FunctionCall::build_cg_from_ast(SgNode *root, FunctionCallGraph &cg/*out*/)
 {
     typedef typename boost::graph_traits<FunctionCallGraph>::vertex_descriptor Vertex;
-    typedef std::map<SgAsmFunctionDeclaration*, Vertex> FunctionVertexMap;
+    typedef std::map<SgAsmFunction*, Vertex> FunctionVertexMap;
     FunctionVertexMap fv_map;
 
     cg.clear();
@@ -319,7 +319,7 @@ BinaryAnalysis::FunctionCall::build_cg_from_ast(SgNode *root, FunctionCallGraph 
             : analyzer(analyzer), cg(cg), fv_map(fv_map)
             {}
         void visit(SgNode *node) {
-            SgAsmFunctionDeclaration *func = isSgAsmFunctionDeclaration(node);
+            SgAsmFunction *func = isSgAsmFunction(node);
             if (func && !analyzer->is_vertex_filtered(func)) {
                 Vertex vertex = add_vertex(cg);
                 fv_map[func] = vertex;
@@ -337,18 +337,18 @@ BinaryAnalysis::FunctionCall::build_cg_from_ast(SgNode *root, FunctionCallGraph 
         EdgeAdder(FunctionCall *analyzer, FunctionCallGraph &cg, FunctionVertexMap &fv_map, Vertex source_vertex)
             : analyzer(analyzer), cg(cg), fv_map(fv_map), source_vertex(source_vertex)
             {}
-        SgAsmFunctionDeclaration *function_of(SgAsmBlock *block) {
+        SgAsmFunction *function_of(SgAsmBlock *block) {
             return block ? block->get_enclosing_function() : NULL;
         }
         void visit(SgNode *node) {
             SgAsmBlock *block_a = isSgAsmBlock(node); /* the calling block */
-            SgAsmFunctionDeclaration *func_a = function_of(block_a); /* the calling function */
+            SgAsmFunction *func_a = function_of(block_a); /* the calling function */
             if (!func_a)
                 return;
             const SgAsmTargetPtrList &succs = block_a->get_successors();
             for (SgAsmTargetPtrList::const_iterator si=succs.begin(); si!=succs.end(); ++si) {
                 SgAsmBlock *block_b = (*si)->get_block(); /* the called block */
-                SgAsmFunctionDeclaration *func_b = function_of(block_b); /* the called function */
+                SgAsmFunction *func_b = function_of(block_b); /* the called function */
                 if (func_b && block_b==func_b->get_entry_block() && !analyzer->is_edge_filtered(func_a, func_b)) {
                     typename FunctionVertexMap::iterator fi_b = fv_map.find(func_b); /* find vertex for called function */
                     if (fi_b!=fv_map.end())
@@ -361,7 +361,7 @@ BinaryAnalysis::FunctionCall::build_cg_from_ast(SgNode *root, FunctionCallGraph 
     VertexAdder(this, cg, fv_map).traverse(root, preorder);
     typename boost::graph_traits<FunctionCallGraph>::vertex_iterator vi, vi_end;
     for (boost::tie(vi, vi_end)=vertices(cg); vi!=vi_end; ++vi) {
-        SgAsmFunctionDeclaration *source_func = get(boost::vertex_name, cg, *vi);
+        SgAsmFunction *source_func = get(boost::vertex_name, cg, *vi);
         EdgeAdder(this, cg, fv_map, *vi).traverse(source_func, preorder);
     }
 }
@@ -387,7 +387,7 @@ BinaryAnalysis::FunctionCall::copy(const FunctionCallGraph &src, FunctionCallGra
 
     typename boost::graph_traits<FunctionCallGraph>::vertex_iterator vi, vi_end;
     for (boost::tie(vi, vi_end)=vertices(src); vi!=vi_end; ++vi) {
-        SgAsmFunctionDeclaration *func = get(boost::vertex_name, src, *vi);
+        SgAsmFunction *func = get(boost::vertex_name, src, *vi);
         if (!is_vertex_filtered(func)) {
             src_to_dst[*vi] = add_vertex(dst);
             put(boost::vertex_name, dst, src_to_dst[*vi], func);
@@ -397,8 +397,8 @@ BinaryAnalysis::FunctionCall::copy(const FunctionCallGraph &src, FunctionCallGra
     typename boost::graph_traits<FunctionCallGraph>::edge_iterator ei, ei_end;
     for (boost::tie(ei, ei_end)=edges(src); ei!=ei_end; ++ei) {
         if (NO_VERTEX!=src_to_dst[source(*ei, src)] && NO_VERTEX!=src_to_dst[target(*ei, src)]) {
-            SgAsmFunctionDeclaration *func1 = get(boost::vertex_name, src, source(*ei, src));
-            SgAsmFunctionDeclaration *func2 = get(boost::vertex_name, src, target(*ei, src));
+            SgAsmFunction *func1 = get(boost::vertex_name, src, source(*ei, src));
+            SgAsmFunction *func2 = get(boost::vertex_name, src, target(*ei, src));
             if (!is_edge_filtered(func1, func2))
                 add_edge(src_to_dst[source(*ei, src)], src_to_dst[target(*ei, src)], dst);
         }

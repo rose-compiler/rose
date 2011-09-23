@@ -58,7 +58,7 @@
  *  detects that a block has edges coming in from two different functions, it creates a new function whose entry point is that
  *  block (see definition of "function" above; a function can only have one entry point).
  *
- *  The third and final phase, called "post-cfg", makes final adjustments, such as adding SgAsmFunctionDeclaration objects for
+ *  The third and final phase, called "post-cfg", makes final adjustments, such as adding SgAsmFunction objects for
  *  no-op or zero padding occuring between the previously detected functions. This could also be user-extended to add blocks to
  *  functions that ROSE detected during CFG analysis (such as unreferenced basic blocks, no-ops, etc. that occur within the
  *  extent of a function.)
@@ -75,7 +75,7 @@
  *
  *  The results of block and function detection are stored in the Partitioner object itself. One usually retrieves this
  *  information via a call to the build_ast() method, which constructs a ROSE AST.  Any instructions that were not assigned to
- *  blocks of a function can be optionally discarded (see the SgAsmFunctionDeclaration::FUNC_LEFTOVERS bit of set_search(), or
+ *  blocks of a function can be optionally discarded (see the SgAsmFunction::FUNC_LEFTOVERS bit of set_search(), or
  *  the "leftovers" parameter of the "-rose:partitioner_search" command-line switch).
  *
  *  The Partitioner class can easily be subclassed by the user. Some of the Disassembler methods automatically call
@@ -167,7 +167,7 @@ protected:
     };
 
     /** Represents a basic block within the Partitioner. Each basic block will eventually become an SgAsmBlock node in the
-     *  AST. However, if the SgAsmFunctionDeclaration::FUNC_LEFTOVER bit is set in the Partitioner::set_search() method then
+     *  AST. However, if the SgAsmFunction::FUNC_LEFTOVER bit is set in the Partitioner::set_search() method then
      *  blocks that were not assigned to any function to not result in an SgAsmBlock node. */
     struct BasicBlock {
         /** Constructor. This constructor should not be called directly since the Partitioner has other pointers that it needs
@@ -195,8 +195,7 @@ protected:
     };
     typedef std::map<rose_addr_t, BasicBlock*> BasicBlocks;
 
-    /** Represents a function within the Partitioner. Each non-empty function will become an SgAsmFunctionDeclaration in the
-     *  AST. */
+    /** Represents a function within the Partitioner. Each non-empty function will become an SgAsmFunction in the AST. */
     struct Function {
         Function(rose_addr_t entry_va): reason(0), pending(true), entry_va(entry_va), returns(false) {}
         Function(rose_addr_t entry_va, unsigned r): reason(r), pending(true), entry_va(entry_va), returns(false) {}
@@ -204,7 +203,7 @@ protected:
             : reason(r), name(name), pending(true), entry_va(entry_va), returns(false) {}
         void clear_blocks();                    /**< Remove all blocks from this function w/out deleting the blocks. */
         BasicBlock* last_block() const;         /**< Return pointer to block with highest address */
-        unsigned reason;                        /**< SgAsmFunctionDeclaration::FunctionReason bit flags */
+        unsigned reason;                        /**< SgAsmFunction::FunctionReason bit flags */
         std::string name;                       /**< Name of function if known */
         BasicBlocks blocks;                     /**< Basic blocks belonging to this function */
         bool pending;                           /**< True if we need to (re)discover the basic blocks */
@@ -257,7 +256,7 @@ public:
      *  Partitioner::Function, which is capable of describing noncontiguous functions. */
     struct FunctionStart {
         FunctionStart(unsigned reason, std::string name): reason(reason), name(name) {}
-        unsigned reason;                        /** SgAsmFunctionDeclaration::FunctionReason bit flags */
+        unsigned reason;                        /** SgAsmFunction::FunctionReason bit flags */
         std::string name;                       /** Name of function if known. */
     };
 
@@ -280,7 +279,7 @@ public:
 public:
 
     Partitioner()
-        : disassembler(NULL), map(NULL), func_heuristics(SgAsmFunctionDeclaration::FUNC_DEFAULT), debug(NULL),
+        : disassembler(NULL), map(NULL), func_heuristics(SgAsmFunction::FUNC_DEFAULT), debug(NULL),
           allow_discont_blocks(true)
         {}
     virtual ~Partitioner() { clear(); }
@@ -291,13 +290,13 @@ public:
 public:
 
     /** Sets the set of heuristics used by the partitioner.  The @p heuristics should be a bit mask containing the
-     *  SgAsmFunctionDeclaration::FunctionReason bits. These same bits are assigned to the "reason" property of the resulting
+     *  SgAsmFunction::FunctionReason bits. These same bits are assigned to the "reason" property of the resulting
      *  function nodes in the AST, depending on which heuristic detected the function. */
     virtual void set_search(unsigned heuristics) {
         func_heuristics = heuristics;
     }
 
-    /** Returns a bit mask of SgAsmFunctionDeclaration::FunctionReason bits indicating which heuristics would be used by the
+    /** Returns a bit mask of SgAsmFunction::FunctionReason bits indicating which heuristics would be used by the
      *  partitioner.  */
     virtual unsigned get_search() const {
         return func_heuristics;
@@ -374,7 +373,7 @@ public:
     /** Adds a user-defined function detector to this partitioner. Any number of detectors can be added and they will be run
      *  by pre_cfg() in the order they were added, after the built-in methods run.  Each user-defined detector will be called
      *  first with the SgAmGenericHeader pointing to null, then once for each file header. The user-defined methods are run
-     *  only if the SgAsmFunctionDeclaration::FUNC_USERDEF is set (see set_search()), which is the default.   The reason for
+     *  only if the SgAsmFunction::FUNC_USERDEF is set (see set_search()), which is the default.   The reason for
      *  having user-defined function detectors is that the detection of functions influences the shape of the AST and so it is
      *  easier to apply those analyses here, before the AST is built, rather than in the mid-end after the AST is built. */
     void add_function_detector(FunctionDetector f) {
@@ -384,11 +383,11 @@ public:
     /** Parses a string describing the heuristics and returns the bit vector that can be passed to set_search(). The input
      *  string should be a comma-separated list (without white space) of search specifications. Each specification should be
      *  an optional qualifier character followed by either an integer or a word. The accepted words are the lower-case
-     *  versions of the constants enumerated by SgAsmFunctionDeclaration::FunctionReason, but without the leading "FUNC_".
+     *  versions of the constants enumerated by SgAsmFunction::FunctionReason, but without the leading "FUNC_".
      *  The qualifier determines whether the bits specified by the integer or word are added to the return value ("+") or
      *  removed from the return value ("-").  The "=" qualifier acts like "+" but first zeros the return value. The default
      *  qualifier is "+" except when the word is "default", in which case the specifier is "=". An optional initial bit mask
-     *  can be specified (defaults to SgAsmFunctionDeclaration::FUNC_DEFAULT). */
+     *  can be specified (defaults to SgAsmFunction::FUNC_DEFAULT). */
     static unsigned parse_switches(const std::string&, unsigned initial_flags);
 
     /** Top-level function to run the partitioner on some instructions and build an AST. The SgAsmInterpretation is optional.
@@ -447,10 +446,10 @@ public:
     virtual Function* find_function(rose_addr_t entry_va);
 
     /** Builds the AST describing all the functions. The return value is an SgAsmBlock node that points to a list of
-     *  SgAsmFunctionDeclaration nodes (the functions), each of which points to a list of SgAsmBlock nodes (the basic
+     *  SgAsmFunction nodes (the functions), each of which points to a list of SgAsmBlock nodes (the basic
      *  blocks). Any basic blocks that were not assigned to a function by the Partitioner will be added to a function named
      *  "***uncategorized blocks***" whose entry address will be the address of the lowest instruction, and whose reasons for
-     * existence will include the SgAsmFunctionDeclaration::FUNC_LEFTOVERS bit.  However, if the FUNC_LEFTOVERS bit is not
+     * existence will include the SgAsmFunction::FUNC_LEFTOVERS bit.  However, if the FUNC_LEFTOVERS bit is not
      * turned on (see set_search()) then uncategorized blocks will not appear in the AST. */
     virtual SgAsmBlock* build_ast();
 
@@ -565,7 +564,7 @@ public:
 
     /** Callback to create inter-function instruction padding.  This callback can be passed to the scan_interfunc_insns()
      *  method's callback list.  Whenever it detects a contiguous sequence of one or more of the specified instructions (in any
-     *  order) immediately after the end of a function it will create a new SgAsmFunctionDeclaration::FUNC_INTERPAD function to
+     *  order) immediately after the end of a function it will create a new SgAsmFunction::FUNC_INTERPAD function to
      *  hold the padding.
      *
      *  Here's an example of how to use this (see the post_cfg() method for actual use):
@@ -661,7 +660,7 @@ protected:
     virtual void pre_cfg(SgAsmInterpretation *interp=NULL);     /**< Detects functions before analyzing the CFG */
     virtual void analyze_cfg(SgAsmBlock::Reason);               /**< Detect functions by analyzing the CFG */
     virtual void post_cfg(SgAsmInterpretation *interp=NULL);    /**< Detects functions after analyzing the CFG */
-    virtual SgAsmFunctionDeclaration* build_ast(Function*);     /**< Build AST for a single function */
+    virtual SgAsmFunction* build_ast(Function*);                /**< Build AST for a single function */
     virtual SgAsmBlock* build_ast(BasicBlock*);                 /**< Build AST for a single basic block */
     virtual bool pops_return_address(rose_addr_t);              /**< Determines if a block pops the stack w/o returning */
     virtual void update_analyses(BasicBlock*);                  /* Makes sure cached analysis results are current. */
@@ -966,7 +965,7 @@ protected:
     std::map<rose_addr_t, BasicBlock*> insn2block;      /**< Map from insns address to basic block. */
     Functions functions;                                /**< All known functions, pending and complete. */
 
-    unsigned func_heuristics;                           /**< Bit mask of SgAsmFunctionDeclaration::FunctionReason bits. */
+    unsigned func_heuristics;                           /**< Bit mask of SgAsmFunction::FunctionReason bits. */
     std::vector<FunctionDetector> user_detectors;       /**< List of user-defined function detection methods. */
 
     FILE *debug;                                        /**< Stream where diagnistics are sent (or null). */

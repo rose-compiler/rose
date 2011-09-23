@@ -110,7 +110,7 @@ class MyUnparser: public AsmUnparser {
         InsnFuncEntry(FunctionCallGraph &cg): cg(cg) {}
         virtual bool operator()(bool enabled, const InsnArgs &args) {
             if (enabled) {
-                SgAsmFunctionDeclaration *func = SageInterface::getEnclosingNode<SgAsmFunctionDeclaration>(args.insn);
+                SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(args.insn);
                 if (func && func->get_entry_va()==args.insn->get_address()) {
                     args.output <<"\n========== Function ===========\n"
                                 <<func->reason_str(false) <<"\n";
@@ -124,7 +124,7 @@ class MyUnparser: public AsmUnparser {
                     Vertex called_v = func->get_cached_vertex();
                     typename boost::graph_traits<FunctionCallGraph>::in_edge_iterator ei, eend;
                     for (boost::tie(ei, eend)=in_edges(called_v, cg); ei!=eend; ++ei) {
-                        SgAsmFunctionDeclaration *caller = get(boost::vertex_name, cg, source(*ei, cg));
+                        SgAsmFunction *caller = get(boost::vertex_name, cg, source(*ei, cg));
                         args.output <<" 0x" <<std::hex <<caller->get_entry_va() <<std::dec;
                     }
                     args.output <<"\n";
@@ -145,9 +145,9 @@ class MyUnparser: public AsmUnparser {
                 args.output <<"{ ";
 
                 /* Name of (single) ROSE function containing this instruction. */
-                SgAsmFunctionDeclaration *rose_func = SageInterface::getEnclosingNode<SgAsmFunctionDeclaration>(args.insn);
+                SgAsmFunction *rose_func = SageInterface::getEnclosingNode<SgAsmFunction>(args.insn);
                 rose_addr_t rose_func_va = 0;
-                if (0!=(rose_func->get_reason() & SgAsmFunctionDeclaration::FUNC_LEFTOVERS))
+                if (0!=(rose_func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS))
                     rose_func = NULL;
                 if (rose_func) {
                     char tmp[64];
@@ -275,16 +275,16 @@ statistics(SgAsmInterpretation *interp, const Disassembler::InstructionMap &insn
     char tmp[128];
     int note=1;
 
-    std::vector<SgAsmFunctionDeclaration*> rose_functions;
+    std::vector<SgAsmFunction*> rose_functions;
     struct T1: public AstSimpleProcessing {
-        std::vector<SgAsmFunctionDeclaration*> &rose_functions;
-        T1(std::vector<SgAsmFunctionDeclaration*> &rose_functions): rose_functions(rose_functions) {}
+        std::vector<SgAsmFunction*> &rose_functions;
+        T1(std::vector<SgAsmFunction*> &rose_functions): rose_functions(rose_functions) {}
         void visit(SgNode *node) {
-            SgAsmFunctionDeclaration *func = isSgAsmFunctionDeclaration(node);
+            SgAsmFunction *func = isSgAsmFunction(node);
             if (func) {
-                if (func->get_reason() & SgAsmFunctionDeclaration::FUNC_LEFTOVERS) {
+                if (func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS) {
                     /* not a function -- just a collection of otherwise unassigned instructions */
-                } else if (SgAsmFunctionDeclaration::FUNC_INTERPAD==func->get_reason()) {
+                } else if (SgAsmFunction::FUNC_INTERPAD==func->get_reason()) {
                     /* not a function -- used exclusivly as padding between functions */
                 } else {
                     rose_functions.push_back(func);
@@ -341,10 +341,10 @@ statistics(SgAsmInterpretation *interp, const Disassembler::InstructionMap &insn
     // Number of bytes assigned to functions (other than FUNC_LEFTOVERS, and not counting overlaps twice)
     emap.clear();
     for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
-        SgAsmFunctionDeclaration *func = SageInterface::getEnclosingNode<SgAsmFunctionDeclaration>(ii->second);
+        SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(ii->second);
         if (func &&
-            0==(func->get_reason() & SgAsmFunctionDeclaration::FUNC_LEFTOVERS) &&
-            SgAsmFunctionDeclaration::FUNC_INTERPAD!=func->get_reason())
+            0==(func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS) &&
+            SgAsmFunction::FUNC_INTERPAD!=func->get_reason())
             emap.insert(ii->first, ii->second->get_raw_bytes().size());
     }
     size_t nassigned0 = emap.size();
@@ -359,10 +359,10 @@ statistics(SgAsmInterpretation *interp, const Disassembler::InstructionMap &insn
     // Number of bytes assigned to padding
     emap.clear();
     for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
-        SgAsmFunctionDeclaration *func = SageInterface::getEnclosingNode<SgAsmFunctionDeclaration>(ii->second);
+        SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(ii->second);
         if (func &&
-            0==(func->get_reason() & SgAsmFunctionDeclaration::FUNC_LEFTOVERS) &&
-            SgAsmFunctionDeclaration::FUNC_INTERPAD==func->get_reason())
+            0==(func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS) &&
+            SgAsmFunction::FUNC_INTERPAD==func->get_reason())
             emap.insert(ii->first, ii->second->get_raw_bytes().size());
     }
     size_t npadding0 = emap.size();
@@ -592,7 +592,7 @@ main(int argc, char *argv[])
     std::cerr <<"Partitioning instructions into functions...\n";
     Partitioner *partitioner = new Partitioner();
     partitioner->set_map(map);
-    partitioner->set_search(SgAsmFunctionDeclaration::FUNC_DEFAULT | SgAsmFunctionDeclaration::FUNC_INTRABLOCK);
+    partitioner->set_search(SgAsmFunction::FUNC_DEFAULT | SgAsmFunction::FUNC_INTRABLOCK);
     //partitioner->set_debug(stderr);
     SgAsmBlock *gblock = partitioner->partition(interp, insns);
     interp->set_global_block(gblock);

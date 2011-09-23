@@ -28,7 +28,7 @@ namespace VirtualBinCFG {
     struct AuxiliaryInformation {
         AddressToInstructionMap    addressToInstructionMap;
         InstructionToAddressesMap  indirectJumpTargets;
-        StatementToAddressesMap    returnTargets; /* statement is SgAsmBlock or SgAsmFunctionDeclaration */
+        StatementToAddressesMap    returnTargets; /* statement is SgAsmBlock or SgAsmFunction */
         InstructionToAddressesMap  incomingEdges;
 
     public:

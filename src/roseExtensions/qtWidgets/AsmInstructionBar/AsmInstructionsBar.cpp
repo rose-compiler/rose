@@ -102,7 +102,7 @@ void AsmInstructionsBar::setRoot( SgNode *root_ )
        {
            continue;
        }
-       else if( isSgAsmFunctionDeclaration( node ) )
+       else if( isSgAsmFunction( node ) )
        {
            background = QBrush( QColor( 255, 216, 0 ) );
        }

@@ -16,7 +16,7 @@ class ShowFunctions : public SgSimpleProcessing {
         {}
     size_t nfuncs;
     void visit(SgNode *node) {
-        SgAsmFunctionDeclaration *defn = isSgAsmFunctionDeclaration(node);
+        SgAsmFunction *defn = isSgAsmFunction(node);
         if (defn) {
             /* Scan through the function's instructions to find the range of addresses for the function. */
             rose_addr_t func_start=~(rose_addr_t)0, func_end=0;
@@ -35,12 +35,12 @@ class ShowFunctions : public SgSimpleProcessing {
 
             /* Kind of function */
             switch (defn->get_function_kind()) {
-              case SgAsmFunctionDeclaration::e_unknown:    fputs("  unknown", stdout); break;
-              case SgAsmFunctionDeclaration::e_standard:   fputs(" standard", stdout); break;
-              case SgAsmFunctionDeclaration::e_library:    fputs("  library", stdout); break;
-              case SgAsmFunctionDeclaration::e_imported:   fputs(" imported", stdout); break;
-              case SgAsmFunctionDeclaration::e_thunk:      fputs("    thunk", stdout); break;
-              default:                                     fputs("    other", stdout); break;
+              case SgAsmFunction::e_unknown:    fputs("  unknown", stdout); break;
+              case SgAsmFunction::e_standard:   fputs(" standard", stdout); break;
+              case SgAsmFunction::e_library:    fputs("  library", stdout); break;
+              case SgAsmFunction::e_imported:   fputs(" imported", stdout); break;
+              case SgAsmFunction::e_thunk:      fputs("    thunk", stdout); break;
+              default:                          fputs("    other", stdout); break;
             }
 
             /* Function name if known */
@@ -57,7 +57,7 @@ class ShowFunctions : public SgSimpleProcessing {
 class MyPartitioner: public Partitioner {
 public:
     MyPartitioner() {
-        set_search(get_search() & ~SgAsmFunctionDeclaration::FUNC_PATTERN);
+        set_search(get_search() & ~SgAsmFunction::FUNC_PATTERN);
         add_function_detector(user_pattern);
     }
 private:
@@ -78,7 +78,7 @@ private:
                 rre->get_descriptor().get_minor() != x86_gpr_bp)
                 continue;
             printf("Marking 0x%08"PRIx64" as the start of a function.\n", addr);
-            p->add_function(addr, SgAsmFunctionDeclaration::FUNC_USERDEF);
+            p->add_function(addr, SgAsmFunction::FUNC_USERDEF);
         }
     }
 };
@@ -109,7 +109,7 @@ main(int argc, char *argv[])
     SgProject *project = frontend(argc, argv);
 
     printf("Functions detected from binary executable:\n");
-    fputs(SgAsmFunctionDeclaration::reason_key("    ").c_str(), stdout);
+    fputs(SgAsmFunction::reason_key("    ").c_str(), stdout);
     printf("\n");
     printf("    Num  Low-Addr   End-Addr  Insns/Bytes   Reason        Kind   Name\n");
     printf("    --- ---------- ---------- ------------ ------------ -------- --------------------------------\n");

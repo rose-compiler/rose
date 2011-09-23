@@ -346,7 +346,7 @@ V_SgAsmOperandList
 V_SgAsmArmInstruction 	
 V_SgAsmx86Instruction 	
 V_SgAsmInstruction 	
-V_SgAsmFunctionDeclaration 	
+V_SgAsmFunction 	
 V_SgAsmDeclaration 	
 V_SgAsmStatement 	
 V_SgAsmBinaryAdd 	
