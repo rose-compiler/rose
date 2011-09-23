@@ -421,7 +421,7 @@ C99_TESTCODES_REQUIRED_TO_PASS = \
      test2008_01.c
 
 JAVA_TESTCODES_REQUIRED_TO_PASS = \
-    test2011_01.java \
+     test2011_01.java \
      test2011_02.java \
      test2011_03.java \
      test2011_06.java \
@@ -452,7 +452,11 @@ JAVA_TESTCODES_REQUIRED_TO_PASS = \
      test2011_38.java \
      test2011_39.java \
      test2011_40.java \
+     test2011_44.java \
+     test2011_46.java \
      test2011_47.java \
+     test2011_48.java \
+     test2011_49.java \
      test2011_50.java \
      pgc_test2011_03.java \
      pgc_test2011_08.java \
@@ -487,8 +491,26 @@ JAVA_TESTCODES_REQUIRED_TO_PASS = \
 #     cave3_instanceof0.java \
 #
 # Buggy cfg implementation
-#     test2011_41.java \
+# Weird cfg for System.out.println
+#     test2011_04.java \
+#     test2011_05.java \
 #     pgc_2011_30.java \
+#     test2011_21.java \
+#     test2011_22.java \
+#     test2011_23.java \
+#     test2011_24.java \
+#     test2011_25.java \
+#     test2011_27.java \
+#     test2011_28.java \
+# Synchronized missing
+#     test2011_41.java \
+# SgJavaImportStatement missing
+#     test2011_42.java \
+#     test2011_43.java \
+#     test2011_44.java \
+# Doesn't compile
+#     test2011_45.java \
+#     test2011_46.java \
 #
 
 # Configure-time automake conditional
