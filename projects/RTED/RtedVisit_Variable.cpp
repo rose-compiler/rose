@@ -299,6 +299,8 @@ namespace rted
 
     void handle(SgFunctionDefinition& n)
     {
+        // \todo the next call should not be here as it might alter the
+        //       current data structure
         vt.transf->transformIfMain(n);
         vt.transf->function_definitions.push_back(&n);
 

@@ -176,6 +176,9 @@ void appendClassName( SgExprListExp* arg_list, SgType* type );
 /// appends a boolean value
 void appendBool( SgExprListExp* arg_list, bool b );
 
+/// implemented in support
+SgExpression* getExprBelowAssignment(SgExpression* exp);
+
 //
 // helper functions to insert rted checks
 
@@ -205,6 +208,51 @@ SgAggregateInitializer* genAggregateInitializer(SgExprListExp* initexpr, SgType*
 /// \brief   creates a variable reference expression from a given name
 SgVarRefExp* genVarRef( SgInitializedName* initName );
 
+/// \brief   moves the body of a function f to a new function f`;
+///          f's body is replaced with code that forwards the call to f`.
+/// \return  a pair indicating the statement containing the call of f`
+///          and an initialized name refering to the temporary variable
+///          holding the result of f`. In case f returns void
+///          the initialized name is NULL.
+/// \param   definingDeclaration the defining function declaration of f
+/// \param   newName the name of function f`
+/// \pre     definingDeclaration must be a defining declaration of a
+///          free standing C/C++ function.
+///          typeid(SgFunctionDeclaration) == typeid(definingDeclaration)
+///          i.e., this function is NOT implemented for class member functions,
+///          template functions, procedures, etc.
+/// \details f's new body becomes { f`(...) } and { int res = f`(...); return res; }
+///          for functions returning void and a value, respectively.
+///          two function declarations are inserted in f's enclosing scope
+///          result_type f`(...);                       <--- (1)
+///          result_type f (...) { forward call to f` }
+///          result_type f`(...) { original code }      <--- (2)
+///          Calls to f are not updated, thus in the transformed code all
+///          calls will continue calling f (this is also true for
+///          recursive function calls from within the body of f`).
+///          After the function has created the wrapper,
+///          definingDeclaration becomes the wrapper function
+///          The definition of f` is the next entry in the
+///          statement list; the forward declaration of f` is the previous
+///          entry in the statement list.
+/// \todo    move to SageInterface
+/// \todo    are the returned values the most meaningful?
+///          maybe it is better to return the call statement of the original
+///          implementation?
+std::pair<SgStatement*, SgInitializedName*>
+wrapFunction(SgFunctionDeclaration& definingDeclaration, SgName newName);
+
+/// \overload
+/// \tparam  functor that generates a new name based on the old name.
+///          interface: SgName @nameGen(const SgName&)
+/// \param   nameGen name generator
+/// \todo    move to SageInterface
+template <class NameGen>
+std::pair<SgStatement*, SgInitializedName*>
+wrapFunction(SgFunctionDeclaration& definingDeclaration, NameGen nameGen)
+{
+  return wrapFunction(definingDeclaration, nameGen(definingDeclaration.get_name()));
+}
 
 typedef std::vector<SgMemberFunctionDeclaration*> SgMemberFunctionDeclarationPtrList;
 
@@ -347,12 +395,6 @@ public:
    void insertFreeCall(SgExpression* freeExp, AllocKind ak);
    void insertReallocateCall( SgFunctionCallExp* exp );
 
-   /**
-    * @return @c true @b iff @c exp is a descendent of an assignment expression
-    * (such as @ref SgAssignmentOp or @ref SgPlusAssignOp)
-    */
-   bool isthereAnotherDerefOpBetweenCurrentAndAssign(SgExpression* exp );
-
 public:
    bool isInInstrumentedFile( SgNode* n );
    void visit_isArraySgAssignOp(SgAssignOp* const);
@@ -368,8 +410,6 @@ public:
    void appendSignature( SgExprListExp* arg_list, SgType* return_type, const SgTypePtrList& param_types);
 private:
 
-   bool isUsedAsLvalue( SgExpression* exp );
-   SgExpression* getExprBelowAssignment(SgExpression* exp);
 
    // ********************* Deep copy classes in headers into source **********
    SgClassDeclaration* instrumentClassDeclarationIntoTopOfAllSourceFiles(SgProject* project, SgClassDeclaration* classDecl);
@@ -501,7 +541,7 @@ public:
 private:
    /// Renames the original main function
    /// copied from projects/UpcTranslation/upc_translation.C
-   void renameMain(SgFunctionDeclaration * sg_func);
+   void renameMain(SgFunctionDefinition& sg_func);
    void changeReturnStmt(ReturnInfo rstmt);
    void insertExitBlock(SgStatement& stmt, size_t openblocks);
 

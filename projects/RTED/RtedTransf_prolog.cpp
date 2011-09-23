@@ -6,6 +6,8 @@
 #include <string>
 #include <iostream>
 
+#include "sageFunctors.h"
+
 #include "RtedSymbols.h"
 #include "DataStructures.h"
 #include "RtedTransformation.h"
@@ -45,7 +47,7 @@ void RtedTransformation::transformIfMain(SgFunctionDefinition& mainFunc)
 {
     if (!is_main_func(mainFunc)) return;
 
-    renameMain(mainFunc.get_declaration());
+    renameMain(mainFunc);
 
     // find the last statement
     SgBasicBlock*         block = mainFunc.get_body();
@@ -59,26 +61,43 @@ void RtedTransformation::transformIfMain(SgFunctionDefinition& mainFunc)
 }
 
 
-void RtedTransformation::renameMain(SgFunctionDeclaration* sg_func)
+static
+void appendMainParamList(SgFunctionParameterList& plist, size_t szargs)
 {
+  if (szargs == 0) return;
+
+  SgInitializedName* arg1 = buildInitializedName("argc", buildIntType());
+  appendArg(&plist, arg1);
+  if (szargs == 1) return;
+
+  SgType*            charArrPtr = buildPointerType(buildPointerType(buildCharType()));
+  SgInitializedName* arg2 = buildInitializedName("argv", charArrPtr);
+  appendArg(&plist, arg2);
+  if (szargs == 2) return;
+
+  SgInitializedName* arg3 = buildInitializedName("envp", charArrPtr);
+  appendArg(&plist, arg3);
+}
+
+
+void RtedTransformation::renameMain(SgFunctionDefinition& maindef)
+{
+  // \todo reimplement in terms of wrapFunction
+
   // grab symbol before any modifications.
+  SgFunctionDeclaration*    sg_func = maindef.get_declaration();
   SgGlobal*                global_scope = isSgGlobal(sg_func->get_scope());
   SgName                   mainName = sg_func->get_name();
   SgFunctionSymbol*        symbol = global_scope->lookup_function_symbol(mainName, sg_func->get_type());
+  SgInitializedNamePtrList& args = sg_func->get_args();
+  const size_t              argssize = args.size();
 
   global_scope->remove_symbol(symbol);
   delete (symbol); // avoid dangling symbol!
 
-  // int main( int arc, char** argc)
-  SgInitializedName*       arg1 = buildInitializedName("argc", buildIntType());
-  SgType*                  type2 = buildPointerType(buildPointerType(buildCharType()));
-  SgInitializedName*       arg2 = buildInitializedName("argv", type2);
-  SgInitializedName*       arg3 = buildInitializedName("envp", type2);
   SgFunctionParameterList* paraList = buildFunctionParameterList();
 
-  appendArg(paraList, arg1);
-  appendArg(paraList, arg2);
-  appendArg(paraList, arg3);
+  appendMainParamList(*paraList, argssize);
 
   SgFunctionDeclaration*   func = buildDefiningFunctionDeclaration( mainName,
                                                                     buildIntType(),
@@ -88,17 +107,12 @@ void RtedTransformation::renameMain(SgFunctionDeclaration* sg_func)
   appendStatement(func, global_scope);
 
   // fill main body:
-  SgBasicBlock*            body = func->get_definition()->get_body();
-
-  //bupc_init_reentrant(&argc, &argv, &user_main);
-  SgExpression*            bupc_arg1 = buildVarRefExp("argc",body);
-  SgExpression*            bupc_arg2 = buildVarRefExp("argv",body);
-  SgExpression*            bupc_arg3 = buildVarRefExp("envp",body);
+  SgFunctionDefinition*     newFundef = func->get_definition();
+  SgBasicBlock*             body = newFundef->get_body();
+  SgInitializedNamePtrList& param_decls = paraList->get_args();
   SgExprListExp*           arg_list = buildExprListExp();
 
-  appendExpression(arg_list, bupc_arg1);
-  appendExpression(arg_list, bupc_arg2);
-  appendExpression(arg_list, bupc_arg3);
+  std::transform( param_decls.begin(), param_decls.end(), sg::sage_inserter(*arg_list), sg::VarRefBuilder(*newFundef) );
 
   SgExpression*      callmain = buildFunctionCallExp( "RuntimeSystem_original_main",
                                                       buildVoidType(),
@@ -131,25 +145,6 @@ void RtedTransformation::renameMain(SgFunctionDeclaration* sg_func)
   SgName             new_name("RuntimeSystem_original_main");
   sg_func->set_name(new_name);
   sg_func->get_declarationModifier().get_storageModifier().setExtern();
-
-  // check if main has argc, argv, envp
-  SgInitializedNamePtrList  args = sg_func->get_args();
-  SgFunctionParameterList*  parameterList = sg_func->get_parameterList();
-
-  SgPointerType* pType1 = new SgPointerType(SgTypeChar::createType());
-  SgPointerType* pType2 = new SgPointerType(pType1);
-
-  if(args.size() < 1) //add argc
-      appendArg(parameterList, buildInitializedName(SgName("argc"), SgTypeInt::createType()));
-
-
-  if(args.size() < 2) //add argc_v
-      appendArg(parameterList, buildInitializedName(SgName("argv"), pType2));
-
-
-  if(args.size() < 3) //add env_p
-      appendArg(parameterList, buildInitializedName(SgName("envp"), pType2));
-
 
   //handle function symbol:remove the original one, insert a new one
   symbol = new SgFunctionSymbol(sg_func);

@@ -57,6 +57,31 @@ namespace sg
   }
 
   //
+  // Convenience class
+
+  template <class _ReturnType>
+  struct DispatchHandler
+  {
+      typedef _ReturnType                 ReturnType;
+      typedef DispatchHandler<ReturnType> Base;
+
+      DispatchHandler()
+      : res()
+      {}
+
+      explicit
+      DispatchHandler(const ReturnType& defaultval)
+      : res(defaultval)
+      {}
+
+      operator ReturnType() const { return res; }
+
+    protected:
+      ReturnType res;
+  };
+
+
+  //
   // Sage query functions
 
   /// \brief *unchecked* down cast from SgNode to SageNode
@@ -2931,6 +2956,43 @@ namespace sg
   const SageNode* assert_sage_type(const SgNode* n)
   {
     return sg::dispatch(TypeRecoveryHandler<const SageNode>(), n);
+  }
+
+  /// \brief swaps the parent pointer of two nodes
+  /// \note  internal use
+  static inline
+  void swap_parent(SgNode* lhs, SgNode* rhs)
+  {
+    SgNode* tmp = lhs->get_parent();
+
+    lhs->set_parent(rhs->get_parent());
+    rhs->set_parent(tmp);
+  }
+
+  /// \overload
+  /// \note for non sage nodes (nodes without a parent)
+  ///       e.g., Rose_Containers
+  static inline
+  void swap_parent(void*, void*) {}
+
+  /// \brief  swaps children (of equal kind) between two ancestor nodes of the same type
+  /// \tparam SageNode the parent node type
+  /// \tparam SageChild the child node type
+  /// \param  lhs one parent node
+  /// \param  rhs another parent node
+  /// \param  getter the getter function to extract the child from @lhs (and @rhs)
+  /// \param  setter the setter function to store the child in @lhs (and @rhs)
+  template <class SageNode, class SageChild>
+  void swap_child(SageNode& lhs, SageNode& rhs, SageChild* (SageNode::*getter) () const, void (SageNode::*setter) (SageChild*))
+  {
+    SageChild* lhs_child = (lhs.*getter)();
+    SageChild* rhs_child = (rhs.*getter)();
+    ROSE_ASSERT(lhs_child && rhs_child);
+
+    (lhs.*setter)(rhs_child);
+    (rhs.*setter)(lhs_child);
+
+    swap_parent(lhs_child, rhs_child);
   }
 }
 #endif /* _SAGEGENERIC_HPP */

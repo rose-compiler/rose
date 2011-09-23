@@ -327,10 +327,14 @@ RtedTransformation::buildVariableCreateCallExpr(SgVarRefExp* var_ref, const stri
 
         appendAddressAndSize(arg_list, Whole, scope, var_ref, NULL);
 
-        const bool     var_init = initb && !isFileIOVariable(varType);
         AllocKind      allocKind = varAllocKind(*initName);
         SgExpression*  callName = buildStringVal(debug_name);
         SgExpression*  callNameExp = buildStringVal(debug_name);
+
+        // \todo check C++ rules for global init
+        initb = initb || ((allocKind & akGlobal) != 0);
+
+        const bool     var_init = initb && !isFileIOVariable(varType);
 
         appendBool      (arg_list, var_init);
         appendAllocKind (arg_list, allocKind);
@@ -591,6 +595,79 @@ void RtedTransformation::insertAccessVariable(SgVarRefExp* varRefE, SgExpression
         insertAccessVariable(initNamescope, derefExp, stmt, varRefE);
 }
 
+
+/**
+ * @return @c true @b iff @c exp is a descendent of an assignment expression
+ * (such as @ref SgAssignmentOp or @ref SgPlusAssignOp)
+ */
+
+static
+bool isthereAnotherDerefOpBetweenCurrentAndAssign(SgExpression* exp ) {
+    SgExpression* parent = isSgExpression( exp->get_parent() );
+
+    while(  parent
+            && !(
+                isSgAssignOp( parent )
+//                || isSgAssignInitializer( parent )
+                || isSgAndAssignOp( parent )
+                || isSgDivAssignOp( parent )
+                || isSgIorAssignOp( parent )
+                || isSgLshiftAssignOp( parent )
+                || isSgMinusAssignOp( parent )
+                || isSgModAssignOp( parent )
+                || isSgMultAssignOp( parent )
+                || isSgPlusAssignOp( parent )
+                || isSgPointerAssignOp( parent )
+                || isSgRshiftAssignOp( parent )
+                || isSgXorAssignOp( parent)
+            )) {
+      if (isSgPointerDerefExp(parent))
+      return true;
+
+        exp = parent;
+        parent = isSgExpression( parent->get_parent() );
+    }
+    return false;
+}
+
+struct LValueChecker : sg::DispatchHandler<bool>
+{
+  // \pp \note this is a quick fix; use SgExpression->isUsedAsLValue instead!!!
+  LValueChecker()
+  : Base()
+  {}
+
+  void handle(const SgNode& n) { sg::unexpected_node(n); }
+
+  void maybeLvalue() { res = true; }
+  void noLvalue()    { res = false; }
+
+  void handle(const SgStatement&)                { noLvalue(); }
+
+  void handle(const SgExpression&)               { maybeLvalue(); }
+
+  void handle(const SgSizeOfOp&)                 { noLvalue(); }
+  void handle(const SgUpcLocalsizeofExpression&) { noLvalue(); }
+  void handle(const SgTypeIdOp&)                 { noLvalue(); }
+  void handle(const SgPntrArrRefExp&)            { noLvalue(); }
+};
+
+static
+bool isUsedAsLvalue( SgExpression* exp )
+{
+    // \pp \todo use exp->isUsedAsLValue()
+    if( NULL == exp ) return false;
+
+    if (!sg::dispatch(LValueChecker(), exp->get_parent())) return false;
+
+    SgExpression* ancestor = getExprBelowAssignment( exp );
+    SgBinaryOp* assign = isSgBinaryOp( ancestor -> get_parent() );
+    return(
+        assign && assign -> get_lhs_operand() == ancestor
+    );
+}
+
+
 struct ReadCanceler
 {
   int rwmask;
@@ -610,6 +687,29 @@ struct ReadCanceler
 
   operator int() { return rwmask; }
 };
+
+static
+SgExpression* readingExpr(SgExpression* exp)
+{
+  // \pp if the expression (deref or arrow) yields
+  //     an array type, than do not check it.
+  // e.g.,
+  //       (*p)[1] = 0;
+  // (*p) itself is valid, if p is valid
+  // no need to read check / write check
+  // all of (*p)[*] ... array acccesses are
+  // checked for access-array
+
+  SgType* t = skip_TopLevelTypes(exp->get_type());
+
+  if (t != skip_ArrayType(t))
+  {
+    exp = 0;
+  }
+
+  return exp;
+}
+
 
 void RtedTransformation::insertAccessVariable( SgScopeStatement* initscope,
                                                SgExpression* derefExp,
@@ -681,8 +781,10 @@ void RtedTransformation::insertAccessVariable( SgScopeStatement* initscope,
                                             // check that the pointer is good
                                             accessed_exp = arrow_op -> get_lhs_operand();
                                     else
+                                    {
                                             // normally we'll be reading the member itself
-                                            accessed_exp = arrow_op;
+                                            accessed_exp = readingExpr(arrow_op);
+                                    }
                             }
                     }
                     else
@@ -692,6 +794,7 @@ void RtedTransformation::insertAccessVariable( SgScopeStatement* initscope,
                             //    *p = 24601;
                             //  It is necessary that &p, sizeof(p) is readable, but not
                             //  &(*p), sizeof(*p).
+                            // \pp why not use derefExp->isUsedAsLValue()
                             if (isUsedAsLvalue(derefExp))
                             {
                                     bool isReadOnly =
@@ -704,9 +807,7 @@ void RtedTransformation::insertAccessVariable( SgScopeStatement* initscope,
                                     //     e.g.: *(arr + idx) = 7
                                     //     here we do not want to test whether
                                     //     arr is readable or not, just test
-                                    //     the writeop
-                                    //     not sure, if this disables
-                                    //     some existing RTED tests
+                                    //     the writeop.
                                     if (!isReadOnly)
                                     {
                                       read_write_mask = sg::dispatch(ReadCanceler(read_write_mask), accessed_exp);
@@ -716,7 +817,7 @@ void RtedTransformation::insertAccessVariable( SgScopeStatement* initscope,
                             }
                             else
                             {
-                                    accessed_exp = deref_op;
+                                    accessed_exp = readingExpr(deref_op);
                             }
                     }
             }
@@ -727,17 +828,20 @@ void RtedTransformation::insertAccessVariable( SgScopeStatement* initscope,
             if ((read_write_mask & Read) != Read) accessed_exp = 0;
             if ((read_write_mask & Write) != Write) write_location_exp = 0;
 
-            appendAddressAndSize(arg_list, Elem, initscope, accessed_exp, NULL);
-            appendAddressAndSize(arg_list, Elem, initscope, write_location_exp, NULL);
-            appendExpression(arg_list, buildIntVal(read_write_mask));
-            appendFileInfo(arg_list, stmt);
+            if (accessed_exp || write_location_exp)
+            {
+              appendAddressAndSize(arg_list, Elem, initscope, accessed_exp, NULL);
+              appendAddressAndSize(arg_list, Elem, initscope, write_location_exp, NULL);
+              appendExpression(arg_list, buildIntVal(read_write_mask));
+              appendFileInfo(arg_list, stmt);
 
-            insertCheck( ilBefore,
-                         stmt,
-                         symbols.roseAccessVariable,
-                         arg_list,
-                         "RS : Access Variable, parameters : (address_r, sizeof(type)_r, address_w, sizeof(type)_w, r/w, filename, line, line transformed, error Str)"
-                       );
+              insertCheck( ilBefore,
+                           stmt,
+                           symbols.roseAccessVariable,
+                           arg_list,
+                           "RS : Access Variable, parameters : (address_r, sizeof(type)_r, address_w, sizeof(type)_w, r/w, filename, line, line transformed, error Str)"
+                         );
+            }
     } // basic block
     else
     {
