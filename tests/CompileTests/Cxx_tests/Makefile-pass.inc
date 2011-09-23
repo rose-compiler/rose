@@ -810,6 +810,10 @@ test2010_24.C \
 $(FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION)
 
 
+# DQ (9/23/2011): Failing astOutlining test as a result of making the get_originalExpressionTree() function virtual.
+# test2005_103.C
+
+
 # DQ (9/17/2011): Failing name qualification...fix after fixing original expression tree AST consistancy.
 FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION = \
  test2004_130.C \
