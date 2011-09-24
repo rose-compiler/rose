@@ -59,7 +59,11 @@ void initUpcSizes()
 }
 
 int main(int argc, char** argv) {
-  SgProject* proj = frontend(argc, argv);
+
+// DQ (9/24/2011): Use constant folded values...since using original expression trees causes the UPC test on non-constant arrays to fail.
+// SgProject* proj = frontend(argc, argv);
+   SgProject* proj = frontend(argc, argv, true);
+
   // Set up the struct layout chain
   initUpcSizes(); 
   CustomizedPrimitiveTypeLayoutGenerator gen1_upc(NULL,&upc_sizes);

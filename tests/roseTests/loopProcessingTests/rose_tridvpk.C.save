@@ -16,20 +16,20 @@ int main()
   int k;
   for (i = 0; i <= 99; i += 1) {
     for (j = 0; j <= 99; j += 1) {
-      ::duz[i][j][0] = (::duz[i][j][0] * ::b[0]);
-      ::tot[i][j] = 0;
+      duz[i][j][0] = (duz[i][j][0] * b[0]);
+      tot[i][j] = 0;
       for (k = 0; k <= 98; k += 1) {
         if (k >= 1) {
-          ::duz[i][j][k] = ((::duz[i][j][k] - (::a[k] * ::duz[i][j][k - 1])) * ::b[k]);
+          duz[i][j][k] = ((duz[i][j][k] - (a[k] * duz[i][j][k - 1])) * b[k]);
         }
         else {
         }
-        ::tot[i][j] = (::tot[i][j] + (::d[k] * ::duz[i][j][k]));
+        tot[i][j] = (tot[i][j] + (d[k] * duz[i][j][k]));
       }
-      ::duz[i][j][(100 - 1)] = ((::duz[i][j][(100 - 1)] - ::tot[i][j]) * ::b[(100 - 1)]);
-      ::duz[i][j][(100 - 2)] = (::duz[i][j][(100 - 2)] - (::e[(100 - 2)] * ::duz[i][j][(100 - 1)]));
+      duz[i][j][100 - 1] = ((duz[i][j][100 - 1] - tot[i][j]) * b[100 - 1]);
+      duz[i][j][100 - 2] = (duz[i][j][100 - 2] - (e[100 - 2] * duz[i][j][100 - 1]));
       for (k = 97; k >= 0; k += -1) {
-        ::duz[i][j][k] = ((::duz[i][j][k] - (::c[k] * ::duz[i][j][k + 1])) - (::e[k] * ::duz[i][j][(100 - 1)]));
+        duz[i][j][k] = ((duz[i][j][k] - (c[k] * duz[i][j][k + 1])) - (e[k] * duz[i][j][100 - 1]));
       }
     }
   }

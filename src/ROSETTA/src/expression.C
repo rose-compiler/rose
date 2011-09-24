@@ -1059,6 +1059,7 @@ Grammar::setUpExpressions ()
      ValueExp.setFunctionPrototype ( "HEADER_VALUE_EXPRESSION", "../Grammar/Expression.code" );
 
 #if 1
+  // DQ (9/23/2011): Modified this to not be traversed.  The traversal leads to an inconsistant AST (incrementally applying fixes).
   // DQ (9/22/2011): Double checked and this was marked as DEF_TRAVERSAL in master (so we don't have to change this case).
   // DQ (9/17/2011): Put back the traversal over the originalExpressionTree (because it will be set to NULL in post processing).
   // DQ (9/16/2011): Modified this to not be traversed.  The traversal leads to an inconsistant AST
@@ -1073,8 +1074,10 @@ Grammar::setUpExpressions ()
   //                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
   // ValueExp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
   //                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // ValueExp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
+  //                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      ValueExp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
-                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
      BoolValExp.setFunctionPrototype ( "HEADER_BOOLEAN_VALUE_EXPRESSION", "../Grammar/Expression.code" );
@@ -1470,6 +1473,7 @@ Grammar::setUpExpressions ()
 
 
 #if 1
+  // DQ (9/23/2011): Modified this to not be traversed.  The traversal leads to an inconsistant AST (incrementally applying fixes).
   // DQ (9/22/2011): Double checked and this was marked as DEF_TRAVERSAL in master (so we don't have to change this case).
   // DQ (9/17/2011): Put back the traversal over the originalExpressionTree (because it will be set to NULL in post processing).
   // DQ (9/16/2011): Modified this to not be traversed.  The traversal leads to an inconsistant AST
@@ -1487,8 +1491,10 @@ Grammar::setUpExpressions ()
   //                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
   // CastExp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
   //                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // CastExp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
+  //                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      CastExp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
-                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
   // DQ (6/2/2011): Added support for name qualification.

@@ -241,7 +241,21 @@ SgValueExp::get_constant_folded_value_as_string() const
              {
                const SgCharVal* charValueExpression = isSgCharVal(this);
                ROSE_ASSERT(charValueExpression != NULL);
-               s = charValueExpression->get_value();
+            // DQ (9/24/2011): Handle case where this is non-printable character (see test2011_140.C, where
+            // the bug was the the dot file had a non-printable character and caused zgrviewer to crash).
+            // s = charValueExpression->get_value();
+               char value = charValueExpression->get_value();
+               if (isalnum(value) == true)
+                  {
+                 // Leave this as a alpha or numeric value where possible.
+                    s = charValueExpression->get_value();
+                  }
+                 else
+                  {
+                 // Convert this to be a string of the numeric value so that it will print.
+                    snprintf (buffer,max_buffer_size,"%d",value);
+                    s = buffer;
+                  }
                break;
              }
 
@@ -300,6 +314,32 @@ SgValueExp::get_constant_folded_value_as_string() const
                break;
              }
 
+       // DQ (9/24/2011): Added support for complex values to be output as strings.
+          case V_SgComplexVal:
+             {
+               const SgComplexVal* complexValueExpression = isSgComplexVal(this);
+               ROSE_ASSERT(complexValueExpression != NULL);
+#if 0
+               float numericValue_realPart      = complexValueExpression->get_real_value();
+               float numericValue_imaginaryPart = complexValueExpression->get_imaginary_value();
+               printf ("numericValue of constant folded expression = (%f,%f) \n",numericValue_realPart,numericValue_imaginaryPart);
+               snprintf (buffer,max_buffer_size,"(%f,%f)",numericValue_realPart,numericValue_imaginaryPart);
+               s = buffer;
+#else
+            // ROSE_ASSERT(complexValueExpression->get_real_value() != NULL);
+               string real_string = "null";
+               if (complexValueExpression->get_real_value() != NULL)
+                    real_string = complexValueExpression->get_real_value()->get_constant_folded_value_as_string();
+
+            // ROSE_ASSERT(complexValueExpression->get_imaginary_value() != NULL);
+               string imaginary_string = "null";
+               if (complexValueExpression->get_imaginary_value() != NULL)
+                    imaginary_string = complexValueExpression->get_imaginary_value()->get_constant_folded_value_as_string();
+
+               s = "(" + real_string + "," + imaginary_string + ")";
+#endif
+               break;
+             }
 
           default:
              {
