@@ -124,7 +124,7 @@ TESTCODES_REQUIRED_TO_PASS = \
 #    mergeTest_124.C 
 
 # DQ (9/24/2011): Comment these out since they do not pass with the new original expression tree handling, and will have to be debugged seperately.
-# TESTCODES_REQUIRED_TO_PASS += mergeTest_90.C mergeTest_124.C
+TESTCODES_REQUIRED_TO_PASS += mergeTest_90.C mergeTest_124.C
 
 
 # This fails for GNU g++ version 4.3

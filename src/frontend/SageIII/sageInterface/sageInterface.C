@@ -13130,6 +13130,45 @@ SageInterface::deleteAST ( SgNode* n )
    }
 
 
+
+
+#ifndef USE_ROSE
+// DQ (9/25/2011):  The deleteAST() function will not remove original expression trees behind constant folded expressions.
+// These exist in the AST within the internal construction of the AST until they are simplified in the AST post-processing.
+// In the post-processing either:
+//    1) the constant folded values are kept and the original expression trees deleted (optional, controled by default parameter to function "frontend()", OR
+//    2) the constant folded values are replaced by the original expression trees, and the constant folded values are deleted (default).
+// Either way, after the AST post-processing the AST is simplified.  Until then the expression trees can contain constant 
+// folded values and the values will have a pointer to the original expression tree.  Before (9/16/2011) the original
+// tree would also sometimes (not uniformally) be traversed as part of the AST.  This was confusing (to people and
+// to numerous forms of analysis), so this is being fixed to be uniform (using either of the methods defined above).
+// However, the fact that until post-processing the AST has this complexity, and that the AST traversal does not
+// traverse the original expression trees (now uniform); means that we need a special delete function for subtrees
+// that are not use post-processed.  This is the special purpose function that we need.
+//
+// NOTE: This function is called from the SgArrayType::createType() member function and in the constant folding AST post-processing.
+//
+void SageInterface::deleteExpressionTreeWithOriginalExpressionSubtrees(SgNode* root)
+   {
+     struct Visitor: public AstSimpleProcessing
+        {
+          virtual void visit(SgNode* n)
+             {
+               SgExpression* expression = isSgExpression(n);
+               if (expression != NULL)
+                  {
+                    Visitor().traverse(expression->get_originalExpressionTree(), postorder);
+                  }
+
+               delete (n);
+             }
+        };
+
+     Visitor().traverse(root, postorder);
+   }
+#endif
+
+
 void
 SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicBlock* targetBlock )
    {

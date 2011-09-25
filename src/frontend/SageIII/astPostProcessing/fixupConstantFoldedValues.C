@@ -117,7 +117,8 @@ deleteOriginalExpressionTree(SgExpression* exp)
 #endif
        // Remove the original expression tree...
        // delete value->get_originalExpressionTree();
-          SageInterface::deleteAST(originalExpressionTree);
+       // SageInterface::deleteAST(originalExpressionTree);
+          SageInterface::deleteExpressionTreeWithOriginalExpressionSubtrees(originalExpressionTree);
 
        // Set the pointer to the original expression tree to NULL.
           exp->set_originalExpressionTree(NULL);
@@ -317,7 +318,7 @@ ConstantFoldedValueReplacer::operator()(SgNode*& key, const SgName & debugString
                  // For the case of a SgEnumVal, don't use the original expression tree (see test2005_194.C)
                  // The original expression tree holds the value used for the enum field, instead of the 
                  // reference to the correct enum field).
-                    printf ("ENUM VALUE special handling: we call deleteOriginalExpressionTree(keyExpression = %p) \n",keyExpression);
+                 // printf ("ENUM VALUE special handling: we call deleteOriginalExpressionTree(keyExpression = %p) \n",keyExpression);
                     deleteOriginalExpressionTree(keyExpression);
                   }
              }

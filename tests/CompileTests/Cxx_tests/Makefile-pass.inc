@@ -175,6 +175,7 @@ test2004_93.C \
 test2004_94.C \
 test2004_95.C \
 test2004_96.C \
+test2004_97.C \
 test2004_98.C \
 test2004_99.C \
 test2004_100.C \
@@ -287,6 +288,7 @@ test2005_47.C \
 test2005_48.C \
 test2005_49.C \
 test2005_50.C \
+test2005_51.C \
 test2005_52.C \
 test2005_53.C \
 test2005_55.C \
@@ -770,6 +772,15 @@ test2011_118.C \
 test2011_119.C \
 test2011_120.C \
 test2011_133.C \
+test2011_135.C \
+test2011_136.C \
+test2011_137.C \
+test2011_138.C \
+test2011_139.C \
+test2011_140.C \
+test2011_141.C \
+test2011_142.C \
+test2011_143.C \
    test2005_112.C \
    test2005_117.C \
    test2005_154.C \
@@ -804,7 +815,8 @@ inputBug327.C \
 test2005_09.C \
 test2005_104.C \
 test2010_24.C \
-$(FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION)
+$(FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION) \
+$(FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION_FOR_FILE_IO_TESTS)
 
 
 # DQ (9/17/2011): Failing name qualification...fix after fixing original expression tree AST consistancy.
@@ -828,8 +840,6 @@ test2010_25.C
 
 # DQ (9/24/2011): Failing astFileIO test as a result of making replacing constant folded values with the original expression trees.
 FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION_FOR_FILE_IO_TESTS = \
- test2004_97.C \
- test2005_51.C \
  test2006_125.C \
  test2011_121.C 
 
