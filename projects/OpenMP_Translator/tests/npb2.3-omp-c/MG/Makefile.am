@@ -14,7 +14,8 @@ $(TESTCODES_REQUIRED_TO_PASS) \
 $(TESTCODE_CURRENTLY_FAILING)
 
 # ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict
-ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 --edg:restrict
+# ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 --edg:restrict
+ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 --edg:restrict -rose:detect_dangling_pointers 2
 
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
 # VALGRIND = /usr/apps/valgrind/new/bin/valgrind $(VALGRIND_OPTIONS)
@@ -49,7 +50,6 @@ run_qm_tests:
 run_qm_gui:
 	cd QMTest; qmtest gui
 
-if ROSE_USE_OMNI_OPENMP
 check-local:
 	@echo "Test for ROSE OpenMP Translator."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
@@ -58,13 +58,6 @@ check-local:
 	@echo "***********************************************************************************************************"
 	@echo "****** ROSE/projects/OpenMP_Translator/tests/npb2.3-omp-c/MG: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"
-else
-check-local:
-	@echo "OpenMP tests NOT run.  To run these reconfigure with:"
-	@echo "****************************************************************************"
-	@echo "****** make check not run here: configure --with-omni_omp_runtime_support=<path> ******"
-	@echo "****************************************************************************"
-endif
 
 EXTRA_DIST = README globals.h  npbparams.h mg.input.sample $(ALL_TESTCODES)
 

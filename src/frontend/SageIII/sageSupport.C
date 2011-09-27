@@ -2157,6 +2157,10 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
   //     frequently.
   //     Note: this detects only dangling pointers to ROSE IR nodes, nothing more.
   //
+#if 0
+  // Test ROSE using default level 2 (error that will cause assertion) when not specified via the command line.
+     set_detect_dangling_pointers(2);
+#endif
      int integerDebugOption = 0;
      if ( CommandlineProcessing::isOptionWithParameter(argv,"-rose:","detect_dangling_pointers",integerDebugOption,true) == true )
         {

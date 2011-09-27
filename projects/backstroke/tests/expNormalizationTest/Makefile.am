@@ -481,6 +481,7 @@ test2006_70.C \
 test2006_71.C \
 test2006_72.C \
 test2006_73.C \
+test2006_74.C \
 test2006_75.C \
 test2006_76.C \
 test2006_77.C \
@@ -493,6 +494,7 @@ test2006_83.C \
 test2006_84.C \
 test2006_85.C \
 test2006_86.C \
+test2006_87.C \
 test2006_88.C \
 test2006_89.C \
 test2006_90.C \
@@ -676,7 +678,6 @@ test2007_51.C
 
 # DQ (9/26/2011): These tests fail the new AST consistancy test for dangling pointers to IR nodes.
 # test2006_74.C 
-# test2006_87.C 
 
 
 
@@ -713,7 +714,10 @@ simple_test:expNormTest FORCE
 ## Include the path to A++ and the transformation specification
 TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
 
-ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0
+# DQ (9/27/2011): Added optional test for detection of dangling pointers in AST (fails only for test2006_74.C).
+#                 Relax the test to level 1 (from level 2: error) to just provide error message instead of assertion.
+# ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0
+ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 -rose:detect_dangling_pointers 1
 
 $(TEST_Objects):expNormTest 
 	@cp $(top_srcdir)/tests/CompileTests/Cxx_tests/$(@:.o=.C) $(@:.o=.C)
