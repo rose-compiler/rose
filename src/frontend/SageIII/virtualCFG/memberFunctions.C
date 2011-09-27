@@ -4893,3 +4893,57 @@ bool SgReturnStmt::isChildUsedAsLValue(const SgExpression* child) const
         ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgReturnStmt");
         return false;
 }
+
+
+/**** JAVA SUPPORT ****/
+
+unsigned int
+SgJavaSynchronizedStatement::cfgIndexForEnd() const
+   {
+     return 2;
+   }
+
+bool
+SgJavaSynchronizedStatement::cfgIsIndexInteresting(unsigned int idx) const
+   {
+     return idx == 1;
+   }
+
+unsigned int
+SgJavaSynchronizedStatement::cfgFindChildIndex(SgNode* n)
+   {
+     if (n == this->get_expression()) {
+          return 0;
+     } else if (n == this->get_body()) {
+    	 return 1;
+     } else {
+         ROSE_ASSERT (!"Bad child in java synchronized statement");
+     }
+     return 0;
+   }
+std::vector<CFGEdge>
+SgJavaSynchronizedStatement::cfgOutEdges(unsigned int idx) {
+  std::vector<CFGEdge> result;
+  switch (idx) {
+    case 0: makeEdge(CFGNode(this, idx), this->get_expression()->cfgForBeginning(), result); break;
+    case 1: makeEdge(CFGNode(this, idx), this->get_body()->cfgForBeginning(), result);
+            break;
+    case 2: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
+    default: ROSE_ASSERT (!"Bad index for SgJavaSynchronizedStatement");
+  }
+  return result;
+}
+
+std::vector<CFGEdge>
+SgJavaSynchronizedStatement::cfgInEdges(unsigned int idx) {
+  std::vector<CFGEdge> result;
+  addIncomingFortranGotos(this, idx, result);
+  switch (idx) {
+    case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
+    case 1: makeEdge(this->get_expression()->cfgForEnd(), CFGNode(this, idx), result); break;
+    case 2: makeEdge(this->get_body()->cfgForEnd(), CFGNode(this, idx), result);
+            break;
+    default: ROSE_ASSERT (!"Bad index for SgJavaSynchronizedStatement");
+  }
+  return result;
+}
