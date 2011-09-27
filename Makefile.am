@@ -49,6 +49,21 @@ all-local: rose.docs
 
 all: enforce_policies remove_sage3basic_h_pch
 
+core:
+	$(MAKE) -C $(top_builddir)/src
+	$(MAKE) -C $(top_builddir)/exampleTranslators
+	$(MAKE) -C $(top_builddir)/tutorial
+
+install-core: core
+	$(MAKE) install-data-local
+	$(MAKE) install -C $(top_builddir)/src
+	$(MAKE) install -C $(top_builddir)/exampleTranslators
+	$(MAKE) install -C $(top_builddir)/tutorial
+
+install-compass: install-core
+	$(MAKE) -C $(top_builddir)/projects/compass
+	$(MAKE) install -C $(top_builddir)/projects/compass
+
 # DQ (10/2/10): Of course this will over-rise the "make install" rule, so we can't 
 # allow exactly this (what was I thinking?). Commented out until I get a better fix.
 # DQ (9/29/2010): Next three lines are a modification suggested by Scott Warren to 
