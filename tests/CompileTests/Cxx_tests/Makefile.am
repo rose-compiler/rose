@@ -102,7 +102,8 @@ test2010_02.o: ../../testTranslator
 
 test2010_07.o: ../../testTranslator
 	echo "Running boost specific test."
-	../../testTranslator $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2010_07.C -o test2010_07.o
+#	../../testTranslator $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2010_07.C -o test2010_07.o
+	../../testTranslator $(ROSE_FLAGS) -I$(top_builddir) -I$(top_srcdir)/src -I$(top_srcdir)/src/util -c $(srcdir)/test2010_07.C -o test2010_07.o
 
 test2010_08.o: ../../testTranslator
 	echo "Running boost specific test."

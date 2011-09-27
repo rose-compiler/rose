@@ -2142,6 +2142,42 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
          set_partitionerConfigurationFileName(stringParameter);
      }
 
+
+  // DQ (9/26/2011): Adding options to support internal debugging of ROSE based tools and language support.
+  // ****************
+  // DEBUGING SUPPORT
+  // ****************
+  //
+  // Support for detecting dangling pointers
+  //     This is the first level of this sort of support. This level will be fooled by any reuse of 
+  //     the memory (from new allocations) previously deleted. A later leve of this option will disable
+  //     reuse of previously deleted memory for IR nodes; but it will consume more memory for translators
+  //     that delete a lot of IR nodes as part of there functionality.  I expect this to only seriously
+  //     make a difference for the AST merge operations which allocate and delete large parts of ASTs
+  //     frequently.
+  //     Note: this detects only dangling pointers to ROSE IR nodes, nothing more.
+  //
+     int integerDebugOption = 0;
+     if ( CommandlineProcessing::isOptionWithParameter(argv,"-rose:","detect_dangling_pointers",integerDebugOption,true) == true )
+        {
+       // If this was set and a parameter was not specified or the value set to zero, then let the value be 1.
+       // I can't seem to detect if the option was specified without a parameter.
+          if (integerDebugOption == 0)
+             {
+               integerDebugOption = 1;
+               if ( SgProject::get_verbose() >= 1 )
+                    printf ("option -rose:detect_dangling_pointers found but value not specified or set to 0 default (reset integerDebugOption = %d) \n",integerDebugOption);
+             }
+          else
+             {
+               if ( SgProject::get_verbose() >= 1 )
+                    printf ("option -rose:detect_dangling_pointers found with level (integerDebugOption = %d) \n",integerDebugOption);
+             }
+
+       // Set the level of the debugging to support.
+          set_detect_dangling_pointers(integerDebugOption);
+        }
+
   //
   // internal testing option (for internal use only, these may disappear at some point)
   //
@@ -2456,6 +2492,9 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
 
   // DQ (10/3/2010): Adding support for having CPP directives explicitly in the AST (as IR nodes instead of handled similar to comments).
      optionCount = sla(argv, "-rose:", "($)^", "(addCppDirectivesToAST)",filename,1);
+
+  // DQ (9/26/2011): Added support for different levesl of detection for dangling pointers.
+     optionCount = sla(argv, "-rose:", "($)^", "detect_dangling_pointers",&integerOption,1);
 
 #if 1
      if ( (ROSE_DEBUG >= 1) || (SgProject::get_verbose() > 2 ))
@@ -4984,6 +5023,9 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
 
        // DQ (9/19/2010): UPC support for upc_threads to define the "THREADS" variable.
           argument == "-rose:upc_threads" ||
+
+       // DQ (9/26/2011): Added support for detection of dangling pointers within translators built using ROSE.
+          argument == "-rose:detect_dangling_pointers" ||   // Used to specify level of debugging support for optional detection of dangling pointers 
           false)
         {
           result = true;
@@ -8683,6 +8725,15 @@ SgFile::usage ( int status )
 "                             Note that the folder must be empty (or does not exist).\n"
 "                             If not specified, the default relative location _rose_ \n"
 "                             is used.\n"                  
+"\n"
+"Debugging options:\n"
+"     -rose:detect_dangling_pointers LEVEL \n"
+"                             detects references to previously deleted IR nodes in the AST\n"
+"                             (part of AST consistancy tests, default is false since some codes fail this test)\n"
+"                             LEVEL is one of:\n"
+"                               0: off (does not issue warning)\n"
+"                               1: on (issues warning with information)\n"
+"                               2: on (issues error and exists)\n"
 "\n"
 "Testing Options:\n"
 "     -rose:negative_test     test ROSE using input that is expected to fail\n"

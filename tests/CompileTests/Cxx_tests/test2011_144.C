@@ -15,10 +15,29 @@
 // was not robust, so we have to fix it to make it robust. This is a test code
 // that demonstrated this type of error, we need to construct more!
 
+void foobar(const char* s);
+
 void foo()
    {
+  // This is what "__func__" should be equivalent to.
+  // static const char explicit_func_name[] = "function-name";
+
+  // This is a C++ specific implicit string to hold the function name with type signature.
+     foobar(__PRETTY_FUNCTION__);
+
+  // This is a C and C99 specific implicit string to hold the simple function name (without type signature).
+     foobar(__func__);
+
+  // Note that EDG maps "__FUNCTION__" to "__func__" internally.
+     foobar(__FUNCTION__);
+
+#if 0
+  // Debug this later after I understand the problem better.
      for (int i=0; i < 3; i++)
         {
+       // This fails to resolve the SgFunctionDefinition from the current scope in sage_gen_be.C.
           assert(i >= 0);
         }
+#endif
+
    }

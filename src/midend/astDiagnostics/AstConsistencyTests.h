@@ -457,4 +457,32 @@ class TestForProperLanguageAndSymbolTableCaseSensitivity : public AstTopDownProc
    };
 
 
+
+class TestForReferencesToDeletedNodes : public ROSE_VisitTraversal
+   {
+  // DQ (9/26/2011): This class is part of a test to verify consistancy of 
+  // the AST by verifying that no IR node referenced in the AST is a SgNode.
+  // Note that in a proper AST all IR nodes are derived from an SgNode, but
+  // that there should be no IR nodes in the AST that are only SgNode types.
+  // It can happen that a referenced IR nodes will only be able to report 
+  // that it is a SgNode, when this happens it is generally because it is 
+  // and dangling pointer to an IR node that was deleted (at which point
+  // it can no longer be identified by type to be more than an SgNode).
+  // So this is a test for references in the AST to IR nodes that have been
+  // deleted.
+
+     private:
+         int detect_dangling_pointers;
+
+     public:
+          TestForReferencesToDeletedNodes(int input_detect_dangling_pointers);
+
+       // Overloaded pure virtual function.
+          void visit( SgNode* node );
+
+       // Simple funtion to call to get the traversal started...
+          static void test( SgProject* project );
+   };
+
+
 #endif

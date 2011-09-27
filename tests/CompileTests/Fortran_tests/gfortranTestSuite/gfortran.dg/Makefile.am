@@ -1154,6 +1154,8 @@ OCT_1_2010_PREVIOUSLY_PASSING_F90_TESTCODES_REQUIRED_TO_PASS = \
    zero_sized_1.f90 \
    zero_sized_2.f90
 
+# DQ (9/26/2011): Current failing test for new AST consistancy test of references to previously deleted IR nodes.
+
 
 # Currently failing tests (1/24/2011):
 #  proc_decl_15.f90 
@@ -1605,8 +1607,9 @@ PERFORMANCE_REPORT_OPTION = -rose:compilationPerformanceFile $(top_builddir)/FOR
 # ROSE_FLAGS = -rose:verbose 2
 
 # These options appear to improve the robustness of the tests... still looking at why...
-ROSE_FLAGS = -rose:verbose 0 -rose:skip_syntax_check -rose:skipfinalCompileStep
 # ROSE_FLAGS = -rose:verbose 0 -rose:skip_syntax_check
+# ROSE_FLAGS = -rose:verbose 0 -rose:skip_syntax_check -rose:skipfinalCompileStep
+ROSE_FLAGS = -rose:verbose 0 -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:detect_dangling_pointers 1
 
 # VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
 # VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes

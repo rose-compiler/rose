@@ -10,9 +10,7 @@ using namespace upcTranslation;
 int
 main (int argc, char *argv[])
 {
-// DQ (9/25/2011): USe the constant folded values to support the ABI evaluation.
-// SgProject *project = frontend (argc, argv);
-   SgProject *project = frontend (argc, argv,true);
+  SgProject *project = frontend (argc, argv);
 
   ROSE_ASSERT (project != NULL);
 

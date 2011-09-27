@@ -508,6 +508,13 @@ AstTests::runAllTests(SgProject* sageProject)
   // DQ (11/28/2010): Test to make sure that Fortran is using case insensitive symbol tables and that C/C++ is using case sensitive symbol tables.
      TestForProperLanguageAndSymbolTableCaseSensitivity::test(sageProject);
 
+        {
+          TimingPerformance timer ("AST check for references to deleted IR nodes:");
+
+       // DQ (9/26/2011): Test for references to deleted IR nodes in the AST.
+          TestForReferencesToDeletedNodes::test(sageProject);
+        }
+
 #if 1
   // Comment out to see if we can checkin what we have fixed recently!
 
@@ -4161,6 +4168,8 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                     case V_SgInitializedName:
                        {
                          SgInitializedName* initializedName             = isSgInitializedName(node);
+#if 0
+                      // DQ (9/26/2011): Older version of code.
                          SgVarRefExp*       variableReferenceExpression = isSgVarRefExp(node->get_parent());
                          if (initializedName != NULL && variableReferenceExpression != NULL && variableReferenceExpression->get_symbol()->get_declaration() == node)
                             {
@@ -4179,6 +4188,32 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                               printf ("Warning: TestChildPointersInMemoryPool::visit(): Node is not in parent's child list, node: %p = %s = %s parent: %p = %s \n",
                                    node,node->class_name().c_str(),SageInterface::get_name(node).c_str(),parent,parent->class_name().c_str());
                             }
+#else
+                      // DQ (9/26/2011): Trying to handle this via a better implementation of this test.
+                         if (initializedName != NULL)
+                            {
+                           // Check for "__PRETTY_FUNCTION__" and "__func__" since these are implicit variables and
+                           // are defined in ROSE to have a parent pointing to the associated SgFunctionDefinition.
+                           // This is a change where it used to point to the associated SgVarRefExp, but this can be
+                           // deleted if the constant folded value is subsituted with the original expression tree.
+                           // It also never made since to have it be associated with anything but the SgFunctionDefinition
+                           // also both of these are handled uniformally now.  This fix permits more passing tests of
+                           // the AST merge and the AST File I/O support in ROSE.  This fix is a part of the move in ROSE
+                           // to support either the constant folded values (optional) or the original expression trees (default).
+                              if (initializedName->get_name() == "__PRETTY_FUNCTION__" || initializedName->get_name() == "__func__")
+                                 {
+                                // This not is not in the child list of the parent, this is expected.
+                                   ROSE_ASSERT(node->get_parent() != NULL);
+                                // printf ("In TestChildPointersInMemoryPool::visit(): (__PRETTY_FUNCTION__ || __func__) node->get_parent() = %p = %s \n",node->get_parent(),node->get_parent()->class_name().c_str());
+                                   ROSE_ASSERT(isSgFunctionDefinition(node->get_parent()) != NULL);
+                                 }
+                                else
+                                 {
+                                   printf ("Warning: TestChildPointersInMemoryPool::visit(): Node is not in parent's child list, node: %p = %s = %s parent: %p = %s \n",
+                                        node,node->class_name().c_str(),SageInterface::get_name(node).c_str(),parent,parent->class_name().c_str());
+                                 }
+                            }
+#endif
                          break;
                        }
 
@@ -4279,7 +4314,8 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                          SgVariableSymbol* variableSymbol = isSgVariableSymbol(node);
                       // SgInitializedName* initializedName             = isSgInitializedName(variableSymbol->get_declaration());
                          SgInitializedName* initializedName             = variableSymbol->get_declaration();
-                         if (initializedName != NULL && initializedName->get_file_info()->isCompilerGenerated() == true && initializedName->get_name() == "__PRETTY_FUNCTION__")
+                      // if (initializedName != NULL && initializedName->get_file_info()->isCompilerGenerated() == true && initializedName->get_name() == "__PRETTY_FUNCTION__")
+                         if ( initializedName != NULL && initializedName->get_file_info()->isCompilerGenerated() == true && (initializedName->get_name() == "__PRETTY_FUNCTION__" || initializedName->get_name() == "__func__") )
                             {
                            // This is the special case of the SgVariableSymbol generated for "void foo(const char*); foo(__PRETTY_FUNCTION__);"
                            // Note that __PRETTY_FUNCTION__ is a compiler generated const char* (C string).
@@ -5133,3 +5169,60 @@ TestForProperLanguageAndSymbolTableCaseSensitivity::test(SgNode* node)
   // printf ("DONE: Traversing AST to support TestForProperLanguageAndSymbolTableCaseSensitivity::test() \n");
    }
 
+
+TestForReferencesToDeletedNodes::TestForReferencesToDeletedNodes(int input_detect_dangling_pointers)
+   : detect_dangling_pointers(input_detect_dangling_pointers)
+   {
+  // Nothing to do here!
+   }
+
+
+void
+TestForReferencesToDeletedNodes::visit ( SgNode* node )
+   {
+  // DQ (9/26/2011): This is a new test for possible references to deleted IR nodes in the AST (dangling pointers).
+  // It works as a byproduct of the way that memory pool works.  It might work better if we also added an option
+  // to prevent previously deleted IR nodes from reusing memory in the memory pool.  This can be considered for 
+  // future work.
+
+     ROSE_ASSERT(node != NULL);
+  // printf ("TestForReferencesToDeletedNodes::visit: node = %s \n",node->class_name().c_str());
+
+  // Only output information about this test if set to value greater than zero (this avoids anoying output for existing translators, e.g. CAF2 work).
+     if (detect_dangling_pointers > 0)
+        {
+          vector<pair<SgNode*,string> > v = node->returnDataMemberPointers();
+
+          for (unsigned long i = 0; i < v.size(); i++)
+             {
+               SgNode* child = v[i].first;
+
+               if (child != NULL && child->variantT() == V_SgNode)
+                  {
+                 // This is a deleted IR node
+                    SgFile* file = TransformationSupport::getFile(node);
+                    string filename = (file != NULL) ? file->getFileName() : "unknown file";
+                    printf ("Error in AST consistancy detect_dangling_pointers test for file %s: Found a child = %p = %s child name = %s of node = %p = %s that was previously deleted \n",filename.c_str(),child,child->class_name().c_str(),v[i].second.c_str(),node,node->class_name().c_str());
+                  }
+
+            // DQ (9/26/2011): This fails for the projects/UpcTranslation upc_shared_2.upc file...figure this out once we see what elase might file.
+            // Other fialing tests include: 
+            //    projects/backstroke/tests/expNormalizationTest/test2006_74.C
+            //    projects/backstroke/tests/expNormalizationTest/test2006_87.C
+            // Large percentage of Fortran tests fail this test!
+               if (detect_dangling_pointers > 1)
+                  {
+                    ROSE_ASSERT( (child == NULL) || (child != NULL && child->variantT() != V_SgNode) );
+                  }
+             }
+        }
+   }
+
+void
+TestForReferencesToDeletedNodes::test( SgProject* project )
+   {
+  // See documentation in the header file for this test.
+     TestForReferencesToDeletedNodes traversal(project->get_detect_dangling_pointers());
+
+     traversal.traverseMemoryPool();
+   }

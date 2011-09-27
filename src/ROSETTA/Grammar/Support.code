@@ -5292,6 +5292,8 @@ HEADER_APPLICATION_PROJECT_START
        // negara1 (07/29/2011)
           std::string findIncludedFile(PreprocessingInfo* preprocessingInfo);
 
+          int get_detect_dangling_pointers(void) const;
+
 #if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
 #else
        // DQ (1/21/2010): In this case we want to support the previous interface so that we can transition easily.
@@ -11470,6 +11472,14 @@ X aggressive
 
   // DQ (11/20/2010): Support for token handling.
      p_output_tokens = false;
+
+  // DQ (9/26/2011): This was not initialized previosuly so I have added it.
+     p_sourceFileTypeIsUnknown = false;
+
+  // DQ (9/26/2011): New support for option to specify debugging support in ROSE to 
+  // detect dangling pointers to IR nodes as part of the AST Consistancy tests. At 
+  // some point this will default to always being on as an AST consistancy test.
+     p_detect_dangling_pointers = 0;
    }
 
 #if 0
@@ -12031,6 +12041,8 @@ SgFile::display ( const std::string & label ) const
      printf ("     p_read_instructions_only               = %s \n",(p_read_instructions_only == true) ? "true" : "false");
 
      printf ("     p_output_tokens                        = %s \n",(p_output_tokens == true) ? "true" : "false");
+
+     printf ("     p_detect_dangling_pointers             = %d \n",p_detect_dangling_pointers);
 
 #if 0
 // Order of data member entries in support.C, matched against the 
@@ -12896,6 +12908,21 @@ SgProject::skipfinalCompileStep(bool value)
         {
           get_file(i).set_skipfinalCompileStep(value);
         }
+   }
+
+
+int
+SgProject::get_detect_dangling_pointers(void) const
+   {
+  // look at how the files are set
+     int result = 0;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          result = result | file.get_detect_dangling_pointers();
+        }
+
+     return result;
    }
 
 

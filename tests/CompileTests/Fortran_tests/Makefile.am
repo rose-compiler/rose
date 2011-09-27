@@ -871,10 +871,11 @@ PERFORMANCE_REPORT_OPTION = -rose:compilationPerformanceFile $(top_builddir)/FOR
 
 # ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict
 # ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict $(PERFORMANCE_REPORT_OPTION)
-ROSE_FLAGS = -rose:verbose 0 -I$(srcdir)
 # ROSE_FLAGS = -rose:verbose 3 -rose:output_parser_actions -I$(srcdir)
 # ROSE_FLAGS = -rose:verbose 0 -rose:output_tokens -rose:output_parser_actions -I$(srcdir)
 # ROSE_FLAGS = -rose:verbose 0 -rose:output_tokens -I$(srcdir)
+# ROSE_FLAGS = -rose:verbose 0 -I$(srcdir)
+ROSE_FLAGS = -rose:verbose 0 -rose:detect_dangling_pointers 2 -I$(srcdir)
 
 # VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes
