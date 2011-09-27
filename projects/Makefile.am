@@ -19,6 +19,7 @@ SUBDIRS = \
      QtDesignerPlugins \
      RoseQt \
      arrayOptimization \
+     UpcTranslation \
      autoParallelization \
      binaryVisualization \
      bugSeeding \
@@ -48,7 +49,7 @@ endif
 # TOO (2/16/2011): Errors with Tensilica's Xtensa compilers as alternative backend compilers. We can
 # gradually enable these tests at a later stage if necessary.
 if !USING_XTENSA_BACKEND_COMPILER
-   SUBDIRS += dataStructureGraphing  autoTuning
+   SUBDIRS += dataStructureGraphing OpenMP_Translator autoTuning
 
 # DQ (9/26/2011): Directory removed for failing new AST consistancy test for references to deleted IR nodes.
 # OpenMP_Translator
