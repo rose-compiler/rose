@@ -5170,8 +5170,8 @@ TestForProperLanguageAndSymbolTableCaseSensitivity::test(SgNode* node)
    }
 
 
-TestForReferencesToDeletedNodes::TestForReferencesToDeletedNodes(int input_detect_dangling_pointers)
-   : detect_dangling_pointers(input_detect_dangling_pointers)
+TestForReferencesToDeletedNodes::TestForReferencesToDeletedNodes(int input_detect_dangling_pointers, const string & s )
+   : detect_dangling_pointers(input_detect_dangling_pointers), filename(s)
    {
   // Nothing to do here!
    }
@@ -5200,8 +5200,8 @@ TestForReferencesToDeletedNodes::visit ( SgNode* node )
                if (child != NULL && child->variantT() == V_SgNode)
                   {
                  // This is a deleted IR node
-                    SgFile* file = TransformationSupport::getFile(node);
-                    string filename = (file != NULL) ? file->getFileName() : "unknown file";
+                 // SgFile* file = TransformationSupport::getFile(node);
+                 // string filename = (file != NULL) ? file->getFileName() : "unknown file";
                     printf ("Error in AST consistancy detect_dangling_pointers test for file %s: Found a child = %p = %s child name = %s of node = %p = %s that was previously deleted \n",filename.c_str(),child,child->class_name().c_str(),v[i].second.c_str(),node,node->class_name().c_str());
                   }
 
@@ -5222,7 +5222,14 @@ void
 TestForReferencesToDeletedNodes::test( SgProject* project )
    {
   // See documentation in the header file for this test.
-     TestForReferencesToDeletedNodes traversal(project->get_detect_dangling_pointers());
+
+  // I was having trouble generating a file name for where the problem was happening, so this should work better.
+  // might be that the problem IR nodes were contained in expressions in the index of a SgArrayType, or something 
+  // like that.
+  // Generate a name from all the files on the command line
+     string filename = SageInterface::generateProjectName(project, /* supressSuffix = */ false );
+
+     TestForReferencesToDeletedNodes traversal(project->get_detect_dangling_pointers(),filename);
 
      traversal.traverseMemoryPool();
    }

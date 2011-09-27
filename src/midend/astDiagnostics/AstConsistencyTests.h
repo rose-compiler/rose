@@ -473,9 +473,10 @@ class TestForReferencesToDeletedNodes : public ROSE_VisitTraversal
 
      private:
          int detect_dangling_pointers;
+         std::string filename;
 
      public:
-          TestForReferencesToDeletedNodes(int input_detect_dangling_pointers);
+          TestForReferencesToDeletedNodes(int input_detect_dangling_pointers, const std::string & s );
 
        // Overloaded pure virtual function.
           void visit( SgNode* node );
