@@ -5,7 +5,9 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 BUPC_INCLUDE = -I$(srcdir)/../include 
 BUPC_MACROS = 
 
-ROSEUPCC_FLAGS = -rose:skipfinalCompileStep --edg:no_warnings 
+# DQ (9/26/2011): Added optional test for dangling pointers to IR nodes in the AST (level 1 causes only an error message if dangling pointers is found).
+# ROSEUPCC_FLAGS = -rose:skipfinalCompileStep --edg:no_warnings 
+ROSEUPCC_FLAGS = -rose:verbose 0 -rose:skipfinalCompileStep --edg:no_warnings -rose:detect_dangling_pointers 1
 
 EXTRA_DIST = barrier.upc bupcr_magic.c hello.upc shared_1.upc unshared_2.upc \
              extern.upc unshared_1.upc
@@ -66,11 +68,11 @@ check-local:
 	$(MAKE) rose_unshared_1.c.aa
 	$(MAKE) rose_extern.c
 #	DQ (9/26/2011): This test fails the new AST consistancy test for references to dangling pointers to IR nodes.
-#	$(MAKE) rose_unshared_2.c
+	$(MAKE) rose_unshared_2.c
 	$(MAKE) rose_bupcr_magic.c
-	@echo "*****************************************************************************************"
+	@echo "***********************************************************************************************"
 	@echo "****** ROSE/projects/UpcTranslator/tests: make check rule complete (terminated normally) ******"
-	@echo "*****************************************************************************************"
+	@echo "***********************************************************************************************"
 
 clean-local:
 	rm -rf a.out *.o rose_* *.dot *.tld

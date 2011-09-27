@@ -200,6 +200,8 @@ PERFORMANCE_REPORT_OPTION = -rose:compilationPerformanceFile $(top_builddir)/FOR
 # ROSE_FLAGS = -rose:verbose 0 -rose:output_parser_actions
 # ROSE_FLAGS = -rose:verbose 0
 # ROSE_FLAGS = -rose:verbose 0 -rose:skip_syntax_check -rose:skipfinalCompileStep
+
+# DQ (9/26/2011): Added optional test for dangling pointers to IR nodes in the AST (level 1 causes only an error message if dangling pointers is found).
 ROSE_FLAGS = -rose:verbose 0 -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:detect_dangling_pointers 1
 
 # VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
