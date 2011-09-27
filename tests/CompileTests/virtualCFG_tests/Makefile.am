@@ -452,6 +452,7 @@ JAVA_TESTCODES_REQUIRED_TO_PASS = \
      test2011_38.java \
      test2011_39.java \
      test2011_40.java \
+     test2011_41.java \
      test2011_44.java \
      test2011_46.java \
      test2011_47.java \
@@ -503,7 +504,6 @@ JAVA_TESTCODES_REQUIRED_TO_PASS = \
 #     test2011_27.java \
 #     test2011_28.java \
 # Synchronized missing
-#     test2011_41.java \
 # SgJavaImportStatement missing
 #     test2011_42.java \
 #     test2011_43.java \

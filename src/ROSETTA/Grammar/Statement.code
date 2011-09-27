@@ -2124,6 +2124,12 @@ HEADER_JAVA_FOREACH_STATEMENT_END
 
 HEADER_JAVA_SYNCHRONIZED_STATEMENT_START
 
+          virtual unsigned int cfgFindChildIndex(SgNode* n);
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual bool cfgIsIndexInteresting(unsigned int) const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
 HEADER_JAVA_SYNCHRONIZED_STATEMENT_END
 
 
