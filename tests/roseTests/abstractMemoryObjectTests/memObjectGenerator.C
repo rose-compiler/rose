@@ -51,7 +51,8 @@ int main(int argc, char * argv[])
     if (mem_obj != NULL)
     {
       cout<<mem_obj->toString()<<endl;
-#if 0
+      //TODO
+#if 0 
       // test operator == for two consecutive aliased ObjSet
       if (prev_obj != NULL)
       {
@@ -75,7 +76,7 @@ int main(int argc, char * argv[])
       cout<<mem_obj->toString()<<endl;
   }   
 
-  // Expression objects
+  // Other objects, expression objects, whole array objects (SgPntrArrRefExp) , or even named object for array elements
   // ---------------------------------------------------------
   Rose_STL_Container <SgNode*> exp_list = NodeQuery::querySubTree (project, V_SgExpression);
   cout<<"----------------------------------------------------"<<endl;
