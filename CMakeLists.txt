@@ -420,7 +420,7 @@ endif (HAVE_DLFCN_H)
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/CFG 
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/CallGraphAnalysis 
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/OAWrap 
-     ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/dataflowAnalysis 
+     ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/bitvectorDataflow 
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/defUseAnalysis 
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/distributedMemoryAnalysis 
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/dominanceAnalysis 
