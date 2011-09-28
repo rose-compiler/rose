@@ -467,6 +467,7 @@ JAVA_TESTCODES_REQUIRED_TO_PASS = \
      cave3_constructor0.java \
      cave3_constructor1.java \
      cave3_constructor2.java \
+     cave3_foreach2.java \
      cave3_if0.java \
      cave3_if1.java \
      cave3_nameResolution0.java \

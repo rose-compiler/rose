@@ -59,6 +59,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      cave3_constructor1.java \
      cave3_constructor2.java \
      cave3_constructor3.java \
+     cave3_foreach2.java \
      cave3_if0.java \
      cave3_if1.java \
      cave3_mthParam0.java \
@@ -66,10 +67,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      cave3_while0.java \
      cave3_while2.java
 
-#     
-
-# DQ (9/3/2011): This test code was listed twice...
-#    pgc_2011_30.java
 #
 # These test pass the compilation using ROSE, all AST tests, unparsing to generate 
 # Java code, and the final compilation of that code using a backend compiler (javac).
@@ -92,7 +89,9 @@ TESTCODE_CURRENTLY_FAILING = \
 	 cave3_import1.java \
 	 cave3_import2.java \
 	 cave3_import3.java \
-     cave3_synchronized0.java
+     cave3_synchronized0.java \
+     cave3_foreach0.java \
+     cave3_foreach1.java
 
 # These tests pass the compilation using ROSE, all AST tests, and unparsing to generate 
 # Java code, but fails the final compilation step of the generated Java code.
