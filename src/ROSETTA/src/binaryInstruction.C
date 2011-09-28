@@ -496,8 +496,19 @@ Grammar::setUpBinaryInstructions()
 
 
 
+     // Represents static data in an executable.  For now, we don't associate any type with the data because ROSE's data type
+     // infrastructure (source or binary) is not capable of representing the information we need: multiple interpretations of
+     // overlapping parts of memory (i.e., two or more types for the same bytes); arbitrary offsets and padding in structured
+     // types; size-specific integers and floating-point types; regions of unknown type; ease of improving type information by
+     // filling in more details as the type is discovered; etc.
+     NEW_TERMINAL_MACRO(AsmStaticData, "AsmStaticData", "AsmStaticDataTag");
+     AsmStaticData.setDataPrototype("SgUnsignedCharList", "raw_bytes", "",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+
+
+
      NEW_NONTERMINAL_MACRO(AsmStatement,
-                           AsmFunction | AsmBlock | AsmInstruction,
+                           AsmFunction | AsmBlock | AsmInstruction | AsmStaticData,
                            "AsmStatement", "AsmStatementTag", false);
      AsmStatement.setDataPrototype("rose_addr_t", "address", "= 0",
                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
