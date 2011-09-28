@@ -55,6 +55,11 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
    cp ${srcdir}/config/upc_collective.h ./include-staging/${compilerName}_HEADERS
    cp ${srcdir}/config/bupc_extensions.h ./include-staging/${compilerName}_HEADERS
 
+ # DQ (8/22/2011): Added support for SSE.
+ # Copy alternative SSE and MMX headers to be seen by ROSE ahead of the originals.
+   cp ${srcdir}/config/rose_specific_emmintrin.h ./include-staging/${compilerName}_HEADERS/emmintrin.h
+   cp ${srcdir}/config/rose_specific_xmmintrin.h ./include-staging/${compilerName}_HEADERS/xmmintrin.h
+
    error_code=$?
    echo "error_code = $error_code"
    if test $error_code != 0; then
@@ -151,6 +156,11 @@ AC_DEFUN([GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS],
    cp ${srcdir}/config/upc_strict.h ./include-staging/${compilerName}_HEADERS
    cp ${srcdir}/config/upc_collective.h ./include-staging/${compilerName}_HEADERS
    cp ${srcdir}/config/bupc_extensions.h ./include-staging/${compilerName}_HEADERS
+
+ # DQ (8/22/2011): Added support for SSE.
+ # Copy alternative SSE and MMX headers to be seen by ROSE ahead of the originals.
+   cp ${srcdir}/config/rose_specific_emmintrin.h ./include-staging/${compilerName}_HEADERS/emmintrin.h
+   cp ${srcdir}/config/rose_specific_xmmintrin.h ./include-staging/${compilerName}_HEADERS/xmmintrin.h
 
    error_code=$?
    echo "error_code = $error_code"

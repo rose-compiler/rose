@@ -28,7 +28,8 @@ $tables{$_} = [sort @{$tables{$_}}] for keys %tables;
 # Output, in column-major order like the "ls" command.
 sub show_table {
   my($mesg,$aref) = @_;
-  my $width = 130; # number of screen columns
+  my $width = ($ENV{COLUMNS} || 132)-2; # number of screen columns
+  $width = 78 if $width < 78;
   my $indent = "    ";
   my $sep = "  ";
   return unless @$aref;
