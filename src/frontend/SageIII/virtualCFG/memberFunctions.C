@@ -4937,13 +4937,50 @@ SgJavaSynchronizedStatement::cfgOutEdges(unsigned int idx) {
 std::vector<CFGEdge>
 SgJavaSynchronizedStatement::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
-  addIncomingFortranGotos(this, idx, result);
   switch (idx) {
     case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
     case 1: makeEdge(this->get_expression()->cfgForEnd(), CFGNode(this, idx), result); break;
     case 2: makeEdge(this->get_body()->cfgForEnd(), CFGNode(this, idx), result);
             break;
     default: ROSE_ASSERT (!"Bad index for SgJavaSynchronizedStatement");
+  }
+  return result;
+}
+
+unsigned int
+SgJavaForEachStatement::cfgIndexForEnd() const
+   {
+     return 1;
+   }
+unsigned int
+SgJavaForEachStatement::cfgFindChildIndex(SgNode* n)
+   {
+     if (n == this->get_collection()) {
+          return 0;
+     } else {
+         ROSE_ASSERT (!"Bad child in java for each statement");
+     }
+     return 0;
+   }
+
+std::vector<CFGEdge>
+SgJavaForEachStatement::cfgOutEdges(unsigned int idx) {
+  std::vector<CFGEdge> result;
+  switch (idx) {
+    case 0: makeEdge(CFGNode(this, idx), this->get_collection()->cfgForBeginning(), result); break;
+    case 1: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
+    default: ROSE_ASSERT (!"Bad index for SgJavaForEachStatement");
+  }
+  return result;
+}
+
+std::vector<CFGEdge>
+SgJavaForEachStatement::cfgInEdges(unsigned int idx) {
+  std::vector<CFGEdge> result;
+  switch (idx) {
+    case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
+    case 1: makeEdge(this->get_collection()->cfgForEnd(), CFGNode(this, idx), result); break;
+    default: ROSE_ASSERT (!"Bad index for SgJavaForEachStatement");
   }
   return result;
 }
