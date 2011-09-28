@@ -44,7 +44,7 @@ class AttributeRec
 private:
 
     SgDeclarationStatement* declaration;
-    SgType* baseType;
+    SgType* entityType;
     SgExpression* charLenExpr;
     bool hasAccessSpec; int accessAttr; int accessType;
     bool isPublic; int publicAttr;
@@ -75,7 +75,7 @@ private:
     bool isDeferred; int deferredAttr;
 
 public:
-    AttributeRec(): declaration(NULL), baseType(NULL), charLenExpr(NULL),
+    AttributeRec(): declaration(NULL), entityType(NULL), charLenExpr(NULL),
                 hasAccessSpec(false), accessAttr(-1), accessType(-1),
                 isPublic(false), publicAttr(-1), isPrivate(false), privateAttr(-1),
                 isAllocatable(false), allocatableAttr(-1), isAsynchronous(false), asyncAttr(-1),
@@ -92,6 +92,7 @@ public:
                 isNonOverridable(false), nonOverrideAttr(-1), isDeferred(false), deferredAttr(-1)
     { }
 
+    // Setters and getters:
     SgDeclarationStatement* getDeclaration();
     void setDeclaration(SgDeclarationStatement* decl);
     SgType* getBaseType();
@@ -110,8 +111,8 @@ public:
     void setPublicAttr(int attr);
     bool getIsPrivate();
     void setIsPrivate(bool isPriv);
-        int getPrivateAttr();
-        void setPrivateAttr(int privAttr);
+    int getPrivateAttr();
+    void setPrivateAttr(int privAttr);
     bool getIsAllocatable();
     void setIsAllocatable(bool isAlloc);
     int getAllocatableAttr();
@@ -215,23 +216,26 @@ public:
     int getDeferredAttr() ;
     void setDeferredAttr(int attr) ;
 
-
-
+    // Resets to initial states (as in the default constructor)
     void reset();
 
     // Sets all the existing attributes for varDeclaration.
     // Pre-condition: varDeclaration != NULL;
     void setDeclAttrSpecs();
 
-    SgType* computeEntityType();
+    // Builds the appropriate SgExprListExp as the dimension/codimension info
+    SgExprListExp* buildDimensionInfo();
 
-    // Builds a SgArrayType object with dimExp as dim_info
-    // Pre-condition: dimExp != NULL
-    SgArrayType* buildArrayType();
+    // Builds an SgArrayType object with the current entityType as the base type and with the given dim info
+    // Pre-condition: dimInfo != NULL
+    SgArrayType* buildArrayType(SgExprListExp* dimInfo);
 
-    // Transforms baseType into a coarray with codimensionAttr as codim_info
+    // Transforms entityType into a coarray with codimensionAttr as codim_info
     // Pre-condition: codimensionAttr != NULL
     void makeBaseTypeCoArray();
+
+    // Computes the type of the entity_decl with the computed based type and accumulated attributes
+    SgType* computeEntityType();
 };
 
 class FortranParserState
