@@ -2380,6 +2380,10 @@ Grammar::setUpBinaryInstructions ()
 
   // Non binary File IR node support
 
+  // DQ (9/13/2011): Added support to specific source code for the SgAsmNode IR node so that we could 
+  // define a copy constructor (identified as missing in static analysis of ROSE code).
+     AsmNode.setFunctionSource                     ( "SOURCE_BINARY", "../Grammar/BinaryInstruction.code");
+
      AsmBlock.setFunctionSource                    ( "SOURCE_BINARY_BLOCK", "../Grammar/BinaryInstruction.code");
      AsmTarget.setFunctionSource                   ( "SOURCE_BINARY_TARGET", "../Grammar/BinaryInstruction.code");
      AsmOperandList.setFunctionSource              ( "SOURCE_BINARY_OPERAND_LIST", "../Grammar/BinaryInstruction.code");

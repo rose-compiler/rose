@@ -88,6 +88,12 @@ UnparseFormat & UnparseFormat::operator=(const UnparseFormat & X)
   // DQ (9/11/2011): This function is provided to make this code better so that can be analyized using static analysis 
   // (static analysis tools don't understand access functions).
 
+  // DQ (9/12/2011): This avoids the memory leak that could happend with self assignment.
+     if (&X == this)
+        {
+          return *this;
+        }
+      
      currentLine    = 0;            //! stores current line number being unparsed
      currentIndent  = 0;            //! indent of the current line
      chars_on_line  = 0;            //! the number of characters printed on the line

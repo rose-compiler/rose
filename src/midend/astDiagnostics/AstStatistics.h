@@ -52,6 +52,10 @@ class AstNodeTraversalStatistics : public SgSimpleProcessing
 
      private:
           StatisticsContainerType& numNodeTypes;
+
+       // DQ (9/13/2011): This copy constructor was built because static analysis tools (made it private to force compile time error if used).
+          AstNodeTraversalStatistics( const AstNodeTraversalStatistics & X);
+
    };
 
 #if 0

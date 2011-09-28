@@ -1996,8 +1996,13 @@ sub do_clone {
   close GIT or die "$arg0: git clone failed";
 
   # Find the local repository
-  die "$arg0: where's the local repository?!?" unless $dirline =~ /^Initialized empty Git repository in\s+(.*?)\/.git\/?$/;
-  $dir = $1;
+  if ($dirline =~ /^Initialized empty Git repository in\s+(.*?)\.git\/?$/) {
+    $dir = $1;
+  } elsif ($dirline =~ /Cloning into\s+(.*?)\.\.\.$/) {
+    $dir = $1;
+  } else {
+    die "$arg0: where's the local repository?!? dirline=$dirline"
+  }
   chdir $dir or die "$arg0: cannot find Git repository at $dir: $!\n";
 
   # set up and clone submodules
