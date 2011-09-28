@@ -150,7 +150,14 @@ include_HEADERS = \
 # bin_PROGRAMS = testSharedRoseLib # testMultiRoseLib
 noinst_PROGRAMS = testSharedRoseLib 
 all-local: testSharedRoseLib$(EXEEXT) 
-# Test if programs using ROSE can be run
+	@boostlibdirs=$$(ldd .libs/testSharedRoseLib |							    \
+                        sed -n --posix '/libboost/s%.*=> /\(\([^ \t/]*/\)*\).*%/\1%p' |			    \
+                        sort |uniq);									    \
+	 if test $$(echo "$$boostlibdirs" |wc -l) -gt 1; then						    \
+	     echo "Boost libraries are being drawn from multiple directories.  This is probably an error:"; \
+	     ldd .libs/testSharedRoseLib |sed -n --posix '/libboost/p';					    \
+	     false;											    \
+	 fi
 	@echo "Testing whether a simple program linked against ROSE can be run:" >&2
 	@echo "The translator will be run without any input files, and will print a warning about that; the warning is normal." >&2
 	@./testSharedRoseLib$(EXEEXT) || (echo "You cannot run a program linked against ROSE.  Please be sure that your LD_LIBRARY_PATH (Linux) or DYLD_LIBRARY_PATH (Mac OSX) contains the correct libraries (JVM, Boost, librose.so, etc.)." >&2; exit 1)

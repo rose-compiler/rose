@@ -2664,6 +2664,7 @@ Grammar::setUpBinaryInstructions()
                            AsmExecutableFileFormat | AsmInterpretationList | AsmGenericFileList | AsmTarget | AsmTargetList,
                            "AsmNode", "AsmNodeTag", false);
      AsmNode.setFunctionPrototype("HEADER_BINARY", "../Grammar/BinaryInstruction.code");
+     AsmNode.setFunctionSource("SOURCE_BINARY", "../Grammar/BinaryInstruction.code");
      AsmNode.setDataPrototype("AttachedPreprocessingInfoType*", "attachedPreprocessingInfoPtr", "= NULL",
                               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, COPY_DATA);
      AsmNode.setDataPrototype("AstAttributeMechanism*", "asmAttributeMechanism", "= NULL",
