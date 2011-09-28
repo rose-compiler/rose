@@ -611,7 +611,7 @@ VarsExprsProductLattice::~VarsExprsProductLattice()
 	// The destructor for ProductLattice deallocates the Lattices in lattices
 }
 
-// Returns the Lattice mapped to the given variable of NULL if nothing is mapped to it
+// Returns the Lattice mapped to the given variable or NULL if nothing is mapped to it
 Lattice* VarsExprsProductLattice::getVarLattice(const varID& var)
 {
 	if(varLatticeIndex.find(var) != varLatticeIndex.end())

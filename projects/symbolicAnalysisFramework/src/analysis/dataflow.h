@@ -172,13 +172,13 @@ class InitDataflowState : public UnstructuredPassIntraAnalysis
 class FindAllFunctionCalls : public UnstructuredPassIntraAnalysis
 {
 	// The set of functions that we wish to find the calls to
-	std::set<Function>& funcsToFind;
+	const std::set<Function>& funcsToFind;
 	
 	// Maps each function in funcsToFind to a set of DataflowNodes that hold calls to this function
 	std::map<Function, std::set<DataflowNode> > funcCalls;
 	
 	public:
-	FindAllFunctionCalls(std::set<Function>& funcsToFind): funcsToFind(funcsToFind)
+	FindAllFunctionCalls(const std::set<Function>& funcsToFind): funcsToFind(funcsToFind)
 	{ }
 	
 	void visit(const Function& func, const DataflowNode& n, NodeState& state);
@@ -191,6 +191,11 @@ class FindAllFunctionCalls : public UnstructuredPassIntraAnalysis
 class IntraUniDirectionalDataflow : public IntraUnitDataflow
 {
 	public:
+
+	// Runs the intra-procedural analysis on the given function and returns true if
+	// the function's NodeState gets modified as a result and false otherwise
+	// state - the function's NodeState
+	bool runAnalysis(const Function& func, NodeState* state, bool analyzeDueToCallers, std::set<Function> calleesUpdated);
 	
 	protected:
 	// propagates the dataflow info from the current node's NodeState (curNodeState) to the next node's 
@@ -198,6 +203,23 @@ class IntraUniDirectionalDataflow : public IntraUnitDataflow
 	bool propagateStateToNextNode(
              const std::vector<Lattice*>& curNodeState, DataflowNode curDFNode, int nodeIndex,
              const std::vector<Lattice*>& nextNodeState, DataflowNode nextDFNode);
+
+        std::vector<DataflowNode> gatherDescendants(std::vector<DataflowEdge> edges,
+                                                    DataflowNode (DataflowEdge::*edgeFn)() const);
+
+        virtual NodeState*initializeFunctionNodeState(const Function &func, NodeState *fState) = 0;
+        virtual VirtualCFG::dataflow*
+          getInitialWorklist(const Function &func, bool firstVisit, bool analyzeDueToCallers, const set<Function> &calleesUpdated, NodeState *fState) = 0;
+        virtual vector<Lattice*> getLatticeAnte(NodeState *state) = 0;
+        virtual vector<Lattice*> getLatticePost(NodeState *state) = 0;
+
+        // If we're currently at a function call, use the associated inter-procedural
+        // analysis to determine the effect of this function call on the dataflow state.
+        virtual void transferFunctionCall(const Function &func, const DataflowNode &n, NodeState *state) = 0;
+
+
+        virtual vector<DataflowNode> getDescendants(const DataflowNode &n) = 0;
+        virtual DataflowNode getUltimate(const Function &func) = 0;
 };
 
 /* Forward Intra-Procedural Dataflow Analysis */
@@ -207,11 +229,15 @@ class IntraFWDataflow  : public IntraUniDirectionalDataflow
 	
 	IntraFWDataflow()
 	{}
-	
-	// Runs the intra-procedural analysis on the given functionm returns true if 
-	// the function's NodeState gets modified as a result and false otherwise
-	// state - the function's NodeState
-	bool runAnalysis(const Function& func, NodeState* state, bool analyzeDueToCallers, std::set<Function> calleesUpdated);
+
+        NodeState* initializeFunctionNodeState(const Function &func, NodeState *fState);
+        VirtualCFG::dataflow*
+          getInitialWorklist(const Function &func, bool firstVisit, bool analyzeDueToCallers, const set<Function> &calleesUpdated, NodeState *fState);
+        vector<Lattice*> getLatticeAnte(NodeState *state);
+        vector<Lattice*> getLatticePost(NodeState *state);
+        void transferFunctionCall(const Function &func, const DataflowNode &n, NodeState *state);
+        vector<DataflowNode> getDescendants(const DataflowNode &n);
+        DataflowNode getUltimate(const Function &func);
 };
 
 /* Backward Intra-Procedural Dataflow Analysis */
@@ -221,11 +247,15 @@ class IntraBWDataflow  : public IntraUniDirectionalDataflow
 	
 	IntraBWDataflow()
 	{}
-	
-	// runs the intra-procedural analysis on the given functionm returns true if 
-	// the function's NodeState gets modified as a result and false otherwise
-	// state - the function's NodeState
-	bool runAnalysis(const Function& func, NodeState* state, bool analyzeDueToCallers, std::set<Function> calleesUpdated);
+
+        NodeState* initializeFunctionNodeState(const Function &func, NodeState *fState);
+        VirtualCFG::dataflow*
+          getInitialWorklist(const Function &func, bool firstVisit, bool analyzeDueToCallers, const set<Function> &calleesUpdated, NodeState *fState);
+        virtual vector<Lattice*> getLatticeAnte(NodeState *state);
+        virtual vector<Lattice*> getLatticePost(NodeState *state);
+        void transferFunctionCall(const Function &func, const DataflowNode &n, NodeState *state);
+        vector<DataflowNode> getDescendants(const DataflowNode &n);
+        DataflowNode getUltimate(const Function &func);
 };
 
 /*// Dataflow class that maintains a Lattice for every currently live variable

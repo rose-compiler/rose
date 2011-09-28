@@ -123,44 +123,6 @@ class RsType
 };
 
 
-#if OBSOLETE_CODE
-
-template<class T>
-std::pair<RsType*, size_t> RsType::getTypeAt(RsType * coarseType,  size_t offset)
-{
-    // make sure that offset lies in range at beginning
-    assert(offset < coarseType->getByteSize() );
-
-    std::pair<RsType*, size_t> res(coarseType, offset);
-
-    while(true)
-    {
-        // Stop criterions:
-        if( dynamic_cast<T*>(res.first) != NULL) return res; // type matches
-        if( res.first->getSubtypeCount() ==0 )   return res; // no refinement possible
-
-        // Refine
-        int subTypeId = res.first->getSubtypeIdAt(res.second);
-
-        if(subTypeId < 0) // error - offset at padded area
-        {
-            res.first = NULL;
-            return res;
-        }
-
-        // make sure that offset stays positive
-        assert( offset >= res.first->getSubtypeOffset(subTypeId));
-
-        // \note pp/ should that not be res.second instead of offset?
-        offset -= res.first->getSubtypeOffset(subTypeId);
-        res.first = res.first->getSubtype(subTypeId);
-    }
-}
-
-#endif /* OBSOLETE_CODE */
-
-
-
 
 class RsArrayType : public RsType
 {
@@ -344,35 +306,6 @@ std::ostream& operator<< (std::ostream &os, const RsType& m);
 
 
 
-class RsTypeDef : public RsType
-{
-    public:
-        /// Creates a typedef info "typedef unsigned int uint"
-        /// then name would be "uint" and refType the type-information for unsigned int
-        RsTypeDef(const std::string& name, RsType* refType);
-
-
-        virtual size_t        getByteSize()     const              { return refType->getByteSize();     }
-        virtual int           getSubtypeCount() const              { return refType->getSubtypeCount(); }
-        virtual int           getKnownSubtypesOverlappingRange(size_t range_start, size_t range_end) const
-                                                                  { return refType->getKnownSubtypesOverlappingRange( range_start, range_end );}
-        virtual const RsType* getSubtype(int i) const              { return refType->getSubtype(i);     }
-        virtual int           getSubtypeOffset(int id) const       { return refType->getSubtypeOffset(id); }
-        virtual int           getSubtypeIdAt(size_t offset)        { return refType->getSubtypeIdAt(offset);}
-        virtual const RsType* getSubtypeAt  (size_t offset) const  { return refType->getSubtypeAt(offset);}
-        virtual bool          isValidOffset(size_t offset) const   { return refType->isValidOffset(offset);}
-        std::string           getSubTypeString(int id) const       { return refType->getSubTypeString(id); }
-
-        /// Print type information to a stream
-        virtual void  print(std::ostream & os) const;
-
-    protected:
-        RsType * refType;
-};
-
-
-
-
 class RsBasicType : public RsType
 {
     public:
@@ -544,3 +477,71 @@ class InvalidType : public RsType
 
 
 #endif
+
+
+#if CURRENTLY_NOT_USED
+
+class RsTypeDef : public RsType
+{
+    public:
+        /// Creates a typedef info "typedef unsigned int uint"
+        /// then name would be "uint" and refType the type-information for unsigned int
+        RsTypeDef(const std::string& name, RsType* refType);
+
+
+        virtual size_t        getByteSize()     const              { return refType->getByteSize();     }
+        virtual int           getSubtypeCount() const              { return refType->getSubtypeCount(); }
+        virtual int           getKnownSubtypesOverlappingRange(size_t range_start, size_t range_end) const
+                                                                   { return refType->getKnownSubtypesOverlappingRange( range_start, range_end );}
+        virtual const RsType* getSubtype(int i) const              { return refType->getSubtype(i);     }
+        virtual int           getSubtypeOffset(int id) const       { return refType->getSubtypeOffset(id); }
+        virtual int           getSubtypeIdAt(size_t offset) const  { return refType->getSubtypeIdAt(offset);}
+        virtual const RsType* getSubtypeAt  (size_t offset) const  { return refType->getSubtypeAt(offset);}
+        virtual bool          isValidOffset(size_t offset) const   { return refType->isValidOffset(offset);}
+        std::string           getSubTypeString(int id) const       { return refType->getSubTypeString(id); }
+
+        /// Print type information to a stream
+        virtual void  print(std::ostream & os) const;
+
+    protected:
+        RsType * refType;
+};
+
+#endif /* CURRENTLY_NOT_USED */
+
+
+#if OBSOLETE_CODE
+
+template<class T>
+std::pair<RsType*, size_t> RsType::getTypeAt(RsType * coarseType,  size_t offset)
+{
+    // make sure that offset lies in range at beginning
+    assert(offset < coarseType->getByteSize() );
+
+    std::pair<RsType*, size_t> res(coarseType, offset);
+
+    while(true)
+    {
+        // Stop criterions:
+        if( dynamic_cast<T*>(res.first) != NULL) return res; // type matches
+        if( res.first->getSubtypeCount() ==0 )   return res; // no refinement possible
+
+        // Refine
+        int subTypeId = res.first->getSubtypeIdAt(res.second);
+
+        if(subTypeId < 0) // error - offset at padded area
+        {
+            res.first = NULL;
+            return res;
+        }
+
+        // make sure that offset stays positive
+        assert( offset >= res.first->getSubtypeOffset(subTypeId));
+
+        // \note pp/ should that not be res.second instead of offset?
+        offset -= res.first->getSubtypeOffset(subTypeId);
+        res.first = res.first->getSubtype(subTypeId);
+    }
+}
+
+#endif /* OBSOLETE_CODE */
