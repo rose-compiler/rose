@@ -251,7 +251,7 @@ public:
     public:
         HexdumpFormat fmt;
         InsnRawBytes() {
-            fmt.width = 6;              /* Max instruction bytes per line of output. */
+            fmt.width = 8;              /* Max instruction bytes per line of output. */
             fmt.pad_chars = true;       /* Show ASCII characters as well as bytes. */
         }
         virtual bool operator()(bool enabled, const InsnArgs &args);
