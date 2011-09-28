@@ -23,8 +23,8 @@ class SgAsmInterpretation;
  *  @endcode
  *
  *  The unparser operates finding the list of top-level, unparsable nodes (see find_unparsable_nodes()) and unparsing each
- *  one.  For each node, an appropriate unparse_TYPE() is called, where TYPE is "insn", "basicblock", "function", or
- *  "interpretation".  Each of these unparse functions invokes three lists of callbacks:
+ *  one.  For each node, an appropriate unparse_TYPE() is called, where TYPE is "insn", "basicblock", "staticdata",
+ *  "datablock", "function", or "interpretation".  Each of these unparse functions invokes three lists of callbacks:
  *  <ul>
  *     <li>The TYPE_pre callback list outputs header information for the TYPE object.  E.g., for instructions, it might emit
  *         an address or the raw bytes.</li>
@@ -36,7 +36,7 @@ class SgAsmInterpretation;
  *
  *  The callback lists are initialized to contain the following functor types.
  *  <ul>
- *     <li>Instructions:
+ *     <li>Instructions (SgAsmInstruction):
  *        <ol>
  *           <li>InsnRawBytes (pre): emits address and raw bytes of instruction in a hexdump-like format.</li>
  *           <li>InsnBody (unparse): emits the instruction mnemonic and arguments.</li>
@@ -47,13 +47,25 @@ class SgAsmInterpretation;
  *           <li>InsnLineTermination (post): emits a line feed at the end of the instruction.</li>
  *        </ol>
  *     </li>
- *     <li>Basic blocks:
+ *     <li>Basic blocks (SgAsmBlock objects containing only instruction objects):
  *        <ol>
  *           <li>BasicBlockReasons (pre): emits the reasons why this block is part of the function.</li>
  *           <li>BasicBlockBody (unparse): unparses each instruction of the basic block.</li>
  *           <li>BasicBlockSuccessors (post): emits addresses of basic block successors.</li>
  *           <li>BasicBlockLineTermination (post): emits a linefeed at the end of each basic block.</li>
  *           <li>BasicBlockCleanup (post): cleans up analysis from BasicBlockNoopUpdater and future built-in functors.</li>
+ *        </ol>
+ *     </li>
+ *     <li>StaticData (SgAsmStaticData):
+ *        <ol>
+ *           <li>StaticDataTitle (pre): emits a title line.</li>
+ *           <li>StaticDataRawBytes (unparse): emits a hexdump-like output of the value.</li>
+ *           <li>StaticDataLineTermination (post): emits a linefeed at the end of each data object.</li>
+ *        </ol>
+ *     </li>
+ *     <li>Data blocks (SgAsmBlock objects containing only data objects):
+ *        <ol>
+ *           <li>DataBlockBody (unparse): unparse each data object in the block.</li>
  *        </ol>
  *     </li>
  *     <li>Functions:
@@ -143,25 +155,46 @@ class AsmUnparser {
 public:
     class UnparserCallback {
     public:
-        /** Arguments passed to instruction unparsing callbacks. */
-        struct InsnArgs {
-            InsnArgs(AsmUnparser *unparser, std::ostream &output, SgAsmInstruction *insn, size_t position_in_block)
-                : unparser(unparser), output(output), insn(insn), position_in_block(position_in_block) {}
+        /** Arguments common to all unparser callback lists. */
+        struct GeneralArgs {
+            GeneralArgs(AsmUnparser *unparser, std::ostream &output)
+                : unparser(unparser), output(output) {}
             AsmUnparser *unparser;      /**< The object doing the unparsing, from which this callback is invoked. */
             std::ostream &output;       /**< Where output should be sent. */
+        };
+            
+        /** Arguments passed to instruction unparsing callbacks. */
+        struct InsnArgs: public GeneralArgs {
+            InsnArgs(AsmUnparser *unparser, std::ostream &output, SgAsmInstruction *insn, size_t position_in_block)
+                : GeneralArgs(unparser, output), insn(insn), position_in_block(position_in_block) {}
             SgAsmInstruction *insn;     /**< The instruction being unparsed. */
             size_t position_in_block;   /**< The index position of the instruction within the basic block, or -1 if unknown. */
         };
 
         /** Arguments passed to basic block unparsing callbacks. */
-        struct BasicBlockArgs {
+        struct BasicBlockArgs: public GeneralArgs {
             BasicBlockArgs(AsmUnparser *unparser, std::ostream &output, SgAsmBlock *block,
                            const std::vector<SgAsmInstruction*> &insns)
-                : unparser(unparser), output(output), block(block), insns(insns) {}
-            AsmUnparser *unparser;      /**< The object doing the unparsing, from which this callback is invoked. */
-            std::ostream &output;       /**< Where output should be sent. */
+                : GeneralArgs(unparser, output), block(block), insns(insns) {}
             SgAsmBlock *block;          /**< The basic block being unparsed. */
             const std::vector<SgAsmInstruction*> &insns; /**< The instructions contained in this basic block. */
+        };
+
+        /** Arguments passed to data unparsing callbacks. */
+        struct StaticDataArgs: public GeneralArgs {
+            StaticDataArgs(AsmUnparser *unparser, std::ostream &output, SgAsmStaticData *data, size_t position_in_block)
+                : GeneralArgs(unparser, output), data(data), position_in_block(position_in_block) {}
+            SgAsmStaticData *data;      /**< The data being unparsed. */
+            size_t position_in_block;   /**< The index position of the data within the data block, or -1 if unknown. */
+        };
+
+        /** Arguments passed to data block unparsing callbacks. */
+        struct DataBlockArgs: public GeneralArgs {
+            DataBlockArgs(AsmUnparser *unparser, std::ostream &output, SgAsmBlock *block,
+                          const std::vector<SgAsmStaticData*> &datalist)
+                : GeneralArgs(unparser, output), block(block), datalist(datalist) {}
+            SgAsmBlock *block;          /**< The block of data being unparsed. */
+            const std::vector<SgAsmStaticData*> &datalist; /**< The data items contained in this data block. */
         };
 
         /** Arguments passed to function unparsing callbacks. */
@@ -196,6 +229,8 @@ public:
          *  @{ */
         virtual bool operator()(bool enabled, const InsnArgs&)           { abort(); }
         virtual bool operator()(bool enabled, const BasicBlockArgs&)     { abort(); }
+        virtual bool operator()(bool enabled, const StaticDataArgs&)     { abort(); }
+        virtual bool operator()(bool enabled, const DataBlockArgs&)      { abort(); }
         virtual bool operator()(bool enabled, const FunctionArgs&)       { abort(); }
         virtual bool operator()(bool enabled, const InterpretationArgs&) { abort(); }
         /** @} */
@@ -299,6 +334,56 @@ public:
     };
 
     /**************************************************************************************************************************
+     *                                  Static Data Callbacks
+     **************************************************************************************************************************/
+
+    /** Functor to print some information at the beginning of a data item. */
+    class StaticDataTitle: public UnparserCallback {
+    public:
+        virtual bool operator()(bool enabled, const StaticDataArgs &args);
+    };
+
+    /** Functor to emit the bytes of the data block. */
+    class StaticDataRawBytes: public UnparserCallback {
+    public:
+        bool show_address;              /* Should we show the address in the left margin? */
+        bool show_offset;               /* If show_address is true, then should we display START+OFFSET or just an address? */
+
+        HexdumpFormat fmt;
+        StaticDataRawBytes() {
+            show_address = true;
+            show_offset = false;
+            fmt.prefix = NULL;          /* Adjusted by the callback each time called. */
+            fmt.multiline = true;       /* Also emit prefix before first line and linefeed after last line. */
+            fmt.width = 8;             /* Max data bytes per line of output. */
+            fmt.pad_chars = true;       /* Show ASCII characters as well as bytes. */
+        }
+        virtual bool operator()(bool enabled, const StaticDataArgs &args);
+    };
+
+    /** Functor to emit a blank line after every data block. */
+    class StaticDataLineTermination: public UnparserCallback {
+    public:
+        virtual bool operator()(bool enabled, const StaticDataArgs &args);
+    };
+
+    /**************************************************************************************************************************
+     *                                  Data Block Callbacks
+     **************************************************************************************************************************/
+
+    /** Functor to print some information at the beginning of a data block. */
+    class DataBlockTitle: public UnparserCallback {
+    public:
+        virtual bool operator()(bool enabled, const StaticDataArgs &args);
+    };
+
+    /** Functor to emit each data statement of the block. */
+    class DataBlockBody: public UnparserCallback {
+    public:
+        virtual bool operator()(bool enabled, const DataBlockArgs &args);
+    };
+
+    /**************************************************************************************************************************
      *                                  Function Callbacks
      **************************************************************************************************************************/
 
@@ -382,6 +467,12 @@ public:
     BasicBlockLineTermination basicBlockLineTermination;
     BasicBlockCleanup basicBlockCleanup;
 
+    StaticDataTitle staticDataTitle;
+    StaticDataRawBytes staticDataRawBytes;
+    StaticDataLineTermination staticDataLineTermination;
+
+    DataBlockBody dataBlockBody;
+
     FunctionEntryAddress functionEntryAddress;
     FunctionSeparator functionSeparator;
     FunctionReasons functionReasons;
@@ -447,8 +538,10 @@ public:
     /** Unparse an object. These are called by unparse(), but might also be called by callbacks.
      *
      *  @{ */
-    virtual bool unparse_insn(bool enabled, std::ostream&, SgAsmInstruction*, size_t position_in_block=0);
+    virtual bool unparse_insn(bool enabled, std::ostream&, SgAsmInstruction*, size_t position_in_block=(size_t)-1);
     virtual bool unparse_basicblock(bool enabled, std::ostream&, SgAsmBlock*);
+    virtual bool unparse_staticdata(bool enabled, std::ostream&, SgAsmStaticData*, size_t position_in_block=(size_t)-1);
+    virtual bool unparse_datablock(bool enabled, std::ostream&, SgAsmBlock*);
     virtual bool unparse_function(bool enabled, std::ostream&, SgAsmFunction*);
     virtual bool unparse_interpretation(bool enabled, std::ostream&, SgAsmInterpretation*);
     /** @} */
@@ -477,6 +570,8 @@ protected:
 
     CallbackLists insn_callbacks;                       /**< Callbacks for instruction unparsing. */
     CallbackLists basicblock_callbacks;                 /**< Callbacks for basic block unparsing. */
+    CallbackLists staticdata_callbacks;                 /**< Callbacks for static data unparsing. */
+    CallbackLists datablock_callbacks;                  /**< Callbacks for data block unparsing. */
     CallbackLists function_callbacks;                   /**< Callbacks for function unparsing. */
     CallbackLists interp_callbacks;                     /**< Callbacks for interpretation unparsing. */
 

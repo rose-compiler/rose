@@ -1,3 +1,6 @@
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+
 #include "sage3basic.h"
 #include "AsmUnparser.h"
 #include "AsmUnparser_compat.h" /*FIXME: needed until no longer dependent upon unparseInstruction()*/
@@ -84,6 +87,16 @@ AsmUnparser::init()
         .append(&basicBlockLineTermination)
         .append(&basicBlockCleanup);
 
+    staticdata_callbacks.pre
+        .append(&staticDataTitle);
+    staticdata_callbacks.unparse
+        .append(&staticDataRawBytes);
+    staticdata_callbacks.post
+        .append(&staticDataLineTermination);
+
+    datablock_callbacks.unparse
+        .append(&dataBlockBody);
+
     function_callbacks.pre
         .append(&functionEntryAddress)
         .append(&functionSeparator)
@@ -119,13 +132,14 @@ AsmUnparser::add_function_labels(SgNode *node)
 bool
 AsmUnparser::is_unparsable_node(SgNode *node)
 {
-    if (isSgAsmFunction(node) || isSgAsmInstruction(node) || isSgAsmInterpretation(node))
+    if (isSgAsmFunction(node) || isSgAsmInstruction(node) || isSgAsmStaticData(node) || isSgAsmInterpretation(node))
         return true;
 
     SgAsmBlock *block = isSgAsmBlock(node);
     if (block!=NULL) {
         const SgAsmStatementPtrList &stmts = block->get_statementList();
-        if (!stmts.empty() && isSgAsmInstruction(stmts.front()))
+        if (!stmts.empty() &&
+            (isSgAsmInstruction(stmts.front()) || isSgAsmStaticData(stmts.front())))
             return true;
     }
 
@@ -192,10 +206,23 @@ AsmUnparser::unparse(std::ostream &output, SgNode *ast)
             continue;
         }
 
+        SgAsmStaticData *data = isSgAsmStaticData(node);
+        if (data) {
+            unparse_staticdata(true, output, data, (size_t)(-1));
+            continue;
+        }
+
         SgAsmBlock *block = isSgAsmBlock(node);
         if (block) {
-            unparse_basicblock(true, output, block);
-            continue;
+            const SgAsmStatementPtrList &stmts = block->get_statementList();
+            assert(!stmts.empty());
+            if (isSgAsmInstruction(stmts.front())) {
+                unparse_basicblock(true, output, block);
+                continue;
+            } else if (isSgAsmStaticData(stmts.front())) {
+                unparse_datablock(true, output, block);
+                continue;
+            }
         }
 
         SgAsmFunction *func = isSgAsmFunction(node);
@@ -237,6 +264,33 @@ AsmUnparser::unparse_basicblock(bool enabled, std::ostream &output, SgAsmBlock *
     enabled = basicblock_callbacks.pre    .apply(enabled, args);
     enabled = basicblock_callbacks.unparse.apply(enabled, args);
     enabled = basicblock_callbacks.post   .apply(enabled, args);
+    return enabled;
+}
+
+bool
+AsmUnparser::unparse_staticdata(bool enabled, std::ostream &output, SgAsmStaticData *data, size_t position_in_block)
+{
+    UnparserCallback::StaticDataArgs args(this, output, data, position_in_block);
+    enabled = staticdata_callbacks.pre    .apply(enabled, args);
+    enabled = staticdata_callbacks.unparse.apply(enabled, args);
+    enabled = staticdata_callbacks.post   .apply(enabled, args);
+    return enabled;
+}
+
+bool
+AsmUnparser::unparse_datablock(bool enabled, std::ostream &output, SgAsmBlock *block)
+{
+    std::vector<SgAsmStaticData*> datalist;
+    const SgAsmStatementPtrList &stmts = block->get_statementList();
+    for (SgAsmStatementPtrList::const_iterator si=stmts.begin(); si!=stmts.end(); ++si) {
+        if (isSgAsmStaticData(*si))
+            datalist.push_back(isSgAsmStaticData(*si));
+    }
+
+    UnparserCallback::DataBlockArgs args(this, output, block, datalist);
+    enabled = datablock_callbacks.pre    .apply(enabled, args);
+    enabled = datablock_callbacks.unparse.apply(enabled, args);
+    enabled = datablock_callbacks.post   .apply(enabled, args);
     return enabled;
 }
 
@@ -402,6 +456,75 @@ bool
 AsmUnparser::BasicBlockCleanup::operator()(bool enabled, const BasicBlockArgs &args)
 {
     args.unparser->insn_is_noop.clear();
+    return enabled;
+}
+
+/******************************************************************************************************************************
+ *                                      Static data callbacks
+ ******************************************************************************************************************************/
+
+bool
+AsmUnparser::StaticDataTitle::operator()(bool enabled, const StaticDataArgs &args)
+{
+    if (enabled) {
+        args.output <<StringUtility::addrToString(args.data->get_address()) <<": static data; "
+                    <<args.data->get_raw_bytes().size() <<" byte" <<(1==args.data->get_raw_bytes().size()?"":"s");
+        SgAsmBlock *block = isSgAsmBlock(args.data->get_parent());
+        if (block && block->get_reason()!=0)
+            args.output <<"; " <<block->reason_str(false);
+        args.output <<std::endl;
+    }
+    return enabled;
+}
+
+
+bool
+AsmUnparser::StaticDataRawBytes::operator()(bool enabled, const StaticDataArgs &args)
+{
+    rose_addr_t start_address = 0;
+    char prefix[64];
+
+    if (enabled) {
+        if (show_address) {
+            fmt.addr_fmt = "0x%08"PRIx64":";
+            if (show_offset) {
+                start_address = 0;
+                sprintf(prefix, "0x%08"PRIx64"+", args.data->get_address());
+                fmt.prefix = prefix;
+            } else {
+                start_address = args.data->get_address();
+                fmt.prefix = "";
+            }
+        } else {
+            fmt.prefix = NULL;
+            fmt.addr_fmt = "";
+        }
+
+        SgAsmExecutableFileFormat::hexdump(args.output, start_address, &(args.data->get_raw_bytes()[0]),
+                                           args.data->get_raw_bytes().size(), fmt);
+    }
+    return enabled;
+}
+
+bool
+AsmUnparser::StaticDataLineTermination::operator()(bool enabled, const StaticDataArgs &args)
+{
+    if (enabled)
+        args.output <<std::endl;
+    return enabled;
+}
+
+/******************************************************************************************************************************
+ *                                      Data block callbacks
+ ******************************************************************************************************************************/
+
+bool
+AsmUnparser::DataBlockBody::operator()(bool enabled, const DataBlockArgs &args)
+{
+    if (enabled) {
+        for (size_t i=0; i<args.datalist.size(); i++)
+            args.unparser->unparse_staticdata(enabled, args.output, args.datalist[i], i);
+    }
     return enabled;
 }
 
