@@ -3836,6 +3836,8 @@ HEADER_SYMBOL_TABLE_START
           SgEnumSymbol*      find_enum(const SgName & name);       //! Complexity O(log n) for first match against name, then O(n)
           SgEnumFieldSymbol* find_enum_field(const SgName & name); //! Complexity O(log n) for first match against name, then O(n)
           SgLabelSymbol*     find_label(const SgName & name);      //! Complexity O(log n) for first match against name, then O(n)
+          SgJavaLabelSymbol* find_java_label(const SgName & name); //! Complexity O(log n) for first match against name, then O(n)
+                                                                   // charles4: added 09/12/2011 for Java
           SgNamespaceSymbol* find_namespace(const SgName & name);  //! Complexity O(log n) for first match against name, then O(n)
           SgTemplateSymbol*  find_template(const SgName & name);   //! Complexity O(log n) for first match against name, then O(n)
 
@@ -6118,6 +6120,14 @@ SgSymbolTable::get_name( const SgNode* node) const
                break;
              }
 
+          case V_SgJavaLabelStatement: // charles4: 09/13/2011 added for Java support
+             {
+               const SgJavaLabelStatement* labelStatement = isSgJavaLabelStatement(node); 
+               ROSE_ASSERT (labelStatement->get_label() != NULL);
+               name = labelStatement->get_label();
+               break;
+             }
+
           case V_SgClassDeclaration:
           case V_SgDerivedTypeStatement:
           case V_SgModuleStatement:
@@ -6861,6 +6871,7 @@ SgSymbolTable::exists ( const SgName & nm, SgSymbol *sp ) const
       SgEnumSymbol*      find_enum(const SgName &);
       SgEnumFieldSymbol* find_enum_field(const SgName &);
       SgLabelSymbol*     find_label(const SgName &) const;
+      SgJavaLabelSymbol* find_label(const SgName &) const; // charles4: added 9/12/2011 for Java
       SgNamespaceSymbol* find_namespace(const SgName &);
 */
 
@@ -7160,6 +7171,32 @@ SgSymbolTable::find_label(const SgName & nm)
                     p_name    = nm;
                     p_no_name = false;
                     return (SgLabelSymbol *) p_iterator->second;
+                  }
+               p_iterator++;
+             }
+        }
+
+     return NULL;
+   }
+
+//
+// charles4: added this function for the Java case...
+//
+SgJavaLabelSymbol*
+SgSymbolTable::find_java_label(const SgName & nm)
+   {
+     assert(p_table != NULL);
+     if (p_table)
+        {
+          p_iterator = p_table->find(nm);
+          while (p_iterator != p_table->end() && (*p_iterator).first == nm)
+             {
+            // if (isSgNamespaceSymbol((*p_iterator).second))
+               if ( p_iterator->second->variantT() == V_SgJavaLabelSymbol)
+                  {
+                    p_name    = nm;
+                    p_no_name = false;
+                    return (SgJavaLabelSymbol *) p_iterator->second;
                   }
                p_iterator++;
              }

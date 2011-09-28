@@ -40,10 +40,10 @@ class ecjASTVisitor extends ASTVisitor
      private final JavaSourcePositionInformationFactory posFactory;
      
      //
-     // Map each argument of a catch clause to its catch block. 
+     // Keep track of the set of Catch block arguments.
      // Keep track of the set of Blocks that are Catch blocks.
      //
-     HashMap<Argument, Block> catchBlockArgumentMap = new HashMap<Argument, Block>();
+     HashSet<Argument> catchArguments = new HashSet<Argument>();
      HashSet<Block> catchBlocks = new HashSet<Block>();
 
   // This is the older version oc the constructor, before Vincent's work
@@ -63,16 +63,16 @@ class ecjASTVisitor extends ASTVisitor
      }
      
      public JavaToken createJavaToken(ASTNode node) {
-    	 JavaSourcePositionInformation pos = getPosInfoFactory().createPosInfo(node);
-    	 // For now we return dummy text
-    	 return new JavaToken("Dummy JavaToken (see createJavaToken)", pos);
+         JavaSourcePositionInformation pos = getPosInfoFactory().createPosInfo(node);
+         // For now we return dummy text
+         return new JavaToken("Dummy JavaToken (see createJavaToken)", pos);
      }
 
      public JavaToken createJavaToken(AbstractMethodDeclaration node) {
        // System.out.println("Create JAVA TOKEN FOR METHOD BODY"); 
-    	 JavaSourcePositionInformation pos = getPosInfoFactory().createPosInfo(node);
-    	 // For now we return dummy text
-    	 return new JavaToken("Dummy JavaToken (see createJavaToken)", pos);
+         JavaSourcePositionInformation pos = getPosInfoFactory().createPosInfo(node);
+         // For now we return dummy text
+         return new JavaToken("Dummy JavaToken (see createJavaToken)", pos);
      }
 
      protected JavaSourcePositionInformationFactory getPosInfoFactory() {
@@ -124,7 +124,7 @@ class ecjASTVisitor extends ASTVisitor
           return true; // do nothing by default, keep traversing
         }
 
-     public boolean visit(Argument  node, BlockScope scope)
+     public boolean visit(Argument node, BlockScope scope)
         {
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of visit (Argument,BlockScope)");
@@ -163,8 +163,20 @@ class ecjASTVisitor extends ASTVisitor
        // the stack within ROSE).
        // java_parser.cactionArgument(nameString, node.modifiers, this.createJavaToken(node));
 
-          if (catchBlockArgumentMap.get(node) != null) {
-              System.out.println("Found a catch block argument");          
+        //
+        // charles4 (09/26/2011): If this Argument declaration belongs to a Catch statement,
+        // initiate processing of the Catch statement.
+        //
+        if (catchArguments.contains(node)) {
+              System.out.println("This call to JavaParserSupport.generateType() pushes a type onto the astJavaTypeStack (visit (MethodDeclaration,ClassScope)): type = " + node.type + " nameString = " + nameString);
+              JavaParserSupport.generateType(node.type);
+
+              // This rule assumes that the type will be made available on the stack (astJavaTypeStack).
+              // In general we want to have rules that are specific to IR nodes and pass any constructed
+              // IR nodes via the stack (rules called should have generated the constructed IR nodes on 
+              // the stack within ROSE).
+              
+              java_parser.cactionCatchBlock(nameString, this.createJavaToken(node)); // Set up Catch Block environment
           }
           
           if (java_parser.verboseLevel > 0)
@@ -173,7 +185,7 @@ class ecjASTVisitor extends ASTVisitor
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(Argument  node, ClassScope scope)
+     public boolean visit(Argument node, ClassScope scope)
         {
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of visit (Argument,ClassScope)");
@@ -197,7 +209,7 @@ class ecjASTVisitor extends ASTVisitor
                System.out.println("Leaving visit (ArrayAllocationExpression,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
-		  }
+        }
 
      public boolean visit(ArrayInitializer  node, BlockScope scope)
         {
@@ -313,13 +325,7 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of visit (Block,BlockScope)");
 
-          if (catchBlocks.contains(node)) {
-              System.out.println("Found a catch Block");
-              java_parser.cactionBlock(this.createJavaToken(node));
-          }
-          else {
-              java_parser.cactionBlock(this.createJavaToken(node));
-          }
+          java_parser.cactionBlock(this.createJavaToken(node));
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (Block,BlockScope)");
@@ -333,7 +339,7 @@ class ecjASTVisitor extends ASTVisitor
                System.out.println("Inside of visit (BreakStatement,BlockScope)");
 
           java_parser.cactionBreakStatement((node.label == null ? "" : new String(node.label)),
-        		                            this.createJavaToken(node));
+                                            this.createJavaToken(node));
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (BreakStatement,BlockScope)");
@@ -584,7 +590,7 @@ class ecjASTVisitor extends ASTVisitor
                System.out.println("Inside of visit (ContinueStatement,BlockScope)");
 
           java_parser.cactionContinueStatement((node.label == null ? "" : new String(node.label)),
-        		                                          this.createJavaToken(node));
+                                               this.createJavaToken(node));
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (ContinueStatement,BlockScope)");
@@ -1353,7 +1359,7 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of visit (LabeledStatement,BlockScope)");
 
-          java_parser.cactionLabeledStatement(this.createJavaToken(node));
+          java_parser.cactionLabeledStatement(new String(node.label), this.createJavaToken(node));
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (LabeledStatement,BlockScope)");
@@ -1944,18 +1950,18 @@ class ecjASTVisitor extends ASTVisitor
           java_parser.cactionQualifiedNameReference("QualifiedNameReference_class_abc", this.createJavaToken(node));
 
 /*
-	if (runtimeTimeType == null || compileTimeType == null)
+    if (runtimeTimeType == null || compileTimeType == null)
      return;
-	// set the generic cast after the fact, once the type expectation is fully known (no need for strict cast)
-	FieldBinding field = null;
-	int length = this.otherBindings == null ? 0 : this.otherBindings.length;
-	if (length == 0) {
+    // set the generic cast after the fact, once the type expectation is fully known (no need for strict cast)
+    FieldBinding field = null;
+    int length = this.otherBindings == null ? 0 : this.otherBindings.length;
+    if (length == 0) {
      if ((this.bits & Binding.FIELD) != 0 && this.binding != null && this.binding.isValidBinding()) {
-     	field = (FieldBinding) this.binding;
+         field = (FieldBinding) this.binding;
      }
-	} else {
+    } else {
      field  = this.otherBindings[length-1];
-	}
+    }
 */
           return true; // do nothing by  node, keep traversing
         }
@@ -2251,11 +2257,12 @@ class ecjASTVisitor extends ASTVisitor
                System.out.println("Inside of visit (TryStatement,BlockScope)");
 
           //
-          // Match each argument into its corresponding block and 
+          // charles4 (09/26/2011): Keep track of the set of Arguments and the set of Blocks that 
+          // make up the catch blocks. 
           //
           if (node.catchArguments != null) {
               for (int i = 0; i < node.catchBlocks.length; i++) {
-                  catchBlockArgumentMap.put(node.catchArguments[i], node.catchBlocks[i]);
+                  catchArguments.add(node.catchArguments[i]);
                   catchBlocks.add(node.catchBlocks[i]);
               }
           }
@@ -2442,18 +2449,14 @@ class ecjASTVisitor extends ASTVisitor
                System.out.println("Leaving endVisit (AnnotationMethodDeclaration,ClassScope)");
         }
 
-     public void endVisit(Argument  node, BlockScope scope)
+     public void endVisit(Argument node, BlockScope scope)
         {
        // do nothing by default
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (Argument,BlockScope)");
-
-          if (catchBlockArgumentMap.get(node) != null) {
-              System.out.println("Exiting a catch block argument");          
-          }
         }
 
-     public void endVisit(Argument  node,ClassScope scope)
+     public void endVisit(Argument node,ClassScope scope)
         {
        // do nothing by default
           if (java_parser.verboseLevel > 0)
@@ -2579,20 +2582,24 @@ class ecjASTVisitor extends ASTVisitor
 
        // DQ (9/30/2011): We need to pass the number of statments so that we can pop 
        // a precise number of statements off of the stack (and not the whole stack).
+          java_parser.cactionBlockEnd(numberOfStatements, this.createJavaToken(node));
+          //
+          // charles4 (09/26/2011): If this block belongs to a Catch statement,
+          // close the catch statement.
+          //
           if (catchBlocks.contains(node)) {
-              System.out.println("Exiting a catch Block");
-              java_parser.cactionBlockEnd(numberOfStatements, this.createJavaToken(node));
+              java_parser.cactionCatchBlockEnd(this.createJavaToken(node));
           }
-          else {
-              java_parser.cactionBlockEnd(numberOfStatements, this.createJavaToken(node));
-          }
+
+          if (java_parser.verboseLevel > 0)
+              System.out.println("Leaving endVisit (Block,BlockScope)");
         }
 
      public void endVisit(BreakStatement  node, BlockScope scope)
         {
        // do nothing  by default
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (BreakStatement,BlockScope)");
+         if (java_parser.verboseLevel > 0)
+             System.out.println("Leaving endVisit (BreakStatement,BlockScope)");
         }
 
      public void endVisit(CaseStatement  node, BlockScope scope)
@@ -3140,7 +3147,7 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (LabeledStatement,BlockScope)");
 
-          java_parser.cactionLabeledStatementEnd(new String(node.label), this.createJavaToken(node));
+          java_parser.cactionLabeledStatementEnd(this.createJavaToken(node));
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (LabeledStatement,BlockScope)");
@@ -3559,7 +3566,7 @@ class ecjASTVisitor extends ASTVisitor
         {
        // do nothing  by default
           if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (TryStatement,BlockScope)");
+               System.out.println("endVisit TryStatement -- BlockScope");
 
           java_parser.cactionTryStatementEnd(node.catchArguments == null ? 0 : node.catchBlocks.length, node.finallyBlock != null, this.createJavaToken(node));
 

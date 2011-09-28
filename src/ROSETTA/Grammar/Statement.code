@@ -280,6 +280,7 @@ HEADER_SCOPE_STATEMENT_START
        // SgEnumFieldSymbol* lookup_enumfield_symbol  (const SgName& n) const ROSE_DEPRECATED_FUNCTION;
           SgEnumFieldSymbol* lookup_enum_field_symbol (const SgName& n) const;
           SgLabelSymbol*     lookup_label_symbol      (const SgName& n) const;
+          SgJavaLabelSymbol* lookup_java_label_symbol (const SgName& n) const; // charles4: added 09/12/2011
           SgNamespaceSymbol* lookup_namespace_symbol  (const SgName& n) const;
           SgTemplateSymbol*  lookup_template_symbol   (const SgName& n) const;
 
@@ -1798,6 +1799,8 @@ HEADER_JAVA_LABEL_STATEMENT_START
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
 #endif
 */
+      // charles4: 09/13/2011 added to support Java (DQ (2/10/2007): Marked as virtual to be consistent)
+          virtual SgSymbol* get_symbol_from_symbol_table() const;
 
 HEADER_JAVA_LABEL_STATEMENT_END
 
@@ -4010,6 +4013,16 @@ SgScopeStatement::lookup_label_symbol(const SgName& n) const
    {
      assert (p_symbol_table != NULL);
      return p_symbol_table->find_label(n);
+   }
+
+//
+// charles4: function added 09/12/2011 identical with the same function for SgLabelSymbol
+//
+SgJavaLabelSymbol*
+SgScopeStatement::lookup_java_label_symbol(const SgName& n) const
+   {
+     assert (p_symbol_table != NULL);
+     return p_symbol_table->find_java_label(n);
    }
 
 // DQ (9/7/2006): Previously removed functionality, restored by request from Beata at ANL.
@@ -11653,6 +11666,20 @@ SOURCE_JAVA_LABEL_STATEMENT_START
 void
 SgJavaLabelStatement::post_construction_initialization()
    {
+   }
+
+// charles4: 09/13/2011 - Adapted from SgLabelStatement to support Java.
+// DQ (2/6/2007): Get the associated symbol from the symbol table in the stored scope
+SgSymbol*
+SgJavaLabelStatement::get_symbol_from_symbol_table() const
+   {
+#if 0
+     ROSE_ASSERT(get_scope() != NULL);
+     ROSE_ASSERT(get_scope()->get_symbol_table() != NULL);
+     return get_scope()->get_symbol_table()->find(this);
+#else
+     return this -> get_symbol_table() -> find(this);
+#endif
    }
 
 SOURCE_JAVA_LABEL_STATEMENT_END
