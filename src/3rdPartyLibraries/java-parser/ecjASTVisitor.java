@@ -154,7 +154,7 @@ class ecjASTVisitor extends ASTVisitor
        // In general we want to have rules that are specific to IR nodes and pass any constructed
        // IR nodes via the stack (rules called should have generated the constructed IR nodes on 
        // the stack within ROSE).
-       // java_parser.cactionArgument(nameString,node.modifiers);
+       // java_parser.cactionArgument(nameString, node.modifiers, this.createJavaToken(node));
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (Argument,BlockScope)");
@@ -241,7 +241,14 @@ class ecjASTVisitor extends ASTVisitor
 
      public boolean visit(ArrayTypeReference  node, BlockScope scope)
         {
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Inside of visit (ArrayTypeReference,BlockScope)");
+
           java_parser.cactionArrayTypeReference("ArrayTypeReference_block_abc", this.createJavaToken(node));
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving visit (ArrayTypeReference,BlockScope)");
+
           return true; // do nothing by  node, keep traversing
         }
 
@@ -308,7 +315,8 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of visit (BreakStatement,BlockScope)");
 
-          java_parser.cactionBreakStatement(this.createJavaToken(node));
+          java_parser.cactionBreakStatement((node.label == null ? "" : new String(node.label)),
+        		                            this.createJavaToken(node));
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (BreakStatement,BlockScope)");
@@ -321,7 +329,7 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of visit (CaseStatement,BlockScope)");
 
-          java_parser.cactionCaseStatement(this.createJavaToken(node));
+          java_parser.cactionCaseStatement(node.constantExpression != null, this.createJavaToken(node));
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (CaseStatement,BlockScope)");
@@ -394,20 +402,26 @@ class ecjASTVisitor extends ASTVisitor
              }
 
        // Ouput some information about the CompilationUnitScope (we don't use the package name currently).
-          String packageReference = "";
+       // DQ (9/11/2011): Static analysis tools suggest using StringBuffer instead of String.
+       // String packageReference = "";
+          StringBuffer packageReference = new StringBuffer();
           for (int i = 0, tokenArrayLength = scope.currentPackageName.length; i < tokenArrayLength; i++)
              {
                String tokenString = new String(scope.currentPackageName[i]);
                System.out.println("     --- packageReference tokens = " + tokenString);
 
                if (i > 0)
-                    packageReference += '.';
+                  {
+                 // packageReference += '.';
+                     packageReference.append('.');
+                  }
 
-               packageReference += tokenString;
+            // packageReference += tokenString;
+               packageReference.append(tokenString);
              }
 
           if (java_parser.verboseLevel > 0)
-               System.out.println("Package name = " + packageReference);
+             System.out.println("Package name = " + packageReference.toString());
 
        // Call the Java side of the JNI function.
        // This function only does a few tests on the C++ side to make sure that it is ready to construct the ROSE AST.
@@ -552,7 +566,8 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of visit (ContinueStatement,BlockScope)");
 
-          java_parser.cactionContinueStatement(this.createJavaToken(node));
+          java_parser.cactionContinueStatement((node.label == null ? "" : new String(node.label)),
+        		                                          this.createJavaToken(node));
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (ContinueStatement,BlockScope)");
@@ -649,19 +664,20 @@ class ecjASTVisitor extends ASTVisitor
              }
             else
              {
+               String name = "super";
                if (node.accessMode == ExplicitConstructorCall.ImplicitSuper)
                   {
-                    System.out.println("Sorry, not implemented in support for ExplicitConstructorCall: implicit super()");
+                 // System.out.println("Sorry, not implemented in support for ExplicitConstructorCall: implicit super()");
                  // java_parser.cactionExplicitConstructorCall("ImplicitSuper");
 
                  // We have to implement the support for an impleicit super() call, even if it is marked explicitly 
                  // as implicit and not generated in the output source code.  It should still be explicit in the AST
                  // as a way to simplify analysis.
-                    String name = new String("super");
+                 // String name = new String("super");
                  // System.out.println("super function name = " + name);
 
                     String associatedClassName = node.binding.toString();
-                    System.out.println("super function associatedClassName = " + associatedClassName);
+                 // System.out.println("super function associatedClassName = " + associatedClassName);
 
                     java_parser.cactionMessageSend(name,associatedClassName, this.createJavaToken(node));
                   }
@@ -669,10 +685,11 @@ class ecjASTVisitor extends ASTVisitor
                   {
                     if (node.accessMode == ExplicitConstructorCall.Super)
                        {
-                         System.out.println("Sorry, not implemented in support for ExplicitConstructorCall: super()");
+                      // System.out.println("Sorry, not implemented in support for ExplicitConstructorCall: super()");
                       // java_parser.cactionExplicitConstructorCall("super");
 
-                         String name = new String("super");
+                      // String name = new String("super");
+                      // String name = "super";
 
                          if (java_parser.verboseLevel > 0)
                             {
@@ -764,6 +781,8 @@ class ecjASTVisitor extends ASTVisitor
         {
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of visit (FieldDeclaration,BlockScope)");
+/*
+       // DQ (9/5/2011): Old code from before this was processed bottom up.
 
        // I think that it is enough that this is set via the LocalDeclaration.
        // boolean isFinal = node.binding.isFinal();
@@ -817,7 +836,7 @@ class ecjASTVisitor extends ASTVisitor
        // java_parser.cactionLocalDeclaration(name,isFinal);
 
           java_parser.cactionFieldDeclaration(name,hasInitializer,isFinal,isPrivate,isProtected,isPublic,isVolatile,isSynthetic,isStatic,isTransient, this.createJavaToken(node));
-
+*/
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (FieldDeclaration,BlockScope)");
 
@@ -826,28 +845,28 @@ class ecjASTVisitor extends ASTVisitor
 
           public boolean visit(FieldReference node, BlockScope scope) 
              {
-               System.out.println("Sorry, not implemented in support for FieldReference(BlockScope): xxx");
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (FieldReference,BlockScope)");
+            // System.out.println("Sorry, not implemented in support for FieldReference(BlockScope): xxx");
+               if (java_parser.verboseLevel > 0)
+                    System.out.println("Inside of visit (FieldReference,BlockScope)");
 
-          java_parser.cactionFieldReference(this.createJavaToken(node));
+               java_parser.cactionFieldReference(this.createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (FieldReference,BlockScope)");
+               if (java_parser.verboseLevel > 0)
+                    System.out.println("Leaving visit (FieldReference,BlockScope)");
 
                return true; // do nothing by  node, keep traversing
              }
 
           public boolean visit(FieldReference  node, ClassScope scope)
              {
-               System.out.println("Sorry, not implemented in support for FieldReference(ClassScope): xxx");
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Inside of visit (FieldReference,ClassScope)");
+            // System.out.println("Sorry, not implemented in support for FieldReference(ClassScope): xxx");
+               if (java_parser.verboseLevel > 0)
+                    System.out.println("Inside of visit (FieldReference,ClassScope)");
 
-          java_parser.cactionFieldReferenceClassScope(this.createJavaToken(node));
+               java_parser.cactionFieldReferenceClassScope(this.createJavaToken(node));
 
-          if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving visit (FieldReference,ClassScope)");
+               if (java_parser.verboseLevel > 0)
+                    System.out.println("Leaving visit (FieldReference,ClassScope)");
 
                return true; // do nothing by  node, keep traversing
              }
@@ -913,149 +932,47 @@ class ecjASTVisitor extends ASTVisitor
        // we have not yet read in the classes that would be a part of those
        // implicitly read as a consequence of the "import" statements.
 
-          if (java_parser.verboseLevel > -1)
+          if (java_parser.verboseLevel > 1)
                System.out.println("Inside of visit (ImportReference,CompilationUnitScope)");
 
-          String importReference = "";
+       // DQ (9/11/2011): Static analysis tools suggest using StringBuffer instead of String.
+       // String importReference = "";
+          StringBuffer importReference = new StringBuffer();
           for (int i = 0, tokenArrayLength = node.tokens.length; i < tokenArrayLength; i++)
              {
                String tokenString = new String(node.tokens[i]);
-               System.out.println("     --- ImportReference tokens = " + tokenString);
+            // System.out.println("     --- ImportReference tokens = " + tokenString);
 
                if (i > 0)
-                    importReference += '.';
+                  {
+                    importReference.append('.');
+                  }
 
-               importReference += tokenString;
+               importReference.append(tokenString);
              }
 
           boolean withOnDemand = true;
           boolean containsWildcard = false;
-          String importReferenceWithoutWildcard = importReference;
+          String importReferenceWithoutWildcard = importReference.toString();
           if (withOnDemand && ((node.bits & node.OnDemand) != 0))
              {
-            // output.append(".*");
-               System.out.println("     --- ImportReference tokens = *");
-               importReference += ".*";
+            // System.out.println("     --- ImportReference tokens = *");
+               importReference.append(".*");
                containsWildcard = true;
              }
 
-          if (java_parser.verboseLevel > -1)
-               System.out.println("importReference (string) = " + importReference);
+          if (java_parser.verboseLevel > 1)
+             System.out.println("importReference (string) = " + importReference.toString());
 
-       // Build the text for the token (not taken from the token stream in EDG, so it might be wrong to call this a token; fix later).
-          String text = "import";
-
-       // We know how to set these, but make them known values for initial testing.
-          int    line_start = 7;
-          int    line_end   = 7;
-          int    col_start  = 42;
-          int    col_end    = 42;
-
-       // DQ (8/14/2011): This code is inconsistant with the new design for source code position inforamtion support.
-       // System.out.println("Building a JavaToken("+text+","+line_start+","+col_start+")");
-       // JavaToken token = new JavaToken(text,line_start,col_start);
-       // System.out.println("DONE: Building a JavaToken("+text+","+line_start+","+col_start+")");
-
-       // DQ (8/14/2011): This code is inconsistant with the new design for source code position inforamtion support.
-       // Use the newer source code position information (we can build it on the stack).
-       // JavaSourcePositionInformation sourcePositionInfo = new JavaSourcePositionInformation(line_start,line_end,col_start,col_end);
-       // java_parser.cactionSetSourcePosition(sourcePositionInfo);
+       // DQ (8/22/2011): Read the referenced class or set of classes defined by the import statement.
+       // System.out.println("In visit (ImportReference,CompilationUnitScope): Calling buildImplicitClassSupport() to recursively build the class structure with member declarations: name = " + importReferenceWithoutWildcard);
+          JavaParserSupport.buildImplicitClassSupport(importReferenceWithoutWildcard);
+       // System.out.println("DONE: In visit (ImportReference,CompilationUnitScope): Calling buildImplicitClassSupport() to recursively build the class structure with member declarations: name = " + importReferenceWithoutWildcard);
 
        // DQ (4/15/2011): I could not get the passing of a boolean to work, so I am just passing an integer.
           int containsWildcard_integer = containsWildcard ? 1 : 0;
-       // java_parser.cactionImportReference(importReferenceWithoutWildcard,containsWildcard_integer);
           java_parser.cactionImportReference(importReferenceWithoutWildcard,containsWildcard_integer,this.createJavaToken(node));
 
-       // Use the token to set the source code position for ROSE.
-       // java_parser.cactionGenerateToken(token);
-
-/*
-       // I now do not think this is worth doing at this point.  Basically, we will treat the "import" statement
-       // as a stringified construct (as much as I don't like that approach within a compiler).
-
-       // We now read in classes on demand as they are references, if they are references.  All classes are read as 
-       // required to resolved all types in the program and the implicitly read classes.  Interestingly, there
-       // are nearly 3000 classes in the 135 packages in the J2SE 1.4.2 standard class library (over 3000 classes 
-       // in 165 packages in J2SE 5.0). Commercial class libraries that you might use add many more packages. 
-       // This implements the equivalent of the C++ "use" statement on "java.lang".
-          System.out.println("Processing import statement: path = " + importReference + " importReferenceWithoutWildcard = " + importReferenceWithoutWildcard);
-
-          JavaParserSupport.buildImplicitClassSupport("java.lang");
-
-       // Note that reflection does not work on all levels (e.g. "java.io"), so we have to handle some cases explicitly.
-          String s = new String(node.tokens[0]);
-          int tokenArrayLength = node.tokens.length;
-          System.out.println("tokenArrayLength = " + tokenArrayLength + " s = " + s);
-          String javaString = new String("java");
-          if (s == javaString)
-             {
-               System.out.println("In path segment: s = " + s);
-               if (tokenArrayLength > 1)
-                  {
-                    s = new String(node.tokens[1]);
-
-                 // This is the start of the default implicit package within the Java standard.
-                    if (s == "lang")
-                       {
-                      // This is the start of the default implicit language package within the Java standard.
-                         if (containsWildcard == true)
-                            {
-                              System.out.println("Processing java.lang.*");
-                            }
-                           else
-                            {
-                              System.out.println("Error: import java.lang is not defined in Java");
-                              System.exit(1);
-                            }
-                       }
-                      else
-                       {
-                         if (s == "io")
-                            {
-                           // This is the start of the default implicit package within the Java standard.
-                              if (containsWildcard == true)
-                                 {
-                                   System.out.println("Processing java.io.*");
-                                 }
-                                else
-                                 {
-                                   System.out.println("Error: import java.io is not defined in Java");
-                                   System.exit(1);
-                                 }
-                            }
-                           else
-                            {
-                              System.out.println("Sorry, import java." + s + " is not implemented yet");
-                              System.exit(1);
-                            }
-                       }
-                  }
-                 else
-                  {
-                    if (containsWildcard == true)
-                       {
-                      // System.out.println("Processing java.*");
-                         System.out.println("Sorry, import java.* is not implemented yet");
-                         System.exit(1);
-                       }
-                      else
-                       {
-                         System.out.println("Error: import java is not implemented yet");
-                         System.exit(1);
-                       }
-                  }
-             }
-            else
-             {
-               System.out.println("Not a part of java standard package: import " + s + " is not implemented yet");
-               System.exit(1);
-             }
-
-       // JavaParserSupport.buildImplicitClassSupport(importReference);
-          JavaParserSupport.buildImplicitClassSupport(importReferenceWithoutWildcard);
-
-          System.out.println("DONE: Processing import statement: path = " + importReference + " importReferenceWithoutWildcard = " + importReferenceWithoutWildcard);
-*/
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (ImportReference,CompilationUnitScope)");
 
@@ -1434,6 +1351,7 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of visit (LocalDeclaration,BlockScope)");
 
+/*
           String name = new String(node.name);
 
        // String selectorName = new String(node.selector);
@@ -1450,7 +1368,7 @@ class ecjASTVisitor extends ASTVisitor
                System.out.println("node.type                     = " + node.type);
              }
 
-       // Construct the type (will be constructed on the astJavaTypeStack.
+       // Construct the type (will be constructed on the astJavaTypeStack).
 
        // DQ (7/18/2011): Switch to using the different generateType() function (taking a TypeReference).
        // JavaParserSupport.generateType(node.binding.type);
@@ -1464,7 +1382,7 @@ class ecjASTVisitor extends ASTVisitor
        // Build the variable declaration using the type from the astJavaTypeStack.
        // Note that this may have to handle an array of names or be even more complex in the future.
           java_parser.cactionLocalDeclaration(name,isFinal, this.createJavaToken(node));
-
+*/
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (LocalDeclaration,BlockScope)");
 
@@ -2310,17 +2228,17 @@ class ecjASTVisitor extends ASTVisitor
           return true; // do nothing by  node, keep traversing
         }
 
-     public boolean visit(TryStatement  node, BlockScope scope)
+     public boolean visit(TryStatement node, BlockScope scope)
         {
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of visit (TryStatement,BlockScope)");
 
-          java_parser.cactionTryStatement(this.createJavaToken(node));
-
+          java_parser.cactionTryStatement(node.catchBlocks.length, node.finallyBlock != null, this.createJavaToken(node));
+          
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (TryStatement,BlockScope)");
 
-          return true; // do nothing by  node, keep traversing
+          return false; // do nothing by  node, keep traversing
         }
 
      public boolean visit(TypeDeclaration node,BlockScope scope)
@@ -2548,7 +2466,22 @@ class ecjASTVisitor extends ASTVisitor
 
      public void endVisit(ArrayTypeReference  node, BlockScope scope)
         {
-       // do nothing by default
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Inside of endVisit (ArrayTypeReference,BlockScope)");
+
+          String type_name = new String(node.token);
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Inside of endVisit (ArrayTypeReference,BlockScope): type name = " + type_name);
+
+       // This will generate the base type
+          JavaParserSupport.generateType(node);
+
+       // This will use the base type from the stack and implement the array type.
+       // TODO: Currently no dimenion information is passed, this should likely be fixed.
+       //       Also, the name of the base type is passed, but not used except for debugging.
+          java_parser.cactionArrayTypeReferenceEnd(type_name, this.createJavaToken(node));
+
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (ArrayTypeReference,BlockScope)");
         }
@@ -2563,6 +2496,11 @@ class ecjASTVisitor extends ASTVisitor
      public void endVisit(AssertStatement  node, BlockScope scope)
         {
        // do nothing by default
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (AssertStatement,BlockScope)");
+
+          java_parser.cactionAssertStatementEnd(node.exceptionArgument != null, this.createJavaToken(node));
+
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (AssertStatement,BlockScope)");
         }
@@ -2598,7 +2536,8 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of endVisit (Block,BlockScope)");
 
-          System.out.println("node.explicitDeclarations = " + node.explicitDeclarations);
+          if (java_parser.verboseLevel > 1)
+               System.out.println("node.explicitDeclarations = " + node.explicitDeclarations);
 
           int numberOfStatements = 0;
           if (node.statements != null)
@@ -2622,6 +2561,11 @@ class ecjASTVisitor extends ASTVisitor
      public void endVisit(CaseStatement  node, BlockScope scope)
         {
        // do nothing  by default
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (CaseStatement,BlockScope)");
+
+          java_parser.cactionCaseStatementEnd(node.constantExpression != null, this.createJavaToken(node));
+
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (CaseStatement,BlockScope)");
         }
@@ -2660,9 +2604,31 @@ class ecjASTVisitor extends ASTVisitor
 
      public void endVisit(CompilationUnitDeclaration node, CompilationUnitScope scope)
         {
-       // do nothing by default
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of endVisit (CompilationUnitDeclaration,CompilationUnitScope)");
+
+          int numberOfStatements = 0;
+          if (node.types != null)
+             {
+               numberOfStatements += node.types.length;
+               if (java_parser.verboseLevel > 0)
+                    System.out.println("node.types.length = " + node.types.length);
+             }
+
+          if (node.imports != null)
+             {
+               numberOfStatements += node.imports.length;
+               if (java_parser.verboseLevel > 0)
+                    System.out.println("node.imports.length = " + node.imports.length);
+             }
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("numberOfStatements = " + numberOfStatements);
+
+          java_parser.cactionCompilationUnitDeclarationEnd(numberOfStatements, this.createJavaToken(node));
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (CompilationUnitDeclaration,CompilationUnitScope)");
         }
 
      public void endVisit(CompoundAssignment  node, BlockScope scope)
@@ -2748,6 +2714,11 @@ class ecjASTVisitor extends ASTVisitor
        // do nothing  by default
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (EmptyStatement,BlockScope)");
+
+          java_parser.cactionEmptyStatementEnd(this.createJavaToken(node));
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (EmptyStatement,BlockScope)");
         }
 
      public void endVisit(EqualExpression  node, BlockScope scope)
@@ -2789,7 +2760,9 @@ class ecjASTVisitor extends ASTVisitor
         {
        // do nothing  by default
           if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (FieldDeclaration,BlockScope)");
+               System.out.println("Inside of endVisit (FieldDeclaration,BlockScope)");
+/*
+       // DQ (9/5/2011): Old code from before this was processed bottom up.
 
        // We pass the name to support debugging...
           String name = new String(node.name);
@@ -2797,6 +2770,61 @@ class ecjASTVisitor extends ASTVisitor
           boolean hasInitializer = (node.initialization != null) ? true : false;
 
           java_parser.cactionFieldDeclarationEnd(name,hasInitializer, this.createJavaToken(node));
+*/
+
+       // I think that it is enough that this is set via the LocalDeclaration.
+       // boolean isFinal = node.binding.isFinal();
+
+          boolean isPrivate   = (node.binding != null && node.binding.isPrivate())   ? true : false;
+          boolean isProtected = (node.binding != null && node.binding.isProtected()) ? true : false;
+          boolean isPublic    = (node.binding != null && node.binding.isPublic())    ? true : false;
+
+          boolean isVolatile  = (node.binding != null && node.binding.isVolatile())  ? true : false;
+          boolean isSynthetic = (node.binding != null && node.binding.isSynthetic()) ? true : false;
+          boolean isStatic    = (node.binding != null && node.binding.isStatic())    ? true : false;
+          boolean isTransient = (node.binding != null && node.binding.isTransient()) ? true : false;
+
+          boolean hasInitializer = (node.initialization != null) ? true : false;
+
+          String name = new String(node.name);
+
+       // String selectorName = new String(node.selector);
+       // System.out.println("node.name = " + selectorName);
+       // System.out.println("node.modfiers = " + node.modfiers);
+
+          if (java_parser.verboseLevel > 0)
+             {
+               System.out.println("node.name                     = " + name);
+               System.out.println("node.binding                  = " + node.binding);
+               System.out.println("node.binding.type             = " + node.binding.type);
+               System.out.println("node.binding.type.id          = " + node.binding.type.id);
+               System.out.println("node.binding.type.debugName() = " + node.binding.type.debugName());
+               System.out.println("node.type                     = " + node.type);
+
+               System.out.println("isPrivate                     = " + isPrivate);
+               System.out.println("isProtected                   = " + isProtected);
+               System.out.println("isPublic                      = " + isPublic);
+
+               System.out.println("hasInitializer                = " + hasInitializer);
+             }
+
+       // Construct the type (will be constructed on the astJavaTypeStack.
+
+       // DQ (9/5/2011): Now that we process this bottom up, we can expect the type be already be on the stack.
+       // DQ (7/18/2011): Switch to using the different generateType() function (taking a TypeReference).
+       // JavaParserSupport.generateType(node.binding.type);
+       // JavaParserSupport.generateType(node.type);
+
+          boolean isFinal = node.binding.isFinal();
+
+       // DQ (8/13/2011): This information is stored in the FieldReference...(not clear how to get it).
+       // boolean isPrivate = (node.binding != null && !node.binding.isPrivate()) ? true : false;
+
+       // Build the variable declaration using the type from the astJavaTypeStack.
+       // Note that this may have to handle an array of names or be even more complex in the future.
+       // java_parser.cactionLocalDeclaration(name,isFinal);
+
+          java_parser.cactionFieldDeclarationEnd(name,hasInitializer,isFinal,isPrivate,isProtected,isPublic,isVolatile,isSynthetic,isStatic,isTransient, this.createJavaToken(node));
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (FieldDeclaration,BlockScope)");
@@ -2826,6 +2854,11 @@ class ecjASTVisitor extends ASTVisitor
      public void endVisit(ForeachStatement  node, BlockScope scope)
         {
        // do nothing  by default
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (ForeachStatement,BlockScope)");
+
+          java_parser.cactionForeachStatementEnd(this.createJavaToken(node));
+
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (ForeachStatement,BlockScope)");
         }
@@ -3067,7 +3100,11 @@ class ecjASTVisitor extends ASTVisitor
 
      public void endVisit(LabeledStatement  node, BlockScope scope)
         {
-       // do nothing  by default
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (LabeledStatement,BlockScope)");
+
+          java_parser.cactionLabeledStatementEnd(new String(node.label), this.createJavaToken(node));
+
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (LabeledStatement,BlockScope)");
         }
@@ -3077,10 +3114,45 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (LocalDeclaration,BlockScope)");
 
-          System.out.println("If there is an expression on the stack it is the initializer...");
+          if (java_parser.verboseLevel > 0)
+               System.out.println("If there is an expression on the stack it is the initializer...");
+
+          String name = new String(node.name);
+
+       // String selectorName = new String(node.selector);
+       // System.out.println("node.name = " + selectorName);
+       // System.out.println("node.modfiers = " + node.modfiers);
+
+          if (java_parser.verboseLevel > 0)
+             {
+               System.out.println("node.name                     = " + name);
+               System.out.println("node.binding                  = " + node.binding);
+               System.out.println("node.binding.type             = " + node.binding.type);
+               System.out.println("node.binding.type.id          = " + node.binding.type.id);
+               System.out.println("node.binding.type.debugName() = " + node.binding.type.debugName());
+               System.out.println("node.type                     = " + node.type);
+             }
+
+       // Construct the type (it should already be present on the astJavaTypeStack).
+
+       // DQ (7/18/2011): Switch to using the different generateType() function (taking a TypeReference).
+       // JavaParserSupport.generateType(node.binding.type);
+       // JavaParserSupport.generateType(node.type);
+
+          boolean isFinal = node.binding.isFinal();
+
+       // DQ (8/13/2011): This information is stored in the FieldReference...(not clear how to get it).
+       // boolean isPrivate = (node.binding != null && !node.binding.isPrivate()) ? true : false;
+
+       // Build the variable declaration using the type from the astJavaTypeStack.
+       // Note that this may have to handle an array of names or be even more complex in the future.
+          java_parser.cactionLocalDeclarationEnd(name,isFinal, this.createJavaToken(node));
+
           if (node.initialization != null)
              {
-               System.out.println("Process the initializer expression...");
+               if (java_parser.verboseLevel > 0)
+                    System.out.println("Process the initializer expression...");
+
                java_parser.cactionLocalDeclarationInitialization(this.createJavaToken(node));
              }
         }
@@ -3108,7 +3180,7 @@ class ecjASTVisitor extends ASTVisitor
 
      public void endVisit(MessageSend  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > -1)
+          if (java_parser.verboseLevel > 0)
                System.out.println("Inside of endVisit (MessageSend,BlockScope)");
 
           java_parser.cactionMessageSendEnd(this.createJavaToken(node));
@@ -3180,13 +3252,33 @@ class ecjASTVisitor extends ASTVisitor
      public void endVisit(ParameterizedSingleTypeReference  node, BlockScope scope)
         {
           if (java_parser.verboseLevel > 0)
-               System.out.println("Leaving endVisit (ParameterizedSingleTypeReference,BlockScope)");
+               System.out.println("At top of endVisit (ParameterizedSingleTypeReference,BlockScope)");
 
           int numberOfTypeArguments = 0;
           if (node.typeArguments != null)
+             {
                numberOfTypeArguments = node.typeArguments.length;
+             }
 
-          java_parser.cactionParameterizedSingleTypeReferenceEnd(numberOfTypeArguments,this.createJavaToken(node));
+          int numberOfDimensions = node.dimensions;
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("At top of endVisit (ParameterizedSingleTypeReference,BlockScope) numberOfDimensions = " + numberOfDimensions);
+
+          String name = new String(node.token);
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("At top of endVisit (ParameterizedSingleTypeReference,BlockScope) name = " + name);
+
+       // We need to find the qualified name for the associated type name (it should be unique).
+       // This has to be handled on the Java side...
+
+          String qualifiedTypeName = JavaParserSupport.hashmapOfQualifiedNamesOfClasses.get(name);
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("At top of endVisit (ParameterizedSingleTypeReference,BlockScope) qualifiedTypeName = " + qualifiedTypeName);
+
+          java_parser.cactionParameterizedSingleTypeReferenceEnd(qualifiedTypeName,numberOfTypeArguments,this.createJavaToken(node));
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (ParameterizedSingleTypeReference,BlockScope)");
@@ -3293,6 +3385,11 @@ class ecjASTVisitor extends ASTVisitor
        // do nothing  by default
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (ReturnStatement,BlockScope)");
+
+          java_parser.cactionReturnStatementEnd(node.expression != null, this.createJavaToken(node));
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (ReturnStatement,BlockScope)");
         }
 
      public void endVisit(SingleMemberAnnotation  node, BlockScope scope)
@@ -3330,7 +3427,7 @@ class ecjASTVisitor extends ASTVisitor
             // String typename = new String(node.getTypeName().toString());
             // String typename = node.getTypeName().toString();
                String typename = node.toString();
-               System.out.println("Sorry, not implemented SingleTypeReference (node.resolvedType != NULL): typename = " + typename);
+            // System.out.println("Sorry, not implemented SingleTypeReference (node.resolvedType != NULL): typename = " + typename);
 
             // DQ (7/17/2011): I think we need a typeReferenceExpression specific to Java.
             // System.out.println("--- We need to build a reference to a type as an expression to be used in instanceof operator (for expressions)");
@@ -3369,11 +3466,21 @@ class ecjASTVisitor extends ASTVisitor
        // do nothing  by default
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (SwitchStatement,BlockScope)");
+
+          java_parser.cactionSwitchStatementEnd(node.caseCount, node.defaultCase != null, this.createJavaToken(node));
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (SwitchStatement,BlockScope)");
         }
 
      public void endVisit(SynchronizedStatement node, BlockScope scope)
         {
        // do nothing  by default
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (SynchronizedStatement,BlockScope)");
+
+          java_parser.cactionSynchronizedStatementEnd(this.createJavaToken(node));
+
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (SynchronizedStatement,BlockScope)");
         }
@@ -3392,12 +3499,17 @@ class ecjASTVisitor extends ASTVisitor
                System.out.println("Leaving endVisit (ThisReference,ClassScope)");
         }
 
-     public void endVisit(ThrowStatement  node, BlockScope scope)
+     public void endVisit(ThrowStatement node, BlockScope scope)
         {
        // do nothing  by default
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (ThrowStatement,BlockScope)");
-        }
+
+          java_parser.cactionThrowStatementEnd(this.createJavaToken(node));
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (ThrowStatement,BlockScope)");
+}
 
      public void endVisit(TrueLiteral  node, BlockScope scope)
         {
@@ -3409,6 +3521,11 @@ class ecjASTVisitor extends ASTVisitor
      public void endVisit(TryStatement  node, BlockScope scope)
         {
        // do nothing  by default
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Leaving endVisit (TryStatement,BlockScope)");
+
+          java_parser.cactionTryStatementEnd(node.catchBlocks.length, node.finallyBlock != null, this.createJavaToken(node));
+
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (TryStatement,BlockScope)");
         }

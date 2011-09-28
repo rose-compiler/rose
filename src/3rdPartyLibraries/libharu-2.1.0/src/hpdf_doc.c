@@ -23,6 +23,7 @@
 #include "hpdf_info.h"
 #include "hpdf_page_label.h"
 #include "hpdf.h"
+#include <assert.h>
 
 
 static const char *HPDF_VERSION_STR[6] = {
@@ -1629,7 +1630,15 @@ HPDF_LoadRawImageFromFile  (HPDF_Doc          pdf,
         HPDF_CheckError (&pdf->error);
 
     if (pdf->compression_mode & HPDF_COMP_IMAGE)
+    {
+      if (image != NULL)
         image->filter = HPDF_STREAM_FILTER_FLATE_DECODE;
+      else
+      {
+        printf("Error. image is NULL.\n");
+        assert (0);
+      }
+    }
 
     return image;
 }

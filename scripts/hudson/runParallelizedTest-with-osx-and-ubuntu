@@ -40,12 +40,21 @@ LOG_LOCATION="$PWD"
 echo "Setting up the [DY]LD_LIBRARY_PATH"
 
 	if test "x$label" = "x64bit-macos-10.6" ; then
-		export DYLD_LIBRARY_PATH="$ROSE_TEST_BOOST_PATH/lib:$DYLD_LIBRARY_PATH"
+		case "$ROSE_TEST_BUILD_STYLE" in
+			"make-check-install-full")
+				source "$HUDSON_TMPDIR"/opt/macports/setup.sh
+				export ROSE_TEST_BOOST_PATH="$MACPORTS_INSTALL"
+				;;
+
+			*)
+				export DYLD_LIBRARY_PATH="$ROSE_TEST_BOOST_PATH/lib:$DYLD_LIBRARY_PATH"
+				;;
+		esac
+
 	else
 		# tps : 04/26/2010 - Added support for OpenGL for 64bit
 		export LD_LIBRARY_PATH="${ROSE_TEST_BOOST_PATH}/lib:${ROSE_TEST_OPENGL_PATH}/lib:$LD_LIBRARY_PATH"
 	fi
-
 
 #########################################################################################
 #
@@ -119,6 +128,7 @@ CONFIGURE_FLAGS="\
 	--with-boost=${ROSE_TEST_BOOST_PATH} \
 	--with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib \
 	--with-java=${ROSE_TEST_JAVA_PATH} \
+    --with-python=${ROSE_TEST_PYTHON_PATH} \
 	--with-ROSE_LONG_MAKE_CHECK_RULE=yes \
 	--with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall"
 #########################################################################################
@@ -222,24 +232,32 @@ fi
 #
 #########################################################################################
 if test "x$label" = "x64bit-macos-10.6" ; then
-	#export MACPORTS_INS=/export/tmp.hudson-rose/opt/macports/ports
-	#set +e
-    #source ${MACPORTS_INS}/setup.sh
-	#set -e
-	#export DYLD_LIBRARY_PATH=/Developer/SDKs/MacOSX10.6.sdk/usr/lib:/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/ImageIO.framework/Versions/A/Resources:${MACPORTS_INS}/lib:$DYLD_LBIRARY_PATH
-	#export ROSE_TEST_BOOST_PATH=${MACPORTS_INS}
-
 	case "$ROSE_TEST_BUILD_STYLE" in
 		"make-check-install-minimal")
 	 		CONFIGURE_FLAGS="
-			--with-boost=${ROSE_TEST_BOOST_PATH} \
-			--with-boost-lib=${ROSE_TEST_BOOST_PATH}/lib/ \
-			--with-CXX_DEBUG=-g --with-CXX_WARNINGS=-Wall"
-    		;;
+				--with-boost=${ROSE_TEST_BOOST_PATH} \
+				--with-boost-lib=${ROSE_TEST_BOOST_PATH}/lib/ \
+				--with-CXX_DEBUG=-g --with-CXX_WARNINGS=-Wall"
+			;;
+
+		"make-check-install-full")
+			export DYLD_LIBRARY_PATH=
+
+			CONFIGURE_FLAGS="
+				--with-boost=${ROSE_TEST_BOOST_PATH} \
+				--with-boost-lib=${ROSE_TEST_BOOST_PATH}/lib/ \
+				--with-CXX_DEBUG=-g --with-CXX_WARNINGS=-Wall \
+				--with-ROSE_LONG_MAKE_CHECK_RULE=yes \
+				--with-qt="$HUDSON_TMPDIR"/opt/macports/ports \
+				--with-roseQt \
+				--with-sqlite3="$HUDSON_TMPDIR"/opt/macports/ports \
+				--with-pch"
+			;;
+
 
 		*)
 			echo "Error: '$ROSE_TEST_BUILD_STYLE' build-style is not currently supported for '$label'"
-    		;;
+			;;
   	esac
 fi
 #########################################################################################

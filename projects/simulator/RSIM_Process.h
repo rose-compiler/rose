@@ -14,13 +14,17 @@ public:
     /** Creates an empty process containing no threads. */
     explicit RSIM_Process(RSIM_Simulator *simulator)
         : simulator(simulator), tracing_file(NULL), tracing_flags(0),
-          map(NULL), brk_va(0), mmap_start(0x40000000ul), mmap_recycle(false), disassembler(NULL),
+          map(NULL), brk_va(0), mmap_start(0x40000000ul), mmap_recycle(false), disassembler(NULL), futexes(NULL),
           interpretation(NULL), ep_orig_va(0), ep_start_va(0),
           terminated(false), termination_status(0), core_flags(0), btrace_file(NULL),
           vdso_mapped_va(0), vdso_entry_va(0),
           core_styles(CORE_ELF), core_base_name("x-core.rose"), ld_linux_base_va(0x40000000) {
         RTS_rwlock_init(&instance_rwlock, RTS_LAYER_RSIM_PROCESS_OBJ, NULL);
         ctor();
+    }
+
+    ~RSIM_Process() {
+        delete futexes;
     }
 
     RSIM_Simulator *get_simulator() const {
@@ -67,7 +71,6 @@ private:
     std::string tracing_file_name;      /**< Pattern for trace file names. May include %d for thread ID. */
     FILE *tracing_file;                 /**< Stream to which debugging output is sent (or NULL to suppress it) */
     unsigned tracing_flags;             /**< Bit vector of what to trace. See TraceFlags. */
-    RSIM_Callbacks callbacks;           /**< Callbacks for a process, and to initialize callbacks of new threads. */
 
 public:
 
@@ -98,6 +101,15 @@ public:
      * bitwise OR of the facilityBitMask() for each enabled facility. */
     unsigned get_tracing_flags() const;
 
+
+    /**************************************************************************************************************************
+     *                                  Callbacks
+     **************************************************************************************************************************/
+private:
+    RSIM_Callbacks callbacks;           /**< Callbacks for a process, and to initialize callbacks of new threads. */
+
+public:
+
     /** Obtain the set of callbacks for this object.  Many of the process callbacks are used to initialize thread callbacks
      *  when a new thread is created.
      *
@@ -118,6 +130,34 @@ public:
      *  Thread safety:  This method is thread safe. */
     void set_callbacks(const RSIM_Callbacks &cb);
 
+    /** Install a callback object.
+     *
+     *  This is just a convenient way of installing a callback object.  It appends it to the BEFORE slot of the appropriate
+     *  queue.
+     *
+     *  @{ */  // ******* Similar functions in RSIM_Simulator and RSIM_Thread ******
+    void install_callback(RSIM_Callbacks::InsnCallback *cb) {
+        callbacks.add_insn_callback(RSIM_Callbacks::BEFORE, cb);
+    }
+    void install_callback(RSIM_Callbacks::MemoryCallback *cb) {
+        callbacks.add_memory_callback(RSIM_Callbacks::BEFORE, cb);
+    }
+    void install_callback(RSIM_Callbacks::SyscallCallback *cb) {
+        callbacks.add_syscall_callback(RSIM_Callbacks::BEFORE, cb);
+    }
+    void install_callback(RSIM_Callbacks::SignalCallback *cb) {
+        callbacks.add_signal_callback(RSIM_Callbacks::BEFORE, cb);
+    }
+    void install_callback(RSIM_Callbacks::ThreadCallback *cb) {
+        callbacks.add_thread_callback(RSIM_Callbacks::BEFORE, cb);
+    }
+    void install_callback(RSIM_Callbacks::ProcessCallback *cb) {
+        callbacks.add_process_callback(RSIM_Callbacks::BEFORE, cb);
+    }
+    /** @} */
+
+
+
     /**************************************************************************************************************************
      *                                  Process memory
      **************************************************************************************************************************/
@@ -137,7 +177,8 @@ public:
 
     /** Add a memory mapping to a specimen.  The new mapping starts at specimen address @p va (zero causes this method to
      *  choose an appropriate address) for @p size bytes.  The @p rose_perms are the MemoryMap::Protection bits, @p flags are
-     *  the same as for mmap() and are defined in <sys/mman.h>, and @p offset and @p fd are as for mmap().
+     *  the same as for mmap() and are defined in <sys/mman.h>, and @p offset and @p fd are as for mmap().  Returns a negative
+     *  error number on failure.
      *
      *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
     rose_addr_t mem_map(rose_addr_t va, size_t size, unsigned rose_perms, unsigned flags, size_t offset, int fd);
@@ -195,8 +236,11 @@ public:
      *  space is not mapped or because (part of) the destination address space does not have write permission, the this method
      *  will write as much as possible up to the first invalid address.  The return value is the number of bytes copied.
      *
+     *  The specimen memory map must have the required permission bits set in order for the write to succeed.  By default, the
+     *  memory must be writable.
+     *
      *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
-    size_t mem_write(const void *buf, rose_addr_t va, size_t size);
+    size_t mem_write(const void *buf, rose_addr_t va, size_t size, unsigned req_perms=MemoryMap::MM_PROT_WRITE);
 
     /** Copies data from specimen address space.  Copies up to @p size bytes from the specimen memory beginning at virtual
      *  address @p va into the beginning of @p buf.  If the requested number of bytes cannot be copied because (part of) the
@@ -204,9 +248,12 @@ public:
      *  permission, then this method will read as much as possible up to the first invalid address.  The return value is the
      *  number of bytes copied.
      *
+     *  The specimen memory map must have the required permission bits set in order for the read to succeed.  By default, the
+     *  memory must be readable.
+     *
      *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads
      *  concurrently. */
-    size_t mem_read(void *buf, rose_addr_t va, size_t size);
+    size_t mem_read(void *buf, rose_addr_t va, size_t size, unsigned req_perms=MemoryMap::MM_PROT_READ);
 
     /** Reads a NUL-terminated string from specimen memory. The NUL is not included in the string.  If a limit is specified
      *  then the returned string will contain at most this many characters (a value of zero implies no limit).  If the string
@@ -242,7 +289,7 @@ public:
     user_desc_32 *gdt_entry(int idx);
 
     static const int GDT_ENTRIES = 8192;                     /**< Number of GDT entries. */
-    static const int GDT_ENTRY_TLS_MIN = 6;                  /**< First TLS entry */
+    static const int GDT_ENTRY_TLS_MIN = 6;                  /**< First TLS entry (this would be 12 on x86_64) */
     static const int GDT_ENTRY_TLS_ENTRIES = 3;              /**< Number of TLS entries */
     static const int GDT_ENTRY_TLS_MAX = GDT_ENTRY_TLS_MIN + GDT_ENTRY_TLS_ENTRIES - 1; /**< Last TLS entry */
 
@@ -342,6 +389,34 @@ public:
      *
      *  Thread safety: This method is thread safe. */
     void signal_dispatch();
+
+
+
+    /**************************************************************************************************************************
+     *                                  Fast User-space Mutexes (Futexes)
+     **************************************************************************************************************************/
+private:
+    RSIM_FutexTable *futexes;
+
+public:
+    /** Return futex table.
+     *
+     *  Specimen futexes have two parts: user-space atomic instructions that operate on a memory word, and the futex system
+     *  call to handle the contended cases.  The futex system call has two operations: wait and wake.  The wait operation
+     *  causes the calling thread to enter itself onto a queue based on the real address of the futex and block until
+     *  signaled.  The wake operation causes matching threads on the queue to resume running and remove themselves from the
+     *  queue.
+     *
+     *  The queues are implemented as an RSIM_FutexTable object, which creates/opens shared memory for communication across
+     *  processes.  The futex shared memory is created/opened the same way as the RSIM_Simulator main semaphore.  In fact, that
+     *  semaphore is used to protect access to the futex table.
+     *
+     *  Thread safety:  This method is thread safe.  The futex table is created when the RSIM_Process object is created.  The
+     *  actual futex queues are shared among all simulator processes that open the same shared memory object based on the name
+     *  of the RSIM_Simulator semaphore. */
+    RSIM_FutexTable *get_futexes() {
+        return futexes;
+    }
 
 
 

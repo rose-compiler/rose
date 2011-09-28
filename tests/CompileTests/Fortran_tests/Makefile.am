@@ -239,8 +239,6 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2011_Rice_caseSensitive.f90 \
      test2011_Rice_char-array-decl-asterisk.f90 \
      test2011_Rice_char-kind-decl.f90 \
-     test2011_Rice_char-star1-function.f \
-     test2011_Rice_char-star2-function.f \
      test2011_Rice_constructor-initializer.f90 \
      test2011_Rice_data-implied-do.f90 \
      test2011_Rice_data-implied-do-object-list.f90 \
@@ -548,6 +546,8 @@ F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
      test2010_30.f \
      test2010_68.f \
      test2010_69.f \
+     test2011_Rice_char-star1-function.f \
+     test2011_Rice_char-star2-function.f \
      test2011_Rice_computed-goto.f \
      test2011_Rice_continuation-spits-token.f \
      test2011_Rice_initial-tab.f \

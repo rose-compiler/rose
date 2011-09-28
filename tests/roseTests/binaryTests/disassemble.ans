@@ -1,17 +1,25 @@
 using this memory map for disassembly:
-    va 0x08048000 + 0x00000114 = 0x08048114 r-x at base aaa  + 0x00000000 i686-test1.O0.bin(LOAD#2+PHDR#0)
-    va 0x08048114 + 0x00000013 = 0x08048127 r-- at base aaa  + 0x00000114 i686-test1.O0.bin(.interp)
-    va 0x08048127 + 0x00000001 = 0x08048128 r-x at base aaa  + 0x00000127 i686-test1.O0.bin(LOAD#2+PHDR#0)
-    va 0x08048128 + 0x0000013f = 0x08048267 r-- at base aaa  + 0x00000128 i686-test1.O0.bin(.dynstr+.dynsym+.hash+.note.ABI-tag)
-    va 0x08048267 + 0x00000001 = 0x08048268 r-x at base aaa  + 0x00000267 i686-test1.O0.bin(LOAD#2+PHDR#0)
-    va 0x08048268 + 0x00000060 = 0x080482c8 r-- at base aaa  + 0x00000268 i686-test1.O0.bin(.gnu.version+.gnu.version_r+.rel.d...
-    va 0x080482c8 + 0x000002e4 = 0x080485ac r-x at base aaa  + 0x000002c8 i686-test1.O0.bin(.fini+.init+.plt+.text+LOAD#2+PHDR#0)
-    va 0x080485ac + 0x00000017 = 0x080485c3 r-- at base aaa  + 0x000005ac i686-test1.O0.bin(.rodata)
-    va 0x080485c3 + 0x00000001 = 0x080485c4 r-x at base aaa  + 0x000005c3 i686-test1.O0.bin(.fini+.init+.plt+.text+LOAD#2+PHDR#0)
-    va 0x080485c4 + 0x00000004 = 0x080485c8 r-- at base aaa  + 0x000005c4 i686-test1.O0.bin(.eh_frame)
-    va 0x080485c8 + 0x00000a38 = 0x08049000 r-x at anon null + 0x00000000 i686-test1.O0.bin(LOAD#2)
-    va 0x08049000 + 0x000006d4 = 0x080496d4 rw- at base aaa  + 0x00000000 i686-test1.O0.bin(.ctors+.data+.dtors+.dynamic+.got+...
-    va 0x080496d4 + 0x0000092c = 0x0804a000 rw- at anon null + 0x00000000 i686-test1.O0.bin(.bss+LOAD#3)
+    va 0x08048000 + 0x00000034 = 0x08048034 r-xp at base aaa  + 0x00000000 i686-test1.O0.bin(LOAD#2)
+    va 0x08048034 + 0x000000e0 = 0x08048114 r-xp at base aab  + 0x00000000 i686-test1.O0.bin(PHDR#0)
+    va 0x08048114 + 0x00000013 = 0x08048127 r--p at base aac  + 0x00000000 i686-test1.O0.bin(.interp)
+    va 0x08048127 + 0x00000001 = 0x08048128 r-xp at base aaa  + 0x00000127 i686-test1.O0.bin(LOAD#2)
+    va 0x08048128 + 0x00000020 = 0x08048148 r--p at base aad  + 0x00000000 i686-test1.O0.bin(.note.ABI-tag)
+    va 0x08048148 + 0x0000011f = 0x08048267 r--- at base aae  + 0x00000148 i686-test1.O0.bin(.dynstr+.dynsym+.hash)
+    va 0x08048267 + 0x00000001 = 0x08048268 r-xp at base aaa  + 0x00000267 i686-test1.O0.bin(LOAD#2)
+    va 0x08048268 + 0x00000060 = 0x080482c8 r--- at base aae  + 0x00000268 i686-test1.O0.bin(.gnu.version+.gnu.version_r+.rel.d...
+    va 0x080482c8 + 0x00000017 = 0x080482df r-x- at base aae  + 0x000002c8 i686-test1.O0.bin(.init)
+    va 0x080482df + 0x00000001 = 0x080482e0 r-xp at base aaa  + 0x000002df i686-test1.O0.bin(LOAD#2)
+    va 0x080482e0 + 0x000002ca = 0x080485aa r-x- at base aae  + 0x000002e0 i686-test1.O0.bin(.fini+.plt+.text)
+    va 0x080485aa + 0x00000002 = 0x080485ac r-xp at base aaa  + 0x000005aa i686-test1.O0.bin(LOAD#2)
+    va 0x080485ac + 0x00000017 = 0x080485c3 r--- at base aae  + 0x000005ac i686-test1.O0.bin(.rodata)
+    va 0x080485c3 + 0x00000001 = 0x080485c4 r-xp at base aaa  + 0x000005c3 i686-test1.O0.bin(LOAD#2)
+    va 0x080485c4 + 0x00000004 = 0x080485c8 r--- at base aae  + 0x000005c4 i686-test1.O0.bin(.eh_frame)
+    va 0x080485c8 + 0x00000a38 = 0x08049000 r-xp at base aaa  + 0x000005c8 i686-test1.O0.bin(LOAD#2)
+    va 0x08049000 + 0x000005c8 = 0x080495c8 rw-p at base aaf  + 0x00000000 i686-test1.O0.bin(LOAD#3)
+    va 0x080495c8 + 0x00000014 = 0x080495dc rw-- at base aae  + 0x000005c8 i686-test1.O0.bin(.ctors+.dtors+.jcr)
+    va 0x080495dc + 0x000000c8 = 0x080496a4 rw-p at base aag  + 0x00000000 i686-test1.O0.bin(.dynamic)
+    va 0x080496a4 + 0x00000030 = 0x080496d4 rw-- at base aae  + 0x000006a4 i686-test1.O0.bin(.data+.got+.got.plt)
+    va 0x080496d4 + 0x0000092c = 0x0804a000 rw-p at anon null + 0x00000000 i686-test1.O0.bin(.bss+LOAD#3)
 disassembled 256 instructions and 1 failure (use --show-bad to see errors)
 0x080482c8: ============================ Function (function call, symbol) <_init>
 0x080482c8: 55                |U     |   push   ebp

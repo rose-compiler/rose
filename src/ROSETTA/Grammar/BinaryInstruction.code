@@ -37,7 +37,12 @@ HEADER_BINARY_START
      All Asm Instructions are derived from this class and thus contain the following functionality.
   */
 
-  public:
+  // private:
+     public:
+       // DQ (9/13/2011): This copy constructor was built because static analysis tools (made it private to force compile time error if used).
+          SgAsmNode ( const SgAsmNode & X );
+
+     public:
 
 HEADER_BINARY_END
 
@@ -1159,7 +1164,8 @@ HEADER_GENERIC_SYMBOL_START
 			SYM_ARRAY,              /* Array of some other type */
 			SYM_TLS,                /* Thread-local storage */
 			SYM_REGISTER,           /* CPU register value (see Sparc) */
-			SYM_COMMON		/* Common block */
+			SYM_COMMON,		/* Common block */
+			SYM_IFUNC,		/* Indirection function */
 		};
 
 		enum SymbolBinding {
@@ -2347,7 +2353,8 @@ HEADER_ELF_SYMBOL_START
 			STT_SECTION 	= 3,	/* associated with a section */
 			STT_FILE    	= 4,	/* name of a file */
 			STT_COMMON  	= 5,	/* common data object */
-			STT_TLS		= 6	/* thread-local data object */
+			STT_TLS		= 6,	/* thread-local data object */
+			STT_IFUNC	= 10	/* indirect function (function call w/out args results in reloc value) */
 		};
 
 #ifdef _MSC_VER
@@ -4518,6 +4525,30 @@ HEADER_DWARF_COMMON_BLOCK_END
 
 SOURCE_BINARY_FILE_START
 SOURCE_BINARY_FILE_END
+
+SOURCE_BINARY_START
+
+SgAsmNode::SgAsmNode ( const SgAsmNode & X )
+   : SgNode(X)
+   {
+  // DQ (9/13/2011): This function was created to support avoiding double free of data allocated in this objects default constructor.
+  // This explicit definition of this constructor avoid a call to the implicitly built copy constructor that would share the 
+  // pointers used internally and for which then the descructor would perform the 2nd free.
+
+  // printf ("Error: SgAsmNode ( const SgAsmNode & X ) copy constructor shoudl not be called \n");
+  // ROSE_ASSERT(false);
+
+  // DQ (9/13/2011): This is the default behavior for implicit copy constructors.
+  // But it is likely not the behavior that we really want since it shares data 
+  // that the destructor might deete more than once.  Lilely this is not being used 
+  // this way (else it would have been a problem before now), but we should fix 
+  // this better.
+     p_attachedPreprocessingInfoPtr = X.p_attachedPreprocessingInfoPtr;
+     p_asmAttributeMechanism        = X.p_asmAttributeMechanism;
+     p_attributeMechanism           = X.p_attributeMechanism;
+   }
+
+SOURCE_BINARY_END
 
 SOURCE_BINARY_BLOCK_START
 void

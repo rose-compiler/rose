@@ -3075,11 +3075,8 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                   file = sourceFile;
 
                                   file->set_sourceFileUsesPythonFileExtension(true);
-
                                   file->set_outputLanguage(SgFile::e_Python_output_language);
-
                                   file->set_Python_only(true);
-                                  file->set_skipfinalCompileStep(true);
 
                                   // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
                                   // Note that file->get_requires_C_preprocessor() should be false.
@@ -6468,8 +6465,8 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
                   }
              }
 
-#if 1
-          if (get_verbose() > -1)
+#if 0
+          if (get_verbose() > 2)
              {
                printf ("Checking syntax of input program using javac: syntaxCheckingCommandline = %s \n",CommandlineProcessing::generateStringFromArgList(javaCommandLine,false,false).c_str());
              }
@@ -6478,17 +6475,19 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
           javaCommandLine.push_back(get_sourceFileNameWithPath());
 
        // At this point we have the full command line with the source file name
-          if ( get_verbose() > -1 )
+          if (get_verbose() > 1)
              {
-               printf ("Checking syntax of input program using gfortran: syntaxCheckingCommandline = %s \n",CommandlineProcessing::generateStringFromArgList(javaCommandLine,false,false).c_str());
+               printf ("Checking syntax of input program using javac: syntaxCheckingCommandline = %s \n",CommandlineProcessing::generateStringFromArgList(javaCommandLine,false,false).c_str());
              }
 
           int returnValueForSyntaxCheckUsingBackendCompiler = 0;
+
+// Note the both the Fortran and Java support require the Jave JVM support (which is what USE_GFORTRAN_IN_ROSE implies).
 #if USE_GFORTRAN_IN_ROSE
           returnValueForSyntaxCheckUsingBackendCompiler = systemFromVector (javaCommandLine);
 #else
        // ROSE can be configured withouth Java support, in which case it is not an error to avoid the syntax checking of a java file.
-          printf ("backend java compiler (javac) unavailable ... (not an error) \n");
+          printf ("backend java compiler (javac) unavailable ... (not an error: ROSE has been configured this way) \n");
 #endif
 
        // Check that there are no errors, I think that warnings are ignored!
@@ -7259,6 +7258,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
      printf ("C++ compiler              = %s \n",BACKEND_CXX_COMPILER_NAME_WITH_PATH);
      printf ("Fortran compiler          = %s \n",BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH);
      printf ("Java compiler             = %s \n",BACKEND_JAVA_COMPILER_NAME_WITH_PATH);
+     printf ("Python interpreter        = %s \n",BACKEND_PYTHON_INTERPRETER_NAME_WITH_PATH);
      printf ("get_C_only()              = %s \n",(get_C_only() == true) ? "true" : "false");
      printf ("get_C99_only()            = %s \n",(get_C99_only() == true) ? "true" : "false");
      printf ("get_Cxx_only()            = %s \n",(get_Cxx_only() == true) ? "true" : "false");
@@ -7269,6 +7269,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
      printf ("get_F2003_only()          = %s \n",(get_F2003_only() == true) ? "true" : "false");
      printf ("get_CoArrayFortran_only() = %s \n",(get_CoArrayFortran_only() == true) ? "true" : "false");
      printf ("get_Java_only()           = %s \n",(get_Java_only() == true) ? "true" : "false");
+     printf ("get_Python_only()         = %s \n",(get_Python_only() == true) ? "true" : "false");
 #endif
 
   // DQ (9/10/2006): We now explicitly store the C and C++ compiler names with
@@ -7331,10 +7332,8 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                        }
                   }
              }
-            else
+            else if (get_Java_only() == true)
              {
-               if (get_Java_only() == true)
-                  {
                  // compilerNameString = "java ";
                  // compilerNameString[0] = ROSE_GNU_JAVA_PATH;
                     compilerNameString[0] = BACKEND_JAVA_COMPILER_NAME_WITH_PATH;
@@ -7349,7 +7348,10 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                     compilerNameString.push_back("-d");
                  // compilerNameString.push_back(".");
                     compilerNameString.push_back(currentDirectory);
-                  }
+             }
+            else if (get_Python_only() == true)
+             {
+                    compilerNameString[0] = BACKEND_PYTHON_INTERPRETER_NAME_WITH_PATH;
              }
         }
 
@@ -7404,7 +7406,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
   // printf ("In buildCompilerCommandLineOptions(): currentDirectory = %s \n",currentDirectory);
 
-     if (get_Java_only() == false)
+     if (get_Java_only() == false && get_Python_only() == false)
         {
        // specify compilation only option (new style command line processing)
           if ( CommandlineProcessing::isOption(argv,"-","c",false) == true )
@@ -7594,7 +7596,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 #endif
 
   // DQ (4/2/2011): Java does not have -I as an accepted option.
-     if (get_Java_only() == false)
+     if (get_Java_only() == false && get_Python_only() == false)
         {
   // DQ (12/8/2004): Add -Ipath option so that source file's directory will be searched for any 
   // possible headers.  This is especially important when we are compiling the generated file
@@ -7687,7 +7689,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
        // DQ (4/2/2011): Java does not have -o as an accepted option, though the "-d <dir>" can be used to specify where class files are put.
        // Currently we explicitly output "-d ." so that generated clas files will be put into the current directory (build tree), but this
        // is not standard semantics for Java (though it makes the Java support in ROSE consistant with other languages supported in ROSE).
-          if (get_Java_only() == false)
+          if (get_Java_only() == false && get_Python_only() == false)
              {
             // DQ (7/14/2004): Suggested fix from Andreas, make the object file name explicit
                if (objectNameSpecified == false)
@@ -7705,7 +7707,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
        // when the original command line is to generate the final executable.
        // We generate the final executable at the SgProject level from object files of each source file
 
-          if (get_Java_only() == false)
+          if (get_Java_only() == false && get_Python_only() == false)
              {
             // cout<<"turn on compilation only at the file compilation level"<<endl;
                compilerNameString.push_back("-c");
@@ -8077,7 +8079,7 @@ SgProject::compileOutput()
              }
 
        // case 3: linking at the project level (but Java codes should never be linked).
-          if (get_Java_only() == false)
+          if (get_Java_only() == false && get_Python_only() == false)
              {
             // Liao, 11/19/2009, 
             // I really want to just move the SgFile::compileOutput() to SgProject::compileOutput() 

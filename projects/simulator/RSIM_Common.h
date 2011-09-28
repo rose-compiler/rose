@@ -15,10 +15,14 @@
 
 #include <sys/ioctl.h>
 #include <sys/ipc.h>
+#include <sys/mman.h>
 #include <sys/msg.h>
+#include <sys/prctl.h>
 #include <sys/resource.h>
 #include <sys/sem.h>
 #include <sys/shm.h>
+
+// #include <linux/msdos_fs.h>             /* for VFAT_IOCTL_* */
 
 /* Define this if you want strict emulation. When defined, every attempt is made for x86sim to provide an environment as close
  * as possible to running natively on hudson-rose-07.  Note that defining this might cause the simulator to malfunction since
@@ -55,8 +59,9 @@ enum TracingFacility {
     TRACE_PROGRESS      = 7,    /**< Show a progress report now and then. */
     TRACE_SIGNAL        = 8,    /**< Show reception and delivery of signals. */
     TRACE_THREAD        = 9,    /**< Show thread creation/destruction, etc. */
+    TRACE_FUTEX         = 10,   /**< Show diagnostics for fast user-space mutexes. */
 
-    TRACE_NFACILITIES   = 10     /**< Number of facilities */
+    TRACE_NFACILITIES   = 11     /**< Number of facilities */
 };
 
 /** Returns a bit mask for a trace facility. Returns zero if the specified trace facility is invalid. */
@@ -562,6 +567,7 @@ struct sigaction_32 {
 static const Translate open_flags[] = { TF(O_RDWR), TF(O_RDONLY), TF(O_WRONLY),
                                         TF(O_CREAT), TF(O_EXCL), TF(O_NONBLOCK), TF(O_NOCTTY), TF(O_TRUNC),
                                         TF(O_APPEND), TF(O_NDELAY), TF(O_ASYNC), TF(O_FSYNC), TF(O_SYNC), TF(O_NOATIME),
+                                        TF(O_LARGEFILE), /*0x8000*/
                                         T_END };
 
 /* Types for getdents syscalls */
@@ -1019,6 +1025,7 @@ struct sockaddr_32 {
     char        sa_data[14];
 } __attribute__((packed));
 
+/* 32-bit kernel struct for sendmsg() and recvmsg(). */
 struct msghdr_32 {
     uint32_t    msg_name;               /* optional ptr to source address if socket is unconnected */
     uint32_t    msg_namelen;            /* number of bytes pointed to by msg_name */
@@ -1029,14 +1036,59 @@ struct msghdr_32 {
     uint32_t    msg_flags;
 } __attribute__((packed));
 
+/* 32-bit kernel struct to overlay onto parts of the msg_control member of msghdr_32 */
+struct cmsghdr_32 {
+    uint32_t    cmsg_len;               /* data byte count including this header */
+    int32_t     cmsg_level;             /* originating protocol */
+    int32_t     cmsg_type;              /* protocol-specific type */
+} __attribute((packed));
+
+/* Bit flags for msghdr_32.msg_flags */
+static const Translate msghdr_flags[] = {
+    TF3(0x1ffff, 0x00001, MSG_OOB),
+    TF3(0x1ffff, 0x00002, MSG_PEEK),
+    TF3(0x1ffff, 0x00004, MSG_DONTROUTE),
+    TF3(0x1ffff, 0x00008, MSG_CTRUNC),
+    TF3(0x1ffff, 0x00010, MSG_PROBE),
+    TF3(0x1ffff, 0x00020, MSG_TRUNC),
+    TF3(0x1ffff, 0x00040, MSG_DONTWAIT),
+    TF3(0x1ffff, 0x00080, MSG_EOR),
+    TF3(0x1ffff, 0x00100, MSG_WAITALL),
+    TF3(0x1ffff, 0x00200, MSG_FIN),
+    TF3(0x1ffff, 0x00400, MSG_SYN),
+    TF3(0x1ffff, 0x00800, MSG_CONFIRM),
+    TF3(0x1ffff, 0x01000, MSG_RST),
+    TF3(0x1ffff, 0x02000, MSG_ERRQUEUE),
+    TF3(0x1ffff, 0x04000, MSG_NOSIGNAL),
+    TF3(0x1ffff, 0x08000, MSG_MORE),
+    TF3(0x1ffff, 0x10000, MSG_WAITFORONEK),
+    T_END
+};
+
 struct iovec_32 {
     uint32_t    iov_base;               /* address of buffer */
     uint32_t    iov_len;                /* size of buffer in bytes */
 } __attribute__((packed));
 
+// /* Macros for creating ioctl command numbers. See the _IOC macro in linux source code. */
+// extern unsigned invalid_size_arg_for_IOC; /* provoke linker error for invalid size arguments */
+// #define LINUX_IOC_NONE 0u
+// #define LINUX_IOC_WRITE 1u
+// #define LINUX_IOC_READ 2u
+// #define LINUX_IOC_TYPECHECK(t) ((sizeof(t) == sizeof(t[1]) && sizeof(t) < (1 << 14)) ? sizeof(t) : invalid_size_arg_for_IOC)
+// #define LINUX_IOC(dir,type,nr,size) (((dir)<<30) | ((type)<<16) | ((nr)<<8) | (size))
+// #define LINUX_IO(type,nr)            LINUX_IOC(LINUX_IOC_NONE,(type),(nr),0)
+// #define LINUX_IOR(type,nr,size)      LINUX_IOC(LINUX_IOC_READ,(type),(nr),(LINUX_IOC_TYPECHECK(size)))
+// #define LINUX_IOW(type,nr,size)      LINUX_IOC(LINUX_IOC_WRITE,(type),(nr),(LINUX_IOC_TYPECHECK(size)))
+// #define LINUX_IOWR(type,nr,size)     LINUX_IOC(LINUX_IOC_READ|LINUX_IOC_WRITE,(type),(nr),(LINUX_IOC_TYPECHECK(size)))
+// #define LINUX_IOR_BAD(type,nr,size)  LINUX_IOC(LINUX_IOC_READ,(type),(nr),sizeof(size))
+// #define LINUX_IOW_BAD(type,nr,size)  LINUX_IOC(LINUX_IOC_WRITE,(type),(nr),sizeof(size))
+// #define LINUX_IOWR_BAD(type,nr,size) LINUX_IOC(LINUX_IOC_READ|LINUX_IOC_WRITE,(type),(nr),sizeof(size))
+
 /* command values for the ioctl syscall */
 static const Translate ioctl_commands[] = {
     TE(TCGETS), TE(TCSETS), TE(TCSETSW), TE(TCGETA), TE(TIOCGPGRP), TE(TIOCSPGRP), TE(TIOCSWINSZ), TE(TIOCGWINSZ),
+    TE2(0x82187201, VFAT_IOCTL_READDIR_BOTH),
     T_END
 };
  
@@ -1239,6 +1291,129 @@ struct sched_param_32 {
     int32_t sched_priority;
 } __attribute__((packed));
 
+/* Kernel's struct new_utsname on i386 */
+struct new_utsname_32 {
+    char sysname[65];
+    char nodename[65];
+    char release[65];
+    char version[65];
+    char machine[65];
+    char domainname[65];
+} __attribute__((packed));
+
+/* Third arg of madvise syscall */
+static const Translate madvise_behaviors[] = {
+    TE(MADV_NORMAL), TE(MADV_RANDOM), TE(MADV_SEQUENTIAL), TE(MADV_WILLNEED), TE(MADV_DONTNEED),
+    TE(MADV_REMOVE), TE(MADV_DONTFORK), TE(MADV_DOFORK),
+#ifdef MADV_HWPOISON
+    TE(MADV_HWPOISON),
+#endif
+#ifdef MADV_SOFT_OFFLINE
+    TE(MADV_SOFT_OFFLINE),
+#endif
+#ifdef MADV_MERGEABLE
+    TE(MADV_MERGEABLE),
+#endif
+#ifdef MADV_UNMERGEABLE
+    TE(MADV_UNMERGEABLE),
+#endif
+#ifdef MADV_HUGEPAGE
+    TE(MADV_HUGEPAGE), TE(MADV_NOHUGEPAGE),
+#endif
+    T_END
+};
+
+/* Third arg of mmap syscall */
+static const Translate mmap_pflags[] = {
+    TF(PROT_READ), TF(PROT_WRITE), TF(PROT_EXEC), TF3(-1, 0, PROT_NONE),
+    T_END
+};
+
+/* Fourth argument of mmap syscall */
+static const Translate mmap_mflags[] = {
+    TF(MAP_SHARED), TF(MAP_PRIVATE), TF(MAP_ANONYMOUS), TF(MAP_DENYWRITE),
+    TF(MAP_EXECUTABLE), TF(MAP_FILE), TF(MAP_FIXED), TF(MAP_GROWSDOWN),
+    TF(MAP_LOCKED), TF(MAP_NONBLOCK), TF(MAP_NORESERVE), TF(MAP_POPULATE),
+#ifdef MAP_32BIT
+    TF(MAP_32BIT),
+#endif
+    T_END
+};
+
+/* Struct for argument of old mmap (syscall 90 in 32-bit x86) */
+struct mmap_arg_struct_32 {
+    uint32_t    addr;
+    uint32_t    len;
+    uint32_t    prot;
+    uint32_t    flags;
+    uint32_t    fd;
+    uint32_t    offset;
+} __attribute__((packed));
+
+static const Translate prctl_options[] = {
+    TE(PR_SET_PDEATHSIG),
+    TE(PR_GET_PDEATHSIG),
+    TE(PR_GET_DUMPABLE),
+    TE(PR_SET_DUMPABLE),
+    TE(PR_GET_UNALIGN),
+    TE(PR_SET_UNALIGN),
+    TE(PR_GET_KEEPCAPS),
+    TE(PR_SET_KEEPCAPS),
+    TE(PR_GET_FPEMU),
+    TE(PR_SET_FPEMU),
+    TE(PR_GET_FPEXC),
+    TE(PR_SET_FPEXC),
+    TE(PR_GET_TIMING),
+    TE(PR_SET_TIMING),
+    TE(PR_SET_NAME),
+    TE(PR_GET_NAME),
+    TE(PR_GET_ENDIAN),
+    TE(PR_SET_ENDIAN),
+#ifdef PR_GET_SECCOMP
+    TE(PR_GET_SECCOMP),
+#endif
+#ifdef PR_SET_SECCOMP
+    TE(PR_SET_SECCOMP),
+#endif
+#ifdef PR_CAPBSET_READ
+    TE(PR_CAPBSET_READ),
+#endif
+#ifdef PR_CAPBSET_DROP
+    TE(PR_CAPBSET_DROP),
+#endif
+#ifdef PR_GET_TSC
+    TE(PR_GET_TSC),
+#endif
+#ifdef PR_SET_TSC
+    TE(PR_SET_TSC),
+#endif
+#ifdef PR_GET_SECUREBITS
+    TE(PR_GET_SECUREBITS),
+#endif
+#ifdef PR_SET_SECUREBITS
+    TE(PR_SET_SECUREBITS),
+#endif
+#ifdef PR_SET_TIMERSLACK
+    TE(PR_SET_TIMERSLACK),
+#endif
+#ifdef PR_GET_TIMERSLACK
+    TE(PR_GET_TIMERSLACK),
+#endif
+#ifdef PR_TASK_PERF_EVENTS_DISABLE
+    TE(PR_TASK_PERF_EVENTS_DISABLE),
+#endif
+#ifdef PR_TASK_PERF_EVENTS_ENABLE
+    TE(PR_TASK_PERF_EVENTS_ENABLE),
+#endif
+#ifdef PR_MCE_KILL
+    TE(PR_MCE_KILL),
+#endif
+#ifdef PR_MCE_KILL_GET
+    TE(PR_MCE_KILL_GET),
+#endif
+    T_END
+};
+
 /* Conversion functions */
 void convert(statfs_32 *g, const statfs64_native *h);
 void convert(statfs_32 *g, const statfs_native *h);
@@ -1278,5 +1453,7 @@ void print_exit_status_32(RTS_Message *f, const uint8_t *_v, size_t sz);
 void print_siginfo_32(RTS_Message *f, const uint8_t *_v, size_t sz);
 void print_sched_param_32(RTS_Message *f, const uint8_t *_v, size_t sz);
 void print_msghdr_32(RTS_Message *f, const uint8_t *_v, size_t sz);
+void print_new_utsname_32(RTS_Message *f, const uint8_t *_v, size_t sz);
+void print_mmap_arg_struct_32(RTS_Message *f, const uint8_t *_v, size_t sz);
 
 #endif /* ROSE_RSIM_Common_H */

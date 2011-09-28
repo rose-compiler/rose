@@ -22,7 +22,11 @@ Token_t *create_token(int line, int col, int type, const char *text)
   {
          Token_t *tmp_token = NULL;
 
-         tmp_token = (Token_t*) malloc(sizeof(Token_t));
+      // DQ (9/11/2011): We want to use the C++ new and delete memory allocation 
+      // and not mix C's malloc/free with C++'s new/delete mechanisms.
+      // tmp_token = (Token_t*) malloc(sizeof(Token_t));
+         tmp_token = new Token_t();
+
          tmp_token->line = line;
          tmp_token->col = col;
          tmp_token->type = type;
@@ -502,8 +506,10 @@ resetEndingSourcePosition( SgLocatedNode* targetLocatedNode, Token_t* token )
        // Also set the ending position of the function declaration.
        // printf ("In resetEndingSourcePosition(): Set the ending position of the related function declaration \n");
           SgDeclarationStatement* functionDeclaration = functionDefinition->get_declaration();
+          ROSE_ASSERT(functionDeclaration != NULL);
           resetEndingSourcePosition(functionDeclaration,token);
         }
+
     // Liao 2/1/2010. The SgBasicBlock of a SgFortranDo has to be adjusted also
     // 1. the begin construct should be the same as the one of its first child statement
     // 2. the end construct should be the same as SgFortranDo's end of construct
@@ -2239,6 +2245,8 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
              {
             // name = qualifiedNameList[i];
                name = qualifiedNameList[i].name;
+
+               ROSE_ASSERT(structureScope != NULL);
 #if 0
                printf ("structureScope = %p = %s name = %s \n",structureScope,structureScope->class_name().c_str(),name.c_str());
 #endif
@@ -2250,6 +2258,8 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
             // variableSymbol = trace_back_through_parent_scopes_lookup_variable_symbol(qualifiedNameList[i],structureScope);
             // trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(qualifiedNameList[i],structureScope,variableSymbol,functionSymbol,classSymbol);
                trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(name,structureScope,variableSymbol,functionSymbol,classSymbol);
+
+               ROSE_ASSERT(structureScope != NULL);
 
 #if 0
                printf ("In trace_back_through_parent_scopes_lookup_member_variable_symbol(): variableSymbol = %p \n",variableSymbol);
