@@ -5,7 +5,7 @@ SUBDIRS = testCallGraphAnalysis defUseAnalysisTests variableLivenessTests static
 		variableRenamingTests staticSingleAssignmentTests
 #ptrTraceDriver
 
-INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/programAnalysis -I$(top_srcdir)/src/midend/programAnalysis/pointerAnal -I${top_srcdir}/src/midend/programAnalysis/CFG -I${top_srcdir}/src/midend/programAnalysis/dataflowAnalysis -I$(top_srcdir)/src/util/support -I$(top_srcdir)/src/util/graphs -I$(top_srcdir)/src/midend/astUtil/astSupport -I$(top_srcdir)/src/midend/astUtil/astInterface -I$(top_srcdir)/src/midend/astUtil -I$(top_srcdir)/src/midend/programAnalysis/ 
+INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/programAnalysis -I$(top_srcdir)/src/midend/programAnalysis/pointerAnal -I${top_srcdir}/src/midend/programAnalysis/CFG -I${top_srcdir}/src/midend/programAnalysis/bitvectorDataflow -I$(top_srcdir)/src/util/support -I$(top_srcdir)/src/util/graphs -I$(top_srcdir)/src/midend/astUtil/astSupport -I$(top_srcdir)/src/midend/astUtil/astInterface -I$(top_srcdir)/src/midend/astUtil -I$(top_srcdir)/src/midend/programAnalysis/ 
 #-I$(top_srcdir)/src/midend/programAnalysis/ptrTrace/GAI/ICFG/
 
 ## The grammar generator (ROSETTA) should use its own template repository
