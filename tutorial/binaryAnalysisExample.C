@@ -15,10 +15,10 @@ int main(int argc, char** argv)
 
      ROSE_ASSERT (file != NULL);
      const SgAsmInterpretationPtrList& interps = binary->get_interpretations()->get_interpretations();
-     ROSE_ASSERT (interps.size() == 1);
-     SgAsmInterpretation* interp = interps[0];
-     SgAsmBlock* global_block = interp->get_global_block();
+     ROSE_ASSERT (!interps.empty());
+     SgAsmInterpretation* interp = interps.back();
 
+     SgAsmBlock* global_block = interp->get_global_block();
      ROSE_ASSERT (global_block != NULL);
 
   // RoseBin_unparse* unparser = new RoseBin_unparse();

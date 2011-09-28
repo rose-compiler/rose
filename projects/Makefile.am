@@ -31,7 +31,8 @@ SUBDIRS = \
      pragmaParsing \
      roseToLLVM \
      taintcheck \
-     PowerAwareCompiler
+     PowerAwareCompiler \
+     $(OPTIONAL_PROJECTS)
 
 # DQ (6/25/2011): Removed from being tested (failing symbolicAnalysisFramework/tests/test_examples/dominator_example.cpp)
 SUBDIRS += symbolicAnalysisFramework

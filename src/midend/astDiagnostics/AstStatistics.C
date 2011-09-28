@@ -30,6 +30,15 @@ AstNodeTraversalStatistics::~AstNodeTraversalStatistics()
      delete &numNodeTypes;
    }
 
+AstNodeTraversalStatistics::AstNodeTraversalStatistics( const AstNodeTraversalStatistics & X)
+   : numNodeTypes(*new StatisticsContainerType(V_SgNumVariants))
+   {
+  // DQ (9/13/2011): This copy constructor was built because static analysis tools 
+  // suggested it would avoid a possible double free error.  I agree.
+     printf ("Error: it is an error to call this copy constructor. \n");
+     ROSE_ASSERT(false);
+   }
+
 string
 AstNodeTraversalStatistics::toString(SgNode* node)
    {

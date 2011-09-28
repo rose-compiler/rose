@@ -258,7 +258,7 @@ struct MemoryManager
 
         /// Deletes all collected data
         /// normally only needed for debug purposes
-        void clearStatus() { mem.clear(); }
+        void clearStatus();
 
         /// Returns the MemoryType which stores the allocation information which is
         /// registered for this addr, or NULL if nothing is registered

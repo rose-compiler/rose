@@ -156,8 +156,16 @@ ReplacementMapTraversal::verifyODR( SgNode* node, SgNode* duplicateNodeFromOrigi
                if (SgProject::get_verbose() > 0)
                   {
                     SgNode* parent_node = node->get_parent();
+
+                 // DQ (9/13/2011): Reported as possible NULL value in static analysis of ROSE code.
+                    ROSE_ASSERT(parent_node != NULL);
+
                     printf ("parent_node = %p = %s = %s \n",parent_node,parent_node->class_name().c_str(),SageInterface::get_name(parent_node).c_str());
                     SgNode* parent_dup = duplicateNodeFromOriginalAST->get_parent();
+
+                 // DQ (9/13/2011): Reported as possible NULL value in static analysis of ROSE code.
+                    ROSE_ASSERT(parent_dup != NULL);
+
                     printf ("parent_dup = %p = %s = %s \n",parent_dup,parent_dup->class_name().c_str(),SageInterface::get_name(parent_dup).c_str());
 
                     printf ("\nPosition of error: \n");

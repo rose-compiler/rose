@@ -83,7 +83,7 @@ Description:\n\
 \n\
   --protection=PROTBITS\n\
     Normally the disassembler will only consider data in memory that has\n\
-    execute permission.  This switch allows allows the disassembler to use a\n\
+    execute permission.  This switch allows the disassembler to use a\n\
     different set of protection bits, all of which must be set on any memory\n\
     which is being considered for disassembly.  The PROTBITS argument is one\n\
     or more of the letters: r (read), w (write), or x (execute), or '-'\n\
@@ -1179,7 +1179,7 @@ main(int argc, char *argv[])
 
     /* If the partitioner needs to execute a success program (defined in an IPD file) then it must be able to provide the
      * program with a window into the specimen's memory.  We do that by supplying the same memory map that was used for
-     * disassembly. It is redundant to call set_map() with an active paritioner, but doesn't hurt anything. */
+     * disassembly. It is redundant to call set_map() with an active partitioner, but doesn't hurt anything. */
     partitioner->set_map(map);
 
     printf("using this memory map for disassembly:\n");
@@ -1228,7 +1228,7 @@ main(int argc, char *argv[])
                 SgAsmFunction *func = isSgAsmFunction(node);
                 if (func) {
                     CFG cfg = cfg_analysis.build_cfg_from_ast<CFG>(func);
-                    CFG_Vertex entry = 0; /* see build_graph() */
+                    CFG_Vertex entry = 0; /* see build_cfg_from_ast() */
                     assert(get(boost::vertex_name, cfg, entry) == func->get_entry_block());
                     Dominance::Graph dg = dom_analysis.build_idom_graph_from_cfg<Dominance::Graph>(cfg, entry);
                     dom_analysis.clear_ast(func);
