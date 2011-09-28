@@ -43,6 +43,7 @@ TESTCODES_REQUIRED_TO_PASS = \
     coarray-bounds-2.caf \
     coarray-decl.caf \
     coarray-semantics-1.caf \
+    coarray-string.caf \
     copointer-components.caf \
     copointer-array.caf \
     copointer-coarray.caf \
@@ -52,6 +53,7 @@ TESTCODES_REQUIRED_TO_PASS = \
     copointer-scalar-coscalar.caf \
     copointer-team1.caf \
     copointer-team2.caf \
+    coshape.caf \
     cotarget-declarations.caf \
     coscalar-1.caf \
     derived-type-1.caf \
@@ -76,16 +78,20 @@ TESTCODES_REQUIRED_TO_PASS = \
     get-3.caf \
     lockset.caf \
     loopbound-1.caf \
+    image-selector.caf \
     memory-1.caf \
     module-1-mod1.caf \
     module-2-module_table.caf \
     pointer-1.caf \
+    pointer-coarray-derived-type.caf \
     put-1.caf \
     put-3.caf \
     remote-read-1.caf \
     remote-write-1.caf \
     team.caf \
     topology.caf \
+    use-only-rename.caf \
+    use-rename.caf \
     withteam.caf
 
 TESTCODE_CURRENTLY_FAILING = \

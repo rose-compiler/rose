@@ -5,7 +5,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 #          valuePropagation  dominatorTreesAndDominanceFrontiers
 #          staticProgramSlicing proceduralSlicing
 
-SUBDIRS = CallGraphAnalysis OAWrap CFG dataflowAnalysis \
+SUBDIRS = CallGraphAnalysis OAWrap CFG bitvectorDataflow \
           valuePropagation  defUseAnalysis dominanceAnalysis \
           staticInterproceduralSlicing pointerAnal \
           annotationLanguageParser sideEffectAnalysis distributedMemoryAnalysis \
