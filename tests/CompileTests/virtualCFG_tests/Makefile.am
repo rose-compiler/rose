@@ -471,6 +471,8 @@ JAVA_TESTCODES_REQUIRED_TO_PASS = \
      cave3_if0.java \
      cave3_if1.java \
      cave3_nameResolution0.java \
+     cave3_rshift0.java \
+     cave3_rshift1.java \
      cave3_while0.java \
      cave3_while2.java
 
