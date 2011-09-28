@@ -660,6 +660,7 @@ traversePath(int begin, int end, CFG*& g, bool loop) {
     int nnumpaths = 0;
     std::set<std::vector<int> > loopPaths;
     int rounds = 0;
+    int oldsize = 0;
     bool done = false;
     std::set<std::vector<int> > fts;
 /* this loop should go down the graph until it hits an endnode or the specified endnode
@@ -670,8 +671,15 @@ traversed maximally once what is the greatest number of steps taken to reach the
             //std::cout << "path.size(): " << path.size() << std::endl;
             if (rounds % 1000000 == 0) {
             std::cout << "round: " << rounds << std::endl;
-            std::cout << "paths.size(): " << paths.size() << std::endl;
+            //std::cout << "paths.size(): " << paths.size() << std::endl;
             
+            }
+            if (!loop && paths.size() % 10000 == 0) {
+            std::cout << "paths.size(): " << paths.size() << std::endl;
+            if (paths.size() != oldsize) {
+                oldsize = paths.size();
+                std::cout << "new path size: " << paths.size() << std::endl;
+            }
             }
             //std::cout << "paths.size(): " << paths.size() << std::endl;
             //std::cout << "path.size(): " << path.size() << std::endl;
@@ -704,7 +712,7 @@ traversed maximally once what is the greatest number of steps taken to reach the
                 done = true;
             }
             if (done) /*outEdges.size() == 0 || (path.back() == end && path.size() != 1 && end != -1) || (path.back() == begin && path.size() != 1  && begin != -1)*/ {
-                //std::cout << "in done" << std::endl;
+                std::cout << "in done" << std::endl;
                 for (int qqq = 0; qqq < paths.size(); qqq++) {
                 path = paths[qqq];
                 bool stop = false;
@@ -719,7 +727,7 @@ traversed maximally once what is the greatest number of steps taken to reach the
                 subpath.push_back(path[0]);
                 nPaths.push_back(subpath);
                 std::vector<std::vector<int> > newNPaths;
-                    int permnums = 1;
+                   int permnums = 1;
                    // std::set<std::vector<int> > pLs;
                     std::vector<int> perms;
                     std::vector<int> qs;
@@ -742,7 +750,7 @@ traversed maximally once what is the greatest number of steps taken to reach the
                     }
                     }
                     //permnums -= 1;
-                 //   std::cout << "permnums: " << permnums << std::endl;
+                    //std::cout << "permnums: " << permnums << std::endl;
                     //#pragma omp parallel for
                     for (int i = 1; i <= permnums; i++) {
                         int j = 0;
@@ -857,7 +865,7 @@ traversed maximally once what is the greatest number of steps taken to reach the
 */
                         analyzePath(verts);
                         nnumpaths++;
-                        if (nnumpaths % 1000000 == 0) {
+                        if (nnumpaths % 10000 == 0) {
                         std::cout << "nnumpaths: " << nnumpaths << std::endl;
                         }
                         }
@@ -879,7 +887,7 @@ traversed maximally once what is the greatest number of steps taken to reach the
 */
                         getVertexPath(npath, g, verts);
                         nnumpaths++;
-                        if (nnumpaths % 1000000 == 0) {
+                        if (nnumpaths % 10000 == 0) {
                         std::cout << "nnumpaths: " << nnumpaths << std::endl;
                         }
                         analyzePath(verts);
@@ -913,6 +921,7 @@ traversed maximally once what is the greatest number of steps taken to reach the
                     //std::cout << "should start here" << std::endl;
 std::vector<int> outEdges2 = getOutEdges(path.back(), g);
 if ((outEdges2.size() == 0) || (path.back() == end && path.size() != 1 && end != -1) || (path.back() == begin && path.size() != 1  && begin != -1)) {
+                   if (find(paths.begin(), paths.end(), path) == paths.end()) {
                    if (bound && !loop) {
                        if (path.front() == begin && path.back() == end) {
                             
@@ -928,9 +937,10 @@ if ((outEdges2.size() == 0) || (path.back() == end && path.size() != 1 && end !=
                            paths.push_back(path);
                        }
                    }
-                
+                   
                    else {
                        ROSE_ASSERT(false);
+                   }
                    }
                    if (path.size() == 0) {
                        done = true;
@@ -1087,14 +1097,23 @@ if ((outEdges2.size() == 0) || (path.back() == end && path.size() != 1 && end !=
                         if ((unsigned int) currents[path.back()] >= oeds.size()) {
                         // if (find(path.begin(), path.end(), getTarget(oeds[currents[path.back()]], g)) == path.end()) {
                         if (loopfind.find(path.back()) == loopfind.end()) {
+                            //currents[path.back()] = 0;
+                        
+                        if (find(path.begin(), path.end(), getTarget(oeds[currents[path.back()]], g)) != path.end()) {
+                           loopfind.insert(getTarget(oeds[currents[path.back()]], g));
+                        }   
+                        else {
                             currents[path.back()] = 0;
                         }
-                        if (find(path.begin(), path.end(), getTarget(oeds[currents[path.back()]], g)) != path.end()) {
-                           loopfind.insert(path.back());
-                        }   
                         //currents[path.back()] = 0;
                         path.pop_back();
                         oeds = getOutEdges(path.back(), g);
+                        }
+                        else {
+                            //loopfind.erase(path.back());
+                            path.pop_back();
+                            oeds = getOutEdges(path.back(), g);
+                        }
                         }
                         else {
                              //currents[path.back()]++;
@@ -1150,14 +1169,16 @@ if ((outEdges2.size() == 0) || (path.back() == end && path.size() != 1 && end !=
                      //       nogo = true;
                      //    }
                      //} 
-                     if ((!nogo && ((globalLoopPaths.find(currn) == globalLoopPaths.end()) || (!nogo && globalLoopPaths[currn].size() == 0))  && find(recursiveLoops.begin(), recursiveLoops.end(), currn) == recursiveLoops.end() && (currn != begin || (currn == begin && currn != end)))) {
+                     if ((!nogo && ((globalLoopPaths.find(currn) == globalLoopPaths.end()) /*|| (!nogo && globalLoopPaths[currn].size() == 0)(*/)  && find(recursiveLoops.begin(), recursiveLoops.end(), currn) == recursiveLoops.end() && (currn != begin || (currn == begin && currn != end)))) {
                          
                          std::vector<std::vector<int> > tmplps;
                          globalLoopPaths[currn] = tmplps;
                          recursiveLoops.push_back(currn);
-                         //std::cout << "solving a loop" << std::endl;
+                         std::cout << "solving a loop at " << currn << std::endl;
                          std::set<std::vector<int> > lps = traversePath(currn, currn, g, true);
-                         //std::cout << "loops found: " << lps.size() << std::endl;
+                         
+                         std::cout << "loops found: " << lps.size() << std::endl;
+                         std::cout << "completed loop " << currn << std::endl;
                          recursiveLoops.pop_back();
                          //currents[currn]++;
                          std::vector<int> ieds = getInEdges(currn, g);
@@ -1213,20 +1234,33 @@ if ((outEdges2.size() == 0) || (path.back() == end && path.size() != 1 && end !=
                std::vector<int> qds = getOutEdges(path.back(), g);
                std::set<int> loopskips;
                while ((unsigned int)currents[path.back()] >= qds.size() && path.size() != 0) {
-                   if (loopskips.find(path.back()) == loopskips.end()) {
-                   currents[path.back()] = 0;
-                   }
-                   else {
-                   loopskips.erase(path.back());
-                   }
+               //    std::cout << "in loopskips while" << std::endl;
                    int ppb = path.back();
+                   if (loopskips.find(path.back()) == loopskips.end()) {
+                   //currents[path.back()] = 0;
+                   //}
+                   //else {
+                   //loopskips.erase(path.back());
+                   //}
+                   //int ppb = path.back();
                    path.pop_back();
                    if (find(path.begin(), path.end(), ppb) != path.end()) {
-                       loopskips.insert(path.back());
+                       loopskips.insert(ppb);
+                   }
+                   else {
+                       currents[ppb] = 0;
+                   }
+                   }
+                   
+                   //}
+                   else {
+                       //loopskips.erase(path.back());
+                       path.pop_back();
                    }
                    //path.pop_back();
                    qds = getOutEdges(path.back(), g);
                }
+               //std::cout << "completed loopskips while" << std::endl;
                if (path.size() == 0) {
                    done = true;
                }
