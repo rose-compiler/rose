@@ -4952,6 +4952,7 @@ SgJavaForEachStatement::cfgIndexForEnd() const
    {
      return 1;
    }
+
 unsigned int
 SgJavaForEachStatement::cfgFindChildIndex(SgNode* n)
    {
