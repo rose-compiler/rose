@@ -228,6 +228,7 @@ SgAsmSectionHeader
 SgAsmSectionHeaderList
 SgAsmSingleFloatValueExpression
 SgAsmStatement
+SgAsmStaticData
 SgAsmStmt
 SgAsmStoredString
 SgAsmStringStorage
