@@ -929,7 +929,7 @@ SgCommonBlock* buildCommonBlock(SgCommonBlockObject* first_block=NULL);
 
 // driscoll6 (6/9/2011): Adding support for try stmts.
 // ! Build a catch statement.
-SgCatchOptionStmt* buildCatchOptionStmt(SgVariableDeclaration* condition, SgStatement* body);
+SgCatchOptionStmt* buildCatchOptionStmt(SgVariableDeclaration* condition=NULL, SgStatement* body=NULL);
 
 // driscoll6 (6/9/2011): Adding support for try stmts.
 // ! Build a try statement.
@@ -939,6 +939,18 @@ SgTryStmt* buildTryStmt(SgStatement* body,
                         SgCatchOptionStmt* catch2=NULL,
                         SgCatchOptionStmt* catch3=NULL,
                         SgCatchOptionStmt* catch4=NULL);
+
+// charles4 (9/16/2011): Adding support for try stmts.
+// ! Build a try statement.
+//SgTryStmt* buildTryStmt(SgStatement *try_body, SgCatchStatementSeq *catches, SgStatement *finally_body = NULL);
+
+// charles4 (9/16/2011): Adding support for try stmts.
+// ! Build a try statement.
+SgTryStmt* buildTryStmt(SgStatement *try_body, SgStatement *finally_body = NULL);
+
+// charles4 (9/16/2011): Adding support for Catch Blocks.
+// ! Build an initial sequence of Catch blocks containing 0 or 1 element.
+SgCatchStatementSeq *buildCatchStatementSeq(SgCatchOptionStmt * = NULL);
 
 // charles4 (8/25/2011): Adding support for Java Synchronized stmts.
 // ! Build a Java Synchronized statement.

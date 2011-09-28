@@ -1511,6 +1511,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionAssignmentEnd(JNIEnv *env, jobject
 
      setJavaSourcePosition(assignmentStatement,env,jToken);
      ROSE_ASSERT(assignmentStatement->get_expression() != NULL);
+ROSE_ASSERT(assignmentStatement->get_expression()->get_type() != NULL);
      setJavaSourcePosition(assignmentStatement->get_expression(),env,jToken);
 
      astJavaStatementStack.push_front(assignmentStatement);
@@ -1619,9 +1620,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBlock(JNIEnv *env, jobject xxx, jo
   // SgBasicBlock instead of building a new one.
   // SgBasicBlock* block = SageBuilder::buildBasicBlock();
      SgBasicBlock* block = NULL;
-     SgIfStmt* ifStatement = isSgIfStmt(astJavaScopeStack.front());
-     if (ifStatement != NULL)
+     if (isSgIfStmt(astJavaScopeStack.front()))
         {
+          SgIfStmt* ifStatement = (SgIfStmt*) astJavaScopeStack.front();
           SgNullStatement* nullStatement = isSgNullStatement(ifStatement->get_true_body());
           if (nullStatement != NULL)
              {
@@ -1640,29 +1641,23 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBlock(JNIEnv *env, jobject xxx, jo
                ifStatement->set_false_body(block);
              }
         }
-       else
+      else if (isSgForStatement(astJavaScopeStack.front()))
         {
        // DQ (7/30/2011): Handle the case of a block after a SgForStatement
        // Because we build the SgForStatement on the stack and then the cactionBlock 
        // function is called, we have to detect and fixup the SgForStatement.
-          SgForStatement* forStatement = isSgForStatement(astJavaScopeStack.front());
-          if (forStatement != NULL)
-             {
-               SgNullStatement* nullStatement = isSgNullStatement(forStatement->get_loop_body());
-               if (nullStatement != NULL)
-                  {
-                    block = SageBuilder::buildBasicBlock();
-                    ROSE_ASSERT(block != NULL);
-                    forStatement->set_loop_body(block);
-                    delete nullStatement;
-                  }
-             }
-            else
-             {
-               block = SageBuilder::buildBasicBlock();
-               ROSE_ASSERT(block != NULL);
-             }
+          SgForStatement* forStatement = (SgForStatement*) astJavaScopeStack.front();
+          SgNullStatement* nullStatement = isSgNullStatement(forStatement->get_loop_body());
+          if (nullStatement != NULL) {
+              block = SageBuilder::buildBasicBlock();
+              ROSE_ASSERT(block != NULL);
+              forStatement->set_loop_body(block);
+              delete nullStatement;
+          }
         }
+      else {
+          block = SageBuilder::buildBasicBlock();
+      }
      ROSE_ASSERT(block != NULL);
 
      setJavaSourcePosition(block,env,jToken);
@@ -2891,9 +2886,10 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionJavadocSingleTypeReferenceClassSco
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionLabeledStatement(JNIEnv *env, jobject xxx, jobject jToken)
+JNIEXPORT void JNICALL Java_JavaParser_cactionLabeledStatement(JNIEnv *env, jobject xxx, jstring labelName, jobject jToken)
    {
-    SgJavaLabelStatement *labelStatement = SageBuilder::buildJavaLabelStatement("");
+    SgName label_name = convertJavaStringToCxxString(env, labelName);
+    SgJavaLabelStatement *labelStatement = SageBuilder::buildJavaLabelStatement(label_name);
     ROSE_ASSERT(labelStatement != NULL);
     setJavaSourcePosition(labelStatement, env, jToken);
     labelStatement->set_parent(astJavaScopeStack.front());
@@ -2901,29 +2897,18 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionLabeledStatement(JNIEnv *env, jobj
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionLabeledStatementEnd(JNIEnv *env, jobject xxx, jstring labelName, jobject jToken)
+JNIEXPORT void JNICALL Java_JavaParser_cactionLabeledStatementEnd(JNIEnv *env, jobject xxx, jobject jToken)
    {
     if (SgProject::get_verbose() > 2)
          printf ("Inside of Java_JavaParser_cactionLabelStatementEnd() \n");
 
     outputJavaState("At TOP of cactionLabelStatementEnd");
 
-    //
-    // charles4 8/17/2001: TODO: Need to wrap the labelStatement in a scope statement.
-    //                     Should we wrap it in a basic block?
-    // ... Would be better if the SglabeledStatement was a subclass of SgScopeStatement.
-    //
-    // For now, the function declaration scope is used. (See the buildLabelStatement is
-    // implemented when a null scope is passed to it.) That actually violates the rules of Java!
-    //
-    SgName label_name = convertJavaStringToCxxString(env, labelName);
-    SgStatement *statement = astJavaStatementStack.front();
-    astJavaStatementStack.pop_front();
-
     SgJavaLabelStatement *labelStatement = (SgJavaLabelStatement *) astJavaScopeStack.front();
     astJavaScopeStack.pop_front();
 
-    labelStatement -> set_label(label_name);
+    SgStatement *statement = astJavaStatementStack.front();
+    astJavaStatementStack.pop_front();
     labelStatement -> set_statement(statement);
 
     // Pushing 'label' on the statement stack
@@ -3524,9 +3509,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionSwitchStatementEnd(JNIEnv *env, jo
     switch_statement -> set_item_selector(item_selector);
     switch_statement -> set_body(switch_block);
 
-     // Pushing 'switch' on the statement stack
-     astJavaStatementStack.push_front(switch_statement);
-     outputJavaState("At BOTTOM of cactionSwitchStatementEnd");
+    // Pushing 'switch' on the statement stack
+    astJavaStatementStack.push_front(switch_statement);
+    outputJavaState("At BOTTOM of cactionSwitchStatementEnd");
    }
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionSynchronizedStatement(JNIEnv *env, jobject xxx, jobject jToken)
@@ -3609,68 +3594,135 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTrueLiteral(JNIEnv *env, jobject x
    }
 
 
+JNIEXPORT void JNICALL Java_JavaParser_cactionCatchBlock(JNIEnv *env, jobject xxx, jstring java_argument_name, jobject jToken)
+   {
+     if (SgProject::get_verbose() > 2)
+          printf ("Inside of Java_JavaParser_cactionCatchBlock() \n");
+
+     outputJavaState("At TOP of cactionCatchBlock");
+
+  // 
+  // We build on the way down because the scope information and symbol table information is contained
+  // in the Ast node.  This AST node is a subclass of SgScopeStatement.
+  // Note that we pass a phony statement to the builder because it requires a body!  The real body will
+  // be applied later when we have it.
+  //
+     SgCatchOptionStmt *catch_option_stmt = SageBuilder::buildCatchOptionStmt();
+     ROSE_ASSERT(catch_option_stmt != NULL);
+     setJavaSourcePosition(catch_option_stmt, env, jToken);
+
+     //
+     // Create a variable declaration for the Catch Block parameter ... Make sure that it is inserted
+     // in the proper scope.
+     //
+     SgName argument_name = convertJavaStringToCxxString(env, java_argument_name);
+     if (SgProject::get_verbose() > 0)
+          printf ("argument argument_name = %s \n",argument_name.str());
+#if 1
+     ROSE_ASSERT(astJavaTypeStack.empty() == false);
+     SgType* type = astJavaTypeStack.front();
+     astJavaTypeStack.pop_front();
+
+     SgVariableDeclaration *variable_declaration = SageBuilder::buildVariableDeclaration(argument_name, type, NULL, catch_option_stmt);
+     setJavaSourcePosition(variable_declaration, env, jToken);
+     ROSE_ASSERT(variable_declaration != NULL);
+     ROSE_ASSERT(SageInterface::is_Fortran_language() == false);
+     SgInitializedName* initializedName = variable_declaration -> get_decl_item(argument_name);
+     ROSE_ASSERT(initializedName != NULL);
+     ROSE_ASSERT(initializedName->get_scope() != NULL);
+#else // This command will place the variable declaration in the scope enclosing the TryStmt
+     SgVariableDeclaration *variable_declaration = buildSimpleVariableDeclaration(argument_name);
+#endif
+
+     catch_option_stmt -> set_condition(variable_declaration);
+     variable_declaration->set_parent(catch_option_stmt);
+
+  // DQ (7/30/2011): For the build interface to work we have to initialize the parent pointer to the SgForStatement.
+  // Charles4 (8/23/2011): When and why parent pointers should be set needs to be clarified. Perhaps the SageBuilder
+  // functions should be revisited?
+  //     catch_option_stmt -> set_parent(astJavaScopeStack.front());
+
+     astJavaScopeStack.push_front(catch_option_stmt);
+     outputJavaState("At BOTTOM of cactionCatchBlock");
+   }
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionCatchBlockEnd(JNIEnv *env, jobject xxx, jobject jToken)
+   {
+    if (SgProject::get_verbose() > 2)
+        printf ("Inside of Java_JavaParser_cactionCatchBlockEnd() \n");
+
+    outputJavaState("At TOP of cactionCatchBlockEnd");
+
+    SgBasicBlock *catch_body = (SgBasicBlock *) astJavaStatementStack.front();
+    astJavaStatementStack.pop_front();
+    ROSE_ASSERT(isSgBasicBlock(catch_body));
+
+    SgCatchOptionStmt *catch_option_stmt = (SgCatchOptionStmt *) astJavaScopeStack.front();
+    astJavaScopeStack.pop_front();
+    ROSE_ASSERT(isSgCatchOptionStmt(catch_option_stmt));
+    catch_option_stmt -> set_body(catch_body);
+
+    // Pushing 'Catch' on the statement stack
+    astJavaStatementStack.push_front(catch_option_stmt);
+    outputJavaState("At BOTTOM of cactionCatchBlockEnd");
+   }
+
 JNIEXPORT void JNICALL Java_JavaParser_cactionTryStatement(JNIEnv *env, jobject xxx, jint numCatchBlocks, jboolean hasFinallyBlock, jobject jToken)
    {
-       // charles4 - 8/20/2011
-       ROSE_ASSERT(! "yet know how to process Try Statement");
    }
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionTryStatementEnd(JNIEnv *env, jobject xxx, jint numCatchBlocks, jboolean hasFinallyBlock, jobject jToken)
    {
-     //     if (SgProject::get_verbose() > 2)
-     //          printf ("Inside of Java_JavaParser_cactionTryStatement() \n");
-     //
-     //     outputJavaState("At TOP of cactionTryStatement");
-     //
-     //    SgStatement *finally_body = NULL;
-     //    if (hasFinallyBlock) {
-     //        finally_body = astJavaStatementStack.front();
-     //        astJavaStatementStack.pop_front();
-     //    }
-     //
-     //    list<SgCatchOptionStmt *> catch_stack;
-     //    for (int i = 0; i < numCatchBlocks; i++) {
-     //         SgStatement *catch_body = astJavaStatementStack.front();
-     //         astJavaStatementStack.pop_front();
-     //         SgCatchOptionStmt *catch_option_stmt = SageBuilder::buildCatchOptionStmt(NULL, catch_body); // no decl... yet!
-     // /*
-     //         SgInitializedName *name = astPhilippeStack.front();
-     //         astPhilippeStack.pop_front();
-     //         SgVariableDeclaration *var_decl = SageBuilder::buildVariableDeclaration(name -> get_name(),
-     //                                                                                 name -> get_type(),
-     //                                                                                 name -> get_initializer(),
-     //                                                                                 catch_option_stmt);
-     // */
-     //         SgVariableDeclaration *var_decl = (SgVariableDeclaration *) astTempStack.front();
-     //         astTempStack.pop_front();
-     //
-     //        catch_option_stmt -> set_condition(var_decl);
-     //        catch_stack.push_front(catch_option_stmt);
-     //    }
-     //
-     //    SgStatement *try_body = astJavaStatementStack.front();
-     //    astJavaStatementStack.pop_front();
-     //
-     //    SgTryStmt *try_statement = SageBuilder::buildTryStmt(try_body);
-     //    setJavaSourcePosition(try_statement, env, jToken);
-     //    for (int i = 0; i < numCatchBlocks; i++) {
-     //        SgCatchOptionStmt *catch_option_stmt = catch_stack.front();
-     //        catch_stack.pop_front();
-     //        catch_option_stmt -> set_trystmt(try_statement);
-     //        //        catch_option_stmt -> set_parent(try_statement);
-     //        try_statement -> append_catch_statement(catch_option_stmt);
-     //    }
-     //
-     //     try_statement -> set_finally_body(finally_body);
-     //     finally_body -> set_parent(try_statement);
-     //
-     //     // Pushing 'try' on the statement stack
-     //     try_statement -> set_parent(astJavaScopeStack.front());
-     //     astJavaStatementStack.push_front(try_statement);
-     //
-     //     outputJavaState("At BOTTOM of cactionTryStatementEnd");
-   }
+     if (SgProject::get_verbose() > 2)
+          printf ("Inside of Java_JavaParser_cactionTryStatement() \n");
+     
+     outputJavaState("At TOP of cactionTryStatement");
 
+    SgStatement *finally_body = NULL;
+    if (hasFinallyBlock) {
+        finally_body = astJavaStatementStack.front();
+        astJavaStatementStack.pop_front();
+        ROSE_ASSERT(isSgBasicBlock(finally_body));
+    }
+
+    list<SgCatchOptionStmt *> catches;
+    for (int i = 0; i < numCatchBlocks; i++) {
+        SgCatchOptionStmt *catch_option_stmt = (SgCatchOptionStmt *) astJavaStatementStack.front();
+        astJavaStatementStack.pop_front();
+        ROSE_ASSERT(isSgCatchOptionStmt(catch_option_stmt));
+        catches.push_front(catch_option_stmt);
+    }
+
+    SgStatement *try_body = (SgStatement *) astJavaStatementStack.front();
+    astJavaStatementStack.pop_front();
+    ROSE_ASSERT(isSgBasicBlock(try_body));
+
+    SgTryStmt *try_statement = SageBuilder::buildTryStmt(try_body, finally_body);
+    setJavaSourcePosition(try_statement, env, jToken);
+    try_statement-> set_parent(astJavaScopeStack.front());
+
+    //
+    // charles4 09/23/2011 - Wwhen an SgTryStmt is allocated, its constructor
+    // preallocates a SgCatchStementSeq (See comment in SageBuilder::buildTryStmt(...))
+    // for the field p_catch_statement_sequence_root. The position of that field cannot
+    // be set during the allocation as it was not yet set for the SgTryStmt being allocated.
+    // Thus, we have to set the location here!
+    //
+    SgCatchStatementSeq *catch_statement_sequence = try_statement -> get_catch_statement_seq_root();
+    setJavaSourcePosition(catch_statement_sequence, env, jToken);
+
+    ROSE_ASSERT(catches.size() == numCatchBlocks);
+    for (int i = 0; i < numCatchBlocks; i++) {
+        SgCatchOptionStmt *catch_option_stmt = catches.front();
+        catches.pop_front();
+        ROSE_ASSERT(catch_option_stmt);
+        try_statement -> append_catch_statement(catch_option_stmt);
+    }
+
+    // Pushing 'try' on the statement stack
+    astJavaStatementStack.push_front(try_statement);
+    outputJavaState("At BOTTOM of cactionTryStatementEnd");
+   }
 
 
 

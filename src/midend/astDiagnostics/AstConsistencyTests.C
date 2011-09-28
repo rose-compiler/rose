@@ -414,9 +414,8 @@ AstTests::runAllTests(SgProject* sageProject)
             // TODO (python) define get_type for the remaining expressions ?
             if (! sageProject->get_Python_only()) {
                 TimingPerformance timer ("AST expression type test:");
-
                 TestExpressionTypes expressionTypeTest;
-                expressionTypeTest.traverse(sageProject,preorder);
+                expressionTypeTest.traverse(sageProject, preorder);
             } else {
                 //cout << "warning: python. Skipping TestExpressionTypes in AstConsistencyTests.C" << endl;
             }
@@ -2468,15 +2467,28 @@ TestAstSymbolTables::visit ( SgNode* node )
                        }
                       else
                        {
-                         SgLabelStatement* labelStatement = isSgLabelStatement(declarationNode);
-                         if (labelStatement != NULL)
+                         if (isSgLabelStatement(declarationNode))
                             {
+                              SgLabelStatement* labelStatement = (SgLabelStatement *) declarationNode;
                               SgSymbol* local_symbol = labelStatement->get_symbol_from_symbol_table();
                               if (local_symbol == NULL)
                                  {
                                    printf ("Error: labelStatement->get_symbol_from_symbol_table() == NULL labelStatement = %p = %s \n",labelStatement,labelStatement->get_label().str());
                                    ROSE_ASSERT(labelStatement->get_scope() != NULL);
                                    labelStatement->get_scope()->get_symbol_table()->print("debug labelStatement scope");
+                                 }
+                              ROSE_ASSERT(local_symbol != NULL);
+                            }
+                         else if (isSgJavaLabelStatement(declarationNode)) // charles4: 09/12/2011 added for Java
+                            {
+                              SgJavaLabelStatement* javaLabelStatement = (SgJavaLabelStatement *) declarationNode;
+                              SgSymbol *local_symbol = javaLabelStatement->get_symbol_from_symbol_table();
+                              if (local_symbol == NULL)
+                                 {
+                                   printf ("Error: javaLabelStatement->get_symbol_from_symbol_table() == NULL javaLabelStatement = %p = %s \n",javaLabelStatement,javaLabelStatement->get_label().str());
+                                   ROSE_ASSERT(javaLabelStatement->get_scope() != NULL);
+                                   ROSE_ASSERT(javaLabelStatement->get_scope()->get_symbol_table() != NULL);
+                                   javaLabelStatement->get_scope()->get_symbol_table()->print("debug javaLabelStatement scope");
                                  }
                               ROSE_ASSERT(local_symbol != NULL);
                             }
@@ -2591,6 +2603,17 @@ TestAstSymbolTables::visit ( SgNode* node )
                                  }
 #endif
                             }
+                         break;
+                       }
+
+                    case V_SgJavaLabelSymbol:
+                       {
+                         SgJavaLabelSymbol* labelSymbol = isSgJavaLabelSymbol(symbol);
+                         ROSE_ASSERT(labelSymbol != NULL);
+
+                      // charles4 (9/12/2011): copied from case of SgLabelSymbol for Java
+                         ROSE_ASSERT(labelSymbol->get_declaration() != NULL);
+
                          break;
                        }
 

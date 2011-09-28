@@ -177,10 +177,14 @@ Unparse_Java::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Info
             case V_SgIfStmt:
             case V_SgSwitchStatement:
             case V_SgCaseOptionStmt:
+            case V_SgCatchOptionStmt:
             case V_SgDefaultOptionStmt:
             case V_SgJavaLabelStatement:
             case V_SgJavaSynchronizedStatement:
                 printSemicolon = false;
+                break;
+            case V_SgVariableDeclaration: // charles4 09/23/2011 -- Shouldn't this be the default initialization!
+                printSemicolon = ! info.SkipSemiColon();
                 break;
             default:
                 printSemicolon = true;
@@ -737,7 +741,9 @@ Unparse_Java::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgVariableDeclaration* vardecl_stmt = isSgVariableDeclaration(stmt);
      ROSE_ASSERT(vardecl_stmt != NULL);
 
-     unparseDeclarationModifier(vardecl_stmt->get_declarationModifier(), info);
+     if (! info.SkipClassSpecifier()) { // charles4 09/23/2011 -- Add this guard ... See Argument decl in CatchOptionStmt
+         unparseDeclarationModifier(vardecl_stmt->get_declarationModifier(), info);
+     }
      foreach (SgInitializedName* init_name, vardecl_stmt->get_variables())
          unparseInitializedName(init_name, info);
    }
@@ -915,6 +921,12 @@ Unparse_Java::unparseTryStmt(SgStatement* stmt, SgUnparse_Info& info)
           unparseStatement(*i, info);
           i++;
         }
+
+     if (try_stmt -> get_finally_body()) { // charles4 09/23/2011
+         curprint_indented("", info);
+         curprint ("finally ");
+         unparseStatement(try_stmt -> get_finally_body(), info);
+     }
    }
 
 void
@@ -931,7 +943,8 @@ Unparse_Java::unparseCatchStmt(SgStatement* stmt, SgUnparse_Info& info)
 
           ninfo.set_SkipSemiColon();
           ninfo.set_SkipClassSpecifier();
-          unparseStatement(catch_statement->get_condition(), ninfo);
+          unparseVarDeclStmt(catch_statement->get_condition(), ninfo); // charles4 09/23/2011 - call VarDecl directly to prevent line break.
+                                                                       // Old statement:  unparseStatement(catch_statement->get_condition(), ninfo);
         }
 
      curprint ( string(")"));

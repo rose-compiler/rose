@@ -4030,13 +4030,49 @@ SgTryStmt* SageBuilder::buildTryStmt(SgStatement* body,
     return try_stmt;
 }
 
+// charles4 09/16/2011
+//! Build a try statement
+SgTryStmt *SageBuilder::buildTryStmt(SgStatement *try_body, SgStatement *finally_body) {
+    //
+    // charles4 09/23/2011 - Note that when an SgTryStmt is allocated, its constructor
+    // preallocates a SgCatchStementSeq for the field p_catch_statement_sequence_root.
+    // So, although the method set_catch_statement_seq_root(catch_statement_sequence) is
+    // available, it should not be used to set the catch_statement_sequence_root as that 
+    // would leave the one that was allocated by the constructor dangling!
+    //
+    ROSE_ASSERT(try_body != NULL);
+    SgTryStmt* try_stmt = new SgTryStmt(try_body);
+    try_body -> set_parent(try_stmt);
+
+    if (finally_body) {
+        try_stmt -> set_finally_body(finally_body);
+        finally_body -> set_parent(try_stmt);
+    }
+
+    return try_stmt;
+}
+
+// charles4 09/16/2011
+// ! Build an initial sequence of Catch blocks containing 0 or 1 element.
+SgCatchStatementSeq *SageBuilder::buildCatchStatementSeq(SgCatchOptionStmt *catch_option_stmt) {
+    SgCatchStatementSeq *catch_statement_sequence = new SgCatchStatementSeq();
+
+    if (catch_option_stmt) {
+        catch_statement_sequence -> append_catch_statement(catch_option_stmt);
+        catch_option_stmt -> set_parent(catch_statement_sequence);
+    }
+
+    return catch_statement_sequence;
+}
+
+// charles4 09/21/2011 - Make condition and body arguments optional.
 //! Build a catch statement
 SgCatchOptionStmt* SageBuilder::buildCatchOptionStmt(SgVariableDeclaration* condition, SgStatement* body) {
-  SgCatchOptionStmt* result = new SgCatchOptionStmt(condition, body, /* SgTryStmt*= */ NULL);
-  if (condition) condition->set_parent(result);
-  body->set_parent(result);
-  setOneSourcePositionForTransformation(result);
-  return result;
+    SgCatchOptionStmt* result = new SgCatchOptionStmt(condition, body, /* SgTryStmt*= */ NULL);
+    if (condition) condition->set_parent(result);
+    if (body) body->set_parent(result);
+    setOneSourcePositionForTransformation(result);
+    return result;
 }
 
 SgJavaSynchronizedStatement *SageBuilder::buildJavaSynchronizedStatement(SgExpression *expression, SgBasicBlock *body)
@@ -4085,17 +4121,13 @@ SgJavaLabelStatement *SageBuilder::buildJavaLabelStatement(const SgName& name,  
     if (stmt != NULL) 
         stmt -> set_parent(label_stmt);
 
-    //
-    // charles4 9/3/2011 - TODO: Can't create an SgLabelSymbol because its constructor
-    // only accepts an SgLabelStatement.
-    //
-    // SgLabelSymbol *lsymbol = label_stmt -> lookup_label_symbol(name);
-    // if (! lsymbol) // Should be an Assertion - always true!
-    // {
-    //     lsymbol= new SgLabelSymbol(label_stmt);
-    //     ROSE_ASSERT(lsymbol);
-    //     label_stmt -> insert_symbol(lsymbol -> get_name(), lsymbol);
-    // }
+    SgJavaLabelSymbol *lsymbol = label_stmt -> lookup_java_label_symbol(name);
+    if (! lsymbol) // Should be an Assertion - always true!
+    {
+        lsymbol= new SgJavaLabelSymbol(label_stmt);
+        ROSE_ASSERT(lsymbol);
+        label_stmt -> insert_symbol(lsymbol -> get_name(), lsymbol);
+    }
 
     return label_stmt;
 }
