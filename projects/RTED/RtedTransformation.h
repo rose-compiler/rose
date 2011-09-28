@@ -5,6 +5,8 @@
 #define RTEDTRANS_H
 
 #include <set>
+#include <vector>
+#include <map>
 #include <string>
 
 #include "RtedSymbols.h"
@@ -14,6 +16,12 @@
 #include "CppRuntimeSystem/rted_typedefs.h"
 
 enum { RTEDDEBUG = 1 };
+
+/// \brief returns the language of the specified source file
+SourceFileType fileType(const std::string& filename);
+
+/// \overload
+SourceFileType fileType(const SgSourceFile& sf);
 
 //
 // convenience and debug functions
@@ -619,7 +627,7 @@ public:
    SgProject* parse(int argc, char** argv);
 
    /// \brief Looks up RTED symbols in the given source file (needed for transformations)
-   void loadFunctionSymbols(SgSourceFile& n);
+   void loadFunctionSymbols(SgSourceFile& n, SourceFileType sft);
 
    SgAggregateInitializer* mkTypeInformation(SgType* type, bool resolve_class_names, bool array_to_pointer);
 

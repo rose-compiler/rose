@@ -3,6 +3,16 @@
 
 #include "rose.h"
 
+enum SourceFileType
+{
+  ftUnknown = 0,
+  ftHeader  = 1,
+  ftCbase   = 2,
+  ftClang   = 4  | ftCbase,  // C
+  ftCxx     = 8  | ftCbase,  // C++
+  ftUPC     = 16 | ftCbase   // UPC
+};
+
 struct RtedSymbols
 {
   SgFunctionSymbol*   roseCreateArray;
@@ -86,7 +96,7 @@ struct RtedSymbols
     size_t_member(NULL)
   {}
 
-  void initialize(SgGlobal& n);
+  void initialize(SgGlobal& n, SourceFileType sft);
 
   static const std::string prefix;
 };

@@ -20,7 +20,7 @@
 namespace rted
 {
   VariableTraversal::VariableTraversal(RtedTransformation* t)
-  : Base(), transf(t)
+  : Base(), transf(t), current_file_type(ftUnknown)
   {
     ROSE_ASSERT(transf != NULL);
   }
@@ -91,6 +91,9 @@ namespace rted
       // regular variable declaration
       void handle(SgType&)
       {
+        // \todo extract whether this is a globally initialized name / file type
+        //       so that the initialization can be properly set when
+        //       using C99 or UPC.
         transf.variable_declarations.push_back(&initname);
       }
 
@@ -271,13 +274,12 @@ namespace rted
     return (name != NULL) && !transf->isInInstrumentedFile(name -> get_declaration());
   }
 
-  struct InheritedAttributeHandler
+  struct InheritedAttributeHandler : sg::DispatchHandler<InheritedAttribute>
   {
     VariableTraversal& vt;
-    InheritedAttribute ia;
 
     InheritedAttributeHandler(VariableTraversal& trav, const InheritedAttribute& inh)
-    : vt(trav), ia(inh)
+    : Base(inh), vt(trav)
     {}
 
     void storeUpcBlockingOp(SgStatement& n)
@@ -289,11 +291,10 @@ namespace rted
 
     void handle(SgSourceFile& n)
     {
-      const bool first = vt.transf->srcfiles.empty();
+      const SourceFileType sft = fileType(n);
 
-      ROSE_ASSERT(first || vt.transf->srcfiles.back() != &n);
-
-      if (first) vt.transf->loadFunctionSymbols(n);
+      vt.current_file_type = sft;
+      vt.transf->loadFunctionSymbols(n, sft);
       vt.transf->srcfiles.push_back(&n);
     }
 
@@ -304,7 +305,9 @@ namespace rted
         vt.transf->transformIfMain(n);
         vt.transf->function_definitions.push_back(&n);
 
-        ia.function = true;
+        res.function = true;
+        res.openBlocks = 0; // reset for nested functions
+
         // do not handle as SgScopeStatement
     }
 
@@ -320,20 +323,20 @@ namespace rted
       SgType* unmodType = skip_ModifierType(n.get_type());
 
       sg::dispatch(VarTypeHandler(*vt.transf, n), unmodType);
-      ia.isVariableDecl = true;
+      res.isVariableDecl = true;
     }
 
     void handle(SgAssignInitializer& n)
     {
-        if (!ia.isVariableDecl) vt.transf->visit_isAssignInitializer(&n);
-        ia.isAssignInitializer = true;
+        if (!res.isVariableDecl) vt.transf->visit_isAssignInitializer(&n);
+        res.isAssignInitializer = true;
     }
 
     void handle(SgReturnStmt& n)
     {
       if (!n.get_expression()) return;
 
-      vt.transf->returnstmt.push_back(std::make_pair(&n, ia.openBlocks));
+      vt.transf->returnstmt.push_back(std::make_pair(&n, res.openBlocks-1));
     }
 
     void handle(SgUpcBarrierStatement& n) { storeUpcBlockingOp(n); }
@@ -346,8 +349,13 @@ namespace rted
     // implicitly casts to SgScopeStatement
     void store_scope(SgScopeStatement& n)
     {
-      if (n.get_file_info()->isCompilerGenerated()) return;
+      const bool skip = (  n.get_file_info()->isCompilerGenerated()
+                        || !n.first_variable_symbol()
+                        );
 
+      if (skip) return;
+
+      ++res.openBlocks;
       vt.transf->scopes.push_back(&n);
     }
 
@@ -360,8 +368,8 @@ namespace rted
     {
       store_scope(sgfor);
 
-      ia.lastGForLoop = &sgfor;
-      ia.isForStatement = true;
+      res.lastGForLoop = &sgfor;
+      res.isForStatement = true;
     }
 
     void handle(SgForStatement& n)
@@ -383,9 +391,9 @@ namespace rted
     {
       // to keep track of return values properly,
       //   the first scope is instrumented at call sites
-      if (ia.openBlocks > 0) store_scope(n);
+      if (res.openBlocks == 0) { res.openBlocks = 1; return; }
 
-      ++ia.openBlocks;
+      store_scope(n);
     }
 
      //
@@ -407,13 +415,13 @@ namespace rted
      void handle(SgVarRefExp& n)
      {
        SgInitializedName* name = n.get_symbol()->get_declaration();
-       bool elide_access_guard = (  (ia.isArrowExp                          )
-                                 || (ia.isAddressOfOp                       )
-                                 || (!ia.function                           )
-                                 || (in_instrumented_file(vt.transf, name)  )
-                                 || (test_binaryop_and_forloop(n, *name, ia))
-                                 || (test_assign_initializer(ia, n)         )
-                                 || (test_call_argument(vt.transf, n)       )
+       bool elide_access_guard = (  (res.isArrowExp                          )
+                                 || (res.isAddressOfOp                       )
+                                 || (!res.function                           )
+                                 || (in_instrumented_file(vt.transf, name)   )
+                                 || (test_binaryop_and_forloop(n, *name, res))
+                                 || (test_assign_initializer(res, n)         )
+                                 || (test_call_argument(vt.transf, n)        )
                                  );
 
        if (elide_access_guard)
@@ -430,7 +438,7 @@ namespace rted
 
      void handle(SgAddressOfOp& n)
      {
-       ia.isAddressOfOp = true;
+      res.isAddressOfOp = true;
        /* returns immediately */
      }
 
@@ -451,9 +459,9 @@ namespace rted
 
      void handle(SgBinaryOp& n)
      {
-        if (ia.isArrowExp || ia.isAddressOfOp) return;
+      if (res.isArrowExp || res.isAddressOfOp) return;
 
-        ia.lastBinary = &n;
+      res.lastBinary = &n;
      }
 
      void handle_binary(SgBinaryOp& n) { handle(n); }  // implcitely casts to SgBinaryOp
@@ -469,7 +477,7 @@ namespace rted
      void handle(SgArrowExp& n)
      {
        vt.transf->visit_isSgArrowExp(&n);
-       ia.isArrowExp = true;
+      res.isArrowExp = true;
        /* skip binary handling */
      }
 
@@ -535,11 +543,6 @@ namespace rted
        const AllocKind allocKind = (del.get_is_array() ? akCxxArrayNew : akCxxNew);
 
        vt.transf->frees.push_back( Deallocations::value_type(&del, allocKind) );
-     }
-
-     operator InheritedAttribute()
-     {
-       return ia;
      }
   };
 

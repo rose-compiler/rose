@@ -98,11 +98,21 @@ struct RuntimeSystem
         void violationHandler(RuntimeViolation & vio)   throw (RuntimeViolation);
 
 
-        /// call this function to inform the runtimesystem what the current position in sourcecode is
-        /// this information is used for printing errors/warnings
-        void checkpoint(const SourcePosition & pos) ;
+        /// call this function to inform the runtimesystem what the current
+        /// position in sourcecode is. This information is used for printing
+        /// errors/warning
+        void checkpoint(const SourcePosition& pos)
+        {
+            curPos = pos;
 
-        const SourcePosition & getCodePosition() const {return curPos; }
+#ifdef ROSE_WITH_ROSEQT
+            if(qtDebugger)
+                RtedDebug::instance()->startGui();
+#endif
+        }
+
+
+        const SourcePosition& getCodePosition() const { return curPos; }
 
         /// if testing mode is true exceptions are thrown when a violations occurs
         /// otherwise abort is called, default false

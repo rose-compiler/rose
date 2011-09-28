@@ -45,7 +45,7 @@ namespace
     typedef unsigned int         CacheIdx;
     typedef MemoryType::Location Location;
 
-    static const char CACHEELEMS = 4;
+    static const unsigned CACHEELEMS = 4;
 
     CacheIdx     pos;
     MemoryType*  cache[CACHEELEMS];

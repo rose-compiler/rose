@@ -41,6 +41,7 @@ namespace rted
 
   private:
     RtedTransformation* const   transf;
+      SourceFileType      current_file_type;  // could be part of inherited attribute
 
     // should fail when needed
     VariableTraversal();

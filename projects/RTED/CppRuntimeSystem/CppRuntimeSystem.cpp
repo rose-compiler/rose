@@ -116,17 +116,6 @@ void RuntimeSystem::readConfigFile()
 }
 
 
-void RuntimeSystem::checkpoint(const SourcePosition& pos)
-{
-    curPos = pos;
-
-#ifdef ROSE_WITH_ROSEQT
-    if(qtDebugger)
-        RtedDebug::instance()->startGui();
-#endif
-}
-
-
 
 // --------------------- Violations ---------------------------------
 

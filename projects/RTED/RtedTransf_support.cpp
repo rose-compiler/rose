@@ -10,8 +10,8 @@
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
 
-#include "sageGeneric.hpp"
 #include "sageFunctors.h"
+#include "sageGeneric.hpp"
 
 #include "RtedSymbols.h"
 #include "DataStructures.h"
@@ -35,6 +35,42 @@ struct TypeStructureInfo
   : type(NULL), desc(rted_obj())
   {}
 };
+
+
+static inline
+std::string lower_case(std::string s)
+{
+  std::transform(s.begin(), s.end(), s.begin(), ::tolower);
+  return s;
+}
+
+SourceFileType fileType(const std::string& fn)
+{
+  if ( boost::ends_with(fn, std::string(".c")) ) return ftClang;
+
+  std::string    filename = lower_case(fn);
+  SourceFileType res = ftUnknown;
+
+  if (  ( boost::ends_with(filename, std::string(".cxx")) )
+     || ( boost::ends_with(filename, std::string(".cpp")) )
+     || ( boost::ends_with(filename, std::string(".cc")) )
+     || ( boost::ends_with(filename, std::string(".c")) )
+     )
+  {
+    res = ftCxx;
+  }
+  else if ( boost::ends_with(filename, std::string(".upc")) )
+  {
+    res = ftUPC;
+  }
+
+  return res;
+}
+
+SourceFileType fileType(const SgSourceFile& sf)
+{
+   return fileType(sf.get_file_info()->get_filename());
+}
 
 
 

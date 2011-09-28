@@ -64,6 +64,15 @@ void StackManager::beginScope(const std::string & name)
 void StackManager::endScope(size_t scopecount)
 {
     const size_t                   noScopes = scope.size();
+
+    if (noScopes < scopecount)
+    {
+      std::stringstream out;
+
+      out << "#internal Error at: " << rtedRTS(this)->getCodePosition() << '\n';
+      RuntimeSystem::instance()->printMessage(out.str());
+    }
+
     assert( noScopes >= scopecount );
 
     const ScopeContainer::iterator limit   = scope.end();

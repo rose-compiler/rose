@@ -13,6 +13,8 @@
 // \hack see comment in CppRuntimeSystem/ptrops.upc
 shared[1] char rted_base_hack[THREADS];
 
+shared[1] int ctrInitVariables[THREADS];
+
 // flag passed to the processing functions in the RuntimeSystem.cpp
 //   indicating that the origin is in another thread
 static const int msgHandling = 0;
@@ -511,6 +513,8 @@ void snd_InitVariable( rted_TypeDesc    td,
   // other threads can only deref shared addresses;
   if (!inSharedRegion(address) || (pointer_move && !inSharedRegion(heap_address))) return;
 
+  ++ctrInitVariables[MYTHREAD];
+
   // \note td.desc.shared_mask != 0 is NOT the same as testing whether an
   //       address is in the shared memory region.
   //       The shared mask test does not include C - pointers to the local
@@ -735,12 +739,13 @@ void rted_ProcessMsg()
 
 void rted_PrintStats()
 {
+  fprintf(stderr, "(#%i) sndInitVar = %i\n", MYTHREAD, ctrInitVariables[MYTHREAD]);
 #ifdef NDEBUG
-  fprintf(stderr, "(#%i) *RELEASE MODE* \n", MYTHREAD);
-#endif /* NDEBUF */
-
+  // fprintf(stderr, "(#%i) *RELEASE MODE* \n", MYTHREAD);
+#else
   fprintf(stderr, "(#%i) snd = %i   rcv = %i\n", MYTHREAD, sndctr, rcvctr);
   fflush(stderr);
+#endif /* NDEBUF */
 }
 
 void rted_UpcAllInitialize()
