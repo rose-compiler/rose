@@ -946,7 +946,7 @@ SgTryStmt* buildTryStmt(SgStatement* body,
 
 // charles4 (9/16/2011): Adding support for try stmts.
 // ! Build a try statement.
-SgTryStmt* buildTryStmt(SgStatement *try_body, SgStatement *finally_body = NULL);
+SgTryStmt* buildTryStmt(SgBasicBlock *try_body, SgBasicBlock *finally_body = NULL);
 
 // charles4 (9/16/2011): Adding support for Catch Blocks.
 // ! Build an initial sequence of Catch blocks containing 0 or 1 element.
