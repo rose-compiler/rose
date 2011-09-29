@@ -1,5 +1,13 @@
 #include "rose.h"
 
+#ifndef HAVE_GCRYPT_H
+int main()
+{
+    fprintf(stderr, "This project requires <gcrypt.h>\n");
+    return 1;
+}
+#else
+
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 #include <gcrypt.h>
@@ -577,3 +585,5 @@ main(int argc, char *argv[])
 
     statistics(interp, insns, ida);
 }
+
+#endif /* HAVE_GCRYPT_H */
