@@ -46,7 +46,8 @@ namespace AbstractMemoryObject
       virtual bool maySet();
       virtual bool mustSet();
       virtual size_t objCount();    
-  };
+
+ };
 
   class Pointer_Impl: public Pointer 
   {
@@ -56,12 +57,70 @@ namespace AbstractMemoryObject
       virtual size_t objCount();    
   };
 
+
+  //! A set of index values, could have constant integer values or unknown values
+  class IndexSet
+  {
+    public:
+      enum Index_type {
+        Integer_type = 0,
+        Unknown_type 
+      };
+
+      Index_type getType() {return type; };
+
+      size_t getSize() {return 1;}; // Simple thing first
+
+      IndexSet (Index_type t):type(t){} 
+      // unknown index may equal to other
+      // integer index equal to another integer index if the integer values are the same
+      virtual bool operator= (IndexSet & other);
+      virtual ~IndexSet();
+      virtual std::string toString();
+
+    private:
+      Index_type type;
+  };
+
+  
+  // we reuse the ConstIndexSet if the value is the same
+  class ConstIndexSet: public IndexSet
+  {
+    public:
+      static ConstIndexSet* get_inst(size_t value);
+      // only accept strict integer value expression, see bool SageInterface::isStrictIntegerType(SgType* t)
+      static ConstIndexSet* get_inst(SgValueExp * v_exp);
+
+      size_t getValue() {return value; };
+      // we should not tweak the value once an instance is created. So there is no setValue()
+      bool operator = (IndexSet & other); 
+      std::string toString() {return "["+StringUtility::numberToString(value) + "]" ;};
+    private:
+      size_t value;
+      ConstIndexSet(size_t i):IndexSet(Integer_type), value(i) {}
+      static std::map <size_t, ConstIndexSet * >  constIndexMap;
+  };
+
+  // We only create at most one instance of this unknown indexset. It is a singleton.
+  class UnknownIndexSet: public IndexSet
+  {
+    public:
+      static UnknownIndexSet* get_inst();
+      bool operator = (IndexSet & other) {return true; };  // may be equal to any others
+      std::string toString() {return "[unknown]" ;};
+    private:
+      UnknownIndexSet (): IndexSet(Unknown_type) { }
+      static UnknownIndexSet* inst; 
+  };
+
+
   // The most intuitive implementation of array index vector
-  class IndexVector_Impl: public IndexVector
+  class IndexVector_Impl : public IndexVector
   {
     public:
       size_t getSize() {  return index_vector.size(); };
-      std::vector<ObjSet*> index_vector; // a vector of memory objects of named objects or temp expression objects
+      std::vector<IndexSet *> index_vector; // a vector of memory objects of named objects or temp expression objects
+      std::string toString();
   };
 
   class NamedObj; 
@@ -106,6 +165,7 @@ namespace AbstractMemoryObject
       // equal if and only the o2 is another ExprObj with the same SgExpression anchor
       bool operator == (ObjSet& o2) ;
       bool operator == (ExprObj& o2) ;
+      bool isConstant () {return isSgValueExp(anchor_exp); } ; // if the expression object represent a constant value (SgValueExp)
       std::string toString();
   };
 
@@ -118,11 +178,12 @@ namespace AbstractMemoryObject
   { 
     public:
       SgSymbol* anchor_symbol; 
-      SgType* type; 
-      ObjSet* parent;  //Only exists for compound variables like a.b, where a is b's parent
+      SgType* type;  // in most cases, the type here should be anchor_symbol->get_type(). But array element's type can be different from its array type
+      ObjSet* parent; //exists for 1) compound variables like a.b, where a is b's parent, 2) also for array element, where array is the parent
+      IndexVector*  array_index_vector; // exists for array element: the index vector of an array element. Ideally this data member could be reused for index of field of structure/class
 
       //Is this always true that the parent of a named object must be an expr object?
-      NamedObj (SgSymbol* a, SgType* t, ObjSet* p):anchor_symbol(a), type(t),parent(p){};
+      NamedObj (SgSymbol* a, SgType* t, ObjSet* p, IndexVector* iv):anchor_symbol(a), type(t),parent(p), array_index_vector (iv){};
       SgType* getType() {return type;}
       ObjSet* getParent() {return parent; } 
       SgSymbol* getSymbol() {return anchor_symbol;}
@@ -203,7 +264,7 @@ namespace AbstractMemoryObject
   class ScalarNamedObj: public Scalar_Impl, public NamedObj 
   {
     public:
-      ScalarNamedObj (SgSymbol* s, SgType* t, ObjSet* p): NamedObj (s,t,p) {}
+      ScalarNamedObj (SgSymbol* s, SgType* t, ObjSet* p, IndexVector* iv): NamedObj (s,t,p, iv) {}
       std::set<SgType*> getType();
       bool operator == (ObjSet& o2) ;
       std::string toString();
@@ -212,7 +273,7 @@ namespace AbstractMemoryObject
   class LabeledAggregateNamedObj: public LabeledAggregate_Impl, public NamedObj
   {
     public:
-      LabeledAggregateNamedObj (SgSymbol* s, SgType* t, ObjSet* p);
+      LabeledAggregateNamedObj (SgSymbol* s, SgType* t, ObjSet* p, IndexVector* iv);
       std::set<SgType*> getType();
 
       // Returns true if this object and that object may/must refer to the same labeledAggregate memory object.
@@ -225,13 +286,28 @@ namespace AbstractMemoryObject
 
   class ArrayNamedObj: public Array_Impl, public NamedObj
   {
+    public:
+      ArrayNamedObj (SgSymbol* s, SgType* t, ObjSet* p, IndexVector* iv);
+      std::set <SgType*> getType();
+      std::string toString();
 
+      // Returns a memory object that corresponds to all the elements in the given array
+      ObjSet* getElements() {return this; } ; 
+      // Returns the memory object that corresponds to the elements described by the given abstract index, 
+      ObjSet* getElements(IndexVector* ai);
+
+      // number of dimensions of the array
+      size_t getNumDims();
+     //TODO 
+      bool operator == (const Array & that) const;
+      bool operator < (const Array & that) const;
+ 
   };
 
   class PointerNamedObj: public Pointer_Impl, public NamedObj
   {
     public:
-      PointerNamedObj   (SgSymbol* s, SgType* t, ObjSet* p): NamedObj (s,t,p) {}
+      PointerNamedObj   (SgSymbol* s, SgType* t, ObjSet* p, IndexVector* iv): NamedObj (s,t,p, iv) {}
       std::set<SgType*> getType();
       // used for a pointer to non-array
       ObjSet* getDereference () ;
@@ -299,11 +375,15 @@ namespace AbstractMemoryObject
   
   // Create an aliased obj set from a type. It can return NULL since not all types are supported.
   ObjSet* createAliasedObjSet(SgType*t);  // One object per type, Type based alias analysis
-  ObjSet* createNamedObjSet(SgSymbol* anchor_symbol, SgType* t, ObjSet* parent); // any 
+  ObjSet* createNamedObjSet(SgSymbol* anchor_symbol, SgType* t, ObjSet* parent, IndexVector* iv); // any 
   ObjSet* createNamedOrAliasedObjSet(SgVarRefExp* r); // create NamedObjSet or AliasedObjSet (for pointer type) from a variable reference 
+  ObjSet* createNamedObjSet(SgPntrArrRefExp* r); // create NamedObjSet from an array element access
   ObjSet* createExpressionObjSet(SgExpression* anchor_exp, SgType*t); 
+  // ObjSet* createObjSet(SgNode*); // top level catch all case, declared in memory_object.h
 
-  // Helper functions for debugging
+  // Helper functions 
+  // --------------------------------------
+  // debugging
   void dump_aliased_objset_map (); 
 
   // A helper function to decide if two types are aliased
@@ -316,6 +396,9 @@ namespace AbstractMemoryObject
 
   // a helper function to fill up elements of ObjSet p from a class/structure type
   void fillUpElements (ObjSet* p, std::vector<LabeledAggregateField*> & elements, SgClassType* c_t);
+
+  // convert std::vector<SgExpression*>* subscripts to IndexVector*  array_index_vector
+  IndexVector * generateIndexVector (std::vector<SgExpression*>& subscripts); 
 
 } // end namespace
 
