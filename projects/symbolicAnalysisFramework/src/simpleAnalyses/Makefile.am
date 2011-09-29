@@ -6,13 +6,17 @@ include $(top_srcdir)/projects/symbolicAnalysisFramework/common.for.dep.libs
 noinst_LTLIBRARIES = libSafsimpleAnalyses.la
 libSafsimpleAnalyses_la_SOURCES = divAnalysis.C liveDeadVarAnalysis.C nodeConstAnalysis.C \
                           placeUIDs.C  printAnalysisStates.C  saveDotAnalysis.C \
-                          sgnAnalysis.C sequenceStructAnalysis.C dominatorAnalysis.C ConstrGraphAnalysis.C \
-                          constantPropagation.C taintedFlowAnalysis.C
+                          sgnAnalysis.C sequenceStructAnalysis.C dominatorAnalysis.C ConstrGraphAnalysis.C 
+
+# DQ (9/28/2011): Remove these from this directory (moved to the tests/roseTests/programAnalysisTests/generalDataFlowAnalysisTests directory)
+#                         constantPropagation.C taintedFlowAnalysis.C
 
 include_HEADERS = divAnalysis.h liveDeadVarAnalysis.h nodeConstAnalysis.h  placeUIDs.h  \
                   printAnalysisStates.h  saveDotAnalysis.h  sgnAnalysis.h sequenceStructAnalysis.h \
-                  dominatorAnalysis.h ConstrGraphAnalysis.h VariableStateTransfer.h \
-                  constantPropagation.h taintedFlowAnalysis.h
+                  dominatorAnalysis.h ConstrGraphAnalysis.h VariableStateTransfer.h 
+
+# DQ (9/28/2011): Remove these from this directory (moved to the tests/roseTests/programAnalysisTests/generalDataFlowAnalysisTests directory)
+#                  constantPropagation.h taintedFlowAnalysis.h
 
 
 # ----------test program -------------------

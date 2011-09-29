@@ -9,6 +9,17 @@
 
 using namespace std;
 
+#include "genericDataflowCommon.h"
+#include "VirtualCFGIterator.h"
+#include "cfgUtils.h"
+#include "CallGraphTraverse.h"
+#include "analysisCommon.h"
+#include "analysis.h"
+#include "dataflow.h"
+#include "latticeFull.h"
+#include "printAnalysisStates.h"
+
+#if 0
 #include "common.h"
 #include "variables.h"
 #include "cfgUtils.h"
@@ -19,6 +30,7 @@ using namespace std;
 #include "dataflow.h"
 #include "liveDeadVarAnalysis.h"
 #include "saveDotAnalysis.h"
+#endif
 
 // Include the header file specific to our analysis.
 #include "taintedFlowAnalysis.h"
