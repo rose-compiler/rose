@@ -1285,8 +1285,6 @@ SgFunctionCallExp* RtedTransformation::mkAddress(SgExpression* exp, bool upcShar
   //   expression to a shared char*
   if (upcShared)
   {
-    ROSE_ASSERT(withupc);
-
     SgType* char_type = buildCharType();
 
     // \pp \todo replace the magic -1 with sth more meaningful

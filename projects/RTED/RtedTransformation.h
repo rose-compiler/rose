@@ -17,6 +17,16 @@
 
 enum { RTEDDEBUG = 1 };
 
+/// analyzed files
+typedef std::set<std::string> RtedFiles;
+
+/// options that can be set on the command line
+struct RtedOptions
+{
+  bool globalsInitialized;
+};
+
+
 /// \brief returns the language of the specified source file
 SourceFileType fileType(const std::string& filename);
 
@@ -303,7 +313,7 @@ public:
    std::vector< SgSourceFile* >  srcfiles;
 
 private:
-   std::set< std::string >       rtedfiles;
+   RtedFiles                     rtedfiles;
 
    // VARIABLES ------------------------------------------------------------
    // ------------------------ array ------------------------------------
@@ -579,11 +589,11 @@ public:
    typedef std::vector<SgStatement*>    UpcBlockingOpsContainer;
 
    UpcBlockingOpsContainer upcBlockingOps;
-   const bool              withupc;
+   RtedOptions             options;
 
 public:
 
-   RtedTransformation(bool testsupc, const std::set<std::string>& prjfiles)
+   RtedTransformation(const RtedFiles& prjfiles, const RtedOptions& cmdlineOpt)
    : symbols(),
      srcfiles(),
      rtedfiles(prjfiles),
@@ -616,7 +626,7 @@ public:
      sourceFileRoseNamespaceMap(),
      classesInRTEDNamespace(),
      upcBlockingOps(),
-     withupc(testsupc)
+     options(cmdlineOpt)
    {}
 
 

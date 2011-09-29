@@ -331,8 +331,12 @@ RtedTransformation::buildVariableCreateCallExpr(SgVarRefExp* var_ref, const stri
         SgExpression*  callName = buildStringVal(debug_name);
         SgExpression*  callNameExp = buildStringVal(debug_name);
 
-        // \todo check C++ rules for global init
-        initb = initb || ((allocKind & akGlobal) != 0);
+        // if this is a global variable
+        //   we set it to initialized according to the defined option value
+        if ((allocKind & akGlobal) == akGlobal)
+        {
+          initb = options.globalsInitialized;
+        }
 
         const bool     var_init = initb && !isFileIOVariable(varType);
 
@@ -401,7 +405,7 @@ RtedTransformation::buildVariableInitCallExpr( SgInitializedName* initName,
                                                     && ((allockind & akUndefined) == akUndefined)
                                                     );
 
-        // \pp The test for akUndefined was moved from RuntmieSystem.cpp
+        // \pp The test for akUndefined was moved from RuntimeSystem.cpp
         //     Not sure why we need it.
 
         appendExpression(arg_list, ctorTypeDesc(mkTypeInformation(exp -> get_type(), false, false)) );
