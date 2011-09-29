@@ -467,7 +467,7 @@ echo "Requested minimum boost version: boost_lib_version_req_sub_minor = $boost_
 # Actual boost version (version 1.42 will not set "_version", but version 1.37 will).
 echo "Boost version being used is: $_version"
 
-rose_boost_version=`grep "#define BOOST_VERSION " ${ac_boost_path}/include/boost/version.hpp | cut -d" " -f 3`
+rose_boost_version=`grep "#define BOOST_VERSION " ${ac_boost_path}/include/boost/version.hpp | cut -d" " -f 3 | tr -d '\r'`
 echo "rose_boost_version = $rose_boost_version"
 
 # Define macros for conditional compilation of parts of ROSE based on version of boost
