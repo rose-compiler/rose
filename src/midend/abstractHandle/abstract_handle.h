@@ -215,6 +215,9 @@ namespace AbstractHandle{
     // associated IR node 
     abstract_node* m_node; 
     specifier * m_specifier;
+    abstract_handle (const abstract_handle &); // disallow copy
+    abstract_handle & operator = (const abstract_handle &);
+
   };
 
   // maintain a map between nodes and handles, 

@@ -7,7 +7,7 @@ endif
 
 mpaVariableRenaming_includes=\
 	-I$(mpaVariableRenamingPath)/.. \
-	-I$(mpaVariableRenamingPath)/../dataflowAnalysis \
+	-I$(mpaVariableRenamingPath)/../bitvectorDataflow \
 	-I$(mpaVariableRenamingPath)/../CFG \
 	-I$(top_srcdir)/src/midend/loopProcessing \
 	-I$(top_srcdir)/src/midend/astUtil \
