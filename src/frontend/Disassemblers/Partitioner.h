@@ -168,7 +168,10 @@ protected:
 
     /** Represents a basic block within the Partitioner. Each basic block will eventually become an SgAsmBlock node in the
      *  AST. However, if the SgAsmFunction::FUNC_LEFTOVER bit is set in the Partitioner::set_search() method then
-     *  blocks that were not assigned to any function to not result in an SgAsmBlock node. */
+     *  blocks that were not assigned to any function to not result in an SgAsmBlock node.
+     *
+     *  The first instruction of a basic block should never change.  In particular, the address of the first instruction should
+     *  not change because this address is used as a key to link a BasicBlock object to a Function object. */
     struct BasicBlock {
         /** Constructor. This constructor should not be called directly since the Partitioner has other pointers that it needs
          *  to establish to this block.  Instead, call Partitioner::find_bb_containing(). */
@@ -188,6 +191,7 @@ protected:
         void validate_cache() { cache.age=insns.size(); }
 
         SgAsmInstruction* last_insn() const;    /**< Returns the last executed (exit) instruction of the block */
+        rose_addr_t address() const;            /* Return the address of the basic block's first (entry) instruction. */
         unsigned reason;                        /**< Reasons this block was created; SgAsmBlock::Reason bit flags */
         std::vector<SgAsmInstruction*> insns;   /**< Non-empty set of instructions composing this basic block, in address order */
         BlockAnalysisCache cache;               /**< Cached results of local analyses */
@@ -195,17 +199,39 @@ protected:
     };
     typedef std::map<rose_addr_t, BasicBlock*> BasicBlocks;
 
+    /** Represents a region of static data within the address space being disassembled.  Each data block will eventually become
+     *  an SgAsmBlock node in the AST if it is assigned to a function.
+     *
+     *  The address of the first SgAsmStaticData node of a DataBlock should remain constant for the life of the DataBlock.
+     *  This is because we use that address to establish a two-way link between the DataBlock and a Function object. */
+    struct DataBlock {
+        /** Constructor. This constructor should not be called directly since the Partitioner has other pointers that it needs
+         * to establish to this block.  Instead, call a method like Paritioner::create_datablock(). */
+        DataBlock(): reason(SgAsmBlock::BLK_NONE), function(NULL) {}
+
+        /** Destructor.  This destructor should not be called directly since there are other pointers in the Partitioner that
+         * this block does not know about.  Instead, call Partitioner::discard(). */
+        ~DataBlock() {}
+
+        rose_addr_t address() const;            /* Return the address of the first node of a data block. */
+        std::vector<SgAsmStaticData*> nodes;    /**< The static data nodes belonging to this block; not deleted. */
+        unsigned reason;                        /**< Reasons this block was created; SgAsmBlock::Reason bit flags */
+        Function *function;                     /**< Function to which this data block is assigned, or null */
+    };
+    typedef std::map<rose_addr_t, DataBlock*> DataBlocks;
+
     /** Represents a function within the Partitioner. Each non-empty function will become an SgAsmFunction in the AST. */
     struct Function {
         Function(rose_addr_t entry_va): reason(0), pending(true), entry_va(entry_va), returns(false) {}
         Function(rose_addr_t entry_va, unsigned r): reason(r), pending(true), entry_va(entry_va), returns(false) {}
         Function(rose_addr_t entry_va, unsigned r, const std::string& name)
             : reason(r), name(name), pending(true), entry_va(entry_va), returns(false) {}
-        void clear_blocks();                    /**< Remove all blocks from this function w/out deleting the blocks. */
-        BasicBlock* last_block() const;         /**< Return pointer to block with highest address */
+        void clear_basic_blocks();              /**< Remove all basic blocks from this function w/out deleting the blocks. */
+        void clear_data_blocks();               /**< Remove all data blocks from this function w/out deleting the blocks. */
         unsigned reason;                        /**< SgAsmFunction::FunctionReason bit flags */
         std::string name;                       /**< Name of function if known */
-        BasicBlocks blocks;                     /**< Basic blocks belonging to this function */
+        BasicBlocks basic_blocks;               /**< Basic blocks belonging to this function */
+        DataBlocks data_blocks;                 /**< Data blocks belonging to this function */
         bool pending;                           /**< True if we need to (re)discover the basic blocks */
         rose_addr_t entry_va;                   /**< Entry virtual address */
         Disassembler::AddressSet heads;         /**< CFG heads, excluding func entry: addresses of additional blocks */
@@ -437,6 +463,18 @@ public:
      *  and add it to the bad instruction list. */
     virtual SgAsmInstruction* find_instruction(rose_addr_t, bool create=true);
 
+    /** Drop an instruction from consideration.  If the instruction belongs to a basic block then the basic block is also
+     *  dropped and its other instructions, if any, are returned to the (implied) list of free instructions.  The basic block
+     *  must not be currently assigned to any function.  The instruction is not deleted.
+     *
+     *  This method always returns the null pointer. */
+    virtual SgAsmInstruction* discard(SgAsmInstruction*);
+
+    /** Drop a basic block from the partitioner.  The specified basic block, which must not belong to any function, is removed
+     *  from the Partitioner, deleted, and its instructions all returned to the (implied) list of free instructions. This
+     *  function always returns the null pointer. */
+    virtual BasicBlock *discard(BasicBlock*);
+
     /** Adds a new function definition to the partitioner.  New functions can be added at any time, including during the
      *  analyze_cfg() call.  When this method is called with an entry_va for an existing function, the specified @p reasons
      *  will be merged with the existing function, and the existing function will be given the specified name if it has none. */
@@ -642,26 +680,27 @@ public:
 protected:
     /* NOTE: Some of these are documented at their implementation because the documentation is more than what conveniently
      *       fits here. */
-    struct AbandonFunctionDiscovery {};                         /**< Exception thrown to defer function block discovery */
+    struct AbandonFunctionDiscovery {};                         /**< Exception thrown to defer function block discovery. */
 
-    virtual void append(BasicBlock*, SgAsmInstruction*);        /**< Add instruction to basic block */
+    virtual void append(BasicBlock*, SgAsmInstruction*);        /**< Add an instruction to a basic block. */
+    virtual void append(Function*, BasicBlock*, unsigned reasons, bool keep=false); /* Append a basic block to a function */
+    virtual void append(Function*, DataBlock*, unsigned reasons); /* Append a data block to a function */
+    virtual void remove(Function*, BasicBlock*);                /**< Remove a basic block from a function. */
+    virtual void remove(Function*, DataBlock*);                 /**< Remove a data block from a function. */
     virtual BasicBlock* find_bb_containing(rose_addr_t, bool create=true); /* Find basic block containing instruction address */
     virtual BasicBlock* find_bb_starting(rose_addr_t, bool create=true);   /* Find or create block starting at specified address */
     virtual Disassembler::AddressSet successors(BasicBlock*, bool *complete=NULL); /* Calculates known successors */
     virtual rose_addr_t call_target(BasicBlock*);               /* Returns address if block could be a function call */
-    virtual void append(Function*, BasicBlock*, unsigned reasons, bool keep=false); /* Append basic block to function */
-    virtual BasicBlock* discard(BasicBlock*);                   /**< Delete a basic block and return null */
-    virtual void remove(Function*, BasicBlock*);                /**< Remove basic block from function */
-    virtual rose_addr_t address(BasicBlock*) const;             /**< Return starting address of basic block */
-    virtual void truncate(BasicBlock*, rose_addr_t);            /**< Remove instructions from end of basic block */
+    virtual void truncate(BasicBlock*, rose_addr_t);            /**< Remove instructions from the end of a basic block. */
     virtual void discover_first_block(Function*);               /* Adds first basic block to empty function to start discovery. */
     virtual void discover_blocks(Function*, unsigned reason);   /* Start to recursively discover blocks of a function. */
     virtual void discover_blocks(Function*, rose_addr_t, unsigned reason); /* Recursively discovers blocks of a function. */
-    virtual void pre_cfg(SgAsmInterpretation *interp=NULL);     /**< Detects functions before analyzing the CFG */
-    virtual void analyze_cfg(SgAsmBlock::Reason);               /**< Detect functions by analyzing the CFG */
-    virtual void post_cfg(SgAsmInterpretation *interp=NULL);    /**< Detects functions after analyzing the CFG */
-    virtual SgAsmFunction* build_ast(Function*);                /**< Build AST for a single function */
-    virtual SgAsmBlock* build_ast(BasicBlock*);                 /**< Build AST for a single basic block */
+    virtual void pre_cfg(SgAsmInterpretation *interp=NULL);     /**< Detects functions before analyzing the CFG. */
+    virtual void analyze_cfg(SgAsmBlock::Reason);               /**< Detect functions by analyzing the CFG. */
+    virtual void post_cfg(SgAsmInterpretation *interp=NULL);    /**< Detects functions after analyzing the CFG. */
+    virtual SgAsmFunction* build_ast(Function*);                /**< Build an AST for a single function. */
+    virtual SgAsmBlock* build_ast(BasicBlock*);                 /**< Build an AST for a single basic block. */
+    virtual SgAsmBlock* build_ast(DataBlock*);                  /**< Build an AST for a single data block. */
     virtual bool pops_return_address(rose_addr_t);              /**< Determines if a block pops the stack w/o returning */
     virtual void update_analyses(BasicBlock*);                  /* Makes sure cached analysis results are current. */
     virtual rose_addr_t canonic_block(rose_addr_t);             /**< Follow alias links in basic blocks. */
@@ -680,8 +719,8 @@ protected:
     /** Returns information about the function addresses.  Every non-empty function has a minimum (inclusive) and maximum
      *  (exclusive) address which are returned by reference, but not all functions own all the bytes within that range of
      *  addresses. Therefore, the exact bytes are returned by adding them to the optional ExtentMap argument.  This function
-     *  returns the number of instructions in the function.  If the function contains no instructions then the extent map is
-     *  not modified and the low and high addresses are both set to zero. */
+     *  returns the number of nodes (instructions and static data items) in the function.  If the function contains no
+     *  nodes then the extent map is not modified and the low and high addresses are both set to zero. */
     virtual size_t function_extent(Function*, ExtentMap *extents=NULL, rose_addr_t *lo_addr=NULL, rose_addr_t *hi_addr=NULL);
 
     /** Returns an indication of whether a function is contiguous.  All empty functions are contiguous. If @p strict is true,
@@ -961,9 +1000,11 @@ protected:
     MemoryMap *map;                                     /**< Memory map used for disassembly if disassembler is present. */
     Disassembler::BadMap bad_insns;                     /**< Captured disassembler exceptions. */
 
-    BasicBlocks blocks;                                 /**< All known basic blocks. */
+    BasicBlocks basic_blocks;                           /**< All known basic blocks. */
     std::map<rose_addr_t, BasicBlock*> insn2block;      /**< Map from insns address to basic block. */
     Functions functions;                                /**< All known functions, pending and complete. */
+
+    DataBlocks data_blocks;                             /**< Blocks that point to static data. */
 
     unsigned func_heuristics;                           /**< Bit mask of SgAsmFunction::FunctionReason bits. */
     std::vector<FunctionDetector> user_detectors;       /**< List of user-defined function detection methods. */
