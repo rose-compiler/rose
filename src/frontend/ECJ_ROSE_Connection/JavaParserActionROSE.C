@@ -3678,9 +3678,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTryStatementEnd(JNIEnv *env, jobje
      
      outputJavaState("At TOP of cactionTryStatement");
 
-    SgStatement *finally_body = NULL;
+    SgBasicBlock *finally_body = NULL;
     if (hasFinallyBlock) {
-        finally_body = astJavaStatementStack.front();
+        finally_body = (SgBasicBlock *) astJavaStatementStack.front();
         astJavaStatementStack.pop_front();
         ROSE_ASSERT(isSgBasicBlock(finally_body));
     }
@@ -3693,7 +3693,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTryStatementEnd(JNIEnv *env, jobje
         catches.push_front(catch_option_stmt);
     }
 
-    SgStatement *try_body = (SgStatement *) astJavaStatementStack.front();
+    SgBasicBlock *try_body = (SgBasicBlock *) astJavaStatementStack.front();
     astJavaStatementStack.pop_front();
     ROSE_ASSERT(isSgBasicBlock(try_body));
 

@@ -4031,8 +4031,8 @@ SgTryStmt* SageBuilder::buildTryStmt(SgStatement* body,
 }
 
 // charles4 09/16/2011
-//! Build a try statement
-SgTryStmt *SageBuilder::buildTryStmt(SgStatement *try_body, SgStatement *finally_body) {
+//! Build a try statement (used for Java)
+SgTryStmt *SageBuilder::buildTryStmt(SgBasicBlock *try_body, SgBasicBlock *finally_body) {
     //
     // charles4 09/23/2011 - Note that when an SgTryStmt is allocated, its constructor
     // preallocates a SgCatchStementSeq for the field p_catch_statement_sequence_root.
