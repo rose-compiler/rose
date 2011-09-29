@@ -42,32 +42,32 @@ int main(int argc,char **argv)
   y = (z*5+a);
   y++;
 /*if(x<=10)
-	{
-		y=1;
-	}
-	else
-	{
-		z=2;	
-	}*/
+        {
+                y=1;
+        }
+        else
+        {
+                z=2;    
+        }*/
 }
 
 /*int main(int argc, char** argv)
 {
-	int x, y, z;
-	z=5;
-	x=z + 6;
-	y = -4* x;
-	while(z<10)
-	{
-		z = z+5;
-	}
-	if(x<10)
-	{
-		z=z+10;
-	}
-	else
-	{
-		y = y*2;
-	}
+        int x, y, z;
+        z=5;
+        x=z + 6;
+        y = -4* x;
+        while(z<10)
+        {
+                z = z+5;
+        }
+        if(x<10)
+        {
+                z=z+10;
+        }
+        else
+        {
+                y = y*2;
+        }
 }
 */
