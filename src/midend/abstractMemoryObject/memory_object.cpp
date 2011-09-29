@@ -141,6 +141,7 @@ namespace  AbstractMemoryObject
     assert (false);
     return "";  
    }
+
    void LabeledAggregateField::setField(ObjSet* f)
    {
      cerr<<"Error. Direct call to base class's setField() is not allowed."<<endl;
@@ -159,4 +160,12 @@ namespace  AbstractMemoryObject
      assert (false);
      return NULL;  
    }
+   std::string IndexVector::toString()
+   {
+    cerr<<"Error. Direct call to base class (IndexVector)'s toString() is not allowed."<<endl;
+    assert (false);
+    return "";  
+   }
+
+
 }
