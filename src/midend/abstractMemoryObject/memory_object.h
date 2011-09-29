@@ -120,11 +120,13 @@ namespace AbstractMemoryObject
 
   // represents d-dimensional integral vectors. It encapsulates a variety of abstract representations for such vectors 
   // such as polyhedral constraints and strided indexes.
+  // TODO: we support a single multi-dimensional index for now
   class IndexVector
   {
     public:
       // the index vector's length
       size_t getSize();
+      virtual std::string toString();
     
   };
 

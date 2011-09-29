@@ -1731,8 +1731,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCaseStatement(JNIEnv *env, jobject
      SgStatement *caseStatement = NULL;
      if (hasCaseExpression) {
          caseStatement = SageBuilder::buildCaseOptionStmt(); // the body will be added later
-     }
-     else {
+     } else {
          caseStatement = SageBuilder::buildDefaultOptionStmt(); // the body will be added later
      }
      ROSE_ASSERT(caseStatement != NULL);

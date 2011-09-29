@@ -3,11 +3,11 @@
 template <class T>
 class templated
 {
-	T val;
-	public:
-	templated();
-	
-	T getVal();
+        T val;
+        public:
+        templated();
+        
+        T getVal();
 };
 
 
@@ -23,7 +23,7 @@ int main()
    b=x, 6;
 printf("b=%d\n", b);
 
-	templated<int> instance;
-	
-	return instance.getVal();
+        templated<int> instance;
+        
+        return instance.getVal();
 }
