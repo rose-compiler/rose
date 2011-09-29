@@ -246,6 +246,13 @@ ExtentMap::size() const
     return retval;
 }
 
+/** Number of contiguous regions. */
+size_t
+ExtentMap::nregions() const
+{
+    return super::size(); // ExtentMap::size() is number of bytes
+}
+
 /** Precipitates individual extents into larger extents by combining individual extents that are separated by an amount less
  *  than or equal to some specified @p reagent value.  Individual elements that would have been adjacent have already
  *  been combined by the other modifying methods (insert, erase, etc). */

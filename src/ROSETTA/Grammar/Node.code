@@ -99,6 +99,7 @@ class ExtentMap : public std::map<rose_addr_t,rose_addr_t> {
 			{return overlap_with(extent.first, extent.second);}
 		ExtentMap overlap_with(rose_addr_t offset, rose_addr_t size) const;
 		size_t size() const; /**< Number of bytes in extent map (not the number extents). */
+		size_t nregions() const; /**< Number of discontiguous regions. */
 
 		/* Non-modifiying search methods */
 		ExtentPair find_address(rose_addr_t address) const;
