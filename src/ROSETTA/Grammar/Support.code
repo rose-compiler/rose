@@ -8520,8 +8520,12 @@ SgSymbol*
 SgInitializedName::search_for_symbol_from_symbol_table() const
    {
      SgSymbol *symbol;
-     if (p_prev_decl_item)
-          symbol = p_prev_decl_item->get_symbol_from_symbol_table();
+     SgInitializedName* aPrevDeclItem=p_prev_decl_item;
+     while(aPrevDeclItem && aPrevDeclItem->p_prev_decl_item) {
+        aPrevDeclItem=aPrevDeclItem->p_prev_decl_item;
+     }
+     if (aPrevDeclItem)
+          symbol = aPrevDeclItem->get_symbol_from_symbol_table();
      else
           symbol = get_symbol_from_symbol_table();
      assert(symbol != NULL);
