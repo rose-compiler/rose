@@ -138,6 +138,43 @@ namespace ROSE_Callbacks {
             return *this;
         }
 
+        /** Insert a callback after another.  The callback is inserted after each occurrence of the @p relative_to
+         *  callback. Up to @p nreplacement insertions are made beginning at the front of the list.
+         *
+         *  Thread safety: This method is thread safe.  In fact, it is safe to modify the list while apply() is calling the
+         *  functors on that list. */
+        List& after(CallbackType *relative_to, CallbackType *cb, size_t nreplacements=(size_t)(-1)) {
+            RTS_MUTEX(mutex) {
+                assert(cb!=NULL);
+                for (typename CBList::iterator li=list.begin(); li!=list.end() && nreplacements>0; ++li) {
+                    if (*li==relative_to) {
+                        li = list.insert(++li, cb);
+                        --nreplacements;
+                    }
+                }
+            } RTS_MUTEX_END;
+            return *this;
+        }
+
+        /** Insert a callback before another.  The callback is inserted before each occurrence of the @p relative_to
+         *  callback. Up to @p nreplacement insertions are made begin$ning at the front of the list.
+         *
+         *  Thread safety: This method is thread safe.  In fact, it is safe to modify the list while apply() is calling the
+         *  functors on that list. */
+        List& before(CallbackType *relative_to, CallbackType *cb, size_t nreplacements=(size_t)(-1)) {
+            RTS_MUTEX(mutex) {
+                assert(cb!=NULL);
+                for (typename CBList::iterator li=list.begin(); li!=list.end() && nreplacements>0; ++li) {
+                    if (*li==relative_to) {
+                        li = list.insert(li, cb);
+                        ++li;
+                        --nreplacements;
+                    }
+                }
+            } RTS_MUTEX_END;
+            return *this;
+        }
+
         /** Replace one callback with another.  The replaced callback is removed from the list as if by erase() without
          *  deleting it, and its replacement is inserted at the same position without copying it.  At most @p nreplacements
          *  are performed (the default is unlimited).  Replacements are performed in the direction specified.
