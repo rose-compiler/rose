@@ -21,7 +21,7 @@ using this memory map for disassembly:
     va 0x080496a4 + 0x00000030 = 0x080496d4 rw-- at base aae  + 0x000006a4 i686-test1.O0.bin(.data+.got+.got.plt)
     va 0x080496d4 + 0x0000092c = 0x0804a000 rw-p at anon null + 0x00000000 i686-test1.O0.bin(.bss+LOAD#3)
 disassembled 256 instructions and 1 failure (use --show-bad to see errors)
-0x080482c8: ============================ Function (function call, symbol, discontiguous) <_init>
+0x080482c8: ================================== Function (function call, symbol, discontiguous) <_init>
 Basic block: entry point, graph-1
 0x080482c8: 55                      |U       |   push   ebp
 0x080482c9: 89 e5                   |..      |   mov    ebp, esp
@@ -61,17 +61,19 @@ Basic block: CFG head, user defined
 0x080482ee: 00 00                   |..      |   add    BYTE PTR ds:[eax], al
             (successors: 0x080482f0)
 
-0x080482e0: ============================ Function (graph) unknown name
+0x080482e0: ================================== Function (graph) unknown name
+0x080482e0: Function does not return to caller.
 Basic block: entry point, graph-2
 0x080482e0: ff 35 ac 96 04 08       |.5....  |   push   DWORD PTR ds:[0x080496ac]
             (successors: 0x080482e6)
 
-0x080482e6: ============================ Function (graph) unknown name
+0x080482e6: ================================== Function (graph) unknown name
+0x080482e6: Function does not return to caller.
 Basic block: entry point, graph-2, user defined
 0x080482e6: ff 25 b0 96 04 08       |.%....  |   jmp    DWORD PTR ds:[0x080496b0]
             (successors:...)
 
-0x080482f0: ============================ Function (function call, import) <signal@plt>
+0x080482f0: ================================== Function (function call, import) <signal@plt>
 Basic block: entry point, graph-1
 0x080482f0: ff 25 b4 96 04 08       |.%....  |   jmp    DWORD PTR ds:[0x080496b4]
             (successors:...)
@@ -84,7 +86,7 @@ Basic block: CFG head, user defined
 0x080482fb: e9 e0 ff ff ff          |.....   |   jmp    0x080482e0
             (successors: 0x080482e0)
 
-0x08048300: ============================ Function (function call, import) <puts@plt>
+0x08048300: ================================== Function (function call, import) <puts@plt>
 Basic block: entry point, graph-1
 0x08048300: ff 25 b8 96 04 08       |.%....  |   jmp    DWORD PTR ds:[0x080496b8]
             (successors:...)
@@ -97,7 +99,7 @@ Basic block: CFG head, user defined
 0x0804830b: e9 d0 ff ff ff          |.....   |   jmp    0x080482e0
             (successors: 0x080482e0)
 
-0x08048310: ============================ Function (function call, import) <__libc_start_main@plt>
+0x08048310: ================================== Function (function call, import) <__libc_start_main@plt>
 Basic block: entry point, graph-1
 0x08048310: ff 25 bc 96 04 08       |.%....  |   jmp    DWORD PTR ds:[0x080496bc]
             (successors:...)
@@ -110,7 +112,8 @@ Basic block: CFG head, user defined
 0x0804831b: e9 c0 ff ff ff          |.....   |   jmp    0x080482e0
             (successors: 0x080482e0)
 
-0x08048320: ============================ Function (function call, import) <_exit@plt>
+0x08048320: ================================== Function (function call, import) <_exit@plt>
+0x08048320: Function does not return to caller.
 Basic block: entry point, graph-1
 0x08048320: ff 25 c0 96 04 08       |.%....  |   jmp    DWORD PTR ds:[0x080496c0]
             (successors:...)
@@ -123,7 +126,7 @@ Basic block: CFG head, user defined
 0x0804832b: e9 b0 ff ff ff          |.....   |   jmp    0x080482e0
             (successors: 0x080482e0)
 
-0x08048330: ============================ Function (function call, import) <__gmon_start__@plt>
+0x08048330: ================================== Function (function call, import) <__gmon_start__@plt>
 Basic block: entry point, graph-1
 0x08048330: ff 25 c4 96 04 08       |.%....  |   jmp    DWORD PTR ds:[0x080496c4]
             (successors:...)
@@ -136,7 +139,8 @@ Basic block: CFG head, user defined
 0x0804833b: e9 a0 ff ff ff          |.....   |   jmp    0x080482e0
             (successors: 0x080482e0)
 
-0x08048340: ============================ Function (entry point, symbol) <_start>
+0x08048340: ================================== Function (entry point, symbol) <_start>
+0x08048340: Function does not return to caller.
 Basic block: entry point, graph-1
 0x08048340: 31 ed                   |1.      |   xor    ebp, ebp
 0x08048342: 5e                      |^       |   pop    esi
@@ -158,13 +162,13 @@ Basic block: graph-1
             (dominator 0x08048340)
             (successors:)
 
-0x08048362: ============================ Function (padding) unknown name
+0x08048362: ================================== Function (padding) unknown name
 Basic block: padding, CFG head
 0x08048362: 90                      |.       |   nop    
 0x08048363: 90                      |.       |   nop    
             (successors: 0x08048364)
 
-0x08048364: ============================ Function (function call, symbol) <call_gmon_start>
+0x08048364: ================================== Function (function call, symbol) <call_gmon_start>
 Basic block: entry point, graph-1
 0x08048364: 55                      |U       |   push   ebp
 0x08048365: 89 e5                   |..      |   mov    ebp, esp
@@ -191,7 +195,7 @@ Basic block: graph-1
             (dominator 0x08048364)
             (successors:...)
 
-0x08048388: ============================ Function (padding) unknown name
+0x08048388: ================================== Function (padding) unknown name
 Basic block: padding, CFG head
 0x08048388: 90                      |.       |   nop    
 0x08048389: 90                      |.       |   nop    
@@ -203,7 +207,7 @@ Basic block: padding, CFG head
 0x0804838f: 90                      |.       |   nop    
             (successors: 0x08048390)
 
-0x08048390: ============================ Function (function call, symbol) <__do_global_dtors_aux>
+0x08048390: ================================== Function (function call, symbol) <__do_global_dtors_aux>
 Basic block: entry point, graph-1
 0x08048390: 55                      |U       |   push   ebp
 0x08048391: 89 e5                   |..      |   mov    ebp, esp
@@ -255,7 +259,7 @@ Basic block: CFG head, user defined
 0x080483ce: 89 f6                   |..      |   mov    esi, esi
             (successors: 0x080483d0)
 
-0x080483d0: ============================ Function (function call, symbol, discontiguous) <frame_dummy>
+0x080483d0: ================================== Function (function call, symbol, discontiguous) <frame_dummy>
 Basic block: entry point, graph-1
 0x080483d0: 55                      |U       |   push   ebp
 0x080483d1: 89 e5                   |..      |   mov    ebp, esp
@@ -279,7 +283,7 @@ Basic block: graph-1
             (dominator 0x080483d0)
             (successors:...)
 
-0x08048404: ============================ Function (function call, symbol) <bar>
+0x08048404: ================================== Function (function call, symbol) <bar>
 Basic block: entry point, graph-1
 0x08048404: 55                      |U       |   push   ebp
 0x08048405: 89 e5                   |..      |   mov    ebp, esp
@@ -294,7 +298,8 @@ Basic block: graph-1
             (dominator 0x08048404)
             (successors:...)
 
-0x08048418: ============================ Function (function call, symbol) <foo>
+0x08048418: ================================== Function (function call, symbol) <foo>
+0x08048418: Function does not return to caller.
 Basic block: entry point, graph-1
 0x08048418: 55                      |U       |   push   ebp
 0x08048419: 89 e5                   |..      |   mov    ebp, esp
@@ -308,7 +313,7 @@ Basic block: graph-1
             (dominator 0x08048418)
             (successors: 0x08048320)
 
-0x0804842f: ============================ Function (symbol) <handler>
+0x0804842f: ================================== Function (symbol) <handler>
 Basic block: entry point, graph-1
 0x0804842f: 55                      |U       |   push   ebp
 0x08048430: 89 e5                   |..      |   mov    ebp, esp
@@ -341,7 +346,7 @@ Basic block: CFG head, user defined
 0x0804845a: c3                      |.       |   ret    
             (successors:...)
 
-0x0804845b: ============================ Function (symbol) <main>
+0x0804845b: ================================== Function (symbol) <main>
 Basic block: entry point, graph-1
 0x0804845b: 55                      |U       |   push   ebp
 0x0804845c: 89 e5                   |..      |   mov    ebp, esp
@@ -361,7 +366,7 @@ Basic block: graph-1
             (dominator 0x0804845b)
             (successors:...)
 
-0x08048486: ============================ Function (padding) unknown name
+0x08048486: ================================== Function (padding) unknown name
 Basic block: padding, CFG head
 0x08048486: 90                      |.       |   nop    
 0x08048487: 90                      |.       |   nop    
@@ -375,7 +380,7 @@ Basic block: padding, CFG head
 0x0804848f: 90                      |.       |   nop    
             (successors: 0x08048490)
 
-0x08048490: ============================ Function (symbol) <__libc_csu_init>
+0x08048490: ================================== Function (symbol) <__libc_csu_init>
 Basic block: entry point, graph-1
 0x08048490: 55                      |U       |   push   ebp
 0x08048491: 89 e5                   |..      |   mov    ebp, esp
@@ -405,7 +410,7 @@ Basic block: graph-1
             (dominator 0x08048490)
             (successors:...)
 
-0x080484c8: ============================ Function (padding) unknown name
+0x080484c8: ================================== Function (padding) unknown name
 Basic block: padding, CFG head
 0x080484c8: 90                      |.       |   nop    
 0x080484c9: 8d b4 26 00 00 00 00    |..&.... |   lea    esi, [esi + 0x00000000]
@@ -486,7 +491,7 @@ Basic block: graph-2
             (dominator 0x080484f1)
             (successors:...)
 
-0x08048500: ============================ Function (symbol, discontiguous) <__libc_csu_fini>
+0x08048500: ================================== Function (symbol, discontiguous) <__libc_csu_fini>
 Basic block: entry point, graph-1
 0x08048500: 55                      |U       |   push   ebp
 0x08048501: 89 e5                   |..      |   mov    ebp, esp
@@ -518,7 +523,7 @@ Basic block: graph-1
             (dominator 0x08048500)
             (successors:...)
 
-0x08048558: ============================ Function (padding) unknown name
+0x08048558: ================================== Function (padding) unknown name
 Basic block: padding, CFG head
 0x08048558: 90                      |.       |   nop    
 0x08048559: 90                      |.       |   nop    
@@ -530,7 +535,7 @@ Basic block: padding, CFG head
 0x0804855f: 90                      |.       |   nop    
             (successors: 0x08048560)
 
-0x08048560: ============================ Function (function call, symbol) <__do_global_ctors_aux>
+0x08048560: ================================== Function (function call, symbol) <__do_global_ctors_aux>
 Basic block: entry point, graph-1
 0x08048560: 55                      |U       |   push   ebp
 0x08048561: 89 e5                   |..      |   mov    ebp, esp
@@ -569,7 +574,7 @@ Basic block: graph-1
             (dominator 0x08048560)
             (successors:...)
 
-0x08048590: ============================ Function (function call, symbol) <_fini>
+0x08048590: ================================== Function (function call, symbol) <_fini>
 Basic block: entry point, graph-1
 0x08048590: 55                      |U       |   push   ebp
 0x08048591: 89 e5                   |..      |   mov    ebp, esp
