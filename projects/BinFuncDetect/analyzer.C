@@ -83,57 +83,6 @@ template<class FunctionCallGraph>
 class MyUnparser: public AsmUnparser {
     typedef typename boost::graph_traits<FunctionCallGraph>::vertex_descriptor Vertex;
 
-    /* Emits a blank line in the listing when two consecutive instructions are not adjacent in memory. */
-    class InsnInterSpace: public UnparserCallback {
-    public:
-        rose_addr_t next_addr;
-        InsnInterSpace(): next_addr(0) {}
-        virtual bool operator()(bool enabled, const InsnArgs &args) {
-            rose_addr_t cur_addr = args.insn->get_address();
-            if (enabled && cur_addr!=next_addr && next_addr!=0) {
-                if (cur_addr > next_addr) {
-                    args.output <<"skipped " <<(cur_addr-next_addr) <<" byte" <<(1==cur_addr-next_addr?"":"s");
-                } else {
-                    args.output <<"back " <<(next_addr-cur_addr) <<" byte" <<(1==next_addr-cur_addr?"":"s");
-                }
-                args.output <<std::endl;
-            }
-            next_addr = cur_addr + args.insn->get_raw_bytes().size();
-            return enabled;
-        }
-    };
-
-    /* Emits info about a function when we hit the entry point of the function. */
-    class InsnFuncEntry: public UnparserCallback {
-    public:
-        FunctionCallGraph &cg;
-        InsnFuncEntry(FunctionCallGraph &cg): cg(cg) {}
-        virtual bool operator()(bool enabled, const InsnArgs &args) {
-            if (enabled) {
-                SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(args.insn);
-                if (func && func->get_entry_va()==args.insn->get_address()) {
-                    args.output <<"\n========== Function ===========\n"
-                                <<func->reason_str(false) <<"\n";
-
-                    if (func->get_can_return()) {
-                        args.output <<"Can return to caller.\n";
-                    } else {
-                        args.output <<"Does not return to caller.\n";
-                    }
-                    args.output <<"Called by:";
-                    Vertex called_v = func->get_cached_vertex();
-                    typename boost::graph_traits<FunctionCallGraph>::in_edge_iterator ei, eend;
-                    for (boost::tie(ei, eend)=in_edges(called_v, cg); ei!=eend; ++ei) {
-                        SgAsmFunction *caller = get(boost::vertex_name, cg, source(*ei, cg));
-                        args.output <<" 0x" <<std::hex <<caller->get_entry_va() <<std::dec;
-                    }
-                    args.output <<"\n";
-                }
-            }
-            return enabled;
-        }
-    };
-
     /* Emits the name or address of the function to which the instruction belongs, inline with the instruction */
     class InsnFuncName: public UnparserCallback {
     public:
@@ -194,40 +143,56 @@ class MyUnparser: public AsmUnparser {
         }
     };
 
-    /* Emits block reason bits for the first instruction of every block, and white space for others. */
-    class InsnBlockReasons: public UnparserCallback {
+    /* Emits info about what other functions call this one whenever we hit an entry point of a function. */
+    class FuncCallers: public UnparserCallback {
     public:
-        virtual bool operator()(bool enabled, const InsnArgs &args) {
-            if (enabled) {
-                SgAsmBlock *bb = SageInterface::getEnclosingNode<SgAsmBlock>(args.insn);
-                assert(bb!=NULL);
-
-                static size_t width = 0;
-                if (0==width)
-                    width = bb->reason_str(true, 0).size();
-                    
-                if (args.insn == bb->get_statementList().front()) {
-                    args.output <<" " <<bb->reason_str(true) <<" ";
-                } else {
-                    args.output <<std::setw(width+2) <<" ";
+        FunctionCallGraph &cg;
+        FuncCallers(FunctionCallGraph &cg): cg(cg) {}
+        virtual bool operator()(bool enabled, const FunctionArgs &args) {
+            if (enabled && AsmUnparser::ORGANIZED_BY_ADDRESS==args.unparser->get_organization()) {
+                size_t ncallers = 0;
+                Vertex called_v = args.func->get_cached_vertex();
+                typename boost::graph_traits<FunctionCallGraph>::in_edge_iterator ei, eend;
+                for (boost::tie(ei, eend)=in_edges(called_v, cg); ei!=eend; ++ei) {
+                    SgAsmFunction *caller = get(boost::vertex_name, cg, source(*ei, cg));
+                    if (0==ncallers++)
+                        args.output <<StringUtility::addrToString(args.func->get_entry_va()) <<": Function called by";
+                    args.output <<" 0x" <<std::hex <<caller->get_entry_va() <<std::dec;
                 }
+                if (0==ncallers)
+                    args.output <<StringUtility::addrToString(args.func->get_entry_va()) <<": No known callers.";
+                args.output <<"\n";
             }
             return enabled;
         }
     };
 
 public:
-    InsnInterSpace insn_inter_space;
-    InsnFuncEntry insn_func_entry;
     InsnFuncName insn_func_name;
-    InsnBlockReasons insn_block_reasons;
+    FuncCallers func_callers;
 
-    MyUnparser(FunctionCallGraph &cg, IdaInfo &ida): insn_func_entry(cg), insn_func_name(ida) {
-        //insn_callbacks.pre.replace(&insnRawBytes, &insnAddress); // print address w/o raw bytes
-        insn_callbacks.pre.prepend(&insn_func_entry);
-        insn_callbacks.pre.prepend(&insn_inter_space);
+    MyUnparser(FunctionCallGraph &cg, IdaInfo &ida): insn_func_name(ida), func_callers(cg) {
+        set_organization(AsmUnparser::ORGANIZED_BY_ADDRESS);
         insn_callbacks.pre.append(&insn_func_name);
-        insn_callbacks.pre.append(&insn_block_reasons);
+        function_callbacks.pre.before(&functionAttributes, &func_callers, 1);
+    }
+
+    /* Augment parent class by printing a key and some column headings. */
+    virtual size_t unparse(std::ostream &output, SgNode *ast) {
+        output <<"BBR means \"basic block reasons\"; Why is a basic block in a function?\n"
+               <<"These letters describe the possible reasons:\n"
+               <<SgAsmBlock::reason_key("    ")
+               <<"\n"
+               <<"Address     Hexadecimal data         CharData  BBR   ROSE     ";
+        for (size_t i=0; i<insn_func_name.ida.size(); i++)
+            output <<"IDA[" <<i <<"]     ";
+        output <<"    Instruction etc.\n";
+        output <<"----------- ------------------------|--------| --- {---------";
+        for (size_t i=0; i<insn_func_name.ida.size(); i++)
+            output <<" ----------";
+        output <<"}   -----------------------------------\n";
+
+        return AsmUnparser::unparse(output, ast);
     }
 };
 
@@ -284,8 +249,8 @@ statistics(SgAsmInterpretation *interp, const Disassembler::InstructionMap &insn
             if (func) {
                 if (func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS) {
                     /* not a function -- just a collection of otherwise unassigned instructions */
-                } else if (SgAsmFunction::FUNC_INTERPAD==func->get_reason()) {
-                    /* not a function -- used exclusivly as padding between functions */
+                } else if (0!=(func->get_reason() & SgAsmFunction::FUNC_INTERPAD)) {
+                    /* not a function -- used as inter-function padding */
                 } else {
                     rose_functions.push_back(func);
                 }
@@ -607,11 +572,8 @@ main(int argc, char *argv[])
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     std::cerr <<"Generating output...\n";
-    std::cout <<"Key for reasons why basic blocks are inside a particular function:\n" <<SgAsmBlock::reason_key("    ") <<"\n";
     MyUnparser<BinaryAnalysis::FunctionCall::Graph> unparser(cg, ida);
-    for (Disassembler::InstructionMap::iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
-        unparser.unparse(std::cout, ii->second);
-    }
+    unparser.unparse(std::cout, gblock);
 
     statistics(interp, insns, ida);
 }
