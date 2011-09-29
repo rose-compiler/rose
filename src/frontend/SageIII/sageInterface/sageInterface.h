@@ -737,7 +737,7 @@ SgType* getArrayElementType(SgType* t);
 //! Get the element type of an array, pointer or string, or NULL if not applicable
 SgType* getElementType(SgType* t);
 
-//! Check if an expression is an array access. If so, return its name expression and subscripts if requested. Based on AstInterface::IsArrayAccess()
+//! Check if an expression is an array access (SgPntrArrRefExp). If so, return its name expression and subscripts if requested. Users can use convertRefToInitializedName() to get the possible name. It does not check if the expression is a top level SgPntrArrRefExp. 
 bool isArrayReference(SgExpression* ref, SgExpression** arrayNameExp=NULL, std::vector<SgExpression*>** subscripts=NULL);
 
 
