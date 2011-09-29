@@ -12,22 +12,22 @@ void testFunc6() {}
 void testFunc7() {}
 
 int main(int argc, char **argv) {
-	testFunc0();
-	int a = 1;
-	int b = 4;
-	int c = a + b;
+        testFunc0();
+        int a = 1;
+        int b = 4;
+        int c = a + b;
         int d = 3;
 
         for (int i = 0; i < argc; ++i)
           d += b;
 
-	int e = d * 5;
+        int e = d * 5;
         int f = e;
         int foo = f++;
         int g = f + 4;
 
-	testFunc1();
-	
+        testFunc1();
+        
         int ret = foo + a + b + c + d + e + f + g;
 
         return ret;
