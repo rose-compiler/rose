@@ -25,50 +25,48 @@ namespace AbstractMemoryObject {
 
   std::map <size_t, ConstIndexSet * >  ConstIndexSet::constIndexMap;
   UnknownIndexSet* UnknownIndexSet::inst = NULL;
-  bool IndexSet::operator=(IndexSet & other)
+
+  bool IndexSet::operator==(const IndexSet & other) const
   {
     cerr<<"Error. Calling the base operator=() of IndexSet is not allowed. "<<endl;
     assert (false);
+    return false;
+  }
+  bool IndexSet::operator!=(const IndexSet & other) const
+  {
+    cerr<<"Error. Calling the base operator!=() of IndexSet is not allowed. "<<endl;
+    assert (false);
+    return false;
   }
 
-  bool ConstIndexSet::operator = (IndexSet & other)
+  bool ConstIndexSet::operator!= (const IndexSet & other) const
+  {
+    return !(*this == other);
+  }
+
+  bool ConstIndexSet::operator == (const IndexSet & other) const
   {
     bool rt = false;
-
-    bool is_const = true;
-    bool is_unkown = true;
-    // There might be better way to code this
     try
     {
-      ConstIndexSet & cis = dynamic_cast <ConstIndexSet&> (other);
+      const ConstIndexSet & cis = dynamic_cast <const ConstIndexSet&> (other);
+      return (cis.value == this->value);
     }
     catch (bad_cast & bc)
     {
-      is_const = false;
-    }
+      try
+      {
+        const UnknownIndexSet & uis = dynamic_cast <const UnknownIndexSet&> (other);
+        return (uis == *this);
+      }
+      catch (bad_cast & bc)
+      {
+        cerr<<"Error: unreachable branch reached ."<<endl;
+        assert (false);
+      }
 
-    try
-    {
-      UnknownIndexSet & uis = dynamic_cast <UnknownIndexSet&> (other);
     }
-    catch (bad_cast & bc)
-    {
-      is_unkown = false;
-    }
-
-    if (is_unkown)
-      rt = true ; // could be equal to any unknown value
-    else if (is_const)
-     {
-      ConstIndexSet & cis = dynamic_cast <ConstIndexSet&> (other);
-      rt = (cis.value == this->value);
-     }
-    else
-    {
-      cerr<<"Error: unreachable branch reached."<<endl;
-      assert (false);
-    }
-    return rt;
+   return rt;
   }
  
   ConstIndexSet* ConstIndexSet::get_inst(SgValueExp * v_exp){
@@ -298,6 +296,7 @@ namespace AbstractMemoryObject {
   }
 
   // --------------------- Expression Object --------------------
+  /* 
   bool ExprObj::operator== (ExprObj& o2)
   {
     if (o2.anchor_exp == anchor_exp)
@@ -305,28 +304,22 @@ namespace AbstractMemoryObject {
     else
       return false;
   }
+ */ 
 
-  bool ExprObj::operator== (ObjSet& o2)
+ // expression objects: true if the same SgExpression, otherwise all false 
+  bool ExprObj::operator== (const ObjSet& o2) const
   {
-    bool is_expr_obj = true;
-    // There might be better way to code this
     try
     {
-      ExprObj & expr_o2 = dynamic_cast <ExprObj&> (o2);
+      const ExprObj & expr_o2 = dynamic_cast <const ExprObj&> (o2);
+      return (  this -> anchor_exp  == expr_o2.anchor_exp);
     }
     catch (bad_cast & bc)
     {
-      is_expr_obj= false;
-    }
-
-    if (is_expr_obj)
-    {
-      ExprObj & expr_o2 = dynamic_cast <ExprObj&> (o2);
-      return (*this == expr_o2);
-    }
-    else
       return false;
+    }
   }
+
   std::string ExprObj::toString()
   {
     string rt;
@@ -343,17 +336,17 @@ namespace AbstractMemoryObject {
     return rt;
   }
   //------------------
-  std::set<SgType*> ScalarExprObj::getType()
+  std::set<SgType*> ScalarExprObj::getType() const
   {
     std::set<SgType*> rt;
     rt.insert (ExprObj::getType());
     return rt;
   }
 
-  bool ScalarExprObj::operator == (ObjSet& o2)
+  bool ScalarExprObj::operator == (const ObjSet& o2) const
   {
-   ExprObj& o1 = dynamic_cast<ExprObj&> (*this);
-    return (o1==o2);
+   const ExprObj& o1 = dynamic_cast<const ExprObj&> (*this);
+   return (o1==o2);
   } 
 
   std::string ScalarExprObj::toString()
@@ -442,74 +435,43 @@ namespace AbstractMemoryObject {
 
   // --------------------- Named Object --------------------
   
-  bool NamedObj::operator== (NamedObj & o2)
+  bool NamedObj::operator== (const NamedObj & o2) const
   {
     bool rt = false;
-    NamedObj & o1 = *this;
-    if (o1.anchor_symbol == o2.anchor_symbol)
-    {
-      if (o1.parent == NULL && o2.parent == NULL)
+    NamedObj o1 = *this;
+    if (o1.anchor_symbol == o2.anchor_symbol) // same symbol
+      if (o1.parent == o2.parent)   // same parent
+        if (o1.array_index_vector == o2. array_index_vector) // same array index
         rt = true ;
-      else if (o1.parent != NULL && o2.parent != NULL)  
-      {
-        //TODO when labeled object is ready
-      }
-    }
     return rt;
   }
 
-  bool NamedObj::operator== (ObjSet & o2)
+  bool NamedObj::operator== (const ObjSet & o2) const
   {
     // three cases:
-//    bool is_exp_obj = true; // always return false whenever expression obj is involved
-    bool is_named_obj = true;
-    bool is_aliased_obj = true;
-
-    // There might be better way to code this
     try
-    {
-      AliasedObj & aliased_o2 = dynamic_cast <AliasedObj&> (o2);
-    }
-    catch (bad_cast & bc)
-    {
-      is_aliased_obj = false;
-    }
-
-    /*
-       try
-       {
-       ExpressionObj & exp_o2 = dynamic_cast <ExpressionObj&> (o2); 
-       } 
-       catch (bad_cast & bc)
-       {
-       is_exp_obj = false;
-       }
-       */
-    try
-    {
-      NamedObj& named_o2 = dynamic_cast <NamedObj&> (o2);
-    }
-    catch (bad_cast & bc)
-    {
-      is_named_obj = false;
-    }
-
-    NamedObj& o1 = *this;
-    if (is_named_obj)
-    {
-      NamedObj & named_o2 = dynamic_cast <NamedObj&> (o2);
-      return o1 == named_o2;
-    }
-
-    if (is_aliased_obj)
-    {
-      AliasedObj & aliased_o2 = dynamic_cast <AliasedObj&> (o2);
+    { // case 1:
+      NamedObj o1 = * this; 
+      const AliasedObj & aliased_o2 = dynamic_cast <const AliasedObj&> (o2);
       return isAliased (o1.getType(), aliased_o2.getType());
     }
-
-    return false;
-    
+    catch (bad_cast & bc)
+    {
+      try
+      { // case 2:
+        const NamedObj& named_o2 = dynamic_cast <const NamedObj&> (o2);
+        NamedObj o1 = *this;
+        return o1 == named_o2;
+      }
+      catch (bad_cast & bc)
+      {
+        //case 3:
+        // Only Expression Obj is left, always return false 
+        return false;
+      }
+    }
   }
+
   std::string IndexVector_Impl::toString()
   {
     string rt;
@@ -521,6 +483,34 @@ namespace AbstractMemoryObject {
      }
      return rt;
    }
+
+  bool IndexVector_Impl:: operator == (const IndexVector & other) const
+  {
+    bool rt = false;
+    try {
+      const IndexVector_Impl & other_impl = dynamic_cast <const IndexVector_Impl & > (other);
+      bool has_diff_element = false;
+      if (this->getSize() == other_impl.getSize()) 
+      { // same size, no different element
+        for (size_t i =0; i< other_impl.getSize(); i++)
+        {
+          if (*(this->index_vector[i]) !=*(other_impl.index_vector[i]))
+          {
+            has_diff_element = true;
+              break;
+          }
+        }
+        if (!has_diff_element )
+          rt = true;
+      }
+    }
+    catch (std::bad_cast& bc)
+    {
+      rt = IndexVector::operator == (other);
+    }
+
+    return rt; 
+  }
 
   std::string IndexSet::toString()
   {
@@ -565,9 +555,10 @@ namespace AbstractMemoryObject {
     return rt;
   }
 
-  bool ScalarNamedObj::operator == (ObjSet& o2)
+  // This is a confusing part:  operator == of ObjSet side is implemented through the operator== () of the NamedObj
+  bool ScalarNamedObj::operator == (const ObjSet& o2) const
   {
-   NamedObj& o1 = dynamic_cast<NamedObj&> (*this);
+    const NamedObj& o1 = dynamic_cast<const NamedObj&> (*this);
     return (o1==o2);
   } 
 
@@ -578,7 +569,7 @@ namespace AbstractMemoryObject {
   }
 
   //------------------
-  std::set<SgType*> PointerNamedObj::getType()
+  std::set<SgType*> PointerNamedObj::getType() const
   {
     std::set<SgType*> rt;
     rt.insert (NamedObj::getType());
@@ -612,9 +603,9 @@ namespace AbstractMemoryObject {
     return (this_type == that_type);
   }
 
-  bool PointerNamedObj::operator == (ObjSet& o2)
+  bool PointerNamedObj::operator == (const ObjSet& o2) const
   {
-   NamedObj& o1 = dynamic_cast<NamedObj&> (*this);
+   const NamedObj& o1 = dynamic_cast<const NamedObj&> (*this);
     return (o1==o2);
   } 
 
@@ -691,6 +682,14 @@ namespace AbstractMemoryObject {
      }
      return rt; 
    }
+
+   bool LabeledAggregateNamedObj::operator == (const ObjSet& o2) const
+   { 
+     const NamedObj& o1 = dynamic_cast<const NamedObj&> (*this);
+     return (o1==o2);
+   } 
+
+
    //---------------------
     ArrayNamedObj::ArrayNamedObj (SgSymbol* s, SgType* t, ObjSet* p, IndexVector* iv): NamedObj (s,t,p, iv) 
   {
@@ -754,6 +753,13 @@ namespace AbstractMemoryObject {
    }
         
 
+  //use the [Named|Expr|Aliased]Obj side of 
+  bool ArrayNamedObj::operator == (const ObjSet& o2) const
+  { 
+   const NamedObj& o1 = dynamic_cast<const NamedObj&> (*this);
+    return (o1==o2);
+  } 
+
   // --------------------- Aliased Object --------------------
   std::string AliasedObj::toString()  
   {
@@ -763,7 +769,7 @@ namespace AbstractMemoryObject {
     return rt;
   } 
 
-  bool isAliased (SgType *t1, SgType* t2)
+  bool isAliased (const SgType *t1, const SgType* t2) 
   {
      // Simplest alias analysis: same type ==> aliased
     // TODO : consider subtype, if type1 is a subtype of type2, they are aliased to each other also
@@ -774,106 +780,66 @@ namespace AbstractMemoryObject {
     
   }
 
-  bool AliasedObj::operator == ( AliasedObj & o2) 
+  bool AliasedObj::operator == ( const AliasedObj & o2)  const
   {
-    AliasedObj& o1 = *this;
+    AliasedObj o1 = *this;
     SgType* own_type = o1.getType();
     SgType* other_type = o2.getType();
     return isAliased (own_type, other_type);
  }
 
-  // TODO AliasedObj and NamedObj,  
-  // TODO NamedObj and AliasedObj 
-  bool AliasedObj::operator < ( AliasedObj& o2)
-  {
-    return (this->getType() < o2.getType());
-  }
-
-  bool AliasedObj::operator == (ObjSet& o2) 
+  bool AliasedObj::operator == (const ObjSet& o2) const
   {
     // three cases
     // 1. o2 is  ExpressionObj: always return false
     // 2. o2 is Named Obj: return operator == (AliasedObj&o1, NamedObj & o2)
     // 3. o2 is AliasedObj:
-    // bool is_exp_obj = true;
-    bool is_named_obj = true;
-    bool is_aliased_obj = true;
 
     // There might be better way to code this
     try
     {
-      AliasedObj & aliased_o2 = dynamic_cast <AliasedObj&> (o2); 
-    } 
-    catch (bad_cast & bc)
-    {
-      is_aliased_obj = false;
-    }
-
-    /*
-       try
-       {
-       ExpressionObj & exp_o2 = dynamic_cast <ExpressionObj&> (o2); 
-       } 
-       catch (bad_cast & bc)
-       {
-       is_exp_obj = false;
-       }
-       */
-    try
-    {
-      NamedObj& named_o2 = dynamic_cast <NamedObj&> (o2); 
-    } 
-    catch (bad_cast & bc)
-    {
-      is_named_obj = false;
-    }
-
-    AliasedObj& o1 = *this;
-    if (is_aliased_obj)
-    {
-      AliasedObj & aliased_o2 = dynamic_cast <AliasedObj&> (o2);
+      const AliasedObj & aliased_o2 = dynamic_cast <const AliasedObj&> (o2); 
+      AliasedObj o1 = *this;
       return o1 == aliased_o2;
-    }  
-
-    if (is_named_obj)
+    } 
+    catch (bad_cast & bc)
     {
-      NamedObj & named_o2 = dynamic_cast <NamedObj&> (o2);
-      return isAliased (o1.getType(), named_o2.getType());
-      
+      try
+      {
+        const NamedObj named_o2 = dynamic_cast <const NamedObj&> (o2); 
+        return isAliased (this->getType(), named_o2.getType());
+      } 
+      catch (bad_cast & bc)
+      {
+        return false;
+      }
     }
-
-    return false;
   }
 
-  bool ScalarAliasedObj::operator == (ObjSet& o2)
+  bool ScalarAliasedObj::operator == (const ObjSet& o2) const
   {
-    AliasedObj& o1 = dynamic_cast<AliasedObj&> (*this);
+    const AliasedObj& o1 = dynamic_cast<const AliasedObj&> (*this);
+    return (o1==o2);
+  }
+
+  bool LabeledAggregateAliasedObj::operator == (const ObjSet& o2) const
+  {
+    const AliasedObj& o1 = dynamic_cast<const AliasedObj&> (*this);
     //  return (o1.operator==( o2));
     return (o1==o2);
   }
 
-  bool LabeledAggregateAliasedObj::operator == (ObjSet& o2)
+  bool ArrayAliasedObj::operator == (const ObjSet& o2) const
   {
-    AliasedObj& o1 = dynamic_cast<AliasedObj&> (*this);
-    //  return (o1.operator==( o2));
+    const AliasedObj& o1 = dynamic_cast<const AliasedObj&> (*this);
     return (o1==o2);
   }
 
-  bool ArrayAliasedObj::operator == (ObjSet& o2)
+  bool PointerAliasedObj::operator == (const ObjSet& o2) const
   {
-    AliasedObj& o1 = dynamic_cast<AliasedObj&> (*this);
-    //  return (o1.operator==( o2));
+    const AliasedObj& o1 = dynamic_cast<const AliasedObj&> (*this);
     return (o1==o2);
   }
-
-  bool PointerAliasedObj::operator == (ObjSet& o2)
-  {
-    AliasedObj& o1 = dynamic_cast<AliasedObj&> (*this);
-    //  return (o1.operator==( o2));
-    return (o1==o2);
-  }
-
-
 
   std::set<SgType*> ScalarAliasedObj::getType()
   {
