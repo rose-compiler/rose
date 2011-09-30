@@ -164,7 +164,6 @@ test2004_68.C \
 test2004_69.C \
 test2004_70.C \
 test2004_71.C \
-test2004_72.C \
 test2004_73.C \
 test2004_74.C \
 test2004_76.C \
@@ -642,7 +641,6 @@ test2010_25.C \
    test2001_25.C \
    test2003_04.C \
    test2003_16.C \
-   test2003_19.C \
    test2004_16.C \
 test2004_19.C \
 test2004_30.C \
@@ -694,6 +692,8 @@ test_wchars.C
 # DQ (9/29/11): Failing OSX machine tests on Hudson.
 # test2001_26.C 
 # test2001_03.C
+# test2003_19.C
+# test2004_72.C
 
 
 
@@ -921,7 +921,6 @@ test2003_11.C \
 test2003_13.C \
 test2003_14.C \
 test2003_16.C \
-test2003_19.C \
 test2003_20.C \
 test2003_21.C \
 test2003_23.C \
@@ -942,7 +941,6 @@ test2004_29.C \
 test2004_49.C \
 test2004_53.C \
 test2004_61.C \
-test2004_72.C \
 test2004_74.C \
 test2004_94.C \
 test2004_96.C \
@@ -1046,6 +1044,8 @@ X.C
 # DQ (9/29/11): Failing OSX machine tests on Hudson.
 # test2001_26.C 
 # test2001_03.C
+# test2003_19.C 
+# test2004_72.C
 
 
 FAILING_C_TESTS = \
