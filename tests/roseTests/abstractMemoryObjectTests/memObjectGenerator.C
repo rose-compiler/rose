@@ -29,8 +29,8 @@ int main(int argc, char * argv[])
       // test operator ==, and < for two consecutive ObjSet
       if (prev_obj != NULL)
       {
-        cout<< "operator==:"<<((*prev_obj) == (*mem_obj)) ;
-        // TODO cout<< "operator<:"<<((*prev_obj) < (*(dynamic_cast <AliasedObj*> (mem_obj)))) <<endl;
+        cout<< "operator==:"<<((*prev_obj) == (*mem_obj)) <<endl;
+        cout<< "operator<:"<<((*prev_obj) < (*mem_obj)) <<endl;
       }
       prev_obj = mem_obj;
     }
@@ -49,29 +49,27 @@ int main(int argc, char * argv[])
     if (mem_obj != NULL)
     {
       cout<<mem_obj->toString()<<endl;
-      //TODO
-#if 0      //
-      // test operator == for two consecutive  ObjSet
+      // test operator ==, and < for two consecutive ObjSet
       if (prev_obj != NULL)
       {
-        cout<< "operator==:"<<((*prev_obj) == (*mem_obj)) ;
-        cout<< "  operator<:"<<((*prev_obj) < (*(dynamic_cast <AliasedObj*> (mem_obj)))) <<endl;
+        cout<< "operator==:"<<((*prev_obj) == (*mem_obj)) <<endl;
+        cout<< "operator<:"<<((*prev_obj) < (*mem_obj)) <<endl;
       }
       prev_obj = mem_obj;
-#endif
-    // test Array::getElements (IndexVector*);  
-    Array* array = dynamic_cast <Array*> (mem_obj);  
-    if (array)
-    {
-      if (array->getNumDims()==1 )
-      { // only for 1-D array, test array[0]
-        cout<<"Found a 1-D array. testing array->getElements(0) ..."<<endl;
-        IndexVector_Impl* myindexv = new IndexVector_Impl();
-        myindexv ->index_vector.push_back(ConstIndexSet::get_inst((size_t)0));
-        cout<<array->getElements(myindexv)->toString()<<endl;
+
+      // test Array::getElements (IndexVector*);  
+      Array* array = dynamic_cast <Array*> (mem_obj);  
+      if (array)
+      {
+        if (array->getNumDims()==1 )
+        { // only for 1-D array, test array[0]
+          cout<<"Found a 1-D array. testing array->getElements(0) ..."<<endl;
+          IndexVector_Impl* myindexv = new IndexVector_Impl();
+          myindexv ->index_vector.push_back(ConstIndexSet::get_inst((size_t)0));
+          cout<<array->getElements(myindexv)->toString()<<endl;
+        }
       }
-    }
- 
+
     }
   }
 
@@ -83,7 +81,16 @@ int main(int argc, char * argv[])
   {
     ObjSet* mem_obj = ObjSetFactory::createObjSet(*iter);
     if (mem_obj != NULL)
+    {
       cout<<mem_obj->toString()<<endl;
+      // test operator ==, and < for two consecutive ObjSet
+      if (prev_obj != NULL)
+      {
+        cout<< "operator==:"<<((*prev_obj) == (*mem_obj)) <<endl;
+        cout<< "operator<:"<<((*prev_obj) < (*mem_obj)) <<endl;
+      }
+      prev_obj = mem_obj;
+    }
   }   
 
   // Other objects, expression objects, whole array objects (SgPntrArrRefExp) , or even named object for array elements
@@ -95,11 +102,27 @@ int main(int argc, char * argv[])
   {
     ObjSet* mem_obj = ObjSetFactory::createObjSet(*iter);
     if (mem_obj != NULL)
+    {
       cout<<mem_obj->toString()<<endl;
+      // test operator ==, and < for two consecutive ObjSet
+      if (prev_obj != NULL)
+      {
+        cout<< "operator==:"<<((*prev_obj) == (*mem_obj)) <<endl;
+        cout<< "operator<:"<<((*prev_obj) < (*mem_obj)) <<endl;
+      }
+      prev_obj = mem_obj;
+
+ 
+    }
  }   
-
-
   // Additional test for IndexSet etc TODO
+  IndexSet * s1 , *s2, *s3;
+  s1 = ConstIndexSet::get_inst (10);
+  s2 = ConstIndexSet::get_inst (1);
+  assert (*s1 != *s2);
+  s3 = UnknownIndexSet::get_inst();
+  assert (*s1 == *s3);
+
   return backend(project);
 }
 

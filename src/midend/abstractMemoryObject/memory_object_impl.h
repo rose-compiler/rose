@@ -23,7 +23,8 @@ namespace AbstractMemoryObject
       virtual bool maySet();
       virtual bool mustSet();
       virtual size_t objCount();    
-      //TODO bool operator < (const ObjSet& other) const; 
+      // We implement operator < () at this level
+      bool operator < (const ObjSet& other) const ;
   };
 
   class LabeledAggregate_Impl : public LabeledAggregate
@@ -32,6 +33,7 @@ namespace AbstractMemoryObject
       virtual bool maySet();
       virtual bool mustSet();
       virtual size_t objCount();    
+      bool operator < (const ObjSet& other) const ;
 
       size_t fieldCount() {return elements.size(); };
       // Returns a list of fields
@@ -47,6 +49,7 @@ namespace AbstractMemoryObject
       virtual bool maySet();
       virtual bool mustSet();
       virtual size_t objCount();    
+      bool operator < (const ObjSet& other) const ;
 
  };
 
@@ -56,6 +59,7 @@ namespace AbstractMemoryObject
       virtual bool maySet();
       virtual bool mustSet();
       virtual size_t objCount();    
+      bool operator < (const ObjSet& other) const ;
   };
 
 
@@ -236,14 +240,20 @@ namespace AbstractMemoryObject
       std::set<SgType*> getType();
 
       // Returns true if this object and that object may/must refer to the same labeledAggregate memory object.
-      // TODO bool operator == (const LabeledAggregate& that) const;
-      //Total order relations (implemented by interface)
-      //bool operator < (const LabeledAggregate& that) const;
+      bool operator == (const ObjSet& o2) const;
       std::string toString();
   };
 
   class ArrayExprObj: public Array_Impl, public ExprObj
-  {};
+  {
+    public:
+      ArrayExprObj(SgExpression* e, SgType* t): ExprObj (e,t) {}
+      std::set<SgType*> getType();
+      //TODO other member functions
+      bool operator == (const ObjSet& o2) const;
+      std::string toString();
+
+  };
 
   class PointerExprObj: public Pointer_Impl, public ExprObj
   {
@@ -258,7 +268,7 @@ namespace AbstractMemoryObject
       bool equalPoints(Pointer & that);
 
       // Returns true if this object and that object may/must refer to the same pointer memory object.
-      bool operator == (ObjSet& o2) ;
+      bool operator == (const ObjSet& o2) const;
       std::string toString();
 
   };
