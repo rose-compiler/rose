@@ -39,7 +39,7 @@ namespace AbstractMemoryObject
       // TODO should we have an interface function to return the starting address of the mem object?
 
       //TODO not in use for now
-      virtual size_t memSize(); // the number of bytes of this objset takes up within memory
+      //virtual size_t memSize(); // the number of bytes of this objset takes up within memory
 
       // Type of memory
       // The types that all elements of the set may/must have. 
@@ -134,13 +134,13 @@ namespace AbstractMemoryObject
   {
     public:
       // Returns a memory object that corresponds to all the elements in the given array
-      ObjSet* getElements();
+      virtual ObjSet* getElements();
       // Returns the memory object that corresponds to the elements described by the given abstract index, 
       // which represents one or more indexes within the array
-      ObjSet* getElements(IndexVector* ai);
+      virtual ObjSet* getElements(IndexVector* ai);
 
       // number of dimensions of the array
-      size_t getNumDims();
+      virtual size_t getNumDims();
       bool operator == (const Array & that) const;
       bool operator < (const Array & that) const;
   };
