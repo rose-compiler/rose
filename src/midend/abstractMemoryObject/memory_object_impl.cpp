@@ -8,6 +8,15 @@ using namespace SageInterface;
 
 namespace AbstractMemoryObject {
 
+  // A map to store named obj set
+  // This can provide quick lookup for existing named objset to avoid duplicated creation
+  // SgSymbol associated with class/struct data member is shared among all class/struct instances
+  // so we have to use two keys (parent ObjSet and SgSymbol) to ensure the uniqueness of named objects
+  //
+  // Array elements are represented as NamedObj also. They need one more key (IndexVector) to differentiate them
+  map<ObjSet*,  map<SgSymbol*, map <IndexVector*, ObjSet* > > > named_objset_map; 
+
+
   IndexSet::~IndexSet()
   {
     cerr<<"Error. Calling the base destructor of IndexSet is not allowed. "<<endl;
@@ -222,7 +231,7 @@ namespace AbstractMemoryObject {
        assert (t != NULL);
        rt = createAliasedObjSet (t);
      }
-     else if (isSgSymbol(n))
+     else if (isSgSymbol(n)) // skip SgFunctionSymbol etc
      {
        SgSymbol* s = isSgSymbol (n);
        assert (s != NULL);
@@ -688,6 +697,7 @@ namespace AbstractMemoryObject {
     assert (s != NULL);
     assert (t != NULL);
 
+    assert (isSgVariableSymbol (s) != NULL);
     assert (s->get_type() == t);
     SgArrayType * a_t = isSgArrayType(t);
     assert (a_t != NULL);
@@ -721,6 +731,28 @@ namespace AbstractMemoryObject {
      return rt; 
    }
 
+   // Returns the memory object that corresponds to the elements described by the given abstract index, 
+   ObjSet* ArrayNamedObj::getElements(IndexVector* ai)
+   { 
+     ObjSet* mem_obj = NULL;
+
+     SgVariableSymbol* s = isSgVariableSymbol(this->getSymbol());
+     assert (s != NULL);
+     assert (ai != NULL);
+     assert (isSgArrayType(s->get_type()) != NULL);
+     SgType* element_type = getArrayElementType (s->get_type());
+     assert (element_type != NULL);
+
+     mem_obj = named_objset_map[this][s][ai];
+      if (mem_obj == NULL)
+      {
+        mem_obj = createNamedObjSet (s, element_type, this, ai);
+        named_objset_map[this][s][ai] = mem_obj;
+      }
+
+     return mem_obj;
+   }
+        
 
   // --------------------- Aliased Object --------------------
   std::string AliasedObj::toString()  
@@ -964,14 +996,6 @@ namespace AbstractMemoryObject {
     return rt;
   } 
 
-  // A map to store named obj set
-  // This can provide quick lookup for existing named objset to avoid duplicated creation
-  // SgSymbol associated with class/struct data member is shared among all class/struct instances
-  // so we have to use two keys (parent ObjSet and SgSymbol) to ensure the uniqueness of named objects
-  //
-  // Array elements are represented as NamedObj also. They need one more key (IndexVector) to differentiate them
-  map<ObjSet*,  map<SgSymbol*, map <IndexVector*, ObjSet* > > > named_objset_map; 
-
   // variables that are explicitly declared/named in the source code
   // local, global, static variables,
   // formal and actual function parameters
@@ -982,6 +1006,11 @@ namespace AbstractMemoryObject {
   ObjSet* createNamedObjSet(SgSymbol* anchor_symbol, SgType* t, ObjSet* parent, IndexVector * iv)
   {
     ObjSet* rt = NULL;
+    if (!isSgVariableSymbol(anchor_symbol))
+    {
+      cerr<<"Warning. createNamedObjSet() skips non-variable symbol:"<< anchor_symbol->class_name() <<endl;
+      return NULL;
+    }
     
     // check parameters
     assert (anchor_symbol != NULL);

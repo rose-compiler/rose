@@ -61,7 +61,19 @@ int main(int argc, char * argv[])
       }
       prev_obj = dynamic_cast <AliasedObj*> (mem_obj);
 #endif
-
+    // test Array::getElements (IndexVector*);  
+    ArrayNamedObj* array = dynamic_cast <ArrayNamedObj*> (mem_obj);  
+    if (array)
+    {
+      if (array->getNumDims()==1 )
+      { // only for 1-D array, test array[0]
+        cout<<"Found a 1-D array. testing array->getElements(0) ..."<<endl;
+        IndexVector_Impl* myindexv = new IndexVector_Impl();
+        myindexv ->index_vector.push_back(ConstIndexSet::get_inst((size_t)0));
+        cout<<array->getElements(myindexv)->toString()<<endl;
+      }
+    }
+ 
     }
   }
 
@@ -86,7 +98,7 @@ int main(int argc, char * argv[])
     ObjSet* mem_obj = ObjSetFactory::createObjSet(*iter);
     if (mem_obj != NULL)
       cout<<mem_obj->toString()<<endl;
-  }   
+ }   
 
 
   return backend(project);

@@ -36,12 +36,14 @@ namespace  AbstractMemoryObject
     return false;  
   }
 
+/*
   size_t ObjSet::memSize()
   {
     cerr<<"Error. Direct call to base class's memSize() is not allowed."<<endl;
     assert (false);
     return 0;
   }
+*/
 
   bool ObjSet:: operator == (const ObjSet& o2)
   {
@@ -165,6 +167,27 @@ namespace  AbstractMemoryObject
     cerr<<"Error. Direct call to base class (IndexVector)'s toString() is not allowed."<<endl;
     assert (false);
     return "";  
+   }
+
+   ObjSet* Array::getElements()
+   {
+     cerr<<"Error. Direct call to base class (Array)'s getElements() is not allowed."<<endl;
+     assert (false);
+     return NULL;  
+   }
+
+   ObjSet* Array::getElements(IndexVector* ai)
+   {
+     cerr<<"Error. Direct call to base class (Array)'s getElements(IndexVector* ai) is not allowed."<<endl;
+     assert (false);
+     return NULL;  
+   }
+
+   size_t Array::getNumDims()
+   {
+     cerr<<"Error. Direct call to base class (Array)'s getNumDims( ) is not allowed."<<endl;
+     assert (false);
+    return 0;
    }
 
 

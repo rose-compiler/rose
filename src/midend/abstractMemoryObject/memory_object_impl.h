@@ -297,7 +297,7 @@ namespace AbstractMemoryObject
       ObjSet* getElements(IndexVector* ai);
 
       // number of dimensions of the array
-      size_t getNumDims();
+      virtual size_t getNumDims();
      //TODO 
       bool operator == (const Array & that) const;
       bool operator < (const Array & that) const;
