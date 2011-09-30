@@ -7,6 +7,26 @@ using namespace std;
 using namespace SageInterface;
 
 namespace AbstractMemoryObject {
+  // Only useful to provide compare operator of std::map 
+  bool Scalar_Impl::operator < (const ObjSet& other) const
+  {
+    return (this < &other);
+  }
+
+  bool LabeledAggregate_Impl::operator < (const ObjSet& other) const
+  {
+    return (this < &other);
+  }
+
+  bool Array_Impl::operator < (const ObjSet& other) const
+  {
+    return (this < &other);
+  }
+
+  bool Pointer_Impl::operator < (const ObjSet& other) const
+  {
+    return (this < &other);
+  }
 
   // A map to store named obj set
   // This can provide quick lookup for existing named objset to avoid duplicated creation
@@ -356,6 +376,28 @@ namespace AbstractMemoryObject {
   }
 
   //------------------
+   std::set<SgType*> ArrayExprObj::getType()
+  {
+    std::set<SgType*> rt;
+    rt.insert (ExprObj::getType());
+    return rt;
+  }
+
+ 
+  bool ArrayExprObj::operator == (const ObjSet& o2) const
+  {
+   const ExprObj& o1 = dynamic_cast<const ExprObj&> (*this);
+    return (o1==o2);
+  } 
+
+
+  std::string ArrayExprObj::toString()
+  {
+    string rt = "ArrayExprObj @" + StringUtility::numberToString(this)+ " "+ ExprObj::toString() ;
+    return rt;
+  }
+
+  //------------------
   std::set<SgType*> PointerExprObj::getType()
   {
     std::set<SgType*> rt;
@@ -388,9 +430,9 @@ namespace AbstractMemoryObject {
     return (this_type == that_type);
   }
 
-  bool PointerExprObj::operator == (ObjSet& o2)
+  bool PointerExprObj::operator == (const ObjSet& o2) const
   {
-   ExprObj& o1 = dynamic_cast<ExprObj&> (*this);
+    const ExprObj& o1 = dynamic_cast<const ExprObj&> (*this);
     return (o1==o2);
   } 
 
@@ -419,6 +461,12 @@ namespace AbstractMemoryObject {
     rt.insert (ExprObj::getType());
     return rt;
   }
+
+  bool LabeledAggregateExprObj::operator == (const ObjSet& o2) const
+  {
+    const ExprObj& o1 = dynamic_cast<const ExprObj&> (*this);
+    return (o1==o2);
+  } 
 
    std::string LabeledAggregateExprObj::toString()
    {
@@ -1132,7 +1180,7 @@ namespace AbstractMemoryObject {
       SgExpression* arrayNameExp = NULL;
       std::vector<SgExpression*>* subscripts = new std::vector<SgExpression*>;
 
-      bool is_top_array = isArrayReference (r, & arrayNameExp, & subscripts);
+      isArrayReference (r, & arrayNameExp, & subscripts);
       SgInitializedName* array_name = convertRefToInitializedName (arrayNameExp);
       SgVariableSymbol * s = NULL; 
       if (array_name != NULL)
