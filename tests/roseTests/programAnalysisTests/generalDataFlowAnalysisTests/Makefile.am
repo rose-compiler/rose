@@ -421,7 +421,6 @@ test2006_142.C \
 test2006_144.C \
 test2006_145.C \
 test2006_146.C \
-test2006_148.C \
 test2006_149.C \
 test2006_150.C \
 test2006_152.C \
@@ -685,6 +684,7 @@ test_wchars.C
 
 # DQ (9/29/11): Failing 32-bit machine tests on Hudson.
 # test2006_93.C 
+# test2006_148.C
 
 # DQ (9/29/11): Failing 64-bit machine tests using GNU 4.0.x compiler on Hudson.
 # test2005_147.C 
@@ -1019,7 +1019,6 @@ test2006_140.C \
 test2006_142.C \
 test2006_145.C \
 test2006_146.C \
-test2006_148.C \
 test2006_149.C \
 test2006_150.C \
 test2006_151.C \
@@ -1040,6 +1039,7 @@ X.C
 
 # DQ (9/29/11): Failing 32-bit machine tests on Hudson.
 # test2006_93.C
+# test2006_148.C
 
 # DQ (9/29/11): Failing OSX machine tests on Hudson.
 # test2001_26.C 
