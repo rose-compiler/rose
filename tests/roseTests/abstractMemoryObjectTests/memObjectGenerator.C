@@ -15,7 +15,7 @@ int main(int argc, char * argv[])
 
   // Test AliasedObj
   // ---------------------------------------------------------
-  AliasedObj* prev_obj = NULL;
+  ObjSet* prev_obj = NULL;
 
   Rose_STL_Container <SgNode*> type_list = NodeQuery::querySubTree (project, V_SgType);
   Rose_STL_Container <SgNode*>::iterator iter;
@@ -26,15 +26,13 @@ int main(int argc, char * argv[])
     if (mem_obj != NULL)
     {
       cout<<mem_obj->toString()<<endl;
-
-      // test operator == for two consecutive aliased ObjSet
+      // test operator ==, and < for two consecutive ObjSet
       if (prev_obj != NULL)
       {
         cout<< "operator==:"<<((*prev_obj) == (*mem_obj)) ;
-        cout<< "  operator<:"<<((*prev_obj) < (*(dynamic_cast <AliasedObj*> (mem_obj)))) <<endl;
+        // TODO cout<< "operator<:"<<((*prev_obj) < (*(dynamic_cast <AliasedObj*> (mem_obj)))) <<endl;
       }
-
-      prev_obj = dynamic_cast <AliasedObj*> (mem_obj);
+      prev_obj = mem_obj;
     }
   }
 
@@ -52,17 +50,17 @@ int main(int argc, char * argv[])
     {
       cout<<mem_obj->toString()<<endl;
       //TODO
-#if 0 
-      // test operator == for two consecutive aliased ObjSet
+#if 0      //
+      // test operator == for two consecutive  ObjSet
       if (prev_obj != NULL)
       {
         cout<< "operator==:"<<((*prev_obj) == (*mem_obj)) ;
         cout<< "  operator<:"<<((*prev_obj) < (*(dynamic_cast <AliasedObj*> (mem_obj)))) <<endl;
       }
-      prev_obj = dynamic_cast <AliasedObj*> (mem_obj);
+      prev_obj = mem_obj;
 #endif
     // test Array::getElements (IndexVector*);  
-    ArrayNamedObj* array = dynamic_cast <ArrayNamedObj*> (mem_obj);  
+    Array* array = dynamic_cast <Array*> (mem_obj);  
     if (array)
     {
       if (array->getNumDims()==1 )
@@ -101,6 +99,7 @@ int main(int argc, char * argv[])
  }   
 
 
+  // Additional test for IndexSet etc TODO
   return backend(project);
 }
 

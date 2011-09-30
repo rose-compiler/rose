@@ -45,20 +45,21 @@ namespace  AbstractMemoryObject
   }
 */
 
-  bool ObjSet:: operator == (const ObjSet& o2)
+  bool ObjSet:: operator == (const ObjSet& o2) const
   {
     cerr<<"Error. Direct call to base class's operator == () is not allowed."<<endl;
     assert (false);
     return false;  
   }
 
-  bool ObjSet::operator < ( const ObjSet& o2)
+  bool ObjSet::operator < ( const ObjSet& o2) const
   {
     cerr<<"Error. Direct call to base class's operator <() is not allowed."<<endl;
     assert (false);
     return false;  
   }
 
+/*
   bool ObjSet::operator <= ( const ObjSet& o2)
   {
     cerr<<"Error. Direct call to base class's operator <=() is not allowed."<<endl;
@@ -79,7 +80,7 @@ namespace  AbstractMemoryObject
     assert (false);
     return false;  
   }
-
+*/
   std::string ObjSet::toString()
   {
     cerr<<"Error. Direct call to base class's toString() is not allowed."<<endl;
@@ -101,6 +102,7 @@ namespace  AbstractMemoryObject
     return 0;
   }
 
+/*
   bool LabeledAggregate:: operator == (const LabeledAggregate& o2) const
   {
     cerr<<"Error. Direct call to base class's operator == () is not allowed."<<endl;
@@ -114,7 +116,7 @@ namespace  AbstractMemoryObject
     assert (false);
     return false;  
   }
- 
+*/ 
    std::string LabeledAggregateField::getName()
    {
     cerr<<"Error. Direct call to base class's getName() is not allowed."<<endl;
@@ -168,6 +170,13 @@ namespace  AbstractMemoryObject
     assert (false);
     return "";  
    }
+   bool IndexVector::operator ==( const IndexVector & other) const
+   {
+    cerr<<"Error. Direct call to base class (IndexVector)'s operator==() is not allowed."<<endl;
+    assert (false);
+    return false;  
+   }
+
 
    ObjSet* Array::getElements()
    {
@@ -189,6 +198,22 @@ namespace  AbstractMemoryObject
      assert (false);
     return 0;
    }
+
+/*
+  bool Array:: operator == (const ObjSet & o2) const
+  {
+    cerr<<"Error. Direct call to base class (Array)'s operator == () is not allowed."<<endl;
+    assert (false);
+    return false;  
+  }
+
+  bool Array:: operator  (const ObjSet & o2) const
+  {
+    cerr<<"Error. Direct call to base class (Array)'s operator == () is not allowed."<<endl;
+    assert (false);
+    return false;  
+  }
+*/
 
 
 }
