@@ -19,6 +19,7 @@ if false; then
 # DQ (10/18/2010): Only test if we should make OFP active if fortran support is enabled.
 echo "Before testing for gfortran to enable OFP: support_fortran_language = $support_fortran_language"
 ofp_enabled=no
+
 if test "x$support_fortran_language" = "xyes"; then
   AC_MSG_CHECKING([for gfortran to test whether Fortran support can be used])
   if test "x$USE_JAVA" = x1; then
