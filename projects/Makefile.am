@@ -18,8 +18,8 @@ SUBDIRS = \
      OpenMP_Analysis \
      QtDesignerPlugins \
      RoseQt \
-     UpcTranslation \
      arrayOptimization \
+     UpcTranslation \
      autoParallelization \
      binaryVisualization \
      bugSeeding \
@@ -32,6 +32,10 @@ SUBDIRS = \
      taintcheck \
      PowerAwareCompiler \
      $(OPTIONAL_PROJECTS)
+
+# DQ (9/26/2011): Directory removed for failing new AST consistancy test for references to deleted IR nodes.
+# UpcTranslation (fails only a single test code shared_2.upc)
+
 
 # DQ (6/25/2011): Removed from being tested (failing symbolicAnalysisFramework/tests/test_examples/dominator_example.cpp)
 SUBDIRS += symbolicAnalysisFramework
@@ -46,6 +50,9 @@ endif
 # gradually enable these tests at a later stage if necessary.
 if !USING_XTENSA_BACKEND_COMPILER
    SUBDIRS += dataStructureGraphing OpenMP_Translator autoTuning
+
+# DQ (9/26/2011): Directory removed for failing new AST consistancy test for references to deleted IR nodes.
+# OpenMP_Translator
 
 # TOO (2/16/2011): Disabled for Thrifty compiler (gcc 3.4.4) due to errors during make check
 if !USING_GCC_3_4_4_BACKEND_COMPILER

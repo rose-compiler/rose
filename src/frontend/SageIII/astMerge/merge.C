@@ -54,7 +54,7 @@ std::set<SgNode*> computeSetIntersection(const std::set<SgNode*> & listToDelete,
 void deleteNodes ( std::set<SgNode*> & listToDelete );
 #endif
 
-#define MAX_NUMBER_OF_IR_NODES_TO_GRAPH 2000
+#define MAX_NUMBER_OF_IR_NODES_TO_GRAPH 15000
 #define DISPLAY_INTERNAL_DATA 0
 
 using namespace std;
@@ -106,7 +106,7 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
      if (SgProject::get_verbose() > 0)
           printf ("numberOfASTnodesBeforeMerge = %d MAX_NUMBER_OF_IR_NODES_TO_GRAPH = %d \n",numberOfASTnodesBeforeMerge,MAX_NUMBER_OF_IR_NODES_TO_GRAPH);
 
-     if (numberOfASTnodesBeforeMerge < MAX_NUMBER_OF_IR_NODES_TO_GRAPH)
+     if ( (SgProject::get_verbose() > 0) && (numberOfASTnodesBeforeMerge < MAX_NUMBER_OF_IR_NODES_TO_GRAPH))
         {
        // SimpleColorMemoryPoolTraversal::generateGraph(filename+"_beforeMerge");
           set<SgNode*> emptySet;
@@ -263,7 +263,8 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
   // If this is not too large of a graph then build the DOT output file for visualization.
   // This is an expensive task fro large ASTs, and the layout for the DOT graph is 
   // exponential so not practical.
-     if (numberOfASTnodesBeforeMerge < MAX_NUMBER_OF_IR_NODES_TO_GRAPH)
+  // if (numberOfASTnodesBeforeMerge < MAX_NUMBER_OF_IR_NODES_TO_GRAPH)
+     if ( (SgProject::get_verbose() > 0) && (numberOfASTnodesBeforeMerge < MAX_NUMBER_OF_IR_NODES_TO_GRAPH))
         {
           if (SgProject::get_verbose() > 0)
                printf ("Generate the graph after the copy intermediateDeleteSet = %zu \n",intermediateDeleteSet.size());
@@ -344,7 +345,8 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
      if (SgProject::get_verbose() > 0)
           printf ("Calling ReplacementMapTraversal::buildListOfODRviolations(): DONE \n");
 
-     if (numberOfASTnodesBeforeMerge < MAX_NUMBER_OF_IR_NODES_TO_GRAPH)
+  // if (numberOfASTnodesBeforeMerge < MAX_NUMBER_OF_IR_NODES_TO_GRAPH)
+     if ( (SgProject::get_verbose() > 0) && (numberOfASTnodesBeforeMerge < MAX_NUMBER_OF_IR_NODES_TO_GRAPH))
         {
           if (SgProject::get_verbose() > 0)
                printf ("Generate the graph after computing the replacement map (ODR_Violations.size() = %ld) \n",(long)ODR_Violations.size());
@@ -397,7 +399,8 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
 
   // TestParentPointersOfSymbols::test();
 
-     if (numberOfASTnodesBeforeMerge < MAX_NUMBER_OF_IR_NODES_TO_GRAPH)
+  // if (numberOfASTnodesBeforeMerge < MAX_NUMBER_OF_IR_NODES_TO_GRAPH)
+     if ( (SgProject::get_verbose() > 0) && (numberOfASTnodesBeforeMerge < MAX_NUMBER_OF_IR_NODES_TO_GRAPH))
         {
           if (SgProject::get_verbose() > 0)
                printf ("Generate the graph after the merge intermediateDeleteSet = %ld \n",(long)intermediateDeleteSet.size());
@@ -603,7 +606,8 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
 #endif
 
      int numberOfASTnodesAfterDelete = numberOfNodes();
-     if (numberOfASTnodesAfterDelete < MAX_NUMBER_OF_IR_NODES_TO_GRAPH)
+  // if (numberOfASTnodesAfterDelete < MAX_NUMBER_OF_IR_NODES_TO_GRAPH)
+     if ( (SgProject::get_verbose() > 0) && (numberOfASTnodesAfterDelete < MAX_NUMBER_OF_IR_NODES_TO_GRAPH))
         {
        // SimpleColorMemoryPoolTraversal::generateGraph("afterDeleteWholeAST",setOfIRnodes);
        // SimpleColorMemoryPoolTraversal::generateGraph(filename+"_afterDeleteWholeAST",sharedNodeSet);

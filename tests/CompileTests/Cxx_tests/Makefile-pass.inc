@@ -17,7 +17,14 @@
 #  test2010_17.C 
 # $(NAME_QUALIFICATION_EXAMPLE_TESTCODES_REQUIRED_TO_PASS)
 
+# The default set of tests include both tests for contant folding and using the original expression tree (default).
+# But since a few tests fail when the constant folded values are used for unparsing, we have to separate out a few tests.
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
+$(EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS) \
+$(FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_ORIGINAL_EXPRESSION_TREE_ELIMINATION)
+
+
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS = \
 test_CplusplusMacro_Cpp.C \
 test2001_01.C \
 test2001_02.C \
@@ -112,7 +119,7 @@ test2004_31.C \
 test2004_32.C \
 test2004_33.C \
 test2004_34.C \
-test2004_35.C \
+ test2004_35.C \
 test2004_36.C \
 test2004_37.C \
 test2004_38.C \
@@ -150,14 +157,14 @@ test2004_73.C \
 test2004_74.C \
 test2004_75.C \
 test2004_76.C \
-test2004_77.C \
+ test2004_77.C \
 test2004_78.C \
 test2004_79.C \
 test2004_80.C \
 test2004_81.C \
 test2004_83.C \
 test2004_84.C \
-test2004_85.C \
+ test2004_85.C \
 test2004_86.C \
 test2004_87.C \
 test2004_88.C \
@@ -187,20 +194,19 @@ test2004_112.C \
 test2004_113.C \
 test2004_114.C \
 test2004_115.C \
-test2004_116.C \
+ test2004_116.C \
 test2004_117.C \
 test2004_118.C \
 test2004_119.C \
-test2004_120.C \
+ test2004_120.C \
 test2004_121.C \
 test2004_122.C \
 test2004_123.C \
 test2004_124.C \
 test2004_125.C \
-test2004_127.C \
+ test2004_127.C \
 test2004_128.C \
-test2004_129.C \
-test2004_130.C \
+ test2004_129.C \
 test2004_131.C \
 test2004_132.C \
 test2004_133.C \
@@ -213,13 +219,13 @@ test2004_139.C \
 test2004_140.C \
 test2004_141.C \
 test2004_142.C \
-test2004_143.C \
+ test2004_143.C \
 test2004_144.C \
 test2004_145.C \
 test2004_146.C \
 test2004_147.C \
 test2004_148.C \
-test2004_149.C \
+ test2004_149.C \
 test2004_150.C \
 test2004_151.C \
 test2004_152.C \
@@ -260,21 +266,20 @@ test2005_24.C \
 test2005_25.C \
 test2005_26.C \
 test2005_27.C \
-test2005_28.C \
+ test2005_28.C \
 test2005_29.C \
 test2005_30.C \
 test2005_31.C \
-test2005_32.C \
 test2005_33.C \
-test2005_34.C \
-test2005_35.C \
+ test2005_34.C \
+ test2005_35.C \
 test2005_36.C \
 test2005_37.C \
 test2005_38.C \
-test2005_39.C \
+ test2005_39.C \
 test2005_40.C \
 test2005_41.C \
-test2005_42.C \
+ test2005_42.C \
 test2005_43.C \
 test2005_44.C \
 test2005_45.C \
@@ -312,7 +317,7 @@ test2005_78.C \
 test2005_79.C \
 test2005_80.C \
 test2005_81.C \
-test2005_82.C \
+ test2005_82.C \
 test2005_83.C \
 test2005_84.C \
 test2005_86.C \
@@ -322,7 +327,7 @@ test2005_89.C \
 test2005_90.C \
 test2005_91.C \
 test2005_92.C \
-test2005_93.C \
+ test2005_93.C \
 test2005_94.C \
 test2005_95.C \
 test2005_96.C \
@@ -507,7 +512,6 @@ test2006_107.C \
 test2006_108.C \
 test2006_109.C \
 test2006_111.C \
-test2006_112.C \
 test2006_113.C \
 test2006_114.C \
 test2006_115.C \
@@ -519,7 +523,6 @@ test2006_120.C \
 test2006_122.C \
 test2006_123.C \
 test2006_124.C \
-test2006_125.C \
 test2006_126.C \
 test2006_129.C \
 test2006_140.C \
@@ -666,7 +669,6 @@ test2009_24.C \
 test2009_27.C \
 test2009_28.C \
 test2009_30.C \
-test2009_31.C \
 test2009_39.C \
 test2009_40.C \
 test2009_41.C \
@@ -728,8 +730,6 @@ test2011_61.C \
 test2011_62.C \
 test2011_63.C \
 test2011_64.C \
-test2011_65.C \
-test2011_66.C \
 test2011_67.C \
 test2011_68.C \
 test2011_69.C \
@@ -752,7 +752,6 @@ test2011_85.C \
 test2011_86.C \
 test2011_87.C \
 test2011_88.C \
-test2011_89.C \
 test2011_90.C \
 test2011_91.C \
 test2011_92.C \
@@ -772,12 +771,19 @@ test2011_117.C \
 test2011_118.C \
 test2011_119.C \
 test2011_120.C \
-test2011_121.C \
 test2011_133.C \
+test2011_135.C \
+test2011_136.C \
+test2011_137.C \
+test2011_138.C \
+test2011_139.C \
+test2011_140.C \
+test2011_141.C \
+test2011_142.C \
+test2011_143.C \
    test2005_112.C \
    test2005_117.C \
    test2005_154.C \
-   test2005_161.C \
    test2005_163.C \
    test2005_179.C \
    test2005_183.C \
@@ -791,13 +797,11 @@ test2011_133.C \
    test2006_151.C \
    test2006_159.C \
    test2007_01.C \
-   test2007_05.C \
    test2007_13.C \
    test2007_17.C \
    test2007_55.C \
    test2007_78.C \
    test2008_04.C \
-   test2009_37.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -811,13 +815,42 @@ inputBug327.C \
 test2005_09.C \
 test2005_104.C \
 test2010_24.C \
-test2010_25.C
+$(FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION) \
+$(FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION_FOR_FILE_IO_TESTS)
+
+
+# DQ (9/17/2011): Failing name qualification...fix after fixing original expression tree AST consistancy.
+FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION = \
+ test2004_130.C \
+ test2005_32.C \
+ test2005_161.C \
+ test2007_05.C \
+ test2009_37.C \
+ test2009_31.C \
+ test2011_65.C \
+ test2011_66.C \
+ test2011_89.C 
+
+
+# DQ (9/17/2011): Failing tests for constant folding AST consitancy support.
+FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_ORIGINAL_EXPRESSION_TREE_ELIMINATION = \
+test2006_112.C \
+test2010_25.C 
+
+
+# DQ (9/24/2011): Failing astFileIO test as a result of making replacing constant folded values with the original expression trees.
+FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION_FOR_FILE_IO_TESTS = \
+ test2006_125.C \
+ test2011_121.C 
+
+
+
+
 
 # Failing AST File I/O tests (7/24/2011):
 # test2011_113.C 
 # test2011_114.C 
 # test2011_116.C 
-
 
 # DQ (5/8/2011): These fail only in the generated (unparsed) code for the new name
 # qualification support.  Thus we can't use them to test the new name qualifiction

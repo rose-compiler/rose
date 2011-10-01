@@ -302,7 +302,7 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
 #     test2007_108.f90
 #     test2010_03.f90
 #     test2010_81.f90
-     
+
 # DQ (4/10/2011): If it is not gfortran 4.5, then add this test code (these fail syntax checking with 4.5).
 if !ROSE_USING_GFORTRAN_VERSION_4_5
    F90_TESTCODES_REQUIRED_TO_PASS += \
@@ -688,7 +688,6 @@ F90_TESTCODES_REQUIRED_TO_PASS += \
      test2010_147.f90 \
      test2010_148.f90 \
      test2010_149.f90 \
-     test2010_161.f90 \
      test2010_169.f90 \
      test2010_170.f90 \
      test2011_03.f90 \
@@ -718,6 +717,9 @@ F90_TESTCODES_REQUIRED_TO_PASS += \
      test2011_72.f90 \
      test2011_75.f90 \
      test2011_76.f90 
+
+# DQ (9/30/2011): There is a long history of this being a statistical failure on at least OSX systems. 
+# test2010_161.f90 
 
 
 # DXN (as of 08/10/2011):
@@ -905,10 +907,13 @@ PERFORMANCE_REPORT_OPTION = -rose:compilationPerformanceFile $(top_builddir)/FOR
 
 # ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict
 # ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict $(PERFORMANCE_REPORT_OPTION)
-ROSE_FLAGS = -rose:verbose 0 -I$(srcdir)
 # ROSE_FLAGS = -rose:verbose 3 -rose:output_parser_actions -I$(srcdir)
 # ROSE_FLAGS = -rose:verbose 0 -rose:output_tokens -rose:output_parser_actions -I$(srcdir)
 # ROSE_FLAGS = -rose:verbose 0 -rose:output_tokens -I$(srcdir)
+# ROSE_FLAGS = -rose:verbose 0 -I$(srcdir)
+
+# DQ (9/26/2011): Added optional test for dangling pointers to IR nodes in the AST (level 2 causes assertion if dangling pointers is found).
+ROSE_FLAGS = -rose:verbose 0 -rose:detect_dangling_pointers 2 -I$(srcdir)
 
 # VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes
@@ -1174,6 +1179,10 @@ bug3:
 bug4:
 	../../testTranslator $(ROSE_FLAGS) -rose:output_parser_actions -I$(srcdir) -c $(srcdir)/verify.f
 
+# DQ (9/19/2011): Added Cray pointer test using test code from Imperial College London.
+crayPointerTest: testTranslator test2011_imperial_crayPointers.f90
+	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f90 -rose:cray_pointer_support -rose:skip_syntax_check -rose:skipfinalCompileStep -c $(srcdir)/test2011_imperial_crayPointers.f90
+	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f90 -rose:skip_syntax_check -rose:skipfinalCompileStep -c $(srcdir)/test2011_imperial_crayPointers.f90
 
 # DQ (4/9/2011): Let's at least run these in parallel (more important for the Insure++ tests).
 extra_tests: $(PASSING_MODULE_TEST_Objects) testCPP_Defines testMPItypes testMultipleFortranFiles
