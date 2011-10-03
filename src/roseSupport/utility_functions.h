@@ -18,8 +18,8 @@ std::string version_number();
 
 // Simple interface for ROSE (error codes are in SgProject.frontendErrorCode(), backendErrorCode() )
 // tps : Need to make this function (DLL) public 
-ROSE_DLL_API SgProject* frontend ( int argc, char** argv);
-ROSE_DLL_API SgProject* frontend ( const std::vector<std::string>& argv);
+ROSE_DLL_API SgProject* frontend ( int argc, char** argv, bool frontendConstantFolding = false );
+ROSE_DLL_API SgProject* frontend ( const std::vector<std::string>& argv, bool frontendConstantFolding = false );
 
 // This builds a shell of a frontend SgProject with associated SgFile objects (but with empty 
 // SgGlobal objects) supporting only commandline processing and requiring the frontend to be 
