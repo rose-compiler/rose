@@ -276,7 +276,7 @@ bool SgBasicBlock::cfgIsIndexInteresting(unsigned int idx) const {
 std::vector<CFGEdge> SgBasicBlock::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   if (idx == this->get_statements().size()) {
-	makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
+        makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
   } else if (idx < this->get_statements().size()) {
     makeEdge(CFGNode(this, idx), this->get_statements()[idx]->cfgForBeginning(), result);
   } else ROSE_ASSERT (!"Bad index for SgBasicBlock");
@@ -4919,7 +4919,7 @@ SgJavaSynchronizedStatement::cfgFindChildIndex(SgNode* n)
      if (n == this->get_expression()) {
           return 0;
      } else if (n == this->get_body()) {
-    	 return 1;
+         return 1;
      } else {
          ROSE_ASSERT (!"Bad child in java synchronized statement");
      }
@@ -4970,7 +4970,7 @@ SgJavaForEachStatement::cfgFindChildIndex(SgNode* n)
      if (n == this->get_collection()) {
           return 0;
      }
-	 if (n == this->get_loop_body()) {
+         if (n == this->get_loop_body()) {
           return 1;
      } else {
          ROSE_ASSERT (!"Bad child in java for each statement");
@@ -4985,18 +4985,18 @@ SgJavaForEachStatement::cfgOutEdges(unsigned int idx) {
 
   switch (idx) {
     case 0:
-    	makeEdge(CFGNode(this, idx), this->get_collection()->cfgForBeginning(), result);
-    	break;
+        makeEdge(CFGNode(this, idx), this->get_collection()->cfgForBeginning(), result);
+        break;
     case 1:
-    	makeEdge(CFGNode(this, idx), this->get_loop_body()->cfgForBeginning(), result);
-    	break;
+        makeEdge(CFGNode(this, idx), this->get_loop_body()->cfgForBeginning(), result);
+        break;
     case 2:
         // backedge from body exit to foreach's 'collection' condition
-    	makeEdge(CFGNode(this, idx),CFGNode(this, 0), result);
-    	break;
+        makeEdge(CFGNode(this, idx),CFGNode(this, 0), result);
+        break;
     case 3:
-    	makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
-    	break;
+        makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
+        break;
     default: ROSE_ASSERT (!"Bad index for SgJavaForEachStatement");
   }
   return result;
@@ -5008,8 +5008,8 @@ SgJavaForEachStatement::cfgInEdges(unsigned int idx) {
   switch (idx) {
     case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
             // backedge from body exit to foreach's 'collection' condition
-    		makeEdge(CFGNode(this, 2), CFGNode(this, idx), result);
-    		break;
+                makeEdge(CFGNode(this, 2), CFGNode(this, idx), result);
+                break;
     case 1: makeEdge(this->get_collection()->cfgForEnd(), CFGNode(this, idx), result); break;
     case 2: {
       makeEdge(this->get_loop_body()->cfgForEnd(), CFGNode(this, idx), result);
