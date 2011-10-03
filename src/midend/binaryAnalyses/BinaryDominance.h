@@ -41,7 +41,7 @@ namespace BinaryAnalysis {
      *  @section BinaryDominance_Ex1 Example
      *
      *  This example shows one way to initialize the SgAsmBlock::get_immediate_dominator() information for an entire AST.  We
-     *  use an AST traversal to find the function nodes (SgAsmFunctionDeclaration), and for each function we calculate that
+     *  use an AST traversal to find the function nodes (SgAsmFunction), and for each function we calculate that
      *  function's control flow graph, and use the control flow graph to calculate the dominance graph.  We then clear all
      *  previous immediate dominator pointers in the function, and re-initialize them with the dominance graph.  The reason we
      *  first clear the AST is because apply_to_ast() only initializes the blocks which have dominators; if we didn't clear the
@@ -68,7 +68,7 @@ namespace BinaryAnalysis {
      *          {}
      *      void visit(SgNode *node) {
      *          using namespace BinaryAnalysis;
-     *          SgAsmFunctionDeclaration *func = isSgAsmFunctionDeclaration(node);
+     *          SgAsmFunction *func = isSgAsmFunction(node);
      *          if (func) {
      *              ControlFlow::Graph cfg = cfg_analysis.build_cfg_from_ast<ControlFlow::Graph>(func);
      *              typedef boost::graph_traits<ControlFlow::Graph>::vertex_descriptor CFG_Vertex;
@@ -175,7 +175,7 @@ namespace BinaryAnalysis {
          *  Blocks that have an immediate dominator will have their dominator pointer updated (see
          *  SgAsmBlock::get_immediate_dominator()), but the pointer will not be set to null if the block has no
          *  dominator. Therefore, it is probably wise to call clear_ast() before apply_to_ast().  The reason this was designed
-         *  like this is because it makes it possible to update just the subtree (e.g., SgAsmFunctionDeclaration) over which
+         *  like this is because it makes it possible to update just the subtree (e.g., SgAsmFunction) over which
          *  dominance was computed even if the control flow graph covers more of the AST.
          *
          *  @{ */
@@ -524,7 +524,7 @@ BinaryAnalysis::Dominance::build_idom_relation_from_cfg(const ControlFlowGraph &
     if (debug) {
         fprintf(debug, "BinaryAnalysis::Dominance::build_idom_relation_from_cfg: starting at vertex %zu\n", start);
         SgAsmBlock *block = get(boost::vertex_name, cfg, start);
-        SgAsmFunctionDeclaration *func = block ? block->get_enclosing_function() : NULL;
+        SgAsmFunction *func = block ? block->get_enclosing_function() : NULL;
         if (func) {
             fprintf(debug, "  Vertex %zu is %s block of", start, func->get_entry_block()==block?"the entry":"a");
             if (func->get_name().empty()) {
@@ -721,7 +721,7 @@ BinaryAnalysis::Dominance::build_postdom_relation_from_cfg(const ControlFlowGrap
     if (debug) {
         fprintf(debug, "BinaryAnalysis::Dominance::build_postdom_relation_from_cfg: starting at vertex %zu\n", start);
         SgAsmBlock *block = get(boost::vertex_name, cfg, start);
-        SgAsmFunctionDeclaration *func = block ? block->get_enclosing_function() : NULL;
+        SgAsmFunction *func = block ? block->get_enclosing_function() : NULL;
         if (func) {
             fprintf(debug, "  Vertex %zu is %s block of", start, func->get_entry_block()==block?"the entry":"a");
             if (func->get_name().empty()) {

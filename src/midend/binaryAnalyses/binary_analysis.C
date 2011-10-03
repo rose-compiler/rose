@@ -134,7 +134,7 @@ generateStaticTraces(SgIncidenceDirectedGraph* graph, size_t max_length)
  * The function addBlocksFromFunctionToGraph creates the SgGraphNode's 
  * for all blocks in the subtree
  **************************************************/
-void addBlocksFromFunctionToGraph(SgIncidenceDirectedGraph* graph, std::map<rose_addr_t, SgGraphNode*>& instToNodeMap, SgAsmFunctionDeclaration* funcDecl )
+void addBlocksFromFunctionToGraph(SgIncidenceDirectedGraph* graph, std::map<rose_addr_t, SgGraphNode*>& instToNodeMap, SgAsmFunction* funcDecl )
 {
   ROSE_ASSERT(funcDecl!=NULL);
 
@@ -207,7 +207,7 @@ SgIncidenceDirectedGraph* constructCFG_BB(SgAsmStatement* blocks, const Partitio
   SgIncidenceDirectedGraph *returnGraph = new SgIncidenceDirectedGraph();
   ROSE_ASSERT (returnGraph != NULL);
 
-  ROSE_ASSERT( isSgAsmBlock(blocks) || isSgAsmFunctionDeclaration(blocks)  );
+  ROSE_ASSERT( isSgAsmBlock(blocks) || isSgAsmFunction(blocks)  );
 
   typedef std::map<rose_addr_t, SgGraphNode*> InstructionToNode;
 
@@ -218,14 +218,14 @@ SgIncidenceDirectedGraph* constructCFG_BB(SgAsmStatement* blocks, const Partitio
 
   //Iterate over all functions to add nodes to the graph
 
-  if( isSgAsmFunctionDeclaration(blocks) != NULL ) // For Single  function
+  if( isSgAsmFunction(blocks) != NULL ) // For Single  function
   {
-    SgAsmFunctionDeclaration* funcDecl = isSgAsmFunctionDeclaration(blocks);
+    SgAsmFunction* funcDecl = isSgAsmFunction(blocks);
     addBlocksFromFunctionToGraph(returnGraph, instToNodeMap, funcDecl);
   }else
     for( unsigned int i = 0 ; i < isSgAsmBlock(blocks)->get_statementList().size(); i++   )
     {
-      SgAsmFunctionDeclaration* funcDecl = isSgAsmFunctionDeclaration(isSgAsmBlock(blocks)->get_statementList()[i]);
+      SgAsmFunction* funcDecl = isSgAsmFunction(isSgAsmBlock(blocks)->get_statementList()[i]);
 
       ROSE_ASSERT(funcDecl!=NULL);
 
@@ -249,7 +249,7 @@ SgIncidenceDirectedGraph* constructCFG_BB(SgAsmStatement* blocks, const Partitio
       SgGraphNode* from = instToNodeMap[ isSgAsmBlock(instMap.find(*edgeItr)->second->get_parent() )->get_address() ];
 
       //Add node when we are creating a full cfg or when we have an interprocedural edge for a functino cfg  
-      if( isSgAsmFunctionDeclaration(blocks) == NULL || ( from != NULL && to != NULL ) )
+      if( isSgAsmFunction(blocks) == NULL || ( from != NULL && to != NULL ) )
       {
         ROSE_ASSERT( from != NULL );
         ROSE_ASSERT( to   != NULL );

@@ -9,7 +9,7 @@
 #include <QIcon>
 
 class SgNode;
-class SgAsmFunctionDeclaration;
+class SgAsmFunction;
 class SgAsmInstruction;
 
 class AstFilterInterface;
@@ -42,8 +42,8 @@ class AsmTreeRootNode : public ItemTreeNode
 class AsmTreeFunctionNode : public ItemTreeNode
 {
     public:
-        AsmTreeFunctionNode(SgAsmFunctionDeclaration * fd,
-                            SgAsmFunctionDeclaration * fd2=0);
+        AsmTreeFunctionNode(SgAsmFunction * fd,
+                            SgAsmFunction * fd2=0);
         virtual ~AsmTreeFunctionNode() {}
 
         QString getName() const { return name; }
@@ -53,8 +53,8 @@ class AsmTreeFunctionNode : public ItemTreeNode
         bool isFirstColumnSpanned () const    { return true; }
 
     protected:
-        SgAsmFunctionDeclaration * declNode1;
-        SgAsmFunctionDeclaration * declNode2;
+        SgAsmFunction * declNode1;
+        SgAsmFunction * declNode2;
         QString name;
 
 };

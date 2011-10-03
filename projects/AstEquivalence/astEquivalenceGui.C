@@ -310,7 +310,7 @@ BinaryCloneGui::run( )
     while(tableWidget->rowCount()) tableWidget->removeRow(0);
 
 
-    vector<SgAsmFunctionDeclaration*> funcs;
+    vector<SgAsmFunction*> funcs;
     FindAsmFunctionsVisitor funcVis;
     AstQueryNamespace::querySubTree(fileA, std::bind2nd( funcVis, &funcs ));
 
@@ -578,7 +578,7 @@ void BinaryCloneGui::showClone(int row)
     vector<SgAsmx86Instruction*> insns;
     FindInstructionsVisitor vis;
 
-    vector<SgAsmFunctionDeclaration*> funcs;
+    vector<SgAsmFunction*> funcs;
     FindAsmFunctionsVisitor funcVis;
     AstQueryNamespace::querySubTree(currentRoot, std::bind2nd( funcVis, &funcs ));
 
