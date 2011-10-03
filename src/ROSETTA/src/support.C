@@ -1050,6 +1050,13 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "sourceFileTypeIsUnknown", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (9/26/2011): Added support to detect dangling pointers in ROSE translators.
+  // This is not an expensive test, but it fails for isolated parts of ROSE currently 
+  // so it should be made optional at this early stage (before it is made a default 
+  // test in the AST consistancy tests).
+     File.setDataPrototype         ( "int", "detect_dangling_pointers", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // To be consistant with the use of binaryFile we will implement get_binaryFile() and set_binaryFile()
   // functions so that we can support the more common (previous) interface where there was only a single
   // SgAsmFile pointers called "binaryFile".
@@ -1112,8 +1119,8 @@ Grammar::setUpSupport ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // RPM (1/5/2010): Switch to control how the Partitioner looks for functions. It takes a list of words based loosely
-  // on the constants in the SgAsmFunctionDeclaration::FunctionReason enum.
-     File.setDataPrototype("unsigned", "partitionerSearchHeuristics", "= SgAsmFunctionDeclaration::FUNC_DEFAULT",
+  // on the constants in the SgAsmFunction::FunctionReason enum.
+     File.setDataPrototype("unsigned", "partitionerSearchHeuristics", "= SgAsmFunction::FUNC_DEFAULT",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // RPM (6/9/2010): Switch to specify the IPD file for the Partitioner.
@@ -1588,7 +1595,12 @@ Grammar::setUpSupport ()
 
   // negara1 (08/17/2011): Added to permit specifying an optional root folder for header files unparsing.
      Project.setDataPrototype("std::string", "unparseHeaderFilesRootFolder", "= \"\"",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (9/18/2011): Added support for specification of frontend constant folding (only supported in C/C++ using EDG).
+     Project.setDataPrototype("bool", "frontendConstantFolding", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);          
+
      
      Attribute.setDataPrototype    ( "std::string"  , "name", "= \"\"",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);

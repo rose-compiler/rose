@@ -1172,7 +1172,7 @@ Outliner::generateFunction ( SgBasicBlock* s,
   // DQ (2/24/2009): I think that at this point we should delete the subtree represented by "s"
   // But it might have made more sense to not do a deep copy on "s" in the first place.
   // Why is there a deep copy on "s"?
-  SageInterface::deleteAST(s);
+     SageInterface::deleteAST(s);
 #endif
 
 #if 0

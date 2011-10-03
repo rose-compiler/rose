@@ -737,7 +737,7 @@ SgType* getArrayElementType(SgType* t);
 //! Get the element type of an array, pointer or string, or NULL if not applicable
 SgType* getElementType(SgType* t);
 
-//! Check if an expression is an array access. If so, return its name expression and subscripts if requested. Based on AstInterface::IsArrayAccess()
+//! Check if an expression is an array access (SgPntrArrRefExp). If so, return its name expression and subscripts if requested. Users can use convertRefToInitializedName() to get the possible name. It does not check if the expression is a top level SgPntrArrRefExp. 
 bool isArrayReference(SgExpression* ref, SgExpression** arrayNameExp=NULL, std::vector<SgExpression*>** subscripts=NULL);
 
 
@@ -1155,6 +1155,9 @@ SgScopeStatement* getScope(const SgNode* astNode);
 // DQ (2/24/2009): Simple function to delete an AST subtree (used in outlining).
 //! Function to delete AST subtree's nodes only, users must take care of any dangling pointers, symbols or types that result.
  void deleteAST(SgNode* node);
+
+//! Special purpose function for deleting AST expression tress containing valid original expression trees in constant folded expressions (for internal use only).
+ void deleteExpressionTreeWithOriginalExpressionSubtrees(SgNode* root);
 
 // DQ (2/25/2009): Added new function to support outliner.
 //! Move statements in first block to the second block (preserves order and rebuilds the symbol table).
