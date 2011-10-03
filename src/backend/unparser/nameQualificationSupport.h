@@ -82,7 +82,7 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
           std::list<SgNode*> gatherNamesInClass( SgClassDefinition* classDefinition );
 
        // DQ (7/23/2011): This supports nested calls where the scope of a subtrees must have its scope explicitly 
-       // specified. I think this only happens for the indedx in the SgArrayType.
+       // specified. I think this only happens for the index in the SgArrayType.
           SgScopeStatement* explictlySpecifiedCurrentScope;
 
      public:

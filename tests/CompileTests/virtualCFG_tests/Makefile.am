@@ -197,9 +197,7 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2007_13.f90 \
      test2007_14.f90 \
      test2007_15.f90 \
-     test2007_16.f90 \
      test2007_17.f90 \
-     test2007_19.f90 \
      test2007_20.f90 \
      test2007_21.f90 \
      test2007_22.f90 \
@@ -230,7 +228,6 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2007_58.f90 \
      test2007_59.f90 \
      test2007_60.f90 \
-     test2007_61.f90 \
      test2007_62.f90 \
      test2007_63.f90 \
      test2007_64.f90 \
@@ -254,28 +251,22 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2007_91.f90 \
      test2007_92.f90 \
      test2007_93.f90 \
-     test2007_94.f90 \
      test2007_95.f90 \
      test2007_96.f90 \
      test2007_97.f90 \
-     test2007_99.f90 \
      test2007_100.f90 \
-     test2007_101.f90 \
      test2007_102.f90 \
      test2007_103.f90 \
      test2007_104.f90 \
      test2007_105.f90 \
      test2007_106.f90 \
-     test2007_109.f90 \
      test2007_110.f90 \
-     test2007_111.f90 \
      test2007_117.f90 \
      test2007_118.f90 \
      test2007_119.f90 \
      test2007_121.f90 \
      test2007_122.f90 \
      test2007_126.f90 \
-     test2007_127.f90 \
      test2007_135.f90 \
      test2007_136.f90 \
      test2007_137.f90 \
@@ -289,14 +280,12 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2007_159.f90 \
      test2007_160.f90 \
      test2007_161.f90 \
-     test2007_168.f90 \
      test2007_169.f90 \
      test2007_178.f90 \
      test2007_179.f90 \
      test2007_181.f90 \
      test2007_182.f90 \
      test2007_190.f90 \
-     test2007_219.f90 \
      test2007_236.f90 \
      test2007_238.f90 \
      test2007_239.f90 \
@@ -305,16 +294,27 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2007_249.f90 \
      test2007_250.f90 \
      test2007_262.f90 \
-     test2007_263.f90 \
      canonicalExample.f90 
 
+# DQ (9/15/2011): Passing tests: 111, Failing tests: 12
+FAILING_F90_TESTS = \
+     test2007_16.f90 \
+     test2007_19.f90 \
+     test2007_61.f90 \
+     test2007_94.f90 \
+     test2007_99.f90 \
+     test2007_101.f90 \
+     test2007_109.f90 \
+     test2007_111.f90 \
+     test2007_127.f90 \
+     test2007_168.f90 \
+     test2007_219.f90 \
+     test2007_263.f90 \
+     lastTest.f90
+
 F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
-     test2007_124.f \
-     test2007_125.f \
-     test2007_128.f \
      test2007_129.f \
      test2007_132.f \
-     test2007_145.f \
      test2007_148.f \
      test2007_150.f \
      test2007_151.f \
@@ -322,25 +322,10 @@ F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
      test2007_154.f \
      test2007_155.f \
      test2007_156.f \
-     test2007_157.f \
      test2007_162.f \
      test2007_163.f \
      test2007_164.f \
      test2007_175.f \
-     test2007_183.f \
-     test2007_184.f \
-     test2007_185.f \
-     test2007_186.f \
-     test2007_187.f \
-     test2007_188.f \
-     test2007_189.f \
-     test2007_191.f \
-     test2007_192.f \
-     test2007_193.f \
-     test2007_194.f \
-     test2007_195.f \
-     test2007_196.f \
-     test2007_197.f \
      test2007_198.f \
      test2007_200.f \
      test2007_201.f \
@@ -350,7 +335,6 @@ F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
      test2007_206.f \
      test2007_207.f \
      test2007_208.f \
-     test2007_209.f \
      test2007_211.f \
      test2007_212.f \
      test2007_213.f \
@@ -365,7 +349,6 @@ F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
      test2007_223.f \
      test2007_224.f \
      test2007_226.f \
-     test2007_227.f \
      test2007_228.f \
      test2007_229.f \
      test2007_230.f \
@@ -379,36 +362,67 @@ F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
      test2007_247.f \
      test2007_251.f \
      test2007_253.f \
-     test2007_256.f \
-     test2007_258.f \
      test2007_259.f \
      test2007_260.f \
      test2007_261.f
 
+# DQ (9/15/2011): It appears that all of the first few F77 tests fail for the same reason.
+# Passing tests: 51, Failing tests: 23
+# The Fortran CFG likely needs to be reviewed separately.
+FAILING_F77_TESTS = \
+     test2007_124.f \
+     test2007_125.f \
+     test2007_128.f \
+     test2007_145.f \
+     test2007_157.f \
+     test2007_183.f \
+     test2007_184.f \
+     test2007_185.f \
+     test2007_186.f \
+     test2007_187.f \
+     test2007_188.f \
+     test2007_189.f \
+     test2007_191.f \
+     test2007_192.f \
+     test2007_193.f \
+     test2007_194.f \
+     test2007_195.f \
+     test2007_196.f \
+     test2007_197.f \
+     test2007_209.f \
+     test2007_227.f \
+     test2007_256.f \
+     test2007_258.f \
+     lastCode.f
+
 F03_TESTCODES_REQUIRED_TO_PASS = \
-     test2007_30.f03 \
      test2007_31.f03 \
-     test2007_35.f03 \
      test2007_37.f03 \
      test2007_41.f03 \
      test2007_42.f03 \
-     test2007_43.f03 \
      test2007_44.f03 \
-     test2007_45.f03 \
      test2007_47.f03 \
      test2007_98.f03 \
      test2007_112.f03 \
      test2007_113.f03 \
      test2007_114.f03 \
-     test2007_115.f03 \
-     test2007_116.f03 \
      test2007_120.f03 \
      test2007_123.f03 \
+     test2007_134.f03 \
+     test2007_174.f03 
+
+# DQ (9/15/2011): Passing tests: , Failing tests: 
+FAILING_F03_TESTS = \
+     test2007_30.f03 \
+     test2007_35.f03 \
+     test2007_43.f03 \
+     test2007_45.f03 \
+     test2007_115.f03 \
+     test2007_116.f03 \
      test2007_130.f03 \
      test2007_133.f03 \
-     test2007_134.f03 \
-     test2007_174.f03 \
-     test2007_176.f03
+     test2007_176.f03 \
+     lastTest.f03
 
 C99_TESTCODES_REQUIRED_TO_PASS = \
      bool.c \
@@ -572,7 +586,8 @@ F03_FILES = ${F03_TESTCODES_REQUIRED_TO_PASS:.f03=.F03-o}
 JAVA_FILES = ${JAVA_TESTCODES_REQUIRED_TO_PASS:.java=.java-o}
 
 $(CXX_FILES): testVirtualCFG
-	./testVirtualCFG $(ROSE_FLAGS) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(srcdir)/../Cxx_tests/$(@:.CXX-o=.C) && touch $@
+#	./testVirtualCFG $(ROSE_FLAGS) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(srcdir)/../Cxx_tests/$(@:.CXX-o=.C) && touch $@
+	./testVirtualCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(srcdir)/../Cxx_tests/$(@:.CXX-o=.C) && touch $@
 
 # ${EXAMPLE_C_TESTCODES_VERIFIED_TO_PASS:.C.o}: testVirtualCFG
 $(C_FILES): testVirtualCFG $(srcdir)/../Cxx_tests/$(@:.C-o=.C)
@@ -583,17 +598,20 @@ $(C99_FILES): testVirtualCFG $(srcdir)/../C99_tests/$(@:.C99-o=.c)
 	cp $(srcdir)/../C99_tests/$(@:.C99-o=.c) $(@:.C99-o=.temp.c)
 	./testVirtualCFG $(ROSE_FLAGS) -I$(srcdir)/../C99_tests $(TESTCODE_INCLUDES) -c $(@:.C99-o=.temp.c) && touch $@
 
+# DQ (9/15/2011): I have reenabled these test and identified the subset which passed so they can be reqularly tested.
 # DQ (6/4/2008): I have commented these out while we do more development of ROSE Fortran support.
 $(F90_FILES): ./testVirtualCFG
-#	./testVirtualCFG $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/../Fortran_tests/$(@:.F90-o=.f90) && touch $@
+	./testVirtualCFG $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/../Fortran_tests/$(@:.F90-o=.f90) && touch $@
 
+# DQ (9/15/2011): I have reenabled these test and identified the subset which passed so they can be reqularly tested.
 # DQ (6/4/2008): I have commented these out while we do more development of ROSE Fortran support.
 $(F77_FILES): ./testVirtualCFG
-#	./testVirtualCFG $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/../Fortran_tests/$(@:.F-o=.f) && touch $@
+	./testVirtualCFG $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/../Fortran_tests/$(@:.F-o=.f) && touch $@
 
+# DQ (9/15/2011): I have reenabled these test and identified the subset which passed so they can be reqularly tested.
 # DQ (6/4/2008): I have commented these out while we do more development of ROSE Fortran support.
 $(F03_FILES): ./testVirtualCFG
-#	./testVirtualCFG $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/../Fortran_tests/$(@:.F03-o=.f03) && touch $@
+	./testVirtualCFG $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/../Fortran_tests/$(@:.F03-o=.f03) && touch $@
 
 #$(JAVA_FILES): testVirtualCFG $(srcdir)/../Java_tests/$(@:.java-o=.java)
 #	cp $(srcdir)/../Java_tests/$(@:.java-o=.java) $(@:.java-o=.temp.java)
@@ -643,7 +661,7 @@ clean-local:
 	rm -f *.o 
 	rm -f *.temp.c 
 	rm -f *-o 
-	rm -f *.mod
+	rm -f *.mod *.rmod
 #	rm -f *.dot
 	rm -f limits_*.dot
 	rm -f test_*.dot

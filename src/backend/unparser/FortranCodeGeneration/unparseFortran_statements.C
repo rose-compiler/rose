@@ -3779,10 +3779,10 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
          if (numVar > 1)
          {
             SgType* baseType = type->stripType(SgType::STRIP_ARRAY_TYPE);
-            unp->u_fortran_type->unparseType(baseType, info, false);  // do not print len for string type
+            unp->u_fortran_type->unparseType(baseType, info, false);  // do not print type attributes such as dimension, length on the left of ::
          }
          else
-            unp->u_fortran_type->unparseType(type, info, true);  // print len if length expression exists
+            unp->u_fortran_type->unparseType(type, info, true);  // print type attribute on the left of ::
 
           // DQ (11/18/2007): Added support for ALLOCATABLE declaration attribute
           // SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(stmt);

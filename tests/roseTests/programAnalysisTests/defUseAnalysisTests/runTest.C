@@ -462,7 +462,9 @@ int main( int argc, char * argv[] )
       // ------------------------------ TESTCASE 1 -----------------------------------------
       argvList[1]=srcdir+"tests/test20.C";
       results.clear();      useresults.clear();
-      testOneFunction("::bar",argvList, debug, 8, results,useresults);
+   // DQ (9/24/2011): We have a different value of nodes within the new replacement of constant folded values with the original expression trees.
+   // testOneFunction("::bar",argvList, debug, 8, results,useresults);
+      testOneFunction("::bar",argvList, debug, 7, results,useresults);
     }
 
     if (startNrInt<=21 || testAll) {
@@ -477,7 +479,9 @@ int main( int argc, char * argv[] )
       argvList[1]=srcdir+"tests/test22.C";
       results.clear();      useresults.clear();
       results.insert(pair<string,int>("b", 7));
-      testOneFunction("::func",argvList, debug, 16, results,useresults);
+   // DQ (9/24/2011): We have a different value of nodes within the new replacement of constant folded values with the original expression trees.
+   // testOneFunction("::func",argvList, debug, 16, results,useresults);
+      testOneFunction("::func",argvList, debug, 15, results,useresults);
     }
 
     if (startNrInt<=23 || testAll) {
