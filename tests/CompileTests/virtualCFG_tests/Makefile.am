@@ -470,6 +470,21 @@ JAVA_TESTCODES_REQUIRED_TO_PASS = \
      cave3_foreach2.java \
      cave3_if0.java \
      cave3_if1.java \
+     cave3_labelDecl0.java \
+     cave3_labelDecl2.java \
+     cave3_labelDecl3.java \
+     cave3_labelBreak0.java \
+     cave3_labelBreak1.java \
+     cave3_labelBreak2.java \
+     cave3_labelBreak4.java \
+     cave3_labelBreak5.java \
+     cave3_labelBreak6.java \
+     cave3_labelContinue2.java \
+     cave3_labelContinue3.java \
+     cave3_labelContinue4.java \
+     cave3_labelContinue5.java \
+     cave3_labelContinueBreak0.java \
+     cave3_labelContinueBreak1.java \
      cave3_nameResolution0.java \
      cave3_rshift0.java \
      cave3_rshift1.java \
@@ -493,6 +508,7 @@ JAVA_TESTCODES_REQUIRED_TO_PASS = \
 #     cave3_mthParam0.java
 #     cave3_while1.java
 #     cave3_instanceof0.java \
+#     cave3_labelDecl1.java \
 #
 # Buggy cfg implementation
 # Weird cfg for System.out.println

@@ -168,8 +168,8 @@ static CFGNode getNodeJustAfterInContainer(SgNode* n) {
   }
   unsigned int idx = parent->cfgFindNextChildIndex(n);
   if ( idx > parent->cfgIndexForEnd() ) {
-    if (SgProject::get_verbose() >= 3) {
-      std::cerr << "getNodeJustAfter has bad index:" << std::endl;
+      if (SgProject::get_verbose() >= 3) {
+      std::cerr << "getNodeJustAfterInContainer has bad index:" << std::endl;
       std::cerr << parent->get_file_info()->get_filename() << ":" << parent->get_file_info()->get_line() << std::endl;
       std::cerr << parent->unparseToString() << std::endl;
     }
@@ -1378,6 +1378,8 @@ std::vector<CFGEdge> SgBreakStmt::cfgOutEdges(unsigned int idx) {
         case V_SgWhileStmt: newIndex = 2; break;
         case V_SgSwitchStatement: newIndex = 2; break;
         case V_SgFortranDo: newIndex = 6; break;
+        case V_SgJavaForEachStatement: newIndex = 3; break;
+        case V_SgJavaLabelStatement: newIndex = 1; break;
         default: ROSE_ASSERT (false);
       }
       makeEdge(CFGNode(this, idx), CFGNode(enc, newIndex), result);
@@ -1421,6 +1423,8 @@ std::vector<CFGEdge> SgContinueStmt::cfgOutEdges(unsigned int idx) {
         case V_SgForStatement: newIndex = 3; break;
         case V_SgWhileStmt: newIndex = 0; break;
         case V_SgFortranDo: newIndex = 5; break;
+        case V_SgJavaForEachStatement: newIndex = 0; break;
+        case V_SgJavaLabelStatement: newIndex = 0; break;
         default: ROSE_ASSERT (false);
       }
       makeEdge(CFGNode(this, idx), CFGNode(loop, newIndex), result);
@@ -4950,14 +4954,24 @@ SgJavaSynchronizedStatement::cfgInEdges(unsigned int idx) {
 unsigned int
 SgJavaForEachStatement::cfgIndexForEnd() const
    {
-     return 1;
+     return 3;
    }
+
+bool SgJavaForEachStatement::cfgIsIndexInteresting(unsigned int idx) const {
+  return idx == 1;
+}
 
 unsigned int
 SgJavaForEachStatement::cfgFindChildIndex(SgNode* n)
    {
+     // for (String s : expr)
+     // 'expr' assumes the role of the traditional loop condition.
+     // It is named 'collection' in the SgForEachStatement
      if (n == this->get_collection()) {
           return 0;
+     }
+	 if (n == this->get_loop_body()) {
+          return 1;
      } else {
          ROSE_ASSERT (!"Bad child in java for each statement");
      }
@@ -4967,9 +4981,22 @@ SgJavaForEachStatement::cfgFindChildIndex(SgNode* n)
 std::vector<CFGEdge>
 SgJavaForEachStatement::cfgOutEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
+  CFGNode res = NULL;
+
   switch (idx) {
-    case 0: makeEdge(CFGNode(this, idx), this->get_collection()->cfgForBeginning(), result); break;
-    case 1: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
+    case 0:
+    	makeEdge(CFGNode(this, idx), this->get_collection()->cfgForBeginning(), result);
+    	break;
+    case 1:
+    	makeEdge(CFGNode(this, idx), this->get_loop_body()->cfgForBeginning(), result);
+    	break;
+    case 2:
+        // backedge from body exit to foreach's 'collection' condition
+    	makeEdge(CFGNode(this, idx),CFGNode(this, 0), result);
+    	break;
+    case 3:
+    	makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
+    	break;
     default: ROSE_ASSERT (!"Bad index for SgJavaForEachStatement");
   }
   return result;
@@ -4979,9 +5006,85 @@ std::vector<CFGEdge>
 SgJavaForEachStatement::cfgInEdges(unsigned int idx) {
   std::vector<CFGEdge> result;
   switch (idx) {
-    case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
+    case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
+            // backedge from body exit to foreach's 'collection' condition
+    		makeEdge(CFGNode(this, 2), CFGNode(this, idx), result);
+    		break;
     case 1: makeEdge(this->get_collection()->cfgForEnd(), CFGNode(this, idx), result); break;
+    case 2: {
+      makeEdge(this->get_loop_body()->cfgForEnd(), CFGNode(this, idx), result);
+      // continue goes to the beginning of the loop
+      vector<SgContinueStmt*> continueStmts = SageInterface::findContinueStmts(this->get_loop_body(), "");
+      for (unsigned int i = 0; i < continueStmts.size(); ++i) {
+        makeEdge(CFGNode(continueStmts[i], 0), CFGNode(this, idx), result);
+      }
+      break;
+    }
+    case 3: {
+      makeEdge(this->get_collection()->cfgForEnd(), CFGNode(this, idx), result);
+      // break goes to the exit node
+      vector<SgBreakStmt*> breakStmts = SageInterface::findBreakStmts(this->get_loop_body(), "");
+      for (unsigned int i = 0; i < breakStmts.size(); ++i) {
+        makeEdge(CFGNode(breakStmts[i], 0), CFGNode(this, idx), result);
+      }
+      break;
+    }
     default: ROSE_ASSERT (!"Bad index for SgJavaForEachStatement");
   }
   return result;
+}
+
+unsigned int
+SgJavaLabelStatement::cfgIndexForEnd() const
+   {
+     return 1;
+   }
+
+bool SgJavaLabelStatement::cfgIsIndexInteresting(unsigned int idx) const {
+  return false;
+}
+
+std::vector<CFGEdge> SgJavaLabelStatement::cfgOutEdges(unsigned int idx)
+   {
+     std::vector<CFGEdge> result;
+     switch (idx)
+        {
+          case 0: makeEdge(CFGNode(this, idx), this->get_statement()->cfgForBeginning(), result); break;
+          case 1: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
+          default: ROSE_ASSERT (!"Bad index for SgJavaLabelStatement");
+        }
+
+     return result;
+   }
+
+std::vector<CFGEdge> SgJavaLabelStatement::cfgInEdges(unsigned int idx)
+{
+    std::vector<CFGEdge> result;
+    switch (idx)
+    {
+    case 0: {
+        makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
+        // Do we need to get all continue statements that can jump here ?
+        // YES
+        SgFunctionDefinition* thisFunction = SageInterface::getEnclosingProcedure(this);
+        std::vector<SgContinueStmt*> contVec = SageInterface::findContinueStmts(thisFunction, this->get_label().getString());
+        for (unsigned int i = 0; i < contVec.size(); ++i) {
+            makeEdge(CFGNode(contVec[i], 0), CFGNode(this, idx), result);
+        }
+        break;
+    }
+    case 1: {
+        makeEdge(this->get_statement()->cfgForEnd(), CFGNode(this, idx), result);
+        // Do we need to get all break statements that can jump here ?
+        // YES
+        SgFunctionDefinition* thisFunction = SageInterface::getEnclosingProcedure(this);
+        std::vector<SgBreakStmt*> brkVec = SageInterface::findBreakStmts(thisFunction, this->get_label().getString());
+        for (unsigned int i = 0; i < brkVec.size(); ++i) {
+            makeEdge(CFGNode(brkVec[i], 0), CFGNode(this, idx), result);
+        }
+        break;
+    }
+    default: ROSE_ASSERT (!"Bad index for SgJavaLabelStatement");
+    }
+    return result;
 }

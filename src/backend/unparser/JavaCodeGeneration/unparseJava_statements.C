@@ -1,4 +1,4 @@
-/* unparseJava_statements.C
+/* unparseJava_statements.java
  * Contains functions that unparse statements
  *
  * FORMATTING WILL BE DONE IN TWO WAYS:
@@ -966,8 +966,12 @@ void
 Unparse_Java::unparseBreakStmt(SgStatement* stmt, SgUnparse_Info& info) {
   SgBreakStmt* break_stmt = isSgBreakStmt(stmt);
   ROSE_ASSERT(break_stmt != NULL);
-
   curprint ("break");
+  if (break_stmt->get_do_string_label() != "") {
+      curprint(" ");
+      curprint(break_stmt->get_do_string_label());
+  }
+
 }
 
 void
