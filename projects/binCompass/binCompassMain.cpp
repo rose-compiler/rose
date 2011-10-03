@@ -189,7 +189,7 @@ int main(int argc, char** argv) {
   RoseBin_Graph* graph;
 
   VirtualBinCFG::AuxiliaryInformation* info = new VirtualBinCFG::AuxiliaryInformation(file);
-  std::map<int,std::set<SgAsmFunctionDeclaration*> > components;
+  std::map<int,std::set<SgAsmFunction*> > components;
   GraphAlgorithms* algo = new GraphAlgorithms(info);
   // call graph analysis  *******************************************************
   if (containsArgument(argc, argv, "-callgraph")) {
@@ -235,17 +235,17 @@ int main(int argc, char** argv) {
     cfganalysis->run(graph, cfgFileName, mergedEdges);
 
 #if 1
-    std::map<int,std::set<SgAsmFunctionDeclaration*> >::const_iterator comps = components.begin();
+    std::map<int,std::set<SgAsmFunction*> >::const_iterator comps = components.begin();
     //set<std::string> partialCFG;
     
     for (;comps!=components.end();++comps) {
       set<std::string> partialCFG;
       int nr = comps->first;
       //cerr << " found the following component " << nr << endl;
-      std::set<SgAsmFunctionDeclaration*>  funcs = comps->second;
-      std::set<SgAsmFunctionDeclaration*>::const_iterator it = funcs.begin();
+      std::set<SgAsmFunction*>  funcs = comps->second;
+      std::set<SgAsmFunction*>::const_iterator it = funcs.begin();
       for (;it!=funcs.end();++it) {
-	SgAsmFunctionDeclaration* function = *it;
+	SgAsmFunction* function = *it;
 	string name = function->get_name();
 
 	name.append("_f");

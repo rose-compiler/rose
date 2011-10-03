@@ -582,9 +582,9 @@ ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/pointerAnal/PtrAnal.C
 #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/CallGraphAnalysisMySQL/Callgraph.C
 #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/CallGraphAnalysisMySQL/callgraph_example.C
 #${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/CallGraphAnalysisMySQL/Classhierarchy.C
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/dataflowAnalysis/DataFlowAnalysis.C
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/dataflowAnalysis/ReachingDefinition.C
-${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/dataflowAnalysis/DefUseChain.C
+${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/bitvectorDataflow/DataFlowAnalysis.C
+${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/bitvectorDataflow/ReachingDefinition.C
+${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/bitvectorDataflow/DefUseChain.C
 ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/graphAnalysis/SB_Graph.C
 ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/graphAnalysis/CallGraphAnalysis.C
 ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/graphAnalysis/RoseSrc_CallGraphAnalysis.C
@@ -768,6 +768,7 @@ ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/astPostProcessing.C
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/buildStatementNumbering.C
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/fixupCxxSymbolTablesToSupportAliasingSymbols.C 
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/normalizeTypedefSequenceLists.C
+     ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astPostProcessing/fixupConstantFoldedValues.C
    )
 
 

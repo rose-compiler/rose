@@ -1736,8 +1736,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCaseStatement(JNIEnv *env, jobject
      SgStatement *caseStatement = NULL;
      if (hasCaseExpression) {
          caseStatement = SageBuilder::buildCaseOptionStmt(); // the body will be added later
-     }
-     else {
+     } else {
          caseStatement = SageBuilder::buildDefaultOptionStmt(); // the body will be added later
      }
      ROSE_ASSERT(caseStatement != NULL);
@@ -1884,7 +1883,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompoundAssignmentEnd(JNIEnv *env,
      outputJavaState("At TOP of cactionCompoundAssignmentEnd");
 
   // These are the operator code values directly from ECJ.
-     enum ops
+     enum ops // NO_STRINGIFY
         {
           ERROR_OPERATOR       = 0, // This is not a ECJ value 
           AND                  = 2,
@@ -2047,7 +2046,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionEqualExpressionEnd(JNIEnv *env, jo
      outputJavaState("At TOP of cactionEqualExpressionEnd");
 
   // These are the operator code values directly from ECJ.
-     enum ops
+     enum ops // NO_STRINGIFY
         {
           ERROR_OPERATOR = 0, // This is not a ECJ value 
           EQUAL_EQUAL    = 18,
@@ -3233,7 +3232,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionPostfixExpressionEnd(JNIEnv *env, 
      outputJavaState("At TOP of cactionPostfixExpressionEnd");
 
   // These are the operator code values directly from ECJ.
-     enum ops
+     enum ops // NO_STRINGIFY
         {
           ERROR_OPERATOR = 0, // This is not a ECJ value 
           MINUS          = 13,
@@ -3281,7 +3280,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionPrefixExpressionEnd(JNIEnv *env, j
      outputJavaState("At TOP of cactionPrefixExpressionEnd");
 
   // These are the operator code values directly from ECJ.
-     enum ops
+     enum ops // NO_STRINGIFY
         {
           ERROR_OPERATOR = 0, // This is not a ECJ value 
           MINUS          = 13,
@@ -3699,7 +3698,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionUnaryExpressionEnd(JNIEnv *env, jo
      outputJavaState("At TOP of cactionUnaryExpressionEnd");
 
   // These are the operator code values directly from ECJ.
-     enum ops
+     enum ops // NO_STRINGIFY
         {
           ERROR_OPERATOR = 0, // This is not a ECJ value 
           NOT            = 11,

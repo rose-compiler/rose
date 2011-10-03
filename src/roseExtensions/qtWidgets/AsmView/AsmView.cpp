@@ -38,7 +38,7 @@ AsmView::~AsmView()
 
 void AsmView::asmNodeDropped(SgNode * node)
 {
-    if(isSgAsmFunctionDeclaration(node))
+    if(isSgAsmFunction(node))
     {
         SgNode * par = node->get_parent();
         while( !isSgFile(par) && par !=0)
@@ -108,7 +108,7 @@ void AsmView::updateModel()
 
 bool AsmView::gotoNode(SgNode * node)
 {
-    if(! isSgAsmFunctionDeclaration(node) && ! isSgAsmInstruction(node) )
+    if(! isSgAsmFunction(node) && ! isSgAsmInstruction(node) )
         return false;
 
 

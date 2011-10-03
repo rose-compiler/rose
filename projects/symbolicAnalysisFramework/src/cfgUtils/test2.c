@@ -1,11 +1,11 @@
 template <class T>
 class templated
 {
-	T val;
-	public:
-	templated();
-	
-	T getVal();
+        T val;
+        public:
+        templated();
+        
+        T getVal();
 };
 
 template <class T>

@@ -49,6 +49,10 @@ TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
 PASSING_TEST_Objects = ${TESTCODES:.C=.o}
 TEST_Objects = ${ALL_TESTCODES:.C=.o}
 
+# DQ (9/18/2011): Added testing for new option to use folded constants or the original express trees.
+TEST_Objects_FoldedConstants = ${EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS:.C=.foldedConstants-o}
+TEST_Objects_UnfoldedConstants = ${ALL_TESTCODES:.C=.unfoldedConstants-o}
+
 # VALGRIND_OPTIONS = -v --num-callers=12 --leak-check=yes --error-limit=no --show-reachable=yes
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes --suppressions=$(top_srcdir)/scripts/rose-suppressions-for-valgrind
 # VALGRIND = valgrind $(VALGRIND_OPTIONS)
@@ -72,6 +76,14 @@ else
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
 endif
 
+# DQ (9/18/2011): This is testing the option to process the AST to use the constant folded values (contained in the AST).
+$(TEST_Objects_FoldedConstants): ../../testTranslatorFoldedConstants
+	$(VALGRIND) ../../testTranslatorFoldedConstants $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.foldedConstants-o=.C) && touch $@
+
+# DQ (9/18/2011): This is the equivalent to the default using testTranslator (so not critical to run this).
+$(TEST_Objects_UnfoldedConstants): ../../testTranslatorUnfoldedConstants
+	$(VALGRIND) ../../testTranslatorUnfoldedConstants $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.unfoldedConstants-o=.C) && touch $@
+
 # DQ (4/6/2010): Added test for parsing only (tested here for C++ code)
 testParser:../../testParser
 	$(VALGRIND) ../../testParser $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/test2001_01.C
@@ -90,7 +102,8 @@ test2010_02.o: ../../testTranslator
 
 test2010_07.o: ../../testTranslator
 	echo "Running boost specific test."
-	../../testTranslator $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2010_07.C -o test2010_07.o
+#	../../testTranslator $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2010_07.C -o test2010_07.o
+	../../testTranslator $(ROSE_FLAGS) -I$(top_builddir) -I$(top_srcdir)/src -I$(top_srcdir)/src/util -c $(srcdir)/test2010_07.C -o test2010_07.o
 
 test2010_08.o: ../../testTranslator
 	echo "Running boost specific test."
@@ -102,6 +115,13 @@ cpp_test2010_07: ../../testTranslator
 
 ../../testTranslator:
 	cd ../..; $(MAKE) testTranslator
+
+../../testTranslatorFoldedConstants:
+	cd ../..; $(MAKE) testTranslatorFoldedConstants
+
+../../testTranslatorUnfoldedConstants:
+	cd ../..; $(MAKE) testTranslatorUnfoldedConstants
+
 
 CURRENT_DIRECTORY = `pwd`
 QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}
@@ -172,6 +192,8 @@ check-local:
 	@echo "Tests of C++."
 	@$(MAKE) failingAST_IO_tests
 	@$(MAKE) $(PASSING_TEST_Objects)
+#	DQ (9/18/2011): Added tests for folded constant option.
+	@$(MAKE) $(TEST_Objects_FoldedConstants)
 #	DQ (4/6/2010): This fails on Hudson, but I don't know why!
 #	@$(MAKE) testParser
 #	DQ (5/8/2011): Special tests are now moved to the end.
@@ -183,4 +205,6 @@ check-local:
 
 clean-local:
 	rm -f a.out *.o rose_*.[cC] roseTestProgram.C *.dot
+	rm -f *.foldedConstants-o
+	rm -f *.unfoldedConstants-o
 	rm -rf QMTest

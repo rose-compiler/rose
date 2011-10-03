@@ -21,7 +21,7 @@ void parse(SgPragmaDeclaration * pragma_decl) throw (Exception::ExceptionBase);
 /* Containers */
 /**************/
 
-	/* PragmaPolyhedralProgram */
+  /* PragmaPolyhedralProgram */
 
 typedef PolyhedralProgram<SgPragmaDeclaration, SgExprStatement, RoseVariable> PragmaPolyhedralProgram;
 
@@ -31,7 +31,7 @@ PragmaPolyhedralProgram & getPolyhedralProgram<SgPragmaDeclaration, SgExprStatem
 template <>
 void setPolyhedralProgram<SgPragmaDeclaration, SgExprStatement, RoseVariable>(SgPragmaDeclaration * arg);
 
-	/* PragmaDomain */
+  /* PragmaDomain */
 
 typedef Domain<SgPragmaDeclaration, SgExprStatement, RoseVariable> PragmaDomain;
 
@@ -40,12 +40,12 @@ PragmaDomain & getDomain<SgPragmaDeclaration, SgExprStatement, RoseVariable>(con
 
 template <>
 void setDomain<SgPragmaDeclaration, SgExprStatement, RoseVariable>(
-	PragmaPolyhedralProgram & polyhedral_program,
-	SgExprStatement * expression,
-	size_t nbr_iterators
+  PragmaPolyhedralProgram & polyhedral_program,
+  SgExprStatement * expression,
+  size_t nbr_iterators
 );
 
-	/* PragmaScattering */
+  /* PragmaScattering */
 
 typedef Scattering<SgPragmaDeclaration, SgExprStatement, RoseVariable> PragmaScattering;
 
@@ -54,12 +54,12 @@ PragmaScattering & getScattering<SgPragmaDeclaration, SgExprStatement, RoseVaria
 
 template <>
 void setScattering<SgPragmaDeclaration, SgExprStatement, RoseVariable>(
-	PragmaPolyhedralProgram & polyhedral_program,
-	SgExprStatement * expression,
-	size_t nbr_iterators
+  PragmaPolyhedralProgram & polyhedral_program,
+  SgExprStatement * expression,
+  size_t nbr_iterators
 );
 
-	/* PragmaDataAccess */
+  /* PragmaDataAccess */
 
 typedef DataAccess<SgPragmaDeclaration, SgExprStatement, RoseVariable> PragmaDataAccess;
 
@@ -68,9 +68,9 @@ PragmaDataAccess & getDataAccess<SgPragmaDeclaration, SgExprStatement, RoseVaria
 
 template <>
 void setDataAccess<SgPragmaDeclaration, SgExprStatement, RoseVariable>(
-	PragmaPolyhedralProgram & polyhedral_program,
-	SgExprStatement * expression,
-	size_t nbr_iterators
+  PragmaPolyhedralProgram & polyhedral_program,
+  SgExprStatement * expression,
+  size_t nbr_iterators
 );
 
 }
@@ -115,7 +115,7 @@ void generateAndReplace(Scheduling::PragmaSchedule &);
 
 // Needed printers
 
-std::ostream & operator << (std::ostream & out, SgPragmaDeclaration & arg);
+// std::ostream & operator << (std::ostream & out, SgPragmaDeclaration & arg);
 
 std::ostream & operator << (std::ostream & out, const SgPragmaDeclaration & arg);
 
@@ -123,7 +123,7 @@ std::ostream & operator << (std::ostream & out, const SgPragmaDeclaration & arg)
 
 const Polyhedron & getDomain(const std::pair<SgExprStatement *, size_t> obj);
 
-const std::vector<LinearExpression> & getScattering(const std::pair<SgExprStatement *, size_t> obj);
+const std::vector<LinearExpression_ppl> & getScattering(const std::pair<SgExprStatement *, size_t> obj);
 
 size_t getDimension(const std::pair<SgExprStatement *, size_t> obj);
 

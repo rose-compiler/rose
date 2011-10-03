@@ -24,7 +24,7 @@ class AsmMappingInfo
               line_( -1 )
         {}
 
-        AsmMappingInfo( SgAsmFunctionDeclaration *relFun,
+        AsmMappingInfo( SgAsmFunction *relFun,
                         SgAsmInstruction *start,
                         SgAsmInstruction *end,
                         const std::string &fileName, int line )
@@ -72,9 +72,9 @@ class AsmMappingInfo
             return fileName_ < other.fileName_;
         }
 
-        SgAsmFunctionDeclaration *&relFun()
+        SgAsmFunction *&relFun()
         { return relFun_; }
-        SgAsmFunctionDeclaration * const &relFun() const
+        SgAsmFunction * const &relFun() const
         { return relFun_; }
 
         SgAsmInstruction *&start()
@@ -98,7 +98,7 @@ class AsmMappingInfo
         { return line_; }
 
     private:
-        SgAsmFunctionDeclaration *relFun_;
+        SgAsmFunction *relFun_;
 
         SgAsmInstruction *start_;
         SgAsmInstruction *end_;

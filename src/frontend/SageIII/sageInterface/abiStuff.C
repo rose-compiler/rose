@@ -115,6 +115,10 @@ StructLayoutInfo NonpackedTypeLayoutGenerator::layoutType(SgType* t) const {
       {
         SgMultiplyOp* multiply = isSgMultiplyOp(isSgArrayType(t)->get_index());
         ROSE_ASSERT(multiply);
+
+     // DQ (9/26/2011): Do constant folding if required.
+     // SageInterface::constantFolding(multiply);
+
         numElements = multiply->get_lhs_operand();
       }  
       if (!isSgValueExp(numElements)) {

@@ -19,32 +19,32 @@ extern int sgnAnalysisDebugLevel;
 
 class NodeID: public NodeFact
 {
-	int id;
-	public:
-	
-	NodeID(int id): id(id) {}
-	
-	int getID();
-	
-	// The string that represents this object.
-	// Every line of this string must be prefixed by indent.
-	// The last character of the returned string must not be '\n', even if it is a multi-line string.
+        int id;
+        public:
+        
+        NodeID(int id): id(id) {}
+        
+        int getID();
+        
+        // The string that represents this object.
+        // Every line of this string must be prefixed by indent.
+        // The last character of the returned string must not be '\n', even if it is a multi-line string.
         std::string str(std::string indent="");
-	
-	// returns a copy of this node fact
-	NodeFact* copy() const;
+        
+        // returns a copy of this node fact
+        NodeFact* copy() const;
 };
 
 class placeUniqueIDs : public UnstructuredPassIntraAnalysis
 {
-	int curID;
-	public:
-	placeUniqueIDs()
-	{
-		curID = 0;
-	}
-	
-	void visit(const Function& func, const DataflowNode& n, NodeState& state);
+        int curID;
+        public:
+        placeUniqueIDs()
+        {
+                curID = 0;
+        }
+        
+        void visit(const Function& func, const DataflowNode& n, NodeState& state);
 };
 
 // Runs the placeUniqueIDs analysis to associate a unique ID with each DataflowNode within each function
