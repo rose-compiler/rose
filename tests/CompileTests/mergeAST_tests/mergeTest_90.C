@@ -3,7 +3,11 @@
 void foobar(const char* c);
 void foo()
    {
-  // foobar(__PRETTY_FUNCTION__);
+#if 1
      foobar(__PRETTY_FUNCTION__);
+#else
+     char* valueString = "abc";
+     foobar(valueString);
+#endif
    }
 

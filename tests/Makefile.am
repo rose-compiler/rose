@@ -21,7 +21,18 @@ endif
 #  Phase 1) Analysis only, compiles the original code
 #  Phase 2) Analysis and code generation, compiles the original code
 #  Phase 3) analysis, code generation, and compiling the generated code
-bin_PROGRAMS = testParser testAnalysis testCodeGeneration testTranslator testAstFileIO testAstFileRead parallelASTMerge testGraphGeneration testTokenGeneration
+bin_PROGRAMS = \
+   testParser \
+   testAnalysis \
+   testCodeGeneration \
+   testTranslator \
+   testTranslatorUnfoldedConstants \
+   testTranslatorFoldedConstants \
+   testAstFileIO \
+   testAstFileRead \
+   parallelASTMerge \
+   testGraphGeneration \
+   testTokenGeneration
 
 
 # Phase 0 tests code:
@@ -46,6 +57,10 @@ testCodeGeneration_SOURCES = testCodeGeneration.C
 # Phase 3 tests code (used in all internal tests of ROSE; regression tests):
 # This tests the ability to read and regnerate the input application and compile it using the backend compiler.
 testTranslator_SOURCES = testTranslator.C
+
+# These tests an option to use frontend specific constant folding or the original expression trees (default is no constnt folding).
+testTranslatorUnfoldedConstants_SOURCES = testTranslatorUnfoldedConstants.C
+testTranslatorFoldedConstants_SOURCES   = testTranslatorFoldedConstants.C
 
 # This tests the ability to generate a compressed binary file representation of the AST.
 # This is a special format of the ROSE AST build for performance File I/O (to address the
@@ -176,7 +191,7 @@ test_testTokenGeneration: testObjectFileTokenGeneration
 
 # Rule to run all the example translator tests
 # test: test_testAnalysis test_testCodeGeneration test_testTranslator test_testAstFileIO testSimpleLinkFileTranslator
-test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testAstFileIO testSimpleLinkFileTranslator
+test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testAstFileIO testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants
 
 
 # Make check rule

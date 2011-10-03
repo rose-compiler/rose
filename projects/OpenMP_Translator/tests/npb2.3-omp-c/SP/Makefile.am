@@ -14,7 +14,8 @@ $(TESTCODES_REQUIRED_TO_PASS) \
 $(TESTCODE_CURRENTLY_FAILING)
 
 # ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict
-ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 --edg:restrict
+# ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 --edg:restrict
+ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 --edg:restrict -rose:detect_dangling_pointers 2
 
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
 # VALGRIND = /usr/apps/valgrind/new/bin/valgrind $(VALGRIND_OPTIONS)
@@ -54,9 +55,9 @@ check-local:
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
 	@$(MAKE) $(PASSING_TEST_Objects)
-	@echo "***********************************************************************************************************"
+	@echo "*******************************************************************************************************************"
 	@echo "****** ROSE/projects/OpenMP_Translator/tests/npb2.3-omp-c/SP: make check rule complete (terminated normally) ******"
-	@echo "***********************************************************************************************************"
+	@echo "*******************************************************************************************************************"
 
 EXTRA_DIST = inputsp.data.sample header.h  npbparams.h $(ALL_TESTCODES)
 

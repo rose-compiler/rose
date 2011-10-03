@@ -147,12 +147,16 @@ ORIGINAL_TEST_MEDIUM_LIST = test2003_01.C test2003_03.C test2003_05.C test2003_0
 TEST_MEDIUM_LIST_EXTRA = \
 test2004_01.C   test2004_106.C  test2004_11.C   test2004_134.C  test2004_148.C  test2004_30.C  test2004_47.C test2004_63.C  test2004_79.C  test2004_95.C \
 test2004_02.C   test2004_107.C  test2004_120.C  test2004_162.C  test2004_31.C  test2004_48.C  test2004_64.C  test2004_80.C  test2004_96.C \
-test2004_03.C   test2004_108.C  test2004_121.C  test2004_14.C   test2004_163.C  test2004_32.C  test2004_49.C  test2004_65.C  test2004_81.C  test2004_97.C \
+test2004_03.C   test2004_108.C  test2004_121.C  test2004_14.C   test2004_163.C  test2004_32.C  test2004_49.C  test2004_65.C  test2004_81.C \
 test2004_04.C   test2004_109.C  test2004_122.C  test2004_137.C  test2004_150.C  test2004_33.C  test2004_67.C  test2004_82.C  test2004_98.C test2004_164.C
 
 # Problem files:
 # test2004_161.C 
 # test2004_136.C
+
+# DQ (9/24/2011): These files are a problem for the new original expression tree support (replacing constant values with the original expression trees).
+# test2004_97.C
+
 TEST_MEDIUM_PROBLEM_FILE_LIST = test2004_136.C test2004_161.C
 
 # /home/dquinlan/ROSE/git-dq-main-rc/src/ROSETTA/Grammar/grammarAST_FileIoSource.code:363: static long unsigned int AST_FILE_IO::getGlobalIndexFromSgClassPointer(SgNode*): Assertion `globalIndex < AST_FILE_IO::getAccumulatedPoolSizeOfNewAst(pointer->variantT()+1)' failed.
@@ -223,7 +227,7 @@ TEST_MEDIUM_PROBLEM_FILE_LIST += test2004_93.C test2004_119.C test2004_133.C tes
 ALT_TEST_MEDIUM_LIST_EXTRA = \
 test2004_01.C   test2004_106.C  test2004_11.C   test2004_134.C  test2004_148.C  test2004_161.C  test2004_30.C  test2004_47.C  test2004_63.C  test2004_79.C  test2004_95.C \
 test2004_02.C   test2004_107.C  test2004_120.C  test2004_135.C  test2004_149.C  test2004_162.C  test2004_31.C  test2004_48.C  test2004_64.C  test2004_80.C  test2004_96.C \
-test2004_03.C   test2004_108.C  test2004_121.C  test2004_136.C  test2004_14.C   test2004_163.C  test2004_32.C  test2004_49.C  test2004_65.C  test2004_81.C  test2004_97.C \
+test2004_03.C   test2004_108.C  test2004_121.C  test2004_136.C  test2004_14.C   test2004_163.C  test2004_32.C  test2004_49.C  test2004_65.C  test2004_81.C   \
 test2004_04.C   test2004_109.C  test2004_122.C  test2004_137.C  test2004_150.C  test2004_164.C  test2004_33.C  test2004_50.C  test2004_67.C  test2004_82.C  test2004_98.C \
 test2004_05.C   test2004_10.C   test2004_123.C  test2004_138.C  test2004_151.C  test2004_16.C   test2004_34.C  test2004_51.C  test2004_68.C  test2004_83.C  test2004_99.C \
 test2004_06.C   test2004_110.C  test2004_124.C  test2004_139.C  test2004_152.C  test2004_17.C   test2004_35.C  test2004_52.C  test2004_69.C  test2004_84.C \
@@ -236,6 +240,10 @@ test2004_102.C  test2004_116.C  test2004_130.C  test2004_144.C  test2004_158.C  
 test2004_103.C  test2004_117.C  test2004_131.C  test2004_145.C  test2004_159.C  test2004_27.C   test2004_43.C  test2004_60.C  test2004_76.C  test2004_91.C \
 test2004_104.C  test2004_118.C  test2004_132.C  test2004_146.C  test2004_15.C   test2004_28.C   test2004_44.C  test2004_61.C  test2004_77.C  test2004_93.C \
 test2004_105.C  test2004_119.C  test2004_133.C  test2004_147.C  test2004_160.C  test2004_29.C   test2004_45.C  test2004_62.C  test2004_78.C  test2004_94.C
+
+# DQ (9/24/2011): These files are a problem for the new original expression tree support (replacing constant values with the original expression trees).
+# test2004_97.C
+
 
 # This make this a much larger test.
 # TEST_MEDIUM_LIST += $(TEST_MEDIUM_LIST_EXTRA) $(ALT2_TEST_MEDIUM_LIST_EXTRA)
