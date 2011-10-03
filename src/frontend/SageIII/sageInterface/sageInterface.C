@@ -6284,31 +6284,31 @@ SgScopeStatement* SageInterface::findEnclosingLoop(SgStatement* s, const std::st
   for (; s; s = isSgStatement(s->get_parent())) {
     SgScopeStatement* sc = isSgScopeStatement(s);
     // Need to check for empty label as for java we must detect the
-	// innermost labeled statement and skip everything in between
+        // innermost labeled statement and skip everything in between
     switch (s->variantT()) {
       case V_SgDoWhileStmt: {
           if (label.empty()) {
-        	  return sc;
+                  return sc;
           }
-    	  break;
+          break;
       }
       case V_SgForStatement: {
           if (label.empty()) {
-        	  return sc;
+                  return sc;
           }
-    	  break;
+          break;
       }
       case V_SgFortranDo:
       case V_SgFortranNonblockedDo: {
         if (label.empty() ||
-        		label == isSgFortranDo(sc)->get_string_label()) {
+                        label == isSgFortranDo(sc)->get_string_label()) {
           return sc;
         }
         break;
       }
       case V_SgWhileStmt: {
         if (label.empty() ||
-        		label == isSgWhileStmt(sc)->get_string_label()) {
+                        label == isSgWhileStmt(sc)->get_string_label()) {
           return sc;
         }
         break;
@@ -6319,16 +6319,16 @@ SgScopeStatement* SageInterface::findEnclosingLoop(SgStatement* s, const std::st
       }
       case V_SgJavaForEachStatement: {
           if (label.empty()) {
-        	  return sc;
+                  return sc;
           }
-    	  break;
+          break;
       }
       case V_SgJavaLabelStatement: {
           if (label.empty() ||
-        		  label == isSgJavaLabelStatement(sc)->get_label().getString()) {
+                          label == isSgJavaLabelStatement(sc)->get_label().getString()) {
             return sc;
           }
-    	  break;
+          break;
       }
       default: continue;
     }
