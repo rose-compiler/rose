@@ -1,0 +1,30 @@
+! Rice coarray shape specs
+
+program p
+  integer, allocatable :: a[*]
+  integer, allocatable :: b(:)[*]
+  integer, allocatable :: c(:,:)[*]
+  team :: myteam
+  
+  allocate( a[@team_world] )
+  allocate( b(10)[@team_world] )
+  allocate( c(10,10)[@team_world] )
+  allocate( a[*] )
+  allocate( b(10)[*] )
+  allocate( c(10,10)[*] )
+  
+  allocate( a[@team_default] )
+  allocate( b(10)[@team_default] )
+  allocate( c(10,10)[@team_default] )
+  allocate( a[@] )
+  allocate( b(10)[@] )
+  allocate( c(10,10)[@] )
+  allocate( a[] )          ! deprecated
+  allocate( b(10)[] )      ! deprecated
+  allocate( c(10,10)[] )   ! deprecated
+  
+  allocate( a[@myteam] )
+  allocate( b(10)[@myteam] )
+  allocate( c(10,10)[@myteam] )
+  
+end program

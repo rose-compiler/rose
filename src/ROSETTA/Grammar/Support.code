@@ -5113,9 +5113,9 @@ HEADER_APPLICATION_PROJECT_START
                e_last          /*!< last value (used for error checking) */
              };
 
-      //! The only useful constructors
-          SgProject ( const std::vector<std::string>& argv);
-          SgProject ( int argc, char** argv);
+      //! The only useful constructors (constant folding in the frontend is false by default).
+          SgProject ( const std::vector<std::string>& argv, bool frontendConstantFolding = false);
+          SgProject ( int argc, char** argv, bool frontendConstantFolding = false);
 
 #if 0
       // DQ (10/16/2005): Depreicated a long time ago, removed it now!
@@ -5291,6 +5291,8 @@ HEADER_APPLICATION_PROJECT_START
 
        // negara1 (07/29/2011)
           std::string findIncludedFile(PreprocessingInfo* preprocessingInfo);
+
+          int get_detect_dangling_pointers(void) const;
 
 #if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
 #else
@@ -11470,6 +11472,14 @@ X aggressive
 
   // DQ (11/20/2010): Support for token handling.
      p_output_tokens = false;
+
+  // DQ (9/26/2011): This was not initialized previosuly so I have added it.
+     p_sourceFileTypeIsUnknown = false;
+
+  // DQ (9/26/2011): New support for option to specify debugging support in ROSE to 
+  // detect dangling pointers to IR nodes as part of the AST Consistancy tests. At 
+  // some point this will default to always being on as an AST consistancy test.
+     p_detect_dangling_pointers = 0;
    }
 
 #if 0
@@ -12032,6 +12042,8 @@ SgFile::display ( const std::string & label ) const
 
      printf ("     p_output_tokens                        = %s \n",(p_output_tokens == true) ? "true" : "false");
 
+     printf ("     p_detect_dangling_pointers             = %d \n",p_detect_dangling_pointers);
+
 #if 0
 // Order of data member entries in support.C, matched against the 
 // initialization to make sure that all data members are initialized.
@@ -12290,9 +12302,16 @@ SgProject::SgProject( const SgProject & project )
    }
 
 //! constructor invokes EDG front end and creates AST. Use frontend() instead.
-SgProject::SgProject ( int argc, char** argv)
+SgProject::SgProject ( int argc, char** argv, bool frontendConstantFolding)
    {
      initialization();
+
+  // DQ (9/18/2011): Added support to use frontend specific constnat folding (applies to C/C++ using EDG).
+  // All other languges have no specific constant folding options in there frontends.  We use to support
+  // the original expression tree in the AST, and this provided both the constant folded value and
+  // the original expression tree, but this was a problem for analysis (which tened to mix them together).
+  // printf ("In SgProject(int argc,char** argv): frontendConstantFolding = %s \n",frontendConstantFolding == true ? "true" : "false");
+     p_frontendConstantFolding = frontendConstantFolding;
 
      std::vector<std::string> argvList(argv, argv + argc);
      int errorCode = parse(argvList);
@@ -12300,29 +12319,20 @@ SgProject::SgProject ( int argc, char** argv)
    }
 
 //! constructor invokes EDG front end and creates AST. Use frontend() instead.
-SgProject::SgProject ( const std::vector<std::string>& argv )
+SgProject::SgProject ( const std::vector<std::string>& argv, bool frontendConstantFolding )
    {
      initialization();
+
+  // DQ (9/18/2011): Added support to use frontend specific constnat folding (applies to C/C++ using EDG).
+  // All other languges have no specific constant folding options in there frontends.  We use to support
+  // the original expression tree in the AST, and this provided both the constant folded value and
+  // the original expression tree, but this was a problem for analysis (which tened to mix them together).
+  // printf ("In SgProject(const std::vector<std::string>& argv): frontendConstantFolding = %s \n",frontendConstantFolding == true ? "true" : "false");
+     p_frontendConstantFolding = frontendConstantFolding;
 
      int errorCode = parse(argv);
      set_frontendErrorCode(errorCode);
    }
-
-#if 0
-// DQ (10/16/2005): Depreicated a long time ago, removed it now!
-//! Deprecated, do not use.
-SgProject::SgProject ( int& argc, char** argv, int& refErrorCode)
-   {
-     printf ("This SgProject constructor is deprecated, do not use. \n");
-
-     initialization();
-
-     int errorCode;
-     errorCode = parse(argc,argv);
-     set_frontendErrorCode(errorCode);
-     refErrorCode = errorCode;
-   }
-#endif
 
 void
 SgProject::initialization()
@@ -12394,6 +12404,9 @@ SgProject::initialization()
      p_Cxx_only              = false;
      p_Fortran_only          = false;
      p_addCppDirectivesToAST = false;
+
+  // DQ (9/18/2011): Added support for using more constant AST to select to use or not use frontend specific constant folding.
+     p_frontendConstantFolding = false;
    }
 
 // DQ (2/1/2007): Added new operator so that w could depricate the inconsistant usage of 
@@ -12895,6 +12908,21 @@ SgProject::skipfinalCompileStep(bool value)
         {
           get_file(i).set_skipfinalCompileStep(value);
         }
+   }
+
+
+int
+SgProject::get_detect_dangling_pointers(void) const
+   {
+  // look at how the files are set
+     int result = 0;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          result = result | file.get_detect_dangling_pointers();
+        }
+
+     return result;
    }
 
 

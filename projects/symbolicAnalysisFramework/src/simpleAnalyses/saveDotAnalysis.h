@@ -20,9 +20,9 @@ extern int divAnalysisDebugLevel;
 // The SaveDotAnalysis saves its target function's CFG into a file
 class SaveDotAnalysis: virtual public IntraProceduralAnalysis
 {
-	public:
-	
-	bool runAnalysis(const Function& func, NodeState* state);
+        public:
+        
+        bool runAnalysis(const Function& func, NodeState* state);
 };
 
 

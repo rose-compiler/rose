@@ -59,7 +59,9 @@ void initUpcSizes()
 }
 
 int main(int argc, char** argv) {
-  SgProject* proj = frontend(argc, argv);
+
+   SgProject* proj = frontend(argc, argv);
+
   // Set up the struct layout chain
   initUpcSizes(); 
   CustomizedPrimitiveTypeLayoutGenerator gen1_upc(NULL,&upc_sizes);

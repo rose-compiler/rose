@@ -137,6 +137,13 @@ main (int argc, char* argv[])
   SgProject* proj = frontend (argvList);
   ROSE_ASSERT (proj);
 
+  // Output an optional graph of the AST (just the tree, when active)
+     generateDOT ( *proj );
+
+  // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
+     const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 8000;
+     generateAstGraph(proj,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH,"");
+
   if (opts.make_pdfs_)
   {
     if (SgProject::get_verbose() > 0)
@@ -173,6 +180,12 @@ main (int argc, char* argv[])
       makePDF (proj, outfinal_prefix);
     }
   }
+
+  // Output an optional graph of the AST (just the tree, when active)
+     generateDOT ( *proj, "_afterOutlining" );
+
+  // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
+     generateAstGraph(proj,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH,"_afterOutlining");
 
   if (SgProject::get_verbose() > 0)
        cerr << "[Unparsing...]" << endl;
