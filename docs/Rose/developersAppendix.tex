@@ -3136,7 +3136,7 @@ string getQualifiedFunctionName(SgFunctionDeclaration *astNode);
 			   GraphAlgorithms* algo):RoseBin_FlowAnalysis(global,algo) 
   // run this analysis
   void run(RoseBin_Graph* vg, std::string fileN, bool multiedge) ;
-  void getConnectedComponents(std::map<int,std::set<SgAsmFunctionDeclaration*> >& ret);
+  void getConnectedComponents(std::map<int,std::set<SgAsmFunction*> >& ret);
 
       \end{lstlisting}
 
@@ -4453,7 +4453,7 @@ Other useful utility functions in ROSE
    * resolve for each instruction which type it has
    ****************************************************/
   SgAsmInstruction* createInstruction(int address, 
-					 SgAsmFunctionDeclaration* bb, 
+					 SgAsmFunction* bb, 
 					 std::string mnemonic);
   /****************************************************
    * process all jump instructions and resolve destination
