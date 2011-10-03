@@ -2,7 +2,6 @@
  * Generic implementation for abstract handles of language constructs
  */
 
-
 #include "abstract_handle.h"
 #include <utility>
 #include <sstream>
