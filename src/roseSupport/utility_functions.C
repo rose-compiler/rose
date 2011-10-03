@@ -117,13 +117,15 @@ std::string version_number()
 // extern an_il_header il_header;
 //
 SgProject*
-frontend (int argc, char** argv)
+frontend (int argc, char** argv, bool frontendConstantFolding )
    {
-     return frontend(std::vector<std::string>(argv, argv + argc));
+  // printf ("In frontend(int argc,char** argv): frontendConstantFolding = %s \n",frontendConstantFolding == true ? "true" : "false");
+
+     return frontend(std::vector<std::string>(argv, argv + argc),frontendConstantFolding);
    }
 
 SgProject*
-frontend (const std::vector<std::string>& argv)
+frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
    {
   // DQ (6/14/2007): Added support for timing of high level frontend function.
      TimingPerformance timer ("ROSE frontend():");
@@ -137,9 +139,12 @@ frontend (const std::vector<std::string>& argv)
        // ROSE::usage(1);      // Print usage and exit with exit status == 1
           SgFile::usage(1);      // Print usage and exit with exit status == 1
         }
+
+  // printf ("In frontend(const std::vector<std::string>& argv): frontendConstantFolding = %s \n",frontendConstantFolding == true ? "true" : "false");
+
   // Error code checks and reporting are done in SgProject constructor
   // return new SgProject (argc,argv);
-     SgProject* project = new SgProject (argv);
+     SgProject* project = new SgProject (argv,frontendConstantFolding);
      ROSE_ASSERT (project != NULL);
 
   // DQ (9/6/2005): I have abandoned this form or prelinking (AT&T C Front style).
