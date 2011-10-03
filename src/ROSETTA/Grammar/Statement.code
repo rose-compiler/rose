@@ -1780,14 +1780,13 @@ HEADER_LABEL_STATEMENT_END
 
 
 HEADER_JAVA_LABEL_STATEMENT_START
-
-/*
-// DQ (8/26/2011): Uncomment these when we need them.  For now support the AST construction.
-
+          virtual bool cfgIsIndexInteresting(unsigned int idx) const;
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
+// CAVE3 (09/30/2007): Not sure what we need to fixup for java label
+/*
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
@@ -1798,7 +1797,6 @@ HEADER_JAVA_LABEL_STATEMENT_START
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
 #endif
 */
-
 HEADER_JAVA_LABEL_STATEMENT_END
 
 
@@ -2118,6 +2116,7 @@ HEADER_JAVA_FOREACH_STATEMENT_START
        public:
        // charles4 (9/07/2011): Added for uniform support of mangled names
           virtual SgName get_mangled_name() const;
+          bool cfgIsIndexInteresting(unsigned int idx) const;
           virtual unsigned int cfgFindChildIndex(SgNode* n);
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);

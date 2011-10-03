@@ -2925,6 +2925,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionLabeledStatementEnd(JNIEnv *env, j
     labelStatement -> set_label(label_name);
     labelStatement -> set_statement(statement);
 
+    statement->set
+
     // Pushing 'label' on the statement stack
     astJavaStatementStack.push_front(labelStatement);
     outputJavaState("At BOTTOM of cactionLabelStatementEnd");

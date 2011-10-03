@@ -6262,23 +6262,36 @@ SgSwitchStatement* SageInterface::findEnclosingSwitch(SgStatement* s) {
   return isSgSwitchStatement(s);
 }
 
-SgScopeStatement* SageInterface::findEnclosingLoop(SgStatement* s, const std::string& fortranLabel, bool stopOnSwitches) {
+SgScopeStatement* SageInterface::findEnclosingLoop(SgStatement* s, const std::string& label, bool stopOnSwitches) {
+  /* label can represent a fortran label or a java label provided as a label in a continue/break statement */
   for (; s; s = isSgStatement(s->get_parent())) {
     SgScopeStatement* sc = isSgScopeStatement(s);
+    // Need to check for empty label as for java we must detect the
+	// innermost labeled statement and skip everything in between
     switch (s->variantT()) {
-      case V_SgDoWhileStmt: return sc;
-      case V_SgForStatement: return sc;
+      case V_SgDoWhileStmt: {
+          if (label.empty()) {
+        	  return sc;
+          }
+    	  break;
+      }
+      case V_SgForStatement: {
+          if (label.empty()) {
+        	  return sc;
+          }
+    	  break;
+      }
       case V_SgFortranDo:
       case V_SgFortranNonblockedDo: {
-        if (fortranLabel.empty() ||
-            fortranLabel == isSgFortranDo(sc)->get_string_label()) {
+        if (label.empty() ||
+        		label == isSgFortranDo(sc)->get_string_label()) {
           return sc;
         }
         break;
       }
       case V_SgWhileStmt: {
-        if (fortranLabel.empty() ||
-            fortranLabel == isSgWhileStmt(sc)->get_string_label()) {
+        if (label.empty() ||
+        		label == isSgWhileStmt(sc)->get_string_label()) {
           return sc;
         }
         break;
@@ -6286,6 +6299,19 @@ SgScopeStatement* SageInterface::findEnclosingLoop(SgStatement* s, const std::st
       case V_SgSwitchStatement: {
         if (stopOnSwitches) return sc;
         break;
+      }
+      case V_SgJavaForEachStatement: {
+          if (label.empty()) {
+        	  return sc;
+          }
+    	  break;
+      }
+      case V_SgJavaLabelStatement: {
+          if (label.empty() ||
+        		  label == isSgJavaLabelStatement(sc)->get_label().getString()) {
+            return sc;
+          }
+    	  break;
       }
       default: continue;
     }
