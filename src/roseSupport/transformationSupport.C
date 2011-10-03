@@ -2443,8 +2443,17 @@ SgFunctionDefinition*
 TransformationSupport::getFunctionDefinition( const SgNode* astNode)
    {
      const SgNode* parentNode = astNode;
+
+     ROSE_ASSERT(astNode != NULL);
+#if 1
+     printf ("Note: astNode = %p = %s parent = %p \n",astNode,astNode->class_name().c_str(),astNode->get_parent());
+#endif
+
      while ( (isSgFunctionDefinition(parentNode) == NULL) && (parentNode->get_parent() != NULL) )
         {
+#if 1
+          printf ("Note: parentNode = %p = %s \n",parentNode,parentNode->class_name().c_str());
+#endif
           parentNode = parentNode->get_parent();
         }
 
@@ -2461,10 +2470,10 @@ TransformationSupport::getFunctionDefinition( const SgNode* astNode)
 #if 0
           printf ("Error: could not trace back to SgFunctionDefinition node \n");
           else 
-               printf ("Error: could not trace back to SgFunctionDefinition node from %s \n",
-          astNode->class_name().c_str());
+               printf ("Error: could not trace back to SgFunctionDefinition node from %s \n",astNode->class_name().c_str());
 #endif
-          ROSE_ABORT();
+       // ROSE_ABORT();
+          ROSE_ASSERT(false);
         }
        else
         {

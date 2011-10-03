@@ -11,6 +11,7 @@ int
 main (int argc, char *argv[])
 {
   SgProject *project = frontend (argc, argv);
+
   ROSE_ASSERT (project != NULL);
 
   // check if it is UPC source file

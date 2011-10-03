@@ -8430,7 +8430,7 @@ void c_action_allocate_shape_spec_list(int count)
  *
  * @param label Optional statement label
  */
-// void c_action_nullify_stmt(Token_t * label)
+// void nullifyStatement_stmt(Token_t * label)
 void c_action_nullify_stmt(Token_t *label, Token_t *nullifyKeyword,
         Token_t *eos)
 {
@@ -8440,14 +8440,28 @@ void c_action_nullify_stmt(Token_t *label, Token_t *nullifyKeyword,
                 label, label != NULL ? label->text : "NULL", nullifyKeyword,
                 nullifyKeyword != NULL ? nullifyKeyword->text : "NULL");
 
-    // argument list
-    // SgNullifyStatement
-    SgExpression* exp = NULL;
-    while (astExpressionStack.empty() == false)
-    {
-        exp = astExpressionStack.front();
-        astExpressionStack.pop_front();
-    }
+#if 0
+    // Output debugging information about saved state (stack) information.
+    outputState("At TOP of R633 c_action_nullify_stmt()");
+#endif
+
+    // There should be a SgExprListExp on the astExpressionStack.
+    ROSE_ASSERT(astExpressionStack.empty() == false);
+    SgNullifyStatement* nullifyStatement = new SgNullifyStatement();
+    ROSE_ASSERT(nullifyKeyword != NULL);
+    setSourcePosition(nullifyStatement, nullifyKeyword);
+    SgExprListExp* exprList = isSgExprListExp(astExpressionStack.front());
+    ROSE_ASSERT(exprList != NULL);
+    nullifyStatement->set_pointer_list(exprList);
+    astExpressionStack.pop_front();
+    astScopeStack.front()->append_statement(nullifyStatement);
+
+#if 0
+    // Output debugging information about saved state (stack) information.
+    outputState("At BOTTOM of R633 c_action_nullify_stmt()");
+#endif
+
+
 }
 
 /** R634 list
@@ -8466,6 +8480,20 @@ void c_action_pointer_object_list(int count)
     if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf("In R634 (list) c_action_pointer_object_list() count = %d \n",
                 count);
+
+    SgExprListExp* expressionList = new SgExprListExp();
+    setSourcePosition(expressionList);
+
+    for (int i = 0; i < count; i++)
+    {
+        ROSE_ASSERT(astExpressionStack.empty() == false);
+        SgExpression* expr = astExpressionStack.front();
+        astExpressionStack.pop_front();
+        ROSE_ASSERT(expr != NULL);
+        expressionList->prepend_expression(expr);
+    }
+    // Save the SgExprListExp on the astExpressionStack
+    astExpressionStack.push_front(expressionList);
 }
 
 /** R635
