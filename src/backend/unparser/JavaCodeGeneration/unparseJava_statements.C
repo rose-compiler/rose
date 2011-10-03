@@ -647,10 +647,10 @@ Unparse_Java::unparseFunctionParameterList(SgStatement* stmt, SgUnparse_Info& in
     SgInitializedNamePtrList& names = param_list->get_args();
     SgInitializedNamePtrList::iterator name_it;
     for (name_it = names.begin(); name_it != names.end(); name_it++) {
-    	if (name_it != names.begin()) {
+        if (name_it != names.begin()) {
             curprint(", ");
         }
-    	SgInitializedName* iname = *name_it;
+        SgInitializedName* iname = *name_it;
         unparseType(iname->get_type(), info);
         curprint(" ");
         unparseName(iname->get_name(), info);
@@ -722,10 +722,10 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgInitializedNamePtrList& names = mfuncdecl_stmt->get_args();
      SgInitializedNamePtrList::iterator name_it;
      for (name_it = names.begin(); name_it != names.end(); name_it++) {
-    	 if (name_it != names.begin()) {
+         if (name_it != names.begin()) {
              curprint(", ");
          }
-    	 unparseInitializedName(*name_it, info);
+         unparseInitializedName(*name_it, info);
      }
 
      curprint(") ");
@@ -980,6 +980,11 @@ Unparse_Java::unparseContinueStmt(SgStatement* stmt, SgUnparse_Info& info) {
   ROSE_ASSERT(continue_stmt != NULL);
 
   curprint ("continue");
+  if (continue_stmt->get_do_string_label() != "") {
+      curprint(" ");
+      curprint(continue_stmt->get_do_string_label());
+  }
+
 }
 
 void
