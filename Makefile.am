@@ -235,6 +235,26 @@ rename_distribution:
 # We convert the number of git commits to a pseudo revision number instead
 distdir = $(PACKAGE)-$(VERSION)$(DOT_SVNREV)
 
+dist-hook:
+	builddir="$$(pwd)" &&                                                      \
+  (                                                                          \
+  [ -e "$(srcdir)"/.git ] &&                                                 \
+  cd $(srcdir) &&                                                            \
+      git_head="$$(git rev-parse HEAD)" &&                                   \
+      git_head_date="$$(git log -1 --format=%at $$(git rev-parse HEAD))" &&  \
+          echo "$$git_head $$git_head_date" > $${builddir}/VERSION &&        \
+          cp $${builddir}/VERSION $${builddir}/$(distdir)/VERSION            \
+  ) ||                                                                       \
+  (                                                                          \
+  VERSION_FILE="$(srcdir)/VERSION" &&                                        \
+  [ -e "$$VERSION_FILE" ] &&                                                 \
+      cp "$$VERSION_FILE" $${builddir}/$(distdir)/VERSION                    \
+  ) ||                                                                       \
+  (                                                                          \
+      echo "Error: could not determine SCM version information." &&          \
+      exit 1                                                                 \
+  )
+
 # Automake hook-ish rule to be run after dist rule (but hook runs before gzip so we can't use hook)
 # We could build our own ROSE specific wrapper for dist and distcheck.
 dist-after:
