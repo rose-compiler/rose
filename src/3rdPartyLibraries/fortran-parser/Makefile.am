@@ -1,5 +1,11 @@
 javadir=$(libdir)
 
+# CER (10/03/2011): Switched to using date-based tag for the OFP version.
+# The macro variable ROSE_OFP_VERSION_NUMBER must be changed when a new
+# date/version of OFP is added.  I think the wget code should go away as
+# the jar file is now distributed with ROSE.
+OFP_DIST_VERSION=20111001
+
 OFP_VERSION=@ROSE_OFP_MAJOR_VERSION_NUMBER@.@ROSE_OFP_MINOR_VERSION_NUMBER@.@ROSE_OFP_PATCH_VERSION_NUMBER@
 
 # DQ (4/5/2010): Think about if we need the test using an Automake conditional since the jar file always exists.
@@ -139,7 +145,7 @@ token.c: OpenFortranParser-${OFP_VERSION}.jar
 
 # DQ (10/4/2010): We only want to distribute the jar file for OFP, and then
 # extract what we require from the jar file (putting it into the build tree).
-EXTRA_DIST = CMakeLists.txt OpenFortranParser-${OFP_VERSION}.jar
+EXTRA_DIST = CMakeLists.txt OpenFortranParser-${OFP_DIST_VERSION}.jar OpenFortranParser-${OFP_VERSION}.jar
 
 
 check-local:

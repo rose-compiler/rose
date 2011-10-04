@@ -4,7 +4,7 @@ AC_DEFUN([ROSE_SUPPORT_OFP],
 
 # Default OFP version, this should be changed each time the OFP jar file is updated.
 #
-default_ofp_version=20110825
+default_ofp_version=20111001
 
 ofp_major_version_number=0
 ofp_minor_version_number=8
