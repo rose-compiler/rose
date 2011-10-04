@@ -111,6 +111,94 @@ SgAsmFunction::reason_str(bool do_pad, unsigned r)
     return result;
 }
 
+/** Returns information about the function addresses.  Every non-empty function has a minimum (inclusive) and maximum
+ *  (exclusive) address which are returned by reference, but not all functions own all the bytes within that range of
+ *  addresses. Therefore, the exact bytes are returned by adding them to the optional ExtentMap argument.  This function
+ *  returns the number of nodes (instructions and static data items) in the function.  If the function contains no nodes then
+ *  the extent map is not modified and the low and high addresses are both set to zero.
+ *
+ *  If an @p exclude functor is provided, then any node for which it returns true is not considered part of the function.  This
+ *  can be used for such things as filtering out data blocks that are marked as padding.  For example:
+ *
+ *  @code
+ *  class NotPadding: public SgAsmFunction::NodeSelector {
+ *  public:
+ *      virtual bool operator()(SgNode *node) {
+ *          SgAsmStaticData *data = isSgAsmStaticData(node);
+ *          SgAsmBlock *block = SageInterface::getEnclosingNode<SgAsmBlock>(data);
+ *          return !data || !block || block->get_reason()!=SgAsmBlock::BLK_PADDING;
+ *      }
+ *  } notPadding;
+ *
+ *  ExtentMap extents;
+ *  function->get_extent(&extents, NULL, NULL, &notPadding);
+ *  @endcode
+ *
+ *  Here's another example that calculates the extent of only the padding data, based on the negation of the filter in the
+ *  previous example:
+ *
+ *  @code
+ *  class OnlyPadding: public NotPadding {
+ *  public:
+ *      virtual bool operator()(SgNode *node) {
+ *          return !NotPadding::operator()(node);
+ *      }
+ *  } onlyPadding;
+ *
+ *  ExtentMap extents;
+ *  function->get_extent(&extents, NULL, NULL, &onlyPadding);
+ *  @endcode
+ */
+size_t
+SgAsmFunction::get_extent(ExtentMap *extents, rose_addr_t *lo_addr, rose_addr_t *hi_addr, NodeSelector *selector)
+{
+    struct T1: public AstSimpleProcessing {
+        ExtentMap *extents;
+        rose_addr_t *lo_addr, *hi_addr;
+        NodeSelector *selector;
+        size_t nnodes;
+        T1(ExtentMap *extents, rose_addr_t *lo_addr, rose_addr_t *hi_addr, NodeSelector *selector)
+            : extents(extents), lo_addr(lo_addr), hi_addr(hi_addr), selector(selector), nnodes(0) {
+            if (lo_addr)
+                *lo_addr = 0;
+            if (hi_addr)
+                *hi_addr = 0;
+        }
+        void visit(SgNode *node) {
+            if (selector && !(*selector)(node))
+                return;
+            SgAsmInstruction *insn = isSgAsmInstruction(node);
+            SgAsmStaticData *data = isSgAsmStaticData(node);
+            rose_addr_t lo, hi;
+            if (insn) {
+                lo = insn->get_address();
+                hi = lo + insn->get_raw_bytes().size();
+            } else if (data) {
+                lo = data->get_address();
+                hi = lo + data->get_raw_bytes().size();
+            } else {
+                return;
+            }
+
+            if (0==nnodes++) {
+                if (lo_addr)
+                    *lo_addr = lo;
+                if (hi_addr)
+                    *hi_addr = hi;
+            } else {
+                if (lo_addr)
+                    *lo_addr = std::min(*lo_addr, lo);
+                if (hi_addr)
+                    *hi_addr = std::max(*hi_addr, hi);
+            }
+            if (extents && hi>lo)
+                extents->insert(lo, hi-lo);
+        }
+    } t1(extents, lo_addr, hi_addr, selector);
+    t1.traverse(this, preorder);
+    return t1.nnodes;
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // These SgAsmBlock methods have no other home, so they're here for now. Do not move them into
 // src/ROSETTA/Grammar/BinaryInstruction.code because then they can't be indexed by C-aware tools.

@@ -4096,6 +4096,15 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
         std::string reason_str(bool pad) const;
         static std::string reason_str(bool pad, unsigned reason);
 
+	class NodeSelector {
+	public:
+		virtual ~NodeSelector() {}
+		virtual bool operator()(SgNode*) = 0;
+	};
+
+	/* Returns info about what addresses a function occupies. */
+	size_t get_extent(ExtentMap *emap=NULL, rose_addr_t *lo_addr=NULL, rose_addr_t *hi_addr=NULL, NodeSelector *exclude=NULL);
+
       //! enum declaration as specified in proposed Sabre database schema
           enum function_kind_enum {
                e_unknown  = 0,
