@@ -37,7 +37,7 @@ namespace BinaryAnalysis {
      *  // is a function entry block.
      *  struct OnlyCallEdges: public ControlFlow::EdgeFilter {
      *      bool operator()(ControlFlow *analyzer, SgAsmBlock *src, SgAsmBlock *dst) {
-     *          SgAsmFunctionDeclaration *func = dst->get_enclosing_function();
+     *          SgAsmFunction *func = dst->get_enclosing_function();
      *          return func && dst == func->get_entry_block();
      *      }
      *  } edge_filter;
@@ -79,7 +79,7 @@ namespace BinaryAnalysis {
      *  @endcode
      *
      *  The BinaryAnalysis::FunctionCall::Graph differs from a filtered ControlFlow::Graph in that the former's vertices point
-     *  to functions (SgAsmFunctionDeclaration) in the AST while the latter's points to basic blocks (SgAsmBlock).  However,
+     *  to functions (SgAsmFunction) in the AST while the latter's points to basic blocks (SgAsmBlock).  However,
      *  building a CFG that has only function call edges is a common enough operation that we provide a method to do just
      *  that.  The benefit of using build_cg_from_ast() is that the user can easily define an additional edge
      *  filter to even further restrict the edges (see that method's source code for an example).
@@ -289,7 +289,7 @@ namespace BinaryAnalysis {
         /** Builds a control flow graph with only function call edges.
          *
          *  This differs from a true FunctionCall::Graph in that the vertices of the returned graph point to basic blocks,
-         *  while the vertices of a FunctionCall::Graph point to functions (SgAsmFunctionDeclaration nodes).
+         *  while the vertices of a FunctionCall::Graph point to functions (SgAsmFunction nodes).
          *
          *  The graph is built by applying an edge filter (in addition to the edge filter that might be set by the user) that
          *  only accepts edges whose target is a function entry block.
@@ -502,7 +502,7 @@ BinaryAnalysis::ControlFlow::build_cg_from_ast(SgNode *root, ControlFlowGraph &c
         EdgeFilter *parent;
         T1(EdgeFilter *parent): parent(parent) {}
         bool operator()(ControlFlow *analyzer, SgAsmBlock *src, SgAsmBlock *dst) {
-            SgAsmFunctionDeclaration *func = dst ? dst->get_enclosing_function() : NULL;
+            SgAsmFunction *func = dst ? dst->get_enclosing_function() : NULL;
             if (!func || dst!=func->get_entry_block())
                 return false;
             if (parent)

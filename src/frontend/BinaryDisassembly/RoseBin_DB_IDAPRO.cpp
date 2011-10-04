@@ -280,7 +280,7 @@ void RoseBin_DB_IDAPRO::process_functions_query(MYSQL* conn, MYSQL_RES* res_set,
         addrhex << hex << setw(8) << address ;
         cout << ">> creating function : " << address << " " << addrhex.str() << " - " << name << " - " << type << endl;
       }
-      SgAsmFunctionDeclaration* fd = new SgAsmFunctionDeclaration();
+      SgAsmFunction* fd = new SgAsmFunction();
       fd->set_address(address);
       fd->set_name(name);
       globalBlock->append_statement(fd);
@@ -392,7 +392,7 @@ void RoseBin_DB_IDAPRO::process_basicblock_query(MYSQL* conn, MYSQL_RES* res_set
 
       bool foundFunction = false;
       // get function and append this instruction
-      map <int, SgAsmFunctionDeclaration* >::iterator funcIt;      
+      map <int, SgAsmFunction* >::iterator funcIt;      
       for (funcIt=rememberFunctions.begin();funcIt!=rememberFunctions.end();++funcIt) {
         int addressFunc = funcIt->first;
         ostringstream addrhex_func;
@@ -401,7 +401,7 @@ void RoseBin_DB_IDAPRO::process_basicblock_query(MYSQL* conn, MYSQL_RES* res_set
         if (addressFunc == parent_function) {
         // found the right basic_block
           foundFunction=true;
-          SgAsmFunctionDeclaration* remFunc = funcIt->second;
+          SgAsmFunction* remFunc = funcIt->second;
           remFunc->append_block(bb);
           bb->set_parent(remFunc);
           //if (RoseBin_support::DEBUG_MODE()) 
@@ -436,7 +436,7 @@ void RoseBin_DB_IDAPRO::process_basicblock_query(MYSQL* conn, MYSQL_RES* res_set
 /****************************************************
  * resolve for each instruction which type it has
  ****************************************************/
-SgAsmInstruction* RoseBin_DB_IDAPRO::createInstruction(int address, SgAsmFunctionDeclaration* bb, 
+SgAsmInstruction* RoseBin_DB_IDAPRO::createInstruction(int address, SgAsmFunction* bb, 
                                                           string mnemonic) {
   SgAsmInstruction* instruction=NULL;
 
@@ -523,8 +523,8 @@ void RoseBin_DB_IDAPRO::process_instruction_query(MYSQL* conn, MYSQL_RES* res_se
       // if it is in the callgraph, one wants to create a BinaryCall instead
 
       // append the instruction to its function
-      rose_hash::unordered_map <int, SgAsmFunctionDeclaration* >::iterator func_it = rememberFunctions.find(i_func);
-      SgAsmFunctionDeclaration* func = NULL;
+      rose_hash::unordered_map <int, SgAsmFunction* >::iterator func_it = rememberFunctions.find(i_func);
+      SgAsmFunction* func = NULL;
       // for (func_it; func_it!=rememberFunctions.end(); ++func_it) {
       if (func_it != rememberFunctions.end()) {
         func = func_it->second;

@@ -1,6 +1,9 @@
 #ifndef ROSE_DISASSEMBLER_PARTITIONER_H
 #define ROSE_DISASSEMBLER_PARTITIONER_H
+
+#include "callbacks.h"
 #include "Disassembler.h"
+
 /** Partitions instructions into basic blocks and functions.
  *
  *  The Partitioner classes are responsible for assigning instructions to basic blocks, and basic blocks to functions.  A
@@ -55,7 +58,7 @@
  *  detects that a block has edges coming in from two different functions, it creates a new function whose entry point is that
  *  block (see definition of "function" above; a function can only have one entry point).
  *
- *  The third and final phase, called "post-cfg", makes final adjustments, such as adding SgAsmFunctionDeclaration objects for
+ *  The third and final phase, called "post-cfg", makes final adjustments, such as adding SgAsmFunction objects for
  *  no-op or zero padding occuring between the previously detected functions. This could also be user-extended to add blocks to
  *  functions that ROSE detected during CFG analysis (such as unreferenced basic blocks, no-ops, etc. that occur within the
  *  extent of a function.)
@@ -72,7 +75,7 @@
  *
  *  The results of block and function detection are stored in the Partitioner object itself. One usually retrieves this
  *  information via a call to the build_ast() method, which constructs a ROSE AST.  Any instructions that were not assigned to
- *  blocks of a function can be optionally discarded (see the SgAsmFunctionDeclaration::FUNC_LEFTOVERS bit of set_search(), or
+ *  blocks of a function can be optionally discarded (see the SgAsmFunction::FUNC_LEFTOVERS bit of set_search(), or
  *  the "leftovers" parameter of the "-rose:partitioner_search" command-line switch).
  *
  *  The Partitioner class can easily be subclassed by the user. Some of the Disassembler methods automatically call
@@ -164,12 +167,15 @@ protected:
     };
 
     /** Represents a basic block within the Partitioner. Each basic block will eventually become an SgAsmBlock node in the
-     *  AST. However, if the SgAsmFunctionDeclaration::FUNC_LEFTOVER bit is set in the Partitioner::set_search() method then
-     *  blocks that were not assigned to any function to not result in an SgAsmBlock node. */
+     *  AST. However, if the SgAsmFunction::FUNC_LEFTOVER bit is set in the Partitioner::set_search() method then
+     *  blocks that were not assigned to any function to not result in an SgAsmBlock node.
+     *
+     *  The first instruction of a basic block should never change.  In particular, the address of the first instruction should
+     *  not change because this address is used as a key to link a BasicBlock object to a Function object. */
     struct BasicBlock {
         /** Constructor. This constructor should not be called directly since the Partitioner has other pointers that it needs
          *  to establish to this block.  Instead, call Partitioner::find_bb_containing(). */
-        BasicBlock(): function(NULL) {}
+        BasicBlock(): reason(SgAsmBlock::BLK_NONE), function(NULL) {}
 
         /** Destructor. This destructor should not be called directly since there are other pointers to this block that the
          *  block does not know about. Instead, call Partitioner::discard(). */
@@ -185,26 +191,50 @@ protected:
         void validate_cache() { cache.age=insns.size(); }
 
         SgAsmInstruction* last_insn() const;    /**< Returns the last executed (exit) instruction of the block */
+        rose_addr_t address() const;            /* Return the address of the basic block's first (entry) instruction. */
+        unsigned reason;                        /**< Reasons this block was created; SgAsmBlock::Reason bit flags */
         std::vector<SgAsmInstruction*> insns;   /**< Non-empty set of instructions composing this basic block, in address order */
         BlockAnalysisCache cache;               /**< Cached results of local analyses */
         Function* function;                     /**< Function to which this basic block is assigned, or null */
     };
     typedef std::map<rose_addr_t, BasicBlock*> BasicBlocks;
 
-    /** Represents a function within the Partitioner. Each non-empty function will become an SgAsmFunctionDeclaration in the
-     *  AST. */
+    /** Represents a region of static data within the address space being disassembled.  Each data block will eventually become
+     *  an SgAsmBlock node in the AST if it is assigned to a function.
+     *
+     *  The address of the first SgAsmStaticData node of a DataBlock should remain constant for the life of the DataBlock.
+     *  This is because we use that address to establish a two-way link between the DataBlock and a Function object. */
+    struct DataBlock {
+        /** Constructor. This constructor should not be called directly since the Partitioner has other pointers that it needs
+         * to establish to this block.  Instead, call a method like Paritioner::create_datablock(). */
+        DataBlock(): reason(SgAsmBlock::BLK_NONE), function(NULL) {}
+
+        /** Destructor.  This destructor should not be called directly since there are other pointers in the Partitioner that
+         * this block does not know about.  Instead, call Partitioner::discard(). */
+        ~DataBlock() {}
+
+        rose_addr_t address() const;            /* Return the address of the first node of a data block. */
+        std::vector<SgAsmStaticData*> nodes;    /**< The static data nodes belonging to this block; not deleted. */
+        unsigned reason;                        /**< Reasons this block was created; SgAsmBlock::Reason bit flags */
+        Function *function;                     /**< Function to which this data block is assigned, or null */
+    };
+    typedef std::map<rose_addr_t, DataBlock*> DataBlocks;
+
+    /** Represents a function within the Partitioner. Each non-empty function will become an SgAsmFunction in the AST. */
     struct Function {
         Function(rose_addr_t entry_va): reason(0), pending(true), entry_va(entry_va), returns(false) {}
         Function(rose_addr_t entry_va, unsigned r): reason(r), pending(true), entry_va(entry_va), returns(false) {}
         Function(rose_addr_t entry_va, unsigned r, const std::string& name)
             : reason(r), name(name), pending(true), entry_va(entry_va), returns(false) {}
-        void clear_blocks();                    /**< Remove all blocks from this function w/out deleting the blocks. */
-        BasicBlock* last_block() const;         /**< Return pointer to block with highest address */
-        unsigned reason;                        /**< SgAsmFunctionDeclaration::FunctionReason bit flags */
+        void clear_basic_blocks();              /**< Remove all basic blocks from this function w/out deleting the blocks. */
+        void clear_data_blocks();               /**< Remove all data blocks from this function w/out deleting the blocks. */
+        unsigned reason;                        /**< SgAsmFunction::FunctionReason bit flags */
         std::string name;                       /**< Name of function if known */
-        BasicBlocks blocks;                     /**< Basic blocks belonging to this function */
+        BasicBlocks basic_blocks;               /**< Basic blocks belonging to this function */
+        DataBlocks data_blocks;                 /**< Data blocks belonging to this function */
         bool pending;                           /**< True if we need to (re)discover the basic blocks */
         rose_addr_t entry_va;                   /**< Entry virtual address */
+        Disassembler::AddressSet heads;         /**< CFG heads, excluding func entry: addresses of additional blocks */
         bool returns;                           /**< Does this function return? */
     };
     typedef std::map<rose_addr_t, Function*> Functions;
@@ -244,7 +274,7 @@ public:
      *
      *  \deprecated This function is deprecated.  Basic blocks are now represented by Partitioner::BasicBlock
      *  and the insn2block map. */
-    BasicBlockStarts detectBasicBlocks(const Disassembler::InstructionMap&) const;
+    BasicBlockStarts detectBasicBlocks(const Disassembler::InstructionMap&) const __attribute__((deprecated));
 
     /** Information about each function starting address.
      *
@@ -252,7 +282,7 @@ public:
      *  Partitioner::Function, which is capable of describing noncontiguous functions. */
     struct FunctionStart {
         FunctionStart(unsigned reason, std::string name): reason(reason), name(name) {}
-        unsigned reason;                        /** SgAsmFunctionDeclaration::FunctionReason bit flags */
+        unsigned reason;                        /** SgAsmFunction::FunctionReason bit flags */
         std::string name;                       /** Name of function if known. */
     };
 
@@ -266,7 +296,7 @@ public:
      *
      *  \deprecated This function has been replaced by pre_cfg(), analyze_cfg(), and post_cfg() */
     FunctionStarts detectFunctions(SgAsmInterpretation*, const Disassembler::InstructionMap &insns,
-                                   BasicBlockStarts &bb_starts/*out*/) const;
+                                   BasicBlockStarts &bb_starts/*out*/) const __attribute__((deprecated));
 
 
     /*************************************************************************************************************************
@@ -275,7 +305,7 @@ public:
 public:
 
     Partitioner()
-        : disassembler(NULL), map(NULL), func_heuristics(SgAsmFunctionDeclaration::FUNC_DEFAULT), debug(NULL),
+        : disassembler(NULL), map(NULL), func_heuristics(SgAsmFunction::FUNC_DEFAULT), debug(NULL),
           allow_discont_blocks(true)
         {}
     virtual ~Partitioner() { clear(); }
@@ -286,13 +316,13 @@ public:
 public:
 
     /** Sets the set of heuristics used by the partitioner.  The @p heuristics should be a bit mask containing the
-     *  SgAsmFunctionDeclaration::FunctionReason bits. These same bits are assigned to the "reason" property of the resulting
+     *  SgAsmFunction::FunctionReason bits. These same bits are assigned to the "reason" property of the resulting
      *  function nodes in the AST, depending on which heuristic detected the function. */
     virtual void set_search(unsigned heuristics) {
         func_heuristics = heuristics;
     }
 
-    /** Returns a bit mask of SgAsmFunctionDeclaration::FunctionReason bits indicating which heuristics would be used by the
+    /** Returns a bit mask of SgAsmFunction::FunctionReason bits indicating which heuristics would be used by the
      *  partitioner.  */
     virtual unsigned get_search() const {
         return func_heuristics;
@@ -369,7 +399,7 @@ public:
     /** Adds a user-defined function detector to this partitioner. Any number of detectors can be added and they will be run
      *  by pre_cfg() in the order they were added, after the built-in methods run.  Each user-defined detector will be called
      *  first with the SgAmGenericHeader pointing to null, then once for each file header. The user-defined methods are run
-     *  only if the SgAsmFunctionDeclaration::FUNC_USERDEF is set (see set_search()), which is the default.   The reason for
+     *  only if the SgAsmFunction::FUNC_USERDEF is set (see set_search()), which is the default.   The reason for
      *  having user-defined function detectors is that the detection of functions influences the shape of the AST and so it is
      *  easier to apply those analyses here, before the AST is built, rather than in the mid-end after the AST is built. */
     void add_function_detector(FunctionDetector f) {
@@ -379,11 +409,11 @@ public:
     /** Parses a string describing the heuristics and returns the bit vector that can be passed to set_search(). The input
      *  string should be a comma-separated list (without white space) of search specifications. Each specification should be
      *  an optional qualifier character followed by either an integer or a word. The accepted words are the lower-case
-     *  versions of the constants enumerated by SgAsmFunctionDeclaration::FunctionReason, but without the leading "FUNC_".
+     *  versions of the constants enumerated by SgAsmFunction::FunctionReason, but without the leading "FUNC_".
      *  The qualifier determines whether the bits specified by the integer or word are added to the return value ("+") or
      *  removed from the return value ("-").  The "=" qualifier acts like "+" but first zeros the return value. The default
      *  qualifier is "+" except when the word is "default", in which case the specifier is "=". An optional initial bit mask
-     *  can be specified (defaults to SgAsmFunctionDeclaration::FUNC_DEFAULT). */
+     *  can be specified (defaults to SgAsmFunction::FUNC_DEFAULT). */
     static unsigned parse_switches(const std::string&, unsigned initial_flags);
 
     /** Top-level function to run the partitioner on some instructions and build an AST. The SgAsmInterpretation is optional.
@@ -433,6 +463,18 @@ public:
      *  and add it to the bad instruction list. */
     virtual SgAsmInstruction* find_instruction(rose_addr_t, bool create=true);
 
+    /** Drop an instruction from consideration.  If the instruction belongs to a basic block then the basic block is also
+     *  dropped and its other instructions, if any, are returned to the (implied) list of free instructions.  The basic block
+     *  must not be currently assigned to any function.  The instruction is not deleted.
+     *
+     *  This method always returns the null pointer. */
+    virtual SgAsmInstruction* discard(SgAsmInstruction*);
+
+    /** Drop a basic block from the partitioner.  The specified basic block, which must not belong to any function, is removed
+     *  from the Partitioner, deleted, and its instructions all returned to the (implied) list of free instructions. This
+     *  function always returns the null pointer. */
+    virtual BasicBlock *discard(BasicBlock*);
+
     /** Adds a new function definition to the partitioner.  New functions can be added at any time, including during the
      *  analyze_cfg() call.  When this method is called with an entry_va for an existing function, the specified @p reasons
      *  will be merged with the existing function, and the existing function will be given the specified name if it has none. */
@@ -442,10 +484,10 @@ public:
     virtual Function* find_function(rose_addr_t entry_va);
 
     /** Builds the AST describing all the functions. The return value is an SgAsmBlock node that points to a list of
-     *  SgAsmFunctionDeclaration nodes (the functions), each of which points to a list of SgAsmBlock nodes (the basic
+     *  SgAsmFunction nodes (the functions), each of which points to a list of SgAsmBlock nodes (the basic
      *  blocks). Any basic blocks that were not assigned to a function by the Partitioner will be added to a function named
      *  "***uncategorized blocks***" whose entry address will be the address of the lowest instruction, and whose reasons for
-     * existence will include the SgAsmFunctionDeclaration::FUNC_LEFTOVERS bit.  However, if the FUNC_LEFTOVERS bit is not
+     * existence will include the SgAsmFunction::FUNC_LEFTOVERS bit.  However, if the FUNC_LEFTOVERS bit is not
      * turned on (see set_search()) then uncategorized blocks will not appear in the AST. */
     virtual SgAsmBlock* build_ast();
 
@@ -453,36 +495,217 @@ public:
      *  block pointers point to actual blocks.  The update only happens for SgAsmTarget objects that don't already have a node
      *  pointer. */
     virtual void update_targets(SgNode *ast);
+
+    /**************************************************************************************************************************
+     *                                  Functions for scanning through memory
+     **************************************************************************************************************************/
+public:
+
+    class InsnRangeCallback {
+    public:
+        struct Args {
+            Args(Partitioner *partitioner, SgAsmInstruction *insn_prev, SgAsmInstruction *insn_begin,
+                 SgAsmInstruction *insn_end, size_t ninsns)
+                : partitioner(partitioner), insn_prev(insn_prev), insn_begin(insn_begin), insn_end(insn_end),
+                  ninsns(ninsns) {}
+            Partitioner *partitioner;
+            SgAsmInstruction *insn_prev;                /**< Previous instruction not in range, or null. */
+            SgAsmInstruction *insn_begin;               /**< First instruction in range of instructions. */
+            SgAsmInstruction *insn_end;                 /**< First subsequent instruction not in range, or null. */
+            size_t ninsns;                              /**< Number of instructions in range. */
+        };
+
+        /** The actual callback function.  This needs to be defined in subclasses. */
+        virtual bool operator()(bool enabled, const Args &args) = 0;
+    };
+
+    typedef ROSE_Callbacks::List<InsnRangeCallback> InsnRangeCallbacks;
+
+    /** Scans contiguous sequences of instructions.  The specified callbacks are invoked for each contiguous sequence of
+     *  instructions in the specified instruction map.  At each iteration of the loop, we choose the instruction with the
+     *  lowest address and the subsequent instructions that are contiguous in memory, build up the callback argument list,
+     *  invoke the callbacks on the list, and remove those instructions from consideration by subsequent iterations of the
+     *  loop.
+     *
+     *  The callback arguments are built from the supplied values of @p insn_prev and @p insn_end.  The @p insn_begin member is
+     *  the instruction with the lowest address in this iteration and @p ninsns is the number of contiguous instructions.
+     *
+     *  @{ */
+    virtual void scan_contiguous_insns(Disassembler::InstructionMap insns, InsnRangeCallbacks &cblist,
+                                       SgAsmInstruction *insn_prev, SgAsmInstruction *insn_end);
+    void scan_contiguous_insns(const Disassembler::InstructionMap &insns, InsnRangeCallback *callback,
+                               SgAsmInstruction *insn_prev, SgAsmInstruction *insn_end) {
+        InsnRangeCallbacks cblist(callback);
+        scan_contiguous_insns(insns, cblist, insn_prev, insn_end);
+    }
+    /** @} */
+
+    /** Scans ranges of unassigned instructions.  Scans through the list of existing instructions that are not assigned to any
+     *  function and invokes all of the specified callbacks on each range of such instructions.  The ranges of unassigned
+     *  instructions are not necessarily contiguous or non-overlapping but are bounded by the @p insn_begin (inclusive) and @p
+     *  insn_end (exclusive, or null) callback arguments. The callbacks are invoked via the scan_contiguous_insns() method with
+     *  a different @p insn_begin for each call.
+     *
+     *  Callbacks are allowed to disassemble additional instructions and/or assign/break associations between instructions and
+     *  functions.  Only the instructions that are already disassembled at the beginning of this call are considered by the
+     *  iterators, but the instruction/function associations may change during the iteration.
+     *
+     *  All callbacks should honor their "enabled" argument and do nothing if it is clear.  This feature is used by some of the
+     *  other instruction scanning methods to filter out certain ranges of instructions.  For instance, the
+     *  scan_intrafunc_insns() will set "enabled" to true only for ranges of unassigned instructions whose closest surrounding
+     *  assigned instructions both belong to the same function.
+     *
+     *  @{ */
+    virtual void scan_unassigned_insns(InsnRangeCallbacks &callbacks);
+    void scan_unassigned_insns(InsnRangeCallback *callback) {
+        InsnRangeCallbacks cblist(callback);
+        scan_unassigned_insns(cblist);
+    }
+    /** @} */
+
+    /** Scans the unassigned instructions within a function.  The specified callbacks are invoked for each range of unassigned
+     *  instructions whose closest surrounding assigned instructions both belong to the same function.  This can be used, for
+     *  example, to discover instructions that should probably be considered part of the same function as the surrounding
+     *  instructions.
+     *
+     *  This method operates by making a temporary copy of @p callbacks, prepending a filtering callback, and then invoking
+     *  scan_unassigned_insns().  Therefore, the callbacks supplied by the user should all honor their "enabled" argument.
+     *
+     *  @{ */
+    virtual void scan_intrafunc_insns(InsnRangeCallbacks &callbacks);
+    void scan_intrafunc_insns(InsnRangeCallback *callback) {
+        InsnRangeCallbacks cblist(callback);
+        scan_intrafunc_insns(cblist);
+    }
+    /** @} */
     
+    /** Scans the instructions between functions.  The specified callbacks are invoked for each set of instructions (not
+     *  necessarily contiguous in memory) that fall "between" two functions.  Instruction I(x) at address x is between two
+     *  functions, Fa and Fb, if there exists a lower address a<x such that I(a) belongs to Fa and there exists a higher
+     *  address b>x such that I(b) belongs to Fb; and for all instructions I(y) for a<y<b, I(y) does not belong to any
+     *  function.
+     *
+     *  Additionally, if no I(a) exists that belongs to a function, and/or no I(b) exists that belongs to a function, then I(x)
+     *  is also considered part of an inter-function region and the lower and/or upper functions are undefined. In other words,
+     *  instructions appearing before all functions or after all functions are also considered to be between functions, and all
+     *  instructions are considered to be between functions if there are no functions.
+     *
+     *  Only instructions that have already been disassembled are considered.
+     *
+     *  @{ */
+    virtual void scan_interfunc_insns(InsnRangeCallbacks &callbacks);
+    void scan_interfunc_insns(InsnRangeCallback *callback) {
+        InsnRangeCallbacks cblist(callback);
+        scan_interfunc_insns(cblist);
+    }
+    /** @} */
+
+    /** Callback to create inter-function instruction padding.  This callback can be passed to the scan_interfunc_insns()
+     *  method's callback list.  Whenever it detects a contiguous sequence of one or more of the specified instructions (in any
+     *  order) immediately after the end of a function it will create a new SgAsmFunction::FUNC_INTERPAD function to
+     *  hold the padding.
+     *
+     *  Here's an example of how to use this (see the post_cfg() method for actual use):
+     *  @code
+     *  // Create the callback object and specify that padding
+     *  // consists of any combination of x86 NOP and INT3 instructions.
+     *  InterFuncInsnPadding pad1;
+     *  pad1.x86_kind.insert(x86_nop);
+     *  pad1.x86_kind.insert(x86_int3);
+     *
+     *  // Create a second callback that looks for instructions of
+     *  // any architecture that consist of all zero bytes.
+     *  InterFuncInsnPadding pad2;
+     *  SgUnsignedCharList zero;
+     *  zero.push_back(0x00);
+     *  pad2.byte_patterns.push_back(zero);
+     *
+     *  // Build the callback list
+     *  InsnRangeCallbacks cblist;
+     *  cblist.append(&pad1);
+     *  cblist.append(&pad2);
+     *
+     *  // Run the callback(s) on the list, invoking them for
+     *  // contiguous sequences of instructions that are not yet
+     *  // assigned to functions and which appear between two
+     *  // functions.
+     *  scan_interfunc_insns(cblist);
+     *  @endcode
+     *
+     *  If we want padding to be a sequence of either NOP instructions or INT3 instructions but not a mixture of both, then
+     *  we would create two callback objects, one for NOP and one for INT3.  They can both be added to the callback list for a
+     *  single invocation of scan_interfunc_insns(), or we can make two separate calls to scan_interfunc_insns(). Likewise,
+     *  if we had added the zero byte pattern to the first callback instead of creating a second callback, the padding could
+     *  consist of any combination of NOP, INT3, or zero bytes.
+     */
+    struct InterFuncInsnPadding: public InsnRangeCallback {
+        std::set<X86InstructionKind> x86_kinds;                         /**< Kinds of x86 instructions allowed. */
+        std::vector<SgUnsignedCharList> byte_patterns;                  /**< Match instructions with specified byte patterns. */
+        bool begins_contiguously;                                       /**< Must immediately follow the end of a function? */
+        bool ends_contiguously;                                         /**< Must immediately precede the beginning of a func? */
+
+        InterFuncInsnPadding()
+            : begins_contiguously(true), ends_contiguously(true) {}
+        virtual bool operator()(bool enabled, const Args &args);        /**< The actual callback function. */
+    };
+
+    /** Callback to insert unreachable intra-function blocks.  This callback can be passed to the scan_intrafunc_insns()
+     *  method's callback list.  Whenever it detects a block of unassigned instructions between blocks that both belong to the
+     *  same function and the function is considered contiguous via the non-strict version of the is_contiguous() method, then
+     *  the block in question is added to the function. */
+    struct IntraFunctionBlocks: public InsnRangeCallback {
+        virtual bool operator()(bool enabled, const Args &args);        /**< The actual callback function. */
+    };
+
+    /** Callback to find thunks.  Creates functions whose only instruction is a JMP to the entry point of another function.
+     *  This should be called by scan_unassigned_insns() before the PostFunctionBlocks callback.
+     *
+     *  Note: This is highly experimental. [RPM 2011-09-22] */
+    struct FindThunks: public InsnRangeCallback {
+        virtual bool operator()(bool enabled, const Args &args);
+    };
+
+    /** Callback to add post-function instructions to the preceding function.  It should be called by the
+     *  scan_interfunc_insns() method after inter-function padding is found.
+     *
+     *  Note: This is highly experimental. [RPM 2011-09-22] */
+    struct PostFunctionBlocks: public InsnRangeCallback {
+        virtual bool operator()(bool enabled, const Args &args);
+    };
+
+
     /*************************************************************************************************************************
      *                                                 Low-level Functions
      *************************************************************************************************************************/
 protected:
     /* NOTE: Some of these are documented at their implementation because the documentation is more than what conveniently
      *       fits here. */
-    struct AbandonFunctionDiscovery {};                         /**< Exception thrown to defer function block discovery */
+    struct AbandonFunctionDiscovery {};                         /**< Exception thrown to defer function block discovery. */
 
-    virtual void append(BasicBlock*, SgAsmInstruction*);        /**< Add instruction to basic block */
+    virtual void append(BasicBlock*, SgAsmInstruction*);        /**< Add an instruction to a basic block. */
+    virtual void append(Function*, BasicBlock*, unsigned reasons, bool keep=false); /* Append a basic block to a function */
+    virtual void append(Function*, DataBlock*, unsigned reasons); /* Append a data block to a function */
+    virtual void remove(Function*, BasicBlock*);                /**< Remove a basic block from a function. */
+    virtual void remove(Function*, DataBlock*);                 /**< Remove a data block from a function. */
     virtual BasicBlock* find_bb_containing(rose_addr_t, bool create=true); /* Find basic block containing instruction address */
     virtual BasicBlock* find_bb_starting(rose_addr_t, bool create=true);   /* Find or create block starting at specified address */
     virtual Disassembler::AddressSet successors(BasicBlock*, bool *complete=NULL); /* Calculates known successors */
     virtual rose_addr_t call_target(BasicBlock*);               /* Returns address if block could be a function call */
-    virtual void append(Function*, BasicBlock*);                /**< Append basic block to function */
-    virtual BasicBlock* discard(BasicBlock*);                   /**< Delete a basic block and return null */
-    virtual void remove(Function*, BasicBlock*);                /**< Remove basic block from function */
-    virtual rose_addr_t address(BasicBlock*) const;             /**< Return starting address of basic block */
-    virtual void truncate(BasicBlock*, rose_addr_t);            /**< Remove instructions from end of basic block */
+    virtual void truncate(BasicBlock*, rose_addr_t);            /**< Remove instructions from the end of a basic block. */
     virtual void discover_first_block(Function*);               /* Adds first basic block to empty function to start discovery. */
-    virtual void discover_blocks(Function*, rose_addr_t);       /* Recursively discovers blocks of a function. */
-    virtual void pre_cfg(SgAsmInterpretation *interp=NULL);     /**< Detects functions before analyzing the CFG */
-    virtual void analyze_cfg();                                 /**< Detect functions by analyzing the CFG */
-    virtual void post_cfg(SgAsmInterpretation *interp=NULL);    /**< Detects functions after analyzing the CFG */
-    virtual SgAsmFunctionDeclaration* build_ast(Function*);     /**< Build AST for a single function */
-    virtual SgAsmBlock* build_ast(BasicBlock*);                 /**< Build AST for a single basic block */
+    virtual void discover_blocks(Function*, unsigned reason);   /* Start to recursively discover blocks of a function. */
+    virtual void discover_blocks(Function*, rose_addr_t, unsigned reason); /* Recursively discovers blocks of a function. */
+    virtual void pre_cfg(SgAsmInterpretation *interp=NULL);     /**< Detects functions before analyzing the CFG. */
+    virtual void analyze_cfg(SgAsmBlock::Reason);               /**< Detect functions by analyzing the CFG. */
+    virtual void post_cfg(SgAsmInterpretation *interp=NULL);    /**< Detects functions after analyzing the CFG. */
+    virtual SgAsmFunction* build_ast(Function*);                /**< Build an AST for a single function. */
+    virtual SgAsmBlock* build_ast(BasicBlock*);                 /**< Build an AST for a single basic block. */
+    virtual SgAsmBlock* build_ast(DataBlock*);                  /**< Build an AST for a single data block. */
     virtual bool pops_return_address(rose_addr_t);              /**< Determines if a block pops the stack w/o returning */
     virtual void update_analyses(BasicBlock*);                  /* Makes sure cached analysis results are current. */
     virtual rose_addr_t canonic_block(rose_addr_t);             /**< Follow alias links in basic blocks. */
     virtual bool is_function_call(BasicBlock*, rose_addr_t*);   /* True if basic block appears to call a function. */
+    virtual bool is_thunk(Function*);                           /* True if function is a thunk. */
 
     virtual void mark_call_insns();                             /**< Naive marking of CALL instruction targets as functions */
     virtual void mark_ipd_configuration();                      /**< Seeds partitioner with IPD configuration information */
@@ -492,8 +715,19 @@ protected:
     virtual void mark_func_symbols(SgAsmGenericHeader*);        /**< Seeds functions that correspond to function symbols */
     virtual void mark_func_patterns();                          /* Seeds functions according to instruction patterns */
     virtual void name_plt_entries(SgAsmGenericHeader*);         /**< Assign names to ELF PLT functions */
-    virtual void create_nop_padding();                          /**< Creates functions to hold NOP padding */
-    virtual void create_zero_padding();                         /* Creates functions to hold zero padding */
+
+    /** Returns information about the function addresses.  Every non-empty function has a minimum (inclusive) and maximum
+     *  (exclusive) address which are returned by reference, but not all functions own all the bytes within that range of
+     *  addresses. Therefore, the exact bytes are returned by adding them to the optional ExtentMap argument.  This function
+     *  returns the number of nodes (instructions and static data items) in the function.  If the function contains no
+     *  nodes then the extent map is not modified and the low and high addresses are both set to zero. */
+    virtual size_t function_extent(Function*, ExtentMap *extents=NULL, rose_addr_t *lo_addr=NULL, rose_addr_t *hi_addr=NULL);
+
+    /** Returns an indication of whether a function is contiguous.  All empty functions are contiguous. If @p strict is true,
+     *  then a function is contiguous if it owns all bytes in a contiguous range of the address space.  If @p strict is false
+     *  then the definition is relaxed so that the instructions need not be contiguous in memory as long as no other function
+     *  owns any of the bytes between this function's low and high address range. */
+    virtual bool is_contiguous(Function*, bool strict=false);
 
     /** Return the virtual address that holds the branch target for an indirect branch. For example, when called with these
      *  instructions:
@@ -512,7 +746,7 @@ protected:
     /** Conditionally prints a progress report. If progress reporting is enabled and the required amount of time has elapsed
      *  since the previous report, then the supplied report is emited. Also, if debugging is enabled the report is emitted to
      *  the debugging file regardless of the elapsed time. The arguments are the same as fprintf(). */
-    void progress(FILE*, const char *fmt, ...) const;
+    void progress(FILE*, const char *fmt, ...) const __attribute__((format(gnu_printf, 3, 4)));
 
     /*************************************************************************************************************************
      *                                   IPD Parser for initializing the Partitioner
@@ -766,11 +1000,13 @@ protected:
     MemoryMap *map;                                     /**< Memory map used for disassembly if disassembler is present. */
     Disassembler::BadMap bad_insns;                     /**< Captured disassembler exceptions. */
 
-    BasicBlocks blocks;                                 /**< All known basic blocks. */
+    BasicBlocks basic_blocks;                           /**< All known basic blocks. */
     std::map<rose_addr_t, BasicBlock*> insn2block;      /**< Map from insns address to basic block. */
     Functions functions;                                /**< All known functions, pending and complete. */
 
-    unsigned func_heuristics;                           /**< Bit mask of SgAsmFunctionDeclaration::FunctionReason bits. */
+    DataBlocks data_blocks;                             /**< Blocks that point to static data. */
+
+    unsigned func_heuristics;                           /**< Bit mask of SgAsmFunction::FunctionReason bits. */
     std::vector<FunctionDetector> user_detectors;       /**< List of user-defined function detection methods. */
 
     FILE *debug;                                        /**< Stream where diagnistics are sent (or null). */
