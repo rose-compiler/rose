@@ -1119,8 +1119,8 @@ Grammar::setUpSupport ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // RPM (1/5/2010): Switch to control how the Partitioner looks for functions. It takes a list of words based loosely
-  // on the constants in the SgAsmFunctionDeclaration::FunctionReason enum.
-     File.setDataPrototype("unsigned", "partitionerSearchHeuristics", "= SgAsmFunctionDeclaration::FUNC_DEFAULT",
+  // on the constants in the SgAsmFunction::FunctionReason enum.
+     File.setDataPrototype("unsigned", "partitionerSearchHeuristics", "= SgAsmFunction::FUNC_DEFAULT",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // RPM (6/9/2010): Switch to specify the IPD file for the Partitioner.
