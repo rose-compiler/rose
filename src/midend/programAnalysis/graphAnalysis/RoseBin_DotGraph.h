@@ -15,9 +15,9 @@ class RoseBin_DotGraph : public RoseBin_Graph {
  private:
   void printInternalNodes( bool dfg,  bool forward_analysis,
                            std::ofstream &myfile, std::string& recursiveFunctionName,
-                           SgAsmFunctionDeclaration* p_binFunc);
+                           SgAsmFunction* p_binFunc);
 
-  typedef std::multimap < SgAsmFunctionDeclaration*,
+  typedef std::multimap < SgAsmFunction*,
     std::pair <int, SgGraphNode*> > inverseNodeType;
   inverseNodeType inverse_nodesMap;
 

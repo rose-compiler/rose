@@ -18,21 +18,21 @@
  *       Another alternative is to write an instruction callback that will be invoked for every simulated instruction and an
  *       SgAsmInstruction will be passed as one of its arguments.  That's what we do in this example.
  *
- *   3.  Once you have an instruction pointer, you just traverse upward in the AST to find the SgAsmFunctionDeclaration
+ *   3.  Once you have an instruction pointer, you just traverse upward in the AST to find the SgAsmFunction
  *       node. There are four cases:
- *         A.  The instruction has no SgAsmFunctionDeclaration parent.  This can happen if you asked for an instruction that
+ *         A.  The instruction has no SgAsmFunction parent.  This can happen if you asked for an instruction that
  *             wasn't run through the partitioning process.  Perhaps you didn't call the disassembler, the disassembler didn't
  *             disassemble at that address for some reason, or the memory containing the instruction has been modified since
  *             the instruction was first disassembled.
- *         B.  The instruction's SgAsmFunctionDeclaration has the FUNC_LEFTOVERS bit set in the vector returned by the
+ *         B.  The instruction's SgAsmFunction has the FUNC_LEFTOVERS bit set in the vector returned by the
  *             get_reason() method.  This means the Partitioner couldn't figure out which function this instruction belongs to,
  *             so it lumped it into a catch-all function.  Be aware that control flow analysis etc. will probably be
  *             meaningless on this function.
- *         C.  The SgAsmFunctionDeclaration has an empty name string.  This means that the instruction's function was detected,
+ *         C.  The SgAsmFunction has an empty name string.  This means that the instruction's function was detected,
  *             but the Partitioner couldn't find any information in symbol tables.  The RSIM_Process::disassemble() will only
  *             know about symbol tables in the main executable, not symbol tables in shared objects that were linked in by the
  *             dynamic linker. (We hope to remedy this).  If the function has no name, you can probably create your own name by
- *             using the function's unique entry address (see SgAsmFunctionDeclaration::get_entry_va()).
+ *             using the function's unique entry address (see SgAsmFunction::get_entry_va()).
  *         D.  Otherwise the function exists and has a name.
  *
  * This test simply prints the name of every instruction's function if known.
@@ -56,8 +56,8 @@ class Demo: public RSIM_Callbacks::InsnCallback {
 public:
     virtual Demo *clone() { return this; }
     virtual bool operator()(bool enabled, const Args &args) {
-        SgAsmFunctionDeclaration *func = SageInterface::getEnclosingNode<SgAsmFunctionDeclaration>(args.insn);
-        if (enabled && func!=NULL && 0==(func->get_reason() & SgAsmFunctionDeclaration::FUNC_LEFTOVERS) &&
+        SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(args.insn);
+        if (enabled && func!=NULL && 0==(func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS) &&
             !func->get_name().empty())
             args.thread->tracing(TRACE_MISC)->mesg("in function %s", func->get_name().c_str());
         return enabled;

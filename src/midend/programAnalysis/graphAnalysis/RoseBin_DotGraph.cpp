@@ -66,7 +66,7 @@ RoseBin_DotGraph::printNodesCallGraph(std::ofstream& myfile) {
     //ROSE_ASSERT(hex_address==hex_addr_tmp);
 
     SgNode* internal = node->get_SgNode();
-    SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(internal);
+    SgAsmFunction* func = isSgAsmFunction(internal);
     ROSE_ASSERT(func);
     string funcName = func->get_name();
     int pos = funcName.find("+");
@@ -104,7 +104,7 @@ RoseBin_DotGraph::printNodesCallGraph(std::ofstream& myfile) {
     //ROSE_ASSERT(hex_address==hex_addr_tmp);
 
     SgNode* internal = node->get_SgNode();
-    SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(internal);
+    SgAsmFunction* func = isSgAsmFunction(internal);
     ROSE_ASSERT(node);
     // specifies that this node has no destination address
     nodest_jmp = false;
@@ -176,7 +176,7 @@ RoseBin_DotGraph::printNodesCallGraph(std::ofstream& myfile) {
         SgGraphNode* node = isSgGraphNode(itn.second);
         string hex_address_n = node->get_name();
         SgNode* internal = node->get_SgNode();
-        SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(internal);
+        SgAsmFunction* func = isSgAsmFunction(internal);
         string name_n="noname";
         if (func)
           name_n=func->get_name();
@@ -237,14 +237,14 @@ RoseBin_DotGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow, bool forw
     //ROSE_ASSERT(hex_address==hex_addr_tmp);
 
     SgNode* internal = node->get_SgNode();
-    SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(internal);
+    SgAsmFunction* func = isSgAsmFunction(internal);
     if (func)
       continue;
     SgAsmInstruction* bin_inst = isSgAsmInstruction(internal);
-    SgAsmFunctionDeclaration* funcDecl_parent =
-      isSgAsmFunctionDeclaration(bin_inst->get_parent());
+    SgAsmFunction* funcDecl_parent =
+      isSgAsmFunction(bin_inst->get_parent());
     if (    funcDecl_parent ==NULL)
-      funcDecl_parent = isSgAsmFunctionDeclaration(bin_inst->get_parent()->get_parent());
+      funcDecl_parent = isSgAsmFunction(bin_inst->get_parent()->get_parent());
     if (funcDecl_parent==NULL) {
       cerr << " ERROR : printNodes preparation . No parent found for node : " << bin_inst->class_name() <<
         "  " << hex_address << endl;
@@ -269,7 +269,7 @@ RoseBin_DotGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow, bool forw
     SgGraphNode* node = isSgGraphNode(itn->second);
     string hex_address = node->get_name();
     SgNode* internal = node->get_SgNode();
-    SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(internal);
+    SgAsmFunction* func = isSgAsmFunction(internal);
     ROSE_ASSERT(node);
     // specifies that this node has no destination address
     nodest_jmp = false;
@@ -338,7 +338,7 @@ RoseBin_DotGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow, bool forw
 void
 RoseBin_DotGraph::printInternalNodes(    bool dfg, bool forward_analysis,
                                          std::ofstream& myfile, string& recursiveFunctionName,
-                                         SgAsmFunctionDeclaration* p_binFunc) {
+                                         SgAsmFunction* p_binFunc) {
 
   inverseNodeType::iterator inv = inverse_nodesMap.lower_bound(p_binFunc);
   for (;inv!=inverse_nodesMap.upper_bound(p_binFunc);++inv) {
@@ -424,14 +424,14 @@ RoseBin_DotGraph::printInternalNodes(    bool dfg, bool forward_analysis,
 
     ROSE_ASSERT(node);
     SgNode* internal = node->get_SgNode();
-    SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(internal);
+    SgAsmFunction* func = isSgAsmFunction(internal);
     if (func)
       continue;
     SgAsmInstruction* bin_inst = isSgAsmInstruction(internal);
-    SgAsmFunctionDeclaration* funcDecl_parent =
-      isSgAsmFunctionDeclaration(bin_inst->get_parent());
+    SgAsmFunction* funcDecl_parent =
+      isSgAsmFunction(bin_inst->get_parent());
     if (    funcDecl_parent ==NULL)
-      funcDecl_parent = isSgAsmFunctionDeclaration(bin_inst->get_parent()->get_parent());
+      funcDecl_parent = isSgAsmFunction(bin_inst->get_parent()->get_parent());
     if (funcDecl_parent==NULL) {
       cerr << " ERROR : InternalNodes . No parent found for node : " << bin_inst->class_name() <<
         "  " << hex_address << endl;
@@ -606,8 +606,8 @@ void RoseBin_DotGraph::printEdges( VirtualBinCFG::AuxiliaryInformation* info,
     //cerr <<"WARNING :: printEdges - edge not found. " << endl;
     return;
     if (source && target) {
-      SgAsmFunctionDeclaration* src = isSgAsmFunctionDeclaration(source->get_SgNode());
-      SgAsmFunctionDeclaration* trg = isSgAsmFunctionDeclaration(target->get_SgNode());
+      SgAsmFunction* src = isSgAsmFunction(source->get_SgNode());
+      SgAsmFunction* trg = isSgAsmFunction(target->get_SgNode());
       if (src && trg) {
         //cerr <<"WARNING :: printEdges - edge not found: " <<
           RoseBin_support::HexToString(src->get_address()) << " -> " <<
@@ -634,9 +634,9 @@ void RoseBin_DotGraph::printEdges( VirtualBinCFG::AuxiliaryInformation* info,
   if (grouping) {
     // fix this only if we use groups (clusters)
 #if 0
-    if (isSgAsmFunctionDeclaration(source->get_SgNode()))
+    if (isSgAsmFunction(source->get_SgNode()))
       from_hex+="_f";
-    if (isSgAsmFunctionDeclaration(target->get_SgNode()))
+    if (isSgAsmFunction(target->get_SgNode()))
       to_hex+="_f";
 #endif
   }
@@ -717,12 +717,12 @@ void RoseBin_DotGraph::printEdges( VirtualBinCFG::AuxiliaryInformation* info,
     SgAsmx86Instruction* thisNode = isSgAsmx86Instruction(source->get_SgNode());
     SgAsmx86Instruction* nextNode = isSgAsmx86Instruction(target->get_SgNode());
     if (thisNode && nextNode) {
-      SgAsmFunctionDeclaration* f_1 = isSgAsmFunctionDeclaration(thisNode->get_parent());
-      SgAsmFunctionDeclaration* f_2 = isSgAsmFunctionDeclaration(nextNode->get_parent());
+      SgAsmFunction* f_1 = isSgAsmFunction(thisNode->get_parent());
+      SgAsmFunction* f_2 = isSgAsmFunction(nextNode->get_parent());
       if (f_1==NULL)
-        f_1 = isSgAsmFunctionDeclaration(thisNode->get_parent()->get_parent());
+        f_1 = isSgAsmFunction(thisNode->get_parent()->get_parent());
       if (f_2==NULL)
-        f_2 = isSgAsmFunctionDeclaration(nextNode->get_parent()->get_parent());
+        f_2 = isSgAsmFunction(nextNode->get_parent()->get_parent());
       if (f_1==f_2)
         if (nextNode->get_kind() == x86_call || nextNode->get_kind() == x86_jmp) {
           string add = ",color=\"Green\",  style=\"invis\"";

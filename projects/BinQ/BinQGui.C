@@ -138,14 +138,14 @@ void BinQGUI::highlightFunctionRow(int row, qrs::QRTable* widget) {
       fileA=false;
     if (fileA) {
       //cerr << "Function Table A selected : " <<  endl;
-      if (isSgAsmFunctionDeclaration(funcsFileA[row])) {
-	SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(funcsFileA[row]);
+      if (isSgAsmFunction(funcsFileA[row])) {
+	SgAsmFunction* func = isSgAsmFunction(funcsFileA[row]);
 	std::vector<Item*>::iterator it = itemsFileA.begin();
 	int offset=0;
 	for (;it!=itemsFileA.end();++it) {
 	  Item* item = *it;
 	  SgAsmStatement* stat = isSgAsmStatement(item->statement);
-	  if (func==isSgAsmFunctionDeclaration(stat)) {
+	  if (func==isSgAsmFunction(stat)) {
 	    offset=item->row;
 	    break;
 	  }
@@ -158,14 +158,14 @@ void BinQGUI::highlightFunctionRow(int row, qrs::QRTable* widget) {
     else {
       //cerr << "Function Table B selected" << endl;
       if (fileB) {
-	if (isSgAsmFunctionDeclaration(funcsFileB[row])) {
-	  SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(funcsFileB[row]);
+	if (isSgAsmFunction(funcsFileB[row])) {
+	  SgAsmFunction* func = isSgAsmFunction(funcsFileB[row]);
 	  std::vector<Item*>::iterator it = itemsFileB.begin();
 	  int offset=0;
 	  for (;it!=itemsFileB.end();++it) {
 	    Item* item = *it;
 	    SgAsmStatement* stat = isSgAsmStatement(item->statement);
-	    if (func==isSgAsmFunctionDeclaration(stat)) {
+	    if (func==isSgAsmFunction(stat)) {
 	      offset=item->row;
 	      break;
 	    }
@@ -220,7 +220,7 @@ void BinQGUI::highlightInstructionRow(int row, qrs::QRTable* widget) {
     if (item) {
       for (int j=1;j<maxrows;j++) {
 	widget->setFont(f, j, row);
-	if (isSgAsmFunctionDeclaration(item->statement) ||
+	if (isSgAsmFunction(item->statement) ||
 	    isSgFunctionDeclaration(item->statement)) 
 	  widget->setBgColor(QColor(120,120,120),j,row);
 	else 
@@ -879,16 +879,16 @@ BinQGUI::showFileTab() {
 
   for (size_t row = 0; row < funcsFileA.size(); ++row) {
     tableWidget->addRows(1);
-    ROSE_ASSERT(isSgAsmFunctionDeclaration(funcsFileA[row]));
-    tableWidget->setText(boost::lexical_cast<std::string>(isSgAsmFunctionDeclaration(funcsFileA[row])->get_name()), 0, row);
+    ROSE_ASSERT(isSgAsmFunction(funcsFileA[row]));
+    tableWidget->setText(boost::lexical_cast<std::string>(isSgAsmFunction(funcsFileA[row])->get_name()), 0, row);
     //tableWidget->setText(boost::lexical_cast<std::string>(cur_elem.size), 1, row);
     tableWidget->setVDim(row,18);
   }
   if (fileB) {
     for (size_t row = 0; row < funcsFileB.size(); ++row) {
       tableWidget2->addRows(1);
-      if (isSgAsmFunctionDeclaration(funcsFileB[row]))
-	tableWidget2->setText(boost::lexical_cast<std::string>(isSgAsmFunctionDeclaration(funcsFileB[row])->get_name()), 0, row);
+      if (isSgAsmFunction(funcsFileB[row]))
+	tableWidget2->setText(boost::lexical_cast<std::string>(isSgAsmFunction(funcsFileB[row])->get_name()), 0, row);
       if (isSgFunctionDeclaration(funcsFileB[row])) {
 	SgFunctionDeclaration* func = isSgFunctionDeclaration(funcsFileB[row]);
 	if (func->get_file_info()->isCompilerGenerated())
@@ -936,8 +936,8 @@ void BinQGUI::showFile(int row, qrs::QRTable* currentWidget,
     cerr << "INVALID BINARY"<<endl;
     exit(0);
   }
-  if (isSgAsmFunctionDeclaration(funcsFile[row])) {
-    funcname=isSgAsmFunctionDeclaration(funcsFile[row])->get_name();
+  if (isSgAsmFunction(funcsFile[row])) {
+    funcname=isSgAsmFunction(funcsFile[row])->get_name();
   }
   QString res = QString(" Looking at function  %1  row: %2  size ")
     .arg(funcname.c_str())
@@ -996,7 +996,7 @@ void BinQGUI::showFile(int row, qrs::QRTable* currentWidget,
       currentWidget->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString((isSgAsmBlock(stmts))->get_address()) ), 1, i);
       currentWidget->setText(boost::lexical_cast<std::string>("***"), 2, i);
       addRow=true;
-    } else if (isSgAsmFunctionDeclaration(stmts)) {
+    } else if (isSgAsmFunction(stmts)) {
       currentWidget->addRows(1);
       itemsFile[i]->bg=QColor(0,0,0);
       QColor back = itemsFile[i]->bg;
@@ -1007,9 +1007,9 @@ void BinQGUI::showFile(int row, qrs::QRTable* currentWidget,
 	currentWidget->setTextColor(front,j,i);
       }
       currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->row), 0, i);	
-      currentWidget->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString((isSgAsmFunctionDeclaration(stmts))->get_address()) ), 1, i);
+      currentWidget->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString((isSgAsmFunction(stmts))->get_address()) ), 1, i);
       currentWidget->setText(boost::lexical_cast<std::string>("FUNC"), 2, i);
-      currentWidget->setText(boost::lexical_cast<std::string>((isSgAsmFunctionDeclaration(stmts))->get_name() ), 3, i);
+      currentWidget->setText(boost::lexical_cast<std::string>((isSgAsmFunction(stmts))->get_name() ), 3, i);
       currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->pos), 5, i);	
       currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->length), 6, i);	
       currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->realByteSize), 7, i);	

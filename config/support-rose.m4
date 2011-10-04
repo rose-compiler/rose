@@ -2031,6 +2031,7 @@ src/roseIndependentSupport/dot2gml/Makefile
 projects/AstEquivalence/Makefile
 projects/AstEquivalence/gui/Makefile
 projects/BabelPreprocessor/Makefile
+projects/BinFuncDetect/Makefile
 projects/BinQ/Makefile
 projects/BinaryCloneDetection/Makefile
 projects/BinaryCloneDetection/gui/Makefile

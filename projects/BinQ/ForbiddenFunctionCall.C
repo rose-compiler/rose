@@ -40,9 +40,9 @@ ForbiddenFunctionCall::visit(SgNode* node) {
 	  instBlock=inst;
 
 
-	SgAsmFunctionDeclaration* func = NULL;
+	SgAsmFunction* func = NULL;
 	if (instBlock)
-	  func=isSgAsmFunctionDeclaration(instBlock->get_parent()); 
+	  func=isSgAsmFunction(instBlock->get_parent()); 
 	if (func)
 	  funcname = func->get_name();
 	res+=name+" ("+RoseBin_support::HexToString(inst->get_address())+") : "+unparseInstruction(inst)+" <"+inst->get_comment()+">";
@@ -51,8 +51,8 @@ ForbiddenFunctionCall::visit(SgNode* node) {
       }
     }
   }
-  if (isSgAsmFunctionDeclaration(node)) {
-    string fname = isSgAsmFunctionDeclaration(node)->get_name();
+  if (isSgAsmFunction(node)) {
+    string fname = isSgAsmFunction(node)->get_name();
     //cerr << " name === " << fname << endl;
     std::set<std::string>::const_iterator it = foundFunction.find(fname);
     if (it==foundFunction.end())

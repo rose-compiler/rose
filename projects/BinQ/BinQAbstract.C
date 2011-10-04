@@ -118,8 +118,8 @@ void BinQAbstract::createItem(SgNode* file, std::vector<Item*>& itemsFile,std::v
     for (;it!=stmts.end();++it) {
       Item* item = NULL;
       int length=1;
-      if (isSgAsmFunctionDeclaration(*it)){
-	SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(*it);
+      if (isSgAsmFunction(*it)){
+	SgAsmFunction* func = isSgAsmFunction(*it);
 	item = new Item(func->get_address(),func,2,row,length,0,pos,"",0);
       }    else if (isSgAsmBlock(*it)) {
 	continue;
@@ -186,7 +186,7 @@ void BinQAbstract::createItem(SgNode* file, std::vector<Item*>& itemsFile,std::v
 	  string s="<...>";
 	  s+=inst->get_comment();
 	  for (unsigned int j=0; j<funcsFile.size();++j) {
-	    SgAsmFunctionDeclaration* f = isSgAsmFunctionDeclaration(funcsFile[j]);
+	    SgAsmFunction* f = isSgAsmFunction(funcsFile[j]);
 	    string addrF= RoseBin_support::HexToString(f->get_address());
 	    addrF="0x"+addrF.substr(1,addrF.size());
 	    if (addrF==addrDest) {

@@ -13,7 +13,7 @@ PrintAsmFunctions::init(SgNode* n) {
 void
 PrintAsmFunctions::visit(SgNode* n) {
   SgAsmInstruction* binInst = isSgAsmInstruction(n);
-  SgAsmFunctionDeclaration* funcDecl = isSgAsmFunctionDeclaration(n);
+  SgAsmFunction* funcDecl = isSgAsmFunction(n);
   SgAsmBlock* block = isSgAsmBlock(n);
   if (funcDecl) {
     string name = funcDecl->get_name();
