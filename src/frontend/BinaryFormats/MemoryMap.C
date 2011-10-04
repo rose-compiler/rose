@@ -462,10 +462,12 @@ MemoryMap::read1(void *dst_buf, rose_addr_t va, size_t desired, unsigned req_per
 
     /* If there have been no writes to an anonymous element and no base has been allocated, then just fill
      * the return value with zeros */
-    if (m->is_anonymous() && NULL==m->get_base(false)) {
-        memset(dst_buf, 0, n);
-    } else {
-        memcpy(dst_buf, (uint8_t*)m->get_base()+m->get_offset()+m_offset, n);
+    if (dst_buf!=NULL) {
+        if (m->is_anonymous() && NULL==m->get_base(false)) {
+            memset(dst_buf, 0, n);
+        } else {
+            memcpy(dst_buf, (uint8_t*)m->get_base()+m->get_offset()+m_offset, n);
+        }
     }
     return n;
 }
@@ -482,6 +484,30 @@ MemoryMap::read(void *dst_buf, rose_addr_t start_va, size_t desired, unsigned re
 
     memset((uint8_t*)dst_buf+total_copied, 0, desired-total_copied);
     return total_copied;
+}
+
+SgUnsignedCharList
+MemoryMap::read(rose_addr_t va, size_t desired, unsigned req_perms/*=MM_PROT_READ*/) const
+{
+    SgUnsignedCharList retval;
+    while (desired>0) {
+        const MemoryMap::MapElement *m=NULL;
+        size_t can_read = read1(NULL, va, desired, req_perms, &m);
+        if (0==can_read)
+            break;
+        assert(m!=NULL && va>=m->get_va());
+        size_t m_offset = va - m->get_va();
+        assert(m_offset+can_read<=m->get_size());
+
+        size_t retval_offset = retval.size();
+        retval.resize(retval.size()+can_read, 0);
+        if (!m->is_anonymous() || NULL!=m->get_base(false))
+            memcpy(&retval[retval_offset], (uint8_t*)m->get_base()+m->get_offset()+m_offset, can_read);
+
+        va += can_read;
+        desired -= can_read;
+    }
+    return retval;
 }
 
 size_t

@@ -367,8 +367,15 @@ public:
      *  correpond to mapped virtual addresses will be zero filled so that @p desired bytes are always initialized. */
     size_t read(void *dst_buf, rose_addr_t start_va, size_t desired, unsigned req_perms=MM_PROT_READ) const;
 
+    /** Reads data from a memory map.  Reads data beginning at the @p start_va virtual address in the memory map and continuing
+     *  for up to @p desired bytes, returning the result as an SgUnsignedCharList.  The read may be shorter than requested if
+     *  we reach a point in the memory map that is not defined or which does not have the requested permissions. */
+    SgUnsignedCharList read(rose_addr_t start_va, size_t desired, unsigned req_perms=MM_PROT_READ) const;
+
     /** Reads from a single memory segment.  Reads up to @p desired bytes beginning at virtual address @p va from the specified
-     *  memory map.  Returns the number of bytes read. */
+     *  memory map.  Returns the number of bytes read.
+     *
+     *  If @p dst_buf is the null pointer, then everything described above still happens, but no data is copied. */
     size_t read1(void *dst_buf, rose_addr_t va, size_t desired, unsigned req_perms=MM_PROT_READ,
                  const MemoryMap::MapElement **mep=NULL) const;
 
