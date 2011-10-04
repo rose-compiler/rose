@@ -1563,8 +1563,8 @@ Partitioner::scan_intrafunc_insns(InsnRangeCallbacks &cblist)
     scan_unassigned_insns(cblist2);
 }
 
-/* Create functions for inter-function padding instruction sequences.  Returns true if we did not find interfunction padding
- * and other padding callbacks should proceed; returns false if we did find padding and the others should be skipped. */
+/* Create functions or data for inter-function padding instruction sequences.  Returns true if we did not find interfunction
+ * padding and other padding callbacks should proceed; returns false if we did find padding and the others should be skipped. */
 bool
 Partitioner::InterFuncInsnPadding::operator()(bool enabled, const Args &args)
 {
@@ -1580,9 +1580,19 @@ Partitioner::InterFuncInsnPadding::operator()(bool enabled, const Args &args)
         args.insn_begin->get_address()!=args.insn_prev->get_address()+args.insn_prev->get_raw_bytes().size())
         return true;
 
+    /* The preceding function.  We'll add the padding as data to this function, unless we're creating explicity padding
+     * functions. */
+    Partitioner *p = args.partitioner;
+    Function *prev_func = NULL;
+    {
+        BasicBlock *last_block = p->find_bb_containing(args.insn_prev->get_address(), false);
+        assert(last_block!=NULL);
+        prev_func = last_block->function;
+    }
+
+    /* Loop over the inter-function instructions and accumulate contiguous ranges of padding. */
     bool retval = true;
     std::vector<SgAsmInstruction*> padding;
-    Partitioner *p = args.partitioner;
     rose_addr_t va = args.insn_begin->get_address();
     SgAsmInstruction *insn = p->find_instruction(va);
     for (size_t i=0; i<args.ninsns && insn!=NULL; i++) {
@@ -1634,22 +1644,87 @@ Partitioner::InterFuncInsnPadding::operator()(bool enabled, const Args &args)
             }
         }
 
-        /* If we get here, then the instructions in "padding" need to be added to the function. All blocks are added to the
-         * function as CFG heads, which causes the block to remain with the function even though it might not be reachable by
-         * the CFG starting from the function's entry point.  This is especially true for padding like x86 "INT3", which has no
-         * known CFG successors. */
-        Function *func = p->add_function(padding.front()->get_address(), SgAsmFunction::FUNC_INTERPAD);
-        p->find_bb_starting(padding.front()->get_address()); // split first block if necessary
-        p->find_bb_starting(va); // split last block if necessary
-        for (size_t i=0; i<padding.size(); i++) {
-            BasicBlock *bb = p->find_bb_containing(padding[i]->get_address());
-            if (bb && !bb->function)
-                p->append(func, bb, SgAsmBlock::BLK_PADDING, true/*head of CFG subgraph*/);
+        /* Make sure we got enough bytes.  We can subtract first from last since we know they're contiguous in memory. */
+        if (padding.back()->get_address()+padding.back()->get_raw_bytes().size() - padding.front()->get_address() < minimum_size) {
+            padding.clear();
+            continue;
         }
+
+        /* If we get here, then we have padding instructions.  Either create a data block to hold the padding, or a new
+         * function to hold the padding.  When creating a function, the basic blocks are added as CFG heads, which cause the
+         * block to remain with the function even though it might not be reachable by the CFG starting from the function's
+         * entry point.  This is especially true for padding like x86 INT3 instructions, which have no known CFG successors and
+         * occupy singleton basic blocks. */
+        assert(!padding.empty());
+        if (add_as_data) {
+            assert(prev_func!=NULL);
+            rose_addr_t begin_va = padding.front()->get_address();
+            rose_addr_t end_va = padding.back()->get_address() + padding.back()->get_raw_bytes().size();
+            assert(end_va>begin_va);
+            size_t size = end_va - begin_va;
+            DataBlock *dblock = p->find_db_starting(begin_va, size);
+            assert(dblock!=NULL);
+            p->append(prev_func, dblock, SgAsmBlock::BLK_PADDING);
+            for (size_t i=0; i<padding.size(); i++)
+                p->discard(padding[i]);
+        } else {
+            Function *new_func = p->add_function(padding.front()->get_address(), SgAsmFunction::FUNC_INTERPAD);
+            p->find_bb_starting(padding.front()->get_address()); // split first block if necessary
+            p->find_bb_starting(va); // split last block if necessary
+            for (size_t i=0; i<padding.size(); i++) {
+                BasicBlock *bb = p->find_bb_containing(padding[i]->get_address());
+                if (bb && !bb->function)
+                    p->append(new_func, bb, SgAsmBlock::BLK_PADDING, true/*head of CFG subgraph*/);
+            }
+        }
+
         retval = padding.size()!=args.ninsns; // allow other callbacks to run only if we didn't suck up all the instructions
         padding.clear();
     }
     return retval;
+}
+
+/** Finds (or creates) a data block.  Finds a data block starting at the specified address.  If @p size is non-zero then the
+ *  existing data block must contain all bytes in the range @p start_va (inclusive) to @p start_va + @p size (exclusive), and
+ *  if it doesn't then a new SgAsmStaticData node is created and appended to either a new data block or a data block that
+ *  already begins at the specified address.   If size is zero an no block exists, then the null pointer is returned.  The size
+ *  of the existing block does not matter if size is zero. */
+Partitioner::DataBlock *
+Partitioner::find_db_starting(rose_addr_t start_va, size_t size/*=0*/)
+{
+    DataBlock *db = NULL;
+    DataBlocks::iterator dbi = data_blocks.find(start_va);
+    if (dbi!=data_blocks.end()) {
+        db = dbi->second;
+        if (0==size)
+            return db; /* caller doesn't care about the size, only whether the block is present. */
+
+        /* Check whether the block contains all the addresses we want. They might not all be in the first node. */
+        ExtentMap have_extents;
+        datablock_extent(db, &have_extents);
+        ExtentMap missing_extents = have_extents.subtract_from(start_va, size);
+        if (0==missing_extents.size())
+            return db;
+    }
+    if (0==size)
+        return NULL;
+
+    /* Create a new SgAsmStaticData node to represent the entire address range and add it to the (possibly new) data block.
+     * When adding to an existing block, the new SgAsmStaticData node will overlap with at least the initial node, and possibly
+     * others. */
+    if (!db) {
+        db = new DataBlock;
+        data_blocks[start_va] = db;
+    }
+
+    SgUnsignedCharList raw_bytes = map->read(start_va, size, MemoryMap::MM_PROT_NONE);
+    assert(raw_bytes.size()==size);
+    SgAsmStaticData *datum = new SgAsmStaticData;
+    datum->set_address(start_va);
+    datum->set_raw_bytes(raw_bytes);
+    db->nodes.push_back(datum);
+
+    return db;
 }
 
 /* Addes unassigned intra-function blocks to surrounding function. */
@@ -1671,29 +1746,49 @@ Partitioner::IntraFunctionBlocks::operator()(bool enabled, const Args &args)
     if (!p->is_contiguous(func, false))
         return true;
 
-    /* Find the basic blocks for this sequence of instructions and add them all to the function as long as they're not already
-     * in some other function (they shouldn't be, unless a previous callback added them).   New blocks are added as CFG heads
-     * in order to keep them inside the function since we couldn't reach them by following the CFG from the function entry
-     * point. */
-    size_t nadded = 0;
-    rose_addr_t va = args.insn_begin->get_address();
-    for (size_t i=0; i<args.ninsns; i++) {
-        BasicBlock *bb = p->find_bb_containing(va);
-        assert(bb!=NULL); // because we know va is an instruction
-        if (!bb->function) {
-            if (p->debug) {
-                if (0==nadded)
-                    fprintf(p->debug, "Partitioner::IntraFunctionBlocks: for F%08"PRIx64": added", func->entry_va);
-                fprintf(p->debug, " B%08"PRIx64, bb->address());
-            }
-            p->append(func, bb, SgAsmBlock::BLK_INTRAFUNC, true/*head of CFG subgraph*/);
-            func->pending = true;
-            ++nadded;
+    if (add_as_data) {
+        /* Create a data block for this part of intra-function memory and discard the instructions provided they're not already
+         * in basic blocks. */
+        rose_addr_t begin_va = args.insn_begin->get_address();
+        rose_addr_t end_va = args.insn_end->get_address();
+        assert(end_va>begin_va);
+        size_t size = end_va - begin_va;
+        DataBlock *dblock = p->find_db_starting(begin_va, size);
+        assert(dblock!=NULL);
+        p->append(func, dblock, SgAsmBlock::BLK_INTRAFUNC);
+
+        /* Remove the instructions because we now know that they're data. */
+        rose_addr_t va = begin_va;
+        for (size_t i=0; i<args.ninsns; i++) {
+            SgAsmInstruction *insn = p->find_instruction(va);
+            va += insn->get_raw_bytes().size();
+            p->discard(insn);
         }
-        
-        SgAsmInstruction *insn = p->find_instruction(va);
-        assert(insn!=NULL);
-        va += insn->get_raw_bytes().size();
+    } else {
+        /* Find the basic blocks for this sequence of instructions and add them all to the function as long as they're not already
+         * in some other function (they shouldn't be, unless a previous callback added them).   New blocks are added as CFG heads
+         * in order to keep them inside the function since we couldn't reach them by following the CFG from the function entry
+         * point. */
+        size_t nadded = 0;
+        rose_addr_t va = args.insn_begin->get_address();
+        for (size_t i=0; i<args.ninsns; i++) {
+            BasicBlock *bb = p->find_bb_containing(va);
+            assert(bb!=NULL); // because we know va is an instruction
+            if (!bb->function) {
+                if (p->debug) {
+                    if (0==nadded)
+                        fprintf(p->debug, "Partitioner::IntraFunctionBlocks: for F%08"PRIx64": added", func->entry_va);
+                    fprintf(p->debug, " B%08"PRIx64, bb->address());
+                }
+                p->append(func, bb, SgAsmBlock::BLK_INTRAFUNC, true/*head of CFG subgraph*/);
+                func->pending = true;
+                ++nadded;
+            }
+
+            SgAsmInstruction *insn = p->find_instruction(va);
+            assert(insn!=NULL);
+            va += insn->get_raw_bytes().size();
+        }
     }
 
     return true;
@@ -1792,25 +1887,41 @@ Partitioner::PostFunctionBlocks::operator()(bool enabled, const Args &args)
         0!=(func->reason & SgAsmFunction::FUNC_THUNK))
         return true; // don't append instructions to certain "functions"
 
-    size_t nadded = 0;
-    rose_addr_t va = args.insn_begin->get_address();
-    for (size_t i=0; i<args.ninsns; i++) {
-        bb = p->find_bb_containing(va);
-        assert(bb!=NULL); // because we know va is an instruction
-        if (!bb->function) {
-            if (p->debug) {
-                if (0==nadded)
-                    fprintf(p->debug, "Partitioner::PostFunctionBlocks: for F%08"PRIx64": added", func->entry_va);
-                fprintf(p->debug, " B%08"PRIx64, bb->address());
-            }
-            p->append(func, bb, SgAsmBlock::BLK_USERDEF, true/*head of CFG subgraph*/);
-            func->pending = true;
-            ++nadded;
+    if (add_as_data) {
+        rose_addr_t begin_va = args.insn_begin->get_address();
+        rose_addr_t end_va = begin_va;
+        for (size_t i=0; i<args.ninsns; i++) {
+            SgAsmInstruction *insn = p->find_instruction(end_va);
+            assert(insn!=NULL);
+            end_va += insn->get_raw_bytes().size();
+            p->discard(insn);
         }
+        assert(end_va>begin_va);
+        size_t size = end_va - begin_va;
+        DataBlock *dblock = p->find_db_starting(begin_va, size);
+        assert(dblock!=NULL);
+        p->append(func, dblock, SgAsmBlock::BLK_USERDEF);
+    } else {
+        size_t nadded = 0;
+        rose_addr_t va = args.insn_begin->get_address();
+        for (size_t i=0; i<args.ninsns; i++) {
+            bb = p->find_bb_containing(va);
+            assert(bb!=NULL); // because we know va is an instruction
+            if (!bb->function) {
+                if (p->debug) {
+                    if (0==nadded)
+                        fprintf(p->debug, "Partitioner::PostFunctionBlocks: for F%08"PRIx64": added", func->entry_va);
+                    fprintf(p->debug, " B%08"PRIx64, bb->address());
+                }
+                p->append(func, bb, SgAsmBlock::BLK_USERDEF, true/*head of CFG subgraph*/);
+                func->pending = true;
+                ++nadded;
+            }
 
-        SgAsmInstruction *insn = p->find_instruction(va);
-        assert(insn!=NULL);
-        va += insn->get_raw_bytes().size();
+            SgAsmInstruction *insn = p->find_instruction(va);
+            assert(insn!=NULL);
+            va += insn->get_raw_bytes().size();
+        }
     }
     return true;
 }
@@ -2334,6 +2445,7 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
         pad1.x86_kinds.insert(x86_int3);
         pad1.begins_contiguously = false;
         pad1.ends_contiguously = false;
+        pad1.minimum_size = 2;
         cblist.append(&pad1);
 
         SgUnsignedCharList bytes2;
@@ -2342,6 +2454,7 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
         pad2.byte_patterns.push_back(bytes2);
         pad2.begins_contiguously = true;
         pad2.ends_contiguously = true;
+        pad2.minimum_size = 2;
         cblist.append(&pad2);
 
         scan_interfunc_insns(cblist);
@@ -2432,6 +2545,25 @@ Partitioner::function_extent(Function *func,
     }
 
     return nnodes;
+}
+
+size_t
+Partitioner::datablock_extent(DataBlock *db,
+                              ExtentMap *extents/*out*/, rose_addr_t *lo_addr/*out*/, rose_addr_t *hi_addr/*out*/)
+{
+    if (lo_addr)
+        *lo_addr = db->nodes.empty() ? 0 : db->nodes.front()->get_address();
+    if (hi_addr)
+        *hi_addr = db->nodes.empty() ? 0 : db->nodes.front()->get_address() + db->nodes.front()->get_raw_bytes().size();
+
+    for (size_t i=1; i<db->nodes.size(); i++) {
+        SgAsmStaticData *node = db->nodes[i];
+        if (lo_addr)
+            *lo_addr = std::min(*lo_addr, node->get_address());
+        if (hi_addr)
+            *hi_addr = std::max(*hi_addr, node->get_address() + node->get_raw_bytes().size());
+    }
+    return db->nodes.size();
 }
 
 /* The function is contiguous if the stuff between its extent doesn't belong to any other function. */
@@ -2527,21 +2659,29 @@ Partitioner::build_ast()
     /* Build a function to hold all the unassigned instructions.  Update documentation if changing the name of
      * this generated function!  We do this by traversing the instructions and obtaining a basic block for each one.  If the
      * basic block doesn't belong to a function yet, we add it to this special one.  Note that we cannot traverse the list of
-     * instructions directly because creating the basic block might cause additional instructions to be created. */
+     * instructions directly because creating the basic block might cause additional instructions to be created.
+     *
+     * Do not include the instruction in the leftovers function if there is a data block that completely overlaps the
+     * instruction. */
     Function *catchall = NULL;
     if ((func_heuristics & SgAsmFunction::FUNC_LEFTOVERS)) {
+        ExtentMap data_extents;
+        for (DataBlocks::iterator dbi=data_blocks.begin(); dbi!=data_blocks.end(); ++dbi)
+            datablock_extent(dbi->second, &data_extents);
         bool process_instructions;
         do {
             process_instructions = false;
             Disassembler::InstructionMap insns_copy = insns;
             for (Disassembler::InstructionMap::iterator ii=insns_copy.begin(); ii!=insns_copy.end(); ++ii) {
-                BasicBlock *bb = find_bb_containing(ii->first);
-                assert(bb!=NULL);
-                if (!bb->function) {
-                    if (!catchall)
-                        catchall = add_function(ii->first, SgAsmFunction::FUNC_LEFTOVERS, "***uncategorized blocks***");
-                    append(catchall, bb, SgAsmBlock::BLK_LEFTOVERS);
-                    process_instructions = true;
+                if (data_extents.exists_all(ExtentPair(ii->second->get_address(), ii->second->get_raw_bytes().size()))) {
+                    BasicBlock *bb = find_bb_containing(ii->first);
+                    assert(bb!=NULL);
+                    if (!bb->function) {
+                        if (!catchall)
+                            catchall = add_function(ii->first, SgAsmFunction::FUNC_LEFTOVERS, "***uncategorized blocks***");
+                        append(catchall, bb, SgAsmBlock::BLK_LEFTOVERS);
+                        process_instructions = true;
+                    }
                 }
             }
         } while (process_instructions);            
