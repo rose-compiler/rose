@@ -7,7 +7,7 @@
 
 class SgAsmInstruction;
 class SgAsmBlock;
-class SgAsmFunctionDeclaration;
+class SgAsmFunction;
 class SgAsmInterpretation;
 
 
@@ -16,15 +16,21 @@ class SgAsmInterpretation;
  *  This class operates on part of an AST corresponding to a binary file (executable, library, etc) and generates output. It is
  *  intended to be highly customizable and has been used to generate both assembly listings and Graphviz files.
  *
- *  To generate a basic assembly listing, use the unparse() method, like this:
+ *  To generate an assembly listing, use the unparse() method, like this:
  *  @code
  *  SgProject *project = ...;
  *  AsmUnparser().unparse(std::cout, project);
  *  @endcode
  *
- *  The unparser operates finding the list of top-level, unparsable nodes (see find_unparsable_nodes()) and unparsing each
- *  one.  For each node, an appropriate unparse_TYPE() is called, where TYPE is "insn", "basicblock", "function", or
- *  "interpretation".  Each of these unparse functions invokes three lists of callbacks:
+ *  The unparser can organize the output either by address (like traditional assembly listings) or by the organization found in
+ *  the AST (by interpretation, then function, then basic block).  The AST organization is often more useful and is therefore
+ *  the default.  Some of the callbacks mentioned below apply only to one organizational style or the other.
+ *
+ *  Instead of passing a SgProject node to the unparse() method, one may also pass lower-level nodes, such as
+ *  SgAsmInterpretation, SgAsmFunction, SgAsmBlock, or even a single SgAsmInstruction. The unparser operates finding the list
+ *  of top-level, unparsable nodes (see find_unparsable_nodes()) reachable from the specified node and then unparsing each 
+ *  one.  For each node, an appropriate unparse_TYPE() is called, where TYPE is "insn", "basicblock", "staticdata",
+ *  "datablock", "function", or "interpretation".  Each of these unparse functions invokes three lists of callbacks:
  *  <ul>
  *     <li>The TYPE_pre callback list outputs header information for the TYPE object.  E.g., for instructions, it might emit
  *         an address or the raw bytes.</li>
@@ -34,11 +40,15 @@ class SgAsmInterpretation;
  *         line to separate one function from another.</li>
  *  </ul>
  *
- *  The callback lists are initialized to contain the following functor types.
+ *  The callback lists are initialized to contain the following functor types.  Some callbacks are no-ops for certain
+ *  organizations of the output, and these are noted.
  *  <ul>
- *     <li>Instructions:
+ *     <li>Instruction callbacks (SgAsmInstruction).
  *        <ol>
+ *           <li>InsnBlockSeparation (pre): emits inter-block spacing when output is organized by address.</li>
+ *           <li>InsnFuncEntry (pre): emits function info at entry points when output is organized by address.</li>
  *           <li>InsnRawBytes (pre): emits address and raw bytes of instruction in a hexdump-like format.</li>
+ *           <li>InsnBlockEntry (pre): emits info about first instruction of each block when output is organized by address.</li>
  *           <li>InsnBody (unparse): emits the instruction mnemonic and arguments.</li>
  *           <li>InsnNoEffect (post): emits an indication when an instruction is part of a no-effect sequence of
  *               instructions.  This functor only has an effect if the BasicBlockNoopUpdater functor is run as
@@ -47,12 +57,26 @@ class SgAsmInterpretation;
  *           <li>InsnLineTermination (post): emits a line feed at the end of the instruction.</li>
  *        </ol>
  *     </li>
- *     <li>Basic blocks:
+ *     <li>Basic block callbacks (SgAsmBlock objects containing only instruction objects).  These callbacks are not invoked
+ *     when output is organized by address.
  *        <ol>
+ *           <li>BasicBlockReasons (pre): emits the reasons why this block is part of the function.</li>
  *           <li>BasicBlockBody (unparse): unparses each instruction of the basic block.</li>
  *           <li>BasicBlockSuccessors (post): emits addresses of basic block successors.</li>
  *           <li>BasicBlockLineTermination (post): emits a linefeed at the end of each basic block.</li>
  *           <li>BasicBlockCleanup (post): cleans up analysis from BasicBlockNoopUpdater and future built-in functors.</li>
+ *        </ol>
+ *     </li>
+ *     <li>StaticData (SgAsmStaticData):
+ *        <ol>
+ *           <li>StaticDataTitle (pre): emits a title line.</li>
+ *           <li>StaticDataRawBytes (unparse): emits a hexdump-like output of the value.</li>
+ *           <li>StaticDataLineTermination (post): emits a linefeed at the end of each data object.</li>
+ *        </ol>
+ *     </li>
+ *     <li>Data blocks (SgAsmBlock objects containing only data objects):
+ *        <ol>
+ *           <li>DataBlockBody (unparse): unparse each data object in the block.</li>
  *        </ol>
  *     </li>
  *     <li>Functions:
@@ -62,6 +86,8 @@ class SgAsmInterpretation;
  *           <li>FunctionReasons (pre): emits the reasons why this is address is considered the start of a function.</li>
  *           <li>FunctionName (pre): emits the name of the function in angle brackets, or "no name".</li>
  *           <li>FunctionLineTermination (pre): emits a linefeed for functions.</li>
+ *           <li>FunctionAttributes (pre): emits additional information about the function, such as whether it returns to the
+ *               caller.</li>
  *           <li>FunctionBody (unparse): unparses the basic blocks of a function.</li>
  *        </ol>
  *     </li>
@@ -140,36 +166,69 @@ class SgAsmInterpretation;
  */
 class AsmUnparser {
 public:
+    enum Organization {
+        ORGANIZED_BY_AST,               /**< Output follows the AST organization.  In other words, the instructions and data
+                                         *    for a block appear consecutively, the blocks of a function appear consecutively,
+                                         *    and the functions of an interpretation appear consecutively.  This is the default
+                                         *    format since it provides the most information about the organization of the
+                                         *    binary file. */
+        ORGANIZED_BY_ADDRESS            /**< Output of instructions and data are organized by address.  Specifically, in the
+                                         *    case of overlapping instructions and/or data, the starting address is used to
+                                         *    sort the output.  This organization is typical of more traditional
+                                         *    disassemblers. */
+    };
+
     class UnparserCallback {
     public:
-        /** Arguments passed to instruction unparsing callbacks. */
-        struct InsnArgs {
-            InsnArgs(AsmUnparser *unparser, std::ostream &output, SgAsmInstruction *insn, size_t position_in_block)
-                : unparser(unparser), output(output), insn(insn), position_in_block(position_in_block) {}
+        /** Arguments common to all unparser callback lists. */
+        struct GeneralArgs {
+            GeneralArgs(AsmUnparser *unparser, std::ostream &output)
+                : unparser(unparser), output(output) {}
             AsmUnparser *unparser;      /**< The object doing the unparsing, from which this callback is invoked. */
             std::ostream &output;       /**< Where output should be sent. */
+        };
+            
+        /** Arguments passed to instruction unparsing callbacks. */
+        struct InsnArgs: public GeneralArgs {
+            InsnArgs(AsmUnparser *unparser, std::ostream &output, SgAsmInstruction *insn, size_t position_in_block)
+                : GeneralArgs(unparser, output), insn(insn), position_in_block(position_in_block) {}
             SgAsmInstruction *insn;     /**< The instruction being unparsed. */
             size_t position_in_block;   /**< The index position of the instruction within the basic block, or -1 if unknown. */
         };
 
         /** Arguments passed to basic block unparsing callbacks. */
-        struct BasicBlockArgs {
+        struct BasicBlockArgs: public GeneralArgs {
             BasicBlockArgs(AsmUnparser *unparser, std::ostream &output, SgAsmBlock *block,
                            const std::vector<SgAsmInstruction*> &insns)
-                : unparser(unparser), output(output), block(block), insns(insns) {}
-            AsmUnparser *unparser;      /**< The object doing the unparsing, from which this callback is invoked. */
-            std::ostream &output;       /**< Where output should be sent. */
+                : GeneralArgs(unparser, output), block(block), insns(insns) {}
             SgAsmBlock *block;          /**< The basic block being unparsed. */
             const std::vector<SgAsmInstruction*> &insns; /**< The instructions contained in this basic block. */
         };
 
+        /** Arguments passed to data unparsing callbacks. */
+        struct StaticDataArgs: public GeneralArgs {
+            StaticDataArgs(AsmUnparser *unparser, std::ostream &output, SgAsmStaticData *data, size_t position_in_block)
+                : GeneralArgs(unparser, output), data(data), position_in_block(position_in_block) {}
+            SgAsmStaticData *data;      /**< The data being unparsed. */
+            size_t position_in_block;   /**< The index position of the data within the data block, or -1 if unknown. */
+        };
+
+        /** Arguments passed to data block unparsing callbacks. */
+        struct DataBlockArgs: public GeneralArgs {
+            DataBlockArgs(AsmUnparser *unparser, std::ostream &output, SgAsmBlock *block,
+                          const std::vector<SgAsmStaticData*> &datalist)
+                : GeneralArgs(unparser, output), block(block), datalist(datalist) {}
+            SgAsmBlock *block;          /**< The block of data being unparsed. */
+            const std::vector<SgAsmStaticData*> &datalist; /**< The data items contained in this data block. */
+        };
+
         /** Arguments passed to function unparsing callbacks. */
         struct FunctionArgs {
-            FunctionArgs(AsmUnparser *unparser, std::ostream &output, SgAsmFunctionDeclaration *func)
+            FunctionArgs(AsmUnparser *unparser, std::ostream &output, SgAsmFunction *func)
                 : unparser(unparser), output(output), func(func) {}
             AsmUnparser *unparser;      /**< The object doing the unparsing, from which this callback is invoked. */
             std::ostream &output;       /**< Where output should be sent. */
-            SgAsmFunctionDeclaration *func; /**< The function being unparsed. */
+            SgAsmFunction *func;        /**< The function being unparsed. */
         };
 
         /** Arguments passed to interpretation unparsing callbacks. */
@@ -195,6 +254,8 @@ public:
          *  @{ */
         virtual bool operator()(bool enabled, const InsnArgs&)           { abort(); }
         virtual bool operator()(bool enabled, const BasicBlockArgs&)     { abort(); }
+        virtual bool operator()(bool enabled, const StaticDataArgs&)     { abort(); }
+        virtual bool operator()(bool enabled, const DataBlockArgs&)      { abort(); }
         virtual bool operator()(bool enabled, const FunctionArgs&)       { abort(); }
         virtual bool operator()(bool enabled, const InterpretationArgs&) { abort(); }
         /** @} */
@@ -203,6 +264,22 @@ public:
     /**************************************************************************************************************************
      *                                  Instruction Callbacks
      **************************************************************************************************************************/
+
+    /** Functor to emit basic block separation in output organized by address.  This does nothing if the output is organized by
+     *  AST since the basic block callbacks handle it in that case. */
+    class InsnBlockSeparation: public UnparserCallback {
+    public:
+        SgAsmBlock *prev_block;
+        InsnBlockSeparation(): prev_block(NULL) {}
+        virtual bool operator()(bool enabled, const InsnArgs &args);
+    };
+
+    /** Functor to emit function information at entry points.  This does nothing if the output is organized by AST since
+     * function callbacks will handle it in that case. */
+    class InsnFuncEntry: public UnparserCallback {
+    public:
+        virtual bool operator()(bool enabled, const InsnArgs &args);
+    };
 
     /** Functor to emit instruction address. This isn't necessary if you use the InsnRawBytes functor. */
     class InsnAddress: public UnparserCallback {
@@ -215,9 +292,18 @@ public:
     public:
         HexdumpFormat fmt;
         InsnRawBytes() {
-            fmt.width = 6;              /* Max instruction bytes per line of output. */
+            fmt.width = 8;              /* Max instruction bytes per line of output. */
             fmt.pad_chars = true;       /* Show ASCII characters as well as bytes. */
         }
+        virtual bool operator()(bool enabled, const InsnArgs &args);
+    };
+
+    /** Functor to emit info about the first instruction of a block.  If the instruction is the first instruction of a block,
+     *  then certain information is printed.  The output for all instructions is always the same width so that things line up
+     *  properly between instructions that are first in a block and those that aren't.  This callback is a no-op unless the
+     *  output is organized by address. */
+    class InsnBlockEntry: public UnparserCallback {
+    public:
         virtual bool operator()(bool enabled, const InsnArgs &args);
     };
 
@@ -250,6 +336,12 @@ public:
      *                                  Basic Block Callbacks
      **************************************************************************************************************************/
 
+    /** Functor to emit reasons this block is part of a function. */
+    class BasicBlockReasons: public UnparserCallback {
+    public:
+        virtual bool operator()(bool enabled, const BasicBlockArgs &args);
+    };
+
     /** Functor to update unparser's is_noop array. */
     class BasicBlockNoopUpdater: public UnparserCallback {
     public:
@@ -264,7 +356,8 @@ public:
         virtual bool operator()(bool enabled, const BasicBlockArgs &args);
     };
 
-    /** Functor to emit the instructions that belong to a basic block. */
+    /** Functor to emit the instructions that belong to a basic block.  This is a no-op except when output is organized by
+     *  AST. */
     class BasicBlockBody: public UnparserCallback {
     public:
         virtual bool operator()(bool enabled, const BasicBlockArgs &args);
@@ -289,6 +382,56 @@ public:
     class BasicBlockCleanup: public UnparserCallback {
     public:
         virtual bool operator()(bool enabled/*ignored*/, const BasicBlockArgs &args);
+    };
+
+    /**************************************************************************************************************************
+     *                                  Static Data Callbacks
+     **************************************************************************************************************************/
+
+    /** Functor to print some information at the beginning of a data item. */
+    class StaticDataTitle: public UnparserCallback {
+    public:
+        virtual bool operator()(bool enabled, const StaticDataArgs &args);
+    };
+
+    /** Functor to emit the bytes of the data block. */
+    class StaticDataRawBytes: public UnparserCallback {
+    public:
+        bool show_address;              /* Should we show the address in the left margin? */
+        bool show_offset;               /* If show_address is true, then should we display START+OFFSET or just an address? */
+
+        HexdumpFormat fmt;
+        StaticDataRawBytes() {
+            show_address = true;
+            show_offset = false;
+            fmt.prefix = NULL;          /* Adjusted by the callback each time called. */
+            fmt.multiline = true;       /* Also emit prefix before first line and linefeed after last line. */
+            fmt.width = 8;             /* Max data bytes per line of output. */
+            fmt.pad_chars = true;       /* Show ASCII characters as well as bytes. */
+        }
+        virtual bool operator()(bool enabled, const StaticDataArgs &args);
+    };
+
+    /** Functor to emit a blank line after every data block. */
+    class StaticDataLineTermination: public UnparserCallback {
+    public:
+        virtual bool operator()(bool enabled, const StaticDataArgs &args);
+    };
+
+    /**************************************************************************************************************************
+     *                                  Data Block Callbacks
+     **************************************************************************************************************************/
+
+    /** Functor to print some information at the beginning of a data block. */
+    class DataBlockTitle: public UnparserCallback {
+    public:
+        virtual bool operator()(bool enabled, const StaticDataArgs &args);
+    };
+
+    /** Functor to emit each data statement of the block.  This is a no-op except when output is organized by AST. */
+    class DataBlockBody: public UnparserCallback {
+    public:
+        virtual bool operator()(bool enabled, const DataBlockArgs &args);
     };
 
     /**************************************************************************************************************************
@@ -325,7 +468,17 @@ public:
         virtual bool operator()(bool enabled, const FunctionArgs &args);
     };
 
-    /** Functor to unparse the function body. */
+    /** Functor to emit function attributes.  Attributes are emitted one per line and each line is prefixed with a user
+     *  supplied string.  The string is a printf format string and may contain one integer specifier for the function entry
+     *  address.   The default is "0x%08llx: ". */
+    class FunctionAttributes: public UnparserCallback {
+    public:
+        std::string prefix;
+        FunctionAttributes();
+        virtual bool operator()(bool enabled, const FunctionArgs &args);
+    };
+
+    /** Functor to unparse the function body.  This is a no-op except when output is organized by AST. */
     class FunctionBody: public UnparserCallback {
     public:
         virtual bool operator()(bool enabled, const FunctionArgs &args);
@@ -341,7 +494,7 @@ public:
         virtual bool operator()(bool enabled, const InterpretationArgs &args);
     };
 
-    /** Functor to emit the functions in an interpretation. */
+    /** Functor to emit the functions in an interpretation.  This is a no-op except when output is organized by AST. */
     class InterpBody: public UnparserCallback {
     public:
         virtual bool operator()(bool enabled, const InterpretationArgs &args);
@@ -360,13 +513,17 @@ public:
      *
      *  @{
      */
+    InsnBlockSeparation insnBlockSeparation;
+    InsnFuncEntry insnFuncEntry;
     InsnAddress insnAddress;
     InsnRawBytes insnRawBytes;
+    InsnBlockEntry insnBlockEntry;
     InsnBody insnBody;
     InsnNoEffect insnNoEffect;
     InsnComment insnComment;
     InsnLineTermination insnLineTermination;
 
+    BasicBlockReasons basicBlockReasons;
     BasicBlockNoopUpdater basicBlockNoopUpdater;
     BasicBlockNoopWarning basicBlockNoopWarning;
     BasicBlockBody basicBlockBody;
@@ -374,11 +531,18 @@ public:
     BasicBlockLineTermination basicBlockLineTermination;
     BasicBlockCleanup basicBlockCleanup;
 
+    StaticDataTitle staticDataTitle;
+    StaticDataRawBytes staticDataRawBytes;
+    StaticDataLineTermination staticDataLineTermination;
+
+    DataBlockBody dataBlockBody;
+
     FunctionEntryAddress functionEntryAddress;
     FunctionSeparator functionSeparator;
     FunctionReasons functionReasons;
     FunctionName functionName;
     FunctionLineTermination functionLineTermination;
+    FunctionAttributes functionAttributes;
     FunctionBody functionBody;
 
     InterpName interpName;
@@ -395,6 +559,15 @@ public:
     }
 
     virtual ~AsmUnparser() {}
+
+    /** Get/set how output is organized.
+     *
+     *  The unparse() method organizes output by one of the methods described for the Organization enum.
+     *
+     *  @{ */
+    virtual Organization get_organization() const { return organization; }
+    virtual void set_organization(Organization organization) { this->organization = organization; }
+    /** @} */
 
     /** Determines if a node can be unparsed.
      *
@@ -431,17 +604,29 @@ public:
      *  This is the primary method for this class. It traverses the specified @p ast and prints some kind of assembly language
      *  output to the specified output stream.  The specifics of what is produced depend on how the AsmUnparser is configured.
      *
-     *  The return value is the number of top-level unparsable nodes encountered.  A "top-level unparsable node" is any node,
+     *  The return value is the number of unparsable nodes encountered and has various meanings depending on the output
+     *  organization.  For output organized by AST it is the number of "top-level unparsable nodes", the number of nodes,
      *  R, such that is_unparsable_node(R) is true, and there exists no node C such that C is a proper ancestor of R and
-     *  contained in the specified AST.  A return value of zero means that nothing was unparsed and no output was produced. */
+     *  contained in the specified AST.  For output organized by address, it is the number of instructions and data objects
+     *  unparsed.  In any case, a return value of zero means that nothing was unparsed and no output was produced. */
     virtual size_t unparse(std::ostream&, SgNode *ast);
 
-    /** Unparse an object. These are called by unparse(), but might also be called by callbacks.
+    /** Unparse a single node if possible.
+     *
+     *  Tries to unparse the given AST node directly, without traversing the AST to find a starting point.  This is basically a
+     *  big switch statement that calls one of the unparse_WHATEVER() methods.
+     *
+     *  Returns true if the node was unparsed, false otherwise. */
+    virtual bool unparse_one_node(std::ostream&, SgNode*);
+
+    /** Unparse an object. These are called by unparse_one_node(), but might also be called by callbacks.
      *
      *  @{ */
-    virtual bool unparse_insn(bool enabled, std::ostream&, SgAsmInstruction*, size_t position_in_block=0);
+    virtual bool unparse_insn(bool enabled, std::ostream&, SgAsmInstruction*, size_t position_in_block=(size_t)-1);
     virtual bool unparse_basicblock(bool enabled, std::ostream&, SgAsmBlock*);
-    virtual bool unparse_function(bool enabled, std::ostream&, SgAsmFunctionDeclaration*);
+    virtual bool unparse_staticdata(bool enabled, std::ostream&, SgAsmStaticData*, size_t position_in_block=(size_t)-1);
+    virtual bool unparse_datablock(bool enabled, std::ostream&, SgAsmBlock*);
+    virtual bool unparse_function(bool enabled, std::ostream&, SgAsmFunction*);
     virtual bool unparse_interpretation(bool enabled, std::ostream&, SgAsmInterpretation*);
     /** @} */
 
@@ -469,12 +654,17 @@ protected:
 
     CallbackLists insn_callbacks;                       /**< Callbacks for instruction unparsing. */
     CallbackLists basicblock_callbacks;                 /**< Callbacks for basic block unparsing. */
+    CallbackLists staticdata_callbacks;                 /**< Callbacks for static data unparsing. */
+    CallbackLists datablock_callbacks;                  /**< Callbacks for data block unparsing. */
     CallbackLists function_callbacks;                   /**< Callbacks for function unparsing. */
     CallbackLists interp_callbacks;                     /**< Callbacks for interpretation unparsing. */
 
     /** This map is consulted whenever a constant is encountered. If the constant is defined as a key of the map, then that
      *  element's string is used as a label. */
     LabelMap labels;
+
+    /** How output will be organized. */
+    Organization organization;
 
     /** Initializes the objects callback lists.  This is invoked by the default constructor. */
     virtual void init();
