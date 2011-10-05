@@ -99,9 +99,7 @@ AC_SUBST(ROSE_OFP_PATCH_VERSION_NUMBER)
 # DQ (4/5/2010): Moved the specification of CLASSPATH to after the specification 
 # of OFP version number so that we can use it to set the class path.
 
-#CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.3-complete.jar:${ABSOLUTE_SRCDIR}${OPEN_FORTRAN_PARSER_PATH}/OpenFortranParser-${ROSE_OFP_VERSION_NUMBER}.jar
-
-CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.3-complete.jar:${ABSOLUTE_SRCDIR}${OPEN_FORTRAN_PARSER_PATH}/OpenFortranParser-0.8.3.jar
+CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.3-complete.jar:${ABSOLUTE_SRCDIR}${OPEN_FORTRAN_PARSER_PATH}/OpenFortranParser-${ROSE_OFP_VERSION_NUMBER}.jar
 
 export CLASSPATH
 AC_SUBST(CLASSPATH)
