@@ -666,7 +666,7 @@ public:
      *  instructions. */
     struct IntraFunctionBlocks: public InsnRangeCallback {
         bool add_as_data;
-        IntraFunctionBlocks(): add_as_data(true) {}
+        IntraFunctionBlocks(): add_as_data(false) {}
         virtual bool operator()(bool enabled, const Args &args);        /**< The actual callback function. */
     };
 
