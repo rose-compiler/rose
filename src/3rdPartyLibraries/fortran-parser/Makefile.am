@@ -10,7 +10,7 @@ OFP_VERSION=@ROSE_OFP_MAJOR_VERSION_NUMBER@.@ROSE_OFP_MINOR_VERSION_NUMBER@.@ROS
 
 # DQ (4/5/2010): Think about if we need the test using an Automake conditional since the jar file always exists.
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-   dist_java_DATA = OpenFortranParser-${OFP_VERSION}.jar
+   dist_java_DATA = OpenFortranParser-${OFP_DIST_VERSION}.jar OpenFortranParser-${OFP_VERSION}.jar
 endif
 
 EXTERNAL_OFP_JAR_FILE_URL = http://sourceforge.net/projects/fortran-parser/files/OpenFortranParser/version_${OFP_VERSION}/OpenFortranParser-${OFP_VERSION}.jar/download
