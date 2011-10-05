@@ -71,16 +71,11 @@ bool RsType::checkSubtypeRecursive(size_t offset, const RsType* type) const
   //rs->printMessage("    >>> checkSubtypeRecursive ");
   const RsType* result = this;
   size_t        size = type -> getByteSize();
+  size_t        resultsize = result->getByteSize();
 
-
-  unsigned int resultsize = result->getByteSize();
-  while(resultsize >= size) {
-    //rs->printMessage("   >> while result->getByteSize() >= size "+
-    //           ToString(resultsize)+" : " +ToString(size));
-    //rs->printMessage("        >>> checking  result == type :   "+result->getName()+
-    //           "  "+type->getName());
-    if( result == type )
-      return true;
+  while (resultsize >= size)
+  {
+    if ( result == type ) return true;
 
     // tps (09/10/09) Handle union type
     const RsClassType* ct_result = dynamic_cast<const RsClassType*>( result);
