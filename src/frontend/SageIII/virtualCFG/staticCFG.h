@@ -46,9 +46,12 @@ public:
     CFG() : graph_(NULL), start_(NULL), entry_(NULL), exit_(NULL) {}
 
     //! Turn a graph node into a CFGNode which is defined in VirtualCFG namespace.
-
     CFGNode toCFGNode(SgGraphNode* node);
-
+    
+    //! Turn a CFG node into a GraphNode which is defined in VirtualCFG namespace.
+    //! Returns NULL if CFGNode is not present
+    SgGraphNode *toGraphNode(CFGNode &n) { return ((all_nodes_.count(n)==0) ?  NULL : all_nodes_[n]);}
+    
     //! The constructor building the CFG.
     /*! The valid nodes are SgProject, SgStatement, SgExpression and SgInitializedName. */
     CFG(SgNode* node, bool is_filtered = false)
@@ -122,10 +125,10 @@ protected:
     
 
     // The following methods are used to build a DOT file.
-    void processNodes(std::ostream & o, SgGraphNode* n, std::set<SgGraphNode*>& explored);
-    void printNodePlusEdges(std::ostream & o, SgGraphNode* node);
-    void printNode(std::ostream & o, SgGraphNode* node);
-    void printEdge(std::ostream & o, SgDirectedGraphEdge* edge, bool isInEdge);
+    virtual void processNodes(std::ostream & o, SgGraphNode* n, std::set<SgGraphNode*>& explored);
+    virtual void printNodePlusEdges(std::ostream & o, SgGraphNode* node);
+    virtual void printNode(std::ostream & o, SgGraphNode* node);
+    virtual void printEdge(std::ostream & o, SgDirectedGraphEdge* edge, bool isInEdge);
 };
 
 

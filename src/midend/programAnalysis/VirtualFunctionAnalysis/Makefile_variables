@@ -1,0 +1,46 @@
+# Non-recursive Makefile
+
+mpaVirtualFunctionAnalysis_includes=\
+	-I$(top_srcdir)/src/util \
+	-I$(top_srcdir)/src/util/support \
+	-I$(top_srcdir)/src/util/graphs \
+	-I$(top_srcdir)/src/midend/astUtil \
+	-I$(top_srcdir)/src/midend/astUtil/astSupport \
+	-I$(top_srcdir)/src/midend/astUtil/astInterface \
+	-I$(top_srcdir)/src/util/support 
+
+
+# TODO: include in top-level?
+## The grammar generator (ROSETTA) should use its own template repository
+#CXX_TEMPLATE_REPOSITORY_PATH = .
+
+
+mpaVirtualFunctionAnalysis_la_sources=\
+	$(mpaVirtualFunctionAnalysisPath)/IntraProcDataFlowAnalysis.C \
+	$(mpaVirtualFunctionAnalysisPath)/InterProcDataFlowAnalysis.C \
+	$(mpaVirtualFunctionAnalysisPath)/VirtualFunctionAnalysis.C \
+	$(mpaVirtualFunctionAnalysisPath)/PtrAliasAnalysis.C \
+	$(mpaVirtualFunctionAnalysisPath)/IntraProcAliasAnalysis.C 
+
+mpaVirtualFunctionAnalysis_includeHeaders=\
+	$(mpaVirtualFunctionAnalysisPath)/IntraProcDataFlowAnalysis.h \
+	$(mpaVirtualFunctionAnalysisPath)/InterProcDataFlowAnalysis.h \
+	$(mpaVirtualFunctionAnalysisPath)/VirtualFunctionAnalysis.h \
+	$(mpaVirtualFunctionAnalysisPath)/PtrAliasAnalysis.h \
+	$(mpaVirtualFunctionAnalysisPath)/IntraProcAliasAnalysis.h 
+
+mpaVirtualFunctionAnalysis_extraDist=\
+	$(mpaVirtualFunctionAnalysisPath)/CMakeLists.txt
+
+
+mpaVirtualFunctionAnalysis_cleanLocal=\
+	rm -rf \
+		$(mpaVirtualFunctionAnalysisPath)/Templates.DB \
+		$(mpaVirtualFunctionAnalysisPath)/ii_files \
+		$(mpaVirtualFunctionAnalysisPath)/ti_files \
+		$(mpaVirtualFunctionAnalysisPath)/cxx_templates
+
+
+mpaVirtualFunctionAnalysis_distCleanLocal=\
+	rm -rf \
+		$(mpaVirtualFunctionAnalysisPath)/Templates.DB
