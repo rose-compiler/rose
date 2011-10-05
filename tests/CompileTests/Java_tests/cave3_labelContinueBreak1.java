@@ -13,6 +13,6 @@ public class cave3_labelContinueBreak1 {
 	}
 	
 	public static void main(String[] args) {
-		test();
+		cave3_labelContinueBreak1.test();
 	}
 }

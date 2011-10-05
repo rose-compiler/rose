@@ -492,11 +492,10 @@ JAVA_TESTCODES_REQUIRED_TO_PASS = \
      cave3_labelBreak2.java \
      cave3_labelBreak4.java \
      cave3_labelBreak5.java \
-     cave3_labelBreak6.java \
+     cave3_labelContinue0.java \
+     cave3_labelContinue1.java \
      cave3_labelContinue2.java \
      cave3_labelContinue3.java \
-     cave3_labelContinue4.java \
-     cave3_labelContinue5.java \
      cave3_labelContinueBreak0.java \
      cave3_labelContinueBreak1.java \
      cave3_nameResolution0.java \
@@ -662,9 +661,11 @@ clean-local:
 	rm -f *.temp.c 
 	rm -f *-o 
 	rm -f *.mod *.rmod
-#	rm -f *.dot
 	rm -f limits_*.dot
 	rm -f test_*.dot
 	rm -f *.dot
 	rm -rf QMTest
+	rm -f *.java
+	rm -f *.class 
+
 
