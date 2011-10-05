@@ -428,6 +428,54 @@ SgIncidenceDirectedGraph::addDirectedEdge( SgDirectedGraphEdge* edge )
      return edge;
    }
 
+bool SgIncidenceDirectedGraph::removeDirectedEdge( SgDirectedGraphEdge* edge  ) {
+    
+    if(exists(edge) ) {
+        
+        int edge_index = edge->get_index();
+        p_edge_index_to_edge_map.erase(edge_index);
+        
+        int node_index_first  = edge->get_node_A()->get_index();
+        int node_index_second = edge->get_node_B()->get_index();
+        
+        for(rose_graph_integerpair_edge_hash_multimap::const_iterator it = p_node_index_pair_to_edge_multimap.begin() ;
+                it != p_node_index_pair_to_edge_multimap.end(); it++) {
+            if(it->second == edge) {
+                p_node_index_pair_to_edge_multimap.erase(it);
+                break;
+            }
+        }
+
+
+        for(rose_graph_integer_edge_hash_multimap::const_iterator it = get_node_index_to_edge_multimap_edgesOut().begin() ;
+                it != get_node_index_to_edge_multimap_edgesOut().end(); it++) {
+            if(it->first == node_index_first && it->second == edge) {
+                get_node_index_to_edge_multimap_edgesOut().erase(it);
+                break;
+            }
+        }
+        
+        for(rose_graph_integer_edge_hash_multimap::const_iterator it = get_node_index_to_edge_multimap_edgesIn().begin() ;
+                it != get_node_index_to_edge_multimap_edgesIn().end(); it++) {
+            if(it->first == node_index_first && it->second == edge) {
+                get_node_index_to_edge_multimap_edgesIn().erase(it);
+                break;
+            }
+        }
+        
+        
+        if(edge->get_name().empty() == false)
+            p_string_to_edge_index_multimap.erase(edge->get_name());
+        
+        edge->set_parent(NULL);
+        
+        delete edge; 
+        return true;
+        
+    }   
+ 
+    return false;
+}
 
 void
 SgGraph::display_node_index_to_node_map() const
@@ -579,7 +627,7 @@ SgGraph::memory_usage()
   // This function makes the hash_maps and hash_multimaps internal hash table 
   // be set to an explicit size (the largest prime number greater than the
   // input specified size is used (I think)).  The reduces the hash collisions
-  // and improves the performance of usign the hash table.
+  // and improves the performance of using the hash table.
 
   // printf ("Inside of SgGraph::memory_usage(): \n");
 

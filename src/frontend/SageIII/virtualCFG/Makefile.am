@@ -14,6 +14,7 @@ libvirtualCFG_la_SOURCES      = \
      cfgToDot.C \
      memberFunctions.C \
      staticCFG.C \
+     customFilteredCFG.C \
      interproceduralCFG.C
 
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
@@ -30,6 +31,7 @@ include_HEADERS = \
      virtualBinCFG.h \
      cfgToDot.h \
      filteredCFG.h \
+     customFilteredCFG.h \
      filteredCFGImpl.h \
      staticCFG.h \
      interproceduralCFG.h

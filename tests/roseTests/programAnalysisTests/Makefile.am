@@ -8,10 +8,39 @@ SUBDIRS = testCallGraphAnalysis defUseAnalysisTests variableLivenessTests static
 INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/programAnalysis -I$(top_srcdir)/src/midend/programAnalysis/pointerAnal -I${top_srcdir}/src/midend/programAnalysis/CFG -I${top_srcdir}/src/midend/programAnalysis/bitvectorDataflow -I$(top_srcdir)/src/util/support -I$(top_srcdir)/src/util/graphs -I$(top_srcdir)/src/midend/astUtil/astSupport -I$(top_srcdir)/src/midend/astUtil/astInterface -I$(top_srcdir)/src/midend/astUtil -I$(top_srcdir)/src/midend/programAnalysis/ 
 #-I$(top_srcdir)/src/midend/programAnalysis/ptrTrace/GAI/ICFG/
 
+include $(srcdir)/../../CompileTests/Cxx_tests/Makefile-pass.inc
+
+if ROSE_USE_LONG_MAKE_CHECK_RULE
+
+# This is the long test of ROSE (takes a while!)
+TESTCODES_REQUIRED_TO_PASS = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS)
+
+else # !ROSE_USE_LONG_MAKE_CHECK_RULE
+
+# Shorten the list of code to compile to simplify checks using "make distcheck"
+# Note that the tests test2001_02.C and test2001_03.C are required because the
+# tests in ../C_subset_of_Cxx use them and that test2004_116.C is required 
+# because the tests in ROSE/tests/roseTests/programTransformationTests use it.
+TESTCODES_REQUIRED_TO_PASS = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS_SHORT)
+
+endif # ROSE_USE_LONG_MAKE_CHECK_RULE
+
+TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
+
+# Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
+TESTCODES = $(TESTCODES_REQUIRED_TO_PASS)
+ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 --edg:restrict
+
+CXX_FILES = ${TESTCODES_REQUIRED_TO_PASS:.C=.CXX-o}
+
+
+
+
+
 ## The grammar generator (ROSETTA) should use its own template repository
 # CXX_TEMPLATE_REPOSITORY_PATH = .
 
-bin_PROGRAMS = CFGTest DataFlowTest StmtRefTest PtrAnalTest steensgaardTest1 steensgaardTest2
+bin_PROGRAMS = CFGTest DataFlowTest StmtRefTest PtrAnalTest steensgaardTest1 steensgaardTest2 VirtualFunctionAnalysisTest ReachingDefinitionFacadeTest
 
 # DQ: Removed this because it was failing and I could not figure out why
 # AnnotationLanguageParserTest
@@ -40,6 +69,12 @@ CFGTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 DataFlowTest_SOURCES = DataFlowTest.C
 DataFlowTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+VirtualFunctionAnalysisTest_SOURCES = VirtualFunctionAnalysisTest.C
+VirtualFunctionAnalysisTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+ReachingDefinitionFacadeTest_SOURCES = ReachingDefinitionFacadeTest.C
+ReachingDefinitionFacadeTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
 StmtRefTest_SOURCES = StmtRefTest.C
 StmtRefTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
@@ -51,6 +86,11 @@ StmtRefTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 # This is specific to compiling AnnotationLanguageParserTest.C
 AM_CXXFLAGS = -D__LOCALSTL_H
 
+
+$(CXX_FILES): VirtualFunctionAnalysisTest
+	./VirtualFunctionAnalysisTest  $(ROSE_FLAGS) -I$(srcdir)/../../CompileTests/Cxx_tests $(TESTCODE_INCLUDES) -c $(srcdir)/../../CompileTests/Cxx_tests/$(@:.CXX-o=.C) && touch $@
+
+
 FORCE_TEST_CODES_TO_RUN:
 	$(srcdir)/TestDriver $(srcdir)
 
@@ -60,15 +100,18 @@ EXTRA_DIST = TestDriver testfile1.c testfile1.c.cfg testfile1.c.du testfile1.c.r
              testfile3.c testfile3.c.cfg testfile3.c.du testfile3.c.ref \
              testfile4.c testfile4.c.du  testPtr1.C testPtr2.C \
              PtrAnalTest.out1  steensgaardTest1.outx   steensgaardTest2.out2 \
-             PtrAnalTest.out2  steensgaardTest2.out1 
+             PtrAnalTest.out2  steensgaardTest2.out1 \
+	     test_vfa1.C test_vfa2.C test_vfa3.C test_vfa4.C test_vfa5.C
 #	     steensgaardTest1.out - .out has a special suffix meaning
 #	     trustedAnnotationOutput annotationLanguageParserInputFile.ann
+
+check-vfa: $(CXX_FILES)
 
 # to deactivate tests comment out check-local
 # check-local:
 #	AnnotationLanguageParserTestRule
 #	$(MAKE) FORCE_TEST_CODES_TO_RUN
-check-local:
+check-local: check-vfa
 	$(MAKE) FORCE_TEST_CODES_TO_RUN
 	@echo "*************************************************************************************************"
 	@echo "*** ROSE/tests/roseTests/programAnalysisTests: make check rule complete (terminated normally) ***"
@@ -79,10 +122,10 @@ AnnotationLanguageParserTestRule: trustedAnnotationOutput
 #	diff annotationOutput trustedAnnotationOutput || exit
 
 clean-local:
-	rm -rf Templates.DB ii_files ti_files cxx_templates
+	rm -rf Templates.DB ii_files ti_files cxx_templates *.CXX-o *.dot *.ti
 
 distclean-local:
-	rm -rf Templates.DB
+	rm -rf Templates.DB *.CXX-o *.dot *.ti
 
 
 

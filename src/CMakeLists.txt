@@ -197,6 +197,9 @@ set(virtualCFG_SRC
     ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/virtualCFG/virtualBinCFG.C 
     ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/virtualCFG/cfgToDot.C 
     ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/virtualCFG/memberFunctions.C
+    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/virtualCFG/staticCFG.C
+    ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/virtualCFG/customFilteredCFG.C
+
    )
 
 set( binaryFrontend_SRC 
@@ -585,6 +588,11 @@ ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/pointerAnal/PtrAnal.C
 ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/bitvectorDataflow/DataFlowAnalysis.C
 ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/bitvectorDataflow/ReachingDefinition.C
 ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/bitvectorDataflow/DefUseChain.C
+${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/VirtualFunctionAnalysis/VirtualFunctionAnalysis.C 
+${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/VirtualFunctionAnalysis/PtrAliasAnalysis.C 
+${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/VirtualFunctionAnalysis/IntraProcAliasAnalysis.C
+${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/VirtualFunctionAnalysis/IntraProcDataFlowAnalysis.C
+${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/VirtualFunctionAnalysis/InterProcDataFlowAnalysis.C
 ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/graphAnalysis/SB_Graph.C
 ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/graphAnalysis/CallGraphAnalysis.C
 ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/graphAnalysis/RoseSrc_CallGraphAnalysis.C

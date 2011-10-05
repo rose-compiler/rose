@@ -357,6 +357,9 @@ HEADER_INCIDENCE_DIRECTED_GRAPH_START
  //! Add support for externally build SgGraphNode objects
      SgDirectedGraphEdge* addDirectedEdge( SgDirectedGraphEdge* edge  );
 
+ //! Remove an edge from graph
+     bool removeDirectedEdge( SgDirectedGraphEdge* edge  );
+     
 	// tps (4/30/2009): Added to support functionality for DirectedGraphs		   
      void getSuccessors(const SgGraphNode* node, std::vector <SgGraphNode*>& vec ) const;
      void getPredecessors(const SgGraphNode* node, std::vector <SgGraphNode*>& vec ) const;
