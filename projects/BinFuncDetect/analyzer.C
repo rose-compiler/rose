@@ -1,6 +1,6 @@
 #include "rose.h"
 
-#ifndef HAVE_GCRYPT_H
+#ifndef ROSE_HAVE_GCRYPT_H
 int main()
 {
     fprintf(stderr, "This project requires <gcrypt.h>\n");
@@ -85,67 +85,96 @@ IdaFile::parse(const std::string &csv_name, const std::string &exe_hash)
     fclose(f);
 }
 
+
 /* We use our own instruction unparser that does a few additional things that ROSE's default unparser doesn't do.  The extra
  * things are each implemented as a callback and are described below. */
 template<class FunctionCallGraph>
 class MyUnparser: public AsmUnparser {
     typedef typename boost::graph_traits<FunctionCallGraph>::vertex_descriptor Vertex;
 
-    /* Emits the name or address of the function to which the instruction belongs, inline with the instruction */
-    class InsnFuncName: public UnparserCallback {
+    void show_names(std::ostream &output, IdaInfo &ida, SgNode *node,
+                    rose_addr_t rose_func_va, const std::vector<rose_addr_t> &ida_func_va,
+                    rose_addr_t start_va, size_t nbytes) {
+        SgAsmBlock *blk = SageInterface::getEnclosingNode<SgAsmBlock>(node);
+        output <<"{ ";
+
+        if (rose_func_va) {
+            char tmp[64];
+            sprintf(tmp, "%08"PRIx64, rose_func_va);
+            output <<tmp;
+        } else {
+            output <<"        ";
+        }
+
+        assert(ida_func_va.size()==ida.size());
+        for (size_t i=0; i<ida_func_va.size(); i++) {
+            if (ida_func_va[i]) {
+                char tmp[64];
+                sprintf(tmp, "%08"PRIx64, ida_func_va[i]);
+                output <<" " <<tmp;
+
+                if (!rose_func_va) {
+                    /* Instruction/data assigned to function by IDA but not ROSE */
+                    ida[i].ida_not_rose.insert(start_va, nbytes);
+                    output <<"!";
+                } else if (rose_func_va!=ida_func_va[i]) {
+                    /* Instruction assigned by ROSE and IDA to different function entry addresses. */
+                    ida[i].rose_ida_diff.insert(start_va, nbytes);
+                    output <<"!";
+                } else {
+                    /* Instruction assigned to same function by ROSE and IDA */
+                    output <<" ";
+                }
+            } else if (rose_func_va) {
+                /* Instruction assigned to function by ROSE but not IDA.  Don't show the "!" for padding bytes since we already
+                 * know that IDA doesn't include them in the function. */
+                ida[i].rose_not_ida.insert(start_va, nbytes);
+                if (blk && 0!=(blk->get_reason() & SgAsmBlock::BLK_PADDING)) {
+                    output <<"          ";
+                } else {
+                    output <<"         !";
+                }
+            } else {
+                /* Instruction assigned by neither ROSE nor IDA */
+                output <<"          ";
+            }
+        }
+                
+        output <<"}";
+    }
+
+    /* Emits the address of the function to which the instruction or data node belongs, inline with the node, for ROSE and IDA */
+    template<class NodeType, class Args>
+    class FuncName: public UnparserCallback {
     public:
         IdaInfo &ida;
-        InsnFuncName(IdaInfo &ida): ida(ida) {}
-        virtual bool operator()(bool enabled, const InsnArgs &args) {
+        FuncName(IdaInfo &ida): ida(ida) {}
+        virtual bool operator()(bool enabled, const Args &args) {
             if (enabled) {
-
-                args.output <<"{ ";
+                NodeType *node = args.get_node();
 
                 /* Name of (single) ROSE function containing this instruction. */
-                SgAsmFunction *rose_func = SageInterface::getEnclosingNode<SgAsmFunction>(args.insn);
-                rose_addr_t rose_func_va = 0;
+                SgAsmFunction *rose_func = SageInterface::getEnclosingNode<SgAsmFunction>(node);
                 if (0!=(rose_func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS))
                     rose_func = NULL;
-                if (rose_func) {
-                    char tmp[64];
-                    rose_func_va = rose_func->get_entry_va();
-                    sprintf(tmp, "%08"PRIx64, rose_func_va);
-                    args.output <<tmp;
-                } else {
-                    args.output <<"        ";
-                }
+                rose_addr_t rose_func_va = rose_func ? rose_func->get_entry_va() : 0;
 
                 /* Name of (multiple) IDA functions containing this instruction. */
+                std::vector<rose_addr_t> ida_func_va;
                 for (IdaInfo::iterator ida_i=ida.begin(); ida_i!=ida.end(); ++ida_i) {
-                    IdaFile::AddrMap::iterator ai=ida_i->address.find(args.insn->get_address());
+                    IdaFile::AddrMap::iterator ai=ida_i->address.find(node->get_address());
                     if (ai!=ida_i->address.end()) {
-                        char tmp[64];
-                        sprintf(tmp, "%08"PRIx64, *ai->second.begin());
-                        args.output <<" " <<tmp;
-
-                        if (!rose_func) {
-                            /* Instruction assigned to function by IDA but not ROSE */
-                            ida_i->ida_not_rose.insert(args.insn->get_address(), args.insn->get_raw_bytes().size());
-                            args.output <<"!";
-                        } else if (ai->second.find(rose_func_va)==ai->second.end()) {
-                            /* Instruction assigned by ROSE and IDA to different function entry addresses. */
-                            ida_i->rose_ida_diff.insert(args.insn->get_address(), args.insn->get_raw_bytes().size());
-                            args.output <<"!";
-                        } else {
-                            /* Instruction assigned to same function by ROSE and IDA */
-                            args.output <<" ";
-                        }
-                        args.output <<(ai->second.size()>1 ? "*" : " "); /* IDA assigned to more than one function? */
-                    } else if (rose_func) {
-                        /* Instruction assigned to function by ROSE but not IDA */
-                        ida_i->rose_not_ida.insert(args.insn->get_address(), args.insn->get_raw_bytes().size());
-                        args.output <<"         ! ";
+                        ida_func_va.push_back(*ai->second.begin());
                     } else {
-                        /* Instruction assigned by neither ROSE nor IDA */
-                        args.output <<"           ";
+                        ida_func_va.push_back(0);
                     }
                 }
-                args.output <<"}";
+
+                rose_addr_t va = node->get_address();
+                size_t size = node->get_raw_bytes().size();
+                MyUnparser *unparser = dynamic_cast<MyUnparser*>(args.unparser);
+                assert(unparser!=NULL);
+                unparser->show_names(args.output, ida, node, rose_func_va, ida_func_va, va, size);
             }
             return enabled;
         }
@@ -176,12 +205,14 @@ class MyUnparser: public AsmUnparser {
     };
 
 public:
-    InsnFuncName insn_func_name;
+    FuncName<SgAsmInstruction, AsmUnparser::UnparserCallback::InsnArgs> insn_func_name;
+    FuncName<SgAsmStaticData,  AsmUnparser::UnparserCallback::StaticDataArgs> data_func_name;
     FuncCallers func_callers;
 
-    MyUnparser(FunctionCallGraph &cg, IdaInfo &ida): insn_func_name(ida), func_callers(cg) {
+    MyUnparser(FunctionCallGraph &cg, IdaInfo &ida): insn_func_name(ida), data_func_name(ida), func_callers(cg) {
         set_organization(AsmUnparser::ORGANIZED_BY_ADDRESS);
         insn_callbacks.pre.append(&insn_func_name);
+        staticdata_callbacks.pre.append(&data_func_name);
         function_callbacks.pre.before(&functionAttributes, &func_callers, 1);
     }
 
@@ -190,6 +221,13 @@ public:
         output <<"BBR means \"basic block reasons\"; Why is a basic block in a function?\n"
                <<"These letters describe the possible reasons:\n"
                <<SgAsmBlock::reason_key("    ")
+               <<"\n"
+               <<"Bangs (\"!\") in the ROSE and IDA columns indicate differences between\n"
+               <<"ROSE and IDA.  We don't show a bang for data blocks due to inter-function padding\n"
+               <<"since we already know that ROSE can reliably include them in the function but\n"
+               <<"IDA does not.\n"
+               <<"\n"
+               <<"\n"
                <<"\n"
                <<"Address     Hexadecimal data         CharData  BBR   ROSE     ";
         for (size_t i=0; i<insn_func_name.ida.size(); i++)
@@ -249,23 +287,27 @@ statistics(SgAsmInterpretation *interp, const Disassembler::InstructionMap &insn
     int note=1;
 
     std::vector<SgAsmFunction*> rose_functions;
+    std::vector<SgAsmFunction*> padding_functions;
     struct T1: public AstSimpleProcessing {
         std::vector<SgAsmFunction*> &rose_functions;
-        T1(std::vector<SgAsmFunction*> &rose_functions): rose_functions(rose_functions) {}
+        std::vector<SgAsmFunction*> &padding_functions;
+        T1(std::vector<SgAsmFunction*> &rose_functions,
+           std::vector<SgAsmFunction*> &padding_functions)
+            : rose_functions(rose_functions), padding_functions(padding_functions) {}
         void visit(SgNode *node) {
             SgAsmFunction *func = isSgAsmFunction(node);
             if (func) {
                 if (func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS) {
                     /* not a function -- just a collection of otherwise unassigned instructions */
                 } else if (0!=(func->get_reason() & SgAsmFunction::FUNC_INTERPAD)) {
-                    /* not a function -- used as inter-function padding */
+                    padding_functions.push_back(func);
                 } else {
                     rose_functions.push_back(func);
                 }
             }
         }
     };
-    T1(rose_functions).traverse(interp, preorder);
+    T1(rose_functions, padding_functions).traverse(interp, preorder);
 
     // Header
     fprintf(stderr, "==========\nStatistics\n==========\n");
@@ -311,15 +353,17 @@ statistics(SgAsmInterpretation *interp, const Disassembler::InstructionMap &insn
     }
     fprintf(stderr, " bytes\n");
 
-    // Number of bytes assigned to functions (other than FUNC_LEFTOVERS, and not counting overlaps twice)
+    // Number of bytes assigned to functions (other than FUNC_LEFTOVERS, and padding bytes, and not counting overlaps twice)
+    struct NonPadding: public SgAsmFunction::NodeSelector {
+        virtual bool operator()(SgNode *node) {
+            SgAsmStaticData *datum = isSgAsmStaticData(node);
+            SgAsmBlock *dblock = SageInterface::getEnclosingNode<SgAsmBlock>(datum);
+            return !datum || !dblock || 0==(dblock->get_reason() & SgAsmBlock::BLK_PADDING);
+        }
+    } no_padding;
     emap.clear();
-    for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
-        SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(ii->second);
-        if (func &&
-            0==(func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS) &&
-            SgAsmFunction::FUNC_INTERPAD!=func->get_reason())
-            emap.insert(ii->first, ii->second->get_raw_bytes().size());
-    }
+    for (std::vector<SgAsmFunction*>::iterator fi=rose_functions.begin(); fi!=rose_functions.end(); ++fi)
+        (*fi)->get_extent(&emap, NULL, NULL, &no_padding);
     size_t nassigned0 = emap.size();
     fprintf(stderr, "Assigned to functions (excl. padding):  %-*zu", width, nassigned0);
     for (IdaInfo::iterator ida_i=ida.begin(); ida_i!=ida.end(); ++ida_i) {
@@ -330,14 +374,16 @@ statistics(SgAsmInterpretation *interp, const Disassembler::InstructionMap &insn
     fprintf(stderr, " bytes\n");
 
     // Number of bytes assigned to padding
+    struct OnlyPadding: public NonPadding {
+        virtual bool operator()(SgNode *node) {
+            return !NonPadding::operator()(node);
+        }
+    } only_padding;
     emap.clear();
-    for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
-        SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(ii->second);
-        if (func &&
-            0==(func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS) &&
-            SgAsmFunction::FUNC_INTERPAD==func->get_reason())
-            emap.insert(ii->first, ii->second->get_raw_bytes().size());
-    }
+    for (std::vector<SgAsmFunction*>::iterator fi=rose_functions.begin(); fi!=rose_functions.end(); ++fi)
+        (*fi)->get_extent(&emap, NULL, NULL, &only_padding);
+    for (std::vector<SgAsmFunction*>::iterator fi=padding_functions.begin(); fi!=padding_functions.end(); ++fi)
+        (*fi)->get_extent(&emap, NULL, NULL, NULL);
     size_t npadding0 = emap.size();
     fprintf(stderr, "Assigned to padding:                    %-*zu", width, npadding0);
     for (IdaInfo::iterator ida_i=ida.begin(); ida_i!=ida.end(); ++ida_i)
