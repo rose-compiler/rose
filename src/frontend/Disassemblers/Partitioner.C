@@ -2803,14 +2803,30 @@ Partitioner::build_ast(DataBlock *block)
 
 /* Top-level function to run the partitioner in passive mode. */
 SgAsmBlock *
-Partitioner::partition(SgAsmInterpretation* interp/*=NULL*/, const Disassembler::InstructionMap& insns)
+Partitioner::partition(SgAsmInterpretation* interp/*=NULL*/, const Disassembler::InstructionMap& insns, MemoryMap *map)
 {
     disassembler = NULL;
     add_instructions(insns);
-    pre_cfg(interp);
-    analyze_cfg(SgAsmBlock::BLK_GRAPH1);
-    post_cfg(interp);
-    return build_ast();
+    
+    MemoryMap *old_map = get_map();
+    if (!map && !old_map)
+        throw Exception("no memory map");
+    if (map)
+        set_map(map);
+
+    SgAsmBlock *retval = NULL;
+    try {
+        pre_cfg(interp);
+        analyze_cfg(SgAsmBlock::BLK_GRAPH1);
+        post_cfg(interp);
+        retval = build_ast();
+        set_map(old_map);
+    } catch (...) {
+        set_map(old_map);
+        throw;
+    }
+    
+    return retval;
 }
 
 /* Top-level function to run the partitioner in active mode. */

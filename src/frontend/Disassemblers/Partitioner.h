@@ -377,15 +377,19 @@ public:
         return debug;
     }
 
-    /** Set the memory map that was used for disassembly. */
+    /** Accessors for the memory map.  The partitioner needs to know the memory map that was used (or will be used, depending
+     *  on the partitioning mode of operation) for disassembly.  The map should certainly include all the bytes of instructions
+     *  because it may be used to construct static data blocks that are interspersed with the instructions.  It should also
+     *  include all read-only data if possible because that will improve the control flow analysis for indirect branches.
+     *
+     *  @{ */
     void set_map(MemoryMap *mmap) {
         map = mmap;
     }
-    
-    /** Return the memory map that was used for disassembly. */
     MemoryMap *get_map() const {
         return map;
     }
+    /** @} */
 
     /** Set progress reporting properties.  A progress report is produced not more than once every @p min_interval seconds
      * (default is 10) by sending a single line of ouput to the specified file.  Progress reporting can be disabled by supplying
@@ -418,8 +422,10 @@ public:
     static unsigned parse_switches(const std::string&, unsigned initial_flags);
 
     /** Top-level function to run the partitioner on some instructions and build an AST. The SgAsmInterpretation is optional.
-     *  If it is null then those function seeding operations that depend on having file headers are not run. */
-    virtual SgAsmBlock* partition(SgAsmInterpretation*, const Disassembler::InstructionMap&);
+     *  If it is null then those function seeding operations that depend on having file headers are not run.  The memory map
+     *  argument is optional only if a memory map has already been attached to this partitioner object with the set_map()
+     *  method. */
+    virtual SgAsmBlock* partition(SgAsmInterpretation*, const Disassembler::InstructionMap&, MemoryMap *mmap);
 
     /** Top-level function to run the partitioner, calling the specified disassembler as necessary to generate instructions. */
     virtual SgAsmBlock* partition(SgAsmInterpretation*, Disassembler*, MemoryMap*);
@@ -686,8 +692,11 @@ public:
 
     /*************************************************************************************************************************
      *                                                 Low-level Functions
+     *
+     * These are public because they might need to be called by the partitioner's instruction or address traversal callbacks,
+     * and its often convenient to declare those functors outside any Partitioner subclass.
      *************************************************************************************************************************/
-protected:
+public:
     /* NOTE: Some of these are documented at their implementation because the documentation is more than what conveniently
      *       fits here. */
     struct AbandonFunctionDiscovery {};                         /**< Exception thrown to defer function block discovery. */
@@ -1014,8 +1023,11 @@ public:
 
     /*************************************************************************************************************************
      *                                                     Data Members
+     *
+     * These are public so they can be accessed by user-defined traversal callbacks that might be declared outside any
+     * Partitioner subclass.
      *************************************************************************************************************************/
-protected:
+public:
     Disassembler *disassembler;                         /**< Optional disassembler to call when an instruction is needed. */
     Disassembler::InstructionMap insns;                 /**< Instruction cache, filled in by user or populated by disassembler. */
     MemoryMap *map;                                     /**< Memory map used for disassembly if disassembler is present. */
@@ -1038,7 +1050,7 @@ protected:
     static time_t progress_time;                        /**< Time of last report, or zero if no report has been generated. */
     static FILE *progress_file;                         /**< File to which reports are made. Null disables reporting. */
 
-private:
+public:
     static const rose_addr_t NO_TARGET = (rose_addr_t)-1;
 };
 

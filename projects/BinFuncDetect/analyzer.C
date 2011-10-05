@@ -610,10 +610,9 @@ main(int argc, char *argv[])
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     std::cerr <<"Partitioning instructions into functions...\n";
     Partitioner *partitioner = new Partitioner();
-    partitioner->set_map(map);
     partitioner->set_search(SgAsmFunction::FUNC_DEFAULT | SgAsmFunction::FUNC_INTRABLOCK);
     //partitioner->set_debug(stderr);
-    SgAsmBlock *gblock = partitioner->partition(interp, insns);
+    SgAsmBlock *gblock = partitioner->partition(interp, insns, map);
     interp->set_global_block(gblock);
     gblock->set_parent(interp);
 

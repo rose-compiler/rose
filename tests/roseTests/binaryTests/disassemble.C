@@ -1177,11 +1177,6 @@ main(int argc, char *argv[])
     if (do_omit_anon>0)
         map->prune(large_anonymous_region_p);
 
-    /* If the partitioner needs to execute a success program (defined in an IPD file) then it must be able to provide the
-     * program with a window into the specimen's memory.  We do that by supplying the same memory map that was used for
-     * disassembly. It is redundant to call set_map() with an active partitioner, but doesn't hurt anything. */
-    partitioner->set_map(map);
-
     printf("using this memory map for disassembly:\n");
     map->dump(stdout, "    ");
 
@@ -1195,7 +1190,7 @@ main(int argc, char *argv[])
     try {
         if (do_call_disassembler) {
             insns = disassembler->disassembleBuffer(map, worklist, NULL, &bad);
-            block = partitioner->partition(interp, insns);
+            block = partitioner->partition(interp, insns, map);
         } else {
             block = partitioner->partition(interp, disassembler, map);
             insns = partitioner->get_instructions();
