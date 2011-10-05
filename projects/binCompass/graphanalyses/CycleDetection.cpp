@@ -74,7 +74,7 @@ CycleDetection::run(string& name, SgGraphNode* node,
   ROSE_ASSERT(node);
 
   //cerr << " cycledetection->run " << node->get_name() << endl;
-  SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(node->get_SgNode());
+  SgAsmFunction* func = isSgAsmFunction(node->get_SgNode());
   if (func) {
     // if the node is a function, we clear the visited nodes
     // this should speed up our search

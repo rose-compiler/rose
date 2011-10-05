@@ -246,7 +246,7 @@ RoseBin_DataFlowAnalysis::traverseGraph(vector <SgGraphNode*>& rootNodes,
       if (RoseBin_support::DEBUG_MODE_MIN() && node) {
         SgAsmInstruction* instr = isSgAsmInstruction(node->get_SgNode());
         if (instr) {
-          SgAsmFunctionDeclaration* funcParent = isSgAsmFunctionDeclaration(instr->get_parent());
+          SgAsmFunction* funcParent = isSgAsmFunction(instr->get_parent());
           if (funcParent) {
             string parent = funcParent->get_name();
             cout << " ---- analysis of node in function : " << parent <<

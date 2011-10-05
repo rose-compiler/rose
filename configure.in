@@ -23,6 +23,8 @@ true ${FFLAGS:=}
 
 AM_CONFIG_HEADER(rose_config.h)
 
+ROSE_SUPPORT_GIT_VERSIONING
+
 # This macro calls all of the other macros that used to be in the body of
 # this configure.in file.  This permits other projects to call this same
 # macro and setup the variables and macros that an external project may 

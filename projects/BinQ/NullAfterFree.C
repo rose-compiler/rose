@@ -38,7 +38,7 @@ NullAfterFree::visit(SgNode* node) {
 
     if (instBlock==NULL)
       return;
-    SgAsmFunctionDeclaration* instFunc = isSgAsmFunctionDeclaration(instBlock->get_parent());
+    SgAsmFunction* instFunc = isSgAsmFunction(instBlock->get_parent());
     if (instFunc==NULL)
       return;
     string calleeName = inst->get_comment();
@@ -77,7 +77,7 @@ NullAfterFree::visit(SgNode* node) {
 #endif
 	if (predBlock==NULL)
 	  continue;
-	SgAsmFunctionDeclaration* predFunc = isSgAsmFunctionDeclaration(predBlock->get_parent());
+	SgAsmFunction* predFunc = isSgAsmFunction(predBlock->get_parent());
 	if (predFunc==NULL)
 	  continue;
 	if (predFunc==instFunc) {
@@ -164,7 +164,7 @@ NullAfterFree::visit(SgNode* node) {
 
 	  if (succBlock==NULL)
 	    continue;
-	  SgAsmFunctionDeclaration* succFunc = isSgAsmFunctionDeclaration(succBlock->get_parent());
+	  SgAsmFunction* succFunc = isSgAsmFunction(succBlock->get_parent());
 	  if (succFunc==NULL)
 	    continue;
 	  if (succFunc==instFunc) {
@@ -225,7 +225,7 @@ NullAfterFree::visit(SgNode* node) {
 #endif
 	if (predBlock==NULL)
 	  continue;
-	SgAsmFunctionDeclaration* predFunc = isSgAsmFunctionDeclaration(predBlock->get_parent());
+	SgAsmFunction* predFunc = isSgAsmFunction(predBlock->get_parent());
 	if (predFunc==NULL)
 	  continue;
 	if (predFunc==instFunc) {
@@ -302,9 +302,9 @@ NullAfterFree::visit(SgNode* node) {
 	string res = "free() called && pointer!=NULL: ";
 	string funcname="";
 	SgAsmBlock* b = isSgAsmBlock(inst->get_parent());
-	SgAsmFunctionDeclaration* func = NULL;
+	SgAsmFunction* func = NULL;
 	if (b)
-	  func=isSgAsmFunctionDeclaration(b->get_parent()); 
+	  func=isSgAsmFunction(b->get_parent()); 
 	if (func)
 	  funcname = func->get_name();
 	res+=" ("+RoseBin_support::HexToString(inst->get_address())+") : "+unparseInstruction(inst)+

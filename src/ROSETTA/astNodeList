@@ -38,8 +38,6 @@ SgAsmCommonSubExpression
 SgAsmControlFlagsExpression
 SgAsmDOSExtendedHeader
 SgAsmDOSFileHeader
-SgAsmDataStructureDeclaration
-SgAsmDeclaration
 SgAsmDoubleFloatValueExpression
 SgAsmDoubleWordValueExpression
 SgAsmDwarfAccessDeclaration
@@ -157,8 +155,7 @@ SgAsmElfSymverSection
 SgAsmExecutableFileFormat
 SgAsmExprListExp
 SgAsmExpression
-SgAsmFieldDeclaration
-SgAsmFunctionDeclaration
+SgAsmFunction
 SgAsmGenericArchitecture
 SgAsmGenericDLL
 SgAsmGenericDLLList
@@ -231,6 +228,7 @@ SgAsmSectionHeader
 SgAsmSectionHeaderList
 SgAsmSingleFloatValueExpression
 SgAsmStatement
+SgAsmStaticData
 SgAsmStmt
 SgAsmStoredString
 SgAsmStringStorage

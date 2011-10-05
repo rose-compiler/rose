@@ -96,7 +96,7 @@ class RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
     //delete roseBin;
     delete vizzGraph;
 
-    std::map <std::string, SgAsmFunctionDeclaration* >::iterator it;
+    std::map <std::string, SgAsmFunction* >::iterator it;
     for (it = bin_funcs.begin();
          it!= bin_funcs.end(); it++) {
       delete it->second;

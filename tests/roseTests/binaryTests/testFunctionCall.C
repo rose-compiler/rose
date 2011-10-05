@@ -11,7 +11,7 @@ struct GraphvizVertexWriter {
     const FunctionCallGraph &g;
     GraphvizVertexWriter(FunctionCallGraph &g): g(g) {}
     void operator()(std::ostream &output, const Vertex &v) {
-        SgAsmFunctionDeclaration *func = get(boost::vertex_name, g, v);
+        SgAsmFunction *func = get(boost::vertex_name, g, v);
         output <<"[ label=\"" <<StringUtility::addrToString(func->get_entry_va()) <<"\" ]";
     }
 };
@@ -19,8 +19,8 @@ struct GraphvizVertexWriter {
 /* Filter that rejects basic block that are uncategorized.  I.e., those blocks that were disassemble but not ultimately
  * linked into the list of known functions.  We excluded these because their control flow information is often nonsensical. */
 struct ExcludeLeftovers: public BinaryAnalysis::FunctionCall::VertexFilter {
-    bool operator()(BinaryAnalysis::FunctionCall *analyzer, SgAsmFunctionDeclaration *func) {
-        return func && 0==(func->get_reason() & SgAsmFunctionDeclaration::FUNC_LEFTOVERS);
+    bool operator()(BinaryAnalysis::FunctionCall *analyzer, SgAsmFunction *func) {
+        return func && 0==(func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS);
     }
 };
 

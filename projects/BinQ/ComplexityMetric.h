@@ -27,7 +27,7 @@ class ComplexityMetric : public BinAnalyses,AstSimpleProcessing {
   bool debug;
   BinQGUI *instance;
   std::map<SgNode*,std::string> result;
-  SgAsmFunctionDeclaration* lastFunction;
+  SgAsmFunction* lastFunction;
   int complexity;
   int max;
 
