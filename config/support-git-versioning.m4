@@ -45,7 +45,7 @@ if ! [[[ "$GIT_HEAD_DATE" =~ $GIT_DATE_REGEX ]]]; then
   AC_MSG_FAILURE([invalid Git author date does not match regex="$GIT_DATE_REGEX": $GIT_HEAD_HASH])
 fi
 
-AC_DEFINE_UNQUOTED([ROSE_SCM_VERSION], [$GIT_HEAD_HASH], [Git SCM version information for ROSE: commit hash.])
+AC_DEFINE_UNQUOTED([ROSE_SCM_VERSION_ID], ["$GIT_HEAD_HASH"], [Git SCM version information for ROSE: commit hash.])
 AC_DEFINE_UNQUOTED([ROSE_SCM_VERSION_UNIX_DATE], [$GIT_HEAD_DATE], [Git SCM version information for ROSE: commit date (Unix timestamp).])
 AC_MSG_RESULT([$GIT_HEAD_HASH $GIT_HEAD_DATE])
 ])
