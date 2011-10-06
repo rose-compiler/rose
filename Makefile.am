@@ -54,11 +54,12 @@ core:
 	$(MAKE) -C $(top_builddir)/exampleTranslators
 	$(MAKE) -C $(top_builddir)/tutorial
 
-install-core: core
+install-core: core rosePublicConfig.h
 	$(MAKE) install-data-local
 	$(MAKE) install -C $(top_builddir)/src
 	$(MAKE) install -C $(top_builddir)/exampleTranslators
 	$(MAKE) install -C $(top_builddir)/tutorial
+	cp rosePublicConfig.h $(DESTDIR)$(includedir)/
 
 install-compass: install-core
 	$(MAKE) -C $(top_builddir)/projects/compass
