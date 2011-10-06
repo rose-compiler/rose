@@ -19,6 +19,10 @@
 #include "StackManager.h"
 #include "PointerManager.h"
 
+#ifdef ROSE_WITH_ROSEQT
+#include "DebuggerQt/RtedDebug.h"
+#endif
+
 
 /**
  * @brief Main API of the runtimesystem.  Provides direct and indirect access to

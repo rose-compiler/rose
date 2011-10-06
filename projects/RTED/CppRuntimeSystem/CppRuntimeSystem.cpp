@@ -10,10 +10,6 @@
 
 #include "CppRuntimeSystem.h"
 
-#ifdef ROSE_WITH_ROSEQT
-#include "DebuggerQt/RtedDebug.h"
-#endif
-
 #include "rtedsync.h"
 
 

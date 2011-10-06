@@ -2,18 +2,13 @@
 #ifndef RTEDDEBUG_H
 #define RTEDDEBUG_H
 
+#include <pthread.h>
 
 #include <QApplication>
 #include <QObject>
-
-
-#include "MainWindow.h"
-#include "../CppRuntimeSystem.h"
-
-
-#include <pthread.h>
-
 #include <QDebug>
+
+struct DbgMainWindow;
 
 class RtedDebug
 {
