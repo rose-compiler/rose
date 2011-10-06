@@ -5714,7 +5714,9 @@ global_build_classpath()
   // Open Fortran Parser (OFP) support (this is the jar file)
   // CER (10/4/2011): Switched to using date-based version for OFP jar file
   //
-     string ofp_jar_file_name = string("OpenFortranParser-") + StringUtility::numberToString(ROSE_OFP_VERSION_NUMBER) + string(".jar");
+     char ofp_date[9];
+     snprintf(ofp_date, 9, "%d", ROSE_OFP_VERSION_NUMBER);
+     string ofp_jar_file_name = string("OpenFortranParser-") + string(ofp_date) + string(".jar");
      string ofp_class_path = "src/3rdPartyLibraries/fortran-parser/" + ofp_jar_file_name;
      classpath += findRoseSupportPathFromBuild(ofp_class_path, string("lib/") + ofp_jar_file_name) + ":";
 
