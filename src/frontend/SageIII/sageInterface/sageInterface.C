@@ -4391,6 +4391,23 @@ SgSymbol *SageInterface:: lookupSymbolInParentScopes (const SgName &  name, SgSc
   // printf ("In SageInterface:: lookupSymbolInParentScopes(): cscope = %p = %s \n",cscope,cscope->class_name().c_str());
      while ((cscope != NULL) && (symbol == NULL))
         {
+          if (cscope->get_symbol_table() == NULL)
+             {
+               printf ("Error: cscope->get_symbol_table() == NULL for cscope = %p = %s \n",cscope,cscope->class_name().c_str());
+               cscope->get_startOfConstruct()->display("cscope->p_symbol_table == NULL: debug");
+#if 0
+               ROSE_ASSERT(cscope->get_parent() != NULL);
+               SgNode* parent = cscope->get_parent();
+               while (parent != NULL)
+                  {
+                    printf ("Error: cscope->get_symbol_table() == NULL for parent = %p = %s \n",parent,parent->class_name().c_str());
+                    parent->get_startOfConstruct()->display("parent == NULL: debug");
+                    parent = parent->get_parent();
+                  }
+#endif
+             }
+          ROSE_ASSERT(cscope->get_symbol_table() != NULL);
+
        // printf ("   --- In SageInterface:: lookupSymbolInParentScopes(): cscope = %p = %s \n",cscope,cscope->class_name().c_str());
           symbol = cscope->lookup_symbol(name);
 
@@ -13113,6 +13130,45 @@ SageInterface::deleteAST ( SgNode* n )
    }
 
 
+
+
+#ifndef USE_ROSE
+// DQ (9/25/2011):  The deleteAST() function will not remove original expression trees behind constant folded expressions.
+// These exist in the AST within the internal construction of the AST until they are simplified in the AST post-processing.
+// In the post-processing either:
+//    1) the constant folded values are kept and the original expression trees deleted (optional, controled by default parameter to function "frontend()", OR
+//    2) the constant folded values are replaced by the original expression trees, and the constant folded values are deleted (default).
+// Either way, after the AST post-processing the AST is simplified.  Until then the expression trees can contain constant 
+// folded values and the values will have a pointer to the original expression tree.  Before (9/16/2011) the original
+// tree would also sometimes (not uniformally) be traversed as part of the AST.  This was confusing (to people and
+// to numerous forms of analysis), so this is being fixed to be uniform (using either of the methods defined above).
+// However, the fact that until post-processing the AST has this complexity, and that the AST traversal does not
+// traverse the original expression trees (now uniform); means that we need a special delete function for subtrees
+// that are not use post-processed.  This is the special purpose function that we need.
+//
+// NOTE: This function is called from the SgArrayType::createType() member function and in the constant folding AST post-processing.
+//
+void SageInterface::deleteExpressionTreeWithOriginalExpressionSubtrees(SgNode* root)
+   {
+     struct Visitor: public AstSimpleProcessing
+        {
+          virtual void visit(SgNode* n)
+             {
+               SgExpression* expression = isSgExpression(n);
+               if (expression != NULL)
+                  {
+                    Visitor().traverse(expression->get_originalExpressionTree(), postorder);
+                  }
+
+               delete (n);
+             }
+        };
+
+     Visitor().traverse(root, postorder);
+   }
+#endif
+
+
 void
 SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicBlock* targetBlock )
    {
@@ -13222,6 +13278,11 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
 
      ROSE_ASSERT(sourceBlock->get_symbol_table() != NULL);
      sourceBlock->set_symbol_table(NULL);
+
+  // DQ (9/23/2011): Reset with a valid symbol table.
+     sourceBlock->set_symbol_table(new SgSymbolTable());
+     sourceBlock->get_symbol_table()->set_parent(sourceBlock);
+
      // Liao 2/4/2009
      // Finally , move preprocessing information attached inside the source block to the target block
      // Outliner uses this function to move a code block to the outlined function.

@@ -838,7 +838,7 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgOmpClause::omp_reduction_operator_enum" ) ||
                  ( varTypeString == "SgProcedureHeaderStatement::subprogram_kind_enum" ) ||
                  ( varTypeString == "SgLabelSymbol::label_type_enum" ) ||
-                 ( varTypeString == "SgAsmFunctionDeclaration::function_kind_enum" ) ||
+                 ( varTypeString == "SgAsmFunction::function_kind_enum" ) ||
                  ( varTypeString == "SgTypeModifier::gnu_extension_machine_mode_enum" ) ||
                  ( varTypeString == "SgDeclarationStatement::gnu_extension_visability_attribute_enum" ) ||
                  ( varTypeString == "SgVariableDeclaration::gnu_extension_declaration_attributes_enum" ) ||

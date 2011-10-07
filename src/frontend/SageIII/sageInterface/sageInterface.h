@@ -1156,6 +1156,9 @@ SgScopeStatement* getScope(const SgNode* astNode);
 //! Function to delete AST subtree's nodes only, users must take care of any dangling pointers, symbols or types that result.
  void deleteAST(SgNode* node);
 
+//! Special purpose function for deleting AST expression tress containing valid original expression trees in constant folded expressions (for internal use only).
+ void deleteExpressionTreeWithOriginalExpressionSubtrees(SgNode* root);
+
 // DQ (2/25/2009): Added new function to support outliner.
 //! Move statements in first block to the second block (preserves order and rebuilds the symbol table).
  void moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicBlock* targetBlock );

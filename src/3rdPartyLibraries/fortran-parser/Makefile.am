@@ -1,10 +1,16 @@
 javadir=$(libdir)
 
+# CER (10/03/2011): Switched to using date-based tag for the OFP version.
+# The macro variable ROSE_OFP_VERSION_NUMBER must be changed when a new
+# date/version of OFP is added.  I think the wget code should go away as
+# the jar file is now distributed with ROSE.
+OFP_DIST_VERSION=20111001
+
 OFP_VERSION=@ROSE_OFP_MAJOR_VERSION_NUMBER@.@ROSE_OFP_MINOR_VERSION_NUMBER@.@ROSE_OFP_PATCH_VERSION_NUMBER@
 
 # DQ (4/5/2010): Think about if we need the test using an Automake conditional since the jar file always exists.
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-   dist_java_DATA = OpenFortranParser-${OFP_VERSION}.jar
+   dist_java_DATA = OpenFortranParser-${OFP_DIST_VERSION}.jar
 endif
 
 EXTERNAL_OFP_JAR_FILE_URL = http://sourceforge.net/projects/fortran-parser/files/OpenFortranParser/version_${OFP_VERSION}/OpenFortranParser-${OFP_VERSION}.jar/download
@@ -38,7 +44,7 @@ OpenFortranParser-${OFP_VERSION}.jar:
 extract_rose_required_ofp_source_files: token.c
 	@echo "files: extract_rose_required_ofp_source_files is out of date compared to token.c"
 
-TEST_OFP_VERSION=0.8.1
+TEST_OFP_VERSION=0.8.3
 TEST_EXTERNAL_OFP_JAR_FILE_URL=http://sourceforge.net/projects/fortran-parser/files/OpenFortranParser/version_${TEST_OFP_VERSION}/OpenFortranParser-${TEST_OFP_VERSION}.jar/download
 
 # This is a rule for testing the download of OFP from the web.
@@ -87,38 +93,38 @@ endif
 
 # DQ (9/26/2010): Add the jar file as a dependency so that when it is 
 # updated it will force the required files to be extracted automatically.
-token.c: OpenFortranParser-${OFP_VERSION}.jar
+token.c: OpenFortranParser-${OFP_DIST_VERSION}.jar
 	@echo "***********************************************************************"
-	@echo "Extracting required OFP files from OpenFortranParser-${OFP_VERSION}.jar"
+	@echo "Extracting required OFP files from OpenFortranParser-${OFP_DIST_VERSION}.jar"
 	@echo "***********************************************************************"
 	@echo "Jar command being used: JAR = ${JAR}"
 	@echo "Jar command being used: JAR = $(JAR)"
-	@if test -e OpenFortranParser-${OFP_VERSION}.jar; then \
-      echo "Found valid OpenFortranParser-${OFP_VERSION}.jar file."; \
+	@if test -e OpenFortranParser-${OFP_DIST_VERSION}.jar; then \
+      echo "Found valid OpenFortranParser-${OFP_DIST_VERSION}.jar file."; \
    else \
-      echo "Note: OpenFortranParser-${OFP_VERSION}.jar file was not found in the build tree (OK)."; \
-      if test -e ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar; then \
-         echo "Found valid ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar file."; \
-         cp ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar OpenFortranParser-${OFP_VERSION}.jar; \
+      echo "Note: OpenFortranParser-${OFP_DIST_VERSION}.jar file was not found in the build tree (OK)."; \
+      if test -e ${srcdir}/OpenFortranParser-${OFP_DIST_VERSION}.jar; then \
+         echo "Found valid ${srcdir}/OpenFortranParser-${OFP_DIST_VERSION}.jar file."; \
+         cp ${srcdir}/OpenFortranParser-${OFP_DIST_VERSION}.jar OpenFortranParser-${OFP_DIST_VERSION}.jar; \
       else \
-         echo "Error: ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar file is not found in the source tree or the build tree."; \
+         echo "Error: ${srcdir}/OpenFortranParser-${OFP_DIST_VERSION}.jar file is not found in the source tree or the build tree."; \
          exit 1; \
       fi; \
    fi;
 #	DQ (10/13/2010): "jar" is not in the path of some system, but our configure tests 
 #	for this and only passes if it is found (and sets the JAR macro, so use it).
-#	jar xf OpenFortranParser-${OFP_VERSION}.jar $(OFP_SOURCE_FILES)
-	$(JAR) xf OpenFortranParser-${OFP_VERSION}.jar $(OFP_SOURCE_FILES)
+#	jar xf OpenFortranParser-${OFP_DIST_VERSION}.jar $(OFP_SOURCE_FILES)
+	$(JAR) xf OpenFortranParser-${OFP_DIST_VERSION}.jar $(OFP_SOURCE_FILES)
 	@list='$(OFP_SOURCE_FILES)'; for f in $$list; do \
 	   echo "building $$f file"; \
 	   filename=`basename $$f`; \
       echo "filename = $$filename"; \
       if test -e $$f; then \
-         echo "Using OFP source file $f from version $(OFP_VERSION) found in OpenFortranParser-${OFP_VERSION}.jar file."; \
+         echo "Using OFP source file $f from version $(OFP_DIST_VERSION) found in OpenFortranParser-${OFP_DIST_VERSION}.jar file."; \
          cp $$f $$filename; \
       else \
          echo "Warning: $$f is not found in jar file."; \
-         if test "x$(OFP_VERSION)" = "x0.8.1"; then \
+         if test "x$(OFP_VERSION)" = "x0.8.3"; then \
             echo "Using OFP source file $$f from version $(OFP_VERSION) distributed with ROSE."; \
             if test -e $$filename; then \
                echo "Note: OFP source file $$filename is already present."; \
@@ -127,7 +133,7 @@ token.c: OpenFortranParser-${OFP_VERSION}.jar
                cp ${srcdir}/$$filename $$filename; \
             fi; \
          else \
-            echo "Error: can't use default (version 0.8.1) OFP source file $$filename with OpenFortranParser-${OFP_VERSION}.jar file."; \
+            echo "Error: can't use default (version 0.8.3) OFP source file $$filename with OpenFortranParser-${OFP_VERSION}.jar file."; \
             exit 1; \
          fi; \
       fi; \
@@ -139,15 +145,15 @@ token.c: OpenFortranParser-${OFP_VERSION}.jar
 
 # DQ (10/4/2010): We only want to distribute the jar file for OFP, and then
 # extract what we require from the jar file (putting it into the build tree).
-EXTRA_DIST = CMakeLists.txt OpenFortranParser-${OFP_VERSION}.jar
-
+# CER (10/03/2011): Switched to using date-based tag for OFP version.
+EXTRA_DIST = CMakeLists.txt OpenFortranParser-${OFP_DIST_VERSION}.jar
 
 check-local:
 
 # DQ (10/11/2010): Fixing bug in "make distcheck" rule.
 # The files (token.c token.h ActionEnums.h jni_token_funcs.h jni_token_funcs.c) are copied 
 # by the "make dist" rule into ${distdir}.  I don't know why!  But because they are in the
-# source directory of the distribution they are not extracted from the OpenFortranParser-${OFP_VERSION}.jar
+# source directory of the distribution they are not extracted from the OpenFortranParser-${OFP_DIST_VERSION}.jar
 # file and thus are not in the build tree for use in compiling sageSupport.C in the src/frontend/SageIII
 # directory.
 dist-hook:
@@ -166,7 +172,7 @@ dist-hook:
 
 
 clean-local:
-	rm -f OpenFortranParser-${OFP_VERSION}.jar FortranParserAction.h c_actions_jni.c
+	rm -f OpenFortranParser-${OFP_DIST_VERSION}.jar FortranParserAction.h c_actions_jni.c
 	rm -f token.c token.h ActionEnums.h jni_token_funcs.h jni_token_funcs.c
 
 

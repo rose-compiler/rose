@@ -1,3 +1,9 @@
+Current OFP version:
+  OpenFortranParser-20111001.jar
+
+(10/03/2011): The version of OFP has been changed to a date-based scheme so that more frequent (up to daily) \
+versions of OFP can be used by ROSE.  Using jar files from OFP releases is deprecated.
+
 Location of OFP jar file:
   # http://sourceforge.net/projects/fortran-parser/files/OpenFortranParser/version_0.7.2/OpenFortranParser-0.7.2.jar
 
