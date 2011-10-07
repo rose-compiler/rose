@@ -241,7 +241,21 @@ SgValueExp::get_constant_folded_value_as_string() const
              {
                const SgCharVal* charValueExpression = isSgCharVal(this);
                ROSE_ASSERT(charValueExpression != NULL);
-               s = charValueExpression->get_value();
+            // DQ (9/24/2011): Handle case where this is non-printable character (see test2011_140.C, where
+            // the bug was the the dot file had a non-printable character and caused zgrviewer to crash).
+            // s = charValueExpression->get_value();
+               char value = charValueExpression->get_value();
+               if (isalnum(value) == true)
+                  {
+                 // Leave this as a alpha or numeric value where possible.
+                    s = charValueExpression->get_value();
+                  }
+                 else
+                  {
+                 // Convert this to be a string of the numeric value so that it will print.
+                    snprintf (buffer,max_buffer_size,"%d",value);
+                    s = buffer;
+                  }
                break;
              }
 
@@ -300,6 +314,32 @@ SgValueExp::get_constant_folded_value_as_string() const
                break;
              }
 
+       // DQ (9/24/2011): Added support for complex values to be output as strings.
+          case V_SgComplexVal:
+             {
+               const SgComplexVal* complexValueExpression = isSgComplexVal(this);
+               ROSE_ASSERT(complexValueExpression != NULL);
+#if 0
+               float numericValue_realPart      = complexValueExpression->get_real_value();
+               float numericValue_imaginaryPart = complexValueExpression->get_imaginary_value();
+               printf ("numericValue of constant folded expression = (%f,%f) \n",numericValue_realPart,numericValue_imaginaryPart);
+               snprintf (buffer,max_buffer_size,"(%f,%f)",numericValue_realPart,numericValue_imaginaryPart);
+               s = buffer;
+#else
+            // ROSE_ASSERT(complexValueExpression->get_real_value() != NULL);
+               string real_string = "null";
+               if (complexValueExpression->get_real_value() != NULL)
+                    real_string = complexValueExpression->get_real_value()->get_constant_folded_value_as_string();
+
+            // ROSE_ASSERT(complexValueExpression->get_imaginary_value() != NULL);
+               string imaginary_string = "null";
+               if (complexValueExpression->get_imaginary_value() != NULL)
+                    imaginary_string = complexValueExpression->get_imaginary_value()->get_constant_folded_value_as_string();
+
+               s = "(" + real_string + "," + imaginary_string + ")";
+#endif
+               break;
+             }
 
           default:
              {
@@ -2102,6 +2142,46 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
          set_partitionerConfigurationFileName(stringParameter);
      }
 
+
+  // DQ (9/26/2011): Adding options to support internal debugging of ROSE based tools and language support.
+  // ****************
+  // DEBUGING SUPPORT
+  // ****************
+  //
+  // Support for detecting dangling pointers
+  //     This is the first level of this sort of support. This level will be fooled by any reuse of 
+  //     the memory (from new allocations) previously deleted. A later leve of this option will disable
+  //     reuse of previously deleted memory for IR nodes; but it will consume more memory for translators
+  //     that delete a lot of IR nodes as part of there functionality.  I expect this to only seriously
+  //     make a difference for the AST merge operations which allocate and delete large parts of ASTs
+  //     frequently.
+  //     Note: this detects only dangling pointers to ROSE IR nodes, nothing more.
+  //
+#if 0
+  // Test ROSE using default level 2 (error that will cause assertion) when not specified via the command line.
+     set_detect_dangling_pointers(2);
+#endif
+     int integerDebugOption = 0;
+     if ( CommandlineProcessing::isOptionWithParameter(argv,"-rose:","detect_dangling_pointers",integerDebugOption,true) == true )
+        {
+       // If this was set and a parameter was not specified or the value set to zero, then let the value be 1.
+       // I can't seem to detect if the option was specified without a parameter.
+          if (integerDebugOption == 0)
+             {
+               integerDebugOption = 1;
+               if ( SgProject::get_verbose() >= 1 )
+                    printf ("option -rose:detect_dangling_pointers found but value not specified or set to 0 default (reset integerDebugOption = %d) \n",integerDebugOption);
+             }
+          else
+             {
+               if ( SgProject::get_verbose() >= 1 )
+                    printf ("option -rose:detect_dangling_pointers found with level (integerDebugOption = %d) \n",integerDebugOption);
+             }
+
+       // Set the level of the debugging to support.
+          set_detect_dangling_pointers(integerDebugOption);
+        }
+
   //
   // internal testing option (for internal use only, these may disappear at some point)
   //
@@ -2416,6 +2496,9 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
 
   // DQ (10/3/2010): Adding support for having CPP directives explicitly in the AST (as IR nodes instead of handled similar to comments).
      optionCount = sla(argv, "-rose:", "($)^", "(addCppDirectivesToAST)",filename,1);
+
+  // DQ (9/26/2011): Added support for different levesl of detection for dangling pointers.
+     optionCount = sla(argv, "-rose:", "($)^", "detect_dangling_pointers",&integerOption,1);
 
 #if 1
      if ( (ROSE_DEBUG >= 1) || (SgProject::get_verbose() > 2 ))
@@ -4944,6 +5027,9 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
 
        // DQ (9/19/2010): UPC support for upc_threads to define the "THREADS" variable.
           argument == "-rose:upc_threads" ||
+
+       // DQ (9/26/2011): Added support for detection of dangling pointers within translators built using ROSE.
+          argument == "-rose:detect_dangling_pointers" ||   // Used to specify level of debugging support for optional detection of dangling pointers 
           false)
         {
           result = true;
@@ -5626,7 +5712,14 @@ global_build_classpath()
      }
 
   // Open Fortran Parser (OFP) support (this is the jar file)
-     string ofp_jar_file_name = string("OpenFortranParser-") + StringUtility::numberToString(ROSE_OFP_MAJOR_VERSION_NUMBER) + "." + StringUtility::numberToString(ROSE_OFP_MINOR_VERSION_NUMBER) + "." + StringUtility::numberToString(ROSE_OFP_PATCH_VERSION_NUMBER) + string(".jar");
+  // CER (10/4/2011): Switched to using date-based version for OFP jar file
+  //
+  // CER (10/6/2011): Don't understand why getting "error: too many decimal points in number"
+  // FIXME - for now just hard code the version #
+  // char ofp_date[9];
+  // snprintf(ofp_date, 9, "%d", ROSE_OFP_VERSION_NUMBER);
+  // string ofp_jar_file_name = string("OpenFortranParser-") + string(ofp_date) + string(".jar");
+     string ofp_jar_file_name = string("OpenFortranParser-20111001.jar");
      string ofp_class_path = "src/3rdPartyLibraries/fortran-parser/" + ofp_jar_file_name;
      classpath += findRoseSupportPathFromBuild(ofp_class_path, string("lib/") + ofp_jar_file_name) + ":";
 
@@ -8583,7 +8676,7 @@ SgFile::usage ( int status )
 "                             the search method should be added ('+') or removed ('-')\n"
 "                             from the set. The qualifier '=' acts like '+' but first\n"
 "                             clears the set.  The words are the lower-case versions of\n"
-"                             most of the SgAsmFunctionDeclaration::FunctionReason\n"
+"                             most of the SgAsmFunction::FunctionReason\n"
 "                             enumerated constants without the leading \"FUNC_\" (see\n"
 "                             doxygen documentation for the complete list and and their\n"
 "                             meanings).   An integer (decimal, octal, or hexadecimal using\n"
@@ -8643,6 +8736,15 @@ SgFile::usage ( int status )
 "                             Note that the folder must be empty (or does not exist).\n"
 "                             If not specified, the default relative location _rose_ \n"
 "                             is used.\n"                  
+"\n"
+"Debugging options:\n"
+"     -rose:detect_dangling_pointers LEVEL \n"
+"                             detects references to previously deleted IR nodes in the AST\n"
+"                             (part of AST consistancy tests, default is false since some codes fail this test)\n"
+"                             LEVEL is one of:\n"
+"                               0: off (does not issue warning)\n"
+"                               1: on (issues warning with information)\n"
+"                               2: on (issues error and exists)\n"
 "\n"
 "Testing Options:\n"
 "     -rose:negative_test     test ROSE using input that is expected to fail\n"

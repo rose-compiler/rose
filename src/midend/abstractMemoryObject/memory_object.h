@@ -39,7 +39,7 @@ namespace AbstractMemoryObject
       // TODO should we have an interface function to return the starting address of the mem object?
 
       //TODO not in use for now
-      virtual size_t memSize(); // the number of bytes of this objset takes up within memory
+      //virtual size_t memSize(); // the number of bytes of this objset takes up within memory
 
       // Type of memory
       // The types that all elements of the set may/must have. 
@@ -60,16 +60,16 @@ namespace AbstractMemoryObject
 
       // Equality relations (implemented by interface)
       // Returns true if this object set and that object set may/must refer to the same memory objects.
-      virtual bool operator == (const ObjSet& o2); 
+      virtual bool operator == (const ObjSet& o2) const; 
 
       // Total order relations (implemented by interface)
       // General comparison operators. Provide a total order among different object types (scalar, labeledAggregate, array or pointer). 
       // These operators have no semantic meaning and are primarily intended to be used to put all objects into a total order, 
       // which makes it possible to use them in data structures such as std::map.
-      virtual bool operator < ( const ObjSet& o2);
-      virtual bool operator <= ( const ObjSet& o2);
-      virtual bool operator > ( const ObjSet& o2);
-      virtual bool operator >= ( const ObjSet& o2);
+      virtual bool operator < ( const ObjSet& o2) const;
+//      virtual bool operator <= ( const ObjSet& o2) const;
+//     virtual bool operator > ( const ObjSet& o2) const;
+//     virtual bool operator >= ( const ObjSet& o2) const;
 
 
       virtual std::string toString(); // pretty print for the object
@@ -81,10 +81,10 @@ namespace AbstractMemoryObject
     public:
       // Equality relations:
       // Returns true if this object and that object may/must refer to the same scalar memory object.
-      bool operator == (const Scalar& that) const;
+      //virtual bool operator == (const Scalar& that) const;
       // Total order relations (implemented by interface):
       // Comparison operator to make it possible to provide a total order among all scalar objects.
-      bool operator < (const Scalar& that) const; 
+      //virtual bool operator < (const Scalar& that) const; 
   };
 
   class LabeledAggregate;
@@ -113,9 +113,9 @@ namespace AbstractMemoryObject
       // Returns a list of field
       virtual std::vector<LabeledAggregateField*> getElements() const; 
       // Returns true if this object and that object may/must refer to the same labeledAggregate memory object.
-      virtual bool operator == (const LabeledAggregate& that) const;
+      //virtual bool operator == (const LabeledAggregate& that) const;
       //Total order relations (implemented by interface)
-      virtual bool operator < (const LabeledAggregate& that) const;
+      //virtual bool operator < (const LabeledAggregate& that) const;
   };
 
   // represents d-dimensional integral vectors. It encapsulates a variety of abstract representations for such vectors 
@@ -127,6 +127,8 @@ namespace AbstractMemoryObject
       // the index vector's length
       size_t getSize();
       virtual std::string toString();
+      // equal operator
+      virtual bool operator == (const IndexVector & other) const;
     
   };
 
@@ -134,15 +136,15 @@ namespace AbstractMemoryObject
   {
     public:
       // Returns a memory object that corresponds to all the elements in the given array
-      ObjSet* getElements();
+      virtual ObjSet* getElements();
       // Returns the memory object that corresponds to the elements described by the given abstract index, 
       // which represents one or more indexes within the array
-      ObjSet* getElements(IndexVector* ai);
+      virtual ObjSet* getElements(IndexVector* ai);
 
       // number of dimensions of the array
-      size_t getNumDims();
-      bool operator == (const Array & that) const;
-      bool operator < (const Array & that) const;
+      virtual size_t getNumDims();
+      //virtual bool operator == (const ObjSet & that) const;
+      //virtual bool operator < (const ObjSet & that) const;
   };
 
   class Pointer: public ObjSet
@@ -155,8 +157,8 @@ namespace AbstractMemoryObject
       // Returns true if this pointer refers to the same abstract object as that pointer.
       bool equalPoints(const Pointer & that);
       // Returns true if this object and that object may/must refer to the same pointer memory object.
-      bool operator == (const Pointer & that) const;
-      bool operator < (const Pointer & that) const;
+      //virtual bool operator == (const Pointer & that) const;
+      //virtual bool operator < (const Pointer & that) const;
   };
 
   // A factory method for creating instances of ObjSet of a given abstraction

@@ -157,7 +157,7 @@ endif
 TEST_CXXFLAGS = -rose:verbose 0 --edg:no_warnings -g3
 
 rose_inputdeepDelete.C:deepDelete
-	./deepDelete$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputdeepDelete.C
+	./deepDelete$(EXEEXT) $(TEST_CXXFLAGS) -rose:detect_dangling_pointers 1 -c $(srcdir)/inputdeepDelete.C
 rose_inputBlank1.C:buildFunctionDeclaration
 	./buildFunctionDeclaration$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputBlank1.C
 rose_inputBlank2.C:buildNondefiningFunction

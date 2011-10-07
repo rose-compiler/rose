@@ -68,8 +68,8 @@ LCS::isEqual(SgNode* A, SgNode* B)
   if(A==NULL || B == NULL) return false;
   SgAsmInstruction* iA = isSgAsmx86Instruction(A);
   SgAsmInstruction* iB = isSgAsmx86Instruction(B);
-  SgAsmFunctionDeclaration* fA = isSgAsmFunctionDeclaration(A);
-  SgAsmFunctionDeclaration* fB = isSgAsmFunctionDeclaration(B);
+  SgAsmFunction* fA = isSgAsmFunction(A);
+  SgAsmFunction* fB = isSgAsmFunction(B);
 
   bool isTheSame = false;
   if(iA != NULL && iB != NULL)

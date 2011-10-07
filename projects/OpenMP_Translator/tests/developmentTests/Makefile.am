@@ -56,7 +56,8 @@ $(TESTCODE_CURRENTLY_FAILING)
 # $(CXX_TESTCODES_REQUIRED_TO_PASS)
 
 # ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict
-ROSE_FLAGS = --edg:no_warnings -w -rose:C -rose:verbose 0 --edg:restrict
+# ROSE_FLAGS = --edg:no_warnings -w -rose:C -rose:verbose 0 --edg:restrict
+ROSE_FLAGS = --edg:no_warnings -w -rose:C -rose:verbose 0 --edg:restrict -rose:detect_dangling_pointers 1
 
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
 # VALGRIND = /usr/apps/valgrind/new/bin/valgrind $(VALGRIND_OPTIONS)
