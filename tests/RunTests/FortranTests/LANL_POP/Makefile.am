@@ -30,8 +30,8 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # To see commands as they execute, set this to "-x"
-#SETX=-x
-SETX=
+SETX=-x
+#SETX=
 
 # Note that these have been modified from their respective distributions by someone prior to me.  It looks like
 # build systems have been adjusted to not generate documentation, and who know what else. Unfortunately, those
@@ -123,7 +123,7 @@ $(netcdf_prefix)/include/netcdf.rmod: $(netcdf_lib) $(netcdf_prefix)/include/typ
 hudson.gnu: hudson-environment.sh
 	@set -e $(SETX);			     \
 	source hudson-environment.sh;		     \
-	sed < $(srcdir)/hudson.gnu >hudson.gnu	     \
+	sed < $(srcdir)/hudson.template >hudson.gnu  \
 	    -e "s%_HUDSON_FC_%$$HUDSON_FC%"	     \
 	    -e "s%_HUDSON_FFLAGS_%$$HUDSON_FFLAGS%"  \
 	    -e "s%_HUDSON_LD_%$$HUDSON_LD%"	     \
@@ -284,7 +284,7 @@ endif
 #       documentation.  When we do that, we get errors about directories not existing (it seems that automake's makefile
 #       tries to copy the files before creating the destination directories.  Therefore, we're using the dist-hook to
 #       explicitly copy these directories.
-EXTRA_DIST = hudson.gnu make_rmod_deps.pl setup_run_dir.ROSE
+EXTRA_DIST = hudson.template make_rmod_deps.pl setup_run_dir.ROSE
 dist-hook:
 	cp -pPRv $(netcdf_srcdir) $(pop_srcdir) $(distdir)
 
