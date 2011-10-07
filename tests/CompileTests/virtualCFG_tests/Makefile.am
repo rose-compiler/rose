@@ -639,7 +639,11 @@ check-c99: $(C99_FILES)
 check-f90: $(F90_FILES)
 check-f77: $(F77_FILES)
 check-f03: $(F03_FILES)
+if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 check-java: $(JAVA_FILES)
+else
+check-java:
+endif
 # if ROSE_USE_OPEN_FORTRAN_PARSER
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 check-fortran: check-f90 check-f77 check-f03
