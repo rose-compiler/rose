@@ -265,7 +265,8 @@ jserver_start(JvmT* je)
   // JNI_CreateJavaVM(&jvm, (void **)&env, &jvm_args);
   // handleExceptionMaybe(jvm, env);
 
-  // printf ("Create and load the Java VM: Calling JNI_CreateJavaVM(); \n");
+  // printf ("Create and load the Java VM: Calling JNI_CreateJavaVM(): \n");
+  // printf ("    classpath==%s \n, classpath.c_str());
      
   /* Create and load the Java VM.  */
      res = JNI_CreateJavaVM(&(je->jvm), (void **)&(je->env), &jvm_args);
