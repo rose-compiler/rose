@@ -56,17 +56,17 @@ translator_flags = -rose:verbose 0 -rose:skip_syntax_check -rose:skipfinalCompil
 hudson-environment.sh:
 	@>$@
 	@echo "export HUDSON_NUM_JOBS='$${HUDSON_NUM_JOBS-1}'"						>>$@
-	@echo "export HUDSON_FC='$${HUDSON_FC-$$(which gfortran)}'"					>>$@
+	@echo "export HUDSON_FC='$${HUDSON_FC-$(GFORTRAN_PATH)}'"					>>$@
 	@echo "export HUDSON_FFLAGS='$${HUDSON_FFLAGS--ffree-line-length-0}'"				>>$@
-	@echo "export HUDSON_LD='$${HUDSON_LD-$$(which gfortran)}'"					>>$@
-	@echo "export HUDSON_CC='$${HUDSON_CC-$$(which cc)}'"						>>$@
+	@echo "export HUDSON_LD='$${HUDSON_LD-$(GFORTRAN_PATH)}'"					>>$@
+	@echo "export HUDSON_CC='$${HUDSON_CC-$(CC)}'"							>>$@
 	@echo "export HUDSON_Cp='$${HUDSON_Cp-$$(which cp)}'"						>>$@
-	@echo "export HUDSON_Cpp='$${HUDSON_Cpp-$$(which cpp) -P}'"					>>$@
-	@echo "export HUDSON_AWK='$${HUDSON_AWK-$$(which awk)}'"					>>$@
+	@echo "export HUDSON_Cpp='$${HUDSON_Cpp-$(CPP)}'"						>>$@
+	@echo "export HUDSON_AWK='$${HUDSON_AWK-$(AWK)}'"						>>$@
 	@echo "export HUDSON_LDLIBS='$${HUDSON_LDLIBS-\$$(LIBS) -lcurl}'"				>>$@
 	@echo "export HUDSON_DIFF='$${HUDSON_DIFF-/usr/bin/diff}'"					>>$@
-	@echo "export HUDSON_MAKE='$${HUDSON_MAKE-/usr/bin/make}'"					>>$@
-	@echo "export HUDSON_SED='$${HUDSON_SED-/bin/sed}'"						>>$@
+	@echo "export HUDSON_MAKE='$${HUDSON_MAKE-make}'"						>>$@
+	@echo "export HUDSON_SED='$${HUDSON_SED-$(SED)}'"						>>$@
 	@echo "Hudson environment: "; source $@; printenv |grep HUDSON_ |sed 's/^/    /'
 
 
