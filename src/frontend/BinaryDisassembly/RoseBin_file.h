@@ -32,7 +32,7 @@ class RoseBin_FILE  {
   // remember a map of comments
   rose_hash::unordered_map <int, std::string > rememberComments; // Instruction addr -> comment
   // remember the map of functions
-  rose_hash::unordered_map <int, SgAsmFunctionDeclaration* > rememberFunctions; // Start of function -> decl
+  rose_hash::unordered_map <int, SgAsmFunction* > rememberFunctions; // Start of function -> decl
   // remember a map of blocks
   //std::map <int, SgAsmBlock* > rememberBlocks;
   // remember a map of instructions
@@ -99,7 +99,7 @@ class RoseBin_FILE  {
     //delete this_file;
     //this_file = NULL;
     /*
-    std::map <int, SgAsmFunctionDeclaration* >::iterator it;
+    std::map <int, SgAsmFunction* >::iterator it;
     for (it = rememberFunctions.begin(); 
          it!= rememberFunctions.end(); it++) {
       delete it->second;
@@ -128,7 +128,7 @@ class RoseBin_FILE  {
    * resolve for each instruction which type it has
    ****************************************************/
   SgAsmInstruction* createInstruction(int address, 
-                                      SgAsmFunctionDeclaration* bb, 
+                                      SgAsmFunction* bb, 
                                       std::string mnemonic);
 
 

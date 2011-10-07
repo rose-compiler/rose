@@ -123,9 +123,9 @@ fi
 # Liao 2/9/2011. We have better handling now
 #
 libtoolize_name=
-if [ -n "$(type glibtoolize)" ]; then
+if [ -n "$(type glibtoolize 2>/dev/null)" ]; then
     libtoolize_name=$(which glibtoolize)
-elif [ -n "$(type libtoolize)" ]; then
+elif [ -n "$(type libtoolize 2>/dev/null)" ]; then
     libtoolize_name=$(which libtoolize)
 else
     # If the user is running build then libtool should be available.

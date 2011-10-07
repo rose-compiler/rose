@@ -142,7 +142,7 @@ independent interpretations (like a PE file that contains a Windows executable a
 practice is to disassemble each interpretation individually.  The {\tt disassemble} method is convenient for this.
 
 While the main purpose of the Disassembler class is to disassemble instructions, it also needs to be able to group those
-instructions into basic blocks (SgAsmBlock) and functions (SgAsmFunctionDeclaration). It uses an instance of the
+instructions into basic blocks (SgAsmBlock) and functions (SgAsmFunction). It uses an instance of the
 Partitioner class to do so.  The user can supply a partitioner to the disassembler or have the disassembler create a
 default partitioner on the fly.  The user is also free to call the partitioner directly on the InstructionMap object
 returned by most of the disassembler methods.
@@ -152,7 +152,7 @@ returned by most of the disassembler methods.
 
 While the main purpose of the Disassembler class is to disassemble instructions, it also
 needs to be able to group those instructions into basic blocks (SgAsmBlock) and functions
-(SgAsmFunctionDeclaration). It uses an instance of the Partitioner class to do so.  The
+(SgAsmFunction). It uses an instance of the Partitioner class to do so.  The
 user can supply a partitioner to the disassembler or have the disassembler create a
 default partitioner on the fly.  The user is also free to call the partitioner directly
 on the InstructionMap object returned by most of the disassembler methods.
@@ -171,7 +171,7 @@ determination.
 Once instructions are assigned to basic blocks, the partitioner assigns the basic blocks
 to functions using a variety of heuristics, the set of which is determined by the values
 specified in the Partioner's {\tt set\_heuristics} method. These are documented in the
-SgAsmFunctionDeclaration class (see the FunctionReason enumeration).  When a function is
+SgAsmFunction class (see the FunctionReason enumeration).  When a function is
 created, its {\tt reason} attribute will contain a bit vector describing which heuristics
 detected this function.
 

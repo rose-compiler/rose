@@ -32,7 +32,7 @@ FunctionDiffAlgo::run(SgNode* fileA, SgNode* fileB) {
   // this part is to find the added and removed code (from Andreas)
   FindInstructionsVisitor vis;
 
-  vector<SgAsmFunctionDeclaration*> funcsA, funcsB;
+  vector<SgAsmFunction*> funcsA, funcsB;
   FindAsmFunctionsVisitor funcVis;
   AstQueryNamespace::querySubTree(fileA, std::bind2nd( funcVis, &funcsA ));
   AstQueryNamespace::querySubTree(fileB, std::bind2nd( funcVis, &funcsB ));
@@ -42,11 +42,11 @@ FunctionDiffAlgo::run(SgNode* fileA, SgNode* fileB) {
   
   for(unsigned int i = 0; i < funcsA.size() ; i++)
   {
-    SgAsmFunctionDeclaration* functionA = funcsA[i];
+    SgAsmFunction* functionA = funcsA[i];
     for(unsigned int j = 0; j < funcsB.size() ; j++)
     {
 
-      SgAsmFunctionDeclaration* functionB = funcsB[j];
+      SgAsmFunction* functionB = funcsB[j];
 
       if( functionA->get_name() != functionB->get_name() ) continue;
       

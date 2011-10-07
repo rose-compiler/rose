@@ -5712,7 +5712,14 @@ global_build_classpath()
      }
 
   // Open Fortran Parser (OFP) support (this is the jar file)
-     string ofp_jar_file_name = string("OpenFortranParser-") + StringUtility::numberToString(ROSE_OFP_MAJOR_VERSION_NUMBER) + "." + StringUtility::numberToString(ROSE_OFP_MINOR_VERSION_NUMBER) + "." + StringUtility::numberToString(ROSE_OFP_PATCH_VERSION_NUMBER) + string(".jar");
+  // CER (10/4/2011): Switched to using date-based version for OFP jar file
+  //
+  // CER (10/6/2011): Don't understand why getting "error: too many decimal points in number"
+  // FIXME - for now just hard code the version #
+  // char ofp_date[9];
+  // snprintf(ofp_date, 9, "%d", ROSE_OFP_VERSION_NUMBER);
+  // string ofp_jar_file_name = string("OpenFortranParser-") + string(ofp_date) + string(".jar");
+     string ofp_jar_file_name = string("OpenFortranParser-20111001.jar");
      string ofp_class_path = "src/3rdPartyLibraries/fortran-parser/" + ofp_jar_file_name;
      classpath += findRoseSupportPathFromBuild(ofp_class_path, string("lib/") + ofp_jar_file_name) + ":";
 
@@ -8669,7 +8676,7 @@ SgFile::usage ( int status )
 "                             the search method should be added ('+') or removed ('-')\n"
 "                             from the set. The qualifier '=' acts like '+' but first\n"
 "                             clears the set.  The words are the lower-case versions of\n"
-"                             most of the SgAsmFunctionDeclaration::FunctionReason\n"
+"                             most of the SgAsmFunction::FunctionReason\n"
 "                             enumerated constants without the leading \"FUNC_\" (see\n"
 "                             doxygen documentation for the complete list and and their\n"
 "                             meanings).   An integer (decimal, octal, or hexadecimal using\n"

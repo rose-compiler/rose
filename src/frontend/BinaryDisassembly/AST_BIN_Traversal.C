@@ -22,9 +22,9 @@ void AST_BIN_Traversal::visit(SgNode* n) {
       SgNode* parent = n->get_parent();
       // node
       std::string add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=yellow,fontname=\"7x13bold\",fontcolor=black,style=filled";
-      if (isSgAsmFunctionDeclaration(n)) { 
+      if (isSgAsmFunction(n)) { 
         add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=purple,fontname=\"7x13bold\",fontcolor=black,style=filled";
-        name = isSgAsmFunctionDeclaration(n)->get_name();
+        name = isSgAsmFunction(n)->get_name();
       }
       if (isSgAsmx86Instruction(n) && isSgAsmx86Instruction(n)->get_kind() == x86_call)
         add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=red,fontname=\"7x13bold\",fontcolor=black,style=filled";
