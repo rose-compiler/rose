@@ -30,8 +30,8 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # To see commands as they execute, set this to "-x"
-SETX=-x
-#SETX=
+#SETX=-x
+SETX=
 
 # Note that these have been modified from their respective distributions by someone prior to me.  It looks like
 # build systems have been adjusted to not generate documentation, and who know what else. Unfortunately, those
