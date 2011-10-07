@@ -41,9 +41,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2011_41.java \
      test2011_47.java \
      test2011_50.java \
-                      \
      pgc_2011_30.java \
-                      \
      pgc_test2011_00.java \
      pgc_test2011_01.java \
      pgc_test2011_02.java \
@@ -53,14 +51,67 @@ TESTCODES_REQUIRED_TO_PASS = \
      pgc_test2011_06.java \
      pgc_test2011_07.java \
      pgc_test2011_08.java \
-     pgc_test2011_09.java
+     pgc_test2011_09.java \
+     cave3_IntLit0.java \
+     cave3_LoadDep0.java \
+     cave3_block0.java \
+     cave3_constructor0.java \
+     cave3_constructor1.java \
+     cave3_constructor2.java \
+     cave3_constructor3.java \
+     cave3_foreach2.java \
+     cave3_foreach4.java \
+     cave3_foreach5.java \
+     cave3_if0.java \
+     cave3_if1.java \
+     cave3_labelDecl0.java \
+     cave3_labelDecl1.java \
+     cave3_labelDecl2.java \
+     cave3_labelDecl3.java \
+     cave3_labelBreak0.java \
+     cave3_labelBreak1.java \
+     cave3_labelBreak2.java \
+     cave3_labelBreak4.java \
+     cave3_labelBreak5.java \
+     cave3_labelContinue0.java \
+     cave3_labelContinue1.java \
+     cave3_labelContinue2.java \
+     cave3_labelContinue3.java \
+     cave3_labelContinueBreak0.java \
+     cave3_labelContinueBreak1.java \
+     cave3_mthParam0.java \
+     cave3_nameResolution0.java \
+     cave3_rshift0.java \
+     cave3_rshift1.java \
+     cave3_while0.java \
+     cave3_while2.java
 
-# DQ (9/3/2011): This test code was listed twice...
-#    pgc_2011_30.java
 #
 # These test pass the compilation using ROSE, all AST tests, unparsing to generate 
 # Java code, and the final compilation of that code using a backend compiler (javac).
-TESTCODE_CURRENTLY_FAILING =
+TESTCODE_CURRENTLY_FAILING = \
+	 cave3_DoubleLit0.java \
+	 cave3_call0.java \
+     cave3_call1.java \
+     cave3_dowhile0.java \
+     cave3_for0.java \
+     cave3_for1.java \
+     cave3_for2.java \
+     cave3_for3.java \
+     cave3_for4.java \
+     cave3_for5.java \
+     cave3_for6.java \
+     cave3_import0.java \
+     cave3_instanceof0.java \
+     cave3_while1.java \
+	 cave3_import0.java \
+	 cave3_import1.java \
+	 cave3_import2.java \
+	 cave3_import3.java \
+     cave3_synchronized0.java \
+     cave3_foreach0.java \
+     cave3_foreach1.java \
+     cave3_foreach3.java
 
 # These tests pass the compilation using ROSE, all AST tests, and unparsing to generate 
 # Java code, but fails the final compilation step of the generated Java code.
