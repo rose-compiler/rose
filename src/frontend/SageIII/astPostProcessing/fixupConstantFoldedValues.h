@@ -52,6 +52,8 @@ class RemoveConstantFoldedValue : public SgBottomUpProcessing<RemoveConstantFold
      public:
           virtual ~RemoveConstantFoldedValue() {};
 
+          void handleTheSynthesizedAttribute( SgNode* node, const RemoveConstantFoldedValueSynthesizedAttribute & i );
+
       //! Required traversal function
           RemoveConstantFoldedValueSynthesizedAttribute evaluateSynthesizedAttribute ( SgNode* node, SubTreeSynthesizedAttributes synthesizedAttributeList );
    };
