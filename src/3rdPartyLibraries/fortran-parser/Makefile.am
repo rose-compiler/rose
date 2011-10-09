@@ -10,7 +10,7 @@ javadir=$(libdir)
 # the jar file is now distributed with ROSE.
 OFP_DIST_VERSION=@ROSE_OFP_VERSION_NUMBER@
 
-OFP_VERSION=@ROSE_OFP_MAJOR_VERSION_NUMBER@.@ROSE_OFP_MINOR_VERSION_NUMBER@.@ROSE_OFP_PATCH_VERSION_NUMBER@
+#OFP_VERSION=@ROSE_OFP_MAJOR_VERSION_NUMBER@.@ROSE_OFP_MINOR_VERSION_NUMBER@.@ROSE_OFP_PATCH_VERSION_NUMBER@
 
 # DQ (4/5/2010): Think about if we need the test using an Automake conditional since the jar file always exists.
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
@@ -83,7 +83,6 @@ token.c: OpenFortranParser-${OFP_DIST_VERSION}.jar
    fi;
 #	DQ (10/13/2010): "jar" is not in the path of some system, but our configure tests 
 #	for this and only passes if it is found (and sets the JAR macro, so use it).
-#	jar xf OpenFortranParser-${OFP_DIST_VERSION}.jar $(OFP_SOURCE_FILES)
 	$(JAR) xf OpenFortranParser-${OFP_DIST_VERSION}.jar $(OFP_SOURCE_FILES)
 	@list='$(OFP_SOURCE_FILES)'; for f in $$list; do \
 	   echo "building $$f file"; \
