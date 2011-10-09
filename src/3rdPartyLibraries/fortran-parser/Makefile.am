@@ -1,5 +1,9 @@
 javadir=$(libdir)
 
+# CER (10/09/2011): Since we now distribute the OFP jar file with ROSE
+# I'm removing references to versions other than the jar file supplied
+# by configure.
+
 # CER (10/03/2011): Switched to using date-based tag for the OFP version.
 # The macro variable ROSE_OFP_VERSION_NUMBER must be changed when a new
 # date/version of OFP is added.  I think the wget code should go away as
@@ -13,43 +17,10 @@ if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
    dist_java_DATA = OpenFortranParser-${OFP_DIST_VERSION}.jar
 endif
 
-EXTERNAL_OFP_JAR_FILE_URL = http://sourceforge.net/projects/fortran-parser/files/OpenFortranParser/version_${OFP_VERSION}/OpenFortranParser-${OFP_VERSION}.jar/download
-
 TARGET_OFP_SOURCE_FILES = token.c jni_token_funcs.c c_actions_jni.c
-
-# DQ (10/9/2010): If the jar file in the source tree is not present then use wget to fetch it from the OFP web site.
-# DQ (3/13/2010): I think we need to use: "--no-check-certificate"
-# Using --no-check-certificate to handle errors:
-#    Resolving sgone.llnl.gov... 128.115.27.11
-#    Connecting to sgone.llnl.gov|128.115.27.11|:443... connected.
-#    ERROR: cannot verify sgone.llnl.gov's certificate, issued by `/C=US/O=VeriSign, Inc./OU=VeriSign Trust Network/OU=Terms 
-#       of use at https://www.verisign.com/rpa (c)09/CN=VeriSign Class 3 Secure Server CA - G2': Unable to locally verify the issuer's authority.
-#    To connect to sgone.llnl.gov insecurely, use `--no-check-certificate'.
-#    Unable to establish SSL connection.
-OpenFortranParser-${OFP_VERSION}.jar:
-	@echo "Check the web for this specific version of OFP: OpenFortranParser-${OFP_VERSION}.jar"
-	test -e ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar || (wget --no-check-certificate ${EXTERNAL_OFP_JAR_FILE_URL} || exit 1;);
-	@if test -e OpenFortranParser-${OFP_VERSION}.jar; then \
-      echo "Found valid OpenFortranParser-${OFP_VERSION}.jar file."; \
-   else \
-      echo "Note: OpenFortranParser-${OFP_VERSION}.jar file is not found."; \
-	   @if test -e ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar; then \
-         echo "Found valid ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar file."; \
-         cp ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar OpenFortranParser-${OFP_VERSION}.jar; \
-      else \
-         echo "Error: ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar file is not found."; \
-      fi; \
-   fi;
 
 extract_rose_required_ofp_source_files: token.c
 	@echo "files: extract_rose_required_ofp_source_files is out of date compared to token.c"
-
-TEST_OFP_VERSION=0.8.3
-TEST_EXTERNAL_OFP_JAR_FILE_URL=http://sourceforge.net/projects/fortran-parser/files/OpenFortranParser/version_${TEST_OFP_VERSION}/OpenFortranParser-${TEST_OFP_VERSION}.jar/download
-
-# This is a rule for testing the download of OFP from the web.
-test_get_new_jar_file:
-	test -e OpenFortranParser-${TEST_OFP_VERSION}.jar || (wget --no-check-certificate ${TEST_EXTERNAL_OFP_JAR_FILE_URL} || exit 1;);
 
 # DQ (4/4/2010): This needs to be an explicit path list for each file since some are all located in different subdirectories.
 OFP_SOURCE_FILES = \
@@ -98,7 +69,6 @@ token.c: OpenFortranParser-${OFP_DIST_VERSION}.jar
 	@echo "Extracting required OFP files from OpenFortranParser-${OFP_DIST_VERSION}.jar"
 	@echo "***********************************************************************"
 	@echo "Jar command being used: JAR = ${JAR}"
-	@echo "Jar command being used: JAR = $(JAR)"
 	@if test -e OpenFortranParser-${OFP_DIST_VERSION}.jar; then \
       echo "Found valid OpenFortranParser-${OFP_DIST_VERSION}.jar file."; \
    else \
@@ -107,7 +77,7 @@ token.c: OpenFortranParser-${OFP_DIST_VERSION}.jar
          echo "Found valid ${srcdir}/OpenFortranParser-${OFP_DIST_VERSION}.jar file."; \
          cp ${srcdir}/OpenFortranParser-${OFP_DIST_VERSION}.jar OpenFortranParser-${OFP_DIST_VERSION}.jar; \
       else \
-         echo "Error: ${srcdir}/OpenFortranParser-${OFP_DIST_VERSION}.jar file is not found in the source tree or the build tree."; \
+         echo "Error: ${srcdir}/OpenFortranParser-${OFP_DIST_VERSION}.jar file was not found in the source tree or the build tree."; \
          exit 1; \
       fi; \
    fi;
@@ -120,22 +90,11 @@ token.c: OpenFortranParser-${OFP_DIST_VERSION}.jar
 	   filename=`basename $$f`; \
       echo "filename = $$filename"; \
       if test -e $$f; then \
-         echo "Using OFP source file $f from version $(OFP_DIST_VERSION) found in OpenFortranParser-${OFP_DIST_VERSION}.jar file."; \
+         echo "Using OFP source file $$f from version $(OFP_DIST_VERSION) found in OpenFortranParser-${OFP_DIST_VERSION}.jar file."; \
          cp $$f $$filename; \
       else \
-         echo "Warning: $$f is not found in jar file."; \
-         if test "x$(OFP_VERSION)" = "x0.8.3"; then \
-            echo "Using OFP source file $$f from version $(OFP_VERSION) distributed with ROSE."; \
-            if test -e $$filename; then \
-               echo "Note: OFP source file $$filename is already present."; \
-            else \
-               echo "Copying OFP source file $$filename from source tree to build tree."; \
-               cp ${srcdir}/$$filename $$filename; \
-            fi; \
-         else \
-            echo "Error: can't use default (version 0.8.3) OFP source file $$filename with OpenFortranParser-${OFP_VERSION}.jar file."; \
-            exit 1; \
-         fi; \
+         echo "Error: $$f is not found in jar file."; \
+         exit 1; \
       fi; \
    done
 #	Remove the fortran directory generated from the extraction of files from the jar file.
