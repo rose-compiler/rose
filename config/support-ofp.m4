@@ -2,7 +2,9 @@ AC_DEFUN([ROSE_SUPPORT_OFP],
 [
 # Begin macro ROSE_SUPPORT_OFP.
 
-# Default OFP version, this should be changed each time the OFP jar file is updated.
+# Default OFP version and jar file, these should be changed each time the OFP jar file is updated.
+# Used in ../src/3rdPartyLibraries/fortran-parser/Makefile.am
+# and     ../src/frontend/SageIII/sageSupport.C
 #
 default_ofp_version=20111001
 
@@ -96,10 +98,17 @@ AC_SUBST(ROSE_OFP_MAJOR_VERSION_NUMBER)
 AC_SUBST(ROSE_OFP_MINOR_VERSION_NUMBER)
 AC_SUBST(ROSE_OFP_PATCH_VERSION_NUMBER)
 
+ofp_jar_file="OpenFortranParser-${ofp_version_number}.jar"
+echo "    ofp_jar_file = $ofp_jar_file"
+
+ROSE_OFP_JAR_FILE=$ofp_jar_file
+AC_SUBST(ROSE_OFP_JAR_FILE)
+AC_DEFINE_UNQUOTED([ROSE_OFP_JAR_FILE], $ofp_jar_file , [OFP jar file])
+
 # DQ (4/5/2010): Moved the specification of CLASSPATH to after the specification 
 # of OFP version number so that we can use it to set the class path.
 
-CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.3-complete.jar:${ABSOLUTE_SRCDIR}${OPEN_FORTRAN_PARSER_PATH}/OpenFortranParser-${ROSE_OFP_VERSION_NUMBER}.jar
+CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.3-complete.jar:${ABSOLUTE_SRCDIR}${OPEN_FORTRAN_PARSER_PATH}/${ROSE_OFP_JAR_FILE}
 
 export CLASSPATH
 AC_SUBST(CLASSPATH)
