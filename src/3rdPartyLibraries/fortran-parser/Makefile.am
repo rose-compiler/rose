@@ -4,7 +4,7 @@ javadir=$(libdir)
 # The macro variable ROSE_OFP_VERSION_NUMBER must be changed when a new
 # date/version of OFP is added.  I think the wget code should go away as
 # the jar file is now distributed with ROSE.
-OFP_DIST_VERSION=20111001
+OFP_DIST_VERSION=@ROSE_OFP_VERSION_NUMBER@
 
 OFP_VERSION=@ROSE_OFP_MAJOR_VERSION_NUMBER@.@ROSE_OFP_MINOR_VERSION_NUMBER@.@ROSE_OFP_PATCH_VERSION_NUMBER@
 
