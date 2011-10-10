@@ -293,7 +293,7 @@ ExtentMap::exists_all(ExtentPair what) const
             assert(found.second > 0);
             assert(found.first <= what.first);
             assert(what.first <= found.first + found.second);
-            rose_addr_t nfound = std::max(what.second, found.second-(what.first-found.first));
+            rose_addr_t nfound = std::min(what.second, found.second-(what.first-found.first));
             what.first = found.first + found.second;
             what.second -= nfound;
         } catch (const std::bad_alloc&) { // thrown by find_address()
