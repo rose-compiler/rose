@@ -211,7 +211,7 @@ SgAsmBlock::reason_key(const std::string &prefix)
 {
     return (prefix + "L = left over blocks   N = NOP/zero padding     V = intrafunction block\n" +
             prefix + "H = CFG head           1 = first CFG traversal  2 = second CFG traversal\n" +
-            prefix + "U = user-def reason\n");
+            prefix + "E = Function entry     U = user-def reason\n");
 }
 
 /** Returns reason string for this block. */
@@ -633,10 +633,10 @@ Partitioner::load_config(const std::string &filename) {
 #endif
 }
 
-/* Reduces the size of a basic block by truncating its list of instructions.  The new block contains initial instructions up
- * to but not including the instruction at the specified virtual address.  The addresses of the instructions (aside from the
- * instruction with the specified split point), are irrelevant since the choice of where to split is based on the relative
- * positions in the basic block's instruction vector rather than instruction address. */
+/** Reduces the size of a basic block by truncating its list of instructions.  The new block contains initial instructions up
+ *  to but not including the instruction at the specified virtual address.  The addresses of the instructions (aside from the
+ *  instruction with the specified split point), are irrelevant since the choice of where to split is based on the relative
+ *  positions in the basic block's instruction vector rather than instruction address. */
 void
 Partitioner::truncate(BasicBlock* bb, rose_addr_t va)
 {
@@ -769,13 +769,20 @@ Partitioner::remove(Function *f, DataBlock *db)
 
 /* Remove instruction from consideration. */
 SgAsmInstruction *
-Partitioner::discard(SgAsmInstruction *insn)
+Partitioner::discard(SgAsmInstruction *insn, bool discard_entire_block)
 {
     if (insn) {
         rose_addr_t va = insn->get_address();
         BasicBlock *bb = find_bb_containing(va, false);
-        if (bb)
-            discard(bb);
+        if (bb) {
+            if (discard_entire_block) {
+                discard(bb);
+            } else if (bb->insns.front()==insn) {
+                discard(bb);
+            } else {
+                truncate(bb, va);
+            }
+        }
         insns.erase(va);
     }
     return NULL;
@@ -1727,7 +1734,7 @@ Partitioner::find_db_starting(rose_addr_t start_va, size_t size/*=0*/)
     return db;
 }
 
-/* Addes unassigned intra-function blocks to surrounding function. */
+/* Adds unassigned intra-function blocks to surrounding function. */
 bool
 Partitioner::IntraFunctionBlocks::operator()(bool enabled, const Args &args)
 {
@@ -1736,6 +1743,7 @@ Partitioner::IntraFunctionBlocks::operator()(bool enabled, const Args &args)
     Partitioner *p = args.partitioner;
 
     assert(args.insn_prev!=NULL); // must be called from scan_intrafunc_insns()
+    assert(args.insn_end!=NULL);  // ditto
     BasicBlock *prev_bb = p->find_bb_containing(args.insn_prev->get_address());
     Function *func = prev_bb ? prev_bb->function : NULL;
     assert(func!=NULL); // must be called from scan_intrafunc_insns()
@@ -1745,6 +1753,20 @@ Partitioner::IntraFunctionBlocks::operator()(bool enabled, const Args &args)
      * additional functions and this block could belong to any of them. */
     if (!p->is_contiguous(func, false))
         return true;
+
+    /* The instructions in this batch must be contiguous with the surrounding function. */
+    {
+        rose_addr_t va = args.insn_begin->get_address();
+        if (va != args.insn_prev->get_address() + args.insn_prev->get_raw_bytes().size())
+            return true; // beginning of range is not contiguous with enclosing function
+        for (size_t i=0; i<args.ninsns; i++) {
+            SgAsmInstruction *insn = p->find_instruction(va);
+            assert(insn!=NULL);
+            va += insn->get_raw_bytes().size();
+        }
+        if (va!=args.insn_end->get_address())
+            return true; // end of range is not contiguous with enclosing function
+    }
 
     if (add_as_data) {
         /* Create a data block for this part of intra-function memory and discard the instructions provided they're not already
@@ -1756,14 +1778,22 @@ Partitioner::IntraFunctionBlocks::operator()(bool enabled, const Args &args)
         DataBlock *dblock = p->find_db_starting(begin_va, size);
         assert(dblock!=NULL);
         p->append(func, dblock, SgAsmBlock::BLK_INTRAFUNC);
+        if (p->debug)
+            fprintf(p->debug, "Partitioner::IntraFunctionBlocks: for F%08"PRIx64": added D%08"PRIx64" deleted",
+                    func->entry_va, begin_va);
 
         /* Remove the instructions because we now know that they're data. */
         rose_addr_t va = begin_va;
         for (size_t i=0; i<args.ninsns; i++) {
             SgAsmInstruction *insn = p->find_instruction(va);
+            assert(insn!=NULL);
+            if (p->debug)
+                fprintf(p->debug, " B%08"PRIx64, va);
             va += insn->get_raw_bytes().size();
             p->discard(insn);
         }
+        if (p->debug)
+            fprintf(p->debug, "\n");
     } else {
         /* Find the basic blocks for this sequence of instructions and add them all to the function as long as they're not already
          * in some other function (they shouldn't be, unless a previous callback added them).   New blocks are added as CFG heads
@@ -1772,7 +1802,7 @@ Partitioner::IntraFunctionBlocks::operator()(bool enabled, const Args &args)
         size_t nadded = 0;
         rose_addr_t va = args.insn_begin->get_address();
         for (size_t i=0; i<args.ninsns; i++) {
-            BasicBlock *bb = p->find_bb_containing(va);
+            BasicBlock *bb = 0==i ? p->find_bb_starting(va) : p->find_bb_containing(va);
             assert(bb!=NULL); // because we know va is an instruction
             if (!bb->function) {
                 if (p->debug) {
@@ -1789,6 +1819,8 @@ Partitioner::IntraFunctionBlocks::operator()(bool enabled, const Args &args)
             assert(insn!=NULL);
             va += insn->get_raw_bytes().size();
         }
+        if (p->debug && nadded)
+            fprintf(p->debug, "\n");
     }
 
     return true;
@@ -1803,28 +1835,42 @@ Partitioner::FindThunks::operator()(bool enabled, const Args &args)
 
     Partitioner *p = args.partitioner;
     rose_addr_t va = args.insn_begin->get_address();
-    for (size_t i=0; i<args.ninsns; i++) {
+    rose_addr_t next_va = 0;
+    for (size_t i=0; i<args.ninsns; i++, va=next_va) {
         SgAsmInstruction *insn = p->find_instruction(va);
-        assert(insn!=NULL);
-        BasicBlock *bb = p->find_bb_starting(va);
-        assert(bb!=NULL);
-        SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn);
-        
-        if (!bb->function && 1==bb->insns.size() &&
-            insn_x86 && (insn_x86->get_kind()==x86_jmp || insn_x86->get_kind()==x86_farjmp)) {
-            bool complete;
-            Disassembler::AddressSet succs = p->successors(bb, &complete);
-            if (complete && 1==succs.size()) {
-                rose_addr_t target_va = *succs.begin();
-                Functions::iterator fi = p->functions.find(target_va);
-                if (fi!=p->functions.end() && 0==(fi->second->reason & SgAsmFunction::FUNC_INTERPAD)) {
-                    Function *func = p->add_function(va, SgAsmFunction::FUNC_THUNK);
-                    p->append(func, bb, SgAsmBlock::BLK_ENTRY_POINT);
-                }
-            }
-        }
+        assert(insn);
+        next_va = va + insn->get_raw_bytes().size();
 
-        va += insn->get_raw_bytes().size();
+        /* Instruction must be an x86 JMP */
+        SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn);
+        if (!insn_x86 || (insn_x86->get_kind()!=x86_jmp && insn_x86->get_kind()!=x86_farjmp))
+            continue;
+
+        /* Instruction must not be in the middle of an existing basic block. */
+        BasicBlock *bb = p->find_bb_containing(va, false);
+        if (bb && bb->address()!=va)
+            continue;
+
+        /* Instruction must have a single successor */
+        bool complete;
+        Disassembler::AddressSet succs = insn->get_successors(&complete);
+        if (!complete && 1!=succs.size())
+            continue;
+        rose_addr_t target_va = *succs.begin();
+
+        /* The target (single successor) must be a known function which is not padding. */
+        Functions::iterator fi = p->functions.find(target_va);
+        if (fi==p->functions.end() || 0!=(fi->second->reason & SgAsmFunction::FUNC_INTERPAD))
+            continue;
+
+        /* Create the basic block for the JMP instruction.  This block must be a single instruction, which it should be since
+         * we already checked that its only successor is another function. */
+        if (!bb)
+            bb = p->find_bb_starting(va);
+        assert(bb!=NULL);
+        assert(1==bb->insns.size());
+        Function *thunk = p->add_function(va, SgAsmFunction::FUNC_THUNK);
+        p->append(thunk, bb, SgAsmBlock::BLK_ENTRY_POINT);
     }
 
     return true;
@@ -1890,9 +1936,17 @@ Partitioner::PostFunctionBlocks::operator()(bool enabled, const Args &args)
     if (add_as_data) {
         rose_addr_t begin_va = args.insn_begin->get_address();
         rose_addr_t end_va = begin_va;
+        if (p->debug) {
+            fprintf(p->debug, "Partitioner::PostFunctionBlocks: for F%08"PRIx64": added D%08"PRIx64" deleted",
+                    func->entry_va, begin_va);
+        }
+
+        /* Delete the instructions, but not the blocks to which they might belong (unless the block becomes empty) */
         for (size_t i=0; i<args.ninsns; i++) {
             SgAsmInstruction *insn = p->find_instruction(end_va);
             assert(insn!=NULL);
+            if (p->debug)
+                fprintf(p->debug, " B%08"PRIx64, end_va);
             end_va += insn->get_raw_bytes().size();
             p->discard(insn);
         }
@@ -1901,6 +1955,8 @@ Partitioner::PostFunctionBlocks::operator()(bool enabled, const Args &args)
         DataBlock *dblock = p->find_db_starting(begin_va, size);
         assert(dblock!=NULL);
         p->append(func, dblock, SgAsmBlock::BLK_USERDEF);
+        if (p->debug)
+            fprintf(p->debug, "\n");
     } else {
         size_t nadded = 0;
         rose_addr_t va = args.insn_begin->get_address();
@@ -1922,6 +1978,8 @@ Partitioner::PostFunctionBlocks::operator()(bool enabled, const Args &args)
             assert(insn!=NULL);
             va += insn->get_raw_bytes().size();
         }
+        if (p->debug && nadded)
+            fprintf(p->debug, "\n");
     }
     return true;
 }
@@ -2661,19 +2719,27 @@ Partitioner::build_ast()
      * basic block doesn't belong to a function yet, we add it to this special one.  Note that we cannot traverse the list of
      * instructions directly because creating the basic block might cause additional instructions to be created.
      *
-     * Do not include the instruction in the leftovers function if there is a data block that completely overlaps the
-     * instruction. */
+     * Do not include the instruction in the leftovers functions if that instruction is completely overlapped by the bytes of
+     * an existing, non-leftovers function. */
     Function *catchall = NULL;
     if ((func_heuristics & SgAsmFunction::FUNC_LEFTOVERS)) {
-        ExtentMap data_extents;
-        for (DataBlocks::iterator dbi=data_blocks.begin(); dbi!=data_blocks.end(); ++dbi)
-            datablock_extent(dbi->second, &data_extents);
+
+        /* List of all bytes occupied by functions. */
+        ExtentMap existing;
+        for (Functions::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
+            if (0==(fi->second->reason & SgAsmFunction::FUNC_LEFTOVERS))
+                function_extent(fi->second, &existing);
+        }
+
+        /* Repeatedly add unassigned instructions to the leftovers function. */
         bool process_instructions;
         do {
             process_instructions = false;
             Disassembler::InstructionMap insns_copy = insns;
             for (Disassembler::InstructionMap::iterator ii=insns_copy.begin(); ii!=insns_copy.end(); ++ii) {
-                if (data_extents.exists_all(ExtentPair(ii->second->get_address(), ii->second->get_raw_bytes().size()))) {
+                rose_addr_t va = ii->first;
+                size_t size = ii->second->get_raw_bytes().size();
+                if (!existing.exists_all(ExtentPair(va, size))) {
                     BasicBlock *bb = find_bb_containing(ii->first);
                     assert(bb!=NULL);
                     if (!bb->function) {

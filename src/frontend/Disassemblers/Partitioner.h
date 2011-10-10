@@ -470,12 +470,13 @@ public:
      *  and add it to the bad instruction list. */
     virtual SgAsmInstruction* find_instruction(rose_addr_t, bool create=true);
 
-    /** Drop an instruction from consideration.  If the instruction belongs to a basic block then the basic block is also
-     *  dropped and its other instructions, if any, are returned to the (implied) list of free instructions.  The basic block
-     *  must not be currently assigned to any function.  The instruction is not deleted.
+    /** Drop an instruction from consideration.  If the instruction is the beginning of a basic block then drop the entire
+     *  basic block, returning its subsequent instructions back to the (implied) list of free instructions.  If the instruction
+     *  is in the middle of a basic block, then either drop the entire basic block, or truncate it at the specified
+     *  instruction depending on whether discard_entire_block is true or false.
      *
      *  This method always returns the null pointer. */
-    virtual SgAsmInstruction* discard(SgAsmInstruction*);
+    virtual SgAsmInstruction* discard(SgAsmInstruction*, bool discard_entire_block=false);
 
     /** Drop a basic block from the partitioner.  The specified basic block, which must not belong to any function, is removed
      *  from the Partitioner, deleted, and its instructions all returned to the (implied) list of free instructions. This
@@ -711,7 +712,7 @@ public:
     virtual DataBlock* find_db_starting(rose_addr_t, size_t size); /* Find (or create if size>0) a data block */
     virtual Disassembler::AddressSet successors(BasicBlock*, bool *complete=NULL); /* Calculates known successors */
     virtual rose_addr_t call_target(BasicBlock*);               /* Returns address if block could be a function call */
-    virtual void truncate(BasicBlock*, rose_addr_t);            /**< Remove instructions from the end of a basic block. */
+    virtual void truncate(BasicBlock*, rose_addr_t);            /* Remove instructions from the end of a basic block. */
     virtual void discover_first_block(Function*);               /* Adds first basic block to empty function to start discovery. */
     virtual void discover_blocks(Function*, unsigned reason);   /* Start to recursively discover blocks of a function. */
     virtual void discover_blocks(Function*, rose_addr_t, unsigned reason); /* Recursively discovers blocks of a function. */
