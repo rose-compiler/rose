@@ -10,7 +10,8 @@ javadir=$(libdir)
 # the jar file is now distributed with ROSE.
 OFP_DIST_VERSION=@ROSE_OFP_VERSION_NUMBER@
 
-#OFP_VERSION=@ROSE_OFP_MAJOR_VERSION_NUMBER@.@ROSE_OFP_MINOR_VERSION_NUMBER@.@ROSE_OFP_PATCH_VERSION_NUMBER@
+# CER (10/10/2011): Disabled OFP version number in favor of version distributed with ROSE
+# OFP_VERSION=@ROSE_OFP_MAJOR_VERSION_NUMBER@.@ROSE_OFP_MINOR_VERSION_NUMBER@.@ROSE_OFP_PATCH_VERSION_NUMBER@
 
 # DQ (4/5/2010): Think about if we need the test using an Automake conditional since the jar file always exists.
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
