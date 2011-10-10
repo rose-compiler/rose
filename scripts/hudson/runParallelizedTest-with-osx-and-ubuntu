@@ -302,7 +302,9 @@ if test "x$ROSE_TEST_BUILD_STYLE" = "xcmake" ; then
       mkdir   ROSE-build-cmake
       cd      ROSE-build-cmake
 
+      set -x;
       cmake .. -DBOOST_ROOT=${ROSE_TEST_BOOST_PATH} && make -j${NUM_PROCESS}
+      set +x;
 
   ) 2>&1 |filterStep "CMake" 
   [ ${PIPESTATUS[0]} -ne 0 ] && killStep "CMake" || exit 0
