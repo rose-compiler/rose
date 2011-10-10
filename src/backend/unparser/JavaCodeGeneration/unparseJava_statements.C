@@ -1,4 +1,4 @@
-/* unparseJava_statements.C
+/* unparseJava_statements.java
  * Contains functions that unparse statements
  *
  * FORMATTING WILL BE DONE IN TWO WAYS:
@@ -651,8 +651,9 @@ Unparse_Java::unparseFunctionParameterList(SgStatement* stmt, SgUnparse_Info& in
     SgInitializedNamePtrList& names = param_list->get_args();
     SgInitializedNamePtrList::iterator name_it;
     for (name_it = names.begin(); name_it != names.end(); name_it++) {
-        if (name_it != names.begin())
+        if (name_it != names.begin()) {
             curprint(", ");
+        }
         SgInitializedName* iname = *name_it;
         unparseType(iname->get_type(), info);
         curprint(" ");
@@ -720,10 +721,17 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      unparseName(mfuncdecl_stmt->get_name(), info);
      curprint("(");
-     //     unparseStatement(mfuncdecl_stmt->get_parameterList(), info);
-     foreach (SgInitializedName* name, mfuncdecl_stmt->get_args()) {
-         unparseInitializedName(name, info);
+     unparseStatement(mfuncdecl_stmt->get_parameterList(), info);
+
+     SgInitializedNamePtrList& names = mfuncdecl_stmt->get_args();
+     SgInitializedNamePtrList::iterator name_it;
+     for (name_it = names.begin(); name_it != names.end(); name_it++) {
+         if (name_it != names.begin()) {
+             curprint(", ");
+         }
+         unparseInitializedName(*name_it, info);
      }
+
      curprint(") ");
      unparseStatement(mfuncdecl_stmt->get_definition(), info);
 
@@ -971,8 +979,12 @@ void
 Unparse_Java::unparseBreakStmt(SgStatement* stmt, SgUnparse_Info& info) {
   SgBreakStmt* break_stmt = isSgBreakStmt(stmt);
   ROSE_ASSERT(break_stmt != NULL);
-
   curprint ("break");
+  if (break_stmt->get_do_string_label() != "") {
+      curprint(" ");
+      curprint(break_stmt->get_do_string_label());
+  }
+
 }
 
 void
@@ -981,6 +993,11 @@ Unparse_Java::unparseContinueStmt(SgStatement* stmt, SgUnparse_Info& info) {
   ROSE_ASSERT(continue_stmt != NULL);
 
   curprint ("continue");
+  if (continue_stmt->get_do_string_label() != "") {
+      curprint(" ");
+      curprint(continue_stmt->get_do_string_label());
+  }
+
 }
 
 void

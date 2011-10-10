@@ -3469,20 +3469,21 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionSwitchStatementEnd(JNIEnv *env, jo
     SgDefaultOptionStmt *default_stmt = NULL;
     for (int i = (hasDefaultCase ? numCases + 1 : numCases); i > 0; i--) {
         SgBasicBlock *case_block = SageBuilder::buildBasicBlock();
-        case_block -> set_parent(switch_block);
+        //case_block -> set_parent(switch_block);
 
         SgStatement *sg_stmt = astJavaStatementStack.front();
         astJavaStatementStack.pop_front();
 
         while (! (isSgCaseOptionStmt(sg_stmt) || isSgDefaultOptionStmt(sg_stmt))) {
             case_block -> prepend_statement(sg_stmt);
-
             sg_stmt = astJavaStatementStack.front();
             astJavaStatementStack.pop_front();
         }
 
         if  (isSgCaseOptionStmt(sg_stmt)) {
             SgCaseOptionStmt *case_stmt = (SgCaseOptionStmt *) sg_stmt;
+            // the case 'block' must be a child of case_stmt
+            case_block->set_parent(case_stmt);
             case_stmt -> set_body(case_block);
             case_stmt -> set_parent(switch_block);
             switch_block -> prepend_statement(case_stmt);
@@ -3490,6 +3491,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionSwitchStatementEnd(JNIEnv *env, jo
         else {
             ROSE_ASSERT(default_stmt == NULL); // only onde default section is expected!
             default_stmt = (SgDefaultOptionStmt *) sg_stmt;
+            // the default 'block' must be a child of default_stmt
+            case_block->set_parent(default_stmt);
             default_stmt->set_body(case_block);
             default_stmt -> set_parent(switch_block);
             switch_block->prepend_statement(default_stmt);
