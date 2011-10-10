@@ -180,6 +180,29 @@ class MyUnparser: public AsmUnparser {
         }
     };
 
+    template<class NodeType, class Args>
+    class DiscontiguousNotifier: public UnparserCallback {
+    public:
+        virtual bool operator()(bool enabled, const Args &args) {
+            if (enabled) {
+                MyUnparser *unparser = dynamic_cast<MyUnparser*>(args.unparser);
+                NodeType *node = args.get_node();
+                rose_addr_t va = node->get_address();
+                if (unparser->nprinted++>0 && va!=unparser->next_address) {
+                    if (va > unparser->next_address) {
+                        rose_addr_t nskipped = va - unparser->next_address;
+                        args.output <<"Skipping " <<nskipped <<" byte" <<(1==nskipped?"":"s") <<"\n";
+                    } else {
+                        rose_addr_t nskipped = unparser->next_address - va;
+                        args.output <<"Backward " <<nskipped <<" byte" <<(1==nskipped?"":"s") <<"\n";
+                    }
+                }
+                unparser->next_address = va + node->get_raw_bytes().size();
+            }
+            return enabled;
+        }
+    };
+
     /* Emits info about what other functions call this one whenever we hit an entry point of a function. */
     class FuncCallers: public UnparserCallback {
     public:
@@ -208,19 +231,50 @@ public:
     FuncName<SgAsmInstruction, AsmUnparser::UnparserCallback::InsnArgs> insn_func_name;
     FuncName<SgAsmStaticData,  AsmUnparser::UnparserCallback::StaticDataArgs> data_func_name;
     FuncCallers func_callers;
+    DiscontiguousNotifier<SgAsmInstruction, AsmUnparser::UnparserCallback::InsnArgs> insn_skip;
+    DiscontiguousNotifier<SgAsmStaticData,  AsmUnparser::UnparserCallback::StaticDataArgs> data_skip;
+    rose_addr_t next_address;
+    size_t nprinted;
 
-    MyUnparser(FunctionCallGraph &cg, IdaInfo &ida): insn_func_name(ida), data_func_name(ida), func_callers(cg) {
+    MyUnparser(FunctionCallGraph &cg, IdaInfo &ida)
+        : insn_func_name(ida), data_func_name(ida), func_callers(cg), next_address(0), nprinted(0) {
         set_organization(AsmUnparser::ORGANIZED_BY_ADDRESS);
-        insn_callbacks.pre.append(&insn_func_name);
-        staticdata_callbacks.pre.append(&data_func_name);
-        function_callbacks.pre.before(&functionAttributes, &func_callers, 1);
+        insn_callbacks.pre
+            .append(&insn_func_name)
+            .after(&insnBlockSeparation, &insn_skip, 1);
+        staticdata_callbacks.pre
+            .append(&data_func_name)
+            .after(&staticDataBlockSeparation, &data_skip, 1);
+        function_callbacks.pre
+            .before(&functionAttributes, &func_callers, 1);
     }
 
     /* Augment parent class by printing a key and some column headings. */
     virtual size_t unparse(std::ostream &output, SgNode *ast) {
-        output <<"BBR means \"basic block reasons\"; Why is a basic block in a function?\n"
-               <<"These letters describe the possible reasons:\n"
+        output <<"The \"BIR\" column is \"block inclusion reasons\": why a block of instructions\n"
+               <<"or data in a function?  Reasons are noted by the following letters:\n"
                <<SgAsmBlock::reason_key("    ")
+               <<"Additional notes about block inclusion reasons:\n"
+               <<"  * The \"left over blocks\" are those blocks that could not be assigned to any\n"
+               <<"    function.  These are usually instructions that were disassembled by the\n"
+               <<"    recursive disassembler using a more agressive and/or less precise analysis\n"
+               <<"    than the partitioner.\n"
+               <<"  * Intra-function blocks are areas of memory that exist inside an otherwise\n"
+               <<"    contiguous function.  The partitioner can be configured to grab these blocks\n"
+               <<"    as basic blocks or data blocks.  When it incorporates them as basic blocks,\n"
+               <<"    a second CFG analysis is run to discover other blocks that might be\n"
+               <<"    referenced by the new blocks.\n"
+               <<"  * A \"CFG Head\" is a basic block that's permanently attached to the function\n"
+               <<"    regardless of whether that block can be reached by following the function's\n"
+               <<"    control flow graph from the function entry point.  These blocks usually\n"
+               <<"    come from some kind of analysis run between the first and second CFG\n"
+               <<"    analysis.  Blocks that are reachable from CFG heads that are not otherwise\n"
+               <<"    reachable are also marked with a \"2\" to indicate they came from the\n"
+               <<"    second CFG analysis.\n"
+               <<"  * We are currently using the \"U\" (user defined) indicator for blocks that\n"
+               <<"    come after the end of a function and before inter-function padding.  This\n"
+               <<"    feature is experimental for now. See the Partitioner::PostFunctionBlocks\n"
+               <<"    class.\n"
                <<"\n"
                <<"Bangs (\"!\") in the ROSE and IDA columns indicate differences between\n"
                <<"ROSE and IDA.  We don't show a bang for data blocks due to inter-function padding\n"
@@ -229,7 +283,7 @@ public:
                <<"\n"
                <<"\n"
                <<"\n"
-               <<"Address     Hexadecimal data         CharData  BBR   ROSE     ";
+               <<"Address     Hexadecimal data         CharData  BIR   ROSE     ";
         for (size_t i=0; i<insn_func_name.ida.size(); i++)
             output <<"IDA[" <<i <<"]     ";
         output <<"    Instruction etc.\n";
