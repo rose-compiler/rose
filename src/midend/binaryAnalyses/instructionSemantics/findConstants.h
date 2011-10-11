@@ -1232,8 +1232,7 @@ public:
             ROSE_ASSERT(block!=NULL);
             for (size_t j=0; j<block->get_statementList().size(); ++j) {
                 SgAsmInstruction* insn = isSgAsmInstruction(block->get_statementList()[j]);
-                ROSE_ASSERT(insn!=NULL);
-                if (insn->get_address()==va)
+                if (insn && insn->get_address()==va)
                     return true;
             }
         }

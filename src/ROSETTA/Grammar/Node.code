@@ -103,6 +103,7 @@ class ExtentMap : public std::map<rose_addr_t,rose_addr_t> {
 
 		/* Non-modifiying search methods */
 		ExtentPair find_address(rose_addr_t address) const;
+		bool exists_all(ExtentPair extent) const;
 
 		/* Allocation-like methods */
 		std::map<rose_addr_t,rose_addr_t>::iterator best_fit(rose_addr_t size);
