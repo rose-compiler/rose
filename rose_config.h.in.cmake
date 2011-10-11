@@ -10,7 +10,10 @@
  * (running cmake before running make within the build process).
  */
 
-#cmakedefine ROSE_SCM_VERSION_ID @ROSE_SCM_VERSION_UNIX_DATE@
+/* Git SCM version information for ROSE: commit identifier. */
+#cmakedefine ROSE_SCM_VERSION_ID "@ROSE_SCM_VERSION_ID@"
+
+/* Git SCM version information for ROSE: commit date (Unix timestamp). */
 #cmakedefine ROSE_SCM_VERSION_UNIX_DATE @ROSE_SCM_VERSION_UNIX_DATE@
 
 /* Define to 1 if you have the `argz_append' function. */
