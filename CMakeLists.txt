@@ -12,8 +12,8 @@ set( CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" "${CMAKE_SOURCE_DIR}/cmake/mo
 #-------------------------------------------------------------------------------
 # ROSE SCM Version Information
 #-------------------------------------------------------------------------------
-set(ROSE_SCM_VERSION_ID_REGEX         "^[0-9a-zA-Z]{40}$")
-set(ROSE_SCM_VERSION_UNIX_DATE_REGEX  "^[0-9]{10,}$")
+set(ROSE_SCM_VERSION_ID_REGEX "^[0-9a-zA-Z][0-9a-zA-Z][0-9a-zA-Z][0-9a-zA-Z][0-9a-zA-Z][0-9a-zA-Z][0-9a-zA-Z][0-9a-zA-Z][0-9a-zA-Z][0-9a-zA-Z][0-9a-zA-Z][0-9a-zA-Z][0-9a-zA-Z][0-9a-zA-Z][0-9a-zA-Z][0-9a-zA-Z][0-9a-zA-Z][0-9a-zA-Z][0-9a-zA-Z][0-9a-zA-Z][0-9a-zA-Z][0-9a-zA-Z][0-9a-zA-Z][0-9a-zA-Z][0-9a-zA-Z][0-9a-zA-Z][0-9a-zA-Z][0-9a-zA-Z][0-9a-zA-Z][0-9a-zA-Z][0-9a-zA-Z][0-9a-zA-Z][0-9a-zA-Z][0-9a-zA-Z][0-9a-zA-Z][0-9a-zA-Z][0-9a-zA-Z][0-9a-zA-Z][0-9a-zA-Z][0-9a-zA-Z]$") #{40}
+set(ROSE_SCM_VERSION_UNIX_DATE_REGEX "^[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]+$") #{10,}
 
 #---------------------------------------
 # HEAD commit - id
@@ -34,7 +34,7 @@ if (NOT error_code EQUAL 0)
         FATAL_ERROR
         "(status=${error_code}) "
         "Failed to determine the ROSE SCM version id: "
-        ${ROSE_SCM_VERSION_ID}${stderr}"
+        "${ROSE_SCM_VERSION_ID}${stderr}"
     )
 elseif (NOT "${ROSE_SCM_VERSION_ID}" MATCHES
             "${ROSE_SCM_VERSION_ID_REGEX}")
