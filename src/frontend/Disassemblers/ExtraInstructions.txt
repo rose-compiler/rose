@@ -76,7 +76,7 @@ REX + 0F 99              SETNS r/m8         Invalid N.E.     Set byte condition 
 0F B8 /r                 JMPE               Invalid Invalid  Used to enter IA64 mode on Itanium architecture
 REX.W + 0F BE /r         MOVSX r64, r/m8    Valid   Invalid  Intel docs have wrong REX byte
 D6                       SALC               Invalid Invalid  Not documented
-F1                       INT1               Invalid Invalid  Undocumented by Intel
+F1                       INT1               Valid   Valid    Undocumented by Intel, but by AMD. Valid for 03+
 
 -------------------------------------------------------------------------------------------------------------------------------
 The Operand Size Override Prefix (0x66) is ignored if the REX.W bit is set for instructions that are inherently 32-bits. These

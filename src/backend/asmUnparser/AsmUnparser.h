@@ -69,8 +69,13 @@ class SgAsmInterpretation;
  *     </li>
  *     <li>StaticData (SgAsmStaticData):
  *        <ol>
- *           <li>StaticDataTitle (pre): emits a title line.</li>
- *           <li>StaticDataRawBytes (unparse): emits a hexdump-like output of the value.</li>
+ *           <li>StaticDataBlockSeparation (pre): emits inter-block spacing when output is organized by address.</li>
+ *           <li>StaticDataRawBytes (pre): emits a hexdump-like output of the value.</li>
+ *           <li>StaticDataBlockEntry (pre): emits info about the first data node of each data block when output is
+ *               organzied by address.</li>
+ *           <li>StaticDataDetails (unparse): info about starting address, size, type, etc. We will probably split this
+ *               callback into smaller parts once we have something interesting to denote.</li>
+ *           <li>StaticDataComment (unparse): emits any comment associated with the data.</li>
  *           <li>StaticDataLineTermination (post): emits a linefeed at the end of each data object.</li>
  *        </ol>
  *     </li>
@@ -192,6 +197,7 @@ public:
         struct InsnArgs: public GeneralArgs {
             InsnArgs(AsmUnparser *unparser, std::ostream &output, SgAsmInstruction *insn, size_t position_in_block)
                 : GeneralArgs(unparser, output), insn(insn), position_in_block(position_in_block) {}
+            SgAsmInstruction *get_node() const { return insn; } /**< Return the node being unparsed. */
             SgAsmInstruction *insn;     /**< The instruction being unparsed. */
             size_t position_in_block;   /**< The index position of the instruction within the basic block, or -1 if unknown. */
         };
@@ -201,6 +207,7 @@ public:
             BasicBlockArgs(AsmUnparser *unparser, std::ostream &output, SgAsmBlock *block,
                            const std::vector<SgAsmInstruction*> &insns)
                 : GeneralArgs(unparser, output), block(block), insns(insns) {}
+            SgAsmBlock *get_node() const { return block; } /**< Return the node being unparsed. */
             SgAsmBlock *block;          /**< The basic block being unparsed. */
             const std::vector<SgAsmInstruction*> &insns; /**< The instructions contained in this basic block. */
         };
@@ -209,6 +216,7 @@ public:
         struct StaticDataArgs: public GeneralArgs {
             StaticDataArgs(AsmUnparser *unparser, std::ostream &output, SgAsmStaticData *data, size_t position_in_block)
                 : GeneralArgs(unparser, output), data(data), position_in_block(position_in_block) {}
+            SgAsmStaticData *get_node() const { return data; } /**< Return the node being unparsed. */
             SgAsmStaticData *data;      /**< The data being unparsed. */
             size_t position_in_block;   /**< The index position of the data within the data block, or -1 if unknown. */
         };
@@ -218,25 +226,24 @@ public:
             DataBlockArgs(AsmUnparser *unparser, std::ostream &output, SgAsmBlock *block,
                           const std::vector<SgAsmStaticData*> &datalist)
                 : GeneralArgs(unparser, output), block(block), datalist(datalist) {}
+            SgAsmBlock *get_node() const { return block; } /**< Return the node being unparsed. */
             SgAsmBlock *block;          /**< The block of data being unparsed. */
             const std::vector<SgAsmStaticData*> &datalist; /**< The data items contained in this data block. */
         };
 
         /** Arguments passed to function unparsing callbacks. */
-        struct FunctionArgs {
+        struct FunctionArgs: public GeneralArgs {
             FunctionArgs(AsmUnparser *unparser, std::ostream &output, SgAsmFunction *func)
-                : unparser(unparser), output(output), func(func) {}
-            AsmUnparser *unparser;      /**< The object doing the unparsing, from which this callback is invoked. */
-            std::ostream &output;       /**< Where output should be sent. */
+                : GeneralArgs(unparser, output), func(func) {}
+            SgAsmFunction *get_node() const { return func; } /**< Return the node being unparsed. */
             SgAsmFunction *func;        /**< The function being unparsed. */
         };
 
         /** Arguments passed to interpretation unparsing callbacks. */
-        struct InterpretationArgs {
+        struct InterpretationArgs: public GeneralArgs {
             InterpretationArgs(AsmUnparser *unparser, std::ostream &output, SgAsmInterpretation *interp)
-                : unparser(unparser), output(output), interp(interp) {}
-            AsmUnparser *unparser;      /**< The object doing the unparsing, from which this callback is invoked. */
-            std::ostream &output;       /**< Where output should be sent. */
+                : GeneralArgs(unparser, output), interp(interp) {}
+            SgAsmInterpretation *get_node() const { return interp; } /**< Return the node being unparsed. */
             SgAsmInterpretation *interp; /**< The interpretation being unparsed. */
         };
         
@@ -388,9 +395,12 @@ public:
      *                                  Static Data Callbacks
      **************************************************************************************************************************/
 
-    /** Functor to print some information at the beginning of a data item. */
-    class StaticDataTitle: public UnparserCallback {
+    /** Functor to emit data block separation in output organized by address.  This does nothing if the output is organized by
+     *  AST since the data block callbacks handle it in that case. */
+    class StaticDataBlockSeparation: public UnparserCallback {
     public:
+        SgAsmBlock *prev_block;
+        StaticDataBlockSeparation(): prev_block(NULL) {}
         virtual bool operator()(bool enabled, const StaticDataArgs &args);
     };
 
@@ -405,10 +415,31 @@ public:
             show_address = true;
             show_offset = false;
             fmt.prefix = NULL;          /* Adjusted by the callback each time called. */
-            fmt.multiline = true;       /* Also emit prefix before first line and linefeed after last line. */
-            fmt.width = 8;             /* Max data bytes per line of output. */
+            fmt.multiline = false;      /* Do not emit prefix before first line and linefeed after last line. */
+            fmt.width = 8;              /* Max data bytes per line of output. */
             fmt.pad_chars = true;       /* Show ASCII characters as well as bytes. */
         }
+        virtual bool operator()(bool enabled, const StaticDataArgs &args);
+    };
+
+    /** Functor to emit info about the first data node of a block.  If the node is the first data node of a data block,
+     *  then certain information is printed.  The output for all nodes is always the same width so that things line up
+     *  properly between nodes that are first in a block and those that aren't.  This callback is a no-op unless the
+     *  output is organized by address. */
+    class StaticDataBlockEntry: public UnparserCallback {
+    public:
+        virtual bool operator()(bool enabled, const StaticDataArgs &args);
+    };
+
+    /** Functor to emit details about static data. */
+    class StaticDataDetails: public UnparserCallback {
+    public:
+        virtual bool operator()(bool enabled, const StaticDataArgs &args);
+    };
+
+    /** Functor to emit optional static data comment. */
+    class StaticDataComment: public UnparserCallback {
+    public:
         virtual bool operator()(bool enabled, const StaticDataArgs &args);
     };
 
@@ -531,8 +562,11 @@ public:
     BasicBlockLineTermination basicBlockLineTermination;
     BasicBlockCleanup basicBlockCleanup;
 
-    StaticDataTitle staticDataTitle;
+    StaticDataBlockSeparation staticDataBlockSeparation;
     StaticDataRawBytes staticDataRawBytes;
+    StaticDataBlockEntry staticDataBlockEntry;
+    StaticDataDetails staticDataDetails;
+    StaticDataComment staticDataComment;
     StaticDataLineTermination staticDataLineTermination;
 
     DataBlockBody dataBlockBody;
