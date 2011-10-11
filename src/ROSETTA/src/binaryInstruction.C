@@ -81,6 +81,7 @@ Grammar::setUpBinaryInstructions()
     NEW_NONTERMINAL_MACRO(AsmInstruction,
                           Asmx86Instruction | AsmArmInstruction | AsmPowerpcInstruction,
                           "AsmInstruction", "AsmInstructionTag", true);
+    AsmInstruction.setPredeclarationString("HEADER_BINARY_INSTRUCTION_PREDECLARATION", "../Grammar/BinaryInstruction.code");
     AsmInstruction.setFunctionPrototype("HEADER_BINARY_INSTRUCTION", "../Grammar/BinaryInstruction.code");
     AsmInstruction.setFunctionSource("SOURCE_BINARY_INSTRUCTION", "../Grammar/BinaryInstruction.code");
     AsmInstruction.setDataPrototype("std::string", "mnemonic", "= \"\"",
