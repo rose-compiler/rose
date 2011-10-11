@@ -554,7 +554,10 @@ MemoryMap::mprotect(const MapElement &region, bool relax/*=false*/)
     std::vector<MapElement>::iterator i=elements.begin();
     while (i!=elements.end()) {
         MapElement &other = *i;
-        if (other.get_va() >= region.get_va()) {
+        if (other.get_mapperms()==region.get_mapperms()) {
+            /* no change */
+            i++;
+        } else if (other.get_va() >= region.get_va()) {
             if (other.get_va()+other.get_size() <= region.get_va()+region.get_size()) {
                 /* other is fully contained in (or congruent to) region; change other's permissions */
                 other.set_mapperms(region.get_mapperms());
