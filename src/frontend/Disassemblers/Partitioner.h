@@ -429,7 +429,7 @@ public:
      *  If it is null then those function seeding operations that depend on having file headers are not run.  The memory map
      *  argument is optional only if a memory map has already been attached to this partitioner object with the set_map()
      *  method. */
-    virtual SgAsmBlock* partition(SgAsmInterpretation*, const Disassembler::InstructionMap&, MemoryMap *mmap);
+    virtual SgAsmBlock* partition(SgAsmInterpretation*, const Disassembler::InstructionMap&, MemoryMap *mmap=NULL);
 
     /** Top-level function to run the partitioner, calling the specified disassembler as necessary to generate instructions. */
     virtual SgAsmBlock* partition(SgAsmInterpretation*, Disassembler*, MemoryMap*);
