@@ -103,9 +103,8 @@ const string FileHelper::pathDelimiter = "/";
 // DQ (9/17/2009): This appears to only be required for the GNU 4.1.x compiler (not for any earlier or later versions).
 extern const std::string ROSE_GFORTRAN_PATH;
 
-// CER (10/08/2011): Having trouble expanding ROSE_OFP_VERSION_NUMBER on some systems
-// just experimenting at the moment.
-const int ofp_version_number = (int) ROSE_OFP_VERSION_NUMBER;
+// CER (10/11/2011): Added to allow OFP jar file to depend on version number based on date.
+extern const std::string ROSE_OFP_VERSION_STRING;
 
 #ifdef _MSC_VER
 // DQ (11/29/2009): MSVC does not support sprintf, but "_snprintf" is equivalent
@@ -5718,10 +5717,7 @@ global_build_classpath()
   // Open Fortran Parser (OFP) support (this is the jar file)
   // CER (10/4/2011): Switched to using date-based version for OFP jar file.
   //
-     char ofp_date[9];
-     //     int ofp_version_number = (int) ROSE_OFP_VERSION_NUMBER; // use variable for snprintf
-     snprintf(ofp_date, 9, "%d", ofp_version_number);
-     string ofp_jar_file_name = string("OpenFortranParser-") + string(ofp_date) + string(".jar");
+     string ofp_jar_file_name = string("OpenFortranParser-") + ROSE_OFP_VERSION_STRING + string(".jar");
      string ofp_class_path = "src/3rdPartyLibraries/fortran-parser/" + ofp_jar_file_name;
      classpath += findRoseSupportPathFromBuild(ofp_class_path, string("lib/") + ofp_jar_file_name) + ":";
 
