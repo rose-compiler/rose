@@ -10,6 +10,9 @@
  * (running cmake before running make within the build process).
  */
 
+#cmakedefine ROSE_SCM_VERSION_ID @ROSE_SCM_VERSION_UNIX_DATE@
+#cmakedefine ROSE_SCM_VERSION_UNIX_DATE @ROSE_SCM_VERSION_UNIX_DATE@
+
 /* Define to 1 if you have the `argz_append' function. */
 #cmakedefine HAVE_ARGZ_APPEND 1
 /* Define to 1 if you have the `argz_create_sep' function. */
