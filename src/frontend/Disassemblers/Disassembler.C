@@ -37,7 +37,8 @@ SgAsmInstruction::get_successors(bool *complete) {
 
 /* This has no other home, so it's here for now. Virtual method to return successors of a basic block. */
 std::set<rose_addr_t>
-SgAsmInstruction::get_successors(const std::vector<SgAsmInstruction*>& basic_block, bool *complete/*out*/)
+SgAsmInstruction::get_successors(const std::vector<SgAsmInstruction*>& basic_block, bool *complete/*out*/,
+                                 MemoryMap *initial_memory/*=NULL*/)
 {
     if (basic_block.size()==0) {
         if (complete) *complete = true;

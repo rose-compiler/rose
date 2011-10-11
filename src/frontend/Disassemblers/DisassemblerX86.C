@@ -175,7 +175,7 @@ SgAsmx86Instruction::get_successors(bool *complete) {
 
 /* "this" is only used to select the virtual function */
 Disassembler::AddressSet
-SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns, bool *complete)
+SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns, bool *complete, MemoryMap *initial_memory)
 {
     static const bool debug = false;
 
@@ -217,6 +217,7 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
         typedef VirtualMachineSemantics::ValueType<32> RegisterType;
         typedef X86InstructionSemantics<Policy, VirtualMachineSemantics::ValueType> Semantics;
         Policy policy;
+        policy.set_map(initial_memory);
 #endif
         try {
             Semantics semantics(policy);
