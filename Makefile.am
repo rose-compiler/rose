@@ -254,7 +254,8 @@ dist-hook:
   (                                                                          \
       echo "Error: could not determine SCM version information." &&          \
       exit 1                                                                 \
-  )
+  ) ||                                                                       \
+  exit 1
 
 # Automake hook-ish rule to be run after dist rule (but hook runs before gzip so we can't use hook)
 # We could build our own ROSE specific wrapper for dist and distcheck.

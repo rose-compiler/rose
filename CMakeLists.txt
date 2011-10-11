@@ -9,6 +9,86 @@ project (ROSE CXX C)
 set( CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" "${CMAKE_SOURCE_DIR}/cmake/modules"  ${CMAKE_MODULE_PATH})
 #message ("CMAKE_MODULE_PATH = ${CMAKE_MODULE_PATH}")
 
+#-------------------------------------------------------------------------------
+# ROSE SCM Version Information
+#-------------------------------------------------------------------------------
+set(ROSE_SCM_VERSION_ID_REGEX         "^[0-9a-zA-Z]{40}$")
+set(ROSE_SCM_VERSION_UNIX_DATE_REGEX  "^[0-9]{10,}$")
+
+#---------------------------------------
+# HEAD commit - id
+#---------------------------------------
+message(STATUS "Detecting ROSE SCM version id")
+
+execute_process(
+    COMMAND             "git" "rev-parse" "HEAD"
+    WORKING_DIRECTORY   ${PROJECT_SOURCE_DIR}
+    ERROR_VARIABLE      stderr
+    RESULT_VARIABLE     error_code
+    OUTPUT_VARIABLE     ROSE_SCM_VERSION_ID
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+if (NOT error_code EQUAL 0)
+    message(
+        FATAL_ERROR
+        "(status=${error_code}) "
+        "Failed to determine the ROSE SCM version id: "
+        ${ROSE_SCM_VERSION_ID}${stderr}"
+    )
+elseif (NOT "${ROSE_SCM_VERSION_ID}" MATCHES
+            "${ROSE_SCM_VERSION_ID_REGEX}")
+    message(
+        FATAL_ERROR
+        "Invalid Git hash (${ROSE_SCM_VERSION_ID}) does not "
+        "match regex=${ROSE_SCM_VERSION_ID_REGEX}"
+    )
+endif()
+
+message(
+    STATUS "Detecting ROSE SCM version id - "
+    "${ROSE_SCM_VERSION_ID}"
+)
+
+#---------------------------------------
+# HEAD commit - date (Unix timestamp)
+#---------------------------------------
+message(STATUS "Detecting ROSE SCM version date (unix timestamp)")
+
+execute_process(
+  # Author time (%at) of the HEAD commit
+    COMMAND             "git" "log" "-1" "--format=%at" "HEAD"
+    WORKING_DIRECTORY   ${PROJECT_SOURCE_DIR}
+    ERROR_VARIABLE      stderr
+    RESULT_VARIABLE     error_code
+    OUTPUT_VARIABLE     ROSE_SCM_VERSION_UNIX_DATE
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+if(NOT error_code EQUAL 0)
+    message(
+        FATAL_ERROR
+        "(status=${error_code} "
+        "Failed to determine the ROSE SCM version unix timestamp: "
+        "${ROSE_SCM_VERSION_UNIX_DATE}${stderr}"
+    )
+elseif(NOT "${ROSE_SCM_VERSION_UNIX_DATE}" MATCHES
+            "${ROSE_SCM_VERSION_UNIX_DATE_REGEX}")
+    message(
+        FATAL_ERROR
+        "Invalid Git author date (${ROSE_SCM_VERSION_UNIX_DATE}) does not "
+        "match regex=${ROSE_SCM_VERSION_UNIX_DATE_REGEX}")
+endif()
+
+message(
+    STATUS
+    "Detecting ROSE SCM version date (unix timestamp) - "
+    "${ROSE_SCM_VERSION_UNIX_DATE}"
+)
+
+#-------------------------------------------------------------------------------
+# Boost C++ Libraries
+#-------------------------------------------------------------------------------
 
 set(Boost_USE_STATIC_LIBS TRUE)        
 set(Boost_DEBUG TRUE)
