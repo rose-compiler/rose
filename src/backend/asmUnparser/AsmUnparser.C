@@ -94,9 +94,12 @@ AsmUnparser::init()
         .append(&basicBlockCleanup);
 
     staticdata_callbacks.pre
-        .append(&staticDataTitle);
+        .append(&staticDataBlockSeparation)     /* used only for ORGANIZED_BY_ADDRESS */
+        .append(&staticDataRawBytes)
+        .append(&staticDataBlockEntry);         /* used only for ORGANIZED_BY_ADDRESS */
     staticdata_callbacks.unparse
-        .append(&staticDataRawBytes);
+        .append(&staticDataDetails)
+        .append(&staticDataComment);
     staticdata_callbacks.post
         .append(&staticDataLineTermination);
 
@@ -539,19 +542,34 @@ AsmUnparser::BasicBlockCleanup::operator()(bool enabled, const BasicBlockArgs &a
  ******************************************************************************************************************************/
 
 bool
-AsmUnparser::StaticDataTitle::operator()(bool enabled, const StaticDataArgs &args)
+AsmUnparser::StaticDataBlockSeparation::operator()(bool enabled, const StaticDataArgs &args)
 {
-    if (enabled) {
-        args.output <<StringUtility::addrToString(args.data->get_address()) <<": static data; "
-                    <<args.data->get_raw_bytes().size() <<" byte" <<(1==args.data->get_raw_bytes().size()?"":"s");
-        SgAsmBlock *block = isSgAsmBlock(args.data->get_parent());
-        if (block && block->get_reason()!=0)
-            args.output <<"; " <<block->reason_str(false);
-        args.output <<std::endl;
+    if (enabled && ORGANIZED_BY_ADDRESS==args.unparser->get_organization()) {
+        SgAsmBlock *block = isSgAsmBlock(args.data->get_parent()); // look only to immediate parent
+        if (block!=prev_block) {
+            prev_block = block;
+            args.output <<std::endl;
+        }
     }
     return enabled;
 }
 
+bool
+AsmUnparser::StaticDataBlockEntry::operator()(bool enabled, const StaticDataArgs &args)
+{
+    if (enabled && ORGANIZED_BY_ADDRESS==args.unparser->get_organization()) {
+        SgAsmBlock *block = isSgAsmBlock(args.data->get_parent()); // look only to immediate parent
+        static size_t width = 0;
+        if (0==width)
+            width = block->reason_str(true, 0).size();
+        if (block && args.data==block->get_statementList().front()) {
+            args.output <<" " <<block->reason_str(true) <<" ";
+        } else {
+            args.output <<std::setw(width+2) <<" ";
+        }
+    }
+    return enabled;
+}
 
 bool
 AsmUnparser::StaticDataRawBytes::operator()(bool enabled, const StaticDataArgs &args)
@@ -575,9 +593,31 @@ AsmUnparser::StaticDataRawBytes::operator()(bool enabled, const StaticDataArgs &
             fmt.addr_fmt = "";
         }
 
+        if (!fmt.multiline && fmt.prefix)
+            args.output <<fmt.prefix;
+
         SgAsmExecutableFileFormat::hexdump(args.output, start_address, &(args.data->get_raw_bytes()[0]),
                                            args.data->get_raw_bytes().size(), fmt);
     }
+    return enabled;
+}
+
+bool
+AsmUnparser::StaticDataDetails::operator()(bool enabled, const StaticDataArgs &args)
+{
+    if (enabled) {
+        size_t nbytes = args.data->get_raw_bytes().size();
+        args.output <<" " <<nbytes <<" byte" <<(1==nbytes?"":"s") <<" untyped data beginning at "
+                    <<StringUtility::addrToString(args.data->get_address());
+    }
+    return enabled;
+}
+
+bool
+AsmUnparser::StaticDataComment::operator()(bool enabled, const StaticDataArgs &args)
+{
+    if (enabled && !args.data->get_comment().empty())
+        args.output <<" /* " <<args.data->get_comment() <<" */";
     return enabled;
 }
 

@@ -206,7 +206,8 @@ protected:
      *  This is because we use that address to establish a two-way link between the DataBlock and a Function object. */
     struct DataBlock {
         /** Constructor. This constructor should not be called directly since the Partitioner has other pointers that it needs
-         * to establish to this block.  Instead, call a method like Paritioner::create_datablock(). */
+         * to establish to this block.  Instead, call one of the Partitioner's data block creation functions, such as
+         * Partitioner::find_db_starting(). */
         DataBlock(): reason(SgAsmBlock::BLK_NONE), function(NULL) {}
 
         /** Destructor.  This destructor should not be called directly since there are other pointers in the Partitioner that
@@ -376,15 +377,19 @@ public:
         return debug;
     }
 
-    /** Set the memory map that was used for disassembly. */
+    /** Accessors for the memory map.  The partitioner needs to know the memory map that was used (or will be used, depending
+     *  on the partitioning mode of operation) for disassembly.  The map should certainly include all the bytes of instructions
+     *  because it may be used to construct static data blocks that are interspersed with the instructions.  It should also
+     *  include all read-only data if possible because that will improve the control flow analysis for indirect branches.
+     *
+     *  @{ */
     void set_map(MemoryMap *mmap) {
         map = mmap;
     }
-    
-    /** Return the memory map that was used for disassembly. */
     MemoryMap *get_map() const {
         return map;
     }
+    /** @} */
 
     /** Set progress reporting properties.  A progress report is produced not more than once every @p min_interval seconds
      * (default is 10) by sending a single line of ouput to the specified file.  Progress reporting can be disabled by supplying
@@ -417,8 +422,10 @@ public:
     static unsigned parse_switches(const std::string&, unsigned initial_flags);
 
     /** Top-level function to run the partitioner on some instructions and build an AST. The SgAsmInterpretation is optional.
-     *  If it is null then those function seeding operations that depend on having file headers are not run. */
-    virtual SgAsmBlock* partition(SgAsmInterpretation*, const Disassembler::InstructionMap&);
+     *  If it is null then those function seeding operations that depend on having file headers are not run.  The memory map
+     *  argument is optional only if a memory map has already been attached to this partitioner object with the set_map()
+     *  method. */
+    virtual SgAsmBlock* partition(SgAsmInterpretation*, const Disassembler::InstructionMap&, MemoryMap *mmap);
 
     /** Top-level function to run the partitioner, calling the specified disassembler as necessary to generate instructions. */
     virtual SgAsmBlock* partition(SgAsmInterpretation*, Disassembler*, MemoryMap*);
@@ -463,12 +470,13 @@ public:
      *  and add it to the bad instruction list. */
     virtual SgAsmInstruction* find_instruction(rose_addr_t, bool create=true);
 
-    /** Drop an instruction from consideration.  If the instruction belongs to a basic block then the basic block is also
-     *  dropped and its other instructions, if any, are returned to the (implied) list of free instructions.  The basic block
-     *  must not be currently assigned to any function.  The instruction is not deleted.
+    /** Drop an instruction from consideration.  If the instruction is the beginning of a basic block then drop the entire
+     *  basic block, returning its subsequent instructions back to the (implied) list of free instructions.  If the instruction
+     *  is in the middle of a basic block, then either drop the entire basic block, or truncate it at the specified
+     *  instruction depending on whether discard_entire_block is true or false.
      *
      *  This method always returns the null pointer. */
-    virtual SgAsmInstruction* discard(SgAsmInstruction*);
+    virtual SgAsmInstruction* discard(SgAsmInstruction*, bool discard_entire_block=false);
 
     /** Drop a basic block from the partitioner.  The specified basic block, which must not belong to any function, is removed
      *  from the Partitioner, deleted, and its instructions all returned to the (implied) list of free instructions. This
@@ -602,8 +610,8 @@ public:
 
     /** Callback to create inter-function instruction padding.  This callback can be passed to the scan_interfunc_insns()
      *  method's callback list.  Whenever it detects a contiguous sequence of one or more of the specified instructions (in any
-     *  order) immediately after the end of a function it will create a new SgAsmFunction::FUNC_INTERPAD function to
-     *  hold the padding.
+     *  order) immediately after the end of a function it will either create a new SgAsmFunction::FUNC_INTERPAD function to
+     *  hold the padding, or add the padding as data to the end of the preceding function.
      *
      *  Here's an example of how to use this (see the post_cfg() method for actual use):
      *  @code
@@ -614,10 +622,11 @@ public:
      *  pad1.x86_kind.insert(x86_int3);
      *
      *  // Create a second callback that looks for instructions of
-     *  // any architecture that consist of all zero bytes.
+     *  // any architecture that consist of 5 or more zero bytes.
      *  InterFuncInsnPadding pad2;
      *  SgUnsignedCharList zero;
      *  zero.push_back(0x00);
+     *  zero.minimum_size = 5;
      *  pad2.byte_patterns.push_back(zero);
      *
      *  // Build the callback list
@@ -643,17 +652,22 @@ public:
         std::vector<SgUnsignedCharList> byte_patterns;                  /**< Match instructions with specified byte patterns. */
         bool begins_contiguously;                                       /**< Must immediately follow the end of a function? */
         bool ends_contiguously;                                         /**< Must immediately precede the beginning of a func? */
+        size_t minimum_size;                                            /**< Minimum size in bytes. */
+        bool add_as_data;                                               /**< If true, create data otherwise create a function. */
 
         InterFuncInsnPadding()
-            : begins_contiguously(true), ends_contiguously(true) {}
+            : begins_contiguously(true), ends_contiguously(true), minimum_size(0), add_as_data(true) {}
         virtual bool operator()(bool enabled, const Args &args);        /**< The actual callback function. */
     };
 
     /** Callback to insert unreachable intra-function blocks.  This callback can be passed to the scan_intrafunc_insns()
      *  method's callback list.  Whenever it detects a block of unassigned instructions between blocks that both belong to the
      *  same function and the function is considered contiguous via the non-strict version of the is_contiguous() method, then
-     *  the block in question is added to the function. */
+     *  the block in question is added to the function.  If add_as_data is true, then the block is added as data rather that
+     *  instructions. */
     struct IntraFunctionBlocks: public InsnRangeCallback {
+        bool add_as_data;
+        IntraFunctionBlocks(): add_as_data(false) {}
         virtual bool operator()(bool enabled, const Args &args);        /**< The actual callback function. */
     };
 
@@ -666,18 +680,24 @@ public:
     };
 
     /** Callback to add post-function instructions to the preceding function.  It should be called by the
-     *  scan_interfunc_insns() method after inter-function padding is found.
+     *  scan_interfunc_insns() method after inter-function padding is found.  If add_as_data is true, then the blocks are added
+     *  as data blocks rather than instructions.
      *
      *  Note: This is highly experimental. [RPM 2011-09-22] */
     struct PostFunctionBlocks: public InsnRangeCallback {
+        bool add_as_data;
+        PostFunctionBlocks(): add_as_data(true) {}
         virtual bool operator()(bool enabled, const Args &args);
     };
 
 
     /*************************************************************************************************************************
      *                                                 Low-level Functions
+     *
+     * These are public because they might need to be called by the partitioner's instruction or address traversal callbacks,
+     * and its often convenient to declare those functors outside any Partitioner subclass.
      *************************************************************************************************************************/
-protected:
+public:
     /* NOTE: Some of these are documented at their implementation because the documentation is more than what conveniently
      *       fits here. */
     struct AbandonFunctionDiscovery {};                         /**< Exception thrown to defer function block discovery. */
@@ -689,9 +709,10 @@ protected:
     virtual void remove(Function*, DataBlock*);                 /**< Remove a data block from a function. */
     virtual BasicBlock* find_bb_containing(rose_addr_t, bool create=true); /* Find basic block containing instruction address */
     virtual BasicBlock* find_bb_starting(rose_addr_t, bool create=true);   /* Find or create block starting at specified address */
+    virtual DataBlock* find_db_starting(rose_addr_t, size_t size); /* Find (or create if size>0) a data block */
     virtual Disassembler::AddressSet successors(BasicBlock*, bool *complete=NULL); /* Calculates known successors */
     virtual rose_addr_t call_target(BasicBlock*);               /* Returns address if block could be a function call */
-    virtual void truncate(BasicBlock*, rose_addr_t);            /**< Remove instructions from the end of a basic block. */
+    virtual void truncate(BasicBlock*, rose_addr_t);            /* Remove instructions from the end of a basic block. */
     virtual void discover_first_block(Function*);               /* Adds first basic block to empty function to start discovery. */
     virtual void discover_blocks(Function*, unsigned reason);   /* Start to recursively discover blocks of a function. */
     virtual void discover_blocks(Function*, rose_addr_t, unsigned reason); /* Recursively discovers blocks of a function. */
@@ -720,8 +741,18 @@ protected:
      *  (exclusive) address which are returned by reference, but not all functions own all the bytes within that range of
      *  addresses. Therefore, the exact bytes are returned by adding them to the optional ExtentMap argument.  This function
      *  returns the number of nodes (instructions and static data items) in the function.  If the function contains no
-     *  nodes then the extent map is not modified and the low and high addresses are both set to zero. */
+     *  nodes then the extent map is not modified and the low and high addresses are both set to zero.
+     *
+     *  See also: SgAsmFunction::get_extent(), which calculates the same information but can be used only after we've constructed
+     *  the AST for the function. */
     virtual size_t function_extent(Function*, ExtentMap *extents=NULL, rose_addr_t *lo_addr=NULL, rose_addr_t *hi_addr=NULL);
+
+    /** Returns information about the datablock addresses.  Every data block has a minimum (inclusive) and maximum (exclusive)
+     *  address which are returned by reference, but some of the addresses in that range might not be owned by the specified
+     *  data block.  Therefore, the exact bytes are returned by adding them to the optional ExtentMap argument.  This function
+     *  returns the number of nodes (static data items) in the data block.  If the data block contains no nodes then the extent
+     *  map is not modified, the low and high addresses are both set to zero, and the return value is zero. */
+    virtual size_t datablock_extent(DataBlock*, ExtentMap *extents=NULL, rose_addr_t *lo_addr=NULL, rose_addr_t *hi_addr=NULL);
 
     /** Returns an indication of whether a function is contiguous.  All empty functions are contiguous. If @p strict is true,
      *  then a function is contiguous if it owns all bytes in a contiguous range of the address space.  If @p strict is false
@@ -993,8 +1024,11 @@ public:
 
     /*************************************************************************************************************************
      *                                                     Data Members
+     *
+     * These are public so they can be accessed by user-defined traversal callbacks that might be declared outside any
+     * Partitioner subclass.
      *************************************************************************************************************************/
-protected:
+public:
     Disassembler *disassembler;                         /**< Optional disassembler to call when an instruction is needed. */
     Disassembler::InstructionMap insns;                 /**< Instruction cache, filled in by user or populated by disassembler. */
     MemoryMap *map;                                     /**< Memory map used for disassembly if disassembler is present. */
@@ -1017,7 +1051,7 @@ protected:
     static time_t progress_time;                        /**< Time of last report, or zero if no report has been generated. */
     static FILE *progress_file;                         /**< File to which reports are made. Null disables reporting. */
 
-private:
+public:
     static const rose_addr_t NO_TARGET = (rose_addr_t)-1;
 };
 
