@@ -382,10 +382,14 @@ public:
      *  because it may be used to construct static data blocks that are interspersed with the instructions.  It should also
      *  include all read-only data if possible because that will improve the control flow analysis for indirect branches.
      *
+     *  The first argument may be the entire memory map.  The second (optional) argument should be the map describing memory
+     *  values for instructions and data and will be consulted for indirect jumps, among other things.  Typically this will be
+     *  the read-only portion of the first argument (the default if the second argument is missing).
+     *
+     *  The first map will be stored by the partitioner as a pointer; the second map (if supplied) is copied.
+     *
      *  @{ */
-    void set_map(MemoryMap *mmap) {
-        map = mmap;
-    }
+    void set_map(MemoryMap *mmap, MemoryMap *ro_mmap=NULL);
     MemoryMap *get_map() const {
         return map;
     }
@@ -1032,6 +1036,7 @@ public:
     Disassembler *disassembler;                         /**< Optional disassembler to call when an instruction is needed. */
     Disassembler::InstructionMap insns;                 /**< Instruction cache, filled in by user or populated by disassembler. */
     MemoryMap *map;                                     /**< Memory map used for disassembly if disassembler is present. */
+    MemoryMap ro_map;                                   /**< The read-only parts of 'map', used for insn semantics mem reads. */
     Disassembler::BadMap bad_insns;                     /**< Captured disassembler exceptions. */
 
     BasicBlocks basic_blocks;                           /**< All known basic blocks. */

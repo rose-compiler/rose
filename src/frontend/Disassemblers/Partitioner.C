@@ -364,6 +364,28 @@ Partitioner::parse_switches(const std::string &s, unsigned flags)
     return flags;
 }
 
+static bool
+is_writable(const MemoryMap::MapElement &me) {
+    return 0 != (me.get_mapperms() & MemoryMap::MM_PROT_WRITE);
+}
+
+/* Set disassembly and memory initialization maps. */
+void
+Partitioner::set_map(MemoryMap *map, MemoryMap *ro_map)
+{
+    this->map = map;
+    if (map) {
+        if (ro_map) {
+            this->ro_map = *ro_map;
+        } else {
+            this->ro_map = *map;
+            this->ro_map.prune(is_writable);
+        }
+    } else {
+        this->ro_map.clear();
+    }
+}
+
 /** Runs local block analyses if their cached results are invalid and caches the results.  A local analysis is one whose
  *  results only depend on the specified block and which are valid into the future as long as the instructions in the block do
  *  not change. */
@@ -374,7 +396,7 @@ Partitioner::update_analyses(BasicBlock *bb)
     if (bb->valid_cache()) return;
 
     /* Successor analysis */
-    bb->cache.sucs = bb->insns.front()->get_successors(bb->insns, &(bb->cache.sucs_complete));
+    bb->cache.sucs = bb->insns.front()->get_successors(bb->insns, &(bb->cache.sucs_complete), &ro_map);
 
     /* Call target analysis. For x86, a function call is any CALL instruction except when the call target is the fall-through
      * address and the instruction at the fall-through address pops the top of the stack (this is how position independent
@@ -2875,6 +2897,7 @@ Partitioner::partition(SgAsmInterpretation* interp/*=NULL*/, const Disassembler:
     add_instructions(insns);
     
     MemoryMap *old_map = get_map();
+    MemoryMap old_ro_map = ro_map;
     if (!map && !old_map)
         throw Exception("no memory map");
     if (map)
@@ -2886,9 +2909,9 @@ Partitioner::partition(SgAsmInterpretation* interp/*=NULL*/, const Disassembler:
         analyze_cfg(SgAsmBlock::BLK_GRAPH1);
         post_cfg(interp);
         retval = build_ast();
-        set_map(old_map);
+        set_map(old_map, &old_ro_map);
     } catch (...) {
-        set_map(old_map);
+        set_map(old_map, &old_ro_map);
         throw;
     }
     
