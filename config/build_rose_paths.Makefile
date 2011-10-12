@@ -29,6 +29,8 @@ src/util/rose_paths.C: Makefile
 	@@echo "const std::string ROSE_CONFIGURE_DATE     = \"@configure_date@\";" >> src/util/rose_paths.C
 	@@echo "const std::string ROSE_AUTOMAKE_BUILD_OS  = \"@build_os@\";" >> src/util/rose_paths.C
 	@@echo "const std::string ROSE_AUTOMAKE_BUILD_CPU = \"@build_cpu@\";" >> src/util/rose_paths.C
+	@@echo "const std::string ROSE_OFP_VERSION_STRING = \"@ROSE_OFP_VERSION_NUMBER@\";" >> src/util/rose_paths.C
+
 	@@echo "" >> src/util/rose_paths.C
 #	@@echo "/* Define the location of the Compass tool within ROSE */" >> src/util/rose_paths.C
 #	@@echo "const char COMPASS_SOURCE_DIRECTORY = \"@absolute_path_srcdir@/projects/compass\";" >> src/util/rose_paths.C
