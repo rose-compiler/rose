@@ -209,7 +209,8 @@ if ENABLE_JAVAPORT
 endif
 
 # DQ (4/5/2010): Use the same version of OFP as specified on the original configure command line.
-DISTCHECK_CONFIGURE_FLAGS += --enable-ofp-version=@ROSE_OFP_MAJOR_VERSION_NUMBER@.@ROSE_OFP_MINOR_VERSION_NUMBER@.@ROSE_OFP_PATCH_VERSION_NUMBER@
+# CER (10/10/2011): No longer needed. A specific OFP version is configured by default and distributed with ROSE.
+#DISTCHECK_CONFIGURE_FLAGS += --enable-ofp-version=@ROSE_OFP_MAJOR_VERSION_NUMBER@.@ROSE_OFP_MINOR_VERSION_NUMBER@.@ROSE_OFP_PATCH_VERSION_NUMBER@
 
 # SRIRAM (8/2/2010): changing distcheck configuration for LLVM translator
 if ROSE_USE_LLVM
