@@ -2,7 +2,7 @@
 
 mpaValuePropagation_includes=\
 	-I$(mpaValuePropagationPath)/.. \
-	-I$(mpaValuePropagationPath)/../dataflowAnalysis \
+	-I$(mpaValuePropagationPath)/../bitvectorDataflow \
 	-I$(mpaValuePropagationPath)/../CFG \
 	-I$(top_srcdir)/src/midend/loopProcessing \
 	-I$(top_srcdir)/src/midend/astUtil \

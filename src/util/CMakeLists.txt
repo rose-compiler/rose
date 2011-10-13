@@ -36,6 +36,7 @@ file( APPEND ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C "/* Additional interes
 file( APPEND ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C "const std::string ROSE_CONFIGURE_DATE     = \"@configure_date@\";\n" )
 file( APPEND ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C "const std::string ROSE_AUTOMAKE_BUILD_OS  = \"${CMAKE_HOST_SYSTEM_VERSION}\";\n" )
 file( APPEND ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C "const std::string ROSE_AUTOMAKE_BUILD_CPU = \"${CMAKE_HOST_SYSTEM_PROCESSOR}\";\n" )
+file( APPEND ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C "const std::string ROSE_OFP_VERSION_STRING = \"@ROSE_OFP_VERSION_NUMBER@\";\n" )
 file( APPEND ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C "/* Numeric form of ROSE version -- assuming ROSE version x.y.zL \(where */\n" )
 file( APPEND ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C "/* x, y, and z are numbers, and L is a single lowercase letter from a to j\), */\n" )
 file( APPEND ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C "/* the numeric value is x * 1000000 + y * 10000 + z * 100 + \(L - 'a'\). */\n" )

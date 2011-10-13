@@ -41,6 +41,12 @@
 // DQ (6/24/2010): Fixup the SgTypedefSeq lists to support the AST merge mechanism.
 #include "normalizeTypedefSequenceLists.h"
 
+// DQ (9/14/2011): Added support to make the AST consistant with respect to constant folded values.
+// We can either leave the constant folded values or replace the constant folded values with the 
+// original expression trees. The default will be to replace the constant folded values with the
+// original expression trees.
+#include "fixupConstantFoldedValues.h"
+
 /*! \brief Postprocessing that is not likely to be handled in the EDG/Sage III translation.
  */
 void postProcessingSupport (SgNode* node);
