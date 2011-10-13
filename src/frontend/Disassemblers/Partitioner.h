@@ -231,16 +231,17 @@ protected:
         rose_addr_t address() const;            /* Return the address of the first node of a data block. */
         std::vector<SgAsmStaticData*> nodes;    /**< The static data nodes belonging to this block; not deleted. */
         unsigned reason;                        /**< Reasons this block was created; SgAsmBlock::Reason bit flags */
-        Function *function;                     /**< Function to which this data block is assigned, or null */
+        Function *function;                     /**< Function to which this data block is explicitly assigned, or null */
+        BasicBlock *basic_block;                /**< Basic block to which this data block is bound, or null. */
     };
     typedef std::map<rose_addr_t, DataBlock*> DataBlocks;
 
     /** Represents a function within the Partitioner. Each non-empty function will become an SgAsmFunction in the AST. */
     struct Function {
-        Function(rose_addr_t entry_va): reason(0), pending(true), entry_va(entry_va), returns(false) {}
-        Function(rose_addr_t entry_va, unsigned r): reason(r), pending(true), entry_va(entry_va), returns(false) {}
+        Function(rose_addr_t entry_va): reason(0), pending(true), entry_va(entry_va), may_return(false) {}
+        Function(rose_addr_t entry_va, unsigned r): reason(r), pending(true), entry_va(entry_va), may_return(false) {}
         Function(rose_addr_t entry_va, unsigned r, const std::string& name)
-            : reason(r), name(name), pending(true), entry_va(entry_va), returns(false) {}
+            : reason(r), name(name), pending(true), entry_va(entry_va), may_return(false) {}
         void clear_basic_blocks();              /**< Remove all basic blocks from this function w/out deleting the blocks. */
         void clear_data_blocks();               /**< Remove all data blocks from this function w/out deleting the blocks. */
         unsigned reason;                        /**< SgAsmFunction::FunctionReason bit flags */
@@ -250,7 +251,7 @@ protected:
         bool pending;                           /**< True if we need to (re)discover the basic blocks */
         rose_addr_t entry_va;                   /**< Entry virtual address */
         Disassembler::AddressSet heads;         /**< CFG heads, excluding func entry: addresses of additional blocks */
-        bool returns;                           /**< Does this function return? */
+        bool may_return;                        /**< Is it possible for this function to return? */
     };
     typedef std::map<rose_addr_t, Function*> Functions;
 

@@ -537,7 +537,7 @@ Partitioner::successors(BasicBlock *bb, bool *complete)
         rose_addr_t call_target_va = call_target(bb);
         if (call_target_va!=NO_TARGET) {
             BasicBlock *target_bb = find_bb_starting(call_target_va, false);
-            if (target_bb && target_bb->function && target_bb->function->returns)
+            if (target_bb && target_bb->function && target_bb->function->may_return)
                 retval.insert(fall_through_va);
         } else {
             retval.insert(fall_through_va); /*true 99% of the time*/
@@ -851,8 +851,8 @@ Partitioner::append(Function* f, BasicBlock *bb, unsigned reason, bool keep/*=fa
      *        analyze_cfg() loop.  Doing it in analyze_cfg() is probably more efficient than running these nested loops each
      *        time we have a transition. [RPM 2010-07-30] */
     update_analyses(bb);
-    if (bb->cache.function_return && !f->returns) {
-        f->returns = true;
+    if (bb->cache.function_return && !f->may_return) {
+        f->may_return = true;
         if (debug) fprintf(debug, "[returns-to");
         for (BasicBlocks::iterator bbi=basic_blocks.begin(); bbi!=basic_blocks.end(); ++bbi) {
             if (bbi->second->function!=NULL) {
@@ -1390,7 +1390,7 @@ Partitioner::mark_elf_plt_entries(SgAsmGenericHeader *fhdr)
         if ("abort@plt"!=name && "execl@plt"!=name && "execlp@plt"!=name && "execv@plt"!=name && "execvp@plt"!=name &&
             "exit@plt"!=name && "_exit@plt"!=name && "fexecve@plt"!=name &&
             "longjmp@plt"!=name && "__longjmp@plt"!=name && "siglongjmp@plt"!=name)
-            plt_func->returns = true;
+            plt_func->may_return = true;
     }
 }
 
@@ -2569,14 +2569,16 @@ Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
             if (bb->function && return_bb &&
                 is_function_call(bb, &target_va) && target_va!=NO_TARGET &&
                 NULL!=(target_bb=find_bb_starting(target_va, false)) &&
-                target_bb->function && target_bb->function->returns) {
+                target_bb->function && target_bb->function->may_return) {
                 if (!return_bb->function) {
+                    /* Function A makes a call to function B and we know that function B could return but the return address is
+                     * not part of any function.  Mark function A as pending so that we rediscover its blocks. */   
                     bb->function->pending = true;
                     if (debug) {
-                        fprintf(debug, "  F%08"PRIx64" returns to B%08"PRIx64" in F%08"PRIx64"\n", 
+                        fprintf(debug, "  F%08"PRIx64" may return to B%08"PRIx64" in F%08"PRIx64"\n", 
                                 target_bb->function->entry_va, return_va, bb->function->entry_va);
                     }
-                } else if (return_va==target_bb->function->entry_va && !bb->function->returns) {
+                } else if (return_va==target_bb->function->entry_va && !bb->function->may_return) {
                     /* This handles the case when function A's return from B falls through into B. In this case, since B
                      * returns then A also returns.  We mark A as returning and we'll catch A's callers on the next pass.
                      *    function_A:
@@ -2585,33 +2587,34 @@ Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
                      *    function_B:
                      *        RET
                      */
-                    bb->function->returns = true;
+                    bb->function->may_return = true;
                     if (debug) {
-                        fprintf(debug, "  Function F%08"PRIx64" returns by virtue of call fall-through at B%08"PRIx64"\n", 
+                        fprintf(debug, "  Function F%08"PRIx64" may return by virtue of call fall-through at B%08"PRIx64"\n", 
                                 bb->function->entry_va, bb->address());
                     }
                 }
-            } else if (bb->function && !bb->function->returns && !is_function_call(bb, NULL) &&
-                       succs_complete && 1==succs.size() && 0!=(target_va=*succs.begin()) &&
-                       NULL!=(target_bb=find_bb_starting(target_va, false)) &&
-                       target_bb->function && target_bb->function!=bb->function &&
-                       target_va==target_bb->function->entry_va &&
-                       target_bb->function->returns) {
-                /* The block bb isn't a function call, but branches to the entry point of another function.  If that function
-                 * returns then so does this one.  This handles situations like:
-                 *      function_A:
-                 *          ...
-                 *          JMP function_B
-                 *      ...
-                 *      function_B:
-                 *          RET
-                 * We don't need to set function_A->pending because the reachability of the instruction after its JMP won't
-                 * change regardless of whether we learned that what it calls changed.
-                 */
-                bb->function->returns = true;
-                if (debug) {
-                    fprintf(debug, "  F%08"PRIx64" returns by virtue of branching to function F%08"PRIx64" which returns\n",
-                            bb->function->entry_va, target_bb->function->entry_va);
+            } else if (bb->function && !bb->function->may_return && !is_function_call(bb, NULL) && succs_complete) {
+                for (Disassembler::AddressSet::iterator si=succs.begin(); si!=succs.end() && !bb->function->may_return; ++si) {
+                    if (0!=(target_va=*si) && NULL!=(target_bb=find_bb_starting(target_va, false)) &&
+                        target_bb->function && target_bb->function!=bb->function &&
+                        target_va==target_bb->function->entry_va && target_bb->function->may_return) {
+                        /* The block bb isn't a function call, but branches to the entry point of another function.  If that
+                         * function returns then so does this one.  This handles situations like:
+                         *      function_A:
+                         *          ...
+                         *          JMP function_B
+                         *      ...
+                         *      function_B:
+                         *          RET
+                         * We don't need to set function_A->pending because the reachability of the instruction after its JMP
+                         * won't change regardless of whether the "called" function returns (i.e., the return is to the caller
+                         * of function_A, not to function_A itself. */
+                        bb->function->may_return = true;
+                        if (debug) {
+                            fprintf(debug, "  F%08"PRIx64" may return by virtue of branching to function F%08"PRIx64
+                                    " which may return\n", bb->function->entry_va, target_bb->function->entry_va);
+                        }
+                    }
                 }
             }
         }
@@ -3000,7 +3003,7 @@ Partitioner::build_ast(Function* f)
     retval->set_entry_va(f->entry_va);
     retval->set_name(f->name);
     retval->set_address(first_basic_block->address());
-    retval->set_can_return(f->returns);
+    retval->set_can_return(f->may_return);
 
     for (NodeMap::iterator ni=nodes.begin(); ni!=nodes.end(); ++ni) {
         retval->get_statementList().push_back(ni->second);
