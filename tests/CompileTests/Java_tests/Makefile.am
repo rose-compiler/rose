@@ -52,6 +52,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      pgc_test2011_07.java \
      pgc_test2011_08.java \
      pgc_test2011_09.java \
+     pgc_test2011_10.java \
      pgc_test2011_11.java \
      \
      cave3_IntLit0.java \
@@ -92,7 +93,6 @@ TESTCODES_REQUIRED_TO_PASS = \
 # These test pass the compilation using ROSE, all AST tests, unparsing to generate 
 # Java code, and the final compilation of that code using a backend compiler (javac).
 TESTCODE_CURRENTLY_FAILING = \
-     pgc_test2011_10.java \
      pgc_test2011_12.java \
      \
 	 cave3_DoubleLit0.java \
