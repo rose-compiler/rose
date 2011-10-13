@@ -1,4 +1,4 @@
-/* unparseJava_statements.java
+/* unparseJava_statements.C
  * Contains functions that unparse statements
  *
  * FORMATTING WILL BE DONE IN TWO WAYS:
@@ -559,10 +559,14 @@ Unparse_Java::unparseForInitStmt (SgStatement* stmt, SgUnparse_Info& info) {
         if (stmt_it != stmts.begin())
             curprint(", ");
 
-        SgExprStatement* stmt = isSgExprStatement(*stmt_it);
-        ROSE_ASSERT(stmt != NULL && "expected an SgExprStatement in SgForInitStmt");
-
-        unparseExpression(stmt->get_expression(), info);
+        // charles4 08/06/2011: A for statement initializer can be a variable declaration or an expression statement.
+        if (isSgVariableDeclaration(*stmt_it))
+             unparseVarDeclStmt(*stmt_it, info);
+        else {
+            SgExprStatement* stmt = isSgExprStatement(*stmt_it);
+            ROSE_ASSERT(stmt != NULL && "expected an SgExprStatement or an SgVariableDeclaration in SgForInitStmt");
+            unparseExprStmt(stmt, info);
+        }
     }
 }
 
@@ -651,9 +655,8 @@ Unparse_Java::unparseFunctionParameterList(SgStatement* stmt, SgUnparse_Info& in
     SgInitializedNamePtrList& names = param_list->get_args();
     SgInitializedNamePtrList::iterator name_it;
     for (name_it = names.begin(); name_it != names.end(); name_it++) {
-        if (name_it != names.begin()) {
+        if (name_it != names.begin())
             curprint(", ");
-        }
         SgInitializedName* iname = *name_it;
         unparseType(iname->get_type(), info);
         curprint(" ");
@@ -721,6 +724,8 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      unparseName(mfuncdecl_stmt->get_name(), info);
      curprint("(");
+
+
      unparseStatement(mfuncdecl_stmt->get_parameterList(), info);
 
      SgInitializedNamePtrList& names = mfuncdecl_stmt->get_args();
@@ -733,7 +738,15 @@ Unparse_Java::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      }
 
      curprint(") ");
-     unparseStatement(mfuncdecl_stmt->get_definition(), info);
+     SgFunctionDefinition *function_definition = mfuncdecl_stmt->get_definition();
+//
+// charles4 10/10/2011: For some reason, when either of the 2 entry points below are invoked,
+// the body of the function is not processed for the generated constructor... Why?
+//
+//     unparseStatement(function_definition, info);
+//     unparseFuncDefnStmt(function_definition, info);
+//
+     unparseBasicBlockStmt(function_definition -> get_body(), info);
 
 #if OUTPUT_DEBUGGING_FUNCTION_NAME
      printf ("Inside of unparseMFuncDeclStmt() name = %s  transformed = %s prototype = %s \n",
