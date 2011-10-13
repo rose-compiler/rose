@@ -2,131 +2,131 @@ void start_save(){}
 
 int main()
 {
-	return 0;
+        return 0;
 }
 
 class myClass
 {
-	public:
-	short x;
-	int y;
-	long int z;
+        public:
+        short x;
+        int y;
+        long int z;
 };
 
 typedef struct 
 {
-	int a;
-	int b;
-	myClass theClass;
+        int a;
+        int b;
+        myClass theClass;
 } myStruct;
 
 
 int testExprParsing_0(int arg)
 {
-	return arg;
+        return arg;
 }
 
 int testExprParsing_1()
 {
-	int i=1, j=2;
-	myStruct q;
-	
-	q.b=1;
-	q.a=q.b+(char)5;
-	i = j+1;
-	q.theClass.y = i;
-	j = q.theClass.z;
-	q.theClass.z = -98;
-	q.a=q.b-5;
-	i = j-(long)12;
-	q.b += 2;
-	q.b += q.a;
-	q.b -= q.a;
-	q.theClass.x -= (unsigned int)16;
-	q.b += -32;
-	q.theClass.x -= (short)-33;
-	q.theClass.x++;
-	q.theClass.x--;
-	++q.theClass.x;
-	--q.theClass.x;
-	q.a = q.b + j;
-	q.a = q.b - j;
-	q.a = 5 - j;
-	i *= 5;
-	i /= j;
-	i = j / -5;
-	i = j * -5;
-	q.b = q.theClass.x * i;
-	q.b = q.theClass.x / i;
-	
-	if(i-5          <= j+1){}
-	if(q.a          <= j+1){}
-	if(i            <= q.a-1){}
-	if(q.theClass.z <= 1){}
-	if(i            <= -1){}
-	if(1            <= q.a){}
-	if(-1           <= j){}
-	if(-761         <= j+220){}
-	if(i+761        <= q.theClass.z){}
+        int i=1, j=2;
+        myStruct q;
+        
+        q.b=1;
+        q.a=q.b+(char)5;
+        i = j+1;
+        q.theClass.y = i;
+        j = q.theClass.z;
+        q.theClass.z = -98;
+        q.a=q.b-5;
+        i = j-(long)12;
+        q.b += 2;
+        q.b += q.a;
+        q.b -= q.a;
+        q.theClass.x -= (unsigned int)16;
+        q.b += -32;
+        q.theClass.x -= (short)-33;
+        q.theClass.x++;
+        q.theClass.x--;
+        ++q.theClass.x;
+        --q.theClass.x;
+        q.a = q.b + j;
+        q.a = q.b - j;
+        q.a = 5 - j;
+        i *= 5;
+        i /= j;
+        i = j / -5;
+        i = j * -5;
+        q.b = q.theClass.x * i;
+        q.b = q.theClass.x / i;
+        
+        if(i-5          <= j+1){}
+        if(q.a          <= j+1){}
+        if(i            <= q.a-1){}
+        if(q.theClass.z <= 1){}
+        if(i            <= -1){}
+        if(1            <= q.a){}
+        if(-1           <= j){}
+        if(-761         <= j+220){}
+        if(i+761        <= q.theClass.z){}
 
-	if(i-5          >= j+1){}
-	if(q.a          >= j+1){}
-	if(i            >= q.a-1){}
-	if(q.theClass.z >= 1){}
-	if(i            >= -1){}
-	if(1            >= q.a){}
-	if(-1           >= j){}
-	if(-761         >= j+220){}
-	if(i-761        >= q.theClass.z){}
-		
-	if(i-5          < j+1){}
-	if(q.a          < j+1){}
-	if(i            < q.a-1){}
-	if(q.theClass.z < 1){}
-	if(i            < -1){}
-	if(1            < q.a){}
-	if(-1           < j){}
-	if(-761         < j+220){}
-	if(i-761        < q.theClass.z){}
-		
-	if(i-5          > j+1){}
-	if(q.a          > j+1){}
-	if(i            > q.a-1){}
-	if(q.theClass.z > 1){}
-	if(i            > -1){}
-	if(1            > q.a){}
-	if(-1           > j){}
-	if(-761         > j+220){}
-	if(i-761        > q.theClass.z){}
-		
-	if(i-5          == j+1){}
-	if(q.a          == j+1){}
-	if(i            == q.a-1){}
-	if(q.theClass.z == 1){}
-	if(i            == -1){}
-	if(1            == q.a){}
-	if(-1           == j){}
-	if(-761         == j+220){}
-	if(i+761        == q.theClass.z){}
+        if(i-5          >= j+1){}
+        if(q.a          >= j+1){}
+        if(i            >= q.a-1){}
+        if(q.theClass.z >= 1){}
+        if(i            >= -1){}
+        if(1            >= q.a){}
+        if(-1           >= j){}
+        if(-761         >= j+220){}
+        if(i-761        >= q.theClass.z){}
+                
+        if(i-5          < j+1){}
+        if(q.a          < j+1){}
+        if(i            < q.a-1){}
+        if(q.theClass.z < 1){}
+        if(i            < -1){}
+        if(1            < q.a){}
+        if(-1           < j){}
+        if(-761         < j+220){}
+        if(i-761        < q.theClass.z){}
+                
+        if(i-5          > j+1){}
+        if(q.a          > j+1){}
+        if(i            > q.a-1){}
+        if(q.theClass.z > 1){}
+        if(i            > -1){}
+        if(1            > q.a){}
+        if(-1           > j){}
+        if(-761         > j+220){}
+        if(i-761        > q.theClass.z){}
+                
+        if(i-5          == j+1){}
+        if(q.a          == j+1){}
+        if(i            == q.a-1){}
+        if(q.theClass.z == 1){}
+        if(i            == -1){}
+        if(1            == q.a){}
+        if(-1           == j){}
+        if(-761         == j+220){}
+        if(i+761        == q.theClass.z){}
 
-	if(i-5          == j+1){}
-	if(q.a          == j+1){}
-	if(i            == q.a-1){}
-	if(q.theClass.z == 1){}
-	if(i            == -1){}
-	if(1            == q.a){}
-	if(-1           == j){}
-	if(-761         == j+220){}
-	if(i-761        == q.theClass.z){}
-		
-	i *= j + 6;
-	i = j / 5 + 1;
-	2+testExprParsing_0(i*9);
-	if(i*1 < j){}
-	if(i==j){}
-	if(q.a = (i<=j)){}
-	
-	return i;
+        if(i-5          == j+1){}
+        if(q.a          == j+1){}
+        if(i            == q.a-1){}
+        if(q.theClass.z == 1){}
+        if(i            == -1){}
+        if(1            == q.a){}
+        if(-1           == j){}
+        if(-761         == j+220){}
+        if(i-761        == q.theClass.z){}
+                
+        i *= j + 6;
+        i = j / 5 + 1;
+        2+testExprParsing_0(i*9);
+        if(i*1 < j){}
+        if(i==j){}
+        if(q.a = (i<=j)){}
+        
+        return i;
 }
 
 int temp_, temp_0, temp_1, temp_2, temp_3, temp_4, temp_5, temp_6, temp_7, temp_8, temp_9;
@@ -143,18 +143,18 @@ int temp_09, temp_19, temp_29, temp_39, temp_49, temp_59, temp_69, temp_79, temp
 int foo(){return 0;}
 int testCFGTransform_0()
 {
-	int a=0,b=1,c=0;
-	
-	a = a = (b+c);
-	
-	b=c;
-	
-	if(a = (a=b))
-	{
-	}
-	
-	a = foo();
-	
-	return b+a;
+        int a=0,b=1,c=0;
+        
+        a = a = (b+c);
+        
+        b=c;
+        
+        if(a = (a=b))
+        {
+        }
+        
+        a = foo();
+        
+        return b+a;
 }
 

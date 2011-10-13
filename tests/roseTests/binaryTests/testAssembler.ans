@@ -1,1 +1,275 @@
-Assembled 1339 instructions
+
+
+
+==================== Interpretation Listing ====================
+
+va 0x08048000 + 0x00000034 = 0x08048034 r-xp at base aaa  + 0x00000000 buffer2.bin(LOAD#2)
+va 0x08048034 + 0x000000e0 = 0x08048114 r-xp at base aab  + 0x00000000 buffer2.bin(PHDR#0)
+va 0x08048114 + 0x00000013 = 0x08048127 r--p at base aac  + 0x00000000 buffer2.bin(.interp)
+va 0x08048127 + 0x00000001 = 0x08048128 r-xp at base aaa  + 0x00000127 buffer2.bin(LOAD#2)
+va 0x08048128 + 0x00000020 = 0x08048148 r--p at base aad  + 0x00000000 buffer2.bin(.note.ABI-tag)
+va 0x08048148 + 0x00000130 = 0x08048278 r--- at base aae  + 0x00000148 buffer2.bin(.dynstr+.dynsym+.gnu.version+.gnu.versio...
+va 0x08048278 + 0x00000017 = 0x0804828f r-x- at base aae  + 0x00000278 buffer2.bin(.init)
+va 0x0804828f + 0x00000001 = 0x08048290 r-xp at base aaa  + 0x0000028f buffer2.bin(LOAD#2)
+va 0x08048290 + 0x0000021e = 0x080484ae r-x- at base aae  + 0x00000290 buffer2.bin(.fini+.plt+.text)
+va 0x080484ae + 0x00000002 = 0x080484b0 r-xp at base aaa  + 0x000004ae buffer2.bin(LOAD#2)
+va 0x080484b0 + 0x0000000c = 0x080484bc r--- at base aae  + 0x000004b0 buffer2.bin(.eh_frame+.rodata)
+va 0x080484bc + 0x00000b44 = 0x08049000 r-xp at base aaa  + 0x000004bc buffer2.bin(LOAD#2)
+va 0x08049000 + 0x000004bc = 0x080494bc rw-p at base aaf  + 0x00000000 buffer2.bin(LOAD#3)
+va 0x080494bc + 0x00000014 = 0x080494d0 rw-- at base aae  + 0x000004bc buffer2.bin(.ctors+.dtors+.jcr)
+va 0x080494d0 + 0x000000c8 = 0x08049598 rw-p at base aag  + 0x00000000 buffer2.bin(.dynamic)
+va 0x08049598 + 0x00000024 = 0x080495bc rw-- at base aae  + 0x00000598 buffer2.bin(.data+.got+.got.plt)
+va 0x080495bc + 0x00000a44 = 0x0804a000 rw-p at anon null + 0x00000000 buffer2.bin(.bss+LOAD#3)
+
+0x08048278: ================================== Function (function call, symbol, pattern) <_init>
+0x08048278: 55                      |U       | E1.    push   ebp
+0x08048279: 89 e5                   |..      |        mov    ebp, esp
+0x0804827b: 83 ec 08                |...     |        sub    esp, 0x08
+0x0804827e: e8 61 00 00 00          |.a...   |        call   0x080482e4
+
+0x08048283: e8 b8 00 00 00          |.....   | .1.    call   0x08048340
+
+0x08048288: e8 d3 01 00 00          |.....   | .1.    call   0x08048460
+
+0x0804828d: c9                      |.       | .1.    leave  
+0x0804828e: c3                      |.       |        ret    
+
+0x0804828f: 00 ff 35 a0 95 04 08 ff |..5.....|
+0x08048297: 25 a4 95 04 08 00 00 00 |%.......|
+0x0804829f: 00                      |.       | ..U  17 bytes untyped data beginning at 0x0804828f
+
+0x080482a0: ================================== Function (function call, import) <malloc@plt>
+0x080482a0: ff 25 a8 95 04 08       |.%....  | E1.    jmp    DWORD PTR ds:[0x080495a8]
+
+0x080482a6: 68 00 00 00 00 e9 e0 ff |h.......|
+0x080482ae: ff ff                   |..      | ..U  10 bytes untyped data beginning at 0x080482a6
+
+0x080482b0: ================================== Function (function call, import) <__libc_start_main@plt>
+0x080482b0: ff 25 ac 95 04 08       |.%....  | E1.    jmp    DWORD PTR ds:[0x080495ac]
+
+0x080482b6: 68 08 00 00 00 e9 d0 ff |h.......|
+0x080482be: ff ff                   |..      | ..U  10 bytes untyped data beginning at 0x080482b6
+
+0x080482c0: ================================== Function (entry point, symbol) <_start>
+0x080482c0: Function does not return to caller.
+0x080482c0: 31 ed                   |1.      | E1.    xor    ebp, ebp
+0x080482c2: 5e                      |^       |        pop    esi
+0x080482c3: 89 e1                   |..      |        mov    ecx, esp
+0x080482c5: 83 e4 f0                |...     |        and    esp, 0xf0<-0x10>
+0x080482c8: 50                      |P       |        push   eax
+0x080482c9: 54                      |T       |        push   esp
+0x080482ca: 52                      |R       |        push   edx
+0x080482cb: 68 14 84 04 08          |h....   |        push   0x08048414
+0x080482d0: 68 c0 83 04 08          |h....   |        push   0x080483c0
+0x080482d5: 51                      |Q       |        push   ecx
+0x080482d6: 56                      |V       |        push   esi
+0x080482d7: 68 64 83 04 08          |hd...   |        push   0x08048364
+0x080482dc: e8 cf ff ff ff          |.....   |        call   0x080482b0
+
+0x080482e1: f4                      |.       | .1.    hlt    
+
+0x080482e2: 90 90                   |..      | N..  2 bytes untyped data beginning at 0x080482e2
+
+0x080482e4: ================================== Function (function call, symbol, pattern) <call_gmon_start>
+0x080482e4: 55                      |U       | E1.    push   ebp
+0x080482e5: 89 e5                   |..      |        mov    ebp, esp
+0x080482e7: 53                      |S       |        push   ebx
+0x080482e8: e8 00 00 00 00          |.....   |        call   0x080482ed
+0x080482ed: 5b                      |[       |        pop    ebx
+0x080482ee: 81 c3 af 12 00 00       |......  |        add    ebx, 0x000012af
+0x080482f4: 52                      |R       |        push   edx
+0x080482f5: 8b 83 fc ff ff ff       |......  |        mov    eax, DWORD PTR ds:[ebx + 0xfffffffc<-0x00000004>]
+0x080482fb: 85 c0                   |..      |        test   eax, eax
+0x080482fd: 74 02                   |t.      |        je     0x08048301
+
+0x080482ff: ff d0                   |..      | .1.    call   eax
+
+0x08048301: 58                      |X       | .1.    pop    eax
+0x08048302: 5b                      |[       |        pop    ebx
+0x08048303: c9                      |.       |        leave  
+0x08048304: c3                      |.       |        ret    
+
+0x08048305: 90 90 90 90 90 90 90 90 |........|
+0x0804830d: 90 90 90                |...     | N..  11 bytes untyped data beginning at 0x08048305
+
+0x08048310: ================================== Function (function call, symbol, pattern) <__do_global_dtors_aux>
+0x08048310: 55                      |U       | E1.    push   ebp
+0x08048311: 89 e5                   |..      |        mov    ebp, esp
+0x08048313: 83 ec 08                |...     |        sub    esp, 0x08
+0x08048316: 80 3d bc 95 04 08 00    |.=..... |        cmp    BYTE PTR ds:[0x080495bc], 0x00
+0x0804831d: 74 0c                   |t.      |        je     0x0804832b
+
+0x0804831f: eb 1c                   |..      | .1.    jmp    0x0804833d
+
+0x08048321: 83 c0 04                |...     | .1.    add    eax, 0x04
+0x08048324: a3 b8 95 04 08          |.....   |        mov    DWORD PTR ds:[0x080495b8], eax
+0x08048329: ff d2                   |..      |        call   edx
+
+0x0804832b: a1 b8 95 04 08          |.....   | .1.    mov    eax, DWORD PTR ds:[0x080495b8]
+0x08048330: 8b 10                   |..      |        mov    edx, DWORD PTR ds:[eax]
+0x08048332: 85 d2                   |..      |        test   edx, edx
+0x08048334: 75 eb                   |u.      |        jne    0x08048321
+
+0x08048336: c6 05 bc 95 04 08 01    |....... | .1.    mov    BYTE PTR ds:[0x080495bc], 0x01
+
+0x0804833d: c9                      |.       | .1.    leave  
+0x0804833e: c3                      |.       |        ret    
+
+0x0804833f: 90                      |.       | ..U  1 byte untyped data beginning at 0x0804833f
+
+0x08048340: ================================== Function (function call, symbol, pattern, discontiguous) <frame_dummy>
+0x08048340: 55                      |U       | E1.    push   ebp
+0x08048341: 89 e5                   |..      |        mov    ebp, esp
+0x08048343: 83 ec 08                |...     |        sub    esp, 0x08
+0x08048346: a1 cc 94 04 08          |.....   |        mov    eax, DWORD PTR ds:[0x080494cc]
+0x0804834b: 85 c0                   |..      |        test   eax, eax
+0x0804834d: 74 12                   |t.      |        je     0x08048361
+
+0x0804834f: b8 00 00 00 00          |.....   | .1.    mov    eax, 0x00000000
+0x08048354: 85 c0                   |..      |        test   eax, eax
+0x08048356: 74 09                   |t.      |        je     0x08048361
+
+0x08048361: c9                      |.       | .1.    leave  
+0x08048362: c3                      |.       |        ret    
+
+0x08048363: 90                      |.       | ..U  1 byte untyped data beginning at 0x08048363
+
+0x08048364: ================================== Function (symbol, pattern) <main>
+0x08048364: 8d 4c 24 04             |.L$.    | E1.    lea    ecx, [esp + 0x04]
+0x08048368: 83 e4 f0                |...     |        and    esp, 0xf0<-0x10>
+0x0804836b: ff 71 fc                |.q.     |        push   DWORD PTR ds:[ecx + 0xfc<-0x04>]
+
+0x0804836e: ================================== Function (pattern) unknown name
+0x0804836e: 55                      |U       | E1.    push   ebp
+0x0804836f: 89 e5                   |..      |        mov    ebp, esp
+0x08048371: 51                      |Q       |        push   ecx
+0x08048372: 83 ec 14                |...     |        sub    esp, 0x14
+0x08048375: c7 04 24 28 00 00 00    |..$(... |        mov    DWORD PTR ss:[esp], 0x00000028
+0x0804837c: e8 1f ff ff ff          |.....   |        call   0x080482a0
+
+0x08048381: 89 45 f0                |.E.     | .1.    mov    DWORD PTR ss:[ebp + 0xf0<-0x10>], eax
+0x08048384: c7 45 f4 00 00 00 00    |.E..... |        mov    DWORD PTR ss:[ebp + 0xf4<-0x0c>], 0x00000000
+0x0804838b: c7 45 f4 00 00 00 00    |.E..... |        mov    DWORD PTR ss:[ebp + 0xf4<-0x0c>], 0x00000000
+0x08048392: eb 12                   |..      |        jmp    0x080483a6
+
+0x08048394: 8b 45 f4                |.E.     | .1.    mov    eax, DWORD PTR ss:[ebp + 0xf4<-0x0c>]
+0x08048397: c1 e0 02                |...     |        shl    eax, 0x02
+0x0804839a: 03 45 f0                |.E.     |        add    eax, DWORD PTR ss:[ebp + 0xf0<-0x10>]
+0x0804839d: c7 00 05 00 00 00       |......  |        mov    DWORD PTR ds:[eax], 0x00000005
+0x080483a3: ff 45 f4                |.E.     |        inc    DWORD PTR ss:[ebp + 0xf4<-0x0c>]
+
+0x080483a6: 83 7d f4 09             |.}..    | .1.    cmp    DWORD PTR ss:[ebp + 0xf4<-0x0c>], 0x09
+0x080483aa: 7e e8                   |~.      |        jle    0x08048394
+
+0x080483ac: 8b 45 f0                |.E.     | .1.    mov    eax, DWORD PTR ss:[ebp + 0xf0<-0x10>]
+0x080483af: 83 c0 30                |..0     |        add    eax, 0x30
+0x080483b2: 8b 00                   |..      |        mov    eax, DWORD PTR ds:[eax]
+0x080483b4: 89 45 f8                |.E.     |        mov    DWORD PTR ss:[ebp + 0xf8<-0x08>], eax
+0x080483b7: 83 c4 14                |...     |        add    esp, 0x14
+0x080483ba: 59                      |Y       |        pop    ecx
+0x080483bb: 5d                      |]       |        pop    ebp
+0x080483bc: 8d 61 fc                |.a.     |        lea    esp, [ecx + 0xfc<-0x04>]
+0x080483bf: c3                      |.       |        ret    
+
+0x080483c0: ================================== Function (symbol, pattern, discontiguous) <__libc_csu_init>
+0x080483c0: 55                      |U       | E1.    push   ebp
+0x080483c1: 89 e5                   |..      |        mov    ebp, esp
+0x080483c3: 57                      |W       |        push   edi
+0x080483c4: 56                      |V       |        push   esi
+0x080483c5: 53                      |S       |        push   ebx
+0x080483c6: 83 ec 0c                |...     |        sub    esp, 0x0c
+0x080483c9: e8 00 00 00 00          |.....   |        call   0x080483ce
+0x080483ce: 5b                      |[       |        pop    ebx
+0x080483cf: 81 c3 ce 11 00 00       |......  |        add    ebx, 0x000011ce
+0x080483d5: e8 9e fe ff ff          |.....   |        call   0x08048278
+
+0x080483da: 8d 83 20 ff ff ff       |.. ...  | .1.    lea    eax, [ebx + 0xffffff20<-0x000000e0>]
+0x080483e0: 8d 93 20 ff ff ff       |.. ...  |        lea    edx, [ebx + 0xffffff20<-0x000000e0>]
+0x080483e6: 89 45 f0                |.E.     |        mov    DWORD PTR ss:[ebp + 0xf0<-0x10>], eax
+0x080483e9: 29 d0                   |).      |        sub    eax, edx
+0x080483eb: 31 f6                   |1.      |        xor    esi, esi
+0x080483ed: c1 f8 02                |...     |        sar    eax, 0x02
+0x080483f0: 39 c6                   |9.      |        cmp    esi, eax
+0x080483f2: 73 16                   |s.      |        jae    0x0804840a
+0x0804840a: 83 c4 0c                |...     |        add    esp, 0x0c
+0x0804840d: 5b                      |[       |        pop    ebx
+0x0804840e: 5e                      |^       |        pop    esi
+0x0804840f: 5f                      |_       |        pop    edi
+0x08048410: c9                      |.       |        leave  
+0x08048411: c3                      |.       |        ret    
+
+0x08048412: 89 f6                   |..      | ..U  2 bytes untyped data beginning at 0x08048412
+
+0x08048414: ================================== Function (symbol, pattern, discontiguous) <__libc_csu_fini>
+0x08048414: 55                      |U       | E1.    push   ebp
+0x08048415: 89 e5                   |..      |        mov    ebp, esp
+0x08048417: 57                      |W       |        push   edi
+0x08048418: 56                      |V       |        push   esi
+0x08048419: 53                      |S       |        push   ebx
+0x0804841a: e8 00 00 00 00          |.....   |        call   0x0804841f
+0x0804841f: 5b                      |[       |        pop    ebx
+0x08048420: 81 c3 7d 11 00 00       |..}...  |        add    ebx, 0x0000117d
+0x08048426: 8d 83 20 ff ff ff       |.. ...  |        lea    eax, [ebx + 0xffffff20<-0x000000e0>]
+0x0804842c: 8d bb 20 ff ff ff       |.. ...  |        lea    edi, [ebx + 0xffffff20<-0x000000e0>]
+0x08048432: 29 f8                   |).      |        sub    eax, edi
+0x08048434: c1 f8 02                |...     |        sar    eax, 0x02
+0x08048437: 83 ec 0c                |...     |        sub    esp, 0x0c
+0x0804843a: 8d 70 ff                |.p.     |        lea    esi, [eax + 0xff<-0x01>]
+0x0804843d: eb 05                   |..      |        jmp    0x08048444
+0x08048444: 83 fe ff                |...     |        cmp    esi, 0xff<-0x01>
+0x08048447: 75 f7                   |u.      |        jne    0x08048440
+0x08048449: e8 46 00 00 00          |.F...   |        call   0x08048494
+
+0x0804844e: 83 c4 0c                |...     | .1.    add    esp, 0x0c
+0x08048451: 5b                      |[       |        pop    ebx
+0x08048452: 5e                      |^       |        pop    esi
+0x08048453: 5f                      |_       |        pop    edi
+0x08048454: c9                      |.       |        leave  
+0x08048455: c3                      |.       |        ret    
+
+0x08048456: 90 90 90 90 90 90 90 90 |........|
+0x0804845e: 90 90                   |..      | N..  10 bytes untyped data beginning at 0x08048456
+
+0x08048460: ================================== Function (function call, symbol, pattern) <__do_global_ctors_aux>
+0x08048460: 55                      |U       | E1.    push   ebp
+0x08048461: 89 e5                   |..      |        mov    ebp, esp
+0x08048463: 53                      |S       |        push   ebx
+0x08048464: bb bc 94 04 08          |.....   |        mov    ebx, 0x080494bc
+0x08048469: 83 ec 04                |...     |        sub    esp, 0x04
+0x0804846c: a1 bc 94 04 08          |.....   |        mov    eax, DWORD PTR ds:[0x080494bc]
+0x08048471: 83 f8 ff                |...     |        cmp    eax, 0xff<-0x01>
+0x08048474: 74 16                   |t.      |        je     0x0804848c
+
+0x08048476: 8d 76 00                |.v.     | .1.    lea    esi, [esi + 0x00]
+0x08048479: 8d bc 27 00 00 00 00    |..'.... |        lea    edi, [edi + 0x00000000]
+
+0x08048480: 83 eb 04                |...     | .1.    sub    ebx, 0x04
+0x08048483: ff d0                   |..      |        call   eax
+
+0x08048485: 8b 03                   |..      | .1.    mov    eax, DWORD PTR ds:[ebx]
+0x08048487: 83 f8 ff                |...     |        cmp    eax, 0xff<-0x01>
+0x0804848a: 75 f4                   |u.      |        jne    0x08048480
+
+0x0804848c: 58                      |X       | .1.    pop    eax
+0x0804848d: 5b                      |[       |        pop    ebx
+0x0804848e: 5d                      |]       |        pop    ebp
+0x0804848f: 90                      |.       |        nop    
+0x08048490: c3                      |.       |        ret    
+
+0x08048491: 90 90 90                |...     | N..  3 bytes untyped data beginning at 0x08048491
+
+0x08048494: ================================== Function (function call, symbol, pattern) <_fini>
+0x08048494: 55                      |U       | E1.    push   ebp
+0x08048495: 89 e5                   |..      |        mov    ebp, esp
+0x08048497: 53                      |S       |        push   ebx
+0x08048498: e8 00 00 00 00          |.....   |        call   0x0804849d
+0x0804849d: 5b                      |[       |        pop    ebx
+0x0804849e: 81 c3 ff 10 00 00       |......  |        add    ebx, 0x000010ff
+0x080484a4: 50                      |P       |        push   eax
+0x080484a5: e8 66 fe ff ff          |.f...   |        call   0x08048310
+
+0x080484aa: 59                      |Y       | .1.    pop    ecx
+0x080484ab: 5b                      |[       |        pop    ebx
+0x080484ac: c9                      |.       |        leave  
+0x080484ad: c3                      |.       |        ret    
+Assembled 175 instructions

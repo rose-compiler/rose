@@ -27,6 +27,13 @@ Makefile.in
 /config/ylwrap
 /config/py-compile
 /config/ROSE_SOURCES
+/config/argz.m4
+/config/libtool.m4
+/config/ltdl.m4
+/config/ltoptions.m4
+/config/ltsugar.m4
+/config/ltversion.m4
+/config/lt~obsolete.m4
 /config/support-projects.m4
 
 # OS X Finder files

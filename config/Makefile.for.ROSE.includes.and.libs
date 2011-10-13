@@ -261,7 +261,7 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/midend/programAnalysis/staticSingleAssignment \
      -I$(top_srcdir)/src/midend/programAnalysis/CallGraphAnalysis \
      -I$(top_srcdir)/src/midend/programAnalysis/OAWrap \
-     -I$(top_srcdir)/src/midend/programAnalysis/dataflowAnalysis \
+     -I$(top_srcdir)/src/midend/programAnalysis/bitvectorDataflow \
      -I$(top_srcdir)/src/midend/programAnalysis/defUseAnalysis \
      -I$(top_srcdir)/src/midend/programAnalysis/distributedMemoryAnalysis \
      -I$(top_srcdir)/src/midend/programAnalysis/dominanceAnalysis \

@@ -8,7 +8,7 @@
 #include <list>
 
 namespace VirtualCFG{
-	
+        
 ///*void insertAfterCFG(DataflowNode cfgNode, SgProject* project);
 //SgStatement* getParentStmt(SgNode* node);*/
 //
@@ -102,91 +102,91 @@ typedef void (*CFGTransform)(SgNode *target, SgNode* newNode, void* data);
 
 class cfgRWTransaction
 {
-	typedef enum {insBef, insAft, callback} modType;
-	class modRequest{
-		protected:
-		modType type;
-		
-		public:
-		modRequest()
-		{}
-		/*modRequest(modType type_arg)
-		{
-			type = type_arg;
-		}*/
-			
-		modType getType()
-		{ return type; }
-		
+        typedef enum {insBef, insAft, callback} modType;
+        class modRequest{
+                protected:
+                modType type;
+                
+                public:
+                modRequest()
+                {}
+                /*modRequest(modType type_arg)
+                {
+                        type = type_arg;
+                }*/
+                        
+                modType getType()
+                { return type; }
+                
                 std::string str() { return ""; }
-	};
-	
-	class insertRequest: public modRequest{
-		protected:
-		SgExpression *newNode;
-		SgNode* origNode;
-		
-		public:
-		insertRequest(modType type_arg, SgNode* origNode, SgExpression *&newNode)
-		{
-			this->type = type_arg;
-			this->newNode = newNode;
-			this->origNode = origNode;
-		}
-		
-		SgNode* getTgtNode() { return origNode; }
-		
+        };
+        
+        class insertRequest: public modRequest{
+                protected:
+                SgExpression *newNode;
+                SgNode* origNode;
+                
+                public:
+                insertRequest(modType type_arg, SgNode* origNode, SgExpression *&newNode)
+                {
+                        this->type = type_arg;
+                        this->newNode = newNode;
+                        this->origNode = origNode;
+                }
+                
+                SgNode* getTgtNode() { return origNode; }
+                
                 std::string str();
-		friend class cfgRWTransaction;
-	};
-	
-	class transformRequest: public modRequest{
-		CFGTransform callbackFunc;
-		SgNode* target;
-		SgNode* newNode;
-		void* data;
-		
-		public:
-		transformRequest(CFGTransform callbackFunc, SgNode *&target, SgNode* newNode, void* data)//: modRequest(callback)
-		{
-			this->type = callback;
-			this->target = target;
-			this->newNode = newNode;
-			this->callbackFunc = callbackFunc;
-			this->data = data;
-		}
-		
-		std::string str();
-		friend class cfgRWTransaction;
-	};
-	
-	public: 
-	std::list<modRequest*> requests;
-	//list<void*> requests;
-	
-	
-	cfgRWTransaction();
-	
-	void beginTransaction();
-	
-	void insertBefore(DataflowNode n, SgExpression* newNode);
-	void insertBefore(SgNode* n, SgExpression* newNode);
-	
-	void insertAfter(DataflowNode n, SgExpression* newNode);
-	void insertAfter(SgNode* n, SgExpression* newNode);
-	
-	void transform(CFGTransform callbackFunc, SgNode* n, SgNode* newNode, void* data);
-	
-	// insert an SgNode along the given CFGEdge
-	void insertAlong(DataflowEdge e, SgExpression* newNode);
-	
-	void commitTransaction();
-	
-	protected:
-	void do_insertBefore(DataflowNode n, SgExpression* newNode);
-	void do_insertBefore(SgNode* n, SgExpression* newNode);
-	void do_insertAfter(DataflowNode n, SgExpression* newNode);
-	void do_insertAfter(SgNode* n, SgExpression* newNode);
+                friend class cfgRWTransaction;
+        };
+        
+        class transformRequest: public modRequest{
+                CFGTransform callbackFunc;
+                SgNode* target;
+                SgNode* newNode;
+                void* data;
+                
+                public:
+                transformRequest(CFGTransform callbackFunc, SgNode *&target, SgNode* newNode, void* data)//: modRequest(callback)
+                {
+                        this->type = callback;
+                        this->target = target;
+                        this->newNode = newNode;
+                        this->callbackFunc = callbackFunc;
+                        this->data = data;
+                }
+                
+                std::string str();
+                friend class cfgRWTransaction;
+        };
+        
+        public: 
+        std::list<modRequest*> requests;
+        //list<void*> requests;
+        
+        
+        cfgRWTransaction();
+        
+        void beginTransaction();
+        
+        void insertBefore(DataflowNode n, SgExpression* newNode);
+        void insertBefore(SgNode* n, SgExpression* newNode);
+        
+        void insertAfter(DataflowNode n, SgExpression* newNode);
+        void insertAfter(SgNode* n, SgExpression* newNode);
+        
+        void transform(CFGTransform callbackFunc, SgNode* n, SgNode* newNode, void* data);
+        
+        // insert an SgNode along the given CFGEdge
+        void insertAlong(DataflowEdge e, SgExpression* newNode);
+        
+        void commitTransaction();
+        
+        protected:
+        void do_insertBefore(DataflowNode n, SgExpression* newNode);
+        void do_insertBefore(SgNode* n, SgExpression* newNode);
+        void do_insertAfter(DataflowNode n, SgExpression* newNode);
+        void do_insertAfter(SgNode* n, SgExpression* newNode);
 };
 
 /*************************************************************

@@ -159,7 +159,7 @@ public:
                 size_t nfuncs;
                 explicit T1(RSIM_Process *process, RTS_Message *m): process(process), m(m), nfuncs(0) {}
                 void visit(SgNode *node) {
-                    SgAsmFunctionDeclaration *defn = isSgAsmFunctionDeclaration(node);
+                    SgAsmFunction *defn = isSgAsmFunction(node);
                     if (defn!=NULL) {
                         /* Scan through the function's instructions to find the range of addresses for the function. */
                         rose_addr_t func_start=~(rose_addr_t)0, func_end=0;
@@ -225,7 +225,7 @@ public:
 
 /** Prints the name of the currently executing function.
  *
- *  This instruction callback looks at the current instruction's AST ancestors to find an enclosing SgAsmFunctionDeclaration
+ *  This instruction callback looks at the current instruction's AST ancestors to find an enclosing SgAsmFunction
  *  node. If the current instruction's function is different than the previous instruction's, then we print either the current
  *  function name or a full stack trace to the TRACE_MISC facility.
  *
@@ -259,7 +259,7 @@ public:
     virtual bool operator()(bool enabled, const Args &args) {
         RSIM_Process *process = args.thread->get_process();
         SgAsmBlock *basic_block = isSgAsmBlock(args.insn->get_parent());
-        SgAsmFunctionDeclaration *func = basic_block ? basic_block->get_enclosing_function() : NULL;
+        SgAsmFunction *func = basic_block ? basic_block->get_enclosing_function() : NULL;
         std::string new_name = func ? func->get_name() : "";
         if (new_name!=name) {
             name = new_name;
@@ -676,7 +676,7 @@ public:
 /** Generates a stack trace when a signal arrives.
  *
  *  Each time a signal arrives, a stack trace is printed.  Since stack traces require instructions to be linked into the AST
- *  (specifically, instructions should each have an SgAsmFunctionDeclaration ancestor), the disassembler is invoked the first
+ *  (specifically, instructions should each have an SgAsmFunction ancestor), the disassembler is invoked the first
  *  time this callback is triggered.
  *
  *  Example:

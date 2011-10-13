@@ -98,8 +98,22 @@ HEADER_START
           virtual bool get_global_qualification_required () const;
           virtual void set_global_qualification_required ( bool global_qualification_required );
 
+       // DQ (9/23/2011): Use the vitual function version so that we can test within ROSE (part of incremental testing of new original expression tree support).
+       // DQ (9/19/2011): Put back the original code (non-virtual functions) so that we can test against previously passing tests.
+       // DQ (9/16/2011): Modified to make this a virtual function and added set_originalExpressionTree().
        // DQ (6/21/2011): Get the original expression if this is an IR node where it is defined and it is a valid pointer.
+#if 1
+          virtual SgExpression* get_originalExpressionTree() const;
+#else
           SgExpression* get_originalExpressionTree() const;
+#endif
+#if 1
+       // DQ (9/19/2011): Modify this to be virtual as a single step for testing ROSE.
+          virtual void set_originalExpressionTree(SgExpression* X);
+#else
+       // DQ (9/19/2011): Added non-virtual set_originalExpressionTree() function so that code in fixupConstantFoldedValues.C would compile.
+          void set_originalExpressionTree(SgExpression* X);
+#endif
 
 HEADER_END
 
@@ -1709,9 +1723,17 @@ SgExpression::set_global_qualification_required ( bool global_qualification_requ
   // p_global_qualification_required = global_qualification_required;
    }
 
+// DQ (9/23/2011): Use the vitual function version so that we can test within ROSE (part of incremental testing of new original expression tree support).
+// DQ (9/19/2011): Put back the original code (non-virtual functions) so that we can test against previously passing tests.
+#if 0
 SgExpression*
 SgExpression::get_originalExpressionTree() const
    {
+  // DQ (9/19/2011): Note that this function should be virtual (that was a mistake).  But if it is virtual, 
+  // then it has some effect on tests that are run in "make check" and so it appears to fail in both the 
+  // number of nodes counted for one of the variableLiveness tests and also in the variable renaming tests.
+  // So this change may have an effect that causes some problems.
+
   // DQ (6/21/2011): Get the original expression if this is an IR node where it is defined and it is a valid pointer.
   // The p_originalExpressionTree datamember exists only on these IR nodes:
   //    SgBinaryOp
@@ -1731,11 +1753,47 @@ SgExpression::get_originalExpressionTree() const
           default:
              {
             // For all other cases do nothing, since there is no originalExpressionTree data member.
+#if 0
+            // DQ (9/16/2011): I think this is failing because variantT() is more specific than V_SgValueExp.
+               ROSE_ASSERT(isSgValueExp(this) == NULL);
+               ROSE_ASSERT(isSgBinaryOp(this) == NULL);
+               ROSE_ASSERT(isSgFunctionRefExp(this) == NULL);
+               ROSE_ASSERT(isSgCastExp(this) == NULL);
+#endif
              }
         }
+#if 0
+     printf ("ERROR: base function SgExpression::set_originalExpressionTree() called for %p = %s \n",this,this->class_name().c_str());
+     ROSE_ASSERT(false);
+#endif
 
      return originalExpressionTree;
    }
+#else
+SgExpression*
+SgExpression::get_originalExpressionTree() const
+   {
+     SgExpression* originalExpressionTree = NULL;
+
+#if 0
+  // DQ (9/17/2011): It is OK to call this function, where it is not supported by a function in the derived class it should return NULL.
+     printf ("WARNING: base function SgExpression::get_originalExpressionTree() called for %p = %s (returning NULL) \n",this,this->class_name().c_str());
+  // ROSE_ASSERT(false);
+#endif
+
+     return originalExpressionTree;
+   }
+#endif
+
+// DQ (9/19/2011): Put back the original code (non-virtual functions) so that we can test against previously passing tests.
+#if 1
+void
+SgExpression::set_originalExpressionTree(SgExpression* X)
+   {
+     printf ("ERROR: base function SgExpression::set_originalExpressionTree() called for %p = %s \n",this,this->class_name().c_str());
+     ROSE_ASSERT(false);
+   }
+#endif
 
 SOURCE_BASECLASS_EXPRESSION_END
 

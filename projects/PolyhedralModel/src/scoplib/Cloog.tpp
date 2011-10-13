@@ -96,7 +96,7 @@ size_t generateCloogProgramFromSchedule(
 	
 	size_t max_scat_size = 0;
 	
-	std::vector<std::vector<LinearExpression> > stmt_scat(nb_statement);
+	std::vector<std::vector<LinearExpression_ppl> > stmt_scat(nb_statement);
 	
 	for (size_t i = 1; i <= nb_statement; i++) {
 		stmt_scat[i-1] = PolyhedricAnnotation::getScattering<Function, Expression, VariableLBL>(polyhedral_program.getStatementById(i)).getScattering();
@@ -118,8 +118,8 @@ size_t generateCloogProgramFromSchedule(
 			max_scat_size + schedule.getDimension() + nb_it + nb_parameters + 2
 		);
 		cnt = 0;
-		const std::vector<LinearExpression> & sched_list = schedule.getSchedule(i);
-		for (std::vector<LinearExpression>::const_iterator it = sched_list.begin(); it != sched_list.end(); it++) {
+		const std::vector<LinearExpression_ppl> & sched_list = schedule.getSchedule(i);
+		for (std::vector<LinearExpression_ppl>::const_iterator it = sched_list.begin(); it != sched_list.end(); it++) {
 			cloog_int_set_si(matrix->p[cnt][0], 0);
 			for (size_t j = 0; j < schedule.getDimension(); j++)
 				cloog_int_set_si(matrix->p[cnt][1 + j], (j == cnt) ? 1 : 0);
@@ -130,7 +130,7 @@ size_t generateCloogProgramFromSchedule(
 			cloog_int_set_si(matrix->p[cnt][max_scat_size + schedule.getDimension() + nb_it + nb_parameters + 1], -it->inhomogeneous_term().get_si());
 			cnt++;
 		}
-		for (std::vector<LinearExpression>::const_iterator it = stmt_scat[i-1].begin(); it != stmt_scat[i-1].end(); it ++) {
+		for (std::vector<LinearExpression_ppl>::const_iterator it = stmt_scat[i-1].begin(); it != stmt_scat[i-1].end(); it ++) {
 			cloog_int_set_si(matrix->p[cnt][0], 0);
 			for (size_t j = 0; j < schedule.getDimension(); j++)
 				cloog_int_set_si(matrix->p[cnt][1 + j], 0);

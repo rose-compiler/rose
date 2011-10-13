@@ -346,10 +346,7 @@ V_SgAsmOperandList
 V_SgAsmArmInstruction 	
 V_SgAsmx86Instruction 	
 V_SgAsmInstruction 	
-V_SgAsmDataStructureDeclaration 	
-V_SgAsmFunctionDeclaration 	
-V_SgAsmFieldDeclaration 	
-V_SgAsmDeclaration 	
+V_SgAsmFunction 	
 V_SgAsmStatement 	
 V_SgAsmBinaryAdd 	
 V_SgAsmBinarySubtract 	

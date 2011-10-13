@@ -4,7 +4,7 @@
 #include <string>
 
 namespace rwAccessLabeler {
-	
+        
 typedef enum {readAccess=0, writeAccess=1, rwAccess=2} accessType;
 
 // labels the portion of the AST rooted at root with annotations that identify the various portions

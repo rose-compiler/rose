@@ -6,7 +6,7 @@ mpt_lpPrepostTransofmration_includes=\
 	-I$(top_srcdir)/src/midend/astUtil/astSupport \
 	-I$(top_srcdir)/src/midend/astUtil/symbolicVal \
 	-I$(top_srcdir)/src/midend/astUtil/astInterface \
-	-I$(top_srcdir)/src/midend/programAnalysis/dataflowAnalysis \
+	-I$(top_srcdir)/src/midend/programAnalysis/bitvectorDataflow \
 	-I$(top_srcdir)/src/midend/programAnalysis/CFG \
 	-I$(top_srcdir)/src/util/graphs
 

@@ -1,0 +1,46 @@
+# Non-recursive Makefile
+
+mpaBitvectorDataflow_includes=\
+	-I$(mpaBitvectorDataflowPath)/.. \
+	-I$(mpaBitvectorDataflowPath)/../CFG \
+	-I$(top_srcdir)/src/util \
+	-I$(top_srcdir)/src/util/support \
+	-I$(top_srcdir)/src/util/graphs \
+	-I$(top_srcdir)/src/midend/astUtil \
+	-I$(top_srcdir)/src/midend/astUtil/astSupport \
+	-I$(top_srcdir)/src/midend/astUtil/astInterface \
+	-I$(top_srcdir)/src/util/support 
+
+
+# TODO: include in top-level?
+## The grammar generator (ROSETTA) should use its own template repository
+#CXX_TEMPLATE_REPOSITORY_PATH = .
+
+
+mpaBitvectorDataflow_la_sources=\
+	$(mpaBitvectorDataflowPath)/DataFlowAnalysis.C \
+	$(mpaBitvectorDataflowPath)/DefUseChain.C \
+	$(mpaBitvectorDataflowPath)/ReachingDefinition.C
+
+
+mpaBitvectorDataflow_includeHeaders=\
+	$(mpaBitvectorDataflowPath)/DataFlowAnalysis.h \
+	$(mpaBitvectorDataflowPath)/DefUseChain.h \
+	$(mpaBitvectorDataflowPath)/ReachingDefinition.h
+
+
+mpaBitvectorDataflow_extraDist=\
+	$(mpaBitvectorDataflowPath)/CMakeLists.txt
+
+
+mpaBitvectorDataflow_cleanLocal=\
+	rm -rf \
+		$(mpaBitvectorDataflowPath)/Templates.DB \
+		$(mpaBitvectorDataflowPath)/ii_files \
+		$(mpaBitvectorDataflowPath)/ti_files \
+		$(mpaBitvectorDataflowPath)/cxx_templates
+
+
+mpaBitvectorDataflow_distCleanLocal=\
+	rm -rf \
+		$(mpaBitvectorDataflowPath)/Templates.DB

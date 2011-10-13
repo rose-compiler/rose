@@ -23,7 +23,7 @@ BinaryAnalysis::Dominance::is_consistent(SgNode *ast, std::set<SgAsmBlock*> *bad
         T1(std::set<SgAsmBlock*> *bad_blocks): failed(false), bad_blocks(bad_blocks) {}
         void visit(SgNode *node) {
             SgAsmBlock *block = isSgAsmBlock(node);
-            SgAsmFunctionDeclaration *func = block ? block->get_enclosing_function() : NULL;
+            SgAsmFunction *func = block ? block->get_enclosing_function() : NULL;
             if (block && func) {
                 if (block==func->get_entry_block()) {
                     if (block->get_immediate_dominator()) {

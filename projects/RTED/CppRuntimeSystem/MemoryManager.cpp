@@ -53,6 +53,11 @@ namespace
     MemTypeCache()
     : pos(0)
     {
+      clear();
+    }
+
+    void clear()
+    {
       for (CacheIdx i = 0; i < CACHEELEMS; ++i)
       {
         cache[i] = 0;
@@ -61,13 +66,11 @@ namespace
 
     MemoryType* findContainingMem(Location addr, size_t sz) const
     {
-      int i = CACHEELEMS;
-
-      while ( i && cache[i] )
+      for (CacheIdx i = 0; i < CACHEELEMS; ++i)
       {
-        if (cache[i]->containsMemArea(addr, sz)) return cache[i];
+        MemoryType* candidate = cache[i];
 
-        --i;
+        if (candidate && candidate->containsMemArea(addr, sz)) return candidate;
       }
 
       return NULL;
@@ -83,7 +86,7 @@ namespace
     {
       for (CacheIdx i = 0; i < CACHEELEMS; ++i)
       {
-        if (cache[i] == &mt) cache[i] = NULL;
+        if (cache[i] == &mt) cache[i] = 0;
       }
     }
   };
@@ -740,13 +743,13 @@ MemoryType* MemoryManager::allocateMemory(Location adrObj, size_t szObj, MemoryT
 {
     if (szObj == 0)
     {
-        RuntimeSystem::instance()->violationHandler(RuntimeViolation::EMPTY_ALLOCATION,"Tried to call malloc/new with size 0\n");
+        RuntimeSystem::instance()->violationHandler(RuntimeViolation::EMPTY_ALLOCATION, "Tried to call malloc/new with size 0\n");
         return NULL;
     }
 
     if (existOverlappingMem(adrObj, szObj, blocksize))
     {
-        // the start address of new chunk lies in already allocated area
+        // the start address of new chunk lies in an already allocated area
         RuntimeSystem::instance()->violationHandler(RuntimeViolation::DOUBLE_ALLOCATION);
         return NULL;
     }
@@ -756,7 +759,6 @@ MemoryType* MemoryManager::allocateMemory(Location adrObj, size_t szObj, MemoryT
     MemoryType&               res = mem.insert(v).first->second;
 
     memtypecache.store(res);
-
     return &res;
 }
 
@@ -889,6 +891,9 @@ void MemoryManager::freeMemory(MemoryType* m, MemoryType::AllocKind freekind)
     pm->deletePointerInRegion( *m );
     pm->invalidatePointerToRegion( *m );
 
+    // remove entry from cache
+    memtypecache.clear(*m);
+
     // successful free, erase allocation info from map
     mem.erase(m->beginAddress());
 }
@@ -899,7 +904,6 @@ void MemoryManager::freeHeapMemory(Location addr, MemoryType::AllocKind freekind
     MemoryType* mt = findContainingMem(addr, 1);
 
     checkDeallocationAddress(mt, addr, freekind);
-    memtypecache.clear(*mt);
     freeMemory( mt, freekind );
 }
 
@@ -908,7 +912,6 @@ void MemoryManager::freeStackMemory(Location addr)
     MemoryType* mt = findContainingMem(addr, 1);
 
     checkDeallocationAddress(mt, addr, akStack);
-    memtypecache.clear(*mt);
     freeMemory( mt, mt->howCreated() );
 }
 
@@ -1287,6 +1290,12 @@ MemoryType* MemoryManager::getMemoryType(Location addr)
 const MemoryType* MemoryManager::getMemoryType(Location addr) const
 {
   return ::checkStartAddress( findPossibleMemMatch(addr), addr );
+}
+
+void MemoryManager::clearStatus()
+{
+  mem.clear();
+  memtypecache.clear();
 }
 
 

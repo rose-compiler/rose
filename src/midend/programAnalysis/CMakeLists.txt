@@ -10,7 +10,7 @@ message ("Commented out use of OpenAnalysis in Windows.")
 add_subdirectory(CFG)
 endif (NOT WIN32)
 
-add_subdirectory(dataflowAnalysis)
+add_subdirectory(bitvectorDataflow)
 add_subdirectory(valuePropagation)
 add_subdirectory(defUseAnalysis)
 add_subdirectory(dominanceAnalysis)

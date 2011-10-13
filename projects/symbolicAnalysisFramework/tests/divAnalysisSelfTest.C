@@ -45,7 +45,7 @@ public:
 
     cout << "Total expectations: " << total_expectations << endl;
   }
-	
+        
   void visit(const Function& func, const DataflowNode& n, NodeState& state)
   {
     SgFunctionCallExp *fnCall = isSgFunctionCallExp(n.getNode());
@@ -85,51 +85,51 @@ public:
 
 int main( int argc, char * argv[] ) 
 {
-	printf("========== S T A R T ==========\n");
-	
-	// Build the AST used by ROSE
-	SgProject* project = frontend(argc,argv);
-	
-	initAnalysis(project);
-	Dbg::init("Divisibility Analysis Test", ".", "index.html");	
-	
-	/*analysisDebugLevel = 0;
-	
-	SaveDotAnalysis sda;
-	UnstructuredPassInterAnalysis upia_sda(sda);
-	upia_sda.runAnalysis();*/
-	
-	liveDeadAnalysisDebugLevel = 0;
-	analysisDebugLevel = 0;
-	if(liveDeadAnalysisDebugLevel) {
-		printf("*************************************************************\n");
-		printf("*****************   Divisibility Analysis   *****************\n");
-		printf("*************************************************************\n");
-	}
-	LiveDeadVarsAnalysis ldva(project);
-	UnstructuredPassInterDataflow ciipd_ldva(&ldva);
-	ciipd_ldva.runAnalysis();
-	
+        printf("========== S T A R T ==========\n");
+        
+        // Build the AST used by ROSE
+        SgProject* project = frontend(argc,argv);
+        
+        initAnalysis(project);
+        Dbg::init("Divisibility Analysis Test", ".", "index.html");     
+        
+        /*analysisDebugLevel = 0;
+        
+        SaveDotAnalysis sda;
+        UnstructuredPassInterAnalysis upia_sda(sda);
+        upia_sda.runAnalysis();*/
+        
+        liveDeadAnalysisDebugLevel = 0;
+        analysisDebugLevel = 0;
+        if(liveDeadAnalysisDebugLevel) {
+                printf("*************************************************************\n");
+                printf("*****************   Divisibility Analysis   *****************\n");
+                printf("*************************************************************\n");
+        }
+        LiveDeadVarsAnalysis ldva(project);
+        UnstructuredPassInterDataflow ciipd_ldva(&ldva);
+        ciipd_ldva.runAnalysis();
+        
         CallGraphBuilder cgb(project);
         cgb.buildCallGraph();
         SgIncidenceDirectedGraph* graph = cgb.getGraph(); 
 
-	analysisDebugLevel = 1;
+        analysisDebugLevel = 1;
         DivAnalysis divA(&ldva);
         ContextInsensitiveInterProceduralDataflow divInter(&divA, graph);
         divInter.runAnalysis();
 
-	evaluateAnalysisStates eas(&divA, "    ");
-	UnstructuredPassInterAnalysis upia_eas(eas);
-	upia_eas.runAnalysis();
+        evaluateAnalysisStates eas(&divA, "    ");
+        UnstructuredPassInterAnalysis upia_eas(eas);
+        upia_eas.runAnalysis();
 
-	if(numFails == 0 && numPass == eas.total_expectations)
+        if(numFails == 0 && numPass == eas.total_expectations)
           printf("PASS: %d / %d\n", numPass, eas.total_expectations);
-	else
+        else
           printf("FAIL!: %d / %d\n", numPass, eas.total_expectations);
-	
-	printf("==========  E  N  D  ==========\n");
-	
-	// Unparse and compile the project (so this can be used for testing)
-	return /*backend(project) +*/ (eas.total_expectations != numPass) || (numFails != 0);
+        
+        printf("==========  E  N  D  ==========\n");
+        
+        // Unparse and compile the project (so this can be used for testing)
+        return /*backend(project) +*/ (eas.total_expectations != numPass) || (numFails != 0);
 }

@@ -1987,7 +1987,7 @@ Grammar::setUpStatements ()
      JavaForEachStatement.setDataPrototype ( "SgStatement*", "loop_body",   "= NULL",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
-  // DQ (8/17/2011):  Added Java "throw" statement support (constructor required SgExpression pointer).
+  // DQ (8/17/2011):  Added Java "synchronized" statement support (constructor required SgExpression pointer).
      JavaSynchronizedStatement.setFunctionPrototype  ( "HEADER_JAVA_SYNCHRONIZED_STATEMENT", "../Grammar/Statement.code" );
      JavaSynchronizedStatement.setDataPrototype ( "SgExpression*", "expression", "= NULL",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);

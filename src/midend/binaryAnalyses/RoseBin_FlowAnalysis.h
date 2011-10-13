@@ -26,11 +26,11 @@
 
 
 // **************** AS DEFINED BY ANDREAS *****************************************
-class FindAsmFunctionsVisitor: public std::binary_function<SgNode*, std::vector<SgAsmFunctionDeclaration *>* , void* >
+class FindAsmFunctionsVisitor: public std::binary_function<SgNode*, std::vector<SgAsmFunction *>* , void* >
 {
   public:
-    void* operator()(first_argument_type node, std::vector<SgAsmFunctionDeclaration*>* insns ) const{
-      if (isSgAsmFunctionDeclaration(node)) insns->push_back(isSgAsmFunctionDeclaration(node));
+    void* operator()(first_argument_type node, std::vector<SgAsmFunction*>* insns ) const{
+      if (isSgAsmFunction(node)) insns->push_back(isSgAsmFunction(node));
       return NULL;
     }
 };
@@ -140,7 +140,7 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {//, public GraphAlgorit
   std::string typeEdge;
 
   // needed for CallGraphAnalysis
-  SgAsmFunctionDeclaration* funcDecl;
+  SgAsmFunction* funcDecl;
   SgGraphNode* funcDeclNode;
 
 
@@ -162,7 +162,7 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {//, public GraphAlgorit
   rose_hash::unordered_map <std::string, SgAsmInstruction*> local_visited;
 #endif
 
-  typedef std::map<std::string, SgAsmFunctionDeclaration*> bin_funcs_type;
+  typedef std::map<std::string, SgAsmFunction*> bin_funcs_type;
   bin_funcs_type bin_funcs;
 
   // vector of graphs

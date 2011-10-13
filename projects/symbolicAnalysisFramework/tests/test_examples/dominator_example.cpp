@@ -11,52 +11,52 @@ void testFunc7() {}
 
 int foo()
 {
-	int b;
-	b++;
-	
-	testFunc0();
-	
-	return 5;
+        int b;
+        b++;
+        
+        testFunc0();
+        
+        return 5;
 }
 
 int main()
 {
-	int a=0;
-	
-	testFunc1();
-	
-	foo();
-	
-	testFunc2();
-	
-	if(a==0)
-		a+=1;
-	else
-		a+=2;
-	
-	testFunc3();
-	
-	a--;
-	
-	while(a<100)
-	{
-		a++;
-	}
-	
-	testFunc4();
-	
-	foo();
-	
-	testFunc5();
-	
-	a*=2;
-	
-	while(a<100)
-	{
-		a++;
-	}
-	
-	testFunc6();
-	
-	return 0;
+        int a=0;
+        
+        testFunc1();
+        
+        foo();
+        
+        testFunc2();
+        
+        if(a==0)
+                a+=1;
+        else
+                a+=2;
+        
+        testFunc3();
+        
+        a--;
+        
+        while(a<100)
+        {
+                a++;
+        }
+        
+        testFunc4();
+        
+        foo();
+        
+        testFunc5();
+        
+        a*=2;
+        
+        while(a<100)
+        {
+                a++;
+        }
+        
+        testFunc6();
+        
+        return 0;
 }

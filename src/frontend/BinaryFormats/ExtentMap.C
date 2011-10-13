@@ -246,6 +246,13 @@ ExtentMap::size() const
     return retval;
 }
 
+/** Number of contiguous regions. */
+size_t
+ExtentMap::nregions() const
+{
+    return super::size(); // ExtentMap::size() is number of bytes
+}
+
 /** Precipitates individual extents into larger extents by combining individual extents that are separated by an amount less
  *  than or equal to some specified @p reagent value.  Individual elements that would have been adjacent have already
  *  been combined by the other modifying methods (insert, erase, etc). */
@@ -273,6 +280,27 @@ ExtentMap::find_address(rose_addr_t addr) const
     if (i->first+i->second <= addr)
         throw std::bad_alloc();
     return *i;
+}
+
+/** Determines if specified bytes are in the extent map.  If every byte of the specified extent is defined by the extent map,
+ *  then this function returns true, otherwise false. */
+bool
+ExtentMap::exists_all(ExtentPair what) const
+{
+    while (what.second>0) {
+        try {
+            ExtentPair found = find_address(what.first);
+            assert(found.second > 0);
+            assert(found.first <= what.first);
+            assert(what.first <= found.first + found.second);
+            rose_addr_t nfound = std::min(what.second, found.second-(what.first-found.first));
+            what.first = found.first + found.second;
+            what.second -= nfound;
+        } catch (const std::bad_alloc&) { // thrown by find_address()
+            return false;
+        }
+    }
+    return true;
 }
 
 /** Print info about an extent map */

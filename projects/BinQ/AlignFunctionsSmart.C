@@ -36,13 +36,13 @@ findPosWhenFunctionsAreNotSyncSmart(int& position, int& offset, int& currentPos)
     if (i<instance->itemsFileB.size())
       itemB=instance->itemsFileB[i];
     if (itemA && itemB) {
-      SgAsmFunctionDeclaration* fa = isSgAsmFunctionDeclaration(itemA->statement);
-      SgAsmFunctionDeclaration* fb = isSgAsmFunctionDeclaration(itemB->statement);
+      SgAsmFunction* fa = isSgAsmFunction(itemA->statement);
+      SgAsmFunction* fb = isSgAsmFunction(itemB->statement);
       if (fa && !fb) {
 	// fa occured but fb is further away, need padding for fa
 	for (unsigned int k=i;k<instance->itemsFileB.size();++k) {
 	    itemB=instance->itemsFileB[k];
-	    fb = isSgAsmFunctionDeclaration(itemB->statement);
+	    fb = isSgAsmFunction(itemB->statement);
 	    if (fb) {
 	      // We need a padding in B at pos i with length (k-i)
 	      position=i-1;
@@ -55,7 +55,7 @@ findPosWhenFunctionsAreNotSyncSmart(int& position, int& offset, int& currentPos)
 	// fa occured but fb is further away, need padding for fa
 	for (unsigned int k=i;k<instance->itemsFileA.size();++k) {
 	    itemA=instance->itemsFileA[k];
-	    fa = isSgAsmFunctionDeclaration(itemA->statement);
+	    fa = isSgAsmFunction(itemA->statement);
 	    if (fa) {
 	      // We need a padding in A at pos i with length (k-i)
 	      position=i-1;

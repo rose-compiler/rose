@@ -382,17 +382,17 @@ int main(int argc, char** argv) {
     //When trying to add function I get that symbols are not defined
 
     //Iterate over the functions separately
-    vector<SgNode*> asmFunctions = NodeQuery::querySubTree(proj, V_SgAsmFunctionDeclaration);
+    vector<SgNode*> asmFunctions = NodeQuery::querySubTree(proj, V_SgAsmFunction);
 
     for(size_t j = 0; j < asmFunctions.size(); j++ )
     {
-      SgAsmFunctionDeclaration* binFunc = isSgAsmFunctionDeclaration( asmFunctions[j] );
+      SgAsmFunction* binFunc = isSgAsmFunction( asmFunctions[j] );
 
       // Some functions (probably just one) are generated to hold basic blocks that could not
       // be assigned to a particular function. This happens when the Disassembler is overzealous
       // and the Partitioner cannot statically determine where the block belongs.  The name of
       // one such function is "***uncategorized blocks***".  [matzke 2010-06-29]
-      if ((binFunc->get_reason() & SgAsmFunctionDeclaration::FUNC_LEFTOVERS))
+      if ((binFunc->get_reason() & SgAsmFunction::FUNC_LEFTOVERS))
         continue;
 
       //Some functions may be unnamed so we need to generate a name for those

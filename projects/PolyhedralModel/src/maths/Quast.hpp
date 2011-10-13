@@ -20,16 +20,16 @@ Type getBottom();
 
 bool operator == (const std::vector<Constraint> & v1, const std::vector<Constraint> & v2);
 
-bool operator == (const std::vector<LinearExpression> & v1, const std::vector<LinearExpression> & v2);
+bool operator == (const std::vector<LinearExpression_ppl> & v1, const std::vector<LinearExpression_ppl> & v2);
 
 std::vector<Constraint> * conditions(
 	const ConstraintSystem & dt,
 	const ConstraintSystem & df,
-	const std::vector<LinearExpression> & rel,
+	const std::vector<LinearExpression_ppl> & rel,
 	size_t st, size_t sf, size_t sg 
 );
 
-std::vector<LinearExpression> * maxlex(Polyhedron & p, std::vector<bool> & sign, size_t d1, size_t d2, size_t g);
+std::vector<LinearExpression_ppl> * maxlex(Polyhedron & p, std::vector<bool> & sign, size_t d1, size_t d2, size_t g);
 
 /**/
 
@@ -39,13 +39,13 @@ class QUAST;
 /**/
 
 template <class Type>
-QUAST<Type> * computeMaxLex(Type from, const std::vector<LinearExpression> & f_from, Type to, const std::vector<LinearExpression> & f_to);
+QUAST<Type> * computeMaxLex(Type from, const std::vector<LinearExpression_ppl> & f_from, Type to, const std::vector<LinearExpression_ppl> & f_to);
 
 template <class Type>
-QUAST<Type> * computeMax(Type from, const std::vector<LinearExpression> & f_from, Type to, const std::vector<LinearExpression> & f_to, size_t depth);
+QUAST<Type> * computeMax(Type from, const std::vector<LinearExpression_ppl> & f_from, Type to, const std::vector<LinearExpression_ppl> & f_to, size_t depth);
 
 template <class Type>
-std::vector<LinearExpression> * computeRelation(Type obj, std::vector<LinearExpression> & arg);
+std::vector<LinearExpression_ppl> * computeRelation(Type obj, std::vector<LinearExpression_ppl> & arg);
 
 /**/
 
@@ -64,7 +64,7 @@ template <class Type>
 QUAST<Type> * makeBranch(Type source, std::vector<Constraint> & cs, QUAST<Type> * q1, QUAST<Type> * q2);
 
 template <class Type>
-QUAST<Type> * makeLeaf(Type source, Type leaf, std::vector<LinearExpression> & iterators);
+QUAST<Type> * makeLeaf(Type source, Type leaf, std::vector<LinearExpression_ppl> & iterators);
 
 /**
  * \brief QUAST means Quasi-Affine Selection Tree.
@@ -83,7 +83,7 @@ class QUAST {
 		
 		bool p_is_leaf;
 		Type p_leaf;
-		std::vector<LinearExpression> p_relation;
+		std::vector<LinearExpression_ppl> p_relation;
 		
 		QUAST(Type source);
 		QUAST(const QUAST<Type> & quast);
@@ -101,7 +101,7 @@ class QUAST {
 		bool isLeaf() const;
 		
 		Type Leaf() const;
-		const std::vector<LinearExpression> & Relation() const;
+		const std::vector<LinearExpression_ppl> & Relation() const;
 		
 		void print(std::ostream & out, std::string indent) const;
 		
@@ -121,7 +121,7 @@ class QUAST {
 	friend QUAST<Type_> * makeBranch(Type_ source, std::vector<Constraint> & cs, QUAST<Type_> * q1, QUAST<Type_> * q2);
 
 	template <class Type_>
-	friend QUAST<Type_> * makeLeaf(Type_ source, Type_ leaf, std::vector<LinearExpression> & iterators);
+	friend QUAST<Type_> * makeLeaf(Type_ source, Type_ leaf, std::vector<LinearExpression_ppl> & iterators);
 };
 
 template <class Type>

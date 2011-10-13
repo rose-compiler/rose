@@ -9,15 +9,15 @@ check-local:
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
 	@$(MAKE) $(PASSING_TEST_Objects)
-	@echo "***********************************************************************************************************"
+	@echo "***************************************************************************************************"
 	@echo "****** ROSE/projects/OpenMP_Translator/tests: make check rule complete (terminated normally) ******"
-	@echo "***********************************************************************************************************"
+	@echo "***************************************************************************************************"
 else
 check-local:
 	@echo "\nOpenMP tests NOT run.  To run these reconfigure with:"
-	@echo "****************************************************************************"
-	@echo "****** make check not run here: configure --with-omni_omp_runtime_support=<path> ******"
+	@echo "********************************************************************************************"
+	@echo "********* make check not run here: configure --with-omni_omp_runtime_support=<path> ********"
 	@echo "** e.g. configure --with-omni_omp_runtime_support=/home/liao6/opt/omni-1.6/lib/openmp/lib **"
-	@echo "****************************************************************************"
+	@echo "********************************************************************************************"
 endif
 

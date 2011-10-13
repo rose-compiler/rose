@@ -36,27 +36,30 @@ namespace  AbstractMemoryObject
     return false;  
   }
 
+/*
   size_t ObjSet::memSize()
   {
     cerr<<"Error. Direct call to base class's memSize() is not allowed."<<endl;
     assert (false);
     return 0;
   }
+*/
 
-  bool ObjSet:: operator == (const ObjSet& o2)
+  bool ObjSet:: operator == (const ObjSet& o2) const
   {
     cerr<<"Error. Direct call to base class's operator == () is not allowed."<<endl;
     assert (false);
     return false;  
   }
 
-  bool ObjSet::operator < ( const ObjSet& o2)
+  bool ObjSet::operator < ( const ObjSet& o2) const
   {
     cerr<<"Error. Direct call to base class's operator <() is not allowed."<<endl;
     assert (false);
     return false;  
   }
 
+/*
   bool ObjSet::operator <= ( const ObjSet& o2)
   {
     cerr<<"Error. Direct call to base class's operator <=() is not allowed."<<endl;
@@ -77,7 +80,7 @@ namespace  AbstractMemoryObject
     assert (false);
     return false;  
   }
-
+*/
   std::string ObjSet::toString()
   {
     cerr<<"Error. Direct call to base class's toString() is not allowed."<<endl;
@@ -99,6 +102,7 @@ namespace  AbstractMemoryObject
     return 0;
   }
 
+/*
   bool LabeledAggregate:: operator == (const LabeledAggregate& o2) const
   {
     cerr<<"Error. Direct call to base class's operator == () is not allowed."<<endl;
@@ -112,7 +116,7 @@ namespace  AbstractMemoryObject
     assert (false);
     return false;  
   }
- 
+*/ 
    std::string LabeledAggregateField::getName()
    {
     cerr<<"Error. Direct call to base class's getName() is not allowed."<<endl;
@@ -141,6 +145,7 @@ namespace  AbstractMemoryObject
     assert (false);
     return "";  
    }
+
    void LabeledAggregateField::setField(ObjSet* f)
    {
      cerr<<"Error. Direct call to base class's setField() is not allowed."<<endl;
@@ -159,4 +164,56 @@ namespace  AbstractMemoryObject
      assert (false);
      return NULL;  
    }
+   std::string IndexVector::toString()
+   {
+    cerr<<"Error. Direct call to base class (IndexVector)'s toString() is not allowed."<<endl;
+    assert (false);
+    return "";  
+   }
+   bool IndexVector::operator ==( const IndexVector & other) const
+   {
+    cerr<<"Error. Direct call to base class (IndexVector)'s operator==() is not allowed."<<endl;
+    assert (false);
+    return false;  
+   }
+
+
+   ObjSet* Array::getElements()
+   {
+     cerr<<"Error. Direct call to base class (Array)'s getElements() is not allowed."<<endl;
+     assert (false);
+     return NULL;  
+   }
+
+   ObjSet* Array::getElements(IndexVector* ai)
+   {
+     cerr<<"Error. Direct call to base class (Array)'s getElements(IndexVector* ai) is not allowed."<<endl;
+     assert (false);
+     return NULL;  
+   }
+
+   size_t Array::getNumDims()
+   {
+     cerr<<"Error. Direct call to base class (Array)'s getNumDims( ) is not allowed."<<endl;
+     assert (false);
+    return 0;
+   }
+
+/*
+  bool Array:: operator == (const ObjSet & o2) const
+  {
+    cerr<<"Error. Direct call to base class (Array)'s operator == () is not allowed."<<endl;
+    assert (false);
+    return false;  
+  }
+
+  bool Array:: operator  (const ObjSet & o2) const
+  {
+    cerr<<"Error. Direct call to base class (Array)'s operator == () is not allowed."<<endl;
+    assert (false);
+    return false;  
+  }
+*/
+
+
 }
