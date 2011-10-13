@@ -606,9 +606,16 @@ bool
 AsmUnparser::StaticDataDetails::operator()(bool enabled, const StaticDataArgs &args)
 {
     if (enabled) {
+        SgAsmBlock *dblock = isSgAsmBlock(args.data->get_parent()); // look only to parent for data block
         size_t nbytes = args.data->get_raw_bytes().size();
-        args.output <<" " <<nbytes <<" byte" <<(1==nbytes?"":"s") <<" untyped data beginning at "
-                    <<StringUtility::addrToString(args.data->get_address());
+
+        if (dblock && 0!=(dblock->get_reason() & SgAsmBlock::BLK_JUMPTABLE)) {
+            args.output <<" " <<nbytes <<"-byte jump table beginning at "
+                        <<StringUtility::addrToString(args.data->get_address());
+        } else {
+            args.output <<" " <<nbytes <<" byte" <<(1==nbytes?"":"s") <<" untyped data beginning at "
+                        <<StringUtility::addrToString(args.data->get_address());
+        }
     }
     return enabled;
 }

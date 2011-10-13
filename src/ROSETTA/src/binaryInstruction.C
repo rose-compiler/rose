@@ -204,7 +204,7 @@ Grammar::setUpBinaryInstructions()
 
     NEW_TERMINAL_MACRO(AsmWordValueExpression, "AsmWordValueExpression", "AsmWordValueExpressionTag");
     AsmWordValueExpression.setFunctionPrototype("HEADER_BINARY_WORD_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
-     AsmWordValueExpression.setFunctionSource("SOURCE_BINARY_WORD_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
+    AsmWordValueExpression.setFunctionSource("SOURCE_BINARY_WORD_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
     AsmWordValueExpression.setDataPrototype("uint16_t", "value", "= 0x0",
                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 

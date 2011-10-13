@@ -4000,7 +4000,7 @@ HEADER_BINARY_BLOCK_START
 		BLK_USERDEF	= 0x0020,	/**< User says block belongs to the function. */
 		BLK_LEFTOVERS	= 0x0040,	/**< Block is being assigned to a FUNC_LEFTOVERS function because it could
 						 *   not be assigned to any other function. */
-
+		BLK_JUMPTABLE   = 0x0080,	/**< Table of code addresses used by indirect branches. */
 		BLK_GRAPH1	= 0x0100,	/**< Block was added by the main CFG analysis. */
 		BLK_GRAPH2	= 0x0200,	/**< Block was added by a second pass of CFG analysis. */
 

@@ -209,9 +209,10 @@ SgAsmFunction::get_extent(ExtentMap *extents, rose_addr_t *lo_addr, rose_addr_t 
 std::string
 SgAsmBlock::reason_key(const std::string &prefix)
 {
-    return (prefix + "L = left over blocks   N = NOP/zero padding     V = intrafunction block\n" +
-            prefix + "H = CFG head           1 = first CFG traversal  2 = second CFG traversal\n" +
-            prefix + "E = Function entry     U = user-def reason\n");
+    return (prefix + "L = left over blocks    N = NOP/zero padding     V = intrafunction block\n" +
+            prefix + "J = jump table          E = Function entry\n" +
+            prefix + "H = CFG head            1 = first CFG traversal 2 = second CFG traversal\n" +
+            prefix + "U = user-def reason\n");
 }
 
 /** Returns reason string for this block. */
@@ -234,7 +235,9 @@ SgAsmBlock::reason_str(bool do_pad, unsigned r)
     } else if (r & BLK_PADDING) {
         add_to_reason_string(result, true, do_pad, "N", "padding");
     } else if (r & BLK_INTRAFUNC) {
-        add_to_reason_string(result, true,    do_pad, "V", "intrafunc"); // because V is used for FUNC_INTRABLOCK
+        add_to_reason_string(result, true, do_pad, "V", "intrafunc"); // because V is used for FUNC_INTRABLOCK
+    } else if (r & BLK_JUMPTABLE) {
+        add_to_reason_string(result, true, do_pad, "J", "jumptable");
     } else {
         add_to_reason_string(result, (r & BLK_ENTRY_POINT),  do_pad, "E", "entry point");
     }
@@ -397,6 +400,77 @@ Partitioner::update_analyses(BasicBlock *bb)
 
     /* Successor analysis */
     bb->cache.sucs = bb->insns.front()->get_successors(bb->insns, &(bb->cache.sucs_complete), &ro_map);
+
+    /* Try to handle indirect jumps of the form "jmp ds:[BASE+REGISTER*WORDSIZE]".  The trick is to assume that some kind of
+     * jump table exists beginning at address BASE, and that the table contains only addresses of valid code.  All we need to
+     * do is look for the first entry in the table that doesn't point into an executable region of the disassembly memory
+     * map. We use a "do" loop so the logic nesting doesn't get so deep: just break when we find that something doesn't match
+     * what we expect. */
+    if (!bb->cache.sucs_complete && bb->cache.sucs.empty()) {
+        do {
+            SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(bb->last_insn());
+            if (!insn_x86 || (insn_x86->get_kind()!=x86_jmp && insn_x86->get_kind()==x86_farjmp) ||
+                1!=insn_x86->get_operandList()->get_operands().size())
+                break;
+            SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(insn_x86->get_operandList()->get_operands()[0]);
+            if (!mre)
+                break;
+            SgAsmBinaryAdd *add = isSgAsmBinaryAdd(mre->get_address());
+            if (!add)
+                break;
+            SgAsmValueExpression *base = isSgAsmValueExpression(add->get_lhs());
+            if (!base)
+                break;
+            SgAsmBinaryMultiply *mult = isSgAsmBinaryMultiply(add->get_rhs());
+            if (!mult)
+                break;
+            SgAsmRegisterReferenceExpression *reg = isSgAsmRegisterReferenceExpression(mult->get_lhs());
+            if (!reg)
+                break;
+            SgAsmValueExpression *step = isSgAsmValueExpression(mult->get_rhs());
+            if (!step)
+                break;
+            rose_addr_t base_va = value_of(base);
+            size_t entry_size = value_of(step);
+            if (! ((entry_size==2 && insn_x86->get_operandSize()==x86_insnsize_16) ||
+                   (entry_size==4 && insn_x86->get_operandSize()==x86_insnsize_32) ||
+                   (entry_size==8 && insn_x86->get_operandSize()==x86_insnsize_64)))
+                break;
+
+            /* How big is the table? */
+            size_t nentries = 0;
+            while (1) {
+                uint8_t buf[8];
+                size_t nread = ro_map.read(buf, base_va+nentries*entry_size, entry_size);
+                if (nread!=entry_size)
+                    break;
+                rose_addr_t target_va = 0;
+                for (size_t i=0; i<entry_size; i++)
+                    target_va |= buf[i] << (i*8);
+                const MemoryMap::MapElement *me = map->find(target_va);
+                if (!me || 0==(me->get_mapperms() & MemoryMap::MM_PROT_EXEC))
+                    break;
+                ++nentries;
+                bb->cache.sucs.insert(target_va);
+            }
+            if (0==nentries)
+                break;
+
+            /* We can assume that since we found a valid jump table that we now know all the successors. Perhaps we shouldn't
+             * be this brave? */
+            bb->cache.sucs_complete = true;
+
+            /* Create a data block for the jump table. */
+            DataBlock *dblock = find_db_starting(base_va, nentries*entry_size);
+            append(bb, dblock, SgAsmBlock::BLK_JUMPTABLE);
+
+            if (debug)
+                fprintf(debug, "[jump table at 0x%08"PRIx64"+%zu*%zu]", base_va, nentries, entry_size);
+#if 1 /* DEBUGGING [RPM 2011-10-12] */
+            fprintf(stderr, "ROBB: jump table at 0x%08"PRIx64"+%zu*%zu\n", base_va, nentries, entry_size);
+#endif
+        } while (0);
+    }
 
     /* Call target analysis. For x86, a function call is any CALL instruction except when the call target is the fall-through
      * address and the instruction at the fall-through address pops the top of the stack (this is how position independent
@@ -570,12 +644,34 @@ Partitioner::DataBlock::address() const
     return nodes.front()->get_address();
 }
 
+/** Returns the function to which this data block is effectively assigned.  This returns, in this order, the function to which
+ *  this data block is explicitly assigned, the function to which this block is implicitly assigned via an association with a
+ *  basic block, or a null pointer. */
+Partitioner::Function *
+Partitioner::effective_function(DataBlock *dblock)
+{
+    if (dblock->function)
+        return dblock->function;
+    if (dblock->basic_block)
+        return dblock->basic_block->function;
+    return NULL;
+}
+
 /* Returns last instruction, the one that exits from the block. */
 SgAsmInstruction *
 Partitioner::BasicBlock::last_insn() const
 {
     assert(insns.size()>0);
     return insns.back();
+}
+
+/* Removes association between data blocks and basic blocks. */
+void
+Partitioner::BasicBlock::clear_data_blocks()
+{
+    for (std::set<DataBlock*>::iterator di=data_blocks.begin(); di!=data_blocks.end(); ++di)
+        (*di)->basic_block = NULL;
+    data_blocks.clear();
 }
 
 /* Release all basic blocks from a function. Do not delete the blocks. */
@@ -658,7 +754,10 @@ Partitioner::load_config(const std::string &filename) {
 /** Reduces the size of a basic block by truncating its list of instructions.  The new block contains initial instructions up
  *  to but not including the instruction at the specified virtual address.  The addresses of the instructions (aside from the
  *  instruction with the specified split point), are irrelevant since the choice of where to split is based on the relative
- *  positions in the basic block's instruction vector rather than instruction address. */
+ *  positions in the basic block's instruction vector rather than instruction address.
+ *
+ *  If this basic block's size decreased, then any data blocks associated with this basic block are no longer associated with
+ *  this basic block. */
 void
 Partitioner::truncate(BasicBlock* bb, rose_addr_t va)
 {
@@ -670,12 +769,15 @@ Partitioner::truncate(BasicBlock* bb, rose_addr_t va)
     while (cut!=bb->insns.end() && (*cut)->get_address()!=va) ++cut;
     assert(cut!=bb->insns.begin()); /*we can't remove them all since basic blocks are never empty*/
 
-    /* Remove instructions from the cut point and beyond. */
+    /* Remove instructions (from the cut point and beyond) and all the data blocks. */
     for (std::vector<SgAsmInstruction*>::iterator ii=cut; ii!=bb->insns.end(); ++ii) {
         assert(insn2block[(*ii)->get_address()] == bb);
         insn2block[(*ii)->get_address()] = NULL;
     }
-    bb->insns.erase(cut, bb->insns.end());
+    if (cut!=bb->insns.end()) {
+        bb->insns.erase(cut, bb->insns.end());
+        bb->clear_data_blocks();
+    }
 }
 
 /* Append instruction to basic block */
@@ -687,6 +789,29 @@ Partitioner::append(BasicBlock* bb, SgAsmInstruction* insn)
     assert(insn2block[insn->get_address()]==NULL); /*insn must not already belong to a basic block*/
     bb->insns.push_back(insn);
     insn2block[insn->get_address()] = bb;
+}
+
+/** Associate a data block with a basic block.  Any basic block can point to zero or more data blocks.  The data block will
+ *  then be kept with the same function as the basic block.  This is typically used for things like jump tables, where the last
+ *  instruction of the basic block is an indirect jump, and the data block contains the jump table.  When a blasic block is
+ *  truncated, it looses its data blocks.
+ *
+ *  A data block's explicit function assignment (i.e., its "function" member) overrides its assignment via a basic block.  A
+ *  data block can be assigned to at most one basic block.
+ *
+ *  The @p reason argument is a bit vector of SgAsmBlock::Reason bits that are added to the data block's reasons for existing. */
+void
+Partitioner::append(BasicBlock *bb, DataBlock *db, unsigned reason)
+{
+    assert(bb!=NULL);
+    assert(db!=NULL);
+    db->reason |= reason;
+
+    if (db->basic_block!=NULL)
+        db->basic_block->data_blocks.erase(db);
+
+    bb->data_blocks.insert(db);
+    db->basic_block = bb;
 }
 
 /** Append basic block to function.  This method is a bit of a misnomer because the order that blocks are appended to a
@@ -767,7 +892,8 @@ Partitioner::append(Function *func, DataBlock *block, unsigned reason)
     func->data_blocks[block->address()] = block;
 }
 
-/* Remove a basic block from a function */
+/** Remove a basic block from a function.  The block and function continue to exist--only the association between them is
+ *  broken. */
 void
 Partitioner::remove(Function* f, BasicBlock* bb) 
 {
@@ -778,7 +904,9 @@ Partitioner::remove(Function* f, BasicBlock* bb)
     f->basic_blocks.erase(bb->address());
 }
 
-/* Remove a data block from a function */
+/** Remove a data block from a function. The block and function continue to exist--only the association between them is
+ *  broken.  The data block might also be associated with a basic block, in which case the data block will ultimately belong to
+ *  the same function as the basic block. */
 void
 Partitioner::remove(Function *f, DataBlock *db)
 {
@@ -787,6 +915,18 @@ Partitioner::remove(Function *f, DataBlock *db)
     assert(db->function==f);
     db->function = NULL;
     f->data_blocks.erase(db->address());
+}
+
+/** Remove a data block from a basic block.  The blocks continue to exist--only the association between them is broken.  The
+ *  data block might still be associated with a function, in which case it will ultimately end up in that function. */
+void
+Partitioner::remove(BasicBlock *bb, DataBlock *db)
+{
+    assert(bb!=NULL);
+    if (db && db->basic_block==bb) {
+        bb->data_blocks.erase(db);
+        db->basic_block = NULL;
+    }
 }
 
 /* Remove instruction from consideration. */
@@ -820,6 +960,9 @@ Partitioner::discard(BasicBlock *bb)
         /* Remove instructions from the block, returning them to the (implied) list of free instructions. */
         for (std::vector<SgAsmInstruction*>::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii)
             insn2block.erase((*ii)->get_address());
+
+        /* Remove the association between data blocks and this basic block. */
+        bb->clear_data_blocks();
 
         /* Remove the block from the partitioner. */
         basic_blocks.erase(bb->address());
@@ -2012,6 +2155,8 @@ Partitioner::value_of(SgAsmValueExpression *e)
 {
     if (!e) {
         return 0;
+    } else if (isSgAsmByteValueExpression(e)) {
+        return isSgAsmByteValueExpression(e)->get_value();
     } else if (isSgAsmWordValueExpression(e)) {
         return isSgAsmWordValueExpression(e)->get_value();
     } else if (isSgAsmDoubleWordValueExpression(e)) {
@@ -2366,8 +2511,7 @@ Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
                  basic_blocks.size(), 1==basic_blocks.size()?"":"s",
                  basic_blocks.size()?(int)(1.0*insn2block.size()/basic_blocks.size()+0.5):0);
 
-        /* If function A makes a call to function B and we know that function B could return but the return address is not
-         * part of any function, then mark function A as pending so that we rediscover its blocks. */   
+        /* Analyze function return characteristics. */
         for (BasicBlocks::iterator bi=basic_blocks.begin(); bi!=basic_blocks.end(); ++bi) {
             BasicBlock *bb = bi->second;
             rose_addr_t return_va = canonic_block(bb->last_insn()->get_address() + bb->last_insn()->get_raw_bytes().size());
@@ -2578,52 +2722,65 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
 
 size_t
 Partitioner::function_extent(Function *func,
-                             ExtentMap *extents/*out*/, rose_addr_t *lo_addr/*out*/, rose_addr_t *hi_addr/*out*/)
+                             ExtentMap *extents/*out*/, rose_addr_t *lo_addr_ptr/*out*/, rose_addr_t *hi_addr_ptr/*out*/)
 {
-    size_t nnodes = 0;
-    if (lo_addr)
-        *lo_addr = 0;
-    if (hi_addr)
-        *hi_addr = 0;
+    size_t nnodes=0, lo_addr=0, hi_addr=0;
     for (BasicBlocks::iterator bi=func->basic_blocks.begin(); bi!=func->basic_blocks.end(); ++bi) {
         BasicBlock *bb = bi->second;
+
+        /* Basic block instructions */
         for (std::vector<SgAsmInstruction*>::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii) {
             if (0==nnodes++) {
-                if (lo_addr)
-                    *lo_addr = (*ii)->get_address();
-                if (hi_addr)
-                    *hi_addr = (*ii)->get_address() + (*ii)->get_raw_bytes().size();
+                lo_addr = (*ii)->get_address();
+                hi_addr = (*ii)->get_address() + (*ii)->get_raw_bytes().size();
             } else {
-                if (lo_addr)
-                    *lo_addr = std::min(*lo_addr, (*ii)->get_address());
-                if (hi_addr)
-                    *hi_addr = std::max(*hi_addr, (*ii)->get_address() + (*ii)->get_raw_bytes().size());
+                lo_addr = std::min(lo_addr, (*ii)->get_address());
+                hi_addr = std::max(hi_addr, (*ii)->get_address() + (*ii)->get_raw_bytes().size());
             }
-                
             if (extents)
                 extents->insert((*ii)->get_address(), (*ii)->get_raw_bytes().size());
         }
-    }
-    for (DataBlocks::iterator bi=func->data_blocks.begin(); bi!=func->data_blocks.end(); ++bi) {
-        DataBlock *block = bi->second;
-        for (std::vector<SgAsmStaticData*>::iterator di=block->nodes.begin(); di!=block->nodes.end(); ++di) {
-            if (0==nnodes++) {
-                if (lo_addr)
-                    *lo_addr = (*di)->get_address();
-                if (hi_addr)
-                    *hi_addr = (*di)->get_address() + (*di)->get_raw_bytes().size();
-            } else {
-                if (lo_addr)
-                    *lo_addr = std::min(*lo_addr, (*di)->get_address());
-                if (hi_addr)
-                    *hi_addr = std::max(*hi_addr, (*di)->get_address() + (*di)->get_raw_bytes().size());
-            }
 
-            if (extents)
-                extents->insert((*di)->get_address(), (*di)->get_raw_bytes().size());
+        /* Data blocks associated with this basic block. Count them only if they aren't explicitly assigned to a function. */
+        for (std::set<DataBlock*>::iterator di=bb->data_blocks.begin(); di!=bb->data_blocks.end(); ++di) {
+            if (NULL==(*di)->function) {
+                rose_addr_t lo, hi;
+                size_t n = datablock_extent(*di, extents, &lo, &hi);
+                if (n>0) {
+                    if (0==nnodes) {
+                        lo_addr = lo;
+                        hi_addr = hi;
+                    } else {
+                        lo_addr = std::min(lo_addr, lo);
+                        hi_addr = std::max(hi_addr, hi);
+                    }
+                    nnodes += n;
+                }
+            }
         }
     }
 
+    /* Data blocks associated with this function. */
+    for (DataBlocks::iterator bi=func->data_blocks.begin(); bi!=func->data_blocks.end(); ++bi) {
+        DataBlock *block = bi->second;
+        rose_addr_t lo, hi;
+        size_t n = datablock_extent(block, extents, &lo, &hi);
+        if (n>0) {
+            if (0==nnodes) {
+                lo_addr = lo;
+                hi_addr = hi;
+            } else {
+                lo_addr = std::min(lo_addr, lo);
+                hi_addr = std::max(hi_addr, hi);
+            }
+            nnodes += n;
+        }
+    }
+
+    if (lo_addr_ptr)
+        *lo_addr_ptr = lo_addr;
+    if (hi_addr_ptr)
+        *hi_addr_ptr = hi_addr;
     return nnodes;
 }
 
@@ -2672,7 +2829,8 @@ Partitioner::is_contiguous(Function *func, bool strict)
      * FIXME: we could use a faster method of doing this! [RPM 2011-09-29] */
     for (DataBlocks::iterator dbi=data_blocks.begin(); dbi!=data_blocks.end(); ++dbi) {
         DataBlock *block = dbi->second;
-        if (block->function!=NULL && block->function!=func) {
+        Function *block_func = effective_function(block);
+        if (block_func!=NULL && block_func!=func) {
             for (size_t i=0; i<block->nodes.size(); i++) {
                 if (block->nodes[i]->get_address() < hi_addr &&
                     block->nodes[i]->get_address() + block->nodes[i]->get_raw_bytes().size() > lo_addr)
@@ -2684,6 +2842,7 @@ Partitioner::is_contiguous(Function *func, bool strict)
     return true;
 }
 
+/* Update SgAsmTarget nodes. */
 void
 Partitioner::update_targets(SgNode *ast)
 {
@@ -2812,16 +2971,28 @@ Partitioner::build_ast(Function* f)
     NodeMap nodes;
     BasicBlock *first_basic_block = NULL;
     for (BasicBlocks::iterator bi=f->basic_blocks.begin(); bi!=f->basic_blocks.end(); ++bi) {
-        BasicBlock *block = bi->second;
+        BasicBlock *bblock = bi->second;
         if (!first_basic_block)
-            first_basic_block = block;
-        SgAsmStatement *node = build_ast(block);
-        nodes.insert(std::make_pair(block->address(), node));
+            first_basic_block = bblock;
+
+        /* The instructions for this basic block */
+        SgAsmStatement *node = build_ast(bblock);
+        nodes.insert(std::make_pair(bblock->address(), node));
+
+        /* The data associated with this basic block */
+        for (std::set<DataBlock*>::iterator di=bblock->data_blocks.begin(); di!=bblock->data_blocks.end(); ++di) {
+            DataBlock *dblock = *di;
+            Function *dblock_func = effective_function(dblock);
+            if (dblock_func==f && nodes.find(dblock->address())==nodes.end())
+                nodes.insert(std::make_pair(dblock->address(), build_ast(dblock)));
+        }
     }
-    for (DataBlocks::iterator bi=f->data_blocks.begin(); bi!=f->data_blocks.end(); ++bi) {
-        DataBlock *block = bi->second;
-        SgAsmStatement *node = build_ast(block);
-        nodes.insert(std::make_pair(block->address(), node));
+
+    for (DataBlocks::iterator di=f->data_blocks.begin(); di!=f->data_blocks.end(); ++di) {
+        DataBlock *dblock = di->second;
+        assert(dblock->function==f);
+        if (nodes.find(dblock->address())==nodes.end())
+            nodes.insert(std::make_pair(dblock->address(), build_ast(dblock)));
     }
 
     /* Create the AST function node. */

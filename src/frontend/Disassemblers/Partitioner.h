@@ -126,6 +126,8 @@ public:
 protected:
 
     struct Function;
+    struct DataBlock;
+    struct BasicBlock;
 
     /** Analysis that can be cached in a block. Some analyses are expensive enough that they should be cached in a block.
      *  Analyses are either locally computed (by examining only the block where they're cached) or non-locally computed (by
@@ -190,10 +192,15 @@ protected:
         /** Marks the block analysis cache as being up to date. */
         void validate_cache() { cache.age=insns.size(); }
 
+        /** Remove all data blocks from this basic block.  The data blocks continue to exist, they're just no longer associated
+         *  with this basic block. */
+        void clear_data_blocks();
+
         SgAsmInstruction* last_insn() const;    /**< Returns the last executed (exit) instruction of the block */
         rose_addr_t address() const;            /* Return the address of the basic block's first (entry) instruction. */
         unsigned reason;                        /**< Reasons this block was created; SgAsmBlock::Reason bit flags */
         std::vector<SgAsmInstruction*> insns;   /**< Non-empty set of instructions composing this basic block, in address order */
+        std::set<DataBlock*> data_blocks;       /**< Data blocks owned by this basic block. E.g., this block's jump table. */
         BlockAnalysisCache cache;               /**< Cached results of local analyses */
         Function* function;                     /**< Function to which this basic block is assigned, or null */
     };
@@ -202,13 +209,20 @@ protected:
     /** Represents a region of static data within the address space being disassembled.  Each data block will eventually become
      *  an SgAsmBlock node in the AST if it is assigned to a function.
      *
+     *  A DataBlock can be associated with a function, a basic block, both, or neither.  When associated with both, the
+     *  function takes precedence (if the function association is broken, the basic block association remains).  When
+     *  associated with a basic block (and not a function), the data block will appear to move from function to function as its
+     *  basic block moves.  When associated with neither, the basic block may ultimately be added to a "leftovers" function or
+     *  discarded.  See the append() method for associating a data block with a function or basic block, and the remove()
+     *  method for breaking the association.
+     *
      *  The address of the first SgAsmStaticData node of a DataBlock should remain constant for the life of the DataBlock.
      *  This is because we use that address to establish a two-way link between the DataBlock and a Function object. */
     struct DataBlock {
         /** Constructor. This constructor should not be called directly since the Partitioner has other pointers that it needs
          * to establish to this block.  Instead, call one of the Partitioner's data block creation functions, such as
          * Partitioner::find_db_starting(). */
-        DataBlock(): reason(SgAsmBlock::BLK_NONE), function(NULL) {}
+        DataBlock(): reason(SgAsmBlock::BLK_NONE), function(NULL), basic_block(NULL) {}
 
         /** Destructor.  This destructor should not be called directly since there are other pointers in the Partitioner that
          * this block does not know about.  Instead, call Partitioner::discard(). */
@@ -707,10 +721,12 @@ public:
     struct AbandonFunctionDiscovery {};                         /**< Exception thrown to defer function block discovery. */
 
     virtual void append(BasicBlock*, SgAsmInstruction*);        /**< Add an instruction to a basic block. */
+    virtual void append(BasicBlock*, DataBlock*, unsigned reasons); /* Add a data block to a basic block. */
     virtual void append(Function*, BasicBlock*, unsigned reasons, bool keep=false); /* Append a basic block to a function */
     virtual void append(Function*, DataBlock*, unsigned reasons); /* Append a data block to a function */
-    virtual void remove(Function*, BasicBlock*);                /**< Remove a basic block from a function. */
-    virtual void remove(Function*, DataBlock*);                 /**< Remove a data block from a function. */
+    virtual void remove(Function*, BasicBlock*);                /* Remove a basic block from a function. */
+    virtual void remove(Function*, DataBlock*);                 /* Remove a data block from a function. */
+    virtual void remove(BasicBlock*, DataBlock*);               /* Remove association between basic block and data block. */
     virtual BasicBlock* find_bb_containing(rose_addr_t, bool create=true); /* Find basic block containing instruction address */
     virtual BasicBlock* find_bb_starting(rose_addr_t, bool create=true);   /* Find or create block starting at specified address */
     virtual DataBlock* find_db_starting(rose_addr_t, size_t size); /* Find (or create if size>0) a data block */
@@ -731,6 +747,7 @@ public:
     virtual rose_addr_t canonic_block(rose_addr_t);             /**< Follow alias links in basic blocks. */
     virtual bool is_function_call(BasicBlock*, rose_addr_t*);   /* True if basic block appears to call a function. */
     virtual bool is_thunk(Function*);                           /* True if function is a thunk. */
+    virtual Function *effective_function(DataBlock*);           /* Function to which a data block is currently bound. */
 
     virtual void mark_call_insns();                             /**< Naive marking of CALL instruction targets as functions */
     virtual void mark_ipd_configuration();                      /**< Seeds partitioner with IPD configuration information */
