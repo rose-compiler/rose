@@ -833,6 +833,7 @@ SgPassStatement* buildPassStatement_nfi();
 
 //! Build a Assert statement
 SgAssertStmt* buildAssertStmt(SgExpression* test);
+SgAssertStmt* buildAssertStmt(SgExpression *test, SgExpression *exceptionArgument);
 SgAssertStmt* buildAssertStmt_nfi(SgExpression* test);
 
 //! Build a yield statement
