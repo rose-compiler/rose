@@ -1,5 +1,5 @@
 ## Automake options
-AUTOMAKE_OPTIONS = foreign no-dependencies
+# AUTOMAKE_OPTIONS = foreign no-dependencies
 # srcdir           = @srcdir@
 # VPATH            = @srcdir@ 
 
