@@ -71,3 +71,23 @@ include_HEADERS = \
      fixupConstantFoldedValues.h
 
 EXTRA_DIST = CMakeLists.txt
+
+# DQ (10/17/2011): Alternative header file dependency support.
+# If this is required we can use this as a way of supporting the header file
+# dependency tailored to exclude system headers.  But it is a more complex form of what is alreay
+# supported more directly via automake.  So we have decided to use the automake version for now.
+# Specification of where we put the *.P files (the comiler will build the *.d files there by default).
+# DQ (10/16/2011): Added support for makefile dependences of header files (requested by Rice).
+# Need to get this into the compileer command line to generate the *.d file in the .libs directory.
+# INCLUDES += -MMD
+# DEPEND_FILE_DIR = .libs
+# This is a specific variable name used by either Make (or automake generated makefiles).
+# DEPDIR = $(DEPEND_FILE_DIR)
+# dependeFileName = $(DEPEND_FILE_DIR)/$(*F)
+# $(DEPEND_FILE_DIR)/%.P : %.lo
+#	sed -e 's/.libs\///'  -e 's/o:/lo:/' < $(dependeFileName).d >> $(dependeFileName).P;
+# -include $(libastPostProcessing_la_SOURCES:%.C=$(DEPEND_FILE_DIR)/%.P)
+# clean-dep:
+#	rm -rf $(DEPEND_FILE_DIR)/*.d $(DEPEND_FILE_DIR)/*.P 
+
+
