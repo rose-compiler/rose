@@ -12,7 +12,8 @@ memObjectGenerator_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 # Put test codes without main() entry here
 C_TESTCODES_REQUIRED_TO_COMPILE =  \
      struct_simplest.c \
-     expression.c
+     expression.c \
+     array.c
 
 CXX_TESTCODES_REQUIRED_TO_COMPILE = \
      test_2011_08_15.cpp \

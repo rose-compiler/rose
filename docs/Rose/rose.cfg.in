@@ -476,6 +476,7 @@ INPUT                  = \
 			 @top_srcdir@/src/frontend/BinaryFormats/Rva.C \
 			 @top_srcdir@/src/frontend/BinaryLoader \
                          @top_srcdir@/src/frontend/Open64/documentation.docs \
+                         @top_srcdir@/src/frontend/SageIII/ \
                          @top_srcdir@/src/frontend/SageIII/docs \
 			 @top_srcdir@/src/frontend/SageIII/astPostProcessing/checkIsModifiedFlag.C \
                          @top_srcdir@/src/frontend/SageIII/sageInterface \

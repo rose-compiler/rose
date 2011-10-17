@@ -593,9 +593,9 @@ RSIM_Thread::report_stack_frames(RTS_Message *mesg, const std::string &title/*="
             } catch (const Disassembler::Exception&) {
                 /* IP is probably pointing to non-executable memory or a bad address. */
             }
-            SgAsmFunctionDeclaration *func = SageInterface::getEnclosingNode<SgAsmFunctionDeclaration>(insn);
+            SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(insn);
             const MemoryMap::MapElement *me = NULL;
-            if (func && !func->get_name().empty() && 0==(func->get_reason() & SgAsmFunctionDeclaration::FUNC_LEFTOVERS)) {
+            if (func && !func->get_name().empty() && 0==(func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS)) {
                 mesg->more(" in function %s", func->get_name().c_str());
             } else if ((me=process->get_memory()->find(ip)) && !me->get_name().empty()) {
                 mesg->more(" in memory region %s", me->get_name().c_str());

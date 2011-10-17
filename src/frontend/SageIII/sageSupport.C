@@ -103,6 +103,9 @@ const string FileHelper::pathDelimiter = "/";
 // DQ (9/17/2009): This appears to only be required for the GNU 4.1.x compiler (not for any earlier or later versions).
 extern const std::string ROSE_GFORTRAN_PATH;
 
+// CER (10/11/2011): Added to allow OFP jar file to depend on version number based on date.
+extern const std::string ROSE_OFP_VERSION_STRING;
+
 #ifdef _MSC_VER
 // DQ (11/29/2009): MSVC does not support sprintf, but "_snprintf" is equivalent
 // (note: printf_S is the safer version but with a different function argument list).
@@ -5712,7 +5715,9 @@ global_build_classpath()
      }
 
   // Open Fortran Parser (OFP) support (this is the jar file)
-     string ofp_jar_file_name = string("OpenFortranParser-") + StringUtility::numberToString(ROSE_OFP_MAJOR_VERSION_NUMBER) + "." + StringUtility::numberToString(ROSE_OFP_MINOR_VERSION_NUMBER) + "." + StringUtility::numberToString(ROSE_OFP_PATCH_VERSION_NUMBER) + string(".jar");
+  // CER (10/4/2011): Switched to using date-based version for OFP jar file.
+  //
+     string ofp_jar_file_name = string("OpenFortranParser-") + ROSE_OFP_VERSION_STRING + string(".jar");
      string ofp_class_path = "src/3rdPartyLibraries/fortran-parser/" + ofp_jar_file_name;
      classpath += findRoseSupportPathFromBuild(ofp_class_path, string("lib/") + ofp_jar_file_name) + ":";
 
@@ -8669,7 +8674,7 @@ SgFile::usage ( int status )
 "                             the search method should be added ('+') or removed ('-')\n"
 "                             from the set. The qualifier '=' acts like '+' but first\n"
 "                             clears the set.  The words are the lower-case versions of\n"
-"                             most of the SgAsmFunctionDeclaration::FunctionReason\n"
+"                             most of the SgAsmFunction::FunctionReason\n"
 "                             enumerated constants without the leading \"FUNC_\" (see\n"
 "                             doxygen documentation for the complete list and and their\n"
 "                             meanings).   An integer (decimal, octal, or hexadecimal using\n"

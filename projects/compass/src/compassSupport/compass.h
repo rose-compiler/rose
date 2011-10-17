@@ -7,7 +7,7 @@
 #include <mpi.h>
 #endif
 
-//#include <rose.h>
+#include <rose.h>
 #include "DefUseAnalysis_perFunction.h"
 #include "DefUseAnalysis.h"
 #include <boost/function.hpp>

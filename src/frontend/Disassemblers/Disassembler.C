@@ -265,7 +265,7 @@ Disassembler::disassemble(SgAsmInterpretation *interp, AddressSet *successors, B
     Partitioner *p = p_partitioner ? p_partitioner : new Partitioner;
     if (p_debug && !p_partitioner)
         p->set_debug(get_debug());
-    SgAsmBlock *top = p->partition(interp, insns);
+    SgAsmBlock *top = p->partition(interp, insns, interp->get_map());
     interp->set_global_block(top);
     top->set_parent(interp);
     if (!p_partitioner)

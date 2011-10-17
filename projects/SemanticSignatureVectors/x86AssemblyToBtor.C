@@ -168,10 +168,10 @@ BtorTranslationPolicy::BtorTranslationPolicy(BtorTranslationHooks* hooks, uint32
        true_() :
        problem.build_op_ulte(stepCount, number<32>(maxNumStepsToFindError))));
   {
-    vector<SgNode*> functions = NodeQuery::querySubTree(proj, V_SgAsmFunctionDeclaration);
+    vector<SgNode*> functions = NodeQuery::querySubTree(proj, V_SgAsmFunction);
     for (size_t i = 0; i < functions.size(); ++i) {
-      functionStarts.push_back(isSgAsmFunctionDeclaration(functions[i])->get_address());
-      // fprintf(stderr, "functionStarts 0x%"PRIx64"\n", isSgAsmFunctionDeclaration(functions[i])->get_address());
+      functionStarts.push_back(isSgAsmFunction(functions[i])->get_address());
+      // fprintf(stderr, "functionStarts 0x%"PRIx64"\n", isSgAsmFunction(functions[i])->get_address());
     }
   }
   {

@@ -19,7 +19,7 @@ struct GraphvizVertexWriter {
 /* Filter that accepts only function call edges. */
 struct OnlyCallEdges: public BinaryAnalysis::ControlFlow::EdgeFilter {
     bool operator()(BinaryAnalysis::ControlFlow *analyzer, SgAsmBlock *src, SgAsmBlock *dst) {
-        SgAsmFunctionDeclaration *func = dst->get_enclosing_function();
+        SgAsmFunction *func = dst->get_enclosing_function();
         return func && dst == func->get_entry_block();
     }
 };
@@ -28,8 +28,8 @@ struct OnlyCallEdges: public BinaryAnalysis::ControlFlow::EdgeFilter {
  * linked into the list of known functions.  We excluded these because their control flow information is often nonsensical. */
 struct ExcludeLeftovers: public BinaryAnalysis::ControlFlow::VertexFilter {
     bool operator()(BinaryAnalysis::ControlFlow *analyzer, SgAsmBlock *block) {
-        SgAsmFunctionDeclaration *func = block->get_enclosing_function();
-        return func && 0==(func->get_reason() & SgAsmFunctionDeclaration::FUNC_LEFTOVERS);
+        SgAsmFunction *func = block->get_enclosing_function();
+        return func && 0==(func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS);
     }
 };
 

@@ -1092,7 +1092,7 @@ void AssemblerX86::initAssemblyRules_part8() {
     define(defn);
 
     //------------------------------------------------------------------------------------------------------------------
-    // The following definitions are from ExtraInstructions.txt, modified 29 Apr 2011
+    // The following definitions are from ExtraInstructions.txt, modified 10 Oct 2011
     //------------------------------------------------------------------------------------------------------------------
 
 

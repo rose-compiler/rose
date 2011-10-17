@@ -100,7 +100,7 @@ main(int argc, char *argv[])
         T1(rose_addr_t a): removal_addr(a) {}
         void visit(SgNode *node) {
             SgAsmBlock *bb = isSgAsmBlock(node);
-            SgAsmFunctionDeclaration *func = bb ? SageInterface::getEnclosingNode<SgAsmFunctionDeclaration>(bb) : NULL;
+            SgAsmFunction *func = bb ? SageInterface::getEnclosingNode<SgAsmFunction>(bb) : NULL;
             if (func && bb->get_address()==removal_addr) {
                 SgAsmStatementPtrList::iterator found = std::find(func->get_statementList().begin(), 
                                                                   func->get_statementList().end(),
@@ -117,7 +117,13 @@ main(int argc, char *argv[])
     /* Unparse the file using assembled data from above */
     std::vector<SgAsmInterpretation*> interps = SageInterface::querySubTree<SgAsmInterpretation>(project, V_SgAsmInterpretation);
     ROSE_ASSERT(!interps.empty());
-    for (size_t i=0; i<interps.size(); ++i)
+    for (size_t i=0; i<interps.size(); ++i) {
+        std::cout <<"\n\n\n==================== Interpretation Listing ====================\n\n";
+        interps[i]->get_map()->dump(stdout);
+        AsmUnparser unparser;
+        unparser.set_organization(AsmUnparser::ORGANIZED_BY_ADDRESS);
+        unparser.unparse(std::cout, interps[i]);
         assemble_all(interps[i]);
+    }
     backend(project);
 }

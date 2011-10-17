@@ -16,14 +16,68 @@ extern SgSourceFile* OpenFortranParser_globalFilePointer;
 // Global stack of scopes
 extern std::list<SgScopeStatement*> astJavaScopeStack;
 
+// Global stack of expressions and statements
+class ComponentStack : private std::list<SgLocatedNode *> {
+public:
+    void push(SgLocatedNode *n) {
+        if (SgProject::get_verbose() > 1) {
+            std::cerr << "***Pushing node " << n -> class_name() << std::endl; 
+            std::cerr.flush();
+        }
+        push_front(n);
+    }
+    SgLocatedNode *pop() {
+        SgLocatedNode *n = front();
+        if (SgProject::get_verbose() > 1) {
+            std::cerr << "***Popping node " << n -> class_name() << std::endl;
+            std::cerr.flush();
+        }
+        pop_front();
+        return n;
+    }
+    SgLocatedNode *top() { return front(); }
+    bool empty() { return (size() == 0); }
+
+    SgExpression *popExpression() {
+        SgLocatedNode *n = pop();
+        if (! isSgExpression(n)) {
+            std::cerr << "Invalid attempt to pop a node of type "
+                     << n -> class_name()
+                     << " as an SgExpression"
+                     << std::endl;
+            ROSE_ASSERT(false);
+        }
+        return (SgExpression *) n;
+    }
+    SgStatement *popStatement() {
+        SgLocatedNode *n = pop();
+        if (isSgExpression(n)) {
+            // TODO: set source position for expr statement !!!?
+            return SageBuilder::buildExprStatement((SgExpression *) n);
+        }
+        if (! isSgStatement(n)) {
+            std::cerr << "Invalid attemtp to pop a node of type "
+                      << n -> class_name()
+                      << " as an SgStatement"
+                      << std::endl;
+            ROSE_ASSERT(false);
+        }
+        return (SgStatement *) n;
+    }
+};
+
+extern ComponentStack astJavaComponentStack;
+
+// Remove this!
 // Global stack of expressions 
-extern std::list<SgExpression*> astJavaExpressionStack;
+//extern std::list<SgExpression*> astJavaExpressionStack;
 
 // Global stack of types
 extern std::list<SgType*> astJavaTypeStack;
 
+// Remove this!
 // Global stack of statements
-extern std::list<SgStatement*> astJavaStatementStack;
+//extern std::list<SgStatement*> astJavaStatementStack;
 
 // Simplifying type for the setSourcePosition() functions
 // typedef std::vector<Token_t*> TokenListType;
@@ -125,12 +179,14 @@ SgClassSymbol* lookupSymbolFromQualifiedName(std::string className);
 SgClassType* lookupTypeFromQualifiedName(std::string className);
 
 
+// Remove this!
 //! Support function handles the complexity of handling append where the current scope is a SgIfStmt.
-void appendStatement(SgStatement* statement);
+//void appendStatement(SgStatement* statement);
 
+// Remove this!
 //! Put the astJavaStatementStack into the current scope.
 // void appendStatementStack();
-void appendStatementStack(int numberOfStatements);
+//void appendStatementStack(int numberOfStatements);
 
 //! Support to get current class scope.
 SgClassDefinition* getCurrentClassDefinition();
@@ -158,61 +214,78 @@ template< class T >
 void
 unaryExpressionSupport()
    {
-     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
-     ROSE_ASSERT(astJavaExpressionStack.size() >= 1);
-
-     SgExpression* operand = astJavaExpressionStack.front();
-     ROSE_ASSERT(operand != NULL);
-     astJavaExpressionStack.pop_front();
+// Remove this!
+//     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
+//     ROSE_ASSERT(astJavaExpressionStack.size() >= 1);
+//
+//     SgExpression* operand = astJavaExpressionStack.front();
+     SgExpression* operand = astJavaComponentStack.popExpression();
+// Remove this!
+//     ROSE_ASSERT(operand != NULL);
+//     astJavaExpressionStack.pop_front();
 
   // Build the assignment operator and push it onto the stack.
      SgExpression* assignmentExpression = SageBuilder::buildUnaryExpression<T>(operand);
      ROSE_ASSERT(assignmentExpression != NULL);
-     astJavaExpressionStack.push_front(assignmentExpression);
-     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
+// Remove this!
+//     astJavaExpressionStack.push_front(assignmentExpression);
+//     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
+     astJavaComponentStack.push(assignmentExpression);
    }
 
 template< class T >
 void
 binaryExpressionSupport()
    {
-     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
-     ROSE_ASSERT(astJavaExpressionStack.size() >= 2);
-
-     SgExpression* rhs = astJavaExpressionStack.front();
+// Remove this!
+//     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
+//     ROSE_ASSERT(astJavaExpressionStack.size() >= 2);
+//
+//     SgExpression* rhs = astJavaExpressionStack.front();
+     SgExpression* rhs = astJavaComponentStack.popExpression();
      ROSE_ASSERT(rhs != NULL);
-     astJavaExpressionStack.pop_front();
+// Remove this!
+//     astJavaExpressionStack.pop_front();
 
-     SgExpression* lhs = astJavaExpressionStack.front();
+     SgExpression* lhs = astJavaComponentStack.popExpression();
      ROSE_ASSERT(lhs != NULL);
-     astJavaExpressionStack.pop_front();
+// Remove this!
+//     astJavaExpressionStack.pop_front();
 
   // Build the assignment operator and push it onto the stack.
      SgExpression* assignmentExpression = SageBuilder::buildBinaryExpression<T>(lhs,rhs);
      ROSE_ASSERT(assignmentExpression != NULL);
-     astJavaExpressionStack.push_front(assignmentExpression);
-     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
+// Remove this!
+//     astJavaExpressionStack.push_front(assignmentExpression);
+     astJavaComponentStack.push(assignmentExpression);
+// Remove this!
+//     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
    }
 
 template< class T >
 void
 binaryAssignmentStatementSupport()
    {
-     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
-     ROSE_ASSERT(astJavaExpressionStack.size() >= 2);
+// Remove this!
+//     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
+//     ROSE_ASSERT(astJavaExpressionStack.size() >= 2);
 
      binaryExpressionSupport<T>();
 
-     SgExpression* exp = astJavaExpressionStack.front();
-     ROSE_ASSERT(exp != NULL);
-     astJavaExpressionStack.pop_front();
+// Remove this!
+//     SgExpression* exp = astJavaExpressionStack.front();
+//     ROSE_ASSERT(exp != NULL);
+//     astJavaExpressionStack.pop_front();
+     SgExpression* exp = astJavaComponentStack.popExpression();
 
      SgExprStatement* exprStatement = SageBuilder::buildExprStatement(exp);
 
      ROSE_ASSERT(exprStatement != NULL);
      ROSE_ASSERT(exp->get_parent() != NULL);
 
-     astJavaStatementStack.push_front(exprStatement);
+// Remove this!
+//     astJavaStatementStack.push_front(exprStatement);
+     astJavaComponentStack.push(exprStatement);
    }
 
 // endif for ROSE_JAVA_SUPPORT

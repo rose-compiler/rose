@@ -275,7 +275,7 @@ void createVectorsNotRespectingFunctionBoundaries(SgNode* top, const std::string
 }
 
 void createVectorsRespectingFunctionBoundaries(SgNode* top, const std::string& filename, size_t windowSize, size_t stride, sqlite3_connection& con) {
-  vector<SgAsmFunctionDeclaration*> funcs;
+  vector<SgAsmFunction*> funcs;
   FindAsmFunctionsVisitor vis;
   AstQueryNamespace::querySubTree(top, std::bind2nd( vis, &funcs ));
   size_t funcCount = funcs.size();

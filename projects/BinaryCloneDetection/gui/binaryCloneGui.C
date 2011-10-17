@@ -718,7 +718,7 @@ void BinaryCloneGui::showClone(int row)
       AstQueryNamespace::querySubTree(currentRoot, std::bind2nd( vis, &insns ));
     else
     {
-      vector<SgAsmFunctionDeclaration*> funcs;
+      vector<SgAsmFunction*> funcs;
       FindAsmFunctionsVisitor funcVis;
       AstQueryNamespace::querySubTree(currentRoot, std::bind2nd( funcVis, &funcs ));
 
