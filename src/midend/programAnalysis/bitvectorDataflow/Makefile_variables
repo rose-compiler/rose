@@ -48,7 +48,8 @@ mpaBitvectorDataflow_cleanLocal=\
 mpaBitvectorDataflow_includeHeaders=\
 	$(mpaBitvectorDataflowPath)/DataFlowAnalysis.h \
 	$(mpaBitvectorDataflowPath)/DefUseChain.h \
-	$(mpaBitvectorDataflowPath)/ReachingDefinition.h
+	$(mpaBitvectorDataflowPath)/ReachingDefinition.h \
+	$(mpaBitvectorDataflowPath)/ReachingDefinitionFacade.h
 
 
 mpaBitvectorDataflow_extraDist=\
