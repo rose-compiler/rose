@@ -6,11 +6,11 @@ using namespace std;
 // Large arbitrary graphs are a problem to layout using GraphViz (and generally)
 // So these macros define limits where it is whole graph mechanism not only takes 
 // too long, but is too complex to even be helpful.
-#define MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH 2000
+#define MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH 8000
 
 // Graphs as trees can be visualized at around 100K nodes, but they are not useful 
 // at that size.
-#define MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_TREE_GRAPH 10000
+#define MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_TREE_GRAPH 16000
 
 int main( int argc, char* argv[] )
    {

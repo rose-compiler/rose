@@ -14,7 +14,7 @@ namespace AstDisplayInfo
         SgNamespaceDefinitionStatement * sgNSDef    = isSgNamespaceDefinitionStatement(node);
 
         //Assembler Nodes
-        SgAsmFunctionDeclaration * sgAsmFunctionDecl= isSgAsmFunctionDeclaration(node);
+        SgAsmFunction * sgAsmFunctionDecl= isSgAsmFunction(node);
 
         if(sgClassDefinition)          return CLASS;
         else if (sgFunctionDefinition) return FUNCTION;
@@ -46,7 +46,7 @@ namespace AstDisplayInfo
         SgPragmaDeclaration * sgPragmaDecl           = isSgPragmaDeclaration(node);
 
         //Assembler Nodes
-        SgAsmFunctionDeclaration * sgAsmFunctionDecl  = isSgAsmFunctionDeclaration(node);
+        SgAsmFunction * sgAsmFunctionDecl  = isSgAsmFunction(node);
 
         std::string s;
 
@@ -81,7 +81,7 @@ namespace AstDisplayInfo
         SgWhileStmt * sgWhileStatement              = isSgWhileStmt(node);
 
         //Assembler Nodes
-        SgAsmFunctionDeclaration * sgAsmFunctionDecl= isSgAsmFunctionDeclaration(node);
+        SgAsmFunction * sgAsmFunctionDecl= isSgAsmFunction(node);
 
 
         if      (sgClassDefinition)     return QObject::tr("Class");
@@ -122,7 +122,7 @@ namespace AstDisplayInfo
 
 
         //Assembler Nodes
-        SgAsmFunctionDeclaration * sgAsmFunctionDecl= isSgAsmFunctionDeclaration(node);
+        SgAsmFunction * sgAsmFunctionDecl= isSgAsmFunction(node);
 
         if      (sgClassDefinition)     return QIcon(":/util/NodeIcons/class.gif");
         else if (sgClassDeclaration)    return QIcon(":/util/NodeIcons/class.gif");

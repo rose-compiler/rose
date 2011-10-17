@@ -214,8 +214,8 @@ void AssemblerX86::initAssemblyRules_part9() {
     defn = new InsnDefn("salc",   x86_salc,    0x00, 0xd6, od_none);
     defn->set_location("ExtraInstructions.txt, page 5");
     define(defn);
-    // F1                       INT1               Invalid Invalid  Undocumented by Intel
-    defn = new InsnDefn("int1",   x86_int1,    0x00, 0xf1, od_none);
+    // F1                       INT1               Valid   Valid    Undocumented by Intel, but by AMD. Valid for 03+
+    defn = new InsnDefn("int1",   x86_int1,    0x03, 0xf1, od_none);
     defn->set_location("ExtraInstructions.txt, page 6");
     define(defn);
 

@@ -278,7 +278,7 @@ void NodeInfoWidget::setNode(SgNode * node)
                                         addEntry( fileIdx, "Start", QString("0x%1").arg( startInstr->get_address(), 0, 16 ) );
                                     else
                                     {
-                                        SgAsmFunctionDeclaration *asmFun( isSgAsmFunctionDeclaration( start ) );
+                                        SgAsmFunction *asmFun( isSgAsmFunction( start ) );
                                         addEntry( fileIdx, "Function", QString( asmFun->get_name().c_str() ) );
                                     }
                                     if( endInstr )

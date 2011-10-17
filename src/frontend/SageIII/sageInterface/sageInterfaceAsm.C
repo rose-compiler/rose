@@ -56,9 +56,9 @@ SageInterface::getSection ( SgProject* project, const string & name )
    }
 
 
-//! Traverses AST backwards up the tree along the "parent" edges to the SgAsmFunctionDeclaration.
-SgAsmFunctionDeclaration*
-SageInterface::getAsmFunctionDeclaration ( SgAsmInstruction* asmInstruction )
+//! Traverses AST backwards up the tree along the "parent" edges to the SgAsmFunction.
+SgAsmFunction*
+SageInterface::getAsmFunction ( SgAsmInstruction* asmInstruction )
    {
   // Every instruction should be in an associated function.
   // Note: this might also make a good test for the AST.
@@ -67,12 +67,12 @@ SageInterface::getAsmFunctionDeclaration ( SgAsmInstruction* asmInstruction )
 
      SgNode* n = asmInstruction;
      ROSE_ASSERT(n != NULL);
-     SgAsmFunctionDeclaration* asmFunctionDeclaration = isSgAsmFunctionDeclaration(n);
+     SgAsmFunction* asmFunctionDeclaration = isSgAsmFunction(n);
      while (asmFunctionDeclaration == NULL)
         {
           ROSE_ASSERT(n != NULL);
           n = n->get_parent();
-          asmFunctionDeclaration = isSgAsmFunctionDeclaration(n);
+          asmFunctionDeclaration = isSgAsmFunction(n);
         }
 
      ROSE_ASSERT(asmFunctionDeclaration != NULL);
@@ -99,7 +99,7 @@ SageInterface::generateUniqueName ( size_t value, std::map<size_t,int> & usedOff
    }
 
 
-//! Traverses AST backwards up the tree along the "parent" edges to the SgAsmFunctionDeclaration.
+//! Traverses AST backwards up the tree along the "parent" edges to the SgAsmInterpretation.
 SgAsmInterpretation*
 SageInterface::getAsmInterpretation ( SgAsmNode* asmNode )
    {
@@ -123,7 +123,7 @@ SageInterface::getAsmInterpretation ( SgAsmNode* asmNode )
    }
 
 
-//! Traverses AST backwards up the tree along the "parent" edges to the SgAsmFunctionDeclaration.
+//! Traverses AST backwards up the tree along the "parent" edges to the SgAsmBlock.
 SgAsmBlock*
 SageInterface::getAsmBlock ( SgAsmInstruction* asmInstruction )
    {
