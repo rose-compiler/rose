@@ -8,6 +8,36 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
+bool
+ExtentMap::valid() const
+{
+    ExtentMap::const_iterator i1 = begin();
+    RangeMapType::const_iterator i2 = ranges.begin();
+    while (i1!=end() && i2!=ranges.end()) {
+        if (i1->first!=i2->first.begin || i1->second!=i2->first.size) {
+            std::cerr <<"ExtentMap::check_rangemap() failure:\n"
+                      <<"  at i1 = (" <<i1->first <<", " <<i1->second <<")\n"
+                      <<"  at i2 = (" <<i2->first.begin <<", " <<i2->first.size <<")\n"
+                      <<"  map1:\n";
+            dump_extents(stderr, "    ", "", false);
+            std::cerr <<"  map2:\n" <<ranges;
+            return false;
+        }
+        ++i1;
+        ++i2;
+    }
+    if (i1!=end() || i2!=ranges.end()) {
+        std::cerr <<"ExtentMap::check_rangemap() failure:\n"
+                  <<"at end of one of the maps:\n"
+                  <<"  map1:\n";
+        dump_extents(stderr, "    ", "", false);
+        std::cerr <<"  map2:\n" <<ranges;
+        return false;
+    }
+
+    return true;
+}
+
 /** Class method comparing two extents. The return value is one of the following letters, depending on how extent A is related
  *  to extent B:
  *     C (congruent):  A and B are congruent
@@ -40,10 +70,14 @@ ExtentMap
 ExtentMap::subtract_from(rose_addr_t offset, rose_addr_t size) const
 {
     ExtentMap result;
+    rose_addr_t orig_offset = offset, orig_size = size;
+    result.ranges = ranges.invert_within<RangeMapType>(RangeType(offset, size));
+
     for (ExtentMap::const_iterator i=begin(); i!=end() && offset+size>(*i).first; ++i) {
         ROSE_ASSERT((*i).second > 0);
         if (0==size) {
             /* We've added everything to the result */
+            assert(result.valid());
             return result;
         } else if ((*i).first >= offset+size) {
             /* Subtrahend extent is to the right of offset,size */
@@ -53,6 +87,7 @@ ExtentMap::subtract_from(rose_addr_t offset, rose_addr_t size) const
         } else if ((*i).first+(*i).second >= offset+size) {
             if ((*i).first <= offset) {
                 /* Subtrahend extent contains all of offset,size */
+                assert(result.valid());
                 return result;
             } else {
                 /* Subtrahend extent starts inside offset,size and ends to the right of offset,size. Add left part of offset,
@@ -73,6 +108,15 @@ ExtentMap::subtract_from(rose_addr_t offset, rose_addr_t size) const
     }
     if (size>0)
         result.super::insert(value_type(offset,size));
+
+    if (!result.valid()) {
+        assert(valid());
+        std::cerr <<"from ExtentMap::subtract_from(" <<orig_offset <<", " <<orig_size <<")\n"
+                  <<"where map is:\n" <<ranges
+                  <<"or:\n";
+        dump_extents(stderr, "    ", "", false);
+        abort();
+    }
     return result;
 }
 
@@ -114,6 +158,9 @@ ExtentMap::insert(rose_addr_t offset, rose_addr_t size, rose_addr_t align_lo/*=1
             }
         }
     }
+
+    ranges.insert(RangeType(offset, size), RangeMapType::ValueType(), true/*make hole*/);
+    assert(valid());
 }
 
 /** Inserts contents of one extent map into another */
@@ -133,6 +180,20 @@ ExtentMap::overlap_with(rose_addr_t offset, rose_addr_t size) const
     for (const_iterator i=begin(); i!=end(); ++i) {
         if ((*i).first < offset+size && (*i).first+(*i).second > offset)
             result.super::insert(value_type((*i).first, (*i).second));
+    }
+
+    if (size>0) {
+        for (RangeMapType::const_iterator i=ranges.begin(); i!=ranges.end(); ++i) {
+            if (RangeType(offset, size).overlaps(i->first))
+                result.ranges.insert(i->first);
+        }
+    }
+
+    if (!result.valid()) {
+        assert(valid());
+        std::cerr <<"from overlap_with(" <<offset <<", " <<size <<")\n"
+                  <<"where map is:\n" <<ranges;
+        abort();
     }
     return result;
 }
@@ -163,6 +224,9 @@ ExtentMap::erase(rose_addr_t offset, rose_addr_t size)
             super::insert(value_type(offset+size, (*i).first+(*i).second - (offset+size)));
         }
     }
+
+    ranges.erase(RangeType(offset, size));
+    assert(valid());
 }
 
 /** Removes the specified extents from this extent. */
@@ -178,13 +242,28 @@ ExtentMap::erase(const ExtentMap& subtrahend)
 ExtentMap::iterator
 ExtentMap::best_fit(rose_addr_t size)
 {
+    RangeMapType::iterator best2 = ranges.best_fit(size, ranges.begin());
+
     iterator best = end();
     for (iterator i=begin(); i!=end(); ++i) {
-        if ((*i).second==size)
+        if ((*i).second==size) {
+            assert(best2!=ranges.end());
+            assert(i->first==best2->first.begin);
+            assert(i->second==best2->first.size);
             return i;
+        }
         if ((*i).second > size && (best==end() || (*i).second < (*best).second))
             best = i;
     }
+
+    if (best==end()) {
+        assert(best2==ranges.end());
+    } else {
+        assert(best2!=ranges.end());
+        assert(best->first==best2->first.begin);
+        assert(best->second==best2->first.size);
+    }
+    
     return best;
 }
 
@@ -194,6 +273,16 @@ ExtentMap::highest_offset()
 {
     ExtentMap::iterator ret = end();
     if (size()>0) --ret;
+
+    if (ret==end()) {
+        assert(ranges.empty());
+    } else {
+        assert(!ranges.empty());
+        RangeMapType::reverse_iterator r2 = ranges.rbegin();
+        assert(ret->first==r2->first.begin);
+        assert(ret->second==r2->first.size);
+    }
+
     return ret;
 }
 
@@ -206,8 +295,12 @@ ExtentMap::allocate_best_fit(rose_addr_t size)
         throw std::bad_alloc();
     ExtentPair saved = *bfi;
     super::erase(bfi);
-    if (saved.second>size)
+    ranges.erase(RangeType(bfi->first, bfi->second));
+    if (saved.second>size) {
         super::insert(value_type(saved.first+size, saved.second-size));
+        ranges.insert(RangeType(saved.first+size, saved.second-size));
+    }
+    assert(valid());
     return ExtentPair(saved.first, size);
 }
 
@@ -215,6 +308,7 @@ ExtentMap::allocate_best_fit(rose_addr_t size)
 ExtentPair
 ExtentMap::allocate_first_fit(rose_addr_t size)
 {
+    abort(); // NOT IMPLEMENTED
     for (iterator i=begin(); i!=end(); ++i) {
         if ((*i).second >= size) {
             ExtentPair saved = *i;
@@ -235,13 +329,24 @@ ExtentMap::allocate_at(const ExtentPair &request)
     erase(request);
 }
 
+/** Remove everything. */
+void
+ExtentMap::clear()
+{
+    super::clear();
+    ranges.clear();
+}
+
 /** Number of bytes represented by extent. */
 size_t
 ExtentMap::size() const
 {
+    assert(valid());
     size_t retval=0;
     for (const_iterator i=begin(); i!=end(); ++i)
         retval += (*i).second;
+
+    assert(retval==ranges.size());
     return retval;
 }
 
@@ -249,6 +354,7 @@ ExtentMap::size() const
 size_t
 ExtentMap::nregions() const
 {
+    assert(super::size()==ranges.nranges());
     return super::size(); // ExtentMap::size() is number of bytes
 }
 
@@ -258,6 +364,7 @@ ExtentMap::nregions() const
 void
 ExtentMap::precipitate(rose_addr_t reagent)
 {
+    abort(); // NOT IMPLEMENTED
     ExtentMap result;
     for (iterator i=begin(); i!=end(); /*void*/) {
         ExtentPair left = *i++;
@@ -273,11 +380,19 @@ ExtentPair
 ExtentMap::find_address(rose_addr_t addr) const
 {
     const_iterator i = upper_bound(addr);
-    if (i==begin())
+    RangeMapType::const_iterator i2 = ranges.find(addr);
+    if (i==begin()) {
+        assert(i2==ranges.end());
         throw std::bad_alloc();
+    }
     --i;
-    if (i->first+i->second <= addr)
+    if (i->first+i->second <= addr) {
+        assert(i2==ranges.end());
         throw std::bad_alloc();
+    }
+
+    assert(i->first==i2->first.begin);
+    assert(i->second==i2->first.size);
     return *i;
 }
 
@@ -296,9 +411,11 @@ ExtentMap::exists_all(ExtentPair what) const
             what.first = found.first + found.second;
             what.second -= nfound;
         } catch (const std::bad_alloc&) { // thrown by find_address()
+            assert(!ranges.contains(RangeType(what.first, what.second)));
             return false;
         }
     }
+    assert(ranges.contains(RangeType(what.first, what.second)));
     return true;
 }
 

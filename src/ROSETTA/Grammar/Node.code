@@ -6,6 +6,7 @@ HEADER_NODE_PREDECLARATION_START
 // tps (01/27/10): Added essential files..
 //#include "sage3basic.h"
 #include "setup.h"
+#include "rangemap.h"
 
 #include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
@@ -77,10 +78,15 @@ typedef std::pair<rose_addr_t,rose_addr_t> ExtentPair; 		  /* Describes a part o
 class ExtentMap : public std::map<rose_addr_t,rose_addr_t> {
 	public:
 		typedef std::map<rose_addr_t,rose_addr_t> super;
+		typedef Range<rose_addr_t> RangeType;
+		typedef RangeMap<RangeType> RangeMapType;
+		RangeMapType ranges;
+		bool valid() const;
 
 		ExtentMap() {}
 
 		/* Modifying methods */
+		void clear();
 		void insert(const ExtentMap&);
 		void insert(const ExtentPair &extent)
 			{insert(extent.first, extent.second);}
