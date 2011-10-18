@@ -544,10 +544,10 @@ MemoryMap::mprotect(const MapElement &region, bool relax/*=false*/)
     /* Check whether the region refers to addresses not in the memory map. */
     if (!relax) {
         ExtentMap e;
-        e.insert(ExtentPair(region.get_va(), region.get_size()));
-        e.erase(va_extents());
+        e.insert(Extent(region.get_va(), region.get_size()));
+        e.erase_ranges(va_extents());
         if (!e.empty())
-            throw NotMapped(this, e.begin()->first);
+            throw NotMapped(this, e.begin()->first.begin);
     }
 
     std::vector<MapElement> created;
@@ -641,7 +641,7 @@ MemoryMap::va_extents() const
     ExtentMap retval;
     for (size_t i=0; i<elements.size(); i++) {
         const MapElement& me = elements[i];
-        retval.insert(me.get_va(), me.get_size());
+        retval.insert(Extent(me.get_va(), me.get_size()));
     }
     return retval;
 }

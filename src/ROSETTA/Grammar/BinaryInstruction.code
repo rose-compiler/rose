@@ -942,10 +942,10 @@ HEADER_GENERIC_SECTION_START
 		SgAsmGenericString *get_name() const;		/** Same as standard ROSETTA accessor */
 		void set_name(SgAsmGenericString *s);		/** Like std accessor but sets parent of 's' */
 
-		/* Convenience functions */
-		ExtentPair get_file_extent() const;		/* Returns get_offset() and get_size() */
-		ExtentPair get_mapped_preferred_extent() const; /* Returns get_mapped_preferred_rva() and get_mapped_size() */
-		bool align();					/* Increase file offset and mapping rva to satisfy constraints */
+                /* Convenience functions */
+                Extent get_file_extent() const;                 /* Returns get_offset() and get_size() */
+                Extent get_mapped_preferred_extent() const;     /* Returns get_mapped_preferred_rva() and get_mapped_size() */
+                bool align();                                   /* Increase file offset and mapping rva to satisfy constraints */
 
 	protected:
 		void ctor(SgAsmGenericFile*, SgAsmGenericHeader*);

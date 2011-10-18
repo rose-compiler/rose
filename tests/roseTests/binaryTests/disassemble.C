@@ -1331,7 +1331,7 @@ main(int argc, char *argv[])
 
         std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(block, V_SgAsmInstruction);
         for (std::vector<SgAsmInstruction*>::iterator ii=insns.begin(); ii!=insns.end(); ++ii)
-            extents.erase((*ii)->get_address(), (*ii)->get_raw_bytes().size());
+            extents.erase(Extent((*ii)->get_address(), (*ii)->get_raw_bytes().size()));
         size_t unused = extents.size();
         if (do_show_extents && unused>0) {
             printf("These addresses (%zu byte%s) do not contain instructions:\n", unused, 1==unused?"":"s");
