@@ -5,13 +5,11 @@ INCLUDES =  $(ROSE_INCLUDES) -I$(srcdir)/.. -I$(srcdir)/../CFG -I$(top_srcdir)/s
 ## The grammar generator (ROSETTA) should use its own template repository
 CXX_TEMPLATE_REPOSITORY_PATH = .
 
-noinst_LTLIBRARIES = libbitvectorDataflow.la
-libbitvectorDataflow_la_SOURCES = DataFlowAnalysis.C  DefUseChain.C  ReachingDefinition.C ReachingDefinitionFacade.C
-#libdataflowAnalysisSources = DataFlowAnalysis.C  ReachingDefinition.C
+libVirtualFunctionAnalysisSources = IntraProcDataFlowAnalysis.C InterProcDataFlowAnalysis.C  IntraProcAliasAnalysis.C PtrAliasAnalysis.C VirtualFunctionAnalysis.C
 
-# lib_LTLIBRARIES = libdataflowAnalysis.a
-# libdataflowAnalysis_a_SOURCES  = $(libdataflowAnalysisSources)
 
+noinst_LTLIBRARIES = libVirtualFunctionAnalysis.la
+libVirtualFunctionAnalysis_la_SOURCES = $(libVirtualFunctionAnalysisSources)
 
 clean-local:
 	rm -rf Templates.DB ii_files ti_files cxx_templates
@@ -19,12 +17,7 @@ clean-local:
 distclean-local:
 	rm -rf Templates.DB
 
-include_HEADERS = DataFlowAnalysis.h DefUseChain.h ReachingDefinition.h ReachingDefinitionFacade.h
-
-
-
-
-
+include_HEADERS = IntraProcDataFlowAnalysis.h InterProcDataFlowAnalysis.h IntraProcAliasAnalysis.h PtrAliasAnalysis.h VirtualFunctionAnalysis.h 
 
 
 
