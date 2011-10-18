@@ -8,36 +8,6 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-bool
-ExtentMap::valid() const
-{
-    ExtentMap::const_iterator i1 = begin();
-    RangeMapType::const_iterator i2 = ranges.begin();
-    while (i1!=end() && i2!=ranges.end()) {
-        if (i1->first!=i2->first.begin || i1->second!=i2->first.size) {
-            std::cerr <<"ExtentMap::check_rangemap() failure:\n"
-                      <<"  at i1 = (" <<i1->first <<", " <<i1->second <<")\n"
-                      <<"  at i2 = (" <<i2->first.begin <<", " <<i2->first.size <<")\n"
-                      <<"  map1:\n";
-            dump_extents(stderr, "    ", "", false);
-            std::cerr <<"  map2:\n" <<ranges;
-            return false;
-        }
-        ++i1;
-        ++i2;
-    }
-    if (i1!=end() || i2!=ranges.end()) {
-        std::cerr <<"ExtentMap::check_rangemap() failure:\n"
-                  <<"at end of one of the maps:\n"
-                  <<"  map1:\n";
-        dump_extents(stderr, "    ", "", false);
-        std::cerr <<"  map2:\n" <<ranges;
-        return false;
-    }
-
-    return true;
-}
-
 /** Class method comparing two extents. The return value is one of the following letters, depending on how extent A is related
  *  to extent B:
  *     C (congruent):  A and B are congruent
@@ -48,316 +18,56 @@ ExtentMap::valid() const
  *     B (beginning):  A overlaps with the beginning of B but does not contain B
  *     E (ending):     A overlaps with the end of B but does not contain B */
 char
-ExtentMap::category(const ExtentPair &a, const ExtentPair &b)
+ExtentMap::category(const Extent &a, const Extent &b)
 {
-    if (a.first==b.first && a.second==b.second)
+    if (a.begin==b.begin && a.size==b.size)
         return 'C';
-    if (a.first+a.second <= b.first)
+    if (a.begin+a.size <= b.begin)
         return 'L';
-    if (a.first >= b.first+b.second)
+    if (a.begin >= b.begin+b.size)
         return 'R';
-    if (a.first <= b.first && a.first+a.second >= b.first+b.second)
+    if (a.begin <= b.begin && a.begin+a.size >= b.begin+b.size)
         return 'O';
-    if (a.first >= b.first && a.first+a.second <= b.first+b.second)
+    if (a.begin >= b.begin && a.begin+a.size <= b.begin+b.size)
         return 'I';
-    if (a.first <= b.first) /*already know a.first+a.second > b.first*/
+    if (a.begin <= b.begin) /*already know a.begin+a.size > b.begin*/
         return 'B';
     return 'E';
 }
 
-/** Return an extent map which contains all extents in (offset,size) that are not in "this" extent map. */
-ExtentMap
-ExtentMap::subtract_from(rose_addr_t offset, rose_addr_t size) const
-{
-    ExtentMap result;
-    rose_addr_t orig_offset = offset, orig_size = size;
-    result.ranges = ranges.invert_within<RangeMapType>(RangeType(offset, size));
-
-    for (ExtentMap::const_iterator i=begin(); i!=end() && offset+size>(*i).first; ++i) {
-        ROSE_ASSERT((*i).second > 0);
-        if (0==size) {
-            /* We've added everything to the result */
-            assert(result.valid());
-            return result;
-        } else if ((*i).first >= offset+size) {
-            /* Subtrahend extent is to the right of offset,size */
-            break;
-        } else if ((*i).first+(*i).second <= offset) {
-            /* Subtrahend extent is to the left of offset,size */
-        } else if ((*i).first+(*i).second >= offset+size) {
-            if ((*i).first <= offset) {
-                /* Subtrahend extent contains all of offset,size */
-                assert(result.valid());
-                return result;
-            } else {
-                /* Subtrahend extent starts inside offset,size and ends to the right of offset,size. Add left part of offset,
-                 * size. */
-                size = (*i).first - offset;
-                break;
-            }
-        } else if ((*i).first > offset) {
-            /* Subtrahend extent is inside offset,size. Add left part, save right part for another pass through the loop. */
-            result.super::insert(value_type(offset, (*i).first - offset));
-            size -= (*i).first + (*i).second - offset;
-            offset = (*i).first + (*i).second;
-        } else {
-            /* Subtrahend extent starts left of offset,size and ends inside offset,size. Discard the left part of offset,size. */
-            size -= (*i).first + (*i).second - offset;
-            offset = (*i).first + (*i).second;
-        }
-    }
-    if (size>0)
-        result.super::insert(value_type(offset,size));
-
-    if (!result.valid()) {
-        assert(valid());
-        std::cerr <<"from ExtentMap::subtract_from(" <<orig_offset <<", " <<orig_size <<")\n"
-                  <<"where map is:\n" <<ranges
-                  <<"or:\n";
-        dump_extents(stderr, "    ", "", false);
-        abort();
-    }
-    return result;
-}
-
-/** Adds the specified extent to the map of extents. Coalesce adjacent entries in the map. */
-void
-ExtentMap::insert(rose_addr_t offset, rose_addr_t size, rose_addr_t align_lo/*=1*/, rose_addr_t align_hi/*=1*/)
-{
-    /* Adjust starting and ending offsets to alignment constraints. */
-    if (align_lo>1) {
-        rose_addr_t new_offset = ALIGN_DN(offset, align_lo);
-        if (new_offset != offset) {
-            size += offset - new_offset;
-            offset = new_offset;
-        }
-    }
-    if (align_hi>1) {
-        rose_addr_t new_hi = ALIGN_UP(offset+size, align_hi);
-        if (new_hi != offset+size)
-            size = new_hi - offset;
-    }
-
-    /* Insert into map */
-    if (0==size) return;
-    ExtentMap to_add = subtract_from(offset, size);
-    for (iterator i=to_add.begin(); i!=to_add.end(); ++i) {
-        iterator right = find((*i).first+(*i).second);
-        if (right!=end()) {
-            (*i).second += (*right).second;
-            super::erase(right);
-        }
-
-        iterator inserted = super::insert(begin(), *i);
-        if (inserted!=begin()) {
-            iterator left = inserted;
-            --left;
-            if ((*left).first+(*left).second == (*i).first) {
-                (*left).second += (*i).second;
-                super::erase(inserted);
-            }
-        }
-    }
-
-    ranges.insert(RangeType(offset, size), RangeMapType::ValueType(), true/*make hole*/);
-    assert(valid());
-}
-
-/** Inserts contents of one extent map into another */
-void
-ExtentMap::insert(const ExtentMap &map)
-{
-    for (ExtentMap::const_iterator i=map.begin(); i!=map.end(); ++i) {
-        insert(*i);
-    }
-}
-
-/** Returns all extents that (partially) overlap with the specified area */
-ExtentMap
-ExtentMap::overlap_with(rose_addr_t offset, rose_addr_t size) const
-{
-    ExtentMap result;
-    for (const_iterator i=begin(); i!=end(); ++i) {
-        if ((*i).first < offset+size && (*i).first+(*i).second > offset)
-            result.super::insert(value_type((*i).first, (*i).second));
-    }
-
-    if (size>0) {
-        for (RangeMapType::const_iterator i=ranges.begin(); i!=ranges.end(); ++i) {
-            if (RangeType(offset, size).overlaps(i->first))
-                result.ranges.insert(i->first);
-        }
-    }
-
-    if (!result.valid()) {
-        assert(valid());
-        std::cerr <<"from overlap_with(" <<offset <<", " <<size <<")\n"
-                  <<"where map is:\n" <<ranges;
-        abort();
-    }
-    return result;
-}
-
-/** Removes the specified extent from the map of extents. */
-void
-ExtentMap::erase(rose_addr_t offset, rose_addr_t size)
-{
-    ExtentMap candidates = overlap_with(offset, size);
-    for (iterator i=candidates.begin(); i!=candidates.end(); ++i) {
-        iterator candidate = find((*i).first);
-        ROSE_ASSERT(candidate!=end());
-        if (offset <= (*candidate).first) {
-            if (offset+size >= (*i).first + (*i).second) {
-                /* Erase entire candidate */
-                super::erase(candidate);
-            } else {
-                /* Erase left part of candidate */
-                super::erase(candidate);
-                super::insert(value_type(offset+size, (*i).first+(*i).second - (offset+size)));
-            }
-        } else if (offset+size >= (*i).first + (*i).second) {
-            /* Erase right part of candidate */
-            (*candidate).second = offset - (*i).first;
-        } else {
-            /* Erase middle of candidate */
-            (*candidate).second = offset - (*i).first;
-            super::insert(value_type(offset+size, (*i).first+(*i).second - (offset+size)));
-        }
-    }
-
-    ranges.erase(RangeType(offset, size));
-    assert(valid());
-}
-
-/** Removes the specified extents from this extent. */
-void
-ExtentMap::erase(const ExtentMap& subtrahend)
-{
-    for (const_iterator i=subtrahend.begin(); i!=subtrahend.end(); ++i)
-        erase((*i).first, (*i).second);
-}
-
-/** Return the extent that's the closest match in size without removing it from the map. If two extents tie for the best fit then
- *  return the one with the lower offset. Returns map.end() on failure. */
-ExtentMap::iterator
-ExtentMap::best_fit(rose_addr_t size)
-{
-    RangeMapType::iterator best2 = ranges.best_fit(size, ranges.begin());
-
-    iterator best = end();
-    for (iterator i=begin(); i!=end(); ++i) {
-        if ((*i).second==size) {
-            assert(best2!=ranges.end());
-            assert(i->first==best2->first.begin);
-            assert(i->second==best2->first.size);
-            return i;
-        }
-        if ((*i).second > size && (best==end() || (*i).second < (*best).second))
-            best = i;
-    }
-
-    if (best==end()) {
-        assert(best2==ranges.end());
-    } else {
-        assert(best2!=ranges.end());
-        assert(best->first==best2->first.begin);
-        assert(best->second==best2->first.size);
-    }
-    
-    return best;
-}
-
-/** Return the extent with the highest offset. */
-ExtentMap::iterator
-ExtentMap::highest_offset()
-{
-    ExtentMap::iterator ret = end();
-    if (size()>0) --ret;
-
-    if (ret==end()) {
-        assert(ranges.empty());
-    } else {
-        assert(!ranges.empty());
-        RangeMapType::reverse_iterator r2 = ranges.rbegin();
-        assert(ret->first==r2->first.begin);
-        assert(ret->second==r2->first.size);
-    }
-
-    return ret;
-}
-
 /** Allocate an extent of the specified size (best fit first) from the extent map, removing the returned extent from the map. */
-ExtentPair
+Extent
 ExtentMap::allocate_best_fit(rose_addr_t size)
 {
-    iterator bfi = best_fit(size);
-    if (bfi==end())
+    iterator found = best_fit(size, begin());
+    if (found==end())
         throw std::bad_alloc();
-    ExtentPair saved = *bfi;
-    super::erase(bfi);
-    ranges.erase(RangeType(bfi->first, bfi->second));
-    if (saved.second>size) {
-        super::insert(value_type(saved.first+size, saved.second-size));
-        ranges.insert(RangeType(saved.first+size, saved.second-size));
-    }
-    assert(valid());
-    return ExtentPair(saved.first, size);
+    Extent retval(found->first.begin, size);
+    erase(retval);
+    return retval;
 }
 
 /** Allocate an extent of the specified size (first fit) from the extent map, removing the returned extent from the map. */
-ExtentPair
+Extent
 ExtentMap::allocate_first_fit(rose_addr_t size)
 {
-    abort(); // NOT IMPLEMENTED
-    for (iterator i=begin(); i!=end(); ++i) {
-        if ((*i).second >= size) {
-            ExtentPair saved = *i;
-            super::erase(i);
-            if (saved.second > size)
-                super::insert(value_type(saved.first+size, saved.second-size));
-            return ExtentPair(saved.first, size);
-        }
-    }
-    throw std::bad_alloc();
+    iterator found = first_fit(size, begin());
+    if (found==end())
+        throw std::bad_alloc();
+    Extent retval(found->first.begin, size);
+    erase(retval);
+    return retval;
 }
 
 /** Allocate the specified extent, which must be in the free list. */
 void
-ExtentMap::allocate_at(const ExtentPair &request)
+ExtentMap::allocate_at(const Extent &request)
 {
     ROSE_ASSERT(subtract_from(request).size()==0); /*entire request should be on free list*/
     erase(request);
 }
 
-/** Remove everything. */
-void
-ExtentMap::clear()
-{
-    super::clear();
-    ranges.clear();
-}
-
-/** Number of bytes represented by extent. */
-size_t
-ExtentMap::size() const
-{
-    assert(valid());
-    size_t retval=0;
-    for (const_iterator i=begin(); i!=end(); ++i)
-        retval += (*i).second;
-
-    assert(retval==ranges.size());
-    return retval;
-}
-
-/** Number of contiguous regions. */
-size_t
-ExtentMap::nregions() const
-{
-    assert(super::size()==ranges.nranges());
-    return super::size(); // ExtentMap::size() is number of bytes
-}
-
+#if 0 /* NOT NEEDED BY ANYTHING? [RPM 2011-10-18] */
 /** Precipitates individual extents into larger extents by combining individual extents that are separated by an amount less
  *  than or equal to some specified @p reagent value.  Individual elements that would have been adjacent have already
  *  been combined by the other modifying methods (insert, erase, etc). */
@@ -374,7 +84,9 @@ ExtentMap::precipitate(rose_addr_t reagent)
     }
     *this = result;
 }
+#endif
 
+#if 0 /* NOT NEEDED BY ANYTHING? [RPM 2011-10-18] */
 /** Find the extent pair that contains the specified address. Throw std::bad_alloc() if the address is not found. */
 ExtentPair
 ExtentMap::find_address(rose_addr_t addr) const
@@ -395,7 +107,9 @@ ExtentMap::find_address(rose_addr_t addr) const
     assert(i->second==i2->first.size);
     return *i;
 }
+#endif
 
+#if 0 /* NOT NEEDED BY ANYTHING? [RPM 2011-10-18] */
 /** Determines if specified bytes are in the extent map.  If every byte of the specified extent is defined by the extent map,
  *  then this function returns true, otherwise false. */
 bool
@@ -418,8 +132,9 @@ ExtentMap::exists_all(ExtentPair what) const
     assert(ranges.contains(RangeType(what.first, what.second)));
     return true;
 }
+#endif
 
-/** Print info about an extent map */
+/** Print info about an extent map. This is a little different format than the ostream "<<" operator. */
 void
 ExtentMap::dump_extents(FILE *f, const char *prefix, const char *label, bool pad) const
 {
@@ -432,8 +147,8 @@ ExtentMap::dump_extents(FILE *f, const char *prefix, const char *label, bool pad
         fprintf(f, "%s%-*s = offset 0x%08"PRIx64" (%"PRIu64"),"
                 " for 0x%08"PRIx64" (%"PRIu64") byte%s,"
                 " ending at 0x%08"PRIx64" (%"PRIu64")\n",
-                p, w, "", (*i).first, (*i).first,
-                (*i).second, (*i).second, 1==(*i).second?"":"s", 
-                (*i).first+(*i).second, (*i).first+(*i).second);
+                p, w, "", i->first.begin, i->first.begin,
+                i->first.size, i->first.size, 1==i->first.size?"":"s", 
+                i->first.begin+i->first.size, i->first.begin+i->first.size);
     }
 }
