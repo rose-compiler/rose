@@ -808,7 +808,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
     for (size_t pass=0; pass<2; pass++) {
         if (debug) {
             fprintf(stderr, "%s    -- %s --\n",
-                    p, pass?"FIRST PASS":"SECOND PASS (after making a larger hole)");
+                    p, 0==pass?"FIRST PASS":"SECOND PASS (after making a larger hole)");
         }
 
         /* S offset and size in file or memory address space */
@@ -837,14 +837,20 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
                     p, sp.first, sp.second, sp.first+sp.second);
         }
         
-        /* Neighborhood (nhs) of S is a single extent. However, if S is zero size then nhs will be empty. */
-        ExtentMap nhs_map = amap.overlap_with(sp);
+        /* Neighborhood (nhs) of S is a single extent. However, if S is zero size then nhs might be empty.  The neighborhood of
+         * S is S plus all sections that overlap with S and all sections that are right-contiguous with S. */
+        ExtentMap nhs_map;
+        for (ExtentMap::iterator amapi=amap.begin(); amapi!=amap.end(); ++amapi) {
+            if (amapi->first <= sp.first+sp.second && amapi->first+amapi->second > sp.first)
+                nhs_map.insert(amapi->first, amapi->second);
+        }
         if (debug) {
             fprintf(stderr, "%s    Neighborhood of S:\n", p);
             nhs_map.dump_extents(stderr, (std::string(p)+"        ").c_str(), "nhs_map");
         }
         ExtentPair nhs;
         if (nhs_map.size()>0) {
+            assert(nhs_map.nregions()==1);
             nhs = *(nhs_map.begin());
         } else {
             nhs = sp;
