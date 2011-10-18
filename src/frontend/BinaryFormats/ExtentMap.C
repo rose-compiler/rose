@@ -80,7 +80,6 @@ ExtentMap::subtract_from(rose_addr_t offset, rose_addr_t size) const
 void
 ExtentMap::insert(rose_addr_t offset, rose_addr_t size, rose_addr_t align_lo/*=1*/, rose_addr_t align_hi/*=1*/)
 {
-
     /* Adjust starting and ending offsets to alignment constraints. */
     if (align_lo>1) {
         rose_addr_t new_offset = ALIGN_DN(offset, align_lo);
@@ -132,7 +131,7 @@ ExtentMap::overlap_with(rose_addr_t offset, rose_addr_t size) const
 {
     ExtentMap result;
     for (const_iterator i=begin(); i!=end(); ++i) {
-        if ((*i).first <= offset+size && (*i).first+(*i).second > offset)
+        if ((*i).first < offset+size && (*i).first+(*i).second > offset)
             result.super::insert(value_type((*i).first, (*i).second));
     }
     return result;
