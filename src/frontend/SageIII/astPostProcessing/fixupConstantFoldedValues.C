@@ -47,7 +47,6 @@ void resetConstantFoldedValues( SgNode* node )
         }
 #endif
 
-#if 1
      if (makeASTConstantFoldingExpressionConsistant == true)
         {
           if (makeASTConstantFoldingExpressionConsistant_useOriginalExpressionTrees == true)
@@ -93,10 +92,6 @@ void resetConstantFoldedValues( SgNode* node )
         }
 
      verifyOriginalExpressionTreesSetToNull(node);
-#else
-  // DQ (9/18/2011): Test the AST merge mechanism with this off.
-     printf ("Warning: Leaving contant folded values PLUS original expression trees in place within AST. \n");
-#endif
    }
 
 // ****************************************************************************
@@ -196,9 +191,9 @@ void removeConstantFoldedValue( SgNode* node )
      RemoveConstantFoldedValue astFixupTraversal;
 
 #if 0
-     printf ("********************************** \n");
-     printf ("Processing the AST (AST traversal) \n");
-     printf ("********************************** \n");
+     printf ("**************************************************************** \n");
+     printf ("Processing the AST (AST traversal for RemoveConstantFoldedValue) \n");
+     printf ("**************************************************************** \n");
 #endif
 
   // I think the default should be preorder so that the interfaces would be more uniform
@@ -251,6 +246,8 @@ ConstantFoldedValueReplacer::operator()(SgNode*& key, const SgName & debugString
         {
        // Now reset the pointer to the subtree identified as redundent with a
        // subtree in the original AST to the subtree in the original (merged) AST.
+
+       // Note: targetNode is the IR node to be replaced (set in the ConstantFoldedValueReplacer constructor call).
           if (key == targetNode)
              {
 #if 0
@@ -273,38 +270,61 @@ ConstantFoldedValueReplacer::operator()(SgNode*& key, const SgName & debugString
 #if 0
                               printf ("key contains a originalExpressionTree = %p = %s \n",keyExpression->get_originalExpressionTree(),keyExpression->get_originalExpressionTree()->class_name().c_str());
 #endif
+
+                           // DQ (10/8/2011): Added support for chains of expression trees.
+                           // while (keyExpression->get_originalExpressionTree()->get_originalExpressionTree() != NULL)
+                              while (keyExpression->get_originalExpressionTree()->get_originalExpressionTree() != NULL && isSgEnumVal(keyExpression->get_originalExpressionTree()) == NULL)
+                                 {
+                                   SgExpression* nestedOriginalExpressionTree = keyExpression->get_originalExpressionTree();
+                                   ROSE_ASSERT(nestedOriginalExpressionTree != NULL);
+#if 0
+                                   printf ("Found a chain of original expression trees (iterate to find the end of the chain: keyExpression = %p = %s keyExpression->get_originalExpressionTree() = %p = %s \n",
+                                        keyExpression,keyExpression->class_name().c_str(),nestedOriginalExpressionTree,nestedOriginalExpressionTree->class_name().c_str());
+#endif
+                                   keyExpression = nestedOriginalExpressionTree;
+                                 }
+
+                           // If this is an enum value, then we don't want the original expression tree (which 
+                           // will otherwise be substituted into such places as SgCaseOptionStmt nodes, etc.).
+                              SgEnumVal* enumValue = isSgEnumVal(keyExpression->get_originalExpressionTree());
+                              if (enumValue != NULL)
+                                 {
+#if 0
+                                   printf ("Detected case of enumValue = %p \n",enumValue);
+#endif
+                                   if (enumValue->get_originalExpressionTree())
+                                      {
+#if 0
+                                        printf ("Deleting the original expression in the nested enumValue \n");
+#endif
+                                        deleteOriginalExpressionTree(enumValue->get_originalExpressionTree());
+                                        enumValue->set_originalExpressionTree(NULL);
+                                      }
+                                 }
+
+                              ROSE_ASSERT(keyExpression->get_originalExpressionTree() != NULL);
                               key = keyExpression->get_originalExpressionTree();
-
-                           // DQ (9/17/2011): After the reference to the key is reset the previous reference can be deleted.
-                              ROSE_ASSERT(key != targetNode);
-
-                           // This subtree is not reference from "key" (which is a reference to a pointer) so the pointer 
-                           // to the originalExpressionTree in keyExpression can be set to NULL. Note that keyExpression
-                           // is not longer the same as key after key has been assigned (since key was a reference to a 
-                           // pointer and keyExpression is just a pointer set before "key" was reset).
-                              ROSE_ASSERT(keyExpression != key);
-                              ROSE_ASSERT(keyExpression == targetNode);
+                              ROSE_ASSERT(key != NULL);
 
                            // Set the parent node
-                              keyExpression->get_originalExpressionTree()->set_parent(keyExpression->get_parent());
+                              ROSE_ASSERT(keyExpression->get_originalExpressionTree() != NULL);
+                              keyExpression->get_originalExpressionTree()->set_parent(targetNode->get_parent());
+
+                              SgExpression* targetExpression = isSgExpression(targetNode);
 
                            // Clear the originalExpressionTree
-                              keyExpression->set_originalExpressionTree(NULL);
-                              ROSE_ASSERT(keyExpression->get_originalExpressionTree() == NULL);
+                              targetExpression->set_originalExpressionTree(NULL);
+                              ROSE_ASSERT(targetExpression->get_originalExpressionTree() == NULL);
 
-                              targetNode->set_parent(NULL);
-#if 0
-                              printf ("Delete the original node (replaced by the original expression tree originalNode = %p = %s = %s) \n",targetNode,targetNode->class_name().c_str(),SageInterface::get_name(targetNode).c_str());
-#endif
+                              targetExpression->set_parent(NULL);
 
                            // DQ (9/24/2011): This can be an expression tree (more than just a single IR node (see test2011_140.C).
                            // delete targetNode;
-                              SageInterface::deleteAST(targetNode);
+                              SageInterface::deleteAST(targetExpression);
 
                            // Reset the pointer to avoid any dangling pointer problems.
                               targetNode = NULL;
                             }
-
                        }
                       else
                        {
@@ -318,7 +338,9 @@ ConstantFoldedValueReplacer::operator()(SgNode*& key, const SgName & debugString
                  // For the case of a SgEnumVal, don't use the original expression tree (see test2005_194.C)
                  // The original expression tree holds the value used for the enum field, instead of the 
                  // reference to the correct enum field).
-                 // printf ("ENUM VALUE special handling: we call deleteOriginalExpressionTree(keyExpression = %p) \n",keyExpression);
+#if 0
+                    printf ("ENUM VALUE special handling: we call deleteOriginalExpressionTree(keyExpression = %p) \n",keyExpression);
+#endif
                     deleteOriginalExpressionTree(keyExpression);
                   }
              }
@@ -341,6 +363,36 @@ ConstantFoldedValueReplacer::operator()(SgNode*& key, const SgName & debugString
 #endif
    }
 
+void
+RemoveConstantFoldedValue::handleTheSynthesizedAttribute( SgNode* node, const RemoveConstantFoldedValueSynthesizedAttribute & i )
+   {
+     SgExpression* value = isSgExpression(i.node);
+     if (value != NULL)
+        {
+          SgExpression* originalExpressionTree = value->get_originalExpressionTree();
+          if (originalExpressionTree != NULL)
+             {
+#if 0
+               printf ("Found an originalExpressionTree = %p = %s \n",originalExpressionTree,originalExpressionTree->class_name().c_str());
+#endif
+               if (node == value->get_parent())
+                  {
+                 // What kind of IR node are we at presently? Replace the expression representing the SgValueExp with the Expression representing the original subtree.
+#if 0
+                    printf ("Current IR node with SgExpression child = %p = %s originalExpressionTree = %p = %s \n",node,node->class_name().c_str(),originalExpressionTree,originalExpressionTree->class_name().c_str());
+#endif
+                    bool traceReplacement = true;
+                    ConstantFoldedValueReplacer r(traceReplacement, value);
+                    node->processDataMemberReferenceToPointers(&r);
+                  }
+                 else
+                  {
+                    printf ("*** Strange case of child attribute not having the current node as a parent child = %p = %s originalExpressionTree = %p = %s \n",node,node->class_name().c_str(),originalExpressionTree,originalExpressionTree->class_name().c_str());
+                  }
+             }
+        }
+   }
+
 
 // void RemoveConstantFoldedValue::visit ( SgNode* node )
 RemoveConstantFoldedValueSynthesizedAttribute
@@ -350,30 +402,13 @@ RemoveConstantFoldedValue::evaluateSynthesizedAttribute ( SgNode* node, SubTreeS
 
   // DQ (3/11/2006): Set NULL pointers where we would like to have none.
 #if 0
+#if 0
   // Avoid excessive output.
      if (isSgFunctionDeclaration(node) == NULL && isSgInitializedName(node) == NULL && isSgFunctionParameterList(node) == NULL)
           printf ("In RemoveConstantFoldedValue::evaluateSynthesizedAttribute(): node = %p = %s synthesizedAttributeList.size() = %zu \n",node,node->class_name().c_str(),synthesizedAttributeList.size());
+#else
+     printf ("In RemoveConstantFoldedValue::evaluateSynthesizedAttribute(): node = %p = %s synthesizedAttributeList.size() = %zu \n",node,node->class_name().c_str(),synthesizedAttributeList.size());
 #endif
-
-#if 0
-  // DQ (9/24/2011): I think this is the wrong place to process this case (see test2011_140.C).
-  // DQ (9/24/2011): We have fixed the AST traversal to no longer traverse originalExpressionTree subtree's (since 
-  // it make analysis using the traversal redundant with the constant folded values).
-  // If the current node is an expression and a leaf node of the AST, then check if it has an originalExpressionTree, 
-  // since we no longer traverse the originalExpressionTree as part of the definition of the AST.
-     SgExpression* leafExpression = (synthesizedAttributeList.empty() == true) ? isSgExpression(node) : NULL;
-     if (leafExpression != NULL)
-        {
-          printf ("Found an leaf expression \n");
-          SgExpression* originalExpressionTree = leafExpression->get_originalExpressionTree();
-          if (originalExpressionTree != NULL)
-             {
-               printf ("Found an expression tree at a leaf node with a valid originalExpressionTree\n");
-            // Make sure that the traversal will see the nested subtrees of any originalExpressionTree (since they may have constant folded subexpresions).
-               RemoveConstantFoldedValue nestedOriginalExpressionTreeTraversal;
-               RemoveConstantFoldedValueSynthesizedAttribute nestedSynthesizedAttribute = nestedOriginalExpressionTreeTraversal.traverse(originalExpressionTree);
-             }
-        }
 #endif
 
   // Here we reset the pointer to the constant folded value to be the pointer to the original expression tree.
@@ -385,48 +420,13 @@ RemoveConstantFoldedValue::evaluateSynthesizedAttribute ( SgNode* node, SubTreeS
           if (isSgFunctionDeclaration(i->node) == NULL && isSgInitializedName(i->node) == NULL && isSgFunctionParameterList(i->node) == NULL && i->node != NULL)
                printf ("synthesizedAttribute = %p = %s \n",i->node,(i->node != NULL) ? i->node->class_name().c_str() : "NULL");
 #endif
-          SgExpression* value = isSgExpression(i->node);
-          if (value != NULL)
-             {
-               SgExpression* originalExpressionTree = value->get_originalExpressionTree();
-               if (originalExpressionTree != NULL)
-                  {
-#if 0
-                    printf ("Found an originalExpressionTree = %p = %s \n",originalExpressionTree,originalExpressionTree->class_name().c_str());
-#endif
-                    if (node == value->get_parent())
-                       {
-                      // What kind of IR node are we at presently? Replace the expression representing the SgValueExp with the Expression representing the original subtree.
-#if 0
-                         printf ("Current IR node with SgExpression child = %p = %s originalExpressionTree = %p = %s \n",node,node->class_name().c_str(),originalExpressionTree,originalExpressionTree->class_name().c_str());
-#endif
-                         bool traceReplacement = true;
-                         ConstantFoldedValueReplacer r(traceReplacement, value);
-                         node->processDataMemberReferenceToPointers(&r);
-                       }
-                      else
-                       {
-                         printf ("*** Strange case of child attribute not having the current node as a parent child = %p = %s originalExpressionTree = %p = %s \n",node,node->class_name().c_str(),originalExpressionTree,originalExpressionTree->class_name().c_str());
-                       }
-#if 0
-                 // DQ (9/24/2011): Traverse the original expression tree so translate all possible cases (see test2011_140.C).
-                    printf ("Process the originalExpressionTree \n");
-                    RemoveConstantFoldedValue nestedOriginalExpressionTreeTraversal;
-                    RemoveConstantFoldedValueSynthesizedAttribute nestedSynthesizedAttribute = nestedOriginalExpressionTreeTraversal.traverse(originalExpressionTree);
-                    printf ("DONE: Process the originalExpressionTree \n");
 
-                    ROSE_ASSERT(value->get_originalExpressionTree() == NULL);
-
-                 // DQ (9/24/2011): reset the originalExpressionTree pointer
-                    value->set_originalExpressionTree(NULL);
-#endif
-                  }
-             }
+       // DQ (10/8/2011): Refectored this code so that we could better support chains of original expression trees (see test2011_146.C).
+          handleTheSynthesizedAttribute(node,*i);
 
           i++;
         }
 
-#if 1
   // Here we force the nested traversal of the originalExpressionTree, since it is not traversed as part of the AST.
   // Note that these are not always leaf nodes that we want to interogate (see test2011_140.C).
 
@@ -451,9 +451,15 @@ RemoveConstantFoldedValue::evaluateSynthesizedAttribute ( SgNode* node, SubTreeS
             // Make sure that the traversal will see the nested subtrees of any originalExpressionTree (since they may have constant folded subexpresions).
                RemoveConstantFoldedValue nestedOriginalExpressionTreeTraversal;
                RemoveConstantFoldedValueSynthesizedAttribute nestedSynthesizedAttribute = nestedOriginalExpressionTreeTraversal.traverse(originalExpressionTree);
+#if 0
+            // DQ (10/8/2011): We should not handl this here, I think.
+               handleTheSynthesizedAttribute(node,nestedSynthesizedAttribute);
+#endif
+#if 0
+               printf ("DONE: Found an expression with a valid originalExpressionTree nestedSynthesizedAttribute \n");
+#endif
              }
         }
-#endif
 
      return RemoveConstantFoldedValueSynthesizedAttribute(node);
    }
@@ -714,9 +720,9 @@ VerifyOriginalExpressionTreesSetToNull::visit ( SgNode* node )
 #if 1
           ROSE_ASSERT(originalExpressionTree == NULL);
 #endif
-#if 1
+
        // Allow us to ignore the cases of originalExpressionTrees hidden in array types.
-       // I want to narrow down the filaing tests codes to eliminate this case which is handled seperately.
+       // I want to narrow down the fialing tests codes to eliminate this case which is handled seperately.
 
           if (originalExpressionTree != NULL)
              {
@@ -736,6 +742,5 @@ VerifyOriginalExpressionTreesSetToNull::visit ( SgNode* node )
                   }
                ROSE_ASSERT(isSgArrayType(parent) != NULL || isSgVariableDefinition(parent) != NULL);
              }
-#endif
         }
    }

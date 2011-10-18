@@ -77,7 +77,13 @@ namespace CallTargetSet
   void getExpressionsForDefinition(SgFunctionDefinition* targetDef, 
                                    ClassHierarchyWrapper* classHierarchy,
                                    Rose_STL_Container<SgExpression*>& exps);
-}
+  
+  // Gets the latest implementation of the member function from the ancestor hierarchy
+  SgFunctionDeclaration * getFirstVirtualFunctionDefinitionFromAncestors(SgClassType *crtClass, 
+                                   SgMemberFunctionDeclaration *memberFunctionDeclaration, 
+                                   ClassHierarchyWrapper *classHierarchy);
+  
+};
 
 class FunctionData
 {
@@ -116,9 +122,16 @@ class CallGraphBuilder
     //! Grab the call graph built
     SgIncidenceDirectedGraph *getGraph(); 
     //void classifyCallGraph();
+
+    //We map each function to the corresponding graph node
+    boost::unordered_map<SgFunctionDeclaration*, SgGraphNode*>& getGraphNodesMapping(){ return graphNodes; }
+
   private:
     SgProject *project;
     SgIncidenceDirectedGraph *graph;
+    //We map each function to the corresponding graph node
+    boost::unordered_map<SgFunctionDeclaration*, SgGraphNode*> graphNodes;
+
 };
 //! Generate a dot graph named 'fileName' from a call graph
 void GenerateDotGraph ( SgIncidenceDirectedGraph *graph, std::string fileName );
@@ -143,6 +156,8 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
     ClassHierarchyWrapper classHierarchy(project);
     Rose_STL_Container<SgNode *>::iterator i = allFunctions.begin();
 
+    graphNodes.clear();
+    
     //Iterate through all the functions found and resolve all the call expressions in each function with a body
     while (i != allFunctions.end())
     {
@@ -182,15 +197,13 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
     SgIncidenceDirectedGraph *returnGraph = new SgIncidenceDirectedGraph();
     ROSE_ASSERT(returnGraph != NULL);
 
-    //We map each function to the corresponding graph node
-    boost::unordered_map<SgFunctionDeclaration*, SgGraphNode*> graphNodes;
     
     //Instantiate all the nodes in the graph, one for each function we found
     BOOST_FOREACH(FunctionData& currentFunction, callGraphData)
     {
         std::string functionName;
         ROSE_ASSERT(currentFunction.functionDeclaration);
-        functionName = currentFunction.functionDeclaration->get_mangled_name().getString();
+        functionName = currentFunction.functionDeclaration->get_qualified_name().getString();
 
         // Generate a unique name to test against later
         SgFunctionDeclaration* id = currentFunction.functionDeclaration;

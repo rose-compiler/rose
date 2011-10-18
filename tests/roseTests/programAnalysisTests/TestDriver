@@ -108,3 +108,22 @@ echo ./DataFlowTest -I$srcdir $srcdir/testfile4.c
 echo "${DIFF} ${DIFFOPTIONS} testfile4.c.outx $srcdir/testfile4.c.du"
 ${DIFF} ${DIFFOPTIONS} $srcdir/testfile4.c.du testfile4.c.outx
 rm testfile4.c.outx
+
+
+echo ./VirtualFunctionAnalysisTest -I$srcdir $srcdir/test_vfa1.C
+./VirtualFunctionAnalysisTest -I$srcdir $srcdir/test_vfa1.C
+
+echo ./VirtualFunctionAnalysisTest -I$srcdir $srcdir/test_vfa2.C
+./VirtualFunctionAnalysisTest -I$srcdir $srcdir/test_vfa2.C
+
+
+echo ./VirtualFunctionAnalysisTest -I$srcdir $srcdir/test_vfa3.C
+./VirtualFunctionAnalysisTest -I$srcdir $srcdir/test_vfa3.C
+
+
+echo ./VirtualFunctionAnalysisTest -I$srcdir $srcdir/test_vfa4.C
+./VirtualFunctionAnalysisTest -I$srcdir $srcdir/test_vfa4.C
+
+echo ./VirtualFunctionAnalysisTest -I$srcdir $srcdir/test_vfa5.C
+./VirtualFunctionAnalysisTest -I$srcdir $srcdir/test_vfa5.C
+
