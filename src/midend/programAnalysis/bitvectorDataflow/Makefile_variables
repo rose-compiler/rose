@@ -43,27 +43,6 @@ mpaBitvectorDataflow_cleanLocal=\
 		$(mpaBitvectorDataflowPath)/cxx_templates
 
 
-
-
-mpaBitvectorDataflow_includeHeaders=\
-	$(mpaBitvectorDataflowPath)/DataFlowAnalysis.h \
-	$(mpaBitvectorDataflowPath)/DefUseChain.h \
-	$(mpaBitvectorDataflowPath)/ReachingDefinition.h \
-	$(mpaBitvectorDataflowPath)/ReachingDefinitionFacade.h
-
-
-mpaBitvectorDataflow_extraDist=\
-	$(mpaBitvectorDataflowPath)/CMakeLists.txt
-
-
-mpaBitvectorDataflow_cleanLocal=\
-	rm -rf \
-		$(mpaBitvectorDataflowPath)/Templates.DB \
-		$(mpaBitvectorDataflowPath)/ii_files \
-		$(mpaBitvectorDataflowPath)/ti_files \
-		$(mpaBitvectorDataflowPath)/cxx_templates
-
-
 mpaBitvectorDataflow_distCleanLocal=\
 	rm -rf \
 		$(mpaBitvectorDataflowPath)/Templates.DB
