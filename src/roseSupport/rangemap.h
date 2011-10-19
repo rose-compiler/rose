@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <map>
+#include <sstream>
 #include <string>
 
 /* Define this if you want the class to do fairly extensive testing of the consistency of the map after every operation.  Note
@@ -217,9 +218,11 @@ struct Range {
 
     void print(std::ostream &o) const {
         if (empty()) {
-            o <<"(<empty>)";
+            o <<"<empty>";
+        } else if (1==size) {
+            o <<begin;
         } else {
-            o <<"(" <<begin <<"+" <<size <<"=" <<begin+size <<")";
+            o <<begin <<"-" <<last();
         }
     }
 
@@ -278,9 +281,7 @@ public:
         return RangeMapVoid();
     }
 
-    void print(std::ostream &o) const {
-        o <<"void";
-    }
+    void print(std::ostream &o) const {}
     friend std::ostream& operator<<(std::ostream &o, const RangeMapVoid &x) {
         x.print(o);
         return o;
@@ -921,10 +922,15 @@ public:
 #endif
     }
 
-    /** Prints unformatted RangeMap. */
-    void print(std::ostream &o, const std::string &prefix="") const {
-        for (const_iterator ri=begin(); ri!=end(); ++ri)
-            o <<prefix <<ri->first <<": " <<ri->second <<std::endl;
+    /** Prints unformatted RangeMap on a single line */
+    void print(std::ostream &o) const {
+        for (const_iterator ri=begin(); ri!=end(); ++ri) {
+            std::ostringstream s;
+            s <<ri->second;
+            o <<(ri==begin()?"":", ") <<ri->first;
+            if (!s.str().empty())
+                o <<" {" <<s.str() <<"}";
+        }
     }
 
     friend std::ostream& operator<<(std::ostream &o, const RangeMap &rmap) {
