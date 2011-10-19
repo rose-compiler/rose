@@ -282,6 +282,27 @@ ExtentMap::find_address(rose_addr_t addr) const
     return *i;
 }
 
+/** Determines if specified bytes are in the extent map.  If every byte of the specified extent is defined by the extent map,
+ *  then this function returns true, otherwise false. */
+bool
+ExtentMap::exists_all(ExtentPair what) const
+{
+    while (what.second>0) {
+        try {
+            ExtentPair found = find_address(what.first);
+            assert(found.second > 0);
+            assert(found.first <= what.first);
+            assert(what.first <= found.first + found.second);
+            rose_addr_t nfound = std::min(what.second, found.second-(what.first-found.first));
+            what.first = found.first + found.second;
+            what.second -= nfound;
+        } catch (const std::bad_alloc&) { // thrown by find_address()
+            return false;
+        }
+    }
+    return true;
+}
+
 /** Print info about an extent map */
 void
 ExtentMap::dump_extents(FILE *f, const char *prefix, const char *label, bool pad) const

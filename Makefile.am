@@ -54,11 +54,12 @@ core:
 	$(MAKE) -C $(top_builddir)/exampleTranslators
 	$(MAKE) -C $(top_builddir)/tutorial
 
-install-core: core
+install-core: core rosePublicConfig.h
 	$(MAKE) install-data-local
 	$(MAKE) install -C $(top_builddir)/src
 	$(MAKE) install -C $(top_builddir)/exampleTranslators
 	$(MAKE) install -C $(top_builddir)/tutorial
+	cp rosePublicConfig.h $(DESTDIR)$(includedir)/
 
 install-compass: install-core
 	$(MAKE) -C $(top_builddir)/projects/compass
@@ -209,7 +210,8 @@ if ENABLE_JAVAPORT
 endif
 
 # DQ (4/5/2010): Use the same version of OFP as specified on the original configure command line.
-DISTCHECK_CONFIGURE_FLAGS += --enable-ofp-version=@ROSE_OFP_MAJOR_VERSION_NUMBER@.@ROSE_OFP_MINOR_VERSION_NUMBER@.@ROSE_OFP_PATCH_VERSION_NUMBER@
+# CER (10/10/2011): No longer needed. A specific OFP version is configured by default and distributed with ROSE.
+#DISTCHECK_CONFIGURE_FLAGS += --enable-ofp-version=@ROSE_OFP_MAJOR_VERSION_NUMBER@.@ROSE_OFP_MINOR_VERSION_NUMBER@.@ROSE_OFP_PATCH_VERSION_NUMBER@
 
 # SRIRAM (8/2/2010): changing distcheck configuration for LLVM translator
 if ROSE_USE_LLVM
@@ -253,7 +255,8 @@ dist-hook:
   (                                                                          \
       echo "Error: could not determine SCM version information." &&          \
       exit 1                                                                 \
-  )
+  ) ||                                                                       \
+  exit 1
 
 # Automake hook-ish rule to be run after dist rule (but hook runs before gzip so we can't use hook)
 # We could build our own ROSE specific wrapper for dist and distcheck.
