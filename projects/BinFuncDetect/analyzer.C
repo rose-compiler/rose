@@ -115,11 +115,11 @@ class MyUnparser: public AsmUnparser {
 
                 if (!rose_func_va) {
                     /* Instruction/data assigned to function by IDA but not ROSE */
-                    ida[i].ida_not_rose.insert(start_va, nbytes);
+                    ida[i].ida_not_rose.insert(Extent(start_va, nbytes));
                     output <<"!";
                 } else if (rose_func_va!=ida_func_va[i]) {
                     /* Instruction assigned by ROSE and IDA to different function entry addresses. */
-                    ida[i].rose_ida_diff.insert(start_va, nbytes);
+                    ida[i].rose_ida_diff.insert(Extent(start_va, nbytes));
                     output <<"!";
                 } else {
                     /* Instruction assigned to same function by ROSE and IDA */
@@ -128,7 +128,7 @@ class MyUnparser: public AsmUnparser {
             } else if (rose_func_va) {
                 /* Instruction assigned to function by ROSE but not IDA.  Don't show the "!" for padding bytes since we already
                  * know that IDA doesn't include them in the function. */
-                ida[i].rose_not_ida.insert(start_va, nbytes);
+                ida[i].rose_not_ida.insert(Extent(start_va, nbytes));
                 if (blk && 0!=(blk->get_reason() & SgAsmBlock::BLK_PADDING)) {
                     output <<"          ";
                 } else {
@@ -380,7 +380,7 @@ statistics(SgAsmInterpretation *interp, const Disassembler::InstructionMap &insn
     // Number of bytes disassembled (including those not assigned to any function, and counting overlaps twice)
     ExtentMap disassembled_bytes;
     for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii)
-        disassembled_bytes.insert(ii->first, ii->second->get_raw_bytes().size());
+        disassembled_bytes.insert(Extent(ii->first, ii->second->get_raw_bytes().size()));
     size_t ndis0 = disassembled_bytes.size();
     fprintf(stderr, "Disassembled:                           %-*zu", width, ndis0);
     for (IdaInfo::iterator ida_i=ida.begin(); ida_i!=ida.end(); ++ida_i) {
@@ -395,7 +395,7 @@ statistics(SgAsmInterpretation *interp, const Disassembler::InstructionMap &insn
     for (IdaInfo::iterator ida_i=ida.begin(); ida_i!=ida.end(); ++ida_i) {
         emap = disassembled_bytes;
         for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii)
-            emap.erase(ii->first, ii->second->get_raw_bytes().size());
+            emap.erase(Extent(ii->first, ii->second->get_raw_bytes().size()));
         size_t n = emap.size();
         if (n>0) {
             printf("[NOTE %d] Bytes disassembled by IDA[%d] (%s) but not ROSE:\n", note, ida_i->id, ida_i->name.c_str());
@@ -489,7 +489,7 @@ statistics(SgAsmInterpretation *interp, const Disassembler::InstructionMap &insn
                 ExtentMap func_bytes;
                 std::vector<SgAsmx86Instruction*> func_insns = SageInterface::querySubTree<SgAsmx86Instruction>(rose_functions[i]);
                 for (size_t j=0; j<func_insns.size(); j++)
-                    func_bytes.insert(func_insns[j]->get_address(), func_insns[j]->get_raw_bytes().size());
+                    func_bytes.insert(Extent(func_insns[j]->get_address(), func_insns[j]->get_raw_bytes().size()));
                 nbytes += func_bytes.size();
             }
         }

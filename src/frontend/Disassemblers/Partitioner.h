@@ -528,8 +528,10 @@ public:
      **************************************************************************************************************************/
 public:
 
+    /** Base class for instruction scanning callbacks. */
     class InsnRangeCallback {
     public:
+        /** Arguments for the callback. */
         struct Args {
             Args(Partitioner *partitioner, SgAsmInstruction *insn_prev, SgAsmInstruction *insn_begin,
                  SgAsmInstruction *insn_end, size_t ninsns)
@@ -542,11 +544,27 @@ public:
             size_t ninsns;                              /**< Number of instructions in range. */
         };
 
+        virtual ~InsnRangeCallback() {}
+
         /** The actual callback function.  This needs to be defined in subclasses. */
         virtual bool operator()(bool enabled, const Args &args) = 0;
     };
-
     typedef ROSE_Callbacks::List<InsnRangeCallback> InsnRangeCallbacks;
+
+    /** Base class for byte scanning callbacks. */
+    class ByteRangeCallback {
+    public:
+        /** Arguments for the callback. */
+        struct Args {
+            Partitioner *partitioner;
+        };
+
+        virtual ~ByteRangeCallback() {}
+
+        /** The actual callback function.  This needs to be defined in subclasses. */
+        virtual bool operator()(bool enabled, const Args &args) = 0;
+    };
+    typedef ROSE_Callbacks::List<ByteRangeCallback> ByteRangeCallbacks;
 
     /** Scans contiguous sequences of instructions.  The specified callbacks are invoked for each contiguous sequence of
      *  instructions in the specified instruction map.  At each iteration of the loop, we choose the instruction with the
@@ -626,6 +644,42 @@ public:
         scan_interfunc_insns(cblist);
     }
     /** @} */
+
+    /** Scans ranges of the address space that have not been assigned to any function.
+     *
+     *  @{ */
+    virtual void scan_unassigned_bytes(ByteRangeCallbacks &callbacks);
+    void scan_unassigned_bytes(ByteRangeCallback *callback) {
+        ByteRangeCallbacks cblist(callback);
+        scan_unassigned_bytes(cblist);
+    }
+    /** @} */
+
+    /** Scans unassigned ranges of the address space within a function.  The specified callbacks are invoked for each range of
+     *  the address space whose closest surrounding assigned addresses both belong to the same function.  This can be used, for
+     *  example, to discover static data or unreachable instructions (by static analysis) that should probably belong to the
+     *  surrounding function.
+     *
+     *  @{ */
+    virtual void scan_intrafunc_bytes(ByteRangeCallbacks &callbacks);
+    void scan_intrafunc_bytes(ByteRangeCallback *callback) {
+        ByteRangeCallbacks cblist(callback);
+        scan_intrafunc_bytes(cblist);
+    }
+    /** @} */
+
+    /** Scans unassigned ranges of the address space between functions.  The specified callbacks are invoked for each range of
+     *  addresses that fall "between" two functions.  An address is between two functions if the next lower assigned address
+     *  belongs to one function and the next higher assigned address belongs to some other function, or if there is no lower
+     *  assigned address and/or no upper assigned address.
+     *
+     *  @{ */
+    virtual void scan_interfunc_bytes(ByteRangeCallbacks &callbacks);
+    void scan_interfunc_bytes(ByteRangeCallback *callback) {
+        ByteRangeCallbacks cblist(callback);
+        scan_interfunc_bytes(cblist);
+    }
+    /** @}*/
 
     /** Callback to create inter-function instruction padding.  This callback can be passed to the scan_interfunc_insns()
      *  method's callback list.  Whenever it detects a contiguous sequence of one or more of the specified instructions (in any

@@ -1042,8 +1042,8 @@ RSIM_Process::mem_unmap(rose_addr_t va, size_t sz, RTS_Message *mesg)
     RTS_WRITE(rwlock()) {
         /* Make sure that the specified memory range is actually mapped, or return -ENOMEM. */
         ExtentMap extents;
-        extents.insert(ExtentPair(va, sz));
-        extents.erase(map->va_extents());
+        extents.insert(Extent(va, sz));
+        extents.erase_ranges(map->va_extents());
         if (!extents.empty()) {
             retval = -ENOMEM;
             break;

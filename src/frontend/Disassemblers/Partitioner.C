@@ -192,7 +192,7 @@ SgAsmFunction::get_extent(ExtentMap *extents, rose_addr_t *lo_addr, rose_addr_t 
                     *hi_addr = std::max(*hi_addr, hi);
             }
             if (extents && hi>lo)
-                extents->insert(lo, hi-lo);
+                extents->insert(Extent(lo, hi-lo));
         }
     } t1(extents, lo_addr, hi_addr, selector);
     t1.traverse(this, preorder);
@@ -1735,6 +1735,27 @@ Partitioner::scan_intrafunc_insns(InsnRangeCallbacks &cblist)
     scan_unassigned_insns(cblist2);
 }
 
+void
+Partitioner::scan_unassigned_bytes(ByteRangeCallbacks &callbacks)
+{
+    assert(!"not implemented yet"); // FIXME
+    abort();
+}
+
+void
+Partitioner::scan_intrafunc_bytes(ByteRangeCallbacks &callbacks)
+{
+    assert(!"not implemented yet"); // FIXME
+    abort();
+}
+
+void
+Partitioner::scan_interfunc_bytes(ByteRangeCallbacks &callbacks)
+{
+    assert(!"not implemented yet"); // FIXME
+    abort();
+}
+
 /* Create functions or data for inter-function padding instruction sequences.  Returns true if we did not find interfunction
  * padding and other padding callbacks should proceed; returns false if we did find padding and the others should be skipped. */
 bool
@@ -1872,10 +1893,10 @@ Partitioner::find_db_starting(rose_addr_t start_va, size_t size/*=0*/)
             return db; /* caller doesn't care about the size, only whether the block is present. */
 
         /* Check whether the block contains all the addresses we want. They might not all be in the first node. */
-        ExtentMap have_extents;
-        datablock_extent(db, &have_extents);
-        ExtentMap missing_extents = have_extents.subtract_from(start_va, size);
-        if (0==missing_extents.size())
+        ExtentMap want; want.insert(Extent(start_va, size));
+        ExtentMap have; datablock_extent(db, &have);
+        want.erase_ranges(have);
+        if (want.empty())
             return db;
     }
     if (0==size)
@@ -2741,7 +2762,7 @@ Partitioner::function_extent(Function *func,
                 hi_addr = std::max(hi_addr, (*ii)->get_address() + (*ii)->get_raw_bytes().size());
             }
             if (extents)
-                extents->insert((*ii)->get_address(), (*ii)->get_raw_bytes().size());
+                extents->insert(Extent((*ii)->get_address(), (*ii)->get_raw_bytes().size()));
         }
 
         /* Data blocks associated with this basic block. Count them only if they aren't explicitly assigned to a function. */
@@ -2923,7 +2944,7 @@ Partitioner::build_ast()
             for (Disassembler::InstructionMap::iterator ii=insns_copy.begin(); ii!=insns_copy.end(); ++ii) {
                 rose_addr_t va = ii->first;
                 size_t size = ii->second->get_raw_bytes().size();
-                if (!existing.exists_all(ExtentPair(va, size))) {
+                if (!existing.contains(Extent(va, size))) {
                     BasicBlock *bb = find_bb_containing(ii->first);
                     assert(bb!=NULL);
                     if (!bb->function) {
@@ -3014,7 +3035,7 @@ Partitioner::build_ast(Function* f)
     if (0==(reasons & SgAsmFunction::FUNC_DISCONT)) {
         ExtentMap extent;
         function_extent(f, &extent);
-        if (extent.nregions()>1)
+        if (extent.nranges()>1)
             reasons |= SgAsmFunction::FUNC_DISCONT;
     }
     retval->set_reason(reasons);
