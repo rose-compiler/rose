@@ -9,7 +9,192 @@ project (ROSE CXX C)
 set( CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" "${CMAKE_SOURCE_DIR}/cmake/modules"  ${CMAKE_MODULE_PATH})
 #message ("CMAKE_MODULE_PATH = ${CMAKE_MODULE_PATH}")
 
+#-------------------------------------------------------------------------------
+# ROSE SCM Version Information
+#
+#   1. Grab the SCM information from Git, otherwise
+#   2. Grab the SCM information from the $ROSE/VERSION file
+#-------------------------------------------------------------------------------
+set(ROSE_SCM_VERSION_ID_REGEX               "^[0-9a-zA-Z]+$") # {40}
+set(ROSE_SCM_VERSION_ID_LENGTH_EXACT        40)
+set(ROSE_SCM_VERSION_UNIX_DATE_REGEX        "^[0-9]+$") # {10,}
+set(ROSE_SCM_VERSION_UNIX_DATE_LENGTH_MIN   10)
+set(ROSE_SCM_VERSION_FILE                   "${PROJECT_SOURCE_DIR}/VERSION")
+set(ROSE_SCM_VERSION_FILE_FIELD_COUNT       2)
 
+message(STATUS "Check for ROSE source tree type")
+if(IS_DIRECTORY ${PROJECT_SOURCE_DIR}/.git)
+  message(STATUS "Check for ROSE source tree type - Git")
+  find_package(Git)
+  if(NOT GIT_FOUND)
+      string(REPLACE ":" "\n\t" ENV_PATH "$ENV{PATH}")
+      message(
+          FATAL_ERROR
+          "git executable not found. You might need to add /path/to/git/bin "
+          "to your \$PATH environment variable.\n"
+          "PATH=${ENV_PATH}"
+      )
+  else()
+      message(
+          STATUS
+          "Detecting ROSE SCM version information (from Git)"
+      )
+
+      # HEAD
+      execute_process(
+          COMMAND             "${GIT_EXECUTABLE}" rev-parse HEAD
+          WORKING_DIRECTORY   ${PROJECT_SOURCE_DIR}
+          ERROR_VARIABLE      stderr
+          RESULT_VARIABLE     error_code
+          OUTPUT_VARIABLE     ROSE_SCM_VERSION_ID
+          OUTPUT_STRIP_TRAILING_WHITESPACE
+      )
+      if (NOT error_code EQUAL 0)
+          message(
+              FATAL_ERROR
+              "(status=${error_code}) "
+              "Failed to determine the ROSE SCM version id: "
+              "${ROSE_SCM_VERSION_ID}${stderr}"
+          )
+      endif()
+
+      execute_process(
+        # Author time (%at) of the HEAD commit
+          COMMAND             "${GIT_EXECUTABLE}" log -1 --format=%at HEAD
+          WORKING_DIRECTORY   ${PROJECT_SOURCE_DIR}
+          ERROR_VARIABLE      stderr
+          RESULT_VARIABLE     error_code
+          OUTPUT_VARIABLE     ROSE_SCM_VERSION_UNIX_DATE
+          OUTPUT_STRIP_TRAILING_WHITESPACE
+      )
+
+      if(NOT error_code EQUAL 0)
+          message(
+              FATAL_ERROR
+              "(status=${error_code} "
+              "Failed to determine the ROSE SCM version unix timestamp: "
+              "${ROSE_SCM_VERSION_UNIX_DATE}${stderr}"
+          )
+      endif()
+  endif()
+else()
+  # Distribution versions of ROSE will have a VERSION file.
+  message(STATUS "Check for ROSE source tree type - Distribution")
+  message(STATUS "Check for VERSION file - ${ROSE_SCM_VERSION_FILE}")
+  if(NOT EXISTS "${ROSE_SCM_VERSION_FILE}")
+      message(
+          FATAL_ERROR
+          "File not found: ${ROSE_SCM_VERSION_FILE}"
+      )
+  else()
+      message(
+          STATUS
+          "Check for VERSION file - found "
+          "${ROSE_SCM_VERSION_FILE}"
+      )
+
+      message(
+          STATUS
+          "Detecting ROSE SCM version information "
+          "(from ${ROSE_SCM_VERSION_FILE})"
+      )
+
+      execute_process(
+          COMMAND             "cat" ${ROSE_SCM_VERSION_FILE}
+          WORKING_DIRECTORY   ${PROJECT_SOURCE_DIR}
+          ERROR_VARIABLE      stderr
+          RESULT_VARIABLE     error_code
+          OUTPUT_VARIABLE     ROSE_SCM_VERSION_INFO
+          OUTPUT_STRIP_TRAILING_WHITESPACE
+      )
+      if (NOT error_code EQUAL 0)
+          message(
+              FATAL_ERROR
+              "(status=${error_code}) "
+              "Failed to extract the ROSE SCM version information from "
+              "${ROSE_SCM_VERSION_FILE}\n"
+              "${ROSE_SCM_VERSION_INFO}${stderr}"
+          )
+      endif()
+      # Convert string information to CMake LIST
+      # (space-delimited to semicolon-delimited)
+      string(
+          REPLACE " " ";"             # <match> <replace>
+          ROSE_SCM_VERSION_INFO_LIST  # output
+          ${ROSE_SCM_VERSION_INFO}    # input
+      )
+      list(
+          LENGTH
+          ROSE_SCM_VERSION_INFO_LIST
+          ROSE_SCM_VERSION_INFO_LIST_LENGTH
+      )
+      if(NOT ROSE_SCM_VERSION_INFO_LIST_LENGTH EQUAL ${ROSE_SCM_VERSION_FILE_FIELD_COUNT})
+          message(
+              FATAL_ERROR
+              "Check for VERSION file - failed\n"
+              "Invalid VERSION file ${ROSE_SCM_VERSION_FILE} has "
+              "(${ROSE_SCM_VERSION_INFO_LIST_LENGTH}) fields, expected "
+              "only (${ROSE_SCM_VERSION_FILE_FIELD_COUNT}) fields!"
+          )
+      else()
+          list(GET ROSE_SCM_VERSION_INFO_LIST 0 ROSE_SCM_VERSION_ID)
+          list(GET ROSE_SCM_VERSION_INFO_LIST 1 ROSE_SCM_VERSION_UNIX_DATE)
+      endif()
+  endif()
+endif(IS_DIRECTORY ${PROJECT_SOURCE_DIR}/.git)
+
+#---------------------------------------
+# HEAD commit - id
+#---------------------------------------
+if (NOT "${ROSE_SCM_VERSION_ID}" MATCHES
+        "${ROSE_SCM_VERSION_ID_REGEX}")
+    message(
+        FATAL_ERROR
+        "Invalid Git hash \"${ROSE_SCM_VERSION_ID}\" does not "
+        "match regex \"${ROSE_SCM_VERSION_ID_REGEX}\""
+    )
+endif()
+
+string(LENGTH ${ROSE_SCM_VERSION_ID} ROSE_SCM_VERSION_ID_LENGTH)
+if (NOT "${ROSE_SCM_VERSION_ID_LENGTH}" EQUAL
+        "${ROSE_SCM_VERSION_ID_LENGTH_EXACT}")
+    message(
+        FATAL_ERROR
+        "Invalid Git hash \"${ROSE_SCM_VERSION_ID}\" has length="
+        "${ROSE_SCM_VERSION_ID_LENGTH}; expected length="
+        "${ROSE_SCM_VERSION_ID_LENGTH_EXACT}"
+    )
+endif()
+
+#---------------------------------------
+# HEAD commit - date (Unix timestamp)
+#---------------------------------------
+if(NOT "${ROSE_SCM_VERSION_UNIX_DATE}" MATCHES
+            "${ROSE_SCM_VERSION_UNIX_DATE_REGEX}")
+    message(
+        FATAL_ERROR
+        "Invalid Git author date \"${ROSE_SCM_VERSION_UNIX_DATE}\" does not "
+        "match regex \"${ROSE_SCM_VERSION_UNIX_DATE_REGEX}\"")
+endif()
+
+string(LENGTH ${ROSE_SCM_VERSION_UNIX_DATE} ROSE_SCM_VERSION_UNIX_DATE_LENGTH)
+if ("${ROSE_SCM_VERSION_UNIX_DATE_LENGTH}" LESS
+    "${ROSE_SCM_VERSION_UNIX_DATE_LENGTH_MIN}")
+    message(
+        FATAL_ERROR
+        "Invalid Git Unix timestamp author date "
+        "\"${ROSE_SCM_VERSION_UNIX_DATE}\" has length="
+        "${ROSE_SCM_VERSION_UNIX_DATE_LENGTH}; "
+        "expected length>=${ROSE_SCM_VERSION_UNIX_DATE_LENGTH_MIN}"
+    )
+endif()
+
+message(STATUS "The ROSE SCM version identifier is ${ROSE_SCM_VERSION_ID}")
+message(STATUS "The ROSE SCM version Unix timestamp is ${ROSE_SCM_VERSION_UNIX_DATE}")
+
+#-------------------------------------------------------------------------------
+# Boost C++ Libraries
+#-------------------------------------------------------------------------------
 set(Boost_USE_STATIC_LIBS TRUE)        
 set(Boost_DEBUG TRUE)
 
@@ -421,6 +606,7 @@ endif (HAVE_DLFCN_H)
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/CallGraphAnalysis 
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/OAWrap 
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/bitvectorDataflow 
+     ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/VirtualFunctionAnalysis 
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/defUseAnalysis 
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/distributedMemoryAnalysis 
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/dominanceAnalysis 
