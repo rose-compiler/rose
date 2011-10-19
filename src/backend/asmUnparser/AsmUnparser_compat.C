@@ -87,8 +87,8 @@ unparseAsmStatement(SgAsmStatement* stmt)
         case V_SgAsmBlock:
             u.unparse(s, isSgAsmBlock(stmt));
             return s.str();
-        case V_SgAsmFunctionDeclaration:
-            u.unparse(s, isSgAsmFunctionDeclaration(stmt));
+        case V_SgAsmFunction:
+            u.unparse(s, isSgAsmFunction(stmt));
             return s.str();
         default:
             std::cerr <<"Unhandled variant " <<stmt->class_name() <<std::endl;

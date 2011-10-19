@@ -49,8 +49,8 @@ QStringList AsmTreeRootNode::sectionHeader() const
 // -------------------- Function Node ------------------------------
 
 
-AsmTreeFunctionNode::AsmTreeFunctionNode(SgAsmFunctionDeclaration * fd1,
-                                         SgAsmFunctionDeclaration * fd2)
+AsmTreeFunctionNode::AsmTreeFunctionNode(SgAsmFunction * fd1,
+                                         SgAsmFunction * fd2)
     : declNode1(fd1), declNode2(fd2)
 {
     Q_ASSERT(declNode1 || declNode2 );
@@ -58,7 +58,7 @@ AsmTreeFunctionNode::AsmTreeFunctionNode(SgAsmFunctionDeclaration * fd1,
     if(declNode1 && declNode2)
         Q_ASSERT(fd1->get_name() == fd2->get_name()); //the function names have to match
 
-    SgAsmFunctionDeclaration *valNode = declNode1 ? declNode1 : declNode2;
+    SgAsmFunction *valNode = declNode1 ? declNode1 : declNode2;
 
     name=StringUtility::demangledName(valNode->get_name()).c_str();
 }
@@ -240,7 +240,7 @@ void buildAsmTreeVisit(SgNode * sgNode, ItemTreeNode * itemNode,AstFilterInterfa
 
     ItemTreeNode * newNode = itemNode;
 
-    SgAsmFunctionDeclaration * sgFunc = isSgAsmFunctionDeclaration(sgNode);
+    SgAsmFunction * sgFunc = isSgAsmFunction(sgNode);
     SgAsmInstruction * sgInst = isSgAsmInstruction(sgNode);
 
     if(sgInst) // Instruction
@@ -310,8 +310,8 @@ Rose_STL_Container<SgNode *>  querySubTreeFiltered(SgNode * tree, VariantT type,
 ItemTreeNode * buildAsmTreeDiff(SgNode * node1, SgNode * node2,
                                 AstFilterInterface * filter1, AstFilterInterface * filter2)
 {
-    Rose_STL_Container<SgNode *> funcs1 = querySubTreeFiltered(node1,V_SgAsmFunctionDeclaration,filter1);
-    Rose_STL_Container<SgNode *> funcs2 = querySubTreeFiltered(node2,V_SgAsmFunctionDeclaration,filter2);
+    Rose_STL_Container<SgNode *> funcs1 = querySubTreeFiltered(node1,V_SgAsmFunction,filter1);
+    Rose_STL_Container<SgNode *> funcs2 = querySubTreeFiltered(node2,V_SgAsmFunction,filter2);
 
 
     ItemTreeNode * rootNode = new AsmTreeRootNode(true);
@@ -323,8 +323,8 @@ ItemTreeNode * buildAsmTreeDiff(SgNode * node1, SgNode * node2,
 
     for(SgPairIter i= funcDiff.begin(); i != funcDiff.end(); ++i)
     {
-        SgAsmFunctionDeclaration * leftFunc  = isSgAsmFunctionDeclaration(i->first);
-        SgAsmFunctionDeclaration * rightFunc = isSgAsmFunctionDeclaration(i->second);
+        SgAsmFunction * leftFunc  = isSgAsmFunction(i->first);
+        SgAsmFunction * rightFunc = isSgAsmFunction(i->second);
 
         AsmTreeFunctionNode * funcNode = new AsmTreeFunctionNode(leftFunc,rightFunc);
         rootNode->addChild(funcNode);

@@ -33,7 +33,7 @@ void CountTraversal::visit ( SgNode* n )
                if (count > 0)
                    {
                   // Report the sequence when we have detected the end of the sequence.
-                     SgAsmFunctionDeclaration* functionDeclaration = getAsmFunctionDeclaration(asmInstruction);
+                     SgAsmFunction* functionDeclaration = getAsmFunction(asmInstruction);
                      printf ("Reporting NOP sequence of length %3d at address %zu in function %s (reason for this being a function = %u = %s) \n",
                           count,nopSequenceStart->get_address(),functionDeclaration->get_name().c_str(),
                           functionDeclaration->get_reason(),functionDeclaration->get_functionReasonString().c_str());
