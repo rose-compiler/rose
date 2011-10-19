@@ -49,6 +49,21 @@ all-local: rose.docs
 
 all: enforce_policies remove_sage3basic_h_pch
 
+core:
+	$(MAKE) -C $(top_builddir)/src
+	$(MAKE) -C $(top_builddir)/exampleTranslators
+	$(MAKE) -C $(top_builddir)/tutorial
+
+install-core: core
+	$(MAKE) install-data-local
+	$(MAKE) install -C $(top_builddir)/src
+	$(MAKE) install -C $(top_builddir)/exampleTranslators
+	$(MAKE) install -C $(top_builddir)/tutorial
+
+install-compass: install-core
+	$(MAKE) -C $(top_builddir)/projects/compass
+	$(MAKE) install -C $(top_builddir)/projects/compass
+
 # DQ (10/2/10): Of course this will over-rise the "make install" rule, so we can't 
 # allow exactly this (what was I thinking?). Commented out until I get a better fix.
 # DQ (9/29/2010): Next three lines are a modification suggested by Scott Warren to 
@@ -219,6 +234,26 @@ rename_distribution:
 # We don't use subversion anymore
 # We convert the number of git commits to a pseudo revision number instead
 distdir = $(PACKAGE)-$(VERSION)$(DOT_SVNREV)
+
+dist-hook:
+	builddir="$$(pwd)" &&                                                      \
+  (                                                                          \
+  [ -e "$(srcdir)"/.git ] &&                                                 \
+  cd $(srcdir) &&                                                            \
+      git_head="$$(git rev-parse HEAD)" &&                                   \
+      git_head_date="$$(git log -1 --format=%at $$(git rev-parse HEAD))" &&  \
+          echo "$$git_head $$git_head_date" > $${builddir}/VERSION &&        \
+          cp $${builddir}/VERSION $${builddir}/$(distdir)/VERSION            \
+  ) ||                                                                       \
+  (                                                                          \
+  VERSION_FILE="$(srcdir)/VERSION" &&                                        \
+  [ -e "$$VERSION_FILE" ] &&                                                 \
+      cp "$$VERSION_FILE" $${builddir}/$(distdir)/VERSION                    \
+  ) ||                                                                       \
+  (                                                                          \
+      echo "Error: could not determine SCM version information." &&          \
+      exit 1                                                                 \
+  )
 
 # Automake hook-ish rule to be run after dist rule (but hook runs before gzip so we can't use hook)
 # We could build our own ROSE specific wrapper for dist and distcheck.

@@ -168,11 +168,10 @@ void rted_ExitScope(size_t scopecount, rted_SourceInfo si);
 void rted_Close(const char* from);
 
 // function used to indicate error
-// \pp is this function used / defined?
+// \pp this seems unused / undefined?
 // void RuntimeSystem_callExit(const char* filename, const char* line,
 //    const char* reason, const char* stmtStr);
 
-extern int RuntimeSystem_original_main(int argc, char**argv, char**envp);
 /***************************** INIT AND EXIT *************************************/
 
 

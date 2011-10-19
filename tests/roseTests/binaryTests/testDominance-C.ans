@@ -1,4 +1,6 @@
 test C in function <_init> at 0x08048278
+test C in function <> at 0x08048290
+test C in function <> at 0x08048296
 test C in function <malloc@plt> at 0x080482a0
 test C in function <__libc_start_main@plt> at 0x080482b0
 test C in function <_start> at 0x080482c0
@@ -17,6 +19,9 @@ test C in function <> at 0x08048456
 test C in function <__do_global_ctors_aux> at 0x08048460
 test C in function <> at 0x08048491
 test C in function <_fini> at 0x08048494
+test C in function <> at 0x08048a30
+test C in function <> at 0x08048c64
+test C in function <> at 0x08048db4
 
 === testDominance-C1.dot ===
 digraph G {
@@ -24,6 +29,10 @@ digraph G {
 1[ label="0x08048283" ];
 2[ label="0x08048288" ];
 3[ label="0x0804828d" ];
+4[ label="0x0804828f" ];
+5[ label="0x08048291" ];
+6[ label="0x0804829c" ];
+7[ label="0x0804829e" ];
 1->0 ;
 2->1 ;
 3->2 ;
@@ -31,27 +40,41 @@ digraph G {
 
 === testDominance-C2.dot ===
 digraph G {
-0[ label="0x080482a0" ];
+0[ label="0x08048290" ];
 }
 
 === testDominance-C3.dot ===
 digraph G {
-0[ label="0x080482b0" ];
+0[ label="0x08048296" ];
 }
 
 === testDominance-C4.dot ===
+digraph G {
+0[ label="0x080482a0" ];
+1[ label="0x080482a6" ];
+2[ label="0x080482ab" ];
+}
+
+=== testDominance-C5.dot ===
+digraph G {
+0[ label="0x080482b0" ];
+1[ label="0x080482b6" ];
+2[ label="0x080482bb" ];
+}
+
+=== testDominance-C6.dot ===
 digraph G {
 0[ label="0x080482c0" ];
 1[ label="0x080482e1" ];
 1->0 ;
 }
 
-=== testDominance-C5.dot ===
+=== testDominance-C7.dot ===
 digraph G {
 0[ label="0x080482e2" ];
 }
 
-=== testDominance-C6.dot ===
+=== testDominance-C8.dot ===
 digraph G {
 0[ label="0x080482e4" ];
 1[ label="0x080482ff" ];
@@ -60,12 +83,12 @@ digraph G {
 2->1 ;
 }
 
-=== testDominance-C7.dot ===
+=== testDominance-C9.dot ===
 digraph G {
 0[ label="0x08048305" ];
 }
 
-=== testDominance-C8.dot ===
+=== testDominance-C10.dot ===
 digraph G {
 0[ label="0x08048310" ];
 1[ label="0x0804831f" ];
@@ -80,12 +103,12 @@ digraph G {
 5->4 ;
 }
 
-=== testDominance-C9.dot ===
+=== testDominance-C11.dot ===
 digraph G {
 0[ label="0x0804833f" ];
 }
 
-=== testDominance-C10.dot ===
+=== testDominance-C12.dot ===
 digraph G {
 0[ label="0x08048340" ];
 1[ label="0x0804834f" ];
@@ -94,17 +117,17 @@ digraph G {
 2->1 ;
 }
 
-=== testDominance-C11.dot ===
+=== testDominance-C13.dot ===
 digraph G {
 0[ label="0x08048363" ];
 }
 
-=== testDominance-C12.dot ===
+=== testDominance-C14.dot ===
 digraph G {
 0[ label="0x08048364" ];
 }
 
-=== testDominance-C13.dot ===
+=== testDominance-C15.dot ===
 digraph G {
 0[ label="0x0804836e" ];
 1[ label="0x08048381" ];
@@ -117,26 +140,37 @@ digraph G {
 4->3 ;
 }
 
-=== testDominance-C14.dot ===
+=== testDominance-C16.dot ===
 digraph G {
 0[ label="0x080483c0" ];
 1[ label="0x080483da" ];
+2[ label="0x0804840a" ];
+3[ label="0x08048412" ];
 1->0 ;
+2->1 ;
 }
 
-=== testDominance-C15.dot ===
+=== testDominance-C17.dot ===
 digraph G {
 0[ label="0x08048414" ];
-1[ label="0x0804844e" ];
-1->0 ;
+1[ label="0x08048440" ];
+2[ label="0x08048443" ];
+3[ label="0x08048444" ];
+4[ label="0x08048449" ];
+5[ label="0x0804844e" ];
+3->0 ;
+2->1 ;
+3->2 ;
+4->3 ;
+5->4 ;
 }
 
-=== testDominance-C16.dot ===
+=== testDominance-C18.dot ===
 digraph G {
 0[ label="0x08048456" ];
 }
 
-=== testDominance-C17.dot ===
+=== testDominance-C19.dot ===
 digraph G {
 0[ label="0x08048460" ];
 1[ label="0x08048476" ];
@@ -149,14 +183,279 @@ digraph G {
 4->3 ;
 }
 
-=== testDominance-C18.dot ===
+=== testDominance-C20.dot ===
 digraph G {
 0[ label="0x08048491" ];
 }
 
-=== testDominance-C19.dot ===
+=== testDominance-C21.dot ===
 digraph G {
 0[ label="0x08048494" ];
 1[ label="0x080484aa" ];
 1->0 ;
+}
+
+=== testDominance-C22.dot ===
+digraph G {
+0[ label="0x08048a30" ];
+}
+
+=== testDominance-C23.dot ===
+digraph G {
+0[ label="0x08048c64" ];
+1[ label="0x08048c69" ];
+2[ label="0x08048c6b" ];
+3[ label="0x08048c6d" ];
+4[ label="0x08048c6f" ];
+5[ label="0x08048c71" ];
+6[ label="0x08048c73" ];
+7[ label="0x08048c75" ];
+8[ label="0x08048c79" ];
+9[ label="0x08048c7b" ];
+10[ label="0x08048c7d" ];
+11[ label="0x08048c80" ];
+12[ label="0x08048c82" ];
+13[ label="0x08048c84" ];
+14[ label="0x08048c85" ];
+15[ label="0x08048c88" ];
+16[ label="0x08048c8a" ];
+17[ label="0x08048c8c" ];
+18[ label="0x08048c8e" ];
+19[ label="0x08048c93" ];
+20[ label="0x08048c99" ];
+21[ label="0x08048c9b" ];
+22[ label="0x08048c9d" ];
+23[ label="0x08048c9f" ];
+24[ label="0x08048ca1" ];
+25[ label="0x08048ca3" ];
+26[ label="0x08048ca9" ];
+27[ label="0x08048cab" ];
+28[ label="0x08048cad" ];
+29[ label="0x08048caf" ];
+30[ label="0x08048cb1" ];
+31[ label="0x08048cb3" ];
+32[ label="0x08048cba" ];
+33[ label="0x08048cbc" ];
+34[ label="0x08048cbe" ];
+35[ label="0x08048cc0" ];
+36[ label="0x08048cc2" ];
+37[ label="0x08048cc4" ];
+38[ label="0x08048ccb" ];
+39[ label="0x08048ccd" ];
+40[ label="0x08048ccf" ];
+41[ label="0x08048cd1" ];
+42[ label="0x08048cd3" ];
+43[ label="0x08048cd5" ];
+44[ label="0x08048cd6" ];
+45[ label="0x08048cd8" ];
+46[ label="0x08048cda" ];
+47[ label="0x08048cdc" ];
+48[ label="0x08048cde" ];
+49[ label="0x08048ce0" ];
+50[ label="0x08048ce2" ];
+51[ label="0x08048ce4" ];
+52[ label="0x08048ceb" ];
+53[ label="0x08048ced" ];
+54[ label="0x08048cef" ];
+55[ label="0x08048cf1" ];
+56[ label="0x08048cf3" ];
+57[ label="0x08048cf9" ];
+58[ label="0x08048cfb" ];
+59[ label="0x08048cfd" ];
+60[ label="0x08048d00" ];
+61[ label="0x08048d02" ];
+62[ label="0x08048d04" ];
+63[ label="0x08048d05" ];
+64[ label="0x08048d06" ];
+65[ label="0x08048d08" ];
+66[ label="0x08048d0a" ];
+67[ label="0x08048d0c" ];
+68[ label="0x08048d0e" ];
+69[ label="0x08048d13" ];
+70[ label="0x08048d19" ];
+71[ label="0x08048d1b" ];
+72[ label="0x08048d1d" ];
+73[ label="0x08048d1f" ];
+74[ label="0x08048d21" ];
+75[ label="0x08048d23" ];
+76[ label="0x08048d2a" ];
+77[ label="0x08048d2c" ];
+78[ label="0x08048d2e" ];
+79[ label="0x08048d2f" ];
+80[ label="0x08048d31" ];
+81[ label="0x08048d33" ];
+82[ label="0x08048d35" ];
+83[ label="0x08048d37" ];
+84[ label="0x08048d39" ];
+85[ label="0x08048d3b" ];
+86[ label="0x08048d3d" ];
+87[ label="0x08048d3f" ];
+88[ label="0x08048d41" ];
+89[ label="0x08048d43" ];
+90[ label="0x08048d45" ];
+91[ label="0x08048d47" ];
+92[ label="0x08048d49" ];
+93[ label="0x08048d4b" ];
+94[ label="0x08048d4d" ];
+95[ label="0x08048d4f" ];
+96[ label="0x08048d51" ];
+97[ label="0x08048d53" ];
+98[ label="0x08048d55" ];
+99[ label="0x08048d57" ];
+100[ label="0x08048d59" ];
+101[ label="0x08048d5b" ];
+102[ label="0x08048d5d" ];
+103[ label="0x08048d5f" ];
+104[ label="0x08048d61" ];
+105[ label="0x08048d63" ];
+106[ label="0x08048d65" ];
+107[ label="0x08048d67" ];
+108[ label="0x08048d69" ];
+109[ label="0x08048d6b" ];
+110[ label="0x08048d6d" ];
+111[ label="0x08048d6f" ];
+112[ label="0x08048d71" ];
+113[ label="0x08048d73" ];
+114[ label="0x08048d75" ];
+115[ label="0x08048d79" ];
+116[ label="0x08048d7b" ];
+117[ label="0x08048d7d" ];
+118[ label="0x08048d80" ];
+119[ label="0x08048d82" ];
+120[ label="0x08048d84" ];
+121[ label="0x08048d86" ];
+122[ label="0x08048d88" ];
+123[ label="0x08048d8a" ];
+124[ label="0x08048d8c" ];
+125[ label="0x08048d8e" ];
+1->0 ;
+2->1 ;
+3->2 ;
+4->3 ;
+5->4 ;
+6->5 ;
+7->6 ;
+8->7 ;
+9->8 ;
+10->9 ;
+11->10 ;
+12->11 ;
+13->12 ;
+14->13 ;
+15->14 ;
+16->15 ;
+17->16 ;
+18->17 ;
+19->18 ;
+20->19 ;
+21->20 ;
+22->21 ;
+23->22 ;
+24->23 ;
+25->24 ;
+26->25 ;
+27->26 ;
+28->27 ;
+29->28 ;
+30->29 ;
+31->30 ;
+32->31 ;
+33->32 ;
+34->33 ;
+35->34 ;
+36->35 ;
+37->36 ;
+38->37 ;
+39->38 ;
+40->39 ;
+41->40 ;
+42->41 ;
+43->42 ;
+44->43 ;
+45->44 ;
+46->45 ;
+47->46 ;
+48->47 ;
+49->48 ;
+50->49 ;
+51->50 ;
+52->51 ;
+53->52 ;
+54->53 ;
+55->54 ;
+56->55 ;
+57->56 ;
+58->57 ;
+59->58 ;
+60->59 ;
+61->60 ;
+62->61 ;
+63->62 ;
+64->63 ;
+65->64 ;
+66->65 ;
+67->66 ;
+68->67 ;
+69->68 ;
+70->69 ;
+71->70 ;
+72->71 ;
+73->72 ;
+74->73 ;
+75->74 ;
+76->75 ;
+77->76 ;
+78->77 ;
+79->78 ;
+80->79 ;
+81->80 ;
+82->81 ;
+83->82 ;
+84->83 ;
+85->84 ;
+86->85 ;
+87->86 ;
+88->87 ;
+89->88 ;
+90->89 ;
+91->90 ;
+92->91 ;
+93->92 ;
+94->93 ;
+95->94 ;
+96->95 ;
+97->96 ;
+98->97 ;
+99->98 ;
+100->99 ;
+101->100 ;
+102->101 ;
+103->102 ;
+104->103 ;
+105->104 ;
+106->105 ;
+107->106 ;
+108->107 ;
+109->108 ;
+110->109 ;
+111->110 ;
+112->111 ;
+113->112 ;
+114->113 ;
+115->114 ;
+116->115 ;
+117->116 ;
+118->117 ;
+119->118 ;
+120->119 ;
+121->120 ;
+122->121 ;
+123->122 ;
+124->123 ;
+125->124 ;
+}
+
+=== testDominance-C24.dot ===
+digraph G {
+0[ label="0x08048db4" ];
 }

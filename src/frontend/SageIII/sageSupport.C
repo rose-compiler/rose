@@ -8669,7 +8669,7 @@ SgFile::usage ( int status )
 "                             the search method should be added ('+') or removed ('-')\n"
 "                             from the set. The qualifier '=' acts like '+' but first\n"
 "                             clears the set.  The words are the lower-case versions of\n"
-"                             most of the SgAsmFunctionDeclaration::FunctionReason\n"
+"                             most of the SgAsmFunction::FunctionReason\n"
 "                             enumerated constants without the leading \"FUNC_\" (see\n"
 "                             doxygen documentation for the complete list and and their\n"
 "                             meanings).   An integer (decimal, octal, or hexadecimal using\n"

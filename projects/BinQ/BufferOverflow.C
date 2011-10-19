@@ -200,9 +200,9 @@ BufferOverflow::run(string& name, SgGraphNode* node,
 		      res +=RoseBin_support::ToString(arrayLength)+">="+RoseBin_support::ToString(length);
 		      string funcname="";
 		      SgAsmBlock* b = isSgAsmBlock(asmAft->get_parent());
-		      SgAsmFunctionDeclaration* func = NULL;
+		      SgAsmFunction* func = NULL;
 		      if (b)
-			func=isSgAsmFunctionDeclaration(b->get_parent()); 
+			func=isSgAsmFunction(b->get_parent()); 
 		      if (func)
 			funcname = func->get_name();
 		      res+=" ("+RoseBin_support::HexToString(asmAft->get_address())+") : "+unparseInstruction(asmAft)+

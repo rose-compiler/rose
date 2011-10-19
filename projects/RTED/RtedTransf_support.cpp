@@ -10,8 +10,8 @@
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
 
-#include "sageGeneric.hpp"
 #include "sageFunctors.h"
+#include "sageGeneric.hpp"
 
 #include "RtedSymbols.h"
 #include "DataStructures.h"
@@ -35,6 +35,42 @@ struct TypeStructureInfo
   : type(NULL), desc(rted_obj())
   {}
 };
+
+
+static inline
+std::string lower_case(std::string s)
+{
+  std::transform(s.begin(), s.end(), s.begin(), ::tolower);
+  return s;
+}
+
+SourceFileType fileType(const std::string& fn)
+{
+  if ( boost::ends_with(fn, std::string(".c")) ) return ftClang;
+
+  std::string    filename = lower_case(fn);
+  SourceFileType res = ftUnknown;
+
+  if (  ( boost::ends_with(filename, std::string(".cxx")) )
+     || ( boost::ends_with(filename, std::string(".cpp")) )
+     || ( boost::ends_with(filename, std::string(".cc")) )
+     || ( boost::ends_with(filename, std::string(".c")) )
+     )
+  {
+    res = ftCxx;
+  }
+  else if ( boost::ends_with(filename, std::string(".upc")) )
+  {
+    res = ftUPC;
+  }
+
+  return res;
+}
+
+SourceFileType fileType(const SgSourceFile& sf)
+{
+   return fileType(sf.get_file_info()->get_filename());
+}
 
 
 
@@ -357,7 +393,6 @@ bool isStaticVariable(const SgInitializedName& n)
 
 AllocKind varAllocKind(const SgInitializedName& n)
 {
-  std::cout << "@@@ " << n.get_name() << std::endl;
 
   const bool global = isSgGlobal(n.get_scope());
 
@@ -368,8 +403,7 @@ AllocKind varAllocKind(const SgInitializedName& n)
   return akGlobal;
 }
 
-SgExpression*
-RtedTransformation::getExprBelowAssignment( SgExpression* exp ) {
+SgExpression* getExprBelowAssignment( SgExpression* exp ) {
     SgExpression* parent = isSgExpression( exp->get_parent() );
 
     while(  parent
@@ -395,52 +429,12 @@ RtedTransformation::getExprBelowAssignment( SgExpression* exp ) {
     return exp;
 }
 
-bool
-RtedTransformation::isthereAnotherDerefOpBetweenCurrentAndAssign(SgExpression* exp ) {
-    SgExpression* parent = isSgExpression( exp->get_parent() );
-
-    while(  parent
-            && !(
-                isSgAssignOp( parent )
-//                || isSgAssignInitializer( parent )
-                || isSgAndAssignOp( parent )
-                || isSgDivAssignOp( parent )
-                || isSgIorAssignOp( parent )
-                || isSgLshiftAssignOp( parent )
-                || isSgMinusAssignOp( parent )
-                || isSgModAssignOp( parent )
-                || isSgMultAssignOp( parent )
-                || isSgPlusAssignOp( parent )
-                || isSgPointerAssignOp( parent )
-                || isSgRshiftAssignOp( parent )
-                || isSgXorAssignOp( parent)
-            )) {
-      if (isSgPointerDerefExp(parent))
-      return true;
-
-        exp = parent;
-        parent = isSgExpression( parent->get_parent() );
-    }
-    return false;
-}
-
 SgArrayType* isUsableAsSgArrayType( SgType* type ) {
     return isSgArrayType( skip_ReferencesAndTypedefs( type ));
 }
 
 SgReferenceType* isUsableAsSgReferenceType( SgType* type ) {
     return isSgReferenceType( skip_Typedefs( type ));
-}
-
-bool
-RtedTransformation::isUsedAsLvalue( SgExpression* exp ) {
-    if( NULL == exp ) return false;
-
-    SgExpression* ancestor = getExprBelowAssignment( exp );
-    SgBinaryOp* assign = isSgBinaryOp( ancestor -> get_parent() );
-    return(
-        assign && assign -> get_lhs_operand() == ancestor
-    );
 }
 
 bool isConstructor( SgMemberFunctionDeclaration* mfun )
@@ -1291,8 +1285,6 @@ SgFunctionCallExp* RtedTransformation::mkAddress(SgExpression* exp, bool upcShar
   //   expression to a shared char*
   if (upcShared)
   {
-    ROSE_ASSERT(withupc);
-
     SgType* char_type = buildCharType();
 
     // \pp \todo replace the magic -1 with sth more meaningful
@@ -1591,8 +1583,6 @@ RtedTransformation::getGlobalVariableForClass(SgGlobal* gl,
   return var;
 
 }
-
-
 
 ////
 // \todo move into SageInterface or SageBuilder

@@ -3950,10 +3950,6 @@ HEADER_BINARY_ARM_INSTRUCTION_END
 
 
 
-HEADER_BINARY_DECLARATION_START
-HEADER_BINARY_DECLARATION_END
-
-
 HEADER_BINARY_RET_START
    void append_dest( SgAsmStatement* instruction );	
 HEADER_BINARY_RET_END
@@ -3984,11 +3980,35 @@ HEADER_BINARY_TARGET_LIST_START
 HEADER_BINARY_TARGET_LIST_END
 
 HEADER_BINARY_BLOCK_START
+	// Please update SgAsmBlock::reason_str() if you change this enum!
+	/** Reasons why a basic block might have been assigned to a function. */
+	enum Reason {
+		BLK_NONE	= 0x0000,	/**< No particular reason.  Mostly just for initialization. */
+		BLK_ENTRY_POINT	= 0x0001,	/**< Block is an entry point for the function. */
+		BLK_PADDING	= 0x0002,	/**< Block is used for padding. */
+		BLK_INTRAFUNC	= 0x0008,	/**< This block was created because it appears within the boundaries of an
+						 *   otherwise contiguous function. See also FUNC_INTRABLOCK. */
+		BLK_CFGHEAD	= 0x0010,	/**< Block serves as an explicit starting point for CFG analysis. */
+		BLK_USERDEF	= 0x0020,	/**< User says block belongs to the function. */
+		BLK_LEFTOVERS	= 0x0040,	/**< Block is being assigned to a FUNC_LEFTOVERS function because it could
+						 *   not be assigned to any other function. */
+
+		BLK_GRAPH1	= 0x0100,	/**< Block was added by the main CFG analysis. */
+		BLK_GRAPH2	= 0x0200,	/**< Block was added by a second pass of CFG analysis. */
+
+		BLK_DEFAULT	= BLK_NONE	//NO_STRINGIFY
+	};
+
         void append_statement( SgAsmStatement* statement );
         void remove_statement( SgAsmStatement* statement );
         void remove_children (  );
         rose_addr_t get_fallthrough_va(); /*implemented in Disassembler.C*/
-	SgAsmFunctionDeclaration *get_enclosing_function() const;
+	SgAsmFunction *get_enclosing_function() const;
+
+	/** Returns a very short string describing the reason mask. */
+	static std::string reason_key(const std::string &prefix="");
+	std::string reason_str(bool pad) const;
+	static std::string reason_str(bool pad, unsigned reason);
 HEADER_BINARY_BLOCK_END
 
 
@@ -4053,12 +4073,28 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
 						 *   any function.  If this bit is turned off then the instruction
 						 *   Partitioner will delete instructions that it couldn't assign to
 						 *   a function. */
+		FUNC_INTRABLOCK  = 0x2000,	/**< Function contains basic blocks that were inserted by searching the
+						 *   address space between the blocks discovered by analyzing the control flow.
+						 *   Blocks added by this algorithm do not take control flow into account, and
+						 *   therefore, the global control flow graph (CFG) may have edges into the
+						 *   middle of such blocks, or such blocks may have edges into the middle of
+						 *   other blocks, including inter-function edges.  Also, blocks added by this
+						 *   method might not represent true instructions, but rather data that was
+						 *   disassembled as instructions. */
+		FUNC_THUNK	 = 0x4000,	/**< Function is a thunk.  Thunks are small pieces of code whose only purpose
+						 *   is to branch to another function.  Depending on how the disassembler and
+						 *   partitioner are run, a thunk can exist either as its own function or the
+						 *   thunk's instructions will be subsumed by the called function.  The
+						 *   partitioner only sets this flag for functions that are created due to
+						 *   the thunk recognition pass; other functions that don't have this bit set
+						 *   might also be thunks. */
                 FUNC_DEFAULT     = 0x1fff       /**< Default value for Partitioner class. */
         };
 
-      /** Returns a very short string describing the reason mask. */
-          std::string reason_str(bool pad) const;
-          static std::string reason_str(bool pad, unsigned reason);
+        /** Returns a very short string describing the reason mask. */
+	static std::string reason_key(const std::string &prefix="");
+        std::string reason_str(bool pad) const;
+        static std::string reason_str(bool pad, unsigned reason);
 
       //! enum declaration as specified in proposed Sabre database schema
           enum function_kind_enum {
@@ -4102,17 +4138,6 @@ HEADER_BINARY_FUNCTION_DECLARATION_END
 
 
 
-HEADER_BINARY_DATA_STRUCTURE_START
-          void append_declaration( SgAsmDeclaration* declaration );
-
-       // SgAsmDeclarationPtrList & get_declarationList();
-
-     protected:
-
-          SgAsmDeclarationPtrList p_declarationList;
-
-     public:
-HEADER_BINARY_DATA_STRUCTURE_END
 
 
 
@@ -4540,7 +4565,7 @@ SgAsmNode::SgAsmNode ( const SgAsmNode & X )
 
   // DQ (9/13/2011): This is the default behavior for implicit copy constructors.
   // But it is likely not the behavior that we really want since it shares data 
-  // that the destructor might deete more than once.  Lilely this is not being used 
+  // that the destructor might delete more than once.  Lilely this is not being used 
   // this way (else it would have been a problem before now), but we should fix 
   // this better.
      p_attachedPreprocessingInfoPtr = X.p_attachedPreprocessingInfoPtr;
@@ -4577,9 +4602,9 @@ SgAsmBlock::remove_statement( SgAsmStatement* statement )
             p_statementList.erase(l);
    }
 
-SgAsmFunctionDeclaration *
+SgAsmFunction *
 SgAsmBlock::get_enclosing_function() const {
-	return SageInterface::getEnclosingNode<SgAsmFunctionDeclaration>(this);
+	return SageInterface::getEnclosingNode<SgAsmFunction>(this);
 }
 SOURCE_BINARY_BLOCK_END
 
@@ -4607,19 +4632,11 @@ SgAsmOperandList::append_operand( SgAsmExpression* operand )
 SOURCE_BINARY_OPERAND_LIST_END
 
 
-SOURCE_BINARY_DATA_STRUCTURE_START
-void
-SgAsmDataStructureDeclaration::append_declaration( SgAsmDeclaration* declaration )
-   {
-     p_declarationList.push_back(declaration);
-   }
-
-SOURCE_BINARY_DATA_STRUCTURE_END
 
 
 SOURCE_BINARY_FUNCTION_DECLARATION_START
 int 
-SgAsmFunctionDeclaration::nrOfValidInstructions( std::vector<SgNode*>& succs  ) {
+SgAsmFunction::nrOfValidInstructions( std::vector<SgNode*>& succs  ) {
 //  std::vector<SgNode*> succs = this->get_traversalSuccessorContainer();
   std::vector<SgNode*>::reverse_iterator j = succs.rbegin();
   int instructions = succs.size();
@@ -4656,25 +4673,25 @@ SgAsmFunctionDeclaration::nrOfValidInstructions( std::vector<SgNode*>& succs  ) 
 }
 
 void
-SgAsmFunctionDeclaration::remove_children(  )
+SgAsmFunction::remove_children(  )
    {
      p_statementList.clear();
    }
 
 void
-SgAsmFunctionDeclaration::append_dest( SgAsmStatement* statement )
+SgAsmFunction::append_dest( SgAsmStatement* statement )
    {
      p_dest.push_back(statement);
    }
 
 void
-SgAsmFunctionDeclaration::append_statement( SgAsmStatement* statement )
+SgAsmFunction::append_statement( SgAsmStatement* statement )
    {
      p_statementList.push_back(statement);
    }
 
 void
-SgAsmFunctionDeclaration::remove_statement( SgAsmStatement* statement )
+SgAsmFunction::remove_statement( SgAsmStatement* statement )
    {
      SgAsmStatementPtrList::iterator l = p_statementList.begin();
      for (;l!=p_statementList.end();l++) {
@@ -4690,14 +4707,14 @@ SgAsmFunctionDeclaration::remove_statement( SgAsmStatement* statement )
 
 /*
 void
-SgAsmFunctionDeclaration::append_block( SgAsmBlock* operand )
+SgAsmFunction::append_block( SgAsmBlock* operand )
    {
      p_body.push_back(operand);
    }
 */
 
 SgAsmBlock *
-SgAsmFunctionDeclaration::get_entry_block() const {
+SgAsmFunction::get_entry_block() const {
 	SgAsmStatementPtrList::const_iterator si = p_statementList.begin();
 	return si==p_statementList.end() ? NULL : isSgAsmBlock(*si);
 }
@@ -4705,7 +4722,7 @@ SgAsmFunctionDeclaration::get_entry_block() const {
 
 // DQ (4/29/2010): Added function to return string for function reason field (for debugging).
 string
-SgAsmFunctionDeclaration::get_functionReasonString ()
+SgAsmFunction::get_functionReasonString ()
    {
 #if 0
      enum FunctionReason {
@@ -4765,12 +4782,12 @@ SgAsmFunctionDeclaration::get_functionReasonString ()
 
 
 // DQ (4/29/2010): Added function to support scoring functions as likely valid functions (work with CERT).
-SgAsmFunctionDeclaration::function_calling_convention_enum
-SgAsmFunctionDeclaration::get_functionCallingConvention() const
+SgAsmFunction::function_calling_convention_enum
+SgAsmFunction::get_functionCallingConvention() const
    {
   // This function classifies the calling convention used and contributes to a scoring of functions as valid functions.
 
-     printf ("Error: This SgAsmFunctionDeclaration::get_functionCallingConvention() function is not yet implemented. \n");
+     printf ("Error: This SgAsmFunction::get_functionCallingConvention() function is not yet implemented. \n");
      ROSE_ASSERT(false);
 
      return e_unknown_call;
@@ -4778,12 +4795,12 @@ SgAsmFunctionDeclaration::get_functionCallingConvention() const
 
 // DQ (4/29/2010): Added function to support scoring functions as likely valid functions (work with CERT).
 int
-SgAsmFunctionDeclaration::get_stackNutralityMetric() const
+SgAsmFunction::get_stackNutralityMetric() const
    {
   // This function computes the positon of the stack at the end of the function relative to the 
   // start of the function and contributes to a scoring of functions as valid functions.
 
-     printf ("Error: This SgAsmFunctionDeclaration::get_stackNutralityMetric() function is not yet implemented. \n");
+     printf ("Error: This SgAsmFunction::get_stackNutralityMetric() function is not yet implemented. \n");
      ROSE_ASSERT(false);
 
      return 0;
@@ -4791,11 +4808,11 @@ SgAsmFunctionDeclaration::get_stackNutralityMetric() const
 
 // DQ (4/29/2010): Added function to support scoring functions as likely valid functions (work with CERT).
 int
-SgAsmFunctionDeclaration::get_numberOfPathsNotReturningMetric() const
+SgAsmFunction::get_numberOfPathsNotReturningMetric() const
    {
   // This function computes the number of paths determined to no return (all paths returning metric)
 
-     printf ("Error: This SgAsmFunctionDeclaration::get_numberOfPathsNotReturningMetric() function is not yet implemented. \n");
+     printf ("Error: This SgAsmFunction::get_numberOfPathsNotReturningMetric() function is not yet implemented. \n");
      ROSE_ASSERT(false);
 
      return 0;

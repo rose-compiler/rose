@@ -5,6 +5,8 @@
 #define RTEDTRANS_H
 
 #include <set>
+#include <vector>
+#include <map>
 #include <string>
 
 #include "RtedSymbols.h"
@@ -14,6 +16,22 @@
 #include "CppRuntimeSystem/rted_typedefs.h"
 
 enum { RTEDDEBUG = 1 };
+
+/// analyzed files
+typedef std::set<std::string> RtedFiles;
+
+/// options that can be set on the command line
+struct RtedOptions
+{
+  bool globalsInitialized;
+};
+
+
+/// \brief returns the language of the specified source file
+SourceFileType fileType(const std::string& filename);
+
+/// \overload
+SourceFileType fileType(const SgSourceFile& sf);
 
 //
 // convenience and debug functions
@@ -176,6 +194,9 @@ void appendClassName( SgExprListExp* arg_list, SgType* type );
 /// appends a boolean value
 void appendBool( SgExprListExp* arg_list, bool b );
 
+/// implemented in support
+SgExpression* getExprBelowAssignment(SgExpression* exp);
+
 //
 // helper functions to insert rted checks
 
@@ -292,7 +313,7 @@ public:
    std::vector< SgSourceFile* >  srcfiles;
 
 private:
-   std::set< std::string >       rtedfiles;
+   RtedFiles                     rtedfiles;
 
    // VARIABLES ------------------------------------------------------------
    // ------------------------ array ------------------------------------
@@ -392,12 +413,6 @@ public:
    void insertFreeCall(SgExpression* freeExp, AllocKind ak);
    void insertReallocateCall( SgFunctionCallExp* exp );
 
-   /**
-    * @return @c true @b iff @c exp is a descendent of an assignment expression
-    * (such as @ref SgAssignmentOp or @ref SgPlusAssignOp)
-    */
-   bool isthereAnotherDerefOpBetweenCurrentAndAssign(SgExpression* exp );
-
 public:
    bool isInInstrumentedFile( SgNode* n );
    void visit_isArraySgAssignOp(SgAssignOp* const);
@@ -413,8 +428,6 @@ public:
    void appendSignature( SgExprListExp* arg_list, SgType* return_type, const SgTypePtrList& param_types);
 private:
 
-   bool isUsedAsLvalue( SgExpression* exp );
-   SgExpression* getExprBelowAssignment(SgExpression* exp);
 
    // ********************* Deep copy classes in headers into source **********
    SgClassDeclaration* instrumentClassDeclarationIntoTopOfAllSourceFiles(SgProject* project, SgClassDeclaration* classDecl);
@@ -576,11 +589,11 @@ public:
    typedef std::vector<SgStatement*>    UpcBlockingOpsContainer;
 
    UpcBlockingOpsContainer upcBlockingOps;
-   const bool              withupc;
+   RtedOptions             options;
 
 public:
 
-   RtedTransformation(bool testsupc, const std::set<std::string>& prjfiles)
+   RtedTransformation(const RtedFiles& prjfiles, const RtedOptions& cmdlineOpt)
    : symbols(),
      srcfiles(),
      rtedfiles(prjfiles),
@@ -613,7 +626,7 @@ public:
      sourceFileRoseNamespaceMap(),
      classesInRTEDNamespace(),
      upcBlockingOps(),
-     withupc(testsupc)
+     options(cmdlineOpt)
    {}
 
 
@@ -624,7 +637,7 @@ public:
    SgProject* parse(int argc, char** argv);
 
    /// \brief Looks up RTED symbols in the given source file (needed for transformations)
-   void loadFunctionSymbols(SgSourceFile& n);
+   void loadFunctionSymbols(SgSourceFile& n, SourceFileType sft);
 
    SgAggregateInitializer* mkTypeInformation(SgType* type, bool resolve_class_names, bool array_to_pointer);
 

@@ -4,6 +4,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 SUBDIRS = \
      AstEquivalence \
      BabelPreprocessor \
+     BinFuncDetect \
      BinQ \
      BinaryCloneDetection \
      C_to_Promela \

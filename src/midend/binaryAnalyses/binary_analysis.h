@@ -25,7 +25,7 @@ generateStaticTraces(SgIncidenceDirectedGraph* graph, size_t max_length);
  * The function addBlocksFromFunctionToGraph creates the SgGraphNode's 
  * for all blocks in the subtree
  **************************************************/
-void addBlocksFromFunctionToGraph(SgIncidenceDirectedGraph* graph, std::map<rose_addr_t, SgGraphNode*>& instToNodeMap, SgAsmFunctionDeclaration* funcDecl );
+void addBlocksFromFunctionToGraph(SgIncidenceDirectedGraph* graph, std::map<rose_addr_t, SgGraphNode*>& instToNodeMap, SgAsmFunction* funcDecl );
 
 /***************************************************************************************************
  * The goal of the function is to create a control flow graph where nodes are basic blocks.

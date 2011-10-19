@@ -10,10 +10,6 @@
 
 #include "CppRuntimeSystem.h"
 
-#ifdef ROSE_WITH_ROSEQT
-#include "DebuggerQt/RtedDebug.h"
-#endif
-
 #include "rtedsync.h"
 
 
@@ -113,17 +109,6 @@ void RuntimeSystem::readConfigFile()
     }
 
     file.close();
-}
-
-
-void RuntimeSystem::checkpoint(const SourcePosition& pos)
-{
-    curPos = pos;
-
-#ifdef ROSE_WITH_ROSEQT
-    if(qtDebugger)
-        RtedDebug::instance()->startGui();
-#endif
 }
 
 

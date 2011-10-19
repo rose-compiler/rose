@@ -1043,18 +1043,18 @@ struct FindConstantsPolicy {
 
     /** Returns true if the specified instruction is the entry point of a function. */
     bool isFunctionEntry(SgAsmInstruction *insn) const {
-        SgAsmFunctionDeclaration *fdefn = containingFunction(insn);
+        SgAsmFunction *fdefn = containingFunction(insn);
         ROSE_ASSERT(fdefn);
         SgAsmBlock *first_bb = isSgAsmBlock(fdefn->get_statementList()[0]);
         return first_bb->get_id()==insn->get_address();
     }
     
     /** Returns the function to which the specified instruction belongs. */
-    SgAsmFunctionDeclaration *
+    SgAsmFunction *
     containingFunction(SgAsmInstruction *insn) const {
         SgAsmBlock *bb = isSgAsmBlock(insn->get_parent());
         ROSE_ASSERT(bb!=NULL);
-        SgAsmFunctionDeclaration *fdefn = isSgAsmFunctionDeclaration(bb->get_parent());
+        SgAsmFunction *fdefn = isSgAsmFunction(bb->get_parent());
         ROSE_ASSERT(fdefn!=NULL);
         return fdefn;
     }
@@ -1218,15 +1218,15 @@ public:
 class FindConstantsABIPolicy: public FindConstantsPolicy {
 public:
     /* Returns the function containing the instruction. */
-    SgAsmFunctionDeclaration* find_function(SgAsmInstruction* insn) {
+    SgAsmFunction* find_function(SgAsmInstruction* insn) {
         SgNode* n=insn;
-        while (n && !isSgAsmFunctionDeclaration(n))
+        while (n && !isSgAsmFunction(n))
             n = n->get_parent();
-        return isSgAsmFunctionDeclaration(n);
+        return isSgAsmFunction(n);
     }
 
     /* Determines if the function contains an instruction at the specified address. */
-    bool function_contains_address(SgAsmFunctionDeclaration* f, rose_addr_t va) {
+    bool function_contains_address(SgAsmFunction* f, rose_addr_t va) {
         for (size_t i=0; i<f->get_statementList().size(); ++i) {
             SgAsmBlock* block = isSgAsmBlock(f->get_statementList()[i]);
             ROSE_ASSERT(block!=NULL);
@@ -1255,7 +1255,7 @@ public:
             return false;
         if (newIp->get().name!=0)
             return true; /*if we don't know the call target then assume it's a function call*/
-        SgAsmFunctionDeclaration *caller = find_function(insn);
+        SgAsmFunction *caller = find_function(insn);
         rose_addr_t callee = newIp->get().offset;
         if (function_contains_address(caller, callee) && caller->get_entry_va()!=callee)
             return false; /*intra-function branch*/

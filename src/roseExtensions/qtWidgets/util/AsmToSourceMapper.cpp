@@ -138,8 +138,8 @@ void AsmToSourceMapper::addFile()
         // insert into multiset
         // block
         assert( start->get_parent() );
-        SgAsmFunctionDeclaration *fun( 
-                isSgAsmFunctionDeclaration( start->get_parent()->get_parent() ) );
+        SgAsmFunction *fun( 
+                isSgAsmFunction( start->get_parent()->get_parent() ) );
         assert( fun );
 
         // continue if we accidently got a block over function boundaries

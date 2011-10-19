@@ -12,8 +12,6 @@
 #include "DataStructures.h"
 #include "RtedTransformation.h"
 
-
-
 using namespace SageInterface;
 using namespace SageBuilder;
 
