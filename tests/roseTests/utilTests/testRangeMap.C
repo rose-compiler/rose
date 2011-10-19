@@ -1,213 +1,176 @@
-#include "sage3basic.h"
-
-/* What to test */
-#define USE_EXTENTMAP
-#define USE_RANGEMAP
-
-#ifdef USE_EXTENTMAP
-typedef ExtentMap ExtentMap1;
-#endif
-
-#ifdef USE_RANGEMAP
 #include "rangemap.h"
-typedef Range<rose_addr_t> Extent2;
-typedef RangeMap<Extent2> ExtentMap2;
-#endif
+#include <csignal>
+#include <cstring>
+#include <iostream>
+#include <stdint.h>
+#include <vector>
 
-#if defined(USE_EXTENTMAP) && defined(USE_RANGEMAP)
-/* Check that EXPR is true. If not, print an error message and abort. */
-#define CHECK(I, WHAT, EXPR, MAP1, MAP2, STMT)                                                                                 \
-    do {                                                                                                                       \
-        if (!(EXPR)) {                                                                                                         \
-            std::cerr <<"Failed at #" <<(I) <<" " <<(WHAT) <<": " <<#EXPR <<": " <<STMT <<"\n";                                \
-            std::cerr <<"map1 at failure:\n";                                                                                  \
-            (MAP1).dump_extents(stderr, "    ", NULL, false);                                                                  \
-            std::cerr <<"map2 at failure:\n";                                                                                  \
-            (MAP2).print(std::cerr, "    ");                                                                                   \
-            abort();                                                                                                           \
-        }                                                                                                                      \
-    } while (0)
-#endif
+/* If defined, then check RangeMap implementation against a very simple bitmap implementation. */
+#define CHECK
 
+/* How long should this test run? */
+static const size_t TIME_LIMIT = 10; // seconds
+static bool time_expired = false;
+static void sigalrm_handler(int) { time_expired = true; }
 
-#if defined(USE_EXTENTMAP) && defined(USE_RANGEMAP)
-/* Check that two maps are identical.  If not, print an error message and abort. */
-static void
-identical_maps(ExtentMap1 &map1, const ExtentMap2 &map2, size_t sequence, const char *what)
+typedef Range<uint64_t> Extent1;
+typedef RangeMap<Extent1> ExtentMap1;
+
+typedef std::vector<bool> ExtentMap2;
+
+std::ostream &
+operator<<(std::ostream &o, const ExtentMap2 &map2)
 {
-    {
-        ExtentMap1::const_iterator i1 = map1.begin();
-        ExtentMap2::const_iterator i2 = map2.begin();
-        while (i1!=map1.end() && i2!=map2.end()) {
-            CHECK(sequence, what, i1->first==i2->first.begin, map1, map2,
-                  "begin=" <<i1->first <<" vs. " <<i2->first.begin);
-            CHECK(sequence, what, i1->second==i2->first.size, map1, map2,
-                  "size=" <<i1->second <<" vs. " <<i2->first.size);
-            ++i1;
+    bool prev=false, had_output=false;
+    size_t range_start=0;
+    for (size_t i=0; i<map2.size(); i++) {
+        if (map2[i]!=prev) {
+            if (map2[i]) {
+                o <<(had_output?", ":"") <<i;
+            } else if (range_start+1<i) {
+                o <<"-" <<(i-1);
+            }
+            prev = map2[i];
+            had_output = true;
+            range_start = i;
+        }
+    }
+    if (prev) {
+        if (range_start+1<map2.size())
+            o <<"-" <<map2.size()-1;
+    }
+
+    return o;
+}
+
+void
+error(const ExtentMap1 &map1, const ExtentMap2 &map2, const char *mesg, size_t where)
+{
+    std::cerr <<mesg <<" at element " <<where <<":\n"
+              <<"range map  = {" <<map1 <<"}\n"
+              <<"bit vector = {" <<map2 <<"}\n";
+    abort();
+}
+
+bool
+check(const ExtentMap1 &map1, const ExtentMap2 &map2) 
+{
+#ifdef CHECK
+    size_t i2 = 0;
+    for (ExtentMap1::const_iterator i1=map1.begin(); i1!=map1.end(); ++i1) {
+        while (i2<i1->first.begin) {
+            if (i2>=map2.size()) {
+                error(map1, map2, "size mismatch", i2);
+                return false;
+            }
+            if (map2[i2]) {
+                error(map1, map2, "element mismatch", i2);
+                return false;
+            }
             ++i2;
         }
-        CHECK(sequence, what, i1==map1.end(), map1, map2, 0);
-        CHECK(sequence, what, i2==map2.end(), map1, map2, 0);
+        while (i2<=i1->first.last()) {
+            if (i2>=map2.size()) {
+                error(map1, map2, "size mismatch", i2);
+                return false;
+            }
+            if (!map2[i2]) {
+                error(map1, map2, "element mismatch", i2);
+                return false;
+            }
+            ++i2;
+        }
     }
 
-    CHECK(sequence, what, map1.size()==map2.size(), map1, map2,
-          "size=" <<map1.size() <<" vs. " <<map2.size());
-
-    if (!map1.empty()) {
-        ExtentMap1::const_iterator i1 = map1.highest_offset();
-        ExtentMap2::const_reverse_iterator i2 = map2.rbegin();
-        CHECK(sequence, what, i1!=map1.end(), map1, map2, "map1 highest_offset()");
-        CHECK(sequence, what, i2!=map2.rend(), map1, map2, "map2 rend()");
-        CHECK(sequence, what, i1->first==i2->first.begin, map1, map2,
-              "highest range begin=" <<i1->first <<" vs. " <<i2->first.begin);
-        CHECK(sequence, what, i1->second==i2->first.size, map1, map2,
-              "highest range size=" <<i1->second <<" vs. " <<i2->first.size);
+    while (i2<map2.size()) {
+        if (map2[i2]) {
+            error(map1, map2, "element mismatch", i2);
+            return false;
+        }
+        ++i2;
     }
+#endif
+    return true;
 }
-#endif
 
-/* This function exercises either the ExtentMap or RangeMap class (or both) to by inserting and removing lots of random
- * extents.  If both classes are enabled, then it also checks that the classes agree with each other.  This is a good test
- * since the implementations were completely independent of each other. */
+/* Repeated insert, erase, and invert operations checked against a bit vector implementation. */
 static void
-test1(size_t niterations, rose_addr_t max_start_addr, size_t max_size)
+test1(size_t niterations, uint64_t max_start_addr, size_t max_size)
 {
-    static const bool verbose = false;
-
-#ifdef USE_EXTENTMAP
-    // The old interface
+    const bool verbose = false;
     ExtentMap1 map1;
-#endif
-
-#ifdef USE_RANGEMAP
-    // The new interface
     ExtentMap2 map2;
-#endif
+
+    alarm(0);
+    struct sigaction sa;
+    memset(&sa, 0, sizeof sa);
+    sa.sa_handler = sigalrm_handler;
+    sigaction(SIGALRM, &sa, NULL);
+    time_expired = false;
+    alarm(TIME_LIMIT);
 
     for (size_t i=0; i<niterations; ++i) {
-        if (0==i%10000)
+        if (0==i%10000 && isatty(2))
             std::cerr <<i <<"          \r";
+        if (time_expired) {
+            std::cerr <<"time expired; canceling this test after " <<i <<" iterations.\n";
+            return;
+        }
 
         /**********************************************************************************************************************
          *                                      INSERT / ERASE
          **********************************************************************************************************************/
         {
-            rose_addr_t start_va = rand() % max_start_addr;
+            uint64_t start_va = rand() % max_start_addr;
             size_t size = rand() % max_size + 1;
             if (0==i%2) {
                 if (verbose)
                     std::cout <<"#" <<i <<": insert (" <<start_va <<"+" <<size <<"=" <<(start_va+size) <<")...\n";
-#ifdef USE_EXTENTMAP
-                map1.insert(start_va, size);
-#endif
-#ifdef USE_RANGEMAP
-                map2.insert(Extent2(start_va, size));
+                map1.insert(Extent1(start_va, size));
+#ifdef CHECK
+                map2.resize(std::max(map2.size(), start_va+size), false);
+                for (size_t j=0; j<size; j++)
+                    map2[start_va+j] = true;
 #endif
             } else {
                 if (verbose)
                     std::cout <<"#" <<i <<": erase (" <<start_va <<"+" <<size <<"=" <<(start_va+size) <<")...\n";
-#ifdef USE_EXTENTMAP
-                map1.erase(start_va, size);
-#endif
-#ifdef USE_RANGEMAP
-                map2.erase(Extent2(start_va, size));
+                map1.erase(Extent1(start_va, size));
+#ifdef CHECK
+                map2.resize(std::max(map2.size(), start_va+size), false);
+                for (size_t j=0; j<size; j++)
+                    map2[start_va+j] = false;
 #endif
             }
-#if defined(USE_EXTENTMAP) && defined(USE_RANGEMAP)
-            identical_maps(map1, map2, i, "insert/erase");
-#endif
-        }
-        
-        /**********************************************************************************************************************
-         *                                      BEST FIT
-         **********************************************************************************************************************/
-        {
-            size_t bf_size = rand() % (2*max_size);
-#ifdef USE_EXTENTMAP
-            ExtentMap1::iterator bf1 = map1.best_fit(bf_size);
-#endif
-#ifdef USE_RANGEMAP
-            ExtentMap2::iterator bf2 = map2.best_fit(bf_size, map2.begin());
-#endif
-#if defined(USE_EXTENTMAP) && defined(USE_RANGEMAP)
-            CHECK(i, "bestfit", (bf1==map1.end() && bf2==map2.end()) || (bf1!=map1.end() && bf2!=map2.end()), map1, map2,
-                  "request size=" <<bf_size);
-            if (bf1!=map1.end()) {
-                CHECK(i, "bestfit", bf1->first==bf2->first.begin, map1, map2,
-                      "request size=" <<bf_size <<"; got first=" <<bf1->first <<" vs. " <<bf2->first.begin);
-                CHECK(i, "bestfit", bf1->second==bf2->first.size, map1, map2,
-                      "request size=" <<bf_size <<"; got size=" <<bf1->second <<" vs. " <<bf2->first.size);
+            if (!check(map1, map2)) {
+                std::cerr <<"failed at #" <<i <<" insert/erase (" <<start_va <<"+" <<size <<"=" <<(start_va+size) <<")\n";
+                abort();
             }
-#endif
         }
 
         /**********************************************************************************************************************
-         *                                      SUBTRACT FROM
+         *                                      INVERT
          **********************************************************************************************************************/
-        {
+        if (map1.nranges()<100000) { // skip for large ranges because its relatively slow
             size_t offset = rand() % std::max(1ul, max_start_addr/10);
             size_t size = rand() % max_start_addr + 1;
+            if (verbose)
+                std::cout <<"#" <<i <<": invert_within(" <<offset <<"+" <<size <<"=" <<(offset+size) <<")...\n";
 
-#ifdef USE_EXTENTMAP
-            ExtentMap1 x1 = map1.subtract_from(offset, size);
-#endif
-#ifdef USE_RANGEMAP
-            ExtentMap2 x2 = map2.invert_within<ExtentMap2>(Extent2(offset, size));
-#endif
-#if defined(USE_EXTENTMAP) && defined(USE_RANGEMAP)
-            identical_maps(map1, map2, i, "subtract from [1]");
-#endif
+            ExtentMap1 x1 = map1.invert_within<ExtentMap1>(Extent1(offset, size));
 
-#ifdef USE_EXTENTMAP
-            x1 = map1.subtract_from(0, (rose_addr_t)(-1));
-#endif
-#ifdef USE_RANGEMAP
-            x2 = map2.invert_within<ExtentMap2>(Extent2(0, (rose_addr_t)(-1)));
-#endif
-#if defined(USE_EXTENTMAP) && defined(USE_RANGEMAP)
-            identical_maps(map1, map2, i, "subtract from [2]");
-#endif
-        }
-
-        /**********************************************************************************************************************
-         *                                      OVERLAP WITH
-         **********************************************************************************************************************/
-        {
-            size_t offset = rand() % max_start_addr;
-            size_t size = rand() % max_start_addr + 1;
-
-#ifdef USE_EXTENTMAP
-            ExtentMap1 x1 = map1.overlap_with(offset, size);
-#endif
-#ifdef USE_RANGEMAP
-            ExtentMap2 x2;
-            Extent2 e(offset, size);
-            for (ExtentMap2::const_iterator ri=map2.begin(); ri!=map2.end(); ++ri) {
-                if (e.overlaps(ri->first))
-                    x2.insert(ri->first);
+#ifdef CHECK
+            ExtentMap2 x2(std::max(map1.max()+1, offset+size), false);
+            for (size_t j=0; j<size; j++)
+                x2[offset+j] = offset+j<map2.size() ? !map2[offset+j] : true;
+            if (!check(x1, x2)) {
+                if (!check(map1, map2))
+                    abort();
+                std::cerr <<"range map  = {" <<map1 <<"}\n"
+                          <<"bit vector = {" <<map2 <<"}\n";
+                std::cerr <<"failed at #" <<i <<" invert_within (" <<offset <<"+" <<size <<"=" <<(offset+size) <<")\n";
+                abort();
             }
-#endif
-#if defined(USE_EXTENTMAP) && defined(USE_RANGEMAP)
-            identical_maps(map1, map2, i, "overlap with");
-#endif
-        }
-
-        /**********************************************************************************************************************
-         *                                      EXISTS ALL
-         **********************************************************************************************************************/
-        {
-            size_t offset = rand() % max_start_addr;
-            size_t size = rand() % max_start_addr + 1;
-
-#ifdef USE_EXTENTMAP
-            bool b1 __attribute__((unused)) = map1.exists_all(ExtentPair(offset, size));
-#endif
-#ifdef USE_RANGEMAP
-            bool b2 __attribute__((unused)) = map2.contains(Extent2(offset, size));
-#endif
-#if defined(USE_EXTENTMAP) && defined(USE_RANGEMAP)
-            CHECK(i, "exists all", b1==b2, map1, map2,
-                  "extent=[" <<offset <<"," <<size <<"]; result=" <<b1 <<" vs. " <<b2);
 #endif
         }
     }
@@ -220,11 +183,10 @@ test1(size_t niterations, rose_addr_t max_start_addr, size_t max_size)
 static void
 test2()
 {
-#ifdef USE_RANGEMAP
     typedef Range<unsigned short> SmallExtent;
     typedef RangeMap<SmallExtent> SmallExtentMap;
 
-    ExtentMap2 map;
+    ExtentMap1 map;
 
     map.clear();
     map.begin();
@@ -236,22 +198,22 @@ test2()
 
     /* Some insertions that don't overlap */
     for (size_t i=0; i<10; i++) {
-        Extent2 e(i*2, 1);
+        Extent1 e(i*2, 1);
         map.erase(e);
         map.insert(e);
     }
 
     /* Some erasures that end at range boundaries */
-    map.erase(Extent2(4, 1));
-    map.erase(Extent2(8, 2));
-    map.erase(Extent2(12, 3));
-    map.erase(Extent2(0, Extent2::maximum()));
+    map.erase(Extent1(4, 1));
+    map.erase(Extent1(8, 2));
+    map.erase(Extent1(12, 3));
+    map.erase(Extent1(0, Extent1::maximum()));
 
     /* Some insertions that should merge with left */
     map.clear();
     for (size_t i=0; i<10; i++) {
-        Extent2 lt(i*5+0, 2);
-        Extent2 rt(i*5+2, 2);
+        Extent1 lt(i*5+0, 2);
+        Extent1 rt(i*5+2, 2);
         map.insert(lt);
         map.insert(rt);
     }
@@ -259,8 +221,8 @@ test2()
     /* Some insertions that should merge with right */
     map.clear();
     for (size_t i=0; i<10; i++) {
-        Extent2 lt(i*5+0, 2);
-        Extent2 rt(i*5+2, 2);
+        Extent1 lt(i*5+0, 2);
+        Extent1 rt(i*5+2, 2);
         map.insert(rt);
         map.insert(lt);
     }
@@ -268,9 +230,9 @@ test2()
     /* Some insertions that merge in the middle */
     map.clear();
     for (size_t i=0; i<10; i++) {
-        Extent2 lt(i*10+0, 2);
-        Extent2 md(i*10+2, 2);
-        Extent2 rt(i*10+4, 2);
+        Extent1 lt(i*10+0, 2);
+        Extent1 md(i*10+2, 2);
+        Extent1 rt(i*10+4, 2);
         map.insert(lt);
         map.insert(rt);
         map.insert(md);
@@ -278,18 +240,18 @@ test2()
 
     /* Erasure from the right */
     map.clear();
-    map.insert(Extent2(10, 10));
-    map.erase(Extent2(15, 5));
+    map.insert(Extent1(10, 10));
+    map.erase(Extent1(15, 5));
 
     /* Erasure from the left */
     map.clear();
-    map.insert(Extent2(10, 10));
-    map.erase(Extent2(10, 5));
+    map.insert(Extent1(10, 10));
+    map.erase(Extent1(10, 5));
 
     /* Erasure from the middle */
     map.clear();
-    map.insert(Extent2(10, 10));
-    map.erase(Extent2(11, 8));
+    map.insert(Extent1(10, 10));
+    map.erase(Extent1(11, 8));
 
     /* Overlap, etc. */
     map.overlaps(map);
@@ -300,47 +262,43 @@ test2()
 
     /* Conversion of one map type to another */
     map.clear();
-    map.insert(Extent2(10, 10));
-    map.insert(Extent2(30, 30));
+    map.insert(Extent1(10, 10));
+    map.insert(Extent1(30, 30));
     SmallExtentMap map2(map);
     map.erase_ranges(map2);
 
     /* Operators */
-    map.contains(Extent2(0, 1));
+    map.contains(Extent1(0, 1));
     map.contains(map);
-#endif
 }
 
 /* Tests of various operators */
 static void
 test3()
 {
-#ifdef USE_RANGEMAP
-
     /* contains */
-    ExtentMap2 map;
+    ExtentMap1 map;
     for (size_t i=0; i<3; i++) {
         switch (i) {
-            case 0: map.insert(Extent2(10, 10)); break;
-            case 1: map.insert(Extent2(4, 4));   break;
-            case 2: map.insert(Extent2(30, 10)); break;
+            case 0: map.insert(Extent1(10, 10)); break;
+            case 1: map.insert(Extent1(4, 4));   break;
+            case 2: map.insert(Extent1(30, 10)); break;
         }
-        assert(!map.contains(Extent2(8, 1)));
-        assert(!map.contains(Extent2(8, 2)));
-        assert(!map.contains(Extent2(8, 3)));
-        assert(!map.contains(Extent2(8, 4)));
-        assert(!map.contains(Extent2(8, 12)));
-        assert(!map.contains(Extent2(8, 13)));
-        assert(map.contains(Extent2(10, 1)));
-        assert(map.contains(Extent2(10, 9)));
-        assert(map.contains(Extent2(10, 10)));
-        assert(!map.contains(Extent2(10, 11)));
-        assert(map.contains(Extent2(19, 1)));
-        assert(!map.contains(Extent2(19, 2)));
-        assert(!map.contains(Extent2(20, 1)));
-        assert(!map.contains(Extent2(21, 1)));
+        assert(!map.contains(Extent1(8, 1)));
+        assert(!map.contains(Extent1(8, 2)));
+        assert(!map.contains(Extent1(8, 3)));
+        assert(!map.contains(Extent1(8, 4)));
+        assert(!map.contains(Extent1(8, 12)));
+        assert(!map.contains(Extent1(8, 13)));
+        assert(map.contains(Extent1(10, 1)));
+        assert(map.contains(Extent1(10, 9)));
+        assert(map.contains(Extent1(10, 10)));
+        assert(!map.contains(Extent1(10, 11)));
+        assert(map.contains(Extent1(19, 1)));
+        assert(!map.contains(Extent1(19, 2)));
+        assert(!map.contains(Extent1(20, 1)));
+        assert(!map.contains(Extent1(21, 1)));
     }
-#endif
 }
 
 int
