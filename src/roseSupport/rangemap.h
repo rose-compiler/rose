@@ -1,8 +1,21 @@
 #ifndef ROSE_RANGEMAP_H
 #define ROSE_RANGEMAP_H
 
+/* This file defines four main template classes:
+ *    - RangeMap:      Time and space efficient storage of non-overlapping Range objects each associated with an arbitrary value.
+ *    - Range:         Contiguous set of integers defined by the starting value and size.
+ *    - RangeMapVoid:  Void value for RangeMap classes that don't store any useful value (just the ranges themselves).
+ *    - RangeMapValue: Class for storing simple values in a RangeMap.
+ */
+
+
+
+
+#undef __STDC_FORMAT_MACROS /* to prevent redef warning on next line */
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+
 #include <cassert>
-#include <cstdio>
 #include <cstdlib>
 #include <iostream>
 #include <map>
@@ -19,10 +32,10 @@
  *  including the maximum possible values for the data type. A range cannot be empty. */
 template<class T>
 struct Range {
-    typedef T ValueType;
+    typedef T Value;
     typedef std::pair<Range, Range> Pair;               /**< A pair of ranges. */
-    ValueType begin;                                    /**< First value in range. */
-    ValueType size;                                     /**< Size of range. */
+    Value begin;                                        /**< First value in range. */
+    Value size;                                         /**< Size of range. */
 
     /** Create an empty range.  Ranges may have an empty size, but empty ranges will never appear inside a RangeMap object.
      *  The @p begin value of an empty range is meaningless. */
@@ -30,21 +43,21 @@ struct Range {
         : begin(0), size(0) {}
 
     /** Create a new range of unit size. */
-    explicit Range(const ValueType &begin)
+    explicit Range(const Value &begin)
         : begin(begin), size(1) {}
 
     /** Create a new range of specified size. */
-    Range(const ValueType &begin, const ValueType &size)
+    Range(const Value &begin, const Value &size)
         : begin(begin), size(size) {}
 
     /** Create a new range from a different range. */
-    template<class OtherType>
-    explicit Range(const OtherType &other)
+    template<class Other>
+    explicit Range(const Other &other)
         : begin(other.begin), size(other.size) {}
 
     /** Split a range into two parts.  Returns a pair of adjacent ranges such that @p at is the first value of the second
      *  returned range.  The split point must be such that neither range is empty. */
-    Pair split_range_at(const ValueType &at) const {
+    Pair split_range_at(const Value &at) const {
         assert(!empty());
         assert(at>begin && at<=last()); // neither half can be empty
         Range left(begin, at-begin);
@@ -65,7 +78,7 @@ struct Range {
     }
 
     /** Return the last value of the range.  The range must not be empty. */
-    ValueType last() const {
+    Value last() const {
         assert(!empty());
         return begin+size-1;
     }
@@ -202,13 +215,13 @@ struct Range {
     }
 
     /** Return the minimum possible value represented by this range. */
-    static ValueType minimum() {
+    static Value minimum() {
         return 0; // FIXME
     }
 
     /** Return the maximum possible value represented by this range. */
-    static ValueType maximum() {
-        return (ValueType)(-1); // FIXME
+    static Value maximum() {
+        return (Value)(-1); // FIXME
     }
 
     /** Return a range that covers all possible values. */
@@ -237,22 +250,22 @@ struct Range {
 template<class R>
 class RangeMapVoid {
 public:
-    typedef R RangeType;
+    typedef R Range;
 
     RangeMapVoid() {}
 
-    template<class OtherType>
-    RangeMapVoid(const OtherType&) {}
+    template<class Other>
+    RangeMapVoid(const Other&) {}
 
     /** Remove a value from a RangeMap.  This method is invoked by RangeMap when it is removing a value from the map, such as
      *  during an erase() or clear() operation.  It is not called for the merge() argument after a successful merge. */
-    void removing(const RangeType &my_range) {
+    void removing(const Range &my_range) {
         assert(!my_range.empty());
     }
 
     /** Truncate the RangeMap value.  This is similar to the removing() method, but only discards part of the value.  The @p
      *  new_size argument must be greater than zero and less than or equal to the current size. */
-    void truncate(const RangeType &my_range, const typename RangeType::ValueType &new_size) {
+    void truncate(const Range &my_range, const typename Range::Value &new_size) {
         assert(new_size>0 && new_size<=my_range.size);
     }
 
@@ -268,7 +281,7 @@ public:
      *  If a merge occurs, then the removing() method of @p other_value is not invoked.
      *
      *  Returns true if merging occurred, false otherwise. */
-    bool merge(const RangeType &my_range, const RangeType &other_range, const RangeMapVoid &other_value) {
+    bool merge(const Range &my_range, const Range &other_range, const RangeMapVoid &other_value) {
         assert(!my_range.empty() && !other_range.empty());
         return true;
     }
@@ -276,8 +289,8 @@ public:
     /** Split a value into two parts.  This is the inverse of the merge() operation.  In effect, it truncates this value to the
      *  specified size, but rather than discarding the right part, it returns it as a new value.  The new size must be greater
      *  than zero but smaller than the current size.  The @p my_range argument is the value's range before it is split. */
-    RangeMapVoid split(const RangeType &my_range, const typename RangeType::ValueType &new_size) {
-        assert(new_size>0 && new_size<=my_range.size);
+    RangeMapVoid split(const Range &my_range, const typename Range::Value &new_size) {
+        assert(new_size>0 && new_size<my_range.size);
         return RangeMapVoid();
     }
 
@@ -286,6 +299,73 @@ public:
         x.print(o);
         return o;
     }
+};
+
+/** Scalar value type for a RangeMap.  Values can be merged if they compare equal; splitting a value is done by copying it.
+ *  The removing() and truncate() methods are no-ops.  This class is often used as a base class for other more sophisticated
+ *  range maps.  See the RangeMapVoid class for full documentation. */
+template<class R, class T>
+class RangeMapValue {
+public:
+    typedef R Range;
+    typedef T Value;
+
+    /** Constructor creates object whose underlying value is default constructed. */
+    RangeMapValue() {}
+
+    /** Constructor creates object with specified value. */
+    RangeMapValue(const Value &v) { // implicit
+        value = v;
+    }
+
+    /** Accessor for the value actually stored here.
+     *  @{ */
+    void set(const Value &v) {
+        value = v;
+    }
+    Value get() const {
+        return value;
+    }
+    /** @} */
+
+
+    /** Called when this value is being removed from a RangeMap. */
+    void removing(const Range &my_range) {
+        assert(!my_range.empty());
+    }
+
+    /** Called when removing part of a value from a RangeMap. */
+    void truncate(const Range &my_range, const typename Range::Value &new_size) {
+        assert(new_size>0 && new_size<=my_range.size);
+    }
+
+    /** Called to merge two RangeMap values.  The values can be merged only if they compare equal. */
+    bool merge(const Range &my_range, const Range &other_range, const RangeMapValue &other_value) {
+        assert(!my_range.empty() && !other_range.empty());
+        return get()==other_value.get();
+    }
+
+#if 0 /* Must be implemented in the subclass due to return type. */
+    /** Split a RangeMap value into two parts. */
+    RangeMapValue split(const Range &my_range, const typename Range::Value &new_size) {
+        assert(new_size>0 && new_size<my_range.size);
+        return *this;
+    }
+#endif
+
+    /** Print a RangeMap value.
+     *  @{ */
+    void print(std::ostream &o) const {
+        o <<value;
+    }
+    friend std::ostream& operator<<(std::ostream &o, const RangeMapValue &x) {
+        x.print(o);
+        return o;
+    }
+    /** @} */
+    
+protected:
+    Value value;
 };
 
 /** A container of ranges, somewhat like a set.  The container is able to hold non-overlapping ranges, each of which has some
@@ -325,33 +405,91 @@ public:
  *  std::cout <<"Instructions occupy " <<instruction_addresses.set.size() <<" bytes:\n"
  *            <<instruction_addresses.set;
  *  @endcode
+ *
+ *  A more complex example is using a RangeMap to store a value with each range.  A simple example follows, where we want to
+ *  build a RangeMap that associates any address with the function that owns that address, even when functions are
+ *  discontiguous in the address space.  The first step is to define the value type for the RangeMap we'll be using to store
+ *  this:
+ *
+ *  @code
+ *  typedef Range<rose_addr_t> AddressRange;
+ *
+ *  class FunctionRangeMapValue: public RangeMapValue<AddressRange, SgAsmFunction*> {
+ *  public:
+ *      FunctionRangeMapValue(): public RangeMapValue<AddressRange, SgAsmFunction*>(NULL) {}
+ *      FunctionRangeMapValue(Function *f): public RangeMapValue<AddressRange, SgAsmFunction*>(f) {}
+ *
+ *      FunctionRangeMapValue split(const AddressRange&, const AddressRange::Value&) {
+ *          return *this;
+ *      }
+ *
+ *      void print(std::ostream &o) const {
+ *          if (NULL==value) {
+ *              o <<"(null)";
+ *          } else {
+ *              o <<"F" <<StringUtility::addrToString(get()->entry_va);
+ *          }
+ *      }
+ *  };
+ *
+ *  typedef RangeMap<AddressRange, FunctionRangeMapValue> FunctionRangeMap; 
+ *  @endcode
+ *
+ *  Define an AST traversal add each instruction to the RangeMap:
+ *
+ *  @code
+ *  struct FindInstructions: public AstSimpleProcessing {
+ *      FunctionRangeMap ranges;
+ *      void visit(SgNode *node) {
+ *          SgAsmInstruction *insn = isSgAsmInstruction(node);
+ *          SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(insn);
+ *          if (insn && func) {
+ *              rose_addr_t start = insn->get_address();
+ *              size_t size = insn->get_raw_bytes().size();
+ *              ranges.insert(AddressRange(start, size), func);
+ *          }
+ *      }
+ *  };
+ *  @endcode
+ *
+ *  Finally, traverse the AST and print the result.  Because RangeMap merges adjacent ranges when possible, the output will
+ *  contain the fewest number of ranges needed to describe the entire address space that's assigned to functions.  Note that
+ *  it's possible for two or more functions to "own" the same part of the address space if their instructions overlap, but
+ *  since we defined our RangeMap to hold only one function pointer per address we'll see only the function that was added last
+ *  for overlapping ranges.
+ *
+ *  @code
+ *  FindInstructions insn_finder;
+ *  insn_finder.traverse(interpretation, preorder);
+ *  o <<insn_finder.ranges;
+ *  @endcode
  */
 template<class R, class T=RangeMapVoid<R> >
 class RangeMap {
 public:
-    typedef R RangeType;                /** A type having the Range interface, used as keys in the underlying std::map. */
-    typedef T ValueType;                /** The value attached to each range in this RangeMap. */
+    typedef R Range;                    /** A type having the Range interface, used as keys in the underlying std::map. */
+    typedef T Value;                    /** The value attached to each range in this RangeMap. */
 
 protected:
     /* The keys of the underlying map are sorted by their last value rather than beginning value.  This allows us to use the
      * map's lower_bound() method to find the range to which an address might belong.  Since the ranges in the map are
      * non-overlapping, sorting by ending address has the same effect as sorting by starting address. */
     struct RangeCompare {
-        bool operator()(const RangeType &a, const RangeType &b) const {
+        bool operator()(const Range &a, const Range &b) const {
             return a.last() < b.last();
         }
     };
 
-    typedef std::pair<RangeType, RangeType> RangePair;
-    typedef std::pair<RangeType, ValueType> MapPair;
-    typedef std::map<RangeType, ValueType, RangeCompare> MapType;
-    MapType ranges;
+    typedef std::pair<Range, Range> RangePair;
+    typedef std::pair<Range, Value> MapPair;
+    typedef std::map<Range, Value, RangeCompare> Map;
+    Map ranges;
 
 public:
-    typedef typename MapType::iterator iterator;
-    typedef typename MapType::const_iterator const_iterator;
-    typedef typename MapType::reverse_iterator reverse_iterator;
-    typedef typename MapType::const_reverse_iterator const_reverse_iterator;
+    typedef typename Map::iterator iterator;
+    typedef typename Map::const_iterator const_iterator;
+    typedef typename Map::reverse_iterator reverse_iterator;
+    typedef typename Map::const_reverse_iterator const_reverse_iterator;
 
     /**************************************************************************************************************************
      *                                  Constructors
@@ -362,11 +500,11 @@ public:
     RangeMap() {}
 
     /** Create a new map from an existing map. */
-    template<class OtherType>
-    RangeMap(const OtherType &other) {
-        for (typename OtherType::const_iterator ri=other.begin(); ri!=other.end(); ++ri) {
-            RangeType new_range(ri->first);
-            ValueType new_value(ri->second);
+    template<class Other>
+    RangeMap(const Other &other) {
+        for (typename Other::const_iterator ri=other.begin(); ri!=other.end(); ++ri) {
+            Range new_range(ri->first);
+            Value new_value(ri->second);
             insert(new_range, new_value);
         }
     }
@@ -427,15 +565,15 @@ public:
      *  end() iterator if no such range exists.
      *
      *  @{ */
-    iterator find(const typename RangeType::ValueType &addr) {
+    iterator find(const typename Range::Value &addr) {
         iterator ei = lower_bound(addr);
-        if (ei==end() || RangeType(addr, 1).left_of(ei->first))
+        if (ei==end() || Range(addr, 1).left_of(ei->first))
             return end();
         return ei;
     }
-    const_iterator find(const typename RangeType::ValueType &addr) const {
+    const_iterator find(const typename Range::Value &addr) const {
         const_iterator ei = lower_bound(addr);
-        if (ei==end() || RangeType(addr, 1).left_of(ei->first))
+        if (ei==end() || Range(addr, 1).left_of(ei->first))
             return end();
         return ei;
     }
@@ -445,11 +583,32 @@ public:
      *  return the end() iterator if a range exists above the specified value.
      *
      *  @{ */
-    iterator lower_bound(const typename RangeType::ValueType &addr) {
-        return ranges.lower_bound(RangeType(addr, 1));
+    iterator lower_bound(const typename Range::Value &addr) {
+        return ranges.lower_bound(Range(addr, 1));
     }
-    const_iterator lower_bound(const typename RangeType::ValueType &addr) const {
-        return ranges.lower_bound(RangeType(addr, 1));
+    const_iterator lower_bound(const typename Range::Value &addr) const {
+        return ranges.lower_bound(Range(addr, 1));
+    }
+    /** @} */
+
+    /** Finds the last range starting at or below the specified value.  Returns the end iterator if there is no range
+     *  containing a value less than or equal to the specified value.
+     *  @{ */
+    iterator find_prior(const typename Range::Value &addr) {
+        if (empty())
+            return end();
+        iterator lb = lower_bound(addr);
+        if (lb!=end() && lb.first.begins_before(Range(addr, 1), false/*non-strict*/))
+            return lb;
+        return --lb;
+    }
+    const_iterator find_prior(const typename Range::Value &addr) const {
+        if (empty())
+            return end();
+        const_iterator lb = lower_bound(addr);
+        if (lb!=end() && lb->first.begins_before(Range(addr, 1), false/*non-strict*/))
+            return lb;
+        return --lb;
     }
     /** @} */
 
@@ -458,7 +617,7 @@ public:
      *  Note that this is an O(N) algorithm.
      *
      * @{ */
-    iterator best_fit(const typename RangeType::ValueType &size, iterator start) {
+    iterator best_fit(const typename Range::Value &size, iterator start) {
         iterator best = end();
         for (iterator ri=start; ri!=end(); ++ri) {
             if (ri->first.size==size)
@@ -468,7 +627,7 @@ public:
         }
         return best;
     }
-    const_iterator best_fit(const typename RangeType::ValueType &size, const_iterator start) const {
+    const_iterator best_fit(const typename Range::Value &size, const_iterator start) const {
         const_iterator best = end();
         for (const_iterator ri=start; ri!=end(); ++ri) {
             if (ri->first.size==size)
@@ -484,14 +643,14 @@ public:
      *  at or after @p start.  Returns the end iterator if no range is found.
      *
      *  @{ */
-    iterator first_fit(const typename RangeType::ValueType &size, iterator start) {
+    iterator first_fit(const typename Range::Value &size, iterator start) {
         for (iterator ri=start; ri!=end(); ++ri) {
             if (ri->first.size>=size)
                 return ri;
         }
         return end();
     }
-    const_iterator first_fit(const typename RangeType::ValueType &size, const_iterator start) {
+    const_iterator first_fit(const typename Range::Value &size, const_iterator start) {
         for (const_iterator ri=start; ri!=end(); ++ri) {
             if (ri->first.size>=size)
                 return ri;
@@ -519,29 +678,29 @@ public:
     /** Returns the number of values represented by this RangeMap.  The number of values does not typically correlate with the
      *  amount of memory used by the RangeMap since each element of the underlying std::map represents an arbitrary number of
      *  values. */
-    typename RangeType::ValueType size() const {
-        typename RangeType::ValueType retval = 0;
+    typename Range::Value size() const {
+        typename Range::Value retval = 0;
         for (const_iterator ei=begin(); ei!=end(); ++ei)
             retval += ei->first.size;
         return retval;
     }
 
     /** Returns the minimum value in an extent map.  The extent map must not be empty. */
-    typename RangeType::ValueType min() const {
+    typename Range::Value min() const {
         assert(!empty());
         return ranges.begin()->first.begin;
     }
 
     /** Returns the maximum value in an extent map.  The extent map must not be empty. */
-    typename RangeType::ValueType max() const {
+    typename Range::Value max() const {
         assert(!empty());
         return ranges.rbegin()->first.last();
     }
 
     /** Returns the range of values in this map. */
-    RangeType minmax() const {
-        typename RangeType::ValueType lt=min(), rt=max();
-        return RangeType(lt, rt+1-lt);
+    Range minmax() const {
+        typename Range::Value lt=min(), rt=max();
+        return Range(lt, rt+1-lt);
     }
 
     /**************************************************************************************************************************
@@ -568,7 +727,7 @@ public:
      *  ranges, or no ranges at all.  It would be nice to be able to return an iterator to the next item since we have that in
      *  hand.  Unfortunately, limitations of std::map make this impractical.  If you need an iterator, just make another call
      *  to lower_bound(). */
-    void erase(const RangeType &erase_range) {
+    void erase(const Range &erase_range) {
         /* This loop figures out what needs to be removed and calls the elements' removing(), truncate(), etc. methods but does
          * not actually erase them from the underlying map yet.  We must not erase them yet because the std::map::erase()
          * method doesn't return any iterator.  Instead, we create a list (via an iterator range) of elements that will need to
@@ -579,12 +738,12 @@ public:
          * become invalid. */
         if (erase_range.empty())
             return;
-        MapType insertions;
+        Map insertions;
         iterator erase_begin=end();
         iterator ei;
         for (ei=lower_bound(erase_range.begin); ei!=end() && !erase_range.left_of(ei->first); ++ei) {
-            RangeType found_range = ei->first;
-            ValueType &v = ei->second;
+            Range found_range = ei->first;
+            Value &v = ei->second;
             if (erase_range.contains(found_range)) {
                 /* Erase entire found range. */
                 if (erase_begin==end())
@@ -627,11 +786,11 @@ public:
 
     /** Erase ranges from this map.  Every range in the @p other map is erased from this map.  The maps need not be the same
      *  type as long as their ranges are the same type.  The values of the @p other map are not used--only its ranges. */
-    template<class OtherMapType>
-    void erase_ranges(const OtherMapType &other) {
+    template<class OtherMap>
+    void erase_ranges(const OtherMap &other) {
         assert((const void*)&other!=(const void*)this);
-        for (typename OtherMapType::const_iterator ri=other.begin(); ri!=other.end(); ++ri)
-            erase(RangeType(ri->first.begin, ri->first.size));
+        for (typename OtherMap::const_iterator ri=other.begin(); ri!=other.end(); ++ri)
+            erase(Range(ri->first.begin, ri->first.size));
     }
 
     /** Insert a range/value pair into the map.  If @p make_hole is true then the new range is allowed to replace existing
@@ -639,7 +798,7 @@ public:
      *  no change is made to the map.  If @p merge is true then we attempt to merge the new range into adjacent ranges.
      *  Returns an iterator to the new map element, or if merged, to the element that contains the new value.  Returns the end
      *  iterator if the range was not inserted. */
-    iterator insert(RangeType new_range, ValueType new_value=ValueType(), bool make_hole=true) {
+    iterator insert(Range new_range, Value new_value=Value(), bool make_hole=true) {
         if (new_range.empty())
             return end();
 
@@ -695,7 +854,7 @@ public:
 
     /** Determines if a range map overlaps with a specified range.  Returns true iff any part of the range @p r is present in
      *  the map.  A RangeMap never overlaps with an empty range. */
-    bool overlaps(const RangeType &r) const {
+    bool overlaps(const Range &r) const {
         if (r.empty())
             return false;
         const_iterator found = lower_bound(r.begin);
@@ -710,7 +869,7 @@ public:
 
     /** Determines if this range map contains all of the specified range.  If the specified range is empty then this function
      * returns true: the map contains all empty ranges. */
-    bool contains(RangeType need) const {
+    bool contains(Range need) const {
         if (need.empty())
             return true;
         const_iterator found=find(need.begin);
@@ -798,29 +957,29 @@ public:
 public:
 
     /** Create an inverse of a range map. The values of the result are default constructed. */
-    template<class ResultMapType>
-    ResultMapType invert() const {
-        return invert_within(RangeType::all());
+    template<class ResultMap>
+    ResultMap invert() const {
+        return invert_within<ResultMap>(Range::all());
     }
 
     /** Create a range map that's the inverse of some other map.  The returned map's ranges will be limited according to the
      *  specified @p limits. The values of the result are default constructed. */
-    template<class ResultMapType>
-    ResultMapType invert_within(const RangeType &limits) const {
-        ResultMapType retval;
+    template<class ResultMap>
+    ResultMap invert_within(const Range &limits) const {
+        ResultMap retval;
         if (limits.empty())
             return retval;
-        typename RangeType::ValueType pending = limits.begin;
+        typename Range::Value pending = limits.begin;
         for (const_iterator ri=lower_bound(limits.begin); ri!=end() && !limits.left_of(ri->first); ++ri) {
             if (ri->first.begin>pending) {
-                typename RangeType::ValueType size = ri->first.begin - pending;
-                retval.insert(RangeType(pending, size));
+                typename Range::Value size = ri->first.begin - pending;
+                retval.insert(Range(pending, size));
             }
             pending = ri->first.last()+1;
         }
         if (pending <= limits.last()) {
-            typename RangeType::ValueType size = limits.last()+1-pending;
-            retval.insert(RangeType(pending, size));
+            typename Range::Value size = limits.last()+1-pending;
+            retval.insert(Range(pending, size));
         }
 
         if (!retval.empty())
@@ -830,7 +989,7 @@ public:
 
     /** Select ranges overlapping selector range.  Returns a new range map whose ranges are those ranges of this map that
      *  overlap with the specified @p selector range. */
-    RangeMap select_overlapping_ranges(const RangeType &selector) const {
+    RangeMap select_overlapping_ranges(const Range &selector) const {
         RangeMap retval;
         if (!selector.empty()) {
             for (const_iterator ri=lower_bound(selector.begin); ri!=end() && !selector.left_of(ri->first); ++ri) {
@@ -856,10 +1015,10 @@ public:
         }
             
         for (const_iterator i1=begin(); i1!=end(); ++i1) {
-            const RangeType &r1 = i1->first;
+            const Range &r1 = i1->first;
             const_iterator i2 = i1; ++i2;
             if (i2!=end()) {
-                const RangeType &r2 = i2->first;
+                const Range &r2 = i2->first;
 
                 RANGEMAP_CHECK(!r2.empty());
 
