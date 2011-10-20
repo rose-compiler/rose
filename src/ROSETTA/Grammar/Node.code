@@ -72,6 +72,11 @@ bool operator!=(const rose_rva_t &a1, const rose_rva_t &a2);
 
 typedef Range<rose_addr_t> Extent;
 
+/** Specialized printing for ROSE addresses. */
+template<>
+void Range<rose_addr_t>::print(std::ostream &o) const;
+
+
 class ExtentMap: public RangeMap<Extent> {
 public:
 	static char category(const Extent &a, const Extent &b);
