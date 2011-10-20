@@ -524,6 +524,56 @@ public:
     virtual void update_targets(SgNode *ast);
 
     /**************************************************************************************************************************
+     *                                  Range maps relating address ranges to objects
+     **************************************************************************************************************************/
+public:
+    /** Value type for FunctionRangeMap.  See base class for documentation. */
+    class FunctionRangeMapValue: public RangeMapValue<Extent, Function*> {
+    public:
+        FunctionRangeMapValue():            RangeMapValue<Extent, Function*>(NULL) {}
+        FunctionRangeMapValue(Function *f): RangeMapValue<Extent, Function*>(f)    {} // implicit
+
+        FunctionRangeMapValue split(const Extent &my_range, const Extent::Value &new_size) {
+            assert(new_size>0 && new_size<my_range.size);
+            return *this;
+        }
+
+        void print(std::ostream &o) const {
+            if (NULL==value) {
+                o <<"(null)";
+            } else {
+                o <<"F" <<StringUtility::addrToString(value->entry_va);
+            }
+        }
+    };
+
+    /** Range map associating addresses with functions. */
+    typedef RangeMap<Extent, FunctionRangeMapValue> FunctionRangeMap;
+
+    /** Value type for DataRangeMap.  See base class for documentation. */
+    class DataRangeMapValue: public RangeMapValue<Extent, DataBlock*> {
+    public:
+        DataRangeMapValue():             RangeMapValue<Extent, DataBlock*>(NULL) {}
+        DataRangeMapValue(DataBlock *d): RangeMapValue<Extent, DataBlock*>(d)    {} // implicit
+
+        DataRangeMapValue split(const Extent &my_range, const Extent::Value &new_size) {
+            assert(new_size>0 && new_size<my_range.size);
+            return *this;
+        }
+
+        void print(std::ostream &o) const {
+            if (NULL==value) {
+                o <<"(null)";
+            } else {
+                o <<"D" <<StringUtility::addrToString(value->address());
+            }
+        }
+    };
+
+    /** Range map associating addresses with functions. */
+    typedef RangeMap<Extent, DataRangeMapValue> DataRangeMap;
+
+    /**************************************************************************************************************************
      *                                  Functions for scanning through memory
      **************************************************************************************************************************/
 public:
@@ -556,7 +606,11 @@ public:
     public:
         /** Arguments for the callback. */
         struct Args {
+            Args(Partitioner *partitioner, const FunctionRangeMap &ranges, const Extent &range)
+                : partitioner(partitioner), ranges(ranges), range(range) {}
             Partitioner *partitioner;
+            const FunctionRangeMap &ranges;             /**< The range map over which we are iterating. */
+            Extent range;                               /**< Range of address space being processed by the callback. */
         };
 
         virtual ~ByteRangeCallback() {}
@@ -645,39 +699,49 @@ public:
     }
     /** @} */
 
-    /** Scans ranges of the address space that have not been assigned to any function.
+    /** Scans ranges of the address space that have not been assigned to any function.  For each contiguous range of address
+     *  space that is not associated with any function, each of the specified callbacks is invoked in turn until one of them
+     *  returns false.  The determination of what parts of the address space belong to functions is made before any of the
+     *  callbacks are invoked and not updated for the duration of this function.  The determination is made by calling
+     *  Partitioner::function_extent() across all known functions, and then passing that mapping to each of the callbacks.
+     *
+     *  If a @p restrict MemoryMap is specified then only addresses that are also defined in the map are considered.
      *
      *  @{ */
-    virtual void scan_unassigned_bytes(ByteRangeCallbacks &callbacks);
-    void scan_unassigned_bytes(ByteRangeCallback *callback) {
+    virtual void scan_unassigned_bytes(ByteRangeCallbacks &callbacks, MemoryMap *restrict=NULL);
+    void scan_unassigned_bytes(ByteRangeCallback *callback, MemoryMap *restrict=NULL) {
         ByteRangeCallbacks cblist(callback);
-        scan_unassigned_bytes(cblist);
+        scan_unassigned_bytes(cblist, restrict);
     }
     /** @} */
 
     /** Scans unassigned ranges of the address space within a function.  The specified callbacks are invoked for each range of
-     *  the address space whose closest surrounding assigned addresses both belong to the same function.  This can be used, for
-     *  example, to discover static data or unreachable instructions (by static analysis) that should probably belong to the
-     *  surrounding function.
+     *  the address space whose closest surrounding assigned addresses both belong to the same function.  This can be used,
+     *  for example, to discover static data or unreachable instructions (by static analysis) that should probably belong to
+     *  the surrounding function.
+     *
+     *  If a @p restrict MemoryMap is specified then only addresses that are also defined in the map are considered.
      *
      *  @{ */
-    virtual void scan_intrafunc_bytes(ByteRangeCallbacks &callbacks);
-    void scan_intrafunc_bytes(ByteRangeCallback *callback) {
+    virtual void scan_intrafunc_bytes(ByteRangeCallbacks &callbacks, MemoryMap *restrict=NULL);
+    void scan_intrafunc_bytes(ByteRangeCallback *callback, MemoryMap *restrict=NULL) {
         ByteRangeCallbacks cblist(callback);
-        scan_intrafunc_bytes(cblist);
+        scan_intrafunc_bytes(cblist, restrict);
     }
     /** @} */
 
     /** Scans unassigned ranges of the address space between functions.  The specified callbacks are invoked for each range of
      *  addresses that fall "between" two functions.  An address is between two functions if the next lower assigned address
-     *  belongs to one function and the next higher assigned address belongs to some other function, or if there is no lower
-     *  assigned address and/or no upper assigned address.
+     *  belongs to one function and the next higher assigned address belongs to some other function, or if there is no assigned
+     *  lower address and/or no assigned higher address.
+     *
+     *  If a @p restrict MemoryMap is specified then only addresses that are also defined in the map are considered.
      *
      *  @{ */
-    virtual void scan_interfunc_bytes(ByteRangeCallbacks &callbacks);
-    void scan_interfunc_bytes(ByteRangeCallback *callback) {
+    virtual void scan_interfunc_bytes(ByteRangeCallbacks &callbacks, MemoryMap *restrict=NULL);
+    void scan_interfunc_bytes(ByteRangeCallback *callback, MemoryMap *restrict=NULL) {
         ByteRangeCallbacks cblist(callback);
-        scan_interfunc_bytes(cblist);
+        scan_interfunc_bytes(cblist, restrict);
     }
     /** @}*/
 
@@ -752,17 +816,29 @@ public:
         virtual bool operator()(bool enabled, const Args &args);
     };
 
-    /** Callback to add post-function instructions to the preceding function.  It should be called by the
-     *  scan_interfunc_insns() method after inter-function padding is found.  If add_as_data is true, then the blocks are added
-     *  as data blocks rather than instructions.
+    /** Callback to add post-function data to the preceding function.  Any part of the address space that's at the end of a
+     *  normal function (anything but FUNC_INTERPAD or FUNC_THUNK) and is not yet assigned to any function is added to the
+     *  function as a data block.  This should be called after inter-function padding has been discovered, or else the padding
+     *  will end up as part of the same data block.
+     *
+     *  See also PostFunctionInsns.  It probably doesn't make sense to use both.
      *
      *  Note: This is highly experimental. [RPM 2011-09-22] */
-    struct PostFunctionBlocks: public InsnRangeCallback {
-        bool add_as_data;
-        PostFunctionBlocks(): add_as_data(true) {}
+    struct PostFunctionData: public ByteRangeCallback {
         virtual bool operator()(bool enabled, const Args &args);
     };
 
+    /** Callback to add post-function instructions to the preceding function.  Any instructions that immediately follow a
+     *  normal function (anything but FUNC_INTERPAD or FUNC_THUNK) but are not assigned to any function are added to that
+     *  function as instructions.  This should be called after inter-function padding has been discovered, or else the padding
+     *  will end up as part of the same data block.
+     *
+     *  See also PostFunctionData.  It probably doesn't make sense to use both.
+     *
+     *  Note: This is highly experimental. [RPM 2011-09-22] */
+    struct PostFunctionInsns: public InsnRangeCallback {
+        virtual bool operator()(bool enabled, const Args &args);
+    };
 
     /*************************************************************************************************************************
      *                                                 Low-level Functions
@@ -821,14 +897,18 @@ public:
      *
      *  See also: SgAsmFunction::get_extent(), which calculates the same information but can be used only after we've constructed
      *  the AST for the function. */
-    virtual size_t function_extent(Function*, ExtentMap *extents=NULL, rose_addr_t *lo_addr=NULL, rose_addr_t *hi_addr=NULL);
+    virtual size_t function_extent(Function*,
+                                   FunctionRangeMap *extents=NULL/*in,out*/,
+                                   rose_addr_t *lo_addr=NULL/*out*/, rose_addr_t *hi_addr=NULL/*out*/);
 
     /** Returns information about the datablock addresses.  Every data block has a minimum (inclusive) and maximum (exclusive)
      *  address which are returned by reference, but some of the addresses in that range might not be owned by the specified
      *  data block.  Therefore, the exact bytes are returned by adding them to the optional ExtentMap argument.  This function
      *  returns the number of nodes (static data items) in the data block.  If the data block contains no nodes then the extent
      *  map is not modified, the low and high addresses are both set to zero, and the return value is zero. */
-    virtual size_t datablock_extent(DataBlock*, ExtentMap *extents=NULL, rose_addr_t *lo_addr=NULL, rose_addr_t *hi_addr=NULL);
+    virtual size_t datablock_extent(DataBlock*,
+                                    DataRangeMap *extents=NULL/*in,out*/,
+                                    rose_addr_t *lo_addr=NULL/*out*/, rose_addr_t *hi_addr=NULL/*out*/);
 
     /** Returns an indication of whether a function is contiguous.  All empty functions are contiguous. If @p strict is true,
      *  then a function is contiguous if it owns all bytes in a contiguous range of the address space.  If @p strict is false

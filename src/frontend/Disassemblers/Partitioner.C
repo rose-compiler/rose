@@ -1736,24 +1736,91 @@ Partitioner::scan_intrafunc_insns(InsnRangeCallbacks &cblist)
 }
 
 void
-Partitioner::scan_unassigned_bytes(ByteRangeCallbacks &callbacks)
+Partitioner::scan_unassigned_bytes(ByteRangeCallbacks &cblist, MemoryMap *restrict/*=NULL*/)
 {
-    assert(!"not implemented yet"); // FIXME
-    abort();
+    if (cblist.empty())
+        return;
+
+    /* Get range map for addresses assigned to functions (function instructions and data w/ function pointers). */
+    FunctionRangeMap assigned;
+    for (Functions::iterator fi=functions.begin(); fi!=functions.end(); ++fi)
+        function_extent(fi->second, &assigned);
+
+    /* Unassigned ranges are the inverse of everything assigned.  Then further restrict the unassigned range map according to
+     * the supplied memory map. */
+    ExtentMap unassigned = assigned.invert<ExtentMap>();
+    if (restrict)
+        unassigned.erase_ranges(restrict->va_extents().invert<ExtentMap>());
+
+    /* Traverse the unassigned map, invoking the callbacks for each range. */
+    for (ExtentMap::iterator ri=unassigned.begin(); ri!=unassigned.end(); ++ri)
+        cblist.apply(true, ByteRangeCallback::Args(this, assigned, ri->first));
 }
 
 void
-Partitioner::scan_intrafunc_bytes(ByteRangeCallbacks &callbacks)
+Partitioner::scan_intrafunc_bytes(ByteRangeCallbacks &cblist, MemoryMap *restrict/*=NULL*/)
 {
-    assert(!"not implemented yet"); // FIXME
-    abort();
+    if (cblist.empty())
+        return;
+
+    struct Filter: public ByteRangeCallback {
+        virtual bool operator()(bool enabled, const Args &args) {
+            if (enabled) {
+                if (args.range.begin<=0 || args.range.last()>=Extent::maximum())
+                    return false; // nothing before and/or after
+
+                /* Find the closest function before this range. */
+                FunctionRangeMap::const_iterator prev = args.ranges.find_prior(args.range.begin-1);
+                if (prev==args.ranges.end())
+                    return false; // nothing before this range
+
+                /* Find the closest function above this range. */
+                FunctionRangeMap::const_iterator next = args.ranges.lower_bound(args.range.last()+1);
+                if (next==args.ranges.end())
+                    return false; // nothing after this range
+
+                /* Continue only if this range is between two of the same functions. */
+                enabled = prev->second.get()==next->second.get();
+            }
+            return enabled;
+        }
+    } filter;
+    ByteRangeCallbacks cblist2 = cblist;
+    cblist2.prepend(&filter);
+    scan_unassigned_bytes(cblist2, restrict);
 }
 
 void
-Partitioner::scan_interfunc_bytes(ByteRangeCallbacks &callbacks)
+Partitioner::scan_interfunc_bytes(ByteRangeCallbacks &cblist, MemoryMap *restrict/*=NULL*/)
 {
-    assert(!"not implemented yet"); // FIXME
-    abort();
+    if (cblist.empty())
+        return;
+
+    struct Filter: public ByteRangeCallback {
+        virtual bool operator()(bool enabled, const Args &args) {
+            if (enabled) {
+                if (args.range.begin<=0 || args.range.last()>=Extent::maximum())
+                    return true; // nothing before and/or after
+
+                /* Find the closest function before this range. */
+                FunctionRangeMap::const_iterator prev = args.ranges.find_prior(args.range.begin-1);
+                if (prev==args.ranges.end())
+                    return true; // nothing before this range
+
+                /* Find the closest function above this range. */
+                FunctionRangeMap::const_iterator next = args.ranges.lower_bound(args.range.last()+1);
+                if (next==args.ranges.end())
+                    return true; // nothing after this range
+
+                /* Continue only if this range is between two different functions. */
+                enabled = prev->second.get()!=next->second.get();
+            }
+            return enabled;
+        }
+    } filter;
+    ByteRangeCallbacks cblist2 = cblist;
+    cblist2.prepend(&filter);
+    scan_unassigned_bytes(cblist2, restrict);
 }
 
 /* Create functions or data for inter-function padding instruction sequences.  Returns true if we did not find interfunction
@@ -1893,8 +1960,8 @@ Partitioner::find_db_starting(rose_addr_t start_va, size_t size/*=0*/)
             return db; /* caller doesn't care about the size, only whether the block is present. */
 
         /* Check whether the block contains all the addresses we want. They might not all be in the first node. */
-        ExtentMap want; want.insert(Extent(start_va, size));
-        ExtentMap have; datablock_extent(db, &have);
+        DataRangeMap want; want.insert(Extent(start_va, size));
+        DataRangeMap have; datablock_extent(db, &have);
         want.erase_ranges(have);
         if (want.empty())
             return db;
@@ -2104,7 +2171,38 @@ Partitioner::is_thunk(Function *func)
 }
 
 bool
-Partitioner::PostFunctionBlocks::operator()(bool enabled, const Args &args)
+Partitioner::PostFunctionData::operator()(bool enabled, const Args &args)
+{
+    if (!enabled)
+        return false;
+    Partitioner *p = args.partitioner;
+
+    /* What is the function _immediately_ before this range in the address space? */
+    if (args.range.begin<=0)
+        return true;            // no prior function
+    FunctionRangeMap::const_iterator prior = args.ranges.find(args.range.begin-1);
+    if (prior==args.ranges.end())
+        return true;            // no prior function
+    Function *func = prior->second.get();
+    assert(func!=NULL);
+
+    /* Don't append data to non-functions. */
+    if (0!=(func->reason & (SgAsmFunction::FUNC_INTERPAD | SgAsmFunction::FUNC_THUNK)))
+        return true;
+
+    /* Create the data block and attach it to the preceding function. */
+    DataBlock *dblock = p->find_db_starting(args.range.begin, args.range.size);
+    assert(dblock!=NULL);
+    p->append(func, dblock, SgAsmBlock::BLK_USERDEF);
+
+    if (p->debug)
+        fprintf(p->debug, "Partitioner::PostFunctionData: for F%08"PRIx64": added D%08"PRIx64"\n",
+                func->entry_va, args.range.begin);
+    return true;
+}
+
+bool
+Partitioner::PostFunctionInsns::operator()(bool enabled, const Args &args)
 {
     if (!enabled)
         return false;
@@ -2119,54 +2217,29 @@ Partitioner::PostFunctionBlocks::operator()(bool enabled, const Args &args)
         0!=(func->reason & SgAsmFunction::FUNC_THUNK))
         return true; // don't append instructions to certain "functions"
 
-    if (add_as_data) {
-        rose_addr_t begin_va = args.insn_begin->get_address();
-        rose_addr_t end_va = begin_va;
-        if (p->debug) {
-            fprintf(p->debug, "Partitioner::PostFunctionBlocks: for F%08"PRIx64": added D%08"PRIx64" deleted",
-                    func->entry_va, begin_va);
-        }
-
-        /* Delete the instructions, but not the blocks to which they might belong (unless the block becomes empty) */
-        for (size_t i=0; i<args.ninsns; i++) {
-            SgAsmInstruction *insn = p->find_instruction(end_va);
-            assert(insn!=NULL);
-            if (p->debug)
-                fprintf(p->debug, " B%08"PRIx64, end_va);
-            end_va += insn->get_raw_bytes().size();
-            p->discard(insn);
-        }
-        assert(end_va>begin_va);
-        size_t size = end_va - begin_va;
-        DataBlock *dblock = p->find_db_starting(begin_va, size);
-        assert(dblock!=NULL);
-        p->append(func, dblock, SgAsmBlock::BLK_USERDEF);
-        if (p->debug)
-            fprintf(p->debug, "\n");
-    } else {
-        size_t nadded = 0;
-        rose_addr_t va = args.insn_begin->get_address();
-        for (size_t i=0; i<args.ninsns; i++) {
-            bb = p->find_bb_containing(va);
-            assert(bb!=NULL); // because we know va is an instruction
-            if (!bb->function) {
-                if (p->debug) {
-                    if (0==nadded)
-                        fprintf(p->debug, "Partitioner::PostFunctionBlocks: for F%08"PRIx64": added", func->entry_va);
-                    fprintf(p->debug, " B%08"PRIx64, bb->address());
-                }
-                p->append(func, bb, SgAsmBlock::BLK_USERDEF, true/*head of CFG subgraph*/);
-                func->pending = true;
-                ++nadded;
+    size_t nadded = 0;
+    rose_addr_t va = args.insn_begin->get_address();
+    for (size_t i=0; i<args.ninsns; i++) {
+        bb = p->find_bb_containing(va);
+        assert(bb!=NULL); // because we know va is an instruction
+        if (!bb->function) {
+            if (p->debug) {
+                if (0==nadded)
+                    fprintf(p->debug, "Partitioner::PostFunctionBlocks: for F%08"PRIx64": added", func->entry_va);
+                fprintf(p->debug, " B%08"PRIx64, bb->address());
             }
-
-            SgAsmInstruction *insn = p->find_instruction(va);
-            assert(insn!=NULL);
-            va += insn->get_raw_bytes().size();
+            p->append(func, bb, SgAsmBlock::BLK_USERDEF, true/*head of CFG subgraph*/);
+            func->pending = true;
+            ++nadded;
         }
-        if (p->debug && nadded)
-            fprintf(p->debug, "\n");
+
+        SgAsmInstruction *insn = p->find_instruction(va);
+        assert(insn!=NULL);
+        va += insn->get_raw_bytes().size();
     }
+    if (p->debug && nadded)
+        fprintf(p->debug, "\n");
+
     return true;
 }
 
@@ -2712,9 +2785,15 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
     FindThunks find_thunks;
     scan_unassigned_insns(&find_thunks);
 
-    /* Add unassigned instructions to the immediately preceding function. */
-    PostFunctionBlocks post_function_blocks;
-    scan_interfunc_insns(&post_function_blocks);
+#if 1
+    /* Append data to the end(s) of each function. */
+    PostFunctionData post_function_data;
+    scan_interfunc_bytes(&post_function_data, &ro_map);
+#else
+    /* Append instructions to the end(s) of each function. */
+    PostFunctionInsns post_function_insns;
+    scan_interfunc_insns(&post_function_insns);
+#endif
 
     /* Give existing functions names from symbol tables. Don't create more functions. */
     if (interp) {
@@ -2746,49 +2825,47 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
 
 size_t
 Partitioner::function_extent(Function *func,
-                             ExtentMap *extents/*out*/, rose_addr_t *lo_addr_ptr/*out*/, rose_addr_t *hi_addr_ptr/*out*/)
+                             FunctionRangeMap *extents/*out*/,
+                             rose_addr_t *lo_addr_ptr/*out*/, rose_addr_t *hi_addr_ptr/*out*/)
 {
     size_t nnodes=0, lo_addr=0, hi_addr=0;
-    for (BasicBlocks::iterator bi=func->basic_blocks.begin(); bi!=func->basic_blocks.end(); ++bi) {
-        BasicBlock *bb = bi->second;
+    std::set<DataBlock*> my_dblocks;
 
-        /* Basic block instructions */
+    for (BasicBlocks::iterator bi=func->basic_blocks.begin(); bi!=func->basic_blocks.end(); ++bi) {
+        /* Find the extents for all the instructions in this basic block. */
+        BasicBlock *bb = bi->second;
         for (std::vector<SgAsmInstruction*>::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii) {
+            rose_addr_t start = (*ii)->get_address();
+            size_t size = (*ii)->get_raw_bytes().size();
             if (0==nnodes++) {
-                lo_addr = (*ii)->get_address();
-                hi_addr = (*ii)->get_address() + (*ii)->get_raw_bytes().size();
+                lo_addr = start;
+                hi_addr = start + size;
             } else {
-                lo_addr = std::min(lo_addr, (*ii)->get_address());
-                hi_addr = std::max(hi_addr, (*ii)->get_address() + (*ii)->get_raw_bytes().size());
+                lo_addr = std::min(lo_addr, start);
+                hi_addr = std::max(hi_addr, start + size);
             }
             if (extents)
-                extents->insert(Extent((*ii)->get_address(), (*ii)->get_raw_bytes().size()));
+                extents->insert(Extent(start, size), func);
         }
 
-        /* Data blocks associated with this basic block. Count them only if they aren't explicitly assigned to a function. */
+        /* Gather data blocks associated with this basic block, but only if they aren't explicitly assigned to a function. */
         for (std::set<DataBlock*>::iterator di=bb->data_blocks.begin(); di!=bb->data_blocks.end(); ++di) {
-            if (NULL==(*di)->function) {
-                rose_addr_t lo, hi;
-                size_t n = datablock_extent(*di, extents, &lo, &hi);
-                if (n>0) {
-                    if (0==nnodes) {
-                        lo_addr = lo;
-                        hi_addr = hi;
-                    } else {
-                        lo_addr = std::min(lo_addr, lo);
-                        hi_addr = std::max(hi_addr, hi);
-                    }
-                    nnodes += n;
-                }
-            }
+            if (NULL==(*di)->function)
+                my_dblocks.insert(*di);
         }
     }
 
-    /* Data blocks associated with this function. */
-    for (DataBlocks::iterator bi=func->data_blocks.begin(); bi!=func->data_blocks.end(); ++bi) {
-        DataBlock *block = bi->second;
+    /* Gather the data blocks associated with this function. */
+    for (DataBlocks::iterator bi=func->data_blocks.begin(); bi!=func->data_blocks.end(); ++bi)
+        my_dblocks.insert(bi->second);
+
+    /* Add the extents of all this function's data blocks. */
+    for (std::set<DataBlock*>::iterator di=my_dblocks.begin(); di!=my_dblocks.end(); ++di) {
+        DataBlock *dblock = *di;
+        DataRangeMap data_extents;
+        DataRangeMap *data_extents_ptr = extents ? &data_extents : NULL;
         rose_addr_t lo, hi;
-        size_t n = datablock_extent(block, extents, &lo, &hi);
+        size_t n = datablock_extent(dblock, data_extents_ptr, &lo, &hi);
         if (n>0) {
             if (0==nnodes) {
                 lo_addr = lo;
@@ -2798,9 +2875,14 @@ Partitioner::function_extent(Function *func,
                 hi_addr = std::max(hi_addr, hi);
             }
             nnodes += n;
+            if (extents) {
+                for (DataRangeMap::iterator di2=data_extents.begin(); di2!=data_extents.end(); ++di2)
+                    extents->insert(di2->first, func);
+            }
         }
     }
 
+    /* Return values */
     if (lo_addr_ptr)
         *lo_addr_ptr = lo_addr;
     if (hi_addr_ptr)
@@ -2810,19 +2892,25 @@ Partitioner::function_extent(Function *func,
 
 size_t
 Partitioner::datablock_extent(DataBlock *db,
-                              ExtentMap *extents/*out*/, rose_addr_t *lo_addr/*out*/, rose_addr_t *hi_addr/*out*/)
+                              DataRangeMap *extents/*in,out*/,
+                              rose_addr_t *lo_addr_ptr/*out*/, rose_addr_t *hi_addr_ptr/*out*/)
 {
-    if (lo_addr)
-        *lo_addr = db->nodes.empty() ? 0 : db->nodes.front()->get_address();
-    if (hi_addr)
-        *hi_addr = db->nodes.empty() ? 0 : db->nodes.front()->get_address() + db->nodes.front()->get_raw_bytes().size();
+    if (lo_addr_ptr)
+        *lo_addr_ptr = db->nodes.empty() ? 0 : db->nodes.front()->get_address();
+    if (hi_addr_ptr)
+        *hi_addr_ptr = db->nodes.empty() ? 0 : db->nodes.front()->get_address() + db->nodes.front()->get_raw_bytes().size();
 
     for (size_t i=1; i<db->nodes.size(); i++) {
         SgAsmStaticData *node = db->nodes[i];
-        if (lo_addr)
-            *lo_addr = std::min(*lo_addr, node->get_address());
-        if (hi_addr)
-            *hi_addr = std::max(*hi_addr, node->get_address() + node->get_raw_bytes().size());
+        rose_addr_t start = node->get_address();
+        size_t size = node->get_raw_bytes().size();
+
+        if (lo_addr_ptr)
+            *lo_addr_ptr = std::min(*lo_addr_ptr, start);
+        if (hi_addr_ptr)
+            *hi_addr_ptr = std::max(*hi_addr_ptr, start+size);
+        if (extents)
+            extents->insert(Extent(start, size), db);
     }
     return db->nodes.size();
 }
@@ -2831,7 +2919,7 @@ Partitioner::datablock_extent(DataBlock *db,
 bool
 Partitioner::is_contiguous(Function *func, bool strict)
 {
-    ExtentMap extents;
+    FunctionRangeMap extents;
     rose_addr_t lo_addr, hi_addr;
     if (0==function_extent(func, &extents, &lo_addr, &hi_addr) || 1==extents.size())
         return true;
@@ -2930,7 +3018,7 @@ Partitioner::build_ast()
     if ((func_heuristics & SgAsmFunction::FUNC_LEFTOVERS)) {
 
         /* List of all bytes occupied by functions. */
-        ExtentMap existing;
+        FunctionRangeMap existing;
         for (Functions::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
             if (0==(fi->second->reason & SgAsmFunction::FUNC_LEFTOVERS))
                 function_extent(fi->second, &existing);
@@ -3033,7 +3121,7 @@ Partitioner::build_ast(Function* f)
 
     unsigned reasons = f->reason;
     if (0==(reasons & SgAsmFunction::FUNC_DISCONT)) {
-        ExtentMap extent;
+        FunctionRangeMap extent;
         function_extent(f, &extent);
         if (extent.nranges()>1)
             reasons |= SgAsmFunction::FUNC_DISCONT;
