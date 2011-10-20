@@ -8,6 +8,24 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
+/* Specialize printing for ROSE addresses.  We use sprintf rather than C++ streams so that we don't mess up the formatting
+ * state of the stream. */
+template<>
+void Range<rose_addr_t>::print(std::ostream &o) const
+{
+    if (empty()) {
+        o <<"<empty>";
+    } else if (1==size) {
+        char buf[64];
+        sprintf(buf, "0x%08"PRIx64, begin);
+        o << buf;
+    } else {
+        char buf[64];
+        sprintf(buf, "0x%08"PRIx64"+0x%08"PRIx64"=0x%08"PRIx64, begin, size, begin+size);
+        o <<buf;
+    }
+}
+
 /** Class method comparing two extents. The return value is one of the following letters, depending on how extent A is related
  *  to extent B:
  *     C (congruent):  A and B are congruent
