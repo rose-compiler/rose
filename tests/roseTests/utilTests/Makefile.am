@@ -14,7 +14,7 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 # Tests the RangeMap class
 noinst_PROGRAMS += testRangeMap
 testRangeMap_SOURCES = testRangeMap.C
-testRangeMap_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+testRangeMap_LDADD = 
 TEST_TARGETS += testRangeMap.passed
 testRangeMap.passed: tests.conf testRangeMap
 	@$(RTH_RUN) CMD=./testRangeMap $< $@
