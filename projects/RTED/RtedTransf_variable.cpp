@@ -330,10 +330,12 @@ RtedTransformation::buildVariableCreateCallExpr(SgVarRefExp* var_ref, const std:
         SgExpression*  callNameExp = buildStringVal(debug_name);
 
         // if this is a global variable
-        //   we set it to initialized according to the defined option value
+        //   we set mark it as default initialized, even without initialzier
+        //   in fact this is the standard defined behaviour for C99, C++,
+        //   and UPC.
         if ((allocKind & akGlobal) == akGlobal)
         {
-          initb = options.globalsInitialized;
+          initb = initb || options.globalsInitialized;
         }
 
         const bool     var_init = initb && !isFileIOVariable(varType);

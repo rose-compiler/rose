@@ -896,6 +896,15 @@ void MemoryManager::freeMemory(MemoryType* m, MemoryType::AllocKind freekind)
 
     // successful free, erase allocation info from map
     mem.erase(m->beginAddress());
+
+    if ( diagnostics::message(diagnostics::memory) )
+    {
+      std::stringstream msg;
+
+      msg << "++ deallocate: " << *m << std::endl;
+
+      RuntimeSystem::instance()->printMessage( msg.str() );
+    }
 }
 
 
