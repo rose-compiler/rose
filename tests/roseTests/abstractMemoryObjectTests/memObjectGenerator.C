@@ -13,7 +13,7 @@ int main(int argc, char * argv[])
   SgProject *project = frontend (argc, argv);
   AstTests::runAllTests(project);
 
-  // Test AliasedObj
+  // Test AliasedObj generated from SgType
   // ---------------------------------------------------------
   ObjSet* prev_obj = NULL;
 
@@ -22,6 +22,7 @@ int main(int argc, char * argv[])
   cout<<"Found "<<type_list.size()<<" types." <<endl;
   for (iter = type_list.begin(); iter !=type_list.end(); iter ++)
   {
+    // the main interface to create ObjSet
     ObjSet* mem_obj = ObjSetFactory::createObjSet(*iter);
     if (mem_obj != NULL)
     {
@@ -36,7 +37,7 @@ int main(int argc, char * argv[])
     }
   }
 
-  // Named objects from symbols 
+  // Named objects from symbols, if possible 
   // ---------------------------------------------------------
   VariantVector vv (V_SgSymbol); 
   //Rose_STL_Container <SgNode*> symbol_list  = NodeQuery::querySubTree (project, V_SgSymbol);
@@ -57,10 +58,11 @@ int main(int argc, char * argv[])
       }
       prev_obj = mem_obj;
 
-      // test Array::getElements (IndexVector*);  
+      // test member functions for arrays
       Array* array = dynamic_cast <Array*> (mem_obj);  
       if (array)
       {
+        // Array::getElements (IndexVector*)
         if (array->getNumDims()==1 )
         { // only for 1-D array, test array[0]
           cout<<"Found a 1-D array. testing array->getElements(0) ..."<<endl;
@@ -68,6 +70,9 @@ int main(int argc, char * argv[])
           myindexv ->index_vector.push_back(ConstIndexSet::get_inst((size_t)0));
           cout<<array->getElements(myindexv)->toString()<<endl;
         }
+        //Array::getDereference()
+       cout<<"testing array->getDereference() .. "<<endl;
+       cout<<array->getDereference()->toString()<<endl;
       }
 
     }
@@ -111,18 +116,8 @@ int main(int argc, char * argv[])
         cout<< "operator<:"<<((*prev_obj) < (*mem_obj)) <<endl;
       }
       prev_obj = mem_obj;
-
- 
     }
  }   
-  // Additional test for IndexSet etc TODO
-  IndexSet * s1 , *s2, *s3;
-  s1 = ConstIndexSet::get_inst (10);
-  s2 = ConstIndexSet::get_inst (1);
-  assert (*s1 != *s2);
-  s3 = UnknownIndexSet::get_inst();
-  assert (*s1 == *s3);
-
   return backend(project);
 }
 
