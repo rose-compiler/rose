@@ -249,7 +249,7 @@ namespace AbstractMemoryObject
     public:
       ArrayExprObj(SgExpression* e, SgType* t): ExprObj (e,t) {}
       std::set<SgType*> getType();
-      //TODO other member functions
+      //TODO other member functions still make sense?
       bool operator == (const ObjSet& o2) const;
       std::string toString();
 
@@ -306,10 +306,14 @@ namespace AbstractMemoryObject
       // Returns a memory object that corresponds to all the elements in the given array
       ObjSet* getElements() {return this; } ; 
       // Returns the memory object that corresponds to the elements described by the given abstract index, 
-      ObjSet* getElements(IndexVector* ai);
+      ObjSet* getElements(IndexVector* ai) ;
 
       // number of dimensions of the array
       virtual size_t getNumDims();
+
+
+  // rare case that an array is dereferenced, treated as array[0]
+      ObjSet* getDereference () ;
       bool operator == (const ObjSet & that) const ;
  
   };
