@@ -177,7 +177,6 @@ namespace  AbstractMemoryObject
     return false;  
    }
 
-
    ObjSet* Array::getElements()
    {
      cerr<<"Error. Direct call to base class (Array)'s getElements() is not allowed."<<endl;
@@ -198,6 +197,14 @@ namespace  AbstractMemoryObject
      assert (false);
     return 0;
    }
+
+   ObjSet * Array::getDereference()
+   {
+     cerr<<"Error. Direct call to base class (Array)'s getDereference( ) is not allowed."<<endl;
+     assert (false);
+    return 0;
+   }
+
 
 /*
   bool Array:: operator == (const ObjSet & o2) const

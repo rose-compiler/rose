@@ -225,7 +225,7 @@ namespace AbstractMemoryObject {
      ObjSet* rt = NULL;
 
      assert  (n!= NULL);
-     if (isSgPntrArrRefExp (n))
+     if (isSgPntrArrRefExp (n) && !isSgPntrArrRefExp (n->get_parent())) // only generate ObjSet for the top level isSgPntrArrRefExp
      {
        SgPntrArrRefExp* r = isSgPntrArrRefExp(n);
        assert (r != NULL);
@@ -779,7 +779,7 @@ namespace AbstractMemoryObject {
    }
 
    // Returns the memory object that corresponds to the elements described by the given abstract index, 
-   ObjSet* ArrayNamedObj::getElements(IndexVector* ai)
+   ObjSet* ArrayNamedObj::getElements(IndexVector* ai) 
    { 
      ObjSet* mem_obj = NULL;
 
@@ -801,6 +801,20 @@ namespace AbstractMemoryObject {
    }
         
 
+  ObjSet * ArrayNamedObj::getDereference() 
+  { 
+    // return array[0][*]..[*]
+    IndexVector_Impl* myindexv = new IndexVector_Impl();
+    myindexv ->index_vector.push_back(ConstIndexSet::get_inst((size_t)0));
+    // we use unknown index to represent the ALL element concept of a dimension
+    // TODO, we may want to generate an Array object which is the N-1 dimension array type to be accurate.
+    for (size_t i =0; i< getNumDims() -1; i++)
+    {
+      myindexv ->index_vector.push_back(UnknownIndexSet::get_inst());
+    }
+
+    return getElements(myindexv);
+  }
   //use the [Named|Expr|Aliased]Obj side of 
   bool ArrayNamedObj::operator == (const ObjSet& o2) const
   { 
@@ -1028,8 +1042,10 @@ namespace AbstractMemoryObject {
     
     // check parameters
     assert (anchor_symbol != NULL);
-    if (! isSgArrayType(anchor_symbol->get_type()))
+    // ! (isArray || isPointer) ==> !isArray && !isPointer
+    if (! isSgArrayType(anchor_symbol->get_type())  && ! isSgPointerType(anchor_symbol->get_type()))
     { // only array elements can have different type from its anchor (parent) symbol
+       // pointer type can also have array-like subscripting
       assert (anchor_symbol->get_type() == t);
     }
     bool assert_flag = true; 
@@ -1188,7 +1204,8 @@ namespace AbstractMemoryObject {
         s = isSgVariableSymbol(array_name->get_symbol_from_symbol_table());
         assert (s != NULL);
         SgType * t = s->get_type();
-        assert (isSgArrayType(t) != NULL);
+        // both array type and pointer type can have subscripts like p[10]
+        assert (isSgArrayType(t) != NULL || isSgPointerType(t) != NULL);
         whole_array_obj = ObjSetFactory::createObjSet(s);
         if (whole_array_obj == NULL)
         {
