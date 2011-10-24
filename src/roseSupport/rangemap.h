@@ -29,38 +29,98 @@
 
 /** A contiguous range of values.  Represents a contiguous range of @p size values beginning at @p begin, and defines
  *  relationships between two ranges.  The ranges are designed such that they can represent unsigned values up to and
- *  including the maximum possible values for the data type. A range cannot be empty. */
+ *  including the maximum possible values for the data type.  However, this means that a range that represents all possible
+ *  values will have a size() of zero due to overflow. */
 template<class T>
-struct Range {
+class Range {
+public:
     typedef T Value;
     typedef std::pair<Range, Range> Pair;               /**< A pair of ranges. */
-    Value begin;                                        /**< First value in range. */
-    Value size;                                         /**< Size of range. */
 
+protected:
+    Value r_first;                                      /**< First value in range. */
+    Value r_last;                                       /**< Last value in range. */
+
+public:
     /** Create an empty range.  Ranges may have an empty size, but empty ranges will never appear inside a RangeMap object.
      *  The @p begin value of an empty range is meaningless. */
     Range()
-        : begin(0), size(0) {}
+        : r_first(1), r_last(0) {}
 
-    /** Create a new range of unit size. */
-    explicit Range(const Value &begin)
-        : begin(begin), size(1) {}
+    /** Create a new range of unit size. The new range contains only the specified value. */
+    explicit Range(const Value &first)
+        : r_first(first), r_last(first) {}
 
-    /** Create a new range of specified size. */
-    Range(const Value &begin, const Value &size)
-        : begin(begin), size(size) {}
+    /** Create a new range of specified size. If @p size is zero then an empty range is created.  Note that  a zero size is also
+     *  returned for a range that contains all values, but this is due to overflow. */
+    Range(const Value &first, const Value &size)
+        : r_first(first), r_last(first+size-1) {
+        if (0==size)
+            clear();
+    }
 
     /** Create a new range from a different range. */
     template<class Other>
     explicit Range(const Other &other)
-        : begin(other.begin), size(other.size) {}
+        : r_first(other.first()), r_last(other.last()) {}
+
+    /** Create a new range by giving the first (inclusive) and last value (inclusive).  This is the only way to create a range
+     * that contains all values since the size of such a range overflows the range's Value type.  If the two values are equal
+     * then the created range contains only that value; if the first value is larger than the second then the range is
+     * considered to be empty. */
+    static Range inin(const Value &v1, const Value &v2) {
+        assert(v1<=v2);
+        Range retval;
+        retval.first(v1);
+        retval.last(v2);
+        return retval;
+    }
+
+    /** Accessor for the first value of a range.
+     *  @{ */
+    void first(const Value &first) {
+        r_first = first;
+    }
+    const Value& first() const {
+        assert(!empty());
+        return r_first;
+    }
+    /** @} */
+
+    /** Accessor for the last value of a range.
+     *  @{ */
+    void last(const Value &last) {
+        r_last = last;
+    }
+    const Value& last() const {
+        assert(!empty());
+        return r_last;
+    }
+    /** @} */
+
+    /** Returns the number of values represented by the range.  Note that if the range contains all possible values then the
+     *  returned size may be zero due to overflow, in which case the empty() method should also be called to make the
+     *  determination. */
+    Value size() const {
+        if (empty())
+            return 0;
+        return r_last + 1 - r_first;
+    }
+
+    /** Sets the range size by adjusting the maximum value.  If the size is set to zero then the range will be empty and the
+     *  first and last values become invalid.  It is an error to change the size of a range from zero to non-zero. */
+    void size(const Value &new_size) {
+        assert(!empty());
+        r_last = r_first + new_size - 1;
+        assert(!empty()); // this one is to check for overflow of r_last
+    }
 
     /** Split a range into two parts.  Returns a pair of adjacent ranges such that @p at is the first value of the second
      *  returned range.  The split point must be such that neither range is empty. */
     Pair split_range_at(const Value &at) const {
         assert(!empty());
-        assert(at>begin && at<=last()); // neither half can be empty
-        Range left(begin, at-begin);
+        assert(at>first() && at<=last()); // neither half can be empty
+        Range left(first(), at-first());
         Range right(at, last()+1-at);
         return std::make_pair(left, right);
     }
@@ -74,19 +134,21 @@ struct Range {
         if (right.empty())
             return *this;
         assert(abuts_lt(right));
-        return Range(begin, size+right.size);
-    }
-
-    /** Return the last value of the range.  The range must not be empty. */
-    Value last() const {
-        assert(!empty());
-        return begin+size-1;
+        return Range::inin(first(), right.last());
     }
 
     /** Returns true if this range is empty.  Note that many of the range comparison methods have special cases for empty
-     *  ranges. */
+     *  ranges.  Note that due to overflow, the size() method may return zero if this range contains all possible values.  It
+     *  follows, then that the expressions "empty()" and "0==size()" are not always equal. */
     bool empty() const {
-        return 0==size;
+        return r_last<r_first; // can't use first() or last() here because they're not valid for empty ranges.
+    }
+
+    /** Make a range empty. */
+    void clear() {
+        first(1);
+        last(0);
+        assert(empty());
     }
 
     /** Do both ranges begin at the same place?  An empty range never begins with any other range, including other empty
@@ -94,7 +156,7 @@ struct Range {
     bool begins_with(const Range &x) const {
         if (empty() || x.empty())
             return false;
-        return begin == x.begin;
+        return first() == x.first();
     }
 
     /** Do both ranges end at the same place? An empty range never ends with any other range, including other empty ranges. */
@@ -109,7 +171,7 @@ struct Range {
     bool begins_after(const Range &x, bool strict=true) const {
         if (empty() || x.empty())
             return false;
-        return strict ? begin > x.begin : begin >= x.begin;
+        return strict ? first() > x.first() : first() >= x.first();
     }
 
     /** Does this range begin (strictly) before the beginning of another range?  An empty range never begins before any other
@@ -117,7 +179,7 @@ struct Range {
     bool begins_before(const Range &x, bool strict=true) const {
         if (empty() || x.empty())
             return false;
-        return strict ? begin < x.begin : begin <= x.begin;
+        return strict ? first() < x.first() : first() <= x.first();
     }
 
     /** Does this range end (strictly) after the end of another range?  An empty range never ends after any other range,
@@ -142,7 +204,7 @@ struct Range {
     bool contains(const Range &x, bool strict=false) const {
         if (empty() || x.empty())
             return false;
-        return strict ? x.begin>begin && x.last()<last() : x.begin>=begin && x.last()<=last();
+        return strict ? x.first()>first() && x.last()<last() : x.first()>=first() && x.last()<=last();
     }
 
     /** Is this range contained in the argument range?  This range is contained in the argument range if this range starts at
@@ -151,15 +213,14 @@ struct Range {
     bool contained_in(const Range &x, bool strict=false) const {
         if (empty() || x.empty())
             return false;
-        return strict ? begin>x.begin && last()<x.last() : begin>=x.begin && last()<=x.last();
+        return strict ? first()>x.first() && last()<x.last() : first()>=x.first() && last()<=x.last();
     }
 
     /** Are two ranges equal.  They are equal if the start and end at the same place or if they are both empty. */
     bool congruent(const Range &x) const {
-        if (size<=0 && x.size<=0)
+        if (empty() && x.empty())
             return true;
-        assert(size>0 && x.size>0);
-        return begin==x.begin && last()==x.last();
+        return first()==x.first() && last()==x.last();
     }
 
     /** Is this range left of the argument range?  This range is left of the argument range if this range ends before the start
@@ -168,7 +229,7 @@ struct Range {
     bool left_of(const Range &x) const {
         if (empty() || x.empty())
             return false;
-        return last() < x.begin;
+        return last() < x.first();
     }
 
     /** Is this range right of the argument range?  This range is right of the argument range if this range starts after the
@@ -177,7 +238,7 @@ struct Range {
     bool right_of(const Range &x) const {
         if (empty() || x.empty())
             return false;
-        return begin > x.last();
+        return first() > x.last();
     }
 
     /** Does this range overlap with the argument range? An empty range does not overlap with any other rance, including other
@@ -202,7 +263,7 @@ struct Range {
     bool abuts_lt(const Range &x) const {
         if (empty() || x.empty())
             return false;
-        return last()+1 == x.begin;
+        return last()+1 == x.first();
     }
 
     /** Is this range immediately right of the argument range?  Returns true if this range begins at the end of the argument,
@@ -211,7 +272,7 @@ struct Range {
     bool abuts_gt(const Range &x) const {
         if (empty() || x.empty())
             return false;
-        return begin == x.last()+1;
+        return first() == x.last()+1;
     }
 
     /** Return the minimum possible value represented by this range. */
@@ -226,16 +287,16 @@ struct Range {
 
     /** Return a range that covers all possible values. */
     static Range all() {
-        return Range(minimum(), maximum()+1-minimum());
+        return Range::inin(minimum(), maximum());
     }
 
     void print(std::ostream &o) const {
         if (empty()) {
             o <<"<empty>";
-        } else if (1==size) {
-            o <<begin;
+        } else if (first()==last()) {
+            o <<first();
         } else {
-            o <<begin <<"-" <<last();
+            o <<first() <<"-" <<last();
         }
     }
 
@@ -264,9 +325,10 @@ public:
     }
 
     /** Truncate the RangeMap value.  This is similar to the removing() method, but only discards part of the value.  The @p
-     *  new_size argument must be greater than zero and less than or equal to the current size. */
-    void truncate(const Range &my_range, const typename Range::Value &new_size) {
-        assert(new_size>0 && new_size<=my_range.size);
+     *  new_end argument is the first value past the end of this range and must be such that the range would not become
+     *  larger. */
+    void truncate(const Range &my_range, const typename Range::Value &new_end) {
+        assert(new_end>my_range.first() && new_end<=my_range.last());
     }
 
     /** Attempts to merge the specified range into this range.  The specified range must adjoin this range (on the left or
@@ -286,11 +348,12 @@ public:
         return true;
     }
 
-    /** Split a value into two parts.  This is the inverse of the merge() operation.  In effect, it truncates this value to the
-     *  specified size, but rather than discarding the right part, it returns it as a new value.  The new size must be greater
-     *  than zero but smaller than the current size.  The @p my_range argument is the value's range before it is split. */
-    RangeMapVoid split(const Range &my_range, const typename Range::Value &new_size) {
-        assert(new_size>0 && new_size<my_range.size);
+    /** Split a value into two parts.  This is the inverse of the merge() operation.  In effect, it truncates this value so it
+     *  ends at @p new_end (exclusive), but rather than discarding the right part, it returns it as a new value.  The @p
+     *  new_end must be inside @p my_range so that neither the modified nor returned ranges are empty.  The @p my_range
+     *  argument is the value's range before it is split. */
+    RangeMapVoid split(const Range &my_range, const typename Range::Value &new_end) {
+        assert(my_range.contains(Range(new_end)));
         return RangeMapVoid();
     }
 
@@ -318,25 +381,29 @@ public:
         value = v;
     }
 
+    /* This class often serves as a base class, so we have some virtual methods. */
+    virtual ~RangeMapValue() {}
+    
+
     /** Accessor for the value actually stored here.
      *  @{ */
-    void set(const Value &v) {
+    virtual void set(const Value &v) {
         value = v;
     }
-    Value get() const {
+    virtual Value get() const {
         return value;
     }
     /** @} */
 
 
     /** Called when this value is being removed from a RangeMap. */
-    void removing(const Range &my_range) {
+    virtual void removing(const Range &my_range) {
         assert(!my_range.empty());
     }
 
     /** Called when removing part of a value from a RangeMap. */
-    void truncate(const Range &my_range, const typename Range::Value &new_size) {
-        assert(new_size>0 && new_size<=my_range.size);
+    virtual void truncate(const Range &my_range, const typename Range::Value &new_end) {
+        assert(new_end>my_range.first() && new_end<=my_range.last());
     }
 
     /** Called to merge two RangeMap values.  The values can be merged only if they compare equal. */
@@ -347,15 +414,15 @@ public:
 
 #if 0 /* Must be implemented in the subclass due to return type. */
     /** Split a RangeMap value into two parts. */
-    RangeMapValue split(const Range &my_range, const typename Range::Value &new_size) {
-        assert(new_size>0 && new_size<my_range.size);
+    RangeMapValue split(const Range &my_range, const typename Range::Value &new_end) {
+        assert(my_range.contains(Range(new_end)));
         return *this;
     }
 #endif
 
     /** Print a RangeMap value.
      *  @{ */
-    void print(std::ostream &o) const {
+    virtual void print(std::ostream &o) const {
         o <<value;
     }
     friend std::ostream& operator<<(std::ostream &o, const RangeMapValue &x) {
@@ -567,13 +634,13 @@ public:
      *  @{ */
     iterator find(const typename Range::Value &addr) {
         iterator ei = lower_bound(addr);
-        if (ei==end() || Range(addr, 1).left_of(ei->first))
+        if (ei==end() || Range(addr).left_of(ei->first))
             return end();
         return ei;
     }
     const_iterator find(const typename Range::Value &addr) const {
         const_iterator ei = lower_bound(addr);
-        if (ei==end() || Range(addr, 1).left_of(ei->first))
+        if (ei==end() || Range(addr).left_of(ei->first))
             return end();
         return ei;
     }
@@ -584,10 +651,10 @@ public:
      *
      *  @{ */
     iterator lower_bound(const typename Range::Value &addr) {
-        return ranges.lower_bound(Range(addr, 1));
+        return ranges.lower_bound(Range(addr));
     }
     const_iterator lower_bound(const typename Range::Value &addr) const {
-        return ranges.lower_bound(Range(addr, 1));
+        return ranges.lower_bound(Range(addr));
     }
     /** @} */
 
@@ -598,7 +665,7 @@ public:
         if (empty())
             return end();
         iterator lb = lower_bound(addr);
-        if (lb!=end() && lb.first.begins_before(Range(addr, 1), false/*non-strict*/))
+        if (lb!=end() && lb.first.begins_before(Range(addr), false/*non-strict*/))
             return lb;
         return --lb;
     }
@@ -606,7 +673,7 @@ public:
         if (empty())
             return end();
         const_iterator lb = lower_bound(addr);
-        if (lb!=end() && lb->first.begins_before(Range(addr, 1), false/*non-strict*/))
+        if (lb!=end() && lb->first.begins_before(Range(addr), false/*non-strict*/))
             return lb;
         return --lb;
     }
@@ -620,9 +687,9 @@ public:
     iterator best_fit(const typename Range::Value &size, iterator start) {
         iterator best = end();
         for (iterator ri=start; ri!=end(); ++ri) {
-            if (ri->first.size==size)
+            if (ri->first.size()==size)
                 return ri;
-            if (ri->first.size>size && (best==end() || ri->first.size<best->first.size))
+            if (ri->first.size()>size && (best==end() || ri->first.size()<best->first.size()))
                 best = ri;
         }
         return best;
@@ -630,9 +697,9 @@ public:
     const_iterator best_fit(const typename Range::Value &size, const_iterator start) const {
         const_iterator best = end();
         for (const_iterator ri=start; ri!=end(); ++ri) {
-            if (ri->first.size==size)
+            if (ri->first.size()==size)
                 return ri;
-            if (ri->first.size>size && (best==end() || ri->first.size<best->first.size))
+            if (ri->first.size()>size && (best==end() || ri->first.size()<best->first.size()))
                 best = ri;
         }
         return best;
@@ -645,14 +712,14 @@ public:
      *  @{ */
     iterator first_fit(const typename Range::Value &size, iterator start) {
         for (iterator ri=start; ri!=end(); ++ri) {
-            if (ri->first.size>=size)
+            if (ri->first.size()>=size)
                 return ri;
         }
         return end();
     }
     const_iterator first_fit(const typename Range::Value &size, const_iterator start) {
         for (const_iterator ri=start; ri!=end(); ++ri) {
-            if (ri->first.size>=size)
+            if (ri->first.size()>=size)
                 return ri;
         }
         return end();
@@ -677,18 +744,19 @@ public:
 
     /** Returns the number of values represented by this RangeMap.  The number of values does not typically correlate with the
      *  amount of memory used by the RangeMap since each element of the underlying std::map represents an arbitrary number of
-     *  values. */
+     *  values.  Note that if the range occupies the entire possible set of values then the size might be returned as zero due
+     *  to overflow, and it will be necessary to call empty() to make the determination. */
     typename Range::Value size() const {
         typename Range::Value retval = 0;
         for (const_iterator ei=begin(); ei!=end(); ++ei)
-            retval += ei->first.size;
+            retval += ei->first.size();
         return retval;
     }
 
     /** Returns the minimum value in an extent map.  The extent map must not be empty. */
     typename Range::Value min() const {
         assert(!empty());
-        return ranges.begin()->first.begin;
+        return ranges.begin()->first.first();
     }
 
     /** Returns the maximum value in an extent map.  The extent map must not be empty. */
@@ -700,7 +768,7 @@ public:
     /** Returns the range of values in this map. */
     Range minmax() const {
         typename Range::Value lt=min(), rt=max();
-        return Range(lt, rt+1-lt);
+        return Range::inin(lt, rt);
     }
 
     /**************************************************************************************************************************
@@ -741,7 +809,7 @@ public:
         Map insertions;
         iterator erase_begin=end();
         iterator ei;
-        for (ei=lower_bound(erase_range.begin); ei!=end() && !erase_range.left_of(ei->first); ++ei) {
+        for (ei=lower_bound(erase_range.first()); ei!=end() && !erase_range.left_of(ei->first); ++ei) {
             Range found_range = ei->first;
             Value &v = ei->second;
             if (erase_range.contains(found_range)) {
@@ -754,23 +822,23 @@ public:
                 assert(erase_begin==end());
                 erase_begin = ei;
                 RangePair rt = found_range.split_range_at(erase_range.last()+1);
-                insertions[rt.second] = v.split(found_range, rt.first.size);
-                RangePair lt = rt.first.split_range_at(erase_range.begin);
-                v.truncate(rt.first, lt.first.size);
+                insertions[rt.second] = v.split(found_range, rt.second.first());
+                RangePair lt = rt.first.split_range_at(erase_range.first());
+                v.truncate(rt.first, erase_range.first());
                 insertions[lt.first] = v;
             } else if (erase_range.begins_after(found_range, true/*strict*/)) {
                 /* Erase right part of found range. */
                 assert(erase_begin==end());
                 erase_begin = ei;
-                RangePair halves = found_range.split_range_at(erase_range.begin);
-                v.truncate(found_range, halves.first.size);
+                RangePair halves = found_range.split_range_at(erase_range.first());
+                v.truncate(found_range, erase_range.first());
                 insertions[halves.first] = v;
             } else if (erase_range.ends_before(found_range, true/*strict*/)) {
                 /* Erase left part of found range. */
                 if (erase_begin==end())
                     erase_begin = ei;
                 RangePair halves = found_range.split_range_at(erase_range.last()+1);
-                insertions[halves.second] = v.split(found_range, halves.first.size);
+                insertions[halves.second] = v.split(found_range, halves.second.first());
                 v.removing(halves.first);
             }
         }
@@ -790,7 +858,7 @@ public:
     void erase_ranges(const OtherMap &other) {
         assert((const void*)&other!=(const void*)this);
         for (typename OtherMap::const_iterator ri=other.begin(); ri!=other.end(); ++ri)
-            erase(Range(ri->first.begin, ri->first.size));
+            erase(Range::inin(ri->first.first(), ri->first.last()));
     }
 
     /** Insert a range/value pair into the map.  If @p make_hole is true then the new range is allowed to replace existing
@@ -805,13 +873,13 @@ public:
         if (make_hole) {
             erase(new_range);
         } else {
-            iterator found = lower_bound(new_range.begin);
+            iterator found = lower_bound(new_range.first());
             if (found!=end() && new_range.overlaps(found->first))
                 return end();
         }
 
         /* Attempt to merge with a left and/or right value. */
-        iterator left = new_range.begin>0 ? find(new_range.begin-1) : end();
+        iterator left = new_range.first()>Range::minimum() ? find(new_range.first()-1) : end();
         if (left!=end() && new_range.abuts_gt(left->first) && new_value.merge(new_range, left->first, left->second)) {
             new_range = left->first.join(new_range);
             ranges.erase(left);
@@ -857,7 +925,7 @@ public:
     bool overlaps(const Range &r) const {
         if (r.empty())
             return false;
-        const_iterator found = lower_bound(r.begin);
+        const_iterator found = lower_bound(r.first());
         return found!=end() && r.overlaps(found->first);
     }
 
@@ -872,7 +940,7 @@ public:
     bool contains(Range need) const {
         if (need.empty())
             return true;
-        const_iterator found=find(need.begin);
+        const_iterator found=find(need.first());
         while (1) {
             if (found==end())
                 return false;
@@ -925,7 +993,7 @@ public:
      *  @{ */
     iterator find_overlap(iterator start, iterator stop, const RangeMap &x) {
         iterator ia = start;
-        const_iterator ib = x.lower_bound(begin->first.begin);
+        const_iterator ib = x.lower_bound(start->first.first());
 
         while (ia!=stop && ib!=x.end() && ia->first.distinct(ib->first)) {
             while (ia!=stop && ia->first.left_of(ib->first))
@@ -938,7 +1006,7 @@ public:
     }
     const_iterator find_overlap(const_iterator start, const_iterator stop, const RangeMap &x) const {
         const_iterator ia = start;
-        const_iterator ib = x.lower_bound(start->first.begin);
+        const_iterator ib = x.lower_bound(start->first.first());
 
         while (ia!=stop && ib!=x.end() && ia->first.distinct(ib->first)) {
             while (ia!=stop && ia->first.left_of(ib->first))
@@ -969,19 +1037,14 @@ public:
         ResultMap retval;
         if (limits.empty())
             return retval;
-        typename Range::Value pending = limits.begin;
-        for (const_iterator ri=lower_bound(limits.begin); ri!=end() && !limits.left_of(ri->first); ++ri) {
-            if (ri->first.begin>pending) {
-                typename Range::Value size = ri->first.begin - pending;
-                retval.insert(Range(pending, size));
-            }
+        typename Range::Value pending = limits.first();
+        for (const_iterator ri=lower_bound(limits.first()); ri!=end() && !limits.left_of(ri->first); ++ri) {
+            if (pending < ri->first.first())
+                retval.insert(Range::inin(pending, ri->first.first()-1));
             pending = ri->first.last()+1;
         }
-        if (pending <= limits.last()) {
-            typename Range::Value size = limits.last()+1-pending;
-            retval.insert(Range(pending, size));
-        }
-
+        if (pending <= limits.last())
+            retval.insert(Range::inin(pending, limits.last()));
         if (!retval.empty())
             assert(retval.minmax().contained_in(limits, false));
         return retval;
@@ -992,7 +1055,7 @@ public:
     RangeMap select_overlapping_ranges(const Range &selector) const {
         RangeMap retval;
         if (!selector.empty()) {
-            for (const_iterator ri=lower_bound(selector.begin); ri!=end() && !selector.left_of(ri->first); ++ri) {
+            for (const_iterator ri=lower_bound(selector.start()); ri!=end() && !selector.left_of(ri->first); ++ri) {
                 if (selector.overlaps(ri->first))
                     retval.insert(ri->first, ri->second);
             }

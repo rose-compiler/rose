@@ -269,6 +269,6 @@ SgAsmElfStrtab::unparse(std::ostream &f) const
     
     /* Fill free areas with zero */
     for (ExtentMap::const_iterator i=get_freelist().begin(); i!=get_freelist().end(); ++i) {
-        container->write(f, i->first.begin, std::string(i->first.size, '\0'));
+        container->write(f, i->first.first(), std::string(i->first.size(), '\0'));
     }
 }

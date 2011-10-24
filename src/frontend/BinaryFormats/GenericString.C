@@ -361,7 +361,7 @@ SgAsmGenericStrtab::reallocate(bool shrink)
         if (storage->get_offset()==SgAsmGenericString::unallocated) {
             try {
                 Extent e = get_freelist().allocate_best_fit(storage->get_string().size()+1);
-                rose_addr_t new_offset = e.begin;
+                rose_addr_t new_offset = e.first();
                 storage->set_offset(new_offset);
             } catch(std::bad_alloc &x) {
                 /* nothing large enough on the free list */
@@ -398,8 +398,8 @@ SgAsmGenericStrtab::reallocate(bool shrink)
         /* See if we can release any address space and shrink the containing section. The containing section's "set_size"
          * method will adjust the free list by removing some bytes from it. */
         Extent hi = get_freelist().rbegin()->first;
-        if (hi.begin + hi.size == container->get_size())
-            container->set_size(hi.begin);
+        if (hi.first() + hi.size() == container->get_size())
+            container->set_size(hi.first());
     }
 
     if (reallocated)
