@@ -749,6 +749,40 @@ public:
     }
     /** @}*/
 
+    /** Callback to detect padding.  This callback looks for repeated patterns of bytes that are used for padding and adds them
+     *  as a static data block to the preceding function.  Multiple patterns can be specified per callback object for
+     *  efficiency, and the first pattern that matches will be used.  Each pattern is matched as many times as possible (up to
+     *  a user-specified maximum).  Once a repeated matching of the pattern is found, it is considered padding only if it
+     *  matches at least some minimum (user-specified) number of times and is anchored to (contiguous with) a preceding and/or
+     *  following function according to the @p begins_contiguously and @p ends_contiguously properties.
+     *
+     *  This callback can be invoked by scan_unassigned_bytes(), scan_intrafunc_bytes(), or scan_interfunc_bytes() depending on
+     *  the kind of padding for which it is searching. */
+    struct FindDataPadding: public ByteRangeCallback {
+        std::vector<SgUnsignedCharList> patterns;       /**< Pattern of padding, repeated at least minimum_size times. */
+        size_t minimum_nrep;                            /**< Minimum number of matched patterns to be considered padding. */
+        size_t maximum_nrep;                            /**< Maximum number of mathced patterns to be considered padding. */
+        bool begins_contiguously;                       /**< If true, pattern must start immediately after a function. */
+        bool ends_contiguously;                         /**< If true, pattern must end immediately before a function. */
+        rose_addr_t maximum_range_size;                 /**< Skip this callback if the range is larger than this. */
+
+        FindDataPadding()
+            : minimum_nrep(2), maximum_nrep(1024*1024), begins_contiguously(false), ends_contiguously(true),
+              maximum_range_size(100*1024*1024) {}
+        virtual bool operator()(bool enabled, const Args &args);
+    };
+
+    /** Callback to add unassigned addresses to a function.  Any unassigned addresses are added as data blocks to the preceding
+     *  normal function.  Normal functions are anything but FUNC_INTERPAD or FUNC_THUNK.  This callback is generally used as a
+     *  final pass over the over the address space to vacuum up anything that couldn't be assigned in previous passes.  It
+     *  should be invoked after padding is detected, or else the padding will end up as part of the same data block. */
+    struct FindData: public ByteRangeCallback {
+        DataRangeMap *padding_ranges;
+        FindData(): padding_ranges(NULL) {}
+        ~FindData() { delete padding_ranges; }
+        virtual bool operator()(bool enabled, const Args &args);
+    };
+
     /** Callback to create inter-function instruction padding.  This callback can be passed to the scan_interfunc_insns()
      *  method's callback list.  Whenever it detects a contiguous sequence of one or more of the specified instructions (in any
      *  order) immediately after the end of a function it will either create a new SgAsmFunction::FUNC_INTERPAD function to
@@ -813,22 +847,40 @@ public:
     };
 
     /** Callback to find thunks.  Creates functions whose only instruction is a JMP to the entry point of another function.
-     *  This should be called by scan_unassigned_insns() before the PostFunctionBlocks callback.
+     *  This should be called by scan_unassigned_insns() before the PostFunctionBlocks callback. Since this is an instruction
+     *  callback, it only scans existing instructions.
      *
-     *  Note: This is highly experimental. [RPM 2011-09-22] */
+     *  A thunk by this definition is a JMP instruction that is not already in the middle of a basic block and which has a
+     *  single successor that's the entry point of an existing function.
+     *
+     *  See also, FindThunkTables class. */
     struct FindThunks: public InsnRangeCallback {
         virtual bool operator()(bool enabled, const Args &args);
     };
 
-    /** Callback to add post-function data to the preceding function.  Any part of the address space that's at the end of a
-     *  normal function (anything but FUNC_INTERPAD or FUNC_THUNK) and is not yet assigned to any function is added to the
-     *  function as a data block.  This should be called after inter-function padding has been discovered, or else the padding
-     *  will end up as part of the same data block.
+    /** Callback to find thunk tables.  Creates functions whose only instruction is a JMP.  The detection is only triggered
+     *  when a user-specified consecutive number of JMP instructions are encountered.  The definition of a thunk in this case
+     *  is a JMP to an address that has an instruction, provided the JMP does not already appear in a basic block containing
+     *  more than just the JMP instruction.  If the validate_targets property is false, then the callback does not verify that
+     *  the JMP successors are addresses where an instruction can be disassembled.
      *
-     *  See also PostFunctionInsns.  It probably doesn't make sense to use both.
-     *
-     *  Note: This is highly experimental. [RPM 2011-09-22] */
-    struct PostFunctionData: public ByteRangeCallback {
+     *  See also, FindThunks class. */
+    struct FindThunkTables: public ByteRangeCallback {
+        bool begins_contiguously;       /**< Match table only at the beginning of the address range. */
+        bool ends_contiguously;         /**< Match table only at the end of the address range. */
+        size_t minimum_nthunks;         /**< Mininum number of JMPs necessary to be considered a thunk table. */
+        bool validate_targets;          /**< If true, then successors must point to instructions. */
+        FindThunkTables(): begins_contiguously(false), ends_contiguously(false), minimum_nthunks(3), validate_targets(true) {}
+        virtual bool operator()(bool enabled, const Args &args);
+    };
+
+    /** Callback to find functons that are between padding.  This callback looks for BLK_PADDING data blocks that are separated
+     *  from one another by a region of unassigned bytes, and causes the first of those bytes to be a function entry address.
+     *  The padding that follows is moved into the new function. */
+    struct FindInterPadFunctions: public ByteRangeCallback {
+        DataRangeMap *padding_ranges;    /**< Information about all the padding data blocks that belong to functions. */
+        FindInterPadFunctions(): padding_ranges(NULL) {}
+        ~FindInterPadFunctions() { delete padding_ranges; }
         virtual bool operator()(bool enabled, const Args &args);
     };
 
@@ -858,7 +910,7 @@ public:
     virtual void append(BasicBlock*, SgAsmInstruction*);        /**< Add an instruction to a basic block. */
     virtual void append(BasicBlock*, DataBlock*, unsigned reasons); /* Add a data block to a basic block. */
     virtual void append(Function*, BasicBlock*, unsigned reasons, bool keep=false); /* Append a basic block to a function */
-    virtual void append(Function*, DataBlock*, unsigned reasons); /* Append a data block to a function */
+    virtual void append(Function*, DataBlock*, unsigned reasons, bool force=false); /* Append a data block to a function */
     virtual void remove(Function*, BasicBlock*);                /* Remove a basic block from a function. */
     virtual void remove(Function*, DataBlock*);                 /* Remove a data block from a function. */
     virtual void remove(BasicBlock*, DataBlock*);               /* Remove association between basic block and data block. */
@@ -913,6 +965,14 @@ public:
     virtual size_t datablock_extent(DataBlock*,
                                     DataRangeMap *extents=NULL/*in,out*/,
                                     rose_addr_t *lo_addr=NULL/*out*/, rose_addr_t *hi_addr=NULL/*out*/);
+
+    /** Addes assigned datablocks to extent.  Scans across all known data blocks and for any block that's assigned to a
+     *  function, adds that block's extents to the supplied RangeMap.  Return value is the number of data blocks added. */
+    virtual size_t datablock_extent(DataRangeMap *extent/*in,out*/);
+
+    /** Addes padding datablocks to extent.  Scans across all known data blocks, and for any padding block that's assigned to a
+     * function, adds that block's extents to the supplied RangeMap.  Return value is the number of padding blocks added. */
+    virtual size_t padding_extent(DataRangeMap *extent/*in,out*/);
 
     /** Returns an indication of whether a function is contiguous.  All empty functions are contiguous. If @p strict is true,
      *  then a function is contiguous if it owns all bytes in a contiguous range of the address space.  If @p strict is false

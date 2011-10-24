@@ -455,19 +455,12 @@ Partitioner::update_analyses(BasicBlock *bb)
             if (0==nentries)
                 break;
 
-            /* We can assume that since we found a valid jump table that we now know all the successors. Perhaps we shouldn't
-             * be this brave? */
-            bb->cache.sucs_complete = true;
-
             /* Create a data block for the jump table. */
             DataBlock *dblock = find_db_starting(base_va, nentries*entry_size);
             append(bb, dblock, SgAsmBlock::BLK_JUMPTABLE);
 
             if (debug)
                 fprintf(debug, "[jump table at 0x%08"PRIx64"+%zu*%zu]", base_va, nentries, entry_size);
-#if 1 /* DEBUGGING [RPM 2011-10-12] */
-            fprintf(stderr, "ROBB: jump table at 0x%08"PRIx64"+%zu*%zu\n", base_va, nentries, entry_size);
-#endif
         } while (0);
     }
 
@@ -875,12 +868,21 @@ Partitioner::append(Function* f, BasicBlock *bb, unsigned reason, bool keep/*=fa
  *  appended (it is not added a second time).
  *
  *  Whenever a block is added to a function, we should supply a reason for adding it.  The @p reason bit vector are those
- *  reasons.  The bits are from the SgAsmBlock::Reason enum. */
+ *  reasons.  The bits are from the SgAsmBlock::Reason enum.
+ *
+ *  If @p force is true then the data block is first removed from any basic block or function to which it already belongs. */
 void
-Partitioner::append(Function *func, DataBlock *block, unsigned reason)
+Partitioner::append(Function *func, DataBlock *block, unsigned reason, bool force)
 {
     assert(func);
     assert(block);
+
+    if (force) {
+        if (block->function)
+            remove(block->function, block);
+        if (block->basic_block)
+            remove(block->basic_block, block);
+    }
 
     block->reason |= reason;
     if (block->function==func)
@@ -1821,6 +1823,136 @@ Partitioner::scan_interfunc_bytes(ByteRangeCallbacks &cblist, MemoryMap *restric
     scan_unassigned_bytes(cblist2, restrict);
 }
 
+bool
+Partitioner::FindDataPadding::operator()(bool enabled, const Args &args)
+{
+    if (!enabled)
+        return false;
+    Partitioner *p = args.partitioner;
+    Extent range = args.range;
+
+    /* What is the maximum pattern length in bytes? */
+    if (patterns.empty())
+        return true;
+    size_t max_psize = patterns[0].size();
+    for (size_t pi=1; pi<patterns.size(); ++pi)
+        max_psize = std::max(max_psize, patterns[pi].size());
+
+
+    /* What is the previous function?  The one to which padding is to be attached. */
+    if (range.first()<=Extent::minimum())
+        return true;
+    FunctionRangeMap::const_iterator prev = begins_contiguously ?
+                                            args.ranges.find(range.first()-1) :
+                                            args.ranges.find_prior(range.first()-1);
+    if (prev==args.ranges.end())
+        return true;
+    Function *func = prev->second.get();
+    assert(func!=NULL);
+
+
+    /* Do we need to be contiguous with a following function?  This only checks whether the incoming range ends at the
+     * beginning of a function.  We'll check below whether a padding sequence also ends at the end of this range. */
+    if (ends_contiguously) {
+        if (max_psize*maximum_nrep < range.size())
+            return true;
+        if (range.last()>=Extent::maximum())
+            return true;
+        FunctionRangeMap::const_iterator next = args.ranges.find(range.last()+1);
+        if (next==args.ranges.end())
+            return true;
+    }
+
+    /* To keep things simple, we read the entire range (which might not be contigous in the MemoryMap) into a contiguous
+     * buffer.  However, that means we had better not try to read huge, anonymous ranges.   Also handle the case of a short
+     * read, although this shouldn't happen if the caller supplied the correct memory map to the scan_*_bytes() method. */
+    if (range.size() > maximum_range_size)
+        return true;
+    SgUnsignedCharList buf = p->ro_map.read(range.first(), range.size());
+    if (ends_contiguously && buf.size()<range.size())
+        return true;
+    range.size(buf.size());
+
+    /* There might be more than one sequence of padding bytes.  Look for all of them, but constrained according to
+     * begins_contiguously and ends_contiguously. */
+    size_t nblocks = 0; // number of blocks added to function
+    while (!range.empty()) {
+        if (begins_contiguously && range.first()>args.range.first())
+            return true;
+        for (size_t pi=0; pi<patterns.size(); ++pi) {
+            size_t psize = patterns[pi].size();
+            assert(psize>0);
+            size_t nrep = 0;
+            for (size_t offset=range.first()-args.range.first();
+                 offset+psize<=buf.size() && nrep<maximum_nrep;
+                 offset+=psize, ++nrep) {
+                if (memcmp(&buf[offset], &patterns[pi][0], psize))
+                    break;
+            }
+            if (nrep>0 && nrep>=minimum_nrep && (!ends_contiguously || nrep*psize==range.size())) {
+                /* Found a matching repeated pattern.  Add data block to function. */
+                DataBlock *dblock = p->find_db_starting(range.first(), nrep*psize);
+                assert(dblock!=NULL);
+                p->append(func, dblock, SgAsmBlock::BLK_PADDING);
+                ++nblocks;
+                if (p->debug) {
+                    if (1==nblocks)
+                        fprintf(p->debug, "Partitioner::FindDataPadding for F%08"PRIx64": added", func->entry_va);
+                    fprintf(p->debug, " D%08"PRIx64, range.first());
+                }
+                range.first(range.first()+nrep*psize-1); // will be incremented after break
+                break;
+            }
+        }
+        if (!range.empty())
+            range.first(range.first()+1);
+    }
+    if (p->debug && nblocks>0)
+        fprintf(p->debug, "\n");
+
+    return true;
+}
+
+bool
+Partitioner::FindData::operator()(bool enabled, const Args &args)
+{
+    if (!enabled)
+        return false;
+    Partitioner *p = args.partitioner;
+
+    /* We must have a function immediately before this range and to which this range's data can be attached. */
+    if (args.range.first()<=Extent::minimum())
+        return true;
+    FunctionRangeMap::const_iterator prev = args.ranges.find(args.range.first()-1);
+    if (prev==args.ranges.end())
+        return true;
+    Function *func = prev->second.get();
+    assert(func!=NULL);
+
+    /* Don't append data to non-functions. */
+    if (0!=(func->reason & (SgAsmFunction::FUNC_INTERPAD | SgAsmFunction::FUNC_THUNK)))
+        return true;
+
+    /* Padding ranges are computed once and cached. */
+    if (NULL==padding_ranges) {
+        padding_ranges = new DataRangeMap;
+        p->padding_extent(padding_ranges);
+    }
+                
+    /* Don't append data if the previous thing is padding. */
+    if (padding_ranges->find(args.range.first()-1)!=padding_ranges->end())
+        return true;
+
+    /* Create a data block and add it to the previous function. */
+    DataBlock *dblock = p->find_db_starting(args.range.first(), args.range.size());
+    assert(dblock!=NULL);
+    p->append(func, dblock, SgAsmBlock::BLK_USERDEF);
+    if (p->debug)
+        fprintf(p->debug, "Partitioner::FindData: for F%08"PRIx64": added D%08"PRIx64"\n",
+                func->entry_va, args.range.first());
+    return true;
+}
+
 /* Create functions or data for inter-function padding instruction sequences.  Returns true if we did not find interfunction
  * padding and other padding callbacks should proceed; returns false if we did find padding and the others should be skipped. */
 bool
@@ -2127,6 +2259,118 @@ Partitioner::FindThunks::operator()(bool enabled, const Args &args)
     return true;
 }
 
+bool
+Partitioner::FindInterPadFunctions::operator()(bool enabled, const Args &args)
+{
+    if (!enabled)
+        return false;
+    Partitioner *p = args.partitioner;
+
+    /* Initialize the data block ranges once and cache it in this object. */
+    if (!padding_ranges) {
+        padding_ranges = new DataRangeMap;
+        p->padding_extent(padding_ranges);
+    }
+
+    /* Range must be immediately preceded by a padding block. */
+    if (args.range.first()<=Extent::minimum())
+        return true;
+    if (padding_ranges->find(args.range.first()-1) == padding_ranges->end())
+        return true;
+
+    /* Range must be immediately followed by a padding block. */
+    if (args.range.last()>=Extent::maximum())
+        return true;
+    DataRangeMap::iterator next = padding_ranges->find(args.range.last()+1);
+    if (next==padding_ranges->end())
+        return true;
+    DataBlock *next_dblock = next->second.get();
+
+    /* Create a new function and move the following padding to the new function. */
+    Function *new_func = p->add_function(args.range.first(), SgAsmFunction::FUNC_USERDEF);
+    p->append(new_func, next_dblock, SgAsmBlock::BLK_PADDING, true/*force*/);
+    return true;
+}
+
+bool
+Partitioner::FindThunkTables::operator()(bool enabled, const Args &args)
+{
+    if (!enabled)
+        return false;
+    Partitioner *p = args.partitioner;
+    Extent range = args.range;
+
+    while (!range.empty()) {
+
+        /* Find a single, contiguous thunk table. */
+        Disassembler::InstructionMap thunks; // each thunk is a single JMP instruction
+        bool in_table = false;
+        rose_addr_t va;
+        for (va=range.first(); va<=range.last() && (in_table || thunks.empty()); va++) {
+            if (begins_contiguously && !in_table && va>args.range.first())
+                return true;
+
+            /* Must be a JMP instruction. */
+            SgAsmInstruction *insn = p->find_instruction(va);
+            SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn);
+            if (!insn || (insn_x86->get_kind()!=x86_jmp && insn_x86->get_kind()!=x86_farjmp)) {
+                in_table = false;
+                continue;
+            }
+
+            /* Instruction must not be part of a larger basic block. Be careful not to create basic blocks unecessarily. */
+            BasicBlock *bb = p->find_bb_containing(va, false);
+            if (bb && bb->insns.size()>1) {
+                in_table = false;
+                continue;
+            }
+            if (!bb)
+                bb = p->find_bb_starting(va);
+            assert(bb!=NULL);
+
+            if (validate_targets) {
+                /* Find successors of the JMP instruction. */
+                Disassembler::AddressSet succs;
+                bool complete;
+                if (bb->insns.size()>1) {
+                    succs.insert(bb->insns[1]->get_address());
+                    complete = true;
+                } else {
+                    succs = p->successors(bb, &complete);
+                }
+
+                /* If the successor is known, it should point to another instruction. */
+                bool points_to_insn = true;
+                for (Disassembler::AddressSet::iterator si=succs.begin(); si!=succs.end() && points_to_insn; ++si)
+                    points_to_insn = NULL != p->find_instruction(*si);
+                if (!points_to_insn) {
+                    in_table = false;
+                    continue;
+                }
+            }
+
+            /* This is a thunk. Save it and skip ahead to the start of the following instruction. */
+            in_table = true;
+            thunks[insn->get_address()] = insn;
+            va += insn->get_raw_bytes().size() - 1; // also incremented by loop
+        }
+
+        /* This is only a thunk table if we found enough thunks and (if appropriate) ends at the end of the range. */
+        if (thunks.size()>minimum_nthunks && (!ends_contiguously || va==args.range.last()+1)) {
+            for (Disassembler::InstructionMap::iterator ii=thunks.begin(); ii!=thunks.end(); ++ii) {
+                Function *thunk = p->add_function(ii->first, SgAsmFunction::FUNC_THUNK);
+                BasicBlock *bb = p->find_bb_starting(ii->first);
+                p->append(thunk, bb, SgAsmBlock::BLK_ENTRY_POINT);
+                if (p->debug)
+                    fprintf(p->debug, "Partitioner::FindThunkTable: thunk F%08"PRIx64"\n", thunk->entry_va);
+            }
+        }
+
+        range.first(va);
+    }
+    return true;
+}
+
 /** Determines if function is a thunk.  A thunk is a small piece of code (a function) whose only purpose is to branch to
  *  another function.   This predicate should not be confused with the SgAsmFunction::FUNC_THUNK reason bit; the
  *  latter is only an indication of why the function was originally created.  A thunk (as defined by this predicate) might not
@@ -2165,37 +2409,6 @@ Partitioner::is_thunk(Function *func)
         0!=(fi->second->reason & SgAsmFunction::FUNC_INTERPAD))
         return false;
 
-    return true;
-}
-
-bool
-Partitioner::PostFunctionData::operator()(bool enabled, const Args &args)
-{
-    if (!enabled)
-        return false;
-    Partitioner *p = args.partitioner;
-
-    /* What is the function _immediately_ before this range in the address space? */
-    if (args.range.begin<=0)
-        return true;            // no prior function
-    FunctionRangeMap::const_iterator prior = args.ranges.find(args.range.begin-1);
-    if (prior==args.ranges.end())
-        return true;            // no prior function
-    Function *func = prior->second.get();
-    assert(func!=NULL);
-
-    /* Don't append data to non-functions. */
-    if (0!=(func->reason & (SgAsmFunction::FUNC_INTERPAD | SgAsmFunction::FUNC_THUNK)))
-        return true;
-
-    /* Create the data block and attach it to the preceding function. */
-    DataBlock *dblock = p->find_db_starting(args.range.begin, args.range.size);
-    assert(dblock!=NULL);
-    p->append(func, dblock, SgAsmBlock::BLK_USERDEF);
-
-    if (p->debug)
-        fprintf(p->debug, "Partitioner::PostFunctionData: for F%08"PRIx64": added D%08"PRIx64"\n",
-                func->entry_va, args.range.begin);
     return true;
 }
 
@@ -2749,7 +2962,8 @@ Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
 void
 Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
 {
-    /* Add unassigned intra-function blocks to the surrounding function. */
+    /* Add unassigned intra-function blocks to the surrounding function.  This needs to come before detecting inter-function
+     * padding, otherwise it will also try to add the stuff between the true function and its following padding. */
     if (func_heuristics & SgAsmFunction::FUNC_INTRABLOCK) {
         IntraFunctionBlocks ifb;
         scan_intrafunc_insns(&ifb);
@@ -2757,41 +2971,42 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
 
     /* Detect inter-function padding */
     if (func_heuristics & SgAsmFunction::FUNC_INTERPAD) {
-        InsnRangeCallbacks cblist;
+        FindDataPadding cb;
+        cb.minimum_nrep = 2;
+        cb.maximum_nrep = 1024*1024;
+        cb.begins_contiguously = false;
+        cb.ends_contiguously = false;
 
-        InterFuncInsnPadding pad1;
-        pad1.x86_kinds.insert(x86_nop);
-        pad1.x86_kinds.insert(x86_int3);
-        pad1.begins_contiguously = false;
-        pad1.ends_contiguously = false;
-        pad1.minimum_size = 2;
-        cblist.append(&pad1);
+        SgUnsignedCharList pattern;
+        pattern.push_back(0x90);                /* x68 NOP */
+        cb.patterns.push_back(pattern);
 
-        SgUnsignedCharList bytes2;
-        bytes2.push_back(0x00);
-        InterFuncInsnPadding pad2;
-        pad2.byte_patterns.push_back(bytes2);
-        pad2.begins_contiguously = true;
-        pad2.ends_contiguously = true;
-        pad2.minimum_size = 2;
-        cblist.append(&pad2);
+        pattern.clear();
+        pattern.push_back(0xcc);                /* x86 INT3 */
+        cb.patterns.push_back(pattern);
 
-        scan_interfunc_insns(cblist);
+        scan_interfunc_bytes(&cb, &ro_map);
     }
 
-    /* Find thunks */
+    /* Find thunks.  The FindThunks callback finds single thunks based on instructions that have already been
+     * disassembled. It's criteria for a thunk is rather strict.  The FindThunkTables callback uses a more relaxed definition
+     * (especially when we clear validate_targets) but must find some minimum number of consective JMP instructions in order to
+     * be a table of thunks.  Both create functions whose only instruction is the JMP. */
     FindThunks find_thunks;
     scan_unassigned_insns(&find_thunks);
 
-#if 1
+    FindThunkTables find_thunk_tables;
+    find_thunk_tables.minimum_nthunks = 3; // at least this many JMPs per table
+    find_thunk_tables.validate_targets = false;
+    scan_unassigned_bytes(&find_thunk_tables, map);
+
     /* Append data to the end(s) of each function. */
-    PostFunctionData post_function_data;
-    scan_interfunc_bytes(&post_function_data, &ro_map);
-#else
-    /* Append instructions to the end(s) of each function. */
-    PostFunctionInsns post_function_insns;
-    scan_interfunc_insns(&post_function_insns);
-#endif
+    FindData find_data;
+    scan_unassigned_bytes(&find_data, &ro_map);
+
+    /* Find functions that we missed between inter-function padding. */
+    FindInterPadFunctions find_interpad_functions;
+    scan_unassigned_bytes(&find_interpad_functions, map);
 
     /* Give existing functions names from symbol tables. Don't create more functions. */
     if (interp) {
@@ -2889,14 +3104,53 @@ Partitioner::function_extent(Function *func,
 }
 
 size_t
+Partitioner::padding_extent(DataRangeMap *extents/*in,out*/)
+{
+    size_t nblocks = 0;
+    for (DataBlocks::const_iterator di=data_blocks.begin(); di!=data_blocks.end(); ++di) {
+        DataBlock *dblock = di->second;
+        if (0!=(dblock->reason & SgAsmBlock::BLK_PADDING) && NULL!=effective_function(dblock)) {
+            datablock_extent(dblock, extents);
+            ++nblocks;
+        }
+    }
+    return nblocks;
+}
+
+size_t
+Partitioner::datablock_extent(DataRangeMap *extents/*in,out*/)
+{
+    size_t nblocks = 0;
+    for (DataBlocks::const_iterator di=data_blocks.begin(); di!=data_blocks.end(); ++di) {
+        DataBlock *dblock = di->second;
+        if (NULL!=effective_function(dblock)) {
+            datablock_extent(dblock, extents);
+            ++nblocks;
+        }
+    }
+    return nblocks;
+}
+
+size_t
 Partitioner::datablock_extent(DataBlock *db,
                               DataRangeMap *extents/*in,out*/,
                               rose_addr_t *lo_addr_ptr/*out*/, rose_addr_t *hi_addr_ptr/*out*/)
 {
-    if (lo_addr_ptr)
-        *lo_addr_ptr = db->nodes.empty() ? 0 : db->nodes.front()->get_address();
-    if (hi_addr_ptr)
-        *hi_addr_ptr = db->nodes.empty() ? 0 : db->nodes.front()->get_address() + db->nodes.front()->get_raw_bytes().size();
+    if (db->nodes.empty()) {
+        if (lo_addr_ptr)
+            *lo_addr_ptr = 0;
+        if (hi_addr_ptr)
+            *hi_addr_ptr = 0;
+    } else {
+        rose_addr_t start = db->nodes.front()->get_address();
+        size_t size = db->nodes.front()->get_raw_bytes().size();
+        if (lo_addr_ptr)
+            *lo_addr_ptr = start;
+        if (hi_addr_ptr)
+            *hi_addr_ptr = start+size;
+        if (extents)
+            extents->insert(Extent(start, size), db);
+    }
 
     for (size_t i=1; i<db->nodes.size(); i++) {
         SgAsmStaticData *node = db->nodes[i];
