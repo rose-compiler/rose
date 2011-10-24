@@ -15,13 +15,13 @@ void Range<rose_addr_t>::print(std::ostream &o) const
 {
     if (empty()) {
         o <<"<empty>";
-    } else if (1==size) {
+    } else if (1==size()) {
         char buf[64];
-        sprintf(buf, "0x%08"PRIx64, begin);
+        sprintf(buf, "0x%08"PRIx64, first());
         o << buf;
     } else {
         char buf[64];
-        sprintf(buf, "0x%08"PRIx64"+0x%08"PRIx64"=0x%08"PRIx64, begin, size, begin+size);
+        sprintf(buf, "0x%08"PRIx64"+0x%08"PRIx64"=0x%08"PRIx64, first(), size(), first()+size());
         o <<buf;
     }
 }
@@ -38,17 +38,25 @@ void Range<rose_addr_t>::print(std::ostream &o) const
 char
 ExtentMap::category(const Extent &a, const Extent &b)
 {
-    if (a.begin==b.begin && a.size==b.size)
+    /* Added these for backward compatibility with an older version. */
+    if (a.empty() && b.empty())
         return 'C';
-    if (a.begin+a.size <= b.begin)
+    if (a.empty())
         return 'L';
-    if (a.begin >= b.begin+b.size)
+    if (b.empty())
         return 'R';
-    if (a.begin <= b.begin && a.begin+a.size >= b.begin+b.size)
+
+    if (a.first()==b.first() && a.size()==b.size())
+        return 'C';
+    if (a.first()+a.size() <= b.first())
+        return 'L';
+    if (a.first() >= b.first()+b.size())
+        return 'R';
+    if (a.first() <= b.first() && a.first()+a.size() >= b.first()+b.size())
         return 'O';
-    if (a.begin >= b.begin && a.begin+a.size <= b.begin+b.size)
+    if (a.first() >= b.first() && a.first()+a.size() <= b.first()+b.size())
         return 'I';
-    if (a.begin <= b.begin) /*already know a.begin+a.size > b.begin*/
+    if (a.first() <= b.first()) /*already know a.begin+a.size > b.begin*/
         return 'B';
     return 'E';
 }
@@ -60,7 +68,7 @@ ExtentMap::allocate_best_fit(rose_addr_t size)
     iterator found = best_fit(size, begin());
     if (found==end())
         throw std::bad_alloc();
-    Extent retval(found->first.begin, size);
+    Extent retval(found->first.first(), size);
     erase(retval);
     return retval;
 }
@@ -72,7 +80,7 @@ ExtentMap::allocate_first_fit(rose_addr_t size)
     iterator found = first_fit(size, begin());
     if (found==end())
         throw std::bad_alloc();
-    Extent retval(found->first.begin, size);
+    Extent retval(found->first.first(), size);
     erase(retval);
     return retval;
 }
@@ -165,8 +173,8 @@ ExtentMap::dump_extents(FILE *f, const char *prefix, const char *label, bool pad
         fprintf(f, "%s%-*s = offset 0x%08"PRIx64" (%"PRIu64"),"
                 " for 0x%08"PRIx64" (%"PRIu64") byte%s,"
                 " ending at 0x%08"PRIx64" (%"PRIu64")\n",
-                p, w, "", i->first.begin, i->first.begin,
-                i->first.size, i->first.size, 1==i->first.size?"":"s", 
-                i->first.begin+i->first.size, i->first.begin+i->first.size);
+                p, w, "", i->first.first(), i->first.first(),
+                i->first.size(), i->first.size(), 1==i->first.size()?"":"s", 
+                i->first.first()+i->first.size(), i->first.first()+i->first.size());
     }
 }

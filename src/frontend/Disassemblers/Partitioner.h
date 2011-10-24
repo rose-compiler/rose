@@ -392,16 +392,20 @@ public:
         return debug;
     }
 
-    /** Accessors for the memory map.  The partitioner needs to know the memory map that was used (or will be used, depending
-     *  on the partitioning mode of operation) for disassembly.  The map should certainly include all the bytes of instructions
-     *  because it may be used to construct static data blocks that are interspersed with the instructions.  It should also
-     *  include all read-only data if possible because that will improve the control flow analysis for indirect branches.
+    /** Accessors for the memory maps.
      *
-     *  The first argument may be the entire memory map.  The second (optional) argument should be the map describing memory
-     *  values for instructions and data and will be consulted for indirect jumps, among other things.  Typically this will be
-     *  the read-only portion of the first argument (the default if the second argument is missing).
+     *  The first argument is usually the complete memory map.  It should define all memory that holds instructions, either
+     *  instructions that have already been disassembled and provided to the Partitioner, or instructions that might be
+     *  disassembled in the course of partitioning.  Depending on disassembler flags, the disassembler will probably only look
+     *  at portions of the map that are marked executable.
      *
-     *  The first map will be stored by the partitioner as a pointer; the second map (if supplied) is copied.
+     *  The second (optional) map is used to initialize memory in the virtual machine semantics layer and should contain all
+     *  read-only memory addresses for the specimen.  This map normally also includes the parts of the first argument that hold
+     *  instructions.  Things such as dynamic library addresses (i.e., import sections) can also be supplied if they are
+     *  initialized and not expected to change during the life of the specimen. If a null pointer is specified (the default)
+     *  then this map is created from all read-only segments of the first argument.
+     *
+     *  The first map will be stored by the partitioner as a pointer; the other supplied maps are copied.
      *
      *  @{ */
     void set_map(MemoryMap *mmap, MemoryMap *ro_mmap=NULL);
@@ -533,8 +537,8 @@ public:
         FunctionRangeMapValue():            RangeMapValue<Extent, Function*>(NULL) {}
         FunctionRangeMapValue(Function *f): RangeMapValue<Extent, Function*>(f)    {} // implicit
 
-        FunctionRangeMapValue split(const Extent &my_range, const Extent::Value &new_size) {
-            assert(new_size>0 && new_size<my_range.size);
+        FunctionRangeMapValue split(const Extent &my_range, const Extent::Value &new_end) {
+            assert(my_range.contains(Extent(new_end)));
             return *this;
         }
 
@@ -556,8 +560,8 @@ public:
         DataRangeMapValue():             RangeMapValue<Extent, DataBlock*>(NULL) {}
         DataRangeMapValue(DataBlock *d): RangeMapValue<Extent, DataBlock*>(d)    {} // implicit
 
-        DataRangeMapValue split(const Extent &my_range, const Extent::Value &new_size) {
-            assert(new_size>0 && new_size<my_range.size);
+        DataRangeMapValue split(const Extent &my_range, const Extent::Value &new_end) {
+            assert(my_range.contains(Extent(new_end)));
             return *this;
         }
 

@@ -801,7 +801,8 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
                 ep = all[i]->get_mapped_preferred_extent();
             }
             fprintf(stderr, "%s        0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64" [%d] \"%s\"\n",
-                    p, ep.begin, ep.size, ep.begin+ep.size, all[i]->get_id(), all[i]->get_name()->get_string(true).c_str());
+                    p, ep.first(), ep.size(), ep.first()+ep.size(), all[i]->get_id(),
+                    all[i]->get_name()->get_string(true).c_str());
         }
     }
 
@@ -834,14 +835,14 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
             amap.dump_extents(stderr, (std::string(p)+"        ").c_str(), "amap");
             fprintf(stderr, "%s    Extent of S:\n", p);
             fprintf(stderr, "%s        start=0x%08"PRIx64" size=0x%08"PRIx64" end=0x%08"PRIx64"\n",
-                    p, sp.begin, sp.size, sp.begin+sp.size);
+                    p, sp.first(), sp.size(), sp.first()+sp.size());
         }
         
         /* Neighborhood (nhs) of S is a single extent. However, if S is zero size then nhs might be empty.  The neighborhood of
          * S is S plus all sections that overlap with S and all sections that are right-contiguous with S. */
         ExtentMap nhs_map;
         for (ExtentMap::iterator amapi=amap.begin(); amapi!=amap.end(); ++amapi) {
-            if (amapi->first.begin <= sp.begin+sp.size && amapi->first.begin+amapi->first.size > sp.begin)
+            if (amapi->first.first() <= sp.first()+sp.size() && amapi->first.first()+amapi->first.size() > sp.first())
                 nhs_map.insert(amapi->first, amapi->second); 
         }
         if (debug) {
@@ -877,10 +878,10 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
               case 'L':
                 if (debug)
                     fprintf(stderr, "%s        L 0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64" [%d] \"%s\"\n", 
-                            p, ap.begin, ap.size, ap.begin+ap.size, a->get_id(), a->get_name()->get_string(true).c_str());
+                            p, ap.first(), ap.size(), ap.first()+ap.size(), a->get_id(), a->get_name()->get_string(true).c_str());
                 break;
               case 'R':
-                if (ap.begin==nhs.begin+nhs.size && 0==ap.size) {
+                  if (ap.first()==nhs.first()+nhs.size() && 0==ap.size()) {
                     /* Empty sections immediately right of the neighborhood of S should actually be considered part of the
                      * neighborhood rather than right of it. */
                     neighbors.push_back(a);
@@ -909,7 +910,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
                 rose_addr_t align = filespace ? a->get_file_alignment() : a->get_mapped_alignment();
                 char cat = ExtentMap::category(ap, sp);
                 fprintf(stderr, "%s        %c %c0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64,
-                        p, cat, 0==ap.begin % (align?align:1) ? ' ' : '!', ap.begin, ap.size, ap.begin+ap.size);
+                        p, cat, 0==ap.first() % (align?align:1) ? ' ' : '!', ap.first(), ap.size(), ap.first()+ap.size());
                 if (strchr("RICE", cat)) {
                     fprintf(stderr, " align=0x%08"PRIx64, align);
                 } else {
@@ -924,7 +925,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
                 rose_addr_t align = filespace ? a->get_file_alignment() : a->get_mapped_alignment();
                 fprintf(stderr, "%s        %c %c0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64,
                         p, ExtentMap::category(ap, sp), /*cat should always be R*/
-                        0==ap.begin % (align?align:1) ? ' ' : '!', ap.begin, ap.size, ap.begin+ap.size);
+                        0==ap.first() % (align?align:1) ? ' ' : '!', ap.first(), ap.size(), ap.first()+ap.size());
                 fputs("                 ", stderr);
                 fprintf(stderr, " [%2d] \"%s\"\n", a->get_id(), a->get_name()->get_string(true).c_str());
             }
@@ -956,14 +957,14 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
         for (size_t i=0; i<villagers.size(); i++) {
             SgAsmGenericSection *a = villagers[i];
             Extent ap = filespace ? a->get_file_extent() : a->get_mapped_preferred_extent();
-            if (!after_hole || ap.begin<hp.begin) {
+            if (!after_hole || ap.first()<hp.first()) {
                 after_hole = a;
                 hp = ap;
             }
         }
         ROSE_ASSERT(after_hole);
-        ROSE_ASSERT(hp.begin > nhs.begin+nhs.size);
-        rose_addr_t hole_size = hp.begin - (nhs.begin+nhs.size);
+        ROSE_ASSERT(hp.first() > nhs.first()+nhs.size());
+        rose_addr_t hole_size = hp.first() - (nhs.first()+nhs.size());
         if (debug) {
             fprintf(stderr, "%s    hole size = 0x%08"PRIx64" (%"PRIu64"); need 0x%08"PRIx64" (%"PRIu64"); %s\n",
                     p, hole_size, hole_size, aligned_sasn, aligned_sasn,
@@ -1014,7 +1015,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
             }
             break;
           case 'O':
-            if (ap.begin==sp.begin) {
+              if (ap.first()==sp.first()) {
                 if (filespace) {
                     a->set_offset(a->get_offset()+aligned_sa);
                     a->set_size(a->get_size()+sn);
@@ -1061,10 +1062,10 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
             rose_addr_t x = filespace ? a->get_file_alignment() : a->get_mapped_alignment();
             fprintf(stderr, "%s   %4s-%c %c0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64,
                     p, space_name, ExtentMap::category(ap, sp), 
-                    0==ap.begin%(x?x:1)?' ':'!', ap.begin, ap.size, ap.begin+ap.size);
+                    0==ap.first()%(x?x:1)?' ':'!', ap.first(), ap.size(), ap.first()+ap.size());
             Extent newap = filespace ? a->get_file_extent() : a->get_mapped_preferred_extent();
             fprintf(stderr, " -> %c0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64,
-                    0==newap.begin%(x?x:1)?' ':'!', newap.begin, newap.size, newap.begin+newap.size);
+                    0==newap.first()%(x?x:1)?' ':'!', newap.first(), newap.size(), newap.first()+newap.size());
             fprintf(stderr, " [%2d] \"%s\"\n", a->get_id(), a->get_name()->get_string(true).c_str());
         }
     }
@@ -1269,8 +1270,8 @@ SgAsmGenericFile::fill_holes()
     for (ExtentMap::iterator i=holes.begin(); i!=holes.end(); ++i) {
         Extent e = i->first;
         SgAsmGenericSection *hole = new SgAsmGenericSection(this, NULL);
-        hole->set_offset(e.begin);
-        hole->set_size(e.size);
+        hole->set_offset(e.first());
+        hole->set_size(e.size());
         hole->parse();
         hole->set_synthesized(true);
         hole->set_name(new SgAsmBasicString("hole"));

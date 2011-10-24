@@ -58,7 +58,7 @@ check(const ExtentMap1 &map1, const ExtentMap2 &map2)
 #ifdef CHECK
     size_t i2 = 0;
     for (ExtentMap1::const_iterator i1=map1.begin(); i1!=map1.end(); ++i1) {
-        while (i2<i1->first.begin) {
+        while (i2<i1->first.first()) {
             if (i2>=map2.size()) {
                 error(map1, map2, "size mismatch", i2);
                 return false;

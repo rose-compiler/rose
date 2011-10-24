@@ -595,15 +595,15 @@ SgAsmGenericSection::get_referenced_extents() const
     for (ExtentMap::const_iterator i=file_extents.begin(); i!=file_extents.end(); i++) {
         Extent e = i->first;
         if (e.contained_in(s)) {
-            retval.insert(Extent(e.begin-get_offset(), e.size));
+            retval.insert(Extent(e.first()-get_offset(), e.size()));
         } else if (e.left_of(s) || e.right_of(s)) {
             /*void*/
         } else if (e.contains(s)) {
             retval.insert(Extent(0, get_size()));
         } else if (e.begins_before(s)) {
-            retval.insert(Extent(0, e.begin+e.size-get_offset()));
+            retval.insert(Extent(0, e.first()+e.size()-get_offset()));
         } else if (e.ends_after(s)) {
-            retval.insert(Extent(e.begin-get_offset(), get_offset()+get_size()-e.begin));
+            retval.insert(Extent(e.first()-get_offset(), get_offset()+get_size()-e.first()));
         } else {
             assert(!"invalid extent overlap category");
             abort();
@@ -675,21 +675,21 @@ SgAsmGenericSection::unparse(std::ostream &f, const ExtentMap &map) const
 {
     for (ExtentMap::const_iterator i=map.begin(); i!=map.end(); ++i) {
         Extent e = i->first;
-        assert(e.begin+e.size <= get_size());
+        assert(e.first()+e.size() <= get_size());
         const unsigned char *extent_data;
         size_t nwrite;
-        if (e.begin >= p_data.size()) {
+        if (e.first() >= p_data.size()) {
             extent_data = NULL;
             nwrite = 0;
-        } else if (e.begin + e.size > p_data.size()) {
-            extent_data = &p_data[e.begin];
-            nwrite = p_data.size() - e.begin;
+        } else if (e.first() + e.size() > p_data.size()) {
+            extent_data = &p_data[e.first()];
+            nwrite = p_data.size() - e.first();
         } else {
-            extent_data = &p_data[e.begin];
-            nwrite = e.size;
+            extent_data = &p_data[e.first()];
+            nwrite = e.size();
         }
         if (extent_data)
-            write(f, e.begin, e.size, extent_data);
+            write(f, e.first(), e.size(), extent_data);
     }
 }
 

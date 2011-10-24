@@ -547,7 +547,7 @@ MemoryMap::mprotect(const MapElement &region, bool relax/*=false*/)
         e.insert(Extent(region.get_va(), region.get_size()));
         e.erase_ranges(va_extents());
         if (!e.empty())
-            throw NotMapped(this, e.begin()->first.begin);
+            throw NotMapped(this, e.begin()->first.first());
     }
 
     std::vector<MapElement> created;

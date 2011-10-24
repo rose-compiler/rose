@@ -275,10 +275,10 @@ void
 Partitioner::progress(FILE *debug, const char *fmt, ...) const
 {
     time_t now = time(NULL);
-    
+
     if (0==progress_time)
         progress_time = now;
-    
+
     if (progress_file!=NULL && now-progress_time >= progress_interval) {
         progress_time = now;
         va_list ap;
@@ -315,13 +315,12 @@ Partitioner::parse_switches(const std::string &s, unsigned flags)
         }
         if (at>=s.size())
             throw Exception("heuristic name must follow qualifier");
-        
-             
+
         size_t comma = s.find(",", at);
         std::string word = std::string(s, at, comma-at);
         if (word.size()==0)
             throw Exception("heuristic name must follow comma");
-        
+
         unsigned bits = 0;
         if (word=="entry" || word=="entry_point") {
             bits = SgAsmFunction::FUNC_ENTRY_POINT;
@@ -611,7 +610,7 @@ Partitioner::pops_return_address(rose_addr_t va)
         } catch (const Policy::Exception&) {
             /*void*/
         }
-        
+
     } catch(...) {
         if (!preexisting)
             discard(bb);
@@ -895,7 +894,7 @@ Partitioner::append(Function *func, DataBlock *block, unsigned reason)
 /** Remove a basic block from a function.  The block and function continue to exist--only the association between them is
  *  broken. */
 void
-Partitioner::remove(Function* f, BasicBlock* bb) 
+Partitioner::remove(Function* f, BasicBlock* bb)
 {
     assert(f);
     assert(bb);
@@ -1156,7 +1155,7 @@ Partitioner::mark_ipd_configuration()
             Policy policy;
             policy.set_map(map);
             Semantics semantics(policy);
-            
+
             if (debug) fprintf(stderr, "  running semantics for the basic block...\n");
             for (std::vector<SgAsmInstruction*>::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii) {
                 SgAsmx86Instruction *insn = isSgAsmx86Instruction(*ii);
@@ -1165,12 +1164,12 @@ Partitioner::mark_ipd_configuration()
             }
 
             /* Load the program. Keep at least one unmapped byte between the program text, stack, and svec areas in order to
-             * help with debugging. */       
+             * help with debugging. */
             if (debug) fprintf(stderr, "  loading the program...\n");
 
             /* Load the instructions to execute */
             rose_addr_t text_va = map->find_free(0, bconf->sucs_program.size(), 4096);
-            MemoryMap::MapElement text_me(text_va, bconf->sucs_program.size(), &(bconf->sucs_program[0]), 0, 
+            MemoryMap::MapElement text_me(text_va, bconf->sucs_program.size(), &(bconf->sucs_program[0]), 0,
                                           MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_EXEC);
             text_me.set_name(block_name + " successors program text");
             map->insert(text_me);
@@ -1323,7 +1322,7 @@ Partitioner::mark_elf_plt_entries(SgAsmGenericHeader *fhdr)
     /* This function is ELF, x86 specific. */
     SgAsmElfFileHeader *elf = isSgAsmElfFileHeader(fhdr);
     if (!elf) return;
-    
+
     /* Find important sections */
     SgAsmGenericSection *plt = elf->get_section_by_name(".plt");
     if (!plt || !plt->is_mapped()) return;
@@ -1354,13 +1353,12 @@ Partitioner::mark_elf_plt_entries(SgAsmGenericHeader *fhdr)
         plt_offset += insn->get_raw_bytes().size();
         SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn);
         if (!insn_x86) continue;
-            
+
         rose_addr_t gotplt_va = get_indirection_addr(insn_x86);
         if (gotplt_va <  elf->get_base_va() + gotplt->get_mapped_preferred_rva() ||
             gotplt_va >= elf->get_base_va() + gotplt->get_mapped_preferred_rva() + gotplt->get_mapped_size()) {
             continue; /* jump is not indirect through the .got.plt section */
         }
-        
 
         /* Find the relocation entry whose offset is the gotplt_va and use that entry's symbol for the function name. */
         std::string name;
@@ -1379,7 +1377,7 @@ Partitioner::mark_elf_plt_entries(SgAsmGenericHeader *fhdr)
                 }
             }
         }
-        
+
         Function *plt_func = add_function(insn->get_address(), SgAsmFunction::FUNC_IMPORT, name);
 
         /* FIXME: Assume that most PLT functions return. We make this assumption for now because the PLT table contains an
@@ -1425,7 +1423,7 @@ Partitioner::mark_func_symbols(SgAsmGenericHeader *fhdr)
                     add_function(value, SgAsmFunction::FUNC_SYMBOL, symbol->get_name()->get_string());
 
                 /* Sometimes weak symbol values are offsets from a section (this code handles that), but other times they're
-                 * the value is used directly (the above code handled that case). */            
+                 * the value is used directly (the above code handled that case). */
                 SgAsmGenericSection *section = symbol->get_bound();
                 if (section && symbol->get_binding()==SgAsmGenericSymbol::SYM_WEAK)
                     value += section->get_mapped_actual_va();
@@ -1535,7 +1533,7 @@ pattern2(const Disassembler::InstructionMap& insns, Disassembler::InstructionMap
         ii = insns.find(ii->first + nop->get_raw_bytes().size());
         if (ii==insns.end()) return insns.end();
     }
-    
+
     /* Look for something that's not a "nop"; this is the function entry point. */
     SgAsmx86Instruction *notnop = isSgAsmx86Instruction(ii->second);
     if (!notnop) return insns.end();
@@ -1568,7 +1566,7 @@ pattern3(const Disassembler::InstructionMap& insns, Disassembler::InstructionMap
         ii = insns.find(ii->first + insn->get_raw_bytes().size());
         if (ii==insns.end()) return insns.end();
     }
-    
+
     /* Zero or more "nop" instructions */
     while (1) {
         SgAsmx86Instruction *insn = isSgAsmx86Instruction(ii->second);
@@ -1578,7 +1576,7 @@ pattern3(const Disassembler::InstructionMap& insns, Disassembler::InstructionMap
         ii = insns.find(ii->first + insn->get_raw_bytes().size());
         if (ii==insns.end()) return insns.end();
     }
-    
+
     /* This must be something that's not a "nop", but make sure it's an x86 instruction anyway. */
     SgAsmx86Instruction *insn = isSgAsmx86Instruction(ii->second);
     if (!insn) return insns.end();
@@ -1587,7 +1585,7 @@ pattern3(const Disassembler::InstructionMap& insns, Disassembler::InstructionMap
     exclude.insert(matches.begin(), matches.end());
     return ii;
 }
-        
+
 /** Seeds functions according to instruction patterns.  Note that this pattern matcher only looks at existing instructions--it
  *  does not actively disassemble new instructions.  In other words, this matcher is intended mostly for passive-mode
  *  partitioners where the disassembler has already disassembled everything it can. */
@@ -1653,7 +1651,7 @@ Partitioner::scan_contiguous_insns(Disassembler::InstructionMap insns, InsnRange
 
 /* Scan through all unassigned instructions */
 void
-Partitioner::scan_unassigned_insns(InsnRangeCallbacks &cblist) 
+Partitioner::scan_unassigned_insns(InsnRangeCallbacks &cblist)
 {
     if (cblist.empty())
         return;
@@ -1766,11 +1764,11 @@ Partitioner::scan_intrafunc_bytes(ByteRangeCallbacks &cblist, MemoryMap *restric
     struct Filter: public ByteRangeCallback {
         virtual bool operator()(bool enabled, const Args &args) {
             if (enabled) {
-                if (args.range.begin<=0 || args.range.last()>=Extent::maximum())
+                if (args.range.first()<=Extent::minimum() || args.range.last()>=Extent::maximum())
                     return false; // nothing before and/or after
 
                 /* Find the closest function before this range. */
-                FunctionRangeMap::const_iterator prev = args.ranges.find_prior(args.range.begin-1);
+                FunctionRangeMap::const_iterator prev = args.ranges.find_prior(args.range.first()-1);
                 if (prev==args.ranges.end())
                     return false; // nothing before this range
 
@@ -1799,11 +1797,11 @@ Partitioner::scan_interfunc_bytes(ByteRangeCallbacks &cblist, MemoryMap *restric
     struct Filter: public ByteRangeCallback {
         virtual bool operator()(bool enabled, const Args &args) {
             if (enabled) {
-                if (args.range.begin<=0 || args.range.last()>=Extent::maximum())
+                if (args.range.first()<=Extent::minimum() || args.range.last()>=Extent::maximum())
                     return true; // nothing before and/or after
 
                 /* Find the closest function before this range. */
-                FunctionRangeMap::const_iterator prev = args.ranges.find_prior(args.range.begin-1);
+                FunctionRangeMap::const_iterator prev = args.ranges.find_prior(args.range.first()-1);
                 if (prev==args.ranges.end())
                     return true; // nothing before this range
 
@@ -2273,7 +2271,7 @@ Partitioner::get_indirection_addr(SgAsmInstruction *g_insn)
         !x86InstructionIsUnconditionalBranch(insn) ||
         1!=insn->get_operandList()->get_operands().size())
         return retval;
-    
+
     SgAsmMemoryReferenceExpression *mref = isSgAsmMemoryReferenceExpression(insn->get_operandList()->get_operands()[0]);
     if (!mref)
         return retval;
@@ -2312,7 +2310,7 @@ Partitioner::name_plt_entries(SgAsmGenericHeader *fhdr)
     /* Find all relocation sections */
     std::set<SgAsmElfRelocSection*> rsects;
     for (SgAsmGenericSectionPtrList::iterator si=elf->get_sections()->get_sections().begin();
-         si!=elf->get_sections()->get_sections().end(); 
+         si!=elf->get_sections()->get_sections().end();
          si++) {
         SgAsmElfRelocSection *reloc_section = isSgAsmElfRelocSection(*si);
         if (reloc_section)
@@ -2347,7 +2345,7 @@ Partitioner::name_plt_entries(SgAsmGenericHeader *fhdr)
         if (gotplt_va <  elf->get_base_va() + gotplt->get_mapped_preferred_rva() ||
             gotplt_va >= elf->get_base_va() + gotplt->get_mapped_preferred_rva() + gotplt->get_mapped_size())
             continue; /* PLT entry doesn't dereference a value in the .got.plt section */
-        
+
         /* Find the relocation entry whose offset is the gotplt_rva and use that entry's symbol for the function name. */
         for (std::set<SgAsmElfRelocSection*>::iterator ri=rsects.begin(); ri!=rsects.end() && fi->second->name==""; ri++) {
             SgAsmElfRelocEntryList *entries = (*ri)->get_entries();
@@ -2421,14 +2419,14 @@ Partitioner::pre_cfg(SgAsmInterpretation *interp/*=NULL*/)
  *    8048472:       c7 04 24 00 00 00 00    mov    DWORD PTR [esp],0x0
  *    8048479:       e8 a2 fe ff ff          call   8048320 <_exit@plt>
  *    804847e:       89 f6                   mov    esi,esi
- *   
+ *
  *   08048480 <handler>:
  *    8048480:       55                      push   ebp
  *    8048481:       89 e5                   mov    ebp,esp
  *    8048483:       83 ec 08                sub    esp,0x8
  */
 void
-Partitioner::discover_first_block(Function *func) 
+Partitioner::discover_first_block(Function *func)
 {
     if (debug) {
         fprintf(debug, "1st block %s F%08"PRIx64" \"%s\": B%08"PRIx64" ",
@@ -2566,7 +2564,7 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va, unsigned reason)
         if (target_bb && target_bb->function && target_va!=target_bb->function->entry_va &&
             (target_bb->function!=f || new_function!=NULL))
             target_bb->function->pending = true;
-        
+
         /* Discovery continues at the successors. */
         const Disassembler::AddressSet &suc = successors(bb);
         for (Disassembler::AddressSet::const_iterator si=suc.begin(); si!=suc.end(); ++si) {
@@ -2601,7 +2599,7 @@ Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
         progress(debug, "Partitioner: starting %s pass %zu: "
                  "%zu function%s, %zu insn%s assigned to %zu block%s (ave %d insn/blk)\n",
                  stringifySgAsmBlockReason(reason, "BLK_").c_str(), pass,
-                 functions.size(), 1==functions.size()?"":"s", insn2block.size(), 1==insn2block.size()?"":"s", 
+                 functions.size(), 1==functions.size()?"":"s", insn2block.size(), 1==insn2block.size()?"":"s",
                  basic_blocks.size(), 1==basic_blocks.size()?"":"s",
                  basic_blocks.size()?(int)(1.0*insn2block.size()/basic_blocks.size()+0.5):0);
 
@@ -2666,10 +2664,10 @@ Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
                 target_bb->function && target_bb->function->may_return) {
                 if (!return_bb->function) {
                     /* Function A makes a call to function B and we know that function B could return but the return address is
-                     * not part of any function.  Mark function A as pending so that we rediscover its blocks. */   
+                     * not part of any function.  Mark function A as pending so that we rediscover its blocks. */
                     bb->function->pending = true;
                     if (debug) {
-                        fprintf(debug, "  F%08"PRIx64" may return to B%08"PRIx64" in F%08"PRIx64"\n", 
+                        fprintf(debug, "  F%08"PRIx64" may return to B%08"PRIx64" in F%08"PRIx64"\n",
                                 target_bb->function->entry_va, return_va, bb->function->entry_va);
                     }
                 } else if (return_va==target_bb->function->entry_va && !bb->function->may_return) {
@@ -2683,7 +2681,7 @@ Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
                      */
                     bb->function->may_return = true;
                     if (debug) {
-                        fprintf(debug, "  Function F%08"PRIx64" may return by virtue of call fall-through at B%08"PRIx64"\n", 
+                        fprintf(debug, "  Function F%08"PRIx64" may return by virtue of call fall-through at B%08"PRIx64"\n",
                                 bb->function->entry_va, bb->address());
                     }
                 }
@@ -2723,14 +2721,14 @@ Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
                 pending.push_back(fi->second);
             }
         }
-                
+
         if (pending.size()==0)
             break;
 
         /* Make sure all functions have an initial basic block if possible. */
         for (size_t i=0; i<pending.size(); ++i)
             discover_first_block(pending[i]);
-        
+
         /* (Re)discover each function's blocks starting with the function entry point */
         for (size_t i=0; i<pending.size(); ++i) {
             if (debug) {
@@ -2802,7 +2800,7 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
             name_plt_entries(headers[i]); // give names to ELF .plt trampolines
         }
     }
-        
+
     /* Run one last analysis of the CFG because we may need to fix some things up after having added more blocks from the
      * post-cfg analyses we did above. If nothing happened above, then analyze_cfg() should be fast. */
     analyze_cfg(SgAsmBlock::BLK_GRAPH2);
@@ -2818,7 +2816,7 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
 
     progress(debug,
              "Partitioner completed: %zu function%s, %zu insn%s assigned to %zu block%s (ave %d insn/blk)\n",
-             functions.size(), 1==functions.size()?"":"s", insn2block.size(), 1==insn2block.size()?"":"s", 
+             functions.size(), 1==functions.size()?"":"s", insn2block.size(), 1==insn2block.size()?"":"s",
              basic_blocks.size(), 1==basic_blocks.size()?"":"s",
              basic_blocks.size()?(int)(1.0*insn2block.size()/basic_blocks.size()+0.5):0);
 }
@@ -2997,7 +2995,7 @@ Partitioner::update_targets(SgNode *ast)
             }
         }
     };
-    
+
     BlockMap block_map;
     BlockMapBuilder(ast, &block_map);
     TargetPopulator(ast, block_map);
@@ -3043,7 +3041,7 @@ Partitioner::build_ast()
                     }
                 }
             }
-        } while (process_instructions);            
+        } while (process_instructions);
     }
 
     /* Build the AST */
@@ -3178,7 +3176,7 @@ Partitioner::partition(SgAsmInterpretation* interp/*=NULL*/, const Disassembler:
 {
     disassembler = NULL;
     add_instructions(insns);
-    
+
     MemoryMap *old_map = get_map();
     MemoryMap old_ro_map = ro_map;
     if (!map && !old_map)
@@ -3197,7 +3195,7 @@ Partitioner::partition(SgAsmInterpretation* interp/*=NULL*/, const Disassembler:
         set_map(old_map, &old_ro_map);
         throw;
     }
-    
+
     return retval;
 }
 
@@ -3250,7 +3248,7 @@ Partitioner::detectBasicBlocks(const Disassembler::InstructionMap &insns) const
                     /* The CALL is acting more like a "PUSH EIP" and should not end the basic block. */
                 } else if (bb_starts.find(next_va)==bb_starts.end()) {
                     bb_starts[next_va] = BasicBlockStarts::mapped_type();
-                }   
+                }
             }
         }
 
