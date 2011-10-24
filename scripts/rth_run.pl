@@ -344,6 +344,7 @@ sub run_command {
     setpgrp; # so we can kill the whole group on a timeout
     my $status = 0;
     for my $cmd (@commands) {
+      print STDERR "+ $cmd\n";
       $status = system $cmd;
       last if $status;
     }
