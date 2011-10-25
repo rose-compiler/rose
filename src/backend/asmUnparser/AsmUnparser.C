@@ -219,7 +219,7 @@ AsmUnparser::unparse(std::ostream &output, SgNode *ast)
 
 
         case ORGANIZED_BY_ADDRESS: {
-            typedef std::map<rose_addr_t, SgAsmStatement*> StatementMap;
+            typedef std::multimap<rose_addr_t, SgAsmStatement*> StatementMap;
             struct GatherStatements: public AstSimpleProcessing {
                 StatementMap *stmts;
                 GatherStatements(StatementMap *stmts): stmts(stmts) {}
