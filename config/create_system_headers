@@ -199,13 +199,15 @@ fi
   # g++|gcc|icpc|icc|mpicc|mpic++|mpiCC|mpicxx|roseTranslator)
   # g++|gcc|icpc|icc|mpicc|mpic++|mpiCC|mpicxx|c++)
     g++*|gcc*|icpc|icc|mpicc|mpic++|mpiCC|mpicxx|c++|xt-xcc|xt-xc++)
-         if [[ "$compilerName" = gcc* || "$compilerName" = "icc" || "$compilerName" = "mpicc" || "$compilerName" = "xt-xcc" ]]
-         then
-            is_C_compiler="yes"
-            language="c"
-         else
-            language="c++"
-         fi
+         case "$compilerName" in
+           gcc*|icc|mpicc|xt-xcc)
+              is_C_compiler="yes"
+              language="c"
+              ;;
+           *)
+              language="c++"
+              ;;
+          esac
 
        # DQ (1/14/2007): To work with Wave we supress the __STDC_HOSTED__ macro
          tmpFile="`mktemp -t roseconfigtempXXXXXXXXXX`"
