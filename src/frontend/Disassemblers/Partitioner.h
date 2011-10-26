@@ -1031,7 +1031,7 @@ public:
     /** Conditionally prints a progress report. If progress reporting is enabled and the required amount of time has elapsed
      *  since the previous report, then the supplied report is emited. Also, if debugging is enabled the report is emitted to
      *  the debugging file regardless of the elapsed time. The arguments are the same as fprintf(). */
-    void progress(FILE*, const char *fmt, ...) const __attribute__((format(gnu_printf, 3, 4)));
+    void progress(FILE*, const char *fmt, ...) const __attribute__((format(printf, 3, 4)));
 
     /** Splits thunks off of the start of functions.  Splits as many thunks as possible from the front of all known functions.
      *  Returns the number of thunks split off from functions.  It's not important that this be done, but doing so results in
