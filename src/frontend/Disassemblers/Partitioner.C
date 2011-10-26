@@ -1547,6 +1547,7 @@ pattern2(const Disassembler::InstructionMap& insns, Disassembler::InstructionMap
 }
 #endif
 
+#if 0 /* commented out in Partitioner::mark_func_patterns() */
 /** See Partitioner::mark_func_patterns. Tries to match "leave;ret" followed by one or more "nop" followed by a non-nop
  *  instruction and if matching, returns the iterator for the non-nop instruction. */
 static Disassembler::InstructionMap::const_iterator
@@ -1587,6 +1588,7 @@ pattern3(const Disassembler::InstructionMap& insns, Disassembler::InstructionMap
     exclude.insert(matches.begin(), matches.end());
     return ii;
 }
+#endif
 
 /** Seeds functions according to instruction patterns.  Note that this pattern matcher only looks at existing instructions--it
  *  does not actively disassemble new instructions.  In other words, this matcher is intended mostly for passive-mode
@@ -1607,10 +1609,12 @@ Partitioner::mark_func_patterns()
             add_function(found->first, SgAsmFunction::FUNC_PATTERN);
     }
 #endif
+#if 0 /* Disabled because NOPs sometimes follow "leave;ret" for functions with multiple returns. */
     for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
         if (exclude.find(ii->first)==exclude.end() && (found=pattern3(insns, ii, exclude))!=insns.end())
             add_function(found->first, SgAsmFunction::FUNC_PATTERN);
     }
+#endif
 }
 
 /* Make all CALL/FARCALL targets functions.  This is a naive approach that won't work for some obfuscated software. A more
