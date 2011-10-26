@@ -1747,8 +1747,7 @@ Partitioner::scan_unassigned_bytes(ByteRangeCallbacks &cblist, MemoryMap *restri
 
     /* Get range map for addresses assigned to functions (function instructions and data w/ function pointers). */
     FunctionRangeMap assigned;
-    for (Functions::iterator fi=functions.begin(); fi!=functions.end(); ++fi)
-        function_extent(fi->second, &assigned);
+    function_extent(&assigned);
 
     /* Unassigned ranges are the inverse of everything assigned.  Then further restrict the unassigned range map according to
      * the supplied memory map. */
@@ -1875,7 +1874,7 @@ Partitioner::FindDataPadding::operator()(bool enabled, const Args &args)
     SgUnsignedCharList buf = p->ro_map.read(range.first(), range.size());
     if (ends_contiguously && buf.size()<range.size())
         return true;
-    range.size(buf.size());
+    range.resize(buf.size());
 
     /* There might be more than one sequence of padding bytes.  Look for all of them, but constrained according to
      * begins_contiguously and ends_contiguously. */
@@ -1899,6 +1898,7 @@ Partitioner::FindDataPadding::operator()(bool enabled, const Args &args)
                 assert(dblock!=NULL);
                 p->append(func, dblock, SgAsmBlock::BLK_PADDING);
                 ++nblocks;
+                ++nfound;
                 if (p->debug) {
                     if (1==nblocks)
                         fprintf(p->debug, "Partitioner::FindDataPadding for F%08"PRIx64": added", func->entry_va);
@@ -1934,7 +1934,7 @@ Partitioner::FindData::operator()(bool enabled, const Args &args)
     assert(func!=NULL);
 
     /* Don't append data to non-functions. */
-    if (0!=(func->reason & (SgAsmFunction::FUNC_INTERPAD | SgAsmFunction::FUNC_THUNK)))
+    if (0!=(func->reason & excluded_reasons))
         return true;
 
     /* Padding ranges are computed once and cached. */
@@ -1942,7 +1942,7 @@ Partitioner::FindData::operator()(bool enabled, const Args &args)
         padding_ranges = new DataRangeMap;
         p->padding_extent(padding_ranges);
     }
-                
+
     /* Don't append data if the previous thing is padding. */
     if (padding_ranges->find(args.range.first()-1)!=padding_ranges->end())
         return true;
@@ -1951,6 +1951,7 @@ Partitioner::FindData::operator()(bool enabled, const Args &args)
     DataBlock *dblock = p->find_db_starting(args.range.first(), args.range.size());
     assert(dblock!=NULL);
     p->append(func, dblock, SgAsmBlock::BLK_USERDEF);
+    ++nfound;
     if (p->debug)
         fprintf(p->debug, "Partitioner::FindData: for F%08"PRIx64": added D%08"PRIx64"\n",
                 func->entry_va, args.range.first());
@@ -1960,7 +1961,7 @@ Partitioner::FindData::operator()(bool enabled, const Args &args)
 /* Create functions or data for inter-function padding instruction sequences.  Returns true if we did not find interfunction
  * padding and other padding callbacks should proceed; returns false if we did find padding and the others should be skipped. */
 bool
-Partitioner::InterFuncInsnPadding::operator()(bool enabled, const Args &args)
+Partitioner::FindInsnPadding::operator()(bool enabled, const Args &args)
 {
     if (!enabled)
         return false;
@@ -2049,6 +2050,7 @@ Partitioner::InterFuncInsnPadding::operator()(bool enabled, const Args &args)
          * block to remain with the function even though it might not be reachable by the CFG starting from the function's
          * entry point.  This is especially true for padding like x86 INT3 instructions, which have no known CFG successors and
          * occupy singleton basic blocks. */
+        ++nfound;
         assert(!padding.empty());
         if (add_as_data) {
             assert(prev_func!=NULL);
@@ -2061,15 +2063,25 @@ Partitioner::InterFuncInsnPadding::operator()(bool enabled, const Args &args)
             p->append(prev_func, dblock, SgAsmBlock::BLK_PADDING);
             for (size_t i=0; i<padding.size(); i++)
                 p->discard(padding[i]);
+            if (p->debug)
+                fprintf(p->debug, "Partitioner::FindInsnPadding: for F%08"PRIx64": added D%08"PRIx64"\n",
+                        prev_func->entry_va, begin_va);
         } else {
             Function *new_func = p->add_function(padding.front()->get_address(), SgAsmFunction::FUNC_INTERPAD);
             p->find_bb_starting(padding.front()->get_address()); // split first block if necessary
             p->find_bb_starting(va); // split last block if necessary
+            if (p->debug)
+                fprintf(p->debug, "Partitioner::FindInsnPadding: for F%08"PRIx64": added", new_func->entry_va);
             for (size_t i=0; i<padding.size(); i++) {
                 BasicBlock *bb = p->find_bb_containing(padding[i]->get_address());
-                if (bb && !bb->function)
+                if (bb && !bb->function) {
                     p->append(new_func, bb, SgAsmBlock::BLK_PADDING, true/*head of CFG subgraph*/);
+                    if (p->debug)
+                        fprintf(p->debug, " B%08"PRIx64, bb->address());
+                }
             }
+            if (p->debug)
+                fprintf(p->debug, "\n");
         }
 
         retval = padding.size()!=args.ninsns; // allow other callbacks to run only if we didn't suck up all the instructions
@@ -2121,93 +2133,66 @@ Partitioner::find_db_starting(rose_addr_t start_va, size_t size/*=0*/)
     return db;
 }
 
-/* Adds unassigned intra-function blocks to surrounding function. */
 bool
-Partitioner::IntraFunctionBlocks::operator()(bool enabled, const Args &args)
+Partitioner::FindIntraFunctionInsns::operator()(bool enabled, const Args &args)
 {
     if (!enabled)
         return false;
     Partitioner *p = args.partitioner;
 
-    assert(args.insn_prev!=NULL); // must be called from scan_intrafunc_insns()
-    assert(args.insn_end!=NULL);  // ditto
-    BasicBlock *prev_bb = p->find_bb_containing(args.insn_prev->get_address());
-    Function *func = prev_bb ? prev_bb->function : NULL;
-    assert(func!=NULL); // must be called from scan_intrafunc_insns()
+    /* Compute and cache the extents of all known functions. */
+    if (!function_extents) {
+        function_extents = new FunctionRangeMap;
+        p->function_extent(function_extents);
+    }
+
+    /* This range must begin contiguously with a function. */
+    if (args.range.first()<=Extent::minimum())
+        return true;
+    FunctionRangeMap::iterator prev = function_extents->find(args.range.first()-1);
+    if (prev==function_extents->end())
+        return true;
+    Function *func = prev->second.get();
+
+    /* This range must end contiguously with the same function. */
+    if (args.range.last()>=Extent::maximum())
+        return true;
+    FunctionRangeMap::iterator next = function_extents->find(args.range.last()+1);
+    if (next==function_extents->end() || next->second.get()!=func)
+        return true;
 
     /* If this function is interleaved with another then how can we know that the instructions in question should actually
      * belong to this function?  If we're interleaved with one other function, then we could very easily be interleaved with
      * additional functions and this block could belong to any of them. */
-    if (!p->is_contiguous(func, false))
+    if (require_contiguous && !p->is_contiguous(func, false))
         return true;
 
-    /* The instructions in this batch must be contiguous with the surrounding function. */
-    {
-        rose_addr_t va = args.insn_begin->get_address();
-        if (va != args.insn_prev->get_address() + args.insn_prev->get_raw_bytes().size())
-            return true; // beginning of range is not contiguous with enclosing function
-        for (size_t i=0; i<args.ninsns; i++) {
-            SgAsmInstruction *insn = p->find_instruction(va);
-            assert(insn!=NULL);
-            va += insn->get_raw_bytes().size();
+    /* Get the list of basic blocks for the instructions in this range and their address extents. */
+    std::set<BasicBlock*> bblocks;
+    ExtentMap block_extents;
+    rose_addr_t va = args.range.first();
+    while (va<=args.range.last()) {
+        BasicBlock *bb = va==args.range.first() ? p->find_bb_starting(va) : p->find_bb_containing(va);
+        if (!bb || bb->function)
+            return true;
+        bblocks.insert(bb);
+        for (std::vector<SgAsmInstruction*>::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii) {
+            rose_addr_t first = (*ii)->get_address();
+            size_t size = (*ii)->get_raw_bytes().size();
+            block_extents.insert(Extent(first, size));
         }
-        if (va!=args.insn_end->get_address())
-            return true; // end of range is not contiguous with enclosing function
+        va = block_extents.begin()->first.last() + 1; // the address of the first missing instruction
     }
 
-    if (add_as_data) {
-        /* Create a data block for this part of intra-function memory and discard the instructions provided they're not already
-         * in basic blocks. */
-        rose_addr_t begin_va = args.insn_begin->get_address();
-        rose_addr_t end_va = args.insn_end->get_address();
-        assert(end_va>begin_va);
-        size_t size = end_va - begin_va;
-        DataBlock *dblock = p->find_db_starting(begin_va, size);
-        assert(dblock!=NULL);
-        p->append(func, dblock, SgAsmBlock::BLK_INTRAFUNC);
-        if (p->debug)
-            fprintf(p->debug, "Partitioner::IntraFunctionBlocks: for F%08"PRIx64": added D%08"PRIx64" deleted",
-                    func->entry_va, begin_va);
+    /* Make sure that all the instructions we got fit in the hole we're trying to fill. */
+    ExtentMap hole; hole.insert(args.range);
+    if (!hole.contains(block_extents))
+        return true;
 
-        /* Remove the instructions because we now know that they're data. */
-        rose_addr_t va = begin_va;
-        for (size_t i=0; i<args.ninsns; i++) {
-            SgAsmInstruction *insn = p->find_instruction(va);
-            assert(insn!=NULL);
-            if (p->debug)
-                fprintf(p->debug, " B%08"PRIx64, va);
-            va += insn->get_raw_bytes().size();
-            p->discard(insn);
-        }
-        if (p->debug)
-            fprintf(p->debug, "\n");
-    } else {
-        /* Find the basic blocks for this sequence of instructions and add them all to the function as long as they're not already
-         * in some other function (they shouldn't be, unless a previous callback added them).   New blocks are added as CFG heads
-         * in order to keep them inside the function since we couldn't reach them by following the CFG from the function entry
-         * point. */
-        size_t nadded = 0;
-        rose_addr_t va = args.insn_begin->get_address();
-        for (size_t i=0; i<args.ninsns; i++) {
-            BasicBlock *bb = 0==i ? p->find_bb_starting(va) : p->find_bb_containing(va);
-            assert(bb!=NULL); // because we know va is an instruction
-            if (!bb->function) {
-                if (p->debug) {
-                    if (0==nadded)
-                        fprintf(p->debug, "Partitioner::IntraFunctionBlocks: for F%08"PRIx64": added", func->entry_va);
-                    fprintf(p->debug, " B%08"PRIx64, bb->address());
-                }
-                p->append(func, bb, SgAsmBlock::BLK_INTRAFUNC, true/*head of CFG subgraph*/);
-                func->pending = true;
-                ++nadded;
-            }
-
-            SgAsmInstruction *insn = p->find_instruction(va);
-            assert(insn!=NULL);
-            va += insn->get_raw_bytes().size();
-        }
-        if (p->debug && nadded)
-            fprintf(p->debug, "\n");
+    /* Add the basic blocks to the function. */
+    for (std::set<BasicBlock*>::iterator bi=bblocks.begin(); bi!=bblocks.end(); ++bi) {
+        p->append(func, *bi, SgAsmBlock::BLK_INTRAFUNC, true/*head of CFG subgraph*/);
+        ++nfound;
     }
 
     return true;
@@ -2238,17 +2223,19 @@ Partitioner::FindThunks::operator()(bool enabled, const Args &args)
         if (bb && bb->address()!=va)
             continue;
 
-        /* Instruction must have a single successor */
-        bool complete;
-        Disassembler::AddressSet succs = insn->get_successors(&complete);
-        if (!complete && 1!=succs.size())
-            continue;
-        rose_addr_t target_va = *succs.begin();
+        if (validate_targets) {
+            /* Instruction must have a single successor */
+            bool complete;
+            Disassembler::AddressSet succs = insn->get_successors(&complete);
+            if (!complete && 1!=succs.size())
+                continue;
+            rose_addr_t target_va = *succs.begin();
 
-        /* The target (single successor) must be a known function which is not padding. */
-        Functions::iterator fi = p->functions.find(target_va);
-        if (fi==p->functions.end() || 0!=(fi->second->reason & SgAsmFunction::FUNC_INTERPAD))
-            continue;
+            /* The target (single successor) must be a known function which is not padding. */
+            Functions::iterator fi = p->functions.find(target_va);
+            if (fi==p->functions.end() || 0!=(fi->second->reason & SgAsmFunction::FUNC_INTERPAD))
+                continue;
+        }
 
         /* Create the basic block for the JMP instruction.  This block must be a single instruction, which it should be since
          * we already checked that its only successor is another function. */
@@ -2258,6 +2245,10 @@ Partitioner::FindThunks::operator()(bool enabled, const Args &args)
         assert(1==bb->insns.size());
         Function *thunk = p->add_function(va, SgAsmFunction::FUNC_THUNK);
         p->append(thunk, bb, SgAsmBlock::BLK_ENTRY_POINT);
+        ++nfound;
+
+        if (p->debug)
+            fprintf(p->debug, "Partitioner::FindThunks: found F%08"PRIx64"\n", va);
     }
 
     return true;
@@ -2293,6 +2284,10 @@ Partitioner::FindInterPadFunctions::operator()(bool enabled, const Args &args)
     /* Create a new function and move the following padding to the new function. */
     Function *new_func = p->add_function(args.range.first(), SgAsmFunction::FUNC_USERDEF);
     p->append(new_func, next_dblock, SgAsmBlock::BLK_PADDING, true/*force*/);
+    ++nfound;
+
+    if (p->debug)
+        fprintf(p->debug, "Partitioner::FindInterPadFunctions: added F%08"PRIx64"\n", new_func->entry_va);
     return true;
 }
 
@@ -2317,7 +2312,7 @@ Partitioner::FindThunkTables::operator()(bool enabled, const Args &args)
             /* Must be a JMP instruction. */
             SgAsmInstruction *insn = p->find_instruction(va);
             SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn);
-            if (!insn || (insn_x86->get_kind()!=x86_jmp && insn_x86->get_kind()!=x86_farjmp)) {
+            if (!insn_x86 || (insn_x86->get_kind()!=x86_jmp && insn_x86->get_kind()!=x86_farjmp)) {
                 in_table = false;
                 continue;
             }
@@ -2365,6 +2360,7 @@ Partitioner::FindThunkTables::operator()(bool enabled, const Args &args)
                 Function *thunk = p->add_function(ii->first, SgAsmFunction::FUNC_THUNK);
                 BasicBlock *bb = p->find_bb_starting(ii->first);
                 p->append(thunk, bb, SgAsmBlock::BLK_ENTRY_POINT);
+                ++nfound;
                 if (p->debug)
                     fprintf(p->debug, "Partitioner::FindThunkTable: thunk F%08"PRIx64"\n", thunk->entry_va);
             }
@@ -2417,7 +2413,7 @@ Partitioner::is_thunk(Function *func)
 }
 
 bool
-Partitioner::PostFunctionInsns::operator()(bool enabled, const Args &args)
+Partitioner::FindPostFunctionInsns::operator()(bool enabled, const Args &args)
 {
     if (!enabled)
         return false;
@@ -2446,6 +2442,7 @@ Partitioner::PostFunctionInsns::operator()(bool enabled, const Args &args)
             p->append(func, bb, SgAsmBlock::BLK_USERDEF, true/*head of CFG subgraph*/);
             func->pending = true;
             ++nadded;
+            ++nfound;
         }
 
         SgAsmInstruction *insn = p->find_instruction(va);
@@ -2963,14 +2960,122 @@ Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
     }
 }
 
+size_t
+Partitioner::detach_thunks()
+{
+    size_t retval = 0;
+    Functions functions = this->functions; // so iterators remain valid inside the loop
+    for (Functions::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
+        while (detach_thunk(fi->second))
+            ++retval;
+    }
+    return retval;
+}
+
+bool
+Partitioner::detach_thunk(Function *func)
+{
+    /* Don't split functions if it has only zero or one instruction. */
+    if (func->basic_blocks.empty())
+        return false;
+    BasicBlock *entry_bb = find_bb_starting(func->entry_va, false);
+    assert(entry_bb!=NULL && entry_bb->function==func);
+    if (func->basic_blocks.size()==1 && entry_bb->insns.size()==1)
+        return false;
+
+    /* Don't split function whose first instruction is not an x86 JMP. */
+    SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(entry_bb->insns[0]);
+    if (!insn_x86 || (insn_x86->get_kind()!=x86_jmp && insn_x86->get_kind()!=x86_farjmp))
+        return false;
+
+    /* The JMP must have a single target. */
+    rose_addr_t second_va = 0;
+    if (entry_bb->insns.size()>1) {
+        second_va = entry_bb->insns[1]->get_address();
+    } else {
+        bool complete;
+        Disassembler::AddressSet succs = successors(entry_bb, &complete);
+        if (!complete || succs.size()!=1)
+            return false;
+        second_va = *(succs.begin());
+    }
+
+    /* Don't split the function if the first instruction is a successor of any of the function's blocks. */
+    for (BasicBlocks::iterator bi=func->basic_blocks.begin(); bi!=func->basic_blocks.end(); ++bi) {
+        BasicBlock *bb = bi->second;
+        Disassembler::AddressSet succs = successors(bb, NULL);
+        if (std::find(succs.begin(), succs.end(), func->entry_va) != succs.end())
+            return false;
+    }
+
+    /* Create a new function and transfer everything but the first instruction to the new function. */
+    if (debug)
+        fprintf(debug, "Partitioner::detach_thunk: detaching thunk F%08"PRIx64" from body F%08"PRIx64"\n",
+                func->entry_va, second_va);
+    Function *new_func = add_function(second_va, func->reason);
+    func->reason |= SgAsmFunction::FUNC_THUNK;
+    new_func->heads = func->heads; func->heads.clear(); new_func->heads.erase(func->entry_va);
+    new_func->may_return = func->may_return;
+
+    BasicBlocks bblocks = func->basic_blocks;
+    for (BasicBlocks::iterator bi=bblocks.begin(); bi!=bblocks.end(); ++bi) {
+        if (bi->first==func->entry_va) {
+            BasicBlock *new_bb = find_bb_starting(second_va);
+            if (new_bb->function) {
+                assert(new_bb->function==func);
+                remove(func, new_bb);
+            }
+            append(new_func, new_bb, SgAsmBlock::BLK_ENTRY_POINT);
+        } else {
+            BasicBlock *bb = bi->second;
+            if (bb->function!=new_func) {
+                remove(func, bb);
+                append(new_func, bb, bb->reason);
+            }
+        }
+    }
+
+    DataBlocks dblocks = func->data_blocks;
+    for (DataBlocks::iterator di=dblocks.begin(); di!=dblocks.end(); ++di) {
+        DataBlock *dblock = di->second;
+        remove(func, dblock);
+        append(new_func, dblock, dblock->reason);
+    }
+    return true;
+}
+
+/* Moves padding blocks to correct functions. */
+void
+Partitioner::adjust_padding()
+{
+    /* Compute two maps: one for non-padding bytes belonging to functions, and one for the padding bytes. */
+    FunctionRangeMap nonpadding_ranges;
+    function_extent(&nonpadding_ranges);
+    DataRangeMap padding_ranges;
+    padding_extent(&padding_ranges);
+    for (DataRangeMap::iterator pi=padding_ranges.begin(); pi!=padding_ranges.end(); ++pi)
+        nonpadding_ranges.erase(pi->first);
+
+    /* For each padding block, find the closest prior function and make that the owner of the padding. */
+    for (DataRangeMap::iterator pi=padding_ranges.begin(); pi!=padding_ranges.end(); ++pi) {
+        DataBlock *padding = pi->second.get();
+        FunctionRangeMap::iterator npi = nonpadding_ranges.find_prior(pi->first.first());
+        if (npi==nonpadding_ranges.end())
+            continue;
+        Function *func = npi->second.get();
+        if (func!=effective_function(padding))
+            append(func, padding, padding->reason, true/*force*/);
+    }
+}
+
 void
 Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
 {
     /* Add unassigned intra-function blocks to the surrounding function.  This needs to come before detecting inter-function
      * padding, otherwise it will also try to add the stuff between the true function and its following padding. */
     if (func_heuristics & SgAsmFunction::FUNC_INTRABLOCK) {
-        IntraFunctionBlocks ifb;
-        scan_intrafunc_insns(&ifb);
+        FindIntraFunctionInsns find_intra_function_insns;
+        scan_unassigned_bytes(&find_intra_function_insns);
     }
 
     /* Detect inter-function padding */
@@ -2992,25 +3097,51 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
         scan_interfunc_bytes(&cb, &ro_map);
     }
 
-    /* Find thunks.  The FindThunks callback finds single thunks based on instructions that have already been
-     * disassembled. It's criteria for a thunk is rather strict.  The FindThunkTables callback uses a more relaxed definition
-     * (especially when we clear validate_targets) but must find some minimum number of consective JMP instructions in order to
-     * be a table of thunks.  Both create functions whose only instruction is the JMP. */
-    FindThunks find_thunks;
-    scan_unassigned_insns(&find_thunks);
-
-    FindThunkTables find_thunk_tables;
-    find_thunk_tables.minimum_nthunks = 3; // at least this many JMPs per table
-    find_thunk_tables.validate_targets = false;
-    scan_unassigned_bytes(&find_thunk_tables, map);
-
-    /* Append data to the end(s) of each function. */
-    FindData find_data;
-    scan_unassigned_bytes(&find_data, &ro_map);
+    /* Find thunks.  First use FindThunkTables, which has a more relaxed definition of a "thunk" but requires some minimum
+     * number of consecutive thunks in order to trigger.  Then use FindThunks, which has a strict definition including that the
+     * thunk target must be a function.  By running the latter in a loop, we can find thunks that branch to other thunks. */
+    if (func_heuristics & SgAsmFunction::FUNC_THUNK) {
+        FindThunkTables find_thunk_tables;
+        find_thunk_tables.minimum_nthunks = 3; // at least this many JMPs per table
+        find_thunk_tables.validate_targets = false;
+        scan_unassigned_bytes(&find_thunk_tables, map);
+        for (size_t npasses=0; npasses<5; ++npasses) {
+            FindThunks find_thunks;
+            scan_unassigned_insns(&find_thunks);
+            if (0==find_thunks.nfound)
+                break;
+        }
+    }
 
     /* Find functions that we missed between inter-function padding. */
     FindInterPadFunctions find_interpad_functions;
     scan_unassigned_bytes(&find_interpad_functions, map);
+
+    /* Split thunks off from their jumped-to function.  Not really necessary, but the result is more like other common
+     * disassemblers and also more closely matches what would happen if we had debugging information in the executable. */
+    if (func_heuristics & SgAsmFunction::FUNC_THUNK)
+        detach_thunks();
+
+    /* Run one last analysis of the CFG because we may need to fix some things up after having added more blocks from the
+     * post-cfg analyses we did above. If nothing happened above, then analyze_cfg() should be fast. */
+    analyze_cfg(SgAsmBlock::BLK_GRAPH2);
+
+    /* Find thunks again.  We might have more things satisfying the relatively strict thunk definition. */
+    if (func_heuristics & SgAsmFunction::FUNC_THUNK) {
+        for (size_t npasses=0; npasses<5; ++npasses) {
+            FindThunks find_thunks;
+            scan_unassigned_insns(&find_thunks);
+            if (0==find_thunks.nfound)
+                break;
+        }
+    }
+
+    /* Append data to the end(s) of each normal function. */
+    FindData find_data;
+    scan_unassigned_bytes(&find_data, &ro_map);
+
+    /* Make sure padding is back where it belongs. */
+    adjust_padding();
 
     /* Give existing functions names from symbol tables. Don't create more functions. */
     if (interp) {
@@ -3019,10 +3150,6 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
             name_plt_entries(headers[i]); // give names to ELF .plt trampolines
         }
     }
-
-    /* Run one last analysis of the CFG because we may need to fix some things up after having added more blocks from the
-     * post-cfg analyses we did above. If nothing happened above, then analyze_cfg() should be fast. */
-    analyze_cfg(SgAsmBlock::BLK_GRAPH2);
 
     /* Add the BLK_CFGHEAD reason to all blocks that are also in the function's CFG head list.  We do this once here rather
      * than searching the heads list in each pass of analyze_cfg(). */
@@ -3038,6 +3165,15 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
              functions.size(), 1==functions.size()?"":"s", insn2block.size(), 1==insn2block.size()?"":"s",
              basic_blocks.size(), 1==basic_blocks.size()?"":"s",
              basic_blocks.size()?(int)(1.0*insn2block.size()/basic_blocks.size()+0.5):0);
+}
+
+size_t
+Partitioner::function_extent(FunctionRangeMap *extents)
+{
+    size_t retval = 0;
+    for (Functions::iterator fi=functions.begin(); fi!=functions.end(); ++fi)
+        retval += function_extent(fi->second, extents);
+    return retval;
 }
 
 size_t
@@ -3275,10 +3411,7 @@ Partitioner::build_ast()
 
         /* List of all bytes occupied by functions. */
         FunctionRangeMap existing;
-        for (Functions::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
-            if (0==(fi->second->reason & SgAsmFunction::FUNC_LEFTOVERS))
-                function_extent(fi->second, &existing);
-        }
+        function_extent(&existing);
 
         /* Repeatedly add unassigned instructions to the leftovers function. */
         bool process_instructions;
@@ -3336,6 +3469,7 @@ Partitioner::build_ast(Function* f)
     /* Get the list of basic blocks and data blocks.  We'll want them to be added to the function in order of their starting
      * address, with basic blocks and data blocks interleaved. */
     typedef std::multimap<rose_addr_t, SgAsmStatement*> NodeMap;
+    std::set<DataBlock*> my_data_blocks;
     NodeMap nodes;
     BasicBlock *first_basic_block = NULL;
     for (BasicBlocks::iterator bi=f->basic_blocks.begin(); bi!=f->basic_blocks.end(); ++bi) {
@@ -3351,16 +3485,21 @@ Partitioner::build_ast(Function* f)
         for (std::set<DataBlock*>::iterator di=bblock->data_blocks.begin(); di!=bblock->data_blocks.end(); ++di) {
             DataBlock *dblock = *di;
             Function *dblock_func = effective_function(dblock);
-            if (dblock_func==f && nodes.find(dblock->address())==nodes.end())
-                nodes.insert(std::make_pair(dblock->address(), build_ast(dblock)));
+            if (dblock_func==f)
+                my_data_blocks.insert(dblock);
         }
     }
 
     for (DataBlocks::iterator di=f->data_blocks.begin(); di!=f->data_blocks.end(); ++di) {
         DataBlock *dblock = di->second;
         assert(dblock->function==f);
-        if (nodes.find(dblock->address())==nodes.end())
-            nodes.insert(std::make_pair(dblock->address(), build_ast(dblock)));
+        my_data_blocks.insert(dblock);
+    }
+
+    for (std::set<DataBlock*>::iterator di=my_data_blocks.begin(); di!=my_data_blocks.end(); ++di) {
+        DataBlock *dblock = *di;
+        SgAsmBlock *ast_block = build_ast(dblock);
+        nodes.insert(std::make_pair(dblock->address(), ast_block));
     }
 
     /* Create the AST function node. */
@@ -3383,7 +3522,6 @@ Partitioner::build_ast(Function* f)
             reasons |= SgAsmFunction::FUNC_DISCONT;
     }
     retval->set_reason(reasons);
-
     return retval;
 }
 
@@ -3423,6 +3561,7 @@ Partitioner::build_ast(DataBlock *block)
 
     for (std::vector<SgAsmStaticData*>::const_iterator ni=block->nodes.begin(); ni!=block->nodes.end(); ++ni) {
         retval->get_statementList().push_back(*ni);
+        assert(NULL==(*ni)->get_parent());
         (*ni)->set_parent(retval);
     }
     return retval;
