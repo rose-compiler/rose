@@ -38,25 +38,17 @@ void Range<rose_addr_t>::print(std::ostream &o) const
 char
 ExtentMap::category(const Extent &a, const Extent &b)
 {
-    /* Added these for backward compatibility with an older version. */
-    if (a.empty() && b.empty())
+    if (a.relaxed_first()==b.relaxed_first() && a.size()==b.size())
         return 'C';
-    if (a.empty())
+    if (a.relaxed_first()+a.size() <= b.relaxed_first())
         return 'L';
-    if (b.empty())
+    if (a.relaxed_first() >= b.relaxed_first()+b.size())
         return 'R';
-
-    if (a.first()==b.first() && a.size()==b.size())
-        return 'C';
-    if (a.first()+a.size() <= b.first())
-        return 'L';
-    if (a.first() >= b.first()+b.size())
-        return 'R';
-    if (a.first() <= b.first() && a.first()+a.size() >= b.first()+b.size())
+    if (a.relaxed_first() <= b.relaxed_first() && a.relaxed_first()+a.size() >= b.relaxed_first()+b.size())
         return 'O';
-    if (a.first() >= b.first() && a.first()+a.size() <= b.first()+b.size())
+    if (a.relaxed_first() >= b.relaxed_first() && a.relaxed_first()+a.size() <= b.relaxed_first()+b.size())
         return 'I';
-    if (a.first() <= b.first()) /*already know a.begin+a.size > b.begin*/
+    if (a.relaxed_first() <= b.relaxed_first()) /*already know a.first+a.size > b.first*/
         return 'B';
     return 'E';
 }
