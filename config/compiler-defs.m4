@@ -28,7 +28,7 @@ dnl predefined by a specific compiler
   # g++|gcc|mpicc|mpic++|mpicxx|mpiCC)
   # TOO (2/16/2011): added support for tensilica compilers, assuming they are
   # like GCC (they use a GCC front-end)
-    g++|gcc|mpicc|mpic++|mpicxx|mpiCC|xt-xc++|xt-xcc)
+    g++*|gcc*|mpicc|mpic++|mpicxx|mpiCC|xt-xc++|xt-xcc)
              BACKEND_GCC_MAJOR=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f1`
              BACKEND_GCC_MINOR=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f2`
              BACKEND_GCC_PATCHLEVEL=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f3`
