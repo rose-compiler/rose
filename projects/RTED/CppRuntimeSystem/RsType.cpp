@@ -71,49 +71,42 @@ bool RsType::checkSubtypeRecursive(size_t offset, const RsType* type) const
   //rs->printMessage("    >>> checkSubtypeRecursive ");
   const RsType* result = this;
   size_t        size = type -> getByteSize();
+  size_t        resultsize = result->getByteSize();
 
-  bool isunion = false;
-  unsigned int resultsize = result->getByteSize();
-  while(resultsize >= size) {
-    //rs->printMessage("   >> while result->getByteSize() >= size "+
-    //           ToString(resultsize)+" : " +ToString(size));
-    //rs->printMessage("        >>> checking  result == type :   "+result->getName()+
-    //           "  "+type->getName());
-    if( result == type )
-      return true;
+  while (resultsize >= size)
+  {
+    if ( result == type ) return true;
 
     // tps (09/10/09) Handle union type
     const RsClassType* ct_result = dynamic_cast<const RsClassType*>( result);
-    if (ct_result && ct_result->isUnionType()) isunion=true;
+    const bool isunion = (ct_result && ct_result->isUnionType());
 
     int subTypeId = -1;
-    std::vector<int> subTypeIdvec;
-    if (isunion==false)
-      subTypeId = result->getSubtypeIdAt(offset);
-    else
-      subTypeIdvec = ct_result->getSubtypeUnionIdAt(offset);
+    if (isunion)
+    {
+      std::vector<int> subTypeIdvec = ct_result->getSubtypeUnionIdAt(offset);
 
-    //rs->printMessage("   >> subTypeId: "+ToString(subTypeId)+"  isunion:"+
-    //     ToString(isunion));
-    if (  (isunion && subTypeIdvec.size()==0)
-       || (!isunion && subTypeId == -1)
-       ) {
-      // no refinement is possible
-      //rs->printMessage("    >>> subTypeId == -1 .");
-      return false;
-    }
+      if (subTypeIdvec.size() == 0) return false;
 
-    if (isunion) {
       std::vector<int>::const_iterator it = subTypeIdvec.begin();
       // iterate over the members and find the matching one
       for (; it!=subTypeIdvec.end(); ++it) {
         subTypeId = *it;
-        //              addr_type temp_offset = offset- result->getSubtypeOffset(subTypeId);
-        const RsType* temp_result =  result->getSubtype(subTypeId);
+
+        const RsType* temp_result = result->getSubtype(subTypeId);
         if (temp_result==type)
           break;
       }
     }
+    else
+    {
+      subTypeId = result->getSubtypeIdAt(offset);
+
+      if (subTypeId == -1) return false;
+    }
+
+    //rs->printMessage("   >> subTypeId: "+ToString(subTypeId)+"  isunion:"+
+    //     ToString(isunion));
 
     // continue as before and get the subtype
     offset -= result->getSubtypeOffset(subTypeId);
@@ -122,7 +115,7 @@ bool RsType::checkSubtypeRecursive(size_t offset, const RsType* type) const
     result  = result->getSubtype(subTypeId);
     //rs->printMessage("       >> result  = result->getSubtype(subTypeId) : "+
     //     result->getName()+"\n");
-    if (isunion==false)
+    if (!isunion)
       resultsize = result->getByteSize();
   }
   //rs->printMessage("    >>> result: bytesize: " + ToString( result -> getByteSize())+

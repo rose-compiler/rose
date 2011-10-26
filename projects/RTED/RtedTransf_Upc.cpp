@@ -16,8 +16,6 @@ void RtedTransformation::transformUpcBlockingOps(SgStatement* const stmt)
   //         some_upc_blocking_operation();
   //         rted_UpcEnterWorkzone(); // acquires heap lock (reader)
 
-  ROSE_ASSERT(withupc);
-
   static const std::string exitwz_msg("RS: UpcExitWorkzone()");
   static const std::string enterwz_msg("RS: UpcEnterWorkzone()");
 

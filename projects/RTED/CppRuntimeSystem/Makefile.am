@@ -3,8 +3,10 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 RuntimeSystemlibdir = $(libdir)
 RuntimeSystemlib_LTLIBRARIES = libCppRuntimeSystem.la
 
+AM_CXXFLAGS = -g -Wall -Wextra
+
 if ROSE_WITH_UPC
-AM_UPCFLAGS = -DWITH_UPC=1 -DIN_TARGET_LIBS
+AM_UPCFLAGS = -g -Wall -Wextra -DWITH_UPC=1 -DIN_TARGET_LIBS
 RuntimeSystemlib_LTLIBRARIES += libUpcRuntimeSystem.la
 endif
 
