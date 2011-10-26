@@ -28,6 +28,7 @@ true ${FFLAGS:=}
 AM_CONFIG_HEADER(rose_config.h)
 
 ROSE_SUPPORT_GIT_VERSIONING
+ROSE_CONFIGURE_SECTION([Configuring ${T_BM}ROSE${T_NM}, version ${T_BM}0.9.5a ($GIT_HEAD_HASH)${T_NM}])
 
 # This macro calls all of the other macros that used to be in the body of
 # this configure.in file.  This permits other projects to call this same
