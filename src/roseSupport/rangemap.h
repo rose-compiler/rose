@@ -45,7 +45,7 @@ public:
     /** Create an empty range.  Ranges may have an empty size, but empty ranges will never appear inside a RangeMap object.
      *  The @p begin value of an empty range is meaningless. */
     Range()
-        : r_first(1), r_last(0) {}
+        : r_first(1), r_last(0) {} // see clear()
 
     /** Create a new range of unit size. The new range contains only the specified value. */
     explicit Range(const Value &first)
@@ -55,14 +55,18 @@ public:
      *  returned for a range that contains all values, but this is due to overflow. */
     Range(const Value &first, const Value &size)
         : r_first(first), r_last(first+size-1) {
-        if (0==size)
+        if (0==size) {
+            r_last = first; // or else clear() is a no-op leaving invalid values
             clear();
+        } else {
+            assert(!empty()); // checks for overflow
+        }
     }
 
     /** Create a new range from a different range. */
     template<class Other>
     explicit Range(const Other &other)
-        : r_first(other.first()), r_last(other.last()) {}
+        : r_first(other.relaxed_first()), r_last(other.relaxed_last()) {}
 
     /** Create a new range by giving the first (inclusive) and last value (inclusive).  This is the only way to create a range
      * that contains all values since the size of such a range overflows the range's Value type.  If the two values are equal
@@ -76,25 +80,37 @@ public:
         return retval;
     }
 
-    /** Accessor for the first value of a range.
+    /** Accessor for the first value of a range.  It does not make sense to ask for the first value of an empty range, and an
+     *  assertion will fail if such a request is made.  However, relaxed_first() will return a value anyway.
      *  @{ */
     void first(const Value &first) {
         r_first = first;
     }
-    const Value& first() const {
+    const Value first() const {
         assert(!empty());
+        return r_first;
+    }
+    const Value relaxed_first() const {
+        if (!empty())
+            return first();
+        if (1==r_first-r_last)
+            return r_first-1;
         return r_first;
     }
     /** @} */
 
-    /** Accessor for the last value of a range.
+    /** Accessor for the last value of a range.  It does not make sense to ask for the last value of an empty range, and an
+     *  assertion will fail if such a request is made.  However, relaxed_last() will return a value anyway.
      *  @{ */
     void last(const Value &last) {
         r_last = last;
     }
-    const Value& last() const {
+    const Value last() const {
         assert(!empty());
         return r_last;
+    }
+    const Value relaxed_last() const {
+        return empty() ? relaxed_first() : last();
     }
     /** @} */
 
@@ -108,12 +124,28 @@ public:
     }
 
     /** Sets the range size by adjusting the maximum value.  If the size is set to zero then the range will be empty and the
-     *  first and last values become invalid.  It is an error to change the size of a range from zero to non-zero. */
-    void size(const Value &new_size) {
+     *  first and last values become invalid.  It is an error to change the size of a range from zero to non-zero, but the
+     *  relaxed_resize() is available for that purpose.
+     *  @{ */
+    void resize(const Value &new_size) {
         assert(!empty());
-        r_last = r_first + new_size - 1;
-        assert(!empty()); // this one is to check for overflow of r_last
+        if (0==new_size) {
+            clear();
+        } else {
+            r_last = r_first + new_size - 1;
+            assert(!empty()); // this one is to check for overflow of r_last
+        }
     }
+    void relaxed_resize(const Value &new_size) {
+        if (0==new_size) {
+            clear();
+        } else {
+            r_first = relaxed_first();
+            r_last = r_first + new_size - 1;
+            assert(!empty()); // this one is to check for overflow of r_last
+        }
+    }
+    /** @} */
 
     /** Split a range into two parts.  Returns a pair of adjacent ranges such that @p at is the first value of the second
      *  returned range.  The split point must be such that neither range is empty. */
@@ -144,11 +176,18 @@ public:
         return r_last<r_first; // can't use first() or last() here because they're not valid for empty ranges.
     }
 
-    /** Make a range empty. */
+    /** Make a range empty.  An empty range is one in which r_first is greater than r_last.  We make special provisions here so
+     *  that relaxed_first() will continue to return the same value as it did before the range was set to empty. */
     void clear() {
-        first(1);
-        last(0);
-        assert(empty());
+        if (!empty()) {
+            if (r_first<maximum()) {
+                r_first = r_first + 1;
+                r_last = r_first - 1;
+            } else {
+                r_last = r_first - 2;
+            }
+            assert(empty());
+        }
     }
 
     /** Do both ranges begin at the same place?  An empty range never begins with any other range, including other empty
@@ -665,7 +704,7 @@ public:
         if (empty())
             return end();
         iterator lb = lower_bound(addr);
-        if (lb!=end() && lb.first.begins_before(Range(addr), false/*non-strict*/))
+        if (lb!=end() && lb->first.begins_before(Range(addr), false/*non-strict*/))
             return lb;
         return --lb;
     }
