@@ -6,7 +6,12 @@ INCLUDES =  $(ROSE_INCLUDES) -I$(srcdir)/.. -I$(srcdir)/../CFG -I$(top_srcdir)/s
 CXX_TEMPLATE_REPOSITORY_PATH = .
 
 noinst_LTLIBRARIES = libbitvectorDataflow.la
-libbitvectorDataflow_la_SOURCES = DataFlowAnalysis.C  DefUseChain.C  ReachingDefinition.C
+libbitvectorDataflow_la_SOURCES = DataFlowAnalysis.C  DefUseChain.C  ReachingDefinition.C ReachingDefinitionFacade.C
+#libdataflowAnalysisSources = DataFlowAnalysis.C  ReachingDefinition.C
+
+# lib_LTLIBRARIES = libdataflowAnalysis.a
+# libdataflowAnalysis_a_SOURCES  = $(libdataflowAnalysisSources)
+
 
 clean-local:
 	rm -rf Templates.DB ii_files ti_files cxx_templates
@@ -14,7 +19,7 @@ clean-local:
 distclean-local:
 	rm -rf Templates.DB
 
-include_HEADERS = DataFlowAnalysis.h DefUseChain.h ReachingDefinition.h
+include_HEADERS = DataFlowAnalysis.h DefUseChain.h ReachingDefinition.h ReachingDefinitionFacade.h
 
 
 

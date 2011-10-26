@@ -2912,7 +2912,10 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of endVisit (ForStatement,BlockScope)");
 
-          java_parser.cactionForStatementEnd(this.createJavaToken(node));
+          java_parser.cactionForStatementEnd(node.initializations == null ? 0 : node.initializations.length,
+        		                             node.condition != null,
+        		                             node.increments == null ? 0 : node.increments.length,
+        		                             this.createJavaToken(node));
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (ForStatement,BlockScope)");
@@ -2923,20 +2926,7 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of endVisit (IfStatement,BlockScope)");
 
-          int numberOfStatements = 0;
-          if (node.thenStatement != null)
-             {
-            // System.out.println("Inside of visit (IfStatement,BlockScope): thenStatement detected");
-               numberOfStatements = 1;
-             }
-          
-          if (node.elseStatement != null)
-             {
-            // System.out.println("Inside of visit (IfStatement,BlockScope): elseStatement detected");
-               numberOfStatements = 2;
-             }
-
-          java_parser.cactionIfStatementEnd(numberOfStatements, this.createJavaToken(node));
+          java_parser.cactionIfStatementEnd(node.elseStatement != null, this.createJavaToken(node));
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (IfStatement,BlockScope)");
@@ -3190,8 +3180,8 @@ class ecjASTVisitor extends ASTVisitor
 
        // Build the variable declaration using the type from the astJavaTypeStack.
        // Note that this may have to handle an array of names or be even more complex in the future.
-          java_parser.cactionLocalDeclarationEnd(name,isFinal, this.createJavaToken(node));
-
+          java_parser.cactionLocalDeclarationEnd(name, node.initialization != null, isFinal, this.createJavaToken(node));
+/*
           if (node.initialization != null)
              {
                if (java_parser.verboseLevel > 0)
@@ -3199,6 +3189,7 @@ class ecjASTVisitor extends ASTVisitor
 
                java_parser.cactionLocalDeclarationInitialization(this.createJavaToken(node));
              }
+*/
         }
 
      public void endVisit(LongLiteral  node, BlockScope scope)
@@ -3227,7 +3218,7 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of endVisit (MessageSend,BlockScope)");
 
-          java_parser.cactionMessageSendEnd(this.createJavaToken(node));
+          java_parser.cactionMessageSendEnd(node.arguments == null ? 0 : node.arguments.length, this.createJavaToken(node));
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (MessageSend,BlockScope)");
@@ -3580,7 +3571,7 @@ class ecjASTVisitor extends ASTVisitor
                System.out.println("endVisit TypeDeclaration -- BlockScope");
 
           String typename = new String(node.name);
-          java_parser.cactionTypeDeclarationEnd(typename,0, this.createJavaToken(node));
+          java_parser.cactionTypeDeclarationEnd(typename, 0, this.createJavaToken(node));
 
           System.out.println("Leaving endVisit (TypeDeclaration,BlockScope)");
         }

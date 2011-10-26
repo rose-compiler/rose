@@ -1,9 +1,7 @@
 #include "RtedDebug.h"
 
-#include <QDebug>
-
-#include <pthread.h>
-
+#include "MainWindow.h"
+#include "../CppRuntimeSystem.h"
 
 RtedDebug * RtedDebug::single = NULL;
 
