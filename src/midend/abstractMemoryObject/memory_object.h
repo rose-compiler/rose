@@ -132,9 +132,13 @@ namespace AbstractMemoryObject
     
   };
 
-  class Array: public ObjSet
+#if 0 // Still not clear if users will get confused by this class
+  // A class to summarize overlapped semantics for C pointers and Arrays
+  // Recommended to be used in C/C++ where pointers and arrays sometimes can be used interchangeably. 
+  class PointerOrArray: public ObjSet
   {
     public:
+    // Array side of interfaces ---------
       // Returns a memory object that corresponds to all the elements in the given array
       virtual ObjSet* getElements();
       // Returns the memory object that corresponds to the elements described by the given abstract index, 
@@ -143,6 +147,33 @@ namespace AbstractMemoryObject
 
       // number of dimensions of the array
       virtual size_t getNumDims();
+
+   // Pointer side of interfaces ---------
+       // used for a pointer to non-array
+      virtual ObjSet* getDereference () const;
+      // Returns true if this pointer refers to the same abstract object as that pointer.
+      virtual bool equalPoints(const PointerOrArray & that);
+    
+      //virtual bool operator == (const ObjSet & that) const;
+      //virtual bool operator < (const ObjSet & that) const;
+  };
+#endif 
+  // Some programming languages don't have the concept of pointers. We provide explicit support for Array
+  class Array: public ObjSet
+  {
+    public:
+      // Returns a memory object that corresponds to all the elements in the given array
+      virtual ObjSet* getElements() ;
+      // Returns the memory object that corresponds to the elements described by the given abstract index, 
+      // which represents one or more indexes within the array
+      virtual ObjSet* getElements(IndexVector* ai) ;
+
+      // number of dimensions of the array
+      virtual size_t getNumDims();
+
+      // support dereference of array object, similar to the dereference of pointer
+      // Return the element object: array[0]
+      virtual ObjSet* getDereference () ;
       //virtual bool operator == (const ObjSet & that) const;
       //virtual bool operator < (const ObjSet & that) const;
   };
@@ -150,10 +181,7 @@ namespace AbstractMemoryObject
   class Pointer: public ObjSet
   {
     public:
-      // used for a pointer to non-array
-      ObjSet* getDereference () const;
-      // used for a pointer to an array
-      ObjSet * getElements() const;
+      ObjSet* getDereference () ;
       // Returns true if this pointer refers to the same abstract object as that pointer.
       bool equalPoints(const Pointer & that);
       // Returns true if this object and that object may/must refer to the same pointer memory object.
