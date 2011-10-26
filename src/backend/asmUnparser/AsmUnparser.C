@@ -104,7 +104,8 @@ AsmUnparser::init()
         .append(&staticDataLineTermination);
 
     datablock_callbacks.unparse
-        .append(&dataBlockBody);                /* used only for ORGANIZED_BY_AST */
+        .append(&dataBlockBody)                 /* used only for ORGANIZED_BY_AST */
+        .append(&dataBlockLineTermination);
 
     function_callbacks.pre
         .append(&functionEntryAddress)
@@ -647,6 +648,14 @@ AsmUnparser::DataBlockBody::operator()(bool enabled, const DataBlockArgs &args)
         for (size_t i=0; i<args.datalist.size(); i++)
             args.unparser->unparse_staticdata(enabled, args.output, args.datalist[i], i);
     }
+    return enabled;
+}
+
+bool
+AsmUnparser::DataBlockLineTermination::operator()(bool enabled, const DataBlockArgs &args)
+{
+    if (enabled)
+        args.output <<std::endl;
     return enabled;
 }
 
