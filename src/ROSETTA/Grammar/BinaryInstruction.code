@@ -4096,7 +4096,7 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
 						 *   partitioner only sets this flag for functions that are created due to
 						 *   the thunk recognition pass; other functions that don't have this bit set
 						 *   might also be thunks. */
-                FUNC_DEFAULT     = 0x1fff       /**< Default value for Partitioner class. */
+                FUNC_DEFAULT     = 0x6fff       /**< Default value for Partitioner class. */
         };
 
         /** Returns a very short string describing the reason mask. */
