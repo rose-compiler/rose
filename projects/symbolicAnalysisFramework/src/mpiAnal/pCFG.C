@@ -997,7 +997,11 @@ if(analysisDebugLevel>=1) Dbg::dbg << indent << "merged="<<merged<<endl;
                         if(analysisDebugLevel>=1)
                         {
                                 int p=0;
-                                Dbg::dbg << indent << "runAnalysis_pCFG() D pSetActive =";    for(vector<bool>::iterator it=pSetActive.begin(); it!=pSetActive.end();    it++, p++) { Dbg::dbg << p << " : " << *it << ", "; } Dbg::dbg <<endl;
+                                Dbg::dbg << indent << "runAnalysis_pCFG() D pSetActive =";
+                                for(vector<bool>::iterator it=pSetActive.begin(); it!=pSetActive.end();    it++, p++) {
+                                    Dbg::dbg << p << " : " << (*it?"true":"false") << ", ";
+                                }
+                                Dbg::dbg <<endl;
                                 printPSetStatus(Dbg::dbg, descN, activePSets, blockedPSets, releasedPSets, indent);
                         }
                         

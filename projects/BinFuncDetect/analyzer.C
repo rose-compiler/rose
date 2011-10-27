@@ -743,7 +743,7 @@ main(int argc, char *argv[])
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     std::cerr <<"Partitioning instructions into functions...\n";
     Partitioner *partitioner = new Partitioner();
-    partitioner->set_search(SgAsmFunction::FUNC_DEFAULT | SgAsmFunction::FUNC_INTRABLOCK);
+    partitioner->set_search(SgAsmFunction::FUNC_DEFAULT | SgAsmFunction::FUNC_LEFTOVERS);
     partitioner->set_map(map, &ro_map);
     //partitioner->set_debug(stderr);
     SgAsmBlock *gblock = partitioner->partition(interp, insns);
