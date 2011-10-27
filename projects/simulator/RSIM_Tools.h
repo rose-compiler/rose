@@ -168,8 +168,8 @@ public:
                         for (std::vector<SgAsmInstruction*>::iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
                             SgAsmInstruction *insn = *ii;
                             func_start = std::min(func_start, insn->get_address());
-                            func_end = std::max(func_end, insn->get_address()+insn->get_raw_bytes().size());
-                            nbytes += insn->get_raw_bytes().size();
+                            func_end = std::max(func_end, insn->get_address()+insn->get_size());
+                            nbytes += insn->get_size();
                         }
 
                         /* Compute name string */
@@ -733,7 +733,7 @@ public:
         if (enabled && insn) {
             RTS_Message *m = args.thread->tracing(TRACE_MISC);
             const SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
-            uint32_t newip_va = insn->get_address() + insn->get_raw_bytes().size();
+            uint32_t newip_va = insn->get_address() + insn->get_size();
             VirtualMachineSemantics::ValueType<32> newip = args.thread->policy.number<32>(newip_va);
             switch (insn->get_kind()) {
                 case x86_movd: {

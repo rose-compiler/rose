@@ -171,7 +171,7 @@ class MyUnparser: public AsmUnparser {
                 }
 
                 rose_addr_t va = node->get_address();
-                size_t size = node->get_raw_bytes().size();
+                size_t size = node->get_size();
                 MyUnparser *unparser = dynamic_cast<MyUnparser*>(args.unparser);
                 assert(unparser!=NULL);
                 unparser->show_names(args.output, ida, node, rose_func_va, ida_func_va, va, size);
@@ -197,7 +197,7 @@ class MyUnparser: public AsmUnparser {
                         args.output <<"Backward " <<nskipped <<" byte" <<(1==nskipped?"":"s") <<"\n";
                     }
                 }
-                unparser->next_address = va + node->get_raw_bytes().size();
+                unparser->next_address = va + node->get_size();
             }
             return enabled;
         }
@@ -380,7 +380,7 @@ statistics(SgAsmInterpretation *interp, const Disassembler::InstructionMap &insn
     // Number of bytes disassembled (including those not assigned to any function, and counting overlaps twice)
     ExtentMap disassembled_bytes;
     for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii)
-        disassembled_bytes.insert(Extent(ii->first, ii->second->get_raw_bytes().size()));
+        disassembled_bytes.insert(Extent(ii->first, ii->second->get_size()));
     size_t ndis0 = disassembled_bytes.size();
     fprintf(stderr, "Disassembled:                           %-*zu", width, ndis0);
     for (IdaInfo::iterator ida_i=ida.begin(); ida_i!=ida.end(); ++ida_i) {
@@ -395,7 +395,7 @@ statistics(SgAsmInterpretation *interp, const Disassembler::InstructionMap &insn
     for (IdaInfo::iterator ida_i=ida.begin(); ida_i!=ida.end(); ++ida_i) {
         emap = disassembled_bytes;
         for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii)
-            emap.erase(Extent(ii->first, ii->second->get_raw_bytes().size()));
+            emap.erase(Extent(ii->first, ii->second->get_size()));
         size_t n = emap.size();
         if (n>0) {
             printf("[NOTE %d] Bytes disassembled by IDA[%d] (%s) but not ROSE:\n", note, ida_i->id, ida_i->name.c_str());
@@ -489,7 +489,7 @@ statistics(SgAsmInterpretation *interp, const Disassembler::InstructionMap &insn
                 ExtentMap func_bytes;
                 std::vector<SgAsmx86Instruction*> func_insns = SageInterface::querySubTree<SgAsmx86Instruction>(rose_functions[i]);
                 for (size_t j=0; j<func_insns.size(); j++)
-                    func_bytes.insert(Extent(func_insns[j]->get_address(), func_insns[j]->get_raw_bytes().size()));
+                    func_bytes.insert(Extent(func_insns[j]->get_address(), func_insns[j]->get_size()));
                 nbytes += func_bytes.size();
             }
         }

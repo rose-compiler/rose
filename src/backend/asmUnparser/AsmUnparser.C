@@ -395,7 +395,7 @@ AsmUnparser::InsnRawBytes::operator()(bool enabled, const InsnArgs &args)
 {
     if (enabled)
         SgAsmExecutableFileFormat::hexdump(args.output, args.insn->get_address(), &(args.insn->get_raw_bytes()[0]),
-                                           args.insn->get_raw_bytes().size(), fmt);
+                                           args.insn->get_size(), fmt);
     return enabled;
 }
 
@@ -598,7 +598,7 @@ AsmUnparser::StaticDataRawBytes::operator()(bool enabled, const StaticDataArgs &
             args.output <<fmt.prefix;
 
         SgAsmExecutableFileFormat::hexdump(args.output, start_address, &(args.data->get_raw_bytes()[0]),
-                                           args.data->get_raw_bytes().size(), fmt);
+                                           args.data->get_size(), fmt);
     }
     return enabled;
 }
@@ -608,7 +608,7 @@ AsmUnparser::StaticDataDetails::operator()(bool enabled, const StaticDataArgs &a
 {
     if (enabled) {
         SgAsmBlock *dblock = isSgAsmBlock(args.data->get_parent()); // look only to parent for data block
-        size_t nbytes = args.data->get_raw_bytes().size();
+        size_t nbytes = args.data->get_size();
 
         if (dblock && 0!=(dblock->get_reason() & SgAsmBlock::BLK_JUMPTABLE)) {
             args.output <<" " <<nbytes <<"-byte jump table beginning at "

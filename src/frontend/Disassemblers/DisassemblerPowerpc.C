@@ -53,7 +53,7 @@ SgAsmPowerpcInstruction::get_successors(bool *complete) {
             assert(ve!=NULL);
             rose_addr_t target = SageInterface::getAsmConstant(ve);
             retval.insert(target);
-            retval.insert(get_address()+get_raw_bytes().size());
+            retval.insert(get_address()+get_size());
             break;
         }
 
@@ -63,7 +63,7 @@ SgAsmPowerpcInstruction::get_successors(bool *complete) {
         case powerpc_bclrl:
             /* Conditional branches to count register; target is unknown */
             *complete = false;
-            retval.insert(get_address()+get_raw_bytes().size());
+            retval.insert(get_address()+get_size());
             break;
 
         case powerpc_b:
@@ -92,7 +92,7 @@ SgAsmPowerpcInstruction::get_successors(bool *complete) {
 
         default:
             /* All others fall through to next instruction */
-            retval.insert(get_address()+get_raw_bytes().size());
+            retval.insert(get_address()+get_size());
             break;
     }
     return retval;

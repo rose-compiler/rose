@@ -25,8 +25,8 @@ class ShowFunctions : public SgSimpleProcessing {
             for (std::vector<SgAsmInstruction*>::iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
                 SgAsmInstruction *insn = *ii;
                 func_start = std::min(func_start, insn->get_address());
-                func_end = std::max(func_end, insn->get_address()+insn->get_raw_bytes().size());
-                nbytes += insn->get_raw_bytes().size();
+                func_end = std::max(func_end, insn->get_address()+insn->get_size());
+                nbytes += insn->get_size();
             }
 
             /* Reason that this is a function */

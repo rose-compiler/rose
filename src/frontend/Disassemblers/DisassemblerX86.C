@@ -137,7 +137,7 @@ SgAsmx86Instruction::get_successors(bool *complete) {
             } else {
                 *complete = false;
             }
-            retval.insert(get_address() + get_raw_bytes().size());
+            retval.insert(get_address() + get_size());
             break;
         }
 
@@ -166,7 +166,7 @@ SgAsmx86Instruction::get_successors(bool *complete) {
 
         default: {
             /* Instructions that always fall through to the next instruction */
-            retval.insert(get_address() + get_raw_bytes().size());
+            retval.insert(get_address() + get_size());
             break;
         }
     }
@@ -444,7 +444,7 @@ SgAsmx86Instruction::has_effect(const std::vector<SgAsmInstruction*>& insns, boo
      * words, a sequence ending with a JMP (for instance) has an effect, but an internal JMP has no effect.  This is to
      * support instruction sequences from non-contiguous basic blocks. */
     ROSE_ASSERT(policy.get_ip().is_known());
-    if (!allow_branch && policy.get_ip().known_value()!=insns.back()->get_address() + insns.back()->get_raw_bytes().size())
+    if (!allow_branch && policy.get_ip().known_value()!=insns.back()->get_address() + insns.back()->get_size())
         return true;
 
     /* Instructions have an effect if the state changed.  We want the comparison to be independent of the instruction pointer,
@@ -512,7 +512,7 @@ SgAsmx86Instruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>
     if (!policy.get_ip().is_known()) {
         state.pop_back();
     } else if (!allow_branch &&
-               policy.get_ip().known_value()!=insns.back()->get_address() + insns.back()->get_raw_bytes().size()) {
+               policy.get_ip().known_value()!=insns.back()->get_address() + insns.back()->get_size()) {
         state.pop_back();
     }
 

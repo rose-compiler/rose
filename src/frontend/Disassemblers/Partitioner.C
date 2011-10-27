@@ -172,10 +172,10 @@ SgAsmFunction::get_extent(ExtentMap *extents, rose_addr_t *lo_addr, rose_addr_t 
             rose_addr_t lo, hi;
             if (insn) {
                 lo = insn->get_address();
-                hi = lo + insn->get_raw_bytes().size();
+                hi = lo + insn->get_size();
             } else if (data) {
                 lo = data->get_address();
-                hi = lo + data->get_raw_bytes().size();
+                hi = lo + data->get_size();
             } else {
                 return;
             }
@@ -474,7 +474,7 @@ Partitioner::update_analyses(BasicBlock *bb)
      * address and the instruction at the fall-through address pops the top of the stack (this is how position independent
      * code loads EIP into a general-purpose register). FIXME: For now we'll assume that any call to the fall-through address
      * is not a function call. */
-    rose_addr_t fallthrough_va = bb->last_insn()->get_address() + bb->last_insn()->get_raw_bytes().size();
+    rose_addr_t fallthrough_va = bb->last_insn()->get_address() + bb->last_insn()->get_size();
     rose_addr_t target_va = NO_TARGET;
     bool looks_like_call = bb->insns.front()->is_function_call(bb->insns, &target_va);
     if (looks_like_call && target_va!=fallthrough_va) {
@@ -531,7 +531,7 @@ Partitioner::successors(BasicBlock *bb, bool *complete)
     /* If this block ends with what appears to be a function call then we should perhaps add the fall-through address as a
      * successor. */
     if (bb->cache.is_function_call) {
-        rose_addr_t fall_through_va = canonic_block(bb->last_insn()->get_address() + bb->last_insn()->get_raw_bytes().size());
+        rose_addr_t fall_through_va = canonic_block(bb->last_insn()->get_address() + bb->last_insn()->get_size());
         rose_addr_t call_target_va = call_target(bb);
         if (call_target_va!=NO_TARGET) {
             BasicBlock *target_bb = find_bb_starting(call_target_va, false);
@@ -1032,7 +1032,7 @@ Partitioner::find_bb_containing(rose_addr_t va, bool create/*true*/)
             basic_blocks.insert(std::make_pair(va, bb));
         }
         append(bb, insn);
-        va += insn->get_raw_bytes().size();
+        va += insn->get_size();
         if (insn->terminatesBasicBlock()) { /*naively terminates?*/
             bool complete;
             const Disassembler::AddressSet& sucs = successors(bb, &complete);
@@ -1218,7 +1218,7 @@ Partitioner::mark_ipd_configuration()
             /* address past the basic block's last instruction */
             stack_ptr -= 4;
             policy.writeMemory<32>(x86_segreg_ss, policy.number<32>(stack_ptr),
-                                   policy.number<32>(bb->insns.back()->get_address()+bb->insns.back()->get_raw_bytes().size()),
+                                   policy.number<32>(bb->insns.back()->get_address()+bb->insns.back()->get_size()),
                                    policy.true_());
 
             /* address of basic block's first instruction */
@@ -1358,7 +1358,7 @@ Partitioner::mark_elf_plt_entries(SgAsmGenericHeader *fhdr)
             ++plt_offset;
             continue;
         }
-        plt_offset += insn->get_raw_bytes().size();
+        plt_offset += insn->get_size();
         SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn);
         if (!insn_x86) continue;
 
@@ -1472,7 +1472,7 @@ pattern1(const Disassembler::InstructionMap& insns, Disassembler::InstructionMap
             rre->get_descriptor().get_minor()!=x86_gpr_di)
             break;
         matches.insert(ii->first);
-        ii = insns.find(ii->first + insn->get_raw_bytes().size());
+        ii = insns.find(ii->first + insn->get_size());
     } while (0);
 
     /* Look for "push rbp" */
@@ -1491,7 +1491,7 @@ pattern1(const Disassembler::InstructionMap& insns, Disassembler::InstructionMap
             rre->get_descriptor().get_minor()!=x86_gpr_bp)
             return insns.end();
         matches.insert(ii->first);
-        ii = insns.find(ii->first + insn->get_raw_bytes().size());
+        ii = insns.find(ii->first + insn->get_size());
     }
 
     /* Look for "mov rbp,rsp" */
@@ -1538,7 +1538,7 @@ pattern2(const Disassembler::InstructionMap& insns, Disassembler::InstructionMap
         if (nop->get_kind()!=x86_nop) return insns.end();
         if (nop->get_operandList()->get_operands().size()!=0) return insns.end(); /*only zero-arg NOPs allowed*/
         matches.insert(ii->first);
-        ii = insns.find(ii->first + nop->get_raw_bytes().size());
+        ii = insns.find(ii->first + nop->get_size());
         if (ii==insns.end()) return insns.end();
     }
 
@@ -1572,7 +1572,7 @@ pattern3(const Disassembler::InstructionMap& insns, Disassembler::InstructionMap
             (i==2 && insn->get_kind()!=x86_nop))
             return insns.end();
         matches.insert(ii->first);
-        ii = insns.find(ii->first + insn->get_raw_bytes().size());
+        ii = insns.find(ii->first + insn->get_size());
         if (ii==insns.end()) return insns.end();
     }
 
@@ -1582,7 +1582,7 @@ pattern3(const Disassembler::InstructionMap& insns, Disassembler::InstructionMap
         if (!insn) return insns.end();
         if (insn->get_kind()!=x86_nop) break;
         matches.insert(ii->first);
-        ii = insns.find(ii->first + insn->get_raw_bytes().size());
+        ii = insns.find(ii->first + insn->get_size());
         if (ii==insns.end()) return insns.end();
     }
 
@@ -1634,7 +1634,7 @@ Partitioner::mark_call_insns()
         iv.push_back(ii->second);
         rose_addr_t target_va=NO_TARGET;
         if (ii->second->is_function_call(iv, &target_va) && target_va!=NO_TARGET &&
-            target_va!=ii->first + ii->second->get_raw_bytes().size()) {
+            target_va!=ii->first + ii->second->get_size()) {
             add_function(target_va, SgAsmFunction::FUNC_CALL_TARGET, "");
         }
     }
@@ -1652,7 +1652,7 @@ Partitioner::scan_contiguous_insns(Disassembler::InstructionMap insns, InsnRange
         std::vector<SgAsmInstruction*> contig;
         while (ii!=insns.end()) {
             contig.push_back(ii->second);
-            va += ii->second->get_raw_bytes().size();
+            va += ii->second->get_size();
             ii = insns.find(va);
         }
         cblist.apply(true, InsnRangeCallback::Args(this, prev, first, end, contig.size()));
@@ -1978,7 +1978,7 @@ Partitioner::FindInsnPadding::operator()(bool enabled, const Args &args)
     assert(args.insn_begin!=NULL);
 
     if (begins_contiguously &&
-        args.insn_begin->get_address()!=args.insn_prev->get_address()+args.insn_prev->get_raw_bytes().size())
+        args.insn_begin->get_address()!=args.insn_prev->get_address()+args.insn_prev->get_size())
         return true;
 
     /* The preceding function.  We'll add the padding as data to this function, unless we're creating explicity padding
@@ -2019,7 +2019,7 @@ Partitioner::FindInsnPadding::operator()(bool enabled, const Args &args)
 
         /* Advance to next instruction, or null. We do this inside the loop so we only need one copy of the code that inserts
          * the basic blocks for padding. */
-        va += insn->get_raw_bytes().size();
+        va += insn->get_size();
         if (matches)
             padding.push_back(insn);
         insn = i+1<args.ninsns ? p->find_instruction(va) : NULL;
@@ -2028,14 +2028,14 @@ Partitioner::FindInsnPadding::operator()(bool enabled, const Args &args)
         if ((matches && insn) || padding.empty())
             continue; // try to grab more padding instructions
         if (begins_contiguously &&
-            padding.front()->get_address()!=args.insn_prev->get_address()+args.insn_prev->get_raw_bytes().size())
+            padding.front()->get_address()!=args.insn_prev->get_address()+args.insn_prev->get_size())
             return true; // no point in even continuing the loop, since we're already past the first instruction now.
         if (ends_contiguously) {
             if (!matches) {
                 padding.clear();
                 continue;
             } else if (args.insn_end) {
-                if (padding.back()->get_address()+padding.back()->get_raw_bytes().size() != args.insn_end->get_address()) {
+                if (padding.back()->get_address()+padding.back()->get_size() != args.insn_end->get_address()) {
                     padding.clear();
                     continue;
                 }
@@ -2046,7 +2046,7 @@ Partitioner::FindInsnPadding::operator()(bool enabled, const Args &args)
         }
 
         /* Make sure we got enough bytes.  We can subtract first from last since we know they're contiguous in memory. */
-        if (padding.back()->get_address()+padding.back()->get_raw_bytes().size() - padding.front()->get_address() < minimum_size) {
+        if (padding.back()->get_address()+padding.back()->get_size() - padding.front()->get_address() < minimum_size) {
             padding.clear();
             continue;
         }
@@ -2061,7 +2061,7 @@ Partitioner::FindInsnPadding::operator()(bool enabled, const Args &args)
         if (add_as_data) {
             assert(prev_func!=NULL);
             rose_addr_t begin_va = padding.front()->get_address();
-            rose_addr_t end_va = padding.back()->get_address() + padding.back()->get_raw_bytes().size();
+            rose_addr_t end_va = padding.back()->get_address() + padding.back()->get_size();
             assert(end_va>begin_va);
             size_t size = end_va - begin_va;
             DataBlock *dblock = p->find_db_starting(begin_va, size);
@@ -2184,7 +2184,7 @@ Partitioner::FindIntraFunctionInsns::operator()(bool enabled, const Args &args)
         bblocks.insert(bb);
         for (std::vector<SgAsmInstruction*>::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii) {
             rose_addr_t first = (*ii)->get_address();
-            size_t size = (*ii)->get_raw_bytes().size();
+            size_t size = (*ii)->get_size();
             block_extents.insert(Extent(first, size));
         }
         va = block_extents.begin()->first.last() + 1; // the address of the first missing instruction
@@ -2217,7 +2217,7 @@ Partitioner::FindThunks::operator()(bool enabled, const Args &args)
     for (size_t i=0; i<args.ninsns; i++, va=next_va) {
         SgAsmInstruction *insn = p->find_instruction(va);
         assert(insn);
-        next_va = va + insn->get_raw_bytes().size();
+        next_va = va + insn->get_size();
 
         /* Instruction must be an x86 JMP */
         SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn);
@@ -2357,7 +2357,7 @@ Partitioner::FindThunkTables::operator()(bool enabled, const Args &args)
             /* This is a thunk. Save it and skip ahead to the start of the following instruction. */
             in_table = true;
             thunks[insn->get_address()] = insn;
-            va += insn->get_raw_bytes().size() - 1; // also incremented by loop
+            va += insn->get_size() - 1; // also incremented by loop
         }
 
         /* This is only a thunk table if we found enough thunks and (if appropriate) ends at the end of the range. */
@@ -2423,7 +2423,7 @@ Partitioner::FindPostFunctionInsns::operator()(bool enabled, const Args &args)
 {
     if (!enabled)
         return false;
-    if (!args.insn_prev || args.insn_begin->get_address()!=args.insn_prev->get_address()+args.insn_prev->get_raw_bytes().size())
+    if (!args.insn_prev || args.insn_begin->get_address()!=args.insn_prev->get_address()+args.insn_prev->get_size())
         return true;
     Partitioner *p = args.partitioner;
     BasicBlock *bb = p->find_bb_containing(args.insn_prev->get_address());
@@ -2453,7 +2453,7 @@ Partitioner::FindPostFunctionInsns::operator()(bool enabled, const Args &args)
 
         SgAsmInstruction *insn = p->find_instruction(va);
         assert(insn!=NULL);
-        va += insn->get_raw_bytes().size();
+        va += insn->get_size();
     }
     if (p->debug && nadded)
         fprintf(p->debug, "\n");
@@ -2502,7 +2502,7 @@ Partitioner::get_indirection_addr(SgAsmInstruction *g_insn)
         SgAsmx86RegisterReferenceExpression *reg = isSgAsmx86RegisterReferenceExpression(mref_bin->get_lhs());
         SgAsmValueExpression *val = isSgAsmValueExpression(mref_bin->get_rhs());
         if (reg->get_descriptor().get_major()==x86_regclass_ip && val!=NULL) {
-            retval = value_of(val) + insn->get_address() + insn->get_raw_bytes().size();
+            retval = value_of(val) + insn->get_address() + insn->get_size();
         }
     } else if (isSgAsmValueExpression(mref_addr)) {
         retval = value_of(isSgAsmValueExpression(mref_addr));
@@ -2826,7 +2826,7 @@ Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
         /* Analyze function return characteristics. */
         for (BasicBlocks::iterator bi=basic_blocks.begin(); bi!=basic_blocks.end(); ++bi) {
             BasicBlock *bb = bi->second;
-            rose_addr_t return_va = canonic_block(bb->last_insn()->get_address() + bb->last_insn()->get_raw_bytes().size());
+            rose_addr_t return_va = canonic_block(bb->last_insn()->get_address() + bb->last_insn()->get_size());
             BasicBlock *return_bb = find_bb_starting(return_va);
             rose_addr_t target_va = NO_TARGET; /*call target*/
             BasicBlock *target_bb = NULL;
@@ -3199,7 +3199,7 @@ Partitioner::function_extent(Function *func,
         BasicBlock *bb = bi->second;
         for (std::vector<SgAsmInstruction*>::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii) {
             rose_addr_t start = (*ii)->get_address();
-            size_t size = (*ii)->get_raw_bytes().size();
+            size_t size = (*ii)->get_size();
             if (0==nnodes++) {
                 lo_addr = start;
                 hi_addr = start + size;
@@ -3293,7 +3293,7 @@ Partitioner::datablock_extent(DataBlock *db,
             *hi_addr_ptr = 0;
     } else {
         rose_addr_t start = db->nodes.front()->get_address();
-        size_t size = db->nodes.front()->get_raw_bytes().size();
+        size_t size = db->nodes.front()->get_size();
         if (lo_addr_ptr)
             *lo_addr_ptr = start;
         if (hi_addr_ptr)
@@ -3305,7 +3305,7 @@ Partitioner::datablock_extent(DataBlock *db,
     for (size_t i=1; i<db->nodes.size(); i++) {
         SgAsmStaticData *node = db->nodes[i];
         rose_addr_t start = node->get_address();
-        size_t size = node->get_raw_bytes().size();
+        size_t size = node->get_size();
 
         if (lo_addr_ptr)
             *lo_addr_ptr = std::min(*lo_addr_ptr, start);
@@ -3347,7 +3347,7 @@ Partitioner::is_contiguous(Function *func, bool strict)
         if (block_func!=NULL && block_func!=func) {
             for (size_t i=0; i<block->nodes.size(); i++) {
                 if (block->nodes[i]->get_address() < hi_addr &&
-                    block->nodes[i]->get_address() + block->nodes[i]->get_raw_bytes().size() > lo_addr)
+                    block->nodes[i]->get_address() + block->nodes[i]->get_size() > lo_addr)
                     return false;
             }
         }
@@ -3430,7 +3430,7 @@ Partitioner::build_ast()
             Disassembler::InstructionMap insns_copy = insns;
             for (Disassembler::InstructionMap::iterator ii=insns_copy.begin(); ii!=insns_copy.end(); ++ii) {
                 rose_addr_t va = ii->first;
-                size_t size = ii->second->get_raw_bytes().size();
+                size_t size = ii->second->get_size();
                 if (!existing.contains(Extent(va, size))) {
                     BasicBlock *bb = find_bb_containing(ii->first);
                     assert(bb!=NULL);
@@ -3635,7 +3635,7 @@ Partitioner::detectBasicBlocks(const Disassembler::InstructionMap &insns) const
     for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
         SgAsmInstruction *insn = ii->second;
         rose_addr_t insn_va = insn->get_address();
-        rose_addr_t next_va = insn->get_address() + insn->get_raw_bytes().size();
+        rose_addr_t next_va = insn->get_address() + insn->get_size();
 
         /* If this instruction is one which terminates a basic block then make the next instruction (if any) the beginning of
          * a basic block. However, a sequence like the following should not be a basic block boundary because the CALL is

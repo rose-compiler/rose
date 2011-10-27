@@ -298,8 +298,8 @@ public:
             for (std::vector<SgAsmInstruction*>::iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
                 SgAsmInstruction *insn = *ii;
                 func_start = std::min(func_start, insn->get_address());
-                func_end = std::max(func_end, insn->get_address()+insn->get_raw_bytes().size());
-                nbytes += insn->get_raw_bytes().size();
+                func_end = std::max(func_end, insn->get_address()+insn->get_size());
+                nbytes += insn->get_size();
             }
 
             /* Reason that this is a function */
@@ -1331,7 +1331,7 @@ main(int argc, char *argv[])
 
         std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(block, V_SgAsmInstruction);
         for (std::vector<SgAsmInstruction*>::iterator ii=insns.begin(); ii!=insns.end(); ++ii)
-            extents.erase(Extent((*ii)->get_address(), (*ii)->get_raw_bytes().size()));
+            extents.erase(Extent((*ii)->get_address(), (*ii)->get_size()));
         size_t unused = extents.size();
         if (do_show_extents && unused>0) {
             printf("These addresses (%zu byte%s) do not contain instructions:\n", unused, 1==unused?"":"s");

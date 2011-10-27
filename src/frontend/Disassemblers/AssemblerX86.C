@@ -1722,7 +1722,7 @@ AssemblerX86::assembleOne(SgAsmInstruction *_insn)
         hf.width = 16;
         hf.pad_numeric = hf.show_chars = false;
         SgAsmExecutableFileFormat::hexdump(p_debug, insn->get_address(),  &(insn->get_raw_bytes()[0]),
-                                           insn->get_raw_bytes().size(), hf);
+                                           insn->get_size(), hf);
         fprintf(p_debug, " | %s\n", unparseInstruction(insn).c_str());
 #if 0 /*DEBUGGING*/
         fprintf(p_debug, "  baseSize=%d, operandSize=%d\n", 
