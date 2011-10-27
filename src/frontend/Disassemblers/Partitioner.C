@@ -371,6 +371,12 @@ is_writable(const MemoryMap::MapElement &me) {
     return 0 != (me.get_mapperms() & MemoryMap::MM_PROT_WRITE);
 }
 
+static bool
+is_unexecutable(const MemoryMap::MapElement &me)
+{
+    return 0 == (me.get_mapperms() & MemoryMap::MM_PROT_EXEC);
+}
+
 /* Set disassembly and memory initialization maps. */
 void
 Partitioner::set_map(MemoryMap *map, MemoryMap *ro_map)
@@ -3094,7 +3100,10 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
         pattern.push_back(0xcc);                /* x86 INT3 */
         cb.patterns.push_back(pattern);
 
-        scan_interfunc_bytes(&cb, &ro_map);
+        /* Scan only executable regions of memory. */
+        MemoryMap exe_map = *map;
+        exe_map.prune(is_unexecutable);
+        scan_interfunc_bytes(&cb, &exe_map);
     }
 
     /* Find thunks.  First use FindThunkTables, which has a more relaxed definition of a "thunk" but requires some minimum
