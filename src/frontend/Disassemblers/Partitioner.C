@@ -3181,7 +3181,8 @@ Partitioner::function_extent(Function *func,
                              FunctionRangeMap *extents/*out*/,
                              rose_addr_t *lo_addr_ptr/*out*/, rose_addr_t *hi_addr_ptr/*out*/)
 {
-    size_t nnodes=0, lo_addr=0, hi_addr=0;
+    size_t nnodes=0;
+    rose_addr_t lo_addr=0, hi_addr=0;
     std::set<DataBlock*> my_dblocks;
 
     for (BasicBlocks::iterator bi=func->basic_blocks.begin(); bi!=func->basic_blocks.end(); ++bi) {
