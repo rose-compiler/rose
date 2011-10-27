@@ -502,7 +502,7 @@ protected:
  *          SgAsmInstruction *insn = isSgAsmInstruction(node);
  *          if (insn!=NULL) {
  *              rose_addr_t start = insn->get_address();
- *              size_t size = insn->get_raw_bytes().size();
+ *              size_t size = insn->get_size();
  *              set.insert(AddressRange(start, size));
  *          }
  *      }
@@ -551,7 +551,7 @@ protected:
  *          SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(insn);
  *          if (insn && func) {
  *              rose_addr_t start = insn->get_address();
- *              size_t size = insn->get_raw_bytes().size();
+ *              size_t size = insn->get_size();
  *              ranges.insert(AddressRange(start, size), func);
  *          }
  *      }

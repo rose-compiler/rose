@@ -503,6 +503,7 @@ Grammar::setUpBinaryInstructions()
      // types; size-specific integers and floating-point types; regions of unknown type; ease of improving type information by
      // filling in more details as the type is discovered; etc.
      NEW_TERMINAL_MACRO(AsmStaticData, "AsmStaticData", "AsmStaticDataTag");
+     AsmStaticData.setFunctionPrototype("HEADER_STATIC_DATA", "../Grammar/BinaryInstruction.code");
      AsmStaticData.setDataPrototype("SgUnsignedCharList", "raw_bytes", "",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 
