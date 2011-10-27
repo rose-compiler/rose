@@ -128,7 +128,7 @@ test1(size_t niterations, uint64_t max_start_addr, size_t max_size)
                     std::cout <<"#" <<i <<": insert (" <<start_va <<"+" <<size <<"=" <<(start_va+size) <<")...\n";
                 map1.insert(Extent1(start_va, size));
 #ifdef CHECK
-                map2.resize(std::max(map2.size(), start_va+size), false);
+                map2.resize(std::max((uint64_t)map2.size(), start_va+size), false);
                 for (size_t j=0; j<size; j++)
                     map2[start_va+j] = true;
 #endif
@@ -137,7 +137,7 @@ test1(size_t niterations, uint64_t max_start_addr, size_t max_size)
                     std::cout <<"#" <<i <<": erase (" <<start_va <<"+" <<size <<"=" <<(start_va+size) <<")...\n";
                 map1.erase(Extent1(start_va, size));
 #ifdef CHECK
-                map2.resize(std::max(map2.size(), start_va+size), false);
+                map2.resize(std::max((uint64_t)map2.size(), start_va+size), false);
                 for (size_t j=0; j<size; j++)
                     map2[start_va+j] = false;
 #endif
@@ -152,7 +152,7 @@ test1(size_t niterations, uint64_t max_start_addr, size_t max_size)
          *                                      INVERT
          **********************************************************************************************************************/
         if (map1.nranges()<100000) { // skip for large ranges because its relatively slow
-            size_t offset = rand() % std::max(1ul, max_start_addr/10);
+            size_t offset = rand() % std::max(1ull, max_start_addr/10);
             size_t size = rand() % max_start_addr + 1;
             if (verbose)
                 std::cout <<"#" <<i <<": invert_within(" <<offset <<"+" <<size <<"=" <<(offset+size) <<")...\n";
@@ -160,7 +160,7 @@ test1(size_t niterations, uint64_t max_start_addr, size_t max_size)
             ExtentMap1 x1 = map1.invert_within<ExtentMap1>(Extent1(offset, size));
 
 #ifdef CHECK
-            ExtentMap2 x2(std::max(map1.max()+1, offset+size), false);
+            ExtentMap2 x2(std::max(map1.max()+1, (uint64_t)offset+size), false);
             for (size_t j=0; j<size; j++)
                 x2[offset+j] = offset+j<map2.size() ? !map2[offset+j] : true;
             if (!check(x1, x2)) {
