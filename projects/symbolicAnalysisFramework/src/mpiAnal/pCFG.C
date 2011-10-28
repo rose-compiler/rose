@@ -1528,7 +1528,7 @@ void pCFG_FWDataflow::performPSetSplit(const pCFGNode& n, pCFGNode& descN, unsig
                 int newPSet = *it;
                 // if the current split process set is supposed to be active, activate it
                 if(analysisDebugLevel>=1) 
-                        Dbg::dbg << indent << "performPSetSplit() splitPSetActive[newPSet="<<newPSet<<"]="<<(*activeIt)<<" activePSets.size()="<<activePSets.size()<<"  blockedPSets.size()="<<blockedPSets.size()<<"  releasedPSets.size()="<<releasedPSets.size()<<"  n.getPSetDFNodes().size()="<<n.getPSetDFNodes().size()<<endl;
+                    Dbg::dbg << indent << "performPSetSplit() splitPSetActive[newPSet="<<newPSet<<"]="<<(*activeIt?"true":"false")<<" activePSets.size()="<<activePSets.size()<<"  blockedPSets.size()="<<blockedPSets.size()<<"  releasedPSets.size()="<<releasedPSets.size()<<"  n.getPSetDFNodes().size()="<<n.getPSetDFNodes().size()<<endl;
                 if(*activeIt)
                         activePSets.insert(newPSet);
                 else
@@ -1546,7 +1546,7 @@ void pCFG_FWDataflow::performPSetSplit(const pCFGNode& n, pCFGNode& descN, unsig
         // Update the state of pSet from its condition
         initPSetDFfromPartCond(func, n, pSet, dfInfo, state->getFactsMod((Analysis*)this), *(splitConditions.begin()));
         if(analysisDebugLevel>=1) 
-                Dbg::dbg << indent << "performPSetSplit() splitPSetActive[pSet="<<pSet<<"]="<<*(splitPSetActive.begin())<<" activePSets.size()="<<activePSets.size()<<"  blockedPSets.size()="<<blockedPSets.size()<<"  releasedPSets.size()="<<releasedPSets.size()<<"  n.getPSetDFNodes().size()="<<n.getPSetDFNodes().size()<<endl;
+            Dbg::dbg << indent << "performPSetSplit() splitPSetActive[pSet="<<pSet<<"]="<<(*(splitPSetActive.begin())?"true":"false")<<" activePSets.size()="<<activePSets.size()<<"  blockedPSets.size()="<<blockedPSets.size()<<"  releasedPSets.size()="<<releasedPSets.size()<<"  n.getPSetDFNodes().size()="<<n.getPSetDFNodes().size()<<endl;
         if(*(splitPSetActive.begin()))
         {
                 bool wasBlocked = movePSet(pSet, activePSets, blockedPSets, true);
