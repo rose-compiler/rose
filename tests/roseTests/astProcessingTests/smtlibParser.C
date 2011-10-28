@@ -721,6 +721,44 @@ std::string getBinaryOp(SgNode* n) {
 
 
 
+int main(int argc, char *argv[]) {
+
+  struct timeval t1, t2;
+  SgProject* proj = frontend(argc,argv);
+  ROSE_ASSERT (proj != NULL);
+
+  SgFunctionDeclaration* mainDefDecl = SageInterface::findMain(proj);
+
+  SgFunctionDefinition* mainDef = mainDefDecl->get_definition();
+   visitorTraversal* vis = new visitorTraversal();
+    StaticCFG::CFG cfg(mainDef);
+   //cfg.buildFullCFG();
+    stringstream ss;
+    string fileName= StringUtility::stripPathFromFileName(mainDef->get_file_info()->get_filenameString());
+    string dotFileName1=fileName+"."+ mainDef->get_declaration()->get_name() +".dot";
+
+    cfgToDot(mainDef,dotFileName1);
+    //cfg->buildFullCFG();
+    SgIncidenceDirectedGraph* g = new SgIncidenceDirectedGraph();
+    g = cfg.getGraph();
+    myGraph* mg = new myGraph();
+    mg = instantiateGraph(g, cfg);
+    vis->tltnodes = 0;
+    vis->paths = 0;
+    vis->orig = mg;
+    vis->cfg = &cfg;
+    //vis->firstPrepGraph(constcfg);
+    //t1 = getCPUTime();
+    vis->constructPathAnalyzer(mg, true);
+    //t2 = getCPUTime();
+    //std::cout << "took: " << timeDifference(t2, t1) << std::endl;
+    //cfg.clearNodesAndEdges();
+    std::cout << "finished" << std::endl;
+    std::cout << "tltnodes: " << vis->tltnodes << " paths: " << vis->paths << std::endl;
+    delete vis;
+    //return 1;
+}
+/*
 
 int main(int argc, char *argv[]) {
   pathnum = 0;
@@ -736,7 +774,7 @@ int main(int argc, char *argv[]) {
    //vis->nGraph = nGraph;
    //newGraph* nnGraph = new newGraph();
     StaticCFG::CFG* cfg1 = new StaticCFG::CFG(mainDef);
-   //cfg.buildFullCFG();
+    //cfg1.buildFullCFG();
     stringstream ss;
     string fileName= StringUtility::stripPathFromFileName(mainDef->get_file_info()->get_filenameString());
     string dotFileName1=fileName+"."+ mainDef->get_declaration()->get_name() +".dot";
@@ -765,7 +803,7 @@ int main(int argc, char *argv[]) {
    // std::cout << "mapped" << std::endl;i
    std::vector<std::vector<int> > pts;
    std::vector<int> ptsP;
-    //std::vector<SgExpressionStmt*> exprs = SageInterface::querySubTree<SgExpressionStmt>(proj);
+   // std::vector<SgExpressionStmt*> exprs = SageInterface::querySubTree<SgExpressionStmt>(proj);
    for (int q1 = 0; q1 < exprs.size(); q1++) {
       ptsP.clear();
       for (int q2 = 0; q2 < exprs.size(); q2++) {
@@ -790,7 +828,7 @@ int main(int argc, char *argv[]) {
     delete vis;
 }
                                                                                                                                                                                                                                                                                                                                                                                                                                                             
-
+*/
 /*
 std::vector<SgExprStatement*> exprList = SageInterface::querySubTree<SgExprStatement>(project);
 for (Rose_STL_Container<SgGraphNode*>::iterator i = exprList.begin(); i != exprList.end(); i++) {

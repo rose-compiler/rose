@@ -275,7 +275,7 @@ for (int i = 0; i < xis2->pths.size(); i++) {
             std::cout << npth[qqw] << ", ";
         }
         std::cout << std::endl;
-        ROSE_ASSERT(false);
+        //ROSE_ASSERT(false);
     }
     npth.clear();
 }

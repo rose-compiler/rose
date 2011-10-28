@@ -14,7 +14,9 @@ using namespace boost;
 
 
 
-
+//This calculates every path, this is exponential in growth for CFGs so it can take quite a long time for
+//some files. It is probably better to do a point to point traversal if you have the choice as this in general can be done
+//faster
 
 //For StaticCFG this is necessary, it allows the traversal to accept a graph that it can run on
 typedef myGraph CFGforT;

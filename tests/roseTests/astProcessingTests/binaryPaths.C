@@ -40,7 +40,7 @@ void visitorTraversal::analyzePath(vector<Vertex>& pth) {
 
 
 int main(int argc, char *argv[]) {
-    
+    int totalPaths = 0;
     /* Parse the binary file */
     SgProject *project = frontend(argc, argv);
     std::vector<SgAsmInterpretation*> interps = SageInterface::querySubTree<SgAsmInterpretation>(project);
@@ -63,6 +63,7 @@ int main(int argc, char *argv[]) {
         vis->constructPathAnalyzer(cfg, true);
         std::cout << "pths: " << vis->pths << std::endl;
         std::cout << "tltnodes: " << vis->tltnodes << std::endl;
+        totalPaths += vis->pths;
 }
 
 

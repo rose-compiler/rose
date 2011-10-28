@@ -7,8 +7,8 @@
 #include <graphProcessing.h>
 #include <staticCFG.h>
 /* Testing the graph traversal mechanism now implementing in AstProcessing.h (inside src/midend/astProcessing/)*/
-
-
+#include <sys/time.h>
+#include <sys/resource.h>
 using namespace std;
 using namespace boost;
 
@@ -40,14 +40,33 @@ void visitorTraversal::analyzePath(vector<VertexID>& pth) {
       //  pathstore.push_back(pth);
         tltnodes += pth.size();
         paths++;
+#if 0
+        std::cout << "pth: " << std::endl;
+        for (int i = 0; i < pth.size(); i++) {
+        std::cout << vertintmap[pth[i]] << ", ";
+        }
+
+        std::cout << "end" << std::endl;
+#endif
         //std::cout << "paths: " << paths << std::endl;
 
+}
+
+double timeDifference(const struct timeval& end, const struct timeval& begin)
+{
+    return (end.tv_sec + end.tv_usec / 1.0e6) - (begin.tv_sec + begin.tv_usec / 1.0e6);
+}
+
+static inline timeval getCPUTime() {
+  rusage ru;
+  getrusage(RUSAGE_SELF, &ru);
+  return ru.ru_utime;
 }
 
 
 int main(int argc, char *argv[]) {
   
-
+  struct timeval t1, t2;
   SgProject* proj = frontend(argc,argv);
   ROSE_ASSERT (proj != NULL); 
 
@@ -70,7 +89,10 @@ int main(int argc, char *argv[]) {
     vis->tltnodes = 0;
     vis->paths = 0;
     //vis->firstPrepGraph(constcfg);
+    t1 = getCPUTime();
     vis->constructPathAnalyzer(mg, true);
+    t2 = getCPUTime();
+    std::cout << "took: " << timeDifference(t2, t1) << std::endl;
     //cfg.clearNodesAndEdges();
     std::cout << "finished" << std::endl;
     std::cout << "tltnodes: " << vis->tltnodes << " paths: " << vis->paths << std::endl;

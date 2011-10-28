@@ -38,6 +38,11 @@ class visitorTraversal : public SgGraphTraversal<CFGforT>
 void visitorTraversal::analyzePath(vector<CFGforT::Vertex>& pth) {   
         tltnodes += pth.size();
         pths++;
+        std::cout << "pth" << std::endl;
+        for (int i = 0; i < pth.size(); i++) {
+            std::cout << intvertmap[pth[i]] << ", ";
+        }
+        std::cout << "end" << std::endl;
 }
 
 
