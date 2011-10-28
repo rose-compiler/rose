@@ -152,7 +152,7 @@ test1(size_t niterations, uint64_t max_start_addr, size_t max_size)
          *                                      INVERT
          **********************************************************************************************************************/
         if (map1.nranges()<100000) { // skip for large ranges because its relatively slow
-            size_t offset = rand() % std::max(1ull, max_start_addr/10);
+            size_t offset = rand() % std::max((uint64_t)1, max_start_addr/10);
             size_t size = rand() % max_start_addr + 1;
             if (verbose)
                 std::cout <<"#" <<i <<": invert_within(" <<offset <<"+" <<size <<"=" <<(offset+size) <<")...\n";
