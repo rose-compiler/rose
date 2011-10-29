@@ -27,7 +27,11 @@ do_quiet=yes
 do_timing=
 
 # Turn this on by default (header file dependence checking).
-do_header_file_dependence_checking=yes
+# On second through make the default OFF and allow users to activate it using --allow-header-file-dependence-checking
+# since this works for Linux (RedHat), but fails for OSX and Ubuntu (and needs to be reviewed with the author of the
+# UPC configuration checking when he gets back (or any other excuse will work).
+# do_header_file_dependence_checking=yes
+do_header_file_dependence_checking=no
 
 while [[ "$#" -gt 0 ]]; do
     arg="$1"; shift
@@ -55,6 +59,9 @@ while [[ "$#" -gt 0 ]]; do
             ;;
         --ignore-header-file-dependence-checking)
             do_header_file_dependence_checking=no
+            ;;
+        --allow-header-file-dependence-checking)
+            do_header_file_dependence_checking=yes
             ;;
         *)
             echo "$0: unrecognized argument: $arg" >&2
