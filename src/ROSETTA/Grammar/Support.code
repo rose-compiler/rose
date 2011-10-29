@@ -357,6 +357,9 @@ HEADER_INCIDENCE_DIRECTED_GRAPH_START
  //! Add support for externally build SgGraphNode objects
      SgDirectedGraphEdge* addDirectedEdge( SgDirectedGraphEdge* edge  );
 
+ //! Remove an edge from graph
+     bool removeDirectedEdge( SgDirectedGraphEdge* edge  );
+     
 	// tps (4/30/2009): Added to support functionality for DirectedGraphs		   
      void getSuccessors(const SgGraphNode* node, std::vector <SgGraphNode*>& vec ) const;
      void getPredecessors(const SgGraphNode* node, std::vector <SgGraphNode*>& vec ) const;
@@ -8559,8 +8562,12 @@ SgSymbol*
 SgInitializedName::search_for_symbol_from_symbol_table() const
    {
      SgSymbol *symbol;
-     if (p_prev_decl_item)
-          symbol = p_prev_decl_item->get_symbol_from_symbol_table();
+     SgInitializedName* aPrevDeclItem=p_prev_decl_item;
+     while(aPrevDeclItem && aPrevDeclItem->p_prev_decl_item) {
+        aPrevDeclItem=aPrevDeclItem->p_prev_decl_item;
+     }
+     if (aPrevDeclItem)
+          symbol = aPrevDeclItem->get_symbol_from_symbol_table();
      else
           symbol = get_symbol_from_symbol_table();
      assert(symbol != NULL);
