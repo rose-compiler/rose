@@ -2183,6 +2183,8 @@ projects/symbolicAnalysisFramework/tests/Makefile
 projects/symbolicAnalysisFramework/include/Makefile
 projects/taintcheck/Makefile
 projects/PowerAwareCompiler/Makefile
+projects/ManyCoreRuntime/Makefile
+projects/ManyCoreRuntime/docs/Makefile
 projects/traceAnalysis/Makefile
 projects/PolyhedralModel/Makefile
 projects/PolyhedralModel/src/Makefile
