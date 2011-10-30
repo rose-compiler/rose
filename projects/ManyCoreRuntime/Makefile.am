@@ -25,8 +25,8 @@ hypercube_SOURCES = hypercube.C
 # CXXFLAGS += 
 
 # This introduces a dependence that can not be checked in to ROSE.
-LDADD = -lnuma -lrt
-# LDADD = -lrt
+# LDADD = -lnuma -lrt
+LDADD = -lrt
 
 
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes --suppressions=$(top_srcdir)/scripts/rose-suppressions-for-valgrind
@@ -51,8 +51,8 @@ valgrind: jacobi
 valgrind_permutations: testPermutations 
 	$(VALGRIND) ./testPermutations
 
-EXTRA_DIST = $(srcdir)/core.h $(srcdir)/multicore.h \
-             $(srcdir)/core.C $(srcdir)/multicore.C
+EXTRA_DIST = $(srcdir)/core.h $(srcdir)/multicore.h highresTimer.h \
+             $(srcdir)/core.C $(srcdir)/multicore.C highresTimer.C
 
 CLEANFILES = 
 

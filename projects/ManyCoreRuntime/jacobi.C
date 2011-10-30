@@ -23,7 +23,7 @@
 // allocated memory returning a valid pointer; so the two are semantically different on minor points). We now
 // handle this case to preserve the same semantics; when using libnuma we check for this case of zero bytes and 
 // use the C++ allocation to get a valid pointer.
-#include<numa.h>
+// #include<numa.h>
 
 // Support for timing
 #include <iostream>
