@@ -1024,9 +1024,11 @@ Partitioner::find_bb_containing(rose_addr_t va, bool create/*true*/)
 
     BasicBlock *bb = NULL;
     while (1) {
-        if (insn2block[va]!=NULL) break; /*we've reached another block*/
+        if (insn2block[va]!=NULL)
+            break; /*we've reached another block*/
         SgAsmInstruction *insn = find_instruction(va);
-        if (!insn) break;
+        if (!insn)
+            break;
         if (!bb) {
             bb = new BasicBlock;
             basic_blocks.insert(std::make_pair(va, bb));
@@ -2511,9 +2513,10 @@ Partitioner::get_indirection_addr(SgAsmInstruction *g_insn)
     return retval; /*calculated value, or defaults to zero*/
 }
 
-/* Gives names to the dynamic linking trampolines in the .plt section if the Partitioner detected them as functions. If
- * mark_elf_plt_entries() was called then they all would have been marked as functions and given names. Otherwise, ROSE might
- * have detected some of them in other ways (like CFG analysis) and this function will give them names. */
+/** Gives names to dynmaic linking trampolines for ELF.  This method gives names to the dynamic linking trampolines in the .plt
+ *  section if the Partitioner detected them as functions. If mark_elf_plt_entries() was called then they all would have been
+ *  marked as functions and given names. Otherwise, ROSE might have detected some of them in other ways (like CFG analysis) and
+ *  this function will give them names. */
 void
 Partitioner::name_plt_entries(SgAsmGenericHeader *fhdr)
 {
@@ -2583,6 +2586,79 @@ Partitioner::name_plt_entries(SgAsmGenericHeader *fhdr)
                 }
             }
         }
+    }
+}
+
+/** Gives names to dynamic linking thunks for PE.  This method gives names to thunks for imported functions.  The thunks must
+ *  have already been detected by the partitioner--this method does not create new functions.  The algorithm scans the list of
+ *  unnamed functions looking for functions whose entry instruction is an indirect jump.  When found, check whether the jump is
+ *  through a memory address that part of an import address table.  If so, use the corresponding import name as the name of
+ *  this function and append "@import".  The "@import" is to distinguish between the actual function whose name is given in the
+ *  PE Import Section, and the thunk that jumps to that function.  It's possible to have multiple thunks that all jump to the
+ *  same imported function and thus all have the same name. */
+void
+Partitioner::name_import_entries(SgAsmGenericHeader *fhdr)
+{
+    /* This function is PE x86 specific */
+    SgAsmPEFileHeader *pe = isSgAsmPEFileHeader(fhdr);
+    if (!pe)
+        return;
+
+    /* Build an index mapping memory addresses to function names.  The addresses are the virtual address through which an
+     * indirect jump would go when calling an imported function. */
+    struct ImportIndexBuilder: public AstSimpleProcessing {
+        typedef std::map<rose_addr_t, std::string> Index;
+        typedef Index::iterator iterator;
+        Index index;
+        SgAsmGenericHeader *fhdr;
+        ImportIndexBuilder(SgAsmGenericHeader *fhdr): fhdr(fhdr) {
+            traverse(fhdr, preorder);
+        }
+        void visit(SgNode *node) {
+            SgAsmPEImportDirectory *idir = isSgAsmPEImportDirectory(node);
+            SgAsmPEImportLookupTable *ilt = idir ? idir->get_ilt() : NULL;
+            SgAsmPEImportLookupTable *iat = idir ? idir->get_iat() : NULL;
+            if (ilt && iat) {
+                rose_addr_t iat_base_va = idir->get_iat_rva() + fhdr->get_base_va();
+                size_t nentries = ilt->get_entries()->get_vector().size();
+                assert(nentries==iat->get_entries()->get_vector().size());
+                for (size_t i=0; i<nentries; ++i) {
+                    SgAsmPEImportILTEntry *ilt_entry = ilt->get_entries()->get_vector()[i];
+                    SgAsmPEImportILTEntry *iat_entry = iat->get_entries()->get_vector()[i];
+                    assert(ilt_entry!=NULL && iat_entry!=NULL);
+                    rose_addr_t iat_entry_va = iat_base_va + i*fhdr->get_word_size();
+                    if (ilt_entry->get_entry_type() == SgAsmPEImportILTEntry::ILT_HNT_ENTRY_RVA)
+                        index[iat_entry_va] = ilt_entry->get_hnt_entry()->get_name()->get_string();
+                }
+            }
+        }
+    } imports(fhdr);
+
+    /* Look for functions whose first instruction is an indirect jump through one of the memory addresses we indexed above. */
+    for (Functions::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
+        Function *func = fi->second;
+        if (!func->name.empty())
+            continue;
+        SgAsmInstruction *insn = find_instruction(func->entry_va);
+        SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn);
+        if (!insn_x86 ||
+            (insn_x86->get_kind()!=x86_jmp && insn_x86->get_kind()!=x86_farjmp) ||
+            1!=insn_x86->get_operandList()->get_operands().size())
+            continue;
+        SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(insn_x86->get_operandList()->get_operands()[0]);
+        if (!mre)
+            continue;
+        SgAsmValueExpression *base = isSgAsmValueExpression(mre->get_address());
+        if (!base)
+            continue;
+        rose_addr_t base_va = value_of(base);
+
+        ImportIndexBuilder::iterator found = imports.index.find(base_va);
+        if (found==imports.index.end())
+            continue;
+        func->name = found->second + "@import";
+        if (debug)
+            fprintf(debug, "Partitioner::name_import_entries: F%08"PRIx64": named \"%s\"\n", func->entry_va, func->name.c_str());
     }
 }
 
@@ -3157,6 +3233,7 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
         const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
         for (size_t i=0; i<headers.size(); i++) {
             name_plt_entries(headers[i]); // give names to ELF .plt trampolines
+            name_import_entries(headers[i]); // give names to PE import thunks
         }
     }
 

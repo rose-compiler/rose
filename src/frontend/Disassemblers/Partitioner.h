@@ -973,7 +973,8 @@ public:
     virtual void mark_elf_plt_entries(SgAsmGenericHeader*);     /**< Seeds functions that are dynamically linked via .plt */
     virtual void mark_func_symbols(SgAsmGenericHeader*);        /**< Seeds functions that correspond to function symbols */
     virtual void mark_func_patterns();                          /* Seeds functions according to instruction patterns */
-    virtual void name_plt_entries(SgAsmGenericHeader*);         /**< Assign names to ELF PLT functions */
+    virtual void name_plt_entries(SgAsmGenericHeader*);         /* Assign names to ELF PLT functions */
+    virtual void name_import_entries(SgAsmGenericHeader*);      /* Assign names to PE import functions */
 
     /** Adds extents for all defined functions.  Scans across all known functions and adds their extents to the specified
      *  RangeMap argument. Returns the sum of the return values from the single-function function_extent() method. */
