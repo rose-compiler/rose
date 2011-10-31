@@ -24,10 +24,11 @@ hypercube_SOURCES = hypercube.C
 # CXXFLAGS += -fopenmp -O2
 # CXXFLAGS += 
 
-# This introduces a dependence that can not be checked in to ROSE.
-# LDADD = -lnuma -lrt
+# ROSE configure script has a check for the existence of numa.h header and triggers this automake conditional.
 LDADD = -lrt
-
+if ROSE_USE_LIBNUMA
+   LDADD += -lnuma
+endif
 
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes --suppressions=$(top_srcdir)/scripts/rose-suppressions-for-valgrind
 VALGRIND = valgrind $(VALGRIND_OPTIONS)

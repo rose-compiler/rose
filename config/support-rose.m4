@@ -1704,6 +1704,15 @@ AM_CONDITIONAL(ROSE_USE_ETHER,test "$with_ether" != "no")
 AC_CHECK_HEADERS(gcrypt.h)
 AC_CHECK_LIB(gcrypt,gcry_check_version)
 
+# Added support for detection of libnuma, a NUMA aware memory allocation mechanism for many-core optimizations.
+AC_CHECK_HEADERS(numa.h, [found_libnuma=yes])
+
+if test "x$found_libnuma" = xyes; then
+  AC_DEFINE([HAVE_NUMA_H],[],[Support for libnuma a NUMA memory allocation library for many-core optimizations])
+fi
+
+AM_CONDITIONAL(ROSE_USE_LIBNUMA, [test "x$found_libnuma" = xyes])
+
 # Multi-thread support is needed by the simulator.  This also enables/disables major parts of threadSupport.[Ch] within
 # the ROSE library.
 AC_CHECK_HEADERS(pthread.h)
