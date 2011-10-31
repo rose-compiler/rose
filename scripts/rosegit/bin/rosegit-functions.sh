@@ -132,57 +132,100 @@ rosegit_load_config () {
     local repo="$1";   [ -d "$repo" ]      || rosegit_die "not a repository: $repo"
     local ns="$2";     [ -n "$ns" ]        || ns=$(rosegit_namespace)
     local branch="$3"; [ -n "$branch" ]    || branch="none";
-    local config="$4";                     # optional file or directory
+    local config="$4";                 # colon-separated list of optional config files and/or directories to search
 
-    local confdir=$repo/scripts/rosegit/config
-    config=$(eval "echo $config")          # expand tidle, etc.
-    if [ -n "$config" ]; then
-	if [ -d "$config/." ]; then
-	    confdir="$config"
-	    config=
-        elif [ -f "$config" ]; then
-	    :
-        elif [ -f "$confdir/$config" ]; then
-	    config="$confdir/$config"
+    # Split $config into a list of directories and (presumably) files.
+    local confdirs=
+    local conffiles=
+    while [ -n "$config" ]; do
+	local ltstr="${config%%:*}"
+	if [ "$ltstr" = "" ]; then
+	    : extraneous colon
+	elif [ -d "$ltstr/." ]; then
+	    confdirs="$confdirs:$ltstr"
 	else
-	    rosegit_die "unable to find configuration file or directory: $config"
+	    conffiles="$conffiles:$ltstr"
 	fi
-    fi
+	config="${config#$ltstr}"
+	config="${config#:}"
+    done
+    confdirs="$confdirs:$repo/scripts/rosegit/config"
 
+    # Load the default config, which is required
     echo -n "$myname configuring:" >&2
-
-    # The defaults.conf must be present (it may be empty). This is a sanity check!
     ROSEGIT_LOADED=
-    local defaults=$confdir/defaults.conf
-    [ -r $defaults ] || rosegit_die "no configuration file: $defaults"
-    rosegit_load_config_file $defaults >&2
-    [ -n "$ROSEGIT_LOADED" ] || rosegit_die "$defaults should have set ROSEGIT_LOADED"
+    rosegit_load_config_file "defaults" "required" "$confdirs" >&2;
+    [ -n "$ROSEGIT_LOADED" ] || rosegit_die "default config should have set ROSEGIT_LOADED"
 
-    # Load other config files. These are just shell scripts. The later, more specific files can override what the earlier ones did.
-    rosegit_load_config_file $confdir/$ns.conf >&2
-    rosegit_load_config_file $confdir/$ns.$branch.conf    >&2
-    [ -f "$config" ] && rosegit_load_config_file $config  >&2
+    # Load configurations based on branch name
+    rosegit_load_config_file "$ns.conf"         "optional" "$confdirs" >&2
+    rosegit_load_config_file "$ns.$branch.conf" "optional" "$confdirs" >&2
+
+    # Load additional configurations specified via $config argument.
+    while [ -n "$conffiles" ]; do
+	local ltstr="${conffiles%%:*}"
+	[ "$ltstr" != "" ] && rosegit_load_config_file "$ltstr" "required" "$confdirs" >&2
+	conffiles="${conffiles#$ltstr}"
+	conffiles="${conffiles#:}"
+    done
 
     echo >&2
 
     # Export variables
     eval $(set |sed -n '/^ROSEGIT/s/^\(ROSEGIT[a-zA-Z_0-9]*\).*/export \1/p')
-
 }
 
-# Loads one configuration file
+# Loads one configuration file.
 rosegit_load_config_file () {
-    local cfile="$1";   [ -n "$cfile" ] || rosegit_die "no configuration file specified"
+    local cfile="$1";     [ -n "$cfile" ] || rosegit_die "no configuration file specified"
+    local flag="$2"
+    local paths="$3"
     echo -n " $(basename $cfile .conf)"
-    if [ -f $cfile ]; then
-	source $cfile || rosegit_die "cannot source file: $cfile"
-	echo -n "[ok]"
-    else
-	echo -n "[no]"
+
+    # If $cfile contains a slash then look directly without searching.
+    if [ "$cfile" != "${cfile%/}" ]; then
+	if [ -f "$cfile" ]; then
+	    echo -n "[ok]"
+	    source "$cfile" || rosegit_die "cannot source file: $cfile"
+	    return 0;
+	elif [ -f "$cfile.conf" ]; then
+	    echo -n "[ok]"
+	    source "$cfile.conf" || rosegit_die "cannot source file: $cfile.conf"
+	    return 0;
+	fi
     fi
 
+    # If $cfile doesn't start with a slash, then search the specified paths.
+    if [ "${cfile#/}" = "$cfile" ]; then
+	while [ -n "$paths" ]; do
+	    local ltstr="${paths%%:*}"
+	    if [ "$ltstr" != "" ]; then
+		local fullname="$ltstr/$cfile"
+		if [ -f "$fullname" ]; then
+		    echo -n "[ok]"
+		    source "$fullname" || rosegit_die "cannot source file: $fullname"
+		    return 0
+		elif [ -f "$fullname.conf" ]; then
+		    echo -n "[ok]"
+		    source "$fullname.conf" || rosegit_die "cannot source file: $fullname.conf"
+		    return 0
+		fi
+		paths="${paths#$ltstr}"
+	    fi
+	    paths="${paths#:}"
+	done
+    fi
+
+    # Was the file required?
+    if [ "$flags" = "required" ]; then
+	echo
+	rosegit_die "config file not found: $cfile"
+    fi
+    echo -n "[no]"
+    return 1
+
     # This variable is typically long and spans multiple lines. Change its value to a single line.
-    ROSEGIT_CONFIGURE=$(echo "$ROSEGIT_CONFIGURE" |tr '\n' ' ')
+#    ROSEGIT_CONFIGURE=$(echo "$ROSEGIT_CONFIGURE" |tr '\n' ' ')
 }
 
 # Runs ROSEGIT_MAKE. Used by test scripts.

@@ -38,7 +38,7 @@ while [ "$#" -gt 0 ]; do
     case "$1" in
 	--) shift; break;;
 	--blddir=*) ROSEGIT_BLD="${1##--blddir=}"; shift;;
-	--config=*) config="${1##--config=}"; shift;;
+	--config=*) config="$config:${1##--config=}"; shift;;
 	--namespace=*) ROSEGIT_NAMESPACE="${1##--namespace=}"; shift ;;
 	--srcdir=*) ROSEGIT_SRC="${1##--srcdir=}"; shift;;
 	-*) rosegit_die "unknown switch: $1";;
