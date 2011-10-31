@@ -1161,9 +1161,8 @@ MulticoreArray<T>::allocateMemorySectionsPerCore()
         {
           int size = memorySectionSize(core);
 
-#ifndef NUMA_NUM_NODES
-          arraySectionPointers[core] = new float[size];
-#else
+// #ifndef NUMA_NUM_NODES
+#if HAVE_NUMA_H
        // Allocate memory using libnuma to get local memory for the associated core.
           arraySectionPointers[core] = (float*) numa_alloc_local((size_t)(size*sizeof(T)));
 
@@ -1173,6 +1172,8 @@ MulticoreArray<T>::allocateMemorySectionsPerCore()
                arraySectionPointers[core] = new float[size];
                assert(arraySectionPointers[core] != NULL);
              }
+#else
+          arraySectionPointers[core] = new float[size];
 #endif
 
        // assert(size == 0 || arraySectionPointers[core] != NULL);
@@ -1828,13 +1829,14 @@ MulticoreArray<T>::~MulticoreArray()
      for (int core = 0; core < numberOfCores; core++)
         {
        // Memory allocated on each core optionally uses libnuma.
-#ifndef NUMA_NUM_NODES
-          delete [] arraySectionPointers[core];
-#else
+// #ifndef NUMA_NUM_NODES
+#if HAVE_NUMA_H
        // Note that libnuma requires the size of the allocated data (which we have fortunately saved).
        // size_t size = (useArraySectionRanges == true) ? arraySectionSizes[p] : algorithmicComputationOfSize(p);
           size_t size = memorySectionSize(core);
           numa_free(arraySectionPointers[core],size);
+#else
+          delete [] arraySectionPointers[core];
 #endif
           arraySectionPointers[core] = NULL;
           assert(arraySectionPointers[core] == NULL);

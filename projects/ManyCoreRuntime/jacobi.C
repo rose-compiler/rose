@@ -129,7 +129,8 @@ int main ()
   // If multiple arrays are used then intra-array padding will separate them from each other and permit them to work well with cache.
 
      int numaSupport = -1;
-#ifdef NUMA_NUM_NODES
+// #ifdef NUMA_NUM_NODES
+#if HAVE_NUMA_H
   // A return value of -1 means that all other functions in this library are undefined.
      numaSupport = numa_available();
 #endif
