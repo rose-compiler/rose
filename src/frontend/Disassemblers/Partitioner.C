@@ -769,8 +769,11 @@ Partitioner::truncate(BasicBlock* bb, rose_addr_t va)
 
     /* Remove instructions (from the cut point and beyond) and all the data blocks. */
     for (std::vector<SgAsmInstruction*>::iterator ii=cut; ii!=bb->insns.end(); ++ii) {
-        assert(insn2block[(*ii)->get_address()] == bb);
-        insn2block[(*ii)->get_address()] = NULL;
+        SgAsmInstruction *insn = *ii;
+        Insn2Block::iterator i2bi = insn2block.find(insn->get_address());
+        assert(i2bi!=insn2block.end());
+        assert(i2bi->second==bb);
+        insn2block.erase(i2bi);
     }
     if (cut!=bb->insns.end()) {
         bb->insns.erase(cut, bb->insns.end());
@@ -784,9 +787,10 @@ Partitioner::append(BasicBlock* bb, SgAsmInstruction* insn)
 {
     assert(bb);
     assert(insn);
-    assert(insn2block[insn->get_address()]==NULL); /*insn must not already belong to a basic block*/
     bb->insns.push_back(insn);
-    insn2block[insn->get_address()] = bb;
+    std::pair<Insn2Block::iterator, bool> insertion_result = insn2block.insert(std::make_pair(insn->get_address(), bb));
+    assert(insertion_result.second); /* insn must not have already belonged to a basic block */
+
 }
 
 /** Associate a data block with a basic block.  Any basic block can point to zero or more data blocks.  The data block will
@@ -1017,15 +1021,14 @@ Partitioner::find_instruction(rose_addr_t va, bool create/*=true*/)
 Partitioner::BasicBlock *
 Partitioner::find_bb_containing(rose_addr_t va, bool create/*true*/)
 {
-    if (insn2block[va]!=NULL)
-        return insn2block[va];
+    Insn2Block::iterator i2bi = insn2block.find(va);
+    if (i2bi!=insn2block.end())
+        return i2bi->second;
     if (!create)
         return NULL;
 
     BasicBlock *bb = NULL;
     while (1) {
-        if (insn2block[va]!=NULL)
-            break; /*we've reached another block*/
         SgAsmInstruction *insn = find_instruction(va);
         if (!insn)
             break;
@@ -1052,6 +1055,9 @@ Partitioner::find_bb_containing(rose_addr_t va, bool create/*true*/)
                     break;
             }
         }
+        i2bi = insn2block.find(va);
+        if (i2bi!=insn2block.end())
+            break; /*we've reached another block*/
     }
     assert(!bb || bb->insns.size()>0);
     return bb;

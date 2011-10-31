@@ -1308,7 +1308,8 @@ public:
     Disassembler::BadMap bad_insns;                     /**< Captured disassembler exceptions. */
 
     BasicBlocks basic_blocks;                           /**< All known basic blocks. */
-    std::map<rose_addr_t, BasicBlock*> insn2block;      /**< Map from insns address to basic block. */
+    typedef std::map<rose_addr_t, BasicBlock*> Insn2Block;
+    Insn2Block insn2block;                              /**< Map from insns address to basic block. */
     Functions functions;                                /**< All known functions, pending and complete. */
 
     DataBlocks data_blocks;                             /**< Blocks that point to static data. */
