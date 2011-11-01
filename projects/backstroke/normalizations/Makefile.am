@@ -3,12 +3,12 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke
 LINK	 = $(CXXLINK)
 
-# noinst_LTLIBRARIES lists all the librarlies that should be built, but not installed
+# noinst_LTLIBRARIES lists all the libraries that should be built, but not installed
 noinst_LTLIBRARIES =  libBackstrokeNormalizations.la
 
 libBackstrokeNormalizations_la_DEPENDENCIES = 
-libBackstrokeNormalizations_la_SOURCES = ExtractFunctionArguments.C expNormalization.C
-libBackstrokeNormalizations_la_include_HEADERS = ExtractFunctionArguments.h expNormalization.h
+libBackstrokeNormalizations_la_SOURCES = ExtractFunctionArguments.C expNormalization.C functionEvaluationOrderTraversal.C
+libBackstrokeNormalizations_la_include_HEADERS = ExtractFunctionArguments.h expNormalization.h functionEvaluationOrderTraversal.h
 libBackstrokeNormalizations_la_includedir = $(includedir)/backstroke
 
 

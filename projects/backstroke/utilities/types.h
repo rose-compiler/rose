@@ -17,10 +17,6 @@ struct EventReversalResult
 };
 
 
-typedef std::vector<ExpPair> ExpPairs;
-typedef std::vector<StmtPair> StmtPairs;
-
-
 //! This structure contains all processed events inside.
 struct ProcessedEvent
 {

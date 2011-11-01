@@ -19,6 +19,7 @@ int main(int argc, char** argv)
 		ExtractFunctionArguments::NormalizeTree(function);
 	}
 
+	SageInterface::fixVariableReferences(project);
 	AstTests::runAllTests(project);
 	return backend(project);
 }

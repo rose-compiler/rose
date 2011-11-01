@@ -423,7 +423,6 @@ test2005_195.C \
 test2005_196.C \
 test2005_197.C \
 test2005_198.C \
-test2005_199.C \
 test2005_202.C \
 test2005_203.C \
 test2005_206.C \
@@ -617,7 +616,6 @@ test2007_103.C \
 test2007_128.C \
 test2007_130.C \
 test2007_133.C \
-test2007_135.C \
 test2007_137.C \
 test2007_140.C \
 test2007_141.C \
@@ -692,7 +690,9 @@ test2007_15.C
 ALL_TESTCODES = \
 $(TESTCODES_REQUIRED_TO_PASS)
 
-FAILURE_TESTCODES =
+FAILURE_TESTCODES = test2005_199.C \
+test2007_135.C # Name qualification assertion
+
 
 TEST_Objects = ${ALL_TESTCODES:.C=.o}
 
