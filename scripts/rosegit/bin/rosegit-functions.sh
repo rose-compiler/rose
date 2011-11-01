@@ -151,9 +151,10 @@ rosegit_load_config () {
     done
     confdirs="$confdirs:$repo/scripts/rosegit/config"
 
+    ROSEGIT_LOADED=
+
     # Load the default config, which is required
     echo -n "$myname configuring:" >&2
-    ROSEGIT_LOADED=
     rosegit_load_config_file "defaults" "required" "$confdirs" >&2;
     [ -n "$ROSEGIT_LOADED" ] || rosegit_die "default config should have set ROSEGIT_LOADED"
 
@@ -175,10 +176,11 @@ rosegit_load_config () {
     eval $(set |sed -n '/^ROSEGIT/s/^\(ROSEGIT[a-zA-Z_0-9]*\).*/export \1/p')
 }
 
-# Loads one configuration file.
+# Loads one configuration file.  Every config file that's loaded gets added to the colon-separated list
+# of loaded names stored in ROSEGIT_LOADED
 rosegit_load_config_file () {
     local cfile="$1";     [ -n "$cfile" ] || rosegit_die "no configuration file specified"
-    local flag="$2"
+    local flags="$2"
     local paths="$3"
     echo -n " $(basename $cfile .conf)"
 
@@ -187,10 +189,12 @@ rosegit_load_config_file () {
 	if [ -f "$cfile" ]; then
 	    echo -n "[ok]"
 	    source "$cfile" || rosegit_die "cannot source file: $cfile"
+	    ROSEGIT_LOADED="$ROSEGIT_LOADED:$cfile";
 	    return 0;
 	elif [ -f "$cfile.conf" ]; then
 	    echo -n "[ok]"
 	    source "$cfile.conf" || rosegit_die "cannot source file: $cfile.conf"
+	    ROSEGIT_LOADED="$ROSEGIT_LOADED:$cfile.conf";
 	    return 0;
 	fi
     fi
@@ -204,10 +208,12 @@ rosegit_load_config_file () {
 		if [ -f "$fullname" ]; then
 		    echo -n "[ok]"
 		    source "$fullname" || rosegit_die "cannot source file: $fullname"
+		    ROSEGIT_LOADED="$ROSEGIT_LOADED:$fullname";
 		    return 0
 		elif [ -f "$fullname.conf" ]; then
 		    echo -n "[ok]"
 		    source "$fullname.conf" || rosegit_die "cannot source file: $fullname.conf"
+		    ROSEGIT_LOADED="$ROSEGIT_LOADED:$fullname.conf";
 		    return 0
 		fi
 		paths="${paths#$ltstr}"
@@ -233,19 +239,19 @@ rosegit_make () {
     eval "$ROSEGIT_MAKE" "$@"
 }
 
-# Echoes the current namespace based on the setting of the ROSEGIT_NAMESPACE variable. If this variable is empty then we generate
-# a namespace based on the gcos field of /etc/passwd for the effective user, or the first three letters of the effective user
-# login name. The result is cached in ROSEGIT_NAMESPACE.
-rosegit_namespace () {
+# Echoes the current namespace based on the setting of the ROSEGIT_NAMESPACE variable.  If this variable is empty then we
+# generate a namespace from the current user name.  For most users, this is simply their login name as stored in $USER.  For
+# the ROSE team staff members, this might be an abbreviation such as "dq" or "rpm".
+rosegit_namespace() {
     local ns="$ROSEGIT_NAMESPACE"
-    if [ ! -n "$ns" ]; then
-       local euser=$(whoami)
-       ns=$(grep "^$euser:" /etc/passwd |cut -d: -f5 |perl -ane 'print map {substr lc,0,1} @F')
-    fi
-    [ -n "$ns" ] || ns=$(whoami)
-    [ -n "$ns" ] || ns=$USER
-    [ -n "$ns" ] || rosegit_die "could not determine namespace; please set the ROSEGIT_NAMESPACE config variable."
-    ns=$(echo "$ns""xxx" |cut -c1-3)
+    [ -n "$ns" ] || ns="$(whoami)"
+    [ -n "$ns" ] || ns="$USER"
+    ns=$(echo "$ns" | tr -cd 'a-z0-9_')
+    case "$ns" in
+	dquinlan*) ns=dq ;;
+        matzke*)   ns=rpm ;;
+    esac
+    [ -n "$ns" ] || rosegit_die "could not determine namespace"
     ROSEGIT_NAMESPACE="$ns"
     echo "$ns"
 }
@@ -289,12 +295,28 @@ rosegit_show_environment () {
     echo "    $((tex --version || echo tex NOT INSTALLED) 2>/dev/null |head -n1)"
     echo "    $((latex --version || echo latex NOT INSTALLED) 2>/dev/null |head -n1)"
     echo "    $(swig -version |grep -i version)"
-    if [ -f /usr/include/boost/version.hpp ]; then
-	echo "    boost (in /usr/include)" \
-	    $(sed -n '/#define BOOST_LIB_VERSION/s/.*"\(.*\)"/\1/p' </usr/include/boost/version.hpp | tr _ .)
+    if [ -n "$BOOST_HOME" ]; then
+	echo -n "    boost (in $BOOST_HOME) "
+	if [ -n "$BOOST_VERSION" ]; then
+	    echo "$BOOST_VERSION"
+	elif [ -f "$BOOST_HOME/include/boost/version.hpp" ]; then
+	    echo $(sed -n '/#.*BOOST_LIB_VERSION/s/.*"\(.*\)"/\1/p' <"$BOOST_HOME/include/boost/version.hpp" | tr _ .)
+	else
+	    echo "unknown"
+        fi
     else
 	echo "    boost: not in /usr/include (see configure output for version)"
     fi
+
+    echo "Configured from:"
+    local x="$ROSEGIT_LOADED"
+    while [ -n "$x" ]; do
+	local ltstr="${x%%:*}"
+	[ -n "$ltstr" ] && echo "    $ltstr"
+	x="${x#$ltstr}"
+	x="${x#:}"
+    done
+
     echo "Configuration:"
     eval "perl -e 'print qq{    \$_\n} for sort {(split q{=},\$a)[0] cmp (split q{=},\$b)[0]} @ARGV' -- $ROSEGIT_CONFIGURE"
 }
