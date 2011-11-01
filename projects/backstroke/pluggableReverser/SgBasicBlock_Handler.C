@@ -1,14 +1,14 @@
-#include "straightlineStatementHandler.h"
+#include "SgBasicBlock_Handler.h"
 
 #include "utilities/cppDefinesAndNamespaces.h"
 
 #include "rose.h"
-#include "statementHandler.h"
+#include "SgNullStatement_Handler.h"
 #include "pluggableReverser/eventProcessor.h"
 
 using namespace std;
 
-vector<EvaluationResult> StraightlineStatementHandler::evaluate(SgStatement* statement, const VariableVersionTable& var_table)
+vector<EvaluationResult> SgBasicBlock_Handler::evaluate(SgStatement* statement, const VariableVersionTable& var_table)
 {
 	if (SgBasicBlock * basicBlock = isSgBasicBlock(statement))
 	{
@@ -24,7 +24,7 @@ vector<EvaluationResult> StraightlineStatementHandler::evaluate(SgStatement* sta
 
 
 /** Process an expression statement by using the first expression handler returning a valid result. */
-vector<EvaluationResult> StraightlineStatementHandler::evaluateExpressionStatement(SgExprStatement* statement, const VariableVersionTable& var_table)
+vector<EvaluationResult> SgBasicBlock_Handler::evaluateExpressionStatement(SgExprStatement* statement, const VariableVersionTable& var_table)
 {
     ROSE_ASSERT(statement);
     
@@ -59,14 +59,14 @@ vector<EvaluationResult> StraightlineStatementHandler::evaluateExpressionStateme
 	return result;
 }
 
-StatementReversal StraightlineStatementHandler::generateReverseAST(SgStatement* statement, const EvaluationResult& reversal)
+StatementReversal SgBasicBlock_Handler::generateReverseAST(SgStatement* statement, const EvaluationResult& reversal)
 {
 	ROSE_ASSERT(reversal.getStatementHandler() == this);
 	return reversal.getAttribute<StatementReversal>();
 }
 
 
-vector<EvaluationResult> StraightlineStatementHandler::evaluateBasicBlock(SgBasicBlock* basicBlock, const VariableVersionTable& var_table)
+vector<EvaluationResult> SgBasicBlock_Handler::evaluateBasicBlock(SgBasicBlock* basicBlock, const VariableVersionTable& var_table)
 {
     ROSE_ASSERT(basicBlock);
     

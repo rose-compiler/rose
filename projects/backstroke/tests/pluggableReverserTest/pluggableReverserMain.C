@@ -39,14 +39,12 @@ void addHandlers(EventProcessor& event_processor)
 	//event_processor.addExpressionHandler(new AkgulStyleExpressionHandler);
 
 	// Add all statement handlers to the statement pool.
-	event_processor.addStatementHandler(new CombinatorialExprStatementHandler);
-	event_processor.addStatementHandler(new VariableDeclarationHandler);
-	event_processor.addStatementHandler(new CombinatorialBasicBlockHandler);
-	event_processor.addStatementHandler(new IfStatementHandler);
-	event_processor.addStatementHandler(new WhileStatementHandler);
-	event_processor.addStatementHandler(new ReturnStatementHandler);
+	event_processor.addStatementHandler(new SgVariableDeclaration_Handler);
+	event_processor.addStatementHandler(new SgBasicBlock_Handler);
+	event_processor.addStatementHandler(new SgIfStmt_Handler);
+	event_processor.addStatementHandler(new SgWhileStmt_Handler);
+	event_processor.addStatementHandler(new SgReturnStmt_Handler);
 	event_processor.addStatementHandler(new StateSavingStatementHandler);
-	//event_processor.addStatementHandler(new NullStatementHandler);
 
 	//Variable value extraction handlers
 	event_processor.addVariableValueRestorer(new RedefineValueRestorer);

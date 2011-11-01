@@ -4,15 +4,6 @@
 #include <rose.h>
 #include "eventProcessor.h"
 
-//! This handler generates a NULL reverse expression.
-class NullExpressionHandler : public ExpressionReversalHandler
-{
-public:
-    NullExpressionHandler() { name_ = "Null Expression Handler"; }
-    virtual ExpressionReversal generateReverseAST(SgExpression* exp, const EvaluationResult& evaluationResult);
-    virtual std::vector<EvaluationResult> evaluate(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used);
-};
-
 //! This handler generates a reverse expression which is the same as the original expression.
 class IdentityExpressionHandler : public ExpressionReversalHandler
 {

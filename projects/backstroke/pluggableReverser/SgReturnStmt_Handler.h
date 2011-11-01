@@ -5,7 +5,7 @@
 
 //! This handler reverses a return statement that appears as the very last
 //! statement of a function. The reverse statement is a no-op
-class ReturnStatementHandler : public StatementReversalHandler
+class SgReturnStmt_Handler : public StatementReversalHandler
 {
 public:
 	virtual std::vector<EvaluationResult> evaluate(SgStatement* statement, const VariableVersionTable& var_table);

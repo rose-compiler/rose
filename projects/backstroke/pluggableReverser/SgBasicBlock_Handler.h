@@ -4,7 +4,7 @@
 
 /** The straightline statement handler runs the expression/statement handlers in the order in which they were installed
   * and picks the first valid result. This allows for very fast code generation. */
-class StraightlineStatementHandler : public StatementReversalHandler
+class SgBasicBlock_Handler : public StatementReversalHandler
 {
 public:
 	virtual std::vector<EvaluationResult> evaluate(SgStatement* stmt, const VariableVersionTable& var_table);

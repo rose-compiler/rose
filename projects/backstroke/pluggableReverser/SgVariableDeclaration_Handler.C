@@ -1,10 +1,10 @@
-#include "variableDeclarationHandler.h"
+#include "SgVariableDeclaration_Handler.h"
 #include "utilities/cppDefinesAndNamespaces.h"
 #include <rose.h>
 
 using namespace std;
 
-StatementReversal VariableDeclarationHandler::generateReverseAST(SgStatement* stmt, const EvaluationResult& evaluationResult)
+StatementReversal SgVariableDeclaration_Handler::generateReverseAST(SgStatement* stmt, const EvaluationResult& evaluationResult)
 {
 	ROSE_ASSERT(evaluationResult.getStatementHandler() == this && evaluationResult.getChildResults().size() <= 1);
 
@@ -47,7 +47,7 @@ StatementReversal VariableDeclarationHandler::generateReverseAST(SgStatement* st
 	return StatementReversal(forwardStatement, reverseStatement);
 }
 
-vector<EvaluationResult> VariableDeclarationHandler::evaluate(SgStatement* stmt, const VariableVersionTable& var_table)
+vector<EvaluationResult> SgVariableDeclaration_Handler::evaluate(SgStatement* stmt, const VariableVersionTable& var_table)
 {
 	SgVariableDeclaration* varDeclaration = isSgVariableDeclaration(stmt);
 	if (varDeclaration == NULL)

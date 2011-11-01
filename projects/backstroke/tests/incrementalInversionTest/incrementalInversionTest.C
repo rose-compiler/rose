@@ -49,10 +49,10 @@ int main(int argc, char** argv)
 	event_processor.addExpressionHandler(new StoreAndRestoreExpressionHandler);
 
 	//Statement handler
-	event_processor.addStatementHandler(new ReturnStatementHandler);
-	event_processor.addStatementHandler(new VariableDeclarationHandler);
-	event_processor.addStatementHandler(new StraightlineStatementHandler);
-	event_processor.addStatementHandler(new NullStatementHandler);
+	event_processor.addStatementHandler(new SgReturnStmt_Handler);
+	event_processor.addStatementHandler(new SgVariableDeclaration_Handler);
+	event_processor.addStatementHandler(new SgBasicBlock_Handler);
+	event_processor.addStatementHandler(new SgNullStatement_Handler);
 
 	Backstroke::reverseEvents(&event_processor, IsEvent(), project);
 

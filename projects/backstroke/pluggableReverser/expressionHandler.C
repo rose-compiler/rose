@@ -7,34 +7,6 @@ using namespace std;
 using namespace SageBuilder;
 
 /******************************************************************************
- ******** Definition of member functions of NullExpressionHandler  ***********/
-
-ExpressionReversal NullExpressionHandler::generateReverseAST(SgExpression* exp, const EvaluationResult& evaluationResult)
-{
-	return ExpressionReversal(SageInterface::copyExpression(exp), NULL);
-}
-
-vector<EvaluationResult> NullExpressionHandler::evaluate(SgExpression* exp, const VariableVersionTable& var_table, bool reverseValueUsed)
-{
-	vector<EvaluationResult> results;
-
-	// Now NullExpressionHander only handles expressions with side effects. Those without side effects are
-	// handled by IdentityExpressionHandler.
-	// If the value of the expression is used, we cannot return NULL.
-	if (!BackstrokeUtility::containsModifyingExpression(exp) || reverseValueUsed)
-		return results;
-
-	//We can't ignore reversing functions
-	if (!NodeQuery::querySubTree(exp, V_SgFunctionCallExp).empty())
-	{
-		return results;
-	}
-
-	results.push_back(EvaluationResult(this, exp, var_table));
-	return results;
-}
-
-/******************************************************************************
  **** Definition of member functions of IdentityExpressionHandler  ***********/
 
 ExpressionReversal IdentityExpressionHandler::generateReverseAST(SgExpression* exp, const EvaluationResult& evaluationResult)

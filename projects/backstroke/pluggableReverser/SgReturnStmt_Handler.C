@@ -1,11 +1,11 @@
 #include "handlerTypes.h"
 #include "utilities/cppDefinesAndNamespaces.h"
-#include "returnStatementHandler.h"
+#include "SgReturnStmt_Handler.h"
 #include <rose.h>
 
 using namespace std;
 
-vector<EvaluationResult> ReturnStatementHandler::evaluate(SgStatement* statement, const VariableVersionTable& var_table)
+vector<EvaluationResult> SgReturnStmt_Handler::evaluate(SgStatement* statement, const VariableVersionTable& var_table)
 {
 	//RECURSIVE_TODO: If the return statement itself contains side effects, these are discarded here
 	//We should reverse the side effects of the expression after 'return'
@@ -22,7 +22,7 @@ vector<EvaluationResult> ReturnStatementHandler::evaluate(SgStatement* statement
 	return results;
 }
 
-StatementReversal ReturnStatementHandler::generateReverseAST(SgStatement* statement, const EvaluationResult& evaluationResult)
+StatementReversal SgReturnStmt_Handler::generateReverseAST(SgStatement* statement, const EvaluationResult& evaluationResult)
 {
 	ROSE_ASSERT(evaluationResult.getStatementHandler() == this && evaluationResult.getChildResults().size() == 0);
 	ROSE_ASSERT(isSgReturnStmt(statement));

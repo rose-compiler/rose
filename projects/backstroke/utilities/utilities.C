@@ -496,13 +496,17 @@ bool isModifyingExpression(SgExpression* exp)
 {
     if (SageInterface::isAssignmentStatement(exp))
         return true;
-    if (isSgPlusPlusOp(exp) || isSgMinusMinusOp(exp))
+	else if (isSgPlusPlusOp(exp) || isSgMinusMinusOp(exp))
         return true;
-    if (isSgFunctionCallExp(exp))
+	else if (isSgFunctionCallExp(exp))
     {
         // FIXME: This part should be refined.
         return true;
     }
+	else if (isSgNewExp(exp))
+	{
+		return true;
+	}
 
     return false;
 }

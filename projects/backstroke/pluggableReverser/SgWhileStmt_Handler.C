@@ -1,4 +1,4 @@
-#include "whileStatementHandler.h"
+#include "SgWhileStmt_Handler.h"
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <utilities/utilities.h>
@@ -9,7 +9,7 @@ using namespace SageBuilder;
 using namespace SageInterface;
 #define foreach BOOST_FOREACH
 
-SgStatement* WhileStatementHandler::assembleLoopCounter(SgStatement* loop_stmt)
+SgStatement* SgWhileStmt_Handler::assembleLoopCounter(SgStatement* loop_stmt)
 {
 	static int counter = 0;
 	string counter_name = "loop_counter_" + lexical_cast<string > (counter++);
@@ -66,7 +66,7 @@ SgStatement* WhileStatementHandler::assembleLoopCounter(SgStatement* loop_stmt)
 	return buildBasicBlock(counter_decl, loop_stmt, store_counter);
 }
 
-SgStatement* WhileStatementHandler::buildForLoop(SgStatement* loop_body)
+SgStatement* SgWhileStmt_Handler::buildForLoop(SgStatement* loop_body)
 {
 	// build a simple for loop like: for (int i = N; i > 0; --i)
 
@@ -84,7 +84,7 @@ SgStatement* WhileStatementHandler::buildForLoop(SgStatement* loop_body)
 	return for_stmt;
 }
 
-StatementReversal WhileStatementHandler::generateReverseAST(SgStatement* stmt, const EvaluationResult& eval_result)
+StatementReversal SgWhileStmt_Handler::generateReverseAST(SgStatement* stmt, const EvaluationResult& eval_result)
 {
 	ROSE_ASSERT(eval_result.getChildResults().size() == 1);
     SgWhileStmt* while_stmt = isSgWhileStmt(stmt);
@@ -101,7 +101,7 @@ StatementReversal WhileStatementHandler::generateReverseAST(SgStatement* stmt, c
     return StatementReversal(fwd_stmt, rvs_stmt);
 }
 
-vector<EvaluationResult> WhileStatementHandler::evaluate(SgStatement* stmt, const VariableVersionTable& var_table)
+vector<EvaluationResult> SgWhileStmt_Handler::evaluate(SgStatement* stmt, const VariableVersionTable& var_table)
 {
 	// Suppose the condition of this while statement does not contain modifying expressions.
 	
