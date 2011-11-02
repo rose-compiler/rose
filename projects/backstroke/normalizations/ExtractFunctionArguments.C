@@ -1,6 +1,6 @@
 #include "ExtractFunctionArguments.h"
-#include "utilities/utilities.h"
 #include <boost/foreach.hpp>
+#include <boost/tuple/tuple.hpp>
 #include <functionEvaluationOrderTraversal.h>
 
 #define foreach BOOST_FOREACH
@@ -51,7 +51,7 @@ void ExtractFunctionArguments::RewriteFunctionCallArguments(const FunctionCallIn
 		SgVariableDeclaration* tempVarDeclaration;
 		SgAssignOp* tempVarAssignment;
 		SgExpression* tempVarReference;
-		tie(tempVarDeclaration, tempVarAssignment, tempVarReference) = BackstrokeUtility::CreateTempVariableForExpression(arg, scope, false);
+		tie(tempVarDeclaration, tempVarAssignment, tempVarReference) = SageInterface::createTempVariableForExpression(arg, scope, false);
 
 		//Insert the temporary variable declaration
 		InsertStatement(tempVarDeclaration, functionCallInfo.tempVarDeclarationLocation, functionCallInfo);
@@ -69,6 +69,49 @@ void ExtractFunctionArguments::RewriteFunctionCallArguments(const FunctionCallIn
 }
 
 
+/** Returns true if the given expression refers to a variable. This could include using the
+ * dot and arrow operator to access member variables. A comma op counts as a variable references
+ * if all its members are variable references (not just the last expression in the list). */
+bool isVariableReference(SgExpression* expression)
+{
+	if (isSgVarRefExp(expression))
+	{
+		return true;
+	}
+	else if (isSgThisExp(expression))
+	{
+		return true;
+	}
+	else if (isSgDotExp(expression))
+	{
+		SgDotExp* dotExpression = isSgDotExp(expression);
+		return isVariableReference(dotExpression->get_lhs_operand()) &&
+				isVariableReference(dotExpression->get_rhs_operand());
+	}
+	else if (isSgArrowExp(expression))
+	{
+		SgArrowExp* arrowExpression = isSgArrowExp(expression);
+		return isVariableReference(arrowExpression->get_lhs_operand()) &&
+				isVariableReference(arrowExpression->get_rhs_operand());
+	}
+	else if (isSgCommaOpExp(expression))
+	{
+		//Comma op where both the lhs and th rhs are variable references.
+		//The lhs would be semantically meaningless since it doesn't have any side effects
+		SgCommaOpExp* commaOp = isSgCommaOpExp(expression);
+		return isVariableReference(commaOp->get_lhs_operand()) &&
+				isVariableReference(commaOp->get_rhs_operand());
+	}
+	else if (isSgPointerDerefExp(expression) || isSgCastExp(expression) || isSgAddressOfOp(expression))
+	{
+		return isVariableReference(isSgUnaryOp(expression)->get_operand());
+	}
+	else
+	{
+		return false;
+	}
+}
+
 /** Given the expression which is the argument to a function call, returns true if that
  * expression should be pulled out into a temporary variable on a separate line.
  * E.g. if the expression contains a function call, it needs to be normalized, while if it
@@ -85,7 +128,7 @@ bool ExtractFunctionArguments::FunctionArgumentNeedsNormalization(SgExpression*&
         argument = arrowExp->get_rhs_operand();
 
 	//For right now, move everything but a constant value or an explicit variable access
-	if (BackstrokeUtility::isVariableReference(argument) || isSgValueExp(argument) || isSgFunctionRefExp(argument)
+	if (isVariableReference(argument) || isSgValueExp(argument) || isSgFunctionRefExp(argument)
             || isSgMemberFunctionRefExp(argument))
 		return false;
 

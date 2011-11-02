@@ -12,42 +12,9 @@ using namespace boost;
 using namespace SageInterface;
 using namespace SageBuilder;
 
-/** Generate a name that is unique in the current scope and any parent and children scopes.
- * @param baseName the word to be included in the variable names. */
-string GenerateUniqueVariableName(SgScopeStatement* scope, std::string baseName)
-{
-	//This implementation tends to generate numbers that are unnecessarily high.
-	static int counter = 0;
-
-	string name;
-	bool collision = false;
-	do
-	{
-		name = "__" + baseName + lexical_cast<string > (counter++) + "__";
-
-		//Look up the name in the parent scopes
-		SgSymbol* nameSymbol = SageInterface::lookupSymbolInParentScopes(SgName(name), scope);
-		collision = (nameSymbol != NULL);
-
-		//Look up the name in the children scopes
-		Rose_STL_Container<SgNode*> childScopes = NodeQuery::querySubTree(scope, V_SgScopeStatement);
-
-
-		foreach(SgNode* childScope, childScopes)
-		{
-			SgScopeStatement* childScopeStatement = isSgScopeStatement(childScope);
-			nameSymbol = childScopeStatement->lookup_symbol(SgName(name));
-			collision = collision || (nameSymbol != NULL);
-		}
-	} while (collision);
-
-	return name;
-}
-
 
 /** Returns true if the given expression refers to a variable. This could include using the
- * dot and arrow operator to access member variables. A comma op conunts as a variable references
- * if all its members are variable references (not just the last expression in the list). */
+ * dot and arrow operator to access member variables.  */
 bool isVariableReference(SgExpression* expression)
 {
 	if (isSgVarRefExp(expression))
@@ -70,14 +37,6 @@ bool isVariableReference(SgExpression* expression)
 		return isVariableReference(arrowExpression->get_lhs_operand()) &&
 				isVariableReference(arrowExpression->get_rhs_operand());
 	}
-	else if (isSgCommaOpExp(expression))
-	{
-		//Comma op where both the lhs and th rhs are variable references.
-		//The lhs would be semantically meaningless since it doesn't have any side effects
-		SgCommaOpExp* commaOp = isSgCommaOpExp(expression);
-		return isVariableReference(commaOp->get_lhs_operand()) &&
-				isVariableReference(commaOp->get_rhs_operand());
-	}
 	else if (isSgPointerDerefExp(expression) || isSgCastExp(expression) || isSgAddressOfOp(expression))
 	{
 		return isVariableReference(isSgUnaryOp(expression)->get_operand());
@@ -86,75 +45,6 @@ bool isVariableReference(SgExpression* expression)
 	{
 		return false;
 	}
-}
-
-
-/** Given an expression, generates a temporary variable whose initializer optionally evaluates
- * that expression. Then, the var reference expression returned can be used instead of the original
- * expression. The temporary variable created can be reassigned to the expression by the returned SgAssignOp;
- * this can be used when the expression the variable represents needs to be evaluated. NOTE: This handles
- * reference types correctly by using pointer types for the temporary.
- * @param expression Expression which will be replaced by a variable
- * @param scope scope in which the temporary variable will be generated
- * @return declaration of the temporary variable, an assignment op to
- *			reevaluate the expression, and a a variable reference expression to use instead of
- *         the original expression. Delete the results that you don't need! */
-tuple<SgVariableDeclaration*, SgAssignOp*, SgExpression*> CreateTempVariableForExpression(SgExpression* expression, SgScopeStatement* scope, bool initializeInDeclaration)
-{
-	SgType* expressionType = expression->get_type();
-	SgType* variableType = expressionType;
-
-	//If the expression has a reference type, we need to use a pointer type for the temporary variable.
-	//Else, re-assigning the variable is not possible
-	bool isReferenceType = SageInterface::isReferenceType(expressionType);
-	if (isReferenceType)
-	{
-		SgType* expressionBaseType = expressionType->stripType(SgType::STRIP_TYPEDEF_TYPE | SgType::STRIP_REFERENCE_TYPE);
-		variableType = SageBuilder::buildPointerType(expressionBaseType);
-	}
-
-    // If the expression is a dereferenced pointer, use a reference to hold it.
-    if (isSgPointerDerefExp(expression))
-        variableType = SageBuilder::buildReferenceType(variableType);
-
-	//Generate a unique variable name
-	string name = BackstrokeUtility::GenerateUniqueVariableName(scope);
-
-	//Initialize the temporary variable to an evaluation of the expression
-	SgExpression* tempVarInitExpression = SageInterface::copyExpression(expression);
-	ROSE_ASSERT(tempVarInitExpression != NULL);
-	if (isReferenceType)
-	{
-		//FIXME: the next line is hiding a bug in ROSE. Remove this line and talk to Dan about the resulting assert
-		tempVarInitExpression->set_lvalue(false);
-
-		tempVarInitExpression = SageBuilder::buildAddressOfOp(tempVarInitExpression);
-	}
-
-	//Optionally initialize the variable in its declaration
-	SgAssignInitializer* initializer = NULL;
-	if (initializeInDeclaration)
-	{
-		SgExpression* initExpressionCopy = SageInterface::copyExpression(tempVarInitExpression);
-		initializer = SageBuilder::buildAssignInitializer(initExpressionCopy);
-	}
-
-	SgVariableDeclaration* tempVarDeclaration = SageBuilder::buildVariableDeclaration(name, variableType, initializer, scope);
-	ROSE_ASSERT(tempVarDeclaration != NULL);
-
-	//Now create the assignment op for reevaluating the expression
-	SgVarRefExp* tempVarReference = SageBuilder::buildVarRefExp(tempVarDeclaration);
-	SgAssignOp* assignment = SageBuilder::buildAssignOp(tempVarReference, tempVarInitExpression);
-
-	//Build the variable reference expression that can be used in place of the original expression
-	SgExpression* varRefExpression = SageBuilder::buildVarRefExp(tempVarDeclaration);
-	if (isReferenceType)
-	{
-		//The temp variable is a pointer type, so dereference it before using it
-		varRefExpression = SageBuilder::buildPointerDerefExp(varRefExpression);
-	}
-
-	return make_tuple(tempVarDeclaration, assignment, varRefExpression);
 }
 
 SgExpression* buildAssert(SgExpression* check)

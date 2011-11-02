@@ -3,6 +3,7 @@
 
 #include "sage3basic.hhh"
 #include <stdint.h>
+#include <boost/tuple/tuple.hpp>
 
 #if 0   // FMZ(07/07/2010): the argument "nextErrorCode" should be call-by-reference
 SgFile* determineFileType ( std::vector<std::string> argv, int nextErrorCode, SgProject* project );
@@ -368,6 +369,10 @@ struct hash_nodeptr
    */
     std::string generateUniqueName ( const SgNode * node, bool ignoreDifferenceBetweenDefiningAndNondefiningDeclarations);
 
+	/** Generate a name that is unique in the current scope and any parent and children scopes.
+	* @param baseName the word to be included in the variable names. */
+	std::string generateUniqueVariableName(SgScopeStatement* scope, std::string baseName = "temp");
+    
   // DQ (8/10/2010): Added const to first parameter.
   // DQ (3/10/2007):
   //! Generate a unique string from the source file position information
@@ -539,9 +544,9 @@ sortSgNodeListBasedOnAppearanceOrderInSource(const std::vector<SgDeclarationStat
   // labels for scopes in a function (as required for name mangling).
   /*! \brief Clears the cache of scope,integer pairs for the input function.
 
-      This is used to clear the cache of computed unique lables for scopes in a function.
+      This is used to clear the cache of computed unique labels for scopes in a function.
       This function should be called after any transformation on a function that might effect
-      the allocation of scopes and cause the existing unique numbrs to be incorrect.
+      the allocation of scopes and cause the existing unique numbers to be incorrect.
       This is part of support to provide unique names for variables and types defined is
       different nested scopes of a function (used in mangled name generation).
    */
@@ -1220,6 +1225,19 @@ void replaceStatement(SgStatement* oldStmt, SgStatement* newStmt, bool movePrepr
 
 //! Replace an anchor node with a specified pattern subtree with optional SgVariantExpression. All SgVariantExpression in the pattern will be replaced with copies of the anchor node.
 SgNode* replaceWithPattern (SgNode * anchor, SgNode* new_pattern);
+
+/** Given an expression, generates a temporary variable whose initializer optionally evaluates
+* that expression. Then, the var reference expression returned can be used instead of the original
+* expression. The temporary variable created can be reassigned to the expression by the returned SgAssignOp;
+* this can be used when the expression the variable represents needs to be evaluated. NOTE: This handles
+* reference types correctly by using pointer types for the temporary.
+* @param expression Expression which will be replaced by a variable
+* @param scope scope in which the temporary variable will be generated
+* @return declaration of the temporary variable, an assignment op to
+* reevaluate the expression, and a a variable reference expression to use instead of
+* the original expression. SageInterface::deepDelete the results that you don't need! */
+boost::tuple<SgVariableDeclaration*, SgAssignOp*, SgExpression* > createTempVariableForExpression(SgExpression* expression,
+        SgScopeStatement* scope, bool initializeInDeclaration);
 
 //! Append an argument to SgFunctionParameterList, transparently set parent,scope, and symbols for arguments when possible
 /*! We recommend to build SgFunctionParameterList before building a function declaration

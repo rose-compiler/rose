@@ -275,11 +275,11 @@ void StateSavingStatementHandler::saveOneVariable(const VariableRenaming::VarNam
 			SgExpression* tempVarRef;
 			SgAssignOp* reassignTempVar;
 			boost::tie(tempVarDecl, reassignTempVar, tempVarRef) = 
-					BackstrokeUtility::CreateTempVariableForExpression(popVal(varType), reverseBody, true);
+					SageInterface::createTempVariableForExpression(popVal(varType), reverseBody, true);
 			SageInterface::deepDelete(reassignTempVar);
 			reassignTempVar = NULL;
 
-			//Build if-statments that check for the actual type of the popped value
+			//Build if-statements that check for the actual type of the popped value
 			vector<SgIfStmt*> reverseIfStatements;
 			for (size_t i = 0; i < castedVars.size(); i++)
 			{
@@ -351,7 +351,7 @@ void StateSavingStatementHandler::saveOneVariable(const VariableRenaming::VarNam
 
 			//Declare the temporary variable to store the popped value
 			boost::tie(tempVarDecl, reassignTempVar, tempVarRef) = 
-					BackstrokeUtility::CreateTempVariableForExpression(popVal_front(varType), commitBody, true);
+					SageInterface::createTempVariableForExpression(popVal_front(varType), commitBody, true);
 			SageInterface::deepDelete(reassignTempVar);
 			reassignTempVar = NULL;
 
