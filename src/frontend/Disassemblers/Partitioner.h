@@ -129,6 +129,39 @@ protected:
     struct DataBlock;
     struct BasicBlock;
 
+    /** Holds an instruction along with some other information about the instruction.  This is mostly an optimization.
+     *  Previous versions of the partitioner kept the additional information in a separate std::map keyed by instruction
+     *  address and this proved to be a major expense, partitularly within the find_bb_containing() hot path. */
+    class Instruction {
+    public:
+        Instruction(SgAsmInstruction *node): node(node), bblock(NULL) { assert(node!=NULL); }
+        SgAsmInstruction *node;                 /**< The underlying instruction node for an AST. */
+        BasicBlock *bblock;                     /**< Block to which this instruction belongs, if any. */
+
+        /* These methods are forwarded to the underlying instruction node for convenience. */
+        Disassembler::AddressSet get_successors(bool *complete) const { return node->get_successors(complete); }
+        rose_addr_t get_address() const { return node->get_address(); }
+        size_t get_size() const { return node->get_size(); }
+        bool terminatesBasicBlock() const { return node->terminatesBasicBlock(); }
+        SgUnsignedCharList get_raw_bytes() const { return node->get_raw_bytes(); } // FIXME: should return const ref?
+    };
+
+    typedef std::map<rose_addr_t, Instruction*> InstructionMap;
+    typedef std::vector<Instruction*> InstructionVector;
+
+    /** Augments dynamic casts defined from ROSETTA.  A Partitioner::Instruction used to be just a SgAsmInstruction before we
+     *  needed to combine it with some additional info for the partitioner.  Therefore, there's quite a bit of code (within the
+     *  partitioner) that treats them as AST nodes.  Rather than replace every occurrance of isSgAsmInstruction(N) with
+     *  something like (N?isSgAsmInstruction(N->node):NULL), we add additional versions of the necessary global functions, but
+     *  define them only within the partitioner.
+     *
+     *  @{ */
+    static SgAsmInstruction *isSgAsmInstruction(const Instruction *);
+    static SgAsmInstruction *isSgAsmInstruction(SgNode*);
+    static SgAsmx86Instruction *isSgAsmx86Instruction(const Instruction*);
+    static SgAsmx86Instruction *isSgAsmx86Instruction(SgNode*);
+    /** @} */
+
     /** Analysis that can be cached in a block. Some analyses are expensive enough that they should be cached in a block.
      *  Analyses are either locally computed (by examining only the block where they're cached) or non-locally computed (by
      *  examining other related basic blocks.  Non-local analyses are not cached locally, but they might be cached in other
@@ -196,10 +229,10 @@ protected:
          *  with this basic block. */
         void clear_data_blocks();
 
-        SgAsmInstruction* last_insn() const;    /**< Returns the last executed (exit) instruction of the block */
+        Instruction* last_insn() const;         /**< Returns the last executed (exit) instruction of the block */
         rose_addr_t address() const;            /* Return the address of the basic block's first (entry) instruction. */
         unsigned reason;                        /**< Reasons this block was created; SgAsmBlock::Reason bit flags */
-        std::vector<SgAsmInstruction*> insns;   /**< Non-empty set of instructions composing this basic block, in address order */
+        std::vector<Instruction*> insns;        /**< Non-empty set of instructions composing this basic block, in address order */
         std::set<DataBlock*> data_blocks;       /**< Data blocks owned by this basic block. E.g., this block's jump table. */
         BlockAnalysisCache cache;               /**< Cached results of local analyses */
         Function* function;                     /**< Function to which this basic block is assigned, or null */
@@ -464,15 +497,11 @@ public:
 
     /** Adds additional instructions to be processed. New instructions are only added at addresses that don't already have an
      *  instruction. */
-    virtual void add_instructions(const Disassembler::InstructionMap& insns) {
-        this->insns.insert(insns.begin(), insns.end());
-    }
+    virtual void add_instructions(const Disassembler::InstructionMap& insns);
 
     /** Get the list of all instructions.  This includes instructions that were added with add_instructions(), instructions
      *  added by a passive partition() call, and instructions added by an active partitioner. */
-    const Disassembler::InstructionMap& get_instructions() const {
-        return insns;
-    }
+    Disassembler::InstructionMap get_instructions() const;
 
     /** Get the list of disassembler errors. Only active partitioners accumulate this information since only active
      *  partitioners call the disassembler to obtain instructions. */
@@ -492,7 +521,7 @@ public:
      *  then the disassembler will be invoked if necessary to obtain the instruction.  This function returns the null pointer
      *  if no instruction is available.  If the disassembler was called and threw an exception, then we catch the exception
      *  and add it to the bad instruction list. */
-    virtual SgAsmInstruction* find_instruction(rose_addr_t, bool create=true);
+    virtual Instruction* find_instruction(rose_addr_t, bool create=true);
 
     /** Drop an instruction from consideration.  If the instruction is the beginning of a basic block then drop the entire
      *  basic block, returning its subsequent instructions back to the (implied) list of free instructions.  If the instruction
@@ -500,7 +529,7 @@ public:
      *  instruction depending on whether discard_entire_block is true or false.
      *
      *  This method always returns the null pointer. */
-    virtual SgAsmInstruction* discard(SgAsmInstruction*, bool discard_entire_block=false);
+    virtual Instruction* discard(Instruction*, bool discard_entire_block=false);
 
     /** Drop a basic block from the partitioner.  The specified basic block, which must not belong to any function, is removed
      *  from the Partitioner, deleted, and its instructions all returned to the (implied) list of free instructions. This
@@ -588,14 +617,14 @@ public:
     public:
         /** Arguments for the callback. */
         struct Args {
-            Args(Partitioner *partitioner, SgAsmInstruction *insn_prev, SgAsmInstruction *insn_begin,
-                 SgAsmInstruction *insn_end, size_t ninsns)
+            Args(Partitioner *partitioner, Instruction *insn_prev, Instruction *insn_begin,
+                 Instruction *insn_end, size_t ninsns)
                 : partitioner(partitioner), insn_prev(insn_prev), insn_begin(insn_begin), insn_end(insn_end),
                   ninsns(ninsns) {}
             Partitioner *partitioner;
-            SgAsmInstruction *insn_prev;                /**< Previous instruction not in range, or null. */
-            SgAsmInstruction *insn_begin;               /**< First instruction in range of instructions. */
-            SgAsmInstruction *insn_end;                 /**< First subsequent instruction not in range, or null. */
+            Instruction *insn_prev;                     /**< Previous instruction not in range, or null. */
+            Instruction *insn_begin;                    /**< First instruction in range of instructions. */
+            Instruction *insn_end;                      /**< First subsequent instruction not in range, or null. */
             size_t ninsns;                              /**< Number of instructions in range. */
         };
 
@@ -635,10 +664,10 @@ public:
      *  the instruction with the lowest address in this iteration and @p ninsns is the number of contiguous instructions.
      *
      *  @{ */
-    virtual void scan_contiguous_insns(Disassembler::InstructionMap insns, InsnRangeCallbacks &cblist,
-                                       SgAsmInstruction *insn_prev, SgAsmInstruction *insn_end);
-    void scan_contiguous_insns(const Disassembler::InstructionMap &insns, InsnRangeCallback *callback,
-                               SgAsmInstruction *insn_prev, SgAsmInstruction *insn_end) {
+    virtual void scan_contiguous_insns(InstructionMap insns, InsnRangeCallbacks &cblist,
+                                       Instruction *insn_prev, Instruction *insn_end);
+    void scan_contiguous_insns(const InstructionMap &insns, InsnRangeCallback *callback,
+                               Instruction *insn_prev, Instruction *insn_end) {
         InsnRangeCallbacks cblist(callback);
         scan_contiguous_insns(insns, cblist, insn_prev, insn_end);
     }
@@ -926,6 +955,31 @@ public:
         virtual bool operator()(bool enabled, const Args &args);
     };
 
+    /**************************************************************************************************************************
+     *                                  Methods for finding functions by patterns
+     **************************************************************************************************************************/
+protected:
+    /** Looks for stack frame setup. Tries to match "(mov rdi,rdi)?; push rbp; mov rbp,rsp" (or the 32-bit equivalent). The
+     *  first MOV instruction is a two-byte no-op used for hot patching of executables (single instruction rather than two NOP
+     *  instructions so that no thread is executing at the second byte when the MOV is replaced by a JMP).  The PUSH and second
+     *  MOV are the standard way to set up the stack frame. */
+    static InstructionMap::const_iterator pattern1(const InstructionMap& insns, InstructionMap::const_iterator first,
+                                                   Disassembler::AddressSet &exclude);
+
+#if 0 /* Definitions are also commented out */
+    /** Matches after NOP padding. Tries to match "nop;nop;nop" followed by something that's not a nop and returns the
+     *  something that's not a nop if successful. */
+    static InstructionMap::const_iterator pattern2(const InstructionMap& insns, InstructionMap::const_iterator first,
+                                                   Disassembler::AddressSet &exclude);
+
+    /** Matches after stack frame destruction. Matches "leave;ret" followed by one or more "nop" followed by a non-nop
+     *  instruction and if matching, returns the iterator for the non-nop instruction. */
+    static InstructionMap::const_iterator pattern3(const InstructionMap& insns, InstructionMap::const_iterator first,
+                                                   Disassembler::AddressSet &exclude);
+#endif
+    
+    
+
     /*************************************************************************************************************************
      *                                                 Low-level Functions
      *
@@ -937,7 +991,7 @@ public:
      *       fits here. */
     struct AbandonFunctionDiscovery {};                         /**< Exception thrown to defer function block discovery. */
 
-    virtual void append(BasicBlock*, SgAsmInstruction*);        /**< Add an instruction to a basic block. */
+    virtual void append(BasicBlock*, Instruction*);             /**< Add an instruction to a basic block. */
     virtual void append(BasicBlock*, DataBlock*, unsigned reasons); /* Add a data block to a basic block. */
     virtual void append(Function*, BasicBlock*, unsigned reasons, bool keep=false); /* Append a basic block to a function */
     virtual void append(Function*, DataBlock*, unsigned reasons, bool force=false); /* Append a data block to a function */
@@ -1302,7 +1356,7 @@ public:
      *************************************************************************************************************************/
 public:
     Disassembler *disassembler;                         /**< Optional disassembler to call when an instruction is needed. */
-    Disassembler::InstructionMap insns;                 /**< Instruction cache, filled in by user or populated by disassembler. */
+    InstructionMap insns;                               /**< Instruction cache, filled in by user or populated by disassembler. */
     MemoryMap *map;                                     /**< Memory map used for disassembly if disassembler is present. */
     MemoryMap ro_map;                                   /**< The read-only parts of 'map', used for insn semantics mem reads. */
     Disassembler::BadMap bad_insns;                     /**< Captured disassembler exceptions. */

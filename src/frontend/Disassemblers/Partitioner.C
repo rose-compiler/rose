@@ -18,12 +18,41 @@
 
 /* See header file for full documentation. */
 
-
 std::ostream& operator<<(std::ostream &o, const Partitioner::Exception &e)
 {
     e.print(o);
     return o;
 }
+
+/* class method */
+SgAsmInstruction *
+Partitioner::isSgAsmInstruction(const Instruction *insn)
+{
+    return insn ? isSgAsmInstruction(insn->node) : NULL;
+}
+
+/* class method */
+SgAsmInstruction *
+Partitioner::isSgAsmInstruction(SgNode *node)
+{
+    return ::isSgAsmInstruction(node);
+}
+
+/* class method */
+SgAsmx86Instruction *
+Partitioner::isSgAsmx86Instruction(const Instruction *insn)
+{
+    return insn ? isSgAsmx86Instruction(insn->node) : NULL;
+}
+
+/* class method */
+SgAsmx86Instruction *
+Partitioner::isSgAsmx86Instruction(SgNode *node)
+{
+    return ::isSgAsmx86Instruction(node);
+}
+
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // These SgAsmFunction methods have no other home, so they're here for now. Do not move them into
@@ -366,14 +395,13 @@ Partitioner::parse_switches(const std::string &s, unsigned flags)
     return flags;
 }
 
-static bool
-is_writable(const MemoryMap::MapElement &me) {
+static bool is_writable(const MemoryMap::MapElement &me) __attribute__((unused));
+static bool is_writable(const MemoryMap::MapElement &me) {
     return 0 != (me.get_mapperms() & MemoryMap::MM_PROT_WRITE);
 }
 
-static bool
-is_unexecutable(const MemoryMap::MapElement &me)
-{
+static bool is_unexecutable(const MemoryMap::MapElement &me) __attribute__((unused));
+static bool is_unexecutable(const MemoryMap::MapElement &me) {
     return 0 == (me.get_mapperms() & MemoryMap::MM_PROT_EXEC);
 }
 
@@ -403,8 +431,11 @@ Partitioner::update_analyses(BasicBlock *bb)
     assert(bb!=NULL && !bb->insns.empty());
     if (bb->valid_cache()) return;
 
-    /* Successor analysis */
-    bb->cache.sucs = bb->insns.front()->get_successors(bb->insns, &(bb->cache.sucs_complete), &ro_map);
+    /* Successor analysis. */
+    std::vector<SgAsmInstruction*> inodes;
+    for (InstructionVector::const_iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii)
+        inodes.push_back(isSgAsmInstruction(*ii));
+    bb->cache.sucs = bb->insns.front()->node->get_successors(inodes, &(bb->cache.sucs_complete), &ro_map);
 
     /* Try to handle indirect jumps of the form "jmp ds:[BASE+REGISTER*WORDSIZE]".  The trick is to assume that some kind of
      * jump table exists beginning at address BASE, and that the table contains only addresses of valid code.  All we need to
@@ -476,7 +507,7 @@ Partitioner::update_analyses(BasicBlock *bb)
      * is not a function call. */
     rose_addr_t fallthrough_va = bb->last_insn()->get_address() + bb->last_insn()->get_size();
     rose_addr_t target_va = NO_TARGET;
-    bool looks_like_call = bb->insns.front()->is_function_call(bb->insns, &target_va);
+    bool looks_like_call = bb->insns.front()->node->is_function_call(inodes, &target_va);
     if (looks_like_call && target_va!=fallthrough_va) {
         bb->cache.is_function_call = true;
         bb->cache.call_target = target_va;
@@ -487,7 +518,7 @@ Partitioner::update_analyses(BasicBlock *bb)
 
     /* Function return analysis */
     bb->cache.function_return = !bb->cache.sucs_complete &&
-                                bb->insns.front()->is_function_return(bb->insns);
+                                bb->insns.front()->node->is_function_return(inodes);
 
     bb->validate_cache();
 }
@@ -589,7 +620,7 @@ Partitioner::pops_return_address(rose_addr_t va)
         fputs("Partitioner::pops_return_address:\n", stderr);
 #endif
         try {
-            for (std::vector<SgAsmInstruction*>::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii) {
+            for (std::vector<Instruction*>::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii) {
                 SgAsmx86Instruction *insn = isSgAsmx86Instruction(*ii);
                 if (!insn) return false;
                 if (insn==last_insn && insn->get_kind()==x86_ret) break;
@@ -656,7 +687,7 @@ Partitioner::effective_function(DataBlock *dblock)
 }
 
 /* Returns last instruction, the one that exits from the block. */
-SgAsmInstruction *
+Partitioner::Instruction *
 Partitioner::BasicBlock::last_insn() const
 {
     assert(insns.size()>0);
@@ -763,13 +794,13 @@ Partitioner::truncate(BasicBlock* bb, rose_addr_t va)
     assert(bb==find_bb_containing(va));
 
     /* Find the cut point in the instruction vector. I.e., the first instruction to remove from the vector. */
-    std::vector<SgAsmInstruction*>::iterator cut = bb->insns.begin();
+    std::vector<Instruction*>::iterator cut = bb->insns.begin();
     while (cut!=bb->insns.end() && (*cut)->get_address()!=va) ++cut;
     assert(cut!=bb->insns.begin()); /*we can't remove them all since basic blocks are never empty*/
 
     /* Remove instructions (from the cut point and beyond) and all the data blocks. */
-    for (std::vector<SgAsmInstruction*>::iterator ii=cut; ii!=bb->insns.end(); ++ii) {
-        SgAsmInstruction *insn = *ii;
+    for (std::vector<Instruction*>::iterator ii=cut; ii!=bb->insns.end(); ++ii) {
+        Instruction *insn = *ii;
         Insn2Block::iterator i2bi = insn2block.find(insn->get_address());
         assert(i2bi!=insn2block.end());
         assert(i2bi->second==bb);
@@ -783,7 +814,7 @@ Partitioner::truncate(BasicBlock* bb, rose_addr_t va)
 
 /* Append instruction to basic block */
 void
-Partitioner::append(BasicBlock* bb, SgAsmInstruction* insn)
+Partitioner::append(BasicBlock* bb, Instruction* insn)
 {
     assert(bb);
     assert(insn);
@@ -941,8 +972,8 @@ Partitioner::remove(BasicBlock *bb, DataBlock *db)
 }
 
 /* Remove instruction from consideration. */
-SgAsmInstruction *
-Partitioner::discard(SgAsmInstruction *insn, bool discard_entire_block)
+Partitioner::Instruction *
+Partitioner::discard(Instruction *insn, bool discard_entire_block)
 {
     if (insn) {
         rose_addr_t va = insn->get_address();
@@ -969,7 +1000,7 @@ Partitioner::discard(BasicBlock *bb)
         assert(NULL==bb->function);
 
         /* Remove instructions from the block, returning them to the (implied) list of free instructions. */
-        for (std::vector<SgAsmInstruction*>::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii)
+        for (std::vector<Instruction*>::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii)
             insn2block.erase((*ii)->get_address());
 
         /* Remove the association between data blocks and this basic block. */
@@ -983,14 +1014,14 @@ Partitioner::discard(BasicBlock *bb)
 }
 
 /* Finds (or possibly creates) an instruction beginning at the specified address. */
-SgAsmInstruction *
+Partitioner::Instruction *
 Partitioner::find_instruction(rose_addr_t va, bool create/*=true*/)
 {
-    Disassembler::InstructionMap::iterator ii = insns.find(va);
+    InstructionMap::iterator ii = insns.find(va);
     if (create && disassembler && ii==insns.end() && bad_insns.find(va)==bad_insns.end()) {
-        SgAsmInstruction *insn = NULL;
+        Instruction *insn = NULL;
         try {
-            insn = disassembler->disassembleOne(map, va, NULL);
+            insn = new Instruction(disassembler->disassembleOne(map, va, NULL));
             ii = insns.insert(std::make_pair(va, insn)).first;
         } catch (const Disassembler::Exception &e) {
             bad_insns.insert(std::make_pair(va, e));
@@ -1029,7 +1060,7 @@ Partitioner::find_bb_containing(rose_addr_t va, bool create/*true*/)
 
     BasicBlock *bb = NULL;
     while (1) {
-        SgAsmInstruction *insn = find_instruction(va);
+        Instruction *insn = find_instruction(va);
         if (!insn)
             break;
         if (!bb) {
@@ -1173,7 +1204,7 @@ Partitioner::mark_ipd_configuration()
             Semantics semantics(policy);
 
             if (debug) fprintf(stderr, "  running semantics for the basic block...\n");
-            for (std::vector<SgAsmInstruction*>::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii) {
+            for (std::vector<Instruction*>::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii) {
                 SgAsmx86Instruction *insn = isSgAsmx86Instruction(*ii);
                 assert(insn!=NULL);
                 semantics.processInstruction(insn);
@@ -1361,7 +1392,7 @@ Partitioner::mark_elf_plt_entries(SgAsmGenericHeader *fhdr)
     while (plt_offset<plt->get_mapped_size()) {
 
         /* Find an x86 instruction */
-        SgAsmInstruction *insn = find_instruction(plt->get_mapped_actual_va()+plt_offset);
+        Instruction *insn = find_instruction(plt->get_mapped_actual_va()+plt_offset);
         if (!insn) {
             ++plt_offset;
             continue;
@@ -1450,15 +1481,11 @@ Partitioner::mark_func_symbols(SgAsmGenericHeader *fhdr)
     }
 }
 
-/** See Partitioner::mark_func_patterns. Tries to match "(mov rdi,rdi)?; push rbp; mov rbp,rsp" (or the 32-bit equivalent). The
- *  first MOV instruction is a two-byte no-op used for hot patching of executables (single instruction rather than two NOP
- *  instructions so that no thread is executing at the second byte when the MOV is replaced by a JMP).  The PUSH and second MOV
- *  are the standard way to set up the stack frame. */
-static Disassembler::InstructionMap::const_iterator
-pattern1(const Disassembler::InstructionMap& insns, Disassembler::InstructionMap::const_iterator first,
-         Disassembler::AddressSet &exclude)
+/* Tries to match "(mov rdi,rdi)?; push rbp; mov rbp,rsp" (or the 32-bit equivalent). */
+Partitioner::InstructionMap::const_iterator
+Partitioner::pattern1(const InstructionMap& insns, InstructionMap::const_iterator first, Disassembler::AddressSet &exclude)
 {
-    Disassembler::InstructionMap::const_iterator ii = first;
+    InstructionMap::const_iterator ii = first;
     Disassembler::AddressSet matches;
 
     /* Look for optional "mov rdi, rdi"; if found, advance ii iterator to fall-through instruction */
@@ -1530,13 +1557,11 @@ pattern1(const Disassembler::InstructionMap& insns, Disassembler::InstructionMap
 }
 
 #if 0 /*commented out in Partitioner::mark_func_patterns()*/
-/** See Partitioner::mark_func_patterns. Tries to match "nop;nop;nop" followed by something that's not a nop and returns the
- *  something that's not a nop if successful. */
-static Disassembler::InstructionMap::const_iterator
-pattern2(const Disassembler::InstructionMap& insns, Disassembler::InstructionMap::const_iterator first,
-         Disassembler::AddressSet &exclude)
+/* Tries to match "nop;nop;nop" followed by something that's not a nop. */
+Partitioner::InstructionMap::const_iterator
+Partitioner::pattern2(const InstructionMap& insns, InstructionMap::const_iterator first, Disassembler::AddressSet &exclude)
 {
-    Disassembler::InstructionMap::const_iterator ii = first;
+    InstructionMap::const_iterator ii = first;
     Disassembler::AddressSet matches;
 
     /* Look for three "nop" instructions */
@@ -1562,13 +1587,11 @@ pattern2(const Disassembler::InstructionMap& insns, Disassembler::InstructionMap
 #endif
 
 #if 0 /* commented out in Partitioner::mark_func_patterns() */
-/** See Partitioner::mark_func_patterns. Tries to match "leave;ret" followed by one or more "nop" followed by a non-nop
- *  instruction and if matching, returns the iterator for the non-nop instruction. */
-static Disassembler::InstructionMap::const_iterator
-pattern3(const Disassembler::InstructionMap& insns, Disassembler::InstructionMap::const_iterator first,
-         Disassembler::AddressSet &exclude)
+/* Tries to match "leave;ret" followed by one or more "nop" followed by a non-nop */
+Partitioner::InstructionMap::const_iterator
+Partitioner::pattern3(const InstructionMap& insns, InstructionMap::const_iterator first, Disassembler::AddressSet &exclude)
 {
-    Disassembler::InstructionMap::const_iterator ii = first;
+    InstructionMap::const_iterator ii = first;
     Disassembler::AddressSet matches;
 
     /* leave; ret; nop */
@@ -1611,20 +1634,20 @@ void
 Partitioner::mark_func_patterns()
 {
     Disassembler::AddressSet exclude;
-    Disassembler::InstructionMap::const_iterator found;
+    InstructionMap::const_iterator found;
 
-    for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
+    for (InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
         if (exclude.find(ii->first)==exclude.end() && (found=pattern1(insns, ii, exclude))!=insns.end())
             add_function(found->first, SgAsmFunction::FUNC_PATTERN);
     }
 #if 0 /* Disabled because NOPs sometimes legitimately appear inside functions */
-    for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
+    for (InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
         if (exclude.find(ii->first)==exclude.end() && (found=pattern2(insns, ii, exclude))!=insns.end())
             add_function(found->first, SgAsmFunction::FUNC_PATTERN);
     }
 #endif
 #if 0 /* Disabled because NOPs sometimes follow "leave;ret" for functions with multiple returns. */
-    for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
+    for (InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
         if (exclude.find(ii->first)==exclude.end() && (found=pattern3(insns, ii, exclude))!=insns.end())
             add_function(found->first, SgAsmFunction::FUNC_PATTERN);
     }
@@ -1637,11 +1660,11 @@ Partitioner::mark_func_patterns()
 void
 Partitioner::mark_call_insns()
 {
-    for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
+    for (InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
         std::vector<SgAsmInstruction*> iv;
-        iv.push_back(ii->second);
+        iv.push_back(ii->second->node);
         rose_addr_t target_va=NO_TARGET;
-        if (ii->second->is_function_call(iv, &target_va) && target_va!=NO_TARGET &&
+        if (ii->second->node->is_function_call(iv, &target_va) && target_va!=NO_TARGET &&
             target_va!=ii->first + ii->second->get_size()) {
             add_function(target_va, SgAsmFunction::FUNC_CALL_TARGET, "");
         }
@@ -1650,14 +1673,14 @@ Partitioner::mark_call_insns()
 
 /* Scan through ranges of contiguous instructions */
 void
-Partitioner::scan_contiguous_insns(Disassembler::InstructionMap insns, InsnRangeCallbacks &cblist,
-                                   SgAsmInstruction *prev, SgAsmInstruction *end)
+Partitioner::scan_contiguous_insns(InstructionMap insns, InsnRangeCallbacks &cblist,
+                                   Instruction *prev, Instruction *end)
 {
     while (!insns.empty()) {
-        SgAsmInstruction *first = insns.begin()->second;
+        Instruction *first = insns.begin()->second;
         rose_addr_t va = first->get_address();
-        Disassembler::InstructionMap::iterator ii = insns.find(va);
-        std::vector<SgAsmInstruction*> contig;
+        InstructionMap::iterator ii = insns.find(va);
+        std::vector<Instruction*> contig;
         while (ii!=insns.end()) {
             contig.push_back(ii->second);
             va += ii->second->get_size();
@@ -1679,10 +1702,10 @@ Partitioner::scan_unassigned_insns(InsnRangeCallbacks &cblist)
     /* We can't iterate over the instruction list while invoking callbacks because one of them might change the instruction
      * list.  Therefore, iterate over a copy of the list.  Instructions are never deleted by the partitioner (only added), so
      * this is safe to do. */
-    Disassembler::InstructionMap all = this->insns;
-    Disassembler::InstructionMap range;
-    SgAsmInstruction *prev = NULL;
-    for (Disassembler::InstructionMap::iterator ai=all.begin(); ai!=all.end(); ++ai) {
+    InstructionMap all = this->insns;
+    InstructionMap range;
+    Instruction *prev = NULL;
+    for (InstructionMap::iterator ai=all.begin(); ai!=all.end(); ++ai) {
         BasicBlock *bb = find_bb_containing(ai->first, false);
         Function *func = bb ? bb->function : NULL;
         if (func) {
@@ -2001,9 +2024,9 @@ Partitioner::FindInsnPadding::operator()(bool enabled, const Args &args)
 
     /* Loop over the inter-function instructions and accumulate contiguous ranges of padding. */
     bool retval = true;
-    std::vector<SgAsmInstruction*> padding;
+    std::vector<Instruction*> padding;
     rose_addr_t va = args.insn_begin->get_address();
-    SgAsmInstruction *insn = p->find_instruction(va);
+    Instruction *insn = p->find_instruction(va);
     for (size_t i=0; i<args.ninsns && insn!=NULL; i++) {
 
         /* Does this instruction match? */
@@ -2190,7 +2213,7 @@ Partitioner::FindIntraFunctionInsns::operator()(bool enabled, const Args &args)
         if (!bb || bb->function)
             return true;
         bblocks.insert(bb);
-        for (std::vector<SgAsmInstruction*>::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii) {
+        for (std::vector<Instruction*>::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii) {
             rose_addr_t first = (*ii)->get_address();
             size_t size = (*ii)->get_size();
             block_extents.insert(Extent(first, size));
@@ -2223,7 +2246,7 @@ Partitioner::FindThunks::operator()(bool enabled, const Args &args)
     rose_addr_t va = args.insn_begin->get_address();
     rose_addr_t next_va = 0;
     for (size_t i=0; i<args.ninsns; i++, va=next_va) {
-        SgAsmInstruction *insn = p->find_instruction(va);
+        Instruction *insn = p->find_instruction(va);
         assert(insn);
         next_va = va + insn->get_size();
 
@@ -2316,7 +2339,7 @@ Partitioner::FindThunkTables::operator()(bool enabled, const Args &args)
     while (!range.empty()) {
 
         /* Find a single, contiguous thunk table. */
-        Disassembler::InstructionMap thunks; // each thunk is a single JMP instruction
+        InstructionMap thunks; // each thunk is a single JMP instruction
         bool in_table = false;
         rose_addr_t va;
         for (va=range.first(); va<=range.last() && (in_table || thunks.empty()); va++) {
@@ -2324,7 +2347,7 @@ Partitioner::FindThunkTables::operator()(bool enabled, const Args &args)
                 return true;
 
             /* Must be a JMP instruction. */
-            SgAsmInstruction *insn = p->find_instruction(va);
+            Instruction *insn = p->find_instruction(va);
             SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn);
             if (!insn_x86 || (insn_x86->get_kind()!=x86_jmp && insn_x86->get_kind()!=x86_farjmp)) {
                 in_table = false;
@@ -2370,7 +2393,7 @@ Partitioner::FindThunkTables::operator()(bool enabled, const Args &args)
 
         /* This is only a thunk table if we found enough thunks and (if appropriate) ends at the end of the range. */
         if (thunks.size()>minimum_nthunks && (!ends_contiguously || va==args.range.last()+1)) {
-            for (Disassembler::InstructionMap::iterator ii=thunks.begin(); ii!=thunks.end(); ++ii) {
+            for (InstructionMap::iterator ii=thunks.begin(); ii!=thunks.end(); ++ii) {
                 Function *thunk = p->add_function(ii->first, SgAsmFunction::FUNC_THUNK);
                 BasicBlock *bb = p->find_bb_starting(ii->first);
                 p->append(thunk, bb, SgAsmBlock::BLK_ENTRY_POINT);
@@ -2403,7 +2426,7 @@ Partitioner::is_thunk(Function *func)
     if (1!=bb->insns.size())
         return false;
 
-    SgAsmInstruction *insn = bb->insns.front();
+    Instruction *insn = bb->insns.front();
     SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn);
     if (!insn_x86 || (insn_x86->get_kind()!=x86_jmp && insn_x86->get_kind()!=x86_farjmp))
         return false;
@@ -2459,7 +2482,7 @@ Partitioner::FindPostFunctionInsns::operator()(bool enabled, const Args &args)
             ++nfound;
         }
 
-        SgAsmInstruction *insn = p->find_instruction(va);
+        Instruction *insn = p->find_instruction(va);
         assert(insn!=NULL);
         va += insn->get_size();
     }
@@ -2561,7 +2584,7 @@ Partitioner::name_plt_entries(SgAsmGenericHeader *fhdr)
         /* Sometimes the first instruction of a basic block cannot be disassembled and the basic block will have a different
          * starting address than its first instruction.  If that basic block is also the start of a function then the
          * function also will have no initial instruction. */
-        SgAsmInstruction *insn = find_instruction(func_addr);
+        Instruction *insn = find_instruction(func_addr);
         if (NULL==insn)
             continue;
 
@@ -2645,7 +2668,7 @@ Partitioner::name_import_entries(SgAsmGenericHeader *fhdr)
         Function *func = fi->second;
         if (!func->name.empty())
             continue;
-        SgAsmInstruction *insn = find_instruction(func->entry_va);
+        Instruction *insn = find_instruction(func->entry_va);
         SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn);
         if (!insn_x86 ||
             (insn_x86->get_kind()!=x86_jmp && insn_x86->get_kind()!=x86_farjmp) ||
@@ -2770,7 +2793,7 @@ void
 Partitioner::discover_blocks(Function *f, rose_addr_t va, unsigned reason)
 {
     if (debug) fprintf(debug, " B%08"PRIx64, va);
-    SgAsmInstruction *insn = find_instruction(va);
+    Instruction *insn = find_instruction(va);
     if (!insn) return; /* No instruction at this address. */
     rose_addr_t target_va = NO_TARGET; /*target of function call instructions (e.g., x86 CALL and FARCALL)*/
 
@@ -3280,7 +3303,7 @@ Partitioner::function_extent(Function *func,
     for (BasicBlocks::iterator bi=func->basic_blocks.begin(); bi!=func->basic_blocks.end(); ++bi) {
         /* Find the extents for all the instructions in this basic block. */
         BasicBlock *bb = bi->second;
-        for (std::vector<SgAsmInstruction*>::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii) {
+        for (std::vector<Instruction*>::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii) {
             rose_addr_t start = (*ii)->get_address();
             size_t size = (*ii)->get_size();
             if (0==nnodes++) {
@@ -3413,7 +3436,7 @@ Partitioner::is_contiguous(Function *func, bool strict)
 
     /* Check for instructions belonging to other functions. */
     const rose_addr_t max_insn_size = 16; /* FIXME: This is a kludge, but should work 99% of the time [RPM 2011-09-16] */
-    Disassembler::InstructionMap::iterator ii = insns.lower_bound(std::max(lo_addr,max_insn_size)-max_insn_size);
+    InstructionMap::iterator ii = insns.lower_bound(std::max(lo_addr,max_insn_size)-max_insn_size);
     for (/*void*/; ii!=insns.end() && ii->first<hi_addr; ++ii) {
         if (ii->first>=lo_addr) {
             BasicBlock *bb = find_bb_containing(ii->first, false);
@@ -3510,8 +3533,8 @@ Partitioner::build_ast()
         bool process_instructions;
         do {
             process_instructions = false;
-            Disassembler::InstructionMap insns_copy = insns;
-            for (Disassembler::InstructionMap::iterator ii=insns_copy.begin(); ii!=insns_copy.end(); ++ii) {
+            InstructionMap insns_copy = insns;
+            for (InstructionMap::iterator ii=insns_copy.begin(); ii!=insns_copy.end(); ++ii) {
                 rose_addr_t va = ii->first;
                 size_t size = ii->second->get_size();
                 if (!existing.contains(Extent(va, size))) {
@@ -3627,9 +3650,10 @@ Partitioner::build_ast(BasicBlock* block)
     retval->set_address(block->address());
     retval->set_reason(block->reason);
 
-    for (std::vector<SgAsmInstruction*>::const_iterator ii=block->insns.begin(); ii!=block->insns.end(); ++ii) {
-        retval->get_statementList().push_back(*ii);
-        (*ii)->set_parent(retval);
+    for (std::vector<Instruction*>::const_iterator ii=block->insns.begin(); ii!=block->insns.end(); ++ii) {
+        Instruction *insn = *ii;
+        retval->get_statementList().push_back(insn->node);
+        insn->node->set_parent(retval);
     }
 
     /* Cache block successors so other layers don't have to constantly compute them.  We fill in the successor SgAsmTarget
@@ -3701,6 +3725,26 @@ Partitioner::partition(SgAsmInterpretation* interp/*=NULL*/, Disassembler *d, Me
     analyze_cfg(SgAsmBlock::BLK_GRAPH1);
     post_cfg(interp);
     return build_ast();
+}
+
+void
+Partitioner::add_instructions(const Disassembler::InstructionMap& insns)
+{
+    for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
+        Instruction *insn = new Instruction(ii->second);
+        this->insns.insert(std::make_pair(ii->first, insn));
+    }
+}
+
+Disassembler::InstructionMap
+Partitioner::get_instructions() const
+{
+    Disassembler::InstructionMap retval;
+    for (InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
+        SgAsmInstruction *insn = ii->second->node;
+        retval.insert(std::make_pair(ii->first, insn));
+    }
+    return retval;
 }
 
 /* FIXME: Deprecated 2010-01-01 */
