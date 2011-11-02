@@ -30,6 +30,8 @@
 #include "abstract_handle.h"
 #include "roseAdapter.h"
 
+#include <boost/lexical_cast.hpp>
+#include <boost/foreach.hpp>
 #include <sstream>
 #include <iostream>
 #include <algorithm> //for set operations
@@ -6049,6 +6051,107 @@ SgNode* SageInterface::replaceWithPattern (SgNode * anchor, SgNode* new_pattern)
    // finally we replace anchor_exp with the pattern_exp
    replaceExpression(anchor_exp, pattern_exp, false);
   return new_pattern;
+}
+
+/** Generate a name that is unique in the current scope and any parent and children scopes.
+ * @param baseName the word to be included in the variable names. */
+string SageInterface::generateUniqueVariableName(SgScopeStatement* scope, std::string baseName)
+{
+	//This implementation tends to generate numbers that are unnecessarily high.
+	static int counter = 0;
+
+	string name;
+	bool collision = false;
+	do
+	{
+		name = "__" + baseName + boost::lexical_cast<string > (counter++) + "__";
+
+		//Look up the name in the parent scopes
+		SgSymbol* nameSymbol = SageInterface::lookupSymbolInParentScopes(SgName(name), scope);
+		collision = (nameSymbol != NULL);
+
+		//Look up the name in the children scopes
+		Rose_STL_Container<SgNode*> childScopes = NodeQuery::querySubTree(scope, V_SgScopeStatement);
+
+
+		BOOST_FOREACH(SgNode* childScope, childScopes)
+		{
+			SgScopeStatement* childScopeStatement = isSgScopeStatement(childScope);
+			nameSymbol = childScopeStatement->lookup_symbol(SgName(name));
+			collision = collision || (nameSymbol != NULL);
+		}
+	} while (collision);
+
+	return name;
+}
+
+/** Given an expression, generates a temporary variable whose initializer optionally evaluates
+ * that expression. Then, the var reference expression returned can be used instead of the original
+ * expression. The temporary variable created can be reassigned to the expression by the returned SgAssignOp;
+ * this can be used when the expression the variable represents needs to be evaluated. NOTE: This handles
+ * reference types correctly by using pointer types for the temporary.
+ * @param expression Expression which will be replaced by a variable
+ * @param scope scope in which the temporary variable will be generated
+ * @return declaration of the temporary variable, an assignment op to
+ *			reevaluate the expression, and a a variable reference expression to use instead of
+ *         the original expression. Delete the results that you don't need! */
+boost::tuple<SgVariableDeclaration*, SgAssignOp*, SgExpression*> SageInterface::createTempVariableForExpression
+(SgExpression* expression, SgScopeStatement* scope, bool initializeInDeclaration)
+{
+    SgType* expressionType = expression->get_type();
+    SgType* variableType = expressionType;
+
+    //If the expression has a reference type, we need to use a pointer type for the temporary variable.
+    //Else, re-assigning the variable is not possible
+    bool isReferenceType = SageInterface::isReferenceType(expressionType);
+    if (isReferenceType)
+    {
+        SgType* expressionBaseType = expressionType->stripType(SgType::STRIP_TYPEDEF_TYPE | SgType::STRIP_REFERENCE_TYPE);
+        variableType = SageBuilder::buildPointerType(expressionBaseType);
+    }
+
+    // If the expression is a dereferenced pointer, use a reference to hold it.
+    if (isSgPointerDerefExp(expression))
+        variableType = SageBuilder::buildReferenceType(variableType);
+
+    //Generate a unique variable name
+    string name = generateUniqueVariableName(scope);
+
+    //Initialize the temporary variable to an evaluation of the expression
+    SgExpression* tempVarInitExpression = SageInterface::copyExpression(expression);
+    ROSE_ASSERT(tempVarInitExpression != NULL);
+    if (isReferenceType)
+    {
+        //FIXME: the next line is hiding a bug in ROSE. Remove this line and talk to Dan about the resulting assert
+        tempVarInitExpression->set_lvalue(false);
+
+        tempVarInitExpression = SageBuilder::buildAddressOfOp(tempVarInitExpression);
+    }
+
+    //Optionally initialize the variable in its declaration
+    SgAssignInitializer* initializer = NULL;
+    if (initializeInDeclaration)
+    {
+        SgExpression* initExpressionCopy = SageInterface::copyExpression(tempVarInitExpression);
+        initializer = SageBuilder::buildAssignInitializer(initExpressionCopy);
+    }
+
+    SgVariableDeclaration* tempVarDeclaration = SageBuilder::buildVariableDeclaration(name, variableType, initializer, scope);
+    ROSE_ASSERT(tempVarDeclaration != NULL);
+
+    //Now create the assignment op for reevaluating the expression
+    SgVarRefExp* tempVarReference = SageBuilder::buildVarRefExp(tempVarDeclaration);
+    SgAssignOp* assignment = SageBuilder::buildAssignOp(tempVarReference, tempVarInitExpression);
+
+    //Build the variable reference expression that can be used in place of the original expression
+    SgExpression* varRefExpression = SageBuilder::buildVarRefExp(tempVarDeclaration);
+    if (isReferenceType)
+    {
+        //The temp variable is a pointer type, so dereference it before using it
+        varRefExpression = SageBuilder::buildPointerDerefExp(varRefExpression);
+    }
+
+    return boost::make_tuple(tempVarDeclaration, assignment, varRefExpression);
 }
 
 // This code is based on OpenMP translator's ASTtools::replaceVarRefExp() and astInling's replaceExpressionWithExpression()
