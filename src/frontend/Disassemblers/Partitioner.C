@@ -3187,11 +3187,15 @@ Partitioner::adjust_padding()
 void
 Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
 {
+    /* A memory map that contains only the executable regions.  I.e., those that might contain instructions. */
+    MemoryMap exe_map = *map;
+    exe_map.prune(is_unexecutable);
+
     /* Add unassigned intra-function blocks to the surrounding function.  This needs to come before detecting inter-function
      * padding, otherwise it will also try to add the stuff between the true function and its following padding. */
     if (func_heuristics & SgAsmFunction::FUNC_INTRABLOCK) {
         FindIntraFunctionInsns find_intra_function_insns;
-        scan_unassigned_bytes(&find_intra_function_insns);
+        scan_unassigned_bytes(&find_intra_function_insns, &exe_map);
     }
 
     /* Detect inter-function padding */
@@ -3223,7 +3227,7 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
         FindThunkTables find_thunk_tables;
         find_thunk_tables.minimum_nthunks = 3; // at least this many JMPs per table
         find_thunk_tables.validate_targets = false;
-        scan_unassigned_bytes(&find_thunk_tables, map);
+        scan_unassigned_bytes(&find_thunk_tables, &exe_map);
         for (size_t npasses=0; npasses<5; ++npasses) {
             FindThunks find_thunks;
             scan_unassigned_insns(&find_thunks);
@@ -3234,7 +3238,7 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
 
     /* Find functions that we missed between inter-function padding. */
     FindInterPadFunctions find_interpad_functions;
-    scan_unassigned_bytes(&find_interpad_functions, map);
+    scan_unassigned_bytes(&find_interpad_functions, &exe_map);
 
     /* Split thunks off from their jumped-to function.  Not really necessary, but the result is more like other common
      * disassemblers and also more closely matches what would happen if we had debugging information in the executable. */
