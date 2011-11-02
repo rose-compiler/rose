@@ -1876,7 +1876,6 @@ src/midend/programTransformation/Makefile
 src/midend/programTransformation/astInlining/Makefile
 src/midend/programTransformation/astOutlining/Makefile
 src/midend/programTransformation/ompLowering/Makefile
-src/midend/programTransformation/partialRedundancyElimination/Makefile
 src/midend/programTransformation/finiteDifferencing/Makefile
 src/midend/programTransformation/functionCallNormalization/Makefile
 src/midend/programTransformation/constantFolding/Makefile
