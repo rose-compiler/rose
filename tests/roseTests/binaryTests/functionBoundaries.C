@@ -66,7 +66,7 @@ private:
         if (hdr) return; /*this function doesn't depend on anything in a file header*/
         MyPartitioner *p = dynamic_cast<MyPartitioner*>(p_);
         ROSE_ASSERT(p!=NULL);
-        for (Disassembler::InstructionMap::const_iterator ii=p->insns.begin(); ii!=p->insns.end(); ii++) {
+        for (InstructionMap::const_iterator ii=p->insns.begin(); ii!=p->insns.end(); ii++) {
             rose_addr_t addr = ii->first;
             SgAsmx86Instruction *insn = isSgAsmx86Instruction(ii->second);
             if (!insn || insn->get_kind()!=x86_push) continue;
