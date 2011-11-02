@@ -261,28 +261,33 @@ DisassemblerPowerpc::makeRegister(PowerpcRegisterClass reg_class, int reg_number
     std::string name;
     switch (reg_class) {
         case powerpc_regclass_gpr:
-            ROSE_ASSERT(reg_number>=0 && reg_number<1024);
+            if (reg_number<0 || reg_number>=1024)
+                throw ExceptionPowerpc("invalid gpr register number", this);
             name = "r" + StringUtility::numberToString(reg_number);
             break;
         case powerpc_regclass_fpr:
-            ROSE_ASSERT(reg_number>=0 && reg_number<1024);
+            if (reg_number<0 || reg_number>=1024)
+                throw ExceptionPowerpc("invalid fpr register number", this);
             name = "f" + StringUtility::numberToString(reg_number);
             break;
         case powerpc_regclass_cr:
             name = "cr";
             switch (cr_granularity) {
                 case powerpc_condreggranularity_whole:
-                    ROSE_ASSERT(0==reg_number);
+                    if (0!=reg_number)
+                        throw ExceptionPowerpc("invalid register number for cr", this);
                     break;
                 case powerpc_condreggranularity_field:
                     /* cr has eight 4-bit fields numbered 0..7 with names like "cr0" */
-                    ROSE_ASSERT(reg_number>=0 && reg_number<8);
+                    if (reg_number<0 || reg_number>=8)
+                        throw ExceptionPowerpc("invalid condition register granularity field", this);
                     name += StringUtility::numberToString(reg_number);
                     break;
                 case powerpc_condreggranularity_bit: {
                     /* each field has four bits with names. The full name of each bit is "crF*4+B" where "F" is the field
                      * number like above and "B" is the bit name. For instance, "cr0*4+eq". */
-                    ROSE_ASSERT(reg_number>=0 && reg_number<32);
+                    if (reg_number<0 || reg_number>=32)
+                        throw ExceptionPowerpc("invalid condition register granularity bit", this);
                     static const char *bitname[] = {"lt", "gt", "eq", "so"};
                     name += StringUtility::numberToString(reg_number/4) + "*4+" + bitname[reg_number%4];
                     break;
@@ -290,21 +295,25 @@ DisassemblerPowerpc::makeRegister(PowerpcRegisterClass reg_class, int reg_number
             }
             break;
         case powerpc_regclass_fpscr:
-            ROSE_ASSERT(0==reg_number);
+            if (0!=reg_number)
+                throw ExceptionPowerpc("invalid register number for fpscr", this);
             name = "fpscr";
             break;
         case powerpc_regclass_spr:
             /* Some special purpose registers have special names, but the dictionary has the generic name as well. */
-            ROSE_ASSERT(reg_number>=0 && reg_number<1024);
+            if (reg_number<0 || reg_number>=1024)
+                throw ExceptionPowerpc("invalid spr register number", this);
             name = "spr" + StringUtility::numberToString(reg_number);
             break;
         case powerpc_regclass_tbr:
             /* Some time base registers have special names, but the dictionary has the generic name as well. */
-            ROSE_ASSERT(reg_number>=0 && reg_number<1024);
+            if (reg_number<0 || reg_number>=1024)
+                throw ExceptionPowerpc("invalid tbr register number", this);
             name = "tbr" + StringUtility::numberToString(reg_number);
             break;
         case powerpc_regclass_msr:
-            ROSE_ASSERT(0==reg_number);
+            if (0!=reg_number)
+                throw ExceptionPowerpc("invalid msr register number", this);
             name = "msr";
             break;
         case powerpc_regclass_sr:
@@ -313,14 +322,15 @@ DisassemblerPowerpc::makeRegister(PowerpcRegisterClass reg_class, int reg_number
             break;
         case powerpc_regclass_iar:
             /* Instruction address register is not a real register, and so should never appear in disassembled code. */
-            ROSE_ASSERT(!"iar is not a real register");
+            throw ExceptionPowerpc("iar is not a real register", this);
         case powerpc_regclass_pvr:
-            ROSE_ASSERT(0==reg_number);
+            if (0!=reg_number)
+                throw ExceptionPowerpc("invalid pvr register number", this);
             name = "pvr";
             break;
         case powerpc_regclass_unknown:
         case powerpc_last_register_class:
-            ROSE_ASSERT(!"not a real register");
+            throw ExceptionPowerpc("not a real register", this);
         /* Don't add a "default" or else we won't get compiler warnings if a new class is defined. */
     }
     ROSE_ASSERT(!name.empty());
@@ -329,7 +339,7 @@ DisassemblerPowerpc::makeRegister(PowerpcRegisterClass reg_class, int reg_number
     ROSE_ASSERT(get_registers()!=NULL);
     const RegisterDescriptor *rdesc = get_registers()->lookup(name);
     if (!rdesc)
-        throw Exception("register \"" + name + "\" is not available for " + get_registers()->get_architecture_name());
+        throw ExceptionPowerpc("register \"" + name + "\" is not available for " + get_registers()->get_architecture_name(), this);
     
     /* Construct the return value */
     SgAsmPowerpcRegisterReferenceExpression *rre = new SgAsmPowerpcRegisterReferenceExpression(*rdesc);
@@ -545,8 +555,8 @@ DisassemblerPowerpc::decode_I_formInstruction()
              {
             // The default case is now used for handling illegal instructions 
             // (during development it was for those not yet implemented).
-               printf ("Error: I-Form primaryOpcode = %d (illegal instruction) \n", primaryOpcode);
-               ROSE_ASSERT(false);
+               printf ("Error: I-Form primaryOpcode = %d (illegal instruction)\n", primaryOpcode);
+               throw ExceptionPowerpc("invaild I-Form primary opcode", this);
              }
         }
 
@@ -609,8 +619,8 @@ DisassemblerPowerpc::decode_B_formInstruction()
              {
             // The default case is now used for handling illegal instructions 
             // (during development it was for those not yet implemented).
-               printf ("Error: B-Form primaryOpcode = %d not handled! \n", primaryOpcode);
-               ROSE_ASSERT(false);
+               printf ("Error: B-Form primaryOpcode = %d not handled!\n", primaryOpcode);
+               throw ExceptionPowerpc("invalid B-Form primary opcode", this);
              }
         }
 
@@ -629,7 +639,8 @@ DisassemblerPowerpc::decode_SC_formInstruction()
 
   // Get bit 30, 1 bit as the reserved flag
      uint8_t constantOneOpcode = (insn >> 1) & 0x1;
-     ROSE_ASSERT(constantOneOpcode == 1);
+     if (constantOneOpcode!=1)
+         throw ExceptionPowerpc("expected bit to be set", this, 1);
 
 #if DEBUG_OPCODES
      printf ("SC-Form instruction opcode = 0x%x levOpcode = 0x%x constantOneOpcode = 0x%x \n", insn, levOpcode, constantOneOpcode);
@@ -644,12 +655,7 @@ DisassemblerPowerpc::decode_SC_formInstruction()
 SgAsmPowerpcInstruction*
 DisassemblerPowerpc::decode_DS_formInstruction()
 {
-     SgAsmPowerpcInstruction* instruction = NULL;
-
-     printf ("DS-Form instructions not implemented yet, I have no examples so far! \n");
-
-     ROSE_ASSERT(instruction != NULL);
-     return instruction;
+     throw ExceptionPowerpc("DS-Form instructions not implemented yet, I have no examples so far! \n", this);
 }
 
 SgAsmPowerpcInstruction*
@@ -813,8 +819,7 @@ DisassemblerPowerpc::decode_X_formInstruction_1F()
                     instruction = MAKE_INSN1(mfcr, RT());
 
                  // See note on page 124 of User Instruction Set Architecture version 2.02
-                    printf ("This mfocr instruction is an old form of the mfcr instruction ... \n");
-                    ROSE_ASSERT(false);
+                    throw ExceptionPowerpc("mfocr is an old form of the mfcr instruction", this);
                   }
                break;
              }
@@ -831,7 +836,7 @@ DisassemblerPowerpc::decode_X_formInstruction_1F()
                     instruction = MAKE_INSN2(mtcrf, FXM(), RS());
 
                  // See note on page 124 of User Instruction Set Architecture version 2.02
-                    printf ("This mtocrf instruction is an old form of the mtcrf instruction ... \n");
+                    throw ExceptionPowerpc("mtocrf is an old form of the mtcrf instruction", this);
                     ROSE_ASSERT(false);
                   }
                break;
@@ -841,7 +846,7 @@ DisassemblerPowerpc::decode_X_formInstruction_1F()
              {
             // The default case is now used for handling illegal instructions 
             // (during development it was for those not yet implemented).
-               printf ("Error: X-Form 1F xoOpcode = %d not handled! \n", xoOpcode);
+               printf ("Error: X-Form 1F xoOpcode = %d not handled!\n", xoOpcode);
                throw ExceptionPowerpc("X-Form 1F xoOpcode not handled", this, 1);
              }
         }
@@ -886,7 +891,7 @@ DisassemblerPowerpc::decode_X_formInstruction_3F()
              {
             // The default case is now used for handling illegal instructions 
             // (during development it was for those not yet implemented).
-               printf ("Error: X-Form 3F xoOpcode = %d not handled! \n", xoOpcode);
+               printf ("Error: X-Form 3F xoOpcode = %d not handled!\n", xoOpcode);
                throw ExceptionPowerpc("X-Form 3F xoOpcode not handled", this, 1);
              }
         }
@@ -926,7 +931,7 @@ DisassemblerPowerpc::decode_X_formInstruction_00()
              {
             // The default case is now used for handling illegal instructions 
             // (during development it was for those not yet implemented).
-               printf ("Error: X-Form 00 xoOpcode = %d not handled! \n", xoOpcode);
+               printf ("Error: X-Form 00 xoOpcode = %d not handled!\n", xoOpcode);
                throw ExceptionPowerpc("X-Form 00 xoOpcode not handled", this, 1);
              }
         }
@@ -992,8 +997,8 @@ DisassemblerPowerpc::decode_XL_formInstruction()
              {
             // The default case is now used for handling illegal instructions 
             // (during development it was for those not yet implemented).
-               printf ("Error: XL-Form xoOpcode = %d not handled! \n", xoOpcode);
-               ROSE_ASSERT(false);
+               printf ("Error: XL-Form xoOpcode = %d not handled!\n", xoOpcode);
+               throw ExceptionPowerpc("invalid XL-Form opcode", this);
              }
         }
 
@@ -1042,7 +1047,7 @@ DisassemblerPowerpc::decode_A_formInstruction_00()
             // The default case is now used for handling illegal instructions 
             // (during development it was for those not yet implemented).
                printf ("Error: A-Form xOpcode = %d (illegal instruction) \n", int(fld<26, 30>()));
-               ROSE_ASSERT(false);
+               throw ExceptionPowerpc("invalid A-Form opcode", this);
              }
         }
 
@@ -1076,7 +1081,7 @@ DisassemblerPowerpc::decode_A_formInstruction_04()
             // The default case is now used for handling illegal instructions 
             // (during development it was for those not yet implemented).
                printf ("Error: A-Form xOpcode = %d (illegal instruction) \n", int(fld<26, 30>()));
-               ROSE_ASSERT(false);
+               throw ExceptionPowerpc("invalid A-Form opcode", this);
              }
         }
 
@@ -1107,7 +1112,7 @@ DisassemblerPowerpc::decode_A_formInstruction_3B()
             // The default case is now used for handling illegal instructions 
             // (during development it was for those not yet implemented).
                printf ("Error: A-Form xOpcode = %d (illegal instruction) \n", int(fld<26, 30>()));
-               ROSE_ASSERT(false);
+               throw ExceptionPowerpc("invalid A-Form opcode", this);
              }
         }
 
@@ -1145,7 +1150,7 @@ DisassemblerPowerpc::decode_A_formInstruction_3F()
             // The default case is now used for handling illegal instructions 
             // (during development it was for those not yet implemented).
                printf ("Error: A-Form xOpcode = %d (illegal instruction) \n", int(fld<26, 30>()));
-               ROSE_ASSERT(false);
+               throw ExceptionPowerpc("invalid A-Form opcode", this);
              }
         }
 
@@ -1156,21 +1161,11 @@ DisassemblerPowerpc::decode_A_formInstruction_3F()
 SgAsmPowerpcInstruction*
 DisassemblerPowerpc::decode_MD_formInstruction()
 {
-     SgAsmPowerpcInstruction* instruction = NULL;
-
-     printf ("MD-Form instructions not implemented yet, I have no examples so far! \n");
-
-     ROSE_ASSERT(instruction != NULL);
-     return instruction;
+    throw ExceptionPowerpc("MD-Form instructions not implementet yet", this);
 }
 
 SgAsmPowerpcInstruction*
 DisassemblerPowerpc::decode_MDS_formInstruction()
 {
-     SgAsmPowerpcInstruction* instruction = NULL;
-
-     printf ("MDS-Form instructions not implemented yet, I have no examples so far! \n");
-
-     ROSE_ASSERT(instruction != NULL);
-     return instruction;
+    throw ExceptionPowerpc("MDS-Form instructions not implemented yet", this);
 }
