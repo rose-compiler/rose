@@ -887,6 +887,7 @@ Partitioner::append(Function* f, BasicBlock *bb, unsigned reason, bool keep/*=fa
     update_analyses(bb);
     if (bb->cache.function_return && !f->may_return) {
         f->may_return = true;
+#if 0
         if (debug) fprintf(debug, "[returns-to");
         for (BasicBlocks::iterator bbi=basic_blocks.begin(); bbi!=basic_blocks.end(); ++bbi) {
             if (bbi->second->function!=NULL) {
@@ -901,6 +902,7 @@ Partitioner::append(Function* f, BasicBlock *bb, unsigned reason, bool keep/*=fa
             }
         }
         if (debug) fprintf(debug, "]");
+#endif
     }
 }
 
