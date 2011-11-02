@@ -14,7 +14,7 @@
 #
 
 AC_DEFUN([DETERMINE_OS],
-    [
+[
 
     case $build_os in
     linux*)
@@ -39,7 +39,7 @@ AC_DEFUN([DETERMINE_OS],
     AM_CONDITIONAL([OS_MSDOS], [ test "x$MSDOS"  = xyes ] )
 
   # AC_DEFINE([ROSE_BUILD_OS], $build_os , [Operating System (OS) being used to build ROSE])
-  ])
+])
 
 
 # /etc/redhat-release
@@ -49,40 +49,31 @@ AC_DEFUN([DETERMINE_OS],
 # /etc/gentoo-release
 # You could do 'cat /etc/*-release' or 'cat /etc/*-version'.
 
-# DQ (9/10/2009): This is a macro I wrote to nail down the OS vendor so that
-# I could skip specific tests in ROSE based on the OS vendor as part of the
-# NMI testing of ROSE on the Compile Farm.
+dnl DQ (9/10/2009): This is a macro I wrote to nail down the OS vendor so that
+dnl I could skip specific tests in ROSE based on the OS vendor as part of the
+dnl NMI testing of ROSE on the Compile Farm.
 AC_DEFUN([DETERMINE_OS_VENDOR],
 [
-   echo "Try to identify the OS vendor...";
-   AC_CHECK_TOOL(ROSE_LSB_RELEASE, [lsb_release], [no])
+  AC_CHECK_TOOL(ROSE_LSB_RELEASE, [lsb_release], [no])
 
-   OS_vendor="ROSE_unknown_OS";
-   OS_release="ROSE_unknown_OS_release";
+  OS_vendor="ROSE_unknown_OS";
+  OS_release="ROSE_unknown_OS_release";
 
-#  if test -z "$ROSE_LSB_RELEASE"; then
-   if test "x$ROSE_LSB_RELEASE" = xno; then
-      echo "********************************";
-      echo "* lsb_release is NOT available *";
-      echo "********************************";
-    # Most OS's output their name buried in /etc/issue
-      ls -dl /etc/*-release /etc/*-version;
-      echo "***************************";
-      echo "* Output /etc/issue file: *";
-      cat /etc/issue
-      echo "***************************";
+  if test "x$ROSE_LSB_RELEASE" = xno; then
+      dnl Most OS's output their name buried in /etc/issue
+      dnl  ls -dl /etc/*-release /etc/*-version;
+      dnl  echo "***************************";
+      dnl  echo "* Output /etc/issue file: *";
+      dnl  cat /etc/issue
+      dnl  echo "***************************";
 
-    # For at least Apple Mac OSX, there is no lsb_release program or /etc/*-release /etc/*-version
-    # files but autoconf will guess the vendor and the OS release correctly (so use those vaules).
-      echo "Autoconf computed value for cpu       = $build_cpu"
-      echo "Autoconf computed value for OS vendor = $build_vendor"
-      echo "Autoconf computed value for OS        = $build_os"
-      echo "***************************";
-
-    # Fix the case of Apple OSX support.
+      dnl Fix the case of Apple OSX support.
+      dnl
+      dnl For at least Apple Mac OSX, there is no lsb_release program or /etc/*-release /etc/*-version
+      dnl files but autoconf will guess the vendor and the OS release correctly (so use those vaules).
       if test "x$build_vendor" = xapple; then
-         OS_vendor=$build_vendor
-         case $build_os in
+          OS_vendor=$build_vendor
+          case $build_os in
             darwin8*)
                OS_release=10.4
                ;;
@@ -96,23 +87,17 @@ AC_DEFUN([DETERMINE_OS_VENDOR],
              echo "Error: Apple Mac OSX version not recognized as either darwin8 or darwin9 ... (build_os = $build_os)";
              exit 1;
              OS_release="";;
-         esac
-         echo "Identified Apple OSX platform OS_vendor = $OS_vendor OS_release = $OS_release"
+          esac
       fi
-    # exit 1
-   else
-      echo "lsb_release IS available ROSE_LSB_RELEASE = $ROSE_LSB_RELEASE";
+  else
       OS_vendor=`lsb_release -is`
       OS_release=`lsb_release -rs`
+  fi
 
-      echo "In conditional: OS_vendor  = $OS_vendor"
-      echo "In conditional: OS_release = $OS_release"
-   fi
+  AC_MSG_CHECKING([$OS_vendor release version])
+  AC_MSG_RESULT([$OS_release])
 
-   echo "In conditional: OS_vendor  = $OS_vendor"
-   echo "In conditional: OS_release = $OS_release"
-
-   case $OS_vendor in
+  case $OS_vendor in
       Debian*)
          DEBIAN=yes
          AC_DEFINE([ROSE_DEBIAN_OS_VENDOR], [] , [Debian Operating System (OS) being used to build ROSE])
@@ -133,27 +118,21 @@ AC_DEFUN([DETERMINE_OS_VENDOR],
          APPLE=yes
          AC_DEFINE([ROSE_APPLE_OS_VENDOR], [] , [apple Operating System (OS) being used to build ROSE])
          ;;
-      esac
-         AM_CONDITIONAL([OS_VENDOR_DEBIAN],[ test "x$DEBIAN" = xyes ] )
-         AM_CONDITIONAL([OS_VENDOR_REDHAT],[ test "x$REDHAT" = xyes ] )
-         AM_CONDITIONAL([OS_VENDOR_UBUNTU],[ test "x$UBUNTU" = xyes ] )
-         AM_CONDITIONAL([OS_VENDOR_CENTOS],[ test "x$CENTOS" = xyes ] )
-         AM_CONDITIONAL([OS_VENDOR_APPLE],[ test "x$APPLE"  = xyes ] )
+  esac
 
-       # Added conditionals for 32-bit vs. 64-bit OS (used only in the binary analysis work -- and rarely).
-         AM_CONDITIONAL([OS_32BIT],[ test "x$build_cpu" = xi686 ] )
-         AM_CONDITIONAL([OS_64BIT],[ test "x$build_cpu" = xx86_64 ] )
+  AM_CONDITIONAL([OS_VENDOR_DEBIAN],[ test "x$DEBIAN" = xyes ] )
+  AM_CONDITIONAL([OS_VENDOR_REDHAT],[ test "x$REDHAT" = xyes ] )
+  AM_CONDITIONAL([OS_VENDOR_UBUNTU],[ test "x$UBUNTU" = xyes ] )
+  AM_CONDITIONAL([OS_VENDOR_CENTOS],[ test "x$CENTOS" = xyes ] )
+  AM_CONDITIONAL([OS_VENDOR_APPLE],[ test "x$APPLE"  = xyes ] )
 
-         AM_CONDITIONAL([OS_VENDOR_REDHAT_32BIT],[ test "x$REDHAT" = xyes -a "x$build_cpu" = xi686 ] )
+  # Added conditionals for 32-bit vs. 64-bit OS (used only in the binary analysis work -- and rarely).
+  AM_CONDITIONAL([OS_32BIT],[ test "x$build_cpu" = xi686 ] )
+  AM_CONDITIONAL([OS_64BIT],[ test "x$build_cpu" = xx86_64 ] )
 
-   echo "Leaving DETERMINE OS VENDOR: OS_vendor  = $OS_vendor"
-   echo "Leaving DETERMINE OS VENDOR: OS_release = $OS_release"
+  AM_CONDITIONAL([OS_VENDOR_REDHAT_32BIT],[ test "x$REDHAT" = xyes -a "x$build_cpu" = xi686 ] )
 
-   AC_SUBST(OS_vendor)
-   AC_SUBST(OS_release)
-
- # AC_DEFINE_UNQUOTED([ROSE_OS_VENDOR], $OS_vendor , [Operating System (OS) being used to build ROSE])
- # AC_DEFINE([ROSE_OS_VENDOR], $OS_vendor , [Operating System (OS) being used to build ROSE])
-
-  ])
+  AC_SUBST(OS_vendor)
+  AC_SUBST(OS_release)
+])
 
