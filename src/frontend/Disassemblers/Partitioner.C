@@ -734,8 +734,7 @@ Partitioner::clear()
     functions.clear();
 
     /* Delete all basic blocks. We don't need to call Partitioner::discard() to fix up ptrs because all functions that might
-     * have pointed to this block have already been deleted, and the insn2block map has also been cleared. */
-    insn2block.clear();
+     * have pointed to this block have already been deleted. */
     for (BasicBlocks::iterator bi=basic_blocks.begin(); bi!=basic_blocks.end(); ++bi)
         delete bi->second;
     basic_blocks.clear();
@@ -750,8 +749,13 @@ Partitioner::clear()
         delete bci->second;
     block_config.clear();
 
-    /* Release all instructions (but do not delete) and disassembly failures from the cache. */
+    /* Delete all instructions by deleting the Partitioner::Instruction objects, but not the underlying SgAsmInstruction
+     * objects because the latter might be used by whatever's calling the Partitioner. */
+    for (InstructionMap::iterator ii=insns.begin(); ii!=insns.end(); ++ii)
+        delete ii->second;
     insns.clear();
+
+    /* Clear all disassembly failures from the cache. */
     clear_disassembler_errors();
 }
 
@@ -801,10 +805,8 @@ Partitioner::truncate(BasicBlock* bb, rose_addr_t va)
     /* Remove instructions (from the cut point and beyond) and all the data blocks. */
     for (InstructionVector::iterator ii=cut; ii!=bb->insns.end(); ++ii) {
         Instruction *insn = *ii;
-        Insn2Block::iterator i2bi = insn2block.find(insn->get_address());
-        assert(i2bi!=insn2block.end());
-        assert(i2bi->second==bb);
-        insn2block.erase(i2bi);
+        assert(insn->bblock==bb);
+        insn->bblock = NULL;
     }
     if (cut!=bb->insns.end()) {
         bb->insns.erase(cut, bb->insns.end());
@@ -818,10 +820,9 @@ Partitioner::append(BasicBlock* bb, Instruction* insn)
 {
     assert(bb);
     assert(insn);
+    assert(NULL==insn->bblock); /* insn must not have already belonged to a basic block */
+    insn->bblock = bb;
     bb->insns.push_back(insn);
-    std::pair<Insn2Block::iterator, bool> insertion_result = insn2block.insert(std::make_pair(insn->get_address(), bb));
-    assert(insertion_result.second); /* insn must not have already belonged to a basic block */
-
 }
 
 /** Associate a data block with a basic block.  Any basic block can point to zero or more data blocks.  The data block will
@@ -1000,8 +1001,11 @@ Partitioner::discard(BasicBlock *bb)
         assert(NULL==bb->function);
 
         /* Remove instructions from the block, returning them to the (implied) list of free instructions. */
-        for (InstructionVector::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii)
-            insn2block.erase((*ii)->get_address());
+        for (InstructionVector::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii) {
+            Instruction *insn = *ii;
+            assert(insn->bblock==bb);
+            insn->bblock = NULL;
+        }
 
         /* Remove the association between data blocks and this basic block. */
         bb->clear_data_blocks();
@@ -1052,22 +1056,21 @@ Partitioner::find_instruction(rose_addr_t va, bool create/*=true*/)
 Partitioner::BasicBlock *
 Partitioner::find_bb_containing(rose_addr_t va, bool create/*true*/)
 {
-    Insn2Block::iterator i2bi = insn2block.find(va);
-    if (i2bi!=insn2block.end())
-        return i2bi->second;
-    if (!create)
+    Instruction *insn = find_instruction(va);
+    if (!insn)
         return NULL;
+    if (!create || insn->bblock!=NULL)
+        return insn->bblock;
+    BasicBlock *bb = insn->bblock;
+    if (!bb) {
+        bb = new BasicBlock;
+        basic_blocks.insert(std::make_pair(va, bb));
+    }
 
-    BasicBlock *bb = NULL;
     while (1) {
-        Instruction *insn = find_instruction(va);
-        if (!insn)
-            break;
-        if (!bb) {
-            bb = new BasicBlock;
-            basic_blocks.insert(std::make_pair(va, bb));
-        }
         append(bb, insn);
+
+        /* Find address of next instruction, or whether this insn is the end of the block */
         va += insn->get_size();
         if (insn->terminatesBasicBlock()) { /*naively terminates?*/
             bool complete;
@@ -1086,11 +1089,12 @@ Partitioner::find_bb_containing(rose_addr_t va, bool create/*true*/)
                     break;
             }
         }
-        i2bi = insn2block.find(va);
-        if (i2bi!=insn2block.end())
-            break; /*we've reached another block*/
+
+        /* Get the next instruction */
+        insn = find_instruction(va);
+        if (!insn || insn->bblock)
+            break;
     }
-    assert(!bb || bb->insns.size()>0);
     return bb;
 }
 
@@ -2922,11 +2926,10 @@ Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
     for (size_t pass=1; true; pass++) {
         if (debug) fprintf(debug, "========== Partitioner::analyze_cfg() pass %zu ==========\n", pass);
         progress(debug, "Partitioner: starting %s pass %zu: "
-                 "%zu function%s, %zu insn%s assigned to %zu block%s (ave %d insn/blk)\n",
+                 "%zu function%s, %zu insn%s, %zu block%s\n",
                  stringifySgAsmBlockReason(reason, "BLK_").c_str(), pass,
-                 functions.size(), 1==functions.size()?"":"s", insn2block.size(), 1==insn2block.size()?"":"s",
-                 basic_blocks.size(), 1==basic_blocks.size()?"":"s",
-                 basic_blocks.size()?(int)(1.0*insn2block.size()/basic_blocks.size()+0.5):0);
+                 functions.size(), 1==functions.size()?"":"s", insns.size(), 1==insns.size()?"":"s",
+                 basic_blocks.size(), 1==basic_blocks.size()?"":"s");
 
         /* Analyze function return characteristics. */
         for (BasicBlocks::iterator bi=basic_blocks.begin(); bi!=basic_blocks.end(); ++bi) {
@@ -3276,10 +3279,9 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
     }
 
     progress(debug,
-             "Partitioner completed: %zu function%s, %zu insn%s assigned to %zu block%s (ave %d insn/blk)\n",
-             functions.size(), 1==functions.size()?"":"s", insn2block.size(), 1==insn2block.size()?"":"s",
-             basic_blocks.size(), 1==basic_blocks.size()?"":"s",
-             basic_blocks.size()?(int)(1.0*insn2block.size()/basic_blocks.size()+0.5):0);
+             "Partitioner completed: %zu function%s, %zu insn%s, %zu block%s\n",
+             functions.size(), 1==functions.size()?"":"s", insns.size(), 1==insns.size()?"":"s",
+             basic_blocks.size(), 1==basic_blocks.size()?"":"s");
 }
 
 size_t

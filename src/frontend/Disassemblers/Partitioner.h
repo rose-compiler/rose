@@ -322,8 +322,7 @@ public:
 
     /** Find the beginnings of basic blocks based on instruction type and call targets.
      *
-     *  \deprecated This function is deprecated.  Basic blocks are now represented by Partitioner::BasicBlock
-     *  and the insn2block map. */
+     *  \deprecated This function is deprecated.  Basic blocks are now represented by Partitioner::BasicBlock. */
     BasicBlockStarts detectBasicBlocks(const Disassembler::InstructionMap&) const __attribute__((deprecated));
 
     /** Information about each function starting address.
@@ -1362,8 +1361,6 @@ public:
     Disassembler::BadMap bad_insns;                     /**< Captured disassembler exceptions. */
 
     BasicBlocks basic_blocks;                           /**< All known basic blocks. */
-    typedef std::map<rose_addr_t, BasicBlock*> Insn2Block;
-    Insn2Block insn2block;                              /**< Map from insns address to basic block. */
     Functions functions;                                /**< All known functions, pending and complete. */
 
     DataBlocks data_blocks;                             /**< Blocks that point to static data. */
