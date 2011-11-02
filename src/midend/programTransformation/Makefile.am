@@ -9,13 +9,14 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 include $(srcdir)/partialRedundancyElimination/Makefile_variables
 include $(srcdir)/finiteDifferencing/Makefile_variables
 include $(srcdir)/functionCallNormalization/Makefile_variables
+include $(srcdir)/constantFolding/Makefile_variables
 
 mptPartialRedundancyEliminationPath=$(srcdir)/partialRedundancyElimination#
 mptFiniteDifferencingPath=$(srcdir)/finiteDifferencing#
 mptFunctionCallNormalizationPath=$(srcdir)/functionCallNormalization#
+mptConstantFoldingPath=$(srcdir)/constantFolding#
 
 SUBDIRS = \
-	constantFolding \
 	implicitCodeGeneration \
 	astInlining \
 	astOutlining \
@@ -37,12 +38,14 @@ noinst_LTLIBRARIES=\
 libprogramTransformation_la_SOURCES = \
 	$(mptPartialRedundancyElimination_la_sources) \
 	$(mptFiniteDifferencing_la_source) \
-	$(mptFunctionCallNormalization_la_sources)
+	$(mptFunctionCallNormalization_la_sources) \
+	$(mptConstantFolding_la_sources)
 
 include_HEADERS = \
 	$(mptPartialRedundancyElimination_includeHeaders) \
 	$(mptFiniteDifferencing_includeHeaders) \
-	$(mptFunctionCallNormalization_includeHeaders)
+	$(mptFunctionCallNormalization_includeHeaders) \
+	$(mptConstantFolding_includeHeaders)
 
 # ------------------------------------------------------------------------------
 #
@@ -52,10 +55,12 @@ EXTRA_DIST = \
 	CMakeLists.txt \
 	$(mptPartialRedundancyElimination_extraDist) \
 	$(mptFiniteDifferencing_extraDist) \
-	$(mptFunctionCallNormalization_extraDist)
+	$(mptFunctionCallNormalization_extraDist) \
+	$(mptConstantFolding_extraDist)
 
 clean-local:
 	$(mptPartialRedundancyElimination_cleanLocal)
 	$(mptFiniteDifferencing_cleanLocal)
 	$(mptFunctionCallNormalization_cleanLocal)
+	$(mptConstantFolding_cleanLocal)
 
