@@ -3137,14 +3137,20 @@ Partitioner::detach_thunk(Function *func)
     for (BasicBlocks::iterator bi=bblocks.begin(); bi!=bblocks.end(); ++bi) {
         if (bi->first==func->entry_va) {
             BasicBlock *new_bb = find_bb_starting(second_va);
-            if (new_bb->function) {
-                assert(new_bb->function==func);
+            if (new_bb->function==func) {
                 remove(func, new_bb);
+                append(new_func, new_bb, SgAsmBlock::BLK_ENTRY_POINT);
+            } else if (new_bb->function==new_func) {
+                /*void*/
+            } else {
+                assert(NULL==new_bb->function);
+                append(new_func, new_bb, SgAsmBlock::BLK_ENTRY_POINT);
             }
             append(new_func, new_bb, SgAsmBlock::BLK_ENTRY_POINT);
         } else {
             BasicBlock *bb = bi->second;
             if (bb->function!=new_func) {
+                assert(bb->function==func);
                 remove(func, bb);
                 append(new_func, bb, bb->reason);
             }
