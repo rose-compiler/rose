@@ -423,7 +423,6 @@ test2005_195.C \
 test2005_196.C \
 test2005_197.C \
 test2005_198.C \
-test2005_199.C \
 test2005_202.C \
 test2005_203.C \
 test2005_206.C \
@@ -687,6 +686,7 @@ test2007_84.C \
 test2009_30.C \
 test2009_31.C \
 inputBug327.C \
+test2005_199.C \
 test2009_37.C \
 --> These fail due to having a defining declaration but a null function definition:\
 test2007_90.C
