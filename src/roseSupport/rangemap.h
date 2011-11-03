@@ -1031,9 +1031,11 @@ public:
      *
      *  @{ */
     iterator find_overlap(iterator start, iterator stop, const RangeMap &x) {
+        if (start==stop)
+            return end();
+
         iterator ia = start;
         const_iterator ib = x.lower_bound(start->first.first());
-
         while (ia!=stop && ib!=x.end() && ia->first.distinct(ib->first)) {
             while (ia!=stop && ia->first.left_of(ib->first))
                 ++ia;
@@ -1044,9 +1046,11 @@ public:
         return ia!=stop && ib!=x.end() && ia->first.overlaps(ib->first);
     }
     const_iterator find_overlap(const_iterator start, const_iterator stop, const RangeMap &x) const {
+        if (start==stop)
+            return end();
+
         const_iterator ia = start;
         const_iterator ib = x.lower_bound(start->first.first());
-
         while (ia!=stop && ib!=x.end() && ia->first.distinct(ib->first)) {
             while (ia!=stop && ia->first.left_of(ib->first))
                 ++ia;
