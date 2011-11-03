@@ -40,9 +40,15 @@ fi
 AC_CANONICAL_BUILD
 # AC_CANONICAL_HOST
 # AC_CANONICAL_TARGET
-echo "Building ROSE for cpu       = $build_cpu"
-echo "Building ROSE for OS vendor = $build_vendor"
-echo "Building ROSE for OS        = $build_os"
+
+AC_MSG_CHECKING([machine hardware cpu])
+AC_MSG_RESULT([$build_cpu])
+
+AC_MSG_CHECKING([operating system vendor])
+AC_MSG_RESULT([$build_vendor])
+
+AC_MSG_CHECKING([operating system])
+AC_MSG_RESULT([$build_os])
 
 DETERMINE_OS
 
@@ -1440,6 +1446,8 @@ dnl    _AM_IF_OPTION([no-dependencies],, [_AM_DEPENDENCIES(GCJ)])
 dnl ]) 
 with_gcj=no ; # JJW 5-22-2008 The code that was here before broke if gcj was not present, even if the --with-gcj flag was absent
 AM_CONDITIONAL(USE_GCJ,test "$with_gcj" = yes)
+
+ROSE_CONFIGURE_SECTION([Running system checks])
 
 AC_SEARCH_LIBS(clock_gettime, [rt], [
   RT_LIBS="$LIBS"
