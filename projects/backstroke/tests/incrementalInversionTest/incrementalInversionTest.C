@@ -1,9 +1,12 @@
 #include <backstroke.h>
 #include <VariableRenaming.h>
-#include "utilities/cppDefinesAndNamespaces.h"
 #include "normalizations/expNormalization.h"
 #include "pluggableReverser/eventProcessor.h"
 #include "pluggableReverser/expAndStmtHandlers.h"
+#include <boost/foreach.hpp>
+
+#define foreach BOOST_FOREACH
+#define reverse_foreach BOOST_REVERSE_FOREACH
 
 using namespace std;
 

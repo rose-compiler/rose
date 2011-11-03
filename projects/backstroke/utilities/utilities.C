@@ -1,7 +1,9 @@
 #include "utilities.h"
-#include "cppDefinesAndNamespaces.h"
+#include <boost/foreach.hpp>
 
-#include <boost/lexical_cast.hpp>
+#define foreach BOOST_FOREACH
+#define reverse_foreach BOOST_REVERSE_FOREACH
+
 #include <boost/algorithm/string.hpp>
 
 namespace BackstrokeUtility

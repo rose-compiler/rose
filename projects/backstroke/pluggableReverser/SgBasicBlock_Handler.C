@@ -1,10 +1,11 @@
 #include "SgBasicBlock_Handler.h"
-
-#include "utilities/cppDefinesAndNamespaces.h"
-
+#include <boost/foreach.hpp>
 #include "rose.h"
 #include "SgNullStatement_Handler.h"
 #include "pluggableReverser/eventProcessor.h"
+
+#define foreach BOOST_FOREACH
+#define reverse_foreach BOOST_REVERSE_FOREACH
 
 using namespace std;
 

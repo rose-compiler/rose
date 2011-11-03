@@ -1,9 +1,11 @@
 #include "akgulStyleExpressionHandler.h"
-#include "utilities/cppDefinesAndNamespaces.h"
 #include "utilities/utilities.h"
+#include <boost/foreach.hpp>
 
 #include <numeric>
 #include <algorithm>
+
+#define foreach BOOST_FOREACH
 
 using namespace std;
 using namespace boost;

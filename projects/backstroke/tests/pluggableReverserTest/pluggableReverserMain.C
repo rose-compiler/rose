@@ -6,8 +6,10 @@
 #include <boost/algorithm/string.hpp>
 #include <string>
 #include <boost/timer.hpp>
+#include <boost/foreach.hpp>
 
-#include "utilities/cppDefinesAndNamespaces.h"
+#define foreach BOOST_FOREACH
+#define reverse_foreach BOOST_REVERSE_FOREACH
 
 //The files are included from the generated code. We do this so they are used by some source file
 #if 0

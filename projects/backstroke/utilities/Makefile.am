@@ -12,7 +12,7 @@ libBackstrokeUtilities_la_DEPENDENCIES =
 libBackstrokeUtilities_la_SOURCES = utilities.C
 libBackstrokeUtilities_la_include_HEADERS = utilities.h types.h
 libBackstrokeUtilities_la_includedir = $(includedir)/backstroke
-noinst_HEADERS = cppDefinesAndNamespaces.h
+noinst_HEADERS = 
 
 
 EXTRA_DIST = 

@@ -2,7 +2,10 @@
 #include "pluggableReverser/variableVersionTable.h"
 #include <boost/tuple/tuple.hpp>
 #include <boost/shared_ptr.hpp>
-#include "utilities/cppDefinesAndNamespaces.h"
+#include <boost/foreach.hpp>
+
+#define foreach BOOST_FOREACH
+#define reverse_foreach BOOST_REVERSE_FOREACH
 
 using namespace std;
 using namespace boost;

@@ -1,7 +1,10 @@
 #include "SgNullStatement_Handler.h"
 #include <boost/tuple/tuple.hpp>
 #include <boost/lexical_cast.hpp>
-#include "utilities/cppDefinesAndNamespaces.h"
+#include <boost/foreach.hpp>
+
+#define foreach BOOST_FOREACH
+#define reverse_foreach BOOST_REVERSE_FOREACH
 
 using namespace std;
 

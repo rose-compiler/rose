@@ -8,7 +8,11 @@
 #include <boost/lambda/bind.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <utilities/utilities.h>
-#include <utilities/cppDefinesAndNamespaces.h>
+#include <boost/foreach.hpp>
+
+#define foreach BOOST_FOREACH
+#define reverse_foreach BOOST_REVERSE_FOREACH
+
 
 using namespace SageBuilder;
 using namespace std;

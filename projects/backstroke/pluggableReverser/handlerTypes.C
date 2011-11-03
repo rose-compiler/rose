@@ -1,7 +1,10 @@
 #include "handlerTypes.h"
 #include "eventProcessor.h"
 #include <boost/foreach.hpp>
-#include "utilities/cppDefinesAndNamespaces.h"
+#include <boost/foreach.hpp>
+
+#define foreach BOOST_FOREACH
+#define reverse_foreach BOOST_REVERSE_FOREACH
 
 using namespace std;
 
