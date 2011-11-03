@@ -41,13 +41,19 @@ struct FunctionFilter
 	}
 };
 
-/** Static single assignment analysis.
- *
- * Contains all the functionality to implement variable renaming on a given program.
- * For this class, we do not actually transform the AST directly, rather
- * we perform the analysis and add attributes to the AST nodes so that later
- * optimizations can access the results of this analysis while still preserving
- * the original AST.
+/** <p>Static single assignment analysis. This analysis attaches uses an definitions to unfiltered CFG nodes rather than
+ * to AST nodes; as such its interfaces are more intuitive and easier to use. It also resolves some ambiguity issues
+ * when attaching definitions to AST nodes.</p>
+ * 
+ * Known bugs:
+ * <ul>
+ *  <li>Bodies of catch statements are not analyzed. This is a shortcoming of the ROSE virtual CFG, because these bodies
+ *      do not appear in the virtual CFG. </li>
+ *  <li>Variables used to define the dimensions inside an array declaration are not detected as uses. This is because
+ *      the SgVarRef nodes for these variables are not visited by AST traversals. </li>
+ * 
+ *  <li>Operands of the sizeof operator are considered uses, and they should not be (relatively easy fix). </li>
+ * </ul>
  */
 class SSA_UnfilteredCfg
 {

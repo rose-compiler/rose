@@ -4,7 +4,7 @@
 
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIRS = staticSingleAssignment
+SUBDIRS = staticSingleAssignment ssaUnfilteredCfg
 
 ###############################################################################
 # Subdirectory specifics
@@ -98,7 +98,8 @@ libprogramAnalysis_la_SOURCES=\
 	$(mpaVariableRenaming_la_sources)
 
 libprogramAnalysis_la_LIBADD = \
-	staticSingleAssignment/libSSA.la
+	staticSingleAssignment/libSSA.la \
+	ssaUnfilteredCfg/libSSA_UnfilteredCfg.la
 
 include_HEADERS=\
 	$(mpaCallGraphAnalysis_includeHeaders) \
