@@ -10,14 +10,15 @@ include $(srcdir)/partialRedundancyElimination/Makefile_variables
 include $(srcdir)/finiteDifferencing/Makefile_variables
 include $(srcdir)/functionCallNormalization/Makefile_variables
 include $(srcdir)/constantFolding/Makefile_variables
+include $(srcdir)/implicitCodeGeneration/Makefile_variables
 
 mptPartialRedundancyEliminationPath=$(srcdir)/partialRedundancyElimination#
 mptFiniteDifferencingPath=$(srcdir)/finiteDifferencing#
 mptFunctionCallNormalizationPath=$(srcdir)/functionCallNormalization#
 mptConstantFoldingPath=$(srcdir)/constantFolding#
+mptImplicitCodeGenerationPath=$(srcdir)/implicitCodeGeneration#
 
 SUBDIRS = \
-	implicitCodeGeneration \
 	astInlining \
 	astOutlining \
 	loopProcessing \
@@ -39,13 +40,15 @@ libprogramTransformation_la_SOURCES = \
 	$(mptPartialRedundancyElimination_la_sources) \
 	$(mptFiniteDifferencing_la_source) \
 	$(mptFunctionCallNormalization_la_sources) \
-	$(mptConstantFolding_la_sources)
+	$(mptConstantFolding_la_sources) \
+	$(mptImplicitCodeGeneration_la_sources)
 
 include_HEADERS = \
 	$(mptPartialRedundancyElimination_includeHeaders) \
 	$(mptFiniteDifferencing_includeHeaders) \
 	$(mptFunctionCallNormalization_includeHeaders) \
-	$(mptConstantFolding_includeHeaders)
+	$(mptConstantFolding_includeHeaders) \
+	$(mptImplicitCodeGeneration_includeHeaders)
 
 # ------------------------------------------------------------------------------
 #
@@ -56,7 +59,8 @@ EXTRA_DIST = \
 	$(mptPartialRedundancyElimination_extraDist) \
 	$(mptFiniteDifferencing_extraDist) \
 	$(mptFunctionCallNormalization_extraDist) \
-	$(mptConstantFolding_extraDist)
+	$(mptConstantFolding_extraDist) \
+	$(mptImplicitCodeGeneration_extraDist)
 
 clean-local:
 	$(mptPartialRedundancyElimination_cleanLocal)
