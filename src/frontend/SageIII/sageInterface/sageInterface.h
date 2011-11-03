@@ -369,9 +369,9 @@ struct hash_nodeptr
    */
     std::string generateUniqueName ( const SgNode * node, bool ignoreDifferenceBetweenDefiningAndNondefiningDeclarations);
 
-	/** Generate a name that is unique in the current scope and any parent and children scopes.
-	* @param baseName the word to be included in the variable names. */
-	std::string generateUniqueVariableName(SgScopeStatement* scope, std::string baseName = "temp");
+    /** Generate a name that is unique in the current scope and any parent and children scopes.
+    * @param baseName the word to be included in the variable names. */
+    std::string generateUniqueVariableName(SgScopeStatement* scope, std::string baseName = "temp");
     
   // DQ (8/10/2010): Added const to first parameter.
   // DQ (3/10/2007):
