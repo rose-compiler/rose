@@ -2112,6 +2112,7 @@ src/midend/astDiagnostics/Makefile
 src/midend/binaryAnalyses/Makefile
 src/midend/programAnalysis/Makefile
 src/midend/programAnalysis/staticSingleAssignment/Makefile
+src/midend/programAnalysis/ssaUnfilteredCfg/Makefile
 src/midend/programTransformation/Makefile
 src/midend/programTransformation/astInlining/Makefile
 src/midend/programTransformation/astOutlining/Makefile
@@ -2256,7 +2257,6 @@ projects/backstroke/eventDetection/ROSS/Makefile
 projects/backstroke/eventDetection/SPEEDES/Makefile
 projects/backstroke/normalizations/Makefile
 projects/backstroke/slicing/Makefile
-projects/backstroke/ssa/Makefile
 projects/backstroke/valueGraph/Makefile
 projects/backstroke/valueGraph/headerUnparser/Makefile
 projects/backstroke/pluggableReverser/Makefile
