@@ -20,7 +20,7 @@ using this memory map for disassembly:
     va 0x080495dc + 0x000000c8 = 0x080496a4 rw-p at base aag  + 0x00000000 i686-test1.O0.bin(.dynamic)
     va 0x080496a4 + 0x00000030 = 0x080496d4 rw-- at base aae  + 0x000006a4 i686-test1.O0.bin(.data+.got+.got.plt)
     va 0x080496d4 + 0x0000092c = 0x0804a000 rw-p at anon null + 0x00000000 i686-test1.O0.bin(.bss+LOAD#3)
-disassembled 3225 instructions and 4592 failures (use --show-bad to see errors)
+disassembled 3225 instructions and 44 failures (use --show-bad to see errors)
 0x080482c8: ================================== Function (function call, symbol) <_init>
 Basic block: entry point, graph-1
 0x080482c8: 55                      |U       |   push   ebp
