@@ -4,8 +4,6 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 INCLUDES = $(ROSE_INCLUDES) -I$(srcdir)/includes \
 	 -I$(top_srcdir)/projects/DataFaultTolerance/includes
 
-Other_SOURCES = faultToleranceArrayLibUtility.C	pragmaHandling.C 
-
 
 CXX_TEMPLATE_REPOSITORY_PATH = .
 CXXFLAGS += -DDEBUG
@@ -14,12 +12,20 @@ bin_PROGRAMS = DataFaultToleranceTransformation
 
 DataFaultToleranceTransformation_SOURCES = \
 				faultToleranceArrayPass.C \
-				AstFromString.C 
+				AstFromString.C \
+				pragmaHandling.C \
+				arrayBase.C
 
 noinst_LIBRARIES = libfaulttolerancearray.a
 
 libfaulttolerancearray_a_SOURCES = \
-			faultToleranceArrayLib.C
+			faultToleranceArrayLib.C \
+			faultToleranceArrayLibUtility.C
+			
+libfaulttolerancearray_a_includedir = $(includedir)/src
+
+libfaulttolerancearray_a_include_HEADERS = \
+     faultToleranceArrayLibUtility.h
 
 LDADD = \
      $(LIBS_WITH_RPATH) \

@@ -1,4 +1,4 @@
-#include "faultToleranceLib.C" 
+#include "faultToleranceLib.h"
 
 int main()
 {
