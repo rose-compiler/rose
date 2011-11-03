@@ -1,18 +1,15 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke
+INCLUDES = $(ROSE_INCLUDES) 
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 # Build the function extraction translator
 noinst_PROGRAMS = normalizationTranslator
 
 normalizationTranslator_SOURCES =  NormalizationTranslator.C
-normalizationTranslator_LDADD = $(top_builddir)/projects/backstroke/normalizations/libBackstrokeNormalizations.la \
-			$(top_builddir)/projects/backstroke/restrictedLanguage/libBackstrokeRestrictedLanguage.la \
-			$(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.la \
-			$(LIBS_WITH_RPATH) $(ROSE_LIBS)
+normalizationTranslator_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-EXTRA_DIST = test_basic.C test_failingTests.C test_forLoops.C test_Swap.C test_whileLoops.C
+EXTRA_DIST = 
 
 CLEANFILES = 
 
@@ -708,7 +705,7 @@ $(TEST_Objects):normalizationTranslator
 check-local:
 	@$(MAKE) $(TEST_Objects)
 	@echo "*********************************************************************************************************"
-	@echo "ROSE/projects/backstroke/tests/extractFunctionArgumentsTest: make check rule complete (terminated normally)"
+	@echo "ROSE/tests/roseTests/programTransformationTests/extractFunctionArgumentsTest: make check rule complete "
 	@echo "*********************************************************************************************************"
 
 clean-local:

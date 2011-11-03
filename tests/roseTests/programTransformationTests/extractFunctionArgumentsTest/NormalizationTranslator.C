@@ -1,9 +1,6 @@
 #include "rose.h"
-#include "normalizations/ExtractFunctionArguments.h"
-#include "restrictedLanguage/LanguageRestrictions.h"
-#include "utilities/cppDefinesAndNamespaces.h"
+#include <ExtractFunctionArguments.h>
 #include <boost/foreach.hpp>
-#include "normalizations/expNormalization.h"
 
 #define foreach BOOST_FOREACH
 

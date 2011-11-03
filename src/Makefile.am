@@ -101,6 +101,7 @@ libroseLibraries = \
    $(top_builddir)/src/midend/programAnalysis/libprogramAnalysis.la \
    $(top_builddir)/src/midend/programTransformation/astInlining/libastinlining.la \
    $(top_builddir)/src/midend/programTransformation/astOutlining/libastOutliner.la \
+   $(top_builddir)/src/midend/programTransformation/extractFunctionArgumentsNormalization/libExtractFunctionArgumentsNormalization.la \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/computation/libcomputation.la \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/depGraph/libdepGraph.la \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/depInfo/libdepInfo.la \

@@ -255,6 +255,7 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/midend/programTransformation/loopProcessing/outsideInterface \
      -I$(top_srcdir)/src/midend/programTransformation/loopProcessing/prepostTransformation \
      -I$(top_srcdir)/src/midend/programTransformation/ompLowering \
+     -I$(top_srcdir)/src/midend/programTransformation/extractFunctionArgumentsNormalization \
      -I$(top_srcdir)/src/midend/programAnalysis \
      -I$(top_srcdir)/src/midend/programAnalysis/annotationLanguageParser \
      -I$(top_srcdir)/src/midend/programAnalysis/CFG \

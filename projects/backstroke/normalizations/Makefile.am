@@ -7,18 +7,16 @@ LINK	 = $(CXXLINK)
 noinst_LTLIBRARIES =  libBackstrokeNormalizations.la
 
 libBackstrokeNormalizations_la_DEPENDENCIES = 
-libBackstrokeNormalizations_la_SOURCES = ExtractFunctionArguments.C expNormalization.C functionEvaluationOrderTraversal.C
-libBackstrokeNormalizations_la_include_HEADERS = ExtractFunctionArguments.h expNormalization.h functionEvaluationOrderTraversal.h
+libBackstrokeNormalizations_la_SOURCES = expNormalization.C
+libBackstrokeNormalizations_la_include_HEADERS = expNormalization.h
 libBackstrokeNormalizations_la_includedir = $(includedir)/backstroke
 
 
 # EXTRA_DIST are files that are not compiled or installed. These include readme's, internal header files, etc.
-EXTRA_DIST = LIMITATIONS.txt
+EXTRA_DIST = 
 
 CLEANFILES = 
 
 
 check-local:
-	@echo "*********************************************************************************************************"
-	@echo "****** ROSE/projects/backstroke/normalizations: make check rule complete (terminated normally) ******"
-	@echo "*********************************************************************************************************"
+
