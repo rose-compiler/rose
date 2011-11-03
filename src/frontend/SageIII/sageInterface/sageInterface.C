@@ -6052,37 +6052,35 @@ SgNode* SageInterface::replaceWithPattern (SgNode * anchor, SgNode* new_pattern)
    replaceExpression(anchor_exp, pattern_exp, false);
   return new_pattern;
 }
-
 /** Generate a name that is unique in the current scope and any parent and children scopes.
  * @param baseName the word to be included in the variable names. */
 string SageInterface::generateUniqueVariableName(SgScopeStatement* scope, std::string baseName)
 {
-	//This implementation tends to generate numbers that are unnecessarily high.
-	static int counter = 0;
+    //This implementation tends to generate numbers that are unnecessarily high.
+    static int counter = 0;
 
-	string name;
-	bool collision = false;
-	do
-	{
-		name = "__" + baseName + boost::lexical_cast<string > (counter++) + "__";
+    string name;
+    bool collision = false;
+    do
+    {
+        name = "__" + baseName + boost::lexical_cast<string > (counter++) + "__";
 
-		//Look up the name in the parent scopes
-		SgSymbol* nameSymbol = SageInterface::lookupSymbolInParentScopes(SgName(name), scope);
-		collision = (nameSymbol != NULL);
+        //Look up the name in the parent scopes
+        SgSymbol* nameSymbol = SageInterface::lookupSymbolInParentScopes(SgName(name), scope);
+        collision = (nameSymbol != NULL);
 
-		//Look up the name in the children scopes
-		Rose_STL_Container<SgNode*> childScopes = NodeQuery::querySubTree(scope, V_SgScopeStatement);
+        //Look up the name in the children scopes
+        Rose_STL_Container<SgNode*> childScopes = NodeQuery::querySubTree(scope, V_SgScopeStatement);
 
+        BOOST_FOREACH(SgNode* childScope, childScopes)
+        {
+            SgScopeStatement* childScopeStatement = isSgScopeStatement(childScope);
+            nameSymbol = childScopeStatement->lookup_symbol(SgName(name));
+            collision = collision || (nameSymbol != NULL);
+        }
+    } while (collision);
 
-		BOOST_FOREACH(SgNode* childScope, childScopes)
-		{
-			SgScopeStatement* childScopeStatement = isSgScopeStatement(childScope);
-			nameSymbol = childScopeStatement->lookup_symbol(SgName(name));
-			collision = collision || (nameSymbol != NULL);
-		}
-	} while (collision);
-
-	return name;
+    return name;
 }
 
 /** Given an expression, generates a temporary variable whose initializer optionally evaluates
@@ -6093,7 +6091,7 @@ string SageInterface::generateUniqueVariableName(SgScopeStatement* scope, std::s
  * @param expression Expression which will be replaced by a variable
  * @param scope scope in which the temporary variable will be generated
  * @return declaration of the temporary variable, an assignment op to
- *			reevaluate the expression, and a a variable reference expression to use instead of
+ *     reevaluate the expression, and a a variable reference expression to use instead of
  *         the original expression. Delete the results that you don't need! */
 boost::tuple<SgVariableDeclaration*, SgAssignOp*, SgExpression*> SageInterface::createTempVariableForExpression
 (SgExpression* expression, SgScopeStatement* scope, bool initializeInDeclaration)
