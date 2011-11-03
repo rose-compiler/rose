@@ -25,7 +25,10 @@ hypercube_SOURCES = hypercube.C
 # CXXFLAGS += 
 
 # ROSE configure script has a check for the existence of numa.h header and triggers this automake conditional.
-LDADD = -lrt
+LDADD = 
+if !OS_MACOSX
+   LDADD += -lrt
+endif
 if ROSE_USE_LIBNUMA
    LDADD += -lnuma
 endif

@@ -229,9 +229,11 @@ int main ()
 
      printf ("Call relaxation \n");
 
+#ifndef __APPLE__
   // Setup timer
      timespec time1, time2;
      clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &time1);
+#endif
 
   // Call relaxation on array
      int numberOfIterations = 1;
@@ -251,10 +253,11 @@ int main ()
 #endif
         }
 
+#ifndef __APPLE__
   // Get and report the time.
      clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &time2);
      cout << diff(time1,time2).tv_sec << ":" << diff(time1,time2).tv_nsec << endl;
- 
+#endif
 
 #if 1
   // Output the result
