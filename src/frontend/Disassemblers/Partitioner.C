@@ -620,7 +620,7 @@ Partitioner::pops_return_address(rose_addr_t va)
         fputs("Partitioner::pops_return_address:\n", stderr);
 #endif
         try {
-            for (std::vector<Instruction*>::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii) {
+            for (InstructionVector::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii) {
                 SgAsmx86Instruction *insn = isSgAsmx86Instruction(*ii);
                 if (!insn) return false;
                 if (insn==last_insn && insn->get_kind()==x86_ret) break;
@@ -794,12 +794,12 @@ Partitioner::truncate(BasicBlock* bb, rose_addr_t va)
     assert(bb==find_bb_containing(va));
 
     /* Find the cut point in the instruction vector. I.e., the first instruction to remove from the vector. */
-    std::vector<Instruction*>::iterator cut = bb->insns.begin();
+    InstructionVector::iterator cut = bb->insns.begin();
     while (cut!=bb->insns.end() && (*cut)->get_address()!=va) ++cut;
     assert(cut!=bb->insns.begin()); /*we can't remove them all since basic blocks are never empty*/
 
     /* Remove instructions (from the cut point and beyond) and all the data blocks. */
-    for (std::vector<Instruction*>::iterator ii=cut; ii!=bb->insns.end(); ++ii) {
+    for (InstructionVector::iterator ii=cut; ii!=bb->insns.end(); ++ii) {
         Instruction *insn = *ii;
         Insn2Block::iterator i2bi = insn2block.find(insn->get_address());
         assert(i2bi!=insn2block.end());
@@ -1000,7 +1000,7 @@ Partitioner::discard(BasicBlock *bb)
         assert(NULL==bb->function);
 
         /* Remove instructions from the block, returning them to the (implied) list of free instructions. */
-        for (std::vector<Instruction*>::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii)
+        for (InstructionVector::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii)
             insn2block.erase((*ii)->get_address());
 
         /* Remove the association between data blocks and this basic block. */
@@ -1204,7 +1204,7 @@ Partitioner::mark_ipd_configuration()
             Semantics semantics(policy);
 
             if (debug) fprintf(stderr, "  running semantics for the basic block...\n");
-            for (std::vector<Instruction*>::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii) {
+            for (InstructionVector::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii) {
                 SgAsmx86Instruction *insn = isSgAsmx86Instruction(*ii);
                 assert(insn!=NULL);
                 semantics.processInstruction(insn);
@@ -1680,7 +1680,7 @@ Partitioner::scan_contiguous_insns(InstructionMap insns, InsnRangeCallbacks &cbl
         Instruction *first = insns.begin()->second;
         rose_addr_t va = first->get_address();
         InstructionMap::iterator ii = insns.find(va);
-        std::vector<Instruction*> contig;
+        InstructionVector contig;
         while (ii!=insns.end()) {
             contig.push_back(ii->second);
             va += ii->second->get_size();
@@ -2024,7 +2024,7 @@ Partitioner::FindInsnPadding::operator()(bool enabled, const Args &args)
 
     /* Loop over the inter-function instructions and accumulate contiguous ranges of padding. */
     bool retval = true;
-    std::vector<Instruction*> padding;
+    InstructionVector padding;
     rose_addr_t va = args.insn_begin->get_address();
     Instruction *insn = p->find_instruction(va);
     for (size_t i=0; i<args.ninsns && insn!=NULL; i++) {
@@ -2213,7 +2213,7 @@ Partitioner::FindIntraFunctionInsns::operator()(bool enabled, const Args &args)
         if (!bb || bb->function)
             return true;
         bblocks.insert(bb);
-        for (std::vector<Instruction*>::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii) {
+        for (InstructionVector::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii) {
             rose_addr_t first = (*ii)->get_address();
             size_t size = (*ii)->get_size();
             block_extents.insert(Extent(first, size));
@@ -3303,7 +3303,7 @@ Partitioner::function_extent(Function *func,
     for (BasicBlocks::iterator bi=func->basic_blocks.begin(); bi!=func->basic_blocks.end(); ++bi) {
         /* Find the extents for all the instructions in this basic block. */
         BasicBlock *bb = bi->second;
-        for (std::vector<Instruction*>::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii) {
+        for (InstructionVector::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii) {
             rose_addr_t start = (*ii)->get_address();
             size_t size = (*ii)->get_size();
             if (0==nnodes++) {
@@ -3650,7 +3650,7 @@ Partitioner::build_ast(BasicBlock* block)
     retval->set_address(block->address());
     retval->set_reason(block->reason);
 
-    for (std::vector<Instruction*>::const_iterator ii=block->insns.begin(); ii!=block->insns.end(); ++ii) {
+    for (InstructionVector::const_iterator ii=block->insns.begin(); ii!=block->insns.end(); ++ii) {
         Instruction *insn = *ii;
         retval->get_statementList().push_back(insn->node);
         insn->node->set_parent(retval);
