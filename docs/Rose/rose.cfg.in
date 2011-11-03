@@ -499,6 +499,7 @@ INPUT                  = \
                          @top_srcdir@/src/midend/programAnalysis/staticSingleAssignment \
                          @top_srcdir@/src/midend/programAnalysis/CallGraphAnalysis \
                          @top_srcdir@/src/midend/programTransformation/documentation.docs \
+                         @top_srcdir@/src/midend/programTransformation/extractFunctionArgumentsNormalization \
                          @top_srcdir@/src/midend/astRewriteMechanism/ASTRewrite.docs \
                          @top_srcdir@/src/midend/astProcessing \
                          @top_srcdir@/src/midend/astQuery/QueryLib.docs \

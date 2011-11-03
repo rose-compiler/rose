@@ -2115,6 +2115,7 @@ src/midend/programAnalysis/staticSingleAssignment/Makefile
 src/midend/programTransformation/Makefile
 src/midend/programTransformation/astInlining/Makefile
 src/midend/programTransformation/astOutlining/Makefile
+src/midend/programTransformation/extractFunctionArgumentsNormalization/Makefile
 src/midend/programTransformation/ompLowering/Makefile
 src/midend/programTransformation/partialRedundancyElimination/Makefile
 src/midend/programTransformation/finiteDifferencing/Makefile
@@ -2264,7 +2265,6 @@ projects/backstroke/restrictedLanguage/Makefile
 projects/backstroke/tests/Makefile
 projects/backstroke/tests/cfgReverseCodeGenerator/Makefile
 projects/backstroke/tests/expNormalizationTest/Makefile
-projects/backstroke/tests/extractFunctionArgumentsTest/Makefile
 projects/backstroke/tests/pluggableReverserTest/Makefile
 projects/backstroke/tests/restrictedLanguageTest/Makefile
 projects/backstroke/tests/testCodeBuilderTest/Makefile
@@ -2451,6 +2451,7 @@ tests/roseTests/programAnalysisTests/variableLivenessTests/Makefile
 tests/roseTests/programAnalysisTests/variableRenamingTests/Makefile
 tests/roseTests/programAnalysisTests/staticSingleAssignmentTests/Makefile
 tests/roseTests/programTransformationTests/Makefile
+tests/roseTests/programTransformationTests/extractFunctionArgumentsTest/Makefile
 tests/roseTests/roseHPCToolkitTests/Makefile
 tests/roseTests/roseHPCToolkitTests/data/01/ANALYSIS/Makefile
 tests/roseTests/roseHPCToolkitTests/data/01/Makefile
