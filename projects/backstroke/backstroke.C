@@ -4,7 +4,10 @@
 #include <pluggableReverser/eventProcessor.h>
 #include <normalizations/expNormalization.h>
 #include <boost/timer.hpp>
+#include <boost/foreach.hpp>
 
+#define foreach BOOST_FOREACH
+#define reverse_foreach BOOST_REVERSE_FOREACH
 
 namespace Backstroke
 {
