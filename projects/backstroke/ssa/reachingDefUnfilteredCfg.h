@@ -5,6 +5,8 @@
 #include <set>
 #include <rose.h>
 
+namespace ssa_unfiltered_cfg
+{
 
 class ReachingDef
 {
@@ -97,3 +99,5 @@ public:
 	
 	void setType(Type t) { defType = t; }
 };
+
+}

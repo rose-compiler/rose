@@ -3,7 +3,7 @@
 
 #include "rose.h"
 #include "CallGraph.h"
-#include "staticSingleAssignment.h"
+#include "ssaUnfilteredCfg.h"
 #include "sageInterface.h"
 #include <map>
 #include <vector>
@@ -17,9 +17,8 @@
 #include <boost/unordered_set.hpp>
 #include <boost/tuple/tuple.hpp>
 #include "uniqueNameTraversal.h"
-#include "defsAndUsesTraversal.h"
-#include "iteratedDominanceFrontier.h"
-#include "controlDependence.h"
+#include <defsAndUsesUnfilteredCfg.h>
+#include <iteratedDominanceFrontier.h>
 #include <fstream>
 
 #define foreach BOOST_FOREACH
@@ -28,13 +27,13 @@
 //#define DISPLAY_TIMINGS
 
 using namespace std;
-using namespace ssa_private;
+using namespace ssa_unfiltered_cfg;
 using namespace boost;
 
 //Initializations of the static attribute tags
-StaticSingleAssignment::VarName StaticSingleAssignment::emptyName;
+SSA_UnfilteredCfg::VarName SSA_UnfilteredCfg::emptyName;
 
-bool StaticSingleAssignment::isBuiltinVar(const VarName& var)
+bool SSA_UnfilteredCfg::isBuiltinVar(const VarName& var)
 {
 	string name = var[0]->get_name().getString();
 	if (name == "__func__" ||
@@ -45,36 +44,36 @@ bool StaticSingleAssignment::isBuiltinVar(const VarName& var)
 	return false;
 }
 
-set<StaticSingleAssignment::VarName> getAllVarsUsedOrDefined(
-		const StaticSingleAssignment::CFGNodeToVarNamesMap& defs,
-		const StaticSingleAssignment::ASTNodeToVarRefsMap& uses,
-		const map<CFGNode, StaticSingleAssignment::NodeReachingDefTable>& localDefTable)
+set<SSA_UnfilteredCfg::VarName> getAllVarsUsedOrDefined(
+		const SSA_UnfilteredCfg::CFGNodeToVarNamesMap& defs,
+		const SSA_UnfilteredCfg::ASTNodeToVarRefsMap& uses,
+		const map<CFGNode, SSA_UnfilteredCfg::NodeReachingDefTable>& localDefTable)
 {
-	set<StaticSingleAssignment::VarName> usedNames;
+	set<SSA_UnfilteredCfg::VarName> usedNames;
 
-	foreach(const StaticSingleAssignment::CFGNodeToVarNamesMap::value_type& nodeVarsPair, defs)
+	foreach(const SSA_UnfilteredCfg::CFGNodeToVarNamesMap::value_type& nodeVarsPair, defs)
 	{
-		map<CFGNode, StaticSingleAssignment::NodeReachingDefTable>::const_iterator allDefsIter =
+		map<CFGNode, SSA_UnfilteredCfg::NodeReachingDefTable>::const_iterator allDefsIter =
 				localDefTable.find(nodeVarsPair.first);
 
-		foreach(const StaticSingleAssignment::NodeReachingDefTable::value_type& varDefPair, allDefsIter->second)
+		foreach(const SSA_UnfilteredCfg::NodeReachingDefTable::value_type& varDefPair, allDefsIter->second)
 		{
 			usedNames.insert(varDefPair.first);
 		}
 	}
 
-	foreach(const StaticSingleAssignment::ASTNodeToVarRefsMap::value_type& nodeVarRefsPair, uses)
+	foreach(const SSA_UnfilteredCfg::ASTNodeToVarRefsMap::value_type& nodeVarRefsPair, uses)
 	{
 
 		foreach(SgVarRefExp* varRef, nodeVarRefsPair.second)
 		{
-			const StaticSingleAssignment::VarName& usedVarName = StaticSingleAssignment::getVarName(varRef);
-			ROSE_ASSERT(usedVarName != StaticSingleAssignment::emptyName);
+			const SSA_UnfilteredCfg::VarName& usedVarName = SSA_UnfilteredCfg::getVarName(varRef);
+			ROSE_ASSERT(usedVarName != SSA_UnfilteredCfg::emptyName);
 
 			//If we have a use for p.x.y, insert uses for p and p.x as well as p.x.y
 			for (size_t i = 1; i <= usedVarName.size(); ++i)
 			{
-				StaticSingleAssignment::VarName var(usedVarName.begin(), usedVarName.begin() + i);
+				SSA_UnfilteredCfg::VarName var(usedVarName.begin(), usedVarName.begin() + i);
 
 				usedNames.insert(var);
 			}
@@ -84,7 +83,7 @@ set<StaticSingleAssignment::VarName> getAllVarsUsedOrDefined(
 	return usedNames;
 }
 
-void StaticSingleAssignment::run()
+void SSA_UnfilteredCfg::run()
 {
 	localDefTable.clear();
 	reachingDefTable.clear();
@@ -96,7 +95,7 @@ void StaticSingleAssignment::run()
 #endif
 	if (getDebug())
 		cout << "Running UniqueNameTraversal...\n";
-	UniqueNameTraversal uniqueTrav(SageInterface::querySubTree<SgInitializedName > (project, V_SgInitializedName));
+	ssa_private::UniqueNameTraversal uniqueTrav(SageInterface::querySubTree<SgInitializedName > (project, V_SgInitializedName));
 	uniqueTrav.traverse(project);
 
 	//	//BEGIN DEBUGGING CODE
@@ -215,7 +214,7 @@ void StaticSingleAssignment::run()
 	}
 }
 
-void StaticSingleAssignment::expandParentMemberDefinitions(const CFGNodeToVarNamesMap& defs)
+void SSA_UnfilteredCfg::expandParentMemberDefinitions(const CFGNodeToVarNamesMap& defs)
 {
 
 	foreach(const CFGNodeToVarNamesMap::value_type& cfgNodeVarsPair, defs)
@@ -247,7 +246,7 @@ void StaticSingleAssignment::expandParentMemberDefinitions(const CFGNodeToVarNam
 	}
 }
 
-void StaticSingleAssignment::runDefUseDataFlow(SgFunctionDefinition* func)
+void SSA_UnfilteredCfg::runDefUseDataFlow(SgFunctionDefinition* func)
 {
 	//Keep track of visited nodes
 	set<CFGNode> visited;
@@ -294,7 +293,7 @@ void StaticSingleAssignment::runDefUseDataFlow(SgFunctionDefinition* func)
 	}
 }
 
-bool StaticSingleAssignment::propagateDefs(const CFGNode& cfgNode)
+bool SSA_UnfilteredCfg::propagateDefs(const CFGNode& cfgNode)
 {
 	if (getDebugExtra())
 		printf("propagateDefs(%s)\n", cfgNode.toStringForDebugging().c_str());
@@ -344,7 +343,7 @@ bool StaticSingleAssignment::propagateDefs(const CFGNode& cfgNode)
 	return changed;
 }
 
-void StaticSingleAssignment::updateIncomingPropagatedDefs(const CFGNode& cfgNode)
+void SSA_UnfilteredCfg::updateIncomingPropagatedDefs(const CFGNode& cfgNode)
 {
 	//Get the previous edges in the CFG for this node
 	vector<CFGEdge> inEdges = cfgNode.inEdges();
@@ -401,7 +400,7 @@ void StaticSingleAssignment::updateIncomingPropagatedDefs(const CFGNode& cfgNode
 	}
 }
 
-void StaticSingleAssignment::insertDefsForChildMemberUses(const CFGNodeToVarNamesMap& defs, const set<VarName>& usedNames)
+void SSA_UnfilteredCfg::insertDefsForChildMemberUses(const CFGNodeToVarNamesMap& defs, const set<VarName>& usedNames)
 {
 	//Map each varName to all used names for which it is a prefix
 	map<VarName, set<VarName> > nameToChildNames;
@@ -459,7 +458,7 @@ void StaticSingleAssignment::insertDefsForChildMemberUses(const CFGNodeToVarName
 }
 
 /** Insert defs for functions that are declared outside the function scope. */
-void StaticSingleAssignment::insertDefsForExternalVariables(SgFunctionDefinition* function, const set<VarName>& usedNames)
+void SSA_UnfilteredCfg::insertDefsForExternalVariables(SgFunctionDefinition* function, const set<VarName>& usedNames)
 {
 	//The function definition should have 4 indices in the CFG. We insert defs for external variables
 	//At the very first one
@@ -519,7 +518,7 @@ void StaticSingleAssignment::insertDefsForExternalVariables(SgFunctionDefinition
 	}
 }
 
-void StaticSingleAssignment::insertPhiFunctions(SgFunctionDefinition* function, const std::vector<CFGNode>& cfgNodesInPostOrder)
+void SSA_UnfilteredCfg::insertPhiFunctions(SgFunctionDefinition* function, const std::vector<CFGNode>& cfgNodesInPostOrder)
 {
 	if (getDebug())
 		printf("Inserting phi nodes in function %s...\n", function->get_declaration()->get_name().str());
@@ -544,11 +543,7 @@ void StaticSingleAssignment::insertPhiFunctions(SgFunctionDefinition* function, 
 
 	//Build an iterated dominance frontier for this function
 	map<CFGNode, CFGNode> iPostDominatorMap;
-	map<CFGNode, set<CFGNode> > domFrontiers = calculateDominanceFrontiers<CFGNode, CFGEdge > (function, NULL, &iPostDominatorMap);
-
-	//Calculate control dependencies (for annotating the phi functions in the future)
-	//multimap< CFGNode, pair<CFGNode, CFGEdge> > controlDependencies =
-	//		calculateControlDependence<CFGNode, CFGEdge > (function, iPostDominatorMap);
+	map<CFGNode, set<CFGNode> > domFrontiers = ssa_private::calculateDominanceFrontiers<CFGNode, CFGEdge > (function, NULL, &iPostDominatorMap);
 
 	//Find the phi function locations for each variable
 	map<VarName, vector<CFGNode> >::const_iterator nameToDefNodesIter = nameToDefNodesMap.begin();
@@ -560,7 +555,7 @@ void StaticSingleAssignment::insertPhiFunctions(SgFunctionDefinition* function, 
 		ROSE_ASSERT(!definitionPoints.empty() && "We have a variable that is not defined anywhere!");
 
 		//Calculate the iterated dominance frontier
-		set<CFGNode> phiNodes = calculateIteratedDominanceFrontier(domFrontiers, definitionPoints);
+		set<CFGNode> phiNodes = ssa_private::calculateIteratedDominanceFrontier(domFrontiers, definitionPoints);
 
 		if (getDebug())
 			printf("Variable %s has phi nodes inserted at\n", varnameToString(var).c_str());
@@ -576,7 +571,7 @@ void StaticSingleAssignment::insertPhiFunctions(SgFunctionDefinition* function, 
 	}
 }
 
-void StaticSingleAssignment::renumberAllDefinitions(SgFunctionDefinition* func, const vector<CFGNode>& cfgNodesInPostOrder)
+void SSA_UnfilteredCfg::renumberAllDefinitions(SgFunctionDefinition* func, const vector<CFGNode>& cfgNodesInPostOrder)
 {
 	//Map from each name to the next index. Not in map means 0
 	map<VarName, int> nameToNextIndexMap;
@@ -639,7 +634,7 @@ void StaticSingleAssignment::renumberAllDefinitions(SgFunctionDefinition* func, 
 
 
 /*static*/
-vector<CFGNode> StaticSingleAssignment::getCfgNodesInPostorder(SgFunctionDefinition* func)
+vector<CFGNode> SSA_UnfilteredCfg::getCfgNodesInPostorder(SgFunctionDefinition* func)
 {
 
 	struct RecursiveDFS

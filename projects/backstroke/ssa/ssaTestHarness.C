@@ -1,4 +1,4 @@
-#include "staticSingleAssignment.h"
+#include "ssaUnfilteredCfg.h"
 #include "rose.h"
 #include "VariableRenaming.h"
 #include <boost/foreach.hpp>
@@ -11,6 +11,7 @@
 #define foreach BOOST_FOREACH
 using namespace std;
 using namespace boost;
+using namespace ssa_unfiltered_cfg;
 
 /** Return all the reaching definitions from a VariableRenaming rename table. */
 set<SgNode*> renameTableToDefNodes(const VariableRenaming::NumNodeRenameEntry& entry);
@@ -22,13 +23,13 @@ class ComparisonTraversal : public AstSimpleProcessing
 {
 public:
 	
-	StaticSingleAssignment* ssa;
+	SSA_UnfilteredCfg* ssa;
 	VariableRenaming* varRenaming;
 	
 	virtual void visit(SgNode* node)
 	{
 		/** Compare reaching defs at node. */
-		StaticSingleAssignment::NodeReachingDefTable newReachingDefs; //= ssa->getOutgoingDefsAtNode(node);
+		SSA_UnfilteredCfg::NodeReachingDefTable newReachingDefs; //= ssa->getOutgoingDefsAtNode(node);
 		VariableRenaming::NumNodeRenameTable oldReachingDefs = varRenaming->getReachingDefsAtNode(node);
 		
 		if (isSgFunctionDefinition(node))
@@ -40,8 +41,8 @@ public:
 			return;
 		}
 
-		StaticSingleAssignment::ReachingDefPtr reachingDef;
-		StaticSingleAssignment::VarName var;
+		SSA_UnfilteredCfg::ReachingDefPtr reachingDef;
+		SSA_UnfilteredCfg::VarName var;
 		foreach (tie(var, reachingDef), newReachingDefs)
 		{
 			set<SgNode*> newReachingDefNodes;// = reachingDef->getActualDefinitions();
@@ -50,7 +51,7 @@ public:
 			//The set of definition nodes should be the same
 			if (newReachingDefNodes != oldReachingDefNodes)
 			{
-				printf("ERROR: Reaching defs don't match for variable %s\n", StaticSingleAssignment::varnameToString(var).c_str());
+				printf("ERROR: Reaching defs don't match for variable %s\n", SSA_UnfilteredCfg::varnameToString(var).c_str());
 				printf("SSA Defs:\n");
 				printNodeSet(newReachingDefNodes);
 				printf("\nVarRenaming Defs:\n");
@@ -66,22 +67,22 @@ public:
 				printf("Found a phi definition with less than two reaching definitions\n");
 				printf("Node is %s@%d: %s\n", node->class_name().c_str(), node->get_file_info()->get_line(),
 						node->unparseToString().c_str());
-				printf("Variable is %s\n", StaticSingleAssignment::varnameToString(var).c_str());
+				printf("Variable is %s\n", SSA_UnfilteredCfg::varnameToString(var).c_str());
 				ROSE_ASSERT(false);
 			}
 		}
 
 		/** Compare uses at node */
-		StaticSingleAssignment::NodeReachingDefTable newUses; //= ssa->getUsesAtNode(node);
+		SSA_UnfilteredCfg::NodeReachingDefTable newUses; //= ssa->getUsesAtNode(node);
 		VariableRenaming::NumNodeRenameTable oldUses = varRenaming->getUsesAtNode(node);
 
 		if (newUses.size() != oldUses.size())
 		{
 			printf("ERROR: Mismatch between variable renaming uses and SSA uses at node ");
 			printf(" %s:%d\nSSA uses:", node->class_name().c_str(), node->get_file_info()->get_line());
-			foreach(const StaticSingleAssignment::NodeReachingDefTable::value_type& varDefPair, newUses)
+			foreach(const SSA_UnfilteredCfg::NodeReachingDefTable::value_type& varDefPair, newUses)
 			{
-				printf("\t%s, ", StaticSingleAssignment::varnameToString(varDefPair.first).c_str());
+				printf("\t%s, ", SSA_UnfilteredCfg::varnameToString(varDefPair.first).c_str());
 			}
 			printf("\nVarRenaming uses at node:\n");
 			foreach(const VariableRenaming::NumNodeRenameTable::value_type& varDefsPair, oldUses)
@@ -112,17 +113,17 @@ public:
 			if (newUseNodes != oldUseNodes)
 			{
 				printf("\n---------Reaching defs for use mismatch at node %s:%d for variable %s\n", node->class_name().c_str(),
-						node->get_file_info()->get_line(), StaticSingleAssignment::varnameToString(var).c_str());
-				printf("SSA Reaching defs for %s:\n", StaticSingleAssignment::varnameToString(var).c_str());
+						node->get_file_info()->get_line(), SSA_UnfilteredCfg::varnameToString(var).c_str());
+				printf("SSA Reaching defs for %s:\n", SSA_UnfilteredCfg::varnameToString(var).c_str());
 				printNodeSet(newUseNodes);
-				printf("VariableRenaming Reaching defs for %s:\n", StaticSingleAssignment::varnameToString(var).c_str());
+				printf("VariableRenaming Reaching defs for %s:\n", SSA_UnfilteredCfg::varnameToString(var).c_str());
 				printNodeSet(oldUseNodes);
 
 				printf("\n---------SSA uses at node %s:%d \n", node->class_name().c_str(),
 						node->get_file_info()->get_line());
-				foreach(const StaticSingleAssignment::NodeReachingDefTable::value_type& varDefPair, newUses)
+				foreach(const SSA_UnfilteredCfg::NodeReachingDefTable::value_type& varDefPair, newUses)
 				{
-					printf("%s, ", StaticSingleAssignment::varnameToString(varDefPair.first).c_str());
+					printf("%s, ", SSA_UnfilteredCfg::varnameToString(varDefPair.first).c_str());
 				}
 				printf("\nVarRenaming uses:\n");
 				foreach(const VariableRenaming::NumNodeRenameTable::value_type& varDefsPair, oldUses)
@@ -160,7 +161,7 @@ int main(int argc, char** argv)
 		
 		//Call graph
 		CallGraphBuilder CGBuilder(project);
-		CGBuilder.buildCallGraph(ssa_private::FunctionFilter());
+		CGBuilder.buildCallGraph(ssa_unfiltered_cfg::FunctionFilter());
 
 		// Output to a dot file
 		AstDOTGeneration dotgen;
@@ -186,7 +187,7 @@ int main(int argc, char** argv)
 	}
 
 	//Run the SSA analysis intraprocedurally
-	StaticSingleAssignment ssa(project);
+	SSA_UnfilteredCfg ssa(project);
 	ssa.run();
 	
 	return 0;
@@ -215,7 +216,7 @@ int main(int argc, char** argv)
 	t.traverse(project, preorder);
 
 	//Also test the interprocedural analysis
-	StaticSingleAssignment ssaInterprocedural(project);
+	SSA_UnfilteredCfg ssaInterprocedural(project);
 	ssaInterprocedural.run();
 
 	if (SgProject::get_verbose() > 0)

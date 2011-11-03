@@ -1,5 +1,5 @@
 //Author: George Vulov <georgevulov@hotmail.com>
-#include "staticSingleAssignment.h"
+#include "ssaUnfilteredCfg.h"
 #include <rose.h>
 #include <boost/foreach.hpp>
 #include <queue>
@@ -7,9 +7,9 @@
 #define foreach BOOST_FOREACH
 
 using namespace std;
-using namespace ssa_private;
+using namespace ssa_unfiltered_cfg;
 
-SgExpression* StaticSingleAssignment::buildVariableReference(const VarName& var, SgScopeStatement* scope)
+SgExpression* SSA_UnfilteredCfg::buildVariableReference(const VarName& var, SgScopeStatement* scope)
 {
 	ROSE_ASSERT(var.size() > 0);
 
@@ -40,7 +40,7 @@ SgExpression* StaticSingleAssignment::buildVariableReference(const VarName& var,
 
 //Printing functions
 
-string StaticSingleAssignment::varnameToString(const VarName& vec)
+string SSA_UnfilteredCfg::varnameToString(const VarName& vec)
 {
 	ROSE_ASSERT(!vec.empty());
 	string name = "";
@@ -61,7 +61,7 @@ string StaticSingleAssignment::varnameToString(const VarName& vec)
 	return name;
 }
 
-void StaticSingleAssignment::printNodeDefTable(const NodeReachingDefTable& table)
+void SSA_UnfilteredCfg::printNodeDefTable(const NodeReachingDefTable& table)
 {
 
 	foreach(const NodeReachingDefTable::value_type& varDefPair, table)
@@ -91,7 +91,7 @@ void StaticSingleAssignment::printNodeDefTable(const NodeReachingDefTable& table
 	}
 }
 
-void StaticSingleAssignment::printFullDefTable(const CFGNodeToDefTableMap& defTable)
+void SSA_UnfilteredCfg::printFullDefTable(const CFGNodeToDefTableMap& defTable)
 {
 
 	foreach(const CFGNodeToDefTableMap::value_type& nodeDefTablePair, defTable)
@@ -103,7 +103,7 @@ void StaticSingleAssignment::printFullDefTable(const CFGNodeToDefTableMap& defTa
 	}
 }
 
-void StaticSingleAssignment::toDOT(const string fileName)
+void SSA_UnfilteredCfg::toDOT(const string fileName)
 {
 	ROSE_ASSERT(fileName != "");
 
@@ -130,7 +130,7 @@ void StaticSingleAssignment::toDOT(const string fileName)
 	}
 }
 
-void StaticSingleAssignment::toFilteredDOT(const string fileName)
+void SSA_UnfilteredCfg::toFilteredDOT(const string fileName)
 {
 	ROSE_ASSERT(fileName != "");
 
@@ -157,7 +157,7 @@ void StaticSingleAssignment::toFilteredDOT(const string fileName)
 	}
 }
 
-void StaticSingleAssignment::printToDOT(SgNode* source, ostream &outFile)
+void SSA_UnfilteredCfg::printToDOT(SgNode* source, ostream &outFile)
 {
 	if (!outFile.good())
 	{
@@ -196,7 +196,7 @@ void StaticSingleAssignment::printToDOT(SgNode* source, ostream &outFile)
 				string id = current.id();
 				string nodeColor = "black";
 
-				bool uniqueName = current.getNode()->attributeExists(UniqueNameTraversal::varKeyTag);
+				bool uniqueName = current.getNode()->attributeExists(ssa_private::UniqueNameTraversal::varKeyTag);
 
 				if (isSgStatement(current.getNode()))
 					nodeColor = "blue";
@@ -208,10 +208,10 @@ void StaticSingleAssignment::printToDOT(SgNode* source, ostream &outFile)
 				string name = "";
 				if (uniqueName)
 				{
-					VarUniqueName *attr = getUniqueName(current.getNode());
+					ssa_private::VarUniqueName *attr = getUniqueName(current.getNode());
 					ROSE_ASSERT(attr);
 
-					name = StaticSingleAssignment::varnameToString(attr->getKey());
+					name = SSA_UnfilteredCfg::varnameToString(attr->getKey());
 				}
 
 				//Print the defs to a string
@@ -312,7 +312,7 @@ void StaticSingleAssignment::printToDOT(SgNode* source, ostream &outFile)
 	outFile << "}\n";
 }
 
-void StaticSingleAssignment::printToFilteredDOT(SgSourceFile* source, ofstream& outFile)
+void SSA_UnfilteredCfg::printToFilteredDOT(SgSourceFile* source, ofstream& outFile)
 {
 	if (!outFile.good())
 	{
@@ -351,7 +351,7 @@ void StaticSingleAssignment::printToFilteredDOT(SgSourceFile* source, ofstream& 
 				string id = current.id();
 				string nodeColor = "black";
 
-				bool uniqueName = current.getNode()->attributeExists(UniqueNameTraversal::varKeyTag);
+				bool uniqueName = current.getNode()->attributeExists(ssa_private::UniqueNameTraversal::varKeyTag);
 
 				if (isSgStatement(current.getNode()))
 					nodeColor = "blue";
@@ -363,10 +363,10 @@ void StaticSingleAssignment::printToFilteredDOT(SgSourceFile* source, ofstream& 
 				string name = "";
 				if (uniqueName)
 				{
-					VarUniqueName *attr = getUniqueName(current.getNode());
+					ssa_private::VarUniqueName *attr = getUniqueName(current.getNode());
 					ROSE_ASSERT(attr);
 
-					name = StaticSingleAssignment::varnameToString(attr->getKey());
+					name = SSA_UnfilteredCfg::varnameToString(attr->getKey());
 				}
 
 				//Print the defs to a string
@@ -463,17 +463,18 @@ void StaticSingleAssignment::printToFilteredDOT(SgSourceFile* source, ofstream& 
 	outFile << "}\n";
 }
 
-VarUniqueName* StaticSingleAssignment::getUniqueName(SgNode* node)
+ssa_private::VarUniqueName* SSA_UnfilteredCfg::getUniqueName(SgNode* node)
 {
-	if (!node->attributeExists(UniqueNameTraversal::varKeyTag))
+	if (!node->attributeExists(ssa_private::UniqueNameTraversal::varKeyTag))
 	{
 		return NULL;
 	}
-	VarUniqueName* uName = dynamic_cast<VarUniqueName*> (node->getAttribute(UniqueNameTraversal::varKeyTag));
+	ssa_private::VarUniqueName* uName = 
+            dynamic_cast<ssa_private::VarUniqueName*> (node->getAttribute(ssa_private::UniqueNameTraversal::varKeyTag));
 	return uName;
 }
 
-const StaticSingleAssignment::VarName& StaticSingleAssignment::getVarName(SgNode* node)
+const SSA_UnfilteredCfg::VarName& SSA_UnfilteredCfg::getVarName(SgNode* node)
 {
 	if (node == NULL || getUniqueName(node) == NULL)
 	{
@@ -482,7 +483,7 @@ const StaticSingleAssignment::VarName& StaticSingleAssignment::getVarName(SgNode
 	return getUniqueName(node)->getKey();
 }
 
-bool StaticSingleAssignment::isPrefixOfName(VarName name, VarName prefix)
+bool SSA_UnfilteredCfg::isPrefixOfName(VarName name, VarName prefix)
 {
 	if (name.size() < prefix.size())
 		return false;
@@ -496,9 +497,9 @@ bool StaticSingleAssignment::isPrefixOfName(VarName name, VarName prefix)
 	return true;
 }
 
-const static StaticSingleAssignment::NodeReachingDefTable emptyTable;
+const static SSA_UnfilteredCfg::NodeReachingDefTable emptyTable;
 
-const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getReachingDefsBefore(const CFGNode& node) const
+const SSA_UnfilteredCfg::NodeReachingDefTable& SSA_UnfilteredCfg::getReachingDefsBefore(const CFGNode& node) const
 {
 	CFGNodeToDefTableMap::const_iterator defs = reachingDefTable.find(node);
 	if (defs == reachingDefTable.end())
@@ -507,7 +508,7 @@ const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getR
 		return defs->second;
 }
 
-const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getReachingDefsAfter(const CFGNode& node) const
+const SSA_UnfilteredCfg::NodeReachingDefTable& SSA_UnfilteredCfg::getReachingDefsAfter(const CFGNode& node) const
 {
 	CFGNodeToDefTableMap::const_iterator defs = outgoingDefTable.find(node);
 	if (defs == outgoingDefTable.end())
@@ -516,7 +517,7 @@ const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getR
 		return defs->second;
 }
 
-const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getDefsAtNode(const CFGNode& node) const
+const SSA_UnfilteredCfg::NodeReachingDefTable& SSA_UnfilteredCfg::getDefsAtNode(const CFGNode& node) const
 {
 	CFGNodeToDefTableMap::const_iterator defs = localDefTable.find(node);
 	if (defs == localDefTable.end())
@@ -525,19 +526,19 @@ const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getD
 		return defs->second;
 }
 
-const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getReachingDefsBefore(SgNode* astNode) const
+const SSA_UnfilteredCfg::NodeReachingDefTable& SSA_UnfilteredCfg::getReachingDefsBefore(SgNode* astNode) const
 {
 	return getReachingDefsBefore(astNode->cfgForBeginning());
 }
 
-const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getReachingDefsAfter(SgNode* astNode) const
+const SSA_UnfilteredCfg::NodeReachingDefTable& SSA_UnfilteredCfg::getReachingDefsAfter(SgNode* astNode) const
 {
 	return getReachingDefsAfter(astNode->cfgForEnd());
 }
 
 const static set<SgVarRefExp*> emptyVarRefSet;
 
-const set<SgVarRefExp*>& StaticSingleAssignment::getUsesAtNode(SgNode* astNode) const
+const set<SgVarRefExp*>& SSA_UnfilteredCfg::getUsesAtNode(SgNode* astNode) const
 {
 	ASTNodeToVarRefsMap::const_iterator uses = astNodeToUses.find(astNode);
 	if (uses == astNodeToUses.end())
@@ -546,7 +547,7 @@ const set<SgVarRefExp*>& StaticSingleAssignment::getUsesAtNode(SgNode* astNode) 
 		return uses->second;
 }
 
-const StaticSingleAssignment::ReachingDefPtr StaticSingleAssignment::getDefinitionForUse(SgVarRefExp* astNode) const
+const SSA_UnfilteredCfg::ReachingDefPtr SSA_UnfilteredCfg::getDefinitionForUse(SgVarRefExp* astNode) const
 {
 	const VarName& varName = getVarName(astNode);
 	if (varName == emptyName)
@@ -563,13 +564,13 @@ const StaticSingleAssignment::ReachingDefPtr StaticSingleAssignment::getDefiniti
 		return reachingDef->second;
 }
 
-const StaticSingleAssignment::ASTNodeToVarRefsMap& StaticSingleAssignment::getUseTable() const
+const SSA_UnfilteredCfg::ASTNodeToVarRefsMap& SSA_UnfilteredCfg::getUseTable() const
 {
 	return astNodeToUses;
 }
 
 //! Get the final versions of all the variables at the end of the given function.
-const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getLastVersions(SgFunctionDefinition* astNode) const
+const SSA_UnfilteredCfg::NodeReachingDefTable& SSA_UnfilteredCfg::getLastVersions(SgFunctionDefinition* astNode) const
 {
 	return getReachingDefsAfter(astNode);
 }

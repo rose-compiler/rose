@@ -14,11 +14,11 @@
 #include <boost/foreach.hpp>
 #include "filteredCFG.h"
 #include <boost/unordered_map.hpp>
-#include "reachingDef.h"
+#include "reachingDefUnfilteredCfg.h"
 #include "CallGraph.h"
 #include <uniqueNameTraversal.h>
 
-namespace ssa_private
+namespace ssa_unfiltered_cfg
 {
 
 /** This filter determines which function declarations get processed in the analysis. */
@@ -41,8 +41,6 @@ struct FunctionFilter
 	}
 };
 
-} //namespace ssa_private
-
 /** Static single assignment analysis.
  *
  * Contains all the functionality to implement variable renaming on a given program.
@@ -51,7 +49,7 @@ struct FunctionFilter
  * optimizations can access the results of this analysis while still preserving
  * the original AST.
  */
-class StaticSingleAssignment
+class SSA_UnfilteredCfg
 {
 private:
 	/** The project to perform SSA Analysis on. */
@@ -91,11 +89,11 @@ private:
 
 public:
 
-	StaticSingleAssignment(SgProject* proj) : project(proj)
+	SSA_UnfilteredCfg(SgProject* proj) : project(proj)
 	{
 	}
 
-	~StaticSingleAssignment()
+	~SSA_UnfilteredCfg()
 	{
 	}
 
@@ -288,4 +286,4 @@ public:
 	static void printFullDefTable(const CFGNodeToDefTableMap& defTable);
 };
 
-
+} //namespace ssa_unfiltered_cfg

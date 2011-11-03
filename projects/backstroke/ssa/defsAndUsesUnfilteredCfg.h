@@ -1,11 +1,10 @@
 #pragma once
 #include <rose.h>
-#include <staticSingleAssignment.h>
 #include <uniqueNameTraversal.h>
 #include <map>
 #include <virtualCFG.h>
 
-namespace ssa_private
+namespace ssa_unfiltered_cfg
 {
 
 /** Attribute that describes the variables used by a given expression. */
@@ -72,7 +71,7 @@ class DefsAndUsesTraversal : private AstBottomUpProcessing<ChildUses>
 {
 public:
 	
-	typedef std::map<CFGNode, std::set<UniqueNameTraversal::VarName> > CFGNodeToVarsMap;
+	typedef std::map<CFGNode, std::set<ssa_private::UniqueNameTraversal::VarName> > CFGNodeToVarsMap;
 
 	/** Call this method to collect defs and uses for a subtree. The additional defs and uses discovered
 	 * in the tree will be inserted in the passed data structures. */
@@ -108,4 +107,4 @@ private:
 	
 };
 
-} //namespace ssa_private
+} //namespace ssa_unfiltered_cfg

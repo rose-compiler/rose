@@ -2,14 +2,13 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 INCLUDES = $(ROSE_INCLUDES) 
 
-# noinst_LTLIBRARIES lists all the librarlies that should be built, but not installed
+# noinst_LTLIBRARIES lists all the libraries that should be built, but not installed
 noinst_LTLIBRARIES =  libSSA.la
 
 libSSA_la_DEPENDENCIES =
-libSSA_la_SOURCES = staticSingleAssignmentCalculation.C staticSingleAssignmentQueries.C  defsAndUsesTraversal.C \
-		reachingDef.C
-include_HEADERS = staticSingleAssignment.h defsAndUsesTraversal.h iteratedDominanceFrontier.h \
-		reachingDef.h controlDependence.h boostGraphCFG.h
+libSSA_la_SOURCES = ssaUnfilteredCfgCalculation.C ssaUnfilteredCfgQueries.C  defsAndUsesUnfilteredCfg.C \
+		reachingDefUnfilteredCfg.C
+include_HEADERS = ssaUnfilteredCfg.h defsAndUsesUnfilteredCfg.h reachingDefUnfilteredCfg.h 
 
 noinst_PROGRAMS= ssaTestHarness
 ssaTestHarness_SOURCES = ssaTestHarness.C

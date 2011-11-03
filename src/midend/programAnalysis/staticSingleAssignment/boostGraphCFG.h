@@ -12,11 +12,8 @@
 #include <boost/graph/transpose_graph.hpp>
 #include <boost/algorithm/string.hpp>
 
-
-#define foreach BOOST_FOREACH
-
-
-
+namespace ssa_private
+{
 
 //! A class holding a Control Flow Graph.
 template <class CFGNodeT, class CFGEdgeT>
@@ -186,7 +183,7 @@ void CFG<CFGNodeT, CFGEdgeT>::build(SgFunctionDefinition* funcDef)
 template <class CFGNodeT, class CFGEdgeT>
 void CFG<CFGNodeT, CFGEdgeT>::setEntryAndExit()
 {
-    foreach (Vertex v, boost::vertices(*this))
+    BOOST_FOREACH (Vertex v, boost::vertices(*this))
 	{
 		CFGNodePtr node = (*this)[v];
 		if (isSgFunctionDefinition(node->getNode()))
@@ -247,7 +244,7 @@ void CFG<CFGNodeT, CFGEdgeT>::buildCFG(
 
 	std::vector<CFGEdgeType> outEdges = node.outEdges();
 
-	foreach(const CFGEdgeType& cfgEdge, outEdges)
+	BOOST_FOREACH(const CFGEdgeType& cfgEdge, outEdges)
 	{
 		// For each out edge, add the target node.
 		CFGNodeType tar = cfgEdge.target();
@@ -321,7 +318,7 @@ std::vector<typename CFG<CFGNodeT, CFGEdgeT>::CFGNodePtr>
 CFG<CFGNodeT, CFGEdgeT>::getAllNodes() const
 {
 	std::vector<CFGNodePtr> allNodes;
-    foreach (Vertex v, boost::vertices(*this))
+    BOOST_FOREACH (Vertex v, boost::vertices(*this))
 		allNodes.push_back((*this)[v]);
 	return allNodes;
 }
@@ -331,7 +328,7 @@ std::vector<typename CFG<CFGNodeT, CFGEdgeT>::CFGEdgePtr>
 CFG<CFGNodeT, CFGEdgeT>::getAllEdges() const
 {
 	std::vector<CFGEdgePtr> allEdges;
-    foreach (const Edge& e, boost::edges(*this))
+    BOOST_FOREACH (const Edge& e, boost::edges(*this))
 		allEdges.push_back((*this)[e]);
 	return allEdges;
 }
@@ -357,7 +354,7 @@ std::vector<typename CFG<CFGNodeT, CFGEdgeT>::Edge> CFG<CFGNodeT, CFGEdgeT>::get
     // If the dominator tree is not built yet, build it now.
     getDominatorTree();
 
-    foreach (const Edge& e, boost::edges(*this))
+    BOOST_FOREACH (const Edge& e, boost::edges(*this))
     {
         Vertex src = boost::source(e, *this);
         Vertex tar = boost::target(e, *this);
@@ -383,11 +380,12 @@ std::vector<typename CFG<CFGNodeT, CFGEdgeT>::Vertex> CFG<CFGNodeT, CFGEdgeT>::g
 {
     std::vector<Edge> backEdges = getAllBackEdges();
     std::vector<Vertex> headers;
-    foreach (Edge e, backEdges)
+    BOOST_FOREACH (Edge e, backEdges)
         headers.push_back(boost::target(e, *this));
     return headers;
 }
 
-#undef foreach
+}
+
 
 

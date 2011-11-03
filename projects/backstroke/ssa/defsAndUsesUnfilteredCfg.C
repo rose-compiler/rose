@@ -1,15 +1,15 @@
-#include "defsAndUsesTraversal.h"
-#include "staticSingleAssignment.h"
+#include <defsAndUsesUnfilteredCfg.h>
+#include "ssaUnfilteredCfg.h"
 #include <boost/foreach.hpp>
 
 using namespace std;
-using namespace ssa_private;
+using namespace ssa_unfiltered_cfg;
 
 #define foreach BOOST_FOREACH
 
 ChildUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttributesList attrs)
 {
-	if (StaticSingleAssignment::getDebug())
+	if (SSA_UnfilteredCfg::getDebug())
 	{
 		cout << "---------<" << node->class_name() << node << ">-------" << node << endl;
 	}
@@ -17,7 +17,7 @@ ChildUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node, Synth
 	//We want to propagate the def/use information up from the varRefs to the higher expressions.
 	if (SgInitializedName* initName = isSgInitializedName(node))
 	{
-		VarUniqueName * uName = StaticSingleAssignment::getUniqueName(node);
+		ssa_private::VarUniqueName * uName = SSA_UnfilteredCfg::getUniqueName(node);
 		ROSE_ASSERT(uName);
 
 		//Add this as a def, unless this initialized name is a preinitialization of a parent class. For example,
@@ -30,9 +30,9 @@ ChildUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node, Synth
 			
 			cfgNodeToDefinedVars[definingNode].insert(uName->getKey());
 
-			if (StaticSingleAssignment::getDebug())
+			if (SSA_UnfilteredCfg::getDebug())
 			{
-				cout << "Defined " << StaticSingleAssignment::varnameToString(uName->getKey()) << 
+				cout << "Defined " << SSA_UnfilteredCfg::varnameToString(uName->getKey()) << 
 						" at " << definingNode.toStringForDebugging() << endl;
 			}
 		}
@@ -43,7 +43,7 @@ ChildUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node, Synth
     else if (SgVarRefExp* varRef = isSgVarRefExp(node))
 	{
 		//Get the unique name of the def.
-		VarUniqueName * uName = StaticSingleAssignment::getUniqueName(node);
+		ssa_private::VarUniqueName * uName = SSA_UnfilteredCfg::getUniqueName(node);
 
 		//In some cases, a varRef isn't actually part of a variable name. For example,
 		//foo().x where foo returns a structure. x is an SgVarRefExp, but is not part of a variable name.
@@ -55,9 +55,9 @@ ChildUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node, Synth
 		//Add this as a use. If it's not a use (e.g. target of an assignment), we'll fix it up later.
 		astNodeToUsedVars[varRef].insert(varRef);
 
-		if (StaticSingleAssignment::getDebug())
+		if (SSA_UnfilteredCfg::getDebug())
 		{
-			cout << "Found use for " << StaticSingleAssignment::varnameToString(uName->getKey()) << 
+			cout << "Found use for " << SSA_UnfilteredCfg::varnameToString(uName->getKey()) << 
 					" at " << node->cfgForBeginning().toStringForDebugging() << endl;
 		}
 
@@ -291,7 +291,7 @@ ChildUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node, Synth
 		std::set<SgVarRefExp*> uses;
 		for (unsigned int i = 0; i < attrs.size(); i++)
 		{
-			if (StaticSingleAssignment::getDebug())
+			if (SSA_UnfilteredCfg::getDebug())
 			{
 				cout << "Merging attr[" << i << "]" << endl;
 			}
@@ -315,14 +315,14 @@ void DefsAndUsesTraversal::addUsesToNode(SgNode* node, std::set<SgVarRefExp*> us
 
 void DefsAndUsesTraversal::addDefForVarAtNode(SgVarRefExp* var, const CFGNode& node)
 {
-	const StaticSingleAssignment::VarName& varName = StaticSingleAssignment::getVarName(var);
-	ROSE_ASSERT(varName != StaticSingleAssignment::emptyName);
+	const SSA_UnfilteredCfg::VarName& varName = SSA_UnfilteredCfg::getVarName(var);
+	ROSE_ASSERT(varName != SSA_UnfilteredCfg::emptyName);
 	
 	cfgNodeToDefinedVars[node].insert(varName);
 	
-	if (StaticSingleAssignment::getDebug())
+	if (SSA_UnfilteredCfg::getDebug())
 	{
-		cout << "Found def for " << StaticSingleAssignment::varnameToString(varName)
+		cout << "Found def for " << SSA_UnfilteredCfg::varnameToString(varName)
 				<< " at " << node.toStringForDebugging() << endl;
 	}
 }

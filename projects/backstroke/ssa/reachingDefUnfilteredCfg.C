@@ -1,4 +1,4 @@
-#include "reachingDef.h"
+#include "reachingDefUnfilteredCfg.h"
 #include <algorithm>
 #include <boost/foreach.hpp>
 #include <boost/unordered_set.hpp>
@@ -9,6 +9,7 @@
 
 using namespace std;
 using namespace boost;
+using namespace ssa_unfiltered_cfg;
 
 ReachingDef::ReachingDef(const CFGNode& defNode, Type type) : defType(type), thisNode(defNode), renamingNumer(-1)
 {
