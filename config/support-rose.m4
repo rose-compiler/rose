@@ -40,9 +40,15 @@ fi
 AC_CANONICAL_BUILD
 # AC_CANONICAL_HOST
 # AC_CANONICAL_TARGET
-echo "Building ROSE for cpu       = $build_cpu"
-echo "Building ROSE for OS vendor = $build_vendor"
-echo "Building ROSE for OS        = $build_os"
+
+AC_MSG_CHECKING([machine hardware cpu])
+AC_MSG_RESULT([$build_cpu])
+
+AC_MSG_CHECKING([operating system vendor])
+AC_MSG_RESULT([$build_vendor])
+
+AC_MSG_CHECKING([operating system])
+AC_MSG_RESULT([$build_os])
 
 DETERMINE_OS
 
@@ -1446,6 +1452,8 @@ dnl ])
 with_gcj=no ; # JJW 5-22-2008 The code that was here before broke if gcj was not present, even if the --with-gcj flag was absent
 AM_CONDITIONAL(USE_GCJ,test "$with_gcj" = yes)
 
+ROSE_CONFIGURE_SECTION([Running system checks])
+
 AC_SEARCH_LIBS(clock_gettime, [rt], [
   RT_LIBS="$LIBS"
   LIBS=""
@@ -1707,7 +1715,17 @@ AM_CONDITIONAL(ROSE_USE_ETHER,test "$with_ether" != "no")
 
 # libgcrypt is used for computing SHA1 hashes of binary basic block semantics, among other things. [RPM 2010-05-12]
 AC_CHECK_HEADERS(gcrypt.h)
+AC_CHECK_LIB(gpg-error,gpg_strerror) dnl needed by statically linked libgcrypt
 AC_CHECK_LIB(gcrypt,gcry_check_version)
+
+# Added support for detection of libnuma, a NUMA aware memory allocation mechanism for many-core optimizations.
+AC_CHECK_HEADERS(numa.h, [found_libnuma=yes])
+
+if test "x$found_libnuma" = xyes; then
+  AC_DEFINE([HAVE_NUMA_H],[],[Support for libnuma a NUMA memory allocation library for many-core optimizations])
+fi
+
+AM_CONDITIONAL(ROSE_USE_LIBNUMA, [test "x$found_libnuma" = xyes])
 
 # Multi-thread support is needed by the simulator.  This also enables/disables major parts of threadSupport.[Ch] within
 # the ROSE library.
@@ -2107,6 +2125,8 @@ projects/symbolicAnalysisFramework/tests/Makefile
 projects/symbolicAnalysisFramework/include/Makefile
 projects/taintcheck/Makefile
 projects/PowerAwareCompiler/Makefile
+projects/ManyCoreRuntime/Makefile
+projects/ManyCoreRuntime/docs/Makefile
 projects/traceAnalysis/Makefile
 projects/PolyhedralModel/Makefile
 projects/PolyhedralModel/src/Makefile
