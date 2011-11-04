@@ -27,6 +27,7 @@ public:
         push_front(n);
     }
     SgLocatedNode *pop() {
+        ROSE_ASSERT(size() > 0);
         SgLocatedNode *n = front();
         if (SgProject::get_verbose() > 1) {
             std::cerr << "***Popping node " << n -> class_name() << std::endl;
@@ -35,7 +36,7 @@ public:
         pop_front();
         return n;
     }
-    SgLocatedNode *top() { return front(); }
+    SgLocatedNode *top() { ROSE_ASSERT(size() > 0); return front(); }
     bool empty() { return (size() == 0); }
 
     SgExpression *popExpression() {
@@ -52,10 +53,16 @@ public:
     SgStatement *popStatement() {
         SgLocatedNode *n = pop();
         if (isSgExpression(n)) {
+            if (SgProject::get_verbose() > 1) {
+                std::cerr << "***Turning node "
+                          << n -> class_name()
+                          << " into a SgExprStatement"
+                          << std::endl;
+            }
             // TODO: set source position for expr statement !!!?
-            return SageBuilder::buildExprStatement((SgExpression *) n);
+            n = SageBuilder::buildExprStatement((SgExpression *) n);
         }
-        if (! isSgStatement(n)) {
+        else if (! isSgStatement(n)) {
             std::cerr << "Invalid attemtp to pop a node of type "
                       << n -> class_name()
                       << " as an SgStatement"
@@ -225,12 +232,13 @@ unaryExpressionSupport()
 //     astJavaExpressionStack.pop_front();
 
   // Build the assignment operator and push it onto the stack.
-     SgExpression* assignmentExpression = SageBuilder::buildUnaryExpression<T>(operand);
-     ROSE_ASSERT(assignmentExpression != NULL);
+  // SgExpression* assignmentExpression = SageBuilder::buildUnaryExpression<T>(operand);
+     SgExpression* resultExpression = SageBuilder::buildUnaryExpression<T>(operand);
+     ROSE_ASSERT(resultExpression != NULL);
 // Remove this!
 //     astJavaExpressionStack.push_front(assignmentExpression);
 //     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
-     astJavaComponentStack.push(assignmentExpression);
+     astJavaComponentStack.push(resultExpression);
    }
 
 template< class T >
@@ -253,40 +261,42 @@ binaryExpressionSupport()
 //     astJavaExpressionStack.pop_front();
 
   // Build the assignment operator and push it onto the stack.
-     SgExpression* assignmentExpression = SageBuilder::buildBinaryExpression<T>(lhs,rhs);
-     ROSE_ASSERT(assignmentExpression != NULL);
+  // SgExpression* assignmentExpression = SageBuilder::buildBinaryExpression<T>(lhs,rhs);
+     SgExpression* resultExpression = SageBuilder::buildBinaryExpression<T>(lhs,rhs);
+     ROSE_ASSERT(resultExpression != NULL);
 // Remove this!
 //     astJavaExpressionStack.push_front(assignmentExpression);
-     astJavaComponentStack.push(assignmentExpression);
+     astJavaComponentStack.push(resultExpression);
 // Remove this!
 //     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
    }
 
-template< class T >
-void
-binaryAssignmentStatementSupport()
-   {
+// charles4 10/14/2011: Remove this
+//template< class T >
+//void
+//binaryAssignmentStatementSupport()
+//   {
 // Remove this!
 //     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
 //     ROSE_ASSERT(astJavaExpressionStack.size() >= 2);
-
-     binaryExpressionSupport<T>();
-
+//
+//     binaryExpressionSupport<T>();
+//
 // Remove this!
 //     SgExpression* exp = astJavaExpressionStack.front();
 //     ROSE_ASSERT(exp != NULL);
 //     astJavaExpressionStack.pop_front();
-     SgExpression* exp = astJavaComponentStack.popExpression();
-
-     SgExprStatement* exprStatement = SageBuilder::buildExprStatement(exp);
-
-     ROSE_ASSERT(exprStatement != NULL);
-     ROSE_ASSERT(exp->get_parent() != NULL);
-
+//     SgExpression* exp = astJavaComponentStack.popExpression();
+//
+//     SgExprStatement* exprStatement = SageBuilder::buildExprStatement(exp);
+//
+//     ROSE_ASSERT(exprStatement != NULL);
+//     ROSE_ASSERT(exp->get_parent() != NULL);
+//
 // Remove this!
 //     astJavaStatementStack.push_front(exprStatement);
-     astJavaComponentStack.push(exprStatement);
-   }
+//     astJavaComponentStack.push(exprStatement);
+//   }
 
 // endif for ROSE_JAVA_SUPPORT
 #endif
