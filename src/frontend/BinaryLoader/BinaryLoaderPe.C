@@ -75,7 +75,7 @@ BinaryLoaderPe::align_values(SgAsmGenericSection *section, MemoryMap *map,
     *va_p = mapped_va;
     *mem_size_p = mapped_size;
     *offset_p = file_offset;
-    *file_size_p = mapped_size;
+    *file_size_p = file_size;
     *map_private_p = false;
     *va_offset_p = 0;
     *anon_lo_p = *anon_hi_p = true;

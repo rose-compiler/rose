@@ -25,8 +25,8 @@ class ShowFunctions : public SgSimpleProcessing {
             for (std::vector<SgAsmInstruction*>::iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
                 SgAsmInstruction *insn = *ii;
                 func_start = std::min(func_start, insn->get_address());
-                func_end = std::max(func_end, insn->get_address()+insn->get_raw_bytes().size());
-                nbytes += insn->get_raw_bytes().size();
+                func_end = std::max(func_end, insn->get_address()+insn->get_size());
+                nbytes += insn->get_size();
             }
 
             /* Reason that this is a function */
@@ -66,7 +66,7 @@ private:
         if (hdr) return; /*this function doesn't depend on anything in a file header*/
         MyPartitioner *p = dynamic_cast<MyPartitioner*>(p_);
         ROSE_ASSERT(p!=NULL);
-        for (Disassembler::InstructionMap::const_iterator ii=p->insns.begin(); ii!=p->insns.end(); ii++) {
+        for (InstructionMap::const_iterator ii=p->insns.begin(); ii!=p->insns.end(); ii++) {
             rose_addr_t addr = ii->first;
             SgAsmx86Instruction *insn = isSgAsmx86Instruction(ii->second);
             if (!insn || insn->get_kind()!=x86_push) continue;

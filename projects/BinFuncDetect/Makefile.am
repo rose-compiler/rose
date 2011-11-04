@@ -13,5 +13,4 @@ noinst_PROGRAMS=
 noinst_PROGRAMS += analyzer
 analyzer_SOURCES = analyzer.C
 analyzer_CPPFLAGS = $(ROSE_INCLUDES)
-analyzer_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
-
+analyzer_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)

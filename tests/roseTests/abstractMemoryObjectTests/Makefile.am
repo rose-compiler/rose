@@ -8,12 +8,14 @@ SUBDIRS= .
 # Default header file search path
 INCLUDES = $(ROSE_INCLUDES)
 memObjectGenerator_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+indexSetTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 # Put test codes without main() entry here
 C_TESTCODES_REQUIRED_TO_COMPILE =  \
      struct_simplest.c \
      expression.c \
-     array.c
+     array.c \
+     arrayDereferencing.c
 
 CXX_TESTCODES_REQUIRED_TO_COMPILE = \
      test_2011_08_15.cpp \
@@ -31,9 +33,9 @@ ALL_TESTCODES = \
 #TEST_DIR = $(top_srcdir)/tests/CompileTests/OpenMP_tests
 #TEST_INCLUDES = -I$(top_srcdir)/src/frontend/SageIII -I$(top_srcdir)/src/midend/programTransformation/ompLowering
 
-noinst_PROGRAMS = memObjectGenerator
+noinst_PROGRAMS = memObjectGenerator indexSetTest
 memObjectGenerator_SOURCES = memObjectGenerator.C
-
+indexSetTest_SOURCES = indexSetTest.C
 # this flag is used for the long list of CXX test files
 TEST_FLAGS = $(TEST_INCLUDES) -g --edg:no_warnings #-rose:verbose 2 #--edg:restrict #-rose:wave 
 
@@ -49,12 +51,14 @@ $(PASSING_CXX_TEST_Objects): %.o: %.cpp memObjectGenerator
 	./memObjectGenerator$(EXEEXT) ${TEST_FLAGS} -c $< &>$(@:.o=.out)
 
 
-check-local: memObjectGenerator
+check-local: memObjectGenerator indexSetTest
 	@echo "Test for Abstrace Memory Object Interface."
 	@echo "***************** Testing C input *******************"
 	$(MAKE) $(PASSING_C_TEST_Objects)
 	@echo "***************** Testing C++ input ******************"
 	$(MAKE) $(PASSING_CXX_TEST_Objects)
+	@echo "***************** Testing IndexSet  ******************"
+	./indexSetTest
 	@echo "***********************************************************************************************************"
 	@echo "****** ROSE/tests/roseTests/abstractMemoryObjectTests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"

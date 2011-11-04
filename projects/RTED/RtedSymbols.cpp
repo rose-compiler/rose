@@ -74,17 +74,17 @@ static
 void set_rtedenum(SgScopeStatement& n, const std::string& name, SgEnumDeclaration*& res)
 {
   res = n.lookup_enum_symbol(rtedIdentifier(name))->get_declaration();
-  ROSE_ASSERT(res);
+  presence_test(name, res);
 }
 
 static
 void set_rtedfunc(SgGlobal& n, const std::string& name, SgFunctionSymbol*& res)
 {
   res = n.lookup_function_symbol(rtedIdentifier(name));
-  // cannot assert for upc functions :(   was: ROSE_ASSERT(res);
+  presence_test(name, res);
 }
 
-void RtedSymbols::initialize(SgGlobal& n)
+void RtedSymbols::initialize(SgGlobal& n, SourceFileType sft)
 {
   set_rtedfunc(n, "CreateArray",              roseCreateArray);
   set_rtedfunc(n, "AllocMem",                 roseAllocMem);
@@ -107,25 +107,30 @@ void RtedSymbols::initialize(SgGlobal& n)
   set_rtedfunc(n, "ReallocateMemory",         roseReallocateMemory);
   set_rtedfunc(n, "CheckIfThisNULL",          roseCheckIfThisNULL);
   set_rtedfunc(n, "Addr",                     roseAddr);
-  set_rtedfunc(n, "AddrSh",                   roseAddrSh);
   set_rtedfunc(n, "Close",                    roseClose);
-  set_rtedfunc(n, "UpcExitWorkzone",          roseUpcExitWorkzone);
-  set_rtedfunc(n, "UpcEnterWorkzone",         roseUpcEnterWorkzone);
-  set_rtedfunc(n, "UpcAllInitialize",         roseUpcAllInitialize);
-  set_rtedfunc(n, "UpcBeginExclusive",        roseUpcBeginExclusive);
-  set_rtedfunc(n, "UpcEndExclusive",          roseUpcEndExclusive);
 
-  set_rtedfunc(n, "UpcEnterSharedPtr",        roseUpcEnterSharedPtr);
-  set_rtedfunc(n, "UpcExitSharedPtr",         roseUpcExitSharedPtr);
+  set_rtedfunc(n, "UpcAllInitialize",         roseUpcAllInitialize);
 
   set_rtedtype(n, "AddressDesc",              roseAddressDesc);
   set_rtedtype(n, "TypeDesc",                 roseTypeDesc);
   set_rtedtype(n, "SourceInfo",               roseSourceInfo);
-
   set_rtedenum(n, "AllocKind",                roseAllocKind);
 
-  set_typedef_type(n, "size_t",               size_t_member);
+  // language specific symbols
+  if (sft == ftUPC)
+  {
+  set_rtedfunc(n, "UpcExitWorkzone",          roseUpcExitWorkzone);
+  set_rtedfunc(n, "UpcEnterWorkzone",         roseUpcEnterWorkzone);
+
+  set_rtedfunc(n, "UpcBeginExclusive",        roseUpcBeginExclusive);
+  set_rtedfunc(n, "UpcEndExclusive",          roseUpcEndExclusive);
+  set_rtedfunc(n, "UpcEnterSharedPtr",        roseUpcEnterSharedPtr);
+  set_rtedfunc(n, "UpcExitSharedPtr",         roseUpcExitSharedPtr);
+  set_rtedfunc(n, "AddrSh",                   roseAddrSh);
 }
 
+  // other symbols
+  set_typedef_type(n, "size_t",               size_t_member);
+}
 
 const std::string RtedSymbols::prefix("rted_");

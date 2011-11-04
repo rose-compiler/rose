@@ -31,6 +31,10 @@ HEADER_INTERPRETATION_PREDECLARATION_START
 #include "MemoryMap.h"
 HEADER_INTERPRETATION_PREDECLARATION_END
 
+HEADER_BINARY_INSTRUCTION_PREDECLARATION_START
+#include "MemoryMap.h"
+HEADER_BINARY_INSTRUCTION_PREDECLARATION_END
+
 HEADER_BINARY_START
 
  /*  This class forms a base class for all of the types represented in the Asm Instruction grammar.
@@ -111,9 +115,18 @@ HEADER_BINARY_INSTRUCTION_START
 		    find_noop_subsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch=false,
 					   bool relax_stack_semantics=false);
 		virtual std::set<rose_addr_t> get_successors(bool* complete); /*subclasses must redefine*/
-		virtual std::set<rose_addr_t> get_successors(const std::vector<SgAsmInstruction*>&, bool *complete);
+		virtual std::set<rose_addr_t> get_successors(const std::vector<SgAsmInstruction*>&,
+							     bool *complete,
+							     MemoryMap *initial_memory=NULL);
+		virtual size_t get_size() const { return p_raw_bytes.size(); } //faster than obj->get_raw_bytes().size()
 HEADER_BINARY_INSTRUCTION_END
 
+
+
+HEADER_STATIC_DATA_START
+	public:
+		size_t get_size() const { return p_raw_bytes.size(); } //faster than obj->get_raw_bytes().size()
+HEADER_STATIC_DATA_END
 
 
 HEADER_BINARY_FILE_START
@@ -942,10 +955,10 @@ HEADER_GENERIC_SECTION_START
 		SgAsmGenericString *get_name() const;		/** Same as standard ROSETTA accessor */
 		void set_name(SgAsmGenericString *s);		/** Like std accessor but sets parent of 's' */
 
-		/* Convenience functions */
-		ExtentPair get_file_extent() const;		/* Returns get_offset() and get_size() */
-		ExtentPair get_mapped_preferred_extent() const; /* Returns get_mapped_preferred_rva() and get_mapped_size() */
-		bool align();					/* Increase file offset and mapping rva to satisfy constraints */
+                /* Convenience functions */
+                Extent get_file_extent() const;                 /* Returns get_offset() and get_size() */
+                Extent get_mapped_preferred_extent() const;     /* Returns get_mapped_preferred_rva() and get_mapped_size() */
+                bool align();                                   /* Increase file offset and mapping rva to satisfy constraints */
 
 	protected:
 		void ctor(SgAsmGenericFile*, SgAsmGenericHeader*);
@@ -3927,7 +3940,9 @@ HEADER_BINARY_X86_INSTRUCTION_START
 		    find_noop_subsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch=false,
 					   bool relax_stack_semantics=false);
 		virtual std::set<rose_addr_t> get_successors(bool* complete);
-		virtual std::set<rose_addr_t> get_successors(const std::vector<SgAsmInstruction*>&, bool* complete);
+		virtual std::set<rose_addr_t> get_successors(const std::vector<SgAsmInstruction*>&,
+							     bool* complete,
+							     MemoryMap *initial_memory=NULL);
 HEADER_BINARY_X86_INSTRUCTION_END
 
 
@@ -3992,7 +4007,7 @@ HEADER_BINARY_BLOCK_START
 		BLK_USERDEF	= 0x0020,	/**< User says block belongs to the function. */
 		BLK_LEFTOVERS	= 0x0040,	/**< Block is being assigned to a FUNC_LEFTOVERS function because it could
 						 *   not be assigned to any other function. */
-
+		BLK_JUMPTABLE   = 0x0080,	/**< Table of code addresses used by indirect branches. */
 		BLK_GRAPH1	= 0x0100,	/**< Block was added by the main CFG analysis. */
 		BLK_GRAPH2	= 0x0200,	/**< Block was added by a second pass of CFG analysis. */
 
@@ -4088,7 +4103,7 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
 						 *   partitioner only sets this flag for functions that are created due to
 						 *   the thunk recognition pass; other functions that don't have this bit set
 						 *   might also be thunks. */
-                FUNC_DEFAULT     = 0x1fff       /**< Default value for Partitioner class. */
+                FUNC_DEFAULT     = 0x6fff       /**< Default value for Partitioner class. */
         };
 
         /** Returns a very short string describing the reason mask. */

@@ -74,10 +74,12 @@ digraph G {
 digraph G {
 0[ label="0x08048340" ];
 1[ label="0x0804834f" ];
-2[ label="0x08048361" ];
-3[ label="0x08048363" ];
-2->0 ;
-2->1 ;
+2[ label="0x08048358" ];
+3[ label="0x08048361" ];
+4[ label="0x08048363" ];
+3->0 ;
+3->1 ;
+3->2 ;
 }
 
 === testDominance-C8.dot ===
@@ -102,16 +104,34 @@ digraph G {
 digraph G {
 0[ label="0x080483c0" ];
 1[ label="0x080483da" ];
-2[ label="0x08048412" ];
+2[ label="0x080483f4" ];
+3[ label="0x080483f8" ];
+4[ label="0x080483fb" ];
+5[ label="0x0804840a" ];
+6[ label="0x08048412" ];
 1->0 ;
+5->1 ;
+3->2 ;
+4->3 ;
+5->4 ;
 }
 
 === testDominance-C11.dot ===
 digraph G {
 0[ label="0x08048414" ];
-1[ label="0x0804844e" ];
-2[ label="0x08048456" ];
-1->0 ;
+1[ label="0x0804843f" ];
+2[ label="0x08048440" ];
+3[ label="0x08048443" ];
+4[ label="0x08048444" ];
+5[ label="0x08048449" ];
+6[ label="0x0804844e" ];
+7[ label="0x08048456" ];
+4->0 ;
+2->1 ;
+3->2 ;
+4->3 ;
+5->4 ;
+6->5 ;
 }
 
 === testDominance-C12.dot ===
@@ -132,5 +152,6 @@ digraph G {
 digraph G {
 0[ label="0x08048494" ];
 1[ label="0x080484aa" ];
+2[ label="0x080484ae" ];
 1->0 ;
 }

@@ -151,12 +151,10 @@ void generateAndReplace(Scheduling::PragmaSchedule & schedule) {
 #endif
 
 // Needed printers
-/*
 std::ostream & operator << (std::ostream & out, SgPragmaDeclaration & arg) {
   out << "Polyhedric Pragma " << &arg;
   return out;
 }
-*/
 
 std::ostream & operator << (std::ostream & out, const SgPragmaDeclaration & arg) {
   out << "Polyhedric Pragma " << &arg;

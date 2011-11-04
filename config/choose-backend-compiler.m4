@@ -196,7 +196,7 @@ dnl build using ROSE)
 # DQ (1/15/2007): This does not work, it seems that BACKEND_C_COMPILER must be a simple name not a compound name using an option!
 # Specify any option that specific backend compiler require (e.g. -restrict)
   case $COMPILER_NAME in
-    gcc|g++)
+    gcc*|g++*)
       ;;
     icc|icpc)
     # BACKEND_C_COMPILER="$BACKEND_C_COMPILER -restrict"
