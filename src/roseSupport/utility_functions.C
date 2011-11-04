@@ -53,14 +53,15 @@ const int roseTargetCacheLineSize = 32;
 
 // DQ (4/17/2010): This function must be define if C++ support in ROSE is disabled.
 std::string edgVersionString()
-{
+   {
 #ifdef ROSE_BUILD_CXX_LANGUAGE_SUPPORT
-  string edg_version = string("edg-") + StringUtility::numberToString(ROSE_EDG_MAJOR_VERSION_NUMBER) + "." + StringUtility::numberToString(ROSE_EDG_MINOR_VERSION_NUMBER);
+     string edg_version = string("edg-") + StringUtility::numberToString(ROSE_EDG_MAJOR_VERSION_NUMBER) + "." + StringUtility::numberToString(ROSE_EDG_MINOR_VERSION_NUMBER);
+  // string edg_version = string("edg-") + StringUtility::numberToString(ROSE_EDG_MAJOR_VERSION_NUMBER) + "." + StringUtility::numberToString(ROSE_EDG_MINOR_VERSION_NUMBER) + " " + StringUtility::numberToString(__EDG_VERSION__);
 #else
-  string edg_version = "unknown (EDG is disabled)";
+     string edg_version = "unknown (EDG is disabled)";
 #endif
-  return edg_version;
-}
+     return edg_version;
+   }
 
 
 
@@ -463,6 +464,11 @@ backendCompilesUsingOriginalInputFile ( SgProject* project )
                ROSE_ASSERT(false);
              }
         }
+
+  // DQ (11/3/2011): Mark this as being called from ROSE (even though the backend compiler is being used).
+  // This will help us detect where strings handed in using -D options may have lost some outer quotes.
+  // There may also be a better fix to detect quoted strings and requote them, so this should be considered also.
+     commandLineToGenerateObjectFile += " -DUSE_ROSE ";
 
      int finalCombinedExitStatus = 0;
      if (project->numberOfFiles() > 0)

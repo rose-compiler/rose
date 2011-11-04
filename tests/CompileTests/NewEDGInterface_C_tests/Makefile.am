@@ -152,6 +152,9 @@ test2006_101.C \
 test2006_139.C \
 test2006_160.C
 
+# This is a C++ test!
+# test2011_147.C
+
 
 if !ROSE_USE_EDG_VERSION_4_3
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
@@ -299,6 +302,8 @@ $(TEST_Objects): ./newEDGInterfaceTranslator
 	@echo "Copy the file to the local build tree so that we can change the file name suffix (to be a C language file) ..."
 	cp $(srcdir)/../Cxx_tests/$(@:.o=.C) $(@:.o=.c)
 	./newEDGInterfaceTranslator $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests -c $(@:.o=.c)
+#	Test this code as well to make sure we can handle testing of the EDG frontend only.
+	../../testFrontEnd $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests -c $(@:.o=.c)
 	rm -f $(@:.o=.c)
 
 # This requires a special makefile rule

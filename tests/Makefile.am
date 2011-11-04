@@ -23,6 +23,7 @@ endif
 #  Phase 3) analysis, code generation, and compiling the generated code
 bin_PROGRAMS = \
    testParser \
+   testFrontEnd \
    testAnalysis \
    testCodeGeneration \
    testTranslator \
@@ -41,6 +42,11 @@ bin_PROGRAMS = \
 # This test only works with C/C++ and Fortran.  Not clear what it means for the binary, 
 # which has its own options for skipping different phases.
 testParser_SOURCES = testParser.C
+
+# This test code just calls the EDG frontend and then compiles the 
+# original source file using the backend specified to ROSE.  This is 
+# useful in evaluating the newer EDG frontend against test codes.
+testFrontEnd_SOURCES = testFrontEnd.C
 
 # Phase 1 tests code:
 # This is used in specialized tests outside of ROSE testing for analysis only of large projects.
