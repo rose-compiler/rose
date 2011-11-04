@@ -9,11 +9,9 @@ noinst_PROGRAMS = incrementalInversionTest
 incrementalInversionTest_SOURCES =  incrementalInversionTest.C
 incrementalInversionTest_LDADD =	$(top_builddir)/projects/backstroke/libBackstroke.la \
 		 	$(top_builddir)/projects/backstroke/restrictedLanguage/libBackstrokeRestrictedLanguage.la \
-			$(top_builddir)/projects/backstroke/reverseComputation/libBackstrokeReverser.la \
 			$(top_builddir)/projects/backstroke/pluggableReverser/libBackstrokePluggableReverser.la \
 			$(top_builddir)/projects/backstroke/normalizations/libBackstrokeNormalizations.la \
 			$(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.la \
-			$(top_builddir)/projects/backstroke/ssa/libSSA.la \
 			$(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 
