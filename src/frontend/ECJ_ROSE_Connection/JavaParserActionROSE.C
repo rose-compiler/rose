@@ -760,7 +760,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSend (JNIEnv *env, jobject 
        // translated into the ROSE AST.
 
           printf ("ERROR: functionSymbol == NULL \n");
-       // ROSE_ASSERT(false);
+          ROSE_ASSERT(false);
         }
    }
 
@@ -796,7 +796,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSendEnd (JNIEnv *env, jobje
         }
 
         //
-        // charles4 09/10/11:
+        // charles4: 09/10/11:
         //
         //     TODO: Remove the guard statement...  It is needed for now (ONLY) because if the
         //     function name is a QualifiedName, it is currently not processed and thus nothing
@@ -809,7 +809,10 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSendEnd (JNIEnv *env, jobje
         }
 
 // Remove this!
-     SgStatement* statement = NULL;
+
+// charles4: 11/04/2011 - A function call should not be assu,ed to be an expression!
+//     SgStatement* statement = NULL;
+
 //     if (astJavaExpressionStack.empty() == true)
 //        {
        // This can happen if we are in a debugging mode and the function was not found and function expression was not built.
@@ -826,7 +829,10 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSendEnd (JNIEnv *env, jobje
 //             }
 //        }
 //       else
-        {
+
+// charles4: 11/04/2011 - A function call should not be assu,ed to be an expression!
+//        {
+
 // Remove this!
 //          ROSE_ASSERT(astJavaExpressionStack.empty() == false);
 //
@@ -872,7 +878,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSendEnd (JNIEnv *env, jobje
                functionCallExp->append_arg(arguments[i]);
              }
 
-          SgExpression* exprForExprStatement = functionCallExp;
+          SgExpression* exprForFunction = functionCallExp;
 
        // The remaining arguments are really just the object chain through which the function is called.
           ROSE_ASSERT(arguments.size() >= numberOfFunctionParameters);
@@ -880,17 +886,30 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSendEnd (JNIEnv *env, jobje
           for (size_t i = 0; i < objectChainLength; i++)
              {
                ROSE_ASSERT(arguments[i] != NULL);
-               exprForExprStatement = SageBuilder::buildBinaryExpression<SgDotExp>(arguments[i],exprForExprStatement);
+
+               //
+               // charles4: 11/4/2011 - ECJ gratuitously inserts a "this." prefix in front of function calls.
+               // This results in a Java error in the "unparser" output when such a method is static. We guard
+               // agains this problem here.
+               //
+               if (! (isSgThisExp(arguments[i]) &&
+                      functionDeclaration -> get_declarationModifier().get_storageModifier().isStatic())) {
+                   exprForFunction = SageBuilder::buildBinaryExpression<SgDotExp>(arguments[i], exprForFunction);
+               }
              }
 
           // ROSE_ASSERT(astJavaStatementStack.empty() == true);
           // SgStatement* statement = SageBuilder::buildExprStatement(functionCallExp);
           // statement = SageBuilder::buildExprStatement(functionCallExp);
-          statement = SageBuilder::buildExprStatement(exprForExprStatement);
-          ROSE_ASSERT(statement != NULL);
-        }
+  // charles4: 11/04/2011 - A function call should not be assu,ed to be an expression!
+  //          statement = SageBuilder::buildExprStatement(exprForExprStatement);
+  //          ROSE_ASSERT(statement != NULL);
 
-     ROSE_ASSERT(statement != NULL);
+// charles4: 11/04/2011 - A function call should not be assu,ed to be an expression!
+//        }
+
+// charles4: 11/04/2011 - A function call should not be assu,ed to be an expression!
+//     ROSE_ASSERT(statement != NULL);
 
   // DQ (7/31/2011): This should be left on the stack instead of being added to the current scope before the end of the scope.
   // printf ("Previously calling appendStatement in cactionMessageSendEnd() \n");
@@ -898,7 +917,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSendEnd (JNIEnv *env, jobje
 
 // Remove this!
 //     astJavaStatementStack.push_front(statement);
-     astJavaComponentStack.push(statement);
+// charles4: 11/04/2011 - A function call should not be assu,ed to be an expression!
+//     astJavaComponentStack.push(statement);
+     astJavaComponentStack.push(exprForFunction);
 
   // printf ("Number of statements in current scope = %zu \n",astJavaScopeStack.front()->generateStatementList().size());
 
@@ -1825,10 +1846,16 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBlockEnd(JNIEnv *env, jobject xxx,
 
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
 
+  // DQ (7/30/2011): Take the block off of the scope stack and put it onto the statement stack so that we can 
+  // process either blocks of other statements uniformally.
+     SgBasicBlock *body = (SgBasicBlock *) astJavaScopeStack.front();
+     ROSE_ASSERT(isSgBasicBlock(body));
+     astJavaScopeStack.pop_front();
+
 // Remove this!
 //     appendStatementStack(numberOfStatements);
      for (int i = 0; i  < numberOfStatements; i++) {
-         SgStatement *statement = astJavaComponentStack.popStatement();
+       SgStatement *statement = astJavaComponentStack.popStatement();
           if (SgProject::get_verbose() > 2) {
               cerr << "Adding statement "
                    << statement -> class_name()
@@ -1836,21 +1863,16 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBlockEnd(JNIEnv *env, jobject xxx,
                    << endl;
               cerr.flush();
          }
-         astJavaScopeStack.front()->prepend_statement(statement);
+         body->prepend_statement(statement);
      }
 
-  // DQ (7/30/2011): We only pop a pricise number of statments off the stack, so that can still be statements left.
+  // DQ (7/30/2011): We only pop a precise number of statments off the stack, so that can still be statements left.
   // ROSE_ASSERT(astJavaStatementStack.empty() == true);
 
-  // DQ (7/30/2011): Take the block off of the scope stack and put it onto the statement stack so that we can 
-  // process either blocks of other statements uniformally.
-     SgStatement* body = astJavaScopeStack.front();
-     ROSE_ASSERT(body != NULL);
 // Remove this!
 //     astJavaStatementStack.push_front(body);
      astJavaComponentStack.push(body);
 
-     astJavaScopeStack.pop_front();
 
      outputJavaState("At BOTTOM of cactionBlockEnd");
    }
@@ -2077,21 +2099,37 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompoundAssignmentEnd(JNIEnv *env,
      switch(operator_kind)
         {
        // Operator codes used by the CompoundAssignment in ECJ.
-          case PLUS:        binaryAssignmentStatementSupport<SgPlusAssignOp>();   break;
-          case MINUS:       binaryAssignmentStatementSupport<SgMinusAssignOp>();  break;
-          case DIVIDE:      binaryAssignmentStatementSupport<SgDivAssignOp>();    break;
-          case MULTIPLY:    binaryAssignmentStatementSupport<SgMultAssignOp>();   break;
-          case OR:          binaryAssignmentStatementSupport<SgIorAssignOp>();    break;
-          case AND:         binaryAssignmentStatementSupport<SgAndAssignOp>();    break;
-          case XOR:         binaryAssignmentStatementSupport<SgXorAssignOp>();    break;
-          case REMAINDER:   binaryAssignmentStatementSupport<SgModAssignOp>();    break;
-          case RIGHT_SHIFT: binaryAssignmentStatementSupport<SgRshiftAssignOp>(); break;
-          case LEFT_SHIFT:  binaryAssignmentStatementSupport<SgLshiftAssignOp>(); break;
+
+//Remove this!
+// charles4: 10/14/2011
+//          case PLUS:        binaryAssignmentStatementSupport<SgPlusAssignOp>();   break;
+//          case MINUS:       binaryAssignmentStatementSupport<SgMinusAssignOp>();  break;
+//          case DIVIDE:      binaryAssignmentStatementSupport<SgDivAssignOp>();    break;
+//          case MULTIPLY:    binaryAssignmentStatementSupport<SgMultAssignOp>();   break;
+//          case OR:          binaryAssignmentStatementSupport<SgIorAssignOp>();    break;
+//          case AND:         binaryAssignmentStatementSupport<SgAndAssignOp>();    break;
+//          case XOR:         binaryAssignmentStatementSupport<SgXorAssignOp>();    break;
+//          case REMAINDER:   binaryAssignmentStatementSupport<SgModAssignOp>();    break;
+//          case RIGHT_SHIFT: binaryAssignmentStatementSupport<SgRshiftAssignOp>(); break;
+//          case LEFT_SHIFT:  binaryAssignmentStatementSupport<SgLshiftAssignOp>(); break;
+          case PLUS:        binaryExpressionSupport<SgPlusAssignOp>();   break;
+          case MINUS:       binaryExpressionSupport<SgMinusAssignOp>();  break;
+          case DIVIDE:      binaryExpressionSupport<SgDivAssignOp>();    break;
+          case MULTIPLY:    binaryExpressionSupport<SgMultAssignOp>();   break;
+          case OR:          binaryExpressionSupport<SgIorAssignOp>();    break;
+          case AND:         binaryExpressionSupport<SgAndAssignOp>();    break;
+          case XOR:         binaryExpressionSupport<SgXorAssignOp>();    break;
+          case REMAINDER:   binaryExpressionSupport<SgModAssignOp>();    break;
+          case RIGHT_SHIFT: binaryExpressionSupport<SgRshiftAssignOp>(); break;
+          case LEFT_SHIFT:  binaryExpressionSupport<SgLshiftAssignOp>(); break;
 
        // This may have to handled special in ROSE. ROSE does not represent the semantics,
        // and so this support my require a special operator to support Java in ROSE. For
        // now we will use the more common SgRshiftOp.
-          case UNSIGNED_RIGHT_SHIFT: binaryAssignmentStatementSupport<SgJavaUnsignedRshiftAssignOp>(); break;
+//Remove this!
+// charles4: 10/14/2011
+//          case UNSIGNED_RIGHT_SHIFT: binaryAssignmentStatementSupport<SgJavaUnsignedRshiftAssignOp>(); break;
+          case UNSIGNED_RIGHT_SHIFT: binaryExpressionSupport<SgJavaUnsignedRshiftAssignOp>(); break;
 
           default:
              {
@@ -2622,7 +2660,11 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionForStatementEnd(JNIEnv *env, jobje
 //     ROSE_ASSERT(incrementExpression != NULL);
 //     astJavaExpressionStack.pop_front();
 
-// charles4: TODO: process list of 0 or more increments
+// charles4 10/14/2011: If there are more than 1 increment statements, merge them into a
+// single expression; a hierarchy of SgCommaOpExp.
+     for (int i = 1; i < num_increments; i++) {
+         binaryExpressionSupport<SgCommaOpExp>();
+     }
      SgExpression *incrementExpression = astJavaComponentStack.popExpression();
 
 // Remove this!
@@ -2661,8 +2703,6 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionForStatementEnd(JNIEnv *env, jobje
 //          ROSE_ASSERT(false);
 //        }
 
-// charles4: TODO: process list of 0 or more initializations.
-     SgStatement* initStatement = astJavaComponentStack.popStatement();
 
   // It might be that we should build this on the way down so that we can have it on the stack 
   // before the body would be pushed onto the scope stack if a block is used.
@@ -2677,10 +2717,17 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionForStatementEnd(JNIEnv *env, jobje
   // The SageBuilder::buildForStatement() function works better if we provide a proper SgForInitStatement
   // Else the original SgForInitStatement built by the SgForStatement constructor will be left dangling...
   // and this causes an error in the AST post processing and testing.
-     SgStatementPtrList statements;
-     statements.push_back(initStatement);
-     SgForInitStatement* forInitStatement = SageBuilder::buildForInitStatement_nfi(statements);
+// Remove this!
+//    SgStatementPtrList statements;
+
+// Remove this!
+//     SgForInitStatement* forInitStatement = SageBuilder::buildForInitStatement_nfi(statements);
+     SgForInitStatement* forInitStatement = SageBuilder::buildForInitStatement();
      ROSE_ASSERT(forInitStatement != NULL);
+     // charles4 10/14/2011: A For statement may contain a list of 0 or more initializations.
+     for (int i = 0; i < num_initializations; i++) {
+         forInitStatement -> prepend_init_stmt(astJavaComponentStack.popStatement());
+     }
 
   // We need to set the source code position information
      SageInterface::setOneSourcePositionForTransformation(forInitStatement);
@@ -2702,8 +2749,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionForStatementEnd(JNIEnv *env, jobje
   // Remove the SgForStatement on the scope stack...
      astJavaScopeStack.pop_front();
 
-     ROSE_ASSERT(initStatement->get_parent() != NULL);
-     ROSE_ASSERT(initStatement->get_startOfConstruct() != NULL);
+// Remove this!
+//     ROSE_ASSERT(initStatement->get_parent() != NULL);
+//     ROSE_ASSERT(initStatement->get_startOfConstruct() != NULL);
 
      ROSE_ASSERT(testExpression->get_parent() != NULL);
      ROSE_ASSERT(testStatement->get_parent() != NULL);
@@ -4010,7 +4058,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTryStatementEnd(JNIEnv *env, jobje
 //        ROSE_ASSERT(isSgBasicBlock(finally_body));
 //    }
     SgBasicBlock *finally_body = (SgBasicBlock *) (hasFinallyBlock ? astJavaComponentStack.popStatement() : NULL);
-    ROSE_ASSERT(isSgBasicBlock(finally_body));
+    ROSE_ASSERT(finally_body == NULL || isSgBasicBlock(finally_body));
 
     list<SgCatchOptionStmt *> catches;
     for (int i = 0; i < numCatchBlocks; i++) {
