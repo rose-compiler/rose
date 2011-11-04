@@ -18,8 +18,6 @@ test2001_07.C \
 test2001_08.C \
 test2001_09.C 
 
-# test2001_10.C 
-
 else
 include $(srcdir)/Makefile-pass.inc
 endif
@@ -27,7 +25,13 @@ endif
 # Import list of C++ test cases that are known to fail:
 #   TESTCODE_CURRENTLY_FAILING
 #
+if ROSE_USE_EDG_VERSION_4_3
+TESTCODE_CURRENTLY_FAILING = \
+ test2001_10.C 
+
+else
 include $(srcdir)/Makefile-fail.inc
+endif
 
 # Configure-time automake conditional
 if ROSE_USE_LONG_MAKE_CHECK_RULE
