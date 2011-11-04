@@ -32,6 +32,7 @@ SUBDIRS = \
      roseToLLVM \
      taintcheck \
      PowerAwareCompiler \
+     ManyCoreRuntime \
      $(OPTIONAL_PROJECTS)
 
 # DQ (9/26/2011): Directory removed for failing new AST consistancy test for references to deleted IR nodes.

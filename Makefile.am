@@ -501,3 +501,6 @@ rosePublicConfig.h: rose_config.h
 	@$(top_srcdir)/scripts/publicConfiguration.pl <$^ >$@
 DISTCLEANFILES = rosePublicConfig.h
 
+# This file does not exist until we run the compiler to build it.
+# include $(top_builddir)/src/frontend/SageIII/astPostProcessing/.libs/astPostProcessing.d
+
