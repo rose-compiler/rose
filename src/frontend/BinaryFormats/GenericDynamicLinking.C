@@ -141,6 +141,7 @@ SgAsmGenericSymbol::dump(FILE *f, const char *prefix, ssize_t idx) const
     switch (p_type) {
       case SYM_NO_TYPE:  s_type = "no-type";  break;
       case SYM_DATA:     s_type = "data";     break;
+      case SYM_IFUNC:    s_type = "ifunc";    break;
       case SYM_FUNC:     s_type = "function"; break;
       case SYM_SECTION:  s_type = "section";  break;
       case SYM_FILE:     s_type = "file";     break;

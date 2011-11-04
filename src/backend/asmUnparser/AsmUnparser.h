@@ -82,6 +82,7 @@ class SgAsmInterpretation;
  *     <li>Data blocks (SgAsmBlock objects containing only data objects):
  *        <ol>
  *           <li>DataBlockBody (unparse): unparse each data object in the block.</li>
+ *           <li>DataBlockLineTermination (post): emits a linefeed at the end of each data block.</li>
  *        </ol>
  *     </li>
  *     <li>Functions:
@@ -465,6 +466,12 @@ public:
         virtual bool operator()(bool enabled, const DataBlockArgs &args);
     };
 
+    /** Functor to emit a blank line after every data block. */
+    class DataBlockLineTermination: public UnparserCallback {
+    public:
+        virtual bool operator()(bool enabled, const DataBlockArgs &args);
+    };
+
     /**************************************************************************************************************************
      *                                  Function Callbacks
      **************************************************************************************************************************/
@@ -570,6 +577,7 @@ public:
     StaticDataLineTermination staticDataLineTermination;
 
     DataBlockBody dataBlockBody;
+    DataBlockLineTermination dataBlockLineTermination;
 
     FunctionEntryAddress functionEntryAddress;
     FunctionSeparator functionSeparator;
