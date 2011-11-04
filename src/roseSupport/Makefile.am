@@ -36,6 +36,7 @@ include_HEADERS =				\
 	transformationSupport.h			\
 	optionDeclaration.h			\
 	sourceLocationInheritedAttribute.h	\
+	rangemap.h				\
 	roseTranslators.h			\
 	utility_functions.h			\
 	threadSupport.h				\
