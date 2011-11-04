@@ -1,5 +1,9 @@
 /* JJW (12/8/2008): Do not include these definitions for EDG 3.10 */
-#ifndef ROSE_USE_NEW_EDG_INTERFACE
+/* #ifndef ROSE_USE_NEW_EDG_INTERFACE */
+/* DQ (11/1/2011): I think we do need this for at least C++ code (e.g. __CHAR_BIT__ must
+   be defined along with lots of other Common Predefined Macros.
+*/
+#if 1
 
 /* Must use C style comments so that "--edg:old_c" options will work! */
 /* DQ (7/13/2006): Undefine these before defining them to avoid warnings. */
@@ -358,9 +362,11 @@ _Atomic_word  __sync_fetch_and_add(volatile _Atomic_word* __mem, int __val);
 /* DQ (8/25/2009): Added another builtin function required to compile ROSE with ROSE. (required for boost) */
 /* #if ROSE_CPP_MODE */
 #if (ROSE_LANGUAGE_MODE == ROSE_CXX_LANGUAGE_MODE)
-/* These use C++ references and so can't be used in C mode */
+/* These use C++ references and so can't be used in C mode (should not be used with EDG 4.3) */
+#ifndef ROSE_USE_NEW_EDG_INTERFACE
 int __sync_lock_test_and_set( int & v, int n );
 int __sync_lock_release( int & v );
+#endif
 #endif
 
 /* DQ and Liao (7/11/2009) Added macros to define away new GNU C++ extension (not required for newer EDG 4.0 use */
