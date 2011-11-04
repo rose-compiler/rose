@@ -1710,6 +1710,7 @@ AM_CONDITIONAL(ROSE_USE_ETHER,test "$with_ether" != "no")
 
 # libgcrypt is used for computing SHA1 hashes of binary basic block semantics, among other things. [RPM 2010-05-12]
 AC_CHECK_HEADERS(gcrypt.h)
+AC_CHECK_LIB(gpg-error,gpg_strerror) dnl needed by statically linked libgcrypt
 AC_CHECK_LIB(gcrypt,gcry_check_version)
 
 # Added support for detection of libnuma, a NUMA aware memory allocation mechanism for many-core optimizations.

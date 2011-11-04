@@ -126,7 +126,7 @@ namespace BinaryAnalysis {
          *  typedef boost::graph_traits<Graph>::edge_descriptor Edge;
          *  @endcode
          */
-        typedef boost::adjacency_list<boost::listS,     /* edge storage */
+        typedef boost::adjacency_list<boost::setS,      /* edge storage */
                                       boost::vecS,      /* vertex storage */
                                       boost::bidirectionalS,
                                       boost::property<boost::vertex_name_t, SgAsmBlock*>

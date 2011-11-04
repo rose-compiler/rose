@@ -46,7 +46,7 @@ namespace BinaryAnalysis {
          *  typedef boost::graph_traits<Graph>::edge_descriptor Edge;
          *  @endcode
          */
-        typedef boost::adjacency_list<boost::listS,                                 /* out-edges of each vertex in std::list */
+        typedef boost::adjacency_list<boost::setS,                                  /* out-edges of each vertex in std::list */
                                       boost::vecS,                                  /* store vertices in std::vector */
                                       boost::bidirectionalS,                        /* call graph is directed */
                                       boost::property<boost::vertex_name_t, SgAsmFunction*>

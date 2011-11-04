@@ -21,6 +21,7 @@ struct CTranslationPolicy {
   virtual SgVariableSymbol* getIPSymbol() const = 0;
   virtual const std::map<uint64_t, SgLabelStatement*>& getLabelsForBlocks() const = 0;
   virtual const std::set<uint64_t>& getExternallyVisibleBlocks() const = 0;
+  void cpuid() {}
 };
 
 unsigned long long getValue(SgExpression* e);
