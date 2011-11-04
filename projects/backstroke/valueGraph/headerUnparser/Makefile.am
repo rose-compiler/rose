@@ -5,7 +5,7 @@ LINK	 = $(CXXLINK)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 
-# noinst_LIBRARIES lists all the librarlies that should be built, but not installed
+# noinst_LIBRARIES lists all the libraries that should be built, but not installed
 noinst_PROGRAMS = unparseHeader
 
 unparseHeader_SOURCES = headerUnparser.C
@@ -13,7 +13,6 @@ unparseHeader_LDADD = \
 		$(top_builddir)/projects/backstroke/valueGraph/libBackstrokeFunctionReverser.la \
 		$(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.la \
 		$(top_builddir)/projects/backstroke/normalizations/libBackstrokeNormalizations.la \
-		$(top_builddir)/projects/backstroke/ssa/libSSA.la \
 		$(LIBS_WITH_RPATH) $(ROSE_LIBS)
 unparseHeader_include_HEADERS = 
 unparseHeader_includedir = $(includedir)/backstroke
