@@ -769,6 +769,7 @@ inline SgIfStmt * buildIfStmt(SgExpression* conditional, SgStatement * true_body
 SgIfStmt * buildIfStmt_nfi(SgStatement* conditional, SgStatement * true_body, SgStatement * false_body);
 
 //! Build a for init statement
+SgForInitStatement * buildForInitStatement();
 SgForInitStatement * buildForInitStatement(const SgStatementPtrList & statements);
 SgForInitStatement * buildForInitStatement_nfi(SgStatementPtrList & statements);
 
