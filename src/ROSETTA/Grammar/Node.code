@@ -6,6 +6,7 @@ HEADER_NODE_PREDECLARATION_START
 // tps (01/27/10): Added essential files..
 //#include "sage3basic.h"
 #include "setup.h"
+#include "rangemap.h"
 
 #include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
@@ -69,55 +70,24 @@ bool operator>=(const rose_rva_t &a1, const rose_rva_t &a2);
 bool operator==(const rose_rva_t &a1, const rose_rva_t &a2);
 bool operator!=(const rose_rva_t &a1, const rose_rva_t &a2);
 
-// ExtentPair and ExtentMap are used for free lists and internal holes in binary executables (RPM 2008-10-09)
-typedef std::pair<rose_addr_t,rose_addr_t> ExtentPair; 		  /* Describes a part of a file (offset, size) */
+typedef Range<rose_addr_t> Extent;
 
-// An ExtentMap keeps track of contiguous regions of address space. Entries in the ExtentMap are sorted by
-// starting offset. No two entries overlap or adjoin.
-class ExtentMap : public std::map<rose_addr_t,rose_addr_t> {
-	public:
-		typedef std::map<rose_addr_t,rose_addr_t> super;
+/** Specialized printing for ROSE addresses. */
+template<>
+void Range<rose_addr_t>::print(std::ostream &o) const;
 
-		ExtentMap() {}
-
-		/* Modifying methods */
-		void insert(const ExtentMap&);
-		void insert(const ExtentPair &extent)
-			{insert(extent.first, extent.second);}
-		void insert(rose_addr_t offset, rose_addr_t size, rose_addr_t align_lo=1, rose_addr_t align_hi=1);
-		void erase(const ExtentPair &extent)
-			{erase(extent.first, extent.second);}
-		void erase(rose_addr_t offset, rose_addr_t size);
-		void erase(const ExtentMap&);
-		void precipitate(rose_addr_t reagent);
-
-		/* Operator-like non-modifying methods */
-		ExtentMap subtract_from(const ExtentPair &extent) const
-			{return subtract_from(extent.first, extent.second);}
-		ExtentMap subtract_from(rose_addr_t offset, rose_addr_t size) const;
-		ExtentMap overlap_with(const ExtentPair &extent) const
-			{return overlap_with(extent.first, extent.second);}
-		ExtentMap overlap_with(rose_addr_t offset, rose_addr_t size) const;
-		size_t size() const; /**< Number of bytes in extent map (not the number extents). */
-		size_t nregions() const; /**< Number of discontiguous regions. */
-
-		/* Non-modifiying search methods */
-		ExtentPair find_address(rose_addr_t address) const;
-		bool exists_all(ExtentPair extent) const;
-
-		/* Allocation-like methods */
-		std::map<rose_addr_t,rose_addr_t>::iterator best_fit(rose_addr_t size);
-		std::map<rose_addr_t,rose_addr_t>::iterator highest_offset();
-		ExtentPair allocate_best_fit(rose_addr_t size);
-		ExtentPair allocate_first_fit(rose_addr_t size);
-	        void allocate_at(rose_addr_t offset, rose_addr_t size)
-			{allocate_at(ExtentPair(offset, size));}
-		void allocate_at(const ExtentPair&);
-		void dump_extents(FILE*, const char *prefix, const char *label, bool pad=true) const;
-
-		/* Class methods */
-		static char category(const ExtentPair &a, const ExtentPair &b);
+class ExtentMap: public RangeMap<Extent> {
+public:
+	static char category(const Extent &a, const Extent &b);
+	ExtentMap subtract_from(const Extent &e) const {
+		return invert_within<ExtentMap>(e);
+        }
+	void allocate_at(const Extent &request);
+	Extent allocate_best_fit(const rose_addr_t size);
+	Extent allocate_first_fit(const rose_addr_t size);
+	void dump_extents(FILE *f, const char *prefix, const char *label, bool pad=true) const;
 };
+
 
 /** Settings that control how the lowest-level SgAsmExecutableFileFormat::hexdump function behaves. */
 struct HexdumpFormat {
@@ -2126,6 +2096,24 @@ int SAGE_DEBUG = 0;  // default value is zero
 // Start of source code for SgNode
 // ###############################
 
+// Specialize printing for ROSE addresses.  A better place for this would be ExtentMap.C along
+// with all the other Extent-related methods.  Unfortunately, that file is compiled only if
+// ROSE is configured with binary support.
+template<>
+void Range<rose_addr_t>::print(std::ostream &o) const
+{
+    if (empty()) {
+        o <<"<empty>";
+    } else if (1==size()) {
+        char buf[64];
+        sprintf(buf, "0x%08"PRIx64, first());
+        o << buf;
+    } else {
+        char buf[64];
+        sprintf(buf, "0x%08"PRIx64"+0x%08"PRIx64"=0x%08"PRIx64, first(), size(), first()+size());
+        o <<buf;
+    }
+}
 
 // Support for global function type symbol table (moved to be static data pointer)
 // DQ (1/31/2006): Modified to build all types in the memory pools

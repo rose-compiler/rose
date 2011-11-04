@@ -6,6 +6,11 @@ AC_DEFUN([ROSE_SUPPORT_UPC],
 
 AC_MSG_CHECKING([for RTEDUPC])
 AC_ARG_ENABLE(rtedupc,AS_HELP_STRING([--enable-rtedupc],[Enable UPC support in ROSE (default=no)]),,[enableval=no])
+
+# set the dependence variables to avoid problems when UPC is not specified and not present
+am__fastdepUPC_TRUE='#'
+am__fastdepUPC_FALSE=
+
 AM_CONDITIONAL(ROSE_WITH_UPC, [test "x$enableval" = "xyes"])
 AS_IF([test "x$enableval" = "xyes"], [AM_PROG_UPC])
 AC_MSG_RESULT([$enableval])
