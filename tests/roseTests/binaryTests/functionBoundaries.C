@@ -112,8 +112,8 @@ main(int argc, char *argv[])
     fputs(SgAsmFunction::reason_key("    ").c_str(), stdout);
     printf("\n");
     printf("    Num  Low-Addr   End-Addr  Insns/Bytes   Reason        Kind   Name\n");
-    printf("    --- ---------- ---------- ------------ ------------ -------- --------------------------------\n");
+    printf("    --- ---------- ---------- ------------ ------------- -------- --------------------------------\n");
     ShowFunctions().traverseInputFiles(project, preorder);
-    printf("    --- ---------- ---------- ------------ ------------ -------- --------------------------------\n");
+    printf("    --- ---------- ---------- ------------ ------------- -------- --------------------------------\n");
     return 0;
 }
