@@ -502,11 +502,12 @@ uTraversePath(int begin, int end, CFG*& g, bool loop) {
                             if (addit) {
                             newpaths.insert(npath);
                             }
+                            
                             if (!workingthread) {
                             if ((newpaths.size() > 100 || i == permnums)) {
                                 workingthread = true;
                                 goodthread = true;
-                                workingthreadnum = omp_get_thread_num();
+                                //workingthreadnum = omp_get_thread_num();
                                 movepaths2 = newpaths;
                                 newpaths.clear();
                             }

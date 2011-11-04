@@ -13,11 +13,13 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 
 # DQ (7/2/2011): Fixed this to only handle binary work when binary support is available.
 # bin_PROGRAMS  = astTraversalTest processnew3Down4SgIncGraph processnew3Down4 binaryPaths
-bin_PROGRAMS  = yicesParser astTraversalTest processnew3Down4SgIncGraph2 strictGraphTest strictGraphTest2 strictGraphTest3 smtlibParser sourcePTP
+bin_PROGRAMS  = astTraversalTest processnew3Down4SgIncGraph2 strictGraphTest strictGraphTest2 strictGraphTest3 smtlibParser sourcePTP
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 bin_PROGRAMS += binaryPaths bPTP
 endif
-
+if HAVE_YICES
+bin_PROGRAMS += yicesParser
+endif
 # Allow development using -lrose -ledg (simpler) or using 
 # long list of separate libraries (for faster development)
 ROSE_DEVELOPMENT_LIBS = $(ROSE_SEPARATE_LIBS)
@@ -53,10 +55,11 @@ sourcePTP_SOURCES = sourcePTP.C
 sourcePTP_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
 sourcePTP_LDFLAGS = -fopenmp -lboost_serialization
 
-#yicesParser_SOURCES = yicesParser.C
-#yicesParser_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-#yicesParser_LDFLAGS = -fopenmp -lboost_serialization -I/home/hoffman34/yices/yices-1.0.292/include -L/home/hoffman34/yices/yices-1.0.292/lib -lyices
-
+if HAVE_YICES
+yicesParser_SOURCES = yicesParser.C
+yicesParser_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+yicesParser_LDFLAGS = -fopenmp -I$(YICES_PREFIX)/include -L$(YICES_PREFIX)/lib -lyices
+endif
 strictGraphTest3_SOURCES = strictGraphTest3.C
 strictGraphTest3_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
 strictGraphTest3_LDFLAGS = -fopenmp -lboost_serialization
@@ -101,17 +104,19 @@ smtParse: smtlibParser
 
 sourcePTPTest: sourcePTP
 	./sourcePTP $(srcdir)/test14.C
-
-#yicesParserTest: yicesParser
-#	./yicesParser $(srcdir)/test14.C 
-
+if HAVE_YICES
+yicesParserTest: yicesParser
+	./yicesParser $(srcdir)/test14.C 
+endif
 check-local:
 	@$(MAKE) testTraversals
 	@$(MAKE) testRunExamples2
 	@$(MAKE) strictGraph
 	@$(MAKE) smtParse
 	@$(MAKE) sourcePTPTest
-#	@$(MAKE) yicesParserTest
+if HAVE_YICES
+	@$(MAKE) yicesParserTest
+endif
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 	@$(MAKE) testRunExamplesbPTP
 	@$(MAKE) testRunExamplesBin
