@@ -4,7 +4,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 EXTRA_DIST = input1.C test11.C test12.C test13.C test14.C t1 t2 t3 t4
 
 # To keep compile commands tidy, please ONLY put required include flags here.
-INCLUDES = -fopenmp $(ROSE_INCLUDES)
+INCLUDES = $(ROSE_INCLUDES)
 
 ## Don't use the repository in ../src
 CXX_TEMPLATE_REPOSITORY_PATH = .
@@ -29,40 +29,40 @@ astTraversalTest_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
 
 bPTP_SOURCES = bPTP.C
 bPTP_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-bPTP_LDFLAGS = -fopenmp -lboost_serialization
+bPTP_LDFLAGS = -lboost_serialization
 
 processnew3Down4SgIncGraph2_SOURCES      = processnew3Down4SgIncGraph2.C
 processnew3Down4SgIncGraph2_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-processnew3Down4SgIncGraph2_LDFLAGS = -fopenmp -lboost_serialization
+processnew3Down4SgIncGraph2_LDFLAGS = -lboost_serialization
 
 binaryPaths_SOURCES = binaryPaths.C
 binaryPaths_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-binaryPaths_LDFLAGS = -fopenmp -lboost_serialization
+binaryPaths_LDFLAGS = -lboost_serialization
 
 strictGraphTest_SOURCES = strictGraphTest.C
 strictGraphTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-strictGraphTest_LDFLAGS = -fopenmp -lboost_serialization
+strictGraphTest_LDFLAGS = -lboost_serialization
 
 strictGraphTest2_SOURCES = strictGraphTest2.C
 strictGraphTest2_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-strictGraphTest2_LDFLAGS = -fopenmp -lboost_serialization
+strictGraphTest2_LDFLAGS = -lboost_serialization
 
 smtlibParser_SOURCES = smtlibParser.C
 smtlibParser_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-smtlibParser_LDFLAGS = -fopenmp -lboost_serialization
+smtlibParser_LDFLAGS = -lboost_serialization
 
 sourcePTP_SOURCES = sourcePTP.C
 sourcePTP_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-sourcePTP_LDFLAGS = -fopenmp -lboost_serialization
+sourcePTP_LDFLAGS = -lboost_serialization
 
 if HAVE_YICES
 yicesParser_SOURCES = yicesParser.C
 yicesParser_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-yicesParser_LDFLAGS = -fopenmp -I$(YICES_PREFIX)/include -L$(YICES_PREFIX)/lib -lyices
+yicesParser_LDFLAGS = -I$(YICES_PREFIX)/include -L$(YICES_PREFIX)/lib -lyices
 endif
 strictGraphTest3_SOURCES = strictGraphTest3.C
 strictGraphTest3_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-strictGraphTest3_LDFLAGS = -fopenmp -lboost_serialization
+strictGraphTest3_LDFLAGS = -lboost_serialization
 
 # source files don't contain anything that would be merged
 # TESTCODES = $(srcdir)/performanceTest.C
