@@ -9,7 +9,9 @@ FINISH TEMPFLATPATH CODE
 
 // Original Author (SgGraphTraversal mechanisms): Michael Hoffman
 //$id$
-#include<omp.h>
+//#ifdef ROSE_WITH_GOMP_OPENMP_LIBRARY
+//#include<omp.h>
+//#endif
 #include <boost/regex.hpp>
 #include <iostream>
 //#include "rose.h"
