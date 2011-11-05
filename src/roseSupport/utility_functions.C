@@ -404,7 +404,7 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
 
 
 int
-backendCompilesUsingOriginalInputFile ( SgProject* project )
+backendCompilesUsingOriginalInputFile ( SgProject* project, bool compile_with_USE_ROSE_macro )
    {
   // DQ (8/24/2009):
   // To work with existing makefile systems, we want to force an object file to be generated.
@@ -465,10 +465,13 @@ backendCompilesUsingOriginalInputFile ( SgProject* project )
              }
         }
 
-  // DQ (11/3/2011): Mark this as being called from ROSE (even though the backend compiler is being used).
-  // This will help us detect where strings handed in using -D options may have lost some outer quotes.
-  // There may also be a better fix to detect quoted strings and requote them, so this should be considered also.
-     commandLineToGenerateObjectFile += " -DUSE_ROSE ";
+     if (compile_with_USE_ROSE_macro == true)
+        {
+       // DQ (11/3/2011): Mark this as being called from ROSE (even though the backend compiler is being used).
+       // This will help us detect where strings handed in using -D options may have lost some outer quotes.
+       // There may also be a better fix to detect quoted strings and requote them, so this should be considered also.
+          commandLineToGenerateObjectFile += " -DUSE_ROSE ";
+        }
 
      int finalCombinedExitStatus = 0;
      if (project->numberOfFiles() > 0)

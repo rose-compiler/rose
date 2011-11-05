@@ -35,5 +35,5 @@ main( int argc, char * argv[] )
 
   // Skip calling the typical backend for ROSE (not required for just testing analysis)
   // This backend calls the backend compiler using the original input source file list.
-     return backendCompilesUsingOriginalInputFile(project);
+     return backendCompilesUsingOriginalInputFile(project, /* compile_with_USE_ROSE_macro */ true);
    }
