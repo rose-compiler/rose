@@ -734,6 +734,8 @@ public:
         iterator lb = lower_bound(addr);
         if (lb!=end() && lb->first.begins_before(Range(addr), false/*non-strict*/))
             return lb;
+        if (lb==begin())
+            return end();
         return --lb;
     }
     const_iterator find_prior(const typename Range::Value &addr) const {
@@ -742,6 +744,8 @@ public:
         const_iterator lb = lower_bound(addr);
         if (lb!=end() && lb->first.begins_before(Range(addr), false/*non-strict*/))
             return lb;
+        if (lb==begin())
+            return end();
         return --lb;
     }
     /** @} */
