@@ -36,19 +36,19 @@ va 0x080495bc + 0x00000a44 = 0x0804a000 rw-p at anon null + 0x00000000 buffer2.b
 
 0x0804828f: 00 ff 35 a0 95 04 08 ff |..5.....|
 0x08048297: 25 a4 95 04 08 00 00 00 |%.......|
-0x0804829f: 00                      |.       | ..U  17 bytes untyped data beginning at 0x0804828f
+0x0804829f: 00                      |.       | ..M  17 bytes untyped data beginning at 0x0804828f
 
 0x080482a0: ================================== Function (function call, import) <malloc@plt>
 0x080482a0: ff 25 a8 95 04 08       |.%....  | E1.    jmp    DWORD PTR ds:[0x080495a8]
 
 0x080482a6: 68 00 00 00 00 e9 e0 ff |h.......|
-0x080482ae: ff ff                   |..      | ..U  10 bytes untyped data beginning at 0x080482a6
+0x080482ae: ff ff                   |..      | ..M  10 bytes untyped data beginning at 0x080482a6
 
 0x080482b0: ================================== Function (function call, import) <__libc_start_main@plt>
 0x080482b0: ff 25 ac 95 04 08       |.%....  | E1.    jmp    DWORD PTR ds:[0x080495ac]
 
 0x080482b6: 68 08 00 00 00 e9 d0 ff |h.......|
-0x080482be: ff ff                   |..      | ..U  10 bytes untyped data beginning at 0x080482b6
+0x080482be: ff ff                   |..      | ..M  10 bytes untyped data beginning at 0x080482b6
 
 0x080482c0: ================================== Function (entry point, symbol) <_start>
 0x080482c0: Function does not return to caller.
@@ -115,7 +115,7 @@ va 0x080495bc + 0x00000a44 = 0x0804a000 rw-p at anon null + 0x00000000 buffer2.b
 0x0804833d: c9                      |.       | .1.    leave  
 0x0804833e: c3                      |.       |        ret    
 
-0x0804833f: 90                      |.       | ..U  1 byte untyped data beginning at 0x0804833f
+0x0804833f: 90                      |.       | ..M  1 byte untyped data beginning at 0x0804833f
 
 0x08048340: ================================== Function (function call, symbol, pattern) <frame_dummy>
 0x08048340: 55                      |U       | E1.    push   ebp
@@ -135,7 +135,7 @@ va 0x080495bc + 0x00000a44 = 0x0804a000 rw-p at anon null + 0x00000000 buffer2.b
 0x08048361: c9                      |.       | .1.    leave  
 0x08048362: c3                      |.       |        ret    
 
-0x08048363: 90                      |.       | ..U  1 byte untyped data beginning at 0x08048363
+0x08048363: 90                      |.       | ..M  1 byte untyped data beginning at 0x08048363
 
 0x08048364: ================================== Function (symbol) <main>
 0x08048364: 8d 4c 24 04             |.L$.    | E1.    lea    ecx, [esp + 0x04]
@@ -215,7 +215,7 @@ va 0x080495bc + 0x00000a44 = 0x0804a000 rw-p at anon null + 0x00000000 buffer2.b
 0x08048410: c9                      |.       |        leave  
 0x08048411: c3                      |.       |        ret    
 
-0x08048412: 89 f6                   |..      | ..U  2 bytes untyped data beginning at 0x08048412
+0x08048412: 89 f6                   |..      | ..M  2 bytes untyped data beginning at 0x08048412
 
 0x08048414: ================================== Function (symbol, pattern) <__libc_csu_fini>
 0x08048414: 55                      |U       | E1.    push   ebp
@@ -660,5 +660,5 @@ va 0x080495bc + 0x00000a44 = 0x0804a000 rw-p at anon null + 0x00000000 buffer2.b
 0x08048fe6: 00 00 00 00 00 00 20 00 |...... .|
 0x08048fee: 00 00 1a 02 00 00 bc 94 |........|
 0x08048ff6: 04 08 00 00 00 00 10 02 |........|
-0x08048ffe: f1 ff                   |..      | ..U  2898 bytes untyped data beginning at 0x080484ae
+0x08048ffe: f1 ff                   |..      | ..M  2898 bytes untyped data beginning at 0x080484ae
 Assembled 190 instructions

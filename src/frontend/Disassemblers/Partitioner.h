@@ -811,7 +811,7 @@ public:
         DataRangeMap *padding_ranges;                   /**< Padding ranges created on demand and cached. */
         size_t nfound;                                  /**< Number of data blocks added by this callback. */
 
-        FindData(): excluded_reasons(SgAsmFunction::FUNC_INTERPAD|SgAsmFunction::FUNC_THUNK), padding_ranges(NULL), nfound(0) {}
+        FindData(): excluded_reasons(SgAsmFunction::FUNC_PADDING|SgAsmFunction::FUNC_THUNK), padding_ranges(NULL), nfound(0) {}
         ~FindData() { delete padding_ranges; }
         virtual bool operator()(bool enabled, const Args &args);
     };

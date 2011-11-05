@@ -114,7 +114,7 @@ public:
     }
     /** @} */
 
-    /** Returns the number of values represented by the range.  Note that if the range contains all possible values then the
+    /** Returns the number of values represented by the range. Note that if the range contains all possible values then the
      *  returned size may be zero due to overflow, in which case the empty() method should also be called to make the
      *  determination. */
     Value size() const {
@@ -190,124 +190,144 @@ public:
         }
     }
 
-    /** Do both ranges begin at the same place?  An empty range never begins with any other range, including other empty
-     *  ranges. */
+    /** Do both ranges begin at the same place?
+     *
+     *  An empty range never begins with any other range, including other empty ranges. */
     bool begins_with(const Range &x) const {
         if (empty() || x.empty())
             return false;
         return first() == x.first();
     }
 
-    /** Do both ranges end at the same place? An empty range never ends with any other range, including other empty ranges. */
+    /** Do both ranges end at the same place?
+     *
+     *  An empty range never ends with any other range, including other empty ranges. */
     bool ends_with(const Range &x) const {
         if (empty() || x.empty())
             return false;
         return last() == x.last();
     }
 
-    /** Does this range begin (strictly) after the beginning of another range?  An empty range never begins after any other
-     *  range, including other empty ranges. */
+    /** Does this range begin (strictly) after the beginning of another range?
+     *
+     *  An empty range never begins after any other range, including other empty ranges. */
     bool begins_after(const Range &x, bool strict=true) const {
         if (empty() || x.empty())
             return false;
         return strict ? first() > x.first() : first() >= x.first();
     }
 
-    /** Does this range begin (strictly) before the beginning of another range?  An empty range never begins before any other
-     *  range, including other empty ranges. */
+    /** Does this range begin (strictly) before the beginning of another range?
+     *
+     *  An empty range never begins before any other range, including other empty ranges. */
     bool begins_before(const Range &x, bool strict=true) const {
         if (empty() || x.empty())
             return false;
         return strict ? first() < x.first() : first() <= x.first();
     }
 
-    /** Does this range end (strictly) after the end of another range?  An empty range never ends after any other range,
-     *  including other empty ranges. */
+    /** Does this range end (strictly) after the end of another range?
+     *
+     *  An empty range never ends after any other range, including other empty ranges. */
     bool ends_after(const Range &x, bool strict=true) const {
         if (empty() || x.empty())
             return false;
         return strict ? last() > x.last() : last() >= x.last();
     }
 
-    /** Does this range end (strictly) before the end of another range? An empty range never ends before any other range,
-     *  including other empty ranges. */
+    /** Does this range end (strictly) before the end of another range?
+     *
+     *  An empty range never ends before any other range, including other empty ranges. */
     bool ends_before(const Range &x, bool strict=true) const {
         if (empty() || x.empty())
             return false;
         return strict ? last() < x.last() : last() <= x.last();
     }
 
-    /** Does this range contain the argument range?  The argument is contained in this range if the argument starts at or after
-     *  the start of this range and ends at or before the end of this range.  If @p strict is true, then the comparisons do not
-     *  include equality. An empty range does not contain any other range, including other empty ranges. */
+    /** Does this range contain the argument range?
+     *
+     *  The argument is contained in this range if the argument starts at or after the start of this range and ends at or
+     *  before the end of this range.  If @p strict is true, then the comparisons do not include equality. An empty range does
+     *  not contain any other range, including other empty ranges. */
     bool contains(const Range &x, bool strict=false) const {
         if (empty() || x.empty())
             return false;
         return strict ? x.first()>first() && x.last()<last() : x.first()>=first() && x.last()<=last();
     }
 
-    /** Is this range contained in the argument range?  This range is contained in the argument range if this range starts at
-     *  or after the start of the argument and ends at or before the end of the argument. If @p strict is true, then the
-     *  comparisons do not include equality. An empty range does not contain any other range, including other empty ranges. */
+    /** Is this range contained in the argument range?
+     *
+     *  This range is contained in the argument range if this range starts at or after the start of the argument and ends at or
+     *  before the end of the argument. If @p strict is true, then the comparisons do not include equality. An empty range does
+     *  not contain any other range, including other empty ranges. */
     bool contained_in(const Range &x, bool strict=false) const {
         if (empty() || x.empty())
             return false;
         return strict ? first()>x.first() && last()<x.last() : first()>=x.first() && last()<=x.last();
     }
 
-    /** Are two ranges equal.  They are equal if the start and end at the same place or if they are both empty. */
+    /** Are two ranges equal?
+     *
+     *  They are equal if the start and end at the same place or if they are both empty. */
     bool congruent(const Range &x) const {
         if (empty() && x.empty())
             return true;
         return first()==x.first() && last()==x.last();
     }
 
-    /** Is this range left of the argument range?  This range is left of the argument range if this range ends before the start
-     *  of the argument. They may adjoin, but must not overlap.  An empty range is never left of any other range, including
-     *  other empty ranges. */
+    /** Is this range left of the argument range?
+     *
+     *  This range is left of the argument range if this range ends before the start of the argument. They may adjoin, but must
+     *  not overlap.  An empty range is never left of any other range, including other empty ranges. */
     bool left_of(const Range &x) const {
         if (empty() || x.empty())
             return false;
         return last() < x.first();
     }
 
-    /** Is this range right of the argument range?  This range is right of the argument range if this range starts after the
-     *  end of the argument range.  They may adjoin, but must not overlap.   An empty range is never right of any other range,
-     *  including other empty ranges. */
+    /** Is this range right of the argument range?
+     *
+     *  This range is right of the argument range if this range starts after the end of the argument range.  They may adjoin,
+     *  but must not overlap.  An empty range is never right of any other range, including other empty ranges. */
     bool right_of(const Range &x) const {
         if (empty() || x.empty())
             return false;
         return first() > x.last();
     }
 
-    /** Does this range overlap with the argument range? An empty range does not overlap with any other rance, including other
-     *  empty ranges. */
+    /** Does this range overlap with the argument range?
+     *
+     *  An empty range does not overlap with any other rance, including other empty ranges. */
     bool overlaps(const Range &x) const {
         if (empty() || x.empty())
             return false;
         return !left_of(x) && !right_of(x);
     }
 
-    /** Is this range non-overlapping with the argument range?  In other words, do the two ranges represent distinct sets of
-     *  values? An empty range is always distinct from all other ranges (including other empty ranges). */
+    /** Is this range non-overlapping with the argument range?
+     *
+     *  In other words, do the two ranges represent distinct sets of values? An empty range is always distinct from all other
+     *  ranges (including other empty ranges). */
     bool distinct(const Range &x) const {
         if (empty() || x.empty())
             return true;
         return !overlaps(x);
     }
 
-    /** Is this range immediately left of the argument range?  Returns true if this range ends at the beginning of the
-     *  argument, with no overlap and no space between them. An empty range does not abut any other range, including other
-     *  empty ranges. */
+    /** Is this range immediately left of the argument range?
+     *
+     *  Returns true if this range ends at the beginning of the argument, with no overlap and no space between them. An empty
+     *  range does not abut any other range, including other empty ranges. */
     bool abuts_lt(const Range &x) const {
         if (empty() || x.empty())
             return false;
         return last()+1 == x.first();
     }
 
-    /** Is this range immediately right of the argument range?  Returns true if this range begins at the end of the argument,
-     *  with no overlap and no space between them.  An empty range does not abut any other range, including other empty
-     *  ranges. */
+    /** Is this range immediately right of the argument range?
+     *
+     *  Returns true if this range begins at the end of the argument, with no overlap and no space between them.  An empty
+     *  range does not abut any other range, including other empty ranges. */
     bool abuts_gt(const Range &x) const {
         if (empty() || x.empty())
             return false;
@@ -569,6 +589,12 @@ protected:
  *  insn_finder.traverse(interpretation, preorder);
  *  o <<insn_finder.ranges;
  *  @endcode
+ *
+ *  The RangeMap class template can also be specialized to hold more complex values.  The value type defines how ranges can be
+ *  merged and split. RangeMap value types must implement the interface described for RangeMapVoid.  Another example of a value
+ *  type is RangeMapValue, that holds a simple scalar value and determines "mergeabiliy" and "splitability" based on the
+ *  equality operator.  Eventually, MemoryMap might also be rewritten in terms of RangeMap, and will have much more complex
+ *  rules for merging, splitting, truncating, and removing.
  */
 template<class R, class T=RangeMapVoid<R> >
 class RangeMap {
@@ -642,6 +668,7 @@ public:
     const_iterator end() const {
         return ranges.end();
     }
+    /** @} */
 
     /** Returns a reverse iterator referring to the last item of the map, the rend() iterator if the RangeMap is empty.  The
      *  iterator is valid until any operation that changes the RangeMap, such as an insert or erase.
@@ -666,6 +693,7 @@ public:
     const_reverse_iterator rend() const {
         return ranges.rend();
     }
+    /** @} */
 
     /** Find the range containing specified value.  Returns an iterator to the Range containing the specified value, or the
      *  end() iterator if no such range exists.
@@ -706,6 +734,8 @@ public:
         iterator lb = lower_bound(addr);
         if (lb!=end() && lb->first.begins_before(Range(addr), false/*non-strict*/))
             return lb;
+        if (lb==begin())
+            return end();
         return --lb;
     }
     const_iterator find_prior(const typename Range::Value &addr) const {
@@ -714,6 +744,8 @@ public:
         const_iterator lb = lower_bound(addr);
         if (lb!=end() && lb->first.begins_before(Range(addr), false/*non-strict*/))
             return lb;
+        if (lb==begin())
+            return end();
         return --lb;
     }
     /** @} */
@@ -746,7 +778,7 @@ public:
     /** @} */
 
     /** Find first range of larger size.  Returns an iterator to the first range at least as large as the specified @p size and
-     *  at or after @p start.  Returns the end iterator if no range is found.
+     *  at or after @p start.  Returns the end iterator if no range is found.  Note that this is an O(N) algorithm.
      *
      *  @{ */
     iterator first_fit(const typename Range::Value &size, iterator start) {

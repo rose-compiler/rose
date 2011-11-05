@@ -355,7 +355,7 @@ statistics(SgAsmInterpretation *interp, const Disassembler::InstructionMap &insn
             if (func) {
                 if (func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS) {
                     /* not a function -- just a collection of otherwise unassigned instructions */
-                } else if (0!=(func->get_reason() & SgAsmFunction::FUNC_INTERPAD)) {
+                } else if (0!=(func->get_reason() & SgAsmFunction::FUNC_PADDING)) {
                     padding_functions.push_back(func);
                 } else {
                     rose_functions.push_back(func);
