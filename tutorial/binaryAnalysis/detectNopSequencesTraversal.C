@@ -2,6 +2,7 @@
 
 #include "sageInterfaceAsm.h"
 #include "detectNopSequencesTraversal.h"
+#include "stringify.h"
 
 using namespace std;
 using namespace SageInterface;
