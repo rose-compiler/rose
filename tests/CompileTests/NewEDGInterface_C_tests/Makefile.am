@@ -152,8 +152,7 @@ test2006_101.C \
 test2006_139.C \
 test2006_160.C
 
-# This is a C++ test!
-# test2011_147.C
+# Failing test due to change in use of EDG 4.3 support in ROSE.
 
 
 if !ROSE_USE_EDG_VERSION_4_3
