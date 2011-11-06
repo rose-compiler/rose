@@ -664,9 +664,12 @@ buildFunctionParameterList_nfi(SgFunctionParameterTypeList * paraTypeList);
 // the support function and require either a SgFunctionType or SgMemberFunctionType, we need to to pass in 
 // a flag to specify which function type to build (bool isMemberFunction).
 //! A template function for function prototype declaration builders
+// template <class actualFunction>
+// actualFunction*
+// buildNondefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, bool isMemberFunction, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
 template <class actualFunction>
 actualFunction*
-buildNondefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, bool isMemberFunction, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
+buildNondefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, bool isMemberFunction, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL, unsigned int functionConstVolatileFlags = 0);
 
 //! Build a prototype for a function, handle function type, symbol etc transparently
 SgFunctionDeclaration *
@@ -677,8 +680,10 @@ SgFunctionDeclaration *
 buildNondefiningFunctionDeclaration (const SgFunctionDeclaration* funcdecl, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
 
 //! Build a prototype member function declaration
+// SgMemberFunctionDeclaration *
+// buildNondefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
 SgMemberFunctionDeclaration *
-buildNondefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
+buildNondefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL, unsigned int functionConstVolatileFlags = 0);
 
 ////! Build a prototype member function declaration
 //SgMemberFunctionDeclaration *
@@ -697,8 +702,10 @@ SgMemberFunctionDeclaration *
 buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgScopeStatement* scope, SgExprListExp* decoratorList = NULL);
 
 //! Build a prototype for an existing member function declaration (defining or nondefining is fine) 
+// SgMemberFunctionDeclaration *
+// buildNondefiningMemberFunctionDeclaration (const SgMemberFunctionDeclaration* funcdecl, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
 SgMemberFunctionDeclaration *
-buildNondefiningMemberFunctionDeclaration (const SgMemberFunctionDeclaration* funcdecl, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
+buildNondefiningMemberFunctionDeclaration (const SgMemberFunctionDeclaration* funcdecl, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL, unsigned int functionConstVolatileFlags = 0);
 
 //! A template function for function declaration builders
 template <class actualFunction>
