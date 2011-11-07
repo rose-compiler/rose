@@ -69,7 +69,8 @@ add_to_reason_string(std::string &result, bool isset, bool do_pad, const std::st
             result += full;
         }
     } else if (do_pad) {
-        result += ".";
+        for (size_t i=0; i<abbr.size(); ++i)
+            result += ".";
     }
 }
 
@@ -137,7 +138,30 @@ SgAsmFunction::reason_str(bool do_pad, unsigned r)
     add_to_reason_string(result, (r & FUNC_DISCONT),       do_pad, "D", "discontiguous");
     add_to_reason_string(result, (r & FUNC_LEFTOVERS),     do_pad, "L", "leftovers");
     add_to_reason_string(result, (r & FUNC_INTRABLOCK),    do_pad, "V", "intrablock");
-    add_to_reason_string(result, (r & FUNC_MISCMASK),      do_pad, "M", "misc-"+StringUtility::numberToString(r & FUNC_MISCMASK));
+
+    /* The miscellaneous marker is special. It's a single letter like the others, but is followed by a fixed width
+     * integer indicating the (user-defined) algorithm that added the function. */
+    {
+        char abbr[32], full[64];
+        int width = snprintf(abbr, sizeof abbr, "%u", FUNC_MISCMASK);
+        snprintf(abbr, sizeof abbr, "M%0*u", width, (r & FUNC_MISCMASK));
+        abbr[sizeof(abbr)-1] = '\0';
+        if (!do_pad) {
+            std::string miscname = stringifySgAsmFunctionFunctionReason((r & FUNC_MISCMASK), "FUNC_");
+            if (miscname.empty() || miscname[0]=='(') {
+                snprintf(full, sizeof full, "misc-%u", (r & FUNC_MISCMASK));
+            } else {
+                for (size_t i=0; i<miscname.size(); ++i)
+                    miscname[i] = tolower(miscname[i]);
+                strncpy(full, miscname.c_str(), sizeof full);
+            }
+            full[sizeof(full)-1] = '\0';
+        } else {
+            full[0] = '\0';
+        }
+        add_to_reason_string(result, (r & FUNC_MISCMASK), do_pad, abbr, full);
+    }
+
     return result;
 }
 
@@ -283,7 +307,24 @@ SgAsmBlock::reason_str(bool do_pad, unsigned r)
     if (r & BLK_USERDEF) {
         add_to_reason_string(result, true, do_pad, "U", "user defined");
     } else {
-        add_to_reason_string(result, (r & BLK_MISCMASK), do_pad, "M", "misc-" + StringUtility::numberToString(r & BLK_MISCMASK));
+        char abbr[32], full[64];
+        int width = snprintf(abbr, sizeof abbr, "%u", BLK_MISCMASK);
+        snprintf(abbr, sizeof abbr, "M%0*u", width, (r & BLK_MISCMASK));
+        abbr[sizeof(abbr)-1] = '\0';
+        if (!do_pad) {
+            std::string miscname = stringifySgAsmBlockReason((r & BLK_MISCMASK), "BLK_");
+            if (miscname.empty() || miscname[0]=='(') {
+                snprintf(full, sizeof full, "misc-%u", (r & BLK_MISCMASK));
+            } else {
+                for (size_t i=0; i<miscname.size(); ++i)
+                    miscname[i] = tolower(miscname[i]);
+                strncpy(full, miscname.c_str(), sizeof full);
+            }
+            full[sizeof(full)-1] = '\0';
+        } else {
+            full[0] = '\0';
+        }
+        add_to_reason_string(result, (r & BLK_MISCMASK), do_pad, abbr, full);
     }
     return result;
 }

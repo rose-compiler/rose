@@ -4013,7 +4013,9 @@ HEADER_BINARY_BLOCK_START
 		
 		BLK_DEFAULT	= BLK_NONE,	//NO_STRINGIFY
 
-		/*========= Miscellaneous Reasons ===========================================================================*/
+		/*========= Miscellaneous Reasons ===========================================================================
+		 * The first half of the range (1-127, inclusive) is used for algorithms defined by ROSE.  The second half is
+		 * availalble for users to use as they see fit. */
 		BLK_MISCMASK	= 0x000000ff,	/**< Miscellaneous reasons go here. We can store only one such reason at
 						 *   a time. */
 		BLK_FINDDATA	= 0x00000001,	/**< Added by Partitioner::FindData, which attaches unassigned parts of the
@@ -4111,7 +4113,9 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
 						 *   might also be thunks. */
                 FUNC_DEFAULT     = 0x6fff0000,	/**< Default value for Partitioner class. */
 
-		/*========= Miscellaneous Reasons ===========================================================================*/
+		/*========= Miscellaneous Reasons ===========================================================================
+		 * The first half of the range (1-127, inclusive) is used for algorithms defined by ROSE.  The second half is
+		 * availalble for users to use as they see fit. */
 		FUNC_MISCMASK	 = 0x000000ff,	/**< Miscellaneous.  These are all the other special purpose function detectors
 						 *   that are implemented in the Partitioner. Each one is identified by an
 						 *   eight-bit integer stored in the low order bits.  Only one such reason can
