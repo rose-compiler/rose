@@ -50,12 +50,12 @@ StatementReversal SgVariableDeclaration_Handler::generateReverseAST(SgStatement*
 	return StatementReversal(forwardStatement, reverseStatement);
 }
 
-vector<EvaluationResult> SgVariableDeclaration_Handler::evaluate(SgStatement* stmt, const VariableVersionTable& var_table)
+EvaluationResult SgVariableDeclaration_Handler::evaluate(SgStatement* stmt, const VariableVersionTable& var_table)
 {
 	SgVariableDeclaration* varDeclaration = isSgVariableDeclaration(stmt);
 	if (varDeclaration == NULL)
 	{
-		return vector<EvaluationResult>();
+		return EvaluationResult();
 	}
 
 	const SgInitializedNamePtrList & variables = varDeclaration->get_variables();
@@ -66,24 +66,21 @@ vector<EvaluationResult> SgVariableDeclaration_Handler::evaluate(SgStatement* st
 	}
 
 	//If the initializer of the variable has side effects, we should insert its reverse in the reverse code
-	vector<EvaluationResult> variableDeclReversals;
+	EvaluationResult variableDeclReversal;
 	SgInitializer* initializer = variables[0]->get_initializer();
 	if (initializer == NULL)
 	{
-		EvaluationResult res(this, stmt, var_table);
-		variableDeclReversals.push_back(res);
+		variableDeclReversal = EvaluationResult(this, stmt, var_table);
 	}
 	else if (SgAssignInitializer* assignInit = isSgAssignInitializer(initializer))
 	{
 		SgExpression* initializerExpression = assignInit->get_operand();
-		vector<EvaluationResult> initializerReversals = evaluateExpression(initializerExpression, var_table, false);
-
-		foreach(EvaluationResult& initReversal, initializerReversals)
-		{
-			EvaluationResult declarationReversal(this, stmt, var_table);
-			declarationReversal.addChildEvaluationResult(initReversal);
-			variableDeclReversals.push_back(declarationReversal);
-		}
+		EvaluationResult initializerReversal = evaluateExpression(initializerExpression, var_table, false);
+		ROSE_ASSERT(initializerReversal.isValid());
+		
+		EvaluationResult declarationReversal(this, stmt, var_table);
+		declarationReversal.addChildEvaluationResult(initializerReversal);
+		variableDeclReversal = declarationReversal;
 	}
 	else if (SgConstructorInitializer* constructorInit = isSgConstructorInitializer(initializer))
 	{
@@ -100,5 +97,5 @@ vector<EvaluationResult> SgVariableDeclaration_Handler::evaluate(SgStatement* st
 		ROSE_ASSERT(false);
 	}
 
-	return variableDeclReversals;
+	return variableDeclReversal;
 }

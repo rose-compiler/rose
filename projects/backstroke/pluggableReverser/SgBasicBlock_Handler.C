@@ -9,7 +9,7 @@
 
 using namespace std;
 
-vector<EvaluationResult> SgBasicBlock_Handler::evaluate(SgStatement* statement, const VariableVersionTable& var_table)
+EvaluationResult SgBasicBlock_Handler::evaluate(SgStatement* statement, const VariableVersionTable& var_table)
 {
 	if (SgBasicBlock * basicBlock = isSgBasicBlock(statement))
 	{
@@ -20,23 +20,21 @@ vector<EvaluationResult> SgBasicBlock_Handler::evaluate(SgStatement* statement, 
 		return evaluateExpressionStatement(expressionStatement, var_table);
 	}
 
-	return vector<EvaluationResult> ();
+	return EvaluationResult();
 }
 
 
 /** Process an expression statement by using the first expression handler returning a valid result. */
-vector<EvaluationResult> SgBasicBlock_Handler::evaluateExpressionStatement(SgExprStatement* statement, const VariableVersionTable& var_table)
+EvaluationResult SgBasicBlock_Handler::evaluateExpressionStatement(SgExprStatement* statement, const VariableVersionTable& var_table)
 {
     ROSE_ASSERT(statement);
     
-	vector<EvaluationResult> expressions = evaluateExpression(statement->get_expression(), var_table, false);
+	EvaluationResult expressionResult = evaluateExpression(statement->get_expression(), var_table, false);
 
 	//If none of the expression handlers could handle the code, we can't reverse it!
-	ROSE_ASSERT(!expressions.empty());
+	ROSE_ASSERT(expressionResult.isValid());
 
-	//This simple handler just takes the first valid reverse expression returned
-	EvaluationResult& expressionReversalOption = expressions.front();
-	ExpressionReversal expressionReversal = expressionReversalOption.generateReverseExpression();
+	ExpressionReversal expressionReversal = expressionResult.generateReverseExpression();
 	SgStatement* forwardStatement = NULL;
 	if (expressionReversal.forwardExpression != NULL)
 	{
@@ -49,15 +47,11 @@ vector<EvaluationResult> SgBasicBlock_Handler::evaluateExpressionStatement(SgExp
 	}
 
 	//We just do all the work in the evaluation step and save it as an attribute
-	EvaluationResult statementResult(this, statement, expressionReversalOption.getVarTable(), expressionReversalOption.getCost());
+	EvaluationResult statementResult(this, statement, expressionResult.getVarTable(), expressionResult.getCost());
 	StatementReversal statementReversal(forwardStatement, reverseStatement);
-	//statementResult.setAttribute(EvaluationResultAttributePtr(new StoredStatementReversal(statementReversal)));
 	statementResult.setAttribute(statementReversal);
 
-	vector<EvaluationResult> result;
-	result.push_back(statementResult);
-
-	return result;
+	return statementResult;
 }
 
 StatementReversal SgBasicBlock_Handler::generateReverseAST(SgStatement* statement, const EvaluationResult& reversal)
@@ -67,7 +61,7 @@ StatementReversal SgBasicBlock_Handler::generateReverseAST(SgStatement* statemen
 }
 
 
-vector<EvaluationResult> SgBasicBlock_Handler::evaluateBasicBlock(SgBasicBlock* basicBlock, const VariableVersionTable& var_table)
+EvaluationResult SgBasicBlock_Handler::evaluateBasicBlock(SgBasicBlock* basicBlock, const VariableVersionTable& var_table)
 {
     ROSE_ASSERT(basicBlock);
     
@@ -132,19 +126,19 @@ vector<EvaluationResult> SgBasicBlock_Handler::evaluateBasicBlock(SgBasicBlock* 
 	reverse_foreach(SgStatement* s, basicBlock->get_statements())
 	{
 		//In this simple handler, we just take the first valid statement available
-		vector<EvaluationResult> possibleStatements = evaluateStatement(s, currentVariableVersions);
-		if (possibleStatements.empty())
+		EvaluationResult statementReversal = evaluateStatement(s, currentVariableVersions);
+		if (!statementReversal.isValid())
 		{
 			fprintf(stderr, "Failed to process statement of type '%s' on line %d: %s\n", s->class_name().c_str(),
 					s->get_file_info()->get_line(), s->unparseToString().c_str());
 			exit(1);
 		}
 
-		StatementReversal instrumentedStatement = possibleStatements.front().generateReverseStatement();
-		totalCost += possibleStatements.front().getCost();
+		StatementReversal instrumentedStatement = statementReversal.generateReverseStatement();
+		totalCost += statementReversal.getCost();
 		SgStatement* forwardStatement = instrumentedStatement.forwardStatement;
 		SgStatement* reverseStatement = instrumentedStatement.reverseStatement;
-		currentVariableVersions = possibleStatements.front().getVarTable();
+		currentVariableVersions = statementReversal.getVarTable();
 
 		//The return statement should go at the very end of the forward statement
 		//after the variables that exit scope have been stored
@@ -187,7 +181,5 @@ vector<EvaluationResult> SgBasicBlock_Handler::evaluateBasicBlock(SgBasicBlock* 
 	EvaluationResult costAndStuff(this, basicBlock, currentVariableVersions, totalCost);
 	costAndStuff.setAttribute(result);
 
-	vector<EvaluationResult> out;
-	out.push_back(costAndStuff);
-	return out;
+	return costAndStuff;
 }

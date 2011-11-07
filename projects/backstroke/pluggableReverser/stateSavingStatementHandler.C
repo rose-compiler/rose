@@ -515,18 +515,16 @@ StatementReversal StateSavingStatementHandler::generateReverseAST(SgStatement* s
 	return StatementReversal(forwardBody, reverseBody, commitBody);
 }
 
-std::vector<EvaluationResult> StateSavingStatementHandler::evaluate(SgStatement* stmt, const VariableVersionTable& var_table)
+EvaluationResult StateSavingStatementHandler::evaluate(SgStatement* stmt, const VariableVersionTable& var_table)
 {
-	vector<EvaluationResult> results;
-
 	// Currently, we just perform this state saving handler on if/while/for/do-while/switch statements and pure
 	// basic block which is not the body of if/while/for/do-while/switch statements.
 	if (!checkStatement(stmt))
-		return results;
+		return EvaluationResult();
 
 	// In case of infinite calling to this function.
 	if (evaluating_stmts_.count(stmt) > 0)
-		return results;
+		return EvaluationResult();
 
 	vector<VariableRenaming::VarName> modified_vars = getAllDefsAtNode(stmt);
 
@@ -571,7 +569,6 @@ std::vector<EvaluationResult> StateSavingStatementHandler::evaluate(SgStatement*
 	EvaluationResult result(this, stmt, new_table);
 	// Add the attribute to the result.
 	result.setAttribute(modified_vars);
-	results.push_back(result);
 
-	return results;
+	return result;
 }

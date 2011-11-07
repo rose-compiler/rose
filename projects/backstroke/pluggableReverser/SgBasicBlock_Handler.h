@@ -7,7 +7,7 @@
 class SgBasicBlock_Handler : public StatementReversalHandler
 {
 public:
-	virtual std::vector<EvaluationResult> evaluate(SgStatement* stmt, const VariableVersionTable& var_table);
+	virtual EvaluationResult evaluate(SgStatement* stmt, const VariableVersionTable& var_table);
 
 	virtual StatementReversal generateReverseAST(SgStatement* stmt, const EvaluationResult& evaluationResult);
 
@@ -15,9 +15,8 @@ public:
 private:
 
 	/** Process an expression statement by using the first expression handler returning a valid result. */
-	std::vector<EvaluationResult> evaluateExpressionStatement(SgExprStatement* stmt, const VariableVersionTable& var_table);
+	EvaluationResult evaluateExpressionStatement(SgExprStatement* stmt, const VariableVersionTable& var_table);
 
 
-
-	std::vector<EvaluationResult> evaluateBasicBlock(SgBasicBlock* stmt, const VariableVersionTable& var_table);
+	EvaluationResult evaluateBasicBlock(SgBasicBlock* stmt, const VariableVersionTable& var_table);
 };

@@ -1,5 +1,4 @@
-#ifndef RETURNSTATEMENTHANDLER_H
-#define	RETURNSTATEMENTHANDLER_H
+#pragma once
 
 #include "handlerTypes.h"
 
@@ -8,11 +7,8 @@
 class SgReturnStmt_Handler : public StatementReversalHandler
 {
 public:
-	virtual std::vector<EvaluationResult> evaluate(SgStatement* statement, const VariableVersionTable& var_table);
+	virtual EvaluationResult evaluate(SgStatement* statement, const VariableVersionTable& var_table);
 
 	virtual StatementReversal generateReverseAST(SgStatement* exp, const EvaluationResult& evaluationResult);
 };
-
-
-#endif	/* RETURNSTATEMENTHANDLER_H */
 

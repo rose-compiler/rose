@@ -91,7 +91,7 @@ namespace BackstrokeUtility
 	bool isModifyingExpression(SgExpression* exp);
 
 	/** Returns if an expression contains any subexpression which modifies any value. */
-	bool containsModifyingExpression(SgExpression* exp);
+	bool containsModifyingExpression(SgNode* exp);
 
 	/** Given a function declaration, get its definition's body. If it does not have a definition, return NULL. */
 	SgBasicBlock* getFunctionBody(SgFunctionDeclaration* func_decl);

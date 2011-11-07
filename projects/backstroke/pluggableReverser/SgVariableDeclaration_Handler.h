@@ -1,5 +1,4 @@
-#ifndef VARIABLEDECLARATIONHANDLER_H
-#define	VARIABLEDECLARATIONHANDLER_H
+#pragma once
 
 #include "handlerTypes.h"
 
@@ -12,8 +11,7 @@ public:
     SgVariableDeclaration_Handler() { name_ = "Variable Declaration Handler"; }
 
     virtual StatementReversal generateReverseAST(SgStatement* stmt, const EvaluationResult& evaluationResult);
-    virtual std::vector<EvaluationResult> evaluate(SgStatement* stmt, const VariableVersionTable& var_table);
+    virtual EvaluationResult evaluate(SgStatement* stmt, const VariableVersionTable& var_table);
 };
 
-#endif	/* VARIABLEDECLARATIONHANDLER_H */
 

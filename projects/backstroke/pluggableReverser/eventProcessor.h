@@ -58,14 +58,10 @@ class EventProcessor
 private:
 
 	//! Given an expression, return all evaluation results using all expression handlers.
-	std::vector<EvaluationResult> evaluateExpression(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used);
+	EvaluationResult evaluateExpression(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used);
 
 	//! Given a statement, return all evaluation results using all statement handlers.
-	std::vector<EvaluationResult> evaluateStatement(SgStatement* stmt, const VariableVersionTable& var_table);
-
-	//! Given a set of results, if two results of them have the same variable table, we remove
-	//! the one which has the higher cost.
-	std::vector<EvaluationResult> filterResults(const std::vector<EvaluationResult>& results);
+	EvaluationResult evaluateStatement(SgStatement* stmt, const VariableVersionTable& var_table);
 
 	//! The following methods are for expression and statement handlers for store and restore.
 	SgExpression* pushVal(SgExpression* exp, SgType* type);

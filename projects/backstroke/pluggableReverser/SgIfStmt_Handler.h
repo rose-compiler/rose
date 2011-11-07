@@ -1,5 +1,4 @@
-#ifndef IFSTATEMENTHANDLER_H
-#define	IFSTATEMENTHANDLER_H
+#pragma once
 
 #include "handlerTypes.h"
 
@@ -9,12 +8,7 @@ public:
     SgIfStmt_Handler() { name_ = "If Statement Handler"; }
 
     virtual StatementReversal generateReverseAST(SgStatement* stmt, const EvaluationResult&);
-    virtual std::vector<EvaluationResult> evaluate(SgStatement* stmt, const VariableVersionTable& var_table);
+    virtual EvaluationResult evaluate(SgStatement* stmt, const VariableVersionTable& var_table);
 
 };
-
-
-
-
-#endif	/* IfStatementHandler_H */
 

@@ -101,17 +101,16 @@ StatementReversal SgWhileStmt_Handler::generateReverseAST(SgStatement* stmt, con
     return StatementReversal(fwd_stmt, rvs_stmt);
 }
 
-vector<EvaluationResult> SgWhileStmt_Handler::evaluate(SgStatement* stmt, const VariableVersionTable& var_table)
+EvaluationResult SgWhileStmt_Handler::evaluate(SgStatement* stmt, const VariableVersionTable& var_table)
 {
 	// Suppose the condition of this while statement does not contain modifying expressions.
-	
-    vector<EvaluationResult> results;
-    SgWhileStmt* while_stmt = isSgWhileStmt(stmt);
-	
-	// If this while statement has any break or continue inside, we cannot handle it.
-    if (while_stmt == NULL || BackstrokeUtility::hasContinueOrBreak(while_stmt))
-        return results;
+	SgWhileStmt* while_stmt = isSgWhileStmt(stmt);
 
+	// If this while statement has any break or continue inside, we cannot handle it.
+	if (while_stmt == NULL || BackstrokeUtility::hasContinueOrBreak(while_stmt))
+		return EvaluationResult();
+
+	ROSE_ASSERT(!BackstrokeUtility::containsModifyingExpression(while_stmt->get_condition()));
 	SgBasicBlock* body = isSgBasicBlock(while_stmt->get_body());
 	ROSE_ASSERT(body);
 
@@ -122,20 +121,16 @@ vector<EvaluationResult> SgWhileStmt_Handler::evaluate(SgStatement* stmt, const 
 	var_table.getVarTablesForLoopBody(body).print();
 #endif
 
-	vector<EvaluationResult> loop_body_results = evaluateStatement(body, var_table.getVarTablesForLoopBody(body));
-	foreach (EvaluationResult& res, loop_body_results)
-	{
-		EvaluationResult final_result(this, while_stmt, res.getVarTable());
-		final_result.addChildEvaluationResult(res);
+	EvaluationResult loop_body_result = evaluateStatement(body, var_table.getVarTablesForLoopBody(body));
 
-		SimpleCostModel cost = res.getCost();
-		cost.increaseStoreCount();
-		final_result.setCost(cost);
+	EvaluationResult final_result(this, while_stmt, loop_body_result.getVarTable());
+	final_result.addChildEvaluationResult(loop_body_result);
 
-		results.push_back(final_result);
-	}
+	SimpleCostModel cost = loop_body_result.getCost();
+	cost.increaseStoreCount();
+	final_result.setCost(cost);
 
-	return results;
+	return final_result;
 }
 
 

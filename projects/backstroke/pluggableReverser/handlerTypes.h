@@ -57,14 +57,24 @@ class EvaluationResult
 	* were the evaluations of all the statements? */
 	std::vector<EvaluationResult> child_results;
 
+    //! True if this if a valid result; false if the handler couldn't deal with the input
+    bool isValid_;
+    
 public:
 
+    //! Create a valid evaluation result
 	EvaluationResult(ReversalHandlerBase* handler_used, SgNode* input,
 			const VariableVersionTable& table,
 			const SimpleCostModel& cost_model = SimpleCostModel())
-	:  var_table_(table), cost_(cost_model), handler_used_(handler_used), input_(input){ }
+	:  var_table_(table), cost_(cost_model), handler_used_(handler_used), input_(input), isValid_(true)
+    { }
 
-	/** Add an evaluation result to the evalutions used in order to construct the current one.
+    //! Create an evaluation results that indicates that the AST fragment couldn't be inverted with the given handler
+    EvaluationResult() : isValid_(false)
+    {
+    }
+    
+	/** Add an evaluation result to the evaluations used in order to construct the current one.
 	* This adds the cost of the child result to the total cost and adds the result to the list of
 	* evaluation results. It also replaces the variable version table! */
 	void addChildEvaluationResult(const EvaluationResult& result);
@@ -110,6 +120,9 @@ public:
 
 	//! Print all handlers inside of this result.
 	void printHandlers() const;
+    
+    //! True if valid result; false if the handler couldn't reverse the given input
+    bool isValid() const { return isValid_; }
 };
 
 
@@ -128,8 +141,8 @@ class ReversalHandlerBase
 protected:
 	std::string name_;
 
-	std::vector<EvaluationResult> evaluateExpression(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used);
-	std::vector<EvaluationResult> evaluateStatement(SgStatement* stmt, const VariableVersionTable& var_table);
+    EvaluationResult evaluateExpression(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used);
+	EvaluationResult evaluateStatement(SgStatement* stmt, const VariableVersionTable& var_table);
 
 	/**
 	* Given a variable and a version, returns an expression evaluating to the value of the variable
@@ -206,7 +219,7 @@ class ExpressionReversalHandler : public ReversalHandlerBase
 public:
 
 	virtual ExpressionReversal generateReverseAST(SgExpression* exp, const EvaluationResult& evaluationResult) = 0;
-	virtual std::vector<EvaluationResult> evaluate(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used) = 0;
+	virtual EvaluationResult evaluate(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used) = 0;
 };
 
 class StatementReversalHandler : public ReversalHandlerBase
@@ -214,7 +227,7 @@ class StatementReversalHandler : public ReversalHandlerBase
 public:
 
 	virtual StatementReversal generateReverseAST(SgStatement* stmt, const EvaluationResult& evaluationResult) = 0;
-	virtual std::vector<EvaluationResult> evaluate(SgStatement* stmt, const VariableVersionTable& var_table) = 0;
+	virtual EvaluationResult evaluate(SgStatement* stmt, const VariableVersionTable& var_table) = 0;
 };
 
 /** These types of reverse handlers recalculate a specific value of a variable at a different point
@@ -228,9 +241,9 @@ public:
 	* at the given version.
 	*
 	* @param variable name of the variable to be restored
-	* @param availableVariables variables whos values are currently available
+	* @param availableVariables variables whose values are currently available
 	* @param definitions the version of the variable which should be restored
-	* @return expessions that when evaluated will produce the desired version of the variable
+	* @return expressions that when evaluated will produce the desired version of the variable
 	*/
 	virtual std::vector<SgExpression*> restoreVariable(VariableRenaming::VarName variable, const VariableVersionTable& availableVariables,
 			VariableRenaming::NumNodeRenameEntry definitions) = 0;

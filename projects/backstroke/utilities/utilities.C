@@ -404,7 +404,7 @@ bool isModifyingExpression(SgExpression* exp)
 }
 
 // Returns if an expression contains any subexpression which modifies any value.
-bool containsModifyingExpression(SgExpression* exp)
+bool containsModifyingExpression(SgNode* exp)
 {
     Rose_STL_Container<SgNode*> exp_list = NodeQuery::querySubTree(exp, V_SgExpression);
     foreach (SgNode* node, exp_list)

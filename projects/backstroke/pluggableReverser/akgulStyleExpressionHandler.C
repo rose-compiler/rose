@@ -10,7 +10,7 @@
 using namespace std;
 using namespace boost;
 
-vector<EvaluationResult> AkgulStyleExpressionHandler::evaluate(SgExpression* expression, const VariableVersionTable& varTable,
+EvaluationResult AkgulStyleExpressionHandler::evaluate(SgExpression* expression, const VariableVersionTable& varTable,
 		bool isReverseValueUsed)
 {
 	VariableRenaming::VarName destroyedVarName;
@@ -72,16 +72,13 @@ vector<EvaluationResult> AkgulStyleExpressionHandler::evaluate(SgExpression* exp
 			ExpressionReversal reversalResult(forwardExp, reverseExpression);
 
 			EvaluationResult reversalInfo(this, expression, newVarTable);
-			//reversalInfo.setAttribute(EvaluationResultAttributePtr(new StoredExpressionReversal(reversalResult)));
 			reversalInfo.setAttribute(reversalResult);
 
-			vector<EvaluationResult> result;
-			result.push_back(reversalInfo);
-			return result;
+			return reversalInfo;
 		}
 	}
 
-	return vector<EvaluationResult>();
+	return EvaluationResult();
 }
 
 ExpressionReversal AkgulStyleExpressionHandler::generateReverseAST(SgExpression* exp, const EvaluationResult& evaluationResult)

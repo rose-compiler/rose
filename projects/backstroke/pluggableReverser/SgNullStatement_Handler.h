@@ -13,5 +13,5 @@ public:
 	}
 
 	virtual StatementReversal generateReverseAST(SgStatement* stmt, const EvaluationResult& evaluationResult);
-	virtual std::vector<EvaluationResult> evaluate(SgStatement* stmt, const VariableVersionTable& var_table);
+	virtual EvaluationResult evaluate(SgStatement* stmt, const VariableVersionTable& var_table);
 };

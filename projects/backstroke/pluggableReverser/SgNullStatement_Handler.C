@@ -14,12 +14,12 @@ StatementReversal SgNullStatement_Handler::generateReverseAST(SgStatement* stmt,
 	return StatementReversal(NULL, NULL);
 }
 
-vector<EvaluationResult> SgNullStatement_Handler::evaluate(SgStatement* stmt, const VariableVersionTable& var_table)
+EvaluationResult SgNullStatement_Handler::evaluate(SgStatement* stmt, const VariableVersionTable& var_table)
 {
-	vector<EvaluationResult> results;
+	EvaluationResult result;
 	if (isSgNullStatement(stmt))
 	{
-		results.push_back(EvaluationResult(this, stmt, var_table));
+		result = EvaluationResult(this, stmt, var_table);
 	}
-	return results;
+	return result;
 }

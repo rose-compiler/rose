@@ -1,5 +1,6 @@
 #include "handlerTypes.h"
 #include "SgReturnStmt_Handler.h"
+#include "utilities/utilities.h"
 #include <rose.h>
 #include <boost/foreach.hpp>
 
@@ -8,21 +9,22 @@
 
 using namespace std;
 
-vector<EvaluationResult> SgReturnStmt_Handler::evaluate(SgStatement* statement, const VariableVersionTable& var_table)
+EvaluationResult SgReturnStmt_Handler::evaluate(SgStatement* statement, const VariableVersionTable& var_table)
 {
-	//RECURSIVE_TODO: If the return statement itself contains side effects, these are discarded here
-	//We should reverse the side effects of the expression after 'return'
-	vector<EvaluationResult> results;
+	EvaluationResult result;
 
 	if (SgReturnStmt* returnStatement = isSgReturnStmt(statement))
 	{
+		//TODO: If the return statement itself contains side effects, these are discarded here
+		//We should reverse the side effects of the expression after 'return'
+		ROSE_ASSERT(BackstrokeUtility::containsModifyingExpression(returnStatement->get_expression()));
+			
 		//We only allow a return statement to appear as the very last statement in a function. Assert this
 		ROSE_ASSERT(SageInterface::getEnclosingFunctionDefinition(statement)->get_body()->get_statements().back() == returnStatement);
-		EvaluationResult evaluation(this, statement, var_table);
-		results.push_back(evaluation);
+		result = EvaluationResult(this, statement, var_table);
 	}
 
-	return results;
+	return result;
 }
 
 StatementReversal SgReturnStmt_Handler::generateReverseAST(SgStatement* statement, const EvaluationResult& evaluationResult)
