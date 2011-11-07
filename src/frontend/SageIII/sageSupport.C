@@ -1896,6 +1896,9 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
   // printf ("After processing -rose:output option argc = %d \n",argc);
   // ROSE_ABORT();
 
+#if 0
+  // DQ (11/1/2011): This option was removed from SgFile at some point in the past (so we don't need the support there).
+
   // DQ (4/20/2006): Added to support fall through option to be supported by user translators.
   //
   // skip_rose option (just call the backend compiler directly): This causes Rose to act identally
@@ -1919,6 +1922,19 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_collectAllCommentsAndDirectives(false);
           set_unparseHeaderFiles(false);
         }
+#endif
+
+  //
+  // skip_translation_from_edg_ast_to_rose_ast option: This variable is checked in the EDG frontend (4.3) 
+  // and if set it will cause the translation from the EDG AST to the ROSE AST to be skipped.  A valid
+  // SgProject and/or SgFile with with SgGlobal (empty) will be built (as I recall).
+  //
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(skip_translation_from_edg_ast_to_rose_ast)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("option -rose:skip_translation_from_edg_ast_to_rose_ast found \n");
+          set_skip_translation_from_edg_ast_to_rose_ast(true);
+        }
 
   //
   // skip_transformation option: if transformations of the AST check this variable then the
@@ -1926,7 +1942,8 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
   //
      if ( CommandlineProcessing::isOption(argv,"-rose:","(skip_transformation)",true) == true )
         {
-          printf ("option -rose:skip_transformation found \n");
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("option -rose:skip_transformation found \n");
           set_skip_transformation(true);
         }
 
@@ -1936,7 +1953,8 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
   //
      if ( CommandlineProcessing::isOption(argv,"-rose:","(skip_unparse)",true) == true )
         {
-          printf ("option -rose:skip_unparse found \n");
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("option -rose:skip_unparse found \n");
           set_skip_unparse(true);
         }
 
@@ -2418,7 +2436,7 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
   // DQ (5/19/2005): The output file name is constructed from the input source name (as I recall)
   // optionCount = sla(argv, "-rose:", "($)^", "(o|output)", &p_unparse_output_filename ,1);
 
-     optionCount = sla(argv, "-rose:", "($)", "(skip_rose)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(skip_translation_from_edg_ast_to_rose_ast)",1);
      optionCount = sla(argv, "-rose:", "($)", "(skip_transformation)",1);
      optionCount = sla(argv, "-rose:", "($)", "(skip_unparse)",1);
      optionCount = sla(argv, "-rose:", "($)", "(unparse_includes)",1);
@@ -3452,6 +3470,8 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // JJW (12/11/2008):  add --edg_base_dir as a new ROSE-set flag
      vector<string> commandLine;
 
+#if 1
+  // DQ (11/1/2011): This is not enough to support C++ code (e.g. "limits" header file).
 #ifdef ROSE_USE_NEW_EDG_INTERFACE
 
   // Note that the new EDG/Sage interface does not require a generated set of header files specific to ROSE.
@@ -3463,13 +3483,17 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // DQ (12/21/2009): The locaion of the EDG directory has been changed now that it is a submodule in our git repository.
   // commandLine.push_back(findRoseSupportPathFromBuild("src/frontend/CxxFrontend/EDG_4.0/lib", "share"));
   // commandLine.push_back(findRoseSupportPathFromBuild("src/frontend/CxxFrontend/EDG/EDG_4.0/lib", "share"));
-     commandLine.push_back(findRoseSupportPathFromSource("src/frontend/CxxFrontend/EDG/EDG_4.0/lib", "share"));
+
+  // DQ (11/1/2011): Fix to use EDG 4.3
+  // commandLine.push_back(findRoseSupportPathFromSource("src/frontend/CxxFrontend/EDG/EDG_4.0/lib", "share"));
+     commandLine.push_back(findRoseSupportPathFromSource("src/frontend/CxxFrontend/EDG/EDG_4.3/lib", "share"));
 #else
   // DQ (2/1/2010): I think this needs to reference the source tree (to pickup src/frontend/CxxFrontend/EDG/EDG_4.0/lib/predefined_macros.txt).
   // DQ (12/21/2009): The locaion of the EDG directory has been changed now that it is a submodule in our git repository.
   // commandLine.push_back(findRoseSupportPathFromBuild("src/frontend/CxxFrontend/EDG_3.10/lib", "share"));
      commandLine.push_back(findRoseSupportPathFromBuild("src/frontend/CxxFrontend/EDG/EDG_3.10/lib", "share"));
   // commandLine.push_back(findRoseSupportPathFromSource("src/frontend/CxxFrontend/EDG/EDG_3.10/lib", "share"));
+#endif
 #endif
 #endif
 
@@ -3525,13 +3549,16 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 #else
   // DQ (1/13/2009): The preincludeDirectoryList was built if the -isystem <dir> option was used
 
-//AS (2/22/08): GCC looks for system headers in '-I' first. We need to support this.
-//PC (10/20/2009): This code was moved from SgProject as it is file-specific (required by AST merge)
+#ifndef ROSE_USE_NEW_EDG_INTERFACE
+  // DQ (11/3/2011): This is only required for the older version of EDG (currently still the default).
+  // AS (2/22/08): GCC looks for system headers in '-I' first. We need to support this.
+  // PC (10/20/2009): This code was moved from SgProject as it is file-specific (required by AST merge)
      for (vector<string>::iterator i = includePaths.begin(); i != includePaths.end(); ++i)
         {
           commandLine.push_back("--sys_include");
           commandLine.push_back(*i);
         }
+#endif
 
      for (SgStringList::iterator i = project->get_preincludeDirectoryList().begin(); i != project->get_preincludeDirectoryList().end(); i++)
         {
@@ -3699,8 +3726,11 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // DQ (9/17/2006): We should be able to build a version of this code which hands a std::string to StringUtility::splitStringIntoStrings()
   // Separate the string into substrings consistent with the structure of argv command line input
      inputCommandLine = commandLine;
-     inputCommandLine.insert(inputCommandLine.begin(), "dummy_argv0_for_edg");
 
+  // DQ (11/1/2011): Do we need this for the new EDG 4.3 work?
+  // #ifndef ROSE_USE_NEW_EDG_INTERFACE
+     inputCommandLine.insert(inputCommandLine.begin(), "dummy_argv0_for_edg");
+  // #endif
   // We only provide options to change the default values!
 
   // Handle option for use of ROSE as a C compiler instead of C++
@@ -3732,7 +3762,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
        // if we use the new EDG frontend (not connected to SAGE) then we can't
        // generate C++ code so we don't want to call the C++ compiler
-          set_skipfinalCompileStep(true);
+       // set_skipfinalCompileStep(true);
         }
 
   //
@@ -3976,10 +4006,13 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
           inputCommandLine.push_back("--upc");
           inputCommandLine.push_back("--restrict");
 
+#if 0
+       // DQ (11/1/2011): This is not enough to support C++ code (e.g. "limits" header file).
 #ifdef ROSE_USE_NEW_EDG_INTERFACE
        // DQ (2/17/2011): Added support for UPC (header are placed into include-staging directory).
           inputCommandLine.push_back("--sys_include");
           inputCommandLine.push_back(findRoseSupportPathFromBuild("include-staging", "share"));
+#endif
 #endif
         }
 
@@ -3994,10 +4027,13 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
           inputCommandLine.push_back("--upc++");
           inputCommandLine.push_back("--restrict");
 
+#if 0
+       // DQ (11/1/2011): This is not enough to support C++ code (e.g. "limits" header file).
 #ifdef ROSE_USE_NEW_EDG_INTERFACE
        // DQ (2/17/2011): Added support for UPC (header are placed into include-staging directory).
           inputCommandLine.push_back("--sys_include");
           inputCommandLine.push_back(findRoseSupportPathFromBuild("include-staging", "share"));
+#endif
 #endif
         }
 
@@ -4240,7 +4276,7 @@ SgProject::parse(const vector<string>& argv)
 #endif
 
   // builds file list (or none if this is a link line)
-          processCommandLine(argv);
+     processCommandLine(argv);
 
      int errorCode = 0;
 
@@ -5374,7 +5410,7 @@ SgFile::callFrontEnd()
           if ( get_new_frontend() == true )
              {
             // Use the current version of the EDG frontend from EDG (or any other version)
-               abort();
+            // abort();
                printf ("ROSE::new_frontend == true (call edgFrontEnd using unix system() function!) \n");
 
                std::string frontEndCommandLineString;
@@ -5384,17 +5420,20 @@ SgFile::callFrontEnd()
                   }
                  else
                   {
-                    frontEndCommandLineString = "edgFrontEnd ";
+                 // frontEndCommandLineString = "edgFrontEnd ";
+                    frontEndCommandLineString = "edgcpfe --g++ --gnu_version 40201 ";
                   }
                frontEndCommandLineString += CommandlineProcessing::generateStringFromArgList(inputCommandLine,true,false);
 
-               if ( get_verbose() > 1 )
-                    printf ("frontEndCommandLineString = %s \n",frontEndCommandLineString.c_str());
+               if ( get_verbose() > -1 )
+                    printf ("frontEndCommandLineString = %s \n\n",frontEndCommandLineString.c_str());
 
-               ROSE_ASSERT (!"Should not get here");
-               system(frontEndCommandLineString.c_str());
+            // ROSE_ASSERT (!"Should not get here");
+               int status = system(frontEndCommandLineString.c_str());
 
-            // exit(0);
+               printf ("After calling edgcpfe as a test (status = %d) \n",status);
+               ROSE_ASSERT(status == 0);
+            // ROSE_ASSERT(false);
              }
             else
              {
@@ -8550,8 +8589,9 @@ SgFile::usage ( int status )
 "                             when using gfortran versions greater than 4.1)\n"
 "     -rose:relax_syntax_check skip Fortran syntax checking (required for some F90 code\n"
 "                             when using gfortran based syntax checking)\n"
-"     -rose:skip_rose         process command line and call backend directly,\n"
-"                             skipping all ROSE-specific processing\n"
+"     -rose:skip_translation_from_edg_ast_to_rose_ast\n"
+"                             skip the translation of the EDG AST into the ROSE AST\n"
+"                             (an SgProject, SgFile, and empty SgGlobal will be constructed)\n"
 "     -rose:skip_transformation\n"
 "                             read input file and skip all transformations\n"
 "     -rose:skip_unparse      read and process input file but skip generation of\n"

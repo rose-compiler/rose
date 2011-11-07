@@ -7,6 +7,15 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 TESTCODES_REQUIRED_TO_PASS = 
 
+if ROSE_USE_EDG_VERSION_4_3
+TESTCODES_REQUIRED_TO_PASS += \
+test_boost_lambda.C \
+test_boost_phoenix_v1.C 
+endif
+
+# DQ (11/3/2011): Can't find "boost/spirit/phoenix/core.hpp"
+# test_boost_phoenix_v2.C
+
 # The file test_boost_lambda.C and test_boost_phoenix_v1.C do not fail, but take too long to be included in frequent tests
 TESTCODE_CURRENTLY_FAILING = \
 test_boost_lambda.C \
@@ -22,17 +31,25 @@ ALL_TESTCODES = \
 $(TESTCODES_REQUIRED_TO_PASS) \
 $(TESTCODE_CURRENTLY_FAILING)
 
-ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 --edg:restrict --edg:export
+# ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 --edg:restrict --edg:export
+ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 --edg:restrict
 
 PASSING_TEST_Objects = ${TESTCODES:.C=.o}
 TEST_Objects = ${ALL_TESTCODES:.C=.o}
 
-$(TEST_Objects): ../../testTranslator $(srcdir)/$(@:.o=.C)
-	../../testTranslator $(ROSE_FLAGS) -I$(srcdir)/usr/local/mstools/include -c $(srcdir)/$(@:.o=.C)
+# Test the EDG 4.3 frontend on Boost (while we work on the C++ support in ROSE using EDG 4.3).
+if ROSE_USE_EDG_VERSION_4_3
+   TRANSLATOR = ../../testFrontEnd
+else
+   TRANSLATOR = ../../testTranslator
+endif
+
+$(TEST_Objects): $(TRANSLATOR) $(srcdir)/$(@:.o=.C)
+	$(TRANSLATOR) $(ROSE_FLAGS) -I$(srcdir)/usr/local/mstools/include -c $(srcdir)/$(@:.o=.C)
 
 # This test code currently fails due to mangled names being too long!
 test_boost_phoenix_v2.o: ../../testTranslator
-	$(VALGRIND) ../../testTranslator -rose:verbose 0 -I$(srcdir)/usr/local/mstools/include -I$(srcdir)/usr/local/mstools/include/phoenix_v2 -c $(srcdir)/test_boost_phoenix_v2.C
+	$(VALGRIND) $(TRANSLATOR) -rose:verbose 0 -I$(srcdir)/usr/local/mstools/include -I$(srcdir)/usr/local/mstools/include/phoenix_v2 -c $(srcdir)/test_boost_phoenix_v2.C
 
 
 CURRENT_DIRECTORY = `pwd`
