@@ -138,7 +138,12 @@ void filterGraph(_GraphStructure& graph, _NodePredicate _nodePred){
      typename _GraphStructure::NodeIterator it1 =  graph. GetNodeIterator();
      while(!it1.ReachEnd()){
       typename _GraphStructure::Node* x1 = *it1;
+#if !USE_ROSE
+   // DQ (11/3/2011): EDG compilains about this (but GNU allowed it, I think that EDG might be correct.
+   // since it see the instantiated template differently.  But since we are only trying to compile ROSE 
+   // with ROSE (using the new EDG 4.3 front-end as a tests) we can just skip this case for now.
       ROSE_ASSERT(x1!=NULL);
+#endif
       _nodePred(x1);
 
       it1++;

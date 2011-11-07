@@ -690,25 +690,29 @@ GrammarString::getDataAccessFunctionPrototypeString () const
      string variableNameStringTmp = string(variableNameString);
 
      string returnString;
-     switch (automaticGenerationOfDataAccessFunctions.getValue()) {
-     case TAG_NO_ACCESS_FUNCTIONS:
-           break;
-     case TAG_BUILD_ACCESS_FUNCTIONS:
-     case TAG_BUILD_FLAG_ACCESS_FUNCTIONS:
-          returnString = "     public: \n         " + typeNameStringTmp + " get_" +
+     switch (automaticGenerationOfDataAccessFunctions.getValue()) 
+        {
+          case TAG_NO_ACCESS_FUNCTIONS:
+               break;
+
+          case TAG_BUILD_ACCESS_FUNCTIONS:
+          case TAG_BUILD_FLAG_ACCESS_FUNCTIONS:
+               returnString = "     public: \n         " + typeNameStringTmp + " get_" +
                          variableNameStringTmp + "() const;\n         void set_"  
                          + variableNameStringTmp + "(" + typeNameStringTmp + " " + 
                          variableNameStringTmp + ");\n";
-          break;
-     case TAG_BUILD_LIST_ACCESS_FUNCTIONS:
-          returnString = "     public: \n         const " + typeNameStringTmp + 
+               break;
+
+          case TAG_BUILD_LIST_ACCESS_FUNCTIONS:
+               returnString = "     public: \n         const " + typeNameStringTmp + 
                          "& " + " get_" + variableNameStringTmp + "() const;\n         " + 
                          typeNameStringTmp + "& " + "get_" + variableNameStringTmp
                          + "(); \n";
-          break;
-     default:
-          assert(false);
-     }
+               break;
+          default:
+               assert(false);
+        }
+
      return returnString;
    }
 

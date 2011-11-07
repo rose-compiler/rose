@@ -5150,7 +5150,7 @@ syscall_madvise(RSIM_Thread *t, int callno)
     RTS_READ(t->get_process()->rwlock()) {
         mapped_mem = t->get_process()->get_memory()->va_extents();
     } RTS_READ_END;
-    ExtentMap unmapped = mapped_mem.subtract_from(start, size);
+    ExtentMap unmapped = mapped_mem.subtract_from(Extent(start, size));
     if (unmapped.size()>0) {
         t->syscall_return(-ENOMEM);
         return;

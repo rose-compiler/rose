@@ -46,7 +46,8 @@ FortranCodeGeneration_locatedNode::unparseStatementNumbersSupport ( SgLabelRefEx
         }
 
   // Let the default be fixed format for now (just for fun)
-     bool fixedFormat = (unp->currentFile->get_outputFormat() == SgFile::e_unknown_output_format) ||
+     bool fixedFormat = (unp->currentFile==NULL) ||
+                        (unp->currentFile->get_outputFormat() == SgFile::e_unknown_output_format) ||
                         (unp->currentFile->get_outputFormat() == SgFile::e_fixed_form_output_format);
 
   // if (numeric_label_symbol != NULL)

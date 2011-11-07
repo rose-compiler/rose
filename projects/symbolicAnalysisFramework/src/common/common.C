@@ -616,7 +616,7 @@ namespace Dbg {
                         ostringstream cmd; cmd << "mkdir -p "<<imgPath.str();
                         //cout << "Command \""<<cmd.str()<<"\"\n";
                         int ret = system(cmd.str().c_str());
-                        if(ret == -1) { cout << "Dbg::init() ERROR creating directory \""<<imgPath<<"\"!"; exit(-1); }
+                        if(ret == -1) { cout << "Dbg::init() ERROR creating directory \""<<imgPath.str()<<"\"!"; exit(-1); }
                 }
                         
                 ostringstream dbgFileName; dbgFileName << workDir << "/" << fName;

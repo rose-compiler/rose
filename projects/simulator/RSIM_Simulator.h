@@ -388,7 +388,7 @@ public:
      *
      *  @code
      *  RSIM_Linux32 sim;
-     *  IOCounter ioc = new IOCounter;
+     *  IOCounter *ioc = new IOCounter;
      *  ...
      *  sim.syscall_implementation(3)->body.append(ioc);
      *  sim.syscall_implementation(4)->body.append(ioc);
