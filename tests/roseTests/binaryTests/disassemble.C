@@ -70,6 +70,10 @@ Description:\n\
     Convenience switch that is equivalent to --ast-dot and --cfg-dot (or\n\
     --no-ast-dot and --no-cfg-dot).\n\
 \n\
+  --linear\n\
+    Organized the output by address rather than hierarchically.  The output\n\
+    will be more like traditional disassemblers.\n\
+\n\
   --omit-anon=SIZE\n\
   --no-omit-anon\n\
     If the memory being disassembled is anonymously mapped (contains all zero\n\
@@ -794,6 +798,7 @@ main(int argc, char *argv[])
     bool do_show_hashes = false;
     bool do_omit_anon = true;                   /* see large_anonymous_region_limit global for actual limit */
     bool do_syscall_names = true;
+    bool do_linear = false;                     /* organized output linearly rather than hierarchically */
 
     Disassembler::AddressSet raw_entries;
     MemoryMap raw_map;
@@ -840,6 +845,8 @@ main(int argc, char *argv[])
                    !strcmp(argv[i], "--help")) {
             printf(usage, arg0, arg0, arg0);
             exit(0);
+        } else if (!strcmp(argv[i], "--linear")) {
+            do_linear = true;
         } else if (!strncmp(argv[i], "--omit-anon=", 12)) {
             char *rest;
             do_omit_anon = true;
@@ -1308,6 +1315,7 @@ main(int argc, char *argv[])
     if (!do_quiet) {
         MyAsmUnparser unparser(do_show_hashes, do_syscall_names);
         unparser.add_function_labels(block);
+        unparser.set_organization(do_linear ? AsmUnparser::ORGANIZED_BY_ADDRESS : AsmUnparser::ORGANIZED_BY_AST);
         unparser.unparse(std::cout, block);
         fputs("\n\n", stdout);
     }
