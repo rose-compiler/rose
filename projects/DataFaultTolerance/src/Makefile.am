@@ -1,12 +1,12 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 
-INCLUDES = $(ROSE_INCLUDES) -I$(srcdir)/includes \
+INCLUDES = $(ROSE_INCLUDES) -I$(srcdir) \
 	 -I$(top_srcdir)/projects/DataFaultTolerance/includes
 
 
 CXX_TEMPLATE_REPOSITORY_PATH = .
-CXXFLAGS += -DDEBUG
+#CXXFLAGS += -DDEBUG
 
 bin_PROGRAMS = DataFaultToleranceTransformation
 
@@ -15,6 +15,12 @@ DataFaultToleranceTransformation_SOURCES = \
 				AstFromString.C \
 				pragmaHandling.C \
 				arrayBase.C
+
+include_HEADERS = \
+		arrayBase.h \
+		AstFromString.h \
+		faultToleranceArrayLibUtility.h \
+		pragmaHandling.h
 
 noinst_LIBRARIES = libfaulttolerancearray.a
 
@@ -32,7 +38,6 @@ LDADD = \
      $(ROSE_LIBS) 
 
 
-EXTRA_DIST = README
 
 clean-local:
 	rm -f *.o a.out rose_*.C
