@@ -38,11 +38,15 @@ dnl predefined by a specific compiler
                BACKEND_GCC_PATCHLEVEL="0"
              fi 
              macroString="{\"-D__GNUG__=$BACKEND_GCC_MAJOR\", \"-D__GNUC__=$BACKEND_GCC_MAJOR\", \"-D__GNUC_MINOR__=$BACKEND_GCC_MINOR\", \"-D__GNUC_PATCHLEVEL__=$BACKEND_GCC_PATCHLEVEL\""
-             if test x$enable_new_edg_interface = xyes; then
-               :
-             else
-               macroString="${macroString}, \"--preinclude\", \"rose_edg_required_macros_and_functions.h\""
-             fi
+
+           # DQ (11/1/2011): We need this same mechanism for C++'s use of EDG 4.x as we did for EDG 3.3 (but for C code this was not required; and was simpler).
+           # if test x$enable_new_edg_interface = xyes; then
+           #   :
+           # else
+           #   macroString="${macroString}, \"--preinclude\", \"rose_edg_required_macros_and_functions.h\""
+           # fi
+             macroString="${macroString}, \"--preinclude\", \"rose_edg_required_macros_and_functions.h\""
+
              macroString="${macroString}}"
 
              compilerVendorName=GNU
@@ -69,11 +73,15 @@ dnl predefined by a specific compiler
            #   from math.h _LIBIMF_EXT _LIBIMF_INT   _LIBIMF_PUBAPI abs( _LIBIMF_INT __x );
            # macroString="{\"-D__PURE_INTEL_C99_HEADERS__\" ${tmp_macro}"
              macroString="{ \"-D__PURE_INTEL_C99_HEADERS__\" ${tmp_macro}"
-             if test x$enable_new_edg_interface = xyes; then
-               :
-             else
-               macroString="${macroString}, \"--preinclude\", \"rose_edg_required_macros_and_functions.h\""
-             fi
+
+           # DQ (11/1/2011): We need this same mechanism for C++'s use of EDG 4.x as we did for EDG 3.3 (but for C code this was not required; and was simpler).
+           # if test x$enable_new_edg_interface = xyes; then
+           #   :
+           # else
+           #   macroString="${macroString}, \"--preinclude\", \"rose_edg_required_macros_and_functions.h\""
+           # fi
+             macroString="${macroString}, \"--preinclude\", \"rose_edg_required_macros_and_functions.h\""
+
              macroString="${macroString}}"
               echo "ICC MACRO DEFS: $ICC_MACRO_DEFS"
              echo "macroString: $macroString"
@@ -118,11 +126,15 @@ dnl predefined by a specific compiler
              fi 
 
              macroString="{\"-D__GNUG__=$BACKEND_GCC_MAJOR\", \"-D__GNUC__=$BACKEND_GCC_MAJOR\", \"-D__GNUC_MINOR__=$BACKEND_GCC_MINOR\", \"-D__GNUC_PATCHLEVEL__=$BACKEND_GCC_PATCHLEVEL\""
-             if test x$enable_new_edg_interface = xyes; then
-               :
-             else
-               macroString="${macroString}, \"--preinclude\", \"rose_edg_required_macros_and_functions.h\""
-             fi
+
+           # DQ (11/1/2011): We need this same mechanism for C++'s use of EDG 4.x as we did for EDG 3.3 (but for C code this was not required; and was simpler).
+           # if test x$enable_new_edg_interface = xyes; then
+           #   :
+           # else
+           #   macroString="${macroString}, \"--preinclude\", \"rose_edg_required_macros_and_functions.h\""
+           # fi
+             macroString="${macroString}, \"--preinclude\", \"rose_edg_required_macros_and_functions.h\""
+
              macroString="${macroString}}"
 
              compilerVendorName=GNU

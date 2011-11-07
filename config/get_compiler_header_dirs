@@ -21,10 +21,11 @@ compilerName="`basename $1`"
          ;;
 
   # Support for compiling ROSE with ROSE (must use translator named: "roseTranslator"
-    roseTranslator) 
+    roseTranslator*|testTranslator*|roseCodeGeneration*|testCodeGeneration*|roseAnalysis*|testAnalysis*|roseAstFileIO*|testAstFileIO*)
          tmpFile="/tmp/tmp`uname -n`$$.C"
          echo "int main(int argc, char **argv){return 0;}" > "$tmpFile"
-         $1 -v -E $tmpFile 2>&1 # | sed -n '/^#include </,/^End/p' | sed '/^#include </d; /^End/d; /\/usr\/include$/d'"
+         #$1 -v -E $tmpFile 2>&1 # | sed -n '/^#include </,/^End/p' | sed '/^#include </d; /^End/d; /\/usr\/include$/d'"
+         $1 -v -E $tmpFile 2>&1 | sed -n '/^#include </,/^End/p' | sed '/^#include </d; /^End/d; /\/usr\/include$/d; /\/Library\/Frameworks$/d; /[(]framework directory[)]$/d'
          ;;
     *) echo "ERROR: Not able to recognize compiler $1"
        exit 1

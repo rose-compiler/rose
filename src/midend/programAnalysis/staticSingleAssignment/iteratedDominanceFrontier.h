@@ -128,7 +128,12 @@ namespace ssa_private
 
                 //Get the immediate dominator of the successor
                 typename ControlFlowGraph::Vertex successorVertex = functionCfg.getVertexForNode(successor);
+#if !USE_ROSE
+             // DQ (11/3/2011): EDG compilains about this (but GNU allowed it, I think that EDG might be correct.
+             // since it might be a private variable.  But since we are only trying to compile ROSE with ROSE (using the
+             // new EDG 4.3 front-end as a tests) we can just skip this case for now.
                 ROSE_ASSERT(successorVertex != ControlFlowGraph::GraphTraits::null_vertex());
+#endif
                 ROSE_ASSERT(dominatorTreeMap.count(successorVertex) == 1);
                 typename ControlFlowGraph::Vertex iDominatorVertex = dominatorTreeMap[successorVertex];
                 CfgNodeT iDominator = *functionCfg[iDominatorVertex];
@@ -151,7 +156,12 @@ namespace ssa_private
                 {
                     //Get the immediate dominator of the child DF node
                     typename ControlFlowGraph::Vertex childDFVertex = functionCfg.getVertexForNode(childDFNode);
+#if !USE_ROSE
+                 // DQ (11/3/2011): EDG compilains about this (but GNU allowed it, I think that EDG might be correct.
+                 // since it might be a private variable.  But since we are only trying to compile ROSE with ROSE (using the
+                 // new EDG 4.3 front-end as a tests) we can just skip this case for now.
                     ROSE_ASSERT(childDFVertex != ControlFlowGraph::GraphTraits::null_vertex());
+#endif
                     ROSE_ASSERT(dominatorTreeMap.count(childDFVertex) == 1);
                     typename ControlFlowGraph::Vertex iDominatorVertex = dominatorTreeMap[childDFVertex];
                     CfgNodeT iDominator = *functionCfg[iDominatorVertex];

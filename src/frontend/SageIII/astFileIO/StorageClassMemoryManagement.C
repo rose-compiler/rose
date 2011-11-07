@@ -4235,8 +4235,8 @@ void EasyStorage<ExtentMap>::storeDataInEasyStorageClass(const ExtentMap& emap)
      * that is twice as large as the number of pairs in the ExtentMap. */
     std::vector<rose_addr_t> data_;
     for (ExtentMap::const_iterator ei=emap.begin(); ei!=emap.end(); ++ei) {
-        data_.push_back(ei->first);
-        data_.push_back(ei->second);
+        data_.push_back(ei->first.first());
+        data_.push_back(ei->first.last());
     }
 
     std::vector<rose_addr_t>::const_iterator dat = data_.begin();
@@ -4288,7 +4288,7 @@ ExtentMap EasyStorage<ExtentMap>::rebuildDataStoredInEasyStorageClass() const
         {
           rose_addr_t *pointer = Base::getBeginningOfDataBlock();
           for (long i=0; i<Base::getSizeOfData(); i+=2)
-               emap.insert(pointer[i+0], pointer[i+1]);
+              emap.insert(Extent::inin(pointer[i+0], pointer[i+1]));
         }
 #endif
 
