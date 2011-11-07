@@ -563,6 +563,11 @@ AC_DEFUN([ROSE_SUPPORT_ROSE_BUILD_INCLUDE_FILES],
 rm -rf ./include-staging
 if test x$enable_new_edg_interface = xyes; then
   :
+# DQ (11/1/2011): I think that we need these for more complex header file 
+# requirements than we have seen in testing C code to date.  Previously
+# in testing C codes with the EDG 4.x we didn't need as many header files.
+  GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS
+  GENERATE_BACKEND_CXX_COMPILER_SPECIFIC_HEADERS
 else
   GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS
   GENERATE_BACKEND_CXX_COMPILER_SPECIFIC_HEADERS
