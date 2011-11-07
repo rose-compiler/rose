@@ -10,6 +10,7 @@ SUBDIRS = \
      C_to_Promela \
      CertSecureCodeProject \
      CloneDetection \
+     DataFaultTolerance \
      DatalogAnalysis \
      DocumentationGenerator \
      FiniteStateModelChecker \
