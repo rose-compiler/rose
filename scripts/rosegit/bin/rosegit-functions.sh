@@ -132,57 +132,106 @@ rosegit_load_config () {
     local repo="$1";   [ -d "$repo" ]      || rosegit_die "not a repository: $repo"
     local ns="$2";     [ -n "$ns" ]        || ns=$(rosegit_namespace)
     local branch="$3"; [ -n "$branch" ]    || branch="none";
-    local config="$4";                     # optional file or directory
+    local config="$4";                 # colon-separated list of optional config files and/or directories to search
 
-    local confdir=$repo/scripts/rosegit/config
-    config=$(eval "echo $config")          # expand tidle, etc.
-    if [ -n "$config" ]; then
-	if [ -d "$config/." ]; then
-	    confdir="$config"
-	    config=
-        elif [ -f "$config" ]; then
-	    :
-        elif [ -f "$confdir/$config" ]; then
-	    config="$confdir/$config"
+    # Split $config into a list of directories and (presumably) files.
+    local confdirs=
+    local conffiles=
+    while [ -n "$config" ]; do
+	local ltstr="${config%%:*}"
+	if [ "$ltstr" = "" ]; then
+	    : extraneous colon
+	elif [ -d "$ltstr/." ]; then
+	    confdirs="$confdirs:$ltstr"
 	else
-	    rosegit_die "unable to find configuration file or directory: $config"
+	    conffiles="$conffiles:$ltstr"
 	fi
-    fi
+	config="${config#$ltstr}"
+	config="${config#:}"
+    done
+    confdirs="$confdirs:$repo/scripts/rosegit/config"
 
-    echo -n "$myname configuring:" >&2
-
-    # The defaults.conf must be present (it may be empty). This is a sanity check!
     ROSEGIT_LOADED=
-    local defaults=$confdir/defaults.conf
-    [ -r $defaults ] || rosegit_die "no configuration file: $defaults"
-    rosegit_load_config_file $defaults >&2
-    [ -n "$ROSEGIT_LOADED" ] || rosegit_die "$defaults should have set ROSEGIT_LOADED"
 
-    # Load other config files. These are just shell scripts. The later, more specific files can override what the earlier ones did.
-    rosegit_load_config_file $confdir/$ns.conf >&2
-    rosegit_load_config_file $confdir/$ns.$branch.conf    >&2
-    [ -f "$config" ] && rosegit_load_config_file $config  >&2
+    # Load the default config, which is required
+    echo -n "$myname configuring:" >&2
+    rosegit_load_config_file "defaults" "required" "$confdirs" >&2;
+    [ -n "$ROSEGIT_LOADED" ] || rosegit_die "default config should have set ROSEGIT_LOADED"
+
+    # Load configurations based on branch name
+    rosegit_load_config_file "$ns.conf"         "optional" "$confdirs" >&2
+    rosegit_load_config_file "$ns.$branch.conf" "optional" "$confdirs" >&2
+
+    # Load additional configurations specified via $config argument.
+    while [ -n "$conffiles" ]; do
+	local ltstr="${conffiles%%:*}"
+	[ "$ltstr" != "" ] && rosegit_load_config_file "$ltstr" "required" "$confdirs" >&2
+	conffiles="${conffiles#$ltstr}"
+	conffiles="${conffiles#:}"
+    done
 
     echo >&2
 
     # Export variables
     eval $(set |sed -n '/^ROSEGIT/s/^\(ROSEGIT[a-zA-Z_0-9]*\).*/export \1/p')
-
 }
 
-# Loads one configuration file
+# Loads one configuration file.  Every config file that's loaded gets added to the colon-separated list
+# of loaded names stored in ROSEGIT_LOADED
 rosegit_load_config_file () {
-    local cfile="$1";   [ -n "$cfile" ] || rosegit_die "no configuration file specified"
+    local cfile="$1";     [ -n "$cfile" ] || rosegit_die "no configuration file specified"
+    local flags="$2"
+    local paths="$3"
     echo -n " $(basename $cfile .conf)"
-    if [ -f $cfile ]; then
-	source $cfile || rosegit_die "cannot source file: $cfile"
-	echo -n "[ok]"
-    else
-	echo -n "[no]"
+
+    # If $cfile contains a slash then look directly without searching.
+    if [ "$cfile" != "${cfile%/}" ]; then
+	if [ -f "$cfile" ]; then
+	    echo -n "[ok]"
+	    source "$cfile" || rosegit_die "cannot source file: $cfile"
+	    ROSEGIT_LOADED="$ROSEGIT_LOADED:$cfile";
+	    return 0;
+	elif [ -f "$cfile.conf" ]; then
+	    echo -n "[ok]"
+	    source "$cfile.conf" || rosegit_die "cannot source file: $cfile.conf"
+	    ROSEGIT_LOADED="$ROSEGIT_LOADED:$cfile.conf";
+	    return 0;
+	fi
     fi
 
+    # If $cfile doesn't start with a slash, then search the specified paths.
+    if [ "${cfile#/}" = "$cfile" ]; then
+	while [ -n "$paths" ]; do
+	    local ltstr="${paths%%:*}"
+	    if [ "$ltstr" != "" ]; then
+		local fullname="$ltstr/$cfile"
+		if [ -f "$fullname" ]; then
+		    echo -n "[ok]"
+		    source "$fullname" || rosegit_die "cannot source file: $fullname"
+		    ROSEGIT_LOADED="$ROSEGIT_LOADED:$fullname";
+		    return 0
+		elif [ -f "$fullname.conf" ]; then
+		    echo -n "[ok]"
+		    source "$fullname.conf" || rosegit_die "cannot source file: $fullname.conf"
+		    ROSEGIT_LOADED="$ROSEGIT_LOADED:$fullname.conf";
+		    return 0
+		fi
+		paths="${paths#$ltstr}"
+	    fi
+	    paths="${paths#:}"
+	done
+    fi
+
+    # Was the file required?
+    if [ "$flags" = "required" ]; then
+	echo
+	rosegit_die "config file not found: $cfile"
+    fi
+    echo -n "[no]"
+    return 1
+
     # This variable is typically long and spans multiple lines. Change its value to a single line.
-    ROSEGIT_CONFIGURE=$(echo "$ROSEGIT_CONFIGURE" |tr '\n' ' ')
+#    ROSEGIT_CONFIGURE=$(echo "$ROSEGIT_CONFIGURE" |tr '\n' ' ')
 }
 
 # Runs ROSEGIT_MAKE. Used by test scripts.
@@ -190,19 +239,19 @@ rosegit_make () {
     eval "$ROSEGIT_MAKE" "$@"
 }
 
-# Echoes the current namespace based on the setting of the ROSEGIT_NAMESPACE variable. If this variable is empty then we generate
-# a namespace based on the gcos field of /etc/passwd for the effective user, or the first three letters of the effective user
-# login name. The result is cached in ROSEGIT_NAMESPACE.
-rosegit_namespace () {
+# Echoes the current namespace based on the setting of the ROSEGIT_NAMESPACE variable.  If this variable is empty then we
+# generate a namespace from the current user name.  For most users, this is simply their login name as stored in $USER.  For
+# the ROSE team staff members, this might be an abbreviation such as "dq" or "rpm".
+rosegit_namespace() {
     local ns="$ROSEGIT_NAMESPACE"
-    if [ ! -n "$ns" ]; then
-       local euser=$(whoami)
-       ns=$(grep "^$euser:" /etc/passwd |cut -d: -f5 |perl -ane 'print map {substr lc,0,1} @F')
-    fi
-    [ -n "$ns" ] || ns=$(whoami)
-    [ -n "$ns" ] || ns=$USER
-    [ -n "$ns" ] || rosegit_die "could not determine namespace; please set the ROSEGIT_NAMESPACE config variable."
-    ns=$(echo "$ns""xxx" |cut -c1-3)
+    [ -n "$ns" ] || ns="$(whoami)"
+    [ -n "$ns" ] || ns="$USER"
+    ns=$(echo "$ns" | tr -cd 'a-z0-9_')
+    case "$ns" in
+	dquinlan*) ns=dq ;;
+        matzke*)   ns=rpm ;;
+    esac
+    [ -n "$ns" ] || rosegit_die "could not determine namespace"
     ROSEGIT_NAMESPACE="$ns"
     echo "$ns"
 }
@@ -246,12 +295,28 @@ rosegit_show_environment () {
     echo "    $((tex --version || echo tex NOT INSTALLED) 2>/dev/null |head -n1)"
     echo "    $((latex --version || echo latex NOT INSTALLED) 2>/dev/null |head -n1)"
     echo "    $(swig -version |grep -i version)"
-    if [ -f /usr/include/boost/version.hpp ]; then
-	echo "    boost (in /usr/include)" \
-	    $(sed -n '/#define BOOST_LIB_VERSION/s/.*"\(.*\)"/\1/p' </usr/include/boost/version.hpp | tr _ .)
+    if [ -n "$BOOST_HOME" ]; then
+	echo -n "    boost (in $BOOST_HOME) "
+	if [ -n "$BOOST_VERSION" ]; then
+	    echo "$BOOST_VERSION"
+	elif [ -f "$BOOST_HOME/include/boost/version.hpp" ]; then
+	    echo $(sed -n '/#.*BOOST_LIB_VERSION/s/.*"\(.*\)"/\1/p' <"$BOOST_HOME/include/boost/version.hpp" | tr _ .)
+	else
+	    echo "unknown"
+        fi
     else
 	echo "    boost: not in /usr/include (see configure output for version)"
     fi
+
+    echo "Configured from:"
+    local x="$ROSEGIT_LOADED"
+    while [ -n "$x" ]; do
+	local ltstr="${x%%:*}"
+	[ -n "$ltstr" ] && echo "    $ltstr"
+	x="${x#$ltstr}"
+	x="${x#:}"
+    done
+
     echo "Configuration:"
     eval "perl -e 'print qq{    \$_\n} for sort {(split q{=},\$a)[0] cmp (split q{=},\$b)[0]} @ARGV' -- $ROSEGIT_CONFIGURE"
 }

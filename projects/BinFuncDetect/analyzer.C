@@ -13,7 +13,7 @@ int main()
 #include <gcrypt.h>
 #include <fcntl.h>
 #include <sys/mman.h>
-
+#include <boost/graph/graphviz.hpp>
 
 #include "rose_getline.h"
 #include "stringify.h"
@@ -115,11 +115,11 @@ class MyUnparser: public AsmUnparser {
 
                 if (!rose_func_va) {
                     /* Instruction/data assigned to function by IDA but not ROSE */
-                    ida[i].ida_not_rose.insert(start_va, nbytes);
+                    ida[i].ida_not_rose.insert(Extent(start_va, nbytes));
                     output <<"!";
                 } else if (rose_func_va!=ida_func_va[i]) {
                     /* Instruction assigned by ROSE and IDA to different function entry addresses. */
-                    ida[i].rose_ida_diff.insert(start_va, nbytes);
+                    ida[i].rose_ida_diff.insert(Extent(start_va, nbytes));
                     output <<"!";
                 } else {
                     /* Instruction assigned to same function by ROSE and IDA */
@@ -128,7 +128,7 @@ class MyUnparser: public AsmUnparser {
             } else if (rose_func_va) {
                 /* Instruction assigned to function by ROSE but not IDA.  Don't show the "!" for padding bytes since we already
                  * know that IDA doesn't include them in the function. */
-                ida[i].rose_not_ida.insert(start_va, nbytes);
+                ida[i].rose_not_ida.insert(Extent(start_va, nbytes));
                 if (blk && 0!=(blk->get_reason() & SgAsmBlock::BLK_PADDING)) {
                     output <<"          ";
                 } else {
@@ -171,7 +171,7 @@ class MyUnparser: public AsmUnparser {
                 }
 
                 rose_addr_t va = node->get_address();
-                size_t size = node->get_raw_bytes().size();
+                size_t size = node->get_size();
                 MyUnparser *unparser = dynamic_cast<MyUnparser*>(args.unparser);
                 assert(unparser!=NULL);
                 unparser->show_names(args.output, ida, node, rose_func_va, ida_func_va, va, size);
@@ -197,7 +197,7 @@ class MyUnparser: public AsmUnparser {
                         args.output <<"Backward " <<nskipped <<" byte" <<(1==nskipped?"":"s") <<"\n";
                     }
                 }
-                unparser->next_address = va + node->get_raw_bytes().size();
+                unparser->next_address = va + node->get_size();
             }
             return enabled;
         }
@@ -212,16 +212,18 @@ class MyUnparser: public AsmUnparser {
             if (enabled && AsmUnparser::ORGANIZED_BY_ADDRESS==args.unparser->get_organization()) {
                 size_t ncallers = 0;
                 Vertex called_v = args.func->get_cached_vertex();
-                typename boost::graph_traits<FunctionCallGraph>::in_edge_iterator ei, eend;
-                for (boost::tie(ei, eend)=in_edges(called_v, cg); ei!=eend; ++ei) {
-                    SgAsmFunction *caller = get(boost::vertex_name, cg, source(*ei, cg));
-                    if (0==ncallers++)
-                        args.output <<StringUtility::addrToString(args.func->get_entry_va()) <<": Function called by";
-                    args.output <<" 0x" <<std::hex <<caller->get_entry_va() <<std::dec;
+                if (called_v!=(Vertex)(-1)) {
+                    typename boost::graph_traits<FunctionCallGraph>::in_edge_iterator ei, eend;
+                    for (boost::tie(ei, eend)=in_edges(called_v, cg); ei!=eend; ++ei) {
+                        SgAsmFunction *caller = get(boost::vertex_name, cg, source(*ei, cg));
+                        if (0==ncallers++)
+                            args.output <<StringUtility::addrToString(args.func->get_entry_va()) <<": Function called by";
+                        args.output <<" 0x" <<std::hex <<caller->get_entry_va() <<std::dec;
+                    }
+                    if (0==ncallers)
+                        args.output <<StringUtility::addrToString(args.func->get_entry_va()) <<": No known callers.";
+                    args.output <<"\n";
                 }
-                if (0==ncallers)
-                    args.output <<StringUtility::addrToString(args.func->get_entry_va()) <<": No known callers.";
-                args.output <<"\n";
             }
             return enabled;
         }
@@ -353,7 +355,7 @@ statistics(SgAsmInterpretation *interp, const Disassembler::InstructionMap &insn
             if (func) {
                 if (func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS) {
                     /* not a function -- just a collection of otherwise unassigned instructions */
-                } else if (0!=(func->get_reason() & SgAsmFunction::FUNC_INTERPAD)) {
+                } else if (0!=(func->get_reason() & SgAsmFunction::FUNC_PADDING)) {
                     padding_functions.push_back(func);
                 } else {
                     rose_functions.push_back(func);
@@ -376,9 +378,10 @@ statistics(SgAsmInterpretation *interp, const Disassembler::InstructionMap &insn
     fprintf(stderr, "-------------\n");
     
     // Number of bytes disassembled (including those not assigned to any function, and counting overlaps twice)
-    size_t ndis0=0;
+    ExtentMap disassembled_bytes;
     for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii)
-        ndis0 += ii->second->get_raw_bytes().size();
+        disassembled_bytes.insert(Extent(ii->first, ii->second->get_size()));
+    size_t ndis0 = disassembled_bytes.size();
     fprintf(stderr, "Disassembled:                           %-*zu", width, ndis0);
     for (IdaInfo::iterator ida_i=ida.begin(); ida_i!=ida.end(); ++ida_i) {
         size_t ndis = ida_i->address.size();
@@ -390,11 +393,9 @@ statistics(SgAsmInterpretation *interp, const Disassembler::InstructionMap &insn
     // Bytes disassembled by IDA but not ROSE
     fprintf(stderr, "Disassembled by IDA but not ROSE:       %-*s", width, "N/A");
     for (IdaInfo::iterator ida_i=ida.begin(); ida_i!=ida.end(); ++ida_i) {
-        emap.clear();
-        for (IdaFile::FuncMap::iterator fi=ida_i->function.begin(); fi!=ida_i->function.end(); ++fi)
-            emap.insert(fi->second.entry_va, fi->second.size);
+        emap = disassembled_bytes;
         for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii)
-            emap.erase(ii->first, ii->second->get_raw_bytes().size());
+            emap.erase(Extent(ii->first, ii->second->get_size()));
         size_t n = emap.size();
         if (n>0) {
             printf("[NOTE %d] Bytes disassembled by IDA[%d] (%s) but not ROSE:\n", note, ida_i->id, ida_i->name.c_str());
@@ -488,7 +489,7 @@ statistics(SgAsmInterpretation *interp, const Disassembler::InstructionMap &insn
                 ExtentMap func_bytes;
                 std::vector<SgAsmx86Instruction*> func_insns = SageInterface::querySubTree<SgAsmx86Instruction>(rose_functions[i]);
                 for (size_t j=0; j<func_insns.size(); j++)
-                    func_bytes.insert(func_insns[j]->get_address(), func_insns[j]->get_raw_bytes().size());
+                    func_bytes.insert(Extent(func_insns[j]->get_address(), func_insns[j]->get_size()));
                 nbytes += func_bytes.size();
             }
         }
@@ -598,6 +599,35 @@ statistics(SgAsmInterpretation *interp, const Disassembler::InstructionMap &insn
         fprintf(stderr, "Notes (\"[#]\") referenced above can be found at the end of stdout.\n");
 }
 
+static bool
+writable_region(const MemoryMap::MapElement &me) {
+    return 0 != (me.get_mapperms() & MemoryMap::MM_PROT_WRITE);
+}
+
+/* Returns true for any anonymous memory region containing more than a certain size. */
+static rose_addr_t large_anonymous_region_limit = 8192;
+static bool
+large_anonymous_region(const MemoryMap::MapElement &me)
+{
+    if (me.is_anonymous() && me.get_size()>large_anonymous_region_limit) {
+        fprintf(stderr, "ignoring zero-mapped memory at va 0x%08"PRIx64" + 0x%08"PRIx64" = 0x%08"PRIx64"\n",
+                me.get_va(), me.get_size(), me.get_va()+me.get_size());
+        return true;
+    }
+    return false;
+}
+
+/* Label the graphviz vertices with function entry addresses rather than vertex numbers. */
+template<class FunctionCallGraph>
+struct GraphvizVertexWriter {
+    typedef typename boost::graph_traits<FunctionCallGraph>::vertex_descriptor Vertex;
+    const FunctionCallGraph &g;
+    GraphvizVertexWriter(FunctionCallGraph &g): g(g) {}
+    void operator()(std::ostream &output, const Vertex &v) {
+        SgAsmFunction *func = get(boost::vertex_name, g, v);
+        output <<"[ label=\"" <<StringUtility::addrToString(func->get_entry_va()) <<"\" ]";
+    }
+};
 
 int
 main(int argc, char *argv[])
@@ -628,18 +658,68 @@ main(int argc, char *argv[])
     my_argv[my_argc] = NULL;
     SgProject *project = frontend(my_argc, my_argv);
     SgAsmInterpretation *interp = SageInterface::querySubTree<SgAsmInterpretation>(project).back();
+    const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     std::cerr <<"Simulating program loader to map memory...\n";
     BinaryLoader *loader = BinaryLoader::lookup(interp)->clone();
+    //loader->set_debug(stderr);
     loader->set_perform_remap(true);
     loader->load(interp);
+    MemoryMap *map = interp->get_map();
+    assert(map!=NULL);
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    std::cerr <<"Building memory map for disassembly...\n";
+
+    // Set the import section and each of the import address tables to read-only in the specified memory map (if they're in the
+    // map), so that the partitioner thinks that the import data is constant.  The partitioner uses the read-only sections of
+    // the map to initialize memory for the instruction semantics layer.  The more memory we can initialize, the more precise
+    // the semantics will be that are used to build basic blocks and functions.  The ReadonlyImports needs to set the import
+    // section and import address tables to read-only independently of each other because some PE executables put the IATs
+    // outside the import section.  Even when the IATs are inside, setting the entire import section to read-only first keeps
+    // the MemoryMap simpler.
+    struct ReadonlyImports: public AstSimpleProcessing {
+        MemoryMap *map;
+        SgAsmGenericHeader *fhdr;
+        ReadonlyImports(MemoryMap *map, SgAsmGenericHeader *fhdr): map(map), fhdr(fhdr) {}
+        void visit(SgNode *node) {
+            SgAsmPEImportSection *isec = isSgAsmPEImportSection(node);
+            if (isec) {
+                rose_addr_t addr = isec->get_mapped_actual_va();
+                size_t size = isec->get_mapped_size();
+                MemoryMap::MapElement me(addr, size, MemoryMap::MM_PROT_READ);
+                map->mprotect(me, true/*relax*/);
+            }
+
+            SgAsmPEImportDirectory *idir = isSgAsmPEImportDirectory(node);
+            if (idir && idir->get_iat_rva()!=0 && idir->get_iat()!=NULL) {
+                SgAsmPEImportLookupTable *iat = idir->get_iat();
+                SgAsmPEImportILTEntryPtrList iat_entries = iat->get_entries()->get_vector();
+                rose_addr_t addr = idir->get_iat_rva() + fhdr->get_base_va();
+                size_t size = iat_entries.size() * fhdr->get_word_size();
+                MemoryMap::MapElement me(addr, size, MemoryMap::MM_PROT_READ);
+                map->mprotect(me, true/*relax*/);
+            }
+        }
+    };
+
+    // We must traverse the headers explicitly because they're not under the SgAsmInterpretation in the AST
+    MemoryMap ro_map = *map;
+    for (SgAsmGenericHeaderPtrList::const_iterator hi=headers.begin(); hi!=headers.end(); ++hi)
+        ReadonlyImports(&ro_map, *hi).traverse(*hi, preorder);
+    ro_map.prune(writable_region);
+    map->prune(large_anonymous_region);
+
+    std::cerr <<"Disassembly map:\n";
+    map->dump(stderr, "    ");
+    std::cerr <<"Memory initialization map:\n";
+    ro_map.dump(stderr, "    ");
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     std::cerr <<"Running the recursive disassembler...\n";
     // Seed the disassembler work list with the entry addresses.
     Disassembler::AddressSet worklist;
-    const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
     for (SgAsmGenericHeaderPtrList::const_iterator hi=headers.begin(); hi!=headers.end(); ++hi) {
         SgRVAList entry_rvalist = (*hi)->get_entry_rvas();
         for (size_t i=0; i<entry_rvalist.size(); i++) {
@@ -649,10 +729,9 @@ main(int argc, char *argv[])
     }
 
     // Initialize and run the disassembler
-    MemoryMap *map = interp->get_map();
-    assert(map!=NULL);
     Disassembler *disassembler = Disassembler::lookup(interp)->clone();
-    disassembler->set_search(Disassembler::SEARCH_DEFAULT | Disassembler::SEARCH_DEADEND | Disassembler::SEARCH_UNKNOWN);
+    disassembler->set_search(Disassembler::SEARCH_DEFAULT | Disassembler::SEARCH_DEADEND |
+                             Disassembler::SEARCH_UNKNOWN | Disassembler::SEARCH_UNUSED);
     Disassembler::BadMap bad;
     Disassembler::InstructionMap insns = disassembler->disassembleBuffer(map, worklist, NULL, &bad);
     if (!bad.empty()) {
@@ -664,18 +743,27 @@ main(int argc, char *argv[])
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     std::cerr <<"Partitioning instructions into functions...\n";
     Partitioner *partitioner = new Partitioner();
-    partitioner->set_search(SgAsmFunction::FUNC_DEFAULT | SgAsmFunction::FUNC_INTRABLOCK);
+    partitioner->set_search(SgAsmFunction::FUNC_DEFAULT | SgAsmFunction::FUNC_LEFTOVERS);
+    partitioner->set_map(map, &ro_map);
     //partitioner->set_debug(stderr);
-    SgAsmBlock *gblock = partitioner->partition(interp, insns, map);
+    SgAsmBlock *gblock = partitioner->partition(interp, insns);
     interp->set_global_block(gblock);
     gblock->set_parent(interp);
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     std::cerr <<"Generating function call graph...\n";
+    struct NoLeftovers: public BinaryAnalysis::FunctionCall::VertexFilter {
+        virtual bool operator()(BinaryAnalysis::FunctionCall*, SgAsmFunction *func) {
+            return func && 0==(func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS);
+        }
+    } vertex_filter;
     BinaryAnalysis::FunctionCall cg_analyzer;
+    cg_analyzer.set_vertex_filter(&vertex_filter);
     BinaryAnalysis::FunctionCall::Graph cg;
     cg_analyzer.build_cg_from_ast(interp, cg);
     cg_analyzer.cache_vertex_descriptors(cg);
+    std::ofstream cgfile("cg.dot");
+    boost::write_graphviz(cgfile, cg, GraphvizVertexWriter<BinaryAnalysis::FunctionCall::Graph>(cg));
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     std::cerr <<"Generating output...\n";
