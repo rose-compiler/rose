@@ -35,7 +35,10 @@ test2001_24.C \
 test2001_25.C \
 test2001_26.C \
 test2001_27.C \
+test2001_28.C \
+test2001_29.C \
 test2002_01.C \
+test2003_01.C \
 test2003_02.C \
 test2003_03.C \
 test2003_04.C \
@@ -78,9 +81,6 @@ endif
 #
 if ROSE_USE_EDG_VERSION_4_3
 TESTCODE_CURRENTLY_FAILING = \
-test2001_28.C \
-test2001_29.C \
-test2003_01.C \
 test2003_08.C \
 test2003_15.C \
 test2003_19.C \
