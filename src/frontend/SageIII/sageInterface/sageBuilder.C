@@ -2357,8 +2357,13 @@ SageBuilder::buildConstructorInitializer_nfi(
   // Prototype:
   // SgConstructorInitializer (SgMemberFunctionDeclaration *declaration, SgExprListExp *args, SgType *expression_type, bool need_name, bool need_qualifier, bool need_parenthesis_after_name, bool associated_class_unknown);
 
+  // DQ (11/7/2011): Added additional error checking.
+  // ROSE_ASSERT(declaration != NULL);
   // DQ (1/4/2009): Error checking
-     ROSE_ASSERT(declaration->get_associatedClassDeclaration() != NULL);
+  // ROSE_ASSERT(declaration->get_associatedClassDeclaration() != NULL);
+
+  // DQ (11/7/2011): Fix symetric to the way George did it above.
+     ROSE_ASSERT(declaration == NULL || declaration->get_associatedClassDeclaration() != NULL);
 
      SgConstructorInitializer* result = new SgConstructorInitializer( declaration, args, expression_type, need_name, need_qualifier, need_parenthesis_after_name, associated_class_unknown );
      ROSE_ASSERT(result != NULL);
