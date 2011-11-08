@@ -10,6 +10,7 @@
 #include <iostream>
 #include <vector>
 #include <sstream>
+#include "stdlib.h"
 
 #include "faultToleranceArrayLibUtility.h"
 

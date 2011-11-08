@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <string>
+#include "stdlib.h"
 #include "AstFromString.h"
 #include "arrayBase.h"
 
