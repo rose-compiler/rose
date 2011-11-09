@@ -5408,8 +5408,6 @@ FortranCodeGeneration_locatedNode::curprint(const std::string & str) const
                 // warn if successful wrapping is impossible
                 if( str.size() > usable_cols )
                     printf("Warning: can't wrap long line in Fortran free format (text is longer than a line)\n");
-                else if( free_cols < 1 )
-                    printf("Warning: can't wrap long line in Fortran free format (no room for final '&')\n");
 
                 // emit free-format line continuation even if result will still be too long
                 unp->u_sage->curprint("&");
