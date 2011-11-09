@@ -1010,17 +1010,20 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           iter++;
         }
 
-  // DQ (1/13/2009): Added support for GNU -include <header_file> option (include this file before all others).
+  // DQ (1/13/2009): Added support for GNU -isystem <directory> option (include this directory before all others).
      string tempDirectory;
      iter = local_commandLineArgumentList.begin();
      while ( iter != local_commandLineArgumentList.end() )
         {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("Searching for -isystem options iter = %s \n",(*iter).c_str());
           if ( *iter == "-isystem")
              {
                iter++;
                tempDirectory = *iter;
 
-            // printf ("Adding tempHeaderFile = %s to p_preincludeDirectoryList \n",tempDirectory.c_str());
+               if ( SgProject::get_verbose() >= 1 )
+                    printf ("Adding tempHeaderFile = %s to p_preincludeDirectoryList \n",tempDirectory.c_str());
                p_preincludeDirectoryList.push_back(tempDirectory);
              }
 
@@ -3401,8 +3404,29 @@ static void makeSysIncludeList(const Rose_STL_Container<string>& dirs, Rose_STL_
         {
           ROSE_ASSERT (!i->empty());
           string fullPath = (*i)[0] == '/' ? *i : (includeBase + "/" + *i);
+#if 1
+       // DQ (11/8/2011): We want to exclude the /usr/include directory since it will be search automatically by EDG.
+       // If we include it here it will become part of the -sys_include directories and that will cause it to 
+       // be searched before the -I<directory> options (which is incorrect).
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("In makeSysIncludeList(): Building commandline: --sys_include %s \n",(*i).c_str());
+          if (*i == "/usr/include")
+             {
+               if ( SgProject::get_verbose() >= 1 )
+                    printf ("Filtering out from the sys_include paths: *i = %s \n",(*i).c_str());
+             }
+            else
+             {
+               result.push_back("--sys_include");
+               result.push_back(fullPath);
+             }
+#else
+       // Old code that would include the "/usr/include" path as an -sys_include entry.
+       // This whole include paths issue is complex enough that I would like to leave this
+       // code in place for a while.
           result.push_back("--sys_include");
           result.push_back(fullPath);
+#endif
         }
    }
 
@@ -3440,6 +3464,8 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      Rose_STL_Container<string> configDefs(configDefsArray, configDefsArray + sizeof(configDefsArray) / sizeof(*configDefsArray));
      Rose_STL_Container<string> Cxx_ConfigIncludeDirs(Cxx_ConfigIncludeDirsRaw, Cxx_ConfigIncludeDirsRaw + sizeof(Cxx_ConfigIncludeDirsRaw) / sizeof(const char*));
      Rose_STL_Container<string> C_ConfigIncludeDirs(C_ConfigIncludeDirsRaw, C_ConfigIncludeDirsRaw + sizeof(C_ConfigIncludeDirsRaw) / sizeof(const char*));
+
+  // const char* boostPath[] = ROSE_BOOST_PATH;
 
   // Removed reference to __restrict__ so it could be placed into the preinclude vendor specific header file for ROSE.
   // DQ (9/10/2004): Attept to add support for restrict (but I think this just sets it to true, using "-Dxxx=" works)
@@ -3560,10 +3586,17 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
         }
 #endif
 
+     if ( SgProject::get_verbose() >= 1 )
+          printf ("project->get_preincludeDirectoryList().size() = %zu \n",project->get_preincludeDirectoryList().size());
+
+  // This is the list of directories that have been referenced as "-isystem <directory>" on the original command line to the ROSE 
+  // translator.  We translate these to "-sys_include <directory>" options to pass to EDG (since that is how EDG understands them).
      for (SgStringList::iterator i = project->get_preincludeDirectoryList().begin(); i != project->get_preincludeDirectoryList().end(); i++)
         {
        // Build the preinclude directory list
-       // printf ("Building commandline: --sys_include %s \n",(*i).c_str());
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("Building commandline: --sys_include %s \n",(*i).c_str());
+
           commandLine.push_back("--sys_include");
           commandLine.push_back(*i);
         }

@@ -1790,7 +1790,7 @@ Partitioner::scan_intrafunc_insns(InsnRangeCallbacks &cblist)
 }
 
 void
-Partitioner::scan_unassigned_bytes(ByteRangeCallbacks &cblist, MemoryMap *restrict/*=NULL*/)
+Partitioner::scan_unassigned_bytes(ByteRangeCallbacks &cblist, MemoryMap *restrict_var/*=NULL*/)
 {
     if (cblist.empty())
         return;
@@ -1802,8 +1802,8 @@ Partitioner::scan_unassigned_bytes(ByteRangeCallbacks &cblist, MemoryMap *restri
     /* Unassigned ranges are the inverse of everything assigned.  Then further restrict the unassigned range map according to
      * the supplied memory map. */
     ExtentMap unassigned = assigned.invert<ExtentMap>();
-    if (restrict)
-        unassigned.erase_ranges(restrict->va_extents().invert<ExtentMap>());
+    if (restrict_var)
+        unassigned.erase_ranges(restrict_var->va_extents().invert<ExtentMap>());
 
     /* Traverse the unassigned map, invoking the callbacks for each range. */
     for (ExtentMap::iterator ri=unassigned.begin(); ri!=unassigned.end(); ++ri)
@@ -1811,7 +1811,7 @@ Partitioner::scan_unassigned_bytes(ByteRangeCallbacks &cblist, MemoryMap *restri
 }
 
 void
-Partitioner::scan_intrafunc_bytes(ByteRangeCallbacks &cblist, MemoryMap *restrict/*=NULL*/)
+Partitioner::scan_intrafunc_bytes(ByteRangeCallbacks &cblist, MemoryMap *restrict_var/*=NULL*/)
 {
     if (cblist.empty())
         return;
@@ -1840,11 +1840,11 @@ Partitioner::scan_intrafunc_bytes(ByteRangeCallbacks &cblist, MemoryMap *restric
     } filter;
     ByteRangeCallbacks cblist2 = cblist;
     cblist2.prepend(&filter);
-    scan_unassigned_bytes(cblist2, restrict);
+    scan_unassigned_bytes(cblist2, restrict_var);
 }
 
 void
-Partitioner::scan_interfunc_bytes(ByteRangeCallbacks &cblist, MemoryMap *restrict/*=NULL*/)
+Partitioner::scan_interfunc_bytes(ByteRangeCallbacks &cblist, MemoryMap *restrict_var/*=NULL*/)
 {
     if (cblist.empty())
         return;
@@ -1873,7 +1873,7 @@ Partitioner::scan_interfunc_bytes(ByteRangeCallbacks &cblist, MemoryMap *restric
     } filter;
     ByteRangeCallbacks cblist2 = cblist;
     cblist2.prepend(&filter);
-    scan_unassigned_bytes(cblist2, restrict);
+    scan_unassigned_bytes(cblist2, restrict_var);
 }
 
 bool
