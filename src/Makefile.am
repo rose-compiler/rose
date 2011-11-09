@@ -99,7 +99,6 @@ libroseLibraries = \
    $(top_builddir)/src/midend/astRewriteMechanism/librewrite.la \
    $(top_builddir)/src/midend/astUtil/libastUtil.la \
    $(top_builddir)/src/midend/programAnalysis/libprogramAnalysis.la \
-   $(top_builddir)/src/midend/programTransformation/astOutlining/libastOutliner.la \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/computation/libcomputation.la \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/depGraph/libdepGraph.la \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/depInfo/libdepInfo.la \
