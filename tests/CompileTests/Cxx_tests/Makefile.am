@@ -6,6 +6,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 #
 
 if ROSE_USE_EDG_VERSION_4_3
+
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
 test_CplusplusMacro_Cpp.C \
 test2001_01.C \
@@ -50,9 +51,11 @@ test2003_11.C \
 test2003_12.C \
 test2003_13.C \
 test2003_14.C \
+test2003_15.C \
 test2003_16.C \
 test2003_17.C \
 test2003_18.C \
+test2003_19.C \
 test2003_20.C \
 test2003_21.C \
 test2003_23.C \
@@ -67,6 +70,53 @@ test2003_35.C \
 test2003_36.C \
 test2003_37.C \
 test2003_38.C \
+test2004_01.C \
+test2004_02.C \
+test2004_03.C \
+test2004_04.C \
+test2004_05.C \
+test2004_06.C \
+test2004_07.C \
+test2004_08.C \
+test2004_12.C \
+test2004_13.C \
+test2004_14.C \
+test2004_16.C \
+test2004_17.C \
+test2004_19.C \
+test2004_23.C \
+test2004_24.C \
+test2004_27.C \
+test2004_28.C \
+test2004_29.C \
+test2004_31.C \
+test2004_42.C \
+test2004_44.C \
+test2004_49.C \
+test2004_50.C \
+test2004_51.C \
+test2004_52.C \
+test2004_53.C \
+test2004_54.C \
+test2004_55.C \
+test2004_56.C \
+test2004_59.C \
+test2004_60.C \
+test2004_61.C \
+test2004_62.C \
+test2004_65.C \
+test2004_71.C \
+test2004_72.C \
+test2004_73.C \
+test2004_74.C \
+test2004_87.C \
+test2004_90.C \
+test2004_93.C \
+test2004_94.C \
+test2004_95.C \
+test2004_96.C \
+test2004_97.C \
+test2004_99.C \
 test2011_149.C \
 test2011_150.C \
 test2011_151.C 
@@ -82,9 +132,50 @@ endif
 if ROSE_USE_EDG_VERSION_4_3
 TESTCODE_CURRENTLY_FAILING = \
 test2003_08.C \
-test2003_15.C \
-test2003_19.C \
-test2003_27.C 
+test2003_27.C \
+test2004_09.C \
+test2004_10.C \
+test2004_11.C \
+test2004_15.C \
+test2004_18.C \
+test2004_26.C \
+test2004_30.C \
+test2004_32.C \
+test2004_33.C \
+test2004_34.C \
+test2004_35.C \
+test2004_36.C \
+test2004_37.C \
+test2004_38.C \
+test2004_39.C \
+test2004_40.C \
+test2004_43.C \
+test2004_45.C \
+test2004_47.C \
+test2004_48.C \
+test2004_58.C \
+test2004_63.C \
+test2004_64.C \
+test2004_67.C \
+test2004_68.C \
+test2004_69.C \
+test2004_70.C \
+test2004_75.C \
+test2004_76.C \
+test2004_77.C \
+test2004_78.C \
+test2004_79.C \
+test2004_80.C \
+test2004_81.C \
+test2004_83.C \
+test2004_84.C \
+test2004_85.C \
+test2004_86.C \
+test2004_88.C \
+test2004_89.C \
+test2004_91.C \
+test2004_98.C \
+test2004_100.C 
 
 else
 include $(srcdir)/Makefile-fail.inc
