@@ -42,7 +42,7 @@ ROSE_DLL_API int backend ( SgProject* project, UnparseFormatHelp *unparseFormatH
 // DQ (8/24/2009): This backend calls the backend compiler using the original input source file list.
 // This is useful as a test code for testing ROSE for use on projects that target Compass or any
 // other analysis only tool using ROSE. Called in tests/testAnalysis.C for example.
-int backendCompilesUsingOriginalInputFile ( SgProject* project );
+int backendCompilesUsingOriginalInputFile ( SgProject* project, bool compile_with_USE_ROSE_macro = false );
 
 // DQ (2/6/2010): This backend forces all code to be generated but still uses the beakend vendor 
 // compiler to compile the original code.  This is a step between backendUsingOriginalInputFile(),
