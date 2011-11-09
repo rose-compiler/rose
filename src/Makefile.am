@@ -109,12 +109,8 @@ libroseLibraries = \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/prepostTransformation/libprepostloop.la \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/slicing/libslicing.la \
    $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la \
+   $(top_builddir)/src/midend/programTransformation/libprogramTransformation.la \
    $(top_builddir)/src/midend/programTransformation/ompLowering/libompLowering.la \
-   $(top_builddir)/src/midend/programTransformation/constantFolding/libconstantFolding.la \
-   $(top_builddir)/src/midend/programTransformation/finiteDifferencing/libfiniteDifferencing.la \
-   $(top_builddir)/src/midend/programTransformation/functionCallNormalization/libfunctionCallNormalization.la \
-   $(top_builddir)/src/midend/programTransformation/implicitCodeGeneration/libimplicitCodeGeneration.la \
-   $(top_builddir)/src/midend/programTransformation/partialRedundancyElimination/libpre.la \
    $(top_builddir)/src/roseSupport/libroseSupport.la \
    $(top_builddir)/src/util/support/libsupport.la \
    $(top_builddir)/src/util/graphs/libgraphs.la \

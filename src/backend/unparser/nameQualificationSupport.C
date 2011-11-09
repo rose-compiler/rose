@@ -297,16 +297,20 @@ NameQualificationTraversal::associatedDeclaration(SgType* type)
        // Also missing some of the Fortran specific scopes.
           case V_SgTypeInt:
           case V_SgTypeUnsignedLong:
+          case V_SgTypeUnsignedLongLong:
           case V_SgTypeUnsignedChar:
           case V_SgTypeUnsignedShort:
           case V_SgTypeUnsignedInt:
           case V_SgTypeSignedChar:
+          case V_SgTypeSignedShort:
+          case V_SgTypeSignedInt:
+          case V_SgTypeSignedLong:
+          case V_SgTypeSignedLongLong:
           case V_SgTypeShort:
           case V_SgTypeLong:
           case V_SgTypeLongLong:
           case V_SgTypeVoid:
           case V_SgTypeChar:
-          case V_SgTypeUnsignedLongLong:
           case V_SgTypeFloat:
           case V_SgTypeDouble:
           case V_SgTypeLongDouble:
