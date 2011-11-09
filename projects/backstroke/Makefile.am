@@ -21,7 +21,7 @@ libBackstroke_a_LIBADD = utilities/libBackstrokeUtilities.a \
 			restrictedLanguage/libBackstrokeRestrictedLanguage.a \
 			pluggableReverser/libBackstrokePluggableReverser.a \
 			testCodeGeneration/libBackstrokeTestCodeBuilder.a
-			
+
 EXTRA_DIST = 
 
 CLEANFILES = 

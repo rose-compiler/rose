@@ -131,8 +131,8 @@ public:
                     bool take = take_branch[nbranches++];
                     rose_addr_t target = 0;
                     for (std::set<rose_addr_t>::iterator si=succs.begin(); si!=succs.end(); ++si) {
-                        if ((take && *si!=insn->get_address()+insn->get_raw_bytes().size()) ||
-                            (!take && *si==insn->get_address()+insn->get_raw_bytes().size()))
+                        if ((take && *si!=insn->get_address()+insn->get_size()) ||
+                            (!take && *si==insn->get_address()+insn->get_size()))
                             target = *si;
                     }
                     assert(target!=0);

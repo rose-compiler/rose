@@ -189,7 +189,7 @@ SgAsmPEImportLookupTable::reallocate(rose_rva_t start_rva)
     ROSE_ASSERT(fhdr);
     
     SgAsmPEImportILTEntryPtrList &entries = get_entries()->get_vector();
-    end_rva.increment(fhdr->get_word_size() + (entries.size() + 1)); /* zero terminated */
+    end_rva.increment(fhdr->get_word_size() * (entries.size() + 1)); /* zero terminated */
 
     /* Some ILT entries might point to Hint/Name pairs in the Hint/Name Table. The Hint/Name Table will be allocated
      * immediately after the ILT entries, if necessary. */

@@ -714,7 +714,7 @@ struct X86InstructionSemantics {
         }
 #else
     virtual void translate(SgAsmx86Instruction* insn) try {
-        policy.writeIP(number<32>((unsigned int)(insn->get_address() + insn->get_raw_bytes().size())));
+        policy.writeIP(number<32>((unsigned int)(insn->get_address() + insn->get_size())));
         X86InstructionKind kind = insn->get_kind();
         const SgAsmExpressionPtrList& operands = insn->get_operandList()->get_operands();
         switch (kind) {

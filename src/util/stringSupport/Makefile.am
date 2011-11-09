@@ -17,13 +17,10 @@ include_HEADERS = string_functions.h escape.h
 
 clean-local:
 	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files
+	rm -f *.loT *.int.c
 
 distclean-local:
 	rm -rf Templates.DB
 
 EXTRA_DIST = CMakeLists.txt stringSupportDocumentation.docs
-
-
-
-
 

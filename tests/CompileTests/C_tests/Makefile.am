@@ -16,7 +16,7 @@ endif
 # These are C testcodes targeting aspects of C that might not be a subset of C++ #
 ##################################################################################
 
-TESTCODES_REQUIRED_TO_PASS = \
+OLD_TESTCODES_REQUIRED_TO_PASS = \
      test_CplusplusMacro_C.c \
      gconv_info.c \
      stdio.c \
@@ -67,6 +67,60 @@ TESTCODES_REQUIRED_TO_PASS = \
      complex_01.c \
      constants.c
 
+TESTCODES_REQUIRED_TO_PASS = \
+     test_CplusplusMacro_C.c \
+     gconv_info.c \
+     testCvsCpp.c \
+     testAnsiC.c \
+     YardenPragmaPackExample.c \
+     commentTest.c \
+     test2003_12.c \
+     test2004_20.c \
+     test2004_21.c \
+     test2005_172.c \
+     test2005_168.c \
+     test2005_186.c \
+     test2006_65.c  \
+     test2006_110.c \
+     test2006_114.c \
+     test2006_133.c \
+     test2006_135.c \
+     test2008_01.c \
+     test2008_02.c \
+     test2009_01.c \
+     test2009_02.c \
+     test2009_03.c \
+     test2009_04.c \
+     test2009_07.c \
+     test2009_08.c \
+     test2009_16.c \
+     test2009_21.c \
+     test2009_22.c \
+     test2010_01.c \
+     test2010_06.c \
+     test2010_07.c \
+     test2010_08.c \
+     test2010_09.c \
+     test2010_10.c \
+     test2010_13.c \
+     test2010_15.c \
+     test2010_17.c \
+     test2011_05.c \
+     test2007_177.c \
+     math.c \
+     complex_01.c \
+     constants.c
+
+if !ROSE_USE_EDG_VERSION_4_3
+   TESTCODES_REQUIRED_TO_PASS += \
+     stdio.c \
+     test2006_48.c \
+     test2006_132.c \
+     test2010_04.c \
+     test2010_11.c \
+     test2010_12.c \
+     test2010_14.c
+
 # DQ (9/26/2009): Conditionally compile this file (fails in OSX due to lack of OSX
 # support for thread local storage). Liao know more about the details of this test.
 # test2009_19.c
@@ -74,12 +128,13 @@ TESTCODES_REQUIRED_TO_PASS = \
 if !OS_MACOSX
    TESTCODES_REQUIRED_TO_PASS += test2009_19.c
 endif
+endif
 
 #Liao, 5/16/2009 add a set of self-verifiable test code with main() 
 # and let them run during make check
 TESTCODES_REQUIRED_TO_RUN = \
-     test2009_05.c \
      test2009_17.c \
+     test2009_05.c \
      test2009_18.c \
      test2009_20.c
 
@@ -119,12 +174,15 @@ TEST_Objects = ${ALL_TESTCODES:.c=.o}
 TEST_Exe_Objects = ${TESTCODES_REQUIRED_TO_RUN:.c=.o}
 
 PASSING_TEST_Executables =  ${TEST_Exe_Objects:.o=.out}
+
+if !ROSE_USE_EDG_VERSION_4_3
 # any programs needed by your tests that does not need to be built by make all.
 check_PROGRAMS = $(PASSING_TEST_Executables)
 # a list of programs or scripts to run in order to do the testing 
 TESTS= $(check_PROGRAMS) caller.out 
+endif
 
-testTranslator=../../testTranslator
+testTranslator = ../../testTranslator
 
 # Add the dependence upon the source file to trigger recompilation each time the makefile is run!
 # $(TEST_Objects): ../../testTranslator $(srcdir)/$(@:.o=.c)
