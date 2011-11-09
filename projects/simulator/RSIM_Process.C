@@ -425,7 +425,7 @@ RSIM_Process::dump_core(int signo, std::string base_name)
      * an instruction because it would have already been incremented by the semantics. */ 
     uint32_t eip = readIP().known_value();
     if (get_insn())
-        eip -= get_insn()->get_raw_bytes().size();
+        eip -= get_insn()->get_size();
 
     SgAsmGenericFile *ef = new SgAsmGenericFile;
     ef->set_truncate_zeros(false);
@@ -790,7 +790,7 @@ RSIM_Process::binary_trace_add(RSIM_Thread *thread, const SgAsmInstruction *insn
     n = fwrite(&tid, 4, 1, btrace_file);
     assert(1==n);
 
-    size_t insn_size = insn->get_raw_bytes().size();
+    size_t insn_size = insn->get_size();
     assert(insn_size<=255);
     uint8_t insn_size_byte = insn_size;
     n = fwrite(&insn_size_byte, 1, 1, btrace_file);
@@ -879,7 +879,7 @@ RSIM_Process::get_instruction(rose_addr_t va)
      * read, the callbacks will not have an opportunity to change the instruction that's fetched.  If you need to do that, use
      * an instruction callback instead. */
     if (insn) {
-        size_t insn_sz = insn->get_raw_bytes().size();
+        size_t insn_sz = insn->get_size();
         SgUnsignedCharList curmem(insn_sz);
         size_t nread = mem_read(&curmem[0], va, insn_sz, MemoryMap::MM_PROT_EXEC);
         if (nread==insn_sz && curmem==insn->get_raw_bytes())
@@ -899,7 +899,7 @@ RSIM_Process::get_instruction(rose_addr_t va)
     } RTS_WRITE_END;
 
     /* Read the rest of the instruction if necessary so that memory access callbacks have a chance to see the access. */
-    for (uint32_t i=4; i<insn->get_raw_bytes().size(); i+=4) {
+    for (uint32_t i=4; i<insn->get_size(); i+=4) {
         uint32_t word;
         (void)mem_read(&word, va+i, 4, MemoryMap::MM_PROT_EXEC);
     }
@@ -1042,8 +1042,8 @@ RSIM_Process::mem_unmap(rose_addr_t va, size_t sz, RTS_Message *mesg)
     RTS_WRITE(rwlock()) {
         /* Make sure that the specified memory range is actually mapped, or return -ENOMEM. */
         ExtentMap extents;
-        extents.insert(ExtentPair(va, sz));
-        extents.erase(map->va_extents());
+        extents.insert(Extent(va, sz));
+        extents.erase_ranges(map->va_extents());
         if (!extents.empty()) {
             retval = -ENOMEM;
             break;

@@ -357,6 +357,9 @@ HEADER_INCIDENCE_DIRECTED_GRAPH_START
  //! Add support for externally build SgGraphNode objects
      SgDirectedGraphEdge* addDirectedEdge( SgDirectedGraphEdge* edge  );
 
+ //! Remove an edge from graph
+     bool removeDirectedEdge( SgDirectedGraphEdge* edge  );
+     
 	// tps (4/30/2009): Added to support functionality for DirectedGraphs		   
      void getSuccessors(const SgGraphNode* node, std::vector <SgGraphNode*>& vec ) const;
      void getPredecessors(const SgGraphNode* node, std::vector <SgGraphNode*>& vec ) const;
@@ -4189,7 +4192,7 @@ HEADER_INITIALIZED_NAME_START
        // SgName get_name() const;
 
        // DQ (10/9/2007): Use the ROSETTA generated version to test failure
-       // DQ (10/5/2007): Put back into place afterhaving been removed by accident in 12/??/2004
+       // DQ (10/5/2007): Put back into place afterhaving been removed by accident in 12/xx/2004
        // AJ (10/21/2004): Added function to support changing names of symbols, note that void set_name(SgName name) 
        // would be the automatically generated function.
        // void set_name(SgName name);
@@ -5221,6 +5224,7 @@ HEADER_APPLICATION_PROJECT_START
 
        // DQ: bool values on the SgFile nodes which can be queried on the SgProject
        // nodes (must be the same across all SgFile nodes in the project).
+          bool get_skip_translation_from_edg_ast_to_rose_ast (void) const;
           bool get_skip_transformation (void) const;
           bool get_skip_unparse (void) const;
           bool get_useBackendOnly (void) const;
@@ -8559,8 +8563,12 @@ SgSymbol*
 SgInitializedName::search_for_symbol_from_symbol_table() const
    {
      SgSymbol *symbol;
-     if (p_prev_decl_item)
-          symbol = p_prev_decl_item->get_symbol_from_symbol_table();
+     SgInitializedName* aPrevDeclItem=p_prev_decl_item;
+     while(aPrevDeclItem && aPrevDeclItem->p_prev_decl_item) {
+        aPrevDeclItem=aPrevDeclItem->p_prev_decl_item;
+     }
+     if (aPrevDeclItem)
+          symbol = aPrevDeclItem->get_symbol_from_symbol_table();
      else
           symbol = get_symbol_from_symbol_table();
      assert(symbol != NULL);
@@ -11294,6 +11302,9 @@ SgFile::initialization()
      p_skip_transformation     = false;
      p_skip_unparse            = false;
 
+  // DQ (11/1/2011): Added support to skip translation of EDG AST to ROSE AST.
+     p_skip_translation_from_edg_ast_to_rose_ast = false;
+
 #if 1
   // The default should be to act like a C++ compiler
      p_skipfinalCompileStep    = false;
@@ -11996,6 +12007,7 @@ SgFile::display ( const std::string & label ) const
      printf ("     p_exit_after_parser                    = %s \n",(p_exit_after_parser == true) ? "true" : "false");
 
      printf ("     p_skip_syntax_check                    = %s \n",(p_skip_syntax_check      == true) ? "true" : "false");
+     printf ("     p_skip_translation_from_edg_ast_to_rose_ast = %s \n",(p_skip_transformation    == true) ? "true" : "false");
      printf ("     p_skip_transformation                  = %s \n",(p_skip_transformation    == true) ? "true" : "false");
      printf ("     p_skip_unparse                         = %s \n",(p_skip_unparse           == true) ? "true" : "false");
      printf ("     p_skipfinalCompileStep                 = %s \n",(p_skipfinalCompileStep   == true) ? "true" : "false");
@@ -12666,6 +12678,19 @@ void
 SgProject::set_verbose ( int x )
    {
      p_verbose = x;
+   }
+
+bool
+SgProject::get_skip_translation_from_edg_ast_to_rose_ast (void) const
+   {
+  // look at how the files are set
+     bool returnSkipTranslation = (numberOfFiles() > 0) ? true : false;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          returnSkipTranslation = returnSkipTranslation && (bool) file.get_skip_translation_from_edg_ast_to_rose_ast();
+        }
+     return returnSkipTranslation;
    }
 
 bool

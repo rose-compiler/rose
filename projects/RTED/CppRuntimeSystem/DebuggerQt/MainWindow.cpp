@@ -8,9 +8,10 @@
 #include <QListWidgetItem>
 
 #include "MainWindow.h"
-#include "qcodeedit.h"
-
 #include "RtedDebug.h"
+#include "../CppRuntimeSystem.h"
+
+#include "qcodeedit.h"
 
 #include "ui_MainWindow.h"
 
@@ -18,14 +19,11 @@
 #include "MemoryTypeDisplay.h"
 #include "VariablesTypeDisplay.h"
 #include "PointerDisplay.h"
-
 #include "ItemTreeModel.h"
-
 #include "ModelRoles.h"
 
 
-DbgMainWindow::DbgMainWindow(RtedDebug * dbgObj_,
-                             QWidget * par)
+DbgMainWindow::DbgMainWindow(RtedDebug * dbgObj_, QWidget * par)
     : QMainWindow(par),
       dbgObj(dbgObj_),
       singleStep(true),

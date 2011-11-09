@@ -28,54 +28,12 @@ RtedTransformation::parse(int argc, char** argv) {
  * Load all function symbols that are needed for transformations
  * Basically we need to know which functions to insert
  * -----------------------------------------------------------*/
-void RtedTransformation::loadFunctionSymbols(SgSourceFile& n)
+void RtedTransformation::loadFunctionSymbols(SgSourceFile& n, SourceFileType sft)
 {
    SgGlobal* globalScope = n.get_globalScope();
    ROSE_ASSERT(globalScope);
 
-   symbols.initialize(*globalScope);
-
-   ROSE_ASSERT(symbols.roseCreateArray);
-   ROSE_ASSERT(symbols.roseAllocMem);
-   ROSE_ASSERT(symbols.roseAccessArray);
-   ROSE_ASSERT(symbols.roseCheckpoint);
-   ROSE_ASSERT(symbols.roseFunctionCall);
-   ROSE_ASSERT(symbols.roseAssertFunctionSignature);
-   ROSE_ASSERT(symbols.roseConfirmFunctionSignature);
-   ROSE_ASSERT(symbols.roseFreeMemory);
-   ROSE_ASSERT(symbols.roseReallocateMemory);
-   ROSE_ASSERT(symbols.roseConvertIntToString);
-   ROSE_ASSERT(symbols.roseCreateVariable);
-   ROSE_ASSERT(symbols.roseCreateObject);
-   ROSE_ASSERT(symbols.roseInitVariable);
-   ROSE_ASSERT(symbols.roseMovePointer);
-   ROSE_ASSERT(symbols.roseAccessVariable);
-   ROSE_ASSERT(symbols.roseEnterScope);
-   ROSE_ASSERT(symbols.roseExitScope);
-   ROSE_ASSERT(symbols.roseIOFunctionCall);
-   ROSE_ASSERT(symbols.roseRegisterTypeCall);
-   ROSE_ASSERT(symbols.roseCheckIfThisNULL);
-   ROSE_ASSERT(symbols.roseAddr);
-   ROSE_ASSERT(symbols.roseClose);
-
-   if (withupc)
-   {
-     /* only present when compiling for UPC code */
-     ROSE_ASSERT(symbols.roseAddrSh);
-     ROSE_ASSERT(symbols.roseUpcExitWorkzone);
-     ROSE_ASSERT(symbols.roseUpcEnterWorkzone);
-     ROSE_ASSERT(symbols.roseUpcBeginExclusive);
-     ROSE_ASSERT(symbols.roseUpcEndExclusive);
-   }
-
-   ROSE_ASSERT(symbols.roseUpcAllInitialize); // see comment in ParallelRTS.h
-
-   ROSE_ASSERT(symbols.roseAllocKind);
-
-   ROSE_ASSERT(symbols.roseTypeDesc);
-   ROSE_ASSERT(symbols.roseAddressDesc);
-   ROSE_ASSERT(symbols.roseSourceInfo);
-   ROSE_ASSERT(symbols.size_t_member);
+   symbols.initialize(*globalScope, sft);
 }
 
 /* -----------------------------------------------------------

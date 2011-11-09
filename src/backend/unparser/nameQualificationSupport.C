@@ -297,16 +297,20 @@ NameQualificationTraversal::associatedDeclaration(SgType* type)
        // Also missing some of the Fortran specific scopes.
           case V_SgTypeInt:
           case V_SgTypeUnsignedLong:
+          case V_SgTypeUnsignedLongLong:
           case V_SgTypeUnsignedChar:
           case V_SgTypeUnsignedShort:
           case V_SgTypeUnsignedInt:
           case V_SgTypeSignedChar:
+          case V_SgTypeSignedShort:
+          case V_SgTypeSignedInt:
+          case V_SgTypeSignedLong:
+          case V_SgTypeSignedLongLong:
           case V_SgTypeShort:
           case V_SgTypeLong:
           case V_SgTypeLongLong:
           case V_SgTypeVoid:
           case V_SgTypeChar:
-          case V_SgTypeUnsignedLongLong:
           case V_SgTypeFloat:
           case V_SgTypeDouble:
           case V_SgTypeLongDouble:
@@ -1620,7 +1624,25 @@ NameQualificationTraversal::getDeclarationAssociatedWithType( SgType* type )
           printf ("In getDeclarationAssociatedWithType(): declaration->get_firstNondefiningDeclaration() = %p \n",declaration->get_firstNondefiningDeclaration());
           printf ("In getDeclarationAssociatedWithType(): declaration->get_definingDeclaration()         = %p \n",declaration->get_definingDeclaration());
 #endif
-          ROSE_ASSERT(declaration == declaration->get_firstNondefiningDeclaration());
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          if (declaration != declaration->get_firstNondefiningDeclaration())
+             {
+            // Output some debug information to learn more about this error
+               printf ("In getDeclarationAssociatedWithType(): declaration = %p = %s \n",declaration,declaration->class_name().c_str());
+               ROSE_ASSERT(declaration->get_file_info() != NULL);
+               declaration->get_file_info()->display("declaration");
+
+               ROSE_ASSERT(declaration->get_firstNondefiningDeclaration() != NULL);
+               printf ("In getDeclarationAssociatedWithType(): declaration->get_firstNondefiningDeclaration() = %p = %s \n",declaration->get_firstNondefiningDeclaration(),declaration->get_firstNondefiningDeclaration()->class_name().c_str());
+               ROSE_ASSERT(declaration->get_firstNondefiningDeclaration()->get_file_info() != NULL);
+               declaration->get_firstNondefiningDeclaration()->get_file_info()->display("declaration->get_firstNondefiningDeclaration()");
+             }
+#endif
+
+       // DQ (11/6/2011): I think it is OK for where this is a SgEnumDeclaration.
+       // ROSE_ASSERT(declaration == declaration->get_firstNondefiningDeclaration());
+          ROSE_ASSERT(declaration == declaration->get_firstNondefiningDeclaration() || isSgEnumDeclaration(declaration) != NULL);
         }
 
      return declaration;

@@ -269,8 +269,15 @@ protected:
     //virtual SynthesizedAttributeType evaluateSynthesizedAttribute( int &n,
     //         InheritedAttributeType &in,
     //         SynthesizedAttributesList &l) = 0;
-    virtual void pathAnalyze( std::vector<int> &pth, bool loop=false,  std::set<std::vector<int> >& incloops=NULL) = 0;
 
+#if !USE_ROSE
+ // DQ (11/3/2011): EDG compilains about this (but GNU allowed it, I think that EDG might be correct,
+ // namely that the value of a reference must be an lvalue (not NULL).  But since we are only trying 
+ // to compile ROSE with ROSE (using the new EDG 4.3 front-end as a tests) we can just skip this case for now.
+    virtual void pathAnalyze( std::vector<int> &pth, bool loop=false,  std::set<std::vector<int> >& incloops=NULL) = 0;
+#else
+    virtual void pathAnalyze( std::vector<int> &pth, bool loop,  std::set<std::vector<int> >& incloops) = 0;
+#endif
 
     //virtual bool subPathFilter(std::vector<int> &subpath);
     //virtual CFG getChildren(
