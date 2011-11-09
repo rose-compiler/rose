@@ -12,6 +12,7 @@ include $(srcdir)/functionCallNormalization/Makefile_variables
 include $(srcdir)/constantFolding/Makefile_variables
 include $(srcdir)/implicitCodeGeneration/Makefile_variables
 include $(srcdir)/astInlining/Makefile_variables
+include $(srcdir)/astOutlining/Makefile_variables
 
 mptPartialRedundancyEliminationPath=$(srcdir)/partialRedundancyElimination#
 mptFiniteDifferencingPath=$(srcdir)/finiteDifferencing#
@@ -19,9 +20,9 @@ mptFunctionCallNormalizationPath=$(srcdir)/functionCallNormalization#
 mptConstantFoldingPath=$(srcdir)/constantFolding#
 mptImplicitCodeGenerationPath=$(srcdir)/implicitCodeGeneration#
 mptAstInliningPath=$(srcdir)/astInlining#
+mptOutliningPath=$(srcdir)/astOutlining#
 
 SUBDIRS = \
-	astOutlining \
 	loopProcessing \
 	ompLowering
 
@@ -31,8 +32,7 @@ SUBDIRS = \
 
 INCLUDES=\
 	$(ROSE_INCLUDES) \
-	$(mptPartialRedundancyElimination_includes) \
-	$(mptFiniteDifferencing_includes)
+	-I${top_srcdir}/src/midend/programAnalysis/CFG
 
 noinst_LTLIBRARIES=\
 	libprogramTransformation.la
@@ -43,7 +43,8 @@ libprogramTransformation_la_SOURCES = \
 	$(mptFunctionCallNormalization_la_sources) \
 	$(mptConstantFolding_la_sources) \
 	$(mptImplicitCodeGeneration_la_sources) \
-	$(mptAstInlining_la_sources)
+	$(mptAstInlining_la_sources) \
+	$(mptAstOutlining_la_sources)
 
 include_HEADERS = \
 	$(mptPartialRedundancyElimination_includeHeaders) \
@@ -51,7 +52,8 @@ include_HEADERS = \
 	$(mptFunctionCallNormalization_includeHeaders) \
 	$(mptConstantFolding_includeHeaders) \
 	$(mptImplicitCodeGeneration_includeHeaders) \
-	$(mptAstInlining_includeHeaders)
+	$(mptAstInlining_includeHeaders) \
+	$(mptAstOutlining_includeHeaders)
 
 # ------------------------------------------------------------------------------
 #
@@ -64,7 +66,8 @@ EXTRA_DIST = \
 	$(mptFunctionCallNormalization_extraDist) \
 	$(mptConstantFolding_extraDist) \
 	$(mptImplicitCodeGeneration_extraDist) \
-	$(mptAstInlining_extraDist)
+	$(mptAstInlining_extraDist) \
+	$(mptAstOutlining_extraDist)
 
 clean-local:
 	$(mptPartialRedundancyElimination_cleanLocal)
@@ -72,4 +75,5 @@ clean-local:
 	$(mptFunctionCallNormalization_cleanLocal)
 	$(mptConstantFolding_cleanLocal)
 	$(mptAstInlining_cleanLocal)
+	$(mptAstOutlining_cleanLocal)
 
