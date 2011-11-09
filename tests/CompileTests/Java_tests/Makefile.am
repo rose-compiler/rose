@@ -56,6 +56,10 @@ TESTCODES_REQUIRED_TO_PASS = \
      \
      cave3_IntLit0.java \
      cave3_LoadDep0.java \
+     cave3_assert0.java \
+     cave3_assert1.java \
+     cave3_assert2.java \
+     cave3_assert3.java \
      cave3_block0.java \
      cave3_constructor0.java \
      cave3_constructor1.java \

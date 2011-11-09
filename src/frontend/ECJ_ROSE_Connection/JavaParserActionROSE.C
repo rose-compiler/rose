@@ -1461,15 +1461,16 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionAssertStatementEnd(JNIEnv *env, jo
     SgExpression *expression = (SgExpression *) astJavaExpressionStack.front();
     astJavaExpressionStack.pop_front();
 
- //
- // charles4: 8/20/2011 - TODO: We need to add an extra expression field to SgAssertStmt for Java.
- //
- // SgAssertStmt *assertStatement = SageBuilder::buildAssertStmt(expression, exceptionArgument);
-    SgAssertStmt *assertStatement = SageBuilder::buildAssertStmt(expression);
+    SgAssertStmt *assertStatement = NULL;
+    if (exceptionArgument != NULL) {
+        assertStatement = SageBuilder::buildAssertStmt(expression, exceptionArgument);
+    } else {
+        assertStatement = SageBuilder::buildAssertStmt(expression);
+    }
     setJavaSourcePosition(assertStatement, env, jToken);
 
     // Pushing 'assert' on the statement stack
-    astJavaStatementStack.push_front(assertStatement);
+    astJavaComponentStack.push(assertStatement);
     outputJavaState("At BOTTOM of cactionAssertStatementEnd");
    }
 
