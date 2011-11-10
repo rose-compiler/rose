@@ -16434,9 +16434,6 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id,
                     modName.c_str());
 
         // This should open the appropriate *.rmod file using ROSE and read it.
-        // DQ (1/28/2009): Currently there is a bug which causes a Fortran include
-        // directive to be output in the generated module file, but it does not appear
-        // to be a problem when we read the *.rmod file.
         moduleStatement = FortranModuleInfo::getModule(modName);
 
         if (moduleStatement == NULL)
