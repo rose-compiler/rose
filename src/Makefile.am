@@ -101,7 +101,6 @@ libroseLibraries = \
    $(top_builddir)/src/midend/programAnalysis/libprogramAnalysis.la \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/libLoopProcessing.la \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/computation/libcomputation.la \
-   $(top_builddir)/src/midend/programTransformation/loopProcessing/depGraph/libdepGraph.la \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/driver/libdriver.la \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/outsideInterface/libarrayOptimization.la \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/prepostTransformation/libprepostloop.la \
