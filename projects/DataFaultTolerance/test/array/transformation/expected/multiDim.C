@@ -13,10 +13,10 @@ int main()
     for (j = 0; j < 100; j++) {
       int _memTemp0 = A[i][j];
       A[i][j] = (i + j);
-      updateElem("A",A[i][j],i,j,_memTemp0,8);
+      updateElem("A",A[i][j],j,i,_memTemp0,8);
       int _memTemp1 = B[i][j];
       B[i][j] = 0;
-      updateElem("B",B[i][j],i,j,_memTemp1,8);
+      updateElem("B",B[i][j],j,i,_memTemp1,8);
     }
   }
   clearHashTable();
@@ -27,7 +27,7 @@ int main()
     for (j = 0; j < 100; j++) {
       int _memTemp2 = B[i][j];
       B[i][j] = A[j][i];
-      updateElem("B",B[i][j],i,j,_memTemp2,8);
+      updateElem("B",B[i][j],j,i,_memTemp2,8);
     }
   }
   validateArray("A",A[0] + 0,0,100,0,100,8);
