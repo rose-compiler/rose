@@ -3149,6 +3149,7 @@ Grammar::setUpStatements ()
 
      PassStatement.setFunctionSource        ( "SOURCE_PASS_STATEMENT", "../Grammar/Statement.code" );
 
+     AssertStmt.setFunctionPrototype        ( "HEADER_ASSERT_STMT", "../Grammar/Statement.code" );
      AssertStmt.setFunctionSource           ( "SOURCE_ASSERT_STMT", "../Grammar/Statement.code" );
      AssertStmt.setDataPrototype            ( "SgExpression*", "test", "= NULL",
              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);

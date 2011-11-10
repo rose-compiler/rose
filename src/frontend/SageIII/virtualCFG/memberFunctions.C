@@ -5088,3 +5088,48 @@ std::vector<CFGEdge> SgJavaLabelStatement::cfgInEdges(unsigned int idx)
     }
     return result;
 }
+unsigned int
+SgAssertStmt::cfgIndexForEnd() const {
+     return 2;
+}
+
+std::vector<CFGEdge>
+SgAssertStmt::cfgOutEdges(unsigned int idx) {
+        std::vector<CFGEdge> result;
+        switch (idx) {
+                case 0:
+                        makeEdge(CFGNode(this, idx), get_test()->cfgForBeginning(), result); break;
+                case 1:
+                    if (this->get_exception_argument()) {
+                        makeEdge(CFGNode(this, idx), get_exception_argument()->cfgForBeginning(), result);
+                    }
+                    makeEdge(CFGNode(this, idx), CFGNode(this, 2), result);
+                    break;
+                case 2:
+                        makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
+                default:
+                        ROSE_ASSERT (!"Bad index for SgAssertStmt");
+        }
+        return result;
+}
+
+std::vector<CFGEdge>
+SgAssertStmt::cfgInEdges(unsigned int idx) {
+        std::vector<CFGEdge> result;
+        switch (idx) {
+                case 0:
+                        makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
+                case 1:
+                        makeEdge(get_test()->cfgForEnd(), CFGNode(this, idx), result);
+                        break;
+                case 2:
+                        makeEdge(CFGNode(this, 1), CFGNode(this, idx), result);
+                        if (this->get_exception_argument()) {
+                            makeEdge(get_exception_argument()->cfgForEnd(), CFGNode(this, idx), result);
+                        }
+                        break;
+                default:
+                        ROSE_ASSERT (!"Bad index for SgAssertStmt");
+        }
+        return result;
+}
