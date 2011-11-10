@@ -13,6 +13,7 @@ include $(srcdir)/constantFolding/Makefile_variables
 include $(srcdir)/implicitCodeGeneration/Makefile_variables
 include $(srcdir)/astInlining/Makefile_variables
 include $(srcdir)/astOutlining/Makefile_variables
+include $(srcdir)/ompLowering/Makefile_variables
 
 mptPartialRedundancyEliminationPath=$(srcdir)/partialRedundancyElimination#
 mptFiniteDifferencingPath=$(srcdir)/finiteDifferencing#
@@ -21,10 +22,10 @@ mptConstantFoldingPath=$(srcdir)/constantFolding#
 mptImplicitCodeGenerationPath=$(srcdir)/implicitCodeGeneration#
 mptAstInliningPath=$(srcdir)/astInlining#
 mptOutliningPath=$(srcdir)/astOutlining#
+mptOmpLoweringPath=$(srcdir)/ompLowering#
 
 SUBDIRS = \
-	loopProcessing \
-	ompLowering
+	loopProcessing
 
 # ------------------------------------------------------------------------------
 #  Library: programTransformation.la
@@ -37,6 +38,9 @@ INCLUDES=\
 noinst_LTLIBRARIES=\
 	libprogramTransformation.la
 
+lib_LIBRARIES=\
+	$(mptOmpLowering_lib_libraries)
+
 libprogramTransformation_la_SOURCES = \
 	$(mptPartialRedundancyElimination_la_sources) \
 	$(mptFiniteDifferencing_la_source) \
@@ -44,7 +48,8 @@ libprogramTransformation_la_SOURCES = \
 	$(mptConstantFolding_la_sources) \
 	$(mptImplicitCodeGeneration_la_sources) \
 	$(mptAstInlining_la_sources) \
-	$(mptAstOutlining_la_sources)
+	$(mptAstOutlining_la_sources) \
+	$(mptOmpLowering_la_sources)
 
 include_HEADERS = \
 	$(mptPartialRedundancyElimination_includeHeaders) \
@@ -53,7 +58,8 @@ include_HEADERS = \
 	$(mptConstantFolding_includeHeaders) \
 	$(mptImplicitCodeGeneration_includeHeaders) \
 	$(mptAstInlining_includeHeaders) \
-	$(mptAstOutlining_includeHeaders)
+	$(mptAstOutlining_includeHeaders) \
+	$(mptOmpLowering_includeHeaders)
 
 # ------------------------------------------------------------------------------
 #
@@ -67,7 +73,8 @@ EXTRA_DIST = \
 	$(mptConstantFolding_extraDist) \
 	$(mptImplicitCodeGeneration_extraDist) \
 	$(mptAstInlining_extraDist) \
-	$(mptAstOutlining_extraDist)
+	$(mptAstOutlining_extraDist) \
+	$(mptOmpLowering_extraDist)
 
 clean-local:
 	$(mptPartialRedundancyElimination_cleanLocal)
@@ -76,4 +83,5 @@ clean-local:
 	$(mptConstantFolding_cleanLocal)
 	$(mptAstInlining_cleanLocal)
 	$(mptAstOutlining_cleanLocal)
+	$(mptOmpLowering_cleanLocal)
 
