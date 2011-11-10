@@ -116,7 +116,9 @@ TESTCODE_CURRENTLY_FAILING = \
      cave3_synchronized0.java \
      cave3_foreach0.java \
      cave3_foreach1.java \
-     cave3_foreach3.java
+     cave3_foreach3.java \
+     cave3_assert2.java \
+     cave3_assert3.java
 
 # These tests pass the compilation using ROSE, all AST tests, and unparsing to generate 
 # Java code, but fails the final compilation step of the generated Java code.
@@ -139,7 +141,9 @@ TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6 = \
      test2011_44.java \
      test2011_46.java \
      test2011_48.java \
-     test2011_49.java 
+     test2011_49.java \
+     cave3_assert0.java \
+     cave3_assert1.java
 
 TESTCODES_REQUIRED_TO_PASS_FAILING_FOR_JAVA_6 = \
      test2011_45.java 

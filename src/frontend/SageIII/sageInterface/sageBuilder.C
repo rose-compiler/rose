@@ -3593,9 +3593,10 @@ SgAssertStmt* SageBuilder::buildAssertStmt(SgExpression* test, SgExpression* exc
   SgAssertStmt* result = new SgAssertStmt(test);
   ROSE_ASSERT(test != NULL);
   test->set_parent(result);
-  result -> set_exception_argument(exceptionArgument);
-  ROSE_ASSERT(exceptionArgument != NULL);
-  exceptionArgument->set_parent(result);
+  if (exceptionArgument != NULL) {
+    result -> set_exception_argument(exceptionArgument);
+    exceptionArgument->set_parent(result);
+  }
   setOneSourcePositionForTransformation(result);
   return result;
 }
