@@ -1898,7 +1898,6 @@ src/midend/programAnalysis/staticSingleAssignment/Makefile
 src/midend/programTransformation/Makefile
 src/midend/programTransformation/loopProcessing/Makefile
 src/midend/programTransformation/loopProcessing/prepostTransformation/Makefile
-src/midend/programTransformation/loopProcessing/depInfo/Makefile
 src/midend/programTransformation/loopProcessing/depGraph/Makefile
 src/midend/programTransformation/loopProcessing/computation/Makefile
 src/midend/programTransformation/loopProcessing/slicing/Makefile
