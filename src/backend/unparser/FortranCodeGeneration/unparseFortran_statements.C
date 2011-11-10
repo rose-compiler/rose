@@ -323,6 +323,8 @@ void
 FortranCodeGeneration_locatedNode::unparseFortranIncludeLine (SgStatement* stmt, SgUnparse_Info& info)
    {
   // This is support for the language specific include mechanism.
+     if (info.outputFortranModFile())  // rmod file expands the include file but does not contain the include statement
+         return;
      SgFortranIncludeLine* includeLine = isSgFortranIncludeLine(stmt);
 
      curprint("include ");
