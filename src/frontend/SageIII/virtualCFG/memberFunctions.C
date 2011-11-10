@@ -1423,7 +1423,7 @@ std::vector<CFGEdge> SgContinueStmt::cfgOutEdges(unsigned int idx) {
         case V_SgForStatement: newIndex = 3; break;
         case V_SgWhileStmt: newIndex = 0; break;
         case V_SgFortranDo: newIndex = 5; break;
-        case V_SgJavaForEachStatement: newIndex = 0; break;
+        case V_SgJavaForEachStatement: newIndex = 2; break;
         case V_SgJavaLabelStatement: newIndex = 0; break;
         default: ROSE_ASSERT (false);
       }
