@@ -2053,16 +2053,26 @@ SgPlusPlusOp *SageBuilder::buildPlusPlusOp_nfi(SgExpression* operand_i, SgUnaryO
 }
 
 SgThrowOp *SageBuilder::buildThrowOp(SgExpression *operand_i, SgThrowOp::e_throw_kind throwKind)
-{
-  SgThrowOp* result = new SgThrowOp(operand_i, operand_i -> get_type(), throwKind);
-  if (operand_i != NULL) {
-      markLhsValues(result);
-  }
-  setOneSourcePositionForTransformation(result);
-  operand_i -> set_parent(result);
-  ROSE_ASSERT(result);
-  return result;
-}
+   {
+  // DQ (11/8/2011): operand_i is allowed to be NULL.
+
+  // SgThrowOp* result = new SgThrowOp(operand_i, operand_i -> get_type(), throwKind);
+     SgThrowOp* result = new SgThrowOp(operand_i, (operand_i != NULL) ? operand_i->get_type() : NULL, throwKind);
+
+     if (operand_i != NULL)
+        {
+          markLhsValues(result);
+        }
+
+     setOneSourcePositionForTransformation(result);
+
+     if (operand_i != NULL)
+          operand_i -> set_parent(result);
+
+     ROSE_ASSERT(result);
+
+     return result;
+   }
 
 
 //---------------------binary expressions-----------------------

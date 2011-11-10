@@ -741,10 +741,10 @@ public:
      *  If a @p restrict MemoryMap is specified then only addresses that are also defined in the map are considered.
      *
      *  @{ */
-    virtual void scan_unassigned_bytes(ByteRangeCallbacks &callbacks, MemoryMap *restrict=NULL);
-    void scan_unassigned_bytes(ByteRangeCallback *callback, MemoryMap *restrict=NULL) {
+    virtual void scan_unassigned_bytes(ByteRangeCallbacks &callbacks, MemoryMap *restrict_var=NULL);
+    void scan_unassigned_bytes(ByteRangeCallback *callback, MemoryMap *restrict_var=NULL) {
         ByteRangeCallbacks cblist(callback);
-        scan_unassigned_bytes(cblist, restrict);
+        scan_unassigned_bytes(cblist, restrict_var);
     }
     /** @} */
 
@@ -756,10 +756,10 @@ public:
      *  If a @p restrict MemoryMap is specified then only addresses that are also defined in the map are considered.
      *
      *  @{ */
-    virtual void scan_intrafunc_bytes(ByteRangeCallbacks &callbacks, MemoryMap *restrict=NULL);
-    void scan_intrafunc_bytes(ByteRangeCallback *callback, MemoryMap *restrict=NULL) {
+    virtual void scan_intrafunc_bytes(ByteRangeCallbacks &callbacks, MemoryMap *restrict_var=NULL);
+    void scan_intrafunc_bytes(ByteRangeCallback *callback, MemoryMap *restrict_var=NULL) {
         ByteRangeCallbacks cblist(callback);
-        scan_intrafunc_bytes(cblist, restrict);
+        scan_intrafunc_bytes(cblist, restrict_var);
     }
     /** @} */
 
@@ -771,10 +771,10 @@ public:
      *  If a @p restrict MemoryMap is specified then only addresses that are also defined in the map are considered.
      *
      *  @{ */
-    virtual void scan_interfunc_bytes(ByteRangeCallbacks &callbacks, MemoryMap *restrict=NULL);
-    void scan_interfunc_bytes(ByteRangeCallback *callback, MemoryMap *restrict=NULL) {
+    virtual void scan_interfunc_bytes(ByteRangeCallbacks &callbacks, MemoryMap *restrict_var=NULL);
+    void scan_interfunc_bytes(ByteRangeCallback *callback, MemoryMap *restrict_var=NULL) {
         ByteRangeCallbacks cblist(callback);
-        scan_interfunc_bytes(cblist, restrict);
+        scan_interfunc_bytes(cblist, restrict_var);
     }
     /** @}*/
 
