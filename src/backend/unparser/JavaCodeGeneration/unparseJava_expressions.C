@@ -615,6 +615,37 @@ Unparse_Java::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
      SgFunctionCallExp* func_call = isSgFunctionCallExp(expr);
      ROSE_ASSERT(func_call != NULL);
 
+     if (func_call -> attributeExists("prefix")) {
+         AstRegExAttribute *attribute = (AstRegExAttribute *) func_call -> getAttribute("prefix");
+         curprint(attribute -> expression);
+         curprint(".");
+     /*
+         SgFunctionDeclaration *declaration = func_call -> getAssociatedFunctionDeclaration();
+         SgMemberFunctionDeclaration *functionDeclaration = isSgMemberFunctionDeclaration(declaration);
+         ROSE_ASSERT(functionDeclaration);
+         SgClassDeclaration *classDeclaration = functionDeclaration -> get_associatedClassDeclaration();
+         ROSE_ASSERT(classDeclaration);
+         SgClassType *classType = classDeclatation -> get_type();
+         ROSE_ASSERT (classType != NUL);
+         curprint(classType -> get_qualified_name().getString());
+         curprint(".");
+     */
+     }
+     /*
+     if (isSgMemberFunctionType(func_call -> get_type())) {
+         SgFunctionDeclaration *declaration = func_call -> getAssociatedFunctionDeclaration();
+         SgMemberFunctionDeclaration *functionDeclaration = isSgMemberFunctionDeclaration(declaration);
+         ROSE_ASSERT(functionDeclaration);
+
+         if (functionDeclaration -> get_declarationModifier().get_storageModifier().isStatic()) {
+             SgType *type = isSgMemberFunctionType(func_call -> get_type()) -> get_class_type();
+             ROSE_ASSERT (type != NULL && isSgNamedType(type));
+             curprint(isSgNamedType(type) -> get_qualified_name().getString());
+             curprint(".");
+         }
+     }
+     */
+
      unparseExpression(func_call->get_function(), info);
      curprint("(");
      unparseExpression(func_call->get_args(), info);

@@ -595,9 +595,11 @@ Unparse_Java::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info) {
     curprint("for (");
     unparseStatement(for_stmt->get_for_init_stmt(), info);
     curprint("; ");
-    unparseExpression(test_exp, info);
+    if (! isSgNullExpression(test_exp))
+        unparseExpression(test_exp, info);
     curprint("; ");
-    unparseExpression(for_stmt->get_increment(), info);
+    if (! isSgNullExpression(for_stmt->get_increment()))
+        unparseExpression(for_stmt->get_increment(), info);
     curprint(")");
 
     if (for_stmt->get_loop_body() != NULL) {
