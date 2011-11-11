@@ -67,7 +67,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      cave3_dowhile0.java \
      cave3_for0.java \
      cave3_for1.java \
-     cave3_for3.java \
      cave3_for4.java \
      cave3_for5.java \
      cave3_foreach0.java \
@@ -75,6 +74,8 @@ TESTCODES_REQUIRED_TO_PASS = \
      cave3_foreach2.java \
      cave3_foreach4.java \
      cave3_foreach5.java \
+     cave3_foreach6.java \
+     cave3_foreach7.java \
      cave3_if0.java \
      cave3_if1.java \
      cave3_labelDecl0.java \
@@ -109,6 +110,7 @@ TESTCODE_CURRENTLY_FAILING = \
      \
      cave3_DoubleLit0.java \
      cave3_for2.java \
+     cave3_for3.java \
      cave3_for6.java \
      cave3_instanceof0.java \
 	 cave3_import0.java \

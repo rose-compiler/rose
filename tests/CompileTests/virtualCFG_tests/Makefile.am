@@ -497,6 +497,8 @@ JAVA_TESTCODES_REQUIRED_TO_PASS = \
      cave3_foreach2.java \
      cave3_foreach4.java \
      cave3_foreach5.java \
+     cave3_foreach6.java \
+     cave3_foreach7.java \
      cave3_if0.java \
      cave3_if1.java \
      cave3_labelDecl0.java \
@@ -527,6 +529,7 @@ JAVA_TESTCODES_REQUIRED_TO_PASS = \
 #     cave3_DoubleLit0.java
 #     cave3_for2.java
 #     cave3_for6.java
+#     cave3_foreach3.java \
 #     cave3_instanceof0.java \
 #     cave3_assert2.java \
 #     cave3_assert3.java \
