@@ -11,6 +11,7 @@ class A
 
 class B
    {
+  // Original code: A* foo () { return Aptr->foo(); }
      A* foo () { return Aptr->foo(); }
      A* Aptr;
    };

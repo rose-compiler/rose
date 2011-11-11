@@ -82,7 +82,7 @@ SgAsmFunction::reason_key(const std::string &prefix)
             prefix + "X = exception frame       T = thunk                I = imported/dyn-linked\n" +
             prefix + "S = function symbol       P = instruction pattern  G = CFG graph analysis\n" +
             prefix + "U = user-def detection    N = NOP/zero padding     D = discontiguous blocks\n" +
-            prefix + "V = intra-function block  L = leftover blocks\n" +
+            prefix + "V = intra-function block  L = leftover blocks      M = miscellaneous\n" +
             prefix + "Note: \"c\" means this is the target of a call-like instruction or instruction\n" +
             prefix + "      sequence but the call is not present in the global control flow graph, while\n" +
             prefix + "      \"C\" means the call is in the CFG.\n");
@@ -124,19 +124,20 @@ SgAsmFunction::reason_str(bool do_pad, unsigned r)
     }
 
     if (r & FUNC_EH_FRAME) {
-        add_to_reason_string(result, true,               do_pad, "X", "exception frame");
+        add_to_reason_string(result, true,                 do_pad, "X", "exception frame");
     } else {
-        add_to_reason_string(result, (r & FUNC_THUNK),   do_pad, "T", "thunk");
+        add_to_reason_string(result, (r & FUNC_THUNK),     do_pad, "T", "thunk");
     }
-    add_to_reason_string(result, (r & FUNC_IMPORT),      do_pad, "I", "import");
-    add_to_reason_string(result, (r & FUNC_SYMBOL),      do_pad, "S", "symbol");
-    add_to_reason_string(result, (r & FUNC_PATTERN),     do_pad, "P", "pattern");
-    add_to_reason_string(result, (r & FUNC_GRAPH),       do_pad, "G", "graph");
-    add_to_reason_string(result, (r & FUNC_USERDEF),     do_pad, "U", "user defined");
-    add_to_reason_string(result, (r & FUNC_INTERPAD),    do_pad, "N", "padding");
-    add_to_reason_string(result, (r & FUNC_DISCONT),     do_pad, "D", "discontiguous");
-    add_to_reason_string(result, (r & FUNC_LEFTOVERS),   do_pad, "L", "leftovers");
-    add_to_reason_string(result, (r & FUNC_INTRABLOCK),  do_pad, "V", "intrablock");
+    add_to_reason_string(result, (r & FUNC_IMPORT),        do_pad, "I", "import");
+    add_to_reason_string(result, (r & FUNC_SYMBOL),        do_pad, "S", "symbol");
+    add_to_reason_string(result, (r & FUNC_PATTERN),       do_pad, "P", "pattern");
+    add_to_reason_string(result, (r & FUNC_GRAPH),         do_pad, "G", "graph");
+    add_to_reason_string(result, (r & FUNC_USERDEF),       do_pad, "U", "user defined");
+    add_to_reason_string(result, (r & FUNC_PADDING),       do_pad, "N", "padding");
+    add_to_reason_string(result, (r & FUNC_DISCONT),       do_pad, "D", "discontiguous");
+    add_to_reason_string(result, (r & FUNC_LEFTOVERS),     do_pad, "L", "leftovers");
+    add_to_reason_string(result, (r & FUNC_INTRABLOCK),    do_pad, "V", "intrablock");
+    add_to_reason_string(result, (r & FUNC_MISCMASK),      do_pad, "M", "misc-"+StringUtility::numberToString(r & FUNC_MISCMASK));
     return result;
 }
 
@@ -241,7 +242,7 @@ SgAsmBlock::reason_key(const std::string &prefix)
     return (prefix + "L = left over blocks    N = NOP/zero padding     V = intrafunction block\n" +
             prefix + "J = jump table          E = Function entry\n" +
             prefix + "H = CFG head            1 = first CFG traversal 2 = second CFG traversal\n" +
-            prefix + "U = user-def reason\n");
+            prefix + "U = user-def reason     M = miscellaneous\n");
 }
 
 /** Returns reason string for this block. */
@@ -279,7 +280,11 @@ SgAsmBlock::reason_str(bool do_pad, unsigned r)
         add_to_reason_string(result, (r & BLK_GRAPH2), do_pad, "2", "graph-2");
     }
 
-    add_to_reason_string(result, (r & BLK_USERDEF),      do_pad, "U", "user defined");
+    if (r & BLK_USERDEF) {
+        add_to_reason_string(result, true, do_pad, "U", "user defined");
+    } else {
+        add_to_reason_string(result, (r & BLK_MISCMASK), do_pad, "M", "misc-" + StringUtility::numberToString(r & BLK_MISCMASK));
+    }
     return result;
 }
 /*
@@ -366,7 +371,7 @@ Partitioner::parse_switches(const std::string &s, unsigned flags)
         } else if (word=="userdef") {
             bits = SgAsmFunction::FUNC_USERDEF;
         } else if (word=="pad" || word=="padding" || word=="interpad") {
-            bits = SgAsmFunction::FUNC_INTERPAD;
+            bits = SgAsmFunction::FUNC_PADDING;
         } else if (word=="unassigned" || word=="unclassified" || word=="leftover" || word=="leftovers") {
             bits = SgAsmFunction::FUNC_LEFTOVERS;
         } else if (word=="default") {
@@ -1160,6 +1165,8 @@ Partitioner::add_function(rose_addr_t entry_va, unsigned reasons, std::string na
     } else {
         f = fi->second;
         assert(f->entry_va==entry_va);
+        if (reasons & SgAsmFunction::FUNC_MISCMASK)
+            f->reason &= ~SgAsmFunction::FUNC_MISCMASK;
         f->reason |= reasons;
         if (name!="") f->name = name;
     }
@@ -1783,7 +1790,7 @@ Partitioner::scan_intrafunc_insns(InsnRangeCallbacks &cblist)
 }
 
 void
-Partitioner::scan_unassigned_bytes(ByteRangeCallbacks &cblist, MemoryMap *restrict/*=NULL*/)
+Partitioner::scan_unassigned_bytes(ByteRangeCallbacks &cblist, MemoryMap *restrict_var/*=NULL*/)
 {
     if (cblist.empty())
         return;
@@ -1795,8 +1802,8 @@ Partitioner::scan_unassigned_bytes(ByteRangeCallbacks &cblist, MemoryMap *restri
     /* Unassigned ranges are the inverse of everything assigned.  Then further restrict the unassigned range map according to
      * the supplied memory map. */
     ExtentMap unassigned = assigned.invert<ExtentMap>();
-    if (restrict)
-        unassigned.erase_ranges(restrict->va_extents().invert<ExtentMap>());
+    if (restrict_var)
+        unassigned.erase_ranges(restrict_var->va_extents().invert<ExtentMap>());
 
     /* Traverse the unassigned map, invoking the callbacks for each range. */
     for (ExtentMap::iterator ri=unassigned.begin(); ri!=unassigned.end(); ++ri)
@@ -1804,7 +1811,7 @@ Partitioner::scan_unassigned_bytes(ByteRangeCallbacks &cblist, MemoryMap *restri
 }
 
 void
-Partitioner::scan_intrafunc_bytes(ByteRangeCallbacks &cblist, MemoryMap *restrict/*=NULL*/)
+Partitioner::scan_intrafunc_bytes(ByteRangeCallbacks &cblist, MemoryMap *restrict_var/*=NULL*/)
 {
     if (cblist.empty())
         return;
@@ -1833,11 +1840,11 @@ Partitioner::scan_intrafunc_bytes(ByteRangeCallbacks &cblist, MemoryMap *restric
     } filter;
     ByteRangeCallbacks cblist2 = cblist;
     cblist2.prepend(&filter);
-    scan_unassigned_bytes(cblist2, restrict);
+    scan_unassigned_bytes(cblist2, restrict_var);
 }
 
 void
-Partitioner::scan_interfunc_bytes(ByteRangeCallbacks &cblist, MemoryMap *restrict/*=NULL*/)
+Partitioner::scan_interfunc_bytes(ByteRangeCallbacks &cblist, MemoryMap *restrict_var/*=NULL*/)
 {
     if (cblist.empty())
         return;
@@ -1866,7 +1873,7 @@ Partitioner::scan_interfunc_bytes(ByteRangeCallbacks &cblist, MemoryMap *restric
     } filter;
     ByteRangeCallbacks cblist2 = cblist;
     cblist2.prepend(&filter);
-    scan_unassigned_bytes(cblist2, restrict);
+    scan_unassigned_bytes(cblist2, restrict_var);
 }
 
 bool
@@ -1993,7 +2000,7 @@ Partitioner::FindData::operator()(bool enabled, const Args &args)
     /* Create a data block and add it to the previous function. */
     DataBlock *dblock = p->find_db_starting(args.range.first(), args.range.size());
     assert(dblock!=NULL);
-    p->append(func, dblock, SgAsmBlock::BLK_USERDEF);
+    p->append(func, dblock, SgAsmBlock::BLK_FINDDATA);
     ++nfound;
     if (p->debug)
         fprintf(p->debug, "Partitioner::FindData: for F%08"PRIx64": added D%08"PRIx64"\n",
@@ -2110,7 +2117,7 @@ Partitioner::FindInsnPadding::operator()(bool enabled, const Args &args)
                 fprintf(p->debug, "Partitioner::FindInsnPadding: for F%08"PRIx64": added D%08"PRIx64"\n",
                         prev_func->entry_va, begin_va);
         } else {
-            Function *new_func = p->add_function(padding.front()->get_address(), SgAsmFunction::FUNC_INTERPAD);
+            Function *new_func = p->add_function(padding.front()->get_address(), SgAsmFunction::FUNC_PADDING);
             p->find_bb_starting(padding.front()->get_address()); // split first block if necessary
             p->find_bb_starting(va); // split last block if necessary
             if (p->debug)
@@ -2276,7 +2283,7 @@ Partitioner::FindThunks::operator()(bool enabled, const Args &args)
 
             /* The target (single successor) must be a known function which is not padding. */
             Functions::iterator fi = p->functions.find(target_va);
-            if (fi==p->functions.end() || 0!=(fi->second->reason & SgAsmFunction::FUNC_INTERPAD))
+            if (fi==p->functions.end() || 0!=(fi->second->reason & SgAsmFunction::FUNC_PADDING))
                 continue;
         }
 
@@ -2325,7 +2332,7 @@ Partitioner::FindInterPadFunctions::operator()(bool enabled, const Args &args)
     DataBlock *next_dblock = next->second.get();
 
     /* Create a new function and move the following padding to the new function. */
-    Function *new_func = p->add_function(args.range.first(), SgAsmFunction::FUNC_USERDEF);
+    Function *new_func = p->add_function(args.range.first(), SgAsmFunction::FUNC_INTERPADFUNC);
     p->append(new_func, next_dblock, SgAsmBlock::BLK_PADDING, true/*force*/);
     ++nfound;
 
@@ -2449,7 +2456,7 @@ Partitioner::is_thunk(Function *func)
         return false;
 
     if (0!=(target_func->reason & SgAsmFunction::FUNC_LEFTOVERS) ||
-        0!=(fi->second->reason & SgAsmFunction::FUNC_INTERPAD))
+        0!=(fi->second->reason & SgAsmFunction::FUNC_PADDING))
         return false;
 
     return true;
@@ -2467,7 +2474,7 @@ Partitioner::FindPostFunctionInsns::operator()(bool enabled, const Args &args)
     if (!bb || !bb->function)
         return true;
     Function *func = bb->function;
-    if (0!=(func->reason & SgAsmFunction::FUNC_INTERPAD) ||
+    if (0!=(func->reason & SgAsmFunction::FUNC_PADDING) ||
         0!=(func->reason & SgAsmFunction::FUNC_THUNK))
         return true; // don't append instructions to certain "functions"
 
@@ -2482,7 +2489,7 @@ Partitioner::FindPostFunctionInsns::operator()(bool enabled, const Args &args)
                     fprintf(p->debug, "Partitioner::PostFunctionBlocks: for F%08"PRIx64": added", func->entry_va);
                 fprintf(p->debug, " B%08"PRIx64, bb->address());
             }
-            p->append(func, bb, SgAsmBlock::BLK_USERDEF, true/*head of CFG subgraph*/);
+            p->append(func, bb, SgAsmBlock::BLK_POSTFUNC, true/*head of CFG subgraph*/);
             func->pending = true;
             ++nadded;
             ++nfound;
@@ -3205,7 +3212,7 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
     }
 
     /* Detect inter-function padding */
-    if (func_heuristics & SgAsmFunction::FUNC_INTERPAD) {
+    if (func_heuristics & SgAsmFunction::FUNC_PADDING) {
         FindDataPadding cb;
         cb.minimum_nrep = 2;
         cb.maximum_nrep = 1024*1024;

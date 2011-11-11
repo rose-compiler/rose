@@ -1656,22 +1656,12 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionAssertStatementEnd(JNIEnv *env, jo
 
     // Build the Assert Statement
     SgExpression *exceptionArgument = (hasExceptionArgument ? astJavaComponentStack.popExpression() : NULL);
-// Remove this!
-//    if (hasExceptionArgument) {
-//        exceptionArgument = (SgExpression *) astJavaExpressionStack.front();
-//        astJavaExpressionStack.pop_front();
-//        exceptionArgument =  astJavaExpressionStack.front();
-//    }
-//    SgExpression *expression = (SgExpression *) astJavaExpressionStack.front();
-//    astJavaExpressionStack.pop_front();
     SgExpression *expression = astJavaComponentStack.popExpression();
 
     SgAssertStmt *assertStatement = SageBuilder::buildAssertStmt(expression, exceptionArgument);
     setJavaSourcePosition(assertStatement, env, jToken);
 
     // Pushing 'assert' on the statement stack
-// Remove this!
-//    astJavaStatementStack.push_front(assertStatement);
     astJavaComponentStack.push(assertStatement);
     outputJavaState("At BOTTOM of cactionAssertStatementEnd");
    }
