@@ -776,6 +776,8 @@ AC_SUBST(TEST_SMT_SOLVER)
 #   AC_MSG_ERROR([Support for both DWARF and Intel Pin fails, these configure options are incompatable!])
 #fi
 
+ROSE_SUPPORT_MINT
+
 ROSE_SUPPORT_PHP
 
 AM_CONDITIONAL(ROSE_USE_PHP,test ! "$with_php" = no)
@@ -2129,6 +2131,9 @@ projects/taintcheck/Makefile
 projects/PowerAwareCompiler/Makefile
 projects/ManyCoreRuntime/Makefile
 projects/ManyCoreRuntime/docs/Makefile
+projects/mint/Makefile
+projects/mint/src/Makefile
+projects/mint/tests/Makefile
 projects/traceAnalysis/Makefile
 projects/PolyhedralModel/Makefile
 projects/PolyhedralModel/src/Makefile
