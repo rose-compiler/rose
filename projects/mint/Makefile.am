@@ -7,7 +7,6 @@ SUBDIRS=\
 
 EXTRA_DIST=\
 	license.txt \
-	rose-new.mk \
 	README
 
 check-local:
