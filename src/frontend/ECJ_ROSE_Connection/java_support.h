@@ -17,31 +17,43 @@ extern SgSourceFile* OpenFortranParser_globalFilePointer;
 extern std::list<SgScopeStatement*> astJavaScopeStack;
 
 // Global stack of expressions and statements
-class ComponentStack : private std::list<SgLocatedNode *> {
+class ComponentStack : private std::list<SgNode *> {
 public:
-    void push(SgLocatedNode *n) {
-        if (SgProject::get_verbose() > 1) {
+    void push(SgNode *n) {
+        if (SgProject::get_verbose() > 0) {
             std::cerr << "***Pushing node " << n -> class_name() << std::endl; 
             std::cerr.flush();
         }
         push_front(n);
     }
-    SgLocatedNode *pop() {
+    SgNode *pop() {
         ROSE_ASSERT(size() > 0);
-        SgLocatedNode *n = front();
-        if (SgProject::get_verbose() > 1) {
+        SgNode *n = front();
+        if (SgProject::get_verbose() > 0) {
             std::cerr << "***Popping node " << n -> class_name() << std::endl;
             std::cerr.flush();
         }
         pop_front();
         return n;
     }
-    SgLocatedNode *top() { ROSE_ASSERT(size() > 0); return front(); }
+    SgNode *top() { ROSE_ASSERT(size() > 0); return front(); }
     bool empty() { return (size() == 0); }
 
     SgExpression *popExpression() {
-        SgLocatedNode *n = pop();
+        SgNode *n = pop();
         if (! isSgExpression(n)) {
+            //
+            // TODO: REMOVE ME WHEN QualifiedNameReference is supported
+            //
+            if (isSgTypeDefault(n)) { // charles4 11/10/2011 TODO: Remove this when QualifiedNameReference is supported
+            std::cerr << "*** No support yet for a QualifiedNameReference dereferencing a field in an expression"
+                      << std::endl;
+            std::cerr.flush();
+            } else
+            //
+            // TODO: END REMOVE ME WHEN QualifiedNameReference is supported...
+            //
+
             std::cerr << "Invalid attempt to pop a node of type "
                      << n -> class_name()
                      << " as an SgExpression"
@@ -51,9 +63,9 @@ public:
         return (SgExpression *) n;
     }
     SgStatement *popStatement() {
-        SgLocatedNode *n = pop();
+        SgNode *n = pop();
         if (isSgExpression(n)) {
-            if (SgProject::get_verbose() > 1) {
+            if (SgProject::get_verbose() > 0) {
                 std::cerr << "***Turning node "
                           << n -> class_name()
                           << " into a SgExprStatement"
@@ -70,6 +82,17 @@ public:
             ROSE_ASSERT(false);
         }
         return (SgStatement *) n;
+    }
+    SgType *popType() {
+        SgNode *n = pop();
+        if (! isSgType(n)) {
+            std::cerr << "Invalid attempt to pop a node of type "
+                     << n -> class_name()
+                     << " as an SgType"
+                     << std::endl;
+            ROSE_ASSERT(false);
+        }
+        return (SgType *) n;
     }
 };
 
