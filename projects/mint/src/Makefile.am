@@ -36,5 +36,43 @@ mint_SOURCES=\
 	optimizer/programAnalysis/StencilAnalysis.C \
 	optimizer/programAnalysis/MintConstantFolding.C \
 	optimizer/LoopUnroll/LoopUnrollOptimizer.C \
-	optimizer/OnChipMemoryOptimizer/GhostCellHandler.C
+	optimizer/OnChipMemoryOptimizer/GhostCellHandler.C \
+        optimizer/CudaOptimizer.h \
+        optimizer/KernelMergeInterface.h \
+        optimizer/LoopUnroll/LoopUnrollOptimizer.h \
+        optimizer/OptimizerInterface/CudaOptimizerInterface.h \
+        optimizer/OnChipMemoryOptimizer/GhostCellHandler.h \
+        optimizer/OnChipMemoryOptimizer/OnChipMemoryOpt.h \
+        optimizer/programAnalysis/MintConstantFolding.h \
+        optimizer/programAnalysis/StencilAnalysis.h \
+        midend/CudaOutliner.h \
+        midend/memoryManagement/CudaMemoryManagement.h \
+        midend/memoryManagement/DataTransferSizes.h \
+        midend/mintTools/MintTools.h \
+        midend/mintTools/MintOptions.h \
+        midend/LoweringToCuda.h \
+        midend/MintCudaMidend.h \
+        midend/rose_openmplowering/omp_lowering.h \
+        midend/mintPragmas/MintPragmas.h \
+        midend/arrayProcessing/MintArrayInterface.h \
+        types/MintTypes.h
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

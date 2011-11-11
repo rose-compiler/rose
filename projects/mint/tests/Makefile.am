@@ -8,14 +8,18 @@ TESTCODES=\
 	heat3D.c \
 	poisson19.c
 
-TEST_Objects=\
-	${TESTCODES:.c=.o}
+TEST_Results=\
+	${TESTCODES:.c=.cu}
 
-$(TEST_Objects): $(MINT)
-	$(MINT) $@
+$(TEST_Results): $(MINT) $(@:.cu=.c)
+	$(MINT) -opt:shared -opt:register $(srcdir)/$(@:.cu=.c)
+clean-local:
+	rm -f *.o rose_*.[cC] *.cu
+	rm -rf QMTest
+EXTRA_DIST = $(TESTCODES)
 
 check-local:
-	@$(MAKE) $(TEST_Objects)
+	@$(MAKE) $(TEST_Results)
 	@echo "***********************************************************************************************"
 	@echo "*** ROSE/projects/mint/tests: make check rule complete (terminated normally)"
 	@echo "***********************************************************************************************"
