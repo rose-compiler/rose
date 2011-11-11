@@ -563,6 +563,11 @@ AC_DEFUN([ROSE_SUPPORT_ROSE_BUILD_INCLUDE_FILES],
 rm -rf ./include-staging
 if test x$enable_new_edg_interface = xyes; then
   :
+# DQ (11/1/2011): I think that we need these for more complex header file 
+# requirements than we have seen in testing C code to date.  Previously
+# in testing C codes with the EDG 4.x we didn't need as many header files.
+  GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS
+  GENERATE_BACKEND_CXX_COMPILER_SPECIFIC_HEADERS
 else
   GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS
   GENERATE_BACKEND_CXX_COMPILER_SPECIFIC_HEADERS
@@ -1891,14 +1896,6 @@ src/midend/binaryAnalyses/Makefile
 src/midend/programAnalysis/Makefile
 src/midend/programAnalysis/staticSingleAssignment/Makefile
 src/midend/programTransformation/Makefile
-src/midend/programTransformation/astInlining/Makefile
-src/midend/programTransformation/astOutlining/Makefile
-src/midend/programTransformation/ompLowering/Makefile
-src/midend/programTransformation/partialRedundancyElimination/Makefile
-src/midend/programTransformation/finiteDifferencing/Makefile
-src/midend/programTransformation/functionCallNormalization/Makefile
-src/midend/programTransformation/constantFolding/Makefile
-src/midend/programTransformation/implicitCodeGeneration/Makefile
 src/midend/programTransformation/loopProcessing/Makefile
 src/midend/programTransformation/loopProcessing/prepostTransformation/Makefile
 src/midend/programTransformation/loopProcessing/depInfo/Makefile
@@ -1975,6 +1972,13 @@ projects/BinaryCloneDetection/gui/Makefile
 projects/C_to_Promela/Makefile
 projects/CertSecureCodeProject/Makefile
 projects/CloneDetection/Makefile
+projects/DataFaultTolerance/Makefile
+projects/DataFaultTolerance/src/Makefile
+projects/DataFaultTolerance/test/Makefile
+projects/DataFaultTolerance/test/array/Makefile
+projects/DataFaultTolerance/test/array/transformation/Makefile
+projects/DataFaultTolerance/test/array/transformation/tests/Makefile
+projects/DataFaultTolerance/test/array/faultCheck/Makefile
 projects/DatalogAnalysis/Makefile
 projects/DatalogAnalysis/relationTranslatorGenerator/Makefile
 projects/DatalogAnalysis/src/DBFactories/Makefile

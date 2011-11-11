@@ -53,14 +53,15 @@ const int roseTargetCacheLineSize = 32;
 
 // DQ (4/17/2010): This function must be define if C++ support in ROSE is disabled.
 std::string edgVersionString()
-{
+   {
 #ifdef ROSE_BUILD_CXX_LANGUAGE_SUPPORT
-  string edg_version = string("edg-") + StringUtility::numberToString(ROSE_EDG_MAJOR_VERSION_NUMBER) + "." + StringUtility::numberToString(ROSE_EDG_MINOR_VERSION_NUMBER);
+     string edg_version = string("edg-") + StringUtility::numberToString(ROSE_EDG_MAJOR_VERSION_NUMBER) + "." + StringUtility::numberToString(ROSE_EDG_MINOR_VERSION_NUMBER);
+  // string edg_version = string("edg-") + StringUtility::numberToString(ROSE_EDG_MAJOR_VERSION_NUMBER) + "." + StringUtility::numberToString(ROSE_EDG_MINOR_VERSION_NUMBER) + " " + StringUtility::numberToString(__EDG_VERSION__);
 #else
-  string edg_version = "unknown (EDG is disabled)";
+     string edg_version = "unknown (EDG is disabled)";
 #endif
-  return edg_version;
-}
+     return edg_version;
+   }
 
 
 
@@ -403,7 +404,7 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
 
 
 int
-backendCompilesUsingOriginalInputFile ( SgProject* project )
+backendCompilesUsingOriginalInputFile ( SgProject* project, bool compile_with_USE_ROSE_macro )
    {
   // DQ (8/24/2009):
   // To work with existing makefile systems, we want to force an object file to be generated.
@@ -462,6 +463,14 @@ backendCompilesUsingOriginalInputFile ( SgProject* project )
                printf ("   Note use options: -rose:C or -rose:Cxx or -rose:Fortran to specify which language backend compiler to link object files. \n");
                ROSE_ASSERT(false);
              }
+        }
+
+     if (compile_with_USE_ROSE_macro == true)
+        {
+       // DQ (11/3/2011): Mark this as being called from ROSE (even though the backend compiler is being used).
+       // This will help us detect where strings handed in using -D options may have lost some outer quotes.
+       // There may also be a better fix to detect quoted strings and requote them, so this should be considered also.
+          commandLineToGenerateObjectFile += " -DUSE_ROSE ";
         }
 
      int finalCombinedExitStatus = 0;
@@ -685,8 +694,8 @@ void generateAstGraph ( const SgProject* project, int maxSize, std::string filen
         }
        else
         {
-          if ( SgProject::get_verbose() >= 1 )
-               printf ("In generateAstGraph(): WHOLE AST greaph too large to generate. \n");
+          if ( SgProject::get_verbose() >= 0 )
+               printf ("In generateAstGraph(): WHOLE AST greaph too large to generate. (numberOfASTnodes=%d) > (maxSize=%d) \n",numberOfASTnodes,maxSize);
         }
    }
 

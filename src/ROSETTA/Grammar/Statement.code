@@ -1786,7 +1786,7 @@ HEADER_JAVA_LABEL_STATEMENT_START
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
-// CAVE3 (09/30/2007): Not sure what we need to fixup for java label
+// CAVE3 (09/30/2011): Not sure what we need to fixup for java label
 /*
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
@@ -2120,7 +2120,7 @@ HEADER_JAVA_FOREACH_STATEMENT_START
        public:
        // charles4 (9/07/2011): Added for uniform support of mangled names
           virtual SgName get_mangled_name() const;
-          bool cfgIsIndexInteresting(unsigned int idx) const;
+          virtual bool cfgIsIndexInteresting(unsigned int idx) const;
           virtual unsigned int cfgFindChildIndex(SgNode* n);
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
@@ -2140,6 +2140,15 @@ HEADER_JAVA_SYNCHRONIZED_STATEMENT_START
 HEADER_JAVA_SYNCHRONIZED_STATEMENT_END
 
 
+HEADER_ASSERT_STMT_START
+
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
+HEADER_ASSERT_STMT_END
+
+
 HEADER_NULL_STATEMENT_START
 
           virtual unsigned int cfgIndexForEnd() const;
@@ -2150,9 +2159,6 @@ HEADER_NULL_STATEMENT_END
 
 HEADER_PASS_STATEMENT_START
 HEADER_PASS_STATEMENT_END
-
-HEADER_ASSERT_STMT_START
-HEADER_ASSERT_STMT_END
 
 HEADER_EXEC_STATEMENT_START
 HEADER_EXEC_STATEMENT_END
