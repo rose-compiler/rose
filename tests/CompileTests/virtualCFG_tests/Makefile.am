@@ -523,8 +523,10 @@ JAVA_TESTCODES_REQUIRED_TO_PASS = \
      cave3_synchronized0.java \
      cave3_while0.java \
      cave3_while1.java \
-     cave3_while2.java
-
+     cave3_while2.java \
+     cave3_while3.java \
+     cave3_while4.java
+     
 # Not yet fully supported in java frontend:
 #     cave3_DoubleLit0.java
 #     cave3_for2.java
