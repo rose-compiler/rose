@@ -477,6 +477,8 @@ JAVA_TESTCODES_REQUIRED_TO_PASS = \
      pgc_test2011_08.java \
      cave3_IntLit0.java \
      cave3_LoadDep0.java \
+     cave3_assert0.java \
+     cave3_assert1.java \
      cave3_block0.java \
      cave3_constructor0.java \
      cave3_constructor1.java \
@@ -522,6 +524,9 @@ JAVA_TESTCODES_REQUIRED_TO_PASS = \
 #     cave3_while1.java
 #     cave3_instanceof0.java \
 #     cave3_labelDecl1.java \
+#     cave3_assert2.java \
+#     cave3_assert3.java \
+#
 #
 # Buggy cfg implementation
 # Weird cfg for System.out.println

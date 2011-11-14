@@ -1918,6 +1918,13 @@ NameQualificationTraversal::nameQualificationDepth ( SgInitializedName* initiali
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                     printf ("These symbols only match based on name and is not the targetInitializedNameSymbol. \n");
 #endif
+                    if (declaration == NULL)
+                       {
+                         printf ("variableSymbol = %p \n",variableSymbol);
+                         printf ("targetInitializedNameSymbol = %p = %s \n",targetInitializedNameSymbol,targetInitializedNameSymbol->get_name().str());
+                         printf ("initializedName = %p = %s \n",initializedName,initializedName->get_name().str());
+                         initializedName->get_file_info()->display("NameQualificationTraversal::nameQualificationDepth(): initializedName");
+                       }
                     ROSE_ASSERT(declaration != NULL);
                     amountOfNameQualificationRequired = nameQualificationDepth(declaration,currentScope,positionStatement) + 1;
                   }

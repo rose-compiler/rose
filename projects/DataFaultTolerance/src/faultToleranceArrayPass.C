@@ -8,7 +8,8 @@
 
 #include "rose.h"
 
-#include "pragmaHandling.C"
+#include "arrayBase.h"
+#include "pragmaHandling.h"
 
 #define NEW_FILE_INFO Sg_File_Info::generateDefaultFileInfoForTransformationNode()
 #define VALIDATE_ARRAY_CALL "validateArray"
