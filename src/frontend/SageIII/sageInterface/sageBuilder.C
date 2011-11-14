@@ -2053,16 +2053,26 @@ SgPlusPlusOp *SageBuilder::buildPlusPlusOp_nfi(SgExpression* operand_i, SgUnaryO
 }
 
 SgThrowOp *SageBuilder::buildThrowOp(SgExpression *operand_i, SgThrowOp::e_throw_kind throwKind)
-{
-  SgThrowOp* result = new SgThrowOp(operand_i, operand_i -> get_type(), throwKind);
-  if (operand_i != NULL) {
-      markLhsValues(result);
-  }
-  setOneSourcePositionForTransformation(result);
-  operand_i -> set_parent(result);
-  ROSE_ASSERT(result);
-  return result;
-}
+   {
+  // DQ (11/8/2011): operand_i is allowed to be NULL.
+
+  // SgThrowOp* result = new SgThrowOp(operand_i, operand_i -> get_type(), throwKind);
+     SgThrowOp* result = new SgThrowOp(operand_i, (operand_i != NULL) ? operand_i->get_type() : NULL, throwKind);
+
+     if (operand_i != NULL)
+        {
+          markLhsValues(result);
+        }
+
+     setOneSourcePositionForTransformation(result);
+
+     if (operand_i != NULL)
+          operand_i -> set_parent(result);
+
+     ROSE_ASSERT(result);
+
+     return result;
+   }
 
 
 //---------------------binary expressions-----------------------
@@ -3092,8 +3102,8 @@ SageBuilder::buildAssignStatement(SgExpression* lhs,SgExpression* rhs)
   return exp;
 }
 
-// DQ (8/16/2011): This is an AST translate specific version (see not below). 
-// We would like to phase out the version above if possible (but we watn to 
+// DQ (8/16/2011): This is an AST translate specific version (see note below). 
+// We would like to phase out the version above if possible (but we want to 
 // test this later).
 SgExprStatement*
 SageBuilder::buildAssignStatement_ast_translate(SgExpression* lhs,SgExpression* rhs)
@@ -3223,6 +3233,11 @@ SgIfStmt * SageBuilder::buildIfStmt_nfi(SgStatement* conditional, SgStatement * 
   if (true_body) true_body->set_parent(ifstmt);
   if (false_body) false_body->set_parent(ifstmt);
   return ifstmt;
+}
+
+// charles4 10/14/2011:  Vanilla allocation. Use prepend_init_stmt and append_init_stmt to populate afterward.
+SgForInitStatement * SageBuilder::buildForInitStatement() {
+  return new SgForInitStatement();
 }
 
 SgForInitStatement * SageBuilder::buildForInitStatement(const SgStatementPtrList & statements) 
@@ -3583,9 +3598,10 @@ SgAssertStmt* SageBuilder::buildAssertStmt(SgExpression* test, SgExpression* exc
   SgAssertStmt* result = new SgAssertStmt(test);
   ROSE_ASSERT(test != NULL);
   test->set_parent(result);
-  result -> set_exception_argument(exceptionArgument);
-  ROSE_ASSERT(exceptionArgument != NULL);
-  exceptionArgument->set_parent(result);
+  if (exceptionArgument != NULL) {
+      result -> set_exception_argument(exceptionArgument);
+      exceptionArgument->set_parent(result);
+  }
   setOneSourcePositionForTransformation(result);
   return result;
 }
