@@ -18,9 +18,11 @@ clean-local:
 	rm -rf QMTest
 EXTRA_DIST = $(TESTCODES)
 
+if !OS_MACOSX
 check-local:
 	@$(MAKE) $(TEST_Results)
 	@echo "***********************************************************************************************"
 	@echo "*** ROSE/projects/mint/tests: make check rule complete (terminated normally)"
 	@echo "***********************************************************************************************"
+endif	
 

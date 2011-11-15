@@ -15,6 +15,8 @@ exec_prefix=${prefix}/mint-$(mint_API_VERSION)
 INCLUDES = $(ROSE_INCLUDES)
 LDADD    = $(ROSE_LIBS)
 
+if !OS_MACOSX
+
 bin_PROGRAMS = mint
 
 mint_SOURCES=\
@@ -57,6 +59,7 @@ mint_SOURCES=\
         midend/arrayProcessing/MintArrayInterface.h \
         types/MintTypes.h
 
+endif
 
 
 
