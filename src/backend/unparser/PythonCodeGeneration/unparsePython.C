@@ -1,6 +1,9 @@
 #include "sage3basic.h"
 #include "unparsePython.h"
-#include "abstract_handle.h"
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+   #include "abstract_handle.h"
+#endif
 
 #include <iostream>
 

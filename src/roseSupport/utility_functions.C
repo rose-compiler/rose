@@ -5,8 +5,8 @@
 #include "checkIsModifiedFlag.h"
 #include "AstPDFGeneration.h"
 #include "AstDOTGeneration.h"
-#include "wholeAST_API.h"
 
+#include "wholeAST_API.h"
 // #include "wholeAST.h"
 
 #ifdef _MSC_VER
@@ -588,6 +588,7 @@ copy_backend( SgProject* project, UnparseFormatHelp *unparseFormatHelp )
 void
 generatePDF ( const SgProject & project )
    {
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
   // DQ (6/14/2007): Added support for timing of the generatePDF() function.
      TimingPerformance timer ("ROSE generatePDF():");
 
@@ -598,6 +599,7 @@ generatePDF ( const SgProject & project )
      AstPDFGeneration pdftest;
      SgProject & nonconstProject = (SgProject &) project;
      pdftest.generateInputFiles(&nonconstProject);
+#endif
    }
 
 void

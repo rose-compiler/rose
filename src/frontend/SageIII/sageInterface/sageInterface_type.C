@@ -1163,6 +1163,7 @@ bool isCopyConstructible(SgType* type)
   }
 
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 bool isPureVirtualClass(SgType* type, const ClassHierarchyWrapper& classHierarchy)
 {
     SgClassType* classType = isSgClassType(type);
@@ -1244,5 +1245,7 @@ bool isPureVirtualClass(SgType* type, const ClassHierarchyWrapper& classHierarch
     
     return false;
 }
+#endif
+
 } //end of namespace 
 
