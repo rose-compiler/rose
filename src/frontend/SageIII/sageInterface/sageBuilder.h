@@ -1022,8 +1022,11 @@ PreprocessingInfo* buildCpreprocessorDefineDeclaration(SgLocatedNode* target,
                 const std::string & content,
                PreprocessingInfo::RelativePositionType position=PreprocessingInfo::before);
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 //! Build an abstract handle from a SgNode
 AbstractHandle::abstract_handle * buildAbstractHandle(SgNode* n);
+#endif
+
 //@}
 
 } // end of namespace
