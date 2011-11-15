@@ -1,6 +1,11 @@
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 #include "fixupDeclarations.h"
+
+#ifdef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+   #include "transformationSupport.h"
+#endif
+
 void
 fixupDeclarations( SgNode* node )
    {

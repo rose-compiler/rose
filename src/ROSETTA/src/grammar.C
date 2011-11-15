@@ -2744,7 +2744,8 @@ Grammar::buildCode ()
    //  string includeSage3 ="#include \"Cxx_Grammar.h\"\n\n";
    //  includeHeaderString += includeSage3;
 
-     string includeHeaderAstFileIO = "#include \"AST_FILE_IO.h\"\n\n";
+  // string includeHeaderAstFileIO = "#include \"AST_FILE_IO.h\"\n\n";
+     string includeHeaderAstFileIO = "#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT\n   #include \"AST_FILE_IO.h\"\n#endif \n";
      includeHeaderString += includeHeaderAstFileIO;
 
   // DQ (10/14/2010):  This should only be included by source files that require it.

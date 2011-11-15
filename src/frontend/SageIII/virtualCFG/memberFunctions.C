@@ -1,14 +1,23 @@
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 #include "sageInterface.h" // for isConstType
-#include "CallGraph.h"
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+   #include "CallGraph.h"
+#endif
+
 #include <vector>
 #include <boost/foreach.hpp>
 #define foreach BOOST_FOREACH
 using namespace std;
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 using namespace VirtualCFG;
+#endif
 
 bool virtualInterproceduralControlFlowGraphs = false;
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 
 unsigned int
 SgNode::cfgIndexForEnd() const {
@@ -239,11 +248,6 @@ SgStatement::cfgInEdges(unsigned int idx) {
     ROSE_ASSERT (false);
     return std::vector<CFGEdge>();
   }
-
-bool SgStatement::isChildUsedAsLValue(const SgExpression* child) const
-{
-        return false;
-}
 
 //---------------------------------------
 std::vector<CFGEdge> SgGlobal::cfgOutEdges(unsigned int idx) {
@@ -4189,7 +4193,15 @@ std::vector<CFGEdge> SgOmpClauseBodyStatement::cfgInEdges(unsigned int idx) {
   return result;
 }
 
+// case of ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+#endif
  
+bool SgStatement::isChildUsedAsLValue(const SgExpression* child) const
+{
+        return false;
+}
+
+
         bool SgExpression::isDefinable() const
         {
                 return false;
@@ -4899,6 +4911,9 @@ bool SgReturnStmt::isChildUsedAsLValue(const SgExpression* child) const
 }
 
 
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+
 /**** JAVA SUPPORT ****/
 
 unsigned int
@@ -5088,6 +5103,7 @@ std::vector<CFGEdge> SgJavaLabelStatement::cfgInEdges(unsigned int idx)
     }
     return result;
 }
+
 unsigned int
 SgAssertStmt::cfgIndexForEnd() const {
      return 2;
@@ -5133,3 +5149,6 @@ SgAssertStmt::cfgInEdges(unsigned int idx) {
         }
         return result;
 }
+
+#endif
+
