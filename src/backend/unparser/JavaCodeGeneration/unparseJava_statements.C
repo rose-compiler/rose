@@ -560,8 +560,21 @@ Unparse_Java::unparseForInitStmt (SgStatement* stmt, SgUnparse_Info& info) {
             curprint(", ");
 
         // charles4 08/06/2011: A for statement initializer can be a variable declaration or an expression statement.
-        if (isSgVariableDeclaration(*stmt_it))
-             unparseVarDeclStmt(*stmt_it, info);
+        if (isSgVariableDeclaration(*stmt_it)) {
+            if (stmt_it == stmts.begin()) // The first declaration in the list?
+                unparseVarDeclStmt(*stmt_it, info);
+            else {
+                SgVariableDeclaration *vardecl_stmt = (SgVariableDeclaration *) *stmt_it;
+                foreach (SgInitializedName* init_name, vardecl_stmt->get_variables()) {
+                    unparseName(init_name->get_name(), info);
+
+                    if (init_name->get_initializer() != NULL) {
+                        curprint(" ");
+                       unparseExpression(init_name->get_initializer(), info);
+                    }
+               }
+            }
+        }
         else {
             SgExprStatement* stmt = isSgExprStatement(*stmt_it);
             ROSE_ASSERT(stmt != NULL && "expected an SgExprStatement or an SgVariableDeclaration in SgForInitStmt");
@@ -582,9 +595,11 @@ Unparse_Java::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info) {
     curprint("for (");
     unparseStatement(for_stmt->get_for_init_stmt(), info);
     curprint("; ");
-    unparseExpression(test_exp, info);
+    if (! isSgNullExpression(test_exp))
+        unparseExpression(test_exp, info);
     curprint("; ");
-    unparseExpression(for_stmt->get_increment(), info);
+    if (! isSgNullExpression(for_stmt->get_increment()))
+        unparseExpression(for_stmt->get_increment(), info);
     curprint(")");
 
     if (for_stmt->get_loop_body() != NULL) {
@@ -1037,13 +1052,10 @@ Unparse_Java::unparseAssertStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      unparseExpression(assert_stmt->get_test(), info);
 
-     //
-     // charles4: 8/20/2011 - TODO: We need to add an extra expression field to SgAssertStmt for Java.
-     //
-     //     if (assert_stmt->get_exception_argument()) {
-     //         curprint(" : ");
-     //         unparseExpression(assert_stmt->get_exception_argument(), info);
-     //     }
+     if (assert_stmt->get_exception_argument()) {
+         curprint(" : ");
+         unparseExpression(assert_stmt->get_exception_argument(), info);
+     }
    }
 
 void
