@@ -17,7 +17,7 @@
 #include <malloc.h>
 #include <math.h>
 
-#include <omp.h>
+//#include <omp.h>
 #include <sys/time.h>
 #include <assert.h>
 
