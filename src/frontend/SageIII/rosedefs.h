@@ -39,6 +39,7 @@ typedef uint64_t rose_addr_t; /* address and size (file and memory) */
 // This fixes the problem that causes macro names to conflict (e.g. PACKAGE_BUGREPORT).
 // #include "rose_config.h"
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 #include "virtualCFG.h" 
 
 // DQ (10/29/2010): This must be included as a header file since the function 
@@ -46,6 +47,24 @@ typedef uint64_t rose_addr_t; /* address and size (file and memory) */
 #include "virtualBinCFG.h" 
 
 #include "staticCFG.h"
+#else
 
+// DQ (11/12/2011): We need a declaration that can be used in Cxx_Grammar.h
+class VirtualCFG
+   {
+     public:
+          typedef int CFGNode;
+          typedef int CFGEdge;
+   };
+
+class VirtualBinCFG
+   {
+     public:
+          typedef int AuxiliaryInformation;
+          typedef int CFGNode;
+          typedef int CFGEdge;
+   };
+
+#endif
 
 #endif

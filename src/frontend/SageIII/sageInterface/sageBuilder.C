@@ -2,6 +2,8 @@
 // test cases are put into tests/roseTests/astInterfaceTests
 // Last modified, by Liao, Jan 10, 2008
 #include "sage3basic.h"
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 #include "roseAdapter.h"
 #include "markLhsValues.h"
 #include "sageBuilder.h"
@@ -9,6 +11,14 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/foreach.hpp>
 #include "Outliner.hh"
+#else
+   #include "sageBuilder.h"
+   #include <fstream>
+   #include <boost/algorithm/string/trim.hpp>
+   #include <boost/foreach.hpp>
+
+   #include "transformationSupport.h"
+#endif
 
 #define foreach BOOST_FOREACH
 
@@ -5720,6 +5730,7 @@ SgEnumDeclaration * SageBuilder::buildEnumDeclaration_nfi(const SgName& name, Sg
 SgFile*
 SageBuilder::buildFile(const std::string& inputFileName, const std::string& outputFileName, SgProject* project/*=NULL*/)
    {
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
      ROSE_ASSERT(inputFileName.size()!=0);// empty file name is not allowed.
      string sourceFilename = inputFileName, fullname;
      Rose_STL_Container<std::string> arglist;
@@ -5839,6 +5850,9 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
           result->clearGlobalMangledNameMap();
 
      return result;
+#else
+     return NULL;
+#endif
    }// end SgFile* buildFile()
 
 
@@ -5871,6 +5885,8 @@ PreprocessingInfo* SageBuilder::buildCpreprocessorDefineDeclaration(SgLocatedNod
   
   }
 
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 //! Build an abstract handle from a SgNode
 AbstractHandle::abstract_handle * SageBuilder::buildAbstractHandle(SgNode* n)
 {
@@ -5889,3 +5905,5 @@ AbstractHandle::abstract_handle * SageBuilder::buildAbstractHandle(SgNode* n)
   }
   return ahandle;
 }
+#endif
+

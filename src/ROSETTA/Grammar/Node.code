@@ -1946,6 +1946,7 @@ HEADER_START
 	  around a construct. */
       /* */
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
       /*! \brief Returns the CFG node for just before this AST node */
      /*! \brief Returns the CFG node for just before this AST node */
           VirtualCFG::CFGNode cfgForBeginning()
@@ -1961,7 +1962,9 @@ HEADER_START
                return VirtualCFG::CFGNode(this, this->cfgIndexForEnd());
 	          }
       /* */
+#endif
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
       /* name Control flow graph view helper functions
 
           These functions are used internally inside the control flow graph
@@ -1995,6 +1998,7 @@ HEADER_START
       /*! \brief Find the in edges of a CFG node from a static CFG -- internal version. */
           virtual std::vector<SgDirectedGraphEdge*> cfgInEdges(unsigned int index, StaticCFG::CFG* cfg)
           { return cfg->getInEdges(this, index); }
+#endif
 #endif
       /* */
 
