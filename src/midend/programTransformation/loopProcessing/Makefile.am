@@ -14,6 +14,7 @@ include $(srcdir)/depInfo/Makefile_variables
 include $(srcdir)/depGraph/Makefile_variables
 
 include $(srcdir)/outsideInterface/Makefile_variables
+include $(srcdir)/slicing/Makefile_variables
 
 #
 # Don't use $(srcdir) in conjunction with [subdir-objects], otherwise
@@ -25,10 +26,10 @@ mptlpDepInfoPath=depInfo#
 mptlpDepGraphPath=depGraph#
 
 mptlpOutsideInterfacePath=outsideInterface#
+mptlpSlicingPath=slicing#
 
 SUBDIRS=\
 	computation \
-	slicing \
 	driver \
 	prepostTransformation
 
@@ -42,7 +43,10 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 INCLUDES=\
 	$(ROSE_INCLUDES) \
 	-I$(srcdir)/driver \
+	-I$(srcdir)/computation \
 	-I$(srcdir)/depInfo \
+	-I$(srcdir)/depGraph \
+	-I$(srcdir)/slicing \
 	-I$(srcdir)/prepostTransformation \
 	-I$(top_srcdir)/src/util/support \
 	-I$(top_srcdir)/src/util/graphs \
@@ -56,12 +60,14 @@ noinst_LTLIBRARIES=\
 libLoopProcessing_la_SOURCES=\
 	$(mptlpDepInfo_la_sources) \
 	$(mptlpDepGraph_la_sources) \
-	$(mptlpOutsideInterface_la_sources)
+	$(mptlpOutsideInterface_la_sources) \
+	$(mptlpSlicing_la_sources)
 
 include_HEADERS=\
 	$(mptlpDepInfo_includeHeaders) \
 	$(mptlpDepGraph_includeHeaders) \
-	$(mptlpOutsideInterface_includeHeaders)
+	$(mptlpOutsideInterface_includeHeaders) \
+	$(mptlpSlicing_includeHeaders)
 
 # ------------------------------------------------------------------------------
 #
@@ -71,7 +77,8 @@ EXTRA_DIST=\
 	CMakeLists.txt \
 	$(mptlpDepInfo_extraDist) \
 	$(mptlpDepGraph_extraDist) \
-	$(mptlpOutsideInterface_extraDist)
+	$(mptlpOutsideInterface_extraDist) \
+	$(mptlpSlicing_extraDist)
 
 clean-local:
 	rm -rf Templates.DB ii_files ti_files cxx_templates
@@ -79,9 +86,11 @@ clean-local:
 	$(mptlpDepInfo_cleanLocal)
 	$(mptlpDepGraph_cleanLocal)
 	$(mptlpOutsideInterface_cleanLocal)
+	$(mptlpSlicing_cleanLocal)
 
 distclean-local:
 	rm -rf Templates.DB
 	$(mptlpDepInfo_distCleanLocal)
 	$(mptlpDepGraph_distCleanLocal)
+	$(mptlpSlicing_distCleanLocal)
 
