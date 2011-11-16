@@ -214,7 +214,7 @@ if WITH_GOMP_OPENMP_LIB
 PASSING_C_TEST_Executables = ${C_TEST_OBJECT_REQUIRED_TO_RUN:.o=.out}
 PASSING_CXX_TEST_Executables = ${CXX_TEST_OBJECT_REQUIRED_TO_RUN:.o=.out}
 # TODO this might have problem with CXX objects!!
-MY_FINAL_LINK = $(top_builddir)/src/midend/programTransformation/ompLowering/libxomp.a $(GOMP_PATH)/libgomp.a -lpthread -lm
+MY_FINAL_LINK = $(top_builddir)/src/midend/programTransformation/libxomp.a $(GOMP_PATH)/libgomp.a -lpthread -lm
 
 $(PASSING_C_TEST_Executables): %.out: %.o
 	$(CC) $< -o $@ $(MY_FINAL_LINK)
