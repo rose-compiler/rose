@@ -13,6 +13,8 @@ AUTOMAKE_OPTIONS = subdir-objects
 include $(srcdir)/depInfo/Makefile_variables
 include $(srcdir)/depGraph/Makefile_variables
 
+include $(srcdir)/outsideInterface/Makefile_variables
+
 #
 # Don't use $(srcdir) in conjunction with [subdir-objects], otherwise
 # object files will be built in the source tree. Therefore, we need to
@@ -22,9 +24,10 @@ include $(srcdir)/depGraph/Makefile_variables
 mptlpDepInfoPath=depInfo#
 mptlpDepGraphPath=depGraph#
 
+mptlpOutsideInterfacePath=outsideInterface#
+
 SUBDIRS=\
 	computation \
-	outsideInterface \
 	slicing \
 	driver \
 	prepostTransformation
@@ -50,13 +53,15 @@ INCLUDES=\
 noinst_LTLIBRARIES=\
 	libLoopProcessing.la
 
-libLoopProcessing_la_SOURCES = \
+libLoopProcessing_la_SOURCES=\
 	$(mptlpDepInfo_la_sources) \
-	$(mptlpDepGraph_la_sources)
+	$(mptlpDepGraph_la_sources) \
+	$(mptlpOutsideInterface_la_sources)
 
-include_HEADERS = \
+include_HEADERS=\
 	$(mptlpDepInfo_includeHeaders) \
-	$(mptlpDepGraph_includeHeaders)
+	$(mptlpDepGraph_includeHeaders) \
+	$(mptlpOutsideInterface_includeHeaders)
 
 # ------------------------------------------------------------------------------
 #
@@ -65,13 +70,15 @@ include_HEADERS = \
 EXTRA_DIST=\
 	CMakeLists.txt \
 	$(mptlpDepInfo_extraDist) \
-	$(mptlpDepGraph_extraDist)
+	$(mptlpDepGraph_extraDist) \
+	$(mptlpOutsideInterface_extraDist)
 
 clean-local:
 	rm -rf Templates.DB ii_files ti_files cxx_templates
 	rm -rf rose_mm.C
 	$(mptlpDepInfo_cleanLocal)
 	$(mptlpDepGraph_cleanLocal)
+	$(mptlpOutsideInterface_cleanLocal)
 
 distclean-local:
 	rm -rf Templates.DB
