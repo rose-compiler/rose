@@ -6,11 +6,21 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 #  Subdirectories
 # ------------------------------------------------------------------------------
 
+## Place generated object files (.o) into the same directory as their source
+## files, in order to avoid collisions when non-recursive make is used.
+AUTOMAKE_OPTIONS = subdir-objects
+
 include $(srcdir)/depInfo/Makefile_variables
 include $(srcdir)/depGraph/Makefile_variables
 
-mptlpDepInfoPath=$(srcdir)/depInfo#
-mptlpDepGraphPath=$(srcdir)/depGraph#
+#
+# Don't use $(srcdir) in conjunction with [subdir-objects], otherwise
+# object files will be built in the source tree. Therefore, we need to
+# use relative paths.
+#
+#mptlpDepInfoPath=$(srcdir)/depInfo#
+mptlpDepInfoPath=depInfo#
+mptlpDepGraphPath=depGraph#
 
 SUBDIRS=\
 	computation \
