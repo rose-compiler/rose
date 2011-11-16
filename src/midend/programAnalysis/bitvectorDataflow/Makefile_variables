@@ -27,6 +27,7 @@ mpaBitvectorDataflow_la_sources=\
 mpaBitvectorDataflow_includeHeaders=\
 	$(mpaBitvectorDataflowPath)/DataFlowAnalysis.h \
 	$(mpaBitvectorDataflowPath)/DefUseChain.h \
+	$(mpaBitvectorDataflowPath)/DefUseChain.C \
 	$(mpaBitvectorDataflowPath)/ReachingDefinition.h \
 	$(mpaBitvectorDataflowPath)/ReachingDefinitionFacade.h
 
