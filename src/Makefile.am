@@ -123,7 +123,6 @@ libroseLibraries = \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/computation/libcomputation.la \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/driver/libdriver.la \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/prepostTransformation/libprepostloop.la \
-   $(top_builddir)/src/midend/programTransformation/loopProcessing/slicing/libslicing.la \
    $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la \
    $(top_builddir)/src/midend/programTransformation/libprogramTransformation.la \
    $(top_builddir)/src/roseSupport/libroseSupport.la \
