@@ -15,6 +15,7 @@ include $(srcdir)/depGraph/Makefile_variables
 
 include $(srcdir)/outsideInterface/Makefile_variables
 include $(srcdir)/slicing/Makefile_variables
+include $(srcdir)/driver/Makefile_variables
 
 #
 # Don't use $(srcdir) in conjunction with [subdir-objects], otherwise
@@ -27,10 +28,10 @@ mptlpDepGraphPath=depGraph#
 
 mptlpOutsideInterfacePath=outsideInterface#
 mptlpSlicingPath=slicing#
+mptlpDriverPath=driver#
 
 SUBDIRS=\
 	computation \
-	driver \
 	prepostTransformation
 
 # ------------------------------------------------------------------------------
@@ -61,13 +62,15 @@ libLoopProcessing_la_SOURCES=\
 	$(mptlpDepInfo_la_sources) \
 	$(mptlpDepGraph_la_sources) \
 	$(mptlpOutsideInterface_la_sources) \
-	$(mptlpSlicing_la_sources)
+	$(mptlpSlicing_la_sources) \
+	$(mptlpDriver_la_sources)
 
 include_HEADERS=\
 	$(mptlpDepInfo_includeHeaders) \
 	$(mptlpDepGraph_includeHeaders) \
 	$(mptlpOutsideInterface_includeHeaders) \
-	$(mptlpSlicing_includeHeaders)
+	$(mptlpSlicing_includeHeaders) \
+	$(mptlpDriver_includeHeaders)
 
 # ------------------------------------------------------------------------------
 #
@@ -78,7 +81,8 @@ EXTRA_DIST=\
 	$(mptlpDepInfo_extraDist) \
 	$(mptlpDepGraph_extraDist) \
 	$(mptlpOutsideInterface_extraDist) \
-	$(mptlpSlicing_extraDist)
+	$(mptlpSlicing_extraDist) \
+	$(mptlpDriver_extraDist)
 
 clean-local:
 	rm -rf Templates.DB ii_files ti_files cxx_templates
@@ -87,10 +91,12 @@ clean-local:
 	$(mptlpDepGraph_cleanLocal)
 	$(mptlpOutsideInterface_cleanLocal)
 	$(mptlpSlicing_cleanLocal)
+	$(mptlpDriver_cleanLocal)
 
 distclean-local:
 	rm -rf Templates.DB
 	$(mptlpDepInfo_distCleanLocal)
 	$(mptlpDepGraph_distCleanLocal)
 	$(mptlpSlicing_distCleanLocal)
+	$(mptlpDriver_distCleanLocal)
 

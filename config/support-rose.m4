@@ -1918,7 +1918,6 @@ src/midend/programTransformation/Makefile
 src/midend/programTransformation/loopProcessing/Makefile
 src/midend/programTransformation/loopProcessing/prepostTransformation/Makefile
 src/midend/programTransformation/loopProcessing/computation/Makefile
-src/midend/programTransformation/loopProcessing/driver/Makefile
 src/backend/Makefile
 src/roseSupport/Makefile
 src/roseExtensions/Makefile
