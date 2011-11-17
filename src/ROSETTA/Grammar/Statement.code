@@ -2202,9 +2202,11 @@ HEADER_JAVA_SYNCHRONIZED_STATEMENT_END
 
 HEADER_ASSERT_STMT_START
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
 HEADER_ASSERT_STMT_END
 
