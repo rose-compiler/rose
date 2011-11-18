@@ -1916,7 +1916,6 @@ src/midend/programAnalysis/Makefile
 src/midend/programAnalysis/staticSingleAssignment/Makefile
 src/midend/programTransformation/Makefile
 src/midend/programTransformation/loopProcessing/Makefile
-src/midend/programTransformation/loopProcessing/prepostTransformation/Makefile
 src/backend/Makefile
 src/roseSupport/Makefile
 src/roseExtensions/Makefile

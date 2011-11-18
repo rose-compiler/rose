@@ -16,6 +16,7 @@ include $(srcdir)/computation/Makefile_variables
 include $(srcdir)/outsideInterface/Makefile_variables
 include $(srcdir)/slicing/Makefile_variables
 include $(srcdir)/driver/Makefile_variables
+include $(srcdir)/prepostTransformation/Makefile_variables
 
 #
 # Don't use $(srcdir) in conjunction with [subdir-objects], otherwise
@@ -29,9 +30,7 @@ mptlpComputationPath=computation#
 mptlpOutsideInterfacePath=outsideInterface#
 mptlpSlicingPath=slicing#
 mptlpDriverPath=driver#
-
-SUBDIRS=\
-	prepostTransformation
+mptlpPrepostTransformationPath=prepostTransformation#
 
 # ------------------------------------------------------------------------------
 #  Library: programTransformationLoopProcessing.la
@@ -47,12 +46,15 @@ INCLUDES=\
 	-I$(srcdir)/depInfo \
 	-I$(srcdir)/depGraph \
 	-I$(srcdir)/slicing \
+	-I$(srcdir)/outsideInterface \
 	-I$(srcdir)/prepostTransformation \
 	-I$(top_srcdir)/src/util/support \
 	-I$(top_srcdir)/src/util/graphs \
 	-I$(top_srcdir)/src/midend/astUtil/astSupport \
 	-I$(top_srcdir)/src/midend/astUtil/astInterface \
-	-I$(top_srcdir)/src/midend/astUtil/symbolicVal
+	-I$(top_srcdir)/src/midend/astUtil/symbolicVal \
+	-I$(top_srcdir)/src/midend/programAnalysis/CFG \
+	-I$(top_srcdir)/src/midend/programAnalysis/bitvectorDataflow
 
 noinst_LTLIBRARIES=\
 	libLoopProcessing.la
@@ -63,7 +65,8 @@ libLoopProcessing_la_SOURCES=\
 	$(mptlpComputation_la_sources) \
 	$(mptlpOutsideInterface_la_sources) \
 	$(mptlpSlicing_la_sources) \
-	$(mptlpDriver_la_sources)
+	$(mptlpDriver_la_sources) \
+	$(mptlpPrepostTransformation_la_sources)
 
 include_HEADERS=\
 	$(mptlpDepInfo_includeHeaders) \
@@ -71,7 +74,8 @@ include_HEADERS=\
 	$(mptlpComputation_includeHeaders) \
 	$(mptlpOutsideInterface_includeHeaders) \
 	$(mptlpSlicing_includeHeaders) \
-	$(mptlpDriver_includeHeaders)
+	$(mptlpDriver_includeHeaders) \
+	$(mptlpPrepostTransformation_includeHeaders)
 
 # ------------------------------------------------------------------------------
 #
@@ -84,7 +88,8 @@ EXTRA_DIST=\
 	$(mptlpComputation_extraDist) \
 	$(mptlpOutsideInterface_extraDist) \
 	$(mptlpSlicing_extraDist) \
-	$(mptlpDriver_extraDist)
+	$(mptlpDriver_extraDist) \
+	$(mptlpPrepostTransformation_extraDist)
 
 clean-local:
 	rm -rf Templates.DB ii_files ti_files cxx_templates
@@ -95,6 +100,7 @@ clean-local:
 	$(mptlpOutsideInterface_cleanLocal)
 	$(mptlpSlicing_cleanLocal)
 	$(mptlpDriver_cleanLocal)
+	$(mptlpPrepostTransformation_cleanLocal)
 
 distclean-local:
 	rm -rf Templates.DB
@@ -103,4 +109,5 @@ distclean-local:
 	$(mptlpComputation_distCleanLocal)
 	$(mptlpSlicing_distCleanLocal)
 	$(mptlpDriver_distCleanLocal)
+	$(mptlpPrepostTransformation_distCleanLocal)
 
