@@ -120,7 +120,6 @@ libroseLibraries = \
    $(top_builddir)/src/midend/astUtil/libastUtil.la \
    $(top_builddir)/src/midend/programAnalysis/libprogramAnalysis.la \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/libLoopProcessing.la \
-   $(top_builddir)/src/midend/programTransformation/loopProcessing/computation/libcomputation.la \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/prepostTransformation/libprepostloop.la \
    $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la \
    $(top_builddir)/src/midend/programTransformation/libprogramTransformation.la \

@@ -12,7 +12,7 @@ AUTOMAKE_OPTIONS = subdir-objects
 
 include $(srcdir)/depInfo/Makefile_variables
 include $(srcdir)/depGraph/Makefile_variables
-
+include $(srcdir)/computation/Makefile_variables
 include $(srcdir)/outsideInterface/Makefile_variables
 include $(srcdir)/slicing/Makefile_variables
 include $(srcdir)/driver/Makefile_variables
@@ -25,13 +25,12 @@ include $(srcdir)/driver/Makefile_variables
 #mptlpDepInfoPath=$(srcdir)/depInfo#
 mptlpDepInfoPath=depInfo#
 mptlpDepGraphPath=depGraph#
-
+mptlpComputationPath=computation#
 mptlpOutsideInterfacePath=outsideInterface#
 mptlpSlicingPath=slicing#
 mptlpDriverPath=driver#
 
 SUBDIRS=\
-	computation \
 	prepostTransformation
 
 # ------------------------------------------------------------------------------
@@ -61,6 +60,7 @@ noinst_LTLIBRARIES=\
 libLoopProcessing_la_SOURCES=\
 	$(mptlpDepInfo_la_sources) \
 	$(mptlpDepGraph_la_sources) \
+	$(mptlpComputation_la_sources) \
 	$(mptlpOutsideInterface_la_sources) \
 	$(mptlpSlicing_la_sources) \
 	$(mptlpDriver_la_sources)
@@ -68,6 +68,7 @@ libLoopProcessing_la_SOURCES=\
 include_HEADERS=\
 	$(mptlpDepInfo_includeHeaders) \
 	$(mptlpDepGraph_includeHeaders) \
+	$(mptlpComputation_includeHeaders) \
 	$(mptlpOutsideInterface_includeHeaders) \
 	$(mptlpSlicing_includeHeaders) \
 	$(mptlpDriver_includeHeaders)
@@ -80,6 +81,7 @@ EXTRA_DIST=\
 	CMakeLists.txt \
 	$(mptlpDepInfo_extraDist) \
 	$(mptlpDepGraph_extraDist) \
+	$(mptlpComputation_extraDist) \
 	$(mptlpOutsideInterface_extraDist) \
 	$(mptlpSlicing_extraDist) \
 	$(mptlpDriver_extraDist)
@@ -89,6 +91,7 @@ clean-local:
 	rm -rf rose_mm.C
 	$(mptlpDepInfo_cleanLocal)
 	$(mptlpDepGraph_cleanLocal)
+	$(mptlpComputation_cleanLocal)
 	$(mptlpOutsideInterface_cleanLocal)
 	$(mptlpSlicing_cleanLocal)
 	$(mptlpDriver_cleanLocal)
@@ -97,6 +100,7 @@ distclean-local:
 	rm -rf Templates.DB
 	$(mptlpDepInfo_distCleanLocal)
 	$(mptlpDepGraph_distCleanLocal)
+	$(mptlpComputation_distCleanLocal)
 	$(mptlpSlicing_distCleanLocal)
 	$(mptlpDriver_distCleanLocal)
 
