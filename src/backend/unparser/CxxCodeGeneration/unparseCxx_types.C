@@ -441,6 +441,9 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
                case T_MEMBERFUNCTION:     unparseMemberFunctionType(type, info);   break;
                case T_ARRAY:              unparseArrayType(type, info);            break;
 
+            // DQ (11/20/2011): Adding support for template declarations within the AST.
+               case T_TEMPLATE:           unparseTemplateType(type, info);         break;
+
                default:
                   {
                     printf("Error: Unparse_Type::unparseType(): Default case reached in switch: Unknown type %p = %s \n",type,type->class_name().c_str());
@@ -1918,4 +1921,22 @@ void Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
                unparseType(array_type, ninfo);
              }
         }
+   }
+
+
+
+void Unparse_Type::unparseTemplateType(SgType* type, SgUnparse_Info& info)
+   {
+  // This has to be able to select the kind of type being used (likely a template parameter, and unparse it by name).
+  // I think that this is non-trivial, since the type might be more than just a name...
+  // I am unclear if it can be something that has a first and second part such as some of the other types above (e.g. SgArrayType).
+
+     SgTemplateType* template_type = isSgTemplateType(type);
+     ROSE_ASSERT(template_type != NULL);
+
+     printf ("In unparseTemplateType(): Unparsing the SgTemplateType as a single 'int' \n");
+
+  // For now just unparse a simple string that will at least be a correct type.
+  // curprint("unparse_template_type ");
+     curprint("int ");
    }

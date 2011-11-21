@@ -625,7 +625,7 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
        // case V_SgModuleStatement:          unparseModuleStmt (stmt, info); break;
        // case V_SgProgramHeaderStatement:   unparseProgHdrStmt(stmt, info); break;
        // case V_SgProcedureHeaderStatement: unparseProcHdrStmt(stmt, info); break;
-#if 1
+
        // declarations
        // case V_SgInterfaceStatement:     unparseInterfaceStmt(stmt, info); break;
        // case V_SgCommonBlock:            unparseCommonBlock  (stmt, info); break;
@@ -647,7 +647,7 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
           case V_SgGotoStatement:          unparseGotoStmt       (stmt, info); break;
        // case V_SgStopOrPauseStatement:   unparseStopOrPauseStmt(stmt, info); break;
           case V_SgReturnStmt:             unparseReturnStmt     (stmt, info); break;
-#endif
+
        // executable statements, IO
        // case V_SgIOStatement:            unparseIOStmt    (stmt, info); break;
        // case V_SgIOControlStatement:     unparseIOCtrlStmt(stmt, info); break;
@@ -661,7 +661,7 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
        // case GLOBAL_STMT:        unparseGlobalStmt(stmt, info);       break;
        // case V_SgBasicBlock:             unparseBasicBlockStmt(stmt, info);   break;
        // case IF_STMT:            unparseIfStmt(stmt, info);           break;
-#if 1
+
           case V_SgForStatement:           unparseForStmt(stmt, info);          break; 
           case V_SgFunctionDeclaration:    unparseFuncDeclStmt(stmt, info);     break;
           case V_SgFunctionDefinition:     unparseFuncDefnStmt(stmt, info);     break;
@@ -696,7 +696,6 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
           case V_SgTemplateInstantiationFunctionDecl:       unparseTemplateInstantiationFunctionDeclStmt(stmt, info); break;
           case V_SgTemplateInstantiationMemberFunctionDecl: unparseTemplateInstantiationMemberFunctionDeclStmt(stmt, info); break;
           case V_SgTemplateInstantiationDirectiveStatement: unparseTemplateInstantiationDirectiveStmt(stmt, info); break;
-#endif
 
 #if 0
           case PRAGMA_DECL:
@@ -709,7 +708,6 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
                break;
 #endif
 
-#if 1
           case V_SgForInitStatement:                   unparseForInitStmt(stmt, info); break;
 
        // Comments could be attached to these statements
@@ -731,8 +729,8 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
 
        // DQ (3/2/2005): Added support for unparsing template class definitions.  This is the case: TEMPLATE_INST_DEFN_STMT
           case V_SgTemplateInstantiationDefn:          unparseClassDefnStmt(stmt, info); break;
-#endif
-                                                 //        case V_SgNullStatement:                      unparseNullStatement(stmt, info); break;
+
+       // case V_SgNullStatement:                      unparseNullStatement(stmt, info); break;
 
        // Liao, 6/13/2008: UPC support
           case V_SgUpcNotifyStatement:                  unparseUpcNotifyStatement(stmt, info); break;
@@ -1407,31 +1405,6 @@ Unparse_ExprStmt::unparseTemplateInstantiationDeclStmt (SgStatement* stmt, SgUnp
    }
 
 
-#if 0
-// DQ (8/13/2007): This has been moved to the base class (language independent code)
-
-bool 
-Unparse_ExprStmt::isTransformed(SgStatement* stmt)
-   {
-  // This function must traverse the AST and look for any sign that 
-  // the subtree has been transformed.  This might be a difficult 
-  // function to write.  We might have to force transformations to
-  // do something to make their presence better known (e.g. removing
-  // a statement will leave no trace in the AST of the transformation).
-
-  // DQ (3/2/2005): Change this to see if we can output each specialization 
-  // as if we were transforming each template specialization
-  // Assume no transformation at the moment while we debug templates.
-
-  // DQ (6/29/2005): return false while we try to return to compiling KULL
-#if 1
-     return false;
-#else
-     return true;
-#endif
-   }
-#endif
-
 
 void
 Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stmt, SgUnparse_Info& info)
@@ -1549,8 +1522,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
              {
             // printf ("Declaration is a prototype functionDeclaration->get_definition() = %p \n",functionDeclaration->get_definition());
                curprint ( string("\n/* ROSE generated template specialization " ) + 
-                      ( (functionDeclaration->get_definition() == NULL) ? "(prototype)" : "(explicit definition)") + 
-                      " */");
+                      ( (functionDeclaration->get_definition() == NULL) ? "(prototype)" : "(explicit definition)") + " */");
                curprint ( string("\ntemplate <> "));
              }
        // unparseTemplateArguments(templateArgListPtr,info);
@@ -1761,134 +1733,6 @@ Unparse_ExprStmt::unparsePragmaDeclStmt (SgStatement* stmt, SgUnparse_Info& info
    }
 
 
-#if 0
-// DQ (8/13/2007): This has been moved to the base class (language independent code)
-// Since I think it is not specific to any one language.
-
-void
-Unparse_ExprStmt::unparseGlobalStmt (SgStatement* stmt, SgUnparse_Info& info)
-   {
-     SgGlobal* globalScope = isSgGlobal(stmt);
-     ROSE_ASSERT(globalScope != NULL);
-
-#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
-     printf ("\n ***** Unparsing the global Scope ***** \n\n");
-#endif
-
-#if OUTPUT_HIDDEN_LIST_DATA
-     outputHiddenListData (globalScope);
-#endif
-
-  // curprint ( string(" /* global scope size = " + globalScope->get_declarations().size() + " */ \n ";
-
-  // Setup an iterator to go through all the statements in the top scope of the file.
-     SgDeclarationStatementPtrList & globalStatementList = globalScope->get_declarations();
-     SgDeclarationStatementPtrList::iterator statementIterator = globalStatementList.begin();
-     while ( statementIterator != globalStatementList.end() )
-        {
-          SgStatement* currentStatement = *statementIterator;
-          ROSE_ASSERT(currentStatement != NULL);
-
-//        unp->opt.display("Before unp->statementFromFile");
-          bool unparseStatementIntoSourceFile = statementFromFile (currentStatement,getFileName());
-
-          if (ROSE_DEBUG > 3)
-             {
-               cout << "unparseStatementIntoSourceFile = " 
-                    << ( (unparseStatementIntoSourceFile == true) ? "true" : "false" ) << endl;
-
-               printf ("block scope statement = %p = %s \n",currentStatement,currentStatement->class_name().c_str());
-               currentStatement->get_file_info()->display("global scope statement: debug");
-             }
-#if 0
-          curprint ( string("/* global scope (" ) + currentStatement->class_name() + "): unparseStatementIntoSourceFile = " + ( (unparseStatementIntoSourceFile == true) ? "true" : "false" ) + " */ ");
-#endif
-
-          if (unparseStatementIntoSourceFile == true)
-             {
-               if (ROSE_DEBUG > 3)
-                  {
-                 // (*primary_os)
-                    cout << "In run_unparser(): getLineNumber(currentStatement) = "
-#if 1
-                         << currentStatement->get_file_info()->displayString()
-#else
-                         << ROSE::getLineNumber(currentStatement)
-                         << " getFileName(currentStatement) = " 
-                         << ROSE::getFileName(currentStatement)
-#endif
-                         << " unp->cur_index = " 
-                         << unp->cur_index
-                         << endl;
-                  }
-
-            // DQ (6/4/2007): Make a new SgUnparse_Info object for each statement in global scope
-            // This should permit children to set the current_scope and not effect other children
-            // see test2007_56.C for example "namespace A { extern int x; } int A::x = 42;"
-            // Namespace definition scope should not effect scope set in SgGlobal.
-            // unparseStatement(currentStatement, info);
-               SgUnparse_Info infoLocal(info);
-               unparseStatement(currentStatement, infoLocal);
-             }
-            else
-             {
-            // printf ("Skipped unparsing %s (global declaration) \n",currentStatement->sage_class_name());
-             }
-
-       // Go to the next statement
-          statementIterator++;
-        }
-
-  // DQ (5/27/2005): Added support for compiler-generated statements that might appear at the end of the applications
-  // printf ("At end of unparseGlobalStmt \n");
-  // outputCompilerGeneratedStatements(info);
-
-  // DQ (4/21/2005): Output a new line at the end of the file (some compilers complain if this is not present)
-     unp->cur.insert_newline(1);
-   }
-#endif
-
-
-#if 0
-// DQ (11/15/2004): This is a class from which all declarations are built so it should not
-// ever have to be unparsed (since no IR nodes exist of this base class type).
-void
-Unparse_ExprStmt::unparseDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
-   {
-  // SgDeclarationStatement* decl_stmt = isSgDeclarationStatement(stmt);
-  // unparseStatement(decl_stmt, info);
-   }
-#endif
-
-#if 0
-// DQ (8/13/2007): This is a class from which all scopes are built so it should not
-// ever have to be unparsed (since no IR nodes exist of this base class type).
-void Unparse_ExprStmt::unparseScopeStmt(SgStatement* stmt, SgUnparse_Info& info)
-   {
-     SgScopeStatement* scope_stmt = isSgScopeStatement(stmt);
-     ROSE_ASSERT(scope_stmt != NULL);
-
-     stringstream  out;
-     scope_stmt->print_symboltable("UNPARSE", out);
-     curprint ( out.str());
-   }
-#endif
-
-
-#if 0
-// DQ (8/13/2007): This has been moved to the base class (language independent code)
-
-void Unparse_ExprStmt::unparseFuncTblStmt(SgStatement* stmt, SgUnparse_Info& info)
-   {
-     SgFunctionTypeTable* functbl_stmt = isSgFunctionTypeTable(stmt);
-     ROSE_ASSERT(functbl_stmt != NULL);
-
-     stringstream  out;
-     functbl_stmt->print_functypetable(out);
-     curprint ( out.str());
-   }
-#endif
-
 void
 Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
@@ -1940,26 +1784,6 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
      unp->cur.format(basic_stmt, info, FORMAT_AFTER_BASIC_BLOCK2);
    }
 
-#if 0
-// DQ (8/13/2007): This has been moved to the base class (language independent code)
-
-//--------------------------------------------------------------------------------
-//  void Unparse_ExprStmt::num_stmt_in_block
-//
-//  returns the number of statements in the basic block
-//--------------------------------------------------------------------------------  
-int Unparse_ExprStmt::num_stmt_in_block(SgBasicBlock* basic_stmt) {
-  //counter to keep number of statements in the block
-  int num_stmt = 0;
-  SgStatementPtrList::iterator p = basic_stmt->get_statements().begin();
-  while (p != basic_stmt->get_statements().end()) {
-    num_stmt++;
-    p++;
-  }
-
-  return num_stmt;
-}
-#endif
 
 // Determine how many "else {}"'s an outer if that has an else clause needs to
 // prevent dangling if problems
@@ -2577,7 +2401,6 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
           SgUnparse_Info ninfo_for_type(ninfo);
 
-#if 1
        // DQ (12/20/2006): This is used to specify global qualification separately from the more general name 
        // qualification mechanism.  Note that SgVariableDeclarations don't use the requiresGlobalNameQualificationOnType
        // on the SgInitializedNames in their list since the SgVariableDeclaration IR nodes is marked directly.
@@ -2593,7 +2416,6 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             // ninfo2.set_forceQualifiedNames();
                ninfo_for_type.set_requiresGlobalNameQualification();
              }
-#endif
 
        // output the return type
 #define OUTPUT_FUNCTION_DECLARATION_DATA 0
@@ -3160,7 +2982,6 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
       // the declaration (so that exceptions to qualification can be tracked).
       ROSE_ASSERT(ninfo_for_type.get_declstatement_ptr() != NULL);
 
-#if 1
       // DQ (12/20/2006): This is used to specify global qualification separately from the more general name 
       // qualification mechanism.  Note that SgVariableDeclarations don't use the requiresGlobalNameQualificationOnType
       // on the SgInitializedNames in their list since the SgVariableDeclaration IR nodes is marked directly.
@@ -3176,7 +2997,6 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
         // ninfo2.set_forceQualifiedNames();
         ninfo_for_type.set_requiresGlobalNameQualification();
       }
-#endif
 
    // DQ (5/30/2011): Added support for name qualification.
       ninfo_for_type.set_reference_node_for_qualification(mfuncdecl_stmt);
@@ -3213,92 +3033,6 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
     // ninfo.set_SkipQualifiedNames();
 
     // ninfo.display("unparse SgMemberFunction: ninfo");
-#if 0
-#error "DEAD CODE!"
-    // DQ (10/11/2006): Switch this back for now while I debug the use of a new qualified name mechanism.
-    // DQ and PC (6/1/2006): Added Peter's suggested fixes to support unparsing fully qualified names (supporting auto-documentation).
-    // if (parent_class != NULL)
-    // if (parent_class != NULL && !info.forceQualifiedNames())
-    // if (parent_class != NULL)
-    // if (parent_class == mfuncdecl_stmt->get_scope() && info.forceQualifiedNames())
-#error "DEAD CODE!"
-    if (ninfo.forceQualifiedNames())
-    {
-      // In a class structure (class definition) don't output the 
-      // class name qualification before each function name.
-
-      // curprint ( string("/* In a class structure (class definition) don't output the class name qualification */\n ";
-
-      // DQ (8/1/2007): Added code to force output of qualified names (if specificed by unparseToString()).
-      SgName scopename = mfuncdecl_stmt->get_class_scope()->get_declaration()->get_qualified_name();
-      scopename = trimGlobalScopeQualifier ( scopename.str() ).c_str();
-      if (scopename.is_null() == false)
-      {
-        curprint(scopename.str());
-        curprint("::");
-      }
-
-#error "DEAD CODE!"
-      curprint (  mfuncdecl_stmt->get_name().str() );
-    }
-    else
-    {
-      // curprint ( string("/* at global scope, for example, output the qualified name <class name>::f() */\n ";
-
-      // at global scope, for example, output the qualified name s::f()
-      SgName scopename;
-#error "DEAD CODE!"
-      printf ("mfuncdecl_stmt->get_isModified() = %s \n",(mfuncdecl_stmt->get_isModified() == true) ? "true" : "false");
-
-      // DQ (12/5/2004): Check if this is a modified member function IR node which does not have it's scope set properly
-      // Allows unparser to output a name with a comment about it being incorrect!
-      SgScopeStatement *classScope = mfuncdecl_stmt->get_scope();
-      SgClassDefinition* classDefinition = isSgClassDefinition(classScope);
-      if ((classDefinition == NULL) && (mfuncdecl_stmt->get_isModified() == true))
-      {
-        // DQ (12/5/2004): Modified nodes (from the rewrite system at least) don't have the correct scope 
-        // information required to generate the qualifier!
-        // output an unqualified name (which is quite incorrect but sufficient while we fix the originating problem).
-        // scopename = string(" /* modified IR node is missing qualifier */ ") + mfuncdecl_stmt->get_name();
-        // curprint ( string(" /* modified IR node is missing qualifier */ ";
-      }
-      else
-      {
-        // DQ (11/17/2004): Interface modified, use get_class_scope() if we want a
-        // SgClassDefinition, else use get_scope() if we want a SgScopeStatement.
-        ROSE_ASSERT (mfuncdecl_stmt->get_class_scope() != NULL);
-        ROSE_ASSERT (mfuncdecl_stmt->get_class_scope()->get_declaration() != NULL);
-
-#error "DEAD CODE!"
-        scopename = mfuncdecl_stmt->get_class_scope()->get_declaration()->get_qualified_name();
-#if 0
-        printf ("In unparseMFuncDeclStmt(): mfuncdecl_stmt->get_scope() = %p = %s \n",
-            mfuncdecl_stmt->get_scope(),mfuncdecl_stmt->get_scope()->class_name().c_str());
-#endif
-#if 0
-        printf ("In unparseMFuncDeclStmt(): mfuncdecl_stmt->get_scope()->get_declaration() = %p = %s \n",
-            mfuncdecl_stmt->get_scope()->get_declaration(),mfuncdecl_stmt->get_scope()->get_declaration()->class_name().c_str());
-        printf ("In unparseMFuncDeclStmt(): mfuncdecl_stmt->get_scope()->get_declaration() = %p scopename = %s \n",
-            mfuncdecl_stmt->get_scope()->get_declaration(),scopename.str());
-#endif
-        printf ("(before trimGlobalScopeQualifier) scopename = %s \n",scopename.str());
-#error "DEAD CODE!"
-
-        // DQ (10/12/2006): need to trim off the global scope specifier (I think).
-        // curprint ( string("\n/* Calling trimGlobalScopeQualifier() */\n ";
-        scopename = trimGlobalScopeQualifier ( scopename.str() ).c_str();
-
-        printf ("(after trimGlobalScopeQualifier) scopename = %s \n",scopename.str());
-
-#error "DEAD CODE!"
-        curprint (  scopename.str());
-        curprint (  "::");
-      }
-
-      // printf ("In unparser: mfuncdecl_stmt->get_name() = %s \n",mfuncdecl_stmt->get_name().str());
-      curprint ( mfuncdecl_stmt->get_name().str());
-    }
-#else
     // DQ (5/13/2011): Support for new name qualification.
     ninfo.set_name_qualification_length(mfuncdecl_stmt->get_name_qualification_length());
     ninfo.set_global_qualification_required(mfuncdecl_stmt->get_global_qualification_required());
@@ -3309,7 +3043,6 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
  // printf ("nameQualifier for member function = %s \n",nameQualifier.str());
     curprint ( nameQualifier.str() );
     curprint ( mfuncdecl_stmt->get_name().str());
-#endif
 
     SgUnparse_Info ninfo2(info);
 
@@ -3453,6 +3186,7 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
   if (mfuncdecl_stmt->get_CtorInitializerList() != NULL)
     unparseAttachedPreprocessingInfo(mfuncdecl_stmt->get_CtorInitializerList(), info, PreprocessingInfo::after);
 }
+
 
 void
 Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
@@ -4153,18 +3887,13 @@ Unparse_ExprStmt::unparseVarDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
   // DQ (2/3/2007): However, for the ODR check in the AST merge we require something to
   // be generated for everything that could be shared.  So we should unparse something,
   // perhaps the variable declaration?
-#if 0
-  // DQ: added 3/25/2001
-     printf("unparseVarDefnStmt not implemented (should it be?) \n");
-     ROSE_ASSERT(false);
-#else
+
      SgUnsignedLongVal *bitfield = vardefn_stmt->get_bitfield();
      if (bitfield != NULL)
         {
           curprint ( string(":"));
           unparseExpression(bitfield, info);
         }
-#endif
    }
 
 
@@ -5209,62 +4938,6 @@ donePrintingConstraints: {}
    }
 
 
-#if 0
-// DQ (8/13/2007): this function is not used!
-
-//never seen this function called yet
-void
-Unparse_ExprStmt::unparseSpawnStmt(SgStatement* stmt, SgUnparse_Info& info) {
-  SgSpawnStmt* spawn_stmt = isSgSpawnStmt(stmt);
-  ROSE_ASSERT(spawn_stmt != NULL);
-  
-  curprint ( string("spawn "));
-  
-  unparseExpression(spawn_stmt->get_the_func(), info);
-  if (!info.SkipSemiColon()) curprint ( string(";"));
-}
-#endif
-
-#if 0
-
-void
-Unparse_ExprStmt::unparseQualifiedNameList (const SgQualifiedNamePtrList & qualifiedNameList)
-   {
-     printf ("Error: inside of Unparse_ExprStmt::unparseQualifiedNameList \n");
-     ROSE_ASSERT(false);
-
-  // DQ (8/26/2005): Test of global scope was explicitly qualified (is really only liked to is 
-  // qualification needed in EDG) so we might have to fix this better later once we store all 
-  // explicitly names qualifiers.
-  // This is copy by value (we mght do something better if ROSETTA could generate 
-  // SgQualifiedNamePtrList qualifiedNameList = qualifiedNameType->get_qualifiedNameList();
-     SgQualifiedNamePtrList::const_iterator i = qualifiedNameList.begin();
-     while(i != qualifiedNameList.end())
-        {
-          ROSE_ASSERT(*i != NULL);
-          ROSE_ASSERT(isSgQualifiedName(*i) != NULL);
-          ROSE_ASSERT((*i)->get_scope() != NULL);
-
-       // printf ("In unparseQualifiedNameList: Found a qualified name i = %p = %s \n",(*i)->get_scope(),(*i)->get_scope()->class_name().c_str());
-
-          if (isSgGlobal((*i)->get_scope()) != NULL)
-             {
-            // printf ("In unparseQualifiedNameList(): Output the global scope qualifier \n");
-            // curprint ( string("::";
-               curprint ( string(":: /* from name qualification */ "));
-             }
-            else
-             {
-            // Use the generated name until we are ready to select between generated or stored qualified names
-            // printf ("Use the generated name until we are ready to select between generated or stored qualified names \n");
-
-               printf ("There should only be SgGlobal IR nodes in this list (later this will change). \n");
-               ROSE_ASSERT(false);
-             }
-          i++;
-        }
-   }
-#endif
 
 void
 Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
@@ -5576,18 +5249,30 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
   // info.display ("At base of unp->u_type->unparseTypeDefStmt()");
    }
 
-// never seen this function called yet
 void
 Unparse_ExprStmt::unparseTemplateDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
-  // By commenting this out we avoid the template declaration 
-  // that is placed at the top of any A++ application.
+  // This function is called for the processing of template declarations (SgTemplateDeclaration).
+  // However a newer design as of 11/19/2011 is using separate derived classes (IR nodes) from
+  // SgTemplateDeclaration to represent SgTemplateClassDeclaration (and template functions, 
+  // template member functions, etc).  This work is part of the processing of the template
+  // declarations into their own AST (different from the EDG 3.3 template support).
 
      SgTemplateDeclaration* template_stmt = isSgTemplateDeclaration(stmt);
      ROSE_ASSERT(template_stmt != NULL);
 
   // printf ("In unparseTemplateDeclStmt(template_stmt = %p) \n",template_stmt);
   // template_stmt->get_declarationModifier().display("In unparseTemplateDeclStmt()");
+
+  // DQ (11/20/2011): Detect derived classes that should not be used in the new EDG 4.x support in ROSE.
+     if (isSgTemplateClassDeclaration(stmt) != NULL)
+        {
+          printf ("Note: Using the saved template declaration as a string to output the template declaration (AST is also available in the AST) \n");
+#if 0
+          printf ("Exiting in unparseTemplateDeclStmt() \n");
+          ROSE_ASSERT(false);
+#endif
+        }
 
   // SgUnparse_Info ninfo(info);
 
@@ -5745,6 +5430,7 @@ Unparse_ExprStmt::unparseUpcFenceStatement(SgStatement* stmt, SgUnparse_Info& in
    if (!ninfo.SkipSemiColon())
         curprint ( string(";"));
  }
+
 // Liao, 6/17/2008, unparse upc_forall 
 // Most code is copied from Unparse_ExprStmt::unparseForStmt()
 void
@@ -5831,6 +5517,8 @@ Unparse_ExprStmt::unparseUpcForAllStatement(SgStatement* stmt, SgUnparse_Info& i
              }
         }
    }
+
+
 // OpenMP support 
 void Unparse_ExprStmt::unparseOmpPrefix(SgUnparse_Info& info)
 {

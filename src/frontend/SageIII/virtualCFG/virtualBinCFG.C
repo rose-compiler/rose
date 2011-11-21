@@ -170,6 +170,7 @@ namespace VirtualBinCFG {
         result.push_back(CFGEdge(CFGNode(from, info), CFGNode(to, info), info));
     }
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
     vector<CFGEdge> CFGNode::outEdges() const {
         ROSE_ASSERT (node);
         return node->cfgBinOutEdges(info);
@@ -179,6 +180,7 @@ namespace VirtualBinCFG {
         ROSE_ASSERT (node);
         return node->cfgBinInEdges(info);
     }
+#endif
 
     const std::set<uint64_t>& AuxiliaryInformation::getPossibleSuccessors(SgAsmInstruction* insn) const {
         static const std::set<uint64_t> emptySet;
@@ -240,13 +242,19 @@ namespace VirtualBinCFG {
         struct AuxInfoTraversal3: public AstSimpleProcessing {
             AuxiliaryInformation* info;
             AuxInfoTraversal3(AuxiliaryInformation* info): info(info) {}
+
             virtual void visit(SgNode* n) {
                 SgAsmInstruction* insn = isSgAsmInstruction(n);
                 if (!insn) return;
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
                 vector<CFGEdge> outEdgesSoFar = insn->cfgBinOutEdges(info);
                 for (size_t i = 0; i < outEdgesSoFar.size(); ++i) {
                     info->incomingEdges[outEdgesSoFar[i].target().getNode()].insert(insn->get_address());
                 }
+#else
+                printf ("This function is not supported in the ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT mode.\n");
+                ROSE_ASSERT(false);
+#endif
             }
         };
 

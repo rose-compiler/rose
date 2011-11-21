@@ -5103,20 +5103,22 @@ SgType* SageInterface::getBoolType(SgNode* n) {
 // Change continue statements in a given block of code to gotos to a label
 void SageInterface::changeContinuesToGotos(SgStatement* stmt, SgLabelStatement* label)
    {
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
      std::vector<SgContinueStmt*> continues = SageInterface::findContinueStmts(stmt);
      for (std::vector<SgContinueStmt*>::iterator i = continues.begin(); i != continues.end(); ++i)
         {
           SgGotoStatement* gotoStatement = SageBuilder::buildGotoStatement(label);
        // printf ("Building gotoStatement #1 = %p \n",gotoStatement);
-#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 #ifndef _MSC_VER
-//#if 1
           LowLevelRewrite::replace(*i, make_unit_list( gotoStatement ) );
 #else
-                  ROSE_ASSERT(false);
-#endif
+          ROSE_ASSERT(false);
 #endif
         }
+#else
+          printf ("Not supported in mode: ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT (LowLevelRewrite::replace() is unavailable)");
+          ROSE_ASSERT(false);
+#endif
    }
 
 // Add a step statement to the end of a loop body
@@ -8771,7 +8773,7 @@ void SageInterface::moveToSubdirectory ( std::string directoryName, SgFile* file
 
 //------------------------- AST repair----------------------------
 //----------------------------------------------------------------
-  void SageInterface::fixStructDeclaration(SgClassDeclaration* structDecl, SgScopeStatement* scope)
+void SageInterface::fixStructDeclaration(SgClassDeclaration* structDecl, SgScopeStatement* scope)
   {
     ROSE_ASSERT(structDecl != NULL);
     ROSE_ASSERT(scope != NULL);
@@ -8837,12 +8839,12 @@ void SageInterface::moveToSubdirectory ( std::string directoryName, SgFile* file
     }
   }
 
-  void SageInterface::fixClassDeclaration(SgClassDeclaration* classDecl, SgScopeStatement* scope)
+void SageInterface::fixClassDeclaration(SgClassDeclaration* classDecl, SgScopeStatement* scope)
   {
     fixStructDeclaration(classDecl,scope);
   }
 
-  void SageInterface::fixNamespaceDeclaration(SgNamespaceDeclarationStatement* structDecl, SgScopeStatement* scope)
+void SageInterface::fixNamespaceDeclaration(SgNamespaceDeclarationStatement* structDecl, SgScopeStatement* scope)
   {
     ROSE_ASSERT(structDecl);
     ROSE_ASSERT(scope);
@@ -8882,54 +8884,121 @@ void SageInterface::moveToSubdirectory ( std::string directoryName, SgFile* file
     }
   }
 
-  void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgScopeStatement* scope)
-  {
-    ROSE_ASSERT(varDecl);
-    ROSE_ASSERT(scope);
-
-    SgInitializedNamePtrList namelist = varDecl->get_variables();
-
-    //avoid duplicated work
-    // CH (2010/7/28): The following test may have a bug. Its scope may be not NULL but different from
-    // the scope passed in.
-    //if (namelist.size()>0) if (namelist[0]->get_scope()!=NULL) return;
-    if (namelist.size() > 0) if (namelist[0]->get_scope() == scope) return;
-    SgInitializedNamePtrList::iterator i;
-    for (i=namelist.begin();i!=namelist.end();i++)
+void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgScopeStatement* scope)
    {
-      SgInitializedName *initName =*i;
-      ROSE_ASSERT(initName);
+     ROSE_ASSERT(varDecl != NULL);
+     ROSE_ASSERT(scope != NULL);
 
-      SgName name= initName->get_name();
-      initName->set_scope(scope);
-     // optional?
-      varDecl->set_parent(scope);
-      // symbol table
-      ROSE_ASSERT(scope != NULL);
-      SgVariableSymbol* varSymbol = scope->lookup_variable_symbol(name);
-      if (varSymbol==NULL)
-      {
-        varSymbol = new SgVariableSymbol(initName);
-        ROSE_ASSERT(varSymbol);
-        scope->insert_symbol(name, varSymbol);
-      }
-      else
-      { // TODO consider prepend() and insert(), prev_decl_time is position dependent.
-    //   cout<<"sageInterface.C:5130 debug: found a previous var declaration!!...."<<endl;
-        SgInitializedName* prev_decl = varSymbol->get_declaration();
-        ROSE_ASSERT(prev_decl);
-        initName->set_prev_decl_item(prev_decl);
-      } //end if
-    } //end for
-    // Liao 12/8/2010
-    // For Fortran, a common statement may refer to a variable which is declared later.
-    // In this case, a fake symbol is used for that variable reference.
-    // But we have to replace the fake one with the real one once the variable declaration is inserted into AST
-    if (SageInterface::is_Fortran_language() )
-    {
-      fixVariableReferences (scope);
-    }
-  }
+     SgInitializedNamePtrList namelist = varDecl->get_variables();
+
+     printf ("In SageInterface::fixVariableDeclaration(): Is this a recursive call! \n");
+
+#if 0
+  // DQ (11/19/2011): This is dangerous code since for C++ the declarations can have different scopes.
+  // But it is required to terminate some programs (now fixed by avoinding self reference, also put
+  // assertion into symbol table handling to detect such infinite loops.
+
+  // avoid duplicated work
+  // CH (2010/7/28): The following test may have a bug. Its scope may be not NULL but different from
+  // the scope passed in.
+  // if (namelist.size()>0) if (namelist[0]->get_scope()!=NULL) return;
+  // if (namelist.size() > 0) if (namelist[0]->get_scope() == scope) return;
+
+     printf ("In SageInterface::fixVariableDeclaration(): This is dangerous code since for C++ the declarations can have different scopes \n");
+     if (namelist.size() > 0)
+        {
+#if 1
+       // DQ (11/19/2011): This at least makes this safer.
+          bool exitEarly = true;
+          SgInitializedNamePtrList::iterator j;
+          for (j = namelist.begin(); j != namelist.end(); j++)
+             {
+               exitEarly = exitEarly && ((*j)->get_scope() == scope);
+             }
+
+          if (exitEarly == true)
+             {
+               printf ("Exit early from SageInterface::fixVariableDeclaration() \n");
+               return;
+             }
+#else
+          if (namelist[0]->get_scope() == scope)
+             {
+               printf ("Premature return from SageInterface::fixVariableDeclaration() \n");
+               return;
+             }
+#endif
+        }
+#endif
+
+     ROSE_ASSERT(namelist.size() > 0);
+
+     SgInitializedNamePtrList::iterator i;
+     for (i = namelist.begin(); i != namelist.end(); i++)
+        {
+          SgInitializedName *initName = *i;
+          ROSE_ASSERT(initName != NULL);
+
+       // DQ (11/19/2011): When used with C++, the variable may already have an associated scope 
+       // and be using name qualification, so might not be associated with the current scope.
+          SgScopeStatement* requiredScope = scope;
+          SgScopeStatement* preAssociatedScope = initName->get_scope();
+          printf ("In SageInterface::fixVariableDeclaration() preAssociatedScope = %p \n",preAssociatedScope);
+          if (preAssociatedScope != NULL)
+             {
+               printf ("Note that this variable already has an associated scope! preAssociatedScope = %p = %s \n",preAssociatedScope,preAssociatedScope->class_name().c_str());
+            // ROSE_ASSERT(preAssociatedScope == scope);
+
+               requiredScope = preAssociatedScope;
+             }
+
+          SgName name = initName->get_name();
+
+       // DQ (11/19/2011): C++ can have a different scope than that of the current scope.
+       // initName->set_scope(scope);
+          initName->set_scope(requiredScope);
+
+       // optional?
+          varDecl->set_parent(scope);
+
+       // DQ (11/19/2011): C++ can have a different scope than that of the current scope.
+       // symbol table
+       // ROSE_ASSERT(scope != NULL);
+       // SgVariableSymbol* varSymbol = scope->lookup_variable_symbol(name);
+          ROSE_ASSERT(requiredScope != NULL);
+          SgVariableSymbol* varSymbol = requiredScope->lookup_variable_symbol(name);
+
+          if (varSymbol == NULL)
+             {
+               varSymbol = new SgVariableSymbol(initName);
+               ROSE_ASSERT(varSymbol);
+               scope->insert_symbol(name, varSymbol);
+             }
+            else
+             {
+            // TODO consider prepend() and insert(), prev_decl_time is position dependent.
+            // cout<<"sageInterface.C:5130 debug: found a previous var declaration!!...."<<endl;
+               SgInitializedName* prev_decl = varSymbol->get_declaration();
+               ROSE_ASSERT(prev_decl);
+
+            // DQ (11/19/2011): Don't let prev_decl_item point be a self reference.
+            // initName->set_prev_decl_item(prev_decl);
+               if (initName != prev_decl)
+                    initName->set_prev_decl_item(prev_decl);
+
+               ROSE_ASSERT(initName->get_prev_decl_item() != initName);
+             } //end if
+        } //end for
+
+  // Liao 12/8/2010
+  // For Fortran, a common statement may refer to a variable which is declared later.
+  // In this case, a fake symbol is used for that variable reference.
+  // But we have to replace the fake one with the real one once the variable declaration is inserted into AST
+     if (SageInterface::is_Fortran_language() == true)
+        {
+          fixVariableReferences (scope);
+        }
+   }
 
 int SageInterface::fixVariableReferences(SgNode* root)
 {
