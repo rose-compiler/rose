@@ -1914,7 +1914,6 @@ src/midend/astDiagnostics/Makefile
 src/midend/binaryAnalyses/Makefile
 src/midend/programAnalysis/Makefile
 src/midend/programAnalysis/staticSingleAssignment/Makefile
-src/midend/programTransformation/Makefile
 src/midend/programTransformation/loopProcessing/Makefile
 src/backend/Makefile
 src/roseSupport/Makefile
