@@ -8,7 +8,6 @@
 #include "rose_config.h"
 
 #define SKIP_C_ACTION_IMPLEMENTATION 0
-#define DXN_DEBUG 1
 
 using namespace std;
 
@@ -13716,7 +13715,7 @@ void c_action_label(Token_t * lbl)
                 label, label != NULL ? label->text : "NULL", writeKeyword,
                 writeKeyword != NULL ? writeKeyword->text : "NULL",
                 hasOutputItemList ? "true" : "false");
-#if DXN_DEBUG
+#if 0
         // Output debugging information about saved state (stack) information.
         outputState("At TOP of R911 c_action_write_stmt()");
 #endif
@@ -13858,7 +13857,7 @@ void c_action_label(Token_t * lbl)
         // There are two mechanisms used to set labels, and we never know which will be used by OFP.
         setStatementNumericLabelUsingStack(writeStatement);
 
-#if DXN_DEBUG
+#if 0
         // Output debugging information about saved state (stack) information.
         outputState("At BOTTOM of R911 c_action_write_stmt()");
 #endif
@@ -14044,7 +14043,7 @@ void c_action_label(Token_t * lbl)
                 keyword != NULL ? keyword->text : "NULL",
                 hasAsterisk ? "true" : "false");
 
-#if DXN_DEBUG
+#if 0
         // Output debugging information about saved state (stack) information.
         outputState("At TOP of R913 c_action_io_control_spec()");
 #endif
@@ -14100,7 +14099,7 @@ void c_action_label(Token_t * lbl)
             ROSE_ASSERT(hasExpression == true);
         }
 
-#if DXN_DEBUG
+#if 0
         // Output debugging information about saved state (stack) information.
         outputState("At BOTTOM of R913 c_action_io_control_spec()");
 #endif
@@ -14126,14 +14125,14 @@ void c_action_label(Token_t * lbl)
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf("c_action_io_control_spec_list(): count = %d \n", count);
 
-#if DXN_DEBUG
+#if 0
         // Output debugging information about saved state (stack) information.
         outputState("At TOP of R913 list c_action_io_control_spec_list()");
 #endif
 
         // Note that we need to associate each expression with names on the astNameStack.
 
-#if DXN_DEBUG
+#if 0
         // Output debugging information about saved state (stack) information.
         outputState("At BOTTOM of R913 list c_action_io_control_spec_list()");
 #endif
