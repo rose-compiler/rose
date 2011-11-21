@@ -8566,14 +8566,22 @@ SgSymbol*
 SgInitializedName::search_for_symbol_from_symbol_table() const
    {
      SgSymbol *symbol;
-     SgInitializedName* aPrevDeclItem=p_prev_decl_item;
-     while(aPrevDeclItem && aPrevDeclItem->p_prev_decl_item) {
-        aPrevDeclItem=aPrevDeclItem->p_prev_decl_item;
-     }
-     if (aPrevDeclItem)
+     SgInitializedName* aPrevDeclItem = p_prev_decl_item;
+     while(aPrevDeclItem != NULL && aPrevDeclItem->p_prev_decl_item != NULL)
+        {
+       // DQ (11/19/2011): This loop will not terminate if (aPrevDeclItem->p_prev_decl_item == aPrevDeclItem).
+       // This should not happen but this mistake has happened and this assertion helps it be caught instead 
+       // of be an infinite loop.
+          ROSE_ASSERT(aPrevDeclItem->p_prev_decl_item != aPrevDeclItem);
+
+          aPrevDeclItem = aPrevDeclItem->p_prev_decl_item;
+        }
+
+     if (aPrevDeclItem != NULL)
           symbol = aPrevDeclItem->get_symbol_from_symbol_table();
-     else
+       else
           symbol = get_symbol_from_symbol_table();
+
      assert(symbol != NULL);
      return symbol;
    }

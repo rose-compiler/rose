@@ -2445,7 +2445,10 @@ generateWholeGraphOfAST_filteredFrontendSpecificNodes( string filename, CustomMe
 #else
      set<SgNode*> skippedNodeSet;
      printf ("ROSE configured for internal frontend development \n");
-     ROSE_ASSERT(false);
+
+  // This is OK to still proceed, just that front-end IR nodes will not be filtered.
+  // They can however be skipped in rose_edg_required_macros_and_functions.h directly.
+  // ROSE_ASSERT(false);
 #endif
 
 #else

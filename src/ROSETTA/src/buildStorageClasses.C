@@ -827,6 +827,7 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgTypeComplex::floating_point_precision_enum" ) ||
                  ( varTypeString == "SgTypeImaginary::floating_point_precision_enum" ) ||
                  ( varTypeString == "SgClassDeclaration::class_types" ) ||
+                 ( varTypeString == "SgTemplateClassDeclaration::class_types" ) ||
                  ( varTypeString == "SgStopOrPauseStatement::stop_or_pause_enum" ) ||
                  ( varTypeString == "SgIOStatement::io_statement_enum" ) ||
                  ( varTypeString == "SgAttributeSpecificationStatement::attribute_spec_enum" ) ||

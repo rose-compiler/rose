@@ -870,6 +870,10 @@ SgClassDefinition* buildClassDefinition(SgClassDeclaration *d = NULL);
 //! Build a class definition scope statement
 SgClassDefinition* buildClassDefinition_nfi(SgClassDeclaration *d = NULL);
 
+// DQ (11/19/2011): Added more template declaration support.
+//! Build a template class definition statement
+SgTemplateClassDefinition* buildTemplateClassDefinition(SgTemplateClassDeclaration *d = NULL );
+
 //! Build a structure first nondefining declaration, without file info
 SgClassDeclaration* buildNondefiningClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope);
 
@@ -909,6 +913,9 @@ SgStringConversion* buildStringConversion_nfi(SgExpression* exp);
 
 // DQ (1/24/2009): Added this "_nfi" function but refactored buildStructDeclaration to also use it (thsi needs to be done uniformally).
 SgClassDeclaration * buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgClassDeclaration* nonDefiningDecl);
+
+// DQ (11/19/2011): Added to support template class declaration using EDG 4.x support.
+SgTemplateClassDeclaration* buildTemplateClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgTemplateClassDeclaration* nonDefiningDecl );
 
 //! Build an enum, It is also a declaration statement in SAGE III
 SgEnumDeclaration * buildEnumDeclaration(const SgName& name, SgScopeStatement* scope=NULL);

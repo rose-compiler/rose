@@ -294,10 +294,15 @@ ROSE_FLAGS = -rose:C --edg:no_warnings -w
 PASSING_TEST_Objects = ${TESTCODES:.C=.o}
 TEST_Objects = ${ALL_TESTCODES:.C=.o}
 
+# Build the translator that runs the EDG front end only (useful for 
+# testing new versions of the EDG frontend or any other front-end).
+../../testFrontEnd:
+	cd ../..; $(MAKE) testFrontEnd
+
 # Note that for these C versions of the C++ tests we get the files directly from the Cxx_tests directory
 # Add the dependence upon the source file to trigger recompilation each time the makefile is run!
 # $(TEST_Objects): ../../testTranslator $(srcdir)/$(@:.o=.C)
-$(TEST_Objects): ./newEDGInterfaceTranslator
+$(TEST_Objects): ./newEDGInterfaceTranslator ../../testFrontEnd
 	@echo "Copy the file to the local build tree so that we can change the file name suffix (to be a C language file) ..."
 	cp $(srcdir)/../Cxx_tests/$(@:.o=.C) $(@:.o=.c)
 	./newEDGInterfaceTranslator $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests -c $(@:.o=.c)

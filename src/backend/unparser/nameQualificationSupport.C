@@ -170,6 +170,19 @@ NameQualificationTraversal::associatedDeclaration(SgScopeStatement* scope)
                break;
              }
 
+       // DQ (11/20/2011): Added support for template declarations (template class declarations)
+          case V_SgTemplateClassDefinition:
+             {
+               SgTemplateClassDefinition* definition = isSgTemplateClassDefinition(scope);
+               ROSE_ASSERT(definition != NULL);
+
+               SgTemplateClassDeclaration* declaration = definition->get_declaration();
+               ROSE_ASSERT(declaration != NULL);
+
+               return_declaration = declaration;
+               break;
+             }
+
           case V_SgNamespaceDefinitionStatement:
              {
                SgNamespaceDefinitionStatement* definition = isSgNamespaceDefinitionStatement(scope);
@@ -276,6 +289,22 @@ NameQualificationTraversal::associatedDeclaration(SgType* type)
                ROSE_ASSERT(declaration != NULL);
 
                return_declaration = declaration;
+               break;
+             }
+
+       // DQ (11/20/2011): Adding support for template declarations in the AST.
+          case V_SgTemplateType:
+             {
+               SgTemplateType* templateType = isSgTemplateType(strippedType);
+               ROSE_ASSERT(templateType != NULL);
+#if 0
+               SgTemplateDeclaration* declaration = isSgTemplateDeclaration(templateType->get_declaration());
+               ROSE_ASSERT(declaration != NULL);
+
+               return_declaration = declaration;
+#else
+               return_declaration = NULL;
+#endif
                break;
              }
 
@@ -2253,8 +2282,11 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
      SgTemplateClassDefinition* templateClassDefinition = isSgTemplateClassDefinition(n);
      if (templateClassDefinition != NULL)
         {
-          printf ("Name qualification of SgTemplateClassDefinition = %p not implemented \n",templateClassDefinition);
-          ROSE_ASSERT(false);
+       // DQ (11/20/2011): Debugging new use of SgTemplateClassDefinition (only used in new version of EDG 4.x support).
+          printf ("Name qualification of SgTemplateClassDefinition = %p not implemented (need and example to debug this case) \n",templateClassDefinition);
+
+       // DQ (11/20/2011): Commented out this assertion.
+       // ROSE_ASSERT(false);
         }
 
      SgClassDefinition* classDefinition = isSgClassDefinition(n);

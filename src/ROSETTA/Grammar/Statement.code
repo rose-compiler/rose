@@ -1619,10 +1619,10 @@ HEADER_CLASS_DECLARATION_STATEMENT_START
       //! \deprecated by RV (1/31/2006)
           SgName get_mangled_qualified_name(int & cnt );
 
-        protected:
-          virtual bool replace_child(SgStatement *,SgStatement *,
-                                         bool extractListFromBasicBlock = false);
-        public:
+     protected:
+          virtual bool replace_child(SgStatement *,SgStatement *, bool extractListFromBasicBlock = false);
+
+     public:
 
       //! Support for where the scope is explicitly required
           virtual bool hasExplicitScope() const;
@@ -2330,6 +2330,17 @@ HEADER_TEMPLATE_DECLARATION_STATEMENT_END
 
 
 HEADER_TEMPLATE_CLASS_DECLARATION_STATEMENT_START
+
+      /*! A template declaration can be of either class, struct, or union */
+          enum class_types
+             {
+               e_class,             /*!< class declaration (default) */
+               e_struct,            /*!< struct declaration */
+               e_union,             /*!< union declaration */
+               e_template_parameter /*!< type parameter in a template declaration */
+             };
+
+
 HEADER_TEMPLATE_CLASS_DECLARATION_STATEMENT_END
 
 HEADER_TEMPLATE_FUNCTION_DECLARATION_STATEMENT_START
@@ -2347,6 +2358,9 @@ HEADER_TEMPLATE_CLASS_DEFINITION_STATEMENT_START
           SgName get_qualified_name() const;
           SgName get_mangled_name (void) const;
           SgName get_mangled_qualified_name (int& i);
+
+       // DQ (11/19/2011): Added constructor to match SgClassDefinition API.
+          SgTemplateClassDefinition( SgTemplateClassDeclaration *decl);
 
 HEADER_TEMPLATE_CLASS_DEFINITION_STATEMENT_END
 
@@ -13006,6 +13020,13 @@ SgTemplateClassDefinition::get_mangled_qualified_name (int& i)
       return "error_no_name";
 
   // return get_declaration()->get_mangled_qualified_name(i);
+   }
+
+SgTemplateClassDefinition::SgTemplateClassDefinition( SgTemplateClassDeclaration *decl)
+   : SgClassDefinition()
+   {
+     set_declaration(decl);
+     decl->set_definition(this);
    }
 
 SOURCE_TEMPLATE_CLASS_DEFINITION_STATEMENT_END

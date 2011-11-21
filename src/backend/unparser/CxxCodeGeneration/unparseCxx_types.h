@@ -47,6 +47,10 @@ class Unparse_Type
           virtual void unparseFunctionType(SgType* type, SgUnparse_Info& info);
           virtual void unparseMemberFunctionType(SgType* type, SgUnparse_Info& info);
           virtual void unparseArrayType(SgType* type, SgUnparse_Info& info);
+
+       // DQ (11/20/2011): Adding support for template declarations in the AST.
+          virtual void unparseTemplateType(SgType* type, SgUnparse_Info& info);
+
           virtual void unparseQualifiedNameType(SgType* type, SgUnparse_Info& info );
 
        // DQ (6/6/2007): Test for if types should be elaborated
