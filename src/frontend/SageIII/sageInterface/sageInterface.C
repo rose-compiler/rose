@@ -8891,7 +8891,7 @@ void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgSco
 
      SgInitializedNamePtrList namelist = varDecl->get_variables();
 
-     printf ("In SageInterface::fixVariableDeclaration(): Is this a recursive call! \n");
+  // printf ("In SageInterface::fixVariableDeclaration(): Is this a recursive call! \n");
 
 #if 0
   // DQ (11/19/2011): This is dangerous code since for C++ the declarations can have different scopes.
@@ -8943,7 +8943,7 @@ void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgSco
        // and be using name qualification, so might not be associated with the current scope.
           SgScopeStatement* requiredScope = scope;
           SgScopeStatement* preAssociatedScope = initName->get_scope();
-          printf ("In SageInterface::fixVariableDeclaration() preAssociatedScope = %p \n",preAssociatedScope);
+       // printf ("In SageInterface::fixVariableDeclaration() preAssociatedScope = %p \n",preAssociatedScope);
           if (preAssociatedScope != NULL)
              {
                printf ("Note that this variable already has an associated scope! preAssociatedScope = %p = %s \n",preAssociatedScope,preAssociatedScope->class_name().c_str());
