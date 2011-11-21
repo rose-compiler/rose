@@ -241,6 +241,18 @@ fi
 #   AC_DEFINE([ROSE_USE_EDG_VERSION_4], [], [Whether to use the new EDG version 4.x])
 # fi
 
+# DQ (11/14/2011): Added new configure mode to support faster development of langauge specific 
+# frontend support (e.g. for work on new EDG 4.3 front-end integration into ROSE).
+AC_ARG_ENABLE(internalFrontendDevelopment, AS_HELP_STRING([--enable-internalFrontendDevelopment], [Enable development mode to reduce files required to support work on language frontends]))
+AM_CONDITIONAL(ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT, [test "x$enable_internalFrontendDevelopment" = xyes])
+if test "x$enable_internalFrontendDevelopment" = "xyes"; then
+  AC_MSG_WARN([Using reduced set of files to support faster development of language frontend work; e.g. new EDG version 4.3 to translate EDG to ROSE (internal use only)!])
+
+# DQ (11/14/2011): It is not good enough for this to be processed here (added to the rose_config.h file) 
+# since it is seen too late in the process.
+# AC_DEFINE([ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT], [], [Whether to use internal reduced mode to support integration of the new EDG version 4.x])
+fi
+
 # DQ (2/2/2010): New code to control use of different versions of EDG with ROSE.
 AC_ARG_ENABLE(edg-version,
 [  --enable-edg_version     major.minor version number for EDG (e.g. 3.3, 3.10, 4.0, 4.1).],
@@ -381,6 +393,13 @@ AC_CANONICAL_HOST
 
 ROSE_FLAG_C_OPTIONS
 ROSE_FLAG_CXX_OPTIONS
+
+# DQ (11/14/2011): This is defined here since it must be seen before any processing of the rose_config.h file.
+if test "x$enable_internalFrontendDevelopment" = "xyes"; then
+  AC_MSG_NOTICE([Adding -D to command line to support faster development of language frontend work.])
+  CFLAGS+=" -DROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT"
+  CXXFLAGS+=" -DROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT"
+fi
 
 echo "CFLAGS   = $CFLAGS"
 echo "CXXFLAGS = $CXXFLAGS"
@@ -1896,13 +1915,8 @@ src/midend/binaryAnalyses/Makefile
 src/midend/programAnalysis/Makefile
 src/midend/programAnalysis/staticSingleAssignment/Makefile
 src/midend/programTransformation/Makefile
-src/midend/programTransformation/astInlining/Makefile
-src/midend/programTransformation/astOutlining/Makefile
-src/midend/programTransformation/ompLowering/Makefile
 src/midend/programTransformation/loopProcessing/Makefile
 src/midend/programTransformation/loopProcessing/prepostTransformation/Makefile
-src/midend/programTransformation/loopProcessing/depInfo/Makefile
-src/midend/programTransformation/loopProcessing/depGraph/Makefile
 src/midend/programTransformation/loopProcessing/computation/Makefile
 src/midend/programTransformation/loopProcessing/slicing/Makefile
 src/midend/programTransformation/loopProcessing/outsideInterface/Makefile

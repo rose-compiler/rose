@@ -2,6 +2,8 @@
 // test cases are put into tests/roseTests/astInterfaceTests
 // Last modified, by Liao, Jan 10, 2008
 #include "sage3basic.h"
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 #include "roseAdapter.h"
 #include "markLhsValues.h"
 #include "sageBuilder.h"
@@ -9,6 +11,14 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/foreach.hpp>
 #include "Outliner.hh"
+#else
+   #include "sageBuilder.h"
+   #include <fstream>
+   #include <boost/algorithm/string/trim.hpp>
+   #include <boost/foreach.hpp>
+
+   #include "transformationSupport.h"
+#endif
 
 #define foreach BOOST_FOREACH
 
@@ -3102,8 +3112,8 @@ SageBuilder::buildAssignStatement(SgExpression* lhs,SgExpression* rhs)
   return exp;
 }
 
-// DQ (8/16/2011): This is an AST translate specific version (see not below). 
-// We would like to phase out the version above if possible (but we watn to 
+// DQ (8/16/2011): This is an AST translate specific version (see note below). 
+// We would like to phase out the version above if possible (but we want to 
 // test this later).
 SgExprStatement*
 SageBuilder::buildAssignStatement_ast_translate(SgExpression* lhs,SgExpression* rhs)
@@ -3233,6 +3243,11 @@ SgIfStmt * SageBuilder::buildIfStmt_nfi(SgStatement* conditional, SgStatement * 
   if (true_body) true_body->set_parent(ifstmt);
   if (false_body) false_body->set_parent(ifstmt);
   return ifstmt;
+}
+
+// charles4 10/14/2011:  Vanilla allocation. Use prepend_init_stmt and append_init_stmt to populate afterward.
+SgForInitStatement * SageBuilder::buildForInitStatement() {
+  return new SgForInitStatement();
 }
 
 SgForInitStatement * SageBuilder::buildForInitStatement(const SgStatementPtrList & statements) 
@@ -3594,8 +3609,8 @@ SgAssertStmt* SageBuilder::buildAssertStmt(SgExpression* test, SgExpression* exc
   ROSE_ASSERT(test != NULL);
   test->set_parent(result);
   if (exceptionArgument != NULL) {
-    result -> set_exception_argument(exceptionArgument);
-    exceptionArgument->set_parent(result);
+      result -> set_exception_argument(exceptionArgument);
+      exceptionArgument->set_parent(result);
   }
   setOneSourcePositionForTransformation(result);
   return result;
@@ -5721,6 +5736,7 @@ SgEnumDeclaration * SageBuilder::buildEnumDeclaration_nfi(const SgName& name, Sg
 SgFile*
 SageBuilder::buildFile(const std::string& inputFileName, const std::string& outputFileName, SgProject* project/*=NULL*/)
    {
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
      ROSE_ASSERT(inputFileName.size()!=0);// empty file name is not allowed.
      string sourceFilename = inputFileName, fullname;
      Rose_STL_Container<std::string> arglist;
@@ -5840,6 +5856,9 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
           result->clearGlobalMangledNameMap();
 
      return result;
+#else
+     return NULL;
+#endif
    }// end SgFile* buildFile()
 
 
@@ -5872,6 +5891,8 @@ PreprocessingInfo* SageBuilder::buildCpreprocessorDefineDeclaration(SgLocatedNod
   
   }
 
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 //! Build an abstract handle from a SgNode
 AbstractHandle::abstract_handle * SageBuilder::buildAbstractHandle(SgNode* n)
 {
@@ -5890,3 +5911,5 @@ AbstractHandle::abstract_handle * SageBuilder::buildAbstractHandle(SgNode* n)
   }
   return ahandle;
 }
+#endif
+

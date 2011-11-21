@@ -6,6 +6,14 @@
 
 #ifndef SAGE3_CLASSES_BASIC__H
 #define SAGE3_CLASSES_BASIC__H
+
+// DQ (11/12/2011): This is support to reduce the size of ROSE so that I can manage development on my laptop.
+// This option defines a subset of ROSE as required to support wotk on the new EDG front-end.
+// This is defined here becasuse it is not enough to define it in the rose_config.h
+// because that can't be read early enough to effect what header files are included.
+// #define ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+
+
 #include <semaphore.h>
 #include "fileoffsetbits.h"
 #include "rosedll.h"
@@ -315,6 +323,9 @@ namespace Exec { namespace ELF { class ElfFileHeader; }; };
    #endif
 #endif
 
+#ifdef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+   #include "transformationSupport.h"
+#endif
 
 #endif
 

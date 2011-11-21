@@ -7,6 +7,15 @@ INCLUDES = $(ROSE_INCLUDES)
 ## The grammar generator (ROSETTA) should use its own template repository
 CXX_TEMPLATE_REPOSITORY_PATH = .
 
+if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+libastprocessingSources = \
+   AstNodeVisitMapping.C AstTextAttributesHandling.C \
+   AstDOTGeneration.C AstProcessing.C AstSimpleProcessing.C Ast.C \
+   AstNodePtrs.C AstSuccessorsSelectors.C AstAttributeMechanism.C \
+   AstReverseSimpleProcessing.C AstClearVisitFlags.C \
+   AstTraversal.C AstCombinedSimpleProcessing.C \
+   AstSharedMemoryParallelSimpleProcessing.C
+else
 libastprocessingSources = \
    AstPDFGeneration.C AstNodeVisitMapping.C AstTextAttributesHandling.C \
    AstDOTGeneration.C AstProcessing.C AstSimpleProcessing.C Ast.C \
@@ -14,6 +23,7 @@ libastprocessingSources = \
    AstReverseSimpleProcessing.C AstRestructure.C AstClearVisitFlags.C \
    AstTraversal.C AstCombinedSimpleProcessing.C \
    AstSharedMemoryParallelSimpleProcessing.C
+endif
 
 # Removed AstTests.C AstStatistics.C 
 

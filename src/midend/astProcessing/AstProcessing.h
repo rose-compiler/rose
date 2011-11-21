@@ -9,7 +9,10 @@
 
 
 
-#include "staticCFG.h"
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+   #include "staticCFG.h"
+#endif
+
 #include <vector>
 #include <algorithm>
 #include <utility>

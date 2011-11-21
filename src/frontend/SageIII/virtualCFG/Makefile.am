@@ -9,6 +9,11 @@ $(GENERATED_SOURCE):
 	cd $(top_builddir)/src/ROSETTA/src; $(MAKE)
 
 noinst_LTLIBRARIES = libvirtualCFG.la
+
+if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+libvirtualCFG_la_SOURCES      = \
+     memberFunctions.C
+else
 libvirtualCFG_la_SOURCES      = \
      virtualCFG.C \
      cfgToDot.C \
@@ -16,6 +21,7 @@ libvirtualCFG_la_SOURCES      = \
      staticCFG.C \
      customFilteredCFG.C \
      interproceduralCFG.C
+endif
 
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      libvirtualCFG_la_SOURCES += virtualBinCFG.C
