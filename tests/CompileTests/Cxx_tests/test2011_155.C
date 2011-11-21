@@ -1,6 +1,6 @@
 // This is a similar case to test2003_27.C
 
-#if 0
+#if 1
 template < class T1 >
 class reverse_iterator
    {
@@ -15,6 +15,6 @@ class XYZ
      public:
           typedef T1* pointer;
           typedef pointer iterator;
-       // typedef ::reverse_iterator<iterator> reverse_iterator;
+          typedef ::reverse_iterator<iterator> reverse_iterator;
    };
 

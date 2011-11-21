@@ -1,6 +1,6 @@
 namespace A
    {
-     int x;
+     extern int x;
    };
 
 int A::x = 0;

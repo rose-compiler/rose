@@ -62,6 +62,7 @@ test2003_21.C \
 test2003_23.C \
 test2003_25.C \
 test2003_26.C \
+test2003_27.C \
 test2003_28.C \
 test2003_29.C \
 test2003_30.C \
@@ -122,6 +123,7 @@ test2011_149.C \
 test2011_150.C \
 test2011_151.C \
 test2011_152.C \
+test2011_153.C \
 test2011_154.C \
 test2011_155.C 
 
@@ -135,7 +137,6 @@ endif
 #
 if ROSE_USE_EDG_VERSION_4_3
 TESTCODE_CURRENTLY_FAILING = \
-test2003_27.C \
 test2004_09.C \
 test2004_10.C \
 test2004_11.C \
@@ -179,7 +180,6 @@ test2004_89.C \
 test2004_91.C \
 test2004_98.C \
 test2004_100.C \
-test2011_153.C \
 test2011_156.C
 
 else
