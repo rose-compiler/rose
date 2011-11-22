@@ -92,6 +92,7 @@ class SgAsmInterpretation;
  *           <li>FunctionReasons (pre): emits the reasons why this is address is considered the start of a function.</li>
  *           <li>FunctionName (pre): emits the name of the function in angle brackets, or "no name".</li>
  *           <li>FunctionLineTermination (pre): emits a linefeed for functions.</li>
+ *           <li>FunctionComment (pre): emits function comments followed by a linefeed if necessary.</li>
  *           <li>FunctionAttributes (pre): emits additional information about the function, such as whether it returns to the
  *               caller.</li>
  *           <li>FunctionBody (unparse): unparses the basic blocks of a function.</li>
@@ -506,6 +507,12 @@ public:
         virtual bool operator()(bool enabled, const FunctionArgs &args);
     };
 
+    /** Functor to print function comments followed by a linefeed if necessary. */
+    class FunctionComment: public UnparserCallback {
+    public:
+        virtual bool operator()(bool enabled, const FunctionArgs &args);
+    };
+
     /** Functor to emit function attributes.  Attributes are emitted one per line and each line is prefixed with a user
      *  supplied string.  The string is a printf format string and may contain one integer specifier for the function entry
      *  address.   The default is "0x%08llx: ". */
@@ -584,6 +591,7 @@ public:
     FunctionReasons functionReasons;
     FunctionName functionName;
     FunctionLineTermination functionLineTermination;
+    FunctionComment functionComment;
     FunctionAttributes functionAttributes;
     FunctionBody functionBody;
 

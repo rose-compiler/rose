@@ -113,6 +113,7 @@ AsmUnparser::init()
         .append(&functionReasons)
         .append(&functionName)
         .append(&functionLineTermination)
+        .append(&functionComment)
         .append(&functionAttributes);
     function_callbacks.unparse
         .append(&functionBody);                 /* used only for ORGANIZED_BY_AST */
@@ -705,6 +706,20 @@ AsmUnparser::FunctionLineTermination::operator()(bool enabled, const FunctionArg
 {
     if (enabled)
         args.output <<std::endl;
+    return enabled;
+}
+
+bool
+AsmUnparser::FunctionComment::operator()(bool enabled, const FunctionArgs &args)
+{
+    if (enabled) {
+        std::string s = args.func->get_comment();
+        if (!s.empty()) {
+            args.output <<s;
+            if (0==s.compare(s.size()-1, 1, "\n"))
+                args.output <<std::endl;
+        }
+    }
     return enabled;
 }
 
