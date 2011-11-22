@@ -1382,7 +1382,7 @@ std::vector<CFGEdge> SgBreakStmt::cfgOutEdges(unsigned int idx) {
         case V_SgWhileStmt: newIndex = 2; break;
         case V_SgSwitchStatement: newIndex = 2; break;
         case V_SgFortranDo: newIndex = 6; break;
-        case V_SgJavaForEachStatement: newIndex = 3; printf("SgBreakStmt out edge %s -> %d \n", "break", 3); break;
+        case V_SgJavaForEachStatement: newIndex = 3; break;
         case V_SgJavaLabelStatement: newIndex = 1; break;
         default: ROSE_ASSERT (false);
       }
