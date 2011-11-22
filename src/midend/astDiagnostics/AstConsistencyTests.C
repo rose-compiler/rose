@@ -3941,6 +3941,20 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
                     break;
                   }
 
+            // DQ (11/21/2011): Added support for template declarations in the AST.
+               case V_SgTemplateParameter:
+                  {
+                    SgNode* parent = support->get_parent();
+                    if (parent == NULL)
+                       {
+#if 1
+                         printf ("Warning: detected SgTemplateParameter without parent set properly at %p = %s parent is currently NULL \n",support,support->class_name().c_str());
+#endif
+                       }
+                    break;
+                  }
+
+
             // DQ (6/11/2007): Added this case
                case V_SgCommonBlockObject:
                   {

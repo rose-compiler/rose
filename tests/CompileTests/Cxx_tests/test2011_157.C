@@ -1,4 +1,4 @@
-template<class T>
+template<class T, int U = 42 >
 class ABC
    {
      public:
