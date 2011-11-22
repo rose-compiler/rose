@@ -359,6 +359,10 @@ public:
     /** Prunes the map elements by removing those for which @p predicate returns true. */
     void prune(bool(*predicate)(const MapElement&));
 
+    /** Prunes away map elements based on permissions.  Keeps map elements that have any of the required bits and none of the
+     *  prohibited bits. */
+    void prune(unsigned required, unsigned prohibited=MM_PROT_NONE);
+
     /** Copies data from a contiguous region of the virtual address space into a user supplied buffer. The portion of the
      *  virtual address space to copy begins at @p start_va and continues for @p desired bytes. The data is copied into the
      *  beginning of the @p dst_buf buffer. The return value is the number of bytes that were copied, which might be fewer
