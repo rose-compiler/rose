@@ -78,6 +78,8 @@ void Range<rose_addr_t>::print(std::ostream &o) const;
 
 class ExtentMap: public RangeMap<Extent> {
 public:
+	ExtentMap(): RangeMap<Extent>() {}
+	template<class Other> ExtentMap(const Other &other): RangeMap<Extent>(other) {}
 	static char category(const Extent &a, const Extent &b);
 	ExtentMap subtract_from(const Extent &e) const {
 		return invert_within<ExtentMap>(e);
