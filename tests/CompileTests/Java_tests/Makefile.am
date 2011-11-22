@@ -74,11 +74,17 @@ TESTCODES_REQUIRED_TO_PASS = \
      cave3_constructor1.java \
      cave3_constructor2.java \
      cave3_constructor3.java \
+     cave3_DoubleLit0.java \
      cave3_dowhile0.java \
      cave3_for0.java \
      cave3_for1.java \
+	 cave3_for2.java \
+     cave3_for3.java \
      cave3_for4.java \
      cave3_for5.java \
+     cave3_for6.java \
+     cave3_for7.java \
+     cave3_for8.java \
      cave3_foreach0.java \
      cave3_foreach1.java \
      cave3_foreach2.java \
@@ -125,10 +131,6 @@ TESTCODE_CURRENTLY_FAILING = \
      \
      pgc_test2011_12.java \
      \
-     cave3_DoubleLit0.java \
-     cave3_for2.java \
-     cave3_for3.java \
-     cave3_for6.java \
      cave3_instanceof0.java \
      cave3_import0.java \
      cave3_import1.java \
