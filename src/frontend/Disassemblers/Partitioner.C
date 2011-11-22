@@ -1,7 +1,6 @@
 /* Algorithms to detect what instructions make up basic blocks and which blocks make up functions, and how to create the
  * necessary SgAsmBlock and SgAsmFunction IR nodes from this information. */
 #define __STDC_FORMAT_MACROS
-// tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 #include <inttypes.h>
 
@@ -14,6 +13,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <math.h>
 #include <stdarg.h>
 
 /* See header file for full documentation. */
@@ -441,16 +441,6 @@ Partitioner::parse_switches(const std::string &s, unsigned flags)
     return flags;
 }
 
-static bool is_writable(const MemoryMap::MapElement &me) __attribute__((unused));
-static bool is_writable(const MemoryMap::MapElement &me) {
-    return 0 != (me.get_mapperms() & MemoryMap::MM_PROT_WRITE);
-}
-
-static bool is_unexecutable(const MemoryMap::MapElement &me) __attribute__((unused));
-static bool is_unexecutable(const MemoryMap::MapElement &me) {
-    return 0 == (me.get_mapperms() & MemoryMap::MM_PROT_EXEC);
-}
-
 /* Set disassembly and memory initialization maps. */
 void
 Partitioner::set_map(MemoryMap *map, MemoryMap *ro_map)
@@ -461,7 +451,7 @@ Partitioner::set_map(MemoryMap *map, MemoryMap *ro_map)
             this->ro_map = *ro_map;
         } else {
             this->ro_map = *map;
-            this->ro_map.prune(is_writable);
+            this->ro_map.prune(MemoryMap::MM_PROT_READ, MemoryMap::MM_PROT_WRITE);
         }
     } else {
         this->ro_map.clear();
@@ -803,6 +793,12 @@ Partitioner::clear()
 
     /* Clear all disassembly failures from the cache. */
     clear_disassembler_errors();
+
+    /* Clear statistics and code criteria.  This object manages memory for its statistics, but the caller manages the memory
+     * for the code criteria. */
+    delete aggregate_mean;           aggregate_mean     = NULL;
+    delete aggregate_variance;       aggregate_variance = NULL;
+    code_criteria = NULL; // owned by user
 }
 
 void
@@ -3241,9 +3237,24 @@ Partitioner::adjust_padding()
 void
 Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
 {
+    /* Obtain aggregate statistics over all the functions, and cache them. These statistics describe code, so we want to do
+     * this before we add data blocks to the functions.  Any statistics already cached should be considered outdated. */
+    clear_aggregate_statistics();
+    RegionStats *mean = aggregate_statistics();
+    RegionStats *variance = get_aggregate_variance();
+    bool cc_allocate = code_criteria==NULL;
+    CodeCriteria *cc = cc_allocate ? new_code_criteria(mean, variance) : code_criteria;
+    if (debug) {
+        std::ostringstream s;
+        s <<"=== Mean ===\n" <<*mean <<"\n"
+          <<"=== Variance ===\n" <<*variance <<"\n"
+          <<"=== Code criteria ===\n" <<*cc <<"\n";
+        fputs(s.str().c_str(), debug);
+    }
+
     /* A memory map that contains only the executable regions.  I.e., those that might contain instructions. */
     MemoryMap exe_map = *map;
-    exe_map.prune(is_unexecutable);
+    exe_map.prune(MemoryMap::MM_PROT_EXEC);
 
     /* Add unassigned intra-function blocks to the surrounding function.  This needs to come before detecting inter-function
      * padding, otherwise it will also try to add the stuff between the true function and its following padding. */
@@ -3270,7 +3281,7 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
 
         /* Scan only executable regions of memory. */
         MemoryMap exe_map = *map;
-        exe_map.prune(is_unexecutable);
+        exe_map.prune(MemoryMap::MM_PROT_EXEC);
         scan_interfunc_bytes(&cb, &exe_map);
     }
 
@@ -3342,6 +3353,47 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
              "Partitioner completed: %zu function%s, %zu insn%s, %zu block%s\n",
              functions.size(), 1==functions.size()?"":"s", insns.size(), 1==insns.size()?"":"s",
              basic_blocks.size(), 1==basic_blocks.size()?"":"s");
+
+#if 0 /* DEBUGGING [RPM 2011-11-16] */
+    {
+        size_t nsat=0, nnsat=0;
+        for (Functions::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
+            Function *func = fi->second;
+            std::cerr <<"\nFunction " <<StringUtility::addrToString(func->entry_va) <<" satisfied as code?\n";
+            RegionStats *func_stats = region_statistics(func);
+            bool issat = cc->satisfied_by(func_stats, NULL, stderr);
+            std::cerr <<"  satisfied? " <<(issat?"yes":"no") <<"\n\n";
+            if (issat) {
+                ++nsat;
+            } else {
+                ++nnsat;
+            }
+            delete func_stats;
+        }
+        std::cerr <<"Number of functions satisfied=" <<nsat <<"; unsatisfied=" <<nnsat <<"\n";
+
+        nsat = nnsat = 0;
+        for (DataBlocks::iterator dbi=data_blocks.begin(); dbi!=data_blocks.end(); ++dbi) {
+            DataBlock *dblock = dbi->second;
+            DataRangeMap extent;
+            if (datablock_extent(dblock, &extent)) {
+                std::cerr <<"\nData block " <<StringUtility::addrToString(dblock->address()) <<" satisfied as code?\n";
+                RegionStats *stats = region_statistics(ExtentMap(extent));
+                if (cc->satisfied_by(stats, NULL, stderr)) {
+                    ++nsat;
+                } else {
+                    ++nnsat;
+                }
+                std::cerr <<"\n";
+                delete stats;
+            }
+        }
+        std::cerr <<"Number of data blocks satisified=" <<nsat <<"; unsatisfied=" <<nnsat <<"\n";
+    }
+#endif
+
+    if (cc_allocate)
+        delete cc;
 }
 
 size_t
