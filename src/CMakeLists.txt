@@ -225,6 +225,7 @@ set(rose_support_src
       ${CMAKE_SOURCE_DIR}/src/roseSupport/transformationSupport.C
       ${CMAKE_SOURCE_DIR}/src/roseSupport/optionDeclaration.C
       ${CMAKE_SOURCE_DIR}/src/roseSupport/sourceLocationInheritedAttribute.C
+      ${CMAKE_SOURCE_DIR}/src/roseSupport/rangemap.C
       ${CMAKE_SOURCE_DIR}/src/roseSupport/roseTranslators.C
       ${CMAKE_SOURCE_DIR}/src/roseSupport/utility_functions.C
       ${CMAKE_SOURCE_DIR}/src/roseSupport/memoryUsage.C
@@ -238,6 +239,7 @@ set(rose_support_src
 set(roseDisassemblers_SRC
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/InstructionEnumsX86.h
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/Partitioner.C 
+   ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/PStatistics.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/IPDParser.C 
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/Registers.C
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/Disassembler.C 
