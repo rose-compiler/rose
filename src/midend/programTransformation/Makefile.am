@@ -6,6 +6,10 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 #  Subdirectories
 # ------------------------------------------------------------------------------
 
+## Place generated object files (.o) into the same directory as their source
+## files, in order to avoid collisions when non-recursive make is used.
+AUTOMAKE_OPTIONS = subdir-objects
+
 include $(srcdir)/partialRedundancyElimination/Makefile_variables
 include $(srcdir)/finiteDifferencing/Makefile_variables
 include $(srcdir)/functionCallNormalization/Makefile_variables
@@ -15,14 +19,20 @@ include $(srcdir)/astInlining/Makefile_variables
 include $(srcdir)/astOutlining/Makefile_variables
 include $(srcdir)/ompLowering/Makefile_variables
 
-mptPartialRedundancyEliminationPath=$(srcdir)/partialRedundancyElimination#
-mptFiniteDifferencingPath=$(srcdir)/finiteDifferencing#
-mptFunctionCallNormalizationPath=$(srcdir)/functionCallNormalization#
-mptConstantFoldingPath=$(srcdir)/constantFolding#
-mptImplicitCodeGenerationPath=$(srcdir)/implicitCodeGeneration#
-mptAstInliningPath=$(srcdir)/astInlining#
-mptOutliningPath=$(srcdir)/astOutlining#
-mptOmpLoweringPath=$(srcdir)/ompLowering#
+#
+# Don't use $(srcdir) in conjunction with [subdir-objects], otherwise
+# object files will be built in the source tree. Therefore, we need to
+# use relative paths.
+#
+#mptPartialRedundancyEliminationPath=$(srcdir)/partialRedundancyElimination#
+mptPartialRedundancyEliminationPath=partialRedundancyElimination#
+mptFiniteDifferencingPath=finiteDifferencing#
+mptFunctionCallNormalizationPath=functionCallNormalization#
+mptConstantFoldingPath=constantFolding#
+mptImplicitCodeGenerationPath=implicitCodeGeneration#
+mptAstInliningPath=astInlining#
+mptOutliningPath=astOutlining#
+mptOmpLoweringPath=ompLowering#
 
 SUBDIRS = \
 	loopProcessing
