@@ -1,23 +1,10 @@
+// Example of template parameter requiring new support for 
+// internal SgInitializedName and a default initializer.
+
 template<class T, int U = 42 >
 class ABC
    {
      public:
           T xyz;
    };
-
-// template<class T> class DEF { public: T xyz; };
-
-int foo()
-   {
-  // unparsed as: "class ::ABC object1;"
-     ABC<int> object1;
-
-  // unparsed as: "class ::DEF object2;"
-  // DEF<int> object2;
-
-     object1.xyz = 7;
-  // object2.xyz = 8;
-
-     return 0;
-   }
 

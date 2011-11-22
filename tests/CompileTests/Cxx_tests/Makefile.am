@@ -125,7 +125,8 @@ test2011_151.C \
 test2011_152.C \
 test2011_153.C \
 test2011_154.C \
-test2011_155.C 
+test2011_155.C \
+test2011_157.C 
 
 else
 include $(srcdir)/Makefile-pass.inc
@@ -180,7 +181,8 @@ test2004_89.C \
 test2004_91.C \
 test2004_98.C \
 test2004_100.C \
-test2011_156.C
+test2011_156.C \
+test2011_158.C
 
 else
 include $(srcdir)/Makefile-fail.inc
