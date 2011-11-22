@@ -99,7 +99,7 @@ libroseLibraries = \
    $(top_builddir)/src/util/support/libsupport.la \
    $(top_builddir)/src/util/graphs/libgraphs.la \
    $(top_builddir)/src/util/libroseutil.la \
-   $(libroseBinaryLibraries) 
+   $(libroseBinaryLibraries)
 else
 libroseLibraries = \
    $(top_builddir)/src/3rdPartyLibraries/MSTL/libmstl.la \
@@ -120,11 +120,6 @@ libroseLibraries = \
    $(top_builddir)/src/midend/astUtil/libastUtil.la \
    $(top_builddir)/src/midend/programAnalysis/libprogramAnalysis.la \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/libLoopProcessing.la \
-   $(top_builddir)/src/midend/programTransformation/loopProcessing/computation/libcomputation.la \
-   $(top_builddir)/src/midend/programTransformation/loopProcessing/driver/libdriver.la \
-   $(top_builddir)/src/midend/programTransformation/loopProcessing/outsideInterface/libarrayOptimization.la \
-   $(top_builddir)/src/midend/programTransformation/loopProcessing/prepostTransformation/libprepostloop.la \
-   $(top_builddir)/src/midend/programTransformation/loopProcessing/slicing/libslicing.la \
    $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la \
    $(top_builddir)/src/midend/programTransformation/libprogramTransformation.la \
    $(top_builddir)/src/roseSupport/libroseSupport.la \

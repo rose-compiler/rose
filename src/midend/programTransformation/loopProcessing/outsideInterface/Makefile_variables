@@ -1,23 +1,24 @@
+# Non-recursive Makefile
 
-mpt_lpOutsideInterface_la_sources=\
-	$(mpt_lpOutsideInterfacePath)/ArrayAnnot.C \
-	$(mpt_lpOutsideInterfacePath)/ArrayInterface.C \
-	$(mpt_lpOutsideInterfacePath)/ArrayRewrite.C 
+# (11/14/2008) Liao - Moved from project/arrayOptimization
 
+mptlpOutsideInterface_la_sources=\
+	$(mptlpOutsideInterfacePath)/ArrayAnnot.C \
+	$(mptlpOutsideInterfacePath)/ArrayInterface.C \
+	$(mptlpOutsideInterfacePath)/ArrayRewrite.C
 
-mpt_lpOutsideInterface_includeHeaders=\
-	$(mpt_lpOutsideInterfacePath)/ArrayAnnot.h \
-	$(mpt_lpOutsideInterfacePath)/ArrayInterface.h \
-	$(mpt_lpOutsideInterfacePath)/ArrayRewrite.h 
+mptlpOutsideInterface_includeHeaders=\
+	$(mptlpOutsideInterfacePath)/ArrayAnnot.h \
+	$(mptlpOutsideInterfacePath)/ArrayInterface.h \
+	$(mptlpOutsideInterfacePath)/ArrayRewrite.h
 
+mptlpOutsideInterface_extraDist=\
+	$(mptlpOutsideInterfacePath)/CMakeLists.txt
 
-mpt_lpOutsideInterface_extraDist=\
-	$(mpt_lpOutsideInterfacePath)/CMakeLists.txt
-
-
-mpt_lpOutsideInterface_cleanLocal=\
+mptlpOutsideInterface_cleanLocal=\
 	rm -rf \
-		$(mpt_lpOutsideInterfacePath)/Templates.DB \
-		$(mpt_lpOutsideInterfacePath)/ii_files \
-		$(mpt_lpOutsideInterfacePath)/ti_files \
-		$(mpt_lpOutsideInterfacePath)/core
+		$(mptlpOutsideInterfacePath)/core \
+		$(mptlpOutsideInterfacePath)/ii_files \
+		$(mptlpOutsideInterfacePath)/ti_files \
+		$(mptlpOutsideInterfacePath)/Templates.DB
+
