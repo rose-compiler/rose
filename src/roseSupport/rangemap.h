@@ -16,6 +16,7 @@
 #include <inttypes.h>
 
 #include <cassert>
+#include <cmath>
 #include <cstdlib>
 #include <iostream>
 #include <map>
@@ -27,10 +28,18 @@
  * method won't really do anything. */
 //#define RANGEMAP_CHECK
 
+/******************************************************************************************************************************
+ *                                      Range<>
+ ******************************************************************************************************************************/
+
 /** A contiguous range of values.  Represents a contiguous range of @p size values beginning at @p begin, and defines
  *  relationships between two ranges.  The ranges are designed such that they can represent unsigned values up to and
  *  including the maximum possible values for the data type.  However, this means that a range that represents all possible
- *  values will have a size() of zero due to overflow. */
+ *  values will have a size() of zero due to overflow.
+ *
+ *  Floating point ranges are also possible (types "float" or "double") but the behavior of some methods differs slightly from
+ *  integers.  For instance, an integer range containing a single value has size 1, but a floating point range with one value
+ *  has size zero.  The differences are noted in the documentation for the particular methods affected. */
 template<class T>
 class Range {
 public:
@@ -52,7 +61,9 @@ public:
         : r_first(first), r_last(first) {}
 
     /** Create a new range of specified size. If @p size is zero then an empty range is created.  Note that  a zero size is also
-     *  returned for a range that contains all values, but this is due to overflow. */
+     *  returned for a range that contains all values, but this is due to overflow.  Whether this is an integer range or a
+     *  floating point range, if size is zero then the range is considered to be empty (but the @p first value is remembered).
+     *  To create a floating point range with a single value, use the single-argument constructor. */
     Range(const Value &first, const Value &size)
         : r_first(first), r_last(first+size-1) {
         if (0==size) {
@@ -116,16 +127,26 @@ public:
 
     /** Returns the number of values represented by the range. Note that if the range contains all possible values then the
      *  returned size may be zero due to overflow, in which case the empty() method should also be called to make the
-     *  determination. */
+     *  determination.
+     *
+     *  Floating point range sizes are simply the last value minus the first value.  Therefore, a singleton floating point range
+     *  will return a size of zero, while a singleton integer range will return a size of one.  This is actualy consistent
+     *  behavior if you think of an integer value N as the floating point range [N,N+1), where N is included in the range but
+     *  N+1 is not. */
     Value size() const {
         if (empty())
             return 0;
         return r_last + 1 - r_first;
     }
 
-    /** Sets the range size by adjusting the maximum value.  If the size is set to zero then the range will be empty and the
-     *  first and last values become invalid.  It is an error to change the size of a range from zero to non-zero, but the
-     *  relaxed_resize() is available for that purpose.
+    /** Sets the range size by adjusting the maximum value.  It is an error to change the size of a range from zero to
+     *  non-zero, but the relaxed_resize() is available for that purpose.
+     *
+     *  Setting the size to zero causes different behavior for integer ranges than it does for floating point ranges.  For
+     *  integer ranges, setting the size to zero clears the range (makes it empty); for floating point ranges, setting the size
+     *  to zero causes the range to contain only the starting value.  Floating point ranges can be cleared by setting the new
+     *  size to a negative value.  The clear() method should be favored over resize() for making a range empty.
+     *
      *  @{ */
     void resize(const Value &new_size) {
         assert(!empty());
@@ -170,8 +191,8 @@ public:
     }
 
     /** Returns true if this range is empty.  Note that many of the range comparison methods have special cases for empty
-     *  ranges.  Note that due to overflow, the size() method may return zero if this range contains all possible values.  It
-     *  follows, then that the expressions "empty()" and "0==size()" are not always equal. */
+     *  ranges.  Note that due to overflow, the size() method may return zero for integer ranges if this range contains all
+     *  possible values.  It follows, then that the expressions "empty()" and "0==size()" are not always equal. */
     bool empty() const {
         return r_last<r_first; // can't use first() or last() here because they're not valid for empty ranges.
     }
@@ -355,7 +376,7 @@ public:
         } else if (first()==last()) {
             o <<first();
         } else {
-            o <<first() <<"-" <<last();
+            o <<first() <<".." <<last();
         }
     }
 
@@ -364,6 +385,96 @@ public:
         return o;
     }
 };
+
+/******************************************************************************************************************************
+ *                                      Specializations for Range<double>
+ ******************************************************************************************************************************/
+
+template<>
+Range<double>::Range();
+
+template<>
+bool
+Range<double>::empty() const;
+
+template<>
+void
+Range<double>::clear();
+
+template<>
+const double
+Range<double>::relaxed_first() const;
+
+template<>
+double
+Range<double>::size() const;
+
+template<>
+void
+Range<double>::resize(const double &new_size);
+
+template<>
+void
+Range<double>::relaxed_resize(const double &new_size);
+
+template<>
+Range<double>::Pair
+Range<double>::split_range_at(const double &at) const;
+
+template<>
+double
+Range<double>::minimum();
+
+template<>
+double
+Range<double>::maximum();
+
+/******************************************************************************************************************************
+ *                                      Specializations for Range<float>
+ ******************************************************************************************************************************/
+
+template<>
+Range<float>::Range();
+
+template<>
+bool
+Range<float>::empty() const;
+
+template<>
+void
+Range<float>::clear();
+
+template<>
+const float
+Range<float>::relaxed_first() const;
+
+template<>
+float
+Range<float>::size() const;
+
+template<>
+void
+Range<float>::resize(const float &new_size);
+
+template<>
+void
+Range<float>::relaxed_resize(const float &new_size);
+
+template<>
+Range<float>::Pair
+Range<float>::split_range_at(const float &at) const;
+
+template<>
+float
+Range<float>::minimum();
+
+template<>
+float
+Range<float>::maximum();
+
+/******************************************************************************************************************************
+ *                                      RangeMap void values
+ ******************************************************************************************************************************/
 
 /** Value type for a RangeMap with no useful data attached to the ranges.  This also serves as an example documenting the
  *  interface for the operations a RangeMap can perform on its values.  The single template parameter is the Range type. */
@@ -422,6 +533,10 @@ public:
         return o;
     }
 };
+
+/******************************************************************************************************************************
+ *                                      RangeMap simple values
+ ******************************************************************************************************************************/
 
 /** Scalar value type for a RangeMap.  Values can be merged if they compare equal; splitting a value is done by copying it.
  *  The removing() and truncate() methods are no-ops.  This class is often used as a base class for other more sophisticated
@@ -493,6 +608,10 @@ public:
 protected:
     Value value;
 };
+
+/******************************************************************************************************************************
+ *                                      RangeMap<>
+ ******************************************************************************************************************************/
 
 /** A container of ranges, somewhat like a set.  The container is able to hold non-overlapping ranges, each of which has some
  *  associated value attached to it.  Arbitrary ranges can be inserted and erased from the RangeMap without regard to the
