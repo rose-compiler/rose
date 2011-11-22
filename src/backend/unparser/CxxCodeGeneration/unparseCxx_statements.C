@@ -5267,7 +5267,7 @@ Unparse_ExprStmt::unparseTemplateDeclStmt(SgStatement* stmt, SgUnparse_Info& inf
   // DQ (11/20/2011): Detect derived classes that should not be used in the new EDG 4.x support in ROSE.
      if (isSgTemplateClassDeclaration(stmt) != NULL)
         {
-          printf ("Note: Using the saved template declaration as a string to output the template declaration (AST is also available in the AST) \n");
+          printf ("Note: Using the saved template declaration as a string to output the template declaration (AST for the template declaration is also now available in the AST) \n");
 #if 0
           printf ("Exiting in unparseTemplateDeclStmt() \n");
           ROSE_ASSERT(false);
