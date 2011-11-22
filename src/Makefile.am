@@ -92,7 +92,6 @@ libroseLibraries = \
    $(top_builddir)/src/backend/libbackend.la \
    $(top_builddir)/src/frontend/SageIII/libsage3.la \
    $(libroseEDGlibraries) \
-   $(top_builddir)/src/midend/astDiagnostics/libastDiagnostics.la \
    $(top_builddir)/src/midend/astProcessing/libastprocessing.la \
    $(top_builddir)/src/midend/astQuery/libquery.la \
    $(top_builddir)/src/roseSupport/libroseSupport.la \
@@ -113,7 +112,6 @@ libroseLibraries = \
    $(libroseBinaryLibraries) \
    $(top_builddir)/src/midend/abstractHandle/libabstractHandle.la \
    $(top_builddir)/src/midend/abstractMemoryObject/libabstractMemoryObject.la \
-   $(top_builddir)/src/midend/astDiagnostics/libastDiagnostics.la \
    $(top_builddir)/src/midend/astProcessing/libastprocessing.la \
    $(top_builddir)/src/midend/astQuery/libquery.la \
    $(top_builddir)/src/midend/astRewriteMechanism/librewrite.la \

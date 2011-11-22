@@ -10,6 +10,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 ## files, in order to avoid collisions when non-recursive make is used.
 AUTOMAKE_OPTIONS = subdir-objects
 
+include $(srcdir)/astDiagnostics/Makefile_variables
 include $(srcdir)/programTransformation/Makefile_variables
 include $(srcdir)/programTransformation/partialRedundancyElimination/Makefile_variables
 include $(srcdir)/programTransformation/finiteDifferencing/Makefile_variables
@@ -26,30 +27,25 @@ include $(srcdir)/programTransformation/ompLowering/Makefile_variables
 # use relative paths.
 #
 #mptPartialRedundancyEliminationPath=$(srcdir)/partialRedundancyElimination#
+mAstDiagnosticsPath=astDiagnostics#
 mProgramTransformationPath=programTransformation#
 
 #
 # DQ (10/29/2010): We have to include "binaryAnalyses" directory so that its header files
 # will be installed by "make install", even with language only options are used.
 #
-if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 SUBDIRS = \
-	astDiagnostics \
 	astProcessing \
 	astQuery \
 	binaryAnalyses
-else
-SUBDIRS = \
+if !ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+SUBDIRS += \
 	abstractHandle \
 	abstractMemoryObject \
-	astDiagnostics \
-	astProcessing \
-	astQuery \
 	astRewriteMechanism \
 	astUtil \
 	programAnalysis \
-	programTransformation/loopProcessing \
-	binaryAnalyses
+	programTransformation/loopProcessing
 endif
 
 # ------------------------------------------------------------------------------
@@ -67,9 +63,11 @@ lib_LIBRARIES=\
 	$(mProgramTransformation_libLibraries)
 
 libmidend_la_SOURCES=\
+	$(mAstDiagnostics_la_sources) \
 	$(mProgramTransformation_la_sources)
 
 include_HEADERS = \
+	$(mAstDiagnostics_includeHeaders) \
 	$(mProgramTransformation_includeHeaders)
 
 # ------------------------------------------------------------------------------
@@ -78,8 +76,10 @@ include_HEADERS = \
 
 EXTRA_DIST = \
 	CMakeLists.txt \
+	$(mAstDiagnostics_extraDist) \
 	$(mProgramTransformation_extraDist)
 
 clean-local:
+	$(mAstDiagnostics_cleanLocal)
 	$(mProgramTransformation_cleanLocal)
 
