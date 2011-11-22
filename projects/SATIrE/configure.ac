@@ -212,9 +212,9 @@ AS_IF([test "x$with_pag" != xno],
       [AC_MSG_RESULT([skipping check for PAG])])
 AM_CONDITIONAL(WITH_PAG, [test "x$with_pag" = xyes])
 
-AC_CHECK_FILE(${BOOST_LIB_DIR}/libboost_filesystem${BOOST_COMPILER_STRING}-mt.so,
+AC_CHECK_FILE(${BOOST_LIB_DIR}/libboost_filesystem${BOOST_COMPILER_STRING}.so,
     AC_MSG_RESULT([found Boost (hopefully)]),
-    [echo "Could not find 'libboost_filesystem${BOOST_COMPILER_STRING}-mt.so' in '${BOOST_LIB_DIR}'."
+    [echo "Could not find 'libboost_filesystem${BOOST_COMPILER_STRING}.so' in '${BOOST_LIB_DIR}'."
      echo "Please consider using one of the --with-boost* options."
      exit -1 ])
 
