@@ -85,13 +85,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      cave3_for6.java \
      cave3_for7.java \
      cave3_for8.java \
-     cave3_foreach0.java \
-     cave3_foreach1.java \
-     cave3_foreach2.java \
-     cave3_foreach4.java \
-     cave3_foreach5.java \
-     cave3_foreach6.java \
-     cave3_foreach7.java \
      cave3_if0.java \
      cave3_if1.java \
      cave3_labelDecl0.java \
@@ -156,7 +149,15 @@ TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6 = \
      test2011_48.java \
      test2011_49.java \
      cave3_assert0.java \
-     cave3_assert1.java
+     cave3_assert1.java \
+     cave3_foreach0.java \
+     cave3_foreach1.java \
+     cave3_foreach2.java \
+     cave3_foreach4.java \
+     cave3_foreach5.java \
+     cave3_foreach6.java \
+     cave3_foreach7.java
+
 
 TESTCODES_REQUIRED_TO_PASS_FAILING_FOR_JAVA_6 = \
      test2011_45.java 
