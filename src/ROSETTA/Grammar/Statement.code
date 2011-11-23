@@ -2178,7 +2178,7 @@ HEADER_JAVA_FOREACH_STATEMENT_START
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual bool cfgIsIndexInteresting(unsigned int idx) const;
-          virtual unsigned int cfgFindChildIndex(SgNode* n);
+          virtual unsigned int cfgFindNextChildIndex(SgNode* n);
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
