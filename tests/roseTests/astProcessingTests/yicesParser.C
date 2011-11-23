@@ -6,6 +6,7 @@
 #include <SgGraphTemplate.h>
 #include <graphProcessing.h>
 #include <staticCFG.h>
+#include <yices_c.h>
 /* Testing the graph traversal mechanism now implementing in AstProcessing.h (inside src/midend/astProcessing/)*/
 
 
@@ -14,9 +15,13 @@ using namespace boost;
 
 
 
+
+bool forFlag;
+
 int nvars;
 std::map<SgName, string> nameOf;
 bool noAssert;
+std::map<SgNode*, int> forsts;
 
 typedef myGraph CFGforT;
 
@@ -104,12 +109,15 @@ typedef newGraph::edge_descriptor EdgeID2;
 //Process CFG representation into SMT
 
 
+std::map<SgName, yices_expr> getExpr;
+
 class visitorTraversal : public SgGraphTraversal<CFGforT>
    {
      public:
           int tltnodes;
           int paths;
-          //std::set<SgNode*> knownNodes;     
+          //std::map<SgName, yices_expr> getExpr;
+          std::set<SgNode*> knownNodes;     
     //      std::vector<std::vector<SgGraphNode*> > pathstore;
           void analyzePath(std::vector<VertexID>& pth);
           SgIncidenceDirectedGraph* g;
@@ -138,7 +146,7 @@ long getIndex(SgGraphNode* n) {
 }
 
 
-string mainParse(vector<SgGraphNode*> expr);
+yices_expr mainParse(vector<SgGraphNode*> expr, yices_context& ctx);
 
 int rounds;
 int pathnum;
@@ -149,7 +157,7 @@ std::map<SgGraphNode*, VertexID2> graphVertex;
 void visitorTraversal2::analyzePath(std::vector<VertexID2>& pathR) {
     tltnodes += pathR.size();
     paths++;
-    std::cout << "path: " << paths << std::endl;
+    //std::cout << "path: " << paths << std::endl;
 }
 
 
@@ -234,32 +242,49 @@ int getTarget(int& edge, newGraph*& g)
 
 std::vector<VertexID> exprs;
 
+int ipaths;
 
 void visitorTraversal::analyzePath(std::vector<VertexID>& pathR) {
-    unsigned int i = 0;
+   //yices_context ctx; 
+   unsigned int i = 0;
    paths++; 
     noAssert = false;
     rounds = 0;
+    forFlag = false;
     stringstream pathstream;
-    std::set<SgNode*> knownNodes;
+    //std::set<SgNode*> knownNodes;
+    nameOf.clear();
+    getExpr.clear();
     //VertexID2 start = boost::add_vertex(*nGraph);
     //graphVertex[(*orig)[pathR[0]]] = start;
-    std::cout << "path: " << pathnum << std::endl;
+    //std::cout << "path: " << pathnum << std::endl;
+    //for (int i = 0; i < pathR.size(); i++) {
+    //    std::cout << vertintmap[pathR[i]] << ", ";
+   // }
+    //std::cout << std::endl;
     pathnum++;
+    bool inconsistent = false;
     std::vector<SgGraphNode*> path;
     //std::vector<SgGraphNode*> pathR;
     std::vector<SgGraphNode*> exprPath;
     for (unsigned int j = 0; j < pathR.size(); j++) {
-       SgGraphNode* R = getGraphNode[pathR[j]];
+       SgGraphNode* R = (*orig)[pathR[j]].sg;
        path.push_back(R);
     }
     //graphVertex[path[0]] = start;
+    yices_context ctx = yices_mk_context();
     while (i < path.size()) {
+        if (yices_inconsistent(ctx)) {
+            inconsistent = true;
+            std::cout << "inconsistent" << std::endl;
+            break;
+        }
+        //std::cout << "i: " << i << std::endl;
         exprPath.clear(); 
         //VertexID2 v1;
         //VertexID2 v2;
         //std::cout << "in while" << std::endl;
-        if (isSgInitializedName(path[i]->get_SgNode()) && knownNodes.find(path[i]->get_SgNode()) == knownNodes.end()) {
+        if (isSgInitializedName(path[i]->get_SgNode()) /*&& knownNodes.find(path[i]->get_SgNode()) == knownNodes.end()*/) {
            // exprs.push_back(path[i]);
             exprPath.push_back(path[i]);
             unsigned int k = i+1;
@@ -268,8 +293,12 @@ void visitorTraversal::analyzePath(std::vector<VertexID>& pathR) {
                 k++;
             }
             exprPath.push_back(path[k]);
-            string ss = mainParse(exprPath);
-            pathstream << ss;
+            //string ss = mainParse(exprPath);
+            ROSE_ASSERT(y1 != NULL); 
+            yices_expr y1 = mainParse(exprPath, ctx);
+            yices_assert(ctx, y1);
+            //std::cout << "successful assert" << std::endl;
+            //pathstream << ss;
       /*      if (knownGraphNodes.find(exprPath.front()) == knownGraphNodes.end()) {
                 VertexID2 vt2 = boost::add_vertex(*nGraph);
                 //graphVertex[path[i]] = vt2;
@@ -279,7 +308,7 @@ void visitorTraversal::analyzePath(std::vector<VertexID>& pathR) {
                 graphVertex[exprPath.front()] = vt2;
 
             }*/
-            knownNodes.insert(path[i]->get_SgNode());
+            //knownNodes.insert(path[i]->get_SgNode());
             //ROSE_ASSERT(graphVertex.find(path[i]) != graphVertex.end());
             //VertexID2 v1 = graphVertex[exprPath.front()];
             i += exprPath.size();
@@ -304,7 +333,33 @@ void visitorTraversal::analyzePath(std::vector<VertexID>& pathR) {
             //ROSE_ASSERT(knownNodes.find((exprPath.back())->get_SgNode) != knownNodes.end());
            // knownNodes.insert(path[i]->get_SgNode());
         }
-        else if (isSgExprStatement(path[i]->get_SgNode()) && knownNodes.find(path[i]->get_SgNode()) == knownNodes.end()) {
+        else if (isSgForStatement(path[i]->get_SgNode()) && isSgForInitStatement(path[i+1]->get_SgNode())) {
+            forFlag = true;
+            std::vector<SgGraphNode*> vec1;
+            unsigned int j = i+2;
+            int w = 2;
+            while (!isSgInitializedName(path[j]->get_SgNode()) && !isSgAssignOp(path[j]->get_SgNode())) {
+                j++;
+                w++;
+            }
+            vec1.push_back(path[j]);
+            int k = j+1;
+            while (k < path.size() && !isSgInitializedName(path[k]->get_SgNode())) {
+                vec1.push_back(path[k]);
+                k++;
+            }
+            vec1.push_back(path[k]);
+            int q = 0;
+            while (k < path.size() && !isSgForInitStatement(path[k]->get_SgNode())) {
+                q++;
+                k++;
+            }
+            yices_expr y1 = mainParse(vec1, ctx);
+            yices_assert(ctx, y1);
+            forFlag = false;
+            i += vec1.size() + w + q;           
+        }    
+        else if (isSgExprStatement(path[i]->get_SgNode()) /*&& knownNodes.find(path[i]->get_SgNode()) == knownNodes.end()*/) {
             unsigned int j = i+1;
             if (find(exprs.begin(), exprs.end(), pathR[i]) == exprs.end()) {
                 exprs.push_back(pathR[i]);
@@ -315,23 +370,102 @@ void visitorTraversal::analyzePath(std::vector<VertexID>& pathR) {
                 j++;
                // std::cout << "in second while" << std::endl;
             }
+            ROSE_ASSERT(j < path.size());
 		    //exprPath.push_back(path[j]);
 		   // i += exprPath.size();
             //std::vector<SgGraphNode*> exprP;
             //for (int q = 1; q < exprPath.size()-1; q++) {
             //    exprP.push_back(exprPath[q]);
            // }
-            string ss = mainParse(exprPath);
+            yices_expr y2 =  mainParse(exprPath, ctx);
+            ROSE_ASSERT(y2 != NULL);
+            //std::cout << "exprPath.size(): " << exprPath.size() << std::endl; 
+            std::set<SgDirectedGraphEdge*> oeds = g->computeEdgeSetOut(path[j]);
+            ROSE_ASSERT(oeds.size() == 1);
+            SgGraphNode* onn = (*(oeds.begin()))->get_to();
+               
+            
+            ROSE_ASSERT(onn == path[j+1]);
+            std::set<SgDirectedGraphEdge*> ifoeds = g->computeEdgeSetOut(path[j+1]); 
+            if ((isSgForStatement(onn->get_SgNode()) || isSgIfStmt(onn->get_SgNode())) && ifoeds.size() >= 2) { 
+                //std::cout << "got a for or if" << std::endl;
+
+                //if (isSgForStatement(onn->get_SgNode())) {
+                //    if (forsts.find(onn->get_SgNode()) != forsts.end()) {
+                //        yices_retract(ctx,forsts[onn->get_SgNode()]);
+                //    }
+               // }
+                //std::cout << "problem node: " << cfg->toCFGNode(path[j+2]).toString() << std::endl;
+                CFGNode cn = cfg->toCFGNode(path[j+2]);
+                std::vector<CFGEdge> ed = cn.inEdges();
+                //ROSE_ASSERT(ed.size() == 1);
+                int qw = 0;
+                while (ed[qw].source() != cfg->toCFGNode(path[j+1])) {
+                    qw++;
+                } 
+                CFGEdge needEdge =  ed[qw];
+                EdgeConditionKind kn = needEdge.condition();
+                ROSE_ASSERT(kn == eckTrue || kn == eckFalse);
+                if (kn == eckFalse) {
+                    //yices_expr y2n = yices_mk_fresh_bool_var(ctx);
+                    yices_expr y2n = yices_mk_not(ctx, y2);
+
+                   //if (isSgForStatement(onn->get_SgNode())) {
+                  //      int yr = yices_assert_retractable(ctx, y2n);
+                  //      forsts[onn->get_SgNode()] = yr;
+                   // }
+                   // else {
+                   //     ROSE_ASSERT(y2n != NULL);
+                        yices_assert(ctx, y2n);
+                    //}
+
+//                    yices_assert(ctx, y2n);
+                    //if (yices_inconsistent(ctx)) {
+                  //      std::cout << "inconsistent" << std::endl;
+                  //      std::cout << "at: " << cfg->toCFGNode(path[i]).toString() << std::endl;
+                    //}
+                    //else {
+                    //    std::cout << "consistent" << std::endl;
+                    //}
+                }
+                else {
+                    ROSE_ASSERT(kn == eckTrue);
+                    //std::cout << "got a eckTrue" << std::endl;
+                    if (isSgForStatement(onn->get_SgNode())) {
+                   //     int yr = yices_assert_retractable(ctx, y2);
+                   //     forsts[onn->get_SgNode()] = yr;
+                    }
+                    else {
+                        yices_assert(ctx, y2);
+                    }
+                    //if (yices_inconsistent(ctx)) {
+                      //  std::cout << "inconsistent" << std::endl;
+                      //  std::cout << "at: " << cfg->toCFGNode(path[i]).toString() << std::endl;
+
+                    //}
+                    //else {
+                      //  std::cout << "consistent" << std::endl;
+                    //}
+
+                   // }
+                }
+            }
+            else {      
+                yices_assert(ctx, y2);
+            }
+            //std::cout << "successful assert" << std::endl;
+            //assertion_id aid = yices_assert_retractable(y2, ctx);
+            
             //stringstream sts;
-            if (!noAssert) {
-            pathstream << "( assert " << ss << ")\n";
-            }
-            else {
-                noAssert = false;
-            }
+            //if (!noAssert) {
+            //pathstream << "( assert " << ss << ")\n";
+           // }
+           // else {
+           //     noAssert = false;
+           // }
             //exprs[path[i]] = ss;
             //std::cout << "sts: " << sts.str() << std::endl;
-            knownNodes.insert(path[i]->get_SgNode());
+            //knownNodes.insert(path[i]->get_SgNode());
            /* if (knownGraphNodes.find(exprPath.front()) == knownGraphNodes.end()) {
                 VertexID2 vt2 = boost::add_vertex(*nGraph);
                 //graphVertex[path[i]] = vt2;
@@ -346,8 +480,8 @@ void visitorTraversal::analyzePath(std::vector<VertexID>& pathR) {
 /*
             ROSE_ASSERT(graphVertex.find(exprPath.front()) != graphVertex.end());
             VertexID v1 = graphVertex[exprPath.front()];
-*/            
-            i += exprPath.size()-1;
+*/          //std::cout << "next node: " << cfg->toCFGNode(path[i]).toString() << std::endl; 
+            i += exprPath.size()+2;
 /*
             if (knownGraphNodes.find(exprPath.back()) == knownGraphNodes.end()) {
                 VertexID2 vt3 = boost::add_vertex(*nGraph);
@@ -408,7 +542,17 @@ void visitorTraversal::analyzePath(std::vector<VertexID>& pathR) {
        // i += exprPath.size();
     
     }
-    std::cout << pathstream.str() << std::endl;
+    if (yices_inconsistent(ctx)) {
+        std::cout << "inconsistent path: " << ipaths << std::endl;
+        ipaths++;
+        //for (int i = 0; i < path.size(); i++) {
+        //   std::cout <<  cfg->toCFGNode(path[i]).toStringForDebugging() << ", ";
+       // }
+        //std::cout << std::endl;
+        inconsistent = false;
+    }
+    //std::cout << pathstream.str() << std::endl;
+    yices_del_context(ctx);
 }
 
 StaticCFG::CFG* cfg;
@@ -431,6 +575,7 @@ std::vector<int> breakTriple(std::vector<SgGraphNode*> expr) {
     }
    
 
+
 //string mainParse(vector<SgGraphNode*> expr);
 string isAtom(SgNode*);
 bool isLogicalSplit(SgNode*);
@@ -440,24 +585,42 @@ bool isBinaryLogicOp(SgNode*);
 bool isBinaryOp(SgNode*);
 string getBinaryOp(SgNode*);
 
-string mainParse(vector<SgGraphNode*> expr) {
+
+yices_expr mainParse(vector<SgGraphNode*> expr, yices_context& ctx) {
     //std::cout << "rounds" << rounds << std::endl;
     rounds++;
+    bool yices = true;
     std::stringstream stst;
     string parsed;
     bool unknown_flag = false;
     std::vector<SgGraphNode*> vec1;
     std::vector<SgGraphNode*> vec2;
     stringstream ss;
+    yices_expr ret;
     if (expr.size() == 0) {
-        string empty;
+        yices_expr empty = new yices_expr;
         return empty;
     }
     if (unknown_flag) {
         string empty;
         parsed= empty;
     }
+    else if (isSgNotOp(expr[0]->get_SgNode())) {
+        ret = yices_mk_fresh_bool_var(ctx);
+        int i = 1;
+        SgGraphNode* curr = expr[1];
+        while (curr->get_SgNode() != expr[0]->get_SgNode()) {
+            vec1.push_back(curr);
+            i++;
+            curr = expr[i];
+        }
+        yices_expr e1 = yices_mk_fresh_bool_var(ctx);
+        e1 = mainParse(vec1, ctx);
+        ret = yices_mk_not(ctx, e1);
+        return ret;
+    }     
     else if (isLogicalSplit(expr[0]->get_SgNode())) {
+        ret = yices_mk_fresh_bool_var(ctx);
         string ls = getLogicalSplit(expr[0]->get_SgNode());
         std::vector<int> bounds = breakTriple(expr);
         for (int i = bounds[0]+1; i < bounds[1]; i++) {
@@ -466,8 +629,43 @@ string mainParse(vector<SgGraphNode*> expr) {
         for (int j = bounds[1]+1; j < bounds[2]; j++) {
             vec2.push_back(expr[j]);
         }
-        stst << "( "<< ls << " " << mainParse(vec1) << " " << mainParse(vec2) << ")";
-        parsed = stst.str();
+        //if (yices) {
+                yices_expr e1 = yices_mk_fresh_bool_var(ctx);
+                yices_expr e2 = yices_mk_fresh_bool_var(ctx);
+                e1 = mainParse(vec1, ctx);
+                e2 = mainParse(vec2, ctx);
+                //std::cout << "vec1.size()" << vec1.size() << " vec2.size(): " << vec2.size() << std::endl;
+                if (vec1.size() == 0 && ls == "and") { 
+                    e1 = yices_mk_false(ctx);
+                }
+                else if (vec1.size() == 0 && ls == "or") {
+                    e1 = yices_mk_true(ctx);
+                }
+                else if (vec2.size() == 0 && ls == "and") {
+                    e2 = yices_mk_false(ctx);
+                }
+                else if (vec2.size() == 0 && ls == "or") {
+                    e2 = yices_mk_true(ctx);
+                }
+                yices_expr arr[2];
+                arr[0] = e1;
+                arr[1] = e2;
+               // yices_expr ret = yices_mk_fresh_bool_var(ctx);
+            if (ls == "or") {
+                ret = yices_mk_or(ctx, arr, 2);
+            }
+            else if (ls == "and") {
+                ret = yices_mk_and(ctx, arr, 2);
+            }
+            else {
+                //std::cout << "bad logical command" << std::endl;
+                ROSE_ASSERT(false);
+            }
+            //yices_assert(ctx, ret);
+            return ret;    
+        //}
+        //stst << "( "<< ls << " " << mainParse(vec1) << " " << mainParse(vec2) << ")";
+        //parsed = stst.str();
         //stst << "and " << mainParse(vec2) << ")\n";
         
     }
@@ -485,82 +683,171 @@ string mainParse(vector<SgGraphNode*> expr) {
         else {
             parsed = getBinaryOp(expr[0]->get_SgNode());
         }
+        //yices_expr ret;
         if (isBinaryLogicOp(expr[0]->get_SgNode())) {
-            stst << "( " <<  parsed << " " << mainParse(vec1) << " " << mainParse(vec2) << ")";
+            ret = yices_mk_fresh_bool_var(ctx);
+            yices_expr e1 = mainParse(vec1, ctx);
+            yices_expr e2 = mainParse(vec2, ctx);
+            if (parsed == ">") {
+                ret = yices_mk_gt(ctx,e1, e2); 
+            }
+            else if (parsed == "<") {
+                ret = yices_mk_lt(ctx, e1, e2);
+            }
+            else if (parsed == "=") {
+                ret = yices_mk_eq(ctx, e1, e2);
+            }
+            else if (parsed == "!=") {
+                ret = yices_mk_diseq(ctx, e1, e2);
+            }
+            else if (parsed == "<=") {
+                ret = yices_mk_le(ctx, e1, e2);
+            }
+            else if (parsed == ">=") {
+                ret = yices_mk_ge(ctx, e1, e2);
+            }
+            else {
+                //std::cout << "unknown binary logic op" << std::endl;
+                return ret;
+            }
+            //std::cout << "parsed: " << parsed << std::endl;
+            ROSE_ASSERT(ret != NULL);
+            //yices_assert(ctx, ret);
+            return ret;
         }
+         //   stst << "( " <<  parsed << " " << mainParse(vec1) << " " << mainParse(vec2) << ")";
         else {
-            stst << "( " << parsed << " " << mainParse(vec1) << " " << mainParse(vec2) << " ) ";
+            yices_expr e1 = mainParse(vec1, ctx);
+            yices_expr e2 = mainParse(vec2, ctx);
+            yices_expr yicesarr[2];
+            yicesarr[0] = e1;
+            yicesarr[1] = e2; 
+            string bop = getBinaryOp(expr[0]->get_SgNode());
+            if (bop == "+") {
+                
+                ret = yices_mk_sum(ctx, yicesarr, 2);
+            }
+            else if (bop == "-") {
+                ret = yices_mk_sub(ctx, yicesarr, 2);
+            }
+            else if (bop == "*") {
+                ret = yices_mk_mul(ctx, yicesarr, 2);
+            }
+            //else if (bop == "/") {
+            //    ret = yices_mk_div(ctx, e1, e2);
+           // }
+            else {
+                //std::cout << "bad binary op: " << bop << endl;
+                ROSE_ASSERT(false);
+            }
+        return ret;
+            //stst << "( " << parsed << " " << mainParse(vec1) << " " << mainParse(vec2) << " ) ";
         }
-        parsed = stst.str();
+        //parsed = stst.str();
     }
+    else if (isSgPlusPlusOp(expr[0]->get_SgNode())) {
+        for (int i = 1; i < expr.size() - 1; i++) {
+            vec1.push_back(expr[i]);
+        }
+        yices_expr e1 = mainParse(vec1, ctx);
+        stringstream funN;
+        funN << "V" << nvars;
+        nvars++;
+        char* fun = (char*) funN.str().c_str();
+        yices_type ty = yices_mk_type(ctx, "int");
+        yices_var_decl vdecl = yices_mk_var_decl(ctx, fun, ty);
+        yices_expr e2 = yices_mk_var_from_decl(ctx, vdecl);
+        yices_expr arr[2];
+        yices_expr en = yices_mk_num(ctx, 1);
+        arr[0] = e1;
+        arr[1] = en; 
+        ret = yices_mk_sum(ctx, arr, 2);
+        return ret;
+    }    
     else if (isAtom(expr[0]->get_SgNode()) != "") {
         string ty = isAtom(expr[0]->get_SgNode());
         if (ty == "int") {
             int ival = isSgIntVal(expr[0]->get_SgNode())->get_value();
-            ss << ival;
-            parsed = ss.str();
+            ret = yices_mk_num(ctx, ival);
+            //std::cout << "ival: " <<  ival << std::endl;
+            
+            //parsed = ss.str();
         }
         else if (ty == "double") {
             double dval = isSgDoubleVal(expr[0]->get_SgNode())->get_value();
-            ss << dval;
-            parsed = ss.str();    
+            //ss << dval;
+            //parsed = ss.str();
+            ret = yices_mk_num(ctx, dval);    
         }
         else if (ty == "float") {
            float fval = isSgFloatVal(expr[0]->get_SgNode())->get_value();
-           ss << fval;
-           parsed =  ss.str();
+          // ss << fval;
+          // parsed =  ss.str();
+           ret = yices_mk_num(ctx, fval);
         }
         else if (ty == "short") {
            short sval = isSgShortVal(expr[0]->get_SgNode())->get_value();
-           ss << sval;
-           parsed =  ss.str();
+           //ss << sval;
+           //parsed =  ss.str();
+           ret = yices_mk_num(ctx, sval);
         }
         else if (ty == "long") {
             long lval = isSgLongIntVal(expr[0]->get_SgNode())->get_value();
-            ss << lval;
-            parsed = ss.str();
+            //ss << lval;
+            //parsed = ss.str();
+            ret = yices_mk_num(ctx, lval);
         }
         else if (ty == "long long int") {
             long long llval = isSgLongLongIntVal(expr[0]->get_SgNode())->get_value();
-            ss << llval;
-            parsed = ss.str();
+            //ss << llval;
+            //parsed = ss.str();
+            ret = yices_mk_num(ctx, llval);
         }
         else if (ty == "long double") {
             long double lldval = isSgLongDoubleVal(expr[0]->get_SgNode())->get_value();
-            ss << lldval;
-            parsed =  ss.str();
+            //ss << lldval;
+            //parsed =  ss.str();
+            ret = yices_mk_num(ctx, lldval);
         }
         else if (ty == "bool") {
             bool bval = isSgBoolValExp(expr[0]->get_SgNode())->get_value();
             if (bval == true) {
                 parsed = "true";
+                ret = yices_mk_true(ctx);
             }
             else {
                 parsed = "false";
+                ret = yices_mk_false(ctx);
             }
         }
         else {
-            cout << "unsupported atomic type";
+            //cout << "unsupported atomic type";
             ROSE_ASSERT(false);
         }
+        return ret;
     }
     else if (isSgVarRefExp((expr[0])->get_SgNode())) {
         SgName svs = isSgVarRefExp(expr[0]->get_SgNode())->get_symbol()->get_name();;
-        stringstream ss;
-        if (nameOf.find(svs) != nameOf.end()) {
-            parsed = nameOf[svs];
-        }
-        else {
-            ss <<  "V" << nvars;
-            nvars++;
-            nameOf[svs] = ss.str();
-            parsed = nameOf[svs];
-        }
+        //stringstream ss;
+        ROSE_ASSERT(nameOf.find(svs) != nameOf.end());
+        //    parsed = nameOf[svs];
+        //}
+        //else {
+        //    ss <<  "V" << nvars;
+        //    nvars++;
+        //    nameOf[svs] = ss.str();
+        //    parsed = nameOf[svs];
+        //}
+        //std::cout << "nameOf[svs]: " << nameOf[svs] << std::endl;
+        yices_expr e1 = getExpr[svs];
+        ret = e1;
+        return ret;
+        
     }
     else if (isSgInitializedName(expr[0]->get_SgNode())) {
         stringstream stst;
         std::vector<SgGraphNode*> vec1;
-        ROSE_ASSERT(isAtom((expr[2])->get_SgNode()) != "");
+        //ROSE_ASSERT(isAtom((expr[2])->get_SgNode()) != "");
         string valType = isAtom((expr[2])->get_SgNode());
         int p = 2;
         SgName svs = (isSgInitializedName(expr[0]->get_SgNode()))->get_qualified_name();
@@ -570,41 +857,121 @@ string mainParse(vector<SgGraphNode*> expr) {
         }
         stringstream funN;
         string ss;
-        if (nameOf.find(svs) != nameOf.end()) {
-            ss = nameOf[svs];
-        }
-        else {
+        //if (nameOf.find(svs) != nameOf.end()) {
+        //    ss = nameOf[svs];
+        //}
+        //else {
             funN << "V" << nvars;
             nameOf[svs] = funN.str();
-            ss = funN.str();
+            //ss = funN.str();
             nvars++;  
-            stst << "(declare-fun " << ss << " () " << valType << ")\n";
+            //stst << "(declare-fun " << ss << " () " << valType << ")\n";
+        //}i
+        char* fun = (char*) funN.str().c_str();
+        //for (int i = 0; i < funN.str().size(); i++) {
+        //    fun[i] = funN.str()[i];
+        //}
+        //std::cout << "fun: " << fun << std::endl;
+        char* valTypeCh = (char*) valType.c_str();
+	//for (int j = 0; j < valType.size(); j++) {
+        //    valTypeCh[j] = valType[j];
+        //}
+        //std::cout << "valTypeCh: " << valTypeCh << std::endl;
+        //std::cout << "fun" << fun << std::endl;
+        //char* fun = (char*)(funN.str().c_str());
+        yices_type ty = yices_mk_type(ctx, valTypeCh);
+        yices_var_decl vdecl = yices_mk_var_decl(ctx, fun, ty);
+        yices_expr e1 = yices_mk_var_from_decl(ctx, vdecl);
+        //getType[e1] = valType;
+        getExpr[svs] = e1;
+        yices_expr e2 = mainParse(vec1, ctx);
+        if (forFlag) {
+            ret = yices_mk_eq(ctx, e1, e1);
         }
-        stst << "(let (" << ss << " " << mainParse(vec1) << ")\n";
-        parsed =  stst.str();
+         else {
+            ret = yices_mk_eq(ctx, e1, e2);
+        }
+        //yices_assert(ctx, ret); 
+        //stst << "(let (" << ss << " " << mainParse(vec1) << ")\n";
+        //parsed =  stst.str();
+        
+        return ret;
     }
     else if (isSgAssignOp(expr[0]->get_SgNode())) {
         stringstream stst;
         ROSE_ASSERT(isSgVarRefExp(expr[1]->get_SgNode()));
+        ROSE_ASSERT(isAtom(expr[3]->get_SgNode()) != "");
+        string valType = isAtom(expr[3]->get_SgNode());
         std::vector<int> bounds = breakTriple(expr);
-        for (int i = bounds[0]+1; i < bounds[1]; i++) {
-            vec1.push_back(expr[i]);
-        }
+        //for (int i = bounds[0]+1; i < bounds[1]; i++) {
+        //    vec1.push_back(expr[i]);
+        //}
+        SgName svs = (isSgVarRefExp((expr[1]->get_SgNode()))->get_symbol()->get_declaration()->get_qualified_name());
         for (int j = bounds[1]+1; j < bounds[2]; j++) {
             vec2.push_back(expr[j]);
         }
+        if (nameOf.find(svs) != nameOf.end()) {
+            stringstream ss;
+            ss << "V";
+            ss << nvars;
+            nvars++;
+            yices_type ty1 = yices_mk_type(ctx, (char*) valType.c_str());
+            yices_var_decl decl1 = yices_mk_var_decl(ctx, (char*) ss.str().c_str(), ty1);
+            yices_expr e1 = yices_mk_var_from_decl(ctx, decl1);
+            yices_expr e2 = mainParse(vec2, ctx);
+            if (forFlag) {
+                ret = e1;
+            }
+            else {
+                ret = yices_mk_eq(ctx, e1, e2);
+            }
+            nameOf[svs] = ss.str();
+            getExpr[svs] = e1;
+        }
+        else {
+            stringstream ss;
+            ss << "V";
+            ss << nvars;
+            nvars++;
+            char valTypeCh[valType.size()];
+            for (int k = 0; k < valType.size(); k++) {
+                valTypeCh[k] = valType[k];
+            }
+            char nam[ss.str().size()];
+            for (int q = 0; q < ss.str().size(); q++) {
+                nam[q] = ss.str()[q];
+            }
+            string fun = valType;
+            //char* funC = fun.c_str();
+            yices_type ty = yices_mk_type(ctx, (char*) valType.c_str());
+	    yices_var_decl decl1 = yices_mk_var_decl(ctx,nam, ty);
+            yices_expr e1 = yices_mk_var_from_decl(ctx, decl1);
+            yices_expr e2 = mainParse(vec2, ctx);
+            if (forFlag) {
+                ret = e1;
+            }
+            else {
+                ret = yices_mk_eq(ctx, e1, e2);
+            }
+            getExpr[svs] = e1;
+            nameOf[svs] = fun;
+        }
+        //yices_assert(ctx, ret);
+        //getExpr[svs] = e1;
         //stringstream stst;
-        noAssert = true;
-        stst << "(let (" << mainParse(vec1) << " " << mainParse(vec2) << ") )";
-        parsed = stst.str();
+        //noAssert = true;
+        
+       // stst << "(let (" << mainParse(vec1) << " " << mainParse(vec2) << ") )";
+        //parsed = stst.str();
+        return ret;
     }
     else {
-        cout << "unknown type" << endl;
-        cout << cfg->toCFGNode(expr[0]).toString() << std::endl;
+        //cout << "unknown type" << endl;
+        //cout << cfg->toCFGNode(expr[0]).toString() << std::endl;
         unknown_flag = true;
     }
     //std::cout << "parsed: " << parsed << std::endl;
-    return parsed;   
+    return ret;   
 }
 
 string isAtom(SgNode* n) {
@@ -653,7 +1020,7 @@ std::string getLogicalSplit(SgNode* n) {
         return "not";
     }
     else {
-        cout << "not a logicalSplit Operator" << std::endl;
+       // cout << "not a logicalSplit Operator" << std::endl;
         ROSE_ASSERT(false);
     }
 }
@@ -673,7 +1040,7 @@ std::string getBinaryLogicOp(SgNode* n) {
        ss = "/=";
     }
     else {
-        std::cout << "bad eqOp" << std::endl;
+        //std::cout << "bad eqOp" << std::endl;
         ROSE_ASSERT(false);
     }
     return ss;
@@ -712,12 +1079,11 @@ std::string getBinaryOp(SgNode* n) {
         ss = "/";
     }
     else {
-        std::cout << "unknown op in getBinaryOp" << std::endl;
+        //std::cout << "unknown op in getBinaryOp" << std::endl;
         ROSE_ASSERT(false);
     }
     return ss;
 }
-
 
 
 
@@ -745,8 +1111,9 @@ int main(int argc, char *argv[]) {
     mg = instantiateGraph(g, cfg);
     vis->tltnodes = 0;
     vis->paths = 0;
+    ipaths = 0;
     vis->orig = mg;
-    vis->cfg = &cfg;
+    vis->g = g;
     //vis->firstPrepGraph(constcfg);
     //t1 = getCPUTime();
     vis->constructPathAnalyzer(mg, true);
@@ -754,14 +1121,17 @@ int main(int argc, char *argv[]) {
     //std::cout << "took: " << timeDifference(t2, t1) << std::endl;
     //cfg.clearNodesAndEdges();
     std::cout << "finished" << std::endl;
-    std::cout << "tltnodes: " << vis->tltnodes << " paths: " << vis->paths << std::endl;
-    delete vis;
-    //return 1;
+    std::cout << "tltnodes: " << vis->tltnodes << " paths: " << vis->paths << " ipaths: " << ipaths <<  std::endl;
+    //delete vis;
+    return 0;
 }
+
+
 /*
 
 int main(int argc, char *argv[]) {
   pathnum = 0;
+  ipaths = 0;
   SgProject* proj = frontend(argc,argv);
   ROSE_ASSERT (proj != NULL);
 
@@ -774,7 +1144,7 @@ int main(int argc, char *argv[]) {
    //vis->nGraph = nGraph;
    //newGraph* nnGraph = new newGraph();
     StaticCFG::CFG* cfg1 = new StaticCFG::CFG(mainDef);
-    //cfg1.buildFullCFG();
+   //cfg.buildFullCFG();
     stringstream ss;
     string fileName= StringUtility::stripPathFromFileName(mainDef->get_file_info()->get_filenameString());
     string dotFileName1=fileName+"."+ mainDef->get_declaration()->get_name() +".dot";
@@ -795,22 +1165,22 @@ int main(int argc, char *argv[]) {
     vis2->orig = mg;
     cfg = cfg1;
     vis->orig = mg;
-    
-    vis->constructPathAnalyzer(mg);
+    vis->constructPathAnalyzer(mg, true);
     std::cout << "constructed" << std::endl;
-   
+    std::cout << "ipaths: " << ipaths << std::endl; 
    // printHotness2(nGraph);
    // std::cout << "mapped" << std::endl;i
    std::vector<std::vector<int> > pts;
    std::vector<int> ptsP;
-   // std::vector<SgExpressionStmt*> exprs = SageInterface::querySubTree<SgExpressionStmt>(proj);
-   for (int q1 = 0; q1 < exprs.size(); q1++) {
+    //std::vector<SgExpressionStmt*> exprs = SageInterface::querySubTree<SgExpressionStmt>(proj);
+/*  
+ for (int q1 = 0; q1 < exprs.size(); q1++) {
       ptsP.clear();
       for (int q2 = 0; q2 < exprs.size(); q2++) {
           if (q1 != q2) {
               vis->paths = 0;
               vis->tltnodes = 0;
-              vis->constructPathAnalyzer(mg, false,exprs[q1], exprs[q2]);
+              vis->constructPathAnalyzer(mg, exprs[q1], exprs[q2]);
               std::cout << vis->paths << " between expr" << q1 << " and expr" << q2 << std::endl;
               ptsP.push_back(vis->paths);
           }
@@ -822,13 +1192,14 @@ int main(int argc, char *argv[]) {
             std::cout << "between expr" << i << "and expr" << j << " there are " << pts[i][j] << std::endl;
         }
     }
-    //cfg.clearNodesAndEdges();
-    std::cout << "finished" << std::endl;
-    std::cout << "tltnodes: " << vis->tltnodes << " paths: " << vis->paths << std::endl;
-    delete vis;
-}
-                                                                                                                                                                                                                                                                                                                                                                                                                                                            
 */
+    //cfg.clearNodesAndEdges();
+    //std::cout << "finished" << std::endl;
+    //std::cout << "tltnodes: " << vis->tltnodes << " paths: " << vis->paths << std::endl;
+    //delete vis;
+//}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+
 /*
 std::vector<SgExprStatement*> exprList = SageInterface::querySubTree<SgExprStatement>(project);
 for (Rose_STL_Container<SgGraphNode*>::iterator i = exprList.begin(); i != exprList.end(); i++) {

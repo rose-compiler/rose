@@ -38,16 +38,11 @@ class visitorTraversal : public SgGraphTraversal<CFGforT>
 void visitorTraversal::analyzePath(vector<VertexID>& pth) {
       //  ROSE_ASSERT(find(pathstore.begin(), pathstore.end(), pth) == pathstore.end());
       //  pathstore.push_back(pth);
-        tltnodes += pth.size();
+        #pragma omp atomic
         paths++;
-#if 0
-        std::cout << "pth: " << std::endl;
-        for (int i = 0; i < pth.size(); i++) {
-        std::cout << vertintmap[pth[i]] << ", ";
-        }
-
-        std::cout << "end" << std::endl;
-#endif
+        
+        //tltnodes += pth.size();
+        //paths++;
         //std::cout << "paths: " << paths << std::endl;
 
 }
@@ -90,7 +85,7 @@ int main(int argc, char *argv[]) {
     vis->paths = 0;
     //vis->firstPrepGraph(constcfg);
     t1 = getCPUTime();
-    vis->constructPathAnalyzer(mg, true);
+    vis->constructPathAnalyzer(mg, true, 0, 0, false);
     t2 = getCPUTime();
     std::cout << "took: " << timeDifference(t2, t1) << std::endl;
     //cfg.clearNodesAndEdges();

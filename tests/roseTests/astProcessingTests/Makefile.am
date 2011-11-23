@@ -64,8 +64,57 @@ strictGraphTest3_SOURCES = strictGraphTest3.C
 strictGraphTest3_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
 strictGraphTest3_LDFLAGS = -lboost_serialization
 
+
+astTraversalTest_SOURCES      = astTraversalTest.C
+astTraversalTest_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+
+t14tt_SOURCES = test14.C.maintest.C
+t14tt_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+
+t13tt_SOURCES = test13.C.maintest.C
+t13tt_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+
+t12tt_SOURCES = test12.C.maintest.C
+t12tt_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+
+t11tt_SOURCES = test11.C.maintest.C
+t11tt_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+
+
+createTest_SOURCES = createTest.C
+createTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+
+bPTP_SOURCES = bPTP.C
+bPTP_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+
+processnew3Down4SgIncGraph2_SOURCES      = processnew3Down4SgIncGraph2.C
+processnew3Down4SgIncGraph2_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+
+binaryPaths_SOURCES = binaryPaths.C
+binaryPaths_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+
+strictGraphTest_SOURCES = strictGraphTest.C
+strictGraphTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+
+strictGraphTest2_SOURCES = strictGraphTest2.C
+strictGraphTest2_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+
+smtlibParser_SOURCES = smtlibParser.C
+smtlibParser_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+
+sourcePTP_SOURCES = sourcePTP.C
+sourcePTP_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+
+yicesParser_SOURCES = yicesParser.C
+yicesParser_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+
+strictGraphTest3_SOURCES = strictGraphTest3.C
+strictGraphTest3_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+
 # source files don't contain anything that would be merged
 # TESTCODES = $(srcdir)/performanceTest.C
+
+
 
 testTraversals: astTraversalTest
 	./astTraversalTest -edg:w -c $(srcdir)/input1.C
@@ -109,6 +158,13 @@ yicesParserTest: yicesParser
 	./yicesParser $(srcdir)/test14.C 
 endif
 check-local:
+yicesParserTest: yicesParser
+	./yicesParser $(srcdir)/test14.C 
+check-local:
+	@$(MAKE) strongCheckOne
+	@$(MAKE) strongCheckTwo
+	@$(MAKE) strongCheckThree
+	@$(MAKE) strongCheckFour
 	@$(MAKE) testTraversals
 	@$(MAKE) testRunExamples2
 	@$(MAKE) strictGraph

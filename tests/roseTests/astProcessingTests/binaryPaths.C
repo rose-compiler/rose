@@ -22,8 +22,8 @@ typedef boost::graph_traits<BinaryAnalysis::ControlFlow::Graph>::edge_descriptor
 class visitorTraversal : public SgGraphTraversal<BinaryAnalysis::ControlFlow::Graph>
    {
      public:
-         int pths;
-         int tltnodes;
+         long int pths;
+         long int tltnodes;
          std::map<Vertex, int> vV;
 
           virtual void analyzePath( vector<Vertex>& pth);
@@ -34,13 +34,14 @@ class visitorTraversal : public SgGraphTraversal<BinaryAnalysis::ControlFlow::Gr
 
 
 void visitorTraversal::analyzePath(vector<Vertex>& pth) {
-    tltnodes += pth.size();
+    //tltnodes += pth.size();
+    #pragma omp atomic
     pths++;
 }
 
 
 int main(int argc, char *argv[]) {
-    int totalPaths = 0;
+    
     /* Parse the binary file */
     SgProject *project = frontend(argc, argv);
     std::vector<SgAsmInterpretation*> interps = SageInterface::querySubTree<SgAsmInterpretation>(project);
@@ -60,10 +61,9 @@ int main(int argc, char *argv[]) {
         vis->tltnodes = 0;
         vis->pths = 0;
 	vis->firstPrepGraph(cfg);
-        vis->constructPathAnalyzer(cfg, true);
+        vis->constructPathAnalyzer(cfg, true, 0, 0, false);
         std::cout << "pths: " << vis->pths << std::endl;
         std::cout << "tltnodes: " << vis->tltnodes << std::endl;
-        totalPaths += vis->pths;
 }
 
 
