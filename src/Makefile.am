@@ -112,7 +112,6 @@ libroseLibraries = \
    $(libroseBinaryLibraries) \
    $(top_builddir)/src/midend/abstractHandle/libabstractHandle.la \
    $(top_builddir)/src/midend/abstractMemoryObject/libabstractMemoryObject.la \
-   $(top_builddir)/src/midend/astProcessing/libastprocessing.la \
    $(top_builddir)/src/midend/astQuery/libquery.la \
    $(top_builddir)/src/midend/astRewriteMechanism/librewrite.la \
    $(top_builddir)/src/midend/astUtil/libastUtil.la \

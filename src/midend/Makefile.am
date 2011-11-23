@@ -11,6 +11,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 AUTOMAKE_OPTIONS = subdir-objects
 
 include $(srcdir)/astDiagnostics/Makefile_variables
+include $(srcdir)/astProcessing/Makefile_variables
 include $(srcdir)/programTransformation/Makefile_variables
 include $(srcdir)/programTransformation/partialRedundancyElimination/Makefile_variables
 include $(srcdir)/programTransformation/finiteDifferencing/Makefile_variables
@@ -28,6 +29,7 @@ include $(srcdir)/programTransformation/ompLowering/Makefile_variables
 #
 #mptPartialRedundancyEliminationPath=$(srcdir)/partialRedundancyElimination#
 mAstDiagnosticsPath=astDiagnostics#
+mAstProcessingPath=astProcessing#
 mProgramTransformationPath=programTransformation#
 
 #
@@ -35,7 +37,6 @@ mProgramTransformationPath=programTransformation#
 # will be installed by "make install", even with language only options are used.
 #
 SUBDIRS = \
-	astProcessing \
 	astQuery \
 	binaryAnalyses
 if !ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
@@ -52,6 +53,9 @@ endif
 #  Library: programTransformation.la
 # ------------------------------------------------------------------------------
 
+## The grammar generator (ROSETTA) should use its own template repository
+CXX_TEMPLATE_REPOSITORY_PATH = .
+
 INCLUDES=\
 	$(ROSE_INCLUDES) \
 	-I${top_srcdir}/src/midend/programAnalysis/CFG
@@ -64,10 +68,16 @@ lib_LIBRARIES=\
 
 libmidend_la_SOURCES=\
 	$(mAstDiagnostics_la_sources) \
+	$(mAstProcessing_la_sources) \
 	$(mProgramTransformation_la_sources)
+
+# astProcessing _la_LIBADD = $(CXX_TEMPLATE_OBJECTS)
+libmidend_la_LIBADD=\
+	$(mAstProcessing_libadd)
 
 include_HEADERS = \
 	$(mAstDiagnostics_includeHeaders) \
+	$(mAstProcessing_includeHeaders) \
 	$(mProgramTransformation_includeHeaders)
 
 # ------------------------------------------------------------------------------
@@ -77,9 +87,14 @@ include_HEADERS = \
 EXTRA_DIST = \
 	CMakeLists.txt \
 	$(mAstDiagnostics_extraDist) \
+	$(mAstProcessing_extraDist) \
 	$(mProgramTransformation_extraDist)
 
 clean-local:
 	$(mAstDiagnostics_cleanLocal)
+	$(mAstProcessing_cleanLocal)
 	$(mProgramTransformation_cleanLocal)
+
+distclean-local:
+	$(mAstProcessing_distCleanLocal)
 

@@ -1908,7 +1908,6 @@ src/midend/abstractHandle/Makefile
 src/midend/abstractMemoryObject/Makefile
 src/midend/astUtil/Makefile
 src/midend/astQuery/Makefile
-src/midend/astProcessing/Makefile
 src/midend/astRewriteMechanism/Makefile
 src/midend/binaryAnalyses/Makefile
 src/midend/programAnalysis/Makefile
