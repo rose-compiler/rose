@@ -25,7 +25,7 @@ typedef myGraph::edge_descriptor EdgeID;
 
 //myGraph* instantiateGraph(SgIncidencedDirectedGraph* g, StaticCFG::CFG cfg);
 std::pair<std::vector<SgGraphNode*>, std::vector<SgDirectedGraphEdge*> > getAllNodesAndEdges(SgIncidenceDirectedGraph* g, SgGraphNode* start);
-
+std::map<VertexID, SgGraphNode*> getGraphNode;
 std::map<SgGraphNode*, VertexID> VSlink;
 
 myGraph* instantiateGraph(SgIncidenceDirectedGraph*& g, StaticCFG::CFG& cfg) {
@@ -48,6 +48,7 @@ myGraph* instantiateGraph(SgIncidenceDirectedGraph*& g, StaticCFG::CFG& cfg) {
         VertexID v2;
         if (VSlink.find(u1) == VSlink.end()) {
             v1 = boost::add_vertex(*graph);
+            getGraphNode[v1] = u1;
             VSlink[u1] = v1;
             (*graph)[v1].sg = u1;
             (*graph)[v1].cfgnd = cfg.toCFGNode(u1);
@@ -62,6 +63,7 @@ myGraph* instantiateGraph(SgIncidenceDirectedGraph*& g, StaticCFG::CFG& cfg) {
             v2 = boost::add_vertex(*graph);
             VSlink[u2] = v2;
             (*graph)[v2].sg = u2;
+            getGraphNode[v2] = u2;
             (*graph)[v2].cfgnd = cfg.toCFGNode(u2);
         }
         bool ok;
@@ -77,6 +79,9 @@ myGraph* instantiateGraph(SgIncidenceDirectedGraph*& g, StaticCFG::CFG& cfg) {
     std::cout << "prs.size: " << prs.size() << std::endl;
     return graph;
 }
+
+
+    
             
 std::pair<std::vector<SgGraphNode*>, std::vector<SgDirectedGraphEdge*> > getAllNodesAndEdges(SgIncidenceDirectedGraph* g, SgGraphNode* start) {
     //for (int i = 0; i < starts.size(); i++) {
