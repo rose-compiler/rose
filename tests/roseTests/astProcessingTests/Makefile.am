@@ -13,7 +13,11 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 
 # DQ (7/2/2011): Fixed this to only handle binary work when binary support is available.
 # bin_PROGRAMS  = astTraversalTest processnew3Down4SgIncGraph processnew3Down4 binaryPaths
+<<<<<<< HEAD
 bin_PROGRAMS  = astTraversalTest processnew3Down4SgIncGraph2 strictGraphTest strictGraphTest2 strictGraphTest3 smtlibParser sourcePTP
+=======
+bin_PROGRAMS  = t14tt t13tt t12tt t11tt createTest astTraversalTest processnew3Down4SgIncGraph2 strictGraphTest strictGraphTest2 strictGraphTest3 smtlibParser sourcePTP
+>>>>>>> fixed a merge issue
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 bin_PROGRAMS += binaryPaths bPTP
 endif
@@ -24,6 +28,11 @@ endif
 # long list of separate libraries (for faster development)
 ROSE_DEVELOPMENT_LIBS = $(ROSE_SEPARATE_LIBS)
 
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> fixed a merge issue
 astTraversalTest_SOURCES      = astTraversalTest.C
 astTraversalTest_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
 
@@ -62,6 +71,7 @@ yicesParser_LDFLAGS = -I$(YICES_PREFIX)/include -L$(YICES_PREFIX)/lib -lyices
 endif
 strictGraphTest3_SOURCES = strictGraphTest3.C
 strictGraphTest3_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+<<<<<<< HEAD
 strictGraphTest3_LDFLAGS = -lboost_serialization
 
 
@@ -110,9 +120,21 @@ yicesParser_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
 
 strictGraphTest3_SOURCES = strictGraphTest3.C
 strictGraphTest3_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+=======
+>>>>>>> fixed a merge issue
 
 # source files don't contain anything that would be merged
 # TESTCODES = $(srcdir)/performanceTest.C
+
+strongCheckOne: t14tt
+	./t14tt $(srcdir)/test14.C
+strongCheckTwo: t13tt
+	./t13tt $(srcdir)/test13.C
+strongCheckThree: t12tt
+	./t12tt $(srcdir)/test12.C
+strongCheckFour: t11tt
+	./t11tt $(srcdir)/test11.C
+
 
 
 
@@ -153,11 +175,6 @@ smtParse: smtlibParser
 
 sourcePTPTest: sourcePTP
 	./sourcePTP $(srcdir)/test14.C
-if HAVE_YICES
-yicesParserTest: yicesParser
-	./yicesParser $(srcdir)/test14.C 
-endif
-check-local:
 yicesParserTest: yicesParser
 	./yicesParser $(srcdir)/test14.C 
 check-local:
