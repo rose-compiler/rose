@@ -12,6 +12,7 @@ AUTOMAKE_OPTIONS = subdir-objects
 
 include $(srcdir)/astDiagnostics/Makefile_variables
 include $(srcdir)/astProcessing/Makefile_variables
+include $(srcdir)/astQuery/Makefile_variables
 include $(srcdir)/programTransformation/Makefile_variables
 include $(srcdir)/programTransformation/partialRedundancyElimination/Makefile_variables
 include $(srcdir)/programTransformation/finiteDifferencing/Makefile_variables
@@ -30,6 +31,7 @@ include $(srcdir)/programTransformation/ompLowering/Makefile_variables
 #mptPartialRedundancyEliminationPath=$(srcdir)/partialRedundancyElimination#
 mAstDiagnosticsPath=astDiagnostics#
 mAstProcessingPath=astProcessing#
+mAstQueryPath=astQuery#
 mProgramTransformationPath=programTransformation#
 
 #
@@ -37,7 +39,6 @@ mProgramTransformationPath=programTransformation#
 # will be installed by "make install", even with language only options are used.
 #
 SUBDIRS = \
-	astQuery \
 	binaryAnalyses
 if !ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 SUBDIRS += \
@@ -69,15 +70,20 @@ lib_LIBRARIES=\
 libmidend_la_SOURCES=\
 	$(mAstDiagnostics_la_sources) \
 	$(mAstProcessing_la_sources) \
+	$(mAstQuery_la_sources) \
 	$(mProgramTransformation_la_sources)
 
 # astProcessing _la_LIBADD = $(CXX_TEMPLATE_OBJECTS)
 libmidend_la_LIBADD=\
 	$(mAstProcessing_libadd)
 
+libmidend_la_DEPENDENCIES=\
+	$(mAstQuery_la_dependencies)
+
 include_HEADERS = \
 	$(mAstDiagnostics_includeHeaders) \
 	$(mAstProcessing_includeHeaders) \
+	$(mAstQuery_includeHeaders) \
 	$(mProgramTransformation_includeHeaders)
 
 # ------------------------------------------------------------------------------
@@ -88,13 +94,16 @@ EXTRA_DIST = \
 	CMakeLists.txt \
 	$(mAstDiagnostics_extraDist) \
 	$(mAstProcessing_extraDist) \
+	$(mAstQuery_extraDist) \
 	$(mProgramTransformation_extraDist)
 
 clean-local:
 	$(mAstDiagnostics_cleanLocal)
 	$(mAstProcessing_cleanLocal)
+	$(mAstQuery_cleanLocal)
 	$(mProgramTransformation_cleanLocal)
 
 distclean-local:
 	$(mAstProcessing_distCleanLocal)
+	$(mAstQuery_distCleanLocal)
 
