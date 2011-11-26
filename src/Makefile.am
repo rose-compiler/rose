@@ -92,7 +92,6 @@ libroseLibraries = \
    $(top_builddir)/src/backend/libbackend.la \
    $(top_builddir)/src/frontend/SageIII/libsage3.la \
    $(libroseEDGlibraries) \
-   $(top_builddir)/src/midend/astDiagnostics/libastDiagnostics.la \
    $(top_builddir)/src/midend/astProcessing/libastprocessing.la \
    $(top_builddir)/src/midend/astQuery/libquery.la \
    $(top_builddir)/src/roseSupport/libroseSupport.la \
@@ -113,15 +112,13 @@ libroseLibraries = \
    $(libroseBinaryLibraries) \
    $(top_builddir)/src/midend/abstractHandle/libabstractHandle.la \
    $(top_builddir)/src/midend/abstractMemoryObject/libabstractMemoryObject.la \
-   $(top_builddir)/src/midend/astDiagnostics/libastDiagnostics.la \
-   $(top_builddir)/src/midend/astProcessing/libastprocessing.la \
    $(top_builddir)/src/midend/astQuery/libquery.la \
    $(top_builddir)/src/midend/astRewriteMechanism/librewrite.la \
    $(top_builddir)/src/midend/astUtil/libastUtil.la \
    $(top_builddir)/src/midend/programAnalysis/libprogramAnalysis.la \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/libLoopProcessing.la \
    $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la \
-   $(top_builddir)/src/midend/programTransformation/libprogramTransformation.la \
+   $(top_builddir)/src/midend/libmidend.la \
    $(top_builddir)/src/roseSupport/libroseSupport.la \
    $(top_builddir)/src/util/support/libsupport.la \
    $(top_builddir)/src/util/graphs/libgraphs.la \
