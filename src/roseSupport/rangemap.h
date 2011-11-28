@@ -1263,6 +1263,8 @@ public:
 public:
 
     void check() const {
+// DQ (11/8/2011): Commented out as part of ROSE compiling this ROSE source code (EDG frontend complains about errors).
+#ifndef USE_ROSE
 #ifndef NDEBUG
 #define RANGEMAP_CHECK(EXPR) if (!(EXPR)) {                                                                                    \
             std::cerr <<"RangeMap::check() failed at r1=" <<r1 <<" r2=" <<r2 <<": " #EXPR "\n";                                \
@@ -1335,6 +1337,7 @@ public:
             }
         }
 #undef RANGEMAP_CHECK
+#endif
 #endif
     }
 

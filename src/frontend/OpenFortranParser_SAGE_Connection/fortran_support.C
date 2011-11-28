@@ -4576,7 +4576,7 @@ generateFunctionRefExp( Token_t* nameToken )
 
           functionDeclaration->set_parent(currentScope);
           functionDeclaration->set_scope(currentScope);
-
+          functionDeclaration->set_subprogram_kind(SgProcedureHeaderStatement::e_function_subprogram_kind); 
           setSourcePosition(functionDeclaration,nameToken);
        // We should not have to set this explicitly!
           setSourcePosition(functionDeclaration->get_parameterList(),nameToken);

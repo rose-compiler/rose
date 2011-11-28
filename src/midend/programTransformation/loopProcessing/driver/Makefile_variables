@@ -1,56 +1,38 @@
+# Non-recursive Makefile
 
-mpt_lpDriver_includes=\
-	-I$(mpt_lpDriverPath)/../prepostTransformation \
-	-I$(mpt_lpDriverPath)/../slicing \
-	-I$(mpt_lpDriverPath)/../computation \
-	-I$(mpt_lpDriverPath)/../depGraph \
-	-I$(mpt_lpDriverPath)/../depInfo \
-	-I$(top_srcdir)/src/util/support \
-	-I$(top_srcdir)/src/util/graphs \
-	-I$(top_srcdir)/src/midend/astUtil/astSupport \
-	-I$(top_srcdir)/src/midend/astUtil/symbolicVal \
-	-I$(top_srcdir)/src/midend/astUtil/astInterface
+mptlpDriver_la_sources=\
+	$(mptlpDriverPath)/BlockingAnal.C \
+	$(mptlpDriverPath)/FusionAnal.C \
+	$(mptlpDriverPath)/CopyArrayAnal.C \
+	$(mptlpDriverPath)/LoopTransformOptions.C \
+	$(mptlpDriverPath)/TransformComputation.C \
+	$(mptlpDriverPath)/InterchangeAnal.C \
+	$(mptlpDriverPath)/TypedFusionImpl.C \
+	$(mptlpDriverPath)/ParallelizeLoop.C \
+	$(mptlpDriverPath)/LoopTransformInterface.C \
+	$(mptlpDriverPath)/NormalizeCPP.C
 
+mptlpDriver_includeHeaders=\
+	$(mptlpDriverPath)/BlockingAnal.h \
+	$(mptlpDriverPath)/InterchangeAnal.h \
+	$(mptlpDriverPath)/CopyArrayAnal.h \
+	$(mptlpDriverPath)/LoopTransformOptions.h \
+	$(mptlpDriverPath)/LoopTransformInterface.h \
+	$(mptlpDriverPath)/FusionAnal.h \
+	$(mptlpDriverPath)/ParallelizeLoop.h \
+	$(mptlpDriverPath)/AutoTuningInterface.h
 
-# TODO: include in top-level?
-## The grammar generator (ROSETTA) should use its own template repository
-#CXX_TEMPLATE_REPOSITORY_PATH = .
+mptlpDriver_extraDist=\
+	$(mptlpDriverPath)/CMakeLists.txt
 
-
-mpt_lpDriver_la_sources=\
-	$(mpt_lpDriverPath)/BlockingAnal.C \
-	$(mpt_lpDriverPath)/FusionAnal.C \
-	$(mpt_lpDriverPath)/CopyArrayAnal.C \
-	$(mpt_lpDriverPath)/LoopTransformOptions.C \
-	$(mpt_lpDriverPath)/TransformComputation.C \
-	$(mpt_lpDriverPath)/InterchangeAnal.C \
-	$(mpt_lpDriverPath)/TypedFusionImpl.C \
-	$(mpt_lpDriverPath)/LoopTransformInterface.C \
-	$(mpt_lpDriverPath)/NormalizeCPP.C
-
-
-mpt_lpDriver_includeHeaders=\
-	$(mpt_lpDriverPath)/BlockingAnal.h \
-	$(mpt_lpDriverPath)/InterchangeAnal.h \
-	$(mpt_lpDriverPath)/CopyArrayAnal.h  \
-	$(mpt_lpDriverPath)/LoopTransformOptions.h \
-	$(mpt_lpDriverPath)/LoopTransformInterface.h\
-	$(mpt_lpDriverPath)/FusionAnal.h
-
-
-mpt_lpDriver_extraDist=\
-	$(mpt_lpDriverPath)/CMakeLists.txt
-
-
-
-mpt_lpDriver_cleanLocal=\
+mptlpDriver_cleanLocal=\
 	rm -rf \
-		$(mpt_lpDriverPath)/Templates.DB \
-		$(mpt_lpDriverPath)/ii_files \
-		$(mpt_lpDriverPath)/ti_files \
-		$(mpt_lpDriverPath)/cxx_templates
+		$(mptlpDriverPath)/cxx_templates \
+		$(mptlpDriverPath)/ii_files \
+		$(mptlpDriverPath)/ti_files \
+		$(mptlpDriverPath)/Templates.DB
 
-
-mpt_lpDriver_distCleanLocal=\
+mptlpDriver_distCleanLocal=\
 	rm -rf \
-		$(mpt_lpDriverPath)/Templates.DB
+		$(mptlpDriverPath)/Templates.DB
+

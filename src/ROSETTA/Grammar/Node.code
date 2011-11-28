@@ -623,7 +623,11 @@ class SgSharedVector {
         : p_pool(x.pool()), p_capacity(x.capacity()), p_size(x.size()) {}
     // new vector points to offset in initializer vector
     SgSharedVector(const SgSharedVector &x, size_type offset) {
-        assert(offset>=0 && offset<=x.size());
+
+     // DQ (11/3/2011): Avoid warning about pointless comparison of unsigned integer with zero.
+     // assert(offset>=0 && offset<=x.size());
+        assert(offset <= x.size());
+
         p_pool = x.pool() + offset;
         p_capacity = x.capacity() - offset;
         p_size = x.size() - offset;
@@ -693,11 +697,15 @@ class SgSharedVector {
         return at(n);
     }
     reference at(size_type n) {
-        assert(n>=0 && n<p_size);
+     // DQ (11/3/2011): Avoid warning about pointless comparison of unsigned integer with zero.
+     // assert(n>=0 && n<p_size);
+        assert(n < p_size);
+
         return p_pool[n];
     }
     const_reference at(size_type n) const {
-        assert(n>=0 && n<p_size);
+     // DQ (11/3/2011): Avoid warning about pointless comparison of unsigned integer with zero.
+        assert(n < p_size);
         return p_pool[n];
     }
     reference back() {
@@ -1940,6 +1948,7 @@ HEADER_START
 	  around a construct. */
       /* */
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
       /*! \brief Returns the CFG node for just before this AST node */
      /*! \brief Returns the CFG node for just before this AST node */
           VirtualCFG::CFGNode cfgForBeginning()
@@ -1955,7 +1964,9 @@ HEADER_START
                return VirtualCFG::CFGNode(this, this->cfgIndexForEnd());
 	          }
       /* */
+#endif
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
       /* name Control flow graph view helper functions
 
           These functions are used internally inside the control flow graph
@@ -1989,6 +2000,7 @@ HEADER_START
       /*! \brief Find the in edges of a CFG node from a static CFG -- internal version. */
           virtual std::vector<SgDirectedGraphEdge*> cfgInEdges(unsigned int index, StaticCFG::CFG* cfg)
           { return cfg->getInEdges(this, index); }
+#endif
 #endif
       /* */
 
