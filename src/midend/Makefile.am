@@ -10,6 +10,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 ## files, in order to avoid collisions when non-recursive make is used.
 AUTOMAKE_OPTIONS = subdir-objects
 
+include $(srcdir)/abstractHandle/Makefile_variables
 include $(srcdir)/astDiagnostics/Makefile_variables
 include $(srcdir)/astProcessing/Makefile_variables
 include $(srcdir)/astQuery/Makefile_variables
@@ -29,6 +30,7 @@ include $(srcdir)/programTransformation/ompLowering/Makefile_variables
 # use relative paths.
 #
 #mptPartialRedundancyEliminationPath=$(srcdir)/partialRedundancyElimination#
+mAbstractHandlePath=abstractHandle#
 mAstDiagnosticsPath=astDiagnostics#
 mAstProcessingPath=astProcessing#
 mAstQueryPath=astQuery#
@@ -42,7 +44,6 @@ SUBDIRS = \
 	binaryAnalyses
 if !ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 SUBDIRS += \
-	abstractHandle \
 	abstractMemoryObject \
 	astRewriteMechanism \
 	astUtil \
@@ -68,6 +69,7 @@ lib_LIBRARIES=\
 	$(mProgramTransformation_libLibraries)
 
 libmidend_la_SOURCES=\
+	$(mAbstractHandle_la_sources) \
 	$(mAstDiagnostics_la_sources) \
 	$(mAstProcessing_la_sources) \
 	$(mAstQuery_la_sources) \
@@ -81,6 +83,7 @@ libmidend_la_DEPENDENCIES=\
 	$(mAstQuery_la_dependencies)
 
 include_HEADERS = \
+	$(mAbstractHandle_includeHeaders) \
 	$(mAstDiagnostics_includeHeaders) \
 	$(mAstProcessing_includeHeaders) \
 	$(mAstQuery_includeHeaders) \
@@ -92,12 +95,14 @@ include_HEADERS = \
 
 EXTRA_DIST = \
 	CMakeLists.txt \
+	$(mAbstractHandle_extraDist) \
 	$(mAstDiagnostics_extraDist) \
 	$(mAstProcessing_extraDist) \
 	$(mAstQuery_extraDist) \
 	$(mProgramTransformation_extraDist)
 
 clean-local:
+	$(mAbstractHandle_cleanLocal)
 	$(mAstDiagnostics_cleanLocal)
 	$(mAstProcessing_cleanLocal)
 	$(mAstQuery_cleanLocal)
