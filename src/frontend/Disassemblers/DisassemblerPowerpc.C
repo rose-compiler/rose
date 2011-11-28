@@ -126,6 +126,12 @@ SgAsmPowerpcInstruction::terminatesBasicBlock() {
 }
 
 bool
+SgAsmPowerpcInstruction::is_unknown() const
+{
+    return powerpc_unknown_instruction == get_kind();
+}
+
+bool
 DisassemblerPowerpc::can_disassemble(SgAsmGenericHeader *header) const
 {
     SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();

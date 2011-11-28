@@ -119,6 +119,7 @@ HEADER_BINARY_INSTRUCTION_START
 							     bool *complete,
 							     MemoryMap *initial_memory=NULL);
 		virtual size_t get_size() const { return p_raw_bytes.size(); } //faster than obj->get_raw_bytes().size()
+		virtual bool is_unknown() const { abort(); } // too bad ROSETTA doesn't allow virtual base classes
 HEADER_BINARY_INSTRUCTION_END
 
 
@@ -3943,6 +3944,7 @@ HEADER_BINARY_X86_INSTRUCTION_START
 		virtual std::set<rose_addr_t> get_successors(const std::vector<SgAsmInstruction*>&,
 							     bool* complete,
 							     MemoryMap *initial_memory=NULL);
+		virtual bool is_unknown() const;
 HEADER_BINARY_X86_INSTRUCTION_END
 
 
@@ -3952,6 +3954,7 @@ HEADER_BINARY_POWERPC_INSTRUCTION_START
 		/* These virtual functions are implemented in DisassemblerPowerpc.C */
 		virtual bool terminatesBasicBlock();
 		virtual std::set<rose_addr_t> get_successors(bool* complete);
+		virtual bool is_unknown() const;
 HEADER_BINARY_POWERPC_INSTRUCTION_END
 
 
@@ -3961,6 +3964,7 @@ HEADER_BINARY_ARM_INSTRUCTION_START
 		/* These virtual functions are implemented in DisassemblerArm.C */
 		virtual bool terminatesBasicBlock();
 		virtual std::set<rose_addr_t> get_successors(bool* complete);
+		virtual bool is_unknown() const;
 HEADER_BINARY_ARM_INSTRUCTION_END
 
 
@@ -4001,8 +4005,8 @@ HEADER_BINARY_BLOCK_START
 		BLK_NONE	= 0x00000000,	/**< No particular reason.  Mostly just for initialization. */
 		BLK_ENTRY_POINT	= 0x00010000,	/**< Block is an entry point for the function. */
 		BLK_PADDING	= 0x00020000,	/**< Block is used for padding. */
-		BLK_INTRAFUNC	= 0x00080000,	/**< This block was created because it appears within the boundaries of an
-						 *   otherwise contiguous function. See also FUNC_INTRABLOCK. */
+		BLK_FRAGMENT	= 0x00080000,	/**< This block created because it seems to belong to the function although
+						 *   CFG traversal did not find it. */
 		BLK_CFGHEAD	= 0x00100000,	/**< Block serves as an explicit starting point for CFG analysis. */
 		BLK_USERDEF	= 0x00200000,	/**< User says block belongs to the function. */
 		BLK_LEFTOVERS	= 0x00400000,	/**< Block is being assigned to a FUNC_LEFTOVERS function because it could
