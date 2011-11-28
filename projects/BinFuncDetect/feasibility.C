@@ -36,8 +36,8 @@ executable_region_stats(Partitioner::RegionStats &mean, Partitioner::RegionStats
     //m.add_sample(Partitioner::RegionStats::RA_RCALLS,         0);             // no functions in raw buffers, so don't vote
     //v.add_sample(Partitioner::RegionStats::RA_RCALLS,         0);             // based on this analysis
 
-    m.add_sample(Partitioner::RegionStats::RA_REXTERNAL,        0.025);        // external branches would be outside the whole
-    v.add_sample(Partitioner::RegionStats::RA_REXTERNAL,        sigma(0.01)); // program address space, so there aren't many
+    m.add_sample(Partitioner::RegionStats::RA_RNONCALLS,        0.025);         // external branches would be outside the whole
+    v.add_sample(Partitioner::RegionStats::RA_RNONCALLS,        sigma(0.01));   // program address space, so there aren't many
 
     m.add_sample(Partitioner::RegionStats::RA_RINTERNAL,        0.9975);        // conversely, most branches should be inside
     v.add_sample(Partitioner::RegionStats::RA_RINTERNAL,        0.00010);       // the whole address space
@@ -107,7 +107,7 @@ main(int argc, char *argv[])
     /* Initialize a code criteria object with some reasonable values. */
     Partitioner::RegionStats m, v;
     executable_region_stats(m, v);
-    Partitioner::CodeCriteria *cc = partitioner->new_code_criteria(&m, &v);
+    Partitioner::CodeCriteria *cc = partitioner->new_code_criteria(&m, &v, 0.5);
     
     double vote;
     cc->satisfied_by(stats, &vote, &std::cout);

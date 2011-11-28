@@ -796,7 +796,14 @@ main(int argc, char *argv[])
     gblock->set_parent(interp);
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Evaluate how well the code criteria subsystem is working by asking whether each function consists of code.
+    // Evaluate how well the code criteria subsystem is working
+#if 0
+    Partitioner::RegionStats *mean=partitioner->get_aggregate_mean(), *variance=partitioner->get_aggregate_variance();
+    assert(mean && variance);
+    std::cerr <<"\n=== Aggregate mean ===\n" <<*mean <<"\n=== Aggregate variance ===\n" <<*variance <<"\n";
+    Partitioner::CodeCriteria *cc = partitioner->new_code_criteria(mean, variance, 0.5);
+    partitioner->set_code_criteria(cc);
+
     struct CodeDetector: public AstPrePostProcessing {
         Partitioner *partitioner;
         ExtentMap function_extent;
@@ -822,13 +829,26 @@ main(int argc, char *argv[])
             }
         }
     } code_detector(partitioner);
-    Partitioner::RegionStats *mean=partitioner->get_aggregate_mean(), *variance=partitioner->get_aggregate_variance();
-    assert(mean && variance);
-    std::cerr <<"\n=== Aggregate mean ===\n" <<*mean <<"\n=== Aggregate variance ===\n" <<*variance <<"\n";
-    Partitioner::CodeCriteria *cc = partitioner->new_code_criteria(mean, variance);
-    partitioner->set_code_criteria(cc);
     code_detector.traverse(gblock);
-    AsmUnparser().unparse(std::cout, gblock);
+
+    struct DataDetector: public AstSimpleProcessing {
+        Partitioner *partitioner;
+        DataDetector(Partitioner *partitioner): partitioner(partitioner) {}
+        void visit(SgNode *node) {
+            SgAsmStaticData *data = isSgAsmStaticData(node);
+            SgAsmBlock *blk = SageInterface::getEnclosingNode<SgAsmBlock>(data);
+            if (data && blk && 0==(blk->get_reason() & (SgAsmBlock::BLK_PADDING|SgAsmBlock::BLK_JUMPTABLE))) {
+                ExtentMap data_extent;
+                data_extent.insert(Extent(data->get_address(), data->get_size()));
+                double vote;
+                std::ostringstream ss;
+                bool iscode = partitioner->is_code(data_extent, &vote, &ss);
+                data->set_comment(ss.str());
+            }
+        }
+    } data_detector(partitioner);
+    data_detector.traverse(gblock, preorder);
+#endif
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     std::cerr <<"Generating function call graph...\n";
@@ -846,10 +866,12 @@ main(int argc, char *argv[])
     boost::write_graphviz(cgfile, cg, GraphvizVertexWriter<BinaryAnalysis::FunctionCall::Graph>(cg));
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#if 0
     std::cerr <<"Generating output...\n";
+#if 1
     MyUnparser<BinaryAnalysis::FunctionCall::Graph> unparser(cg, ida, disassembler);
     unparser.unparse(std::cout, gblock);
+#else
+    AsmUnparser().unparse(std::cout, gblock);
 #endif
     statistics(interp, insns, ida);
 
