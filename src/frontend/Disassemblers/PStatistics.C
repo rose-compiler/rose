@@ -35,11 +35,11 @@ Partitioner::RegionStats::init_class()
         define_analysis("rbranches",    "ratio of nbranches to ninsns",                 1.0, RA_RBRANCHES);
         define_analysis("ncalls",       "calls to previously known functions",          0.0, RA_NCALLS);
         define_analysis("rcalls",       "ratio of ncalls to nbranches",                 1.0, RA_RCALLS);
-        define_analysis("nexternal",    "branches to outside this region",              0.0, RA_NEXTERNAL);
-        define_analysis("rexternal",    "ratio of nexternal to nbranches",              1.0, RA_REXTERNAL);
+        define_analysis("nnoncalls",    "external branches to non-functions",           0.0, RA_NNONCALLS);
+        define_analysis("rnoncalls",    "ratio of nnoncalls to nbranches",              1.0, RA_RNONCALLS);
         define_analysis("ninternal",    "branches to inside this region",               0.0, RA_NINTERNAL);
         define_analysis("rinternal",    "ratio of ninternal to nbranches",              1.0, RA_RINTERNAL);
-        define_analysis("nicfgedges",   "total internal CFG edges",                     0.0, RA_NICFGEDGES);
+        define_analysis("nicfgedges",   "total internal instruction CFG edges",         0.0, RA_NICFGEDGES);
         define_analysis("ricfgedges",   "ratio of nicfgedges to ninsns",                1.0, RA_RICFGEDGES);
         define_analysis("ncomps",       "connected components of internal CFG",         0.0, RA_NCOMPS);
         define_analysis("rcomps",       "ratio of ncomps to ninsns",                    1.0, RA_RCOMPS);
@@ -208,7 +208,7 @@ Partitioner::RegionStats::compute_ratios()
     set_value(RA_RFLOAT,      divnan(RA_NFLOAT,      RA_NINSNS));
 
     set_value(RA_RCALLS,      divnan(RA_NCALLS,      RA_NBRANCHES));
-    set_value(RA_REXTERNAL,   divnan(RA_NEXTERNAL,   RA_NBRANCHES));
+    set_value(RA_RNONCALLS,   divnan(RA_NNONCALLS,   RA_NBRANCHES));
     set_value(RA_RINTERNAL,   divnan(RA_NINTERNAL,   RA_NBRANCHES));
 }
 
@@ -254,11 +254,11 @@ Partitioner::CodeCriteria::init_class()
 {}
 
 void
-Partitioner::CodeCriteria::init(const RegionStats *mean, const RegionStats *variance)
+Partitioner::CodeCriteria::init(const RegionStats *mean, const RegionStats *variance, double threshold)
 {
     assert(mean!=NULL && variance!=NULL);
     assert(mean->get_nanalyses()==variance->get_nanalyses());
-    threshold = 0.5;
+    this->threshold = threshold;
     size_t n = mean->get_nanalyses();
     for (size_t analysis_id=0; analysis_id<n; ++analysis_id) {
         if (!mean->get_name(analysis_id).empty() && mean->get_weight(analysis_id)>0.0) {
@@ -752,8 +752,9 @@ Partitioner::region_statistics(const ExtentMap &addresses)
     size_t noverlaps=0;                         // instructions overlapping with a previously found instruction
     size_t nincomplete=0;                       // number of instructions with unknown successors
     size_t nfallthrough=0;                      // number of branches to fall-through address within our "addresses"
-    size_t ncalls=0;                            // number of function calls
-    size_t ninternal=0, nexternal=0;            // non-fallthrough internal and external branches
+    size_t ncalls=0;                            // number of function calls outside our "addresses"
+    size_t nnoncalls=0;                         // number of branches to non-functions outside our "addresses"
+    size_t ninternal=0;                         // number of non-fallthrough internal branches
 
     while (!pending.empty()) {
         rose_addr_t start_va = pending.min();
@@ -764,7 +765,7 @@ Partitioner::region_statistics(const ExtentMap &addresses)
             rose_addr_t va = *worklist.begin();
             worklist.erase(worklist.begin());
 
-            /* Obtain (disassemble) the instruction and make sure it falls entirely without the "addresses" */
+            /* Obtain (disassemble) the instruction and make sure it falls entirely within the "addresses" */
             Instruction *insn = find_instruction(va);
             if (!insn) {
                 ++nfails;
@@ -777,6 +778,14 @@ Partitioner::region_statistics(const ExtentMap &addresses)
                 pending.erase(Extent(va));
                 continue;
             }
+
+            /* The disassembler can also return an "unknown" instruction when failing, depending on how it is invoked. */
+            if (insn->node->is_unknown()) {
+                ++nfails;
+                pending.erase(Extent(va, insn->get_size()));
+                continue;
+            }
+
             insns_found.insert(std::make_pair(va, insn));
             rose_addr_t fall_through_va = va + insn->get_size();
 
@@ -805,10 +814,8 @@ Partitioner::region_statistics(const ExtentMap &addresses)
             /* Classify the various successors. */
             for (Disassembler::AddressSet::const_iterator si=succs.begin(); si!=succs.end(); ++si) {
                 rose_addr_t succ_va = *si;
-                if (functions.find(succ_va)!=functions.end()) {
-                    /* A branch to a function entry point we've previously discovered. */
-                    ++ncalls;
-                }
+
+
                 if (succ_va==fall_through_va) {
                     ++nfallthrough;
                     if (pending.find(succ_va)!=pending.end())
@@ -818,7 +825,12 @@ Partitioner::region_statistics(const ExtentMap &addresses)
                     add_edge(va2id[va], va2id[succ_va], cfg);
                 } else if (addresses.find(succ_va)==addresses.end()) {
                     /* A non-fallthrough branch to something outside this memory region */
-                    ++nexternal;
+                    if (functions.find(succ_va)!=functions.end()) {
+                        /* A branch to a function entry point we've previously discovered. */
+                        ++ncalls;
+                    } else {
+                        ++nnoncalls;
+                    }
                 } else {
                     /* A non-fallthrough branch to something in our address range. */
                     ++ninternal;
@@ -840,9 +852,9 @@ Partitioner::region_statistics(const ExtentMap &addresses)
     stats->add_sample(RegionStats::RA_NSTARTS, nstarts);
     stats->add_sample(RegionStats::RA_NCOVERAGE, insns_extent.size());
     stats->add_sample(RegionStats::RA_NINCOMPLETE, nincomplete);
-    stats->add_sample(RegionStats::RA_NBRANCHES, ninternal+nexternal);
+    stats->add_sample(RegionStats::RA_NBRANCHES, ncalls+nnoncalls+ninternal);
     stats->add_sample(RegionStats::RA_NCALLS, ncalls);
-    stats->add_sample(RegionStats::RA_NEXTERNAL, nexternal);
+    stats->add_sample(RegionStats::RA_NNONCALLS, nnoncalls);
     stats->add_sample(RegionStats::RA_NINTERNAL, ninternal);
     stats->add_sample(RegionStats::RA_NICFGEDGES, ninternal + nfallthrough);
     stats->add_sample(RegionStats::RA_NIUNIQUE, count_kinds(insns_found));
@@ -911,7 +923,7 @@ Partitioner::is_code(const ExtentMap &region, double *raw_vote_ptr, std::ostream
         /* Use cached values if possible. */
         RegionStats *mean = aggregate_statistics();
         RegionStats *variance = get_aggregate_variance();
-        cc = new_code_criteria(mean, variance);
+        cc = new_code_criteria(mean, variance, 0.5);
     }
 
     /* Compare region analysis results with aggregate statistics */

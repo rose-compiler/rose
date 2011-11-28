@@ -607,6 +607,335 @@ public:
     typedef RangeMap<Extent, DataRangeMapValue> DataRangeMap;
 
     /**************************************************************************************************************************
+     *                                  Methods for characterizing whether something is code
+     **************************************************************************************************************************/
+public:
+
+    /** Statistics computed over a region of an address space.  Most of the members are floating point because they are also
+     *  used to compute averages. For instance, aggregate_statistics() can compute the average number of instructions per
+     *  function.
+     *
+     *  This is a virtual class so that users can easily augment it with additional analyses.  The Partitioner never
+     *  instantiates RegionStats objects directly, but rather always by calling Partitioner::new_region_stats().  The
+     *  statistics are computed by methods like Partitioner::region_statistics() and Partitioner::aggregate_statistics(), which
+     *  the user can also agument or replace.
+     *
+     *  @code
+     *  // TODO: add an example showing how to specialize this class.
+     *  @endcode
+     *
+     *  See also, Partitioner::CodeCriteria. */
+    class RegionStats {
+    private:
+        struct DictionaryEntry {
+            DictionaryEntry(): weight(0.0) {}
+            DictionaryEntry(const std::string &name, const std::string &desc, double weight)
+                : name(name), desc(desc), weight(weight) {}
+            std::string name;
+            std::string desc;
+            double weight;                                      /**< Default weight for CodeCriteria. */
+        };
+
+        struct AnalysisResult {
+            AnalysisResult(): sum(0), nsamples(0) {}
+            AnalysisResult(double d): sum(d), nsamples(1) {} // implicit
+            double sum;
+            size_t nsamples;
+        };
+
+        static std::vector<DictionaryEntry> dictionary;
+        std::vector<AnalysisResult> results;
+
+    public:
+        /** IDs for predefined analyses.  Derived classes should start their numbering at the value returned by get_nanalyses()
+         *  after allowing this base class to initialize itself. */
+        enum AnalysisEnum {
+            RA_NBYTES=0, RA_NINSNS, RA_NCOVERAGE, RA_RCOVERAGE, RA_NSTARTS, RA_NFAILS, RA_RFAILS, RA_NOVERLAPS, RA_ROVERLAPS,
+            RA_NINCOMPLETE, RA_RINCOMPLETE, RA_NBRANCHES, RA_RBRANCHES, RA_NCALLS, RA_RCALLS, RA_NNONCALLS, RA_RNONCALLS,
+            RA_NINTERNAL, RA_RINTERNAL, RA_NICFGEDGES, RA_RICFGEDGES, RA_NCOMPS, RA_RCOMPS, RA_NIUNIQUE, RA_RIUNIQUE,
+            RA_NREGREFS, RA_RREGREFS, RA_REGSZ, RA_REGVAR, RA_NPRIV, RA_RPRIV, RA_NFLOAT, RA_RFLOAT
+        };
+
+        RegionStats() { init_class(); }
+        virtual ~RegionStats() {}
+        virtual RegionStats* create() const;                    /**< Return a new, allocated copy of this object. */
+
+        /** Add a new analysis to this RegionStats container. */
+        static size_t define_analysis(const std::string &name, const std::string &desc, double weight, size_t id=(size_t)(-1));
+        static size_t find_analysis(const std::string &name);   /**< Return the ID for an analysis based on name. */
+        static size_t get_nanalyses();                          /**< Number of anlyses defined by this class and super classes. */
+        static const std::string& get_name(size_t id);          /**< Returns name of analysis. */
+        static const std::string& get_desc(size_t id);          /**< Returns one-line description of analysis. */
+        static double get_weight(size_t id);                    /**< Returns the default weight in the analysis definition. */
+
+        virtual void add_sample(size_t id, double val, size_t nsamples=1);  /**< Add another sample point to this container. */
+        virtual size_t get_nsamples(size_t id) const;           /**< Returns the number of samples accumulated for an analysis. */
+        virtual double get_sum(size_t id) const;                /**< Returns the sum stored for the analysis. */
+        virtual double get_value(size_t id) const;              /**< Returns the value (sum/nsamples) of an analysis. */
+        virtual void compute_ratios();                          /**< Called to compute ratios, etc. from other stats. */
+        virtual void set_value(size_t id, double val);          /**< Set value to indicated single sample unless value is NaN. */
+
+        double divnan(size_t num_id, size_t den_id) const;      /**< Safely computes the ratio of two values. */
+        void add_samples(const RegionStats*);                   /**< Add samples from other statistics object to this one. */
+        void square_diff(const RegionStats*);                   /**< Compute square of differences. */
+
+        virtual void print(std::ostream&) const;
+        friend std::ostream& operator<<(std::ostream&, const RegionStats&);
+    protected:
+        static void init_class();
+
+    };
+
+    /** Criteria to decide whether a region of memory contains code.
+     *
+     *  Ultimately, one often needs to answer the question of whether an arbitrary region of memory contains code or data.  A
+     *  CodeCriteria object can be used to help answer that question.  Such an object contains criteria for multiple analyses.
+     *  The criteria can be initialized by hand, or by running the analyses over parts of the program that we already know to
+     *  be code (see Partitioner::aggregate_statistics()). In the latter case, the criteria are automatically fine tuned based
+     *  on characteristics of the specimen executable itself.
+     *
+     *  Each criterion is assumed to have a Gaussian distribution (this class can be specialized if something else is needed)
+     *  and therefore stores a mean and variance.  Each criterion also stores a weight relative to the other criteria.
+     *
+     *  To determine the probability that a sample contains code, the analyses, \f$A_i\f$, are run over the sample to produce a
+     *  set of analysis results \f$R_i\f$.  Each analysis result is compared against the corresponding probability
+     *  density function \f$f_i(x)\f$ to obtain the likelihood (in the range zero to one) that the sample is code.  The
+     *  probability density function is characterized by the criterion mean, \f$\mu_i\f$, and variance \f$\sigma_i^2\f$. The
+     *  Guassian probability distribution function is:
+     *
+     *  \f[ f_i(x) = \frac{1}{\sqrt{2 \pi \sigma^2}} e^{-\frac{(x - \mu)^2}{2\sigma^2}} \f]
+     *
+     *
+     *  The likelihood, \f$C_i(R_i)\f$ that \f$R_i\f$ is representative of valid code is computed as the area under the
+     *  probability density curve further from the mean value than \f$R_i\f$.  In other words:
+     *
+     *  \f[ C_i(x) = 2 \int_{-\inf}^{\mu_i-|\mu_i-x|} f_i(x) dx = 1 - {\rm erf}(-\frac{|x-\mu_i|}{\sqrt{2\sigma_i^2}}) \f]
+     *
+     *  A criterion that has an undefined \f$R_i\f$ value does not contribute to the final vote. Similarly, criteria that have
+     *  zero variance contribute a vote of zero or one:
+     *
+     *  \f[
+     *      C_i(x) = \left\{
+     *          \begin{array}{cl}
+     *              1 & \quad \mbox{if } x = \mu_i \\
+     *              0 & \quad \mbox{if } x \ne \mu_i
+     *          \end{array}
+     *      \right.
+     *   \f]
+     *
+     *  The individual probabilities from each analysis are weighted relative to one another to obtain a final probability,
+     *  which is then compared against a threshold.  If the probability is equal to or greater than the threshold, then the
+     *  sample is considered to be code.
+     *
+     *  The Partitioner never instantiates a CodeCriteria object directly, but rather always uses the new_code_criteria()
+     *  virtual method.  This allows the user to easily augment this class to do something more interesting.
+     *
+     *  Here's an example of using this class to determine if some uncategorized region of memory contains code.  First we compute
+     *  aggregate statistics across all the known functions.  Then we use the mean and variance in those statistics to create a
+     *  code criteria specification.  Then we run the same analyses over the uncategorized region of memory and ask whether the
+     *  results satisfy the criteria.  This example is essentially the implementation of Partitioner::is_code().
+     *
+     *  @code
+     *  partitioner->aggregate_statistics(); // compute stats if not already cached
+     *  Partitioner::RegionStats *mean = partitioner->get_aggregate_mean();
+     *  Partitioner::RegionStats *variance = partitioner->get_aggregate_variance();
+     *  Partitioner::CodeCriteria *cc = partitioner->new_code_criteria(mean, variance);
+     *
+     *  ExtentMap uncategorized_region = ....;
+     *  Partitioner::RegionStats *stats = region_statistics(uncategorized_region);
+     *  if (cc->satisfied_by(stats))
+     *      std::cout <<"this looks like code" <<std::endl;
+     *  delete stats;
+     *  delete cc;
+     *  @endcode
+     */
+    class CodeCriteria {
+    private:
+        struct DictionaryEntry {
+            DictionaryEntry() {}
+            DictionaryEntry(const std::string &name, const std::string &desc): name(name), desc(desc) {}
+            std::string name;
+            std::string desc;
+        };
+
+        struct Criterion {
+            Criterion(): mean(0.0), variance(0.0), weight(0.0) {}
+            double mean;
+            double variance;
+            double weight;
+        };
+
+        static std::vector<DictionaryEntry> dictionary;
+        std::vector<Criterion> criteria;
+        double threshold;
+
+    public:
+        CodeCriteria(): threshold(0.5) { init_class(); }
+        CodeCriteria(const RegionStats *mean, const RegionStats *variance, double threshold) {
+            init_class();
+            init(mean, variance, threshold);
+        }
+        virtual ~CodeCriteria() {}
+        virtual CodeCriteria* create() const;
+
+        static size_t define_criterion(const std::string &name, const std::string &desc, size_t id=(size_t)(-1));
+        static size_t find_criterion(const std::string &name);
+        static size_t get_ncriteria();
+        static const std::string& get_name(size_t id);
+        static const std::string& get_desc(size_t id);
+
+        virtual double get_mean(size_t id) const;
+        virtual void set_mean(size_t id, double mean);
+        virtual double get_variance(size_t id) const;
+        virtual void set_variance(size_t id, double variance);
+        virtual double get_weight(size_t id) const;
+        virtual void set_weight(size_t id, double weight);
+        void set_value(size_t id, double mean, double variance, double weight) {
+            set_mean(id, mean);
+            set_variance(id, variance);
+            set_weight(id, weight);
+        }
+
+        double get_threshold() const { return threshold; }
+        void set_threshold(double th) { threshold=th; }
+        virtual double get_vote(const RegionStats*, std::vector<double> *votes=NULL) const;
+        virtual bool satisfied_by(const RegionStats*, double *raw_vote_ptr=NULL, std::ostream *debug=NULL) const;
+
+        virtual void print(std::ostream&, const RegionStats *stats=NULL, const std::vector<double> *votes=NULL,
+                           const double *total_vote=NULL) const;
+        friend std::ostream& operator<<(std::ostream&, const CodeCriteria&);
+
+    protected:
+        static void init_class();
+        virtual void init(const RegionStats *mean, const RegionStats *variance, double threshold);
+        
+    };
+
+    /** Create a new region statistics object.  We do it this way because the statistics class is closely tied to the
+     *  partitioner class, but users might want to augment the statistics.  The RegionStats is a virtual class as is this
+     *  creator. */
+    virtual RegionStats *new_region_stats() {
+        return new RegionStats;
+    }
+
+    /** Create a new criteria object.  This allows a user to derive a new class from CodeCriteria and have that class be used
+     *  by the partitioner.
+     * @{ */
+    virtual CodeCriteria *new_code_criteria() {
+        return new CodeCriteria;
+    }
+    virtual CodeCriteria *new_code_criteria(const RegionStats *mean, const RegionStats *variance, double threshold) {
+        return new CodeCriteria(mean, variance, threshold);
+    }
+    /** @} */
+
+    /** Computes various statistics over part of an address space.  If no region is supplied then the statistics are calculated
+     *  over the part of the Partitioner memory map that contains execute permission.  The statistics are returned by argument
+     *  so that subclasses have an easy way to augment them.
+     *@{ */
+    virtual RegionStats *region_statistics(const ExtentMap&);
+    virtual RegionStats *region_statistics(Function*);
+    virtual RegionStats *region_statistics();
+    /** @} */
+
+    /** Computes aggregate statistics over all known functions.  This method computes region statistics for each individual
+     *  function (except padding and leftovers) and obtains an average and, optionally, the variance.  The average and variance
+     *  are cached in the partitioner and can be retrieved by get_aggregate_mean() and get_aggregate_variance().  This method
+     *  also returns the mean regardless of whether its cached. The values are not recomputed if they are already cached; the
+     *  cache can be cleared with clear_aggregate_cache(). */
+    virtual RegionStats *aggregate_statistics(bool do_variance=true);
+
+    /** Accessors for cached aggregate statistics.  If the partitioner has aggregated statistics over known functions, then
+     *  that information is available by this method: get_aggregate_mean() returns the average values over all functions, and
+     *  get_aggregate_variance() returns the variance.  The partitioner normally calculates this information immediately after
+     *  performing the first CFG analysis, after most instructions are added to most functions, but before data blocks are
+     *  added.  A null pointer is returned if the information is not available.  The user is allowed to modify the values, but
+     *  should not free the objects.  New values can be computed by clearing the cache (clear_aggregate_statistics()) and then
+     *  calling a function that computes them again, such as aggregate_statistics() or is_code().
+     * @{ */
+    virtual RegionStats *get_aggregate_mean() const { return aggregate_mean; }
+    virtual RegionStats *get_aggregate_variance() const { return aggregate_variance; }
+    /** @} */
+
+    /** Causes the partitioner to forget statistics.  The statistics aggregated over known functions are discarded, and
+     *  subsequent calls to get_aggregate_mean() and get_aggregate_variance() will return null pointers until the data is
+     *  recalculated (if ever). */
+    virtual void clear_aggregate_statistics() {
+        delete aggregate_mean;       aggregate_mean = NULL;
+        delete aggregate_variance;   aggregate_variance = NULL;
+    }
+
+    /** Counts the number of distinct kinds of instructions.  The counting is based on the instructions' get_kind() method.
+     *  @{ */
+    virtual size_t count_kinds(const InstructionMap&);
+    virtual size_t count_kinds() { return count_privileged(insns); }
+    /** @} */
+
+    /** Counts the number of privileged instructions.  Such instructions are generally don't appear in normal code.
+     *  @{ */
+    virtual size_t count_privileged(const InstructionMap&);
+    virtual size_t count_privileged() { return count_privileged(insns); }
+    virtual double ratio_privileged() { return insns.empty() ? NAN : (double)count_privileged(insns) / insns.size(); }
+    /** @} */
+
+    /** Counts the number of floating point instructions.
+     *  @{ */
+    virtual size_t count_floating_point(const InstructionMap&);
+    virtual size_t count_floating_point() { return count_floating_point(insns); }
+    virtual double ratio_floating_point() { return insns.empty() ? NAN : (double)count_floating_point(insns) / insns.size(); }
+    /** @} */
+
+    /** Counts the number of register references.  Returns the total number of register reference expressions, but the real
+     *  value of this method is that it also computes the an average register reference size and variance.  Register sizes are
+     *  represented as a power of two in an attempt to weight common register sizes equally.  In other words, a 16 bit program
+     *  with a couple of 8 bit values should have a variance that's close to a similar sized 32-bit program with a couple of
+     *  16-bit values.
+     * @{ */
+    virtual size_t count_registers(const InstructionMap&, double *mean=NULL, double *variance=NULL);
+    virtual size_t count_registers(double *mean=NULL, double *variance=NULL) { return count_registers(insns, mean, variance); }
+    virtual double ratio_registers(double *mean=NULL, double *variance=NULL) {
+        return insns.empty() ? NAN : (double)count_registers(mean, variance) / insns.size();
+    }
+    /** @} */
+
+    /** Returns the variance of instruction bit widths.  The variance is computed over the instruction size, the address size,
+     *  and the operand size.  The sizes 16-, 32-, and 64-bit are mapped to the integers 0, 1, and 2 respectively and the mean
+     *  is computed.  The variance is the sum of squares of the difference between each data point and the mean.  Returns NAN
+     *  if the instruction map is empty.  Most valid code has a variance of less than 0.05.
+     *  @{ */
+    virtual double count_size_variance(const InstructionMap &insns);
+    virtual double count_size_variance() { return count_size_variance(insns); }
+    /** @} */
+
+    /** Determines if a region contains code.  The determination is made by computing aggregate statistics over each of the
+     *  functions that are already known, then building a CodeCriteria object.  The same analysis is run over the region in
+     *  question and the compared with the CodeCriteria object.  The criteria is then discarded.
+     *
+     *  If the partitioner's get_aggregate_mean() and get_aggregate_variance() return non-null values, then those statistics
+     *  are used in favor of computing new ones.  If new statistics are computed, they will be cached for those methods to
+     *  return later.
+     *
+     *  If a raw_vote_ptr is supplied, then upon return it will hold a value between zero and one, inclusive, which is the
+     *  weighted average of the votes from the individual analyses.  The raw vote is the value compared against the code
+     *  criteria threshold to obtain a Boolean result. */
+    virtual bool is_code(const ExtentMap &region, double *raw_vote_ptr=NULL, std::ostream *debug=NULL);
+
+    /** Accessors for code criteria.  A CodeCriteria object can be associated with the Partitioner, in which case the
+     *  partitioner does not compute statistics over the known functions, but rather uses the code criteria directly.
+     *  The caller is reponsible for allocating and freeing the criteria.  If no criteria is supplied, then one is created as
+     *  necessary by calling new_code_criteria() and passing it the average and variance computed over all the functions
+     *  (excluding leftovers and padding) or use the values cached in the partitioner.
+     * @{ */
+    virtual CodeCriteria *get_code_criteria() const { return code_criteria; }
+    virtual void set_code_criteria(CodeCriteria *cc) { code_criteria = cc; }
+    /** @} */
+
+protected:
+    RegionStats *aggregate_mean;                /**< Aggregate statistics returned by get_region_stats_mean(). */
+    RegionStats *aggregate_variance;            /**< Aggregate statistics returned by get_region_stats_variance(). */
+    CodeCriteria *code_criteria;                /**< Criteria used to determine if a region contains code or data. */
+
+    /**************************************************************************************************************************
      *                                  Functions for scanning through memory
      **************************************************************************************************************************/
 public:
@@ -871,24 +1200,47 @@ public:
         virtual bool operator()(bool enabled, const Args &args);
     };
 
-    /** Callback to insert unreachable intra-function blocks.  This callback can be passed to the scan_unassigned_bytes()
-     *  method's callback list.  Whenever it detects a block of unassigned bytes between blocks that both belong to the
-     *  same function and the function is considered contiguous via the non-strict version of the is_contiguous() method, then
-     *  the block in question is added to the function.
+    /** Callback to insert unreachable code fragments.  This callback can be passed to the scan_unassigned_bytes() method's
+     *  callback list.  Whenever it detects a region of unassigned bytes that looks like it might be code, it generates basic
+     *  blocks and attaches them to the immediately preceding function.
      *
-     *  If the @p require_contiguous property is set (the default) then this callback is triggered only if the surrounding
+     *  If the @p require_noninterleaved property is set (the default) then the callback is triggered only if the preceding
      *  function's extent is not interleaved with other functions.  Normally, if two or more functions are interleaved then we
-     *  cannot assume that the range of instructions being analyzed by this callback belong to the surrounding function or some
-     *  other (also interleaved) function.
+     *  cannot assume that the range of instructions being analyzed by this callback belongs to the surrounding function or
+     *  some other (possibly interleaved) function.
+     *
+     *  If the @p require_intrafunction property is set (default is clear) then the region being analyzed must be immediately
+     *  followed by something that belongs to the preceding function.
+     *
+     *  A fragment is added to the preceding function only if the fragment looks statistically like code.  A CodeCriteria
+     *  object is created on the first call if necessary and is initialized based on the statistics computed across all known
+     *  functions (as returned by Partitioner::aggregate_statistics()) and the @p threshold data member.  The caller can supply
+     *  its own CodeCriteria if desired, in which case FindFunctionFragments::threshold is unused.  In either case, the
+     *  CodeCriteria object is deleted when the FindFunctionFragments object is deleted.
+     *
+     *  This callback is skipped if the preceding function contains any of the SgAsmFunction::FunctionReason bits that are set
+     *  in the @p excluded_reasons data member.  The default is to exclude functions created for padding or thunks.
      *
      *  This callback might create new basic blocks as a side effect even if those blocks are not added to any function. */
-    struct FindIntraFunctionInsns: public ByteRangeCallback {
-        bool require_contiguous;                                /**< If set, then surrounding function must be contiguous. */
-        FunctionRangeMap *function_extents;                     /**< Cached function extents computed on first call. */
-        size_t nfound;                                          /**< Number of basic blocks added by this callback. */
+    struct FindFunctionFragments: public ByteRangeCallback {
+        bool require_noninterleaved;                            /**< If set, then preceding function cannot be interleaved. */
+        bool require_intrafunction;                             /**< If set, range must be inside the preceding function. */
+        double threshold;                                       /**< Threshold for determining whether range is code. */
+        unsigned excluded_reasons;                              /**< Functions for which callback should be skipped. */
+        size_t nfound;                                          /**< Number of regions added as code fragments. */
 
-        FindIntraFunctionInsns(): require_contiguous(true), function_extents(NULL), nfound(0) {}
-        virtual ~FindIntraFunctionInsns() { delete function_extents; }
+        FunctionRangeMap *function_extents;                     /**< Cached function extents computed on first call. */
+        CodeCriteria *code_criteria;                            /**< Cached code criteria computed on first call. */
+
+        FindFunctionFragments()
+            : require_noninterleaved(true), require_intrafunction(false), threshold(0.7),
+              excluded_reasons(SgAsmFunction::FUNC_PADDING|SgAsmFunction::FUNC_THUNK),
+              nfound(0), function_extents(NULL), code_criteria(NULL)
+            {}
+        virtual ~FindFunctionFragments() {
+            delete function_extents;
+            delete code_criteria;
+        }
         virtual bool operator()(bool enabled, const Args &args);
     };
 
@@ -976,335 +1328,6 @@ protected:
     static InstructionMap::const_iterator pattern3(const InstructionMap& insns, InstructionMap::const_iterator first,
                                                    Disassembler::AddressSet &exclude);
 #endif
-
-    /**************************************************************************************************************************
-     *                                  Methods for characterizing whether something is code
-     **************************************************************************************************************************/
-public:
-
-    /** Statistics computed over a region of an address space.  Most of the members are floating point because they are also
-     *  used to compute averages. For instance, aggregate_statistics() can compute the average number of instructions per
-     *  function.
-     *
-     *  This is a virtual class so that users can easily augment it with additional analyses.  The Partitioner never
-     *  instantiates RegionStats objects directly, but rather always by calling Partitioner::new_region_stats().  The
-     *  statistics are computed by methods like Partitioner::region_statistics() and Partitioner::aggregate_statistics(), which
-     *  the user can also agument or replace.
-     *
-     *  @code
-     *  // TODO: add an example showing how to specialize this class.
-     *  @endcode
-     *
-     *  See also, Partitioner::CodeCriteria. */
-    class RegionStats {
-    private:
-        struct DictionaryEntry {
-            DictionaryEntry(): weight(0.0) {}
-            DictionaryEntry(const std::string &name, const std::string &desc, double weight)
-                : name(name), desc(desc), weight(weight) {}
-            std::string name;
-            std::string desc;
-            double weight;                                      /**< Default weight for CodeCriteria. */
-        };
-
-        struct AnalysisResult {
-            AnalysisResult(): sum(0), nsamples(0) {}
-            AnalysisResult(double d): sum(d), nsamples(1) {} // implicit
-            double sum;
-            size_t nsamples;
-        };
-
-        static std::vector<DictionaryEntry> dictionary;
-        std::vector<AnalysisResult> results;
-
-    public:
-        /** IDs for predefined analyses.  Derived classes should start their numbering at the value returned by get_nanalyses()
-         *  after allowing this base class to initialize itself. */
-        enum AnalysisEnum {
-            RA_NBYTES=0, RA_NINSNS, RA_NCOVERAGE, RA_RCOVERAGE, RA_NSTARTS, RA_NFAILS, RA_RFAILS, RA_NOVERLAPS, RA_ROVERLAPS,
-            RA_NINCOMPLETE, RA_RINCOMPLETE, RA_NBRANCHES, RA_RBRANCHES, RA_NCALLS, RA_RCALLS, RA_NEXTERNAL, RA_REXTERNAL,
-            RA_NINTERNAL, RA_RINTERNAL, RA_NICFGEDGES, RA_RICFGEDGES, RA_NCOMPS, RA_RCOMPS, RA_NIUNIQUE, RA_RIUNIQUE,
-            RA_NREGREFS, RA_RREGREFS, RA_REGSZ, RA_REGVAR, RA_NPRIV, RA_RPRIV, RA_NFLOAT, RA_RFLOAT
-        };
-
-        RegionStats() { init_class(); }
-        virtual ~RegionStats() {}
-        virtual RegionStats* create() const;                    /**< Return a new, allocated copy of this object. */
-
-        /** Add a new analysis to this RegionStats container. */
-        static size_t define_analysis(const std::string &name, const std::string &desc, double weight, size_t id=(size_t)(-1));
-        static size_t find_analysis(const std::string &name);   /**< Return the ID for an analysis based on name. */
-        static size_t get_nanalyses();                          /**< Number of anlyses defined by this class and super classes. */
-        static const std::string& get_name(size_t id);          /**< Returns name of analysis. */
-        static const std::string& get_desc(size_t id);          /**< Returns one-line description of analysis. */
-        static double get_weight(size_t id);                    /**< Returns the default weight in the analysis definition. */
-
-        virtual void add_sample(size_t id, double val, size_t nsamples=1);  /**< Add another sample point to this container. */
-        virtual size_t get_nsamples(size_t id) const;           /**< Returns the number of samples accumulated for an analysis. */
-        virtual double get_sum(size_t id) const;                /**< Returns the sum stored for the analysis. */
-        virtual double get_value(size_t id) const;              /**< Returns the value (sum/nsamples) of an analysis. */
-        virtual void compute_ratios();                          /**< Called to compute ratios, etc. from other stats. */
-        virtual void set_value(size_t id, double val);          /**< Set value to indicated single sample unless value is NaN. */
-
-        double divnan(size_t num_id, size_t den_id) const;      /**< Safely computes the ratio of two values. */
-        void add_samples(const RegionStats*);                   /**< Add samples from other statistics object to this one. */
-        void square_diff(const RegionStats*);                   /**< Compute square of differences. */
-
-        virtual void print(std::ostream&) const;
-        friend std::ostream& operator<<(std::ostream&, const RegionStats&);
-    protected:
-        static void init_class();
-
-    };
-
-    /** Criteria to decide whether a region of memory contains code.
-     *
-     *  Ultimately, one often needs to answer the question of whether an arbitrary region of memory contains code or data.  A
-     *  CodeCriteria object can be used to help answer that question.  Such an object contains criteria for multiple analyses.
-     *  The criteria can be initialized by hand, or by running the analyses over parts of the program that we already know to
-     *  be code (see Partitioner::aggregate_statistics()). In the latter case, the criteria are automatically fine tuned based
-     *  on characteristics of the specimen executable itself.
-     *
-     *  Each criterion is assumed to have a Gaussian distribution (this class can be specialized if something else is needed)
-     *  and therefore stores a mean and variance.  Each criterion also stores a weight relative to the other criteria.
-     *
-     *  To determine the probability that a sample contains code, the analyses, \f$A_i\f$, are run over the sample to produce a
-     *  set of analysis results \f$R_i\f$.  Each analysis result is compared against the corresponding probability
-     *  density function \f$f_i(x)\f$ to obtain the likelihood (in the range zero to one) that the sample is code.  The
-     *  probability density function is characterized by the criterion mean, \f$\mu_i\f$, and variance \f$\sigma_i^2\f$. The
-     *  Guassian probability distribution function is:
-     *
-     *  \f[ f_i(x) = \frac{1}{\sqrt{2 \pi \sigma^2}} e^{-\frac{(x - \mu)^2}{2\sigma^2}} \f]
-     *
-     *
-     *  The likelihood, \f$C_i(R_i)\f$ that \f$R_i\f$ is representative of valid code is computed as the area under the
-     *  probability density curve further from the mean value than \f$R_i\f$.  In other words:
-     *
-     *  \f[ C_i(x) = 2 \int_{-\inf}^{\mu_i-|\mu_i-x|} f_i(x) dx = 1 - {\rm erf}(-\frac{|x-\mu_i|}{\sqrt{2\sigma_i^2}}) \f]
-     *
-     *  A criterion that has an undefined \f$R_i\f$ value does not contribute to the final vote. Similarly, criteria that have
-     *  zero variance contribute a vote of zero or one:
-     *
-     *  \f[
-     *      C_i(x) = \left\{
-     *          \begin{array}{cl}
-     *              1 & \quad \mbox{if } x = \mu_i \\
-     *              0 & \quad \mbox{if } x \ne \mu_i
-     *          \end{array}
-     *      \right.
-     *   \f]
-     *
-     *  The individual probabilities from each analysis are weighted relative to one another to obtain a final probability,
-     *  which is then compared against a threshold.  If the probability is equal to or greater than the threshold, then the
-     *  sample is considered to be code.
-     *
-     *  The Partitioner never instantiates a CodeCriteria object directly, but rather always uses the new_code_criteria()
-     *  virtual method.  This allows the user to easily augment this class to do something more interesting.
-     *
-     *  Here's an example of using this class to determine if some uncategorized region of memory contains code.  First we compute
-     *  aggregate statistics across all the known functions.  Then we use the mean and variance in those statistics to create a
-     *  code criteria specification.  Then we run the same analyses over the uncategorized region of memory and ask whether the
-     *  results satisfy the criteria.  This example is essentially the implementation of Partitioner::is_code().
-     *
-     *  @code
-     *  partitioner->aggregate_statistics(); // compute stats if not already cached
-     *  Partitioner::RegionStats *mean = partitioner->get_aggregate_mean();
-     *  Partitioner::RegionStats *variance = partitioner->get_aggregate_variance();
-     *  Partitioner::CodeCriteria *cc = partitioner->new_code_criteria(mean, variance);
-     *
-     *  ExtentMap uncategorized_region = ....;
-     *  Partitioner::RegionStats *stats = region_statistics(uncategorized_region);
-     *  if (cc->satisfied_by(stats))
-     *      std::cout <<"this looks like code" <<std::endl;
-     *  delete stats;
-     *  delete cc;
-     *  @endcode
-     */
-    class CodeCriteria {
-    private:
-        struct DictionaryEntry {
-            DictionaryEntry() {}
-            DictionaryEntry(const std::string &name, const std::string &desc): name(name), desc(desc) {}
-            std::string name;
-            std::string desc;
-        };
-
-        struct Criterion {
-            Criterion(): mean(0.0), variance(0.0), weight(0.0) {}
-            double mean;
-            double variance;
-            double weight;
-        };
-
-        static std::vector<DictionaryEntry> dictionary;
-        std::vector<Criterion> criteria;
-        double threshold;
-
-    public:
-        CodeCriteria(): threshold(0.5) { init_class(); }
-        CodeCriteria(const RegionStats *mean, const RegionStats *variance) {
-            init_class();
-            init(mean, variance);
-        }
-        virtual ~CodeCriteria() {}
-        virtual CodeCriteria* create() const;
-
-        static size_t define_criterion(const std::string &name, const std::string &desc, size_t id=(size_t)(-1));
-        static size_t find_criterion(const std::string &name);
-        static size_t get_ncriteria();
-        static const std::string& get_name(size_t id);
-        static const std::string& get_desc(size_t id);
-
-        virtual double get_mean(size_t id) const;
-        virtual void set_mean(size_t id, double mean);
-        virtual double get_variance(size_t id) const;
-        virtual void set_variance(size_t id, double variance);
-        virtual double get_weight(size_t id) const;
-        virtual void set_weight(size_t id, double weight);
-        void set_value(size_t id, double mean, double variance, double weight) {
-            set_mean(id, mean);
-            set_variance(id, variance);
-            set_weight(id, weight);
-        }
-
-        double get_threshold() const { return threshold; }
-        void set_threshold(double th) { threshold=th; }
-        virtual double get_vote(const RegionStats*, std::vector<double> *votes=NULL) const;
-        virtual bool satisfied_by(const RegionStats*, double *raw_vote_ptr=NULL, std::ostream *debug=NULL) const;
-
-        virtual void print(std::ostream&, const RegionStats *stats=NULL, const std::vector<double> *votes=NULL,
-                           const double *total_vote=NULL) const;
-        friend std::ostream& operator<<(std::ostream&, const CodeCriteria&);
-
-    protected:
-        static void init_class();
-        virtual void init(const RegionStats *mean, const RegionStats *variance);
-        
-    };
-
-    /** Create a new region statistics object.  We do it this way because the statistics class is closely tied to the
-     *  partitioner class, but users might want to augment the statistics.  The RegionStats is a virtual class as is this
-     *  creator. */
-    virtual RegionStats *new_region_stats() {
-        return new RegionStats;
-    }
-
-    /** Create a new criteria object.  This allows a user to derive a new class from CodeCriteria and have that class be used
-     *  by the partitioner.
-     * @{ */
-    virtual CodeCriteria *new_code_criteria() {
-        return new CodeCriteria;
-    }
-    virtual CodeCriteria *new_code_criteria(const RegionStats *mean, const RegionStats *variance) {
-        return new CodeCriteria(mean, variance);
-    }
-    /** @} */
-
-    /** Computes various statistics over part of an address space.  If no region is supplied then the statistics are calculated
-     *  over the part of the Partitioner memory map that contains execute permission.  The statistics are returned by argument
-     *  so that subclasses have an easy way to augment them.
-     *@{ */
-    virtual RegionStats *region_statistics(const ExtentMap&);
-    virtual RegionStats *region_statistics(Function*);
-    virtual RegionStats *region_statistics();
-    /** @} */
-
-    /** Computes aggregate statistics over all known functions.  This method computes region statistics for each individual
-     *  function (except padding and leftovers) and obtains an average and, optionally, the variance.  The average and variance
-     *  are cached in the partitioner and can be retrieved by get_aggregate_mean() and get_aggregate_variance().  This method
-     *  also returns the mean regardless of whether its cached. The values are not recomputed if they are already cached; the
-     *  cache can be cleared with clear_aggregate_cache(). */
-    virtual RegionStats *aggregate_statistics(bool do_variance=true);
-
-    /** Accessors for cached aggregate statistics.  If the partitioner has aggregated statistics over known functions, then
-     *  that information is available by this method: get_aggregate_mean() returns the average values over all functions, and
-     *  get_aggregate_variance() returns the variance.  The partitioner normally calculates this information immediately after
-     *  performing the first CFG analysis, after most instructions are added to most functions, but before data blocks are
-     *  added.  A null pointer is returned if the information is not available.  The user is allowed to modify the values, but
-     *  should not free the objects.  New values can be computed by clearing the cache (clear_aggregate_statistics()) and then
-     *  calling a function that computes them again, such as aggregate_statistics() or is_code().
-     * @{ */
-    virtual RegionStats *get_aggregate_mean() const { return aggregate_mean; }
-    virtual RegionStats *get_aggregate_variance() const { return aggregate_variance; }
-    /** @} */
-
-    /** Causes the partitioner to forget statistics.  The statistics aggregated over known functions are discarded, and
-     *  subsequent calls to get_aggregate_mean() and get_aggregate_variance() will return null pointers until the data is
-     *  recalculated (if ever). */
-    virtual void clear_aggregate_statistics() {
-        delete aggregate_mean;       aggregate_mean = NULL;
-        delete aggregate_variance;   aggregate_variance = NULL;
-    }
-
-    /** Counts the number of distinct kinds of instructions.  The counting is based on the instructions' get_kind() method.
-     *  @{ */
-    virtual size_t count_kinds(const InstructionMap&);
-    virtual size_t count_kinds() { return count_privileged(insns); }
-    /** @} */
-
-    /** Counts the number of privileged instructions.  Such instructions are generally don't appear in normal code.
-     *  @{ */
-    virtual size_t count_privileged(const InstructionMap&);
-    virtual size_t count_privileged() { return count_privileged(insns); }
-    virtual double ratio_privileged() { return insns.empty() ? NAN : (double)count_privileged(insns) / insns.size(); }
-    /** @} */
-
-    /** Counts the number of floating point instructions.
-     *  @{ */
-    virtual size_t count_floating_point(const InstructionMap&);
-    virtual size_t count_floating_point() { return count_floating_point(insns); }
-    virtual double ratio_floating_point() { return insns.empty() ? NAN : (double)count_floating_point(insns) / insns.size(); }
-    /** @} */
-
-    /** Counts the number of register references.  Returns the total number of register reference expressions, but the real
-     *  value of this method is that it also computes the an average register reference size and variance.  Register sizes are
-     *  represented as a power of two in an attempt to weight common register sizes equally.  In other words, a 16 bit program
-     *  with a couple of 8 bit values should have a variance that's close to a similar sized 32-bit program with a couple of
-     *  16-bit values.
-     * @{ */
-    virtual size_t count_registers(const InstructionMap&, double *mean=NULL, double *variance=NULL);
-    virtual size_t count_registers(double *mean=NULL, double *variance=NULL) { return count_registers(insns, mean, variance); }
-    virtual double ratio_registers(double *mean=NULL, double *variance=NULL) {
-        return insns.empty() ? NAN : (double)count_registers(mean, variance) / insns.size();
-    }
-    /** @} */
-
-    /** Returns the variance of instruction bit widths.  The variance is computed over the instruction size, the address size,
-     *  and the operand size.  The sizes 16-, 32-, and 64-bit are mapped to the integers 0, 1, and 2 respectively and the mean
-     *  is computed.  The variance is the sum of squares of the difference between each data point and the mean.  Returns NAN
-     *  if the instruction map is empty.  Most valid code has a variance of less than 0.05.
-     *  @{ */
-    virtual double count_size_variance(const InstructionMap &insns);
-    virtual double count_size_variance() { return count_size_variance(insns); }
-    /** @} */
-
-    /** Determines if a region contains code.  The determination is made by computing aggregate statistics over each of the
-     *  functions that are already known, then building a CodeCriteria object.  The same analysis is run over the region in
-     *  question and the compared with the CodeCriteria object.  The criteria is then discarded.
-     *
-     *  If the partitioner's get_aggregate_mean() and get_aggregate_variance() return non-null values, then those statistics
-     *  are used in favor of computing new ones.  If new statistics are computed, they will be cached for those methods to
-     *  return later.
-     *
-     *  If a raw_vote_ptr is supplied, then upon return it will hold a value between zero and one, inclusive, which is the
-     *  weighted average of the votes from the individual analyses.  The raw vote is the value compared against the code
-     *  criteria threshold to obtain a Boolean result. */
-    virtual bool is_code(const ExtentMap &region, double *raw_vote_ptr=NULL, std::ostream *debug=NULL);
-
-    /** Accessors for code criteria.  A CodeCriteria object can be associated with the Partitioner, in which case the
-     *  partitioner does not compute statistics over the known functions, but rather uses the code criteria directly.
-     *  The caller is reponsible for allocating and freeing the criteria.  If no criteria is supplied, then one is created as
-     *  necessary by calling new_code_criteria() and passing it the average and variance computed over all the functions
-     *  (excluding leftovers and padding) or use the values cached in the partitioner.
-     * @{ */
-    virtual CodeCriteria *get_code_criteria() const { return code_criteria; }
-    virtual void set_code_criteria(CodeCriteria *cc) { code_criteria = cc; }
-    /** @} */
-
-protected:
-    RegionStats *aggregate_mean;                /**< Aggregate statistics returned by get_region_stats_mean(). */
-    RegionStats *aggregate_variance;            /**< Aggregate statistics returned by get_region_stats_variance(). */
-    CodeCriteria *code_criteria;                /**< Criteria used to determine if a region contains code or data. */
 
     /*************************************************************************************************************************
      *                                                 Low-level Functions
