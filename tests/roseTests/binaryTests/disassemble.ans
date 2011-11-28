@@ -211,12 +211,12 @@ Basic block: graph-1
             (dominator 0x080483d0)
             (successors: 0x08048400)
 
-Basic block: intrafunc, CFG head
+Basic block: fragment, CFG head
 0x080483e8: c7 04 24 d8 95 04 08    |..$.... |   mov    DWORD PTR ss:[esp], 0x080495d8
 0x080483ef: e8 0c 7c fb f7          |..|..   |   call   0x00000000
             (successors: 0x00000000)
 
-Basic block: intrafunc, CFG head
+Basic block: fragment, CFG head
 0x080483f4: 8d b6 00 00 00 00       |......  |   lea    esi, [esi + 0x00000000]
 0x080483fa: 8d bf 00 00 00 00       |......  |   lea    edi, [edi + 0x00000000]
             (successors: 0x08048400)
@@ -355,7 +355,7 @@ Basic block: entry point, graph-1
 0x0804852d: 74 1c                   |t.      |   je     0x0804854b
             (successors: 0x0804854b)
 
-Basic block: intrafunc, CFG head
+Basic block: fragment, CFG head
 0x0804852f: 8d 34 82                |.4.     |   lea    esi, [edx + eax*0x04]
 0x08048532: 31 ff                   |1.      |   xor    edi, edi
 0x08048534: 8d b6 00 00 00 00       |......  |   lea    esi, [esi + 0x00000000]
@@ -366,7 +366,7 @@ Basic block: graph-2
 0x08048540: ff 16                   |..      |   call   DWORD PTR ds:[esi]
             (successors: 0x08048542...)
 
-Basic block: intrafunc, CFG head
+Basic block: fragment, CFG head
 0x08048542: 47                      |G       |   inc    edi
 0x08048543: 83 ee 04                |...     |   sub    esi, 0x04
 0x08048546: 39 7d f0                |9}.     |   cmp    DWORD PTR ss:[ebp + 0xf0<-0x10>], edi
