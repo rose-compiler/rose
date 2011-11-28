@@ -4014,6 +4014,7 @@ HEADER_BINARY_BLOCK_START
 		BLK_JUMPTABLE   = 0x00800000,	/**< Table of code addresses used by indirect branches. */
 		BLK_GRAPH1	= 0x01000000,	/**< Block was added by the main CFG analysis. */
 		BLK_GRAPH2	= 0x02000000,	/**< Block was added by a second pass of CFG analysis. */
+		BLK_GRAPH3	= 0x04000000,	/**< Block was added by a third pass of CFG analysis. */
 		
 		BLK_DEFAULT	= BLK_NONE,	//NO_STRINGIFY
 
