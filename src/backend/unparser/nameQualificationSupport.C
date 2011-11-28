@@ -1690,6 +1690,9 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
      printf ("\n\n*********************************************************************************************************************\n");
      printf ("Inside of NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList(): templateArgumentList.size() = %zu \n",templateArgumentList.size());
      printf ("*********************************************************************************************************************\n");
+
+     ROSE_ASSERT(positionStatement != NULL);
+     positionStatement->get_file_info()->display("Inside of NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList()");
 #endif
 
      SgTemplateArgumentPtrList::iterator i = templateArgumentList.begin();
@@ -1699,7 +1702,7 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
           ROSE_ASSERT(templateArgument != NULL);
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-          printf ("*** Processing template argument #%d \n",counter++);
+          printf ("*** Processing template argument #%d templateArgument = %p \n",counter++,templateArgument);
 #endif
           SgType* type = templateArgument->get_type();
           if (type != NULL)

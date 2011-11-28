@@ -80,6 +80,9 @@ test2004_05.C \
 test2004_06.C \
 test2004_07.C \
 test2004_08.C \
+test2004_09.C \
+test2004_10.C \
+test2004_11.C \
 test2004_12.C \
 test2004_13.C \
 test2004_14.C \
@@ -126,7 +129,12 @@ test2011_152.C \
 test2011_153.C \
 test2011_154.C \
 test2011_155.C \
-test2011_157.C 
+test2011_157.C \
+test2011_158.C \
+test2011_159.C \
+test2011_160.C \
+test2011_161.C \
+test2011_162.C
 
 else
 include $(srcdir)/Makefile-pass.inc
@@ -138,9 +146,6 @@ endif
 #
 if ROSE_USE_EDG_VERSION_4_3
 TESTCODE_CURRENTLY_FAILING = \
-test2004_09.C \
-test2004_10.C \
-test2004_11.C \
 test2004_15.C \
 test2004_18.C \
 test2004_26.C \
@@ -181,8 +186,7 @@ test2004_89.C \
 test2004_91.C \
 test2004_98.C \
 test2004_100.C \
-test2011_156.C \
-test2011_158.C
+test2011_156.C 
 
 else
 include $(srcdir)/Makefile-fail.inc

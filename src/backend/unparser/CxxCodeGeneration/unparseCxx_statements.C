@@ -690,7 +690,9 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
           case V_SgTemplateDeclaration:    unparseTemplateDeclStmt(stmt, info); break;
 
        // DQ (6/11/2011): Added support for new template IR nodes.
-          case V_SgTemplateClassDeclaration: unparseTemplateDeclStmt(stmt, info); break;
+          case V_SgTemplateClassDeclaration:                unparseTemplateDeclStmt(stmt, info); break;
+          case V_SgTemplateFunctionDeclaration:             unparseTemplateDeclStmt(stmt, info); break;
+          case V_SgTemplateMemberFunctionDeclaration:       unparseTemplateDeclStmt(stmt, info); break;
 
           case V_SgTemplateInstantiationDecl:               unparseTemplateInstantiationDeclStmt(stmt, info); break;
           case V_SgTemplateInstantiationFunctionDecl:       unparseTemplateInstantiationFunctionDeclStmt(stmt, info); break;
@@ -5334,8 +5336,9 @@ Unparse_ExprStmt::unparseTemplateDeclStmt(SgStatement* stmt, SgUnparse_Info& inf
                  // It is not clear to me why the names are missing, though perhaps they have not been computed yet 
                  // (until the templated clas is instantiated)!
 
-                 // printf ("Warning: templateString name is empty in Unparse_ExprStmt::unparseTemplateDeclStmt() \n");
-                 // printf ("     template_stmt->get_template_kind() = %d \n",template_stmt->get_template_kind());
+                 // DQ (11/27/2011): Uncommented for debugging new EDG 4.x connection.
+                    printf ("Warning: templateString name is empty in Unparse_ExprStmt::unparseTemplateDeclStmt() \n");
+                    printf ("     template_stmt->get_template_kind() = %d \n",template_stmt->get_template_kind());
                   }
             // ROSE_ASSERT(templateString.empty() == false);
 
@@ -5355,6 +5358,7 @@ Unparse_ExprStmt::unparseTemplateDeclStmt(SgStatement* stmt, SgUnparse_Info& inf
                ROSE_ASSERT (false);
         }
    }
+
  
 //#if USE_UPC_IR_NODES //TODO need this?
 //#if UPC_EXTENSIONS_ALLOWED

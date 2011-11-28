@@ -697,7 +697,7 @@ void generateAstGraph ( const SgProject* project, int maxSize, std::string filen
        else
         {
           if ( SgProject::get_verbose() >= 0 )
-               printf ("In generateAstGraph(): WHOLE AST greaph too large to generate. (numberOfASTnodes=%d) > (maxSize=%d) \n",numberOfASTnodes,maxSize);
+               printf ("In generateAstGraph(): WHOLE AST graph too large to generate. (numberOfASTnodes=%d) > (maxSize=%d) \n",numberOfASTnodes,maxSize);
         }
    }
 

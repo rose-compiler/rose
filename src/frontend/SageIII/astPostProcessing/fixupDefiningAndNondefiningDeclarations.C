@@ -132,6 +132,9 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
        // DQ (7/23/2005): The scopes should match!
           if (definingDeclaration != NULL && firstNondefiningDeclaration != NULL)
              {
+               ROSE_ASSERT(definingDeclaration != NULL);
+               ROSE_ASSERT(firstNondefiningDeclaration != NULL);
+
                SgScopeStatement* definingScope    =  definingDeclaration->get_scope();
                SgScopeStatement* nondefiningScope =  firstNondefiningDeclaration->get_scope();
                if (definingScope != nondefiningScope)
