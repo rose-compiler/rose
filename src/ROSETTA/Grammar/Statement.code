@@ -2365,6 +2365,12 @@ HEADER_TEMPLATE_CLASS_DEFINITION_STATEMENT_START
 HEADER_TEMPLATE_CLASS_DEFINITION_STATEMENT_END
 
 HEADER_TEMPLATE_FUNCTION_DEFINITION_STATEMENT_START
+
+          SgTemplateFunctionDeclaration* get_declaration() const;
+          void set_declaration(SgTemplateFunctionDeclaration* new_val);
+
+          virtual SgName get_mangled_name (void) const;
+
 HEADER_TEMPLATE_FUNCTION_DEFINITION_STATEMENT_END
 
 
@@ -2478,6 +2484,9 @@ HEADER_TEMPLATE_FUNCTION_INSTANTIATION_DECLARATION_STATEMENT_START
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
 #endif
 
+       // DQ (11/27/2011): Adding support for uniform interface to support template build interface.
+          SgTemplateInstantiationFunctionDecl ( SgName name, SgFunctionType* type, SgFunctionDefinition* definition);
+
 HEADER_TEMPLATE_FUNCTION_INSTANTIATION_DECLARATION_STATEMENT_END
 
 HEADER_TEMPLATE_MEMBER_FUNCTION_INSTANTIATION_DECLARATION_STATEMENT_START
@@ -2529,6 +2538,9 @@ HEADER_TEMPLATE_MEMBER_FUNCTION_INSTANTIATION_DECLARATION_STATEMENT_START
        // DQ (11/6/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
 #endif
+
+       // DQ (11/27/2011): Adding support for uniform interface to support template build interface.
+          SgTemplateInstantiationMemberFunctionDecl ( SgName name, SgFunctionType* type, SgFunctionDefinition* definition);
 
 HEADER_TEMPLATE_MEMBER_FUNCTION_INSTANTIATION_DECLARATION_STATEMENT_END
 
@@ -3507,34 +3519,27 @@ SgStatement::get_scope(void) const
                }
 
                SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(stmt->get_parent());
-               ROSE_ASSERT (functionDeclaration != NULL);
-#if 0
-               SgFunctionDefinition* functionDefinition = functionDeclaration->get_definition();
-               if (functionDefinition != NULL)
+               if (functionDeclaration != NULL)
                   {
-                    returnScope = functionDefinition;
+                 // DQ (2/12/2006): provide a consistent definition of the scope for SgFunctionParameterList
+                 // instead of a definition that depends on if it is a defining or non-defining declaration.
+                    returnScope = functionDeclaration->get_scope();
                   }
                  else
                   {
-                 // scope of a SgFunctionParameterList in a forward function declaration 
-                 // (without a pointer to a SgFunctionDefinition)
-                 // returnScope = NULL;
-
-                 // DQ (11/27/2003): Force SgFunctionParameterList case to use scope of function
-                 //                  declaration (most often global scope of class definition scope).
-                    returnScope = functionDeclaration->get_scope();
+                 // DQ (11/25/2011): Added support for SgTemplateFunctionDeclaration (and SgTemplateMemberFunctionDeclaration) 
+                 // which uses a SgFunctionParameterList internally.
+                    SgTemplateFunctionDeclaration* templateFunctionDeclaration = isSgTemplateFunctionDeclaration(stmt->get_parent());
+                    ROSE_ASSERT(templateFunctionDeclaration != NULL);
+                    returnScope = templateFunctionDeclaration->get_scope();
                   }
-#else
-            // DQ (2/12/2006): provide a consistent definition of the scope for SgFunctionParameterList
-            // instead of a definition that depends on if it is a defining or non-defining declaration.
-               returnScope = functionDeclaration->get_scope();
-#endif
+
                ROSE_ASSERT (returnScope != NULL);
                break;
              }
 #if 0
        // DQ (2/19/2006): If commented out test2004_78.C fails, if left in place then test2004_71.C fails.
-       // I have concluded from this that the SgNamespaceDeclarationStatement shold have an explicitly 
+       // I have concluded from this that the SgNamespaceDeclarationStatement should have an explicitly 
        // stored scope.
        // DQ (2/10/2006): Added case that is a current problem in test2005_08.C
        // There can be many instances of a single name space but get_scope()
@@ -4477,9 +4482,15 @@ SgScopeStatement::containsOnlyDeclarations() const
           case V_SgCatchOptionStmt:
           case V_SgDoWhileStmt:
           case V_SgForStatement:
-       // Liao, 6/17/2008, upc_forall           
+
+       // Liao, 6/17/2008, upc_forall
           case V_SgUpcForAllStatement:
+
           case V_SgFunctionDefinition:
+
+       // DQ (11/27/2011): Adding more support for template declarations in the AST.
+          case V_SgTemplateFunctionDefinition:
+
           case V_SgIfStmt:
           case V_SgSwitchStatement:
           case V_SgWhileStmt:
@@ -4501,7 +4512,7 @@ SgScopeStatement::containsOnlyDeclarations() const
                break;
 
           default:
-               printf ("ERROR: default reached in switch ($CLASSNAME::containsOnlyDeclarations() is called from a %s) \n",sage_class_name());
+             printf ("ERROR: default reached in switch (SgScopeStatement::containsOnlyDeclarations() is called from a %s) \n",class_name().c_str());
                ROSE_ASSERT(false);
                break;
         }
@@ -4937,6 +4948,8 @@ SgScopeStatement::getStatementList ()
                break;
              }
 
+       // DQ (11/27/2011): Adding more support for template declarations in the AST.
+          case V_SgTemplateFunctionDefinition:
           case V_SgFunctionDefinition:
              {
                SgFunctionDefinition* functionScope = isSgFunctionDefinition(currentScope);
@@ -5123,6 +5136,8 @@ SgScopeStatement::getStatementList () const
                break;
              }
 
+       // DQ (11/27/2011): Adding more support for template declarations in the AST.
+          case V_SgTemplateFunctionDefinition:
           case V_SgFunctionDefinition:
              {
                const SgFunctionDefinition* functionScope = isSgFunctionDefinition(currentScope);
@@ -5609,6 +5624,10 @@ SgScopeStatement::isNamedScope()
              }
 
        // case V_SgGlobal:  // global has the name "::" but it does not have an associated declaration.
+
+       // DQ (11/27/2011): Adding more support for template declarations in the AST.
+          case V_SgTemplateClassDefinition:
+
           case V_SgClassDefinition:
           case V_SgTemplateInstantiationDefn:
           case V_SgNamespaceDefinitionStatement:
@@ -11198,6 +11217,32 @@ SgTemplateInstantiationFunctionDecl::get_symbol_from_symbol_table() const
      return get_scope()->get_symbol_table()->find(this);
    }
 
+
+// DQ (11/27/2011): Adding support to hold the template declarations in the AST.
+SgTemplateInstantiationFunctionDecl::SgTemplateInstantiationFunctionDecl ( SgName name, SgFunctionType* type, SgFunctionDefinition* definition )
+   : SgFunctionDeclaration(name, type, definition)
+   {
+  // Custom constructor to support same interface and allow for a templated function to to build SgFunctionDeclaration, 
+  // SgTemplateInstantiationFunctionDecl, SgMemberFunctionDeclaration, and SgTemplateInstantiationMemberFunctionDecl.
+
+  // Only two lines of additional code to allow use of same code as in generated constructor (below).
+     SgTemplateDeclaration* templateDeclaration = NULL;
+     SgTemplateArgumentPtrList templateArguments;
+
+  // Same code as in generated constructor.
+     p_templateName = "";
+     p_templateDeclaration = templateDeclaration;
+     p_templateArguments = templateArguments;
+     p_nameResetFromMangledForm = false;
+
+  // Test the variant virtual function
+     assert(TEMPLATE_INST_MEMBER_FUNCTION_DECL_STMT == variant());
+     post_construction_initialization();
+
+  // Test the isSgTemplateInstantiationMemberFunctionDecl() function since it has been problematic
+     assert(isSgTemplateInstantiationMemberFunctionDecl(this) != NULL);
+   }
+
 SOURCE_TEMPLATE_INSTANTIATION_FUNCTION_DECLARATION_STATEMENT_END
 
 SOURCE_TEMPLATE_INSTANTIATION_MEMBER_FUNCTION_DECLARATION_STATEMENT_START
@@ -11276,6 +11321,33 @@ SgTemplateInstantiationMemberFunctionDecl::get_symbol_from_symbol_table() const
      ROSE_ASSERT(get_scope()->get_symbol_table() != NULL);
      return get_scope()->get_symbol_table()->find(this);
    }
+
+// DQ (11/27/2011): Adding support to hold the template declarations in the AST.
+SgTemplateInstantiationMemberFunctionDecl::SgTemplateInstantiationMemberFunctionDecl ( SgName name, SgFunctionType* type, SgFunctionDefinition* definition )
+   : SgMemberFunctionDeclaration(name, type, definition)
+   {
+  // Custom constructor to support same interface and allow for a templated function to to build SgMemberFunctionDeclaration, 
+  // SgTemplateInstantiationMemberFunctionDecl, SgFunctionDeclaration, and SgTemplateInstantiationFunctionDecl.
+
+  // Only two lines of additional code to allow use of same code as in generated constructor (below).
+     SgTemplateDeclaration* templateDeclaration = NULL;
+     SgTemplateArgumentPtrList templateArguments;
+
+  // Same code as in generated constructor.
+     p_templateName = "";
+     p_templateDeclaration = templateDeclaration;
+     p_templateArguments = templateArguments;
+     p_nameResetFromMangledForm = false;
+
+  // Test the variant virtual function
+     assert(TEMPLATE_INST_MEMBER_FUNCTION_DECL_STMT == variant());
+     post_construction_initialization();
+
+  // Test the isSgTemplateInstantiationMemberFunctionDecl() function since it has been problematic
+     assert(isSgTemplateInstantiationMemberFunctionDecl(this) != NULL);
+   }
+
+
 
 SOURCE_TEMPLATE_INSTANTIATION_MEMBER_FUNCTION_DECLARATION_STATEMENT_END
 
@@ -12945,6 +13017,7 @@ SOURCE_TEMPLATE_CLASS_DECLARATION_STATEMENT_START
 void
 SgTemplateClassDeclaration::post_construction_initialization()
    {
+     this->set_template_kind(e_template_class);
    }
 
 SOURCE_TEMPLATE_CLASS_DECLARATION_STATEMENT_END
@@ -12953,6 +13026,64 @@ SOURCE_TEMPLATE_FUNCTION_DECLARATION_STATEMENT_START
 void
 SgTemplateFunctionDeclaration::post_construction_initialization()
    {
+     this->set_template_kind(e_template_function);
+
+  // This code could be factored (copied from SgFunctionDeclaration::post_construction_initialization()).
+     SgFunctionParameterList* args = NULL;
+     if (get_startOfConstruct() != NULL)
+        {
+          args = new SgFunctionParameterList(New_File_Info(this));
+          args->get_startOfConstruct()->set_parent(args);
+        }
+       else
+        {
+       // DQ (11/12/2006): Use the new constructor.
+          args = new SgFunctionParameterList();
+        }
+
+     ROSE_ASSERT (args != NULL);
+     set_parameterList(args);
+
+  // DQ (7/19/2005): set the parent explicitly
+     get_parameterList()->set_parent(this);
+
+  // DQ (3/6/2007): Set the firstNondefiningDeclaration of args to itself (this is now required 
+  // for the AST consistency tests after the AST merge).  Likely because one where a member function 
+  // is referenced before being declared in a class the member function was not previously visited by 
+  // the AST traversal and so one of its defining or non-defining declarations was not set and after 
+  // the merge this declaration is used (shared) and thus accessed where before it had been hidden.
+  // DQ (3/15/2006): Let this be NULL so that it will be fixed by the fixupDeclarations function 
+  // within the post processing phase.
+  // DQ (9/6/2005): Since a SgFunctionParameterList is a SgDeclarationStatement we should set
+  // either its defining or non-defining declaration (I choose the non-defining declaration).
+  // args->set_definingDeclaration(args);
+  // args->set_firstNondefiningDeclaration(args);
+     args->set_firstNondefiningDeclaration(args);
+
+#if 0
+  // This is already set in the constructor.
+
+  // DQ (10/25/2004): Add a ending file info object for completeness (though this is not yet 
+  // initialized to the correct position, yet).  Initially let's get them in place then we can
+  // work on the accuracy afterward!
+  // Sg_File_Info* endingPosition = new Sg_File_Info(*thisFileInfo);
+  // ROSE_ASSERT (endingPosition != NULL);
+  // p_args->set_endOfConstruct(endingPosition);
+
+  // DQ (7/31/2006): Explicit initialization of this data member is required!
+  // JJW (8/6/2008): It probably isn't now that p_exceptionSpecification is a vector
+     p_exceptionSpecification.clear();
+
+  // DQ (5/14/2011): Added to support name qualification on types referenced by template arguments.
+     p_name_qualification_length     = 0;
+     p_type_elaboration_required     = false;
+     p_global_qualification_required = false;
+
+  // DQ (5/14/2011): Added to support name qualification on types referenced by template arguments.
+     p_name_qualification_length_for_return_type     = 0;
+     p_type_elaboration_required_for_return_type     = false;
+     p_global_qualification_required_for_return_type = false;
+#endif
    }
 
 SOURCE_TEMPLATE_FUNCTION_DECLARATION_STATEMENT_END
@@ -12961,6 +13092,23 @@ SOURCE_TEMPLATE_MEMBER_FUNCTION_DECLARATION_STATEMENT_START
 void
 SgTemplateMemberFunctionDeclaration::post_construction_initialization()
    {
+     this->set_template_kind(e_template_m_function);
+
+  // DQ (11/25/2011): This is copied from the SgMemberFunctionDeclaration (the semantics must match).
+  // There is however an opportunity to refactor some of this code (even though it is a small amount of code).
+     if (get_startOfConstruct() != NULL)
+        {
+          p_CtorInitializerList = new SgCtorInitializerList(New_File_Info(this));
+        }
+       else
+        {
+          p_CtorInitializerList = new SgCtorInitializerList();
+        }
+     ROSE_ASSERT(p_CtorInitializerList != NULL);
+
+     p_CtorInitializerList->set_firstNondefiningDeclaration(p_CtorInitializerList);
+
+     p_CtorInitializerList->set_parent(this);
    }
 
 SOURCE_TEMPLATE_MEMBER_FUNCTION_DECLARATION_STATEMENT_END
@@ -13035,6 +13183,31 @@ SOURCE_TEMPLATE_FUNCTION_DEFINITION_STATEMENT_START
 void
 SgTemplateFunctionDefinition::post_construction_initialization()
    {
+   }
+
+SgTemplateFunctionDeclaration*
+SgTemplateFunctionDefinition::get_declaration() const
+   {
+  // This is copied and modified from the similar function for SgFunctionDefinition::get_declaration()
+     SgNode* res = get_parent();
+     SgTemplateFunctionDeclaration* res1 = isSgTemplateFunctionDeclaration(res); 
+
+     assert( res == 0 || res1 != 0);
+
+     return res1;
+   }
+
+void
+SgTemplateFunctionDefinition::set_declaration(SgTemplateFunctionDeclaration* new_val)
+   {
+  // This is copied from the similar function for SgFunctionDefinition::set_declaration()
+     set_parent(new_val);
+   }
+
+SgName
+SgTemplateFunctionDefinition::get_mangled_name (void) const
+   {
+     return get_declaration()->get_mangled_name ();
    }
 
 SOURCE_TEMPLATE_FUNCTION_DEFINITION_STATEMENT_END

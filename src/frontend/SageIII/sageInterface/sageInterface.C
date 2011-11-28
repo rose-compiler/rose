@@ -8111,29 +8111,42 @@ SgAssignInitializer* SageInterface::splitExpression(SgExpression* from, string n
       appendExpression(expList, exp[i]);
   }
 
-  //TODO consider the difference between C++ and Fortran
-  // fixup the scope of arguments,no symbols for nondefining function declaration's arguments
-  void SageInterface::setParameterList(SgFunctionDeclaration * func,SgFunctionParameterList * paralist)
-  {
-    ROSE_ASSERT(func);
-    ROSE_ASSERT(paralist);
-  // Warning users if a paralist is being shared
-  if (paralist->get_parent() !=NULL)
-  {
-    cerr<<"Waring! Setting a used SgFunctionParameterList to function: "
-    << (func->get_name()).getString()<<endl
-    << " Sharing parameter lists can corrupt symbol tables!"<<endl
-    << " Please use deepCopy() to get an exclusive parameter list for each function declaration!"<<endl;
-//    ROSE_ASSERT(false);
-  }
-  // Liao,2/5/2008  constructor of SgFunctionDeclaration will automatically generate SgFunctionParameterList, so be cautious when set new paralist!!
-    if (func->get_parameterList() != NULL)
-      if (func->get_parameterList() != paralist)
-        delete func->get_parameterList();
-    func->set_parameterList(paralist);
-    paralist->set_parent(func);
+# if 0
+  // DQ (11/25/2011): Moved to the header file so that it could be seen as a template function.
 
-  }
+  // TODO consider the difference between C++ and Fortran
+  // fixup the scope of arguments,no symbols for nondefining function declaration's arguments
+template <class actualFunction>
+void
+// SageInterface::setParameterList(SgFunctionDeclaration * func,SgFunctionParameterList * paralist)
+SageInterface::setParameterList(actualFunction * func,SgFunctionParameterList * paralist)
+   {
+  // DQ (11/25/2011): Modified this to be a templated function so that we can handle both 
+  // SgFunctionDeclaration and SgTemplateFunctionDeclaration (and their associated member 
+  // function derived classes).
+
+     ROSE_ASSERT(func);
+     ROSE_ASSERT(paralist);
+
+  // Warn to users if a paralist is being shared
+     if (paralist->get_parent() !=NULL)
+        {
+          cerr << "Waring! Setting a used SgFunctionParameterList to function: "
+               << (func->get_name()).getString()<<endl
+               << " Sharing parameter lists can corrupt symbol tables!"<<endl
+               << " Please use deepCopy() to get an exclusive parameter list for each function declaration!"<<endl;
+       // ROSE_ASSERT(false);
+        }
+
+  // Liao,2/5/2008  constructor of SgFunctionDeclaration will automatically generate SgFunctionParameterList, so be cautious when set new paralist!!
+     if (func->get_parameterList() != NULL)
+          if (func->get_parameterList() != paralist)
+               delete func->get_parameterList();
+
+     func->set_parameterList(paralist);
+     paralist->set_parent(func);
+   }
+#endif
 
 static SgVariableSymbol * addArg(SgFunctionParameterList *paraList, SgInitializedName* initName,bool isPrepend)
 {

@@ -6228,6 +6228,10 @@ SgSymbolTable::get_name( const SgNode* node) const
                break;
              }
 
+       // DQ (11/23/2011): Added more support for template declaration IR nodes.
+          case V_SgTemplateFunctionDeclaration:
+          case V_SgTemplateMemberFunctionDeclaration:
+
        // DQ (6/11/2011): Added support for new template declaration IR nodes.
           case V_SgTemplateClassDeclaration:
           case V_SgTemplateDeclaration:
@@ -14483,11 +14487,15 @@ void SgTemplateArgument::post_construction_initialization()
   // JJW 10-26-2007 ensure that this object is not on the stack
      preventConstructionOnStack(this);
 
+#if 0
+  // DQ (11/22/2011): These are set in the constrcutors and should not be reset.
      p_argumentType          = argument_undefined;
      p_type                  = NULL;
      p_expression            = NULL;
+
   // p_templateInstantiation = NULL;
      p_templateDeclaration   = NULL;
+#endif
 
   // DQ (5/14/2011): Added to support name qualification on types referenced by template arguments.
      p_name_qualification_length     = 0;
@@ -14504,6 +14512,11 @@ SgTemplateArgument::SgTemplateArgument ( SgType* argument, bool explicitlySpecif
      p_type                = argument;
      p_explicitlySpecified = explicitlySpecified;
 
+     p_expression          = NULL;
+
+  // DQ (11/22/2011): This is no longer set in the post_construction_initialization() function.
+     p_templateDeclaration = NULL;
+
   // Don't set the parent of a type!
   // argument->set_parent(this);
    }
@@ -14515,6 +14528,11 @@ SgTemplateArgument::SgTemplateArgument ( SgExpression* argument, bool explicitly
      p_argumentType        = nontype_argument;
      p_expression          = argument;
      p_explicitlySpecified = explicitlySpecified;
+
+     p_type                = NULL;
+
+  // DQ (11/22/2011): This is no longer set in the post_construction_initialization() function.
+     p_templateDeclaration = NULL;
 
   // DQ (8/24/2006): Set the parent
      argument->set_parent(this);
@@ -14539,9 +14557,13 @@ SgTemplateArgument::SgTemplateArgument ( SgTemplateDeclaration* argument, bool e
   // Should this be a SgTemplateInstantiationDecl instead of a SgTemplateDeclaration?
      post_construction_initialization();
 
-     p_argumentType          = template_template_argument;
-     p_templateDeclaration   = argument;
-     p_explicitlySpecified   = explicitlySpecified;
+     p_argumentType        = template_template_argument;
+     p_templateDeclaration = argument;
+     p_explicitlySpecified = explicitlySpecified;
+
+  // DQ (11/22/2011): These are no longer set in the post_construction_initialization() function.
+     p_expression          = NULL;
+     p_type                = NULL;
 
   // DQ (8/24/2006): Set the parent ???  (make sure it is not already set!)
   // This is likely a shared IR node, so we don't want to set the parent here!

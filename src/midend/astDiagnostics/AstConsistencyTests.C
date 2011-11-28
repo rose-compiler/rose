@@ -2819,6 +2819,7 @@ TestAstAccessToDeclarations::test ( SgNode* node )
           case V_SgFunctionDefinition:
              {
                SgFunctionDefinition* tmp = isSgFunctionDefinition(node);
+               ROSE_ASSERT(tmp != NULL);
                ROSE_ASSERT(tmp->get_declaration() != NULL);
                break;
              }
@@ -3621,7 +3622,17 @@ TestMangledNames::visit ( SgNode* node )
      SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(node);
      if (functionDefinition != NULL)
         {
-          mangledName = functionDefinition->get_mangled_name().getString();
+       // DQ (11/27/2011): Adding more support for template declarations in the AST.
+       // mangledName = functionDefinition->get_mangled_name().getString();
+          SgTemplateFunctionDefinition* templateFunctionDefinition = isSgTemplateFunctionDefinition(functionDefinition);
+          if (templateFunctionDefinition != NULL)
+             {
+               mangledName = templateFunctionDefinition->get_mangled_name().getString();
+             }
+            else
+             {
+               mangledName = functionDefinition->get_mangled_name().getString();
+             }
        // printf ("Test generated mangledName for node = %p = %s = %s \n",node,node->class_name().c_str(),mangledName.c_str());
         }
 #endif

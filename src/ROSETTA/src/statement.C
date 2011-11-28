@@ -819,7 +819,7 @@ Grammar::setUpStatements ()
                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #else
      FunctionDeclaration.setDataPrototype ( "SgName", "name", "= \"\"",
-                                            CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                   CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
   // DQ (3/4/2007): We want to force the copy mechanism to skip building a new SgFunctionParameterList
@@ -1033,6 +1033,7 @@ Grammar::setUpStatements ()
 
      MemberFunctionDeclaration.setFunctionPrototype ( "HEADER_MEMBER_FUNCTION_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
      MemberFunctionDeclaration.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
+
      MemberFunctionDeclaration.editSubstitute      ( "LIST_DATA_TYPE", "SgInitializedNamePtrList" );
      MemberFunctionDeclaration.editSubstitute      ( "LIST_NAME", "ctors" );
      MemberFunctionDeclaration.editSubstitute      ( "LIST_FUNCTION_RETURN_TYPE", "void" );
@@ -1408,14 +1409,35 @@ Grammar::setUpStatements ()
      //      new template instantiation declaration.
      //
      // TemplateDeclaration.setDataPrototype ( "SgClassType*", "type", "= NULL");
+
      TemplateDeclaration.setDataPrototype ( "SgName", "name", "= \"\"",
-                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+#ifdef ROSE_USE_NEW_EDG_INTERFACE
      TemplateDeclaration.setDataPrototype ( "SgName", "string", "= \"\"",
-                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateDeclaration.setDataPrototype ( "SgTemplateDeclaration::template_type_enum" , "template_kind", "= SgTemplateDeclaration::e_template_none",
-                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateDeclaration.setDataPrototype ( "SgTemplateParameterPtrList", "templateParameters", "= SgTemplateParameterPtrList()",
-                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#else
+  // TemplateDeclaration.setDataPrototype ( "SgName", "string", "= \"\"",
+  //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TemplateDeclaration.setDataPrototype ( "SgName", "string", "= \"\"",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // TemplateDeclaration.setDataPrototype ( "SgTemplateDeclaration::template_type_enum" , "template_kind", "= SgTemplateDeclaration::e_template_none",
+  //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TemplateDeclaration.setDataPrototype ( "SgTemplateDeclaration::template_type_enum" , "template_kind", "= SgTemplateDeclaration::e_template_none",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (11/22/2011): Fix the access functions to properly handle references to list data structure.
+  // TemplateDeclaration.setDataPrototype ( "SgTemplateParameterPtrList", "templateParameters", "= SgTemplateParameterPtrList()",
+  //               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // TemplateDeclaration.setDataPrototype ( "SgTemplateParameterPtrList", "templateParameters", "= SgTemplateParameterPtrList()",
+  //            CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TemplateDeclaration.setDataPrototype ( "SgTemplateParameterPtrList", "templateParameters", "= SgTemplateParameterPtrList()",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
   // DQ (11/15/2004): class declarations for nested classes can appear outside the scope of the class to which 
   // they belong, thus the parent information is not sufficent to define the relationship of nested classes 
@@ -1439,8 +1461,13 @@ Grammar::setUpStatements ()
   // TemplateClassDeclaration.setDataPrototype ( "SgTemplateClassDefinition*", "definition", "= NULL",
   //            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+  // TemplateClassDeclaration.setDataPrototype ( "SgName", "name", "= \"\"",
+  //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      TemplateClassDeclaration.setDataPrototype ( "SgTemplateClassDeclaration::class_types", "class_type", "= SgTemplateClassDeclaration::e_class",
                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // TemplateClassDeclaration.setDataPrototype ( "SgClassDeclaration::class_types", "class_type", "= SgClassDeclaration::e_class",
+  //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (11/20/2011): Template declarations don't have a type, the SgTemplateType is used for template instantiations only.
   // TemplateClassDeclaration.setDataPrototype ( "SgTemplateType*", "type", "= NULL",
@@ -1478,12 +1505,110 @@ Grammar::setUpStatements ()
 
 
      TemplateFunctionDeclaration.setFunctionPrototype  ( "HEADER_TEMPLATE_FUNCTION_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
-     TemplateFunctionDeclaration.setDataPrototype ( "SgTemplateFunctionDefinition*", "definition", "= NULL",
+
+  // **************************************************************************************************************
+  // DQ (11/23/2011): Added matching function data members to TemplateFunctionDeclaration as in FunctionDeclaration
+  // **************************************************************************************************************
+
+     TemplateFunctionDeclaration.editSubstitute   ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
+     TemplateFunctionDeclaration.editSubstitute   ( "LIST_DATA_TYPE", "SgInitializedNamePtrList" );
+     TemplateFunctionDeclaration.editSubstitute   ( "LIST_NAME", "args" );
+     TemplateFunctionDeclaration.editSubstitute   ( "LIST_FUNCTION_RETURN_TYPE", "SgInitializedNamePtrList::iterator" );
+     TemplateFunctionDeclaration.editSubstitute   ( "LIST_FUNCTION_NAME", "arg" );
+
+     TemplateFunctionDeclaration.editSubstitute   ( "LIST_ELEMENT_DATA_TYPE", "SgInitializedName*" );
+
+  // TemplateFunctionDeclaration.setDataPrototype ( "SgName", "name", "= \"\"",
+  //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // This exists in the TemplateDeclaration base class.
+  // TemplateFunctionDeclaration.setDataPrototype ( "SgName", "name", "= \"\"",
+  //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TemplateFunctionDeclaration.setDataPrototype ( "SgFunctionParameterList*", "parameterList", "= NULL",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
+     TemplateFunctionDeclaration.setDataPrototype ( "SgFunctionModifier", "functionModifier", "",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TemplateFunctionDeclaration.setDataPrototype ( "SgSpecialFunctionModifier", "specialFunctionModifier", "",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     TemplateFunctionDeclaration.setDataPrototype ( "SgFunctionType*", "type", "= NULL",
+                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+
+  // TemplateFunctionDeclaration.setDataPrototype ( "SgFunctionDefinition*", "definition", "= NULL",
+  //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // DQ (11/23/2011): We want this to be a SgTemplateFunctionDefinition, but to match the template support 
+  // in the build functions it must be SgFunctionDefinition to match the signature of SgFunctionDeclaration.
+  // TemplateFunctionDeclaration.setDataPrototype ( "SgTemplateFunctionDefinition*", "definition", "= NULL",
+  //            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     TemplateFunctionDeclaration.setDataPrototype ( "SgFunctionDefinition*", "definition", "= NULL",
+                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // This is a redundant data member.
+  // TemplateFunctionDeclaration.setDataPrototype ( "SgScopeStatement*", "scope", "= NULL",
+  //            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (12/4/2007): Added support for GNU attributes
+     TemplateFunctionDeclaration.setDataPrototype ("std::string", "gnu_extension_section", "= \"\"",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TemplateFunctionDeclaration.setDataPrototype ("std::string", "gnu_extension_alias", "= \"\"",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TemplateFunctionDeclaration.setDataPrototype ("SgDeclarationStatement::gnu_extension_visability_attribute_enum", "gnu_extension_visability", "= SgDeclarationStatement::e_gnu_attribute_visability_unspecified",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/13/2011): Added support for name qualification.
+     TemplateFunctionDeclaration.setDataPrototype ( "int", "name_qualification_length", "= 0",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/13/2011): Added information required for new name qualification support.
+     TemplateFunctionDeclaration.setDataPrototype("bool","type_elaboration_required","= false",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/13/2011): Added information required for new name qualification support.
+     TemplateFunctionDeclaration.setDataPrototype("bool","global_qualification_required","= false",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/15/2011): Added support for name qualification.
+     TemplateFunctionDeclaration.setDataPrototype ( "int", "name_qualification_length_for_return_type", "= 0",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/15/2011): Added information required for new name qualification support.
+     TemplateFunctionDeclaration.setDataPrototype("bool","type_elaboration_required_for_return_type","= false",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/15/2011): Added information required for new name qualification support.
+     TemplateFunctionDeclaration.setDataPrototype("bool","global_qualification_required_for_return_type","= false",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (11/26/2011): Added to define uniform support in templated functions to build the SgFunctionDeclaration and SgTemplateFunctionDeclaration.
+  // driscoll6 (7/14/11) support for python decorators
+     TemplateFunctionDeclaration.setDataPrototype ( "SgExprListExp*", "decoratorList", "= NULL",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // **************************************************************************************************************
+  // **************************************************************************************************************
 
      TemplateMemberFunctionDeclaration.setFunctionPrototype  ( "HEADER_TEMPLATE_MEMBER_FUNCTION_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
   // TemplateMemberFunctionDeclaration.setDataPrototype ( "SgTemplateFunctionDefinition*", "definition", "= NULL",
   //            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // **************************************************************************************************************************
+  // DQ (11/23/2011): Added matching function data members to TemplateMemberFunctionDeclaration as in MemberFunctionDeclaration
+  // **************************************************************************************************************************
+
+     TemplateMemberFunctionDeclaration.editSubstitute      ( "LIST_DATA_TYPE", "SgInitializedNamePtrList" );
+     TemplateMemberFunctionDeclaration.editSubstitute      ( "LIST_NAME", "ctors" );
+     TemplateMemberFunctionDeclaration.editSubstitute      ( "LIST_FUNCTION_RETURN_TYPE", "void" );
+     TemplateMemberFunctionDeclaration.editSubstitute      ( "LIST_FUNCTION_NAME", "ctor_initializer" );
+     TemplateMemberFunctionDeclaration.editSubstitute      ( "LIST_ELEMENT_DATA_TYPE", "SgInitializedName*" );
+
+     TemplateMemberFunctionDeclaration.setDataPrototype ( "SgCtorInitializerList*", "CtorInitializerList", "= NULL",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     TemplateMemberFunctionDeclaration.setDataPrototype ( "SgClassDeclaration*", "associatedClassDeclaration", "= NULL",
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // **************************************************************************************************************************
+  // **************************************************************************************************************************
 
      TemplateClassDefinition.setFunctionPrototype    ( "HEADER_TEMPLATE_CLASS_DEFINITION_STATEMENT", "../Grammar/Statement.code" );
      TemplateFunctionDefinition.setFunctionPrototype ( "HEADER_TEMPLATE_FUNCTION_DEFINITION_STATEMENT", "../Grammar/Statement.code" );
@@ -1494,8 +1619,7 @@ Grammar::setUpStatements ()
      TemplateInstantiationDirectiveStatement.setDataPrototype ( "SgDeclarationStatement*", "declaration", "= NULL",
                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
-     TemplateInstantiationDecl.setFunctionPrototype ( 
-                                        "HEADER_TEMPLATE_INSTANTIATION_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
+     TemplateInstantiationDecl.setFunctionPrototype ( "HEADER_TEMPLATE_INSTANTIATION_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
   // This might have to be made to be type == "int" but it makes more sense as a template_type_enum
   // TemplateInstantiationDecl.setDataPrototype ( "template_type_enum" , "template_kind", "= e_template_none");
 
