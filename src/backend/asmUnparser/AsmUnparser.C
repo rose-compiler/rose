@@ -614,6 +614,9 @@ AsmUnparser::StaticDataDetails::operator()(bool enabled, const StaticDataArgs &a
         if (dblock && 0!=(dblock->get_reason() & SgAsmBlock::BLK_JUMPTABLE)) {
             args.output <<" " <<nbytes <<"-byte jump table beginning at "
                         <<StringUtility::addrToString(args.data->get_address());
+        } else if (dblock && 0!=(dblock->get_reason() & SgAsmBlock::BLK_PADDING)) {
+            args.output <<" " <<nbytes <<"-byte padding beginning at "
+                        <<StringUtility::addrToString(args.data->get_address());
         } else {
             args.output <<" " <<nbytes <<" byte" <<(1==nbytes?"":"s") <<" untyped data beginning at "
                         <<StringUtility::addrToString(args.data->get_address());
