@@ -289,6 +289,7 @@ public:
         : insn_func_name(ida), data_func_name(ida), func_callers(cg), data_block_disassembler(disassembler),
           next_address(0), nprinted(0) {
         set_organization(AsmUnparser::ORGANIZED_BY_ADDRESS);
+        insnBlockEntry.show_function = false; // don't show function addresses since our own show_names() does that.
         insn_callbacks.pre
             .append(&insn_func_name)
             .after(&insnBlockSeparation, &insn_skip, 1);

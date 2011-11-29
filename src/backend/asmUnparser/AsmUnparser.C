@@ -405,13 +405,29 @@ AsmUnparser::InsnBlockEntry::operator()(bool enabled, const InsnArgs &args)
 {
     if (enabled && ORGANIZED_BY_ADDRESS==args.unparser->get_organization()) {
         SgAsmBlock *block = isSgAsmBlock(args.insn->get_parent()); // look only to immediate parent
+        bool is_first_insn = block && args.insn==block->get_statementList().front();
+
         static size_t width = 0;
         if (0==width)
             width = block->reason_str(true, 0).size();
-        if (block && args.insn==block->get_statementList().front()) {
-            args.output <<" " <<block->reason_str(true) <<" ";
-        } else {
-            args.output <<std::setw(width+2) <<" ";
+
+        if (show_function) {
+            SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(block);
+            char buf[32];
+            if (func && is_first_insn) {
+                snprintf(buf, sizeof buf, "F%08"PRIx64, func->get_entry_va());
+            } else {
+                sprintf(buf, "%*s", 9, "");
+            }
+            args.output <<" " <<buf;
+        }
+
+        if (show_reasons) {
+            if (block && is_first_insn) {
+                args.output <<" " <<block->reason_str(true) <<" ";
+            } else {
+                args.output <<std::setw(width+2) <<" ";
+            }
         }
     }
     return enabled;
@@ -561,13 +577,29 @@ AsmUnparser::StaticDataBlockEntry::operator()(bool enabled, const StaticDataArgs
 {
     if (enabled && ORGANIZED_BY_ADDRESS==args.unparser->get_organization()) {
         SgAsmBlock *block = isSgAsmBlock(args.data->get_parent()); // look only to immediate parent
+        bool is_first_data = block && args.data==block->get_statementList().front();
+
         static size_t width = 0;
         if (0==width)
             width = block->reason_str(true, 0).size();
-        if (block && args.data==block->get_statementList().front()) {
-            args.output <<" " <<block->reason_str(true) <<" ";
-        } else {
-            args.output <<std::setw(width+2) <<" ";
+
+        if (show_function) {
+            SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(block);
+            char buf[32];
+            if (func && is_first_data) {
+                snprintf(buf, sizeof buf, "F%08"PRIx64, func->get_entry_va());
+            } else {
+                sprintf(buf, "%*s", 9, "");
+            }
+            args.output <<" " <<buf;
+        }
+
+        if (show_reasons) {
+            if (block && is_first_data) {
+                args.output <<" " <<block->reason_str(true) <<" ";
+            } else {
+                args.output <<std::setw(width+2) <<" ";
+            }
         }
     }
     return enabled;
