@@ -9,6 +9,8 @@
 
 #define SKIP_C_ACTION_IMPLEMENTATION 0
 
+#define DXN_CODE 1
+
 using namespace std;
 
 // ********************************************************************
@@ -14048,55 +14050,29 @@ void c_action_label(Token_t * lbl)
         outputState("At TOP of R913 c_action_io_control_spec()");
 #endif
 
-        // if (hasExpression == true)
-        if (hasExpression == true)
+        // This is the case of an option not being specified, as in "read(1)" instead of "read(UNIT=1)"
+        // To make the astExpressionStack match the astNameStack we have to push a default token onto the astNameStack.
+        if (keyword == NULL)
         {
-            // printf ("In c_action_io_control_spec() -- hasExpression == true: Need an example of this case before I can support it! \n");
-
-            // This is the case of an option not being specified, as in "read(1)" instead of "read(UNIT=1)"
-            // To make the astExpressionStack match the astNameStack we have to push a default token onto the astNameStack.
-            if (keyword == NULL)
-            {
-                Token_t* defaultToken = create_token(0, 0, 0, "defaultString");
-                ROSE_ASSERT(defaultToken != NULL);
-                astNameStack.push_front(defaultToken);
-            }
-            else
-            {
-                // else use the correct name of the option specified
-                astNameStack.push_front(keyword);
-            }
-
-            // ROSE_ASSERT(false);
+            Token_t* defaultToken = create_token(0, 0, 0, "defaultString");
+            ROSE_ASSERT(defaultToken != NULL);
+            astNameStack.push_front(defaultToken);
         }
+        else   // use the correct name of the option specified
+            astNameStack.push_front(keyword);
 
-        if (hasAsterisk == true)
+        if ( hasAsterisk )
         {
             SgAsteriskShapeExp* asterisk = new SgAsteriskShapeExp();
             setSourcePosition(asterisk);
-
             astExpressionStack.push_front(asterisk);
-
-            // This is the case of an option not being specified, as in "read(1)" instead of "read(UNIT=1)"
-            // To make the astExpressionStack match the astNameStack we have to push a default token onto the astNameStack.
-            if (keyword == NULL)
-            {
-              Token_t* defaultToken = create_token(0, 0, 0, "defaultString");
-              ROSE_ASSERT(defaultToken != NULL);
-              astNameStack.push_front(defaultToken);
-            }
-            else
-                astNameStack.push_front(keyword);
         }
-        else
+        else if ( !hasExpression )
         {
-            if (hasExpression == false)
-            {
-                printf(
-                        "In c_action_io_control_spec() -- hasAsterisk == false: Need an example of this case before I can support it! \n");
-            }
-            // ROSE_ASSERT(false);
-            ROSE_ASSERT(hasExpression == true);
+           if ( keyword)
+              cout << "At line " << keyword->line << " ";
+           cout << "c_action_io_control_spec(): case hasExpression == false and hasAsterisk == false NOT possible from the grammar." << endl;
+           ROSE_ASSERT(false);
         }
 
 #if 0
