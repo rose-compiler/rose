@@ -1830,7 +1830,7 @@ Partitioner::scan_intrafunc_insns(InsnRangeCallbacks &cblist)
 }
 
 void
-Partitioner::scan_unassigned_bytes(ByteRangeCallbacks &cblist, MemoryMap *restrict_var/*=NULL*/)
+Partitioner::scan_unassigned_bytes(ByteRangeCallbacks &cblist, MemoryMap *restrict_map/*=NULL*/)
 {
     if (cblist.empty())
         return;
@@ -1842,16 +1842,16 @@ Partitioner::scan_unassigned_bytes(ByteRangeCallbacks &cblist, MemoryMap *restri
     /* Unassigned ranges are the inverse of everything assigned.  Then further restrict the unassigned range map according to
      * the supplied memory map. */
     ExtentMap unassigned = assigned.invert<ExtentMap>();
-    if (restrict_var)
-        unassigned.erase_ranges(restrict_var->va_extents().invert<ExtentMap>());
+    if (restrict_map)
+        unassigned.erase_ranges(restrict_map->va_extents().invert<ExtentMap>());
 
     /* Traverse the unassigned map, invoking the callbacks for each range. */
     for (ExtentMap::iterator ri=unassigned.begin(); ri!=unassigned.end(); ++ri)
-        cblist.apply(true, ByteRangeCallback::Args(this, assigned, ri->first));
+        cblist.apply(true, ByteRangeCallback::Args(this, restrict_map, assigned, ri->first));
 }
 
 void
-Partitioner::scan_intrafunc_bytes(ByteRangeCallbacks &cblist, MemoryMap *restrict_var/*=NULL*/)
+Partitioner::scan_intrafunc_bytes(ByteRangeCallbacks &cblist, MemoryMap *restrict_map/*=NULL*/)
 {
     if (cblist.empty())
         return;
@@ -1880,11 +1880,11 @@ Partitioner::scan_intrafunc_bytes(ByteRangeCallbacks &cblist, MemoryMap *restric
     } filter;
     ByteRangeCallbacks cblist2 = cblist;
     cblist2.prepend(&filter);
-    scan_unassigned_bytes(cblist2, restrict_var);
+    scan_unassigned_bytes(cblist2, restrict_map);
 }
 
 void
-Partitioner::scan_interfunc_bytes(ByteRangeCallbacks &cblist, MemoryMap *restrict_var/*=NULL*/)
+Partitioner::scan_interfunc_bytes(ByteRangeCallbacks &cblist, MemoryMap *restrict_map/*=NULL*/)
 {
     if (cblist.empty())
         return;
@@ -1913,7 +1913,7 @@ Partitioner::scan_interfunc_bytes(ByteRangeCallbacks &cblist, MemoryMap *restric
     } filter;
     ByteRangeCallbacks cblist2 = cblist;
     cblist2.prepend(&filter);
-    scan_unassigned_bytes(cblist2, restrict_var);
+    scan_unassigned_bytes(cblist2, restrict_map);
 }
 
 bool
@@ -1959,7 +1959,8 @@ Partitioner::FindDataPadding::operator()(bool enabled, const Args &args)
      * read, although this shouldn't happen if the caller supplied the correct memory map to the scan_*_bytes() method. */
     if (range.size() > maximum_range_size)
         return true;
-    SgUnsignedCharList buf = p->ro_map.read(range.first(), range.size());
+    MemoryMap *map = args.restrict_map ? args.restrict_map : &p->ro_map;
+    SgUnsignedCharList buf = map->read(range.first(), range.size());
     if (ends_contiguously && buf.size()<range.size())
         return true;
     range.resize(buf.size());

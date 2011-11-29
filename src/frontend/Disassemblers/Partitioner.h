@@ -968,9 +968,10 @@ public:
     public:
         /** Arguments for the callback. */
         struct Args {
-            Args(Partitioner *partitioner, const FunctionRangeMap &ranges, const Extent &range)
-                : partitioner(partitioner), ranges(ranges), range(range) {}
+            Args(Partitioner *partitioner, MemoryMap *restrict_map, const FunctionRangeMap &ranges, const Extent &range)
+                : partitioner(partitioner), restrict_map(restrict_map), ranges(ranges), range(range) {}
             Partitioner *partitioner;
+            MemoryMap *restrict_map;                    /**< Optional memory map supplied to scan_*_bytes() method. */
             const FunctionRangeMap &ranges;             /**< The range map over which we are iterating. */
             Extent range;                               /**< Range of address space being processed by the callback. */
         };
@@ -1067,13 +1068,13 @@ public:
      *  callbacks are invoked and not updated for the duration of this function.  The determination is made by calling
      *  Partitioner::function_extent() across all known functions, and then passing that mapping to each of the callbacks.
      *
-     *  If a @p restrict MemoryMap is specified then only addresses that are also defined in the map are considered.
+     *  If a @p restrict_map MemoryMap is specified then only addresses that are also defined in the map are considered.
      *
      *  @{ */
-    virtual void scan_unassigned_bytes(ByteRangeCallbacks &callbacks, MemoryMap *restrict_var=NULL);
-    void scan_unassigned_bytes(ByteRangeCallback *callback, MemoryMap *restrict_var=NULL) {
+    virtual void scan_unassigned_bytes(ByteRangeCallbacks &callbacks, MemoryMap *restrict_map=NULL);
+    void scan_unassigned_bytes(ByteRangeCallback *callback, MemoryMap *restrict_map=NULL) {
         ByteRangeCallbacks cblist(callback);
-        scan_unassigned_bytes(cblist, restrict_var);
+        scan_unassigned_bytes(cblist, restrict_map);
     }
     /** @} */
 
@@ -1082,13 +1083,13 @@ public:
      *  for example, to discover static data or unreachable instructions (by static analysis) that should probably belong to
      *  the surrounding function.
      *
-     *  If a @p restrict MemoryMap is specified then only addresses that are also defined in the map are considered.
+     *  If a @p restrict_map MemoryMap is specified then only addresses that are also defined in the map are considered.
      *
      *  @{ */
-    virtual void scan_intrafunc_bytes(ByteRangeCallbacks &callbacks, MemoryMap *restrict_var=NULL);
-    void scan_intrafunc_bytes(ByteRangeCallback *callback, MemoryMap *restrict_var=NULL) {
+    virtual void scan_intrafunc_bytes(ByteRangeCallbacks &callbacks, MemoryMap *restrict_map=NULL);
+    void scan_intrafunc_bytes(ByteRangeCallback *callback, MemoryMap *restrict_map=NULL) {
         ByteRangeCallbacks cblist(callback);
-        scan_intrafunc_bytes(cblist, restrict_var);
+        scan_intrafunc_bytes(cblist, restrict_map);
     }
     /** @} */
 
@@ -1097,13 +1098,13 @@ public:
      *  belongs to one function and the next higher assigned address belongs to some other function, or if there is no assigned
      *  lower address and/or no assigned higher address.
      *
-     *  If a @p restrict MemoryMap is specified then only addresses that are also defined in the map are considered.
+     *  If a @p restrict_map MemoryMap is specified then only addresses that are also defined in the map are considered.
      *
      *  @{ */
-    virtual void scan_interfunc_bytes(ByteRangeCallbacks &callbacks, MemoryMap *restrict_var=NULL);
-    void scan_interfunc_bytes(ByteRangeCallback *callback, MemoryMap *restrict_var=NULL) {
+    virtual void scan_interfunc_bytes(ByteRangeCallbacks &callbacks, MemoryMap *restrict_map=NULL);
+    void scan_interfunc_bytes(ByteRangeCallback *callback, MemoryMap *restrict_map=NULL) {
         ByteRangeCallbacks cblist(callback);
-        scan_interfunc_bytes(cblist, restrict_var);
+        scan_interfunc_bytes(cblist, restrict_map);
     }
     /** @}*/
 
