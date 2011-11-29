@@ -3,6 +3,7 @@
   
  */
 
+#include <rose.h>
 #include "CudaOutliner.h"       
 
 #include "unparser.h"           //parses types into strings  
@@ -11,7 +12,6 @@
 #include "Copy.hh"
 
 
-#include <rose.h>
 #include <iostream>
 #include <string>
 #include <sstream>
