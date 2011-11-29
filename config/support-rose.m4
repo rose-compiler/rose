@@ -1904,7 +1904,6 @@ src/frontend/BinaryLoader/Makefile
 src/frontend/BinaryFormats/Makefile
 src/frontend/Disassemblers/Makefile
 src/midend/Makefile
-src/midend/abstractMemoryObject/Makefile
 src/midend/astUtil/Makefile
 src/midend/astRewriteMechanism/Makefile
 src/midend/binaryAnalyses/Makefile
