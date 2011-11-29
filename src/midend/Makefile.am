@@ -16,6 +16,11 @@ include $(srcdir)/astDiagnostics/Makefile_variables
 include $(srcdir)/astProcessing/Makefile_variables
 include $(srcdir)/astRewriteMechanism/Makefile_variables
 include $(srcdir)/astQuery/Makefile_variables
+include $(srcdir)/astUtil/Makefile_variables
+include $(srcdir)/astUtil/annotation/Makefile_variables
+include $(srcdir)/astUtil/astInterface/Makefile_variables
+include $(srcdir)/astUtil/astSupport/Makefile_variables
+include $(srcdir)/astUtil/symbolicVal/Makefile_variables
 include $(srcdir)/programTransformation/Makefile_variables
 include $(srcdir)/programTransformation/partialRedundancyElimination/Makefile_variables
 include $(srcdir)/programTransformation/finiteDifferencing/Makefile_variables
@@ -38,6 +43,7 @@ mAstDiagnosticsPath=astDiagnostics#
 mAstProcessingPath=astProcessing#
 mAstRewriteMechanismPath=astRewriteMechanism#
 mAstQueryPath=astQuery#
+mAstUtilPath=astUtil#
 mProgramTransformationPath=programTransformation#
 
 #
@@ -48,7 +54,6 @@ SUBDIRS = \
 	binaryAnalyses
 if !ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 SUBDIRS += \
-	astUtil \
 	programAnalysis \
 	programTransformation/loopProcessing
 endif
@@ -62,7 +67,13 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 
 INCLUDES=\
 	$(ROSE_INCLUDES) \
-	-I${top_srcdir}/src/midend/programAnalysis/CFG
+	-I${top_srcdir}/src/midend/programAnalysis/CFG \
+	-I$(mAstUtilPath) \
+	-I$(mAstUtilPath)/astInterface \
+	-I$(mAstUtilPath)/symbolicVal \
+	-I$(mAstUtilPath)/astSupport \
+	-I$(top_srcdir)/src/util \
+	-I$(top_srcdir)/src/util/support
 
 noinst_LTLIBRARIES=\
 	libmidend.la
@@ -77,6 +88,7 @@ libmidend_la_SOURCES=\
 	$(mAstProcessing_la_sources) \
 	$(mAstRewriteMechanism_la_sources) \
 	$(mAstQuery_la_sources) \
+	$(mAstUtil_la_sources) \
 	$(mProgramTransformation_la_sources)
 
 # astProcessing _la_LIBADD = $(CXX_TEMPLATE_OBJECTS)
@@ -93,6 +105,7 @@ include_HEADERS = \
 	$(mAstProcessing_includeHeaders) \
 	$(mAstRewriteMechanism_includeHeaders) \
 	$(mAstQuery_includeHeaders) \
+	$(mAstUtil_includeHeaders) \
 	$(mProgramTransformation_includeHeaders)
 
 # ------------------------------------------------------------------------------
@@ -107,6 +120,7 @@ EXTRA_DIST = \
 	$(mAstProcessing_extraDist) \
 	$(mAstRewriteMechanism_extraDist) \
 	$(mAstQuery_extraDist) \
+	$(mAstUtil_extraDist) \
 	$(mProgramTransformation_extraDist)
 
 clean-local:
@@ -116,9 +130,11 @@ clean-local:
 	$(mAstProcessing_cleanLocal)
 	$(mAstRewriteMechanism_cleanLocal)
 	$(mAstQuery_cleanLocal)
+	$(mAstUtil_cleanLocal)
 	$(mProgramTransformation_cleanLocal)
 
 distclean-local:
 	$(mAstProcessing_distCleanLocal)
 	$(mAstQuery_distCleanLocal)
+	$(mAstUtil_distCleanLocal)
 
