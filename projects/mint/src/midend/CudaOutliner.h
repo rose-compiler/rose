@@ -8,7 +8,7 @@
 #ifndef _CUDAOUTLINER_H
 #define _CUDAOUTLINER_H
 
-#include <rose.h>
+//#include <rose.h>
 #include <iostream>
 #include <string>
 #include <sstream>

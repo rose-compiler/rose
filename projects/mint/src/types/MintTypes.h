@@ -2,7 +2,7 @@
 #ifndef __MINTTYPES_H
 
 #define __MINTTYPES_H
-#include "rose.h"
+//#include "rose.h"
 
 #include <string>
 #include <map>
