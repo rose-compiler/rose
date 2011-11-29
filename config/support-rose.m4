@@ -1567,13 +1567,22 @@ fi
 AM_CONDITIONAL(ROSE_HAS_EDG_SOURCE, [test "x$has_edg_source" = "xyes"])
 AM_CONDITIONAL(BINARY_EDG_TARBALL_ENABLED, [test "x$binary_edg_tarball_enabled" = "xyes"])
 
+ROSE_ARG_ENABLE(
+  [alternate-edg-build-cpu],
+  [for alternate EDG build cpu],
+  [allows you to generate EDG binaries with a different CPU type in the name string]
+)
+
 #The build_triplet_without_redhat variable is used only in src/frontend/CxxFrontend/Makefile.am to determine the binary edg name
 build_triplet_without_redhat=`${srcdir}/config/cleanConfigGuessOutput "$build" "$build_cpu" "$build_vendor"`
+if test "x$CONFIG_HAS_ROSE_ENABLE_ALTERNATE_EDG_BUILD_CPU" = "xyes"; then
+  # Manually modify the build CPU <build_cpu>-<build_vendor>-<build>
+  build_triplet_without_redhat="$(echo "$build_triplet_without_redhat" | sed 's/^[[^-]]*\(.*\)/'$ROSE_ENABLE_ALTERNATE_EDG_BUILD_CPU'\1/')"
+fi
 AC_SUBST(build_triplet_without_redhat) dnl This is done even with EDG source, since it is used to determine the binary to make in roseFreshTest
 
 # End macro ROSE_SUPPORT_ROSE_PART_3.
-]
-)
+])
 
 #-----------------------------------------------------------------------------
 
