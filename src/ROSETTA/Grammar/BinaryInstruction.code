@@ -4062,6 +4062,8 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
 	 *  the instruction partitioner (Partitioner class) to determine what heuristics are used when partitioning
 	 *  instructions into functions. */
         enum FunctionReason {
+
+		// NOTE: If you add more here, then fix Partitioner::parse_switches()
                 FUNC_NONE        = 0x00000000,	/**< Used for initialization; not a bit flag. */
                 FUNC_ENTRY_POINT = 0x00010000,  /**< An entry point specified in the file header. */
                 FUNC_CALL_TARGET = 0x00020000,	/**< Target of a function call instruction sequence in the CFG. When used as
@@ -4116,7 +4118,7 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
 						 *   partitioner only sets this flag for functions that are created due to
 						 *   the thunk recognition pass; other functions that don't have this bit set
 						 *   might also be thunks. */
-                FUNC_DEFAULT     = 0x6fff0000,	/**< Default value for Partitioner class. */
+                FUNC_DEFAULT     = 0x6fff00ff,	/**< Default value for Partitioner class. */
 
 		/*========= Miscellaneous Reasons ===========================================================================
 		 * The first half of the range (1-127, inclusive) is used for algorithms defined by ROSE.  The second half is

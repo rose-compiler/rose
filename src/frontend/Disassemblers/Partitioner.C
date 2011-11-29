@@ -401,8 +401,12 @@ Partitioner::parse_switches(const std::string &s, unsigned flags)
         unsigned bits = 0;
         if (word=="entry" || word=="entry_point") {
             bits = SgAsmFunction::FUNC_ENTRY_POINT;
-        } else if (word=="call" || word=="call_target") {
+        } else if (word=="call_target") {
             bits = SgAsmFunction::FUNC_CALL_TARGET;
+        } else if (word=="call_insn") {
+            bits = SgAsmFunction::FUNC_CALL_INSN;
+        } else if (word=="call") {
+            bits = SgAsmFunction::FUNC_CALL_TARGET | SgAsmFunction::FUNC_CALL_INSN;
         } else if (word=="eh" || word=="eh_frame") {
             bits = SgAsmFunction::FUNC_EH_FRAME;
         } else if (word=="import") {
@@ -415,6 +419,12 @@ Partitioner::parse_switches(const std::string &s, unsigned flags)
             bits = SgAsmFunction::FUNC_USERDEF;
         } else if (word=="pad" || word=="padding" || word=="interpad") {
             bits = SgAsmFunction::FUNC_PADDING;
+        } else if (word=="intrablock") {
+            bits = SgAsmFunction::FUNC_INTRABLOCK;
+        } else if (word=="thunk") {
+            bits = SgAsmFunction::FUNC_THUNK;
+        } else if (word=="misc" || word=="miscellaneous" || word=="interpadfunc") {
+            bits = SgAsmFunction::FUNC_MISCMASK;
         } else if (word=="unassigned" || word=="unclassified" || word=="leftover" || word=="leftovers") {
             bits = SgAsmFunction::FUNC_LEFTOVERS;
         } else if (word=="default") {
@@ -3332,8 +3342,10 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
     }
 
     /* Find functions that we missed between inter-function padding. */
-    FindInterPadFunctions find_interpad_functions;
-    scan_unassigned_bytes(&find_interpad_functions, &exe_map);
+    if (func_heuristics & SgAsmFunction::FUNC_MISCMASK) {
+        FindInterPadFunctions find_interpad_functions;
+        scan_unassigned_bytes(&find_interpad_functions, &exe_map);
+    }
 
     /* Find code fragments that appear after a function. */
     if (func_heuristics & SgAsmFunction::FUNC_INTRABLOCK) {
@@ -3373,7 +3385,7 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
     adjust_padding();
 
     /* Give existing functions names from symbol tables. Don't create more functions. */
-    if (interp) {
+    if (interp && 0!=(func_heuristics & SgAsmFunction::FUNC_IMPORT)) {
         const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
         for (size_t i=0; i<headers.size(); i++) {
             name_plt_entries(headers[i]); // give names to ELF .plt trampolines
