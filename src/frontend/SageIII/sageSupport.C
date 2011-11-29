@@ -5,9 +5,15 @@
 #include "astPostProcessing.h"
 #include <sys/stat.h>
 
-#include "omp_lowering.h"
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+   #include "omp_lowering.h"
+#endif
+
 #include "attachPreprocessingInfo.h"
-#include "astMergeAPI.h"
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+   #include "astMergeAPI.h"
+#endif
 
 #include "BinaryLoader.h"
 #include "Partitioner.h"
@@ -22,8 +28,11 @@
 //#pragma message ("WARNING: wait.h header file not available in MSVC.")
 #else
 #include <sys/wait.h>
-#include "PHPFrontend.h"
-#include "PythonFrontend.h"
+
+   #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+      #include "PHPFrontend.h"
+      #include "PythonFrontend.h"
+   #endif
 #endif
 
 #ifdef _MSC_VER
@@ -63,6 +72,9 @@
 // Liao 10/8/2010, refactored OpenMP related code to ompAstConstruction.C
 #include "ompAstConstruction.h"
 
+#ifdef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+   #include "transformationSupport.h"
+#endif
 
 #if 0
 //Liao, 10/27/2008: parsing OpenMP pragma here
@@ -4326,7 +4338,9 @@ SgProject::parse(const vector<string>& argv)
             // working directories to a separate file.  This permits a makefile to
             // call a ROSE translator repeatedly and the command line for each
             // file be saved.
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
                errorCode = AstMergeSupport(this);
+#endif
              }
             else
              {
@@ -4342,7 +4356,9 @@ SgProject::parse(const vector<string>& argv)
                ROSE_ASSERT(false);
                errorCode = -1;
 #endif
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
                errorCode = AstMergeSupport(this);
+#endif
              }
         }
        else
@@ -4360,7 +4376,9 @@ SgProject::parse(const vector<string>& argv)
             // object files to be built so that, for example, libraries can be constructed when
             // operating across multiple directories.
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
                errorCode = buildAstMergeCommandFile(this);
+#endif
              }
             else
              {
@@ -5720,8 +5738,10 @@ SgFile::secondaryPassOverSourceFile()
                attachPreprocessingInfo(sourceFile);
 #endif
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
             // Liao, 3/31/2009 Handle OpenMP here to see macro calls within directives
                processOpenMP(sourceFile);
+#endif
 
             // Reset the saved state (might not really be required at this point).
                if (requiresCPP == true)

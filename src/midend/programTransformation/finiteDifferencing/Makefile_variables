@@ -1,8 +1,5 @@
 # Non-recursive Makefile
 
-mptFiniteDifferencing_includes = \
-	-I${top_srcdir}/src/midend/programAnalysis/CFG
-
 mptFiniteDifferencing_la_source = \
 	$(mptFiniteDifferencingPath)/finiteDifferencing.C \
 	$(mptFiniteDifferencingPath)/patternRewrite.C

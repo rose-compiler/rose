@@ -776,6 +776,7 @@ inline SgIfStmt * buildIfStmt(SgExpression* conditional, SgStatement * true_body
 SgIfStmt * buildIfStmt_nfi(SgStatement* conditional, SgStatement * true_body, SgStatement * false_body);
 
 //! Build a for init statement
+SgForInitStatement * buildForInitStatement();
 SgForInitStatement * buildForInitStatement(const SgStatementPtrList & statements);
 SgForInitStatement * buildForInitStatement_nfi(SgStatementPtrList & statements);
 
@@ -1022,8 +1023,11 @@ PreprocessingInfo* buildCpreprocessorDefineDeclaration(SgLocatedNode* target,
                 const std::string & content,
                PreprocessingInfo::RelativePositionType position=PreprocessingInfo::before);
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 //! Build an abstract handle from a SgNode
 AbstractHandle::abstract_handle * buildAbstractHandle(SgNode* n);
+#endif
+
 //@}
 
 } // end of namespace

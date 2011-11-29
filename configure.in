@@ -36,6 +36,7 @@ dnl +--------------------------------------------------------------------------+
 AC_CONFIG_AUX_DIR([config])
 AM_INIT_AUTOMAKE([foreign tar-pax 1.9.5])
 AM_CONFIG_HEADER([rose_config.h])
+AM_PROG_CC_C_O
 
 # JJW (10/8/2008): Make default CFLAGS, CXXFLAGS, and FFLAGS empty (from
 # <URL:http://osdir.com/ml/sysutils.autoconf.general/2003-11/msg00124.html>)

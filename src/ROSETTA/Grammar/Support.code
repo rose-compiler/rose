@@ -4139,6 +4139,8 @@ HEADER_INITIALIZED_NAME_START
           void unsetGnuAttributeWeakReference();
 
           void post_construction_initialization();
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
        // Overriding SgNode versions of these
           virtual unsigned int cfgIndexForEnd() const;
           virtual bool cfgIsIndexInteresting(unsigned int index) const;
@@ -4146,6 +4148,7 @@ HEADER_INITIALIZED_NAME_START
           virtual unsigned int cfgFindNextChildIndex(SgNode* n);
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
           SgStorageModifier & get_storageModifier();
 

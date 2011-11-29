@@ -1,8 +1,5 @@
 # Non-recursive Makefile
 
-mptPartialRedundancyElimination_includes = \
-	-I${top_srcdir}/src/midend/programAnalysis/CFG
-
 mptPartialRedundancyElimination_la_sources = \
 	$(mptPartialRedundancyEliminationPath)/pre.C \
 	$(mptPartialRedundancyEliminationPath)/controlFlowGraph.C \
