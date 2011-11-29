@@ -110,7 +110,6 @@ libroseLibraries = \
    $(librosePythonlibraries) \
    $(libroseEDGlibraries) \
    $(libroseBinaryLibraries) \
-   $(top_builddir)/src/midend/astRewriteMechanism/librewrite.la \
    $(top_builddir)/src/midend/astUtil/libastUtil.la \
    $(top_builddir)/src/midend/programAnalysis/libprogramAnalysis.la \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/libLoopProcessing.la \
