@@ -1931,7 +1931,6 @@ Partitioner::FindDataPadding::operator()(bool enabled, const Args &args)
     for (size_t pi=1; pi<patterns.size(); ++pi)
         max_psize = std::max(max_psize, patterns[pi].size());
 
-
     /* What is the previous function?  The one to which padding is to be attached. */
     if (range.first()<=Extent::minimum())
         return true;
@@ -1942,7 +1941,6 @@ Partitioner::FindDataPadding::operator()(bool enabled, const Args &args)
         return true;
     Function *func = prev->second.get();
     assert(func!=NULL);
-
 
     /* Do we need to be contiguous with a following function?  This only checks whether the incoming range ends at the
      * beginning of a function.  We'll check below whether a padding sequence also ends at the end of this range. */
@@ -2708,9 +2706,10 @@ Partitioner::name_import_entries(SgAsmGenericHeader *fhdr)
     struct ImportIndexBuilder: public AstSimpleProcessing {
         typedef std::map<rose_addr_t, std::string> Index;
         typedef Index::iterator iterator;
+        Partitioner *partitioner;
         Index index;
         SgAsmGenericHeader *fhdr;
-        ImportIndexBuilder(SgAsmGenericHeader *fhdr): fhdr(fhdr) {
+        ImportIndexBuilder(Partitioner *partitioner, SgAsmGenericHeader *fhdr): partitioner(partitioner), fhdr(fhdr) {
             traverse(fhdr, preorder);
         }
         void visit(SgNode *node) {
@@ -2720,17 +2719,24 @@ Partitioner::name_import_entries(SgAsmGenericHeader *fhdr)
             if (ilt && iat) {
                 rose_addr_t iat_base_va = idir->get_iat_rva() + fhdr->get_base_va();
                 size_t nentries = ilt->get_entries()->get_vector().size();
-                assert(nentries==iat->get_entries()->get_vector().size());
+                if (nentries!=iat->get_entries()->get_vector().size()) {
+                    if (partitioner->debug)
+                        fprintf(partitioner->debug, "Partitioner::name_import_entries: malformed import directory skipped\n");
+                    return;
+                }
                 for (size_t i=0; i<nentries; ++i) {
                     SgAsmPEImportILTEntry *ilt_entry = ilt->get_entries()->get_vector()[i];
-                    assert(NULL!=ilt_entry && NULL!=iat->get_entries()->get_vector()[i]);
-                    rose_addr_t iat_entry_va = iat_base_va + i*fhdr->get_word_size();
-                    if (ilt_entry->get_entry_type() == SgAsmPEImportILTEntry::ILT_HNT_ENTRY_RVA)
-                        index[iat_entry_va] = ilt_entry->get_hnt_entry()->get_name()->get_string();
+                    if (NULL!=ilt_entry && NULL!=iat->get_entries()->get_vector()[i]) {
+                        rose_addr_t iat_entry_va = iat_base_va + i*fhdr->get_word_size();
+                        if (ilt_entry->get_entry_type() == SgAsmPEImportILTEntry::ILT_HNT_ENTRY_RVA)
+                            index[iat_entry_va] = ilt_entry->get_hnt_entry()->get_name()->get_string();
+                    } else if (partitioner->debug) {
+                        fprintf(partitioner->debug, "Partitioner::name_import_entries: malformed ILT/IAT entry skipped\n");
+                    }
                 }
             }
         }
-    } imports(fhdr);
+    } imports(this, fhdr);
 
     /* Look for functions whose first instruction is an indirect jump through one of the memory addresses we indexed above. */
     for (Functions::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
