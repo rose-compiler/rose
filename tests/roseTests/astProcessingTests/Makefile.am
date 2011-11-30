@@ -1,10 +1,10 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 
-EXTRA_DIST = input1.C test11.C test12.C test13.C test14.C createTest.C t1 t2 t3 t4 t11tt t12tt t13tt t14tt
+EXTRA_DIST = input1.C test11.C test12.C test13.C test14.C createTest.C t1 t2 t3 t4
 
 # To keep compile commands tidy, please ONLY put required include flags here.
-INCLUDES = $(ROSE_INCLUDES) -fopenmp -O3
+INCLUDES = $(ROSE_INCLUDES) #-fopenmp -O3
 
 ## Don't use the repository in ../src
 CXX_TEMPLATE_REPOSITORY_PATH = .
@@ -13,11 +13,7 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 
 # DQ (7/2/2011): Fixed this to only handle binary work when binary support is available.
 # bin_PROGRAMS  = astTraversalTest processnew3Down4SgIncGraph processnew3Down4 binaryPaths
-<<<<<<< HEAD
-bin_PROGRAMS  = astTraversalTest processnew3Down4SgIncGraph2 strictGraphTest strictGraphTest2 strictGraphTest3 smtlibParser sourcePTP
-=======
 bin_PROGRAMS  = t14tt t13tt t12tt t11tt createTest astTraversalTest processnew3Down4SgIncGraph2 strictGraphTest strictGraphTest2 strictGraphTest3 smtlibParser sourcePTP
->>>>>>> fixed a merge issue
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 bin_PROGRAMS += binaryPaths bPTP
 endif
@@ -28,11 +24,8 @@ endif
 # long list of separate libraries (for faster development)
 ROSE_DEVELOPMENT_LIBS = $(ROSE_SEPARATE_LIBS)
 
-<<<<<<< HEAD
-=======
 
 
->>>>>>> fixed a merge issue
 astTraversalTest_SOURCES      = astTraversalTest.C
 astTraversalTest_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
 
@@ -80,48 +73,58 @@ astTraversalTest_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
 
 t14tt_SOURCES = test14.C.maintest.C
 t14tt_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+#t14tt_LDFLAGS = -fopenmp -O3
 
 t13tt_SOURCES = test13.C.maintest.C
 t13tt_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+#t13tt_LDFLAGS = -fopenmp -O3
 
 t12tt_SOURCES = test12.C.maintest.C
 t12tt_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+#t12tt_LDFLAGS = -fopenmp -O3
 
 t11tt_SOURCES = test11.C.maintest.C
 t11tt_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-
+#t11tt_LDFLAGS = -fopenmp -O3
 
 createTest_SOURCES = createTest.C
 createTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+#createTest_LDFLAGS = -fopenmp -O3
 
 bPTP_SOURCES = bPTP.C
 bPTP_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+#bPTP_LDFLAGS = -fopenmp -O3
 
 processnew3Down4SgIncGraph2_SOURCES      = processnew3Down4SgIncGraph2.C
 processnew3Down4SgIncGraph2_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+#processnew3Down4SgIncGraph2_LDFLAGS = -fopenmp -O3
 
 binaryPaths_SOURCES = binaryPaths.C
 binaryPaths_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+#binaryPaths_LDFLAGS = -fopenmp -O3
 
 strictGraphTest_SOURCES = strictGraphTest.C
 strictGraphTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+#strictGraphTest_LDFLAGS = -fopenmp -O3
 
 strictGraphTest2_SOURCES = strictGraphTest2.C
 strictGraphTest2_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+#strictGraphTest2_LDFLAGS = -fopenmp -O3
 
 smtlibParser_SOURCES = smtlibParser.C
 smtlibParser_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+#smtlibParser_LDFLAGS = -fopenmp -O3
 
 sourcePTP_SOURCES = sourcePTP.C
 sourcePTP_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+#sourcePTP_LDFLAGS = -fopenmp -O3
 
 yicesParser_SOURCES = yicesParser.C
 yicesParser_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+#yicesParser_LDFLAGS = -fopenmp -O3
 
 strictGraphTest3_SOURCES = strictGraphTest3.C
 strictGraphTest3_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-=======
->>>>>>> fixed a merge issue
 
 # source files don't contain anything that would be merged
 # TESTCODES = $(srcdir)/performanceTest.C
