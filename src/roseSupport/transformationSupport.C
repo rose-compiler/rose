@@ -2572,6 +2572,51 @@ TransformationSupport::getModuleStatement( const SgNode* astNode)
      return const_cast<SgModuleStatement*>(returnModuleDeclaration);
    }
 
+
+SgTemplateDeclaration*
+TransformationSupport::getTemplateDeclaration( const SgNode* astNode)
+   {
+     const SgNode* parentNode = astNode;
+     while ( (isSgTemplateDeclaration(parentNode) == NULL) && (parentNode->get_parent() != NULL) )
+        {
+          parentNode = parentNode->get_parent();
+        }
+
+  // Check to see if we made it back to the root (current root is SgProject).
+  // It is also OK to stop at a node for which get_parent() returns NULL (SgType and SgSymbol nodes).
+     if ( isSgTemplateDeclaration(parentNode) == NULL &&
+          dynamic_cast<const SgType*>(parentNode) == NULL &&
+          dynamic_cast<const SgSymbol*>(parentNode) == NULL )
+        {
+#if 0
+          if (astNode == NULL)
+               printf ("Error: could not trace back to SgTemplateDeclaration node \n");
+            else
+               printf ("Warning: could not trace back to SgTemplateDeclaration node from %s \n",astNode->class_name().c_str());
+          ROSE_ABORT();
+#endif
+
+       // DQ (12/27/2010): This should not be an error (OK to return NULL).
+          return NULL;
+        }
+       else
+        {
+          if ( dynamic_cast<const SgType*>(parentNode) != NULL || dynamic_cast<const SgSymbol*>(parentNode) != NULL )
+             {
+               printf ("Error: can't locate an associated SgTemplateDeclaration from astNode = %p = %s parentNode = %p = %s \n",astNode,astNode->class_name().c_str(),parentNode,parentNode->class_name().c_str());
+               return NULL;
+             }
+        }
+
+  // Make sure we have a SgFunctionDeclaration node
+     const SgTemplateDeclaration* templateDeclaration = isSgTemplateDeclaration(parentNode);
+     ROSE_ASSERT (templateDeclaration != NULL);
+
+     return const_cast<SgTemplateDeclaration*>(templateDeclaration);
+   }
+
+
+
 #if 0
 // Moved to SgTemplateArgument!!!
 SgScopeStatement*

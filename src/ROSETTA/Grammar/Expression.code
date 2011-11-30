@@ -453,6 +453,14 @@ HEADER_LONG_DOUBLE_VALUE_EXPRESSION_START
 HEADER_LONG_DOUBLE_VALUE_EXPRESSION_END
 
 
+HEADER_TEMPLATE_PARAMETER_VALUE_EXPRESSION_START
+
+       // DQ (11/28/2011): Added to support template declarations in the AST.
+          SgName get_template_parameter_name() const;
+
+HEADER_TEMPLATE_PARAMETER_VALUE_EXPRESSION_END
+
+
 HEADER_COMPLEX_VALUE_EXPRESSION_START
 HEADER_COMPLEX_VALUE_EXPRESSION_END
 
@@ -2807,6 +2815,65 @@ SOURCE_DOUBLE_VALUE_EXPRESSION_END
 
 SOURCE_LONG_DOUBLE_VALUE_EXPRESSION_START
 SOURCE_LONG_DOUBLE_VALUE_EXPRESSION_END
+
+
+SOURCE_TEMPLATE_PARAMETER_VALUE_EXPRESSION_START
+
+SgName
+SgTemplateParameterVal::get_template_parameter_name() const
+   {
+  // DQ (11/28/2011): Added to support template declarations in the AST.
+
+  // Note that we have to store the index position into the template parameter list
+  // so that this template parameter can be identified and its name used.  It 
+  // can be different from the template parameter name of the template class declaration
+  // (which is the name referenced in EDG), so we have to find the enclosing template
+  // declaration and use the index position into its template parameter list (which 
+  // can of course use different names).
+
+     ROSE_ASSERT(get_parent() != NULL);
+     SgTemplateDeclaration* templateDeclaration = TransformationSupport::getTemplateDeclaration(this);
+     ROSE_ASSERT(templateDeclaration != NULL);
+
+     SgTemplateParameterPtrList & templateParameters = templateDeclaration->get_templateParameters();
+
+     int template_parameter_position = get_template_parameter_position();
+
+  // printf ("In SgTemplateParameterVal::get_template_parameter_name(): template_parameter_position = %d \n",template_parameter_position);
+  // printf ("In SgTemplateParameterVal::get_template_parameter_name(): templateParameters.size()   = %zu \n",templateParameters.size());
+
+     ROSE_ASSERT(template_parameter_position >= 0);
+     ROSE_ASSERT(template_parameter_position < (long int)(templateParameters.size()));
+     
+  // SgTemplateParameter* templateParameter = templateParameters[position];
+
+     SgName name = "__template_parameter_name__error__";
+
+     SgTemplateParameter* templateParameter = NULL;
+     if (template_parameter_position >= 0)
+        {
+          templateParameter = templateParameters[template_parameter_position];
+          ROSE_ASSERT(templateParameter != NULL);
+
+       // printf ("In SgTemplateParameterVal::get_template_parameter_name(): templateParameter->get_parameterType() = %d \n",templateParameter->get_parameterType());
+
+          ROSE_ASSERT(templateParameter->get_parameterType() == SgTemplateParameter::nontype_parameter);
+       // ROSE_ASSERT(templateParameter->get_parameterType() == SgTemplateParameter::template_parameter);
+
+          SgInitializedName* initializedName = templateParameter->get_initializedName();
+          ROSE_ASSERT(initializedName != NULL);
+
+       // name = "__template_parameter_name__";
+          name = initializedName->get_name();
+
+       // printf ("In SgTemplateParameterVal::get_template_parameter_name(): name of template parameter used = %s \n",name.str());
+        }
+
+     return name;
+   }
+
+
+SOURCE_TEMPLATE_PARAMETER_VALUE_EXPRESSION_END
 
 
 SOURCE_COMPLEX_VALUE_EXPRESSION_START

@@ -65,7 +65,7 @@ Grammar::setUpTypes ()
   // But we do need a type for the TemplateDeclarationStatement since every sysmbol should have a type
   // as a general rule.  So cancle TemplateInstantiationType and build TemplateType instead.
   // NEW_TERMINAL_MACRO ( TemplateInstantiationType, "TemplateInstantiationType", "T_TEMPLATE_INSTANTIATION" );
-     NEW_TERMINAL_MACRO ( TemplateType, "TemplateType", "T_TEMPLATE" );
+     NEW_TERMINAL_MACRO ( TemplateType        , "TemplateType",         "T_TEMPLATE" );
      NEW_TERMINAL_MACRO ( EnumType            , "EnumType",             "T_ENUM" );
      NEW_TERMINAL_MACRO ( TypedefType         , "TypedefType",          "T_TYPEDEF" );
      NEW_TERMINAL_MACRO ( ModifierType        , "ModifierType",         "T_MODIFIER" );
@@ -76,7 +76,7 @@ Grammar::setUpTypes ()
      NEW_TERMINAL_MACRO ( ArrayType           , "ArrayType",            "T_ARRAY" );
      NEW_TERMINAL_MACRO ( TypeEllipse         , "TypeEllipse",          "T_ELLIPSE" );
 
- // FMZ (4/8/2009): Added for Cray Pointer
+  // FMZ (4/8/2009): Added for Cray Pointer
      NEW_TERMINAL_MACRO ( TypeCrayPointer           , "TypeCrayPointer",            "T_CRAY_POINTER" );
 
 #if 0
@@ -279,9 +279,11 @@ Grammar::setUpTypes ()
      PointerType.excludeFunctionSource      ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
      ArrayType.excludeFunctionPrototype     ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
      ArrayType.excludeFunctionSource        ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-     TemplateType.excludeFunctionPrototype  ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-     TemplateType.excludeFunctionSource     ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-     TemplateType.excludeFunctionPrototype     ( "HEADER_CREATE_TYPE_WITH_PARAMETER", "../Grammar/Type.code" );
+
+     TemplateType.excludeFunctionPrototype        ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
+     TemplateType.excludeFunctionSource           ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
+  // TemplateType.excludeFunctionPrototype        ( "HEADER_CREATE_TYPE_WITH_PARAMETER", "../Grammar/Type.code" );
+
      FunctionType.excludeFunctionPrototype        ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
      FunctionType.excludeFunctionSource           ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
      MemberFunctionType.excludeFunctionPrototype  ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
@@ -298,7 +300,8 @@ Grammar::setUpTypes ()
      TypeCrayPointer.excludeFunctionSource      ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
 
   // DQ (6/18/2007): Not sure if we need this.
-     TemplateType.excludeFunctionPrototype      ( "HEADER_CREATE_TYPE_WITH_PARAMETER", "../Grammar/Type.code" );
+  // TemplateType.excludeFunctionPrototype      ( "HEADER_CREATE_TYPE_WITH_PARAMETER", "../Grammar/Type.code" );
+  // TemplateType.excludeFunctionSource         ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
 
 #if 1
      TypeComplex.excludeFunctionPrototype       ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
@@ -375,6 +378,9 @@ Grammar::setUpTypes ()
   // DQ (2/1/2011): Added label type to support Fortran alternative return arguments in function declarations.
      TypeLabel.setDataPrototype            ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
+  // DQ (11/28/2011): Adding template declaration support.
+  // TemplateType.setDataPrototype         ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
   // DQ (8/18/2011): Java specific support for generics.
   // JavaParameterizedType.setDataPrototype             ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
@@ -412,9 +418,11 @@ Grammar::setUpTypes ()
      CUSTOM_CREATE_TYPE_MACRO(JavaParameterizedType,
             "SOURCE_CREATE_TYPE_FOR_JAVA_PARAMETERIZED_TYPE",
             "SgClassDeclaration* decl = NULL");
-     CUSTOM_CREATE_TYPE_MACRO(TemplateType,
-            "SOURCE_CREATE_TYPE_FOR_TEMPLATE_TYPE",
-            "SgTemplateInstantiationDecl* decl = NULL");
+
+  // DQ (11/28/2011): Make this more like the NamedType internal support.
+  // CUSTOM_CREATE_TYPE_MACRO(TemplateType,"SOURCE_CREATE_TYPE_FOR_TEMPLATE_TYPE","SgTemplateInstantiationDecl* decl = NULL");
+     CUSTOM_CREATE_TYPE_MACRO(TemplateType,"SOURCE_CREATE_TYPE_FOR_TEMPLATE_TYPE","SgTemplateDeclaration* decl = NULL");
+
      CUSTOM_CREATE_TYPE_MACRO(EnumType,
             "SOURCE_CREATE_TYPE_FOR_ENUM_TYPE",
             "SgEnumDeclaration* decl = NULL");
@@ -575,7 +583,7 @@ Grammar::setUpTypes ()
 
   // DQ (10/10/2006): The idea here is that these would be wrappers for existing types, 
   // but I think this was ultimately a problem to make it really work (because it could 
-  // only replace SgTyep and not SgNamedType, for example; so it is not used as an IR 
+  // only replace SgType and not SgNamedType, for example; so it is not used as an IR 
   // node at present.
   // DQ (12/21/2005): Global qualification and qualified name handling are now represented explicitly in the AST
   // Exclude the get_mangled function since we include it in the HEADER_MODIFIER_TYPE string

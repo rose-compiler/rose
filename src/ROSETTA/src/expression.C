@@ -136,6 +136,9 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (DoubleVal,              "DoubleVal",              "DOUBLE_VAL" );
      NEW_TERMINAL_MACRO (LongDoubleVal,          "LongDoubleVal",          "LONG_DOUBLE_VAL" );
 
+  // DQ (11/28/2011): Adding support for temp,ate declarations in the AST.
+     NEW_TERMINAL_MACRO (TemplateParameterVal,   "TemplateParameterVal",   "TEMPLATE_PARAMETER_VAL" );
+
   // Liao 6/18/2008: Support UPC constant THREADS, MYTHREAD
      NEW_TERMINAL_MACRO (UpcThreads,              "UpcThreads",                 "UPC_THREADS" );
      NEW_TERMINAL_MACRO (UpcMythread,             "UpcMythread",                 "UPC_MYTHREAD" );
@@ -267,7 +270,8 @@ Grammar::setUpExpressions ()
           BoolValExp     | StringVal        | ShortVal               | CharVal         | UnsignedCharVal |
           WcharVal       | UnsignedShortVal | IntVal                 | EnumVal         | UnsignedIntVal  | 
           LongIntVal     | LongLongIntVal   | UnsignedLongLongIntVal | UnsignedLongVal | FloatVal        | 
-          DoubleVal      | LongDoubleVal    | ComplexVal             |  UpcThreads     | UpcMythread,
+          DoubleVal      | LongDoubleVal    | ComplexVal             |  UpcThreads     | UpcMythread     |
+          TemplateParameterVal,
           "ValueExp","ValueExpTag", false);
 
      NEW_NONTERMINAL_MACRO (ExprListExp,
@@ -645,6 +649,10 @@ Grammar::setUpExpressions ()
      FloatVal.setFunctionSource         ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      DoubleVal.setFunctionSource        ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      LongDoubleVal.setFunctionSource    ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+
+  // DQ (11/28/2011): Adding template declaration support to the AST.
+     TemplateParameterVal.setFunctionSource( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+
      ComplexVal.setFunctionSource       ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      ThisExp.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      RefExp.setFunctionSource           ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
@@ -1220,6 +1228,14 @@ Grammar::setUpExpressions ()
   // DQ (11/9/2005): Added string to hold source code constant precisely (part of work with Andreas)
      LongDoubleVal.setDataPrototype ( "std::string", "valueString", "= \"\"",
                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (11/28/2011): Adding template declaration support in the AST (see test2011_164.C).
+     TemplateParameterVal.setFunctionPrototype ( "HEADER_TEMPLATE_PARAMETER_VALUE_EXPRESSION", "../Grammar/Expression.code" );
+     TemplateParameterVal.setDataPrototype ( "int", "template_parameter_position", "= -1",
+                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TemplateParameterVal.setDataPrototype ( "std::string", "valueString", "= \"\"",
+                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
   // DQ (8/27/2006): Added support for Complex values (save the values as long doubles internally within the AST)
   // JJW (11/22/2008): Changed members to SgValueExp*; real_value can be NULL for imaginary numbers
@@ -2011,6 +2027,10 @@ Grammar::setUpExpressions ()
      FloatVal.setFunctionSource ( "SOURCE_FLOAT_VALUE_EXPRESSION","../Grammar/Expression.code" );
      DoubleVal.setFunctionSource ( "SOURCE_DOUBLE_VALUE_EXPRESSION","../Grammar/Expression.code" );
      LongDoubleVal.setFunctionSource ( "SOURCE_LONG_DOUBLE_VALUE_EXPRESSION","../Grammar/Expression.code" );
+
+  // DQ (11/28/2011): Adding support for template declarations in the AST.
+     TemplateParameterVal.setFunctionSource ( "SOURCE_TEMPLATE_PARAMETER_VALUE_EXPRESSION","../Grammar/Expression.code" );
+
      ComplexVal.setFunctionSource ( "SOURCE_COMPLEX_VALUE_EXPRESSION","../Grammar/Expression.code" );
      CallExpression.setFunctionSource ( "SOURCE_CALL_EXPRESSION","../Grammar/Expression.code" );
      FunctionCallExp.setFunctionSource ( "SOURCE_FUNCTION_CALL_EXPRESSION","../Grammar/Expression.code" );
@@ -2217,6 +2237,9 @@ Grammar::setUpExpressions ()
      LongDoubleVal.setFunctionSource          ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
      ComplexVal.setFunctionSource             ( "SOURCE_GET_TYPE_COMPLEX","../Grammar/Expression.code" );
 
+  // DQ (11/28/2011): Adding template declaration support to the AST.
+     TemplateParameterVal.setFunctionSource   ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
+
      UpcThreads.setFunctionSource             ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
      UpcMythread.setFunctionSource            ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
 
@@ -2245,6 +2268,10 @@ Grammar::setUpExpressions ()
      DoubleVal.editSubstitute              ( "GENERIC_TYPE", "SgTypeDouble" );
      LongDoubleVal.editSubstitute          ( "GENERIC_TYPE", "SgTypeLongDouble" );
      ComplexVal.editSubstitute             ( "GENERIC_TYPE", "SgTypeComplex" );
+
+  // DQ (11/28/2011): Adding template declaration support to the AST.
+  // TemplateParameterVal.editSubstitute   ( "GENERIC_TYPE", "SgTemplateType" );
+     TemplateParameterVal.editSubstitute   ( "GENERIC_TYPE", "SgTypeInt" );
 
      UpcThreads.editSubstitute             ( "GENERIC_TYPE", "SgTypeInt" );
      UpcMythread.editSubstitute            ( "GENERIC_TYPE", "SgTypeInt" );
