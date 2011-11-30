@@ -214,6 +214,8 @@ class TransformationSupport
           static SgClassDefinition* getClassDefinition( const SgNode* astNode);
           static SgModuleStatement* getModuleStatement( const SgNode* astNode);
 
+          static SgTemplateDeclaration* getTemplateDeclaration( const SgNode* astNode);
+
        // DQ (5/11/2011): This function was moved to SgTemplateArgument a long time ago and is not longer available.
        // DQ (6/9/2007): This function traverses through the parents to the first scope (used for name qualification support of template arguments)
        // static SgScopeStatement* getScope(const SgNode* astNode);

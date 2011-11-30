@@ -295,6 +295,11 @@ SgUnsignedLongLongIntVal* buildUnsignedLongLongIntVal(unsigned long long v = 0);
 SgUnsignedLongLongIntVal* buildUnsignedLongLongIntValHex(unsigned long long v = 0);
 SgUnsignedLongLongIntVal* buildUnsignedLongLongIntVal_nfi(unsigned long long v, const std::string& str);
 
+//! Build an template parameter value expression
+SgTemplateParameterVal* buildTemplateParameterVal(int template_parameter_position = -1);
+SgTemplateParameterVal* buildTemplateParameterVal_nfi(int template_parameter_position, const std::string& str);
+
+
 //! Build UPC THREADS (integer expression)
 SgUpcThreads* buildUpcThreads();
 SgUpcThreads* buildUpcThreads_nfi();
@@ -885,6 +890,9 @@ SgTemplateClassDefinition* buildTemplateClassDefinition(SgTemplateClassDeclarati
 //! Build a structure first nondefining declaration, without file info
 // SgClassDeclaration* buildNondefiningClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope);
 SgClassDeclaration* buildNondefiningClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, bool buildTemplateInstantiation = false);
+
+// DQ (11/29/2011): Adding template declaration support to the AST.
+SgTemplateClassDeclaration* buildNondefiningTemplateClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope);
 
 // DQ (11/7/2009): Added functions to build C++ class.
 SgClassDeclaration* buildNondefiningClassDeclaration ( SgName name, SgScopeStatement* scope );

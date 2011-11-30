@@ -607,6 +607,7 @@ SgTemplateInstantiationDirectiveStatement
 SgTemplateInstantiationFunctionDecl
 SgTemplateInstantiationMemberFunctionDecl
 SgTemplateParameter
+SgTemplateParameterVal
 SgTemplateParameterList
 SgTemplateSymbol
 SgTemplateType

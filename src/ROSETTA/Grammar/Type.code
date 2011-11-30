@@ -4088,70 +4088,6 @@ $CLASSNAME::createType(SgExpression* optional_fortran_type_kind)
   // builtin_type.p_freepointer = AST_FileIO::IS_VALID_POINTER();
   // return &builtin_type;
 
-#if 0
-     static bool firstCallToFunction = true;
-     if (firstCallToFunction == true)
-        {
-       // printf ("Build the $CLASSNAME object for the p_builtin_type \n");
-#if 0
-          p_builtin_type = new $CLASSNAME();
-       // p_builtin_type = new $CLASSNAME(NULL,true,NULL,0);
-#else
-       // DQ (7/30/2010): In the case of merging AST's read from files this will be initialized and be a valid pointer.
-       // ROSE_ASSERT(p_builtin_type == NULL);
-          if (p_builtin_type == NULL)
-             {
-               p_builtin_type = new $CLASSNAME();
-               if (optional_fortran_type_kind != NULL)
-                  {
-                 // DQ (10/4/2010): Added fortran type kind support (must be in place before the mangled name is generated).
-                    p_builtin_type->set_type_kind(optional_fortran_type_kind);
-                  }
-             }
-          ROSE_ASSERT(p_builtin_type != NULL);
-
-          SgName name = p_builtin_type->get_mangled();
-#if 0
-          printf ("Mangled type name for $CLASSNAME = %s get_globalTypeTable()->get_type_table()->size() = %d \n",name.str(),get_globalTypeTable()->get_type_table()->size());
-#endif
-
-#if 0
-          bool exists = get_globalTypeTable()->get_type_table()->exists(name);
-          printf ("In $CLASSNAME::createType(): type name exists = %s \n",exists ? "true" : "false");
-#endif
-       // bool exists = get_globalTypeTable()->get_type_table()->get_symbolSet()->find(name);
-       // printf ("In $CLASSNAME::createType(): type name exists = %s \n",exists ? "true" : "false");
-
-          SgType* t = get_globalTypeTable()->lookup_type(name);
-#if 0
-          printf ("In $CLASSNAME::createType(): type from lookup_type = %p \n",t);
-#endif
-          if (t == NULL)
-             {
-               get_globalTypeTable()->insert_type(name,p_builtin_type);
-             }
-            else
-             {
-            // If t is the same as p_builtin_type then we can't delete it...(only comes up in merging AST's read from files).
-               if (t != p_builtin_type)
-                  {
-                    delete p_builtin_type;
-                    p_builtin_type = NULL;
-                  }
-
-            // Reuse this tempType variable so we can use the same code below.
-               p_builtin_type = is$CLASSNAME(t);
-               ROSE_ASSERT(p_builtin_type != NULL);
-             }
-#endif
-        }
-     firstCallToFunction = false;
-
-     ROSE_ASSERT(p_builtin_type != NULL);
-     p_builtin_type->p_freepointer = AST_FileIO::IS_VALID_POINTER();
-
-     return p_builtin_type;
-#else
   // DQ (10/4/2010): New version of code to support multiple kinds of bool as required for the Fortran type_kind support within ROSE.
   // Note that this implementation does not use p_builtin_type, since with the global type table it is not required.
 
@@ -4203,7 +4139,6 @@ $CLASSNAME::createType(SgExpression* optional_fortran_type_kind)
         }
 
      return temp_type;
-#endif
    }
 
 SOURCE_COMMON_CREATE_TYPE_END
@@ -4869,6 +4804,21 @@ SOURCE_CREATE_TYPE_FOR_JAVA_PARAMETERIZED_TYPE_END
 
 
 SOURCE_CREATE_TYPE_FOR_TEMPLATE_TYPE_START
+
+SgTemplateType*
+SgTemplateType::createType(SgTemplateDeclaration* cd, SgExpression* optional_fortran_type_kind)
+   {
+     ROSE_ASSERT(cd != NULL);
+
+  // DQ (10/4/2010): I think that pointer types can't have a kind parameter, so this should be NULL.
+     ROSE_ASSERT(optional_fortran_type_kind == NULL);
+
+     printf ("SgTemplateType::createType(SgTemplateDeclaration*,SgExpression*) implemented to return NULL \n");
+     ROSE_ASSERT(false);
+
+  // return ($CLASSNAME*) cd->get_type();
+     return NULL;
+   }
 
 SOURCE_CREATE_TYPE_FOR_TEMPLATE_TYPE_END
 

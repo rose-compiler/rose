@@ -14440,6 +14440,10 @@ void SgTemplateParameter::post_construction_initialization()
   // JJW 10-26-2007 ensure that this object is not on the stack
      preventConstructionOnStack(this);
 
+#if 0
+  // DQ (11/28/2011): Commented out since this code prevents the ROSETTA generated constructor from working correctly.
+  // Values initialized in the constructor are reset by this code.
+
      p_parameterType                       = parameter_undefined;
      p_type                                = NULL;
      p_defaultTypeParameter                = NULL;
@@ -14447,34 +14451,66 @@ void SgTemplateParameter::post_construction_initialization()
      p_defaultExpressionParameter          = NULL;
      p_templateDeclaration                 = NULL;
      p_defaultTemplateDeclarationParameter = NULL;
+#endif
    }
 
 // Different constructors for use in building the different types of parameters possible
 SgTemplateParameter::SgTemplateParameter ( SgType* parameter, SgType* defaultParameter )
    {
+  // This is normally called last (but because it is called first we had to comment out the
+  // initialization in the SgTemplateParameter::post_construction_initialization() function.
      post_construction_initialization();
 
      p_parameterType        = type_parameter;
      p_type                 = parameter;
      p_defaultTypeParameter = defaultParameter;
+
+     p_expression                          = NULL;
+     p_defaultExpressionParameter          = NULL;
+     p_templateDeclaration                 = NULL;
+     p_defaultTemplateDeclarationParameter = NULL;
+
+     p_initializedName                     = NULL;
    }
 
 SgTemplateParameter::SgTemplateParameter ( SgExpression* parameter, SgExpression* defaultParameter )
    {
+  // This is normally called last (but because it is called first we had to comment out the
+  // initialization in the SgTemplateParameter::post_construction_initialization() function.
      post_construction_initialization();
 
      p_parameterType              = nontype_parameter;
-     p_expression                 = NULL;
-     p_defaultExpressionParameter = NULL;
+
+  // DQ (11/28/2011): These were not initialized properly.
+  // p_expression                 = NULL;
+  // p_defaultExpressionParameter = NULL;
+     p_expression                 = parameter;
+     p_defaultExpressionParameter = defaultParameter;
+
+     p_type                                = NULL;
+     p_defaultTypeParameter                = NULL;
+     p_templateDeclaration                 = NULL;
+     p_defaultTemplateDeclarationParameter = NULL;
+
+     p_initializedName                     = NULL;
    }
 
 SgTemplateParameter::SgTemplateParameter ( SgTemplateDeclaration* parameter, SgTemplateDeclaration* defaultParameter )
    {
+  // This is normally called last (but because it is called first we had to comment out the
+  // initialization in the SgTemplateParameter::post_construction_initialization() function.
      post_construction_initialization();
 
      p_parameterType                       = template_parameter;
      p_templateDeclaration                 = parameter;
      p_defaultTemplateDeclarationParameter = defaultParameter;
+
+     p_type                                = NULL;
+     p_defaultTypeParameter                = NULL;
+     p_expression                          = NULL;
+     p_defaultExpressionParameter          = NULL;
+
+     p_initializedName                     = NULL;
    }
 
 SOURCE_TEMPLATE_PARAMETER_END
