@@ -1,0 +1,29 @@
+# Non-recursive Makefile
+
+mAbstractHandle_la_sources=\
+	$(mAbstractHandlePath)/abstract_handle.cpp \
+	$(mAbstractHandlePath)/roseAdapter.cpp
+
+mAbstractHandle_includeHeaders=\
+	$(mAbstractHandlePath)/abstract_handle.h \
+	$(mAbstractHandlePath)/roseAdapter.h
+
+# This directory also contains a self-contained example
+# using a simple loop data structure to demonstrate the usage.
+# It can be released separated from ROSE
+mAbstractHandle_extraDist=\
+	$(mAbstractHandlePath)/CMakeLists.txt \
+	$(mAbstractHandlePath)/README \
+	$(mAbstractHandlePath)/testMyLoop.cpp \
+	$(mAbstractHandlePath)/myloop.h \
+	$(mAbstractHandlePath)/loopAdapter.h \
+	$(mAbstractHandlePath)/loopAdapter.cpp \
+	$(mAbstractHandlePath)/makefile-myloop
+
+mAbstractHandle_cleanLocal=\
+	rm -rf \
+		$(mAbstractHandlePath)/core \
+		$(mAbstractHandlePath)/ii_files \
+		$(mAbstractHandlePath)/ti_files \
+		$(mAbstractHandlePath)/Templates.DB
+
