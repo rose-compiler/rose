@@ -16407,17 +16407,9 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id,
     SgModuleStatement* moduleStatement = NULL;
     if (moduleSymbol == NULL)
     {
-        // This is part of work with Rice, this case is currently an error until we get their
-        // support in place for reading the *.mod files of any previously declared modules
-        // from other translation units.
+        // Import the module declaration from modName.rmod file
 
-        // FMZ (5/28/2008) importing the module declaration from modName.rmod file save the global variable
-        // printf ("Importing the module declaration from %s.rmod file \n",name.str());
-
-        // FMZ (10/22008) in the new version (rice branch) SgFile*=>SgSourceFile
-        // SgFile* savedFilePointer = OpenFortranParser_globalFilePointer;
         SgSourceFile* savedFilePointer = OpenFortranParser_globalFilePointer;
-
         FortranModuleInfo rmodFile;
 
         // need to check module/def/decl or read from .rmod file
