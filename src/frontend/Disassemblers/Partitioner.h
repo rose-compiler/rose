@@ -1228,7 +1228,7 @@ public:
         bool require_intrafunction;                             /**< If set, range must be inside the preceding function. */
         double threshold;                                       /**< Threshold for determining whether range is code. */
         unsigned excluded_reasons;                              /**< Functions for which callback should be skipped. */
-        size_t nfound;                                          /**< Number of regions added as code fragments. */
+        size_t nfound;                                          /**< Number of basic blocks added as code fragments. */
 
         FunctionRangeMap *function_extents;                     /**< Cached function extents computed on first call. */
         CodeCriteria *code_criteria;                            /**< Cached code criteria computed on first call. */

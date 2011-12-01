@@ -285,12 +285,25 @@ public:
         {}
     void show(SgNode *node) {
         printf("Functions detected in this interpretation:\n");
+        std::string r = SgAsmFunction::reason_str(true, 0);
+        const char *col_name[] = {"Num", "Low-Addr", "End-Addr", "Insns/Bytes", "Reason", "Kind", "Hash", "Name"};
+        int col_width[]        = {3,     10,         10,         12,            r.size(), 8,      16,     32};
+        printf("   ");
+        for (size_t i=0; i<sizeof(col_name)/sizeof(col_name[0]); ++i)
+            printf(" %-*s", col_width[i], col_name[i]);
+        printf("\n   ");
+        for (size_t i=0; i<sizeof(col_name)/sizeof(col_name[0]); ++i)
+            printf(" %s", std::string(col_width[i], '-').c_str());
+        printf("\n");
+
+        traverse(node, preorder);
+
+        printf("   ");
+        for (size_t i=0; i<sizeof(col_name)/sizeof(col_name[0]); ++i)
+            printf(" %s", std::string(col_width[i], '-').c_str());
+        printf("\n");
         fputs(SgAsmFunction::reason_key("    ").c_str(), stdout);
         printf("\n");
-        printf("    Num  Low-Addr   End-Addr  Insns/Bytes  Reason      Kind     Hash             Name\n");
-        printf("    --- ---------- ---------- ------------ ----------- -------- ---------------- --------------------------------\n");
-        traverse(node, preorder);
-        printf("    --- ---------- ---------- ------------ ----------- -------- ---------------- --------------------------------\n");
     }
     void visit(SgNode *node) {
         SgAsmFunction *defn = isSgAsmFunction(node);
@@ -312,12 +325,12 @@ public:
 
             /* Kind of function */
             switch (defn->get_function_kind()) {
-              case SgAsmFunction::e_unknown:    fputs("  unknown", stdout); break;
+              case SgAsmFunction::e_unknown:    fputs(" unknown ", stdout); break;
               case SgAsmFunction::e_standard:   fputs(" standard", stdout); break;
-              case SgAsmFunction::e_library:    fputs("  library", stdout); break;
+              case SgAsmFunction::e_library:    fputs(" library ", stdout); break;
               case SgAsmFunction::e_imported:   fputs(" imported", stdout); break;
-              case SgAsmFunction::e_thunk:      fputs("    thunk", stdout); break;
-              default:                          fputs("    other", stdout); break;
+              case SgAsmFunction::e_thunk:      fputs(" thunk   ", stdout); break;
+              default:                          fputs(" other   ", stdout); break;
             }
 
             /* First 16 bytes of the function hash */

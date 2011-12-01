@@ -4064,6 +4064,7 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
         enum FunctionReason {
 
 		// NOTE: If you add more here, then fix Partitioner::parse_switches()
+		//       Also fix SgAsmFunction::reason_key()
                 FUNC_NONE        = 0x00000000,	/**< Used for initialization; not a bit flag. */
                 FUNC_ENTRY_POINT = 0x00010000,  /**< An entry point specified in the file header. */
                 FUNC_CALL_TARGET = 0x00020000,	/**< Target of a function call instruction sequence in the CFG. When used as

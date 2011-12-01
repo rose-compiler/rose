@@ -3,7 +3,8 @@ Functions detected from binary executable:
     X = exception frame       T = thunk                I = imported/dyn-linked
     S = function symbol       P = instruction pattern  G = CFG graph analysis
     U = user-def detection    N = NOP/zero padding     D = discontiguous blocks
-    V = intra-function block  L = leftover blocks      M = miscellaneous
+    V = intra-function block  L = leftover blocks    Mxxx are miscellaneous reasons (at most one misc reason per function):
+          M001 = code between function padding bytes
     Note: "c" means this is the target of a call-like instruction or instruction
           sequence but the call is not present in the global control flow graph, while
           "C" means the call is in the CFG.

@@ -83,7 +83,9 @@ SgAsmFunction::reason_key(const std::string &prefix)
             prefix + "X = exception frame       T = thunk                I = imported/dyn-linked\n" +
             prefix + "S = function symbol       P = instruction pattern  G = CFG graph analysis\n" +
             prefix + "U = user-def detection    N = NOP/zero padding     D = discontiguous blocks\n" +
-            prefix + "V = intra-function block  L = leftover blocks      M = miscellaneous\n" +
+            prefix + "V = intra-function block  L = leftover blocks" +
+            prefix + "Mxxx are miscellaneous reasons (at most one misc reason per function):\n" +
+            prefix + "      M001 = code between function padding bytes\n" +
             prefix + "Note: \"c\" means this is the target of a call-like instruction or instruction\n" +
             prefix + "      sequence but the call is not present in the global control flow graph, while\n" +
             prefix + "      \"C\" means the call is in the CFG.\n");
@@ -2272,7 +2274,7 @@ Partitioner::FindFunctionFragments::operator()(bool enabled, const Args &args)
             return true;
     }
 
-    /* If the preceding function is interleaved with nother then how can we know that the instructions in question should
+    /* If the preceding function is interleaved with another then how can we know that the instructions in question should
      * actually belong to this function?  If we're interleaved with one other function, then we could very easily be
      * interleaved with additional functions and this address region could belong to any of them. */
     if (require_noninterleaved && !p->is_contiguous(func, false))
