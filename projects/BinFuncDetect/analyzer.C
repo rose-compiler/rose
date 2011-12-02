@@ -798,12 +798,12 @@ main(int argc, char *argv[])
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Evaluate how well the code criteria subsystem is working
+#if 0
     Partitioner::RegionStats *mean=partitioner->get_aggregate_mean(), *variance=partitioner->get_aggregate_variance();
     assert(mean && variance);
     std::cerr <<"\n=== Aggregate mean ===\n" <<*mean <<"\n=== Aggregate variance ===\n" <<*variance <<"\n";
     Partitioner::CodeCriteria *cc = partitioner->new_code_criteria(mean, variance, 0.5);
     partitioner->set_code_criteria(cc);
-#if 0
 
     struct CodeDetector: public AstPrePostProcessing {
         Partitioner *partitioner;
