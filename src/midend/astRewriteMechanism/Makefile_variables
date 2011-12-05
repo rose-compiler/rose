@@ -1,0 +1,60 @@
+# Non-recursive Makefile
+
+# Separate out the template files to make clear which sources are templates
+# the hope was that this would be useful to generate the TemplateSourceFiles
+mAstRewriteMechanism_template_files=\
+	$(mAstRewriteMechanismPath)/rewriteMidLevelInterfaceTemplatesImpl.h \
+	$(mAstRewriteMechanismPath)/prefixGenerationImpl.h \
+	$(mAstRewriteMechanismPath)/ASTFragmentCollectorTraversalImpl.h \
+	$(mAstRewriteMechanismPath)/rewriteSynthesizedAttributeTemplatesImpl.h \
+	$(mAstRewriteMechanismPath)/rewriteTreeTraversalImpl.h \
+	$(mAstRewriteMechanismPath)/rewriteASTFragementStringTemplatesImpl.h \
+	$(mAstRewriteMechanismPath)/nodeCollectionTemplatesImpl.h \
+	$(mAstRewriteMechanismPath)/rewriteDebuggingSupportTemplatesImpl.h \
+	$(mAstRewriteMechanismPath)/rewriteTemplateImpl.h
+
+mAstRewriteMechanism_sources=\
+	$(mAstRewriteMechanismPath)/nodeCollection.C \
+	$(mAstRewriteMechanismPath)/rewriteMidLevelInterface.C \
+	$(mAstRewriteMechanismPath)/rewriteHighLevelInterface.C \
+	$(mAstRewriteMechanismPath)/rewriteSynthesizedAttribute.C \
+	$(mAstRewriteMechanismPath)/rewriteASTFragementString.C \
+	$(mAstRewriteMechanismPath)/rewriteAccumulatedAttribute.C \
+	$(mAstRewriteMechanismPath)/rewriteTypeDeclaration.C \
+	$(mAstRewriteMechanismPath)/rewriteDebuggingSupport.C \
+	$(mAstRewriteMechanismPath)/rewriteLowLevelInterface.C \
+	$(mAstRewriteMechanism_template_files)
+
+mAstRewriteMechanism_la_sources=\
+	$(mAstRewriteMechanism_sources) \
+	$(mAstRewriteMechanismPath)/rewriteTemplateInstantiations.C
+
+# Header files we want to have installed
+# (note that rewrite.h includes the rewriteTreeTraversal.C
+# and rewriteSynthesizedAttributeTemplates.C because of how
+# templates are used).
+mAstRewriteMechanism_includeHeaders=\
+	$(mAstRewriteMechanismPath)/rewrite.h \
+	$(mAstRewriteMechanismPath)/lowLevelRewriteInterface.h \
+	$(mAstRewriteMechanismPath)/midLevelRewriteInterface.h \
+	$(mAstRewriteMechanismPath)/highLevelRewriteInterface.h \
+	$(mAstRewriteMechanism_template_files)
+
+mAstRewriteMechanism_extraDist=\
+	$(mAstRewriteMechanismPath)/CMakeLists.txt \
+	$(mAstRewriteMechanismPath)/ASTRewrite.docs
+
+mAstRewriteMechanism_cleanLocal=\
+	rm -rf \
+		$(mAstRewriteMechanismPath)/core \
+		$(mAstRewriteMechanismPath)/ii_files \
+		$(mAstRewriteMechanismPath)/ti_files \
+		$(mAstRewriteMechanismPath)/Templates.DB; \
+	rm -f \
+		$(mAstRewriteMechanismPath)/*.dot \
+		$(mAstRewriteMechanismPath)/*.pdf; \
+	rm -f \
+		$(mAstRewriteMechanismPath)/rose_inputProgram*.C \
+		$(mAstRewriteMechanismPath)/rose_transformation_*.C \
+		$(mAstRewriteMechanismPath)/*.C.pdf
+
