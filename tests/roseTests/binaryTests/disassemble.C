@@ -176,6 +176,7 @@ these switches can be obtained by specifying the \"--rose-help\" switch.\n\
 #include <unistd.h>
 #include <sys/mman.h>
 
+#include "AsmFunctionIndex.h"
 #include "AsmUnparser.h"
 #include "BinaryLoader.h"
 #include "VirtualMachineSemantics.h"
@@ -276,76 +277,28 @@ function_hash(SgAsmFunction *func, unsigned char digest[20])
     return true;
 }
 
-/* Traversal prints information about each SgAsmFunction node. */
-class ShowFunctions : public SgSimpleProcessing {
+/* Aguments the AsmFunctionIndex by always sorting functions by entry address, and adding an extra column named "Hash" that
+ * contains the hash value (if known) of the function. */
+class ShowFunctions: public AsmFunctionIndex {
 public:
-    size_t nfuncs;
-    ShowFunctions()
-        : nfuncs(0)
-        {}
-    void show(SgNode *node) {
-        printf("Functions detected in this interpretation:\n");
-        std::string r = SgAsmFunction::reason_str(true, 0);
-        const char *col_name[] = {"Num", "Low-Addr", "End-Addr", "Insns/Bytes", "Reason", "Kind", "Hash", "Name"};
-        int col_width[]        = {3,     10,         10,         12,            r.size(), 8,      16,     32};
-        printf("   ");
-        for (size_t i=0; i<sizeof(col_name)/sizeof(col_name[0]); ++i)
-            printf(" %-*s", col_width[i], col_name[i]);
-        printf("\n   ");
-        for (size_t i=0; i<sizeof(col_name)/sizeof(col_name[0]); ++i)
-            printf(" %s", std::string(col_width[i], '-').c_str());
-        printf("\n");
-
-        traverse(node, preorder);
-
-        printf("   ");
-        for (size_t i=0; i<sizeof(col_name)/sizeof(col_name[0]); ++i)
-            printf(" %s", std::string(col_width[i], '-').c_str());
-        printf("\n");
-        fputs(SgAsmFunction::reason_key("    ").c_str(), stdout);
-        printf("\n");
-    }
-    void visit(SgNode *node) {
-        SgAsmFunction *defn = isSgAsmFunction(node);
-        if (defn) {
-            /* Scan through the function's instructions to find the range of addresses for the function. */
-            rose_addr_t func_start=~(rose_addr_t)0, func_end=0;
-            size_t nbytes=0;
-            std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(defn);
-            for (std::vector<SgAsmInstruction*>::iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
-                SgAsmInstruction *insn = *ii;
-                func_start = std::min(func_start, insn->get_address());
-                func_end = std::max(func_end, insn->get_address()+insn->get_size());
-                nbytes += insn->get_size();
+    struct HashCallback: public OutputCallback {
+        HashCallback(): OutputCallback("Hash", 16) {}
+        virtual bool operator()(bool enabled, const DataArgs &args) {
+            if (enabled) {
+                unsigned char sha1[20];
+                if (function_hash(args.func, sha1)) {
+                    args.output <<data_prefix <<std::setw(width) <<digest_to_str(sha1).substr(0, 16);
+                } else {
+                    args.output <<data_prefix <<std::setw(width) <<"";
+                }
             }
-
-            /* Reason that this is a function */
-            printf("    %3zu 0x%08"PRIx64" 0x%08"PRIx64" %5zu/%-6zu ", ++nfuncs, func_start, func_end, insns.size(), nbytes);
-            fputs(defn->reason_str(true).c_str(), stdout);
-
-            /* Kind of function */
-            switch (defn->get_function_kind()) {
-              case SgAsmFunction::e_unknown:    fputs(" unknown ", stdout); break;
-              case SgAsmFunction::e_standard:   fputs(" standard", stdout); break;
-              case SgAsmFunction::e_library:    fputs(" library ", stdout); break;
-              case SgAsmFunction::e_imported:   fputs(" imported", stdout); break;
-              case SgAsmFunction::e_thunk:      fputs(" thunk   ", stdout); break;
-              default:                          fputs(" other   ", stdout); break;
-            }
-
-            /* First 16 bytes of the function hash */
-            unsigned char sha1[20];
-            if (function_hash(defn, sha1)) {
-                printf(" %-16s", digest_to_str(sha1).substr(0, 16).c_str());
-            } else {
-                printf(" %-16s", "");
-            }
-            
-            /* Function name if known */
-            if (defn->get_name()!="")
-                printf(" %s", defn->get_name().c_str());
-            fputc('\n', stdout);
+            return enabled;
         }
+    } hashCallback;
+
+    ShowFunctions(SgNode *ast): AsmFunctionIndex(ast) {
+        sort_by_entry_addr();
+        output_callbacks.before(&nameCallback, &hashCallback, 1);
     }
 };
 
@@ -357,9 +310,8 @@ public:
             function_callbacks.pre.append(&functionHash);
             basicblock_callbacks.pre.append(&blockHash);
         }
-        if (show_syscall_names) {
-            insn_callbacks.post.append(&syscallName);
-        }
+        if (show_syscall_names)
+            insn_callbacks.unparse.append(&syscallName);
         basicblock_callbacks.post.prepend(&dominatorBlock);
     }
 
@@ -1323,7 +1275,7 @@ main(int argc, char *argv[])
     }
 
     if (do_show_functions)
-        ShowFunctions().show(block);
+        std::cout <<ShowFunctions(block);
 
     if (!do_quiet) {
         MyAsmUnparser unparser(do_show_hashes, do_syscall_names);
