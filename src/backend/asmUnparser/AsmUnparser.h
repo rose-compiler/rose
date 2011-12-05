@@ -722,7 +722,7 @@ protected:
     /** How output will be organized. */
     Organization organization;
 
-    /** Initializes the objects callback lists.  This is invoked by the default constructor. */
+    /** Initializes the callback lists.  This is invoked by the default constructor. */
     virtual void init();
 
 };
