@@ -2284,7 +2284,8 @@ Partitioner::FindFunctionFragments::operator()(bool enabled, const Args &args)
     ExtentMap pending;
     pending.insert(args.range);
     RegionStats *stats = p->region_statistics(pending);
-    if (!code_criteria->satisfied_by(stats))
+    double raw_vote;
+    if (!code_criteria->satisfied_by(stats, &raw_vote))
         return true;
     
     /* Get the list of basic blocks for the instructions in this range and their address extents.  Bail if a basic block
@@ -2309,6 +2310,7 @@ Partitioner::FindFunctionFragments::operator()(bool enabled, const Args &args)
 
     /* All looks good.  Add the basic blocks to the preceding function. */
     for (std::set<BasicBlock*>::iterator bi=bblocks.begin(); bi!=bblocks.end(); ++bi) {
+        (*bi)->code_likelihood = raw_vote;
         p->append(func, *bi, SgAsmBlock::BLK_FRAGMENT, true/*CFG head*/);
         ++nfound;
     }
@@ -3777,6 +3779,7 @@ Partitioner::build_ast(BasicBlock* block)
     retval->set_id(block->address());
     retval->set_address(block->address());
     retval->set_reason(block->reason);
+    retval->set_code_likelihood(block->code_likelihood);
 
     for (InstructionVector::const_iterator ii=block->insns.begin(); ii!=block->insns.end(); ++ii) {
         Instruction *insn = *ii;

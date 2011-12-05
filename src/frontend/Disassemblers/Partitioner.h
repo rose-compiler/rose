@@ -210,7 +210,7 @@ protected:
     struct BasicBlock {
         /** Constructor. This constructor should not be called directly since the Partitioner has other pointers that it needs
          *  to establish to this block.  Instead, call Partitioner::find_bb_containing(). */
-        BasicBlock(): reason(SgAsmBlock::BLK_NONE), function(NULL) {}
+        BasicBlock(): reason(SgAsmBlock::BLK_NONE), function(NULL), code_likelihood(1.0) {}
 
         /** Destructor. This destructor should not be called directly since there are other pointers to this block that the
          *  block does not know about. Instead, call Partitioner::discard(). */
@@ -236,6 +236,7 @@ protected:
         std::set<DataBlock*> data_blocks;       /**< Data blocks owned by this basic block. E.g., this block's jump table. */
         BlockAnalysisCache cache;               /**< Cached results of local analyses */
         Function* function;                     /**< Function to which this basic block is assigned, or null */
+        double code_likelihood;                 /**< Likelihood (0..1) that this is code. One unless detected statistically. */
     };
     typedef std::map<rose_addr_t, BasicBlock*> BasicBlocks;
 
