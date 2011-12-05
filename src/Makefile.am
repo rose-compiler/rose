@@ -85,6 +85,7 @@ else
    libroseQtExtension =
 endif
 
+# TOO (11/22/2011): flattening midend Makefiles => TODO: move conditional compilation to Makefile.
 # TODO: correct list!
 if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 libroseLibraries = \
@@ -93,7 +94,6 @@ libroseLibraries = \
    $(top_builddir)/src/frontend/SageIII/libsage3.la \
    $(libroseEDGlibraries) \
    $(top_builddir)/src/midend/astProcessing/libastprocessing.la \
-   $(top_builddir)/src/midend/astQuery/libquery.la \
    $(top_builddir)/src/roseSupport/libroseSupport.la \
    $(top_builddir)/src/util/support/libsupport.la \
    $(top_builddir)/src/util/graphs/libgraphs.la \
@@ -110,11 +110,6 @@ libroseLibraries = \
    $(librosePythonlibraries) \
    $(libroseEDGlibraries) \
    $(libroseBinaryLibraries) \
-   $(top_builddir)/src/midend/abstractHandle/libabstractHandle.la \
-   $(top_builddir)/src/midend/abstractMemoryObject/libabstractMemoryObject.la \
-   $(top_builddir)/src/midend/astQuery/libquery.la \
-   $(top_builddir)/src/midend/astRewriteMechanism/librewrite.la \
-   $(top_builddir)/src/midend/astUtil/libastUtil.la \
    $(top_builddir)/src/midend/programAnalysis/libprogramAnalysis.la \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/libLoopProcessing.la \
    $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la \
