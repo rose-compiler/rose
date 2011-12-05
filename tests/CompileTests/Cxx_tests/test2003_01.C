@@ -23,7 +23,7 @@ int main()
      class A
         {
           public:
-            // Why does foo3 have to be defined???
+            // Why does foo3 have to be defined???  Answer: Because there is no other place where its definition could be placed structurally.
                void foo3(){};
         };
 

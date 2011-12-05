@@ -621,6 +621,9 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
 
      switch (declaration->variantT())
         {
+       // DQ (12/4/2011): Added support for template declarations in the AST.
+          case V_SgTemplateMemberFunctionDeclaration:
+          case V_SgTemplateFunctionDeclaration:
        // DQ (6/11/2011): Added support for new template IR nodes.
           case V_SgTemplateClassDeclaration:
           case V_SgTemplateDeclaration:
@@ -8148,47 +8151,73 @@ SageInterface::setParameterList(actualFunction * func,SgFunctionParameterList * 
    }
 #endif
 
-static SgVariableSymbol * addArg(SgFunctionParameterList *paraList, SgInitializedName* initName,bool isPrepend)
-{
-  ROSE_ASSERT(paraList);
-  ROSE_ASSERT(initName);
-  if (isPrepend)
-    paraList->prepend_arg(initName);
-  else
-    paraList->append_arg(initName);
-  initName->set_parent(paraList);
+static SgVariableSymbol * addArg(SgFunctionParameterList *paraList, SgInitializedName* initName, bool isPrepend)
+   {
+     ROSE_ASSERT(paraList != NULL);
+     ROSE_ASSERT(initName != NULL);
 
-  SgFunctionDeclaration* func_decl= isSgFunctionDeclaration(paraList->get_parent());
-  SgScopeStatement* scope = NULL;
-  if (func_decl)
-  {
-    if ((func_decl->get_definingDeclaration()) == func_decl )
-    { //defining function declaration, set scope and symbol table
-      SgFunctionDefinition* func_def = func_decl->get_definition();
-      ROSE_ASSERT(func_def);
-      scope = func_def;
-    } // nondefining declaration, set scope only, currently set to decl's scope, TODO
-    else
-      scope = func_decl->get_scope();
-    //fix up declptr of the init name
-    initName->set_declptr(func_decl);
-  } //end if func_decl is available
+     if (isPrepend == true)
+          paraList->prepend_arg(initName);
+       else
+          paraList->append_arg(initName);
+
+  // DQ (12/4/2011): If this is going to be set, make sure it will not be over written.
+  // initName->set_parent(paraList);
+     if (initName->get_parent() == NULL)
+          initName->set_parent(paraList);
+
+     ROSE_ASSERT(initName->get_parent() == paraList);
+
+     SgFunctionDeclaration* func_decl= isSgFunctionDeclaration(paraList->get_parent());
+
+  // DQ (12/4/2011): This will not be true for function parameter lists in SgTemplateFunctionDeclaration cases.
+  // Also in typical use the SgFunctionDeclaration is not known yet so the parent is not set.
+  // ROSE_ASSERT(paraList->get_parent() != NULL);
+  // ROSE_ASSERT(func_decl != NULL);
+
+     SgScopeStatement* scope = NULL;
+     if (func_decl != NULL)
+        {
+          if ((func_decl->get_definingDeclaration()) == func_decl )
+             {
+            // defining function declaration, set scope and symbol table
+               SgFunctionDefinition* func_def = func_decl->get_definition();
+               ROSE_ASSERT(func_def);
+               scope = func_def;
+             }
+            else
+             {
+            // nondefining declaration, set scope only, currently set to decl's scope, TODO
+               scope = func_decl->get_scope();
+             }
+ 
+       // fix up declptr of the init name
+          initName->set_declptr(func_decl);
+        }
+
+  // DQ (12/4/2011): Added check...(fails for case of SgTypeEllipse).
+  // ROSE_ASSERT(initName->get_scope() != NULL);
+     ROSE_ASSERT(initName->get_scope() != NULL || isSgTypeEllipse(initName->get_type()) != NULL);
+
   // ROSE_ASSERT (scope); -- scope may not be set because the function declaration may not have been inserted anywhere
-  initName->set_scope(scope);
-  if (scope)
-  {
-    SgVariableSymbol* sym = isSgVariableSymbol(initName->get_symbol_from_symbol_table());
-    if (sym == NULL)
-    {
-      sym = new SgVariableSymbol(initName);
-      scope->insert_symbol(initName->get_name(), sym);
-      sym->set_parent(scope->get_symbol_table());
-    }
-    return sym;
-  }
-  else
-    return NULL;
-}
+
+     initName->set_scope(scope);
+     if (scope != NULL)
+        {
+          SgVariableSymbol* sym = isSgVariableSymbol(initName->get_symbol_from_symbol_table());
+          if (sym == NULL)
+             {
+               sym = new SgVariableSymbol(initName);
+               scope->insert_symbol(initName->get_name(), sym);
+               sym->set_parent(scope->get_symbol_table());
+             }
+          return sym;
+        }
+       else
+        {
+          return NULL;
+        }
+   }
 
 SgVariableSymbol* SageInterface::appendArg(SgFunctionParameterList *paraList, SgInitializedName* initName)
 {
@@ -8787,90 +8816,107 @@ void SageInterface::moveToSubdirectory ( std::string directoryName, SgFile* file
 //------------------------- AST repair----------------------------
 //----------------------------------------------------------------
 void SageInterface::fixStructDeclaration(SgClassDeclaration* structDecl, SgScopeStatement* scope)
-  {
-    ROSE_ASSERT(structDecl != NULL);
-    ROSE_ASSERT(scope != NULL);
-    SgClassDeclaration* nondefdecl = isSgClassDeclaration(structDecl->get_firstNondefiningDeclaration());
-    ROSE_ASSERT(nondefdecl != NULL);
+   {
+     ROSE_ASSERT(structDecl != NULL);
+     ROSE_ASSERT(scope != NULL);
+     SgClassDeclaration* nondefdecl = isSgClassDeclaration(structDecl->get_firstNondefiningDeclaration());
+     ROSE_ASSERT(nondefdecl != NULL);
 
-    //ROSE_ASSERT(structDecl->get_definingDeclaration() != NULL);
-    SgClassDeclaration* defdecl = isSgClassDeclaration(structDecl->get_definingDeclaration());
-    //ROSE_ASSERT(defdecl != NULL);
+  // ROSE_ASSERT(structDecl->get_definingDeclaration() != NULL);
+     SgClassDeclaration* defdecl = isSgClassDeclaration(structDecl->get_definingDeclaration());
+  // ROSE_ASSERT(defdecl != NULL);
 
-    // Liao, 9/2/2009
-    // fixup missing scope when bottomup AST building is used
-    if (structDecl->get_scope() == NULL)
-      structDecl->set_scope(scope);
-    if (nondefdecl->get_scope() == NULL)
-      nondefdecl->set_scope(scope);
+  // Liao, 9/2/2009
+  // fixup missing scope when bottomup AST building is used
+     if (structDecl->get_scope() == NULL)
+          structDecl->set_scope(scope);
+     if (nondefdecl->get_scope() == NULL)
+          nondefdecl->set_scope(scope);
 
-    if (structDecl->get_parent() == NULL)
-      structDecl->set_parent(scope);
-    if (nondefdecl->get_parent() == NULL)
-      nondefdecl->set_parent(scope);
+     if (structDecl->get_parent() == NULL)
+          structDecl->set_parent(scope);
+     if (nondefdecl->get_parent() == NULL)
+          nondefdecl->set_parent(scope);
 
-    SgName name= structDecl->get_name();
-    // This is rare case (translation error) when scope->lookup_class_symbol(name) will find something
-    // but nondefdecl->get_symbol_from_symbol_table() returns NULL
-    // But symbols are associated with nondefining declarations whenever possible
-    // and AST consistent check will check the nondefining declarations first
-    // Liao, 9/2/2009
-    //SgClassSymbol* mysymbol = scope->lookup_class_symbol(name);
-    SgClassSymbol* mysymbol = isSgClassSymbol(nondefdecl->get_symbol_from_symbol_table());
-    if (mysymbol == NULL)
-    {
-      mysymbol = new SgClassSymbol(nondefdecl);
-      ROSE_ASSERT(mysymbol);
-      scope->insert_symbol(name, mysymbol);
+     SgName name= structDecl->get_name();
+  // This is rare case (translation error) when scope->lookup_class_symbol(name) will find something
+  // but nondefdecl->get_symbol_from_symbol_table() returns NULL
+  // But symbols are associated with nondefining declarations whenever possible
+  // and AST consistent check will check the nondefining declarations first
+  // Liao, 9/2/2009
+  // SgClassSymbol* mysymbol = scope->lookup_class_symbol(name);
+     SgClassSymbol* mysymbol = isSgClassSymbol(nondefdecl->get_symbol_from_symbol_table());
+     if (mysymbol == NULL)
+        {
+       // DQ (12/3/2011): This will be an error for C++ if the scope of the statment is different from the scope where it is located structurally...
+       // DQ (12/4/2011): Only generate symbols and set the scope if this is the correct scope.
+          ROSE_ASSERT(structDecl->get_scope() != NULL);
 
-      //ROSE_ASSERT(defdecl != NULL);
-      if (defdecl) defdecl->set_scope(scope);
-      nondefdecl->set_scope(scope);
+          if (scope == structDecl->get_scope())
+             {
+               mysymbol = new SgClassSymbol(nondefdecl);
+               ROSE_ASSERT(mysymbol);
 
-      if (defdecl) defdecl->set_parent(scope);
-      nondefdecl->set_parent(scope);
-    }
-    //fixup SgClassType, which is associated with the first non-defining declaration only
-    //and the other declarations share it.
-    if (nondefdecl->get_type() == NULL)
-    {
-      nondefdecl->set_type(SgClassType::createType(nondefdecl));
-    }
-    ROSE_ASSERT (nondefdecl->get_type() != NULL);
+            // I need to check the rest of these functions.
+               printf ("############## DANGER:DANGER:DANGER ################\n");
 
-    //ROSE_ASSERT(defdecl != NULL);
-    if (defdecl)
-    {
-      if (defdecl->get_type()!= nondefdecl->get_type())
-      {
-        if (defdecl->get_type())
-          delete defdecl->get_type();
-        defdecl->set_type(nondefdecl->get_type());
-      }
-      ROSE_ASSERT (defdecl->get_type() != NULL);
-      ROSE_ASSERT (defdecl->get_type() == nondefdecl->get_type());
-    }
-  }
+               printf ("In SageInterface::fixStructDeclaration(): Adding class symbol to scope = %p = %s \n",scope,scope->class_name().c_str());
+               scope->insert_symbol(name, mysymbol);
+
+            // ROSE_ASSERT(defdecl != NULL);
+               if (defdecl)
+                    defdecl->set_scope(scope);
+               nondefdecl->set_scope(scope);
+
+               if (defdecl)
+                    defdecl->set_parent(scope);
+               nondefdecl->set_parent(scope);
+             }
+        }
+
+  // fixup SgClassType, which is associated with the first non-defining declaration only
+  // and the other declarations share it.
+     if (nondefdecl->get_type() == NULL)
+        {
+          nondefdecl->set_type(SgClassType::createType(nondefdecl));
+        }
+     ROSE_ASSERT (nondefdecl->get_type() != NULL);
+
+  // ROSE_ASSERT(defdecl != NULL);
+     if (defdecl != NULL)
+        {
+          if (defdecl->get_type()!= nondefdecl->get_type())
+             {
+               if (defdecl->get_type())
+                    delete defdecl->get_type();
+               defdecl->set_type(nondefdecl->get_type());
+             }
+          ROSE_ASSERT (defdecl->get_type() != NULL);
+          ROSE_ASSERT (defdecl->get_type() == nondefdecl->get_type());
+        }
+   }
+
 
 void SageInterface::fixClassDeclaration(SgClassDeclaration* classDecl, SgScopeStatement* scope)
   {
     fixStructDeclaration(classDecl,scope);
   }
 
-void SageInterface::fixNamespaceDeclaration(SgNamespaceDeclarationStatement* structDecl, SgScopeStatement* scope)
-  {
-    ROSE_ASSERT(structDecl);
-    ROSE_ASSERT(scope);
-    SgNamespaceDeclarationStatement* nondefdecl = isSgNamespaceDeclarationStatement(structDecl->get_firstNondefiningDeclaration());
-    ROSE_ASSERT(nondefdecl);
-    // Liao, 9/2/2009
-    // fixup missing scope when bottomup AST building is used
-    if (structDecl->get_parent() == NULL)
-      structDecl->set_parent(scope);
-    if (nondefdecl->get_parent() == NULL)
-      nondefdecl->set_parent(scope);
 
-        // tps : (09/03/2009) Namespace should not have a scope
+void SageInterface::fixNamespaceDeclaration(SgNamespaceDeclarationStatement* structDecl, SgScopeStatement* scope)
+   {
+     ROSE_ASSERT(structDecl);
+     ROSE_ASSERT(scope);
+     SgNamespaceDeclarationStatement* nondefdecl = isSgNamespaceDeclarationStatement(structDecl->get_firstNondefiningDeclaration());
+     ROSE_ASSERT(nondefdecl);
+  // Liao, 9/2/2009
+  // fixup missing scope when bottomup AST building is used
+     if (structDecl->get_parent() == NULL)
+          structDecl->set_parent(scope);
+     if (nondefdecl->get_parent() == NULL)
+          nondefdecl->set_parent(scope);
+
+  // tps : (09/03/2009) Namespace should not have a scope
     /*
     if (structDecl->get_scope() == NULL)
       structDecl->set_scope(scope);
@@ -8878,24 +8924,31 @@ void SageInterface::fixNamespaceDeclaration(SgNamespaceDeclarationStatement* str
       nondefdecl->set_scope(scope);
     */
 
+     SgName name= structDecl->get_name();
+  // SgNamespaceSymbol* mysymbol = scope->lookup_namespace_symbol(name);
+     SgNamespaceSymbol* mysymbol = isSgNamespaceSymbol(nondefdecl->get_symbol_from_symbol_table());
+     if (mysymbol==NULL)
+        {
+       // DQ (12/4/2011): This code is modified to try to only insert the symbol into the correct scope.  It used to
+       // just insert the symbol into whatever scope structureally held the declaration (not good enough for C++).
+          if (scope == structDecl->get_scope())
+             {
+               mysymbol = new SgNamespaceSymbol(name,nondefdecl);
+               ROSE_ASSERT(mysymbol);
 
-    SgName name= structDecl->get_name();
-    //SgNamespaceSymbol* mysymbol = scope->lookup_namespace_symbol(name);
-    SgNamespaceSymbol* mysymbol = isSgNamespaceSymbol(nondefdecl->get_symbol_from_symbol_table());
-    if (mysymbol==NULL)
-    {
-      mysymbol = new SgNamespaceSymbol(name,nondefdecl);
-      ROSE_ASSERT(mysymbol);
-      scope->insert_symbol(name, mysymbol);
-      SgNamespaceDeclarationStatement* defdecl = isSgNamespaceDeclarationStatement(structDecl->get_definingDeclaration());
-      ROSE_ASSERT(defdecl);
-      defdecl->set_scope(scope);
-      nondefdecl->set_scope(scope);
+               printf ("In SageInterface::fixNamespaceDeclaration(): inserting namespace symbol into scope = %p = %s \n",scope,scope->class_name().c_str());
+               scope->insert_symbol(name, mysymbol);
 
-      defdecl->set_parent(scope);
-      nondefdecl->set_parent(scope);
-    }
-  }
+               SgNamespaceDeclarationStatement* defdecl = isSgNamespaceDeclarationStatement(structDecl->get_definingDeclaration());
+               ROSE_ASSERT(defdecl);
+               defdecl->set_scope(scope);
+               nondefdecl->set_scope(scope);
+
+               defdecl->set_parent(scope);
+               nondefdecl->set_parent(scope);
+             }
+        }
+   }
 
 void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgScopeStatement* scope)
    {
@@ -8983,9 +9036,14 @@ void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgSco
 
           if (varSymbol == NULL)
              {
-               varSymbol = new SgVariableSymbol(initName);
-               ROSE_ASSERT(varSymbol);
-               scope->insert_symbol(name, varSymbol);
+            // DQ (12/4/2011): This code is modified to try to only insert the symbol into the correct scope.  It used to
+            // just insert the symbol into whatever scope structureally held the declaration (not good enough for C++).
+               if (scope == initName->get_scope())
+                  {
+                    varSymbol = new SgVariableSymbol(initName);
+                    ROSE_ASSERT(varSymbol);
+                    scope->insert_symbol(name, varSymbol);
+                  }
              }
             else
              {
@@ -9192,61 +9250,68 @@ void SageInterface::clearUnusedVariableSymbols()
     }
 }
 
+
 //! fixup symbol table for SgLableStatement. Used Internally when the label is built without knowing its target scope. Both parameters cannot be NULL.
 /*
  * label statement has special scope: the closest function definition , not SgBasicBlock or others!
  */
 void SageInterface::fixLabelStatement(SgLabelStatement* stmt, SgScopeStatement* scope)
-{
-   SgLabelStatement* label_stmt = isSgLabelStatement(stmt);
-   ROSE_ASSERT(label_stmt);
-   SgName name = label_stmt->get_label();
+   {
+     SgLabelStatement* label_stmt = isSgLabelStatement(stmt);
+     ROSE_ASSERT(label_stmt);
+     SgName name = label_stmt->get_label();
 
-   SgScopeStatement* label_scope = getEnclosingFunctionDefinition(scope,true);
-   if (label_scope) //Should we assert this instead? No for bottom up AST building
-    {
-     label_stmt->set_scope(label_scope);
-     SgLabelSymbol* lsymbol = label_scope->lookup_label_symbol(name);
-     if (!lsymbol)
-      {
-        lsymbol= new SgLabelSymbol(label_stmt);
-        ROSE_ASSERT(lsymbol);
-        label_scope->insert_symbol(lsymbol->get_name(), lsymbol);
-      }
-    }// end label_scope
-} // fixLabelStatement()
+     SgScopeStatement* label_scope = getEnclosingFunctionDefinition(scope,true);
+     if (label_scope) //Should we assert this instead? No for bottom up AST building
+        {
+          label_stmt->set_scope(label_scope);
+          SgLabelSymbol* lsymbol = label_scope->lookup_label_symbol(name);
+
+          if (lsymbol != NULL)
+             {
+            // DQ (12/4/2011): This is the correct handling for SgLabelStatement (always in the function scope).
+               lsymbol= new SgLabelSymbol(label_stmt);
+               ROSE_ASSERT(lsymbol);
+               label_scope->insert_symbol(lsymbol->get_name(), lsymbol);
+             }
+        }
+   }
+
 
 //! Set a numerical label for a Fortran statement. The statement should have a enclosing function definition already. SgLabelSymbol and SgLabelR
 //efExp are created transparently as needed.
 void SageInterface::setFortranNumericLabel(SgStatement* stmt, int label_value)
-{
-  ROSE_ASSERT (stmt != NULL);
-  ROSE_ASSERT (label_value >0 && label_value <=99999); //five digits for Fortran label
-  SgScopeStatement* label_scope = getEnclosingFunctionDefinition(stmt);
-  ROSE_ASSERT (label_scope != NULL);
-  SgName label_name(StringUtility::numberToString(label_value));
-  SgLabelSymbol * symbol = label_scope->lookup_label_symbol (label_name);
-  if (symbol == NULL)
-  {
- // DQ (2/2/2011): We want to call the old constructor (we now have another constructor that takes a SgInitializedName pointer).
- // symbol = new SgLabelSymbol(NULL);
-    symbol = new SgLabelSymbol((SgLabelStatement*) NULL);
-    ROSE_ASSERT(symbol != NULL);
-    symbol->set_fortran_statement(stmt);
-    symbol->set_numeric_label_value(label_value);
-    label_scope->insert_symbol(label_name,symbol);
-  }
-  else
-  {
-    cerr<<"Error. SageInterface::setFortranNumericLabel() tries to set a duplicated label value!"<<endl;
-    ROSE_ASSERT (false);
-  }
-  //SgLabelRefExp
-  SgLabelRefExp* ref_exp = buildLabelRefExp(symbol);
-  stmt->set_numeric_label(ref_exp);
-  ref_exp->set_parent(stmt);
+   {
+     ROSE_ASSERT (stmt != NULL);
+     ROSE_ASSERT (label_value >0 && label_value <=99999); //five digits for Fortran label
 
-}
+     SgScopeStatement* label_scope = getEnclosingFunctionDefinition(stmt);
+     ROSE_ASSERT (label_scope != NULL);
+     SgName label_name(StringUtility::numberToString(label_value));
+     SgLabelSymbol * symbol = label_scope->lookup_label_symbol (label_name);
+     if (symbol == NULL)
+        {
+       // DQ (12/4/2011): This is the correct handling for SgLabelStatement (always in the function scope, same as C and C++).
+       // DQ (2/2/2011): We want to call the old constructor (we now have another constructor that takes a SgInitializedName pointer).
+       // symbol = new SgLabelSymbol(NULL);
+          symbol = new SgLabelSymbol((SgLabelStatement*) NULL);
+          ROSE_ASSERT(symbol != NULL);
+          symbol->set_fortran_statement(stmt);
+          symbol->set_numeric_label_value(label_value);
+          label_scope->insert_symbol(label_name,symbol);
+        }
+       else
+        {
+          cerr<<"Error. SageInterface::setFortranNumericLabel() tries to set a duplicated label value!"<<endl;
+          ROSE_ASSERT (false);
+        }
+
+  // SgLabelRefExp
+     SgLabelRefExp* ref_exp = buildLabelRefExp(symbol);
+     stmt->set_numeric_label(ref_exp);
+     ref_exp->set_parent(stmt);
+   }
+
 
 //! Suggest next usable (non-conflicting) numeric label value for a Fortran function definition scope
 int  SageInterface::suggestNextNumericLabel(SgFunctionDefinition* func_def)
@@ -9269,87 +9334,250 @@ int  SageInterface::suggestNextNumericLabel(SgFunctionDefinition* func_def)
     }
   }
 
-  ROSE_ASSERT (result <=99999); // max 5 digits for F77 label
+  ROSE_ASSERT (result <= 99999); // max 5 digits for F77 label
   return result;
 }
 
-//! A wrapper containing fixes (fixVariableDeclaration(),fixStructDeclaration(), fixLabelStatement(), etc) for all kinds statements.
-void SageInterface::fixStatement(SgStatement* stmt, SgScopeStatement* scope)
-{
-  // fix symbol table
-  if (isSgVariableDeclaration(stmt))
-      fixVariableDeclaration(isSgVariableDeclaration(stmt), scope);
-  else if (isStructDeclaration(stmt))
-  {
-  // DQ (1/2/2010): Enforce some rules as early as possible.
-  // fixStructDeclaration(isSgClassDeclaration(stmt),scope);
-     SgClassDeclaration* classDeclaration = isSgClassDeclaration(stmt);
-     ROSE_ASSERT(classDeclaration != NULL);
-#if 0
-     ROSE_ASSERT(classDeclaration->get_firstNondefiningDeclaration() != NULL);
-     ROSE_ASSERT(classDeclaration->get_definingDeclaration() != NULL);
-#endif
-     fixStructDeclaration(classDeclaration,scope);
-  }
-  else if (isSgClassDeclaration(stmt))
-      fixClassDeclaration(isSgClassDeclaration(stmt),scope);
-  else if (isSgLabelStatement(stmt))
-      fixLabelStatement(isSgLabelStatement(stmt),scope);
-  else if (isSgFunctionDeclaration(stmt))
-  {  //fix function type table's parent edge
-    // Liao 5/4/2010
+//! fixup symbol table for SgFunctionDeclaration (and template instantiations, member functions, and member function template instantiations). Used Internally when the function is built without knowing its target scope. Both parameters cannot be NULL.
+/*
+ * function declarations can have a scope that is different from their structural location (e.g. member functions declared outside of the defining class declaration.
+ */
+void SageInterface::fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeStatement* scope)
+   {
+ // fix function type table's parent edge
+ // Liao 5/4/2010
     SgFunctionTypeTable * fTable = SgNode::get_globalFunctionTypeTable();
     ROSE_ASSERT(fTable);
     if (fTable->get_parent() == NULL)
-      fTable->set_parent(getGlobalScope(scope));
+         fTable->set_parent(getGlobalScope(scope));
 
-    // Liao 4/23/2010,  Fix function symbol
-    // This could happen when users copy a function, then rename it (func->set_name()), and finally insert it to a scope
-    SgFunctionDeclaration * func = isSgFunctionDeclaration(stmt); 
-    SgFunctionSymbol *func_symbol =  scope->lookup_function_symbol (func->get_name(), func->get_type());
-    if (func_symbol == NULL);
-    {
-      func_symbol = new SgFunctionSymbol (func);
-      ROSE_ASSERT (func_symbol != NULL);
-      scope ->insert_symbol(func->get_name(), func_symbol);
-    }
-#if 0    
-    // Fix local symbol, a symbol directly refer to this function declaration
-    // This could happen when a non-defining func decl is copied, the corresonding symbol will point to the original source func
-     // symbolTable->find(this) used inside get_symbol_from_symbol_table()  won't find the copied decl 
-    SgSymbol* local_symbol = func ->get_symbol_from_symbol_table();
-    if (local_symbol == NULL) // 
-    {
-      if (func->get_definingDeclaration() == NULL) // prototype function
-      {
-        SgFunctionDeclaration * src_func = func_symbol->get_declaration();
-        if (func != src_func )
+  // Liao 4/23/2010,  Fix function symbol
+  // This could happen when users copy a function, then rename it (func->set_name()), and finally insert it to a scope
+     SgFunctionDeclaration*       func        = isSgFunctionDeclaration(stmt);
+     SgMemberFunctionDeclaration* mfunc       = isSgMemberFunctionDeclaration(stmt); 
+
+     printf ("In SageInterface::fixStatement(): scope = %p = %s \n",scope,scope->class_name().c_str());
+     printf ("In SageInterface::fixStatement(): stmt->get_scope() = %p \n",stmt->get_scope());
+
+  // DQ (12/3/2011): This is a scary piece of code, but I think it is OK now!
+  // It is an error to put the symbol for a function into the current scope if the function's scope 
+  // is explicitly set to be different.  So this should be allowed only if the function's scope is 
+  // not explicitly set, or if the scopes match.  This is an example of something different for C++
+  // than for C or other simpler languages.
+  // If the scope of the function is not set, or if it matches the current scope then allow this step.
+     if (stmt->get_scope() == NULL || scope == stmt->get_scope())
         {
-          ROSE_ASSERT (src_func->get_firstNondefiningDeclaration () == src_func);
-          func->set_firstNondefiningDeclaration (func_symbol->get_declaration());
+          printf ("Looking up the function symbol using name = %s and type = %p = %s \n",func->get_name().str(),func->get_type(),func->get_type()->class_name().c_str());
+          SgFunctionSymbol*            func_symbol = scope->lookup_function_symbol (func->get_name(), func->get_type());
+
+          printf ("In SageInterface::fixStatement(): func_symbol = %p \n",func_symbol);
+          if (func_symbol == NULL)
+             {
+            // DQ (12/3/2011): Added support for C++ member functions.
+            // func_symbol = new SgFunctionSymbol (func);
+               if (mfunc != NULL)
+                  {
+                    func_symbol = new SgMemberFunctionSymbol (func);
+                  }
+                 else
+                  {
+                    func_symbol = new SgFunctionSymbol (func);
+                  }
+               ROSE_ASSERT (func_symbol != NULL);
+
+               scope->insert_symbol(func->get_name(), func_symbol);
+             }
+            else
+             {
+               printf ("In SageInterface::fixStatement(): found a valid function so no need to insert new symbol \n");
+             }
         }
-      }
-    }
-#endif    
-  }
+#if 0
+  // Fix local symbol, a symbol directly refer to this function declaration
+  // This could happen when a non-defining func decl is copied, the corresonding symbol will point to the original source func
+  // symbolTable->find(this) used inside get_symbol_from_symbol_table()  won't find the copied decl 
+     SgSymbol* local_symbol = func ->get_symbol_from_symbol_table();
+     if (local_symbol == NULL) // 
+        {
+          if (func->get_definingDeclaration() == NULL) // prototype function
+             {
+               SgFunctionDeclaration * src_func = func_symbol->get_declaration();
+               if (func != src_func )
+                  {
+                    ROSE_ASSERT (src_func->get_firstNondefiningDeclaration () == src_func);
+                    func->set_firstNondefiningDeclaration (func_symbol->get_declaration());
+                  }
+             }
+        }
+#endif
+   }
+
+//! fixup symbol table for SgFunctionDeclaration (and template instantiations, member functions, and member function template instantiations). Used Internally when the function is built without knowing its target scope. Both parameters cannot be NULL.
+/*
+ * function declarations can have a scope that is different from their structural location (e.g. member functions declared outside of the defining class declaration.
+ */
+void SageInterface::fixTemplateDeclaration(SgTemplateDeclaration* stmt, SgScopeStatement* scope)
+   {
+  // DQ (12/4/2011): This function has not been implemented yet.  It will assert fail if it is required.
+     printf ("Need to handle SgTemplateDeclaration IR nodes as well...(implement later) \n");
+  // ROSE_ASSERT(false);
+   }
+
+
+//! A wrapper containing fixes (fixVariableDeclaration(),fixStructDeclaration(), fixLabelStatement(), etc) for all kinds statements.
+void SageInterface::fixStatement(SgStatement* stmt, SgScopeStatement* scope)
+   {
+  // fix symbol table
+     if (isSgVariableDeclaration(stmt))
+        {
+          fixVariableDeclaration(isSgVariableDeclaration(stmt), scope);
+        }
+       else if (isStructDeclaration(stmt))
+        {
+       // DQ (1/2/2010): Enforce some rules as early as possible.
+       // fixStructDeclaration(isSgClassDeclaration(stmt),scope);
+          SgClassDeclaration* classDeclaration = isSgClassDeclaration(stmt);
+          ROSE_ASSERT(classDeclaration != NULL);
+#if 0
+          ROSE_ASSERT(classDeclaration->get_firstNondefiningDeclaration() != NULL);
+          ROSE_ASSERT(classDeclaration->get_definingDeclaration() != NULL);
+#endif
+          fixStructDeclaration(classDeclaration,scope);
+        }
+       else if (isSgClassDeclaration(stmt))
+        {
+          fixClassDeclaration(isSgClassDeclaration(stmt),scope);
+        }
+      else if (isSgLabelStatement(stmt))
+        {
+          fixLabelStatement(isSgLabelStatement(stmt),scope);
+        }
+       else if (isSgFunctionDeclaration(stmt))
+        {
+#if 1
+          fixFunctionDeclaration(isSgFunctionDeclaration(stmt),scope);
+#else
+       // fix function type table's parent edge
+       // Liao 5/4/2010
+          SgFunctionTypeTable * fTable = SgNode::get_globalFunctionTypeTable();
+          ROSE_ASSERT(fTable);
+          if (fTable->get_parent() == NULL)
+               fTable->set_parent(getGlobalScope(scope));
+
+       // Liao 4/23/2010,  Fix function symbol
+       // This could happen when users copy a function, then rename it (func->set_name()), and finally insert it to a scope
+          SgFunctionDeclaration*       func        = isSgFunctionDeclaration(stmt);
+          SgMemberFunctionDeclaration* mfunc       = isSgMemberFunctionDeclaration(stmt);
+
+          printf ("In SageInterface::fixStatement(): scope = %p = %s \n",scope,scope->class_name().c_str());
+          printf ("In SageInterface::fixStatement(): stmt->get_scope() = %p \n",stmt->get_scope());
+
+       // DQ (12/3/2011): This is a scary piece of code, but I think it is OK now!
+       // It is an error to put the symbol for a function into the current scope if the function's scope 
+       // is explicitly set to be different.  So this should be allowed only if the function's scope is 
+       // not explicitly set, or if the scopes match.  This is an example of something different for C++
+       // than for C or other simpler languages.
+       // If the scope of the function is not set, or if it matches the current scope then allow this step.
+          if (stmt->get_scope() == NULL || scope == stmt->get_scope())
+             {
+               printf ("Looking up the function symbol using name = %s and type = %p = %s \n",func->get_name().str(),func->get_type(),func->get_type()->class_name().c_str());
+               SgFunctionSymbol*            func_symbol = scope->lookup_function_symbol (func->get_name(), func->get_type());
+
+               printf ("In SageInterface::fixStatement(): func_symbol = %p \n",func_symbol);
+               if (func_symbol == NULL)
+                  {
+                 // DQ (12/3/2011): Added support for C++ member functions.
+                 // func_symbol = new SgFunctionSymbol (func);
+                    if (mfunc != NULL)
+                       {
+                         func_symbol = new SgMemberFunctionSymbol (func);
+                       }
+                      else
+                       {
+                         func_symbol = new SgFunctionSymbol (func);
+                       }
+                    ROSE_ASSERT (func_symbol != NULL);
+
+                    scope->insert_symbol(func->get_name(), func_symbol);
+                  }
+                 else
+                  {
+                    printf ("In SageInterface::fixStatement(): found a valid function so no need to insert new symbol \n");
+                  }
+             }
+#if 0
+       // Fix local symbol, a symbol directly refer to this function declaration
+       // This could happen when a non-defining func decl is copied, the corresonding symbol will point to the original source func
+       // symbolTable->find(this) used inside get_symbol_from_symbol_table()  won't find the copied decl 
+          SgSymbol* local_symbol = func ->get_symbol_from_symbol_table();
+          if (local_symbol == NULL) // 
+             {
+               if (func->get_definingDeclaration() == NULL) // prototype function
+                  {
+                    SgFunctionDeclaration * src_func = func_symbol->get_declaration();
+                    if (func != src_func )
+                       {
+                         ROSE_ASSERT (src_func->get_firstNondefiningDeclaration () == src_func);
+                         func->set_firstNondefiningDeclaration (func_symbol->get_declaration());
+                       }
+                  }
+             }
+#endif
+#endif
+        }
+       else if (isSgTemplateDeclaration(stmt) != NULL)
+        {
+       // DQ (12/3/2011): Added new case for SgTemplateDeclaration (adding template declarations to the AST).
+          fixTemplateDeclaration(isSgTemplateDeclaration(stmt),scope);
+        }
+
+#if 0
+  // DQ (12/4/2011): This WAS not the correct behavior for C++ since declarations can appear structureally in different 
+  // scopes than where the are positioned (e.g. member functions defined outside of there associated class). 
+  // This this code is very dangerous.
 
   // fix scope pointer for statements explicitly storing scope pointer
-  switch (stmt->variantT())
-   {
-     case V_SgEnumDeclaration:
-     case V_SgTemplateDeclaration:
-     case V_SgTypedefDeclaration:
-     case V_SgFunctionDeclaration:
-     case V_SgTemplateInstantiationFunctionDecl:
-  //   case V_SgLabelStatement:
-  //   Label statement' scope is special, handled in fixLabelStatement()
-      stmt->set_scope(scope);
-      break;
-    default:
-      break;
-   } // switch
+     switch (stmt->variantT())
+        {
+       // The case of SgLabelStatement should maybe be included.
+          case V_SgEnumDeclaration:
+          case V_SgTemplateDeclaration:
+          case V_SgTypedefDeclaration:
+          case V_SgFunctionDeclaration:
+          case V_SgMemberFunctionDeclaration:
+          case V_SgTemplateInstantiationFunctionDecl:
+             {
+            // DQ (12/4/2011): We can't just set the scope this simily (except in C).  In C++ the scope should have 
+            // already been set or we can let it default to the current scope where it si located structurally.
+            // stmt->set_scope(scope);
+                if ( (stmt->hasExplicitScope() == true) && (stmt->get_scope() == NULL) )
+                  {
+                    stmt->set_scope(scope);
+                  }
+               break;
+             }
 
-} // fixStatement()
+          default:
+             {
+            // debugging support...
+               printf ("In SageInterface::fixStatement(): switch default case used (likely OK): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+               ROSE_ASSERT(stmt->hasExplicitScope() == false);
+#if 0
+               printf ("switch case not handled properly: stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+        }
+#else
+  // If the scoep has to be set and it has not yet been set, then set it directly.
+     if ( (stmt->hasExplicitScope() == true) && (stmt->get_scope() == NULL) )
+        {
+          stmt->set_scope(scope);
+        }
+#endif
+   }
+
 
 /*! Liao, 7/3/2008
  * Update a list of function declarations inside a scope according to a newly introduced one
@@ -9363,53 +9591,59 @@ void SageInterface::fixStatement(SgStatement* stmt, SgScopeStatement* scope)
  *       not the first ? set first nondefining for itself only
  */
 void SageInterface::updateDefiningNondefiningLinks(SgFunctionDeclaration* func, SgScopeStatement* scope)
-{
-  ROSE_ASSERT(func&&scope);
-  SgStatementPtrList stmtList, sameFuncList;
-  //SgFunctionDeclaration* first_nondef = NULL;
+   {
+     ROSE_ASSERT(func&&scope);
+     SgStatementPtrList stmtList, sameFuncList;
+  // SgFunctionDeclaration* first_nondef = NULL;
   // Some annoying part of scope
-  if (scope->containsOnlyDeclarations())
-  {
-    SgDeclarationStatementPtrList declList = scope->getDeclarationList();
-    SgDeclarationStatementPtrList::iterator i;
-    for (i=declList.begin();i!=declList.end();i++)
-      stmtList.push_back(*i);
-  }
-  else
-    stmtList = scope->getStatementList();
+     if (scope->containsOnlyDeclarations())
+        {
+          SgDeclarationStatementPtrList declList = scope->getDeclarationList();
+          SgDeclarationStatementPtrList::iterator i;
+          for (i=declList.begin();i!=declList.end();i++)
+               stmtList.push_back(*i);
+        }
+       else
+        {
+          stmtList = scope->getStatementList();
+        }
 
   // Find the same function declaration list, including func itself
-  SgStatementPtrList::iterator j;
-  for (j=stmtList.begin();j!=stmtList.end();j++)
-  {
-    SgFunctionDeclaration* func_decl = isSgFunctionDeclaration(*j);
-    if (func_decl)
-    {
-      if (isSameFunction(func_decl, func))
-      {
-        // Assume all defining functions have definingdeclaration links set properly already!!
-        //if ((first_nondef == NULL) && (func_decl->get_definingDeclaration() == NULL))
-        //  first_nondef = func_decl;
-        sameFuncList.push_back(func_decl);
-      }
-    } // if (func_decl)
-  } // for
+     SgStatementPtrList::iterator j;
+     for (j=stmtList.begin();j!=stmtList.end();j++)
+        {
+          SgFunctionDeclaration* func_decl = isSgFunctionDeclaration(*j);
+          if (func_decl)
+             {
+               if (isSameFunction(func_decl, func))
+                  {
+                 // Assume all defining functions have definingdeclaration links set properly already!!
+                 // if ((first_nondef == NULL) && (func_decl->get_definingDeclaration() == NULL))
+                 //      first_nondef = func_decl;
+                    sameFuncList.push_back(func_decl);
+                  }
+             }
+        }
 
-  if(func->get_definingDeclaration()==func)
-  {
-    for (j=sameFuncList.begin();j!=sameFuncList.end();j++)
-      isSgFunctionDeclaration(*j)->set_definingDeclaration(func);
-  }
-  else if (func==isSgFunctionDeclaration(*(sameFuncList.begin()))) // is first_nondefining declaration
-  {
-    for (j=sameFuncList.begin();j!=sameFuncList.end();j++)
-      isSgFunctionDeclaration(*j)->set_firstNondefiningDeclaration(func);
-  } else // is a following nondefining declaration, grab any other's first nondefining link then
-  {
-     func->set_firstNondefiningDeclaration(isSgFunctionDeclaration(*(sameFuncList.begin()))
-                      ->get_firstNondefiningDeclaration());
-  }// if
-} // updateDefiningNondefiningLinks()
+     if (func->get_definingDeclaration()==func)
+        {
+          for (j=sameFuncList.begin();j!=sameFuncList.end();j++)
+               isSgFunctionDeclaration(*j)->set_definingDeclaration(func);
+        }
+       else
+        {
+          if (func==isSgFunctionDeclaration(*(sameFuncList.begin()))) // is first_nondefining declaration
+             {
+               for (j=sameFuncList.begin();j!=sameFuncList.end();j++)
+                    isSgFunctionDeclaration(*j)->set_firstNondefiningDeclaration(func);
+             }
+            else // is a following nondefining declaration, grab any other's first nondefining link then
+             {
+               func->set_firstNondefiningDeclaration(isSgFunctionDeclaration(*(sameFuncList.begin()))->get_firstNondefiningDeclaration());
+             }
+        }
+   }
+
 
 //---------------------------------------------------------------
 PreprocessingInfo* SageInterface::attachComment(

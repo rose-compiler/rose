@@ -1472,6 +1472,8 @@ Grammar::setUpStatements ()
   // DQ (11/20/2011): Template declarations don't have a type, the SgTemplateType is used for template instantiations only.
   // TemplateClassDeclaration.setDataPrototype ( "SgTemplateType*", "type", "= NULL",
   //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE, CLONE_PTR);
+     TemplateClassDeclaration.setDataPrototype ( "SgType*", "type", "= NULL",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE, CLONE_PTR);
 
      TemplateClassDeclaration.setDataPrototype ( "SgTemplateClassDefinition*", "definition", "= NULL",
                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -1557,7 +1559,7 @@ Grammar::setUpStatements ()
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (5/13/2011): Added support for name qualification.
-     TemplateFunctionDeclaration.setDataPrototype ( "int", "name_qualification_length", "= 0",
+     TemplateFunctionDeclaration.setDataPrototype ("int", "name_qualification_length", "= 0",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (5/13/2011): Added information required for new name qualification support.
@@ -1569,7 +1571,7 @@ Grammar::setUpStatements ()
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (5/15/2011): Added support for name qualification.
-     TemplateFunctionDeclaration.setDataPrototype ( "int", "name_qualification_length_for_return_type", "= 0",
+     TemplateFunctionDeclaration.setDataPrototype ("int", "name_qualification_length_for_return_type", "= 0",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (5/15/2011): Added information required for new name qualification support.
@@ -1582,7 +1584,7 @@ Grammar::setUpStatements ()
 
   // DQ (11/26/2011): Added to define uniform support in templated functions to build the SgFunctionDeclaration and SgTemplateFunctionDeclaration.
   // driscoll6 (7/14/11) support for python decorators
-     TemplateFunctionDeclaration.setDataPrototype ( "SgExprListExp*", "decoratorList", "= NULL",
+     TemplateFunctionDeclaration.setDataPrototype ("SgExprListExp*", "decoratorList", "= NULL",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // **************************************************************************************************************

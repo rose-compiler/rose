@@ -140,7 +140,11 @@ test2011_161.C \
 test2011_162.C \
 test2011_163.C \
 test2011_164.C \
-test2011_165.C
+test2011_165.C \
+test2011_166.C \
+test2011_167.C \
+test2011_168.C
+
 
 else
 include $(srcdir)/Makefile-pass.inc

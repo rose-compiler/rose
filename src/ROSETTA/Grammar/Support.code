@@ -6280,6 +6280,8 @@ SgSymbolTable::get_name( const SgNode* node) const
 void
 SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
    {
+  // For simplicity, there is only a single insert member function to put a symbol into the symbol table.
+
   // DQ (2/14/2007): Added assertion!
      assert(this != NULL);
 
@@ -6289,15 +6291,42 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
   // DQ (2/14/2007): Added assertion!
      assert (sp != NULL);
 
-#if 0
+#if 1
   // This outputs a message for every use of the insert function (for non function type symbols) useful for tracing through bugs
      SgNode* symbolBasis = sp->get_symbol_basis();
-     printf ("In SgSymbolTable::insert(%s,%p) into SgSymbolTable = %p = %s of scope = %p = %s sp = %p = %s sp->get_symbol_basis() = %p = %s \n",
+#if 0
+  // DQ (12/3/3011): This does not work since the sp->get_mangled_name() can't always be called...
+     printf ("+++++++++++ In SgSymbolTable::insert(%s,%p) into SgSymbolTable = %p = %s of scope = %p = %s sp = %p = %s sp->get_symbol_basis() = %p = %s mangled_name = %s \n",
           nm.str(),sp,this,this->class_name().c_str(),this->get_parent(),this->get_parent()->class_name().c_str(),
-          sp,sp->class_name().c_str(),symbolBasis,symbolBasis != NULL ? symbolBasis->class_name().c_str() : "NULL");
+             sp,sp->class_name().c_str(),symbolBasis,symbolBasis != NULL ? symbolBasis->class_name().c_str() : "NULL",
+             sp->get_mangled_name().str());
+#else
+     printf ("+++++++++++ In SgSymbolTable::insert(%s,%p) into SgSymbolTable = %p = %s of scope = %p = %s sp = %p = %s sp->get_symbol_basis() = %p = %s \n",
+          nm.str(),sp,this,this->class_name().c_str(),this->get_parent(),this->get_parent()->class_name().c_str(),
+             sp,sp->class_name().c_str(),symbolBasis,symbolBasis != NULL ? symbolBasis->class_name().c_str() : "NULL");
 #endif
 
-#if 1
+  // DQ (12/3/3011): If this is a symbol for a member function declaration, then it should be a SgMemberFunctionSymbol, and not a SgFunctionSymbol.
+     if (symbolBasis != NULL && isSgMemberFunctionDeclaration(symbolBasis) != NULL)
+        {
+          if (isSgMemberFunctionSymbol(sp) == NULL)
+             {
+               printf ("Error: symbol for SgMemberFunctionDeclaration is not a SgMemberFunctionSymbol (sp = %p = %s) \n",sp,sp->class_name().c_str());
+             }
+          ROSE_ASSERT(isSgMemberFunctionSymbol(sp) != NULL);
+        }
+#endif
+
+  // DQ (12/3/2011): Disable symbols with the same name (temporary testing/debugging).
+     if (exists(nm) == true)
+        {
+       // We what to check on what kind of symbol this is.
+          SgSymbol* s = find_function(nm);
+          printf ("In SgSymbolTable::insert(%s,%p) found an overloaded function (symbol = %p = %s) \n",nm.str(),sp,s,(s != NULL) ? s->class_name().c_str() : "empty string");
+       // ROSE_ASSERT(s == NULL);
+        }
+  // ROSE_ASSERT(exists(nm) == false);
+
   // #if SYMBOL_TABLE_ERROR_CHECKING
   // SgFunctionTypeSymbol does not have a valid get_symbol_basis(), so skip this case!
      if (isSgFunctionTypeSymbol(sp) == NULL)
@@ -6314,21 +6343,49 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
              sp,sp->class_name().c_str(),sp->get_symbol_basis(),sp->get_symbol_basis()->class_name().c_str());
 #endif
         }
-#endif
 
   // DQ (3/10/2007): This is a simpler assertion equivalent to the one above but without generating any error output 
      ROSE_ASSERT(isSgFunctionTypeSymbol(sp) != NULL || sp->get_symbol_basis() != NULL);
 
+#if 0
+  // DQ (12/3/2011): Adding debugging support to output p_symbolSet.
+     printf ("Output the internal symbol set used for fast existence testing (p_symbolSet size = %zu): \n",p_symbolSet.size());
+     int counter = 0;
+     SgNodeSet::iterator i = p_symbolSet.begin();
+     while (i != p_symbolSet.end())
+        {
+          SgSymbol* temp_symbol = isSgSymbol(*i);
+          ROSE_ASSERT(temp_symbol != NULL);
+
+          SgNode* symbolBasis = temp_symbol->get_symbol_basis();
+       // printf ("--- p_symbolSet[counter=%d] = %p = %s : name = %s symbolBasis = %p mangled_name = %s \n",counter,temp_symbol,temp_symbol->class_name().c_str(),temp_symbol->get_name().str(),symbolBasis,temp_symbol->get_mangled_name().str());
+          printf ("--- p_symbolSet[counter=%d] = %p = %s : name = %s symbolBasis = %p \n",counter,temp_symbol,temp_symbol->class_name().c_str(),temp_symbol->get_name().str(),symbolBasis);
+          i++;
+          counter++;
+        }
+     printf ("DONE: Output the internal symbol set used for fast existence testing (p_symbolSet size = %zu) \n",p_symbolSet.size());
+
+#if 0
+  // DQ (12/3/2011): Debugging code...
+     if (p_symbolSet.size() > 1)
+        {
+          printf ("Exiting when there is a single symbol in p_symbolSet \n");
+          ROSE_ASSERT(false);
+        }
+#endif
+#endif
+
   // DQ (3/10/2007): Test for if the symbol exists
      if (p_symbolSet.find(sp) != p_symbolSet.end())
         {
-           SgType* t = sp->get_type();
-           ROSE_ASSERT(t != NULL);
-           printf ("ERROR: p_symbolSet.find(sp) != p_symbolSet.end(): base type = %p = %s \n",t,t->class_name().c_str());
+          SgType* t = sp->get_type();
+          ROSE_ASSERT(t != NULL);
+          printf ("ERROR: p_symbolSet.find(sp) != p_symbolSet.end(): base type = %p = %s \n",t,t->class_name().c_str());
         }
      ROSE_ASSERT(p_symbolSet.find(sp) == p_symbolSet.end());
 
-#if 0
+#if 1
+  // DQ (12/3/2011): Turning on symbol table checking.
   // #if SYMBOL_TABLE_ERROR_CHECKING
   // DQ (2/19/2007): These is no need to do both of these since exists(sp) is more complete test!
   // DQ (2/25/2007): except that it is helpful to know which one fails.
@@ -6403,7 +6460,8 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
   // slow) we implement a set of symbols to permit fast tests for existence.
      p_symbolSet.insert(sp);
 
-#if 0
+#if 1
+  // DQ (12/3/2011): Turning on symbol table checking.
   // #if SYMBOL_TABLE_ERROR_CHECKING
   // Error checking
      assert(exists(nm)    == true);
@@ -6411,7 +6469,8 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
      assert(exists(sp)    == true);
 #endif
 
-#if 0
+#if 1
+  // DQ (12/3/2011): Turning on symbol table checking.
   // #if SYMBOL_TABLE_ERROR_CHECKING
   // DQ (2/14/2007): Added error checking!
      if (nm != sp->get_name())
@@ -7158,6 +7217,14 @@ SgSymbolTable::find_function_type(const SgName & nm)
      SgFunctionTypeSymbol* returnFunctionType = NULL;
 
      hash_iterator i = p_table->find(nm);
+
+  // DQ (12/3/2011): Added debugging code for identifying types.
+     if (i != p_table->end())
+        {
+          printf ("In SgSymbolTable::find_function_type(): Found a symbol with correct name: symbol = %p = %s \n",i->second,i->second->class_name().c_str());
+          ROSE_ASSERT(isSgFunctionTypeSymbol(i->second) != NULL);
+        }
+
   // if (i != p_table->end() && isSgFunctionTypeSymbol((*i).second))
      if (i != p_table->end() && i->second->variantT() == V_SgFunctionTypeSymbol)
         {
@@ -7291,17 +7358,28 @@ SgSymbolTable::find_function (const SgName & nm, const SgType* t)
           std::pair<hash_iterator, hash_iterator> range = p_table->equal_range(nm);
 
           for (hash_iterator i = range.first; i != range.second; ++i)
-            {
-              SgFunctionSymbol * sym = isSgFunctionSymbol(i->second);
-              if ( (sym != NULL) && (sym->get_declaration()->get_type() == t) && get_table()->key_eq()(sym->get_name(),nm))
-                {
-                  p_name    = nm;
-                  p_no_name = false;
-                  s = sym;
-                  break;
-                }
-            }
-         }
+             {
+               SgFunctionSymbol * sym = isSgFunctionSymbol(i->second);
+
+            // DQ (12/3/2011): Added debugging code for identifying types.
+               if (sym != NULL)
+                  {
+                    printf ("In SgSymbolTable::find_function(): Found a symbol with correct name: symbol = %p = %s (looking for type = %p = %s) \n",i->second,i->second->class_name().c_str(),t,t->class_name().c_str());
+                    ROSE_ASSERT(sym->get_declaration() != NULL);
+                    ROSE_ASSERT(sym->get_declaration()->get_type() != NULL);
+                    printf ("In SgSymbolTable::find_function(): Found a symbol with correct name: sym->get_declaration() = %p = %s (looking for sym->get_declaration()->get_type() = %p = %s) \n",
+                         sym->get_declaration(),sym->get_declaration()->class_name().c_str(),sym->get_declaration()->get_type(),sym->get_declaration()->get_type()->class_name().c_str());
+                  }
+
+               if ( (sym != NULL) && (sym->get_declaration()->get_type() == t) && get_table()->key_eq()(sym->get_name(),nm))
+                  {
+                    p_name    = nm;
+                    p_no_name = false;
+                    s = sym;
+                    break;
+                  }
+             }
+        }
 
      if (s != NULL)
         {
@@ -7309,6 +7387,7 @@ SgSymbolTable::find_function (const SgName & nm, const SgType* t)
           ROSE_ASSERT(s->get_declaration()->get_type() == t);
         }
 
+     printf ("In SgSymbolTable::find_function(): returning symbol = %p = %s \n",s,(s != NULL) ? s->class_name().c_str() : "null");
      return s;
    }
 
@@ -8180,8 +8259,16 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
                        }
                   }
 
+#if 1
+            // DQ (12/3/2011): Refactored code.
+               SgSymbol* symbolFromTable = (*i).second;
+               SgName mangledName = symbolFromTable->get_mangled_name();
+#else
                SgName mangledName;
                SgSymbol* symbolFromTable = (*i).second;
+
+#error "DEAD CODE"
+
                assert(symbolFromTable != NULL);
                switch(symbolFromTable->variantT())
                   {
@@ -8209,6 +8296,9 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
                          mangledName = classDeclaration->get_mangled_name();
                          break;
                        }
+
+#error "DEAD CODE"
+
                     case V_SgEnumFieldSymbol:
                        {
                          SgEnumFieldSymbol* symbol = isSgEnumFieldSymbol(symbolFromTable);
@@ -8233,6 +8323,9 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
                          printf ("A SgFunctionTypeSymbol also has a pointer to a SgType = %p \n",symbol->get_type());
                          break;
                        }
+
+#error "DEAD CODE"
+
                     case V_SgLabelSymbol:
                        {
                          SgLabelSymbol* symbol = isSgLabelSymbol(symbolFromTable);
@@ -8252,6 +8345,9 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
                             }
                          break;
                        }
+
+#error "DEAD CODE"
+
                     case V_SgNamespaceSymbol:
                        {
                          SgNamespaceSymbol* symbol = isSgNamespaceSymbol(symbolFromTable);
@@ -8276,6 +8372,9 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
 #endif
                          break;
                        }
+
+#error "DEAD CODE"
+
                     case V_SgTemplateSymbol:
                        {
                          SgTemplateSymbol* symbol = isSgTemplateSymbol(symbolFromTable);
@@ -8300,6 +8399,9 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
                          mangledName = initializedName->get_mangled_name();
                          break;
                        }
+
+#error "DEAD CODE"
+
                     case V_SgAliasSymbol:
                        {
                          SgAliasSymbol* symbol = isSgAliasSymbol(symbolFromTable);
@@ -8317,6 +8419,7 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
                          assert(false);
                        }
                   }
+#endif
 
                if (outputSymbolInfo == true)
                   {
