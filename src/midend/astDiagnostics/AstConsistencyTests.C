@@ -600,19 +600,28 @@ AstTests::runAllTests(SgProject* sageProject)
                  // Liao 10/30/2009, We enforce a unique SgClassType node for SgClassDeclaration and its derived classes
                  // SgClassType should be associated with the first nondefining class declaration
                  // All other relevant declarations (defining and other nondefining declarations) should share this type node
-                    SgClassType * cls_type = isSgClassType (*i); 
-                    if (cls_type)
-                    {
-                      SgClassDeclaration * cls_decl = isSgClassDeclaration (cls_type->get_declaration());
-                      ROSE_ASSERT (cls_decl);
-                      if (cls_decl->get_firstNondefiningDeclaration()!= NULL)
-                        if (isSgClassDeclaration(cls_decl->get_firstNondefiningDeclaration()) != cls_decl )
-                        {
-                          printf("    Warning: found a SgClassType which is NOT associated with the first nondefining class declaration\n");
-                          printf("    Warning: SgClassType = %p name = %s associated with SgClassDeclaration =%p\n", cls_type, cls_type->get_name().getString().c_str(), cls_decl);
-                          ROSE_ASSERT (false);
-                        }
-                    }  
+                    SgClassType* cls_type = isSgClassType (*i); 
+                    if (cls_type != NULL)
+                       {
+                      // DQ (12/4/2011): Better to treat this as a test on the SgDeclarationStatement instead of on the SgClassDeclaration.
+                      // SgClassDeclaration * cls_decl = isSgClassDeclaration (cls_type->get_declaration());
+                         ROSE_ASSERT (cls_type->get_declaration() != NULL);
+                         SgDeclarationStatement* cls_decl = isSgDeclarationStatement(cls_type->get_declaration());
+                         ROSE_ASSERT (cls_decl != NULL);
+                         if (cls_decl != NULL)
+                            {
+                              if (cls_decl->get_firstNondefiningDeclaration()!= NULL)
+                                 {
+                                // if (isSgClassDeclaration(cls_decl->get_firstNondefiningDeclaration()) != cls_decl )
+                                   if (cls_decl->get_firstNondefiningDeclaration() != cls_decl )
+                                      {
+                                        printf("    Warning: found a SgClassType which is NOT associated with the first nondefining class declaration\n");
+                                        printf("    Warning: SgClassType = %p name = %s associated with SgClassDeclaration =%p\n", cls_type, cls_type->get_name().getString().c_str(), cls_decl);
+                                        ROSE_ASSERT (false);
+                                       }
+                                 }
+                            }
+                       }  
 
                  // DQ (10/20/2004): Added test to find locations where the mangled template 
                  // class names might be used in unparsing!

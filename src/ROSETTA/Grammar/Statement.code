@@ -2366,6 +2366,10 @@ HEADER_TEMPLATE_CLASS_DEFINITION_STATEMENT_END
 
 HEADER_TEMPLATE_FUNCTION_DEFINITION_STATEMENT_START
 
+       // DQ (12/1/2011): Adding support for template declarations in the AST.
+          SgTemplateFunctionDefinition(Sg_File_Info* f, SgTemplateFunctionDeclaration* d, SgBasicBlock* body = 0);
+          SgTemplateFunctionDefinition(SgTemplateFunctionDeclaration* d, SgBasicBlock* body);
+
           SgTemplateFunctionDeclaration* get_declaration() const;
           void set_declaration(SgTemplateFunctionDeclaration* new_val);
 
@@ -4113,7 +4117,7 @@ SgScopeStatement::lookup_symbol(const SgName& n, SgSymbol *s) const
 
   // first symbol with n
 SgSymbol*
-$CLASSNAME::lookup_symbol(const SgName& n) const
+SgScopeStatement::lookup_symbol(const SgName& n) const
    {
      assert (p_symbol_table != NULL);
      return p_symbol_table->find_any(n);
@@ -12992,7 +12996,10 @@ SgTemplateDeclaration::get_mangled_name(void) const
         }
        else
         {
-          SgName mangledName = get_scope()->get_mangled_name() + SgName("_template_declaration_") + get_name();
+       // SgName mangledName = get_scope()->get_mangled_name() + SgName("_template_declaration_") + get_name();
+          SgScopeStatement* scope = get_scope();
+          ROSE_ASSERT(scope != NULL);
+          SgName mangledName = scope->get_mangled_name() + SgName("_template_declaration_") + get_name();
 
        // p_globalMangledNameMap[declaration] = mangledName;
           mangledName = SageInterface::addMangledNameToCache(const_cast<SgTemplateDeclaration*>(this),mangledName);
@@ -13184,6 +13191,27 @@ void
 SgTemplateFunctionDefinition::post_construction_initialization()
    {
    }
+
+// DQ (12/1/2011): Added support for template declarations in the AST.
+SgTemplateFunctionDefinition::SgTemplateFunctionDefinition(Sg_File_Info* f, SgTemplateFunctionDeclaration* d, SgBasicBlock* body)
+// : SgScopeStatement(f), p_body(body)
+   : SgFunctionDefinition(f,NULL,body)
+   {
+     set_declaration(d); 
+     if (d!=NULL) // Liao, 4/14/2009. Support bottom-up AST building: definition is built first, declaration may be still NULL 
+      d->set_definition(this);
+   }
+
+// DQ (12/1/2011): Added support for template declarations in the AST.
+SgTemplateFunctionDefinition::SgTemplateFunctionDefinition( SgTemplateFunctionDeclaration* d, SgBasicBlock* body)
+// : SgScopeStatement(), p_body(body)
+   : SgFunctionDefinition((SgFunctionDeclaration*)NULL,body)
+   {
+     set_declaration(d); 
+     if (d!=NULL)
+      d->set_definition(this);
+   }
+
 
 SgTemplateFunctionDeclaration*
 SgTemplateFunctionDefinition::get_declaration() const

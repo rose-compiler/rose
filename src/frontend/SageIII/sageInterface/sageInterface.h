@@ -1369,6 +1369,12 @@ void setFortranNumericLabel(SgStatement* stmt, int label_value);
 //! Suggest next usable (non-conflicting) numeric label value for a Fortran function definition scope
 int  suggestNextNumericLabel(SgFunctionDefinition* func_def);
 
+//! Fix the symbol table and set scope (only if scope in declaration is not already set).
+void fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeStatement* scope);
+
+//! Fix the symbol table and set scope (only if scope in declaration is not already set).
+void fixTemplateDeclaration(SgTemplateDeclaration* stmt, SgScopeStatement* scope);
+
 //! A wrapper containing fixes (fixVariableDeclaration(),fixStructDeclaration(), fixLabelStatement(), etc) for all kinds statements. Should be used before attaching the statement into AST.
 void fixStatement(SgStatement* stmt, SgScopeStatement* scope);
 //@}

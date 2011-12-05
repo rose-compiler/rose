@@ -11,6 +11,10 @@ HEADER_START
 
        // DQ (6/10/007): supports test of symbol declaration scope against symbol table's associated scope
           virtual SgScopeStatement* get_scope() const;
+
+       // DQ (12/3/2011): refactoring support for symbol tables and symbols.
+          SgName get_mangled_name() const;
+
 HEADER_END
 
 HEADER_X_SYMBOL_START
@@ -149,6 +153,154 @@ SgSymbol::get_scope() const
 
      ROSE_ASSERT(scope != NULL);
      return scope;
+   }
+
+
+SgName
+SgSymbol::get_mangled_name() const
+   {
+  // DQ (12/3/2011): refactoring of support for symbol tables and symbols.
+
+               SgName mangledName;
+               const SgSymbol* symbolFromTable = this;
+               ROSE_ASSERT(symbolFromTable != NULL);
+
+               switch(symbolFromTable->variantT())
+                  {
+                    case V_SgFunctionSymbol:
+                       {
+                         const SgFunctionSymbol* symbol = isSgFunctionSymbol(symbolFromTable);
+                         assert(symbol != NULL);
+                         SgFunctionDeclaration* functionDeclaration = symbol->get_declaration();
+                         mangledName = functionDeclaration->get_mangled_name();
+                         break;
+                       }
+                    case V_SgMemberFunctionSymbol:
+                       {
+                         const SgMemberFunctionSymbol* symbol = isSgMemberFunctionSymbol(symbolFromTable);
+                         assert(symbol != NULL);
+                         SgFunctionDeclaration* functionDeclaration = symbol->get_declaration();
+                         mangledName = functionDeclaration->get_mangled_name();
+                         break;
+                       }
+                    case V_SgClassSymbol:
+                       {
+                         const SgClassSymbol* symbol = isSgClassSymbol(symbolFromTable);
+                         assert(symbol != NULL);
+                         SgClassDeclaration* classDeclaration = symbol->get_declaration();
+                         mangledName = classDeclaration->get_mangled_name();
+                         break;
+                       }
+                    case V_SgEnumFieldSymbol:
+                       {
+                         const SgEnumFieldSymbol* symbol = isSgEnumFieldSymbol(symbolFromTable);
+                         assert(symbol != NULL);
+                         SgInitializedName* enumFieldName = symbol->get_declaration();
+                         mangledName = enumFieldName->get_mangled_name();
+                         break;
+                       }
+                    case V_SgEnumSymbol:
+                       {
+                         const SgEnumSymbol* symbol = isSgEnumSymbol(symbolFromTable);
+                         assert(symbol != NULL);
+                         SgEnumDeclaration* enumDeclaration = symbol->get_declaration();
+                         mangledName = enumDeclaration->get_mangled_name();
+                         break;
+                       }
+                    case V_SgFunctionTypeSymbol:
+                       {
+                         const SgFunctionTypeSymbol* symbol = isSgFunctionTypeSymbol(symbolFromTable);
+                         assert(symbol != NULL);
+                         mangledName = symbol->get_name();
+                         printf ("A SgFunctionTypeSymbol also has a pointer to a SgType = %p \n",symbol->get_type());
+                         break;
+                       }
+                    case V_SgLabelSymbol:
+                       {
+                         const SgLabelSymbol* symbol = isSgLabelSymbol(symbolFromTable);
+                         assert(symbol != NULL);
+                         SgLabelStatement* labelStatement = symbol->get_declaration();
+
+                      // DQ (12/24/2007): Modified to reflect new implementation for Fortran numeric labels.
+                      // mangledName = labelStatement->get_label();
+                         if (labelStatement == NULL)
+                            {
+                              assert(symbol->get_numeric_label_value() >= 0);
+                              mangledName = StringUtility::numberToString(symbol->get_numeric_label_value());
+                            }
+                           else
+                            {
+                              mangledName = labelStatement->get_label();
+                            }
+                         break;
+                       }
+                    case V_SgNamespaceSymbol:
+                       {
+                         const SgNamespaceSymbol* symbol = isSgNamespaceSymbol(symbolFromTable);
+                         assert(symbol != NULL);
+#if 0
+                         SgNamespaceDeclarationStatement* namespaceDeclaration = symbol->get_declaration();
+                         mangledName = namespaceDeclaration->get_mangled_name();
+                         printf ("A SgNamespaceSymbol also has a name = %s \n",symbol->get_name().str());
+#else
+                         if (symbol->get_isAlias() == true)
+                            {
+                              SgNamespaceAliasDeclarationStatement* namespaceAliasDeclarationStatement = symbol->get_aliasDeclaration();
+                              mangledName = namespaceAliasDeclarationStatement->get_mangled_name();
+                              printf ("A SgNamespaceSymbol has an ALIAS with name = %s \n",symbol->get_name().str());
+                            }
+                           else
+                            {
+                              SgNamespaceDeclarationStatement* namespaceDeclaration = symbol->get_declaration();
+                              mangledName = namespaceDeclaration->get_mangled_name();
+                              printf ("A SgNamespaceSymbol also has a name = %s \n",symbol->get_name().str());
+                            }
+#endif
+                         break;
+                       }
+                    case V_SgTemplateSymbol:
+                       {
+                         const SgTemplateSymbol* symbol = isSgTemplateSymbol(symbolFromTable);
+                         assert(symbol != NULL);
+                         SgTemplateDeclaration* templateDeclaration = symbol->get_declaration();
+                         mangledName = templateDeclaration->get_mangled_name();
+                         break;
+                       }
+                    case V_SgTypedefSymbol:
+                       {
+                         const SgTypedefSymbol* symbol = isSgTypedefSymbol(symbolFromTable);
+                         assert(symbol != NULL);
+                         SgTypedefDeclaration* typedefDeclaration = symbol->get_declaration();
+                         mangledName = typedefDeclaration->get_mangled_name();
+                         break;
+                       }
+                    case V_SgVariableSymbol:
+                       {
+                         const SgVariableSymbol* symbol = isSgVariableSymbol(symbolFromTable);
+                         assert(symbol != NULL);
+                         SgInitializedName* initializedName = symbol->get_declaration();
+                         mangledName = initializedName->get_mangled_name();
+                         break;
+                       }
+                    case V_SgAliasSymbol:
+                       {
+                         const SgAliasSymbol* symbol = isSgAliasSymbol(symbolFromTable);
+                         assert(symbol != NULL);
+                         mangledName = symbol->get_name();
+                         break;
+                       }
+
+                    default:
+                       {
+                         mangledName = "unknown mangled name";
+                         printf ("Error: SgSymbol not handled (%s) \n",symbolFromTable->class_name().c_str());
+
+                      // DQ (6/8/2007): Make this case fail so we can detect this error.
+                         assert(false);
+                       }
+                  }
+
+     return mangledName;
    }
 
 SOURCE_END

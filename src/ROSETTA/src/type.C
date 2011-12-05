@@ -412,9 +412,9 @@ Grammar::setUpTypes ()
      CUSTOM_CREATE_TYPE_MACRO(ReferenceType,
             "SOURCE_CREATE_TYPE_FOR_REFERENCE_TYPE",
             "SgType* type = NULL");
-     CUSTOM_CREATE_TYPE_MACRO(ClassType,
-            "SOURCE_CREATE_TYPE_FOR_CLASS_TYPE",
-            "SgClassDeclaration* decl = NULL");
+  // DQ (12/4/2011): Adding support for template declarations into the AST.
+  // CUSTOM_CREATE_TYPE_MACRO(ClassType,"SOURCE_CREATE_TYPE_FOR_CLASS_TYPE","SgClassDeclaration* decl = NULL");
+     CUSTOM_CREATE_TYPE_MACRO(ClassType,"SOURCE_CREATE_TYPE_FOR_CLASS_TYPE","SgDeclarationStatement* decl = NULL");
      CUSTOM_CREATE_TYPE_MACRO(JavaParameterizedType,
             "SOURCE_CREATE_TYPE_FOR_JAVA_PARAMETERIZED_TYPE",
             "SgClassDeclaration* decl = NULL");
@@ -598,7 +598,7 @@ Grammar::setUpTypes ()
      QualifiedNameType.setDataPrototype ( "SgQualifiedNamePtrList", "qualifiedNameList", "",
                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-     FunctionType.setFunctionPrototype ("HEADER_FUNCTION_TYPE_ARGUMENTS", "../Grammar/Type.code" );
+     FunctionType.setFunctionPrototype ("HEADER_FUNCTION_TYPE", "../Grammar/Type.code" );
      FunctionType.setDataPrototype     ("SgType*", "return_type","= NULL",
                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, TYPE_TRAVERSAL, NO_DELETE);
      FunctionType.setDataPrototype     ("bool", "has_ellipses","= true",

@@ -687,7 +687,7 @@ HEADER_QUALIFIED_NAME_TYPE_START
 HEADER_QUALIFIED_NAME_TYPE_END
 
 
-HEADER_FUNCTION_TYPE_ARGUMENTS_START
+HEADER_FUNCTION_TYPE_START
 
       //! Constructor for building a function type
           SgFunctionType(SgPartialFunctionType *);
@@ -733,7 +733,7 @@ HEADER_FUNCTION_TYPE_ARGUMENTS_START
        // TV (04/18/11): For support of shared function type.
           static SgName get_mangled(SgType* return_type, SgFunctionParameterTypeList * typeList);
 
-HEADER_FUNCTION_TYPE_ARGUMENTS_END
+HEADER_FUNCTION_TYPE_END
 
 HEADER_MEMBER_FUNCTION_TYPE_START
 
@@ -790,6 +790,9 @@ HEADER_MEMBER_FUNCTION_TYPE_START
        // SgName get_mangled_type();
        // RV (2/1/2006): Changed signature, and removed 'get_mangled_type()'.
           virtual SgName get_mangled_name (void) const;
+
+       // DQ (12/3/2011): Added better support for member function name mangling (symetric with SgFunctionType).
+          static SgName get_mangled(SgType* ret_type, SgFunctionParameterTypeList* typeList, SgClassType* classType );
 
       //! I forget why this is here.
           SgMemberFunctionType * mkAnotherType(SgType *);
@@ -2591,10 +2594,29 @@ SgClassType::SgClassType ( const SgClassType & X )
 SgName
 SgClassType::get_name() const
    {
-     if(get_declaration())
-          return isSgClassDeclaration(get_declaration())->get_name();
+  // DQ (12/4/2011): Adding support for template declarations in the AST.
+  // if (get_declaration() != NULL)
+     SgDeclarationStatement* declaration = get_declaration();
+     if (declaration != NULL)
+        {
+       // DQ (12/4/2011): Handling support for SgClassDeclaration and SgTemplateClassDeclaration declarations.
+       // return isSgClassDeclaration(get_declaration())->get_name();
+          SgClassDeclaration* classDeclaration = isSgClassDeclaration(declaration);
+          if (classDeclaration != NULL)
+             {
+               return classDeclaration->get_name();
+             }
+            else
+             {
+               SgTemplateClassDeclaration* templateClassDeclaration = isSgTemplateClassDeclaration(declaration);
+               ROSE_ASSERT(templateClassDeclaration != NULL);
+               return templateClassDeclaration->get_name();
+             }
+        }
        else
+        {
           return SgName((char *)0L);
+        }
    }
 
 #if 0
@@ -3213,7 +3235,8 @@ SgFunctionType::insert_argument(const SgTypePtrList::iterator& where, SgType* wh
      p_argument_list->insert_argument(where,what);
    }
 
-SgName SgFunctionType::get_mangled(SgType* ret_type, SgFunctionParameterTypeList * typeList) {
+SgName SgFunctionType::get_mangled(SgType* ret_type, SgFunctionParameterTypeList * typeList) 
+   {
   // process argument type
      SgName arg_names;
      if (typeList != NULL) {
@@ -3235,7 +3258,7 @@ SgName SgFunctionType::get_mangled(SgType* ret_type, SgFunctionParameterTypeList
        ;
        
      return mangled_name;
-}
+   }
 
 // RV (1/31/2006): Changed the form of the mangled name.
 SgName
@@ -3588,12 +3611,68 @@ SgMemberFunctionType::get_mangled_name (void) const
      return get_mangled ();
    }
 
+SgName SgMemberFunctionType::get_mangled(SgType* ret_type, SgFunctionParameterTypeList * typeList, SgClassType* classType )
+   {
+  // DQ (12/3/2011): Added this static function to simplify (refactor) how mangled names are generated).
+  // The advantage of refactoring this code to a static function is that the managle name generated to
+  // support the global function type table hash key could be generated more directly that what we do 
+  // now (which is the generate a SgMemberFunctionType, call the get_mangled() function, and then delete
+  // the newly built SgMemberFunctionType if the name is alread in the global function type table.
+
+  // Unfortunaely, this function makes too many calls to non-static member functions, and thus would be
+  // harder than expected to turn into a simple static function.
+
+  // Member-function specific information (class name, const/volatile qualifiers).
+     SgName mangled_cls_tag;
+
+     ROSE_ASSERT(classType != NULL);
+
+  // Compute class scope
+  //! \todo Figure out why member function types are sometimes used
+  //! incorrectly in place of plain function types.
+  // const SgType* cls_type = get_class_type();
+     const SgType* cls_type = classType;
+     if (cls_type != NULL)
+        {
+          SgName class_scope = cls_type->get_mangled();
+          mangled_cls_tag += class_scope;
+        }
+
+     SgName mangled_name;
+
+#if 0
+  // DQ (12/3/2011): Because of these member function calls this can't be refactored to be a static function.
+  // Append modifiers
+     if (isConstFunc())
+          mangled_cls_tag << "_cf";
+     if (isVolatileFunc())
+          mangled_cls_tag << "_vf";
+
+  // Mangle the function type without qualifiers
+     SgName basic_func_type = SgFunctionType::get_mangled();
+
+  // Compute mangled member function pointer type
+     SgName mangled_name;
+     if (mangled_cls_tag.get_length () > 0)
+          mangled_name << "__MFb_" << mangled_cls_tag.str (); // really is a member function
+
+     mangled_name << "_" << basic_func_type.str (); // Append standard argument signature.
+#else
+  // DQ (12/3/2011): If the data fro these non-static member fucntions were passed in as parameters it might be possible to refactor this code.
+     printf ("This function can be used as a refactored version of SgMemberFunctionType::get_mangled(void) \n");
+     ROSE_ASSERT(false);
+#endif
+
+     return mangled_name;
+   }
+
 // RV (1/31/2006): Changed form of mangling to include begin/end tags.
 SgName
 SgMemberFunctionType::get_mangled (void) const
    {
      ROSE_ASSERT(this != NULL);
 
+#if 1
   // Member-function specific information (class name, const/volatile qualifiers)
      SgName mangled_cls_tag;
 
@@ -3602,25 +3681,31 @@ SgMemberFunctionType::get_mangled (void) const
   //! incorrectly in place of plain function types.
      const SgType* cls_type = get_class_type ();
      if (cls_type)
-       {
-         SgName class_scope = cls_type->get_mangled ();
-         mangled_cls_tag += class_scope;
-       }
+        {
+          SgName class_scope = cls_type->get_mangled ();
+          mangled_cls_tag += class_scope;
+        }
 
+  // DQ (12/3/2011): Because of these member function calls this can't be refactored to be a static function.
   // Append modifiers
-     if (isConstFunc ())
-       mangled_cls_tag << "_cf";
-     if (isVolatileFunc ())
-       mangled_cls_tag << "_vf";
+     if (isConstFunc())
+          mangled_cls_tag << "_cf";
+     if (isVolatileFunc())
+          mangled_cls_tag << "_vf";
 
   // Mangle the function type without qualifiers
-     SgName basic_func_type = SgFunctionType::get_mangled ();
+     SgName basic_func_type = SgFunctionType::get_mangled();
 
   // Compute mangled member function pointer type
      SgName mangled_name;
      if (mangled_cls_tag.get_length () > 0)
        mangled_name << "__MFb_" << mangled_cls_tag.str (); // really is a member function
      mangled_name << "_" << basic_func_type.str (); // Append standard argument signature.
+#else
+  // DQ (12/3/2011): Not sure how to construct this case...leaving the older code (unrefactored).
+     SgMemberFunctionType::get_mangled(get_return_type(),get_argument_list(),get_class_type());
+#endif
+
      return mangled_name;
    }
 
@@ -4682,8 +4767,9 @@ SOURCE_CREATE_TYPE_FOR_ENUM_TYPE_END
 SOURCE_CREATE_TYPE_FOR_CLASS_TYPE_START
 
 // SgClassType* SgClassType::createType(SgClassDeclaration * cd)
+// SgClassType* SgClassType::createType(SgClassDeclaration * cd, SgExpression* optional_fortran_type_kind)
 SgClassType*
-SgClassType::createType(SgClassDeclaration * cd, SgExpression* optional_fortran_type_kind)
+SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortran_type_kind)
    {
      ROSE_ASSERT(cd != NULL);
 
@@ -4699,7 +4785,27 @@ SgClassType::createType(SgClassDeclaration * cd, SgExpression* optional_fortran_
      printf ("cd = %p cd->get_firstNondefiningDeclaration() = %p \n",cd,cd->get_firstNondefiningDeclaration());
 #endif
 
-     if (!cd->get_type())
+  // DQ (12/4/2011): Adding template declaration support to AST.  An SgClassType is modified to hold a SgTemplateClassDeclaration or a SgClassDeclaration.
+     SgClassDeclaration*         classDeclaration         = isSgClassDeclaration(cd);
+     SgTemplateClassDeclaration* templateClassDeclaration = isSgTemplateClassDeclaration(cd);
+     ROSE_ASSERT(classDeclaration != NULL || templateClassDeclaration != NULL);
+
+     SgType* type_from_declaration = NULL;
+     if (classDeclaration != NULL)
+        {
+          type_from_declaration = classDeclaration->get_type();
+       // ROSE_ASSERT(type_from_declaration != NULL);
+        }
+       else
+        {
+          type_from_declaration = templateClassDeclaration->get_type();
+       // ROSE_ASSERT(type_from_declaration != NULL);
+        }
+
+  // ROSE_ASSERT(type_from_declaration != NULL);
+
+  // if (!cd->get_type())
+     if (type_from_declaration == NULL)
         {
 #if 0
           $CLASSNAME* newType = new $CLASSNAME(cd);
@@ -4751,7 +4857,13 @@ SgClassType::createType(SgClassDeclaration * cd, SgExpression* optional_fortran_
 #if 0
                     printf ("This $CLASSNAME::createType() function also sets the type in the SgClassDeclaration = %p \n",cd);
 #endif
-                    cd->set_type(newType);
+
+                 // DQ (12/4/2011): Modified to support template declarations in the AST.
+                 // cd->set_type(newType);
+                    if (classDeclaration != NULL)
+                         classDeclaration->set_type(newType);
+                      else
+                         templateClassDeclaration->set_type(newType);
                   }
                  else
                   {
@@ -4767,7 +4879,13 @@ SgClassType::createType(SgClassDeclaration * cd, SgExpression* optional_fortran_
                     printf ("This $CLASSNAME::createType() function also sets the type in the SgClassDeclaration = %p \n",cd);
 #endif
                     $CLASSNAME* typeFromTypeTable = is$CLASSNAME(t);
-                    cd->set_type(typeFromTypeTable);
+
+                 // DQ (12/4/2011): Modified to support template declarations in the AST.
+                 // cd->set_type(typeFromTypeTable);
+                    if (classDeclaration != NULL)
+                         classDeclaration->set_type(typeFromTypeTable);
+                      else
+                         templateClassDeclaration->set_type(typeFromTypeTable);
                   }
              }
             else
@@ -4775,12 +4893,37 @@ SgClassType::createType(SgClassDeclaration * cd, SgExpression* optional_fortran_
             // Set the type using the generated type that might be redundant with a previously
             // generated type (something to sort out when we either merge local type tables or
             // when we connect the AST fragment being built (bottom up) into the large AST).
-               cd->set_type(newType);
+
+            // DQ (12/4/2011): Modified to support template declarations in the AST.
+            // cd->set_type(newType);
+               if (classDeclaration != NULL)
+                   classDeclaration->set_type(newType);
+                else
+                   templateClassDeclaration->set_type(newType);
+
              }
 #endif
         }
 
-     return ($CLASSNAME*) cd->get_type();
+  // return ($CLASSNAME*) cd->get_type();
+
+  // ROSE_ASSERT(type_from_declaration != NULL);
+  // return ($CLASSNAME*) type_from_declaration;
+
+     SgType* returnType = NULL;
+     if (classDeclaration != NULL)
+        {
+          returnType = classDeclaration->get_type();
+          ROSE_ASSERT(returnType != NULL);
+        }
+       else
+        {
+          returnType = templateClassDeclaration->get_type();
+          ROSE_ASSERT(returnType != NULL);
+        }
+
+     ROSE_ASSERT(returnType != NULL);
+     return ($CLASSNAME*) returnType;
    }
 
 SOURCE_CREATE_TYPE_FOR_CLASS_TYPE_END
