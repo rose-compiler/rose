@@ -11,7 +11,7 @@ Range<double>::Range(): r_first(0), r_last(NAN) {}
 template<>
 bool
 Range<double>::empty() const {
-    return isnan(r_last);
+    return std::isnan(r_last);
 }
 
 template<>
@@ -86,7 +86,7 @@ Range<float>::Range(): r_first(0), r_last(NAN) {}
 template<>
 bool
 Range<float>::empty() const {
-    return isnan(r_last);
+    return std::isnan(r_last);
 }
 
 template<>
