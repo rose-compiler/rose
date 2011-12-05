@@ -510,8 +510,12 @@ AsmUnparser::BasicBlockNoopWarning::operator()(bool enabled, const BasicBlockArg
 bool
 AsmUnparser::BasicBlockReasons::operator()(bool enabled, const BasicBlockArgs &args)
 {
-    if (enabled)
-        args.output <<"Basic block: " <<args.block->reason_str(false) <<"\n";
+    if (enabled) {
+        args.output <<"Basic block: " <<args.block->reason_str(false);
+        if (args.block->get_code_likelihood()<1.0 && args.block->get_code_likelihood()>=0.0)
+            args.output <<"; " <<floor(100.0*args.block->get_code_likelihood()+0.5) <<"% code likelihood";
+        args.output <<"\n";
+    }
     return enabled;
 }
 
