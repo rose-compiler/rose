@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <unistd.h>
+#include <cmath>
 
 static bool is_unexecutable(const MemoryMap::MapElement &me) {
     return 0 == (me.get_mapperms() & MemoryMap::MM_PROT_EXEC);
@@ -111,7 +112,7 @@ main(int argc, char *argv[])
     
     double vote;
     cc->satisfied_by(stats, &vote, &std::cout);
-    if (isnan(vote)) {
+    if (std::isnan(vote)) {
         std::cout <<"Code probability could not be determined.\n";
     } else {
         std::cout <<"There is a " <<floor(100.0*vote+0.5) <<"% probability that this file is x86 code.\n";

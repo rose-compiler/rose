@@ -2,6 +2,7 @@
 #define __STDC_FORMAT_MACROS
 #include "sage3basic.h"
 #include <inttypes.h>
+#include <cmath>
 
 #include "Partitioner.h"
 
@@ -120,7 +121,7 @@ Partitioner::RegionStats::add_sample(size_t id, double x, size_t n)
 {
     assert(id<dictionary.size());
     results.resize(dictionary.size());
-    if (!isnan(x)) {
+    if (!std::isnan(x)) {
         results[id].sum += x;
         results[id].nsamples += n;
     }
@@ -171,7 +172,7 @@ Partitioner::RegionStats::set_value(size_t id, double value)
 {
     assert(id<dictionary.size());
     results.resize(dictionary.size());
-    if (isnan(value)) {
+    if (std::isnan(value)) {
         results[id].sum = 0;
         results[id].nsamples = 0;
     } else {
@@ -186,7 +187,7 @@ Partitioner::RegionStats::divnan(size_t num_id, size_t den_id) const
     double num = get_value(num_id);
     double den = get_value(den_id);
 
-    if (isnan(num) || isnan(den) || 0.0==den)
+    if (std::isnan(num) || std::isnan(den) || 0.0==den)
         return NAN;
     return num/den;
 }
@@ -388,13 +389,13 @@ Partitioner::CodeCriteria::get_vote(const RegionStats *stats, std::vector<double
             continue;
 
         double stat_val = stats->get_value(stat_id);
-        if (!isnan(stat_val)) {
+        if (!std::isnan(stat_val)) {
             double c = 0.0==criteria[cc_id].variance ?
                        (stat_val==criteria[cc_id].mean ? 1.0 : 0.0) :
                        1 + erf(-fabs(stat_val-criteria[cc_id].mean) / sqrt(2*criteria[cc_id].variance));
             if (votes)
                 (*votes)[cc_id] = c;
-            if (!isnan(c)) {
+            if (!std::isnan(c)) {
                 sum += c * criteria[cc_id].weight;
                 total_wt += criteria[cc_id].weight;
             }
@@ -483,7 +484,7 @@ Partitioner::CodeCriteria::print(std::ostream &o, const RegionStats *stats, cons
 
         /* Vote optional column */
         if (votes) {
-            if (-1==(ssize_t)cc_id || isnan((*votes)[cc_id])) {
+            if (-1==(ssize_t)cc_id || std::isnan((*votes)[cc_id])) {
                 o <<" " <<std::setw(5) <<std::right <<"";
             } else {
                 o <<" " <<std::setw(4)  <<std::right <<floor(100.0*(*votes)[cc_id]+0.5) <<"%";
@@ -502,7 +503,7 @@ Partitioner::CodeCriteria::print(std::ostream &o, const RegionStats *stats, cons
           <<" "  <<std::setw(11)              <<"";
         if (stats)
             o <<" " <<std::setw(11) <<"";
-        if (isnan(*total_vote)) {
+        if (std::isnan(*total_vote)) {
             o <<" " <<std::setw(5) <<std::right <<"";
         } else {
             o <<" "  <<std::setw(4)  <<std::right <<floor(100.0*(*total_vote)+0.5) <<"%";
@@ -519,7 +520,7 @@ Partitioner::CodeCriteria::print(std::ostream &o, const RegionStats *stats, cons
     if (stats)
         o <<" " <<std::setw(11) <<"";
     if (votes && total_vote) {
-        if (isnan(*total_vote)) {
+        if (std::isnan(*total_vote)) {
             o <<" " <<std::setw(5) <<std::right <<"NaN";
         } else {
             o <<" "  <<std::setw(5)  <<std::right <<(*total_vote>=threshold?"YES":"NO");
