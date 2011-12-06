@@ -266,7 +266,7 @@ namespace ROSE_Callbacks {
          *  callbacks should not assume that any particular mutexes or other thread synchronization resources are held. It is
          *  possible for a single callback to be invoked concurrently if two or more threads invoke apply() concurrently. */
         template<class ArgumentType>
-        bool apply(bool b, const ArgumentType &args, Direction dir=FORWARD) {
+        bool apply(bool b, const ArgumentType &args, Direction dir=FORWARD) const {
             CBList list = callbacks(); /* copy, so callbacks can safely modify this object's list */
             if (FORWARD==dir) {
                 for (typename CBList::iterator li=list.begin(); li!=list.end(); ++li) {
