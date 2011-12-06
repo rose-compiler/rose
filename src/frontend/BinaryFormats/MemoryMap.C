@@ -447,6 +447,18 @@ MemoryMap::prune(bool(*predicate)(const MapElement&))
     elements = keep;
 }
 
+void
+MemoryMap::prune(unsigned required, unsigned prohibited)
+{
+    std::vector<MapElement> keep;
+    for (size_t i=0; i<elements.size(); ++i) {
+        if ((0==required || 0!=(elements[i].get_mapperms() & required)) &&
+            0==(elements[i].get_mapperms() & prohibited))
+            keep.push_back(elements[i]);
+    }
+    elements = keep;
+}
+
 size_t
 MemoryMap::read1(void *dst_buf, rose_addr_t va, size_t desired, unsigned req_perms/*=MM_PROT_READ*/,
                  const MapElement **mep/*=NULL*/) const

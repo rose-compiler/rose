@@ -1,7 +1,6 @@
 /* Algorithms to detect what instructions make up basic blocks and which blocks make up functions, and how to create the
  * necessary SgAsmBlock and SgAsmFunction IR nodes from this information. */
 #define __STDC_FORMAT_MACROS
-// tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 #include <inttypes.h>
 
@@ -14,6 +13,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <math.h>
 #include <stdarg.h>
 
 /* See header file for full documentation. */
@@ -69,7 +69,8 @@ add_to_reason_string(std::string &result, bool isset, bool do_pad, const std::st
             result += full;
         }
     } else if (do_pad) {
-        result += ".";
+        for (size_t i=0; i<abbr.size(); ++i)
+            result += ".";
     }
 }
 
@@ -82,7 +83,9 @@ SgAsmFunction::reason_key(const std::string &prefix)
             prefix + "X = exception frame       T = thunk                I = imported/dyn-linked\n" +
             prefix + "S = function symbol       P = instruction pattern  G = CFG graph analysis\n" +
             prefix + "U = user-def detection    N = NOP/zero padding     D = discontiguous blocks\n" +
-            prefix + "V = intra-function block  L = leftover blocks      M = miscellaneous\n" +
+            prefix + "V = intra-function block  L = leftover blocks" +
+            prefix + "Mxxx are miscellaneous reasons (at most one misc reason per function):\n" +
+            prefix + "      M001 = code between function padding bytes\n" +
             prefix + "Note: \"c\" means this is the target of a call-like instruction or instruction\n" +
             prefix + "      sequence but the call is not present in the global control flow graph, while\n" +
             prefix + "      \"C\" means the call is in the CFG.\n");
@@ -137,7 +140,30 @@ SgAsmFunction::reason_str(bool do_pad, unsigned r)
     add_to_reason_string(result, (r & FUNC_DISCONT),       do_pad, "D", "discontiguous");
     add_to_reason_string(result, (r & FUNC_LEFTOVERS),     do_pad, "L", "leftovers");
     add_to_reason_string(result, (r & FUNC_INTRABLOCK),    do_pad, "V", "intrablock");
-    add_to_reason_string(result, (r & FUNC_MISCMASK),      do_pad, "M", "misc-"+StringUtility::numberToString(r & FUNC_MISCMASK));
+
+    /* The miscellaneous marker is special. It's a single letter like the others, but is followed by a fixed width
+     * integer indicating the (user-defined) algorithm that added the function. */
+    {
+        char abbr[32], full[64];
+        int width = snprintf(abbr, sizeof abbr, "%u", FUNC_MISCMASK);
+        snprintf(abbr, sizeof abbr, "M%0*u", width, (r & FUNC_MISCMASK));
+        abbr[sizeof(abbr)-1] = '\0';
+        if (!do_pad) {
+            std::string miscname = stringifySgAsmFunctionFunctionReason((r & FUNC_MISCMASK), "FUNC_");
+            if (miscname.empty() || miscname[0]=='(') {
+                snprintf(full, sizeof full, "misc-%u", (r & FUNC_MISCMASK));
+            } else {
+                for (size_t i=0; i<miscname.size(); ++i)
+                    miscname[i] = tolower(miscname[i]);
+                strncpy(full, miscname.c_str(), sizeof full);
+            }
+            full[sizeof(full)-1] = '\0';
+        } else {
+            full[0] = '\0';
+        }
+        add_to_reason_string(result, (r & FUNC_MISCMASK), do_pad, abbr, full);
+    }
+
     return result;
 }
 
@@ -239,10 +265,10 @@ SgAsmFunction::get_extent(ExtentMap *extents, rose_addr_t *lo_addr, rose_addr_t 
 std::string
 SgAsmBlock::reason_key(const std::string &prefix)
 {
-    return (prefix + "L = left over blocks    N = NOP/zero padding     V = intrafunction block\n" +
+    return (prefix + "L = left over blocks    N = NOP/zero padding     F = fragment\n" +
             prefix + "J = jump table          E = Function entry\n" +
-            prefix + "H = CFG head            1 = first CFG traversal 2 = second CFG traversal\n" +
-            prefix + "U = user-def reason     M = miscellaneous\n");
+            prefix + "H = CFG head            U = user-def reason      M = miscellaneous\n" +
+            prefix + "1 = first CFG traversal 2 = second CFG traversal 3 = third CFG traversal\n");
 }
 
 /** Returns reason string for this block. */
@@ -264,8 +290,8 @@ SgAsmBlock::reason_str(bool do_pad, unsigned r)
         add_to_reason_string(result, true, do_pad, "L", "leftovers");
     } else if (r & BLK_PADDING) {
         add_to_reason_string(result, true, do_pad, "N", "padding");
-    } else if (r & BLK_INTRAFUNC) {
-        add_to_reason_string(result, true, do_pad, "V", "intrafunc"); // because V is used for FUNC_INTRABLOCK
+    } else if (r & BLK_FRAGMENT) {
+        add_to_reason_string(result, true, do_pad, "F", "fragment");
     } else if (r & BLK_JUMPTABLE) {
         add_to_reason_string(result, true, do_pad, "J", "jumptable");
     } else {
@@ -276,14 +302,33 @@ SgAsmBlock::reason_str(bool do_pad, unsigned r)
         add_to_reason_string(result, true, do_pad, "H", "CFG head");
     } else if (r & BLK_GRAPH1) {
         add_to_reason_string(result, true, do_pad, "1", "graph-1");
+    } else if (r & BLK_GRAPH2) {
+        add_to_reason_string(result, true, do_pad, "2", "graph-2");
     } else {
-        add_to_reason_string(result, (r & BLK_GRAPH2), do_pad, "2", "graph-2");
+        add_to_reason_string(result, (r & BLK_GRAPH3), do_pad, "3", "graph-3");
     }
 
     if (r & BLK_USERDEF) {
         add_to_reason_string(result, true, do_pad, "U", "user defined");
     } else {
-        add_to_reason_string(result, (r & BLK_MISCMASK), do_pad, "M", "misc-" + StringUtility::numberToString(r & BLK_MISCMASK));
+        char abbr[32], full[64];
+        int width = snprintf(abbr, sizeof abbr, "%u", BLK_MISCMASK);
+        snprintf(abbr, sizeof abbr, "M%0*u", width, (r & BLK_MISCMASK));
+        abbr[sizeof(abbr)-1] = '\0';
+        if (!do_pad) {
+            std::string miscname = stringifySgAsmBlockReason((r & BLK_MISCMASK), "BLK_");
+            if (miscname.empty() || miscname[0]=='(') {
+                snprintf(full, sizeof full, "misc-%u", (r & BLK_MISCMASK));
+            } else {
+                for (size_t i=0; i<miscname.size(); ++i)
+                    miscname[i] = tolower(miscname[i]);
+                strncpy(full, miscname.c_str(), sizeof full);
+            }
+            full[sizeof(full)-1] = '\0';
+        } else {
+            full[0] = '\0';
+        }
+        add_to_reason_string(result, (r & BLK_MISCMASK), do_pad, abbr, full);
     }
     return result;
 }
@@ -358,8 +403,12 @@ Partitioner::parse_switches(const std::string &s, unsigned flags)
         unsigned bits = 0;
         if (word=="entry" || word=="entry_point") {
             bits = SgAsmFunction::FUNC_ENTRY_POINT;
-        } else if (word=="call" || word=="call_target") {
+        } else if (word=="call_target") {
             bits = SgAsmFunction::FUNC_CALL_TARGET;
+        } else if (word=="call_insn") {
+            bits = SgAsmFunction::FUNC_CALL_INSN;
+        } else if (word=="call") {
+            bits = SgAsmFunction::FUNC_CALL_TARGET | SgAsmFunction::FUNC_CALL_INSN;
         } else if (word=="eh" || word=="eh_frame") {
             bits = SgAsmFunction::FUNC_EH_FRAME;
         } else if (word=="import") {
@@ -372,6 +421,12 @@ Partitioner::parse_switches(const std::string &s, unsigned flags)
             bits = SgAsmFunction::FUNC_USERDEF;
         } else if (word=="pad" || word=="padding" || word=="interpad") {
             bits = SgAsmFunction::FUNC_PADDING;
+        } else if (word=="intrablock") {
+            bits = SgAsmFunction::FUNC_INTRABLOCK;
+        } else if (word=="thunk") {
+            bits = SgAsmFunction::FUNC_THUNK;
+        } else if (word=="misc" || word=="miscellaneous" || word=="interpadfunc") {
+            bits = SgAsmFunction::FUNC_MISCMASK;
         } else if (word=="unassigned" || word=="unclassified" || word=="leftover" || word=="leftovers") {
             bits = SgAsmFunction::FUNC_LEFTOVERS;
         } else if (word=="default") {
@@ -400,16 +455,6 @@ Partitioner::parse_switches(const std::string &s, unsigned flags)
     return flags;
 }
 
-static bool is_writable(const MemoryMap::MapElement &me) __attribute__((unused));
-static bool is_writable(const MemoryMap::MapElement &me) {
-    return 0 != (me.get_mapperms() & MemoryMap::MM_PROT_WRITE);
-}
-
-static bool is_unexecutable(const MemoryMap::MapElement &me) __attribute__((unused));
-static bool is_unexecutable(const MemoryMap::MapElement &me) {
-    return 0 == (me.get_mapperms() & MemoryMap::MM_PROT_EXEC);
-}
-
 /* Set disassembly and memory initialization maps. */
 void
 Partitioner::set_map(MemoryMap *map, MemoryMap *ro_map)
@@ -420,7 +465,7 @@ Partitioner::set_map(MemoryMap *map, MemoryMap *ro_map)
             this->ro_map = *ro_map;
         } else {
             this->ro_map = *map;
-            this->ro_map.prune(is_writable);
+            this->ro_map.prune(MemoryMap::MM_PROT_READ, MemoryMap::MM_PROT_WRITE);
         }
     } else {
         this->ro_map.clear();
@@ -762,6 +807,12 @@ Partitioner::clear()
 
     /* Clear all disassembly failures from the cache. */
     clear_disassembler_errors();
+
+    /* Clear statistics and code criteria.  This object manages memory for its statistics, but the caller manages the memory
+     * for the code criteria. */
+    delete aggregate_mean;           aggregate_mean     = NULL;
+    delete aggregate_variance;       aggregate_variance = NULL;
+    code_criteria = NULL; // owned by user
 }
 
 void
@@ -1142,6 +1193,7 @@ Partitioner::canonic_block(rose_addr_t va)
         va = bb->cache.alias_for;
     }
     assert(!"possible alias loop");
+    return va;
 }
 
 /* Finds an existing function definition. */
@@ -1790,7 +1842,7 @@ Partitioner::scan_intrafunc_insns(InsnRangeCallbacks &cblist)
 }
 
 void
-Partitioner::scan_unassigned_bytes(ByteRangeCallbacks &cblist, MemoryMap *restrict_var/*=NULL*/)
+Partitioner::scan_unassigned_bytes(ByteRangeCallbacks &cblist, MemoryMap *restrict_map/*=NULL*/)
 {
     if (cblist.empty())
         return;
@@ -1802,16 +1854,16 @@ Partitioner::scan_unassigned_bytes(ByteRangeCallbacks &cblist, MemoryMap *restri
     /* Unassigned ranges are the inverse of everything assigned.  Then further restrict the unassigned range map according to
      * the supplied memory map. */
     ExtentMap unassigned = assigned.invert<ExtentMap>();
-    if (restrict_var)
-        unassigned.erase_ranges(restrict_var->va_extents().invert<ExtentMap>());
+    if (restrict_map)
+        unassigned.erase_ranges(restrict_map->va_extents().invert<ExtentMap>());
 
     /* Traverse the unassigned map, invoking the callbacks for each range. */
     for (ExtentMap::iterator ri=unassigned.begin(); ri!=unassigned.end(); ++ri)
-        cblist.apply(true, ByteRangeCallback::Args(this, assigned, ri->first));
+        cblist.apply(true, ByteRangeCallback::Args(this, restrict_map, assigned, ri->first));
 }
 
 void
-Partitioner::scan_intrafunc_bytes(ByteRangeCallbacks &cblist, MemoryMap *restrict_var/*=NULL*/)
+Partitioner::scan_intrafunc_bytes(ByteRangeCallbacks &cblist, MemoryMap *restrict_map/*=NULL*/)
 {
     if (cblist.empty())
         return;
@@ -1840,11 +1892,11 @@ Partitioner::scan_intrafunc_bytes(ByteRangeCallbacks &cblist, MemoryMap *restric
     } filter;
     ByteRangeCallbacks cblist2 = cblist;
     cblist2.prepend(&filter);
-    scan_unassigned_bytes(cblist2, restrict_var);
+    scan_unassigned_bytes(cblist2, restrict_map);
 }
 
 void
-Partitioner::scan_interfunc_bytes(ByteRangeCallbacks &cblist, MemoryMap *restrict_var/*=NULL*/)
+Partitioner::scan_interfunc_bytes(ByteRangeCallbacks &cblist, MemoryMap *restrict_map/*=NULL*/)
 {
     if (cblist.empty())
         return;
@@ -1873,7 +1925,7 @@ Partitioner::scan_interfunc_bytes(ByteRangeCallbacks &cblist, MemoryMap *restric
     } filter;
     ByteRangeCallbacks cblist2 = cblist;
     cblist2.prepend(&filter);
-    scan_unassigned_bytes(cblist2, restrict_var);
+    scan_unassigned_bytes(cblist2, restrict_map);
 }
 
 bool
@@ -1891,7 +1943,6 @@ Partitioner::FindDataPadding::operator()(bool enabled, const Args &args)
     for (size_t pi=1; pi<patterns.size(); ++pi)
         max_psize = std::max(max_psize, patterns[pi].size());
 
-
     /* What is the previous function?  The one to which padding is to be attached. */
     if (range.first()<=Extent::minimum())
         return true;
@@ -1902,7 +1953,6 @@ Partitioner::FindDataPadding::operator()(bool enabled, const Args &args)
         return true;
     Function *func = prev->second.get();
     assert(func!=NULL);
-
 
     /* Do we need to be contiguous with a following function?  This only checks whether the incoming range ends at the
      * beginning of a function.  We'll check below whether a padding sequence also ends at the end of this range. */
@@ -1921,7 +1971,8 @@ Partitioner::FindDataPadding::operator()(bool enabled, const Args &args)
      * read, although this shouldn't happen if the caller supplied the correct memory map to the scan_*_bytes() method. */
     if (range.size() > maximum_range_size)
         return true;
-    SgUnsignedCharList buf = p->ro_map.read(range.first(), range.size());
+    MemoryMap *map = args.restrict_map ? args.restrict_map : &p->ro_map;
+    SgUnsignedCharList buf = map->read(range.first(), range.size());
     if (ends_contiguously && buf.size()<range.size())
         return true;
     range.resize(buf.size());
@@ -2184,7 +2235,7 @@ Partitioner::find_db_starting(rose_addr_t start_va, size_t size/*=0*/)
 }
 
 bool
-Partitioner::FindIntraFunctionInsns::operator()(bool enabled, const Args &args)
+Partitioner::FindFunctionFragments::operator()(bool enabled, const Args &args)
 {
     if (!enabled)
         return false;
@@ -2196,52 +2247,71 @@ Partitioner::FindIntraFunctionInsns::operator()(bool enabled, const Args &args)
         p->function_extent(function_extents);
     }
 
-    /* This range must begin contiguously with a function. */
+    /* Compute and cache code criteria. */
+    if (!code_criteria) {
+        RegionStats *mean = p->aggregate_statistics();
+        RegionStats *variance = p->get_aggregate_variance();
+        code_criteria = p->new_code_criteria(mean, variance, threshold);
+    }
+
+    /* This range must begin contiguously with a valid function. */
     if (args.range.first()<=Extent::minimum())
         return true;
     FunctionRangeMap::iterator prev = function_extents->find(args.range.first()-1);
     if (prev==function_extents->end())
         return true;
     Function *func = prev->second.get();
-
-    /* This range must end contiguously with the same function. */
-    if (args.range.last()>=Extent::maximum())
-        return true;
-    FunctionRangeMap::iterator next = function_extents->find(args.range.last()+1);
-    if (next==function_extents->end() || next->second.get()!=func)
+    if (0!=(func->reason & excluded_reasons))
         return true;
 
-    /* If this function is interleaved with another then how can we know that the instructions in question should actually
-     * belong to this function?  If we're interleaved with one other function, then we could very easily be interleaved with
-     * additional functions and this block could belong to any of them. */
-    if (require_contiguous && !p->is_contiguous(func, false))
+    /* Should this range end contiguously with the same function?  Perhaps we should relax this and only require that the
+     * preceding function has an address after this range? [RPM 2011-11-25] */
+    if (require_intrafunction) {
+        if (args.range.last()>=Extent::maximum())
+            return true;
+        FunctionRangeMap::iterator next = function_extents->find(args.range.last()+1);
+        if (next==function_extents->end() || next->second.get()!=func)
+            return true;
+    }
+
+    /* If the preceding function is interleaved with another then how can we know that the instructions in question should
+     * actually belong to this function?  If we're interleaved with one other function, then we could very easily be
+     * interleaved with additional functions and this address region could belong to any of them. */
+    if (require_noninterleaved && !p->is_contiguous(func, false))
         return true;
 
-    /* Get the list of basic blocks for the instructions in this range and their address extents. */
+    /* Bail unless the region statistically looks like code. */
+    ExtentMap pending;
+    pending.insert(args.range);
+    RegionStats *stats = p->region_statistics(pending);
+    double raw_vote;
+    if (!code_criteria->satisfied_by(stats, &raw_vote))
+        return true;
+    
+    /* Get the list of basic blocks for the instructions in this range and their address extents.  Bail if a basic block
+     * extends beyond the address ranges we're considering, rather than splitting the block.  Also bail if we encounter two or
+     * more instructions that overlap since that's a pretty strong indication that this isn't code. */
     std::set<BasicBlock*> bblocks;
-    ExtentMap block_extents;
-    rose_addr_t va = args.range.first();
-    while (va<=args.range.last()) {
+    while (!pending.empty()) {
+        rose_addr_t va = pending.min();
         BasicBlock *bb = va==args.range.first() ? p->find_bb_starting(va) : p->find_bb_containing(va);
         if (!bb || bb->function)
             return true;
-        bblocks.insert(bb);
-        for (InstructionVector::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii) {
-            rose_addr_t first = (*ii)->get_address();
-            size_t size = (*ii)->get_size();
-            block_extents.insert(Extent(first, size));
+        if (bblocks.find(bb)==bblocks.end()) {
+            bblocks.insert(bb);
+            for (InstructionVector::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii) {
+                Extent ie((*ii)->get_address(), (*ii)->get_size());
+                if (!pending.contains(ie))
+                    return true;
+                pending.erase(ie);
+            }
         }
-        va = block_extents.begin()->first.last() + 1; // the address of the first missing instruction
     }
 
-    /* Make sure that all the instructions we got fit in the hole we're trying to fill. */
-    ExtentMap hole; hole.insert(args.range);
-    if (!hole.contains(block_extents))
-        return true;
-
-    /* Add the basic blocks to the function. */
+    /* All looks good.  Add the basic blocks to the preceding function. */
     for (std::set<BasicBlock*>::iterator bi=bblocks.begin(); bi!=bblocks.end(); ++bi) {
-        p->append(func, *bi, SgAsmBlock::BLK_INTRAFUNC, true/*head of CFG subgraph*/);
+        (*bi)->code_likelihood = raw_vote;
+        p->append(func, *bi, SgAsmBlock::BLK_FRAGMENT, true/*CFG head*/);
         ++nfound;
     }
 
@@ -2651,9 +2721,10 @@ Partitioner::name_import_entries(SgAsmGenericHeader *fhdr)
     struct ImportIndexBuilder: public AstSimpleProcessing {
         typedef std::map<rose_addr_t, std::string> Index;
         typedef Index::iterator iterator;
+        Partitioner *partitioner;
         Index index;
         SgAsmGenericHeader *fhdr;
-        ImportIndexBuilder(SgAsmGenericHeader *fhdr): fhdr(fhdr) {
+        ImportIndexBuilder(Partitioner *partitioner, SgAsmGenericHeader *fhdr): partitioner(partitioner), fhdr(fhdr) {
             traverse(fhdr, preorder);
         }
         void visit(SgNode *node) {
@@ -2663,18 +2734,24 @@ Partitioner::name_import_entries(SgAsmGenericHeader *fhdr)
             if (ilt && iat) {
                 rose_addr_t iat_base_va = idir->get_iat_rva() + fhdr->get_base_va();
                 size_t nentries = ilt->get_entries()->get_vector().size();
-                assert(nentries==iat->get_entries()->get_vector().size());
+                if (nentries!=iat->get_entries()->get_vector().size()) {
+                    if (partitioner->debug)
+                        fprintf(partitioner->debug, "Partitioner::name_import_entries: malformed import directory skipped\n");
+                    return;
+                }
                 for (size_t i=0; i<nentries; ++i) {
                     SgAsmPEImportILTEntry *ilt_entry = ilt->get_entries()->get_vector()[i];
-                    SgAsmPEImportILTEntry *iat_entry = iat->get_entries()->get_vector()[i];
-                    assert(ilt_entry!=NULL && iat_entry!=NULL);
-                    rose_addr_t iat_entry_va = iat_base_va + i*fhdr->get_word_size();
-                    if (ilt_entry->get_entry_type() == SgAsmPEImportILTEntry::ILT_HNT_ENTRY_RVA)
-                        index[iat_entry_va] = ilt_entry->get_hnt_entry()->get_name()->get_string();
+                    if (NULL!=ilt_entry && NULL!=iat->get_entries()->get_vector()[i]) {
+                        rose_addr_t iat_entry_va = iat_base_va + i*fhdr->get_word_size();
+                        if (ilt_entry->get_entry_type() == SgAsmPEImportILTEntry::ILT_HNT_ENTRY_RVA)
+                            index[iat_entry_va] = ilt_entry->get_hnt_entry()->get_name()->get_string();
+                    } else if (partitioner->debug) {
+                        fprintf(partitioner->debug, "Partitioner::name_import_entries: malformed ILT/IAT entry skipped\n");
+                    }
                 }
             }
         }
-    } imports(fhdr);
+    } imports(this, fhdr);
 
     /* Look for functions whose first instruction is an indirect jump through one of the memory addresses we indexed above. */
     for (Functions::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
@@ -2788,6 +2865,10 @@ Partitioner::discover_first_block(Function *func)
         bb = find_bb_containing(func->entry_va);
         assert(bb!=NULL);
         assert(func->entry_va==bb->address());
+    } else if (bb && bb->function!=NULL && bb->function!=func) {
+        if (debug) fprintf(debug, "[removing B%08"PRIx64" from F%08"PRIx64"]", func->entry_va, bb->function->entry_va);
+        bb->function->pending = true;
+        remove(bb->function, bb);
     }
 
     if (bb) {
@@ -2933,7 +3014,7 @@ void
 Partitioner::analyze_cfg(SgAsmBlock::Reason reason)
 {
     for (size_t pass=1; true; pass++) {
-        if (debug) fprintf(debug, "========== Partitioner::analyze_cfg() pass %zu ==========\n", pass);
+        if (debug) fprintf(debug, "\n========== Partitioner::analyze_cfg() pass %zu ==========\n", pass);
         progress(debug, "Partitioner: starting %s pass %zu: "
                  "%zu function%s, %zu insn%s, %zu block%s\n",
                  stringifySgAsmBlockReason(reason, "BLK_").c_str(), pass,
@@ -3200,15 +3281,30 @@ Partitioner::adjust_padding()
 void
 Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
 {
+    /* Obtain aggregate statistics over all the functions, and cache them. These statistics describe code, so we want to do
+     * this before we add data blocks to the functions.  Any statistics already cached should be considered outdated. */
+    clear_aggregate_statistics();
+    RegionStats *mean = aggregate_statistics();
+    RegionStats *variance = get_aggregate_variance();
+    if (debug) {
+        std::ostringstream s;
+        s <<"=== Mean ===\n" <<*mean <<"\n"
+          <<"=== Variance ===\n" <<*variance <<"\n";
+        fputs(s.str().c_str(), debug);
+    }
+
     /* A memory map that contains only the executable regions.  I.e., those that might contain instructions. */
     MemoryMap exe_map = *map;
-    exe_map.prune(is_unexecutable);
+    exe_map.prune(MemoryMap::MM_PROT_EXEC);
 
     /* Add unassigned intra-function blocks to the surrounding function.  This needs to come before detecting inter-function
      * padding, otherwise it will also try to add the stuff between the true function and its following padding. */
     if (func_heuristics & SgAsmFunction::FUNC_INTRABLOCK) {
-        FindIntraFunctionInsns find_intra_function_insns;
-        scan_unassigned_bytes(&find_intra_function_insns, &exe_map);
+        FindFunctionFragments fff;
+        fff.require_noninterleaved = true;
+        fff.require_intrafunction = true;
+        fff.threshold = 0; // treat all intra-function regions as code
+        scan_unassigned_bytes(&fff, &exe_map);
     }
 
     /* Detect inter-function padding */
@@ -3229,7 +3325,7 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
 
         /* Scan only executable regions of memory. */
         MemoryMap exe_map = *map;
-        exe_map.prune(is_unexecutable);
+        exe_map.prune(MemoryMap::MM_PROT_EXEC);
         scan_interfunc_bytes(&cb, &exe_map);
     }
 
@@ -3250,17 +3346,30 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
     }
 
     /* Find functions that we missed between inter-function padding. */
-    FindInterPadFunctions find_interpad_functions;
-    scan_unassigned_bytes(&find_interpad_functions, &exe_map);
+    if (func_heuristics & SgAsmFunction::FUNC_MISCMASK) {
+        FindInterPadFunctions find_interpad_functions;
+        scan_unassigned_bytes(&find_interpad_functions, &exe_map);
+    }
 
-    /* Split thunks off from their jumped-to function.  Not really necessary, but the result is more like other common
-     * disassemblers and also more closely matches what would happen if we had debugging information in the executable. */
-    if (func_heuristics & SgAsmFunction::FUNC_THUNK)
-        detach_thunks();
+    /* Find code fragments that appear after a function. */
+    if (func_heuristics & SgAsmFunction::FUNC_INTRABLOCK) {
+        FindFunctionFragments fff;
+        fff.require_noninterleaved = false;
+        fff.require_intrafunction = false;
+        fff.threshold = 0.7;
+        scan_unassigned_bytes(&fff, &exe_map);
+    }
 
     /* Run one last analysis of the CFG because we may need to fix some things up after having added more blocks from the
      * post-cfg analyses we did above. If nothing happened above, then analyze_cfg() should be fast. */
     analyze_cfg(SgAsmBlock::BLK_GRAPH2);
+
+    /* Split thunks off from their jumped-to function.  Not really necessary, but the result is more like other common
+     * disassemblers and also more closely matches what would happen if we had debugging information in the executable.  This
+     * should only run after analyze_cfg() because it assumes that a function's blocks have all been discovered -- it does some
+     * analysis on the function's internal control flow. */
+    if (0!=(func_heuristics & SgAsmFunction::FUNC_THUNK) && detach_thunks()>0)
+        analyze_cfg(SgAsmBlock::BLK_GRAPH3);
 
     /* Find thunks again.  We might have more things satisfying the relatively strict thunk definition. */
     if (func_heuristics & SgAsmFunction::FUNC_THUNK) {
@@ -3280,7 +3389,7 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
     adjust_padding();
 
     /* Give existing functions names from symbol tables. Don't create more functions. */
-    if (interp) {
+    if (interp && 0!=(func_heuristics & SgAsmFunction::FUNC_IMPORT)) {
         const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
         for (size_t i=0; i<headers.size(); i++) {
             name_plt_entries(headers[i]); // give names to ELF .plt trampolines
@@ -3670,6 +3779,7 @@ Partitioner::build_ast(BasicBlock* block)
     retval->set_id(block->address());
     retval->set_address(block->address());
     retval->set_reason(block->reason);
+    retval->set_code_likelihood(block->code_likelihood);
 
     for (InstructionVector::const_iterator ii=block->insns.begin(); ii!=block->insns.end(); ++ii) {
         Instruction *insn = *ii;

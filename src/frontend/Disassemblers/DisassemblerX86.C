@@ -87,6 +87,12 @@ SgAsmx86Instruction::is_function_return(const std::vector<SgAsmInstruction*> &in
     return false;
 }
 
+bool
+SgAsmx86Instruction::is_unknown() const
+{
+    return x86_unknown_instruction == get_kind();
+}
+
 Disassembler::AddressSet
 SgAsmx86Instruction::get_successors(bool *complete) {
     Disassembler::AddressSet retval;

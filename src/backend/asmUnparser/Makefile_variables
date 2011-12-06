@@ -4,6 +4,7 @@ if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 asmUnparser_la_sources=\
 	$(asmUnparserPath)/AsmUnparser.C \
 	$(asmUnparserPath)/AsmUnparser_compat.C \
+	$(asmUnparserPath)/AsmFunctionIndex.C \
 	$(asmUnparserPath)/unparseX86Asm.C \
 	$(asmUnparserPath)/unparseArmAsm.C \
 	$(asmUnparserPath)/unparsePowerpcAsm.C
@@ -14,7 +15,8 @@ endif
 
 asmUnparser_distIncludeHeaders=\
 	$(asmUnparserPath)/AsmUnparser.h \
-	$(asmUnparserPath)/AsmUnparser_compat.h
+	$(asmUnparserPath)/AsmUnparser_compat.h \
+	$(asmUnparserPath)/AsmFunctionIndex.h
 
 
 asmUnparser_extraDist=\

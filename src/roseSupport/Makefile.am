@@ -22,6 +22,7 @@ libroseSupport_la_SOURCES =			\
 	transformationSupport.C			\
 	optionDeclaration.C			\
 	sourceLocationInheritedAttribute.C	\
+	rangemap.C				\
 	roseTranslators.C			\
 	utility_functions.C			\
 	memoryUsage.C				\

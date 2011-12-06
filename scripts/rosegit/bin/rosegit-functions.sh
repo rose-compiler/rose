@@ -14,9 +14,15 @@ rosegit_checkargs () {
     
 # Dies with a message
 rosegit_die () {
-    local myname=${0##*/}
+    local myname="${0##*/}"
     echo "$myname:" "$@" >&2
     exit 1
+}
+
+# Prints a warning message
+rosegit_warn () {
+    local myname="${0##*/}"
+    echo "$myname:" "$@" >&2
 }
 
 # Format elapsed time into a human-readable value like 5d2h20m5s
@@ -256,14 +262,64 @@ rosegit_namespace() {
     echo "$ns"
 }
 
-# All scripts should call this function first to make sure the environment is set up properly
+# Returns true/false depending on whether the specified argument is a recognized rosegit switch
+rosegit_preamble_switch () {
+    case "$1" in
+	--blddir=*) return 0;;
+        --config=*) return 0;;
+	--namespace=*) return 0;;
+	--srcdir=*) return 0;
+    esac
+    return 1;
+}
+
+# All scripts should call this function to make sure the environment is set up properly.  You'll generally want to pass it the
+# script arguments after having removed things the caller recognizes.  In the simplest case, call it as:
+#    rosegit_preamble "$@"
 rosegit_preamble () {
-    local config="$1";      # optional configuration file or directory
-    if [ ! -n "$ROSEGIT_LOADED" ]; then
+    local config srcdir blddir namespace
+
+    # Extract arguments we recognize
+    while [ "$#" -gt 0 ]; do
+	case "$1" in
+	    --) break;;
+            --blddir=*) blddir="${1##--blddir=}"; shift;;
+	    --config=*) config="$config:${1##--config=}"; shift;;
+	    --namespace=*) namespace="${1##--namespace=}"; shift;;
+	    --srcdir=*) srcdir="${1##--srcdir=}"; shift;;
+	    -*) rosegit_die "unknown switch: $1";;
+            *) rosegit_die "unknown argument: $1";;
+        esac
+    done
+	
+    # Configure rosegit if not configured already
+    if [ "$ROSEGIT_LOADED" = "" ]; then
+	ROSEGIT_BLD="$blddir"
+	ROSEGIT_SRC="$srcdir"
+	ROSEGIT_NAMESPACE="$namespace"
 	rosegit_find_directories
 	local branch=$(cd $ROSEGIT_SRC && git branch 2>/dev/null |sed -n '/^\*/s/^\* //p')
+
+        # If no --config= switch, then try to use the configuration that we already saved.  Configurations are saved by
+        # names of config files rather than by specific variables they define.
+	local settings="$ROSEGIT_BLD/.rosegit"
+	local old_config=$(sed -n '/^config=/s/config=//p' "$settings" 2>/dev/null)
+	if [ -n "$config" ]; then
+	    [ "$config" = ":default" ] && config=
+	    [ -f "$settings" -a "$config" != "$old_config" ] && rosegit_warn "warning: possible change in configuration"
+	else
+	    config="$old_config"
+	fi
+
 	rosegit_load_config "$ROSE_SRC" "$(rosegit_namespace)" "$branch" "$config"
 	rosegit_environment
+	echo "config=$config" >"$ROSEGIT_BLD/.rosegit"
+
+    elif [ -n "$blddir" -a "$blddir" != "$ROSEGIT_BLD" ] || \
+	 [ -n "$srcdir" -a "$srcdir" != "$ROSEGIT_SRC" ] || \
+	 [ -n "$namespace" -a "$srcdir" != "$ROSEGIT_NAMESPACE" ] || \
+	 [ -n "$config" ]; then
+	rosegit_die "you are already in a rosegit environment"
     fi
 
     # Prevent errors about the progress report file being closed.

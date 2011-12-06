@@ -92,6 +92,7 @@ class SgAsmInterpretation;
  *           <li>FunctionReasons (pre): emits the reasons why this is address is considered the start of a function.</li>
  *           <li>FunctionName (pre): emits the name of the function in angle brackets, or "no name".</li>
  *           <li>FunctionLineTermination (pre): emits a linefeed for functions.</li>
+ *           <li>FunctionComment (pre): emits function comments followed by a linefeed if necessary.</li>
  *           <li>FunctionAttributes (pre): emits additional information about the function, such as whether it returns to the
  *               caller.</li>
  *           <li>FunctionBody (unparse): unparses the basic blocks of a function.</li>
@@ -312,6 +313,9 @@ public:
      *  output is organized by address. */
     class InsnBlockEntry: public UnparserCallback {
     public:
+        bool show_function;             /**< If true (the default) show entry address of function owning block. */
+        bool show_reasons;              /**< If true (the default) show block reason bits. */
+        InsnBlockEntry(): show_function(true), show_reasons(true) {}
         virtual bool operator()(bool enabled, const InsnArgs &args);
     };
 
@@ -429,6 +433,9 @@ public:
      *  output is organized by address. */
     class StaticDataBlockEntry: public UnparserCallback {
     public:
+        bool show_function;             /**< If true (the default) show entry address of function owning block. */
+        bool show_reasons;              /**< If true (the default) show block reason bits. */
+        StaticDataBlockEntry(): show_function(true), show_reasons(true) {}
         virtual bool operator()(bool enabled, const StaticDataArgs &args);
     };
 
@@ -502,6 +509,12 @@ public:
 
     /** Functor to emit function line termination. */
     class FunctionLineTermination: public UnparserCallback {
+    public:
+        virtual bool operator()(bool enabled, const FunctionArgs &args);
+    };
+
+    /** Functor to print function comments followed by a linefeed if necessary. */
+    class FunctionComment: public UnparserCallback {
     public:
         virtual bool operator()(bool enabled, const FunctionArgs &args);
     };
@@ -584,6 +597,7 @@ public:
     FunctionReasons functionReasons;
     FunctionName functionName;
     FunctionLineTermination functionLineTermination;
+    FunctionComment functionComment;
     FunctionAttributes functionAttributes;
     FunctionBody functionBody;
 
@@ -708,7 +722,7 @@ protected:
     /** How output will be organized. */
     Organization organization;
 
-    /** Initializes the objects callback lists.  This is invoked by the default constructor. */
+    /** Initializes the callback lists.  This is invoked by the default constructor. */
     virtual void init();
 
 };
