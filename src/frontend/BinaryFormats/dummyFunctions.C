@@ -104,7 +104,6 @@ bool SgAsmInstruction::terminatesBasicBlock()        { return false; }
 bool SgAsmx86Instruction::is_unknown() const         { return false; }
 bool SgAsmArmInstruction::is_unknown() const         { return false; }
 bool SgAsmPowerpcInstruction::is_unknown() const     { return false; } 
-bool SgAsmInstruction::is_unknown() const            { return false; }
 
 
 // These are needed because they are virtual functions and need to be defined
