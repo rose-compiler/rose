@@ -705,7 +705,7 @@ buildNondefiningFunctionDeclaration (const SgFunctionDeclaration* funcdecl, SgSc
 SgMemberFunctionDeclaration *
 buildNondefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL, unsigned int functionConstVolatileFlags = 0, bool buildTemplateInstantiation = false);
 
-SgTemplateMemberFunctionDeclaration *
+SgTemplateMemberFunctionDeclaration*
 buildNondefiningTemplateMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL, unsigned int functionConstVolatileFlags = 0);
 
 // DQ (12/1/2011): Adding support for template declarations in the AST.
@@ -713,40 +713,40 @@ SgTemplateMemberFunctionDeclaration*
 buildDefiningTemplateMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL, unsigned int functionConstVolatileFlags = 0 );
 
 ////! Build a prototype member function declaration
-//SgMemberFunctionDeclaration *
+//SgMemberFunctionDeclaration*
 //buildNondefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgFunctionParameterList* paralist, SgScopeStatement* scope=NULL);
 
 //! Build a defining ( non-prototype) member function declaration
-SgMemberFunctionDeclaration *
+SgMemberFunctionDeclaration*
 buildDefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL, bool buildTemplateInstantiation = false);
 
 //! Build a defining ( non-prototype) member function declaration from a SgMemberFunctionType
-SgMemberFunctionDeclaration *
+SgMemberFunctionDeclaration*
 buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgFunctionParameterList* paralist, SgScopeStatement* scope, SgExprListExp* decoratorList = NULL);
 
 //! Build a defining ( non-prototype) member function declaration from a SgMemberFunctionType
-SgMemberFunctionDeclaration *
+SgMemberFunctionDeclaration*
 buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgScopeStatement* scope, SgExprListExp* decoratorList = NULL);
 
 //! Build a prototype for an existing member function declaration (defining or nondefining is fine) 
-// SgMemberFunctionDeclaration *
+// SgMemberFunctionDeclaration*
 // buildNondefiningMemberFunctionDeclaration (const SgMemberFunctionDeclaration* funcdecl, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
-SgMemberFunctionDeclaration *
+SgMemberFunctionDeclaration*
 buildNondefiningMemberFunctionDeclaration (const SgMemberFunctionDeclaration* funcdecl, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL, unsigned int functionConstVolatileFlags = 0);
 
 //! A template function for function declaration builders
 template <class actualFunction>
-actualFunction *
+actualFunction*
 buildDefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * parlist, bool isMemberFunction, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
 
 //! Build a function declaration with a function body
-SgFunctionDeclaration *
+SgFunctionDeclaration*
 buildDefiningFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL, bool buildTemplateInstantiation = false);
 
-SgFunctionDeclaration *
+SgFunctionDeclaration*
 buildDefiningFunctionDeclaration (const std::string & name, SgType* return_type, SgFunctionParameterList * parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
 
-SgFunctionDeclaration *
+SgFunctionDeclaration*
 buildDefiningFunctionDeclaration (const char* name, SgType* return_type, SgFunctionParameterList * parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
 
 //! Build a Fortran subroutine or procedure
