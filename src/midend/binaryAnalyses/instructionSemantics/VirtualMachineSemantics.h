@@ -296,9 +296,11 @@ public:
         return cur_insn;
     }
 
-    /** Returns the current state. */
+    /** Returns the current state.
+     * @{ */
     const State& get_state() const { return cur_state; }
     State& get_state() { return cur_state; }
+    /** @} */
 
     /** Returns the original state.  The original state is initialized to be equal to the current state twice: once by the
      *  constructor, and then again when the first instruction is processed. */

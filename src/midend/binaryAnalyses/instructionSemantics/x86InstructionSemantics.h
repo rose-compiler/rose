@@ -11,6 +11,7 @@
 #include <cstdio>
 #include <iostream>
 #include "integerOps.h"
+#include "AsmUnparser_compat.h" /* for unparseInstructionWithAddress() */
 
 /* Returns the segment register corresponding to the specified register reference address expression. */
 static inline X86SegmentRegister getSegregFromMemoryReference(SgAsmMemoryReferenceExpression* mr) {
