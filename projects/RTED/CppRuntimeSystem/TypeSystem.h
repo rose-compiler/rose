@@ -3,8 +3,9 @@
 #define TYPESYSTEM_H
 
 #include <map>
-#include <boost/unordered_map.hpp>
 #include <iosfwd>
+
+#include <boost/unordered_map.hpp>
 
 #include "Util.h"
 #include "RsType.h"

@@ -9,44 +9,74 @@ namespace rted
 {
   struct InheritedAttribute
   {
-    bool          function;
-    bool          isAssignInitializer;
-    bool          isVariableDecl;
-    bool          isArrowExp;
-    bool          isAddressOfOp;
-    bool          isForStatement;
-    size_t        openBlocks;
-    SgStatement*  lastGForLoop;
-    SgBinaryOp*   lastBinary;
+    bool             isAssignInitializer;
+    bool             isVariableDecl;
+    bool             isArrowExp;
+    bool             isAddressOfOp;
+    bool             isSizeOfOp;
+    ReturnInfo::Kind functionReturnType;
+    size_t           openBlocks;
+    SgStatement*     lastGForLoop;
+    SgBinaryOp*      lastBinary;
+    size_t           lastBreakableStmtLevel;
+    size_t           lastContinueableStmtLevel;
 
     InheritedAttribute()
-    : function(false),  isAssignInitializer(false), isVariableDecl(false),
-      isArrowExp(false), isAddressOfOp(false), isForStatement(false),
-      openBlocks(0), lastGForLoop(NULL), lastBinary(NULL)
+    : isAssignInitializer(false), isVariableDecl(false),
+      isArrowExp(false), isAddressOfOp(false), isSizeOfOp(false),
+      functionReturnType(ReturnInfo::rtNone),
+      openBlocks(0), lastGForLoop(NULL), lastBinary(NULL),
+      lastBreakableStmtLevel(0), lastContinueableStmtLevel(0)
     {}
   };
 
+#if 0
+  struct EvaluatedAttribute
+  {
+    bool instrument_function_call;
+
+    EvaluatedAttribute()
+    : instrument_function_call(false)
+    {}
+
+    EvaluatedAttribute& operator+=(const EvaluatedAttribute& rhs)
+    {
+      instrument_function_call = instrument_function_call || rhs.instrument_function_call;
+      return *this;
+    }
+
+    EvaluatedAttribute operator+(const EvaluatedAttribute& rhs) const
+    {
+      EvaluatedAttribute res(*this);
+
+      res += rhs;
+      return res;
+    }
+  };
+#endif
 
   struct VariableTraversal : public AstTopDownProcessing<InheritedAttribute>
   {
      typedef AstTopDownProcessing<InheritedAttribute> Base;
 
-     explicit
-     VariableTraversal(RtedTransformation* t) ;
+      explicit
+      VariableTraversal(RtedTransformation* t);
 
-       // Functions required
-    InheritedAttribute evaluateInheritedAttribute (SgNode* astNode, InheritedAttribute inheritedAttribute );
+      // Functions required
+      InheritedAttribute evaluateInheritedAttribute(SgNode* astNode, InheritedAttribute inheritedAttribute);
+      // EvaluatedAttribute evaluateSynthesizedAttribute(SgNode* astNode, InheritedAttribute inh, SynthesizedAttributesList synList);
 
-    friend class InheritedAttributeHandler;
+      friend class InheritedAttributeHandler;
+      // friend class EvaluatedAttributeHandler;
 
-  private:
-    RtedTransformation* const   transf;
+    private:
+      RtedTransformation* const transf;
       SourceFileType      current_file_type;  // could be part of inherited attribute
 
-    // should fail when needed
-    VariableTraversal();
-    VariableTraversal(const VariableTraversal&);
-    VariableTraversal& operator=(const VariableTraversal&);
+      // should fail when needed
+      VariableTraversal();
+      VariableTraversal(const VariableTraversal&);
+      VariableTraversal& operator=(const VariableTraversal&);
   };
 }
 

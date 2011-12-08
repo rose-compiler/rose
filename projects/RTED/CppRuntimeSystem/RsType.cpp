@@ -65,17 +65,33 @@ RsType::getSubtypeRecursive(size_t offset, size_t size, bool stopAtArray, std::s
     return result;
 }
 
+static
+bool type_compatible(const RsType& lhs, const RsType& rhs)
+{
+  if (&lhs == &rhs) return true;
+
+  const RsArrayType* lhs_arr = dynamic_cast<const RsArrayType*>(&lhs);
+  if (!lhs_arr) return false;
+
+  const RsPointerType* rhs_ptr = dynamic_cast<const RsPointerType*>(&rhs);
+  if (!rhs_ptr) return false;
+
+  return lhs_arr->getBaseType() == rhs_ptr->getBaseType();
+}
+
 bool RsType::checkSubtypeRecursive(size_t offset, const RsType* type) const
 {
-  //  RuntimeSystem * rs = RuntimeSystem::instance();
-  //rs->printMessage("    >>> checkSubtypeRecursive ");
+  assert(type);
+
+  //  RuntimeSystem& rs = RuntimeSystem::instance();
+  //rs.printMessage("    >>> checkSubtypeRecursive ");
   const RsType* result = this;
   size_t        size = type -> getByteSize();
   size_t        resultsize = result->getByteSize();
 
   while (resultsize >= size)
   {
-    if ( result == type ) return true;
+    if ( type_compatible(*result, *type) ) return true;
 
     // tps (09/10/09) Handle union type
     const RsClassType* ct_result = dynamic_cast<const RsClassType*>( result);
@@ -110,15 +126,15 @@ bool RsType::checkSubtypeRecursive(size_t offset, const RsType* type) const
 
     // continue as before and get the subtype
     offset -= result->getSubtypeOffset(subTypeId);
-    //rs->printMessage("       >> new offset :  offset -= result->getSubtypeOffset(subTypeId); "+
+    //rs.printMessage("       >> new offset :  offset -= result->getSubtypeOffset(subTypeId); "+
     //         ToString(offset));
     result  = result->getSubtype(subTypeId);
-    //rs->printMessage("       >> result  = result->getSubtype(subTypeId) : "+
+    //rs.printMessage("       >> result  = result->getSubtype(subTypeId) : "+
     //     result->getName()+"\n");
     if (!isunion)
       resultsize = result->getByteSize();
   }
-  //rs->printMessage("    >>> result: bytesize: " + ToString( result -> getByteSize())+
+  //rs.printMessage("    >>> result: bytesize: " + ToString( result -> getByteSize())+
   //                " !=  size: "+ToString(size));
 
   assert( result == NULL || result -> getByteSize() != size );
@@ -209,15 +225,15 @@ const RsType* RsArrayType::getSubtypeAt ( size_t offset) const
 
 bool  RsArrayType::isValidOffset(size_t offset) const
 {
-   // RuntimeSystem * rs = RuntimeSystem::instance();
-    //rs->printMessage("        ... isValidOffset: offset >= getByteSize()   "+
+   // RuntimeSystem& rs = RuntimeSystem::instance();
+    //rs.printMessage("        ... isValidOffset: offset >= getByteSize()   "+
     //         ToString(offset)+ " >= "+ToString(getByteSize()));
     if(offset >= getByteSize())
         return false;
 
     int inTypeOffset = offset % baseType->getByteSize();
 
-    //rs->printMessage(" baseType->isValidOffset(inTypeOffset)==false   "+
+    //rs.printMessage(" baseType->isValidOffset(inTypeOffset)==false   "+
     //         ToString( baseType->isValidOffset(inTypeOffset)));
     return baseType->isValidOffset(inTypeOffset);
 }
@@ -314,7 +330,7 @@ int RsClassType::addMember(const std::string & name, const RsType* type, size_t 
           << "  type: " << type->getName()
           << "  offset: " << ToString(offset);
 
-      RuntimeSystem::instance()->printMessage(msg.str());
+      RuntimeSystem::instance().printMessage(msg.str());
     }
 
     if (members.size() > 0)
@@ -338,7 +354,7 @@ void RsClassType::setUnionType( bool is_union ) {
 }
 
 
-bool RsClassType::isComplete(bool verbose) const
+bool RsClassType::isComplete() const
 {
     if ( diagnostics::message(diagnostics::memory) )
     {
@@ -359,7 +375,7 @@ bool RsClassType::isComplete(bool verbose) const
             }
          }
 
-         RuntimeSystem::instance()->printMessage(stream.str());
+         RuntimeSystem::instance().printMessage(stream.str());
     }
 
     if(members.size()==0)
@@ -390,8 +406,8 @@ int RsClassType::getSubtypeOffset(int id) const
 
 int RsClassType::getSubtypeIdAt(size_t offset) const
 {
-  // RuntimeSystem * rs = RuntimeSystem::instance();
-  //rs->printMessage("      ....... isValidOffset(offset >=getByteSize) : "+
+  // RuntimeSystem& rs = RuntimeSystem::instance();
+  //rs.printMessage("      ....... isValidOffset(offset >=getByteSize) : "+
   //         ToString(offset)+"  >= "+ToString(getByteSize()));
   if( offset >= getByteSize())
     return -1;
@@ -410,13 +426,13 @@ int RsClassType::getSubtypeIdAt(size_t offset) const
 std::vector<int> RsClassType::getSubtypeUnionIdAt(size_t offset) const
 {
     std::vector<int> retvalvec;
-    // RuntimeSystem * rs = RuntimeSystem::instance();
-    // rs->printMessage("      ....... isValidOffset(offset >=getByteSize) : "+
+    // RuntimeSystem& rs = RuntimeSystem::instance();
+    // rs.printMessage("      ....... isValidOffset(offset >=getByteSize) : "+
     //         ToString(offset)+"  >= "+ToString(getByteSize()));
     if( offset >= getByteSize())
         return retvalvec;
 
-    //rs->printMessage("      ....... iterate through members : "+
+    //rs.printMessage("      ....... iterate through members : "+
     //         ToString(members.size()));
 
     for(int i=members.size()-1 ;  i >= 0; i--)
@@ -425,15 +441,15 @@ std::vector<int> RsClassType::getSubtypeUnionIdAt(size_t offset) const
         {
             // TODO register privates - this check fails if not all members are registered
             // and currently privates are not registered -> so this check fails when trying to access privates
-      //rs->printMessage("      .... iterate member : "+ToString(i)+
+      //rs.printMessage("      .... iterate member : "+ToString(i)+
             //       "! members[i].type->isValidOffset(offset - members[i].offset)  : "+
             //       " members[i].offset: "+ToString(members[i].offset)
             //       +" offset - members[i].offset : " + ToString(offset - members[i].offset));
             if (! members[i].type->isValidOffset(offset - members[i].offset) ) {
-                //rs->printMessage("     .. didnt work : "+ToString(i));
+                //rs.printMessage("     .. didnt work : "+ToString(i));
                 return retvalvec;
             }   else {
-                //rs->printMessage("     .. worked : "+ToString(i));
+                //rs.printMessage("     .. worked : "+ToString(i));
                 // because the union (class) needs the largest member to perform
                 // this operation successfully, we need to return the largest member
                 retvalvec.push_back(i);
@@ -605,31 +621,31 @@ std::string RsBasicType::getDisplayName() const
 std::string RsBasicType::readValueAt(Address addr) const
 {
     std::string          res;
-    const MemoryManager* m = rtedRTS(this)->getMemManager();
+    const MemoryManager& mm = rtedRTS(this).getMemManager();
 
     switch (type)
     {
-        case SgTypeBool:             res = m->readMemory<bool>(addr);                break;
-        case SgTypeChar:             res = m->readMemory<char>(addr);                break;
-        case SgTypeWchar:            res = m->readMemory<wchar_t>(addr);             break;
-        case SgTypeDouble:           res = m->readMemory<double>(addr);              break;
-        case SgTypeFloat:            res = m->readMemory<float>(addr);               break;
-        case SgTypeInt:              res = m->readMemory<int>(addr);                 break;
-        case SgTypeLong:             res = m->readMemory<long>(addr);                break;
-        case SgTypeLongDouble:       res = m->readMemory<long double>(addr);         break;
-        case SgTypeLongLong:         res = m->readMemory<long long>(addr);           break;
-        case SgTypeShort:            res = m->readMemory<short>(addr);               break;
-        case SgTypeSignedChar:       res = m->readMemory<signed char>(addr);         break;
-        case SgTypeSignedInt:        res = m->readMemory<signed int>(addr);          break;
-        case SgTypeSignedLong:       res = m->readMemory<signed long>(addr);         break;
-        case SgTypeSignedLongLong:   res = m->readMemory<signed long long>(addr);    break;
-        case SgTypeSignedShort:      res = m->readMemory<signed short>(addr);        break;
-        case SgTypeUnsignedChar:     res = m->readMemory<unsigned char>(addr);       break;
-        case SgTypeUnsignedInt:      res = m->readMemory<unsigned int>(addr);        break;
-        case SgTypeUnsignedLong:     res = m->readMemory<unsigned long>(addr);       break;
-        case SgTypeUnsignedLongLong: res = m->readMemory<unsigned long long>(addr);  break;
-        case SgTypeUnsignedShort:    res = m->readMemory<unsigned short>(addr);      break;
-        case SgTypeString:           res = m->readMemory<char*>(addr);               break;
+        case SgTypeBool:             res = mm.readMemory<bool>(addr);                break;
+        case SgTypeChar:             res = mm.readMemory<char>(addr);                break;
+        case SgTypeWchar:            res = mm.readMemory<wchar_t>(addr);             break;
+        case SgTypeDouble:           res = mm.readMemory<double>(addr);              break;
+        case SgTypeFloat:            res = mm.readMemory<float>(addr);               break;
+        case SgTypeInt:              res = mm.readMemory<int>(addr);                 break;
+        case SgTypeLong:             res = mm.readMemory<long>(addr);                break;
+        case SgTypeLongDouble:       res = mm.readMemory<long double>(addr);         break;
+        case SgTypeLongLong:         res = mm.readMemory<long long>(addr);           break;
+        case SgTypeShort:            res = mm.readMemory<short>(addr);               break;
+        case SgTypeSignedChar:       res = mm.readMemory<signed char>(addr);         break;
+        case SgTypeSignedInt:        res = mm.readMemory<signed int>(addr);          break;
+        case SgTypeSignedLong:       res = mm.readMemory<signed long>(addr);         break;
+        case SgTypeSignedLongLong:   res = mm.readMemory<signed long long>(addr);    break;
+        case SgTypeSignedShort:      res = mm.readMemory<signed short>(addr);        break;
+        case SgTypeUnsignedChar:     res = mm.readMemory<unsigned char>(addr);       break;
+        case SgTypeUnsignedInt:      res = mm.readMemory<unsigned int>(addr);        break;
+        case SgTypeUnsignedLong:     res = mm.readMemory<unsigned long>(addr);       break;
+        case SgTypeUnsignedLongLong: res = mm.readMemory<unsigned long long>(addr);  break;
+        case SgTypeUnsignedShort:    res = mm.readMemory<unsigned short>(addr);      break;
+        case SgTypeString:           res = mm.readMemory<char*>(addr);               break;
         default:                     std::cerr << "RsBasicType::readValueAt with unknown type";
                                      assert(false);
     }
