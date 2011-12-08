@@ -4,7 +4,7 @@
 
 /// \file sageFunctors.h
 ///       This file implements utility functors for using sage containers
-///       with STL functions
+///       with STL functions:
 ///       - ScopeSetter, VarRefBuilder, InitNameCloner, and SageInserter
 ///         (a generic inserter for sage containers).
 /// \email peter.pirkelbauer@llnl.gov
@@ -25,17 +25,17 @@ namespace sg
     return SageInterface::deepCopy(n);
   }
 
-  /// \brief unified interface for storing an element to a sage container
+  /// \brief unified interface for storing an element in a sage container
   /// \note  internal use
   static inline
-  void append(SgExprListExp& container, SgExpression* elem)
+  void _append(SgExprListExp& container, SgExpression* elem)
   {
     SageInterface::appendExpression(&container, elem);
   }
 
   /// \overload
   static inline
-  void append(SgFunctionParameterList& container, SgInitializedName* elem)
+  void _append(SgFunctionParameterList& container, SgInitializedName* elem)
   {
     SageInterface::appendArg(&container, elem);
   }
@@ -71,7 +71,7 @@ namespace sg
       : scope(the_scope)
       {}
 
-      SgVarRefExp* operator()(SgInitializedName* initName)
+      SgVarRefExp* operator()(SgInitializedName* initName) const
       {
         return SageBuilder::buildVarRefExp(initName, &scope);
       }
@@ -103,11 +103,12 @@ namespace sg
   };
 
   /// \brief   Generic inserter for sage containers
-  /// \details forwards actual insert to function family append
-  template <class _SageContainer>
+  /// \tparam  SageSequenceContainer, a sage container that supports appending an element
+  /// \details forwards actual insert to function family _append
+  template <class SageSequenceContainer>
   struct SageInserter : std::iterator<std::output_iterator_tag, void, void, void, void>
   {
-    typedef _SageContainer Container;
+    typedef SageSequenceContainer Container;
 
     Container& container;
 
@@ -120,7 +121,7 @@ namespace sg
     template <class SageElem>
     SageInserter& operator=(SageElem* elem)
     {
-      append(container, elem);
+      _append(container, elem);
       return *this;
     }
 
@@ -129,10 +130,13 @@ namespace sg
     SageInserter& operator++(int) { return *this; }
   };
 
-  template <class Container>
-  SageInserter<Container> sage_inserter(Container& cont)
+  /// \brief   generates a SageInserter, adding elements at the end of a sequence
+  /// \tparam  SageSequenceContainer, a sage container that supports appending an element
+  template <class SageSequenceContainer>
+  SageInserter<SageSequenceContainer>
+  sage_inserter(SageSequenceContainer& cont)
   {
-    return SageInserter<Container>(cont);
+    return SageInserter<SageSequenceContainer>(cont);
   }
 }
 
