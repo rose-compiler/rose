@@ -3,7 +3,7 @@
 
 #include "sage3basic.hhh"
 #include <stdint.h>
-#include <boost/tuple/tuple.hpp>
+#include <utility>
 
 #if 0   // FMZ(07/07/2010): the argument "nextErrorCode" should be call-by-reference
 SgFile* determineFileType ( std::vector<std::string> argv, int nextErrorCode, SgProject* project );
@@ -1242,11 +1242,11 @@ SgNode* replaceWithPattern (SgNode * anchor, SgNode* new_pattern);
 * reference types correctly by using pointer types for the temporary.
 * @param expression Expression which will be replaced by a variable
 * @param scope scope in which the temporary variable will be generated
-* @return declaration of the temporary variable, an assignment op to
-* reevaluate the expression, and a a variable reference expression to use instead of
-* the original expression. SageInterface::deepDelete the results that you don't need! */
-boost::tuple<SgVariableDeclaration*, SgAssignOp*, SgExpression* > createTempVariableForExpression(SgExpression* expression,
-        SgScopeStatement* scope, bool initializeInDeclaration);
+* @param reEvaluate an assignment op to reevaluate the expression. Leave NULL if not needed
+* @return declaration of the temporary variable, and a a variable reference expression to use instead of
+* the original expression. */
+std::pair<SgVariableDeclaration*, SgExpression* > createTempVariableForExpression(SgExpression* expression,
+        SgScopeStatement* scope, bool initializeInDeclaration, SgAssignOp** reEvaluate = NULL);
 
 //! Append an argument to SgFunctionParameterList, transparently set parent,scope, and symbols for arguments when possible
 /*! We recommend to build SgFunctionParameterList before building a function declaration
