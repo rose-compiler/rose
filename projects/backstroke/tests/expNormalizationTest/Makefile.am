@@ -698,7 +698,7 @@ test2005_199.C \
 test2009_37.C \
 --> These fail due to having a defining declaration but a null function definition:\
 test2007_90.C \
---> These fail due to AST consistency tests (fix!)
+--> These fail due to AST consistency tests (fix!) \
 test2006_74.C \
 test2006_87.C 
 
