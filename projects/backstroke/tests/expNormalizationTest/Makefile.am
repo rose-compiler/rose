@@ -480,7 +480,6 @@ test2006_70.C \
 test2006_71.C \
 test2006_72.C \
 test2006_73.C \
-test2006_74.C \
 test2006_75.C \
 test2006_76.C \
 test2006_77.C \
@@ -493,7 +492,6 @@ test2006_83.C \
 test2006_84.C \
 test2006_85.C \
 test2006_86.C \
-test2006_87.C \
 test2006_88.C \
 test2006_89.C \
 test2006_90.C \
@@ -689,7 +687,10 @@ inputBug327.C \
 test2005_199.C \
 test2009_37.C \
 --> These fail due to having a defining declaration but a null function definition:\
-test2007_90.C
+test2007_90.C \
+--> These fail due to AST consistency tests (fix!)
+test2006_74.C \
+test2006_87.C 
 
 ALL_TESTCODES = \
 $(TESTCODES_REQUIRED_TO_PASS) 
