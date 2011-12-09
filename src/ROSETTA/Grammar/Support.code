@@ -6291,7 +6291,7 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
   // DQ (2/14/2007): Added assertion!
      assert (sp != NULL);
 
-#if 1
+#if 0
   // This outputs a message for every use of the insert function (for non function type symbols) useful for tracing through bugs
      SgNode* symbolBasis = sp->get_symbol_basis();
 #if 0
@@ -7221,7 +7221,7 @@ SgSymbolTable::find_function_type(const SgName & nm)
   // DQ (12/3/2011): Added debugging code for identifying types.
      if (i != p_table->end())
         {
-          printf ("In SgSymbolTable::find_function_type(): Found a symbol with correct name: symbol = %p = %s \n",i->second,i->second->class_name().c_str());
+       // printf ("In SgSymbolTable::find_function_type(): Found a symbol with correct name: symbol = %p = %s \n",i->second,i->second->class_name().c_str());
           ROSE_ASSERT(isSgFunctionTypeSymbol(i->second) != NULL);
         }
 

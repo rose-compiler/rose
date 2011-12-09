@@ -122,8 +122,11 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (TemplateMemberFunctionDeclaration, "TemplateMemberFunctionDeclaration", "TEMPLATE_MEMBER_FUNCTION_DECL_STMT" );
      NEW_NONTERMINAL_MACRO (TemplateFunctionDeclaration, TemplateMemberFunctionDeclaration, "TemplateFunctionDeclaration",  "TEMPLATE_FUNCTION_DECL_STMT", true );
 
+  // DQ (12/6/2011): Adding support for template variables (static data members).
+     NEW_TERMINAL_MACRO (TemplateVariableDeclaration, "TemplateVariableDeclaration",    "TEMPLATE_VARIABLE_DECL_STMT" );
+
      NEW_NONTERMINAL_MACRO (TemplateDeclaration,
-          TemplateClassDeclaration | TemplateFunctionDeclaration, "TemplateDeclaration", "TEMPLATE_DECL_STMT", true);
+          TemplateClassDeclaration | TemplateFunctionDeclaration | TemplateVariableDeclaration, "TemplateDeclaration", "TEMPLATE_DECL_STMT", true);
 
   // DQ (9/12/2004): Adding new IR node to support instantiation directives (C++ template language construct)
   // NEW_TERMINAL_MACRO (TemplateInstantiationDirective,    "TemplateInstantiationDirective",    "TEMPLATE_INST_DIRECTIVE_STMT" );
@@ -1611,6 +1614,19 @@ Grammar::setUpStatements ()
 
   // **************************************************************************************************************************
   // **************************************************************************************************************************
+
+
+  // *******************************************************************************
+  // DQ (12/6/2011): Adding support for template variables into the AST.
+  // *******************************************************************************
+
+     TemplateVariableDeclaration.setFunctionPrototype ( "HEADER_TEMPLATE_VARIABLE_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
+
+     TemplateVariableDeclaration.setDataPrototype("SgInitializedNamePtrList", "variables", "",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // *******************************************************************************
+
 
      TemplateClassDefinition.setFunctionPrototype    ( "HEADER_TEMPLATE_CLASS_DEFINITION_STATEMENT", "../Grammar/Statement.code" );
      TemplateFunctionDefinition.setFunctionPrototype ( "HEADER_TEMPLATE_FUNCTION_DEFINITION_STATEMENT", "../Grammar/Statement.code" );
@@ -3295,6 +3311,9 @@ Grammar::setUpStatements ()
      TemplateMemberFunctionDeclaration.setFunctionSource ( "SOURCE_TEMPLATE_MEMBER_FUNCTION_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
      TemplateClassDefinition.setFunctionSource           ( "SOURCE_TEMPLATE_CLASS_DEFINITION_STATEMENT", "../Grammar/Statement.code" );
      TemplateFunctionDefinition.setFunctionSource        ( "SOURCE_TEMPLATE_FUNCTION_DEFINITION_STATEMENT", "../Grammar/Statement.code" );
+
+  // DQ (12/6/2011): Adding support for template variables (e.g. static template data members).
+     TemplateVariableDeclaration.setFunctionSource       ( "SOURCE_TEMPLATE_VARIABLE_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
 
   // Support for pragmas in the IR
      PragmaDeclaration.setFunctionSource      ( "SOURCE_PRAGMA_STATEMENT", "../Grammar/Statement.code" );

@@ -651,6 +651,10 @@ buildVariableDeclaration(const char* name, SgType *type, SgInitializer *varInit=
 SgVariableDeclaration* 
 buildVariableDeclaration_nfi(const SgName & name, SgType *type, SgInitializer *varInit, SgScopeStatement* scope);
 
+// DQ (12/6/2011): Adding support for template declarations into the AST.
+SgTemplateDeclaration*
+buildTemplateVariableDeclaration_nfi(const SgName & name, SgType *type, SgInitializer *varInit, SgScopeStatement* scope);
+
 //!Build a typedef declaration, such as: typedef int myint; 
 SgTypedefDeclaration* 
 buildTypedefDeclaration(const std::string& name, SgType* base_type, SgScopeStatement* scope = NULL);
