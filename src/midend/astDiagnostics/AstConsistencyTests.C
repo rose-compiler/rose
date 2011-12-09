@@ -1131,11 +1131,15 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                   {
                     SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(parentParameterList->get_parent());
 
-                    if (SageInterface::is_Python_language() && isSgLambdaRefExp(parentParameterList->get_parent())) {
-                        std::cerr << "warning: python. Allowing inconsistent scope for InitializedNames in SgLambdaRefExp's parameter lists." << std::endl;
-                        break;
-                    }
-                    ROSE_ASSERT(functionDeclaration != NULL);
+                    if (SageInterface::is_Python_language() && isSgLambdaRefExp(parentParameterList->get_parent()))
+                       {
+                         std::cerr << "warning: python. Allowing inconsistent scope for InitializedNames in SgLambdaRefExp's parameter lists." << std::endl;
+                         break;
+                       }
+
+                 // ROSE_ASSERT(functionDeclaration != NULL);
+                    if (functionDeclaration != NULL)
+                       {
                     bool isFunctionDefinition = (functionDeclaration->get_definition() != NULL);
 
                  // Only enforce the scope to be valid if this is the defining function declaration 
@@ -1150,9 +1154,15 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                  // initialized name.
 
                     const SgInitializedNamePtrList& initNameList = parentParameterList->get_args();
-                    SgInitializedNamePtrList::const_iterator result = 
-                        std::find(initNameList.begin(), initNameList.end(), initializedName);
+                    SgInitializedNamePtrList::const_iterator result = std::find(initNameList.begin(), initNameList.end(), initializedName);
                     ROSE_ASSERT(result != initNameList.end());
+                       }
+                      else
+                       {
+                      // DQ (12/6/2011): Now that we have the template declarations in the AST, this could be a SgTemplateDeclaration.
+                         ROSE_ASSERT(isSgTemplateDeclaration(parentParameterList->get_parent()) != NULL);
+                         printf ("WARNING: There are tests missing for the case of a parentParameterList->get_parent() that is a SgTemplateDeclaration \n");
+                       }
                   }
                  else
                   {

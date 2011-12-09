@@ -693,6 +693,7 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
           case V_SgTemplateClassDeclaration:                unparseTemplateDeclStmt(stmt, info); break;
           case V_SgTemplateFunctionDeclaration:             unparseTemplateDeclStmt(stmt, info); break;
           case V_SgTemplateMemberFunctionDeclaration:       unparseTemplateDeclStmt(stmt, info); break;
+          case V_SgTemplateVariableDeclaration:             unparseTemplateDeclStmt(stmt, info); break;
 
           case V_SgTemplateInstantiationDecl:               unparseTemplateInstantiationDeclStmt(stmt, info); break;
           case V_SgTemplateInstantiationFunctionDecl:       unparseTemplateInstantiationFunctionDeclStmt(stmt, info); break;
@@ -3303,6 +3304,8 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgInitializedNamePtrList::iterator p = vardecl_stmt->get_variables().begin();
      ROSE_ASSERT(p != vardecl_stmt->get_variables().end());
 
+  // printf ("vardecl_stmt->get_variables().size() = %zu \n",vardecl_stmt->get_variables().size());
+
      while (p != vardecl_stmt->get_variables().end())
         {
           decl_item = *p;
@@ -3534,7 +3537,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                ninfo_for_type.set_isTypeFirstPart();
 
             // printf ("ninfo2.SkipClassDefinition() = %s \n",(ninfo2.SkipClassDefinition() == true) ? "true" : "false");
-            // curprint ( string("\n/* START: output using unp->u_type->unparseType (1st part) */ \n";
+            // curprint ( string("\n/* START: output using unp->u_type->unparseType (1st part) */ \n"));
             // printf ("Calling 1st part of unp->u_type->unparseType for %s \n",tmp_type->sage_class_name());
 
             // ROSE_ASSERT(ninfo2.get_declstatement_ptr() != NULL);
@@ -3555,7 +3558,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             // ROSE_ASSERT(ninfo2.get_declstatement_ptr() != NULL);
                ROSE_ASSERT(ninfo_for_type.get_declstatement_ptr() != NULL);
 
-            // curprint ( string("\n/* END: output using unp->u_type->unparseType (1st part) */ \n";
+            // curprint ( string("\n/* END: output using unp->u_type->unparseType (1st part) */ \n"));
             // DQ (11/28/2004): Added qualifier to variable name.
 
             // DQ (10/6/2004): Changed this back to the previous ordering so that we could handle test2004_104.C
@@ -3825,7 +3828,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
          unparseAttachedPreprocessingInfo(decl_item, ninfo, PreprocessingInfo::after);    
         }
 
-  // curprint ( string("\n/* Handle bit fields specifiers (if any) */ \n";
+  // curprint ( string("\n/* Handle bit fields specifiers (if any) */ \n"));
 
   // DQ (11/28/2004): Bit fields specifiers should be associated with the SgInitializedName 
   // and not the SgVariableDeclaration!  However this works because variable declarations 
@@ -3868,7 +3871,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
 #if 0
      printf ("Leaving unparseVarDeclStmt() \n");
-     curprint ( string("/* Leaving unparseVarDeclStmt() */ \n";
+     curprint ( string("/* Leaving unparseVarDeclStmt() */ \n"));
 #endif
    }
 
@@ -4678,10 +4681,16 @@ Unparse_ExprStmt::unparseCatchStmt(SgStatement* stmt, SgUnparse_Info& info)
           SgUnparse_Info ninfo(info);
           ninfo.set_inVarDecl();
 
+       // DQ (12/8/2011): debugging catch parameter...
+       // curprint ( string("/* START: variable declaration */ "));
+       // printf ("In unparseCatchStmt(): catch_statement->get_condition() = %p = %s \n",catch_statement->get_condition(),catch_statement->get_condition()->class_name().c_str());
+
        // DQ (5/6/2004): this does not unparse correctly if the ";" is included
           ninfo.set_SkipSemiColon();
           ninfo.set_SkipClassSpecifier();
           unparseStatement(catch_statement->get_condition(), ninfo);
+       // curprint ( string("/* END: variable declaration */ "));
+       // printf ("DONE: In unparseCatchStmt(): catch_statement->get_condition() = %p = %s \n",catch_statement->get_condition(),catch_statement->get_condition()->class_name().c_str());
         }
 
      curprint ( string(")"));

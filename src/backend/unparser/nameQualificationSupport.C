@@ -1858,12 +1858,15 @@ NameQualificationTraversal::nameQualificationDepth ( SgInitializedName* initiali
      SgDeclarationStatement* declaration = associatedDeclaration(initializedName->get_scope());
   // ROSE_ASSERT(declaration != NULL);
 
+  // printf ("************** In nameQualificationDepth(): declaration = %p \n",declaration);
+
      SgVariableSymbol* variableSymbol = NULL;
      SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(name,currentScope);
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
      printf ("In NameQualificationTraversal::nameQualificationDepth(SgInitializedName* = %p): symbol = %p \n",initializedName,symbol);
 #endif
+
      if (symbol != NULL)
         {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -1931,9 +1934,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgInitializedName* initiali
                printf ("initializedName->get_prev_decl_item() = %p \n",initializedName->get_prev_decl_item());
 #endif
             // DQ (6/4/2011): Get the associated symbol so that we can avoid matching on name only; and not the actual SgVariableSymbol symbols.
-#if 1
                SgVariableSymbol* targetInitializedNameSymbol = isSgVariableSymbol(initializedName->search_for_symbol_from_symbol_table());
-#endif
                ROSE_ASSERT(targetInitializedNameSymbol != NULL);
 
             // DQ (6/4/2011): Make sure we have the correct symbol, else we have detected a collision which will require name qualification to resolve.

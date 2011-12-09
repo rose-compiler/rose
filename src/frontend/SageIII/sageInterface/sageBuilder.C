@@ -303,6 +303,59 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
   return varDecl;
 }
 
+
+// DQ (12/6/2011): Adding support for template declarations into the AST.
+SgTemplateDeclaration*
+SageBuilder::buildTemplateVariableDeclaration_nfi (const SgName & name, SgType* type, SgInitializer * varInit, SgScopeStatement* scope)
+   {
+     ROSE_ASSERT (scope != NULL);
+     ROSE_ASSERT(type != NULL);
+
+  // At present we don't have a SgTemplateVariableDeclaration IR node, so use the base class SgTemplateDeclaration for now!
+     printf ("ROSE needs a SgTemplateVariableDeclaration IR node \n");
+
+  // SgTemplateDeclaration * varDecl = new SgTemplateDeclaration(name, type, varInit);
+  // SgTemplateDeclaration * varDecl = new SgTemplateDeclaration(name);
+     SgTemplateDeclaration * varDecl = new SgTemplateVariableDeclaration(name);
+     ROSE_ASSERT(varDecl);
+
+     varDecl->set_firstNondefiningDeclaration(varDecl);
+
+#if 0
+     if (name != "")
+        {
+       // Anonymous bit fields should not have symbols
+          fixVariableDeclaration(varDecl,scope);
+        }
+
+     SgInitializedName *initName = varDecl->get_decl_item (name);   
+     ROSE_ASSERT(initName); 
+     ROSE_ASSERT((initName->get_declptr())!=NULL);
+
+#if 1
+  // bug 119, SgVariableDefintion's File_info is needed for deep copy to work
+  // AstQuery based setSourcePositionForTransformation() cannot access all child nodes
+  // have to set SgVariableDefintion explicitly
+     SgVariableDefinition* variableDefinition_original = isSgVariableDefinition(initName->get_declptr());
+     setOneSourcePositionNull(variableDefinition_original);
+#endif
+#else
+     printf ("In buildTemplateVariableDeclaration_nfi(): Support for template variable declarations is not yet implemented into AST. \n");
+#endif
+
+     setOneSourcePositionNull(varDecl);
+
+#if 0
+// DQ (1/2/2010): Set the defining declaration to itself.
+     if (varDecl->get_definingDeclaration() == NULL)
+          varDecl->set_definingDeclaration(varDecl);
+#endif
+
+  // ROSE_ASSERT (varDecl->get_declarationModifier().get_accessModifier().isPublic() == false);
+     return varDecl;
+   }
+
+
 SgVariableDeclaration*
 SageBuilder::buildVariableDeclaration(const std::string & name, SgType* type, SgInitializer * varInit, SgScopeStatement* scope)
 {

@@ -520,7 +520,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
      if (!statementFromFile(stmt, getFileName(), info))
         {
 #if 0
-          printf ("WARNING: Skipping calls to output statements that are not recorded as being in the targer file \n");
+          printf ("WARNING: Skipping calls to output statements that are not recorded as being in the target file \n");
 #endif
           return;
         }
