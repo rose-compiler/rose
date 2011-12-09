@@ -292,12 +292,6 @@ namespace rted
   }
 
   static
-  SgType* get_return_type(SgFunctionDefinition& def)
-  {
-    return def.get_declaration()->get_type()->get_return_type();
-  }
-
-  static
   bool result_used(const SgExpression& n)
   {
     // \todo there could be some other (meaningful?) expressions between
@@ -333,7 +327,8 @@ namespace rted
 
     void handle(SgFunctionDefinition& n)
     {
-        ReturnInfo::Kind return_type_kind = functionReturnType(get_return_type(n));
+        SgFunctionType* const   funtype = n.get_declaration()->get_type();
+        ReturnInfo::Kind        return_type_kind = functionReturnType(funtype->get_return_type());
 
         vt.transf->transformIfMain(n);
         vt.transf->function_definitions.push_back(std::make_pair(&n, return_type_kind));
@@ -341,6 +336,9 @@ namespace rted
         res.functionReturnType = return_type_kind;
         res.openBlocks = 0; // reset for nested functions
 
+        SgTypePtrList&          funparams = funtype->get_arguments();
+
+        res.functionHasParameters = (funparams.begin() != funparams.end());
         // do not handle as SgScopeStatement
     }
 
@@ -381,14 +379,14 @@ namespace rted
       storeUpcBlockingOp(n);
     }
 
-    void store_scope(SgScopeStatement& n, bool isNonVoidFunctionScope = false, bool delayLeakCheck = false)
+    void store_scope(SgScopeStatement& n, bool isNonVoidFunctionScope = false, bool guardParams = false, bool delayLeakCheck = false)
     {
       typedef RtedTransformation::ScopeContainer::value_type ScopeDesc;
 
-      // \pp no need to keep track o fthe scope if it was compiler generated
-      //     or if there was no variable declared
+      // \pp no need to keep track of the scope if it was compiler generated
+      //     or if there was no variable (parameter) declared.
       const bool skip = (  n.get_file_info()->isCompilerGenerated()
-                        || !n.first_variable_symbol()
+                        || (!n.first_variable_symbol() && !guardParams)
                         );
 
       if (skip) return;
@@ -456,9 +454,10 @@ namespace rted
     void handle(SgBasicBlock& n)
     {
       const bool isNonVoidFunctionScope = (res.openBlocks == 0) && (res.functionReturnType > ReturnInfo::rtVoid);
+      const bool guardParams = (res.openBlocks == 0) && res.functionHasParameters;
       const bool ptrReturn = (res.functionReturnType == ReturnInfo::rtIndirection);
 
-      store_scope(n, isNonVoidFunctionScope, ptrReturn);
+      store_scope(n, isNonVoidFunctionScope, guardParams, ptrReturn);
     }
 
      //

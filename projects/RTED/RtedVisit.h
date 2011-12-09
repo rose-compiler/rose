@@ -14,6 +14,7 @@ namespace rted
     bool             isArrowExp;
     bool             isAddressOfOp;
     bool             isSizeOfOp;
+    bool             functionHasParameters;
     ReturnInfo::Kind functionReturnType;
     size_t           openBlocks;
     SgStatement*     lastGForLoop;
@@ -22,8 +23,8 @@ namespace rted
     size_t           lastContinueableStmtLevel;
 
     InheritedAttribute()
-    : isAssignInitializer(false), isVariableDecl(false),
-      isArrowExp(false), isAddressOfOp(false), isSizeOfOp(false),
+    : isAssignInitializer(false), isVariableDecl(false), isArrowExp(false),
+      isAddressOfOp(false), isSizeOfOp(false), functionHasParameters(false),
       functionReturnType(ReturnInfo::rtNone),
       openBlocks(0), lastGForLoop(NULL), lastBinary(NULL),
       lastBreakableStmtLevel(0), lastContinueableStmtLevel(0)
