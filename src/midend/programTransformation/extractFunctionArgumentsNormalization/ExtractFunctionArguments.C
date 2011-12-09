@@ -51,7 +51,7 @@ void ExtractFunctionArguments::RewriteFunctionCallArguments(const FunctionCallIn
         SgVariableDeclaration* tempVarDeclaration;
         SgAssignOp* tempVarAssignment;
         SgExpression* tempVarReference;
-        tie(tempVarDeclaration, tempVarAssignment, tempVarReference) = SageInterface::createTempVariableForExpression(arg, scope, false);
+        tie(tempVarDeclaration, tempVarReference) = SageInterface::createTempVariableForExpression(arg, scope, false, &tempVarAssignment);
 
         //Insert the temporary variable declaration
         InsertStatement(tempVarDeclaration, functionCallInfo.tempVarDeclarationLocation, functionCallInfo);

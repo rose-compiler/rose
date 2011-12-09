@@ -6121,18 +6121,9 @@ string SageInterface::generateUniqueVariableName(SgScopeStatement* scope, std::s
     return name;
 }
 
-/** Given an expression, generates a temporary variable whose initializer optionally evaluates
- * that expression. Then, the var reference expression returned can be used instead of the original
- * expression. The temporary variable created can be reassigned to the expression by the returned SgAssignOp;
- * this can be used when the expression the variable represents needs to be evaluated. NOTE: This handles
- * reference types correctly by using pointer types for the temporary.
- * @param expression Expression which will be replaced by a variable
- * @param scope scope in which the temporary variable will be generated
- * @return declaration of the temporary variable, an assignment op to
- *     reevaluate the expression, and a a variable reference expression to use instead of
- *         the original expression. Delete the results that you don't need! */
-boost::tuple<SgVariableDeclaration*, SgAssignOp*, SgExpression*> SageInterface::createTempVariableForExpression
-(SgExpression* expression, SgScopeStatement* scope, bool initializeInDeclaration)
+
+std::pair<SgVariableDeclaration*, SgExpression*> SageInterface::createTempVariableForExpression
+(SgExpression* expression, SgScopeStatement* scope, bool initializeInDeclaration, SgAssignOp** reEvaluate)
 {
     SgType* expressionType = expression->get_type();
     SgType* variableType = expressionType;
@@ -6176,8 +6167,11 @@ boost::tuple<SgVariableDeclaration*, SgAssignOp*, SgExpression*> SageInterface::
     ROSE_ASSERT(tempVarDeclaration != NULL);
 
     //Now create the assignment op for reevaluating the expression
-    SgVarRefExp* tempVarReference = SageBuilder::buildVarRefExp(tempVarDeclaration);
-    SgAssignOp* assignment = SageBuilder::buildAssignOp(tempVarReference, tempVarInitExpression);
+    if (reEvaluate != NULL)
+    {
+        SgVarRefExp* tempVarReference = SageBuilder::buildVarRefExp(tempVarDeclaration);
+        *reEvaluate = SageBuilder::buildAssignOp(tempVarReference, tempVarInitExpression);
+    }
 
     //Build the variable reference expression that can be used in place of the original expression
     SgExpression* varRefExpression = SageBuilder::buildVarRefExp(tempVarDeclaration);
@@ -6187,7 +6181,7 @@ boost::tuple<SgVariableDeclaration*, SgAssignOp*, SgExpression*> SageInterface::
         varRefExpression = SageBuilder::buildPointerDerefExp(varRefExpression);
     }
 
-    return boost::make_tuple(tempVarDeclaration, assignment, varRefExpression);
+    return std::make_pair(tempVarDeclaration, varRefExpression);
 }
 
 // This code is based on OpenMP translator's ASTtools::replaceVarRefExp() and astInling's replaceExpressionWithExpression()
