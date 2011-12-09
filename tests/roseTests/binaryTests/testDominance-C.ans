@@ -1,22 +1,15 @@
 test C in function <_init> at 0x08048278
-test C in function <***uncategorized blocks***> at 0x0804828f
 test C in function <malloc@plt> at 0x080482a0
 test C in function <__libc_start_main@plt> at 0x080482b0
 test C in function <_start> at 0x080482c0
-test C in function <> at 0x080482e2
 test C in function <call_gmon_start> at 0x080482e4
-test C in function <> at 0x08048305
 test C in function <__do_global_dtors_aux> at 0x08048310
-test C in function <> at 0x0804833f
 test C in function <frame_dummy> at 0x08048340
-test C in function <> at 0x08048363
 test C in function <main> at 0x08048364
 test C in function <> at 0x0804836e
 test C in function <__libc_csu_init> at 0x080483c0
 test C in function <__libc_csu_fini> at 0x08048414
-test C in function <> at 0x08048456
 test C in function <__do_global_ctors_aux> at 0x08048460
-test C in function <> at 0x08048491
 test C in function <_fini> at 0x08048494
 
 === testDominance-C1.dot ===
@@ -25,6 +18,7 @@ digraph G {
 1[ label="0x08048283" ];
 2[ label="0x08048288" ];
 3[ label="0x0804828d" ];
+4[ label="0x0804828f" ];
 1->0 ;
 2->1 ;
 3->2 ;
@@ -32,58 +26,35 @@ digraph G {
 
 === testDominance-C2.dot ===
 digraph G {
-0[ label="0x0804828f" ];
-1[ label="0x08048296" ];
-2[ label="0x0804829c" ];
-3[ label="0x080482a6" ];
-4[ label="0x080482b6" ];
-5[ label="0x08048358" ];
-6[ label="0x080483f4" ];
-7[ label="0x080483fb" ];
-8[ label="0x08048412" ];
-9[ label="0x0804843f" ];
-10[ label="0x08048443" ];
-1->0 ;
-1->3 ;
+0[ label="0x080482a0" ];
+1[ label="0x080482a6" ];
 }
 
 === testDominance-C3.dot ===
 digraph G {
-0[ label="0x080482a0" ];
+0[ label="0x080482b0" ];
+1[ label="0x080482b6" ];
 }
 
 === testDominance-C4.dot ===
 digraph G {
-0[ label="0x080482b0" ];
+0[ label="0x080482c0" ];
+1[ label="0x080482e1" ];
+2[ label="0x080482e2" ];
+1->0 ;
 }
 
 === testDominance-C5.dot ===
 digraph G {
-0[ label="0x080482c0" ];
-1[ label="0x080482e1" ];
-1->0 ;
-}
-
-=== testDominance-C6.dot ===
-digraph G {
-0[ label="0x080482e2" ];
-}
-
-=== testDominance-C7.dot ===
-digraph G {
 0[ label="0x080482e4" ];
 1[ label="0x080482ff" ];
 2[ label="0x08048301" ];
+3[ label="0x08048305" ];
 2->0 ;
 2->1 ;
 }
 
-=== testDominance-C8.dot ===
-digraph G {
-0[ label="0x08048305" ];
-}
-
-=== testDominance-C9.dot ===
+=== testDominance-C6.dot ===
 digraph G {
 0[ label="0x08048310" ];
 1[ label="0x0804831f" ];
@@ -91,6 +62,7 @@ digraph G {
 3[ label="0x0804832b" ];
 4[ label="0x08048336" ];
 5[ label="0x0804833d" ];
+6[ label="0x0804833f" ];
 5->0 ;
 5->1 ;
 3->2 ;
@@ -98,31 +70,24 @@ digraph G {
 5->4 ;
 }
 
-=== testDominance-C10.dot ===
-digraph G {
-0[ label="0x0804833f" ];
-}
-
-=== testDominance-C11.dot ===
+=== testDominance-C7.dot ===
 digraph G {
 0[ label="0x08048340" ];
 1[ label="0x0804834f" ];
-2[ label="0x08048361" ];
-2->0 ;
-2->1 ;
+2[ label="0x08048358" ];
+3[ label="0x08048361" ];
+4[ label="0x08048363" ];
+3->0 ;
+3->1 ;
+3->2 ;
 }
 
-=== testDominance-C12.dot ===
-digraph G {
-0[ label="0x08048363" ];
-}
-
-=== testDominance-C13.dot ===
+=== testDominance-C8.dot ===
 digraph G {
 0[ label="0x08048364" ];
 }
 
-=== testDominance-C14.dot ===
+=== testDominance-C9.dot ===
 digraph G {
 0[ label="0x0804836e" ];
 1[ label="0x08048381" ];
@@ -135,46 +100,58 @@ digraph G {
 4->3 ;
 }
 
-=== testDominance-C15.dot ===
+=== testDominance-C10.dot ===
 digraph G {
 0[ label="0x080483c0" ];
 1[ label="0x080483da" ];
+2[ label="0x080483f4" ];
+3[ label="0x080483f8" ];
+4[ label="0x080483fb" ];
+5[ label="0x0804840a" ];
+6[ label="0x08048412" ];
 1->0 ;
+5->1 ;
+3->2 ;
+4->3 ;
+5->4 ;
 }
 
-=== testDominance-C16.dot ===
+=== testDominance-C11.dot ===
 digraph G {
 0[ label="0x08048414" ];
-1[ label="0x0804844e" ];
-1->0 ;
+1[ label="0x0804843f" ];
+2[ label="0x08048440" ];
+3[ label="0x08048443" ];
+4[ label="0x08048444" ];
+5[ label="0x08048449" ];
+6[ label="0x0804844e" ];
+7[ label="0x08048456" ];
+4->0 ;
+2->1 ;
+3->2 ;
+4->3 ;
+5->4 ;
+6->5 ;
 }
 
-=== testDominance-C17.dot ===
-digraph G {
-0[ label="0x08048456" ];
-}
-
-=== testDominance-C18.dot ===
+=== testDominance-C12.dot ===
 digraph G {
 0[ label="0x08048460" ];
 1[ label="0x08048476" ];
 2[ label="0x08048480" ];
 3[ label="0x08048485" ];
 4[ label="0x0804848c" ];
+5[ label="0x08048491" ];
 4->0 ;
 2->1 ;
 3->2 ;
 4->3 ;
 }
 
-=== testDominance-C19.dot ===
-digraph G {
-0[ label="0x08048491" ];
-}
-
-=== testDominance-C20.dot ===
+=== testDominance-C13.dot ===
 digraph G {
 0[ label="0x08048494" ];
 1[ label="0x080484aa" ];
+2[ label="0x080484ae" ];
 1->0 ;
 }

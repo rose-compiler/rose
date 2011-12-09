@@ -34,7 +34,7 @@ MODULE attrs_pointer_coarray
     INTEGER n, m
     REAL, OPTIONAL, DIMENSION(:, :), POINTER :: c[*]
     LOGICAL, POINTER, CODIMENSION[*] :: d(:)
-    ALLOCATE(a(n,n)[5])
+    ALLOCATE(a(n,n)[*])
     ALLOCATE(b(m)[])
     IF (PRESENT(c)) THEN 
       c => a
@@ -64,11 +64,11 @@ pa(6,7) = 7.8
 pb(9) = .true.
 !
 ALLOCATE(p)
-ALLOCATE(p%a(6)[]) ! allocate a coarray of 1-dim logical array of size 6 on all processors
-ALLOCATE(p%b(7,11)[10]) ! allocate a coarray of 2-dim real array of shape (7,11) on 10 processors
+ALLOCATE(p%a(6)[]) ! allocate a coarray of 1-dim logical array of size 6 on default team's processors
+ALLOCATE(p%b(7,11)[*]) ! allocate a coarray of 2-dim real array of shape (7,11) on all processors
 ALLOCATE(p%pci) ! allocate a pointer to a coarray of integer
 ALLOCATE(p%pc1c) ! p%pc1c is a pointer to a coarray of 1-dim array of complex
-ALLOCATE(p%pc1c(99)[2]) ! allocate a coarray of 1-dim array of complex of size 99 on 2 processors
+ALLOCATE(p%pc1c(99)[*]) ! allocate a coarray of 1-dim array of complex of size 99 on all processors
 
 p%a(5) = .true.
 p%a(5)[6] = .false.

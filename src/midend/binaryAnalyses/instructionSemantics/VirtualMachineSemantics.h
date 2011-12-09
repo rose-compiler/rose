@@ -285,6 +285,12 @@ public:
         return ninsns;
     }
 
+    /** Sets the number instructions processed. This is the same counter incremented at the beginning of each instruction and
+     * returned by get_ninsns(). */
+    void set_ninsns(size_t n) {
+        ninsns = n;
+    }
+
     /** Returns current instruction. Returns the null pointer if no instruction is being processed. */
     SgAsmInstruction *get_insn() const {
         return cur_insn;
@@ -425,7 +431,7 @@ public:
                 }
             }
 
-            /* Not found in intial state. But if we have a known address and a valid memory map then initialize the original
+            /* Not found in initial state. But if we have a known address and a valid memory map then initialize the original
              * state with data from the memory map. */      
             if (map && addr.is_known()) {
                 uint8_t buf[sizeof(uint64_t)];
@@ -571,6 +577,9 @@ public:
 
     /** Called only for the HLT instruction. */
     void hlt() {} // FIXME
+
+    /** Called only for the CPUID instruction. */
+    void cpuid() {} // FIXME
 
     /** Called only for the RDTSC instruction. */
     ValueType<64> rdtsc() {

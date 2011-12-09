@@ -20,7 +20,7 @@ libBackstroke_la_LIBADD = utilities/libBackstrokeUtilities.la \
 			restrictedLanguage/libBackstrokeRestrictedLanguage.la \
 			pluggableReverser/libBackstrokePluggableReverser.la \
 			testCodeGeneration/libBackstrokeTestCodeBuilder.la
-			
+
 EXTRA_DIST = 
 
 CLEANFILES = 

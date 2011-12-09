@@ -135,9 +135,13 @@ void ROSE_ABORT( const char *message )
     throw rose_exception( message );
 }
 
- #ifdef USE_ROSE
-   void ROSE_ABORT() __THROW __attribute__ ((__noreturn__))
+#if 0
+// DQ (11/3/2011): EDG 4.3 does not require anything special and even 
+// reports the use of __attribute__ in a function definition to be an error.
+#ifdef USE_ROSE
+void ROSE_ABORT() __THROW __attribute__ ((__noreturn__))
    {
       throw rose_exception( "abort" );
    }
  #endif // USE_ROSE
+#endif

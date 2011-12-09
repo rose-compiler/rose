@@ -31,7 +31,8 @@ public:
         SegmentInfo(const user_desc_32 &ud) {
             base = ud.base_addr;
             limit = ud.limit_in_pages ? (ud.limit << 12) | 0xfff : ud.limit;
-            present = !ud.seg_not_present && ud.useable;
+            present = true;  // present = !ud.seg_not_present && ud.useable; // NOT USED BY LINUX
+
         }
     };
 
@@ -66,6 +67,15 @@ public:
         fprintf(stderr, "hlt\n");
         abort();
     }
+
+    /* Called by RDTSC to return time stamp counter.  The simulator doesn't really have a time stamp counter, so we'll just
+     * return the number of instructions simulated (counting the RDTSC itself) instead. */
+    VirtualMachineSemantics::ValueType<64> rdtsc() {
+        return get_ninsns();
+    }
+
+    /* Called by X86InstructionSemantics for the CPUID instruction */
+    void cpuid();
 
     /* Called by X86InstructionSemantics for the INT instruction */
     void interrupt(uint8_t num);

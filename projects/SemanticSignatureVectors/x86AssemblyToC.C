@@ -342,7 +342,7 @@ struct X86CTranslationPolicy: public CTranslationPolicy {
 
   void sysenter() {
   }
-    
+
   WordWithExpression<64> rdtsc() {
     return buildUnsignedLongLongIntValHex(0); // FIXME
   }

@@ -21,7 +21,6 @@
 #include "AstNodePtrs.h"
 #include "AstTraversal.h"
 
-
 // This controls output for debugging
 #define WARN_ABOUT_ATYPICAL_LVALUES 0
 
@@ -414,9 +413,8 @@ AstTests::runAllTests(SgProject* sageProject)
             // TODO (python) define get_type for the remaining expressions ?
             if (! sageProject->get_Python_only()) {
                 TimingPerformance timer ("AST expression type test:");
-
                 TestExpressionTypes expressionTypeTest;
-                expressionTypeTest.traverse(sageProject,preorder);
+                expressionTypeTest.traverse(sageProject, preorder);
             } else {
                 //cout << "warning: python. Skipping TestExpressionTypes in AstConsistencyTests.C" << endl;
             }
@@ -507,6 +505,13 @@ AstTests::runAllTests(SgProject* sageProject)
 
   // DQ (11/28/2010): Test to make sure that Fortran is using case insensitive symbol tables and that C/C++ is using case sensitive symbol tables.
      TestForProperLanguageAndSymbolTableCaseSensitivity::test(sageProject);
+
+        {
+          TimingPerformance timer ("AST check for references to deleted IR nodes:");
+
+       // DQ (9/26/2011): Test for references to deleted IR nodes in the AST.
+          TestForReferencesToDeletedNodes::test(sageProject);
+        }
 
 #if 1
   // Comment out to see if we can checkin what we have fixed recently!
@@ -1401,11 +1406,15 @@ TestAstTemplateProperties::visit ( SgNode* astNode )
         ROSE_ASSERT(classDefinition != NULL);
 
         SgBaseClassPtrList::iterator i = classDefinition->get_inheritances().begin();
-        while ( i != classDefinition->get_inheritances().end() )
+        for ( ; i != classDefinition->get_inheritances().end(); ++i)
         {
           // Check the parent pointer to make sure it is properly set
           ROSE_ASSERT( (*i)->get_parent() != NULL);
           ROSE_ASSERT( (*i)->get_parent() == classDefinition);
+
+          // skip this check for SgExpBaseClasses, which don't need to define p_base_class 
+          if (isSgExpBaseClass(*i) != NULL)
+              continue;
 
           // Calling resetTemplateName()
           SgClassDeclaration* baseClassDeclaration = (*i)->get_base_class();
@@ -1417,8 +1426,6 @@ TestAstTemplateProperties::visit ( SgNode* astNode )
             // printf ("In AST Consistancy test: templateInstantiation->get_templateName() = %s \n",templateInstantiation->get_templateName().str());
             ROSE_ASSERT(templateInstantiation->get_nameResetFromMangledForm() == true);
           }
-
-          i++;
         }
         break;
       }
@@ -2466,15 +2473,28 @@ TestAstSymbolTables::visit ( SgNode* node )
                        }
                       else
                        {
-                         SgLabelStatement* labelStatement = isSgLabelStatement(declarationNode);
-                         if (labelStatement != NULL)
+                         if (isSgLabelStatement(declarationNode))
                             {
+                              SgLabelStatement* labelStatement = (SgLabelStatement *) declarationNode;
                               SgSymbol* local_symbol = labelStatement->get_symbol_from_symbol_table();
                               if (local_symbol == NULL)
                                  {
                                    printf ("Error: labelStatement->get_symbol_from_symbol_table() == NULL labelStatement = %p = %s \n",labelStatement,labelStatement->get_label().str());
                                    ROSE_ASSERT(labelStatement->get_scope() != NULL);
                                    labelStatement->get_scope()->get_symbol_table()->print("debug labelStatement scope");
+                                 }
+                              ROSE_ASSERT(local_symbol != NULL);
+                            }
+                         else if (isSgJavaLabelStatement(declarationNode)) // charles4: 09/12/2011 added for Java
+                            {
+                              SgJavaLabelStatement* javaLabelStatement = (SgJavaLabelStatement *) declarationNode;
+                              SgSymbol *local_symbol = javaLabelStatement->get_symbol_from_symbol_table();
+                              if (local_symbol == NULL)
+                                 {
+                                   printf ("Error: javaLabelStatement->get_symbol_from_symbol_table() == NULL javaLabelStatement = %p = %s \n",javaLabelStatement,javaLabelStatement->get_label().str());
+                                   ROSE_ASSERT(javaLabelStatement->get_scope() != NULL);
+                                   ROSE_ASSERT(javaLabelStatement->get_scope()->get_symbol_table() != NULL);
+                                   javaLabelStatement->get_scope()->get_symbol_table()->print("debug javaLabelStatement scope");
                                  }
                               ROSE_ASSERT(local_symbol != NULL);
                             }
@@ -2589,6 +2609,17 @@ TestAstSymbolTables::visit ( SgNode* node )
                                  }
 #endif
                             }
+                         break;
+                       }
+
+                    case V_SgJavaLabelSymbol:
+                       {
+                         SgJavaLabelSymbol* labelSymbol = isSgJavaLabelSymbol(symbol);
+                         ROSE_ASSERT(labelSymbol != NULL);
+
+                      // charles4 (9/12/2011): copied from case of SgLabelSymbol for Java
+                         ROSE_ASSERT(labelSymbol->get_declaration() != NULL);
+
                          break;
                        }
 
@@ -3775,6 +3806,7 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
                case V_SgFunctionParameterTypeList:
                case V_SgPragma:
                case V_SgBaseClass:
+               case V_SgExpBaseClass:
                   {
                     SgNode* parent = support->get_parent();
                     if (parent == NULL)
@@ -4158,6 +4190,8 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                     case V_SgInitializedName:
                        {
                          SgInitializedName* initializedName             = isSgInitializedName(node);
+#if 0
+                      // DQ (9/26/2011): Older version of code.
                          SgVarRefExp*       variableReferenceExpression = isSgVarRefExp(node->get_parent());
                          if (initializedName != NULL && variableReferenceExpression != NULL && variableReferenceExpression->get_symbol()->get_declaration() == node)
                             {
@@ -4176,6 +4210,32 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                               printf ("Warning: TestChildPointersInMemoryPool::visit(): Node is not in parent's child list, node: %p = %s = %s parent: %p = %s \n",
                                    node,node->class_name().c_str(),SageInterface::get_name(node).c_str(),parent,parent->class_name().c_str());
                             }
+#else
+                      // DQ (9/26/2011): Trying to handle this via a better implementation of this test.
+                         if (initializedName != NULL)
+                            {
+                           // Check for "__PRETTY_FUNCTION__" and "__func__" since these are implicit variables and
+                           // are defined in ROSE to have a parent pointing to the associated SgFunctionDefinition.
+                           // This is a change where it used to point to the associated SgVarRefExp, but this can be
+                           // deleted if the constant folded value is subsituted with the original expression tree.
+                           // It also never made since to have it be associated with anything but the SgFunctionDefinition
+                           // also both of these are handled uniformally now.  This fix permits more passing tests of
+                           // the AST merge and the AST File I/O support in ROSE.  This fix is a part of the move in ROSE
+                           // to support either the constant folded values (optional) or the original expression trees (default).
+                              if (initializedName->get_name() == "__PRETTY_FUNCTION__" || initializedName->get_name() == "__func__")
+                                 {
+                                // This not is not in the child list of the parent, this is expected.
+                                   ROSE_ASSERT(node->get_parent() != NULL);
+                                // printf ("In TestChildPointersInMemoryPool::visit(): (__PRETTY_FUNCTION__ || __func__) node->get_parent() = %p = %s \n",node->get_parent(),node->get_parent()->class_name().c_str());
+                                   ROSE_ASSERT(isSgFunctionDefinition(node->get_parent()) != NULL);
+                                 }
+                                else
+                                 {
+                                   printf ("Warning: TestChildPointersInMemoryPool::visit(): Node is not in parent's child list, node: %p = %s = %s parent: %p = %s \n",
+                                        node,node->class_name().c_str(),SageInterface::get_name(node).c_str(),parent,parent->class_name().c_str());
+                                 }
+                            }
+#endif
                          break;
                        }
 
@@ -4276,7 +4336,8 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                          SgVariableSymbol* variableSymbol = isSgVariableSymbol(node);
                       // SgInitializedName* initializedName             = isSgInitializedName(variableSymbol->get_declaration());
                          SgInitializedName* initializedName             = variableSymbol->get_declaration();
-                         if (initializedName != NULL && initializedName->get_file_info()->isCompilerGenerated() == true && initializedName->get_name() == "__PRETTY_FUNCTION__")
+                      // if (initializedName != NULL && initializedName->get_file_info()->isCompilerGenerated() == true && initializedName->get_name() == "__PRETTY_FUNCTION__")
+                         if ( initializedName != NULL && initializedName->get_file_info()->isCompilerGenerated() == true && (initializedName->get_name() == "__PRETTY_FUNCTION__" || initializedName->get_name() == "__func__") )
                             {
                            // This is the special case of the SgVariableSymbol generated for "void foo(const char*); foo(__PRETTY_FUNCTION__);"
                            // Note that __PRETTY_FUNCTION__ is a compiler generated const char* (C string).
@@ -5130,3 +5191,67 @@ TestForProperLanguageAndSymbolTableCaseSensitivity::test(SgNode* node)
   // printf ("DONE: Traversing AST to support TestForProperLanguageAndSymbolTableCaseSensitivity::test() \n");
    }
 
+
+TestForReferencesToDeletedNodes::TestForReferencesToDeletedNodes(int input_detect_dangling_pointers, const string & s )
+   : detect_dangling_pointers(input_detect_dangling_pointers), filename(s)
+   {
+  // Nothing to do here!
+   }
+
+
+void
+TestForReferencesToDeletedNodes::visit ( SgNode* node )
+   {
+  // DQ (9/26/2011): This is a new test for possible references to deleted IR nodes in the AST (dangling pointers).
+  // It works as a byproduct of the way that memory pool works.  It might work better if we also added an option
+  // to prevent previously deleted IR nodes from reusing memory in the memory pool.  This can be considered for 
+  // future work.
+
+     ROSE_ASSERT(node != NULL);
+  // printf ("TestForReferencesToDeletedNodes::visit: node = %s \n",node->class_name().c_str());
+
+  // Only output information about this test if set to value greater than zero (this avoids anoying output for existing translators, e.g. CAF2 work).
+     if (detect_dangling_pointers > 0)
+        {
+          vector<pair<SgNode*,string> > v = node->returnDataMemberPointers();
+
+          for (unsigned long i = 0; i < v.size(); i++)
+             {
+               SgNode* child = v[i].first;
+
+               if (child != NULL && child->variantT() == V_SgNode)
+                  {
+                 // This is a deleted IR node
+                 // SgFile* file = TransformationSupport::getFile(node);
+                 // string filename = (file != NULL) ? file->getFileName() : "unknown file";
+                    printf ("Error in AST consistancy detect_dangling_pointers test for file %s: Found a child = %p = %s child name = %s of node = %p = %s that was previously deleted \n",filename.c_str(),child,child->class_name().c_str(),v[i].second.c_str(),node,node->class_name().c_str());
+                  }
+
+            // DQ (9/26/2011): This fails for the projects/UpcTranslation upc_shared_2.upc file...figure this out once we see what elase might file.
+            // Other fialing tests include: 
+            //    projects/backstroke/tests/expNormalizationTest/test2006_74.C
+            //    projects/backstroke/tests/expNormalizationTest/test2006_87.C
+            // Large percentage of Fortran tests fail this test!
+               if (detect_dangling_pointers > 1)
+                  {
+                    ROSE_ASSERT( (child == NULL) || (child != NULL && child->variantT() != V_SgNode) );
+                  }
+             }
+        }
+   }
+
+void
+TestForReferencesToDeletedNodes::test( SgProject* project )
+   {
+  // See documentation in the header file for this test.
+
+  // I was having trouble generating a file name for where the problem was happening, so this should work better.
+  // might be that the problem IR nodes were contained in expressions in the index of a SgArrayType, or something 
+  // like that.
+  // Generate a name from all the files on the command line
+     string filename = SageInterface::generateProjectName(project, /* supressSuffix = */ false );
+
+     TestForReferencesToDeletedNodes traversal(project->get_detect_dangling_pointers(),filename);
+
+     traversal.traverseMemoryPool();
+   }

@@ -28,7 +28,7 @@
 
  * The steps are:
  * -> Create two mutexes m1 and m2 (errorcheck or recursive)
- * -> Create a condition variable c depending on a bootlean b
+ * -> Create a condition variable c depending on a Boolean b
  * -> create N threads which will
  *     -> lock m1
  *     -> wait or timedwait c, m1 (while b is false)
@@ -86,10 +86,10 @@
 /********************************** Configuration ******************************************/
 /********************************************************************************************/
 #ifndef VERBOSE
-#define VERBOSE 1
+#define VERBOSE 2
 #endif
 
-#define NTHREADS (100)
+#define NTHREADS (10)
 
 #ifndef WITHOUT_ALTCLK
 #define USE_ALTCLK  /* make tests with MONOTONIC CLOCK if supported */

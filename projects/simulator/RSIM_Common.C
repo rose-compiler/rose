@@ -34,10 +34,20 @@ print_user_desc_32(RTS_Message *m, const uint8_t *_ud, size_t sz)
 }
 
 void
-print_int_32(RTS_Message *m, const uint8_t *ptr, size_t sz)
+print_int_32(RTS_Message *m, const uint8_t *_v, size_t sz)
 {
-    assert(4==sz);
-    m->more("%"PRId32, *(const int32_t*)ptr);
+    const uint32_t *v = (const uint32_t*)_v;
+    assert(sz % 4 == 0);
+    size_t nelmts = sz/4;
+
+    if (1==nelmts) {
+        m->more("%"PRId32, v[0]);
+    } else {
+        m->more("[");
+        for (size_t i=0; i<nelmts; i++)
+            m->more("%s%"PRId32, i?",":"", v[i]);
+        m->more("]");
+    }
 }
 
 void
@@ -74,7 +84,9 @@ print_timespec_32(RTS_Message *m, const uint8_t *_ts, size_t sz)
 {
     assert(sz==sizeof(timespec_32));
     const timespec_32 *ts = (const timespec_32*)_ts;
-    m->more("sec=%"PRId32", nsec=%"PRId32, ts->tv_sec, ts->tv_nsec);
+    m->more("sec=");
+    print_time(m, ts->tv_sec);
+    m->more(", nsec=%"PRId32, ts->tv_nsec);
 }
 
 void
@@ -453,9 +465,41 @@ print_msghdr_32(RTS_Message *m, const uint8_t *_v, size_t sz)
     assert(sizeof(msghdr_32)==sz);
     const msghdr_32 *v = (const msghdr_32*)_v;
     m->more("name=0x%08"PRIx32", namelen=%"PRIu32", iov=0x%08"PRIx32", iovlen=%"PRIu32
-            ", control=0x%08"PRIx32", controllen=%"PRIu32", flags=0x%08"PRIx32,
+            ", control=0x%08"PRIx32", controllen=%"PRIu32", flags=",
             v->msg_name, v->msg_namelen, v->msg_iov, v->msg_iovlen,
-            v->msg_control, v->msg_controllen, v->msg_flags);
+            v->msg_control, v->msg_controllen);
+    print_flags(m, msghdr_flags, v->msg_flags);
+}
+
+void
+print_new_utsname_32(RTS_Message *m, const uint8_t *_v, size_t sz)
+{
+    assert(sizeof(new_utsname_32)==sz);
+    const new_utsname_32 *v = (const new_utsname_32*)_v;
+    m->more("sysname=");
+    print_string(m, v->sysname);
+    m->more(", nodename=");
+    print_string(m, v->nodename);
+    m->more(", release=");
+    print_string(m, v->release);
+    m->more(", version=");
+    print_string(m, v->version);
+    m->more(", machine=");
+    print_string(m, v->machine);
+    m->more(", domainname=");
+    print_string(m, v->domainname);
+}
+
+void
+print_mmap_arg_struct_32(RTS_Message *m, const uint8_t *_v, size_t sz)
+{
+    assert(sizeof(mmap_arg_struct_32)==sz);
+    const mmap_arg_struct_32 *v = (const mmap_arg_struct_32*)_v;
+    m->more("addr=0x%08"PRIx32", len=%"PRId32", prot=", v->addr, v->len);
+    print_flags(m, mmap_pflags, v->prot);
+    m->more(", flags=");
+    print_flags(m, mmap_mflags, v->flags);
+    m->more(", fd=%"PRId32", offset=%"PRId32, v->fd, v->offset);
 }
 
 void

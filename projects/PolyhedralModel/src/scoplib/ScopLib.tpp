@@ -85,8 +85,8 @@ scoplib_scop_p PolyhedricAnnotationToScopLib(const PolyhedricAnnotation::Polyhed
 		try {
 			Scattering<Function, Expression, VariableLBL> & scattering = getScattering<Function, Expression, VariableLBL>(polyhedral_program.getStatementById(i));
 			
-			const std::vector<LinearExpression> & le_l = scattering.getScattering();
-			std::vector<LinearExpression>::const_iterator it;
+			const std::vector<LinearExpression_ppl> & le_l = scattering.getScattering();
+			std::vector<LinearExpression_ppl>::const_iterator it;
 			
 			(*statement)->schedule = scoplib_matrix_malloc(le_l.size(), (*statement)->nb_iterators + res->nb_parameters + 2);
 
@@ -124,8 +124,8 @@ scoplib_scop_p PolyhedricAnnotationToScopLib(const PolyhedricAnnotation::Polyhed
 	
 			size_t row = 0;
 			size_t nbr_line = 0;
-			std::vector<std::pair<size_t, std::vector<LinearExpression> > >::const_iterator it1;
-			std::vector<LinearExpression>::const_iterator it2;
+			std::vector<std::pair<size_t, std::vector<LinearExpression_ppl> > >::const_iterator it1;
+			std::vector<LinearExpression_ppl>::const_iterator it2;
 			for (it1 = data_access.getRead().begin(); it1 != data_access.getRead().end(); it1++)
 				nbr_line += (*it1).second.size();
 		

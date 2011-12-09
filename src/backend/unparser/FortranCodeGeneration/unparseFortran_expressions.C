@@ -1867,56 +1867,74 @@ FortranCodeGeneration_locatedNode::unparseUserDefinedBinaryOp (SgExpression* exp
    }
 
 
-//FMZ (02/02/2009): Added for unparsing co_expression
-void
-FortranCodeGeneration_locatedNode::unparseCoArrayExpression (SgExpression* expr, SgUnparse_Info& info)
-   {
-    
-    // printf("unparseCoArrayExpression\n");
- 
-    bool hasImageSelec = false;
+void FortranCodeGeneration_locatedNode::unparseCoArrayExpression (SgExpression * expr, SgUnparse_Info & info)
+{
+    // get subparts
+    SgCAFCoExpression * coExpr     = isSgCAFCoExpression(expr);
+    SgExpression *      referData  = coExpr->get_referData();
+    SgExpression *      teamRank   = coExpr->get_teamRank();
+    SgVarRefExp *       teamVarRef = coExpr->get_teamId();
 
-    SgCAFCoExpression* coExpr = isSgCAFCoExpression(expr);  
+    // print the data reference
+    ROSE_ASSERT(referData);
+    unparseLanguageSpecificExpression(referData, info);
 
-    ROSE_ASSERT(coExpr != NULL);
+    // print the image selector
 
-    SgExpression *dataExpr = coExpr->get_referData();
-   
-    ROSE_ASSERT(dataExpr != NULL);
+    curprint("[");
 
-    SgExpression *teamRank = coExpr->get_teamRank();
-
-    unparseLanguageSpecificExpression(dataExpr,info);
-
-    //SgName teamID = coExpr->get_teamId();
-    SgVarRefExp* teamIdRef = coExpr->get_teamId();
-
-     SgInitializedName* teamDecl = NULL;
-    
-    if (teamIdRef) {
-        teamDecl  = teamIdRef->get_symbol()->get_declaration();
-     }
-
-    hasImageSelec =  teamDecl || teamRank;
-
-    if (hasImageSelec) 
-        curprint("[");
-
-    if (teamRank) { 
-        SgIntVal* intRank = isSgIntVal(teamRank);
-
-        if (intRank)
-           unparseIntVal(intRank, info);
+    if( teamRank )
+    {
+        SgIntVal * val = isSgIntVal(teamRank);
+        if( val )
+            unparseIntVal(val, info);
         else
-           unparseLanguageSpecificExpression(teamRank,info);
+            unparseLanguageSpecificExpression(teamRank, info);
     }
 
+    if( teamRank && teamVarRef ) curprint(" ");
 
-    if (teamDecl) {
-        curprint("@");
-        curprint(teamDecl->get_name().str());
+    if( teamVarRef )
+    {
+        string name = teamVarRef->get_symbol()->get_declaration()->get_name();
+        if( name == "team_world" && !teamRank )
+            curprint("*");
+        else if( name == "team_default" && !teamRank )
+            curprint("@");
+        else
+        {
+            curprint("@");
+            curprint(name);
+        }
     }
 
-    if (hasImageSelec)
-        curprint("]");
-  }
+    else
+        /* print nothing */ ;
+
+    curprint("]");
+}
+
+
+bool FortranCodeGeneration_locatedNode::requiresParentheses(SgExpression* expr, SgUnparse_Info& info)
+{
+    // same as in base class except always respect 'need_paren' property of a node
+    // seems like this would be a good idea in general, but it breaks C++ unparsing for some reason
+
+    if( expr->get_need_paren() )
+        return true;
+    else
+        return UnparseLanguageIndependentConstructs::requiresParentheses(expr, info);
+}
+
+
+PrecedenceSpecifier FortranCodeGeneration_locatedNode::getPrecedence(SgExpression* exp)
+{
+    // same as in base class except unary plus/minus have equal precedence with binary plus.
+
+    SgAddOp * addOp = new SgAddOp(NULL, NULL, NULL, NULL);
+    PrecedenceSpecifier addOpPrec = UnparseLanguageIndependentConstructs::getPrecedence(addOp);
+    delete addOp;
+    return (isSgMinusOp(exp) || isSgUnaryAddOp(exp) ? addOpPrec : UnparseLanguageIndependentConstructs::getPrecedence(exp));
+}
+
+

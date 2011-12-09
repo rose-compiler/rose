@@ -1,4 +1,3 @@
-
 #ifndef UNPARSER_JAVA
 #define UNPARSER_JAVA
 
@@ -84,8 +83,6 @@ class Unparse_Java : public UnparseLanguageIndependentConstructs
 
           virtual void unparseTypeIdOp                (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseNotOp                   (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseMinusMinusOp            (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparsePlusPlusOp              (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseAbstractOp              (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseBitCompOp               (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseExprCond                (SgExpression* expr, SgUnparse_Info& info);  
@@ -120,6 +117,9 @@ class Unparse_Java : public UnparseLanguageIndependentConstructs
           virtual void unparseImportDeclarationStatement (SgStatement* stmt, SgUnparse_Info& info);
 
           virtual void unparseIfStmt           (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseSynchronizedStmt (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseThrowStmt        (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseForEachStmt      (SgStatement* stmt, SgUnparse_Info& info);
        // virtual void unparseWhereStmt        (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseForInitStmt      (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseForStmt          (SgStatement* stmt, SgUnparse_Info& info);
@@ -143,6 +143,7 @@ class Unparse_Java : public UnparseLanguageIndependentConstructs
           virtual void unparseBreakStmt        (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseContinueStmt     (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseReturnStmt       (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseAssertStmt       (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseGotoStmt         (SgStatement* stmt, SgUnparse_Info& info);
        // virtual void unparseAsmStmt          (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseTypeDefStmt      (SgStatement* stmt, SgUnparse_Info& info);
@@ -193,6 +194,7 @@ class Unparse_Java : public UnparseLanguageIndependentConstructs
 
           virtual void unparseCompoundAssignOp(SgCompoundAssignOp* op, SgUnparse_Info& info);
           virtual void unparseBinaryOp(SgBinaryOp* op, SgUnparse_Info& info);
+          virtual void unparseUnaryOp(SgUnaryOp* op, SgUnparse_Info& info);
 
       //! Support for unparsing modifiers
           virtual void unparseDeclarationModifier   (SgDeclarationModifier& mod,   SgUnparse_Info& info);
@@ -211,8 +213,9 @@ class Unparse_Java : public UnparseLanguageIndependentConstructs
 
       //! Support for unparsing types
           virtual void unparseType(SgType* type, SgUnparse_Info& info);
-
           virtual void unparseTypeVoid(SgTypeVoid* type, SgUnparse_Info& info);
+
+          virtual void unparseBaseClass(SgBaseClass* base, SgUnparse_Info& info);
 
           virtual void unparseTypeWchar(SgTypeWchar* type, SgUnparse_Info& info);
           virtual void unparseTypeSignedChar(SgTypeSignedChar* type, SgUnparse_Info& info);
@@ -227,6 +230,8 @@ class Unparse_Java : public UnparseLanguageIndependentConstructs
           virtual void unparseEnumType(SgEnumType* type, SgUnparse_Info& info);
           virtual void unparseArrayType(SgArrayType* type, SgUnparse_Info& info);
           virtual void unparseModifierType(SgModifierType* type, SgUnparse_Info& info);
+
+          virtual void unparseJavaParameterizedType(SgJavaParameterizedType* type, SgUnparse_Info& info);
    };
 
 #endif

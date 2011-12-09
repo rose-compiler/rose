@@ -23,7 +23,7 @@ SgAsmBlock::get_fallthrough_va()
     ROSE_ASSERT(!get_statementList().empty());
     SgAsmInstruction *last = isSgAsmInstruction(get_statementList().back());
     ROSE_ASSERT(last!=NULL);
-    return last->get_address() + last->get_raw_bytes().size();
+    return last->get_address() + last->get_size();
 }
 
 /* This has no other home, so it's here for now. Virtual method should be overridden by subclasses. */
@@ -37,7 +37,8 @@ SgAsmInstruction::get_successors(bool *complete) {
 
 /* This has no other home, so it's here for now. Virtual method to return successors of a basic block. */
 std::set<rose_addr_t>
-SgAsmInstruction::get_successors(const std::vector<SgAsmInstruction*>& basic_block, bool *complete/*out*/)
+SgAsmInstruction::get_successors(const std::vector<SgAsmInstruction*>& basic_block, bool *complete/*out*/,
+                                 MemoryMap *initial_memory/*=NULL*/)
 {
     if (basic_block.size()==0) {
         if (complete) *complete = true;
@@ -265,7 +266,7 @@ Disassembler::disassemble(SgAsmInterpretation *interp, AddressSet *successors, B
     Partitioner *p = p_partitioner ? p_partitioner : new Partitioner;
     if (p_debug && !p_partitioner)
         p->set_debug(get_debug());
-    SgAsmBlock *top = p->partition(interp, insns);
+    SgAsmBlock *top = p->partition(interp, insns, interp->get_map());
     interp->set_global_block(top);
     top->set_parent(interp);
     if (!p_partitioner)
@@ -446,7 +447,7 @@ Disassembler::disassembleBlock(const MemoryMap *map, rose_addr_t start_va, Addre
                 }
             }
             assert(insn!=NULL);
-            next_va = va + insn->get_raw_bytes().size();
+            next_va = va + insn->get_size();
             insns.insert(std::make_pair(va, insn));
 
             /* Is this the end of a basic block? This is naive logic that bases the decision only on the single instruction.
@@ -594,7 +595,7 @@ Disassembler::search_following(AddressSet *worklist, const InstructionMap &bb, r
         InstructionMap::const_iterator bbi = bb.end();
         --bbi;
         SgAsmInstruction *last_insn = bbi->second;
-        following_va = last_insn->get_address() + last_insn->get_raw_bytes().size();
+        following_va = last_insn->get_address() + last_insn->get_size();
     }
 
     if (map->find(following_va) && (!bad || bad->find(following_va)==bad->end())) {
@@ -714,7 +715,7 @@ Disassembler::search_next_address(AddressSet *worklist, rose_addr_t start_va, co
             /* Are their any instructions that overlap with this address? */
             SgAsmInstruction *overlap = find_instruction_containing(insns, next_va);
             if (overlap) {
-                next_va = overlap->get_address() + overlap->get_raw_bytes().size() + 1;
+                next_va = overlap->get_address() + overlap->get_size() + 1;
                 continue; /*tail recursion*/
             }
         } else if (insns.find(next_va)!=insns.end()) {
@@ -772,7 +773,7 @@ Disassembler::find_instruction_containing(const InstructionMap &insns, rose_addr
         ROSE_ASSERT(ii->first <= va);
         if (ii->first + max_insns_size < va)
             return NULL;
-        if (ii->first + ii->second->get_raw_bytes().size() > va)
+        if (ii->first + ii->second->get_size() > va)
             return ii->second;
         if (ii==insns.begin())
             return NULL;
@@ -894,9 +895,9 @@ Disassembler::mark_referenced_instructions(SgAsmInterpretation *interp, const Me
     try {
         for (InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
             SgAsmInstruction *insn = ii->second;
-            ROSE_ASSERT(insn->get_raw_bytes().size()<=sizeof buf);
+            ROSE_ASSERT(insn->get_size()<=sizeof buf);
             rose_addr_t va = insn->get_address();
-            size_t nbytes = insn->get_raw_bytes().size();
+            size_t nbytes = insn->get_size();
 
             while (nbytes>0) {
                 /* Find the map element and the file that goes with that element (if any) */
@@ -960,7 +961,7 @@ Disassembler::get_block_successors(const InstructionMap& insns, bool *complete)
     rose_addr_t target;
     SgAsmInstruction *last_insn = block.back();
     if (last_insn->is_function_call(block, &target))
-        successors.insert(last_insn->get_address() + last_insn->get_raw_bytes().size());
+        successors.insert(last_insn->get_address() + last_insn->get_size());
 
     return successors;
 }

@@ -267,6 +267,7 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
      SgInitializedName* thisinitname = 0;
      if (isSgMemberFunctionSymbol(funsym) && !fundecl->get_declarationModifier().get_storageModifier().isStatic())
         {
+          assert (thisptr != NULL);
           SgType* thisptrtype = thisptr->get_type();
           const SgSpecialFunctionModifier& specialMod = 
             funsym->get_declaration()->get_specialFunctionModifier();

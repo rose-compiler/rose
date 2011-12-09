@@ -5,9 +5,15 @@
 #include "astPostProcessing.h"
 #include <sys/stat.h>
 
-#include "omp_lowering.h"
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+   #include "omp_lowering.h"
+#endif
+
 #include "attachPreprocessingInfo.h"
-#include "astMergeAPI.h"
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+   #include "astMergeAPI.h"
+#endif
 
 #include "BinaryLoader.h"
 #include "Partitioner.h"
@@ -22,8 +28,11 @@
 //#pragma message ("WARNING: wait.h header file not available in MSVC.")
 #else
 #include <sys/wait.h>
-#include "PHPFrontend.h"
-#include "PythonFrontend.h"
+
+   #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+      #include "PHPFrontend.h"
+      #include "PythonFrontend.h"
+   #endif
 #endif
 
 #ifdef _MSC_VER
@@ -63,6 +72,9 @@
 // Liao 10/8/2010, refactored OpenMP related code to ompAstConstruction.C
 #include "ompAstConstruction.h"
 
+#ifdef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+   #include "transformationSupport.h"
+#endif
 
 #if 0
 //Liao, 10/27/2008: parsing OpenMP pragma here
@@ -102,6 +114,9 @@ const string FileHelper::pathDelimiter = "/";
 
 // DQ (9/17/2009): This appears to only be required for the GNU 4.1.x compiler (not for any earlier or later versions).
 extern const std::string ROSE_GFORTRAN_PATH;
+
+// CER (10/11/2011): Added to allow OFP jar file to depend on version number based on date.
+extern const std::string ROSE_OFP_VERSION_STRING;
 
 #ifdef _MSC_VER
 // DQ (11/29/2009): MSVC does not support sprintf, but "_snprintf" is equivalent
@@ -241,7 +256,21 @@ SgValueExp::get_constant_folded_value_as_string() const
              {
                const SgCharVal* charValueExpression = isSgCharVal(this);
                ROSE_ASSERT(charValueExpression != NULL);
-               s = charValueExpression->get_value();
+            // DQ (9/24/2011): Handle case where this is non-printable character (see test2011_140.C, where
+            // the bug was the the dot file had a non-printable character and caused zgrviewer to crash).
+            // s = charValueExpression->get_value();
+               char value = charValueExpression->get_value();
+               if (isalnum(value) == true)
+                  {
+                 // Leave this as a alpha or numeric value where possible.
+                    s = charValueExpression->get_value();
+                  }
+                 else
+                  {
+                 // Convert this to be a string of the numeric value so that it will print.
+                    snprintf (buffer,max_buffer_size,"%d",value);
+                    s = buffer;
+                  }
                break;
              }
 
@@ -300,6 +329,32 @@ SgValueExp::get_constant_folded_value_as_string() const
                break;
              }
 
+       // DQ (9/24/2011): Added support for complex values to be output as strings.
+          case V_SgComplexVal:
+             {
+               const SgComplexVal* complexValueExpression = isSgComplexVal(this);
+               ROSE_ASSERT(complexValueExpression != NULL);
+#if 0
+               float numericValue_realPart      = complexValueExpression->get_real_value();
+               float numericValue_imaginaryPart = complexValueExpression->get_imaginary_value();
+               printf ("numericValue of constant folded expression = (%f,%f) \n",numericValue_realPart,numericValue_imaginaryPart);
+               snprintf (buffer,max_buffer_size,"(%f,%f)",numericValue_realPart,numericValue_imaginaryPart);
+               s = buffer;
+#else
+            // ROSE_ASSERT(complexValueExpression->get_real_value() != NULL);
+               string real_string = "null";
+               if (complexValueExpression->get_real_value() != NULL)
+                    real_string = complexValueExpression->get_real_value()->get_constant_folded_value_as_string();
+
+            // ROSE_ASSERT(complexValueExpression->get_imaginary_value() != NULL);
+               string imaginary_string = "null";
+               if (complexValueExpression->get_imaginary_value() != NULL)
+                    imaginary_string = complexValueExpression->get_imaginary_value()->get_constant_folded_value_as_string();
+
+               s = "(" + real_string + "," + imaginary_string + ")";
+#endif
+               break;
+             }
 
           default:
              {
@@ -967,17 +1022,20 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           iter++;
         }
 
-  // DQ (1/13/2009): Added support for GNU -include <header_file> option (include this file before all others).
+  // DQ (1/13/2009): Added support for GNU -isystem <directory> option (include this directory before all others).
      string tempDirectory;
      iter = local_commandLineArgumentList.begin();
      while ( iter != local_commandLineArgumentList.end() )
         {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("Searching for -isystem options iter = %s \n",(*iter).c_str());
           if ( *iter == "-isystem")
              {
                iter++;
                tempDirectory = *iter;
 
-            // printf ("Adding tempHeaderFile = %s to p_preincludeDirectoryList \n",tempDirectory.c_str());
+               if ( SgProject::get_verbose() >= 1 )
+                    printf ("Adding tempHeaderFile = %s to p_preincludeDirectoryList \n",tempDirectory.c_str());
                p_preincludeDirectoryList.push_back(tempDirectory);
              }
 
@@ -1853,6 +1911,9 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
   // printf ("After processing -rose:output option argc = %d \n",argc);
   // ROSE_ABORT();
 
+#if 0
+  // DQ (11/1/2011): This option was removed from SgFile at some point in the past (so we don't need the support there).
+
   // DQ (4/20/2006): Added to support fall through option to be supported by user translators.
   //
   // skip_rose option (just call the backend compiler directly): This causes Rose to act identally
@@ -1876,6 +1937,19 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_collectAllCommentsAndDirectives(false);
           set_unparseHeaderFiles(false);
         }
+#endif
+
+  //
+  // skip_translation_from_edg_ast_to_rose_ast option: This variable is checked in the EDG frontend (4.3) 
+  // and if set it will cause the translation from the EDG AST to the ROSE AST to be skipped.  A valid
+  // SgProject and/or SgFile with with SgGlobal (empty) will be built (as I recall).
+  //
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(skip_translation_from_edg_ast_to_rose_ast)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("option -rose:skip_translation_from_edg_ast_to_rose_ast found \n");
+          set_skip_translation_from_edg_ast_to_rose_ast(true);
+        }
 
   //
   // skip_transformation option: if transformations of the AST check this variable then the
@@ -1883,7 +1957,8 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
   //
      if ( CommandlineProcessing::isOption(argv,"-rose:","(skip_transformation)",true) == true )
         {
-          printf ("option -rose:skip_transformation found \n");
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("option -rose:skip_transformation found \n");
           set_skip_transformation(true);
         }
 
@@ -1893,7 +1968,8 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
   //
      if ( CommandlineProcessing::isOption(argv,"-rose:","(skip_unparse)",true) == true )
         {
-          printf ("option -rose:skip_unparse found \n");
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("option -rose:skip_unparse found \n");
           set_skip_unparse(true);
         }
 
@@ -2101,6 +2177,46 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
      if (CommandlineProcessing::isOptionWithParameter(argv, "-rose:", "partitioner_config", stringParameter, true)) {
          set_partitionerConfigurationFileName(stringParameter);
      }
+
+
+  // DQ (9/26/2011): Adding options to support internal debugging of ROSE based tools and language support.
+  // ****************
+  // DEBUGING SUPPORT
+  // ****************
+  //
+  // Support for detecting dangling pointers
+  //     This is the first level of this sort of support. This level will be fooled by any reuse of 
+  //     the memory (from new allocations) previously deleted. A later leve of this option will disable
+  //     reuse of previously deleted memory for IR nodes; but it will consume more memory for translators
+  //     that delete a lot of IR nodes as part of there functionality.  I expect this to only seriously
+  //     make a difference for the AST merge operations which allocate and delete large parts of ASTs
+  //     frequently.
+  //     Note: this detects only dangling pointers to ROSE IR nodes, nothing more.
+  //
+#if 0
+  // Test ROSE using default level 2 (error that will cause assertion) when not specified via the command line.
+     set_detect_dangling_pointers(2);
+#endif
+     int integerDebugOption = 0;
+     if ( CommandlineProcessing::isOptionWithParameter(argv,"-rose:","detect_dangling_pointers",integerDebugOption,true) == true )
+        {
+       // If this was set and a parameter was not specified or the value set to zero, then let the value be 1.
+       // I can't seem to detect if the option was specified without a parameter.
+          if (integerDebugOption == 0)
+             {
+               integerDebugOption = 1;
+               if ( SgProject::get_verbose() >= 1 )
+                    printf ("option -rose:detect_dangling_pointers found but value not specified or set to 0 default (reset integerDebugOption = %d) \n",integerDebugOption);
+             }
+          else
+             {
+               if ( SgProject::get_verbose() >= 1 )
+                    printf ("option -rose:detect_dangling_pointers found with level (integerDebugOption = %d) \n",integerDebugOption);
+             }
+
+       // Set the level of the debugging to support.
+          set_detect_dangling_pointers(integerDebugOption);
+        }
 
   //
   // internal testing option (for internal use only, these may disappear at some point)
@@ -2335,7 +2451,7 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
   // DQ (5/19/2005): The output file name is constructed from the input source name (as I recall)
   // optionCount = sla(argv, "-rose:", "($)^", "(o|output)", &p_unparse_output_filename ,1);
 
-     optionCount = sla(argv, "-rose:", "($)", "(skip_rose)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(skip_translation_from_edg_ast_to_rose_ast)",1);
      optionCount = sla(argv, "-rose:", "($)", "(skip_transformation)",1);
      optionCount = sla(argv, "-rose:", "($)", "(skip_unparse)",1);
      optionCount = sla(argv, "-rose:", "($)", "(unparse_includes)",1);
@@ -2416,6 +2532,9 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
 
   // DQ (10/3/2010): Adding support for having CPP directives explicitly in the AST (as IR nodes instead of handled similar to comments).
      optionCount = sla(argv, "-rose:", "($)^", "(addCppDirectivesToAST)",filename,1);
+
+  // DQ (9/26/2011): Added support for different levesl of detection for dangling pointers.
+     optionCount = sla(argv, "-rose:", "($)^", "detect_dangling_pointers",&integerOption,1);
 
 #if 1
      if ( (ROSE_DEBUG >= 1) || (SgProject::get_verbose() > 2 ))
@@ -3075,11 +3194,8 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                   file = sourceFile;
 
                                   file->set_sourceFileUsesPythonFileExtension(true);
-
                                   file->set_outputLanguage(SgFile::e_Python_output_language);
-
                                   file->set_Python_only(true);
-                                  file->set_skipfinalCompileStep(true);
 
                                   // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
                                   // Note that file->get_requires_C_preprocessor() should be false.
@@ -3300,8 +3416,29 @@ static void makeSysIncludeList(const Rose_STL_Container<string>& dirs, Rose_STL_
         {
           ROSE_ASSERT (!i->empty());
           string fullPath = (*i)[0] == '/' ? *i : (includeBase + "/" + *i);
+#if 1
+       // DQ (11/8/2011): We want to exclude the /usr/include directory since it will be search automatically by EDG.
+       // If we include it here it will become part of the -sys_include directories and that will cause it to 
+       // be searched before the -I<directory> options (which is incorrect).
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("In makeSysIncludeList(): Building commandline: --sys_include %s \n",(*i).c_str());
+          if (*i == "/usr/include")
+             {
+               if ( SgProject::get_verbose() >= 1 )
+                    printf ("Filtering out from the sys_include paths: *i = %s \n",(*i).c_str());
+             }
+            else
+             {
+               result.push_back("--sys_include");
+               result.push_back(fullPath);
+             }
+#else
+       // Old code that would include the "/usr/include" path as an -sys_include entry.
+       // This whole include paths issue is complex enough that I would like to leave this
+       // code in place for a while.
           result.push_back("--sys_include");
           result.push_back(fullPath);
+#endif
         }
    }
 
@@ -3340,6 +3477,8 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      Rose_STL_Container<string> Cxx_ConfigIncludeDirs(Cxx_ConfigIncludeDirsRaw, Cxx_ConfigIncludeDirsRaw + sizeof(Cxx_ConfigIncludeDirsRaw) / sizeof(const char*));
      Rose_STL_Container<string> C_ConfigIncludeDirs(C_ConfigIncludeDirsRaw, C_ConfigIncludeDirsRaw + sizeof(C_ConfigIncludeDirsRaw) / sizeof(const char*));
 
+  // const char* boostPath[] = ROSE_BOOST_PATH;
+
   // Removed reference to __restrict__ so it could be placed into the preinclude vendor specific header file for ROSE.
   // DQ (9/10/2004): Attept to add support for restrict (but I think this just sets it to true, using "-Dxxx=" works)
   // const string roseSpecificDefs    = "-DUSE_RESTRICT_POINTERS_IN_ROSE_TRANSFORMATIONS -DUSE_ROSE -D__restrict__=";
@@ -3369,6 +3508,8 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // JJW (12/11/2008):  add --edg_base_dir as a new ROSE-set flag
      vector<string> commandLine;
 
+#if 1
+  // DQ (11/1/2011): This is not enough to support C++ code (e.g. "limits" header file).
 #ifdef ROSE_USE_NEW_EDG_INTERFACE
 
   // Note that the new EDG/Sage interface does not require a generated set of header files specific to ROSE.
@@ -3380,13 +3521,17 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // DQ (12/21/2009): The locaion of the EDG directory has been changed now that it is a submodule in our git repository.
   // commandLine.push_back(findRoseSupportPathFromBuild("src/frontend/CxxFrontend/EDG_4.0/lib", "share"));
   // commandLine.push_back(findRoseSupportPathFromBuild("src/frontend/CxxFrontend/EDG/EDG_4.0/lib", "share"));
-     commandLine.push_back(findRoseSupportPathFromSource("src/frontend/CxxFrontend/EDG/EDG_4.0/lib", "share"));
+
+  // DQ (11/1/2011): Fix to use EDG 4.3
+  // commandLine.push_back(findRoseSupportPathFromSource("src/frontend/CxxFrontend/EDG/EDG_4.0/lib", "share"));
+     commandLine.push_back(findRoseSupportPathFromSource("src/frontend/CxxFrontend/EDG/EDG_4.3/lib", "share"));
 #else
   // DQ (2/1/2010): I think this needs to reference the source tree (to pickup src/frontend/CxxFrontend/EDG/EDG_4.0/lib/predefined_macros.txt).
   // DQ (12/21/2009): The locaion of the EDG directory has been changed now that it is a submodule in our git repository.
   // commandLine.push_back(findRoseSupportPathFromBuild("src/frontend/CxxFrontend/EDG_3.10/lib", "share"));
      commandLine.push_back(findRoseSupportPathFromBuild("src/frontend/CxxFrontend/EDG/EDG_3.10/lib", "share"));
   // commandLine.push_back(findRoseSupportPathFromSource("src/frontend/CxxFrontend/EDG/EDG_3.10/lib", "share"));
+#endif
 #endif
 #endif
 
@@ -3442,18 +3587,28 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 #else
   // DQ (1/13/2009): The preincludeDirectoryList was built if the -isystem <dir> option was used
 
-//AS (2/22/08): GCC looks for system headers in '-I' first. We need to support this.
-//PC (10/20/2009): This code was moved from SgProject as it is file-specific (required by AST merge)
+#ifndef ROSE_USE_NEW_EDG_INTERFACE
+  // DQ (11/3/2011): This is only required for the older version of EDG (currently still the default).
+  // AS (2/22/08): GCC looks for system headers in '-I' first. We need to support this.
+  // PC (10/20/2009): This code was moved from SgProject as it is file-specific (required by AST merge)
      for (vector<string>::iterator i = includePaths.begin(); i != includePaths.end(); ++i)
         {
           commandLine.push_back("--sys_include");
           commandLine.push_back(*i);
         }
+#endif
 
+     if ( SgProject::get_verbose() >= 1 )
+          printf ("project->get_preincludeDirectoryList().size() = %zu \n",project->get_preincludeDirectoryList().size());
+
+  // This is the list of directories that have been referenced as "-isystem <directory>" on the original command line to the ROSE 
+  // translator.  We translate these to "-sys_include <directory>" options to pass to EDG (since that is how EDG understands them).
      for (SgStringList::iterator i = project->get_preincludeDirectoryList().begin(); i != project->get_preincludeDirectoryList().end(); i++)
         {
        // Build the preinclude directory list
-       // printf ("Building commandline: --sys_include %s \n",(*i).c_str());
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("Building commandline: --sys_include %s \n",(*i).c_str());
+
           commandLine.push_back("--sys_include");
           commandLine.push_back(*i);
         }
@@ -3616,8 +3771,11 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // DQ (9/17/2006): We should be able to build a version of this code which hands a std::string to StringUtility::splitStringIntoStrings()
   // Separate the string into substrings consistent with the structure of argv command line input
      inputCommandLine = commandLine;
-     inputCommandLine.insert(inputCommandLine.begin(), "dummy_argv0_for_edg");
 
+  // DQ (11/1/2011): Do we need this for the new EDG 4.3 work?
+  // #ifndef ROSE_USE_NEW_EDG_INTERFACE
+     inputCommandLine.insert(inputCommandLine.begin(), "dummy_argv0_for_edg");
+  // #endif
   // We only provide options to change the default values!
 
   // Handle option for use of ROSE as a C compiler instead of C++
@@ -3649,7 +3807,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
        // if we use the new EDG frontend (not connected to SAGE) then we can't
        // generate C++ code so we don't want to call the C++ compiler
-          set_skipfinalCompileStep(true);
+       // set_skipfinalCompileStep(true);
         }
 
   //
@@ -3893,10 +4051,13 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
           inputCommandLine.push_back("--upc");
           inputCommandLine.push_back("--restrict");
 
+#if 0
+       // DQ (11/1/2011): This is not enough to support C++ code (e.g. "limits" header file).
 #ifdef ROSE_USE_NEW_EDG_INTERFACE
        // DQ (2/17/2011): Added support for UPC (header are placed into include-staging directory).
           inputCommandLine.push_back("--sys_include");
           inputCommandLine.push_back(findRoseSupportPathFromBuild("include-staging", "share"));
+#endif
 #endif
         }
 
@@ -3911,10 +4072,13 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
           inputCommandLine.push_back("--upc++");
           inputCommandLine.push_back("--restrict");
 
+#if 0
+       // DQ (11/1/2011): This is not enough to support C++ code (e.g. "limits" header file).
 #ifdef ROSE_USE_NEW_EDG_INTERFACE
        // DQ (2/17/2011): Added support for UPC (header are placed into include-staging directory).
           inputCommandLine.push_back("--sys_include");
           inputCommandLine.push_back(findRoseSupportPathFromBuild("include-staging", "share"));
+#endif
 #endif
         }
 
@@ -4157,7 +4321,7 @@ SgProject::parse(const vector<string>& argv)
 #endif
 
   // builds file list (or none if this is a link line)
-          processCommandLine(argv);
+     processCommandLine(argv);
 
      int errorCode = 0;
 
@@ -4174,7 +4338,9 @@ SgProject::parse(const vector<string>& argv)
             // working directories to a separate file.  This permits a makefile to
             // call a ROSE translator repeatedly and the command line for each
             // file be saved.
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
                errorCode = AstMergeSupport(this);
+#endif
              }
             else
              {
@@ -4190,7 +4356,9 @@ SgProject::parse(const vector<string>& argv)
                ROSE_ASSERT(false);
                errorCode = -1;
 #endif
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
                errorCode = AstMergeSupport(this);
+#endif
              }
         }
        else
@@ -4208,7 +4376,9 @@ SgProject::parse(const vector<string>& argv)
             // object files to be built so that, for example, libraries can be constructed when
             // operating across multiple directories.
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
                errorCode = buildAstMergeCommandFile(this);
+#endif
              }
             else
              {
@@ -4948,6 +5118,9 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
 
        // DQ (9/19/2010): UPC support for upc_threads to define the "THREADS" variable.
           argument == "-rose:upc_threads" ||
+
+       // DQ (9/26/2011): Added support for detection of dangling pointers within translators built using ROSE.
+          argument == "-rose:detect_dangling_pointers" ||   // Used to specify level of debugging support for optional detection of dangling pointers 
           false)
         {
           result = true;
@@ -5289,7 +5462,7 @@ SgFile::callFrontEnd()
           if ( get_new_frontend() == true )
              {
             // Use the current version of the EDG frontend from EDG (or any other version)
-               abort();
+            // abort();
                printf ("ROSE::new_frontend == true (call edgFrontEnd using unix system() function!) \n");
 
                std::string frontEndCommandLineString;
@@ -5299,17 +5472,20 @@ SgFile::callFrontEnd()
                   }
                  else
                   {
-                    frontEndCommandLineString = "edgFrontEnd ";
+                 // frontEndCommandLineString = "edgFrontEnd ";
+                    frontEndCommandLineString = "edgcpfe --g++ --gnu_version 40201 ";
                   }
                frontEndCommandLineString += CommandlineProcessing::generateStringFromArgList(inputCommandLine,true,false);
 
-               if ( get_verbose() > 1 )
-                    printf ("frontEndCommandLineString = %s \n",frontEndCommandLineString.c_str());
+               if ( get_verbose() > -1 )
+                    printf ("frontEndCommandLineString = %s \n\n",frontEndCommandLineString.c_str());
 
-               ROSE_ASSERT (!"Should not get here");
-               system(frontEndCommandLineString.c_str());
+            // ROSE_ASSERT (!"Should not get here");
+               int status = system(frontEndCommandLineString.c_str());
 
-            // exit(0);
+               printf ("After calling edgcpfe as a test (status = %d) \n",status);
+               ROSE_ASSERT(status == 0);
+            // ROSE_ASSERT(false);
              }
             else
              {
@@ -5563,8 +5739,10 @@ SgFile::secondaryPassOverSourceFile()
                attachPreprocessingInfo(sourceFile);
 #endif
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
             // Liao, 3/31/2009 Handle OpenMP here to see macro calls within directives
                processOpenMP(sourceFile);
+#endif
 
             // Reset the saved state (might not really be required at this point).
                if (requiresCPP == true)
@@ -5630,7 +5808,9 @@ global_build_classpath()
      }
 
   // Open Fortran Parser (OFP) support (this is the jar file)
-     string ofp_jar_file_name = string("OpenFortranParser-") + StringUtility::numberToString(ROSE_OFP_MAJOR_VERSION_NUMBER) + "." + StringUtility::numberToString(ROSE_OFP_MINOR_VERSION_NUMBER) + "." + StringUtility::numberToString(ROSE_OFP_PATCH_VERSION_NUMBER) + string(".jar");
+  // CER (10/4/2011): Switched to using date-based version for OFP jar file.
+  //
+     string ofp_jar_file_name = string("OpenFortranParser-") + ROSE_OFP_VERSION_STRING + string(".jar");
      string ofp_class_path = "src/3rdPartyLibraries/fortran-parser/" + ofp_jar_file_name;
      classpath += findRoseSupportPathFromBuild(ofp_class_path, string("lib/") + ofp_jar_file_name) + ":";
 
@@ -6415,9 +6595,7 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
      bool syntaxCheckInputCode = (get_skip_syntax_check() == false);
   // printf ("In build_Java_AST(): syntaxCheckInputCode = %s \n",syntaxCheckInputCode ? "true" : "false");
 
-     //if (syntaxCheckInputCode == true)
-     printf ("java unparser: skipping syntax check.\n");
-     if (false)
+     if (syntaxCheckInputCode == true)
         {
        // Introduce tracking of performance of ROSE.
           TimingPerformance timer ("Java syntax checking of input:");
@@ -6471,26 +6649,29 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
                   }
              }
 
-#if 1
-          if ( get_verbose() > 0 )
+#if 0
+          if (get_verbose() > 2)
              {
-               printf ("Checking syntax of input program using gfortran: syntaxCheckingCommandline = %s \n",CommandlineProcessing::generateStringFromArgList(javaCommandLine,false,false).c_str());
+               printf ("Checking syntax of input program using javac: syntaxCheckingCommandline = %s \n",CommandlineProcessing::generateStringFromArgList(javaCommandLine,false,false).c_str());
              }
 #endif
        // Call the OS with the commandline defined by: syntaxCheckingCommandline
           javaCommandLine.push_back(get_sourceFileNameWithPath());
 
        // At this point we have the full command line with the source file name
-          if ( get_verbose() > 0 )
+          if (get_verbose() > 1)
              {
-               printf ("Checking syntax of input program using gfortran: syntaxCheckingCommandline = %s \n",CommandlineProcessing::generateStringFromArgList(javaCommandLine,false,false).c_str());
+               printf ("Checking syntax of input program using javac: syntaxCheckingCommandline = %s \n",CommandlineProcessing::generateStringFromArgList(javaCommandLine,false,false).c_str());
              }
 
           int returnValueForSyntaxCheckUsingBackendCompiler = 0;
+
+// Note the both the Fortran and Java support require the Jave JVM support (which is what USE_GFORTRAN_IN_ROSE implies).
 #if USE_GFORTRAN_IN_ROSE
           returnValueForSyntaxCheckUsingBackendCompiler = systemFromVector (javaCommandLine);
 #else
-          printf ("backend java compiler (javac) unavailable ... (not an error) \n");
+       // ROSE can be configured withouth Java support, in which case it is not an error to avoid the syntax checking of a java file.
+          printf ("backend java compiler (javac) unavailable ... (not an error: ROSE has been configured this way) \n");
 #endif
 
        // Check that there are no errors, I think that warnings are ignored!
@@ -6620,7 +6801,6 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
      frontEndCommandLine.push_back(".");
 #endif
 
-#if 1
   // DQ (4/1/2011): Added ecj option handling (similar to how EDG option handling is supported).
   // This allows ECJ specific option to be set on the command line for ROSE translators.
 
@@ -6633,6 +6813,18 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
   // Resets modifiedArgc and allocates memory to modifiedArgv
      Rose_STL_Container<string> ecjOptionList = CommandlineProcessing::generateOptionList (argv,"-ecj:");
      CommandlineProcessing::addListToCommandLine(frontEndCommandLine,"-",ecjOptionList);
+
+  // Test for explicit specification of support for Java version number.
+     bool redundantVersionSpecification = false;
+     if ( (find(ecjOptionList.begin(),ecjOptionList.end(),"1.3") != ecjOptionList.end()) ||
+          (find(ecjOptionList.begin(),ecjOptionList.end(),"1.4") != ecjOptionList.end()) ||
+          (find(ecjOptionList.begin(),ecjOptionList.end(),"1.5") != ecjOptionList.end()) ||
+          (find(ecjOptionList.begin(),ecjOptionList.end(),"1.6") != ecjOptionList.end()) ||
+          (find(ecjOptionList.begin(),ecjOptionList.end(),"1.7") != ecjOptionList.end()) )
+        {
+       // If any of these were specified explicitly then don't set the default version on the ECJ command line redundantly (an error detected by ECJ).
+          redundantVersionSpecification = true;
+        }
 
   // *******************************************************************
   // Handle general ecj options (--xxx)
@@ -6659,7 +6851,15 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
   // Handle ecj options taking a parameter (string or integer)
      ecjOptionList = CommandlineProcessing::generateOptionWithNameParameterList (argv,"--ecj_parameter:");
      CommandlineProcessing::addListToCommandLine(frontEndCommandLine,"--",ecjOptionList);
-#endif
+
+  // Set the default Java version to be supported in ROSE:
+  // DQ (8/20/2011): Make the default for ROSE to use Java version 1.6 since our syntax checking
+  // and backend compiler is using javac 1.6 (thought this could be upgraded to 1.7 at any point).
+  // Since the langauge does not change between 1.5 and 1.7, this should not be an issue for ROSE.
+     if (redundantVersionSpecification == false)
+        {
+          frontEndCommandLine.push_back("-1.6");
+        }
 
   // Java does not use include files, so we can enforce this.
      ROSE_ASSERT(get_project()->get_includeDirectorySpecifierList().empty() == true);
@@ -6698,9 +6898,6 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
      printf ("To enable the use of Fortran support in ROSE don't use --enable-ssl on configure command line. \n");
      printf ("********************************************************************************************** \n");
 #else
-
-  // frontendErrorLevel = openFortranParser_main (numberOfCommandLineArguments, inputCommandLine);
-  // int frontendErrorLevel = openFortranParser_main (openFortranParser_argc, openFortranParser_argv);
      int frontendErrorLevel = openJavaParser_main (openJavaParser_argc, openJavaParser_argv);
 #endif
 
@@ -7011,12 +7208,12 @@ SgBinaryComposite::buildAsmAST(string executableFileName)
  *    - optionally disassembles instructions (SgAsmInterpretation nodes) */
 int
 SgBinaryComposite::buildAST(vector<string> /*argv*/, vector<string> /*inputCommandLine*/)
-{
+   {
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
     /* Parse the specified binary file to create the AST. Do not disassemble instructions yet. If the file is dynamically
      * linked then optionally load (i.e., parse the container, map sections into process address space, and perform relocation
      * fixups) all dependencies also.  See the BinaryLoader class for details. */
-    if (get_isLibraryArchive()) {
+     if (get_isLibraryArchive()) {
         ROSE_ASSERT(get_libraryArchiveObjectFileNameList().empty() == false);
         ROSE_ASSERT(get_libraryArchiveObjectFileNameList().empty() == (get_isLibraryArchive() == false));
 
@@ -7043,9 +7240,10 @@ SgBinaryComposite::buildAST(vector<string> /*argv*/, vector<string> /*inputComma
     // DQ (1/22/2008): The generated unparsed assemble code can not currently be compiled because the
     // addresses are unparsed (see Jeremiah for details).
     // Skip running gnu assemble on the output since we include text that would make this a problem.
-    if (get_verbose() > 1)
-        printf("set_skipfinalCompileStep(true) because we are on a binary '%s'\n", this->get_sourceFileNameWithoutPath().c_str());
-    this->set_skipfinalCompileStep(true);
+     if (get_verbose() > 1)
+          printf("set_skipfinalCompileStep(true) because we are on a binary '%s'\n", this->get_sourceFileNameWithoutPath().c_str());
+
+     this->set_skipfinalCompileStep(true);
 
     // This is now done below in the Secondary file processing phase.
     // Generate the ELF executable format structure into the AST
@@ -7055,9 +7253,9 @@ SgBinaryComposite::buildAST(vector<string> /*argv*/, vector<string> /*inputComma
      ROSE_ASSERT(false);
 #endif
 
-    int frontendErrorLevel = 0;
-    return frontendErrorLevel;
-}
+     int frontendErrorLevel = 0;
+     return frontendErrorLevel;
+   }
 
 
 #if 0
@@ -7244,6 +7442,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
      printf ("C++ compiler              = %s \n",BACKEND_CXX_COMPILER_NAME_WITH_PATH);
      printf ("Fortran compiler          = %s \n",BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH);
      printf ("Java compiler             = %s \n",BACKEND_JAVA_COMPILER_NAME_WITH_PATH);
+     printf ("Python interpreter        = %s \n",BACKEND_PYTHON_INTERPRETER_NAME_WITH_PATH);
      printf ("get_C_only()              = %s \n",(get_C_only() == true) ? "true" : "false");
      printf ("get_C99_only()            = %s \n",(get_C99_only() == true) ? "true" : "false");
      printf ("get_Cxx_only()            = %s \n",(get_Cxx_only() == true) ? "true" : "false");
@@ -7254,6 +7453,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
      printf ("get_F2003_only()          = %s \n",(get_F2003_only() == true) ? "true" : "false");
      printf ("get_CoArrayFortran_only() = %s \n",(get_CoArrayFortran_only() == true) ? "true" : "false");
      printf ("get_Java_only()           = %s \n",(get_Java_only() == true) ? "true" : "false");
+     printf ("get_Python_only()         = %s \n",(get_Python_only() == true) ? "true" : "false");
 #endif
 
   // DQ (9/10/2006): We now explicitly store the C and C++ compiler names with
@@ -7316,10 +7516,8 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                        }
                   }
              }
-            else
+            else if (get_Java_only() == true)
              {
-               if (get_Java_only() == true)
-                  {
                  // compilerNameString = "java ";
                  // compilerNameString[0] = ROSE_GNU_JAVA_PATH;
                     compilerNameString[0] = BACKEND_JAVA_COMPILER_NAME_WITH_PATH;
@@ -7334,7 +7532,10 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                     compilerNameString.push_back("-d");
                  // compilerNameString.push_back(".");
                     compilerNameString.push_back(currentDirectory);
-                  }
+             }
+            else if (get_Python_only() == true)
+             {
+                    compilerNameString[0] = BACKEND_PYTHON_INTERPRETER_NAME_WITH_PATH;
              }
         }
 
@@ -7389,7 +7590,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
   // printf ("In buildCompilerCommandLineOptions(): currentDirectory = %s \n",currentDirectory);
 
-     if (get_Java_only() == false)
+     if (get_Java_only() == false && get_Python_only() == false)
         {
        // specify compilation only option (new style command line processing)
           if ( CommandlineProcessing::isOption(argv,"-","c",false) == true )
@@ -7579,7 +7780,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 #endif
 
   // DQ (4/2/2011): Java does not have -I as an accepted option.
-     if (get_Java_only() == false)
+     if (get_Java_only() == false && get_Python_only() == false)
         {
   // DQ (12/8/2004): Add -Ipath option so that source file's directory will be searched for any 
   // possible headers.  This is especially important when we are compiling the generated file
@@ -7672,7 +7873,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
        // DQ (4/2/2011): Java does not have -o as an accepted option, though the "-d <dir>" can be used to specify where class files are put.
        // Currently we explicitly output "-d ." so that generated clas files will be put into the current directory (build tree), but this
        // is not standard semantics for Java (though it makes the Java support in ROSE consistant with other languages supported in ROSE).
-          if (get_Java_only() == false)
+          if (get_Java_only() == false && get_Python_only() == false)
              {
             // DQ (7/14/2004): Suggested fix from Andreas, make the object file name explicit
                if (objectNameSpecified == false)
@@ -7690,7 +7891,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
        // when the original command line is to generate the final executable.
        // We generate the final executable at the SgProject level from object files of each source file
 
-          if (get_Java_only() == false)
+          if (get_Java_only() == false && get_Python_only() == false)
              {
             // cout<<"turn on compilation only at the file compilation level"<<endl;
                compilerNameString.push_back("-c");
@@ -7864,7 +8065,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
             // I need the exact command line used to compile the generate code with the backendcompiler (so that I can reuse it to test the generated code).
                printf ("SgFile::compileOutput(): compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
              }
-
+#if 0
        // Call the backend compiler. For Fortran inputs, if ROSE is configured with Java this can cause the backend fortran compiler to be called.
        // driscoll6 (8/11/11) debugging java backend
           if (get_Java_only() == true) {
@@ -7873,6 +8074,9 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
           } else {
               returnValueForCompiler = systemFromVector (compilerNameString);
           }
+#else
+          returnValueForCompiler = systemFromVector (compilerNameString);
+#endif
         }
        else
         {
@@ -8059,7 +8263,7 @@ SgProject::compileOutput()
              }
 
        // case 3: linking at the project level (but Java codes should never be linked).
-          if (get_Java_only() == false)
+          if (get_Java_only() == false && get_Python_only() == false)
              {
             // Liao, 11/19/2009, 
             // I really want to just move the SgFile::compileOutput() to SgProject::compileOutput() 
@@ -8439,8 +8643,9 @@ SgFile::usage ( int status )
 "                             when using gfortran versions greater than 4.1)\n"
 "     -rose:relax_syntax_check skip Fortran syntax checking (required for some F90 code\n"
 "                             when using gfortran based syntax checking)\n"
-"     -rose:skip_rose         process command line and call backend directly,\n"
-"                             skipping all ROSE-specific processing\n"
+"     -rose:skip_translation_from_edg_ast_to_rose_ast\n"
+"                             skip the translation of the EDG AST into the ROSE AST\n"
+"                             (an SgProject, SgFile, and empty SgGlobal will be constructed)\n"
 "     -rose:skip_transformation\n"
 "                             read input file and skip all transformations\n"
 "     -rose:skip_unparse      read and process input file but skip generation of\n"
@@ -8563,7 +8768,7 @@ SgFile::usage ( int status )
 "                             the search method should be added ('+') or removed ('-')\n"
 "                             from the set. The qualifier '=' acts like '+' but first\n"
 "                             clears the set.  The words are the lower-case versions of\n"
-"                             most of the SgAsmFunctionDeclaration::FunctionReason\n"
+"                             most of the SgAsmFunction::FunctionReason\n"
 "                             enumerated constants without the leading \"FUNC_\" (see\n"
 "                             doxygen documentation for the complete list and and their\n"
 "                             meanings).   An integer (decimal, octal, or hexadecimal using\n"
@@ -8623,6 +8828,15 @@ SgFile::usage ( int status )
 "                             Note that the folder must be empty (or does not exist).\n"
 "                             If not specified, the default relative location _rose_ \n"
 "                             is used.\n"                  
+"\n"
+"Debugging options:\n"
+"     -rose:detect_dangling_pointers LEVEL \n"
+"                             detects references to previously deleted IR nodes in the AST\n"
+"                             (part of AST consistancy tests, default is false since some codes fail this test)\n"
+"                             LEVEL is one of:\n"
+"                               0: off (does not issue warning)\n"
+"                               1: on (issues warning with information)\n"
+"                               2: on (issues error and exists)\n"
 "\n"
 "Testing Options:\n"
 "     -rose:negative_test     test ROSE using input that is expected to fail\n"

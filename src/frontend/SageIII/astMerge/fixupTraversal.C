@@ -303,6 +303,7 @@ FixupSubtreeTraversal::visit ( SgNode* node)
                   {
                  // Check that the key is in the map
                  // DQ (2/19/2007): This is more efficient since it looks up the element from the map only once.
+#if 1
                     ReplacementMapTraversal::ReplacementMapType::const_iterator replacementMap_it = ft.replacementMap.find(key);
 
                     if (replacementMap_it != ft.replacementMap.end())
@@ -335,6 +336,7 @@ FixupSubtreeTraversal::visit ( SgNode* node)
                          if (traceReplacement == true)
                               printf ("replacementMap_it == replacementMap.end() \n");
                        }
+#endif
                   }
                  else
                   {

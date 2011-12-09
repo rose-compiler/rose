@@ -840,7 +840,7 @@ ConstantFoldingTraversal::evaluateSynthesizedAttribute (
                                  {
                                    SgIntVal* integerValue = isSgIntVal(valueExpression);
                                    int originalValue = integerValue->get_value();
-
+#if 0
                                 // Check if we have a constant folded value computed at a child node (synthesized attribute).
                                    SgValueExp* constantValueExp = synthesizedAttributeList[SgValueExp_originalExpressionTree].newValueExp;
                                    if (constantValueExp != NULL)
@@ -862,6 +862,10 @@ ConstantFoldingTraversal::evaluateSynthesizedAttribute (
                                              valueExpression->set_originalExpressionTree(NULL);
                                            }
                                       }
+#else
+                                   printf ("Warning: originalExpressionTree is no longer a part of the AST traversal (must be accessed explicitly). code in constant folding is disabled. \n");
+                                   ROSE_ASSERT(false);
+#endif
                                  }
 
                               default:

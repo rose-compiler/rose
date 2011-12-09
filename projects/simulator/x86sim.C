@@ -72,7 +72,7 @@ main(int argc, char *argv[], char *envp[])
 
     /* Suck out any command-line switches that the tool recognizes.  Leave the others for processing by the RSIM_Simulator
      * class. */
-    bool do_disassemble_at_oep;
+    bool do_disassemble_at_oep = false;
     for (int i=1; i<argc; i++) {
         bool parsed = false;
         if (!strncmp(argv[i], "--disassemble=", 14)) {
@@ -113,41 +113,39 @@ main(int argc, char *argv[], char *envp[])
         sim.get_callbacks().add_insn_callback(RSIM_Callbacks::BEFORE, new DisassembleAtAddress);
     if (do_disassemble_at_coredump)
         sim.get_callbacks().add_process_callback(RSIM_Callbacks::BEFORE, new DisassembleAtCoreDump);
-                
+
+    sim.get_callbacks().add_signal_callback(RSIM_Callbacks::AFTER, new RSIM_Tools::SignalStackTrace);
         
-            
+        
+#if 0
+    {
+        char **p = envp;
+        while (*p) ++p;
+        for (uint64_t *av=(uint64_t*)(p+1); 0!=*av; av+=2) {
+            if (33==av[0]) {
+                void *sysinfo_ehdr = (void*)(av[1]);
+                std::string vdso_name_temp = "x86sim.vdso";
+                int fd = open(vdso_name_temp.c_str(), O_CREAT|O_EXCL|O_RDWR, 0666);
+                if (fd>=0) {
+                    write(fd, sysinfo_ehdr, 4096);
+                    close(fd);
+                    fprintf(stderr, "%s: saved vdso in %s\n", argv[0], vdso_name_temp.c_str());
+                }
+                break;
+            }
+        }
+    }
+#endif
+
+    
+    
 
 
 
 
     /***************************************************************************************************************************/
-#   if 0 /* EXAMPLE: If you change this then also update the example text in RSIM_Callbacks.h */
-    {
-        /* This example depends on the previous one, which called RSIM_Process::disassemble() */
-        class ShowFunction: public RSIM_Callbacks::InsnCallback {
-        public:
-            // Share a single callback among the simulator, the process, and all threads.
-            virtual ShowFunction *clone() { return this; }
-
-            // The actual callback.
-            virtual bool operator()(bool prev, const Args &args) {
-                SgAsmBlock *basic_block = isSgAsmBlock(args.insn->get_parent());
-                SgAsmFunctionDeclaration *func = basic_block ?
-                                                 SageInterface::getEnclosingNode<SgAsmFunctionDeclaration>(basic_block) :
-                                                 NULL;
-                if (func && func->get_name()!=name) {
-                    name = func->get_name();
-                    args.thread->tracing(TRACE_MISC)->mesg("in function \"%s\"", name.c_str());
-                }
-                return prev;
-            }
-
-        private:
-            std::string name;
-        };
-
-        sim.get_callbacks().add_insn_callback(RSIM_Callbacks::BEFORE, new ShowFunction);
-    }
+#   if 0 /* EXAMPLE: report function names. */
+    sim.get_callbacks().add_insn_callback(RSIM_Callbacks::BEFORE, new FunctionReporter);
 #   endif
 
     /***************************************************************************************************************************/
@@ -220,12 +218,28 @@ main(int argc, char *argv[], char *envp[])
 #   if 0 /* EXAMPLE: Data injection */
 #   endif
 
+    /***************************************************************************************************************************/
+#   if 1 /* EXAMPLE: Showing the current memory map when the specimen is about to dump core. */
+    {
+        struct ShowMmapAtCoredump: public RSIM_Callbacks::ProcessCallback {
+            virtual ShowMmapAtCoredump *clone() { return this; }
+            virtual bool operator()(bool enabled, const Args &args) {
+                if (args.reason==RSIM_Callbacks::ProcessCallback::COREDUMP) {
+                    RTS_Message m(stderr, NULL);
+                    std::string title = "ShowMmapAtCoreDump triggered for process" + StringUtility::numberToString(getpid());
+                    args.process->mem_showmap(&m, title.c_str(), "  ");
+                }
+                return enabled;
+            }
+        };
+        sim.install_callback(new ShowMmapAtCoredump);
+    }
+#endif
 
-
-
-
-
-
+    /***************************************************************************************************************************/
+#   if 1 /* Example: providing implementation for instructions not recognized by ROSE proper. */
+    sim.install_callback(new RSIM_Tools::UnhandledInstruction);
+#   endif
 
     /***************************************************************************************************************************
      *                                  The main program...

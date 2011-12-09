@@ -40,7 +40,6 @@ main(int argc, char *argv[])
     /* Calculate the control flow graph over the entire interpretation. */
     typedef BinaryAnalysis::ControlFlow::Graph CFG;
     typedef boost::graph_traits<CFG>::vertex_descriptor CFG_Vertex;
-    CFG cfg = BinaryAnalysis::ControlFlow().build_cfg_from_ast<CFG>(interp);
 
     /* Calculate immediate dominator graph from the control flow graph. Do this for each function. */
     if (algorithm=="A") {
@@ -50,8 +49,8 @@ main(int argc, char *argv[])
             int counter;
             TA(): counter(0) {}
             void visit(SgNode *node) {
-                SgAsmFunctionDeclaration *func = isSgAsmFunctionDeclaration(node);
-                if (func) {
+                SgAsmFunction *func = isSgAsmFunction(node);
+                if (func && 0==(func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS)) {
                     std::cout <<"test A in function <" <<func->get_name() <<">"
                               <<" at " <<StringUtility::addrToString(func->get_entry_va()) <<"\n";
                     CFG cfg = BinaryAnalysis::ControlFlow().build_cfg_from_ast<CFG>(func);
@@ -77,8 +76,8 @@ main(int argc, char *argv[])
             int counter;
             TB(): counter(0) {}
             void visit(SgNode *node) {
-                SgAsmFunctionDeclaration *func = isSgAsmFunctionDeclaration(node);
-                if (func) {
+                SgAsmFunction *func = isSgAsmFunction(node);
+                if (func && 0==(func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS)) {
                     std::cout <<"test B in function <" <<func->get_name() <<">"
                               <<" at " <<StringUtility::addrToString(func->get_entry_va()) <<"\n";
                     CFG cfg = BinaryAnalysis::ControlFlow().build_cfg_from_ast<CFG>(func);
@@ -104,8 +103,8 @@ main(int argc, char *argv[])
             int counter;
             TC(): counter(0) {}
             void visit(SgNode *node) {
-                SgAsmFunctionDeclaration *func = isSgAsmFunctionDeclaration(node);
-                if (func) {
+                SgAsmFunction *func = isSgAsmFunction(node);
+                if (func && 0==(func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS)) {
                     std::cout <<"test C in function <" <<func->get_name() <<">"
                               <<" at " <<StringUtility::addrToString(func->get_entry_va()) <<"\n";
                     CFG cfg = BinaryAnalysis::ControlFlow().build_cfg_from_ast<CFG>(func);
@@ -131,8 +130,8 @@ main(int argc, char *argv[])
             int counter;
             TD(): counter(0) {}
             void visit(SgNode *node) {
-                SgAsmFunctionDeclaration *func = isSgAsmFunctionDeclaration(node);
-                if (func) {
+                SgAsmFunction *func = isSgAsmFunction(node);
+                if (func && 0==(func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS)) {
                     std::cout <<"test D in function <" <<func->get_name() <<">"
                               <<" at " <<StringUtility::addrToString(func->get_entry_va()) <<"\n";
                     CFG cfg = BinaryAnalysis::ControlFlow().build_cfg_from_ast<CFG>(func);

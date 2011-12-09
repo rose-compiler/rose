@@ -25,16 +25,16 @@ class Schedule {
 		PolyhedricAnnotation::PolyhedralProgram<Function, Expression, VariableLBL> & p_polyhedral_program;
 		
 		size_t p_dim;
-		std::map<Expression *, std::vector<LinearExpression> > p_schedule;
+		std::map<Expression *, std::vector<LinearExpression_ppl> > p_schedule;
 		size_t p_memory_size;
 	public:
 		Schedule(PolyhedricAnnotation::PolyhedralProgram<Function, Expression, VariableLBL> & polyhedral_program, size_t dim);
 		
 		size_t getDimension() const;
 		
-		std::vector<LinearExpression> & setSchedule(size_t expression);
+		std::vector<LinearExpression_ppl> & setSchedule(size_t expression);
 		
-		const std::vector<LinearExpression> & getSchedule(size_t expression) const;
+		const std::vector<LinearExpression_ppl> & getSchedule(size_t expression) const;
 		
 		Function * getFunction() const;
 		const PolyhedricAnnotation::PolyhedralProgram<Function, Expression, VariableLBL> & getPolyhedralProgram() const;

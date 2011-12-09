@@ -48,7 +48,7 @@ RoseBin_GMLGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow,bool forwa
     SgGraphNode* node = isSgGraphNode(itn2->second);
     string hex_address =node->get_name();
     SgNode* internal = node->get_SgNode();
-    SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(internal);
+    SgAsmFunction* func = isSgAsmFunction(internal);
     if (func) {
       vector<SgNode*> list;
       FindInstructionsVisitorx86 vis;
@@ -107,7 +107,7 @@ RoseBin_GMLGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow,bool forwa
     SgGraphNode* node = isSgGraphNode(itn->second);
     string hex_address = node->get_name();
     SgNode* internal = node->get_SgNode();
-    SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(internal);
+    SgAsmFunction* func = isSgAsmFunction(internal);
     string text="";
     // specifies that this node has no destination address
     nodest_jmp = false;
@@ -171,11 +171,11 @@ RoseBin_GMLGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow,bool forwa
     } /*not a func*/ else {
       SgAsmx86Instruction* bin_inst = isSgAsmx86Instruction(internal);
       //cerr << " else part " << endl;
-      SgAsmFunctionDeclaration* funcDecl_parent = NULL;
+      SgAsmFunction* funcDecl_parent = NULL;
       if (bin_inst) {
-        funcDecl_parent = isSgAsmFunctionDeclaration(bin_inst->get_parent());
+        funcDecl_parent = isSgAsmFunction(bin_inst->get_parent());
         if (funcDecl_parent==NULL)
-          funcDecl_parent = isSgAsmFunctionDeclaration(bin_inst->get_parent()->get_parent());
+          funcDecl_parent = isSgAsmFunction(bin_inst->get_parent()->get_parent());
       }
       if (funcDecl_parent==NULL) {
         cerr << " ERROR : printNodes preparation . No parent found for node : " << bin_inst->class_name() <<
@@ -186,7 +186,7 @@ RoseBin_GMLGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow,bool forwa
         cout << " GMLGraph:: printing GML Nodes : " << pos << endl;
       string name = getInternalNodes(node, forward_analysis,bin_inst);
       int parent=0;
-      map <SgAsmFunctionDeclaration*, int>::iterator its = funcMap.find(funcDecl_parent);
+      map <SgAsmFunction*, int>::iterator its = funcMap.find(funcDecl_parent);
       if (its!=funcMap.end())
         parent = funcMap[funcDecl_parent];
       if (parent==0)
@@ -488,7 +488,7 @@ void RoseBin_GMLGraph::printEdges( VirtualBinCFG::AuxiliaryInformation* info, bo
       // skip the function declaration edges for now
       //      bool blankOutput=false;
       //if (skipFunctions)
-      //if (isSgAsmFunctionDeclaration(binStat_s))
+      //if (isSgAsmFunction(binStat_s))
       //  blankOutput=true;
       if (skipInternalEdges) {
         SgAsmx86Instruction* contrl = isSgAsmx86Instruction(source->get_SgNode());

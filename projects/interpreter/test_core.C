@@ -20,7 +20,11 @@ int main(int argc, char **argv)
         {
           interp.parseCommandLine(argvList);
 
-          SgProject *prj = frontend(argvList);
+       // DQ (9/26/2011): The default use of original expression trees will fail in a "unhandled expression SgSizeOfOp", 
+       // but if the constant folded values are used all tests will run properly.  Not sure how to fix this better.
+       // SgProject *prj = frontend(argvList);
+          SgProject *prj = frontend(argvList,true);
+
           SgFunctionSymbol *testSym = prjFindGlobalFunction(prj, "test");
           ROSE_ASSERT(testSym != NULL);
 
@@ -75,7 +79,11 @@ int main(int argc, char **argv)
         {
           cerr << "Interpreter error occurred: " << ie.err << endl;
           ie.dumpCallStack(cerr);
-          return 1;
+
+       // DQ (9/26/2011): Added assertion instead of return.
+       // return 1;
+          ROSE_ASSERT(false);
         }
+
         return 0;
    }

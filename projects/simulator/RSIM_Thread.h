@@ -44,10 +44,10 @@ public:
     /** Main loop. This loop simulates a single specimen thread and returns when the simulated thread exits. */
     void *main();
 
-    /** The global mutex for instruction simulation. */
-    static RTS_mutex_t insn_mutex;
-
-
+    /** Indicates whether the instruction semaphore was posted.  If an instruction needs to post the insn_semaphore, then it
+     *  can do so only if insn_semaphore_posted is clear, and it must set insn_semaphore_posted.  The insn_semaphore_posted is
+     *  part of RSIM_Thread because each simulator thread must have its own copy. */
+    bool insn_semaphore_posted;
 
     /**************************************************************************************************************************
      *                                  Thread simulation (specimen threads)
@@ -108,9 +108,6 @@ public:
      *  into the RSIM_Threads tls_array, depending on the value of @p idx. */
     user_desc_32 *gdt_entry(int idx);
 
-    /** Wake (signal) a futex. Returns the number of processes woken up on success, negative error number on failure. */
-    int futex_wake(uint32_t va);
-
     /** Traverse the robust futex list and handle futex death for each item on the list. See the Linux version of this function
      *  for details. */
     int exit_robust_list();
@@ -121,6 +118,10 @@ public:
 
     /** Simulate thread exit. Return values is that which would be returned as the status for waitpid. */
     int sys_exit(const RSIM_Process::Exit &e);
+
+    /** Performs the clear_child_tid actions. Namely, writes zero to the specified address and wakes the futex at that
+     *  address.  This should be called when the child exits for any reason, or when the child calls exec. */
+    void do_clear_child_tid();
 
 
 
@@ -142,7 +143,6 @@ private:
     RTS_Message *trace_mesg[TRACE_NFACILITIES];         /**< Array indexed by TraceFacility */
     struct timeval last_report;                         /**< Time of last progress report for TRACE_PROGRESS */
     double report_interval;                             /**< Minimum seconds between progress reports for TRACE_PROGRESS */
-    RSIM_Callbacks callbacks;                           /**< Callbacks per thread */
 
     /** Return a string identifying the thread and time called. */
     std::string id();
@@ -162,9 +162,20 @@ public:
     /** Print a progress report if progress reporting is enabled and enough time has elapsed since the previous report. */
     void report_progress_maybe();
 
-    /** Prints information about stack frames. */
-    void report_stack_frames(RTS_Message*);
+    /** Prints information about stack frames.  The first line of output will include the optional title string (followed by a
+     *  line feed) or the string "stack frames:".  The stack is unwound beginning with the current EIP, and using the EBP
+     *  register to locate both the next EBP and the return address.  If @p bp_not_saved is true, then the return address of
+     *  the inner-most function is assumed to be on the top of the stack (ss:[esp]), as is the case immediately after a CALL
+     *  instruction before the called function has a chance to "PUSH EBP; MOV EBP, ESP". */
+    void report_stack_frames(RTS_Message*, const std::string &title="", bool bp_not_saved=false);
 
+    /**************************************************************************************************************************
+     *                                  Callbacks
+     **************************************************************************************************************************/
+private:
+    RSIM_Callbacks callbacks;                           /**< Callbacks per thread */
+
+public:
     /** Obtain the set of callbacks for this object.
      *
      *  @{ */
@@ -183,6 +194,34 @@ public:
     void set_callbacks(const RSIM_Callbacks &cb) {
         callbacks = cb;
     }
+
+    /** Install a callback object.
+     *
+     *  This is just a convenient way of installing a callback object.  It appends it to the BEFORE slot of the appropriate
+     *  queue.
+     *
+     *  @{ */  // ******* Similar functions in RSIM_Simulator and RSIM_Process ******
+    void install_callback(RSIM_Callbacks::InsnCallback *cb) {
+        callbacks.add_insn_callback(RSIM_Callbacks::BEFORE, cb);
+    }
+    void install_callback(RSIM_Callbacks::MemoryCallback *cb) {
+        callbacks.add_memory_callback(RSIM_Callbacks::BEFORE, cb);
+    }
+    void install_callback(RSIM_Callbacks::SyscallCallback *cb) {
+        callbacks.add_syscall_callback(RSIM_Callbacks::BEFORE, cb);
+    }
+    void install_callback(RSIM_Callbacks::SignalCallback *cb) {
+        callbacks.add_signal_callback(RSIM_Callbacks::BEFORE, cb);
+    }
+    void install_callback(RSIM_Callbacks::ThreadCallback *cb) {
+        callbacks.add_thread_callback(RSIM_Callbacks::BEFORE, cb);
+    }
+    void install_callback(RSIM_Callbacks::ProcessCallback *cb) {
+        callbacks.add_process_callback(RSIM_Callbacks::BEFORE, cb);
+    }
+    /** @} */
+
+
 
     /**************************************************************************************************************************
      *                                  System call simulation
@@ -379,6 +418,50 @@ public:
     int sys_sigaltstack(const stack_32 *in, stack_32 *out);
     
 
+    /**************************************************************************************************************************
+     *                                  Futex interface
+     **************************************************************************************************************************/
+public:
+    
+    /** Wait for a futex.  Verifies that the aligned memory at @p va contains the value @p oldval and sleeps, waiting
+     *  sys_futex_wake on this address.  Returns zero on success; negative error number on failure.  See manpage futex(2) for
+     *  details about the return value, although the return values here are negative error numbers rather than -1 with errno
+     *  set.
+     *
+     *  The @p bitset value is a bit vector added to the wait queue.  When waking threads that are blocked, we wake only those
+     *  threads where the intersection of the wait and wake bitsets is non-empty.
+     *
+     *  Thread safety:  This method is thread safe. */
+    int futex_wait(rose_addr_t va, uint32_t oldval, uint32_t bitset=0xffffffff);
+
+    /** Wakes blocked processes.  Wakes at most @p nprocs processes waiting for the specified address.  Returns the number of
+     *  processes woken up; negative error number on failure.
+     *
+     *  The @p bitset value is a bit vector used when waking blocked threads.  Only threads where the intersection of the wait
+     *  bitset with this wake bitset is non-empty are awoken.
+     *
+     *  Thread safety:  This method is thread safe. */
+    int futex_wake(rose_addr_t va, int nprocs, uint32_t bitset=0xffffffff);
+
+private:
+    /** Obtain a key for a futex.  Futex queues are based on real addresses, not process virtual addresses.  In other words,
+     *  the same futex can have two different addresses in two different processes.  In fact, it could even have two or more
+     *  addresses in a single processes.  We can't figure out real addresses, so we map the specimen's futex address into the
+     *  corresponding simulator address.  Then, in order to handle the case where the simulator's address is in shared memory,
+     *  we look up the address in /proc/self/maps, and if we find it belongs to a file, we generate a hash based on the file's
+     *  device and inode numbers and the offset of the futex within the file.
+     *
+     *  Upon successful return, val_ptr will point to the address in simulator memory where the futex value is stored.  This
+     *  means that the specimen futex is required to occupy a single region of memory--it cannot span two different mapped
+     *  regions.
+     *
+     *  Returns zero on failure, non-zero on success.
+     *
+     *  Thread safety:  This method is not thread safe. We are assuming that the calling function has already surrounded this
+     *  call with a mutex that protects this function from being entered concurrently by any other thread of the calling
+     *  process. */
+    rose_addr_t futex_key(rose_addr_t va, uint32_t **val_ptr);
+    
 
     /**************************************************************************************************************************
      *                                  Instruction disassembly

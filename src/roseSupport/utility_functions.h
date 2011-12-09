@@ -16,10 +16,16 @@ std::string version_message();
 // returns a string containing the current version number
 std::string version_number();
 
+//! SCM version identifier for ROSE
+std::string rose_scm_version_id();
+
+//! SCM version date-identifier for ROSE (Unix timestamp)
+time_t rose_scm_version_date();
+
 // Simple interface for ROSE (error codes are in SgProject.frontendErrorCode(), backendErrorCode() )
 // tps : Need to make this function (DLL) public 
-ROSE_DLL_API SgProject* frontend ( int argc, char** argv);
-ROSE_DLL_API SgProject* frontend ( const std::vector<std::string>& argv);
+ROSE_DLL_API SgProject* frontend ( int argc, char** argv, bool frontendConstantFolding = false );
+ROSE_DLL_API SgProject* frontend ( const std::vector<std::string>& argv, bool frontendConstantFolding = false );
 
 // This builds a shell of a frontend SgProject with associated SgFile objects (but with empty 
 // SgGlobal objects) supporting only commandline processing and requiring the frontend to be 
@@ -36,7 +42,7 @@ ROSE_DLL_API int backend ( SgProject* project, UnparseFormatHelp *unparseFormatH
 // DQ (8/24/2009): This backend calls the backend compiler using the original input source file list.
 // This is useful as a test code for testing ROSE for use on projects that target Compass or any
 // other analysis only tool using ROSE. Called in tests/testAnalysis.C for example.
-int backendCompilesUsingOriginalInputFile ( SgProject* project );
+int backendCompilesUsingOriginalInputFile ( SgProject* project, bool compile_with_USE_ROSE_macro = false );
 
 // DQ (2/6/2010): This backend forces all code to be generated but still uses the beakend vendor 
 // compiler to compile the original code.  This is a step between backendUsingOriginalInputFile(),

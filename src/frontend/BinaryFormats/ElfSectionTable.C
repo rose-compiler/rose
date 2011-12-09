@@ -209,7 +209,6 @@ SgAsmElfSectionTable::parse()
                         break;
                     case SgAsmElfSectionTableEntry::SHT_REL: {
                         SgAsmElfSymbolSection *symbols = dynamic_cast<SgAsmElfSymbolSection*>(linked);
-                        ROSE_ASSERT(symbols);
                         SgAsmElfRelocSection *relocsec = new SgAsmElfRelocSection(fhdr, symbols, info_linked);
                         relocsec->set_uses_addend(false);
                         is_parsed[i] = relocsec;
@@ -217,7 +216,6 @@ SgAsmElfSectionTable::parse()
                     }
                     case SgAsmElfSectionTableEntry::SHT_RELA: {
                         SgAsmElfSymbolSection *symbols = dynamic_cast<SgAsmElfSymbolSection*>(linked);
-                        ROSE_ASSERT(symbols);
                         SgAsmElfRelocSection *relocsec = new SgAsmElfRelocSection(fhdr, symbols, info_linked);
                         relocsec->set_uses_addend(true);
                         is_parsed[i] = relocsec;

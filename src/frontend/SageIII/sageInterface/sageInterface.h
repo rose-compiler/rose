@@ -11,15 +11,19 @@ SgFile* determineFileType ( std::vector<std::string> argv, int nextErrorCode, Sg
 SgFile* determineFileType ( std::vector<std::string> argv, int& nextErrorCode, SgProject* project );
 #endif
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 #include "rewrite.h"
+#endif
 
 // DQ (7/20/2008): Added support for unparsing abitrary strings in the unparser.
 #include "astUnparseAttribute.h"
 #include <set>
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 #include "LivenessAnalysis.h"
 #include "abstract_handle.h"
 #include "ClassHierarchyGraph.h"
+#endif
 
 // DQ (8/19/2004): Moved from ROSE/src/midend/astRewriteMechanism/rewrite.h
 //! A global function for getting the string associated with an enum (which is defined in global scope)
@@ -667,10 +671,12 @@ bool isCopyConstructible(SgType* type);
 //! Is a type assignable?  This may not quite work properly.
 bool isAssignable(SgType* type);
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 //! Check if a class type is a pure virtual class. True means that there is at least
 //! one pure virtual function that has not been overridden. 
 //! In the case of an incomplete class type (forward declaration), this function returns false.
 bool isPureVirtualClass(SgType* type, const ClassHierarchyWrapper& classHierarchy);
+#endif
 
 //! Does a type have a trivial (built-in) destructor?
 bool hasTrivialDestructor(SgType* t);
@@ -742,7 +748,7 @@ SgType* getArrayElementType(SgType* t);
 //! Get the element type of an array, pointer or string, or NULL if not applicable
 SgType* getElementType(SgType* t);
 
-//! Check if an expression is an array access. If so, return its name expression and subscripts if requested. Based on AstInterface::IsArrayAccess()
+//! Check if an expression is an array access (SgPntrArrRefExp). If so, return its name expression and subscripts if requested. Users can use convertRefToInitializedName() to get the possible name. It does not check if the expression is a top level SgPntrArrRefExp. 
 bool isArrayReference(SgExpression* ref, SgExpression** arrayNameExp=NULL, std::vector<SgExpression*>** subscripts=NULL);
 
 
@@ -1161,6 +1167,9 @@ SgScopeStatement* getScope(const SgNode* astNode);
 //! Function to delete AST subtree's nodes only, users must take care of any dangling pointers, symbols or types that result.
  void deleteAST(SgNode* node);
 
+//! Special purpose function for deleting AST expression tress containing valid original expression trees in constant folded expressions (for internal use only).
+ void deleteExpressionTreeWithOriginalExpressionSubtrees(SgNode* root);
+
 // DQ (2/25/2009): Added new function to support outliner.
 //! Move statements in first block to the second block (preserves order and rebuilds the symbol table).
  void moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicBlock* targetBlock );
@@ -1373,11 +1382,13 @@ bool isUseByAddressVariableRef(SgVarRefExp* ref);
 //! Collect variable references involving use by address: including &a expression and foo(a) when type2 foo(Type& parameter) in C++
 void collectUseByAddressVariableRefs (const SgStatement* s, std::set<SgVarRefExp* >& varSetB);
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 //!Call liveness analysis on an entire project
 LivenessAnalysis * call_liveness_analysis(SgProject* project, bool debug=false);
 
 //!get liveIn and liveOut variables for a for loop from liveness analysis result liv.
 void getLiveVariables(LivenessAnalysis * liv, SgForStatement* loop, std::set<SgInitializedName*>& liveIns, std::set<SgInitializedName*> & liveOuts);
+#endif
 
 //!Recognize and collect reduction variables and operations within a C/C++ loop, following OpenMP 3.0 specification for allowed reduction variable types and operation types.
 void ReductionRecognition(SgForStatement* loop, std::set< std::pair <SgInitializedName*, VariantT> > & results);

@@ -1,0 +1,240 @@
+Possible Pathways for Windows Dynamic Analysis.
+
+The simulator consists of three big parts:
+
+1. The loader, which finds the executable and copies it into specimen
+   memory, and finds all its dynamic objects (recursively) and copies
+   them into memory, links things together, sets up the rest of the
+   address space (initial stack, heap, thread local storage, etc), and
+   starts execution.  See section "PROGRAM LOADING" below for details.
+
+2. The system call interface.  For every specimen-initiated system
+   call, the simulator needs to collect the call's inputs, compute an
+   answer (possibly by making its own system calls), and store the
+   answer back into the specimen's address space.  System calls tend
+   to have a simpler interface than the standard libraries.  User
+   programs generally invoke functions in the standard library, which
+   then triggers a system call if necessary.  Not all functions make
+   system calls (e.g., fprintf() probably doesn't make a system call
+   every time, while write() probably does).  x86sim simulates each
+   instruction in the library, but not each instruction in the kernel
+   function that implements a system call.
+
+3. Simulated operating system interactions (other than those already
+   described in #1 and #2).  Some interactions with the operating
+   system need to be handled directly by the simulator: specimen
+   address space (registers and memory), thread creation/termination,
+   all aspects of signal handling, process fork() and exec(), probably
+   some I'm not thinking of right now...
+
+
+At this time [May 2011] x86sim can run x86 specimens written for
+32-bit Linux on a Linux 32- or 64-bit host.
+
+There are three main ways to support Windows specimens, and one hybrid.
+
+
+A. Do for Windows exactly what we did for Linux (the three major parts
+   above); the end result will be a simulator that can run 32-bit PE
+   specimens on a Windows platform.
+
+   The biggest drawback is that the Windows system call interface is
+   apparently not well documented. There are good tables that show the
+   syscall names and arguments, but I have yet to find anything that
+   describes in the semantics in the detail necessary to reimplement
+   them in Windows.  Another minor drawback is that the resulting
+   simulator could only run on Windows hosts.
+
+   Any Windows-expert we hire would likely be more familiar with the
+   Windows API (i.e., shared library), than with the actual Windows
+   system calls.
+
+   NOTE: At one point early in implementation of the Linux system
+   calls in x86sim, we simply had the simulator make a C library
+   call. For instance, if the specimen invoked the "write" system
+   call (presumably by the executable calling "write" function in the
+   standard C library, which then made the system call), the simulator
+   called the "write" function with the same arguments and used its
+   return value as the specimen's system call return value.  We might
+   be able to do something similar with Windows, thus using the better
+   documented Windows API rather than the Windows system call
+   interface.   Unfortunately, as we found out for Linux, there's not
+   always a 1:1 correspondence between library functions and system
+   calls.  Take "fstat" for example:  the data structure passed to the
+   C library's "fstat" is different than the data structure passed to
+   the Linux "fstat" system call.  So the simulator really does need
+   to know the system call interface.
+
+B. Use WINE as the specimen.  x86sim might be able to run WINE
+   directly.  In other words, we treat WINE as the specimen to
+   analyze, and as a side effect, the Windows executable is loaded
+   into Linux memory and the Windows API (dynamic library) is replaced
+   by WINE-Lib, which makes Linux system calls.
+
+   The biggest benefit is that x86sim wouldn't actually have any
+   windows-specific code, and emulation of the Windows API is already
+   written by the experts that wrote WINE.
+
+   The biggest drawback is that analysis by x86sim includes WINE and
+   WINE-Lib.
+
+C. Use WINE inside the simulator.  x86sim loads the specimen using the
+   algorithms in WINE (#1 of the three big parts, and this is fairly
+   straight forward), and rather than linking WINE-Lib into the
+   specimen, we treat Windows API calls (the stuff Wine-Lib handles)
+   as if they were a sort of system call (basically, #2 of the bit
+   parts).
+
+   The benefit is that WINE has already done much of the hard work by
+   providing a layer to emulate each Windows API function in terms of
+   Linux system calls.  Another benefit is that the Windows API is
+   better documented than the Windows system calls, and any Windows
+   expert we hire would likely be familiar with this layer.
+
+   The main drawback is that there are more Windows API functions than
+   there are Windows system calls, and the functions have a more
+   complex interface than the system calls.  The complexity is
+   important because x86sim needs to copy data from the specimen and
+   send the answer back to the specimen.
+
+B+C: A hybrid approach tries to combine the best of B with the best of
+   C.
+
+   If we don't want to have to implement Windows API functions in
+   terms of POSIX functions (the main drawback of C), then we must use
+   WINE-Lib in some way.
+
+   If we don't want to implement the interface between the Windows API
+   call in the specimen, and the WINE-Lib linked into the simulator,
+   then we need to link WINE-Lib into the specimen and allow x86sim to
+   simulate its instructions.  This will require us to write a PE
+   loader (parts of which we already have, and parts we can borrow
+   from WINE). (Footnote-1)
+
+   But now we have the main drawback of B: we're simulating WINE-Lib
+   along with the Windows executable.   However, since we wrote the PE
+   loader we presumably know what parts of the specimen address space
+   are WINE-Lib.  We can provide the x86sim users with a Boolean
+   function executingInWineLib() which they can incorporate into their
+   analysis.
+
+   B+C allows us to implement C at a later time if we so choose.  It
+   probably is not possible in general to emulate some of the Windows
+   API in the simulator and allow others to be executed as part of the
+   simulation of WINE-Lib in the specimen.  Any Windows API function
+   that has a side effect visible from another Windows API function
+   probably requires that both functions be emulated in x86sim
+   (directly or via x86sim's WINE-Lib), or both be simulated as part
+   of the specimen's WINE-Lib.
+
+Footnote-1: Instead of writing our own PE loader, we might be able to
+get by with simulating the WINE loader, then performing some analysis
+so figure out where WINE-Lib was loaded.
+
+IMPLEMENTATION PLAN
+===================
+
+1. Implement hybrid B+C with footnote as described above. I.e.,
+   simulate WINE and provide the user with an executingInWineLib()
+   function.
+
+2. Implement C. I.e., replace the simulated WINE-Lib with data
+   marshalling and call WINE-Lib from within the simulator on behalf
+   of the specimen.
+
+3. Port to Windows, replacing calls to WINE-Lib with calls to
+   equivalent Microsoft library functions.
+
+
+PROGRAM LOADING
+===============
+
+This section describes some details about how x86sim loads a Linux
+executable.
+
+x86sim is responsible for loading a program and its associated dynamic
+shared objects (DSOs) into the process memory address space. The
+mapping of ELF and PE are similar in that they both have a table that
+describes where to map certain parts of the executable and DSO files
+into the process memory.  They differ in the format of the table and
+in details about alignment, preferred address, extending to pages
+boundaries, and zero-filling/mapping.
+
+The part of x86sim that's responsible (currently) for loading an ELF
+executable is RSIM_Process::load(). It does this with the following
+algorithm [with notes about what needs to change for Windows]:
+
+  1. Find the executable file by searching the directories
+     specified by the $PATH environment variable, if
+     necessary. [x86sim should use a different mechanism to search for
+     the binary file]
+
+  2. Parse the ELF container by calling ROSE's frontend().  This
+     results in an AST. [No change necessary for PE.]
+
+  3. Choose a file header (ELF has only one; PE has both DOS and PE
+     headers) and record the program entry address. [We currently
+     choose the last interpretation, which will be PE rather than
+     DOS. It would be nice if x86sim provided a mechanism by which the
+     user can choose which interpretation to execute.]
+
+  4. If the ELF executable is dynamically linked, then it will have an
+     ".interp" section with the name of the dynamic linker (such as
+     /lib/ld-linux.so).  In this case, the dynamic linker is parsed
+     and added to the AST, in essence becoming part of the specimen
+     and thereby linking in any necessary DSOs by virtue of being
+     executed by x86sim. [PE dynamic linking is resolved by the kernel
+     rather than a user-mode library, therefore it is x86sim's
+     responsibility to find and parse all the necessary DSOs, adding
+     them to the AST and, in subsequent steps, inserting them into the
+     process memory.]
+
+  5. The parts of the AST (from step 4) are sorted according to their
+     preferred virtual address so that BinaryLoader (step 6) processes
+     them in the correct order. [No change necessary for PE.]
+
+  6. ROSE's BinaryLoader is invoked to map the parts of the AST (step
+     4) into simulated process memory.  The result is a MemoryMap
+     object. No relocation fixups need to be applied since the main
+     executable was mapped at its preferred address and the
+     interpreter (dynamic linker) and VDSO are position
+     independent. [The PE AST may contain DSOs that cannot be mapped
+     at their preferred address due to collisions, in which case one
+     or more need to be relocated and fixups applied. ROSE's
+     BinaryLoader is responsible for relocating, although it will need
+     to be enhanced to handle the PE relocation types. As a first
+     step, we could require that PE DSOs are not in conflict and do
+     not need to have relocation fixups applied.]
+
+  7. A ROSE Disassembler object is created and will be called whenever
+     x68sim needs to parse an instruction from memory. [No change
+     necessary for PE.]
+
+  8. Miscellaneous simulated-OS features are initialized. ELF/Linux
+     initializes the brk and mmap system calls. [Wine/Winelib may need
+     some initializations at this point.]
+
+SYSTEM CALLS
+============
+
+Linux system calls are invoked either by the "INT 80" instruction or
+by the SYSENTER instruction, usually from within the standard C
+library that provides functional wrappers around each system call.
+For instance, the getpid() function defined in libc invokes system
+call number 20 on the x86 architecture (39 on amd64). Linux defines a
+few hundred system calls, most of which take integer arguments, and a
+few of which take pointers to structs. The structs generally do not
+contain further pointers.
+
+FILE NAME MAPPING
+=================
+
+Windows file names don't match Linux file names.  E.g., Linux has no
+drive letters.  The WINE library takes care of the two-way mapping
+between Linux and Windows file names.
+
+SIGNAL HANDLING
+===============
+
+Windows does not use POSIX signals.  WINE-Lib takes care of the
+translation for us (I'm pretty sure).

@@ -7,10 +7,10 @@ public class test2011_42
      public void foo()
         {
           List v;
-          List w = new ArrayList();
+       // List w = new ArrayList();
 
        // Call a member function of List, this is fixed now (but the graph is too large for dot to visualize).
-          w.add("test");
+       // v.add("test");
 
        // Integer i = (Integer)v.get(0); // Run time error
         }

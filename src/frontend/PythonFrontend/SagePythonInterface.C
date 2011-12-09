@@ -316,10 +316,12 @@ sage_buildClassDef(PyObject *self, PyObject *args)
     SgClassDeclaration* sg_class_decl =
         SageBuilder::buildDefiningClassDeclaration(SgName(name), scope);
 
+    SgClassDefinition* sg_class_def = sg_class_decl->get_definition();
     Py_ssize_t basec = PyList_Size(py_bases);
     for (int i = 0; i < basec; i++) {
         PyObject* py_base = PyList_GetItem(py_bases, i);
         SgExpression* sg_base = PyDecapsulate<SgExpression>(py_base);
+        sg_class_def->append_inheritance( new SgExpBaseClass(NULL, true, sg_base) );
     }
 
     if (decoratorList != NULL) {

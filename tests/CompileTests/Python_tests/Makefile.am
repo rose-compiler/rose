@@ -33,10 +33,10 @@ ALL_PYTHON_TESTCODES = \
     test2011_031.py
 
 
-TEST_Objects = $(notdir ${ALL_PYTHON_TESTCODES:.py=.py-o})
+TEST_Objects = ${ALL_PYTHON_TESTCODES:.py=.test}
 
 $(TEST_Objects): ../../testTranslator
-	../../testTranslator $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.py-o=.py) -rose:output $@
+	../../testTranslator $(ROSE_FLAGS) $(srcdir)/$(@:.test=.py) -rose:skipfinalCompileStep
 
 ../../testTranslator:
 	$(MAKE) -C ../.. testTranslator
@@ -49,6 +49,6 @@ check-local:
 	@echo "***********************************************************************************************"
 
 clean-local:
-	rm -f *-o
+	rm -f rose_*.py
 
 EXTRA_DIST = $(ALL_PYTHON_TESTCODES)

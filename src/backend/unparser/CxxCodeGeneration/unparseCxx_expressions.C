@@ -1050,6 +1050,7 @@ Unparse_ExprStmt::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
 
   // SgMemberFunctionDeclaration* mfd  = mfunc_ref->get_symbol_i()->get_declaration();
      SgMemberFunctionDeclaration* mfd  = mfunc_ref->get_symbol()->get_declaration();
+     ROSE_ASSERT (mfd != NULL);
 
   // printf ("mfunc_ref->get_symbol()->get_name() = %s \n",mfunc_ref->get_symbol()->get_name().str());
   // printf ("mfunc_ref->get_symbol()->get_declaration()->get_name() = %s \n",mfunc_ref->get_symbol()->get_declaration()->get_name().str());

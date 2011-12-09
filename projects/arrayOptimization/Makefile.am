@@ -14,7 +14,6 @@ INCLUDES = \
 #     -I$(top_srcdir)/src/midend/astUtil/annotation \
 #     -I$(top_srcdir)/src/midend/programAnalysis \
 #     -I$(top_srcdir)/src/midend/programAnalysis/CFG \
-#     -I$(top_srcdir)/src/midend/programAnalysis/dataflowAnalysis \
 #     -I$(top_srcdir)/src/midend/programAnalysis/valuePropagation \
 #     -I$(top_srcdir)/src/midend/programAnalysis/CFG \
 #     -I$(top_srcdir)/src/midend/loopProcessing/driver \

@@ -50,7 +50,7 @@ YicesSolver::available_linkage() const
 
 /* See YicesSolver.h */
 bool
-YicesSolver::satisfiable(const InsnSemanticsExpr::TreeNode *expr)
+YicesSolver::satisfiable(const std::vector<const InsnSemanticsExpr::TreeNode*> &exprs)
 {
 #ifdef HAVE_LIBYICES
     if (get_linkage() & LM_LIBRARY) {
@@ -68,8 +68,10 @@ YicesSolver::satisfiable(const InsnSemanticsExpr::TreeNode *expr)
 #endif
 
         Definitions defns;
-        ctx_define(expr, &defns);
-        ctx_assert(expr);
+        for (std::vector<const InsnSemanticsExpr::TreeNode*>::const_iterator ei=exprs.begin(); ei!=exprs.end(); ++ei)
+            ctx_define(*ei, &defns);
+        for (std::vector<const InsnSemanticsExpr::TreeNode*>::const_iterator ei=exprs.begin(); ei!=exprs.end(); ++ei)
+            ctx_assert(*ei);
         switch (yices_check(context)) {
             case l_false: return false;
             case l_true:  return true;
@@ -79,7 +81,7 @@ YicesSolver::satisfiable(const InsnSemanticsExpr::TreeNode *expr)
 #endif
 
     ROSE_ASSERT(get_linkage() & LM_EXECUTABLE);
-    return SMTSolver::satisfiable(expr);
+    return SMTSolver::satisfiable(exprs);
 }
 
 
@@ -89,7 +91,7 @@ YicesSolver::get_command(const std::string &config_name)
 {
 #ifdef YICES
     ROSE_ASSERT(get_linkage() & LM_EXECUTABLE);
-    return std::string(YICES) + " -tc " + config_name;
+    return std::string(YICES) + " --evidence --type-check " + config_name;
 #else
     return "false no yices command";
 #endif
@@ -97,18 +99,53 @@ YicesSolver::get_command(const std::string &config_name)
 
 /* See SMTSolver::generate_file() */
 void
-YicesSolver::generate_file(std::ostream &o, const InsnSemanticsExpr::TreeNode *tn, Definitions *defns)
+YicesSolver::generate_file(std::ostream &o, const std::vector<const InsnSemanticsExpr::TreeNode*> &exprs, Definitions *defns)
 {
     ROSE_ASSERT(get_linkage() & LM_EXECUTABLE);
     Definitions *allocated = NULL;
     if (!defns)
         defns = allocated = new Definitions;
 
-    out_define(o, tn, defns);
-    out_assert(o, tn);
+    for (std::vector<const InsnSemanticsExpr::TreeNode*>::const_iterator ei=exprs.begin(); ei!=exprs.end(); ++ei)
+        out_define(o, *ei, defns);
+    for (std::vector<const InsnSemanticsExpr::TreeNode*>::const_iterator ei=exprs.begin(); ei!=exprs.end(); ++ei)
+        out_assert(o, *ei);
     o <<"\n(check)\n";
 
     delete allocated;
+}
+
+/* See SMTSolver::parse_evidence() */
+void
+YicesSolver::parse_evidence()
+{
+    /* Look for lines like "(= v36 0b01101111111111111101011110110100)" */
+    evidence.clear();
+    for (size_t i=0; i<output_text.size(); i++) {
+        const char *s = output_text[i].c_str();
+        if (!strncmp(s, "(= v", 4)) {
+            char *rest;
+            unsigned varnum = strtoul(s+4, &rest, 10);
+            assert(rest-s>4);
+            s = rest;
+            if (!strncmp(s, " 0b", 3)) {
+                uint64_t val = 0;
+                size_t nbits;
+                for (nbits=0; '0'==s[3+nbits] || '1'==s[3+nbits]; nbits++)
+                    val = (val<<1) | ('1'==s[3+nbits]?1:0);
+                evidence[varnum] = std::pair<size_t, uint64_t>(nbits, val);
+            }
+        }
+    }
+}
+
+/* See SMTSolver::get_definition() */
+InsnSemanticsExpr::TreeNode *
+YicesSolver::get_definition(uint64_t varno)
+{
+    if (evidence.find(varno)==evidence.end())
+        return NULL;
+    return InsnSemanticsExpr::LeafNode::create_integer(evidence[varno].first, evidence[varno].second);
 }
 
 /** Traverse an expression and produce Yices "define" statements for variables. */
@@ -137,7 +174,7 @@ YicesSolver::out_assert(std::ostream &o, const InsnSemanticsExpr::TreeNode *tn)
 {
     o <<"(assert ";
     out_expr(o, tn);
-    o <<")";
+    o <<")\n";
 }
 
 /** Output a decimal number. */

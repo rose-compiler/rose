@@ -31,7 +31,7 @@ public:
     virtual MappingContribution align_values(SgAsmGenericSection*, MemoryMap*,
                                              rose_addr_t *malign_lo, rose_addr_t *malign_hi,
                                              rose_addr_t *va, rose_addr_t *mem_size,
-                                             rose_addr_t *offset, rose_addr_t *file_size,
+                                             rose_addr_t *offset, rose_addr_t *file_size, bool *map_private,
                                              rose_addr_t *va_offset, bool *anon_lo, bool *anon_hi, 
                                              ConflictResolution *resolve);
 };

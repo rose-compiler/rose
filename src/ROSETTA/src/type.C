@@ -502,7 +502,9 @@ Grammar::setUpTypes ()
 
      JavaParameterizedType.setFunctionPrototype ("HEADER_JAVA_PARAMETERIZED_TYPE", "../Grammar/Type.code" );
      JavaParameterizedType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
-     JavaParameterizedType.setDataPrototype     ("SgTemplateParameterList*","parameter_list","= NULL",
+     JavaParameterizedType.setDataPrototype     ("SgType*","raw_type","= NULL",
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     JavaParameterizedType.setDataPrototype     ("SgTemplateParameterList*","type_list","= NULL",
                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // TemplateInstantiationType.setFunctionPrototype ("HEADER_TEMPLATE_INSTANTIATION_TYPE", "../Grammar/Type.code" );

@@ -31,13 +31,22 @@ HEADER_INTERPRETATION_PREDECLARATION_START
 #include "MemoryMap.h"
 HEADER_INTERPRETATION_PREDECLARATION_END
 
+HEADER_BINARY_INSTRUCTION_PREDECLARATION_START
+#include "MemoryMap.h"
+HEADER_BINARY_INSTRUCTION_PREDECLARATION_END
+
 HEADER_BINARY_START
 
  /*  This class forms a base class for all of the types represented in the Asm Instruction grammar.
      All Asm Instructions are derived from this class and thus contain the following functionality.
   */
 
-  public:
+  // private:
+     public:
+       // DQ (9/13/2011): This copy constructor was built because static analysis tools (made it private to force compile time error if used).
+          SgAsmNode ( const SgAsmNode & X );
+
+     public:
 
 HEADER_BINARY_END
 
@@ -106,9 +115,19 @@ HEADER_BINARY_INSTRUCTION_START
 		    find_noop_subsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch=false,
 					   bool relax_stack_semantics=false);
 		virtual std::set<rose_addr_t> get_successors(bool* complete); /*subclasses must redefine*/
-		virtual std::set<rose_addr_t> get_successors(const std::vector<SgAsmInstruction*>&, bool *complete);
+		virtual std::set<rose_addr_t> get_successors(const std::vector<SgAsmInstruction*>&,
+							     bool *complete,
+							     MemoryMap *initial_memory=NULL);
+		virtual size_t get_size() const { return p_raw_bytes.size(); } //faster than obj->get_raw_bytes().size()
+		virtual bool is_unknown() const { abort(); } // too bad ROSETTA doesn't allow virtual base classes
 HEADER_BINARY_INSTRUCTION_END
 
+
+
+HEADER_STATIC_DATA_START
+	public:
+		size_t get_size() const { return p_raw_bytes.size(); } //faster than obj->get_raw_bytes().size()
+HEADER_STATIC_DATA_END
 
 
 HEADER_BINARY_FILE_START
@@ -937,10 +956,10 @@ HEADER_GENERIC_SECTION_START
 		SgAsmGenericString *get_name() const;		/** Same as standard ROSETTA accessor */
 		void set_name(SgAsmGenericString *s);		/** Like std accessor but sets parent of 's' */
 
-		/* Convenience functions */
-		ExtentPair get_file_extent() const;		/* Returns get_offset() and get_size() */
-		ExtentPair get_mapped_preferred_extent() const; /* Returns get_mapped_preferred_rva() and get_mapped_size() */
-		bool align();					/* Increase file offset and mapping rva to satisfy constraints */
+                /* Convenience functions */
+                Extent get_file_extent() const;                 /* Returns get_offset() and get_size() */
+                Extent get_mapped_preferred_extent() const;     /* Returns get_mapped_preferred_rva() and get_mapped_size() */
+                bool align();                                   /* Increase file offset and mapping rva to satisfy constraints */
 
 	protected:
 		void ctor(SgAsmGenericFile*, SgAsmGenericHeader*);
@@ -1159,7 +1178,8 @@ HEADER_GENERIC_SYMBOL_START
 			SYM_ARRAY,              /* Array of some other type */
 			SYM_TLS,                /* Thread-local storage */
 			SYM_REGISTER,           /* CPU register value (see Sparc) */
-			SYM_COMMON		/* Common block */
+			SYM_COMMON,		/* Common block */
+			SYM_IFUNC,		/* Indirection function */
 		};
 
 		enum SymbolBinding {
@@ -2347,7 +2367,8 @@ HEADER_ELF_SYMBOL_START
 			STT_SECTION 	= 3,	/* associated with a section */
 			STT_FILE    	= 4,	/* name of a file */
 			STT_COMMON  	= 5,	/* common data object */
-			STT_TLS		= 6	/* thread-local data object */
+			STT_TLS		= 6,	/* thread-local data object */
+			STT_IFUNC	= 10	/* indirect function (function call w/out args results in reloc value) */
 		};
 
 #ifdef _MSC_VER
@@ -3920,7 +3941,10 @@ HEADER_BINARY_X86_INSTRUCTION_START
 		    find_noop_subsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch=false,
 					   bool relax_stack_semantics=false);
 		virtual std::set<rose_addr_t> get_successors(bool* complete);
-		virtual std::set<rose_addr_t> get_successors(const std::vector<SgAsmInstruction*>&, bool* complete);
+		virtual std::set<rose_addr_t> get_successors(const std::vector<SgAsmInstruction*>&,
+							     bool* complete,
+							     MemoryMap *initial_memory=NULL);
+		virtual bool is_unknown() const;
 HEADER_BINARY_X86_INSTRUCTION_END
 
 
@@ -3930,6 +3954,7 @@ HEADER_BINARY_POWERPC_INSTRUCTION_START
 		/* These virtual functions are implemented in DisassemblerPowerpc.C */
 		virtual bool terminatesBasicBlock();
 		virtual std::set<rose_addr_t> get_successors(bool* complete);
+		virtual bool is_unknown() const;
 HEADER_BINARY_POWERPC_INSTRUCTION_END
 
 
@@ -3939,12 +3964,9 @@ HEADER_BINARY_ARM_INSTRUCTION_START
 		/* These virtual functions are implemented in DisassemblerArm.C */
 		virtual bool terminatesBasicBlock();
 		virtual std::set<rose_addr_t> get_successors(bool* complete);
+		virtual bool is_unknown() const;
 HEADER_BINARY_ARM_INSTRUCTION_END
 
-
-
-HEADER_BINARY_DECLARATION_START
-HEADER_BINARY_DECLARATION_END
 
 
 HEADER_BINARY_RET_START
@@ -3977,11 +3999,46 @@ HEADER_BINARY_TARGET_LIST_START
 HEADER_BINARY_TARGET_LIST_END
 
 HEADER_BINARY_BLOCK_START
+	// Please update SgAsmBlock::reason_str() if you change this enum!
+	/** Reasons why a basic block might have been assigned to a function. */
+	enum Reason {
+		BLK_NONE	= 0x00000000,	/**< No particular reason.  Mostly just for initialization. */
+		BLK_ENTRY_POINT	= 0x00010000,	/**< Block is an entry point for the function. */
+		BLK_PADDING	= 0x00020000,	/**< Block is used for padding. */
+		BLK_FRAGMENT	= 0x00080000,	/**< This block created because it seems to belong to the function although
+						 *   CFG traversal did not find it. */
+		BLK_CFGHEAD	= 0x00100000,	/**< Block serves as an explicit starting point for CFG analysis. */
+		BLK_USERDEF	= 0x00200000,	/**< User says block belongs to the function. */
+		BLK_LEFTOVERS	= 0x00400000,	/**< Block is being assigned to a FUNC_LEFTOVERS function because it could
+						 *   not be assigned to any other function. */
+		BLK_JUMPTABLE   = 0x00800000,	/**< Table of code addresses used by indirect branches. */
+		BLK_GRAPH1	= 0x01000000,	/**< Block was added by the main CFG analysis. */
+		BLK_GRAPH2	= 0x02000000,	/**< Block was added by a second pass of CFG analysis. */
+		BLK_GRAPH3	= 0x04000000,	/**< Block was added by a third pass of CFG analysis. */
+		
+		BLK_DEFAULT	= BLK_NONE,	//NO_STRINGIFY
+
+		/*========= Miscellaneous Reasons ===========================================================================
+		 * The first half of the range (1-127, inclusive) is used for algorithms defined by ROSE.  The second half is
+		 * availalble for users to use as they see fit. */
+		BLK_MISCMASK	= 0x000000ff,	/**< Miscellaneous reasons go here. We can store only one such reason at
+						 *   a time. */
+		BLK_FINDDATA	= 0x00000001,	/**< Added by Partitioner::FindData, which attaches unassigned parts of the
+						 *   disassembly address space to the preceding function. */
+		BLK_POSTFUNC    = 0x00000002,	/**< Added by Partitioner::FindPostFunctionInsns, which adds unassigned
+						 *   instructions to the immediately preceding function. */
+	};
+
         void append_statement( SgAsmStatement* statement );
         void remove_statement( SgAsmStatement* statement );
         void remove_children (  );
         rose_addr_t get_fallthrough_va(); /*implemented in Disassembler.C*/
-	SgAsmFunctionDeclaration *get_enclosing_function() const;
+	SgAsmFunction *get_enclosing_function() const;
+
+	/** Returns a very short string describing the reason mask. */
+	static std::string reason_key(const std::string &prefix="");
+	std::string reason_str(bool pad) const;
+	static std::string reason_str(bool pad, unsigned reason);
 HEADER_BINARY_BLOCK_END
 
 
@@ -4001,57 +4058,98 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
 	void remove_children();
 	SgAsmBlock *get_entry_block() const;
 
-   std::string get_functionReasonString();
-
 	/** Reasons why an instruction might be considered the beginning of a function. These bit flags are also used by
 	 *  the instruction partitioner (Partitioner class) to determine what heuristics are used when partitioning
 	 *  instructions into functions. */
         enum FunctionReason {
-                FUNC_NONE        = 0x0000,	/**< Used for initialization; not a bit flag. */
-                FUNC_ENTRY_POINT = 0x0001,      /**< An entry point specified in the file header. */
-                FUNC_CALL_TARGET = 0x0002,	/**< Target of a function call instruction sequence in the CFG. When used as
+
+		// NOTE: If you add more here, then fix Partitioner::parse_switches()
+		//       Also fix SgAsmFunction::reason_key()
+                FUNC_NONE        = 0x00000000,	/**< Used for initialization; not a bit flag. */
+                FUNC_ENTRY_POINT = 0x00010000,  /**< An entry point specified in the file header. */
+                FUNC_CALL_TARGET = 0x00020000,	/**< Target of a function call instruction sequence in the CFG. When used as
 						 *   a partitioning heuristic, the partitioner will create new functions when
 						 *   it discovers a call-like sequence while traversing the CFG. */
-		FUNC_CALL_INSN   = 0x0004,	/**< Target of call, possibly not in the CFG (see Partitioner::mark_call_insns).
+		FUNC_CALL_INSN   = 0x00040000,	/**< Target of call, possibly not in the CFG (see Partitioner::mark_call_insns).
 						 *   When used as a partitioning heuristic, the partitioner will search all
 						 *   available instructions for instances of call-like instructions and define
 						 *   a function for each target. The function entry points added in this way
 						 *   become initial nodes of the CFG which is used by some of
 						 *   the other function discovery methods, including FUNC_CALL_TARGET. */
-                FUNC_EH_FRAME    = 0x0008,	/**< Address mentioned in the ELF .eh_frame section. */
-                FUNC_SYMBOL      = 0x0010,	/**< Address of a function symbol in a symbol table. */
-                FUNC_PATTERN     = 0x0020,	/**< Appears to be a function based on pattern of instructions. When used as
+                FUNC_EH_FRAME    = 0x00080000,	/**< Address mentioned in the ELF .eh_frame section. */
+                FUNC_SYMBOL      = 0x00100000,	/**< Address of a function symbol in a symbol table. */
+                FUNC_PATTERN     = 0x00200000,	/**< Appears to be a function based on pattern of instructions. When used as
 						 *   a partitioning heuristic, the partitioner will search through all available
 						 *   instructions and create function entry points. The function entry points are
 						 *   added to the CFG which is used by some of the other function discovery
 						 *   methods. */
-                FUNC_GRAPH       = 0x0040,	/**< Implied by inter-basicblock branching. When used as a partitioning
+                FUNC_GRAPH       = 0x00400000,	/**< Implied by inter-basicblock branching. When used as a partitioning
 						 *   heuristic, the partitioner creates a new function when it discovers, by
 						 *   CFG traversal, that two different functions branch to a common basic block.
 						 *   The block in common becomes a new function under this rule. */
-                FUNC_USERDEF     = 0x0080,	/**< User-defined algorithm. See Partitioner::addFunctionDetector(). */
-		FUNC_INTERPAD    = 0x0100,	/**< Created to represent NOP padding between other functions. When used as a
+                FUNC_USERDEF     = 0x00800000,	/**< User-defined algorithm. See Partitioner::addFunctionDetector(). */
+		FUNC_PADDING     = 0x01000000,	/**< Created to represent NOP padding between other functions. When used as a
 						 *   partitioning heuristic, the partitioner searches for padding after all
 						 *   CFG-based analysis has completed.  Padding can consist of either NOP
 						 *   instructions or zero bytes. The former requires that instructions at the
 						 *   interfunction addresses have been disassembled. */
-		FUNC_DISCONT     = 0x0200,	/**< Blocks of function are not contiguous in memory. This is not a partitioner
+		FUNC_DISCONT     = 0x02000000,	/**< Blocks of function are not contiguous in memory. This is not a partitioner
 						 *   heuristic, but rather only an indication of whether the function's basic
 						 *   blocks occupy contiguous memory locations. */
-		FUNC_INSNHEAD    = 0x0400,	/**< Initial instructions not in any other function. (UNUSED?) */
-		FUNC_IMPORT      = 0x0800,	/**< Functions dynamically linked. For ELF containers, these are the entries
+		FUNC_INSNHEAD    = 0x04000000,	/**< Initial instructions not in any other function. (UNUSED?) */
+		FUNC_IMPORT      = 0x08000000,	/**< Functions dynamically linked. For ELF containers, these are the entries
 						 *   in the procedure lookup table (PLT). When used as a partitioning heuristic,
 						 *   the partitioner will scan the PLT and define a function for each entry. */
-		FUNC_LEFTOVERS   = 0x1000,	/**< Generated function to hold blocks that are otherwise not part of
+		FUNC_LEFTOVERS   = 0x10000000,	/**< Generated function to hold blocks that are otherwise not part of
 						 *   any function.  If this bit is turned off then the instruction
 						 *   Partitioner will delete instructions that it couldn't assign to
 						 *   a function. */
-                FUNC_DEFAULT     = 0x1fff       /**< Default value for Partitioner class. */
+		FUNC_INTRABLOCK  = 0x20000000,	/**< Function contains basic blocks that were inserted by searching the
+						 *   address space between the blocks discovered by analyzing the control flow.
+						 *   Blocks added by this algorithm do not take control flow into account, and
+						 *   therefore, the global control flow graph (CFG) may have edges into the
+						 *   middle of such blocks, or such blocks may have edges into the middle of
+						 *   other blocks, including inter-function edges.  Also, blocks added by this
+						 *   method might not represent true instructions, but rather data that was
+						 *   disassembled as instructions. */
+		FUNC_THUNK	 = 0x40000000,	/**< Function is a thunk.  Thunks are small pieces of code whose only purpose
+						 *   is to branch to another function.  Depending on how the disassembler and
+						 *   partitioner are run, a thunk can exist either as its own function or the
+						 *   thunk's instructions will be subsumed by the called function.  The
+						 *   partitioner only sets this flag for functions that are created due to
+						 *   the thunk recognition pass; other functions that don't have this bit set
+						 *   might also be thunks. */
+                FUNC_DEFAULT     = 0x6fff00ff,	/**< Default value for Partitioner class. */
+
+		/*========= Miscellaneous Reasons ===========================================================================
+		 * The first half of the range (1-127, inclusive) is used for algorithms defined by ROSE.  The second half is
+		 * availalble for users to use as they see fit. */
+		FUNC_MISCMASK	 = 0x000000ff,	/**< Miscellaneous.  These are all the other special purpose function detectors
+						 *   that are implemented in the Partitioner. Each one is identified by an
+						 *   eight-bit integer stored in the low order bits.  Only one such reason can
+						 *   be stored at a time.  These are not used to control which partitioning
+						 *   heuristics to use, but rather to indicate which one (of possibly many)
+						 *   that detected the function. */
+		FUNC_INTERPADFUNC = 0x00000001,	/**< Detected by Partitioner::FindInterPadFunctions, which looks for unassigned
+						 *   space between two inter-function padding blocks and makes the first such
+						 *   address the beginning of one of these functions. */
         };
 
-      /** Returns a very short string describing the reason mask. */
-          std::string reason_str(bool pad) const;
-          static std::string reason_str(bool pad, unsigned reason);
+
+
+        /** Returns a very short string describing the reason mask. */
+	static std::string reason_key(const std::string &prefix="");
+        std::string reason_str(bool pad) const;
+        static std::string reason_str(bool pad, unsigned reason);
+
+	class NodeSelector {
+	public:
+		virtual ~NodeSelector() {}
+		virtual bool operator()(SgNode*) = 0;
+	};
+
+	/* Returns info about what addresses a function occupies. */
+	size_t get_extent(ExtentMap *emap=NULL, rose_addr_t *lo_addr=NULL, rose_addr_t *hi_addr=NULL, NodeSelector *exclude=NULL);
 
       //! enum declaration as specified in proposed Sabre database schema
           enum function_kind_enum {
@@ -4095,17 +4193,6 @@ HEADER_BINARY_FUNCTION_DECLARATION_END
 
 
 
-HEADER_BINARY_DATA_STRUCTURE_START
-          void append_declaration( SgAsmDeclaration* declaration );
-
-       // SgAsmDeclarationPtrList & get_declarationList();
-
-     protected:
-
-          SgAsmDeclarationPtrList p_declarationList;
-
-     public:
-HEADER_BINARY_DATA_STRUCTURE_END
 
 
 
@@ -4519,6 +4606,30 @@ HEADER_DWARF_COMMON_BLOCK_END
 SOURCE_BINARY_FILE_START
 SOURCE_BINARY_FILE_END
 
+SOURCE_BINARY_START
+
+SgAsmNode::SgAsmNode ( const SgAsmNode & X )
+   : SgNode(X)
+   {
+  // DQ (9/13/2011): This function was created to support avoiding double free of data allocated in this objects default constructor.
+  // This explicit definition of this constructor avoid a call to the implicitly built copy constructor that would share the 
+  // pointers used internally and for which then the descructor would perform the 2nd free.
+
+  // printf ("Error: SgAsmNode ( const SgAsmNode & X ) copy constructor shoudl not be called \n");
+  // ROSE_ASSERT(false);
+
+  // DQ (9/13/2011): This is the default behavior for implicit copy constructors.
+  // But it is likely not the behavior that we really want since it shares data 
+  // that the destructor might delete more than once.  Lilely this is not being used 
+  // this way (else it would have been a problem before now), but we should fix 
+  // this better.
+     p_attachedPreprocessingInfoPtr = X.p_attachedPreprocessingInfoPtr;
+     p_asmAttributeMechanism        = X.p_asmAttributeMechanism;
+     p_attributeMechanism           = X.p_attributeMechanism;
+   }
+
+SOURCE_BINARY_END
+
 SOURCE_BINARY_BLOCK_START
 void
 SgAsmBlock::append_statement( SgAsmStatement* statement )
@@ -4546,9 +4657,9 @@ SgAsmBlock::remove_statement( SgAsmStatement* statement )
             p_statementList.erase(l);
    }
 
-SgAsmFunctionDeclaration *
+SgAsmFunction *
 SgAsmBlock::get_enclosing_function() const {
-	return SageInterface::getEnclosingNode<SgAsmFunctionDeclaration>(this);
+	return SageInterface::getEnclosingNode<SgAsmFunction>(this);
 }
 SOURCE_BINARY_BLOCK_END
 
@@ -4576,19 +4687,11 @@ SgAsmOperandList::append_operand( SgAsmExpression* operand )
 SOURCE_BINARY_OPERAND_LIST_END
 
 
-SOURCE_BINARY_DATA_STRUCTURE_START
-void
-SgAsmDataStructureDeclaration::append_declaration( SgAsmDeclaration* declaration )
-   {
-     p_declarationList.push_back(declaration);
-   }
-
-SOURCE_BINARY_DATA_STRUCTURE_END
 
 
 SOURCE_BINARY_FUNCTION_DECLARATION_START
 int 
-SgAsmFunctionDeclaration::nrOfValidInstructions( std::vector<SgNode*>& succs  ) {
+SgAsmFunction::nrOfValidInstructions( std::vector<SgNode*>& succs  ) {
 //  std::vector<SgNode*> succs = this->get_traversalSuccessorContainer();
   std::vector<SgNode*>::reverse_iterator j = succs.rbegin();
   int instructions = succs.size();
@@ -4625,25 +4728,25 @@ SgAsmFunctionDeclaration::nrOfValidInstructions( std::vector<SgNode*>& succs  ) 
 }
 
 void
-SgAsmFunctionDeclaration::remove_children(  )
+SgAsmFunction::remove_children(  )
    {
      p_statementList.clear();
    }
 
 void
-SgAsmFunctionDeclaration::append_dest( SgAsmStatement* statement )
+SgAsmFunction::append_dest( SgAsmStatement* statement )
    {
      p_dest.push_back(statement);
    }
 
 void
-SgAsmFunctionDeclaration::append_statement( SgAsmStatement* statement )
+SgAsmFunction::append_statement( SgAsmStatement* statement )
    {
      p_statementList.push_back(statement);
    }
 
 void
-SgAsmFunctionDeclaration::remove_statement( SgAsmStatement* statement )
+SgAsmFunction::remove_statement( SgAsmStatement* statement )
    {
      SgAsmStatementPtrList::iterator l = p_statementList.begin();
      for (;l!=p_statementList.end();l++) {
@@ -4659,87 +4762,36 @@ SgAsmFunctionDeclaration::remove_statement( SgAsmStatement* statement )
 
 /*
 void
-SgAsmFunctionDeclaration::append_block( SgAsmBlock* operand )
+SgAsmFunction::append_block( SgAsmBlock* operand )
    {
      p_body.push_back(operand);
    }
 */
 
 SgAsmBlock *
-SgAsmFunctionDeclaration::get_entry_block() const {
+SgAsmFunction::get_entry_block() const {
 	SgAsmStatementPtrList::const_iterator si = p_statementList.begin();
 	return si==p_statementList.end() ? NULL : isSgAsmBlock(*si);
 }
 
 
-// DQ (4/29/2010): Added function to return string for function reason field (for debugging).
-string
-SgAsmFunctionDeclaration::get_functionReasonString ()
-   {
 #if 0
-     enum FunctionReason {
-          FUNC_NONE        = 0x000,  /**< Used for initialization; not a bit flag */
-          FUNC_ENTRY_POINT = 0x001,  /**< An entry point specified in the file header */
-          FUNC_CALL_TARGET = 0x002,  /**< Target of a CALL-like instruction */
-          FUNC_EH_FRAME    = 0x004,  /**< Address mentioned in the ELF .eh_frame section */
-          FUNC_SYMBOL      = 0x008,  /**< Address of a function symbol in a symbol table */
-          FUNC_PATTERN     = 0x010,  /**< Appears to be a function based on pattern of instructions */
-          FUNC_GRAPH       = 0x020,  /**< Implied by inter-basicblock branching */
-          FUNC_USERDEF     = 0x040,  /**< User-defined algorithm. See Partitioner::addFunctionDetector(). */
-          FUNC_INTERPAD    = 0x080,  /**< Created to represent NOP padding between other functions. */
-          FUNC_DISCONT     = 0x100,  /**< Blocks of function are not contiguous in memory. */
-          FUNC_INSNHEAD    = 0x200,  /**< For initial instructions not in any other function (is always run) */
-          FUNC_DEFAULT     = 0x3ff   /**< Default value for Partitioner class */
+// DQ (4/29/2010): Added function to return string for function reason field (for debugging).
+// [RPM 2011-11-03]: Removed. Use stringifySgAsmFunctionFunctionReason() instead since it is automatically generated.
+string
+SgAsmFunction::get_functionReasonString ()
+   {
+     ...
+   }
 #endif
 
-     string s;
-
-     unsigned int reason = this->get_reason();
-  // printf ("reason = %u \n",reason);
-     for (unsigned i = 0; i < sizeof(FunctionReason) * 8; i++)
-        {
-          unsigned x = (1 << i) & reason;
-          switch (x)
-             {
-            // case FUNC_NONE:        s += "FUNC_NONE ";        break;
-               case FUNC_ENTRY_POINT: s += "FUNC_ENTRY_POINT "; break;
-               case FUNC_CALL_TARGET: s += "FUNC_CALL_TARGET "; break;
-               case FUNC_EH_FRAME:    s += "FUNC_EH_FRAME ";    break;
-               case FUNC_SYMBOL:      s += "FUNC_SYMBOL ";      break;
-               case FUNC_PATTERN:     s += "FUNC_PATTERN ";     break;
-               case FUNC_GRAPH:       s += "FUNC_GRAPH ";       break;
-               case FUNC_USERDEF:     s += "FUNC_USERDEF ";     break;
-               case FUNC_INTERPAD:    s += "FUNC_INTERPAD ";    break;
-               case FUNC_DISCONT:     s += "FUNC_DISCONT ";     break;
-               case FUNC_INSNHEAD:    s += "FUNC_INSNHEAD ";    break;
-               case FUNC_LEFTOVERS:   s += "FUNC_LEFTOVERS ";   break;
-            // case FUNC_DEFAULT:     s += "FUNC_DEFAULT ";     break;
-
-               default:
-                  {
-                 // Nothing to do here!
-                  }
-             }
-        }
-
-  // Output NONE if nothing was set
-     if (s.empty() == true)
-        {
-       // s = "FUNC_NONE";
-          s = "no bit flags set";
-        }
-
-     return s;
-   }
-
-
 // DQ (4/29/2010): Added function to support scoring functions as likely valid functions (work with CERT).
-SgAsmFunctionDeclaration::function_calling_convention_enum
-SgAsmFunctionDeclaration::get_functionCallingConvention() const
+SgAsmFunction::function_calling_convention_enum
+SgAsmFunction::get_functionCallingConvention() const
    {
   // This function classifies the calling convention used and contributes to a scoring of functions as valid functions.
 
-     printf ("Error: This SgAsmFunctionDeclaration::get_functionCallingConvention() function is not yet implemented. \n");
+     printf ("Error: This SgAsmFunction::get_functionCallingConvention() function is not yet implemented. \n");
      ROSE_ASSERT(false);
 
      return e_unknown_call;
@@ -4747,12 +4799,12 @@ SgAsmFunctionDeclaration::get_functionCallingConvention() const
 
 // DQ (4/29/2010): Added function to support scoring functions as likely valid functions (work with CERT).
 int
-SgAsmFunctionDeclaration::get_stackNutralityMetric() const
+SgAsmFunction::get_stackNutralityMetric() const
    {
   // This function computes the positon of the stack at the end of the function relative to the 
   // start of the function and contributes to a scoring of functions as valid functions.
 
-     printf ("Error: This SgAsmFunctionDeclaration::get_stackNutralityMetric() function is not yet implemented. \n");
+     printf ("Error: This SgAsmFunction::get_stackNutralityMetric() function is not yet implemented. \n");
      ROSE_ASSERT(false);
 
      return 0;
@@ -4760,11 +4812,11 @@ SgAsmFunctionDeclaration::get_stackNutralityMetric() const
 
 // DQ (4/29/2010): Added function to support scoring functions as likely valid functions (work with CERT).
 int
-SgAsmFunctionDeclaration::get_numberOfPathsNotReturningMetric() const
+SgAsmFunction::get_numberOfPathsNotReturningMetric() const
    {
   // This function computes the number of paths determined to no return (all paths returning metric)
 
-     printf ("Error: This SgAsmFunctionDeclaration::get_numberOfPathsNotReturningMetric() function is not yet implemented. \n");
+     printf ("Error: This SgAsmFunction::get_numberOfPathsNotReturningMetric() function is not yet implemented. \n");
      ROSE_ASSERT(false);
 
      return 0;

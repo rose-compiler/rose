@@ -135,9 +135,9 @@ public:
 
         /* Verify that instructions are identical. */
         unsigned char remote[256];
-        assert(insn->get_raw_bytes().size()<=sizeof remote);
-        size_t remote_size = debugger->memory(insn->get_address(), insn->get_raw_bytes().size(), remote);
-        if (remote_size!=insn->get_raw_bytes().size()) {
+        assert(insn->get_size()<=sizeof remote);
+        size_t remote_size = debugger->memory(insn->get_address(), insn->get_size(), remote);
+        if (remote_size!=insn->get_size()) {
             throw Exception("could not read entire instruction");
         } else if (memcmp(&(insn->get_raw_bytes()[0]), remote, remote_size)) {
             throw Exception("instruction mismatch");
@@ -149,6 +149,9 @@ public:
 
     /* Called for the HLT instruction */
     void hlt() {} /*FIXME*/
+
+    /* Called for the CPUID instruction */
+    void cpuid() {} /*FIXME*/
 
     /* Called for the RDTSC instruction */
     VerifierValue<64> rdtsc() {return 0;} /*FIXME*/

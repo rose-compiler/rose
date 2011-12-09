@@ -39,7 +39,7 @@ ComplexityMetric::visit(SgNode* node) {
 
     if (instBlock==NULL)
       return;
-    SgAsmFunctionDeclaration* instFunc = isSgAsmFunctionDeclaration(instBlock->get_parent());
+    SgAsmFunction* instFunc = isSgAsmFunction(instBlock->get_parent());
     if (instFunc==NULL)
       return;
     

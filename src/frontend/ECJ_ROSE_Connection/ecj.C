@@ -97,7 +97,7 @@ jofp_invoke(int argc, char **argv)
      }      
 #endif
 
-     printf("We are done -----------------------------------------\n");
+  // printf("We are done -----------------------------------------\n");
 
   // DQ (10/12/2010): This function is not implemented in the ECJ parser (only in OFP).
      jobject new_ofp_class = jofp_get_new_object(jofp_get_cons_method(),args, fileName, type);

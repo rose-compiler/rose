@@ -37,18 +37,21 @@
 #include "astPostProcessing.h"
 
 
-
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 //Liao, 10/9/2008, support for abstract handles for language constructs
 #include "abstract_handle.h"
 #include "roseAdapter.h"
 
 #include "memory_object.h"
+//#include "memory_object_impl.h"
+#endif
 
 //Liao, 2/8/2008. SAGE III node building interface
 #include "sageBuilder.h"
 #include "sageBuilderAsm.h"
 
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 // Liao, 11/14/2008, support for annotation-based array optimization
 // The headers bring some garbage which cannot be compiled
 //#include "ArrayAnnot.h"
@@ -56,10 +59,17 @@
 //include "ArrayRewrite.h"
 // Liao, 8/11/2009, support for OpenMP lowering
 #include "omp_lowering.h" 
+#else
+// DQ (11/12/2011): This is included in the omp_lowering.h and it is needed in sageInterface.C.
+// #include "astQuery.h"
+#include "nodeQuery.h"
+#endif
 
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 // DQ (5/28/2007): Added new AST Merge API
 #include "astMergeAPI.h"
+#endif
 
 // JJW 10-23-2007
 // Add possibility to include Valgrind header for memcheck
@@ -68,12 +78,14 @@
 #include <valgrind/memcheck.h>
 #endif
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 /* The SgFile node needs default settings defined in Disassembler::SEARCH_DEFAULT */
 #include "Disassembler.h"
 
 // TV (05/23/2011): Add headers for the AstFromString library
 #include "AstFromString.h"
 #include "ParserBuilder.hpp"
+#endif
 
 #endif
 

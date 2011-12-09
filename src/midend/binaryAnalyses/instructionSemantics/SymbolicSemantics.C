@@ -113,4 +113,10 @@ State::print(std::ostream &o, RenameMap *rmap/*NULL*/) const
     }
 }
 
+void
+Policy::print(std::ostream &o, RenameMap *rmap/*NULL*/) const
+{
+    cur_state.print(o, rmap);
+}
+
 }
