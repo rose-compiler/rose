@@ -34,3 +34,4 @@ public:
     map<string, set<string> > collectIncludedFilesMap();
     pair<list<string>, list<string> > collectIncludedFilesSearchPaths();
 };
+

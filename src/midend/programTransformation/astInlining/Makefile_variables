@@ -1,24 +1,23 @@
+# Non-recursive Makefile
 
-mptAstInlining_la_sources=\
+mptAstInlining_la_sources = \
 	$(mptAstInliningPath)/inliner.C \
 	$(mptAstInliningPath)/inlinerSupport.C \
 	$(mptAstInliningPath)/isPotentiallyModified.C \
-	$(mptAstInliningPath)/replaceExpressionWithStatement.C 
+	$(mptAstInliningPath)/replaceExpressionWithStatement.C
 
-
-mptAstInlining_includeHeaders=\
-	$(mptAstInliningPath)/replaceExpressionWithStatement.h \
+mptAstInlining_includeHeaders = \
+	$(mptAstInliningPath)/inliner.h \
 	$(mptAstInliningPath)/inlinerSupport.h \
-	$(mptAstInliningPath)/inliner.h
+	$(mptAstInliningPath)/replaceExpressionWithStatement.h
 
-
-mptAstInlining_extraDist=\
+mptAstInlining_extraDist = \
 	$(mptAstInliningPath)/CMakeLists.txt
 
-
-mptAstInlining_cleanLocal=\
+mptAstInlining_cleanLocal = \
 	rm -rf \
-		$(mptAstInliningPath)/Templates.DB \
+		$(mptAstInliningPath)/core \
 		$(mptAstInliningPath)/ii_files \
 		$(mptAstInliningPath)/ti_files \
-		$(mptAstInliningPath)/core
+		$(mptAstInliningPath)/Templates.DB
+

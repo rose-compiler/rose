@@ -2,6 +2,8 @@
 // test cases are put into tests/roseTests/astInterfaceTests
 // Last modified, by Liao, Jan 10, 2008
 #include "sage3basic.h"
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 #include "roseAdapter.h"
 #include "markLhsValues.h"
 #include "sageBuilder.h"
@@ -9,6 +11,14 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/foreach.hpp>
 #include "Outliner.hh"
+#else
+   #include "sageBuilder.h"
+   #include <fstream>
+   #include <boost/algorithm/string/trim.hpp>
+   #include <boost/foreach.hpp>
+
+   #include "transformationSupport.h"
+#endif
 
 #define foreach BOOST_FOREACH
 
@@ -160,6 +170,13 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
 
   SgVariableDeclaration * varDecl = new SgVariableDeclaration(name, type, varInit);
   ROSE_ASSERT(varDecl);
+
+// DQ (8/21/2011): Note that the default is to set the declaration modifier's access modifier to be 
+// default (which is the same as public).  So the effect it to set it to be public.  This is ignored
+// by the unparser for most languguages in ROSE.
+
+// DQ (8/21/2011): Debugging declarations should have default settings (should not be marked as public).
+// ROSE_ASSERT(varDecl->get_declarationModifier().get_accessModifier().isPublic() == false);
 
   varDecl->set_firstNondefiningDeclaration(varDecl);
 
@@ -598,7 +615,7 @@ SageBuilder::buildFunctionType(SgType* return_type, SgFunctionParameterList * ar
 // 4. fortran ?
 template <class actualFunction>
 actualFunction*
-SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, bool isMemberFunction, SgScopeStatement* scope, SgExprListExp* decoratorList)
+SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, bool isMemberFunction, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags)
    {
 #if 0 //FMZ (3/23/2009): We need this for the  coarray translator
      if (SageInterface::is_Fortran_language() == true)
@@ -634,7 +651,10 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType*
           SgClassDefinition *struct_name = isSgClassDefinition(scope);
           ROSE_ASSERT(struct_name != NULL);
           SgFunctionParameterTypeList * typeList = buildFunctionParameterTypeList(paralist);
-          func_type = buildMemberFunctionType(return_type,typeList,struct_name,/* const, volatile, restrict support */ 0);
+
+       // DQ (11/6/2011): Modified function interfaces to support defining const and vaolatile functions (part of function type, but be built before types are shared).
+       // func_type = buildMemberFunctionType(return_type,typeList,struct_name,/* const, volatile, restrict support */ 0);
+          func_type = buildMemberFunctionType(return_type,typeList,struct_name,/* const, volatile, restrict support */ functionConstVolatileFlags);
 
        // printf ("Error: SgFunctionType built instead of SgMemberFunctionType \n");
        // ROSE_ASSERT(false);
@@ -857,7 +877,7 @@ SageBuilder::buildNondefiningFunctionDeclaration (const SgName & name, SgType* r
 
 //! Build a prototype for an existing member function declaration (defining or nondefining ) 
 SgMemberFunctionDeclaration *
-SageBuilder::buildNondefiningMemberFunctionDeclaration (const SgMemberFunctionDeclaration* funcdecl, SgScopeStatement* scope/*=NULL*/, SgExprListExp* decoratorList)
+SageBuilder::buildNondefiningMemberFunctionDeclaration (const SgMemberFunctionDeclaration* funcdecl, SgScopeStatement* scope/*=NULL*/, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags)
 {
   ROSE_ASSERT(funcdecl!=NULL);
   SgName name=funcdecl->get_name(); 
@@ -867,7 +887,8 @@ SageBuilder::buildNondefiningMemberFunctionDeclaration (const SgMemberFunctionDe
 
 // DQ (2/19/2009): Fixed to handle extern "C" state in input "funcdecl"
 // return buildNondefiningFunctionDeclaration(name,return_type,paralist,scope);
-  SgMemberFunctionDeclaration* returnFunction = buildNondefiningMemberFunctionDeclaration(name,return_type,paralist,scope,decoratorList);
+// SgMemberFunctionDeclaration* returnFunction = buildNondefiningMemberFunctionDeclaration(name,return_type,paralist,scope,decoratorList);
+  SgMemberFunctionDeclaration* returnFunction = buildNondefiningMemberFunctionDeclaration(name,return_type,paralist,scope,decoratorList,functionConstVolatileFlags);
 
   returnFunction->set_linkage(funcdecl->get_linkage());
 
@@ -883,9 +904,9 @@ SageBuilder::buildNondefiningMemberFunctionDeclaration (const SgMemberFunctionDe
   return returnFunction;
 }
 
-SgMemberFunctionDeclaration* SageBuilder::buildNondefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope, SgExprListExp* decoratorList)
+SgMemberFunctionDeclaration* SageBuilder::buildNondefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags)
 {
-  SgMemberFunctionDeclaration * result = buildNondefiningFunctionDeclaration_T <SgMemberFunctionDeclaration> (name,return_type,paralist, /* isMemberFunction = */ true,scope,decoratorList);
+  SgMemberFunctionDeclaration * result = buildNondefiningFunctionDeclaration_T <SgMemberFunctionDeclaration> (name,return_type,paralist, /* isMemberFunction = */ true,scope,decoratorList,functionConstVolatileFlags);
   // set definingdecl for SgCtorInitializerList
   SgCtorInitializerList * ctor= result-> get_CtorInitializerList ();
   ROSE_ASSERT(ctor != NULL);
@@ -2041,6 +2062,29 @@ SgPlusPlusOp *SageBuilder::buildPlusPlusOp_nfi(SgExpression* operand_i, SgUnaryO
   return result;
 }
 
+SgThrowOp *SageBuilder::buildThrowOp(SgExpression *operand_i, SgThrowOp::e_throw_kind throwKind)
+   {
+  // DQ (11/8/2011): operand_i is allowed to be NULL.
+
+  // SgThrowOp* result = new SgThrowOp(operand_i, operand_i -> get_type(), throwKind);
+     SgThrowOp* result = new SgThrowOp(operand_i, (operand_i != NULL) ? operand_i->get_type() : NULL, throwKind);
+
+     if (operand_i != NULL)
+        {
+          markLhsValues(result);
+        }
+
+     setOneSourcePositionForTransformation(result);
+
+     if (operand_i != NULL)
+          operand_i -> set_parent(result);
+
+     ROSE_ASSERT(result);
+
+     return result;
+   }
+
+
 //---------------------binary expressions-----------------------
 
 template <class T>
@@ -2333,8 +2377,13 @@ SageBuilder::buildConstructorInitializer_nfi(
   // Prototype:
   // SgConstructorInitializer (SgMemberFunctionDeclaration *declaration, SgExprListExp *args, SgType *expression_type, bool need_name, bool need_qualifier, bool need_parenthesis_after_name, bool associated_class_unknown);
 
+  // DQ (11/7/2011): Added additional error checking.
+  // ROSE_ASSERT(declaration != NULL);
   // DQ (1/4/2009): Error checking
-     ROSE_ASSERT(declaration->get_associatedClassDeclaration() != NULL);
+  // ROSE_ASSERT(declaration->get_associatedClassDeclaration() != NULL);
+
+  // DQ (11/7/2011): Fix symetric to the way George did it above.
+     ROSE_ASSERT(declaration == NULL || declaration->get_associatedClassDeclaration() != NULL);
 
      SgConstructorInitializer* result = new SgConstructorInitializer( declaration, args, expression_type, need_name, need_qualifier, need_parenthesis_after_name, associated_class_unknown );
      ROSE_ASSERT(result != NULL);
@@ -2897,19 +2946,47 @@ SageBuilder::buildFunctionCallExp(const SgName& name,
 SgFunctionCallExp* 
 SageBuilder::buildFunctionCallExp(SgFunctionSymbol* sym, 
                                   SgExprListExp* parameters/*=NULL*/)
-{
-  ROSE_ASSERT (sym);
-  if (parameters == NULL)
-    parameters = buildExprListExp();
-  ROSE_ASSERT (parameters);
-  SgFunctionRefExp* func_ref = buildFunctionRefExp(sym);
-  SgFunctionCallExp * func_call_expr = new SgFunctionCallExp(func_ref,parameters,func_ref->get_type());
-  func_ref->set_parent(func_call_expr);
-  parameters->set_parent(func_call_expr);
-  setOneSourcePositionForTransformation(func_call_expr);
-  ROSE_ASSERT(func_call_expr);
-  return func_call_expr;  
-}
+   {
+     ROSE_ASSERT (sym);
+     if (parameters == NULL)
+          parameters = buildExprListExp();
+     ROSE_ASSERT (parameters);
+
+  // DQ (8/21/2011): We want to preserve the support for member functions to be built as SgMemberFunctionRefExp.
+  // This is important for the Java support and the C++ support else we will be lowering all mmember function calls
+  // to function calls which will be a proble for eht analysis of object oriented languages.
+  // SgFunctionRefExp* func_ref = buildFunctionRefExp(sym);
+  // SgFunctionCallExp * func_call_expr = new SgFunctionCallExp(func_ref,parameters,func_ref->get_type());
+  // func_ref->set_parent(func_call_expr);
+     SgFunctionCallExp * func_call_expr = NULL;
+     SgMemberFunctionSymbol* memberFunctionSymbol = isSgMemberFunctionSymbol(sym);
+     if (memberFunctionSymbol != NULL)
+        {
+       // Note that we can't at this point be sure this is not a virtual function.
+          bool virtual_call = false;
+
+       // Name qualificaiton is handled separately from the setting of this variable (old API).
+          bool need_qualifier = false;
+
+          SgMemberFunctionRefExp* member_func_ref = buildMemberFunctionRefExp(memberFunctionSymbol,virtual_call,need_qualifier);
+          func_call_expr = new SgFunctionCallExp(member_func_ref,parameters,member_func_ref->get_type());
+          member_func_ref->set_parent(func_call_expr);
+        }
+       else
+        {
+          SgFunctionRefExp * func_ref = buildFunctionRefExp(sym);
+          func_call_expr = new SgFunctionCallExp(func_ref,parameters,func_ref->get_type());
+          func_ref->set_parent(func_call_expr);
+        }
+
+
+     parameters->set_parent(func_call_expr);
+
+     setOneSourcePositionForTransformation(func_call_expr);
+
+     ROSE_ASSERT(func_call_expr);
+     return func_call_expr;  
+   }
 
 SgFunctionCallExp* 
 SageBuilder::buildFunctionCallExp_nfi(SgExpression* f, SgExprListExp* parameters /*=NULL*/)
@@ -3035,8 +3112,8 @@ SageBuilder::buildAssignStatement(SgExpression* lhs,SgExpression* rhs)
   return exp;
 }
 
-// DQ (8/16/2011): This is an AST translate specific version (see not below). 
-// We would like to phase out the version above if possible (but we watn to 
+// DQ (8/16/2011): This is an AST translate specific version (see note below). 
+// We would like to phase out the version above if possible (but we want to 
 // test this later).
 SgExprStatement*
 SageBuilder::buildAssignStatement_ast_translate(SgExpression* lhs,SgExpression* rhs)
@@ -3166,6 +3243,11 @@ SgIfStmt * SageBuilder::buildIfStmt_nfi(SgStatement* conditional, SgStatement * 
   if (true_body) true_body->set_parent(ifstmt);
   if (false_body) false_body->set_parent(ifstmt);
   return ifstmt;
+}
+
+// charles4 10/14/2011:  Vanilla allocation. Use prepend_init_stmt and append_init_stmt to populate afterward.
+SgForInitStatement * SageBuilder::buildForInitStatement() {
+  return new SgForInitStatement();
 }
 
 SgForInitStatement * SageBuilder::buildForInitStatement(const SgStatementPtrList & statements) 
@@ -3517,6 +3599,19 @@ SgAssertStmt* SageBuilder::buildAssertStmt(SgExpression* test)
   SgAssertStmt* result = new SgAssertStmt(test);
   ROSE_ASSERT(test != NULL);
   test->set_parent(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgAssertStmt* SageBuilder::buildAssertStmt(SgExpression* test, SgExpression* exceptionArgument)
+{
+  SgAssertStmt* result = new SgAssertStmt(test);
+  ROSE_ASSERT(test != NULL);
+  test->set_parent(result);
+  if (exceptionArgument != NULL) {
+      result -> set_exception_argument(exceptionArgument);
+      exceptionArgument->set_parent(result);
+  }
   setOneSourcePositionForTransformation(result);
   return result;
 }
@@ -3982,13 +4077,106 @@ SgTryStmt* SageBuilder::buildTryStmt(SgStatement* body,
     return try_stmt;
 }
 
+// charles4 09/16/2011
+//! Build a try statement (used for Java)
+SgTryStmt *SageBuilder::buildTryStmt(SgBasicBlock *try_body, SgBasicBlock *finally_body) {
+    //
+    // charles4 09/23/2011 - Note that when an SgTryStmt is allocated, its constructor
+    // preallocates a SgCatchStementSeq for the field p_catch_statement_sequence_root.
+    // So, although the method set_catch_statement_seq_root(catch_statement_sequence) is
+    // available, it should not be used to set the catch_statement_sequence_root as that 
+    // would leave the one that was allocated by the constructor dangling!
+    //
+    ROSE_ASSERT(try_body != NULL);
+    SgTryStmt* try_stmt = new SgTryStmt(try_body);
+    try_body -> set_parent(try_stmt);
+
+    if (finally_body) {
+        try_stmt -> set_finally_body(finally_body);
+        finally_body -> set_parent(try_stmt);
+    }
+
+    return try_stmt;
+}
+
+// charles4 09/16/2011
+// ! Build an initial sequence of Catch blocks containing 0 or 1 element.
+SgCatchStatementSeq *SageBuilder::buildCatchStatementSeq(SgCatchOptionStmt *catch_option_stmt) {
+    SgCatchStatementSeq *catch_statement_sequence = new SgCatchStatementSeq();
+
+    if (catch_option_stmt) {
+        catch_statement_sequence -> append_catch_statement(catch_option_stmt);
+        catch_option_stmt -> set_parent(catch_statement_sequence);
+    }
+
+    return catch_statement_sequence;
+}
+
+// charles4 09/21/2011 - Make condition and body arguments optional.
 //! Build a catch statement
 SgCatchOptionStmt* SageBuilder::buildCatchOptionStmt(SgVariableDeclaration* condition, SgStatement* body) {
-  SgCatchOptionStmt* result = new SgCatchOptionStmt(condition, body, /* SgTryStmt*= */ NULL);
-  if (condition) condition->set_parent(result);
-  body->set_parent(result);
-  setOneSourcePositionForTransformation(result);
-  return result;
+    SgCatchOptionStmt* result = new SgCatchOptionStmt(condition, body, /* SgTryStmt*= */ NULL);
+    if (condition) condition->set_parent(result);
+    if (body) body->set_parent(result);
+    setOneSourcePositionForTransformation(result);
+    return result;
+}
+
+SgJavaSynchronizedStatement *SageBuilder::buildJavaSynchronizedStatement(SgExpression *expression, SgBasicBlock *body)
+{
+  ROSE_ASSERT(expression);
+  ROSE_ASSERT(body);
+  SgJavaSynchronizedStatement *sync_stmt = new SgJavaSynchronizedStatement(expression, body);
+  ROSE_ASSERT(sync_stmt);
+
+  expression->set_parent(sync_stmt);
+  body->set_parent(sync_stmt);
+
+  return sync_stmt;
+}
+
+SgJavaThrowStatement *SageBuilder::buildJavaThrowStatement(SgThrowOp *op)
+{
+  ROSE_ASSERT(op);
+  SgJavaThrowStatement *throw_stmt = new SgJavaThrowStatement(op);
+  ROSE_ASSERT(throw_stmt);
+
+  op->set_parent(throw_stmt);
+
+  return throw_stmt;
+}
+
+// DQ (9/3/2011): Changed the API to conform to the Java grammar.
+// SgJavaForEachStatement *SageBuilder::buildJavaForEachStatement(SgInitializedName *variable, SgExpression *collection, SgStatement *body)
+SgJavaForEachStatement *SageBuilder::buildJavaForEachStatement(SgVariableDeclaration *variable, SgExpression *collection, SgStatement *body)
+{
+  SgJavaForEachStatement *foreach_stmt = new SgJavaForEachStatement(variable, collection, body);
+  ROSE_ASSERT(foreach_stmt);
+  if (variable) variable -> set_parent(foreach_stmt);
+  if (collection) collection -> set_parent(foreach_stmt);
+  if (body) body -> set_parent(foreach_stmt);
+
+  return foreach_stmt;
+}
+
+SgJavaLabelStatement *SageBuilder::buildJavaLabelStatement(const SgName& name,  SgStatement *stmt /* = NULL */)
+{
+    SgJavaLabelStatement *label_stmt = new SgJavaLabelStatement(name, stmt);
+    ROSE_ASSERT(label_stmt);
+    setOneSourcePositionForTransformation(label_stmt);
+  
+    if (stmt != NULL) 
+        stmt -> set_parent(label_stmt);
+
+    SgJavaLabelSymbol *lsymbol = label_stmt -> lookup_java_label_symbol(name);
+    if (! lsymbol) // Should be an Assertion - always true!
+    {
+        lsymbol= new SgJavaLabelSymbol(label_stmt);
+        ROSE_ASSERT(lsymbol);
+        label_stmt -> insert_symbol(lsymbol -> get_name(), lsymbol);
+    }
+
+    return label_stmt;
 }
 
 SgPythonPrintStmt*
@@ -5548,6 +5736,7 @@ SgEnumDeclaration * SageBuilder::buildEnumDeclaration_nfi(const SgName& name, Sg
 SgFile*
 SageBuilder::buildFile(const std::string& inputFileName, const std::string& outputFileName, SgProject* project/*=NULL*/)
    {
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
      ROSE_ASSERT(inputFileName.size()!=0);// empty file name is not allowed.
      string sourceFilename = inputFileName, fullname;
      Rose_STL_Container<std::string> arglist;
@@ -5667,6 +5856,9 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
           result->clearGlobalMangledNameMap();
 
      return result;
+#else
+     return NULL;
+#endif
    }// end SgFile* buildFile()
 
 
@@ -5699,6 +5891,8 @@ PreprocessingInfo* SageBuilder::buildCpreprocessorDefineDeclaration(SgLocatedNod
   
   }
 
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 //! Build an abstract handle from a SgNode
 AbstractHandle::abstract_handle * SageBuilder::buildAbstractHandle(SgNode* n)
 {
@@ -5717,3 +5911,5 @@ AbstractHandle::abstract_handle * SageBuilder::buildAbstractHandle(SgNode* n)
   }
   return ahandle;
 }
+#endif
+

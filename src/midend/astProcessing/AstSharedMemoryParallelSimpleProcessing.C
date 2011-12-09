@@ -47,10 +47,30 @@ AstSharedMemoryParallelProcessingSynchronizationInfo::~AstSharedMemoryParallelPr
     delete finishedThreads;
 }
 
-AstSharedMemoryParallelProcessingSynchronizationBase::AstSharedMemoryParallelProcessingSynchronizationBase(
-        const AstSharedMemoryParallelProcessingSynchronizationInfo &syncInfo)
+AstSharedMemoryParallelProcessingSynchronizationInfo::AstSharedMemoryParallelProcessingSynchronizationInfo( const AstSharedMemoryParallelProcessingSynchronizationInfo & X )
+   {
+  // DQ (9/13/2011): This copy constructor was built because static analysis tools 
+  // suggested it would avoid a possible double free error.  I agree.
+
+  // printf ("Error: it is an error to call this copy constructor. \n");
+  // ROSE_ASSERT(false);
+
+  // Note that this is the behavior of the implicit copy constructor, but likely not what we want.
+  // These are pointers (copy only the pointer value to perserve the implicit copy constructor semantics)
+     mutex                     = X.mutex;
+     synchronizationEvent      = X.synchronizationEvent;
+     threadFinishedEvent       = X.threadFinishedEvent;
+     workingThreads            = X.workingThreads;
+     finishedThreads           = X.finishedThreads;
+
+  // This is a scalar value.
+     synchronizationWindowSize = X.synchronizationWindowSize;
+   }
+
+AstSharedMemoryParallelProcessingSynchronizationBase::AstSharedMemoryParallelProcessingSynchronizationBase(const AstSharedMemoryParallelProcessingSynchronizationInfo &syncInfo)
     : syncInfo(syncInfo), numberOfThreads(*syncInfo.workingThreads)
 {
+// Note that this function requires the use of the AstSharedMemoryParallelProcessingSynchronizationInfo copy constructor.
 }
 
 void AstSharedMemoryParallelProcessingSynchronizationBase::synchronize()

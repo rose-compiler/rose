@@ -9,7 +9,7 @@ compilerName="`basename $1`"
 
  case "$compilerName" in
   # Support for compiling ROSE with GNU g++ compiler
-    g++|gcc|icpc|icc|mpicc|mpic++|mpiCC|mpicxx|c++|xt-xcc|xt-xc++)
+    g++*|gcc*|icpc|icc|mpicc|mpic++|mpiCC|mpicxx|c++|xt-xcc|xt-xc++)
          if [ "$compilerName" = "gcc" -o "$compilerName" = "icc" -o "$compilerName" = "mpicc" -o "$compilerName" = "xt-xcc" ]
          then
             language="c"
@@ -21,10 +21,11 @@ compilerName="`basename $1`"
          ;;
 
   # Support for compiling ROSE with ROSE (must use translator named: "roseTranslator"
-    roseTranslator) 
+    roseTranslator*|testTranslator*|roseCodeGeneration*|testCodeGeneration*|roseAnalysis*|testAnalysis*|roseAstFileIO*|testAstFileIO*)
          tmpFile="/tmp/tmp`uname -n`$$.C"
          echo "int main(int argc, char **argv){return 0;}" > "$tmpFile"
-         $1 -v -E $tmpFile 2>&1 # | sed -n '/^#include </,/^End/p' | sed '/^#include </d; /^End/d; /\/usr\/include$/d'"
+         #$1 -v -E $tmpFile 2>&1 # | sed -n '/^#include </,/^End/p' | sed '/^#include </d; /^End/d; /\/usr\/include$/d'"
+         $1 -v -E $tmpFile 2>&1 | sed -n '/^#include </,/^End/p' | sed '/^#include </d; /^End/d; /\/usr\/include$/d; /\/Library\/Frameworks$/d; /[(]framework directory[)]$/d'
          ;;
     *) echo "ERROR: Not able to recognize compiler $1"
        exit 1

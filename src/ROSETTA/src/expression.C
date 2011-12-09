@@ -892,8 +892,17 @@ Grammar::setUpExpressions ()
             CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
 
 #if 1
-  // DQ (2/9/2011): Modified this to specify NO_TRAVERSAL.
+  // DQ (9/22/2011): Double checked and this was marked as NO_TRAVERSAL in master (so mark it as such so 
+  // that I can pass the existing tests).  I am trying to pass the existing tests and implement the 
+  // new changes to support originalExpressionTree handling gradually so that I can identify what 
+  // changes are breaking a few of the existing tests.
+  // DQ (9/17/2011): Put back the traversal over the originalExpressionTree (because it will be set to NULL in post processing).
+  // DQ (9/16/2011): Modified this to specify NO_TRAVERSAL.
   // DQ (2/6/2011): Added reference to expression tree for unfolded constant expressions (see comment above).
+  // BinaryOp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
+  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+  // BinaryOp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
+  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // BinaryOp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
   //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      BinaryOp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
@@ -938,8 +947,17 @@ Grammar::setUpExpressions ()
      VarRefExp.setDataPrototype ( "SgVariableSymbol*", "symbol", "= NULL",
                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #if 1
-  // DQ (2/9/2011): Modified this to specify NO_TRAVERSAL.
+  // DQ (9/22/2011): Double checked and this was marked as NO_TRAVERSAL in master (so mark it as such so 
+  // that I can pass the existing tests).  I am trying to pass the existing tests and implement the 
+  // new changes to support originalExpressionTree handling gradually so that I can identify what 
+  // changes are breaking a few of the existing tests.
+  // DQ (9/17/2011): Put back the traversal over the originalExpressionTree (because it will be set to NULL in post processing).
+  // DQ (9/16/2011): Modified this to specify NO_TRAVERSAL.
   // DQ (2/6/2011): Added reference to expression tree for unfolded constant expressions (see comment above).
+  // VarRefExp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
+  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+  // VarRefExp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
+  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // VarRefExp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
   //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      VarRefExp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
@@ -978,8 +996,17 @@ Grammar::setUpExpressions ()
      FunctionRefExp.setDataPrototype ( "SgFunctionType*"  , "function_type", "= NULL",
             CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
 #if 1
-  // DQ (2/9/2011): Modified this to specify NO_TRAVERSAL.
+  // DQ (9/22/2011): Double checked and this was marked as NO_TRAVERSAL in master (so mark it as such so 
+  // that I can pass the existing tests).  I am trying to pass the existing tests and implement the 
+  // new changes to support originalExpressionTree handling gradually so that I can identify what 
+  // changes are breaking a few of the existing tests.
+  // DQ (9/17/2011): Put back the traversal over the originalExpressionTree (because it will be set to NULL in post processing).
+  // DQ (9/16/2011): Modified this to specify NO_TRAVERSAL.
   // DQ (2/6/2011): Added reference to expression tree for unfolded constant expressions (see comment above).
+  // FunctionRefExp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
+  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+  // FunctionRefExp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
+  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // FunctionRefExp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
   //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      FunctionRefExp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
@@ -1032,14 +1059,25 @@ Grammar::setUpExpressions ()
      ValueExp.setFunctionPrototype ( "HEADER_VALUE_EXPRESSION", "../Grammar/Expression.code" );
 
 #if 1
+  // DQ (9/23/2011): Modified this to not be traversed.  The traversal leads to an inconsistant AST (incrementally applying fixes).
+  // DQ (9/22/2011): Double checked and this was marked as DEF_TRAVERSAL in master (so we don't have to change this case).
+  // DQ (9/17/2011): Put back the traversal over the originalExpressionTree (because it will be set to NULL in post processing).
+  // DQ (9/16/2011): Modified this to not be traversed.  The traversal leads to an inconsistant AST
+  // We now want to select two modes of consistant AST (using or not use the originalExpressionTree).
   // DQ (2/7/2011): Moved this to the SgExpression level in the IR node hierarchy because it requires 
   // more general support.
   // DQ (6/19/2006): Changed name of data member to be consitant with more general use in SgCastExp
   // DQ (11/9/2005): Added reference to expression tree for original unfolded constant expressions.
   // Constant folding in EDG and ROSE allows us to ignore this subtree, but it is here to to permit
   // the original source code to be faithfully represented.
+  // ValueExp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
+  //                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+  // ValueExp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
+  //                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // ValueExp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
+  //                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      ValueExp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
-                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
      BoolValExp.setFunctionPrototype ( "HEADER_BOOLEAN_VALUE_EXPRESSION", "../Grammar/Expression.code" );
@@ -1435,6 +1473,11 @@ Grammar::setUpExpressions ()
 
 
 #if 1
+  // DQ (9/23/2011): Modified this to not be traversed.  The traversal leads to an inconsistant AST (incrementally applying fixes).
+  // DQ (9/22/2011): Double checked and this was marked as DEF_TRAVERSAL in master (so we don't have to change this case).
+  // DQ (9/17/2011): Put back the traversal over the originalExpressionTree (because it will be set to NULL in post processing).
+  // DQ (9/16/2011): Modified this to not be traversed.  The traversal leads to an inconsistant AST
+  // We now want to select two modes of consistant AST (using or not use the originalExpressionTree).
   // DQ (6/19/2006): Added reference to expression tree for unfolded constant expressions, where this happens
   // in a cast it is because EDG has generated an alternative expression tree and yet holds the original one
   // (similar to the unfolded constant expression) as an alternative.  We actually want the original tree
@@ -1444,8 +1487,14 @@ Grammar::setUpExpressions ()
   // and I would like to avoid the extra memory requirement of this design, since expressions are numerous
   // within the AST and so they need to be kept as small as possible.  So we handle it in SgValue and SgCastExp 
   // explicitly instead of at the SgExpression level.
+  // CastExp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
+  //                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+  // CastExp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
+  //                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // CastExp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
+  //                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      CastExp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
-                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
   // DQ (6/2/2011): Added support for name qualification.

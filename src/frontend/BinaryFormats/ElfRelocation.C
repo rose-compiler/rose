@@ -169,8 +169,7 @@ SgAsmElfRelocSection::ctor(SgAsmElfSymbolSection *symbols, SgAsmElfSection *targ
 {
     p_entries = new SgAsmElfRelocEntryList;
     p_entries->set_parent(this);
-    ROSE_ASSERT(symbols!=NULL);
-    p_linked_section = symbols;
+    p_linked_section = symbols;         // may be null
     p_target_section = targetsec;
 }
 

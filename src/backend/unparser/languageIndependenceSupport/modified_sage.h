@@ -105,3 +105,5 @@ class Unparse_MOD_SAGE
 #endif
 
 
+int GetOperatorVariant(SgExpression* expr);
+SgExpression* GetFirstOperand(SgExpression* expr);

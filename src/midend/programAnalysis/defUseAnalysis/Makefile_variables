@@ -8,7 +8,7 @@ endif
 
 mpaDefUseAnalysis_includes=\
 	-I$(mpaDefUseAnalysisPath)/.. \
-	-I$(mpaDefUseAnalysisPath)/../dataflowAnalysis \
+	-I$(mpaDefUseAnalysisPath)/../bitvectorDataflow \
 	-I$(mpaDefUseAnalysisPath)/../CFG \
 	-I$(top_srcdir)/src/midend/loopProcessing \
 	-I$(top_srcdir)/src/midend/astUtil \

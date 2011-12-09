@@ -38,8 +38,6 @@ SgAsmCommonSubExpression
 SgAsmControlFlagsExpression
 SgAsmDOSExtendedHeader
 SgAsmDOSFileHeader
-SgAsmDataStructureDeclaration
-SgAsmDeclaration
 SgAsmDoubleFloatValueExpression
 SgAsmDoubleWordValueExpression
 SgAsmDwarfAccessDeclaration
@@ -157,8 +155,7 @@ SgAsmElfSymverSection
 SgAsmExecutableFileFormat
 SgAsmExprListExp
 SgAsmExpression
-SgAsmFieldDeclaration
-SgAsmFunctionDeclaration
+SgAsmFunction
 SgAsmGenericArchitecture
 SgAsmGenericDLL
 SgAsmGenericDLLList
@@ -231,6 +228,7 @@ SgAsmSectionHeader
 SgAsmSectionHeaderList
 SgAsmSingleFloatValueExpression
 SgAsmStatement
+SgAsmStaticData
 SgAsmStmt
 SgAsmStoredString
 SgAsmStringStorage
@@ -270,6 +268,7 @@ SgAttribute
 SgAttributeSpecificationStatement
 SgBackspaceStatement
 SgBaseClass
+SgExpBaseClass
 SgBaseClassModifier
 SgBasicBlock
 SgBidirectionalGraph
@@ -437,7 +436,9 @@ SgCudaKernelExecConfig
 SgCudaKernelCallExp
 SgLabelRefExp
 SgLabelStatement
+SgJavaLabelStatement
 SgLabelSymbol
+SgJavaLabelSymbol
 SgLambdaRefExp
 SgLessOrEqualOp
 SgLessThanOp

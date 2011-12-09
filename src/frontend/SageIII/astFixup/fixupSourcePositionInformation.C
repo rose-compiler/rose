@@ -400,6 +400,7 @@ FixupSourcePositionInformation::evaluateSynthesizedAttribute
              {
                printf ("Error: (*(returnAttribute.startingPosition) <= *(returnAttribute.endingPosition)) == false \n");
                SgNode* tempNode = returnAttribute.startingPosition->get_parent();
+               ROSE_ASSERT(tempNode != NULL);
                printf ("returnAttribute.startingPosition->get_parent() = %p = %s \n",tempNode,tempNode->class_name().c_str());
                returnAttribute.startingPosition->display("Leaving evaluateSynthesizedAttribute(): returnAttribute.startingPosition");
                returnAttribute.endingPosition->display("Leaving evaluateSynthesizedAttribute(): returnAttribute.endingPosition");
@@ -674,7 +675,9 @@ FixupSourcePositionConstructs::visit(SgNode* node)
           ROSE_ASSERT(locatedNode->get_startOfConstruct() != NULL);
           if (locatedNode->get_endOfConstruct() == NULL)
              {
-               printf ("FixupSourcePositionConstructs::visit(): Building a matching endOfConstruct to the available startOfConstruct for locatedNode = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
+                 if (SgProject::get_verbose() > 0) {
+                     printf ("FixupSourcePositionConstructs::visit(): Building a matching endOfConstruct to the available startOfConstruct for locatedNode = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
+                 }
                locatedNode->set_endOfConstruct( new Sg_File_Info (* ( locatedNode->get_startOfConstruct() ) ) );
              }
           ROSE_ASSERT(locatedNode->get_endOfConstruct() != NULL);

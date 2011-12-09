@@ -1,25 +1,20 @@
+# Non-recursive Makefile
 
-mptFiniteDifferencing_includes=\
-	-I${top_srcdir}/src/midend/programAnalysis/CFG 
-
-
-mptFiniteDifferencing_la_sources=\
+mptFiniteDifferencing_la_source = \
 	$(mptFiniteDifferencingPath)/finiteDifferencing.C \
 	$(mptFiniteDifferencingPath)/patternRewrite.C
 
-
-mptFiniteDifferencing_includeHeaders=\
+mptFiniteDifferencing_includeHeaders = \
 	$(mptFiniteDifferencingPath)/finiteDifferencing.h \
 	$(mptFiniteDifferencingPath)/patternRewrite.h
 
-
-mptFiniteDifferencing_extraDist=\
+mptFiniteDifferencing_extraDist = \
 	$(mptFiniteDifferencingPath)/CMakeLists.txt
 
-
-mptFiniteDifferencing_cleanLocal=\
+mptFiniteDifferencing_cleanLocal = \
 	rm -rf \
-		$(mptFiniteDifferencingPath)/Templates.DB \
+		$(mptFiniteDifferencingPath)/core \
 		$(mptFiniteDifferencingPath)/ii_files \
 		$(mptFiniteDifferencingPath)/ti_files \
-		$(mptFiniteDifferencingPath)/core
+		$(mptFiniteDifferencingPath)/Templates.DB
+

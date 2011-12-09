@@ -30,6 +30,7 @@ include_HEADERS = \
      sageInterface.h \
      sageBuilder.h \
      sageGeneric.hpp \
+     sageFunctors.h \
      integerOps.h \
      abiStuff.h
 #     highLevelInterface.h
