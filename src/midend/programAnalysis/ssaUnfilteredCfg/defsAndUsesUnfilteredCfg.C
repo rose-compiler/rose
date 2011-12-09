@@ -196,8 +196,7 @@ ChildUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node, Synth
             //We now know that the unary op is a use. We have to merge its child uses
             if (isSgCastExp(unaryOp))
             {
-                //Cast expressions can have two children in the AST, because of the original expression tree
-                ROSE_ASSERT(attrs.size() == 2);
+                ROSE_ASSERT(attrs.size() == 1);
                 uses.insert(attrs[0].getUses().begin(), attrs[0].getUses().end());
             }
             else if (isSgThrowOp(unaryOp))
