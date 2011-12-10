@@ -277,11 +277,8 @@ void StateSavingStatementHandler::saveOneVariable(const VariableRenaming::VarNam
 			//Declare the temporary variable to store the popped value
 			SgVariableDeclaration* tempVarDecl;
 			SgExpression* tempVarRef;
-			SgAssignOp* reassignTempVar;
-			boost::tie(tempVarDecl, reassignTempVar, tempVarRef) = 
-					SageInterface::createTempVariableForExpression(popVal(varType), reverseBody, true);
-			SageInterface::deepDelete(reassignTempVar);
-			reassignTempVar = NULL;
+			boost::tie(tempVarDecl, tempVarRef) = 
+					SageInterface::createTempVariableForExpression(popVal(varType), reverseBody, true, NULL);
 
 			//Build if-statements that check for the actual type of the popped value
 			vector<SgIfStmt*> reverseIfStatements;
