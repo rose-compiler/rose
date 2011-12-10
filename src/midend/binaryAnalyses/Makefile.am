@@ -51,6 +51,7 @@ include_HEADERS = \
    dataflowanalyses/RoseBin_DefUseAnalysis.h \
    dataflowanalyses/RoseBin_Emulate.h \
    dataflowanalyses/RoseBin_VariableAnalysis.h \
+   instructionSemantics/ReadWriteRegisterFragment.h \
    instructionSemantics/findConstants.h \
    instructionSemantics/InsnSemanticsExpr.h \
    instructionSemantics/SMTSolver.h \

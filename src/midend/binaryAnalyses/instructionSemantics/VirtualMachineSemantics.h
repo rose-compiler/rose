@@ -258,6 +258,13 @@ private:
     size_t ninsns;                      /**< Total number of instructions processed. This is incremented by startInstruction(),
                                          *   which is the first thing called by X86InstructionSemantics::processInstruction(). */
     MemoryMap *map;                     /**< Initial known memory values for known addresses. */
+    const RegisterDictionary *regdict;  /**< Registers stored in the various State objects for this Policy.  This dictionary is
+                                         *   used by the X86InstructionSemantics class to translate register names to register
+                                         *   descriptors.   For instance, to read from the "eax" register, the semantics will
+                                         *   look up "eax" in the policy's register dictionary and then pass that descriptor to
+                                         *   the policy's readRegister() method.  Register descriptors are also stored in
+                                         *   instructions then the instruction is disassembled, so the disassembler and policy
+                                         *   should probably be using the same dictionary. */
 
 public:
     struct Exception {
@@ -269,7 +276,7 @@ public:
         std::string mesg;
     };
 
-    Policy(): cur_insn(NULL), p_discard_popped_memory(false), ninsns(0), map(NULL) {
+    Policy(): cur_insn(NULL), p_discard_popped_memory(false), ninsns(0), map(NULL), regdict(NULL) {
         /* So that named values are identical in both; reinitialized by first call to startInstruction(). */
         orig_state = cur_state;
     }
@@ -373,6 +380,7 @@ public:
     /** Sign extend from @p FromLen bits to @p ToLen bits. */
     template <size_t FromLen, size_t ToLen>
     ValueType<ToLen> signExtend(const ValueType<FromLen> &a) const {
+        if (ToLen==FromLen) return a;
         if (a.name) return ValueType<ToLen>();
         return IntegerOps::signExtend<FromLen, ToLen>(a.offset);
     }
@@ -389,7 +397,7 @@ public:
     /** Return a newly sized value by either truncating the most significant bits or by adding more most significant bits that
      *  are set to zeros. */
     template <size_t FromLen, size_t ToLen>
-    ValueType<ToLen> extendByMSB(const ValueType<FromLen> &a) const {
+    ValueType<ToLen> unsignedExtend(const ValueType<FromLen> &a) const {
         return ValueType<ToLen>(a);
     }
 
@@ -503,6 +511,21 @@ public:
         }
     }
 
+    /**************************************************************************************************************************
+     * The registers defined for this policy.  Most policies have at least one State object that contains (among other things)
+     * values for each of the registers.  The organization of those values is Policy-specific and possibly based on information
+     * from a register dictionary.
+     **************************************************************************************************************************/
+
+    /** Returns the register dictionary. */
+    const RegisterDictionary *get_register_dictionary() const {
+        return regdict ? regdict : RegisterDictionary::dictionary_pentium4();
+    }
+
+    /** Sets the register dictionary. */
+    void set_register_dictionary(const RegisterDictionary *regdict) {
+        this->regdict = regdict;
+    }
 
     /*************************************************************************************************************************
      * Functions invoked by the X86InstructionSemantics class for every processed instruction or block
@@ -602,46 +625,7 @@ public:
      * Functions invoked by the X86InstructionSemantics class for data access operations
      *************************************************************************************************************************/
 
-    /** Returns value of the specified 32-bit general purpose register. */
-    ValueType<32> readGPR(X86GeneralPurposeRegister r) const {
-        return cur_state.gpr[r];
-    }
-
-    /** Places a value in the specified 32-bit general purpose register. */
-    void writeGPR(X86GeneralPurposeRegister r, const ValueType<32> &value) {
-        cur_state.gpr[r] = value;
-    }
-
-    /** Reads a value from the specified 16-bit segment register. */
-    ValueType<16> readSegreg(X86SegmentRegister sr) const {
-        return cur_state.segreg[sr];
-    }
-
-    /** Places a value in the specified 16-bit segment register. */
-    void writeSegreg(X86SegmentRegister sr, const ValueType<16> &value) {
-        cur_state.segreg[sr] = value;
-    }
-
-    /** Returns the value of the instruction pointer as it would be during the execution of the instruction. In other words,
-     *  it points to the first address past the end of the current instruction. */
-    ValueType<32> readIP() const {
-        return cur_state.ip;
-    }
-
-    /** Changes the value of the instruction pointer. */
-    void writeIP(const ValueType<32> &value) {
-        cur_state.ip = value;
-    }
-
-    /** Returns the value of a specific control/status/system flag. */
-    ValueType<1> readFlag(X86Flag f) const {
-        return cur_state.flag[f];
-    }
-
-    /** Changes the value of the specified control/status/system flag. */
-    void writeFlag(X86Flag f, const ValueType<1> &value) {
-        cur_state.flag[f] = value;
-    }
+#include "ReadWriteRegisterFragment.h"
 
     /** Reads a value from memory. */
     template <size_t Len> ValueType<Len>
@@ -896,7 +880,7 @@ public:
             if (!a.name) return a.offset % b.offset;
             /* FIXME: More folding possibilities... if 'b' is a power of two then we can return 'a' with the bitsize of 'b'. */
         }
-        if (extendByMSB<Len1,64>(a)==extendByMSB<Len2,64>(b)) return b;
+        if (unsignedExtend<Len1,64>(a)==unsignedExtend<Len2,64>(b)) return b;
         return ValueType<Len2>();
     }
 
@@ -907,11 +891,11 @@ public:
             return a.offset * b.offset;
         if (!b.name) {
             if (0==b.offset) return 0;
-            if (1==b.offset) return extendByMSB<Len1, Len1+Len2>(a);
+            if (1==b.offset) return unsignedExtend<Len1, Len1+Len2>(a);
         }
         if (!a.name) {
             if (0==a.offset) return 0;
-            if (1==a.offset) return extendByMSB<Len2, Len1+Len2>(b);
+            if (1==a.offset) return unsignedExtend<Len2, Len1+Len2>(b);
         }
         return ValueType<Len1+Len2>();
     }

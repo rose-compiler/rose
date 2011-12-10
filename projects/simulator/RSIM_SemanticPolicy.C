@@ -6,22 +6,45 @@
 void
 RSIM_SemanticPolicy::ctor()
 {
-    for (size_t i=0; i<VirtualMachineSemantics::State::n_gprs; i++)
-        writeGPR((X86GeneralPurposeRegister)i, 0);
-    for (size_t i=0; i<VirtualMachineSemantics::State::n_flags; i++)
-        writeFlag((X86Flag)i, 0);
-    writeIP(0);
-    writeFlag((X86Flag)1, true_());
 
-    writeGPR(x86_gpr_sp, 0xc0000000ul); /* high end of stack, exclusive */
+    reg_eax = findRegister("eax", 32);
+    reg_ebx = findRegister("ebx", 32);
+    reg_ecx = findRegister("ecx", 32);
+    reg_edx = findRegister("edx", 32);
+    reg_esi = findRegister("esi", 32);
+    reg_edi = findRegister("edi", 32);
+    reg_eip = findRegister("eip", 32);
+    reg_esp = findRegister("esp", 32);
+    reg_ebp = findRegister("ebp", 32);
 
-    writeSegreg(x86_segreg_cs, 0x23);
-    writeSegreg(x86_segreg_ds, 0x2b);
-    writeSegreg(x86_segreg_es, 0x2b);
-    writeSegreg(x86_segreg_ss, 0x2b);
-    writeSegreg(x86_segreg_fs, 0);
-    writeSegreg(x86_segreg_gs, 0);
+    reg_cs  = findRegister("cs", 16);
+    reg_ds  = findRegister("ds", 16);
+    reg_es  = findRegister("es", 16);
+    reg_fs  = findRegister("fs", 16);
+    reg_gs  = findRegister("gs", 16);
+    reg_ss  = findRegister("ss", 16);
 
+    reg_eflags = findRegister("eflags", 32);
+    reg_df  = findRegister("df", 1);
+    reg_tf  = findRegister("tf", 1);
+
+    writeRegister<32>(reg_eip, 0);
+    writeRegister<32>(reg_eax, 0);
+    writeRegister<32>(reg_ebx, 0);
+    writeRegister<32>(reg_ecx, 0);
+    writeRegister<32>(reg_edx, 0);
+    writeRegister<32>(reg_esi, 0);
+    writeRegister<32>(reg_edi, 0);
+    writeRegister<32>(reg_ebp, 0);
+    writeRegister<32>(reg_esp, 0xc0000000ul); /* high end of stack, exclusive */
+    writeRegister<32>(reg_eflags, 0x00000002); // flag bit 1 is set to one, although this is a reserved register
+
+    writeRegister<16>(reg_cs, 0x23);
+    writeRegister<16>(reg_ds, 0x2b);
+    writeRegister<16>(reg_es, 0x2b);
+    writeRegister<16>(reg_ss, 0x2b);
+    writeRegister<16>(reg_fs, 0);
+    writeRegister<16>(reg_gs, 0);
 }
 
 RTS_Message *
@@ -43,7 +66,7 @@ RSIM_SemanticPolicy::interrupt(uint8_t num)
 void
 RSIM_SemanticPolicy::cpuid()
 {
-    int code = readGPR(x86_gpr_ax).known_value();
+    int code = readRegister<32>(reg_eax).known_value();
 
     uint32_t dwords[4];
 #if 0
@@ -73,10 +96,10 @@ RSIM_SemanticPolicy::cpuid()
         fprintf(stderr, "CPUID-%d probably should not have been executed!", code);
     }
 
-    writeGPR(x86_gpr_ax, number<32>(dwords[0]));
-    writeGPR(x86_gpr_bx, number<32>(dwords[1]));
-    writeGPR(x86_gpr_cx, number<32>(dwords[2]));
-    writeGPR(x86_gpr_dx, number<32>(dwords[3]));
+    writeRegister(reg_eax, number<32>(dwords[0]));
+    writeRegister(reg_ebx, number<32>(dwords[1]));
+    writeRegister(reg_ecx, number<32>(dwords[2]));
+    writeRegister(reg_edx, number<32>(dwords[3]));
 }
 
 void
@@ -87,27 +110,28 @@ RSIM_SemanticPolicy::sysenter()
     /* On linux, SYSENTER is followed by zero or more NOPs, followed by a JMP back to just before the SYSENTER in order to
      * restart interrupted system calls, followed by POPs for the callee-saved registers. A non-interrupted system call should
      * return to the first POP instruction, which happens to be 9 bytes after the end of the SYSENTER. */
-    writeIP(add(readIP(), number<32>(9)));
+    writeRegister(reg_eip, add(readRegister<32>(reg_eip), number<32>(9)));
 }
 
 void
-RSIM_SemanticPolicy::dump_registers(RTS_Message *mesg) const
+RSIM_SemanticPolicy::dump_registers(RTS_Message *mesg)
 {
     /* lock, so entire state is all together in the output */
     RTS_MESSAGE(*mesg) {
         mesg->multipart("state",
                         "    eax=0x%08"PRIx64" ebx=0x%08"PRIx64" ecx=0x%08"PRIx64" edx=0x%08"PRIx64"\n",
-                        readGPR(x86_gpr_ax).known_value(), readGPR(x86_gpr_bx).known_value(),
-                        readGPR(x86_gpr_cx).known_value(), readGPR(x86_gpr_dx).known_value());
+                        readRegister<32>(reg_eax).known_value(), readRegister<32>(reg_ebx).known_value(),
+                        readRegister<32>(reg_ecx).known_value(), readRegister<32>(reg_edx).known_value());
         mesg->more("    esi=0x%08"PRIx64" edi=0x%08"PRIx64" ebp=0x%08"PRIx64" esp=0x%08"PRIx64" eip=0x%08"PRIx64"\n",
-                   readGPR(x86_gpr_si).known_value(), readGPR(x86_gpr_di).known_value(),
-                   readGPR(x86_gpr_bp).known_value(), readGPR(x86_gpr_sp).known_value(),
+                   readRegister<32>(reg_esi).known_value(), readRegister<32>(reg_edi).known_value(),
+                   readRegister<32>(reg_ebp).known_value(), readRegister<32>(reg_esp).known_value(),
                    get_ip().known_value());
+
+        static const char *segreg_name[] = {"cs", "ds", "es", "fs", "gs", "ss"};
         for (int i=0; i<6; i++) {
-            X86SegmentRegister sr = (X86SegmentRegister)i;
             mesg->more("    %s=0x%04"PRIx64" base=0x%08"PRIx32" limit=0x%08"PRIx32" present=%s\n",
-                       segregToString(sr), readSegreg(sr).known_value(),
-                       sr_shadow[sr].base, sr_shadow[sr].limit, sr_shadow[sr].present?"yes":"no");
+                       segregToString((X86SegmentRegister)i), readRegister<16>(segreg_name[i]).known_value(),
+                       sr_shadow[i].base, sr_shadow[i].limit, sr_shadow[i].present?"yes":"no");
         }
 
         uint32_t eflags = get_eflags();
@@ -126,48 +150,32 @@ RSIM_SemanticPolicy::dump_registers(RTS_Message *mesg) const
 }
 
 uint32_t
-RSIM_SemanticPolicy::get_eflags() const
+RSIM_SemanticPolicy::get_eflags()
 {
-    uint32_t eflags = 0;
-    for (size_t i=0; i<VirtualMachineSemantics::State::n_flags; i++) {
-        if (readFlag((X86Flag)i).is_known())
-            eflags |= readFlag((X86Flag)i).known_value() ? 1u<<i : 0u;
-    }
-    return eflags;
+    return readRegister<32>(reg_eflags).known_value();
 }
 
 void
 RSIM_SemanticPolicy::set_eflags(uint32_t eflags)
 {
-    for (size_t i=0; i<VirtualMachineSemantics::State::n_flags; i++) {
-        uint32_t mask = (uint32_t)1 << i;
-        writeFlag((X86Flag)i, eflags & mask ? true_() : false_());
-    }
+    writeRegister<32>(reg_eflags, eflags);
 }
 
 void
 RSIM_SemanticPolicy::push(VirtualMachineSemantics::ValueType<32> n)
 {
-    VirtualMachineSemantics::ValueType<32> new_sp = add(readGPR(x86_gpr_sp), number<32>((uint64_t)(int64_t)-4));
+    VirtualMachineSemantics::ValueType<32> new_sp = add(readRegister<32>(reg_esp), number<32>((uint64_t)(int64_t)-4));
     writeMemory(x86_segreg_ss, new_sp, n, true_());
-    writeGPR(x86_gpr_sp, new_sp);
+    writeRegister(reg_esp, new_sp);
 }
 
 VirtualMachineSemantics::ValueType<32>
 RSIM_SemanticPolicy::pop()
 {
-    VirtualMachineSemantics::ValueType<32> old_sp = readGPR(x86_gpr_sp);
+    VirtualMachineSemantics::ValueType<32> old_sp = readRegister<32>(reg_esp);
     VirtualMachineSemantics::ValueType<32> retval = readMemory<32>(x86_segreg_ss, old_sp, true_());
-    writeGPR(x86_gpr_sp, add(old_sp, number<32>(4)));
+    writeRegister(reg_esp, add(old_sp, number<32>(4)));
     return retval;
-}
-
-void
-RSIM_SemanticPolicy::writeSegreg(X86SegmentRegister sr, const VirtualMachineSemantics::ValueType<16> &val)
-{
-    ROSE_ASSERT(0==val.known_value() || 3 == (val.known_value() & 7)); /*GDT and privilege level 3*/
-    VirtualMachineSemantics::Policy::writeSegreg(sr, val);
-    load_sr_shadow(sr, val.known_value()>>3);
 }
 
 void

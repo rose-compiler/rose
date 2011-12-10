@@ -216,8 +216,25 @@ namespace SymbolicSemantics {
                                              * startInstruction(), which is the first thing called by
                                              * X86InstructionSemantics::processInstruction(). */
         SMTSolver *solver;                  /**< The solver to use for Satisfiability Modulo Theory, or NULL. */
+        const RegisterDictionary *regdict;  /**< Registers stored in the various State objects for this Policy.  This
+                                             *   dictionary is used by the X86InstructionSemantics class to translate register
+                                             *   names to register descriptors.  For instance, to read from the "eax" register,
+                                             *   the semantics will look up "eax" in the policy's register dictionary and then
+                                             *   pass that descriptor to the policy's readRegister() method.  Register
+                                             *   descriptors are also stored in instructions then the instruction is
+                                             *   disassembled, so the disassembler and policy should probably be using the same
+                                             *   dictionary. */
 
     public:
+        struct Exception {
+            Exception(const std::string &mesg): mesg(mesg) {}
+            friend std::ostream& operator<<(std::ostream &o, const Exception &e) {
+                o <<"VirtualMachineSemantics exception: " <<e.mesg;
+                return o;
+            }
+            std::string mesg;
+        };
+
         /** Constructs a new policy without an SMT solver. */
         Policy() {
             init();
@@ -239,6 +256,7 @@ namespace SymbolicSemantics {
             p_discard_popped_memory = false;
             ninsns = 0;
             solver = NULL;
+            regdict = NULL;
         }
 
         /** Sets the satisfiability modulo theory (SMT) solver to use for certain operations. */
@@ -458,9 +476,26 @@ namespace SymbolicSemantics {
         }
 
 
-        /*************************************************************************************************************************
+        /**********************************************************************************************************************
+         * The registers defined for this policy.  Most policies have at least one State object that contains (among other
+         * things) values for each of the registers.  The organization of those values is Policy-specific and possibly based on
+         * information from a register dictionary.
+         **********************************************************************************************************************/
+
+        /** Returns the register dictionary. */
+        const RegisterDictionary *get_register_dictionary() const {
+            return regdict ? regdict : RegisterDictionary::dictionary_pentium4();
+        }
+
+        /** Sets the register dictionary. */
+        void set_register_dictionary(const RegisterDictionary *regdict) {
+            this->regdict = regdict;
+        }
+
+
+        /*********************************************************************************************************************
          * Functions invoked by the X86InstructionSemantics class for every processed instructions
-         *************************************************************************************************************************/
+         *********************************************************************************************************************/
 
         /* Called at the beginning of X86InstructionSemantics::processInstruction() */
         void startInstruction(SgAsmInstruction *insn) {
@@ -544,65 +579,6 @@ namespace SymbolicSemantics {
         /** Called for SYSENTER instruction. */
         void sysenter() {
             cur_state = State(); /*reset entire machine state*/
-        }
-
-
-
-        /*************************************************************************************************************************
-         * Functions invoked by the X86InstructionSemantics class for data access operations
-         *************************************************************************************************************************/
-
-        /** Returns value of the specified 32-bit general purpose register. */
-        ValueType<32> readGPR(X86GeneralPurposeRegister r) const {
-            return cur_state.gpr[r];
-        }
-
-        /** Places a value in the specified 32-bit general purpose register. */
-        void writeGPR(X86GeneralPurposeRegister r, const ValueType<32> &value) {
-            cur_state.gpr[r] = value;
-        }
-
-        /** Reads a value from the specified 16-bit segment register. */
-        ValueType<16> readSegreg(X86SegmentRegister sr) const {
-            return cur_state.segreg[sr];
-        }
-
-        /** Places a value in the specified 16-bit segment register. */
-        void writeSegreg(X86SegmentRegister sr, const ValueType<16> &value) {
-            cur_state.segreg[sr] = value;
-        }
-
-        /** Returns the value of the instruction pointer as it would be during the execution of the instruction. In other words,
-         *  it points to the first address past the end of the current instruction. */
-        ValueType<32> readIP() const {
-            return cur_state.ip;
-        }
-
-        /** Changes the value of the instruction pointer. */
-        void writeIP(const ValueType<32> &value) {
-            cur_state.ip = value;
-        }
-
-        /** Returns the value of a specific control/status/system flag. */
-        ValueType<1> readFlag(X86Flag f) const {
-            return cur_state.flag[f];
-        }
-
-        /** Changes the value of the specified control/status/system flag. */
-        void writeFlag(X86Flag f, const ValueType<1> &value) {
-            cur_state.flag[f] = value;
-        }
-
-        /** Reads a value from memory. */
-        template <size_t Len> ValueType<Len>
-        readMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<1> cond) const {
-            return mem_read<Len>(cur_state, addr);
-        }
-
-        /** Writes a value to memory. */
-        template <size_t Len> void
-        writeMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<Len> &data, ValueType<1> cond) {
-            mem_write<Len>(cur_state, addr, data);
         }
 
 
@@ -856,7 +832,28 @@ namespace SymbolicSemantics {
                 return ValueType<Len>(a.known_value() ^ b.known_value());
             return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_BV_XOR, a.expr, b.expr));
         }
+
+
+
+        /*************************************************************************************************************************
+         * Functions invoked by the X86InstructionSemantics class for data access operations
+         *************************************************************************************************************************/
+
+#include "ReadWriteRegisterFragment.h"
+
+        /** Reads a value from memory. */
+        template <size_t Len> ValueType<Len>
+        readMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<1> cond) const {
+            return mem_read<Len>(cur_state, addr);
+        }
+
+        /** Writes a value to memory. */
+        template <size_t Len> void
+        writeMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<Len> &data, ValueType<1> cond) {
+            mem_write<Len>(cur_state, addr, data);
+        }
     };
+
 
 }; /*namespace*/
 

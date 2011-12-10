@@ -27,11 +27,11 @@ public:
     }
     virtual ExecutionTransfer *clone() { return this; }
     virtual bool operator()(bool enabled, const Args &args) {
-        if (args.thread->policy.readIP().known_value()==from_addr) {
+        if (args.thread->policy.readRegister<32>("eip").known_value()==from_addr) {
             std::cerr <<"transfering control from " <<StringUtility::addrToString(from_addr)
                       <<" to " <<StringUtility::addrToString(to_addr) <<"\n";
             // we could push a return address onto the stack here...
-            args.thread->policy.writeIP(args.thread->policy.number<32>(to_addr));
+            args.thread->policy.writeRegister("eip", args.thread->policy.number<32>(to_addr));
             enabled = false; /* do not execute instruction at from_addr */
         }
         return enabled;
