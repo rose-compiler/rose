@@ -677,7 +677,7 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
      SgFunctionTypeTable* fTable = SgNode::get_globalFunctionTypeTable();
      ROSE_ASSERT(fTable != NULL);
 
-     fTable->get_function_type_table()->print("In buildMemberFunctionType(): globalFunctionTypeTable BEFORE");
+  // fTable->get_function_type_table()->print("In buildMemberFunctionType(): globalFunctionTypeTable BEFORE");
 
      SgType* typeInTable = fTable->lookup_function_type(typeName);
      printf ("########### In buildMemberFunctionType(): Looking in global function type table for member function type = %p name = %s \n",funcType,typeName.str());
@@ -1737,7 +1737,7 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & name, SgType* ret
      if (func_symbol == NULL)
         {
           printf ("Could not find an existing symbol for this function! \n");
-          scope->get_symbol_table()->print("Could not find an existing symbol for this function!");
+       // scope->get_symbol_table()->print("Could not find an existing symbol for this function!");
 
        // DQ (12/2/2011): After discussion with Liao, we think this should be an error.
        // The defining declaration requires that the associated non-defining declaration should already exist.

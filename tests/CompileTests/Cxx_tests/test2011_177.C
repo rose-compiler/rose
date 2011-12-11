@@ -1,19 +1,16 @@
+// Bug demonstrated in test2004_35.C
+// Note namespace "std" is special and only appears as a secondary declaration
+// so the symbol table handling for it needs to be a bit special.
 
-namespace X 
+namespace std
    {
-     int var_A;
-#if 0
-     inline long abs(long __i) { return 0; }
-#endif
+//   int var_A;
    }
 
-#if 1
-namespace X 
+#if 0
+namespace std
    {
      int var_B = var_A;
-#if 0
-     inline long div(long __i, long __j) { return 0; }   
-#endif
    }
 #endif
 
