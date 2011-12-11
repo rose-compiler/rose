@@ -15,7 +15,7 @@ incrementalInversionTest_LDADD =	$(top_builddir)/projects/backstroke/libBackstro
 			$(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 
-EXTRA_DIST = 
+EXTRA_DIST = codes/new1.C
 
 CLEANFILES = 
 
