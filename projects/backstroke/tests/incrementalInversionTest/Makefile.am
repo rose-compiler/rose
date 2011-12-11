@@ -20,8 +20,10 @@ EXTRA_DIST = codes/new1.C
 CLEANFILES = 
 
 check-local:
-	./incrementalInversionTest --edg:no_warnings -w -I$(top_srcdir)/projects/backstroke/pluggableReverser -c ${srcdir}/codes/new1.C
+	cp ${srcdir}/codes/new1.C new1.C
+	./incrementalInversionTest --edg:no_warnings -w -I$(top_srcdir)/projects/backstroke/pluggableReverser -c new1.C
 
 clean-local:
+	rm -f new1.C
 	
 
