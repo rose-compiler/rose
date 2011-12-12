@@ -484,6 +484,7 @@ INPUT                  = \
                          @top_srcdir@/src/frontend/SageIII/docs \
 			 @top_srcdir@/src/frontend/SageIII/astPostProcessing/checkIsModifiedFlag.C \
                          @top_srcdir@/src/frontend/SageIII/sageInterface \
+                         @top_srcdir@/src/frontend/SageIII/astFromString \
                          @top_srcdir@/src/frontend/SageIII/virtualCFG \
 			 @top_srcdir@/src/frontend/SageIII/virtualCFG/virtualBinCFG.C \
 			 @top_srcdir@/src/frontend/BinaryFormats \
