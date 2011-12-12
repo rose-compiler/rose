@@ -155,7 +155,14 @@ test2011_172.C \
 test2011_173.C \
 test2011_174.C \
 test2011_175.C \
-test2011_176.C 
+test2011_176.C \
+test2011_177.C \
+test2011_179.C \
+test2011_180.C \
+test2011_181.C \
+test2011_182.C \
+test2011_183.C \
+test2011_184.C 
 
 
 else

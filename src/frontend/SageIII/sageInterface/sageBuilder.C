@@ -885,6 +885,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType*
                printf ("NOTE: Maybe template symbols for template function declarations should use the function type \n");
                ROSE_ASSERT(func_type != NULL);
 
+            // DQ (12/12/2011): Because this is an just using the name, it could return the wrong symbol in the case of overloaded functions.
                func_symbol = scope->lookup_template_symbol(name);
 
                printf ("In buildNondefiningFunctionDeclaration_T(): func_symbol from scope->lookup_template_symbol(name = %s) = %p \n",name.str(),func_symbol);
@@ -1155,6 +1156,18 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType*
           ROSE_ASSERT(f_func->get_endOfConstruct()->isOutputInCodeGeneration() == false);
         }
 
+  // DQ (12/11/2011): Added new test.
+     ROSE_ASSERT(func->get_firstNondefiningDeclaration() != NULL);
+     SgSymbol* symbol_from_first_nondefining_function = func->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table();
+     ROSE_ASSERT(symbol_from_first_nondefining_function != NULL);
+
+  // DQ (12/11/2011): Note that this may be false when func is not the first nondefining declaration.
+     if (func != func->get_firstNondefiningDeclaration())
+        {
+          SgSymbol* symbol_from_nondefining_function = func->get_symbol_from_symbol_table();
+          ROSE_ASSERT(symbol_from_nondefining_function == NULL);
+        }
+
      return func;  
    }
 
@@ -1226,6 +1239,16 @@ SageBuilder::buildNondefiningTemplateFunctionDeclaration (const SgName & name, S
   // DQ (11/25/2011): Adding support for template declarations in the AST.
 
      SgTemplateFunctionDeclaration* result = buildNondefiningFunctionDeclaration_T <SgTemplateFunctionDeclaration> (name,return_type,paralist, /* isMemberFunction = */ false, scope, decoratorList);
+
+  // DQ (12/12/2011): Added test.
+     ROSE_ASSERT(result != NULL);
+     if (result->get_symbol_from_symbol_table() == NULL)
+        {
+          ROSE_ASSERT(result->get_firstNondefiningDeclaration() != NULL);
+          ROSE_ASSERT(result != result->get_firstNondefiningDeclaration());
+          ROSE_ASSERT(result->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table() != NULL);
+        }
+     ROSE_ASSERT(result->get_symbol_from_symbol_table() != NULL);
 
      return result;
    }
@@ -1385,6 +1408,18 @@ SageBuilder::buildNondefiningTemplateMemberFunctionDeclaration (const SgName & n
      printf ("Error: incomplete implementation of buildNondefiningTemplateMemberFunctionDeclaration() \n");
      ROSE_ASSERT(false);
 #endif
+
+  // DQ (12/11/2011): Added new test (also at the base of buildNondefiningFunctionDeclaration_T<>() function).
+     ROSE_ASSERT(result->get_firstNondefiningDeclaration() != NULL);
+     SgSymbol* symbol_from_first_nondefining_function = result->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table();
+     ROSE_ASSERT(symbol_from_first_nondefining_function != NULL);
+
+  // DQ (12/11/2011): Note that this may be false when func is not the first nondefining declaration.
+     if (result != result->get_firstNondefiningDeclaration())
+        {
+          SgSymbol* symbol_from_nondefining_function = result->get_symbol_from_symbol_table();
+          ROSE_ASSERT(symbol_from_nondefining_function == NULL);
+        }
 
      return result;
    }
