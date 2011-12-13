@@ -14205,7 +14205,9 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
       }
   };
   visitorTraversal exampleTraversal;
-  exampleTraversal.traverseInputFiles(project,preorder);
+  //FIX: should traverse using the traverse function
+  // exampleTraversal.traverseInputFiles(project,preorder);
+  exampleTraversal.traverse(project);
 }
 
 #endif
