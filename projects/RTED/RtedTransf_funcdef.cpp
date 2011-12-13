@@ -9,17 +9,16 @@
 #include "DataStructures.h"
 #include "RtedTransformation.h"
 
-using namespace std;
-using namespace SageInterface;
-using namespace SageBuilder;
-
+namespace SI = SageInterface;
+namespace SB = SageBuilder;
 
 void
-RtedTransformation::insertVariableCreateInitForParams( SgFunctionDefinition* fndef) {
-    SgBasicBlock* body = fndef->get_body();
+RtedTransformation::insertVariableCreateInitForParams( SgFunctionDefinition& fndef)
+{
+    SgBasicBlock* body = fndef.get_body();
     ROSE_ASSERT( body);
 
-    SgInitializedNamePtrList names = fndef->get_declaration()->get_parameterList()->get_args();
+    SgInitializedNamePtrList names = fndef.get_declaration()->get_parameterList()->get_args();
 
     BOOST_FOREACH( SgInitializedName* param, names)
     {
@@ -38,7 +37,7 @@ RtedTransformation::insertVariableCreateInitForParams( SgFunctionDefinition* fnd
       if ( isSgReferenceType(initType) || isSgArrayType(skip_ModifierType(initType)) )
         continue;
 
-      SgFunctionDeclaration* fndecl = fndef->get_declaration();
+      SgFunctionDeclaration* fndecl = fndef.get_declaration();
       std::cerr << ">>> " << fndecl->get_name() << std::endl;
       ROSE_ASSERT(isSgFunctionDefinition(param->get_scope()));
 
@@ -50,48 +49,104 @@ void
 RtedTransformation::appendSignature( SgExprListExp* arg_list, SgType* return_type, const SgTypePtrList& param_types)
 {
   // number of type descriptors (arguments + return type)
-  appendExpression( arg_list, buildIntVal( param_types.size() + 1));
+  SI::appendExpression( arg_list, SB::buildIntVal( param_types.size() + 1));
 
   // generate a list of typedesc aggregate initializers representing the
   //   function signature.
-  SgExprListExp* type_list = buildExprListExp();
+  SgExprListExp* type_list = SB::buildExprListExp();
 
-  appendExpression( type_list, mkTypeInformation(return_type, true, true) );
+  SI::appendExpression( type_list, mkTypeInformation(return_type, true, true) );
 
   BOOST_FOREACH( SgType* p_type, param_types ) {
-    appendExpression( type_list, mkTypeInformation( p_type, true, true ) );
+    SI::appendExpression( type_list, mkTypeInformation( p_type, true, true ) );
   }
 
   // \pp \note probably roseTypeDesc below should really be an array of roseTypeDescs
-  appendExpression( arg_list, ctorTypeDescList(genAggregateInitializer(type_list, roseTypeDesc())) );
+  SI::appendExpression( arg_list, ctorTypeDescList(genAggregateInitializer(type_list, roseTypeDesc())) );
 }
 
-void
-RtedTransformation::insertConfirmFunctionSignature( SgFunctionDefinition* fndef )
+static
+void insertSignatureCheck(SgFunctionDefinition& fndef, RtedTransformation& trans)
 {
-  SgFunctionDeclaration* fndecl = fndef->get_declaration();
+  SgFunctionDeclaration* fndecl = fndef.get_declaration();
 
+  // \pp \todo replace with !is_C_linkage
   if (isSgMemberFunctionDeclaration(fndecl))
     return;
 
-  SgExprListExp*         arg_list = buildExprListExp();
+  SgExprListExp*         arg_list = SB::buildExprListExp();
 
   // first arg is the name
   // \todo
   // FIXME 2: This probably needs to be something closer to the mangled_name,
   // or perhaps we can simply skip the check entirely for C++
-  appendExpression( arg_list, buildStringVal(fndecl -> get_name()) );
+  SI::appendExpression( arg_list, SB::buildStringVal(fndecl -> get_name()) );
 
   SgFunctionType*        fntype = fndecl->get_type();
   SgType*                fnreturn = fntype->get_return_type();
   SgTypePtrList&         fnparams = fntype->get_arguments();
 
-  appendSignature( arg_list, fnreturn, fnparams );
+  trans.appendSignature( arg_list, fnreturn, fnparams );
 
-  SgFunctionRefExp*      callee = buildFunctionRefExp( symbols.roseConfirmFunctionSignature );
-  SgStatement*           stmt = buildFunctionCallStmt( callee, arg_list );
+  SgFunctionRefExp*      callee = SB::buildFunctionRefExp( trans.symbols.roseConfirmFunctionSignature );
+  SgStatement*           stmt = SB::buildFunctionCallStmt( callee, arg_list );
 
-  fndef->get_body()->prepend_statement(stmt);
+  fndef.get_body()->prepend_statement(stmt);
+}
+
+void
+RtedTransformation::insertDeallocationCheck(SgStatement& loc, SgInitializedName& resvar)
+{
+  SgExprListExp* args = SB::buildExprListExp();
+  SgVarRefExp*   ptr = SB::buildVarRefExp(&resvar);
+  SgAddressOfOp* ptraddr = SB::buildAddressOfOp(ptr);
+  SgPointerType* ppvoid = SB::buildPointerType(SB::buildPointerType(SB::buildVoidType()));
+
+  // \todo build reinterpret cast for C++ codes
+  SI::appendExpression(args, SB::buildCastExp(ptraddr, ppvoid));
+
+  insertCheck(ilAfter, &loc, symbols.roseCheckTransientPtr, args);
+}
+
+static
+SgName gen_wrapper_name(const SgName& n)
+{
+  std::string fnname = n.getString();
+
+  fnname.append("_impl");
+  return fnname;
+}
+
+void
+RtedTransformation::handleFunctionDefinition( FunctionDefContainer::value_type entry )
+{
+  typedef std::pair<SgStatement*, SgInitializedName*> WrapperDesc;
+
+  // insert signature check
+
+  SgFunctionDefinition&  fndef = *entry.first;
+
+  insertVariableCreateInitForParams(fndef);
+  insertSignatureCheck(fndef, *this);
+
+  if (entry.second != ReturnInfo::rtIndirection) return;
+  // insert function wrapper if return type is a pointer (\todo should be contains a pointer)
+
+  SgFunctionDeclaration* fndecl = fndef.get_declaration();
+
+  if (typeid(*fndecl) != typeid(SgFunctionDeclaration))
+  {
+    std::cerr << "error: " << typeid(*fndecl).name() << " wrapping not yet handled." << std::endl;
+    return ;
+  }
+
+  // create a function wrapper
+  WrapperDesc            funpair = wrapFunction(*fndecl, gen_wrapper_name);
+  ROSE_ASSERT(funpair.second);
+
+  // add checks to the wrapper that guarantee that the object pointed to by
+  //   the return value was not deallocated on scope exit.
+  insertDeallocationCheck(*funpair.first, *funpair.second);
 }
 
 #endif

@@ -8,6 +8,8 @@
 
 #include "ptrops.h"
 
+#define UNUSEDARG(X) ((void) &(X)) /* we write for C and C++ compilers ;) */
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
@@ -46,8 +48,6 @@ void rted_EnterSharedPtr(rted_Address addr);
 void rted_ExitSharedPtr(rted_Address addr);
 
 #else /* WITH_UPC */
-
-#define UNUSEDARG(X) ((void) &(X)) /* we write for C and C++ compilers ;) */
 
 static inline
 void rted_UpcEnterWorkzone(void)
