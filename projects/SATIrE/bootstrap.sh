@@ -45,14 +45,14 @@ if [ "$DISABLE_SATIRE" == "0" ] ; then
     if [ "$DISABLE_CHECKS" ==  "1" ]; then
         (libtoolize && \
             autoreconf -i && \
-            ./configure --prefix=$PREFIX --with-rosedir=/usr/local/mstools/rose --with-pagdir=/usr/local/mstools/pag --with-boostdir=/usr/local/mstools/boost --with-boost-compiler-string=-gcc42 CXXFLAGS="-O2 -ggdb -Wno-deprecated" $CCARGS && \
+            ./configure --prefix=$PREFIX --with-rosedir=/usr/local/mstools/rose --with-pagdir=/usr/local/mstools/pag --with-boostdir=/usr/local/mstools/boost --with-boost-compiler-string= CXXFLAGS="-O2 -ggdb -Wno-deprecated" $CCARGS && \
             make $JOBS && \
             make install) \
             || exit 1
     else
         (libtoolize && \
             autoreconf -i && \
-            ./configure --prefix=$PREFIX --with-rosedir=/usr/local/mstools/rose --with-pagdir=/usr/local/mstools/pag --with-boostdir=/usr/local/mstools/boost --with-boost-compiler-string=-gcc42 CXXFLAGS="-O2 -ggdb -Wno-deprecated" $CCARGS && \
+            ./configure --prefix=$PREFIX --with-rosedir=/usr/local/mstools/rose --with-pagdir=/usr/local/mstools/pag --with-boostdir=/usr/local/mstools/boost --with-boost-compiler-string= CXXFLAGS="-O2 -ggdb -Wno-deprecated" $CCARGS && \
             make $JOBS && \
             make $JOBS distcheck && \
             make install && \
