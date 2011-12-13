@@ -6,7 +6,7 @@
 #include <set>
 
 #include "Util.h"
-
+#include "rted_typedefs.h"
 
 class FileManager;
 
@@ -22,7 +22,7 @@ class FileInfo
         FileInfo(FileHandle fp,
                  const std::string & name,
                  int openMode,
-                 const SourcePosition & pos);
+                 const SourceInfo & pos);
 
 
 
@@ -34,7 +34,7 @@ class FileInfo
         FileHandle             getHandle()   const      { return handle;   }
         const std::string &    getFileName() const      { return name;     }
         int                    getOpenMode() const      { return openMode; }
-        const SourcePosition & getPos()      const      { return openPos;  }
+        SourcePosition         getPos()      const      { return SourcePosition(openPos);  }
 
     protected:
 
@@ -47,7 +47,7 @@ class FileInfo
         FileHandle     handle;   ///< the pointer returned by fopen
         std::string    name;      ///< filename or filepath
         int            openMode;  ///< combination of OpenMode flags
-        SourcePosition openPos;   ///< position in sourcecode where file was opened
+        SourceInfo openPos;   ///< position in sourcecode where file was opened
 };
 
 std::ostream& operator<< (std::ostream &os, const FileInfo & m);
@@ -62,19 +62,19 @@ class FileInfo_FSTREAM
         FileInfo_FSTREAM(FileHandle_FSTREAM fp,
                  const std::string & name,
                  int openMode,
-                 const SourcePosition & pos);
+                 const SourceInfo & pos);
 
 
 
         /// overloaded operator because FileInfo's are managed in a std::set
-	bool operator< (const FileInfo_FSTREAM & other) const { return &handle < &other.handle; }
+  bool operator< (const FileInfo_FSTREAM & other) const { return &handle < &other.handle; }
 
         void print(std::ostream & os) const;
 
-	FileHandle_FSTREAM            getHandle()   const      { return handle;   }
+  FileHandle_FSTREAM            getHandle()   const      { return handle;   }
         const std::string &    getFileName() const      { return name;     }
         int                    getOpenMode() const      { return openMode; }
-        const SourcePosition & getPos()      const      { return openPos;  }
+        SourcePosition         getPos()      const      { return SourcePosition(openPos);  }
 
     protected:
 
@@ -84,10 +84,10 @@ class FileInfo_FSTREAM
         FileInfo_FSTREAM(FileHandle_FSTREAM f);
 
 
-	FileHandle_FSTREAM     handle;   ///< the pointer returned by fopen
+  FileHandle_FSTREAM     handle;   ///< the pointer returned by fopen
         std::string    name;      ///< filename or filepath
         int            openMode;  ///< combination of OpenMode flags
-        SourcePosition openPos;   ///< position in sourcecode where file was opened
+        SourceInfo openPos;   ///< position in sourcecode where file was opened
 };
 
 std::ostream& operator<< (std::ostream &os, const FileInfo_FSTREAM & m);
@@ -114,12 +114,12 @@ class FileManager
         void openFile(FileHandle handle,
                       const std::string & fileName,
                       OpenMode mode,
-                      const SourcePosition & pos);
+                      const SourceInfo& pos);
 
         void openFile(FileHandle handle,
-                      const std::string & fileName,
-                      const std::string & mode,
-                      const SourcePosition & pos);
+                      const std::string& fileName,
+                      const std::string& mode,
+                      const SourceInfo& pos);
 
         /// Registers that a file was closed
         void closeFile(FileHandle  handle);
@@ -131,7 +131,7 @@ class FileManager
 
         /// Should be called at end of program, to check if there are any open files
         void checkForOpenFiles();
- 
+
         /// Deletes all collected data
         /// normally only needed for debug purposes
         void clearStatus() { openFiles.clear(); }
@@ -147,12 +147,12 @@ class FileManager
         void openFile(FileHandle_FSTREAM handle,
                       const std::string & fileName,
                       OpenMode mode,
-                      const SourcePosition & pos);
+                      const SourceInfo& pos);
 
         void openFile(FileHandle_FSTREAM handle,
                       const std::string & fileName,
                       const std::string & mode,
-                      const SourcePosition & pos);
+                      const SourceInfo& pos);
 
         /// Registers that a file was closed
         void closeFile(FileHandle_FSTREAM  handle);

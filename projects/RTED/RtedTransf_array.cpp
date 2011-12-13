@@ -81,19 +81,19 @@ void appendUpcBlocksize(SgExprListExp* arg_list, const RtedArray& arr)
 
 
 
-/* -----------------------------------------------------------
- * Is the Initialized Name already known as an array element ?
- * -----------------------------------------------------------*/
-bool RtedTransformation::isVarRefInCreateArray(SgInitializedName* search)
-{
-  if (create_array_define_varRef_multiArray_stack.find(search) != create_array_define_varRef_multiArray_stack.end())
-    return true;
-
-  std::map<SgVarRefExp*, RtedArray>::iterator aa = create_array_define_varRef_multiArray.begin();
-  std::map<SgVarRefExp*, RtedArray>::iterator zz = create_array_define_varRef_multiArray.end();
-
-  return std::find_if(aa, zz, InitNameComp(search)) != zz;
-}
+//~ /* -----------------------------------------------------------
+ //~ * Is the Initialized Name already known as an array element ?
+ //~ * -----------------------------------------------------------*/
+//~ bool RtedTransformation::isVarRefInCreateArray(SgInitializedName* search)
+//~ {
+  //~ if (create_array_define_varRef_multiArray_stack.find(search) != create_array_define_varRef_multiArray_stack.end())
+    //~ return true;
+//~
+  //~ std::map<SgVarRefExp*, RtedArray>::iterator aa = create_array_define_varRef_multiArray.begin();
+  //~ std::map<SgVarRefExp*, RtedArray>::iterator zz = create_array_define_varRef_multiArray.end();
+//~
+  //~ return std::find_if(aa, zz, InitNameComp(search)) != zz;
+//~ }
 
 /* -----------------------------------------------------------
  * Perform Transformation: insertArrayCreateCall
@@ -190,7 +190,7 @@ RtedTransformation::buildArrayCreateCall(SgExpression* const src_exp, const Rted
    ROSE_ASSERT(isCreateArray || under_type->class_name() == "SgPointerType");
 
    // if we have an array, then it has to be on the stack
-   ROSE_ASSERT( !isCreateArray || ((array.allocKind & (akStack | akGlobal)) != 0) );
+   ROSE_ASSERT( !isCreateArray || ((array.allocKind & akNamedMemory) != 0) );
 
    SgScopeStatement*  scope = get_scope(initName);
 
@@ -347,7 +347,7 @@ void RtedTransformation::insertArrayCreateCall( SgExpression* const srcexp, cons
    // for detecting other bugs such as not null terminated strings
    // therefore we call a function that appends code to the
    // original program to add padding different from '\0'
-   if ( (array.allocKind & (akStack | akGlobal)) == 0 )
+   if ( (array.allocKind & akNamedMemory) == 0 )
       addPaddingToAllocatedMemory(stmt, array);
 }
 
@@ -516,7 +516,7 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt, SgPntrArrRefEx
 }
 
 
-void RtedTransformation::populateDimensions(RtedArray& array, SgInitializedName& init, SgArrayType& type_)
+void populateDimensions(RtedArray& array, SgInitializedName& init, SgArrayType& type_)
 {
    std::vector<SgExpression*> indices;
    bool                       implicit_index = false;
@@ -553,11 +553,9 @@ void RtedTransformation::populateDimensions(RtedArray& array, SgInitializedName&
 
 
 // obsolete
-void RtedTransformation::visit_isSgPointerDerefExp(SgPointerDerefExp* const n)
+void RtedTransformation::visit_sgPointerDerefExp(SgPointerDerefExp& n)
 {
-   ROSE_ASSERT(n);
-
-   SgExpression*                 right = n->get_operand();
+   SgExpression*                 right = n.get_operand();
    // right hand side should contain some VarRefExp
    // \pp \note \todo I am not sure why we consider all VarRefExp that
    //                 are underneath the deref.
@@ -586,9 +584,7 @@ void RtedTransformation::visit_isSgPointerDerefExp(SgPointerDerefExp* const n)
 
       if (left == varRef || left == NULL)
       {
-         variable_access_pointerderef[n] = varRef;
-         std::cerr << "$$$ DotExp: " << dotExp << "   arrowExp: " << arrowExp << std::endl;
-         std::cerr << "  &&& Adding : " << varRef->unparseToString() << std::endl;
+         variable_access_pointerderef.push_back(PtrDerefContainer::value_type(&n, varRef));
       }
       else
       {
@@ -609,7 +605,7 @@ void RtedTransformation::visit_isSgPointerDerefExp(SgPointerDerefExp* const n)
    for (; it2 != vars2.end(); ++it2) {
       SgThisExp* varRef = isSgThisExp(*it2);
       ROSE_ASSERT(varRef);
-      variable_access_arrowthisexp[n] = varRef;
+      variable_access_arrowthisexp[&n] = varRef;
       std::cerr << " &&& Adding : " << varRef->unparseToString() << std::endl;
    }
    if (vars2.size() > 1) {

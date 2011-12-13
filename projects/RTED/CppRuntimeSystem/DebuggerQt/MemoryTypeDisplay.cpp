@@ -54,14 +54,14 @@ MemoryTypeDisplay::MemoryTypeDisplay(const MemoryType& mt_, bool displayPointer)
     if(displayPointer)
     {
 
-        PointerManager * pm = RuntimeSystem::instance()->getPointerManager();
+        PointerManager& pm = RuntimeSystem::instance().getPointerManager();
 
         {
             Pvn * pointerIn = new Pvn("Pointer to this Allocation","");
             pointerIn->setFirstColumnSpanned(true);
 
-            PointerManager::PointerSetIter i   = pm->sourceRegionIter(mt->beginAddress());
-            PointerManager::PointerSetIter end = pm->sourceRegionIter(mt->lastValidAddress());
+            PointerManager::PointerSetIter i   = pm.sourceRegionIter(mt->beginAddress());
+            PointerManager::PointerSetIter end = pm.sourceRegionIter(mt->lastValidAddress());
 
             for(; i != end; ++i)
                 pointerIn->addChild(new PointerDisplay(*i));
@@ -71,8 +71,8 @@ MemoryTypeDisplay::MemoryTypeDisplay(const MemoryType& mt_, bool displayPointer)
             Pvn * pointerOut = new Pvn("Pointer into this Allocation","");
             pointerOut->setFirstColumnSpanned(true);
 
-            PointerManager::TargetToPointerMap::const_iterator i   = pm->targetRegionIterBegin(mt->beginAddress());
-            PointerManager::TargetToPointerMap::const_iterator end = pm->targetRegionIterEnd(mt->lastValidAddress());
+            PointerManager::TargetToPointerMap::const_iterator i   = pm.targetRegionIterBegin(mt->beginAddress());
+            PointerManager::TargetToPointerMap::const_iterator end = pm.targetRegionIterEnd(mt->lastValidAddress());
 
             for(; i!= end; ++i)
                 pointerOut->addChild(new PointerDisplay(i->second));

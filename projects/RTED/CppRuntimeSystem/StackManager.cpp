@@ -3,102 +3,97 @@
 #include "VariablesType.h"
 #include "CppRuntimeSystem.h"
 
-using namespace std;
-
 StackManager::StackManager()
 {
     beginScope("Globals");
 }
 
-void StackManager::addVariable(VariablesType* var, long blocksize)
+void StackManager::addVariable(Location address, const char* name, const char* mangledName, const RsType& t, long /*blocksize*/)
 {
     assert(scope.size() > 0);
+
     // if the variable is (or contains) pointer register it to pointer manager
+    // rtedRTS(this).getPointerManager().createPointer(address, &t, blocksize);
 
-    const RsType* vartype = var->getType();
-    const Address varaddr = var->getAddress();
-
-    rtedRTS(this)->getPointerManager()->createPointer(varaddr, vartype, blocksize);
-
-    addrToVarMap.insert(AddrToVarMap::value_type(varaddr, var));
-    stack.push_back(var);
+    // addrToVarMap.insert(AddrToVarMap::value_type(varaddr, var));
+    stack.push_back(VariablesType(address, name, mangledName, &t));
 }
 
-
-
-const VariablesType* StackManager::getVariable(Location addr) const
+namespace
 {
-    AddrToVarMap::const_iterator it = addrToVarMap.find(addr);
+  struct AtAddress
+  {
+    const Address where;
 
-    if (it == addrToVarMap.end()) return NULL;
+    explicit
+    AtAddress(Address loc)
+    : where(loc)
+    {}
 
-    return it->second;
-}
-
-VariablesType * StackManager::getVariableByMangledName(const string& mangledName)
-{
-    for (size_t i=0; i <  stack.size(); i++)
+    bool operator()(const VariablesType& var) const
     {
-        if (stack[i]->getMangledName() == mangledName)
-            return stack[i];
+      return var.getAddress() == where;
+    }
+  };
+}
+
+static inline
+AtAddress atAddress(Address addr)
+{
+  return AtAddress(addr);
+}
+
+const VariablesType*
+StackManager::getVariable(Location addr) const
+{
+    // \todo use lower_bound
+    VariableStack::const_iterator zz = stack.end();
+    VariableStack::const_iterator pos = std::find_if(stack.begin(), zz, atAddress(addr));
+
+    if (pos == zz) return NULL;
+    return &*pos;
+}
+
+const VariablesType*
+StackManager::getVariableByMangledName(const std::string& mangledName) const
+{
+    for (size_t i=0; i <  stack.size(); ++i)
+    {
+        if (stack[i].getMangledName() == mangledName)
+            return &stack[i];
     }
     return NULL;
 }
 
-void StackManager::getVariableByName(const std::string& name, vector<VariablesType*> & result)
+void StackManager::beginScope(const char* name)
 {
-    for (size_t i=0; i < stack.size(); ++i)
-    {
-        if(stack[i]->getName() == name)
-            result.push_back(stack[i]);
-    }
-}
-
-
-
-void StackManager::beginScope(const std::string & name)
-{
-    scope.push_back(ScopeInfo(name,stack.size()));
+    scope.push_back( ScopeInfo(name, stack.size()) );
 }
 
 void StackManager::endScope(size_t scopecount)
 {
-    const size_t                   noScopes = scope.size();
+  const ScopeStack::iterator limit   = scope.end();
+  const ScopeStack::iterator new_top = limit - scopecount;
+  const size_t               noScopes = scope.size();
+  assert( noScopes >= scopecount );
 
-    if (noScopes < scopecount)
-    {
-      std::stringstream out;
+  const size_t               new_stack_size = new_top->stackIndex;
+  size_t                     curr_stack_size = stack.size();
+  assert(curr_stack_size >= new_stack_size);
 
-      out << "#internal Error at: " << rtedRTS(this)->getCodePosition() << '\n';
-      RuntimeSystem::instance()->printMessage(out.str());
-    }
+  RuntimeSystem&             rs = rtedRTS(this);
+  MemoryManager&             memmgr = rs.getMemManager();
 
-    assert( noScopes >= scopecount );
+  while (curr_stack_size > new_stack_size)
+  {
+      const Address varaddr = stack.back().getAddress();
 
-    const ScopeContainer::iterator limit   = scope.end();
-    const ScopeContainer::iterator new_top = limit - scopecount;
-    const size_t                   new_stack_size = new_top->stackIndex;
+      memmgr.freeStackMemory(varaddr);
+      stack.pop_back();
+      --curr_stack_size;
+  }
 
-    scope.erase(new_top, limit);
-
-    size_t                         curr_stack_size = stack.size();
-    assert(curr_stack_size >= new_stack_size);
-
-    MemoryManager&                 memmgr = *rtedRTS(this)->getMemManager();
-
-    while (curr_stack_size > new_stack_size)
-    {
-        --curr_stack_size;
-
-        VariablesType* var = stack.back();
-        const Address  varaddr = var->getAddress();
-
-        stack.pop_back();
-        addrToVarMap.erase(varaddr);
-        memmgr.freeStackMemory(varaddr);
-
-        delete var;
-    }
+  scope.erase(new_top, limit);
 }
 
 int StackManager::getScopeCount()  const
@@ -106,32 +101,28 @@ int StackManager::getScopeCount()  const
     return scope.size();
 }
 
-const std::string & StackManager::getScopeName(int i) const
+std::string StackManager::getScopeName(size_t i) const
 {
-    assert(i >=0 );
-    assert(i < (int)scope.size());
+    assert(i < scope.size());
     return scope[i].name;
 }
 
 StackManager::VariableStack::const_iterator
-StackManager::variablesBegin(int i) const
+StackManager::variablesBegin(size_t i) const
 {
-    assert(i >=0 );
-    assert(i < (int)scope.size());
+    assert(i < scope.size());
 
     return stack.begin() + scope[i].stackIndex;
 }
 
 StackManager::VariableStack::const_iterator
-StackManager::variablesEnd(int i) const
+StackManager::variablesEnd(size_t i) const
 {
-    assert(i >=0 );
-    assert(i < (int)scope.size());
+    assert(i < scope.size());
 
-    if(i+1 == (int)scope.size())
-        return stack.end();
-    else
-        return stack.begin() + scope[i+1].stackIndex;
+    if (i+1 == scope.size()) return stack.end();
+
+    return stack.begin() + scope[i+1].stackIndex;
 }
 
 
@@ -139,26 +130,25 @@ void StackManager::clearStatus()
 {
     endScope(scope.size());
 
-    assert(stack.size() ==0);
-    assert(addrToVarMap.size() == 0);
+    assert(stack.size() == 0);
 
     beginScope("Globals");
 }
 
 
-void StackManager::print(ostream & os) const
+void StackManager::print(std::ostream& os) const
 {
-    os << endl;
-    os << "------------------------------- Stack Status --------------------------------------" << endl << endl;
+    os << std::endl;
+    os << "------------------------------- Stack Status --------------------------------------" << std::endl << std::endl;
 
     for (unsigned int sc=0; sc < scope.size(); sc++)
     {
-        os << scope[sc].name << ":" << endl;
+        os << scope[sc].name << ":" << std::endl;
 
         for (VariableStack::const_iterator i = variablesBegin(sc); i != variablesEnd(sc); ++i)
-             os << "\t" << **i << endl;
+             os << "\t" << *i << std::endl;
 
     }
 
-    os << endl;
+    os << std::endl;
 }
