@@ -37,22 +37,30 @@ void RtedTransformation::executeTransformations()
   //    MyClassWithConstructor a;
   //    exitScope("constructor");
   //
-  BOOST_FOREACH( SgFunctionDefinition* fndef, function_definitions ) {
+  BOOST_FOREACH( FunctionDefContainer::value_type entry, function_definitions )
+  {
+    SgFunctionDefinition* fndef = entry.first;
+
     // tps : 09/14/2009 : handle templates
-    SgTemplateInstantiationFunctionDecl* istemplate =
-      isSgTemplateInstantiationFunctionDecl(fndef->get_parent());
+    SgTemplateInstantiationFunctionDecl* istemplate = isSgTemplateInstantiationFunctionDecl(fndef->get_parent());
+
     if (RTEDDEBUG) std::cerr <<" ^^^^ Found definition : " << fndef->get_declaration()->get_name().str() <<       "  is template: " << istemplate << std::endl;
-    if (istemplate) {
+
+    if (istemplate)
+    {
       SgGlobal* gl = isSgGlobal(istemplate->get_parent());
       ROSE_ASSERT(gl);
+
       const SgNodePtrList&          nodes2 = NodeQuery::querySubTree(istemplate, V_SgLocatedNode);
       SgNodePtrList::const_iterator nodesIT2 = nodes2.begin();
+
       for (; nodesIT2 != nodes2.end(); nodesIT2++) {
         SgLocatedNode* node = isSgLocatedNode(*nodesIT2);
         ROSE_ASSERT(node);
         Sg_File_Info* file_info = node->get_file_info();
         file_info->setOutputInCodeGeneration();
       }
+
       // insert after template declaration
       // find last template declaration, which should be part of SgGlobal
       const SgNodePtrList&          nodes3 = NodeQuery::querySubTree(gl, V_SgTemplateInstantiationFunctionDecl);
@@ -69,6 +77,7 @@ void RtedTransformation::executeTransformations()
         // "  istemplate : " << istemplate->get_qualified_name().str() << ":"<<istemplate<<
         // "         " << (temp_str.compare(template_str)==0) << std::endl;
       }
+
       ROSE_ASSERT(templ);
       SageInterface::removeStatement(istemplate);
       SageInterface::insertStatementAfter(templ,istemplate);
@@ -83,9 +92,9 @@ void RtedTransformation::executeTransformations()
 
   // This must occur before variable
   // initialization, so that assignments of function return values happen before exitScope is called.
-  std::for_each( callsites.begin(),
-                 callsites.end(),
-                 std::bind1st(std::mem_fun(&RtedTransformation::transformCallSites), this)
+  std::for_each( unusedReturnValue.begin(),
+                 unusedReturnValue.end(),
+                 std::bind1st(std::mem_fun(&RtedTransformation::transformUnusedPointerReturn), this)
                );
 
   InitializedVarMap::const_iterator it5 = variableIsInitialized.begin();
@@ -109,7 +118,7 @@ void RtedTransformation::executeTransformations()
   }
 
   if (RTEDDEBUG) std::cerr << "\n # Elements in variable_access_pointer  : " << variable_access_pointerderef.size() << std::endl;
-  std::map<SgPointerDerefExp*,SgVarRefExp*>::const_iterator itAccess2 = variable_access_pointerderef.begin();
+  PtrDerefContainer::const_iterator itAccess2 = variable_access_pointerderef.begin();
   for (; itAccess2 != variable_access_pointerderef.end(); ++itAccess2) {
     insertAccessVariable(itAccess2->second, itAccess2->first);
   }
@@ -131,9 +140,9 @@ void RtedTransformation::executeTransformations()
   }
 
   if (RTEDDEBUG) std::cerr << "\n # Elements in create_array_define_varRef_multiArray_stack  : "  << create_array_define_varRef_multiArray_stack.size() << std::endl;
-  std::map<SgInitializedName*, RtedArray>::const_iterator itv = create_array_define_varRef_multiArray_stack.begin();
+  StackMultiArrayContainer::const_iterator itv = create_array_define_varRef_multiArray_stack.begin();
   for (; itv != create_array_define_varRef_multiArray_stack.end(); ++itv) {
-    insertArrayCreateCall(itv->second);
+    insertArrayCreateCall(*itv);
   }
 
   if (RTEDDEBUG) std::cerr << "\n # Elements in variable_declarations  : " << variable_declarations.size() << std::endl;
@@ -162,9 +171,9 @@ void RtedTransformation::executeTransformations()
     insertAssertFunctionSignature( fncall );
 
   if (RTEDDEBUG) std::cerr << "\n # Elements in function_definitions  : " << function_definitions.size() << std::endl;
-  BOOST_FOREACH( SgFunctionDefinition* fndef, function_definitions) {
-    insertVariableCreateInitForParams( fndef );
-    insertConfirmFunctionSignature( fndef );
+  BOOST_FOREACH( FunctionDefContainer::value_type entry, function_definitions)
+  {
+    handleFunctionDefinition( entry );
   }
 
   if (RTEDDEBUG) std::cerr << "\n # Elements in funccall_call : " << function_call.size() << std::endl;
@@ -200,7 +209,7 @@ void RtedTransformation::executeTransformations()
   if (RTEDDEBUG) std::cerr << "\n # Elements in scopes  : " << scopes.size() << std::endl;
   BOOST_FOREACH( ScopeContainer::value_type pseudoblock, scopes ) {
     // bracket all scopes except constructors with enter/exit
-    bracketWithScopeEnterExit( pseudoblock, pseudoblock->get_endOfConstruct() );
+    bracketWithScopeEnterExit( pseudoblock );
   }
 
   if (RTEDDEBUG)  std::cerr << "Inserting main close call" << std::endl;

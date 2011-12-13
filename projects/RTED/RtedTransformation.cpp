@@ -6,9 +6,9 @@
 #include <string>
 #include <set>
 
-#include "RtedSymbols.h"
-#include "DataStructures.h"
 #include "RtedTransformation.h"
+
+#include "DataStructures.h"
 #include "RtedVisit.h"
 
 using namespace SageInterface;
