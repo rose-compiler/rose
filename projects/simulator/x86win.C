@@ -34,9 +34,9 @@ public:
             uint64_t value = next_value(args);
             uint32_t eax = value;
             uint32_t edx = value>>32;
-            args.thread->policy.writeGPR(x86_gpr_ax, args.thread->policy.number<32>(eax));
-            args.thread->policy.writeGPR(x86_gpr_dx, args.thread->policy.number<32>(edx));
-            args.thread->policy.writeIP(args.thread->policy.number<32>(newip));
+            args.thread->policy.writeRegister(args.thread->policy.reg_eax, args.thread->policy.number<32>(eax));
+            args.thread->policy.writeRegister(args.thread->policy.reg_edx, args.thread->policy.number<32>(edx));
+            args.thread->policy.writeRegister(args.thread->policy.reg_eip, args.thread->policy.number<32>(newip));
             enabled = false;
             args.thread->tracing(TRACE_MISC)->mesg("RDTSC adjustment; returning 0x%016"PRIx64, value);
         }
@@ -106,7 +106,7 @@ public:
 class FutexFooler: public RSIM_Simulator::SystemCall::Callback {
 public:
     virtual bool operator()(bool enabled, const Args &args) {
-        if (enabled && 0x68000832==args.thread->policy.readIP().known_value()) {
+        if (enabled && 0x68000832==args.thread->policy.readRegister<32>(args.thread->policy.reg_eip).known_value()) {
             args.thread->tracing(TRACE_MISC)->mesg("FutexFooler triggered: returning zero");
             args.thread->syscall_return(0);
             enabled = false;
@@ -184,7 +184,7 @@ main(int argc, char *argv[], char *envp[])
                 bottom_of_stack += nwritten;
             }
             close(fd);
-            thread->policy.writeGPR(x86_gpr_sp, thread->policy.number<32>(new_stack_pointer));
+            thread->policy.writeRegister(thread->policy.reg_esp, thread->policy.number<32>(new_stack_pointer));
         }
     }
 
