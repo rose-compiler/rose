@@ -174,13 +174,11 @@ AC_ARG_WITH([cbmc],
    [with_cbmc=check])
           
 AS_IF([test "x$with_cbmc" != xno],
-      AS_IF([test "x$CBMC" != x],
-   [with_cbmc=yes],
-   [if test "x$with_cbmc" != xcheck; then
-    AC_MSG_FAILURE([--with-cbmc was given, but test for CBMC failed])
-	     else
-	       with_cbmc=no
-    fi]),
+      [AS_IF([test "x$CBMC" != x],
+            [with_cbmc=yes],
+            [AS_IF([test "x$with_cbmc" != xcheck],
+                   [AC_MSG_FAILURE([--with-cbmc was given, but test for CBMC failed])],
+                   [with_cbmc=no])])],
       [with_cbmc=no])
 
 AS_IF([test "x$with_cbmc" = xyes],

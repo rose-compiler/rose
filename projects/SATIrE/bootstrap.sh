@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 JOBS=-j8 # 8 parallel compiler jobs
 CCARGS="CXX=g++ CC=gcc"
