@@ -70,14 +70,14 @@ solve_flow_equation_iteratively(SgAsmFunction *func)
      * the registers are irrelevant since the policy doesn't track values, only bitmasks describing which bits of each register
      * are defined. */
     Policy entry_policy;
-    entry_policy.writeGPR(x86_gpr_sp, entry_policy.number<32>(0));              // stack ptr defined by the CALL
-    entry_policy.writeGPR(x86_gpr_bp, entry_policy.number<32>(0));              // we can usually assume EBP is defined
-    entry_policy.writeSegreg(x86_segreg_es, entry_policy.number<16>(0));        // segment registers are always defined...
-    entry_policy.writeSegreg(x86_segreg_cs, entry_policy.number<16>(0));
-    entry_policy.writeSegreg(x86_segreg_ss, entry_policy.number<16>(0));
-    entry_policy.writeSegreg(x86_segreg_ds, entry_policy.number<16>(0));
-    entry_policy.writeSegreg(x86_segreg_fs, entry_policy.number<16>(0));
-    entry_policy.writeSegreg(x86_segreg_gs, entry_policy.number<16>(0));
+    entry_policy.writeRegister(entry_policy.findRegister("esp", 32), entry_policy.number<32>(0));
+    entry_policy.writeRegister(entry_policy.findRegister("ebp", 32), entry_policy.number<32>(0));
+    entry_policy.writeRegister(entry_policy.findRegister("es", 16), entry_policy.number<16>(0));
+    entry_policy.writeRegister(entry_policy.findRegister("cs", 16), entry_policy.number<16>(0));
+    entry_policy.writeRegister(entry_policy.findRegister("ss", 16), entry_policy.number<16>(0));
+    entry_policy.writeRegister(entry_policy.findRegister("ds", 16), entry_policy.number<16>(0));
+    entry_policy.writeRegister(entry_policy.findRegister("fs", 16), entry_policy.number<16>(0));
+    entry_policy.writeRegister(entry_policy.findRegister("gs", 16), entry_policy.number<16>(0));
     
     /* Solve the flow equation iteratively to find out what's defined at the end of every basic block.   The policies[] stores
      * this info for each vertex. */

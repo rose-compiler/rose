@@ -83,12 +83,11 @@ std::ostream& operator<<(std::ostream &o, const ValueType<nBits> &e)
 struct State {
     static const size_t n_gprs = 8;             /**< Number of general purpose registers. */
     static const size_t n_segregs = 6;          /**< Number of segment registers. */
-    static const size_t n_flags = 32;           /**< Number of flag registers. */
 
     ValueType<32> ip;
     ValueType<32> gpr[n_gprs];
     ValueType<16> segreg[n_segregs];
-    ValueType<1> flag[n_flags];
+    ValueType<32> flags;
 
     /** Set state back to initial value. */
     void clear() {
@@ -121,9 +120,29 @@ private:
     State cur_state;                            /** Current state. Indicates which bits of registers have defined values. */
     mutable State rdundef;                      /** Which undefined bits have been read from registers. */
     size_t ninsns;
+    const RegisterDictionary *regdict;
 
 public:
-    Policy(): cur_insn(NULL), ninsns(0) {}
+    struct Exception {
+        Exception(const std::string &mesg): mesg(mesg) {}
+        friend std::ostream& operator<<(std::ostream &o, const Exception &e) {
+            o <<"FindRegisterDefs exception: " <<e.mesg;
+            return o;
+        }
+        std::string mesg;
+    };
+
+    Policy(): cur_insn(NULL), ninsns(0), regdict(NULL) {}
+
+    /** Returns the register dictionary. */
+    const RegisterDictionary *get_register_dictionary() const {
+        return regdict ? regdict : RegisterDictionary::dictionary_pentium4();
+    }
+
+    /** Sets the register dictionary. */
+    void set_register_dictionary(const RegisterDictionary *regdict) {
+        this->regdict = regdict;
+    }
 
     /** Returns the number of instructions processed. */
     size_t get_ninsns() const {
@@ -188,7 +207,7 @@ public:
     /** Return a newly sized value by either truncating the most significant bits or by adding more most significant bits that
      *  are defined (set). */
     template <size_t FromLen, size_t ToLen>
-    ValueType<ToLen> extendByMSB(const ValueType<FromLen> &a) const {
+    ValueType<ToLen> unsignedExtend(const ValueType<FromLen> &a) const {
         uint64_t newbits = IntegerOps::GenMask<uint64_t, ToLen>::value & ~IntegerOps::GenMask<uint64_t, FromLen>::value;
         return a.defbits | newbits; // all new bits are defined (i.e., they would be set to zero if we were tracking values)
     }
@@ -284,55 +303,237 @@ public:
      * Functions invoked by the X86InstructionSemantics class for data access operations
      *************************************************************************************************************************/
 
-    /** Returns value of the specified 32-bit general purpose register. */
-    ValueType<32> readGPR(X86GeneralPurposeRegister r) const {
-        assert((unsigned)r<State::n_gprs);
-        rdundef.gpr[r].defbits |= ~cur_state.gpr[r].defbits & IntegerOps::GenMask<uint64_t, 32>::value;
-        return cur_state.gpr[r];
+    /** Finds a register by name. */
+    const RegisterDescriptor& findRegister(const std::string &regname, size_t nbits=0) {
+        const RegisterDescriptor *reg = get_register_dictionary()->lookup(regname);
+        if (!reg) {
+            std::ostringstream ss;
+            ss <<"Invalid register: \"" <<regname <<"\"";
+            throw Exception(ss.str());
+        }
+        if (nbits>0 && reg->get_nbits()!=nbits) {
+            std::ostringstream ss;
+            ss <<"Invalid " <<nbits <<"-bit register: \"" <<regname <<"\" is "
+               <<reg->get_nbits() <<" " <<(1==reg->get_nbits()?"byte":"bytes");
+            throw Exception(ss.str());
+        }
+        return *reg;
     }
 
-    /** Places a value in the specified 32-bit general purpose register. */
-    void writeGPR(X86GeneralPurposeRegister r, const ValueType<32> &value) {
-        assert((unsigned)r<State::n_gprs);
-        cur_state.gpr[r] = value;
+    /** Reads from a named register. */
+    template<size_t Len/*bits*/>
+    ValueType<Len> readRegister(const char *regname) {
+        return readRegister<Len>(findRegister(regname, Len));
     }
 
-    /** Reads a value from the specified 16-bit segment register. */
-    ValueType<16> readSegreg(X86SegmentRegister sr) const {
-        assert((unsigned)sr<State::n_segregs);
-        rdundef.segreg[sr].defbits |= ~cur_state.segreg[sr].defbits & IntegerOps::GenMask<uint64_t, 16>::value;
-        return cur_state.segreg[sr];
+    /** Writes to a named register. */
+    template<size_t Len/*bits*/>
+    void writeRegister(const char *regname, const ValueType<Len> &value) {
+        writeRegister<Len>(findRegister(regname, Len), value);
     }
 
-    /** Places a value in the specified 16-bit segment register. */
-    void writeSegreg(X86SegmentRegister sr, const ValueType<16> &value) {
-        assert((unsigned)sr<State::n_segregs);
-        cur_state.segreg[sr] = value;
+    /** Generic register read. */
+    template<size_t Len>
+    ValueType<Len> readRegister(const RegisterDescriptor &reg) {
+        switch (Len) {
+            case 1: {
+                // Only FLAGS/EFLAGS bits have a size of one.  Other registers cannot be accessed at this granularity.
+                if (reg.get_major()!=x86_regclass_flags)
+                    throw Exception("bit access only valid for FLAGS/EFLAGS register");
+                if (reg.get_minor()!=0 || reg.get_offset()>=32)
+                    throw Exception("register not implemented in semantic policy");
+                if (reg.get_nbits()!=1)
+                    throw Exception("semantic policy supports only single-bit flags");
+                uint64_t mask = (uint64_t)1 << reg.get_offset();
+                rdundef.flags.defbits |= ~cur_state.flags.defbits & mask;
+                uint64_t retval = (cur_state.flags.defbits & mask) >> reg.get_offset();
+                return retval;
+            }
+
+            case 8: {
+                // Only general-purpose registers can be accessed at a byte granularity, and we can access only the low-order
+                // byte or the next higher byte.  For instance, "al" and "ah" registers.
+                if (reg.get_major()!=x86_regclass_gpr)
+                    throw Exception("byte access only valid for general purpose registers");
+                if (reg.get_minor()>=cur_state.n_gprs)
+                    throw Exception("register not implemented in semantic policy");
+                assert(reg.get_nbits()==8); // we had better be asking for a one-byte register (e.g., "ah", not "ax")
+                switch (reg.get_offset()) {
+                    case 0:
+                        rdundef.gpr[reg.get_minor()].defbits |= ~cur_state.gpr[reg.get_minor()].defbits & 0x000000ff;
+                        return extract<0, Len>(cur_state.gpr[reg.get_minor()]);
+                    case 8:
+                        rdundef.gpr[reg.get_minor()].defbits |= ~cur_state.gpr[reg.get_minor()].defbits & 0x0000ff00;
+                        return extract<8, 8+Len>(cur_state.gpr[reg.get_minor()]);
+                    default:
+                        throw Exception("invalid one-byte access offset");
+                }
+            }
+
+            case 16: {
+                if (reg.get_nbits()!=16)
+                    throw Exception("invalid 2-byte register");
+                if (reg.get_offset()!=0)
+                    throw Exception("policy does not support non-zero offsets for word granularity register access");
+                switch (reg.get_major()) {
+                    case x86_regclass_segment:
+                        if (reg.get_minor()>=cur_state.n_segregs)
+                            throw Exception("register not implemented in semantic policy");
+                        rdundef.segreg[reg.get_minor()].defbits |= ~cur_state.segreg[reg.get_minor()].defbits & 0x0000ffff;
+                        return unsignedExtend<16, Len>(cur_state.segreg[reg.get_minor()]);
+                    case x86_regclass_gpr:
+                        if (reg.get_minor()>=cur_state.n_gprs)
+                            throw Exception("register not implemented in semantic policy");
+                        rdundef.gpr[reg.get_minor()].defbits |= ~cur_state.gpr[reg.get_minor()].defbits & 0x0000ffff;
+                        return extract<0, Len>(cur_state.gpr[reg.get_minor()]);
+                    case x86_regclass_flags:
+                        if (reg.get_minor()!=0)
+                            throw Exception("register not implemented in semantic policy");
+                        rdundef.flags.defbits |= ~cur_state.flags.defbits & 0x0000ffff;
+                        return extract<0, Len>(cur_state.flags);
+                    default:
+                        throw Exception("word access not valid for this register type");
+                }
+            }
+
+            case 32: {
+                if (reg.get_offset()!=0)
+                    throw Exception("policy does not support non-zero offsets for double word granularity register access");
+                switch (reg.get_major()) {
+                    case x86_regclass_gpr:
+                        if (reg.get_minor()>=cur_state.n_gprs)
+                            throw Exception("register not implemented in semantic policy");
+                        rdundef.gpr[reg.get_minor()].defbits |= ~cur_state.gpr[reg.get_minor()].defbits & 0xffffffff;
+                        return unsignedExtend<32, Len>(cur_state.gpr[reg.get_minor()]);
+                    case x86_regclass_ip:
+                        if (reg.get_minor()!=0)
+                            throw Exception("register not implemented in semantic policy");
+                        rdundef.ip.defbits |= ~cur_state.ip.defbits & 0xffffffff;
+                        return unsignedExtend<32, Len>(cur_state.ip.defbits);
+                    case x86_regclass_segment:
+                        if (reg.get_minor()>=cur_state.n_segregs || reg.get_nbits()!=16)
+                            throw Exception("register not implemented in semantic policy");
+                        rdundef.segreg[reg.get_minor()].defbits |= ~cur_state.segreg[reg.get_minor()].defbits & 0x0000ffff;
+                        return unsignedExtend<16, Len>(cur_state.segreg[reg.get_minor()]);
+                    case x86_regclass_flags: {
+                        if (reg.get_minor()!=0)
+                            throw Exception("register not implemented in semantic policy");
+                        if (reg.get_nbits()!=32)
+                            throw Exception("register is not 32 bits");
+                        rdundef.flags.defbits |= ~cur_state.flags.defbits & 0xffffffff;
+                        return cur_state.flags;
+                    }
+                    default:
+                        throw Exception("double word access not valid for this register type");
+                }
+            }
+
+            default:
+                throw Exception("invalid register access width");
+        }
     }
 
-    /** Returns the value of the instruction pointer as it would be during the execution of the instruction. In other words,
-     *  it points to the first address past the end of the current instruction. */
-    ValueType<32> readIP() const {
-        rdundef.ip.defbits |= ~cur_state.ip.defbits & IntegerOps::GenMask<uint64_t, 32>::value;
-        return cur_state.ip;
-    }
+    /** Generic register write. */
+    template<size_t Len>
+    void writeRegister(const RegisterDescriptor &reg, const ValueType<Len> &value) {
+        switch (Len) {
+            case 1: {
+                // Only FLAGS/EFLAGS bits have a size of one.  Other registers cannot be accessed at this granularity.
+                if (reg.get_major()!=x86_regclass_flags)
+                    throw Exception("bit access only valid for FLAGS/EFLAGS register");
+                if (reg.get_minor()!=0 || reg.get_offset()>=32)
+                    throw Exception("register not implemented in semantic policy");
+                if (reg.get_nbits()!=1)
+                    throw Exception("semantic policy supports only single-bit flags");
+                uint64_t mask = (uint64_t)1 << reg.get_offset();
+                cur_state.flags.defbits &= ~mask;
+                cur_state.flags.defbits |= (value.defbits << reg.get_offset()) & mask;
+                break;
+            }
 
-    /** Changes the value of the instruction pointer. */
-    void writeIP(const ValueType<32> &value) {
-        cur_state.ip = value;
-    }
+            case 8: {
+                // Only general purpose registers can be accessed at byte granularity, and only for offsets 0 and 8.
+                if (reg.get_major()!=x86_regclass_gpr)
+                    throw Exception("byte access only valid for general purpose registers.");
+                if (reg.get_minor()>=cur_state.n_gprs)
+                    throw Exception("register not implemented in semantic policy");
+                assert(reg.get_nbits()==8); // we had better be asking for a one-byte register (e.g., "ah", not "ax")
+                switch (reg.get_offset()) {
+                    case 0:
+                        cur_state.gpr[reg.get_minor()] =
+                            concat(signExtend<Len, 8>(value), extract<8, 32>(cur_state.gpr[reg.get_minor()])); // no-op extend
+                        break;
+                    case 8:
+                        cur_state.gpr[reg.get_minor()] =
+                            concat(extract<0, 8>(cur_state.gpr[reg.get_minor()]),
+                                   concat(unsignedExtend<Len, 8>(value),
+                                          extract<16, 32>(cur_state.gpr[reg.get_minor()])));
+                        break;
+                    default:
+                        throw Exception("invalid byte access offset");
+                }
+                break;
+            }
 
-    /** Returns the value of a specific control/status/system flag. */
-    ValueType<1> readFlag(X86Flag f) const {
-        assert((unsigned)f<=State::n_flags);
-        rdundef.flag[f].defbits |= ~cur_state.flag[f].defbits & 0x1;
-        return cur_state.flag[f];
-    }
+            case 16: {
+                if (reg.get_nbits()!=16)
+                    throw Exception("invalid 2-byte register");
+                if (reg.get_offset()!=0)
+                    throw Exception("policy does not support non-zero offsets for word granularity register access");
+                switch (reg.get_major()) {
+                    case x86_regclass_segment:
+                        if (reg.get_minor()>=cur_state.n_segregs)
+                            throw Exception("register not implemented in semantic policy");
+                        cur_state.segreg[reg.get_minor()] = unsignedExtend<Len, 16>(value);
+                        break;
+                    case x86_regclass_gpr:
+                        if (reg.get_minor()>=cur_state.n_gprs)
+                            throw Exception("register not implemented in semantic policy");
+                        cur_state.gpr[reg.get_minor()] =
+                            concat(unsignedExtend<Len, 16>(value),
+                                   extract<16, 32>(cur_state.gpr[reg.get_minor()]));
+                        break;
+                    case x86_regclass_flags:
+                        if (reg.get_minor()!=0)
+                            throw Exception("register not implemented in semantic policy");
+                        cur_state.flags = unsignedExtend<0, 16>(value);
+                        break;
+                    default:
+                        throw Exception("word access not valid for this register type");
+                }
+                break;
+            }
 
-    /** Changes the value of the specified control/status/system flag. */
-    void writeFlag(X86Flag f, const ValueType<1> &value) {
-        assert((unsigned)f<=State::n_flags);
-        cur_state.flag[f] = value;
+            case 32: {
+                if (reg.get_offset()!=0)
+                    throw Exception("policy does not support non-zero offsets for double word granularity register access");
+                switch (reg.get_major()) {
+                    case x86_regclass_gpr:
+                        if (reg.get_minor()>=cur_state.n_gprs)
+                            throw Exception("register not implemented in semantic policy");
+                        cur_state.gpr[reg.get_minor()] = signExtend<Len, 32>(value);
+                        break;
+                    case x86_regclass_ip:
+                        if (reg.get_minor()!=0)
+                            throw Exception("register not implemented in semantic policy");
+                        cur_state.ip = unsignedExtend<Len, 32>(value);
+                        break;
+                    case x86_regclass_flags:
+                        if (reg.get_minor()!=0)
+                            throw Exception("register not implemented in semantic policy");
+                        if (reg.get_nbits()!=32)
+                            throw Exception("register is not 32 bits");
+                        cur_state.flags = unsignedExtend<Len, 32>(value);
+                        break;
+                    default:
+                        throw Exception("double word access not valid for this register type");
+                }
+                break;
+            }
+
+            default:
+                throw Exception("invalid register access width");
+        }
     }
 
     /** Reads a value from memory.  For simplicity, this policy assumes that all of memory is defined. */

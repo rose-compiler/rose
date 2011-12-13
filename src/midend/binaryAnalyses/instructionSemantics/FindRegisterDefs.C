@@ -15,8 +15,7 @@ State::merge(const State &other)
         gpr[i].defbits |= other.gpr[i].defbits;
     for (size_t i=0; i<n_segregs; ++i)
         segreg[i].defbits |= other.segreg[i].defbits;
-    for (size_t i=0; i<n_flags; ++i)
-        flag[i].defbits |= other.flag[i].defbits;
+    flags.defbits |= other.flags.defbits;
     ip.defbits |= other.ip.defbits;
 }
 
@@ -31,9 +30,8 @@ State::equal_registers(const State &other) const
         if (segreg[i].defbits != other.segreg[i].defbits)
             return false;
 
-    for (size_t i=0; i<n_flags; ++i)
-        if (flag[i].defbits != other.flag[i].defbits)
-            return false;
+    if (flags.defbits!=other.ip.defbits)
+        return false;
 
     if (ip.defbits != other.ip.defbits)
         return false;
@@ -51,8 +49,8 @@ State::print(std::ostream &o) const
             o <<prefix <<std::setw(5) <<std::left <<gprToString((X86GeneralPurposeRegister)i) <<" = " <<gpr[i] <<"\n";
         for (size_t i=0; i<n_segregs; ++i)
             o <<prefix <<std::setw(5) <<std::left <<segregToString((X86SegmentRegister)i) <<" = " <<segreg[i] <<"\n";
-        for (size_t i=0; i<n_flags; ++i)
-            o <<prefix <<std::setw(5) <<std::left <<flagToString((X86Flag)i) <<" = " <<flag[i] <<"\n";
+        for (size_t i=0; i<32; ++i)
+            o <<prefix <<std::setw(5) <<std::left <<flagToString((X86Flag)i) <<" = " <<ValueType<1>(flags.defbits>>i) <<"\n";
         o <<prefix <<std::setw(5) <<std::left <<"ip" <<" = " <<ip <<"\n";
     } catch (...) {
         o.flags(oflags);
