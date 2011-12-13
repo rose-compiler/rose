@@ -22,13 +22,16 @@ using namespace std;
 
 void usage(const char* me) 
 {
-  cerr << "Usage: " << me
+  cout << "Usage: " << me
   <<" [FRONTEND OPTIONS] [--dot] [--pdf] src1.c src2.cpp ... [-o termfile.pl]\n"
   <<"  Parse one or more source files and convert them into a TERMITE file."
        << "\n  Header files will be included in the term representation.\n\n"
 
        << "Options:\n"
        << "  [FRONTENT OPTIONS] will be passed to the C/C++ frontend.\n\n" 
+
+       << "  --rose-help\n"
+       << "    Display the help for the C/C++ frontend.\n\n"
 
        << "  -o, --output <termfile.pl>\n"
        << "    Write the output to <termifile.pl> instead of stdout.\n\n"
@@ -55,19 +58,21 @@ int main(int argc, char** argv) {
   for (int i = 1; i < argc; ++i)
     argv1.push_back(argv[i]);
 
-  // Run the EDG frontend
-  SgProject* project = frontend(argc+1,&argv1[0]);
-
-
   // Process our own options
   const char* outfile = NULL;
   int dot_flag = 0;
   int pdf_flag = 0;
+  int version_flag = 0;
+  int help_flag = 0;
 
   static struct option long_options[] = {
     /* These options set a flag. */
+    {"version", no_argument, &version_flag, 1},
+    {"help", no_argument, &help_flag, 1},
+    {"rose-help", no_argument, &help_flag, 1},
     {"dot", no_argument, &dot_flag, 1},
     {"pdf", no_argument, &pdf_flag, 1},
+    /* These don't */
     {"output", required_argument, 0, 'o'},
     {0, 0, 0, 0}
   };
@@ -78,8 +83,10 @@ int main(int argc, char** argv) {
     if (argv[i][0] == '-') {
       char empty[] = "";
       bool edg_opt = true;
-      for (struct option *opt = long_options; opt->name; ++opt)
-	if (argv[i][1] == *opt->name) edg_opt = false;
+      for (struct option *opt = long_options; opt->name; ++opt) {
+	if (argv[i]+1 && string(argv[i]+2) == string(opt->name)) edg_opt = false;
+	if (argv[i][1] == 'o') edg_opt = false;
+      }
       if (edg_opt)
 	argv[i] = empty;
     }
@@ -100,6 +107,14 @@ int main(int argc, char** argv) {
     default: ; /* ignore - pass to frontend */
     }
   }
+  if (help_flag) { 
+    usage(argv[0]); 
+    return 0;
+  }
+  if (version_flag) { 
+    cout << argv[0] << " version " << PACKAGE_VERSION << "\n"; 
+    return 0;
+  }
   if (optind < argc) {
     //infile = argv[optind];
   } else {
@@ -107,6 +122,8 @@ int main(int argc, char** argv) {
     return 1;
   }
 
+  // Run the EDG frontend
+  SgProject* project = frontend(argc+1,&argv1[0]);
 
   if (dot_flag) {
     //  Create dot and pdf files

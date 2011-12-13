@@ -7,23 +7,22 @@ AC_CONFIG_SRCDIR([README])
 
 AC_CONFIG_MACRO_DIR([m4])
 
-AM_INIT_AUTOMAKE
-# Automake > 1.11 allows a less verbose make output!
-m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES])
+AM_INIT_AUTOMAKE([silent-rules foreign no-installinfo no-texinfo.tex 1.11 
+  dist-bzip2 parallel-tests color-tests silent-rules std-options])
+dnl do `make V=1' or `./configure --disable-silent-rules' for a verbose build
+AM_SILENT_RULES([yes])
 
 # Checks for programs.
 AC_PROG_YACC
-AS_IF([test "x$YACC" = x],[AC_MSG_FAILURE([Please install bison])])
+AS_IF([test "x`which $YACC`" = x],[AC_MSG_FAILURE([Please install bison])])
 AC_PROG_CXX
-AS_IF([test "x$CXX" = x],[AC_MSG_FAILURE([Please install g++])])
+AS_IF([test "x`which $CXX`" = x],[AC_MSG_FAILURE([Please install g++])])
 AC_PROG_CC
-AS_IF([test "x$CC" = x],[AC_MSG_FAILURE([Please install gcc])])
+AS_IF([test "x`which $CC`" = x],[AC_MSG_FAILURE([Please install gcc])])
 AC_PROG_LEX
-AS_IF([test "x$LEX" = x],[AC_MSG_FAILURE([Please install flex])])
-dnl AC_PROG_RANLIB
-dnl AS_IF([test "x$RANLIB" = x],[AC_MSG_FAILURE([Please install ranlib])])
+AS_IF([test "x`which $LEX`" = x],[AC_MSG_FAILURE([Please install flex])])
 AC_PROG_SED
-AS_IF([test "x$SED" = x],[AC_MSG_FAILURE([Please install sed])])
+AS_IF([test "x`which $SED`" = x],[AC_MSG_FAILURE([Please install sed])])
 AC_PROG_LIBTOOL
 AS_IF([test "x$LIBTOOL" = x],[AC_MSG_FAILURE([Please install libtool])])
 

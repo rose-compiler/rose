@@ -38,6 +38,22 @@ static const char* e_function_modifier[] = {
  "gnu_attribute__always_inline__", //         = 22,/*!< GNU specific attribute for (GNU extension) */
  "gnu_attribute__nothrow__", //               = 23,/*!< GNU specific attribute for (GNU extension) */
  "gnu_attribute__weakref__", //               = 24,/*!< GNU specific attribute for (GNU extension) */
+ // TV (04/08/2010): Support for CUDA functions modifiers
+ "e_cuda_device", //                 = 25, /*!< CUDA device function */
+ "e_cuda_kernel", //                 = 26, /*!< CUDA kernel */
+ "e_cuda_host", //                   = 27, /*!< CUDA host function */
+               
+ // TV (05/03/2010): Support for OpenCL functions modifiers             
+ "e_opencl_kernel", //				   = 28, /*!< OpenCL kernel */
+ "e_opencl_vec_type_hint", //			= 29, /*!< OpenCL */
+ "e_opencl_work_group_size_hint", //	= 30, /*!< OpenCL */
+ "e_opencl_work_group_size_req", //	= 31, /*!< OpenCL */
+
+ // DQ (8/11/2011): Added support for Java specific function modifiers.
+ "e_java_native", //                 = 32, /*!< Java native keyword used for JNI function specification */
+ "e_java_synchronized", //           = 33, /*!< Java synchronized keyword used to only allow one thread at a time into a particular section of code */
+ "e_java_strictfp" //               = 34, /*!< Java strictfp keyword used to specify strict floating point evaluation by JVM */
+
  //"last_modifier"  /*!< last value (upper bound on range of values, used in error checking) */
 };
 static const char* e_special_function_modifier[] = {
@@ -119,7 +135,9 @@ static const char* e_declaration_modifier[] = {
   "export",  // = 4,  /*!< Export qualifier */
   "throw",   // = 5,  /*!< Exception handling support (throw) */ 
   "bind",    // = 6,  /*!< Fortran bind attribute for declarations (functions, variable, and classes) */
-  "final"    // = 7,  /*!< PHP support for specification to not be extended (should be useful for Java, if required in the future) */
+  "final",    // = 7,  /*!< PHP support for specification to not be extended (should be useful for Java, if required in the future) */
+  // DQ (8/11/2011): Added support for Java "abstract" declaration modifier.
+  "e_java_abstract" // = 8,  /*!< abstract keyword for Java functions, classes and interfaces */
   //"last_modifier" /*!< last modifier value (upper bound on range of values, used in error checking) */
 };
 
@@ -140,8 +158,19 @@ static const char* e_storage_modifier[] = {
   "common",       // = 11, /*!< A COMMON block */
   "associated",   // = 12, /*!< Variable is part of an association */
   "intrinsic",    // = 13, /*!< Intrinsic function or subroutine */
-  "pointer_based" // = 14, /*!< Pointee of a POINTER definition */
+  "pointer_based",// = 14, /*!< Pointee of a POINTER definition */
   
+  // TV (04/08/2010): Support for CUDA storage modifiers
+  "e_cuda_global", //       = 15, /*!< CUDA, in device's global memory */
+  "e_cuda_constant",//      = 16, /*!< CUDA, in device's constant memory */
+  "e_cuda_shared",//         = 17, /*!< CUDA, in device's shared memory */
+  "e_cuda_dynamic_shared",// = 18, /*!< CUDA, in device's shared memory, dynamically allocated */
+
+  // TV (05/06/2010): Support for OpenCL storage modifiers
+  "e_opencl_global",//   = 19, /*!< OpenCL, accessible from all the device */
+  "e_opencl_local",//    = 20, /*!< OpenCL, accessible for a work-group only */
+  "e_opencl_constant",// = 21, /*!< OpenCL, read-only variable accessible from all the device */
+  "e_opencl_private" //  = 22, /*!< OpenCL, accessible only from one work-item */            
   //e_last_modifier  /*!< last value (upper bound on range of values, used in error checking) */
 };
 

@@ -145,6 +145,7 @@ private:
   SgMemberFunctionDeclaration* createMemberFunctionDeclaration(Sg_File_Info*, SgNode*, SgNode*, SgNode*, PrologCompTerm*);
   SgNewExp* createNewExp(Sg_File_Info*, SgNode*, SgNode*, SgNode*, PrologCompTerm*);
   SgConditionalExp* createConditionalExp(Sg_File_Info*, SgNode*, SgNode*, SgNode*, PrologCompTerm*);
+  SgProgramHeaderStatement* createProgramHeaderStatement(Sg_File_Info*, SgNode*, SgNode*, SgNode*, PrologCompTerm*);
   /*quaternary nodes*/
   SgForStatement* createForStatement(Sg_File_Info*, SgNode*, SgNode*, SgNode*, SgNode*, PrologCompTerm*);
   /*list nodes*/

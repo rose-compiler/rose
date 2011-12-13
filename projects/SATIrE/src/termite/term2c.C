@@ -13,7 +13,7 @@ using namespace std;
 
 void usage(const char* me) 
 {
-  cerr << "Usage: " << me
+  cout << "Usage: " << me
        << " [OPTION]... [FILE.term]\n"
        << "Unparse a term file to its original source representation.\n\n"
 
@@ -50,12 +50,16 @@ int main(int argc, char** argv) {
   const char* suffix = ".unparsed";
   int dot_flag = 0;
   int pdf_flag = 0;
+  int version_flag = 0;
+  int help_flag = 0;
 
   while (1) {
     static struct option long_options[] = {
       /* These options set a flag. */
       {"dot", no_argument, &dot_flag, 1},
       {"pdf", no_argument, &pdf_flag, 1},
+      {"version", no_argument, &version_flag, 1},
+      {"help", no_argument, &help_flag, 1},
       /* These don't */
       {"dir",    required_argument, 0, 'd'},
       {"output", required_argument, 0, 'o'},
@@ -76,10 +80,16 @@ int main(int argc, char** argv) {
     case 'o': outfile = optarg; break;
     case 's': suffix  = optarg; break;
      
-    default:
-      usage(argv[0]);
-      return 1; 
+    default: ;
     }
+  }
+  if (help_flag) {
+    usage(argv[0]);
+    return 0;
+  }
+  if (version_flag) {
+    cout << argv[0] << " version " << PACKAGE_VERSION << "\n";
+    return 0;
   }
   if (optind < argc) {
     infile = argv[optind];
@@ -92,6 +102,8 @@ int main(int argc, char** argv) {
 
   TermToRose conv;
   SgNode* p = conv.toRose(infile);
+
+  if (help_flag || version_flag) return 0;
 
   if (dot_flag) {
     //  Create dot and pdf files
