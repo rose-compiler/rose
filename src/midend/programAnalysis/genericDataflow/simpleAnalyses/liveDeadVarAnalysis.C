@@ -335,7 +335,12 @@ public:
   // Sizeof
   void visit(SgSizeOfOp *sgn) {
     // XXX: The argument is NOT used, but its type is
-    ldva.used(sgn->get_operand_expr());
+    // NOTE: get_operand_expr() returns NULL when sizeof(type)
+    // FIX: use get_operand_expr() only when sizeof() involves expr
+    // ldva.used(sgn->get_operand_expr());
+      if(sgn->get_operand_expr()) {
+          ldva.used(sgn->get_operand_expr());
+      }
   }
   // This
   void visit(SgThisExp *sgn) {
