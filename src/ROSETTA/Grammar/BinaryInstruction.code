@@ -4142,6 +4142,7 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
         std::string reason_str(bool pad) const;
         static std::string reason_str(bool pad, unsigned reason);
 
+	/** Selection functor for SgAsmFunction::get_extent(). */
 	class NodeSelector {
 	public:
 		virtual ~NodeSelector() {}

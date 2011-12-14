@@ -269,7 +269,7 @@ public:
                  * address of a CALL instruction in executable memory.  This only handles CALLs encoded in two or five
                  * bytes. */
                 bool bp_not_pushed = false;
-                uint32_t esp = args.thread->policy.readGPR(x86_gpr_sp).known_value();
+                uint32_t esp = args.thread->policy.readRegister<32>(args.thread->policy.reg_esp).known_value();
                 uint32_t top_word;
                 SgAsmx86Instruction *call_insn;
                 try {
@@ -744,7 +744,7 @@ public:
                         m->mesg(fmt, unparseInstruction(insn).c_str());
                         mmx[mmx_number].lo = args.thread->semantics.read32(operands[1]);
                         mmx[mmx_number].hi = args.thread->policy.number<32>(0);
-                        args.thread->policy.writeIP(newip);
+                        args.thread->policy.writeRegister(args.thread->policy.reg_eip, newip);
                         enabled = false;
                     }
                     break;
@@ -760,7 +760,7 @@ public:
                         args.thread->policy.writeMemory(x86_segreg_ss, addr, mmx[mmx_number].lo, args.thread->policy.true_());
                         addr = args.thread->policy.add<32>(addr, args.thread->policy.number<32>(4));
                         args.thread->policy.writeMemory(x86_segreg_ss, addr, mmx[mmx_number].hi, args.thread->policy.true_());
-                        args.thread->policy.writeIP(newip);
+                        args.thread->policy.writeRegister(args.thread->policy.reg_eip, newip);
                         enabled = false;
                     }
                     break;
@@ -769,7 +769,7 @@ public:
                 case x86_pause: {
                     /* PAUSE is treated as a CPU hint, and is a no-op on some architectures. */
                     assert(0==operands.size());
-                    args.thread->policy.writeIP(newip);
+                    args.thread->policy.writeRegister(args.thread->policy.reg_eip, newip);
                     enabled = false;
                     break;
                 }
@@ -783,7 +783,7 @@ public:
                     VirtualMachineSemantics::ValueType<32> value = args.thread->policy.number<32>(0x1f80); // from GDB
                     VirtualMachineSemantics::ValueType<32> addr = args.thread->semantics.readEffectiveAddress(operands[0]);
                     args.thread->policy.writeMemory(x86_segreg_ss, addr, value, args.thread->policy.true_());
-                    args.thread->policy.writeIP(newip);
+                    args.thread->policy.writeRegister(args.thread->policy.reg_eip, newip);
                     enabled = false;
                     break;
                 }
@@ -795,7 +795,7 @@ public:
                     assert(1==operands.size());
                     VirtualMachineSemantics::ValueType<32> addr = args.thread->semantics.readEffectiveAddress(operands[0]);
                     (void)args.thread->policy.readMemory<32>(x86_segreg_ss, addr, args.thread->policy.true_());
-                    args.thread->policy.writeIP(newip);
+                    args.thread->policy.writeRegister(args.thread->policy.reg_eip, newip);
                     enabled = false;
                     break;
                 }

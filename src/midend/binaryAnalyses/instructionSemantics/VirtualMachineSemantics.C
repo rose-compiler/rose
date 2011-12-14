@@ -310,4 +310,143 @@ Policy::SHA1() const
     return digest_str;
 }
 
+//template<>
+//ValueType<1> Policy::readRegister(const RegisterDescriptor &reg) {
+//    /* Flag bits are identified by their bit offset within the containing FLAGS register. */
+//    assert(reg.get_nbits()==1);
+//    assert(reg.get_major()==x86_regclass_flags);
+//    assert(reg.get_minor()==0);
+//    assert(reg.get_offset()<cur_state.n_flags);
+//    return cur_state.flag[reg.get_offset()];
+//}
+//
+//template<>
+//ValueType<8> Policy::readRegister(const RegisterDescriptor &reg) {
+//    assert(reg.get_nbits()==8);
+//    assert(reg.get_major()==x86_regclass_gpr);
+//    assert(reg.get_minor()<cur_state.n_gprs);
+//    if (0==reg.get_offset())
+//        return extract<0, 8>(cur_state.gpr[reg.get_minor()]);
+//    assert(8==reg.get_offset());
+//    return extract<8, 16>(cur_state.gpr[reg.get_minor()]);
+//}
+//
+//template<>
+//ValueType<16> Policy::readRegister(const RegisterDescriptor &reg) {
+//    assert(reg.get_nbits()==16);
+//    assert(reg.get_offset()==0);
+//    if (reg.get_major()==x86_regclass_segment) {
+//        assert(reg.get_minor()<cur_state.n_segregs);
+//        return cur_state.segreg[reg.get_minor()];
+//    } else if (reg.get_major()==x86_regclass_gpr) {
+//        assert(reg.get_minor()<cur_state.n_gprs);
+//        return extract<0, 16>(cur_state.gpr[reg.get_minor()]);
+//    } else {
+//        assert(reg.get_major()==x86_regclass_flags);
+//        return concat(cur_state.flag[0],
+//               concat(cur_state.flag[1],
+//               concat(cur_state.flag[2],
+//               concat(cur_state.flag[3],
+//               concat(cur_state.flag[4],
+//               concat(cur_state.flag[5],
+//               concat(cur_state.flag[6],
+//               concat(cur_state.flag[7],
+//               concat(cur_state.flag[8],
+//               concat(cur_state.flag[9],
+//               concat(cur_state.flag[10],
+//               concat(cur_state.flag[11],
+//               concat(cur_state.flag[12],
+//               concat(cur_state.flag[13],
+//               concat(cur_state.flag[14],
+//                      cur_state.flag[15])))))))))))))));
+//    }
+//}
+//
+//template<>
+//ValueType<32> Policy::readRegister(const RegisterDescriptor &reg) {
+//    assert(reg.get_nbits()==32);
+//    assert(reg.get_offset()==0);
+//
+//    if (reg.get_major()==x86_regclass_gpr) {
+//        assert(reg.get_minor()<cur_state.n_gprs);
+//        return cur_state.gpr[reg.get_minor()];
+//    } else if (reg.get_major()==x86_regclass_ip) {
+//        assert(reg.get_minor()==0);
+//        return cur_state.ip;
+//    } else {
+//        assert(reg.get_major()==x86_regclass_flags);
+//        const RegisterDescriptor *reg_flags16 = get_register_dictionary()->lookup("flags");
+//        assert(reg_flags16!=NULL);
+//        return concat(readRegister<16>(*reg_flags16),
+//               concat(cur_state.flag[16],
+//               concat(cur_state.flag[17],
+//               concat(cur_state.flag[18],
+//               concat(cur_state.flag[19],
+//               concat(cur_state.flag[20],
+//               concat(cur_state.flag[21],
+//               concat(cur_state.flag[22],
+//               concat(cur_state.flag[23],
+//               concat(cur_state.flag[24],
+//               concat(cur_state.flag[25],
+//               concat(cur_state.flag[26],
+//               concat(cur_state.flag[27],
+//               concat(cur_state.flag[28],
+//               concat(cur_state.flag[29],
+//               concat(cur_state.flag[30],
+//                      cur_state.flag[31]))))))))))))))));
+//    }
+//}
+//
+//template<>
+//void Policy::writeRegister<1>(const RegisterDescriptor &reg, const ValueType<1> &value) {
+//    /* Flags are identified by their bit offset within the containing FLAGS register. */
+//    assert(reg.get_nbits()==1);
+//    assert(reg.get_major()==x86_regclass_flags);
+//    assert(reg.get_minor()==0);
+//    assert(reg.get_offset()<cur_state.n_flags);
+//    cur_state.flag[reg.get_offset()] = value;
+//}
+//
+//template<>
+//void Policy::writeRegister<8>(const RegisterDescriptor &reg, const ValueType<8> &value) {
+//    assert(reg.get_nbits()==8);
+//    assert(reg.get_major()==x86_regclass_gpr);
+//    assert(reg.get_minor()<cur_state.n_gprs);
+//    if (0==reg.get_offset()) {
+//        cur_state.gpr[reg.get_minor()] = concat(value, extract<8, 32>(cur_state.gpr[reg.get_minor()]));
+//    } else {
+//        assert(reg.get_offset()==8);
+//        cur_state.gpr[reg.get_minor()] = concat(extract<0, 8>(cur_state.gpr[reg.get_minor()]),
+//                                                concat(value, extract<16, 32>(cur_state.gpr[reg.get_minor()])));
+//    }
+//}
+//
+//template<>
+//void Policy::writeRegister<16>(const RegisterDescriptor &reg, const ValueType<16> &value) {
+//    assert(reg.get_nbits()==16);
+//    assert(reg.get_offset()==0);
+//    if (reg.get_major()==x86_regclass_segment) {
+//        assert(reg.get_minor()<cur_state.n_segregs);
+//        cur_state.segreg[reg.get_minor()] = value;
+//    } else {
+//        assert(reg.get_major()==x86_regclass_gpr);
+//        assert(reg.get_minor()<cur_state.n_gprs);
+//        cur_state.gpr[reg.get_minor()] = concat(value, number<16>(0));
+//    }
+//}
+//
+//template<>
+//void Policy::writeRegister<32>(const RegisterDescriptor &reg, const ValueType<32> &value) {
+//    assert(reg.get_nbits()==32);
+//    assert(reg.get_offset()==0);
+//    if (reg.get_major()==x86_regclass_gpr) {
+//        assert(reg.get_minor()<cur_state.n_gprs);
+//        cur_state.gpr[reg.get_minor()] = value;
+//    } else {
+//        assert(reg.get_major()==x86_regclass_ip);
+//        assert(0==reg.get_minor());
+//        cur_state.ip = value;
+//    }
+//}
+
 } /*namespace*/
