@@ -24,6 +24,6 @@ check-local:
 	./incrementalInversionTest --edg:no_warnings -w -I$(top_srcdir)/projects/backstroke/pluggableReverser -c new1.C
 
 clean-local:
-	rm -f new1.C
+	rm -f *.C
 	
 
