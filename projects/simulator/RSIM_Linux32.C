@@ -3952,25 +3952,20 @@ sys_clone(RSIM_Thread *t, unsigned flags, uint32_t newsp, uint32_t parent_tid_va
 
             /* Return register values in child */
             pt_regs_32 regs;
-            regs.bx = t->policy.readGPR(x86_gpr_bx).known_value();
-            regs.cx = t->policy.readGPR(x86_gpr_cx).known_value();
-            regs.dx = t->policy.readGPR(x86_gpr_dx).known_value();
-            regs.si = t->policy.readGPR(x86_gpr_si).known_value();
-            regs.di = t->policy.readGPR(x86_gpr_di).known_value();
-            regs.bp = t->policy.readGPR(x86_gpr_bp).known_value();
-            regs.sp = t->policy.readGPR(x86_gpr_sp).known_value();
-            regs.cs = t->policy.readSegreg(x86_segreg_cs).known_value();
-            regs.ds = t->policy.readSegreg(x86_segreg_ds).known_value();
-            regs.es = t->policy.readSegreg(x86_segreg_es).known_value();
-            regs.fs = t->policy.readSegreg(x86_segreg_fs).known_value();
-            regs.gs = t->policy.readSegreg(x86_segreg_gs).known_value();
-            regs.ss = t->policy.readSegreg(x86_segreg_ss).known_value();
-            uint32_t flags = 0;
-            for (size_t i=0; i<VirtualMachineSemantics::State::n_flags; i++) {
-                if (t->policy.readFlag((X86Flag)i).known_value()) {
-                    flags |= (1u<<i);
-                }
-            }
+            regs.bx = t->policy.readRegister<32>(t->policy.reg_ebx).known_value();
+            regs.cx = t->policy.readRegister<32>(t->policy.reg_ecx).known_value();
+            regs.dx = t->policy.readRegister<32>(t->policy.reg_edx).known_value();
+            regs.si = t->policy.readRegister<32>(t->policy.reg_esi).known_value();
+            regs.di = t->policy.readRegister<32>(t->policy.reg_edi).known_value();
+            regs.bp = t->policy.readRegister<32>(t->policy.reg_ebp).known_value();
+            regs.sp = t->policy.readRegister<32>(t->policy.reg_esp).known_value();
+            regs.cs = t->policy.readRegister<16>(t->policy.reg_cs).known_value();
+            regs.ds = t->policy.readRegister<16>(t->policy.reg_ds).known_value();
+            regs.es = t->policy.readRegister<16>(t->policy.reg_es).known_value();
+            regs.fs = t->policy.readRegister<16>(t->policy.reg_fs).known_value();
+            regs.gs = t->policy.readRegister<16>(t->policy.reg_gs).known_value();
+            regs.ss = t->policy.readRegister<16>(t->policy.reg_ss).known_value();
+            regs.flags = t->policy.readRegister<32>(t->policy.reg_eflags).known_value();
             if (sizeof(regs)!=t->get_process()->mem_write(&regs, pt_regs_va, sizeof regs))
                 return -EFAULT;
         }

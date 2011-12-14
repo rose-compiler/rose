@@ -663,7 +663,7 @@ Partitioner::pops_return_address(rose_addr_t va)
         Policy policy;
         policy.set_map(get_map());
         VirtualMachineSemantics::ValueType<32> orig_retaddr;
-        policy.writeMemory(x86_segreg_ss, policy.readGPR(x86_gpr_sp), orig_retaddr, policy.true_());
+        policy.writeMemory(x86_segreg_ss, policy.readRegister<32>("esp"), orig_retaddr, policy.true_());
         Semantics semantics(policy);
 
 #if 0
@@ -1317,7 +1317,7 @@ Partitioner::mark_ipd_configuration()
             /* old stack pointer */
             stack_ptr -= 4;
             policy.writeMemory<32>(x86_segreg_ss, policy.number<32>(stack_ptr),
-                                   policy.readGPR(x86_gpr_sp), policy.true_());
+                                   policy.readRegister<32>("esp"), policy.true_());
 
             /* address past the basic block's last instruction */
             stack_ptr -= 4;
@@ -1346,21 +1346,21 @@ Partitioner::mark_ipd_configuration()
                                    policy.number<32>(return_va), policy.true_());
 
             /* Adjust policy stack pointer */
-            policy.writeGPR(x86_gpr_sp, policy.number<32>(stack_ptr));
+            policy.writeRegister("esp", policy.number<32>(stack_ptr));
 
             /* Interpret the program */
             if (debug) fprintf(stderr, "  running the program...\n");
             Disassembler *disassembler = Disassembler::lookup(new SgAsmPEFileHeader(new SgAsmGenericFile()));
             assert(disassembler!=NULL);
-            policy.writeIP(policy.number<32>(text_va));
+            policy.writeRegister("eip", policy.number<32>(text_va));
             while (1) {
-                rose_addr_t ip = policy.readIP().known_value();
+                rose_addr_t ip = policy.readRegister<32>("eip").known_value();
                 if (ip==return_va) break;
                 SgAsmx86Instruction *insn = isSgAsmx86Instruction(disassembler->disassembleOne(map, ip));
                 if (debug) fprintf(stderr, "    0x%08"PRIx64": %s\n", ip, insn?unparseInstruction(insn).c_str():"<null>");
                 assert(insn!=NULL);
                 semantics.processInstruction(insn);
-                assert(policy.readIP().is_known());
+                assert(policy.readRegister<32>("eip").is_known());
                 SageInterface::deleteAST(insn);
             }
 

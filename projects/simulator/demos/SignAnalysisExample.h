@@ -121,6 +121,19 @@ namespace SignAnalysisExample {
     class Policy {
     private:
         State cur_state;
+        const RegisterDictionary *regdict;
+
+    public:
+        struct Exception {
+            Exception(const std::string &mesg): mesg(mesg) {}
+            friend std::ostream& operator<<(std::ostream &o, const Exception &e) {
+                o <<"VirtualMachineSemantics exception: " <<e.mesg;
+                return o;
+            }
+            std::string mesg;
+        };
+        
+        Policy(): regdict(NULL) {}
 
         /**********************************************************************************************************************
          * Some extra functions that are normally defined but not absolutely necessary.
@@ -150,7 +163,7 @@ namespace SignAnalysisExample {
         }
 
         template<size_t FromLen, size_t ToLen>
-        ValueType<ToLen> extendByMSB(const ValueType<FromLen> &a) const {
+        ValueType<ToLen> unsignedExtend(const ValueType<FromLen> &a) const {
             if (ToLen==FromLen) return ValueType<ToLen>(a);
             if (ToLen>FromLen) return ValueType<ToLen>(POSITIVE);
             return ValueType<ToLen>();
@@ -215,68 +228,6 @@ namespace SignAnalysisExample {
 
         void sysenter() {
             cur_state = State();        // we have no idea what might have changed
-        }
-
-        ValueType<32> readGPR(X86GeneralPurposeRegister r) const {
-            return cur_state.gpr[r];
-        }
-
-        void writeGPR(X86GeneralPurposeRegister r, const ValueType<32> &value) {
-            cur_state.gpr[r] = value;
-        }
-
-        ValueType<16> readSegreg(X86SegmentRegister sr) const {
-            return cur_state.segreg[sr];
-        }
-
-        void writeSegreg(X86SegmentRegister sr, const ValueType<16> &value) {
-            cur_state.segreg[sr] = value;
-        }
-
-        ValueType<32> readIP() const {
-            return cur_state.ip;
-        }
-
-        void writeIP(const ValueType<32> &value) {
-            cur_state.ip = value;
-        }
-
-        ValueType<1> readFlag(X86Flag f) const {
-            return cur_state.flag[f];
-        }
-
-        void writeFlag(X86Flag f, const ValueType<1> &value) {
-            cur_state.flag[f] = value;
-        }
-
-        template<size_t Len>
-        ValueType<Len> readMemory(X86SegmentRegister segreg, const ValueType<32> &addr, ValueType<1> cond) const {
-            unsigned sign = 0;
-            if (addr.sign & ZERO)
-                sign |= cur_state.memory[0].sign;
-            if (addr.sign & POSITIVE)
-                sign |= cur_state.memory[1].sign;
-            if (addr.sign & NEGATIVE)
-                sign |= cur_state.memory[2].sign;
-            return ValueType<Len>(sign);
-        }
-
-        template<size_t Len>
-        void writeMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<Len> &data, ValueType<1> cond) {
-            if (addr.sign==ZERO) {
-                cur_state.memory[0] = data;                       // must alias
-            } else if (addr.sign==POSITIVE) {
-                cur_state.memory[1] = data;                       // must alias
-            } else if (addr.sign==NEGATIVE) {
-                cur_state.memory[2] = data;                       // must alias
-            } else {
-                if (addr.sign & ZERO)
-                    cur_state.memory[0].sign |= data.sign;        // may alias
-                if (addr.sign & POSITIVE)
-                    cur_state.memory[1].sign |= data.sign;        // may alias
-                if (addr.sign & NEGATIVE)
-                    cur_state.memory[2].sign |= data.sign;        // may alias
-            }
         }
 
         template<size_t Len>
@@ -498,6 +449,49 @@ namespace SignAnalysisExample {
                 return a;
             return ValueType<Len>();
         }
+
+        /** Returns the register dictionary. */
+        const RegisterDictionary *get_register_dictionary() const {
+            return regdict ? regdict : RegisterDictionary::dictionary_pentium4();
+        }
+
+        /** Sets the register dictionary. */
+        void set_register_dictionary(const RegisterDictionary *regdict) {
+            this->regdict = regdict;
+        }
+
+#include "ReadWriteRegisterFragment.h"
+
+        template<size_t Len>
+        ValueType<Len> readMemory(X86SegmentRegister segreg, const ValueType<32> &addr, ValueType<1> cond) const {
+            unsigned sign = 0;
+            if (addr.sign & ZERO)
+                sign |= cur_state.memory[0].sign;
+            if (addr.sign & POSITIVE)
+                sign |= cur_state.memory[1].sign;
+            if (addr.sign & NEGATIVE)
+                sign |= cur_state.memory[2].sign;
+            return ValueType<Len>(sign);
+        }
+
+        template<size_t Len>
+        void writeMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<Len> &data, ValueType<1> cond) {
+            if (addr.sign==ZERO) {
+                cur_state.memory[0] = data;                       // must alias
+            } else if (addr.sign==POSITIVE) {
+                cur_state.memory[1] = data;                       // must alias
+            } else if (addr.sign==NEGATIVE) {
+                cur_state.memory[2] = data;                       // must alias
+            } else {
+                if (addr.sign & ZERO)
+                    cur_state.memory[0].sign |= data.sign;        // may alias
+                if (addr.sign & POSITIVE)
+                    cur_state.memory[1].sign |= data.sign;        // may alias
+                if (addr.sign & NEGATIVE)
+                    cur_state.memory[2].sign |= data.sign;        // may alias
+            }
+        }
+
     };
 }; /*namespace*/
 

@@ -17,8 +17,14 @@
 class RSIM_SemanticPolicy: public RSIM_SEMANTIC_POLICY {
 public:
     RSIM_Thread *thread;                        /* Thread to which this policy belongs */
+    const RegisterDictionary *regdict;
+
+    RegisterDescriptor reg_eax, reg_ebx, reg_ecx, reg_edx, reg_esi, reg_edi, reg_eip, reg_esp, reg_ebp;
+    RegisterDescriptor reg_cs, reg_ds, reg_es, reg_fs, reg_gs, reg_ss;
+    RegisterDescriptor reg_eflags, reg_df, reg_tf;
+
     RSIM_SemanticPolicy(RSIM_Thread *thread)
-        : thread(thread) {
+        : thread(thread), regdict(NULL) {
         ctor();
     }
 
@@ -36,6 +42,16 @@ public:
         }
     };
 
+    /** Returns the register dictionary. */
+    const RegisterDictionary *get_register_dictionary() const {
+        return regdict ? regdict : RegisterDictionary::dictionary_pentium4();
+    }
+
+    /** Sets the register dictionary. */
+    void set_register_dictionary(const RegisterDictionary *regdict) {
+        this->regdict = regdict;
+    }
+
     /** Segment shadow registers, one per segment register. */
     SegmentInfo sr_shadow[6];
 
@@ -45,20 +61,20 @@ public:
     /* Delegates to thread. */
     RTS_Message *tracing(TracingFacility what) const;
 
-    uint32_t get_eflags() const;
+    uint32_t get_eflags();
     void set_eflags(uint32_t);
 
     /* Print machine register state for debugging */
-    void dump_registers(RTS_Message*) const;
+    void dump_registers(RTS_Message*);
 
     /* Same as the x86_push instruction */
-    void push(VirtualMachineSemantics::ValueType<32> n);
+    void push(RSIM_SEMANTIC_VTYPE<32> n);
 
     /* Same as the x86_pop instruction */
-    VirtualMachineSemantics::ValueType<32> pop();
+    RSIM_SEMANTIC_VTYPE<32> pop();
 
     /* Called by X86InstructionSemantics. Used by x86_and instruction to set AF flag */
-    VirtualMachineSemantics::ValueType<1> undefined_() {
+    RSIM_SEMANTIC_VTYPE<1> undefined_() {
         return 1;
     }
 
@@ -70,7 +86,7 @@ public:
 
     /* Called by RDTSC to return time stamp counter.  The simulator doesn't really have a time stamp counter, so we'll just
      * return the number of instructions simulated (counting the RDTSC itself) instead. */
-    VirtualMachineSemantics::ValueType<64> rdtsc() {
+    RSIM_SEMANTIC_VTYPE<64> rdtsc() {
         return get_ninsns();
     }
 
@@ -87,21 +103,34 @@ public:
     void startInstruction(SgAsmInstruction* insn);
 
     /* Write value to a segment register and its shadow. */
-    void writeSegreg(X86SegmentRegister sr, const VirtualMachineSemantics::ValueType<16> &val);
+    template<size_t Len>
+    void writeRegister(const char *regname, const RSIM_SEMANTIC_VTYPE<Len> &val) {
+        writeRegister<Len>(findRegister(regname, Len), val);
+    }
+    template<size_t Len>
+    void writeRegister(const RegisterDescriptor &reg, const RSIM_SEMANTIC_VTYPE<Len> &val) {
+        VirtualMachineSemantics::Policy::writeRegister<Len>(reg, val);
+        if (reg.get_major()==x86_regclass_segment) {
+            ROSE_ASSERT(0==val.known_value() || 3 == (val.known_value() & 7)); /*GDT and privilege level 3*/
+            load_sr_shadow((X86SegmentRegister)reg.get_minor(), val.known_value()>>3);
+        }
+    }
 
     /* Reads memory from the memory map rather than the super class. */
-    template <size_t Len> VirtualMachineSemantics::ValueType<Len>
-    readMemory(X86SegmentRegister sr, const VirtualMachineSemantics::ValueType<32> &addr,
-               const VirtualMachineSemantics::ValueType<1> cond);
+    template <size_t Len> RSIM_SEMANTIC_VTYPE<Len>
+    readMemory(X86SegmentRegister sr, const RSIM_SEMANTIC_VTYPE<32> &addr,
+               const RSIM_SEMANTIC_VTYPE<1> cond);
 
     /* Writes memory to the memory map rather than the super class. */
     template <size_t Len> void
-    writeMemory(X86SegmentRegister sr, const VirtualMachineSemantics::ValueType<32> &addr,
-                const VirtualMachineSemantics::ValueType<Len> &data,  VirtualMachineSemantics::ValueType<1> cond);
+    writeMemory(X86SegmentRegister sr, const RSIM_SEMANTIC_VTYPE<32> &addr,
+                const RSIM_SEMANTIC_VTYPE<Len> &data,  RSIM_SEMANTIC_VTYPE<1> cond);
 
 };
 
 
-typedef X86InstructionSemantics<RSIM_SemanticPolicy, VirtualMachineSemantics::ValueType> RSIM_Semantics;
+
+
+typedef X86InstructionSemantics<RSIM_SemanticPolicy, RSIM_SEMANTIC_VTYPE> RSIM_Semantics;
 
 #endif /* ROSE_RSIM_SemanticPolicy_H */

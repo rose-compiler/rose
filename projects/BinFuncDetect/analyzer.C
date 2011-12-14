@@ -19,6 +19,7 @@ int main()
 #include "stringify.h"
 #include "BinaryLoader.h"                       /* maps specimen into an address space */
 #include "BinaryFunctionCall.h"                 /* function call graphs */
+#include "BinaryCallingConvention.h"            /* for testing the calling convention analysis. */
 
 class IdaFile {
 public:
@@ -850,6 +851,18 @@ main(int argc, char *argv[])
     } data_detector(partitioner);
     data_detector.traverse(gblock, preorder);
 #endif
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Test the function calling convention analysis
+
+    struct CConvTester: public AstSimpleProcessing {
+        void visit(SgNode *node) {
+            SgAsmFunction *func = isSgAsmFunction(node);
+            if (func)
+                BinaryCallingConvention().analyze_callee(func);
+        }
+    } cconvTester;
+    cconvTester.traverse(gblock, preorder);
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     std::cerr <<"Generating function call graph...\n";
