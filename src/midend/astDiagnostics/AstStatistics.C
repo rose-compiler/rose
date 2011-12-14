@@ -30,6 +30,15 @@ AstNodeTraversalStatistics::~AstNodeTraversalStatistics()
      delete &numNodeTypes;
    }
 
+AstNodeTraversalStatistics::AstNodeTraversalStatistics( const AstNodeTraversalStatistics & X)
+   : numNodeTypes(*new StatisticsContainerType(V_SgNumVariants))
+   {
+  // DQ (9/13/2011): This copy constructor was built because static analysis tools 
+  // suggested it would avoid a possible double free error.  I agree.
+     printf ("Error: it is an error to call this copy constructor. \n");
+     ROSE_ASSERT(false);
+   }
+
 string
 AstNodeTraversalStatistics::toString(SgNode* node)
    {
@@ -467,10 +476,7 @@ void AstNodeMemoryPoolStatistics::visit ( SgNode* node)
           IR_NODE_VISIT_CASE(SgAsmx86Instruction)
           IR_NODE_VISIT_CASE(SgAsmPowerpcInstruction)
           IR_NODE_VISIT_CASE(SgAsmInstruction)
-          IR_NODE_VISIT_CASE(SgAsmDataStructureDeclaration)
-          IR_NODE_VISIT_CASE(SgAsmFunctionDeclaration)
-          IR_NODE_VISIT_CASE(SgAsmFieldDeclaration)
-          IR_NODE_VISIT_CASE(SgAsmDeclaration)
+          IR_NODE_VISIT_CASE(SgAsmFunction)
           IR_NODE_VISIT_CASE(SgAsmStatement)
           IR_NODE_VISIT_CASE(SgAsmBinaryAdd)
           IR_NODE_VISIT_CASE(SgAsmBinarySubtract)

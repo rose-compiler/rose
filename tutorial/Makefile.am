@@ -58,6 +58,7 @@ NOINST_TUTORIAL_EXAMPLES = \
    binaryFileWrite \
    sb_callgraphAnalysis \
    buildCFG \
+   buildVFA \
    changeFunction \
    charmSupport \
    classHierarchyGraph \
@@ -237,6 +238,8 @@ binaryAnalysis_symbolTable_SOURCES = binaryAnalysis_symbolTable.C
 bin_example_SOURCES = bin_example.C
 
 buildCallGraph_SOURCES = buildCallGraph.C
+
+buildVFA_SOURCES = buildVFA.C
 
 livenessAnalysis_SOURCES = livenessAnalysis.C
 
@@ -484,6 +487,8 @@ endif
 testVirtualCFG: vcfg_testIf_debug.pdf
 
 testBuildCG: callGraph.pdf
+
+testVFA: vfa.pdf vfa_orig.pdf
 
 testClassHierarchyGraph: classHierarchyGraph
 	./classHierarchyGraph $(srcdir)/inputCode_ClassHierarchyGraph.C
@@ -798,6 +803,8 @@ generatedCodeExamples = \
    commandlineProcessing.out \
    charmSupport.out \
    callGraph.pdf \
+   vfa.pdf \
+   vfa_orig.pdf \
    liveness.pdf \
    classHierarchyGraph.pdf \
    rose_inputCode_templateExample1.C \
@@ -1226,6 +1233,21 @@ if ROSE_USE_GRAPHVIZ_DOT
 	if ! test -e callGraph.pdf; then exit 1; fi
 endif
 
+vfa.pdf: buildVFA
+	@echo "Generate Virtual Function Analysis CallGraph of input code ..."
+	./buildVFA $(ROSE_FLAGS) -c $(srcdir)/inputCode_VFA.C
+	$(top_srcdir)/scripts/dotgenLetterPDF pruned_call_graph.dot vfa.pdf
+if ROSE_USE_GRAPHVIZ_DOT
+	if ! test -e vfa.pdf; then exit 1; fi
+endif
+vfa_orig.pdf: buildVFA
+	@echo "Generate Virtual Function Analysis CallGraph of input code ..."
+	./buildVFA $(ROSE_FLAGS) -c $(srcdir)/inputCode_VFA.C
+	$(top_srcdir)/scripts/dotgenLetterPDF original_call_graph.dot vfa_orig.pdf
+if ROSE_USE_GRAPHVIZ_DOT
+	if ! test -e vfa_orig.pdf; then exit 1; fi
+endif
+
 liveness.pdf: livenessAnalysis
 	@echo "Generate liveness information from processing of input code ..."
 	./livenessAnalysis $(ROSE_FLAGS) -c $(srcdir)/inputCode_livenessAnalysis.c
@@ -1460,6 +1482,7 @@ EXTRA_DIST = CMakeLists.txt \
    inputCode_generatingUniqueNamesFromDeclaration2.C \
    inputCode_scopeInformation.C \
    inputCode_BuildCG.C \
+   inputCode_VFA.C \
    inputCode_inlineTransformations.C \
    inputCode_livenessAnalysis.c \
    inputCode_NestedQuery.C \

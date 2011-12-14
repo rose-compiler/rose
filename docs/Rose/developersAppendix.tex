@@ -172,35 +172,26 @@ Both the internal and the external ROSE repositories are structured according to
 n continuous integration workflow using Git best practices. The master branch
 contains the latest work in ROSE that passes the tests and each developer can
 create any number of branches that he owns. No developer can modify
-a branch owned by another developer, but a group branch can be created that 
-can be modified by groups of users. 
+a branch owned by another developer, but a group branch can be created that
+can be modified by groups of users.
 
-Branches in the ROSE repository is named according to naming convention so that 
+Branches in the ROSE repository is named according to naming convention so that
 it is easy to see who owns a branch and if the developer intends this branch to
 be tested, released or not tested at all. This is done with a prefix and postfix
 scheme.
 
-The prefix of a branch name maps directly to a user name. A prefix enforces 
-ownership of a branch and is unique to each developer. This prefix is chosen
-by the developer and is on the form 'prefix-'. For instance a user 'John Brandy' 
-with username 'john' can choose the prefix 'jb-'. If he is working on a bugfix
-for bug number 1234 he should create a branch 'jb-bug1234' where he works on this.
+The prefix of a branch name maps directly to your LLNL official user name (OUN).
+For example, a developer 'John Brady' has the OUN 'brady1'. If he is working on
+a bugfix for bug number 1234 he should create a branch 'brady1-bug1234'
+where he works on this.
 
-Th postfix of a branch determines if a branch should only be tested or tested and
-considered for integration with master. We currently only do automatic testing on
-our internal git repository due to security concerns. A branch that should only be 
-tested must have the postfix '-test'. We test branches with the '-test' prefix as 
-rigorously as a branch that is considered for integration. If work on a branch has
-reached a stage where a developer deems it ready for integration he should create
-a new branch with a branch with a postfix on the form '-rc'. '-rc' is short for
-release candidate as this work will be integrated with master if it passes all test.
-
-If our developer 'John Brandy' wants his bugfix to be merged with master if it passes
-all tests he should rename his branch to 'jb-bug1234-rc'.
+If work on a branch has reached a stage where a developer deems it ready for
+integration, he should push his changes to a new branch with a '-rc' postfix. RC
+stands for 'Release Candidate' as this work will be integrated with master if it
+passes all the tests.
 
 
 \subsection{Making a Copy of the Internal repository}
-
 
 
 Before starting to work a developer must create a local clone of the central git repository.
@@ -214,8 +205,6 @@ Please configure this copy with your name and email before starting work.
 	  \item Set your email: \textit{git config --global user.email johndoe@example.com}
 	  \item Tell git-branch and git-checkout to setup new branches so that git-pull(1)
     will appropriately merge from that remote branch: \textit{git config branch.autosetupmerge true}
-          \item This setting tells git to convert the newlines to the system’s standard
-	    when checking out files, and to LF newlines when committing in \textit{git config core.autocrlf true}
 %	 \item Tell git to automatically push to the remotely tracked branch: 
 %	 	\textit{git config push.default 'tracking'}
    \end{itemize}       
@@ -3136,7 +3125,7 @@ string getQualifiedFunctionName(SgFunctionDeclaration *astNode);
 			   GraphAlgorithms* algo):RoseBin_FlowAnalysis(global,algo) 
   // run this analysis
   void run(RoseBin_Graph* vg, std::string fileN, bool multiedge) ;
-  void getConnectedComponents(std::map<int,std::set<SgAsmFunctionDeclaration*> >& ret);
+  void getConnectedComponents(std::map<int,std::set<SgAsmFunction*> >& ret);
 
       \end{lstlisting}
 
@@ -4453,7 +4442,7 @@ Other useful utility functions in ROSE
    * resolve for each instruction which type it has
    ****************************************************/
   SgAsmInstruction* createInstruction(int address, 
-					 SgAsmFunctionDeclaration* bb, 
+					 SgAsmFunction* bb, 
 					 std::string mnemonic);
   /****************************************************
    * process all jump instructions and resolve destination

@@ -89,6 +89,11 @@ private:
   void lookup(procedureAnn * procedure,
               Annotations * annotations);
 
+  private:
+ // DQ (9/13/2011): This copy constructor was built because static analysis tools (made it private to force compile time error if used).
+   /** @brief Private Copy Constructor */
+       pointerRuleAnn(const pointerRuleAnn & X);
+
 };
 
 #endif /* BDWY_POINTERRULE_H */

@@ -152,7 +152,11 @@ SgAsmPEImportSection::remove_import_directory(SgAsmPEImportDirectory *d)
     }
 }
 
-/** Reallocate space for the import section if necessary. */
+/** Reallocate space for the import section if necessary.  This will likely not work correctly because it moves the import
+ *  address tables.  Unlike ELF, which tends to have dynamic linking trampolines and tables (PLT and GOT) in well defined
+ *  locations, PE executables seem to have them haphazardly scattered throughout virtual memory.  That means there's no easy
+ *  way to fix things if we have to move the import address table.  This whole subject of Import reallocation needs much
+ *  improvement. */
 bool
 SgAsmPEImportSection::reallocate()
 {

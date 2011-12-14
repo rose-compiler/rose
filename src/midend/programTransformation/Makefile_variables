@@ -1,0 +1,66 @@
+# Non-recursive Makefile
+
+# ------------------------------------------------------------------------------
+#  Subdirectories
+# ------------------------------------------------------------------------------
+
+mptPartialRedundancyEliminationPath=$(mProgramTransformationPath)/partialRedundancyElimination#
+mptFiniteDifferencingPath=$(mProgramTransformationPath)/finiteDifferencing#
+mptFunctionCallNormalizationPath=$(mProgramTransformationPath)/functionCallNormalization#
+mptConstantFoldingPath=$(mProgramTransformationPath)/constantFolding#
+mptImplicitCodeGenerationPath=$(mProgramTransformationPath)/implicitCodeGeneration#
+mptAstInliningPath=$(mProgramTransformationPath)/astInlining#
+mptOutliningPath=$(mProgramTransformationPath)/astOutlining#
+mptOmpLoweringPath=$(mProgramTransformationPath)/ompLowering#
+
+# ------------------------------------------------------------------------------
+#  Library: programTransformation.la
+# ------------------------------------------------------------------------------
+
+mProgramTransformation_libLibraries=\
+	$(mptOmpLowering_lib_libraries)
+
+mProgramTransformation_la_sources=\
+	$(mptPartialRedundancyElimination_la_sources) \
+	$(mptFiniteDifferencing_la_source) \
+	$(mptFunctionCallNormalization_la_sources) \
+	$(mptConstantFolding_la_sources) \
+	$(mptImplicitCodeGeneration_la_sources) \
+	$(mptAstInlining_la_sources) \
+	$(mptAstOutlining_la_sources) \
+	$(mptOmpLowering_la_sources)
+
+mProgramTransformation_includeHeaders=\
+	$(mptPartialRedundancyElimination_includeHeaders) \
+	$(mptFiniteDifferencing_includeHeaders) \
+	$(mptFunctionCallNormalization_includeHeaders) \
+	$(mptConstantFolding_includeHeaders) \
+	$(mptImplicitCodeGeneration_includeHeaders) \
+	$(mptAstInlining_includeHeaders) \
+	$(mptAstOutlining_includeHeaders) \
+	$(mptOmpLowering_includeHeaders)
+
+# ------------------------------------------------------------------------------
+#
+# ------------------------------------------------------------------------------
+
+mProgramTransformation_extraDist=\
+	$(mProgramTransformationPath)/CMakeLists.txt \
+	$(mptPartialRedundancyElimination_extraDist) \
+	$(mptFiniteDifferencing_extraDist) \
+	$(mptFunctionCallNormalization_extraDist) \
+	$(mptConstantFolding_extraDist) \
+	$(mptImplicitCodeGeneration_extraDist) \
+	$(mptAstInlining_extraDist) \
+	$(mptAstOutlining_extraDist) \
+	$(mptOmpLowering_extraDist)
+
+mProgramTransformation_cleanLocal=\
+	$(mptPartialRedundancyElimination_cleanLocal); \
+	$(mptFiniteDifferencing_cleanLocal); \
+	$(mptFunctionCallNormalization_cleanLocal); \
+	$(mptConstantFolding_cleanLocal); \
+	$(mptAstInlining_cleanLocal); \
+	$(mptAstOutlining_cleanLocal); \
+	$(mptOmpLowering_cleanLocal)
+

@@ -193,6 +193,48 @@ endif
 # installed with Linux (it is always a version too old to be used with ROSE).
 # This is used only when the ROSE configuration detects a previously installed
 # version of Boost (e.g /usr/include/boost) that we don't want to use.
+if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+ROSE_INCLUDES = \
+     $(ROSE_BOOST_PREINCLUDE_PATH) \
+     -I$(top_builddir)/src/roseSupport \
+     -I$(top_builddir)/src/frontend/SageIII \
+     -I$(top_srcdir)/src \
+     -I$(top_srcdir)/src/frontend/SageIII \
+     -I$(top_srcdir)/src/frontend/SageIII/astFixup \
+     -I$(top_srcdir)/src/frontend/SageIII/astPostProcessing \
+     -I$(top_srcdir)/src/frontend/SageIII/astVisualization \
+     -I$(top_srcdir)/src/frontend/SageIII/sageInterface \
+     -I$(top_srcdir)/src/frontend/SageIII/includeDirectivesProcessing \
+     -I$(top_srcdir)/src/frontend/OpenFortranParser_SAGE_Connection \
+     -I$(top_srcdir)/src/frontend/ECJ_ROSE_Connection \
+     -I$(top_srcdir)/src/frontend/BinaryDisassembly \
+     -I$(top_srcdir)/src/frontend/BinaryFormats \
+     -I$(top_srcdir)/src/frontend/BinaryLoader \
+     -I$(top_srcdir)/src/frontend/Disassemblers \
+     -I$(top_srcdir)/src/backend/unparser \
+     -I$(top_srcdir)/src/backend/unparser/formatSupport \
+     -I$(top_srcdir)/src/backend/unparser/languageIndependenceSupport \
+     -I$(top_srcdir)/src/backend/unparser/CxxCodeGeneration \
+     -I$(top_srcdir)/src/backend/unparser/JavaCodeGeneration \
+     -I$(top_srcdir)/src/backend/unparser/FortranCodeGeneration \
+     -I$(top_srcdir)/src/backend/unparser/PHPCodeGeneration \
+     -I$(top_srcdir)/src/backend/unparser/PythonCodeGeneration \
+     -I$(top_srcdir)/src/backend/asmUnparser \
+     -I$(top_srcdir)/src/util \
+     -I$(top_srcdir)/src/util/support \
+     -I$(top_srcdir)/src/util/graphs  \
+     -I$(top_srcdir)/src/util/stringSupport \
+     -I$(top_srcdir)/src/util/commandlineProcessing \
+     -I$(top_srcdir)/src/midend/astDiagnostics \
+     -I$(top_srcdir)/src/midend/astProcessing \
+     -I$(top_srcdir)/src/midend/astQuery \
+     -I$(top_srcdir)/src/midend/binaryAnalyses \
+     -I$(top_srcdir)/src/midend/programAnalysis \
+     -I$(top_srcdir)/src/roseSupport \
+     -I$(top_srcdir)/src/3rdPartyLibraries/MSTL \
+     -I$(top_srcdir)/src/util/graphs \
+     $(ROSE_BOOST_NORMAL_INCLUDE_PATH) -DBOOST_REGEX_MATCH_EXTRA 
+else
 ROSE_INCLUDES = \
      $(ROSE_BOOST_PREINCLUDE_PATH) \
      -I$(top_builddir)/src/roseSupport \
@@ -261,7 +303,8 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/midend/programAnalysis/staticSingleAssignment \
      -I$(top_srcdir)/src/midend/programAnalysis/CallGraphAnalysis \
      -I$(top_srcdir)/src/midend/programAnalysis/OAWrap \
-     -I$(top_srcdir)/src/midend/programAnalysis/dataflowAnalysis \
+     -I$(top_srcdir)/src/midend/programAnalysis/bitvectorDataflow \
+     -I$(top_srcdir)/src/midend/programAnalysis/VirtualFunctionAnalysis \
      -I$(top_srcdir)/src/midend/programAnalysis/defUseAnalysis \
      -I$(top_srcdir)/src/midend/programAnalysis/distributedMemoryAnalysis \
      -I$(top_srcdir)/src/midend/programAnalysis/dominanceAnalysis \
@@ -302,7 +345,7 @@ ROSE_INCLUDES = \
      $(ROSE_PCH_INCLUDE) \
      $(INTEL_PIN_INCLUDE_PATHS) \
      $(ROSE_ETHER_INCLUDE)
-
+endif
 
 # DQ (8/15/2010): I have removed these directories from the include paths since it no longer exists.
 # I expect that the directories were removed and the include list not properly cleaned up.

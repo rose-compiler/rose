@@ -751,9 +751,9 @@
 ./midend/programAnalysis/CallGraphAnalysis/ClassHierarchyGraph.h
 ./midend/programAnalysis/CFG/CFG.h
 ./midend/programAnalysis/CFG/CFGImpl.h
-./midend/programAnalysis/dataflowAnalysis/DataFlowAnalysis.h
-./midend/programAnalysis/dataflowAnalysis/DefUseChain.h
-./midend/programAnalysis/dataflowAnalysis/ReachingDefinition.h
+./midend/programAnalysis/bitvectorDataflow/DataFlowAnalysis.h
+./midend/programAnalysis/bitvectorDataflow/DefUseChain.h
+./midend/programAnalysis/bitvectorDataflow/ReachingDefinition.h
 ./midend/programAnalysis/Interface/CPPAstInterface.h
 ./midend/programAnalysis/Interface/StmtInfoAnal.h
 ./midend/programAnalysis/OAWrap/OAConfig.h
@@ -1242,9 +1242,9 @@
 ./midend/programAnalysis/CFG/CFGImpl.C
 ./midend/programAnalysis/CFG/CFG_ROSE.C
 ./midend/programAnalysis/CFG/CFG_OA.C
-./midend/programAnalysis/dataflowAnalysis/DataFlowAnalysis.C
-./midend/programAnalysis/dataflowAnalysis/DefUseChain.C
-./midend/programAnalysis/dataflowAnalysis/ReachingDefinition.C
+./midend/programAnalysis/bitvectorDataflow/DataFlowAnalysis.C
+./midend/programAnalysis/bitvectorDataflow/DefUseChain.C
+./midend/programAnalysis/bitvectorDataflow/ReachingDefinition.C
 ./midend/programAnalysis/Interface/CPPAstInterface.C
 ./midend/programAnalysis/Interface/StmtInfoAnal.C
 ./midend/programAnalysis/OAWrap/OAWrap.C

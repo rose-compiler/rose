@@ -20,32 +20,37 @@ using namespace std;
 //  to the appropriate function to unparse each C++ type.
 //-----------------------------------------------------------------------------------
 void
-Unparse_Java::unparseType(SgType* type, SgUnparse_Info& info) {
+Unparse_Java::unparseType(SgType* type, SgUnparse_Info& info)
+   {
 
      ROSE_ASSERT(type != NULL);
-     switch (type->variantT()) {
-         case V_SgTypeVoid:   unparseTypeVoid( isSgTypeVoid(type), info); break;
+     switch (type->variantT())
+        {
+          case V_SgTypeVoid:   unparseTypeVoid( isSgTypeVoid(type), info); break;
 
-         case V_SgTypeSignedChar: unparseTypeSignedChar( isSgTypeSignedChar(type), info); break;
-         case V_SgTypeWchar:  unparseTypeWchar( isSgTypeWchar(type), info); break;
-         case V_SgTypeShort:  unparseTypeShort( isSgTypeShort(type), info); break;
-         case V_SgTypeInt:    unparseTypeInt( isSgTypeInt(type), info); break;
-         case V_SgTypeLong:   unparseTypeLong( isSgTypeLong(type), info); break;
-         case V_SgTypeFloat:  unparseTypeFloat( isSgTypeFloat(type), info); break;
-         case V_SgTypeDouble: unparseTypeDouble( isSgTypeDouble(type), info); break;
-         case V_SgTypeBool:   unparseTypeBool( isSgTypeBool(type), info); break;
+          case V_SgTypeSignedChar: unparseTypeSignedChar( isSgTypeSignedChar(type), info); break;
+          case V_SgTypeWchar:  unparseTypeWchar( isSgTypeWchar(type), info); break;
+          case V_SgTypeShort:  unparseTypeShort( isSgTypeShort(type), info); break;
+          case V_SgTypeInt:    unparseTypeInt( isSgTypeInt(type), info); break;
+          case V_SgTypeLong:   unparseTypeLong( isSgTypeLong(type), info); break;
+          case V_SgTypeFloat:  unparseTypeFloat( isSgTypeFloat(type), info); break;
+          case V_SgTypeDouble: unparseTypeDouble( isSgTypeDouble(type), info); break;
+          case V_SgTypeBool:   unparseTypeBool( isSgTypeBool(type), info); break;
 
-         case V_SgArrayType:  unparseArrayType( isSgArrayType(type), info); break;
-         case V_SgClassType:  unparseClassType( isSgClassType(type), info); break;
-         case V_SgEnumType:   unparseEnumType( isSgEnumType(type), info); break;
-         case V_SgModifierType: unparseModifierType( isSgModifierType(type), info); break;
+          case V_SgArrayType:  unparseArrayType( isSgArrayType(type), info); break;
+          case V_SgClassType:  unparseClassType( isSgClassType(type), info); break;
+          case V_SgEnumType:   unparseEnumType( isSgEnumType(type), info); break;
+          case V_SgModifierType: unparseModifierType( isSgModifierType(type), info); break;
 
-         default:
-            cout << "Unparse_Java::unparseType(" << type->class_name() << "*,info) is unimplemented." << endl;
-            ROSE_ASSERT(false);
-            break;
-     }
-}
+       // DQ (9/5/2011): Added support for Java generics.
+          case V_SgJavaParameterizedType:  unparseJavaParameterizedType(isSgJavaParameterizedType(type),info); break;
+
+          default:
+               cout << "Unparse_Java::unparseType(" << type->class_name() << "*,info) is unimplemented." << endl;
+               ROSE_ASSERT(false);
+               break;
+        }
+   }
 
 void
 Unparse_Java::unparseModifierType(SgModifierType* type, SgUnparse_Info& info) {
@@ -61,6 +66,52 @@ Unparse_Java::unparseClassType(SgClassType* type, SgUnparse_Info& info)
 
      unparseName(decl->get_name(), info);
      //todo templates and qualified names
+   }
+
+
+void
+Unparse_Java::unparseJavaParameterizedType(SgJavaParameterizedType* type, SgUnparse_Info& info)
+   {
+     unparseType(type->get_raw_type(),info);
+     curprint("<");
+
+     if (type->get_type_list() != NULL)
+        {
+          SgTemplateParameterList* type_list = type->get_type_list();
+          for (size_t i = 0; i < type_list->get_args().size(); i++)
+             {
+               SgType* argumentType = NULL;
+               SgTemplateParameter* templateParameter = type_list->get_args()[i];
+               ROSE_ASSERT(templateParameter != NULL);
+               if (templateParameter->get_parameterType() == SgTemplateParameter::type_parameter)
+                  {
+                    if (templateParameter->get_type() != NULL)
+                       {
+                         argumentType = templateParameter->get_type();
+                       }
+                      else
+                       {
+                      // Do we need to support the default type when the type is not explicit.
+                       }
+                  }
+                 else
+                  {
+                 // This was not a type parameter (but it might be a template declaration or something work paying attention to).
+                  }
+
+            // There are a number of way in which the argumentType can be set (but maybe a restricted set of ways for Java).
+               if (argumentType != NULL)
+                  {
+                    unparseType(argumentType,info);
+                  }
+                 else
+                  {
+                 // It might be that this branch should be an error for Java. But likely caught elsewhere in ROSE.
+                  }
+             }
+        }
+
+     curprint(">");
    }
 
 

@@ -102,6 +102,7 @@ int openJavaParser_main(int argc, char **argv)
 
  /* Save the old value */
     const char* old_value = getenv(ROSE_SHLIBPATH_VAR); // Might be null
+ // assert(old_value != NULL);
 
 #if OVERWRITE_LD_LIBRARY_PATH
     int overwrite = 1;
@@ -136,7 +137,11 @@ int openJavaParser_main(int argc, char **argv)
 
  /* Reset to the saved value */
 #if OVERWRITE_LD_LIBRARY_PATH
-    env_status = setenv(ROSE_SHLIBPATH_VAR,old_value,overwrite);
+ // DQ (9/9/2011): Note that old_value can be NULL and if so then we don't want it to be dereferenced.
+ // env_status = setenv(ROSE_SHLIBPATH_VAR,old_value,overwrite);
+    if (old_value != NULL)
+         env_status = setenv(ROSE_SHLIBPATH_VAR,old_value,overwrite);
+
     assert(env_status == 0);
 #endif
 

@@ -4,7 +4,10 @@
 #include <string.h>
 #include <stdio.h>
 #include <pthread.h>
-#define TIMESTAMP_LEN 21
+
+// DQ (9/13/2011): Static analysis reports that this should be 68 or greater.
+// #define TIMESTAMP_LEN 21
+#define TIMESTAMP_LEN 128
 
 typedef enum {FALSE, TRUE} bool;
 
@@ -34,10 +37,12 @@ static FILE *openCoverageFile() {
    gettimeofday(&val,NULL);
    const struct tm * const ts = getIsoTm(&val);
 
+// DQ (9/13/2011): Static analysis reports that this is a problem and that the size of the buffer should be 68 or greater.
+// We back this up by also using a safer version of sprintf() to limit the number of characters written to the buffer to
+// be the size of the buffer.
+// sprintf(timestamp, "%02d_%02d_%02d_%02d_%02d_%02d_%02d",ts->tm_year % 100, ts->tm_mon, ts->tm_mday, ts->tm_hour, ts->tm_min, ts->tm_sec,getHundredthOfSeconds(&val));
+   snprintf(timestamp, TIMESTAMP_LEN, "%02d_%02d_%02d_%02d_%02d_%02d_%02d",ts->tm_year % 100, ts->tm_mon, ts->tm_mday, ts->tm_hour, ts->tm_min, ts->tm_sec,getHundredthOfSeconds(&val));
 
-   sprintf(timestamp, "%02d_%02d_%02d_%02d_%02d_%02d_%02d",
-               ts->tm_year % 100, ts->tm_mon, ts->tm_mday, ts->tm_hour, ts->tm_min, ts->tm_sec,
-               getHundredthOfSeconds(&val));
    strcpy(name, "synch_");
    strcat(name, timestamp);
    strcat(name, ".trace");

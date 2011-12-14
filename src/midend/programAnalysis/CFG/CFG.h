@@ -59,6 +59,9 @@ inline std::string CFGConfig::EdgeType2String( EdgeType e)
   default:
      assert(false);
   }
+
+// DQ (11/3/2011): Added return (caught by new EDG compiling ROSE).
+   return "error";
 }
 
 template <class Node>
@@ -133,7 +136,7 @@ class BuildCFGTraverse : public ProcessAstTree
       }
       switch (t) {
       case EXIT:
-         exitMap.InsertMapping(s.get_ptr(), n); break;
+         exitMap.InsertMapping(s.get_ptr(), n);
          break;
       case START:
          startMap.InsertMapping(s.get_ptr(), n);

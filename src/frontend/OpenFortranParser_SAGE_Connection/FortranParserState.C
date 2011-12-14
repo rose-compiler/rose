@@ -98,62 +98,63 @@ SgType* AttributeRec::computeEntityType()
 {
     if (charLenExpr)
     {
-        // convert baseType to string type with char length and the existing type kind
-        SgExpression* typeKind = baseType->get_type_kind();
-        baseType = SgTypeString::createType(charLenExpr, typeKind);
+        // convert entityType to string type with char length and the existing type kind
+        SgExpression* typeKind = entityType->get_type_kind();
+        entityType = SgTypeString::createType(charLenExpr, typeKind);
     }
     if (hasDimension)
     {
-      baseType = buildArrayType();
+      entityType = buildArrayType(dimExp);
     }
     if (hasCodimension)
     {
-      makeBaseTypeCoArray();
+        entityType = buildArrayType(codimExp);
+        entityType->set_isCoArray(true);
     }
     if (isCopointer)
     {
-      baseType = new SgPointerType(baseType);
-      baseType->set_isCoArray(true);             // a copointer is a pointer whose isCoArray flag is true.
+      entityType = new SgPointerType(entityType);
+      entityType->set_isCoArray(true);             // a copointer is a pointer whose isCoArray flag is true.
     }
     if (isPointer)
     {
-      baseType = new SgPointerType(baseType);
+      entityType = new SgPointerType(entityType);
     }
-    return baseType;
+    return entityType;
 }
 
-SgArrayType* AttributeRec::buildArrayType()
+SgArrayType* AttributeRec::buildArrayType(SgExprListExp* dimInfo)
 {
     SgExpression* sizeExpression = new SgNullExpression();  // this is the so-called index
     setSourcePosition(sizeExpression);
-    SgArrayType* arrayType = new SgArrayType(baseType,sizeExpression);
+    SgArrayType* arrayType = new SgArrayType(entityType,sizeExpression);
     sizeExpression->set_parent(arrayType);
-    arrayType->set_dim_info(dimExp);
-    dimExp->set_parent(arrayType);
-    arrayType->set_rank(dimExp->get_expressions().size());
+    arrayType->set_dim_info(dimInfo);
+    dimInfo->set_parent(arrayType);
+    arrayType->set_rank(dimInfo->get_expressions().size());
     return arrayType;
 }
 
 void AttributeRec::makeBaseTypeCoArray()
 {
-    if (!isSgArrayType(baseType))
+    if (!isSgArrayType(entityType))
     { // build an array of rank 0 to represent a covariable of a non-array type.
       SgExpression* sizeExpression = new SgNullExpression();
       setSourcePosition(sizeExpression);
-      SgArrayType* arrayType = new SgArrayType(baseType,sizeExpression);
+      SgArrayType* arrayType = new SgArrayType(entityType,sizeExpression);
       sizeExpression->set_parent(arrayType);
       arrayType->set_dim_info(codimExp);
       codimExp->set_parent(arrayType);
       arrayType->set_rank(0);
-      baseType = arrayType;
+      entityType = arrayType;
     }
-    baseType->set_isCoArray(true);
+    entityType->set_isCoArray(true);
 }
 
 SgDeclarationStatement* AttributeRec::getDeclaration() { return declaration; }
 void AttributeRec::setDeclaration(SgDeclarationStatement* decl) { declaration = decl; }
-SgType* AttributeRec::getBaseType() { return baseType; }
-void AttributeRec::setBaseType(SgType* newType) { baseType = newType; }
+SgType* AttributeRec::getBaseType() { return entityType; }
+void AttributeRec::setBaseType(SgType* newType) { entityType = newType; }
 SgExpression* AttributeRec::AttributeRec::getLenExpr () { return charLenExpr; }
 void AttributeRec::setLenExpr(SgExpression* exp) { charLenExpr = exp; }
 bool AttributeRec::getHasAccessSpec () { return hasAccessSpec; }
@@ -275,7 +276,7 @@ void AttributeRec::setDeferredAttr(int attr) { deferredAttr = attr; }
 
 void AttributeRec::reset()
 {
-    declaration = NULL; baseType = NULL; charLenExpr = NULL;
+    declaration = NULL; entityType = NULL; charLenExpr = NULL;
     hasAccessSpec = false; accessAttr = -1; accessType = -1;
     isPublic = false; publicAttr = -1; isPrivate = false; privateAttr = -1;
     isAllocatable = false; allocatableAttr = -1; isAsynchronous = false; asyncAttr = -1;
@@ -291,3 +292,21 @@ void AttributeRec::reset()
     isPass = false; passAttr = -1; isNoPass = false; noPassAttr = -1;
     isNonOverridable = false; nonOverrideAttr = -1; isDeferred = false; deferredAttr = -1;
 }
+
+SgExprListExp* AttributeRec::buildDimensionInfo()
+{
+    // transfer the array/coarray spec from the astExpressionStack to this AttrSpec record.
+    SgIntVal * intVal = isSgIntVal(astExpressionStack.front());
+    ROSE_ASSERT(intVal);  // astExpressionStack.front() contains the number of array spec elements for the dimension info
+    int count = intVal->get_value();
+    delete intVal;  // must remove it from AST
+    astExpressionStack.pop_front();
+    processMultidimensionalSubscriptsIntoExpressionList(count);  // the dimension info is now on top of astExpressionStack
+    SgExprListExp* dimInfo = isSgExprListExp(astExpressionStack.front());
+    ROSE_ASSERT(dimInfo);
+//    setDimExp(dimInfo);
+//    setHasDimension(true);
+    astExpressionStack.pop_front();
+    return dimInfo;
+}
+

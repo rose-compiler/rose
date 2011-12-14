@@ -34,14 +34,19 @@ SgSourceFile* OpenFortranParser_globalFilePointer = NULL;
 // list<SgScopeStatement*> astJavaScopeStack;
 extern list<SgScopeStatement*> astJavaScopeStack;
 
+// Global stack of expressions and statements
+ComponentStack astJavaComponentStack;
+
+// Remove this!
 // Global stack of expressions 
-list<SgExpression*> astJavaExpressionStack;
+//list<SgExpression*> astJavaExpressionStack;
 
 // Global stack of types
 list<SgType*> astJavaTypeStack;
 
+// Remove this!
 // Global stack of statements
-list<SgStatement*> astJavaStatementStack;
+//list<SgStatement*> astJavaStatementStack;
 
 // Simplifying type for the setSourcePosition() functions
 // typedef std::vector<Token_t*> TokenListType;
@@ -495,29 +500,31 @@ void outputJavaState( const std::string label )
   //      astDeclarationStatementStack,
   //      astInitializerStack, 
 
-     if ( SgProject::get_verbose() <= 3 )
+  // if ( SgProject::get_verbose() <= 3 )
+     if ( SgProject::get_verbose() <= 3 && label.find("debug") == string::npos )
         {
        // Skip output of stack data for verbose levels less than or equal to 2
           return;
         }
 
-     size_t maxStackSize = astJavaScopeStack.size();
-     maxStackSize = astJavaStatementStack.size()       > maxStackSize ? astJavaStatementStack.size()       : maxStackSize;
-     maxStackSize = astJavaExpressionStack.size()      > maxStackSize ? astJavaExpressionStack.size()      : maxStackSize;
-     maxStackSize = astJavaTypeStack.size()            > maxStackSize ? astJavaTypeStack.size()            : maxStackSize;
-     maxStackSize = astJavaInitializedNameStack.size() > maxStackSize ? astJavaInitializedNameStack.size() : maxStackSize;
-     maxStackSize = astJavaNodeStack.size()            > maxStackSize ? astJavaNodeStack.size()            : maxStackSize;
+// Remove this!
+//     size_t maxStackSize = astJavaScopeStack.size();
+//     maxStackSize = astJavaStatementStack.size()       > maxStackSize ? astJavaStatementStack.size()       : maxStackSize;
+//     maxStackSize = astJavaExpressionStack.size()      > maxStackSize ? astJavaExpressionStack.size()      : maxStackSize;
+//     maxStackSize = astJavaTypeStack.size()            > maxStackSize ? astJavaTypeStack.size()            : maxStackSize;
+//     maxStackSize = astJavaInitializedNameStack.size() > maxStackSize ? astJavaInitializedNameStack.size() : maxStackSize;
+//     maxStackSize = astJavaNodeStack.size()            > maxStackSize ? astJavaNodeStack.size()            : maxStackSize;
+//
+//     printf ("\n");
+//     printf ("\n");
+//     printf ("In outputState (%s): maxStackSize = %ld \n",label.c_str(),(long)maxStackSize);
 
-     printf ("\n");
-     printf ("\n");
-     printf ("In outputState (%s): maxStackSize = %ld \n",label.c_str(),(long)maxStackSize);
-
-     std::list<SgScopeStatement*>      ::reverse_iterator astScopeStack_iterator                = astJavaScopeStack.rbegin();
-     std::list<SgStatement*>           ::reverse_iterator astStatementStack_iterator            = astJavaStatementStack.rbegin();
-     std::list<SgExpression*>          ::reverse_iterator astExpressionStack_iterator           = astJavaExpressionStack.rbegin();
-     std::list<SgType*>                ::reverse_iterator astTypeStack_iterator                 = astJavaTypeStack.rbegin();
-     std::list<SgInitializedName*>     ::reverse_iterator astInitializedNameStack_iterator      = astJavaInitializedNameStack.rbegin();
-     std::list<SgNode*>                ::reverse_iterator astNodeStack_iterator                 = astJavaNodeStack.rbegin();
+//     std::list<SgScopeStatement*>      ::reverse_iterator astScopeStack_iterator                = astJavaScopeStack.rbegin();
+//     std::list<SgStatement*>           ::reverse_iterator astStatementStack_iterator            = astJavaStatementStack.rbegin();
+//     std::list<SgExpression*>          ::reverse_iterator astExpressionStack_iterator           = astJavaExpressionStack.rbegin();
+//     std::list<SgType*>                ::reverse_iterator astTypeStack_iterator                 = astJavaTypeStack.rbegin();
+//     std::list<SgInitializedName*>     ::reverse_iterator astInitializedNameStack_iterator      = astJavaInitializedNameStack.rbegin();
+//     std::list<SgNode*>                ::reverse_iterator astNodeStack_iterator                 = astJavaNodeStack.rbegin();
 
      const int NumberOfStacks = 6;
      struct
@@ -541,6 +548,8 @@ void outputJavaState( const std::string label )
         }
      printf ("\n");
 
+// Remove this!
+/*
      for (size_t i=0; i < maxStackSize; i++)
         {
           std::string s;
@@ -650,7 +659,7 @@ void outputJavaState( const std::string label )
 
           printf ("\n");
         }
-
+*/
      printf ("\n");
      printf ("\n");
    }
@@ -734,23 +743,29 @@ memberFunctionSetup (SgName & name, SgClassDefinition* classDefinition, SgFuncti
      astJavaTypeStack.pop_front();
 
   // Loop over the types in the astJavaTypeStack (the rest of the stack).
-     while (astJavaInitializedNameStack.empty() == false)
+     list<SgInitializedName *> names;
+     while (astJavaInitializedNameStack.empty() == false) // charles4 10/12/2011: Reverse the content of the stack.
         {
           SgInitializedName* initializedName = astJavaInitializedNameStack.front();
+          names.push_front(initializedName);
+          astJavaInitializedNameStack.pop_front();
+        }
+
+     // charles4 10/12/2011: Now, iterate over the list in the proper order
+     while (names.empty() == false) {
+          SgInitializedName* initializedName = names.front();
           ROSE_ASSERT(initializedName != NULL);
+          names.pop_front();
 
           setJavaSourcePositionUnavailableInFrontend(initializedName);
 
           SgType* parameterType = initializedName->get_type();
           ROSE_ASSERT(parameterType != NULL);
 
-       // Note certain this is the correct order (we might need to insert instead of append).
           typeList->append_argument(parameterType);
 
           parameterlist->append_arg(initializedName);
           initializedName->set_parent(parameterlist);
-
-          astJavaInitializedNameStack.pop_front();
         }
 
   // Specify if this is const, volatile, or restrict (0 implies normal member function).
@@ -821,7 +836,7 @@ memberFunctionTest (const SgName & name, SgClassDefinition* classDefinition, SgM
      ROSE_ASSERT(classDefinition->get_declaration()->get_symbol_from_symbol_table() == NULL);
 
      ROSE_ASSERT(classDefinition->get_declaration()->get_firstNondefiningDeclaration() != NULL);
-     ROSE_ASSERT(classDefinition->get_declaration()->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table() != NULL);
+     ROSE_ASSERT(classDefinition->get_declaration()->get_firstNondefiningDeclaration() != NULL && classDefinition->get_declaration()->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table() != NULL);
      ROSE_ASSERT(functionDeclaration->get_symbol_from_symbol_table() != NULL);
 
 #if 0
@@ -960,8 +975,9 @@ buildJavaClass (const SgName & className, SgScopeStatement* scope )
 
   // DQ (3/25/2011): Added testing.
      ROSE_ASSERT(classDefinition->get_declaration() == declaration);
-     ROSE_ASSERT(classDefinition->get_declaration()->get_symbol_from_symbol_table() == NULL);
-     ROSE_ASSERT(classDefinition->get_declaration()->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table() != NULL);
+     ROSE_ASSERT(classDefinition->get_declaration() != NULL);
+     ROSE_ASSERT(classDefinition->get_declaration() != NULL && classDefinition->get_declaration()->get_symbol_from_symbol_table() == NULL);
+     ROSE_ASSERT(classDefinition->get_declaration() != NULL && classDefinition->get_declaration()->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table() != NULL);
 
 #if 1
   // Ignore this requirement while we are debugging...
@@ -1249,6 +1265,13 @@ buildClassSupport (const SgName & className, bool implicitClass, Token_t* token)
                ROSE_ASSERT(outerScope->symbol_exists(name,classSymbol) == false);
 
                outerScope->insert_symbol(name,classSymbol);
+
+#if 0
+            // DQ (9/4/2011): Moved this code to avoid leaving a declaration on the stack when 
+            // this is a class that has been previously handled (see test2011_48.java).
+               ROSE_ASSERT(declaration->get_definition() != NULL);
+               astJavaScopeStack.push_front(declaration->get_definition());
+#endif
              }
             else
              {
@@ -1273,7 +1296,9 @@ buildClassSupport (const SgName & className, bool implicitClass, Token_t* token)
        // Note that this pushed only the new implicit class definition onto the stack 
        // and none of the parent class scopes. Is this going to be OK?
           ROSE_ASSERT(declaration->get_definition() != NULL);
+#if 1
           astJavaScopeStack.push_front(declaration->get_definition());
+#endif
           ROSE_ASSERT(astJavaScopeStack.front()->get_parent() != NULL);
 
           ROSE_ASSERT(declaration->get_parent() != NULL);
@@ -1658,10 +1683,10 @@ lookupTypeFromQualifiedName(string className)
    }
 
 
-
-void
-appendStatement(SgStatement* statement)
-   {
+// charles4 10/12/2011: Remove this !
+//void
+//appendStatement(SgStatement* statement)
+//   {
   // This support function handles the complexity of handling append where the current scope is a SgIfStmt.
 //     SgIfStmt* ifStatement = isSgIfStmt(astJavaScopeStack.front());
 //     if (ifStatement != NULL)
@@ -1679,12 +1704,13 @@ appendStatement(SgStatement* statement)
 //        }
 //       else
 //        {
-          astJavaScopeStack.front()->append_statement(statement);
+//          astJavaScopeStack.front()->append_statement(statement);
 //        }
 
 
 //     ROSE_ASSERT(statement->get_parent() != NULL);
-   }
+//   }
+
 //
 //
 ///*
@@ -1704,42 +1730,49 @@ std::list<SgStatement*> pop_from_stack_and_reverse(std::list<SgStatement*>& l, i
 //
 //=======
 //// void appendStatementStack()
-void
-appendStatementStack(int numberOfStatements)
-   {
+// charles4 10/12/2011: Remove this !
+//void
+//appendStatementStack(int numberOfStatements)
+//   {
   // DQ (9/30/2011): Modified to only pop a precise number of statements off the of the stack.
 
   // This function is used to dump all statements accumulated on the astJavaStatementStack
   // into the current scope (called as part of closing off the scope where functions that 
   // don't call the function to close off statements).
 
+// Remove this!
   // Reverse the list to avoid acesses to the stack from the bottom, 
   // which would be confusing and violate stack semantics.
-     int counter = 0;
-     list<SgStatement*> reverseStatementList;
+//     int counter = 0;
+//     list<SgStatement*> reverseStatementList;
 
+// Remove this!
   // DQ (7/30/2011): We want to be more exact in the future, if possible.  This allows
   // for the number of statements to be larger than the statck size and if so we take
   // everything on the stack, but don't trigger an error.
-     while (astJavaStatementStack.empty() == false && counter < numberOfStatements)
-        {
-          reverseStatementList.push_front(astJavaStatementStack.front());
-          astJavaStatementStack.pop_front();
-
-          counter++;
-        }
-
-     while (reverseStatementList.empty() == false)
-        {
-          appendStatement(reverseStatementList.front());
-
-          ROSE_ASSERT(reverseStatementList.front()->get_parent() != NULL);
-          ROSE_ASSERT(reverseStatementList.front()->get_parent()->get_startOfConstruct() != NULL);
-
-          reverseStatementList.pop_front();
-        }
-   }
-
+//     while (astJavaStatementStack.empty() == false && counter < numberOfStatements)
+//        {
+//          reverseStatementList.push_front(astJavaStatementStack.front());
+//          astJavaStatementStack.pop_front();
+//
+//          counter++;
+//        }
+//
+//     while (reverseStatementList.empty() == false)
+//        {
+//          appendStatement(reverseStatementList.front());
+//
+//          ROSE_ASSERT(reverseStatementList.front()->get_parent() != NULL);
+//          ROSE_ASSERT(reverseStatementList.front()->get_parent() != NULL && reverseStatementList.front()->get_parent()->get_startOfConstruct() != NULL);
+//
+//          reverseStatementList.pop_front();
+//        }
+//
+//     for (int i = 0; i  < numberOfStatements; i++) {
+//         SgStatement *statement = astJavaComponentStack.popStatement();
+//         astJavaScopeStack.front()->prepend_statement(statement);
+//        }
+//   }
 
 
 SgClassDefinition*
@@ -1835,7 +1868,7 @@ lookupSymbolInParentScopesUsingQualifiedName( SgName qualifiedName, SgScopeState
 
      list<SgName>::iterator i = qualifiedNameList.begin();
 
-     printf ("In lookupSymbolInParentScopesUsingQualifiedName(): Seaching for symbol for qualifiedName = %s name = %s (inital name) \n",qualifiedName.str(),(*i).str());
+  // printf ("In lookupSymbolInParentScopesUsingQualifiedName(): Seaching for symbol for qualifiedName = %s name = %s (inital name) \n",qualifiedName.str(),(*i).str());
 
   // Lookup the first name using the parent scopes, but then drill down into the identified scopes only.
      SgSymbol* returnSymbol = SageInterface::lookupSymbolInParentScopes(*i,currentScope);
@@ -1847,7 +1880,7 @@ lookupSymbolInParentScopesUsingQualifiedName( SgName qualifiedName, SgScopeState
   // If there are more names in the list, then drill down in to each to find the next class.
      while (i != qualifiedNameList.end())
         {
-          printf ("In lookupSymbolInParentScopesUsingQualifiedName(): Seaching for symbol for name = %s \n",(*i).str());
+       // printf ("In lookupSymbolInParentScopesUsingQualifiedName(): Seaching for symbol for name = %s \n",(*i).str());
 
           currentScope = get_scope_from_symbol(returnSymbol);
           ROSE_ASSERT(currentScope != NULL);
@@ -1857,7 +1890,6 @@ lookupSymbolInParentScopesUsingQualifiedName( SgName qualifiedName, SgScopeState
 
           i++;
         }
-
 
      return returnSymbol;
    }
