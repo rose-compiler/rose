@@ -743,7 +743,7 @@ MemoryMap::dump(const std::string &basename) const
 #else
             off_t offset = lseek(fd, me.get_size()-1, SEEK_SET);
 #endif
-            ROSE_ASSERT(offset=me.get_size()-1);
+            ROSE_ASSERT((size_t)offset==me.get_size()-1);
             const int zero = 0;
 #ifdef _MSC_VER
             ssize_t n = _write(fd, &zero, 1);

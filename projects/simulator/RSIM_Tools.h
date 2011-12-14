@@ -13,6 +13,52 @@
  *  source code and write similar tools as classes within your own source files, which are then registered as RSIM callbacks. */
 namespace RSIM_Tools {
 
+/** Pauses at process fork.
+ *
+ *  When a process forks, this callback is invoked first for the process performing the fork, and then for the new process
+ *  created by the fork.  Whether the callback is on the BEFORE or AFTER list determines whether it's called by the parent
+ *  and/or child process.  The affected process creates a named fifo and blocks until some other process writes something to
+ *  that fifo.  The fifo is then closed, removed from the file system, and the specimen calling thread is allowed to continue.
+ *
+ *  For instance, to cause the specimen to stop in all newly forked processes, the callback should be registered on the AFTER
+ *  list only, like this:
+ *
+ *  @code
+ *  RSIM_Linux32 *sim = ...;
+ *  RSIM_Tools::ForkPauser pause;
+ *  sim.get_callbacks().add_process_callback(RSIM_Callbacks::AFTER, &pause);
+ *  @endcode
+ */
+class ForkPauser: public RSIM_Callbacks::ProcessCallback {
+public:
+    bool pause_on_fork;
+
+    ForkPauser(): pause_on_fork(true) {}
+
+    virtual ForkPauser *clone() { return this; }
+
+    virtual bool operator()(bool enabled, const Args &args) {
+        if (enabled && args.reason==FORK) {
+            std::cerr <<"ForkPauser: pid=" <<getpid();
+            if (pause_on_fork) {
+                std::string filename("/tmp/paused_"); filename += StringUtility::numberToString(getpid());
+                int status __attribute__((unused)) = mkfifo(filename.c_str(), 0666);
+                assert(status>=0);
+                std::cerr <<"; paused -- say \"echo >" <<filename <<"\" to resume...";
+                int fd = open(filename.c_str(), O_RDONLY);
+                assert(fd>=0);
+                char buf;
+                read(fd, &buf, 1);
+                std::cerr <<" resumed";
+                close(fd);
+                unlink(filename.c_str());
+            }
+            std::cerr <<std::endl;
+        }
+        return enabled;
+    }
+};
+
 /** Traverses the AST to find a symbol for a global function with the specified name.
  *
  *  This class operates over an AST and is not a callback like most of the other classes in this collection of tools.  The

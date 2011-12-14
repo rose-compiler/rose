@@ -3183,7 +3183,8 @@ Partitioner::detach_thunk(Function *func)
     if (func->basic_blocks.empty())
         return false;
     BasicBlock *entry_bb = find_bb_starting(func->entry_va, false);
-    assert(entry_bb!=NULL && entry_bb->function==func);
+    if (NULL==entry_bb || entry_bb->function!=func)
+        return false;
     if (func->basic_blocks.size()==1 && entry_bb->insns.size()==1)
         return false;
 

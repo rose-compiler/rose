@@ -443,7 +443,8 @@ BinaryLoaderElf::SymbolMapEntry::get_vsymbol(const VersionedSymbol &version) con
         if (def && neededVersion == def->get_entries()->get_entries().front()->get_name()->get_string())
             return p_versions[i];
     }
-    ROSE_ASSERT(false);/* TODO, handle cases where input uses versioning, but definition does not */
+    assert(!"TODO, handle cases where input uses versioning, but definition does not");
+    abort();
 }
 
 void

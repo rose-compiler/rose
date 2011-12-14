@@ -854,7 +854,7 @@ main(int argc, char *argv[])
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Test the function calling convention analysis
-
+#if 0
     struct CConvTester: public AstSimpleProcessing {
         void visit(SgNode *node) {
             SgAsmFunction *func = isSgAsmFunction(node);
@@ -863,6 +863,7 @@ main(int argc, char *argv[])
         }
     } cconvTester;
     cconvTester.traverse(gblock, preorder);
+#endif
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     std::cerr <<"Generating function call graph...\n";
