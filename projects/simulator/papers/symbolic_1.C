@@ -72,17 +72,17 @@ public:
             // the buffer, to which we give a concrete value, and above that is the size of the buffer, which we also give a
             // concrete value).  The contents of the buffer are unknown.  Process memory is maintained by the policy we created
             // above, so none of these memory writes are actually affecting the specimen's state in the simulator.
-            policy.writeGPR(x86_gpr_sp, policy.number<32>(4000));
-            SymbolicSemantics::ValueType<32> arg1_va = policy.add(policy.readGPR(x86_gpr_sp), policy.number<32>(4));
+            policy.writeRegister("esp", policy.number<32>(4000));
+            SymbolicSemantics::ValueType<32> arg1_va = policy.add(policy.readRegister<32>("esp"), policy.number<32>(4));
             SymbolicSemantics::ValueType<32> arg2_va = policy.add(arg1_va, policy.number<32>(4));
             policy.writeMemory<32>(x86_segreg_ss, arg1_va, policy.number<32>(12345), policy.true_());   // ptr to buffer
             policy.writeMemory<32>(x86_segreg_ss, arg2_va, policy.number<32>(2), policy.true_());       // bytes in buffer
 
             // Run the analysis until we can't figure out what instruction is next.  If we set things up correctly, the
             // simulation will stop when we hit the RET instruction to return from this function.
-            policy.writeIP(SymbolicSemantics::ValueType<32>(analysis_addr));
-            while (policy.readIP().is_known()) {
-                uint64_t va = policy.readIP().known_value();
+            policy.writeRegister("eip", SymbolicSemantics::ValueType<32>(analysis_addr));
+            while (policy.readRegister<32>("eip").is_known()) {
+                uint64_t va = policy.readRegister<32>("eip").known_value();
                 SgAsmx86Instruction *insn = isSgAsmx86Instruction(args.thread->get_process()->get_instruction(va));
                 assert(insn!=NULL);
                 //std::cout <<policy <<unparseInstructionWithAddress(insn) <<"\n";
@@ -91,7 +91,7 @@ public:
 
             // Show the value of the EAX register since this is where GCC puts the function's return value.  If we did things
             // right, the return value should depend only on the unknown bytes from the beginning of the buffer.
-            SymbolicSemantics::ValueType<32> result = policy.readGPR(x86_gpr_ax);
+            SymbolicSemantics::ValueType<32> result = policy.readRegister<32>("eax");
             std::set<const InsnSemanticsExpr::LeafNode*> vars = result.expr->get_variables();
             {
                 std::ostringstream s;

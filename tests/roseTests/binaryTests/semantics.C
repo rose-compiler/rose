@@ -19,12 +19,12 @@
             newIp = number<32>(addr);
             if (rsets.find(addr)==rsets.end())
                 rsets[addr].setToBottom();
-            currentRset = rsets[addr];
+            cur_state = rsets[addr];
             currentInstruction = isSgAsmx86Instruction(insn);
         }
         void dump(SgAsmInstruction *insn) {
             std::cout <<unparseInstructionWithAddress(insn) <<"\n"
-                      <<currentRset
+                      <<cur_state
                       <<"    ip = " <<newIp <<"\n";
         }
     };
@@ -37,12 +37,12 @@
             newIp = number<32>(addr);
             if (rsets.find(addr)==rsets.end())
                 rsets[addr].setToBottom();
-            currentRset = rsets[addr];
+            cur_state = rsets[addr];
             currentInstruction = isSgAsmx86Instruction(insn);
         }
         void dump(SgAsmInstruction *insn) {
             std::cout <<unparseInstructionWithAddress(insn) <<"\n"
-                      <<currentRset
+                      <<cur_state
                       <<"    ip = " <<newIp <<"\n";
         }
     };
