@@ -102,7 +102,7 @@ const RsType* TypeSystem::getTypeInfo(const std::string& name) const
         msg << "getTypeInfo for " << name << "was called:" << std::endl;
         msg << "*** SEVERE WARNING: Pointer and Arrays have now be registered differently!" << std::endl;
 
-        RuntimeSystem::instance()->printMessage(msg.str());
+        RuntimeSystem::instance().printMessage(msg.str());
       }
     }
 

@@ -60,7 +60,6 @@ void RtedTransformation::transformIfMain(SgFunctionDefinition& mainFunc)
     mainFirst = stmts.front();
 }
 
-
 static
 void appendMainParamList(SgFunctionParameterList& plist, size_t szargs)
 {
@@ -86,16 +85,16 @@ void RtedTransformation::renameMain(SgFunctionDefinition& maindef)
 
   // grab symbol before any modifications.
   SgFunctionDeclaration*    sg_func = maindef.get_declaration();
-  SgGlobal*                 global_scope = isSgGlobal(sg_func->get_scope());
-  SgName                    mainName = sg_func->get_name();
-  SgFunctionSymbol*         symbol = global_scope->lookup_function_symbol(mainName, sg_func->get_type());
+  SgGlobal*                global_scope = isSgGlobal(sg_func->get_scope());
+  SgName                   mainName = sg_func->get_name();
+  SgFunctionSymbol*        symbol = global_scope->lookup_function_symbol(mainName, sg_func->get_type());
   SgInitializedNamePtrList& args = sg_func->get_args();
   const size_t              argssize = args.size();
 
   global_scope->remove_symbol(symbol);
   delete (symbol); // avoid dangling symbol!
 
-  SgFunctionParameterList*  paraList = buildFunctionParameterList();
+  SgFunctionParameterList* paraList = buildFunctionParameterList();
 
   appendMainParamList(*paraList, argssize);
 
@@ -110,20 +109,20 @@ void RtedTransformation::renameMain(SgFunctionDefinition& maindef)
   SgFunctionDefinition*     newFundef = func->get_definition();
   SgBasicBlock*             body = newFundef->get_body();
   SgInitializedNamePtrList& param_decls = paraList->get_args();
-  SgExprListExp*            arg_list = buildExprListExp();
+  SgExprListExp*           arg_list = buildExprListExp();
 
   std::transform( param_decls.begin(), param_decls.end(), sg::sage_inserter(*arg_list), sg::VarRefBuilder(*newFundef) );
 
-  SgExpression*             callmain = buildFunctionCallExp( "RuntimeSystem_original_main",
-                                                             buildVoidType(),
-                                                             arg_list,
-                                                             body
-                                                           );
-  SgStatement*              st = buildVariableDeclaration( "exit_code",
-                                                           buildIntType(),
-                                                           buildAssignInitializer(callmain),
-                                                           body
-                                                         );
+  SgExpression*      callmain = buildFunctionCallExp( "RuntimeSystem_original_main",
+                                                      buildVoidType(),
+                                                      arg_list,
+                                                      body
+                                                    );
+  SgStatement*       st = buildVariableDeclaration( "exit_code",
+                                                    buildIntType(),
+                                                    buildAssignInitializer(callmain),
+                                                    body
+                                                  );
   appendStatement(st, body);
 
   ROSE_ASSERT(globalsInitLoc == NULL);

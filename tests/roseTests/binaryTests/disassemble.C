@@ -238,7 +238,7 @@ block_hash(SgAsmBlock *blk, unsigned char digest[20])
     SgAsmx86Instruction *last_insn = isSgAsmx86Instruction(stmts.back());
     if (last_insn->get_kind()==x86_call || last_insn->get_kind()==x86_farcall) {
         VirtualMachineSemantics::RenameMap rmap;
-        policy.writeMemory(x86_segreg_ss, policy.readGPR(x86_gpr_sp), policy.number<32>(0), policy.true_());
+        policy.writeMemory(x86_segreg_ss, policy.readRegister<32>("esp"), policy.number<32>(0), policy.true_());
         ignore_final_ip = false;
     }
 
@@ -365,8 +365,8 @@ private:
 
                     try {
                         semantics.processBlock(stmts, 0, int_n);
-                        if (policy.readGPR(x86_gpr_ax).is_known()) {
-                            int nr = policy.readGPR(x86_gpr_ax).known_value();
+                        if (policy.readRegister<32>("eax").is_known()) {
+                            int nr = policy.readRegister<32>("eax").known_value();
                             extern std::map<int, std::string> linux32_syscalls; // defined in linux_syscalls.C
                             const std::string &syscall_name = linux32_syscalls[nr];
                             if (!syscall_name.empty())

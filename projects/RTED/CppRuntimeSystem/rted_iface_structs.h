@@ -33,6 +33,7 @@ enum rted_AllocKind
   /* allocation categories */
   akGlobal          = 8,    // Global memory (allocated on the file scope)
   akStack           = 16,   // Stack memory (allocated during function execution)
+  akNamedMemory     = (akGlobal | akStack),
   akCHeap           = 32,   // C style heap allocation: malloc and friends
   akCxxHeap         = 64,   // C++ new/delete
   akUpcShared       = 128,  // set for UPC allocations (and upc_free)
