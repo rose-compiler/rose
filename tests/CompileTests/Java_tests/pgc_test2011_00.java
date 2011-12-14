@@ -2,14 +2,14 @@
 // Test a Switch statement with a default block at the end.
 //
 public class pgc_test2011_00 {
-    void test(int num) {
+    public void test(int num) {
         int i;
-        switch (num) {
+        switch(num) {
             case 0:
                 i = 0;
                 break;
             case 1:
-                i = 1;             
+                i = 1;
                 break;
             case 2:
                 i = 2;

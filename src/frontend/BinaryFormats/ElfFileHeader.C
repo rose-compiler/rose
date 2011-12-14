@@ -551,7 +551,7 @@ SgAsmElfFileHeader::unparse(std::ostream &f) const
     } else {
         ROSE_ASSERT(!"unsupported word size");
     }
-    write(f, p_offset, struct_size, disk);
+    write(f, 0, struct_size, disk);
 }
 
 /** Print some debugging info */

@@ -25,6 +25,7 @@ using namespace std;
 void
 Unparse_Java::unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_Info& info)
    {
+
   // This is the Java specific expression code generation
 
 #if 0
@@ -110,6 +111,7 @@ Unparse_Java::unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_In
          case V_SgNotEqualOp:
          case V_SgRshiftOp:
          case V_SgSubtractOp:
+         case V_SgCommaOpExp: // charles4 10/14/2011
              unparseBinaryOp( isSgBinaryOp(expr), info ); break;
 
          case V_SgPlusPlusOp:
@@ -123,6 +125,8 @@ Unparse_Java::unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_In
          case V_SgVarRefExp:             { unparseVarRef(expr, info); break; }
          case V_SgFunctionRefExp:        { unparseFuncRef(expr, info); break; }
          case V_SgMemberFunctionRefExp:  { unparseMFuncRef(expr, info); break; }
+
+         case V_SgNullExpression:        { curprint ("null"); break; }
 
          default:
                cout << "error: unparseExpression() is unimplemented for " << expr->class_name() << endl;
@@ -183,6 +187,7 @@ Unparse_Java::getPrecedence(SgExpression* expr) {
         case V_SgRshiftAssignOp:               return 1;
         case V_SgLshiftAssignOp:               return 1;
         case V_SgJavaUnsignedRshiftAssignOp:   return 1;
+        case V_SgCommaOpExp:                   return 1; // charles4 10/14/2011
 
         default:                               return ROSE_UNPARSER_NO_PRECEDENCE;
     }
@@ -610,6 +615,37 @@ Unparse_Java::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
      SgFunctionCallExp* func_call = isSgFunctionCallExp(expr);
      ROSE_ASSERT(func_call != NULL);
 
+     if (func_call -> attributeExists("prefix")) {
+         AstRegExAttribute *attribute = (AstRegExAttribute *) func_call -> getAttribute("prefix");
+         curprint(attribute -> expression);
+         curprint(".");
+     /*
+         SgFunctionDeclaration *declaration = func_call -> getAssociatedFunctionDeclaration();
+         SgMemberFunctionDeclaration *functionDeclaration = isSgMemberFunctionDeclaration(declaration);
+         ROSE_ASSERT(functionDeclaration);
+         SgClassDeclaration *classDeclaration = functionDeclaration -> get_associatedClassDeclaration();
+         ROSE_ASSERT(classDeclaration);
+         SgClassType *classType = classDeclatation -> get_type();
+         ROSE_ASSERT (classType != NUL);
+         curprint(classType -> get_qualified_name().getString());
+         curprint(".");
+     */
+     }
+     /*
+     if (isSgMemberFunctionType(func_call -> get_type())) {
+         SgFunctionDeclaration *declaration = func_call -> getAssociatedFunctionDeclaration();
+         SgMemberFunctionDeclaration *functionDeclaration = isSgMemberFunctionDeclaration(declaration);
+         ROSE_ASSERT(functionDeclaration);
+
+         if (functionDeclaration -> get_declarationModifier().get_storageModifier().isStatic()) {
+             SgType *type = isSgMemberFunctionType(func_call -> get_type()) -> get_class_type();
+             ROSE_ASSERT (type != NULL && isSgNamedType(type));
+             curprint(isSgNamedType(type) -> get_qualified_name().getString());
+             curprint(".");
+         }
+     }
+     */
+
      unparseExpression(func_call->get_function(), info);
      curprint("(");
      unparseExpression(func_call->get_args(), info);
@@ -777,7 +813,27 @@ Unparse_Java::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
        // printf ("In Unparse_ExprStmt::unparseNewOp: Now unparse new_op->get_constructor_args() \n");
           unparseExpression(new_op->get_constructor_args(), newinfo);
         }
+     else curprint ( "()"); // charles4: Still need parentheses for empty argument list.
 
+//
+// chares4: I don't understand what the purpose of the unreachable "else" block below is.
+//          I added the "else " alternative above because it is required for the Unparser
+//          to generate correct code.  If it turns out that the else block below is important
+//          then its creator should merge it with the else statement that I added above like this:
+//
+// -----------------------------------------------------------------------------------------------
+//
+//               else
+//                {
+//                  curprint ( "()"); // charles4: Still need parentheses for empty argument list.
+//        #if 0
+//               // printf ("In Unparse_ExprStmt::unparseNewOp: Call unparse type \n");
+//                  unp->u_type->unparseType(new_op->get_type(), newinfo);
+//        #endif
+//                }
+//
+// -----------------------------------------------------------------------------------------------
+//
 #if 0
        else
         {
@@ -1052,6 +1108,7 @@ Unparse_Java::unparseBinaryOp(SgBinaryOp* op,
         case V_SgNotEqualOp:           curprint(" != ");  break;
         case V_SgRshiftOp:             curprint(" >> ");  break;
         case V_SgSubtractOp:           curprint(" - ");   break;
+        case V_SgCommaOpExp:           curprint(", ");    break; // charles4 10/14/2011
         default: {
              cout << "error: cannot unparse binary op: " << op->class_name() << endl;
              ROSE_ASSERT(false);

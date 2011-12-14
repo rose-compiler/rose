@@ -5,65 +5,89 @@
 
 #include <string>
 
-#include "sageGeneric.hpp"
+// #include "sageGeneric.hpp"
 
 #include "RtedSymbols.h"
 #include "DataStructures.h"
 #include "RtedTransformation.h"
 
-using namespace SageInterface;
-using namespace SageBuilder;
-
-
-static
-SgReturnStmt* return_stmt(ReturnInfo ri)
-{
-  return ri.first;
-}
+namespace SI = SageInterface;
+namespace SB = SageBuilder;
 
 static
-size_t open_blocks(ReturnInfo ri)
+SgStatement& buildFunctionExitStmt(RtedTransformation& trans, SgInitializedName& resvar, ReturnInfo ri, SgScopeStatement& scope)
 {
-  return ri.second;
+  SgExprStatement* exitBlock = NULL;
+
+  if (ri.expected_return == ReturnInfo::rtValue)
+  {
+    exitBlock = trans.buildExitBlockStmt(ri.open_blocks, scope, scope.get_endOfConstruct());
+  }
+  else
+  {
+    ROSE_ASSERT(ri.expected_return == ReturnInfo::rtIndirection);
+    exitBlock = trans.buildDelayedLeakCheckExitStmt(ri.filetype, ri.open_blocks, scope, resvar, scope.get_endOfConstruct());
+  }
+
+  ROSE_ASSERT(exitBlock);
+  return *exitBlock;
 }
+
 
 void
 RtedTransformation::changeReturnStmt(ReturnInfo rinfo)
 {
-  SgReturnStmt* rstmt = return_stmt(rinfo);
-  ROSE_ASSERT(rstmt);
-  std::cerr << "\n\n@@@@@@@@@@@@@@@@@@@@@@@ enter ReturnStmtChange" << std::endl;
-
-  SgExpression*         rightOfRet = rstmt->get_expression();
-  // we need to build a new variable of type rightOfRet
-  SgType*               typeRet = rightOfRet->get_type();
-  // and assign that expr to that new variable:
-  //   type x = rightOfRet;
-  //   return x;
+  SgReturnStmt* const   rstmt = rinfo.stmt;
+  SgExpression* const   returnExpr = rstmt->get_expression();
 
   requiresParentIsBasicBlock(*rstmt);
 
-  SgScopeStatement*     scope = rstmt->get_scope();
-  std::string           name = "rstmt";
+  if (!returnExpr)
+  {
+    // function returns a value but return statement has no expression
+    insertErrorReport(*rstmt, "return statement is expected to return a value");
+    return;
+  }
 
+  // We need to build a new variable of type returnExpr
+  // \pp why do we have to do that?
+  //     most likely b/c exitScope clears all local pointers ...
+  SgScopeStatement*      scope = rstmt->get_scope();
+  SgType* const          typeRet = returnExpr->get_type();
+  std::string            name = "rstmt";
+
+  ROSE_ASSERT(scope);
   name.append(scope->get_qualified_name().str());
 
-  SgName                rName( name );
-  SgAssignInitializer*  init = buildAssignInitializer(rightOfRet);
-  SgStatement*          newStmt = buildVariableDeclaration( rName,
-                                                            deepCopy(typeRet),
-                                                            init,
-                                                            scope
-                                                          );
-  SgVarRefExp*          vexp = buildVarRefExp(rName, scope);
-  SgStatement*          newRtnStmt = buildReturnStmt( vexp );
+  SgName                 rName( name );
+  SgAssignInitializer*   init = SB::buildAssignInitializer(returnExpr);
+  SgVariableDeclaration* resDecl = SB::buildVariableDeclaration( rName, typeRet, init, scope );
+  SgInitializedName&     resVar = getFirstVariable(*resDecl);
 
-  replaceStatement( rstmt, newRtnStmt );
-  insertStatementBefore( newRtnStmt, newStmt );
+  SgVarRefExp* const     vexp = SB::buildVarRefExp(rName, scope);
+  SgStatement* const     newRtnStmt = SB::buildReturnStmt( vexp );
 
-  /* do not do it right now */
-  // SgStatement*          exitBlock = buildExitBlockStmt(open_blocks(rinfo), scope, scope->get_endOfConstruct());
-  // insertStatementBefore( newRtnStmt, exitBlock );
+  SI::replaceStatement( rstmt, newRtnStmt );
+  SI::insertStatementBefore( newRtnStmt, resDecl );
+
+  Sg_File_Info* const    fileinfo = scope->get_endOfConstruct();
+
+  // handle C++ only if the function returns a pointer
+  if (rinfo.filetype != ftCxx)
+  {
+    SgStatement* const   exitStmt = (rinfo.expected_return == ReturnInfo::rtValue)
+                                          ? buildExitBlockStmt(rinfo.open_blocks, *scope, fileinfo)
+                                          : buildDelayedLeakCheckExitStmt(rinfo.filetype, rinfo.open_blocks, *scope, resVar, fileinfo)
+                                          ;
+
+    SI::insertStatementBefore( newRtnStmt, exitStmt );
+  }
+  else if (rinfo.expected_return == ReturnInfo::rtIndirection)
+  {
+    SgStatement* const   exitStmt = buildDelayedLeakCheckExitStmt(rinfo.filetype, rinfo.open_blocks, *scope, resVar, fileinfo);
+
+    SI::insertStatementBefore( newRtnStmt, exitStmt );
+  }
 }
 
 #endif

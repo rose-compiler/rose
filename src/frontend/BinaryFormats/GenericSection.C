@@ -182,10 +182,10 @@ SgAsmGenericSection::get_end_offset() const
 }
 
 /** Returns the file extent for the section */
-ExtentPair
+Extent
 SgAsmGenericSection::get_file_extent() const 
 {
-    return ExtentPair(get_offset(), get_size());
+    return Extent(get_offset(), get_size());
 }
 
 /** Returns whether section desires to be mapped to memory */
@@ -269,11 +269,11 @@ SgAsmGenericSection::get_base_va() const
 }
 
 /** Returns the memory extent for a mapped section. If the section is not mapped then offset and size will be zero */
-ExtentPair
+Extent
 SgAsmGenericSection::get_mapped_preferred_extent() const
 {
     ROSE_ASSERT(this != NULL);
-    return ExtentPair(get_mapped_preferred_rva(), get_mapped_size());
+    return Extent(get_mapped_preferred_rva(), get_mapped_size());
 }
 
 /** Reads data from a file. Reads up to @p size bytes of data beginning at byte @p start_offset from the beginning of the file,
@@ -499,6 +499,7 @@ SgAsmGenericSection::write(std::ostream &f, rose_addr_t offset, size_t bufsize, 
             fprintf(stderr, " in [%d] \"%s\"\n", get_id(), get_name()->get_string(true).c_str());
             fprintf(stderr, "    section is at file offset 0x%08"PRIx64" (%"PRIu64"), size 0x%"PRIx64" (%"PRIu64") bytes\n", 
                     get_offset(), get_offset(), get_size(), get_size());
+            fprintf(stderr, " write %zu byte%s at section offset 0x%08"PRIx64"\n", bufsize, 1==bufsize?"":"s", offset);
             fprintf(stderr, "      ");
             HexdumpFormat hf;
             hf.prefix = "      ";
@@ -587,28 +588,26 @@ ExtentMap
 SgAsmGenericSection::get_referenced_extents() const
 {
     ExtentMap retval;
-    ExtentPair s(get_offset(), get_size());
+    if (0==get_size())
+        return retval;
+
+    Extent s(get_offset(), get_size());
     const ExtentMap &file_extents = get_file()->get_referenced_extents();
     for (ExtentMap::const_iterator i=file_extents.begin(); i!=file_extents.end(); i++) {
-        switch (ExtentMap::category(*i, s)) {
-            case 'C': /*congruent*/
-            case 'I': /*extent is inside section*/
-                retval.insert(i->first-get_offset(), i->second);
-                break;
-            case 'L': /*extent is left of section*/
-            case 'R': /*extent is right of section*/
-                break;
-            case 'O': /*extent contains all of section*/
-                retval.insert(0, get_size());
-                break;
-            case 'B': /*extent overlaps with beginning of section*/
-                retval.insert(0, i->first+i->second - get_offset());
-                break;
-            case 'E': /*extent overlaps with end of section*/
-                retval.insert(i->first-get_offset(), get_offset()+get_size() - i->first);
-                break;
-            default:
-                ROSE_ASSERT(!"invalid extent overlap category");
+        Extent e = i->first;
+        if (e.contained_in(s)) {
+            retval.insert(Extent(e.first()-get_offset(), e.size()));
+        } else if (e.left_of(s) || e.right_of(s)) {
+            /*void*/
+        } else if (e.contains(s)) {
+            retval.insert(Extent(0, get_size()));
+        } else if (e.begins_before(s)) {
+            retval.insert(Extent(0, e.first()+e.size()-get_offset()));
+        } else if (e.ends_after(s)) {
+            retval.insert(Extent(e.first()-get_offset(), get_offset()+get_size()-e.first()));
+        } else {
+            assert(!"invalid extent overlap category");
+            abort();
         }
     }
     return retval;
@@ -617,7 +616,7 @@ SgAsmGenericSection::get_referenced_extents() const
 ExtentMap
 SgAsmGenericSection::get_unreferenced_extents() const
 {
-    return get_referenced_extents().subtract_from(0, get_size()); /*complement*/
+    return get_referenced_extents().subtract_from(Extent(0, get_size())); /*complement*/
 }
 
 /** Extend a section by some number of bytes during the construction and/or parsing phase. This is function is considered to
@@ -676,21 +675,22 @@ void
 SgAsmGenericSection::unparse(std::ostream &f, const ExtentMap &map) const
 {
     for (ExtentMap::const_iterator i=map.begin(); i!=map.end(); ++i) {
-        ROSE_ASSERT((*i).first+(*i).second <= get_size());
+        Extent e = i->first;
+        assert(e.first()+e.size() <= get_size());
         const unsigned char *extent_data;
         size_t nwrite;
-        if ((*i).first >= p_data.size()) {
+        if (e.first() >= p_data.size()) {
             extent_data = NULL;
             nwrite = 0;
-        } else if ((*i).first + (*i).second > p_data.size()) {
-            extent_data = &p_data[(*i).first];
-            nwrite = p_data.size() - (*i).first;
+        } else if (e.first() + e.size() > p_data.size()) {
+            extent_data = &p_data[e.first()];
+            nwrite = p_data.size() - e.first();
         } else {
-            extent_data = &p_data[(*i).first];
-            nwrite = (*i).second;
+            extent_data = &p_data[e.first()];
+            nwrite = e.size();
         }
         if (extent_data)
-            write(f, (*i).first, (*i).second, extent_data);
+            write(f, e.first(), e.size(), extent_data);
     }
 }
 

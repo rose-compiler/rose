@@ -34,7 +34,7 @@ namespace CompassAnalyses
             // Checker specific parameters should be allocated here.
                Compass::OutputObject* output;
 	       std::string stringOutput;
-	       //SgAsmFunctionDeclaration* project;
+	       //SgAsmFunction* project;
 	       SgBinaryComposite* file;
                public:
                     Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output);
@@ -115,12 +115,12 @@ CompassAnalyses::BinPrintAsmFunctions::Traversal::
 visit(SgNode* n)
    { 
      // mark the first Function as the output object
-     //     if (isSgAsmFunctionDeclaration(n) && file==NULL)
-     //file = isSgAsmFunctionDeclaration(n);
+     //     if (isSgAsmFunction(n) && file==NULL)
+     //file = isSgAsmFunction(n);
      if (isSgBinaryComposite(n) && file==NULL)
        file = isSgBinaryComposite(n);
   SgAsmInstruction* binInst = isSgAsmInstruction(n);
-  SgAsmFunctionDeclaration* funcDecl = isSgAsmFunctionDeclaration(n);
+  SgAsmFunction* funcDecl = isSgAsmFunction(n);
   SgAsmBlock* block = isSgAsmBlock(n);
   if (funcDecl) {
     string name = funcDecl->get_name();

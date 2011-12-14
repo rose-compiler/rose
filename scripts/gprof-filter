@@ -1,0 +1,48 @@
+#!/usr/bin/perl
+#
+# Run output of gprof through this filter to reformat the columns for larger numbers.
+# The gprof command doesn't provide wide enough colums to hold some values (like number of calls) and
+# the result is messed up enough to make it hard to read.  This filter widens the columns so things
+# line up properly.
+
+use strict;
+
+while (<>) {
+  if (my @fields = /^\s*(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)?\s+(.*)/) {
+    # Brief table with all data
+    printf "%6.2f  %6.2f   %6.2f  %10d  %6.2f   %6.2f  %s\n", @fields;
+  } elsif (my @fields = /^\s*(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)\s+(.*)/) {
+    # Brief table missing number of calls
+    printf "%6.2f  %6.2f   %6.2f                               %s\n", @fields;
+
+  } elsif (/^index\s+%\s+time\s+self\s+children\s+called\s+name/) {
+    # Detail column heading
+    print "index     % time   sef   children       called        name\n";
+
+  } elsif (my @fields = /^(\[\d+\]?)\s+(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+)\s+(.*)/) {
+    # Detail table main function
+    printf "%-9s %6s %6.2f  %6.2f %10d            %s\n", @fields;
+  } elsif (my @fields = /^(\[\d+\]?)\s+(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)\s+(.*)/) {
+    # Detail table main function missing number of calls
+    printf "%-9s %6s %6.2f  %6.2f                       %s\n", @fields;
+
+  } elsif (my @fields = /^\s*(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+)([+\/])(\d+)\s+(.*)(\[\d+\])/) {
+    # Detail table other functions
+    shift @fields; my $id = pop @fields; unshift @fields, $id;
+    printf "                 %6.2f  %6.2f %10d%1s%-10d     %s\n", @fields;
+  } elsif (my @fields = /^\s*(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+)\s+(.*)(\[\d+\])/) {
+    # Detail table other functions, only caller
+    shift @fields; my $id = pop @fields; unshift @fields, $id;
+    printf "                 %6.2f  %6.2f %10d                %s\n", @fields;
+  } elsif (my @fields = /^\s+(\d+)\s+([^\s\d].*)/) {
+    # Detail table other functions, missing times, only caller
+    printf "                                %10d                %s\n", @fields;
+
+  } elsif (/^(\s+)(<spontaneous>.*)/) {
+    print $1, "         ", $2, "\n";
+  } elsif (/^(-{10,})(.*)/) {
+    print $1, "------$2\n";
+  } else {
+    print $_;
+  }
+}

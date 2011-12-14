@@ -315,7 +315,7 @@ RSIM_Process::load(const char *name)
     interpretation = SageInterface::querySubTree<SgAsmInterpretation>(project, V_SgAsmInterpretation).back();
     SgAsmGenericHeader *fhdr = interpretation->get_headers()->get_headers().front();
     ep_orig_va = ep_start_va = fhdr->get_entry_rva() + fhdr->get_base_va();
-    thread->policy.writeIP(ep_orig_va);
+    thread->policy.writeRegister<32>(thread->policy.reg_eip, ep_orig_va);
 
     /* Link the interpreter into the AST */
     SimLoader *loader = new SimLoader(interpretation, trace, interpname);
@@ -328,7 +328,7 @@ RSIM_Process::load(const char *name)
         if (load0 && load0->is_mapped() && load0->get_mapped_preferred_rva()==0 && load0->get_mapped_size()>0)
             loader->interpreter->set_base_va(ld_linux_base_va);
         ep_start_va = loader->interpreter->get_entry_rva() + loader->interpreter->get_base_va();
-        thread->policy.writeIP(ep_start_va);
+        thread->policy.writeRegister<32>(thread->policy.reg_eip, ep_start_va);
     }
 
     /* Sort the headers so they're in order by entry address. In other words, if the interpreter's entry address is below the
@@ -425,7 +425,7 @@ RSIM_Process::dump_core(int signo, std::string base_name)
      * an instruction because it would have already been incremented by the semantics. */ 
     uint32_t eip = readIP().known_value();
     if (get_insn())
-        eip -= get_insn()->get_raw_bytes().size();
+        eip -= get_insn()->get_size();
 
     SgAsmGenericFile *ef = new SgAsmGenericFile;
     ef->set_truncate_zeros(false);
@@ -790,7 +790,7 @@ RSIM_Process::binary_trace_add(RSIM_Thread *thread, const SgAsmInstruction *insn
     n = fwrite(&tid, 4, 1, btrace_file);
     assert(1==n);
 
-    size_t insn_size = insn->get_raw_bytes().size();
+    size_t insn_size = insn->get_size();
     assert(insn_size<=255);
     uint8_t insn_size_byte = insn_size;
     n = fwrite(&insn_size_byte, 1, 1, btrace_file);
@@ -799,65 +799,63 @@ RSIM_Process::binary_trace_add(RSIM_Thread *thread, const SgAsmInstruction *insn
     n = fwrite(&insn->get_raw_bytes()[0], insn_size, 1, btrace_file);
     assert(1==n);
 
-    uint32_t r = 0;
-    for (size_t i=0; i<VirtualMachineSemantics::State::n_flags; i++)
-        r |= thread->policy.readFlag((X86Flag)i).known_value() << i;
+    uint32_t r = thread->policy.readRegister<32>(thread->policy.reg_eflags).known_value();
     n = fwrite(&r, 4, 1, btrace_file);
     assert(1==n);
 
-    r = thread->policy.readGPR(x86_gpr_ax).known_value();
+    r = thread->policy.readRegister<32>(thread->policy.reg_eax).known_value();
     n = fwrite(&r, 4, 1, btrace_file);
     assert(1==n);
     
-    r = thread->policy.readGPR(x86_gpr_bx).known_value();
+    r = thread->policy.readRegister<32>(thread->policy.reg_ebx).known_value();
     n = fwrite(&r, 4, 1, btrace_file);
     assert(1==n);
     
-    r = thread->policy.readGPR(x86_gpr_cx).known_value();
+    r = thread->policy.readRegister<32>(thread->policy.reg_ecx).known_value();
     n = fwrite(&r, 4, 1, btrace_file);
     assert(1==n);
     
-    r = thread->policy.readGPR(x86_gpr_dx).known_value();
+    r = thread->policy.readRegister<32>(thread->policy.reg_edx).known_value();
     n = fwrite(&r, 4, 1, btrace_file);
     assert(1==n);
     
-    r = thread->policy.readGPR(x86_gpr_si).known_value();
+    r = thread->policy.readRegister<32>(thread->policy.reg_esi).known_value();
     n = fwrite(&r, 4, 1, btrace_file);
     assert(1==n);
     
-    r = thread->policy.readGPR(x86_gpr_di).known_value();
+    r = thread->policy.readRegister<32>(thread->policy.reg_edi).known_value();
     n = fwrite(&r, 4, 1, btrace_file);
     assert(1==n);
     
-    r = thread->policy.readGPR(x86_gpr_bp).known_value();
+    r = thread->policy.readRegister<32>(thread->policy.reg_ebp).known_value();
     n = fwrite(&r, 4, 1, btrace_file);
     assert(1==n);
     
-    r = thread->policy.readGPR(x86_gpr_sp).known_value();
+    r = thread->policy.readRegister<32>(thread->policy.reg_esp).known_value();
     n = fwrite(&r, 4, 1, btrace_file);
     assert(1==n);
 
-    r = thread->policy.readSegreg(x86_segreg_cs).known_value();
+    r = thread->policy.readRegister<16>(thread->policy.reg_cs).known_value();
     n = fwrite(&r, 2, 1, btrace_file);
     assert(1==n);
 
-    r = thread->policy.readSegreg(x86_segreg_ss).known_value();
+    r = thread->policy.readRegister<16>(thread->policy.reg_ss).known_value();
     n = fwrite(&r, 2, 1, btrace_file);
     assert(1==n);
 
-    r = thread->policy.readSegreg(x86_segreg_es).known_value();
+    r = thread->policy.readRegister<16>(thread->policy.reg_es).known_value();
     n = fwrite(&r, 2, 1, btrace_file);
     assert(1==n);
 
-    r = thread->policy.readSegreg(x86_segreg_ds).known_value();
+    r = thread->policy.readRegister<16>(thread->policy.reg_ds).known_value();
     n = fwrite(&r, 2, 1, btrace_file);
     assert(1==n);
 
-    r = thread->policy.readSegreg(x86_segreg_fs).known_value();
+    r = thread->policy.readRegister<16>(thread->policy.reg_fs).known_value();
     n = fwrite(&r, 2, 1, btrace_file);
     assert(1==n);
 
-    r = thread->policy.readSegreg(x86_segreg_gs).known_value();
+    r = thread->policy.readRegister<16>(thread->policy.reg_gs).known_value();
     n = fwrite(&r, 2, 1, btrace_file);
     assert(1==n);
 }
@@ -879,7 +877,7 @@ RSIM_Process::get_instruction(rose_addr_t va)
      * read, the callbacks will not have an opportunity to change the instruction that's fetched.  If you need to do that, use
      * an instruction callback instead. */
     if (insn) {
-        size_t insn_sz = insn->get_raw_bytes().size();
+        size_t insn_sz = insn->get_size();
         SgUnsignedCharList curmem(insn_sz);
         size_t nread = mem_read(&curmem[0], va, insn_sz, MemoryMap::MM_PROT_EXEC);
         if (nread==insn_sz && curmem==insn->get_raw_bytes())
@@ -899,7 +897,7 @@ RSIM_Process::get_instruction(rose_addr_t va)
     } RTS_WRITE_END;
 
     /* Read the rest of the instruction if necessary so that memory access callbacks have a chance to see the access. */
-    for (uint32_t i=4; i<insn->get_raw_bytes().size(); i+=4) {
+    for (uint32_t i=4; i<insn->get_size(); i+=4) {
         uint32_t word;
         (void)mem_read(&word, va+i, 4, MemoryMap::MM_PROT_EXEC);
     }
@@ -1042,8 +1040,8 @@ RSIM_Process::mem_unmap(rose_addr_t va, size_t sz, RTS_Message *mesg)
     RTS_WRITE(rwlock()) {
         /* Make sure that the specified memory range is actually mapped, or return -ENOMEM. */
         ExtentMap extents;
-        extents.insert(ExtentPair(va, sz));
-        extents.erase(map->va_extents());
+        extents.insert(Extent(va, sz));
+        extents.erase_ranges(map->va_extents());
         if (!extents.empty()) {
             retval = -ENOMEM;
             break;
@@ -1231,7 +1229,7 @@ RSIM_Process::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char *argv[]
 
         /* Allocate the stack */
         static const size_t stack_size = 0x00015000;
-        size_t sp = main_thread->policy.readGPR(x86_gpr_sp).known_value();
+        size_t sp = main_thread->policy.readRegister<32>(main_thread->policy.reg_esp).known_value();
         size_t stack_addr = sp - stack_size;
         MemoryMap::MapElement melmt(stack_addr, stack_size, MemoryMap::MM_PROT_READ|MemoryMap::MM_PROT_WRITE);
         melmt.set_name("[stack]");
@@ -1514,7 +1512,7 @@ RSIM_Process::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char *argv[]
         sp &= ~0xf; /*align to 16 bytes*/
         mem_write(&(pointers[0]), sp, 4*pointers.size());
 
-        main_thread->policy.writeGPR(x86_gpr_sp, sp);
+        main_thread->policy.writeRegister<32>(main_thread->policy.reg_esp, sp);
     } RTS_WRITE_END;
 }
 

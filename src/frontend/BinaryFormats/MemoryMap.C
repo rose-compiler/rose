@@ -447,6 +447,18 @@ MemoryMap::prune(bool(*predicate)(const MapElement&))
     elements = keep;
 }
 
+void
+MemoryMap::prune(unsigned required, unsigned prohibited)
+{
+    std::vector<MapElement> keep;
+    for (size_t i=0; i<elements.size(); ++i) {
+        if ((0==required || 0!=(elements[i].get_mapperms() & required)) &&
+            0==(elements[i].get_mapperms() & prohibited))
+            keep.push_back(elements[i]);
+    }
+    elements = keep;
+}
+
 size_t
 MemoryMap::read1(void *dst_buf, rose_addr_t va, size_t desired, unsigned req_perms/*=MM_PROT_READ*/,
                  const MapElement **mep/*=NULL*/) const
@@ -462,10 +474,12 @@ MemoryMap::read1(void *dst_buf, rose_addr_t va, size_t desired, unsigned req_per
 
     /* If there have been no writes to an anonymous element and no base has been allocated, then just fill
      * the return value with zeros */
-    if (m->is_anonymous() && NULL==m->get_base(false)) {
-        memset(dst_buf, 0, n);
-    } else {
-        memcpy(dst_buf, (uint8_t*)m->get_base()+m->get_offset()+m_offset, n);
+    if (dst_buf!=NULL) {
+        if (m->is_anonymous() && NULL==m->get_base(false)) {
+            memset(dst_buf, 0, n);
+        } else {
+            memcpy(dst_buf, (uint8_t*)m->get_base()+m->get_offset()+m_offset, n);
+        }
     }
     return n;
 }
@@ -482,6 +496,30 @@ MemoryMap::read(void *dst_buf, rose_addr_t start_va, size_t desired, unsigned re
 
     memset((uint8_t*)dst_buf+total_copied, 0, desired-total_copied);
     return total_copied;
+}
+
+SgUnsignedCharList
+MemoryMap::read(rose_addr_t va, size_t desired, unsigned req_perms/*=MM_PROT_READ*/) const
+{
+    SgUnsignedCharList retval;
+    while (desired>0) {
+        const MemoryMap::MapElement *m=NULL;
+        size_t can_read = read1(NULL, va, desired, req_perms, &m);
+        if (0==can_read)
+            break;
+        assert(m!=NULL && va>=m->get_va());
+        size_t m_offset = va - m->get_va();
+        assert(m_offset+can_read<=m->get_size());
+
+        size_t retval_offset = retval.size();
+        retval.resize(retval.size()+can_read, 0);
+        if (!m->is_anonymous() || NULL!=m->get_base(false))
+            memcpy(&retval[retval_offset], (uint8_t*)m->get_base()+m->get_offset()+m_offset, can_read);
+
+        va += can_read;
+        desired -= can_read;
+    }
+    return retval;
 }
 
 size_t
@@ -518,17 +556,20 @@ MemoryMap::mprotect(const MapElement &region, bool relax/*=false*/)
     /* Check whether the region refers to addresses not in the memory map. */
     if (!relax) {
         ExtentMap e;
-        e.insert(ExtentPair(region.get_va(), region.get_size()));
-        e.erase(va_extents());
+        e.insert(Extent(region.get_va(), region.get_size()));
+        e.erase_ranges(va_extents());
         if (!e.empty())
-            throw NotMapped(this, e.begin()->first);
+            throw NotMapped(this, e.begin()->first.first());
     }
 
     std::vector<MapElement> created;
     std::vector<MapElement>::iterator i=elements.begin();
     while (i!=elements.end()) {
         MapElement &other = *i;
-        if (other.get_va() >= region.get_va()) {
+        if (other.get_mapperms()==region.get_mapperms()) {
+            /* no change */
+            i++;
+        } else if (other.get_va() >= region.get_va()) {
             if (other.get_va()+other.get_size() <= region.get_va()+region.get_size()) {
                 /* other is fully contained in (or congruent to) region; change other's permissions */
                 other.set_mapperms(region.get_mapperms());
@@ -615,7 +656,7 @@ MemoryMap::va_extents() const
     ExtentMap retval;
     for (size_t i=0; i<elements.size(); i++) {
         const MapElement& me = elements[i];
-        retval.insert(me.get_va(), me.get_size());
+        retval.insert(Extent(me.get_va(), me.get_size()));
     }
     return retval;
 }

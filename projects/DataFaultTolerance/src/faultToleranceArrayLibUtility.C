@@ -10,18 +10,12 @@
 #include <iostream>
 #include <vector>
 #include <sstream>
+#include "stdlib.h"
 
+#include "faultToleranceArrayLibUtility.h"
 
 using namespace std;
 
-/*
- * Block Parity Algorithm
- */
-typedef struct hashVal
-{
-	vector<bool> parity_col;
-	unsigned int parity_row;
-};
 
 map< string, hashVal > hashTable;
 
@@ -43,7 +37,7 @@ int countOneBits(unsigned int val)
 
 
 /*
- * Calculates the parity
+ * Calculates the parity ( even parity )
  */
 bool calculateParity(unsigned int data)
 {
@@ -100,6 +94,11 @@ map<string, hashVal>::iterator getHashEntry(string arrayEntry)
 	}
 
 	return it;
+}
+
+void clearAllHashEntries()
+{
+	hashTable.clear();
 }
 
 /*

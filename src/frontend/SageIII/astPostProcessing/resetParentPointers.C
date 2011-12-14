@@ -49,8 +49,12 @@ ResetParentPointers::traceBackToRoot ( SgNode* node )
                printf ("   starting node           = %p = %s \n",node,node->sage_class_name());
                printf ("   (current node)          = %p = %s \n",parentNode,parentNode->sage_class_name());
                printf ("   (current node's parent) = %p = %s \n",parentNode->get_parent(),parentNode->get_parent()->sage_class_name());
+
+               ROSE_ASSERT(parentNode->get_parent()->get_parent() != NULL);
                printf ("   (parent node's parent)  = %p = %s \n",
                     parentNode->get_parent()->get_parent(),parentNode->get_parent()->get_parent()->sage_class_name());
+
+               ROSE_ASSERT(parentNode->get_parent()->get_parent()->get_parent() != NULL);
                printf ("   (parent node's parent 2)  = %p = %s \n",
                     parentNode->get_parent()->get_parent()->get_parent(),parentNode->get_parent()->get_parent()->get_parent()->sage_class_name());
 
@@ -1539,12 +1543,17 @@ ResetFileInfoParentPointersInMemoryPool::visit(SgNode* node)
                printf ("Error: locatedNode->get_startOfConstruct() == NULL (locatedNode = %p = %s) \n",locatedNode,locatedNode->class_name().c_str());
                if (isSgFunctionParameterList(node) != NULL)
                   {
+                 // DQ (9/13/2011): Reported as possible NULL value in static analysis of ROSE code.
+                    ROSE_ASSERT(locatedNode->get_parent() != NULL);
+
                     printf ("     This is a SgFunctionParameterList, so look at the parent = %p = %s \n",locatedNode->get_parent(),locatedNode->get_parent()->class_name().c_str());
                   }
+
                if (locatedNode->get_parent() == NULL)
                   {
                     printf ("     locatedNode->get_parent() locatedNode = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
                   }
+
                ROSE_ASSERT(locatedNode->get_parent() != NULL);
                if (locatedNode->get_parent()->get_startOfConstruct() != NULL)
                   {
@@ -1914,6 +1923,9 @@ ResetParentPointersInMemoryPool::visit(SgNode* node)
 
                          if (nondefiningDeclaration == NULL)
                             {
+                           // DQ (9/13/2011): Reported as possible NULL value in static analysis of ROSE code.
+                              ROSE_ASSERT(functionDeclaration->get_parent() != NULL);
+
                               printf ("Error: nondefiningDeclaration == NULL for functionDeclaration = %p = %s \n",functionDeclaration,SageInterface::get_name(functionDeclaration).c_str());
                               printf ("   definingDeclaration = %p \n",definingDeclaration);
                               printf ("   functionDeclaration->get_parent() = %p = %s \n",functionDeclaration->get_parent(),functionDeclaration->get_parent()->class_name().c_str());

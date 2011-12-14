@@ -159,7 +159,7 @@ public:
                 size_t nfuncs;
                 explicit T1(RSIM_Process *process, RTS_Message *m): process(process), m(m), nfuncs(0) {}
                 void visit(SgNode *node) {
-                    SgAsmFunctionDeclaration *defn = isSgAsmFunctionDeclaration(node);
+                    SgAsmFunction *defn = isSgAsmFunction(node);
                     if (defn!=NULL) {
                         /* Scan through the function's instructions to find the range of addresses for the function. */
                         rose_addr_t func_start=~(rose_addr_t)0, func_end=0;
@@ -168,8 +168,8 @@ public:
                         for (std::vector<SgAsmInstruction*>::iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
                             SgAsmInstruction *insn = *ii;
                             func_start = std::min(func_start, insn->get_address());
-                            func_end = std::max(func_end, insn->get_address()+insn->get_raw_bytes().size());
-                            nbytes += insn->get_raw_bytes().size();
+                            func_end = std::max(func_end, insn->get_address()+insn->get_size());
+                            nbytes += insn->get_size();
                         }
 
                         /* Compute name string */
@@ -225,7 +225,7 @@ public:
 
 /** Prints the name of the currently executing function.
  *
- *  This instruction callback looks at the current instruction's AST ancestors to find an enclosing SgAsmFunctionDeclaration
+ *  This instruction callback looks at the current instruction's AST ancestors to find an enclosing SgAsmFunction
  *  node. If the current instruction's function is different than the previous instruction's, then we print either the current
  *  function name or a full stack trace to the TRACE_MISC facility.
  *
@@ -259,7 +259,7 @@ public:
     virtual bool operator()(bool enabled, const Args &args) {
         RSIM_Process *process = args.thread->get_process();
         SgAsmBlock *basic_block = isSgAsmBlock(args.insn->get_parent());
-        SgAsmFunctionDeclaration *func = basic_block ? basic_block->get_enclosing_function() : NULL;
+        SgAsmFunction *func = basic_block ? basic_block->get_enclosing_function() : NULL;
         std::string new_name = func ? func->get_name() : "";
         if (new_name!=name) {
             name = new_name;
@@ -269,7 +269,7 @@ public:
                  * address of a CALL instruction in executable memory.  This only handles CALLs encoded in two or five
                  * bytes. */
                 bool bp_not_pushed = false;
-                uint32_t esp = args.thread->policy.readGPR(x86_gpr_sp).known_value();
+                uint32_t esp = args.thread->policy.readRegister<32>(args.thread->policy.reg_esp).known_value();
                 uint32_t top_word;
                 SgAsmx86Instruction *call_insn;
                 try {
@@ -676,7 +676,7 @@ public:
 /** Generates a stack trace when a signal arrives.
  *
  *  Each time a signal arrives, a stack trace is printed.  Since stack traces require instructions to be linked into the AST
- *  (specifically, instructions should each have an SgAsmFunctionDeclaration ancestor), the disassembler is invoked the first
+ *  (specifically, instructions should each have an SgAsmFunction ancestor), the disassembler is invoked the first
  *  time this callback is triggered.
  *
  *  Example:
@@ -733,7 +733,7 @@ public:
         if (enabled && insn) {
             RTS_Message *m = args.thread->tracing(TRACE_MISC);
             const SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
-            uint32_t newip_va = insn->get_address() + insn->get_raw_bytes().size();
+            uint32_t newip_va = insn->get_address() + insn->get_size();
             VirtualMachineSemantics::ValueType<32> newip = args.thread->policy.number<32>(newip_va);
             switch (insn->get_kind()) {
                 case x86_movd: {
@@ -744,7 +744,7 @@ public:
                         m->mesg(fmt, unparseInstruction(insn).c_str());
                         mmx[mmx_number].lo = args.thread->semantics.read32(operands[1]);
                         mmx[mmx_number].hi = args.thread->policy.number<32>(0);
-                        args.thread->policy.writeIP(newip);
+                        args.thread->policy.writeRegister(args.thread->policy.reg_eip, newip);
                         enabled = false;
                     }
                     break;
@@ -760,7 +760,7 @@ public:
                         args.thread->policy.writeMemory(x86_segreg_ss, addr, mmx[mmx_number].lo, args.thread->policy.true_());
                         addr = args.thread->policy.add<32>(addr, args.thread->policy.number<32>(4));
                         args.thread->policy.writeMemory(x86_segreg_ss, addr, mmx[mmx_number].hi, args.thread->policy.true_());
-                        args.thread->policy.writeIP(newip);
+                        args.thread->policy.writeRegister(args.thread->policy.reg_eip, newip);
                         enabled = false;
                     }
                     break;
@@ -769,7 +769,7 @@ public:
                 case x86_pause: {
                     /* PAUSE is treated as a CPU hint, and is a no-op on some architectures. */
                     assert(0==operands.size());
-                    args.thread->policy.writeIP(newip);
+                    args.thread->policy.writeRegister(args.thread->policy.reg_eip, newip);
                     enabled = false;
                     break;
                 }
@@ -783,7 +783,7 @@ public:
                     VirtualMachineSemantics::ValueType<32> value = args.thread->policy.number<32>(0x1f80); // from GDB
                     VirtualMachineSemantics::ValueType<32> addr = args.thread->semantics.readEffectiveAddress(operands[0]);
                     args.thread->policy.writeMemory(x86_segreg_ss, addr, value, args.thread->policy.true_());
-                    args.thread->policy.writeIP(newip);
+                    args.thread->policy.writeRegister(args.thread->policy.reg_eip, newip);
                     enabled = false;
                     break;
                 }
@@ -795,7 +795,7 @@ public:
                     assert(1==operands.size());
                     VirtualMachineSemantics::ValueType<32> addr = args.thread->semantics.readEffectiveAddress(operands[0]);
                     (void)args.thread->policy.readMemory<32>(x86_segreg_ss, addr, args.thread->policy.true_());
-                    args.thread->policy.writeIP(newip);
+                    args.thread->policy.writeRegister(args.thread->policy.reg_eip, newip);
                     enabled = false;
                     break;
                 }

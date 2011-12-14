@@ -195,7 +195,7 @@ public:
             *(uint32_t*)(buf+0x1000-5)  = strlen((char*)buf);           // updcrc's second argument
             *(uint32_t*)(buf+0x1000-9)  = (uint32_t)buf_va;             // updcrc's first argument
             *(uint32_t*)(buf+0x1000-13) = buf_va+0x1000-1;              // special return address, the NOP above
-            args.thread->policy.writeGPR(x86_gpr_sp, args.thread->policy.number<32>(buf_va+0x1000-13));
+            args.thread->policy.writeRegister("esp", args.thread->policy.number<32>(buf_va+0x1000-13));
 
             // We know that the function being analyzed has a local variable (crc_32_tab) which is an array of 256 double
             // words.  We also know (by looking at the assembly) that the array ends 25 bytes from the top of our "buf" and
@@ -206,7 +206,7 @@ public:
             // Modify EIP to point to the entry address of the function being analyzed, and set "enabled" to false to
             // indicate that the current instruction (the first instruction of main), should not be simulated at this
             // time.
-            args.thread->policy.writeIP(args.thread->policy.number<32>(analysis_va));
+            args.thread->policy.writeRegister("eip", args.thread->policy.number<32>(analysis_va));
             enabled = false;
             trace->mesg("Analysis: simulator will continue to run to analyse the function...");
 
@@ -215,7 +215,7 @@ public:
             // top of our debugging stack.  Obtain the analyzed function's return value from the EAX register, restore all
             // registers to their original values, and unmap our debugging buffer from the specimen.
             RTS_Message *trace = args.thread->tracing(TRACE_MISC);
-            uint32_t result = args.thread->policy.readGPR(x86_gpr_ax).known_value();
+            uint32_t result = args.thread->policy.readRegister<32>("eax").known_value();
             trace->mesg("Analysis: function returned 0x%08"PRIx32, result);
 
             // Unmap our debugging page of memory

@@ -105,6 +105,9 @@ RemoveInitializedNamePtr::evaluateInheritedAttribute (
                  // if ( mfdnode->get_definition()->get_parent() != node /* cut off in class */
                  //      && !(mfdnode->get_parent()->variantT() == V_SgGlobal) /* but do not cut off at nodes ref.to by SgGlobal */)
 
+                 // DQ (9/13/2011): Reported as possible NULL value in static analysis of ROSE code.
+                    ROSE_ASSERT(mfdnode->get_parent() != NULL);
+
                     if ( (mfdnode->get_definition()->get_parent() != NULL) && 
                          (mfdnode->get_definition()->get_parent() != node) && /* cut off in class */
                        !(mfdnode->get_parent()->variantT() == V_SgGlobal) /* but do not cut off at nodes ref.to by SgGlobal */) 

@@ -433,7 +433,11 @@ INPUT                  = \
 			 @top_srcdir@/src/ROSETTA/src/binaryInstruction.C \
                          @top_srcdir@/src/frontend/CxxFrontend/EDG/EDG_3.3/documentation.docs \
 			 @top_srcdir@/src/frontend/Disassemblers \
+			 @top_srcdir@/src/frontend/Disassemblers/Disassembler.C \
+			 @top_srcdir@/src/frontend/Disassemblers/DisassemblerArm.C \
+			 @top_srcdir@/src/frontend/Disassemblers/DisassemblerX86.C \
 			 @top_srcdir@/src/frontend/Disassemblers/Partitioner.C \
+			 @top_srcdir@/src/frontend/Disassemblers/Registers.C \
 			 @top_srcdir@/src/frontend/BinaryFormats/DataConversion.C \
 			 @top_srcdir@/src/frontend/BinaryFormats/ElfDynamicLinking.C \
 			 @top_srcdir@/src/frontend/BinaryFormats/ElfErrorFrame.C \
@@ -476,6 +480,7 @@ INPUT                  = \
 			 @top_srcdir@/src/frontend/BinaryFormats/Rva.C \
 			 @top_srcdir@/src/frontend/BinaryLoader \
                          @top_srcdir@/src/frontend/Open64/documentation.docs \
+                         @top_srcdir@/src/frontend/SageIII/ \
                          @top_srcdir@/src/frontend/SageIII/docs \
 			 @top_srcdir@/src/frontend/SageIII/astPostProcessing/checkIsModifiedFlag.C \
                          @top_srcdir@/src/frontend/SageIII/sageInterface \
@@ -517,6 +522,7 @@ INPUT                  = \
                          @top_srcdir@/src/util/stringSupport/ \
                          @top_srcdir@/src/util/commandlineProcessing \
 			 @top_srcdir@/src/roseSupport \
+			 @top_builddir@/src/roseSupport/stringify.C \
                          @top_srcdir@/src/3rdPartyLibraries/3rdPartyLibraries.docs \
                          @top_srcdir@/src/3rdPartyLibraries/MSTL/MSTL.docs \
                          @top_srcdir@/src/extra.docs \

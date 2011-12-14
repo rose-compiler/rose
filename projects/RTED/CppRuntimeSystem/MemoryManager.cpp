@@ -45,13 +45,18 @@ namespace
     typedef unsigned int         CacheIdx;
     typedef MemoryType::Location Location;
 
-    static const char CACHEELEMS = 4;
+    static const CacheIdx CACHEELEMS = 4;
 
     CacheIdx     pos;
     MemoryType*  cache[CACHEELEMS];
 
     MemTypeCache()
     : pos(0)
+    {
+      clear();
+    }
+
+    void clear()
     {
       for (CacheIdx i = 0; i < CACHEELEMS; ++i)
       {
@@ -61,13 +66,11 @@ namespace
 
     MemoryType* findContainingMem(Location addr, size_t sz) const
     {
-      int i = CACHEELEMS;
-
-      while ( i && cache[i] )
+      for (CacheIdx i = 0; i < CACHEELEMS; ++i)
       {
-        if (cache[i]->containsMemArea(addr, sz)) return cache[i];
+        MemoryType* candidate = cache[i];
 
-        --i;
+        if (candidate && candidate->containsMemArea(addr, sz)) return candidate;
       }
 
       return NULL;
@@ -79,11 +82,11 @@ namespace
       cache[pos] = &mt;
     }
 
-    void clear(MemoryType& mt)
+    void clear(const MemoryType& mt)
     {
       for (CacheIdx i = 0; i < CACHEELEMS; ++i)
       {
-        if (cache[i] == &mt) cache[i] = NULL;
+        if (cache[i] == &mt) cache[i] = 0;
       }
     }
   };
@@ -134,12 +137,12 @@ getOverlappingTypeInfos(TypeMap& tmap, size_t from, size_t len)
 
 // -----------------------    MemoryType  --------------------------------------
 
-MemoryType::MemoryType(Location _addr, size_t _size, AllocKind ak, long blsz, const SourcePosition& _pos)
+MemoryType::MemoryType(Location _addr, size_t _size, AllocKind ak, long blsz, const SourceInfo& _pos)
 : startAddress(_addr), origin(ak), allocPos(_pos), typedata(), initdata(_size), blocksize(blsz)
 {
   assert(_size && getSize());
 
-  RuntimeSystem*   rs = RuntimeSystem::instance();
+  RuntimeSystem&   rs = RuntimeSystem::instance();
 
   if ( diagnostics::message(diagnostics::memory) )
   {
@@ -152,8 +155,8 @@ MemoryType::MemoryType(Location _addr, size_t _size, AllocKind ak, long blsz, co
         << "  size = " << _size
         << "  blocksize = " << blocksize
         << "  distributed = " << isDistributed()
-        << "  @ (" << _pos.getLineInOrigFile() << ", " << _pos.getLineInTransformedFile() << ")";
-    rs->printMessage(msg.str());
+        << "  @ (" << _pos.src_line << ", " << _pos.rted_line << ")";
+    rs.printMessage(msg.str());
   }
 }
 
@@ -190,7 +193,6 @@ bool MemoryType::operator< (const MemoryType& other) const
     return (startAddress < other.startAddress);
 }
 
-
 bool MemoryType::isInitialized(Location addr, size_t len) const
 {
     const size_t           offset = byte_offset(startAddress, addr, blockSize(), 0);
@@ -203,9 +205,6 @@ bool MemoryType::isInitialized(Location addr, size_t len) const
 
     return true;
 }
-
-
-
 
 bool MemoryType::initialize(size_t offset, size_t len)
 {
@@ -246,7 +245,7 @@ bool MemoryType::registerMemType(Location addr, size_t ofs, const RsType* type)
           << "++ type: " << type->getName() << '\n'
           << "++ types_merged: " << mergeRes;
 
-      RuntimeSystem::instance()->printMessage(msg.str());
+      RuntimeSystem::instance().printMessage(msg.str());
     }
 
     if ( !mergeRes.first )
@@ -259,15 +258,15 @@ bool MemoryType::registerMemType(Location addr, size_t ofs, const RsType* type)
 
         // since we have knowledge about the type in memory, we also need to update the
         // information about "dereferentiable" memory regions i.e. pointer
-        PointerManager* pm = rtedRTS(this)->getPointerManager();
+        PointerManager& pm = rtedRTS(this).getPointerManager();
 
-        pm->createPointer(addr, type, blockSize());
+        pm.createPointer(addr, type, blockSize());
         statuschange = true;
     }
 
     if ( diagnostics::message(diagnostics::memory) )
     {
-      RuntimeSystem::instance()->printMessage("   ++ registerMemType done.");
+      RuntimeSystem::instance().printMessage("   ++ registerMemType done.");
     }
 
     return statuschange;
@@ -347,7 +346,7 @@ MemoryType::checkAndMergeMemType(size_t ofs, const RsType* type)
       msg << "++ checkAndMergeMemType ofs: " << newStart << " (base = " << startAddress << ")"
           << "   length: " << newLength << std::endl;
 
-      RuntimeSystem::instance()->printMessage( msg.str() );
+      RuntimeSystem::instance().printMessage( msg.str() );
     }
 
     // Get a range of entries which overlap with [newStart,newTiEnd)
@@ -389,7 +388,7 @@ MemoryType::checkAndMergeMemType(size_t ofs, const RsType* type)
                                  << (oldStart + oldLength) << ")  base = " << startAddress
                                  << std::endl;
 
-                RuntimeSystem::instance()->violationHandler(vio);
+                RuntimeSystem::instance().violationHandler(vio);
                 return mtyFailed();
             }
             else
@@ -422,7 +421,7 @@ MemoryType::checkAndMergeMemType(size_t ofs, const RsType* type)
                              << "Overlapping Type " << curType->getName()
                              << " (" << curStart << "," << (curStart + curLength) << ")  base = " << startAddress
                              << std::endl;
-            RuntimeSystem::instance()->violationHandler(vio);
+            RuntimeSystem::instance().violationHandler(vio);
             return mtyFailed();
         }
 
@@ -439,7 +438,7 @@ MemoryType::checkAndMergeMemType(size_t ofs, const RsType* type)
                              << " (" << curStart << "," << (curStart + curLength) << ")  base = " << startAddress
                              << std::endl;
 
-            RuntimeSystem::instance()->violationHandler(vio);
+            RuntimeSystem::instance().violationHandler(vio);
             return mtyFailed();
         }
     }
@@ -452,9 +451,9 @@ MemoryType::checkAndMergeMemType(size_t ofs, const RsType* type)
 
     const long     blocksize = blockSize();
     Location       addr = ::add(startAddress, ofs, blocksize);
-    RuntimeSystem* rts = rtedRTS(this);
+    RuntimeSystem& rs = rtedRTS(this);
 
-    rts->getPointerManager()->createPointer(addr, type, blocksize);
+    rs.getPointerManager().createPointer(addr, type, blocksize);
     return mtyMerged();
 }
 
@@ -467,10 +466,6 @@ const RsType* MemoryType::getTypeAt(size_t ofs, size_t size) const
     IterPair        type_range = ::getOverlappingTypeInfos(typedata, ofs, size);
     Iterator        first_addr_type = type_range.first;
     Iterator        end = type_range.second;
-
-    //~ std::cerr << "   distance = " << std::distance(first_addr_type, end) << std::endl;
-    //~ std::cerr << "   addr = " << static_cast<const void*>(addr.local)
-              //~ << "  first = " << static_cast<const void*>(first_addr_type->first) << std::endl;
 
     if( first_addr_type == end )
     {
@@ -496,9 +491,6 @@ const RsType* MemoryType::getTypeAt(size_t ofs, size_t size) const
       //     In particular with multi-dimensional arrays, the returned
       //     array would not always be the top level
       res = first_type->getSubtypeRecursive( ofs, size, true /* stop-on-array */ );
-
-      //~ std::cerr << "   res = " << static_cast<const void*>(res)
-                //~ << "   " << typeid(*first_type).name() << std::endl;
     }
 
     return res;
@@ -620,10 +612,10 @@ void MemoryType::print(std::ostream& os) const
 {
     os << startAddress
        << " Size " << std::dec << getSize()
-       <<  "\t" << getInitString() << "\tAllocated here: " << allocPos
+       <<  "\t" << getInitString() << "\tAllocated here: " << SourcePosition(allocPos)
        << std::endl;
 
-    rtedRTS(this)->getPointerManager()->printPointersToThisChunk(os, *this);
+    rtedRTS(this).getPointerManager().printPointersToThisChunk(os, *this);
 
     if (typedata.size() > 0)
     {
@@ -736,18 +728,18 @@ bool MemoryManager::existOverlappingMem(Location addr, size_t size, long blocksi
 }
 
 
-MemoryType* MemoryManager::allocateMemory(Location adrObj, size_t szObj, MemoryType::AllocKind kind, long blocksize, const SourcePosition& pos)
+MemoryType* MemoryManager::allocateMemory(Location adrObj, size_t szObj, MemoryType::AllocKind kind, long blocksize, const SourceInfo& pos)
 {
     if (szObj == 0)
     {
-        RuntimeSystem::instance()->violationHandler(RuntimeViolation::EMPTY_ALLOCATION,"Tried to call malloc/new with size 0\n");
+        RuntimeSystem::instance().violationHandler(RuntimeViolation::EMPTY_ALLOCATION,"Tried to call malloc/new with size 0\n");
         return NULL;
     }
 
     if (existOverlappingMem(adrObj, szObj, blocksize))
     {
         // the start address of new chunk lies in already allocated area
-        RuntimeSystem::instance()->violationHandler(RuntimeViolation::DOUBLE_ALLOCATION);
+        RuntimeSystem::instance().violationHandler(RuntimeViolation::DOUBLE_ALLOCATION);
         return NULL;
     }
 
@@ -756,7 +748,6 @@ MemoryType* MemoryManager::allocateMemory(Location adrObj, size_t szObj, MemoryT
     MemoryType&               res = mem.insert(v).first->second;
 
     memtypecache.store(res);
-
     return &res;
 }
 
@@ -814,9 +805,9 @@ alloc_free_mismatch(MemoryType& m, AllocKind howAlloced, AllocKind howFreed)
 {
   std::stringstream desc;
 
-  if (howAlloced & (akStack | akGlobal))
+  if (howAlloced & akNamedMemory)
   {
-    desc << allocDisplayName(static_cast<AllocKind>(howAlloced & (akStack | akGlobal)))
+    desc << allocDisplayName(static_cast<AllocKind>(howAlloced & (akNamedMemory)))
          << " memory was explicitly freed (0x" << m << ") with "
          << freeDisplayName(howFreed)
          << std::endl;
@@ -840,28 +831,28 @@ void checkDeallocationAddress(MemoryType* m, MemoryType::Location addr, MemoryTy
     // free on unknown address
     if (m == NULL)
     {
-        RuntimeSystem*    rs = RuntimeSystem::instance();
+        RuntimeSystem&    rs = RuntimeSystem::instance();
         std::stringstream desc;
 
         desc << freeDisplayName(freekind);
         desc << " was called with unknown address " << addr <<std::endl;
         desc << " Allocated Memory Regions:" << std::endl;
         // MemoryManager::print(desc);
-        rs->violationHandler(RuntimeViolation::INVALID_FREE, desc.str());
+        rs.violationHandler(RuntimeViolation::INVALID_FREE, desc.str());
         return;
     }
 
     // free inside an allocated memory block
     if (m->beginAddress() != addr)
     {
-        RuntimeSystem*    rs = RuntimeSystem::instance();
+        RuntimeSystem&    rs = RuntimeSystem::instance();
         std::stringstream desc;
 
         desc << freeDisplayName(freekind);
         desc << " was called with an address inside of an allocated block (Address:" << addr <<")" <<std::endl;
         desc << "Allocated Block: " << *m <<std::endl;
 
-        rs->violationHandler(RuntimeViolation::INVALID_FREE, desc.str());
+        rs.violationHandler(RuntimeViolation::INVALID_FREE, desc.str());
         return;
     }
 }
@@ -875,22 +866,34 @@ void MemoryManager::freeMemory(MemoryType* m, MemoryType::AllocKind freekind)
     //   e.g., upc_free subsumes all upc allocations
     // (1) same method used to allocate and free
     // (2) no free of global memory
-    if ( (allockind & (freekind | akGlobal | akStack)) != freekind )
+    if ( (allockind & (freekind | akNamedMemory)) != freekind )
     {
-      RuntimeSystem* rs = RuntimeSystem::instance();
+      RuntimeSystem& rs = RuntimeSystem::instance();
       std::string    msg = alloc_free_mismatch(*m, allockind, freekind);
 
-      rs->violationHandler(RuntimeViolation::INVALID_FREE, msg);
+      rs.violationHandler(RuntimeViolation::INVALID_FREE, msg);
       return;
     }
 
-    PointerManager* pm = rtedRTS(this)->getPointerManager();
+    PointerManager& pm = rtedRTS(this).getPointerManager();
 
-    pm->deletePointerInRegion( *m );
-    pm->invalidatePointerToRegion( *m );
+    pm.deletePointerInRegion( *m );
+    pm.invalidatePointerToRegion( *m );
+
+    // remove entry from cache
+    memtypecache.clear(*m);
 
     // successful free, erase allocation info from map
     mem.erase(m->beginAddress());
+
+    if ( diagnostics::message(diagnostics::memory) )
+    {
+      std::stringstream msg;
+
+      msg << "++ deallocate: " << *m << std::endl;
+
+      RuntimeSystem::instance().printMessage( msg.str() );
+    }
 }
 
 
@@ -899,7 +902,6 @@ void MemoryManager::freeHeapMemory(Location addr, MemoryType::AllocKind freekind
     MemoryType* mt = findContainingMem(addr, 1);
 
     checkDeallocationAddress(mt, addr, freekind);
-    memtypecache.clear(*mt);
     freeMemory( mt, freekind );
 }
 
@@ -908,10 +910,8 @@ void MemoryManager::freeStackMemory(Location addr)
     MemoryType* mt = findContainingMem(addr, 1);
 
     checkDeallocationAddress(mt, addr, akStack);
-    memtypecache.clear(*mt);
     freeMemory( mt, mt->howCreated() );
 }
-
 
 template <class MemManager>
 static
@@ -924,7 +924,7 @@ checkLocation(MemManager& mgr, Address addr, size_t size, RuntimeViolation::Type
 
   if (!res)
   {
-      RuntimeSystem*    rs = RuntimeSystem::instance();
+      RuntimeSystem&    rs = RuntimeSystem::instance();
       std::stringstream desc;
       desc << "Trying to access non-allocated MemoryRegion "
            << "(Address " << addr << " of size " << std::dec << size << ")"
@@ -935,7 +935,7 @@ checkLocation(MemManager& mgr, Address addr, size_t size, RuntimeViolation::Type
           desc << "Did you try to access this region:" << std::endl << *possMatch << std::endl;
       }
 
-      rs->violationHandler(vioType, desc.str());
+      rs.violationHandler(vioType, desc.str());
   }
 
   return res;
@@ -954,7 +954,7 @@ void MemoryManager::checkRead(Location addr, size_t size) const
 
     if(! mt->isInitialized(addr, size) )
     {
-      RuntimeSystem * rs = RuntimeSystem::instance();
+      RuntimeSystem& rs = RuntimeSystem::instance();
 
       std::stringstream desc;
       desc << "Trying to read from uninitialized MemoryRegion "
@@ -962,7 +962,7 @@ void MemoryManager::checkRead(Location addr, size_t size) const
            << " of size " << std::dec << size << ")"
            << std::endl;
 
-      rs->violationHandler(RuntimeViolation::INVALID_READ, desc.str());
+      rs.violationHandler(RuntimeViolation::INVALID_READ, desc.str());
     }
 }
 
@@ -974,7 +974,7 @@ MemoryManager::checkWrite(Location addr, size_t size, const RsType* t)
       std::stringstream msg;
 
       msg << "   ++ checkWrite: " << addr << " size: " << size;
-      RuntimeSystem::instance()->printMessage(msg.str());
+      RuntimeSystem::instance().printMessage(msg.str());
     }
 
     bool           statuschange = false;
@@ -989,11 +989,11 @@ MemoryManager::checkWrite(Location addr, size_t size, const RsType* t)
     {
       if ( diagnostics::message(diagnostics::memory) )
       {
-        RuntimeSystem*    rs = RuntimeSystem::instance();
+        RuntimeSystem&    rs = RuntimeSystem::instance();
         std::stringstream msg;
 
         msg << "++ found memory addr: " << *mt << " for " << addr << " with size " << ToString(size);
-        rs->printMessage(msg.str());
+        rs.printMessage(msg.str());
       }
 
       statuschange = mt->registerMemType(addr, ofs, t);
@@ -1003,7 +1003,7 @@ MemoryManager::checkWrite(Location addr, size_t size, const RsType* t)
 
     if ( diagnostics::message(diagnostics::memory) )
     {
-      RuntimeSystem::instance()->printMessage("   ++ checkWrite done.");
+      RuntimeSystem::instance().printMessage("   ++ checkWrite done.");
     }
 
     return std::make_pair(mt, initmod || statuschange);
@@ -1097,12 +1097,12 @@ MemoryManager::checkIfSameChunk(Location addr1, Location addr2, size_t typeSize,
     if (!skiperr)
     {
       assert(mem1 && mem2 && mem1 != mem2);
-      RuntimeSystem*       rs = RuntimeSystem::instance();
+      RuntimeSystem&       rs = RuntimeSystem::instance();
       std::stringstream    ss;
 
       ss << "Pointer changed allocation block from " << addr1 << " to " << addr2 << std::endl;
 
-      rs->violationHandler( violation, ss.str() );
+      rs.violationHandler( violation, ss.str() );
     }
 
     return false;
@@ -1245,7 +1245,7 @@ void MemoryManager::failNotSameChunk( const RsType& type1,
                                       RuntimeViolation::Type violation
                                     ) const
 {
-    RuntimeSystem *   rs = RuntimeSystem::instance();
+    RuntimeSystem&    rs = RuntimeSystem::instance();
     std::stringstream ss;
 
     ss << "A pointer changed the memory area (subarray or variable) which it points to (may be an error)"
@@ -1254,7 +1254,7 @@ void MemoryManager::failNotSameChunk( const RsType& type1,
        << "  addr1 = " << addr1 << "  type = " << type1 << std::endl
        << "  addr2 = " << addr2 << "  type = " << type2 << std::endl;
 
-    rs->violationHandler( violation, ss.str() );
+    rs.violationHandler( violation, ss.str() );
 }
 
 
@@ -1267,7 +1267,7 @@ void MemoryManager::checkForNonFreedMem() const
         desc << "Program terminated and the following allocations were not freed:" <<std::endl;
         print(desc);
 
-        RuntimeSystem::instance()->violationHandler(RuntimeViolation::MEMORY_LEAK, desc.str());
+        RuntimeSystem::instance().violationHandler(RuntimeViolation::MEMORY_LEAK, desc.str());
     }
 }
 
@@ -1287,6 +1287,12 @@ MemoryType* MemoryManager::getMemoryType(Location addr)
 const MemoryType* MemoryManager::getMemoryType(Location addr) const
 {
   return ::checkStartAddress( findPossibleMemMatch(addr), addr );
+}
+
+void MemoryManager::clearStatus()
+{
+  mem.clear();
+  memtypecache.clear();
 }
 
 

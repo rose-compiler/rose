@@ -1,4 +1,4 @@
-// This required the Java 1.7 support (default is Java 1.4), use option "-ecj:1.7".
+// This required the Java 1.5 to 1.7 support (default in ROSE is now Java 1.6)
 public class test2011_45<T>
    {
      private T t; // T stands for "Type"

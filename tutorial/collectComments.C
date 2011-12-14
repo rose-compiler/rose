@@ -52,7 +52,8 @@ int main( int argc, char * argv[] )
   // Traverse all header files and source file (the -rose:collectAllCommentsAndDirectives 
   // commandline option controls if comments and CPP directives are separately extracted 
   // from header files).
-     exampleTraversal.traverse(project,preorder);
+  // exampleTraversal.traverse(project,preorder);
+     exampleTraversal.traverseInputFiles(project,preorder);
 
      return 0;
    }

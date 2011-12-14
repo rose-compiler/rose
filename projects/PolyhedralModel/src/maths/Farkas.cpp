@@ -32,7 +32,7 @@ Polyhedron Farkas(const biLinearExpression & phi, const Polyhedron & positivity_
 	Polyhedron res(phi.getDimA() + size + 1);
 	
 	for (size_t i = 0; i <= it->space_dimension(); i++) {
-		LinearExpression le;
+		LinearExpression_ppl le;
 		for (size_t j = 0; j < phi.getDimA() + size + 1; i++)
 			le += ident.get(i, j) * VariableID(j);
 		le += ident.getB(i);
@@ -85,7 +85,7 @@ void FarkasWS(const biLinearExpression & phi, const Polyhedron & positivity_doma
 	}
 	
 	for (size_t i = 0; i < phi.getDimB(); i++) {
-		LinearExpression le;
+		LinearExpression_ppl le;
 		for (size_t j = 0; j < phi.getDimA() + size + 1; j++)
 			le += ident.get(j, i) * VariableID(j);
 		le += ident.getB(i);
@@ -94,7 +94,7 @@ void FarkasWS(const biLinearExpression & phi, const Polyhedron & positivity_doma
 	
 	(*strongly) = new Polyhedron(**weakly);
 	
-	LinearExpression le;
+	LinearExpression_ppl le;
 	for (size_t j = 0; j < phi.getDimA() + size + 1; j++)
 		le += ident.getA(j) * VariableID(j);
 	le += ident.getConst();

@@ -6,7 +6,9 @@ void bar(int &w)
 
 int main(int ,char **)
 {
-// Partial redundancy elimination: cachevar__1 is a cache of (b % 10)
+// Partial redundancy elimination: cachevar__2 is a cache of (b % 10)
+  int cachevar__2;
+// Partial redundancy elimination: cachevar__1 is a cache of -999
   int cachevar__1;
   int z = 3;
   int a = ((5 + z) + 9);
@@ -16,10 +18,11 @@ int main(int ,char **)
     b -= 5;
     --b;
   }
+  cachevar__1 = -999;
   while(true){
     --b;
     LLL:
-    if (b <= -999) 
+    if (b <= cachevar__1) 
       return 0;
     else {
     }
@@ -31,10 +34,10 @@ int main(int ,char **)
   for (b = 0; b < 10; ++b) {
     ++z;
   }
-  for (int z2 = (7 + (z * 5)), cachevar__1 = (b % 10); (z2 + 9) < cachevar__1; ++( *((&z2 + 5) - 5))) {
+  for (int z2 = (7 + (z * 5)), cachevar__2 = (b % 10); (z2 + 9) < cachevar__2; ++( *((&z2 + 5) - 5))) {
     (a += 7) += 7;
     ++(++a);
   }
-  b = -999;
+  b = cachevar__1;
   goto LLL;
 }

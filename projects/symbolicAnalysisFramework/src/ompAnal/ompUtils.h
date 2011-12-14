@@ -12,25 +12,25 @@
 
 class ompUtils
 {
-	public:
-	static const int unknown_type =      -1;
-	static const int omp_parallel =      0;
-	static const int omp_for =           1;
-	static const int omp_parallel_for =	 2;
-	static const int omp_sections =      3;
-	static const int omp_section =       4;
-	static const int omp_single =        5;
-	static const int omp_master =	       6;
-	static const int omp_critical =      7;
-	static const int omp_barrier =       8;
-	static const int omp_atomic =        9;
-	static const int omp_flush =         10;
-	static const int omp_threadprivate = 11;
+        public:
+        static const int unknown_type =      -1;
+        static const int omp_parallel =      0;
+        static const int omp_for =           1;
+        static const int omp_parallel_for =      2;
+        static const int omp_sections =      3;
+        static const int omp_section =       4;
+        static const int omp_single =        5;
+        static const int omp_master =          6;
+        static const int omp_critical =      7;
+        static const int omp_barrier =       8;
+        static const int omp_atomic =        9;
+        static const int omp_flush =         10;
+        static const int omp_threadprivate = 11;
 
-	static bool match_OMP_String(std::string directive, std::string targetStr);
+        static bool match_OMP_String(std::string directive, std::string targetStr);
 
-	static int getOmpType(std::string directive);
-	static std::string ompTypeStr(int ompType);
+        static int getOmpType(std::string directive);
+        static std::string ompTypeStr(int ompType);
 };
 
 /*******************************
@@ -39,8 +39,8 @@ class ompUtils
 
 class reductionOperation
 {
-	public:
-	static const int unknown_type =          -1;
+        public:
+        static const int unknown_type =          -1;
    static const int reduction_plus =        0;
    static const int reduction_multiply =    1;
    static const int reduction_minus =       2;
@@ -50,54 +50,54 @@ class reductionOperation
    static const int reduction_boolean_AND = 6;
    static const int reduction_boolean_OR =  7;
 
-	protected:
-	int op;
+        protected:
+        int op;
 
-	public:
-	reductionOperation();
+        public:
+        reductionOperation();
 
-	reductionOperation(const reductionOperation &that);
+        reductionOperation(const reductionOperation &that);
 
-	reductionOperation(std::string opStr);
-	
-	void init(std::string opStr);
+        reductionOperation(std::string opStr);
+        
+        void init(std::string opStr);
 
-	std::string str();
+        std::string str();
 };
 
 class ompReduction
 {
-	reductionOperation operation;
-	list<std::string> variables;
-	public:
+        reductionOperation operation;
+        list<std::string> variables;
+        public:
 
-	ompReduction(const ompReduction& that);
+        ompReduction(const ompReduction& that);
 
-	// numRedVars - the number of reduction variables in this match (needed to get around a boost regex bug)
-	ompReduction(boost::smatch what, int numRedVars);
+        // numRedVars - the number of reduction variables in this match (needed to get around a boost regex bug)
+        ompReduction(boost::smatch what, int numRedVars);
 
-	std::string str();
+        std::string str();
 
-	int numVars();
+        int numVars();
 
-	reductionOperation& getOp();
+        reductionOperation& getOp();
 };
 
 
 class ompReductionsSet
 {
-	list<ompReduction> reductions;
+        list<ompReduction> reductions;
 
-	public:
-	ompReductionsSet();
-		
-	ompReductionsSet(const ompReductionsSet& that);
+        public:
+        ompReductionsSet();
+                
+        ompReductionsSet(const ompReductionsSet& that);
 
-	ompReductionsSet(std::string directive);
+        ompReductionsSet(std::string directive);
 
-	int numReductions();
+        int numReductions();
 
-	std::string str();
+        std::string str();
 };
 
 /***********************************
@@ -106,41 +106,41 @@ class ompReductionsSet
 
 class ompDataClause
 {
-	std::string clauseType;
-	list<std::string> variables;
-	public:
+        std::string clauseType;
+        list<std::string> variables;
+        public:
 
-	ompDataClause();
-	
-	ompDataClause(const ompDataClause &that);
+        ompDataClause();
+        
+        ompDataClause(const ompDataClause &that);
 
-	ompDataClause(std::string directive, std::string clauseType);
+        ompDataClause(std::string directive, std::string clauseType);
 
-	int numVars() const;
-	
-	const list<std::string>& getVars() const;
-	
-	void addVar(std::string var);
+        int numVars() const;
+        
+        const list<std::string>& getVars() const;
+        
+        void addVar(std::string var);
 
-	std::string str() const;
+        std::string str() const;
 };
 
 class defaultVarSharing
 {
-	public:
-	static const int var_sharing_class_unknown =   0;
-	static const int var_sharing_class_none =   1;
-	static const int var_sharing_class_shared = 2;
+        public:
+        static const int var_sharing_class_unknown =   0;
+        static const int var_sharing_class_none =   1;
+        static const int var_sharing_class_shared = 2;
 
-	protected:
-	int type;
+        protected:
+        int type;
 
-	public:
-	defaultVarSharing(const defaultVarSharing& that);
+        public:
+        defaultVarSharing(const defaultVarSharing& that);
 
-	defaultVarSharing(std::string directive);
-	
-	std::string str();
+        defaultVarSharing(std::string directive);
+        
+        std::string str();
 };
 
 /********************************
@@ -150,26 +150,26 @@ class ompParallelFor;
 
 class ompParallel
 {
-	public:
-	ompReductionsSet  reductions;
-	ompDataClause     privateVars;
-	ompDataClause     firstPrivateVars;
-	ompDataClause     lastPrivateVars;
-	ompDataClause     sharedVars;
-	ompDataClause     copyinVars;
-	defaultVarSharing varSharingClass;
+        public:
+        ompReductionsSet  reductions;
+        ompDataClause     privateVars;
+        ompDataClause     firstPrivateVars;
+        ompDataClause     lastPrivateVars;
+        ompDataClause     sharedVars;
+        ompDataClause     copyinVars;
+        defaultVarSharing varSharingClass;
 
-	ompParallel(std::string directive, bool verbose=false);
-	
-	ompParallel(ompParallelFor opf);
+        ompParallel(std::string directive, bool verbose=false);
+        
+        ompParallel(ompParallelFor opf);
 
-	ompParallel(ompReductionsSet oldReductions, ompDataClause oldPrivateVars,
-	            ompDataClause oldFirstPrivateVars, ompDataClause oldLastPrivateVars,
-	            ompDataClause oldSharedVars, ompDataClause oldCopyinVars,
-	            defaultVarSharing oldVarSharingClass);
+        ompParallel(ompReductionsSet oldReductions, ompDataClause oldPrivateVars,
+                    ompDataClause oldFirstPrivateVars, ompDataClause oldLastPrivateVars,
+                    ompDataClause oldSharedVars, ompDataClause oldCopyinVars,
+                    defaultVarSharing oldVarSharingClass);
 
-	std::string str();
-	std::string str_nopragma();
+        std::string str();
+        std::string str_nopragma();
 };
 
 /***************************
@@ -177,28 +177,28 @@ class ompParallel
  ***************************/
 class ompFor
 {
-	bool ordered;
-	bool nowait;
+        bool ordered;
+        bool nowait;
 
-	public:
-	ompReductionsSet reductions;
-	ompDataClause privateVars;
-	ompDataClause firstPrivateVars;
-	ompDataClause lastPrivateVars;
-	
-	ompFor(std::string directive, bool verbose = false);
+        public:
+        ompReductionsSet reductions;
+        ompDataClause privateVars;
+        ompDataClause firstPrivateVars;
+        ompDataClause lastPrivateVars;
+        
+        ompFor(std::string directive, bool verbose = false);
 
-	ompFor(ompReductionsSet oldReductions, ompDataClause oldPrivateVars,
-	       ompDataClause oldFirstPrivateVars, ompDataClause oldLastPrivateVars,
-	       bool oldOrdered, bool oldNoWait);
-	
-	ompFor(bool oldOrdered, bool oldNoWait);
-	
-	bool getOrdered();
-	bool getNowait();
+        ompFor(ompReductionsSet oldReductions, ompDataClause oldPrivateVars,
+               ompDataClause oldFirstPrivateVars, ompDataClause oldLastPrivateVars,
+               bool oldOrdered, bool oldNoWait);
+        
+        ompFor(bool oldOrdered, bool oldNoWait);
+        
+        bool getOrdered();
+        bool getNowait();
 
-	std::string str();
-	std::string str_nopragma();
+        std::string str();
+        std::string str_nopragma();
 };
 
 /************************************
@@ -207,32 +207,32 @@ class ompFor
 
 class ompParallelFor
 {
-	bool ordered;
-		
-	public:
-	
-	ompReductionsSet reductions;
-	ompDataClause    privateVars;
-	ompDataClause    firstPrivateVars;
-	ompDataClause    lastPrivateVars;
- 	ompDataClause    sharedVars;
-	ompDataClause    copyinVars;
+        bool ordered;
+                
+        public:
+        
+        ompReductionsSet reductions;
+        ompDataClause    privateVars;
+        ompDataClause    firstPrivateVars;
+        ompDataClause    lastPrivateVars;
+        ompDataClause    sharedVars;
+        ompDataClause    copyinVars;
 
-	defaultVarSharing varSharingClass;
+        defaultVarSharing varSharingClass;
 
-	ompParallelFor(std::string directive, bool verbose = false);
+        ompParallelFor(std::string directive, bool verbose = false);
 
-	ompParallelFor(ompReductionsSet oldReductions, ompDataClause oldPrivateVars,
-	               ompDataClause oldFirstPrivateVars, ompDataClause oldLastPrivateVars,
-	               ompDataClause oldSharedVars, ompDataClause oldCopyinVars,
-	               bool oldOrdered, defaultVarSharing oldVarSharingClass);
+        ompParallelFor(ompReductionsSet oldReductions, ompDataClause oldPrivateVars,
+                       ompDataClause oldFirstPrivateVars, ompDataClause oldLastPrivateVars,
+                       ompDataClause oldSharedVars, ompDataClause oldCopyinVars,
+                       bool oldOrdered, defaultVarSharing oldVarSharingClass);
 
-	bool getOrdered();
-	
-	std::string str();
-	std::string str_nopragma();
-	
-	friend class ompParallel;
+        bool getOrdered();
+        
+        std::string str();
+        std::string str_nopragma();
+        
+        friend class ompParallel;
 };
 
 /******************************
@@ -240,25 +240,25 @@ class ompParallelFor
  ******************************/
 class ompSingle
 {
-	bool nowait;
-	
-	public:
-	ompDataClause privateVars;
-	ompDataClause firstPrivateVars;
-	ompDataClause copyPrivateVars;
-	
+        bool nowait;
+        
+        public:
+        ompDataClause privateVars;
+        ompDataClause firstPrivateVars;
+        ompDataClause copyPrivateVars;
+        
 
-	ompSingle(std::string directive, bool verbose = false);
-	
-	ompSingle(ompDataClause oldPrivateVars, ompDataClause oldFirstPrivateVars, 
-	          ompDataClause oldCopyPrivateVars, bool oldNoWait);
+        ompSingle(std::string directive, bool verbose = false);
+        
+        ompSingle(ompDataClause oldPrivateVars, ompDataClause oldFirstPrivateVars, 
+                  ompDataClause oldCopyPrivateVars, bool oldNoWait);
 
-	ompSingle(bool oldNoWait);
-	
+        ompSingle(bool oldNoWait);
+        
 
-	bool getNowait();
-	std::string str();
-	std::string str_nopragma();
+        bool getNowait();
+        std::string str();
+        std::string str_nopragma();
 };
 
 /*************************************
@@ -266,17 +266,17 @@ class ompSingle
  *************************************/
 class ompThreadprivate
 {
-	public:
-	ompDataClause     vars;
+        public:
+        ompDataClause     vars;
 
-	ompThreadprivate(std::string directive, bool verbose=false);
-	
-	ompThreadprivate(ompThreadprivate& otp);
+        ompThreadprivate(std::string directive, bool verbose=false);
+        
+        ompThreadprivate(ompThreadprivate& otp);
 
-	ompThreadprivate(ompDataClause vars);
+        ompThreadprivate(ompDataClause vars);
 
-	std::string str();
-	std::string str_nopragma();
+        std::string str();
+        std::string str_nopragma();
 };
 
 
@@ -297,15 +297,15 @@ void annotateOmpFor(SgPragmaDeclaration* pragma, SgForStatement* ompFor);
 
 class OMPcfgRWTransaction : public cfgRWTransaction
 {
-	public:
-	void insertBefore(DataflowNode cfgNode, SgExpression* newNode);
-	void insertBefore(SgNode* n, SgExpression* newNode);
-	
-	void insertAfter(DataflowNode cfgNode, SgExpression* newNode);
-	void insertAfter(SgNode* n, SgExpression* newNode);
-	
-	// insert an SgNode along the given CFGEdge
-	void insertAlong(DataflowEdge e, SgExpression* newNode);
+        public:
+        void insertBefore(DataflowNode cfgNode, SgExpression* newNode);
+        void insertBefore(SgNode* n, SgExpression* newNode);
+        
+        void insertAfter(DataflowNode cfgNode, SgExpression* newNode);
+        void insertAfter(SgNode* n, SgExpression* newNode);
+        
+        // insert an SgNode along the given CFGEdge
+        void insertAlong(DataflowEdge e, SgExpression* newNode);
 };
 
 

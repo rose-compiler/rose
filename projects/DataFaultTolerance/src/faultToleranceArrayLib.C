@@ -11,7 +11,7 @@
 #include <vector>
 #include <sstream>
 
-#include "faultToleranceArrayLibUtility.C"
+#include "faultToleranceArrayLibUtility.h"
 
 using namespace std;
 
@@ -115,7 +115,7 @@ void validateArray(string arrayName, int *arrayPtr, int LB1, int UB1, int LB2,
 
 void clearHashTable()
 {
-	hashTable.clear();
+	clearAllHashEntries();
 }
 
 //int main()

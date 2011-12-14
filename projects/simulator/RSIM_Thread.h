@@ -529,7 +529,7 @@ public:
 public: //FIXME
     template<class guest_dirent_t> int getdents_syscall(int fd, uint32_t dirent_va, size_t sz);
     
-    RSIM_SemanticPolicy policy;
+    mutable RSIM_SemanticPolicy policy;         /* Mutable because some policies aren't careful about using const "this" ptrs. */
     RSIM_Semantics semantics;
 
 

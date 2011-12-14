@@ -21,44 +21,44 @@ extern int analysisDebugLevel;
 
 class Analysis
 {
-	public:
-	Analysis() {}
+        public:
+        Analysis() {}
 };
 
 class InterProceduralAnalysis;
 
 class IntraProceduralAnalysis : virtual public Analysis
 {
-	protected:
-	InterProceduralAnalysis* interAnalysis;
-	
-	public:
-	void setInterAnalysis(InterProceduralAnalysis* interAnalysis)
-	{ this->interAnalysis = interAnalysis; }
-	
-	// runs the intra-procedural analysis on the given function, returns true if 
-	// the function's NodeState gets modified as a result and false otherwise
-	// state - the function's NodeState
-	virtual bool runAnalysis(const Function& func, NodeState* state)=0;
-	
-	virtual ~IntraProceduralAnalysis();
+        protected:
+        InterProceduralAnalysis* interAnalysis;
+        
+        public:
+        void setInterAnalysis(InterProceduralAnalysis* interAnalysis)
+        { this->interAnalysis = interAnalysis; }
+        
+        // runs the intra-procedural analysis on the given function, returns true if 
+        // the function's NodeState gets modified as a result and false otherwise
+        // state - the function's NodeState
+        virtual bool runAnalysis(const Function& func, NodeState* state)=0;
+        
+        virtual ~IntraProceduralAnalysis();
 };
 
 class InterProceduralAnalysis : virtual public Analysis
 {
-	protected:
-	IntraProceduralAnalysis* intraAnalysis;
-	
-	InterProceduralAnalysis(IntraProceduralAnalysis* intraAnalysis)
-	{
-		this->intraAnalysis = intraAnalysis; 
-		// inform the intra-procedural analysis that this inter-procedural analysis will be running it
-		intraAnalysis->setInterAnalysis(this);
-	}
-	
-	virtual void runAnalysis()=0;
-	
-	virtual ~InterProceduralAnalysis();
+        protected:
+        IntraProceduralAnalysis* intraAnalysis;
+        
+        InterProceduralAnalysis(IntraProceduralAnalysis* intraAnalysis)
+        {
+                this->intraAnalysis = intraAnalysis; 
+                // inform the intra-procedural analysis that this inter-procedural analysis will be running it
+                intraAnalysis->setInterAnalysis(this);
+        }
+        
+        virtual void runAnalysis()=0;
+        
+        virtual ~InterProceduralAnalysis();
 };
 
 /********************************
@@ -67,22 +67,22 @@ class InterProceduralAnalysis : virtual public Analysis
 
 class UnstructuredPassIntraAnalysis : virtual public IntraProceduralAnalysis
 {
-	public:
-	// runs the intra-procedural analysis on the given function, returns true if 
-	// the function's NodeState gets modified as a result and false otherwise
-	// state - the function's NodeState
-	bool runAnalysis(const Function& func, NodeState* state);
-	
-	virtual void visit(const Function& func, const DataflowNode& n, NodeState& state)=0;
+        public:
+        // runs the intra-procedural analysis on the given function, returns true if 
+        // the function's NodeState gets modified as a result and false otherwise
+        // state - the function's NodeState
+        bool runAnalysis(const Function& func, NodeState* state);
+        
+        virtual void visit(const Function& func, const DataflowNode& n, NodeState& state)=0;
 };
 
 class UnstructuredPassInterAnalysis : virtual public InterProceduralAnalysis
 {
-	public:
-	UnstructuredPassInterAnalysis(IntraProceduralAnalysis& intraAnalysis) : InterProceduralAnalysis(&intraAnalysis)
-	{ }
-		
-	void runAnalysis();
+        public:
+        UnstructuredPassInterAnalysis(IntraProceduralAnalysis& intraAnalysis) : InterProceduralAnalysis(&intraAnalysis)
+        { }
+                
+        void runAnalysis();
 };
 
 #endif

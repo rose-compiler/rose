@@ -159,22 +159,66 @@ void rted_ReallocateMemory( void* ptr, size_t size, rted_SourceInfo si );
 // handle scopes (so we can detect when locals go out of scope, free up the
 // memory and possibly complain if the local was the last var pointing to some
 // memory)
+
+/// \brief notifies the runtime system when a scope (function, block, scope-statement)
+///        is entered. All subsequent stack allocations are linked to the
+///        top of the scope stack.
 void rted_EnterScope(const char* scope_name);
+
+/// \brief   notifies the runtime system when a number of scopes is exited
+///          (end of scope, return, continue, break statements)
+/// \param   scopecount number of scopes exited (1 for end of scope,
+///          nesting level for other statements.
+/// \details frees shadow memory associated with stack memory. No calls to
+///          rted_ExitScope are needed in C++ code (see class ScopeGuard,
+///          which autoatically calls rted_ExitScope on scope exit)
 void rted_ExitScope(size_t scopecount, rted_SourceInfo si);
+
+/// \brief   notifies the runtime system about a transient pointer (a return
+///          value of pointer type).
+/// \details A transient pointer is a pointer that is returned from a function.
+///          Since the memory location, where the pointer is stored is not known
+///          at the return statement, such cases are difficult to handle.
+///          A solution should cover:
+///          C   1: pointers to a stack location going out of scope
+///              2: return values that are not assigned
+///              3: a returned pointer is the only pointer to a heap location
+///          C++ 4: exceptions
+///              5: stack/heap allocations that are triggered from user defined
+///                 destructor calls.
+/// \note    this implementation covers these cases except for pointers
+///          returned through exceptions
+void rted_CxxTransientPtr(rted_Address points_to, rted_SourceInfo si);
+
+/// \brief similar to rted_CxxTransientPointer, but also calls rted_ExitScope to
+///        remove variables from the shadow memory.
+void rted_CTransientPtr(size_t scopecount, rted_Address points_to, rted_SourceInfo si);
+
+/// \brief   checks that the memory pointed by (*p) is still allocated
+/// \details used to invalidate transient pointers that point to memory
+///          that was explicitly or implicitly deallocated upon function exit.
+void rted_CheckTransientPtr(void** p);
+
+/// \brief   check whether the address location
+void rted_CheckLocation(rted_Address location);
+
+/// \brief   check whether the memory chunk associated with location is reachable
+void rted_CheckForMemoryLeak(rted_Address location);
+
+/// \brief reports a violation in the running code
+/// \param msg free form text message
+void rted_ReportViolation(const char* msg, rted_SourceInfo si);
 
 /***************************** SCOPE *************************************/
 
 
+/***************************** INIT AND EXIT *************************************/
 void rted_Close(const char* from);
 
 // function used to indicate error
 // \pp is this function used / defined?
 // void RuntimeSystem_callExit(const char* filename, const char* line,
 //    const char* reason, const char* stmtStr);
-
-extern int RuntimeSystem_original_main(int argc, char**argv, char**envp);
-/***************************** INIT AND EXIT *************************************/
-
 
 
 /***************************** VARIABLES *************************************/
@@ -282,6 +326,23 @@ void rted_RegisterTypeCall( const char*     nameC,
 
 #ifdef __cplusplus
 } // extern "C"
+
+/// \brief   wraps enterScope/exitScope for C++ code
+/// \details invokes enterScope on construction, exitScope on destruction
+struct rted_ScopeGuard
+{
+  rted_SourceInfo location;
+
+  rted_ScopeGuard(const char* scope_name, rted_SourceInfo endOfScope)
+  : location(endOfScope)
+  {
+    rted_EnterScope(scope_name);
+  }
+
+  ~rted_ScopeGuard() { rted_ExitScope(1, location); }
+};
+
+
 #endif
 
 #endif

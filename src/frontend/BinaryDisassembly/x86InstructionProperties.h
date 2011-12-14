@@ -10,6 +10,8 @@ bool x86InstructionIsConditionalFlagControlTransfer(SgAsmx86Instruction* inst);
 bool x86InstructionIsConditionalFlagDataTransfer(SgAsmx86Instruction* inst);
 bool x86InstructionIsConditionalControlTransfer(SgAsmx86Instruction* inst);
 bool x86InstructionIsConditionalDataTransfer(SgAsmx86Instruction* inst);
+bool x86InstructionIsPrivileged(SgAsmx86Instruction*);
+bool x86InstructionIsFloatingPoint(SgAsmx86Instruction*);
 
 bool x86InstructionIsConditionalFlagBitAndByte(SgAsmx86Instruction* inst);
 

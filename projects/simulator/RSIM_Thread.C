@@ -47,7 +47,8 @@ RSIM_Thread::id()
     sprintf(buf1, "%1.3f", elapsed);
 
     char buf2[64];
-    int n = snprintf(buf2, sizeof(buf2), "0x%08"PRIx64"[%zu]: ", policy.readIP().known_value(), policy.get_ninsns());
+    int n = snprintf(buf2, sizeof(buf2), "0x%08"PRIx64"[%zu]: ",
+                     policy.readRegister<32>(policy.reg_eip).known_value(), policy.get_ninsns());
     assert(n>=0 && (size_t)n<sizeof(buf2)-1);
     memset(buf2+n, ' ', sizeof(buf2)-n);
     buf2[std::max(n, 21)] = '\0';
@@ -69,7 +70,7 @@ RSIM_Thread::tracing(TracingFacility tf)
 SgAsmx86Instruction *
 RSIM_Thread::current_insn()
 {
-    rose_addr_t ip = policy.readIP().known_value();
+    rose_addr_t ip = policy.readRegister<32>(policy.reg_eip).known_value();
     SgAsmx86Instruction *insn = isSgAsmx86Instruction(get_process()->get_instruction(ip));
     ROSE_ASSERT(insn!=NULL); /*only happens if our disassembler is not an x86 disassembler!*/
     return insn;
@@ -167,7 +168,7 @@ RSIM_Thread::syscall_leavev(uint32_t *values, const char *format, va_list *app)
     if (mesg->get_file()) {
         /* System calls return an integer (negative error numbers, non-negative success) */
         ArgInfo info;
-        uint32_t retval = values ? values[0] : policy.readGPR(x86_gpr_ax).known_value();
+        uint32_t retval = values ? values[0] : policy.readRegister<32>(policy.reg_eax).known_value();
         syscall_arginfo(format[0], retval, &info, app);
 
         RTS_WRITE(process->rwlock()) {
@@ -228,13 +229,13 @@ uint32_t
 RSIM_Thread::syscall_arg(int idx)
 {
     switch (idx) {
-        case -1: return policy.readGPR(x86_gpr_ax).known_value();      /* syscall return value */
-        case 0: return policy.readGPR(x86_gpr_bx).known_value();
-        case 1: return policy.readGPR(x86_gpr_cx).known_value();
-        case 2: return policy.readGPR(x86_gpr_dx).known_value();
-        case 3: return policy.readGPR(x86_gpr_si).known_value();
-        case 4: return policy.readGPR(x86_gpr_di).known_value();
-        case 5: return policy.readGPR(x86_gpr_bp).known_value();
+        case -1: return policy.readRegister<32>(policy.reg_eax).known_value();      /* syscall return value */
+        case 0:  return policy.readRegister<32>(policy.reg_ebx).known_value();
+        case 1:  return policy.readRegister<32>(policy.reg_ecx).known_value();
+        case 2:  return policy.readRegister<32>(policy.reg_edx).known_value();
+        case 3:  return policy.readRegister<32>(policy.reg_esi).known_value();
+        case 4:  return policy.readRegister<32>(policy.reg_edi).known_value();
+        case 5:  return policy.readRegister<32>(policy.reg_ebp).known_value();
         default: assert(!"invalid argument number"); abort();
     }
 }
@@ -411,19 +412,19 @@ RSIM_Thread::signal_deliver(const RSIM_SignalHandling::siginfo_32 &_info)
             sighand.sigprocmask(SIG_SETMASK, &signal_mask, NULL);
 
             /* Clear flags per ABI for function entry. */
-            policy.writeFlag(x86_flag_df, policy.false_());
-            policy.writeFlag(x86_flag_tf, policy.false_());
+            policy.writeRegister(policy.reg_df, policy.false_());
+            policy.writeRegister(policy.reg_tf, policy.false_());
 
             /* Set up registers for signal handler */
-            policy.writeGPR(x86_gpr_ax, policy.number<32>(signo));
-            policy.writeGPR(x86_gpr_dx, policy.number<32>(0));
-            policy.writeGPR(x86_gpr_cx, policy.number<32>(0));
-            policy.writeSegreg(x86_segreg_ds, 0x2b);        /* see RSIM_SemanticPolicy::ctor() */
-            policy.writeSegreg(x86_segreg_es, 0x2b);        /* see RSIM_SemanticPolicy::ctor() */
-            policy.writeSegreg(x86_segreg_ss, 0x2b);        /* see RSIM_SemanticPolicy::ctor() */
-            policy.writeSegreg(x86_segreg_cs, 0x23);        /* see RSIM_SemanticPolicy::ctor() */
-            policy.writeGPR(x86_gpr_sp, policy.number<32>(frame_va));
-            policy.writeIP(policy.number<32>(sa.handler_va)); /* we're now executing in the signal handler... */
+            policy.writeRegister(policy.reg_eax, policy.number<32>(signo));
+            policy.writeRegister(policy.reg_edx, policy.number<32>(0));
+            policy.writeRegister(policy.reg_ecx, policy.number<32>(0));
+            policy.writeRegister(policy.reg_ds,  policy.number<16>(0x2b));        /* see RSIM_SemanticPolicy::ctor() */
+            policy.writeRegister(policy.reg_es,  policy.number<16>(0x2b));        /* see RSIM_SemanticPolicy::ctor() */
+            policy.writeRegister(policy.reg_ss,  policy.number<16>(0x2b));        /* see RSIM_SemanticPolicy::ctor() */
+            policy.writeRegister(policy.reg_cs,  policy.number<16>(0x23));        /* see RSIM_SemanticPolicy::ctor() */
+            policy.writeRegister(policy.reg_esp, policy.number<32>(frame_va));
+            policy.writeRegister(policy.reg_eip, policy.number<32>(sa.handler_va)); /* we're now in the signal handler... */
         }
     }
 
@@ -440,7 +441,7 @@ RSIM_Thread::sys_rt_sigreturn()
     /* Sighandler frame address is four less than the current SP because the return from sighandler popped the frame's
      * pretcode. Unlike the sigframe_32 stack frame, the rt_sigframe_32 stack frame's retcode does not pop the signal number
      * nor the other handler arguments, and why should it since we're about to restore the hardware context anyway. */
-    uint32_t sp = policy.readGPR(x86_gpr_sp).known_value();
+    uint32_t sp = policy.readRegister<32>(policy.reg_esp).known_value();
     uint32_t frame_va = sp - 4;
 
     RSIM_SignalHandling::rt_sigframe_32 frame;
@@ -480,7 +481,7 @@ RSIM_Thread::sys_sigreturn()
 
     /* Sighandler frame address is eight less than the current SP because the return from sighandler popped the frame's
      * pretcode, and the retcode popped the signo. */
-    uint32_t sp = policy.readGPR(x86_gpr_sp).known_value();
+    uint32_t sp = policy.readRegister<32>(policy.reg_esp).known_value();
     uint32_t frame_va = sp - 8; 
 
     RSIM_SignalHandling::sigframe_32 frame;
@@ -582,8 +583,8 @@ RSIM_Thread::report_stack_frames(RTS_Message *mesg, const std::string &title/*="
             mesg->multipart("stack", "%s", title.c_str());
         }
 
-        uint32_t bp = policy.readGPR(x86_gpr_bp).known_value();
-        uint32_t ip = policy.readIP().known_value();
+        uint32_t bp = policy.readRegister<32>(policy.reg_ebp).known_value();
+        uint32_t ip = policy.readRegister<32>(policy.reg_eip).known_value();
 
         for (int i=0; i<32; i++) {
             mesg->more("\n  #%d: bp=0x%08"PRIx32" ip=0x%08"PRIx32, i, bp, ip);
@@ -593,9 +594,9 @@ RSIM_Thread::report_stack_frames(RTS_Message *mesg, const std::string &title/*="
             } catch (const Disassembler::Exception&) {
                 /* IP is probably pointing to non-executable memory or a bad address. */
             }
-            SgAsmFunctionDeclaration *func = SageInterface::getEnclosingNode<SgAsmFunctionDeclaration>(insn);
+            SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(insn);
             const MemoryMap::MapElement *me = NULL;
-            if (func && !func->get_name().empty() && 0==(func->get_reason() & SgAsmFunctionDeclaration::FUNC_LEFTOVERS)) {
+            if (func && !func->get_name().empty() && 0==(func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS)) {
                 mesg->more(" in function %s", func->get_name().c_str());
             } else if ((me=process->get_memory()->find(ip)) && !me->get_name().empty()) {
                 mesg->more(" in memory region %s", me->get_name().c_str());
@@ -605,7 +606,7 @@ RSIM_Thread::report_stack_frames(RTS_Message *mesg, const std::string &title/*="
                 /* Presumably being called after a CALL but before EBP is saved on the stack.  In this case, the return address
                  * of the inner-most function should be at ss:[esp], and containing functions have set up their stack
                  * frames. */
-                uint32_t sp = policy.readGPR(x86_gpr_sp).known_value();
+                uint32_t sp = policy.readRegister<32>(policy.reg_esp).known_value();
                 if (4!=process->mem_read(&ip, sp, 4))
                     break;
                 bp_not_saved = false;
@@ -626,13 +627,13 @@ RSIM_Thread::report_stack_frames(RTS_Message *mesg, const std::string &title/*="
 void
 RSIM_Thread::syscall_return(const RSIM_SEMANTIC_VTYPE<32> &retval)
 {
-    policy.writeGPR(x86_gpr_ax, retval);
+    policy.writeRegister(policy.reg_eax, retval);
 }
 
 void
 RSIM_Thread::syscall_return(int retval)
 {
-    policy.writeGPR(x86_gpr_ax, policy.number<32>(retval));
+    policy.writeRegister(policy.reg_eax, policy.number<32>(retval));
 }
 
 /* Executed by a real thread to simulate a specimen's thread. */
@@ -649,13 +650,13 @@ RSIM_Thread::main()
         report_progress_maybe();
         try {
             /* Returned from signal handler? This code simulates the sigframe_32 or rt_sigframe_32 "retcode" */
-            if (policy.readIP().known_value()==SIGHANDLER_RETURN) {
+            if (policy.readRegister<32>(policy.reg_eip).known_value()==SIGHANDLER_RETURN) {
                 policy.pop();
-                policy.writeGPR(x86_gpr_ax, 119);
+                policy.writeRegister<32>(policy.reg_eax, 119);
                 sys_sigreturn();
                 continue;
-            } else if (policy.readIP().known_value()==SIGHANDLER_RT_RETURN) {
-                policy.writeGPR(x86_gpr_ax, 173);
+            } else if (policy.readRegister<32>(policy.reg_eip).known_value()==SIGHANDLER_RT_RETURN) {
+                policy.writeRegister<32>(policy.reg_eax, 173);
                 sys_rt_sigreturn();
                 continue;
             }
@@ -763,51 +764,44 @@ RSIM_Thread::get_regs() const
 {
     pt_regs_32 regs;
     memset(&regs, 0, sizeof regs);
-    regs.ip = policy.readIP().known_value();
-    regs.ax = policy.readGPR(x86_gpr_ax).known_value();
-    regs.bx = policy.readGPR(x86_gpr_bx).known_value();
-    regs.cx = policy.readGPR(x86_gpr_cx).known_value();
-    regs.dx = policy.readGPR(x86_gpr_dx).known_value();
-    regs.si = policy.readGPR(x86_gpr_si).known_value();
-    regs.di = policy.readGPR(x86_gpr_di).known_value();
-    regs.bp = policy.readGPR(x86_gpr_bp).known_value();
-    regs.sp = policy.readGPR(x86_gpr_sp).known_value();
-    regs.cs = policy.readSegreg(x86_segreg_cs).known_value();
-    regs.ds = policy.readSegreg(x86_segreg_ds).known_value();
-    regs.es = policy.readSegreg(x86_segreg_es).known_value();
-    regs.fs = policy.readSegreg(x86_segreg_fs).known_value();
-    regs.gs = policy.readSegreg(x86_segreg_gs).known_value();
-    regs.ss = policy.readSegreg(x86_segreg_ss).known_value();
-    regs.flags = 0;
-    for (size_t i=0; i<VirtualMachineSemantics::State::n_flags; i++) {
-        if (policy.readFlag((X86Flag)i).known_value()) {
-            regs.flags |= (1u<<i);
-        }
-    }
+    regs.ip = policy.readRegister<32>(policy.reg_eip).known_value();
+    regs.ax = policy.readRegister<32>(policy.reg_eax).known_value();
+    regs.bx = policy.readRegister<32>(policy.reg_ebx).known_value();
+    regs.cx = policy.readRegister<32>(policy.reg_ecx).known_value();
+    regs.dx = policy.readRegister<32>(policy.reg_edx).known_value();
+    regs.si = policy.readRegister<32>(policy.reg_esi).known_value();
+    regs.di = policy.readRegister<32>(policy.reg_edi).known_value();
+    regs.bp = policy.readRegister<32>(policy.reg_ebp).known_value();
+    regs.sp = policy.readRegister<32>(policy.reg_esp).known_value();
+    regs.cs = policy.readRegister<16>(policy.reg_cs).known_value();
+    regs.ds = policy.readRegister<16>(policy.reg_ds).known_value();
+    regs.es = policy.readRegister<16>(policy.reg_es).known_value();
+    regs.fs = policy.readRegister<16>(policy.reg_fs).known_value();
+    regs.gs = policy.readRegister<16>(policy.reg_gs).known_value();
+    regs.ss = policy.readRegister<16>(policy.reg_ss).known_value();
+    regs.flags = policy.readRegister<32>(policy.reg_eflags).known_value();
     return regs;
 }
 
 void
 RSIM_Thread::init_regs(const pt_regs_32 &regs)
 {
-    policy.writeIP(regs.ip);
-    policy.writeGPR(x86_gpr_ax, regs.ax);
-    policy.writeGPR(x86_gpr_bx, regs.bx);
-    policy.writeGPR(x86_gpr_cx, regs.cx);
-    policy.writeGPR(x86_gpr_dx, regs.dx);
-    policy.writeGPR(x86_gpr_si, regs.si);
-    policy.writeGPR(x86_gpr_di, regs.di);
-    policy.writeGPR(x86_gpr_bp, regs.bp);
-    policy.writeGPR(x86_gpr_sp, regs.sp);
-    policy.writeSegreg(x86_segreg_cs, regs.cs);
-    policy.writeSegreg(x86_segreg_ds, regs.ds);
-    policy.writeSegreg(x86_segreg_es, regs.es);
-    policy.writeSegreg(x86_segreg_fs, regs.fs);
-    policy.writeSegreg(x86_segreg_gs, regs.gs);
-    policy.writeSegreg(x86_segreg_ss, regs.ss);
-    for (size_t i=0; i<VirtualMachineSemantics::State::n_flags; i++) {
-        policy.writeFlag((X86Flag)i, regs.flags & ((uint32_t)1<<i) ? policy.true_() : policy.false_());
-    }
+    policy.writeRegister<32>(policy.reg_eip, regs.ip);
+    policy.writeRegister<32>(policy.reg_eax, regs.ax);
+    policy.writeRegister<32>(policy.reg_ebx, regs.bx);
+    policy.writeRegister<32>(policy.reg_ecx, regs.cx);
+    policy.writeRegister<32>(policy.reg_edx, regs.dx);
+    policy.writeRegister<32>(policy.reg_esi, regs.si);
+    policy.writeRegister<32>(policy.reg_edi, regs.di);
+    policy.writeRegister<32>(policy.reg_ebp, regs.bp);
+    policy.writeRegister<32>(policy.reg_esp, regs.sp);
+    policy.writeRegister<16>(policy.reg_cs, regs.cs);
+    policy.writeRegister<16>(policy.reg_ds, regs.ds);
+    policy.writeRegister<16>(policy.reg_es, regs.es);
+    policy.writeRegister<16>(policy.reg_fs, regs.fs);
+    policy.writeRegister<16>(policy.reg_gs, regs.gs);
+    policy.writeRegister<16>(policy.reg_ss, regs.ss);
+    policy.writeRegister<32>(policy.reg_eflags, regs.flags);
 }
 
 int
@@ -817,8 +811,12 @@ RSIM_Thread::set_gdt(const user_desc_32 *ud)
     *entry = *ud;
 
     /* Make sure all affected shadow registers are reloaded. */
-    for (size_t i=0; i<6; i++)
-        policy.writeSegreg((X86SegmentRegister)i, policy.readSegreg((X86SegmentRegister)i));
+    policy.writeRegister(policy.reg_cs, policy.readRegister<16>(policy.reg_cs));
+    policy.writeRegister(policy.reg_ds, policy.readRegister<16>(policy.reg_ds));
+    policy.writeRegister(policy.reg_es, policy.readRegister<16>(policy.reg_es));
+    policy.writeRegister(policy.reg_fs, policy.readRegister<16>(policy.reg_fs));
+    policy.writeRegister(policy.reg_gs, policy.readRegister<16>(policy.reg_gs));
+    policy.writeRegister(policy.reg_ss, policy.readRegister<16>(policy.reg_ss));
 
     return ud->entry_number;
 }
@@ -1052,7 +1050,7 @@ RSIM_Thread::sys_sigsuspend(const RSIM_SignalHandling::sigset_32 *mask) {
 int
 RSIM_Thread::sys_sigaltstack(const stack_32 *in, stack_32 *out)
 {
-    uint32_t sp = policy.readGPR(x86_gpr_sp).known_value();
+    uint32_t sp = policy.readRegister<32>(policy.reg_esp).known_value();
     return sighand.sigaltstack(in, out, sp);
 }
 
@@ -1076,7 +1074,7 @@ RSIM_Thread::emulate_syscall()
     assert(0==status);
     insn_semaphore_posted = true;
 
-    unsigned callno = policy.readGPR(x86_gpr_ax).known_value();
+    unsigned callno = policy.readRegister<32>(policy.reg_eax).known_value();
     bool cb_status = callbacks.call_syscall_callbacks(RSIM_Callbacks::BEFORE, this, callno, true);
     if (cb_status) {
         RSIM_Simulator *sim = get_process()->get_simulator();

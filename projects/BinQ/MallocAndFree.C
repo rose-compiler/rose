@@ -37,7 +37,7 @@ MallocAndFree::visit(SgNode* node) {
 
     if (instBlock==NULL)
       return;
-    SgAsmFunctionDeclaration* instFunc = isSgAsmFunctionDeclaration(instBlock->get_parent());
+    SgAsmFunction* instFunc = isSgAsmFunction(instBlock->get_parent());
     if (instFunc==NULL)
       return;
     string calleeName = inst->get_comment();
@@ -76,7 +76,7 @@ MallocAndFree::visit(SgNode* node) {
 
 	  if (succBlock==NULL)
 	    continue;
-	  SgAsmFunctionDeclaration* succFunc = isSgAsmFunctionDeclaration(succBlock->get_parent());
+	  SgAsmFunction* succFunc = isSgAsmFunction(succBlock->get_parent());
 	  if (succFunc==NULL)
 	    continue;
 	  if (succFunc==instFunc) {
@@ -124,7 +124,7 @@ MallocAndFree::visit(SgNode* node) {
 
 	if (succBlock==NULL)
 	  continue;
-	SgAsmFunctionDeclaration* succFunc = isSgAsmFunctionDeclaration(succBlock->get_parent());
+	SgAsmFunction* succFunc = isSgAsmFunction(succBlock->get_parent());
 	if (succFunc==NULL)
 	  continue;
 	if (succFunc==instFunc) {
@@ -190,7 +190,7 @@ MallocAndFree::visit(SgNode* node) {
 
       bool foundMatchingFree=false;
       if (resolveAddr!=0) {
-	SgAsmFunctionDeclaration* succFunc2=instFunc;
+	SgAsmFunction* succFunc2=instFunc;
 	SgAsmx86Instruction* succInst2=inst;
 	//cerr << " Looking for free : start : " << RoseBin_support::HexToString(succInst2->get_address() )<< endl;
 	std::set<uint64_t> visited;
@@ -208,12 +208,12 @@ MallocAndFree::visit(SgNode* node) {
 	    SgAsmBlock* succBlock2 = isSgAsmBlock(succInst2->get_parent());
 	    if (succBlock2==NULL)
 	      continue;
-	    succFunc2 = isSgAsmFunctionDeclaration(succBlock2->get_parent());
+	    succFunc2 = isSgAsmFunction(succBlock2->get_parent());
 	    if (succFunc2==NULL)
 	      continue;
 	  } else {
 	    // IDA
-	    succFunc2 = isSgAsmFunctionDeclaration(succInst2->get_parent());
+	    succFunc2 = isSgAsmFunction(succInst2->get_parent());
 	    if (succFunc2==NULL)
 	      continue;
 	  }
@@ -252,7 +252,7 @@ MallocAndFree::visit(SgNode* node) {
 #endif
 		if (predBlock==NULL)
 		  continue;
-		SgAsmFunctionDeclaration* predFunc = isSgAsmFunctionDeclaration(predBlock->get_parent());
+		SgAsmFunction* predFunc = isSgAsmFunction(predBlock->get_parent());
 		if (predFunc==NULL)
 		  continue;
 		if (predFunc==instFunc) {
@@ -315,9 +315,9 @@ MallocAndFree::visit(SgNode* node) {
 	  string res = "malloc() called but no free() found: ";
 	  string funcname="";
 	  SgAsmBlock* b = isSgAsmBlock(inst->get_parent());
-	  SgAsmFunctionDeclaration* func = NULL;
+	  SgAsmFunction* func = NULL;
 	  if (b)
-	    func=isSgAsmFunctionDeclaration(b->get_parent()); 
+	    func=isSgAsmFunction(b->get_parent()); 
 	  if (func)
 	    funcname = func->get_name();
 	  res+=" ("+RoseBin_support::HexToString(inst->get_address())+") : "+unparseInstruction(inst)+

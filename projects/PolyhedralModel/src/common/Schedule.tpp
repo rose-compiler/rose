@@ -12,11 +12,11 @@ Schedule<Function, Expression, VariableLBL>::Schedule(PolyhedricAnnotation::Poly
 	p_schedule(),
 	p_memory_size(sizeof(Schedule<Function, Expression, VariableLBL>))
 {
-	p_memory_size += p_polyhedral_program.getNumberOfStatement() * (sizeof(std::pair<Expression *, std::vector<LinearExpression> >) + p_dim * sizeof(LinearExpression));
+	p_memory_size += p_polyhedral_program.getNumberOfStatement() * (sizeof(std::pair<Expression *, std::vector<LinearExpression_ppl> >) + p_dim * sizeof(LinearExpression_ppl));
 	for (size_t i = 1; i <= p_polyhedral_program.getNumberOfStatement(); i++) {
-		p_schedule.insert(std::pair<Expression *, std::vector<LinearExpression> >(
+		p_schedule.insert(std::pair<Expression *, std::vector<LinearExpression_ppl> >(
 			p_polyhedral_program.getStatementById(i),
-			std::vector<LinearExpression>(p_dim)
+			std::vector<LinearExpression_ppl>(p_dim)
 		));
 		
 	}
@@ -28,13 +28,13 @@ size_t Schedule<Function, Expression, VariableLBL>::getDimension() const {
 }
 
 template <class Function, class Expression, class VariableLBL>
-std::vector<LinearExpression> & Schedule<Function, Expression, VariableLBL>::setSchedule(size_t expression) {
+std::vector<LinearExpression_ppl> & Schedule<Function, Expression, VariableLBL>::setSchedule(size_t expression) {
 	return p_schedule[p_polyhedral_program.getStatementById(expression)];
 }
 		
 template <class Function, class Expression, class VariableLBL>
-const std::vector<LinearExpression> & Schedule<Function, Expression, VariableLBL>::getSchedule(size_t expression) const {
-	typename std::map<Expression *, std::vector<LinearExpression> >::const_iterator sched = p_schedule.find(p_polyhedral_program.getStatementById(expression));
+const std::vector<LinearExpression_ppl> & Schedule<Function, Expression, VariableLBL>::getSchedule(size_t expression) const {
+	typename std::map<Expression *, std::vector<LinearExpression_ppl> >::const_iterator sched = p_schedule.find(p_polyhedral_program.getStatementById(expression));
 	if (sched == p_schedule.end())
 		throw Exception::UnknownExpression<Function, Expression>(p_polyhedral_program.getFunction(), p_polyhedral_program.getStatementById(expression));
 	return sched->second;
@@ -64,8 +64,8 @@ template <class Function, class Expression, class VariableLBL>
 void Schedule<Function, Expression, VariableLBL>::print(std::ostream & out, std::string indent) const {
 	for (size_t i = 1; i <= p_polyhedral_program.getNumberOfStatement(); i++) {
 		out << indent << "S" << i << ": " << std::endl;
-		std::vector<LinearExpression>::const_iterator it;
-		const std::vector<LinearExpression> & vect = p_schedule.find(p_polyhedral_program.getStatementById(i))->second;
+		std::vector<LinearExpression_ppl>::const_iterator it;
+		const std::vector<LinearExpression_ppl> & vect = p_schedule.find(p_polyhedral_program.getStatementById(i))->second;
 		for (it = vect.begin(); it != vect.end(); it++) {
 			out << indent << "\t";
 			for (size_t j = 0; j < it->space_dimension(); j++) {

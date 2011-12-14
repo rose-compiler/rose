@@ -204,6 +204,12 @@ class Unparser
       //! destructor
           virtual ~Unparser();
 
+       // DQ (9/11/2011): Added copy constructor.
+          Unparser(const Unparser & X);
+
+       // DQ (9/11/2011): Added operator==() to fix issue detected in static analysis.
+          Unparser & operator=(const Unparser & X);
+
       //! get the output stream wrapper
           UnparseFormat& get_output_stream(); 
 

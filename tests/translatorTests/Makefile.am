@@ -5,7 +5,7 @@ INCLUDES = $(ROSE_INCLUDES)
 
 # an better alternative to identityTranslator
 # Liao 1/29/2009
-bin_PROGRAMS = roseCompiler testDataMemberOfConst testFortranParameter testFortranProtected label_stmt_file_info_translator
+bin_PROGRAMS = roseCompiler testDataMemberOfConst testFortranParameter testFortranProtected label_stmt_file_info_translator testConstDeclarations
 
 roseCompiler_SOURCES = roseCompiler.C
 
@@ -38,6 +38,9 @@ ompVariableCollecting_SOURCES = ompVariableCollecting.C
 
 label_stmt_file_info_translator_SOURCES = label_stmt_file_info_translator.C
 
+# DQ (8/25/2011): Added test code to demonstrate where const is set in the AST.
+testConstDeclarations_SOURCES = testConstDeclarations.C
+
 # LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
@@ -62,6 +65,9 @@ test_testFortranProtected: testFortranProtected
 
 test_ompVariableCollecting: ompVariableCollecting
 	./ompVariableCollecting -I$(top_srcdir)/src/frontend/SageIII -rose:OpenMP:ast_only -c $(srcdir)/input_ompVariableCollecting.C
+
+test_testConstDeclarations: testConstDeclarations
+	./testConstDeclarations $(srcdir)/input_testConstDeclarations.C
 
 #testTranslator2010_01_test: testTranslator2010_01 
 #	./testTranslator2010_01 -rose:verbose 2

@@ -1,0 +1,48 @@
+#!/bin/bash
+
+CXXCOMPILE="g++"
+UPCCOMPILE="upc"
+
+while (($# > 0)); do
+  if [[ "$1" = "--cxxcompile="* ]]; then
+    arg=$1
+    CXXCOMPILE=${arg/#*=}
+  elif [[ "$1" = "--upccompile="* ]]; then
+    arg=$1
+    UPCCOMPILE=${arg/#*=}
+  elif [[ "$1" == "--help" ]] || [[ "$1" == "-h" ]]; then
+    echo "Usage: upc++link [OPTIONS] linker-arguments"
+    echo ""
+    echo "    --cxxcompile=C++-cmd  specifies the C++ compiler (default=g++)"
+    echo "                          if C++-cmd is set to C, the linker will "
+    echo "                          not add the C++ runtime library.        "
+    echo "    --upccompile=UPC-cmd  specifies the C++ compiler (default=upc)"
+    echo ""
+    echo "Links C++ and UPC object files. Adds the C++ runtime library if needed"
+
+    exit
+  else # proceed with compile
+    break
+  fi
+
+  shift
+done
+
+if [[ "$CXXCOMPILE" != "C" ]]; then
+  STDLIB="libstdc++.so"
+  STDLIBFILE=`$CXXCOMPILE --print-file-name=$STDLIB`
+
+  if [[ "$STDLIBFILE" == "$STDLIB" ]] && [[ ! -e "$STDLIB" ]]; then
+    echo "error: cannot find C++ runtime library ($STDLIB)."
+    echo "error: files NOT linked."
+    exit 1
+  fi
+
+  STDLIBDIR=`dirname $STDLIBFILE`
+  STDLIBARG="-L$STDLIBDIR -lstdc++"
+fi
+
+CMD="$UPCCOMPILE $@ $STDLIBARG"
+
+echo "$CMD"
+$CMD

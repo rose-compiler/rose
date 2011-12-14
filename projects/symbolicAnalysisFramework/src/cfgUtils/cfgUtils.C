@@ -72,7 +72,7 @@ namespace cfgUtils
       // (negX)x + (negX2)x2 + cx <= (negY)y + (negY2)y2 + cy
       if(x2!=zeroVar || y2!=zeroVar) return false;
 
-      // (negX)x + cx <= (negY)y + cy	
+      // (negX)x + cx <= (negY)y + cy   
       c = cy-cx;
       //printf("computeTermsOfIfCondition(), cx=%d, cy=%d, c=%d\n", cx, cy, c);
     }
@@ -168,7 +168,7 @@ namespace cfgUtils
       // (negX)x + (negX2)x2 + cx == (negY)y + (negY2)y2 + cy
       if(x2!=zeroVar || y2!=zeroVar) return false;
 
-      // (negX)x + cx == (negY)y + cy	
+      // (negX)x + cx == (negY)y + cy   
       c = cy-cx;
       //printf("computeTermsOfIfCondition(), cx=%d, cy=%d, c=%d\n", cx, cy, c);
     }
@@ -199,7 +199,7 @@ namespace cfgUtils
   {
     ROSE_ASSERT(0);
     return false;
-    /*	SgNode* lhs, rhs;
+    /*  SgNode* lhs, rhs;
     // indicates whether this is an expression that reads the left-hand-side (i.e. i++)
     bool readlhs;
     // we only consider assignments
@@ -218,7 +218,7 @@ return false;
     if ( lhs )
     arraysLhs = NodeQuery::querySubTree( lhs, V_SgPntrArrRefExp );
 
-    // list of all array access expressions on the right-hand-side of ast_node	
+    // list of all array access expressions on the right-hand-side of ast_node  
     list<SgNode *>arraysRhs;
     if (rhs)
     arraysRhs = NodeQuery::querySubTree( rhs, V_SgPntrArrRefExp );
@@ -381,7 +381,7 @@ return false;
   if ( lhs )
   arraysLhs = NodeQuery::querySubTree( lhs, V_SgPntrArrRefExp );
 
-  // list of all array access expressions on the right-hand-side of ast_node	
+  // list of all array access expressions on the right-hand-side of ast_node    
   list<SgNode *>arraysRhs;
   if (rhs)
   arraysRhs = NodeQuery::querySubTree( rhs, V_SgPntrArrRefExp );
@@ -429,7 +429,7 @@ cout << "parseArrayAccess B LHS vars2Name["<<v<<"]="<<vars2Name[v]<<"\n";
   wrIndexCpx.push_front(v);
   // if this type of expression reads the lhs (i.e. i++)
   if ( readlhs )
-  rdIndexCpx.push_front(v);	
+  rdIndexCpx.push_front(v);     
   }
   }
 
@@ -591,7 +591,7 @@ bool parseAssignment(/*SgExpression*/SgNode* expr, short& op, varID &i, varID &j
       // if the lhs is not a variable that we can understand, break
       if(!varID::isValidVarExp(lhs)) return false;
 
-      /*			printf("parseAssignment isSgAssignOp  valid rhs=%d (%s)\n", parseAddition(rhs, j, c), lhs->class_name().c_str());				
+      /*                        printf("parseAssignment isSgAssignOp  valid rhs=%d (%s)\n", parseAddition(rhs, j, c), lhs->class_name().c_str());                               
                                 printf("parseAssignment isSgAssignOp  i=%s j=%s c=%d  &i=0x%x &j=0x%x\n", i.str().c_str(), j.str().c_str(), c, &i, &j);*/
 
       // if the rhs of the assignment is not parseable operation, abort
@@ -894,9 +894,9 @@ bool parseAddition(const SgExpression* expr, varID &j, bool &negJ, varID& k, boo
   }
   else
   {
-    //		printf("      invalid\n");
+    //          printf("      invalid\n");
     return false;
-  }		
+  }             
 
   return true;
 }
@@ -972,9 +972,9 @@ bool parseMultiplication(const SgExpression* expr, varID &j, varID& k, long &c)
   }
   else
   {
-    //		printf("      invalid\n");
+    //          printf("      invalid\n");
     return false;
-  }		
+  }             
 
   return true;
 }
@@ -1050,9 +1050,9 @@ bool parseDivision(const SgExpression* expr, varID &j, varID& k, long &c)
   }
   else
   {
-    //		printf("      invalid\n");
+    //          printf("      invalid\n");
     return false;
-  }		
+  }             
 
   return true;
 }
@@ -1097,7 +1097,7 @@ return 0;
 // but not floating point, characters, etc.)
 bool IsConstInt(const SgExpression* rhs, long &val)
 {
-  //	printf("rhs = %s: %s\n", rhs->unparseToString().c_str(), rhs->class_name().c_str());
+  //    printf("rhs = %s: %s\n", rhs->unparseToString().c_str(), rhs->class_name().c_str());
 
   /*SgCastExp* cast;
     if(cast = isSgCastExp(rhs))
@@ -1173,15 +1173,15 @@ DataflowNode cfgUtils::getFuncStartCFG(SgFunctionDefinition* func)
   DataflowNode funcCFGStart = (DataflowNode)func->cfgForBeginning();
   for(VirtualCFG::iterator it(funcCFGStart); it!=VirtualCFG::iterator::end(); it++)
   {
-  	 //cout << "getFuncStartCFG(): (*it)=<"<<(*it).getNode()->unparseToString()<<" | "<<(*it).getNode()->class_name()<<">\n"; cout.flush();
-    //		printf("getFuncStartCFG(): isSgFunctionParameterList((*it).getNode())=%d (*it)=<%s | %s>\n", isSgFunctionParameterList((*it).getNode()), (*it).getNode()->unparseToString().c_str(), (*it).getNode()->class_name().c_str());
+         //cout << "getFuncStartCFG(): (*it)=<"<<(*it).getNode()->unparseToString()<<" | "<<(*it).getNode()->class_name()<<">\n"; cout.flush();
+    //          printf("getFuncStartCFG(): isSgFunctionParameterList((*it).getNode())=%d (*it)=<%s | %s>\n", isSgFunctionParameterList((*it).getNode()), (*it).getNode()->unparseToString().c_str(), (*it).getNode()->class_name().c_str());
     if(isSgFunctionParameterList((*it).getNode()))
     {
-      //			printf("getFuncStartCFG(): returning a SgFunctionParameterList\n");
+      //                        printf("getFuncStartCFG(): returning a SgFunctionParameterList\n");
       return (*it);
     }
   }
-  //	printf("getFuncStartCFG(): returning function's declaration\n");
+  //    printf("getFuncStartCFG(): returning function's declaration\n");
   return funcCFGStart;
   /*
      SgBasicBlock *funcBody = func->get_body();
@@ -1209,12 +1209,12 @@ string cfgUtils::genUniqueName()
     ROSE_ASSERT(curName = isSgInitializedName(*it));
     // while our chosen "unique" name conflicts with the current SgInitializedName
     // keep adding random numbers to the end of the the "unique" name until it becomes unique
-    //		printf("SgInitializedName: name<%s> == curName->get_name().getString()<%s> = %d\n", name.c_str(), curName->get_name().getString().c_str(), name == curName->get_name().getString());
+    //          printf("SgInitializedName: name<%s> == curName->get_name().getString()<%s> = %d\n", name.c_str(), curName->get_name().getString().c_str(), name == curName->get_name().getString());
     while(name == curName->get_name().getString())
     {
       char num[2];
       num[0] = '0'+rand()%10;
-      num[1] = 0;			
+      num[1] = 0;                       
       name = name + num;
     }
   }
@@ -1226,7 +1226,7 @@ string cfgUtils::genUniqueName()
     ROSE_ASSERT(curDecl = isSgFunctionDeclaration(*it));
     // while our chosen "unique" name conflicts with the current SgFunctionDeclaration
     // keep adding random numbers to the end of the the "unique" name until it becomes unique
-    //		printf("SgFunctionDeclaration: name<%s> == curDecl->get_name().getString()<%s> = %d\n", name.c_str(), curDecl->get_name().getString().c_str(), name == curDecl->get_name().getString());
+    //          printf("SgFunctionDeclaration: name<%s> == curDecl->get_name().getString()<%s> = %d\n", name.c_str(), curDecl->get_name().getString().c_str(), name == curDecl->get_name().getString());
     while(name == curDecl->get_name().getString())
     {
       char num[2];

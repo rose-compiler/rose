@@ -7,7 +7,7 @@
 #     ln -s $(rosegit-src)/*.bin .
 
 source rosegit-functions.sh || exit 1
-(rosegit_preamble 2>&1 |grep -v configuring) >&2  # strip a specific error message, but show any others
+(rosegit_preamble 2>&1 |grep -v 'configuring:') >&2  # strip a specific diagnostic but show any others
 
 cwd=$(pwd)
 echo "$ROSEGIT_SRC${cwd#$ROSEGIT_BLD}"

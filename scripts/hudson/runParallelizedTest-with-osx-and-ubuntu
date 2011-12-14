@@ -128,6 +128,7 @@ CONFIGURE_FLAGS="\
 	--with-boost=${ROSE_TEST_BOOST_PATH} \
 	--with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib \
 	--with-java=${ROSE_TEST_JAVA_PATH} \
+    --with-python=${ROSE_TEST_PYTHON_PATH} \
 	--with-ROSE_LONG_MAKE_CHECK_RULE=yes \
 	--with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall"
 #########################################################################################
@@ -294,6 +295,7 @@ set -e
 #  CMake build 
 #
 #########################################################################################
+set -x;
 if test "x$ROSE_TEST_BUILD_STYLE" = "xcmake" ; then
   (
 
@@ -301,11 +303,12 @@ if test "x$ROSE_TEST_BUILD_STYLE" = "xcmake" ; then
       mkdir   ROSE-build-cmake
       cd      ROSE-build-cmake
 
-      cmake .. -DBOOST_ROOT=${ROSE_TEST_BOOST_PATH} && make -j${NUM_PROCESS}
+      cmake .. -DBOOST_ROOT=${ROSE_TEST_BOOST_PATH} && make -j${NUM_PROCESS} || exit 1
 
-  ) 2>&1 |filterStep "CMake" 
+  ) 2>&1 |filterStep "CMake"
   [ ${PIPESTATUS[0]} -ne 0 ] && killStep "CMake" || exit 0
 fi
+set +x;
 #########################################################################################
 #
 #  ROSE/build
@@ -315,11 +318,11 @@ fi
 
    ./build
 
-) 2>&1 |filterStep "./build" 
+) 2>&1 |filterStep "./build"
 [ ${PIPESTATUS[0]} -ne 0 ] && killStep "./build"
 #########################################################################################
 #
-#  Setup Build & Install trees 
+#  Setup Build & Install trees
 #
 #########################################################################################
 for DIR in "ROSE-install" "ROSE-build" ; do
@@ -328,7 +331,7 @@ for DIR in "ROSE-install" "ROSE-build" ; do
       [ -d "./$DIR" ] && chmod -R u+xw ./$DIR && safe_rm_rf `pwd`/$DIR
       mkdir ./$DIR 
 
-  ) 2>&1 |filterStep "$DIR setup" 
+  ) 2>&1 |filterStep "$DIR setup"
   [ ${PIPESTATUS[0]} -ne 0 ] && killStep "workspace setup"
 done
 cd ROSE-build
@@ -353,7 +356,7 @@ cd ROSE-build
 #########################################################################################
 function printRoseTranslatorVersion {
   (
-  
+
        make PrintRoseTranslatorVersion
 
   ) 2>&1 |filterStep "ROSE Translator Version" 

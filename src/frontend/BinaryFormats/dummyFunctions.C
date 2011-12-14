@@ -101,6 +101,11 @@ bool SgAsmArmInstruction::terminatesBasicBlock()     { return false; }
 bool SgAsmPowerpcInstruction::terminatesBasicBlock() { return false; }
 bool SgAsmInstruction::terminatesBasicBlock()        { return false; }
 
+bool SgAsmx86Instruction::is_unknown() const         { return false; }
+bool SgAsmArmInstruction::is_unknown() const         { return false; }
+bool SgAsmPowerpcInstruction::is_unknown() const     { return false; } 
+
+
 // These are needed because they are virtual functions and need to be defined
 // so that the associated classes can be used.
 SgAsmPEFileHeader* SgAsmPEFileHeader::parse() { return NULL; }
@@ -352,7 +357,7 @@ bool SgAsmInstruction::has_effect() { return false; }
 bool SgAsmInstruction::has_effect(const std::vector<SgAsmInstruction*>&, bool allow_branch,bool relax_stack_semantics) { return false; }
 std::vector<std::pair<size_t,size_t> > SgAsmInstruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch,bool relax_stack_semantics) { return std::vector<std::pair<size_t,size_t> >(); }
 std::set<rose_addr_t> SgAsmInstruction::get_successors(bool* complete) { return std::set<rose_addr_t>();}
-std::set<rose_addr_t> SgAsmInstruction::get_successors(const std::vector<SgAsmInstruction*>&, bool *complete) { return std::set<rose_addr_t>();}
+std::set<rose_addr_t> SgAsmInstruction::get_successors(const std::vector<SgAsmInstruction*>&, bool *complete, MemoryMap*) { return std::set<rose_addr_t>();}
 
 
 bool SgAsmDOSFileHeader::reallocate() { return false; }
@@ -384,7 +389,7 @@ std::string SgAsmStoredString::get_string(bool escape) const { return ""; }
 rose_addr_t SgAsmStoredString::get_offset() const { return 0;}
 bool SgAsmPESectionTable::reallocate() { return false; }
 std::set<rose_addr_t> SgAsmPowerpcInstruction::get_successors(bool*) { return std::set<rose_addr_t>();}
-std::set<rose_addr_t> SgAsmx86Instruction::get_successors(std::vector<SgAsmInstruction*, std::allocator<SgAsmInstruction*> > const&, bool*) { return std::set<rose_addr_t>();}
+std::set<rose_addr_t> SgAsmx86Instruction::get_successors(std::vector<SgAsmInstruction*, std::allocator<SgAsmInstruction*> > const&, bool*, MemoryMap*) { return std::set<rose_addr_t>();}
 bool SgAsmPEStringSection::reallocate() { return false; }
 SgAsmStringStorage* SgAsmCoffStrtab::create_storage(rose_addr_t, bool) { return NULL;}
 SgAsmNERelocEntry::iname_type::iname_type() {}

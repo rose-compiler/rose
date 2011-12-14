@@ -196,7 +196,12 @@ ChildUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node, Synth
 			if (isSgCastExp(unaryOp))
 			{
 				//Cast expressions can have two children in the AST, because of the original expression tree
-				ROSE_ASSERT(attrs.size() == 2);
+
+         // DQ (9/26/2011): The original expression tree is no longer traversed and is either removed (optional) 
+         // or is used to replace the associated constant folded value (default).  So I have changed the assert.
+         // ROSE_ASSERT(attrs.size() == 2);
+				ROSE_ASSERT(attrs.size() == 1);
+
 				uses.insert(attrs[0].getUses().begin(), attrs[0].getUses().end());
 			}
 			else if (isSgThrowOp(unaryOp))

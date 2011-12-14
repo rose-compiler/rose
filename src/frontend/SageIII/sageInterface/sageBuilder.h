@@ -358,6 +358,9 @@ SgMinusMinusOp *buildMinusMinusOp_nfi(SgExpression* operand_i, SgUnaryOp::Sgop_m
 SgPlusPlusOp* buildPlusPlusOp(SgExpression* operand_i, SgUnaryOp::Sgop_mode  a_mode);
 SgPlusPlusOp* buildPlusPlusOp_nfi(SgExpression* operand_i, SgUnaryOp::Sgop_mode  a_mode);
 
+//! Build a ThrowOp expression
+SgThrowOp* buildThrowOp(SgExpression *, SgThrowOp::e_throw_kind);
+
 SgNewExp * buildNewExp(SgType* type, 
                        SgExprListExp* exprListExp, 
                        SgConstructorInitializer* constInit, 
@@ -661,9 +664,12 @@ buildFunctionParameterList_nfi(SgFunctionParameterTypeList * paraTypeList);
 // the support function and require either a SgFunctionType or SgMemberFunctionType, we need to to pass in 
 // a flag to specify which function type to build (bool isMemberFunction).
 //! A template function for function prototype declaration builders
+// template <class actualFunction>
+// actualFunction*
+// buildNondefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, bool isMemberFunction, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
 template <class actualFunction>
 actualFunction*
-buildNondefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, bool isMemberFunction, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
+buildNondefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, bool isMemberFunction, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL, unsigned int functionConstVolatileFlags = 0);
 
 //! Build a prototype for a function, handle function type, symbol etc transparently
 SgFunctionDeclaration *
@@ -674,8 +680,10 @@ SgFunctionDeclaration *
 buildNondefiningFunctionDeclaration (const SgFunctionDeclaration* funcdecl, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
 
 //! Build a prototype member function declaration
+// SgMemberFunctionDeclaration *
+// buildNondefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
 SgMemberFunctionDeclaration *
-buildNondefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
+buildNondefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL, unsigned int functionConstVolatileFlags = 0);
 
 ////! Build a prototype member function declaration
 //SgMemberFunctionDeclaration *
@@ -694,8 +702,10 @@ SgMemberFunctionDeclaration *
 buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgScopeStatement* scope, SgExprListExp* decoratorList = NULL);
 
 //! Build a prototype for an existing member function declaration (defining or nondefining is fine) 
+// SgMemberFunctionDeclaration *
+// buildNondefiningMemberFunctionDeclaration (const SgMemberFunctionDeclaration* funcdecl, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
 SgMemberFunctionDeclaration *
-buildNondefiningMemberFunctionDeclaration (const SgMemberFunctionDeclaration* funcdecl, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL);
+buildNondefiningMemberFunctionDeclaration (const SgMemberFunctionDeclaration* funcdecl, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL, unsigned int functionConstVolatileFlags = 0);
 
 //! A template function for function declaration builders
 template <class actualFunction>
@@ -766,6 +776,7 @@ inline SgIfStmt * buildIfStmt(SgExpression* conditional, SgStatement * true_body
 SgIfStmt * buildIfStmt_nfi(SgStatement* conditional, SgStatement * true_body, SgStatement * false_body);
 
 //! Build a for init statement
+SgForInitStatement * buildForInitStatement();
 SgForInitStatement * buildForInitStatement(const SgStatementPtrList & statements);
 SgForInitStatement * buildForInitStatement_nfi(SgStatementPtrList & statements);
 
@@ -830,6 +841,7 @@ SgPassStatement* buildPassStatement_nfi();
 
 //! Build a Assert statement
 SgAssertStmt* buildAssertStmt(SgExpression* test);
+SgAssertStmt* buildAssertStmt(SgExpression *test, SgExpression *exceptionArgument);
 SgAssertStmt* buildAssertStmt_nfi(SgExpression* test);
 
 //! Build a yield statement
@@ -926,7 +938,7 @@ SgCommonBlock* buildCommonBlock(SgCommonBlockObject* first_block=NULL);
 
 // driscoll6 (6/9/2011): Adding support for try stmts.
 // ! Build a catch statement.
-SgCatchOptionStmt* buildCatchOptionStmt(SgVariableDeclaration* condition, SgStatement* body);
+SgCatchOptionStmt* buildCatchOptionStmt(SgVariableDeclaration* condition=NULL, SgStatement* body=NULL);
 
 // driscoll6 (6/9/2011): Adding support for try stmts.
 // ! Build a try statement.
@@ -936,6 +948,35 @@ SgTryStmt* buildTryStmt(SgStatement* body,
                         SgCatchOptionStmt* catch2=NULL,
                         SgCatchOptionStmt* catch3=NULL,
                         SgCatchOptionStmt* catch4=NULL);
+
+// charles4 (9/16/2011): Adding support for try stmts.
+// ! Build a try statement.
+//SgTryStmt* buildTryStmt(SgStatement *try_body, SgCatchStatementSeq *catches, SgStatement *finally_body = NULL);
+
+// charles4 (9/16/2011): Adding support for try stmts.
+// ! Build a try statement.
+SgTryStmt* buildTryStmt(SgBasicBlock *try_body, SgBasicBlock *finally_body = NULL);
+
+// charles4 (9/16/2011): Adding support for Catch Blocks.
+// ! Build an initial sequence of Catch blocks containing 0 or 1 element.
+SgCatchStatementSeq *buildCatchStatementSeq(SgCatchOptionStmt * = NULL);
+
+// charles4 (8/25/2011): Adding support for Java Synchronized stmts.
+// ! Build a Java Synchronized statement.
+SgJavaSynchronizedStatement *buildJavaSynchronizedStatement(SgExpression *, SgBasicBlock *);
+
+// charles4 (8/25/2011): Adding support for Java Throw stmts.
+// ! Build a Java Throw statement.
+SgJavaThrowStatement *buildJavaThrowStatement(SgThrowOp *);
+
+// charles4 (8/25/2011): Adding support for Java Foreach stmts.
+// ! Build a Java Foreach statement.
+// SgJavaForEachStatement *buildJavaForEachStatement(SgInitializedName * = NULL, SgExpression * = NULL, SgStatement * = NULL);
+SgJavaForEachStatement *buildJavaForEachStatement(SgVariableDeclaration * = NULL, SgExpression * = NULL, SgStatement * = NULL);
+
+// charles4 (8/25/2011): Adding support for Java Label stmts.
+// ! Build a Java Label statement.
+SgJavaLabelStatement *buildJavaLabelStatement(const SgName &,  SgStatement * = NULL);
 
 // ! Build an exec statement
 SgExecStatement* buildExecStatement(SgExpression* executable, SgExpression* globals = NULL, SgExpression* locals = NULL);
@@ -982,8 +1023,11 @@ PreprocessingInfo* buildCpreprocessorDefineDeclaration(SgLocatedNode* target,
                 const std::string & content,
                PreprocessingInfo::RelativePositionType position=PreprocessingInfo::before);
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 //! Build an abstract handle from a SgNode
 AbstractHandle::abstract_handle * buildAbstractHandle(SgNode* n);
+#endif
+
 //@}
 
 } // end of namespace

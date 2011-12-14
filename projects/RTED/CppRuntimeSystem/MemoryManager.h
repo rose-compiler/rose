@@ -42,7 +42,7 @@ struct MemoryType
 
         enum InitStatus { none, some, all };
 
-        MemoryType(Location addr, size_t size, AllocKind kind, long blsz, const SourcePosition& pos);
+        MemoryType(Location addr, size_t size, AllocKind kind, long blsz, const SourceInfo& pos);
 
         /// Checks if an address lies in this memory chunk
         bool containsAddress(Location addr) const;
@@ -54,7 +54,7 @@ struct MemoryType
 
         Location               beginAddress() const { return startAddress; }
         size_t                 getSize()      const { return initdata.size(); }
-        const SourcePosition & getPos()       const { return allocPos; }
+        SourcePosition         getPos()       const { return SourcePosition(allocPos); }
         AllocKind              howCreated()   const { return origin; }
 
         /// Returns one past the last writeable address
@@ -159,7 +159,7 @@ struct MemoryType
 
         Location        startAddress; ///< address where memory chunk starts
         AllocKind       origin;       ///< Where the memory is located and how the location was created
-        SourcePosition  allocPos;     ///< Position in source file where malloc/new was called
+        SourceInfo      allocPos;     ///< Position in source file where malloc/new was called
         TypeData        typedata;
         InitData        initdata;
         long            blocksize;
@@ -205,7 +205,7 @@ struct MemoryManager
 
         /// \brief  Create a new allocation based on the parameters
         /// \return a pointer to the actual stored object (NULL in case something went wrong)
-        MemoryType* allocateMemory(Location addr, size_t size, MemoryType::AllocKind kind, long blocksize, const SourcePosition& pos);
+        MemoryType* allocateMemory(Location addr, size_t size, MemoryType::AllocKind kind, long blocksize, const SourceInfo& pos);
 
         /// tracks dynamic memory deallocations
         void freeHeapMemory(Location addr, MemoryType::AllocKind freekind);
@@ -258,7 +258,7 @@ struct MemoryManager
 
         /// Deletes all collected data
         /// normally only needed for debug purposes
-        void clearStatus() { mem.clear(); }
+        void clearStatus();
 
         /// Returns the MemoryType which stores the allocation information which is
         /// registered for this addr, or NULL if nothing is registered

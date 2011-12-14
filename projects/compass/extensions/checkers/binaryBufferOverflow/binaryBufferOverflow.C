@@ -239,7 +239,7 @@ CompassAnalyses::BinaryBufferOverflow::Traversal::run(string& name, SgGraphNode*
                   if (RoseBin_support::DEBUG_MODE()) 
 		    cerr << " The address of the malloc variable is : " << RoseBin_support::HexToString(address_of_var) << endl;
                   string functionName = "func";
-                  //SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(mov->get_parent());
+                  //SgAsmFunction* func = isSgAsmFunction(mov->get_parent());
                   //if (func)
                   //  functionName = func->get_name();
                   functionName = RoseBin_support::HexToString(malloc_pos)+":";

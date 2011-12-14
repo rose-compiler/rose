@@ -1,0 +1,50 @@
+# Non-recursive Makefile
+
+mAstDiagnostics_la_sources=\
+	$(mAstDiagnosticsPath)/AstConsistencyTests.C \
+	$(mAstDiagnosticsPath)/AstWarnings.C \
+	$(mAstDiagnosticsPath)/AstStatistics.C \
+	$(mAstDiagnosticsPath)/AstPerformance.C
+
+mAstDiagnostics_includeHeaders=\
+	$(mAstDiagnosticsPath)/AstDiagnostics.h \
+	$(mAstDiagnosticsPath)/AstConsistencyTests.h \
+	$(mAstDiagnosticsPath)/AstWarnings.h \
+	$(mAstDiagnosticsPath)/AstStatistics.h \
+	$(mAstDiagnosticsPath)/AstPerformance.h
+
+mAstDiagnostics_extraDist=\
+	$(mAstDiagnosticsPath)/CMakeLists.txt \
+	$(mAstDiagnosticsPath)/AstDiagnostics.docs
+
+mAstDiagnostics_cleanLocal=\
+	rm -rf \
+		$(mAstDiagnosticsPath)/core \
+		$(mAstDiagnosticsPath)/ii_files \
+		$(mAstDiagnosticsPath)/ti_files \
+		$(mAstDiagnosticsPath)/Templates.DB
+
+
+# DQ (3/7/2010): This code does not appear to be used or even distributed with ROSE any more.
+# DQ (12/8/2006): Linux memory support used in ROSE
+# ramustMemoryUsageObjs = \
+#  $(top_builddir)/src/3rdPartyLibraries/ramust/memcheck.o \
+#  $(top_builddir)/src/3rdPartyLibraries/ramust/filemap.o \
+#  $(top_builddir)/src/3rdPartyLibraries/ramust/processes.o \
+#  $(top_builddir)/src/3rdPartyLibraries/ramust/mem_totals.o \
+#  $(top_builddir)/src/3rdPartyLibraries/ramust/cleanup_memory.o \
+#  $(top_builddir)/src/3rdPartyLibraries/ramust/procps/alloc.o \
+#  $(top_builddir)/src/3rdPartyLibraries/ramust/procps/devname.o \
+#  $(top_builddir)/src/3rdPartyLibraries/ramust/procps/escape.o \
+#  $(top_builddir)/src/3rdPartyLibraries/ramust/procps/ksym.o \
+#  $(top_builddir)/src/3rdPartyLibraries/ramust/procps/pwcache.o \
+#  $(top_builddir)/src/3rdPartyLibraries/ramust/procps/readproc.o \
+#  $(top_builddir)/src/3rdPartyLibraries/ramust/procps/sig.o \
+#  $(top_builddir)/src/3rdPartyLibraries/ramust/procps/slab.o \
+#  $(top_builddir)/src/3rdPartyLibraries/ramust/procps/sysinfo.o \
+#  $(top_builddir)/src/3rdPartyLibraries/ramust/procps/version.o \
+#  $(top_builddir)/src/3rdPartyLibraries/ramust/procps/whattime.o
+
+# DQ (12/8/2006): Added to support memory useage under Linux
+# libastDiagnostics_la_OBJECTS = AstConsistencyTests.o AstWarnings.o AstStatistics.o AstPerformance.o $(ramustMemoryUsageObjs)
+
