@@ -2,18 +2,17 @@
 #define _MPIRANKDEPANALYSIS_H
 
 #include "rose.h"
-#include "common.h"
+#include "genericDataflowCommon.h"
 #include "VirtualCFGIterator.h"
 #include "cfgUtils.h"
-#include "CFGRewrite.h"
 #include "CallGraphTraverse.h"
 #include "analysisCommon.h"
 #include "analysis.h"
 #include "dataflow.h"
 #include "latticeFull.h"
+#include "VariableStateTransfer.h"
 #include "liveDeadVarAnalysis.h"
 #include "printAnalysisStates.h"
-#include "VariableStateTransfer.h"
 
 extern int MPIDepAnalysisDebugLevel;
 

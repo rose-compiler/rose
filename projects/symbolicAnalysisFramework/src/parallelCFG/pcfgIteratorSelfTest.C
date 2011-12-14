@@ -6,14 +6,13 @@
 #include <string>
 
 // dataflow analysis includes
-#include "common.h"
+#include "genericDataflowCommon.h"
 #include "variables.h"
 #include "analysisCommon.h"
 #include "functionState.h"
 #include "latticeFull.h"
 #include "analysis.h"
 #include "dataflow.h"
-#include "liveDeadVarAnalysis.h"
 #include "divAnalysis.h"
 #include "ConstrGraphAnalysis.h"
 

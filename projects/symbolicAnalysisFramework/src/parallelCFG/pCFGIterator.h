@@ -9,7 +9,7 @@
 #include <fstream>
 
 #include "pCFG.h"
-#include "common.h"
+#include "genericDataflowCommon.h"
 #include "virtualCFGIterator.h"
 #include "cfgUtils.h"
 #include "CallGraphTraverse.h"

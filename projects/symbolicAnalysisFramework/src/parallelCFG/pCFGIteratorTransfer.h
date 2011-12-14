@@ -2,7 +2,7 @@
 #define _PCFGITERATORTRANSFER_H
 
 #include "pCFG.h"
-#include "common.h"
+#include "genericDataflowCommon.h"
 #include "virtualCFGIterator.h"
 #include "cfgUtils.h"
 #include "CallGraphTraverse.h"
@@ -10,8 +10,6 @@
 #include "analysis.h"
 #include "dataflow.h"
 #include "latticeFull.h"
-#include "printAnalysisStates.h"
-#include "liveDeadVarAnalysis.h"
 #include "MPIDepAnalysis.h"
 #include "pcfgAnnotations.h"
 

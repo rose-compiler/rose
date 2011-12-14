@@ -6,7 +6,7 @@
 #include <iostream>
 #include <map>
 
-#include "common.h"
+#include "genericDataflowCommon.h"
 #include "VirtualCFGIterator.h"
 #include "cfgUtils.h"
 #include "analysisCommon.h"
