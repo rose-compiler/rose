@@ -2134,6 +2134,7 @@ projects/symbolicAnalysisFramework/src/unionFind/Makefile
 projects/symbolicAnalysisFramework/src/varBitVector/Makefile
 projects/symbolicAnalysisFramework/src/variables/Makefile
 projects/symbolicAnalysisFramework/src/varLatticeVector/Makefile
+projects/symbolicAnalysisFramework/src/parallelCFG/Makefile
 projects/symbolicAnalysisFramework/src/Makefile
 projects/symbolicAnalysisFramework/tests/Makefile
 projects/symbolicAnalysisFramework/include/Makefile
