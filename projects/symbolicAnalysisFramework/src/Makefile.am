@@ -15,7 +15,8 @@ SUBDIRS = analysis \
          varBitVector \
          variables \
          varLatticeVector \
-         chkptRangeAnalysis
+         chkptRangeAnalysis \
+	 taintAnalysis
 
 # there are inter dependencies among sub directories, parallel build is a bad idea for now
 #.NOTPARALLEL:
