@@ -298,18 +298,31 @@ public:
   void visit(SgNewExp *sgn) {
     // The placement arguments are used
     SgExprListExp* exprList = sgn->get_placement_args();
-    for(SgExpressionPtrList::iterator expr=exprList->get_expressions().begin();
-        expr!=exprList->get_expressions().end(); expr++)
-      ldva.used(*expr);
+    // NOTE: placement args are optional
+    // exprList could be NULL
+    // check for NULL before adding to used set
+    if(exprList) {
+        for(SgExpressionPtrList::iterator expr=exprList->get_expressions().begin();
+            expr!=exprList->get_expressions().end(); expr++)
+            ldva.used(*expr);
+    }
                                 
     // The placement arguments are used
+    // check for NULL before adding to used set
+    // not sure if this check is required for get_constructor_args()
     exprList = sgn->get_constructor_args()->get_args();
-    for(SgExpressionPtrList::iterator expr=exprList->get_expressions().begin();
-        expr!=exprList->get_expressions().end(); expr++)
-      ldva.used(*expr);
+    if(exprList) {
+        for(SgExpressionPtrList::iterator expr=exprList->get_expressions().begin();
+            expr!=exprList->get_expressions().end(); expr++)
+            ldva.used(*expr);
+    }
                                 
     // The built-in arguments are used (DON'T KNOW WHAT THESE ARE!)
-    ldva.used(sgn->get_builtin_args());
+    // check for NULL before adding to used set
+    // not sure if this check is required for get_builtin_args()
+    if(sgn->get_builtin_args()) {
+        ldva.used(sgn->get_builtin_args());
+    }
   }
   // Function Calls
   void visit(SgFunctionCallExp *sgn) {
