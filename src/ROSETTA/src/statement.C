@@ -1472,10 +1472,13 @@ Grammar::setUpStatements ()
   // TemplateClassDeclaration.setDataPrototype ( "SgClassDeclaration::class_types", "class_type", "= SgClassDeclaration::e_class",
   //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (11/20/2011): Template declarations don't have a type, the SgTemplateType is used for template instantiations only.
+  // DQ (12/12/2011): SgTemplateType IR nodes were never used in the EDG 3.3 connection. They are only used in the newer EDG 4.3 connection.
+  // DQ (11/20/2011): OLD INCORRECT COMMENT: Template declarations don't have a type, the SgTemplateType is used for template instantiations only.
   // TemplateClassDeclaration.setDataPrototype ( "SgTemplateType*", "type", "= NULL",
   //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE, CLONE_PTR);
-     TemplateClassDeclaration.setDataPrototype ( "SgType*", "type", "= NULL",
+  // TemplateClassDeclaration.setDataPrototype ( "SgType*", "type", "= NULL",
+  //            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE, CLONE_PTR);
+     TemplateClassDeclaration.setDataPrototype ( "SgClassType*", "type", "= NULL",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE, CLONE_PTR);
 
      TemplateClassDeclaration.setDataPrototype ( "SgTemplateClassDefinition*", "definition", "= NULL",

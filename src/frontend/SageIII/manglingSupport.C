@@ -102,18 +102,39 @@ joinMangledQualifiers (const SgName& base, const SgName& name)
      return SgName (mangled_name.c_str ());
    }
 
-const SgFunctionDefinition *
+const SgFunctionDefinition*
 findRootFunc (const SgScopeStatement* scope)
-{
-  if (scope) {
-    if (scope->variantT () == V_SgFunctionDefinition)
-      return isSgFunctionDefinition (scope);
-    else
-      return findRootFunc (scope->get_scope ());
-  }
+   {
+  // DQ (12/13/2011): This function is being called recursively (infinite recursion) for test2011_187.C (added support for SgTemplateFunctionDefinition).
+
+  // printf ("Inside of findRootFunc(scope = %p) \n",scope);
+     if (scope != NULL)
+        {
+          if (scope->variantT () == V_SgFunctionDefinition)
+             {
+               return isSgFunctionDefinition (scope);
+             }
+            else
+             {
+               if (scope->variantT () == V_SgTemplateFunctionDefinition)
+                  {
+                    return isSgTemplateFunctionDefinition (scope);
+                  }
+                 else
+                  {
+                 // DQ (12/13/2011): Adding test for improperly set scope.
+                    SgScopeStatement* nextOuterScope = scope->get_scope();
+                 // printf ("nextOuterScope = %p = %s \n",nextOuterScope,nextOuterScope->class_name().c_str());
+                    ROSE_ASSERT(nextOuterScope != scope);
+
+                    return findRootFunc(scope->get_scope());
+                  }
+             }
+        }
+
   // Not found.
-  return NULL;
-}
+     return NULL;
+   }
 
 
 // size_t getLocalScopeNum ( SgFunctionDefinition* func_def, const SgScopeStatement* target)
