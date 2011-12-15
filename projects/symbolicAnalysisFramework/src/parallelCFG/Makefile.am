@@ -41,16 +41,52 @@ INCLUDES = $(ROSE_INCLUDES) \
 noinst_LTLIBRARIES = libSafpcfgAnalyses.la
 libSafpcfgAnalyses_la_SOURCES = pCFG.C \
 				MPIDepAnalysis.C \
-				pcfgAnnotations.C \
+				pCFGAnnotations.C \
 				pCFGIteratorTransfer.C \
 				pCFGIterator.C
 
-include_HEADERS = pCFG.h pCFGIterator.h pCFGIteratorTransfer.h pcfgAnnotations.h MPIDepAnalysis.h
+include_HEADERS = pCFG.h pCFGIterator.h pCFGIteratorTransfer.h pCFGAnnotations.h MPIDepAnalysis.h
 
 noinst_PROGRAMS = pcfgiterator
-pcfgiterator_SOURCES = pcfgIteratorSelfTest.C
+pcfgiterator_SOURCES = pCFGIteratorSelfTest.C
 
 LDADD = $(ROSE_LIBS) libSafpcfgAnalyses.la
+
+# Currently dataflow framework cannot handle mpicxx.h
+# we use .c to test this code
+# more test codes to be added after optimizing the match
+TESTCODES_TO_PASS = \
+test1.c \
+test2.c
+
+TEST_ANALYSIS = ./pcfgiterator
+
+ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 --edg:restrict
+
+C_FILES = ${TESTCODES_TO_PASS:.c=.c-o}
+
+$(C_FILES): $(TEST_ANALYSIS) $(srcdir)/tests/$(@:.c-o:.c)
+	cp $(srcdir)/tests/$(@:.c-o=.c) $(@:.c-o=.temp.c)
+	$(TEST_ANALYSIS) $(ROSE_FLAGS) -I$(srcdir)/tests -c $(@:.c-o=.temp.c) && touch $@
+
+check-c: $(C_FILES)
+
+clean-local:
+	rm -f *.o rose_*.C
+	rm -f *.dot
+	rm -f *.mod *.rmod
+	rm -f *.html
+	rm -rf dbg_imgs
+	rm -f *.temp.c
+	rm -f *.c-o
+
+distclean-local:
+
+check-local: check-c
+	@echo "******************************************************************************************************************************"
+	@echo "*** ROSE/projects/symbolicAnalysisFramework/src/parallelCFG/tests : make check rule complete (terminated normally) ***"
+	@echo "******************************************************************************************************************************"
+
 
 #LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) \
 #	$(SAF_BUILD_ROOT)/src/parallelCFG/libSafpcfgAnalyses.la

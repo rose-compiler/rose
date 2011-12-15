@@ -10,7 +10,6 @@
 
 #include "pCFG.h"
 #include "genericDataflowCommon.h"
-#include "virtualCFGIterator.h"
 #include "cfgUtils.h"
 #include "CallGraphTraverse.h"
 #include "analysisCommon.h"
@@ -20,7 +19,7 @@
 #include "printAnalysisStates.h"
 #include "liveDeadVarAnalysis.h"
 #include "MPIDepAnalysis.h"
-#include "pcfgAnnotations.h"
+#include "pCFGAnnotations.h"
 #include "pCFGIteratorTransfer.h"
 
 #include "boost/random.hpp"
@@ -117,7 +116,7 @@ class pCFGIterator : public pCFG_FWDataflow
     void printSubGraphInit(unsigned int);
     void printSubGraphEnd();
 
-    void writeToDot();
+    void writeToDot(string filename);
 
     void filterSendRecv(const pCFGNode&, set<unsigned int>&, set<unsigned int>&, set<unsigned int>&);
     bool matchSendRecv(const pCFGNode&, set<unsigned int>&, set<unsigned int>&, set<unsigned int>&, set<unsigned int>&, set<unsigned int>&);

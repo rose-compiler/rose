@@ -30,7 +30,7 @@ void pCFGIteratorTransfer::visit(SgIfStmt* sgif)
 {
     
     if(isMpiDepCond(sgif)) {
-        pcfgSplitAnnotation* annotation = dynamic_cast<pcfgSplitAnnotation*> (sgif->getAttribute("pCFGAnnotation"));
+        // pcfgSplitAnnotation* annotation = dynamic_cast<pcfgSplitAnnotation*> (sgif->getAttribute("pCFGAnnotation"));
         //TODO: stick this annotation to pCFGState maybe ??
 
         //we need to split process set

@@ -3,7 +3,6 @@
 
 #include "pCFG.h"
 #include "genericDataflowCommon.h"
-#include "virtualCFGIterator.h"
 #include "cfgUtils.h"
 #include "CallGraphTraverse.h"
 #include "analysisCommon.h"
@@ -11,7 +10,7 @@
 #include "dataflow.h"
 #include "latticeFull.h"
 #include "MPIDepAnalysis.h"
-#include "pcfgAnnotations.h"
+#include "pCFGAnnotations.h"
 
 class IntraPCFGTransferVisitor : public ROSE_VisitorPatternDefaultBase
 {

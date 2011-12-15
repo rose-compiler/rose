@@ -171,7 +171,7 @@ bool pCFGIterator::runAnalysis_pCFG(const Function& func, NodeState* state, pCFG
         Dbg::dbg << indent << "RESTARTING FROM CHKPT " << chkpt->str(indent+"    ") << endl;
     }
 
-    bool shouldMatch = false;
+    // bool shouldMatch = false;
     bool movedPSet = false;
 
     // outer-loop
@@ -208,11 +208,11 @@ bool pCFGIterator::runAnalysis_pCFG(const Function& func, NodeState* state, pCFG
             // process the curPset until it is blocked
             while(1) {
                 pair<set<pCFGNode>::iterator, bool> insertReturn = visitedPCFGNodes.insert(curNode);
-                bool firstTimeVisit = insertReturn.second;        // may be required
+                //bool firstTimeVisit = insertReturn.second;        // may be required
 
                 // dataflow node corresponding to this pset
                 const DataflowNode& dfNode = curNode.getCurNode(curPSet);
-                SgNode *sgn = dfNode.getNode();
+                // SgNode *sgn = dfNode.getNode();
 
                 // get the state corresponding to this analysis
                 // lattice information above/below
@@ -261,9 +261,7 @@ bool pCFGIterator::runAnalysis_pCFG(const Function& func, NodeState* state, pCFG
                     // correct state below this node.
                                         
                     // The new information below this pCFGNode. Initially a copy of the above information
-                    vector<Lattice*> dfInfoNewBelow;
-                                        
-                    int j=0;
+                    vector<Lattice*> dfInfoNewBelow;                                        
                                        
                     // Initialize dfInfoNewBelow to be the copy of the information above this node.
                     //    It will then get pushed through the transfer function before being unioned 
@@ -607,10 +605,10 @@ void pCFGIterator::printSubGraphEnd()
     nodeouts << "}\n";
 }
 
-void pCFGIterator::writeToDot()
+void pCFGIterator::writeToDot(string filename)
 {
     ofstream file;
-    file.open("pcfg.dot");
+    file.open(filename.c_str());
     file << "digraph pcfg {\n";
     file << "node [shape = box]; " << endl;
     file << nodeouts.str() << edgeouts.str();

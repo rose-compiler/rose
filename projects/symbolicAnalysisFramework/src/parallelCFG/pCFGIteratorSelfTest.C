@@ -19,8 +19,8 @@
 // pcfg includes
 #include "pCFG.h"
 #include "MPIDepAnalysis.h"
-#include "pcfgAnnotations.h"
-#include "pcfgIterator.h"
+#include "pCFGAnnotations.h"
+#include "pCFGIterator.h"
 
 
 int main(int argc, char* argv[])
@@ -50,7 +50,9 @@ int main(int argc, char* argv[])
     pCFGIterator pcfgiterator(&ldva, &mda);
     UnstructuredPassInterDataflow upid_pcfg(&pcfgiterator);
     upid_pcfg.runAnalysis();
-    pcfgiterator.writeToDot();
+    ostringstream filename;
+    filename << (project->get_sourceFileNameList())[0] << "_pcfg.dot";    
+    pcfgiterator.writeToDot(filename.str());
     
     return 0;
 }
