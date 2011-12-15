@@ -286,6 +286,10 @@ HEADER_SCOPE_STATEMENT_START
           SgNamespaceSymbol* lookup_namespace_symbol  (const SgName& n) const;
           SgTemplateSymbol*  lookup_template_symbol   (const SgName& n) const;
 
+       // DQ (12/12/2011): Added support for template declarations in the AST.
+          SgTemplateSymbol*  lookup_class_template_symbol    (const SgName& n) const;
+          SgTemplateSymbol*  lookup_template_function_symbol (const SgName& n, const SgType* t) const;
+
        //! get the first symbol independent of name (lack of name is stored as internal state)
           SgSymbol*          first_any_symbol        () const;
        // SgVariableSymbol*  first_var_symbol        () const ROSE_DEPRECATED_FUNCTION;
@@ -2316,6 +2320,9 @@ HEADER_TEMPLATE_DECLARATION_STATEMENT_START
        // DQ (2/10/2007): Marked as virtual to be consistent
           virtual SgSymbol* get_symbol_from_symbol_table() const;
 
+       // DQ (12/12/2011): Explicit access function.
+          SgType* get_type();
+
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
@@ -4240,6 +4247,21 @@ SgScopeStatement::lookup_template_symbol(const SgName& n) const
    {
      assert (p_symbol_table != NULL);
      return p_symbol_table->find_template(n);
+   }
+
+       // DQ (12/12/2011): Added support for template declarations in the AST.
+SgTemplateSymbol*
+SgScopeStatement::lookup_class_template_symbol    (const SgName& n) const
+   {
+     assert (p_symbol_table != NULL);
+     return p_symbol_table->find_template_class(n);
+   }
+
+SgTemplateSymbol*
+SgScopeStatement::lookup_template_function_symbol (const SgName& n, const SgType* t) const
+   {
+     assert (p_symbol_table != NULL);
+     return p_symbol_table->find_template_function(n,t);
    }
 
 // DQ (9/7/2006): Previously removed functionality, restored by request from Beata at ANL.
@@ -11429,7 +11451,7 @@ SgClassDefinition::get_declaration() const
      ROSE_ASSERT(this != NULL);
 
      ROSE_ASSERT(get_parent() != NULL);
-  // printf ("In SgClassDefinition::get_declaration(): get_parent() = %p = %s \n",get_parent(),get_parent()->class_name().c_str());
+     printf ("In SgClassDefinition::get_declaration(): get_parent() = %p = %s \n",get_parent(),get_parent()->class_name().c_str());
 
      SgClassDeclaration *decl = isSgClassDeclaration(get_parent());
      assert( get_parent() == NULL || decl != NULL ); 
@@ -13018,6 +13040,57 @@ SgTemplateDeclaration::get_symbol_from_symbol_table() const
      ROSE_ASSERT(get_scope() != NULL);
      ROSE_ASSERT(get_scope()->get_symbol_table() != NULL);
      return get_scope()->get_symbol_table()->find(this);
+   }
+
+
+SgType*
+SgTemplateDeclaration::get_type()
+   {
+  // DQ (12/12/2011): Added function to support "get_type()" on the derived IR nodes.  Maybe
+  // this should be a virtual function, but no, because the return types at the derived classes
+  // are different and some compilers (MS Visual Studio) do not support covariant return types.
+
+     SgType* returnType = NULL;
+     
+     switch (variantT())
+        {
+          case V_SgTemplateClassDeclaration:
+             {
+               SgTemplateClassDeclaration* decl = isSgTemplateClassDeclaration(this);
+               returnType = decl->get_type();
+               break;
+             }
+
+          case V_SgTemplateFunctionDeclaration:
+             {
+               SgTemplateFunctionDeclaration* decl = isSgTemplateFunctionDeclaration(this);
+               returnType = decl->get_type();
+               break;
+             }
+
+          case V_SgTemplateMemberFunctionDeclaration:
+             {
+               SgTemplateMemberFunctionDeclaration* decl = isSgTemplateMemberFunctionDeclaration(this);
+               returnType = decl->get_type();
+               break;
+             }
+
+          case V_SgTemplateVariableDeclaration:
+             {
+               SgTemplateVariableDeclaration* decl = isSgTemplateVariableDeclaration(this);
+               returnType = decl->get_type();
+               break;
+             }
+
+          default:
+             {
+               printf ("Default reached in SgTemplateDeclaration::get_type() variant = %d \n",variantT());
+               ROSE_ASSERT(false);
+             }
+        }
+
+     ROSE_ASSERT(returnType != NULL);
+     return returnType;
    }
 
 SOURCE_TEMPLATE_DECLARATION_STATEMENT_END

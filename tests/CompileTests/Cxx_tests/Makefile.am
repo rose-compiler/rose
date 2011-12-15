@@ -162,7 +162,10 @@ test2011_180.C \
 test2011_181.C \
 test2011_182.C \
 test2011_183.C \
-test2011_184.C 
+test2011_184.C \
+test2011_185.C \
+test2011_186.C \
+test2011_187.C 
 
 
 else

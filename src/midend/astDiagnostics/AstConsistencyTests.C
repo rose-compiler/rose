@@ -1140,22 +1140,22 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                  // ROSE_ASSERT(functionDeclaration != NULL);
                     if (functionDeclaration != NULL)
                        {
-                    bool isFunctionDefinition = (functionDeclaration->get_definition() != NULL);
+                         bool isFunctionDefinition = (functionDeclaration->get_definition() != NULL);
 
-                 // Only enforce the scope to be valid if this is the defining function declaration 
-                 // (later for any function prototype of a defining function declaration!)
-                    if (isFunctionDefinition == true)
-                       {
-                         ROSE_ASSERT(initializedName->get_scope() != NULL);
-                       }
+                      // Only enforce the scope to be valid if this is the defining function declaration 
+                      // (later for any function prototype of a defining function declaration!)
+                         if (isFunctionDefinition == true)
+                            {
+                              ROSE_ASSERT(initializedName->get_scope() != NULL);
+                            }
 
-                 // Cong (10/20/2010): Here we test if the parent of this initialized name does have it as
-                 // an argument. This is to detect if several function parameter lists own the same 
-                 // initialized name.
+                      // Cong (10/20/2010): Here we test if the parent of this initialized name does have it as
+                      // an argument. This is to detect if several function parameter lists own the same 
+                      // initialized name.
 
-                    const SgInitializedNamePtrList& initNameList = parentParameterList->get_args();
-                    SgInitializedNamePtrList::const_iterator result = std::find(initNameList.begin(), initNameList.end(), initializedName);
-                    ROSE_ASSERT(result != initNameList.end());
+                         const SgInitializedNamePtrList& initNameList = parentParameterList->get_args();
+                         SgInitializedNamePtrList::const_iterator result = std::find(initNameList.begin(), initNameList.end(), initializedName);
+                         ROSE_ASSERT(result != initNameList.end());
                        }
                       else
                        {

@@ -3867,8 +3867,8 @@ HEADER_SYMBOL_TABLE_START
           SgTemplateSymbol*  find_template();   //! Complexity O(log n) for first match against name, then O(n)
 
        // DQ (12/12/2011): New functions to support template declarations in the AST.
-          SgTemplateSymbol*  find_template_function(const SgName&, const SgType* name); //! Complexity O(log n) for first match against name, then O(n)
-          SgTemplateSymbol*  find_template_class   (const SgName&);                     //! Complexity O(log n) for first match against name, then O(n)
+          SgTemplateSymbol*  find_template_function(const SgName& name, const SgType* type); //! Complexity O(log n) for first match against name, then O(n)
+          SgTemplateSymbol*  find_template_class   (const SgName& name);                     //! Complexity O(log n) for first match against name, then O(n)
 
 #if 0
        // DQ (11/27/2010): Removing these to avoid updating them to have consistant case handling support (deprecated 4-5 years ago).
@@ -7401,7 +7401,7 @@ SgSymbolTable::find_template_function(const SgName& nm, const SgType* t)
    {
      SgTemplateSymbol *s = NULL;
      ROSE_ASSERT(p_table != NULL);
-#if 0
+#if 1
   // Find the sublist that match the name.
      std::pair<hash_iterator, hash_iterator> range = p_table->equal_range(nm);
 

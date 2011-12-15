@@ -2835,38 +2835,62 @@ SgTemplateParameterVal::get_template_parameter_name() const
      SgTemplateDeclaration* templateDeclaration = TransformationSupport::getTemplateDeclaration(this);
      ROSE_ASSERT(templateDeclaration != NULL);
 
+     int template_parameter_position = get_template_parameter_position();
+
      SgTemplateParameterPtrList & templateParameters = templateDeclaration->get_templateParameters();
 
-     int template_parameter_position = get_template_parameter_position();
+  // DQ (12/13/2011): this is a problem demonstrated by test2011_186.C, so we have to disable the template parameter position error checking.
+     bool getParameterNameFromTemplateParameterList = true;
+     if (template_parameter_position >= (long int) templateParameters.size())
+        {
+          printf ("This is a reference to a template parameter in an outer scope (e.g. we are a part of a member function with out explicit templates within a templated class declaration) \n");
+          getParameterNameFromTemplateParameterList = false;
+        }
 
   // printf ("In SgTemplateParameterVal::get_template_parameter_name(): template_parameter_position = %d \n",template_parameter_position);
   // printf ("In SgTemplateParameterVal::get_template_parameter_name(): templateParameters.size()   = %zu \n",templateParameters.size());
 
-     ROSE_ASSERT(template_parameter_position >= 0);
-     ROSE_ASSERT(template_parameter_position < (long int)(templateParameters.size()));
-     
-  // SgTemplateParameter* templateParameter = templateParameters[position];
-
-     SgName name = "__template_parameter_name__error__";
-
-     SgTemplateParameter* templateParameter = NULL;
-     if (template_parameter_position >= 0)
+     if (template_parameter_position >= (long int)(templateParameters.size()))
         {
-          templateParameter = templateParameters[template_parameter_position];
-          ROSE_ASSERT(templateParameter != NULL);
+          printf ("In SgTemplateParameterVal::get_template_parameter_name(): template_parameter_position = %d \n",template_parameter_position);
+          printf ("In SgTemplateParameterVal::get_template_parameter_name(): templateParameters.size()   = %zu \n",templateParameters.size());
+        }
 
-       // printf ("In SgTemplateParameterVal::get_template_parameter_name(): templateParameter->get_parameterType() = %d \n",templateParameter->get_parameterType());
+     SgName name;
+     if (getParameterNameFromTemplateParameterList == true)
+        {
+          ROSE_ASSERT(template_parameter_position >= 0);
+          ROSE_ASSERT(template_parameter_position < (long int)(templateParameters.size()));
 
-          ROSE_ASSERT(templateParameter->get_parameterType() == SgTemplateParameter::nontype_parameter);
-       // ROSE_ASSERT(templateParameter->get_parameterType() == SgTemplateParameter::template_parameter);
+       // SgTemplateParameter* templateParameter = templateParameters[position];
 
-          SgInitializedName* initializedName = templateParameter->get_initializedName();
-          ROSE_ASSERT(initializedName != NULL);
+          name = "__template_parameter_name__error__";
 
-       // name = "__template_parameter_name__";
-          name = initializedName->get_name();
+          SgTemplateParameter* templateParameter = NULL;
+          if (template_parameter_position >= 0)
+             {
+               templateParameter = templateParameters[template_parameter_position];
+               ROSE_ASSERT(templateParameter != NULL);
 
-       // printf ("In SgTemplateParameterVal::get_template_parameter_name(): name of template parameter used = %s \n",name.str());
+            // printf ("In SgTemplateParameterVal::get_template_parameter_name(): templateParameter->get_parameterType() = %d \n",templateParameter->get_parameterType());
+
+               ROSE_ASSERT(templateParameter->get_parameterType() == SgTemplateParameter::nontype_parameter);
+            // ROSE_ASSERT(templateParameter->get_parameterType() == SgTemplateParameter::template_parameter);
+
+               SgInitializedName* initializedName = templateParameter->get_initializedName();
+               ROSE_ASSERT(initializedName != NULL);
+
+            // name = "__template_parameter_name__";
+               name = initializedName->get_name();
+
+            // printf ("In SgTemplateParameterVal::get_template_parameter_name(): name of template parameter used = %s \n",name.str());
+             }
+        }
+       else
+        {
+       // This is not the favored case since i think it can be problematic to use template parameter names.
+          name = get_valueString();
+          printf ("Using the string in the template parameteer value = %s \n",name.str());
         }
 
      return name;
@@ -5181,10 +5205,27 @@ SgType*
 $CLASSNAME::get_type() const
    {
      ROSE_ASSERT(this != NULL);
-     ROSE_ASSERT(get_symbol() != NULL);
+
+     SgSymbol* symbol = this->get_symbol();
+     if (symbol == NULL)
+        {
+          printf ("Error: In $CLASSNAME::get_type(): symbol == NULL this = %p = %s \n",this,this->class_name().c_str());
+        }
+     ROSE_ASSERT(symbol != NULL);
+
   // DQ (9/27/2006): Added assertion
-     ROSE_ASSERT(get_symbol()->get_type() != NULL);
-     return get_symbol()->get_type();
+  // ROSE_ASSERT(get_symbol()->get_type() != NULL);
+
+     printf ("In $CLASSNAME::get_type(): symbol = %p = %s \n",symbol,symbol->class_name().c_str());
+     SgType* type = symbol->get_type();
+     if (type == NULL)
+        {
+          printf ("Error: In $CLASSNAME::get_type(): type == NULL symbol = %p = %s \n",symbol,symbol->class_name().c_str());
+        }
+     ROSE_ASSERT(type != NULL);
+
+  // return get_symbol()->get_type();
+     return type;
    }
 
 SOURCE_GET_TYPE_FROM_SYMBOL_END
