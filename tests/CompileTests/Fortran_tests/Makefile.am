@@ -710,7 +710,6 @@ F90_TESTCODES_REQUIRED_TO_PASS += \
      test2011_62.f90 \
      test2011_63.f90 \
      test2011_64.f90 \
-     test2011_66.f90 \
      test2011_68.f90 \
      test2011_69.f90 \
      test2011_71.f90 \
@@ -720,6 +719,8 @@ F90_TESTCODES_REQUIRED_TO_PASS += \
 
 # DQ (9/30/2011): There is a long history of this being a statistical failure on at least OSX systems. 
 # test2010_161.f90 
+# Liao 12/15/2011. This one also uses alternative return according to Dan
+#     test2011_66.f90  
 
 
 # DXN (as of 08/10/2011):
