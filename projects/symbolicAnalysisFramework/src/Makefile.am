@@ -16,7 +16,8 @@ SUBDIRS = analysis \
          variables \
          varLatticeVector \
          chkptRangeAnalysis \
-	 taintAnalysis
+	 taintAnalysis \
+	 parallelCFG
 
 # there are inter dependencies among sub directories, parallel build is a bad idea for now
 #.NOTPARALLEL:
