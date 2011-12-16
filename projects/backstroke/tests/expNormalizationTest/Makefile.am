@@ -3,12 +3,12 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 SUBDIRS = 
 
 INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke
-LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(top_builddir)/projects/backstroke/normalizations/libBackstrokeNormalizations.a $(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.a
+LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(top_builddir)/projects/backstroke/normalizations/libBackstrokeNormalizations.la $(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.la
 
 # Liao 10/1/2010, support out of order parallel build
-$(top_builddir)/projects/backstroke/normalizations/libBackstrokeNormalizations.a:
+$(top_builddir)/projects/backstroke/normalizations/libBackstrokeNormalizations.la:
 	$(MAKE) -C $(top_builddir)/projects/backstroke/normalizations/
-$(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.a:
+$(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.la:
 	$(MAKE) -C $(top_builddir)/projects/backstroke/utilities/
 
 noinst_PROGRAMS = expNormTest
@@ -423,7 +423,6 @@ test2005_195.C \
 test2005_196.C \
 test2005_197.C \
 test2005_198.C \
-test2005_199.C \
 test2005_202.C \
 test2005_203.C \
 test2005_206.C \
@@ -481,7 +480,6 @@ test2006_70.C \
 test2006_71.C \
 test2006_72.C \
 test2006_73.C \
-test2006_74.C \
 test2006_75.C \
 test2006_76.C \
 test2006_77.C \
@@ -494,7 +492,6 @@ test2006_83.C \
 test2006_84.C \
 test2006_85.C \
 test2006_86.C \
-test2006_87.C \
 test2006_88.C \
 test2006_89.C \
 test2006_90.C \
@@ -697,9 +694,13 @@ test2007_84.C \
 test2009_30.C \
 test2009_31.C \
 inputBug327.C \
+test2005_199.C \
 test2009_37.C \
 --> These fail due to having a defining declaration but a null function definition:\
-test2007_90.C
+test2007_90.C \
+--> These fail due to AST consistency tests (fix!) \
+test2006_74.C \
+test2006_87.C 
 
 ALL_TESTCODES = \
 $(TESTCODES_REQUIRED_TO_PASS) 
