@@ -1,38 +1,14 @@
 #include "expressionHandler.h"
 #include "utilities/utilities.h"
-#include "utilities/cppDefinesAndNamespaces.h"
 #include "pluggableReverser/eventProcessor.h"
+#include <boost/foreach.hpp>
+
+#define foreach BOOST_FOREACH
+#define reverse_foreach BOOST_REVERSE_FOREACH
+
 
 using namespace std;
 using namespace SageBuilder;
-
-/******************************************************************************
- ******** Definition of member functions of NullExpressionHandler  ***********/
-
-ExpressionReversal NullExpressionHandler::generateReverseAST(SgExpression* exp, const EvaluationResult& evaluationResult)
-{
-	return ExpressionReversal(SageInterface::copyExpression(exp), NULL);
-}
-
-vector<EvaluationResult> NullExpressionHandler::evaluate(SgExpression* exp, const VariableVersionTable& var_table, bool reverseValueUsed)
-{
-	vector<EvaluationResult> results;
-
-	// Now NullExpressionHander only handles expressions with side effects. Those without side effects are
-	// handled by IdentityExpressionHandler.
-	// If the value of the expression is used, we cannot return NULL.
-	if (!BackstrokeUtility::containsModifyingExpression(exp) || reverseValueUsed)
-		return results;
-
-	//We can't ignore reversing functions
-	if (!NodeQuery::querySubTree(exp, V_SgFunctionCallExp).empty())
-	{
-		return results;
-	}
-
-	results.push_back(EvaluationResult(this, exp, var_table));
-	return results;
-}
 
 /******************************************************************************
  **** Definition of member functions of IdentityExpressionHandler  ***********/
@@ -56,19 +32,17 @@ ExpressionReversal IdentityExpressionHandler::generateReverseAST(SgExpression* e
 	return ExpressionReversal(forwardExpression, reverseExpression);
 }
 
-vector<EvaluationResult> IdentityExpressionHandler::evaluate(SgExpression* exp, const VariableVersionTable& var_table, bool reverseValueUsed)
+EvaluationResult IdentityExpressionHandler::evaluate(SgExpression* exp, const VariableVersionTable& var_table, bool reverseValueUsed)
 {
-	vector<EvaluationResult> results;
-
 	// If an expression does not modify any value and its value is used, the reverse is the same as itself
 	if (!BackstrokeUtility::containsModifyingExpression(exp))
 	{
 		EvaluationResult result(this, exp, var_table);
 		result.setAttribute(!reverseValueUsed);
-		results.push_back(result);
+		return result;
 	}
 
-	return results;
+	return EvaluationResult();
 }
 
 /******************************************************************************
@@ -89,9 +63,8 @@ ExpressionReversal StoreAndRestoreExpressionHandler::generateReverseAST(SgExpres
 	return ExpressionReversal(fwd_exp, rvs_exp);
 }
 
-vector<EvaluationResult> StoreAndRestoreExpressionHandler::evaluate(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used)
+EvaluationResult StoreAndRestoreExpressionHandler::evaluate(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used)
 {
-	vector<EvaluationResult> results;
 	SgExpression* var_to_save = NULL;
 
 	if (isSgPlusPlusOp(exp) || isSgMinusMinusOp(exp))
@@ -100,7 +73,7 @@ vector<EvaluationResult> StoreAndRestoreExpressionHandler::evaluate(SgExpression
 		var_to_save = isSgBinaryOp(exp)->get_lhs_operand();
 
 	if (var_to_save == NULL)
-		return results;
+		return EvaluationResult();
 
 	if (VariableRenaming::getVarName(var_to_save) != VariableRenaming::emptyName)
 	{
@@ -123,8 +96,8 @@ vector<EvaluationResult> StoreAndRestoreExpressionHandler::evaluate(SgExpression
 
 		EvaluationResult result(this, exp, new_var_table, cost);
 		result.setAttribute(var_to_save);
-		results.push_back(result);
+		return result;
 	}
 
-	return results;
+	return EvaluationResult();
 }
