@@ -5,13 +5,14 @@
 
 #include "defUseChains.h"
 #include "util.h"
-#include <staticSingleAssignment.h>
+#include <ssaUnfilteredCfg.h>
 #include <VariableRenaming.h>
 #include <boost/foreach.hpp>
 
 #define foreach BOOST_FOREACH
 
 using namespace std;
+using namespace ssa_unfiltered_cfg;
 
 namespace SDG
 {
@@ -38,7 +39,7 @@ void generateDefUseChainsFromVariableRenaming(SgProject* project, DefUseChains& 
 
 void generateDefUseChainsFromSSA(SgProject* project, DefUseChains& defUseChains)
 {
-    StaticSingleAssignment ssa(project);
+    SSA_UnfilteredCfg ssa(project);
     ssa.run();
         
     vector<SgNode*> astNodes = NodeQuery::querySubTree(project, V_SgNode);
@@ -47,7 +48,7 @@ void generateDefUseChainsFromSSA(SgProject* project, DefUseChains& defUseChains)
         set<SgVarRefExp*> uses = ssa.getUsesAtNode(node);
         foreach (SgVarRefExp* varRef, uses)
         {
-            StaticSingleAssignment::ReachingDefPtr reachingDef = ssa.getDefinitionForUse(varRef);
+            ReachingDef::ReachingDefPtr reachingDef = ssa.getDefinitionForUse(varRef);
 
             set<VirtualCFG::CFGNode> defs = reachingDef->getActualDefinitions();
 
@@ -78,7 +79,7 @@ void generateDefUseChainsFromSSA(SgProject* project, DefUseChains& defUseChains)
         }
 
         
-        typedef StaticSingleAssignment::NodeReachingDefTable NodeReachingDefTable;
+        typedef SSA_UnfilteredCfg::NodeReachingDefTable NodeReachingDefTable;
         const NodeReachingDefTable& reachingDefs = ssa.getLastVersions(funcDef);
         foreach (const NodeReachingDefTable::value_type& varAndDefs, reachingDefs)
         {
