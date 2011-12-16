@@ -2,7 +2,6 @@
 #define _______DDG_H__________
 
 #include "cong_staticCFG.h"
-using namespace StaticCFG;
 
 namespace SDG
 {
@@ -22,7 +21,7 @@ struct DDGEdge
 
 
 class DataDependenceGraph : public boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS, 
-                CFGNodePtr, DDGEdge>
+                StaticCFG::CFGNodePtr, DDGEdge>
 {
 public:
         typedef boost::graph_traits<DataDependenceGraph>::vertex_descriptor Vertex;
@@ -32,13 +31,13 @@ public:
         DataDependenceGraph() {}
 
         //! The constructor building the DDG from a CFG.
-        DataDependenceGraph(const ControlFlowGraph& cfg)
+        DataDependenceGraph(const StaticCFG::ControlFlowGraph& cfg)
         {
                 build(cfg);
         }
 
         //! Build the DDG from the given CFG.
-        void build(const ControlFlowGraph& cfg);
+        void build(const StaticCFG::ControlFlowGraph& cfg);
 
         //! Write the DDG to a dot file.
         void toDot(const std::string& filename) const;

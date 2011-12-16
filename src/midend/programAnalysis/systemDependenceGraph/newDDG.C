@@ -7,6 +7,7 @@
 
 #define foreach BOOST_FOREACH
 
+using namespace StaticCFG;
 
 namespace SDG
 {
