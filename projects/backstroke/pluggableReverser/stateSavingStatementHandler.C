@@ -8,7 +8,11 @@
 #include <boost/lambda/bind.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <utilities/utilities.h>
-#include <utilities/cppDefinesAndNamespaces.h>
+#include <boost/foreach.hpp>
+
+#define foreach BOOST_FOREACH
+#define reverse_foreach BOOST_REVERSE_FOREACH
+
 
 using namespace SageBuilder;
 using namespace std;
@@ -273,13 +277,10 @@ void StateSavingStatementHandler::saveOneVariable(const VariableRenaming::VarNam
 			//Declare the temporary variable to store the popped value
 			SgVariableDeclaration* tempVarDecl;
 			SgExpression* tempVarRef;
-			SgAssignOp* reassignTempVar;
-			boost::tie(tempVarDecl, reassignTempVar, tempVarRef) = 
-					BackstrokeUtility::CreateTempVariableForExpression(popVal(varType), reverseBody, true);
-			SageInterface::deepDelete(reassignTempVar);
-			reassignTempVar = NULL;
+			boost::tie(tempVarDecl, tempVarRef) = 
+					SageInterface::createTempVariableForExpression(popVal(varType), reverseBody, true, NULL);
 
-			//Build if-statments that check for the actual type of the popped value
+			//Build if-statements that check for the actual type of the popped value
 			vector<SgIfStmt*> reverseIfStatements;
 			for (size_t i = 0; i < castedVars.size(); i++)
 			{
@@ -350,10 +351,8 @@ void StateSavingStatementHandler::saveOneVariable(const VariableRenaming::VarNam
 			//
 
 			//Declare the temporary variable to store the popped value
-			boost::tie(tempVarDecl, reassignTempVar, tempVarRef) = 
-					BackstrokeUtility::CreateTempVariableForExpression(popVal_front(varType), commitBody, true);
-			SageInterface::deepDelete(reassignTempVar);
-			reassignTempVar = NULL;
+			boost::tie(tempVarDecl, tempVarRef) = 
+					SageInterface::createTempVariableForExpression(popVal_front(varType), commitBody, true, NULL);
 
 			//Build if-statments that check for the actual type of the popped value
 			vector<SgIfStmt*> commitIfStatements;
@@ -466,8 +465,8 @@ StatementReversal StateSavingStatementHandler::generateReverseAST(SgStatement* s
 	if (!child_result.empty())
 	{
 		StatementReversal child_reversal = child_result[0].generateReverseStatement();
-		SageInterface::prependStatement(child_reversal.fwd_stmt, forwardBody);
-		SageInterface::appendStatement(child_reversal.rvs_stmt, reverseBody);
+		SageInterface::prependStatement(child_reversal.forwardStatement, forwardBody);
+		SageInterface::appendStatement(child_reversal.reverseStatement, reverseBody);
 	}
 	else
 	{
@@ -511,18 +510,16 @@ StatementReversal StateSavingStatementHandler::generateReverseAST(SgStatement* s
 	return StatementReversal(forwardBody, reverseBody, commitBody);
 }
 
-std::vector<EvaluationResult> StateSavingStatementHandler::evaluate(SgStatement* stmt, const VariableVersionTable& var_table)
+EvaluationResult StateSavingStatementHandler::evaluate(SgStatement* stmt, const VariableVersionTable& var_table)
 {
-	vector<EvaluationResult> results;
-
 	// Currently, we just perform this state saving handler on if/while/for/do-while/switch statements and pure
 	// basic block which is not the body of if/while/for/do-while/switch statements.
 	if (!checkStatement(stmt))
-		return results;
+		return EvaluationResult();
 
 	// In case of infinite calling to this function.
 	if (evaluating_stmts_.count(stmt) > 0)
-		return results;
+		return EvaluationResult();
 
 	vector<VariableRenaming::VarName> modified_vars = getAllDefsAtNode(stmt);
 
@@ -567,7 +564,6 @@ std::vector<EvaluationResult> StateSavingStatementHandler::evaluate(SgStatement*
 	EvaluationResult result(this, stmt, new_table);
 	// Add the attribute to the result.
 	result.setAttribute(modified_vars);
-	results.push_back(result);
 
-	return results;
+	return result;
 }

@@ -1,7 +1,10 @@
 #include "handlerTypes.h"
 #include "eventProcessor.h"
 #include <boost/foreach.hpp>
-#include "utilities/cppDefinesAndNamespaces.h"
+#include <boost/foreach.hpp>
+
+#define foreach BOOST_FOREACH
+#define reverse_foreach BOOST_REVERSE_FOREACH
 
 using namespace std;
 
@@ -120,13 +123,13 @@ SgExpression* ReversalHandlerBase::assignPointerExp(SgExpression* lhs, SgExpress
 	return event_handler_->assignPointerExp(lhs, rhs, lhsType, rhsType);
 }
 
-vector<EvaluationResult> ReversalHandlerBase::evaluateExpression(SgExpression* exp,
+EvaluationResult ReversalHandlerBase::evaluateExpression(SgExpression* exp,
 		const VariableVersionTable& var_table, bool is_value_used)
 {
     return event_handler_->evaluateExpression(exp, var_table, is_value_used);
 }
 
-vector<EvaluationResult> ReversalHandlerBase::evaluateStatement(SgStatement* stmt, const VariableVersionTable& var_table)
+EvaluationResult ReversalHandlerBase::evaluateStatement(SgStatement* stmt, const VariableVersionTable& var_table)
 {
     return event_handler_->evaluateStatement(stmt, var_table);
 }
