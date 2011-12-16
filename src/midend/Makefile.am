@@ -51,7 +51,8 @@ mProgramTransformationPath=programTransformation#
 # will be installed by "make install", even with language only options are used.
 #
 SUBDIRS = \
-	binaryAnalyses
+	binaryAnalyses \
+	programTransformation/extractFunctionArgumentsNormalization
 if !ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 SUBDIRS += \
 	programAnalysis \
