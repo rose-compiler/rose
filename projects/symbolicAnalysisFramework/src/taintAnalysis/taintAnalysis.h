@@ -18,6 +18,26 @@
 
 extern int taintAnalysisDebugLevel;
 
+/*********************************************
+ *********************************************
+ Naive Taint Analysis Implementation
+ Author: Sriram Aananthakrishnan
+ email : sriram@cs.utah.edu
+ 
+ Taint Identification:
+  user code or library code are not taint sources
+  Taint source can be specified explicitly using SecureFunctionTraversal::addToUntrustedFunc()
+
+ No support for pointers and references yet. It understands only variables
+ 3 ways to taint a var:
+ 1. x = taint_func() - handled
+ 2. pass ref: taint_func(var &x) - not handled
+ 3. pass ptrs: taint_func(var *x) - not handled
+
+ taint flow into other variables handled
+ *********************************************
+ *********************************************/
+
 class TaintLattice : public FiniteLattice
 {      
     public:
