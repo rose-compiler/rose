@@ -619,7 +619,7 @@ void pCFGIterator::writeToDot(string filename)
 string pCFGIterator::genRandColor(unsigned int curPSet)
 {
     stringstream color;
-    boost::mt19937 seed(static_cast<unsigned int> (std::time(0) + curPSet));
+    boost::mt19937 seed(static_cast<unsigned int> (time(0) + curPSet));
     boost::uniform_smallint<> color_component(0, 255);
     boost::variate_generator< boost::mt19937, boost::uniform_smallint<> > 
         hex(seed, color_component);
