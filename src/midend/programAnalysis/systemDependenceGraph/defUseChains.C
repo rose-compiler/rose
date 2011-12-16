@@ -5,7 +5,7 @@
 
 #include "defUseChains.h"
 #include "util.h"
-//#include <ssa/staticSingleAssignment.h>
+#include <staticSingleAssignment.h>
 #include <VariableRenaming.h>
 #include <boost/foreach.hpp>
 
@@ -36,8 +36,6 @@ void generateDefUseChainsFromVariableRenaming(SgProject* project, DefUseChains& 
 }
 
 
-// Wait until the interfaces used from SSA are added to midend.
-#if 0
 void generateDefUseChainsFromSSA(SgProject* project, DefUseChains& defUseChains)
 {
     StaticSingleAssignment ssa(project);
@@ -99,7 +97,6 @@ void generateDefUseChainsFromSSA(SgProject* project, DefUseChains& defUseChains)
         }
     }
 }
-#endif
 
 
 
