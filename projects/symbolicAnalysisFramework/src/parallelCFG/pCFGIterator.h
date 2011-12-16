@@ -23,6 +23,7 @@
 #include "pCFGIteratorTransfer.h"
 
 #include "boost/random.hpp"
+#include <ctime>
 
 extern int pCFGIteratorDebugLevel;
 
