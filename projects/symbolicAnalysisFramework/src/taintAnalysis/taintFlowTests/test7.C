@@ -1,9 +1,14 @@
+// no taint example
 #include <stdio.h>
-#include "test2.h"
+
+int get_input()
+{
+    return 1;
+}
 
 int main(int argc, char *argv[])
 {
-    int i = constTaintFunc1();
+    int i = get_input();
     int two = 2;
     int j, l, k;
 

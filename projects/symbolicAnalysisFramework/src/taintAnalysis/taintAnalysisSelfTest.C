@@ -19,10 +19,15 @@ class EvaluationPass: public UnstructuredPassIntraAnalysis
 public:
     ConstantPropagationAnalysis* cpa;
     TaintAnalysis *ta;
+    int pass, fail;
     string indent;
+    bool failure;
     EvaluationPass(ConstantPropagationAnalysis* that_cpa, TaintAnalysis* that_ta, string _indent="")
         : cpa(that_cpa), ta(that_ta), indent(_indent)
     {
+        pass = 0;
+        fail = 0;
+        failure = false;
     }
 
     void visit(const Function& func, const DataflowNode& n, NodeState& state);
@@ -49,11 +54,19 @@ void EvaluationPass::visit(const Function& func, const DataflowNode& n, NodeStat
         ConstantPropagationLattice *cpaVarLattice = dynamic_cast<ConstantPropagationLattice*> (cpa_lat->getVarLattice(*i));
         TaintLattice *taVarLattice = dynamic_cast<TaintLattice*> (ta_lat->getVarLattice(*j));
 
-        cout << i->str() << ": " << cpaVarLattice->str() << endl;
-        cout << j->str() << ": " << taVarLattice->str() << endl;
-    }
-
-    
+        //NOTE: our only taint source is a function returning constant
+        if(taVarLattice->getLevel() == TaintLattice::taintyes) {
+            if(cpaVarLattice->getLevel() == ConstantPropagationLattice::constantValue) {
+                failure = failure || false;
+                pass++;
+            }
+            else {
+                failure = true;
+                fail++;
+            }
+            
+        }
+    }    
 }
 
 int main( int argc, char * argv[] ) 
@@ -95,8 +108,8 @@ int main( int argc, char * argv[] )
     }
     sftype_traversal.traverse(project, preorder);
 
-    SecureFunctionTypeTraversalTest sftype_test;
-    sftype_test.traverse(project, preorder);
+    // SecureFunctionTypeTraversalTest sftype_test;
+    // sftype_test.traverse(project, preorder);
 
     TaintAnalysis ta(&ldva);
     ContextInsensitiveInterProceduralDataflow ciipd_ta(&ta, graph);
@@ -108,7 +121,7 @@ int main( int argc, char * argv[] )
     //         3. In an evaluation pass, check if the constant lattice and taint lattice match
     // only in test mode, perform the constant propagation analysis
     if(constTaintAnalysisTest) {
-        std::cout << "Testing Taint Analysis using Constant Propagation Analysis..\n";
+        //std::cout << "Testing Taint Analysis using Constant Propagation Analysis..\n";
         ConstantPropagationAnalysis cpa(&ldva);
         ContextInsensitiveInterProceduralDataflow ciipd_cpa(&cpa, graph);
         ciipd_cpa.runAnalysis();
@@ -116,6 +129,14 @@ int main( int argc, char * argv[] )
         EvaluationPass ep(&cpa, &ta, " ");
         UnstructuredPassInterAnalysis upia_ep(ep);
         upia_ep.runAnalysis();
+
+        if(ep.failure) {
+            cout << "TEST FAIL\n";
+            cout << ep.fail << " lattice did not match the lattice\n";
+        }
+        else {
+            cout << "TEST PASSED\n";
+        }
     }
                       
     return 0;
