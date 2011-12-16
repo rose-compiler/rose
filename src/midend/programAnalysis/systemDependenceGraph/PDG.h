@@ -6,7 +6,7 @@
 #ifndef ___________PDG_H__________
 #define ___________PDG_H__________
 
-#include "staticCFG.h"
+#include "cong_staticCFG.h"
 
 namespace SDG
 {
