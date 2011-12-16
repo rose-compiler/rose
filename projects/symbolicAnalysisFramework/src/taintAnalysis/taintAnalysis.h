@@ -1,10 +1,9 @@
 #ifndef _TAINTANALYSIS_H
 #define _TAINTANALYSIS_H
 
-#include "common.h"
+#include "genericDataflowCommon.h"
 #include "VirtualCFGIterator.h"
 #include "cfgUtils.h"
-#include "CFGRewrite.h"
 #include "CallGraphTraverse.h"
 #include "analysisCommon.h"
 #include "analysis.h"

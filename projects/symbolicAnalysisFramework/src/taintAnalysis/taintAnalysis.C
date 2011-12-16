@@ -382,7 +382,7 @@ void SecureFunctionTypeTraversal::visit(SgNode* sgn)
             //StringUtility::FileNameLocation filetypeclassification = classification.getLocation();
             //cout << sgn->unparseToString() <<  filename << " : "  << classification.getLocation() << ", " <<  classification.getLibrary() << endl;
             bool isSecure;
-            if(untrustedFunctions.find(fndecl->get_name().getString() != untrustedFunctions.end())) {
+            if(untrustedFunctions.find(fndecl->get_name().getString()) != untrustedFunctions.end()) {
                 isSecure = false;
             }                 
                 

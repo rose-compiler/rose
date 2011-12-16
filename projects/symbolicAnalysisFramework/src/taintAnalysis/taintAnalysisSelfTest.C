@@ -3,7 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <string.h>
-#include "common.h"
+#include "genericDataflowCommon.h"
 #include "variables.h"
 #include "cfgUtils.h"
 #include "analysisCommon.h"
