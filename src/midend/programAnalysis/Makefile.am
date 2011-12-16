@@ -107,6 +107,7 @@ libprogramAnalysis_la_SOURCES=\
 
 libprogramAnalysis_la_LIBADD = \
 	staticSingleAssignment/libSSA.la \
+	ssaUnfilteredCfg/libSSA_UnfilteredCfg.la \
 	systemDependenceGraph/libSDG.la
 
 include_HEADERS=\
