@@ -303,6 +303,8 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/midend/programAnalysis/CFG \
      -I$(top_srcdir)/src/midend/programAnalysis/staticSingleAssignment \
      -I$(top_srcdir)/src/midend/programAnalysis/ssaUnfilteredCfg \
+     -I$(top_srcdir)/src/midend/programAnalysis/systemDependenceGraph \
+     -I$(top_srcdir)/src/midend/programAnalysis/systemDependenceGraph \
      -I$(top_srcdir)/src/midend/programAnalysis/CallGraphAnalysis \
      -I$(top_srcdir)/src/midend/programAnalysis/OAWrap \
      -I$(top_srcdir)/src/midend/programAnalysis/bitvectorDataflow \
