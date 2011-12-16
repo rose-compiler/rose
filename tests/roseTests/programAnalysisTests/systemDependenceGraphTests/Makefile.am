@@ -758,7 +758,7 @@ TEST_C:
 
 .PHONY: $(C_TESTCODES_REQUIRED_TO_PASS)
 $(C_TESTCODES_REQUIRED_TO_PASS): testSDG
-	./ssaTestHarness --edg:no_warnings -w -rose:verbose 0 $(TEST_INCLUDES) -c $@
+	./testSDG --edg:no_warnings -w -rose:verbose 0 $(TEST_INCLUDES) -c $@
 
 .PHONY: TEST_CXX
 TEST_CXX:
