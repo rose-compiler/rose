@@ -757,7 +757,7 @@ TEST_C:
 	@rm -f *.c
 
 .PHONY: $(C_TESTCODES_REQUIRED_TO_PASS)
-$(C_TESTCODES_REQUIRED_TO_PASS): ssaTestHarness
+$(C_TESTCODES_REQUIRED_TO_PASS): testSDG
 	./ssaTestHarness --edg:no_warnings -w -rose:verbose 0 $(TEST_INCLUDES) -c $@
 
 .PHONY: TEST_CXX
@@ -767,7 +767,7 @@ TEST_CXX:
 	@rm -f *.C
 
 .PHONY: $(CXX_TESTCODES_REQUIRED_TO_PASS)
-$(CXX_TESTCODES_REQUIRED_TO_PASS): ssaTestHarness
+$(CXX_TESTCODES_REQUIRED_TO_PASS): testSDG
 	./testSDG --edg:no_warnings -w -rose:verbose 0 $(TEST_INCLUDES) -c $@
 
 check-local:
@@ -776,7 +776,7 @@ if !ROSE_USE_EDG_VERSION_4
 	@$(MAKE) TEST_CXX
 endif
 	@echo "*********************************************************************************************************"
-	@echo "****** ROSE/projects/backstroke/ssa: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/roseTests/programAnalysisTests/systemDependenceGraphTests: make check rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************************"
 
 clean-local:
