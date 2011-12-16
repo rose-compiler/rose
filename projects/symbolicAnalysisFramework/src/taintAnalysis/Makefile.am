@@ -26,6 +26,8 @@ noinst_PROGRAMS = taintAnalysisTest
 
 taintAnalysisTest_SOURCES = taintAnalysisSelfTest.C
 
+include_HEADERS = taintAnalysis.h constantPropagation.h
+
 LDADD = $(ROSE_LIBS) libSaftaintAnalyses.la
 
 TESTCODES_TO_PASS = \
