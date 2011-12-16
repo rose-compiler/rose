@@ -42,7 +42,7 @@ void DataDependenceGraph::build(const ControlFlowGraph& cfg)
 
     std::vector<CFGNodePtr> allNodes = cfg.getAllNodes();
     std::sort(allNodes.begin(), allNodes.end());
-    //,	boost::bind(&CFGNode::getNode, _1) < boost::bind(&CFGNode::getNode, _2));
+    //, boost::bind(&CFGNode::getNode, _1) < boost::bind(&CFGNode::getNode, _2));
 
     const VariableRenaming::DefUseTable& useTable = varRenaming.getUseTable();
 
