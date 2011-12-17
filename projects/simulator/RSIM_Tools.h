@@ -581,7 +581,7 @@ public:
                 int fd = open(filename.c_str(), O_TRUNC|O_CREAT|O_RDWR, 0666);
                 if (fd<=0) {
                     m->mesg("MemoryDumper: %s: %s", filename.c_str(), strerror(errno));
-                    return enabled;
+                    goto error;
                 }
                 uint8_t buffer[4096];
                 rose_addr_t va = this->va;
@@ -594,14 +594,14 @@ public:
                         if (n<0) {
                             m->mesg("MemoryDumper: write failed\n");
                             close(fd);
-                            return enabled;
+                            goto error;
                         }
                         nwrite += n;
                     }
                     if (nread<to_read) {
                         m->mesg("MemoryDumper: read failed at 0x%08"PRIx64, va+nread);
                         close(fd);
-                        return enabled;
+                        goto error;
                     }
                     nbytes -= nread;
                     va += nread;
@@ -619,7 +619,7 @@ public:
                     if (-1==(fd=open(filename.c_str(), O_TRUNC|O_CREAT|O_RDWR, 0666))) {
                         m->mesg("MemoryDumper: %s: %s", filename.c_str(), strerror(errno));
                         delete[] buffer;
-                        return enabled;
+                        goto error;
                     }
                     for (size_t nwrite=0; nwrite<nread; /*void*/) {
                         ssize_t n = write(fd, buffer+nwrite, nread-nwrite);
@@ -627,17 +627,18 @@ public:
                             m->mesg("MemoryDumper: write failed\n");
                             close(fd);
                             delete[] buffer;
-                            return enabled;
+                            goto error;
                         }
                         nwrite += n;
                     }
                     close(fd);
                 } else {
                     m->more("%s", s.c_str());
-                    m->multipart_end();
                 }
                 delete[] buffer;
             }
+        error:
+            m->multipart_end();
         }
         return enabled;
     }
