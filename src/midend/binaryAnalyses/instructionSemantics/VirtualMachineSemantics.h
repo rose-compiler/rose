@@ -631,13 +631,13 @@ public:
 
     /** Reads a value from memory. */
     template <size_t Len> ValueType<Len>
-    readMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<1> cond) const {
+    readMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<1> &cond) const {
         return mem_read<Len>(cur_state, addr);
     }
 
     /** Writes a value to memory. */
     template <size_t Len> void
-    writeMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<Len> &data, ValueType<1> cond) {
+    writeMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<Len> &data, const ValueType<1> &cond) {
         mem_write<Len>(cur_state, addr, data);
     }
 
