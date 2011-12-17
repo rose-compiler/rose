@@ -59,6 +59,8 @@ TESTCODES_TO_PASS = \
 test1.c \
 test2.c
 
+EXTRA_DIST = tests
+
 TEST_ANALYSIS = ./pcfgiterator
 
 ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 --edg:restrict
@@ -71,18 +73,22 @@ $(C_FILES): $(TEST_ANALYSIS) $(srcdir)/tests/$(@:.c-o:.c)
 
 check-c: $(C_FILES)
 
-clean-local:
-	rm -f *.o rose_*.C
-	rm -f *.dot
-	rm -f *.mod *.rmod
-	rm -f *.html
-	rm -rf dbg_imgs
-	rm -f *.temp.c
-	rm -f *.c-o
+if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+check-c_languages: check-c
+else
+check-c_languages: 
+endif
+
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+check-fortran:
+else
+check-fortran:
+endif
 
 distclean-local:
 
-check-local: check-c
+#check-local: check-c
+check-local: check-c_languages check-fortran
 	@echo "******************************************************************************************************************************"
 	@echo "*** ROSE/projects/symbolicAnalysisFramework/src/parallelCFG/tests : make check rule complete (terminated normally) ***"
 	@echo "******************************************************************************************************************************"

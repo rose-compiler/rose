@@ -47,12 +47,20 @@ TEST_ANALYSIS = ./taintAnalysisTest
 
 ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 --edg:restrict
 
+EXTRA_DIST = taintFlowTests
+
+#C_FILES = $(TESTCODES_TO_PASS)
+
 C_FILES = ${TESTCODES_TO_PASS:.C=.C-o}
 #cp $(srcdir)/taintFlowTests/$(@:.C-o=.C) ./taintFlowTests/$(@:.C-o=.temp.C)
 
 #NOTE: taintFlowTests in the file's path is critical to enable the test
+
 $(C_FILES): $(TEST_ANALYSIS) $(srcdir)/taintFlowTests/$(@:.C-o:.C)
 	$(TEST_ANALYSIS) $(ROSE_FLAGS) -I$(srcdir)/taintFlowTests -c $(srcdir)/taintFlowTests/$(@:.C-o=.C)
+
+#$(C_FILES): $(TEST_ANALYSIS)
+#	$(TEST_ANALYSIS) $(ROSE_FLAGS) -I$(srcdir)/taintFlowTests -c $(srcdir)/taintFlowTests/$@
 
 check-c: $(C_FILES)
 
@@ -65,9 +73,21 @@ clean-local:
 	rm -f *.temp.c
 	rm -f *.c-o
 
+if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+check-c_languages: check-c
+else
+check-c_languages: 
+endif
+
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+check-fortran:
+else
+check-fortran:
+endif
+
 distclean-local:
 
-check-local: check-c
+check-local: check-c_languages check-fortran
 	@echo "******************************************************************************************************************************"
 	@echo "*** ROSE/projects/symbolicAnalysisFramework/src/taintAnalysis/taintFlowTests : make check rule complete (terminated normally) ***"
 	@echo "******************************************************************************************************************************"
