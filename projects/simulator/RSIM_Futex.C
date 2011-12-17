@@ -235,7 +235,7 @@ RSIM_FutexTable::insert(rose_addr_t key, uint32_t bitset, LockStatus lock_state)
         /* Initialize the member. */
         table->member[mno].key = key;
         table->member[mno].bitset = bitset;
-        int status = sem_init(&table->member[mno].sem, 1, 0);
+        int status __attribute__((unused)) = sem_init(&table->member[mno].sem, 1, 0);
         assert(0==status);
     } while (0);
 

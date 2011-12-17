@@ -25,12 +25,17 @@ RSIM_Thread::ctor()
     memset(&last_report, 0, sizeof last_report);
     memset(tls_array, 0, sizeof tls_array);
 
+    reopen_trace_facilities(process->get_tracing_file());
+}
+
+void
+RSIM_Thread::reopen_trace_facilities(FILE *file)
+{
     for (int tf=0; tf<TRACE_NFACILITIES; tf++) {
-        if ((process->get_tracing_flags() & tracingFacilityBit((TracingFacility)tf))) {
-            trace_mesg[tf] = new RTS_Message(process->get_tracing_file(), &mesg_prefix);
-        } else {
-            trace_mesg[tf] = new RTS_Message(NULL, NULL);
-        }
+        if (trace_mesg[tf]==NULL)
+            trace_mesg[tf] = new RTS_Message(NULL, &mesg_prefix);
+        if ((process->get_tracing_flags() & tracingFacilityBit((TracingFacility)tf)))
+            trace_mesg[tf]->set_file(file);
     }
 }
 
@@ -1057,6 +1062,12 @@ RSIM_Thread::sys_sigaltstack(const stack_32 *in, stack_32 *out)
 void
 RSIM_Thread::post_fork()
 {
+    /* Delete all the message queues and trace file, reopen the logging file(s), and recreate the RTS_Message objects based on
+     * the new file handles. */
+    get_process()->open_tracing_file();
+    get_process()->btrace_close();
+    reopen_trace_facilities(process->get_tracing_file());
+
     my_tid = syscall(SYS_gettid);
     assert(my_tid==getpid());
     process->post_fork();
