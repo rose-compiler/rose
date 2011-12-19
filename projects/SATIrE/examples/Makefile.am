@@ -8,7 +8,7 @@ EXTRA_DIST= \
         sl2rd/tests/rdtest8a.C    sl2rd/tests/rdtest9a_c89.c \
 	sl2rd/tests/rdtest11.C \
         sl2rd/tests/rdtest3.C     sl2rd/tests/rdtest6.C  \
-	sl2rd/tests/rdtest8b.C    sl2rd/tests/rdtest0.C  \
+	sl2rd/tests/rdtest8b.C    sl2rd/tests/rdtest0.C  \
         sl2rd/tests/rdtest12.C    sl2rd/tests/rdtest4.C  \
 	sl2rd/tests/rdtest7.C     sl2rd/tests/rdtest8c.C \
         sl2rd/tests/rdtest9b.C    sl2rd/tests/rdtest1.C  \
@@ -123,7 +123,7 @@ termite: init.token
 	@echo "================================================================"
 #	cp $(top_srcdir)/examples/*/tests/* $(testdir)
 	@echo "TERMITE language C:"
-	@echo "** Termite-tests are currently deactivated (updates are required for ROSE 0.8.5+)."
+	@echo "** Termite-tests are currently deactivated (TODO: updates for ROSE 0.8.5+)."
 #	$(MAKE) -j1 $(patsubst %.c,%.termite,$(wildcard $(top_srcdir)/examples/*/tests/*.c))
 #	@echo "TERMITE language C++:"
 
