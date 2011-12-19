@@ -96,8 +96,11 @@ init.token:
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST1.term -o TEST2.c
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term -I$(shell dirname $<) TEST2.c -o TEST3.term
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST3.term -o TEST4.c
+# MS FIX: if SWI Prolog is not available, termite_lint is not built.
+if WITH_SWI_PROLOG
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/termite_lint TEST1.term
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/termite_lint TEST3.term
+endif
 
 %.termite: %.C
 	@echo "TERMITE: performing a translation circle of" $<
@@ -107,8 +110,11 @@ init.token:
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST1.term -o TEST2.C
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term -I$(shell dirname $<) TEST2.C -o TEST3.term
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST3.term -o TEST4.C
+# MS FIX: if SWI Prolog is not available, termite_lint is not built.
+if WITH_SWI_PROLOG
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/termite_lint TEST1.term
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/termite_lint TEST3.term
+endif
 
 termite: init.token
 	@echo
@@ -117,8 +123,9 @@ termite: init.token
 	@echo "================================================================"
 #	cp $(top_srcdir)/examples/*/tests/* $(testdir)
 	@echo "TERMITE language C:"
-	$(MAKE) -j1 $(patsubst %.c,%.termite,$(wildcard $(top_srcdir)/examples/*/tests/*.c))
-	@echo "TERMITE language C++:"
+	@echo "** Termite-tests are currently deactivated (updates are required for ROSE 0.8.5+)."
+#	$(MAKE) -j1 $(patsubst %.c,%.termite,$(wildcard $(top_srcdir)/examples/*/tests/*.c))
+#	@echo "TERMITE language C++:"
 
 # known fails...
 #$(MAKE) -j1 $(patsubst %.C,%.termite,$(wildcard $(top_srcdir)/examples/*/tests/*.C))
