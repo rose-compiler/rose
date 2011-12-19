@@ -2,6 +2,7 @@
 
 #include <cstring>
 #include <cstdlib>
+#include <cstdio>
 
 #include "o_ContextInfo.h"
 
