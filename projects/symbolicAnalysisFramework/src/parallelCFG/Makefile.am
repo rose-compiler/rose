@@ -85,7 +85,12 @@ else
 check-fortran:
 endif
 
-distclean-local:
+clean-local:
+	rm -f       \
+		*.temp.c  \
+		*.dot     \
+		*.c-o     \
+		*.html
 
 #check-local: check-c
 check-local: check-c_languages check-fortran
