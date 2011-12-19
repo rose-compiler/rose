@@ -39,8 +39,3 @@ clean-local:
 		*.out \
 		*.ti
 
-distclean:
-	rm -f \
-		*.xml \
-		*.xsd
-
