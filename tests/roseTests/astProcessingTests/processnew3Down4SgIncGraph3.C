@@ -30,14 +30,14 @@ class visitorTraversal : public SgGraphTraversal<CFGforT>
      public:
           int tltnodes;
 	  int paths;
-          //std::vector<std::vector<VertexID> > pathstore;
+          std::vector<std::vector<VertexID> > pathstore;
 	  void analyzePath(vector<VertexID>& pth);
    };
 
 
 void visitorTraversal::analyzePath(vector<VertexID>& pth) {
-       // ROSE_ASSERT(find(pathstore.begin(), pathstore.end(), pth) == pathstore.end());
-       // pathstore.push_back(pth);
+        ROSE_ASSERT(find(pathstore.begin(), pathstore.end(), pth) == pathstore.end());
+        pathstore.push_back(pth);
         #pragma omp atomic
         paths++;
         

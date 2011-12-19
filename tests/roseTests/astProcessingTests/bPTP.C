@@ -6,7 +6,7 @@
 #include <err.h>
 #include "graphProcessing.h"
 #include "BinaryControlFlow.h"
-
+#include "BinaryLoader.h"
 /* Testing the graph traversal mechanism now implementing in AstProcessing.h (inside src/midend/astProcessing/)*/
 
 using namespace std;

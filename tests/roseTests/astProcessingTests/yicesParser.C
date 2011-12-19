@@ -276,7 +276,7 @@ void visitorTraversal::analyzePath(std::vector<VertexID>& pathR) {
     while (i < path.size()) {
         if (yices_inconsistent(ctx)) {
             inconsistent = true;
-            std::cout << "inconsistent" << std::endl;
+            //std::cout << "inconsistent" << std::endl;
             break;
         }
         //std::cout << "i: " << i << std::endl;
@@ -543,7 +543,7 @@ void visitorTraversal::analyzePath(std::vector<VertexID>& pathR) {
     
     }
     if (yices_inconsistent(ctx)) {
-        std::cout << "inconsistent path: " << ipaths << std::endl;
+        //std::cout << "inconsistent path: " << ipaths << std::endl;
         ipaths++;
         //for (int i = 0; i < path.size(); i++) {
         //   std::cout <<  cfg->toCFGNode(path[i]).toStringForDebugging() << ", ";

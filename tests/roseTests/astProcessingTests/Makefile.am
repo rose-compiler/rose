@@ -1,10 +1,10 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 
-EXTRA_DIST = input1.C test11.C test12.C test13.C test14.C createTest.C t1 t2 t3 t4
+EXTRA_DIST = efor.C efor1.C input1.C test11.C test12.C test13.C test14.C createTest.C t1 t2 t3 t4
 
 # To keep compile commands tidy, please ONLY put required include flags here.
-INCLUDES = $(ROSE_INCLUDES) #-fopenmp -O3
+INCLUDES = $(ROSE_INCLUDES) -O3 -fopenmp
 
 ## Don't use the repository in ../src
 CXX_TEMPLATE_REPOSITORY_PATH = .
@@ -13,7 +13,7 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 
 # DQ (7/2/2011): Fixed this to only handle binary work when binary support is available.
 # bin_PROGRAMS  = astTraversalTest processnew3Down4SgIncGraph processnew3Down4 binaryPaths
-bin_PROGRAMS  = t14tt t13tt t12tt t11tt createTest astTraversalTest processnew3Down4SgIncGraph2 strictGraphTest strictGraphTest2 strictGraphTest3 smtlibParser sourcePTP
+bin_PROGRAMS  = e0 e1 createTest astTraversalTest processnew3Down4SgIncGraph2 processnew3Down4SgIncGraph3 strictGraphTest strictGraphTest2 strictGraphTest3 smtlibParser sourcePTP
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 bin_PROGRAMS += binaryPaths bPTP
 endif
@@ -24,122 +24,91 @@ endif
 # long list of separate libraries (for faster development)
 ROSE_DEVELOPMENT_LIBS = $(ROSE_SEPARATE_LIBS)
 
+e0_SOURCES = efor.C.maintest.C
+e0_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+e0_LDFLAGS = -O3 -fopenmp
+
+e1_SOURCES = efor1.C.maintest.C
+e1_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+e1_LDFLAGS = -O3 -fopenmp
 
 
 astTraversalTest_SOURCES      = astTraversalTest.C
 astTraversalTest_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
 
+#t14tt_SOURCES = test14.C.maintest.C
+#t14tt_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+#t14tt_LDFLAGS = -O3 -fopenmp
+
+#t13tt_SOURCES = test13.C.maintest.C
+#t13tt_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+#t13tt_LDFLAGS = -O3 -fopenmp
+
+#t12tt_SOURCES = test12.C.maintest.C
+#t12tt_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+#t12tt_LDFLAGS = -O3 -fopenmp
+
+#t11tt_SOURCES = test11.C.maintest.C
+#t11tt_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+#t11tt_LDFLAGS = -O3 -fopenmp
+
+createTest_SOURCES = createTest.C
+createTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+createTest_LDFLAGS = -O3 -fopenmp
+
 bPTP_SOURCES = bPTP.C
 bPTP_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-bPTP_LDFLAGS = -lboost_serialization
+bPTP_LDFLAGS = -O3 -fopenmp
 
 processnew3Down4SgIncGraph2_SOURCES      = processnew3Down4SgIncGraph2.C
 processnew3Down4SgIncGraph2_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-processnew3Down4SgIncGraph2_LDFLAGS = -lboost_serialization
+processnew3Down4SgIncGraph2_LDFLAGS = -O3 -fopenmp
+
+processnew3Down4SgIncGraph3_SOURCES      = processnew3Down4SgIncGraph3.C
+processnew3Down4SgIncGraph3_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+processnew3Down4SgIncGraph3_LDFLAGS = -O3 -fopenmp
+
 
 binaryPaths_SOURCES = binaryPaths.C
 binaryPaths_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-binaryPaths_LDFLAGS = -lboost_serialization
+binaryPaths_LDFLAGS = -O3 -fopenmp
 
 strictGraphTest_SOURCES = strictGraphTest.C
 strictGraphTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-strictGraphTest_LDFLAGS = -lboost_serialization
+strictGraphTest_LDFLAGS = -O3 -fopenmp
 
 strictGraphTest2_SOURCES = strictGraphTest2.C
 strictGraphTest2_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-strictGraphTest2_LDFLAGS = -lboost_serialization
+strictGraphTest2_LDFLAGS = -O3 -fopenmp
 
 smtlibParser_SOURCES = smtlibParser.C
 smtlibParser_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-smtlibParser_LDFLAGS = -lboost_serialization
+smtlibParser_LDFLAGS = -O3 -fopenmp
 
 sourcePTP_SOURCES = sourcePTP.C
 sourcePTP_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-sourcePTP_LDFLAGS = -lboost_serialization
+sourcePTP_LDFLAGS = -O3 -fopenmp
 
 if HAVE_YICES
 yicesParser_SOURCES = yicesParser.C
 yicesParser_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-yicesParser_LDFLAGS = -I$(YICES_PREFIX)/include -L$(YICES_PREFIX)/lib -lyices
+yicesParser_LDFLAGS = -O3 -fopenmp
 endif
-strictGraphTest3_SOURCES = strictGraphTest3.C
-strictGraphTest3_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-<<<<<<< HEAD
-strictGraphTest3_LDFLAGS = -lboost_serialization
-
-
-astTraversalTest_SOURCES      = astTraversalTest.C
-astTraversalTest_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-
-t14tt_SOURCES = test14.C.maintest.C
-t14tt_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-#t14tt_LDFLAGS = -fopenmp -O3
-
-t13tt_SOURCES = test13.C.maintest.C
-t13tt_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-#t13tt_LDFLAGS = -fopenmp -O3
-
-t12tt_SOURCES = test12.C.maintest.C
-t12tt_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-#t12tt_LDFLAGS = -fopenmp -O3
-
-t11tt_SOURCES = test11.C.maintest.C
-t11tt_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-#t11tt_LDFLAGS = -fopenmp -O3
-
-createTest_SOURCES = createTest.C
-createTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-#createTest_LDFLAGS = -fopenmp -O3
-
-bPTP_SOURCES = bPTP.C
-bPTP_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-#bPTP_LDFLAGS = -fopenmp -O3
-
-processnew3Down4SgIncGraph2_SOURCES      = processnew3Down4SgIncGraph2.C
-processnew3Down4SgIncGraph2_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-#processnew3Down4SgIncGraph2_LDFLAGS = -fopenmp -O3
-
-binaryPaths_SOURCES = binaryPaths.C
-binaryPaths_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-#binaryPaths_LDFLAGS = -fopenmp -O3
-
-strictGraphTest_SOURCES = strictGraphTest.C
-strictGraphTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-#strictGraphTest_LDFLAGS = -fopenmp -O3
-
-strictGraphTest2_SOURCES = strictGraphTest2.C
-strictGraphTest2_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-#strictGraphTest2_LDFLAGS = -fopenmp -O3
-
-smtlibParser_SOURCES = smtlibParser.C
-smtlibParser_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-#smtlibParser_LDFLAGS = -fopenmp -O3
-
-sourcePTP_SOURCES = sourcePTP.C
-sourcePTP_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-#sourcePTP_LDFLAGS = -fopenmp -O3
-
-yicesParser_SOURCES = yicesParser.C
-yicesParser_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-#yicesParser_LDFLAGS = -fopenmp -O3
 
 strictGraphTest3_SOURCES = strictGraphTest3.C
 strictGraphTest3_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-
+strictGraphTest3_LDFLAGS = -O3 -fopenmp
 # source files don't contain anything that would be merged
 # TESTCODES = $(srcdir)/performanceTest.C
 
-strongCheckOne: t14tt
-	./t14tt $(srcdir)/test14.C
-strongCheckTwo: t13tt
-	./t13tt $(srcdir)/test13.C
-strongCheckThree: t12tt
-	./t12tt $(srcdir)/test12.C
-strongCheckFour: t11tt
-	./t11tt $(srcdir)/test11.C
-
-
-
+#strongCheckThree: t12tt
+#	./t12tt $(srcdir)/test12.C
+#strongCheckFour: t11tt
+#	./t11tt $(srcdir)/test11.C
+strongCheckFive: e0
+	./e0 $(srcdir)/efor.C
+strongCheckSix: e1
+	./e1 $(srcdir)/efor1.C
 
 testTraversals: astTraversalTest
 	./astTraversalTest -edg:w -c $(srcdir)/input1.C
@@ -150,6 +119,12 @@ testRunExamples2: processnew3Down4SgIncGraph2
 	./processnew3Down4SgIncGraph2 $(srcdir)/test13.C
 	./processnew3Down4SgIncGraph2 $(srcdir)/test14.C
 	rm *.dot
+
+testRunExamples3: processnew3Down4SgIncGraph3
+	./processnew3Down4SgIncGraph3 $(srcdir)/eif.C
+	./processnew3Down4SgIncGraph3 $(srcdir)/eif2.C
+	./processnew3Down4SgIncGraph3 $(srcdir)/eif3.C
+	./processnew3Down4SgIncGraph3 $(srcdir)/eif4.C
 
 testRunExamplesBin: binaryPaths
 	./binaryPaths $(srcdir)/t1
@@ -178,15 +153,16 @@ smtParse: smtlibParser
 
 sourcePTPTest: sourcePTP
 	./sourcePTP $(srcdir)/test14.C
+if HAVE_YICES
 yicesParserTest: yicesParser
 	./yicesParser $(srcdir)/test14.C 
+endif
 check-local:
-	@$(MAKE) strongCheckOne
-	@$(MAKE) strongCheckTwo
-	@$(MAKE) strongCheckThree
-	@$(MAKE) strongCheckFour
+	@$(MAKE) strongCheckFive
+	@$(MAKE) strongCheckSix
 	@$(MAKE) testTraversals
 	@$(MAKE) testRunExamples2
+	@$(MAKE) testRunExamples3
 	@$(MAKE) strictGraph
 	@$(MAKE) smtParse
 	@$(MAKE) sourcePTPTest

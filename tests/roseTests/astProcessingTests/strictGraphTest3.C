@@ -58,11 +58,11 @@ void visitorTraversal::analyzePath(vector<VertexID>& pth) {
          //   }
           //  std::cout << "end" << std::endl;
         //}
-        //ROSE_ASSERT(find(pths.begin(), pths.end(), pth) == pths.end());
-        //if (find(pths.begin(), pths.end(), pth) == pths.end()) {
-        //    pths.push_back(pth);
-        //    std::cout << "pths.size(): " << pths.size() << std::endl;
-       // }
+        ROSE_ASSERT(find(pths.begin(), pths.end(), pth) == pths.end());
+        if (find(pths.begin(), pths.end(), pth) == pths.end()) {
+            pths.push_back(pth);
+         //   std::cout << "pths.size(): " << pths.size() << std::endl;
+        }
        // else {
        //     repeats2++;
        //     std::cout << "repeats: " << repeats2 << std::endl;
