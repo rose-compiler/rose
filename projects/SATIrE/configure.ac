@@ -11,7 +11,7 @@ AM_INIT_AUTOMAKE([foreign no-installinfo no-texinfo.tex 1.10
   dist-bzip2]) dnl color-tests parallel-tests silent-rules std-options])
 dnl do `make V=1' or `./configure --disable-silent-rules' for a verbose build
 # Automake > 1.11 allows a less verbose make output!
-m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES])
+m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 
 # Checks for programs.
 AC_PROG_YACC
