@@ -107,7 +107,9 @@ export PKG_CONFIG_PATH=${PKG_CONFIG_PATH}:${prefix}/lib/pkgconfig
 #-----------------------------------
 PKG_CHECK_MODULES(PL, [pl >= 5.8.0],
     [AC_SUBST([SWIPL_PREFIX], [`$PKG_CONFIG pl --variable prefix`])
-     AC_SUBST([SWIPL], ["${SWIPL_PREFIX}/bin/swipl"])
+     AS_IF([test -x $SWIPL_PREFIX/bin/swipl],
+           [AC_SUBST([SWIPL], ["${SWIPL_PREFIX}/bin/swipl"])],
+           [AC_SUBST([SWIPL], ["${SWIPL_PREFIX}/bin/pl"])])
      AC_SUBST([SWIPL_VERSION], [`${SWIPL} --version | awk '{print $3}'`])
      AC_MSG_RESULT([using ${SWIPL}])
     ],
@@ -122,11 +124,6 @@ Please remember to set PKG_CONFIG_PATH accordingly.])
          AC_SUBST([SWIPL], [""])
         ])
     ])
-PLBASE=`$SWIPL --dump-runtime-variables |grep PLBASE |sed 's/"/ /g' |awk '{print $2}'`
-PLARCH=`$SWIPL --dump-runtime-variables |grep PLARCH |sed 's/"/ /g' |awk '{print $2}'`
-PLLIBS=`$SWIPL --dump-runtime-variables |grep PLLIBS |sed 's/"/ /g' |awk -F= '{print $2}' |sed 's/;//g'`
-PLCFLAGS=`$SWIPL --dump-runtime-variables |grep PLCFLAGS |sed 's/"/ /g' |awk '{print $2}'`
-PLLIB="$PLBASE/lib/$PLARCH"
 AC_ARG_WITH([swi-prolog],
    [AS_HELP_STRING([--with-swi-prolog],
      [enable SWI-Prolog in Termite (recommended)  @<:@default=check@:>@])],
@@ -142,7 +139,13 @@ AS_IF([test "x$with_swi_prolog" != xno],
       [with_swi_prolog=no])
 
 AS_IF([test "x$with_swi_prolog" = xyes],
-      [AC_SUBST([SWI_PL], ["$SWIPL"])
+      [PLBASE=`$SWIPL --dump-runtime-variables |grep PLBASE |sed 's/"/ /g' |awk '{print $2}'`
+       PLARCH=`$SWIPL --dump-runtime-variables |grep PLARCH |sed 's/"/ /g' |awk '{print $2}'`
+       PLLIBS=`$SWIPL --dump-runtime-variables |grep PLLIBS |sed 's/"/ /g' |awk -F= '{print $2}' |sed 's/;//g'`
+       PLCFLAGS=`$SWIPL --dump-runtime-variables |grep PLCFLAGS |sed 's/"/ /g' |awk '{print $2}'`
+       PLLIB="$PLBASE/lib/$PLARCH"
+
+AC_SUBST([SWI_PL], ["$SWIPL"])
        AC_SUBST([SWI_PROLOG_LIBS], ["$PLLIBS"])
        AC_SUBST([SWI_PROLOG_LDADD], ["-Wl,-rpath $PLLIB -L$PLLIB -lpl"])
        AC_SUBST([SWI_PROLOG_HOME_DIR], ["$PLBASE"])
