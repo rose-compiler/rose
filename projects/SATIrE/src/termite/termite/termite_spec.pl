@@ -75,6 +75,7 @@ declaration_statement ::=
   | function_declaration
   | function_parameter_list
   | pragma_declaration
+  | program_header_statement
   | typedef_declaration
   | variable_declaration
   | variable_definition.
@@ -88,13 +89,19 @@ enum_declaration ::=
                      analysis_info, file_info).
 
 function_declaration ::=
-    function_declaration(function_parameter_list, function_definition?,
+    function_declaration(function_parameter_list, {null}, function_definition?,
                          function_declaration_annotation,
                          analysis_info, file_info).
 
 function_parameter_list ::=
     function_parameter_list([initialized_name],
                             default_annotation, analysis_info, file_info).
+
+program_header_statement ::=
+    program_header_statement(function_parameter_list, {null}, function_definition?,
+			     function_declaration_annotation,
+			     analysis_info, file_info).
+
 
 pragma_declaration ::=
     pragma_declaration(todo).
@@ -185,6 +192,8 @@ while_stmt ::=
 % --- expressions ---
 expression ::=
     binary_op
+  | cast_exp(expression, /*expression? * original expression tree ,*/
+             unary_op_annotation, analysis_info, file_info)
   | conditional_exp
   | expr_list_exp
   | function_call_exp
@@ -193,13 +202,18 @@ expression ::=
   | null_expression
   | size_of_op
   | unary_op
-  | value_exp
   | var_arg_copy_op
   | var_arg_end_op
   | var_arg_op
   | var_arg_start_one_operand_op
   | var_arg_start_op
-  | var_ref_exp.
+  | var_ref_exp
+  | functors [long_long_int_val, unsigned_long_long_int_val, long_int_val,
+        unsigned_long_val, int_val, unsigned_int_val, short_val,
+        unsigned_short_val, char_val, unsigned_char_val, float_val,
+        double_val, long_double_val, string_val, enum_val]
+    with (/*expression?  original expression tree ,*/
+          value_annotation, analysis_info, file_info).
 
 binary_op ::=
     functors [add_op, and_assign_op, and_op, arrow_exp, assign_op,
@@ -247,19 +261,9 @@ size_of_op ::=
     size_of_op(expression?, size_of_op_annotation, analysis_info, file_info).
 
 unary_op ::=
-    cast_exp(expression, expression? /* original expression tree */,
-             unary_op_annotation, analysis_info, file_info)
-  | functors [address_of_op, bit_complement_op, minus_minus_op,
+    functors [address_of_op, bit_complement_op, minus_minus_op,
         minus_op, not_op, plus_plus_op, pointer_deref_exp, unary_add_op]
     with (expression, unary_op_annotation, analysis_info, file_info).
-
-value_exp ::=
-    functors [long_long_int_val, unsigned_long_long_int_val, long_int_val,
-        unsigned_long_val, int_val, unsigned_int_val, short_val,
-        unsigned_short_val, char_val, unsigned_char_val, float_val,
-        double_val, long_double_val, string_val]
-    with (expression? /* original expression tree */,
-          value_annotation, analysis_info, file_info).
 
 var_arg_copy_op ::=
     var_arg_copy_op(todo).
@@ -315,7 +319,8 @@ size_of_op_annotation ::=
                           preprocessing_info).
 
 value_annotation ::=
-    value_annotation(number_or_string, preprocessing_info).
+    value_annotation(number_or_string, name, type, preprocessing_info) /* enum */
+    | value_annotation(number_or_string, preprocessing_info).
 
 binary_op_annotation ::=
     binary_op_annotation(type, preprocessing_info).
