@@ -63,8 +63,9 @@ SgAsmPEImportLookupTable::parse(rose_rva_t rva, size_t idir_idx)
 
     for (size_t i=0; 1; i++) {
         uint64_t ilt_entry_word=0;
-        unsigned char buf[8];
-        ROSE_ASSERT(fhdr->get_word_size() <= sizeof buf);
+        unsigned char buf_[8];
+        unsigned char * __restrict__ buf = buf_;
+        ROSE_ASSERT(fhdr->get_word_size() <= sizeof buf_);
         try {
             isec->read_content(fhdr->get_loader_map(), rva.get_rva(), buf, fhdr->get_word_size());
         } catch (const MemoryMap::NotMapped &e) {
@@ -77,7 +78,7 @@ SgAsmPEImportLookupTable::parse(rose_rva_t rva, size_t idir_idx)
                 fprintf(stderr, "    Memory map in effect at time of error:\n");
                 e.map->dump(stderr, "        ");
             }
-            memset(buf, 0, sizeof buf);
+            memset(buf, 0, sizeof buf_);
         }
 
         if (4==fhdr->get_word_size()) {

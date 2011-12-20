@@ -871,7 +871,7 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_num_rvasize_pairs", p_e_num_rvasize_pairs);
     for (unsigned i = 0; i < p_rvasize_pairs->get_pairs().size(); i++) {
         char p2[256];
-        int nprint = snprintf(p2, sizeof p2, "%s.pair[%d].", p, i);
+        int nprint __attribute__((unused)) = snprintf(p2, sizeof p2, "%s.pair[%d].", p, i);
         assert((size_t)nprint<sizeof p2);
         w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p2));
         fprintf(f, "%s%-*s = rva %s,\tsize 0x%08"PRIx64" (%"PRIu64")\n", p2, w, "..",
