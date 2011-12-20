@@ -76,7 +76,7 @@ TEXFILES=$(patsubst %.pl, %.tex,$(INPUTFILES))
 GARBAGE=$(patsubst %.tex, %.aux,$(TEXFILES))
 MYTEXINPUT=$(srcdir)/ltx2htm:$(srcdir)
 
-if WITH_SWI_PROLOG58  # --------------------------------------------------
+if WITH_SWI_PROLOG  # --------------------------------------------------
 
 docs-termite: HTML termite.pdf mostlyclean
 dist_doc_DATA += \
