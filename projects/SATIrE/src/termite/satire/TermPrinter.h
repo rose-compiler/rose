@@ -197,9 +197,22 @@ TermPrinter<DFI_STORE_TYPE>::isContainer(SgNode* astNode)
 
 template<typename DFI_STORE_TYPE>
 int
-TermPrinter<DFI_STORE_TYPE>::getArity(SgNode* astNode) 
+TermPrinter<DFI_STORE_TYPE>::getArity(SgNode* astNode)
 {
-  return AstTests::numSingleSuccs(astNode);
+  int n = AstTests::numSingleSuccs(astNode);
+  switch (astNode->variantT()) {
+    /* Since ~2011, ROSE adds additional 'else' children to these
+       nodes that do not make sense in C/C++.
+       We remove them here. */
+    case V_SgWhileStmt:
+    case V_SgForStatement:
+      // We also don't need the decorator list
+    case V_SgClassDeclaration:
+      // case V_SgFunctionDeclaration: FIXME: middle arg
+      // case V_SgMemberFunctionDeclaration:
+      return n - 1;
+    default: return n;
+  }
 }
 
 template<typename DFI_STORE_TYPE>
