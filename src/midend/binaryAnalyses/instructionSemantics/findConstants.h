@@ -653,7 +653,9 @@ struct FindConstantsPolicy {
 
     FindConstantsPolicy()
         : orig_state(NULL), addr(0), regdict(NULL)
-        {}
+        {
+            newIp = number<32>(0);
+        }
 
     /* Use this constructor when performing constant propagation analysis on a function where you want the entry point of the
      * function to use the specified initial values. See FindConstantsPolicy::startInstruction() for how this is used. */
