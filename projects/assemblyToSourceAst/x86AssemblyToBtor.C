@@ -150,7 +150,7 @@ void BtorTranslationPolicy::setInitialState(uint32_t entryPoint, bool initialCon
   writeBackReset();
 }
 
-BtorTranslationPolicy::BtorTranslationPolicy(BtorTranslationHooks* hooks, uint32_t minNumStepsToFindError, uint32_t maxNumStepsToFindError, SgProject* proj): problem(), hooks(hooks) {
+BtorTranslationPolicy::BtorTranslationPolicy(BtorTranslationHooks* hooks, uint32_t minNumStepsToFindError, uint32_t maxNumStepsToFindError, SgProject* proj): problem(), hooks(hooks), regdict(NULL) {
   assert (minNumStepsToFindError >= 1); // Can't find an error on the first step
   assert (maxNumStepsToFindError < 0xFFFFFFFFU); // Prevent overflows
   assert (minNumStepsToFindError <= maxNumStepsToFindError || maxNumStepsToFindError == 0);
