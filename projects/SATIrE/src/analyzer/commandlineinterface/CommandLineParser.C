@@ -207,9 +207,12 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
     }
     cl->outputSourceOn();
     cl->setOutputSourceFileName(strdup(argv[i]+prefixLength));
-  } else if (optionMatchPrefix(argv[i], "--output-icfg=")) {
+  } else if (optionMatchPrefix(argv[i], "--output-gdl-icfg=")) {
     cl->outputIcfgOn();
-    cl->setOutputIcfgFileName(strdup(argv[i]+prefixLength));
+    cl->setOutputGdlIcfgFileName(strdup(argv[i]+prefixLength));
+  } else if (optionMatchPrefix(argv[i], "--output-dot-icfg=")) {
+    cl->outputIcfgOn();
+    cl->setOutputDotIcfgFileName(strdup(argv[i]+prefixLength));
   } else if (optionMatchPrefix(argv[i], "--output-sourceprefix=")) {
     if (strlen(argv[i]+prefixLength) == 0) {
       cl->setOptionsErrorMessage("empty output file name prefix");

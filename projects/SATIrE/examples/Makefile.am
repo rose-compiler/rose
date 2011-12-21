@@ -124,8 +124,8 @@ termite: init.token
 #	cp $(top_srcdir)/examples/*/tests/* $(testdir)
 	@echo "TERMITE language C:"
 	@echo "** Termite-tests are currently deactivated (TODO: updates for ROSE 0.8.5+)."
-#	$(MAKE) -j1 $(patsubst %.c,%.termite,$(wildcard $(top_srcdir)/examples/*/tests/*.c))
-#	@echo "TERMITE language C++:"
+	$(MAKE) -j1 $(patsubst %.c,%.termite,$(wildcard $(top_srcdir)/examples/*/tests/*.c))
+	@echo "TERMITE language C++:"
 
 # known fails...
 #$(MAKE) -j1 $(patsubst %.C,%.termite,$(wildcard $(top_srcdir)/examples/*/tests/*.C))
