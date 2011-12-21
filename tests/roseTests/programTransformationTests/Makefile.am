@@ -1,5 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+SUBDIRS = extractFunctionArgumentsTest
+
 INCLUDES = $(ROSE_INCLUDES) 
 
 ## The grammar generator (ROSETTA) should use its own template repository

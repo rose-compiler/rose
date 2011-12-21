@@ -626,6 +626,10 @@ public:
         /** Reason for invoking process callbacks. */
         enum Reason {
             START,                              /**< Process is starting execution. */
+            FORK,                               /**< New process created via clone system call.  The callback is invoked by the
+                                                 *   thread performing the clone() system call before the system call is made,
+                                                 *   and by the main thread of the new process almost immediately after the
+                                                 *   system call returns. */
             COREDUMP,                           /**< Process is about to dump core. If call_process_callbacks() return false
                                                  *   then the core dump is avoided. */
             FINISH,                             /**< Process has finished execution. */

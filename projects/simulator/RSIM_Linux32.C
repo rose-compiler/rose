@@ -3919,6 +3919,8 @@ sys_clone(RSIM_Thread *t, unsigned flags, uint32_t newsp, uint32_t parent_tid_va
 {
     if (flags == (CLONE_CHILD_CLEARTID | CLONE_CHILD_SETTID | SIGCHLD)) {
         /* This is a fork() */
+        t->get_process()->get_callbacks().call_process_callbacks(RSIM_Callbacks::BEFORE, t->get_process(),
+                                                                 RSIM_Callbacks::ProcessCallback::FORK, true);
 
         /* Flush some files so buffered content isn't output twice. */
         fflush(stdout);
@@ -3968,6 +3970,9 @@ sys_clone(RSIM_Thread *t, unsigned flags, uint32_t newsp, uint32_t parent_tid_va
             regs.flags = t->policy.readRegister<32>(t->policy.reg_eflags).known_value();
             if (sizeof(regs)!=t->get_process()->mem_write(&regs, pt_regs_va, sizeof regs))
                 return -EFAULT;
+
+            t->get_process()->get_callbacks().call_process_callbacks(RSIM_Callbacks::AFTER, t->get_process(),
+                                                                     RSIM_Callbacks::ProcessCallback::FORK, true);
         }
 
         return pid;

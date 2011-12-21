@@ -889,7 +889,7 @@ Disassembler::mark_referenced_instructions(SgAsmInterpretation *interp, const Me
     const MemoryMap::MapElement *me = NULL;
     SgAsmGenericFile *file = NULL;
     const SgAsmGenericFilePtrList &files = interp->get_files();
-    bool was_tracking;
+    bool was_tracking = false; // only valid when file!=NULL  (value here is to shut of used-before-defined warnings from GCC)
 
     /* Re-read each instruction so the file has a chance to track the reference. */
     try {

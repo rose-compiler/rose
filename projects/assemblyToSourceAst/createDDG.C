@@ -345,19 +345,21 @@ public:
     void writeFlag(X86Flag f, XVariablePtr<1> value) {
       updateCurrentReadDependencies();
 
-      if(currentRset.flag[f].var->value.definingInstruction != NULL)
-	addDependency( currentRset.flag[f].var->value.definingInstruction, 1 );
-      FindConstantsPolicy::writeFlag(f, value);
+      if(cur_state.flag[f].var->value.definingInstruction != NULL)
+	addDependency( cur_state.flag[f].var->value.definingInstruction, 1 );
+      RegisterDescriptor reg(x86_regclass_flags, 0, (unsigned)f, 1);
+      FindConstantsPolicy::writeRegister(reg, value);
 
     }
 
     void writeGPR(X86GeneralPurposeRegister r, XVariablePtr<32> value) {
       updateCurrentReadDependencies();
 
-      if(currentRset.gpr[r].var->value.definingInstruction != NULL)
-	addDependency( currentRset.gpr[r].var->value.definingInstruction, 2 );
+      if(cur_state.gpr[r].var->value.definingInstruction != NULL)
+	addDependency( cur_state.gpr[r].var->value.definingInstruction, 2 );
 
-      FindConstantsPolicy::writeGPR(r, value);
+      RegisterDescriptor reg(x86_regclass_gpr, (unsigned)r, 0, 32);
+      FindConstantsPolicy::writeRegister(reg, value);
 
     }
 
@@ -365,10 +367,11 @@ public:
     void writeSegreg(X86SegmentRegister sr, XVariablePtr<16> val) {
       updateCurrentReadDependencies();
 
-      if(currentRset.segreg[sr].var->value.definingInstruction != NULL)
-	addDependency( currentRset.segreg[sr].var->value.definingInstruction, 3 );
+      if(cur_state.segreg[sr].var->value.definingInstruction != NULL)
+	addDependency( cur_state.segreg[sr].var->value.definingInstruction, 3 );
 
-      FindConstantsPolicy::writeSegreg(sr, val);
+      RegisterDescriptor reg(x86_regclass_segment, (unsigned)sr, 0, 16);
+      FindConstantsPolicy::writeRegister(reg, val);
 
     }
 
@@ -397,16 +400,16 @@ public:
 	if (0==repeat->get().name) {
 	  for (size_t i=0; i<repeat->get().offset; i++) {
 	    XVariablePtr<32> tmp_addr = add(addr, number<32>(i*nbits/8));
-	    currentRset.memoryWrites = memoryWriteHelper(currentRset.memoryWrites, tmp_addr, data);
+	    cur_state.memoryWrites = memoryWriteHelper(cur_state.memoryWrites, tmp_addr, data);
 
-	    XVariablePtr<nbits> result = FindConstantsPolicy::readMemory<nbits>(currentRset.memoryWrites, tmp_addr, cond);
+	    XVariablePtr<nbits> result = FindConstantsPolicy::readMemory<nbits>(cur_state.memoryWrites, tmp_addr, cond);
 
 	    if(result.var->value.definingInstruction != NULL)
 	      addDependency(result.var->value.definingInstruction, 5);
 
 	  }
 	} else {
-	  XVariablePtr<nbits> result = FindConstantsPolicy::readMemory<nbits>(currentRset.memoryWrites, addr, cond);
+	  XVariablePtr<nbits> result = FindConstantsPolicy::readMemory<nbits>(cur_state.memoryWrites, addr, cond);
 
 	  if(result.var->value.definingInstruction != NULL)
 	    addDependency(result.var->value.definingInstruction,6 );
@@ -422,7 +425,8 @@ public:
     XVariablePtr<1> readFlag(X86Flag f) {
       updateCurrentReadDependencies();
 
-      XVariablePtr<1> result =   FindConstantsPolicy::readFlag(f);
+      RegisterDescriptor reg(x86_regclass_flags, 0, (unsigned)f, 1);
+      XVariablePtr<1> result =   FindConstantsPolicy::readRegister<1>(reg);
       if(result.var->value.definingInstruction != NULL)
 	addDependency(result.var->value.definingInstruction, 7);
 
@@ -434,7 +438,8 @@ public:
     XVariablePtr<16> readSegreg(X86SegmentRegister sr) {
       updateCurrentReadDependencies();
 
-      XVariablePtr<16> result =   FindConstantsPolicy::readSegreg(sr);
+      RegisterDescriptor reg(x86_regclass_segment, (unsigned)sr, 0, 16);
+      XVariablePtr<16> result =   FindConstantsPolicy::readRegister<16>(reg);
 
       if(result.var->value.definingInstruction != NULL)
 	addDependency(result.var->value.definingInstruction, 8);
@@ -446,7 +451,8 @@ public:
     XVariablePtr<32> readGPR(X86GeneralPurposeRegister r) {
       updateCurrentReadDependencies();
 
-      XVariablePtr<32> result =   FindConstantsPolicy::readGPR(r);
+      RegisterDescriptor reg(x86_regclass_gpr, (unsigned)r, 0, 32);
+      XVariablePtr<32> result =   FindConstantsPolicy::readRegister<32>(reg);
 
       if(result.var->value.definingInstruction != NULL)
 	addDependency(result.var->value.definingInstruction, 9);
