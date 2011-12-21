@@ -6,7 +6,7 @@
 #include <SgGraphTemplate.h>
 #include <graphProcessing.h>
 #include <staticCFG.h>
-#include <yices_c.h>
+#include "yices_c.h"
 /* Testing the graph traversal mechanism now implementing in AstProcessing.h (inside src/midend/astProcessing/)*/
 
 
@@ -286,17 +286,23 @@ void visitorTraversal::analyzePath(std::vector<VertexID>& pathR) {
         //std::cout << "in while" << std::endl;
         if (isSgInitializedName(path[i]->get_SgNode()) /*&& knownNodes.find(path[i]->get_SgNode()) == knownNodes.end()*/) {
            // exprs.push_back(path[i]);
+           //std::cout << "initialized name" << std::endl;
             exprPath.push_back(path[i]);
             unsigned int k = i+1;
             while (k < path.size() && (!isSgInitializedName(path[k]->get_SgNode()) || path[k]->get_SgNode() != path[i]->get_SgNode())) {
                 exprPath.push_back(path[k]);
                 k++;
             }
+            if (k < path.size()) {
             exprPath.push_back(path[k]);
+            }
             //string ss = mainParse(exprPath);
-            ROSE_ASSERT(y1 != NULL); 
-            yices_expr y1 = mainParse(exprPath, ctx);
-            yices_assert(ctx, y1);
+            //ROSE_ASSERT(y1 != NULL);
+            //std::cout << "exprPath.size(): " << exprPath.size() << std::endl;
+            //std::cout << "k: " << k << std::endl;
+            //std::cout << "i: " << i << std::endl;
+            yices_expr yx = mainParse(exprPath, ctx);
+            yices_assert(ctx, yx);
             //std::cout << "successful assert" << std::endl;
             //pathstream << ss;
       /*      if (knownGraphNodes.find(exprPath.front()) == knownGraphNodes.end()) {
@@ -851,7 +857,7 @@ yices_expr mainParse(vector<SgGraphNode*> expr, yices_context& ctx) {
         string valType = isAtom((expr[2])->get_SgNode());
         int p = 2;
         SgName svs = (isSgInitializedName(expr[0]->get_SgNode()))->get_qualified_name();
-        while (!isSgAssignInitializer(expr[p]->get_SgNode())) {
+        while (p < expr.size() && !isSgAssignInitializer(expr[p]->get_SgNode())) {
             vec1.push_back(expr[p]);
             p++;
         }
@@ -968,7 +974,9 @@ yices_expr mainParse(vector<SgGraphNode*> expr, yices_context& ctx) {
     else {
         //cout << "unknown type" << endl;
         //cout << cfg->toCFGNode(expr[0]).toString() << std::endl;
-        unknown_flag = true;
+        //unknown_flag = true;
+        ret = yices_mk_fresh_bool_var(ctx);
+        return ret;
     }
     //std::cout << "parsed: " << parsed << std::endl;
     return ret;   

@@ -86,7 +86,7 @@ int main(int argc, char *argv[]) {
         visitorTraversal* vis = new visitorTraversal;
         vis->tltnodes = 0;
         vis->pths = 0;
-	vis->firstPrepGraph(cfg);
+	//vis->firstPrepGraph(cfg);
         for (int i = 0; i < nfurcations.size()-1; i++) {
             vis->tltnodes = 0;
             vis->pths = 0;

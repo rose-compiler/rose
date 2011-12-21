@@ -62,37 +62,37 @@ bPTP_LDFLAGS = -O3 -fopenmp
 
 processnew3Down4SgIncGraph2_SOURCES      = processnew3Down4SgIncGraph2.C
 processnew3Down4SgIncGraph2_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-processnew3Down4SgIncGraph2_LDFLAGS = -O3 -fopenmp
+#processnew3Down4SgIncGraph2_LDFLAGS = -O3 -fopenmp
 
 processnew3Down4SgIncGraph3_SOURCES      = processnew3Down4SgIncGraph3.C
 processnew3Down4SgIncGraph3_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-processnew3Down4SgIncGraph3_LDFLAGS = -O3 -fopenmp
+#processnew3Down4SgIncGraph3_LDFLAGS = -O3 -fopenmp
 
 
 binaryPaths_SOURCES = binaryPaths.C
 binaryPaths_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-binaryPaths_LDFLAGS = -O3 -fopenmp
+#binaryPaths_LDFLAGS = -O3 -fopenmp
 
 strictGraphTest_SOURCES = strictGraphTest.C
 strictGraphTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-strictGraphTest_LDFLAGS = -O3 -fopenmp
+#strictGraphTest_LDFLAGS = -O3 -fopenmp
 
 strictGraphTest2_SOURCES = strictGraphTest2.C
 strictGraphTest2_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-strictGraphTest2_LDFLAGS = -O3 -fopenmp
+#strictGraphTest2_LDFLAGS = -O3 -fopenmp
 
 smtlibParser_SOURCES = smtlibParser.C
 smtlibParser_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-smtlibParser_LDFLAGS = -O3 -fopenmp
+#smtlibParser_LDFLAGS = -O3 -fopenmp
 
 sourcePTP_SOURCES = sourcePTP.C
 sourcePTP_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-sourcePTP_LDFLAGS = -O3 -fopenmp
+#sourcePTP_LDFLAGS = -O3 -fopenmp
 
 if HAVE_YICES
 yicesParser_SOURCES = yicesParser.C
 yicesParser_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-yicesParser_LDFLAGS = -O3 -fopenmp
+#yicesParser_LDFLAGS = -O3 -fopenmp -I/home/hoffman34/yices/yices-1.0.292/include -L/home/hoffman34/yices/yices-1.0.292/lib -lyices
 endif
 
 strictGraphTest3_SOURCES = strictGraphTest3.C
@@ -125,7 +125,6 @@ testRunExamples3: processnew3Down4SgIncGraph3
 	./processnew3Down4SgIncGraph3 $(srcdir)/eif2.C
 	./processnew3Down4SgIncGraph3 $(srcdir)/eif3.C
 	./processnew3Down4SgIncGraph3 $(srcdir)/eif4.C
-
 testRunExamplesBin: binaryPaths
 	./binaryPaths $(srcdir)/t1
 	./binaryPaths $(srcdir)/t2

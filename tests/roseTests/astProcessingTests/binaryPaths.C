@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
         visitorTraversal* vis = new visitorTraversal;
         vis->tltnodes = 0;
         vis->pths = 0;
-	vis->firstPrepGraph(cfg);
+//	vis->firstPrepGraph(cfg);
         vis->constructPathAnalyzer(cfg, true, 0, 0, false);
         std::cout << "pths: " << vis->pths << std::endl;
         std::cout << "tltnodes: " << vis->tltnodes << std::endl;
