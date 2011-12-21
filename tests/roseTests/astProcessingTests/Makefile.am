@@ -13,7 +13,7 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 
 # DQ (7/2/2011): Fixed this to only handle binary work when binary support is available.
 # bin_PROGRAMS  = astTraversalTest processnew3Down4SgIncGraph processnew3Down4 binaryPaths
-bin_PROGRAMS  = processnew3Down4SgIncGraphInter e0 e1 createTest astTraversalTest processnew3Down4SgIncGraph2 processnew3Down4SgIncGraph3 strictGraphTest strictGraphTest2 strictGraphTest3 smtlibParser sourcePTP
+bin_PROGRAMS  = e0 e1 createTest astTraversalTest processnew3Down4SgIncGraph2 processnew3Down4SgIncGraph3 strictGraphTest strictGraphTest2 strictGraphTest3 smtlibParser sourcePTP
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 bin_PROGRAMS += binaryPaths bPTP
 endif
