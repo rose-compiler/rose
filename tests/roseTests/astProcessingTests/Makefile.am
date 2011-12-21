@@ -4,7 +4,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 EXTRA_DIST = efor.C efor1.C input1.C test11.C test12.C test13.C test14.C createTest.C t1 t2 t3 t4
 
 # To keep compile commands tidy, please ONLY put required include flags here.
-INCLUDES = $(ROSE_INCLUDES) -O3 -fopenmp
+INCLUDES = $(ROSE_INCLUDES)
 
 ## Don't use the repository in ../src
 CXX_TEMPLATE_REPOSITORY_PATH = .
