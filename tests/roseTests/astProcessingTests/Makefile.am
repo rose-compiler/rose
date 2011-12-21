@@ -97,7 +97,7 @@ endif
 
 strictGraphTest3_SOURCES = strictGraphTest3.C
 strictGraphTest3_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-strictGraphTest3_LDFLAGS = -O3 -fopenmp
+#strictGraphTest3_LDFLAGS = -O3 -fopenmp
 # source files don't contain anything that would be merged
 # TESTCODES = $(srcdir)/performanceTest.C
 
