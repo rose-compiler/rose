@@ -13,7 +13,7 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 
 # DQ (7/2/2011): Fixed this to only handle binary work when binary support is available.
 # bin_PROGRAMS  = astTraversalTest processnew3Down4SgIncGraph processnew3Down4 binaryPaths
-bin_PROGRAMS  = e0 e1 createTest astTraversalTest processnew3Down4SgIncGraph2 processnew3Down4SgIncGraph3 strictGraphTest strictGraphTest2 strictGraphTest3 smtlibParser sourcePTP
+bin_PROGRAMS  = processnew3Down4SgIncGraphInter e0 e1 createTest astTraversalTest processnew3Down4SgIncGraph2 processnew3Down4SgIncGraph3 strictGraphTest strictGraphTest2 strictGraphTest3 smtlibParser sourcePTP
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 bin_PROGRAMS += binaryPaths bPTP
 endif
@@ -26,11 +26,11 @@ ROSE_DEVELOPMENT_LIBS = $(ROSE_SEPARATE_LIBS)
 
 e0_SOURCES = efor.C.maintest.C
 e0_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-e0_LDFLAGS = -O3 -fopenmp
+#e0_LDFLAGS = -O3 -fopenmp
 
 e1_SOURCES = efor1.C.maintest.C
 e1_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-e1_LDFLAGS = -O3 -fopenmp
+#e1_LDFLAGS = -O3 -fopenmp
 
 
 astTraversalTest_SOURCES      = astTraversalTest.C
@@ -54,11 +54,11 @@ astTraversalTest_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
 
 createTest_SOURCES = createTest.C
 createTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-createTest_LDFLAGS = -O3 -fopenmp
+#createTest_LDFLAGS = -O3 -fopenmp
 
 bPTP_SOURCES = bPTP.C
 bPTP_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-bPTP_LDFLAGS = -O3 -fopenmp
+#bPTP_LDFLAGS = -O3 -fopenmp
 
 processnew3Down4SgIncGraph2_SOURCES      = processnew3Down4SgIncGraph2.C
 processnew3Down4SgIncGraph2_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
