@@ -140,14 +140,10 @@ AS_IF([test "x$with_swi_prolog" != xno], dnl yes or autodetect
                     [with_swi_prolog=no])])
 
 AS_IF([test "x$with_swi_prolog" = xyes],
-      [PLBASE=`$SWIPL --dump-runtime-variables |grep PLBASE |sed 's/"/ /g' |awk '{print $2}'`
-       PLARCH=`$SWIPL --dump-runtime-variables |grep PLARCH |sed 's/"/ /g' |awk '{print $2}'`
-       PLLIBS=`$SWIPL --dump-runtime-variables |grep PLLIBS |sed 's/"/ /g' |awk -F= '{print $2}' |sed 's/;//g'`
-       PLCFLAGS=`$SWIPL --dump-runtime-variables |grep PLCFLAGS |sed 's/"/ /g' |awk '{print $2}'`
-       PLLIB="$PLBASE/lib/$PLARCH"
+      [eval `$SWIPL --dump-runtime-variables |grep -v '^CC='`
        AC_SUBST([SWI_PL], ["$SWIPL"])
        AC_SUBST([SWI_PROLOG_LIBS], ["$PLLIBS"])
-       AC_SUBST([SWI_PROLOG_LDADD], ["-Wl,-rpath $PLLIB -L$PLLIB -lpl"])
+       AC_SUBST([SWI_PROLOG_LDADD], ["-L'$PLBASE/lib/$PLARCH' -Wl,-rpath '$PLBASE/lib/$PLARCH' $PLLIB $PLLIBS"])
        AC_SUBST([SWI_PROLOG_HOME_DIR], ["$PLBASE"])
        AC_SUBST([SWI_PROLOG_INCLUDE_DIR], ["$PLBASE/include"])
        AC_SUBST([SWI_PLC], ["$SWIPL -q -t main -O -L0 -G0 -T0"])
