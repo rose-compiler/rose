@@ -106,15 +106,26 @@ CFG *createICFG(Program *program, AnalyzerOptions *options)
     if (options->outputIcfg())
     {
         TimingPerformance timer("ICFG visualization:");
-        if (verbose)
-        {
+	if(options->getOutputGdlIcfgFileName()!="") { 
+	  if (verbose) {
             std::cout
-                << "generating icfg visualization "
-                << options->getOutputIcfgFileName()
-                << " ... " << std::flush;
-        }
-        outputIcfg(cfg, options->getOutputIcfgFileName().c_str());
-        if (verbose) std::cout << "done" << std::endl;
+	      << "generating gdl-icfg visualization "
+	      << options->getOutputGdlIcfgFileName()
+	      << " ... " << std::flush;
+	  }
+	  outputGdlIcfg(cfg, options->getOutputGdlIcfgFileName().c_str());
+	  if (verbose) std::cout << "done" << std::endl;
+	}
+	if(options->getOutputDotIcfgFileName()!="") { 
+	  if (verbose) {
+            std::cout
+	      << "generating dot-icfg visualization "
+	      << options->getOutputDotIcfgFileName()
+	      << " ... " << std::flush;
+	  }
+	  outputDotIcfg(cfg, options->getOutputDotIcfgFileName().c_str());
+	  if (verbose) std::cout << "done" << std::endl;
+	}
     }
 
     return cfg;

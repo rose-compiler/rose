@@ -16,7 +16,8 @@ STRING_ATTR(HelpOptionsText, "")
 
 STRING_ATTR(OutputSourceFileName, "")
 STRING_ATTR(OutputFilePrefix, "")
-STRING_ATTR(OutputIcfgFileName, "")
+STRING_ATTR(OutputDotIcfgFileName, "")
+STRING_ATTR(OutputGdlIcfgFileName, "")
 STRING_ATTR(OutputTermFileName, "")
 #if HAVE_PAG
 STRING_ATTR(OutputGdlFileName, "")

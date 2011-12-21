@@ -1726,6 +1726,83 @@ static void writegdl (const char *name)
   fclose(file);
 } 
 
+/*
+ * write a dot-file with the control flow graph
+ */
+static void writedot (const char *name)
+{
+  KFG_NODE node, n2;
+  KFG_NODE_LIST list;
+  FILE *file;
+  int i, j, k;
+
+  /* filename defined ? */
+  if (NULL == name)
+    return;
+
+  /* open gdl-file */
+  if (NULL == (file = fopen (name, "wt"))) {
+    error ("cannot write file '%s'\n", name);
+    return;
+  }
+  
+  /* write header */
+  (void)fprintf (file, "digraph Program {\n");
+  
+  /* write all procedures */
+  for (i = 0; i < kfg_num_procs (cfg); i++) {
+    /* begin subgraph */
+    char* function_name=kfg_proc_name(cfg, i);
+    (void)fprintf (file, " subgraph cluster_%s {\n",function_name); 
+    (void)fprintf (file, " style=filled;\n color=lightgrey;\n");
+    (void)fprintf (file, " label=\"%s\";\n",function_name); 
+    (void)fprintf (file, " node [style=filled, color=green];\n");
+      
+    /* write all nodes of the procedure */
+    for (j = 0; j < kfg_num_nodes (cfg); j++) {
+      node = kfg_get_node (cfg, (KFG_NODE_ID)j);
+      
+      /* is the node in this procedure */
+      if (i == kfg_procnumnode (cfg, node)) {
+	//(void)fprintf (file, "    node: {\n"				\
+	//	       "      title: \"%d\"\n"				\
+	//	       "      label: \"%d %d\n", j, j, i);
+	
+	//  for (k = 0; (k == 0) || k < kfg_get_bbsize (cfg, node); k++)
+	//	{
+	//	  kfg_node_infolabel_print_fp (file, cfg, node, k);
+	//	  (void)fprintf (file, "\n");
+	//	}
+
+	/* write all edges */
+	for (list = kfg_successors (cfg, node); 0 == kfg_node_list_is_empty (list); ) {
+	  n2 = kfg_node_list_head (list);
+	  list = kfg_node_list_tail (list);
+	  (void)fprintf (file, "%d -> %d [color=black];\n",j,kfg_get_id (cfg, n2));
+	}
+	
+#if 0
+	// dot not write back-edges (no option yet)
+	/* write all back-edges */
+	for (list = kfg_predecessors (cfg, node); 0 == kfg_node_list_is_empty (list); )	{
+	  n2 = kfg_node_list_head (list);
+	  list = kfg_node_list_tail (list);
+	  (void)fprintf (file, "%d -> %d [color=red];\n",j,kfg_get_id (cfg, n2));	    
+	}
+#endif
+      }
+    }
+
+    /* close subgraph */
+    (void)fprintf (file, "  }\n");
+  }
+  
+  /* write footer */
+  (void)fprintf (file, "}\n");
+  
+  /* close the file */
+  fclose(file);
+} 
 
 /* The main testfunction. Returns 0 if any error is found in the cfg */
 int kfg_testit (KFG kfg, int quiet_mode)
@@ -1765,11 +1842,14 @@ int kfg_testit (KFG kfg, int quiet_mode)
   return (error_found == 0);
 }
 
-void outputIcfg(KFG kfg, const char *gdl_name) {
+void outputGdlIcfg(KFG kfg, const char *gdl_name) {
   cfg=kfg;
   writegdl (gdl_name);
 }
 
-
+void outputDotIcfg(KFG kfg, const char *dot_name) {
+  cfg=kfg;
+  writedot (dot_name);
+}
 
 #endif /* ifdef NDEBUG */

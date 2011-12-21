@@ -15,7 +15,8 @@ extern "C" {
 
 #include "iface.h"
 
-  void outputIcfg(KFG kfg, const char* gdl_name);
+  void outputGdlIcfg(KFG kfg, const char* gdl_name);
+  void outputDotIcfg(KFG kfg, const char* dot_name);
   int kfg_testit(KFG kfg, int quiet_mode);
 
 #ifdef __cplusplus
