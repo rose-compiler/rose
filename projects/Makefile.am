@@ -32,6 +32,7 @@ SUBDIRS = \
 	pragmaParsing \
 	roseToLLVM \
 	taintcheck \
+	RTC \
 	PowerAwareCompiler \
 	ManyCoreRuntime \
 	mint \
