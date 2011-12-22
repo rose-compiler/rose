@@ -2141,6 +2141,7 @@ projects/symbolicAnalysisFramework/src/Makefile
 projects/symbolicAnalysisFramework/tests/Makefile
 projects/symbolicAnalysisFramework/include/Makefile
 projects/taintcheck/Makefile
+projects/RTC/Makefile
 projects/PowerAwareCompiler/Makefile
 projects/ManyCoreRuntime/Makefile
 projects/ManyCoreRuntime/docs/Makefile
