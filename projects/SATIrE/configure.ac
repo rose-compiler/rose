@@ -11,6 +11,7 @@ AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([foreign no-installinfo no-texinfo.tex 1.11
   dist-bzip2 color-tests silent-rules]) dnl  parallel-tests
 dnl do `make V=1' or `./configure --disable-silent-rules' for a verbose build
+AM_SILENT_RULES
 
 # Checks for programs.
 AC_PROG_YACC
