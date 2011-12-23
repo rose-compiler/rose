@@ -241,7 +241,7 @@ loopbounds: interval
 	$(MAKE) -j1 $(patsubst %.c,%.loop.term,$(wildcard $(top_srcdir)/testsuite/mtrc/success/*.c))
 	@echo "Sanity check"
 	$(bindir)/loopbounds $(top_srcdir)/testsuite/base/success/bsort.c \
-	  |unparse | grep wcet_constraint
+	  |$(DESTDIR)/$(bindir)/unparse | grep wcet_constraint
 
 satire_driver: init.token
 	@echo
