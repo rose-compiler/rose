@@ -57,8 +57,8 @@ counter_assert(C, Lower..Upper, FI, Assertion) :-
 			     AI, FI),
   Ftp = function_type(type_void,ellipses,[type_int]),
 
-  MinVal = unsigned_int_val(null, value_annotation(Lower, PPI), AI, FI),
-  MaxVal = unsigned_int_val(null, value_annotation(Upper, PPI), AI, FI),
+  MinVal = unsigned_int_val(value_annotation(Lower, PPI), AI, FI),
+  MaxVal = unsigned_int_val(value_annotation(Upper, PPI), AI, FI),
   GEop = greater_or_equal_op(VarRef, MinVal, TypeAn, AI, FI),
   LEop = less_or_equal_op(VarRef, MaxVal, TypeAn, AI, FI),
   AndOp = and_op(GEop, LEop, binary_op_annotation(type_int, PPI), AI, FI),
@@ -70,7 +70,7 @@ counter_assert(C, Lower..Upper, FI, Assertion) :-
 
 counter_decl(C, FI, variable_declaration([
     initialized_name(assign_initializer(
-        unsigned_int_val(null, value_annotation(0, PPI), AI, FI),
+        unsigned_int_val(value_annotation(0, PPI), AI, FI),
       assign_initializer_annotation(type_unsigned_int, PPI), AI, FI),
       initialized_name_annotation(type_unsigned_int, C, default, null), AI, FI)
 				     ],

@@ -301,37 +301,37 @@ term_interval(AnalysisInfo, Term, TermC) :-
 
 %% isIntVal(?IntVal, ?Value) is noned.
 % Convert between int_val nodes and integer values.
-isIntVal(                   int_val(_,value_annotation(Value,_), _, _), Value).
-isIntVal(		  short_val(_,value_annotation(Value,_), _, _), Value).
-isIntVal(	      short_int_val(_,value_annotation(Value,_), _, _), Value).
-isIntVal(	       long_int_val(_,value_annotation(Value,_), _, _), Value).
-isIntVal(	  long_long_int_val(_,value_annotation(Value,_), _, _), Value).
-isIntVal(	   unsigned_int_val(_,value_annotation(Value,_), _, _), Value).
-isIntVal(    unsigned_short_int_val(_,value_annotation(Value,_), _, _), Value).
-isIntVal(	 unsigned_short_val(_,value_annotation(Value,_), _, _), Value).
-isIntVal(	  unsigned_long_val(_,value_annotation(Value,_), _, _), Value).
-isIntVal(unsigned_long_long_int_val(_,value_annotation(Value,_), _, _), Value).
-isIntVal(	       bool_val_exp(_,value_annotation(Value,_), _, _), Value).
+isIntVal(                   int_val(value_annotation(Value,_), _, _), Value).
+isIntVal(		  short_val(value_annotation(Value,_), _, _), Value).
+isIntVal(	      short_int_val(value_annotation(Value,_), _, _), Value).
+isIntVal(	       long_int_val(value_annotation(Value,_), _, _), Value).
+isIntVal(	  long_long_int_val(value_annotation(Value,_), _, _), Value).
+isIntVal(	   unsigned_int_val(value_annotation(Value,_), _, _), Value).
+isIntVal(    unsigned_short_int_val(value_annotation(Value,_), _, _), Value).
+isIntVal(	 unsigned_short_val(value_annotation(Value,_), _, _), Value).
+isIntVal(	  unsigned_long_val(value_annotation(Value,_), _, _), Value).
+isIntVal(unsigned_long_long_int_val(value_annotation(Value,_), _, _), Value).
+isIntVal(	       bool_val_exp(value_annotation(Value,_), _, _), Value).
 
-isIntVal(char_val(_,value_annotation(Value, _), _, _), Value) :-
+isIntVal(char_val(value_annotation(Value, _), _, _), Value) :-
   integer(Value).
 
-isIntVal(unsigned_char_val(_,value_annotation(Value, _), _, _), Value) :-
+isIntVal(unsigned_char_val(value_annotation(Value, _), _, _), Value) :-
   integer(Value).
 
-isIntVal(char_val(_,value_annotation(String, _), _, _), Value) :-
+isIntVal(char_val(value_annotation(String, _), _, _), Value) :-
   string(String),
   string_to_atom(String, Atom),
   atom_codes(Atom, [Value]).
 
-isIntVal(unsigned_char_val(_,value_annotation(String, _), _, _), Value) :-
+isIntVal(unsigned_char_val(value_annotation(String, _), _, _), Value) :-
   string(String),
   string_to_atom(String, Atom),
   atom_codes(Atom, [Value]).
 
 %% new_intval(+Value, -IntVal)
 % Create a new int_val(Value, ...) data structure with default annotations.
-new_intval(Value, int_val(null,value_annotation(Value,PPI), AI, FI)) :-
+new_intval(Value, int_val(value_annotation(Value,PPI), AI, FI)) :-
   default_values(PPI, _, AI, FI).
 
 %% isVar(?VarRefExp, ?Name) is nondet.

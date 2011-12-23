@@ -228,7 +228,7 @@ get_implicit_marker(Stmt, LoopMarker) :-
 % unsigned int VarName = 0;
 intz_decl(VarName, variable_declaration([
     initialized_name(assign_initializer(
-        unsigned_int_val(null, value_annotation(0, PPI), AI, FI),
+        unsigned_int_val(value_annotation(0, PPI), AI, FI),
       assign_initializer_annotation(type_unsigned_int, PPI), AI, FI),
       initialized_name_annotation(type_unsigned_int, VarName, default, null), AI, FI)
 				     ],
@@ -242,7 +242,7 @@ intz_decl(VarName, variable_declaration([
 % static int VarName = 0;
 static_intz_decl(VarName, variable_declaration([
     initialized_name(assign_initializer(
-        unsigned_int_val(null, value_annotation(0, PPI), AI, FI),
+        unsigned_int_val(value_annotation(0, PPI), AI, FI),
       assign_initializer_annotation(type_unsigned_int, PPI), AI, FI),
       initialized_name_annotation(type_unsigned_int, VarName, default, null), AI, FI)
 				     ],
@@ -277,7 +277,7 @@ assert_expr(Expr, Assertion) :-
 
 % build_expr(PrologExpr, CxxExpr)
 build_expr(IntVal,
-	      int_val(null, value_annotation(IntVal, PPI), AI, FI)) :-
+	      int_val(value_annotation(IntVal, PPI), AI, FI)) :-
   number(IntVal),
   default_values(PPI, _DA, AI, FI).
 

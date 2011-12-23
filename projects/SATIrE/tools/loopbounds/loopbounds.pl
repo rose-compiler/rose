@@ -402,7 +402,7 @@ find_iv_interval(Info, InfoInner, PostCondition, I, Base, End) :-
   merge_info(Info, I-(PCmin..PCmax), PostCondition).
   %write('post '), writeln(PostCondition)
   %merge_info(PostCond1, equiv(I, End),
-    %add_op(End, int_val(_, value_annotation(Increment, _), _, _), _)),
+    %add_op(End, int_val(value_annotation(Increment, _), _, _), _)),
  %	     PostCondition).%,   write('post '), writeln(PostCondition).
 
 %-----------------------------------------------------------------------
