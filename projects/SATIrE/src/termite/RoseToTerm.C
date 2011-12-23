@@ -12,6 +12,7 @@
 #include "TermPrinter.h"
 #include "RoseToTerm.h"
 #include "satire.h"
+#include <boost/algorithm/string/predicate.hpp>
 
 using namespace std;
 
@@ -19,6 +20,17 @@ using namespace std;
    annotation */
 #define PPI(NODE) \
   getPreprocessingInfo((NODE)->getAttachedPreprocessingInfo())
+
+/**
+ * Create a descriptive name for a boolean flag
+ */
+PrologTerm*
+RoseToTerm::makeFlag(bool val, std::string name) {
+  ROSE_ASSERT(!boost::starts_with(name, "no_"));
+  if (val) return new PrologAtom(name);
+  else return new PrologAtom("no_"+name);
+}
+
 
 /**
  * get node specific info for a term.
@@ -378,8 +390,13 @@ RoseToTerm::getConstructorInitializerSpecific(SgConstructorInitializer* ci) {
   SgClassDeclaration* dec = ci->get_class_decl();
   ROSE_ASSERT(dec != NULL);
   return new PrologCompTerm
-    ("constructor_initializer_annotation", //2,
+    ("constructor_initializer_annotation",
      new PrologAtom(dec->get_qualified_name().getString()),
+     getTypeSpecific(ci->get_expression_type()),
+     makeFlag(ci->get_need_name(), "need_name"),
+     makeFlag(ci->get_need_qualifier(), "need_qualifier"),
+     makeFlag(ci->get_need_parenthesis_after_name(), "need_parenthesis_after_name"),
+     makeFlag(ci->get_associated_class_unknown(), "associated_class_unknown"),
      PPI(ci));
 }
 

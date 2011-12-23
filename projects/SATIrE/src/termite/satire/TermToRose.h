@@ -30,6 +30,8 @@ public:
 private:
   /* enum <-> atom conversion */
   RoseEnums re;
+
+  bool getFlag(PrologTerm*);
   
   /* fixups */
   std::vector<SgDeclarationStatement*> declarationStatementsWithoutScope;
