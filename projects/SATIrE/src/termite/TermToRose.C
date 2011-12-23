@@ -76,7 +76,7 @@ static inline string makeInameID(PrologCompTerm* annot) {
 	   << t->getRepresentation() << "<<\n\n"	 		\
 	   << "====================================\n"			\
 	   << "Did you upgrade ROSE?\n"					\
-	   << "In that case the arity/layout of "                       \
+	   << "In that case the arity/layout of\n"                       \
 	   << "certain node types may have changed.\n"			\
 	   << "====================================\n"			\
 	   << endl;                                                     \
