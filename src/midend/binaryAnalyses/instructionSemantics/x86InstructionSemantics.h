@@ -610,7 +610,7 @@ struct X86InstructionSemantics {
         }
 #else
     virtual void translate(SgAsmx86Instruction* insn) try {
-        Word(32) orig_eip = readRegister<32>(REG_EIP);
+        orig_eip = readRegister<32>(REG_EIP);
         writeRegister(REG_EIP, policy.add(orig_eip, policy.number<32>(insn->get_size())));
         X86InstructionKind kind = insn->get_kind();
         const SgAsmExpressionPtrList& operands = insn->get_operandList()->get_operands();

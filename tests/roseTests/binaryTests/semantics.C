@@ -48,7 +48,7 @@
     };
 #elif  3==POLICY_SELECTOR
 #   define TestValueTemplate VirtualMachineSemantics::ValueType
-    struct TestPolicy: public VirtualMachineSemantics::Policy {
+    struct TestPolicy: public VirtualMachineSemantics::Policy<VirtualMachineSemantics::ValueType> {
         void dump(SgAsmInstruction *insn) {
             std::cout <<unparseInstructionWithAddress(insn) <<"\n"
                       <<get_state()

@@ -162,18 +162,18 @@ RSIM_SemanticPolicy::set_eflags(uint32_t eflags)
 }
 
 void
-RSIM_SemanticPolicy::push(VirtualMachineSemantics::ValueType<32> n)
+RSIM_SemanticPolicy::push(RSIM_SEMANTIC_VTYPE<32> n)
 {
-    VirtualMachineSemantics::ValueType<32> new_sp = add(readRegister<32>(reg_esp), number<32>((uint64_t)(int64_t)-4));
+    RSIM_SEMANTIC_VTYPE<32> new_sp = add(readRegister<32>(reg_esp), number<32>((uint64_t)(int64_t)-4));
     writeMemory(x86_segreg_ss, new_sp, n, true_());
     writeRegister(reg_esp, new_sp);
 }
 
-VirtualMachineSemantics::ValueType<32>
+RSIM_SEMANTIC_VTYPE<32>
 RSIM_SemanticPolicy::pop()
 {
-    VirtualMachineSemantics::ValueType<32> old_sp = readRegister<32>(reg_esp);
-    VirtualMachineSemantics::ValueType<32> retval = readMemory<32>(x86_segreg_ss, old_sp, true_());
+    RSIM_SEMANTIC_VTYPE<32> old_sp = readRegister<32>(reg_esp);
+    RSIM_SEMANTIC_VTYPE<32> retval = readMemory<32>(x86_segreg_ss, old_sp, true_());
     writeRegister(reg_esp, add(old_sp, number<32>(4)));
     return retval;
 }
@@ -190,7 +190,7 @@ RSIM_SemanticPolicy::startInstruction(SgAsmInstruction* insn)
             mesg->mesg("%s", unparseInstruction(insn).c_str());
         }
     }
-    VirtualMachineSemantics::Policy::startInstruction(insn);
+    RSIM_SEMANTIC_POLICY::startInstruction(insn);
 }
 
 void
