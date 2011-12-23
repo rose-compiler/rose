@@ -46,7 +46,7 @@
 % don't compare against top
 compval(top, V, V, _, _, _) :- !.
 compval('BOTTOM', V, V, _, _, _) :- !.
-compval(Val, _, int_val(null, value_annotation(Val, PPI), AI, FI), PPI, AI, FI).
+compval(Val, _, int_val(value_annotation(Val, PPI), AI, FI), PPI, AI, FI).
 
 % look up type for some variable
 var_withtype(Decls, Var->Intvl, Var:Type->Intvl) :-
@@ -56,7 +56,7 @@ var_withtype(_Decls, _V, not_in_scope).
 
 % get Var:Type pair from a variable declaration
 vardecl_vartype(variable_declaration([IN],_,_,_), Var:Type) :-
-  IN = initialized_name(_, initialized_name_annotation(Type,Var,_,_),_,_).
+  IN = initialized_name(_, initialized_name_annotation(Type,Var,_,_,_),_,_).
 
 % check for pointer type
 is_pointer_type(pointer_type(_)).
@@ -125,14 +125,13 @@ info_decls_assertions(Info, Decls, Assertions) :-
 info_decls_assertions(Info, _Decls, [AssertCall]) :-
   member(merged:bot, Info),
   default_values(PPI, _DA, AI, FI),
-  Zero = int_val(null, value_annotation(0, PPI), AI, FI),
-  ErrorMsg = string_val(null,
-                        value_annotation(
+  Zero = int_val(value_annotation(0, PPI), AI, FI),
+  ErrorMsg = string_val(value_annotation(
                             'error: branch should be unreachable!', PPI),
                         AI, FI),
-  ErrorInt = cast_exp(ErrorMsg, null,
+  ErrorInt = cast_exp(ErrorMsg, 
                       unary_op_annotation(
-                          prefix, type_int, implicit, null, PPI),
+                          prefix, type_int, 'C_style_cast', null, PPI),
                       AI, FI),
   And = and_op(Zero, ErrorInt, binary_op_annotation(type_int, PPI), AI, FI),
   assert_call(And, AssertCall).
@@ -155,7 +154,7 @@ interval_assert(Var:VarType->[Min,Max], AssertionExpr) :-
   % skip temp vars, pointer and array variables
   ( ( atom_concat('$', _, Var)
       ; is_pointer_type(VarType) ; is_array_type(VarType) )
-  -> AndOp = int_val(null, value_annotation(1, PPI), AI, FI)
+  -> AndOp = int_val(value_annotation(1, PPI), AI, FI)
   ;  AndOp = and_op(GE, LE, binary_op_annotation(type_int, PPI), AI, FI)
   ),
 
@@ -256,9 +255,9 @@ assertions(y-[], y-[], y-VarsTypes, global(Decls, An, Ai, Fi),
   function_declaration(
    function_parameter_list(
     [initialized_name(null,
-		      initialized_name_annotation(type_int, '', default, null),
+		      initialized_name_annotation(type_int, '', default, null, PPI),
 		      analysis_info([]), AFI)], DA, AI, AFI),
-		       null,
+		       null, null,
 		       function_declaration_annotation(
 		         function_type(type_void,
 				       ellipses, [type_int]),
@@ -302,6 +301,7 @@ maingen(t(FuncName/FuncType,Closure,Unreachable), [], [],
 
   Main = function_declaration(
      function_parameter_list([], DA, AI, FI),
+     null,
      function_definition(basic_block(BB, DA, AI, FI),
 			 DA, AI, FI),
      function_declaration_annotation(function_type(type_int, ellipses, []),
@@ -321,7 +321,7 @@ maingen(t(FuncName/FuncType,Closure,Unreachable), [], [],
 			      function_call_exp_annotation(type_int, PPI),
 			      AI, FI), DA, AI, FI), Return]
   ),
-  Return = return_stmt(int_val(null, value_annotation(0, PPI),AI,FI),DA,AI,FI),
+  Return = return_stmt(int_val(value_annotation(0, PPI),AI,FI),DA,AI,FI),
   FREA = function_ref_exp_annotation(FuncName, FuncType, PPI),
   append(Decls, [Main], Decls1).
 
