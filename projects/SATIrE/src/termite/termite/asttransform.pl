@@ -440,7 +440,7 @@ unparse1(UI, dot_exp(pointer_deref_exp(E1, _, _, _), E2, _, _, _)) :- !,
 
 unparse1(UI, pointer_deref_exp(E1, _, _, _)) :- !, 
   write('*'), unparse_par(UI, E1).
-unparse1(UI, cast_exp(E, _, unary_op_annotation(_, Type, _, _, _), _, _)) :- !,
+unparse1(UI, cast_exp(E, unary_op_annotation(_, Type, _, _, _), _, _)) :- !,
   (  ( Type \= array_type(_, _),
        Type \= pointer_type(array_type(_, _)))
   -> (write('('), unparse(UI, Type), write(')'))

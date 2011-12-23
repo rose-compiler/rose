@@ -233,12 +233,12 @@ simplification(arrow_exp(_,(_.._),binary_op_annotation(Type,_), _, _), I):-
 
 % Type Casting
 simplification(assign_op(E1,
-         cast_exp(E2, _, unary_op_annotation(_, Type, _, _, _), _, _),
+         cast_exp(E2, unary_op_annotation(_, Type, _, _, _), _, _),
 			 binary_op_annotation(Type, _), _, _),
 	       assign_op(E1, E2, _, _, _)).
 
 simplification(cast_exp(var_ref_exp(var_ref_exp_annotation(Type1,Name,T,S,PPI),A,_),
-		        _, unary_op_annotation(_, Type2, _, _), _, _),
+		        unary_op_annotation(_, Type2, _, _), _, _),
 	       var_ref_exp(var_ref_exp_annotation(Type1,Name,T,S,PPI),A,_)) :-
   type_info(Type1, Signed1, Size1),
   type_info(Type2, Signed2, Size2),
@@ -248,7 +248,7 @@ simplification(cast_exp(var_ref_exp(var_ref_exp_annotation(Type1,Name,T,S,PPI),A
      Signed2 = signed)).
   
 simplification(CastExp, and_op(E1, Mask, _, _, _)) :- 
-  CastExp = cast_exp(E1, _, unary_op_annotation(_, Type, _, _, _), _, _),
+  CastExp = cast_exp(E1, unary_op_annotation(_, Type, _, _, _), _, _),
   type_info(Type, _, Size),
   M is (2**Size) -1,
   isIntVal(Mask, M).

@@ -257,7 +257,7 @@ var_stripped(
     ->	Ai1 = analysis_info([variable_id(Id)])
     ;	Ai1 = null).
 
-var_stripped(cast_exp(V, _, _A, _Ai, _Fi), V1) :- !,
+var_stripped(cast_exp(V, _A, _Ai, _Fi), V1) :- !,
   var_stripped(V, V1).
 
 var_stripped(Term, Term).
@@ -339,7 +339,7 @@ new_intval(Value, int_val(value_annotation(Value,PPI), AI, FI)) :-
 % of the variable.
 isVar(var_ref_exp(var_ref_exp_annotation(_, Name, _, _, _), _, _), Name).
 isVar(cast_exp(var_ref_exp(var_ref_exp_annotation(_, Name, _, _, _), _, _),
-	       null, _, _, _),
+	       _, _, _),
       Name).
 
 %% var_type(?VarRefExp, ?Type) is nondet.
