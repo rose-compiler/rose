@@ -73,8 +73,9 @@ public:
 
             // Create the policy that holds the analysis state which is modified by each instruction.  Then plug the policy
             // into the X86InstructionSemantics to which we'll feed each instruction.
-            SymbolicSemantics::Policy policy(&smt_solver);
-            X86InstructionSemantics<SymbolicSemantics::Policy, SymbolicSemantics::ValueType> semantics(policy);
+            SymbolicSemantics::Policy<SymbolicSemantics::ValueType> policy(&smt_solver);
+            X86InstructionSemantics<SymbolicSemantics::Policy<SymbolicSemantics::ValueType>,
+                                    SymbolicSemantics::ValueType> semantics(policy);
 
             // The top of the stack contains the (unknown) return address.  The value above that (in memory) is the address of
             // the buffer, to which we give a concrete value, and above that is the size of the buffer, which we also give a

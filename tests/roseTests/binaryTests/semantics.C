@@ -57,7 +57,7 @@
     };
 #elif  4==POLICY_SELECTOR
 #   define TestValueTemplate SymbolicSemantics::ValueType
-    struct TestPolicy: public SymbolicSemantics::Policy {
+struct TestPolicy: public SymbolicSemantics::Policy<SymbolicSemantics::ValueType> {
         TestPolicy() {
 #           if 1==SOLVER_SELECTOR
                 YicesSolver *solver = new YicesSolver;

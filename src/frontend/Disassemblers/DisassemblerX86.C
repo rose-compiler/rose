@@ -214,7 +214,7 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
 # endif
         if (debug && solver)
             solver->set_debug(stderr);
-        typedef SymbolicSemantics::Policy Policy;
+        typedef SymbolicSemantics::Policy<SymbolicSemantics::ValueType> Policy;
         typedef SymbolicSemantics::ValueType<32> RegisterType;
         typedef X86InstructionSemantics<Policy, SymbolicSemantics::ValueType> Semantics;
         Policy policy(solver);
