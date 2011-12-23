@@ -146,7 +146,7 @@ void expect_term(PrologTerm* n, TermType **r) {
 /* Special case for Prolog Terms, with check for name  */
 template< class TermType >
 void expect_term(PrologTerm* n, TermType **r,
-		      std::string name) {
+		 std::string name) {
   expect_term(n, r);
   if ((*r)->getName() != name) {
     std::cerr << "** ERROR: The term\n  "
@@ -300,10 +300,10 @@ TermToRose::toRose(const char* filename) {
 }
 
 /**
- * create ROSE-IR for valid term representation*/
+ * create ROSE-IR for valid term representation
+ */
 SgNode*
 TermToRose::toRose(PrologTerm* t) {
-
   SgNode* node;
   if(PrologCompTerm* c = isPrologCompTerm(t)) {
 
@@ -1582,7 +1582,7 @@ TermToRose::createSizeOfOp(Sg_File_Info* fi,SgNode* child1,PrologCompTerm* t) {
 
 /** create a SgReturnStmt*/
 SgReturnStmt*
-TermToRose::createReturnStmt(Sg_File_Info* fi, SgNode* succ,PrologCompTerm* t) {
+TermToRose::createReturnStmt(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) {
   /* get expression*/
   SgExpression* exp = isSgExpression(succ);
   SgReturnStmt* s  = new SgReturnStmt(fi,exp);
@@ -2562,7 +2562,7 @@ TermToRose::createClassDefinition(Sg_File_Info* fi, std::deque<SgNode*>* succs, 
  * create SgClassDeclaration
  */
 SgClassDeclaration*
-TermToRose::createClassDeclaration(Sg_File_Info* fi,SgNode* child1 ,PrologCompTerm* t) {
+TermToRose::createClassDeclaration(Sg_File_Info* fi, SgNode* child1, PrologCompTerm* t) {
   //cerr<<t->getRepresentation()<<endl;
   /* retrieve annotation*/
   PrologCompTerm* annot = retrieveAnnotation(t);
@@ -3778,5 +3778,3 @@ TermToRose::createProgramHeaderStatement(Sg_File_Info* fi,SgNode* child1,SgNode*
 
   return stmt;
 }
-
-
