@@ -106,6 +106,8 @@ protected:
 private:
   /** should generate list instead of tuple? */
   bool isContainer(SgNode* astNode);
+  void padArity(SynthesizedAttributesList synList, int arity);
+  void ensureArity(SgNode* astNode, SynthesizedAttributesList synList);
   /** return the number of successors */
   int getArity(SgNode* astNode);
 
@@ -168,24 +170,25 @@ typedef TermPrinter<void*> BasicTermPrinter;
 /***********************************************************************
  * TermPrinter (Implementation)
  ***********************************************************************/
-
+/**
+ *  AP 2.2.2008 new rose (hotel) compatibility
+ *  GB (2008-12-11): AstTests::numSuccContainers does not report container
+ *  nodes that happen to be empty at the moment. This is a clear design
+ *  problem in the way it is implemented (in theory, a correct
+ *  implementation could be generated for each node by using ROSETTA). This
+ *  is really problematic for empty SgFunctionParameterLists! However,
+ *  other than patching ROSE, which is not really an option, I can't see
+ *  how to implement this correctly. In any case, I added the parameter
+ *  lists as a special case here, and this should be done for any other
+ *  maybe-empty list nodes we stumble upon.
+ *  FIXME: Revisit this issue, and think of a real fix!
+ *  GB (2009-JAN): Added SgBasicBlock and SgExprListExp as maybe-emtpy
+ *  containers. Added SgForInitStatement.
+ */
 template<typename DFI_STORE_TYPE>
 bool
 TermPrinter<DFI_STORE_TYPE>::isContainer(SgNode* astNode) 
 {
-  // AP 2.2.2008 new rose (hotel) compatibility
-  // GB (2008-12-11): AstTests::numSuccContainers does not report container
-  // nodes that happen to be empty at the moment. This is a clear design
-  // problem in the way it is implemented (in theory, a correct
-  // implementation could be generated for each node by using ROSETTA). This
-  // is really problematic for empty SgFunctionParameterLists! However,
-  // other than patching ROSE, which is not really an option, I can't see
-  // how to implement this correctly. In any case, I added the parameter
-  // lists as a special case here, and this should be done for any other
-  // maybe-empty list nodes we stumble upon.
-  // FIXME: Revisit this issue, and think of a real fix!
-  // GB (2009-JAN): Added SgBasicBlock and SgExprListExp as maybe-emtpy
-  // containers. Added SgForInitStatement.
   return AstTests::numSuccContainers(astNode) ||
     isSgFunctionParameterList(astNode) ||
     isSgExprListExp(astNode) ||
@@ -193,6 +196,33 @@ TermPrinter<DFI_STORE_TYPE>::isContainer(SgNode* astNode)
     isSgForInitStatement(astNode) ||
     isSgClassDefinition(astNode) ||
     isSgVariableDeclaration(astNode);
+}
+
+template<typename DFI_STORE_TYPE>
+void
+TermPrinter<DFI_STORE_TYPE>::padArity(SynthesizedAttributesList synList, int arity)
+{
+  size_t l = synList.size();
+  ROSE_ASSERT(l <= arity);
+  while (l < arity) {
+    std::cerr<< l<<std::endl;
+    synList.debugDump(std::cerr);
+    synList.push(new PrologAtom("null"));
+  }
+}
+/**
+ * ensure that certain node types always have as consistent arity,
+ * even though they may or maynot have children by padding them with
+ * extra "null" children
+ */
+template<typename DFI_STORE_TYPE>
+void
+TermPrinter<DFI_STORE_TYPE>::ensureArity(SgNode* astNode, SynthesizedAttributesList synList)
+{
+  switch (astNode->variantT()) {
+  case V_SgFunctionDeclaration: padArity(synList, 3); break;
+  default: return;
+  }
 }
 
 template<typename DFI_STORE_TYPE>
@@ -215,10 +245,7 @@ TermPrinter<DFI_STORE_TYPE>::getArity(SgNode* astNode)
   }
 }
 
-template<typename DFI_STORE_TYPE>
-PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
-  SgNode* astNode, SynthesizedAttributesList synList) {
-  /*
+/**
    * Compute the PROLOG representation of a node using
    * the successors' synthesized attributes.
    *
@@ -229,6 +256,9 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
    * o nodes with more successors or a variable # of succ. will be
    *   represented by a term that contains a list of successor nodes.
    */
+template<typename DFI_STORE_TYPE>
+PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
+  SgNode* astNode, SynthesizedAttributesList synList) {
 
   PrologTerm* t;
 
@@ -317,6 +347,8 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
       return t;
     }
   }
+
+  ensureArity(astNode, synList);
 
   if (!fi->isFrontendSpecific()) {
     /* add node specific information to the term*/
