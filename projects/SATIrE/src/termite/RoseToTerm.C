@@ -160,8 +160,8 @@ RoseToTerm::getFileInfo(Sg_File_Info* inf) {
  * convert ZigZagCase to zig_zag_case.
  * (In Prolog, strings starting with uppercase letters are free variables)
  */
-string 
-RoseToTerm::prologize(string s) {
+std::string
+RoseToTerm::prologize(std::string s) {
   string t;
   string::iterator it;
   it = s.begin();
@@ -801,7 +801,7 @@ RoseToTerm::getNamespaceDeclarationStatementSpecific
 
 /** create a list of atoms from a bit vector*/
 PrologTerm* 
-RoseToTerm::getBitVector(const SgBitVector &v, const vector<string> &names) {
+RoseToTerm::getBitVector(const SgBitVector &v, const std::vector<std::string> &names) {
   PrologList* l = new PrologList;
   reverse_iterator<SgBitVector::const_iterator> it = v.rbegin();
   reverse_iterator<vector<string>::const_iterator> name = names.rbegin();
@@ -818,7 +818,7 @@ RoseToTerm::getBitVector(const SgBitVector &v, const vector<string> &names) {
 
 /** create a list of atoms from a bit vector*/
 PrologTerm* 
-RoseToTerm::getEnum(int enum_val, const vector<string> &names) {
+RoseToTerm::getEnum(int enum_val, const std::vector<std::string> &names) {
   ROSE_ASSERT(enum_val < names.size());
   return new PrologAtom(names[enum_val]);
 }
