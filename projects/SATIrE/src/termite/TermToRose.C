@@ -2857,7 +2857,7 @@ TermToRose::createTypedefDeclaration(Sg_File_Info* fi, PrologCompTerm* t) {
     if (ct->getName() == "class_declaration") {
       ARITY_ASSERT(ct, 4);
       PrologCompTerm* annot = isPrologCompTerm(ct->at(1));
-      ARITY_ASSERT(annot, 4+AR);
+      ARITY_ASSERT(annot, 3+AR);
       id = annot->at(0)->getRepresentation();
     }
     else if (ct->getName() == "enum_declaration")
