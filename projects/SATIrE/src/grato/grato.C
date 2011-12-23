@@ -3,10 +3,11 @@
 
 // Author: Markus Schordan
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #include <iostream>
 #include <string>
+#include <cstring>
 #include <fstream>
 
 //#include "parser_decls.h"
@@ -29,6 +30,22 @@ string auxiliaryNonTerminalPostfix="";
 extern void printRegisteredAuxRules();
 extern GGrammar* synParse(void);
 
+void print_help_text(char* command_name) {
+  cout << command_name << " <grammarfile> [-trdph]" << endl;
+	 cout << "  -t : text output" << endl;
+	 cout << "  -r<num> : apply transformation rule number <num> (requires -t)" << endl;
+	 cout << "     num=0: default"<< endl;
+	 cout << "     num=1: introduce auxiliary rule and non-terminal"<< endl;
+	 cout << "     num=2: introduce base-type class"<< endl;
+
+	 cout << "  -d : dot output" << endl;
+	 cout << "  -p : check properties" << endl;
+	 cout << "  -v : visitor" << endl;
+	 cout << "  -h : help" << endl;
+	 cout << "  --help    : print help" << endl;
+	 cout << "  --version : print version text" << endl;
+}
+
 int main(int argc, char **argv)
 {
   char *input_filename = NULL;
@@ -43,6 +60,14 @@ int main(int argc, char **argv)
 #if 1
   int i; 
   for(i=1;i<argc;i++) {
+	if(!strcmp(argv[i],"--version")) {
+	  cout << argv[0] << " (SATIrE) 0.1" << endl;
+	  exit(0);
+	}
+	if(!strcmp(argv[i],"--help")) {
+	  print_help_text(argv[0]);
+	  exit(0);
+	}
     if (*argv[i]=='-') {
        switch(*(argv[i]+1)) {
        /* output option */
@@ -62,18 +87,8 @@ int main(int argc, char **argv)
 	 transformationrulenumber=*(argv[i]+2)-'0';
 	 break;
        case 'h': 
-	 cout << "synparser <synfile> [-trdph]" << endl;
-	 cout << "  -t : text output" << endl;
-	 cout << "  -r<num> : apply transformation rule number <num> (requires -t)" << endl;
-	 cout << "     num=0: default"<< endl;
-	 cout << "     num=1: introduce auxiliary rule and non-terminal"<< endl;
-	 cout << "     num=2: introduce base-type class"<< endl;
-
-	 cout << "  -d : dot output" << endl;
-	 cout << "  -p : check properties" << endl;
-	 cout << "  -v : visitor" << endl;
-	 cout << "  -h : help" << endl;
-	 exit(0);
+		 print_help_text(argv[0]);
+		 exit(0);
 	 break;
 
        case 'v':

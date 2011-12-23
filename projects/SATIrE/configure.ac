@@ -7,9 +7,11 @@ AC_CONFIG_SRCDIR([README])
 
 AC_CONFIG_MACRO_DIR([m4])
 
+# MS: add 'std-options' once all scripts conform to standard options
 AM_INIT_AUTOMAKE([foreign no-installinfo no-texinfo.tex 1.11
-  dist-bzip2 color-tests silent-rules std-options]) dnl  parallel-tests
+  dist-bzip2 color-tests silent-rules]) dnl  parallel-tests
 dnl do `make V=1' or `./configure --disable-silent-rules' for a verbose build
+AM_SILENT_RULES([yes])
 
 # Checks for programs.
 AC_PROG_YACC

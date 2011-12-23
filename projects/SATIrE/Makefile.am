@@ -42,7 +42,7 @@ EXTRA_DIST= README COPYING ChangeLog KNOWN_BUGS BugLog \
 	testsuite/base/success/blocks.c \
 	testsuite/base/success/cconstants.c \
 	testsuite/base/success/classes.C \
-	testsuite/base/success/classes2.C \
+	testsuite/base/success/classes3.C \
 	testsuite/base/success/classes_and_returns.C \
 	testsuite/base/success/deepreturn.c \
 	testsuite/base/success/default_args.C \
