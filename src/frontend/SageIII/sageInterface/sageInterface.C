@@ -971,9 +971,13 @@ SageInterface::get_name ( const SgScopeStatement* scope )
           case V_SgNamespaceDefinitionStatement:
                name = get_name(isSgNamespaceDefinitionStatement(scope)->get_namespaceDeclaration());
                break;
+          case V_SgJavaLabelStatement:
+               name = (isSgJavaLabelStatement(scope)->get_label()).getString();
+               break;
 
-       // DQ (11/30/2007): Added more fortran suport.
+       // DQ (11/30/2007): Added more fortran support.
           case V_SgAssociateStatement:
+          case V_SgJavaForEachStatement:
 
           case V_SgBasicBlock:
           case V_SgCatchOptionStmt:
@@ -1489,7 +1493,8 @@ SageInterface::get_name ( const SgExpression* expr )
 
             // DQ (4/8/2010): define something specific to this function to make debugging more clear.
             // printf ("Note: default reached in get_name() expr = %p = %s \n",expr,expr->class_name().c_str());
-               name = "undefined_expression_name";
+              // name = "undefined_expression_name";
+               name = expr->class_name() + "_undef_name";
                break;
              }
         }

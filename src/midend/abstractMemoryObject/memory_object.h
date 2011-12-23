@@ -174,7 +174,7 @@ namespace AbstractMemoryObject
       //--- pointer like semantics
       // support dereference of array object, similar to the dereference of pointer
       // Return the element object: array[0]
-      //virtual ObjSet* getDereference () ;
+      virtual ObjSet* getDereference () ;
       //virtual bool operator == (const ObjSet & that) const;
       //virtual bool operator < (const ObjSet & that) const;
   };
