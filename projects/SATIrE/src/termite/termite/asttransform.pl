@@ -455,6 +455,7 @@ unparse1(UI, dot_exp(E1, E2, _, _, _)) :- !,
 unparse1(UI, arrow_exp(E1, E2, _, _, _)) :- !,
   unparse_par(UI, E1), write('->'), unparse_par(UI, E2).
 unparse1(_UI, null_expression(_, _, _)) :- !, write('/*NULL*/').
+unparse1(_UI, null_statement(_, _, _)) :- !, write(';').
 
 % STATEMENTS       
 unparse1(UI, expression_root(E, _, _, _)) :- !, unparse(UI, E).
