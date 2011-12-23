@@ -417,7 +417,7 @@ file_info(N, Fi) :-
 %% function_signature(?FunctionDecl, ?Type, ?Name, ?Modifier)
 % Convert between signatures and terms.
 function_signature(FunctionDecl, Type, Name, Modifier) :-
-  FunctionDecl = function_declaration(_Params, _Def, DeclAnnot, _AI, _FI),
+  FunctionDecl = function_declaration(_Params, _Null, _Def, DeclAnnot, _AI, _FI),
   DeclAnnot = function_declaration_annotation(Type, Name, Modifier, _PPI).
 
 %% is_function_call(?Term, ?Name, ?Type).
@@ -437,7 +437,7 @@ is_function_call_exp(function_call_exp(function_ref_exp(
 
 %% function_body(?FuncDecl, ?Body)
 % Get the function body Body from a function declaration FuncDecl.
-function_body(function_declaration(_, function_definition(Body, _, _,_),
+function_body(function_declaration(_, _, function_definition(Body, _, _,_),
 				   _, _, _),
 	      Body).
 

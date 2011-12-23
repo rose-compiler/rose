@@ -505,7 +505,7 @@ unparse1(UI, source_file(E1, _An, _Ai, file_info(Name, _, _))) :- !,
   write('/* '), write(Name), writeln(': */'), unparse(UI, E1).
 unparse1(UI, project(E1, _, _, _)) :- !, unparse(UI, E1).
 
-unparse1(UI, function_declaration(Params, Definition,
+unparse1(UI, function_declaration(Params, _Null, Definition,
              function_declaration_annotation(Type, Name, Mod, _), _, _)) :- !,
   unparse_modifier(Mod),
   unparse(UI, Type), write(' '), write(Name),

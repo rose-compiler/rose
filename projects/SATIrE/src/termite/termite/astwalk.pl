@@ -127,12 +127,12 @@ goto_function(P, Function, P1) :-
   (  % Prefer to find a real definition first
      find_function(P, Function, P1),
      unzip(P1, Function, _),
-     Function = function_declaration(_Def, Body, _A1, _Ai1, _F1),
-     Body \= null
+     Function = function_declaration(_Params, _Null, Def, _A1, _Ai1, _F1),
+     Def \= null
   ; 
      find_function(P, Function, P1),
      unzip(P1, Function, _),
-     Function = function_declaration(_, null, _, _, _)
+     Function = function_declaration(_, _, null, _, _, _)
   ), !.
 
 find_function(P, FunctionTemplate, P3) :-
