@@ -15,6 +15,9 @@
 
 #include "AstNodePtrs.h"
 
+#ifdef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+   #include "AstReverseProcessing.h"
+#endif
 
 class TestAstPropertiesSA 
    {
@@ -88,13 +91,16 @@ class TestAstNullPointers : public AstNodePtrs {
     void visit(SgNode* n) {}
   };
 
+// #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
   class DummyISTestQuery2 : public AstReversePrefixInhSynProcessing<DI,DS> {
     DI evaluateInheritedAttribute(SgNode* n, DI inh) { return inh; }
     DS evaluateSynthesizedAttribute(SgNode*, DI inh, SubTreeSynthesizedAttributes st) { DS syn; return syn; }
   };
+
   class DummyITestQuery2 : public AstReversePrefixInhProcessing<DI> {
     DI evaluateInheritedAttribute(SgNode* n, DI inh) { return inh; }
   };
+
   class DummySTestQuery2 : public AstReversePrefixSynProcessing<DS> {
     DS evaluateSynthesizedAttribute(SgNode* n, SubTreeSynthesizedAttributes st) { DS syn; return syn; }
   };
@@ -115,6 +121,7 @@ class TestAstNullPointers : public AstNodePtrs {
   class DummyTestQuery3 : public AstReverseBranchSimpleProcessing {
     void visit(SgNode* n) {}
   };
+// #endif
 
 // DQ (3/30/2004): Added tests on templates!
 // class TestAstTemplateProperties : public AstPreOrderTraversal

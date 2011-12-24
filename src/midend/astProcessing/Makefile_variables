@@ -1,0 +1,73 @@
+# Non-recursive Makefile
+
+mAstProcessing_la_sources=\
+	$(mAstProcessingPath)/AstNodeVisitMapping.C \
+	$(mAstProcessingPath)/AstTextAttributesHandling.C \
+	$(mAstProcessingPath)/AstDOTGeneration.C \
+	$(mAstProcessingPath)/AstProcessing.C \
+	$(mAstProcessingPath)/AstSimpleProcessing.C \
+	$(mAstProcessingPath)/Ast.C \
+	$(mAstProcessingPath)/AstNodePtrs.C \
+	$(mAstProcessingPath)/AstSuccessorsSelectors.C \
+	$(mAstProcessingPath)/AstAttributeMechanism.C \
+	$(mAstProcessingPath)/AstReverseSimpleProcessing.C \
+	$(mAstProcessingPath)/AstClearVisitFlags.C \
+	$(mAstProcessingPath)/AstTraversal.C \
+	$(mAstProcessingPath)/AstCombinedSimpleProcessing.C \
+	$(mAstProcessingPath)/AstSharedMemoryParallelSimpleProcessing.C
+if !ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+mAstProcessing_la_sources+=\
+	$(mAstProcessingPath)/AstPDFGeneration.C \
+	$(mAstProcessingPath)/AstRestructure.C
+endif
+
+mAstProcessing_libadd=\
+	$(CXX_TEMPLATE_OBJECTS)
+
+mAstProcessing_includeHeaders=\
+	$(mAstProcessingPath)/AstPDFGeneration.h \
+	$(mAstProcessingPath)/AstNodeVisitMapping.h \
+	$(mAstProcessingPath)/AstAttributeMechanism.h \
+	$(mAstProcessingPath)/AstTextAttributesHandling.h \
+	$(mAstProcessingPath)/AstDOTGeneration.h \
+	$(mAstProcessingPath)/AstProcessing.h \
+	$(mAstProcessingPath)/AstSimpleProcessing.h \
+	$(mAstProcessingPath)/AstTraverseToRoot.h \
+	$(mAstProcessingPath)/AstNodePtrs.h \
+	$(mAstProcessingPath)/AstSuccessorsSelectors.h \
+	$(mAstProcessingPath)/AstReverseProcessing.h \
+	$(mAstProcessingPath)/AstReverseSimpleProcessing.h \
+	$(mAstProcessingPath)/Ast.h \
+	$(mAstProcessingPath)/AstRestructure.h \
+	$(mAstProcessingPath)/AstClearVisitFlags.h \
+	$(mAstProcessingPath)/AstTraversal.h \
+	$(mAstProcessingPath)/AstCombinedProcessing.h \
+	$(mAstProcessingPath)/AstCombinedProcessingImpl.h \
+	$(mAstProcessingPath)/AstCombinedSimpleProcessing.h \
+	$(mAstProcessingPath)/StackFrameVector.h \
+	$(mAstProcessingPath)/AstSharedMemoryParallelProcessing.h \
+	$(mAstProcessingPath)/AstSharedMemoryParallelProcessingImpl.h \
+	$(mAstProcessingPath)/AstSharedMemoryParallelSimpleProcessing.h \
+	$(mAstProcessingPath)/graphProcessing.h \
+	$(mAstProcessingPath)/graphProcessingSgIncGraph.h \
+	$(mAstProcessingPath)/graphTemplate.h
+
+mAstProcessing_extraDist=\
+	$(mAstProcessingPath)/CMakeLists.txt \
+	$(mAstProcessingPath)/AstProcessing.docs
+
+mAstProcessing_cleanLocal=\
+	rm -rf \
+		$(mAstProcessingPath)/cxx_templates \
+		$(mAstProcessingPath)/ii_files \
+		$(mAstProcessingPath)/ti_files \
+		$(mAstProcessingPath)/Templates.DB
+
+mAstProcessing_distCleanLocal=\
+	rm -rf \
+		$(mAstProcessingPath)/Templates.DB
+
+# TOO (11/22/2011): TODO: (flattening this makefile) what to do about "-I." ?
+test_code_size:
+	g++ -E -I$(top_builddir) -I. $(ROSE_INCLUDES) $(mAstProcessingPath)/AstNodeVisitMapping.C | wc -l
+

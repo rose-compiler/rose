@@ -3,6 +3,7 @@
 
 #include "sage3basic.hhh"
 #include <stdint.h>
+#include <utility>
 
 #if 0   // FMZ(07/07/2010): the argument "nextErrorCode" should be call-by-reference
 SgFile* determineFileType ( std::vector<std::string> argv, int nextErrorCode, SgProject* project );
@@ -10,15 +11,19 @@ SgFile* determineFileType ( std::vector<std::string> argv, int nextErrorCode, Sg
 SgFile* determineFileType ( std::vector<std::string> argv, int& nextErrorCode, SgProject* project );
 #endif
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 #include "rewrite.h"
+#endif
 
 // DQ (7/20/2008): Added support for unparsing abitrary strings in the unparser.
 #include "astUnparseAttribute.h"
 #include <set>
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 #include "LivenessAnalysis.h"
 #include "abstract_handle.h"
 #include "ClassHierarchyGraph.h"
+#endif
 
 // DQ (8/19/2004): Moved from ROSE/src/midend/astRewriteMechanism/rewrite.h
 //! A global function for getting the string associated with an enum (which is defined in global scope)
@@ -368,6 +373,10 @@ struct hash_nodeptr
    */
     std::string generateUniqueName ( const SgNode * node, bool ignoreDifferenceBetweenDefiningAndNondefiningDeclarations);
 
+    /** Generate a name that is unique in the current scope and any parent and children scopes.
+    * @param baseName the word to be included in the variable names. */
+    std::string generateUniqueVariableName(SgScopeStatement* scope, std::string baseName = "temp");
+    
   // DQ (8/10/2010): Added const to first parameter.
   // DQ (3/10/2007):
   //! Generate a unique string from the source file position information
@@ -539,9 +548,9 @@ sortSgNodeListBasedOnAppearanceOrderInSource(const std::vector<SgDeclarationStat
   // labels for scopes in a function (as required for name mangling).
   /*! \brief Clears the cache of scope,integer pairs for the input function.
 
-      This is used to clear the cache of computed unique lables for scopes in a function.
+      This is used to clear the cache of computed unique labels for scopes in a function.
       This function should be called after any transformation on a function that might effect
-      the allocation of scopes and cause the existing unique numbrs to be incorrect.
+      the allocation of scopes and cause the existing unique numbers to be incorrect.
       This is part of support to provide unique names for variables and types defined is
       different nested scopes of a function (used in mangled name generation).
    */
@@ -662,10 +671,12 @@ bool isCopyConstructible(SgType* type);
 //! Is a type assignable?  This may not quite work properly.
 bool isAssignable(SgType* type);
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 //! Check if a class type is a pure virtual class. True means that there is at least
 //! one pure virtual function that has not been overridden. 
 //! In the case of an incomplete class type (forward declaration), this function returns false.
 bool isPureVirtualClass(SgType* type, const ClassHierarchyWrapper& classHierarchy);
+#endif
 
 //! Does a type have a trivial (built-in) destructor?
 bool hasTrivialDestructor(SgType* t);
@@ -1224,6 +1235,19 @@ void replaceStatement(SgStatement* oldStmt, SgStatement* newStmt, bool movePrepr
 //! Replace an anchor node with a specified pattern subtree with optional SgVariantExpression. All SgVariantExpression in the pattern will be replaced with copies of the anchor node.
 SgNode* replaceWithPattern (SgNode * anchor, SgNode* new_pattern);
 
+/** Given an expression, generates a temporary variable whose initializer optionally evaluates
+* that expression. Then, the var reference expression returned can be used instead of the original
+* expression. The temporary variable created can be reassigned to the expression by the returned SgAssignOp;
+* this can be used when the expression the variable represents needs to be evaluated. NOTE: This handles
+* reference types correctly by using pointer types for the temporary.
+* @param expression Expression which will be replaced by a variable
+* @param scope scope in which the temporary variable will be generated
+* @param reEvaluate an assignment op to reevaluate the expression. Leave NULL if not needed
+* @return declaration of the temporary variable, and a a variable reference expression to use instead of
+* the original expression. */
+std::pair<SgVariableDeclaration*, SgExpression* > createTempVariableForExpression(SgExpression* expression,
+        SgScopeStatement* scope, bool initializeInDeclaration, SgAssignOp** reEvaluate = NULL);
+
 //! Append an argument to SgFunctionParameterList, transparently set parent,scope, and symbols for arguments when possible
 /*! We recommend to build SgFunctionParameterList before building a function declaration
  However, it is still allowed to append new arguments for existing function declarations.
@@ -1358,11 +1382,13 @@ bool isUseByAddressVariableRef(SgVarRefExp* ref);
 //! Collect variable references involving use by address: including &a expression and foo(a) when type2 foo(Type& parameter) in C++
 void collectUseByAddressVariableRefs (const SgStatement* s, std::set<SgVarRefExp* >& varSetB);
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 //!Call liveness analysis on an entire project
 LivenessAnalysis * call_liveness_analysis(SgProject* project, bool debug=false);
 
 //!get liveIn and liveOut variables for a for loop from liveness analysis result liv.
 void getLiveVariables(LivenessAnalysis * liv, SgForStatement* loop, std::set<SgInitializedName*>& liveIns, std::set<SgInitializedName*> & liveOuts);
+#endif
 
 //!Recognize and collect reduction variables and operations within a C/C++ loop, following OpenMP 3.0 specification for allowed reduction variable types and operation types.
 void ReductionRecognition(SgForStatement* loop, std::set< std::pair <SgInitializedName*, VariantT> > & results);

@@ -50,8 +50,15 @@ class PtrSetWrap
      : Iterator(that) {}
     bool operator == (const const_iterator& that) const
       { return Iterator::operator==(that); }
+
     const_iterator& operator = (const const_iterator& that)
-      { Iterator::operator=(that); }
+      { 
+        Iterator::operator=(that);
+
+     // DQ (11/3/2011): Added return (caught by new EDG compiling ROSE).
+        return *this;
+      }
+
     T* Current() const {  return Iterator::Current(); }
     T* operator *() const { return Current(); }
   };
@@ -60,8 +67,15 @@ class PtrSetWrap
     iterator( const Iterator& that) : Iterator(that) {}
     bool operator == (const iterator& that) const
       { return Iterator::operator==(that); }
+
     iterator& operator = (const iterator& that)
-      { Iterator::operator=(that); }
+      {
+        Iterator::operator=(that); 
+
+     // DQ (11/3/2011): Added return (caught by new EDG compiling ROSE).
+        return *this;
+      }
+
     T*& Current() {  return Iterator::Current(); }
     T*& operator *() { return Current(); }
   };

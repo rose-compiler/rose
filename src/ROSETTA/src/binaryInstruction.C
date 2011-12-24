@@ -81,6 +81,7 @@ Grammar::setUpBinaryInstructions()
     NEW_NONTERMINAL_MACRO(AsmInstruction,
                           Asmx86Instruction | AsmArmInstruction | AsmPowerpcInstruction,
                           "AsmInstruction", "AsmInstructionTag", true);
+    AsmInstruction.setPredeclarationString("HEADER_BINARY_INSTRUCTION_PREDECLARATION", "../Grammar/BinaryInstruction.code");
     AsmInstruction.setFunctionPrototype("HEADER_BINARY_INSTRUCTION", "../Grammar/BinaryInstruction.code");
     AsmInstruction.setFunctionSource("SOURCE_BINARY_INSTRUCTION", "../Grammar/BinaryInstruction.code");
     AsmInstruction.setDataPrototype("std::string", "mnemonic", "= \"\"",
@@ -203,7 +204,7 @@ Grammar::setUpBinaryInstructions()
 
     NEW_TERMINAL_MACRO(AsmWordValueExpression, "AsmWordValueExpression", "AsmWordValueExpressionTag");
     AsmWordValueExpression.setFunctionPrototype("HEADER_BINARY_WORD_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
-     AsmWordValueExpression.setFunctionSource("SOURCE_BINARY_WORD_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
+    AsmWordValueExpression.setFunctionSource("SOURCE_BINARY_WORD_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
     AsmWordValueExpression.setDataPrototype("uint16_t", "value", "= 0x0",
                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -474,6 +475,8 @@ Grammar::setUpBinaryInstructions()
                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmBlock.setDataPrototype("size_t", "cached_vertex", "= (size_t)(-1)", // see BinaryAnalysis::ControlFlow
                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmBlock.setDataPrototype("double", "code_likelihood", "= 0.0",
+                               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
 
@@ -502,6 +505,7 @@ Grammar::setUpBinaryInstructions()
      // types; size-specific integers and floating-point types; regions of unknown type; ease of improving type information by
      // filling in more details as the type is discovered; etc.
      NEW_TERMINAL_MACRO(AsmStaticData, "AsmStaticData", "AsmStaticDataTag");
+     AsmStaticData.setFunctionPrototype("HEADER_STATIC_DATA", "../Grammar/BinaryInstruction.code");
      AsmStaticData.setDataPrototype("SgUnsignedCharList", "raw_bytes", "",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 

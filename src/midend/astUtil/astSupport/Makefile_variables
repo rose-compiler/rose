@@ -1,21 +1,8 @@
 # Non-recursive Makefile
 
-mauAstSupport_includes=\
-	-I$(mauAstSupportPath)/../astInterface \
-	-I$(mauAstSupportPath)/../symbolicVal \
-	-I$(top_srcdir)/src/util \
-	-I$(top_srcdir)/src/util/support
-
-
-# TODO: include in top-level?
-## The grammar generator (ROSETTA) should use its own template repository
-#CXX_TEMPLATE_REPOSITORY_PATH = .
-
-
 mauAstSupport_la_sources=\
 	$(mauAstSupportPath)/ProcessAstTree.C \
 	$(mauAstSupportPath)/StmtInfoCollect.C
-
 
 mauAstSupport_includeHeaders=\
 	$(mauAstSupportPath)/AnalysisInterface.h \
@@ -23,19 +10,17 @@ mauAstSupport_includeHeaders=\
 	$(mauAstSupportPath)/StmtInfoCollect.h \
 	$(mauAstSupportPath)/LoopInfoInterface.h
 
-
 mauAstSupport_extraDist=\
 	$(mauAstSupportPath)/CMakeLists.txt
 
-
 mauAstSupport_cleanLocal=\
 	rm -rf \
-		$(mauAstSupportPath)/Templates.DB \
+		$(mauAstSupportPath)/cxx_templates \
 		$(mauAstSupportPath)/ii_files \
 		$(mauAstSupportPath)/ti_files \
-		$(mauAstSupportPath)/cxx_templates
-
+		$(mauAstSupportPath)/Templates.DB
 
 mauAstSupport_distCleanLocal=\
 	rm -rf \
 		$(mauAstSupportPath)/Templates.DB
+

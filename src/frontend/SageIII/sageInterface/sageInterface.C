@@ -3,13 +3,20 @@
 #include "sage3basic.h"
 #include "markLhsValues.h"
 #include "fixupNames.h"
-#include "buildMangledNameMap.h"
-#include "buildReplacementMap.h"
-#include "fixupTraversal.h"
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+   #include "buildMangledNameMap.h"
+   #include "buildReplacementMap.h"
+   #include "fixupTraversal.h"
+#endif
+
 #include "sageInterface.h"
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 #include "replaceExpressionWithStatement.h"
 
 #include "constantFolding.h"
+#endif
 
 // DQ (10/14/2006): Added supporting help functions. tps commented out since it caused no compilation errors
 //#include "rewrite.h"
@@ -17,6 +24,7 @@
 // Liao 1/24/2008 : need access to scope stack sometimes
 #include "sageBuilder.h"
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 // For reusing some code from Qing's loop optimizer
 // Liao, 2/26/2009
 #include "AstInterface_ROSE.h"
@@ -29,10 +37,18 @@
 #include "LoopUnroll.h"
 #include "abstract_handle.h"
 #include "roseAdapter.h"
+#endif
 
+#include <boost/lexical_cast.hpp>
+#include <boost/foreach.hpp>
 #include <sstream>
 #include <iostream>
 #include <algorithm> //for set operations
+
+
+#ifdef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+   #include "transformationSupport.h"
+#endif
 
 typedef std::set<SgLabelStatement*> SgLabelStatementPtrSet;
 
@@ -3042,6 +3058,7 @@ SageInterface::fixupReferencesToSymbols( const SgScopeStatement* this_scope,  Sg
   // All pairs of old/new symbols are also saved in the object:
   //    SgCopyHelp::copiedNodeMapType copiedNodeMap
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
      ROSE_ASSERT(this_scope != NULL);
      ROSE_ASSERT(copy_scope != NULL);
 
@@ -3176,6 +3193,7 @@ SageInterface::fixupReferencesToSymbols( const SgScopeStatement* this_scope,  Sg
   // DQ (3/1/2009): find a case where this code is tested.
   // ROSE_ASSERT(this_symbolTable->get_table()->size() == 0);
   // ROSE_ASSERT(isSgClassDefinition(copy_scope) == NULL);
+#endif
 
 #if 0
      printf ("Exiting as a test in fixupReferencesToSymbols() \n");
@@ -5097,11 +5115,13 @@ void SageInterface::changeContinuesToGotos(SgStatement* stmt, SgLabelStatement* 
         {
           SgGotoStatement* gotoStatement = SageBuilder::buildGotoStatement(label);
        // printf ("Building gotoStatement #1 = %p \n",gotoStatement);
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 #ifndef _MSC_VER
 //#if 1
           LowLevelRewrite::replace(*i, make_unit_list( gotoStatement ) );
 #else
                   ROSE_ASSERT(false);
+#endif
 #endif
         }
    }
@@ -5650,6 +5670,7 @@ SgStatement* SageInterface::getEnclosingStatement(SgNode* n) {
 //! Remove a statement: TODO consider side effects for symbol tables
 void SageInterface::removeStatement(SgStatement* targetStmt, bool autoRelocatePreprocessingInfo /*= true*/)
    {
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
   // This function removes the input statement.
   // If there are comments and/or CPP directives then those comments and/or CPP directives will
   // be moved to a new SgStatement.  The new SgStatement is selected using the findSurroundingStatementFromSameFile()
@@ -5746,6 +5767,8 @@ void SageInterface::removeStatement(SgStatement* targetStmt, bool autoRelocatePr
 #else
      printf ("Error: This is not supported within Microsoft Windows (I forget why). \n");
      ROSE_ASSERT(false);
+#endif
+
 #endif
    }
 
@@ -6071,6 +6094,99 @@ SgNode* SageInterface::replaceWithPattern (SgNode * anchor, SgNode* new_pattern)
    // finally we replace anchor_exp with the pattern_exp
    replaceExpression(anchor_exp, pattern_exp, false);
   return new_pattern;
+}
+/** Generate a name that is unique in the current scope and any parent and children scopes.
+ * @param baseName the word to be included in the variable names. */
+string SageInterface::generateUniqueVariableName(SgScopeStatement* scope, std::string baseName)
+{
+    //This implementation tends to generate numbers that are unnecessarily high.
+    static int counter = 0;
+
+    string name;
+    bool collision = false;
+    do
+    {
+        name = "__" + baseName + boost::lexical_cast<string > (counter++) + "__";
+
+        //Look up the name in the parent scopes
+        SgSymbol* nameSymbol = SageInterface::lookupSymbolInParentScopes(SgName(name), scope);
+        collision = (nameSymbol != NULL);
+
+        //Look up the name in the children scopes
+        Rose_STL_Container<SgNode*> childScopes = NodeQuery::querySubTree(scope, V_SgScopeStatement);
+
+        BOOST_FOREACH(SgNode* childScope, childScopes)
+        {
+            SgScopeStatement* childScopeStatement = isSgScopeStatement(childScope);
+            nameSymbol = childScopeStatement->lookup_symbol(SgName(name));
+            collision = collision || (nameSymbol != NULL);
+        }
+    } while (collision);
+
+    return name;
+}
+
+
+std::pair<SgVariableDeclaration*, SgExpression*> SageInterface::createTempVariableForExpression
+(SgExpression* expression, SgScopeStatement* scope, bool initializeInDeclaration, SgAssignOp** reEvaluate)
+{
+    SgType* expressionType = expression->get_type();
+    SgType* variableType = expressionType;
+
+    //If the expression has a reference type, we need to use a pointer type for the temporary variable.
+    //Else, re-assigning the variable is not possible
+    bool isReferenceType = SageInterface::isReferenceType(expressionType);
+    if (isReferenceType)
+    {
+        SgType* expressionBaseType = expressionType->stripType(SgType::STRIP_TYPEDEF_TYPE | SgType::STRIP_REFERENCE_TYPE);
+        variableType = SageBuilder::buildPointerType(expressionBaseType);
+    }
+
+    // If the expression is a dereferenced pointer, use a reference to hold it.
+    if (isSgPointerDerefExp(expression))
+        variableType = SageBuilder::buildReferenceType(variableType);
+
+    //Generate a unique variable name
+    string name = generateUniqueVariableName(scope);
+
+    //Initialize the temporary variable to an evaluation of the expression
+    SgExpression* tempVarInitExpression = SageInterface::copyExpression(expression);
+    ROSE_ASSERT(tempVarInitExpression != NULL);
+    if (isReferenceType)
+    {
+        //FIXME: the next line is hiding a bug in ROSE. Remove this line and talk to Dan about the resulting assert
+        tempVarInitExpression->set_lvalue(false);
+
+        tempVarInitExpression = SageBuilder::buildAddressOfOp(tempVarInitExpression);
+    }
+
+    //Optionally initialize the variable in its declaration
+    SgAssignInitializer* initializer = NULL;
+    if (initializeInDeclaration)
+    {
+        SgExpression* initExpressionCopy = SageInterface::copyExpression(tempVarInitExpression);
+        initializer = SageBuilder::buildAssignInitializer(initExpressionCopy);
+    }
+
+    SgVariableDeclaration* tempVarDeclaration = SageBuilder::buildVariableDeclaration(name, variableType, initializer, scope);
+    ROSE_ASSERT(tempVarDeclaration != NULL);
+
+    //Now create the assignment op for reevaluating the expression
+    if (reEvaluate != NULL)
+    {
+        SgVarRefExp* tempVarReference = SageBuilder::buildVarRefExp(tempVarDeclaration);
+        *reEvaluate = SageBuilder::buildAssignOp(tempVarReference, tempVarInitExpression);
+    }
+
+    //Build the variable reference expression that can be used in place of the original expression
+    SgExpression* varRefExpression = SageBuilder::buildVarRefExp(tempVarDeclaration);
+    if (isReferenceType)
+    {
+        //The temp variable is a pointer type, so dereference it before using it
+        varRefExpression = SageBuilder::buildPointerDerefExp(varRefExpression);
+    }
+
+    return std::make_pair(tempVarDeclaration, varRefExpression);
 }
 
 // This code is based on OpenMP translator's ASTtools::replaceVarRefExp() and astInling's replaceExpressionWithExpression()
@@ -6760,6 +6876,7 @@ bool SageInterface::loopUnrolling(SgForStatement* loop, size_t unrolling_factor)
  */
 bool SageInterface::loopUnrolling(SgForStatement* target_loop, size_t unrolling_factor)
 {
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
   //Handle 0 and 1, which means no unrolling at all
   if (unrolling_factor <= 1)
     return true;
@@ -6894,6 +7011,8 @@ bool SageInterface::loopUnrolling(SgForStatement* target_loop, size_t unrolling_
    // constant folding for the transformed AST
    ConstantFolding::constantFoldingOptimization(scope,false);
    //ConstantFolding::constantFoldingOptimization(getProject(),false);
+
+#endif
 
   return true;
 }
@@ -7889,6 +8008,7 @@ SgAssignInitializer* SageInterface::splitExpression(SgExpression* from, string n
 {
   ROSE_ASSERT(from != NULL);
   
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
   if (!SageInterface::isCopyConstructible(from->get_type())) {
     std::cerr << "Type " << from->get_type()->unparseToString() << " of expression " << from->unparseToString() << " is not copy constructible" << std::endl;
     ROSE_ASSERT (false);
@@ -7964,6 +8084,11 @@ SgAssignInitializer* SageInterface::splitExpression(SgExpression* from, string n
   // FixSgTree(vardecl);
   // FixSgTree(parent);
   return ai;
+
+#else
+  return NULL;
+#endif
+
 } //splitExpression()
 
   //! This generalizes the normal splitExpression to allow loop tests and
@@ -10035,6 +10160,7 @@ SageInterface::replaceExpressionWithStatement(SgExpression* from, StatementGener
   // Note that a number of cases were changed when this fix was made to SageIII (see documentation
   // for SgScopeStatement).
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
      SgStatement*           enclosingStatement      = getStatementOfExpression(from);
      SgExprStatement*       exprStatement           = isSgExprStatement(enclosingStatement);
 
@@ -10246,6 +10372,8 @@ SageInterface::replaceExpressionWithStatement(SgExpression* from, StatementGener
              }
         }
 
+#endif
+
   // printf ("Leaving replaceExpressionWithStatement(from,to) \n");
    }
 
@@ -10264,8 +10392,8 @@ SageInterface::replaceExpressionWithStatement(SgExpression* from, StatementGener
 void SageInterface::replaceSubexpressionWithStatement(SgExpression* from, StatementGenerator* to)
    {
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
      SgStatement* stmt = getStatementOfExpression(from);
-
 
      if (isSgExprStatement(stmt))
         {
@@ -10308,6 +10436,8 @@ void SageInterface::replaceSubexpressionWithStatement(SgExpression* from, Statem
 
   // printf ("In replaceSubexpressionWithStatement: new_stmt = %p = %s \n",new_stmt,new_stmt->class_name().c_str());
   // cout << "4: " << getStatementOfExpression(from)->get_parent()->unparseToString() << endl;
+
+#endif
    }
 
 
@@ -11623,6 +11753,7 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
      decl->set_parent (scope);
 #endif
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
   // Make sure that the input declaration (decl" is consistent in it's representation across more
   // than one file (only a significant test when outlining to a separate file; which is what this
   // function supports).
@@ -12154,6 +12285,9 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
 
   // Repeated test from above
      ROSE_ASSERT(dependentDeclarationList.size() <= dependentDeclarationList_inOriginalFile.size());
+
+// endif for ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+#endif
 
 #if 0
   // The replacementMap should include the symbols associated with the dependentDeclarationList
@@ -13392,6 +13526,10 @@ SgInitializedName* SageInterface::convertRefToInitializedName(SgNode* current)
 //! Obtain a matching SgNode from an abstract handle string
 SgNode* SageInterface::getSgNodeFromAbstractHandleString(const std::string& input_string)
 {
+#ifdef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+  printf ("AbstractHandle support is disabled for ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT \n");
+  ROSE_ASSERT(false);
+#else
   AbstractHandle::abstract_handle * project_handle = buildAbstractHandle(getProject());
 
   // trim off the possible leading handle for project: "Project<numbering,1>::"
@@ -13419,6 +13557,8 @@ SgNode* result = NULL; // (SgNode*)(handle->getNode()->getNode());
       return result;
     }
   }
+#endif
+
   return NULL;
 }
 
@@ -13480,6 +13620,7 @@ SageInterface::collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& rea
 {   // The type cannot be SgExpression since variable declarations have SgInitializedName as the reference, not SgVarRefExp.
   ROSE_ASSERT(stmt !=NULL);
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
   // We should allow accumulate the effects for multiple statements
   // ROSE_ASSERT(readRefs.size() == 0);
   // ROSE_ASSERT(writeRefs.size() == 0);
@@ -13548,6 +13689,9 @@ SageInterface::collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& rea
   //  cout<<"write reference:"<<sgRef->unparseToString()<<" address "<<sgRef<<
   //      " sage type:"<< sgRef->class_name()<< endl;
   }
+
+#endif
+
   return true;
 }
 
@@ -13752,6 +13896,8 @@ void SageInterface::collectUseByAddressVariableRefs (const SgStatement* s, std::
       varSetB.insert(ref);
   }
 }
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 //!Call liveness analysis on an entire project
 LivenessAnalysis * SageInterface::call_liveness_analysis(SgProject* project, bool debug/*=false*/)
 {
@@ -13815,7 +13961,9 @@ LivenessAnalysis * SageInterface::call_liveness_analysis(SgProject* project, boo
   return liv;
   //return !abortme;
 }
+#endif
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 //!Get liveIn and liveOut variables for a for loop
 void SageInterface::getLiveVariables(LivenessAnalysis * liv, SgForStatement* loop, std::set<SgInitializedName*>& liveIns, std::set<SgInitializedName*> & liveOuts)
 {
@@ -13885,6 +14033,7 @@ void SageInterface::getLiveVariables(LivenessAnalysis * liv, SgForStatement* loo
   } // end for (edges)
 
 }
+#endif
 
 //!Recognize and collect reduction variables and operations within a C/C++ loop, following OpenMP 3.0 specification for allowed reduction variable types and operation types.
 /* This code is refactored from project/autoParallelization/autoParSupport.C
@@ -14132,7 +14281,9 @@ void SageInterface::ReductionRecognition(SgForStatement* loop, std::set< std::pa
 void SageInterface::constantFolding(SgNode* r)
 {
   ROSE_ASSERT(r!=NULL);
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
   ConstantFolding::constantFoldingOptimization(r,false);
+#endif
 }
 
 //! Generate unique names for expressions and attach the names as persistent attributes
@@ -14154,7 +14305,9 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
       }
   };
   visitorTraversal exampleTraversal;
-  exampleTraversal.traverseInputFiles(project,preorder);
+  //Sriram FIX: should traverse using the traverse function
+  // exampleTraversal.traverseInputFiles(project,preorder);
+  exampleTraversal.traverse(project, preorder);
 }
 
 #endif

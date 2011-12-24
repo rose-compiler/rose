@@ -92,8 +92,10 @@ HEADER_START
           virtual SgNode *get_traversalSuccessorByIndex(size_t idx);
           virtual size_t get_childIndex(SgNode *child);
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
        // MS: 08/16/2002 method for generating RTI information
-          virtual RTIReturnType roseRTI();	
+          virtual RTIReturnType roseRTI();
+#endif
       /* */
 
 

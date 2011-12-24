@@ -433,7 +433,11 @@ INPUT                  = \
 			 @top_srcdir@/src/ROSETTA/src/binaryInstruction.C \
                          @top_srcdir@/src/frontend/CxxFrontend/EDG/EDG_3.3/documentation.docs \
 			 @top_srcdir@/src/frontend/Disassemblers \
+			 @top_srcdir@/src/frontend/Disassemblers/Disassembler.C \
+			 @top_srcdir@/src/frontend/Disassemblers/DisassemblerArm.C \
+			 @top_srcdir@/src/frontend/Disassemblers/DisassemblerX86.C \
 			 @top_srcdir@/src/frontend/Disassemblers/Partitioner.C \
+			 @top_srcdir@/src/frontend/Disassemblers/Registers.C \
 			 @top_srcdir@/src/frontend/BinaryFormats/DataConversion.C \
 			 @top_srcdir@/src/frontend/BinaryFormats/ElfDynamicLinking.C \
 			 @top_srcdir@/src/frontend/BinaryFormats/ElfErrorFrame.C \
@@ -480,6 +484,7 @@ INPUT                  = \
                          @top_srcdir@/src/frontend/SageIII/docs \
 			 @top_srcdir@/src/frontend/SageIII/astPostProcessing/checkIsModifiedFlag.C \
                          @top_srcdir@/src/frontend/SageIII/sageInterface \
+                         @top_srcdir@/src/frontend/SageIII/astFromString \
                          @top_srcdir@/src/frontend/SageIII/virtualCFG \
 			 @top_srcdir@/src/frontend/SageIII/virtualCFG/virtualBinCFG.C \
 			 @top_srcdir@/src/frontend/BinaryFormats \
@@ -496,10 +501,11 @@ INPUT                  = \
                          @top_srcdir@/src/midend/programTransformation/astOutlining/documentation.docs \
                          @top_srcdir@/src/midend/programTransformation/loopProcessing/documentation.docs \
                          @top_srcdir@/src/midend/programAnalysis/documentation.docs \
-                         @top_srcdir@/src/midend/programAnalysis/variableRenaming \
-                         @top_srcdir@/src/midend/programAnalysis/staticSingleAssignment \
+                         @top_srcdir@/src/midend/programAnalysis/staticSingleAssignment/ \
+                         @top_srcdir@/src/midend/programAnalysis/ssaUnfilteredCfg/ \
                          @top_srcdir@/src/midend/programAnalysis/CallGraphAnalysis \
                          @top_srcdir@/src/midend/programTransformation/documentation.docs \
+                         @top_srcdir@/src/midend/programTransformation/extractFunctionArgumentsNormalization \
                          @top_srcdir@/src/midend/astRewriteMechanism/ASTRewrite.docs \
                          @top_srcdir@/src/midend/astProcessing \
                          @top_srcdir@/src/midend/astQuery/QueryLib.docs \
@@ -518,6 +524,7 @@ INPUT                  = \
                          @top_srcdir@/src/util/stringSupport/ \
                          @top_srcdir@/src/util/commandlineProcessing \
 			 @top_srcdir@/src/roseSupport \
+			 @top_builddir@/src/roseSupport/stringify.C \
                          @top_srcdir@/src/3rdPartyLibraries/3rdPartyLibraries.docs \
                          @top_srcdir@/src/3rdPartyLibraries/MSTL/MSTL.docs \
                          @top_srcdir@/src/extra.docs \
