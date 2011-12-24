@@ -39,6 +39,8 @@ struct RtedSymbols
   SgFunctionSymbol*   roseAddrSh;
   SgFunctionSymbol*   roseClose;
 
+  SgFunctionSymbol*   roseReportViolation;
+
   // symbols for UPC
   SgFunctionSymbol*   roseUpcExitWorkzone;
   SgFunctionSymbol*   roseUpcEnterWorkzone;
@@ -48,11 +50,17 @@ struct RtedSymbols
   SgFunctionSymbol*   roseUpcEnterSharedPtr;
   SgFunctionSymbol*   roseUpcExitSharedPtr;
 
+  SgFunctionSymbol*   roseCxxTransientPtr;
+  SgFunctionSymbol*   roseCTransientPtr;
+  SgFunctionSymbol*   roseCheckTransientPtr;
+  SgFunctionSymbol*   roseCheckForMemoryLeak;
+
   SgEnumDeclaration*  roseAllocKind;
 
   SgClassType*        roseTypeDesc;
   SgClassType*        roseAddressDesc;
   SgClassType*        roseSourceInfo;
+  SgClassType*        roseScopeGuard;
   SgTypedefType*      size_t_member;
 
   RtedSymbols()
@@ -80,6 +88,8 @@ struct RtedSymbols
     roseAddrSh(NULL),
     roseClose(NULL),
 
+    roseReportViolation(NULL),
+
     roseUpcExitWorkzone(NULL),
     roseUpcEnterWorkzone(NULL),
     roseUpcAllInitialize(NULL),
@@ -88,11 +98,16 @@ struct RtedSymbols
     roseUpcEnterSharedPtr(NULL),
     roseUpcExitSharedPtr(NULL),
 
+    roseCxxTransientPtr(NULL),
+    roseCTransientPtr(NULL),
+    roseCheckTransientPtr(NULL),
+
     roseAllocKind(NULL),
 
     roseTypeDesc(NULL),
     roseAddressDesc(NULL),
     roseSourceInfo(NULL),
+    roseScopeGuard(NULL),
     size_t_member(NULL)
   {}
 

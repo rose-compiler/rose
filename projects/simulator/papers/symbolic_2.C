@@ -80,12 +80,12 @@ public:
             // the buffer, to which we give a concrete value, and above that is the size of the buffer, which we also give a
             // concrete value).  The contents of the buffer are unknown.  Process memory is maintained by the policy we created
             // above, so none of these memory writes are actually affecting the specimen's state in the simulator.
-            policy.writeGPR(x86_gpr_sp, policy.number<32>(4000));
-            SymbolicSemantics::ValueType<32> arg1_va = policy.add(policy.readGPR(x86_gpr_sp), policy.number<32>(4));
+            policy.writeRegister("esp", policy.number<32>(4000));
+            SymbolicSemantics::ValueType<32> arg1_va = policy.add(policy.readRegister<32>("esp"), policy.number<32>(4));
             SymbolicSemantics::ValueType<32> arg2_va = policy.add(arg1_va, policy.number<32>(4));
             policy.writeMemory<32>(x86_segreg_ss, arg1_va, policy.number<32>(12345), policy.true_());   // ptr to buffer
             policy.writeMemory<32>(x86_segreg_ss, arg2_va, policy.number<32>(2), policy.true_());       // bytes in buffer
-            policy.writeIP(SymbolicSemantics::ValueType<32>(analysis_addr));            // branch to analysis address
+            policy.writeRegister("eip", SymbolicSemantics::ValueType<32>(analysis_addr));            // branch to analysis address
 
 #if 1
             {
@@ -97,9 +97,9 @@ public:
                     X86InstructionSemantics<VirtualMachineSemantics::Policy, VirtualMachineSemantics::ValueType> sem(p);
                     p.set_map(args.thread->get_process()->get_memory()); // won't be thread safe
                     sem.processInstruction(insn);
-                    policy.writeIP(SymbolicSemantics::ValueType<32>(p.readIP().known_value()));
+                    policy.writeRegister("eip", SymbolicSemantics::ValueType<32>(p.readRegister<32>("eip").known_value()));
                     trace->mesg("%s: dynamic linker thunk kludge triggered: changed eip from 0x%08"PRIx64" to 0x%08"PRIx64,
-                                name, analysis_addr, p.readIP().known_value());
+                                name, analysis_addr, p.readRegister<32>("eip").known_value());
                 }
             }
 #endif
@@ -108,20 +108,20 @@ public:
             // simulation will stop when we hit the RET instruction to return from this function.
             size_t nbranches = 0;
             std::vector<const TreeNode*> constraints; // path constraints for the SMT solver
-            while (policy.readIP().is_known()) {
-                uint64_t va = policy.readIP().known_value();
+            while (policy.readRegister<32>("eip").is_known()) {
+                uint64_t va = policy.readRegister<32>("eip").known_value();
                 SgAsmx86Instruction *insn = isSgAsmx86Instruction(args.thread->get_process()->get_instruction(va));
                 assert(insn!=NULL);
                 trace->mesg("%s: analysing instruction %s", name, unparseInstructionWithAddress(insn).c_str());
                 semantics.processInstruction(insn);
-                if (policy.readIP().is_known())
+                if (policy.readRegister<32>("eip").is_known())
                     continue;
                 
                 bool complete;
                 std::set<rose_addr_t> succs = insn->get_successors(&complete);
                 if (complete && 2==succs.size()) {
                     if (nbranches>=take_branch.size()) {
-                        std::ostringstream s; s<<policy.readIP();
+                        std::ostringstream s; s<<policy.readRegister<32>("eip");
                         trace->mesg("%s: EIP = %s", name, s.str().c_str());
                         trace->mesg("%s: analysis cannot continue; out of \"take_branch\" values", name);
                         throw this;
@@ -131,18 +131,19 @@ public:
                     bool take = take_branch[nbranches++];
                     rose_addr_t target = 0;
                     for (std::set<rose_addr_t>::iterator si=succs.begin(); si!=succs.end(); ++si) {
-                        if ((take && *si!=insn->get_address()+insn->get_raw_bytes().size()) ||
-                            (!take && *si==insn->get_address()+insn->get_raw_bytes().size()))
+                        if ((take && *si!=insn->get_address()+insn->get_size()) ||
+                            (!take && *si==insn->get_address()+insn->get_size()))
                             target = *si;
                     }
                     assert(target!=0);
                     trace->mesg("%s: branch %staken; target=0x%08"PRIx64, name, take?"":"not ", target);
 
                     // Is this path feasible?  We don't really need to check it now; we could wait until the end.
-                    InternalNode *c = new InternalNode(32, OP_EQ, policy.readIP().expr, LeafNode::create_integer(32, target));
+                    InternalNode *c = new InternalNode(32, OP_EQ, policy.readRegister<32>("eip").expr,
+                                                       LeafNode::create_integer(32, target));
                     constraints.push_back(c); // shouldn't really have to do this again if we could save some state
                     if (smt_solver.satisfiable(c)) {
-                        policy.writeIP(SymbolicSemantics::ValueType<32>(target));
+                        policy.writeRegister("eip", SymbolicSemantics::ValueType<32>(target));
                     } else {
                         trace->mesg("%s: chosen control flow path is not feasible.", name);
                         break;
@@ -152,7 +153,7 @@ public:
 
             // Show the value of the EAX register since this is where GCC puts the function's return value.  If we did things
             // right, the return value should depend only on the unknown bytes from the beginning of the buffer.
-            SymbolicSemantics::ValueType<32> result = policy.readGPR(x86_gpr_ax);
+            SymbolicSemantics::ValueType<32> result = policy.readRegister<32>("eax");
             std::set<const InsnSemanticsExpr::LeafNode*> vars = result.expr->get_variables();
             {
                 std::ostringstream s;

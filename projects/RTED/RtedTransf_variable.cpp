@@ -32,7 +32,7 @@ bool isFileIOVariable(SgType* type)
 
         bool res =  boost::starts_with( name, std::string("class ::std::basic_fstream") );
 
-        // std::std::cerr << "@@@ IOVar?" << name << " " << res << std::endl;
+        // std::cerr << "@@@ IOVar?" << name << " " << res << std::endl;
         return res;
 }
 
@@ -307,7 +307,7 @@ RtedTransformation::buildVariableCreateCallExpr(SgVarRefExp* var_ref, const std:
 {
         ROSE_ASSERT( var_ref );
 
-        SgType*            varType = var_ref -> get_type();
+        SgType*            varType = skip_Typedefs(var_ref -> get_type());
 
         // variables are handled by buildArrayCreateCall
         ROSE_ASSERT ( "SgArrayType" != skip_ModifierType(varType)->class_name() );
@@ -583,6 +583,8 @@ void RtedTransformation::insertAccessVariable(SgVarRefExp* varRefE, SgExpression
 {
         ROSE_ASSERT(varRefE);
 
+        std::cerr << varRefE->unparseToString() << std::endl;
+
         SgStatement* stmt = getSurroundingStatement(*varRefE);
         // make sure there is no extern in front of stmt
         SgInitializedName* initName = varRefE->get_symbol()->get_declaration();
@@ -596,7 +598,6 @@ void RtedTransformation::insertAccessVariable(SgVarRefExp* varRefE, SgExpression
         }
         insertAccessVariable(initNamescope, derefExp, stmt, varRefE);
 }
-
 
 /**
  * @return @c true @b iff @c exp is a descendent of an assignment expression
@@ -670,24 +671,20 @@ bool isUsedAsLvalue( SgExpression* exp )
 }
 
 
-struct ReadCanceler
+struct ReadCanceler : sg::DispatchHandler<int>
 {
-  int rwmask;
-
   explicit
   ReadCanceler(int read_write_flag)
-  : rwmask(read_write_flag)
+  : Base(read_write_flag)
   {}
 
-  void cancel_read() { rwmask = 0; }
+  void cancel_read() { res = 0; }
 
-  void handle(const SgNode&) { ROSE_ASSERT(false); }
+  void handle(const SgNode& n)     { sg::unexpected_node(n); }
   void handle(const SgExpression&) {} // default case, no changes
 
-  void handle(const SgAddOp&) { cancel_read(); }
+  void handle(const SgAddOp&)      { cancel_read(); }
   void handle(const SgSubtractOp&) { cancel_read(); }
-
-  operator int() { return rwmask; }
 };
 
 static
@@ -832,17 +829,17 @@ void RtedTransformation::insertAccessVariable( SgScopeStatement* initscope,
 
             if (accessed_exp || write_location_exp)
             {
-              appendAddressAndSize(arg_list, Elem, initscope, accessed_exp, NULL);
-              appendAddressAndSize(arg_list, Elem, initscope, write_location_exp, NULL);
-              SI::appendExpression(arg_list, buildIntVal(read_write_mask));
-              appendFileInfo(arg_list, stmt);
+            appendAddressAndSize(arg_list, Elem, initscope, accessed_exp, NULL);
+            appendAddressAndSize(arg_list, Elem, initscope, write_location_exp, NULL);
+            SI::appendExpression(arg_list, buildIntVal(read_write_mask));
+            appendFileInfo(arg_list, stmt);
 
-              insertCheck( ilBefore,
-                           stmt,
-                           symbols.roseAccessVariable,
-                           arg_list,
-                           "RS : Access Variable, parameters : (address_r, sizeof(type)_r, address_w, sizeof(type)_w, r/w, filename, line, line transformed, error Str)"
-                         );
+            insertCheck( ilBefore,
+                         stmt,
+                         symbols.roseAccessVariable,
+                         arg_list,
+                         "RS : Access Variable, parameters : (address_r, sizeof(type)_r, address_w, sizeof(type)_w, r/w, filename, line, line transformed, error Str)"
+                       );
             }
     } // basic block
     else

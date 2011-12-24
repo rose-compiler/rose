@@ -477,14 +477,37 @@ JAVA_TESTCODES_REQUIRED_TO_PASS = \
      pgc_test2011_08.java \
      cave3_IntLit0.java \
      cave3_LoadDep0.java \
+     cave3_assert0.java \
+     cave3_assert1.java \
      cave3_block0.java \
+     cave3_call0.java \
+     cave3_call1.java \
      cave3_constructor0.java \
      cave3_constructor1.java \
      cave3_constructor2.java \
+     cave3_constructor3.java \
+	 cave3_DoubleLit0.java \
+     cave3_dowhile0.java \
+     cave3_for0.java \
+     cave3_for1.java \
+     cave3_for2.java \
+     cave3_for3.java \
+     cave3_for4.java \
+     cave3_for5.java \
+     cave3_for6.java \
+     cave3_for7.java \
+     cave3_for8.java \
+     cave3_foreach0.java \
+     cave3_foreach1.java \
      cave3_foreach2.java \
+     cave3_foreach4.java \
+     cave3_foreach5.java \
+     cave3_foreach6.java \
+     cave3_foreach7.java \
      cave3_if0.java \
      cave3_if1.java \
      cave3_labelDecl0.java \
+     cave3_labelDecl1.java \
      cave3_labelDecl2.java \
      cave3_labelDecl3.java \
      cave3_labelBreak0.java \
@@ -498,30 +521,27 @@ JAVA_TESTCODES_REQUIRED_TO_PASS = \
      cave3_labelContinue3.java \
      cave3_labelContinueBreak0.java \
      cave3_labelContinueBreak1.java \
+     cave3_mthParam0.java \
      cave3_nameResolution0.java \
      cave3_rshift0.java \
      cave3_rshift1.java \
+     cave3_synchronized0.java \
      cave3_while0.java \
-     cave3_while2.java
-
+     cave3_while1.java \
+     cave3_while2.java \
+     cave3_while3.java \
+     cave3_while4.java
+     
 # Not yet fully supported in java frontend:
-#     cave3_synchronized0.java
-#     cave3_DoubleLit0.java
-#     cave3_call0.java
-#     cave3_call1.java
-#     cave3_dowhile0.java
-#     cave3_for0.java
-#     cave3_for1.java
-#     cave3_for2.java
-#     cave3_for3.java
-#     cave3_for4.java
-#     cave3_for5.java
-#     cave3_for6.java
+#	  cave3_import0.java \
+#	  cave3_import1.java \
+#	  cave3_import2.java \
+#	  cave3_import3.java \
+#     cave3_foreach3.java \
 #     cave3_instanceof0.java \
-#     cave3_mthParam0.java
-#     cave3_while1.java
-#     cave3_instanceof0.java \
-#     cave3_labelDecl1.java \
+#     cave3_assert2.java \
+#     cave3_assert3.java \
+#
 #
 # Buggy cfg implementation
 # Weird cfg for System.out.println

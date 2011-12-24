@@ -13,6 +13,52 @@
  *  source code and write similar tools as classes within your own source files, which are then registered as RSIM callbacks. */
 namespace RSIM_Tools {
 
+/** Pauses at process fork.
+ *
+ *  When a process forks, this callback is invoked first for the process performing the fork, and then for the new process
+ *  created by the fork.  Whether the callback is on the BEFORE or AFTER list determines whether it's called by the parent
+ *  and/or child process.  The affected process creates a named fifo and blocks until some other process writes something to
+ *  that fifo.  The fifo is then closed, removed from the file system, and the specimen calling thread is allowed to continue.
+ *
+ *  For instance, to cause the specimen to stop in all newly forked processes, the callback should be registered on the AFTER
+ *  list only, like this:
+ *
+ *  @code
+ *  RSIM_Linux32 *sim = ...;
+ *  RSIM_Tools::ForkPauser pause;
+ *  sim.get_callbacks().add_process_callback(RSIM_Callbacks::AFTER, &pause);
+ *  @endcode
+ */
+class ForkPauser: public RSIM_Callbacks::ProcessCallback {
+public:
+    bool pause_on_fork;
+
+    ForkPauser(): pause_on_fork(true) {}
+
+    virtual ForkPauser *clone() { return this; }
+
+    virtual bool operator()(bool enabled, const Args &args) {
+        if (enabled && args.reason==FORK) {
+            std::cerr <<"ForkPauser: pid=" <<getpid();
+            if (pause_on_fork) {
+                std::string filename("/tmp/paused_"); filename += StringUtility::numberToString(getpid());
+                int status __attribute__((unused)) = mkfifo(filename.c_str(), 0666);
+                assert(status>=0);
+                std::cerr <<"; paused -- say \"echo >" <<filename <<"\" to resume...";
+                int fd = open(filename.c_str(), O_RDONLY);
+                assert(fd>=0);
+                char buf;
+                read(fd, &buf, 1);
+                std::cerr <<" resumed";
+                close(fd);
+                unlink(filename.c_str());
+            }
+            std::cerr <<std::endl;
+        }
+        return enabled;
+    }
+};
+
 /** Traverses the AST to find a symbol for a global function with the specified name.
  *
  *  This class operates over an AST and is not a callback like most of the other classes in this collection of tools.  The
@@ -168,8 +214,8 @@ public:
                         for (std::vector<SgAsmInstruction*>::iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
                             SgAsmInstruction *insn = *ii;
                             func_start = std::min(func_start, insn->get_address());
-                            func_end = std::max(func_end, insn->get_address()+insn->get_raw_bytes().size());
-                            nbytes += insn->get_raw_bytes().size();
+                            func_end = std::max(func_end, insn->get_address()+insn->get_size());
+                            nbytes += insn->get_size();
                         }
 
                         /* Compute name string */
@@ -269,7 +315,7 @@ public:
                  * address of a CALL instruction in executable memory.  This only handles CALLs encoded in two or five
                  * bytes. */
                 bool bp_not_pushed = false;
-                uint32_t esp = args.thread->policy.readGPR(x86_gpr_sp).known_value();
+                uint32_t esp = args.thread->policy.readRegister<32>(args.thread->policy.reg_esp).known_value();
                 uint32_t top_word;
                 SgAsmx86Instruction *call_insn;
                 try {
@@ -733,7 +779,7 @@ public:
         if (enabled && insn) {
             RTS_Message *m = args.thread->tracing(TRACE_MISC);
             const SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
-            uint32_t newip_va = insn->get_address() + insn->get_raw_bytes().size();
+            uint32_t newip_va = insn->get_address() + insn->get_size();
             VirtualMachineSemantics::ValueType<32> newip = args.thread->policy.number<32>(newip_va);
             switch (insn->get_kind()) {
                 case x86_movd: {
@@ -744,7 +790,7 @@ public:
                         m->mesg(fmt, unparseInstruction(insn).c_str());
                         mmx[mmx_number].lo = args.thread->semantics.read32(operands[1]);
                         mmx[mmx_number].hi = args.thread->policy.number<32>(0);
-                        args.thread->policy.writeIP(newip);
+                        args.thread->policy.writeRegister(args.thread->policy.reg_eip, newip);
                         enabled = false;
                     }
                     break;
@@ -760,7 +806,7 @@ public:
                         args.thread->policy.writeMemory(x86_segreg_ss, addr, mmx[mmx_number].lo, args.thread->policy.true_());
                         addr = args.thread->policy.add<32>(addr, args.thread->policy.number<32>(4));
                         args.thread->policy.writeMemory(x86_segreg_ss, addr, mmx[mmx_number].hi, args.thread->policy.true_());
-                        args.thread->policy.writeIP(newip);
+                        args.thread->policy.writeRegister(args.thread->policy.reg_eip, newip);
                         enabled = false;
                     }
                     break;
@@ -769,7 +815,7 @@ public:
                 case x86_pause: {
                     /* PAUSE is treated as a CPU hint, and is a no-op on some architectures. */
                     assert(0==operands.size());
-                    args.thread->policy.writeIP(newip);
+                    args.thread->policy.writeRegister(args.thread->policy.reg_eip, newip);
                     enabled = false;
                     break;
                 }
@@ -783,7 +829,7 @@ public:
                     VirtualMachineSemantics::ValueType<32> value = args.thread->policy.number<32>(0x1f80); // from GDB
                     VirtualMachineSemantics::ValueType<32> addr = args.thread->semantics.readEffectiveAddress(operands[0]);
                     args.thread->policy.writeMemory(x86_segreg_ss, addr, value, args.thread->policy.true_());
-                    args.thread->policy.writeIP(newip);
+                    args.thread->policy.writeRegister(args.thread->policy.reg_eip, newip);
                     enabled = false;
                     break;
                 }
@@ -795,7 +841,7 @@ public:
                     assert(1==operands.size());
                     VirtualMachineSemantics::ValueType<32> addr = args.thread->semantics.readEffectiveAddress(operands[0]);
                     (void)args.thread->policy.readMemory<32>(x86_segreg_ss, addr, args.thread->policy.true_());
-                    args.thread->policy.writeIP(newip);
+                    args.thread->policy.writeRegister(args.thread->policy.reg_eip, newip);
                     enabled = false;
                     break;
                 }

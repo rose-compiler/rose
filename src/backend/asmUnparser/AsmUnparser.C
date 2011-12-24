@@ -104,7 +104,8 @@ AsmUnparser::init()
         .append(&staticDataLineTermination);
 
     datablock_callbacks.unparse
-        .append(&dataBlockBody);                /* used only for ORGANIZED_BY_AST */
+        .append(&dataBlockBody)                 /* used only for ORGANIZED_BY_AST */
+        .append(&dataBlockLineTermination);
 
     function_callbacks.pre
         .append(&functionEntryAddress)
@@ -112,6 +113,7 @@ AsmUnparser::init()
         .append(&functionReasons)
         .append(&functionName)
         .append(&functionLineTermination)
+        .append(&functionComment)
         .append(&functionAttributes);
     function_callbacks.unparse
         .append(&functionBody);                 /* used only for ORGANIZED_BY_AST */
@@ -219,7 +221,7 @@ AsmUnparser::unparse(std::ostream &output, SgNode *ast)
 
 
         case ORGANIZED_BY_ADDRESS: {
-            typedef std::map<rose_addr_t, SgAsmStatement*> StatementMap;
+            typedef std::multimap<rose_addr_t, SgAsmStatement*> StatementMap;
             struct GatherStatements: public AstSimpleProcessing {
                 StatementMap *stmts;
                 GatherStatements(StatementMap *stmts): stmts(stmts) {}
@@ -394,7 +396,7 @@ AsmUnparser::InsnRawBytes::operator()(bool enabled, const InsnArgs &args)
 {
     if (enabled)
         SgAsmExecutableFileFormat::hexdump(args.output, args.insn->get_address(), &(args.insn->get_raw_bytes()[0]),
-                                           args.insn->get_raw_bytes().size(), fmt);
+                                           args.insn->get_size(), fmt);
     return enabled;
 }
 
@@ -403,13 +405,29 @@ AsmUnparser::InsnBlockEntry::operator()(bool enabled, const InsnArgs &args)
 {
     if (enabled && ORGANIZED_BY_ADDRESS==args.unparser->get_organization()) {
         SgAsmBlock *block = isSgAsmBlock(args.insn->get_parent()); // look only to immediate parent
+        bool is_first_insn = block && args.insn==block->get_statementList().front();
+
         static size_t width = 0;
         if (0==width)
             width = block->reason_str(true, 0).size();
-        if (block && args.insn==block->get_statementList().front()) {
-            args.output <<" " <<block->reason_str(true) <<" ";
-        } else {
-            args.output <<std::setw(width+2) <<" ";
+
+        if (show_function) {
+            SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(block);
+            char buf[32];
+            if (func && is_first_insn) {
+                snprintf(buf, sizeof buf, "F%08"PRIx64, func->get_entry_va());
+            } else {
+                sprintf(buf, "%*s", 9, "");
+            }
+            args.output <<" " <<buf;
+        }
+
+        if (show_reasons) {
+            if (block && is_first_insn) {
+                args.output <<" " <<block->reason_str(true) <<" ";
+            } else {
+                args.output <<std::setw(width+2) <<" ";
+            }
         }
     }
     return enabled;
@@ -492,8 +510,12 @@ AsmUnparser::BasicBlockNoopWarning::operator()(bool enabled, const BasicBlockArg
 bool
 AsmUnparser::BasicBlockReasons::operator()(bool enabled, const BasicBlockArgs &args)
 {
-    if (enabled)
-        args.output <<"Basic block: " <<args.block->reason_str(false) <<"\n";
+    if (enabled) {
+        args.output <<"Basic block: " <<args.block->reason_str(false);
+        if (args.block->get_code_likelihood()<1.0 && args.block->get_code_likelihood()>=0.0)
+            args.output <<"; " <<floor(100.0*args.block->get_code_likelihood()+0.5) <<"% code likelihood";
+        args.output <<"\n";
+    }
     return enabled;
 }
 
@@ -559,13 +581,29 @@ AsmUnparser::StaticDataBlockEntry::operator()(bool enabled, const StaticDataArgs
 {
     if (enabled && ORGANIZED_BY_ADDRESS==args.unparser->get_organization()) {
         SgAsmBlock *block = isSgAsmBlock(args.data->get_parent()); // look only to immediate parent
+        bool is_first_data = block && args.data==block->get_statementList().front();
+
         static size_t width = 0;
         if (0==width)
             width = block->reason_str(true, 0).size();
-        if (block && args.data==block->get_statementList().front()) {
-            args.output <<" " <<block->reason_str(true) <<" ";
-        } else {
-            args.output <<std::setw(width+2) <<" ";
+
+        if (show_function) {
+            SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(block);
+            char buf[32];
+            if (func && is_first_data) {
+                snprintf(buf, sizeof buf, "F%08"PRIx64, func->get_entry_va());
+            } else {
+                sprintf(buf, "%*s", 9, "");
+            }
+            args.output <<" " <<buf;
+        }
+
+        if (show_reasons) {
+            if (block && is_first_data) {
+                args.output <<" " <<block->reason_str(true) <<" ";
+            } else {
+                args.output <<std::setw(width+2) <<" ";
+            }
         }
     }
     return enabled;
@@ -597,7 +635,7 @@ AsmUnparser::StaticDataRawBytes::operator()(bool enabled, const StaticDataArgs &
             args.output <<fmt.prefix;
 
         SgAsmExecutableFileFormat::hexdump(args.output, start_address, &(args.data->get_raw_bytes()[0]),
-                                           args.data->get_raw_bytes().size(), fmt);
+                                           args.data->get_size(), fmt);
     }
     return enabled;
 }
@@ -606,9 +644,19 @@ bool
 AsmUnparser::StaticDataDetails::operator()(bool enabled, const StaticDataArgs &args)
 {
     if (enabled) {
-        size_t nbytes = args.data->get_raw_bytes().size();
-        args.output <<" " <<nbytes <<" byte" <<(1==nbytes?"":"s") <<" untyped data beginning at "
-                    <<StringUtility::addrToString(args.data->get_address());
+        SgAsmBlock *dblock = isSgAsmBlock(args.data->get_parent()); // look only to parent for data block
+        size_t nbytes = args.data->get_size();
+
+        if (dblock && 0!=(dblock->get_reason() & SgAsmBlock::BLK_JUMPTABLE)) {
+            args.output <<" " <<nbytes <<"-byte jump table beginning at "
+                        <<StringUtility::addrToString(args.data->get_address());
+        } else if (dblock && 0!=(dblock->get_reason() & SgAsmBlock::BLK_PADDING)) {
+            args.output <<" " <<nbytes <<"-byte padding beginning at "
+                        <<StringUtility::addrToString(args.data->get_address());
+        } else {
+            args.output <<" " <<nbytes <<" byte" <<(1==nbytes?"":"s") <<" untyped data beginning at "
+                        <<StringUtility::addrToString(args.data->get_address());
+        }
     }
     return enabled;
 }
@@ -640,6 +688,14 @@ AsmUnparser::DataBlockBody::operator()(bool enabled, const DataBlockArgs &args)
         for (size_t i=0; i<args.datalist.size(); i++)
             args.unparser->unparse_staticdata(enabled, args.output, args.datalist[i], i);
     }
+    return enabled;
+}
+
+bool
+AsmUnparser::DataBlockLineTermination::operator()(bool enabled, const DataBlockArgs &args)
+{
+    if (enabled)
+        args.output <<std::endl;
     return enabled;
 }
 
@@ -689,6 +745,20 @@ AsmUnparser::FunctionLineTermination::operator()(bool enabled, const FunctionArg
 {
     if (enabled)
         args.output <<std::endl;
+    return enabled;
+}
+
+bool
+AsmUnparser::FunctionComment::operator()(bool enabled, const FunctionArgs &args)
+{
+    if (enabled) {
+        std::string s = args.func->get_comment();
+        if (!s.empty()) {
+            args.output <<s;
+            if (0==s.compare(s.size()-1, 1, "\n"))
+                args.output <<std::endl;
+        }
+    }
     return enabled;
 }
 

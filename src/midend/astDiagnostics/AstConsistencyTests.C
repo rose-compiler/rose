@@ -21,7 +21,6 @@
 #include "AstNodePtrs.h"
 #include "AstTraversal.h"
 
-
 // This controls output for debugging
 #define WARN_ABOUT_ATYPICAL_LVALUES 0
 

@@ -2,37 +2,40 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # Add Projects that are associated with capabilities that belong to ROSE here
 SUBDIRS = \
-     AstEquivalence \
-     BabelPreprocessor \
-     BinFuncDetect \
-     BinQ \
-     BinaryCloneDetection \
-     C_to_Promela \
-     CertSecureCodeProject \
-     CloneDetection \
-     DatalogAnalysis \
-     DocumentationGenerator \
-     FiniteStateModelChecker \
-     HeaderFilesInclusion \
-     MPI_Tools \
-     MacroRewrapper \
-     OpenMP_Analysis \
-     QtDesignerPlugins \
-     RoseQt \
-     arrayOptimization \
-     UpcTranslation \
-     autoParallelization \
-     binaryVisualization \
-     bugSeeding \
-     checkPointExample \
-     highLevelGrammars \
-     javaport \
-     programModeling \
-     pragmaParsing \
-     roseToLLVM \
-     taintcheck \
-     PowerAwareCompiler \
-     $(OPTIONAL_PROJECTS)
+	AstEquivalence \
+	BabelPreprocessor \
+	BinFuncDetect \
+	BinQ \
+	BinaryCloneDetection \
+	C_to_Promela \
+	CertSecureCodeProject \
+	CloneDetection \
+	DataFaultTolerance \
+	DatalogAnalysis \
+	DocumentationGenerator \
+	FiniteStateModelChecker \
+	HeaderFilesInclusion \
+	MPI_Tools \
+	MacroRewrapper \
+	OpenMP_Analysis \
+	QtDesignerPlugins \
+	RoseQt \
+	arrayOptimization \
+	UpcTranslation \
+	autoParallelization \
+	binaryVisualization \
+	bugSeeding \
+	checkPointExample \
+	highLevelGrammars \
+	javaport \
+	programModeling \
+	pragmaParsing \
+	roseToLLVM \
+	taintcheck \
+	PowerAwareCompiler \
+	ManyCoreRuntime \
+	mint \
+	$(OPTIONAL_PROJECTS)
 
 # DQ (9/26/2011): Directory removed for failing new AST consistancy test for references to deleted IR nodes.
 # UpcTranslation (fails only a single test code shared_2.upc)

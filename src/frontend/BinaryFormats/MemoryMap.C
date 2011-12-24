@@ -447,6 +447,18 @@ MemoryMap::prune(bool(*predicate)(const MapElement&))
     elements = keep;
 }
 
+void
+MemoryMap::prune(unsigned required, unsigned prohibited)
+{
+    std::vector<MapElement> keep;
+    for (size_t i=0; i<elements.size(); ++i) {
+        if ((0==required || 0!=(elements[i].get_mapperms() & required)) &&
+            0==(elements[i].get_mapperms() & prohibited))
+            keep.push_back(elements[i]);
+    }
+    elements = keep;
+}
+
 size_t
 MemoryMap::read1(void *dst_buf, rose_addr_t va, size_t desired, unsigned req_perms/*=MM_PROT_READ*/,
                  const MapElement **mep/*=NULL*/) const
@@ -544,17 +556,20 @@ MemoryMap::mprotect(const MapElement &region, bool relax/*=false*/)
     /* Check whether the region refers to addresses not in the memory map. */
     if (!relax) {
         ExtentMap e;
-        e.insert(ExtentPair(region.get_va(), region.get_size()));
-        e.erase(va_extents());
+        e.insert(Extent(region.get_va(), region.get_size()));
+        e.erase_ranges(va_extents());
         if (!e.empty())
-            throw NotMapped(this, e.begin()->first);
+            throw NotMapped(this, e.begin()->first.first());
     }
 
     std::vector<MapElement> created;
     std::vector<MapElement>::iterator i=elements.begin();
     while (i!=elements.end()) {
         MapElement &other = *i;
-        if (other.get_va() >= region.get_va()) {
+        if (other.get_mapperms()==region.get_mapperms()) {
+            /* no change */
+            i++;
+        } else if (other.get_va() >= region.get_va()) {
             if (other.get_va()+other.get_size() <= region.get_va()+region.get_size()) {
                 /* other is fully contained in (or congruent to) region; change other's permissions */
                 other.set_mapperms(region.get_mapperms());
@@ -641,7 +656,7 @@ MemoryMap::va_extents() const
     ExtentMap retval;
     for (size_t i=0; i<elements.size(); i++) {
         const MapElement& me = elements[i];
-        retval.insert(me.get_va(), me.get_size());
+        retval.insert(Extent(me.get_va(), me.get_size()));
     }
     return retval;
 }
@@ -728,7 +743,7 @@ MemoryMap::dump(const std::string &basename) const
 #else
             off_t offset = lseek(fd, me.get_size()-1, SEEK_SET);
 #endif
-            ROSE_ASSERT(offset=me.get_size()-1);
+            ROSE_ASSERT((size_t)offset==me.get_size()-1);
             const int zero = 0;
 #ifdef _MSC_VER
             ssize_t n = _write(fd, &zero, 1);

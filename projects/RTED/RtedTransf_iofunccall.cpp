@@ -16,7 +16,7 @@
 //#include "RuntimeSystem.h"
 
 namespace SI = SageInterface;
-using namespace SageBuilder;
+namespace SB = SageBuilder;
 
 
 
@@ -31,8 +31,8 @@ RtedTransformation::insertIOFuncCall(RtedArguments& args)
   SgScopeStatement*           scope = stmt->get_scope();
   ROSE_ASSERT(scope);
 
-  SgExpression*               arg_name = buildStringVal(args.f_name);
-  SgExprListExp*              arg_list = buildExprListExp();
+  SgExpression*               arg_name = SB::buildStringVal(args.f_name);
+  SgExprListExp*              arg_list = SB::buildExprListExp();
 
   SI::appendExpression(arg_list, arg_name);
 
@@ -40,11 +40,11 @@ RtedTransformation::insertIOFuncCall(RtedArguments& args)
   {
     SgExpression*  arg_lhs_exprstr = (args.leftHandSideAssignmentExprStr != NULL)
                                             ? args.leftHandSideAssignmentExprStr
-                                            : buildStringVal("NoAssignmentVar")
+                                            : SB::buildStringVal("NoAssignmentVar")
                                             ;
 
     std::cerr << " ... Left hand side variable : " <<  args.leftHandSideAssignmentExpr << std::endl;
-    SI::appendExpression(arg_list, buildStringVal(removeSpecialChar(stmt->unparseToString())));
+    SI::appendExpression(arg_list, SB::buildStringVal(removeSpecialChar(stmt->unparseToString())));
     SI::appendExpression(arg_list, arg_lhs_exprstr);
   }
 
@@ -75,8 +75,8 @@ RtedTransformation::insertIOFuncCall(RtedArguments& args)
 
     // file handle
     arg_file = SI::deepCopy(roseArgs.front());
-    arg_1 = buildStringVal("NULL");
-    arg_2 = buildStringVal("NULL");
+    arg_1 = SB::buildStringVal("NULL");
+    arg_2 = SB::buildStringVal("NULL");
   }
   else if (args.f_name=="fputc")
   {
@@ -93,8 +93,8 @@ RtedTransformation::insertIOFuncCall(RtedArguments& args)
 
     // \pp not sure why this is needed (and if this even generates
     //     compileable code).
-    arg_1 = buildAddressOfOp(SI::deepCopy(roseArgs.front()));
-    arg_2 = buildStringVal("NULL");
+    arg_1 = SB::buildAddressOfOp(SI::deepCopy(roseArgs.front()));
+    arg_2 = SB::buildStringVal("NULL");
   }
   else if (args.f_name=="::std::fstream")
   {
@@ -110,7 +110,7 @@ RtedTransformation::insertIOFuncCall(RtedArguments& args)
 
     arg_file = args.varRefExp;
     arg_1 = SI::deepCopy(roseArgs.front());
-    arg_2 = buildStringVal("NULL");
+    arg_2 = SB::buildStringVal("NULL");
   } else {
     std::cerr <<"Unknown io function call " << args.f_name << std::endl;
     abort();
@@ -124,8 +124,8 @@ RtedTransformation::insertIOFuncCall(RtedArguments& args)
   appendFileInfo(arg_list, stmt);
 
   ROSE_ASSERT(symbols.roseIOFunctionCall);
-  SgFunctionRefExp* memRef_r = buildFunctionRefExp(symbols.roseIOFunctionCall);
-  SgExprStatement*  exprStmt = buildFunctionCallStmt(memRef_r, arg_list);
+  SgFunctionRefExp* memRef_r = SB::buildFunctionRefExp(symbols.roseIOFunctionCall);
+  SgExprStatement*  exprStmt = SB::buildFunctionCallStmt(memRef_r, arg_list);
 
   // create the function call and its comment
   if (insertBefore)

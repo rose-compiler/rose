@@ -62,7 +62,7 @@ assemble_all(SgAsmInterpretation *interp)
 #if 0   /* Don't worry about writing the instruction back out to the section. [RPM 2011-08-23] */
         /* We don't handle the case where an instruction grows because that could cause us to require that the section
          * containing the instruction grows, which opens a whole can of worms. */
-        ROSE_ASSERT(machine_code.size() <= insn->get_raw_bytes().size());
+        ROSE_ASSERT(machine_code.size() <= insn->get_size());
         
         /* We're using the same memory map as what was used when we loaded the binary and disassembled it. Therefore, the
          * machine code that we're writing back needs to fall within those same areas of the virtual address space: we cannot

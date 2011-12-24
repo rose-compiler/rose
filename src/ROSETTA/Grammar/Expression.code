@@ -52,6 +52,7 @@ HEADER_START
 
      public:
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 	  // Overriding SgNode versions of these
           virtual unsigned int cfgIndexForEnd() const;
           virtual bool cfgIsIndexInteresting(unsigned int index) const;
@@ -59,6 +60,7 @@ HEADER_START
           virtual unsigned int cfgFindNextChildIndex(SgNode* n);
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
        // get lvalue
           virtual bool isDefinable() const;
@@ -197,9 +199,11 @@ HEADER_UNARY_EXPRESSION_START
                postfix  /*! Postfix Operator Specifier */
              };
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
 HEADER_UNARY_EXPRESSION_END
 
@@ -210,9 +214,11 @@ HEADER_BINARY_EXPRESSION_START
           void set_rhs_operand(SgExpression * exp);
           SgType* get_type() const;
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
 HEADER_BINARY_EXPRESSION_END
 
@@ -248,9 +254,11 @@ HEADER_LIST_DECLARATIONS
 
           int replace_expression(SgExpression *o, SgExpression *n) ROSE_DEPRECATED_FUNCTION;
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
        // get lvalue
           virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
@@ -258,9 +266,11 @@ HEADER_EXPRESSION_LIST_EXPRESSION_END
 
 
 HEADER_VAR_REF_EXPRESSION_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
        // DQ (11/7/2007): I think this is not used any more.
        // DQ (10/5/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
@@ -276,9 +286,11 @@ HEADER_VAR_REF_EXPRESSION_END
 
 HEADER_LABEL_REF_EXPRESSION_START
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
           SgName get_name() const;
        // const SgName & get_name() const;
@@ -306,9 +318,11 @@ HEADER_FUNCTION_REF_EXPRESSION_START
           SgFunctionSymbol* get_symbol() const;
           void set_symbol(SgFunctionSymbol * symbol);
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
 		  /** Returns the associated function declaration, if it can be resolved statically. In some cases,
 			* such as function pointers and virtual functions, the function called cannot be resolved statically;
@@ -327,9 +341,11 @@ HEADER_MEMBER_FUNCTION_REF_EXPRESSION_START
           SgMemberFunctionSymbol* get_symbol() const;
           void set_symbol(SgMemberFunctionSymbol * symbol);
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
       	  //! This is helpful in chasing down the associated declaration to this member function reference.
 		  //! Note: This function can return NULL - for example when the function call occurs through a function
@@ -344,9 +360,11 @@ HEADER_MEMBER_FUNCTION_REF_EXPRESSION_END
 
 
 HEADER_VALUE_EXPRESSION_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
        // DQ (2/12/2011): Added const so that this could be called in get_mangled() (and more generally).
        // DQ (8/18/2009): Added support to get the constant folded value as a string instead of the expression tree.
@@ -454,9 +472,11 @@ HEADER_CALL_EXPRESSION_END
 
 HEADER_FUNCTION_CALL_EXPRESSION_START
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
 		  /** Returns the associated function declaration, if it can be resolved statically. In some cases,
 			* such as function pointers and virtual functions, the function called cannot be resolved statically;
@@ -611,18 +631,24 @@ HEADER_IS_NOT_OP_END
 
 HEADER_AND_OPERATOR_START
           SgType* get_type() const;
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual bool cfgIsIndexInteresting(unsigned int) const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
 HEADER_AND_OPERATOR_END
 
 
 HEADER_OR_OPERATOR_START
           SgType* get_type() const;
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual bool cfgIsIndexInteresting(unsigned int) const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
 HEADER_OR_OPERATOR_END
 
@@ -673,23 +699,31 @@ HEADER_SIZEOF_OPERATOR_START
  // Liao, 11/17/2009
           int replace_expression(SgExpression*, SgExpression*) ROSE_DEPRECATED_FUNCTION;
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
+
 HEADER_SIZEOF_OPERATOR_END
 
 
 HEADER_JAVA_INSTANCEOF_OPERATOR_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
+
 HEADER_JAVA_INSTANCEOF_OPERATOR_END
 
 
 HEADER_TYPE_ID_OPERATOR_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
        // get lvalue
           virtual bool isLValue() const;
@@ -698,26 +732,34 @@ HEADER_TYPE_ID_OPERATOR_START
 HEADER_TYPE_ID_OPERATOR_END
 
 HEADER_VARARG_START_OPERATOR_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
 HEADER_VARARG_START_OPERATOR_END
 
 HEADER_VARARG_OPERATOR_START
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
+
           int replace_expression(SgExpression*, SgExpression*) ROSE_DEPRECATED_FUNCTION;
        // void set_type( SgType* type );
 
 HEADER_VARARG_OPERATOR_END
 
 HEADER_VARARG_END_OPERATOR_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
+
           int replace_expression(SgExpression*, SgExpression*) ROSE_DEPRECATED_FUNCTION;
 
 HEADER_VARARG_END_OPERATOR_END
@@ -787,11 +829,13 @@ HEADER_CONJUGATE_OPERATOR_END
 
 
 HEADER_CONDITIONAL_EXPRESSION_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual bool cfgIsIndexInteresting(unsigned int) const;
           virtual unsigned int cfgFindChildIndex(SgNode* n);
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
        // get lvalue
           virtual bool isLValue() const;
@@ -828,7 +872,9 @@ HEADER_CAST_EXPRESSION_START
        // (one of the few places where we have to store the expression type explicitly).
           SgType* get_type() const;
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgFindChildIndex(SgNode* n); // CFG children do not match traversalSuccessorContainer
+#endif
 
        // DQ (1/17/2008): Added to permit the type to be set.
           void set_type (SgType* type);
@@ -856,25 +902,32 @@ HEADER_NEW_OPERATOR_EXPRESSION_START
        // DQ (1/16/2006): Added to support special version of get_type.
        // returns SgPointerType::createType(p_expression_type)
        // SgType* get_type() const;
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual unsigned int cfgFindChildIndex(SgNode* n);
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
 HEADER_NEW_OPERATOR_EXPRESSION_END
 
 
 HEADER_DELETE_OPERATOR_EXPRESSION_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
 HEADER_DELETE_OPERATOR_EXPRESSION_END
 
 HEADER_THIS_EXPRESSION_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
 HEADER_THIS_EXPRESSION_END
 
@@ -964,9 +1017,11 @@ HEADER_THROW_OPERATOR_START
        // DQ (1/16/2006): Added to support special version of get_type()
           SgType* get_type() const;
 
-unsigned int cfgIndexForEnd() const;
-std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          unsigned int cfgIndexForEnd() const;
+          std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
 HEADER_THROW_OPERATOR_END
 
@@ -976,23 +1031,30 @@ HEADER_CONCATENATION_OPERATOR_END
 
 
 HEADER_INITIALIZER_EXPRESSION_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
+#endif
 
 HEADER_INITIALIZER_EXPRESSION_END
 
 
 HEADER_AGGREGATE_INITIALIZER_EXPRESSION_START
 HEADER_LIST_DECLARATIONS
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
 HEADER_AGGREGATE_INITIALIZER_EXPRESSION_END
 
 
 HEADER_CONSTRUCTOR_INITIALIZER_EXPRESSION_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
           virtual unsigned int cfgIndexForEnd() const;
+#endif
+
       /*! \brief Get the SgClassDeclaration associated with this constructor call.
 
           Note that in rare cases where the constructor is associated with a primative type
@@ -1007,8 +1069,10 @@ HEADER_CONSTRUCTOR_INITIALIZER_EXPRESSION_END
 
 
 HEADER_ASSIGNMENT_INITIALIZER_EXPRESSION_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
           SgExpression * get_operand() const;
           void set_operand(SgExpression * exp);
@@ -1024,9 +1088,11 @@ HEADER_REPLACE_EXPRESSION_START
 HEADER_REPLACE_EXPRESSION_END
 
 HEADER_NULL_EXPRESSION_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
 HEADER_NULL_EXPRESSION_END
 
@@ -1034,9 +1100,11 @@ HEADER_VARIANT_EXPRESSION_START
 HEADER_VARIANT_EXPRESSION_END
 
 HEADER_STATEMENT_EXPRESSION_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
 HEADER_STATEMENT_EXPRESSION_END
 
@@ -1120,9 +1188,11 @@ HEADER_ASM_OP_START
                e_last
              };
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
 HEADER_ASM_OP_END
 
@@ -1132,9 +1202,11 @@ HEADER_ASM_OP_END
 // HEADER_INTRINSICFN_EXPRESSION_END
 
 HEADER_SUBSCRIPT_EXPR_EXPRESSION_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
 HEADER_SUBSCRIPT_EXPR_EXPRESSION_END
 
@@ -1148,9 +1220,11 @@ HEADER_COLON_SHAPE_EXPRESSION_END
 // HEADER_SUBSCRIPT_ASTERISK_EXPRESSION_END
 
 HEADER_ASTERISK_SHAPE_EXPRESSION_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
 HEADER_ASTERISK_SHAPE_EXPRESSION_END
 
@@ -1164,9 +1238,11 @@ HEADER_IO_ITEM_EXPR_START
 HEADER_IO_ITEM_EXPR_END
 
 HEADER_IMPLIED_DO_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
 HEADER_IMPLIED_DO_END
 
@@ -1174,16 +1250,21 @@ HEADER_UNKNOWN_ARRAY_OR_FUNCTION_REFERENCE_START
 HEADER_UNKNOWN_ARRAY_OR_FUNCTION_REFERENCE_END
 
 HEADER_ACTUAL_ARGUMENT_EXPRESSION_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
 HEADER_ACTUAL_ARGUMENT_EXPRESSION_END
 
 HEADER_DESIGNATED_INITIALIZER_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
           virtual unsigned int cfgFindChildIndex(SgNode* n);
+#endif
+
 HEADER_DESIGNATED_INITIALIZER_END
 
 HEADER_UPC_LOCAL_SIZEOF_EXPRESSION_START
@@ -1213,9 +1294,12 @@ HEADER_USER_DEFINED_BINARY_EXPRESSION_START
 HEADER_USER_DEFINED_BINARY_EXPRESSION_END
 
 HEADER_PSEUDO_DESTRUCTOR_REF_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
+
 HEADER_PSEUDO_DESTRUCTOR_REF_END
 
 // FMZ (2/5/2009) Added for CAFCoExpression

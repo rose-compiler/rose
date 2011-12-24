@@ -71,11 +71,13 @@ void rted_sync_log(void)
 
 void rted_EnterSharedPtr(rted_Address addr)
 {
+  UNUSEDARG(addr);
   upc_lock(sharedptrlock);
 }
 
 void rted_ExitSharedPtr(rted_Address addr)
 {
+  UNUSEDARG(addr);
   upc_unlock(sharedptrlock);
 }
 

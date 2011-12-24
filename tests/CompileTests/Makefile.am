@@ -28,6 +28,9 @@ if !USING_XTENSA_BACKEND_COMPILER
 endif
 endif
 
+# DQ (11/3/2011): For now we don't want to worry about these tests with the EDG 4.3 based support in ROSE.
+if !ROSE_USE_EDG_VERSION_4_3
+
 # DQ (7/25/2010): Put these tests after the most basic tests that users expect ROSE to pass (C,C++,C99, etc.).
 if !ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 SUBDIRS += OpenMP_tests
@@ -59,6 +62,9 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 if !USING_XTENSA_BACKEND_COMPILER
    SUBDIRS += mergeAST_tests ElsaTestCases virtualCFG_tests A++Tests staticCFG_tests 
 endif
+endif
+
+# end of !ROSE_USE_EDG_VERSION_4_3
 endif
 
 if ROSE_BUILD_EDG_WITH_CUDA_SUPPORT

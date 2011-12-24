@@ -107,8 +107,8 @@ namespace rted
         //     something like: if (&n != initname.get_type()) return;
         RtedArray arrayRted(&initname, getSurroundingStatement(initname), varAllocKind(initname));
 
-        transf.populateDimensions( arrayRted, initname, arrtype );
-        transf.create_array_define_varRef_multiArray_stack[&initname] = arrayRted;
+        populateDimensions( arrayRted, initname, arrtype );
+        transf.create_array_define_varRef_multiArray_stack.push_back(arrayRted);
       }
     };
   }
@@ -186,6 +186,19 @@ namespace rted
            );
   }
 
+  static
+  void print_node_type(SgNode* n)
+  {
+    if (n)
+    {
+      std::cerr << typeid(*n).name() << std::endl;
+    }
+    else
+    {
+      std::cerr << "*NULL*" << std::endl;
+    }
+  }
+
 
 
   /// \brief   tests whether a varref is related to an assign initializer
@@ -194,11 +207,15 @@ namespace rted
   {
      if (!inh.isAssignInitializer) return false;
 
-     SgInitializedName* initName = isSgInitializedName(varref.get_parent() ->get_parent()-> get_parent());
-     if (initName == NULL)
-        initName = isSgInitializedName(varref.get_parent() ->get_parent());
+     SgNode* parent = varref.get_parent();
+     SgNode* grandparent = parent ? parent->get_parent() : NULL;
+     SgNode* ggparent = grandparent ? grandparent->get_parent() : NULL;
 
-     return (initName && isSgReferenceType(initName -> get_type()));
+     SgInitializedName* initName = isSgInitializedName(ggparent);
+     if (initName == NULL)
+        initName = isSgInitializedName(grandparent);
+
+     return (initName && isSgReferenceType(initName->get_type()));
   }
 
   /// wraps ::isUsableAsSgArrayType and makes sure that type is
@@ -274,6 +291,16 @@ namespace rted
     return (name != NULL) && !transf->isInInstrumentedFile(name -> get_declaration());
   }
 
+  static
+  bool result_used(const SgExpression& n)
+  {
+    // \todo there could be some other (meaningful?) expressions between
+    //       n and a SgExprStatement.
+    //       e.g., static_cast<Y>(x); // result used the conversion could be handled by a user defined operator
+    //             (int*)(&x);        // result unused
+    return !isSgExprStatement(n.get_parent());
+  }
+
   struct InheritedAttributeHandler : sg::DispatchHandler<InheritedAttribute>
   {
     VariableTraversal& vt;
@@ -300,14 +327,18 @@ namespace rted
 
     void handle(SgFunctionDefinition& n)
     {
-        // \todo the next call should not be here as it might alter the
-        //       current data structure
-        vt.transf->transformIfMain(n);
-        vt.transf->function_definitions.push_back(&n);
+        SgFunctionType* const   funtype = n.get_declaration()->get_type();
+        ReturnInfo::Kind        return_type_kind = functionReturnType(funtype->get_return_type());
 
-        res.function = true;
+        vt.transf->transformIfMain(n);
+        vt.transf->function_definitions.push_back(std::make_pair(&n, return_type_kind));
+
+        res.functionReturnType = return_type_kind;
         res.openBlocks = 0; // reset for nested functions
 
+        SgTypePtrList&          funparams = funtype->get_arguments();
+
+        res.functionHasParameters = (funparams.begin() != funparams.end());
         // do not handle as SgScopeStatement
     }
 
@@ -334,9 +365,11 @@ namespace rted
 
     void handle(SgReturnStmt& n)
     {
-      if (!n.get_expression()) return;
+      assert(res.functionReturnType != ReturnInfo::rtNone);
 
-      vt.transf->returnstmt.push_back(std::make_pair(&n, res.openBlocks-1));
+      if (res.functionReturnType == ReturnInfo::rtVoid) return;
+
+      vt.transf->returnstmt.push_back(ReturnInfo(&n, res.openBlocks, res.functionReturnType, vt.current_file_type));
     }
 
     void handle(SgUpcBarrierStatement& n) { storeUpcBlockingOp(n); }
@@ -346,17 +379,23 @@ namespace rted
       storeUpcBlockingOp(n);
     }
 
-    // implicitly casts to SgScopeStatement
-    void store_scope(SgScopeStatement& n)
+    void store_scope(SgScopeStatement& n, bool isNonVoidFunctionScope = false, bool guardParams = false, bool delayLeakCheck = false)
     {
+      typedef RtedTransformation::ScopeContainer::value_type ScopeDesc;
+
+      // \pp no need to keep track of the scope if it was compiler generated
+      //     or if there was no variable (parameter) declared.
       const bool skip = (  n.get_file_info()->isCompilerGenerated()
-                        || !n.first_variable_symbol()
+                        || (!n.first_variable_symbol() && !guardParams)
                         );
 
       if (skip) return;
 
+      const bool      isCxxScope = ((vt.current_file_type & ftCxx) == ftCxx);
+      const ScopeDesc desc(&n, isNonVoidFunctionScope, isCxxScope, delayLeakCheck);
+
       ++res.openBlocks;
-      vt.transf->scopes.push_back(&n);
+      vt.transf->scopes.push_back(desc);
     }
 
     void handle(SgClassDefinition& n)
@@ -364,12 +403,38 @@ namespace rted
       vt.transf->visit_isClassDefinition(&n);
     }
 
+    void handle(SgSwitchStatement& n)
+    {
+      // \todo
+      // switch statement blocks are difficult to instrument
+      // consider the following code:
+      // switch(X)
+      // {
+      //   int y;
+      //   case 1: y = 8; ... /* fallthrough */
+      //   case 2: y = 9; ... break;
+      //   default: ;
+      // }
+      //
+      // --- storage space for y is declared with its declaration
+      //     but the declaration code itself is never executed
+      //     as the switch jumps to the corresponding case label
+
+      res.lastBreakableStmtLevel = res.openBlocks;
+      // store_scope(n); /* currently disabled --- see comment above */
+    }
+
+    void handle_loop(SgScopeStatement& n)
+    {
+      res.lastBreakableStmtLevel = res.lastContinueableStmtLevel = res.openBlocks;
+      store_scope(n);
+    }
+
     void handle_gfor(SgScopeStatement& sgfor)
     {
-      store_scope(sgfor);
+      handle_loop(sgfor);
 
       res.lastGForLoop = &sgfor;
-      res.isForStatement = true;
     }
 
     void handle(SgForStatement& n)
@@ -382,18 +447,17 @@ namespace rted
       handle_gfor(n);
     }
 
-    void handle(SgWhileStmt& n)       { store_scope(n); }
-    void handle(SgDoWhileStmt& n)     { store_scope(n); }
-    void handle(SgSwitchStatement& n) { store_scope(n); }
+    void handle(SgWhileStmt& n)       { handle_loop(n); }
+    void handle(SgDoWhileStmt& n)     { handle_loop(n); }
     void handle(SgIfStmt& n)          { store_scope(n); }
 
     void handle(SgBasicBlock& n)
     {
-      // to keep track of return values properly,
-      //   the first scope is instrumented at call sites
-      if (res.openBlocks == 0) { res.openBlocks = 1; return; }
+      const bool isNonVoidFunctionScope = (res.openBlocks == 0) && (res.functionReturnType > ReturnInfo::rtVoid);
+      const bool guardParams = (res.openBlocks == 0) && res.functionHasParameters;
+      const bool ptrReturn = (res.functionReturnType == ReturnInfo::rtIndirection);
 
-      store_scope(n);
+      store_scope(n, isNonVoidFunctionScope, guardParams, ptrReturn);
     }
 
      //
@@ -412,138 +476,125 @@ namespace rted
         }
      }
 
-     void handle(SgVarRefExp& n)
-     {
-       SgInitializedName* name = n.get_symbol()->get_declaration();
-       bool elide_access_guard = (  (res.isArrowExp                          )
-                                 || (res.isAddressOfOp                       )
-                                 || (!res.function                           )
-                                 || (in_instrumented_file(vt.transf, name)   )
-                                 || (test_binaryop_and_forloop(n, *name, res))
-                                 || (test_assign_initializer(res, n)         )
-                                 || (test_call_argument(vt.transf, n)        )
-                                 );
+    void handle(SgVarRefExp& n)
+    {
+      SgInitializedName* name = n.get_symbol()->get_declaration();
+      bool elide_access_guard = (  (res.isArrowExp                              )
+                                || (res.isAddressOfOp                           )
+                                || (res.isSizeOfOp                              )
+                                || (res.functionReturnType == ReturnInfo::rtNone)
+                                || (in_instrumented_file(vt.transf, name)       )
+                                || (test_binaryop_and_forloop(n, *name, res)    )
+                                || (test_assign_initializer(res, n)             )
+                                || (test_call_argument(vt.transf, n)            )
+                                );
 
-       if (elide_access_guard)
-       {
-         // std::cerr << "### ELIDE " << where << " " << varref->unparseToString() << std::endl;
-         return;
-       }
+      if (elide_access_guard)
+      {
+        // std::cerr << "### ELIDE " << where << " " << varref->unparseToString() << std::endl;
+        return;
+      }
 
-       // its a plain variable access
-       vt.transf->variable_access_varref.push_back(&n);
-     }
+      // its a plain variable access
+      getSurroundingStatement(n);
+      vt.transf->variable_access_varref.push_back(&n);
+    }
 
-     // unary
+    // unary
 
-     void handle(SgAddressOfOp& n)
-     {
-      res.isAddressOfOp = true;
-       /* returns immediately */
-     }
+    void handle(SgAddressOfOp& n) { res.isAddressOfOp = true; }
+    void handle(SgSizeOfOp&)      { res.isSizeOfOp = true; }
 
-     void handle(SgPointerDerefExp& n)
-     {
-        // if this is a varrefexp and it is not initialized, we flag it.
-        // do only if it is by itself or on right hand side of assignment
-        vt.transf->visit_isSgPointerDerefExp(&n);
+    void handle(SgPointerDerefExp& n)
+    {
+      // if this is a varrefexp and it is not initialized, we flag it.
+      // do only if it is by itself or on right hand side of assignment
+      vt.transf->visit_sgPointerDerefExp(n);
 
-        if (isUpcSharedPointer(n.get_operand()->get_type()))
-        {
-          vt.transf->sharedptr_derefs.push_back(&n);
-        }
-     }
+      if (isUpcSharedPointer(n.get_operand()->get_type()))
+      {
+        vt.transf->sharedptr_derefs.push_back(&n);
+      }
+    }
 
 
-     // binary
+    // binary
 
-     void handle(SgBinaryOp& n)
-     {
+    void handle(SgBinaryOp& n)
+    {
       if (res.isArrowExp || res.isAddressOfOp) return;
 
       res.lastBinary = &n;
-     }
+    }
 
-     void handle_binary(SgBinaryOp& n) { handle(n); }  // implcitely casts to SgBinaryOp
+    void handle_binary(SgBinaryOp& n) { handle(n); }  // implcitely casts to SgBinaryOp
 
-     void handle(SgDotExp&) { /* skip binary handling */ }
+    void handle(SgDotExp&) { /* skip binary handling */ }
 
-     void handle(SgPntrArrRefExp& n)
-     {
-       vt.transf->visit_isArrayPntrArrRefExp(&n);
-       handle_binary(n);
-     }
+    void handle(SgPntrArrRefExp& n)
+    {
+      vt.transf->visit_isArrayPntrArrRefExp(&n);
+      handle_binary(n);
+    }
 
-     void handle(SgArrowExp& n)
-     {
-       vt.transf->visit_isSgArrowExp(&n);
+    void handle(SgArrowExp& n)
+    {
+      vt.transf->visit_isSgArrowExp(&n);
       res.isArrowExp = true;
-       /* skip binary handling */
-     }
+      /* skip binary handling */
+    }
 
-     void handle(SgAssignOp& n)
-     {
-        // 1. look for MALLOC
-        // 2. Look for assignments to variables - i.e. a variable is initialized
-        // 3. Assign variables that come from assign initializers (not just assignments
-        std::cerr << n.unparseToString() << std::endl;
-        vt.transf->visit_isArraySgAssignOp(&n);
-        handle_binary(n);
-     }
+    void handle(SgAssignOp& n)
+    {
+      // 1. look for MALLOC
+      // 2. Look for assignments to variables - i.e. a variable is initialized
+      // 3. Assign variables that come from assign initializers (not just assignments
+      std::cerr << n.unparseToString() << std::endl;
+      vt.transf->visit_isArraySgAssignOp(&n);
+      handle_binary(n);
+    }
 
-     void handle(SgMinusAssignOp& n)
-     {
-       push_if_ptr_movement(*n.get_lhs_operand());
-       handle_binary(n);
-     }
+    void handle(SgMinusAssignOp& n)
+    {
+      push_if_ptr_movement(*n.get_lhs_operand());
+      handle_binary(n);
+    }
 
-     void handle(SgPlusAssignOp& n)
-     {
-       push_if_ptr_movement(*n.get_lhs_operand());
-       handle_binary(n);
-     }
+    void handle(SgPlusAssignOp& n)
+    {
+      push_if_ptr_movement(*n.get_lhs_operand());
+      handle_binary(n);
+    }
 
-     // n-ary
+    // n-ary
+    void handle(SgPlusPlusOp& n)
+    {
+      push_if_ptr_movement(*n.get_operand());
+    }
 
-     // \note see note comment in handle(SgFunctionCallExp)
-     bool suppress_binary_for_specific_calls(const SgFunctionDeclaration* fndecl)
-     {
-       return ((fndecl != NULL) && isLibFunctionRequiringArgCheck(fndecl->get_name()));
-     }
+    void handle(SgMinusMinusOp& n)
+    {
+      push_if_ptr_movement(*n.get_operand());
+    }
 
-     void handle(SgFunctionCallExp& n)
-     {
-        vt.transf->visit_isFunctionCall(&n);
+    void handle(SgDeleteExp& del)
+    {
+      typedef RtedTransformation::Deallocations Deallocations;
 
-        // \pp binary should be suppressed for all calls
-        //     in order not to impact existing RTED tests, we suppress for
-        //     cases relevant to UPC
-        // \todo 1) make suppression unconditional (remove if)
-        // \todo 2) I think the following code is obsolete
-        //~ if (suppress_binary_for_specific_calls(n.getAssociatedFunctionDeclaration()))
-        //~ {
-          //~ ia.isBinaryOp = false;
-        //~ }
-     }
+      const AllocKind allocKind = (del.get_is_array() ? akCxxArrayNew : akCxxNew);
 
-     void handle(SgPlusPlusOp& n)
-     {
-       push_if_ptr_movement(*n.get_operand());
-     }
+      vt.transf->frees.push_back( Deallocations::value_type(&del, allocKind) );
+    }
 
-     void handle(SgMinusMinusOp& n)
-     {
-       push_if_ptr_movement(*n.get_operand());
-     }
+    void handle(SgFunctionCallExp& n)
+    {
+      typedef RtedTransformation::CallSiteContainer CallSiteContainer;
 
-     void handle(SgDeleteExp& del)
-     {
-       typedef RtedTransformation::Deallocations Deallocations;
+      ReturnInfo::Kind kind = vt.transf->visit_FunctionCall(n);
+      if (kind != ReturnInfo::rtIndirection || result_used(n)) return;
 
-       const AllocKind allocKind = (del.get_is_array() ? akCxxArrayNew : akCxxNew);
-
-       vt.transf->frees.push_back( Deallocations::value_type(&del, allocKind) );
-     }
+      vt.transf->unusedReturnValue.push_back(&n);
+    }
   };
 
   InheritedAttribute VariableTraversal::evaluateInheritedAttribute(SgNode* astNode, InheritedAttribute inheritedAttribute)
@@ -551,67 +602,5 @@ namespace rted
     return sg::dispatch(InheritedAttributeHandler(*this, inheritedAttribute), astNode);
   }
 }
-
-#if INCOMPLETE_CODE
-  >>> imported from RtedTransforamtion.h
-   typedef std::vector< std::pair<const SgSourceFile*, SgPointerDerefExp*> > PtrDerefContainer;
-
-   PtrDerefContainer    ptrderefs;
-   // \todo add to ctor member initializer list
-
-   typedef std::pair<SgPointerType*, std::string>                            SafeFunctionKey;
-   typedef std::map< SafeFunctionKey, SgFunctionSymbol* >                    SafeFunctionContainer;
-   typedef std::map< const SgSourceFile*, SafeFunctionContainer >            GeneratedFunctions;
-  <<< imported from RtedTransforamtion.h
-
-  struct SafeEval
-  {
-    static const char* const read  = "r";
-    static const char* const write = "w";
-
-    static const char* const deref   = "Deref"
-    static const char* const none    = "None"
-    static const char* const assign  = "Assign"
-
-    SynthesizedAttribute             res;
-    VariableTraversal&               vt;
-    const SynthesizedAttributesList& subeval;
-
-    SafeEval(VariableTraversal& trav, const SynthesizedAttributesList& childattr)
-    : res(NULL, none), vt(trav), subeval(childattr)
-    {}
-
-    void handle_subexpr(SgUnaryOp& n, std::string mode)
-    {
-      ROSE_ASSERT(subeval.size() == 1);
-
-      const SynthesizedAttribute& attr = subeval.front();
-      SgExpression&               operand = *n.get_operand();
-
-      attr.modify(*vt.transf, operand, vt.get_safeFunctionSym(attr.operation, mode));
-    }
-
-    void handle(SgNode&) {}
-
-    void handle(SgPointerDerefExp& n)
-    {
-      handle_sub(n, read);
-
-      res.operation = deref;
-      res.handler = RtedTransformation::replaceNode;
-    }
-
-    void handle(SgAssignOp& n)
-    {
-      handle_subexpr(n, read, write);
-
-      if (subeval.front().operation == none) return;
-
-      res.operand = assign;
-      res.handler = RtedTransformation::replaceNode;
-    }
-  }
-#endif /* INCOMPLETE_CODE */
-
 
 #endif

@@ -1,19 +1,18 @@
+# Non-recursive Makefile
 
-mptConstantFolding_la_sources=\
+mptConstantFolding_la_sources = \
 	$(mptConstantFoldingPath)/constantFolding.C
 
-
-mptConstantFolding_includeHeaders=\
+mptConstantFolding_includeHeaders = \
 	$(mptConstantFoldingPath)/constantFolding.h
 
-
-mptConstantFolding_extraDist=\
+mptConstantFolding_extraDist = \
 	$(mptConstantFoldingPath)/CMakeLists.txt
 
-
-mptConstantFolding_cleanLocal=\
+mptConstantFolding_cleanLocal = \
 	rm -rf \
-		$(mptConstantFoldingPath)/Templates.DB \
+		$(mptConstantFoldingPath)/core \
 		$(mptConstantFoldingPath)/ii_files \
 		$(mptConstantFoldingPath)/ti_files \
-		$(mptConstantFoldingPath)/core
+		$(mptConstantFoldingPath)/Templates.DB
+

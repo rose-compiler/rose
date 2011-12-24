@@ -70,6 +70,10 @@ Description:\n\
     Convenience switch that is equivalent to --ast-dot and --cfg-dot (or\n\
     --no-ast-dot and --no-cfg-dot).\n\
 \n\
+  --linear\n\
+    Organized the output by address rather than hierarchically.  The output\n\
+    will be more like traditional disassemblers.\n\
+\n\
   --omit-anon=SIZE\n\
   --no-omit-anon\n\
     If the memory being disassembled is anonymously mapped (contains all zero\n\
@@ -172,6 +176,7 @@ these switches can be obtained by specifying the \"--rose-help\" switch.\n\
 #include <unistd.h>
 #include <sys/mman.h>
 
+#include "AsmFunctionIndex.h"
 #include "AsmUnparser.h"
 #include "BinaryLoader.h"
 #include "VirtualMachineSemantics.h"
@@ -233,7 +238,7 @@ block_hash(SgAsmBlock *blk, unsigned char digest[20])
     SgAsmx86Instruction *last_insn = isSgAsmx86Instruction(stmts.back());
     if (last_insn->get_kind()==x86_call || last_insn->get_kind()==x86_farcall) {
         VirtualMachineSemantics::RenameMap rmap;
-        policy.writeMemory(x86_segreg_ss, policy.readGPR(x86_gpr_sp), policy.number<32>(0), policy.true_());
+        policy.writeMemory(x86_segreg_ss, policy.readRegister<32>("esp"), policy.number<32>(0), policy.true_());
         ignore_final_ip = false;
     }
 
@@ -272,63 +277,28 @@ function_hash(SgAsmFunction *func, unsigned char digest[20])
     return true;
 }
 
-/* Traversal prints information about each SgAsmFunction node. */
-class ShowFunctions : public SgSimpleProcessing {
+/* Aguments the AsmFunctionIndex by always sorting functions by entry address, and adding an extra column named "Hash" that
+ * contains the hash value (if known) of the function. */
+class ShowFunctions: public AsmFunctionIndex {
 public:
-    size_t nfuncs;
-    ShowFunctions()
-        : nfuncs(0)
-        {}
-    void show(SgNode *node) {
-        printf("Functions detected in this interpretation:\n");
-        fputs(SgAsmFunction::reason_key("    ").c_str(), stdout);
-        printf("\n");
-        printf("    Num  Low-Addr   End-Addr  Insns/Bytes  Reason      Kind     Hash             Name\n");
-        printf("    --- ---------- ---------- ------------ ----------- -------- ---------------- --------------------------------\n");
-        traverse(node, preorder);
-        printf("    --- ---------- ---------- ------------ ----------- -------- ---------------- --------------------------------\n");
-    }
-    void visit(SgNode *node) {
-        SgAsmFunction *defn = isSgAsmFunction(node);
-        if (defn) {
-            /* Scan through the function's instructions to find the range of addresses for the function. */
-            rose_addr_t func_start=~(rose_addr_t)0, func_end=0;
-            size_t nbytes=0;
-            std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(defn);
-            for (std::vector<SgAsmInstruction*>::iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
-                SgAsmInstruction *insn = *ii;
-                func_start = std::min(func_start, insn->get_address());
-                func_end = std::max(func_end, insn->get_address()+insn->get_raw_bytes().size());
-                nbytes += insn->get_raw_bytes().size();
+    struct HashCallback: public OutputCallback {
+        HashCallback(): OutputCallback("Hash", 16) {}
+        virtual bool operator()(bool enabled, const DataArgs &args) {
+            if (enabled) {
+                unsigned char sha1[20];
+                if (function_hash(args.func, sha1)) {
+                    args.output <<data_prefix <<std::setw(width) <<digest_to_str(sha1).substr(0, 16);
+                } else {
+                    args.output <<data_prefix <<std::setw(width) <<"";
+                }
             }
-
-            /* Reason that this is a function */
-            printf("    %3zu 0x%08"PRIx64" 0x%08"PRIx64" %5zu/%-6zu ", ++nfuncs, func_start, func_end, insns.size(), nbytes);
-            fputs(defn->reason_str(true).c_str(), stdout);
-
-            /* Kind of function */
-            switch (defn->get_function_kind()) {
-              case SgAsmFunction::e_unknown:    fputs("  unknown", stdout); break;
-              case SgAsmFunction::e_standard:   fputs(" standard", stdout); break;
-              case SgAsmFunction::e_library:    fputs("  library", stdout); break;
-              case SgAsmFunction::e_imported:   fputs(" imported", stdout); break;
-              case SgAsmFunction::e_thunk:      fputs("    thunk", stdout); break;
-              default:                          fputs("    other", stdout); break;
-            }
-
-            /* First 16 bytes of the function hash */
-            unsigned char sha1[20];
-            if (function_hash(defn, sha1)) {
-                printf(" %-16s", digest_to_str(sha1).substr(0, 16).c_str());
-            } else {
-                printf(" %-16s", "");
-            }
-            
-            /* Function name if known */
-            if (defn->get_name()!="")
-                printf(" %s", defn->get_name().c_str());
-            fputc('\n', stdout);
+            return enabled;
         }
+    } hashCallback;
+
+    ShowFunctions(SgNode *ast): AsmFunctionIndex(ast) {
+        sort_by_entry_addr();
+        output_callbacks.before(&nameCallback, &hashCallback, 1);
     }
 };
 
@@ -340,9 +310,8 @@ public:
             function_callbacks.pre.append(&functionHash);
             basicblock_callbacks.pre.append(&blockHash);
         }
-        if (show_syscall_names) {
-            insn_callbacks.post.append(&syscallName);
-        }
+        if (show_syscall_names)
+            insn_callbacks.unparse.append(&syscallName);
         basicblock_callbacks.post.prepend(&dominatorBlock);
     }
 
@@ -396,8 +365,8 @@ private:
 
                     try {
                         semantics.processBlock(stmts, 0, int_n);
-                        if (policy.readGPR(x86_gpr_ax).is_known()) {
-                            int nr = policy.readGPR(x86_gpr_ax).known_value();
+                        if (policy.readRegister<32>("eax").is_known()) {
+                            int nr = policy.readRegister<32>("eax").known_value();
                             extern std::map<int, std::string> linux32_syscalls; // defined in linux_syscalls.C
                             const std::string &syscall_name = linux32_syscalls[nr];
                             if (!syscall_name.empty())
@@ -794,6 +763,7 @@ main(int argc, char *argv[])
     bool do_show_hashes = false;
     bool do_omit_anon = true;                   /* see large_anonymous_region_limit global for actual limit */
     bool do_syscall_names = true;
+    bool do_linear = false;                     /* organized output linearly rather than hierarchically */
 
     Disassembler::AddressSet raw_entries;
     MemoryMap raw_map;
@@ -840,6 +810,8 @@ main(int argc, char *argv[])
                    !strcmp(argv[i], "--help")) {
             printf(usage, arg0, arg0, arg0);
             exit(0);
+        } else if (!strcmp(argv[i], "--linear")) {
+            do_linear = true;
         } else if (!strncmp(argv[i], "--omit-anon=", 12)) {
             char *rest;
             do_omit_anon = true;
@@ -1303,11 +1275,12 @@ main(int argc, char *argv[])
     }
 
     if (do_show_functions)
-        ShowFunctions().show(block);
+        std::cout <<ShowFunctions(block);
 
     if (!do_quiet) {
         MyAsmUnparser unparser(do_show_hashes, do_syscall_names);
         unparser.add_function_labels(block);
+        unparser.set_organization(do_linear ? AsmUnparser::ORGANIZED_BY_ADDRESS : AsmUnparser::ORGANIZED_BY_AST);
         unparser.unparse(std::cout, block);
         fputs("\n\n", stdout);
     }
@@ -1331,7 +1304,7 @@ main(int argc, char *argv[])
 
         std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(block, V_SgAsmInstruction);
         for (std::vector<SgAsmInstruction*>::iterator ii=insns.begin(); ii!=insns.end(); ++ii)
-            extents.erase((*ii)->get_address(), (*ii)->get_raw_bytes().size());
+            extents.erase(Extent((*ii)->get_address(), (*ii)->get_size()));
         size_t unused = extents.size();
         if (do_show_extents && unused>0) {
             printf("These addresses (%zu byte%s) do not contain instructions:\n", unused, 1==unused?"":"s");

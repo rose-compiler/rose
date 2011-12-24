@@ -253,8 +253,8 @@ void SystemDependenceGraph::build()
         ROSE_ASSERT(funcDecl);
         if (functionsToEntries_.count(funcDecl))
             addEdge(callInfo.vertex, functionsToEntries_[funcDecl], new SDGEdge(SDGEdge::Call));
-        else
-            ;//ROSE_ASSERT(false);
+        //else
+            //ROSE_ASSERT(false);
     }
     
     //=============================================================================================//

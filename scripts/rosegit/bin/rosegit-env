@@ -33,26 +33,28 @@
 source rosegit-functions.sh || exit 1
 
 # Parse command-line arguments
-config=
+my_args=() rg_args=()
 while [ "$#" -gt 0 ]; do
     case "$1" in
-	--) shift; break;;
-	--blddir=*) ROSEGIT_BLD="${1##--blddir=}"; shift;;
-	--config=*) config="${1##--config=}"; shift;;
-	--namespace=*) ROSEGIT_NAMESPACE="${1##--namespace=}"; shift ;;
-	--srcdir=*) ROSEGIT_SRC="${1##--srcdir=}"; shift;;
-	-*) rosegit_die "unknown switch: $1";;
-	*) break;;
+	--)     my_args=("${my_args[@]}" "$@"); break;;
+	--show) show_config=yes;                shift;;
+	-*)     rg_args=("${rg_args[@]}" "$1"); shift;;
+	*)      my_args=("${my_args[@]}" "$@"); break;;
     esac
 done
+rosegit_preamble "${rg_args[@]}"
+set -- "${my_args[@]}"
 
-# Find build and source trees and load configurations
-rosegit_preamble $config
+# Show configuration, but only if rosegit_preamble didn't just configure things (since it shows the config)
+if [ -n "$show_config" ]; then
+    rosegit_show_environment
+    exit 0
+fi
 
 # Run the subordinate command. If there is none then run bash instead.
+export PS1_STACK="rose $PS1_STACK"
 if [ "$#" -eq 0 ]; then
     rosegit_show_environment
-    export PS1_STACK="rose $PS1_STACK"
     exec ${SHELL:-/bin/bash}
 else
     exec "$@"

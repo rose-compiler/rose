@@ -1,0 +1,24 @@
+# Non-recursive Makefile
+
+mAbstractMemoryObject_la_sources=\
+	$(mAbstractMemoryObjectPath)/memory_object.cpp \
+	$(mAbstractMemoryObjectPath)/memory_object.h \
+	$(mAbstractMemoryObjectPath)/memory_object_impl.h \
+	$(mAbstractMemoryObjectPath)/memory_object_impl.cpp
+
+mAbstractMemoryObject_includeHeaders=\
+	$(mAbstractMemoryObjectPath)/memory_object.h \
+	$(mAbstractMemoryObjectPath)/memory_object_impl.h
+
+mAbstractMemoryObject_extraDist=\
+	$(mAbstractMemoryObjectPath)/CMakeLists.txt \
+	$(mAbstractMemoryObjectPath)/README \
+	$(mAbstractMemoryObjectPath)/original_design.doc
+
+mAbstractMemoryObject_cleanLocal=\
+	rm -rf \
+		$(mAbstractMemoryObjectPath)/core \
+		$(mAbstractMemoryObjectPath)/ii_files \
+		$(mAbstractMemoryObjectPath)/ti_files \
+		$(mAbstractMemoryObjectPath)/Templates.DB
+

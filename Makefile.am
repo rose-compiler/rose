@@ -159,7 +159,10 @@ install-exec-local:
 
 install-data-local: uninstall-local
 	-mkdir $(DESTDIR)$(includedir)
+#	DQ (11/1/2011): The EDG 4.x support does not require a separate include-staging directory.
+#	if !ROSE_USE_NEW_EDG_INTERFACE
 	cp -R $(top_builddir)/include-staging/* $(DESTDIR)$(includedir)/
+#	endif
 	@echo '*****************************************************************'
 	@echo '***** make install-data rule complete (terminated normally) *****'
 	@echo '*****************************************************************'
@@ -500,4 +503,7 @@ rosePublicConfig.h: rose_config.h
 	@echo "  GEN     $@"
 	@$(top_srcdir)/scripts/publicConfiguration.pl <$^ >$@
 DISTCLEANFILES = rosePublicConfig.h
+
+# This file does not exist until we run the compiler to build it.
+# include $(top_builddir)/src/frontend/SageIII/astPostProcessing/.libs/astPostProcessing.d
 

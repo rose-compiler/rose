@@ -2,7 +2,7 @@
 #define REVERSE_COMPUTATION_NORMALIZATION
 
 #include <rose.h>
-#include "ExtractFunctionArguments.h"
+#include <ExtractFunctionArguments.h>
 
 namespace BackstrokeNorm
 {
@@ -52,13 +52,6 @@ namespace BackstrokeNormUtility
 	bool isInSizeOfOp(SgNode* node);
 
 } // namespace BackstrokeNormUtility
-
-#if 0
-inline void normalizeEvent(SgFunctionDefinition* func_def)
-{
-	BackstrokeNormUtility::normalize(func_def->get_body());
-}
-#endif
 
 //! Normalize the given function. The output is the normalized function.
 SgFunctionDeclaration* normalizeEvent(SgFunctionDeclaration* func_decl);
