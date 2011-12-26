@@ -8,21 +8,21 @@ INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke
 
 
 # noinst_LIBRARIES lists all the librarlies that should be built, but not installed
-noinst_LIBRARIES = libBackstrokeFunctionReverser.a
+noinst_LTLIBRARIES = libBackstrokeFunctionReverser.la
 
-libBackstrokeFunctionReverser_a_DEPENDENCIES =
-libBackstrokeFunctionReverser_a_SOURCES = valueGraphNode.C valueGraph.C graphSearch.C functionReverser.C \
+libBackstrokeFunctionReverser_la_DEPENDENCIES =
+libBackstrokeFunctionReverser_la_SOURCES = valueGraphNode.C valueGraph.C graphSearch.C functionReverser.C \
 		pathNumGenerator.C CFGFilter.C codeGeneration.C types.C 
-libBackstrokeFunctionReverser_a_includedir = $(includedir)/backstroke
-libBackstrokeFunctionReverser_a_include_HEADERS = valueGraph.h valueGraphNode.h pathNumGenerator.h functionReverser.h \
+libBackstrokeFunctionReverser_la_includedir = $(includedir)/backstroke
+libBackstrokeFunctionReverser_la_include_HEADERS = valueGraph.h valueGraphNode.h pathNumGenerator.h functionReverser.h \
 			CFGFilter.h types.h
-libBackstrokeFunctionReverser_a_LIBADD = 
+libBackstrokeFunctionReverser_la_LIBADD = 
 
 noinst_PROGRAMS= functionReverserTest
 functionReverserTest_SOURCES = test.C
-functionReverserTest_LDADD = libBackstrokeFunctionReverser.a \
-		$(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.a \
-		$(top_builddir)/projects/backstroke/normalizations/libBackstrokeNormalizations.a \
+functionReverserTest_LDADD = libBackstrokeFunctionReverser.la \
+		$(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.la \
+		$(top_builddir)/projects/backstroke/normalizations/libBackstrokeNormalizations.la \
 		$(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 

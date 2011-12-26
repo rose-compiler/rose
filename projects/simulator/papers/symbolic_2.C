@@ -73,8 +73,9 @@ public:
 
             // Create the policy that holds the analysis state which is modified by each instruction.  Then plug the policy
             // into the X86InstructionSemantics to which we'll feed each instruction.
-            SymbolicSemantics::Policy policy(&smt_solver);
-            X86InstructionSemantics<SymbolicSemantics::Policy, SymbolicSemantics::ValueType> semantics(policy);
+            SymbolicSemantics::Policy<SymbolicSemantics::ValueType> policy(&smt_solver);
+            X86InstructionSemantics<SymbolicSemantics::Policy<SymbolicSemantics::ValueType>,
+                                    SymbolicSemantics::ValueType> semantics(policy);
 
             // The top of the stack contains the (unknown) return address.  The value above that (in memory) is the address of
             // the buffer, to which we give a concrete value, and above that is the size of the buffer, which we also give a
@@ -93,8 +94,9 @@ public:
                 // linker thunk and execute the instruction concretely to advance the instruction pointer.
                 SgAsmx86Instruction *insn = isSgAsmx86Instruction(args.thread->get_process()->get_instruction(analysis_addr));
                 if (x86_jmp==insn->get_kind()) {
-                    VirtualMachineSemantics::Policy p;
-                    X86InstructionSemantics<VirtualMachineSemantics::Policy, VirtualMachineSemantics::ValueType> sem(p);
+                    VirtualMachineSemantics::Policy<VirtualMachineSemantics::ValueType> p;
+                    X86InstructionSemantics<VirtualMachineSemantics::Policy<VirtualMachineSemantics::ValueType>,
+                                            VirtualMachineSemantics::ValueType> sem(p);
                     p.set_map(args.thread->get_process()->get_memory()); // won't be thread safe
                     sem.processInstruction(insn);
                     policy.writeRegister("eip", SymbolicSemantics::ValueType<32>(p.readRegister<32>("eip").known_value()));

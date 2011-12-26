@@ -548,6 +548,7 @@ PathNumManager::getVisiblePathNumbers(SgNode* node) const
     return std::make_pair(idx,
                           pathNumGenerators_[idx]->getVisibleNumAndPaths(dagNode));
 #endif
+	ROSE_ASSERT(false);
 }
 
 PathInfos PathNumManager::getPathNumbers(

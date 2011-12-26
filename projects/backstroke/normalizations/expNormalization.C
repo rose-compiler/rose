@@ -135,7 +135,7 @@ void getAndReplaceModifyingExpression(SgExpression*& e)
 
             // Get the closest basic block which contains the expression e.
             SgBasicBlock* body = getCurrentBody(e);
-            SgName name = BackstrokeUtility::GenerateUniqueVariableName(body, "t");
+            SgName name = SageInterface::generateUniqueVariableName(body, "t");
             SgVariableDeclaration* temp_decl = buildVariableDeclaration(name, e->get_type(), NULL, getScope(e));
             body->prepend_statement(temp_decl);
 

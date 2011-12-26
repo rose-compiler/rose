@@ -48,6 +48,7 @@ struct X86InstructionSemantics {
 
     Policy& policy;
     SgAsmInstruction *current_instruction;
+    Word(32) orig_eip; // set at the top of translate()
 
     /* Registers used explicitly by this class. */
     RegisterDescriptor REG_EAX, REG_EBX, REG_ECX, REG_EDX, REG_EDI, REG_EIP, REG_ESI, REG_ESP, REG_EBP;
@@ -55,7 +56,7 @@ struct X86InstructionSemantics {
     RegisterDescriptor REG_EFLAGS, REG_AF, REG_CF, REG_DF, REG_OF, REG_PF, REG_SF, REG_ZF;
 
     X86InstructionSemantics(Policy& policy)
-        : policy(policy), current_instruction(NULL) {
+        : policy(policy), current_instruction(NULL), orig_eip(policy.readRegister<32>(policy.findRegister("eip"))) {
         REG_EAX = policy.findRegister("eax", 32);
         REG_EBX = policy.findRegister("ebx", 32);
         REG_ECX = policy.findRegister("ecx", 32);
@@ -103,7 +104,7 @@ struct X86InstructionSemantics {
         repeat = policy.and_(repeat, policy.invert(policy.equalToZero(new_cx)));
         writeRegister(REG_EIP,
                       policy.ite(policy.and_(cond, repeat),
-                                 number<32>((uint32_t)(insn->get_address())),    /* repeat */
+                                 orig_eip,    /* repeat */
                                  readRegister<32>(REG_EIP)));                    /* exit */
     }
 
@@ -609,7 +610,8 @@ struct X86InstructionSemantics {
         }
 #else
     virtual void translate(SgAsmx86Instruction* insn) try {
-        writeRegister(REG_EIP, number<32>((unsigned int)(insn->get_address() + insn->get_size())));
+        orig_eip = readRegister<32>(REG_EIP);
+        writeRegister(REG_EIP, policy.add(orig_eip, policy.number<32>(insn->get_size())));
         X86InstructionKind kind = insn->get_kind();
         const SgAsmExpressionPtrList& operands = insn->get_operandList()->get_operands();
         switch (kind) {
@@ -2415,7 +2417,7 @@ struct X86InstructionSemantics {
                 if (operands.size()!=0)
                     throw Exception("instruction must have no operands", insn);
                 policy.hlt();
-                writeRegister(REG_EIP, number<32>((uint32_t)(insn->get_address())));
+                writeRegister(REG_EIP, orig_eip);
                 break;
             }
 
