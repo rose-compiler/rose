@@ -489,7 +489,7 @@ namespace SymbolicSemantics {
                 return ValueType<ToLen>(IntegerOps::GenMask<uint64_t,ToLen>::value & a.known_value())
                     .defined_by(cur_insn, &a.defs);
             if (FromLen==ToLen)
-                return ValueType<ToLen>(a.expr).defined_by(cur_insn, &a.defs);
+                return ValueType<ToLen>(a.expr).defined_by(NULL, &a.defs); // no-op, so not defined by current insn
             if (FromLen>ToLen)
                 return ValueType<ToLen>(new InternalNode(ToLen, InsnSemanticsExpr::OP_EXTRACT,
                                                          LeafNode::create_integer(32, 0),
@@ -507,7 +507,7 @@ namespace SymbolicSemantics {
             if (a.is_known())
                 return ValueType<ToLen>(IntegerOps::signExtend<FromLen, ToLen>(a.known_value())).defined_by(cur_insn, &a.defs);
             if (FromLen==ToLen)
-                return ValueType<ToLen>(a.expr).defined_by(cur_insn, &a.defs);
+                return ValueType<ToLen>(a.expr).defined_by(NULL, &a.defs); // no-op, so not defined by current insns
             if (FromLen > ToLen)
                 return ValueType<ToLen>(new InternalNode(ToLen, InsnSemanticsExpr::OP_EXTRACT,
                                                          LeafNode::create_integer(32, 0),
@@ -523,7 +523,7 @@ namespace SymbolicSemantics {
         template <size_t BeginAt, size_t EndAt, size_t Len>
         ValueType<EndAt-BeginAt> extract(const ValueType<Len> &a) const {
             if (0==BeginAt)
-                return unsignedExtend<Len,EndAt-BeginAt>(a).defined_by(cur_insn, &a.defs);
+                return unsignedExtend<Len,EndAt-BeginAt>(a);
             if (a.is_known())
                 return ValueType<EndAt-BeginAt>((a.known_value()>>BeginAt) & IntegerOps::genMask<uint64_t>(EndAt-BeginAt))
                     .defined_by(cur_insn, &a.defs);
@@ -551,9 +551,9 @@ namespace SymbolicSemantics {
                     if ((*mi).clobbered) {
                         (*mi).clobbered = false;
                         (*mi).data = new_cell.data;
-                        return unsignedExtend<32, Len>(new_cell.data).defined_by(NULL, &new_cell.data.defs);
+                        return unsignedExtend<32, Len>(new_cell.data);
                     } else {
-                        return unsignedExtend<32, Len>((*mi).data).defined_by(NULL, &(*mi).data.defs);
+                        return unsignedExtend<32, Len>((*mi).data);
                     }
                 } else if ((*mi).written && new_cell.may_alias(*mi, solver)) {
                     aliased = true;
@@ -568,7 +568,7 @@ namespace SymbolicSemantics {
                         ROSE_ASSERT(!(*mi).clobbered);
                         ROSE_ASSERT(!(*mi).written);
                         state.mem.push_back(*mi);
-                        return unsignedExtend<32, Len>((*mi).data).defined_by(NULL, &(*mi).data.defs);
+                        return unsignedExtend<32, Len>((*mi).data);
                     }
                 }
 
