@@ -244,9 +244,11 @@ struct State {
 };
 
 /** A policy that is supplied to the semantic analysis constructor. */
-template<template <size_t nBits> class ValueType>
+template<
+    template <template <size_t> class ValueType> class State,
+    template <size_t nBits> class ValueType>
 class Policy {
-private:
+protected:
     typedef typename State<ValueType>::Memory Memory;
     
     SgAsmInstruction *cur_insn;         /**< Set by startInstruction(), cleared by finishInstruction() */
@@ -1104,9 +1106,11 @@ State<ValueType>::discard_popped_memory()
  *************************************************************************************************************************/
 
 /* Returns memory that needs to be compared by equal_states() */
-template<template<size_t> class ValueType>
+template<
+    template <template <size_t> class ValueType> class State,
+    template<size_t> class ValueType>
 typename State<ValueType>::Memory
-Policy<ValueType>::memory_for_equality(const State<ValueType> &state) const
+Policy<State, ValueType>::memory_for_equality(const State<ValueType> &state) const
 {
     State<ValueType> tmp_state = state;
     Memory retval;
@@ -1119,9 +1123,11 @@ Policy<ValueType>::memory_for_equality(const State<ValueType> &state) const
     return retval;
 }
 
-template<template<size_t> class ValueType>
+template<
+    template <template <size_t> class ValueType> class State,
+    template<size_t> class ValueType>
 bool
-Policy<ValueType>::equal_states(const State<ValueType> &s1, const State<ValueType> &s2) const
+Policy<State, ValueType>::equal_states(const State<ValueType> &s1, const State<ValueType> &s2) const
 {
 #ifndef CXX_IS_ROSE_ANALYSIS
     if (!s1.equal_registers(s2))
@@ -1140,17 +1146,21 @@ Policy<ValueType>::equal_states(const State<ValueType> &s1, const State<ValueTyp
     return true;
 }
 
-template<template<size_t> class ValueType>
+template<
+    template <template <size_t> class ValueType> class State,
+    template<size_t> class ValueType>
 void
-Policy<ValueType>::print(std::ostream &o, RenameMap *rmap/*=NULL*/) const
+Policy<State, ValueType>::print(std::ostream &o, RenameMap *rmap/*=NULL*/) const
 {
     cur_state.print(o, rmap);
 }
 
-template<template<size_t> class ValueType>
+template<
+    template <template <size_t> class ValueType> class State,
+    template<size_t> class ValueType>
 void
-Policy<ValueType>::print_diff(std::ostream &o, const State<ValueType> &s1,
-                              const State<ValueType> &s2, RenameMap *rmap/*=NULL*/) const
+Policy<State, ValueType>::print_diff(std::ostream &o, const State<ValueType> &s1,
+                                     const State<ValueType> &s2, RenameMap *rmap/*=NULL*/) const
 {
 #ifndef CXX_IS_ROSE_ANALYSIS
     s1.print_diff_registers(o, s2, rmap);
@@ -1180,9 +1190,11 @@ Policy<ValueType>::print_diff(std::ostream &o, const State<ValueType> &s1,
 #endif
 }
 
-template<template<size_t> class ValueType>
+template<
+    template <template <size_t> class ValueType> class State,
+    template<size_t> class ValueType>
 bool
-Policy<ValueType>::on_stack(const ValueType<32> &value) const
+Policy<State, ValueType>::on_stack(const ValueType<32> &value) const
 {
 #ifndef CXX_IS_ROSE_ANALYSIS
     const ValueType<32> sp_inverted = invert(cur_state.gpr[x86_gpr_sp]);
@@ -1201,9 +1213,11 @@ Policy<ValueType>::on_stack(const ValueType<32> &value) const
     return false;
 }
 
-template<template<size_t> class ValueType>
+template<
+    template <template <size_t> class ValueType> class State,
+    template<size_t> class ValueType>
 bool
-Policy<ValueType>::SHA1(unsigned char digest[20]) const
+Policy<State, ValueType>::SHA1(unsigned char digest[20]) const
 {
 #ifdef ROSE_HAVE_GCRYPT_H
     /* libgcrypt requires gcry_check_version() to be called "before any other function in the library", but doesn't include an
@@ -1228,9 +1242,11 @@ Policy<ValueType>::SHA1(unsigned char digest[20]) const
 #endif
 }
 
-template<template<size_t> class ValueType>
+template<
+    template <template <size_t> class ValueType> class State,
+    template<size_t> class ValueType>
 std::string
-Policy<ValueType>::SHA1() const
+Policy<State, ValueType>::SHA1() const
 {
     std::string digest_str;
     unsigned char digest[20];

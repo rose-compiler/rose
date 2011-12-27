@@ -5,7 +5,7 @@
 #include "VirtualMachineSemantics.h"
 
 
-#define RSIM_SEMANTIC_POLICY    VirtualMachineSemantics::Policy<VirtualMachineSemantics::ValueType>
+#define RSIM_SEMANTIC_POLICY    VirtualMachineSemantics::Policy<VirtualMachineSemantics::State, VirtualMachineSemantics::ValueType>
 #define RSIM_SEMANTIC_VTYPE     VirtualMachineSemantics::ValueType
 
 

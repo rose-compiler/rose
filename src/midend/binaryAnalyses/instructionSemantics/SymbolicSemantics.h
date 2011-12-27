@@ -331,9 +331,11 @@ namespace SymbolicSemantics {
     };
 
     /** A policy that is supplied to the semantic analysis constructor. See documentation for the SymbolicSemantics namespace. */
-    template <template <size_t> class ValueType>
+    template <
+        template <template <size_t> class ValueType> class State,
+        template <size_t> class ValueType>
     class Policy {
-    private:
+    protected:
         typedef typename State<ValueType>::Memory Memory;
 
         SgAsmInstruction *cur_insn;         /**< Set by startInstruction(), cleared by finishInstruction() */
