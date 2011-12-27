@@ -22,6 +22,7 @@ public:
   static std::string prologize(std::string);
   static PrologTerm* traverseSingleNode(SgNode*);
 private:
+  PrologTerm* makeFlag(bool, std::string);
   bool typeWasDeclaredBefore(std::string type);
   std::set<std::string> declaredTypes;
   RoseEnums re;

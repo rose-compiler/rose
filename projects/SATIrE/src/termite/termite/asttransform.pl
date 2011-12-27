@@ -357,29 +357,30 @@ unparse1(UI, size_of_op(null, size_of_op_annotation(ClassType,_Type, _), _)) :- 
   write('sizeof('), unparse(UI, ClassType), write(')').
 
 % VALUES
-unparse1(_UI,          char_val(_,value_annotation(Value,_),_)) :- string(Value), !, string_to_list(Value, [N]), write(N).
-unparse1(_UI, unsigned_char_val(_,value_annotation(Value,_),_)) :- string(Value), !, string_to_list(Value, [N]), write(N).
+unparse1(_UI,          char_val(value_annotation(Value,_),_)) :- string(Value), !, string_to_list(Value, [N]), write(N).
+unparse1(_UI, unsigned_char_val(value_annotation(Value,_),_)) :- string(Value), !, string_to_list(Value, [N]), write(N).
 
-unparse1(_UI, char_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
-unparse1(_UI, int_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
-unparse1(_UI, short_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
-unparse1(_UI, short_int_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
-unparse1(_UI, long_int_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
-unparse1(_UI, long_long_int_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
-unparse1(_UI, unsigned_char_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
-unparse1(_UI, unsigned_int_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
-unparse1(_UI, unsigned_short_int_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
-unparse1(_UI, unsigned_short_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
-unparse1(_UI, unsigned_long_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
-unparse1(_UI, unsigned_long_long_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
-unparse1(_UI, unsigned_long_long_int_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
-unparse1(_UI, float_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
-unparse1(_UI, double_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
-unparse1(_UI, string_val(_,value_annotation(Value,_),_,_)) :- !, write('"'), write(Value), write('"').
-unparse1(_UI, bool_val_exp(_, value_annotation(0,_),_,_)) :- !, write('false').
-unparse1(_UI, bool_val_exp(_, value_annotation(1,_),_,_)) :- !, write('true').
-unparse1(_UI, bool_val_exp(_, value_annotation(Value,_),_, _)) :- !, write(Value).
-unparse1(_UI, enum_val(_,value_annotation(_,Value,_,_),_,_)) :- !, write(Value).
+unparse1(_UI, char_val(                  value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse1(_UI, int_val(                   value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse1(_UI, short_val(                 value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse1(_UI, short_int_val(             value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse1(_UI, long_int_val(              value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse1(_UI, long_long_int_val(         value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse1(_UI, unsigned_char_val(         value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse1(_UI, unsigned_int_val(          value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse1(_UI, unsigned_short_int_val(    value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse1(_UI, unsigned_short_val(        value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse1(_UI, unsigned_long_val(         value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse1(_UI, unsigned_long_long_val(    value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse1(_UI, unsigned_long_long_int_val(value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse1(_UI, float_val(                 value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse1(_UI, double_val(                value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse1(_UI, enum_val(                  value_annotation(_,Value,_,_),_,_)) :- !, write(Value).
+unparse1(_UI, bool_val_exp(              value_annotation(0,_),_,_)) :- !, write('false').
+unparse1(_UI, bool_val_exp(              value_annotation(1,_),_,_)) :- !, write('true').
+unparse1(_UI, bool_val_exp(              value_annotation(Value,_),_, _)) :- !, write(Value).
+unparse1(_UI, string_val(                value_annotation(Value,_),_,_)) :- !,
+	write('"'), write(Value), write('"').
 
 % EXPRESSIONS
 unparse1(UI, function_call_exp(function_ref_exp(function_ref_exp_annotation(Name, _Type, _), _, _), ExprList, _, _, _)) :-
@@ -439,7 +440,7 @@ unparse1(UI, dot_exp(pointer_deref_exp(E1, _, _, _), E2, _, _, _)) :- !,
 
 unparse1(UI, pointer_deref_exp(E1, _, _, _)) :- !, 
   write('*'), unparse_par(UI, E1).
-unparse1(UI, cast_exp(E, _, unary_op_annotation(_, Type, _, _, _), _, _)) :- !,
+unparse1(UI, cast_exp(E, unary_op_annotation(_, Type, _, _, _), _, _)) :- !,
   (  ( Type \= array_type(_, _),
        Type \= pointer_type(array_type(_, _)))
   -> (write('('), unparse(UI, Type), write(')'))
@@ -454,6 +455,7 @@ unparse1(UI, dot_exp(E1, E2, _, _, _)) :- !,
 unparse1(UI, arrow_exp(E1, E2, _, _, _)) :- !,
   unparse_par(UI, E1), write('->'), unparse_par(UI, E2).
 unparse1(_UI, null_expression(_, _, _)) :- !, write('/*NULL*/').
+unparse1(_UI, null_statement(_, _, _)) :- !, write(';').
 
 % STATEMENTS       
 unparse1(UI, expression_root(E, _, _, _)) :- !, unparse(UI, E).

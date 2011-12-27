@@ -199,6 +199,7 @@ expression ::=
   | function_call_exp
   | function_ref_exp
   | initializer
+  | new_exp
   | null_expression
   | size_of_op
   | unary_op
@@ -241,6 +242,23 @@ function_call_exp ::=
 
 function_ref_exp ::=
     function_ref_exp(function_ref_exp_annotation, analysis_info, file_info).
+
+new_exp ::=
+    new_exp({null}, constructor_initializer?, {null},
+	    new_exp_annotation, analysis_info, file_info).
+
+new_exp_annotation ::=
+    new_exp_annotation(type, preprocessing_info).
+
+constructor_initializer ::=
+    constructor_initializer(expr_list_exp,
+			    constructor_initializer_annotation,
+			    analysis_info, file_info).
+
+constructor_initializer_annotation ::=
+    constructor_initializer_annotation(name, type,
+				       name, name, name, name,
+				       preprocessing_info).
 
 initializer ::=
     aggregate_initializer

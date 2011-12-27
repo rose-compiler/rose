@@ -12,6 +12,7 @@ Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
 #include <string>
 #include <assert.h>
 #include <boost/regex.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <typeinfo>
 
 /* some single-word type names */
@@ -180,6 +181,13 @@ void expect_term(PrologTerm* n, TermType **r,
   expect_term(base, &spec, name, arity);
 
 
+/** reverse of makeFlag */
+bool TermToRose::getFlag(PrologTerm *t) {
+  EXPECT_TERM(PrologAtom*, atom, t);
+  if (boost::starts_with(atom->getName(), "no_"))
+    return false;
+  else return true;
+}
 
 /**
  * Unparse to a file
@@ -389,14 +397,14 @@ TermToRose::unaryToRose(PrologCompTerm* t,std::string tname) {
   Sg_File_Info* fi = createFileInfo(t->at(t->getArity()-1));
   testFileInfo(fi);
 
-  /*get child node (prefix traversal step)*/
-  SgNode* child1 = toRose(t->at(0));
-
   if (tname == "class_declaration") {
     /* class declarations must be handled before their bodies because they
      * can be recursive */
     s = createClassDeclaration(fi,NULL,t);
   }
+
+  /*get child node (prefix traversal step)*/
+  SgNode* child1 = toRose(t->at(0));
 
   /* depending on the node type: create it*/
   if(tname == "class_declaration") {
@@ -516,18 +524,18 @@ TermToRose::binaryToRose(PrologCompTerm* t,std::string tname) {
 SgNode*
 TermToRose::ternaryToRose(PrologCompTerm* t,std::string tname) {
   debug("unparsing ternary");
-  /* assert correct arity of term*/
+  // assert correct arity of term
   ARITY_ASSERT(t, 6);
-  /*get child nodes (prefix traversal step)*/
-  SgNode* child1 = toRose(t->at(0));
-  SgNode* child2 = toRose(t->at(1));
-  SgNode* child3 = toRose(t->at(2));
-  /*create file info and check it*/
+
+  // node to be created 
+  SgNode* s = NULL;
+
+  // create file info and check it
   Sg_File_Info* fi = createFileInfo(t->at(t->getArity()-1));
   testFileInfo(fi);
 
-  /* node to be created */
-  SgNode* s = NULL;
+  // get child nodes (prefix traversal step)
+  SgNode* child1 = toRose(t->at(0));
 
   if (tname == "function_declaration") {
     /* function declarations are special: we create an incomplete
@@ -535,6 +543,10 @@ TermToRose::ternaryToRose(PrologCompTerm* t,std::string tname) {
      * recursive functions */
     s = createFunctionDeclaration(fi,child1,t);
   }
+
+  // remaining children (traversals)
+  SgNode* child2 = toRose(t->at(1));
+  SgNode* child3 = toRose(t->at(2));
 
   /* create nodes depending on type*/
   if (tname == "if_stmt") {
@@ -576,20 +588,32 @@ TermToRose::quaternaryToRose(PrologCompTerm* t,std::string tname) {
   debug("unparsing quaternary");
   /* assert correct arity of term*/
   ARITY_ASSERT(t, 7);
-  /*get child nodes (prefix traversal step)*/
-  SgNode* child1 = toRose(t->at(0));
-  SgNode* child2 = toRose(t->at(1));
-  SgNode* child3 = toRose(t->at(2));
-  SgNode* child4 = toRose(t->at(3));
   /*create file info and check it*/
   Sg_File_Info* fi = createFileInfo(t->at(t->getArity()-1));
   testFileInfo(fi);
   /* node to be created*/
   SgNode* s = NULL;
+
+  /*get child nodes (prefix traversal step)*/
+  SgNode* child1 = toRose(t->at(0));
+  // child2 comes below:
+  SgNode* child3 = toRose(t->at(2));
+  SgNode* child4 = toRose(t->at(3));
+
+  if (tname == "function_declaration") {
+    /* function declarations are special: we create an incomplete
+     * declaration before traversing the body; this is necessary for
+     * recursive functions */
+    s = createMemberFunctionDeclaration(fi,child1,NULL,child3,t);
+  }
+  SgNode* child2 = toRose(t->at(1));
+
   if(tname == "for_statement") {
     s = createForStatement(fi,child1,child2,child3,child4,t);
   } else if (tname == "member_function_declaration") {
-    s = createMemberFunctionDeclaration(fi,child1,child2,child3,t);
+    /* function declaration: created above, needs a fixup here */
+    /* child2 is the decorator now */
+    s = setFunctionDeclarationBody(isSgFunctionDeclaration(s),child3);
   } else cerr<<"**WARNING: unhandled Quarternary Node: "<<tname<<endl;
   /*set s to be the parent of its child nodes*/
   if (s != NULL) {
@@ -623,7 +647,7 @@ TermToRose::listToRose(PrologCompTerm* t,std::string tname) {
   /* recursively, create ROSE-IR for list-members*/
   deque<PrologTerm*>* succterms = l->getSuccs();
 
-  /* lookeahead hack for variable declarations: the annotation term must be
+  /* lookahead hack for variable declarations: the annotation term must be
    * traversed first because it may contain a type declaration */
   SgDeclarationStatement *varDeclBaseTypeDecl = NULL;
   if (tname == "variable_declaration") {
@@ -1798,6 +1822,7 @@ TermToRose::createFunctionDeclaration(Sg_File_Info* fi, SgNode* par_list_u, Prol
   /* get functioon name*/
   EXPECT_TERM(PrologAtom*, func_name_term, annot->at(1));
   SgName func_name = func_name_term->getName();
+  cerr<<"func decl: "<<func_name<<endl;
   /* create declaration*/
   SgFunctionDeclaration* func_decl =
     new SgFunctionDeclaration(fi,func_name,func_type,/*func_def=*/NULL);
@@ -2868,7 +2893,6 @@ TermToRose::createTypedefDeclaration(Sg_File_Info* fi, PrologCompTerm* t) {
   PrologCompTerm* ct = isPrologCompTerm(t->at(0));
   if(ct != NULL) {
     debug("...with declaration");
-
     string id;
     if (ct->getName() == "class_declaration") {
       ARITY_ASSERT(ct, 4);
@@ -3667,12 +3691,20 @@ TermToRose::createConstructorInitializer(Sg_File_Info* fi, SgNode* child1,Prolog
   /* get class name*/
   string s = *toStringP(annot->at(0));
   /* create a class for unparsing the name*/
-  SgMemberFunctionDeclaration* decl = createDummyMemberFunctionDeclaration(s,0);
-  TERM_ASSERT(t, decl != NULL);
+  SgMemberFunctionDeclaration* decl = NULL;//createDummyMemberFunctionDeclaration(s,0);
+  //TERM_ASSERT(t, decl != NULL);
+  /* get expression type */
+  SgType* expr_type = createType(annot->at(1));
+  TERM_ASSERT(t, expr_type != NULL);
   /* cast the SgExprListExp*/
   SgExprListExp* el = isSgExprListExp(child1);
   /* create constructor initializer, need_name = true*/
-  SgConstructorInitializer* ci = new SgConstructorInitializer(fi,decl,el,NULL,true,false,false,false);
+  SgConstructorInitializer* ci = new SgConstructorInitializer
+    (fi,decl,el,expr_type,
+     getFlag(annot->at(2)),
+     getFlag(annot->at(3)),
+     getFlag(annot->at(4)),
+     getFlag(annot->at(5)));
   TERM_ASSERT(t, ci != NULL);
   ci->set_is_explicit_cast(1);
   return ci;

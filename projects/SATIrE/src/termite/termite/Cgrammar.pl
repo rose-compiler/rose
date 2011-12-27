@@ -89,29 +89,29 @@ op(UI, [_|C0], C, not_op(E, _, _, _))            --> ['!'], rexpr(UI, C0, C, E).
 op(UI, [_|C0], C, bit_complement_op(E, _, _, _)) --> ['~'], rexpr(UI, C0, C, E).
 
 % VALUES
-%rexpr(_UI, [_|C], C,          char_val(_,value_annotation(Value,_),_)) --> string_to_list(Value, [N]), [N], { string(Value) }.
-%rexpr(_UI, [_|C], C, unsigned_char_val(_,value_annotation(Value,_),_)) --> string_to_list(Value, [N]), [N], { string(Value) }.
+%rexpr(_UI, [_|C], C,          char_val(value_annotation(Value,_),_)) --> string_to_list(Value, [N]), [N], { string(Value) }.
+%rexpr(_UI, [_|C], C, unsigned_char_val(value_annotation(Value,_),_)) --> string_to_list(Value, [N]), [N], { string(Value) }.
 
-rexpr(_UI, [_|C], C, enum_val(_,value_annotation(_,Value,_),_,_)) --> [Value], { number(Value) }.
-rexpr(_UI, [_|C], C, char_val(_,value_annotation(Value,_),_,_)) --> [Value], { number(Value) }.
-rexpr(_UI, [_|C], C, int_val(_,value_annotation(Value,_),_,_)) --> [Value], { number(Value) }.
-rexpr(_UI, [_|C], C, short_val(_,value_annotation(Value,_),_,_)) --> [Value], { number(Value) }.
-rexpr(_UI, [_|C], C, short_int_val(_,value_annotation(Value,_),_,_)) --> [Value], { number(Value) }.
-rexpr(_UI, [_|C], C, long_int_val(_,value_annotation(Value,_),_,_)) --> [Value], { number(Value) }.
-rexpr(_UI, [_|C], C, long_long_int_val(_,value_annotation(Value,_),_,_)) --> [Value], { number(Value) }.
-rexpr(_UI, [_|C], C, unsigned_char_val(_,value_annotation(Value,_),_,_)) --> [Value], { number(Value) }.
-rexpr(_UI, [_|C], C, unsigned_int_val(_,value_annotation(Value,_),_,_)) --> [Value], { number(Value) }.
-rexpr(_UI, [_|C], C, unsigned_short_int_val(_,value_annotation(Value,_),_,_)) --> [Value], { number(Value) }.
-rexpr(_UI, [_|C], C, unsigned_short_val(_,value_annotation(Value,_),_,_)) --> [Value], { number(Value) }.
-rexpr(_UI, [_|C], C, unsigned_long_val(_,value_annotation(Value,_),_,_)) --> [Value], { number(Value) }.
-rexpr(_UI, [_|C], C, unsigned_long_long_val(_,value_annotation(Value,_),_,_)) --> [Value], { number(Value) }.
-rexpr(_UI, [_|C], C, unsigned_long_long_int_val(_,value_annotation(Value,_),_,_)) --> [Value], { number(Value) }.
-rexpr(_UI, [_|C], C, float_val(_,value_annotation(Value,_),_,_)) --> [Value], { number(Value) }.
-rexpr(_UI, [_|C], C, double_val(_,value_annotation(Value,_),_,_)) --> [Value], { number(Value) }.
-rexpr(_UI, [_,_,_|C], C, string_val(_,value_annotation(Value,_),_,_)) --> ['"', Value, '"'], { string(Value) }.
-rexpr(_UI, [_|C], C, bool_val_exp(_, value_annotation(0,_),_,_)) --> ['false'].
-rexpr(_UI, [_|C], C, bool_val_exp(_, value_annotation(1,_),_,_)) --> ['true'].
-rexpr(_UI, [_|C], C, bool_val_exp(_, value_annotation(Value,_),_, _)) --> [Value], { number(Value) }.
+rexpr(_UI, [_|C], C, enum_val(value_annotation(_,Value,_),_,_)) --> [Value], { number(Value) }.
+rexpr(_UI, [_|C], C, char_val(value_annotation(Value,_),_,_)) --> [Value], { number(Value) }.
+rexpr(_UI, [_|C], C, int_val(value_annotation(Value,_),_,_)) --> [Value], { number(Value) }.
+rexpr(_UI, [_|C], C, short_val(value_annotation(Value,_),_,_)) --> [Value], { number(Value) }.
+rexpr(_UI, [_|C], C, short_int_val(value_annotation(Value,_),_,_)) --> [Value], { number(Value) }.
+rexpr(_UI, [_|C], C, long_int_val(value_annotation(Value,_),_,_)) --> [Value], { number(Value) }.
+rexpr(_UI, [_|C], C, long_long_int_val(value_annotation(Value,_),_,_)) --> [Value], { number(Value) }.
+rexpr(_UI, [_|C], C, unsigned_char_val(value_annotation(Value,_),_,_)) --> [Value], { number(Value) }.
+rexpr(_UI, [_|C], C, unsigned_int_val(value_annotation(Value,_),_,_)) --> [Value], { number(Value) }.
+rexpr(_UI, [_|C], C, unsigned_short_int_val(value_annotation(Value,_),_,_)) --> [Value], { number(Value) }.
+rexpr(_UI, [_|C], C, unsigned_short_val(value_annotation(Value,_),_,_)) --> [Value], { number(Value) }.
+rexpr(_UI, [_|C], C, unsigned_long_val(value_annotation(Value,_),_,_)) --> [Value], { number(Value) }.
+rexpr(_UI, [_|C], C, unsigned_long_long_val(value_annotation(Value,_),_,_)) --> [Value], { number(Value) }.
+rexpr(_UI, [_|C], C, unsigned_long_long_int_val(value_annotation(Value,_),_,_)) --> [Value], { number(Value) }.
+rexpr(_UI, [_|C], C, float_val(value_annotation(Value,_),_,_)) --> [Value], { number(Value) }.
+rexpr(_UI, [_|C], C, double_val(value_annotation(Value,_),_,_)) --> [Value], { number(Value) }.
+rexpr(_UI, [_,_,_|C], C, string_val(value_annotation(Value,_),_,_)) --> ['"', Value, '"'], { string(Value) }.
+rexpr(_UI, [_|C], C, bool_val_exp(value_annotation(0,_),_,_)) --> ['false'].
+rexpr(_UI, [_|C], C, bool_val_exp(value_annotation(1,_),_,_)) --> ['true'].
+rexpr(_UI, [_|C], C, bool_val_exp(value_annotation(Value,_),_, _)) --> [Value], { number(Value) }.
 rexpr(UI, C0, C, E) --> expr(UI, C0, C, E).
 
 % VARIABLES
