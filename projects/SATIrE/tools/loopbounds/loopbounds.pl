@@ -1,4 +1,4 @@
-#!/usr/bin/pl -q  -O -L0 -G0 -T0 -t main -s 
+#!/usr/bin/pl -q  -O -L0 -G0 -T0 -t main -s
 % -*- prolog -*-
 
 %-----------------------------------------------------------------------
@@ -26,11 +26,11 @@ References
 
     http://costa.tuwien.ac.at/papers/wlpe08.pdf
 
-@author 
+@author
 
 Copyright (C) 2007-2010, Adrian Prantl <adrian@complang.tuwien.ac.at>
 
-@license 
+@license
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -88,8 +88,8 @@ user:message_hook(_Term, error, _Lines) :-
 %
 merge_info(Info, Var-Interval, Merged) :-
   put_assoc(Var, Info, Interval, Merged).
-merge_info(Info1, Info2, Merged) :- 
-  assoc_to_list(Info2, List), 
+merge_info(Info1, Info2, Merged) :-
+  assoc_to_list(Info2, List),
   foldl(List, merge_info, Info1, Merged).
 
 interval_of(AI-_, Var, Interval) :-
@@ -137,7 +137,7 @@ reduce(Info, subtract_op(Expr1, Expr2, _, _, _), I) :-
 
 % Interval Arithmetic
 reduce(_, add_op((Min1..Max1), (Min2..Max2), _, _, _),
-          (   Min3..Max3)) :-
+	  (   Min3..Max3)) :-
   Min3 is Min1 + Min2,
   Max3 is Max1 + Max2.
 
@@ -182,7 +182,7 @@ simplification_fixpoint(E, E).
 % recurse simplification
 simplify(E, Et) :-
   simplification_fixpoint(E, Ewk),
-  isBinNode(Ewk, F, E1, E2, A, Ai, Fi), 
+  isBinNode(Ewk, F, E1, E2, A, Ai, Fi),
   simplify(E1, E1t),
   simplify(E2, E2t),
   isBinNode(Ewk2, F, E1t, E2t, A, Ai, Fi),
@@ -233,12 +233,12 @@ simplification(arrow_exp(_,(_.._),binary_op_annotation(Type,_), _, _), I):-
 
 % Type Casting
 simplification(assign_op(E1,
-         cast_exp(E2, unary_op_annotation(_, Type, _, _, _), _, _),
+	 cast_exp(E2, unary_op_annotation(_, Type, _, _, _), _, _),
 			 binary_op_annotation(Type, _), _, _),
 	       assign_op(E1, E2, _, _, _)).
 
 simplification(cast_exp(var_ref_exp(var_ref_exp_annotation(Type1,Name,T,S,PPI),A,_),
-		        unary_op_annotation(_, Type2, _, _), _, _),
+			unary_op_annotation(_, Type2, _, _), _, _),
 	       var_ref_exp(var_ref_exp_annotation(Type1,Name,T,S,PPI),A,_)) :-
   type_info(Type1, Signed1, Size1),
   type_info(Type2, Signed2, Size2),
@@ -246,8 +246,8 @@ simplification(cast_exp(var_ref_exp(var_ref_exp_annotation(Type1,Name,T,S,PPI),A
   ( Signed1 = Signed2
   ; (Signed1 = unsigned,
      Signed2 = signed)).
-  
-simplification(CastExp, and_op(E1, Mask, _, _, _)) :- 
+
+simplification(CastExp, and_op(E1, Mask, _, _, _)) :-
   CastExp = cast_exp(E1, unary_op_annotation(_, Type, _, _, _), _, _),
   type_info(Type, _, Size),
   M is (2**Size) -1,
@@ -283,7 +283,7 @@ simplification(subtract_op(E1, add_op(E2, E3, _, _, _), _, _, _),
 
 % (i1+v)-i2 = v+i'
 simplification(subtract_op(add_op(E1, E2, _, _, _), E3, _, _, _),
-	       add_op(E4, E2, _, _, _)) :- 
+	       add_op(E4, E2, _, _, _)) :-
   isIntVal(E1, X), isIntVal(E3, Y), Z is X-Y, isIntVal(E4, Z).
 
 % Some associativity of '+'
@@ -297,7 +297,7 @@ simplification(subtract_op(add_op(E1, E2, _, _, _), E3, _, _, _),
 %  isVar(E3,_).
 
 simplification(add_op(add_op(E1, E2, _, _, _), E3, _, _, _),
-               add_op(R, E2, _, _, _)) :-
+	       add_op(R, E2, _, _, _)) :-
   % Hints on when to apply this rule
   isIntVal(E1,I1), isIntVal(E3,I2), I is I1+I2, isIntVal(R, I).
 
@@ -333,11 +333,11 @@ is_real_for_loop(for_statement(ForInit,
   -> (
       term_interval(AnalysisInfo, B1v, B1),
 
-      isForTestOp(ForTest, TestOp), 
+      isForTestOp(ForTest, TestOp),
       isBinOpRhs(TestOp, B2v),
       term_interval(AnalysisInfo, B2v, B2))
   ; ( % ForInit is empty
-     isEmptyForInit(ForInit), 
+     isEmptyForInit(ForInit),
      isForTestOp(ForTest, TestOp),
      isBinOpLhs(TestOp, I1),
      var_stripped(I1, IterationVar),
@@ -349,7 +349,7 @@ is_real_for_loop(for_statement(ForInit,
      ),
      isBinOpRhs(TestOp, B2v),
      term_interval(AnalysisInfo, B2v, B2)
-  )), 
+  )),
     %unparse(B1v), write('->'), unparse(B1), nl,
     %writeln(B2v),
     %unparse(B2v), write('->'), unparse(B2), nl,
@@ -360,9 +360,9 @@ is_real_for_loop(for_statement(ForInit,
   ( isStepsize(SimpleForStep, I3, Step)
   ; isUnsignedVarStep(Info, SimpleForStep, I3, Step) ),
   var_stripped(I3, IterationVar),
-  
+
   !,
-  
+
   ((Step < 0) ->
     (MinX = B2l, MaxX = B1h, MinV = B2v, MaxV = B1v)
   ; (MinX = B1l, MaxX = B2h, MinV = B1v, MaxV = B2v)
@@ -371,14 +371,14 @@ is_real_for_loop(for_statement(ForInit,
   ( ( % Symbolic
       ground(MinV),
       ground(MaxV),
-      Min = MinV, 
+      Min = MinV,
       Max = MaxV)
   ; ( % Evaluated
       reduce(Info, B1, (B1l..B1h)),
       reduce(Info, B2, (B2l..B2h)),
-      isIntVal(Min, MinX), 
+      isIntVal(Min, MinX),
       isIntVal(Max, MaxX))
-  ), 
+  ),
 
   guarantee(Body, is_transp(IterationVar, local)),
   write('% **WARNING: Assuming that '), unparse(IterationVar),
@@ -386,11 +386,11 @@ is_real_for_loop(for_statement(ForInit,
   %write('is transp: '), writeln(I),
 
 
-find_iv_interval(Info, InfoInner, PostCondition, I, Base, End) :- 
+find_iv_interval(Info, InfoInner, PostCondition, I, Base, End) :-
   % Find out the interval of IV
   reduce(Info, Base, StartR),
   reduce(Info, End, StopR),
-  
+
   %unparse(for_statement(ForInit,ForTest,ForStep, [], _, _, _)), nl,
   StartR = (StartMin.._),          % write('StartR='), writeln(StartR),
   StopR = (StopMin..StopMax),      %  write('StopR='), writeln(StopR),
@@ -432,13 +432,13 @@ get_loopbound(Fs, Bound, I, Info, InfoInner, PostCondition) :-
   ->  Low is floor((IV_low + 1 /*LE*/) / abs(Increment))
   ;   Low = 0  ), % Early exits or multiple exit conditions not handled yet
   High is ceil((IV_high + 1 /*LE*/) / abs(Increment)),
-  Bound=Low..High, 
+  Bound=Low..High,
 
   !,
   (   High #> 65536
   ->  format('% ** Ignoring overly large loop bound ~w.~n', [Bound]), fail
   ;   true),
-  
+
   write(' --> '), write('Bound= '), writeln(Bound),
 
   % Try to find the Induction Variable interval;
@@ -460,8 +460,8 @@ get_loopbound(ShiftLoop, Bound, _, Info, Info, Info) :-
   ShiftLoop = for_statement(_,
 			    expr_statement(not_equal_op(Var1, End, _, _, _), _, _, _),
 			    rshift_assign_op(Var2, Amount, _, _, _),
-			    Body, _, _, _), 
-  guarantee(Body, is_transp(Var, local)), 
+			    Body, _, _, _),
+  guarantee(Body, is_transp(Var, local)),
   isIntVal(End, 0),
   isIntVal(Amount, AmountVal),
   var_stripped(Var1, Var),
@@ -502,7 +502,7 @@ replace_loopbody(for_statement(Init, Test, Incr,
 % Annotate the easy loop bounds
 
 %% loop_bounds(+Info, -InfoInner, -InfoPost, +Fs, -Fs_Annot).
-loop_bounds(Info, InfoInner, InfoPost, Fs, Fs_Annot) :- 
+loop_bounds(Info, InfoInner, InfoPost, Fs, Fs_Annot) :-
   get_loopbound(Fs, Bound, /*InductionVar*/_, Info, InfoIn, _InfoPo),
   A = wcet_loopbound(Bound), write('% '), pragma_text(Annot, A), writeln(A),
 
@@ -543,7 +543,7 @@ expr_constr(add_op(E1, E2, _, _, _), Map, Expr) :-
 expr_constr(subtract_op(E1, E2, _, _, _), Map, Expr) :-
   expr_constr(E1, Map, Expr1),
   expr_constr(E2, Map, Expr2),
-  Expr #= Expr1 - Expr2.    
+  Expr #= Expr1 - Expr2.
 
 expr_constr(and_op(E1, E2, _, _, _), Map, Expr) :-
   expr_constr(E1, Map, Expr1),
@@ -579,7 +579,7 @@ expr_constr(Term, AR-_Map, Expr) :-
   Max < 2**24,
   Expr #=< Max.
 
-expr_constr(Term, AR-Map, Expr) :- 
+expr_constr(Term, AR-Map, Expr) :-
   simplification(Term, SimpleTerm),
   expr_constr(SimpleTerm, AR-Map, Expr).
 
@@ -588,7 +588,7 @@ expr_constr(Term, AR-Map, Expr) :-
 step_constr(comma_op_exp(Step1, Step2, _, _, _), Map, Dir) :-
   step_constr(Step1, Map, Dir),
   step_constr(Step2, Map, Dir).
-  
+
 step_constr(ForStep, Map, Dir) :-
   isStepsize(ForStep, InductionVar, Step),
   (  Step > 0
@@ -623,7 +623,7 @@ test_constr(expr_statement(E1, _, _, _), Map) :-
 test_constr(and_op(E1, E2, _, _, _), Map) :-
   test_constr(E1, Map),
   test_constr(E2, Map).
-  
+
 test_constr(ForTest, Map) :-
   isForTestLE(ForTest, less_or_equal_op(InductionVar, Than, _, _, _)),
   lookup(InductionVar, Map, IV),
@@ -677,7 +677,7 @@ loop_constraints(Fs, Fs_Annot, RootMarker, Map) :-
   ;  Aibody = Aibody0),
 
   %replace_loopbody(Fs, [], FsPrint),
-  %unparse(FsPrint), writeln('...'), 
+  %unparse(FsPrint), writeln('...'),
 
   !,
   %gtrace,
@@ -696,9 +696,9 @@ loop_constraints(Fs, Fs_Annot, RootMarker, Map) :-
   findall(C, labeling([upto_in(C)], Vars), Cs),
   sum(Cs, #=, IterationCount),
   %writeln(Ns),
-  
+
   get_bb_marker(Stmts, ThisMarker),
-  
+
   % Add constraint
   pragma_text(Annot, wcet_constraint(ThisMarker=<RootMarker*IterationCount)),
   append(Stmts,[Annot],Stmts1), !,
@@ -721,7 +721,7 @@ constraints(I, I, I, Fs, /*Scope,*/ Fs_Annot) :-
   % We need to guarantee that Fs is an induction-variable-
   % based loop, and that the induction variable I is transp().
   %term_stripped(Fsc, Fs),
-  is_fortran_multicond_for_loop(Fs, _, _, _, _, _), 
+  is_fortran_multicond_for_loop(Fs, _, _, _, _, _),
   Fs = for_statement(_,_,_, basic_block(Stmts, _, _, _), _, _, _),
 
   % We employ our own "interpretation traversal", so don't traverse this
@@ -776,7 +776,7 @@ marker_fixup(Info, InfoInner, InfoPost,
 		     basic_block(Stmts, An, Ai, Fi), _Marker),
   !.
 
-marker_fixup(Info, InfoInner, InfoPost, Node, Node) :- 
+marker_fixup(Info, InfoInner, InfoPost, Node, Node) :-
   update_marker_info(Info, InfoInner, InfoPost, Node, _Marker).
 
 %-----------------------------------------------------------------------
@@ -793,14 +793,14 @@ annot(Input, Output) :-
   % WHILE -> FOR conversion
   writeln('% while() to for() conversion...'),
   transformed_with(X1, while_to_for, [], _, X2), !,
-  
+
   % Loop Bounds
   writeln('% Loop Bounds...'),
   empty_assoc(Info),
   transformed_with(X2, loop_bounds, Info, _, X3), !,
 
   % Constraints
-  writeln('% Constraints...'), 
+  writeln('% Constraints...'),
   transformed_with(X3, constraints, [], _, X4), !,
 
   % Pragma Terms->Atoms

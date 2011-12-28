@@ -235,7 +235,7 @@ do_check(Node, F) :-
 %-----------------------------------------------------------------------
 
 %% strip_file_info(_,_,_,+Term1,-Term2)
-% Repace file_info(...) with null in all VarRefExps. This facilitates
+% Replace file_info(...) with null in all VarRefExps. This facilitates
 % the comparison of AST nodes.
 %
 % Use this with transformed_with/4

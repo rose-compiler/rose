@@ -233,6 +233,7 @@ $(LTX2HTM):
 	mkdir -p ltx2htm-inst/bin ltx2htm-inst/lib
 	cd ltx2htm-build && sh configure --prefix=$(realpath $(builddir))/ltx2htm-inst
 	make -C ltx2htm-build all install
+	rm -f $(realpath $(builddir))/ltx2htm-inst/lib/latex2html/pl.pl
 
 else # -----------------------------------------------------------------
 
