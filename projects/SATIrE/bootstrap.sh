@@ -2,7 +2,8 @@
 
 JOBS=-j8 # 8 parallel compiler jobs
 CCARGS="CXX=g++ CC=gcc"
-PREFIX="`pwd`/_inst"
+PREFIX="`pwd`/install"
+BUILDDIR=build
 
 ENABLE_CLANG="0"
 DISABLE_SATIRE="0"
@@ -45,7 +46,7 @@ if [ "$DISABLE_SATIRE" == "0" ] ; then
     if [ "$DISABLE_CHECKS" ==  "1" ]; then
         (libtoolize && \
             autoreconf -i && \
-            mkdir -p _build && cd _build && \
+            mkdir -p $BUILDDIR && cd $BUILDDIR && \
             ../configure --prefix=$PREFIX --with-rosedir=/usr/local/mstools/rose --with-pagdir=/usr/local/mstools/pag --with-boostdir=/usr/local/mstools/boost --with-boost-compiler-string= PKG_CONFIG_PATH=/usr/local/mstools/lib/pkgconfig:$PKG_CONFIG_PATH CXXFLAGS="-O2 -ggdb -Wno-deprecated" $CCARGS && \
             make $JOBS && \
             make install) \
@@ -53,7 +54,7 @@ if [ "$DISABLE_SATIRE" == "0" ] ; then
     else
         (libtoolize && \
             autoreconf -i && \
-            mkdir -p _build && cd _build && \
+            mkdir -p $BUILDDIR && cd $BUILDDIR && \
             ../configure --prefix=$PREFIX --with-rosedir=/usr/local/mstools/rose --with-pagdir=/usr/local/mstools/pag --with-boostdir=/usr/local/mstools/boost --with-boost-compiler-string= PKG_CONFIG_PATH=/usr/local/mstools/lib/pkgconfig:$PKG_CONFIG_PATH CXXFLAGS="-O2 -ggdb -Wno-deprecated" $CCARGS && \
             make $JOBS && \
             make $JOBS distcheck && \
