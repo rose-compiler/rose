@@ -328,7 +328,7 @@ is_real_for_loop(for_statement(ForInit,
 		 Body, IterationVar,
 		 (Min..Max),
 		 Step) :-
-  write('% '), unparse(for_statement(ForInit,ForTest,ForStep,[], _, _, _)), nl,   gtrace,
+%  write('% '), unparse(for_statement(ForInit,ForTest,ForStep,[], _, _, _)), nl,   gtrace,
   (isSimpleForInit(ForInit, IterationVar, B1v)
   -> (
       term_interval(AnalysisInfo, B1v, B1),
@@ -570,7 +570,6 @@ expr_constr(IntVal, _Map, Expr) :-
   Expr #= Val.
 
 expr_constr(Var, Map, Expr) :-
-gtrace,
   lookup(Var, Map, Expr1),
   Expr #= Expr1.
 
@@ -685,7 +684,7 @@ loop_constraints(Fs, Fs_Annot, RootMarker, Map) :-
   %trace,
   step_constr(ForStep, Aibody/*FIXME!!! body*/-Map1, Dir),
   init_constr(ForInit, Aipre-Map1, Dir),
-  gtrace,test_constr(ForTest, Aibody/*FIXME!!! body*/-Map1),
+  test_constr(ForTest, Aibody/*FIXME!!! body*/-Map1),
 
   % additional init constraints
   maplist(init_constr2(Map1, Aipre), InductionVars),
