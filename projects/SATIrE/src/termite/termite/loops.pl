@@ -177,7 +177,8 @@ isForTestLE(LtOp, LeOp) :-
   LtOp = less_than_op(Var, Val, A, Ai, Fi),
   isVar(Var, _),
   isIntVal(One, 1),
-  LeOp = less_or_equal_op(Var, subtract_op(Val, One, _, _, _), A, Ai, Fi).
+  default_values(_PPI, An1, Ai1, Fi1),
+  LeOp = less_or_equal_op(Var, subtract_op(Val, One, An1, Ai1, Fi1), A, Ai, Fi).
 
 %% isForTestGE(+TestOp, -GeOp) is semidet.
 % Any > test will be converted into a >=
@@ -191,7 +192,8 @@ isForTestGE(GtOp, GeOp) :-
   GtOp = greater_than_op(Var, Val, A, Ai, Fi),
   isVar(Var, _),
   isIntVal(One, 1),
-  GeOp = greater_or_equal_op(Var, add_op(Val, One, _), A, Ai, Fi).
+  default_values(_PPI, An1, Ai1, Fi1),
+  GeOp = greater_or_equal_op(Var, add_op(Val, One, An1, Ai1, Fi1), A, Ai, Fi).
 
 %% isForTestNE(+NeOp, -NeOp) is semidet.
 isForTestNE(NeOp, NeOp) :- NeOp = not_equal_op(_, _, _, _, _).
