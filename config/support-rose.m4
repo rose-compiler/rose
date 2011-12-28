@@ -161,6 +161,7 @@ else
 fi
 
   ROSE_SUPPORT_UPC
+  ROSE_SUPPORT_COMPASS2
 
 ##
 #########################################################################################
@@ -2141,6 +2142,7 @@ projects/symbolicAnalysisFramework/src/Makefile
 projects/symbolicAnalysisFramework/tests/Makefile
 projects/symbolicAnalysisFramework/include/Makefile
 projects/taintcheck/Makefile
+projects/RTC/Makefile
 projects/PowerAwareCompiler/Makefile
 projects/ManyCoreRuntime/Makefile
 projects/ManyCoreRuntime/docs/Makefile
@@ -2322,6 +2324,25 @@ demo/Makefile
 demo/qrose/Makefile
 binaries/Makefile
 binaries/samples/Makefile
+])
+
+dnl
+dnl Compass2
+dnl
+AC_CONFIG_FILES([
+projects/compass2/Makefile
+projects/compass2/docs/Makefile
+projects/compass2/docs/asciidoc/Makefile
+projects/compass2/docs/doxygen/doxygen.config
+projects/compass2/docs/doxygen/Makefile
+projects/compass2/tests/Makefile
+projects/compass2/tests/checkers/Makefile
+projects/compass2/tests/checkers/function_pointer/Makefile
+projects/compass2/tests/checkers/function_pointer/compass_parameters.xml
+projects/compass2/tests/checkers/keyword_macro/Makefile
+projects/compass2/tests/checkers/keyword_macro/compass_parameters.xml
+projects/compass2/tests/core/Makefile
+projects/compass2/tests/core/compass_parameters.xml
 ])
 
 # DQ (10/27/2010): New Fortran tests (from gfortan test suite).
