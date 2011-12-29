@@ -4,9 +4,7 @@ ACLOCAL_AMFLAGS = -I m4
 
 SUBDIRS= src tools examples
 
-#MS: deactivated inclusion of docs temporarily (fails for termite docs)
-#DIST_SUBDIRS = src tools examples docs
-DIST_SUBDIRS = src tools examples
+DIST_SUBDIRS = src tools examples docs
 
 DISTCHECK_CONFIGURE_FLAGS=--with-rosedir=$(ROSEDIR) --with-boostdir=$(BOOSTDIR) --with-boost-compiler-string=$(BOOST_COMPILER_STRING) CXX=$(CXX)
 
@@ -25,12 +23,11 @@ endif
 docs:
 	$(MAKE) -C docs docs
 
-#MS: deactivated installation of docs temporarily (fails for termite docs)
-#install-data-local:
-#	$(MAKE) install
+install-data-local:
+	$(MAKE) -C docs install
 
-#uninstall-local:
-#	$(MAKE) -C docs uninstall
+uninstall-local:
+	$(MAKE) -C docs uninstall
 
 clang: $(top_srcdir)/src/termite/clang/clang-termite.patch $(top_builddir)/clang/build/Makefile
 	$(MAKE) -C $(top_builddir)/clang/build

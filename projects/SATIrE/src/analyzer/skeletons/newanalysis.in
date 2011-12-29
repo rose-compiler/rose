@@ -173,7 +173,7 @@ then
     echo "$ANALYSIS_DIR/$ANALYSIS_NAME.optla exists and remains in $ANALYSIS_DIR."
     echo "customizing Makefile..."
     echo "ANALYSIS = $ANALYSIS_NAME" > $ANALYSIS_DIR/Makefile
-    CARRIER_TYPE=`egrep 'carrier[ ]*:' $ANALYSIS_DIR/$ANALYSIS_NAME.optla | awk --field-separator ':' '{ print $2 }' | sed 's/ //g'`
+    CARRIER_TYPE=`egrep 'carrier[ ]*:' $ANALYSIS_DIR/$ANALYSIS_NAME.optla | awk -F ':' '{ print $2 }' | sed 's/ //g'`
     echo "CARRIER_TYPE = $CARRIER_TYPE" >> $ANALYSIS_DIR/Makefile
     echo "PREFIX = $PREFIX" >> $ANALYSIS_DIR/Makefile
     if [ x$PREFIX != x ]
