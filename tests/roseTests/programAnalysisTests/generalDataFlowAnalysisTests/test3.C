@@ -1,4 +1,4 @@
-// Dataflow live veriables test code.
+// Dataflow live variables test code.
 // Test code to demonstrate assertion that test in for statement is a valid expression.
 void foo()
    {
