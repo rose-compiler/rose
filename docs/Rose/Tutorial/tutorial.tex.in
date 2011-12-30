@@ -291,16 +291,19 @@ transformations and optimizations.}
 \input{commandlineProcessing}
 \input{codeGenerationFormatControl}
 
+\input{astConstruction.tex}
 %---- begin chapter for AST construction
 % DQ (6/24/2008): Need to combine these into a
 % single file if it is to be a single chapter.
-\input{addVariableDeclaration}
-\input{addExpression}
-\input {addAssignmentStmt}
-\input{addFunctionDeclaration}
-\input{instrumentationExample}
-\input{globalVariableHandling}
+%\input{addVariableDeclaration}
+%\input{addExpression}
+%\input {addAssignmentStmt}
+%\input{addFunctionDeclaration}
+%\input{instrumentationExample}
+%\input{globalVariableHandling}
 %-------end of chapter for AST construction
+
+\input{parserBuildingBlocks}
 
 \input{addingComments}  % handling preprocessing information
 \input{partialRedundancyElimination}
