@@ -102,8 +102,14 @@ test2004_31.C \
 test2004_32.C \
 test2004_33.C \
 test2004_34.C \
+test2004_37.C \
+test2004_38.C \
+test2004_40.C \
 test2004_42.C \
+test2004_43.C \
 test2004_44.C \
+test2004_45.C \
+test2004_47.C \
 test2004_49.C \
 test2004_50.C \
 test2004_51.C \
@@ -112,15 +118,22 @@ test2004_53.C \
 test2004_54.C \
 test2004_55.C \
 test2004_56.C \
+test2004_58.C \
 test2004_59.C \
 test2004_60.C \
 test2004_61.C \
 test2004_62.C \
 test2004_65.C \
+test2004_70.C \
 test2004_71.C \
 test2004_72.C \
 test2004_73.C \
 test2004_74.C \
+test2004_75.C \
+test2004_76.C \
+test2004_80.C \
+test2004_83.C \
+test2004_86.C \
 test2004_87.C \
 test2004_90.C \
 test2004_93.C \
@@ -136,6 +149,7 @@ test2011_152.C \
 test2011_153.C \
 test2011_154.C \
 test2011_155.C \
+test2011_156.C \
 test2011_157.C \
 test2011_158.C \
 test2011_159.C \
@@ -169,13 +183,16 @@ test2011_187.C \
 test2011_188.C \
 test2011_189.C \
 test2011_190.C \
+test2011_191.C \
 test2011_192.C \
 test2011_193.C \
-test2011_194.C 
+test2011_194.C \
+test2011_195.C 
 
-# DQ (12/28/2011): These fail in the weaving of the preprocessor control directives back into the AST, and will be debugged seperately (likely just incorrect file info data).
-# test2011_191.C
-# test2011_195.C
+# $(TESTCODE_CURRENTLY_FAILING)
+
+# DQ (12/29/2011): This passes but I had to handle a template constant parameter incorrectly in the AST to get past a problem in EDG (or my lack of understanding of an aspect of EDG).
+# test2011_191.C 
 
 else
 include $(srcdir)/Makefile-pass.inc
@@ -189,38 +206,24 @@ if ROSE_USE_EDG_VERSION_4_3
 TESTCODE_CURRENTLY_FAILING = \
 test2004_35.C \
 test2004_36.C \
-test2004_37.C \
-test2004_38.C \
 test2004_39.C \
-test2004_40.C \
-test2004_43.C \
-test2004_45.C \
-test2004_47.C \
 test2004_48.C \
-test2004_58.C \
 test2004_63.C \
 test2004_64.C \
 test2004_67.C \
 test2004_68.C \
 test2004_69.C \
-test2004_70.C \
-test2004_75.C \
-test2004_76.C \
 test2004_77.C \
 test2004_78.C \
 test2004_79.C \
-test2004_80.C \
 test2004_81.C \
-test2004_83.C \
 test2004_84.C \
 test2004_85.C \
-test2004_86.C \
 test2004_88.C \
 test2004_89.C \
 test2004_91.C \
 test2004_98.C \
-test2004_100.C \
-test2011_156.C 
+test2004_100.C 
 
 else
 include $(srcdir)/Makefile-fail.inc
