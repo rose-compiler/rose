@@ -62,7 +62,7 @@ bool UnstructuredPassIntraAnalysis::runAnalysis(const Function& func, NodeState*
 void UnstructuredPassInterAnalysis::runAnalysis()
 {
         set<FunctionState*> allFuncs = FunctionState::getAllDefinedFuncs();
-        
+        // Go through functions one by one, call an intra-procedural analysis on each of them
         // iterate over all functions with bodies
         for(set<FunctionState*>::iterator it=allFuncs.begin(); it!=allFuncs.end(); it++)
         {
