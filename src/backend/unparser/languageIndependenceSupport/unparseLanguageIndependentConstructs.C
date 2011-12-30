@@ -3886,7 +3886,8 @@ UnparseLanguageIndependentConstructs::getAssociativity(SgExpression* expr) {
 }
 
 bool
-UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, SgUnparse_Info& info) {
+UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, SgUnparse_Info& info) 
+   {
      ROSE_ASSERT(expr != NULL);
 
      if (isSgSubscriptExpression(expr) != NULL || isSgDotExp(expr) || isSgCAFCoExpression(expr) || isSgPntrArrRefExp(expr) )
@@ -4026,7 +4027,7 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
                     return true;
                   }
 
-               int exprVariant = GetOperatorVariant(expr);
+            // int exprVariant = GetOperatorVariant(expr);
                PrecedenceSpecifier exprPrecedence = getPrecedence(expr);
 
 #if DEBUG_PARENTHESIS_PLACEMENT
@@ -4077,4 +4078,6 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
      printf ("     base of function return true \n");
 #endif
      return true;
-}
+   }
+
+

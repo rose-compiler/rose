@@ -1012,7 +1012,8 @@ SgTemplateInstantiationDecl::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) c
   // Also call the base class version of the fixupCopycopy() member function
      SgClassDeclaration::fixupCopy_scopes(copy,help);
 
-     FixupCopyDataMemberMacro(templateClassDeclaration_copy,SgTemplateDeclaration,get_templateDeclaration,set_templateDeclaration)
+  // FixupCopyDataMemberMacro(templateClassDeclaration_copy,SgTemplateDeclaration,get_templateDeclaration,set_templateDeclaration)
+     FixupCopyDataMemberMacro(templateClassDeclaration_copy,SgTemplateClassDeclaration,get_templateDeclaration,set_templateDeclaration)
 
 #if 0
   // DQ (11/6/2007): I have returned to sharing SgTemplateArgument objects, fix this up later.
@@ -1046,7 +1047,8 @@ SgTemplateInstantiationMemberFunctionDecl::fixupCopy_scopes(SgNode* copy, SgCopy
   // Also call the base class version of the fixupCopycopy() member function
      SgMemberFunctionDeclaration::fixupCopy_scopes(copy,help);
 
-     FixupCopyDataMemberMacro(templateMemberFunctionDeclaration_copy,SgTemplateDeclaration,get_templateDeclaration,set_templateDeclaration)
+  // FixupCopyDataMemberMacro(templateMemberFunctionDeclaration_copy,SgTemplateDeclaration,get_templateDeclaration,set_templateDeclaration)
+     FixupCopyDataMemberMacro(templateMemberFunctionDeclaration_copy,SgTemplateMemberFunctionDeclaration,get_templateDeclaration,set_templateDeclaration)
 
 #if 0
      printf ("this = %p this->get_templateDeclaration() = %p \n",this,this->get_templateDeclaration());
@@ -1087,7 +1089,8 @@ SgTemplateInstantiationFunctionDecl::fixupCopy_scopes(SgNode* copy, SgCopyHelp &
   // Also call the base class version of the fixupCopycopy() member function
      SgFunctionDeclaration::fixupCopy_scopes(copy,help);
 
-     FixupCopyDataMemberMacro(templateFunctionDeclaration_copy,SgTemplateDeclaration,get_templateDeclaration,set_templateDeclaration)
+  // FixupCopyDataMemberMacro(templateFunctionDeclaration_copy,SgTemplateDeclaration,get_templateDeclaration,set_templateDeclaration)
+     FixupCopyDataMemberMacro(templateFunctionDeclaration_copy,SgTemplateFunctionDeclaration,get_templateDeclaration,set_templateDeclaration)
 
 #if 0
   // DQ (11/6/2007): I have returned to sharing SgTemplateArgument objects, fix this up later.

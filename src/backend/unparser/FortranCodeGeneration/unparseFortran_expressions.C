@@ -246,7 +246,7 @@ FortranCodeGeneration_locatedNode::unparseLabelRefExp(SgExpression* expr, SgUnpa
           if (isSgReturnStmt(tmp_statement) != NULL)
              {
             // This is a return statement, but we have to check if it is associated with a function that has SgTypeLabel parameters.
-               bool functionHasAlternativeArgumentParameters = true;
+            // bool functionHasAlternativeArgumentParameters = true;
 
                size_t alternativeReturnValue = 0;
 

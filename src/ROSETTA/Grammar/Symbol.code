@@ -333,7 +333,7 @@ SOURCE_NON_X_SYMBOL_END
 
 SOURCE_LONG_GET_NAME_START
 SgName 
-SgVariableSymbol::get_name() const
+$CLASSNAME::get_name() const
    {
 #if 0
    // (original note from Sage II) this is less efficient but it does avoid a bug in Sun C++
@@ -357,7 +357,7 @@ SgVariableSymbol::get_name() const
 #if 1
 // DQ (2/6/2007): This returns the basis for the SgVariableSymbol (an SgInitializedName object)
 SgNode*
-SgVariableSymbol::get_symbol_basis() const
+$CLASSNAME::get_symbol_basis() const
    {
      return get_declaration();
    }

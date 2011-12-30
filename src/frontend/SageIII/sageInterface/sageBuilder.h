@@ -541,7 +541,15 @@ SgFunctionRefExp * buildFunctionRefExp(const SgFunctionDeclaration* func_decl);
 
 //! Build SgFunctionRefExp based on a function's symbol.
 SgFunctionRefExp * buildFunctionRefExp(SgFunctionSymbol* sym);
+
 SgFunctionRefExp * buildFunctionRefExp_nfi(SgFunctionSymbol* sym);
+
+// DQ (12/15/2011): Adding template declaration support to the AST.
+SgTemplateFunctionRefExp* buildTemplateFunctionRefExp_nfi(SgTemplateFunctionSymbol* sym);
+
+// DQ (12/29/2011): Adding template declaration support to the AST.
+SgTemplateMemberFunctionRefExp* buildTemplateMemberFunctionRefExp_nfi(SgTemplateMemberFunctionSymbol* sym, bool virtual_call, bool need_qualifier);
+
 SgMemberFunctionRefExp * buildMemberFunctionRefExp_nfi(SgMemberFunctionSymbol* sym, bool virtual_call, bool need_qualifier);
 SgMemberFunctionRefExp * buildMemberFunctionRefExp(SgMemberFunctionSymbol* sym, bool virtual_call, bool need_qualifier);
 SgClassNameRefExp * buildClassNameRefExp_nfi(SgClassSymbol* sym);
@@ -652,7 +660,9 @@ SgVariableDeclaration*
 buildVariableDeclaration_nfi(const SgName & name, SgType *type, SgInitializer *varInit, SgScopeStatement* scope);
 
 // DQ (12/6/2011): Adding support for template declarations into the AST.
-SgTemplateDeclaration*
+// SgTemplateDeclaration*
+// SgVariableDeclaration* buildTemplateVariableDeclaration_nfi(const SgName & name, SgType *type, SgInitializer *varInit, SgScopeStatement* scope);
+SgTemplateVariableDeclaration*
 buildTemplateVariableDeclaration_nfi(const SgName & name, SgType *type, SgInitializer *varInit, SgScopeStatement* scope);
 
 //!Build a typedef declaration, such as: typedef int myint; 

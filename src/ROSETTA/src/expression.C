@@ -21,12 +21,19 @@ Grammar::setUpExpressions ()
   // Fortran loop constructs etc.).
      NEW_TERMINAL_MACRO (LabelRefExp,            "LabelRefExp",            "LABEL_REF" );
 
-     NEW_TERMINAL_MACRO (ClassNameRefExp,        "ClassNameRefExp",        "CLASSNAME_REF" );
-     NEW_TERMINAL_MACRO (FunctionRefExp,         "FunctionRefExp",         "FUNCTION_REF" );
-     NEW_TERMINAL_MACRO (MemberFunctionRefExp,   "MemberFunctionRefExp",   "MEMBER_FUNCTION_REF" );
-     NEW_TERMINAL_MACRO (FunctionCallExp,        "FunctionCallExp",        "FUNC_CALL" );
-     NEW_TERMINAL_MACRO (SizeOfOp,               "SizeOfOp",               "SIZEOF_OP" );
-     NEW_TERMINAL_MACRO (JavaInstanceOfOp,       "JavaInstanceOfOp",       "JAVA_INSTANCEOF_OP" );
+     NEW_TERMINAL_MACRO (ClassNameRefExp,              "ClassNameRefExp",              "CLASSNAME_REF" );
+     NEW_TERMINAL_MACRO (FunctionRefExp,               "FunctionRefExp",               "FUNCTION_REF" );
+     NEW_TERMINAL_MACRO (MemberFunctionRefExp,         "MemberFunctionRefExp",         "MEMBER_FUNCTION_REF" );
+
+  // DQ (12/15/2011): Added support for templates into AST.  It might make sense at some point to have
+  // function ref expressions have a hierarchy rather than a flat representation as it is now (similar 
+  // to SgFunctionDeclaration's hierarchy).
+     NEW_TERMINAL_MACRO (TemplateFunctionRefExp,       "TemplateFunctionRefExp",       "TEMPLATE_FUNCTION_REF" );
+     NEW_TERMINAL_MACRO (TemplateMemberFunctionRefExp, "TemplateMemberFunctionRefExp", "TEMPLATE_MEMBER_FUNCTION_REF" );
+
+     NEW_TERMINAL_MACRO (FunctionCallExp,              "FunctionCallExp",              "FUNC_CALL" );
+     NEW_TERMINAL_MACRO (SizeOfOp,                     "SizeOfOp",                     "SIZEOF_OP" );
+     NEW_TERMINAL_MACRO (JavaInstanceOfOp,             "JavaInstanceOfOp",             "JAVA_INSTANCEOF_OP" );
 
 #if USE_UPC_IR_NODES
   // DQ and Liao (6/10/2008): Added new IR nodes specific to UPC.
@@ -294,8 +301,8 @@ Grammar::setUpExpressions ()
           UnknownArrayOrFunctionReference               | PseudoDestructorRefExp | CAFCoExpression  |
           CudaKernelCallExp   | CudaKernelExecConfig    |  /* TV (04/22/2010): CUDA support */
           LambdaRefExp        | DictionaryExp           | KeyDatumPair             |
-          Comprehension       | ListComprehension       | SetComprehension    | DictionaryComprehension | NaryOp |
-          StringConversion    | YieldExpression,
+          Comprehension       | ListComprehension       | SetComprehension         | DictionaryComprehension | NaryOp |
+          StringConversion    | YieldExpression         | TemplateFunctionRefExp   | TemplateMemberFunctionRefExp,
           "Expression","ExpressionTag", false);
 
   // ***********************************************************************
@@ -1063,6 +1070,76 @@ Grammar::setUpExpressions ()
   // DQ (5/12/2011): Added information required for new name qualification support.
      MemberFunctionRefExp.setDataPrototype("bool","global_qualification_required","= false",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // *****************************************************************************
+  // DQ (12/15/2011) Added template declaration support and so we need support for 
+  // calling template functions and template member functions as expressions.
+  // NOTE: These have a similar interface to the SgFunctionRefExp and 
+  // SgTemplateMemberFunctionRefExp.
+  // *****************************************************************************
+
+     TemplateFunctionRefExp.setFunctionPrototype ( "HEADER_TEMPLATE_FUNCTION_REF_EXPRESSION", "../Grammar/Expression.code" );
+  // TemplateFunctionRefExp.setDataPrototype ( "SgTemplateSymbol*", "symbol_i", "= NULL",
+  //                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TemplateFunctionRefExp.setDataPrototype ( "SgTemplateFunctionSymbol*", "symbol_i", "= NULL",
+                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (1/14/2006): The function type should be computed from the function declaration (instead of being stored)
+  // Leave the type in the constructor for storage internally and build a special version of get_type() to access 
+  // this value or later compute it directly.
+  // FunctionRefExp.setDataPrototype ( "SgFunctionType*"  , "function_type", "= NULL",
+  //        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+  // TemplateFunctionRefExp.setDataPrototype ( "SgFunctionType*"  , "function_type", "= NULL",
+  //        CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/12/2011): Added support for name qualification.
+     TemplateFunctionRefExp.setDataPrototype ( "int", "name_qualification_length", "= 0",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/12/2011): Added information required for new name qualification support.
+     TemplateFunctionRefExp.setDataPrototype("bool","type_elaboration_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/12/2011): Added information required for new name qualification support.
+     TemplateFunctionRefExp.setDataPrototype("bool","global_qualification_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     TemplateMemberFunctionRefExp.setFunctionPrototype ( "HEADER_TEMPLATE_MEMBER_FUNCTION_REF_EXPRESSION", "../Grammar/Expression.code" );
+  // TemplateMemberFunctionRefExp.setDataPrototype ( "SgTemplateSymbol*", "symbol_i", "= NULL",
+  //        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TemplateMemberFunctionRefExp.setDataPrototype ( "SgTemplateMemberFunctionSymbol*", "symbol_i", "= NULL",
+            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TemplateMemberFunctionRefExp.setDataPrototype ( "int", "virtual_call", "= 0",
+            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (1/14/2006): The function type should be computed from the function declaration (instead of being stored)
+  // Leave the type in the constructor for storage internally and build a special version of get_type() to access 
+  // this value or later compute it directly.
+  // MemberFunctionRefExp.setDataPrototype ( "SgFunctionType*", "function_type", "= NULL",
+  //        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+  // TemplateMemberFunctionRefExp.setDataPrototype ( "SgFunctionType*", "function_type", "= NULL",
+  //        CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+
+  // DQ (4/13/2004): Changed false to true in default setting (and removed resetting of value in 
+  //                 post_constructor_initialization(), as suggested by Qing).
+     TemplateMemberFunctionRefExp.setDataPrototype ( "int", "need_qualifier", "= true",
+                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/12/2011): Added support for name qualification.
+     TemplateMemberFunctionRefExp.setDataPrototype ( "int", "name_qualification_length", "= 0",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/12/2011): Added information required for new name qualification support.
+     TemplateMemberFunctionRefExp.setDataPrototype("bool","type_elaboration_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/12/2011): Added information required for new name qualification support.
+     TemplateMemberFunctionRefExp.setDataPrototype("bool","global_qualification_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // *****************************************************************************
+
+
 
      ValueExp.setFunctionPrototype ( "HEADER_VALUE_EXPRESSION", "../Grammar/Expression.code" );
 
@@ -2007,8 +2084,13 @@ Grammar::setUpExpressions ()
      VarRefExp.setFunctionSource ( "SOURCE_VARIABLE_REFERENCE_EXPRESSION","../Grammar/Expression.code" );
      LabelRefExp.setFunctionSource ( "SOURCE_LABEL_REFERENCE_EXPRESSION","../Grammar/Expression.code" );
      ClassNameRefExp.setFunctionSource ( "SOURCE_CLASS_NAME_REFERENCE_EXPRESSION","../Grammar/Expression.code" );
+
      FunctionRefExp.setFunctionSource ( "SOURCE_FUNCTION_REFERENCE_EXPRESSION","../Grammar/Expression.code" );
      MemberFunctionRefExp.setFunctionSource ( "SOURCE_MEMBER_FUNCTION_REFERENCE_EXPRESSION","../Grammar/Expression.code" );
+
+     TemplateFunctionRefExp.setFunctionSource ( "SOURCE_TEMPLATE_FUNCTION_REFERENCE_EXPRESSION","../Grammar/Expression.code" );
+     TemplateMemberFunctionRefExp.setFunctionSource ( "SOURCE_TEMPLATE_MEMBER_FUNCTION_REFERENCE_EXPRESSION","../Grammar/Expression.code" );
+
      ValueExp.setFunctionSource ( "SOURCE_VALUE_EXPRESSION","../Grammar/Expression.code" );
      BoolValExp.setFunctionSource ( "SOURCE_BOOLEAN_VALUE_EXPRESSION","../Grammar/Expression.code" );
      StringVal.setFunctionSource ( "SOURCE_STRING_VALUE_EXPRESSION","../Grammar/Expression.code" );
@@ -2210,8 +2292,13 @@ Grammar::setUpExpressions ()
      ExprListExp.setFunctionSource            ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
      VarRefExp.setFunctionSource              ( "SOURCE_GET_TYPE_FROM_SYMBOL","../Grammar/Expression.code" );
      LabelRefExp.setFunctionSource            ( "SOURCE_GET_TYPE_FROM_SYMBOL","../Grammar/Expression.code" );
+
      FunctionRefExp.setFunctionSource         ( "SOURCE_GET_TYPE_FROM_SYMBOL","../Grammar/Expression.code" );
      MemberFunctionRefExp.setFunctionSource   ( "SOURCE_GET_TYPE_FROM_SYMBOL","../Grammar/Expression.code" );
+
+  // DQ (12/15/2011): Adding template declaration support to the AST.
+     TemplateFunctionRefExp.setFunctionSource         ( "SOURCE_GET_TYPE_FROM_SYMBOL","../Grammar/Expression.code" );
+     TemplateMemberFunctionRefExp.setFunctionSource   ( "SOURCE_GET_TYPE_FROM_SYMBOL","../Grammar/Expression.code" );
 
      BoolValExp.setFunctionSource             ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
      ShortVal.setFunctionSource               ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );

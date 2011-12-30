@@ -1298,6 +1298,8 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                             break;
                           }
 
+                 // DQ (12/29/2011): Adding support for template class declarations.
+                    case V_SgTemplateClassDeclaration:
 
                     case V_SgClassDeclaration:
                           {
@@ -1336,6 +1338,9 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                             previousLocatedNodeMap[currentFileNameId] = typedefDeclaration;
                             break;
                           }
+
+                 // DQ (12/29/2011): Adding support for template variable declarations.
+                    case V_SgTemplateVariableDeclaration:
 
                  // GB (09/19/2007): Added support for preprocessing info inside variable declarations (e.g. after the
                  // base type, which is what the previousLocNodePtr might point to).
@@ -1443,6 +1448,10 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                             previousLocatedNodeMap[currentFileNameId] = locatedNode;
                           }
 
+                 // DQ (12/29/2011): Adding support for template function and member function declarations.
+                    case V_SgTemplateFunctionDeclaration:
+                    case V_SgTemplateMemberFunctionDeclaration:
+
                     // DQ (4/21/2005): this can be the last statement and if it is we have to 
                     // record it as such so that directives/comments can be attached after it.
                     case V_SgTemplateInstantiationDirectiveStatement:
@@ -1460,12 +1469,12 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                           }
 
                     default:
-                          {
-#if 0
-                            printf ("Skipping any possability of attaching a comment/directive after a %s \n",n->sage_class_name());
-                         // ROSE_ASSERT(false);
+                       {
+#if 1
+                         printf ("Skipping any possability of attaching a comment/directive after a %s \n",n->sage_class_name());
+                      // ROSE_ASSERT(false);
 #endif
-                          }
+                       }
                   }
              } // if compiler generated or match current file
 

@@ -165,8 +165,17 @@ test2011_183.C \
 test2011_184.C \
 test2011_185.C \
 test2011_186.C \
-test2011_187.C 
+test2011_187.C \
+test2011_188.C \
+test2011_189.C \
+test2011_190.C \
+test2011_192.C \
+test2011_193.C \
+test2011_194.C 
 
+# DQ (12/28/2011): These fail in the weaving of the preprocessor control directives back into the AST, and will be debugged seperately (likely just incorrect file info data).
+# test2011_191.C
+# test2011_195.C
 
 else
 include $(srcdir)/Makefile-pass.inc

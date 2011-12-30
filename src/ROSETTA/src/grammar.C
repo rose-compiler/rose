@@ -3208,7 +3208,10 @@ Grammar::GrammarNodeInfo Grammar::getGrammarNodeInfo(Terminal* grammarnode) {
  // Liao I made more exceptions for some OpenMP specific nodes for now
  // The traversal generator has already been changed accordingly.
  //    std::cout << "both single and container members in node " << nodeName << std::endl;
-    ROSE_ASSERT(nodeName == "SgVariableDeclaration"
+    ROSE_ASSERT(
+          nodeName == "SgVariableDeclaration"
+     // DQ (12/21/2011): Added exception for SgTemplateVariableDeclaration derived from SgVariableDeclaration.
+        ||nodeName == "SgTemplateVariableDeclaration"
         ||nodeName == "SgOmpClauseBodyStatement"
         ||nodeName == "SgOmpParallelStatement"
         ||nodeName == "SgOmpSectionsStatement"
@@ -3421,7 +3424,8 @@ Grammar::buildTreeTraversalFunctions(Terminal& node, StringUtility::FileWithLine
                   {
                     outputFile << successorContainerName << ".push_back(compute_baseTypeDefiningDeclaration());\n";
                   }
-               else if (nodeName == "SgVariableDeclaration" && memberVariableName == "baseTypeDefiningDeclaration")
+            // else if (nodeName == "SgVariableDeclaration" && memberVariableName == "baseTypeDefiningDeclaration")
+               else if ((nodeName == "SgVariableDeclaration" || nodeName == "SgTemplateVariableDeclaration") && memberVariableName == "baseTypeDefiningDeclaration")
                   {
                     outputFile << successorContainerName << ".push_back(compute_baseTypeDefiningDeclaration());\n";
                   }
@@ -3489,7 +3493,8 @@ Grammar::buildTreeTraversalFunctions(Terminal& node, StringUtility::FileWithLine
                string typeString = gs->getTypeNameString();
             // Exceptional case first: SgVariableDeclaration, which has a fixed member (that we compute using a special
             // function) followed by a container.
-               if (string(node.getName()) == "SgVariableDeclaration")
+            // if (string(node.getName()) == "SgVariableDeclaration")
+               if (string(node.getName()) == "SgVariableDeclaration" || string(node.getName()) == "SgTemplateVariableDeclaration")
                   {
                     outputFile << "if (idx == 0) return compute_baseTypeDefiningDeclaration();\n"
                                << "else return p_variables[idx-1];\n";
@@ -3585,7 +3590,8 @@ Grammar::buildTreeTraversalFunctions(Terminal& node, StringUtility::FileWithLine
                string typeString = gs->getTypeNameString();
             // Exceptional case first: SgVariableDeclaration, which has a fixed member (that we compute using a special
             // function) followed by a container.
-               if (string(node.getName()) == "SgVariableDeclaration")
+            // if (string(node.getName()) == "SgVariableDeclaration")
+               if (string(node.getName()) == "SgVariableDeclaration" || string(node.getName()) == "SgTemplateVariableDeclaration")
                   {
                     outputFile << "if (child == compute_baseTypeDefiningDeclaration()) return 0;\n"
                                << "else {\n"

@@ -287,8 +287,13 @@ HEADER_SCOPE_STATEMENT_START
           SgTemplateSymbol*  lookup_template_symbol   (const SgName& n) const;
 
        // DQ (12/12/2011): Added support for template declarations in the AST.
-          SgTemplateSymbol*  lookup_class_template_symbol    (const SgName& n) const;
-          SgTemplateSymbol*  lookup_template_function_symbol (const SgName& n, const SgType* t) const;
+          SgTemplateClassSymbol* lookup_template_class_symbol    (const SgName& n) const;
+          SgClassSymbol*         lookup_nontemplate_class_symbol (const SgName& n) const;
+
+       // DQ (12/27/2011): Added support for template declarations in the AST.
+          SgTemplateFunctionSymbol*       lookup_template_function_symbol (const SgName& n, const SgType* t) const;
+          SgFunctionSymbol*               lookup_nontemplate_function_symbol (const SgName& n, const SgType* t) const;
+          SgTemplateMemberFunctionSymbol* lookup_template_member_function_symbol (const SgName& n, const SgType* t) const;
 
        //! get the first symbol independent of name (lack of name is stored as internal state)
           SgSymbol*          first_any_symbol        () const;
@@ -718,6 +723,10 @@ HEADER_DECLARATION_STATEMENT_START
        // DQ (5/29/2011): Added to support for new qualified name generation
       //! This function generates the qualified name prefix to be used with the named declaration (only applied to restricted set of declarations where name qualification can be used).
           SgName get_qualified_name_prefix() const;
+
+       // DQ (12/23/2011): This is part of work to reorganize the templates in the AST (and a recent redesign of this work, because the first approach could not be supported in more complex code examples).
+      //! This function returns the template name (taken from the template declaration for the class, function, member function, or variable template declaration).
+          SgName get_template_name() const;
 
 HEADER_DECLARATION_STATEMENT_END
 
@@ -1397,7 +1406,7 @@ HEADER_VARIABLE_DECLARATION_STATEMENT_START
           void setStatic() ROSE_DEPRECATED_FUNCTION;
           SgVariableDefinition *get_definition( SgInitializedName* ditem = 0 );
           SgInitializedName *get_decl_item(const SgName&);
- //         SgInitializedName *get_defn_item(const SgName&);
+       // SgInitializedName *get_defn_item(const SgName&);
 
        // I think this should be "unsigned long" instead of SgUnsignedLongVal (but I'm not certain!)
           SgUnsignedLongVal *get_bitfield();
@@ -1572,7 +1581,9 @@ HEADER_VARIABLE_DECLARATION_STATEMENT_START
           void unsetVolatileAttribute();
 #endif
 
-     private:
+  // DQ (12/21/2011): Modified to support SgTemplateVariableDeclaration to use this function.
+  // private:
+     protected:
        // GB (09/25/2007): Added this function as part of the traversal island fix.
           SgDeclarationStatement *compute_baseTypeDefiningDeclaration() const;
 
@@ -2557,6 +2568,16 @@ HEADER_TEMPLATE_MEMBER_FUNCTION_INSTANTIATION_DECLARATION_STATEMENT_END
 
 
 HEADER_TEMPLATE_VARIABLE_DECLARATION_STATEMENT_START
+
+       // DQ (12/28/2011): We need a constructor similar to the base class.
+          $CLASSNAME ( const SgName& var_name, SgType *type, SgInitializer *initializer );
+
+#ifndef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
+     private:
+       // DQ (12/29/2011): This is added to support backward compatability.
+          SgDeclarationStatement *compute_baseTypeDefiningDeclaration() const;
+#endif
+
 HEADER_TEMPLATE_VARIABLE_DECLARATION_STATEMENT_END
 
 
@@ -4249,19 +4270,41 @@ SgScopeStatement::lookup_template_symbol(const SgName& n) const
      return p_symbol_table->find_template(n);
    }
 
-       // DQ (12/12/2011): Added support for template declarations in the AST.
-SgTemplateSymbol*
-SgScopeStatement::lookup_class_template_symbol    (const SgName& n) const
+// DQ (12/12/2011): Added support for template declarations in the AST.
+SgTemplateClassSymbol*
+SgScopeStatement::lookup_template_class_symbol    (const SgName& n) const
    {
      assert (p_symbol_table != NULL);
      return p_symbol_table->find_template_class(n);
    }
 
-SgTemplateSymbol*
+// DQ (12/12/2011): Added support for template declarations in the AST.
+SgClassSymbol*
+SgScopeStatement::lookup_nontemplate_class_symbol    (const SgName& n) const
+   {
+     assert (p_symbol_table != NULL);
+     return p_symbol_table->find_nontemplate_class(n);
+   }
+
+SgTemplateFunctionSymbol*
 SgScopeStatement::lookup_template_function_symbol (const SgName& n, const SgType* t) const
    {
      assert (p_symbol_table != NULL);
      return p_symbol_table->find_template_function(n,t);
+   }
+
+SgFunctionSymbol*
+SgScopeStatement::lookup_nontemplate_function_symbol (const SgName& n, const SgType* t) const
+   {
+     assert (p_symbol_table != NULL);
+     return p_symbol_table->find_nontemplate_function(n,t);
+   }
+
+SgTemplateMemberFunctionSymbol*
+SgScopeStatement::lookup_template_member_function_symbol (const SgName& n, const SgType* t) const
+   {
+     assert (p_symbol_table != NULL);
+     return p_symbol_table->find_template_member_function(n,t);
    }
 
 // DQ (9/7/2006): Previously removed functionality, restored by request from Beata at ANL.
@@ -7596,6 +7639,54 @@ SgDeclarationStatement::hasAssociatedSymbol() const
    }
 
 
+SgName
+SgDeclarationStatement::get_template_name() const
+   {
+  // DQ (12/22/2011): This is an ugly aspect of supporting template declarations as derived from that which they are associated.
+  // (e.g. SgTemplateClassDeclaration derived from a SgClassDeclaration).
+
+  // But at least it is not islolated to a single function.
+
+     SgName templateDeclarationName;
+  // switch (templateDeclaration->variantT())
+     switch (this->variantT())
+        {
+          case V_SgTemplateClassDeclaration:
+             {
+               templateDeclarationName = isSgTemplateClassDeclaration(this)->get_name();
+               break;
+             }
+
+          case V_SgTemplateFunctionDeclaration:
+             {
+               templateDeclarationName = isSgTemplateFunctionDeclaration(this)->get_name();
+               break;
+             }
+
+          case V_SgTemplateMemberFunctionDeclaration:
+             {
+               templateDeclarationName = isSgTemplateMemberFunctionDeclaration(this)->get_name();
+               break;
+             }
+
+          case V_SgTemplateVariableDeclaration:
+             {
+               const SgTemplateVariableDeclaration* templateVariableDeclaration = isSgTemplateVariableDeclaration(this);
+               ROSE_ASSERT(templateVariableDeclaration->get_variables().empty() == false);
+               SgInitializedName* initializedName = templateVariableDeclaration->get_variables()[0];
+               templateDeclarationName = initializedName->get_name();
+               break;
+             }
+
+          default:
+             {
+               printf ("Error: default reached templateDeclaration = %p = %s (not a template declaration for class, function, member function, or variable) \n",this,this->class_name().c_str());
+               ROSE_ASSERT(false);
+             }
+        }
+
+     return templateDeclarationName;
+   }
 
 SOURCE_DECLARATION_STATEMENT_END
 
@@ -8490,19 +8581,25 @@ SgFunctionDeclaration::isTemplateFunction() const
 
        // Error checking 
           ROSE_ASSERT(templateFunction->get_templateDeclaration() != NULL);
-          ROSE_ASSERT(templateFunction->get_templateDeclaration()->get_template_kind() == SgTemplateDeclaration::e_template_function /* 3 */);
+
+       // DQ (12/23/2011): With the new design we no long have this data member.
+       // ROSE_ASSERT(templateFunction->get_templateDeclaration()->get_template_kind() == SgTemplateDeclaration::e_template_function /* 3 */);
         }
        else
         {
           const SgTemplateInstantiationMemberFunctionDecl *templateMemberFunction = isSgTemplateInstantiationMemberFunctionDecl(this);
           if (templateMemberFunction != NULL)
              {
+#if 0
+            // DQ (12/23/2011): With the new design we no long use a SgTemplateDeclaration as the return value for get_templateDeclaration().
+
             // This is a template member function but we need to know if it is a member 
             // function of a template class or a template function in a non template class.
                SgTemplateDeclaration *templateDeclaration = templateMemberFunction->get_templateDeclaration();
                ROSE_ASSERT(templateDeclaration != NULL);
 
             // printf ("type of template declaration = %d \n",templateDeclaration->get_template_kind());
+#endif
 #if 0
                SgTemplateParameterPtrList *templateParameterList = templateDeclaration->get_templateParameters();
                if (templateParameterList == NULL)
@@ -8529,6 +8626,8 @@ SgFunctionDeclaration::isTemplateFunction() const
 
                  // Error checking
                     ROSE_ASSERT(templateMemberFunction->get_templateDeclaration() != NULL);
+#if 0
+                 // DQ (12/23/2011): With the new design we no long have this data member.
 
                  // DQ (8/12/2005): This can also be a template declaration for a class (at least where the template declaration is stringified presently)
                  // if (templateMemberFunction->get_templateDeclaration()->get_template_kind() != SgTemplateDeclaration::e_template_m_function /* 4 */)
@@ -8548,11 +8647,14 @@ SgFunctionDeclaration::isTemplateFunction() const
                     ROSE_ASSERT( templateMemberFunction->get_templateDeclaration()->get_template_kind() == SgTemplateDeclaration::e_template_m_function /* 4 */ ||
                                  templateMemberFunction->get_templateDeclaration()->get_template_kind() == SgTemplateDeclaration::e_template_class /* 1 */ ||
                                  templateMemberFunction->get_templateDeclaration()->get_template_kind() == SgTemplateDeclaration::e_template_m_class /* 2 */);
+#endif
                   }
                  else
                   {
                  // printf ("This is a valid templated member function! numberOfTemplateArguments = %d \n",numberOfTemplateArguments);
                     returnValue = true;
+#if 0
+                 // DQ (12/23/2011): With the new design we no long have this data member.
 
                  // Error checking
                     ROSE_ASSERT(templateMemberFunction->get_templateDeclaration() != NULL);
@@ -8569,6 +8671,7 @@ SgFunctionDeclaration::isTemplateFunction() const
                  // ROSE_ASSERT(templateMemberFunction->get_templateDeclaration()->get_template_kind() == SgTemplateDeclaration::e_template_function /* 3 */);
                     ROSE_ASSERT( templateMemberFunction->get_templateDeclaration()->get_template_kind() == SgTemplateDeclaration::e_template_function /* 3 */ ||
                                  templateMemberFunction->get_templateDeclaration()->get_template_kind() == SgTemplateDeclaration::e_template_class /* 1 */);
+#endif
                   }
 
             // printf ("type of template declaration = %d returnValue = %s \n",templateDeclaration->get_template_kind(),returnValue ? "true" : "false");
@@ -11255,21 +11358,24 @@ SgTemplateInstantiationFunctionDecl::SgTemplateInstantiationFunctionDecl ( SgNam
   // SgTemplateInstantiationFunctionDecl, SgMemberFunctionDeclaration, and SgTemplateInstantiationMemberFunctionDecl.
 
   // Only two lines of additional code to allow use of same code as in generated constructor (below).
-     SgTemplateDeclaration* templateDeclaration = NULL;
+  // SgTemplateDeclaration* templateDeclaration = NULL;
      SgTemplateArgumentPtrList templateArguments;
 
   // Same code as in generated constructor.
      p_templateName = "";
-     p_templateDeclaration = templateDeclaration;
+
+  // p_templateDeclaration = templateDeclaration;
+     p_templateDeclaration = NULL;
+
      p_templateArguments = templateArguments;
      p_nameResetFromMangledForm = false;
 
   // Test the variant virtual function
-     assert(TEMPLATE_INST_MEMBER_FUNCTION_DECL_STMT == variant());
+     assert(TEMPLATE_INST_FUNCTION_DECL_STMT == variant());
      post_construction_initialization();
 
-  // Test the isSgTemplateInstantiationMemberFunctionDecl() function since it has been problematic
-     assert(isSgTemplateInstantiationMemberFunctionDecl(this) != NULL);
+  // Test the isSgTemplateInstantiationFunctionDecl() function since it has been problematic
+     assert(isSgTemplateInstantiationFunctionDecl(this) != NULL);
    }
 
 SOURCE_TEMPLATE_INSTANTIATION_FUNCTION_DECLARATION_STATEMENT_END
@@ -11359,12 +11465,13 @@ SgTemplateInstantiationMemberFunctionDecl::SgTemplateInstantiationMemberFunction
   // SgTemplateInstantiationMemberFunctionDecl, SgFunctionDeclaration, and SgTemplateInstantiationFunctionDecl.
 
   // Only two lines of additional code to allow use of same code as in generated constructor (below).
-     SgTemplateDeclaration* templateDeclaration = NULL;
+  // SgTemplateDeclaration* templateDeclaration = NULL;
      SgTemplateArgumentPtrList templateArguments;
 
   // Same code as in generated constructor.
      p_templateName = "";
-     p_templateDeclaration = templateDeclaration;
+  // p_templateDeclaration = templateDeclaration;
+     p_templateDeclaration = NULL;
      p_templateArguments = templateArguments;
      p_nameResetFromMangledForm = false;
 
@@ -13051,7 +13158,8 @@ SgTemplateDeclaration::get_type()
   // are different and some compilers (MS Visual Studio) do not support covariant return types.
 
      SgType* returnType = NULL;
-     
+
+#if 0
      switch (variantT())
         {
           case V_SgTemplateClassDeclaration:
@@ -13088,6 +13196,10 @@ SgTemplateDeclaration::get_type()
                ROSE_ASSERT(false);
              }
         }
+#else
+     printf ("This is a part of the new design for ROSE to have the SgTemplateClassDeclaration derived from the SgClassDeclaration (same for functions, member functions, and varaiable declarations). \n");
+     ROSE_ASSERT(false);
+#endif
 
      ROSE_ASSERT(returnType != NULL);
      return returnType;
@@ -13100,7 +13212,8 @@ SOURCE_TEMPLATE_CLASS_DECLARATION_STATEMENT_START
 void
 SgTemplateClassDeclaration::post_construction_initialization()
    {
-     this->set_template_kind(e_template_class);
+  // DQ (12/21/2011): This is not what we want for the newer design with SgTemplateVariableDeclaration derived from SgVariableDeclaration.
+  // this->set_template_kind(e_template_class);
    }
 
 SOURCE_TEMPLATE_CLASS_DECLARATION_STATEMENT_END
@@ -13109,8 +13222,11 @@ SOURCE_TEMPLATE_FUNCTION_DECLARATION_STATEMENT_START
 void
 SgTemplateFunctionDeclaration::post_construction_initialization()
    {
-     this->set_template_kind(e_template_function);
+  // DQ (12/21/2011): This is not what we want for the newer design with SgTemplateVariableDeclaration derived from SgVariableDeclaration.
+  // this->set_template_kind(e_template_function);
 
+#if 0
+  // DQ (12/28/2011): This will overwrite the existing SgFunctionParameterList the base class.
   // This code could be factored (copied from SgFunctionDeclaration::post_construction_initialization()).
      SgFunctionParameterList* args = NULL;
      if (get_startOfConstruct() != NULL)
@@ -13142,6 +13258,13 @@ SgTemplateFunctionDeclaration::post_construction_initialization()
   // args->set_definingDeclaration(args);
   // args->set_firstNondefiningDeclaration(args);
      args->set_firstNondefiningDeclaration(args);
+#else
+     ROSE_ASSERT (get_parameterList() != NULL);
+
+  // DQ (12/28/2011): set the parent explicitly
+     get_parameterList()->set_parent(this);
+#endif
+
 
 #if 0
   // This is already set in the constructor.
@@ -13175,8 +13298,11 @@ SOURCE_TEMPLATE_MEMBER_FUNCTION_DECLARATION_STATEMENT_START
 void
 SgTemplateMemberFunctionDeclaration::post_construction_initialization()
    {
-     this->set_template_kind(e_template_m_function);
+  // DQ (12/21/2011): This is not what we want for the newer design with SgTemplateVariableDeclaration derived from SgVariableDeclaration.
+  // this->set_template_kind(e_template_m_function);
 
+#if 0
+  // DQ (12/28/2011): This will overwrite the existing SgCtorInitializerList in the base class.
   // DQ (11/25/2011): This is copied from the SgMemberFunctionDeclaration (the semantics must match).
   // There is however an opportunity to refactor some of this code (even though it is a small amount of code).
      if (get_startOfConstruct() != NULL)
@@ -13187,9 +13313,12 @@ SgTemplateMemberFunctionDeclaration::post_construction_initialization()
         {
           p_CtorInitializerList = new SgCtorInitializerList();
         }
-     ROSE_ASSERT(p_CtorInitializerList != NULL);
 
+     ROSE_ASSERT(p_CtorInitializerList != NULL);
      p_CtorInitializerList->set_firstNondefiningDeclaration(p_CtorInitializerList);
+#else
+     ROSE_ASSERT(p_CtorInitializerList != NULL);
+#endif
 
      p_CtorInitializerList->set_parent(this);
    }
@@ -13202,8 +13331,47 @@ SOURCE_TEMPLATE_VARIABLE_DECLARATION_STATEMENT_START
 void
 SgTemplateVariableDeclaration::post_construction_initialization()
    {
-     this->set_template_kind(e_template_m_data);
+  // DQ (12/21/2011): This is not what we want for the newer design with SgTemplateVariableDeclaration derived from SgVariableDeclaration.
+  // this->set_template_kind(e_template_m_data);
    }
+
+
+#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
+SgTemplateVariableDeclaration::SgTemplateVariableDeclaration( const SgName& var_name, SgType *type, SgInitializer *initializer)
+   : SgVariableDeclaration(var_name,type,initializer)
+   {
+  // DQ (11/10/2006): Ultimately, i think this constructor should be eliminated since it will be
+  // redundant with a higher level interface which is planned and it is not automatically generated.
+     ROSE_ASSERT (this != NULL);
+
+  // printf ("Inside of SgTemplateVariableDeclaration constructor taking all parameters \n");
+  // initializeData (NULL,var_name,type,initializer);
+   }
+#endif
+
+#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
+
+// DQ (12/292/2011): The generate Cxx_Grammar.h header file will see the prototype for this function (even though I tried to make it NOT visible).
+// As a result we need a function definition (but we need only call the base class version of the function).
+SgDeclarationStatement *
+SgTemplateVariableDeclaration::compute_baseTypeDefiningDeclaration() const
+   {
+     return SgVariableDeclaration::compute_baseTypeDefiningDeclaration();
+   }
+
+#else
+
+SgDeclarationStatement *
+SgTemplateVariableDeclaration::compute_baseTypeDefiningDeclaration() const
+   {
+  // DQ (12/29/2011): Not clear what this definition should be.  This is provided for backward compatability with the EDG 3.3 version.
+  // I think it will not be used. So we return an error so that it will be detected if called.
+     printf ("This function should not be called unde the EDG 3.3 interface, and is not defined under the EDG 4.3 interface. \n");
+     ROSE_ASSERT(false);
+
+     return NULL;
+   }
+#endif
 
 SOURCE_TEMPLATE_VARIABLE_DECLARATION_STATEMENT_END
 

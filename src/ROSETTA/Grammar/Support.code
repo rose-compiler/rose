@@ -3828,7 +3828,13 @@ HEADER_SYMBOL_TABLE_START
        // the internal STL container to look for an entry that match the name and the type of
        // the SgSymbol.  This is optimially fast only for the case where there are unique names.
           SgSymbol*          find_any(const SgName & name);                    //! Complexity O(log n) for first match against name, then O(n)
+
           SgVariableSymbol*  find_variable(const SgName & name);               //! Complexity O(log n) for first match against name, then O(n)
+
+       // DQ (12/27/2011): Added support for template declarations in the AST.
+          SgTemplateVariableSymbol* find_template_variable(const SgName & name);               //! Complexity O(log n) for first match against name, then O(n)
+          SgVariableSymbol*         find_nontemplate_variable(const SgName & name);               //! Complexity O(log n) for first match against name, then O(n)
+
           SgClassSymbol*     find_class(const SgName & name);                  //! Complexity O(log n) for first match against name, then O(n)
           SgFunctionSymbol*  find_function(const SgName& name);                //! Complexity O(log n) for first match against name, then O(n)
           SgFunctionSymbol*  find_function(const SgName&, const SgType* name); //! Complexity O(log n) for first match against name, then O(n)
@@ -3844,6 +3850,10 @@ HEADER_SYMBOL_TABLE_START
           SgNamespaceSymbol* find_namespace(const SgName & name);  //! Complexity O(log n) for first match against name, then O(n)
           SgTemplateSymbol*  find_template(const SgName & name);   //! Complexity O(log n) for first match against name, then O(n)
 
+
+       // DQ (12/26/2011): Added more refined level of support for template declarations in the AST.
+       // SgTemplateClassSymbol* find_template_class (const SgName & nm);
+
 #if 0
        // DQ (11/27/2010): Removing these to avoid updating them to have consistant case handling support (deprecated 4-5 years ago).
           SgSymbol*          findfirstany() ROSE_DEPRECATED_FUNCTION;
@@ -3856,9 +3866,11 @@ HEADER_SYMBOL_TABLE_START
           SgVariableSymbol*  find_variable(); //! Complexity O(log n) for first match against name, then O(n)
           SgClassSymbol*     find_class();    //! Complexity O(log n) for first match against name, then O(n)
           SgFunctionSymbol*  find_function(); //! Complexity O(log n) for first match against name, then O(n)
+
        // DQ (2/19/2007): this is equivalent to the STL "begin()" function because 
        // SgFunctionTypeSymbol objects are placed into the global function type table.
        // SgFunctionTypeSymbol*  find_function_type();
+
           SgTypedefSymbol*   find_typedef();    //! Complexity O(log n) for first match against name, then O(n)
           SgEnumSymbol*      find_enum();       //! Complexity O(log n) for first match against name, then O(n)
           SgEnumFieldSymbol* find_enum_field(); //! Complexity O(log n) for first match against name, then O(n)
@@ -3866,9 +3878,17 @@ HEADER_SYMBOL_TABLE_START
           SgNamespaceSymbol* find_namespace();  //! Complexity O(log n) for first match against name, then O(n)
           SgTemplateSymbol*  find_template();   //! Complexity O(log n) for first match against name, then O(n)
 
+       // DQ (12/27/2011): Added support for template declarations in the AST.
        // DQ (12/12/2011): New functions to support template declarations in the AST.
-          SgTemplateSymbol*  find_template_function(const SgName& name, const SgType* type); //! Complexity O(log n) for first match against name, then O(n)
-          SgTemplateSymbol*  find_template_class   (const SgName& name);                     //! Complexity O(log n) for first match against name, then O(n)
+          SgTemplateFunctionSymbol* find_template_function(const SgName& name, const SgType* type); //! Complexity O(log n) for first match against name, then O(n)
+          SgFunctionSymbol*         find_nontemplate_function(const SgName& name, const SgType* type); //! Complexity O(log n) for first match against name, then O(n)
+
+       // DQ (12/27/2011): Added support for template declarations in the AST.
+          SgTemplateMemberFunctionSymbol* find_template_member_function(const SgName& name, const SgType* type); //! Complexity O(log n) for first match against name, then O(n)
+          SgMemberFunctionSymbol*         find_nontemplate_member_function(const SgName& name, const SgType* type); //! Complexity O(log n) for first match against name, then O(n)
+
+          SgTemplateClassSymbol* find_template_class   (const SgName& name);                     //! Complexity O(log n) for first match against name, then O(n)
+          SgClassSymbol*         find_nontemplate_class(const SgName& name);                     //! Complexity O(log n) for first match against name, then O(n)
 
 #if 0
        // DQ (11/27/2010): Removing these to avoid updating them to have consistant case handling support (deprecated 4-5 years ago).
@@ -3945,6 +3965,10 @@ HEADER_SYMBOL_TABLE_START
           bool isCaseInsensitive() const;
           void setCaseInsensitive(bool b);
 
+     protected:
+       // DQ (12/26/2011): Refactoring of code into templated support function.
+          template<class ReturnType> ReturnType* find_symbol_support (const SgName & nm);
+     public:
 
 HEADER_SYMBOL_TABLE_END
 
@@ -6232,12 +6256,42 @@ SgSymbolTable::get_name( const SgNode* node) const
                break;
              }
 
+       // DQ (12/26/2011): Template declarations have to have their own cases now.
        // DQ (11/23/2011): Added more support for template declaration IR nodes.
           case V_SgTemplateFunctionDeclaration:
-          case V_SgTemplateMemberFunctionDeclaration:
+             {
+               const SgTemplateFunctionDeclaration* templateDeclaration = isSgTemplateFunctionDeclaration(node); 
+               name = templateDeclaration->get_name();
+               break;
+             }
 
+       // DQ (12/26/2011): Template declarations have to have their own cases now.
+          case V_SgTemplateMemberFunctionDeclaration:
+             {
+               const SgTemplateMemberFunctionDeclaration* templateDeclaration = isSgTemplateMemberFunctionDeclaration(node); 
+               name = templateDeclaration->get_name();
+               break;
+             }
+
+       // DQ (12/26/2011): Template declarations have to have their own cases now.
        // DQ (6/11/2011): Added support for new template declaration IR nodes.
           case V_SgTemplateClassDeclaration:
+             {
+               const SgTemplateClassDeclaration* templateDeclaration = isSgTemplateClassDeclaration(node); 
+               name = templateDeclaration->get_name();
+               break;
+             }
+#if 0
+       // DQ (12/26/2011): This is not a required case to handle since a variable declaration dos not have a name.
+          case V_SgTemplateVariableDeclaration:
+             {
+               const SgTemplateVariableDeclaration* templateDeclaration = isSgTemplateVariableDeclaration(node); 
+               name = templateDeclaration->get_name();
+               break;
+             }
+#endif
+       // DQ (12/26/2011): This is no longer a base class for SgTemplateClassDeclaration and other templae declaration IR nodes.
+       // It is used only for the EDG 3.3 compatable support for template declarations.
           case V_SgTemplateDeclaration:
              {
                const SgTemplateDeclaration* templateDeclaration = isSgTemplateDeclaration(node); 
@@ -6326,7 +6380,7 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
         {
        // We what to check on what kind of symbol this is.
           SgSymbol* s = find_function(nm);
-          printf ("In SgSymbolTable::insert(%s,%p) found an overloaded function (symbol = %p = %s) \n",nm.str(),sp,s,(s != NULL) ? s->class_name().c_str() : "empty string");
+          printf ("In SgSymbolTable::insert(%s,%p = %s) found an overloaded function (symbol = %p = %s) \n",nm.str(),sp,sp->class_name().c_str(),s,(s != NULL) ? s->class_name().c_str() : "empty string");
        // ROSE_ASSERT(s == NULL);
         }
   // ROSE_ASSERT(exists(nm) == false);
@@ -7395,12 +7449,15 @@ SgSymbolTable::find_function (const SgName & nm, const SgType* t)
      return s;
    }
 
+// DQ (12/27/2011): Added more support for template declarations in the AST.
 // DQ (12/12/2011): New functions to support template declarations in the AST.
-SgTemplateSymbol*
-SgSymbolTable::find_template_function(const SgName& nm, const SgType* t)
+// SgTemplateSymbol*
+SgFunctionSymbol*
+SgSymbolTable::find_nontemplate_function(const SgName& nm, const SgType* t)
    {
-     SgTemplateSymbol *s = NULL;
+     SgFunctionSymbol *s = NULL;
      ROSE_ASSERT(p_table != NULL);
+
 #if 1
   // Find the sublist that match the name.
      std::pair<hash_iterator, hash_iterator> range = p_table->equal_range(nm);
@@ -7408,14 +7465,22 @@ SgSymbolTable::find_template_function(const SgName& nm, const SgType* t)
   // Iterate through the list that match the name to find the one that is a SgTemplateSymbol and has a matching SgType pointer.
      for (hash_iterator i = range.first; i != range.second; ++i)
         {
-          SgTemplateSymbol * sym = isSgTemplateSymbol(i->second);
+          SgFunctionSymbol * sym = isSgFunctionSymbol(i->second);
+
+       // Check for both SgTemplateFunctionSymbol AND SgTemplateMemberFunctionSymbol!
+          if (isSgTemplateFunctionSymbol(i->second) != NULL || isSgTemplateMemberFunctionSymbol(i->second) != NULL)
+             {
+            // If this is a SgTemplateFunctionSymbol then reset sym == NULL, this is not the symbol you are looking for...
+               printf ("In SgSymbolTable::find_nontemplate_function(): this is not the symbol you are looking for... \n");
+               sym = NULL;
+             }
 
           if (sym != NULL)
              {
-               printf ("In SgSymbolTable::find_function(): Found a symbol with correct name: symbol = %p = %s (looking for type = %p = %s) \n",i->second,i->second->class_name().c_str(),t,t->class_name().c_str());
+               printf ("In SgSymbolTable::find_nontemplate_function(): Found a symbol with correct name: symbol = %p = %s (looking for type = %p = %s) \n",i->second,i->second->class_name().c_str(),t,t->class_name().c_str());
                ROSE_ASSERT(sym->get_declaration() != NULL);
                ROSE_ASSERT(sym->get_declaration()->get_type() != NULL);
-               printf ("In SgSymbolTable::find_function(): Found a symbol with correct name: sym->get_declaration() = %p = %s (looking for sym->get_declaration()->get_type() = %p = %s) \n",
+               printf ("In SgSymbolTable::find_nontemplate_function(): Found a symbol with correct name: sym->get_declaration() = %p = %s (looking for sym->get_declaration()->get_type() = %p = %s) \n",
                          sym->get_declaration(),sym->get_declaration()->class_name().c_str(),sym->get_declaration()->get_type(),sym->get_declaration()->get_type()->class_name().c_str());
              }
 
@@ -7434,22 +7499,329 @@ SgSymbolTable::find_template_function(const SgName& nm, const SgType* t)
           ROSE_ASSERT(s->get_declaration()->get_type() == t);
         }
 #else
-     printf ("ERROR: SgSymbolTable::find_template_class(nm = %s,SgType*) is not implemented yet! \n",nm.str());
+     printf ("ERROR: SgSymbolTable::find_nontemplate_function(nm = %s,SgType*) is not implemented yet! \n",nm.str());
      ROSE_ASSERT(false);
 #endif
-     printf ("In SgSymbolTable::find_function(): returning symbol = %p = %s \n",s,(s != NULL) ? s->class_name().c_str() : "null");
+
+     printf ("In SgSymbolTable::find_nontemplate_function(): returning symbol = %p = %s \n",s,(s != NULL) ? s->class_name().c_str() : "null");
+
      return s;
    }
 
 
-// DQ (12/12/2011): Adding support for template declarations in the AST.
-SgTemplateSymbol*
+SgTemplateFunctionSymbol*
+SgSymbolTable::find_template_function(const SgName& nm, const SgType* t)
+   {
+     SgTemplateFunctionSymbol *s = NULL;
+     ROSE_ASSERT(p_table != NULL);
+
+#if 1
+  // Find the sublist that match the name.
+     std::pair<hash_iterator, hash_iterator> range = p_table->equal_range(nm);
+
+  // Iterate through the list that match the name to find the one that is a SgTemplateSymbol and has a matching SgType pointer.
+     for (hash_iterator i = range.first; i != range.second; ++i)
+        {
+          SgTemplateFunctionSymbol * sym = isSgTemplateFunctionSymbol(i->second);
+
+          if (sym != NULL)
+             {
+               printf ("In SgSymbolTable::find_template_function(): Found a symbol with correct name: symbol = %p = %s (looking for type = %p = %s) \n",i->second,i->second->class_name().c_str(),t,t->class_name().c_str());
+               ROSE_ASSERT(sym->get_declaration() != NULL);
+               ROSE_ASSERT(sym->get_declaration()->get_type() != NULL);
+               printf ("In SgSymbolTable::find_template_function(): Found a symbol with correct name: sym->get_declaration() = %p = %s (looking for sym->get_declaration()->get_type() = %p = %s) \n",
+                         sym->get_declaration(),sym->get_declaration()->class_name().c_str(),sym->get_declaration()->get_type(),sym->get_declaration()->get_type()->class_name().c_str());
+             }
+
+          if ( (sym != NULL) && (sym->get_declaration()->get_type() == t) && get_table()->key_eq()(sym->get_name(),nm))
+             {
+               p_name    = nm;
+               p_no_name = false;
+               s         = sym;
+               break;
+             }
+        }
+
+     if (s != NULL)
+        {
+          ROSE_ASSERT(s->get_name() == nm);
+          ROSE_ASSERT(s->get_declaration()->get_type() == t);
+        }
+#else
+     printf ("ERROR: SgSymbolTable::find_template_function(nm = %s,SgType*) is not implemented yet! \n",nm.str());
+     ROSE_ASSERT(false);
+#endif
+
+     printf ("In SgSymbolTable::find_template_function(): returning symbol = %p = %s \n",s,(s != NULL) ? s->class_name().c_str() : "null");
+
+     return s;
+   }
+
+
+// DQ (12/27/2011): Added more support for template declarations in the AST.
+SgMemberFunctionSymbol*
+SgSymbolTable::find_nontemplate_member_function(const SgName& nm, const SgType* t)
+   {
+     SgMemberFunctionSymbol *s = NULL;
+     ROSE_ASSERT(p_table != NULL);
+
+#if 1
+  // Find the sublist that match the name.
+     std::pair<hash_iterator, hash_iterator> range = p_table->equal_range(nm);
+
+  // Iterate through the list that match the name to find the one that is a SgTemplateSymbol and has a matching SgType pointer.
+     for (hash_iterator i = range.first; i != range.second; ++i)
+        {
+          SgMemberFunctionSymbol * sym = isSgMemberFunctionSymbol(i->second);
+
+       // Check for both SgTemplateFunctionSymbol AND SgTemplateMemberFunctionSymbol!
+          if (isSgTemplateMemberFunctionSymbol(i->second) != NULL)
+             {
+            // If this is a SgTemplateFunctionSymbol then reset sym == NULL, this is not the symbol you are looking for...
+               printf ("In SgSymbolTable::find_nontemplate_function(): this is not the symbol you are looking for... \n");
+               sym = NULL;
+             }
+
+          if (sym != NULL)
+             {
+               printf ("In SgSymbolTable::find_nontemplate_function(): Found a symbol with correct name: symbol = %p = %s (looking for type = %p = %s) \n",i->second,i->second->class_name().c_str(),t,t->class_name().c_str());
+               ROSE_ASSERT(sym->get_declaration() != NULL);
+               ROSE_ASSERT(sym->get_declaration()->get_type() != NULL);
+               printf ("In SgSymbolTable::find_nontemplate_function(): Found a symbol with correct name: sym->get_declaration() = %p = %s (looking for sym->get_declaration()->get_type() = %p = %s) \n",
+                         sym->get_declaration(),sym->get_declaration()->class_name().c_str(),sym->get_declaration()->get_type(),sym->get_declaration()->get_type()->class_name().c_str());
+             }
+
+          if ( (sym != NULL) && (sym->get_declaration()->get_type() == t) && get_table()->key_eq()(sym->get_name(),nm))
+             {
+               p_name    = nm;
+               p_no_name = false;
+               s         = sym;
+               break;
+             }
+        }
+
+     if (s != NULL)
+        {
+          ROSE_ASSERT(s->get_name() == nm);
+          ROSE_ASSERT(s->get_declaration()->get_type() == t);
+        }
+#else
+     printf ("ERROR: SgSymbolTable::find_nontemplate_function(nm = %s,SgType*) is not implemented yet! \n",nm.str());
+     ROSE_ASSERT(false);
+#endif
+
+     printf ("In SgSymbolTable::find_nontemplate_function(): returning symbol = %p = %s \n",s,(s != NULL) ? s->class_name().c_str() : "null");
+
+     return s;
+   }
+
+
+SgTemplateMemberFunctionSymbol*
+SgSymbolTable::find_template_member_function(const SgName& nm, const SgType* t)
+   {
+     SgTemplateMemberFunctionSymbol *s = NULL;
+     ROSE_ASSERT(p_table != NULL);
+
+#if 1
+  // Find the sublist that match the name.
+     std::pair<hash_iterator, hash_iterator> range = p_table->equal_range(nm);
+
+  // Iterate through the list that match the name to find the one that is a SgTemplateSymbol and has a matching SgType pointer.
+     for (hash_iterator i = range.first; i != range.second; ++i)
+        {
+          SgTemplateMemberFunctionSymbol * sym = isSgTemplateMemberFunctionSymbol(i->second);
+
+          if (sym != NULL)
+             {
+               printf ("In SgSymbolTable::find_template_function(): Found a symbol with correct name: symbol = %p = %s (looking for type = %p = %s) \n",i->second,i->second->class_name().c_str(),t,t->class_name().c_str());
+               ROSE_ASSERT(sym->get_declaration() != NULL);
+               ROSE_ASSERT(sym->get_declaration()->get_type() != NULL);
+               printf ("In SgSymbolTable::find_template_function(): Found a symbol with correct name: sym->get_declaration() = %p = %s (looking for sym->get_declaration()->get_type() = %p = %s) \n",
+                         sym->get_declaration(),sym->get_declaration()->class_name().c_str(),sym->get_declaration()->get_type(),sym->get_declaration()->get_type()->class_name().c_str());
+             }
+
+          if ( (sym != NULL) && (sym->get_declaration()->get_type() == t) && get_table()->key_eq()(sym->get_name(),nm))
+             {
+               p_name    = nm;
+               p_no_name = false;
+               s         = sym;
+               break;
+             }
+        }
+
+     if (s != NULL)
+        {
+          ROSE_ASSERT(s->get_name() == nm);
+          ROSE_ASSERT(s->get_declaration()->get_type() == t);
+        }
+#else
+     printf ("ERROR: SgSymbolTable::find_template_function(nm = %s,SgType*) is not implemented yet! \n",nm.str());
+     ROSE_ASSERT(false);
+#endif
+
+     printf ("In SgSymbolTable::find_template_function(): returning symbol = %p = %s \n",s,(s != NULL) ? s->class_name().c_str() : "null");
+
+     return s;
+   }
+
+
+// DQ (12/26/2011): Adding revised support for template declarations in the AST.
+SgClassSymbol*
+SgSymbolTable::find_nontemplate_class (const SgName & nm)
+   {
+     SgClassSymbol *s = NULL;
+
+#if 1
+  // Find the sublist that match the name.
+     std::pair<hash_iterator, hash_iterator> range = p_table->equal_range(nm);
+
+  // Iterate through the list that match the name to find the one that is a SgTemplateSymbol and has a matching SgType pointer.
+     for (hash_iterator i = range.first; i != range.second; ++i)
+        {
+          printf ("In SgSymbolTable::find_nontemplate_class(): Found a possible symbol with correct name = %s: symbol = %p = %s \n",nm.str(),i->second,i->second->class_name().c_str());
+          SgClassSymbol* sym = isSgClassSymbol(i->second);
+          if (isSgTemplateClassSymbol(i->second) != NULL)
+             {
+            // If this is a SgTemplateClassSymbol then reset sym == NULL, this is not the symbol you are looking for...
+               printf ("In SgSymbolTable::find_nontemplate_class(): this is not the symbol you are looking for... \n");
+               sym = NULL;
+             }
+
+          if (sym != NULL)
+             {
+               printf ("In SgSymbolTable::find_nontemplate_class(): Found a symbol with correct name: symbol = %p = %s \n",i->second,i->second->class_name().c_str());
+               ROSE_ASSERT(sym->get_declaration() != NULL);
+               ROSE_ASSERT(sym->get_declaration()->get_type() != NULL);
+               printf ("In SgSymbolTable::find_nontemplate_class(): Found a symbol with correct name: sym->get_declaration() = %p = %s (looking for sym->get_declaration()->get_type() = %p = %s) \n",
+                         sym->get_declaration(),sym->get_declaration()->class_name().c_str(),sym->get_declaration()->get_type(),sym->get_declaration()->get_type()->class_name().c_str());
+             }
+
+          if ( (sym != NULL) && get_table()->key_eq()(sym->get_name(),nm))
+             {
+               p_name    = nm;
+               p_no_name = false;
+               s         = sym;
+               break;
+             }
+        }
+
+     if (s != NULL)
+        {
+          ROSE_ASSERT(s->get_name() == nm);
+        }
+#else
+     printf ("ERROR: SgSymbolTable::find_nontemplate_class(nm = %s) is not implemented yet! \n",nm.str());
+     ROSE_ASSERT(false);
+
+     s = find_symbol_support<SgTemplateClassSymbol>(nm);
+#endif
+
+     printf ("In SgSymbolTable::find_nontemplate_class(): returning symbol = %p = %s \n",s,(s != NULL) ? s->class_name().c_str() : "null");
+
+#if 0
+     printf ("ERROR: SgSymbolTable::find_nontemplate_class(nm = %s) is not implemented yet! \n",nm.str());
+     ROSE_ASSERT(false);
+#endif
+
+     return s;
+   }
+
+SgTemplateClassSymbol*
 SgSymbolTable::find_template_class (const SgName & nm)
    {
-     SgTemplateSymbol *s = NULL;
+     SgTemplateClassSymbol *s = NULL;
 
+#if 0
+  // Find the sublist that match the name.
+     std::pair<hash_iterator, hash_iterator> range = p_table->equal_range(nm);
+
+  // Iterate through the list that match the name to find the one that is a SgTemplateSymbol and has a matching SgType pointer.
+     for (hash_iterator i = range.first; i != range.second; ++i)
+        {
+          SgTemplateClassSymbol * sym = isSgTemplateClassSymbol(i->second);
+
+          if (sym != NULL)
+             {
+               printf ("In SgSymbolTable::find_function(): Found a symbol with correct name: symbol = %p = %s \n",i->second,i->second->class_name().c_str());
+               ROSE_ASSERT(sym->get_declaration() != NULL);
+               ROSE_ASSERT(sym->get_declaration()->get_type() != NULL);
+               printf ("In SgSymbolTable::find_function(): Found a symbol with correct name: sym->get_declaration() = %p = %s (looking for sym->get_declaration()->get_type() = %p = %s) \n",
+                         sym->get_declaration(),sym->get_declaration()->class_name().c_str(),sym->get_declaration()->get_type(),sym->get_declaration()->get_type()->class_name().c_str());
+             }
+
+          if ( (sym != NULL) && get_table()->key_eq()(sym->get_name(),nm))
+             {
+               p_name    = nm;
+               p_no_name = false;
+               s         = sym;
+               break;
+             }
+        }
+
+     if (s != NULL)
+        {
+          ROSE_ASSERT(s->get_name() == nm);
+        }
+#else
+     s = find_symbol_support<SgTemplateClassSymbol>(nm);
+#endif
+
+     printf ("In SgSymbolTable::find_function(): returning symbol = %p = %s \n",s,(s != NULL) ? s->class_name().c_str() : "null");
+
+#if 0
      printf ("ERROR: SgSymbolTable::find_template_class(nm = %s) is not implemented yet! \n",nm.str());
      ROSE_ASSERT(false);
+#endif
+
+     return s;
+   }
+
+template<class ReturnType>
+ReturnType*
+SgSymbolTable::find_symbol_support (const SgName & nm)
+   {
+  // Templated function to support retrival of different types of symbols from the symbol table.
+  // This refactors a lot of code (some now and more later).
+
+     ReturnType *s = NULL;
+
+  // Find the sublist that match the name.
+     std::pair<hash_iterator, hash_iterator> range = p_table->equal_range(nm);
+
+  // Iterate through the list that match the name to find the one that is a SgTemplateSymbol and has a matching SgType pointer.
+     for (hash_iterator i = range.first; i != range.second; ++i)
+        {
+          ReturnType * sym = dynamic_cast<ReturnType*>(i->second);
+
+          if (sym != NULL)
+             {
+               printf ("In SgSymbolTable::find_function(): Found a symbol with correct name: symbol = %p = %s \n",i->second,i->second->class_name().c_str());
+               ROSE_ASSERT(sym->get_declaration() != NULL);
+               ROSE_ASSERT(sym->get_declaration()->get_type() != NULL);
+               printf ("In SgSymbolTable::find_function(): Found a symbol with correct name: sym->get_declaration() = %p = %s (looking for sym->get_declaration()->get_type() = %p = %s) \n",
+                         sym->get_declaration(),sym->get_declaration()->class_name().c_str(),sym->get_declaration()->get_type(),sym->get_declaration()->get_type()->class_name().c_str());
+             }
+
+          if ( (sym != NULL) && get_table()->key_eq()(sym->get_name(),nm))
+             {
+               p_name    = nm;
+               p_no_name = false;
+               s         = sym;
+               break;
+             }
+        }
+
+     if (s != NULL)
+        {
+          ROSE_ASSERT(s->get_name() == nm);
+        }
+
+     printf ("In SgSymbolTable::find_symbol_support(): returning symbol = %p = %s \n",s,(s != NULL) ? s->class_name().c_str() : "null");
+
+#if 0
+     printf ("ERROR: SgSymbolTable::find_symbol_support(nm = %s) is not implemented yet! \n",nm.str());
+     ROSE_ASSERT(false);
+#endif
 
      return s;
    }
@@ -14803,7 +15175,11 @@ SgTemplateArgument::get_mangled_name (void) const
 
           case SgTemplateArgument::template_template_argument:
              {
-               const SgTemplateDeclaration* templateDeclaration = get_templateDeclaration();
+            // DQ (12/22/2011): The new design has a SgTemplateClassDeclaration derived from a SgClassDeclaration (and
+            // the same for SgTemplateFunctionDeclaration, etc.) So we have to change this to support the new design.
+            // Now we have to use a common base class which would be the SgDeclarationStatement.
+            // const SgTemplateDeclaration* templateDeclaration = get_templateDeclaration();
+               const SgDeclarationStatement* templateDeclaration = get_templateDeclaration();
                assert (templateDeclaration != NULL);
 
             // DQ (8/24/2006): This is not yet implemented, we can't handle this as a expression!
@@ -14811,7 +15187,53 @@ SgTemplateArgument::get_mangled_name (void) const
 
             // Let the mangled name be the simple name of the template (at least for now).
             // SgName mangled_templateDeclaration = templateDeclaration->get_mangled_name();
+#if 0
                SgName mangled_templateDeclaration = templateDeclaration->get_name();
+#else
+#if 1
+               SgName mangled_templateDeclaration = templateDeclaration->get_template_name();
+#else
+            // DQ (12/22/2011): This is an ugly aspect of supporting template declarations as derived from that which they are associated.
+            // (e.g. SgTemplateClassDeclaration derived from a SgClassDeclaration).
+               SgName mangled_templateDeclaration;
+               switch (templateDeclaration->variantT())
+                  {
+                    case V_SgTemplateClassDeclaration:
+                       {
+                         mangled_templateDeclaration = isSgTemplateClassDeclaration(templateDeclaration)->get_name();
+                         break;
+                       }
+
+                    case V_SgTemplateFunctionDeclaration:
+                       {
+                         mangled_templateDeclaration = isSgTemplateFunctionDeclaration(templateDeclaration)->get_name();
+                         break;
+                       }
+
+                    case V_SgTemplateMemberFunctionDeclaration:
+                       {
+                         mangled_templateDeclaration = isSgTemplateMemberFunctionDeclaration(templateDeclaration)->get_name();
+                         break;
+                       }
+
+                    case V_SgTemplateVariableDeclaration:
+                       {
+                      // mangled_templateDeclaration = isSgTemplateVariableDeclaration(templateDeclaration)->get_name();
+                         const SgTemplateVariableDeclaration* templateVariableDeclaration = isSgTemplateVariableDeclaration(templateDeclaration);
+                         ROSE_ASSERT(templateVariableDeclaration->get_variables().empty() == false);
+                         SgInitializedName* initializedName = templateVariableDeclaration->get_variables()[0];
+                         mangled_templateDeclaration = initializedName->get_name();
+                         break;
+                       }
+
+                    default:
+                       {
+                         printf ("Error: default reached templateDeclaration = %p = %s \n",templateDeclaration,templateDeclaration->class_name().c_str());
+                         ROSE_ASSERT(false);
+                       }
+                  }
+#endif
+#endif
                mangled_name << mangled_templateDeclaration.str();
 
 #if PRINT_DEVELOPER_WARNINGS

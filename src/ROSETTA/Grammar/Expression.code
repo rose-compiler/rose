@@ -359,6 +359,56 @@ HEADER_MEMBER_FUNCTION_REF_EXPRESSION_START
 HEADER_MEMBER_FUNCTION_REF_EXPRESSION_END
 
 
+HEADER_TEMPLATE_FUNCTION_REF_EXPRESSION_START
+       // SgTemplateSymbol* get_symbol() const;
+       // void set_symbol(SgTemplateSymbol * symbol);
+          SgTemplateFunctionSymbol* get_symbol() const;
+          void set_symbol(SgTemplateFunctionSymbol * symbol);
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
+
+		  /** Returns the associated function declaration, if it can be resolved statically. In some cases,
+			* such as function pointers and virtual functions, the function called cannot be resolved statically;
+			* for those cases this function returns NULL. The actual function expression is available through
+			* get_function(). */
+          SgTemplateFunctionDeclaration* getAssociatedFunctionDeclaration() const;
+
+//       // get lvalue
+//          virtual bool isLValue() const;
+//          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+
+HEADER_TEMPLATE_FUNCTION_REF_EXPRESSION_END
+
+
+HEADER_TEMPLATE_MEMBER_FUNCTION_REF_EXPRESSION_START
+       // SgTemplateSymbol* get_symbol() const;
+       // void set_symbol(SgTemplateSymbol * symbol);
+          SgTemplateMemberFunctionSymbol* get_symbol() const;
+          void set_symbol(SgTemplateMemberFunctionSymbol * symbol);
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
+
+        //! This is helpful in chasing down the associated declaration to this member function reference.
+		  //! Note: This function can return NULL - for example when the function call occurs through a function
+		  //! pointer.
+          SgTemplateMemberFunctionDeclaration* getAssociatedMemberFunctionDeclaration() const;
+
+       // DQ (12/15/2011): We might require this...
+       // get lvalue
+       // virtual bool isLValue() const;
+       // virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+
+HEADER_TEMPLATE_MEMBER_FUNCTION_REF_EXPRESSION_END
+
+
 HEADER_VALUE_EXPRESSION_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
@@ -2687,6 +2737,83 @@ SgMemberFunctionRefExp::getAssociatedMemberFunctionDeclaration() const
 
 SOURCE_MEMBER_FUNCTION_REFERENCE_EXPRESSION_END
 
+
+SOURCE_TEMPLATE_FUNCTION_REFERENCE_EXPRESSION_START
+
+void
+SgTemplateFunctionRefExp::post_construction_initialization()
+   {
+   }
+
+SgTemplateFunctionSymbol*
+SgTemplateFunctionRefExp::get_symbol() const
+   {
+  // return isSgTemplateFunctionSymbol(get_symbol_i());
+     return get_symbol_i();
+   }
+
+void
+SgTemplateFunctionRefExp::set_symbol(SgTemplateFunctionSymbol * symbol)
+   {
+     set_symbol_i(symbol);
+   }
+
+SgTemplateFunctionDeclaration*
+SgTemplateFunctionRefExp::getAssociatedFunctionDeclaration() const
+   {
+  // This is helpful in chasing down the associated declaration to this function reference.
+     SgTemplateFunctionDeclaration* returnFunctionDeclaration = NULL;
+     SgTemplateFunctionSymbol*      functionSymbol            = this->get_symbol();
+
+     ROSE_ASSERT(functionSymbol != NULL);
+
+     if (functionSymbol != NULL)
+          returnFunctionDeclaration = isSgTemplateFunctionDeclaration(functionSymbol->get_declaration());
+
+     return returnFunctionDeclaration;
+   }
+
+
+SOURCE_TEMPLATE_FUNCTION_REFERENCE_EXPRESSION_END
+
+
+SOURCE_TEMPLATE_MEMBER_FUNCTION_REFERENCE_EXPRESSION_START
+
+void
+SgTemplateMemberFunctionRefExp::post_construction_initialization() 
+   {
+   }
+
+SgTemplateMemberFunctionSymbol*
+SgTemplateMemberFunctionRefExp::get_symbol() const
+   {
+  // return isSgTemplateMemberFunctionSymbol(get_symbol_i());
+     return get_symbol_i();
+   }
+
+void
+SgTemplateMemberFunctionRefExp::set_symbol(SgTemplateMemberFunctionSymbol * symbol)
+   {
+     set_symbol_i(symbol);
+   }
+
+// DQ (2/8/2009): I always wanted to have this function!
+SgTemplateMemberFunctionDeclaration*
+SgTemplateMemberFunctionRefExp::getAssociatedMemberFunctionDeclaration() const
+   {
+  // This is helpful in chasing down the associated declaration to this member function reference.
+     SgTemplateMemberFunctionDeclaration* returnMemberFunctionDeclaration = NULL;
+     SgTemplateMemberFunctionSymbol*      memberFunctionSymbol            = this->get_symbol();
+
+     ROSE_ASSERT(memberFunctionSymbol != NULL);
+
+     if (memberFunctionSymbol != NULL)
+          returnMemberFunctionDeclaration = isSgTemplateMemberFunctionDeclaration(memberFunctionSymbol->get_declaration());
+
+     return returnMemberFunctionDeclaration;
+   }
+
+SOURCE_TEMPLATE_MEMBER_FUNCTION_REFERENCE_EXPRESSION_END
 
 SOURCE_VALUE_EXPRESSION_START
 

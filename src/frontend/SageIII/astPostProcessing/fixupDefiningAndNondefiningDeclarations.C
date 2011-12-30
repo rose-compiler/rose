@@ -1,5 +1,9 @@
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
+
+// DQ (12/29//2011): Since this file used the TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS macro we need to include rose_config.h.
+#include "rose_config.h"
+
 #include "fixupDefiningAndNondefiningDeclarations.h"
 void fixupAstDefiningAndNondefiningDeclarations( SgNode* node )
    {
@@ -594,7 +598,11 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                if (templateMemberFunction != NULL)
                   {
                  // Look for the SgTempleteDeclaration (some of them can been hidden and are not traversed)
+#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
+                    SgDeclarationStatement* templateDeclaration = templateMemberFunction->get_templateDeclaration();
+#else
                     SgTemplateDeclaration* templateDeclaration = templateMemberFunction->get_templateDeclaration();
+#endif
                     ROSE_ASSERT(templateDeclaration != NULL);
                  // ROSE_ASSERT(templateDeclaration->get_firstNondefiningDeclaration() != NULL);
 #if 0

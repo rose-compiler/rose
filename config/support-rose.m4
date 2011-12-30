@@ -587,6 +587,10 @@ if test x$enable_new_edg_interface = xyes; then
 # in testing C codes with the EDG 4.x we didn't need as many header files.
   GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS
   GENERATE_BACKEND_CXX_COMPILER_SPECIFIC_HEADERS
+
+# DQ (12/29/2011): Adding support for improved template declaration handling (only for EDG 4.3 and later)
+  AC_DEFINE([TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS], [], [Controls design of internal template declaration support within the ROSE AST.])
+
 else
   GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS
   GENERATE_BACKEND_CXX_COMPILER_SPECIFIC_HEADERS

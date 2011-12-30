@@ -84,6 +84,8 @@ class ClassTypeWithNestedClass
 
 template < class S >
 S ClassTypeWithNestedClass::NestedClass<S>::templateParameterVariable = 0;
+
+// int x;
 #endif
 
 
