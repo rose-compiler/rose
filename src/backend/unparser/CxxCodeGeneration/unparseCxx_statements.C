@@ -690,10 +690,16 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
           case V_SgTemplateDeclaration:    unparseTemplateDeclStmt(stmt, info); break;
 
        // DQ (6/11/2011): Added support for new template IR nodes.
-          case V_SgTemplateClassDeclaration:                unparseTemplateDeclStmt(stmt, info); break;
-          case V_SgTemplateFunctionDeclaration:             unparseTemplateDeclStmt(stmt, info); break;
-          case V_SgTemplateMemberFunctionDeclaration:       unparseTemplateDeclStmt(stmt, info); break;
-          case V_SgTemplateVariableDeclaration:             unparseTemplateDeclStmt(stmt, info); break;
+       // case V_SgTemplateClassDeclaration:                unparseTemplateDeclStmt(stmt, info); break;
+       // case V_SgTemplateFunctionDeclaration:             unparseTemplateDeclStmt(stmt, info); break;
+       // case V_SgTemplateMemberFunctionDeclaration:       unparseTemplateDeclStmt(stmt, info); break;
+       // case V_SgTemplateVariableDeclaration:             unparseTemplateDeclStmt(stmt, info); break;
+
+       // DQ (12/26/2011): New design for template declarations (no longer derived from StTemplateDeclaration).
+          case V_SgTemplateClassDeclaration:                unparseTemplateClassDeclStmt(stmt, info);          break;
+          case V_SgTemplateFunctionDeclaration:             unparseTemplateFunctionDeclStmt(stmt, info);       break;
+          case V_SgTemplateMemberFunctionDeclaration:       unparseTemplateMemberFunctionDeclStmt(stmt, info); break;
+          case V_SgTemplateVariableDeclaration:             unparseTemplateVariableDeclStmt(stmt, info);       break;
 
           case V_SgTemplateInstantiationDecl:               unparseTemplateInstantiationDeclStmt(stmt, info); break;
           case V_SgTemplateInstantiationFunctionDecl:       unparseTemplateInstantiationFunctionDeclStmt(stmt, info); break;
@@ -1060,8 +1066,30 @@ Unparse_ExprStmt::unparseUsingDeclarationStatement (SgStatement* stmt, SgUnparse
                     break;
                   }
 
-            // DQ (6/11/2011): Added support for new template IR nodes.
+            // DQ (12/29/2011): Added more template support for declarations.
+            // I don't know if this case has to be separated out from case V_SgClassDeclaration
                case V_SgTemplateClassDeclaration:
+                  {
+                    SgTemplateClassDeclaration* templateDeclaration = isSgTemplateClassDeclaration(declarationStatement);
+                    ROSE_ASSERT(templateDeclaration != NULL);
+                    SgName templateName = templateDeclaration->get_name();
+                    curprint ( templateName.str());
+                    break;
+                  }
+
+            // DQ (12/29/2011): Added more template support for declarations.
+            // I don't know if these case have to be separated out from case V_SgFunctionDeclaration
+               case V_SgTemplateFunctionDeclaration:
+               case V_SgTemplateMemberFunctionDeclaration:
+                  {
+                    SgTemplateFunctionDeclaration* templateDeclaration = isSgTemplateFunctionDeclaration(declarationStatement);
+                    ROSE_ASSERT(templateDeclaration != NULL);
+                    SgName templateName = templateDeclaration->get_name();
+                    curprint ( templateName.str());
+                    break;
+                  }
+
+            // DQ (6/11/2011): Added support for new template IR nodes.
                case V_SgTemplateDeclaration:
                   {
                  // DQ (9/12/2004): This function outputs the default template name which is not correct, we need 
@@ -5368,6 +5396,105 @@ Unparse_ExprStmt::unparseTemplateDeclStmt(SgStatement* stmt, SgUnparse_Info& inf
         }
    }
 
+
+void
+Unparse_ExprStmt::unparseTemplateClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
+   {
+#if 1
+     unparseTemplateDeclarationStatment_support<SgTemplateClassDeclaration>(stmt,info);
+#else
+     SgTemplateClassDeclaration* template_stmt = isSgTemplateClassDeclaration(stmt);
+     ROSE_ASSERT(template_stmt != NULL);
+
+     printf ("Note: Using the saved template declaration as a string to output the template declaration (AST for the template declaration is also now available in the AST) \n");
+
+  // Check to see if this is an object defined within a class
+     ROSE_ASSERT (template_stmt->get_parent() != NULL);
+     SgClassDefinition *cdefn = isSgClassDefinition(template_stmt->get_parent());
+     if (cdefn != NULL)
+        {
+          if (cdefn->get_declaration()->get_class_type() == SgClassDeclaration::e_class)
+             {
+               info.set_CheckAccess();
+             }
+        }
+
+  // Output access modifiers
+     unp->u_sage->printSpecifier1(template_stmt, info);
+
+  // printf ("template_stmt->get_string().str() = %s \n",template_stmt->get_string().str());
+
+  // DQ (1/21/2004): Use the string class to simplify the previous version of the code
+     string templateString = template_stmt->get_string().str();
+
+  // DQ (4/29/2004): Added support for "export" keyword (not supported by g++ yet)
+     if (template_stmt->get_declarationModifier().isExport())
+        {
+          curprint(string("export "));
+        }
+
+  // printf ("template_stmt->get_template_kind() = %d \n",template_stmt->get_template_kind());
+     curprint ( string("\n" ) + templateString);
+#endif
+   }
+
+void
+Unparse_ExprStmt::unparseTemplateFunctionDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     unparseTemplateDeclarationStatment_support<SgTemplateFunctionDeclaration>(stmt,info);
+   }
+
+void
+Unparse_ExprStmt::unparseTemplateMemberFunctionDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     unparseTemplateDeclarationStatment_support<SgTemplateMemberFunctionDeclaration>(stmt,info);
+   }
+
+void
+Unparse_ExprStmt::unparseTemplateVariableDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     unparseTemplateDeclarationStatment_support<SgTemplateVariableDeclaration>(stmt,info);
+   }
+
+template<class T>
+void
+Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     T* template_stmt = dynamic_cast<T*>(stmt);
+     ROSE_ASSERT(template_stmt != NULL);
+
+     printf ("Note: Using the saved template declaration as a string to output the template declaration (AST for the template declaration is also now available in the AST) \n");
+
+  // Check to see if this is an object defined within a class
+     ROSE_ASSERT (template_stmt->get_parent() != NULL);
+     SgClassDefinition *cdefn = isSgClassDefinition(template_stmt->get_parent());
+     if (cdefn != NULL)
+        {
+          if (cdefn->get_declaration()->get_class_type() == SgClassDeclaration::e_class)
+             {
+               info.set_CheckAccess();
+             }
+        }
+
+  // Output access modifiers
+     unp->u_sage->printSpecifier1(template_stmt, info);
+
+  // printf ("template_stmt->get_string().str() = %s \n",template_stmt->get_string().str());
+
+  // DQ (1/21/2004): Use the string class to simplify the previous version of the code
+     string templateString = template_stmt->get_string().str();
+
+  // DQ (4/29/2004): Added support for "export" keyword (not supported by g++ yet)
+     if (template_stmt->get_declarationModifier().isExport())
+        {
+          curprint(string("export "));
+        }
+
+  // printf ("template_stmt->get_template_kind() = %d \n",template_stmt->get_template_kind());
+     curprint ( string("\n" ) + templateString);
+   }
+
+ 
  
 //#if USE_UPC_IR_NODES //TODO need this?
 //#if UPC_EXTENSIONS_ALLOWED

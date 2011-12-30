@@ -13,16 +13,25 @@ Grammar::setUpSymbols ()
   // C++ grammar, but this will be modified to permit all grammars to contain elements of the
   // C++ grammar.  Modified grammars will add and subtract elements from this default C++ grammar.
 
-     NEW_TERMINAL_MACRO ( VariableSymbol,       "VariableSymbol",       "VARIABLE_NAME" );
-     //
-     // [DT] 5/3/2000 -- Added TypeSymbol (as an experiment).
-     //
-     //NEW_TERMINAL_MACRO ( TypeSymbol,           "TypeSymbol",           "TYPE_NAME" );
+  // DQ (12/27/2011): Added more support for template declaration details in the AST.
+  // NEW_TERMINAL_MACRO ( VariableSymbol,       "VariableSymbol",       "VARIABLE_NAME" );
+     NEW_TERMINAL_MACRO ( TemplateVariableSymbol, "TemplateVariableSymbol", "TEMPLATE_VARIABLE_NAME" );
+     NEW_NONTERMINAL_MACRO ( VariableSymbol, TemplateVariableSymbol, "VariableSymbol", "VARIABLE_NAME", true);
+
+  //
+  // [DT] 5/3/2000 -- Added TypeSymbol (as an experiment).
+  //
+  // NEW_TERMINAL_MACRO ( TypeSymbol,           "TypeSymbol",           "TYPE_NAME" );
      NEW_TERMINAL_MACRO ( FunctionTypeSymbol,   "FunctionTypeSymbol",   "FUNCTYPE_NAME" );
 
+  // DQ (12/26/2011): Added TemplateClassSymbol and changed ClassSymbol to be a non-terminal.
   // DQ (5/7/2004): ClassSymbol is not longer a nonterminal (change to be a terminal)
-     NEW_TERMINAL_MACRO ( ClassSymbol,          "ClassSymbol",          "CLASS_NAME" );
-     NEW_TERMINAL_MACRO ( TemplateSymbol,       "TemplateSymbol",       "TEMPLATE_NAME" ); // [DT] 5/10/2000
+  // NEW_TERMINAL_MACRO ( ClassSymbol,          "ClassSymbol",          "CLASS_NAME" );
+     NEW_TERMINAL_MACRO    ( TemplateClassSymbol,  "TemplateClassSymbol",  "TEMPLATE_CLASS_NAME" );
+     NEW_NONTERMINAL_MACRO ( ClassSymbol, TemplateClassSymbol, "ClassSymbol", "CLASS_NAME", true);
+
+  // [DT] 5/10/2000
+     NEW_TERMINAL_MACRO ( TemplateSymbol,       "TemplateSymbol",       "TEMPLATE_NAME" );
 
 #if 0
      //
@@ -36,13 +45,17 @@ Grammar::setUpSymbols ()
      NEW_TERMINAL_MACRO ( EnumSymbol,           "EnumSymbol",           "ENUM_NAME" );
      NEW_TERMINAL_MACRO ( EnumFieldSymbol,      "EnumFieldSymbol",      "FIELD_NAME" );
      NEW_TERMINAL_MACRO ( TypedefSymbol,        "TypedefSymbol",        "TYPEDEF_NAME" );
-     NEW_TERMINAL_MACRO ( MemberFunctionSymbol, "MemberFunctionSymbol", "MEMBER_FUNC_NAME" );
+
+  // NEW_TERMINAL_MACRO ( MemberFunctionSymbol, "MemberFunctionSymbol", "MEMBER_FUNC_NAME" );
+     NEW_TERMINAL_MACRO ( TemplateFunctionSymbol, "TemplateFunctionSymbol", "TEMPLATE_FUNC_NAME" );
+     NEW_TERMINAL_MACRO ( TemplateMemberFunctionSymbol, "TemplateMemberFunctionSymbol", "TEMPLATE_MEMBER_FUNC_NAME" );
+
      NEW_TERMINAL_MACRO ( LabelSymbol,          "LabelSymbol",          "LABEL_NAME" );
 
   // DQ (9/9/2011): Added support for JavaLabelStatement (which has a different type of support for labels than C/C++ or Fortran).
      NEW_TERMINAL_MACRO ( JavaLabelSymbol,      "JavaLabelSymbol",      "JAVA_LABEL_NAME" );
 
-     // [DT] 6/14/2000 -- Added DefaultSymbol.
+  // [DT] 6/14/2000 -- Added DefaultSymbol.
      NEW_TERMINAL_MACRO ( DefaultSymbol,        "DefaultSymbol",        "DEFAULT_NAME" );
 
   // DQ (5/3/2004): Added namespace support
@@ -63,7 +76,10 @@ Grammar::setUpSymbols ()
   // SgAliasSymbol IR nodes could be properly evaluated.
      NEW_TERMINAL_MACRO ( RenameSymbol,         "RenameSymbol",        "RENAME_SYMBOL");
 
-     NEW_NONTERMINAL_MACRO ( FunctionSymbol,MemberFunctionSymbol | RenameSymbol,"FunctionSymbol","FUNCTION_NAME", true);
+  // DQ (12/27/2011): Added more support for template declaration details in the AST.
+  // NEW_NONTERMINAL_MACRO ( FunctionSymbol,MemberFunctionSymbol | RenameSymbol,"FunctionSymbol","FUNCTION_NAME", true);
+     NEW_NONTERMINAL_MACRO ( MemberFunctionSymbol,TemplateMemberFunctionSymbol,"MemberFunctionSymbol","MEMBER_FUNC_NAME", true);
+     NEW_NONTERMINAL_MACRO ( FunctionSymbol, MemberFunctionSymbol | TemplateFunctionSymbol | RenameSymbol,"FunctionSymbol","FUNCTION_NAME", true);
 
   // DQ (5/3/2010): Added symbol table support to the binary analysis within ROSE.  Values that
   // are addresses or references to data will have symbols in a function symbol table.  All other 
@@ -166,6 +182,7 @@ Grammar::setUpSymbols ()
                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      MemberFunctionSymbol.setFunctionPrototype ( "HEADER_DECLARATION", "../Grammar/Symbol.code" );
+  // TemplateMemberFunctionSymbol.setFunctionPrototype ( "HEADER_DECLARATION", "../Grammar/Symbol.code" );
 
   // This is depricated (it is not used in Fortran, but still used in C/C++).
      LabelSymbol.setFunctionPrototype     ( "HEADER_LABEL_SYMBOL", "../Grammar/Symbol.code" );
@@ -283,6 +300,8 @@ Grammar::setUpSymbols ()
      Symbol.setFunctionSource        ( "SOURCE", "../Grammar/Symbol.code" );
 
      VariableSymbol.setFunctionSource       ( "SOURCE_GET_TYPE", "../Grammar/Symbol.code" );
+     TemplateVariableSymbol.setFunctionSource( "SOURCE_GET_TYPE", "../Grammar/Symbol.code" );
+
 #if USE_FORTRAN_IR_NODES
      IntrinsicSymbol.setFunctionSource      ( "SOURCE_GET_TYPE", "../Grammar/Symbol.code" );
   // ModuleSymbol.setFunctionSource         ( "SOURCE_MODULE_SYMBOL", "../Grammar/Symbol.code" );
@@ -291,16 +310,22 @@ Grammar::setUpSymbols ()
      CommonSymbol.setFunctionSource         ( "SOURCE_GET_TYPE", "../Grammar/Symbol.code" );
 #endif
 
-  // TypeSymbol.setFunctionSource         ( "SOURCE_GET_TYPE", "../Grammar/Symbol.code" );
+  // TypeSymbol.setFunctionSource           ( "SOURCE_GET_TYPE", "../Grammar/Symbol.code" );
      FunctionSymbol.setFunctionSource       ( "SOURCE_GET_TYPE", "../Grammar/Symbol.code" );
+     TemplateFunctionSymbol.setFunctionSource( "SOURCE_GET_TYPE", "../Grammar/Symbol.code" );
      ClassSymbol.setFunctionSource          ( "SOURCE_GET_TYPE", "../Grammar/Symbol.code" );
-     //TemplateSymbol.setFunctionSource     ( "SOURCE_GET_TYPE", "../Grammar/Symbol.code" );       // [DT] 5/10/2000
-     TemplateSymbol.setFunctionSource       ( "SOURCE_EMPTY_GET_TYPE", "../Grammar/Symbol.code" ); // [DT] 5/10/2000
+     TemplateClassSymbol.setFunctionSource  ( "SOURCE_GET_TYPE", "../Grammar/Symbol.code" );
+
+  // DQ (12/15/2011): I think we have to support types for templates.
+     TemplateSymbol.setFunctionSource     ( "SOURCE_GET_TYPE", "../Grammar/Symbol.code" );       // [DT] 5/10/2000
+  // TemplateSymbol.setFunctionSource       ( "SOURCE_EMPTY_GET_TYPE", "../Grammar/Symbol.code" ); // [DT] 5/10/2000
+
   // TemplateInstantiationSymbol.setFunctionSource( "SOURCE_GET_TYPE", "../Grammar/Symbol.code" ); // [DT] 5/11/2000
      EnumSymbol.setFunctionSource           ( "SOURCE_GET_TYPE", "../Grammar/Symbol.code" );
      EnumFieldSymbol.setFunctionSource      ( "SOURCE_GET_TYPE", "../Grammar/Symbol.code" );
      TypedefSymbol.setFunctionSource        ( "SOURCE_GET_TYPE", "../Grammar/Symbol.code" );
      MemberFunctionSymbol.setFunctionSource ( "SOURCE_GET_TYPE", "../Grammar/Symbol.code" );
+     TemplateMemberFunctionSymbol.setFunctionSource ( "SOURCE_GET_TYPE", "../Grammar/Symbol.code" );
 
   // DQ (12/9/2007): Handle the case of labels as a special case.
   // LabelSymbol.setFunctionSource          ( "SOURCE_EMPTY_GET_TYPE", "../Grammar/Symbol.code" );
@@ -312,10 +337,13 @@ Grammar::setUpSymbols ()
 
   // There is really no difference between the long and short versions (just debugging code, I think)
      VariableSymbol.setFunctionSource       ( "SOURCE_LONG_GET_NAME", "../Grammar/Symbol.code" );
+     TemplateVariableSymbol.setFunctionSource ( "SOURCE_LONG_GET_NAME", "../Grammar/Symbol.code" );
 
   // TypeSymbol.setFunctionSource           ( "SOURCE_LONG_GET_NAME",  "../Grammar/Symbol.code" );
      FunctionSymbol.setFunctionSource       ( "SOURCE_SHORT_GET_NAME", "../Grammar/Symbol.code" );
+     TemplateFunctionSymbol.setFunctionSource       ( "SOURCE_SHORT_GET_NAME", "../Grammar/Symbol.code" );
      ClassSymbol.setFunctionSource          ( "SOURCE_SHORT_GET_NAME", "../Grammar/Symbol.code" );
+     TemplateClassSymbol.setFunctionSource  ( "SOURCE_SHORT_GET_NAME", "../Grammar/Symbol.code" );
 
   // DQ (3/11/2004): Force name of templateSymbol to be the template string (at least until we can get 
   // to the point in the processing were we have access to the realy template name within EDG (then it 
@@ -328,8 +356,10 @@ Grammar::setUpSymbols ()
      EnumFieldSymbol.setFunctionSource      ( "SOURCE_SHORT_GET_NAME", "../Grammar/Symbol.code" );
      TypedefSymbol.setFunctionSource        ( "SOURCE_SHORT_GET_NAME", "../Grammar/Symbol.code" );
      MemberFunctionSymbol.setFunctionSource ( "SOURCE_SHORT_GET_NAME", "../Grammar/Symbol.code" );
+     TemplateMemberFunctionSymbol.setFunctionSource ( "SOURCE_SHORT_GET_NAME", "../Grammar/Symbol.code" );
 
      MemberFunctionSymbol.setFunctionSource ( "SOURCE_DECLARATION", "../Grammar/Symbol.code" );
+  // TemplateMemberFunctionSymbol.setFunctionSource ( "SOURCE_DECLARATION", "../Grammar/Symbol.code" );
 
   // DQ (2/29/2004): Source code for template declaration support
   // TemplateInstantiationSymbol.setFunctionSource( "SOURCE_TEMPLATE_INSTANTIATION_DECLARATION", "../Grammar/Symbol.code" );

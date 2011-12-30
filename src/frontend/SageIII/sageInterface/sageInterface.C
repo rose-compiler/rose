@@ -124,7 +124,8 @@ SageInterface::getNonInstantiatonDeclarationForClass ( SgTemplateInstantiationMe
      SgClassDefinition* classDefinition = memberFunctionInstantiation->get_class_scope();
      ROSE_ASSERT(classDefinition != NULL);
 
-     SgTemplateDeclaration* templateDeclaration = memberFunctionInstantiation->get_templateDeclaration();
+  // SgTemplateDeclaration* templateDeclaration = memberFunctionInstantiation->get_templateDeclaration();
+     SgDeclarationStatement* templateDeclaration = memberFunctionInstantiation->get_templateDeclaration();
      ROSE_ASSERT(templateDeclaration != NULL);
 
   // If it is a template instatiation, then we have to find the temple declaration (not the template instantiation declaration), else we want the class declaration.
@@ -153,7 +154,8 @@ SageInterface::getNonInstantiatonDeclarationForClass ( SgTemplateInstantiationMe
 //! Liao, 11/9/2009
   //! a better version for SgVariableDeclaration::set_baseTypeDefininingDeclaration(), handling all side effects automatically
   //! Used to have a struct declaration embedded into a variable declaration
-  void SageInterface::setBaseTypeDefiningDeclaration(SgVariableDeclaration* var_decl, SgDeclarationStatement *base_decl)
+void
+SageInterface::setBaseTypeDefiningDeclaration(SgVariableDeclaration* var_decl, SgDeclarationStatement *base_decl)
 {
   ROSE_ASSERT (var_decl && base_decl);
 
@@ -621,11 +623,23 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
 
      switch (declaration->variantT())
         {
+       // DQ (12/28/2011): Added seperate support for new design of template IR nodes.
        // DQ (12/4/2011): Added support for template declarations in the AST.
           case V_SgTemplateMemberFunctionDeclaration:
+               name = isSgTemplateMemberFunctionDeclaration(declaration)->get_name().str();
+               break;
+
+       // DQ (12/28/2011): Added seperate support for new design of template IR nodes.
           case V_SgTemplateFunctionDeclaration:
+               name = isSgTemplateFunctionDeclaration(declaration)->get_name().str();
+               break;
+
+       // DQ (12/28/2011): Added seperate support for new design of template IR nodes.
        // DQ (6/11/2011): Added support for new template IR nodes.
           case V_SgTemplateClassDeclaration:
+               name = isSgTemplateClassDeclaration(declaration)->get_name().str();
+               break;
+
           case V_SgTemplateDeclaration:
                name = isSgTemplateDeclaration(declaration)->get_name().str();
                break;
@@ -1185,7 +1199,8 @@ SageInterface::get_name ( const SgSupport* node )
 
                     case SgTemplateArgument::template_template_argument:
                        {
-                         SgTemplateDeclaration* t = templateArgument->get_templateDeclaration();
+                      // SgTemplateDeclaration* t = templateArgument->get_templateDeclaration();
+                         SgDeclarationStatement* t = templateArgument->get_templateDeclaration();
                          ROSE_ASSERT(t != NULL);
                          name += get_name(t);
                          break;
@@ -1863,7 +1878,8 @@ SageInterface::templateDefinitionIsInClass( SgTemplateInstantiationMemberFunctio
 #endif
 
   // Alternative approach
-     SgTemplateDeclaration* templateDeclaration = memberFunctionDeclaration->get_templateDeclaration();
+  // SgTemplateDeclaration* templateDeclaration = memberFunctionDeclaration->get_templateDeclaration();
+     SgDeclarationStatement* templateDeclaration = memberFunctionDeclaration->get_templateDeclaration();
      printf ("In templateDefinitionIsInClass(): templateDeclaration = %p parent of templateDeclaration = %p = %s \n",templateDeclaration,
           templateDeclaration->get_parent(),templateDeclaration->get_parent()->class_name().c_str());
 
@@ -2626,9 +2642,11 @@ SageInterface::rebuildSymbolTable ( SgScopeStatement* scope )
 
                            // If this is a copy then it would be nice to make sure that the scope has been properly set.
                            // Check this by looking for the associated template declaration in the scope.
-                              SgTemplateDeclaration* templateDeclaration = derivedDeclaration->get_templateDeclaration();
+                           // SgTemplateDeclaration* templateDeclaration = derivedDeclaration->get_templateDeclaration();
+                              SgDeclarationStatement* templateDeclaration = derivedDeclaration->get_templateDeclaration();
                               ROSE_ASSERT(templateDeclaration != NULL);
-                              SgTemplateSymbol* templateSymbol = derivedDeclarationScope->lookup_template_symbol(templateDeclaration->get_name());
+                           // SgTemplateSymbol* templateSymbol = derivedDeclarationScope->lookup_template_symbol(templateDeclaration->get_name());
+                              SgTemplateSymbol* templateSymbol = derivedDeclarationScope->lookup_template_symbol(templateDeclaration->get_template_name());
                               if (templateSymbol != NULL)
                                  {
                                 // The symbol is not present, so we have to build one and add it.

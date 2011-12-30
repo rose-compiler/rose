@@ -1,6 +1,11 @@
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
+
+// DQ (12/29//2011): Since this file used the TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS macro we need to include rose_config.h.
+#include "rose_config.h"
+
 #include "markCompilerGenerated.h"
+
 void
 markAsCompilerGenerated( SgNode* node )
    {
@@ -13,8 +18,20 @@ markAsCompilerGenerated( SgNode* node )
      astFixupTraversal.traverse(node,preorder);
    }
 
+#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
+// DQ (12/23/2011): Template declarations are now derived from there associated non-template 
+// declarations (e.g. SgTemplateClassDeclaration is derived from SgClassDeclaration). It was
+// previously the case that SgTemplateClassDeclaration was derived from SgTemplateDeclaration
+// in the first attempt to put the template declarations into the AST.  Previous to this (within 
+// the EDG 3.3 support within ROSE there was only a SgTemplateDeclaration and there was no 
+// SgTemplateClassDeclaration.  The same story was the case for functions, member functions, 
+// and variable template declrations.
+bool
+MarkAsCompilerGenerated::templateDeclarationCanBeMarkedAsCompilerGenerated(SgDeclarationStatement* templateDeclaration)
+#else
 bool
 MarkAsCompilerGenerated::templateDeclarationCanBeMarkedAsCompilerGenerated(SgTemplateDeclaration* templateDeclaration)
+#endif
    {
   // Note that this function uses and requires parent pointers to be previously set.
 

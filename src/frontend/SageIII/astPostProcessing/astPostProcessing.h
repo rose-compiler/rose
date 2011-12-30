@@ -8,7 +8,10 @@
 #include "resetParentPointers.h"
 #include "processTemplateHandlingOptions.h"
 #include "fixupSymbolTables.h"
-#include "markCompilerGenerated.h"
+
+// DQ (12/29/2011): This header file requires rose_config.h and we don't want all of ROSE to require this.
+// #include "markCompilerGenerated.h"
+
 #include "markTemplateInstantiationsForOutput.h"
 #include "resetTemplateNames.h"
 #include "fixupDeclarations.h"

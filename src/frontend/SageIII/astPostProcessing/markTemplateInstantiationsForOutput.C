@@ -1,5 +1,9 @@
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
+
+// DQ (12/29//2011): Since this file used the TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS macro we need to include rose_config.h.
+#include "rose_config.h"
+
 #include "markForOutputInCodeGeneration.h"
 #include "markTemplateInstantiationsForOutput.h"
 
@@ -172,7 +176,11 @@ ProcessMemberFunctionTemplateDeclarations ( set<SgDeclarationStatement*> setOfRe
                ROSE_ASSERT ( isfirstNondefiningDeclaration == true || isDefiningDeclaration == true );
 
             // If the template declaration is in the current file then we need not output the instantiation (skip marking instantiation for output!)
+#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
+               SgDeclarationStatement* templateDeclaration = memberFunctionInstantiation->get_templateDeclaration();
+#else
                SgTemplateDeclaration* templateDeclaration = memberFunctionInstantiation->get_templateDeclaration();
+#endif
                ROSE_ASSERT(templateDeclaration != NULL);
 #if 0
                printf ("templateDeclaration = %p = %s \n",templateDeclaration,templateDeclaration->get_name().str());
@@ -195,8 +203,11 @@ ProcessMemberFunctionTemplateDeclarations ( set<SgDeclarationStatement*> setOfRe
                     SgTemplateInstantiationDecl* memberFunctionScopeTemplateInstantiationDeclaration = 
                          isSgTemplateInstantiationDecl(memberFunctionScopeTemplateInstantiationDefinition->get_declaration());
                     ROSE_ASSERT(memberFunctionScopeTemplateInstantiationDeclaration != NULL);
-                    SgTemplateDeclaration* memberFunctionScopeTemplateDeclaration = 
-                         memberFunctionScopeTemplateInstantiationDeclaration->get_templateDeclaration();
+#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
+                    SgDeclarationStatement* memberFunctionScopeTemplateDeclaration = memberFunctionScopeTemplateInstantiationDeclaration->get_templateDeclaration();
+#else
+                    SgTemplateDeclaration* memberFunctionScopeTemplateDeclaration = memberFunctionScopeTemplateInstantiationDeclaration->get_templateDeclaration();
+#endif
                     ROSE_ASSERT(memberFunctionScopeTemplateDeclaration != NULL);
 #if 0
                     printf ("Warning the member function might be specified in a templated class which is nested in another templated class! \n");
@@ -224,8 +235,11 @@ ProcessMemberFunctionTemplateDeclarations ( set<SgDeclarationStatement*> setOfRe
                     printf ("isSpecialization = %s \n",isSpecialization ? "true" : "false");
                     printf ("isDefinedInClass = %s \n",isDefinedInClass ? "true" : "false");
 #endif
+#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
+                    SgDeclarationStatement* templateDeclaration = memberFunctionInstantiation->get_templateDeclaration();
+#else
                     SgTemplateDeclaration* templateDeclaration = memberFunctionInstantiation->get_templateDeclaration();
-
+#endif
                  // bool templateDeclarationIsDeclaredInClass = (templateDeclaration->get_parent() == templateDeclaration->get_scope());
                          SgNode* parentOfTemplateDeclaration = templateDeclaration->get_parent();
                  // Later this test will have to be for "isTemplateDefinition(parentOfTemplateDeclaration));"
@@ -668,7 +682,11 @@ MarkTemplateInstantiationsForOutput::ProcessFunctionTemplateDeclarations ( set<S
                ROSE_ASSERT ( isfirstNondefiningDeclaration == true || isDefiningDeclaration == true );
 
             // If the template declaration is in the current file then we need not output the instantiation (skip marking instantiation for output!)
+#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
+               SgDeclarationStatement* templateDeclaration = functionInstantiation->get_templateDeclaration();
+#else
                SgTemplateDeclaration* templateDeclaration = functionInstantiation->get_templateDeclaration();
+#endif
                ROSE_ASSERT(templateDeclaration != NULL);
 #if 0
                printf ("templateDeclaration = %p = %s \n",templateDeclaration,templateDeclaration->get_name().str());
@@ -729,11 +747,15 @@ MarkTemplateInstantiationsForOutput::ProcessClassTemplateDeclarations ( set<SgDe
                                    isfirstNondefiningDeclaration ? "true" : "false");
                (*i)->get_file_info()->display("required declaration");
 #endif
-                           // At least one of these should be true!
+            // At least one of these should be true!
                ROSE_ASSERT ( isfirstNondefiningDeclaration == true || isDefiningDeclaration == true );
 
-                           // If the template declaration is in the current file then we need not output the instantiation (skip marking instantiation for output!)
+            // If the template declaration is in the current file then we need not output the instantiation (skip marking instantiation for output!)
+#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
+               SgDeclarationStatement* templateDeclaration = classInstantiation->get_templateDeclaration();
+#else
                SgTemplateDeclaration* templateDeclaration = classInstantiation->get_templateDeclaration();
+#endif
                ROSE_ASSERT(templateDeclaration != NULL);
 #if 0
                printf ("templateDeclaration = %p = %s \n",templateDeclaration,templateDeclaration->get_name().str());

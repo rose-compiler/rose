@@ -713,6 +713,8 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #endif
                switch (declaration->variantT())
                   {
+                 // DQ (12/26/2011): Added support for template class declarations (part of new design for template declarations).
+                    case V_SgTemplateClassDeclaration:
                     case V_SgClassDeclaration:
                        {
                          SgClassDeclaration* classDeclaration = isSgClassDeclaration(declaration);
@@ -818,6 +820,10 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                          
                          break;
                        }
+
+                 // DQ (12/28/2011): Added support for template functions and template member functions.
+                    case V_SgTemplateFunctionDeclaration:
+                    case V_SgTemplateMemberFunctionDeclaration:
 
                  // DQ (6/1/2011): Added case for SgTemplateInstantiationFunctionDecl.
                  // case V_SgTemplateInstantiationFunctionDecl:
@@ -1156,7 +1162,8 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                     default:
                        {
                       // Handle cases are we work through specific example codes.
-                         printf ("default reached symbol = %s \n",symbol->class_name().c_str());
+                      // printf ("default reached symbol = %s \n",symbol->class_name().c_str());
+                         printf ("default reached declaration = %p = %s \n",declaration,declaration->class_name().c_str());
                          ROSE_ASSERT(false);
                        }
                   }
@@ -1278,6 +1285,8 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 
                     switch (symbol->variantT())
                        {
+                      // DQ (12/27/2011): Added support for template class symbols.
+                         case V_SgTemplateClassSymbol:
                          case V_SgClassSymbol:
                             {
                               SgClassSymbol* classSymbol = isSgClassSymbol(symbol);
@@ -1398,6 +1407,10 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #endif
                               break;
                             }
+
+                      // DQ (12/28/2011): Added support for new template handling in the AST.
+                         case V_SgTemplateMemberFunctionSymbol:
+                         case V_SgTemplateFunctionSymbol:
 
                          case V_SgMemberFunctionSymbol:
                          case V_SgFunctionSymbol:
@@ -1855,6 +1868,11 @@ NameQualificationTraversal::nameQualificationDepth ( SgInitializedName* initiali
           return 0;
         }
 
+  // DQ (12/28/2011): Added test...
+     ROSE_ASSERT(initializedName->get_scope() != NULL);
+
+     printf ("In NameQualificationTraversal::nameQualificationDepth(): initializedName->get_scope() = %p = %s \n",initializedName->get_scope(),initializedName->get_scope()->class_name().c_str());
+
      SgDeclarationStatement* declaration = associatedDeclaration(initializedName->get_scope());
   // ROSE_ASSERT(declaration != NULL);
 
@@ -1958,8 +1976,17 @@ NameQualificationTraversal::nameQualificationDepth ( SgInitializedName* initiali
                          printf ("initializedName = %p = %s \n",initializedName,initializedName->get_name().str());
                          initializedName->get_file_info()->display("NameQualificationTraversal::nameQualificationDepth(): initializedName");
                        }
-                    ROSE_ASSERT(declaration != NULL);
-                    amountOfNameQualificationRequired = nameQualificationDepth(declaration,currentScope,positionStatement) + 1;
+
+                 // DQ (12/28/2011): I think it may be OK to have this be NULL, in which case there is not name qualification (scope has no associated declaration, so it is NULL as is should be).
+                 // ROSE_ASSERT(declaration != NULL);
+                    if (declaration != NULL)
+                       {
+                         amountOfNameQualificationRequired = nameQualificationDepth(declaration,currentScope,positionStatement) + 1;
+                       }
+                      else
+                       {
+                         printf ("Warning: In NameQualificationTraversal::nameQualificationDepth() --- It might be that this is an incorrect fix for where declaration == NULL in test2004_97.C \n");
+                       }
                   }
              }
         }

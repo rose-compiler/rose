@@ -1848,10 +1848,17 @@ Specifiers that can have only one value (implemented with a protected enum varia
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      TemplateParameter.setDataPrototype     ( "SgExpression*", "defaultExpressionParameter", "= NULL",
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
+     TemplateParameter.setDataPrototype     ( "SgDeclarationStatement*", "templateDeclaration", "= NULL",
+                                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     TemplateParameter.setDataPrototype     ( "SgDeclarationStatement*", "defaultTemplateDeclarationParameter", "= NULL",
+                                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#else
      TemplateParameter.setDataPrototype     ( "SgTemplateDeclaration*", "templateDeclaration", "= NULL",
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      TemplateParameter.setDataPrototype     ( "SgTemplateDeclaration*", "defaultTemplateDeclarationParameter", "= NULL",
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
 
   // DQ (11/21/2011): template parameters can be "int U = 42" in which case "U" needs to be an initialized name (see test2011_157.C).
      TemplateParameter.setDataPrototype     ( "SgInitializedName*", "initializedName", "= NULL",
@@ -1869,12 +1876,31 @@ Specifiers that can have only one value (implemented with a protected enum varia
      TemplateArgument.setDataPrototype     ( "SgExpression*", "expression", "= NULL",
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+  // DQ (12/22/2011): The new design has a SgTemplateClassDeclaration derived from a SgClassDeclaration (and
+  // the same for SgTemplateFunctionDeclaration, etc.) So we have to change this to support the new design.
+  // Now we have to use a common base class which would be the SgDeclarationStatement.
   // DQ: Case of a template specialization (and partial specialization) not handled
   // here (not clear on how to do this)
   // TemplateArgument.setDataPrototype     ( "SgTemplateInstantiationDecl*", "templateInstantiation", "= NULL",
   //              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
+#if 1
+     TemplateArgument.setDataPrototype     ( "SgDeclarationStatement*", "templateDeclaration", "= NULL",
+                                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#else
+     TemplateArgument.setDataPrototype     ( "SgTemplateClassDeclaration*", "templateClassDeclaration", "= NULL",
+                                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     TemplateArgument.setDataPrototype     ( "SgTemplateFunctionDeclaration*", "templateFunctionDeclaration", "= NULL",
+                                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     TemplateArgument.setDataPrototype     ( "SgTemplateMemberFunctionDeclaration*", "templateMemberFunctionDeclaration", "= NULL",
+                                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     TemplateArgument.setDataPrototype     ( "SgTemplateVariableDeclaration*", "templateVariableDeclaration", "= NULL",
+                                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
+#else
      TemplateArgument.setDataPrototype     ( "SgTemplateDeclaration*", "templateDeclaration", "= NULL",
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
 
   // DQ (2/27/2005): Support for recognition of default template arguments
   // (required to fix bug demonstrated in test2005_12.C)

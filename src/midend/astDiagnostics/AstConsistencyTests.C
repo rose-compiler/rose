@@ -4,8 +4,12 @@
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 
+// DQ (12/29//2011): Since "markCompilerGenerated.h" uses the TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS macro we need to include rose_config.h.
+#include "rose_config.h"
+
 // tps : needed to define this here as it is defined in rose.h
 #include "markCompilerGenerated.h"
+
 #include "AstDiagnostics.h"
 #ifndef ASTTESTS_C
    #define ASTTESTS_C
@@ -2556,6 +2560,21 @@ TestAstSymbolTables::visit ( SgNode* node )
                          SgClassSymbol* classSymbol = isSgClassSymbol(symbol);
                          ROSE_ASSERT(classSymbol != NULL);
                          ROSE_ASSERT(classSymbol->get_declaration() != NULL);
+
+                      // DQ (12/27/2011): Make sure this is not a SgClassSymbol that is incorrectly associated with a SgTemplateClassDeclaration.
+                         ROSE_ASSERT(isSgTemplateClassDeclaration(classSymbol->get_declaration()) == NULL);
+                         break;
+                       }
+
+                 // DQ (12/27/2011): Added new symbol (and required support).
+                    case V_SgTemplateClassSymbol:
+                       {
+                         SgTemplateClassSymbol* templateClassSymbol = isSgTemplateClassSymbol(symbol);
+                         ROSE_ASSERT(templateClassSymbol != NULL);
+                         ROSE_ASSERT(templateClassSymbol->get_declaration() != NULL);
+
+                      // DQ (12/27/2011): Make sure this is correctly associated with a SgTemplateClassDeclaration.
+                         ROSE_ASSERT(isSgTemplateClassDeclaration(templateClassSymbol->get_declaration()) != NULL);
                          break;
                        }
 
@@ -2582,6 +2601,10 @@ TestAstSymbolTables::visit ( SgNode* node )
                          ROSE_ASSERT(enumSymbol->get_declaration() != NULL);
                          break;
                        }
+
+                 // DQ (12/28/2011): These can be handled using the same case.
+                    case V_SgTemplateFunctionSymbol:
+                    case V_SgTemplateMemberFunctionSymbol:
 
                  // These can be handled by the same case
                     case V_SgFunctionSymbol:

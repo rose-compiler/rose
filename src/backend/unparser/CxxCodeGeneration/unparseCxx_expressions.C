@@ -387,8 +387,11 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
 
             // DQ (8/24/2006): Skip output of the extra space.
             // unp->u_exprStmt->curprint ( templateArgument->get_templateDeclaration()->get_name().str() << " ";
+#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
+               unp->u_exprStmt->curprint ( templateArgument->get_templateDeclaration()->get_template_name().str());
+#else
                unp->u_exprStmt->curprint ( templateArgument->get_templateDeclaration()->get_name().str());
-
+#endif
             // printf ("Error: template_argument case not implemented in Unparse_ExprStmt::unparseTemplateArgument \n");
             // ROSE_ABORT();
                break;

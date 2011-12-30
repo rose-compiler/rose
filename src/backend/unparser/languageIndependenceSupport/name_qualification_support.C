@@ -54,6 +54,10 @@ Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
                break;
              }
 
+       // DQ (12/29/2011): Added cases for new template IR nodes.
+          case V_SgTemplateFunctionDeclaration:
+          case V_SgTemplateMemberFunctionDeclaration:
+
           case V_SgFunctionDeclaration:
           case V_SgMemberFunctionDeclaration:
           case V_SgTemplateInstantiationFunctionDecl:
