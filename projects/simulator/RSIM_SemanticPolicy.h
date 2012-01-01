@@ -5,7 +5,7 @@
 #include "VirtualMachineSemantics.h"
 
 
-#define RSIM_SEMANTIC_POLICY    VirtualMachineSemantics::Policy
+#define RSIM_SEMANTIC_POLICY    VirtualMachineSemantics::Policy<VirtualMachineSemantics::ValueType>
 #define RSIM_SEMANTIC_VTYPE     VirtualMachineSemantics::ValueType
 
 
@@ -109,7 +109,7 @@ public:
     }
     template<size_t Len>
     void writeRegister(const RegisterDescriptor &reg, const RSIM_SEMANTIC_VTYPE<Len> &val) {
-        VirtualMachineSemantics::Policy::writeRegister<Len>(reg, val);
+        RSIM_SEMANTIC_POLICY::writeRegister<Len>(reg, val);
         if (reg.get_major()==x86_regclass_segment) {
             ROSE_ASSERT(0==val.known_value() || 3 == (val.known_value() & 7)); /*GDT and privilege level 3*/
             load_sr_shadow((X86SegmentRegister)reg.get_minor(), val.known_value()>>3);
