@@ -1,5 +1,9 @@
 V0.?.? ? AP,GB,DE,FB...
 
+* DOT outout of ICFG [MS]
+  - an output of the icfg can now be enerated with the satire_driver
+  - the output is a cluster graph where each cluster represents a function
+
 * Provided analyzers [GB]
   - A number of SATIrE analyzers are now compiled into a shared library for
     easy combination with other analyzers.
