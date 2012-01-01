@@ -658,7 +658,7 @@ Partitioner::pops_return_address(rose_addr_t va)
 
         SgAsmx86Instruction *last_insn = isSgAsmx86Instruction(bb->last_insn());
 
-        typedef VirtualMachineSemantics::Policy Policy;
+        typedef VirtualMachineSemantics::Policy<VirtualMachineSemantics::ValueType> Policy;
         typedef X86InstructionSemantics<Policy, VirtualMachineSemantics::ValueType> Semantics;
         Policy policy;
         policy.set_map(get_map());
@@ -1262,8 +1262,8 @@ Partitioner::mark_ipd_configuration()
 
             MemoryMap *map = get_map();
             assert(map!=NULL);
-            using namespace VirtualMachineSemantics;
-            typedef X86InstructionSemantics<Policy, ValueType> Semantics;
+            typedef VirtualMachineSemantics::Policy<VirtualMachineSemantics::ValueType> Policy;
+            typedef X86InstructionSemantics<Policy, VirtualMachineSemantics::ValueType> Semantics;
             Policy policy;
             policy.set_map(map);
             Semantics semantics(policy);
@@ -1366,12 +1366,15 @@ Partitioner::mark_ipd_configuration()
 
             /* Extract the list of successors. The number of successors is the first element of the list. */
             if (debug) fprintf(stderr, "  extracting program return values...\n");
-            ValueType<32> nsucs = policy.readMemory<32>(x86_segreg_ss, policy.number<32>(svec_va), policy.true_());
+            VirtualMachineSemantics::ValueType<32> nsucs = policy.readMemory<32>(x86_segreg_ss, policy.number<32>(svec_va),
+                                                                                 policy.true_());
             assert(nsucs.is_known());
             if (debug) fprintf(stderr, "    number of successors: %"PRId64"\n", nsucs.known_value());
             assert(nsucs.known_value()*4 <= svec_size-4); /*first entry is size*/
             for (size_t i=0; i<nsucs.known_value(); i++) {
-                ValueType<32> suc_va = policy.readMemory<32>(x86_segreg_ss, policy.number<32>(svec_va+4+i*4), policy.true_());
+                VirtualMachineSemantics::ValueType<32> suc_va = policy.readMemory<32>(x86_segreg_ss,
+                                                                                      policy.number<32>(svec_va+4+i*4),
+                                                                                      policy.true_());
                 if (suc_va.is_known()) {
                     if (debug) fprintf(stderr, "    #%zu: 0x%08"PRIx64"\n", i, suc_va.known_value());
                     bb->cache.sucs.insert(suc_va.known_value());
