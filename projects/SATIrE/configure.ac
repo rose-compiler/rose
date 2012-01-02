@@ -133,7 +133,7 @@ AC_ARG_WITH([swi-prolog],
    :, [with_swi_prolog=check])
  
 AS_IF([test "x$with_swi_prolog" != xno], dnl yes or autodetect
-      [AS_IF([test -n "$SWIPL" -a -x $SWIPL], 
+      [AS_IF([test -n "$SWIPL" -a -x "$SWIPL"], 
              [with_swi_prolog=yes],
       	     [AS_IF([test "x$with_swi_prolog" != xcheck],
                     [AC_MSG_FAILURE([--with-swi_prolog was given, but test for SWI Prolog failed])])],
