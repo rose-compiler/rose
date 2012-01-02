@@ -41,10 +41,10 @@
 :- use_module(library(option)).
 :- use_module(library(lists)).
 :- use_module(library(debug)).
-:- use_module(pldoc(doc_wiki)).
-:- use_module(pldoc(doc_process)).
-:- use_module(pldoc(doc_modes)).
-:- use_module(pldoc(doc_html),		% we cannot import all as the
+:- use_module(library(doc_wiki)).
+:- use_module(library(doc_process)).
+:- use_module(library(doc_modes)).
+:- use_module(library(doc_html),		% we cannot import all as the
 	      [ doc_file_objects/5,	% \commands have the same name
 		doc_tag_title/2,
 		existing_linked_file/2,

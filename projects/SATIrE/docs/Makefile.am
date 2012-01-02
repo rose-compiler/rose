@@ -124,11 +124,16 @@ comefrom.pl: $(top_srcdir)/tools/loopbounds/comefrom.pl
 
 %.tex: %.pl while2for.pl types.pl comefrom.pl termite_spec.pl
 	export TERMITE_LIB=$(top_srcdir)/src/termite/termite && \
-	echo "use_module(library(doc_latex)), \
-	      getenv('PWD', CurDir), \
+	echo "getenv('PWD', CurDir), \
 	      asserta(library_directory(CurDir)), \
+	      asserta(library_directory('$(srcdir)/ltx2htm')), \
+	      asserta(library_directory('$(builddir)/ltx2htm-inst/lib/latex2html')), \
+	      asserta(library_directory('$(srcdir)')), \
+	      asserta(library_directory('$(srcdir)/pldoc')), \
 	      getenv('TERMITE_LIB', TermitePath), \
 	      asserta(library_directory(TermitePath)), \
+	      use_module(library(pldoc)), \
+	      use_module(library(pldoc_latex)). \
 	      consult('$*'), \
 	      open('$@', write, _, [alias(wstrm)]),\
               latex_for_file('$<', wstrm, \
