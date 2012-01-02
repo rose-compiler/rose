@@ -5,7 +5,9 @@
 #include <err.h>
 #include <SgGraphTemplate.h>
 #include <graphProcessing.h>
+
 #include <staticCFG.h>
+#include <interproceduralCFG.h>
 /* Testing the graph traversal mechanism now implementing in AstProcessing.h (inside src/midend/astProcessing/)*/
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -69,18 +71,18 @@ int main(int argc, char *argv[]) {
 
   SgFunctionDefinition* mainDef = mainDefDecl->get_definition(); 
    visitorTraversal* vis = new visitorTraversal();
-    StaticCFG::CFG cfg(mainDef);
+    StaticCFG::InterproceduralCFG cfg(mainDef);
    //cfg.buildFullCFG();
     stringstream ss;
     string fileName= StringUtility::stripPathFromFileName(mainDef->get_file_info()->get_filenameString());
     string dotFileName1=fileName+"."+ mainDef->get_declaration()->get_name() +".dot";
 
     cfgToDot(mainDef,dotFileName1); 
-    //cfg->buildFullCFG();
+    //cfg.buildFullCFG();
     SgIncidenceDirectedGraph* g = new SgIncidenceDirectedGraph();
     g = cfg.getGraph();
     myGraph* mg = new myGraph();
-    mg = instantiateGraph(g, cfg);
+    mg = instantiateGraph(g, cfg, mainDef);
     vis->tltnodes = 0;
     vis->paths = 0;
     //vis->firstPrepGraph(constcfg);

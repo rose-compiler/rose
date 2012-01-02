@@ -38,6 +38,8 @@ class visitorTraversal : public SgGraphTraversal<CFGforT>
 void visitorTraversal::analyzePath(vector<VertexID>& pth) {
        // ROSE_ASSERT(find(pathstore.begin(), pathstore.end(), pth) == pathstore.end());
        // pathstore.push_back(pth);
+         //std::cout << "pathsize: " << pth.size() << std::endl;
+         //std::cout
         #pragma omp atomic
         paths++;
         

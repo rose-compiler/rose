@@ -296,6 +296,9 @@ void visitorTraversal::analyzePath(std::vector<VertexID>& pathR) {
             if (k < path.size()) {
             exprPath.push_back(path[k]);
             }
+            if (k == path.size()) {
+                 return;
+           }
             //string ss = mainParse(exprPath);
             //ROSE_ASSERT(y1 != NULL);
             //std::cout << "exprPath.size(): " << exprPath.size() << std::endl;
@@ -385,6 +388,8 @@ void visitorTraversal::analyzePath(std::vector<VertexID>& pathR) {
            // }
             yices_expr y2 =  mainParse(exprPath, ctx);
             ROSE_ASSERT(y2 != NULL);
+            ROSE_ASSERT(path[j] != NULL);
+            ROSE_ASSERT(g != NULL);
             //std::cout << "exprPath.size(): " << exprPath.size() << std::endl; 
             std::set<SgDirectedGraphEdge*> oeds = g->computeEdgeSetOut(path[j]);
             ROSE_ASSERT(oeds.size() == 1);
@@ -1097,40 +1102,114 @@ std::string getBinaryOp(SgNode* n) {
 
 int main(int argc, char *argv[]) {
 
+  string fileSaver = "saviorStuff";
+  ofstream fout;
+    fout.open(fileSaver.c_str(),ios::app);
+
   struct timeval t1, t2;
   SgProject* proj = frontend(argc,argv);
   ROSE_ASSERT (proj != NULL);
 
-  SgFunctionDeclaration* mainDefDecl = SageInterface::findMain(proj);
 
+  Rose_STL_Container<SgNode*> functionDeclarationList = NodeQuery::querySubTree(proj,V_SgFunctionDeclaration);
+  std::vector<SgNode*> forsA;
+  int counter = 0;
+  for (Rose_STL_Container<SgNode*>::iterator i = functionDeclarationList.begin(); i != functionDeclarationList.end(); i++) {
+
+          SgFunctionDeclaration* fni = isSgFunctionDeclaration(*i);
+          ROSE_ASSERT(fni != NULL);
+          forsA.push_back(fni);
+  }
+  for (int i = 0; i < forsA.size(); i++) {
+      SgFunctionDeclaration* sfd = isSgFunctionDeclaration(forsA[i]);
+      SgFunctionDefinition* sfdd = sfd->get_definition();
+      visitorTraversal* visInter = new visitorTraversal();
+  
+int counter = i;
+   //std::cout << "counter: " << counter << std::endl;
+   SgFunctionDefinition* fnc = isSgFunctionDefinition(sfdd);
+   if (fnc != NULL) {
+  stringstream ss;
+  SgFunctionDeclaration* functionDeclaration = fnc->get_declaration();
+  string fileName= functionDeclaration->get_name().str();//StringUtility::stripPathFromFileName(mainDef->get_file_info()->get_filenameString());
+    string dotFileName1;
+ss << fileName << "." << counter << ".dot";
+    counter++;
+    dotFileName1 = ss.str();
+    //SgFunctionDefinition* fnc = functionDeclaration->get_definition();
+    StaticCFG::InterproceduralCFG* cfg = new StaticCFG::InterproceduralCFG(fnc);
+    SgIncidenceDirectedGraph* g = new SgIncidenceDirectedGraph();
+     visitorTraversal* vis = new visitorTraversal();
+    g = cfg->getGraph();
+    myGraph* mg = new myGraph();
+    mg = instantiateGraph(g, *cfg, fnc);
+    vis->tltnodes = 0;
+    vis->paths = 0;
+    vis->orig = mg;
+    vis->cfg = cfg;
+    vis->g = g;
+ //std::cout << dotFileName1 << std::endl;
+ //cfgToDot(fnc,dotFileName1);
+    //vis->firstPrepGraph(constcfg);
+    //t1 = getCPUTime();
+    vis->constructPathAnalyzer(mg, true, 0, 0, true);
+
+    //t2 = getCPUTim
+    if (ipaths > 0) {
+    string fN = StringUtility::stripPathFromFileName(fnc->get_file_info()->get_filenameString());
+    fout << "filename: " << fN << std::endl;
+    fout << "function: " << fileName << std::endl;
+    fout << "paths: " << vis->paths << std::endl;
+    fout << "ipaths: " << ipaths << std::endl;
+    }
+    //delete vis;
+   //delete cfg;
+    //delete g;
+    //delete mg;
+    //std::cout << "took: " << timeDifference(t2, t1) << std::endl;
+    }
+    }
+
+
+
+  SgFunctionDeclaration* mainDefDecl = SageInterface::findMain(proj);
+  if (mainDefDecl != NULL) {
   SgFunctionDefinition* mainDef = mainDefDecl->get_definition();
    visitorTraversal* vis = new visitorTraversal();
-    StaticCFG::CFG cfg(mainDef);
+    StaticCFG::InterproceduralCFG* cfg = new StaticCFG::InterproceduralCFG(mainDef);
+    
    //cfg.buildFullCFG();
     stringstream ss;
     string fileName= StringUtility::stripPathFromFileName(mainDef->get_file_info()->get_filenameString());
     string dotFileName1=fileName+"."+ mainDef->get_declaration()->get_name() +".dot";
 
-    cfgToDot(mainDef,dotFileName1);
+    //cfgToDot(mainDef,dotFileName1);
     //cfg->buildFullCFG();
     SgIncidenceDirectedGraph* g = new SgIncidenceDirectedGraph();
-    g = cfg.getGraph();
+    g = cfg->getGraph();
     myGraph* mg = new myGraph();
-    mg = instantiateGraph(g, cfg);
+    mg = instantiateGraph(g, *cfg, mainDef);
     vis->tltnodes = 0;
     vis->paths = 0;
     ipaths = 0;
     vis->orig = mg;
     vis->g = g;
+    vis->cfg = cfg;
+    
     //vis->firstPrepGraph(constcfg);
     //t1 = getCPUTime();
     vis->constructPathAnalyzer(mg, true);
     //t2 = getCPUTime();
     //std::cout << "took: " << timeDifference(t2, t1) << std::endl;
-    //cfg.clearNodesAndEdges();
-    std::cout << "finished" << std::endl;
-    std::cout << "tltnodes: " << vis->tltnodes << " paths: " << vis->paths << " ipaths: " << ipaths <<  std::endl;
-    //delete vis;
+    //cfg.clearNodesAndEdges(;
+    if (ipaths > 0) {
+    fout << "filename: " << fileName << std::endl;
+    fout << "finished" << std::endl;
+    fout << "tltnodes: " << vis->tltnodes << " paths: " << vis->paths << " ipaths: " << ipaths <<  std::endl;
+   } 
+   //delete vis;
+    }
+    fout.close();
     return 0;
 }
 
@@ -1181,7 +1260,6 @@ int main(int argc, char *argv[]) {
    std::vector<std::vector<int> > pts;
    std::vector<int> ptsP;
     //std::vector<SgExpressionStmt*> exprs = SageInterface::querySubTree<SgExpressionStmt>(proj);
-/*  
  for (int q1 = 0; q1 < exprs.size(); q1++) {
       ptsP.clear();
       for (int q2 = 0; q2 < exprs.size(); q2++) {

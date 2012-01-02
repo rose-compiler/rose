@@ -1101,5 +1101,18 @@ vis->sssv = sssv;
 vis->constructPathAnalyzer(mg, true, 0, 0, true);
 std::cout << "finished" << std::endl;
 std::cout << " paths: " << vis->paths.size() << std::endl;
+if (vis->paths.size() != sssv.size()) {
+    for (std::set<std::vector<string> >::iterator i = sssv.begin(); i != sssv.end(); i++) {
+        std::vector<string> ivec = (*i);
+        std::vector<std::vector<string> > ppaths = vis->paths;
+        if (find(ppaths.begin(), ppaths.end(), ivec) == ppaths.end()) {
+            std::cout << "missing path: " << std::endl;
+            for (int q = 0; q < (*i).size(); q++) {
+                std::cout << ", " <<  (*i)[q];
+            }
+            std::cout << std::endl;
+        }
+    }
+}
 delete vis;
 }
