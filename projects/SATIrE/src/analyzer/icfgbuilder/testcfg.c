@@ -1727,6 +1727,7 @@ static void writegdl (const char *name)
 } 
 
 /*
+ * MS 2011
  * write a dot-file with the control flow graph
  */
 static void writedot (const char *name)
