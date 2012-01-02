@@ -203,7 +203,8 @@ AS_IF([test "x$with_pag" != xno],
            [AC_MSG_FAILURE(
       [PAG test failed (--without-pag to disable, --with-pag* to fix paths)])],
            [-L${PAG_LIB_DIR}])],
-      [AC_MSG_RESULT([skipping check for PAG])])
+      [AC_DEFINE([HAVE_PAG], [0], [Define if you have PAG])
+       AC_MSG_RESULT([skipping check for PAG])])
 AM_CONDITIONAL(WITH_PAG, [test "x$with_pag" = xyes])
 
 AC_CHECK_FILE(${BOOST_LIB_DIR}/libboost_filesystem${BOOST_COMPILER_STRING}.so,

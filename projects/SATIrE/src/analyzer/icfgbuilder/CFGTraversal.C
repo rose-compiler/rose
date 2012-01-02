@@ -2793,17 +2793,19 @@ void
 IcfgExternalCallResolver::icfgVisit(SgNode *node)
 {
     using namespace SATIrE::Analyses;
+#if HAVE_PAG
     PointsToAnalysis::PointsToAnalysis *pointsToAnalysis
         = get_icfg()->pointsToAnalysis;
     const PointsToAnalysis::CallGraph &callGraph
         = pointsToAnalysis->getCallGraph();
+#endif
 
     if (ExternalCall *ec = isExternalCall(node))
     {
         CallBlock *icfgNode
             = dynamic_cast<CallBlock *>(get_icfg()->nodes[get_node_id()]);
         SgExpression *callTarget = icfgNode->call_target;
-
+#if HAVE_PAG
         PointsToAnalysis::CallGraph::CallCandidateMap::const_iterator ccmi;
         ccmi = callGraph.callCandidateMap.find(callTarget);
         if (ccmi != callGraph.callCandidateMap.end())
@@ -2829,6 +2831,7 @@ IcfgExternalCallResolver::icfgVisit(SgNode *node)
             }
         }
         else
+#endif
         {
             std::cerr
                 << "*** warning: tried to resolve function expression "
