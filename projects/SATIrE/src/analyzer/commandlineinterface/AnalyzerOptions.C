@@ -62,6 +62,7 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo(""),_n
     "   --output-pointsto-graph=<name>  create <name>.dot and <name>.eps files\n"
     "                            showing points-to analysis results (requires DOT)\n"
     "   --analysis=<identifier>  run SATIrE's analysis <identifier> on the ICFG\n"
+    "                            identifier=constprop|sl2rd|interval\n"
     "\n"
 #if HAVE_PAG
     " PAG-specific analysis options:\n"
