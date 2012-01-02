@@ -310,6 +310,7 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
     cl->setLanguage(AnalyzerOptions::Language_C99);
   } else if (optionMatch(argv[i], "--run-pointsto-analysis")) {
     cl->runPointsToAnalysisOn();
+    cl->resolveFuncPtrCallsOn();
   } else if (optionMatch(argv[i], "--no-run-pointsto-analysis")) {
     cl->runPointsToAnalysisOff();
   } else if (optionMatch(argv[i], "--resolve-funcptr-calls")) {
@@ -320,6 +321,7 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
     cl->outputPointsToGraphOn();
     cl->setPointsToGraphName(argv[i]+prefixLength);
 	cl->buildIcfgOn();
+    cl->resolveFuncPtrCallsOn();
 #if HAVE_PAG
   } else if (optionMatch(argv[i], "--compute-call-strings")) {
     cl->computeCallStringsOn();
