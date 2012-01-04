@@ -23,7 +23,9 @@ AC_SUBST(PLTARGETS)
 if test -z "$PLINCL"; then
 plcandidates="swi-prolog swipl pl"
 AC_CHECK_PROGS(PL, $plcandidates, "none")
-AC_CHECK_PROGS(PLLD, plld, "none")
+# MS: added swipl-ld for Ubuntu support
+plldcandidates="plld swipl-ld"
+AC_CHECK_PROGS(PLLD, $plldcandidates, "none")
 if test $PLLD = "none"; then
    AC_ERROR("Cannot find SWI-Prolog plld utility. SWI-Prolog must be installed first")
 fi

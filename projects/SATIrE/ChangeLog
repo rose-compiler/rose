@@ -1,8 +1,17 @@
-V0.?.? ? AP,GB,DE,FB...
+V0.9.0 2012-01-xx MS,AP,GB,DE,FB
+
+* Tested with: [MS]
+  - ROSE 0.9.5a-17156
+  - PAG 9.0.0.92248
+  - flex 2.5.35
+  - bison 2.4.1
+  - g++ 4.4.6 (ROSE supports g++ up to 4.4, but not 4.6 yet)
+  - Boost 1.47.0 (1.48.0+ requires g++ 4.6+)
 
 * DOT outout of ICFG [MS]
-  - an output of the icfg can now be enerated with the satire_driver
-  - the output is a cluster graph where each cluster represents a function
+  - an output of the icfg can be generated with the satire_driver now
+  - the output is a clustered graph where each cluster represents a function
+  - new satire_driver option: --output-dot-icfg=<FILENAME>
 
 * Provided analyzers [GB]
   - A number of SATIrE analyzers are now compiled into a shared library for
