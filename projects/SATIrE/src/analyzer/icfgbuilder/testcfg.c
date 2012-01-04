@@ -1762,9 +1762,15 @@ static void writedot (const char *name)
     /* write all nodes of the procedure */
     for (j = 0; j < kfg_num_nodes (cfg); j++) {
       node = kfg_get_node (cfg, (KFG_NODE_ID)j);
-      
+
       /* is the node in this procedure */
       if (i == kfg_procnumnode (cfg, node)) {
+	  /* print node text */
+	  (void)fprintf (file, "L%d [label=\"",j);
+      (void)fprintf (file, "%d: ",j); 
+      kfg_node_infolabel_print_fp(file, cfg, node, 0);
+	  (void)fprintf (file, "\"];\n");	  
+      
 	//(void)fprintf (file, "    node: {\n"				\
 	//	       "      title: \"%d\"\n"				\
 	//	       "      label: \"%d %d\n", j, j, i);
@@ -1779,7 +1785,7 @@ static void writedot (const char *name)
 	for (list = kfg_successors (cfg, node); 0 == kfg_node_list_is_empty (list); ) {
 	  n2 = kfg_node_list_head (list);
 	  list = kfg_node_list_tail (list);
-	  (void)fprintf (file, "%d -> %d [color=black];\n",j,kfg_get_id (cfg, n2));
+	  (void)fprintf (file, "L%d -> L%d [color=black];\n",j,kfg_get_id (cfg, n2));
 	}
 	
 #if 0
@@ -1788,7 +1794,7 @@ static void writedot (const char *name)
 	for (list = kfg_predecessors (cfg, node); 0 == kfg_node_list_is_empty (list); )	{
 	  n2 = kfg_node_list_head (list);
 	  list = kfg_node_list_tail (list);
-	  (void)fprintf (file, "%d -> %d [color=red];\n",j,kfg_get_id (cfg, n2));	    
+	  (void)fprintf (file, "L%d -> L%d [color=red];\n",j,kfg_get_id (cfg, n2));	    
 	}
 #endif
       }
