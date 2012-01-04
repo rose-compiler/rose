@@ -230,7 +230,7 @@ EXTRA_DIST += \
   ltx2htm/icons/prev.gif \
   ltx2htm/icons/up.gif \
   ltx2htm/icons/yellow_pages.gif \
-  ltx2htm/pldoc_latex.pl
+  ltx2htm/pldoc_latex.pl \
   pldoc/doc_access.pl   \
   pldoc/doc_colour.pl	\
   pldoc/doc_html.pl	\
