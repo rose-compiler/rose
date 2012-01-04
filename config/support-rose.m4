@@ -471,19 +471,9 @@ echo "rose_boost_version = $rose_boost_version"
 
 # Define macros for conditional compilation of parts of ROSE based on version of boost
 # (this ONLY happens for the tests in tests/CompilerOptionsTests/testWave)
-# we don't want conditional compilation or code in ROSE based on version numbers of Boost.
-# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_35,test "x$_version" = "x1.35")
-# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_36,test "x$_version" = "x1.36")
-# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_37,test "x$_version" = "x1.37")
-# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_38,test "x$_version" = "x1.38")
-# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_39,test "x$_version" = "x1.39")
-# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_40,test "x$_version" = "x1.40")
-# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_41,test "x$_version" = "x1.41")
-# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_42,test "x$_version" = "x1.42")
-# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_43,test "x$_version" = "x1.43")
-# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_44,test "x$_version" = "x1.44")
-# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_45,test "x$_version" = "x1.45")
-# AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_46,test "x$_version" = "x1.46")
+#
+# !! We don't want conditional compilation or code in ROSE based on version numbers of Boost. !!
+#
 
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_35,test "x$rose_boost_version" = "x103500" -o "x$_version" = "x1.35")
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_36,test "x$rose_boost_version" = "x103600" -o "x$_version" = "x1.36")
@@ -499,6 +489,7 @@ AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_45,test "x$rose_boost_version" = "x104
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_46,test "x$rose_boost_version" = "x104600" -o "x$_version" = "x1.46")
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_46,test "x$rose_boost_version" = "x104601" -o "x$_version" = "x1.46")
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_47,test "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.47")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_48,test "x$rose_boost_version" = "x104800" -o "x$_version" = "x1.48")
 
 # DQ (10/18/2010): Error checking for Boost version.
 if test "x$rose_boost_version" = "x103600" -o "x$_version" = "x1.36" \
@@ -513,11 +504,12 @@ if test "x$rose_boost_version" = "x103600" -o "x$_version" = "x1.36" \
    -o "x$rose_boost_version" = "x104500" -o "x$_version" = "x1.45" \
    -o "x$rose_boost_version" = "x104600" -o "x$_version" = "x1.46" \
    -o "x$rose_boost_version" = "x104601" -o "x$_version" = "x1.46" \
-   -o "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.47"; then 
-echo "Reasonable version of Boost found!"
+   -o "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.47" \
+   -o "x$rose_boost_version" = "x104800" -o "x$_version" = "x1.48"
+then
+    echo "Reasonable version of Boost found!"
 else
-echo "No identifiable version of boost recognised!"
-exit 1;
+    ROSE_MSG_ERROR([Unsupported version of Boost: '$_version' ('$rose_boost_version')])
 fi
 
 # DQ (12/22/2008): Fix boost configure to handle OS with older version of Boost that will
