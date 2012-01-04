@@ -229,7 +229,35 @@ EXTRA_DIST += \
   ltx2htm/icons/next.gif \
   ltx2htm/icons/prev.gif \
   ltx2htm/icons/up.gif \
-  ltx2htm/icons/yellow_pages.gif
+  ltx2htm/icons/yellow_pages.gif \
+  ltx2htm/pldoc_latex.pl
+  pldoc/doc_access.pl   \
+  pldoc/doc_colour.pl	\
+  pldoc/doc_html.pl	\
+  pldoc/doc_htmlsrc.pl	\
+  pldoc/doc_http.pl	\
+  pldoc/doc_index.pl	\
+  pldoc/doc_library.pl	\
+  pldoc/doc_man.pl	\
+  pldoc/doc_modes.pl	\
+  pldoc/doc_process.pl	\
+  pldoc/doc_register.pl	\
+  pldoc/doc_search.pl	\
+  pldoc/doc_util.pl	\
+  pldoc/doc_wiki.pl	\
+  pldoc/edit.gif	\
+  pldoc/favicon.ico	\
+  pldoc/hooks.pl	\
+  pldoc/pldoc.css	\
+  pldoc/pldoc.js	\
+  pldoc/pldoc.pl	\
+  pldoc/pldoc.sty	\
+  pldoc/pllisting.css	\
+  pldoc/reload.gif	\
+  pldoc/source.gif	\
+  pldoc/up.gif		\
+  pldoc/zoomin.gif	\
+  pldoc/zoomout.gif
 
 $(LTX2HTM):
 	cp -r $(srcdir)/ltx2htm ltx2htm-build
