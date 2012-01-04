@@ -133,7 +133,7 @@ AC_ARG_WITH([swi-prolog],
    :, [with_swi_prolog=check])
  
 AS_IF([test "x$with_swi_prolog" != xno], dnl yes or autodetect
-      [AS_IF([test -x $SWIPL], 
+      [AS_IF([test -n "$SWIPL" -a -x "$SWIPL"], 
              [with_swi_prolog=yes],
       	     [AS_IF([test "x$with_swi_prolog" != xcheck],
                     [AC_MSG_FAILURE([--with-swi_prolog was given, but test for SWI Prolog failed])])],
@@ -203,7 +203,8 @@ AS_IF([test "x$with_pag" != xno],
            [AC_MSG_FAILURE(
       [PAG test failed (--without-pag to disable, --with-pag* to fix paths)])],
            [-L${PAG_LIB_DIR}])],
-      [AC_MSG_RESULT([skipping check for PAG])])
+      [AC_DEFINE([HAVE_PAG], [0], [Define if you have PAG])
+       AC_MSG_RESULT([skipping check for PAG])])
 AM_CONDITIONAL(WITH_PAG, [test "x$with_pag" = xyes])
 
 AC_CHECK_FILE(${BOOST_LIB_DIR}/libboost_filesystem${BOOST_COMPILER_STRING}.so,

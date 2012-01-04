@@ -124,15 +124,20 @@ comefrom.pl: $(top_srcdir)/tools/loopbounds/comefrom.pl
 
 %.tex: %.pl while2for.pl types.pl comefrom.pl termite_spec.pl
 	export TERMITE_LIB=$(top_srcdir)/src/termite/termite && \
-	echo "use_module(library(doc_latex)), \
-	      getenv('PWD', CurDir), \
+	echo "getenv('PWD', CurDir), \
 	      asserta(library_directory(CurDir)), \
+	      asserta(library_directory('$(srcdir)/ltx2htm')), \
+	      asserta(library_directory('$(builddir)/ltx2htm-inst/lib/latex2html')), \
+	      asserta(library_directory('$(srcdir)')), \
+	      asserta(library_directory('$(srcdir)/pldoc')), \
 	      getenv('TERMITE_LIB', TermitePath), \
 	      asserta(library_directory(TermitePath)), \
+	      use_module(library(pldoc)), \
+	      use_module(library(pldoc_latex)). \
 	      consult('$*'), \
 	      open('$@', write, _, [alias(wstrm)]),\
               latex_for_file('$<', wstrm, \
-	                     [stand_alone(false),public_only(true)]), \
+	                     [stand_alone(false),public_only(true)]). \
 	      close(wstrm)." | $(SWI_PL) -q
 
 # Sadly, ltx2html does not understand the listings package...
@@ -233,6 +238,7 @@ $(LTX2HTM):
 	mkdir -p ltx2htm-inst/bin ltx2htm-inst/lib
 	cd ltx2htm-build && sh configure --prefix=$(realpath $(builddir))/ltx2htm-inst
 	make -C ltx2htm-build all install
+	perl -pi -e "s|library\(\'pldoc/pldoc.sty\'\)|\'$(realpath $(srcdir))/pldoc/pldoc.sty\'|" ltx2htm-inst/lib/latex2html/pldoc.pl
 	rm -f $(realpath $(builddir))/ltx2htm-inst/lib/latex2html/pl.pl
 
 else # -----------------------------------------------------------------
