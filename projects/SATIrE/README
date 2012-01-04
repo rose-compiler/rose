@@ -28,9 +28,21 @@ term syntax.
 
  a) Before you can install SATIrE
 
-    i)  you must install LLNL-ROSE - http://www.rosecompiler.org
-    ii) you must install BOOST - http://www.boost.org
+    i)  you must install BOOST - http://www.boost.org
 
+    Set the evironment variable LD_LIBRARY_PATH:
+    export LD_LIBRARY_PATH=/usr/local/boost-1.45.0/lib
+
+    ii) you must install LLNL-ROSE - http://www.rosecompiler.org
+
+    The following ROSE configure options are sufficient for working with
+    SATIrE (features such as Java, Haskell, Python support can be turned off)
+    ROSE configure line: 
+    rose-0.9.5a-17156/configure CXX=g++-4.4 CC=gcc-4.4 --without-java \
+      --with-boost=/usr/local/boost-1.45.0 --disable-projects-directory \
+      --prefix=/usr/local/rose-0.9.5a --enable-opencl \
+      --enable-edg-opencl --disable-tests-directory
+ 
     iii) optional integrated tools: PAG, Termite
     For both tools, SATIrE's configure script automatically detects the
            availability of each integrated tool and automatically deactivates
