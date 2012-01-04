@@ -68,13 +68,21 @@ term syntax.
  d) Configure the sources for your platform and set the install path prefix
     for ROSE and BOOST:
     example: 
-    ./configure --prefix=/usr/local --with-rosedir=/usr/local/rose/ \
-                --with-boostdir=/usr/local/boost-1.47.0
-    If you have PAG installed set the install path prefix for PAG:
-    example: --with-pagdir=/usr/local/pag
+      libtoolize
+      autoreconf -i
+      ./configure --prefix=/usr/local --with-rosedir=/usr/local/rose/ \
+                  --with-boostdir=/usr/local/boost-1.47.0
+    If you have PAG installed also set the install path prefix for PAG:
+    example: 
+      libtoolize
+      autoreconf -i
+      ./configure --prefix=/usr/local --with-rosedir=/usr/local/rose/ \
+                  --with-boostdir=/usr/local/boost-1.47.0 \
+                  --with-pagdir=/usr/local/pag
 
     If you have Prolog installed set the following variable when running 
-    configure: PKG_CONFIG_PATH=/usr/lib/pkgconfig ./configure ..
+    configure: 
+       PKG_CONFIG_PATH=/usr/lib/pkgconfig ./configure .. (as above)
     [this is reqired on some Linux system for determining the installed
      Prolog version. On Ubuntu it also works without specifying this variable]
 
@@ -85,6 +93,7 @@ term syntax.
     run 'make install' to install SATIrE to the location specified 
       by --prefix=<INSTALL_PREFIX>
     run 'make installcheck' to run SATIrE tests on the installation
+    ('make check' does not perform all checks. Only 'make installcheck' does.]
 
 ------------------------------------------------------------
 (2) GETTING STARTED WITH AN ANALYSIS THAT COMES WITH SATIrE
