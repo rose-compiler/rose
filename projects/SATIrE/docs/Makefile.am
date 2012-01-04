@@ -205,7 +205,6 @@ EXTRA_DIST += \
   ltx2htm/pl.pl \
   ltx2htm/url.sty \
   ltx2htm/ChangeLog \
-  ltx2htm/debug.pl \
   ltx2htm/latex2html.css \
   ltx2htm/pl.sty \
   ltx2htm/xpce.cmd \
