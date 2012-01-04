@@ -1,11 +1,8 @@
-In some rare cases the original AST is modifyied when generating the
-ICFG: 
-the reason seems to be a bug in ROSE 0.8.10e's deep copy mechanism which
-we use when generating the SATIrE-ICFG from the ROSE-AST. This deep
-copy mechanism is already fixed for the next ROSE release. We will
-need to investigate this problem again, once the new release is
-available.
-Problem caused: some file info is missing and an assert fails.
+BUILDING SATIrE:
 
-
+* make -j
+parallel build with "make -j" does not always work due to some
+dependencies on generated files which are not properly represented in
+make-files yet. You can use -j, but in case compilation fails,
+complete the remaining compilation without option -j.
 

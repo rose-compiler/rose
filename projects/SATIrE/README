@@ -8,14 +8,8 @@ Program Analysis Generator (PAG), the C/C++ infrastructure LLNL-ROSE,
 and support for an external format (reading and writing) in Prolog
 term syntax.
 
-* Tested with (under Debian lenny):
-  - ROSE 0.9.3a-1593
-  - PAG 9.2.2.48
-  - flex 2.5.35
-  - bison 2.3
-  - g++ 4.2.0 (>= 4.2.0 required by ROSE with EDG binaries)
-  - Boost 1_36 (>= 1_35 required by ROSE)
-  - SWI-Prolog version 5.7.14 for x86_64-linux (optional)
+* Tested with Debian and Ubuntu 11.10
+  (for exact program versions used in testing SATIrE 0.9.0 see ChangeLog)
 
 ------------------------------------------------------------
 (0) UPGRADING AN EXISTING SATIrE INSTALLATION
@@ -33,21 +27,46 @@ term syntax.
 ------------------------------------------------------------
 
  a) Before you can install SATIrE
-    i)  you must install LLNL-ROSE - http://www.rosecompiler.org/
-    ii) you must install PAG - http://www.absint.com/pag/
+
+    i)  you must install LLNL-ROSE - http://www.rosecompiler.org
+    ii) you must install BOOST - http://www.boost.org
+
+    iii) optional integrated tools: PAG, Termite
+    For both tools, SATIrE's configure script automatically detects the
+           availability of each integrated tool and automatically deactivates
+           dependent features.
+    - PAG: SATIrE supports the use of AbsInt's PAG: http://www.absint.com/pag/
+           For obtaining a copy of PAG you must contact AbsInt.
+           If you do not have a copy of PAG, you can use the option
+           '--without-pag' when running 'configure'. This will deactivate some
+           features in SATIrE (e.g. PAG based analyses).
+    - Termite: Termite is integrated in SATIrE, but requires Prolog to be
+           installed. You can obtain swi-prolog with most Linux distributions.
+           For example, with Ubuntu run: 'sudo apt-get install swi-prolog' to
+           install swi-prolog. If you do not want to use Prolog, you can use
+           the option '--without-swi-prolog' to deactivate all Prolog dependent
+           features (e.g. this deactivates the loop bound analysis).
 
  b) Unpack the satire tar-ball with:
-    tar xvzf SATIrE-0.8.6.tgz
+    tar xvzf SATIrE-0.9.0.tgz
 
  c) Go to the satire directory:
-    cd SATIrE-0.8.6
+    cd SATIrE-0.9.0
 
- d) Configure the sources for your platform and set the path for ROSE and PAG:
+ d) Configure the sources for your platform and set the install path prefix
+    for ROSE and BOOST:
+    example: 
+    ./configure --prefix=/usr/local --with-rosedir=/usr/local/rose/ \
+                --with-boostdir=/usr/local/boost-1.47.0
+    If you have PAG installed set the install path prefix for PAG:
+    example: --with-pagdir=/usr/local/pag
 
-    e.g.    
-    ./configure --prefix=/usr/local --with-rosedir=/usr/local/rose/  \
-                --with-pagdir=/usr/local/pag
+    If you have Prolog installed set the following variable when running 
+    configure: PKG_CONFIG_PATH=/usr/lib/pkgconfig ./configure ..
+    [this is reqired on some Linux system for determining the installed
+     Prolog version. On Ubuntu it also works without specifying this variable]
 
+    for more options of the provided configure script run (as usual):
     ./configure --help
 
     run 'make' for compiling all SATIrE modules and analyzers
@@ -65,56 +84,27 @@ term syntax.
  Examples:
 
  a) <INSTALL_PREFIX>/bin/satire_driver \
+      --analysis=constprop <FILE1.c> <FILE2.c> ...  --output-text
+
+ b) <INSTALL_PREFIX>/bin/satire_driver \
       --run-pointsto-analysis <FILE1.c> <FILE2.c> ...  --output-text
  
  For the TERMITE-based loop bounds analysis a convenient executable is
  available under <INSTALL_PREFIX>/bin/loopbounds
 
- b) <INSTALL_PREFIX>/bin/loopbounds  <FILE1.c> | term2c
+ c) <INSTALL_PREFIX>/bin/loopbounds  <FILE1.c> | term2c
 
 
 ------------------------------------------------------------
-(3) COMPILING THE EXAMPLE ANALYSES THAT COME WITH SATIrE
+(3) INVOKING ANALYSES THAT COME WITH SATIrE
 ------------------------------------------------------------
 
- a) Ensure that SATIrE's <INSTALL_PREFIX>/bin is in your environment variable path.
-
- b) compile all examples that come with SATIrE
-    cd SATIrE-0.8.6/examples
-    sh build-examples.sh                  [creates examples in directory executable-examples]
-                                          [note that the script uses the *installed* 'newanalysis']
-
-    Example for viewing shape analysis results:
-      cd executable-examples
-      cd srw98_shape
-      srw98_shape --output-gdl=srw98_shape_result.gdl --output-source=annot_srw98_listreverse.C 
-                  --aliassourceoutput tests/srw98_listreverse.C
-      aisee srw98_shape_result.gdl        [view shape graphs with aisee]
-      cat annot_srw98_listreverse.C       [view source file annotated with computed alias pairs]
-
- c) If you want to perform each step on your own, here is an example for sl1rd:
-    [let's assume that you unpacked SATIrE-0.8.6.tgz in your home directory]
-    cp -r ~/SATIrE-0.8.6/examples/sl1rd . [copy all files and test files to your directory]
-    cd sl1rd                              [change to the directory]
-    newanalysis                           [generate and configure all required files]
-    make                                  [compile the analyzer (links ROSE,PAG,SATIrE files)]
-    sl1rd --help                          [prints an overview of the available options]
-    sl1rd --output-gdl=sl1rd_result.gdl tests/rdtest1.C
-                                          [run the analyzer on the test file 'rdtest1.C']
-    aisee sl1rd_result.gdl                [view the analysis result with aisee]
-    sl1rd --output-source=tests/annot_rdtest1.C tests/rdtest1.C  
-                                          [generate an annotated source file tests/annot_rdtest1.C]
-    sl1rd --output-term=tests/rdtest1.pl tests/rdtest1.C
-                                          [generate a term representation in tests/rdtest1.C.pl]
-
- d) If you are starting with a shape analysis (srw98_shape or nnh99_shape) you must use
-    newanalysis -u
-    The option 'u' ensures that existing files are not overwritten by 'newanalysis' which
-    is currently necessary for the shape analyses to allow for analysis results post-processing
-    and non-default visualizations.
+ a) For viewing the results of available analyses you can use the provided
+    program satire_driver.
+    run satire_driver --help for all options.
 
 ------------------------------------------------------------
-(4) CRAFTING A NEW ANALYSIS
+(4) CRAFTING A NEW ANALYSIS USING PAG
 ------------------------------------------------------------
 
  a) Ensure that <INSTALL_PREFIX>/bin is in your environment variable path.
@@ -158,10 +148,12 @@ term syntax.
     satire_attributes_auxiliary_functions: a text document on the auxiliary
           functions that can be used in PAG analysis specifications to 
           access various program information.
+    termite.pdf: gives an overview of the various capabilites for program
+          analysis and transformation using SATIrE and Termite's features.
     
  b) On the web information can be found at:
-    http://www.complang.tuwien.ac.at/markus/satire
-    http://www.complang.tuwien.ac.at/markus/satirefaq
+    http://www.complang.tuwien.ac.at/satire
 
  c) For questions, feedback, bug reports, or suggestions on SATIrE send
-    email to: markus@complang.tuwien.ac.at
+    email to: schordan@technikum-wien.at
+

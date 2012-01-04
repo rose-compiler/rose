@@ -1,9 +1,12 @@
+ICFG Builder:
 1) Support for array initializers
    - currently they are ignored (we would need to generate a list of
      assignments or a special construct accessible in a specification)
-2) Generation of analysis results as pragmas
-   - currently only comments are generated
-3) Support for initialization of global variables
+2) Support for initialization of global variables
    - currently global variables show up in the ICFG, but the initialization
      in global scope is not accessible. Thus, global variables do not
      have a corresponding DeclStatement
+
+Annotation:
+1) Generation of analysis results as pragmas
+   - currently only comments are generated
