@@ -6,8 +6,16 @@ class TestClassArgument
    {
      public:
           T xyz;
+       // This is a SgTemplateInstantiationMemberFunction in ROSE using EDG 3.3, so we should 
+       // preserve this (also is currently in the AST this way).
+       // However, by default these template instantiations are not output as specializations.
+       // A larger change to ROSE would be that there is an opportunity to have this be a member 
+       // function of the template class, instead of a template member function.
           T foo();
    };
+
+// Note: in instantiated template for foo() it should be uparsed as: "int foo();"
+// Note: the function declaration for the template function foo() should be: "int TestClassArgument<int>::foo()"
 
 template<class T>
 T TestClassArgument<T>::foo ()
@@ -16,7 +24,7 @@ T TestClassArgument<T>::foo ()
    }
 #endif
 
-#if 1
+#if 0
 template<int T>
 class TestIntegerArgument
    {
@@ -43,7 +51,7 @@ int main()
      object1.xyz = object1.foo();
 #endif
 
-#if 1
+#if 0
      TestIntegerArgument<2> object2;
      object2.xyz = object2.foo();
 #endif

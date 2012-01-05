@@ -923,6 +923,10 @@ ResetParentPointers::evaluateInheritedAttribute (
 #else
                     SgTemplateDeclaration* templateDeclaration = templateInstantiation->get_templateDeclaration();
 #endif
+                    if (templateDeclaration == NULL)
+                       {
+                         printf ("templateInstantiation->get_templateDeclaration() == NULL templateInstantiation = %p = %s \n",templateInstantiation,templateInstantiation->class_name().c_str());
+                       }
                     ROSE_ASSERT(templateDeclaration != NULL);
 
 #if 0

@@ -123,6 +123,8 @@ findRootFunc (const SgScopeStatement* scope)
                  else
                   {
                  // DQ (12/13/2011): Adding test for improperly set scope.
+                    printf ("scope = %p = %s \n",scope,scope->class_name().c_str());
+
                     SgScopeStatement* nextOuterScope = scope->get_scope();
                  // printf ("nextOuterScope = %p = %s \n",nextOuterScope,nextOuterScope->class_name().c_str());
                     ROSE_ASSERT(nextOuterScope != scope);

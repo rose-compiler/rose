@@ -3577,13 +3577,21 @@ SageBuilder::buildVarRefExp(const SgName& name, SgScopeStatement* scope/*=NULL*/
 
      if (scope != NULL)
         {
-          symbol = lookupSymbolInParentScopes(name,scope); 
-       // printf ("In SageBuilder::buildVarRefExp(): scope = %p = %s symbpl = %p \n",scope,scope->class_name().c_str(),symbol);
+       // DQ (12/30/2011): This is a bad idea for C++ since qualified names might inticate different scopes.
+       // If the scope has been provided then is should be the correct scope.
+#if 1
+          symbol = lookupSymbolInParentScopes(name,scope);
+#else
+          symbol = scope->lookup_variable_symbol(name);
+#endif
+          printf ("In SageBuilder::buildVarRefExp(): scope = %p = %s name = %s symbol = %p \n",scope,scope->class_name().c_str(),name.str(),symbol);
+//        ROSE_ASSERT(symbol != NULL);
         }
 
      if (symbol != NULL) 
         {
-          varSymbol= isSgVariableSymbol(symbol); 
+          printf ("What type of symbol is this: symbol = %p = %s \n",symbol,symbol->class_name().c_str());
+          varSymbol = isSgVariableSymbol(symbol); 
         }
        else
         {
@@ -3592,9 +3600,14 @@ SageBuilder::buildVarRefExp(const SgName& name, SgScopeStatement* scope/*=NULL*/
        // two features: no scope and unknown type for initializedName
           SgInitializedName * name1 = buildInitializedName(name,SgTypeUnknown::createType());
           name1->set_scope(scope); //buildInitializedName() does not set scope for various reasons
-          varSymbol= new SgVariableSymbol(name1);
+          varSymbol = new SgVariableSymbol(name1);
         }
-     ROSE_ASSERT(varSymbol); 
+
+     if (varSymbol == NULL)
+        {
+          printf ("Error: varSymbol == NULL for name = %s \n",name.str());
+        }
+     ROSE_ASSERT(varSymbol != NULL);
 
      SgVarRefExp *varRef = new SgVarRefExp(varSymbol);
      setOneSourcePositionForTransformation(varRef);
@@ -6583,6 +6596,14 @@ SgClassDeclaration * SageBuilder::buildClassDeclaration_nfi(const SgName& name, 
        // This adds: SgTemplateDeclaration *templateDeclaration and SgTemplateArgumentPtrList templateArguments
           SgTemplateArgumentPtrList emptyList;
           defdecl = new SgTemplateInstantiationDecl (name,kind,NULL,classDef,NULL,emptyList);
+
+       // DQ (1/1/2012): Added support for setting the template name (I think this should be fixed in the constructor).
+       // It can't be fixed in the constructor since it has to be set after construction (or passed in explicitly).
+          ROSE_ASSERT(isSgTemplateInstantiationDecl(defdecl)->get_templateName().is_null() == true);
+          printf ("Warning: In buildClassDeclaration_nfi(): calling set_templateName(name = %s) for defining declaration \n",name.str());
+       // isSgTemplateInstantiationDecl(defdecl)->set_templateName(name);
+          isSgTemplateInstantiationDecl(defdecl)->set_templateName("SETME_DEFINING_DECL<>");
+          ROSE_ASSERT(isSgTemplateInstantiationDecl(defdecl)->get_templateName().is_null() == false);
         }
        else
         {
@@ -6647,7 +6668,28 @@ SgClassDeclaration * SageBuilder::buildClassDeclaration_nfi(const SgName& name, 
        else // build a nondefnining declaration if it does not exist
         {
        // DQ (1/25/2009): We only want to build a new declaration if we can't reuse the existing declaration.
-          nondefdecl = new SgClassDeclaration(name,kind,NULL,NULL);
+       // DQ (1/1/2012): Fixed to force matching types or IR nodes for defining and non-defining declarations.
+          if (buildTemplateInstantiation == true)
+             {
+            // This adds: SgTemplateDeclaration *templateDeclaration and SgTemplateArgumentPtrList templateArguments
+               SgTemplateArgumentPtrList emptyList;
+               nondefdecl = new SgTemplateInstantiationDecl (name,kind,NULL,NULL,NULL,emptyList);
+               ROSE_ASSERT(nondefdecl != NULL);
+
+            // DQ (1/1/2012): Added support for setting the template name (I think this should be fixed in the constructor).
+            // It can't be fixed in the constructor since it has to be set after construction (or passed in explicitly).
+               ROSE_ASSERT(isSgTemplateInstantiationDecl(nondefdecl)->get_templateName().is_null() == true);
+               printf ("Warning: In buildClassDeclaration_nfi(): calling set_templateName(name = %s) for nondefining declaration \n",name.str());
+            // isSgTemplateInstantiationDecl(nondefdecl)->set_templateName(name);
+               isSgTemplateInstantiationDecl(nondefdecl)->set_templateName("SETME_NONDEFINING_DECL<>");
+               ROSE_ASSERT(isSgTemplateInstantiationDecl(nondefdecl)->get_templateName().is_null() == false);
+             }
+            else
+             {
+               nondefdecl = new SgClassDeclaration(name,kind,NULL,NULL);
+               ROSE_ASSERT(nondefdecl != NULL);
+             }
+
           ROSE_ASSERT(nondefdecl != NULL);
           if (nondefdecl->get_type() == NULL)
             nondefdecl->set_type(SgClassType::createType(nondefdecl));
