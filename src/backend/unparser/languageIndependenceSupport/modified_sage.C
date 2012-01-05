@@ -1209,8 +1209,8 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
           curprint( "template<> ");
         }
 #else
-     if ( (isSgTemplateInstantiationDecl(decl_stmt) != NULL) ||
-          (isSgTemplateInstantiationFunctionDecl(decl_stmt) != NULL) ||
+     if ( (isSgTemplateInstantiationDecl(decl_stmt)               != NULL) ||
+          (isSgTemplateInstantiationFunctionDecl(decl_stmt)       != NULL) ||
           (isSgTemplateInstantiationMemberFunctionDecl(decl_stmt) != NULL) )
         {
           if ( isSgTemplateInstantiationDirectiveStatement(decl_stmt->get_parent()) != NULL)

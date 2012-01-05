@@ -1261,12 +1261,12 @@ Unparse_ExprStmt::unparseTemplateInstantiationDeclStmt (SgStatement* stmt, SgUnp
 
   // curprint("Output in curprint in Unparse_ExprStmt::unparseTemplateInstantiationDeclStmt()");
 
-#if OUTPUT_DEBUGGING_CLASS_NAME
+#if OUTPUT_DEBUGGING_CLASS_NAME || true
      printf ("Inside of unparseTemplateInstantiationDeclStmt() stmt = %p/%p name = %s  templateName = %s transformed = %s/%s prototype = %s compiler-generated = %s compiler-generated and marked for output = %s \n",
           classDeclaration,templateInstantiationDeclaration,
           templateInstantiationDeclaration->get_name().str(),
           templateInstantiationDeclaration->get_templateName().str(),
-          unp->isTransformed (templateInstantiationDeclaration) ? "true" : "false",
+          isTransformed (templateInstantiationDeclaration) ? "true" : "false",
           (templateInstantiationDeclaration->get_file_info()->isTransformation() == true) ? "true" : "false",
           (templateInstantiationDeclaration->get_definition() == NULL) ? "true" : "false",
           (templateInstantiationDeclaration->get_file_info()->isCompilerGenerated() == true) ? "true" : "false",
@@ -1292,7 +1292,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationDeclStmt (SgStatement* stmt, SgUnp
        // I am not currently sure how to make this happen, but it should involve the *.ti 
        // files (I guess).
 
-       // printf ("Calling unparseClassDeclStmt to unparse the SgTemplateInstantiationDecl \n");
+          printf ("Calling unparseClassDeclStmt to unparse the SgTemplateInstantiationDecl \n");
 
 #if 0
        // This case is not supported if member functions or static data members are present in the class
@@ -1335,14 +1335,14 @@ Unparse_ExprStmt::unparseTemplateInstantiationDeclStmt (SgStatement* stmt, SgUnp
         {
           if ( templateInstantiationDeclaration->get_file_info()->isOutputInCodeGeneration() == true )
              {
-#if PRINT_DEVELOPER_WARNINGS
+#if PRINT_DEVELOPER_WARNINGS || true
                printf ("Class template is marked for output in the current source file. \n");
 #endif
                outputClassTemplateInstantiation = true;
              }
             else
              {
-#if PRINT_DEVELOPER_WARNINGS
+#if PRINT_DEVELOPER_WARNINGS || true
                printf ("Class template is NOT marked for output in the current source file. \n");
 #endif
              }
@@ -3429,7 +3429,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
                ROSE_ASSERT(ninfo.get_declstatement_ptr() != NULL);
 
-            // printf ("Inside of unparseVarDeclStmt: namedType = %p \n",namedType);
+               printf ("Inside of unparseVarDeclStmt: namedType = %p \n",namedType);
                if (namedType != NULL)
                   {
                  // DQ (10/5/2004): This controls the unparsing of the class definition
@@ -3577,11 +3577,11 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                ninfo_for_type.set_global_qualification_required(decl_item->get_global_qualification_required_for_type());
                ninfo_for_type.set_type_elaboration_required(decl_item->get_type_elaboration_required_for_type());
 
-            // printf ("Inside of unparseVarDeclStmt: calling unparseType() tmp_type = %p = %s \n",tmp_type,tmp_type->class_name().c_str());
+               printf ("Inside of unparseVarDeclStmt: calling unparseType() tmp_type = %p = %s \n",tmp_type,tmp_type->class_name().c_str());
             // unp->u_type->unparseType(tmp_type, ninfo2);
                ROSE_ASSERT(isSgType(tmp_type) != NULL);
                unp->u_type->unparseType(tmp_type, ninfo_for_type);
-            // printf ("Inside of unparseVarDeclStmt: DONE calling unparseType() \n");
+               printf ("Inside of unparseVarDeclStmt: DONE calling unparseType() \n");
 
             // ROSE_ASSERT(ninfo2.get_declstatement_ptr() != NULL);
                ROSE_ASSERT(ninfo_for_type.get_declstatement_ptr() != NULL);
@@ -4117,10 +4117,11 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
           if (classdecl_stmt->isForward() && !info.SkipSemiColon())
              {
-               curprint ( string(";"));
+               curprint(string(";"));
+
                if (classdecl_stmt->isExternBrace())
                   {
-                    curprint ( string(" }"));
+                    curprint(string(" }"));
                   }
              }
         }
@@ -4165,7 +4166,21 @@ Unparse_ExprStmt::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      ninfo.unset_SkipClassDefinition();
 
-  // curprint ( string("/* END: Print out class declaration */ \n";
+#if 0
+  // DQ (1/2/2012): The name stored in SgClassDeclaration contains the template arguments (now that this is set we don't need this code).
+  // DQ (1/2/2012): If this is the template instantiation then it could be marked as a specialization (supported by ROSE) 
+  // and thus needs to be output as such. I think this is the new style of specification for C++ template specialization.
+     if (classdefn_stmt->get_declaration()->get_specialization() == SgDeclarationStatement::e_specialization)
+        {
+       // curprint("/* Output the template arguments for this specialization */ \n");
+          SgTemplateInstantiationDecl* templateInstantiationClassDeclaration = isSgTemplateInstantiationDecl(classdefn_stmt->get_declaration());
+          ROSE_ASSERT(templateInstantiationClassDeclaration != NULL);
+          SgTemplateArgumentPtrList& templateArgListPtr = templateInstantiationClassDeclaration->get_templateArguments();
+          unparseTemplateArgumentList(templateArgListPtr,info);
+        }
+#endif
+
+  // curprint("/* END: Print out class declaration */ \n");
 
      SgNamedType *saved_context = ninfo.get_current_context();
 

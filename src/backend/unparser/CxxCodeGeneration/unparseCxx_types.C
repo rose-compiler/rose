@@ -170,10 +170,9 @@ string get_type_name(SgType* t)
               {
                 SgClassType* class_type = isSgClassType(t);
                 ROSE_ASSERT(class_type != NULL);
-                                // CH (4/7/2010): 'cdecl' is a keywork of MSVC
-                //SgClassDeclaration* cdecl;
-                                SgClassDeclaration* decl;
-                                decl = isSgClassDeclaration(class_type->get_declaration());
+             // CH (4/7/2010): 'cdecl' is a keywork of MSVC
+             // SgClassDeclaration* cdecl;
+                SgClassDeclaration* decl = isSgClassDeclaration(class_type->get_declaration());
                 SgName nm = decl->get_qualified_name();
              // printf ("In unparseType(%p): nm = %s \n",t,nm.str());
                 if (nm.getString() != "")
@@ -792,7 +791,7 @@ void Unparse_Type::unparseNameType(SgType* type, SgUnparse_Info& info)
 void
 Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
    {
-#if 0
+#if 1
      printf ("Inside of Unparse_Type::unparseClassType \n");
 #endif
 
@@ -809,6 +808,9 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
   // SgClassDeclaration *cdecl = isSgClassDeclaration(class_type->get_declaration());
      SgClassDeclaration *decl = isSgClassDeclaration(class_type->get_declaration());
      ROSE_ASSERT(decl != NULL);
+
+     printf ("In Unparse_Type::unparseClassType(): decl = %p = %s \n",decl,decl->class_name().c_str());
+
      if (decl->get_definition() == NULL)
         {
        // We likely have a forward declaration so get the defining declaration if it is available
@@ -896,7 +898,7 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
        // bases typedefed types).
           SgName nm = decl->get_name();
 
-       // printf ("In unparseClassType: nm = %s \n",nm.str());
+          printf ("In unparseClassType: nm = %s \n",nm.str());
 
        // DQ (6/27/2006): nm.is_null() is a better test for an empty name, don't output the qualifier for un-named
        // structs.  This is part of the fix for the Red Hat 7.3 gconv problem (see ChangeLog for details).
@@ -995,7 +997,9 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
                          if (isSgTemplateInstantiationDecl(decl) != NULL)
                             {
                            // Handle case of class template instantiation (code located in unparse_stmt.C)
+                           // curprint ("/* Calling unparseTemplateName */ \n ");
                               unp->u_exprStmt->unparseTemplateName(templateInstantiationDeclaration,info);
+                           // curprint ("/* DONE: Calling unparseTemplateName */ \n ");
                             }
                            else
                             {

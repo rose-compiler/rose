@@ -241,6 +241,11 @@ Unparse_ExprStmt::unparseTemplateParameter(SgTemplateParameter* templateParamete
      ROSE_ASSERT(false);
    }
 
+
+#if 0
+// Saved version of this function.  We want to build a verison that will output a string seperately
+// and then use this function to output eh string.  then the front-end can use the same function to generate 
+// the string.
 void
 Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, SgUnparse_Info& info)
    {
@@ -416,6 +421,186 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
      unp->u_exprStmt->curprint ( string("\n/* Bottom of unparseTemplateArgument */ \n"));
 #endif
    }
+#endif
+
+
+
+void
+Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, SgUnparse_Info& info)
+   {
+     ROSE_ASSERT(templateArgument != NULL);
+
+#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
+     printf ("Unparse TemplateArgument (%p) \n",templateArgument);
+     unp->u_exprStmt->curprint ( "\n/* Unparse TemplateArgument */ \n");
+  // unp->u_exprStmt->curprint ( std::endl;
+     unp->u_exprStmt->curprint ( "\n");
+#endif
+
+#if 0
+     unp->u_exprStmt->curprint ( string("/* templateArgument is explicitlySpecified = ") + 
+            ((templateArgument->get_explicitlySpecified() == true) ? "true" : "false") +
+            " */");
+#endif
+
+     SgUnparse_Info newInfo(info);
+
+  // DQ (8/6/2007): Turn this off now that we have a more sophisticated hidden declaration and hidden type list mechanism.
+  // DQ (10/13/2006): Force template arguments to be fully qualified! (else they can 
+  // now be turned off where the template instantiation appears in a namespace)!
+  // DQ (10/14/2006): Since template can appear anywhere types referenced in template instantiation
+  // declarations have to be fully qualified.  We can't tell from the template argument if it requires 
+  // qualification we would need the type and the function declaration (and then some 
+  // analysis).  So fully qualify all function parameter types.  This is a special case
+  // (documented in the Unparse_ExprStmt::generateNameQualifier() member function.
+  // newInfo.set_forceQualifiedNames();
+
+  // DQ (5/14/2011): Added support for newer name qualification implementation.
+  // printf ("In unparseTemplateArgument(): templateArgument->get_name_qualification_length() = %d \n",templateArgument->get_name_qualification_length());
+     newInfo.set_name_qualification_length(templateArgument->get_name_qualification_length());
+     newInfo.set_global_qualification_required(templateArgument->get_global_qualification_required());
+     newInfo.set_type_elaboration_required(templateArgument->get_type_elaboration_required());
+
+  // DQ (5/30/2011): Added support for name qualification.
+     newInfo.set_reference_node_for_qualification(templateArgument);
+     ROSE_ASSERT(newInfo.get_reference_node_for_qualification() != NULL);
+
+#if 0
+     printf ("Exiting in unparseTemplateArgument() to see whate this is called \n");
+     ROSE_ASSERT(false);
+#endif
+
+  // ROSE_ASSERT(newInfo.isTypeFirstPart() == false);
+  // ROSE_ASSERT(newInfo.isTypeSecondPart() == false);
+
+     switch (templateArgument->get_argumentType())
+        {
+          case SgTemplateArgument::type_argument:
+             {
+               ROSE_ASSERT (templateArgument->get_type() != NULL);
+
+            // printf ("In unparseTemplateArgument(): templateArgument->get_type() = %s \n",templateArgument->get_type()->class_name().c_str());
+
+#if OUTPUT_DEBUGGING_INFORMATION
+               printf ("In unparseTemplateArgument(): templateArgument->get_type() = %s \n",templateArgument->get_type()->sage_class_name());
+               unp->u_exprStmt->curprint ( "\n /* templateArgument->get_type() */ \n");
+#endif
+            // curprint ( "\n /* SgTemplateArgument::type_argument */ \n");
+
+            // DQ (7/24/2011): Comment out to test going back to previous version befor unparsing array types correctly.
+               newInfo.set_SkipClassDefinition();
+               newInfo.set_SkipClassSpecifier();
+
+            // DQ (7/24/2011): Added to prevent output of enum declarations with enum fields in template argument.
+               newInfo.set_SkipEnumDefinition();
+               
+            // DQ (7/23/2011): These are required to unparse the full type directly (e.g. SgArrayType (see test2011_117.C).
+            // DQ (11/27/2004): Set these (though I am not sure that they help!)
+            // newInfo.unset_isTypeFirstPart();
+            // newInfo.unset_isTypeSecondPart();
+
+#if 0
+            // DQ (7/24/2011): Output the first part (before the name qualification)
+               newInfo.unset_isTypeFirstPart();
+               newInfo.unset_isTypeSecondPart();
+
+               newInfo.set_isTypeFirstPart();
+               unp->u_type->unparseType(templateArgument->get_type(),newInfo);
+
+            // DQ (7/24/2011): Output the second part (after the name qualification)
+               newInfo.unset_isTypeFirstPart();
+               newInfo.set_isTypeSecondPart();
+
+            // Debugging...this will fail for unparseToString...
+               ROSE_ASSERT(newInfo.get_reference_node_for_qualification() != NULL);
+               printf ("newInfo.get_reference_node_for_qualification() = %p = %s \n",newInfo.get_reference_node_for_qualification(),newInfo.get_reference_node_for_qualification()->class_name().c_str());
+#endif
+
+#if 1
+            // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
+            // different and so it depends upon where the type is referenced.  Thus the qualified name is 
+            // stored in a map to the IR node that references the type.
+               SgName nameQualifier;
+               if (templateArgument->get_name_qualification_length() > 0)
+                  {
+                    std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(templateArgument);
+                    ROSE_ASSERT(i != SgNode::get_globalQualifiedNameMapForTypes().end());
+                    if (i != SgNode::get_globalQualifiedNameMapForTypes().end())
+                       {
+                         nameQualifier = i->second;
+#if 0
+                         printf ("In unparseTemplateArgument(): Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+#endif
+                         curprint(nameQualifier);
+                       }
+                  }
+#endif
+            // DQ (7/23/2011): To unparse the type directly we can't have either of these set!
+            // ROSE_ASSERT(newInfo.isTypeFirstPart()  == false);
+            // ROSE_ASSERT(newInfo.isTypeSecondPart() == false);
+
+            // This will unparse the type will any required name qualification.
+               unp->u_type->unparseType(templateArgument->get_type(),newInfo);
+               break;
+             }
+
+          case SgTemplateArgument::nontype_argument:
+             {
+               ROSE_ASSERT (templateArgument->get_expression() != NULL);
+#if OUTPUT_DEBUGGING_INFORMATION
+               printf ("In unparseTemplateArgument(): templateArgument->get_expression() = %s \n",templateArgument->get_expression()->sage_class_name());
+               unp->u_exprStmt->curprint ( "\n /* templateArgument->get_expression() */ \n");
+#endif
+            // curprint ( "\n /* SgTemplateArgument::nontype_argument */ \n");
+
+            // DQ (1/5/2007): test2007_01.C demonstrated where this expression argument requires qualification.
+            // printf ("Template argument = %p = %s \n",templateArgument->get_expression(),templateArgument->get_expression()->class_name().c_str());
+
+               unp->u_exprStmt->unparseExpression(templateArgument->get_expression(),newInfo);
+            // printf ("Error: nontype_argument case not implemented in Unparse_ExprStmt::unparseTemplateArgument \n");
+            // ROSE_ABORT();
+               break;
+             }
+
+          case SgTemplateArgument::template_template_argument:
+             {
+            // unparseTemplateName(templateArgument->xxx,newInfo);
+               ROSE_ASSERT(templateArgument->get_templateDeclaration() != NULL);
+
+            // curprint ( "\n /* SgTemplateArgument::template_template_argument */ \n");
+
+            // DQ (8/24/2006): Skip output of the extra space.
+            // unp->u_exprStmt->curprint ( templateArgument->get_templateDeclaration()->get_name().str() << " ";
+#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
+               unp->u_exprStmt->curprint ( templateArgument->get_templateDeclaration()->get_template_name().str());
+#else
+               unp->u_exprStmt->curprint ( templateArgument->get_templateDeclaration()->get_name().str());
+#endif
+            // printf ("Error: template_argument case not implemented in Unparse_ExprStmt::unparseTemplateArgument \n");
+            // ROSE_ABORT();
+               break;
+             }
+
+          case SgTemplateArgument::argument_undefined:
+             {
+               printf ("Error argument_undefined in Unparse_ExprStmt::unparseTemplateArgument \n");
+               ROSE_ABORT();
+               break;
+             }
+
+          default:
+             {
+               printf ("Error default reached in Unparse_ExprStmt::unparseTemplateArgument \n");
+               ROSE_ABORT();
+             }
+        }
+
+#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
+     printf ("Leaving unparseTemplateArgument (%p) \n",templateArgument);
+     unp->u_exprStmt->curprint ( string("\n/* Bottom of unparseTemplateArgument */ \n"));
+#endif
+   }
+
 
 string
 unparse_operand_constraint (SgAsmOp::asm_operand_constraint_enum constraint)

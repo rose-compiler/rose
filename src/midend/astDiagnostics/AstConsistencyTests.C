@@ -1475,7 +1475,7 @@ TestAstTemplateProperties::visit ( SgNode* astNode )
                               ROSE_ASSERT(classDeclaration != NULL);
                               if (isSgTemplateInstantiationDecl(classDefinition->get_declaration()) == NULL)
                                  {
-                                // this is NOT a data member of the templated class (or nested class of a templated class)
+                                // This is NOT a data member of the templated class (or nested class of a templated class)
                                    if (variableDeclaration->get_specialization() != SgClassDeclaration::e_no_specialization)
                                       {
                                         printf ("Note: variableDeclaration->get_specialization() = %d != SgClassDeclaration::e_no_specialization  (variableDeclaration = %p) \n",variableDeclaration->get_specialization(),variableDeclaration);
@@ -1487,7 +1487,14 @@ TestAstTemplateProperties::visit ( SgNode* astNode )
                                 else
                                  {
                                 // Make sure that all template class declarations are associated with a template definition!
-                                   ROSE_ASSERT( isSgTemplateInstantiationDefn(classDefinition) != NULL);
+                                   if (isSgTemplateInstantiationDefn(classDefinition) == NULL)
+                                      {
+                                        printf ("Warning: classDefinition = %p = %s \n",classDefinition,classDefinition != NULL ? classDefinition->class_name().c_str() : "null");
+                                      }
+
+                                // DQ (1/1/2012): I think we can assert that this is only a SgClassDefinition (but leave the warning message above).
+                                // ROSE_ASSERT(isSgTemplateInstantiationDefn(classDefinition) != NULL);
+                                   ROSE_ASSERT(isSgClassDefinition(classDefinition) != NULL);
                                  }
                             }
                        }
@@ -1598,7 +1605,7 @@ TestAstForProperlyMangledNames::visit ( SgNode* node )
           int counter = 0; // counts the numbre of scopes back to global scope (not critical, but useful for debugging)
           mangledName = classDeclaration->get_mangled_qualified_name(counter).str();
 #else
-          mangledName = classDeclaration->get_mangled_name ().getString ();
+          mangledName = classDeclaration->get_mangled_name().getString ();
 #endif
 
        // DQ (8/28/2006): Added tests for the length of the mangled names
@@ -3170,6 +3177,9 @@ TestExpressionTypes::visit ( SgNode* node )
              {
                switch(definingDeclaration->variantT())
                   {
+                 // DQ (1/1/2012): Added support for templates in the AST.
+                    case V_SgTemplateClassDeclaration:
+
                  // This case applies to template or non-template classes
                     case V_SgClassDeclaration:
                     case V_SgDerivedTypeStatement:
@@ -3241,7 +3251,7 @@ TestExpressionTypes::visit ( SgNode* node )
 
                      default:
                        {
-                         printf ("definingDeclaration not tested = %p = %s \n",definingDeclaration,definingDeclaration->class_name().c_str());
+                         printf ("Error: default reached in switch: definingDeclaration not tested = %p = %s \n",definingDeclaration,definingDeclaration->class_name().c_str());
                          ROSE_ASSERT(false);
                        }
                   }
