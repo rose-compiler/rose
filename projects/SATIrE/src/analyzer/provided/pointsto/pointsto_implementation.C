@@ -4146,7 +4146,8 @@ PointsToAnalysis::Implementation::doDot(std::string filename)
     TimingPerformance timer("Points-to analysis, printing (DOT file):");
     std::string dotfilename = filename + ".dot";
     std::ofstream dotfile(dotfilename.c_str());
-    dotfile << "digraph " << filename << " {" << std::endl;
+    // MS: added quotes to filename to allow spaces and slashes
+    dotfile << "digraph " << "\""<<filename <<"\""<< " {" << std::endl;
 
     if (!contextSensitive)
     {

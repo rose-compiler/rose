@@ -155,16 +155,6 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
   } else if (optionMatch(argv[i], "--gdl-nodeformat=no-asttext")) {
     cl->nodeFormatAstTextOff();
 #endif
-  } else if (optionMatchPrefix(argv[i], "--analysis=")) {
-    /* see if we have an analyzer with the given name */
-    SATIrE::DataFlowAnalysis *analyzer
-        = SATIrE::makeProvidedAnalyzer(argv[i]+prefixLength);
-    if (analyzer == NULL) {
-      cl->setOptionsErrorMessage("no such provided analysis: "
-                                 + std::string(argv[i]+prefixLength));
-      return 1;
-    }
-    cl->appendDataFlowAnalysis(analyzer);
   } else if (optionMatch(argv[i], "--analysis-files=all")) {
     cl->analysisWholeProgramOn();
   } else if (optionMatch(argv[i], "--analysis-files=cl")) {
@@ -308,6 +298,9 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
     cl->setLanguage(AnalyzerOptions::Language_C89);
   } else if (optionMatch(argv[i], "--language=c99")) {
     cl->setLanguage(AnalyzerOptions::Language_C99);
+  } else if (optionMatch(argv[i], "--analysis=pointsto")) {
+    cl->runPointsToAnalysisOn();
+    cl->resolveFuncPtrCallsOn();
   } else if (optionMatch(argv[i], "--run-pointsto-analysis")) {
     cl->runPointsToAnalysisOn();
     cl->resolveFuncPtrCallsOn();
@@ -346,6 +339,16 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
     cl->appendInputFile(argv[i]);
   } else if (cl->verbatimArgs()) {
     cl->appendCommandLine(string(argv[i]));
+  } else if (optionMatchPrefix(argv[i], "--analysis=")) {
+    /* see if we have an analyzer with the given name */
+    SATIrE::DataFlowAnalysis *analyzer
+        = SATIrE::makeProvidedAnalyzer(argv[i]+prefixLength);
+    if (analyzer == NULL) {
+      cl->setOptionsErrorMessage("no such provided analysis: "
+                                 + std::string(argv[i]+prefixLength));
+      return 1;
+    }
+    cl->appendDataFlowAnalysis(analyzer);
   } else {
     stringstream s;
     s << "unrecognized option: " << argv[i] << endl;
