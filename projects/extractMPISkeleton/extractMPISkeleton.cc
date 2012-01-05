@@ -63,18 +63,30 @@ int main(int argc, char **argv) {
     bool outline = false;  // if true,   'outlines' non-skeleton code
                            // otherwise, removes non-skeleton code
 
-    SgProject* project = frontend(argc, argv);
-
     // Local Command Line Processing:
     Rose_STL_Container<std::string> l =
       CommandlineProcessing::generateArgListFromArgcArgv (argc,argv);
-    if ( CommandlineProcessing::isOption(l,"-local:","(o|outline)",true) ) {
+    if ( CommandlineProcessing::isOption(l,"-skel:","(o|outline)",true) ) {
       std::cout << "Outlining on." << std::endl;
       outline = true;
     }
-    if ( CommandlineProcessing::isOption(l,"-local:","(d|debug)",true) ) {
+    if ( CommandlineProcessing::isOption(l,"-skel:","(d|debug)",true) ) {
         debug = true;
     }
+
+    std::string spec_fname;
+    APISpecs apiSpecs;
+    if ( CommandlineProcessing::isOptionWithParameter(l, "-skel:",
+                                                      "(s|spec)",
+                                                      spec_fname,
+                                                      true) ) {
+        std::cout << "Using API specification: " << spec_fname << std::endl;
+        apiSpecs = readAPISpecCollection(spec_fname);
+    } else {
+        std::cout << "Warning: no API specification given." << std::endl;
+    }
+
+    SgProject* project = frontend(l);
 
     // Run the Backstroke Def-Use analysis
     if(debug) std::cout << "Running backstroke def-use analysis" << std::endl;
@@ -84,12 +96,6 @@ int main(int argc, char **argv) {
     // Find the dependencies of API calls:
     if(debug) std::cout << "Running dependency finder" << std::endl;
 
-    std::string spec_fname = "mpi_api.spec"; // set to default
-    //
-    // TODO: add argument processing to let API spec file be passed as
-    //       cmd line parameter
-    //
-    APISpecs apiSpecs = readAPISpecCollection("apis.coll");
     APIDepFinder *df = new APIDepFinder(&ssa, &apiSpecs);
     df->traverse(project);
     df->finalize(project);
