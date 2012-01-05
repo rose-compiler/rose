@@ -73,8 +73,8 @@ public:
 
             // Create the policy that holds the analysis state which is modified by each instruction.  Then plug the policy
             // into the X86InstructionSemantics to which we'll feed each instruction.
-            SymbolicSemantics::Policy<SymbolicSemantics::ValueType> policy(&smt_solver);
-            X86InstructionSemantics<SymbolicSemantics::Policy<SymbolicSemantics::ValueType>,
+            SymbolicSemantics::Policy<SymbolicSemantics::State, SymbolicSemantics::ValueType> policy(&smt_solver);
+            X86InstructionSemantics<SymbolicSemantics::Policy<SymbolicSemantics::State, SymbolicSemantics::ValueType>,
                                     SymbolicSemantics::ValueType> semantics(policy);
 
             // The top of the stack contains the (unknown) return address.  The value above that (in memory) is the address of
@@ -94,8 +94,9 @@ public:
                 // linker thunk and execute the instruction concretely to advance the instruction pointer.
                 SgAsmx86Instruction *insn = isSgAsmx86Instruction(args.thread->get_process()->get_instruction(analysis_addr));
                 if (x86_jmp==insn->get_kind()) {
-                    VirtualMachineSemantics::Policy<VirtualMachineSemantics::ValueType> p;
-                    X86InstructionSemantics<VirtualMachineSemantics::Policy<VirtualMachineSemantics::ValueType>,
+                    VirtualMachineSemantics::Policy<VirtualMachineSemantics::State, VirtualMachineSemantics::ValueType> p;
+                    X86InstructionSemantics<VirtualMachineSemantics::Policy<VirtualMachineSemantics::State,
+                                                                            VirtualMachineSemantics::ValueType>,
                                             VirtualMachineSemantics::ValueType> sem(p);
                     p.set_map(args.thread->get_process()->get_memory()); // won't be thread safe
                     sem.processInstruction(insn);
@@ -144,7 +145,7 @@ public:
                     InternalNode *c = new InternalNode(32, OP_EQ, policy.readRegister<32>("eip").expr,
                                                        LeafNode::create_integer(32, target));
                     constraints.push_back(c); // shouldn't really have to do this again if we could save some state
-                    if (smt_solver.satisfiable(c)) {
+                    if (smt_solver.satisfiable(constraints)) {
                         policy.writeRegister("eip", SymbolicSemantics::ValueType<32>(target));
                     } else {
                         trace->mesg("%s: chosen control flow path is not feasible.", name);

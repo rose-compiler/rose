@@ -20,6 +20,7 @@ public:
           policy(this), semantics(policy),
           robust_list_head_va(0), clear_child_tid(0) {
         real_thread = pthread_self();
+        memset(trace_mesg, 0, sizeof trace_mesg);
         ctor();
     }
 
@@ -168,6 +169,13 @@ public:
      *  the inner-most function is assumed to be on the top of the stack (ss:[esp]), as is the case immediately after a CALL
      *  instruction before the called function has a chance to "PUSH EBP; MOV EBP, ESP". */
     void report_stack_frames(RTS_Message*, const std::string &title="", bool bp_not_saved=false);
+
+    /** Create, open, or reassign all tracing facilities.  This method is called when a thread is constructed or when a thread
+     *  is reassigned to a new process after a fork.  For each tracing facility, an RTS_Message object is created (if
+     *  necessary) to point to either the specified file or no file, depending on whether the corresponding trace flag is set
+     *  for the containing process.  If an RTS_Message object already exists, then its set_file() method is called to make it
+     *  point to the specified file. */
+    void reopen_trace_facilities(FILE*);
 
     /**************************************************************************************************************************
      *                                  Callbacks

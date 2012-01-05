@@ -5,7 +5,7 @@
 #include "VirtualMachineSemantics.h"
 
 
-#define RSIM_SEMANTIC_POLICY    VirtualMachineSemantics::Policy<VirtualMachineSemantics::ValueType>
+#define RSIM_SEMANTIC_POLICY    VirtualMachineSemantics::Policy<VirtualMachineSemantics::State, VirtualMachineSemantics::ValueType>
 #define RSIM_SEMANTIC_VTYPE     VirtualMachineSemantics::ValueType
 
 
@@ -119,12 +119,12 @@ public:
     /* Reads memory from the memory map rather than the super class. */
     template <size_t Len> RSIM_SEMANTIC_VTYPE<Len>
     readMemory(X86SegmentRegister sr, const RSIM_SEMANTIC_VTYPE<32> &addr,
-               const RSIM_SEMANTIC_VTYPE<1> cond);
+               const RSIM_SEMANTIC_VTYPE<1> &cond);
 
     /* Writes memory to the memory map rather than the super class. */
     template <size_t Len> void
     writeMemory(X86SegmentRegister sr, const RSIM_SEMANTIC_VTYPE<32> &addr,
-                const RSIM_SEMANTIC_VTYPE<Len> &data,  RSIM_SEMANTIC_VTYPE<1> cond);
+                const RSIM_SEMANTIC_VTYPE<Len> &data,  const RSIM_SEMANTIC_VTYPE<1> &cond);
 
 };
 

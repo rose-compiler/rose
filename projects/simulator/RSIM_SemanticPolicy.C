@@ -6,7 +6,6 @@
 void
 RSIM_SemanticPolicy::ctor()
 {
-
     reg_eax = findRegister("eax", 32);
     reg_ebx = findRegister("ebx", 32);
     reg_ecx = findRegister("ecx", 32);
@@ -127,10 +126,10 @@ RSIM_SemanticPolicy::dump_registers(RTS_Message *mesg)
                    readRegister<32>(reg_ebp).known_value(), readRegister<32>(reg_esp).known_value(),
                    get_ip().known_value());
 
-        static const char *segreg_name[] = {"cs", "ds", "es", "fs", "gs", "ss"};
         for (int i=0; i<6; i++) {
+            std::string segreg_name = segregToString((X86SegmentRegister)i);
             mesg->more("    %s=0x%04"PRIx64" base=0x%08"PRIx32" limit=0x%08"PRIx32" present=%s\n",
-                       segregToString((X86SegmentRegister)i), readRegister<16>(segreg_name[i]).known_value(),
+                       segreg_name.c_str(), readRegister<16>(segreg_name.c_str()).known_value(),
                        sr_shadow[i].base, sr_shadow[i].limit, sr_shadow[i].present?"yes":"no");
         }
 

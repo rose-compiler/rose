@@ -212,7 +212,7 @@ block_hash(SgAsmBlock *blk, unsigned char digest[20])
     }
     const SgAsmStatementPtrList &stmts = blk->get_statementList();
 
-    typedef VirtualMachineSemantics::Policy<VirtualMachineSemantics::ValueType> Policy;
+    typedef VirtualMachineSemantics::Policy<VirtualMachineSemantics::State, VirtualMachineSemantics::ValueType> Policy;
     typedef X86InstructionSemantics<Policy, VirtualMachineSemantics::ValueType> Semantics;
     Policy policy;
     policy.set_discard_popped_memory(true);
@@ -358,7 +358,8 @@ private:
                         if (isSgAsmInstruction(stmts[int_n])==args.insn)
                             break;
 
-                    typedef VirtualMachineSemantics::Policy<VirtualMachineSemantics::ValueType> Policy;
+                    typedef VirtualMachineSemantics::Policy<VirtualMachineSemantics::State,
+                                                            VirtualMachineSemantics::ValueType> Policy;
                     typedef X86InstructionSemantics<Policy, VirtualMachineSemantics::ValueType> Semantics;
                     Policy policy;
                     Semantics semantics(policy);

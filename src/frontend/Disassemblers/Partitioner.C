@@ -658,7 +658,7 @@ Partitioner::pops_return_address(rose_addr_t va)
 
         SgAsmx86Instruction *last_insn = isSgAsmx86Instruction(bb->last_insn());
 
-        typedef VirtualMachineSemantics::Policy<VirtualMachineSemantics::ValueType> Policy;
+        typedef VirtualMachineSemantics::Policy<VirtualMachineSemantics::State, VirtualMachineSemantics::ValueType> Policy;
         typedef X86InstructionSemantics<Policy, VirtualMachineSemantics::ValueType> Semantics;
         Policy policy;
         policy.set_map(get_map());
@@ -1262,7 +1262,7 @@ Partitioner::mark_ipd_configuration()
 
             MemoryMap *map = get_map();
             assert(map!=NULL);
-            typedef VirtualMachineSemantics::Policy<VirtualMachineSemantics::ValueType> Policy;
+            typedef VirtualMachineSemantics::Policy<VirtualMachineSemantics::State, VirtualMachineSemantics::ValueType> Policy;
             typedef X86InstructionSemantics<Policy, VirtualMachineSemantics::ValueType> Semantics;
             Policy policy;
             policy.set_map(map);

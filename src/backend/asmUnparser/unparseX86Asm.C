@@ -10,7 +10,10 @@
 /** Returns a string containing everthing before the first operand in a typical x86 assembly statement. */
 std::string unparseX86Mnemonic(SgAsmx86Instruction *insn) {
     ROSE_ASSERT(insn!=NULL);
-    std::string result = insn->get_mnemonic();
+    std::string result;
+    if (insn->get_lockPrefix())
+        result += "lock ";
+    result += insn->get_mnemonic();
     switch (insn->get_branchPrediction()) {
         case x86_branch_prediction_none: break;
         case x86_branch_prediction_taken: result += ",pt"; break;

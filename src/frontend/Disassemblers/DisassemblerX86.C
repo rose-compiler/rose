@@ -214,12 +214,12 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
 # endif
         if (debug && solver)
             solver->set_debug(stderr);
-        typedef SymbolicSemantics::Policy<SymbolicSemantics::ValueType> Policy;
+        typedef SymbolicSemantics::Policy<SymbolicSemantics::State, SymbolicSemantics::ValueType> Policy;
         typedef SymbolicSemantics::ValueType<32> RegisterType;
         typedef X86InstructionSemantics<Policy, SymbolicSemantics::ValueType> Semantics;
         Policy policy(solver);
 #else
-        typedef VirtualMachineSemantics::Policy<VirtualMachineSemantics::ValueType> Policy;
+        typedef VirtualMachineSemantics::Policy<VirtualMachineSemantics::State, VirtualMachineSemantics::ValueType> Policy;
         typedef VirtualMachineSemantics::ValueType<32> RegisterType;
         typedef X86InstructionSemantics<Policy, VirtualMachineSemantics::ValueType> Semantics;
         Policy policy;
@@ -428,7 +428,7 @@ SgAsmx86Instruction::has_effect(const std::vector<SgAsmInstruction*>& insns, boo
 {
     if (insns.empty()) return false;
 
-    typedef VirtualMachineSemantics::Policy<VirtualMachineSemantics::ValueType> Policy;
+    typedef VirtualMachineSemantics::Policy<VirtualMachineSemantics::State, VirtualMachineSemantics::ValueType> Policy;
     typedef X86InstructionSemantics<Policy, VirtualMachineSemantics::ValueType> Semantics;
     Policy policy;
     Semantics semantics(policy);
@@ -479,7 +479,7 @@ SgAsmx86Instruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>
     if (verbose) std::cerr <<"find_noop_subsequences:\n";
     std::vector< std::pair <size_t/*starting insn index*/, size_t/*num. insns*/> > retval;
 
-    typedef VirtualMachineSemantics::Policy<VirtualMachineSemantics::ValueType> Policy;
+    typedef VirtualMachineSemantics::Policy<VirtualMachineSemantics::State, VirtualMachineSemantics::ValueType> Policy;
     typedef X86InstructionSemantics<Policy, VirtualMachineSemantics::ValueType> Semantics;
     Policy policy;
     if (relax_stack_semantics) policy.set_discard_popped_memory(true);
