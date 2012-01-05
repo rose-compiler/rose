@@ -5,6 +5,7 @@
 #include <assert.h>
 
 #include "APISpec.h"
+#include "sage3basic.h"
 
 using namespace std;
 
@@ -84,6 +85,7 @@ APISpec *readAPISpec(string fname, uint32_t typeCode) {
 APISpecs readAPISpecCollection(string fname) {
   APISpecs theSpecs;
   uint32_t typeCode = 1;
+  string path = ROSE::getPathFromFileName(fname);
 
   // parse the file into an s-expression
   SExpr *sx = SExpr::parse_file(fname);
@@ -103,7 +105,7 @@ APISpecs readAPISpecCollection(string fname) {
           string e = cur->getValue();
           if(e == "include-api") {
               cur = cur->getNext();
-              string fname = cur->getValue();
+              string fname = path + "/" + cur->getValue();
               APISpec *spec = readAPISpec(fname, typeCode);
               theSpecs.push_back(spec);
               typeCode = spec->nextTypeCode();
