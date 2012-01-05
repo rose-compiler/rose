@@ -31,7 +31,7 @@ run: out
 out: ${EXEC}
 	rm -rf $@
 	mkdir $@
-	for f in ${EXAMPLES} ${TESTS} ; do b=$$(basename "$$f") ; echo ----- $$b ----- ; ${LIBTOOL} --mode=execute ./${EXEC} -rose:o out/$$b $$f ; done
+	for f in ${EXAMPLES} ${TESTS} ; do b=$$(basename "$$f") ; echo ----- $$b ----- ; ./${EXEC} -rose:o out/$$b -skel:spec $(srcdir)/apis.coll $$f ; done
 
 out/%: out/%.c
 	mpicc -o $@ $<
@@ -45,7 +45,7 @@ mpibuild: ${OUTS}
 out-o: ${EXEC}
 	rm -rf $@
 	mkdir $@
-	for f in ${EXAMPLES} ${TESTS} ; do b=$$(basename "$$f") ; echo ----- $$b ----- ; ${LIBTOOL} --mode=execute ./${EXEC} -rose:o out-o/$$b -local:outline $$f ; done
+	for f in ${EXAMPLES} ${TESTS} ; do b=$$(basename "$$f") ; echo ----- $$b ----- ; ./${EXEC} -rose:o out-o/$$b -skel:spec $(srcdir)/apis.coll -skel:outline $$f ; done
 
 out-o/%: out-o/%.c
 	mpicc -o $@ $<
