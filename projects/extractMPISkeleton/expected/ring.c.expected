@@ -1,0 +1,28 @@
+#include <stdio.h>
+#include "mpi.h"
+
+int main(argc,argv)
+int argc;
+char **argv;
+{
+  int rank;
+  int value;
+  int size;
+  MPI_Status status;
+  MPI_Init(&argc,&argv);
+  MPI_Comm_rank(&ompi_mpi_comm_world,&rank);
+  MPI_Comm_size(&ompi_mpi_comm_world,&size);
+  do {
+    if (rank == 0) {
+      scanf("%d",&value);
+      MPI_Send((&value),1,&ompi_mpi_int,(rank + 1),0,&ompi_mpi_comm_world);
+    }
+    else {
+      MPI_Recv((&value),1,&ompi_mpi_int,(rank - 1),0,&ompi_mpi_comm_world,&status);
+      if (rank < (size - 1)) 
+        MPI_Send((&value),1,&ompi_mpi_int,(rank + 1),0,&ompi_mpi_comm_world);
+    }
+  }while (value >= 0);
+  MPI_Finalize();
+  return 0;
+}
