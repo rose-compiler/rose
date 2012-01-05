@@ -1771,7 +1771,6 @@ static void writedot (const char *name)
 		(void)fprintf (file, "L%d [label=\"",j);
 		(void)fprintf (file, "%d: ",j); 
 		kfg_node_infolabel_print_fp(file, cfg, node, 0);
-		(void)fprintf (file, "::%d=%s",i,function_name);	  
 		(void)fprintf (file, "\"];\n");	  
 		
 		//(void)fprintf (file, "    node: {\n"		\
