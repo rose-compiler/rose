@@ -51,6 +51,10 @@ namespace VirtualCFG {
       }
       s << isSgFunctionDefinition(node)->get_declaration()->get_qualified_name().str() << ")" << std::endl; 
     }
+    else
+    {
+      s << SageInterface::get_name (node)<<endl;
+    }  
     s << toStringForDebugging();
   //if (isSgFunctionDefinition(node)) {
   //  s << std::endl << "decl'd by: <" << isSgFunctionDefinition(node)->get_declaration()->class_name() << "> @" << 
@@ -69,11 +73,11 @@ namespace VirtualCFG {
       } else {
         // nodeText = node->unparseToString(); -- Fortran CFG nodes can't always be unparsed
         ostringstream nt;
-        nt << "@" << node->get_startOfConstruct()->get_line();
+        nt << "@line=" << node->get_startOfConstruct()->get_line();
         nodeText += nt.str();
       }
       if (nodeText.length() > 20) {nodeText.resize(20); nodeText += "...";}
-      s << "<" << node->class_name() << "> " << nodeText << " :" << index;
+      s << "<" << node->class_name() << "> " << nodeText << " :idx=" << index;
       // s << node->class_name() << " @" << hex << uintptr_t(node) << " " << dec << index;
     }
     return s.str();

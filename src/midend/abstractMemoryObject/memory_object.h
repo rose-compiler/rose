@@ -171,6 +171,7 @@ namespace AbstractMemoryObject
       // number of dimensions of the array
       virtual size_t getNumDims();
 
+      //--- pointer like semantics
       // support dereference of array object, similar to the dereference of pointer
       // Return the element object: array[0]
       virtual ObjSet* getDereference () ;
@@ -187,6 +188,16 @@ namespace AbstractMemoryObject
       // Returns true if this object and that object may/must refer to the same pointer memory object.
       //virtual bool operator == (const Pointer & that) const;
       //virtual bool operator < (const Pointer & that) const;
+      //
+      //--- array like semantics
+       // Returns a memory object that corresponds to all the elements in the given array
+      //virtual ObjSet* getElements() ;
+      // which represents one or more indexes within the array
+      //virtual ObjSet* getElements(IndexVector* ai) ;
+      // number of dimensions of the array
+      //virtual size_t getNumDims() ;
+
+     
   };
 
   // A factory method for creating instances of ObjSet of a given abstraction
