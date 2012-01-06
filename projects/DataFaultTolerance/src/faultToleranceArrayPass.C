@@ -57,8 +57,6 @@ void MemFaultTolerance::insertWriteCheck(SgExpression *lhs,
 	SgExpression *arrayNameExp;
 	vector<SgExpression *> subscripts;
 	vector<SgExpression *>* ptrsubscripts = &subscripts;
-	vector<SgExpression *>::iterator subscriptsIter;
-
 
 	/* Check if the current lhsExpr is an array reference */
 	if (!isArrayReference(lhs, &arrayNameExp, &ptrsubscripts))
@@ -84,9 +82,10 @@ void MemFaultTolerance::insertWriteCheck(SgExpression *lhs,
 	parameters->append_expression(lhs); // Array Value
 
 	// Insert subscripts
-	for (subscriptsIter = subscripts.end() - 1; subscriptsIter
-			>= subscripts.begin(); subscriptsIter--)
-		parameters->append_expression(*subscriptsIter);
+	vector<SgExpression *>::reverse_iterator rSubscriptsIter;
+	for (rSubscriptsIter = subscripts.rbegin() ; rSubscriptsIter
+	       < subscripts.rend(); rSubscriptsIter++)
+	  parameters->append_expression(*rSubscriptsIter);
 
 	// Insert Old Value in parameter list
 	parameters->append_expression(

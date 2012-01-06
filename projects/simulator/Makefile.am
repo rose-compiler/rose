@@ -282,6 +282,14 @@ run_symbolic_2_grep_strchr: symbolic_2 $(32BIT_REPO)/grep
 	LD_BIND_NOW=y ./symbolic_2 --debug --trigger=0x08049508 --analysis-func=0x08049488 --take-branch=nnnnnnyy $(32BIT_REPO)/grep x /dev/null
 
 
+#------------------------------------------------------------------------------------------------------------------------------
+# Analysis to determine type info
+noinst_PROGRAMS += types_1
+types_1_SOURCES = papers/types_1.C
+types_1_CPPFLAGS = $(ROSE_INCLUDES)
+types_1_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+
 ###############################################################################################################################
 #  SYSTEM CALL TESTS
 ###############################################################################################################################
