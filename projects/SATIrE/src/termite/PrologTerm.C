@@ -80,7 +80,8 @@ void abort_termite() {
 
 bool init_termite(int argc, char **argv, bool interactive)
 { 
-  char *av[10];
+  const int numoptions=10;
+  char *av[numoptions+1];
   int ac = 0;
 
   av[ac++] = argv[0];
@@ -89,7 +90,8 @@ bool init_termite(int argc, char **argv, bool interactive)
   // Sizes of "0" mean the largest possible limits.
   av[ac++] = strdup("-L0");  // Local stack
   av[ac++] = strdup("-G0");  // Global stack
-  av[ac++] = strdup("-A0");  // Argument stack
+  // MS: removed option -A0 (see documentation and -L option)
+  //     eliminates "% WARNING: -Asize is no longer supported"
   av[ac++] = strdup("-T0");  // Trail stack
 
   if (interactive == false) {
@@ -112,6 +114,7 @@ bool init_termite(int argc, char **argv, bool interactive)
   }
 
   av[ac]   = NULL;
+  assert(ac<=numoptions+1);
 
   // Make sure SWI always finds... itself. Its home directory is determined
   // by the configure script and must be passed on the command line when
