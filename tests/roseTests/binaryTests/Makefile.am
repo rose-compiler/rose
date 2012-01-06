@@ -176,6 +176,11 @@ MOSTLYCLEANFILES += arm-ctrlaltdel.dump-1 arm-ctrlaltdel.dump-2 arm-ctrlaltdel.d
 shiftResizeSection.passed: shiftResizeSection.conf shiftResizeSection
 	@$(RTH_RUN) INPUT=arm-ctrlaltdel $< $@
 
+# Check whether the instruction semantics classes can be specialized. This is only a compile test; we never actually
+# run the program since the same classes are exercised by other tests.
+noinst_PROGRAMS += subSemantics
+subSemantics_SOURCES = subSemantics.C
+subSemantics_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 # Finds constant values and propagates them across instructions
 noinst_PROGRAMS += findConstants
