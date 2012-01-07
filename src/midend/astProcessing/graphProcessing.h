@@ -6,6 +6,8 @@
 
 // Original Author (SgGraphTraversal mechanisms): Michael Hoffman
 //$id$
+//#define PERFDEBUG 1
+//#define LP 1
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -39,6 +41,7 @@
 #include <iostream>
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <sys/time.h>
 
 
 
@@ -49,9 +52,12 @@ template <class CFG>
 class SgGraphTraversal
 {
 public:
+    int normals;
+    int abnormals;
     bool needssafety;
     int recursed;
     int checkedfound;
+    //std::map<int, std::set<std::vector<int> > > loopPaths;
     typedef typename boost::graph_traits<CFG>::vertex_descriptor Vertex;
     typedef typename boost::graph_traits<CFG>:: edge_descriptor Edge;
     std::vector<int> getInEdges(int& node, CFG*& g);
@@ -223,7 +229,7 @@ zipPath(std::vector<int>& pth, CFG*& g, int start, int end) {
                         for (unsigned int qw = 0; qw < pth.size(); qw++) {
                            if (find(markers.begin(), markers.end(), pth[qw]) != markers.end()) {
                                std::vector<int> oeds = getOutEdges(pth[qw], g);
-                               for (int i = 0; i < oeds.size(); i++) {
+                               for (unsigned int i = 0; i < oeds.size(); i++) {
                                    if (getTarget(oeds[i], g) == pth[qw+1]) {
                                        movepath.push_back(oeds[i]);
                                    }
@@ -246,7 +252,7 @@ unzipPath(std::vector<int>& pzipped, CFG*& g, int start, int end) {
     // std::cout << std::endl;
      ROSE_ASSERT(pzipped[0] == start && (pzipped[1] == end || end == -1));
      std::vector<int> zipped;
-     for (int i = 2; i < pzipped.size(); i++) {
+     for (unsigned int i = 2; i < pzipped.size(); i++) {
          zipped.push_back(pzipped[i]);
      }
      std::vector<int> unzipped;
@@ -308,11 +314,30 @@ unzipPath(std::vector<int>& pzipped, CFG*& g, int start, int end) {
 
                       
                            
+/*
+Example Time
+
+    Example:
+             timeval tim;
+             gettimeofday(&tim, NULL);
+             double t1=tim.tv_sec+(tim.tv_usec/1000000.0);
+             do_something_long();
+             gettimeofday(&tim, NULL);
+             double t2=tim.tv_sec+(tim.tv_usec/1000000.0);
+             printf("%.6lf seconds elapsed\n", t2-t1);
+
+*/
+
 
 template<class CFG>
 std::vector<std::vector<int> >
 SgGraphTraversal<CFG>::
 bfsTraversePath(int begin, int end, CFG*& g, bool loop) {
+    #ifdef PERFDEBUG
+    timeval tim;
+    gettimeofday(&tim, NULL);
+    double tim1 = tim.tv_sec+(tim.tv_usec/1000000.0);
+    #endif
     bool recursedloop = loop;
     std::map<int, std::vector<std::vector<int> > > PtP;
     std::set<int> nodes;
@@ -337,7 +362,7 @@ bfsTraversePath(int begin, int end, CFG*& g, bool loop) {
     //   if (paths.size() % 1000000 == 0 && paths.size() != 0) {  
     //   std::cout << "paths.size(): " << paths.size() << std::endl;
     //   }
-       unsigned int mpc = 10000;
+       unsigned int mpc = 50000;
        if (pathContainer.size() == 0) {
            unsigned int mxl = 0; 
            if (oldPaths.size() > mpc) {
@@ -362,9 +387,8 @@ bfsTraversePath(int begin, int end, CFG*& g, bool loop) {
            pathContainer = npc;
            npc.clear();
        }
-       int chunk = 1;//pathContainer.size()/100;
-       //#pragma omp parallel for schedule(dynamic, chunk)
-       for (int i = 0; i < pathContainer.size(); i++) {
+       //#pragma omp parallel for schedule(guided)
+       for (unsigned int i = 0; i < pathContainer.size(); i++) {
        std::vector<int> npth = pathContainer[i];
         std::vector<int> oeds = getOutEdges(npth.back(), g);
         std::vector<int> ieds = getInEdges(npth.back(), g);
@@ -433,23 +457,23 @@ pathContainer[i] = prepath;
              std::vector<int> movepath = newpth;
              
              if (recursedloop && newpth.back() == end && newpth.size() != 1) {
-             #pragma omp critical
-             {
+             //#pragma omp critical
+            // {
              paths.push_back(movepath);
-             }
+            // }
              }
              else if (!recursedloop) {
              if (bound && newpth.size() != 1 && newpth.back() == end) {
-             #pragma omp critical
-            {
+            // #pragma omp critical
+           // {
              paths.push_back(movepath);
-            }
+           // }
              }
              else if (!bound) {
-             #pragma omp critical
-             {
+           //  #pragma omp critical
+           //  {
              paths.push_back(movepath);
-             }
+           //  }
              }
              }
              
@@ -511,57 +535,44 @@ int tg = getTarget(oeds[j], g);
                 if (PtP.find(tg) == PtP.end()) {
                     std::vector<int> nv;
                     nv.push_back(tg);
-                    #pragma omp critical
-                    {
                     newPathContainer.push_back(nv);
                     PtP[tg].push_back(/*zipPath(*(*/newpath);//, g, newpath.front(), newpath.back()));
-                    }
                 }
                 else {
-                    if (find(PtP[tg].begin(), PtP[tg].end(), newpath) == PtP[tg].end()) {
-                    #pragma omp critical
-                    {
+                   // ROSE_ASSERT(find(PtP[tg].begin(), PtP[tg].end(), newpath) == PtP[tg].end())
                     PtP[tg].push_back(/*zipPath(*/newpath);//, g, newpath.front(), newpath.back()));
-                    }
-                    }
                 }
             }
             else if (find(newpath.begin(), newpath.end(), getTarget(oeds[j], g)) == newpath.end() || getTarget(oeds[j], g) == end) {
                 newpath.push_back(tg);
                 std::vector<int> ieds = getInEdges(tg, g);
                 if (ieds.size() > 1) {//find(closures.begin(), closures.end(), tg) != closures.end()) {
-                #pragma omp critical
-                {
                 nodes.insert(tg);
                 }
-                }
                // }
-                #pragma omp critical
-                {
-                ROSE_ASSERT(find(newPathContainer.begin(), newPathContainer.end(), newpath) == newPathContainer.end());
+             //   #pragma omp critical
+             //   {
                 newPathContainer.push_back(newpath);
-                }
+             //   }
             }
             else if (tg == end  && recursedloop) {
                 newpath.push_back(tg);
                 //if (find(closures.begin(), closures.end(), tg) != closures.end()) {
                 //nodes.insert(tg);
                // }
-                #pragma omp critical
-                {
- ROSE_ASSERT(find(newPathContainer.begin(), newPathContainer.end(), newpath) == newPathContainer.end());
+               // #pragma omp critical
+               // {
                 newPathContainer.push_back(newpath);
-                }
+               // }
             }
             else if (find(newpath.begin(), newpath.end(), tg) != newpath.end() && tg != end) { 
                 std::vector<int> ieds = getInEdges(tg, g);
                 if (ieds.size() > 1/*find(closures.begin(), closures.end(), tg) != closures.end()*/ && find(localLoops.begin(), localLoops.end(), tg) == localLoops.end() && find(recurses.begin(), recurses.end(), tg) == recurses.end()) {
-                   #pragma omp critical
-                   {
+                 //  #pragma omp critical
+                 //  {
                    localLoops.push_back(tg);
-                   //}
+                 //  }
                    nodes.insert(tg);
-                   }
                 }
                 else if (find(recurses.begin(), recurses.end(), tg) != recurses.end()) {
                     //std::cout << "found recursed: " << tg << std::endl;
@@ -581,7 +592,6 @@ int tg = getTarget(oeds[j], g);
         pathContainer.clear();
     std::vector<std::vector<int> > finnpts;
     std::vector<std::vector<int> > npts;
-    nodes.clear();
    // std::vector<std::vector<int> > ntg;
    // std::vector<std::vector<int> > tgpaths;
     //std::cout << "completedbuild, begin while" << std::endl;
@@ -591,9 +601,11 @@ int tg = getTarget(oeds[j], g);
            std::cout << "too many paths, consider a subgraph" << std::endl;
            ROSE_ASSERT(false);
        }
-       #pragma omp parallel for schedule(guided)
-       for (int qq = 0; qq < paths.size(); qq++) {
-       
+       //int normals = 0;
+       //int abnormals = 0;
+       //#pragma omp parallel for schedule(guided)
+       for (unsigned int qq = 0; qq < paths.size(); qq++) {
+       // while (true) {
             std::vector<int> pq = paths[qq];
             std::vector<int> qp;
            // #pragma omp critical
@@ -609,15 +621,30 @@ int tg = getTarget(oeds[j], g);
           //  }
             int ppf = paths[qq].front();
             if (PtP.find(ppf) != PtP.end()) {
-                
-                for (int kk = 0; kk < PtP[ppf].size(); kk++) {
+                for (unsigned int kk = 0; kk < PtP[ppf].size(); kk++) {
                     std::vector<int> newpath = /*unzipPath(*/PtP[ppf][kk];//, g, PtP[ppf][kk][0], PtP[ppf][kk][1]);
                     bool good = true;
                     if (newpath.back() == newpath.front() && newpath.front() != begin && newpath.size() > 1) {
                         good = false;
+                        //#pragma omp critical
+                       // {
+                       // std::cout << "shouldn't occur" << std::endl;
+                       // }
                     }
                     else {
-                    for (int kk1 = 0; kk1 < newpath.size(); kk1++) {
+
+                    if (find(pq.begin(), pq.end(), newpath.front()) != pq.end() && newpath.front() != begin) {
+                         //#pragma omp critical
+                        // {
+                        // normals++;
+                         //std::cout << "normal" << std::endl;
+                        // }
+                          good = false;
+                    }
+
+
+                    else {
+                    for (unsigned int kk1 = 0; kk1 < newpath.size(); kk1++) {
                        //if (tgpaths.size() == 0) {
                        //if (find(pq.begin(), pq.end(), newpath[kk1]) != pq.end() && newpath[kk1] != begin) {
                       //     good = true;
@@ -632,9 +659,7 @@ int tg = getTarget(oeds[j], g);
                            good = false;
                            break;
                        }
-                       else */
-                       if (find(closures.begin(), closures.end(), newpath[kk1]) != closures.end()) {
-                       if (find(pq.begin(), pq.end(), newpath[kk1]) != pq.end() && newpath[kk1] != begin) {
+                       else */if (find(pq.begin(), pq.end(), newpath[kk1]) != pq.end() && newpath[kk1] != begin) {
                            //std::cout << "badpath" << std::endl;
                            //for (int i = 0; i < newpath.size(); i++) {
                            //    std::cout << newpath[i] << ", ";
@@ -642,11 +667,17 @@ int tg = getTarget(oeds[j], g);
                           // std::cout << "end path" << std::endl;
                           // std::cout << "nobf" << std::endl;
                            good = false;
+                           //#pragma omp critical
+                          // {
+                          // abnormals++;
+                           ///std::cout << "abnormal" << std::endl;
+                          // }
                            break;
+                          
                        }
                        }
-                      // }
                     }
+                   // }
                     }
                     if (good) {
                        newpath.insert(newpath.end(), pq.begin(), pq.end());
@@ -661,7 +692,7 @@ int tg = getTarget(oeds[j], g);
                 }
             }
             else {
-                std::vector<int> ppq = zipPath(pq, g, pq.front(), pq.back());
+                std::vector<int> ppq = pq;// zipPath(pq, g, pq.front(), pq.back());
                 #pragma omp critical
                 {
                 finnpts.push_back(ppq);
@@ -684,8 +715,6 @@ int tg = getTarget(oeds[j], g);
     //for (unsigned int k1 = 0; k1 < localLoops.size(); k1++) {
     //    recurses.push_back(localLoops[k1]);
    // }
-    PtP.clear();
-    int bfsdepth = 1;
     for (unsigned int k = 0; k < localLoops.size(); k++) {
         int lk = localLoops[k];
         std::vector<std::vector<int> > loopp;
@@ -696,10 +725,7 @@ int tg = getTarget(oeds[j], g);
         std::map<int, std::vector<std::vector<int> > > localLoopPaths;
         
         recurses.push_back(lk);
-        //std::cout << "bfsdepth: " << bfsdepth << std::endl;
-        bfsdepth++;
         loopp = bfsTraversePath(lk, lk, g, true);
-        bfsdepth--;
        // recurses.pop_back();
         //}
         //globalLoopPaths[localLoops[k]] = loop;
@@ -732,11 +758,10 @@ int tg = getTarget(oeds[j], g);
     borrowed = true;
    
     std::vector<std::vector<int> > lps2;
-    unsigned int maxpaths = 1000;
-    unsigned int pathdivisor = paths.size()/maxpaths;
-    //unsigned int maxpaths = paths.size()/pathdivisor;
+    unsigned int pathdivisor = 100;
+    unsigned int maxpaths = paths.size()/pathdivisor;
 
-    if (pathdivisor < 1) {
+    if (maxpaths < 100) {
         pathdivisor = 1;
         maxpaths = paths.size();
     }
@@ -770,7 +795,6 @@ int tg = getTarget(oeds[j], g);
         npaths.clear();
     //pathStore = paths;
     //std::vector<std::vector<int> > lps2;
-    //std::cout << "uTraverses" << std::endl;
     if (!recursedloop) {
     uTraversePath(begin, end, g, false, globalLoopPaths);
     }
@@ -778,6 +802,7 @@ int tg = getTarget(oeds[j], g);
     //const std::map<int, std::vector<std::vector<int> > > glp = globalLoopPaths;
     //std::cout << "recursed: " << recursed << std::endl;
     recursed++;
+    
     std::set<std::vector<int> > lps = uTraversePath(begin, end, g, true, globalLoopPaths);
     recursed--;
     
@@ -793,38 +818,90 @@ int tg = getTarget(oeds[j], g);
     }
     //std::cout << "evaledpaths: " << evaledpaths << std::endl;
     //}
-    //std::cout << "end uTraverses" << std::endl;
-    
+    #ifdef PERFDEBUG
+    std::cout << "begin: " << begin << " end: " << end << std::endl;
+    gettimeofday(&tim, NULL);
+    double tim2 = tim.tv_sec+(tim.tv_usec/1000000);
+    double timeRet = tim2 - tim1;
+    std::cout << "bfs time elapsed: " << timeRet << std::endl;
+    #endif
+    //std::cout << "normals: " << normals << " abnormals: " << abnormals << std::endl;
     return lps2;
     
 
 }
              
         
+std::vector<int> increment(std::vector<int> toInc, std::vector<int> help) {
+  int i = 0;
+  toInc[0] += 1;
+  ROSE_ASSERT(toInc.size() == help.size());
+  while (true) {
+      if (i == toInc.size()) {
+          toInc.back() = -10;
+          break;
+      }
+      else if (toInc[i] == help[i]-1) {
+         //if (i == toInc.size()) {
+         //    toInc.back() = -10;
+        // }
+        // else {
+         toInc[i+1] += 1;
+         for (int q = 0; q < i+1; q++) {
+             toInc[q] = -1;
+         }
+        // }
+      }
+      else {
+          break;
+      }
+      i++;
+  }
+ // std::cout << "toInc: " << std::endl;
+ // for (int k = 0; k < toInc.size(); k++) {
+ //     std::cout << ", " << toInc[k];
+ // }
+ // std::cout << std::endl;
+  return toInc;
+}
+    
 
 
 template<class CFG>
 std::set<std::vector<int> >
 SgGraphTraversal<CFG>::
 uTraversePath(int begin, int end, CFG*& g, bool loop, std::map<int, std::vector<std::vector<int> > >& globalLoopPaths) {
-    
-    
+    //std::set<std::vector<int> > movepaths;
+    //std::set<std::vector<int> > movepaths2;
+    //int rP = 0;
+    //int bA = 0;
+    //int tl = 0;
+    #ifdef LP
+    if (loopStore.find(begin) != loopStore.end()) {
+        return loopStore[begin];
+    }
+    #endif
+    #ifdef PERFDEBUG
+    timeval tim;
+    gettimeofday(&tim, NULL);
+    double t1 = tim.tv_sec+(tim.tv_usec/1000000);
+    #endif
     std::set<std::vector<int> > newpaths;
     //int checkedfound = 0;
     //workingthread = -1;:
-    int lpsToGo = 0;
+    //int lpsToGo = 0;
     //std::cout << "beginning : " << begin << " end: " << end << std::endl;
     std::set<std::vector<int> > npaths;
-    int pathcount = 0;
-    int npathnum = 1;
+    //int pathcount = 0;
+    //int npathnum = 1;
     pathnum = 0;
-    double globalMin = 1;
+    //double globalMin = 1;
     std::vector<int> path;
     std::vector<std::vector<int> > paths;
     int truepaths = 0;
     
     std::vector<std::vector<int> > checkpaths;
-    int repeats = 1;
+    //int repeats = 1;
     std::vector<std::vector<int> > npathchecker;
     
     
@@ -832,8 +909,8 @@ uTraversePath(int begin, int end, CFG*& g, bool loop, std::map<int, std::vector<
     std::map<int, int> currents;
     int nnumpaths = 0;
     std::set<std::vector<int> > loopPaths;
-    int rounds = 0;
-    int oldsize = 0;
+    //int rounds = 0;
+    //int oldsize = 0;
     bool threadsafe = true;
     bool done = false;
     std::set<std::vector<int> > fts;
@@ -846,6 +923,7 @@ uTraversePath(int begin, int end, CFG*& g, bool loop, std::map<int, std::vector<
         if (paths.size() > 100000) {
             std::cout << "nearly 1 million paths with no loops, stopping" << std::endl;
             return loopPaths;
+            std::cout << "ended early" << std::endl;
         }
         if (done || borrowed) {
      
@@ -875,55 +953,58 @@ uTraversePath(int begin, int end, CFG*& g, bool loop, std::map<int, std::vector<
                 std::vector<int> path;// = paths[qqq];
                 //#pragma omp critical
                // {
-                path = unzipPath(paths[qqq], g, begin, end);
-               
-                
-                
-                
-                
-                
-               
-                
-                
-                
-                    
-                
-                
+                path = paths[qqq];//unzipPath(paths[qqq], g, begin, end);
+               // }
+                //std::cout << "unzipping" << std::endl;,
+                //std::vector<int> path = unzipPath(prepath, g, begin, end);
+                //std::cout << "unzipped path: " << std::endl;
+                //for (int jw = 0; jw < path.size(); jw++) {
+                //    std::cout << path[jw] << ", ";
+               // }
+                //std::cout << "end" << std::endl;
+                //if (paths.size() == 1 && paths[0].size() == 1) {
+                //    std::set<std::vector<int> > nullvec;
+                    //return nullvec;
+                //}
+                //movepaths.clear();
                 truepaths++;
-                
-                
-                
-                
-                
-                   unsigned int permnums = 1;
+                //std::vector<std::vector<int> > nPaths;
+                //std::vector<int> subpath;
+                //subpath.push_back(path[0]);
+                //nPaths.push_back(subpath);
+                //std::vector<std::vector<int> > newNPaths;
+                   int permnums = 1;
                    std::vector<int> perms;
-                    std::vector<int> qs;
+                    std::vector<unsigned int> qs;
                     std::map<int, std::vector<std::vector<int> > > localLoops;
                     std::vector<int> takenLoops;
                     bool taken = false;
                     
+                    //std::cout << "forming dumpedNodes" << std::endl;
+                     std::vector<int> help;
+                     std::vector<int> pL;
                     for (unsigned int q = 0; q < path.size(); q++) {
                     //if (dumpedNodes.find(path[q]) == dumpedNodes.end()) {
-                    if (q != 0 && globalLoopPaths.find(path[q]) != globalLoopPaths.end() /*&& find(lloops.begin(), lloops.end(), path[q]) != lloops.end()*/ && globalLoopPaths[path[q]].size() != 0 /*&& path[q] != begin && path[q] != end*/) {
+                    if (q != 0 && q != path.size()-1 && globalLoopPaths.find(path[q]) != globalLoopPaths.end() /*&& find(lloops.begin(), lloops.end(), path[q]) != lloops.end()*/ && globalLoopPaths[path[q]].size() != 0 /*&& path[q] != begin && path[q] != end*/) {
                     //    for (int qL = 0; qL < globalLoopPaths[path[q]].size(); qL++) {
                     //        for (int qL2 = 0; qL2 < globalLoopPaths[path[q]][qL].size(); qL2++) {
                     //            dumpedNodes.insert(globalLoopPaths[path[q]][qL][qL2]);
                     //        }
                     //   }
-                        for (int qp1 = 0; qp1 < globalLoopPaths[path[q]].size(); qp1++) {
-                       
-                            
-                            
-                           
-                           
-                           
-                           
-               
-                            
-                            
-                            
-                           
-                           
+                        for (unsigned int qp1 = 0; qp1 < globalLoopPaths[path[q]].size(); qp1++) {
+                       //     std::vector<int> gp = unzipPath(globalLoopPaths[path[q]][qp1], g, path[q]);
+                            //if (gp.back() != gp.front()) {
+                            //    taken = true;
+                           // }
+                           // if (gp.back() != gp.front()) {
+                           //     gp.push_back(gp.front());
+                           // }
+               //            (!taken) {
+                            //std::cout << "looped path unzipped: " << std::endl;
+                            //for (int jw1 = 0; jw1 < gp.size(); jw1++) {
+                            //    std::cout << gp[jw1] << ", ";
+                           // }
+                           // std::cout << "end" << std::endl;
                              
                             std::vector<int> gp = unzipPath(globalLoopPaths[path[q]][qp1],g,path[q],path[q]);
 
@@ -931,73 +1012,99 @@ uTraversePath(int begin, int end, CFG*& g, bool loop, std::map<int, std::vector<
                               
                                 if (find(gp.begin(),gp.end(), takenLoops[qp2]) != gp.end()) {
                                     taken = true;
+                                    break;
                                 }
                             }
 
                             if (!taken) {
                                 //std::cout << "loop being taken" << std::endl;
-                                if (find(localLoops[path[q]].begin(), localLoops[path[q]].end(), gp) == localLoops[path[q]].end()) {
                                 localLoops[path[q]].push_back(gp);
-                                }
                             }
                             else {
+                               //tl++;
                                //std::cout << "already taken" << std::endl;
                                taken = false;
                             }
                         }
+                       
                         if (localLoops[path[q]].size() != 0) {
                         takenLoops.push_back(path[q]);
-                        permnums *= (localLoops[path[q]].size()+1);
-                        perms.push_back(permnums);
+                        //permnums *= (localLoops[path[q]].size()+1);
+                        
+                        help.push_back(localLoops[path[q]].size()+1);
+                        if (loop) {
+                            help.back() -= 1;
+                        }
+                        //perms.push_back(permnums);
                         qs.push_back(q);
+                        pL.push_back(-1);
                         }
                     }
                     }
+                    ROSE_ASSERT(qs.size() == pL.size());
                     //std::cout << "permnums: " << permnums << std::endl;
                     
-                    
-                    
-                    
-                    
-                    
-                    
-                   
-                  
-                    std::set<std::vector<int> > movepaths2;
-                    //std::set<std::vector<int> > movepathscheck;
-                    for (unsigned int i = 1; i <= permnums; i++) {
-                        int iterand = i;
+                    //std::cout << "completedFillingDumpedNodes" << std::endl;
+                    //permnums -= 1;
+                    //if (permnums != 1) {
+                    //std::cout << "permnums: " << permnums << std::endl;
+                    //}
+                    //#pragma omp parallel
+                   // {
+                  //  #pragma omp for
+                    //std::set<std::vector<int> > movepaths2;
+                    std::set<std::vector<int> > movepathscheck;
+                    std::vector<int> init;
+                    //for (int i = 0; i < qs.size(); i++) {
+                    //    pL.push_back(-1);
+                    //}
+                    bool fd = false;
+                    bool nten = false;
+                    while (!fd) {//pL.size() != 0 && pL.back() != -10) {
+                        if (pL.size() == 0) {
+                            fd = true;
+                        }
+                        else if (pL.back() == -10) {
+                            nten = true;
+                            break;
+                        }
+                    //for (int i = 1; i <= permnums; i++) {
+
+                     
+
+                        bool run = false;
                         bool goodthread = false;
                         
                         std::vector<int> loopsTaken;
                         bool stop = false;
                         unsigned int j = 0;
                         std::vector<int> npath;
-                        while (true) {
-                            if (j == perms.size() || perms[j] > i) {
-                                break;
-                            }
-                            else {
-                                j++;
-                            }
-                        }
-                        int pn = i;
-                        std::vector<int> pL;
-                        for (unsigned int j1 = 0; j1 <= j; j1++) {
-                            pL.push_back(-1);
-                        }
-                           for (unsigned int k = j; k > 0; k--) {
-                               int l = 1;
-                               while (perms[k-1]*l < pn) {
-                                   l++;
-                              }
-                               pL[k] = l-2;
-                               pn -= (perms[k-1]*(l-1));
-                           }
-                        pL[0] = pn-2;
+//                        while (true) {
+//                            if (j == perms.size() || perms[j] > i) {
+//                                break;
+//                            }
+//                            else {
+//                                j++;
+//                            }
+//                        }
+//                        int pn = i;
+//                        std::vector<int> pL;
+//                        for (unsigned int j1 = 0; j1 <= j; j1++) {
+ //                           pL.push_back(-1);
+ //                       }
+ //                          for (unsigned int k = j; k > 0; k--) {
+ //                              int l = 0;
+  //                             while (perms[k-1]*l < pn) {
+   //                                l++;
+   //                           }
+   //                            pL[k] = l;
+    //                           pn -= (perms[k-1]*(l));
+    //                       }
+     //                   pL[0] = pn-2;
 
-                        int q2 = 0;
-                        
+                        unsigned int q2 = 0;
+                        //std::vector<int> npathi;
+                        if (qs.size() != 0) {
                         for (unsigned int q1 = 0; q1 < path.size(); q1++) {
                             
                             
@@ -1038,30 +1145,65 @@ uTraversePath(int begin, int end, CFG*& g, bool loop, std::map<int, std::vector<
                                 
                             
                         }
-                        
-                        
-                        
-                        
-
-
-
-
-
-
-
-
-                    
-
-
-
-
-
-
-
- 
- 
-
-                        
+                        #pragma omp critical
+                        {
+                        pL = increment(pL, help);
+                        }
+                        }
+                        else {
+                          nten = true;
+                            npath = path;
+                        }
+                        //std::vector<Vertex> verts;
+                        //std::vector<int> movepath;
+                        /* 
+                        for (int qw = 0; qw < npath.size()-1; qw++) {
+                            if (qw == 0 && find(markers.begin(), markers.end(), npath[qw]) == markers.end()) {
+                                movepath.push_back(npath[qw]);
+                            } 
+                            if (find(markers.begin(), markers.end(), npath[qw]) != markers.end()) {
+                               //std::pair<int, int> mpcheck;
+                               movepath.push_back(npath[qw]);
+                               if (find(markers.begin(), markers.end(), npath[qw+1]) == markers.end() && qw+1 < npath.size()) {
+                               movepath.push_back(npath[qw+1]);
+                               }
+                            }
+                        }
+                    */
+//                    std::vector<int>  movepath;
+//
+//                    if (!loop) {
+//                    #pragma omp critical
+//                    {
+//                    movepath = zipPath(npath, g); 
+//                    }
+//                    }
+                    //std::vector<std::vector<bool> > movepath
+/*
+                    for (int qw = 0; qw < npath.size()-1; qw++) {
+                        movepath[npath[qw]][npath[qw+1]] = true;
+                    }
+*/
+//                    if (movepaths.find(movepath) != movepaths.end() && !loop) {
+//                        stop = true;
+//                        #pragma omp atomic
+//                        badpaths++;
+//                    }
+//                    else if (!loop) {
+ //                       movepaths.insert(movepath);
+ //                   }  
+/*
+                        std::cout << "begin move: ";
+                        for (int qe = 0; qe < movepath.size(); qe++) {
+                            std::cout << ", " << movepath[qe];
+                        }
+                        std::cout << "end" << std::endl;
+                        std::cout << "begin orig: ";
+                        for (int qe2 = 0; qe2 < npath.size(); qe2++) {
+                            std::cout << ", " << npath[qe2];
+                        }
+*/
+                        //std::cout << "end" << std::endl;
  
                         bool addit = false;
                         //if (movepath.back() != npath[npath.size()-1]) {
@@ -1077,39 +1219,36 @@ uTraversePath(int begin, int end, CFG*& g, bool loop, std::map<int, std::vector<
                         else if (!loop && !bound) {
                             addit = true;
                         }
-                       
-                       
-                        
-                       
-                       
-                       
-                            if (addit) {
+                        else {
+                            //bA++;
+                        }
                        // #pragma omp critical
                        // {
                         //if (movepaths.find(movepath) == movepaths.end() && !stop) {
                        //     if (!loop) { 
                        //     movepaths.insert(movepath);
                        //     }
+                       run = false;
                        if (addit) {
                        //#pragma omp critical
                       // {
-                          //  ROSE_ASSERT(movepathscheck.find(npath) == movepathscheck.end());
-                            movepaths2.insert(npath);
-                          //  movepathscheck.insert(npath);
-                            /*
-                            else {
-                            #pragma omp critical
-                            {
-                                std::cout << "permnums iterand: " << iterand << std::endl;
-                                std::cout << "permnums: " << permnums << std::endl; 
-                                std::cout << "bad path" << std::endl;
-                                for (int bpath = 0; bpath < npath.size(); bpath++) {
-                                    std::cout << npath[bpath] << ", ";
-                                }
-                                std::cout << std::endl;
+                            if (movepathscheck.find(npath) == movepathscheck.end()) {
+                          //   movepaths2.insert(npath);
+                             run = true;
+                            movepathscheck.insert(npath);
                            }
-                           } 
-                           */
+                           // else {
+                               //#pragma omp critical
+                                //{
+                               // if (nten) {
+                                //std::cout << "nten" << std::endl;
+                                //}
+                               // std::cout << "npath.front(): " << npath.front() << ", npath.back() " << npath.back() << std::endl; 
+                               // std::cout << "path[" << qqq << "] of " << paths.size() << std::endl;//<< " permnum: " << i << " of " << permnums <<  std::endl;
+                                
+                              // rP++;
+                               // }
+                           // }
                            // else {
                            // #pragma omp atomic
                            // checkedfound++;
@@ -1118,16 +1257,16 @@ uTraversePath(int begin, int end, CFG*& g, bool loop, std::map<int, std::vector<
                        //}
                        }
                             
-                            if (!workingthread || threadsafe) {
-                            if ((newpaths.size() > 1 || i == permnums || threadsafe)) {
-                                
-                        
-                          
-                            
-                             
-                             
-                            }
-                            }
+                            //if (!workingthread || threadsafe) {
+                            //if ((newpaths.size() > 1 /*|| i == permnums*/ || threadsafe)) {
+                                //std::cout << "newpaths.size(): " << newpaths.size() << std::endl;
+                        //        workingthread = true;
+                          //      goodthread = true;
+                            //    workingthreadnum = omp_get_thread_num();
+                             //   movepaths2 = newpaths;
+                             //   newpaths.clear();
+                           // }
+                           // }
                                
                           
                         
@@ -1136,11 +1275,11 @@ uTraversePath(int begin, int end, CFG*& g, bool loop, std::map<int, std::vector<
                           
                        
                         }
-                       
-                        
-                        if (goodthread || threadsafe)
+                       // }
+                        //int th_id = omp_get_thread_num();
+                        if (run)
                         {
-                        if (movepaths2.size() > 0) //|| i == permnums || threadsafe)
+                        if (run) //|| i == permnums || threadsafe)
                         {
                         
                         
@@ -1213,7 +1352,8 @@ uTraversePath(int begin, int end, CFG*& g, bool loop, std::map<int, std::vector<
                       
                       
                       
-                      bool analyzed = false;
+                      //nnumpaths++;
+                      //bool analyzed = false;
                       //if (evaledpaths % 100000 == 0 && evaledpaths != 0) {
                       //std::cout << "evaled paths: " << evaledpaths << std::endl;
                      // }
@@ -1271,8 +1411,46 @@ uTraversePath(int begin, int end, CFG*& g, bool loop, std::map<int, std::vector<
                           }
                        
                       }
-                      else {
-                         
+                      //else {
+                         // std::cout << "rejected path: " << std::endl;
+                         // for (int qwe = 0; qwe < npath.size(); qwe++) {
+                         //     std::cout << npath[qwe] << ", ";
+                         // }
+                         // std::cout << std::endl;
+                     // }
+                      //if (!analyzed) {
+                      //    badpaths++;
+                     // }
+                     // }
+/*
+                      if (analyzed) {
+                          if (!loop) {
+                              std::set<int> nodes;
+                              for (int j = 0; j < npath.size(); j++) {
+                                  bool lp = false;
+                                  if (nodes.find(npath[j]) != nodes.end()) {
+                                      lp = true;
+                                  }
+                                  else {
+                                      nodes.insert(npath[j]);
+                                  }
+                                  std::stringstream ss1;
+                                  std::string ss;
+                                  if (nodeStrings.find(npath[j]) != nodeStrings.end()) {
+                                      ss = nodeStrings[npath[j]];
+                                  }
+                                  else {
+                                      ss = "";
+                                  }
+                                  ss1 << ss;
+                                  if (lp) {
+                                  ss1 << ", L" << pathnum;
+                                  }
+                                  else {
+                                  ss1 <<  ", " << pathnum;
+                                  }
+                                  if (!bound) {
+                                      ss1 << ":" << sourcenum;
                          
                          
                          
@@ -1286,7 +1464,7 @@ uTraversePath(int begin, int end, CFG*& g, bool loop, std::map<int, std::vector<
                       
                    //}
                    }
-                   movepaths2.clear();
+                   //movepaths2.clear();
                    //workingthread = false; 
                    //workingthreadnum = -1;
                    //movepaths2.clear();
@@ -1294,15 +1472,29 @@ uTraversePath(int begin, int end, CFG*& g, bool loop, std::map<int, std::vector<
                   }
                   }
                   } 
-                  
 if (newpaths.size() != 0) {
                     std::cout << "went too far" << std::endl; 
                     //int evaledpaths = 0;
                     for (std::set<std::vector<int> >::iterator qw = newpaths.begin(); qw != newpaths.end(); qw++) {
                     std::vector<int> npath = *qw;
                     bool analyzed = false;
-                   
-                      
+                   *//* 
+                    #pragma omp critical
+                     {
+                      bool analyzed = false;
+                      if (evaledpaths % 1000 == 0 && evaledpaths != 0) {
+                      std::cout << "evaled paths: " << evaledpaths << std::endl;
+                      }
+                      evaledpaths++;
+                     }
+                    */
+                      /*if (!loop && (bound && npath.front() == begin &&  npath.back() == end)) {
+                           nnumpaths++;
+                          std::vector<Vertex> verts;
+                          getVertexPath(npath, g, verts);
+                          analyzePath(verts);
+                          analyzed = true;
+                      }*//*
                       if (!loop) {
                           nnumpaths++;
                           std::vector<Vertex> verts;
@@ -1310,7 +1502,7 @@ if (newpaths.size() != 0) {
                           analyzePath(verts);
                           analyzed = true;
                       }
-                      else if (loop /*&& npath.front() == npath.back() && loopPaths.find(npath) == loopPaths.end()*/) {
+                      else if (loop *//*&& npath.front() == npath.back() && loopPaths.find(npath) == loopPaths.end()*//*) {
                           std::vector<int> nn = zipPath(npath, g, npath.front(), npath.back());
                           if (loopPaths.find(nn) != loopPaths.end()) {
                               badpaths++;
@@ -1333,21 +1525,29 @@ if (newpaths.size() != 0) {
                    }
                    
                    }
-                   
+                   */
                    
                    
                    }
                     
 
                     
-                   
-                    
-                    
+                   // std::cout << "nnumpaths: " << nnumpaths << std::endl;
+                    #ifdef PERFDEBUG
+                    gettimeofday(&tim, NULL);
+                    double t2 = tim.tv_sec+(tim.tv_usec/1000000.0);
+                    double tX = t2 - t1;
+                    std::cout << "begin: " << begin << " end: " << end << std::endl;
+                    std::cout << "uTraverse time: " << tX << std::endl; 
+                    #endif
+                    #ifdef LP
                     if (loop) {
-                    
-                    
+                    std::cout << "loopPaths: " << loopPaths.size() << std::endl;
+                    loopStore[begin] = loopPaths;
                     }
-                    
+                    #endif
+                    //std::cout << "bA: " << bA << ", rP: " << rP << ", tl: " << tl << std::endl;
+                    //std::cout << "stoppedpaths: " << stoppedpaths << std::endl;
                     return loopPaths;
                     
                     
@@ -1379,7 +1579,9 @@ template<class CFG>
 void
 SgGraphTraversal<CFG>::
 constructPathAnalyzer(CFG* g, bool unbounded, Vertex begin, Vertex end, bool ns) {
-    
+    //sets up a few data structures to ease computations in future functions
+    abnormals = 0;
+    normals = 0;
     if (ns) {
         needssafety = true;
     }
@@ -1397,10 +1599,10 @@ constructPathAnalyzer(CFG* g, bool unbounded, Vertex begin, Vertex end, bool ns)
     prepareGraph(g);
     workingthread = false;
     workingthreadnum = -1;
-    //std::cout << "markers: " << markers.size() << std::endl;
-    //std::cout << "closures: " << closures.size() << std::endl;
-    //std::cout << "sources: " << sources.size() << std::endl;
-    //std::cout << "sinks" << sinks.size() << std::endl;
+    std::cout << "markers: " << markers.size() << std::endl;
+    std::cout << "closures: " << closures.size() << std::endl;
+    std::cout << "sources: " << sources.size() << std::endl;
+    std::cout << "sinks" << sinks.size() << std::endl;
     printHotness(g);
     
     bool subgraph = false;
@@ -1453,6 +1655,7 @@ constructPathAnalyzer(CFG* g, bool unbounded, Vertex begin, Vertex end, bool ns)
            }
            //std::cout << "badpaths: " << badpaths << std::endl;
     }
+   // std::cout << "normals: " << normals << " abnormals: " << abnormals << std::endl;
 /*
     else {
         // construct SubGraphs to allow for parallel traversal
@@ -1468,7 +1671,7 @@ constructPathAnalyzer(CFG* g, bool unbounded, Vertex begin, Vertex end, bool ns)
          }
     }
 */
-    //std::cout << "checkedfound: " << checkedfound << std::endl;
+    std::cout << "checkedfound: " << checkedfound << std::endl;
     //printPathDot(g);
 }
 
@@ -1787,7 +1990,11 @@ getVertexPath(std::vector<int> path, CFG*& g, std::vector<Vertex>& vertexPath) {
         
 }
 
-
+/**
+NCurrently unused, may eventually be modified for optimal storage purposes
+SgGraphTraversal::storeCompact
+@param[compactPath] path to be compactified
+*/
 template<class CFG>
 void
 SgGraphTraversal<CFG>::
@@ -1798,495 +2005,4 @@ return;
 
 
 
-
-
-
-
-template<class CFG>
-std::set<std::vector<int> > 
-SgGraphTraversal<CFG>::
-traversePath(int begin, int end, CFG*& g, bool loop) {
-        
-        
-    
-    int pathcount = 0;
-    int npathnum = 1;
-    double globalMin = 1;
-    std::vector<int> path;
-    std::vector<std::vector<int> > paths;
-    int truepaths = 0;
-    path.push_back(begin);
-    std::vector<std::vector<int> > checkpaths;
-    int repeats = 1;
-    std::vector<std::vector<int> > npathchecker;
-    std::map<int, std::vector<std::vector<int> > > globalLoopPaths;
-    std::map<int, int> currents;
-    int nnumpaths = 0;
-    std::set<std::vector<int> > loopPaths;
-    int rounds = 0;
-    int oldsize = 0;
-    bool done = false;
-    std::set<std::vector<int> > fts;
-
-        while (true) {
-            rounds++;
-            
-            if (rounds % 1000000 == 0) {
-            std::cout << "round: " << rounds << std::endl;
-            
-            
-            }
-            if (!loop && paths.size() % 100 == 0 && paths.size() > 0) {
-            std::cout << "paths.size(): " << paths.size() << std::endl;
-            if (paths.size() != oldsize) {
-                oldsize = paths.size();
-                std::cout << "new path size: " << paths.size() << std::endl;
-            }
-            }
-            
-            
-            
-            
-                        
-            
-            
-           
-           
-           
-           
-          
-          
-          
-          
-          
-          
-          
-          
-            
-          
-           
-            
-          
-            
-            
-            std::vector<int> outEdges = getOutEdges(path.back(), g);
-            if (path.size() == 0) {
-                done = true;
-            }
-            if (done)  {
-                std::cout << "in done" << std::endl;
-                for (int qqq = 0; qqq < paths.size(); qqq++) {
-                path = paths[qqq];
-                //std::set<std::vector<int> > movepathscheck;
-                std::cout << "qqq: " << qqq << std::endl;
-                bool stop = false;
-                
-                ROSE_ASSERT(find(checkpaths.begin(), checkpaths.end(), path) == checkpaths.end());
-                checkpaths.push_back(path);
-               
-                truepaths++;
-                
-                std::vector<std::vector<int> > nPaths;
-                std::vector<int> subpath;
-                subpath.push_back(path[0]);
-                nPaths.push_back(subpath);
-                std::vector<std::vector<int> > newNPaths;
-                   int permnums = 1;
-                   
-                    std::vector<int> perms;
-                    std::vector<int> qs;
-                    for (int i = 0; i < path.size(); i++) {
-                        double minPaths = 1;
-                        std::vector<int> ieds = getInEdges(path[i], g);
-                        if (ieds.size() > 1) {
-                            minPaths *= ieds.size();
-                        }
-                        if (minPaths > globalMin) {
-                            globalMin = minPaths;
-                            
-                        }
-                    }
-                    for (unsigned int q = 0; q < path.size(); q++) {
-                    if (globalLoopPaths.find(path[q]) != globalLoopPaths.end() && globalLoopPaths[path[q]].size() != 0 ) {
-                        permnums *= (globalLoopPaths[path[q]].size()+1);
-                        perms.push_back(permnums);
-                        qs.push_back(q);
-                    }
-                    }
-                    
-                    if ((paths.size() - qqq) % 100 == 0) {
-                    //std::cout << "paths left: " << paths.size() - qqq << std::endl;
-                    }
-                    
-                    for (int i = 1; i <= permnums; i++) {
-                        int j = 0;
-                        std::vector<int> npath;
-                        while (true) {
-                            if (j == perms.size() || perms[j] > i) {
-                                break;
-                            }
-                            else {
-                                j++;
-                            }
-                        }
-                        int pn = i;
-                        std::vector<int> pL;
-                        for (int j1 = 0; j1 <= j; j1++) {
-                            pL.push_back(-1);
-                        }
-                       
-                           for (int k = j; k > 0; k--) {
-                               int l = 1;
-                               while (perms[k-1]*l < pn) {
-                                   l++;
-                               }
-                               pL[k] = l-2;
-                               pn -= (perms[k-1]*(l-1));
-                           }
-                        pL[0] = pn-2;
-                       
-                       
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-   
-                        int q2 = 0;
-                        
-                        for (int q1 = 0; q1 < path.size(); q1++) {
-                            
-                            
-                            if (qs.size() != 0 && q1 == qs[q2] && q2 != pL.size()) {
-                               
-                               if (pL[q2] == -1) {
-                                   npath.push_back(path[q1]);
-                               }
-                               else {
-                        
-                                   for (int kk = 0; kk < globalLoopPaths[path[q1]][pL[q2]].size(); kk++) {
-                                       if (find(npath.begin(), npath.end(), globalLoopPaths[path[q1]][pL[q2]][kk]) != npath.end()) {
-                                           stop = true;
-                                           
-                                           repeats++;
-                                           break;
-                                       }
-                                   }
-                                   
-                                  
-                                   npath.insert(npath.end(), globalLoopPaths[path[q1]][pL[q2]].begin(), globalLoopPaths[path[q1]][pL[q2]].end());
-                                  
-                                  
-                                  
-                                  
-                                  
-                               }
-                               q2++;
-                            }
-                            else {
-                               npath.push_back(path[q1]);
-                            }
-                            if (stop) {
-                                break;
-                            }
-                        }
-                        std::vector<Vertex> verts;
-                        
-                        
-                       
-                       
-                        
-                        
-                       
-                       
-                       
-                       
-                       
-                       
-                       
-                        if (!loop && !stop) {
-                        if ((bound && npath.front() == begin && npath.back() == end && !stop)) {
-                        getVertexPath(npath, g, verts);
-
-                        analyzePath(verts);
-                        nnumpaths++;
-                        if (nnumpaths % 10000 == 0) {
-                        std::cout << "nnumpaths: " << nnumpaths << std::endl;
-                        }
-                        }
-                        else if (!bound && !stop) {
-                        
-
-                        getVertexPath(npath, g, verts);
-                        nnumpaths++;
-                        if (nnumpaths % 10000 == 0) {
-                        std::cout << "nnumpaths: " << nnumpaths << std::endl;
-                        }
-                        analyzePath(verts);
-                        
-                        }
-                        }
-                        else if (!stop) {
-                        if (loopPaths.find(npath) == loopPaths.end() && !stop) {
-                        
-                        if (npath.front() == npath.back() && npath.back() == end ) {
-                            
-                       
-                            loopPaths.insert(npath);
-                        }
-                        }
-                        else {
-                            
-                            
-
-                        }
-                        }
-                        if (stop) {
-                            stop = false;
-                        }
-                        
-                        npath.clear();
-                    }
-                    }
-                    return loopPaths;
-                    }
-                    
-std::vector<int> outEdges2 = getOutEdges(path.back(), g);
-if ((outEdges2.size() == 0) || (path.back() == end && path.size() != 1 && end != -1) || (path.back() == begin && path.size() != 1  && begin != -1)) {
-                   if (find(paths.begin(), paths.end(), path) == paths.end()) {
-                   if (bound && !loop) {
-                       if (path.front() == begin && path.back() == end) {
-                            
-                           paths.push_back(path);
-                           
-                       }
-                   }
-                   else if (!bound && !loop) {
-                       paths.push_back(path);
-                   }
-                   else if (loop) {
-                       if (path.front() == begin && path.back() == end) {
-                           paths.push_back(path);
-                       }
-                   }
-                   
-                   else {
-                       ROSE_ASSERT(false);
-                   }
-                   }
-                   if (path.size() == 0) {
-                       done = true;
-                   }
-                   else  {
-                   
-                   path.pop_back();
-                   }
-                        
-                    if (path.size() == 0) {
-                        done = true;
-                    }
-                   
-                    std::vector<int> oeds = getOutEdges(path.back(), g);
-                    std::set<int> loopfind;
-                    while ((path.size() != 0 && (unsigned int) (currents[path.back()] >= oeds.size())) || (path.size() != 0 && find(path.begin(), path.end(), getTarget(oeds[currents[path.back()]], g)) != path.end())) {
-                        if ((unsigned int) currents[path.back()] >= oeds.size()) {
-                        
-                        if (loopfind.find(path.back()) == loopfind.end()) {
-                            
-                        
-                        if (find(path.begin(), path.end(), getTarget(oeds[currents[path.back()]], g)) != path.end()) {
-                           loopfind.insert(getTarget(oeds[currents[path.back()]], g));
-                        }   
-                        else {
-                            currents[path.back()] = 0;
-                        }
-                        
-                        path.pop_back();
-                        oeds = getOutEdges(path.back(), g);
-                        }
-                        else {
-                            
-                            path.pop_back();
-                            oeds = getOutEdges(path.back(), g);
-                        }
-                        }
-                        else {
-                             
-                             path.pop_back();
-                             oeds = getOutEdges(path.back(), g);
-                         }
-                   }
-                   loopfind.clear();
-                        
-                     
-                    
-                    if (path.size() == 0) {
-                        done = true;
-                    }
-                    else {
-                    int oldBack = path.back();
-                    path.push_back(getTarget(oeds[currents[path.back()]], g));
-                    currents[oldBack]++;
-                    }
-           }
-             
-             
-            
-             else {
-                
-                 
-                 
-                 
-                
-                
-                 std::vector<int> outEdges = getOutEdges(path.back(), g);
-                 if (currents.find(path.back()) == currents.end()) {
-                     currents[path.back()] = 0;
-                 }
-                 if ((unsigned int) currents[path.back()] < outEdges.size()) { 
-                 int currn = getTarget(outEdges[currents[path.back()]], g);
-                 
-                 
-                 
-                 
-                
-                 if (find(path.begin(), path.end(), currn) == path.end() || (currn == begin && currn == end) || (currn == begin && currn == end && path.size() != 1)) {
-                     currents[path.back()]++;
-                     path.push_back(currn);
-                     std::vector<int> oeds1 = getOutEdges(currn, g);
-                  
-                   
-                   
-                   
-                         
-                   
-                         
-                          
-  
-                 }
-                 else {
-                     
-                     bool nogo = false;
-                     currents[path.back()]++;
-                     
-                     
-                     
-                     
-                     
-                     if ((!nogo && ((globalLoopPaths.find(currn) == globalLoopPaths.end()) )  && find(recursiveLoops.begin(), recursiveLoops.end(), currn) == recursiveLoops.end() && (currn != begin || (currn == begin && currn != end)))) {
-                         
-                         std::vector<std::vector<int> > tmplps;
-                         globalLoopPaths[currn] = tmplps;
-                         recursiveLoops.push_back(currn);
-                         std::cout << "solving a loop at " << currn << std::endl;
-                         std::set<std::vector<int> > lps = traversePath(currn, currn, g, true);
-                         
-                         std::cout << "loops found: " << lps.size() << std::endl;
-                         std::cout << "completed loop " << currn << std::endl;
-                         recursiveLoops.pop_back();
-                         
-                         std::vector<int> ieds = getInEdges(currn, g);
-                         
-                         for (std::set<std::vector<int> >::iterator i = lps.begin(); i != lps.end(); i++) {
-                             if ((*i).back() == currn) {
-                                
-                                     
-                                     
-                                    
-                                
-                                 if (!nogo) {
-                                     globalLoopPaths[currn].push_back(*i);
-                                 }
-                                 nogo = false;
-                             }
-                             else {
-                                 
-                             }
-                         }
-                     recursiveLoops.clear();
-                     }
-                     
-                     
-                     std::vector<int> ods2 = getOutEdges(path.back(), g);
-                     if ((unsigned int) currents[path.back()] >= ods2.size()) {
-                         while ((unsigned int) currents[path.back()] >= ods2.size() && path.size() != 0) {
-                             currents[path.back()] = 0;
-                             path.pop_back();
-                             ods2 = getOutEdges(path.back(), g);
-                         }
-                     
-                     if (path.size() == 0) {
-                         done = true;
-                     }
-                     else {
-                         int oldback = path.back();
-                         path.push_back(getTarget(ods2[currents[path.back()]], g));
-                         currents[oldback]++;
-                     }
-               
-               }
-               else {
-                  int oldback = path.back();
-                  std::vector<int> ods2 = getOutEdges(path.back(), g);
-                  path.push_back(getTarget(ods2[currents[path.back()]], g));
-                  currents[oldback]++;
-              
-              }
-              }
-           }
-           else {
-               std::vector<int> qds = getOutEdges(path.back(), g);
-               std::set<int> loopskips;
-               while ((unsigned int)currents[path.back()] >= qds.size() && path.size() != 0) {
-               
-                   int ppb = path.back();
-                   if (loopskips.find(path.back()) == loopskips.end()) {
-                   
-                   
-                   
-                   
-                   
-                   
-                   path.pop_back();
-                   if (find(path.begin(), path.end(), ppb) != path.end()) {
-                       loopskips.insert(ppb);
-                   }
-                   else {
-                       currents[ppb] = 0;
-                   }
-                   }
-                   
-                   
-                   else {
-                       
-                       path.pop_back();
-                   }
-                   
-                   qds = getOutEdges(path.back(), g);
-               }
-               
-               if (path.size() == 0) {
-                   done = true;
-               }
-               else {
-               qds = getOutEdges(path.back(), g);
-               int oldback = path.back();
-               path.push_back(getTarget(qds[currents[path.back()]], g));
-               currents[oldback]++;
-               }
-          }
-     
-     }
-     } 
-     
-     return loopPaths;
-}
                   
