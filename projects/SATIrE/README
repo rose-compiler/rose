@@ -1,4 +1,3 @@
--*- markdown -*-
 ------------------------------------------------------------
 SATIrE: Static Analysis Tool Integration Engine
 ------------------------------------------------------------
@@ -71,7 +70,7 @@ term syntax.
     example: 
       libtoolize
       autoreconf -i
-      ./configure --prefix=/usr/local --with-rosedir=/usr/local/rose/ \
+      ./configure --prefix=/usr/local --with-rosedir=/usr/local/rose-0.8.5a/ \
                   --with-boostdir=/usr/local/boost-1.47.0
     If you have PAG installed also set the install path prefix for PAG:
     example: 
@@ -105,17 +104,22 @@ term syntax.
 
  Examples:
 
- a) <INSTALL_PREFIX>/bin/satire_driver \
-      --analysis=constprop <FILE1.c> <FILE2.c> ...  --output-text
+ Example 1: Perform a constant propagation analysis and generate the
+            results as textual comments in the gerated cpp-file:
+     <INSTALL_PREFIX>/bin/satire_driver \
+     --analysis=constprop --output-text <FILE1.cpp>
 
- b) <INSTALL_PREFIX>/bin/satire_driver \
-      --run-pointsto-analysis <FILE1.c> <FILE2.c> ...  --output-text
+ Example 2: Perform a pointsto analysis and visualize the computed
+            information for a given program <FILE1.cpp> as DOT graph:
+     <INSTALL_PREFIX>/bin/satire_driver \
+     --analysis=pointsto --output-pointsto-graph=pointstograph <FILE1.cpp>
  
- For the TERMITE-based loop bounds analysis a convenient executable is
- available under <INSTALL_PREFIX>/bin/loopbounds
+ Example 3: For the TERMITE-based loop bounds analysis a convenient 
+            executable is available as <INSTALL_PREFIX>/bin/loopbounds.
+            To show the results of a loopbound analysis for <FILE1.c> use:
+     <INSTALL_PREFIX>/bin/loopbounds  <FILE1.c> | term2c
 
- c) <INSTALL_PREFIX>/bin/loopbounds  <FILE1.c> | term2c
-
+ For more examples consult the satire_manual.pdf in docs.
 
 ------------------------------------------------------------
 (3) INVOKING ANALYSES THAT COME WITH SATIrE
@@ -177,5 +181,5 @@ term syntax.
     http://www.complang.tuwien.ac.at/satire
 
  c) For questions, feedback, bug reports, or suggestions on SATIrE send
-    email to: schordan@technikum-wien.at
+    email to: schordan@technikum-wien.at or adrian@llnl.gov
 
