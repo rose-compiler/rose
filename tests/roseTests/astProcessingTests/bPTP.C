@@ -87,7 +87,7 @@ int main(int argc, char *argv[]) {
         vis->tltnodes = 0;
         vis->pths = 0;
 	//vis->firstPrepGraph(cfg);
-        for (int i = 0; i < nfurcations.size()-1; i++) {
+        for (unsigned int i = 0; i < nfurcations.size()-1; i++) {
             vis->tltnodes = 0;
             vis->pths = 0;
             vis->paths.clear();

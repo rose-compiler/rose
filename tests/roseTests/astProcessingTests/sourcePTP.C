@@ -49,8 +49,9 @@ void visitorTraversal::analyzePath(vector<VertexID>& pathR) {
         tltnodes += pathR.size();
         paths++;
        std::vector<SgGraphNode*> path;
-       for (unsigned int j = 0; j < pathR.size(); j++) {
-           SgGraphNode* R = (*orig)[pathR[j]].sg;
+       int pR = (int) pathR.size();
+       for (int j = 0; j < pR; j++) {
+           //SgGraphNode* R = (*orig)[pathR[j]].sg;
           // if (isSgForStatement(R->get_SgNode())) {
           //     if (find(fors.begin(), fors.end(), R->get_SgNode()) == fors.end()) {
           //         fors.push_back(R->get_SgNode());
@@ -71,12 +72,12 @@ int main(int argc, char *argv[]) {
 
   SgFunctionDeclaration* mainDefDecl = SageInterface::findMain(proj);
 
-  SgFunctionDefinition* mainDef = mainDefDecl->get_definition(); 
-   visitorTraversal* vis = new visitorTraversal();
+ SgFunctionDefinition* mainDef = mainDefDecl->get_definition(); 
+ //  visitorTraversal* vis = new visitorTraversal();
     StaticCFG::CFG cfg(mainDef);
   Rose_STL_Container<SgNode*> functionDeclarationList = NodeQuery::querySubTree(proj,V_SgForStatement);
   std::vector<SgNode*> forsA;
-  int counter = 0;
+ // int counter = 0;
   for (Rose_STL_Container<SgNode*>::iterator i = functionDeclarationList.begin(); i != functionDeclarationList.end(); i++) {
 
           SgForStatement* fni = isSgForStatement(*i);
@@ -90,7 +91,7 @@ int main(int argc, char *argv[]) {
   mg = instantiateGraph(g, cfg);
   orig = mg;
   //vis->orig = mg;
-  for (int i=0; i < forsA.size(); i++) {
+  for (unsigned int i=0; i < forsA.size(); i++) {
      if (find(fors.begin(), fors.end(), forsA[i]) == fors.end()) {
      // if (completedIfs.find(ifs[i]) == completedIfs.end()) {
       std::cout << i << std::endl;

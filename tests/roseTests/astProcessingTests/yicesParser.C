@@ -209,7 +209,7 @@ int getTarget(int& edge, newGraph*& g)
 
         void printHotness2(newGraph*& g)
         {
-            const newGraph* gc = g;
+            //const newGraph* gc = g;
             int currhot = 0;
             
             std::ofstream mf;
@@ -279,10 +279,20 @@ void visitorTraversal::analyzePath(std::vector<VertexID>& pathR) {
             //std::cout << "inconsistent" << std::endl;
             break;
         }
+        exprPath.clear();
+       // if (isSgFunctionDefinition(path[i]->get_SgNode())) {
+        //    exprPath.push_back(path[i]);
+        //    int k = i+1;
+            //ROSE_ASSERT(isSgFunctionParameterList(path[k]->get_SgNode()));
+        //    while (!isSgFunctionDefinition(path[k])) {
+            
         //std::cout << "i: " << i << std::endl;
-        exprPath.clear(); 
         //VertexID2 v1;
         //VertexID2 v2;
+        if (isSgFunctionRefExp(path[i]->get_SgNode())) {
+            SgFunctionDeclaration* sgfd = getAssociatedFunctionDeclaration(isSgFunctionRefExp(path[i]->get_SgNode()));
+            SgFunctionDefinition* sgfdef = getAssociatedFunctionDefinition(sgfd);
+            ROSE_ASSERT(isSgFunctionParameterList)path[i+1]->get_SgNode())
         //std::cout << "in while" << std::endl;
         if (isSgInitializedName(path[i]->get_SgNode()) /*&& knownNodes.find(path[i]->get_SgNode()) == knownNodes.end()*/) {
            // exprs.push_back(path[i]);
@@ -338,7 +348,7 @@ void visitorTraversal::analyzePath(std::vector<VertexID>& pathR) {
                 knownEdges.insert(pr);
             }
            */
-            k = 0;
+           k = 0;
             //ROSE_ASSERT(knownNodes.find((exprPath.back())->get_SgNode) != knownNodes.end());
            // knownNodes.insert(path[i]->get_SgNode());
         }
@@ -346,13 +356,13 @@ void visitorTraversal::analyzePath(std::vector<VertexID>& pathR) {
             forFlag = true;
             std::vector<SgGraphNode*> vec1;
             unsigned int j = i+2;
-            int w = 2;
+            unsigned int w = 2;
             while (!isSgInitializedName(path[j]->get_SgNode()) && !isSgAssignOp(path[j]->get_SgNode())) {
                 j++;
                 w++;
             }
             vec1.push_back(path[j]);
-            int k = j+1;
+            unsigned int k = j+1;
             while (k < path.size() && !isSgInitializedName(path[k]->get_SgNode())) {
                 vec1.push_back(path[k]);
                 k++;
@@ -575,8 +585,9 @@ std::vector<int> breakTriple(std::vector<SgGraphNode*> expr) {
     bounds[0] = 0;
     int i = 1;
     while (expr[i]->get_SgNode() != index) {
+        int er = (int) expr.size();
         //std::cout << "expr[i]: " << cfg->toCFGNode(expr[i]).toString() << std::endl;
-        ROSE_ASSERT(i < expr.size());
+        ROSE_ASSERT(i < er);
         i++;
     }
     bounds[1] = i;
@@ -600,7 +611,7 @@ string getBinaryOp(SgNode*);
 yices_expr mainParse(vector<SgGraphNode*> expr, yices_context& ctx) {
     //std::cout << "rounds" << rounds << std::endl;
     rounds++;
-    bool yices = true;
+    //bool yices = true;
     std::stringstream stst;
     string parsed;
     bool unknown_flag = false;
@@ -757,17 +768,17 @@ yices_expr mainParse(vector<SgGraphNode*> expr, yices_context& ctx) {
         //parsed = stst.str();
     }
     else if (isSgPlusPlusOp(expr[0]->get_SgNode())) {
-        for (int i = 1; i < expr.size() - 1; i++) {
+        for (unsigned int i = 1; i < expr.size() - 1; i++) {
             vec1.push_back(expr[i]);
         }
         yices_expr e1 = mainParse(vec1, ctx);
         stringstream funN;
         funN << "V" << nvars;
         nvars++;
-        char* fun = (char*) funN.str().c_str();
-        yices_type ty = yices_mk_type(ctx, "int");
-        yices_var_decl vdecl = yices_mk_var_decl(ctx, fun, ty);
-        yices_expr e2 = yices_mk_var_from_decl(ctx, vdecl);
+        //char* fun = (char*) funN.str().c_str();
+        //yices_type ty = yices_mk_type(ctx, "int");
+        //yices_var_decl vdecl = yices_mk_var_decl(ctx, fun, ty);
+        //yices_expr e2 = yices_mk_var_from_decl(ctx, vdecl);
         yices_expr arr[2];
         yices_expr en = yices_mk_num(ctx, 1);
         arr[0] = e1;
@@ -860,7 +871,7 @@ yices_expr mainParse(vector<SgGraphNode*> expr, yices_context& ctx) {
         std::vector<SgGraphNode*> vec1;
         //ROSE_ASSERT(isAtom((expr[2])->get_SgNode()) != "");
         string valType = isAtom((expr[2])->get_SgNode());
-        int p = 2;
+        unsigned int p = 2;
         SgName svs = (isSgInitializedName(expr[0]->get_SgNode()))->get_qualified_name();
         while (p < expr.size() && !isSgAssignInitializer(expr[p]->get_SgNode())) {
             vec1.push_back(expr[p]);
@@ -945,11 +956,11 @@ yices_expr mainParse(vector<SgGraphNode*> expr, yices_context& ctx) {
             ss << nvars;
             nvars++;
             char valTypeCh[valType.size()];
-            for (int k = 0; k < valType.size(); k++) {
+            for (unsigned int k = 0; k < valType.size(); k++) {
                 valTypeCh[k] = valType[k];
             }
             char nam[ss.str().size()];
-            for (int q = 0; q < ss.str().size(); q++) {
+            for (unsigned int q = 0; q < ss.str().size(); q++) {
                 nam[q] = ss.str()[q];
             }
             string fun = valType;
@@ -1106,24 +1117,24 @@ int main(int argc, char *argv[]) {
   ofstream fout;
     fout.open(fileSaver.c_str(),ios::app);
 
-  struct timeval t1, t2;
+  //struct timeval t1, t2;
   SgProject* proj = frontend(argc,argv);
   ROSE_ASSERT (proj != NULL);
 
 
   Rose_STL_Container<SgNode*> functionDeclarationList = NodeQuery::querySubTree(proj,V_SgFunctionDeclaration);
   std::vector<SgNode*> forsA;
-  int counter = 0;
+  //int counter = 0;
   for (Rose_STL_Container<SgNode*>::iterator i = functionDeclarationList.begin(); i != functionDeclarationList.end(); i++) {
 
           SgFunctionDeclaration* fni = isSgFunctionDeclaration(*i);
           ROSE_ASSERT(fni != NULL);
           forsA.push_back(fni);
   }
-  for (int i = 0; i < forsA.size(); i++) {
+  for (unsigned int i = 0; i < forsA.size(); i++) {
       SgFunctionDeclaration* sfd = isSgFunctionDeclaration(forsA[i]);
       SgFunctionDefinition* sfdd = sfd->get_definition();
-      visitorTraversal* visInter = new visitorTraversal();
+      //visitorTraversal* visInter = new visitorTraversal();
   
 int counter = i;
    //std::cout << "counter: " << counter << std::endl;

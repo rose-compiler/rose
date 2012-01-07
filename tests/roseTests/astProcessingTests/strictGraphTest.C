@@ -46,7 +46,7 @@ void visitorTraversal::analyzePath(vector<VertexID>& pth) {
         //cout << "pth.size(): " << pth.size() << std::endl;
         //ROSE_ASSERT(find(pths.begin(), paths.end(), pth) != paths.end());
             std::cout << "path" << std::endl;
-            for (int i = 0; i < pth.size(); i++) {
+            for (unsigned int i = 0; i < pth.size(); i++) {
                 std::cout << vertintmap[pth[i]] << ", ";
             }
             std::cout << "end" << std::endl;
@@ -263,15 +263,15 @@ visitorTraversal* xis4 = new visitorTraversal;
        std::cout << "end xis2" << std::endl;
        //std::cout << "pths" << (xis2->paths).size() << std::endl;
        std::vector<int> npth;
-for (int i = 0; i < xis2->pths.size(); i++) {
-    for (int j = 0; j < xis2->pths[i].size(); j++) {
+for (unsigned int i = 0; i < xis2->pths.size(); i++) {
+    for (unsigned int j = 0; j < xis2->pths[i].size(); j++) {
         npth.push_back(xis2->vertintmap[xis2->pths[i][j]]);
        // std::cout << npth.back() << ", ";
     }
     //std::cout << std::endl;
     if (find(mypath.begin(), mypath.end(), npth) == mypath.end()) {
         std::cout << "poss new path: " << std::endl;
-        for (int qqw = 0; qqw < npth.size(); qqw++) {
+        for (unsigned int qqw = 0; qqw < npth.size(); qqw++) {
             std::cout << npth[qqw] << ", ";
         }
         std::cout << std::endl;
@@ -282,8 +282,8 @@ for (int i = 0; i < xis2->pths.size(); i++) {
 std::cout << "xis3->pths.size()" << xis3->pths.size() << std::endl;
 std::cout << "mypath2.size()" << mypath2.size() << std::endl;
 ROSE_ASSERT(mypath2.size() == xis3->pths.size());
-for (int i = 0; i < xis3->pths.size(); i++) {
-    for (int j = 0; j < xis3->pths[i].size(); j++) {
+for (unsigned int i = 0; i < xis3->pths.size(); i++) {
+    for (unsigned int j = 0; j < xis3->pths[i].size(); j++) {
         npth.push_back(xis3->vertintmap[xis3->pths[i][j]]);
        // std::cout << npth.back() << ", ";
     }
@@ -294,7 +294,7 @@ for (int i = 0; i < xis3->pths.size(); i++) {
 std::cout << "xis4->pths.size()" << xis4->pths.size() << std::endl;
 std::cout << "mypath3.size()" << mypath3.size() << std::endl;
 //ROSE_ASSERT(mypath3.size() == xis4->pths.size());
-for (int i = 0; i < xis4->pths.size(); i++) {
+for (unsigned int i = 0; i < xis4->pths.size(); i++) {
 //    if (find(mypath3.begin(), mypath3.end(), xis4->pths[i]) == mypath3.end()) {
 //        std::cout << "poss new path: " << std::endl;
 //        for (int qqe = 0; qqe < xis4->pths[i].size(); qqe++) {
@@ -302,14 +302,14 @@ for (int i = 0; i < xis4->pths.size(); i++) {
 //        }
 //        std::cout << "end" << std::endl;
 //    }i
-    for (int j = 0; j < xis4->pths[i].size(); j++) {
+    for (unsigned int j = 0; j < xis4->pths[i].size(); j++) {
         npth.push_back(xis4->vertintmap[xis4->pths[i][j]]);
        // std::cout << npth.back() << ", ";
     }
     std::cout << std::endl;
     if (find(mypath3.begin(), mypath3.end(), npth) == mypath3.end()) {
         std::cout << "path not in mypath3: " << std::endl;
-        for (int qu = 0; qu < npth.size(); qu++) {
+        for (unsigned int qu = 0; qu < npth.size(); qu++) {
             std::cout << npth[qu] << ", ";
         }
         std::cout << std::endl;

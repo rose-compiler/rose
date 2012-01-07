@@ -201,7 +201,7 @@ int getTarget(int& edge, newGraph*& g)
 
         void printHotness2(newGraph*& g)
         {
-            const newGraph* gc = g;
+           // const newGraph* gc = g;
             int currhot = 0;
             
             std::ofstream mf;
@@ -418,7 +418,7 @@ std::vector<int> breakTriple(std::vector<SgGraphNode*> expr) {
     SgNode* index = expr[0]->get_SgNode();
     std::vector<int> bounds(3, 0);
     bounds[0] = 0;
-    int i = 1;
+    unsigned int i = 1;
     while (expr[i]->get_SgNode() != index) {
         //std::cout << "expr[i]: " << cfg->toCFGNode(expr[i]).toString() << std::endl;
         ROSE_ASSERT(i < expr.size());
@@ -723,7 +723,7 @@ std::string getBinaryOp(SgNode* n) {
 
 int main(int argc, char *argv[]) {
 
-  struct timeval t1, t2;
+  //struct timeval t1, t2;
   SgProject* proj = frontend(argc,argv);
   ROSE_ASSERT (proj != NULL);
 

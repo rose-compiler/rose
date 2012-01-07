@@ -76,8 +76,8 @@ int main() {
        MyGraph* graph1 = new MyGraph;
        MyGraph* graph2 = new MyGraph;
        MyGraph* graph3 = new MyGraph;
-       MyGraph* graph4 = new MyGraph;
-       MyGraph* graph5 = new MyGraph;
+       //MyGraph* graph4 = new MyGraph;
+       //MyGraph* graph5 = new MyGraph;
  
        VertexID vidComplex[17];
        for (unsigned int j = 0; j < 4; j++) {

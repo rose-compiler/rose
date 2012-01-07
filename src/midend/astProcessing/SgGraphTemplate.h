@@ -171,7 +171,7 @@ std::pair<std::vector<SgGraphNode*>, std::vector<SgDirectedGraphEdge*> > getAllN
             //}
         }
         
-        for (int i = 0; i < newnods.size(); i++) {
+        for (unsigned int i = 0; i < newnods.size(); i++) {
            std::set<SgDirectedGraphEdge*> oedsp = g->computeEdgeSetOut(newnods[i]);
            for (std::set<SgDirectedGraphEdge*>::iterator j = oedsp.begin(); j != oedsp.end(); j++) {
                if (find(feds.begin(), feds.end(), *j) == feds.end()) {

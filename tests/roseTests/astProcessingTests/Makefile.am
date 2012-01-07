@@ -1,6 +1,5 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-
 EXTRA_DIST = efor.C efor1.C input1.C test11.C test12.C test13.C test14.C createTest.C t1 t2 t3 t4
 
 # To keep compile commands tidy, please ONLY put required include flags here.
@@ -13,7 +12,7 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 
 # DQ (7/2/2011): Fixed this to only handle binary work when binary support is available.
 # bin_PROGRAMS  = astTraversalTest processnew3Down4SgIncGraph processnew3Down4 binaryPaths
-bin_PROGRAMS  = interproceduralCFG e0 e1 createTest astTraversalTest processnew3Down4SgIncGraph2 processnew3Down4SgIncGraph3 strictGraphTest strictGraphTest2 strictGraphTest3 smtlibParser sourcePTP
+bin_PROGRAMS  = proFunSIG interproceduralCFG e0 e1 createTest astTraversalTest processnew3Down4SgIncGraph2 processnew3Down4SgIncGraph3 strictGraphTest strictGraphTest2 strictGraphTest3 smtlibParser sourcePTP
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 bin_PROGRAMS += binaryPaths bPTP
 endif
@@ -25,7 +24,7 @@ endif
 ROSE_DEVELOPMENT_LIBS = $(ROSE_SEPARATE_LIBS)
 
 e0_SOURCES = efor.C.maintest.C
-r0_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+e0_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
  #
 
 e1_SOURCES = efor1.C.maintest.C
@@ -38,6 +37,9 @@ interproceduralCFG_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
 
 astTraversalTest_SOURCES      = astTraversalTest.C
 astTraversalTest_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+
+proFunSIG_SOURCES = proFunSIG.C
+proFunSIG_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
 
 #t14tt_SOURCES = test14.C.maintest.C
 #t14tt_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
@@ -92,15 +94,16 @@ sourcePTP_SOURCES = sourcePTP.C
 sourcePTP_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
  #
 
+
 if HAVE_YICES
 yicesParser_SOURCES = yicesParser.C
 yicesParser_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
- # -I/home/hoffman34/yices/yices-1.0.292/include -L/home/hoffman34/yices/yices-1.0.292/lib -lyices
+yicesParser_LDFLAGS =  -I/home/hoffman34/yices/yices-1.0.292/include -L/home/hoffman34/yices/yices-1.0.292/lib -lyices
 endif
 
 #yicesMultiParser_SOURCES = yicesMultiParser.C
 #yicesMultiParser_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
- = -O0 -I/home/hoffman34/yices/yices-1.0.292/include -L/home/hoffman34/yices/yices-1.0.292/lib -lyices
+#= -O0 -I/home/hoffman34/yices/yices-1.0.292/include -L/home/hoffman34/yices/yices-1.0.292/lib -lyices
 
 
 strictGraphTest3_SOURCES = strictGraphTest3.C
@@ -152,6 +155,12 @@ testRunExamplesbPTP: bPTP
 	./bPTP $(srcdir)/t3
 	./bPTP $(srcdir)/t4
 
+testProFunSIG: proFunSIG
+	./proFunSIG $(srcdir)/mf1.C
+	./proFunSIG $(srcdir)/mf3.C
+	./proFunSIG $(srcdir)/mf4.C
+	./proFunSIG $(srcdir)/mf5.C
+
 strictGraph: strictGraphTest
 	./strictGraphTest
 
@@ -179,6 +188,7 @@ check-local:
 	@$(MAKE) testInter
 	@$(MAKE) strictGraph
 	@$(MAKE) smtParse
+	@$(MAKE) testProFunSIG
 	@$(MAKE) sourcePTPTest
 if HAVE_YICES
 	@$(MAKE) yicesParserTest
