@@ -154,6 +154,8 @@ main( int argc, char * argv[] )
      UnstructuredPassInterAnalysis upia_eas(eas);
      upia_eas.runAnalysis();
 
+// Liao 1/6/2012, optionally dump dot graph of the analysis result
+//     Dbg::dotGraphGenerator(&divA);
      if (numFails == 0 && numPass == eas.total_expectations)
           printf("PASS: %d / %d\n", numPass, eas.total_expectations);
        else
