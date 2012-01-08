@@ -273,13 +273,14 @@ TermToRose::toRose(const char* filename) {
   PL_put_atom_chars(read, "read");
   PL_put_variable(var);
   PL_chars_to_term("[alias(r)]", alias);
-  PL_cons_functor(open, PL_new_functor(PL_new_atom("open"), 4),
+  int ignored;
+  ignored=PL_cons_functor(open, PL_new_functor(PL_new_atom("open"), 4),
 		  fn, read, var, alias);
 
   PL_put_atom_chars(r, "r");
   PL_put_variable(term);
   PL_chars_to_term("[double_quotes(string)]", flags);
-  PL_cons_functor(read_term, PL_new_functor(PL_new_atom("read_term"), 3),
+  ignored=PL_cons_functor(read_term, PL_new_functor(PL_new_atom("read_term"), 3),
 		  r, term, flags);
 
   PL_chars_to_term("close(r)", close);

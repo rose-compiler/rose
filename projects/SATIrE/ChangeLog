@@ -8,6 +8,9 @@ V0.9.0 2012-01-xx MS,AP,GB,DE,FB
   - g++ 4.4.6 (ROSE supports g++ up to 4.4, but not 4.6 yet)
   - Boost 1.47.0 (1.48.0+ requires g++ 4.6+)
 
+* Termite compiler warnings [MS]
+  - fixed all compiler warninges in Termite headers and implementations
+
 * DOT outout of ICFG [MS]
   - an output of the icfg can be generated with the satire_driver now
   - the output is a clustered graph where each cluster represents a function
