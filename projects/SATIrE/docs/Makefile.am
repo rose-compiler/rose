@@ -5,7 +5,7 @@ nodist_EXTRA_DATA=manual/manual_vars.tex.in
 EXTRA_DIST= \
         satire_cfgconstruction.pdf \
 	satire_overview.pdf \
-	satire_attributes_auxiliary_functions \
+	satire_attributes_auxiliary_functions.txt \
         termite.tex \
 	fancychap.sty \
 	fancyheadings.sty \

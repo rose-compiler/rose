@@ -19,10 +19,6 @@
 
 This is the manual for SATIrE version \version.
 
-This manual is not done yet. Parts are missing, other parts are probably
-wrong, and the overall structure is not fixed. In short, this manual is the
-best documentation SATIrE has ever had :-)
-
 \tableofcontents
 
 \chapter{Introduction}
@@ -421,11 +417,11 @@ The traversal itself is started by calling the following method of the
     void traverse(CFG *icfg);
 \end{verbatim}
 
-\section{Termite Terms}
-\label{sec:representation_termite}
-
-This section is not here yet. But a reference to Chapter~\ref{chap:termite}
-is here.
+%\section{Termite Terms}
+%\label{sec:representation_termite}
+%
+%This section is not here yet. But a reference to Chapter~\ref{chap:termite}
+%is here.
 
 \section{SATIrE's \texttt{Program} class}
 \label{sec:satire_program}
@@ -819,10 +815,11 @@ than one call to the same callee. Some contexts are identified as
 `spontaneous'; this is typically the case for functions that are not called
 from other functions in the program.
 
-\chapter{Termite: Symbolic Program Analysis and Transformation}
-\label{chap:termite}
-
-This chapter is not here yet.
+%\chapter{Termite: Symbolic Program Analysis and Transformation}
+%\label{chap:termite}
+%
+%This chapter is not here yet.
+%
 
 \appendix
 
@@ -831,7 +828,7 @@ This chapter is not here yet.
 
 See the \texttt{README} file in the SATIrE distribution. Use the
 \texttt{--without-pag} configure flag if you wish to install SATIrE without
-PAG support.
+PAG support. Use the \texttt{--without-swi-prolog} configure flag if you wish to install SATIrE without SWI-Prolog support (i.e. this deactivates Termite and its features (such as the loop-bound analysis)).
 
 \chapter{Analyzers Provided by SATIrE}
 \label{appendix:analyzers}

@@ -29,6 +29,7 @@ install-data-local:
 uninstall-local:
 	$(MAKE) -C docs uninstall
 
+# clang connection is currently not maintained and may be discontinued
 clang: $(top_srcdir)/src/termite/clang/clang-termite.patch $(top_builddir)/clang/build/Makefile
 	$(MAKE) -C $(top_builddir)/clang/build
 	$(MAKE) install -C $(top_builddir)/clang/build
