@@ -177,7 +177,7 @@ public:
   PrologCompTerm(term_t t) : PrologTerm(t) {
     term_t name;
     int arity;
-    PL_get_name_arity(t, &name, &arity);
+    int ignored=PL_get_name_arity(t, &name, &arity);
     while (arity --> 0)
       subterms.push_back(NULL);
   };
@@ -191,10 +191,11 @@ public:
  // above. We copy the argument terms to a new argument list, create a
  // functor, and hope that everything works out well.
     atom_t functorAtom = PL_new_atom(name.c_str());
+	int ignored; 
     if (n > 0) {
       functor_t functor = PL_new_functor(functorAtom, n);
       term_t args = PL_new_term_refs(n);
-      PL_cons_functor_v(term, functor, args);
+      ignored=PL_cons_functor_v(term, functor, args);
       va_list params;
       va_start(params, n);
       for (size_t i = 0; i < n; i++) {
@@ -211,15 +212,16 @@ public:
 #endif
 
 # define COMPTERM_CONSTRUCTOR(N)		      \
+  int ignored; \
   atom_t functorAtom = PL_new_atom(name.c_str());     \
   functor_t functor = PL_new_functor(functorAtom, N); \
   term_t args = PL_new_term_refs(N);		      \
-  PL_cons_functor_v(term, functor, args)
+  ignored=PL_cons_functor_v(term, functor, args)
 
   PrologCompTerm(std::string name, PrologTerm* t1) : PrologTerm()
   {
     COMPTERM_CONSTRUCTOR(1);
-    PL_unify_arg(1, term, t1->getTerm());
+    ignored=PL_unify_arg(1, term, t1->getTerm());
     subterms.push_back(t1);
   }
 
@@ -227,8 +229,8 @@ public:
   : PrologTerm()
   {
     COMPTERM_CONSTRUCTOR(2);
-    PL_unify_arg(1, term, t1->getTerm());
-    PL_unify_arg(2, term, t2->getTerm());
+    ignored=PL_unify_arg(1, term, t1->getTerm());
+    ignored=PL_unify_arg(2, term, t2->getTerm());
     subterms.push_back(t1);
     subterms.push_back(t2);
   }
@@ -238,9 +240,9 @@ public:
   : PrologTerm()
   {
     COMPTERM_CONSTRUCTOR(3);
-    PL_unify_arg(1, term, t1->getTerm());
-    PL_unify_arg(2, term, t2->getTerm());
-    PL_unify_arg(3, term, t3->getTerm());
+    ignored=PL_unify_arg(1, term, t1->getTerm());
+    ignored=PL_unify_arg(2, term, t2->getTerm());
+    ignored=PL_unify_arg(3, term, t3->getTerm());
     subterms.push_back(t1);
     subterms.push_back(t2);
     subterms.push_back(t3);
@@ -252,10 +254,10 @@ public:
   : PrologTerm()
   {
     COMPTERM_CONSTRUCTOR(4);
-    PL_unify_arg(1, term, t1->getTerm());
-    PL_unify_arg(2, term, t2->getTerm());
-    PL_unify_arg(3, term, t3->getTerm());
-    PL_unify_arg(4, term, t4->getTerm());
+    ignored=PL_unify_arg(1, term, t1->getTerm());
+    ignored=PL_unify_arg(2, term, t2->getTerm());
+    ignored=PL_unify_arg(3, term, t3->getTerm());
+    ignored=PL_unify_arg(4, term, t4->getTerm());
     subterms.push_back(t1);
     subterms.push_back(t2);
     subterms.push_back(t3);
@@ -268,11 +270,11 @@ public:
   : PrologTerm()
   {
     COMPTERM_CONSTRUCTOR(5);
-    PL_unify_arg(1, term, t1->getTerm());
-    PL_unify_arg(2, term, t2->getTerm());
-    PL_unify_arg(3, term, t3->getTerm());
-    PL_unify_arg(4, term, t4->getTerm());
-    PL_unify_arg(5, term, t5->getTerm());
+    ignored=PL_unify_arg(1, term, t1->getTerm());
+    ignored=PL_unify_arg(2, term, t2->getTerm());
+    ignored=PL_unify_arg(3, term, t3->getTerm());
+    ignored=PL_unify_arg(4, term, t4->getTerm());
+    ignored=PL_unify_arg(5, term, t5->getTerm());
     subterms.push_back(t1);
     subterms.push_back(t2);
     subterms.push_back(t3);
@@ -286,12 +288,12 @@ public:
   : PrologTerm()
   {
     COMPTERM_CONSTRUCTOR(6);
-    PL_unify_arg(1, term, t1->getTerm());
-    PL_unify_arg(2, term, t2->getTerm());
-    PL_unify_arg(3, term, t3->getTerm());
-    PL_unify_arg(4, term, t4->getTerm());
-    PL_unify_arg(5, term, t5->getTerm());
-    PL_unify_arg(6, term, t6->getTerm());
+    ignored=PL_unify_arg(1, term, t1->getTerm());
+    ignored=PL_unify_arg(2, term, t2->getTerm());
+    ignored=PL_unify_arg(3, term, t3->getTerm());
+    ignored=PL_unify_arg(4, term, t4->getTerm());
+    ignored=PL_unify_arg(5, term, t5->getTerm());
+    ignored=PL_unify_arg(6, term, t6->getTerm());
     subterms.push_back(t1);
     subterms.push_back(t2);
     subterms.push_back(t3);
@@ -306,13 +308,13 @@ public:
   : PrologTerm()
   {
     COMPTERM_CONSTRUCTOR(7);
-    PL_unify_arg(1, term, t1->getTerm());
-    PL_unify_arg(2, term, t2->getTerm());
-    PL_unify_arg(3, term, t3->getTerm());
-    PL_unify_arg(4, term, t4->getTerm());
-    PL_unify_arg(5, term, t5->getTerm());
-    PL_unify_arg(6, term, t6->getTerm());
-    PL_unify_arg(7, term, t7->getTerm());
+    ignored=PL_unify_arg(1, term, t1->getTerm());
+    ignored=PL_unify_arg(2, term, t2->getTerm());
+    ignored=PL_unify_arg(3, term, t3->getTerm());
+    ignored=PL_unify_arg(4, term, t4->getTerm());
+    ignored=PL_unify_arg(5, term, t5->getTerm());
+    ignored=PL_unify_arg(6, term, t6->getTerm());
+    ignored=PL_unify_arg(7, term, t7->getTerm());
     subterms.push_back(t1);
     subterms.push_back(t2);
     subterms.push_back(t3);
@@ -338,7 +340,7 @@ public:
     int arity = getArity();
     for(int n = 1; n <= arity; n++) { 
       term_t arg = PL_new_term_ref();
-      PL_get_arg(n, term, arg);
+      int ignored=PL_get_arg(n, term, arg);
       mSubterms.push_back(newPrologTerm(arg));
     }
     return mSubterms;
@@ -346,6 +348,7 @@ public:
 
   /// Add a subterm at the first position
   void addFirstSubTerm(PrologTerm* t) {
+	int ignored;
 #   if DEBUG_TERMITE
       std::cerr<<display(term)<<" . addFirstSubTerm("
 	       <<t->getRepresentation()<<");"<<std::endl;
@@ -358,18 +361,19 @@ public:
     if (PL_get_atom(old_term, &name)) { // still arity 0
       arity = 0;
     } else {
-	PL_get_name_arity(old_term, &name, &arity);
+	 ignored=PL_get_name_arity(old_term, &name, &arity);
     }
 
     // Construct a new, bigger term
     term_t args = PL_new_term_refs(arity+1);
-    PL_put_variable(args);
+    (void)PL_put_variable(args);
+	
     for(int n = 1; n <= arity; n++)
-      assert(PL_get_arg(n, old_term, args+n));
+      assert(ignored=PL_get_arg(n, old_term, args+n));
 
     term = PL_new_term_ref();
-    PL_cons_functor_v(term, PL_new_functor(name, arity+1), args); 
-    assert(PL_unify_arg(1, term, t->getTerm()));
+    ignored=PL_cons_functor_v(term, PL_new_functor(name, arity+1), args); 
+    assert(ignored=PL_unify_arg(1, term, t->getTerm()));
 
 #   if DEBUG_TERMITE
       std::cerr<<" --> "<<display(term)<<" !"<<std::endl;
@@ -378,6 +382,7 @@ public:
 
   /// Add a subterm at the last position
   void addSubterm(PrologTerm* t) {
+	int ignored;
 #   if DEBUG_TERMITE
       std::cerr<<display(term)<<"  addSubterm("<<t->getRepresentation()<<");"
 	       <<std::endl;
@@ -386,20 +391,20 @@ public:
     term_t old_term = term;
     int arity;
     term_t name;
-    if (PL_get_atom(old_term, &name)) { // still arity 0
+    if (ignored=PL_get_atom(old_term, &name)) { // still arity 0
       arity = 0;
     } else {
-      PL_get_name_arity(old_term, &name, &arity);
+      ignored=PL_get_name_arity(old_term, &name, &arity);
     }
 
     // Construct a new, bigger term
     term_t args = PL_new_term_refs(arity+1);
     for(int n = 0; n < arity; n++)
-      assert(PL_get_arg(n+1, old_term, args+n));
+      assert(ignored=PL_get_arg(n+1, old_term, args+n));
     PL_put_variable(args+arity);
 
     term = PL_new_term_ref();
-    PL_cons_functor_v(term, PL_new_functor(name, arity+1), args); 
+    ignored=PL_cons_functor_v(term, PL_new_functor(name, arity+1), args); 
 
     assert(PL_unify_arg(arity+1, term, t->getTerm()));
 
@@ -412,11 +417,12 @@ public:
 
   /// the i-th subterm
   PrologTerm* at(int i) {
+	int ignored;
     if (subterms[i] != NULL)
       return subterms[i];
     else {
       term_t arg = PL_new_term_ref();
-      PL_get_arg(i+1, term, arg);
+      ignored=PL_get_arg(i+1, term, arg);
       subterms[i] = newPrologTerm(arg);
       return subterms[i];
     }

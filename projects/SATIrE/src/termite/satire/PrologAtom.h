@@ -67,7 +67,7 @@ public:
   ///return the string
   std::string getName() {
     char* name;
-    PL_get_atom_chars(term, &name);
+    int ignored=PL_get_atom_chars(term, &name);
     return std::string(name);
   }
 };

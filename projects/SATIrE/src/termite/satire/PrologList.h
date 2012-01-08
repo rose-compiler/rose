@@ -76,7 +76,7 @@ class PrologList : public PrologCompTerm {
   /** empty list */
   PrologList() {
     term = PL_new_term_ref();
-    PL_put_nil(term);
+    (void)PL_put_nil(term);
 #   if DEBUG_TERMITE
       std::cerr<<"new PrologList: "<<display(term)<<std::endl;
 #   endif
@@ -86,11 +86,12 @@ class PrologList : public PrologCompTerm {
 
   /** construct from vector*/
   PrologList(std::vector<PrologTerm*> v) {
+	int ignored;
     term = PL_new_term_ref();
-    PL_put_nil(term);
+    (void)PL_put_nil(term);
     for (std::vector<PrologTerm*>::reverse_iterator i = v.rbegin();
 	 i != v.rend(); ++i) { 
-      PL_cons_list(term, (*i)->getTerm(), term);
+      ignored=PL_cons_list(term, (*i)->getTerm(), term);
     }
 #   if DEBUG_TERMITE
       std::cerr<<"new PrologList: "<<display(term)<<std::endl;
@@ -98,11 +99,12 @@ class PrologList : public PrologCompTerm {
   }
 
   PrologList(std::deque<PrologTerm*> v) {
+	int ignored;
     term = PL_new_term_ref();
-    PL_put_nil(term);
+    (void)PL_put_nil(term);
     for (std::deque<PrologTerm*>::reverse_iterator i = v.rbegin();
 	 i != v.rend(); ++i) { 
-      PL_cons_list(term, (*i)->getTerm(), term);
+      ignored=PL_cons_list(term, (*i)->getTerm(), term);
     }
 #   if DEBUG_TERMITE
       std::cerr<<"new PrologList: "<<display(term)<<std::endl;
@@ -111,12 +113,13 @@ class PrologList : public PrologCompTerm {
   
   /// return size of the list
   int getArity() { 
+	int ignored;
     int l = 0;
     fid_t fid = PL_open_foreign_frame();
     // FIXME: cache predicate
     term_t a0 = PL_new_term_refs(3);
     assert(PL_unify(a0, term));
-    PL_put_variable(a0+2);
+    (void)PL_put_variable(a0+2);
     qid_t qid = PL_open_query(NULL, PL_Q_NORMAL, 
 			      PL_predicate("length", 2, ""), a0);
     assert(PL_next_solution(qid) && 
@@ -129,6 +132,7 @@ class PrologList : public PrologCompTerm {
 
   /// add a list element
   void addElement(PrologTerm* t) {
+	int ignored;
 #   if DEBUG_TERMITE
       std::cerr<<"  addElement("<<display(term)<<" + " 
 	       <<t->getRepresentation()<<")"<<std::endl;
@@ -136,9 +140,9 @@ class PrologList : public PrologCompTerm {
 
     term_t a0 = PL_new_term_refs(3);
     assert(PL_unify(a0, term));
-    PL_put_nil(a0+1);
-    PL_cons_list(a0+1, t->getTerm(), a0+1);
-    PL_put_variable(a0+2);
+    (void)PL_put_nil(a0+1);
+    ignored=PL_cons_list(a0+1, t->getTerm(), a0+1);
+    (void)PL_put_variable(a0+2);
     // TODO: cache the predicates
     assert(PL_call_predicate(NULL, PL_Q_NORMAL, 
 			     PL_predicate("append", 3, "library(lists)"), a0));
@@ -153,7 +157,7 @@ class PrologList : public PrologCompTerm {
 
   /// add the first list element
   void addFirstElement(PrologTerm* t) {
-    PL_cons_list(term, t->getTerm(), term);
+    int ignored=PL_cons_list(term, t->getTerm(), term);
   }
 
   /// get the i-th element
@@ -166,7 +170,7 @@ class PrologList : public PrologCompTerm {
 
     for (int c = 0; c < i; c++)
       assert(PL_get_tail(t, t));
-    PL_get_head(t, t);
+    int ignored=PL_get_head(t, t);
     return newPrologTerm(t);
   }
 

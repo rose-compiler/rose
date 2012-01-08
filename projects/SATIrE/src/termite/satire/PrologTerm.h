@@ -161,7 +161,7 @@ class PrologTerm {
     int arity = 0;
     if (PL_term_type(term) == PL_TERM) {
       term_t name;
-      PL_get_name_arity(term, &name, &arity);
+      int ignored=PL_get_name_arity(term, &name, &arity);
     }
     return arity;
   }
@@ -178,7 +178,7 @@ class PrologTerm {
 
     int arity;
     atom_t name;
-    PL_get_name_arity(term, &name, &arity);
+    int ignored=PL_get_name_arity(term, &name, &arity);
     return std::string(PL_atom_chars(name));
   }
   /// the actual prolog term that is represented by this object
@@ -218,25 +218,25 @@ protected:
     term_t with_output_to = a0 + 6;
 
     PL_put_variable(S);
-    PL_cons_functor(string, PL_new_functor(PL_new_atom("string"), 1), S);
+    int ignored=PL_cons_functor(string, PL_new_functor(PL_new_atom("string"), 1), S);
 
     PL_put_atom_chars(True, "true");
-    PL_cons_functor(quoted, PL_new_functor(PL_new_atom("quoted"), 1), True);
+    ignored=PL_cons_functor(quoted, PL_new_functor(PL_new_atom("quoted"), 1), True);
 
-    PL_put_nil(list);
-    PL_cons_list(list, quoted, list);
+    (void)PL_put_nil(list);
+    ignored=PL_cons_list(list, quoted, list);
     
-    PL_cons_functor(write_term, 
-		    PL_new_functor(PL_new_atom("write_term"), 2), 
+    ignored=PL_cons_functor(write_term, 
+		    ignored=PL_new_functor(PL_new_atom("write_term"), 2), 
 		    T, list);
-    PL_cons_functor(with_output_to, 
-		    PL_new_functor(PL_new_atom("with_output_to"), 2), 
+    ignored=PL_cons_functor(with_output_to, 
+		    ignored=PL_new_functor(PL_new_atom("with_output_to"), 2), 
 		    string, write_term);
-    assert(PL_call(with_output_to, NULL));
+    assert(ignored=PL_call(with_output_to, NULL));
     
     char *s;
     size_t len;
-    assert(PL_get_string_chars(S, &s, &len));
+    assert(ignored=PL_get_string_chars(S, &s, &len));
 
     std::string r = std::string(s);
     PL_discard_foreign_frame(fid);

@@ -88,7 +88,7 @@ public:
     //#   endif
 
     term = PL_new_term_ref();
-    PL_put_int64(term, value);
+    int ignored=PL_put_int64(term, value);
 
 #   if DEBUG_TERMITE
       std::cerr<<"PrologInt: "<<value<<") = "<<term<<std::endl;
@@ -127,7 +127,7 @@ public:
     //#   endif
 
     term = PL_new_term_ref();
-    PL_put_float(term, value);
+    int ignored=PL_put_float(term, value);
 
 #   if DEBUG_TERMITE
       std::cerr<<"PrologFloat: "<<value<<") = "<<term<<std::endl;
@@ -142,8 +142,9 @@ public:
 
   /// return value
   double getValue() {
+	int ignored;
     double i;
-    assert(PL_get_float(term, &i));
+    assert(ignored=PL_get_float(term, &i));
     return i;
   }
 };
