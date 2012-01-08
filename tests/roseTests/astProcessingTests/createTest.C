@@ -123,7 +123,7 @@ ss << "str.erase(std::remove(str.begin(), str.end(), '\\n'), str.end());\n";
 ss << "       path.push_back(str);\n";
 ss << "    }\n";
 ss << "    paths.push_back(path);\n";
-ss << "    ROSE_ASSERT(sssv.find(path) != sssv.end());\n";
+ss << "   // ROSE_ASSERT(sssv.find(path) != sssv.end());\n";
 
 ss << "}\n";
 
@@ -151,6 +151,7 @@ ss << "std::vector<string> sss;\n";
 vis->constructPathAnalyzer(mg, true, 0, 0, true);
 ss << "vis->sssv = sssv;\n";
 ss << "vis->constructPathAnalyzer(mg, true, 0, 0, true);\n";
+ss << "ROSE_ASSERT(vis->sssv.size() == vis->paths.size());\n";
 ss << "std::cout << \"finished\" << std::endl;\n";
 ss << "std::cout << \" paths: \" << vis->paths.size() << std::endl;\n";
 ss << "delete vis;\n";
