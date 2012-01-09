@@ -20,8 +20,7 @@ noinst_HEADERS = APIDepAttrib.h APIDepFinder.h APIReader.h APISpec.h \
 EXTRA_DIST=mpi_api.spec stdio_input.spec
 
 EXAMPLES=$(shell ls $(srcdir)/examples/*/*.c)
-TESTS=$(shell ls $(srcdir)/test-sources/*.c)
-SOURCES=${EXAMPLES} ${TESTS}
+SOURCES=${EXAMPLES} $(shell ls $(srcdir)/test-sources/*.c)
 OUTS=$(addprefix out/, $(basename $(notdir ${SOURCES})))
 OUTS_O=$(addprefix out-o/, $(basename $(notdir ${SOURCES})))
 
@@ -31,7 +30,7 @@ run: out
 out: ${EXEC}
 	rm -rf $@
 	mkdir $@
-	for f in ${EXAMPLES} ${TESTS} ; do b=$$(basename "$$f") ; echo ----- $$b ----- ; ./${EXEC} -rose:o out/$$b -skel:spec $(srcdir)/apis.coll $$f ; done
+	for f in ${SOURCES} ; do b=$$(basename "$$f") ; echo ----- $$b ----- ; ./${EXEC} -rose:o out/$$b -skel:spec $(srcdir)/apis.coll $$f ; done
 
 out/%: out/%.c
 	mpicc -o $@ $<
@@ -45,7 +44,7 @@ mpibuild: ${OUTS}
 out-o: ${EXEC}
 	rm -rf $@
 	mkdir $@
-	for f in ${EXAMPLES} ${TESTS} ; do b=$$(basename "$$f") ; echo ----- $$b ----- ; ./${EXEC} -rose:o out-o/$$b -skel:spec $(srcdir)/apis.coll -skel:outline $$f ; done
+	for f in ${SOURCES} ; do b=$$(basename "$$f") ; echo ----- $$b ----- ; ./${EXEC} -rose:o out-o/$$b -skel:spec $(srcdir)/apis.coll -skel:outline $$f ; done
 
 out-o/%: out-o/%.c
 	mpicc -o $@ $<
@@ -70,3 +69,8 @@ TAGS: ${CCFILES} ${HFILES}
 
 show:
 	@echo $($(VALUE))              # note: this expands!
+
+check-local: test
+	@echo "***********************************************************************************************"
+	@echo "*** ROSE/projects/extractMPISkeletons: make check rule complete (terminated normally)"
+	@echo "***********************************************************************************************"
