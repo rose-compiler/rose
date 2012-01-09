@@ -50,7 +50,9 @@ TESTS_WITH_PAG = sl1rd sl2rd pointsto_live_variables testsuite interval satire_d
 TESTS_WITHOUT_PAG = termite
 
 if WITH_SWI_PROLOG
-TESTS_WITH_PAG += itvl_stresstest loopbounds
+#MS: deactivated loopbounds test (9.1.2012) [to be fixed]
+#TESTS_WITH_PAG += itvl_stresstest loopbounds
+TESTS_WITH_PAG += itvl_stresstest
 endif
 
 
