@@ -1,17 +1,15 @@
-PDFS=cfgconstruction.pdf pig-doc.pdf pag-interface.pdf manual.pdf
+PDFS=manual.pdf pig-doc.pdf
 dist_doc_DATA=$(PDFS)
 nodist_EXTRA_DATA=manual/manual_vars.tex.in
 
 EXTRA_DIST= \
-        satire_cfgconstruction.pdf \
-	satire_overview.pdf \
 	satire_attributes_auxiliary_functions.txt \
-        termite.tex \
+    termite.tex \
 	fancychap.sty \
 	fancyheadings.sty \
 	logo.sty \
-        plonline.sty \
-        plpage.sty \
+    plonline.sty \
+    plpage.sty \
 	pldoc.sty \
 	html.sty url.sty \
 	icons/folder-saved-search.png \
@@ -38,8 +36,13 @@ clean-local: clean-termite
 	done
 	rm -f $(PDFS)
 
+# pig-doc is not using bibtex, thus we make these to speps explicit here
+# without invoking bibtex (you cannot invoke bibtex without bibliography)
+pig-doc.dvi: pig-doc.tex # We can't use pdlatex to include *.ps graphics
+	latex pig-doc < /dev/null || (rm -f $@ && false)
+	latex pig-doc < /dev/null || (rm -f $@ && false)
 
-BIBTEX = :
+BIBTEX = bibtex
 
 %.dvi: %.tex # We can't use pdlatex to include *.ps graphics
 	latex $< < /dev/null || (rm -f $@ && false)

@@ -1,10 +1,6 @@
-\documentclass[12pt]{article}
-\usepackage{longtable}
-\usepackage{moreverb}
-\usepackage{fullpage}
+\chapter{Interfacing Compilers with PAG}
 
-\title{Interfacing Compilers with PAG}
-\author{Gerg\H{o} B\'ar\'any}
+Author: Gerg\H{o} B\'ar\'any
 
 %\topmargin      -16.0mm
 %%\oddsidemargin  -11.0mm
@@ -14,12 +10,6 @@
 %\textheight     243.5mm
 %%\textwidth      183.0mm
 %\textwidth      164.0mm
-
-\setlength{\parindent}{0pt}
-\setlength{\fboxsep}{5pt}
-
-\begin{document}
-\maketitle
 
 \section{Introduction}
 \subsection{Overview}
@@ -143,7 +133,7 @@ Prototype & Description \\
 \hline
 \verb|int kfg_num_nodes(KFG)| & number of nodes in the CFG \\
 \hline
-\verb|KFG_NODE_TYPE kfg_node_type(KFG,| \verb|KFG_NODE)|
+\verb|KFG_NODE_TYPE kfg_node_type(| \verb|KFG, KFG_NODE)|
     & type of the node \\
 \hline
 \verb|KFG_NODE_ID kfg_get_id(KFG,| \verb|KFG_NODE)|
@@ -152,7 +142,7 @@ Prototype & Description \\
 \verb|KFG_NODE kfg_get_node(KFG,| \verb|KFG_NODE_ID)|
     & node with the given identitier \\
 \hline
-\verb|int kfg_get_bbsize(KFG, KFG_NODE)|
+\verb|int kfg_get_bbsize(KFG, | \verb|KFG_NODE)|
     & number of instructions in the node \\
 \hline
 \(t\) \verb|kfg_get_bbelem(KFG, KFG_NODE, int)|
@@ -680,11 +670,5 @@ i.e. if writing the specification is less tedious than writing the
 access code by hand. This should be the case if access to the AST
 nodes is similar in most cases, subsuming many functions under one
 macro specification.
-
-\begin{thebibliography}{0}
-\bibitem{pag} AbsInt Angewandte Informatik GmbH: {\em PAG, The
-    Program Analyzer Generator: User's Manual}, 2002
-%\bibitem{accc} Unknown Author: {\em Untitled ACCC Documentation}
-\end{thebibliography}
 
 \end{document}

@@ -6,6 +6,15 @@
 \documentclass[a4paper,12pt]{report}
 
 \usepackage{graphicx}
+\usepackage{listings}
+
+\usepackage{longtable}
+\usepackage{moreverb}
+%\usepackage{fullpage}
+
+\setlength{\parindent}{0pt}
+\setlength{\fboxsep}{5pt}
+
 \newcommand{\satire}[0]{SATIrE}
 
 \input{manual_vars}
@@ -1358,7 +1367,7 @@ without putting restrictions on the semantics of an analysis. Clearly,
 the annotations allow to represent analysis result data, but the semantics of
 the data are defined for each analysis separately. For example, the
 language is general enough to represent analysis information specified
-in PAG's %\cite{Martin98} 
+in PAG's %\cite{martin98} 
 DATLA language. Since PAG is integrated into
 SATIrE this is a requirement for reusing any analysis information
 computed with a PAG generated analyzer. ARAL consists of sets, lists,
@@ -1656,9 +1665,9 @@ contract No 215068 funded by the 7th EU R\&D Framework Programme.
 }
 }
 
-\subsection{Type System}
+\subsection{Type System (not implemented yet)}
 
-ARAL provides (from version 0.9.16 upwards) a type system. The type
+ARAL will provide also a type system. The type
 system ensures that the mappings provided in the mapping section
 conform to the specified type and that the data represented in the
 DATA subsection of a result section conforms to the type(s) defined in
@@ -1932,6 +1941,9 @@ SATIrE.
 
 See the document termite.pdf for information on Termite. 
 
+\bibliographystyle{abbrv}
+\bibliography{mymanual}
+
 \appendix
 
 \chapter{Installing SATIrE}
@@ -2148,6 +2160,7 @@ That is, statements, variables, and expressions are printed only as they
 would be represented in source code. Analysis information is associated with
 the outgoing edges of ICFG nodes.
 
-
+\input{cfgconstruction}
+\input{paginterface}
 
 \end{document}
