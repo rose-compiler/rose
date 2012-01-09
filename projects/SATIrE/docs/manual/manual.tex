@@ -1125,11 +1125,11 @@ steps should be performed by SATIrE.
 --no-analysis-annotation do not annotate analysis results in AST
 --number-expressions     number expressions and types in the ICFG [default]
 --no-number-expressions  do not number expressions and types in the ICFG
---run-pointsto-analysis  run a points-to analysis on the ICFG
 --resolve-funcptr-calls  resolve indirect calls using pointer analysis
 --output-pointsto-graph=<name>  create <name>.dot and <name>.eps files
                          showing points-to analysis results (requires DOT)
 --analysis=<identifier>  run SATIrE's analysis <identifier> on the ICFG
+                         identifier=pointsto|constprop|interval|sl2rd
 \end{verbatim}
 }
 
@@ -1155,7 +1155,8 @@ annotated programs, analysis results---from the analyzer.
                          analysis results for each statement
 --output-term=<FILENAME> generate Prolog term representation of input
                          program AST
---output-icfg=<FILENAME> output icfg of input program
+--output-gdl-icfg=<FILENAME> output icfg as gdl file
+--output-dot-icfg=<FILENAME> output icfg as dot file
 --output-binary-ast=<FILENAME> write AST to binary file
 --warn-deprecated        warn about the use of deprecated features
 --no-warn-deprecated     do not warn about the use of deprecated features
