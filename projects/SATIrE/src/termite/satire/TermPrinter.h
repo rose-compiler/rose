@@ -202,7 +202,7 @@ template<typename DFI_STORE_TYPE>
 void
 TermPrinter<DFI_STORE_TYPE>::padArity(SynthesizedAttributesList synList, int arity)
 {
-  size_t l = synList.size();
+  int l = synList.size();
   ROSE_ASSERT(l <= arity);
   while (l < arity) {
     std::cerr<< l<<std::endl;
