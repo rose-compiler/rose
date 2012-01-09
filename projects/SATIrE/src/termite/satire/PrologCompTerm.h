@@ -177,7 +177,8 @@ public:
   PrologCompTerm(term_t t) : PrologTerm(t) {
     term_t name;
     int arity;
-    int ignored=PL_get_name_arity(t, &name, &arity);
+    int success=PL_get_name_arity(t, &name, &arity);
+	if(!success) { /* do someting reasonable */ }
     while (arity --> 0)
       subterms.push_back(NULL);
   };
@@ -340,7 +341,8 @@ public:
     int arity = getArity();
     for(int n = 1; n <= arity; n++) { 
       term_t arg = PL_new_term_ref();
-      int ignored=PL_get_arg(n, term, arg);
+      int success=PL_get_arg(n, term, arg);
+	  if(!success) { /* do someting reasonable */ }
       mSubterms.push_back(newPrologTerm(arg));
     }
     return mSubterms;
@@ -391,7 +393,7 @@ public:
     term_t old_term = term;
     int arity;
     term_t name;
-    if (ignored=PL_get_atom(old_term, &name)) { // still arity 0
+    if ((ignored=PL_get_atom(old_term, &name))) { // still arity 0
       arity = 0;
     } else {
       ignored=PL_get_name_arity(old_term, &name, &arity);

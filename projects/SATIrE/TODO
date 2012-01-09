@@ -8,5 +8,12 @@ ICFG Builder:
      have a corresponding DeclStatement
 
 Annotation:
-1) Generation of analysis results as pragmas
-   - currently only comments are generated
+1) Annotation of analysis results as pragmas
+   - currently only comments are annotated
+
+Warnings: decprecated headers
+1) analyzer/astnumbering/satire/EqualityTraversal.h uses <ext/hash_map>
+   We will probably replace this with include<unordered_map>, but this
+   requires additional work.
+usr/include/c++/4.4/backward/backward_warning.h:28: warning: #warning 
+

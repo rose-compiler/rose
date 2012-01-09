@@ -158,10 +158,12 @@ class PrologTerm {
   }
   /// returns the arity of the term
   virtual int getArity() { 
+	int success;
     int arity = 0;
     if (PL_term_type(term) == PL_TERM) {
       term_t name;
-      int ignored=PL_get_name_arity(term, &name, &arity);
+      success=PL_get_name_arity(term, &name, &arity);
+	  if(!success) { /* do someting reasonable */ }
     }
     return arity;
   }
@@ -178,7 +180,8 @@ class PrologTerm {
 
     int arity;
     atom_t name;
-    int ignored=PL_get_name_arity(term, &name, &arity);
+    int success=PL_get_name_arity(term, &name, &arity);
+	if(!success) { /* do someting reasonable */ }
     return std::string(PL_atom_chars(name));
   }
   /// the actual prolog term that is represented by this object

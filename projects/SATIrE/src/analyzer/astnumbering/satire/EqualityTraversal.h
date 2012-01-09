@@ -5,6 +5,9 @@
 #include <satire.h>
 
 #include <map>
+
+// MS: using TR1 we will probably replace this with include<unordered_map>
+// but this requires additional work
 #include <ext/hash_map>
 
 typedef unsigned long EqualityId;
