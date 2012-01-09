@@ -5,7 +5,23 @@
 
 \documentclass[a4paper,12pt]{report}
 
+\newcommand{\satire}[0]{SATIrE}
+
 \input{manual_vars}
+
+\newcommand{\msvector}[2]{{({#1},\ldots,{#2})}}
+\newcommand{\outcomment}[1]{}
+\newcommand{\hide}[1]{}
+\input{formalisms3}
+\newcommand{\derivationarrow}[0]{\Rightarrow}
+\newcommand{\deriveone}[2]{{#1}\derivationarrow{#2}}
+\newcommand{\derive}[2]{{#1}\stackrel{*}{\derivationarrow}{#2}}
+\newcommand{\deriveminone}[2]{{#1}\stackrel{+}{\derivationarrow}{#2}}
+\newtheorem{mydefinition}{Definition}
+\newcommand{\classset}[0]{\mathcal{C}}
+\newcommand{\gvar}[1]{\$$#1$}
+\newcommand{\dollar}[0]{$\$$}
+\newcommand{\markinfo}[1]{#1}
 
 \title{SATIrE Manual}
 \author{}
@@ -223,10 +239,10 @@ unspecified order that is consistent with all the dependencies in the
 system---before \(A\)'s \texttt{run} method is finally called by the
 scheduler.
 
-\section{ARAL: Representing Analysis Results}
-\label{sec:aral}
-
-See the ARAL Manual for further information on ARAL (aralmanual.pdf)
+%\section{ARAL: Representing Analysis Results}
+%\label{sec:aral}
+%
+%See the ARAL Manual for further information on ARAL (aralmanual.pdf)
 
 \chapter{Program Representation in SATIrE}
 \label{chap:program_representation}
@@ -815,21 +831,6 @@ than one call to the same callee. Some contexts are identified as
 `spontaneous'; this is typically the case for functions that are not called
 from other functions in the program.
 
-%\chapter{Termite: Symbolic Program Analysis and Transformation}
-%\label{chap:termite}
-%
-%This chapter is not here yet.
-%
-
-\appendix
-
-\chapter{Installing SATIrE}
-\label{appendix:installing}
-
-See the \texttt{README} file in the SATIrE distribution. Use the
-\texttt{--without-pag} configure flag if you wish to install SATIrE without
-PAG support. Use the \texttt{--without-swi-prolog} configure flag if you wish to install SATIrE without SWI-Prolog support (i.e. this deactivates Termite and its features (such as the loop-bound analysis)).
-
 \chapter{Analyzers Provided by SATIrE}
 \label{appendix:analyzers}
 
@@ -1072,15 +1073,622 @@ support functions \verb|varid_location_cs| and \verb|exprid_location_cs|
 \section{Loop Bounds Analysis}
 \label{sec:analysis_loopbounds}
 
-\section{Coherence Analysis}
-\label{sec:analysis_coherence}
+See termite.pdf for more Information on the provided loop bound analysis.
 
-\chapter{SATIrE Analyzer Command Line Flags}
+%\section{Coherence Analysis}
+%\label{sec:analysis_coherence}
+
+\chapter{ARAL: Analysis Results Annotation Language}
+
+\section{Introduction}
+\label{section:aral}
+The analysis results annotation language (ARAL) is designed to be suitable
+for annotating flow-sensitive and context-sensitive analysis
+results. It allows to represent computed data of analysis tools, but
+without putting restrictions on the semantics of an analysis. Clearly,
+the annotations allow to represent analysis result data, but the semantics of
+the data are defined for each analysis separately. For example, the
+language is general enough to represent analysis information specified
+in PAG's %\cite{Martin98} 
+DATLA language. Since PAG is integrated into
+SATIrE this is a requirement for reusing any analysis information
+computed with a PAG generated analyzer. ARAL consists of sets, lists,
+tuples, maps, and some primitive data types. Additionally each
+analysis information has an Analysis Identifier. This identifier
+allows to associate semantics with the analysis information.
+
+ARAL is designed to be a
+general format that allows to exchange analysis information between
+\satire and other tools. 
+
+%Therefore it allows to exchange WCET
+%analysis specific information, but also information for supporting
+%analyses (e.g. interval analysis is an supporting analysis for loop
+%bound analysis). This capability is necessary for use case R.
+
+ARAL is suitable for annotating flow-insensitive as well as
+flow-sensitive and context-insensitive as well as context-sensitive
+analysis results. It allows to represent computed data of analysis
+tools, but without putting restrictions on the semantics of an
+analysis. Clearly, the annotations allow to represent analysis result
+data, but the semantics of the data are defined for each analysis
+separately. For example, the language is general enough to represent
+analysis information specified in AbsInt's PAG DATLA language. Since
+PAG is integrated into \satire{} this is a requirement for reusing any
+analysis information computed with a PAG generated analyzer. ARAL
+consists of sets, lists, tuples, maps, and some primitive data
+types. Additionally each analysis information has an Analysis
+Identifier. This identifier allows to associate semantics with the
+analysis information.
+
+%To associate the analysis information with a program fragment
+%a label and a mapping exists to associate the analysis information with
+%a program fragment.
+
+%\outcomment{
+
+\section{Language}
+
+%TODO: the language shall be described by discussion of type-system
+%and data-representation only. The mapping and file structure shall be
+%explained in the file format chapter. ARAL is for administration
+%of analysis results (combination of files etc.). A COMPUTATION section will allow compact representation of analysis results.\\
+
+ARAL is a strictly typed language. A data element can only have
+exactly one type and there is no void type. For a proper use of the
+language it is important to be aware of the concept of the mapping
+section and the result section(s). In a result section analysis data
+is represented independent from the intermediate representation on
+which is was computed. The mapping section defines how the analysis
+information of a result section is associated with locations in a
+source code of a program and similarly, how it is associated with
+locations in an intermediate representation. The two different kinds
+of sectionos support a separation of concerns: the analysis data
+itself and how it is associated with locations in a program. The
+locations are labeled, and those labels are used in the data
+section. For expressions (and its subexpressions) IDs are computed
+that those IDs are used in the DATA section. A mapping section can
+provide information on how to map the IDs to source code constructs.
+
+\subsection{ARAL Grammar}
+
+{
+\newcommand{\regexstar}[1]{\{~#1~\}$^*$}
+\newcommand{\regexplus}[1]{\{~#1~\}$^+$}
+\newcommand{\regexgroup}[1]{\{~#1~\}}
+\newcommand{\regexopt}[1]{[~#1~]}
+\newcommand{\lexrange}[2]{\underline{#1}-\underline{#2}}
+\newcommand{\lb}[0]{\underline{(}~}
+\newcommand{\rb}[0]{\underline{)}}
+\newcommand{\comma}[0]{\underline{,}~}
+\newcommand{\garrow}[0]{$\rightarrow$}
+
+\newenvironment{GRAMMAR}                          % Prolog Umgebung
+{
+\begin{minipage}[t]{40ex}%
+\prologcode\progfont%
+\begin{quote}%
+\begin{tabbing}%
+\hspace{3ex}\=\hspace{3ex}\=\hspace{3ex}\=\hspace{3ex}%
+\=\hspace{3ex}\=\hspace{4ex}\=\hspace{3ex}\=\hspace{3ex}\=\hspace{3ex}\=\hspace{3ex}\=\hspace{3ex}\=\hspace{3ex}\=\hspace{3ex}\kill}%
+{\end{tabbing}%
+\end{quote}%
+\end{minipage}%
+}
+
+This subsection gives a precise definition of the ARAL syntax. The
+grammar is specified in the usual notation for context-free grammars,
+plus some convenient abbreviations:
+
+\begin{itemize}
+\item Non terminals start with a capital letter.
+\item Terminals are underlined.
+\item Optional constructs are enclosed in square brackets: [ Optional ]
+\item Alternatives are separated by $\mid$: A $\mid$ B
+\item Zero or more occurrences are enclosed in curly braces with a star: \regexstar{zero or more}
+\item One or more occurrences take a '+': \regexplus{ one or more}
+\item Sequences of constructs are separated by spaces.
+\item Ranges are written with a dash, e.g. \underline{0}-\underline{9}.
+\item Braces indicate grouping, e.g. \{ A $\mid$ B \} C
+\item Some productions are explained with comments: \% comment.
+\end{itemize}
+
+Primitive tokens are 'Number' (\regexplus{\underline{0}-\underline{9}}) and identifiers, 'Id' (\regexgroup{\lexrange{A}{Z}$\mid$\lexrange{a}{z}}\regexstar{\underline{\_}$\mid$\lexrange{A}{Z}$\mid$\lexrange{a}{z}$\mid$\lexrange{0}{9}}).
+ARAL comments start with a double slash and end at the end of the current line. Whitespace may be inserted anywhere between tokens.
+
+The grammar productions can be found in Fig.~\ref{fig:annotationfileformat},\ref{fig:aralone}, \ref{fig:araltwo}.
+
+\begin{figure}[!ht]
+\begin{GRAMMAR}
+{AralFile}      \>\>\>\>\>\garrow\> \underline{ANALYSIS} 
+                 \>\>\>\>\> \> \regexopt{ConfigSection}
+                 \>\>\>\>\> \> \regexopt{MappingSection} 
+                 \>\>\>\>\> \> \regexopt{ResultSection} 
+                 \>\>\>\>\> \>       \underline{END}
+
+{ResultSection}    \>\>\>\>\>\garrow\> \underline{RESULT}
+                 \>\>\>\>\> \> NameSection
+                 \>\>\>\>\> \> TypeSection 
+                 \>\>\>\>\> \> DataSection 
+                 \>\>\>\>\> \> \underline{END}
+
+{NameSection}    \>\>\>\>\>\garrow\> \underline{NAME} AnalaysisIdent
+
+{ConfigSection}  \>\>\>\>\>\garrow\> \underline{CONFIG} ConfigType \underline{:} ConfigData \underline{;}
+
+{MappingSection}  \>\>\>\>\>\>\garrow\> \underline{MAPPING} \regexstar{\underline{map}\lb~FromType\comma~Type \rb ~\underline{:} Map \underline{;}} 
+                  \>\>\>\>\>\>\% keyword IDMAP is deprecated
+
+{FromType}       \>\>\>\>\>\garrow\> Label
+                 \>\>\>\>\> \> $\mid$ ProgId
+
+{TypeSection}    \>\>\>\>\>\garrow\> \underline{TYPE} \regexstar{TypeDef} \regexopt{\underline{$\langle$} ContextType \underline{$\rangle$}} AnnotType 
+
+{DataSection}    \>\>\>\>\>\garrow\> \underline{DATA} \regexstar{AnnotData}
+
+{AnalysisIdent}  \>\>\>\>\>\garrow\> Id
+{ConfigType}     \>\>\>\>\>\garrow\> Type
+{ConfigData}     \>\>\>\>\>\garrow\> Data
+{AnnotType}      \>\>\>\>\>\garrow\> Type
+{ContextType}    \>\>\>\>\>\garrow\> Type
+
+{TypeDef}        \>\>\>\>\>\garrow\> Id \underline{=} Type \underline{;}
+
+{Type}           \>\>\>\>\>\garrow\> \underline{set}\lb Type \rb
+                 \>\>\>\>\> \> $\mid$ \underline{list}\lb Type \rb
+                 \>\>\>\>\> \> $\mid$ \underline{tuple}\lb Type$_1$,...,Type$_n$ \rb
+                 \>\>\>\>\> \> $\mid$ \underline{flat} \lb Type \rb
+                 \>\>\>\>\> \> $\mid$ \underline{lift} \lb Type \rb
+                 \>\>\>\>\> \> $\mid$ \underline{map} \lb Type \comma Type \rb
+%                 \>\>\>\>\> \> $\mid$ \underline{enum} \lb Id \regexstar{\comma Id} \underline{$\mid$} \regexopt{Edge \regexstar{\comma Edge}} \underline{$\mid$} Id \underline{$\mid$} Id \rb
+                 \>\>\>\>\> \> $\mid$ \underline{label}
+                 \>\>\>\>\> \> $\mid$ \underline{constraint}
+                \>\>\>\>\> \> $\mid$ \underline{string}
+                \>\>\>\>\> \> $\mid$ \underline{int(} Number \underline{)}
+                 \>\>\>\>\> \> $\mid$ IdNumber
+                 \>\>\>\>\> \> $\mid$ Basic
+                 \>\>\>\>\> \> $\mid$ ProgId
+
+{Label}           \>\>\>\>\>\garrow\> $\texttt{\underline{@}}$Number
+
+{IdNumber}       \>\>\>\>\>\garrow\> $\underline{\texttt{\#}}$Number
+
+%Edge             \>\>\>\>\>\garrow\> Id $\leq$ Id
+\end{GRAMMAR}
+\caption{Grammar for the ARAL Annotation File Format (Part 1, see Fig. \ref{fig:aralone} for productions of AnnotData, Basic, ProgId, and Map)}
+\label{fig:annotationfileformat}
+\end{figure}
+
+\begin{figure}[!ht]
+\begin{GRAMMAR}
+{AnnotData}      \>\>\>\>\>\garrow\> LocationSpec FlowSpec InfoElement \underline{;}
+
+{LocationSpec}   \>\>\>\>\>\garrow\> [ ExpPath ] LocSpecTarget
+
+{LocSpecTarget}  \>\>\>\>\>\garrow\>Label
+                 \>\>\>\>\> \>$\mid$ \underline{(} Label \underline{,} Label \underline{)} \hspace{2cm}\% not implemented 
+                 \>\>\>\>\> \>$\mid$ \underline{program}
+                 \>\>\>\>\> \>$\mid$ \underline{file} \underline{(}  String \underline{)} 
+                 \>\>\>\>\> \>$\mid$ \underline{function} \underline{(}  String \underline{)} 
+
+{ExpPath}        \>\>\>\>\>\garrow\> \underline{call} \underline{(} Number \underline{)} \underline{:} \regexopt{\underline{param} \underline{(} Number \underline{)}\underline{:}} \% not implemented
+
+{FlowSpec}       \>\>\>\>\>\garrow\> \underline{pre} $\mid$ \underline{post} $\mid$ \underline{noflow}
+
+{InfoElement}    \>\>\>\>\>\garrow\> \regexopt{\underline{$<$}Context\underline{$>$}} Data \regexstar{\underline{,} \underline{$<$}Context\underline{$>$} Data}
+
+{Basic}          \>\>\>\>\>\garrow\> \underline{bool} $\mid$ \underline{string} $\mid$ \underline{real} $\mid$ NumRange
+
+{ProgId}         \>\>\>\>\>\garrow\> \underline{funcid} $\mid$ \underline{declid} $\mid$ \underline{stmtid} $\mid$ \underline{exprid} $\mid$ \underline{varid}
+
+
+{Context}        \>\>\>\>\>\garrow\> Data
+
+{NumRange}       \>\>\>\>\>\garrow\> \underline{[} NumExp \underline{..} NumExp \underline {]} \% not implemented
+
+{NumExp}         \>\>\>\>\>\garrow\> [-] Number
+                 \>\>\>\>\> \>$\mid$ NumExp NumOperator NumExp
+                 \>\>\>\>\> \>$\mid$ [-] \lb~NumExp \rb
+
+{NumOperator}    \>\>\>\>\>\garrow\> \underline{+} $\mid$ \underline{-} $\mid$ \underline{*} $\mid$ \underline{/} $\mid$ \underline{\%} $\mid$ \underline{\symbol{"5E}}
+
+\end{GRAMMAR}
+\caption{ARAL Grammar (Part 2)}
+\label{fig:aralone}
+\end{figure}
+
+\begin{figure}[!ht]
+\begin{GRAMMAR}
+{Data}    \>\>\>\>\>\garrow\> Set
+                 \>\>\>\>\> \>$\mid$ List
+                 \>\>\>\>\> \>$\mid$ Tuple
+                 \>\>\>\>\> \>$\mid$ Map
+                 \>\>\>\>\> \>$\mid$ $\underline{\$}$ Constraint $\underline{\$}$
+                 \>\>\>\>\> \>$\mid$ Primitive
+
+{Set}            \>\>\>\>\>\garrow\> \underline{\{} ElementSeq \underline{\}}
+
+{List}           \>\>\>\>\>\garrow\> \underline{[} ElementSeq \underline{]}
+
+{Tuple}          \>\>\>\>\>\garrow\> \lb ElementSeq \rb
+
+{Map}            \>\>\>\>\>\garrow\> \underline{\{} $\underline{default} $ $\underline{\rightarrow}$ DefaultElem \regexopt{\underline{$\backslash$} MapElemSeq} \underline{\}}
+
+{DefaultElem} \>\>\>\>\>\garrow\> Data
+
+{MapElemSeq}     \>\>\>\>\>\garrow\> Data $\underline{\rightarrow}$ Data \regexstar{\comma Data $\underline{\rightarrow}$ Data}
+
+{ElementSeq}     \>\>\>\>\>\garrow\> \regexopt{Data \regexstar{\underline{,} Data}}
+
+{Constraint}     \>\>\>\>\>\garrow\> Number
+                 \>\>\>\>\> \> $\mid$ Label
+%                 \>\>\>\>\> \> $\mid$ \lb Label\comma Label\rb
+                 \>\>\>\>\> \> $\mid$ Constraint LogOperator Constraint
+                 \>\>\>\>\> \> $\mid$ Constraint RelOperator Constraint
+                 \>\>\>\>\> \> $\mid$ Constraint NumOperator Constraint 
+                 \>\>\>\>\> \> $\mid$ $\underline{(}$ Constraint $\underline{)}$ 
+
+
+{Primitive}      \>\>\>\>\>\garrow\> Number
+                 \>\>\>\>\> \>$\mid$ String
+%                 \>\>\>\>\> \>$\mid$ Char
+                 \>\>\>\>\> \>$\mid$ \underline{\texttt{true}} \% not implemented
+                 \>\>\>\>\> \>$\mid$ \underline{\texttt{false}} \% not implemented
+                 \>\>\>\>\> \>$\mid$ \underline{\texttt{top}}
+                 \>\>\>\>\> \>$\mid$ \underline{\texttt{bot}}
+
+{RelOperator}   \>\>\>\>\>\garrow\> \underline{$\texttt{<}$} $\mid$ \underline{$\texttt{<=}$} $\mid$ \underline{$\texttt{=}$} $\mid$ \underline{$\texttt{<>}$} $\mid$ \underline{$\texttt{>=}$} $\mid$ \underline{$\texttt{>}$}
+
+{LogOperator}   \>\>\>\>\>\garrow\> \underline{$\texttt{and}$} $\mid$ \underline{$\texttt{or}$} $\mid$ \underline{$\texttt{not}$}
+
+\end{GRAMMAR}
+\caption{ARAL Grammar (Part 3)}
+\label{fig:araltwo}
+\end{figure}
+}
+
+%\begin{figure}[h!]
+%\begin{GRAMMAR}
+%{SourceAnnot}\>\>\>\>\>\garrow\> \underline{\#pragma} \underline{ARAL} {AnalysisIdent} AnnotData
+%\end{GRAMMAR}
+%\caption{ARAL Source Code Annotation Format}
+%\label{fig:sourceannotationformat}
+%\end{figure}
+%}
+
+\subsection{Operator Precedence}
+
+Logical, relational, and numerical operators ordered from lower to higher precedence:
+
+\vspace{0.3cm}
+\begin{tabular}{|l|r|}\hline
+Precedence & Operator\\\hline\hline
+right & \texttt{not}\\\hline
+left & \texttt{or}\\\hline
+left & \texttt{and}\\\hline
+left & \texttt{= <>}\\\hline
+left & \texttt{< > >= <=} \\\hline
+left & \texttt{+ -}\\\hline
+left & \texttt{* / \%}\\\hline
+left & \texttt{\^}\\\hline
+\end{tabular}
+
+The operators (except for \texttt{\%} and \texttt{\^} ) conform to the UML2 object constraint language.
+
+\outcomment{
+{\footnotesize
+\vspace{0.2cm} \textbf{Acknowledgements.} 
+This work has been partially supported by the ARTIST2 Network of
+Excellence 
+%(\href{http://www.artist-embedded.org/}
+({http://www.artist-embedded.org/}), and the research project
+``Integrating European Timing Analysis Technology'' (ALL-TIMES) under
+contract No 215068 funded by the 7th EU R\&D Framework Programme.
+}
+}
+
+\subsection{Type System}
+
+ARAL provides (from version 0.9.16 upwards) a type system. The type
+system ensures that the mappings provided in the mapping section
+conform to the specified type and that the data represented in the
+DATA subsection of a result section conforms to the type(s) defined in
+the respective TYPE section of that result section.
+
+The type system is based on name equivalence of types, and two types are equivalent if one of the following conditions holds
+
+\begin{itemize}
+\item They are the same basic type.
+\item They are formed by applying the same constructor on to structurally equivalent types (this only applies to pre-defined types).
+\item They have the same name.
+\end{itemize}
+
+Predefined types are set, list, map, tuple, and basic types. New types can be introduced by combining other types and associating names with those types.
+For example, in a TYPE section for the results of a reaching definition analysis we can define the type as
+\begin{verbatim}
+TYPE
+T = tuple(label,varid); 
+RD = lift(set(T));
+\end{verbatim}
+
+This defines a type RD to be a lifted type of T which is a tuple of a label and a variable-idnumber. In the corresponding DATA section information such as 
+\begin{verbatim}
+DATA
+{(@2,#5),(@2,#6)}
+\end{verbatim}
+
+can be represented. This DATA section represents the fact that at label 2, two variables with id-numbers 5 and 6 may be defined. 
+
+A mapping section may define a type that is also defined in a DATA section. The type checker ensures that if the same name is used for a type in the mapping section and in a data section, or in multiple data sections, that the types are indeed equivalent. This allows to include mapping sections in different ARAL files without the need to have a DATA section around that produces DATA for which this mapping is indeed required. It also permits that different DATA sections can define the same types of the same name. This allows to easily merge different ARAL files.
+
+The type of an analysis result can be defined by introducing new type names or without doing so. Here are examples of 2 different TYPE sections that define types for the same type of analysis results:
+
+\begin{verbatim}
+TYPE
+MyLiftedSet = lift(set(tuple(label,varid)));
+
+TYPE
+MyLab = Label;
+MyTuple = tuple(MyLab,varid);
+MySet = set(MyTuple);
+MyLiftedSet = lift(MySet);
+\end{verbatim}
+
+The type for this analysis can also be defined as 
+
+\begin{verbatim}
+TYPE
+lift(set(tuple(label,varid)));
+\end{verbatim}
+
+This type is not equivalent with the type MyLiftedSet. It is structurally equivalent but not name equivalent - combined types that are not associated with a name are anonymous types. It is ensured that structurally equivalent anonymous types in different TYPE sections are equivalent.
+
+
+\section{File Format}
+
+An ARAL file consists of three sections where some have several subsections. The grammar for the ARAL file
+is shown in Fig.~\ref{fig:annotationfileformat}. In the file
+information is provided about the configuration of the analyzer and
+the system level parameters that were taken into account by the
+analysis, the type of the analysis data, and the data that was
+computed for each program point. The three sections are:
+
+\begin{description}
+\item [Configuration Section.] In this section the values of system
+level parameters and configuration options of the analyzer are
+provided.
+\item [Mapping Section.] If an analyzer uses unique identifiers for
+program constructs such as functions, statements, expressions,
+variables a mapping to some readable representation can be provided in
+this section. For example, the unique identifier for an expression can
+be E22, but the better readable representation is the expression as
+used in the source code, ``$a+b$''. The mapping section allows to
+provide such information. Alternatively the readable information can
+be represented in the analysis information itself, but usually the
+unique identifiers are better suitable for tools, but the readable
+form is only used in visualization or output that is presented to the
+user. Therefore this important indirection is supported in ARAL.
+\item [Result Section.] An arbitrary number of results sections are allowed.
+Each result section consists of three sub sections.
+
+\begin{description}
+\item [Name Section.] An identifier is provided for the name of the analysis that was performed.
+\item [Type Section.] An analysis Data Type Definition must be
+provided.  The Type Definition allows to define exactly what kind of
+analysis information is used in the annotations, such as whether a set
+is lifted or not (i.e. whether it may contain a special element for
+the top and bottom element of a lattice), value ranges of numbers, or
+whether constraints are reported as annotations. This section allows
+to specify the type of the data that is provided in the DATA section.
+\item [Data Section.]
+In the data section the actual analysis data is provided. The grammar
+for the annotation data is shown in Fig. \ref{fig:aralone} and
+Fig. \ref{fig:araltwo}. The DATA section may hold arbitrary many
+elements of annotation data. An element of annotation data consists of the following three entities:
+
+\begin{description}
+\item [Location Specifier.] Each analysis information is associated with a
+program location and its corresponding program fragment. The program
+location is represented by an optional Location Reference and a unique
+label. The label is represented by a unique number.
+The Location Reference allows to specify with which
+part of a program fragment an annotation is associated with. This allows to
+annotate multiple subexpressions of an expression without breaking up
+the expression. An example is 'param($N$):12' for specifying that an annotation
+of the $N$th formal parameter of a function is associated with label 12.
+
+\item [Flow Specifier.] A Flow Specifier allows to define whether an analysis information is a pre or post information in a flow-sensitive information. If the information is flow-insensitive it is denoted as 'noflow'.
+\item [List of Data Elements.] A data element consists of
+\begin{description}
+\item [Context.] For a context-sensitive analysis each context is represented in the annotations by an identifier which allows to keep context sensitive information separate. For a context-insensitive analysis the context identifier is the same for all analysis results computed for a program or function.
+\item [Data.] The analysis data represents the analysis
+information computed at a location in a program. A location can be
+associated with a function, a statement, an expression, or with a scope.
+\end{description}
+\end{description}
+\end{description}
+
+Analysis data can consist of a set, list, tuple, map, string, int, float,
+constraint, or specific program information: numeric VariableIds,
+ExpressionIds, StatementIds, FunctionIds and Labels. Two special
+symbols exist for the top and bottom element of lattices, 'top' and 'bot'. Sets, lists,
+and maps can only contain data elements of the same type, whereas
+tuples can contain elements of different type. In an constraint
+(in)equations on program locations can be provided
+(e.g. flow-constraints). In a data element the types of data can be
+arbitrarily nested and combined.
+\end{description}
+
+\outcomment{
+An ARAL analysis information annotation consists of:
+
+\begin{description}
+\item [Analysis Identifier.] Allows to identify the analysis information and associate the data with semantics.
+\item [Location.] Each analysis information is associated with a
+program location and its corresponding program fragment. The program
+location is represented by an optional Location Reference and a unique
+label. The label is represented by a unique number and a mapping of
+labels is maintained by the IR-Mapper 
+%(see Section \ref{section:architecture}) 
+between the AST and the ICFG
+representation. The Location Reference allows to specify with which
+part of a program fragment an annotation is associated. This allows to
+annotate multiple subexpressions of an expression without breaking up
+the expression. An example is param($N$) for specifying an annotation
+of the $N$th formal parameter of a function, or 'entry' and 'exit' for
+denoting that an annotation is the entry or exit information of a
+function (see Fig \ref{example:sourcelevel2}).
+\item [Flow-Specifier.] A Flow-Specifier allows to define whether an analysis information is a pre or post information in a flow-sensitive information. If the information is flow-insensitive it is denoted as '-'.
+\item [List of Data Elements.] A data element consists of
+\begin{description}
+\item [Context Identifier.] For a context-sensitive analysis each context is represented in the annotations by an identifier which allows to keep context sensitive information separate. For a context-insensitive analysis the context identifier is the same for all analysis results computed for a program or function.
+\item [Analysis Data.] The analysis data represents the analysis
+information computed at a location in a program. A location can be
+associated with a function, a statement, an expression, or with a scope.
+\end{description}
+\end{description}
+
+Analysis data can consist of a set, list, tuple, map, string, number,
+constraints, or specific program information: numeric VariableIds,
+ExpressionIds, StatementIds, FunctionIds and Labels. Two special
+symbols exist for the top and bottom element of lattices. Sets, lists,
+and maps can only contain data elements of the same type, whereas
+tuples can contain elements of different type. In an constraint
+(in)equations on program locations can be provided
+(e.g. flow-constraints). In a data element the types of data can be
+arbitrarily nested and combined.
+}
+
+
+
+\section{API}
+
+The ARAL API allows to read, access, manipulate, and write ARAL files.
+
+\section{Front End}
+
+To create the ARAL-IR from an ARAL file the parser must be invoked
+with \verb+Aral::Translator::frontEnd();+
+If no parse-error occurred, the Front End returns a pointer to the
+root of the ARAL-IR of type \verb+Aral::File*+.
+The ARAL-IR, once available in memory, can be deleted by calling
+the destructor of the root object. The destructors are implemented to
+perform a deep-destruct.
+
+\section{ARAL-IR}
+Every IR node has a method \verb+accept(AbstractVisitor& v)+ that can be used
+to invoke a traversal on the ARAL-IR. Three pre-defined Visitors exist.
+\begin{itemize}
+\item AbstractDataVisitor (only pure abstract methods)
+\item EmptyDataVisitor
+\item DataToStringVisitor;
+\end{itemize}
+
+\subsection{AbstractDataVisitor}
+
+Each method has 2-3 visit methods.
+
+\begin{itemize}
+\item preVisitX
+\item inVisitX
+\item postVisitX
+\end{itemize}
+
+where X is the name of the resepective ARAL class.
+
+\begin{itemize}
+\item If a node is a leaf node or has only one child it has a pre and post
+visit methods.
+\item If a node is a container node or has at least two
+children it also has an inVisit method.
+\end{itemize}
+
+The Visitor performs a combined pre/in/post order traversal in one pass.
+
+\subsection{EmptyDataVisitor}
+Is a visitor that has only empty methods. If you are writing your own
+Visitor, you have to implemented a number of visit-methods. In this
+case it is best to start with EmptyVisitor and override those methods
+where certain actions are to be defined to certain ARAL-IR nodes. An example is the
+generation of the DATA section in some specific custom format. The DataToStringVisitor
+is an example, where the entire ARAL-IR is tranlated to the ARAL syntax representation. It overrides
+several methods of the EmptyDataVisitor.
+
+\subsection{DataToStringVisitor}
+This is the pre-defined Visitor that generates ARAL, i.e. the ARAL
+Back End implementation. It also servers as an example to see how the
+Visitor can be used to translate the ARAL-IR to some other format. For
+example, instead of generating a string you could map ARAL to your own
+internal representation.
+
+All Aral nodes (of type Aral::Data) have the following methods:
+
+\begin{tabular}{p{6cm}cp{7.2cm}}
+std::string toString()& :& translates the ARAL-IR subtree to Aral-Syntax and
+                         returns it as a std::string.\\
+
+Aral::Data* deepCopy()& : &clones the ARAL-IR subtree and returns a
+                         pointer to the cloned sub tree.\\
+void\newline accept(Aral::AbstractDataVisitor\&)& :& accepts any Visitor class that inherits
+                         from AbstractDataVisitor, or EmptyDataVisitor, 
+                         or DataToStringVisitor. See above for details.\\
+Data* getParent()   &  :& returns the parent of an ARAL-IR node. The parents are always
+                         automatically set internally by operations on the ARAL-IR.\\
+
+void autoLinkParent(Data*)& : &for internal use of maintaining parent pointers.\\
+virtual bool isEqual(Data*)&: &for internal use (not finished yet)\\
+bool isLessThan(Data*)     &:& for internal use (not finished yet)\\
+\end{tabular}
+
+\section{ARAL Back End}
+
+The Back End can be invoked by calling Aral::Translator::backEnd(root)
+where root is the root node of the ARAL-IR. The Back End is
+implemented by calling the toString function on the root object. The
+toString function is implemented by using the DataToStringVisitor.
+The Back End generates the ARAL file in a fixed layout and returns a
+std::string\footnote{Currently generating the std::string representation and a file
+are synonymous. This may be further diversified in future.}
+
+
+\chapter{Termite: Symbolic Program Analysis and Transformation}
+\label{chap:termite}
+
+The TERM Iteration and Transformation Environment (Termite) is a
+Prolog library that allows easy manipulation and analysis of C++
+programs. It is particularly well suited to specify source-to-source
+program transformations, static program analyses and program
+visualizations. Termite builds upon the intermediate representation of
+SATIrE.
+
+See the document termite.pdf for information on Termite. 
+
+\appendix
+
+\chapter{Installing SATIrE}
+\label{appendix:installing}
+
+For details see the \texttt{README} file in the SATIrE distribution. 
+
+You can use the \texttt{--without-pag} configure flag if you wish to install
+SATIrE without PAG support.
+
+You can use the \texttt{--without-swi-prolog} configure flag if you wish to
+install SATIrE without SWI-Prolog support (i.e. this deactivates
+Termite and its features).
+
+\chapter{SATIrE Driver and Analyzer Command Line Flags}
 \label{appendix:command_line}
 
 SATIrE analyzers take a number of command line flags, arbitrarily
 intermingled with input file names. This appendix lists these flags grouped
 by topic.
+
+The provided SATIrE driver (satire\_driver) provides several analyzers
+and thus, provides the same command line options. The only difference
+is that the SATIrE driver also offers the option
+\verb+--analysis=<identifier>+ where identifier is the name of an
+analysis (where identifier=\verb+pointsto|constprop|interval|sl2rd+).
 
 \section{General Flags}
 \label{sec:general_flags}
@@ -1270,5 +1878,7 @@ command line:
 That is, statements, variables, and expressions are printed only as they
 would be represented in source code. Analysis information is associated with
 the outgoing edges of ICFG nodes.
+
+
 
 \end{document}
