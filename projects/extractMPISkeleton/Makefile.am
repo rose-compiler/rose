@@ -20,7 +20,7 @@ noinst_HEADERS = APIDepAttrib.h APIDepFinder.h APIReader.h APISpec.h \
 EXTRA_DIST=mpi_api.spec stdio_input.spec
 
 EXAMPLES=$(shell ls $(srcdir)/examples/*/*.c)
-TESTS=$(shell ls $(srcdir)/tests/*.c)
+TESTS=$(shell ls $(srcdir)/test-sources/*.c)
 SOURCES=${EXAMPLES} ${TESTS}
 OUTS=$(addprefix out/, $(basename $(notdir ${SOURCES})))
 OUTS_O=$(addprefix out-o/, $(basename $(notdir ${SOURCES})))
