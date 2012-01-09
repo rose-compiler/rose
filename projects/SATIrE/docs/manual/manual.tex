@@ -5,6 +5,7 @@
 
 \documentclass[a4paper,12pt]{report}
 
+\usepackage{graphicx}
 \newcommand{\satire}[0]{SATIrE}
 
 \input{manual_vars}
@@ -61,8 +62,6 @@ binding to the EDG C and C++ frontend
 \item Termite
 \end{itemize}
 
-Work on using clang as an alternative C frontend is in progress.
-
 Additionally, SATIrE comes with a number of standard analyses that can be
 used as building blocks when implementing custom program analyzers and
 transformers.
@@ -71,6 +70,276 @@ Development of SATIrE has been funded within the ARTIST2 Network of
 Excellence on Embedded Systems
 Design\footnote{\texttt{http://www.artist-embedded.org}} and the ALL-TIMES
 project\footnote{\texttt{http://www.all-times.org}}.
+
+\chapter{SATIrE Tool Integration Architecture}
+
+\section{Architecture - Conceptual View}
+\label{sec:abstractarchitecture}
+
+\begin{figure*}
+\includegraphics[scale=0.37]{abstractsatirearchitecture}
+\caption{Static Analysis Tool Integration Engine Architecture}
+\label{fig:abstractsatirearchitecture}
+\end{figure*}
+
+The architecture of the Static Analysis Tool Integration Engine
+(\satire) for combining different analysis tools is shown at a conceptual level in Fig.~\ref{fig:abstractsatirearchitecture}. A central
+aspect of the SATIrE approach is that information gathered about an input program
+can be generated as annotation in the output program, and that the
+output program can again serve as input program. This allows to make
+analysis results persistent as generated source-code
+annotations. Utilizing such annotations can also support whole
+program optimization.
+
+The architecture shown in Fig. \ref{fig:abstractsatirearchitecture} consists of the following kinds of components
+
+\begin{description}
+\item [Front End.] The (possibly annotated) program, $P$, is translated to a high-level intermediate representation (HL-IR).
+\item [Annotation Mapper.] The annotations in $P$ are translated to annotations of the HL-IR.
+\item [Tool IR Builder.] Each tool may require its own IR. The Tool-IR Builder creates the required Tool-IR by translating the HL-IR to the Tool-IR.
+\item [Tool.] A tool analyzes or transforms its respective Tool-IR.
+\item [Tool IR Mapper.] The Tool-IR mapper either maps the Tool's IR
+back to High-Level IR or maps the computed information or results back
+to locations in the HL-IR.
+\item [Program Annotator.] The HL-IR annotations are translated to a representation in the source code. This can be comments, pragmas, or some specific language extension.
+\item [Back End.] From the HL-IR an annotated program $P'$ (or an annotation file in ARAL format) is generated.
+\end{description}
+
+To allow a seamless integration of the tools, the Annotation Mapper,
+Program Annotator, the Tool-IR Builders and Tool-IR Mappers are
+offered by SATIrE. In Fig.~\ref{fig:abstractsatirearchitecture} the
+solid back-edge represents an iterative application of the tools
+within SATIrE.
+
+\section{Architecture - Concrete View}
+\label{sec:concretearchitecture}
+
+To date we have integrated the Program Analyzer
+Generator PAG~\cite{martin98}, which generates analyzers from
+high-level specifications, the LLNL-ROSE infrastructure for
+source-to-source transformation of C++ programs~\cite{MS-SCAM05}, and
+the term-based analyzer and transformation tool Termite, into \satire.
+In the following sections we describe each integrated tool and give a
+short overview of its integrated components.
+
+\begin{figure*}
+\includegraphics[scale=0.37]{concretesatirearchitecture}
+\caption{SATIrE Architecture - Integrated Tools}
+\label{fig:concretesatirearchitecture}
+\end{figure*}
+
+\subsection{LLNL-ROSE Integration}
+\label{sec:ROSE}
+
+The LLNL-ROSE infrastructure offers several components to build a
+source-to-source translator. 
+\outcomment{The ROSE Front End translates a C/C++
+program to an object-oriented decorated abstract syntax tree. Several
+different components can be used to build the midend of a translator:
+to operate on the AST, a predefined traversal mechanism, a
+restructuring mechanism, and an attribute evaluation mechanism can be
+used to implement a transformation. A Back End is available for
+unparsing the AST to a C++ program.
+}
+The ROSE components integrated into SATIrE are
+
+\begin{description}
+\item[C/C++ Front End.]
+ROSE uses the Edison Design Group C++ Front End (EDG) \cite{EDG} to parse
+C++ programs. The EDG Front End generates an abstract syntax tree (AST) and performs a full
+type evaluation of the C++ program. The AST is represented as a C data
+structure. ROSE translates this data structure into a decorated object-oriented
+AST (ROSE-AST).
+
+\item[Abstract Syntax Tree (ROSE-AST).]
+The ROSE-AST represents the structure of the input program. It holds
+additional information such as the type information for every
+expression, exact line and column information, instantiated
+templates, the class hierarchy (as it can be computed from the input
+files), an interface that permits querying the AST, an an attribute
+mechanism for attaching user-defined information to AST nodes.
+
+\item[C/C++ Back End.]  The Back End unparses the AST and generates
+C++ source code. It can be specified to unparse all included (header)
+files or the source file(s) specified on the command line with
+include-directives. This feature is important when transforming
+user-defined data types.
+
+\end{description}
+
+\subsection{Program Analyzer Generator Integration}
+\label{sec:analinterface}
+
+The Program Analyzer Generator (PAG) from AbsInt, takes as input a
+specification of a program analysis and generates an analyzer that
+implements the analysis. The analyzer operates on an inter-procedural
+control flow graph (ICFG) and provides the computed analysis results
+as C data structure as well as a visualization of the ICFG and the
+analysis results. The components necessary for a seamless integration
+of PAG into SATIrE are
+
+\begin{description}
+\item [ICFG Builder.] Creates the inter-procedural control flow graph (ICFG) for a given ROSE-AST.
+\item [PAG Analyzer.] Generated by the Program Analyzer Generator (PAG) from a user-defined analysis specification using the OPTLA language.
+\item [Analysis Results Mapper.] Maps the analysis results back
+to locations in the ROSE-AST and makes them accessible as ROSE-AST
+annotations.
+\end{description}
+
+\outcomment{
+PAG assumes a two-level intermediate representation for programs to
+be analyzed: The analyzer generated by PAG requires the program to
+be represented as a control-flow graph consisting of basic blocks
+containing at least one statement each; for reasons of simplicity
+our basic blocks consist of exactly one statement each, effectively
+turning the graph from a basic-block graph into a single-instruction
+graph~\cite{knoop98basicblock}. Statements in basic blocks are taken
+to be executed in order, blocks may have several predecessors and
+successors according to the control flow. Edges between blocks may
+be labeled to represent certain types of control flow, e.\,g.~true
+and false branches. Blocks are organized in procedures, between
+which only call and return edges are allowed.  A number of ICFG
+access functions are implemented to enable the analyzer to
+iterate over procedures, blocks, statements, and edges between
+blocks. The statements themselves are
+represented as abstract syntax trees.
+}
+
+Various types of ICFG attributes (for example numeric
+labels for statements) and support functions are provided to the
+analyzer by appropriate functions. Thus, the high-level
+analysis specification can access any information the ROSE-AST
+provides, such as types of expressions, the class hierarchy, etc.
+
+\outcomment{
+\subsection{Example}
+
+A short example output of an automatically annotated program is shown
+for the post-processed results of a shape analysis \cite{SRW98} in
+Fig.~\ref{fig:example}. The shape analysis is specified using PAG, the
+input program is a C++ program implementing a list reversal (and other
+list operations). After translating the C++ program to the
+corresponding ROSE-AST, SATIrE's ICFG builder creates the ICFG. Then the
+PAG analyzer performs the shape analysis and the Analysis Results Mapper
+maps the results back to the ROSE-AST. A post-processing of the
+computed shapes generates may and must alias information. The
+aliasing results are attached to the ROSE-AST nodes as must/may alias
+annotations. The Program Annotator generates from the AST the annotations
+as source code comments, and the ROSE Back End generates the annotated C++ code.
+
+\outcomment{
+\begin{sourcelisting}
+SxET\\
+VarSet             = set(str)\\
+NodeSet            = set(VarSet)\\
+HeapEdge           = VarSet * str * VarSet\\
+HeapEdgeSet        = set(HeapEdge)\\
+StackEdge          = str * VarSet\\
+StackEdgeSet       = set(StackEdge)\\
+Graph              = StackEdgeSet * HeapEdgeSet \\
+ShapeGraph         = Graph * NodeSet\\
+...\\
+\\
+DOMAIN \\
+dfi              = flat(ShapeGraph)\\
+\\
+PROBLEM pointer\\
+direction       : forward\\
+carrier         : dfi\\
+init            : bot\\
+init_start      : lift((({},{}),{}))\\
+equal           : eq\\
+combine         : comb\\
+retfunc         : comb\\
+widening        : w\\
+\end{sourcelisting}
+
+\begin{sourcelisting}
+// Support function for x = y; \\
+assign_x_y::str,str,ShapeGraph -> ShapeGraph;\\
+assign_x_y(x,y,((Ev0,Es0),is0)) =\\
+  let Ev1=union({(za,msgc(x,y,Z))!!(za,Z) <-- Ev0},\\
+              {(x,msgc(x,y,Z))!!(y1,Z) <-- Ev0, if y1=y});\\
+      Es1={(msgc(x,y,Z1),sel0,msgc(x,y,Z2))!!(Z1,sel0,Z2) <-- Es0};\\
+      is1={msgc(x,y,Z)!!Z <-- is0}; \\
+  in\\
+      ((Ev1,Es1),is1);\\
+\end{sourcelisting}
+}
+
+\begin{figure}
+\begin{verbatim}
+class List* reverseList(class List* x)
+{
+  // pre must_aliases : {(l,x)} 
+  // pre may_aliases : {(l,x)}  
+  class List* y; 
+  // pre,post must_aliases : {(l,x)}  
+  // pre,post may_aliases : {(l,x)}  
+  class List* t; 
+  // post,pre must_aliases : {(l,x)}  
+  // post,pre may_aliases : {(l,x)}  
+  y = ((0)); 
+  // post must_aliases : {(l,x)}  
+  // post may_aliases : {(l,x)}  
+  // pre must_aliases : {} 
+  // pre may_aliases : {(l,t),(l,x),(l,y),(l,y->next),(t,y->next)}  
+  while(x != ((0))) { 
+    // pre must_aliases : {} 
+    // pre may_aliases : {(l,t),(l,x),(l,y),(l,y->next),(t,y->next)}  
+    t = y; 
+    // post,pre must_aliases : {(t,y)}  
+    // post,pre may_aliases : {(l,t),(l,x),(l,y),(l,y->next),(t,y)}  
+    y = x; 
+    // post,pre must_aliases : {(x,y)}  
+    // post,pre may_aliases : {(l,t),(l,x),(l,y),(x,y)}  
+    x = (x -> next); 
+    // post,pre must_aliases : {(x,y -> next)}  
+    // post,pre may_aliases : {(l,t),(l,y),(x,y->next)}  
+    y -> next = t; 
+    // post must_aliases : {} 
+    // post may_aliases : {(l,t),(l,y),(l,y->next),(t,y->next)}  
+  } 
+  // post,pre must_aliases : {} 
+  // post,pre may_aliases : {(l,t),(l,x),(l,y),(l,y->next),(t,y->next)}  
+  t = ((0)); 
+  // post,pre must_aliases :  {}
+  // post,pre may_aliases : {(l,x),(l,y),(l,y->next)}  
+  return y; 
+  // post must_aliases : {} 
+  // post may_aliases : {(l,x),(l,y),(l,y->next)}  
+} 
+\end{verbatim}
+\caption{Example of a C++ program, annotated automatically with must/may
+aliasing information which is computed by a post-processing phase from
+the results of a shape analysis \cite{SRW98}. We extended the shape
+analysis to an inter-procedural analysis. The analysis is specified by using PAG's specification language.}
+\label{fig:example}
+\end{figure}
+
+The actual parameter in the call to the function \verb+reverseList+ is
+\verb+l+, and is therefore aliased with the formal parameter
+\verb+x+. When post analysis information (after a statement) and pre
+analysis information (before a statement) is the same, it is shown in the same
+line and preceded with \verb+post,pre+.
+}
+
+\subsection{Termite and Prolog Integration}
+
+The integration of the tool Termite (i.e. Prolog) allows to specify a manipulation of the AST as term manipulation. The SATIrE components necessary for integration are
+
+\begin{description}
+\item[Term builder.] Creates a term representation for a given AST. The term representation is complete, meaning that it contains all information available in the AST. The term representation is stored in an external file.
+\item[Termite - Prolog term manipulator] The term manipulation is specified as Prolog rules.
+\item[Term-AST Mapper.] The transformed term is read in and translated
+to a ROSE-AST.
+\end{description}
+
+More information on Termite can be found in the document termite.pdf.
+
+%This approach has been successfully adopted within the COSTA project
+%for performing Worst-Case Execution Time Analysis for a
+%given C program. A detailed description can be found in \cite{adrian07}.
 
 \chapter{SATIrE Analyzer Architecture}
 \label{chap:analyzer}
