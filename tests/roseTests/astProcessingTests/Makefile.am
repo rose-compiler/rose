@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-EXTRA_DIST = mf1.C mf3.C mf4.C mf5.C eif.C eif2.C eif3.C eif4.C efor.C efor1.C input1.C test11.C test12.C test13.C test14.C createTest.C t1 t2 t3 t4
+EXTRA_DIST = mf1.C mf3.C mf4.C mf5.C eif.C eif2.C eif3.C eif4.C efor2.C efor3.C input1.C test11.C test12.C test13.C test14.C createTest.C t1 t2 t3 t4
 
 # To keep compile commands tidy, please ONLY put required include flags here.
 INCLUDES = $(ROSE_INCLUDES)
@@ -23,11 +23,11 @@ endif
 # long list of separate libraries (for faster development)
 ROSE_DEVELOPMENT_LIBS = $(ROSE_SEPARATE_LIBS)
 
-e0_SOURCES = efor.C.maintest.C
+e0_SOURCES = efor2.C.maintest.C
 e0_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
  #
 
-e1_SOURCES = efor1.C.maintest.C
+e1_SOURCES = efor3.C.maintest.C
 e1_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
  #
 
@@ -98,7 +98,7 @@ sourcePTP_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
 if HAVE_YICES
 yicesParser_SOURCES = yicesParser.C
 yicesParser_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-yicesParser_LDFLAGS =  -I/home/hoffman34/yices/yices-1.0.292/include -L/home/hoffman34/yices/yices-1.0.292/lib -lyices
+#yicesParser_LDFLAGS =  -I/home/hoffman34/yices/yices-1.0.292/include -L/home/hoffman34/yices/yices-1.0.292/lib -lyices
 endif
 
 #yicesMultiParser_SOURCES = yicesMultiParser.C
@@ -117,9 +117,9 @@ strictGraphTest3_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
 #strongCheckFour: t11tt
 #	./t11tt $(srcdir)/test11.C
 strongCheckFive: e0
-	./e0 $(srcdir)/efor.C
+	./e0 $(srcdir)/efor2.C
 strongCheckSix: e1
-	./e1 $(srcdir)/efor1.C
+	./e1 $(srcdir)/efor3.C
 
 testTraversals: astTraversalTest
 	./astTraversalTest -edg:w -c $(srcdir)/input1.C
