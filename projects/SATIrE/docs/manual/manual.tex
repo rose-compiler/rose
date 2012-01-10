@@ -124,9 +124,9 @@ within SATIrE.
 \label{sec:concretearchitecture}
 
 To date we have integrated the Program Analyzer
-Generator PAG~\cite{martin98}, which generates analyzers from
+Generator PAG~\cite{pag}, which generates analyzers from
 high-level specifications, the LLNL-ROSE infrastructure for
-source-to-source transformation of C++ programs~\cite{MS-SCAM05}, and
+source-to-source transformation of C++ programs~\cite{ROSE}, and
 the term-based analyzer and transformation tool Termite, into \satire.
 In the following sections we describe each integrated tool and give a
 short overview of its integrated components.
@@ -202,7 +202,9 @@ be represented as a control-flow graph consisting of basic blocks
 containing at least one statement each; for reasons of simplicity
 our basic blocks consist of exactly one statement each, effectively
 turning the graph from a basic-block graph into a single-instruction
-graph~\cite{knoop98basicblock}. Statements in basic blocks are taken
+graph
+%~\cite{knoop98basicblock}.
+Statements in basic blocks are taken
 to be executed in order, blocks may have several predecessors and
 successors according to the control flow. Edges between blocks may
 be labeled to represent certain types of control flow, e.\,g.~true
@@ -1367,8 +1369,7 @@ without putting restrictions on the semantics of an analysis. Clearly,
 the annotations allow to represent analysis result data, but the semantics of
 the data are defined for each analysis separately. For example, the
 language is general enough to represent analysis information specified
-in PAG's %\cite{martin98} 
-DATLA language. Since PAG is integrated into
+in PAG's DATLA language \cite{pag}. Since PAG is integrated into
 SATIrE this is a requirement for reusing any analysis information
 computed with a PAG generated analyzer. ARAL consists of sets, lists,
 tuples, maps, and some primitive data types. Additionally each

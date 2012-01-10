@@ -25,10 +25,11 @@ sort of interface between the compiler and the analyzer must be
 implemented. A tool called GON can automatically generate this
 interface, but only for compilers that are written from scratch.
 
-The purpose of this document is to describe the glue code that must
-be written in oder to connect an existing compiler with PAG. It also
+The purpose of this document is to describe the glue code that must be
+written in order to connect an existing compiler with PAG. It also
 investigates which parts of the interface can be generated
-automatically.
+automatically. These are exactly those parts which are generated
+automatically by SATIrE's internal tool PIG (PAG Interface Generator).
 
 \subsection{Required files}
 
@@ -124,7 +125,7 @@ contants should also be analogous to those declared in the
 PAG requires the front end to implement a number of functions for
 accessing, and traversing the CFG in numerous ways.
 
-\begin{longtable}{|p{.47\textwidth} | p{.47\textwidth}|}
+\begin{longtable}{|p{.55\textwidth} | p{.38\textwidth}|}
 \hline
 Prototype & Description \\
 \hline
@@ -142,10 +143,10 @@ Prototype & Description \\
 \verb|KFG_NODE kfg_get_node(KFG,| \verb|KFG_NODE_ID)|
     & node with the given identitier \\
 \hline
-\verb|int kfg_get_bbsize(KFG, | \verb|KFG_NODE)|
+\verb|int kfg_get_bbsize(KFG,| \verb|KFG_NODE)|
     & number of instructions in the node \\
 \hline
-\(t\) \verb|kfg_get_bbelem(KFG, KFG_NODE, int)|
+\(t\) \verb|kfg_get_bbelem(KFG,| \verb|KFG_NODE, int)|
     & the \(n\)-th instruction of the node, starting with 0; \(t\) is
       the AST type \\
 \hline
@@ -154,10 +155,10 @@ Prototype & Description \\
     & write a textual description of the \(n\)-th instruction of the node
       to the file (used for visualization) \\
 \hline
-\verb|KFG_NODE_LIST kfg_predecessors(KFG,| \verb|KFG_NODE)|
+\verb|KFG_NODE_LIST| \verb|kfg_predecessors(KFG,| \verb|KFG_NODE)|
     & list of predecessors of the node \\
 \hline
-\verb|KFG_NODE_LIST kfg_successors(KFG,| \verb|KFG_NODE)|
+\verb|KFG_NODE_LIST| \verb|kfg_successors(KFG,| \verb|KFG_NODE)|
     & list of successors of the node \\
 \hline
 \verb|KFG_NODE kfg_get_call(KFG,| \verb|KFG_NODE)|
@@ -185,7 +186,8 @@ Prototype & Description \\
 \hline
 \end{longtable}
 
-\begin{longtable}{|p{.47\textwidth} | p{.47\textwidth}|}
+% MS: changed column width for all tables to fit new format
+\begin{longtable}{|p{.55\textwidth} | p{.38\textwidth}|}
 \hline
 Prototype & Description \\
 \hline
@@ -204,7 +206,7 @@ Prototype & Description \\
 \hline
 \end{longtable}
 
-\begin{longtable}{|p{.47\textwidth} | p{.47\textwidth}|}
+\begin{longtable}{|p{.55\textwidth} | p{.38\textwidth}|}
 \hline
 Prototype & Description \\
 \hline
@@ -225,7 +227,7 @@ Prototype & Description \\
 \hline
 \end{longtable}
 
-\begin{longtable}{|p{.47\textwidth} | p{.47\textwidth}|}
+\begin{longtable}{|p{.55\textwidth} | p{.38\textwidth}|}
 \hline
 Prototype & Description \\
 \hline
@@ -247,7 +249,7 @@ Prototype & Description \\
 \hline
 \end{longtable}
 
-\begin{longtable}{|p{.47\textwidth} | p{.47\textwidth}|}
+\begin{longtable}{|p{.55\textwidth} | p{.38\textwidth}|}
 \hline
 Prototype & Description \\
 \hline
@@ -576,12 +578,14 @@ specification:
 
 \begin{quote}
 \begin{verbatim}
-get("mirStmt", NODE, CONSTR, CONSTR_IDX, FIELD, FIELD_IDX, FIELD_TYPE)
+get("mirStmt", NODE, CONSTR, CONSTR_IDX, 
+               FIELD, FIELD_IDX, FIELD_TYPE)
 {
     return NODE->children[CONSTR_IDX][FIELD_IDX];
 }
 
-get(TYPE, NODE, CONSTR, CONSTR_IDX, FIELD, FIELD_IDX, FIELD_TYPE)
+get(TYPE, NODE, CONSTR, CONSTR_IDX, 
+                FIELD, FIELD_IDX, FIELD_TYPE)
 {
     return NODE->children.f_##CONSTR.FIELD;
 }

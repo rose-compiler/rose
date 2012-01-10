@@ -81,7 +81,7 @@ MYTEXINPUT=$(srcdir)/ltx2htm:$(srcdir)
 
 if WITH_SWI_PROLOG  # --------------------------------------------------
 
-docs-termite: HTML termite.pdf mostlyclean
+docs-termite: termite.pdf mostlyclean # MS: deactivated HTML here (target is still available)
 dist_doc_DATA += \
 	termite.pdf
 
