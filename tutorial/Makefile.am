@@ -26,8 +26,8 @@ bin_PROGRAMS = \
    livenessAnalysis \
    interproceduralCFG \
    virtualCFG \
-   binaryCFGTraversalTutorial \
-   sourceCFGTraversalTutorial 
+   traverseBinCFG \
+   traverseSourceCFG 
 
 #varSubstCopy , disabled this one Liao, and sorted the list
 # tutorial examples which will not be installed to ROSE_INS/bin
@@ -134,9 +134,9 @@ else
   sharedMemoryTraversals_SOURCES = sharedMemoryTraversals.C
 endif
 
-sourceCFGTraversalTutorial_SOURCES = sourceCFGTraversalTutorial.C
+traverseSourceCFG_SOURCES = traverseSourceCFG.C
 
-binaryCFGTraversalTutorial_SOURCES = binaryCFGTraversalTutorial.C
+traverseBinCFG_SOURCES = traverseBinCFG.C
 
 binaryFileRead_SOURCES = binaryFileRead.C
 

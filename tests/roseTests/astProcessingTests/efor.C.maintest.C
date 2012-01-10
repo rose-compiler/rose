@@ -1,6 +1,6 @@
-#include <SgGraphTemplate.h>
-#include <graphProcessing.h>
-#include <staticCFG.h>
+#include "SgGraphTemplate.h"
+#include "graphProcessing.h"
+#include "staticCFG.h"
 using namespace std;
 using namespace boost;
 typedef myGraph CFGforT;

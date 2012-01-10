@@ -1,7 +1,7 @@
 
-#include <SgGraphTemplate.h>
-#include <graphProcessing.h>
-#include <staticCFG.h>
+#include "SgGraphTemplate.h"
+#include "graphProcessing.h"
+#include "staticCFG.h"
 #include <iostream>
 #include <fstream>
 
@@ -53,9 +53,9 @@ void visitorTraversal::analyzePath(std::vector<VertexID>& pathR) {
 
 
 int main(int argc, char *argv[]) {
-  ss << "#include <SgGraphTemplate.h>\n";
-  ss << "#include <graphProcessing.h>\n";
-  ss << "#include <staticCFG.h>\n";
+  ss << "#include \"SgGraphTemplate.h\"\n";
+  ss << "#include \"graphProcessing.h\"\n";
+  ss << "#include \"staticCFG.h\"\n";
   ss << "using namespace std;\n";
   ss << "using namespace boost;\n";
 

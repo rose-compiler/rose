@@ -3,11 +3,11 @@
 //#include <rose.h>
 #include <string>
 #include <err.h>
-#include <SgGraphTemplate.h>
-#include <graphProcessing.h>
+#include "SgGraphTemplate.h"
+#include "graphProcessing.h"
 
-#include <staticCFG.h>
-#include <interproceduralCFG.h>
+#include "staticCFG.h"
+#include "interproceduralCFG.h"
 /* Testing the graph traversal mechanism now implementing in AstProcessing.h (inside src/midend/astProcessing/)*/
 #include <sys/time.h>
 #include <sys/resource.h>

@@ -355,6 +355,10 @@ bfsTraversePath(int begin, int end, CFG*& g, bool loop) {
     //std::map<int, std::map<int, std::vector<std::vector<int> > > > localsnew;
    //std::cout << "starting build" << std::endl;
      while (pathContainer.size() != 0 || oldPaths.size() != 0) {
+      if (oldPaths.size() > 100000) {
+          std::cout << "too many paths, consider a subgraph" << std::endl;
+          ROSE_ASSERT(false);
+      }
     //std::cout << "pathContainer.size(): " << pathContainer.size() << std::endl;
    // #pragma omp parallel for schedule(guided)
         //std::cout << "pathContainer.size(): " << pathContainer.size() << std::endl;
@@ -596,7 +600,7 @@ int tg = getTarget(oeds[j], g);
    // std::vector<std::vector<int> > tgpaths;
     //std::cout << "completedbuild, begin while" << std::endl;
     while (true) {
-    //   std::cout << "paths.size(): " << paths.size() << std::endl;
+       //std::cout << "paths.size(): " << paths.size() << std::endl;
         if (paths.size() > 10000000) {
            std::cout << "too many paths, consider a subgraph" << std::endl;
            ROSE_ASSERT(false);
@@ -761,17 +765,17 @@ int tg = getTarget(oeds[j], g);
     unsigned int pathdivisor = 100;
     unsigned int maxpaths = paths.size()/pathdivisor;
 
-    if (maxpaths < 100) {
+    if (maxpaths < 10) {
         pathdivisor = 1;
         maxpaths = paths.size();
     }
-    for (unsigned int j = 0; j < pathdivisor+1; j++) {
+    for (unsigned int j = 0; j < pathdivisor; j++) {
         std::vector<std::vector<int> > npaths;
         
         std::vector<int> dummyvec;
         
         unsigned int mxpths;
-        if (j < pathdivisor) {
+        if (j <= pathdivisor) {
             mxpths = maxpaths;
         }
         else {
@@ -1232,11 +1236,15 @@ uTraversePath(int begin, int end, CFG*& g, bool loop, std::map<int, std::vector<
                        if (addit) {
                        //#pragma omp critical
                       // {
-                            if (movepathscheck.find(npath) == movepathscheck.end()) {
+                            std::vector<int> zpth = zipPath(npath, g, npath.front(), npath.back());
+                            if (movepathscheck.find(zpth) == movepathscheck.end()) {
                           //   movepaths2.insert(npath);
                              run = true;
-                            movepathscheck.insert(npath);
+                            movepathscheck.insert(zpth);
                            }
+                           //else {
+                           //    ROSE_ASSERT(movepathscheck.find(zpth) == movepathscheck.end());
+                          // }
                            // else {
                                //#pragma omp critical
                                 //{

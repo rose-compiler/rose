@@ -4,7 +4,7 @@
 #include <string>
 #include <err.h>
 #include <boost/graph/adjacency_list.hpp>
-#include <graphProcessing.h>
+#include "graphProcessing.h"
 #include <assert.h>
 
 using namespace std;
