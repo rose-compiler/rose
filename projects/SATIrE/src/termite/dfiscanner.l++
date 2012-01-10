@@ -1,7 +1,7 @@
 %{ /* -*- c++ -*- */
 /*
  * Copyright 2008 Adrian Prantl
- * see LICENSE in the root folder of this project
+ * see COPYING in the root folder of the SATIrE project
 */
 using namespace std;
 #include <string>
