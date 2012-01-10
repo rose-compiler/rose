@@ -11,6 +11,12 @@
 // the specimen in some cases.  See its use in main().
 #undef PRODUCTION
 
+// Choose an arbitrary concrete value for the stack pointer register (ESP) in order to simplify memory addresses.  This makes
+// it easier for the output from the PtrAnalysis to be used by the OracleAnalysis.
+static const rose_addr_t analysis_stack_va = 0xb0000000ul;
+
+enum Verbosity {VB_SILENT, VB_MINIMAL, VB_SOME, VB_LOTS};
+
 /** Stack-like list.  Defines push and pop, but the push only pushes if the value is not already on the stack. */
 class WorkList {
 private:
@@ -37,44 +43,65 @@ public:
     }
 };
 
-/** Values used by analysis semantics.  This is a stub and is here so that if we need to add something to the values we can do
- *  so quite easily. */
+/******************************************************************************************************************************
+ *                                      Values used for Pointer and Oracle Analysis
+ ******************************************************************************************************************************/
+
+// This is a stub and is here so that if we need to add something to the values we can do so quite easily.
 template<size_t nBits>
-class PtrValueType: public SymbolicSemantics::ValueType<nBits> {
+class ValueType: public SymbolicSemantics::ValueType<nBits> {
 public:
-    PtrValueType(): SymbolicSemantics::ValueType<nBits>() {}
-    PtrValueType(const SymbolicSemantics::ValueType<nBits> &other): SymbolicSemantics::ValueType<nBits>(other) {}
-    PtrValueType(uint64_t n): SymbolicSemantics::ValueType<nBits>(n) {}
-    explicit PtrValueType(SymbolicSemantics::TreeNode *node): SymbolicSemantics::ValueType<nBits>(node) {}
+    ValueType(): SymbolicSemantics::ValueType<nBits>() {}
+    ValueType(const SymbolicSemantics::ValueType<nBits> &other): SymbolicSemantics::ValueType<nBits>(other) {}
+    ValueType(uint64_t n): SymbolicSemantics::ValueType<nBits>(n) {}
+    explicit ValueType(SymbolicSemantics::TreeNode *node): SymbolicSemantics::ValueType<nBits>(node) {}
 };
+
+
+/******************************************************************************************************************************
+ *                                              Pointer Type Analysis
+ ******************************************************************************************************************************/
+
 
 /** Info passed from analyzer to semantics. */
 struct PtrInfo {
-    typedef std::vector<PtrValueType<32> > PointerAddresses;
-    PtrInfo(RSIM_Thread *thread, RTS_Message *m): pass(0), thread(thread), m(m) {}
+    typedef std::vector<ValueType<32> > PointerAddresses;
+    PtrInfo(RSIM_Thread *thread, RTS_Message *m): pass(0), thread(thread), m(m), verbosity(VB_SOME) {}
     int pass;                                   /** Analysis pass number (0 or 1). */
     RSIM_Thread *thread;                        /** Thread doing the analysis. */
     RTS_Message *m;                             /** Message facility for analysis debugging. */
+    Verbosity verbosity;                        /** How verbose to be with messages. */
     SymbolicSemantics::InsnSet ptr_insns;       /** Instructions computing pointer R-values. */
     PointerAddresses ptr_addrs;                 /** Memory addresses storing pointers. */
 
     struct Comparator {
-        const PtrValueType<32> &addr;
+        const ValueType<32> &addr;
         SMTSolver *solver;
-        Comparator(const PtrValueType<32> &addr, SMTSolver *solver=NULL): addr(addr), solver(solver) {}
-        bool operator()(const PtrValueType<32> &val) {
+        Comparator(const ValueType<32> &addr, SMTSolver *solver=NULL): addr(addr), solver(solver) {}
+        bool operator()(const ValueType<32> &val) {
             return val.expr->equal_to(addr.expr, solver);
         }
     };
 
     /** Add address to list of pointer addresses.  Only added if not already present.  Comparison uses an SMT solver if
      *  possible. */
-    void insert_addr(const PtrValueType<32> &addr, SMTSolver *solver) {
-        std::ostringstream ss; ss <<"      pointer addr: " <<addr;
-        m->more("%s\n", ss.str().c_str());
+    void insert_addr(const ValueType<32> &addr, SMTSolver *solver) {
+        if (verbosity>=VB_SOME) {
+            std::ostringstream ss; ss <<"      pointer addr: " <<addr;
+            m->more("%s\n", ss.str().c_str());
+        }
         PtrInfo::PointerAddresses::iterator ai = find_if(ptr_addrs.begin(), ptr_addrs.end(), Comparator(addr, solver));
         if (ai==ptr_addrs.end())
             ptr_addrs.push_back(addr);
+    }
+
+    /** Returns true if the specified address is a known pointer address.  The comparison of addresses is naive. */
+    bool is_pointer(const ValueType<32> &addr, SMTSolver *solver) const {
+        for (PointerAddresses::const_iterator pi=ptr_addrs.begin(); pi!=ptr_addrs.end(); ++pi) {
+            if (pi->expr->equal_to(addr.expr, solver))
+                return true;
+        }
+        return false;
     }
 };
     
@@ -125,9 +152,11 @@ public:
     PtrPolicy(PtrInfo *info): info(info) {}
 
     bool merge(const PtrPolicy &other) {
-        info->m->more(" merging... ");
+        if (info->verbosity>=VB_SOME)
+            info->m->more(" merging... ");
         bool changed = this->get_state().merge(other.get_state());
-        info->m->more(changed ? "(changed)" : "(no change)");
+        if (info->verbosity>=VB_SOME)
+            info->m->more(changed ? "(changed)" : "(no change)");
         return changed;
     }
 
@@ -143,7 +172,7 @@ public:
                     defs.insert(*di);
             }
 #if 1
-            if (!defs.empty()) {
+            if (!defs.empty() && info->verbosity>=VB_SOME) {
                 info->m->more("    DS read depends on insn%s", 1==defs.size()?"":"s");
                 for (SymbolicSemantics::InsnSet::const_iterator di=defs.begin(); di!=defs.end(); ++di)
                     info->m->more(" 0x%08"PRIx64, (*di)->get_address());
@@ -152,7 +181,8 @@ public:
 #endif
             info->ptr_insns.insert(defs.begin(), defs.end());
         } else if (1==info->pass && info->ptr_insns.find(this->cur_insn)!=info->ptr_insns.end()) {
-            info->m->more("    Pointer L-value found.\n");
+            if (info->verbosity>=VB_SOME)
+                info->m->more("    Pointer L-value found.\n");
             info->insert_addr(addr, this->get_solver());
         }
 
@@ -186,19 +216,20 @@ public:
             
 };
 
-/** Perform a pointer analysis, looking for memory addresses that contain pointers. */
+/** Perform a pointer analysis, looking for memory addresses that contain pointers.  Return value is a PtrInfo object that
+ *  contains a list of memory addresses (possibly symbolic) that we think contain pointers. */
 class PtrAnalysis {
 public:
-    typedef PtrPolicy<PtrState, PtrValueType> Policy;
-    typedef X86InstructionSemantics<PtrPolicy<PtrState, PtrValueType>, PtrValueType> Semantics;
-    typedef std::map<rose_addr_t, PtrPolicy<PtrState, PtrValueType> > StateMap;
-    static const bool debug = true;
+    typedef PtrPolicy<PtrState, ValueType> Policy;
+    typedef X86InstructionSemantics<Policy, ValueType> Semantics;
+    typedef std::map<rose_addr_t, PtrPolicy<PtrState, ValueType> > StateMap;
 
     // Do the analysis
     PtrInfo analyze(RSIM_Thread *thread, RTS_Message *m, rose_addr_t analysis_addr) {
         static const char *name = "PtrAnalysis";
-        m->multipart(name, "%s triggered: analysis starts at 0x%08"PRIx64"\n", name, analysis_addr);
         PtrInfo info(thread, m); // to be passed down to policy operations and to return results
+        if (info.verbosity>=VB_MINIMAL)
+            m->multipart(name, "%s triggered: analysis starts at 0x%08"PRIx64"\n", name, analysis_addr);
 
         // Create the policy that holds the analysis state which is modified by each instruction.  Then plug the policy
         // into the X86InstructionSemantics to which we'll feed each instruction.  Each time we process an instruction
@@ -213,9 +244,8 @@ public:
         // marked instruction reads from memory we remember that the memory location holds a pointer.  The policies all
         // point to "info" and update it appropriately.
         for (info.pass=0; info.pass<2; ++info.pass) {
-            m->more((std::string(78, '=') + "\n  PASS " +
-                     StringUtility::numberToString(info.pass) + "\n" +
-                     std::string(78, '=') + "\n").c_str());
+            if (info.verbosity>=VB_SOME)
+                m->more("%s: pass %zu\n", name, info.pass);
             StateMap before, after;
             WorkList worklist;
 
@@ -223,8 +253,8 @@ public:
             // Initialize the policy for the first simulated instruction.  We choose a concrete value for the ESP register
             // only because we'll use that same value in another analysis.
             const RegisterDescriptor *ESP = policy.get_register_dictionary()->lookup("esp");
-            PtrPolicy<PtrState, PtrValueType> initial_policy(&info);
-            initial_policy.writeRegister(*ESP, policy.number<32>(0xb0000000ul)); // arbitrary
+            PtrPolicy<PtrState, ValueType> initial_policy(&info);
+            initial_policy.writeRegister(*ESP, policy.number<32>(analysis_stack_va)); // arbitrary
             before.insert(std::make_pair(analysis_addr, initial_policy));
 #endif
 
@@ -233,16 +263,17 @@ public:
                 // Process next instruction on work list by loading it's initial state
                 rose_addr_t va = worklist.pop();
                 SgAsmx86Instruction *insn = isSgAsmx86Instruction(thread->get_process()->get_instruction(va));
-                m->more("  processing 0x%08"PRIx64": %s\n", insn->get_address(), unparseInstruction(insn).c_str());
+                if (info.verbosity>=VB_SOME)
+                    m->more("  processing 0x%08"PRIx64": %s\n", insn->get_address(), unparseInstruction(insn).c_str());
                 StateMap::iterator bi=before.find(va);
-                policy = bi==before.end() ? PtrPolicy<PtrState, PtrValueType>(&info) : bi->second;
-                if (debug) {
+                policy = bi==before.end() ? PtrPolicy<PtrState, ValueType>(&info) : bi->second;
+                if (info.verbosity>=VB_LOTS) {
                     std::ostringstream ss;
                     ss <<"  -- Instruction's initial state --\n" <<policy;
                     m->more("%s", ss.str().c_str());
                 }
                 semantics.processInstruction(insn);
-                if (debug) {
+                if (info.verbosity>=VB_LOTS) {
                     std::ostringstream ss;
                     ss <<"  -- Instruction's final state --\n" <<policy;
                     m->more("%s", ss.str().c_str());
@@ -255,7 +286,7 @@ public:
 
                 // Find control flow successors
                 std::set<rose_addr_t> successors;
-                PtrValueType<32> eip_value = policy.readRegister<32>(semantics.REG_EIP);
+                ValueType<32> eip_value = policy.readRegister<32>(semantics.REG_EIP);
                 InsnSemanticsExpr::InternalNode *inode = dynamic_cast<InsnSemanticsExpr::InternalNode*>(eip_value.expr);
                 if (eip_value.is_known()) {
                     successors.insert(eip_value.known_value());
@@ -265,37 +296,170 @@ public:
                     successors.insert(inode->child(2)->get_value());    // the if-false case
                 } else {
                     std::ostringstream ss; ss<<eip_value;
-                    m->more("    unknown control flow successors: %s\n", ss.str().c_str());
+                    if (info.verbosity>=VB_LOTS)
+                        m->more("    unknown control flow successors: %s\n", ss.str().c_str());
                 }
 
                 // Merge output state of this instruction into input states of successors.
                 for (std::set<rose_addr_t>::const_iterator si=successors.begin(); si!=successors.end(); ++si) {
-                    m->more("    successor 0x%08"PRIx64, *si);
+                    if (info.verbosity>=VB_LOTS)
+                        m->more("    successor 0x%08"PRIx64, *si);
                     std::pair<StateMap::iterator, bool> insert_result = before.insert(std::make_pair(*si, policy));
                     if (insert_result.second || insert_result.first->second.merge(policy))
                         worklist.push(*si);
-                    m->more("\n");
+                    if (info.verbosity>=VB_LOTS)
+                        m->more("\n");
                 }
             }
         }
 
         // Final results
-        m->more((std::string(78, '=') + "\n  POINTER ADDRESSES\n" + std::string(78, '=') + "\n").c_str());
-        for (PtrInfo::PointerAddresses::const_iterator ai=info.ptr_addrs.begin(); ai!=info.ptr_addrs.end(); ++ai) {
-            std::ostringstream ss;
-            ss <<"  " <<*ai <<"\n";
-            m->more("%s", ss.str().c_str());
+        if (info.verbosity>=VB_MINIMAL) {
+            m->more("%s: pointer addresses:\n", name);
+            for (PtrInfo::PointerAddresses::const_iterator ai=info.ptr_addrs.begin(); ai!=info.ptr_addrs.end(); ++ai) {
+                std::ostringstream ss;
+                ss <<"  " <<*ai <<"\n";
+                m->more("%s", ss.str().c_str());
+            }
+            if (info.ptr_addrs.empty())
+                m->more("  No addresses found.\n");
         }
-        if (info.ptr_addrs.empty())
-            m->more("  No addresses found.\n");
 
         // Cleanup
-        m->multipart_end();
+        if (info.verbosity>=VB_MINIMAL)
+            m->multipart_end();
         return info;
     }
 };
 
 
+
+/******************************************************************************************************************************
+ *                                              Memory Oracle Analysis
+ ******************************************************************************************************************************/
+
+template<template <size_t> class ValueType>
+class OracleState: public SymbolicSemantics::State<ValueType> {
+public:
+};
+
+template<
+    template<template<size_t> class ValueType> class State,
+    template<size_t> class ValueType>
+class OraclePolicy: public SymbolicSemantics::Policy<State, ValueType>
+{
+public:
+    typedef typename       SymbolicSemantics::Policy<State, ValueType>  super;
+    typedef typename State<ValueType>::Memory Memory;
+    const PtrInfo &info; // memory addresses of known pointer variables
+
+    OraclePolicy(const PtrInfo &info): info(info) {}
+
+    // Provide a memory oracle
+    template<size_t nBits>
+    ValueType<nBits>
+    readMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<1> &cond) {
+        if (info.verbosity>=VB_SOME) {
+            std::ostringstream ss;
+            ss <<"    reading from memory address " <<addr <<"\n";
+            info.m->more("%s", ss.str().c_str());
+        }
+        ValueType<nBits> retval = super::template readMemory<nBits>(segreg, addr, cond);
+        if (!retval.is_known()) {
+            retval = info.is_pointer(addr, this->get_solver()) ? random_pointer<nBits>() : random_integer<nBits>();
+            super::template writeMemory<nBits>(segreg, addr, retval, cond);
+        }
+        return retval;
+    }
+
+    // Return a random pointer
+    template<size_t nBits>
+    ValueType<nBits>
+    random_pointer() const {
+        ValueType<nBits> retval = this->template number<nBits>(rand() % (1ul << nBits));
+        if (info.verbosity>=VB_SOME) {
+            std::ostringstream ss;
+            ss <<"    providing a random pointer: " <<retval <<"\n";
+            info.m->more("%s", ss.str().c_str());
+        }
+        return retval;
+    }
+
+    // Return a random integer
+    template<size_t nBits>
+    ValueType<nBits>
+    random_integer() const {
+        static const uint64_t limit = 100; // arbitrary
+        ValueType<nBits> retval = this->template number<nBits>(rand() % limit);
+        if (info.verbosity>=VB_SOME) {
+            std::ostringstream ss;
+            ss <<"    providing a random unsigned integer: " <<retval <<"\n";
+            info.m->more("%s", ss.str().c_str());
+        }
+        return retval;
+    }
+};
+
+class OracleAnalysis {
+public:
+    typedef OraclePolicy<OracleState, ValueType> Policy;
+    typedef X86InstructionSemantics<Policy, ValueType> Semantics;
+
+    // Throws:
+    //   Disassembler::Exception when it can't disassemble something, probably because we supplied a bugus value for
+    //   the instruction pointer.
+    void analyze(const PtrInfo &info, rose_addr_t analysis_addr) {
+        static const char *name = "OracleAnalysis";
+        if (info.verbosity>=VB_MINIMAL)
+            info.m->multipart(name, "%s triggered: analysis starts at 0x%08"PRIx64"\n", name, analysis_addr);
+
+        static const size_t limit = 200;        // max number of instructions to process
+        size_t ninsns = 0;                      // number of instructions processed
+        try {
+            Policy policy(info);
+            Semantics semantics(policy);
+
+            // Initialize the policy for the first simulated instruction.
+            policy.writeRegister(semantics.REG_EIP, policy.number<32>(analysis_addr));
+            policy.writeRegister(semantics.REG_ESP, policy.number<32>(analysis_stack_va));
+
+            // Simulate some instructions
+            for (/*void*/; ninsns<limit && policy.readRegister<32>(semantics.REG_EIP).is_known(); ++ninsns) {
+                rose_addr_t va = policy.readRegister<32>(semantics.REG_EIP).known_value();
+                SgAsmx86Instruction *insn = isSgAsmx86Instruction(info.thread->get_process()->get_instruction(va));
+                if (info.verbosity>=VB_SOME)
+                    info.m->more("  processing 0x%08"PRIx64": %s\n", insn->get_address(), unparseInstruction(insn).c_str());
+                semantics.processInstruction(insn);
+                if (info.verbosity>=VB_LOTS) {
+                    std::ostringstream ss;
+                    ss <<"  -- State --\n" <<policy;
+                    info.m->more("%s", ss.str().c_str());
+                }
+            }
+        } catch (...) {
+            // just rethrow the exception and allow it to be caught (and described) by the simulator as if the simulator
+            // had encountered it during normal simulation.
+            if (info.verbosity>=VB_MINIMAL) {
+                info.m->more("%s: caught an exception; terminating analysis.\n", name);
+                info.m->multipart_end();
+            }
+            throw;
+        }
+        
+        // Cleanup
+        if (info.verbosity>=VB_MINIMAL) {
+            info.m->more("%s finished after processing %zu instruction%s\n", name, ninsns, 1==ninsns?"":"s");
+            info.m->multipart_end();
+        }
+    }
+};
+
+
+/******************************************************************************************************************************
+ *                                              Top-level analysis
+ *
+ * This callback just waits for the EIP to reach a certain value and then fires off the pointer and oracle analyses.
+ ******************************************************************************************************************************/
 
 class AnalysisTrigger: public RSIM_Callbacks::InsnCallback {
 public:
@@ -311,7 +475,8 @@ public:
     virtual bool operator()(bool enabled, const Args &args) {
         if (enabled && args.insn->get_address()==trigger_addr) {
             RTS_Message *m = args.thread->tracing(TRACE_MISC);
-            PtrInfo results = PtrAnalysis().analyze(args.thread, m, analysis_addr);
+            PtrInfo ptr_info = PtrAnalysis().analyze(args.thread, m, analysis_addr);
+            OracleAnalysis().analyze(ptr_info, analysis_addr);
         }
         return enabled;
     }
