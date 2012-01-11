@@ -25,9 +25,10 @@ noinst_PROGRAMS = \
     deepDelete insertStatementBeforeFunction removeStatementCommentRelocation \
     generateUniqueName annotateExpressionsWithUniqueNames buildExternalStatement \
     buildCommonBlock doLoopNormalization buildLabelStatement2 replaceWithPattern \
-    insertBeforeUsingCommaOp insertAfterUsingCommaOp deepCopy
+    insertBeforeUsingCommaOp insertAfterUsingCommaOp deepCopy fixVariableReferences
 
 # list of test SAGE AST builders 
+fixVariableReferences_SOURCES = fixVariableReferences.C 
 annotateExpressionsWithUniqueNames_SOURCES = annotateExpressionsWithUniqueNames.C
 deepDelete_SOURCES                       = deepDelete.C 
 buildFunctionDeclaration_SOURCES         = buildFunctionDeclaration.C
@@ -93,6 +94,7 @@ endif
 #failing_generatedCodeExamples = rose_inputdeepDelete.C 
 
 generatedCodeExamples = \
+  rose_inputfixVariableReferences.C \
   rose_inputBlank1.C \
   rose_inputBlank2.C \
   rose_inputfindMain.C \
@@ -156,6 +158,8 @@ endif
 # turn off edg warnings such as "variable x declared but never referenced" for test input files
 TEST_CXXFLAGS = -rose:verbose 0 --edg:no_warnings -g3
 
+rose_inputfixVariableReferences.C:fixVariableReferences
+	./fixVariableReferences$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputfixVariableReferences.C
 rose_inputdeepDelete.C:deepDelete
 	./deepDelete$(EXEEXT) $(TEST_CXXFLAGS) -rose:detect_dangling_pointers 1 -c $(srcdir)/inputdeepDelete.C
 rose_inputBlank1.C:buildFunctionDeclaration
@@ -346,7 +350,7 @@ EXTRA_DIST = inputBlank1.C inputBlank2.C inputfindMain.C inputbuildVariableDecla
        inputgenerateUniqueName.C inputannotateExpressionsWithUniqueNames.C \
        inputbuildExternalStatement.f inputbuildCommonBlock.f inputdoLoopNormalization.f \
        inputbuildLabelStatement2.f inputreplaceWithPattern.C inputinsertBeforeUsingCommaOp.C \
-       inputinsertAfterUsingCommaOp.C inputdeepCopy.C
+       inputinsertAfterUsingCommaOp.C inputdeepCopy.C inputfixVariableReferences.C
 
 
 check-local:
