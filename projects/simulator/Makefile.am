@@ -290,7 +290,7 @@ types_1_CPPFLAGS = $(ROSE_INCLUDES)
 types_1_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 # Input files for types_1 analysis
-EXTRA_DIST += local_tests/types.c local_tests/types_extern.c test_types_1.conf
+EXTRA_DIST += local_tests/types.c local_tests/types_extern.c test_types_1.conf test_types_1.conf
 MOSTLYCLEANFILES += types_extern.o libtypes_extern.{a,so} types_{static,shared}
 
 types_extern.o: local_tests/types_extern.c
