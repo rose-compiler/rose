@@ -40,7 +40,7 @@ astTraversalTest_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
 
 proFunSIG_SOURCES = proFunSIG.C
 proFunSIG_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-
+#proFunSIG_LDFLAGS = -O3 -fopenmp
 #t14tt_SOURCES = test14.C.maintest.C
 #t14tt_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
  
@@ -59,46 +59,47 @@ proFunSIG_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
 
 createTest_SOURCES = createTest.C
 createTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
- #
+#createTest_LDFLAGS = -O3 -fopenmp
 
 bPTP_SOURCES = bPTP.C
 bPTP_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
- #
+#bPTP_LDFLAGS = -O3 -fopenmp
 
 processnew3Down4SgIncGraph2_SOURCES      = processnew3Down4SgIncGraph2.C
 processnew3Down4SgIncGraph2_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
- #
+#processnew3Down4SgIncGraph2_LDFLAGS = -O3 -fopenmp
 
 processnew3Down4SgIncGraph3_SOURCES      = processnew3Down4SgIncGraph3.C
 processnew3Down4SgIncGraph3_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+#processnew3DOwn4SgIncGraph3_LDFLAGS = -O3 -fopenmp
  #
 
 
 binaryPaths_SOURCES = binaryPaths.C
 binaryPaths_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
- #
+#binaryPaths_LDFLAGS = -fopenmp -O3 
 
 strictGraphTest_SOURCES = strictGraphTest.C
 strictGraphTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
- #
+#strictGraphTest_LDFLAGS = -fopenmp -O3
 
 strictGraphTest2_SOURCES = strictGraphTest2.C
 strictGraphTest2_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
- #
+#strictGraphTest2_LDFLAGS = -fopenmp -O3
 
 smtlibParser_SOURCES = smtlibParser.C
 smtlibParser_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
- #
+#smtlibParser_LDFLAGS = -fopenmp -O3
 
 sourcePTP_SOURCES = sourcePTP.C
 sourcePTP_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
- #
+#sourcePTP_LDFLAGS = -O3 -fopenmp
 
 
 if HAVE_YICES
 yicesParser_SOURCES = yicesParser.C
 yicesParser_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-#yicesParser_LDFLAGS =  -I/home/hoffman34/yices/yices-1.0.292/include -L/home/hoffman34/yices/yices-1.0.292/lib -lyices
+#yicesParser_LDFLAGS = -fopenmp -O3 # -I/home/hoffman34/yices/yices-1.0.292/include -L/home/hoffman34/yices/yices-1.0.292/lib -lyices
 endif
 
 #yicesMultiParser_SOURCES = yicesMultiParser.C
@@ -108,7 +109,7 @@ endif
 
 strictGraphTest3_SOURCES = strictGraphTest3.C
 strictGraphTest3_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
- #
+#strictGraphTest3_LDFLAGS = -O3 -fopenmp
 # source files don't contain anything that would be merged
 # TESTCODES = $(srcdir)/performanceTest.C
 
