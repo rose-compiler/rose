@@ -316,10 +316,14 @@ public:
     /** Disassembles an entire process based on the current memory map, returning a pointer to a SgAsmBlock AST node and
      *  inserting all new instructions into the instruction cache used by get_instruction().
      *
+     *  If the @p fast argument is set then the partitioner is not run and the disassembly simply disassembles all executable
+     *  addresses that haven't been disassembled yet, adding them to the process' instruction cache.  The return value in this
+     *  case is an SgAsmBlock that contains all the instructions.
+     *
      *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threaads concurrently.
      *  The callers are serialized and each caller will generate a new AST that does not share nodes with any AST returned by
      *  any previous call by this thread or any other. */
-    SgAsmBlock *disassemble();
+    SgAsmBlock *disassemble(bool fast=false);
 
     /** Returns the disassembler that is being used to obtain instructions. This disassembler is chosen automatically when the
      *  specimen is loaded.

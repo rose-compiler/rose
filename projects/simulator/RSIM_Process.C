@@ -1747,16 +1747,35 @@ RSIM_Process::signal_dispatch()
 }
 
 SgAsmBlock *
-RSIM_Process::disassemble()
+RSIM_Process::disassemble(bool fast)
 {
-    Partitioner partitioner;
     SgAsmBlock *block = NULL;
 
     RTS_WRITE(rwlock()) { /* while using the memory map */
-        block = partitioner.partition(interpretation, disassembler, map);
-        const Disassembler::InstructionMap &insns = partitioner.get_instructions();
-        for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
-            icache[ii->first] = ii->second;
+        /* Disassemble instructions */
+        Disassembler::InstructionMap insns;
+        if (fast) {
+            rose_addr_t start_va = 0; // arbitrary since we set the disassembler's SEARCH_UNUSED bit
+            unsigned search = disassembler->get_search();
+            disassembler->set_search(search | Disassembler::SEARCH_UNUSED);
+            Disassembler::AddressSet successors;
+            Disassembler::BadMap bad;
+            insns = disassembler->disassembleBuffer(map, start_va, &successors, &bad);
+            disassembler->set_search(search);
+        } else {
+            Partitioner partitioner;
+            block = partitioner.partition(interpretation, disassembler, map);
+            insns = partitioner.get_instructions();
+        }
+
+        /* Add new instructions to cache */
+        icache.insert(insns.begin(), insns.end());
+
+        /* Fast disassembly puts all the instructions in a single SgAsmBlock */
+        if (!block) {
+            block = new SgAsmBlock;
+            for (Disassembler::InstructionMap::const_iterator ii=icache.begin(); ii!=icache.end(); ++ii)
+                block->get_statementList().push_back(ii->second);
         }
     } RTS_WRITE_END;
     return block;
