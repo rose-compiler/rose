@@ -2677,7 +2677,7 @@ syscall_socketcall_leave(RSIM_Thread *t, int callno)
                 if (trace->get_file() &&
                     (int32_t)a[0] > 0 &&
                     sizeof(msghdr)==t->get_process()->mem_read(&msghdr, a[2], sizeof msghdr)) {
-                    trace->multipart("recvmsg", "");
+                    trace->multipart("recvmsg", "%s", ""); // this way to fix compiler warning
                     uint32_t nbytes = a[0];
                     for (unsigned i=0; i<msghdr.msg_iovlen && i<100 && nbytes>0; i++) {
                         uint32_t vasz[2];
