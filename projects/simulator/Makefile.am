@@ -179,6 +179,17 @@ run_demo7: demo7
 	./demo7 --debug $(top_srcdir)/binaries/samples/buffer2.bin
 
 #------------------------------------------------------------------------------------------------------------------------------
+# demo 7b: generate a disassembly listing after dynamic linking
+noinst_PROGRAMS += demo7b
+demo7b_SOURCES = demos/demo7b.C
+demo7b_CPPFLAGS = $(ROSE_INCLUDES)
+demo7b_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+.PHONY: run_demo7b
+run_demo7b: demo7b
+	./demo7b --debug $(top_srcdir)/binaries/samples/buffer2.bin
+
+#------------------------------------------------------------------------------------------------------------------------------
 # demo 8: report statistics about number of instructions and system calls
 noinst_PROGRAMS += demo8
 demo8_SOURCES = demos/demo8.C
