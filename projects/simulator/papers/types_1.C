@@ -66,13 +66,16 @@ public:
 /** Info passed from analyzer to semantics. */
 struct PtrInfo {
     typedef std::vector<ValueType<32> > PointerAddresses;
-    PtrInfo(RSIM_Thread *thread, RTS_Message *m): pass(0), thread(thread), m(m), verbosity(VB_SOME) {}
     int pass;                                   /** Analysis pass number (0 or 1). */
     RSIM_Thread *thread;                        /** Thread doing the analysis. */
     RTS_Message *m;                             /** Message facility for analysis debugging. */
+    rose_addr_t analysis_addr;                  /** Address where analysis starts. */
     Verbosity verbosity;                        /** How verbose to be with messages. */
     SymbolicSemantics::InsnSet ptr_insns;       /** Instructions computing pointer R-values. */
     PointerAddresses ptr_addrs;                 /** Memory addresses storing pointers. */
+
+    PtrInfo(RSIM_Thread *thread, RTS_Message *m, rose_addr_t analysis_addr, Verbosity verbosity)
+        : pass(0), thread(thread), m(m), analysis_addr(analysis_addr), verbosity(verbosity) {}
 
     struct Comparator {
         const ValueType<32> &addr;
@@ -224,12 +227,15 @@ public:
     typedef X86InstructionSemantics<Policy, ValueType> Semantics;
     typedef std::map<rose_addr_t, PtrPolicy<PtrState, ValueType> > StateMap;
 
+    // Limit the number of instructions we process.  The symbolic expressions can become very large quite quickly.  A better
+    // approach might be to bail when the expression complexity reaches a certain point.
+    static const size_t max_processed = 100;
+
     // Do the analysis
-    PtrInfo analyze(RSIM_Thread *thread, RTS_Message *m, rose_addr_t analysis_addr) {
+    void analyze(PtrInfo &info/*in,out*/) {
         static const char *name = "PtrAnalysis";
-        PtrInfo info(thread, m); // to be passed down to policy operations and to return results
         if (info.verbosity>=VB_MINIMAL)
-            m->multipart(name, "%s triggered: analysis starts at 0x%08"PRIx64"\n", name, analysis_addr);
+            info.m->multipart(name, "%s triggered: analysis starts at 0x%08"PRIx64"\n", name, info.analysis_addr);
 
         // Create the policy that holds the analysis state which is modified by each instruction.  Then plug the policy
         // into the X86InstructionSemantics to which we'll feed each instruction.  Each time we process an instruction
@@ -245,9 +251,10 @@ public:
         // point to "info" and update it appropriately.
         for (info.pass=0; info.pass<2; ++info.pass) {
             if (info.verbosity>=VB_SOME)
-                m->more("%s: pass %zu\n", name, info.pass);
+                info.m->more("%s: pass %d\n", name, info.pass);
             StateMap before, after;
             WorkList worklist;
+            size_t nprocessed = 0; // number of instructions processed, including failures
 
 #if 1
             // Initialize the policy for the first simulated instruction.  We choose a concrete value for the ESP register
@@ -255,28 +262,50 @@ public:
             const RegisterDescriptor *ESP = policy.get_register_dictionary()->lookup("esp");
             PtrPolicy<PtrState, ValueType> initial_policy(&info);
             initial_policy.writeRegister(*ESP, policy.number<32>(analysis_stack_va)); // arbitrary
-            before.insert(std::make_pair(analysis_addr, initial_policy));
+            before.insert(std::make_pair(info.analysis_addr, initial_policy));
 #endif
 
-            worklist.push(analysis_addr);
-            while (!worklist.empty()) {
+            worklist.push(info.analysis_addr);
+            while (!worklist.empty() && nprocessed++ < max_processed) {
                 // Process next instruction on work list by loading it's initial state
                 rose_addr_t va = worklist.pop();
-                SgAsmx86Instruction *insn = isSgAsmx86Instruction(thread->get_process()->get_instruction(va));
+                SgAsmx86Instruction *insn = NULL;
+                try {
+                    insn = isSgAsmx86Instruction(info.thread->get_process()->get_instruction(va));
+                } catch (const Disassembler::Exception &e) {
+                    if (info.verbosity>=VB_SOME) {
+                        std::ostringstream ss; ss <<e;
+                        info.m->more("%s: caught disassembler exception: %s\n", name, ss.str().c_str());
+                    }
+                    continue;
+                }
+
                 if (info.verbosity>=VB_SOME)
-                    m->more("  processing 0x%08"PRIx64": %s\n", insn->get_address(), unparseInstruction(insn).c_str());
+                    info.m->more("  processing 0x%08"PRIx64": %s\n", insn->get_address(), unparseInstruction(insn).c_str());
                 StateMap::iterator bi=before.find(va);
                 policy = bi==before.end() ? PtrPolicy<PtrState, ValueType>(&info) : bi->second;
                 if (info.verbosity>=VB_LOTS) {
                     std::ostringstream ss;
                     ss <<"  -- Instruction's initial state --\n" <<policy;
-                    m->more("%s", ss.str().c_str());
+                    info.m->more("%s", ss.str().c_str());
                 }
-                semantics.processInstruction(insn);
+                try {
+                    semantics.processInstruction(insn);
+                } catch (const Semantics::Exception &e) {
+                    if (info.verbosity>=VB_LOTS) {
+                        std::ostringstream ss; ss <<e;
+                        info.m->more("%s: caught semantics exception: %s", name, ss.str().c_str());
+                    }
+                } catch (const Policy::Exception &e) {
+                    if (info.verbosity>=VB_LOTS) {
+                        std::ostringstream ss; ss <<e;
+                        info.m->more("%s: caught policy exception: %s", name, ss.str().c_str());
+                    }
+                }
                 if (info.verbosity>=VB_LOTS) {
                     std::ostringstream ss;
                     ss <<"  -- Instruction's final state --\n" <<policy;
-                    m->more("%s", ss.str().c_str());
+                    info.m->more("%s", ss.str().c_str());
                 }
 
                 // Save the state resulting from this instruction
@@ -297,38 +326,41 @@ public:
                 } else {
                     std::ostringstream ss; ss<<eip_value;
                     if (info.verbosity>=VB_LOTS)
-                        m->more("    unknown control flow successors: %s\n", ss.str().c_str());
+                        info.m->more("    unknown control flow successors: %s\n", ss.str().c_str());
                 }
 
                 // Merge output state of this instruction into input states of successors.
                 for (std::set<rose_addr_t>::const_iterator si=successors.begin(); si!=successors.end(); ++si) {
                     if (info.verbosity>=VB_LOTS)
-                        m->more("    successor 0x%08"PRIx64, *si);
+                        info.m->more("    successor 0x%08"PRIx64, *si);
                     std::pair<StateMap::iterator, bool> insert_result = before.insert(std::make_pair(*si, policy));
                     if (insert_result.second || insert_result.first->second.merge(policy))
                         worklist.push(*si);
                     if (info.verbosity>=VB_LOTS)
-                        m->more("\n");
+                        info.m->more("\n");
                 }
             }
+
+            if (nprocessed>max_processed && info.verbosity>=VB_MINIMAL)
+                info.m->more("  limited processing after %zu instructions\n", max_processed);
         }
 
         // Final results
         if (info.verbosity>=VB_MINIMAL) {
-            m->more("%s: pointer addresses:\n", name);
+            info.m->more("%s: pointer addresses:\n", name);
             for (PtrInfo::PointerAddresses::const_iterator ai=info.ptr_addrs.begin(); ai!=info.ptr_addrs.end(); ++ai) {
+                std::cerr <<"ROBB: " <<*ai <<"\n";
                 std::ostringstream ss;
                 ss <<"  " <<*ai <<"\n";
-                m->more("%s", ss.str().c_str());
+                info.m->more("%s", ss.str().c_str());
             }
             if (info.ptr_addrs.empty())
-                m->more("  No addresses found.\n");
+                info.m->more("  No addresses found.\n");
         }
 
         // Cleanup
         if (info.verbosity>=VB_MINIMAL)
-            m->multipart_end();
-        return info;
+            info.m->multipart_end();
     }
 };
 
@@ -408,19 +440,19 @@ public:
     // Throws:
     //   Disassembler::Exception when it can't disassemble something, probably because we supplied a bugus value for
     //   the instruction pointer.
-    void analyze(const PtrInfo &info, rose_addr_t analysis_addr) {
+    size_t analyze(const PtrInfo &info) {
         static const char *name = "OracleAnalysis";
         if (info.verbosity>=VB_MINIMAL)
-            info.m->multipart(name, "%s triggered: analysis starts at 0x%08"PRIx64"\n", name, analysis_addr);
+            info.m->multipart(name, "%s triggered: analysis starts at 0x%08"PRIx64"\n", name, info.analysis_addr);
 
         static const size_t limit = 200;        // max number of instructions to process
         size_t ninsns = 0;                      // number of instructions processed
-        try {
-            Policy policy(info);
-            Semantics semantics(policy);
+        Policy policy(info);
+        Semantics semantics(policy);
 
+        try {
             // Initialize the policy for the first simulated instruction.
-            policy.writeRegister(semantics.REG_EIP, policy.number<32>(analysis_addr));
+            policy.writeRegister(semantics.REG_EIP, policy.number<32>(info.analysis_addr));
             policy.writeRegister(semantics.REG_ESP, policy.number<32>(analysis_stack_va));
 
             // Simulate some instructions
@@ -436,11 +468,28 @@ public:
                     info.m->more("%s", ss.str().c_str());
                 }
             }
+        } catch (const Disassembler::Exception &e) {
+            if (info.verbosity>=VB_MINIMAL) {
+                std::ostringstream ss; ss <<e;
+                info.m->more("%s: caught disassembler exception: %s\n", name, ss.str().c_str());
+            }
+        } catch (const Semantics::Exception &e) {
+            if (info.verbosity>=VB_MINIMAL) {
+                std::ostringstream ss; ss <<e;
+                info.m->more("%s: caught semantics exception: %s\n", name, ss.str().c_str());
+            }
+        } catch (const Policy::Exception &e) {
+            if (info.verbosity>=VB_MINIMAL) {
+                std::ostringstream ss; ss <<e;
+                info.m->more("%s: caught policy exception: %s", name, ss.str().c_str());
+            }
         } catch (...) {
             // just rethrow the exception and allow it to be caught (and described) by the simulator as if the simulator
             // had encountered it during normal simulation.
             if (info.verbosity>=VB_MINIMAL) {
-                info.m->more("%s: caught an exception; terminating analysis.\n", name);
+                std::ostringstream ss; ss <<policy;
+                info.m->more("%s: caught an exception; terminating analysis after processing %zu instruction%s.  Final state:\n%s",
+                             name, ninsns, 1==ninsns?"":"s", ss.str().c_str());
                 info.m->multipart_end();
             }
             throw;
@@ -448,9 +497,12 @@ public:
         
         // Cleanup
         if (info.verbosity>=VB_MINIMAL) {
-            info.m->more("%s finished after processing %zu instruction%s\n", name, ninsns, 1==ninsns?"":"s");
+            std::ostringstream ss; ss <<policy;
+            info.m->more("%s finished after processing %zu instruction%s.  Final state:\n%s",
+                         name, ninsns, 1==ninsns?"":"s", ss.str().c_str());
             info.m->multipart_end();
         }
+        return ninsns;
     }
 };
 
@@ -464,9 +516,11 @@ public:
 class AnalysisTrigger: public RSIM_Callbacks::InsnCallback {
 public:
     rose_addr_t trigger_addr, analysis_addr;
+    size_t randomize, niters;
+    Verbosity verbosity;
 
-    AnalysisTrigger(rose_addr_t trigger_addr, rose_addr_t analysis_addr)
-        : trigger_addr(trigger_addr), analysis_addr(analysis_addr) {}
+    AnalysisTrigger(rose_addr_t trigger_addr, rose_addr_t analysis_addr, size_t randomize, size_t niters, Verbosity verbosity)
+        : trigger_addr(trigger_addr), analysis_addr(analysis_addr), randomize(randomize), niters(niters), verbosity(verbosity) {}
 
     // This analysis is intended to run in a single thread, so clone is a no-op.
     virtual AnalysisTrigger *clone() { return this; }
@@ -474,9 +528,29 @@ public:
     // The actual analysis, triggered when we reach the specified execution address...
     virtual bool operator()(bool enabled, const Args &args) {
         if (enabled && args.insn->get_address()==trigger_addr) {
+            static const char *name = "AnalysisTrigger";
             RTS_Message *m = args.thread->tracing(TRACE_MISC);
-            PtrInfo ptr_info = PtrAnalysis().analyze(args.thread, m, analysis_addr);
-            OracleAnalysis().analyze(ptr_info, analysis_addr);
+            m->mesg("%s triggered\n", name);
+
+            std::vector<SgAsmInstruction*> insns;
+            if (randomize>0) {
+                m->mesg("%s: disassembling the whole program...", name);
+                SgAsmBlock *gblk = args.thread->get_process()->disassemble(true);
+                insns = SageInterface::querySubTree<SgAsmInstruction>(gblk);
+                m->mesg("%s: disassembled %zu instructions", name, insns.size());
+            }
+            for (size_t n=0; n<std::max((size_t)1, randomize); ++n) {
+                if (n>0 || (randomize>0 && 0==analysis_addr))
+                    analysis_addr = insns[rand() % insns.size()]->get_address();
+                PtrInfo ptr_info(args.thread, m, analysis_addr, verbosity);
+                PtrAnalysis().analyze(ptr_info);
+                for (size_t iter=0; iter<niters; ++iter) {
+                    m->mesg("%s: MemoryOracle at virtual address 0x%08"PRIx64" (%zu of %zu), iteration %zu",
+                            name, analysis_addr, n+1, randomize, iter);
+                    size_t ninsns = OracleAnalysis().analyze(ptr_info);
+                    m->mesg("%s:   MemoryOracle processed %zu instruction%s", name, ninsns, 1==ninsns?"":"s");
+                }
+            }
         }
         return enabled;
     }
@@ -487,6 +561,8 @@ int main(int argc, char *argv[], char *envp[])
     // Parse (and remove) switches intended for the analysis.
     std::string trigger_func, analysis_func;
     rose_addr_t trigger_va=0, analysis_va=0;
+    size_t randomize=0, niters=1;
+    Verbosity verbosity=VB_MINIMAL;
 
     for (int i=1; i<argc; i++) {
         if (!strncmp(argv[i], "--trigger=", 10)) {
@@ -499,13 +575,38 @@ int main(int argc, char *argv[], char *envp[])
             }
             memmove(argv+i, argv+i+1, (argc-- - i)*sizeof(*argv));
             --i;
-        } else if (!strncmp(argv[i], "--analysis-func=", 16)) {
-            // name or address of function to analyze
+        } else if (!strncmp(argv[i], "--random=", 9)) {
+            // number of analyses (i.e., number of analysis starting addresses)
+            randomize = strtoul(argv[i]+9, NULL, 0);
+            memmove(argv+i, argv+i+1, (argc-- - i)*sizeof(*argv));
+            --i;
+        } else if (!strncmp(argv[i], "--analysis=", 11)) {
+            // name or address of function to analyze.  If the name is "oep" then trigger on the original entry point.
             char *rest;
-            analysis_va = strtoull(argv[i]+16, &rest, 0);
+            analysis_va = strtoull(argv[i]+11, &rest, 0);
             if (*rest) {
                 analysis_va = 0;
-                analysis_func = argv[i]+16;
+                analysis_func = argv[i]+11;
+            }
+            memmove(argv+i, argv+i+1, (argc-- - i)*sizeof(*argv));
+            --i;
+        } else if (!strncmp(argv[i], "--iterations=", 13)) {
+            // number of iterations of each analysis
+            niters = strtoul(argv[i]+13, NULL, 0);
+            memmove(argv+i, argv+i+1, (argc-- - i)*sizeof(*argv));
+            --i;
+        } else if (!strncmp(argv[i], "--verbosity=", 12)) {
+            if (!strcmp(argv[i]+12, "silent")) {
+                verbosity = VB_SILENT;
+            } else if (!strcmp(argv[i]+12, "minimal")) {
+                verbosity = VB_MINIMAL;
+            } else if (!strcmp(argv[i]+12, "some")) {
+                verbosity = VB_SOME;
+            } else if (!strcmp(argv[i]+12, "lots")) {
+                verbosity = VB_LOTS;
+            } else {
+                std::cerr <<argv[0] <<": --verbosity should be silent, minimal, some, or lots\n";
+                return 1;
             }
             memmove(argv+i, argv+i+1, (argc-- - i)*sizeof(*argv));
             --i;
@@ -515,8 +616,8 @@ int main(int argc, char *argv[], char *envp[])
         std::cerr <<argv[0] <<": --trigger=NAME_OR_ADDR is required\n";
         return 1;
     }
-    if (analysis_func.empty() && 0==analysis_va) {
-        std::cerr <<argv[0] <<": --analysis-func=NAME_OR_ADDR is required\n";
+    if (analysis_func.empty() && 0==analysis_va && 0==randomize) {
+        std::cerr <<argv[0] <<": --analysis or --random switch is required\n";
         return 1;
     }
 
@@ -534,15 +635,23 @@ int main(int argc, char *argv[], char *envp[])
     SgProject *project = frontend(rose_argc, rose_argv);
 
     // Find the address of "main" and analysis functions.
-    if (!trigger_func.empty())
+    if (!trigger_func.empty() && trigger_func!="oep") {
         trigger_va = RSIM_Tools::FunctionFinder().address(project, trigger_func);
-    assert(trigger_va!=0);
-    if (!analysis_func.empty())
+        if (0==trigger_va) {
+            std::cerr <<argv[0] <<": could not find trigger function: " <<trigger_func <<"\n";
+            return 1;
+        }
+    }
+    if (!analysis_func.empty()) {
         analysis_va = RSIM_Tools::FunctionFinder().address(project, analysis_func);
-    assert(analysis_va!=0);
+        if (0==analysis_va) {
+            std::cerr <<argv[0] <<": could not find analysis function: " <<analysis_func <<"\n";
+            return 1;
+        }
+    }
 
     // Register the analysis callback.
-    AnalysisTrigger trigger(trigger_va, analysis_va);
+    AnalysisTrigger trigger(trigger_va, analysis_va, randomize, niters, verbosity);
     sim.install_callback(&trigger);
 
     // The rest is normal boiler plate to run the simulator, except we'll catch the Analysis to terminate the simulation early
@@ -552,6 +661,8 @@ int main(int argc, char *argv[], char *envp[])
 #ifdef PRODUCTION
     sim.activate();
 #endif
+    if (trigger_func=="oep")
+        trigger.trigger_addr = sim.get_process()->get_ep_orig_va();
     try {
         sim.main_loop();
     } catch (PtrAnalysis*) {
