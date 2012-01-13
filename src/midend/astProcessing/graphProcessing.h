@@ -920,7 +920,7 @@ int tg = getTarget(oeds[j], g);
         //std::cout << "loop: " << localLoops[k] << std::endl;
         recurses.push_back(lk);
         loopp = bfsTraversePath(lk, lk, g, true);
-       // recurses.pop_back();
+        recurses.pop_back();
         //}
         //globalLoopPaths[localLoops[k]] = loop;
         for (unsigned int ik = 0; ik < loopp.size(); ik++) {
@@ -1411,7 +1411,9 @@ uTraversePath(int begin, int end, CFG*& g, bool loop, std::map<int, std::vector<
                         //if (movepaths.find(movepath) == movepaths.end() && !stop) {
                        //     if (!loop) { 
                        //     movepaths.insert(movepath);
-                       //     }
+                       if (!addit) {
+                           std::cout << "bad path" << std::endl;
+                       }
                        if (addit) {
                        //#pragma omp critical
                       // {
@@ -1539,10 +1541,13 @@ uTraversePath(int begin, int end, CFG*& g, bool loop, std::map<int, std::vector<
                       //    std::cout << npath[qq] << ", ";
                     //  }
                      // std::cout << std::endl;
+                      #pragma omp critical
+                      {
                       evaledpaths++; 
                       if (evaledpaths % 1000000 == 0 && evaledpaths != 0) {
                           std::cout << "evaled paths: " << evaledpaths << std::endl;
                           //std::cout << "badpaths: " << badpaths << std::endl;
+                      }
                       }
                       //}
                       if (!loop) { //&& (bound && npath.front() == begin &&  npath.back() == end && npath.size() > 1)) {
