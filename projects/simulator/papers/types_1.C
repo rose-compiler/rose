@@ -551,6 +551,7 @@ public:
                     m->mesg("%s:   MemoryOracle processed %zu instruction%s", name, ninsns, 1==ninsns?"":"s");
                 }
             }
+            throw this; // terminate simulation
         }
         return enabled;
     }
@@ -665,8 +666,8 @@ int main(int argc, char *argv[], char *envp[])
         trigger.trigger_addr = sim.get_process()->get_ep_orig_va();
     try {
         sim.main_loop();
-    } catch (PtrAnalysis*) {
-        std::cerr <<"simulation terminated by PtrAnalysis.\n";
+    } catch (AnalysisTrigger*) {
+        std::cerr <<"analysis finsished; simulation terminated.\n";
     }
 #ifdef PRODUCTION
     sim.deactivate();
