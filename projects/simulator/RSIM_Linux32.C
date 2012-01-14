@@ -2352,7 +2352,8 @@ sys_connect(RSIM_Thread *t, int fd, uint32_t addr_va, uint32_t addrlen)
             }
             size_t host_sz = 2/*af_family*/ + filename.size() + 1/*NUL*/;
             char host[host_sz];
-            *(uint16_t*)host = guest.sa_family;
+            uint16_t fam = guest.sa_family;
+            memcpy(host+0, &fam, 2);
             strcpy(host+2, filename.c_str());
 #ifdef SYS_socketcall /* i686 */
             ROSE_ASSERT(4==sizeof(int));
