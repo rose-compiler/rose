@@ -478,6 +478,7 @@ RSIM_Simulator::main_loop()
                                                                              RSIM_Callbacks::ProcessCallback::START,
                                                                              true);
     bool cb_thread_status = thread->get_callbacks().call_thread_callbacks(RSIM_Callbacks::BEFORE, thread, true);
+    thread->tracing(TRACE_THREAD)->mesg("main thread is starting");
     thread->main();
     thread->get_callbacks().call_thread_callbacks(RSIM_Callbacks::AFTER, thread, cb_thread_status);
     process->get_callbacks().call_process_callbacks(RSIM_Callbacks::AFTER, process,
