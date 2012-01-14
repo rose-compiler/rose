@@ -71,6 +71,7 @@ private:
     std::string tracing_file_name;      /**< Pattern for trace file names. May include %d for thread ID. */
     FILE *tracing_file;                 /**< Stream to which debugging output is sent (or NULL to suppress it) */
     unsigned tracing_flags;             /**< Bit vector of what to trace. See TraceFlags. */
+    struct timeval time_created;        /**< Time at which process object was created. */
 
 public:
 
@@ -101,7 +102,13 @@ public:
      * bitwise OR of the facilityBitMask() for each enabled facility. */
     unsigned get_tracing_flags() const;
 
+    /** Returns the time at which this process was created. */
+    const struct timeval &get_ctime() const {
+        return time_created;
+    }
 
+
+    
     /**************************************************************************************************************************
      *                                  Callbacks
      **************************************************************************************************************************/

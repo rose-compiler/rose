@@ -13,6 +13,8 @@
 void
 RSIM_Process::ctor()
 {
+    gettimeofday(&time_created, NULL);
+
     bool do_unlink;
     sem_t *sem = simulator->get_semaphore(&do_unlink);
     futexes = new RSIM_FutexTable(sem, simulator->get_semaphore_name(), do_unlink);

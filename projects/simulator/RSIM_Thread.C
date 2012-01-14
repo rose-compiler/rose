@@ -42,12 +42,12 @@ RSIM_Thread::reopen_trace_facilities(FILE *file)
 std::string
 RSIM_Thread::id()
 {
-    static struct timeval start;
     struct timeval now;
     gettimeofday(&now, NULL);
-    if (0==start.tv_sec)
-        start = now;
-    double elapsed = (now.tv_sec - start.tv_sec) + 1e-6 * ((double)now.tv_usec - start.tv_usec);
+
+    const struct timeval &ctime = get_process()->get_ctime();
+
+    double elapsed = (now.tv_sec - ctime.tv_sec) + 1e-6 * ((double)now.tv_usec - ctime.tv_usec);
     char buf1[32];
     sprintf(buf1, "%1.3f", elapsed);
 
