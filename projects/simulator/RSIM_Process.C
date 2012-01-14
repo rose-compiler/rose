@@ -1757,12 +1757,15 @@ RSIM_Process::disassemble(bool fast)
         /* Disassemble instructions */
         Disassembler::InstructionMap insns;
         if (fast) {
+            MemoryMap emap = *map;
+            emap.prune(MemoryMap::MM_PROT_EXEC);
+
             rose_addr_t start_va = 0; // arbitrary since we set the disassembler's SEARCH_UNUSED bit
             unsigned search = disassembler->get_search();
             disassembler->set_search(search | Disassembler::SEARCH_UNUSED);
             Disassembler::AddressSet successors;
             Disassembler::BadMap bad;
-            insns = disassembler->disassembleBuffer(map, start_va, &successors, &bad);
+            insns = disassembler->disassembleBuffer(&emap, start_va, &successors, &bad);
             disassembler->set_search(search);
         } else {
             Partitioner partitioner;
