@@ -4666,7 +4666,7 @@ syscall_rt_sigprocmask(RSIM_Thread *t, int callno)
 {
     int how=t->syscall_arg(0);
     uint32_t in_va=t->syscall_arg(1), out_va=t->syscall_arg(2);
-    size_t sigsetsize=t->syscall_arg(3);
+    size_t sigsetsize __attribute__((unused)) = t->syscall_arg(3);
     assert(sigsetsize==sizeof(RSIM_SignalHandling::sigset_32));
 
     RSIM_SignalHandling::sigset_32 in_set, out_set;
@@ -5725,9 +5725,9 @@ syscall_fstatfs64_enter(RSIM_Thread *t, int callno)
 static void
 syscall_fstatfs64(RSIM_Thread *t, int callno)
 {
-    int fd              = t->syscall_arg(0);
-    size_t sb_sz        = t->syscall_arg(1);
-    uint32_t sb_va      = t->syscall_arg(2);
+    int fd                               = t->syscall_arg(0);
+    size_t sb_sz __attribute__((unused)) = t->syscall_arg(1);
+    uint32_t sb_va                       = t->syscall_arg(2);
 
     assert(sb_sz==sizeof(statfs64_32));
 

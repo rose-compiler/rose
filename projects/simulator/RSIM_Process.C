@@ -1741,7 +1741,7 @@ RSIM_Process::signal_dispatch()
     /* write lock not required for thread safety here since called functions are already thread safe */
     RSIM_SignalHandling::siginfo_32 info;
     for (int signo=signal_dequeue(&info); signo>0; signo=signal_dequeue(&info)) {
-        int status = sys_kill(getpid(), info);
+        int status __attribute__((unused)) = sys_kill(getpid(), info);
         assert(status>=0);
     }
 }
