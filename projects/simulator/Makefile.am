@@ -346,6 +346,12 @@ TYPES_1_CLEANUPS = $(patsubst %.passed, %.clean, $(TYPES_1_TARGETS))
 $(TYPES_1_CLEANUPS):
 	rm -f $(foreach ext, passed failed err out, $(patsubst %.clean, %, $@).$(ext))
 
+#------------------------------------------------------------------------------------------------------------------------------
+# Ptraced-based "run to original entry point, then branch and count how long it takes for child to crash.
+noinst_PROGRAMS += ptrace_jmp
+ptrace_jmp_SOURCES = papers/ptrace_jmp.C
+ptrace_jmp_CPPFLAGS = $(ROSE_INCLUDES)
+ptrace_jmp_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 ###############################################################################################################################
 #  SYSTEM CALL TESTS
