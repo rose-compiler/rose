@@ -567,12 +567,14 @@ RSIM_Thread::report_progress_maybe()
     if (mesg->get_file()) {
         struct timeval now;
         gettimeofday(&now, NULL);
-        double delta = (now.tv_sec - last_report.tv_sec) + 1e-1 * (now.tv_usec - last_report.tv_usec);
-        if (delta > report_interval) {
-            double insn_rate = delta>0 ? get_ninsns() / delta : 0;
-            mesg->mesg("processed %zu insns in %d sec (%d insns/sec)\n", get_ninsns(), (int)(delta+0.5), (int)(insn_rate+0.5));
+        double report_delta = (now.tv_sec - last_report.tv_sec) + 1e-6 * (now.tv_usec - last_report.tv_usec);
+        if (report_delta > report_interval) {
+            const struct timeval &ctime = get_process()->get_ctime();
+            double elapsed = (now.tv_sec - ctime.tv_sec) + 1e-6 * (now.tv_usec - ctime.tv_usec);
+            double insn_rate = elapsed>0.0 ? get_ninsns() / elapsed : 0;
+            mesg->mesg("processed %zu insns in %d sec (%d insns/sec)\n", get_ninsns(), (int)(elapsed+0.5), (int)(insn_rate+0.5));
+            last_report = now;
         }
-        last_report = now;
     }
 }
 
