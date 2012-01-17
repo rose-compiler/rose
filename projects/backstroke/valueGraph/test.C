@@ -227,7 +227,8 @@ void processHeaderFiles(const set<SgFunctionDeclaration*>& funcDecls)
 int main(int argc, char *argv[])
 {
     int option;
-    cin >> option;
+    option = 3;
+    //cin >> option;
         
     // Build the AST used by ROSE
     SgProject* project = frontend(argc, argv);
@@ -338,6 +339,7 @@ int main(int argc, char *argv[])
         set<string> events;
         events.insert("Handle");
         events.insert("tmr_event_handler");
+        events.insert("event_handler");
     
         vector<SgFunctionDefinition*> allFuncDefs = 
                 BackstrokeUtility::querySubTree<SgFunctionDefinition>(project);
