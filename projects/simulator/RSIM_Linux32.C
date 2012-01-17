@@ -2352,7 +2352,8 @@ sys_connect(RSIM_Thread *t, int fd, uint32_t addr_va, uint32_t addrlen)
             }
             size_t host_sz = 2/*af_family*/ + filename.size() + 1/*NUL*/;
             char host[host_sz];
-            *(uint16_t*)host = guest.sa_family;
+            uint16_t fam = guest.sa_family;
+            memcpy(host+0, &fam, 2);
             strcpy(host+2, filename.c_str());
 #ifdef SYS_socketcall /* i686 */
             ROSE_ASSERT(4==sizeof(int));
@@ -2677,7 +2678,7 @@ syscall_socketcall_leave(RSIM_Thread *t, int callno)
                 if (trace->get_file() &&
                     (int32_t)a[0] > 0 &&
                     sizeof(msghdr)==t->get_process()->mem_read(&msghdr, a[2], sizeof msghdr)) {
-                    trace->multipart("recvmsg", "");
+                    trace->multipart("recvmsg", "%s", ""); // this way to fix compiler warning
                     uint32_t nbytes = a[0];
                     for (unsigned i=0; i<msghdr.msg_iovlen && i<100 && nbytes>0; i++) {
                         uint32_t vasz[2];
@@ -4666,7 +4667,7 @@ syscall_rt_sigprocmask(RSIM_Thread *t, int callno)
 {
     int how=t->syscall_arg(0);
     uint32_t in_va=t->syscall_arg(1), out_va=t->syscall_arg(2);
-    size_t sigsetsize=t->syscall_arg(3);
+    size_t sigsetsize __attribute__((unused)) = t->syscall_arg(3);
     assert(sigsetsize==sizeof(RSIM_SignalHandling::sigset_32));
 
     RSIM_SignalHandling::sigset_32 in_set, out_set;
@@ -5725,9 +5726,9 @@ syscall_fstatfs64_enter(RSIM_Thread *t, int callno)
 static void
 syscall_fstatfs64(RSIM_Thread *t, int callno)
 {
-    int fd              = t->syscall_arg(0);
-    size_t sb_sz        = t->syscall_arg(1);
-    uint32_t sb_va      = t->syscall_arg(2);
+    int fd                               = t->syscall_arg(0);
+    size_t sb_sz __attribute__((unused)) = t->syscall_arg(1);
+    uint32_t sb_va                       = t->syscall_arg(2);
 
     assert(sb_sz==sizeof(statfs64_32));
 

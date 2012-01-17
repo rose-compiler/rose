@@ -42,12 +42,12 @@ RSIM_Thread::reopen_trace_facilities(FILE *file)
 std::string
 RSIM_Thread::id()
 {
-    static struct timeval start;
     struct timeval now;
     gettimeofday(&now, NULL);
-    if (0==start.tv_sec)
-        start = now;
-    double elapsed = (now.tv_sec - start.tv_sec) + 1e-6 * ((double)now.tv_usec - start.tv_usec);
+
+    const struct timeval &ctime = get_process()->get_ctime();
+
+    double elapsed = (now.tv_sec - ctime.tv_sec) + 1e-6 * ((double)now.tv_usec - ctime.tv_usec);
     char buf1[32];
     sprintf(buf1, "%1.3f", elapsed);
 
@@ -334,7 +334,7 @@ RSIM_Thread::signal_deliver(const RSIM_SignalHandling::siginfo_32 &_info)
                 RSIM_SignalHandling::rt_sigframe_32 frame;
                 memset(&frame, 0, sizeof frame);
                 stack_32 stack; /* signal alternate stack */
-                int status = sighand.sigaltstack(NULL, &stack, regs.sp);
+                int status __attribute__((unused)) = sighand.sigaltstack(NULL, &stack, regs.sp);
                 assert(status>=0);
                 frame_va = sighand.get_sigframe(&sa, sizeof frame, regs.sp);
 
@@ -553,7 +553,7 @@ RSIM_Thread::signal_dequeue(RSIM_SignalHandling::siginfo_32 *info/*out*/)
     int signo = sighand.dequeue(info);
     if (0==signo) {
         RSIM_SignalHandling::sigset_32 mask;
-        int status = sighand.sigprocmask(0, NULL, &mask);
+        int status __attribute__((unused)) = sighand.sigprocmask(0, NULL, &mask);
         assert(status>=0);
         signo = get_process()->sighand.dequeue(info, &mask);
     }
@@ -695,7 +695,7 @@ RSIM_Thread::main()
                 policy.dump_registers(mesg);
         } catch (const Disassembler::Exception &e) {
             if (!insn_semaphore_posted) {
-                int status = sem_post(process->get_simulator()->get_semaphore());
+                int status __attribute__((unused)) = sem_post(process->get_simulator()->get_semaphore());
                 assert(0==status);
                 insn_semaphore_posted = true;
             }
@@ -709,7 +709,7 @@ RSIM_Thread::main()
         } catch (const RSIM_Semantics::Exception &e) {
             /* Thrown for instructions whose semantics are not implemented yet. */
             if (!insn_semaphore_posted) {
-                int status = sem_post(process->get_simulator()->get_semaphore());
+                int status __attribute__((unused)) = sem_post(process->get_simulator()->get_semaphore());
                 assert(0==status);
                 insn_semaphore_posted = true;
             }
@@ -727,7 +727,7 @@ RSIM_Thread::main()
 #endif
         } catch (const RSIM_SEMANTIC_POLICY::Exception &e) {
             if (!insn_semaphore_posted) {
-                int status = sem_post(process->get_simulator()->get_semaphore());
+                int status __attribute__((unused)) = sem_post(process->get_simulator()->get_semaphore());
                 assert(0==status);
                 insn_semaphore_posted = true;
             }
@@ -740,7 +740,7 @@ RSIM_Thread::main()
             abort();
         } catch (const RSIM_Process::Exit &e) {
             if (!insn_semaphore_posted) {
-                int status = sem_post(process->get_simulator()->get_semaphore());
+                int status __attribute__((unused)) = sem_post(process->get_simulator()->get_semaphore());
                 assert(0==status);
                 insn_semaphore_posted = true;
             }
@@ -748,7 +748,7 @@ RSIM_Thread::main()
             return NULL;
         } catch (RSIM_SignalHandling::siginfo_32 &e) {
             if (!insn_semaphore_posted) {
-                int status = sem_post(process->get_simulator()->get_semaphore());
+                int status __attribute__((unused)) = sem_post(process->get_simulator()->get_semaphore());
                 assert(0==status);
                 insn_semaphore_posted = true;
             }
@@ -1081,7 +1081,7 @@ void
 RSIM_Thread::emulate_syscall()
 {
     /* Post the instruction semphore because some system calls can block indefinitely. */
-    int status = sem_post(get_process()->get_simulator()->get_semaphore());
+    int status __attribute__((unused)) = sem_post(get_process()->get_simulator()->get_semaphore());
     assert(0==status);
     insn_semaphore_posted = true;
 

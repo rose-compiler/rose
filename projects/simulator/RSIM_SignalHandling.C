@@ -355,7 +355,7 @@ RSIM_SignalHandling::generate(const siginfo_32 &info, RSIM_Process *process, RTS
         return -EINVAL;
 
     sigaction_32 sa;
-    int status = process->sys_sigaction(signo, NULL, &sa);
+    int status __attribute__((unused)) = process->sys_sigaction(signo, NULL, &sa);
     assert(status>=0);
 
     RTS_MUTEX(mutex) {
