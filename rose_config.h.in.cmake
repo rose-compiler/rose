@@ -10,6 +10,12 @@
  * (running cmake before running make within the build process).
  */
 
+/* Git SCM version information for ROSE: commit identifier. */
+#cmakedefine ROSE_SCM_VERSION_ID "@ROSE_SCM_VERSION_ID@"
+
+/* Git SCM version information for ROSE: commit date (Unix timestamp). */
+#cmakedefine ROSE_SCM_VERSION_UNIX_DATE @ROSE_SCM_VERSION_UNIX_DATE@
+
 /* Define to 1 if you have the `argz_append' function. */
 #cmakedefine HAVE_ARGZ_APPEND 1
 /* Define to 1 if you have the `argz_create_sep' function. */
@@ -269,6 +275,8 @@
 /* Name of backend Java compiler including path */
 #define BACKEND_JAVA_COMPILER_NAME_WITH_PATH "${BACKEND_JAVA_COMPILER}"
 
+/* Name of backend Python interpreter including path */
+#define BACKEND_PYTHON_INTERPRETER_NAME_WITH_PATH "${BACKEND_PYTHON_INTERPRETER_NAME_WITH_PATH}"
 
 /* Internal EDG specific consistency tests. */
 //AS FIXME

@@ -1,9 +1,9 @@
 #include<string>
 
-#include "jni.h"
-#include "token.h"
+#include "jni_token.h"
+#include "jni_utils.h"
+#include "jni_JavaSourceCodePosition.h"
 #include <assert.h>
-
   
 Token_t*
 convert_Java_token(JNIEnv *env, jobject token)
@@ -13,39 +13,18 @@ convert_Java_token(JNIEnv *env, jobject token)
      const char *text = NULL;
      jmethodID method_id;
      Token_t *our_token = NULL;
-     int line = -1;
-     int col  = -1;
+     JavaSourceCodePosition * pos_info = NULL;
+     jobject jpos_info;
 
      assert(env != NULL);
 
   // Need to get the object class so we can use it to retrieve the methods.
   // printf ("Need to get the object class so we can use it to retrieve the methods. \n");  
-     cls = env->GetObjectClass(token);
+     cls = get_class(env, token);
 
-     if ( cls != (jclass)0 )
-        {
-       // printf ("jclass cls is OK! \n");
-        }
-       else
-        {
-          printf ("Error: jclass cls == NULL! \n");
-          assert(false);
-        }
-
-#if 1
   // Get the method ID for the getText() method.
   // printf ("Get the method ID for the getText() method. \n");
-     method_id = env->GetMethodID(cls, "getText", "()Ljava/lang/String;");
-
-     if ( method_id != NULL )
-        {
-       // printf ("jmethodID method_id is OK! \n");
-        }
-       else
-        {
-          printf ("Error: jmethodID method_id == NULL (method not found) \n");
-          assert(false);
-        }
+     method_id = get_method(env, cls, "getText", "()Ljava/lang/String;");
 
   // Call getText() to get the Java String object (note that the cast is critical!).
   // printf ("Call getText() to get the Java String object. \n");
@@ -66,57 +45,16 @@ convert_Java_token(JNIEnv *env, jobject token)
         {
           text = NULL;
         }
-#else
-     text = "foobar";
-#endif
 
-  // Get the method ID for the getLine() method.
-  // printf ("Get the method ID for the getLine() method. \n");
-     method_id = env->GetMethodID(cls, "getLine", "()I");
+  // Get the method ID for the getJavaSourcePositionInformation() method.
+     method_id = get_method(env, cls, "getJavaSourcePositionInformation", "()LJavaSourcePositionInformation;");
+     jpos_info = (jobject) env->CallObjectMethod(token, method_id);
 
-     if ( method_id != NULL )
-        {
-       // printf ("jmethodID method_id is OK! \n");
-        }
-       else
-        {
-          printf ("Error: jmethodID method_id == NULL (method not found) \n");
-          assert(false);
-        }
+     // Convert position to its C-based representation
+     pos_info = convert_Java_SourcePosition(env, jpos_info);
 
-#if 1
-  // Call the getLine() method to get the line number for this token.
-  // printf ("Call the getLine() method to get the line number for this token. \n");
-     line = (int) env->CallIntMethod(token, method_id);
-#else
-     line = -1;
-#endif
-
-  // Get the method ID for the getCharPositionInLine() method.
-  // printf ("Get the method ID for the getCharPositionInLine() method. \n");
-     method_id = env->GetMethodID(cls, "getColumn", "()I");
-
-     if ( method_id != NULL )
-        {
-       // printf ("jmethodID method_id is OK! \n");
-        }
-       else
-        {
-          printf ("Error: jmethodID method_id == NULL (method not found) \n");
-          assert(false);
-        }
-
-#if 1
-  // Call getCharPositionInLine() to get the column position for the token.
-  // printf ("Call getCharPositionInLine() to get the column position for the token. \n");
-     col = (int) env->CallIntMethod(token, method_id);
-#else
-     col = -1;
-#endif
-
-  // build a Token of our own.
-  // printf ("build a Token of our own. \n");
-     our_token = new Token_t(text, line, col);
+     // Build a C-based representation of the JavaToken
+     our_token = new Token_t(text, pos_info);
 
 #if 0
   // Release the string now that we've made a new copy for ourselves.

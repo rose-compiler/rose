@@ -113,6 +113,7 @@ else
        // the originalModuleFilename as a basis.
        // printf ("originalModuleFilenameWithPath = %s outputFilename = %s \n",originalModuleFilenameWithPath.c_str(),outputFilename.c_str());
           Unparser unp(&Module_OutputFile, originalModuleFilenameWithPath,options,NULL,NULL);
+          unp.currentFile = sfile;
 
        // The outputFilename is the name that will be matched against in the selection of statements to unparse.
        // However, that its suffix is ".rmod" will cause UnparseLanguageIndependentConstructs::statementFromFile() 

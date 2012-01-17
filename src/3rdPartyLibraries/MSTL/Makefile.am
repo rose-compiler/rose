@@ -5,8 +5,13 @@ INCLUDES = $(ROSE_INCLUDES)
 ## The grammar generator (ROSETTA) should use its own template repository
 CXX_TEMPLATE_REPOSITORY_PATH = .
 
+if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+libmstlSources = \
+   DOTGraphInterface.C
+else
 libmstlSources = \
    PDFGeneration.C DOTGraphInterface.C
+endif
 
 # lib_LIBRARIES = libmstl.a
 # libmstl_a_SOURCES  = $(libmstlSources)

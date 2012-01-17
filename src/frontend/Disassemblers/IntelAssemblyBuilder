@@ -130,11 +130,12 @@ sub build_lexer {
 sub table_row {
   my($line) = @_;
   local($_);
-  my $retval = {opcode=>[], mnemonic=>"", operands=>[], sixtyfour=>"", legacy=>"", comment=>"", ccol=>undef};
+  my $retval = {opcode=>[], mnemonic=>"", orig_mnemonic=>"", operands=>[], sixtyfour=>"", legacy=>"", comment=>"", ccol=>undef};
   my $lexer = build_lexer $line;
   push @{$retval->{opcode}}, $_ while defined ($_ = &{$lexer}('opcode'));
   return "no opcode at \"@{[&{$lexer}('remainder')]}\"" unless @{$retval->{opcode}};
-  return "no mnemonic at \"@{[&{$lexer}('remainder')]}\"" unless defined ($retval->{mnemonic} = &{$lexer}('mnemonic'));
+  defined ($retval->{mnemonic} = $retval->{orig_mnemonic} = &{$lexer}('mnemonic')) or
+    return "no mnemonic at \"@{[&{$lexer}('remainder')]}\"";
   push @{$retval->{operands}}, $_ while defined ($_ = &{$lexer}('operand'));
   if ($chapter == 5) {
     # Intel Instruction Reference Manual Chapter 5 is "VMX Instruction Reference" and the compatibility columns are
@@ -191,6 +192,18 @@ sub fixup_row {
     my @iqual = grep {/^od_i[bwdo]$/} @{$row->{opcode}};
     my %map = (od_imm8=>'od_ib', od_imm16=>'od_iw', od_imm32=>'od_id', od_imm64=>'od_io');
     push @{$row->{opcode}}, $map{$imm[0]} if !@iqual;
+  }
+
+  # Some of the tables are missing the operand for opcode qualifiers "ib" when the original mnemonic is "(No mnemonic)", such
+  # as the entry:
+  #    D4 ib (No mnemonic) Invalid Valid Adjust AX after multiply to number base imm8
+  # which should actually be:
+  #    D4 ib (No mnemonic) imm8 Invalid Valid Adjust AX after multiply to number base imm8
+  if ($row->{orig_mnemonic} eq "" && @{$row->{operands}}==0) {
+    my %map = (b=>'od_imm8', w=>'od_imm16', d=>'od_imm32', o=>'od_imm64');
+    for my $opcode (@{$row->{opcode}}) {
+      push @{$row->{operands}}, $map{$1} if $opcode =~ /^od_i([bwdo])$/;
+    }
   }
 
   # The tables for non-REP/REPE/REPNE versions of CMPS, INS, LODS, MOVS, OUTS, SCAS, and STOS describe both the versions that take

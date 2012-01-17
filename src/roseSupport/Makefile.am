@@ -22,6 +22,7 @@ libroseSupport_la_SOURCES =			\
 	transformationSupport.C			\
 	optionDeclaration.C			\
 	sourceLocationInheritedAttribute.C	\
+	rangemap.C				\
 	roseTranslators.C			\
 	utility_functions.C			\
 	memoryUsage.C				\
@@ -36,6 +37,7 @@ include_HEADERS =				\
 	transformationSupport.h			\
 	optionDeclaration.h			\
 	sourceLocationInheritedAttribute.h	\
+	rangemap.h				\
 	roseTranslators.h			\
 	utility_functions.h			\
 	threadSupport.h				\

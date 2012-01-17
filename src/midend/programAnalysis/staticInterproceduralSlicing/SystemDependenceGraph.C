@@ -459,9 +459,31 @@ void SystemDependenceGraph::performInterproceduralAnalysis()
 std::vector<InterproceduralInfo*> SystemDependenceGraph::getPossibleFuncs(SgFunctionCallExp * funcCall)
 {
   std::vector<InterproceduralInfo*> retVal;
+  SgFunctionSymbol *fsym = NULL; 
   // check if there is the function declaration available and return the ipi for that decl
   SgFunctionRefExp *fref = isSgFunctionRefExp(funcCall->get_function());
-  SgFunctionSymbol *fsym = fref->get_symbol();
+  // Liao 11/15/2011
+  // It could be a call to a class member function
+  SgArrowExp* arrow_exp = isSgArrowExp (funcCall->get_function());
+  SgDotExp* dot_exp = isSgDotExp (funcCall->get_function());
+  if (arrow_exp|| dot_exp)
+  {
+    SgBinaryOp * bop = isSgBinaryOp(funcCall->get_function());
+    ROSE_ASSERT (bop != NULL);
+    SgMemberFunctionRefExp* mfref = isSgMemberFunctionRefExp (bop->get_rhs_operand_i());
+    ROSE_ASSERT (mfref != NULL);
+    fsym =  mfref ->get_symbol();
+  }
+  else if (fref)
+  {
+    fsym = fref->get_symbol();
+  }
+  else
+  {
+    cerr<<"Error: SystemDependenceGraph::getPossibleFuncs() found a unhandled function call type:"<< funcCall->get_function()->class_name()<<endl;
+    ROSE_ASSERT (false);
+  }
+  ROSE_ASSERT (fsym != NULL);
   SgFunctionDeclaration *fD = fsym->get_declaration();
 #ifdef VERBOSE_DEBUG
   cout << "Adding function call " << funcCall->unparseToString() << " with funref " << fref->unparseToString() << " and function " << fD->get_name().getString() << endl;

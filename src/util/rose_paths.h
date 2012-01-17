@@ -36,6 +36,7 @@ extern const std::string ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR;
 extern const std::string ROSE_CONFIGURE_DATE;
 extern const std::string ROSE_AUTOMAKE_BUILD_OS;
 extern const std::string ROSE_AUTOMAKE_BUILD_CPU;
+extern const std::string ROSE_OFP_VERSION_STRING;
 
 /* Numeric form of ROSE version -- assuming ROSE version x.y.zL (where */
 /* x, y, and z are numbers, and L is a single lowercase letter from a to j), */

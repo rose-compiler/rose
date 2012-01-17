@@ -1,4 +1,3 @@
-
 #ifndef UNPARSER_JAVA
 #define UNPARSER_JAVA
 
@@ -26,12 +25,12 @@ class SgAsmOp;
 // using namespace std;
 class Unparser;
 
-class JavaCodeGeneration_locatedNode : public UnparseLanguageIndependentConstructs
+class Unparse_Java : public UnparseLanguageIndependentConstructs
    {
      public:
-          JavaCodeGeneration_locatedNode(Unparser* unp, std::string fname);
+          Unparse_Java(Unparser* unp, std::string fname);
 
-          virtual ~JavaCodeGeneration_locatedNode();
+          virtual ~Unparse_Java();
 
        // DQ (3/13/2004): Added to support templates
           virtual void unparseTemplateParameter(SgTemplateParameter* templateParameter, SgUnparse_Info& info);
@@ -40,16 +39,8 @@ class JavaCodeGeneration_locatedNode : public UnparseLanguageIndependentConstruc
        // DQ (11/27/2004): Added to support unparsing of pointers to nested template arguments 
           virtual void unparseTemplateName(SgTemplateInstantiationDecl* templateInstantiationDeclaration, SgUnparse_Info& info);
 
-       // DQ (2/16/2004): Added to refactor code and add support for old-style K&R C
-          void unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUnparse_Info& info);
-          void unparseFunctionParameterDeclaration ( SgFunctionDeclaration* funcdecl_stmt, 
-                                                     SgInitializedName* initializedName,
-                                                     bool outputParameterDeclaration, 
-                                                     SgUnparse_Info& info );
 
           void unparseOneElemConInit(SgConstructorInitializer* con_init, SgUnparse_Info& info);
-
-          void unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse_Info& info);
 
       //! Unparser support for compiler-generated statments
           void outputCompilerGeneratedStatements( SgUnparse_Info & info );
@@ -58,11 +49,12 @@ class JavaCodeGeneration_locatedNode : public UnparseLanguageIndependentConstruc
           virtual void unparseLanguageSpecificStatement (SgStatement*  stmt, SgUnparse_Info& info);
           virtual void unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_Info& info);
 
+          virtual void unparseFunctionParameterList(SgStatement* stmt, SgUnparse_Info& info);
+
        // DQ (9/6/2010): Mark the derived class to support debugging.
           virtual std::string languageName() const { return "C++ Unparser"; }
 
           virtual void unparseUnaryOperator           (SgExpression* expr, const char* op, SgUnparse_Info& info);
-          virtual void unparseBinaryOperator          (SgExpression* expr, const char* op, SgUnparse_Info& info);
           virtual void unparseAssnExpr                (SgExpression* expr, SgUnparse_Info& info);   
           virtual void unparseVarRef                  (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseClassRef                (SgExpression* expr, SgUnparse_Info& info);  
@@ -85,45 +77,14 @@ class JavaCodeGeneration_locatedNode : public UnparseLanguageIndependentConstruc
 
 
           virtual void unparseFuncCall                (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparsePointStOp               (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseRecRef                  (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseDotStarOp               (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseArrowStarOp             (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseEqOp                    (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseLtOp                    (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseGtOp                    (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseNeOp                    (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseLeOp                    (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseGeOp                    (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseAddOp                   (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseSubtOp                  (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseMultOp                  (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseDivOp                   (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseIntDivOp                (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseModOp                   (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseAndOp                   (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseOrOp                    (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseBitXOrOp                (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseBitAndOp                (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseBitOrOp                 (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseCommaOp                 (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseLShiftOp                (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseRShiftOp                (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseUnaryMinusOp            (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseUnaryAddOp              (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseSizeOfOp                (SgExpression* expr, SgUnparse_Info& info);  
 
           virtual void unparseTypeIdOp                (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseNotOp                   (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseDerefOp                 (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseAddrOp                  (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseMinusMinusOp            (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparsePlusPlusOp              (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseAbstractOp              (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseBitCompOp               (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseRealPartOp              (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseImagPartOp              (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseConjugateOp             (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseExprCond                (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseClassInitOp             (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseDyCastOp                (SgExpression* expr, SgUnparse_Info& info);  
@@ -133,17 +94,6 @@ class JavaCodeGeneration_locatedNode : public UnparseLanguageIndependentConstruc
           virtual void unparseDeleteOp                (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseThisNode                (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseScopeOp                 (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseAssnOp                  (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparsePlusAssnOp              (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseMinusAssnOp             (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseAndAssnOp               (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseIOrAssnOp               (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseMultAssnOp              (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseDivAssnOp               (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseModAssnOp               (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseXorAssnOp               (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseLShiftAssnOp            (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseRShiftAssnOp            (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseForDeclOp               (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseTypeRef                 (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseVConst                  (SgExpression* expr, SgUnparse_Info& info);  
@@ -159,6 +109,7 @@ class JavaCodeGeneration_locatedNode : public UnparseLanguageIndependentConstruc
        // virtual void unparseVarArgCopyOp            (SgExpression* expr, SgUnparse_Info& info);
           virtual void unparseDesignatedInitializer   (SgExpression* expr, SgUnparse_Info& info);
           virtual void unparsePseudoDtorRef           (SgExpression* expr, SgUnparse_Info& info);
+          virtual void unparseJavaInstanceOfOp        (SgExpression* expr, SgUnparse_Info& info);
 
           virtual void unparseBasicBlockStmt   (SgStatement* stmt, SgUnparse_Info& info);
 
@@ -166,6 +117,9 @@ class JavaCodeGeneration_locatedNode : public UnparseLanguageIndependentConstruc
           virtual void unparseImportDeclarationStatement (SgStatement* stmt, SgUnparse_Info& info);
 
           virtual void unparseIfStmt           (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseSynchronizedStmt (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseThrowStmt        (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseForEachStmt      (SgStatement* stmt, SgUnparse_Info& info);
        // virtual void unparseWhereStmt        (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseForInitStmt      (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseForStmt          (SgStatement* stmt, SgUnparse_Info& info);
@@ -189,6 +143,7 @@ class JavaCodeGeneration_locatedNode : public UnparseLanguageIndependentConstruc
           virtual void unparseBreakStmt        (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseContinueStmt     (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseReturnStmt       (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseAssertStmt       (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseGotoStmt         (SgStatement* stmt, SgUnparse_Info& info);
        // virtual void unparseAsmStmt          (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseTypeDefStmt      (SgStatement* stmt, SgUnparse_Info& info);
@@ -232,6 +187,51 @@ class JavaCodeGeneration_locatedNode : public UnparseLanguageIndependentConstruc
 
       //! Support for exception specification for functions and member functions
           virtual void unparseExceptionSpecification( const SgTypePtrList& exceptionSpecifierList, SgUnparse_Info& info);
+
+      //! Unparse intialized names (technically not an SgStatement, but both share SgLocatedNode)
+          virtual void unparseInitializedName(SgInitializedName* init_name, SgUnparse_Info& info);
+          virtual void unparseName(SgName name, SgUnparse_Info& info);
+
+          virtual void unparseCompoundAssignOp(SgCompoundAssignOp* op, SgUnparse_Info& info);
+          virtual void unparseBinaryOp(SgBinaryOp* op, SgUnparse_Info& info);
+          virtual void unparseUnaryOp(SgUnaryOp* op, SgUnparse_Info& info);
+
+      //! Support for unparsing modifiers
+          virtual void unparseDeclarationModifier   (SgDeclarationModifier& mod,   SgUnparse_Info& info);
+          virtual void unparseAccessModifier        (SgAccessModifier& mod,        SgUnparse_Info& info);
+          virtual void unparseStorageModifier       (SgStorageModifier& mod,       SgUnparse_Info& info);
+          virtual void unparseConstVolatileModifier (SgConstVolatileModifier& mod, SgUnparse_Info& info);
+          virtual void unparseTypeModifier          (SgTypeModifier& mod,          SgUnparse_Info& info);
+          virtual void unparseFunctionModifier      (SgFunctionModifier& mod,      SgUnparse_Info& info);
+
+          virtual void curprint_indented(const std::string str, SgUnparse_Info& info) const;
+
+          virtual void unparseNestedStatement(SgStatement* stmt, SgUnparse_Info& info);
+
+          virtual PrecedenceSpecifier getPrecedence(SgExpression* exp);
+          virtual AssociativitySpecifier getAssociativity(SgExpression* exp);
+
+      //! Support for unparsing types
+          virtual void unparseType(SgType* type, SgUnparse_Info& info);
+          virtual void unparseTypeVoid(SgTypeVoid* type, SgUnparse_Info& info);
+
+          virtual void unparseBaseClass(SgBaseClass* base, SgUnparse_Info& info);
+
+          virtual void unparseTypeWchar(SgTypeWchar* type, SgUnparse_Info& info);
+          virtual void unparseTypeSignedChar(SgTypeSignedChar* type, SgUnparse_Info& info);
+          virtual void unparseTypeShort(SgTypeShort* type, SgUnparse_Info& info);
+          virtual void unparseTypeInt(SgTypeInt* type, SgUnparse_Info& info);
+          virtual void unparseTypeLong(SgTypeLong* type, SgUnparse_Info& info);
+          virtual void unparseTypeFloat(SgTypeFloat* type, SgUnparse_Info& info);
+          virtual void unparseTypeDouble(SgTypeDouble* type, SgUnparse_Info& info);
+          virtual void unparseTypeBool(SgTypeBool* type, SgUnparse_Info& info);
+
+          virtual void unparseClassType(SgClassType* type, SgUnparse_Info& info);
+          virtual void unparseEnumType(SgEnumType* type, SgUnparse_Info& info);
+          virtual void unparseArrayType(SgArrayType* type, SgUnparse_Info& info);
+          virtual void unparseModifierType(SgModifierType* type, SgUnparse_Info& info);
+
+          virtual void unparseJavaParameterizedType(SgJavaParameterizedType* type, SgUnparse_Info& info);
    };
 
 #endif

@@ -5,8 +5,8 @@
 
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
-#include "propagateHiddenListData.h"
-#include "HiddenList.h"
+// #include "propagateHiddenListData.h"
+// #include "HiddenList.h"
 
 // include "array_class_interface.h"
 #include "unparser.h"
@@ -76,15 +76,6 @@ Unparser::Unparser( ostream* nos, string fname, Unparser_Opt nopt, UnparseFormat
      u_fortran_type = new UnparseFortran_type(this);
      u_fortran_locatedNode = new FortranCodeGeneration_locatedNode(this, fname);
 
-#if 0
-     u_java_type = NULL;
-     u_java_locatedNode = NULL;
-#else
-  // DQ (4/16/2011): Added the Java support symetric to the Fortran unparser support.
-     u_java_type = new UnparseJava_type(this);
-     u_java_locatedNode = new JavaCodeGeneration_locatedNode(this, fname);
-#endif
-
   // ROSE_ASSERT(nfile != NULL);
      ROSE_ASSERT(nos != NULL);
 
@@ -137,6 +128,59 @@ Unparser::~Unparser()
      delete u_exprStmt;
      delete u_fortran_type;
      delete u_fortran_locatedNode;
+   }
+
+
+Unparser::Unparser(const Unparser & X)
+   {
+  // DQ (9/11/2011): Added explicit copy constructor to avoid possible double free of formatHelpInfo (reported by static analysis).
+  // DQ (9/11/2011): This function is provided to make this code better so that can be analyized using static analysis 
+  // (static analysis tools don't understand access functions).
+
+  // Call the operator=() member function.
+     *this = X;
+
+     printf ("Error: I think we likely don't want to be using this constructor (UnparseFormat(const UnparseFormat & X)). \n");
+     ROSE_ASSERT(false);
+   }
+
+Unparser & Unparser::operator=(const Unparser & X)
+   {
+  // DQ (9/11/2011): Added explicit operator=() to avoid possible double free of formatHelpInfo (reported by static analysis).
+  // DQ (9/11/2011): This function is provided to make this code better so that can be analyized using static analysis 
+  // (static analysis tools don't understand access functions).
+
+  // DQ (9/12/2011): This avoids the memory leak that could happend with self assignment.
+     if (&X == this)
+        {
+          return *this;
+        }
+      
+     u_type      = NULL; // new Unparse_Type(this);
+     u_name      = NULL; // new Unparser_Nameq(this);
+     u_sym       = NULL; // new Unparse_Sym(this);
+     u_debug     = NULL; // new Unparse_Debug(this);
+     u_sage      = NULL; // new Unparse_MOD_SAGE(this);
+     u_exprStmt  = NULL; // new Unparse_ExprStmt(this, fname);
+
+     opt         = X.opt;
+     cur_index   = 0;
+     currentFile = NULL;
+
+     prevdir_was_cppDeclaration = false;
+
+     cur         = X.cur;
+     repl        = X.repl;
+
+     embedColorCodesInGeneratedCode = 0;
+     generateSourcePositionCodes    = 0;
+
+     p_resetSourcePosition = false;
+
+     printf ("Error: I think we likely don't want to be using this operator (UnparseFormat::operator=(const UnparseFormat & X)). \n");
+     ROSE_ASSERT(false);
+
+     return *this;
    }
 
 UnparseFormat& Unparser::get_output_stream()
@@ -345,8 +389,8 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
              {
             // Unparse using C/C++ unparser by default
                // negara1 (06/29/2011): If unparseScope is provided, unparse it. Otherwise, unparse the global scope (the default behavior).
-               if (unparseScope != NULL) {                   
-                   if (isSgGlobal(unparseScope) != NULL || isSgClassDefinition(unparseScope) != NULL) {                       
+               if (unparseScope != NULL) {
+                   if (isSgGlobal(unparseScope) != NULL || isSgClassDefinition(unparseScope) != NULL) {
                        info.set_current_scope(unparseScope);
                        const SgDeclarationStatementPtrList& declarations = unparseScope -> getDeclarationList();
                        for (SgDeclarationStatementPtrList::const_iterator declaration = declarations.begin(); declaration != declarations.end(); declaration++) {
@@ -354,7 +398,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
                        }
                    } else {
                        //Simulate that the unparsed scope is global in order to unparse an included file.
-                       SgGlobal* fakeGlobal = new SgGlobal(); 
+                       SgGlobal* fakeGlobal = new SgGlobal();
                        fakeGlobal -> set_file_info(unparseScope -> get_file_info());
                        info.set_current_scope(fakeGlobal);
 
@@ -379,13 +423,13 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
                   {
                     if (file->get_Java_only())
                        {
-                      // Unparse using the new Fortran unparser!
-                         ROSE_ASSERT(u_java_locatedNode != NULL);
+                      // DQ (8/19/2011): Now that the unparser is working better and we generate a more 
+                      // correct AST for Java, we want to use better mechanisms to control the output of 
+                      // different parts of the AST (implicit vs. explicit classes in Java).
+                      // info.set_outputCompilerGeneratedStatements();
 
-                      // printf ("This is the unparser support for Java (exiting as a test) \n");
-                      // ROSE_ASSERT(false);
-
-                         u_java_locatedNode->unparseStatement(globalScope, info);
+                         Unparse_Java unparser(this, file->getFileName());
+                         unparser.unparseStatement(globalScope, info);
                        }
                       else
                        {
@@ -1283,11 +1327,15 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
                if (SageInterface::is_Fortran_language() == true)
                   {
                  // Unparse as a Fortran code.
+                    ROSE_ASSERT(roseUnparser.u_fortran_locatedNode != NULL);
                     roseUnparser.u_fortran_locatedNode->unparseStatement ( const_cast<SgStatement*>(stmt), inheritedAttributeInfo );
                   }
                  else
                   {
                  // Unparse as a C/C++ code.
+
+                    ROSE_ASSERT(roseUnparser.u_exprStmt != NULL);
+
                  // printf ("Calling roseUnparser.u_exprStmt->unparseStatement() stmt = %s \n",stmt->class_name().c_str());
                  // roseUnparser.u_exprStmt->curprint ("Output from curprint");
                     roseUnparser.u_exprStmt->unparseStatement ( const_cast<SgStatement*>(stmt), inheritedAttributeInfo );
@@ -1304,11 +1352,13 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
                if (SageInterface::is_Fortran_language() == true)
                   {
                  // Unparse as a Fortran code.
+                    ROSE_ASSERT(roseUnparser.u_fortran_locatedNode != NULL);
                     roseUnparser.u_fortran_locatedNode->unparseExpression ( const_cast<SgExpression*>(expr), inheritedAttributeInfo );
                   }
                  else
                   {
                  // Unparse as a C/C++ code.
+                    ROSE_ASSERT(roseUnparser.u_exprStmt != NULL);
                     roseUnparser.u_exprStmt->unparseExpression ( const_cast<SgExpression*>(expr), inheritedAttributeInfo );
                   }
              }
@@ -1320,6 +1370,7 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
             // DQ (9/6/2010): Added support to detect use of C (default) or Fortran code.
             // DQ (2/2/2007): Note that we should modify the unparser to take the IR nodes as const pointers, but this is a bigger job than I want to do now!
 #if 1
+               ROSE_ASSERT(roseUnparser.u_type != NULL);
                roseUnparser.u_type->unparseType ( const_cast<SgType*>(type), inheritedAttributeInfo );
 #else
                if (SageInterface::is_Fortran_language() == true)
@@ -1340,6 +1391,7 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
                const SgSymbol* symbol = isSgSymbol(astNode);
 
             // DQ (2/2/2007): Note that we should modify the unparser to take the IR nodes as const pointers, but this is a bigger job than I want to do now!
+               ROSE_ASSERT(roseUnparser.u_sym != NULL);
                roseUnparser.u_sym->unparseSymbol ( const_cast<SgSymbol*>(symbol), inheritedAttributeInfo );
              }
 
@@ -1381,6 +1433,7 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
                          const SgTemplateParameter* templateParameter = isSgTemplateParameter(astNode);
 
                       // DQ (2/2/2007): Note that we should modify the unparser to take the IR nodes as const pointers, but this is a bigger job than I want to do now!
+                         ROSE_ASSERT(roseUnparser.u_exprStmt != NULL);
                          roseUnparser.u_exprStmt->unparseTemplateParameter(const_cast<SgTemplateParameter*>(templateParameter),inheritedAttributeInfo);
                          break;
                        }
@@ -1389,6 +1442,7 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
                          const SgTemplateArgument* templateArgument = isSgTemplateArgument(astNode);
 
                       // DQ (2/2/2007): Note that we should modify the unparser to take the IR nodes as const pointers, but this is a bigger job than I want to do now!
+                         ROSE_ASSERT(roseUnparser.u_exprStmt != NULL);
                          roseUnparser.u_exprStmt->unparseTemplateArgument(const_cast<SgTemplateArgument*>(templateArgument),inheritedAttributeInfo);
                          break;
                        }
@@ -1405,6 +1459,7 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
                          const SgPragma* pr = isSgPragma(astNode);
                          SgPragmaDeclaration* decl = isSgPragmaDeclaration(pr->get_parent());
                          ROSE_ASSERT (decl);
+                         ROSE_ASSERT(roseUnparser.u_exprStmt != NULL);
                          roseUnparser.u_exprStmt->unparseStatement ( decl, inheritedAttributeInfo );
                          break;
                        }
@@ -1463,6 +1518,7 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
                     SgOmpClause * omp_clause = const_cast<SgOmpClause*>(isSgOmpClause(astNode));
                     ROSE_ASSERT(omp_clause);
 
+                    ROSE_ASSERT(roseUnparser.u_exprStmt != NULL);
                     roseUnparser.u_exprStmt->unparseOmpClause(omp_clause, inheritedAttributeInfo);
                   }
              }
@@ -1524,9 +1580,8 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
 
      ROSE_ASSERT(file != NULL);
 
-     // FMZ (12/21/2009) the imported files by "use" statements should not be unparsed 
+  // FMZ (12/21/2009) the imported files by "use" statements should not be unparsed 
      if (file->get_skip_unparse()==true) return;
-
 
 #if 0
   // DQ (5/31/2006): It is a message that I think we can ignore (was a problem for Yarden)
@@ -1672,6 +1727,8 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
        // information that is passed down through the tree (inherited attribute)
        // SgUnparse_Info inheritedAttributeInfo (NO_UNPARSE_INFO);
           SgUnparse_Info inheritedAttributeInfo;
+
+       // inheritedAttributeInfo.display("Inside of unparseFile(SgFile* file)");
 
        // Call member function to start the unparsing process
        // roseUnparser.run_unparser();

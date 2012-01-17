@@ -91,6 +91,25 @@ volatile:     Already in const-volatile modifier
 
 
 
+My little TODO list (Dan):
+
+   Types:
+      Array types (e.g. String[] in test2011_02.java) is built as SgClassType, but not a SgArrayType of String).
+
+
+
+   IR nodes to add for Philippe:
+      SgForEach ( SgInitializedName or SgForInitStmt )
+      SynchronizedStatement (SgExpression,SgBasicBlock)
+      ThrowStatement  (Justified since it is part of the grammar)
+   Make sure that ArithmeticException is found as a implicit type in Java
+
+   The code representing cactionArgument() should be refactored so that
+   it can be called to put arguments onto the stack (instead of processing
+   them in the functions (and catch statement) when they are seen.
+   The cactionArgument() was hijacked for use in the top down processing
+   of method declarations and then commented out in the implementation from
+   the Java visit() functions.
 
 
 

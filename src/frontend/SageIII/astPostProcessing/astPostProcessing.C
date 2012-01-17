@@ -15,6 +15,7 @@
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 
+
 // DQ (8/20/2005): Make this local so that it can't be called externally!
 void postProcessingSupport (SgNode* node);
 
@@ -147,7 +148,9 @@ void postProcessingSupport (SgNode* node)
 #ifdef ROSE_USE_NEW_EDG_INTERFACE
 
   // Only do AST post-processing for C/C++
-     bool doPostprocessing = (SageInterface::is_Fortran_language() == true) || (SageInterface::is_PHP_language() == true);
+     bool doPostprocessing = (SageInterface::is_Fortran_language() == true) ||
+                             (SageInterface::is_PHP_language() == true) ||
+                             (SageInterface::is_Python_language() == true);
 
   // If this is C or C++ then we are using the new EDG translation and althrough fewer 
   // fixups should be required, some are still required.
@@ -495,6 +498,13 @@ void postProcessingSupport (SgNode* node)
   // DQ (3/7/2010): Identify the fragments of the AST that are disconnected.
   // Moved from astConsistancy tests (since it deletes nodes not connected to the AST).
   // TestForDisconnectedAST::test(node);
+
+  // DQ (9/14/2011): Process the AST to remove constant folded values held in the expression trees.
+  // This step defines a consistant AST more suitable for analysis since only the constant folded
+  // values will be visited.  However, the default should be to save the original expression trees
+  // and remove the constant folded values since this represents the original code.  This mechanism
+  // will provide a default when it is more fully implemented.
+     resetConstantFoldedValues(node);
 
   // DQ (5/22/2005): Nearly all AST fixup should be done before this closing step
   // QY: check the isModified flag

@@ -1,6 +1,7 @@
 #ifndef VIRTUAL_CFG_H
 #define VIRTUAL_CFG_H
 
+#include <string>
 #include <vector>
 #include <assert.h>
 

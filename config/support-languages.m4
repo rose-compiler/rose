@@ -63,7 +63,7 @@ if test "x$USER_GAVE_ENABLE_ONLY_LANGUAGE_CONFIG_OPTION" = "xno" ; then
 #########################################################################################
 AC_ARG_ENABLE([languages],
 #########################################################################################
-               AS_HELP_STRING([--enable-languages=LIST],[Build specific languages: all,none,binary-analysis,c,c++,cuda,fortran,java,opencl,php,python (default=all)]),,
+               AS_HELP_STRING([--enable-languages=LIST],[Build specific languages: all,none,binaries,c,c++,cuda,fortran,java,opencl,php,python (default=all)]),,
                [enableval=all])
 
 	       # Default support for all languages

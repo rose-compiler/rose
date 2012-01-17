@@ -1,6 +1,8 @@
 #ifndef __token_h__
 #define __token_h__
 
+#include "JavaSourceCodePosition.h"
+
 #if 0
 typedef struct Token
    {
@@ -15,20 +17,15 @@ typedef struct Token
 #else
 class Token_t
    {
-  /* The minimum four fields.  */
      private:
           std::string text;
-          int line_number;
-          int column_number;
-
+          JavaSourceCodePosition * pos_info;
   // I don't think I need the token type.
   // int type;
      public:
-          Token_t (std::string s, int line, int col );
-
+          Token_t (std::string s, JavaSourceCodePosition * pos_info);
+          JavaSourceCodePosition * getSourcecodePosition();
           std::string getText();
-          int getLine();
-          int getCol();
    };
 #endif
 

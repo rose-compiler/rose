@@ -30,6 +30,7 @@ fixupAstSymbolTablesToSupportAliasedSymbols (SgNode* node)
    }
 
 
+// DQ (8/23/2011): Made this a static function so that I could call it from the Java support.
 void
 FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeIntoCurrentScope ( SgScopeStatement* referencedScope, SgScopeStatement* currentScope, SgAccessModifier::access_modifier_enum accessLevel )
    {
@@ -523,11 +524,16 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
        // Handle any derived classes.
           SgBaseClassPtrList & baseClassList = classDefinition->get_inheritances();
           SgBaseClassPtrList::iterator i = baseClassList.begin();
-          while (i != baseClassList.end())
+          for ( ; i != baseClassList.end(); ++i)
              {
             // Check each base class.
                SgBaseClass* baseClass = *i;
                ROSE_ASSERT(baseClass != NULL);
+
+               /* skip processing for SgExpBaseClasses (which don't have to define p_base_class) */
+               if (baseClass->variantT() == V_SgExpBaseClass) {
+                   continue;
+               }
 
             // printf ("baseClass->get_baseClassModifier().displayString()                      = %s \n",baseClass->get_baseClassModifier().displayString().c_str());
             // printf ("baseClass->get_baseClassModifier().get_accessModifier().displayString() = %s \n",baseClass->get_baseClassModifier().get_accessModifier().displayString().c_str());
@@ -550,8 +556,6 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
 
             // We need this function to restrict it's injection of symbol to just those that are associated with public and protected declarations.
                injectSymbolsFromReferencedScopeIntoCurrentScope(referencedScope,classDefinition,accessLevel);
-
-               i++;
              }
         }
 

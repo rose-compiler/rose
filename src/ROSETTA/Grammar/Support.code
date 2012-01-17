@@ -357,6 +357,9 @@ HEADER_INCIDENCE_DIRECTED_GRAPH_START
  //! Add support for externally build SgGraphNode objects
      SgDirectedGraphEdge* addDirectedEdge( SgDirectedGraphEdge* edge  );
 
+ //! Remove an edge from graph
+     bool removeDirectedEdge( SgDirectedGraphEdge* edge  );
+     
 	// tps (4/30/2009): Added to support functionality for DirectedGraphs		   
      void getSuccessors(const SgGraphNode* node, std::vector <SgGraphNode*>& vec ) const;
      void getPredecessors(const SgGraphNode* node, std::vector <SgGraphNode*>& vec ) const;
@@ -3836,6 +3839,8 @@ HEADER_SYMBOL_TABLE_START
           SgEnumSymbol*      find_enum(const SgName & name);       //! Complexity O(log n) for first match against name, then O(n)
           SgEnumFieldSymbol* find_enum_field(const SgName & name); //! Complexity O(log n) for first match against name, then O(n)
           SgLabelSymbol*     find_label(const SgName & name);      //! Complexity O(log n) for first match against name, then O(n)
+          SgJavaLabelSymbol* find_java_label(const SgName & name); //! Complexity O(log n) for first match against name, then O(n)
+                                                                   // charles4: added 09/12/2011 for Java
           SgNamespaceSymbol* find_namespace(const SgName & name);  //! Complexity O(log n) for first match against name, then O(n)
           SgTemplateSymbol*  find_template(const SgName & name);   //! Complexity O(log n) for first match against name, then O(n)
 
@@ -3983,6 +3988,11 @@ HEADER_BASECLASS_START
 
 HEADER_BASECLASS_END
 
+HEADER_EXP_BASE_CLASS_START
+     public:
+          void post_construction_initialization();
+HEADER_EXP_BASE_CLASS_END
+
 
 HEADER_SYMBOL_TABLE_POSTDECLARATION_START
 HEADER_SYMBOL_TABLE_POSTDECLARATION_END
@@ -4129,6 +4139,8 @@ HEADER_INITIALIZED_NAME_START
           void unsetGnuAttributeWeakReference();
 
           void post_construction_initialization();
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
        // Overriding SgNode versions of these
           virtual unsigned int cfgIndexForEnd() const;
           virtual bool cfgIsIndexInteresting(unsigned int index) const;
@@ -4136,6 +4148,7 @@ HEADER_INITIALIZED_NAME_START
           virtual unsigned int cfgFindNextChildIndex(SgNode* n);
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
 
           SgStorageModifier & get_storageModifier();
 
@@ -4182,7 +4195,7 @@ HEADER_INITIALIZED_NAME_START
        // SgName get_name() const;
 
        // DQ (10/9/2007): Use the ROSETTA generated version to test failure
-       // DQ (10/5/2007): Put back into place afterhaving been removed by accident in 12/??/2004
+       // DQ (10/5/2007): Put back into place afterhaving been removed by accident in 12/xx/2004
        // AJ (10/21/2004): Added function to support changing names of symbols, note that void set_name(SgName name) 
        // would be the automatically generated function.
        // void set_name(SgName name);
@@ -5108,9 +5121,9 @@ HEADER_APPLICATION_PROJECT_START
                e_last          /*!< last value (used for error checking) */
              };
 
-      //! The only useful constructors
-          SgProject ( const std::vector<std::string>& argv);
-          SgProject ( int argc, char** argv);
+      //! The only useful constructors (constant folding in the frontend is false by default).
+          SgProject ( const std::vector<std::string>& argv, bool frontendConstantFolding = false);
+          SgProject ( int argc, char** argv, bool frontendConstantFolding = false);
 
 #if 0
       // DQ (10/16/2005): Depreicated a long time ago, removed it now!
@@ -5214,6 +5227,7 @@ HEADER_APPLICATION_PROJECT_START
 
        // DQ: bool values on the SgFile nodes which can be queried on the SgProject
        // nodes (must be the same across all SgFile nodes in the project).
+          bool get_skip_translation_from_edg_ast_to_rose_ast (void) const;
           bool get_skip_transformation (void) const;
           bool get_skip_unparse (void) const;
           bool get_useBackendOnly (void) const;
@@ -5283,6 +5297,11 @@ HEADER_APPLICATION_PROJECT_START
           SgStringList & get_excludeFileList();
           const SgStringList & get_excludeFileList() const;
           void set_excludeFileList(const SgStringList & excludeFileList);
+
+       // negara1 (07/29/2011)
+          std::string findIncludedFile(PreprocessingInfo* preprocessingInfo);
+
+          int get_detect_dangling_pointers(void) const;
 
 #if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
 #else
@@ -6110,6 +6129,14 @@ SgSymbolTable::get_name( const SgNode* node) const
                break;
              }
 
+          case V_SgJavaLabelStatement: // charles4: 09/13/2011 added for Java support
+             {
+               const SgJavaLabelStatement* labelStatement = isSgJavaLabelStatement(node); 
+               ROSE_ASSERT (labelStatement->get_label() != NULL);
+               name = labelStatement->get_label();
+               break;
+             }
+
           case V_SgClassDeclaration:
           case V_SgDerivedTypeStatement:
           case V_SgModuleStatement:
@@ -6853,6 +6880,7 @@ SgSymbolTable::exists ( const SgName & nm, SgSymbol *sp ) const
       SgEnumSymbol*      find_enum(const SgName &);
       SgEnumFieldSymbol* find_enum_field(const SgName &);
       SgLabelSymbol*     find_label(const SgName &) const;
+      SgJavaLabelSymbol* find_label(const SgName &) const; // charles4: added 9/12/2011 for Java
       SgNamespaceSymbol* find_namespace(const SgName &);
 */
 
@@ -7152,6 +7180,32 @@ SgSymbolTable::find_label(const SgName & nm)
                     p_name    = nm;
                     p_no_name = false;
                     return (SgLabelSymbol *) p_iterator->second;
+                  }
+               p_iterator++;
+             }
+        }
+
+     return NULL;
+   }
+
+//
+// charles4: added this function for the Java case...
+//
+SgJavaLabelSymbol*
+SgSymbolTable::find_java_label(const SgName & nm)
+   {
+     assert(p_table != NULL);
+     if (p_table)
+        {
+          p_iterator = p_table->find(nm);
+          while (p_iterator != p_table->end() && (*p_iterator).first == nm)
+             {
+            // if (isSgNamespaceSymbol((*p_iterator).second))
+               if ( p_iterator->second->variantT() == V_SgJavaLabelSymbol)
+                  {
+                    p_name    = nm;
+                    p_no_name = false;
+                    return (SgJavaLabelSymbol *) p_iterator->second;
                   }
                p_iterator++;
              }
@@ -8469,6 +8523,12 @@ SgBaseClass::get_qualified_name_prefix() const
  
 SOURCE_BASECLASS_END
 
+SOURCE_EXP_BASE_CLASS_START
+void
+SgExpBaseClass::post_construction_initialization()
+   {
+   }
+SOURCE_EXP_BASE_CLASS_END
 
 SOURCE_X_INITIALIZED_NAME_START
 
@@ -8506,8 +8566,12 @@ SgSymbol*
 SgInitializedName::search_for_symbol_from_symbol_table() const
    {
      SgSymbol *symbol;
-     if (p_prev_decl_item)
-          symbol = p_prev_decl_item->get_symbol_from_symbol_table();
+     SgInitializedName* aPrevDeclItem=p_prev_decl_item;
+     while(aPrevDeclItem && aPrevDeclItem->p_prev_decl_item) {
+        aPrevDeclItem=aPrevDeclItem->p_prev_decl_item;
+     }
+     if (aPrevDeclItem)
+          symbol = aPrevDeclItem->get_symbol_from_symbol_table();
      else
           symbol = get_symbol_from_symbol_table();
      assert(symbol != NULL);
@@ -9516,15 +9580,21 @@ SgName::assembleQualifiedName(const SgName & scopeQualifiedName, const SgName & 
         }
        else 
         {
+          std::string scopeDelimiter;
+          if (SageInterface::is_Java_language())
+              scopeDelimiter = ".";
+          else
+              scopeDelimiter = "::";
+
        // Trap out the case of global scope to avoid building "::::"
-          if ( scopeQualifiedName == "::" )
+          if ( scopeQualifiedName == scopeDelimiter )
              {
             // Avoid building "::::"
                returnName = scopeQualifiedName.getString() + localName.getString();
              }
             else
              {
-               returnName = scopeQualifiedName.getString() + "::" + localName.getString();
+               returnName = scopeQualifiedName.getString() + scopeDelimiter + localName.getString();
              }
         }
 
@@ -11235,6 +11305,9 @@ SgFile::initialization()
      p_skip_transformation     = false;
      p_skip_unparse            = false;
 
+  // DQ (11/1/2011): Added support to skip translation of EDG AST to ROSE AST.
+     p_skip_translation_from_edg_ast_to_rose_ast = false;
+
 #if 1
   // The default should be to act like a C++ compiler
      p_skipfinalCompileStep    = false;
@@ -11450,6 +11523,14 @@ X aggressive
 
   // DQ (11/20/2010): Support for token handling.
      p_output_tokens = false;
+
+  // DQ (9/26/2011): This was not initialized previosuly so I have added it.
+     p_sourceFileTypeIsUnknown = false;
+
+  // DQ (9/26/2011): New support for option to specify debugging support in ROSE to 
+  // detect dangling pointers to IR nodes as part of the AST Consistancy tests. At 
+  // some point this will default to always being on as an AST consistancy test.
+     p_detect_dangling_pointers = 0;
    }
 
 #if 0
@@ -11929,6 +12010,7 @@ SgFile::display ( const std::string & label ) const
      printf ("     p_exit_after_parser                    = %s \n",(p_exit_after_parser == true) ? "true" : "false");
 
      printf ("     p_skip_syntax_check                    = %s \n",(p_skip_syntax_check      == true) ? "true" : "false");
+     printf ("     p_skip_translation_from_edg_ast_to_rose_ast = %s \n",(p_skip_transformation    == true) ? "true" : "false");
      printf ("     p_skip_transformation                  = %s \n",(p_skip_transformation    == true) ? "true" : "false");
      printf ("     p_skip_unparse                         = %s \n",(p_skip_unparse           == true) ? "true" : "false");
      printf ("     p_skipfinalCompileStep                 = %s \n",(p_skipfinalCompileStep   == true) ? "true" : "false");
@@ -12011,6 +12093,8 @@ SgFile::display ( const std::string & label ) const
      printf ("     p_read_instructions_only               = %s \n",(p_read_instructions_only == true) ? "true" : "false");
 
      printf ("     p_output_tokens                        = %s \n",(p_output_tokens == true) ? "true" : "false");
+
+     printf ("     p_detect_dangling_pointers             = %d \n",p_detect_dangling_pointers);
 
 #if 0
 // Order of data member entries in support.C, matched against the 
@@ -12270,9 +12354,16 @@ SgProject::SgProject( const SgProject & project )
    }
 
 //! constructor invokes EDG front end and creates AST. Use frontend() instead.
-SgProject::SgProject ( int argc, char** argv)
+SgProject::SgProject ( int argc, char** argv, bool frontendConstantFolding)
    {
      initialization();
+
+  // DQ (9/18/2011): Added support to use frontend specific constnat folding (applies to C/C++ using EDG).
+  // All other languges have no specific constant folding options in there frontends.  We use to support
+  // the original expression tree in the AST, and this provided both the constant folded value and
+  // the original expression tree, but this was a problem for analysis (which tened to mix them together).
+  // printf ("In SgProject(int argc,char** argv): frontendConstantFolding = %s \n",frontendConstantFolding == true ? "true" : "false");
+     p_frontendConstantFolding = frontendConstantFolding;
 
      std::vector<std::string> argvList(argv, argv + argc);
      int errorCode = parse(argvList);
@@ -12280,29 +12371,20 @@ SgProject::SgProject ( int argc, char** argv)
    }
 
 //! constructor invokes EDG front end and creates AST. Use frontend() instead.
-SgProject::SgProject ( const std::vector<std::string>& argv )
+SgProject::SgProject ( const std::vector<std::string>& argv, bool frontendConstantFolding )
    {
      initialization();
+
+  // DQ (9/18/2011): Added support to use frontend specific constnat folding (applies to C/C++ using EDG).
+  // All other languges have no specific constant folding options in there frontends.  We use to support
+  // the original expression tree in the AST, and this provided both the constant folded value and
+  // the original expression tree, but this was a problem for analysis (which tened to mix them together).
+  // printf ("In SgProject(const std::vector<std::string>& argv): frontendConstantFolding = %s \n",frontendConstantFolding == true ? "true" : "false");
+     p_frontendConstantFolding = frontendConstantFolding;
 
      int errorCode = parse(argv);
      set_frontendErrorCode(errorCode);
    }
-
-#if 0
-// DQ (10/16/2005): Depreicated a long time ago, removed it now!
-//! Deprecated, do not use.
-SgProject::SgProject ( int& argc, char** argv, int& refErrorCode)
-   {
-     printf ("This SgProject constructor is deprecated, do not use. \n");
-
-     initialization();
-
-     int errorCode;
-     errorCode = parse(argc,argv);
-     set_frontendErrorCode(errorCode);
-     refErrorCode = errorCode;
-   }
-#endif
 
 void
 SgProject::initialization()
@@ -12374,6 +12456,9 @@ SgProject::initialization()
      p_Cxx_only              = false;
      p_Fortran_only          = false;
      p_addCppDirectivesToAST = false;
+
+  // DQ (9/18/2011): Added support for using more constant AST to select to use or not use frontend specific constant folding.
+     p_frontendConstantFolding = false;
    }
 
 // DQ (2/1/2007): Added new operator so that w could depricate the inconsistant usage of 
@@ -12596,6 +12681,19 @@ void
 SgProject::set_verbose ( int x )
    {
      p_verbose = x;
+   }
+
+bool
+SgProject::get_skip_translation_from_edg_ast_to_rose_ast (void) const
+   {
+  // look at how the files are set
+     bool returnSkipTranslation = (numberOfFiles() > 0) ? true : false;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          returnSkipTranslation = returnSkipTranslation && (bool) file.get_skip_translation_from_edg_ast_to_rose_ast();
+        }
+     return returnSkipTranslation;
    }
 
 bool
@@ -12875,6 +12973,21 @@ SgProject::skipfinalCompileStep(bool value)
         {
           get_file(i).set_skipfinalCompileStep(value);
         }
+   }
+
+
+int
+SgProject::get_detect_dangling_pointers(void) const
+   {
+  // look at how the files are set
+     int result = 0;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          result = result | file.get_detect_dangling_pointers();
+        }
+
+     return result;
    }
 
 
