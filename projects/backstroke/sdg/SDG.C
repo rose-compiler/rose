@@ -165,7 +165,7 @@ void SystemDependenceGraph::build()
             // If this CFG node contains a function call expression, extract its all parameters
             // and make them as actual-in nodes.
             
-            else if (SgFunctionCallExp* funcCallExpr = isSgFunctionCallExp(astNode))
+            if (SgFunctionCallExp* funcCallExpr = isSgFunctionCallExp(astNode))
             {
                 CallSiteInfo callInfo;
                 callInfo.funcCall = funcCallExpr;
@@ -177,10 +177,22 @@ void SystemDependenceGraph::build()
                 
                 // Get the associated function declaration.
                 SgFunctionDeclaration* funcDecl = funcCallExpr->getAssociatedFunctionDeclaration();
+                
+                if (funcDecl == NULL)
+                    continue;
+                ROSE_ASSERT(funcDecl);
+                
                 const SgInitializedNamePtrList& formalArgs = funcDecl->get_args();
                 
                 SgExprListExp* args = funcCallExpr->get_args();
                 const SgExpressionPtrList& actualArgs = args->get_expressions();
+                
+                if (formalArgs.size() != actualArgs.size())
+                {
+                    cout << funcDecl->get_file_info()->get_filename() << endl;
+                    cout << funcDecl->get_name() << formalArgs.size() << " " << actualArgs.size() << endl;
+                    continue;
+                }
                 
                 for (int i = 0, s = actualArgs.size(); i < s; ++i)
                 {
