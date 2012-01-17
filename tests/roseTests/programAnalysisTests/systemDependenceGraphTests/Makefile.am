@@ -2,7 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 INCLUDES = $(ROSE_INCLUDES)
 
-noinst_PROGRAMS=testSDG
+noinst_PROGRAMS = testSDG
 testSDG_SOURCES = sdgTest.C
 testSDG_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
@@ -20,7 +20,6 @@ constants.c \
 gconv_info.c \
 math.c \
 stdio.c \
-test2003_12.c \
 test2004_20.c \
 test2004_21.c \
 test2005_172.c \
@@ -76,6 +75,7 @@ YardenPragmaPackExample.c \
 Yarden_client.c 
 
 C_FAILURE_TESTCODES = \
+test2003_12.c \
 expected failure (need special compile cmd) test2005_168.c \
 gzip.c
 
@@ -757,8 +757,8 @@ TEST_C:
 	@rm -f *.c
 
 .PHONY: $(C_TESTCODES_REQUIRED_TO_PASS)
-$(C_TESTCODES_REQUIRED_TO_PASS): ssaTestHarness
-	./ssaTestHarness --edg:no_warnings -w -rose:verbose 0 $(TEST_INCLUDES) -c $@
+$(C_TESTCODES_REQUIRED_TO_PASS): testSDG
+	./testSDG --edg:no_warnings -w -rose:verbose 0 $(TEST_INCLUDES) -c $@
 
 .PHONY: TEST_CXX
 TEST_CXX:
