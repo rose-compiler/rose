@@ -658,9 +658,17 @@ int initialize(int argc, char** argv)
 #ifdef POET_DEST_DIR
   lib_dir.push_front(POET_DEST_DIR);
 #endif
+
 #ifdef POET_LIB_DIR
+#if !USE_ROSE
+// DQ (11/3/2011): EDG compilains about this (but GNU allowed it, I think that EDG might be correct,
+// and that the issue might be the ammount of quoting for the string passed via the -D option list.
+// But since we are only trying to compile ROSE with ROSE (using the new EDG 4.3 front-end as a tests) 
+// we can just skip this case for now.
   lib_dir.push_front(POET_LIB_DIR);
 #endif
+#endif
+
   lib_dir.push_front("./");
   
   int index = 1;
@@ -685,7 +693,17 @@ int initialize(int argc, char** argv)
      else if (*p == 'm' && *(p+1) == 'd')
           redefine_code=true;
      else if (*p == 'v')
-          std::cerr << "pcg version: " << POET_VERSION << "\n";
+             {
+#if !USE_ROSE
+            // DQ (11/3/2011): EDG compilains about this (but GNU allowed it, I think that EDG might be correct,
+            // and that the issue might be the ammount of quoting for the string passed via the -D option list.
+            // But since we are only trying to compile ROSE with ROSE (using the new EDG 4.3 front-end as a tests) 
+            // we can just skip this case for now.
+               std::cerr << "pcg version: " << POET_VERSION << "\n";
+#else
+               std::cerr << "pcg version: " << "1.02.06.10" << "\n";
+#endif
+             }
      else if (*p == 'p') {
          std::string parName;
          char* p1 = p+1;

@@ -80,7 +80,7 @@ std::vector<PolyhedricDependency::Dependency<Function, Expression, VariableLBL> 
 		Polyhedron dependency(deps->domain->NbColumns - 2);
 		
 		for (size_t i = 0; i < deps->domain->NbRows; i++) {
-			LinearExpression le;
+			LinearExpression_ppl le;
 			for (size_t j = 1; j < deps->domain->NbColumns-1; j++) {
 				le += Integer((long int)deps->domain->p[i][j]) * VariableID(j-1);
 			}

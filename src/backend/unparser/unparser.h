@@ -24,7 +24,6 @@
 #include "unparseFortran_types.h"
 
 #include "unparseJava.h"
-#include "unparseJava_types.h"
 
 #include "unparsePHP.h"
 
@@ -129,10 +128,6 @@ class Unparser
           UnparseFortran_type* u_fortran_type;
           FortranCodeGeneration_locatedNode* u_fortran_locatedNode;
 
-       // DQ (4/16/2011): Added the Java support semetric to the Fortran unparser support.
-          UnparseJava_type* u_java_type;
-          JavaCodeGeneration_locatedNode* u_java_locatedNode;
-
      private:
 
 
@@ -208,6 +203,12 @@ class Unparser
 
       //! destructor
           virtual ~Unparser();
+
+       // DQ (9/11/2011): Added copy constructor.
+          Unparser(const Unparser & X);
+
+       // DQ (9/11/2011): Added operator==() to fix issue detected in static analysis.
+          Unparser & operator=(const Unparser & X);
 
       //! get the output stream wrapper
           UnparseFormat& get_output_stream(); 

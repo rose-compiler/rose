@@ -203,7 +203,7 @@ Partitioner::IPDParser::parse_FuncDecl()
     rose_addr_t entry_va = match_number();
     std::string name = is_string() ? match_string() : "";
     try {
-        cur_func = partitioner->add_function(entry_va, SgAsmFunctionDeclaration::FUNC_USERDEF, name);
+        cur_func = partitioner->add_function(entry_va, SgAsmFunction::FUNC_USERDEF, name);
         parse_FuncBody();
         cur_func = NULL;
     } catch (const Exception&) {
@@ -243,12 +243,12 @@ Partitioner::IPDParser::parse_ReturnSpec()
 {
     if (is_symbol("return") || is_symbol("returns")) {
         match_symbol();
-        cur_func->returns = true;
+        cur_func->may_return = true;
         return true;
     }
     if (is_symbol("noreturn")) {
         match_symbol("noreturn");
-        cur_func->returns = false;
+        cur_func->may_return = false;
         return true;
     }
     return false;
@@ -269,6 +269,8 @@ Partitioner::IPDParser::parse_BlockDecl()
     cur_block = new BlockConfig;
     cur_block->ninsns = ninsns;
     partitioner->block_config.insert(std::make_pair(va, cur_block));
+    if (cur_func)
+        cur_func->heads.insert(va);
     parse_BlockBody();
     return true;
 }

@@ -1,0 +1,11 @@
+MODULE work_caf
+implicit none
+REAL :: work[*]
+END MODULE
+  
+  subroutine use_work
+  use work_caf, only : k => work  
+  implicit none 
+
+  k[3] = 0.5
+  end subroutine

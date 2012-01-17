@@ -9,40 +9,40 @@
 
 #include <vector>
 
-std::vector<LinearExpression> * maxlex(Polyhedron & p, std::vector<bool> & sign, size_t d1, size_t d2, size_t g) {
-	std::vector<LinearExpression> * res = new std::vector<LinearExpression>(d1);
+std::vector<LinearExpression_ppl> * maxlex(Polyhedron & p, std::vector<bool> & sign, size_t d1, size_t d2, size_t g) {
+	std::vector<LinearExpression_ppl> * res = new std::vector<LinearExpression_ppl>(d1);
 	
 	if (d1==0) return res;
 	
-	std::vector<std::pair<bool, LinearExpression> > cs(2 * d1);
+	std::vector<std::pair<bool, LinearExpression_ppl> > cs(2 * d1);
 	
 	const ConstraintSystem & cs_ = p.minimized_constraints();
 	ConstraintSystem::const_iterator it;
-	LinearExpression le(0);
+	LinearExpression_ppl le(0);
 	
 	for (it = cs_.begin(); it != cs_.end(); it++) {
 		for (size_t i = 0; i < d1; i++) {
 			if (it->coefficient(VariableID(i)) != 0) { // == 1 or -1
-				le = LinearExpression::zero();
+				le = LinearExpression_ppl::zero();
 				le += it->inhomogeneous_term();
 				for (size_t j = 0; j < d1 + d2 + g; j++) {
 					if (j != i)
 						le += it->coefficient(VariableID(j)) * VariableID(j);
 				}
 				if (it->is_equality()) {
-					cs[2 * i] =     std::pair<bool, LinearExpression>(true, - it->coefficient(VariableID(i)) * le);
-					cs[2 * i + 1] = std::pair<bool, LinearExpression>(true, - it->coefficient(VariableID(i)) * le);
+					cs[2 * i] =     std::pair<bool, LinearExpression_ppl>(true, - it->coefficient(VariableID(i)) * le);
+					cs[2 * i + 1] = std::pair<bool, LinearExpression_ppl>(true, - it->coefficient(VariableID(i)) * le);
 					break;
 				}
 				else if (it->coefficient(VariableID(i)) == 1) {
 					if (!cs[2 * i].first) {
-						cs[2 * i] = std::pair<bool, LinearExpression>(true, -le);
+						cs[2 * i] = std::pair<bool, LinearExpression_ppl>(true, -le);
 						break;
 					}
 				}
 				else {
 					if (!cs[2 * i + 1].first) {
-						cs[2 * i + 1] = std::pair<bool, LinearExpression>(true, le);
+						cs[2 * i + 1] = std::pair<bool, LinearExpression_ppl>(true, le);
 						break;
 					}
 				}
@@ -78,7 +78,7 @@ std::vector<LinearExpression> * maxlex(Polyhedron & p, std::vector<bool> & sign,
 	for (size_t i = 0; i < d1; i++)
 		(*res)[i] = cs[2 * i + (sign[i] ? 1 : 0)].second;
 	
-	std::vector<LinearExpression> * tmp = new std::vector<LinearExpression>(d1);
+	std::vector<LinearExpression_ppl> * tmp = new std::vector<LinearExpression_ppl>(d1);
 	
 	for (size_t i = 0; i < d1; i++) {
 		(*tmp)[i] +=  (*res)[i].inhomogeneous_term();
@@ -94,13 +94,13 @@ std::vector<LinearExpression> * maxlex(Polyhedron & p, std::vector<bool> & sign,
 std::vector<Constraint> * conditions(
 	const ConstraintSystem & dt,
 	const ConstraintSystem & df,
-	const std::vector<LinearExpression> & rel,
+	const std::vector<LinearExpression_ppl> & rel,
 	size_t st, size_t sf, size_t sg 
 ) {
 	std::vector<Constraint> * res = new std::vector<Constraint>();
 	ConstraintSystem::const_iterator itc_cs;
 	for (itc_cs = dt.begin(); itc_cs != dt.end(); itc_cs++) {
-		LinearExpression le(0);
+		LinearExpression_ppl le(0);
 		le += itc_cs->inhomogeneous_term();
 		for (int i = 0; (i < st) && (i < itc_cs->space_dimension()); i++) {
 			le += itc_cs->coefficient(VariableID(i)) * rel[i];
@@ -139,7 +139,7 @@ std::vector<Constraint> * conditions(
 	return res;
 }
 
-bool operator == (const std::vector<LinearExpression> & v1, const std::vector<LinearExpression> & v2) {
+bool operator == (const std::vector<LinearExpression_ppl> & v1, const std::vector<LinearExpression_ppl> & v2) {
 	if (v1.size() != v2.size())
 		return false;
 	bool res = true;

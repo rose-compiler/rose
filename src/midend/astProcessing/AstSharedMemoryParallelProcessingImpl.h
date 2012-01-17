@@ -201,14 +201,24 @@ template <class I, class S>
 void
 AstSharedMemoryParallelTopDownBottomUpProcessing<I, S>::set_numberOfThreads(size_t threads) const
 {
+#if !USE_ROSE
+// DQ (11/3/2011): EDG compilains about this (but GNU allowed it, I think that EDG might be correct
+// since it is a private variable.  But since we are only trying to compile ROSE with ROSE (using the
+// new EDG 4.3 front-end as a tests) we can just skip this case for now.
     numberOfThreads = threads;
+#endif
 }
 
 template <class I, class S>
 void
 AstSharedMemoryParallelTopDownBottomUpProcessing<I, S>::set_synchronizationWindowSize(size_t windowSize) const
 {
+#if !USE_ROSE
+// DQ (11/3/2011): EDG compilains about this (but GNU allowed it, I think that EDG might be correct
+// since it is a private variable.  But since we are only trying to compile ROSE with ROSE (using the
+// new EDG 4.3 front-end as a tests) we can just skip this case for now.
     synchronizationWindowSize = windowSize;
+#endif
 }
 
 // parallel TOP DOWN implementation
@@ -386,14 +396,24 @@ template <class I>
 void
 AstSharedMemoryParallelTopDownProcessing<I>::set_numberOfThreads(size_t threads) const
 {
+#if !USE_ROSE
+// DQ (11/3/2011): EDG compilains about this (but GNU allowed it, I think that EDG might be correct
+// since it is a private variable.  But since we are only trying to compile ROSE with ROSE (using the
+// new EDG 4.3 front-end as a tests) we can just skip this case for now.
     numberOfThreads = threads;
+#endif
 }
 
 template <class I>
 void
 AstSharedMemoryParallelTopDownProcessing<I>::set_synchronizationWindowSize(size_t windowSize) const
 {
+#if !USE_ROSE
+// DQ (11/3/2011): EDG compilains about this (but GNU allowed it, I think that EDG might be correct
+// since it is a private variable.  But since we are only trying to compile ROSE with ROSE (using the
+// new EDG 4.3 front-end as a tests) we can just skip this case for now.
     synchronizationWindowSize = windowSize;
+#endif
 }
 
 // parallel BOTTOM UP implementation
@@ -563,14 +583,24 @@ template <class S>
 void
 AstSharedMemoryParallelBottomUpProcessing<S>::set_numberOfThreads(size_t threads) const
 {
+#if !USE_ROSE
+// DQ (11/3/2011): EDG compilains about this (but GNU allowed it, I think that EDG might be correct
+// since it is a private variable.  But since we are only trying to compile ROSE with ROSE (using the
+// new EDG 4.3 front-end as a tests) we can just skip this case for now.
     numberOfThreads = threads;
+#endif
 }
 
 template <class S>
 void
 AstSharedMemoryParallelBottomUpProcessing<S>::set_synchronizationWindowSize(size_t windowSize) const
 {
+#if !USE_ROSE
+// DQ (11/3/2011): EDG compilains about this (but GNU allowed it, I think that EDG might be correct
+// since it is a private variable.  But since we are only trying to compile ROSE with ROSE (using the
+// new EDG 4.3 front-end as a tests) we can just skip this case for now.
     synchronizationWindowSize = windowSize;
+#endif
 }
 
 #endif

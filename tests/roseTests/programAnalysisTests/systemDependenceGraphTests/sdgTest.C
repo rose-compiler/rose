@@ -1,8 +1,11 @@
-#include <staticCFG.h>
+#include <cong_staticCFG.h>
 #include <PDG.h>
 #include <SDG.h>
 #include <defUseChains.h>
+#include <newCDG.h>
+#include <newDDG.h>
 
+using namespace StaticCFG;
 using namespace SDG;
 
 bool filterCfgNode(const VirtualCFG::CFGNode& cfgNode)

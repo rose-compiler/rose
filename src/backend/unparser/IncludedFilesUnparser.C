@@ -8,7 +8,7 @@
 
 using namespace std;
 
-const string IncludedFilesUnparser::defaultUnparseFolderName = "_rose_";
+const string IncludedFilesUnparser::defaultUnparseFolderName = "_rose_unparsed_headers_";
 
 //It is needed because otherwise, the default destructor breaks something.
 
@@ -42,8 +42,22 @@ list<string> IncludedFilesUnparser::getIncludeCompilerOptions() {
 
 void IncludedFilesUnparser::unparse() {
     workingDirectory = FileHelper::normalizePath((* projectNode -> get_fileList().begin()) -> getWorkingDirectory());
-    //TODO: Use the default value for now, but the command line option should be used instead, if present.
-    unparseRootPath = FileHelper::concatenatePaths(workingDirectory, defaultUnparseFolderName);
+    string userSpecifiedUnparseRootFolder = projectNode -> get_unparseHeaderFilesRootFolder();
+    if (userSpecifiedUnparseRootFolder.empty()) {
+        //No folder specified, use the default location.
+        unparseRootPath = FileHelper::concatenatePaths(workingDirectory, defaultUnparseFolderName);
+    } else {
+        if (FileHelper::isAbsolutePath(userSpecifiedUnparseRootFolder)) {
+            unparseRootPath = userSpecifiedUnparseRootFolder;
+        } else {
+            unparseRootPath = FileHelper::concatenatePaths(workingDirectory, userSpecifiedUnparseRootFolder);            
+        }
+        //Check that the specified location does not exist or is empty. This is necessary to avoid data loss since this folder will be erased.
+        if (FileHelper::isNotEmptyFolder(unparseRootPath)) {
+            cout << "Please make sure that the root folder for header files unparsing does not exist or is empty:" << unparseRootPath << endl;
+            ROSE_ASSERT(false);
+        }
+    }
     FileHelper::eraseFolder(unparseRootPath); //Should be erased completely at every run to avoid name collisions with previous runs.
 
     traverse(projectNode, preorder); //collect immediately affected files as well as all traversed files

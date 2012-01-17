@@ -138,7 +138,8 @@ Grammar::setUpSupport ()
      NEW_NONTERMINAL_MACRO (Attribute, Pragma | BitAttribute, "Attribute", "AttributeTag", false);
 
   // DQ (4/25/2004): Must be placed before the modifiers (since it includes one as a data member)
-     NEW_TERMINAL_MACRO (BaseClass, "BaseClass", "BaseClassTag" );
+     NEW_TERMINAL_MACRO (ExpBaseClass, "ExpBaseClass", "ExpBaseClassTag" );
+     NEW_NONTERMINAL_MACRO (BaseClass, ExpBaseClass, "BaseClass", "BaseClassTag", false );
 
 // #define OLD_GRAPH_NODES 0
 // #if OLD_GRAPH_NODES
@@ -518,6 +519,7 @@ Grammar::setUpSupport ()
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 
      BaseClass.setFunctionPrototype           ( "HEADER_BASECLASS", "../Grammar/Support.code");
+     ExpBaseClass.setFunctionPrototype           ( "HEADER_EXP_BASE_CLASS", "../Grammar/Support.code");
 
   // DQ (4/29/2004): Removed in place of new modifier interface
   // BaseClass.setDataPrototype               ( "int"                , "base_specifier", "= 0",
@@ -552,6 +554,9 @@ Grammar::setUpSupport ()
   // DQ (5/11/2011): Added information required for new name qualification support.
      BaseClass.setDataPrototype("bool","global_qualification_required","= false",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     ExpBaseClass.setDataPrototype ( "SgExpression*", "base_class_exp", "= NULL",
+                                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      FuncDecl_attr.setFunctionPrototype ( "HEADER_FUNCTION_DECLARATION_ATTRIBUTE", "../Grammar/Support.code");
      ClassDecl_attr.setFunctionPrototype( "HEADER_CLASS_DECLARATION_ATTRIBUTE", "../Grammar/Support.code");
@@ -830,6 +835,12 @@ Grammar::setUpSupport ()
   // Operational options
   // File.setDataPrototype         ( "bool", "skip_rose", "= false",
   //             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (11/1/2011): Added support to just run the EDG front-end without translation of the EDG AST to the ROSE AST.
+  // This is helpful in evaluating the EDG frontend within the move to EDG 4.3 and later versions (update for C++ robustness).
+     File.setDataPrototype         ( "bool", "skip_translation_from_edg_ast_to_rose_ast", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      File.setDataPrototype         ( "bool", "skip_transformation", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype         ( "bool", "skip_unparse", "= false",
@@ -1045,6 +1056,13 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "sourceFileTypeIsUnknown", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (9/26/2011): Added support to detect dangling pointers in ROSE translators.
+  // This is not an expensive test, but it fails for isolated parts of ROSE currently 
+  // so it should be made optional at this early stage (before it is made a default 
+  // test in the AST consistancy tests).
+     File.setDataPrototype         ( "int", "detect_dangling_pointers", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // To be consistant with the use of binaryFile we will implement get_binaryFile() and set_binaryFile()
   // functions so that we can support the more common (previous) interface where there was only a single
   // SgAsmFile pointers called "binaryFile".
@@ -1107,8 +1125,8 @@ Grammar::setUpSupport ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // RPM (1/5/2010): Switch to control how the Partitioner looks for functions. It takes a list of words based loosely
-  // on the constants in the SgAsmFunctionDeclaration::FunctionReason enum.
-     File.setDataPrototype("unsigned", "partitionerSearchHeuristics", "= SgAsmFunctionDeclaration::FUNC_DEFAULT",
+  // on the constants in the SgAsmFunction::FunctionReason enum.
+     File.setDataPrototype("unsigned", "partitionerSearchHeuristics", "= SgAsmFunction::FUNC_DEFAULT",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // RPM (6/9/2010): Switch to specify the IPD file for the Partitioner.
@@ -1574,6 +1592,22 @@ Grammar::setUpSupport ()
      Project.setDataPrototype("std::map<std::string, std::set<PreprocessingInfo*> >", "includingPreprocessingInfosMap", "",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);    
 
+  // negara1 (07/29/2011): The following two fields track include paths that compiler searches for quoted and bracketed includes correspondingly.
+     Project.setDataPrototype("std::list<std::string>", "quotedIncludesSearchPaths", "",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     Project.setDataPrototype("std::list<std::string>", "bracketedIncludesSearchPaths", "",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);          
+
+  // negara1 (08/17/2011): Added to permit specifying an optional root folder for header files unparsing.
+     Project.setDataPrototype("std::string", "unparseHeaderFilesRootFolder", "= \"\"",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (9/18/2011): Added support for specification of frontend constant folding (only supported in C/C++ using EDG).
+     Project.setDataPrototype("bool", "frontendConstantFolding", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);          
+
+     
      Attribute.setDataPrototype    ( "std::string"  , "name", "= \"\"",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
    //  Attribute.setAutomaticGenerationOfCopyFunction(false);
@@ -2029,6 +2063,7 @@ Specifiers that can have only one value (implemented with a protected enum varia
      Options.setFunctionSource         ( "SOURCE_OPTIONS", "../Grammar/Support.code");
      Unparse_Info.setFunctionSource    ( "SOURCE_UNPARSE_INFO", "../Grammar/Support.code");
      BaseClass.setFunctionSource       ( "SOURCE_BASECLASS", "../Grammar/Support.code");
+     ExpBaseClass.setFunctionSource    ( "SOURCE_EXP_BASE_CLASS", "../Grammar/Support.code");
 
   // DQ (12/19/2005): Support for explicitly specified qualified names
      QualifiedName.setFunctionSource   ( "SOURCE_QUALIFIED_NAME", "../Grammar/Support.code");

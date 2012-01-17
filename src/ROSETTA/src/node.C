@@ -93,6 +93,8 @@ Grammar::setUpNodes ()
   // DQ (10/6/2008): Support for the Fortran "USE" statement and its rename list option.
      NEW_TERMINAL_MACRO (InterfaceBody,  "InterfaceBody",  "TEMP_Interface_Body" );
 
+  // negara1 (08/10/2011): Support for included files (i.e. headers) bodies.
+     NEW_TERMINAL_MACRO (HeaderFileBody,  "HeaderFileBody",  "TEMP_Header_File_Body" );
 
   // DQ (10/6/2008): Migrate some of the SgSupport derived IR nodes, that truly have a position in the 
   // source code, to SgLocatedNode.  Start with some of the newer IR nodes which are traversed and thus 
@@ -100,7 +102,7 @@ Grammar::setUpNodes ()
   // the SgLocatedNode base class).  Eventually a number of the IR nodes currently derived from SgSupport
   // should be moved to be here (e.g. SgTemplateArgument, SgTemplateParameter, and 
   // a number of the new Fortran specific IRnodes, etc.).
-     NEW_NONTERMINAL_MACRO (LocatedNodeSupport, CommonBlockObject | InitializedName | InterfaceBody | RenamePair | OmpClause , "LocatedNodeSupport", "LocatedNodeSupportTag", false );
+     NEW_NONTERMINAL_MACRO (LocatedNodeSupport, CommonBlockObject | InitializedName | InterfaceBody | HeaderFileBody | RenamePair | OmpClause , "LocatedNodeSupport", "LocatedNodeSupportTag", false );
 
   // DQ (3/24/2007): Added support for tokens in the IR (to support threading of the token stream 
   // onto the AST as part of an alternative, and exact, form of code generation within ROSE.
@@ -359,6 +361,9 @@ Grammar::setUpNodes ()
   // InterfaceBody.setDataPrototype     ( "Sg_File_Info*", "endOfConstruct", "= NULL",
   //              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, CLONE_PTR);
 
+  // negara1 (08/10/2011): Added to SgLocatedNodeSupport, no need for additional functions.
+     HeaderFileBody.setFunctionPrototype ( "HEADER_HEADER_FILE_BODY", "../Grammar/LocatedNode.code");     
+
      CommonBlockObject.setFunctionPrototype ( "HEADER_COMMON_BLOCK_OBJECT", "../Grammar/Support.code");
      CommonBlockObject.setDataPrototype     ( "std::string", "block_name", "=\"\"",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -599,6 +604,9 @@ Grammar::setUpNodes ()
 
   // DQ (10/6/2008): Moved from SgSupport.
      InterfaceBody.setFunctionSource ( "SOURCE_INTERFACE_BODY", "../Grammar/LocatedNode.code");
+
+  // negara1 (08/10/2011): Added to SgLocatedNodeSupport.
+     HeaderFileBody.setFunctionSource ( "SOURCE_HEADER_FILE_BODY", "../Grammar/LocatedNode.code");     
 
   // DQ (11/21/2007): support for common block statements
      CommonBlockObject.setFunctionSource ( "SOURCE_COMMON_BLOCK_OBJECT", "../Grammar/Support.code");

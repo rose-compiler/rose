@@ -316,12 +316,12 @@ SB_DirectedGraph::isDirectCFGEdge(SgGraphNode* sgNode,
   SgAsmInstruction* instSgNode = isSgAsmInstruction(sgNode->get_SgNode());
   SgAsmInstruction* instSgNodeBefore = isSgAsmInstruction(sgNodeBefore->get_SgNode());
   if (instSgNode && instSgNodeBefore) {
-    SgAsmFunctionDeclaration* f1 = isSgAsmFunctionDeclaration(instSgNode->get_parent());
-    SgAsmFunctionDeclaration* f2 = isSgAsmFunctionDeclaration(instSgNodeBefore->get_parent());
+    SgAsmFunction* f1 = isSgAsmFunction(instSgNode->get_parent());
+    SgAsmFunction* f2 = isSgAsmFunction(instSgNodeBefore->get_parent());
     if (f1==NULL)
-      f1 = isSgAsmFunctionDeclaration(instSgNode->get_parent()->get_parent());
+      f1 = isSgAsmFunction(instSgNode->get_parent()->get_parent());
     if (f2==NULL)
-      f2 = isSgAsmFunctionDeclaration(instSgNodeBefore->get_parent()->get_parent());
+      f2 = isSgAsmFunction(instSgNodeBefore->get_parent()->get_parent());
     if (f1 && f2 && f1==f2) {
       vector<VirtualBinCFG::CFGEdge> outEdges = instSgNodeBefore->cfgBinOutEdges(info);
       for (size_t i = 0; i < outEdges.size(); ++i) {
@@ -350,12 +350,12 @@ SB_DirectedGraph::isValidCFGEdge(SgGraphNode* sgNode,
   if (instSgNode && instSgNodeBefore) {
   if (RoseBin_support::DEBUG_MODE())
     cout << " *** instSgNode && instSgNodeBefore " << endl;
-    SgAsmFunctionDeclaration* f1 = isSgAsmFunctionDeclaration(instSgNode->get_parent());
-    SgAsmFunctionDeclaration* f2 = isSgAsmFunctionDeclaration(instSgNodeBefore->get_parent());
+    SgAsmFunction* f1 = isSgAsmFunction(instSgNode->get_parent());
+    SgAsmFunction* f2 = isSgAsmFunction(instSgNodeBefore->get_parent());
     if (f1==NULL)
-      f1 = isSgAsmFunctionDeclaration(instSgNode->get_parent()->get_parent());
+      f1 = isSgAsmFunction(instSgNode->get_parent()->get_parent());
     if (f2==NULL)
-      f2 = isSgAsmFunctionDeclaration(instSgNodeBefore->get_parent()->get_parent());
+      f2 = isSgAsmFunction(instSgNodeBefore->get_parent()->get_parent());
     if (f1 && f2) {
       // (tps - 05/23/08) : the semantics of the previous implementation is:
       // check the node before in the instruction set and check if it is the same as the previous node

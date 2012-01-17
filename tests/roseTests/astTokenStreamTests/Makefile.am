@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-if ROSE_USE_SQLITE_DATABASE
+# if ROSE_USE_SQLITE_DATABASE
 
 bin_PROGRAMS = testLinearization testScopeMatching
 
@@ -31,20 +31,20 @@ $(TEST_Linearization): testLinearization $(srcdir)/$(@:.o=.C)
 
 
 check-local:
-	@echo "************************************************************************************"
-	@echo "*** ROSE/tests/roseTests/astTokenStreamTests: make check rule start                          ***"
-	@echo "************************************************************************************"
+	@echo "***********************************************************************"
+	@echo "*** ROSE/tests/roseTests/astTokenStreamTests: make check rule start ***"
+	@echo "***********************************************************************"
 	@$(MAKE) $(TEST_Linearization)
-	@echo "************************************************************************************"
+	@echo "************************************************************************************************"
 	@echo "*** ROSE/tests/roseTests/astTokenStreamTests: make check rule complete (terminated normally) ***"
-	@echo "************************************************************************************"
+	@echo "************************************************************************************************"
 
 CLEANFILES = 
 
 clean-local:
 	rm -rf *.out
 
-endif
+# endif
 
 EXTRA_DIST =  tests
 

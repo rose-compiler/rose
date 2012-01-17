@@ -1,4 +1,4 @@
-/* For each function (SgAsmFunctionDeclaration) process each instruction (SgAsmInstruction) through the instruction semantics
+/* For each function (SgAsmFunction) process each instruction (SgAsmInstruction) through the instruction semantics
  * layer using the FindConstantsPolicy. Output consists of each instruction followed by the registers and memory locations
  * with constant or pseudo-constant values. */
 
@@ -19,12 +19,12 @@
             newIp = number<32>(addr);
             if (rsets.find(addr)==rsets.end())
                 rsets[addr].setToBottom();
-            currentRset = rsets[addr];
+            cur_state = rsets[addr];
             currentInstruction = isSgAsmx86Instruction(insn);
         }
         void dump(SgAsmInstruction *insn) {
             std::cout <<unparseInstructionWithAddress(insn) <<"\n"
-                      <<currentRset
+                      <<cur_state
                       <<"    ip = " <<newIp <<"\n";
         }
     };
@@ -37,12 +37,12 @@
             newIp = number<32>(addr);
             if (rsets.find(addr)==rsets.end())
                 rsets[addr].setToBottom();
-            currentRset = rsets[addr];
+            cur_state = rsets[addr];
             currentInstruction = isSgAsmx86Instruction(insn);
         }
         void dump(SgAsmInstruction *insn) {
             std::cout <<unparseInstructionWithAddress(insn) <<"\n"
-                      <<currentRset
+                      <<cur_state
                       <<"    ip = " <<newIp <<"\n";
         }
     };
@@ -87,11 +87,13 @@ typedef X86InstructionSemantics<TestPolicy, TestValueTemplate> Semantics;
 static void
 analyze_interp(SgAsmInterpretation *interp)
 {
-    /* Get the set of all instructions */
+    /* Get the set of all instructions except instructions that are part of left-over blocks. */
     struct AllInstructions: public SgSimpleProcessing, public std::map<rose_addr_t, SgAsmx86Instruction*> {
         void visit(SgNode *node) {
             SgAsmx86Instruction *insn = isSgAsmx86Instruction(node);
-            if (insn) insert(std::make_pair(insn->get_address(), insn));
+            SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(insn);
+            if (func && 0==(func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS))
+                insert(std::make_pair(insn->get_address(), insn));
         }
     } insns;
     insns.traverse(interp, postorder);

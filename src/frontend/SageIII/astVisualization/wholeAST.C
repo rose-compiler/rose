@@ -11,7 +11,9 @@
    #include "AsmUnparser_compat.h"
 #endif
 
-#include "merge.h"
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+   #include "merge.h"
+#endif
 
 // **********************************************************
 // **********************************************************
@@ -1407,10 +1409,23 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                        {
                          printf ("Error: unsignedLongVal = %lu \n",unsignedLongVal->get_value());
                        }
+                    SgCharVal* charVal = isSgCharVal(valueExp);
+                    if (charVal != NULL)
+                       {
+                         printf ("Error: charVal = %d \n",charVal->get_value());
+                       }
                   }
                ROSE_ASSERT(valueExp->get_parent() != NULL);
             // labelWithSourceCode = "\\n value = " + valueExp->unparseToString() + "\\n" + StringUtility::numberToString(node) + "  ";
             // labelWithSourceCode = string("\\n value = nnn") + "\\n" + StringUtility::numberToString(node) + "  ";
+
+            // DQ (9/24/2011): Added support to indicate non-printable characters.
+               SgCharVal* charVal = isSgCharVal(valueExp);
+               if (charVal != NULL)
+                  {
+                    char value = charVal->get_value();
+                    labelWithSourceCode += string("\\n alpha/numeric value = ") + (isalnum(value) ? "true" : "false") + "  ";
+                  }
 
             // DQ (10/4/2010): Output the value so that we can provide more information.
                labelWithSourceCode += string("\\n value = ") + valueExp->get_constant_folded_value_as_string() + "  ";
@@ -2425,12 +2440,20 @@ generateWholeGraphOfAST_filteredFrontendSpecificNodes( string filename, CustomMe
 
 #if 1
   // Normally we want to skip the frontend IR nodes so avoid cluttering the graphs for users.
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
      set<SgNode*> skippedNodeSet = getSetOfFrontendSpecificNodes();
+#else
+     set<SgNode*> skippedNodeSet;
+     printf ("ROSE configured for internal frontend development \n");
+     ROSE_ASSERT(false);
+#endif
+
 #else
   // DQ (7/26/2010): We want to include the frontend IR nodes so that we can debug the type table.
      printf ("Generating an empty set of Frontend specific IR nodes to skip \n");
      set<SgNode*> skippedNodeSet;
 #endif
+
      SimpleColorMemoryPoolTraversal::generateGraph(filename,skippedNodeSet, flags);
    }
 

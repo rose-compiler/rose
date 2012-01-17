@@ -74,6 +74,12 @@ public:
    */
 
   void print(int depth = 0) const;
+
+  private:
+ // DQ (9/13/2011): This copy constructor was built because static analysis tools (made it private to force compile time error if used).
+   /** @brief Private Copy Constructor */
+       structureTreeAnn(const structureTreeAnn & X);
+
 };
 
 

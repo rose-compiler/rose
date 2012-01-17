@@ -4,6 +4,20 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # These are C99 testcodes targeting aspects of C99 that might not be a subset of C or C++ #
 ###########################################################################################
 
+if ROSE_USE_EDG_VERSION_4_3
+TESTCODES_REQUIRED_TO_PASS = \
+     test2005_186.c \
+     test2006_127.c \
+     test2006_143.c \
+     test2008_01.c \
+     complex_01.c \
+     bool.c \
+     constants.c 
+
+# Failing tests when using EDG 4.3 based support in ROSE.
+# complex_03.c 
+
+else
 TESTCODES_REQUIRED_TO_PASS = \
      test2005_186.c \
      test2006_127.c \
@@ -13,6 +27,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      complex_03.c \
      bool.c \
      constants.c 
+endif
 
 TESTCODE_CURRENTLY_FAILING = \
      complex_02.c \

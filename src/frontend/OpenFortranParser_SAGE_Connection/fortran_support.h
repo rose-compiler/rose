@@ -384,7 +384,6 @@ void convertBaseTypeToArrayWhereAppropriate();
 SgInitializedName* buildInitializedNameAndPutOntoStack(const SgName & name, SgType* type, SgInitializer* initializer);
 
 
-
 // endif for ROSE_FORTRAN_SUPPORT
 #endif
 

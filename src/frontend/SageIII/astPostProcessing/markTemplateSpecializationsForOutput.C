@@ -2,6 +2,11 @@
 #include "sage3basic.h"
 #include "markTemplateSpecializationsForOutput.h"
 #include "markTemplateInstantiationsForOutput.h"
+
+#ifdef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+   #include "transformationSupport.h"
+#endif
+
 void
 markTemplateSpecializationsForOutput( SgNode* node )
    {

@@ -10,7 +10,11 @@ class A
           int & operator[](int i);
           A *operator->() const { return Aptr; }
           A& operator*() const  { return *Aptr; }
+#ifndef ROSE_USE_NEW_EDG_INTERFACE
           A* operator&() const  { return this; }
+#else
+          A* operator&() const;
+#endif
           A ( const A & X ) {}
 
           A*  Aptr;

@@ -167,14 +167,14 @@ LibraryIdentification::libraryIdentificationDataBaseSupport( string databaseName
           SgAsmInterpretation* asmInterpretation = isSgAsmInterpretation(*j);
           ROSE_ASSERT(asmInterpretation != NULL);
 
-          printf ("Calling the NodeQuery::querySubTree() on SgAsmFunctionDeclaration \n");
-          Rose_STL_Container<SgNode*> binaryFunctionList = NodeQuery::querySubTree (asmInterpretation,V_SgAsmFunctionDeclaration);
-          printf ("DONE: Calling the NodeQuery::querySubTree() on SgAsmFunctionDeclaration \n");
+          printf ("Calling the NodeQuery::querySubTree() on SgAsmFunction\n");
+          Rose_STL_Container<SgNode*> binaryFunctionList = NodeQuery::querySubTree (asmInterpretation,V_SgAsmFunction);
+          printf ("DONE: Calling the NodeQuery::querySubTree() on SgAsmFunction\n");
 
           for (Rose_STL_Container<SgNode*>::iterator i = binaryFunctionList.begin(); i != binaryFunctionList.end(); i++)
              {
             // Build a pointer to the current type so that we can call the get_name() member function.
-               SgAsmFunctionDeclaration* binaryFunction = isSgAsmFunctionDeclaration(*i);
+               SgAsmFunction* binaryFunction = isSgAsmFunction(*i);
                ROSE_ASSERT(binaryFunction != NULL);
 
                string mangledFunctionName   = binaryFunction->get_name();

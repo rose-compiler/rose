@@ -2,113 +2,118 @@ int min(int ,int );
 
 void dgemm(double *a,double *b,double *c,int n)
 {
-// Partial redundancy elimination: cachevar__10 is a cache of (_var_0 + 15)
+// Partial redundancy elimination: cachevar__12 is a cache of (_var_0 + 15)
+  int cachevar__12;
+// Partial redundancy elimination: cachevar__11 is a cache of cachevar__10 + i
+  int cachevar__11;
+// Partial redundancy elimination: cachevar__10 is a cache of (_var_2 * n)
   int cachevar__10;
 // Partial redundancy elimination: cachevar__9 is a cache of cachevar__8 + i
   int cachevar__9;
-// Partial redundancy elimination: cachevar__8 is a cache of (_var_2 * n)
+// Partial redundancy elimination: cachevar__8 is a cache of (j * n)
   int cachevar__8;
-// Partial redundancy elimination: cachevar__7 is a cache of cachevar__6 + i
+// Partial redundancy elimination: cachevar__7 is a cache of (n + cachevar__6)
   int cachevar__7;
-// Partial redundancy elimination: cachevar__6 is a cache of (j * n)
+// Partial redundancy elimination: cachevar__6 is a cache of -16
   int cachevar__6;
-// Partial redundancy elimination: cachevar__5 is a cache of (n + -16)
+// Partial redundancy elimination: cachevar__5 is a cache of (cachevar__4 + i)
   int cachevar__5;
-// Partial redundancy elimination: cachevar__4 is a cache of (cachevar__3 + i)
+// Partial redundancy elimination: cachevar__4 is a cache of (k * n)
   int cachevar__4;
-// Partial redundancy elimination: cachevar__3 is a cache of (k * n)
+// Partial redundancy elimination: cachevar__3 is a cache of (_var_1 + 15)
   int cachevar__3;
-// Partial redundancy elimination: cachevar__2 is a cache of (_var_1 + 15)
+// Partial redundancy elimination: cachevar__2 is a cache of (cachevar__1 + n)
   int cachevar__2;
-// Partial redundancy elimination: cachevar__1 is a cache of (-1 + n)
+// Partial redundancy elimination: cachevar__1 is a cache of -1
   int cachevar__1;
   int _var_1;
   int _var_0;
   int i;
   int j;
   int k;
-  for (_var_1 = 0, cachevar__1 = (-1 + n); _var_1 <= cachevar__1; _var_1 += 16) {
-    for (_var_0 = 0; _var_0 <= cachevar__1; _var_0 += 16) {
-      for (i = 0; i <= cachevar__1; i += 1) {
-        for (k = _var_1, cachevar__2 = (_var_1 + 15); k <= min(cachevar__1,cachevar__2); k += 1) {
-          cachevar__3 = (k * n);
-          cachevar__4 = (cachevar__3 + i);
-          int dummy_1 = cachevar__4;
-          cachevar__5 = (n + -16);
-          for (j = _var_0; j <= min(cachevar__5,_var_0); j += 16) {
+  for (_var_1 = 0, cachevar__1 = -1, cachevar__2 = (cachevar__1 + n); _var_1 <= cachevar__2; _var_1 += 16) {
+    for (_var_0 = 0; _var_0 <= cachevar__2; _var_0 += 16) {
+      for (i = 0; i <= cachevar__2; i += 1) {
+        for (k = _var_1, cachevar__3 = (_var_1 + 15); k <= min(cachevar__2,cachevar__3); k += 1) {
+          cachevar__4 = (k * n);
+          cachevar__5 = (cachevar__4 + i);
+          int dummy_1 = cachevar__5;
+          cachevar__7 = (n + cachevar__6);
+          cachevar__6 = -16;
+          for (j = _var_0; j <= min(cachevar__7,_var_0); j += 16) {
             int _var_2 = j;
-            cachevar__3 = (k * n);
-            cachevar__4 = (cachevar__3 + i);
-            cachevar__6 = (j * n);
-            cachevar__7 = cachevar__6 + i;
-            c[cachevar__7] = (c[cachevar__7] + (a[cachevar__4] * b[cachevar__6 + k]));
-            _var_2 = (1 + _var_2);
-            cachevar__8 = (_var_2 * n);
+            cachevar__4 = (k * n);
+            cachevar__5 = (cachevar__4 + i);
+            cachevar__8 = (j * n);
             cachevar__9 = cachevar__8 + i;
-            c[cachevar__9] = (c[cachevar__9] + (a[cachevar__4] * b[cachevar__8 + k]));
+            c[cachevar__9] = (c[cachevar__9] + (a[cachevar__5] * b[cachevar__8 + k]));
             _var_2 = (1 + _var_2);
-            cachevar__8 = (_var_2 * n);
-            cachevar__9 = cachevar__8 + i;
-            c[cachevar__9] = (c[cachevar__9] + (a[cachevar__4] * b[cachevar__8 + k]));
+            cachevar__10 = (_var_2 * n);
+            cachevar__11 = cachevar__10 + i;
+            c[cachevar__11] = (c[cachevar__11] + (a[cachevar__5] * b[cachevar__10 + k]));
             _var_2 = (1 + _var_2);
-            cachevar__8 = (_var_2 * n);
-            cachevar__9 = cachevar__8 + i;
-            c[cachevar__9] = (c[cachevar__9] + (a[cachevar__4] * b[cachevar__8 + k]));
+            cachevar__10 = (_var_2 * n);
+            cachevar__11 = cachevar__10 + i;
+            c[cachevar__11] = (c[cachevar__11] + (a[cachevar__5] * b[cachevar__10 + k]));
             _var_2 = (1 + _var_2);
-            cachevar__8 = (_var_2 * n);
-            cachevar__9 = cachevar__8 + i;
-            c[cachevar__9] = (c[cachevar__9] + (a[cachevar__4] * b[cachevar__8 + k]));
+            cachevar__10 = (_var_2 * n);
+            cachevar__11 = cachevar__10 + i;
+            c[cachevar__11] = (c[cachevar__11] + (a[cachevar__5] * b[cachevar__10 + k]));
             _var_2 = (1 + _var_2);
-            cachevar__8 = (_var_2 * n);
-            cachevar__9 = cachevar__8 + i;
-            c[cachevar__9] = (c[cachevar__9] + (a[cachevar__4] * b[cachevar__8 + k]));
+            cachevar__10 = (_var_2 * n);
+            cachevar__11 = cachevar__10 + i;
+            c[cachevar__11] = (c[cachevar__11] + (a[cachevar__5] * b[cachevar__10 + k]));
             _var_2 = (1 + _var_2);
-            cachevar__8 = (_var_2 * n);
-            cachevar__9 = cachevar__8 + i;
-            c[cachevar__9] = (c[cachevar__9] + (a[cachevar__4] * b[cachevar__8 + k]));
+            cachevar__10 = (_var_2 * n);
+            cachevar__11 = cachevar__10 + i;
+            c[cachevar__11] = (c[cachevar__11] + (a[cachevar__5] * b[cachevar__10 + k]));
             _var_2 = (1 + _var_2);
-            cachevar__8 = (_var_2 * n);
-            cachevar__9 = cachevar__8 + i;
-            c[cachevar__9] = (c[cachevar__9] + (a[cachevar__4] * b[cachevar__8 + k]));
+            cachevar__10 = (_var_2 * n);
+            cachevar__11 = cachevar__10 + i;
+            c[cachevar__11] = (c[cachevar__11] + (a[cachevar__5] * b[cachevar__10 + k]));
             _var_2 = (1 + _var_2);
-            cachevar__8 = (_var_2 * n);
-            cachevar__9 = cachevar__8 + i;
-            c[cachevar__9] = (c[cachevar__9] + (a[cachevar__4] * b[cachevar__8 + k]));
+            cachevar__10 = (_var_2 * n);
+            cachevar__11 = cachevar__10 + i;
+            c[cachevar__11] = (c[cachevar__11] + (a[cachevar__5] * b[cachevar__10 + k]));
             _var_2 = (1 + _var_2);
-            cachevar__8 = (_var_2 * n);
-            cachevar__9 = cachevar__8 + i;
-            c[cachevar__9] = (c[cachevar__9] + (a[cachevar__4] * b[cachevar__8 + k]));
+            cachevar__10 = (_var_2 * n);
+            cachevar__11 = cachevar__10 + i;
+            c[cachevar__11] = (c[cachevar__11] + (a[cachevar__5] * b[cachevar__10 + k]));
             _var_2 = (1 + _var_2);
-            cachevar__8 = (_var_2 * n);
-            cachevar__9 = cachevar__8 + i;
-            c[cachevar__9] = (c[cachevar__9] + (a[cachevar__4] * b[cachevar__8 + k]));
+            cachevar__10 = (_var_2 * n);
+            cachevar__11 = cachevar__10 + i;
+            c[cachevar__11] = (c[cachevar__11] + (a[cachevar__5] * b[cachevar__10 + k]));
             _var_2 = (1 + _var_2);
-            cachevar__8 = (_var_2 * n);
-            cachevar__9 = cachevar__8 + i;
-            c[cachevar__9] = (c[cachevar__9] + (a[cachevar__4] * b[cachevar__8 + k]));
+            cachevar__10 = (_var_2 * n);
+            cachevar__11 = cachevar__10 + i;
+            c[cachevar__11] = (c[cachevar__11] + (a[cachevar__5] * b[cachevar__10 + k]));
             _var_2 = (1 + _var_2);
-            cachevar__8 = (_var_2 * n);
-            cachevar__9 = cachevar__8 + i;
-            c[cachevar__9] = (c[cachevar__9] + (a[cachevar__4] * b[cachevar__8 + k]));
+            cachevar__10 = (_var_2 * n);
+            cachevar__11 = cachevar__10 + i;
+            c[cachevar__11] = (c[cachevar__11] + (a[cachevar__5] * b[cachevar__10 + k]));
             _var_2 = (1 + _var_2);
-            cachevar__8 = (_var_2 * n);
-            cachevar__9 = cachevar__8 + i;
-            c[cachevar__9] = (c[cachevar__9] + (a[cachevar__4] * b[cachevar__8 + k]));
+            cachevar__10 = (_var_2 * n);
+            cachevar__11 = cachevar__10 + i;
+            c[cachevar__11] = (c[cachevar__11] + (a[cachevar__5] * b[cachevar__10 + k]));
             _var_2 = (1 + _var_2);
-            cachevar__8 = (_var_2 * n);
-            cachevar__9 = cachevar__8 + i;
-            c[cachevar__9] = (c[cachevar__9] + (a[cachevar__4] * b[cachevar__8 + k]));
+            cachevar__10 = (_var_2 * n);
+            cachevar__11 = cachevar__10 + i;
+            c[cachevar__11] = (c[cachevar__11] + (a[cachevar__5] * b[cachevar__10 + k]));
             _var_2 = (1 + _var_2);
-            cachevar__4 = (cachevar__3 + i);
-            cachevar__8 = (_var_2 * n);
-            cachevar__9 = cachevar__8 + i;
-            c[cachevar__9] = (c[cachevar__9] + (a[cachevar__4] * b[cachevar__8 + k]));
+            cachevar__10 = (_var_2 * n);
+            cachevar__11 = cachevar__10 + i;
+            c[cachevar__11] = (c[cachevar__11] + (a[cachevar__5] * b[cachevar__10 + k]));
+            _var_2 = (1 + _var_2);
+            cachevar__5 = (cachevar__4 + i);
+            cachevar__10 = (_var_2 * n);
+            cachevar__11 = cachevar__10 + i;
+            c[cachevar__11] = (c[cachevar__11] + (a[cachevar__5] * b[cachevar__10 + k]));
           }
-          cachevar__10 = (_var_0 + 15);
-          for (; j <= min(cachevar__1,cachevar__10); j += 1) {
-            cachevar__6 = (j * n);
-            cachevar__7 = cachevar__6 + i;
-            c[cachevar__7] = (c[cachevar__7] + (a[cachevar__4] * b[cachevar__6 + k]));
+          cachevar__12 = (_var_0 + 15);
+          for (; j <= min(cachevar__2,cachevar__12); j += 1) {
+            cachevar__8 = (j * n);
+            cachevar__9 = cachevar__8 + i;
+            c[cachevar__9] = (c[cachevar__9] + (a[cachevar__5] * b[cachevar__8 + k]));
           }
         }
       }

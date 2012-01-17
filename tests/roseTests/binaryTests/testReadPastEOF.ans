@@ -1,33 +1,41 @@
-    va 0x08048000 + 0x00002f40 = 0x0804af40 r-x at base aaa  + 0x00000000 fnord.i386(.text+LOAD#0)
-    va 0x0804af40 + 0x0000085b = 0x0804b79b r-- at base aaa  + 0x00002f40 fnord.i386(.rodata)
-    va 0x0804b79b + 0x00000001 = 0x0804b79c r-x at base aaa  + 0x0000379b fnord.i386(.text+LOAD#0)
-    va 0x0804b79c + 0x00000058 = 0x0804b7f4 r-- at base aaa  + 0x0000379c fnord.i386(.eh_frame)
-    va 0x0804b7f4 + 0x0000080c = 0x0804c000 r-x at anon null + 0x00000000 fnord.i386(LOAD#0)
-    va 0x0804c000 + 0x00000858 = 0x0804c858 rw- at base aaa  + 0x00003000 fnord.i386(.data+LOAD#1)
-    va 0x0804c858 + 0x000047a8 = 0x08051000 rw- at anon null + 0x00000000 fnord.i386(.bss+LOAD#1)
+    va 0x08048000 + 0x000000a0 = 0x080480a0 r-xp at base aaa  + 0x00000000 fnord.i386(LOAD#0)
+    va 0x080480a0 + 0x00002e87 = 0x0804af27 r-x- at base aab  + 0x000000a0 fnord.i386(.text)
+    va 0x0804af27 + 0x00000019 = 0x0804af40 r-xp at base aaa  + 0x00002f27 fnord.i386(LOAD#0)
+    va 0x0804af40 + 0x0000085b = 0x0804b79b r--- at base aab  + 0x00002f40 fnord.i386(.rodata)
+    va 0x0804b79b + 0x00000001 = 0x0804b79c r-xp at base aaa  + 0x0000379b fnord.i386(LOAD#0)
+    va 0x0804b79c + 0x00000058 = 0x0804b7f4 r--- at base aab  + 0x0000379c fnord.i386(.eh_frame)
+    va 0x0804b7f4 + 0x000001ac = 0x0804b9a0 r-xp at base aaa  + 0x000037f4 fnord.i386(LOAD#0)
+    va 0x0804b9a0 + 0x00000660 = 0x0804c000 r-xp at anon null + 0x00000000 fnord.i386(LOAD#0)
+    va 0x0804c000 + 0x000007f4 = 0x0804c7f4 rw-p at base aac  + 0x00000000 fnord.i386(LOAD#1)
+    va 0x0804c7f4 + 0x00000064 = 0x0804c858 rw-- at base aab  + 0x000037f4 fnord.i386(.data)
+    va 0x0804c858 + 0x000047a8 = 0x08051000 rw-p at anon null + 0x00000000 fnord.i386(.bss+LOAD#1)
 0x0804b7c4: 00 41 0e 08 85 02 42 0d  05 45 86 04 87 03 00 00 |.A....B..E......|
 0x0804b7d4: 1c 00 00 00 3c 00 00 00  c4 f5 ff ff 87 01 00 00 |....<...........|
 0x0804b7e4: 00 41 0e 08 85 02 42 0d  05 45 86 04 87 03 00 00 |.A....B..E......|
-0x0804b7f4: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 |................|
-0x0804b804: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 |................|
-0x0804b814: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 |................|
+0x0804b7f4: 0c b4 04 08 0c b4 04 08  94 01 00 00 0e b4 04 08 |................|
+0x0804b804: 08 c8 04 08 60 c9 04 08  00 00 00 00 00 00 00 00 |....`...........|
+0x0804b814: 00 20 00 00 01 00 00 00  a8 a1 04 08 24 c8 04 08 |. ..........$...|
 96 bytes
 
 0x0804b7c4: 00 41 0e 08 85 02 42 0d  05 45 86 04 87 03 00 00 |.A....B..E......|
 0x0804b7d4: 1c 00 00 00 3c 00 00 00  c4 f5 ff ff 87 01 00 00 |....<...........|
 0x0804b7e4: 00 41 0e 08 85 02 42 0d  05 45 86 04 87 03 00 00 |.A....B..E......|
-0x0804b7f4: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 |................|
-0x0804b804: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 |................|
-0x0804b814: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 |................|
+0x0804b7f4: 0c b4 04 08 0c b4 04 08  94 01 00 00 0e b4 04 08 |................|
+0x0804b804: 08 c8 04 08 60 c9 04 08  00 00 00 00 00 00 00 00 |....`...........|
+0x0804b814: 00 20 00 00 01 00 00 00  a8 a1 04 08 24 c8 04 08 |. ..........$...|
 96 bytes
 
-    va 0x08048000 + 0x00002f40 = 0x0804af40 r-x at base aaa  + 0x00000000 fnord.i386(.text+LOAD#0)
-    va 0x0804af40 + 0x0000085b = 0x0804b79b r-- at base aaa  + 0x00002f40 fnord.i386(.rodata)
-    va 0x0804b79b + 0x00000001 = 0x0804b79c r-x at base aaa  + 0x0000379b fnord.i386(.text+LOAD#0)
-    va 0x0804b79c + 0x00000058 = 0x0804b7f4 r-- at base aaa  + 0x0000379c fnord.i386(.eh_frame)
-    va 0x0804b7f4 + 0x0000080c = 0x0804c000 r-x at anon null + 0x00000000 fnord.i386(LOAD#0)
-    va 0x0804c000 + 0x00000858 = 0x0804c858 rw- at base aaa  + 0x00003000 fnord.i386(.data+LOAD#1)
-    va 0x0804c858 + 0x000047a8 = 0x08051000 rw- at anon null + 0x00000000 fnord.i386(.bss+LOAD#1)
+    va 0x08048000 + 0x000000a0 = 0x080480a0 r-xp at base aaa  + 0x00000000 fnord.i386(LOAD#0)
+    va 0x080480a0 + 0x00002e87 = 0x0804af27 r-x- at base aab  + 0x000000a0 fnord.i386(.text)
+    va 0x0804af27 + 0x00000019 = 0x0804af40 r-xp at base aaa  + 0x00002f27 fnord.i386(LOAD#0)
+    va 0x0804af40 + 0x0000085b = 0x0804b79b r--- at base aab  + 0x00002f40 fnord.i386(.rodata)
+    va 0x0804b79b + 0x00000001 = 0x0804b79c r-xp at base aaa  + 0x0000379b fnord.i386(LOAD#0)
+    va 0x0804b79c + 0x00000058 = 0x0804b7f4 r--- at base aab  + 0x0000379c fnord.i386(.eh_frame)
+    va 0x0804b7f4 + 0x000001ac = 0x0804b9a0 r-xp at base aaa  + 0x000037f4 fnord.i386(LOAD#0)
+    va 0x0804b9a0 + 0x00000660 = 0x0804c000 r-xp at anon null + 0x00000000 fnord.i386(LOAD#0)
+    va 0x0804c000 + 0x000007f4 = 0x0804c7f4 rw-p at base aac  + 0x00000000 fnord.i386(LOAD#1)
+    va 0x0804c7f4 + 0x00000064 = 0x0804c858 rw-- at base aab  + 0x000037f4 fnord.i386(.data)
+    va 0x0804c858 + 0x000047a8 = 0x08051000 rw-p at anon null + 0x00000000 fnord.i386(.bss+LOAD#1)
 0x08050fd0: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 |................|
 0x08050fe0: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 |................|
 0x08050ff0: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00 |................|

@@ -1,8 +1,8 @@
 #include <string>
 #include "token.h"
 
-Token_t::Token_t (std::string s, int line, int col )
-   : text(s), line_number(line), column_number(col)
+Token_t::Token_t (std::string s, JavaSourceCodePosition * p)
+   : text(s), pos_info(p)
    {
   // Nothing to do here!
    }
@@ -13,17 +13,8 @@ Token_t::getText()
      return text;
    }
 
-int
-Token_t::getLine()
+JavaSourceCodePosition *
+Token_t::getSourcecodePosition()
    {
-     return line_number;
+         return pos_info;
    }
-
-int
-Token_t::getCol()
-   {
-     return column_number;
-   }
-
-
-

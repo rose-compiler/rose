@@ -55,7 +55,7 @@ public:
     };
 
     Verifier(Debugger *dbg)
-        :debugger(dbg), registers_current(false), trace_file(NULL) {
+        :debugger(dbg), regdict(NULL), registers_current(false), trace_file(NULL) {
         memset(&register_set, 0, sizeof register_set);
     }
 
@@ -135,9 +135,9 @@ public:
 
         /* Verify that instructions are identical. */
         unsigned char remote[256];
-        assert(insn->get_raw_bytes().size()<=sizeof remote);
-        size_t remote_size = debugger->memory(insn->get_address(), insn->get_raw_bytes().size(), remote);
-        if (remote_size!=insn->get_raw_bytes().size()) {
+        assert(insn->get_size()<=sizeof remote);
+        size_t remote_size = debugger->memory(insn->get_address(), insn->get_size(), remote);
+        if (remote_size!=insn->get_size()) {
             throw Exception("could not read entire instruction");
         } else if (memcmp(&(insn->get_raw_bytes()[0]), remote, remote_size)) {
             throw Exception("instruction mismatch");
@@ -149,6 +149,9 @@ public:
 
     /* Called for the HLT instruction */
     void hlt() {} /*FIXME*/
+
+    /* Called for the CPUID instruction */
+    void cpuid() {} /*FIXME*/
 
     /* Called for the RDTSC instruction */
     VerifierValue<64> rdtsc() {return 0;} /*FIXME*/
@@ -412,6 +415,59 @@ public:
         register_set.reg[name] = val.uv();
     }
 
+    /** Finds a register by name. */
+    const RegisterDescriptor& findRegister(const std::string &regname, size_t nbits=0) {
+        const RegisterDescriptor *reg = get_register_dictionary()->lookup(regname);
+        if (!reg) {
+            std::ostringstream ss;
+            ss <<"Invalid register: \"" <<regname <<"\"";
+            throw Exception(ss.str());
+        }
+        if (nbits>0 && reg->get_nbits()!=nbits) {
+            std::ostringstream ss;
+            ss <<"Invalid " <<nbits <<"-bit register: \"" <<regname <<"\" is "
+               <<reg->get_nbits() <<" " <<(1==reg->get_nbits()?"byte":"bytes");
+            throw Exception(ss.str());
+        }
+        return *reg;
+    }
+
+    /** Reads from a named register. */
+    template<size_t Len/*bits*/>
+    VerifierValue<Len> readRegister(const char *regname) {
+        return readRegister<Len>(findRegister(regname, Len));
+    }
+
+    /** Writes to a named register. */
+    template<size_t Len/*bits*/>
+    void writeRegister(const char *regname, const VerifierValue<Len> &value) {
+        writeRegister<Len>(findRegister(regname, Len), value);
+    }
+
+    /* Generic register read. */
+    template<size_t Len>
+    VerifierValue<Len> readRegister(const RegisterDescriptor &reg) {
+        assert(!"Use only specialized versions.");
+        abort();
+    }
+
+    /* Generic register write. */
+    template<size_t Len>
+    void writeRegister(const RegisterDescriptor &reg, const VerifierValue<Len> &value) {
+        assert(!"Use only specialized versions.");
+        abort();
+    }
+
+    /** Returns the register dictionary. */
+    const RegisterDictionary *get_register_dictionary() const {
+        return regdict ? regdict : RegisterDictionary::dictionary_pentium4();
+    }
+
+    /** Sets the register dictionary. */
+    void set_register_dictionary(const RegisterDictionary *regdict) {
+        this->regdict = regdict;
+    }
+
     /* Reads the contents of some memory location. */
     template <size_t Len>
     VerifierValue<Len> readMemory(X86SegmentRegister segreg, VerifierValue<32> addrval, VerifierValue<1> cond) {
@@ -653,10 +709,167 @@ public:
 private:
     Debugger *debugger;
     RegisterSet register_set;
+    const RegisterDictionary *regdict;
     bool registers_current;                     /* Is the register_set up to date? */
     std::map<uint64_t, unsigned char> memory;   /* Modified memory values */
     std::ostream *trace_file;
 };
+
+/******************************************************************************************************************************
+ * The X86InstructionSemantics calls readRegister() and writeRegister() now rather than the multitude of read* and write*
+ * methods. However, since the Verifier class was written before this change, these new readRegister() and writeRegister()
+ * methods just dispatch to the old ones.
+ ******************************************************************************************************************************/
+template<>
+VerifierValue<1> Verifier::readRegister<1>(const RegisterDescriptor &reg)
+{
+    assert(reg.get_nbits()==1);
+    assert(reg.get_major()==x86_regclass_flags);
+    assert(reg.get_minor()==0);
+    return readFlag((X86Flag)reg.get_offset());
+}
+
+template<>
+VerifierValue<8> Verifier::readRegister<8>(const RegisterDescriptor &reg)
+{
+    assert(reg.get_nbits()==8);
+    assert(reg.get_major()==x86_regclass_gpr);
+    if (0==reg.get_offset())
+        return extract<0, 8>(readGPR((X86GeneralPurposeRegister)reg.get_minor()));
+    assert(8==reg.get_offset());
+    return extract<8, 16>(readGPR((X86GeneralPurposeRegister)reg.get_minor()));
+}
+
+template<>
+VerifierValue<16> Verifier::readRegister<16>(const RegisterDescriptor &reg)
+{
+    assert(reg.get_nbits()==16);
+    assert(reg.get_offset()==0);
+    if (reg.get_major()==x86_regclass_segment) {
+        return readSegreg((X86SegmentRegister)reg.get_minor());
+    } else if (reg.get_major()==x86_regclass_gpr) {
+        return extract<0, 16>(readGPR((X86GeneralPurposeRegister)reg.get_minor()));
+    } else {
+        assert(reg.get_major()==x86_regclass_flags);
+        return concat(readFlag((X86Flag)0),
+               concat(readFlag((X86Flag)1),
+               concat(readFlag((X86Flag)2),
+               concat(readFlag((X86Flag)3),
+               concat(readFlag((X86Flag)4),
+               concat(readFlag((X86Flag)5),
+               concat(readFlag((X86Flag)6),
+               concat(readFlag((X86Flag)7),
+               concat(readFlag((X86Flag)8),
+               concat(readFlag((X86Flag)9),
+               concat(readFlag((X86Flag)10),
+               concat(readFlag((X86Flag)11),
+               concat(readFlag((X86Flag)12),
+               concat(readFlag((X86Flag)13),
+               concat(readFlag((X86Flag)14),
+                      readFlag((X86Flag)15))))))))))))))));
+    }
+}
+
+template<>
+VerifierValue<32> Verifier::readRegister<32>(const RegisterDescriptor &reg)
+{
+    assert(reg.get_nbits()==32);
+    assert(reg.get_offset()==0);
+
+    if (reg.get_major()==x86_regclass_gpr) {
+        return readGPR((X86GeneralPurposeRegister)reg.get_minor());
+    } else if (reg.get_major()==x86_regclass_ip) {
+        assert(reg.get_minor()==0);
+        return readIP();
+    } else {
+        assert(reg.get_major()==x86_regclass_flags);
+        const RegisterDescriptor *reg_flags16 = get_register_dictionary()->lookup("flags");
+        assert(reg_flags16!=NULL);
+        return concat(readRegister<16>(*reg_flags16),
+               concat(readFlag((X86Flag)16),
+               concat(readFlag((X86Flag)17),
+               concat(readFlag((X86Flag)18),
+               concat(readFlag((X86Flag)19),
+               concat(readFlag((X86Flag)20),
+               concat(readFlag((X86Flag)21),
+               concat(readFlag((X86Flag)22),
+               concat(readFlag((X86Flag)23),
+               concat(readFlag((X86Flag)24),
+               concat(readFlag((X86Flag)25),
+               concat(readFlag((X86Flag)26),
+               concat(readFlag((X86Flag)27),
+               concat(readFlag((X86Flag)28),
+               concat(readFlag((X86Flag)29),
+               concat(readFlag((X86Flag)30),
+                      readFlag((X86Flag)31)))))))))))))))));
+    }
+}
+
+template<>
+void Verifier::writeRegister<1>(const RegisterDescriptor &reg, const VerifierValue<1> &value)
+{
+    /* Flags are identified by their bit offset within the containing FLAGS register. */
+    assert(reg.get_nbits()==1);
+    assert(reg.get_major()==x86_regclass_flags);
+    assert(reg.get_minor()==0);
+    writeFlag((X86Flag)reg.get_offset(), value);
+}
+
+template<>
+void Verifier::writeRegister<8>(const RegisterDescriptor &reg, const VerifierValue<8> &value)
+{
+    assert(reg.get_nbits()==8);
+    assert(reg.get_major()==x86_regclass_gpr);
+    if (0==reg.get_offset()) {
+        writeGPR((X86GeneralPurposeRegister)reg.get_minor(),
+                 concat(value, extract<8, 32>(readGPR((X86GeneralPurposeRegister)reg.get_minor()))));
+    } else {
+        assert(reg.get_offset()==8);
+        writeGPR((X86GeneralPurposeRegister)reg.get_minor(),
+                 concat(extract<0, 8>(readGPR((X86GeneralPurposeRegister)reg.get_minor())),
+                        concat(value, extract<16, 32>(readGPR((X86GeneralPurposeRegister)reg.get_minor())))));
+    }
+}
+
+template<>
+void Verifier::writeRegister<16>(const RegisterDescriptor &reg, const VerifierValue<16> &value)
+{
+    assert(reg.get_nbits()==16);
+    assert(reg.get_offset()==0);
+    if (reg.get_major()==x86_regclass_segment) {
+        writeSegreg((X86SegmentRegister)reg.get_minor(), value);
+    } else {
+        assert(reg.get_major()==x86_regclass_gpr);
+        writeGPR((X86GeneralPurposeRegister)reg.get_minor(), concat(value, number<16>(0)));
+    }
+}
+
+template<>
+void Verifier::writeRegister<32>(const RegisterDescriptor &reg, const VerifierValue<32> &value)
+{
+    assert(reg.get_nbits()==32);
+    assert(reg.get_offset()==0);
+    if (reg.get_major()==x86_regclass_gpr) {
+        writeGPR((X86GeneralPurposeRegister)reg.get_minor(), value);
+    } else {
+        assert(reg.get_major()==x86_regclass_ip);
+        assert(0==reg.get_minor());
+        writeIP(value);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 /* Prints values of all registers */

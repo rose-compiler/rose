@@ -6,7 +6,9 @@ include_HEADERS = \
      rose_stdarg.h \
      rose_varargs.h \
      rose-g++-headerfilefixup.h \
-     rose_specific_cdefs.h
+     rose_specific_cdefs.h \
+     rose_specific_emmintrin.h \
+     rose_specific_xmmintrin.h
 
 # DQ (9/15/2010): Added UPC header files.
 # DQ (8/14/2010): Added modified header file iomanip-gnu-4.5 to fix code in new 4.5 header files 

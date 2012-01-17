@@ -6,39 +6,34 @@
 #include <iosfwd>
 #include <cassert>
 
+#include "RsType.h"
 #include "Util.h"
 
 #include "rted_typedefs.h"
 
-
 class MemoryType;
-class RsType;
 class PointerInfo;
-
 
 /// \brief   represents Variables
 /// \details variables are names that have a stack address associated
-class VariablesType
+struct VariablesType
 {
-  typedef Address Location;
+        typedef Address Location;
 
-    public:
-        VariablesType( Address address,
-                       const std::string & name,
-                       const std::string & mangledName,
-                       const RsType* type
-                     );
+        VariablesType(Address addr, const char* id, const char* mangledId, const RsType* t)
+        : address(addr), name(id), mangledName(mangledId), type(t)
+        {}
 
-        const std::string & getName()        const  { return name;        }
-        const std::string & getMangledName() const  { return mangledName; }
-        const RsType*       getType()        const  { return type;        }
-        Location            getAddress()     const  { return address; }
-        size_t              getSize()        const;
+        std::string   getName()        const  { return name;                }
+        std::string   getMangledName() const  { return mangledName;         }
+        const RsType* getType()        const  { return type;                }
+        Location      getAddress()     const  { return address;             }
+        size_t        getSize()        const  { return type->getByteSize(); }
 
         /// returns the allocation information for this var
-        const MemoryType*   getAllocation()  const;
+        const MemoryType*  getAllocation()  const;
 
-        void print(std::ostream & os) const;
+        void print(std::ostream& os) const;
 
         /// If this variable is registered as a pointer the PointerInfo is return, else NULL
         const PointerInfo* getPointerInfo() const;
@@ -48,19 +43,15 @@ class VariablesType
         Location address;
 
         /// stack variable name
-        std::string name;
+        const char* name;
 
         /// mangled name
-        std::string mangledName;
+        const char* mangledName;
 
-        /// string with class name of rose-type
+        /// type rep
         const RsType* type;
 };
 
-
-std::ostream& operator<< (std::ostream &os, const VariablesType & m);
-
-
-
+std::ostream& operator<< (std::ostream& os, const VariablesType& m);
 
 #endif

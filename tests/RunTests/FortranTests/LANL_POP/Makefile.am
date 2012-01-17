@@ -56,17 +56,17 @@ translator_flags = -rose:verbose 0 -rose:skip_syntax_check -rose:skipfinalCompil
 hudson-environment.sh:
 	@>$@
 	@echo "export HUDSON_NUM_JOBS='$${HUDSON_NUM_JOBS-1}'"						>>$@
-	@echo "export HUDSON_FC='$${HUDSON_FC-$$(which gfortran)}'"					>>$@
+	@echo "export HUDSON_FC='$${HUDSON_FC-$(GFORTRAN_PATH)}'"					>>$@
 	@echo "export HUDSON_FFLAGS='$${HUDSON_FFLAGS--ffree-line-length-0}'"				>>$@
-	@echo "export HUDSON_LD='$${HUDSON_LD-$$(which gfortran)}'"					>>$@
-	@echo "export HUDSON_CC='$${HUDSON_CC-$$(which cc)}'"						>>$@
+	@echo "export HUDSON_LD='$${HUDSON_LD-$(GFORTRAN_PATH)}'"					>>$@
+	@echo "export HUDSON_CC='$${HUDSON_CC-$(CC)}'"							>>$@
 	@echo "export HUDSON_Cp='$${HUDSON_Cp-$$(which cp)}'"						>>$@
-	@echo "export HUDSON_Cpp='$${HUDSON_Cpp-$$(which cpp) -P}'"					>>$@
-	@echo "export HUDSON_AWK='$${HUDSON_AWK-$$(which awk)}'"					>>$@
+	@echo "export HUDSON_Cpp='$${HUDSON_Cpp-$(CPP)}'"						>>$@
+	@echo "export HUDSON_AWK='$${HUDSON_AWK-$(AWK)}'"						>>$@
 	@echo "export HUDSON_LDLIBS='$${HUDSON_LDLIBS-\$$(LIBS) -lcurl}'"				>>$@
 	@echo "export HUDSON_DIFF='$${HUDSON_DIFF-/usr/bin/diff}'"					>>$@
-	@echo "export HUDSON_MAKE='$${HUDSON_MAKE-/usr/bin/make}'"					>>$@
-	@echo "export HUDSON_SED='$${HUDSON_SED-/bin/sed}'"						>>$@
+	@echo "export HUDSON_MAKE='$${HUDSON_MAKE-make}'"						>>$@
+	@echo "export HUDSON_SED='$${HUDSON_SED-$(SED)}'"						>>$@
 	@echo "Hudson environment: "; source $@; printenv |grep HUDSON_ |sed 's/^/    /'
 
 
@@ -86,7 +86,7 @@ $(netcdf_lib): hudson-environment.sh
 	@set -e $(SETX);						\
 	echo "  BUILD   NetCDF";					\
 	source hudson-environment.sh;					\
-	cp -pdR $(netcdf_srcdir) $(netcdf_blddir);			\
+	cp -pPR $(netcdf_srcdir) $(netcdf_blddir);			\
 	chmod -R u+w $(netcdf_blddir);					\
 	cd $(netcdf_blddir);						\
         ./configure --prefix=$(netcdf_prefix) --disable-netcdf-4	\
@@ -123,7 +123,7 @@ $(netcdf_prefix)/include/netcdf.rmod: $(netcdf_lib) $(netcdf_prefix)/include/typ
 hudson.gnu: hudson-environment.sh
 	@set -e $(SETX);			     \
 	source hudson-environment.sh;		     \
-	sed < $(srcdir)/hudson.gnu >hudson.gnu	     \
+	sed < $(srcdir)/hudson.template >hudson.gnu  \
 	    -e "s%_HUDSON_FC_%$$HUDSON_FC%"	     \
 	    -e "s%_HUDSON_FFLAGS_%$$HUDSON_FFLAGS%"  \
 	    -e "s%_HUDSON_LD_%$$HUDSON_LD%"	     \
@@ -141,7 +141,7 @@ pop_pristine_blddir_stamp pop_modified_blddir_stamp pop_modified_srcdir_stamp: h
 	@set -e $(SETX);							\
 	source hudson-environment.sh;						\
 	blddir=$(patsubst %_stamp,%,$@);					\
-	cp -pdR $(pop_srcdir) $$blddir;						\
+	cp -pPR $(pop_srcdir) $$blddir;						\
 	chmod -R u+w $$blddir;							\
 	ARCHDIR=hudson $(srcdir)/setup_run_dir.ROSE $(pop_srcdir) $$blddir/run;	\
 	touch $@
@@ -284,9 +284,9 @@ endif
 #       documentation.  When we do that, we get errors about directories not existing (it seems that automake's makefile
 #       tries to copy the files before creating the destination directories.  Therefore, we're using the dist-hook to
 #       explicitly copy these directories.
-EXTRA_DIST = hudson.gnu make_rmod_deps.pl setup_run_dir.ROSE
+EXTRA_DIST = hudson.template make_rmod_deps.pl setup_run_dir.ROSE
 dist-hook:
-	cp -pdRv $(netcdf_srcdir) $(pop_srcdir) $(distdir)
+	cp -pPRv $(netcdf_srcdir) $(pop_srcdir) $(distdir)
 
 clean-local:
 	rm -rf $(netcdf_blddir)

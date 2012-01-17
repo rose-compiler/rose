@@ -39,8 +39,8 @@ void RoseBin_CompareAnalysis::visit(SgNode* node) {
   //SgAsmNode* binNode= isSgAsmNode(node);
   
   //  cerr << " traversing node " << binNode << endl;
-  if (isSgAsmFunctionDeclaration(node)) {
-    SgAsmFunctionDeclaration* binDecl = isSgAsmFunctionDeclaration(node); 
+  if (isSgAsmFunction(node)) {
+    SgAsmFunction* binDecl = isSgAsmFunction(node); 
     string name = binDecl->get_name();
     bin_funcs[name] = binDecl;
   }
@@ -58,7 +58,7 @@ void RoseBin_CompareAnalysis::create_map_functions() {
     SgFunctionDeclaration* funcDef = isSgFunctionDeclaration(*it);
     string name = funcDef->get_name().str();
     if(RoseBin_support::filterName(name)==false) {
-      SgAsmFunctionDeclaration* funcD=bin_funcs[name];
+      SgAsmFunction* funcD=bin_funcs[name];
       //      cerr << " found function " << name << " " << 
       //        funcDef->get_name().str() << " " << funcD->get_name() << endl;
       function_map[name]=(make_pair(funcDef,funcD));
@@ -1201,7 +1201,7 @@ int RoseBin_CompareAnalysis::match_statements(int array_src_length,
  ****************************************************/
 void RoseBin_CompareAnalysis::checkFunctions(string name,
                                              SgFunctionDeclaration* funcDecl,
-                                             SgAsmFunctionDeclaration* binDecl) {
+                                             SgAsmFunction* binDecl) {
 
   string output="\n**** *************************\n";
   /*
@@ -1357,9 +1357,9 @@ void RoseBin_CompareAnalysis::run() {
   for (;it!=function_map.end();++it) {
     string name = it->first;
     cerr << " function to check " << name << endl;
-    pair <SgFunctionDeclaration*, SgAsmFunctionDeclaration*> my_pair = it->second;
+    pair <SgFunctionDeclaration*, SgAsmFunction*> my_pair = it->second;
     SgFunctionDeclaration* funcDef = my_pair.first;
-    SgAsmFunctionDeclaration* binDef = my_pair.second;
+    SgAsmFunction* binDef = my_pair.second;
     checkFunctions(name,funcDef, binDef);
   }
   

@@ -1,53 +1,39 @@
+# Non-recursive Makefile
 
-mpt_lpDepInfo_includes=\
-	-I$(top_srcdir)/src/util/support \
-	-I$(top_srcdir)/src/midend/astUtil/astSupport \
-	-I$(top_srcdir)/src/midend/astUtil/astInterface \
-	-I$(top_srcdir)/src/midend/astUtil/symbolicVal \
-	-I$(top_srcdir)/src/midend/programTransformation/loopProcessing/driver
+mptlpDepInfo_la_sources=\
+	$(mptlpDepInfoPath)/DepEDD.C \
+	$(mptlpDepInfoPath)/DepInfoAnal.C \
+	$(mptlpDepInfoPath)/ReuseAnalysis.C \
+	$(mptlpDepInfoPath)/DepInfo.C \
+	$(mptlpDepInfoPath)/DepInfoSet.C \
+	$(mptlpDepInfoPath)/DepRel.C \
+	$(mptlpDepInfoPath)/DepRel.h \
+	$(mptlpDepInfoPath)/DomainInfo.C \
+	$(mptlpDepInfoPath)/StmtDepAnal.C
 
+mptlpDepInfo_includeHeaders=\
+	$(mptlpDepInfoPath)/DepEDD.h \
+	$(mptlpDepInfoPath)/DepInfo.h \
+	$(mptlpDepInfoPath)/DepInfoUpdate.h \
+	$(mptlpDepInfoPath)/DomainInfo.h \
+	$(mptlpDepInfoPath)/DepInfoAnal.h \
+	$(mptlpDepInfoPath)/DepInfoSet.h \
+	$(mptlpDepInfoPath)/DepRel.h \
+	$(mptlpDepInfoPath)/DomainInfoUpdate.h \
+	$(mptlpDepInfoPath)/ReuseAnalysis.h \
+	$(mptlpDepInfoPath)/StmtDepAnal.h
 
-# TODO: include in top-level?
-## The grammar generator (ROSETTA) should use its own template repository
-#CXX_TEMPLATE_REPOSITORY_PATH = .
+mptlpDepInfo_extraDist=\
+	$(mptlpDepInfoPath)/CMakeLists.txt
 
-
-mpt_lpDepInfo_la_sources=\
-	$(mpt_lpDepInfoPath)/DepEDD.C \
-	$(mpt_lpDepInfoPath)/DepInfoAnal.C \
-	$(mpt_lpDepInfoPath)/ReuseAnalysis.C \
-	$(mpt_lpDepInfoPath)/DepInfo.C \
-	$(mpt_lpDepInfoPath)/DepInfoSet.C \
-	$(mpt_lpDepInfoPath)/DepRel.C \
-	$(mpt_lpDepInfoPath)/DomainInfo.C \
-	$(mpt_lpDepInfoPath)/StmtDepAnal.C
-
-
-mpt_lpDepInfo_includeHeaders=\
-	$(mpt_lpDepInfoPath)/DepEDD.h \
-	$(mpt_lpDepInfoPath)/DepInfo.h \
-	$(mpt_lpDepInfoPath)/DepInfoUpdate.h \
-	$(mpt_lpDepInfoPath)/DomainInfo.h \
-	$(mpt_lpDepInfoPath)/DepInfoAnal.h \
-	$(mpt_lpDepInfoPath)/DepInfoSet.h \
-	$(mpt_lpDepInfoPath)/DepRel.h \
-	$(mpt_lpDepInfoPath)/DomainInfoUpdate.h \
-	$(mpt_lpDepInfoPath)/ReuseAnalysis.h \
-	$(mpt_lpDepInfoPath)/StmtDepAnal.h
-
-
-mpt_lpDepInfo_extraDist=\
-	$(mpt_lpDepInfoPath)/CMakeLists.txt
-
-
-mpt_lpDepInfo_cleanLocal=\
+mptlpDepInfo_cleanLocal=\
 	rm -rf \
-		$(mpt_lpDepInfoPath)/Templates.DB \
-		$(mpt_lpDepInfoPath)/ii_files \
-		$(mpt_lpDepInfoPath)/ti_files \
-		$(mpt_lpDepInfoPath)/cxx_templates
+		$(mptlpDepInfoPath)/cxx_templates \
+		$(mptlpDepInfoPath)/ii_files \
+		$(mptlpDepInfoPath)/ti_files \
+		$(mptlpDepInfoPath)/Templates.DB
 
-
-mpt_lpDepInfo_distCleanLocal=\
+mptlpDepInfo_distCleanLocal=\
 	rm -rf \
-		$(mpt_lpDepInfoPath)/Templates.DB
+		$(mptlpDepInfoPath)/Templates.DB
+

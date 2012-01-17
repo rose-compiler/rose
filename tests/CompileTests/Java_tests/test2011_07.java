@@ -6,7 +6,7 @@ public class test2011_07
      public static void main(String args[])
         {
        // Test using an initializer.
-          int x = 7;
+          int x = 75;
         }
    }
 

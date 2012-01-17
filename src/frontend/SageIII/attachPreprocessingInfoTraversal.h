@@ -62,6 +62,12 @@ class AttachPreprocessingInfoTreeTrav
    : public SgTopDownBottomUpProcessing<AttachPreprocessingInfoTreeTraversalInheritedAttrribute,
                                         AttachPreprocessingInfoTreeTraversalSynthesizedAttribute>
    {
+     // negara1 (08/12/2011): These lists contain correspondingly pairs of <include_stmt_to_be_inserted, stmt_before_which_should_insert>
+     //                       and <include_stmt_to_be_inserted, stmt_after_which_should_insert>
+     private:
+         std::list<std::pair<SgIncludeDirectiveStatement*, SgStatement*> > statementsToInsertBefore;
+         std::list<std::pair<SgIncludeDirectiveStatement*, SgStatement*> > statementsToInsertAfter;
+         
      protected: // Pi-- private:
        //! accumulator attribute
        // SgLocatedNode *previousLocNodePtr;
@@ -114,6 +120,9 @@ class AttachPreprocessingInfoTreeTrav
 
      public:
 
+       // Destructor
+          ~AttachPreprocessingInfoTreeTrav();
+          
        // DQ (9/24/2007): Moved function definition to source file from header file.
        // Constructor
           AttachPreprocessingInfoTreeTrav( SgSourceFile* file, bool includeDirectivesAndCommentsFromAllFiles );

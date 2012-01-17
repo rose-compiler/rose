@@ -1,54 +1,38 @@
 #include "rose.h"
 #include "InsnSemanticsExpr.h"
 #include "SMTSolver.h"
+#include "stringify.h"
 
 const char *
 InsnSemanticsExpr::to_str(Operator o)
 {
-    switch (o) {
-        case OP_ADD: return "add";
-        case OP_AND: return "and";
-        case OP_ASR: return "asr";
-        case OP_BV_AND: return "bv-and";
-        case OP_BV_OR: return "bv-or";
-        case OP_BV_XOR: return "bv-xor";
-        case OP_CONCAT: return "concat";
-        case OP_EQ: return "eq";
-        case OP_EXTRACT: return "extract";
-        case OP_INVERT: return "invert";
-        case OP_ITE: return "ite";
-        case OP_LSSB: return "lssb";
-        case OP_MSSB: return "mssb";
-        case OP_NE: return "ne";
-        case OP_NEGATE: return "negate";
-        case OP_NOOP: return "nop";
-        case OP_OR: return "or";
-        case OP_ROL: return "rol";
-        case OP_ROR: return "ror";
-        case OP_SDIV: return "sdiv";
-        case OP_SEXTEND: return "sextend";
-        case OP_SGE: return "sge";
-        case OP_SGT: return "sgt";
-        case OP_SHL0: return "shl0";
-        case OP_SHL1: return "shl1";
-        case OP_SHR0: return "shr0";
-        case OP_SHR1: return "shr1";
-        case OP_SLE: return "sle";
-        case OP_SLT: return "slt";
-        case OP_SMOD: return "smod";
-        case OP_SMUL: return "smul";
-        case OP_UDIV: return "udiv";
-        case OP_UEXTEND: return "uextend";
-        case OP_UGE: return "uge";
-        case OP_UGT: return "ugt";
-        case OP_ULE: return "ule";
-        case OP_ULT: return "ult";
-        case OP_UMOD: return "umod";
-        case OP_UMUL: return "umul";
-        case OP_ZEROP: return "zerop";
+    static char buf[64];
+    std::string s = stringifyInsnSemanticsExprOperator(o, "OP_");
+    assert(s.size()<sizeof buf);
+    strcpy(buf, s.c_str());
+    for (char *s=buf; *s; s++) {
+        if ('_'==*s) {
+            *s = '-';
+        } else {
+            *s = tolower(*s);
+        }
     }
-    ROSE_ASSERT(!"list is not complete"); /*do not add as default since that would turn off compiler warnings*/
-        return "list is not complete"; // tps: removes warning in MSC compiler
+    return buf;
+}
+
+std::set<const InsnSemanticsExpr::LeafNode*>
+InsnSemanticsExpr::TreeNode::get_variables() const
+{
+    struct T1: public Visitor {
+        std::set<const LeafNode*> vars;
+        void operator()(const TreeNode *node) {
+            const LeafNode *l_node = dynamic_cast<const LeafNode*>(node);
+            if (l_node && !l_node->is_known())
+                vars.insert(l_node);
+        }
+    } t1;
+    depth_first_visit(&t1);
+    return t1.vars;
 }
 
 /* Shallow delete: delete this node if it has no parents, but not its children */
@@ -125,6 +109,18 @@ InsnSemanticsExpr::InternalNode::equal_to(const TreeNode *other_, SMTSolver *sol
     }
     return retval;
 }
+
+void
+InsnSemanticsExpr::InternalNode::depth_first_visit(Visitor *v) const
+{
+    assert(v!=NULL);
+    for (std::vector<const TreeNode*>::const_iterator ci=children.begin(); ci!=children.end(); ++ci)
+        (*ci)->depth_first_visit(v);
+    (*v)(this);
+}
+
+        
+
 
 /* class method */
 InsnSemanticsExpr::LeafNode *
@@ -218,3 +214,17 @@ InsnSemanticsExpr::LeafNode::equal_to(const TreeNode *other_, SMTSolver *solver)
     }
     return retval;
 }
+
+void
+InsnSemanticsExpr::LeafNode::depth_first_visit(Visitor *v) const
+{
+    assert(v!=NULL);
+    (*v)(this);
+}
+
+std::ostream&
+operator<<(std::ostream &o, const InsnSemanticsExpr::TreeNode *node) {
+    node->print(o);
+    return o;
+}
+

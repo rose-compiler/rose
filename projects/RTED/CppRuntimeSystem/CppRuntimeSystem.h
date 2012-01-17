@@ -19,6 +19,9 @@
 #include "StackManager.h"
 #include "PointerManager.h"
 
+#ifdef ROSE_WITH_ROSEQT
+#include "DebuggerQt/RtedDebug.h"
+#endif
 
 /**
  * @brief Main API of the runtimesystem.  Provides direct and indirect access to
@@ -89,20 +92,41 @@ struct RuntimeSystem
 {
         typedef std::vector< const RsType* > TypeList;
 
-        static RuntimeSystem* instance();
+        static
+        RuntimeSystem& instance()
+        {
+            if (!single)
+            {
+                single = new RuntimeSystem();
+                single->registerOutputStream(&std::cerr);
+            }
+
+            return *single;
+        }
 
         /// Gets called when a violation is detected
         /// this function decides what to do (message printing, aborting program)
         /// this function does not necessarily stop the program, but may just print a warning
         void violationHandler(RuntimeViolation::Type v, const std::string & desc ="") throw (RuntimeViolation);
-        void violationHandler(RuntimeViolation & vio)   throw (RuntimeViolation);
+        void violationHandler(RuntimeViolation& vio)                                  throw (RuntimeViolation);
 
 
-        /// call this function to inform the runtimesystem what the current position in sourcecode is
-        /// this information is used for printing errors/warnings
-        void checkpoint(const SourcePosition & pos) ;
+        /// call this function to inform the runtimesystem what the current
+        /// position in sourcecode is. This information is used for printing
+        /// errors/warning
+        void checkpoint(const SourceInfo& pos)
+        {
+            curPos = pos;
 
-        const SourcePosition & getCodePosition() const {return curPos; }
+#ifdef ROSE_WITH_ROSEQT
+            if(qtDebugger)
+                RtedDebug::instance()->startGui();
+#endif
+        }
+
+
+        SourceInfo     getSourceInfo()   const { return curPos; }
+        SourcePosition getCodePosition() const { return SourcePosition(curPos); }
 
         /// if testing mode is true exceptions are thrown when a violations occurs
         /// otherwise abort is called, default false
@@ -119,19 +143,19 @@ struct RuntimeSystem
 
         // access a specific manager
 
-        CStdLibManager*       getCStdLibManager()       { return &cstdlibManager;  }
-        MemoryManager*        getMemManager()           { return & memManager;     }
-        FileManager*          getFileManager()          { return & fileManager;    }
-        TypeSystem*           getTypeSystem()           { return & typeSystem;     }
-        StackManager*         getStackManager()         { return & stackManager;   }
-        PointerManager*       getPointerManager()       { return & pointerManager; }
+        CStdLibManager&       getCStdLibManager()       { return cstdlibManager; }
+        MemoryManager&        getMemManager()           { return memManager;     }
+        FileManager&          getFileManager()          { return fileManager;    }
+        TypeSystem&           getTypeSystem()           { return typeSystem;     }
+        StackManager&         getStackManager()         { return stackManager;   }
+        PointerManager&       getPointerManager()       { return pointerManager; }
 
-        const CStdLibManager* getCStdLibManager() const { return &cstdlibManager;  }
-        const MemoryManager*  getMemManager()     const { return & memManager;     }
-        const FileManager*    getFileManager()    const { return & fileManager;    }
-        const TypeSystem*     getTypeSystem()     const { return & typeSystem;     }
-        const StackManager*   getStackManager()   const { return & stackManager;   }
-        const PointerManager* getPointerManager() const { return & pointerManager; }
+        const CStdLibManager& getCStdLibManager() const { return cstdlibManager; }
+        const MemoryManager&  getMemManager()     const { return memManager;     }
+        const FileManager&    getFileManager()    const { return fileManager;    }
+        const TypeSystem&     getTypeSystem()     const { return typeSystem;     }
+        const StackManager&   getStackManager()   const { return stackManager;   }
+        const PointerManager& getPointerManager() const { return pointerManager; }
 
         // ---------------------------------  Register Functions ------------------------------------------------------------
 
@@ -150,7 +174,7 @@ struct RuntimeSystem
             int foo() {
                 int x;
 
-                RuntimeSystem* rs = RuntimeSystem::instance();
+                RuntimeSystem& rs = RuntimeSystem::instance();
                 rs -> createVariable(
                     &x,
                     "x",
@@ -170,25 +194,25 @@ struct RuntimeSystem
          * @param typeString    A valid RsType string.
          */
         void createVariable( Address            address,
-                             const std::string& name,
-                             const std::string& mangledName,
+                             const char*        name,
+                             const char*        mangledName,
                              const std::string& typeString,
                              AllocKind          ak,
                              long               blocksize
                            );
 
         void createVariable( Address            address,
-                             const std::string& name,
-                             const std::string& mangledName,
-                             const RsType*      type,
+                             const char*        name,
+                             const char*        mangledName,
+                             const RsType&      type,
                              AllocKind          ak,
                              long               blocksize
                            );
 
 
         void createArray(   Address            address,
-                            const std::string& name,
-                            const std::string& mangledName,
+                            const char*        name,
+                            const char*        mangledName,
                             const std::string& baseType,
                             size_t             size,
                             AllocKind          ak,
@@ -196,8 +220,8 @@ struct RuntimeSystem
                         );
 
         void createArray(   Address            address,
-                            const std::string& name,
-                            const std::string& mangledName,
+                            const char*        name,
+                            const char*        mangledName,
                             const RsType*      baseType,
                             size_t             size,
                             AllocKind          ak,
@@ -205,8 +229,8 @@ struct RuntimeSystem
                         );
 
         void createArray(   Address            address,
-                            const std::string& name,
-                            const std::string& mangledName,
+                            const char*        name,
+                            const char*        mangledName,
                             const RsArrayType* type,
                             AllocKind          ak,
                             long               blocksize
@@ -285,21 +309,21 @@ struct RuntimeSystem
          *      computable (e.g. if one stores an int with a fixed offset from
          *      the address).
          */
-        void registerPointerChange( Address     src,
-                                    Address     target,
-                                    bool        checkPointerMove,
-                                    bool        checkMemLeaks
-                                  );
 
         /// for documentation see PointerManager::registerPointerChange()
         void registerPointerChange( Address              src,
                                     Address              tgt,
-                                    const RsPointerType* type,
-                                    bool                 checkPointerMove, //=false,
-                                    bool                 checkMemLeaks //=true
+                                    const RsPointerType& type,
+                                    bool                 checkPointerMove
                                   );
 
 #if OBSOLETE_CODE
+        void registerPointerChange( Address     src,
+                                          Address     target,
+                                          bool        checkPointerMove,
+                                          bool        checkMemLeaks
+                                        );
+
         /// Convenience function which takes mangledName instead of sourceAddress
         void registerPointerChange( const std::string & mangledName, Address targetAddress, bool checkPointerMove=false, bool checkMemLeaks=true);
 
@@ -311,21 +335,22 @@ struct RuntimeSystem
         void checkIfThisisNULL(void* thisExp) const;
 
 
-        /// Each variable is associated with a scope, use this function to create a new scope
-        /// @param name  string description of scope, may be function name or "for-loop" ...
-        void beginScope(const std::string & name);
+        //~ /// Each variable is associated with a scope, use this function to create a new scope
+        //~ /// @param name  string description of scope, may be function name or "for-loop" ...
+        //~ void beginScope(const std::string & name);
+        //~
+        //~ /// \brief Closes a scope and deletes all variables which where created
+        //~ ///        via registerVariable() from the stack, testing for memory
+        //~ ///        leaks (@ref registerPointerChange).
+        //~ /// \param scopecount number of scopes to close (e.g., return from inner block)
+        //~ void endScope(size_t scopecount, bool delay_report);
 
-        /// Closes a scope and deletes all variables which where created via registerVariable()
-        /// from the stack, testing for memory leaks (@ref registerPointerChange).
-        void endScope(size_t scopecount);
 
-
-
-        //// Call this function if a file is opened
+        /// \brief Call this function if a file is opened
         /// @param openMode combination of FileOpenMode flags
-        void registerFileOpen (FILE * file, const std::string & openedFile, int openMode);
-        void registerFileOpen (FILE * file, const std::string & openedFile, const std::string & openMode);
-        void registerFileClose(FILE * file);
+        void registerFileOpen (FILE* file, const std::string & openedFile, int openMode);
+        void registerFileOpen (FILE* file, const std::string & openedFile, const std::string & openMode);
+        void registerFileClose(FILE* file);
         void registerFileOpen (std::fstream& file, const std::string & openedFile, int openMode);
         void registerFileOpen (std::fstream& file, const std::string & openedFile, const std::string & openMode);
         void registerFileClose(std::fstream& file);
@@ -429,10 +454,10 @@ struct RuntimeSystem
         std::ostream& log();
 
         // Printing of RuntimeSystem status
-        void printOpenFiles(std::ostream & os) const  { fileManager.print(os);    }
-        void printMemStatus(std::ostream & os) const  { memManager.print(os);     }
-        void printStack    (std::ostream & os) const  { stackManager.print(os);   }
-        void printPointer  (std::ostream & os) const  { pointerManager.print(os); }
+        void printOpenFiles(std::ostream& os) const  { fileManager.print(os);    }
+        void printMemStatus(std::ostream& os) const  { memManager.print(os);     }
+        void printStack    (std::ostream& os) const  { stackManager.print(os);   }
+        void printPointer  (std::ostream& os) const  { pointerManager.print(os); }
 
         // all functions again, print the status to registered outputstream
         void printOpenFiles() const  { printOpenFiles(*defaultOutStr); }
@@ -441,8 +466,8 @@ struct RuntimeSystem
         void printPointer  () const  { printPointer  (*defaultOutStr); }
 
         // Access to variables/scopes
-        int                getScopeCount()     const;
-        const std::string& getScopeName(int i) const;
+        int                getScopeCount()        const;
+        const std::string& getScopeName(size_t i) const;
 
         void printMessage(const std::string& message);
 
@@ -486,9 +511,9 @@ struct RuntimeSystem
 
         //  -----------  Members which are used for output -------------
 
-        SourcePosition curPos;
+        SourceInfo curPos;
 
-        std::ostream * defaultOutStr;
+        std::ostream* defaultOutStr;
         std::ofstream outFile;
 
         /** A @c map of violation types to policies.  Policies include:
@@ -513,21 +538,35 @@ struct RuntimeSystem
          */
         std::map<RuntimeViolation::Type, ViolationPolicy::Type> violationTypePolicy;
 
-        ViolationPolicy::Type getPolicyFromString( std::string & name ) const;
+        ViolationPolicy::Type getPolicyFromString( std::string& name ) const;
 
         // members related to function signature verification
         std::string nextCallFunctionName;
         TypeList    nextCallFunctionTypes;
 };
 
+
+/// \brief returns a const sensitive reference to the runtime
+/// \param the void* parameter is used to differentiate the overloaded
+///        function.
+/// \note  typical use is from within another runtime system component
+///        (e.g., StackManager, ...).
+///        rtedRTS(this) returns a const RuntimeSystem, iff this is const
 inline
-RuntimeSystem* rtedRTS(void *)
+RuntimeSystem& rtedRTS(void *)
 {
   return RuntimeSystem::instance();
 }
 
+static inline
+void* modifying() { return 0; }
+
+static inline
+const void* non_modifying() { return 0; }
+
+/// \overload
 inline
-const RuntimeSystem* rtedRTS(const void *)
+const RuntimeSystem& rtedRTS(const void *)
 {
   return RuntimeSystem::instance();
 }

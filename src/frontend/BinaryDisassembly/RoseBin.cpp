@@ -349,7 +349,7 @@ void RoseBin::test() {
  * traverse the binary AST to test if all nodes are there
  ****************************************************/
 void RoseBin::visit(SgNode* node) {
-  SgAsmFunctionDeclaration* funcDecl= isSgAsmFunctionDeclaration(node);
+  SgAsmFunction* funcDecl= isSgAsmFunction(node);
   SgAsmInstruction* instr= isSgAsmInstruction(node);
   //SgAsmBlock* block= isSgAsmBlock(node);
   nodes++;
@@ -369,7 +369,7 @@ void RoseBin::visit(SgNode* node) {
   /*
     if (block) {
     trav_blocks++;
-    SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(block->get_parent());
+    SgAsmFunction* func = isSgAsmFunction(block->get_parent());
     int address = block->get_address();
     ostringstream addrhex;
     addrhex << hex << setw(8) << address ;
@@ -387,7 +387,7 @@ void RoseBin::visit(SgNode* node) {
   }
   if (instr) {
     trav_inst++;
-    SgAsmFunctionDeclaration* ins = isSgAsmFunctionDeclaration(instr->get_parent());
+    SgAsmFunction* ins = isSgAsmFunction(instr->get_parent());
     if (ins==NULL) {
       int address = ins->get_address();
       ostringstream addrhex;

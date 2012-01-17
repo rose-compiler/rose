@@ -54,7 +54,7 @@ namespace AbstractHandle{
 
   typedef union u_specifier_value
      {
-       char str_v[PATH_MAX+255];
+       char str_v[PATH_MAX+256];
        size_t int_v; 
        source_position_pair positions;
      } specifier_value_t;
@@ -215,6 +215,9 @@ namespace AbstractHandle{
     // associated IR node 
     abstract_node* m_node; 
     specifier * m_specifier;
+    abstract_handle (const abstract_handle &); // disallow copy
+    abstract_handle & operator = (const abstract_handle &);
+
   };
 
   // maintain a map between nodes and handles, 

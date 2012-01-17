@@ -13,8 +13,8 @@
 #include <QIcon>
 
 
-VariablesTypeDisplay::VariablesTypeDisplay(VariablesType * vt_, bool displayMem)
-    : vt(vt_)
+VariablesTypeDisplay::VariablesTypeDisplay(const VariablesType& vt_, bool displayMem)
+    : vt(&vt_)
 {
     typedef PropertyValueNode PVN;
 
@@ -42,7 +42,7 @@ QVariant VariablesTypeDisplay::data(int role, int column) const
             return vt->getName().c_str();
     }
     if(role == VariablesTypeRole)
-        return QVariant::fromValue<VariablesType*>(vt);
+        return QVariant::fromValue<VariablesType*>(const_cast<VariablesType*>(vt));
 
     if(role == Qt::DecorationRole && column ==0)
         return QIcon(":/icons/variable.gif");

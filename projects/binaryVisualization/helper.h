@@ -117,8 +117,8 @@ public:
     this->traverse(node,preorder);
   }
   void visit(SgNode* node) {
-    SgAsmFunctionDeclaration* funcDecl =
-      isSgAsmFunctionDeclaration(node);
+    SgAsmFunction* funcDecl =
+      isSgAsmFunction(node);
     if (funcDecl) {
       std::cerr << " preprocessing function: " << funcDecl->get_name() << std::endl;
       std::vector<SgAsmStatement*> instructions;

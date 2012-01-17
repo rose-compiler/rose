@@ -3,7 +3,7 @@
  * Author: Cong Hou [hou_cong@gatech.edu]
  */
 
-#include "staticCFG.h"
+#include "cong_staticCFG.h"
 
 #include <boost/algorithm/string.hpp>
 #include <boost/bind.hpp>

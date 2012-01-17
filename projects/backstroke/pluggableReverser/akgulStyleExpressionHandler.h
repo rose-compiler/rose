@@ -15,7 +15,7 @@ public:
 
 	/** Attempts to reverse an expression. If the reversal fails,
 	* this function returns an empty vector. */
-	virtual std::vector<EvaluationResult> evaluate(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used);
+	virtual EvaluationResult evaluate(SgExpression* exp, const VariableVersionTable& var_table, bool is_value_used);
 
 	/** Returns the variable name referred by the expression. Also returns
 	* the AST expression for referring to that variable (using the variable renaming analysis).

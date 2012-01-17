@@ -143,8 +143,10 @@ namespace OmpSupport
           if (previous == NULL )
           {
             // Call parser
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
             omp_parser_init(pragmaDeclaration,pragmaString.c_str());
             omp_parse();
+#endif
             OmpAttribute* attribute = getParsedDirective();
             //cout<<"sage_gen_be.C:23758 debug:\n"<<pragmaString<<endl;
             //attribute->print();//debug only for now
