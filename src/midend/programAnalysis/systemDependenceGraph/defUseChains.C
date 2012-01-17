@@ -5,7 +5,7 @@
 
 #include "defUseChains.h"
 #include "util.h"
-//#include <ssa/staticSingleAssignment.h>
+#include <staticSingleAssignment.h>
 #include <VariableRenaming.h>
 #include <boost/foreach.hpp>
 
@@ -41,7 +41,9 @@ void generateDefUseChainsFromVariableRenaming(SgProject* project, DefUseChains& 
 void generateDefUseChainsFromSSA(SgProject* project, DefUseChains& defUseChains)
 {
     StaticSingleAssignment ssa(project);
-    ssa.run();
+    ssa.run(true, true);
+        
+    typedef StaticSingleAssignment::NodeReachingDefTable NodeReachingDefTable;
         
     vector<SgNode*> astNodes = NodeQuery::querySubTree(project, V_SgNode);
     foreach (SgNode* node, astNodes)
@@ -79,8 +81,6 @@ void generateDefUseChainsFromSSA(SgProject* project, DefUseChains& defUseChains)
                 argsPassedByRef.insert(initName);
         }
 
-        
-        typedef StaticSingleAssignment::NodeReachingDefTable NodeReachingDefTable;
         const NodeReachingDefTable& reachingDefs = ssa.getLastVersions(funcDef);
         foreach (const NodeReachingDefTable::value_type& varAndDefs, reachingDefs)
         {
