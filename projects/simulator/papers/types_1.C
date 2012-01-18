@@ -164,12 +164,17 @@ public:
         return changed;
     }
 
+    bool interesting_access(X86SegmentRegister segreg, const T<32> &addr, const T<1> &cond) {
+        // return x86_segreg_ds == segreg;
+        return true;
+    }
+    
     template<size_t Len>
     T<Len> readMemory(X86SegmentRegister segreg, const T<32> &addr, const T<1> &cond) {
         SymbolicSemantics::MemoryCell<T> new_cell(addr, T<32>(), Len/8, NULL/*no defining instruction*/);
         bool aliased = false; /*is new_cell aliased by any existing writes?*/
 
-        if (0==info->pass && segreg==x86_segreg_ds) {
+        if (0==info->pass && interesting_access(segreg, addr, cond)) {
             SymbolicSemantics::InsnSet defs; // defining instructions, excluding self
             for (SymbolicSemantics::InsnSet::const_iterator di=addr.defs.begin(); di!=addr.defs.end(); ++di) {
                 if (*di!=this->cur_insn)
@@ -218,7 +223,7 @@ public:
 
     template<size_t Len>
     void writeMemory(X86SegmentRegister segreg, const T<32> &addr, const T<Len> &val, const T<1> &cond) {
-        if (0==info->pass && segreg==x86_segreg_ds) {
+        if (0==info->pass && interesting_access(segreg, addr, cond)) {
             SymbolicSemantics::InsnSet defs; // defining instructions, excluding self
             for (SymbolicSemantics::InsnSet::const_iterator di=addr.defs.begin(); di!=addr.defs.end(); ++di) {
                 if (*di!=this->cur_insn)
