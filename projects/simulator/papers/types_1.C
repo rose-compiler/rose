@@ -73,9 +73,10 @@ struct PtrInfo {
     Verbosity verbosity;                        /** How verbose to be with messages. */
     SymbolicSemantics::InsnSet ptr_insns;       /** Instructions computing pointer R-values. */
     PointerAddresses ptr_addrs;                 /** Memory addresses storing pointers. */
+    ExtentMap addrspc;                          /** If not empty, analysis stays within this address space. */
 
-    PtrInfo(RSIM_Thread *thread, RTS_Message *m, rose_addr_t analysis_addr, Verbosity verbosity)
-        : pass(0), thread(thread), m(m), analysis_addr(analysis_addr), verbosity(verbosity) {}
+    PtrInfo(RSIM_Thread *thread, RTS_Message *m, rose_addr_t analysis_addr, Verbosity verbosity, const ExtentMap &addrspc)
+        : pass(0), thread(thread), m(m), analysis_addr(analysis_addr), verbosity(verbosity), addrspc(addrspc) {}
 
     struct Comparator {
         const ValueType<32> &addr;
@@ -155,10 +156,10 @@ public:
     PtrPolicy(PtrInfo *info): info(info) {}
 
     bool merge(const PtrPolicy &other) {
-        if (info->verbosity>=VB_SOME)
+        if (info->verbosity>=VB_LOTS)
             info->m->more(" merging... ");
         bool changed = this->get_state().merge(other.get_state());
-        if (info->verbosity>=VB_SOME)
+        if (info->verbosity>=VB_LOTS)
             info->m->more(changed ? "(changed)" : "(no change)");
         return changed;
     }
@@ -234,8 +235,14 @@ public:
     // Do the analysis
     void analyze(PtrInfo &info/*in,out*/) {
         static const char *name = "PtrAnalysis";
-        if (info.verbosity>=VB_MINIMAL)
+        if (info.verbosity>=VB_MINIMAL) {
             info.m->multipart(name, "%s triggered: analysis starts at 0x%08"PRIx64"\n", name, info.analysis_addr);
+            if (!info.addrspc.empty()) {
+                std::ostringstream ss;
+                ss <<info.addrspc;
+                info.m->more("%s: analysis restricted to these %zu addresses: %s\n", name, info.addrspc.size(), ss.str().c_str());
+            }
+        }
 
         // Create the policy that holds the analysis state which is modified by each instruction.  Then plug the policy
         // into the X86InstructionSemantics to which we'll feed each instruction.  Each time we process an instruction
@@ -244,6 +251,8 @@ public:
         // reference to this policy.)
         Policy policy(&info);
         Semantics semantics(policy);
+        const RegisterDescriptor *ESP = policy.get_register_dictionary()->lookup("esp");
+        const RegisterDescriptor *EIP = policy.get_register_dictionary()->lookup("eip");
 
         // Make two passes.  During the first pass we discover what addresses are used to dereference memory and what
         // instructions define those addresses, marking those instructions in the process.  During the second pass, if a
@@ -256,14 +265,11 @@ public:
             WorkList worklist;
             size_t nprocessed = 0; // number of instructions processed, including failures
 
-#if 1
             // Initialize the policy for the first simulated instruction.  We choose a concrete value for the ESP register
             // only because we'll use that same value in another analysis.
-            const RegisterDescriptor *ESP = policy.get_register_dictionary()->lookup("esp");
             PtrPolicy<PtrState, ValueType> initial_policy(&info);
             initial_policy.writeRegister(*ESP, policy.number<32>(analysis_stack_va)); // arbitrary
             before.insert(std::make_pair(info.analysis_addr, initial_policy));
-#endif
 
             worklist.push(info.analysis_addr);
             while (!worklist.empty() && nprocessed++ < max_processed) {
@@ -280,10 +286,19 @@ public:
                     continue;
                 }
 
+                // Skip the instruction if it's (partially) outside our address limits.
+                if (!info.addrspc.empty() && !info.addrspc.contains(Extent(insn->get_address(), insn->get_size()))) {
+                    if (info.verbosity>=VB_SOME)
+                        info.m->more("  skipping   0x%08"PRIx64": %s (outside address range limit)\n",
+                                     insn->get_address(), unparseInstruction(insn).c_str());
+                    continue;
+                }
+
                 if (info.verbosity>=VB_SOME)
                     info.m->more("  processing 0x%08"PRIx64": %s\n", insn->get_address(), unparseInstruction(insn).c_str());
                 StateMap::iterator bi=before.find(va);
                 policy = bi==before.end() ? PtrPolicy<PtrState, ValueType>(&info) : bi->second;
+                policy.writeRegister(*EIP, policy.number<32>(insn->get_address()));
                 if (info.verbosity>=VB_LOTS) {
                     std::ostringstream ss;
                     ss <<"  -- Instruction's initial state --\n" <<policy;
@@ -319,6 +334,9 @@ public:
                 InsnSemanticsExpr::InternalNode *inode = dynamic_cast<InsnSemanticsExpr::InternalNode*>(eip_value.expr);
                 if (eip_value.is_known()) {
                     successors.insert(eip_value.known_value());
+                    // assume all CALLs return since we might not actually traverse the called function
+                    if (insn->get_kind()==x86_call)
+                        successors.insert(insn->get_address()+insn->get_size());
                 } else if (NULL!=inode && InsnSemanticsExpr::OP_ITE==inode->get_operator() &&
                            inode->child(1)->is_known() && inode->child(2)->is_known()) {
                     successors.insert(inode->child(1)->get_value());    // the if-true case
@@ -349,7 +367,6 @@ public:
         if (info.verbosity>=VB_MINIMAL) {
             info.m->more("%s: pointer addresses:\n", name);
             for (PtrInfo::PointerAddresses::const_iterator ai=info.ptr_addrs.begin(); ai!=info.ptr_addrs.end(); ++ai) {
-                std::cerr <<"ROBB: " <<*ai <<"\n";
                 std::ostringstream ss;
                 ss <<"  " <<*ai <<"\n";
                 info.m->more("%s", ss.str().c_str());
@@ -518,31 +535,97 @@ public:
     rose_addr_t trigger_addr, analysis_addr;
     size_t randomize, niters;
     Verbosity verbosity;
+    ExtentMap limits; // limits for choosing random analysis addresses; empty means no limits
 
-    AnalysisTrigger(rose_addr_t trigger_addr, rose_addr_t analysis_addr, size_t randomize, size_t niters, Verbosity verbosity)
-        : trigger_addr(trigger_addr), analysis_addr(analysis_addr), randomize(randomize), niters(niters), verbosity(verbosity) {}
+    AnalysisTrigger(rose_addr_t trigger_addr, rose_addr_t analysis_addr, size_t randomize, const ExtentMap &limits,
+                    size_t niters, Verbosity verbosity)
+        : trigger_addr(trigger_addr), analysis_addr(analysis_addr), randomize(randomize), niters(niters),
+          verbosity(verbosity), limits(limits) {}
 
     // This analysis is intended to run in a single thread, so clone is a no-op.
     virtual AnalysisTrigger *clone() { return this; }
 
+    // Given a function, figure out what part of the address space its instructions occupy.
+    ExtentMap function_extent(SgAsmFunction *func) {
+        struct: public AstSimpleProcessing {
+            ExtentMap extents;
+            void visit(SgNode *node) {
+                SgAsmInstruction *insn = isSgAsmInstruction(node);
+                if (insn)
+                    extents.insert(Extent(insn->get_address(), insn->get_size()));
+            }
+        } t;
+        t.traverse(func, preorder);
+        return t.extents;
+    }
+
     // The actual analysis, triggered when we reach the specified execution address...
     virtual bool operator()(bool enabled, const Args &args) {
+        static const bool limit_to_function = true;
         if (enabled && args.insn->get_address()==trigger_addr) {
             static const char *name = "AnalysisTrigger";
             RTS_Message *m = args.thread->tracing(TRACE_MISC);
             m->mesg("%s triggered\n", name);
 
+            // Show a memory map to aid the user in choosing address limits in future runs.
+            args.thread->get_process()->mem_showmap(m, "process memory map:\n");
+
+            // Disassemble if necessary.  The only reason we would need to do this is if we need to choose random addresses for
+            // the analysis (fast, simple disassembly) and/or if we need to know how instructions are related to functions.
             std::vector<SgAsmInstruction*> insns;
-            if (randomize>0) {
+            if (randomize>0 || limit_to_function) {
                 m->mesg("%s: disassembling the whole program...", name);
-                SgAsmBlock *gblk = args.thread->get_process()->disassemble(true);
+                SgAsmBlock *gblk = args.thread->get_process()->disassemble(!limit_to_function);
                 insns = SageInterface::querySubTree<SgAsmInstruction>(gblk);
                 m->mesg("%s: disassembled %zu instructions", name, insns.size());
+#if 1
+                const char *listing_name = "x-prog.lst";
+                m->mesg("%s: generating assembly listing in \"%s\"", name, listing_name);
+                std::ofstream listing(listing_name);
+                AsmUnparser().unparse(listing, gblk);
+#endif
+                if (!limits.empty()) {
+                    std::ostringstream ss; ss<<limits;
+                    m->mesg("%s: limiting instructions to addresses: %s\n", name, ss.str().c_str());
+                    std::vector<SgAsmInstruction*> tmp = insns;
+                    insns.clear();
+                    for (size_t i=0; i<tmp.size(); ++i) {
+                        if (limits.contains(Extent(tmp[i]->get_address(), tmp[i]->get_size())))
+                            insns.push_back(tmp[i]);
+                    }
+                    m->mesg("%s: %zu instructions left from which to choose\n", name, insns.size());
+                }
             }
+
             for (size_t n=0; n<std::max((size_t)1, randomize); ++n) {
-                if (n>0 || (randomize>0 && 0==analysis_addr))
-                    analysis_addr = insns[rand() % insns.size()]->get_address();
-                PtrInfo ptr_info(args.thread, m, analysis_addr, verbosity);
+
+                // Choose an analysis address
+                SgAsmInstruction *insn = NULL;
+                if (n>0 || (randomize>0 && 0==analysis_addr)) {
+                    insn = insns[rand() % insns.size()];
+                    analysis_addr = insn->get_address();
+                } else {
+                    try {
+                        insn = args.thread->get_process()->get_instruction(analysis_addr);
+                    } catch (...) {
+                    }
+                }
+
+                // Limit the range of addresses that will be considered during the analysis
+                ExtentMap addrspc;
+                if (limit_to_function) {
+                    SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(insn);
+                    if (func) {
+                        addrspc = function_extent(func);
+                    } else {
+                        m->mesg("%s: cannot limit analysis to a single function at insn at 0x%08"PRIx64, name, analysis_addr);
+                    }
+                } else if (!limits.empty()) {
+                    addrspc = limits;
+                }
+
+                // Do the analyses
+                PtrInfo ptr_info(args.thread, m, analysis_addr, verbosity, addrspc);
                 PtrAnalysis().analyze(ptr_info);
                 for (size_t iter=0; iter<niters; ++iter) {
                     m->mesg("%s: MemoryOracle at virtual address 0x%08"PRIx64" (%zu of %zu), iteration %zu",
@@ -564,6 +647,7 @@ int main(int argc, char *argv[], char *envp[])
     rose_addr_t trigger_va=0, analysis_va=0;
     size_t randomize=0, niters=1;
     Verbosity verbosity=VB_MINIMAL;
+    ExtentMap limits;
 
     for (int i=1; i<argc; i++) {
         if (!strncmp(argv[i], "--trigger=", 10)) {
@@ -579,6 +663,24 @@ int main(int argc, char *argv[], char *envp[])
         } else if (!strncmp(argv[i], "--random=", 9)) {
             // number of analyses (i.e., number of analysis starting addresses)
             randomize = strtoul(argv[i]+9, NULL, 0);
+            memmove(argv+i, argv+i+1, (argc-- - i)*sizeof(*argv));
+            --i;
+        } else if (!strncmp(argv[i], "--limits=", 9)) {
+            // when --random is specified, limit instructions to those which are contained in the specified part of the address
+            // range.  The value of this switch should be a comma-separated list of addresses appearing in pairs consisting of
+            // the low limit and high limit (inclusive).
+            char *s=argv[i]+9, *rest;
+            while (*s) {
+                rose_addr_t lo=strtoull(s, &rest, 0);
+                s = *rest ? rest+1 : rest;
+                rose_addr_t hi=strtoull(s, &rest, 0);
+                s = *rest ? rest+1 : rest;
+                if (hi<lo) {
+                    std::cerr <<argv[0] <<": --limits switch should have pairs of inclusive address limits.\n";
+                    return 1;
+                }
+                limits.insert(Extent::inin(lo, hi));
+            }
             memmove(argv+i, argv+i+1, (argc-- - i)*sizeof(*argv));
             --i;
         } else if (!strncmp(argv[i], "--analysis=", 11)) {
@@ -652,7 +754,7 @@ int main(int argc, char *argv[], char *envp[])
     }
 
     // Register the analysis callback.
-    AnalysisTrigger trigger(trigger_va, analysis_va, randomize, niters, verbosity);
+    AnalysisTrigger trigger(trigger_va, analysis_va, randomize, limits, niters, verbosity);
     sim.install_callback(&trigger);
 
     // The rest is normal boiler plate to run the simulator, except we'll catch the Analysis to terminate the simulation early
