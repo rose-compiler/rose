@@ -504,6 +504,10 @@ public:
             // Initialize the policy for the first simulated instruction.
             policy.writeRegister(semantics.REG_EIP, policy.number<32>(info.analysis_addr));
             policy.writeRegister(semantics.REG_ESP, policy.number<32>(analysis_stack_va));
+            if (info.verbosity>=VB_MINIMAL) {
+                std::stringstream ss; ss <<policy;
+                info.m->more("%s: initial state:\n%s", name, ss.str().c_str());
+            }
 
             // Simulate some instructions
             for (/*void*/; ninsns<limit && policy.readRegister<32>(semantics.REG_EIP).is_known(); ++ninsns) {
