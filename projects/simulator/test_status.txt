@@ -1,8 +1,8 @@
 pthread_atfork.1-1 no
 pthread_atfork.2-1 no
-pthread_atfork.3-2 no
-pthread_atfork.3-3 no
-pthread_atfork.4-1 no
+pthread_atfork.3-2 yes
+pthread_atfork.3-3 yes
+pthread_atfork.4-1 yes
 pthread_attr_destroy.1-1 no
 pthread_attr_destroy.2-1 no
 pthread_attr_destroy.3-1 no
