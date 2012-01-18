@@ -175,14 +175,12 @@ public:
                 if (*di!=this->cur_insn)
                     defs.insert(*di);
             }
-#if 1
             if (!defs.empty() && info->verbosity>=VB_SOME) {
-                info->m->more("    DS read depends on insn%s", 1==defs.size()?"":"s");
+                info->m->more("    Read depends on insn%s", 1==defs.size()?"":"s");
                 for (SymbolicSemantics::InsnSet::const_iterator di=defs.begin(); di!=defs.end(); ++di)
                     info->m->more(" 0x%08"PRIx64, (*di)->get_address());
                 info->m->more("\n");
             }
-#endif
             info->ptr_insns.insert(defs.begin(), defs.end());
         } else if (1==info->pass && info->ptr_insns.find(this->cur_insn)!=info->ptr_insns.end()) {
             if (info->verbosity>=VB_SOME)
@@ -217,7 +215,37 @@ public:
         this->cur_state.mem.push_back(new_cell);
         return this->template unsignedExtend<32,Len>(new_cell.data); // no defining instruction
     }
-            
+
+    template<size_t Len>
+    void writeMemory(X86SegmentRegister segreg, const T<32> &addr, const T<Len> &val, const T<1> &cond) {
+        if (0==info->pass && segreg==x86_segreg_ds) {
+            SymbolicSemantics::InsnSet defs; // defining instructions, excluding self
+            for (SymbolicSemantics::InsnSet::const_iterator di=addr.defs.begin(); di!=addr.defs.end(); ++di) {
+                if (*di!=this->cur_insn)
+                    defs.insert(*di);
+            }
+            if (!defs.empty() && info->verbosity>=VB_SOME) {
+                info->m->more("    Write depends on insn%s", 1==defs.size()?"":"s");
+                for (SymbolicSemantics::InsnSet::const_iterator di=defs.begin(); di!=defs.end(); ++di)
+                    info->m->more(" 0x%08"PRIx64, (*di)->get_address());
+                info->m->more("\n");
+            }
+            info->ptr_insns.insert(defs.begin(), defs.end());
+        }
+
+        SymbolicSemantics::MemoryCell<T> new_cell(addr, this->template unsignedExtend<Len, 32>(val), Len/8, NULL/*no defng insn*/);
+        bool saved = false; // has new_cell been saved to memory?
+        for (typename Memory::iterator mi=this->cur_state.mem.begin(); mi!=this->cur_state.mem.end(); ++mi) {
+            if (new_cell.must_alias(*mi, this->solver)) {
+                *mi = new_cell;
+                saved = true;
+            } else if (new_cell.may_alias(*mi, this->solver)) {
+                (*mi).set_clobbered();
+            }
+        }
+        if (!saved)
+            this->cur_state.mem.push_back(new_cell);
+    }
 };
 
 /** Perform a pointer analysis, looking for memory addresses that contain pointers.  Return value is a PtrInfo object that
@@ -230,7 +258,7 @@ public:
 
     // Limit the number of instructions we process.  The symbolic expressions can become very large quite quickly.  A better
     // approach might be to bail when the expression complexity reaches a certain point.
-    static const size_t max_processed = 100;
+    static const size_t max_processed = 200;
 
     // Do the analysis
     void analyze(PtrInfo &info/*in,out*/) {
