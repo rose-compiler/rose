@@ -43,7 +43,7 @@ void generateDefUseChainsFromSSA(SgProject* project, DefUseChains& defUseChains)
         set<SgVarRefExp*> uses = ssa.getUsesAtNode(node);
         foreach (SgVarRefExp* varRef, uses)
         {
-            StaticSingleAssignment::ReachingDefPtr reachingDef = ssa.getDefinitionForUse(varRef);
+            SSA_UnfilteredCfg::ReachingDefPtr reachingDef = ssa.getDefinitionForUse(varRef);
             
             if (!reachingDef) continue;
 
