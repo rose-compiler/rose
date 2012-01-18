@@ -170,7 +170,11 @@ void
 InsnSemanticsExpr::LeafNode::print(std::ostream &o, RenameMap *rmap/*NULL*/) const
 {
     if (known) {
-        if (nbits>1 && (ival & ((uint64_t)1<<(nbits-1)))) {
+        if ((32==nbits || 64==nbits) && 0!=(ival & 0xffff0000) && 0xffff0000!=(ival & 0xffff0000)) {
+            // probably an address, so print in hexadecimal.  The comparison with 0 is for positive values, and the comparison
+            // with 0xffff0000 is for negative values.
+            o <<StringUtility::addrToString(ival);
+        } else if (nbits>1 && (ival & ((uint64_t)1<<(nbits-1)))) {
             uint64_t sign_extended = ival | ~(((uint64_t)1<<nbits)-1);
             o <<(int64_t)sign_extended;
         } else {
