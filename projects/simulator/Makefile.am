@@ -1407,7 +1407,7 @@ check-pthread:  $(PTHREAD_TEST_TARGETS)
 test-inputs: $(SYS_TEST_INPUTS) $(PTHREAD_TEST_INPUTS)
 
 .PHONY: run-tests
-run-tests: check-syscalls check-pthread
+run-tests: check-syscalls #  check-pthread  # pthread tests are temporarily disabled
 	@$(RTH_STATS)
 
 check-local: run-tests
