@@ -7,7 +7,7 @@
 #include "graphProcessing.h"
 #include "BinaryControlFlow.h"
 #include "BinaryLoader.h"
-/* Testing the graph traversal mechanism now implementing in AstProcessing.h (inside src/midend/astProcessing/)*/
+/* Testing the graph traversal mechanism now implementing in graphProcessing.h (inside src/midend/astProcessing/)*/
 
 using namespace std;
 using namespace boost;
@@ -24,7 +24,6 @@ class visitorTraversal : public SgGraphTraversal<BinaryAnalysis::ControlFlow::Gr
      public:
          long int pths;
          long int tltnodes;
-         std::map<Vertex, int> vV;
 
           virtual void analyzePath( vector<Vertex>& pth);
  
@@ -35,7 +34,7 @@ class visitorTraversal : public SgGraphTraversal<BinaryAnalysis::ControlFlow::Gr
 
 void visitorTraversal::analyzePath(vector<Vertex>& pth) {
     //tltnodes += pth.size();
-//    #pragma omp atomic
+    #pragma omp atomic
     pths++;
 }
 
@@ -60,7 +59,6 @@ int main(int argc, char *argv[]) {
         visitorTraversal* vis = new visitorTraversal;
         vis->tltnodes = 0;
         vis->pths = 0;
-//	vis->firstPrepGraph(cfg);
         vis->constructPathAnalyzer(cfg, true, 0, 0, false);
         std::cout << "pths: " << vis->pths << std::endl;
         std::cout << "tltnodes: " << vis->tltnodes << std::endl;
