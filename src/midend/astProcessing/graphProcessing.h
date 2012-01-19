@@ -281,7 +281,7 @@ zipPath(std::vector<int>& pth, CFG*& g, int start, int end) {
                         std::vector<int> movepath;
                         movepath.push_back(pth.front());
                         movepath.push_back(pth.back());
-                        for (unsigned int qw = 0; qw < pth.size(); qw++) {
+                        for (unsigned int qw = 0; qw < pth.size()-1; qw++) {
                            if (find(markers.begin(), markers.end(), pth[qw]) != markers.end()) {
                                std::vector<int> oeds = getOutEdges(pth[qw], g);
                                for (unsigned int i = 0; i < oeds.size(); i++) {
@@ -1284,6 +1284,7 @@ uTraversePath(int begin, int end, CFG*& g, bool loop, std::map<int, std::vector<
                         for (unsigned int q1 = 0; q1 < path.size(); q1++) {
                             //std::cout << "q1: " << q1 << " q2 " << q2 << std::endl;
                             //std::cout << "q1: " << q1 << " qs[q2]: " << qs[q2] << std::endl;
+                            if (q2 < qs.size()) {
                             if (qs.size() != 0 && q1 == qs[q2] && q2 != pL.size()) {
                                //if (pL[q2] >= globalLoopPaths[path[q1]].size()) {
                                if (pL[q2] == -1) {
@@ -1321,6 +1322,10 @@ uTraversePath(int begin, int end, CFG*& g, bool loop, std::map<int, std::vector<
                                   // }
                                }
                                q2++;
+                            }
+                            else {
+                               npath.push_back(path[q1]);
+                            }
                             }
                             else {
                                npath.push_back(path[q1]);
@@ -2495,8 +2500,9 @@ traversed maximally once what is the greatest number of steps taken to reach the
                         for (int q1 = 0; q1 < path.size(); q1++) {
                             //std::cout << "q1: " << q1 << " q2 " << q2 << std::endl;
                             //std::cout << "q1: " << q1 << " qs[q2]: " << qs[q2] << std::endl;
-                            if (qs.size() != 0 && q1 == qs[q2] && q2 != pL.size()) {
-                               //if (pL[q2] >= globalLoopPaths[path[q1]].size()) {
+                            if (q2 != pL.size()) {
+                            if (qs.size() != 0 && q1 == qs[q2]) {
+                               //if (pL[q2] >= globalLoopPaths[path[q1]].isize()) {
                                if (pL[q2] == -1) {
                                    npath.push_back(path[q1]);
                                }
@@ -2520,6 +2526,10 @@ traversed maximally once what is the greatest number of steps taken to reach the
                                   // }
                                }
                                q2++;
+                            }
+                            else {
+                                npath.push_back(path[q1]);
+                            }
                             }
                             else {
                                npath.push_back(path[q1]);
