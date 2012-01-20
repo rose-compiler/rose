@@ -348,7 +348,7 @@ sub run_command {
       $status = system $cmd;
       last if $status;
     }
-    exit $status;
+    exit($status!=0 ? 1 : 0);
   }
 
   my $status = -1;
