@@ -666,7 +666,7 @@ public:
                 PtrAnalysis().analyze(ptr_info);
                 for (size_t iter=0; iter<niters; ++iter) {
                     m->mesg("%s: MemoryOracle at virtual address 0x%08"PRIx64" (%zu of %zu), iteration %zu",
-                            name, analysis_addr, n+1, randomize, iter);
+                            name, analysis_addr, n+1, std::max(randomize, (size_t)1), iter);
                     size_t ninsns = OracleAnalysis().analyze(ptr_info);
                     m->mesg("%s:   MemoryOracle processed %zu instruction%s", name, ninsns, 1==ninsns?"":"s");
                 }
