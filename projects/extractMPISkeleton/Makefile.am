@@ -21,8 +21,8 @@ EXTRA_DIST=mpi_api.spec stdio_input.spec
 
 EXAMPLES=$(shell ls $(srcdir)/examples/*/*.c)
 SOURCES=${EXAMPLES} $(shell ls $(srcdir)/test-sources/*.c)
-OUTS=$(addprefix out/, $(basename $(notdir ${SOURCES})))
-OUTS_O=$(addprefix out-o/, $(basename $(notdir ${SOURCES})))
+OUTS=$(addsuffix .o, $(addprefix out/, $(basename $(notdir ${SOURCES}))))
+OUTS_O=$(addsuffix .o, (addprefix out-o/, $(basename $(notdir ${SOURCES}))))
 
 run: out
 
@@ -30,10 +30,10 @@ run: out
 out: ${EXEC}
 	rm -rf $@
 	mkdir $@
-	for f in ${SOURCES} ; do b=$$(basename "$$f") ; echo ----- $$b ----- ; ./${EXEC} -rose:o out/$$b -skel:spec $(srcdir)/apis.coll $$f ; done
+	for f in ${SOURCES} ; do b=$$(basename "$$f") ; echo ----- $$b ----- ; ./${EXEC} -I${srcdir}/mpi-fakeheader -rose:o out/$$b -skel:spec $(srcdir)/apis.coll $$f ; done
 
-out/%: out/%.c
-	mpicc -o $@ $<
+out/%.o: out/%.c
+	${CC} -I${srcdir}/mpi-fakeheader -c -o $@ $<
 
 .PHONY: mpibuild
 mpibuild: ${OUTS}
@@ -44,7 +44,7 @@ mpibuild: ${OUTS}
 out-o: ${EXEC}
 	rm -rf $@
 	mkdir $@
-	for f in ${SOURCES} ; do b=$$(basename "$$f") ; echo ----- $$b ----- ; ./${EXEC} -rose:o out-o/$$b -skel:spec $(srcdir)/apis.coll -skel:outline $$f ; done
+	for f in ${SOURCES} ; do b=$$(basename "$$f") ; echo ----- $$b ----- ; ./${EXEC} -I${srcdir}/mpi-fakeheader -rose:o out-o/$$b -skel:spec $(srcdir)/apis.coll -skel:outline $$f ; done
 
 out-o/%: out-o/%.c
 	mpicc -o $@ $<
@@ -56,7 +56,7 @@ mpibuild-o: ${OUTS_O}
 
 .PHONY: compare
 compare: ${OUTS}
-	@for f in out/*.c ; do b=$$(basename "$$f") ; if [ -e expected/$$b.expected ] ; then diff $$f expected/$$b.expected ; fi ; done
+	@for f in out/*.c ; do b=$$(basename "$$f") ; if [ -e ${srcdir}/expected/$$b.expected ] ; then diff $$f ${srcdir}/expected/$$b.expected ; fi ; done
 
 .PHONY: test
 test: ${EXEC}

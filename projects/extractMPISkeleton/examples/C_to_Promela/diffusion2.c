@@ -56,7 +56,6 @@ void write_frame_2(int time) {
     MPI_Status status;
     char filename[50];
     FILE *file;
-    int linelen = nprocsx*nxl*8+1; /* length of one line, incl. \n */
     int numrecvs = nyl*(nprocsx*nprocsy - 1);
 
     sprintf(filename, "./diffusion2_%d.out", time);
@@ -74,14 +73,8 @@ void write_frame_2(int time) {
         fprintf(file, "\n");
       }
     for (k = 0; k < numrecvs; k++) {
-      int procx, procy, row;
       MPI_Recv(buf, nxl, MPI_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG,
                MPI_COMM_WORLD, &status);
-      procx = status.MPI_SOURCE % nprocsx;
-      procy = status.MPI_SOURCE / nprocsx;
-      row = procy*nyl + status.MPI_TAG;
-      fseek(file, row*linelen + procx*nxl*8, SEEK_SET);
-      for (i = 1; i <= nxl; i++) fprintf(file, "%8.2f", buf[i-1]);
     }
     fclose(file);
   }

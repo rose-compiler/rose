@@ -8,11 +8,11 @@ char **argv;
   int rank;
   int value;
   MPI_Init(&argc,&argv);
-  MPI_Comm_rank(&ompi_mpi_comm_world,&rank);
+  MPI_Comm_rank(MPI_COMM_WORLD,&rank);
   do {
     if (rank == 0) 
       scanf("%d",&value);
-    MPI_Bcast((&value),1,&ompi_mpi_int,0,&ompi_mpi_comm_world);
+    MPI_Bcast((&value),1,MPI_INT,0,MPI_COMM_WORLD);
   }while (value >= 0);
   MPI_Finalize();
   return 0;
