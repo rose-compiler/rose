@@ -3960,36 +3960,29 @@ syscall_clone_enter(RSIM_Thread *t, int callno)
 static int
 sys_clone(RSIM_Thread *t, unsigned flags, uint32_t newsp, uint32_t parent_tid_va, uint32_t child_tls_va, uint32_t pt_regs_va)
 {
+    RSIM_Process *p = t->get_process();
+
     if (flags == (CLONE_CHILD_CLEARTID | CLONE_CHILD_SETTID | SIGCHLD)) {
-        /* This is a fork() */
-        t->get_process()->get_callbacks().call_process_callbacks(RSIM_Callbacks::BEFORE, t->get_process(),
-                                                                 RSIM_Callbacks::ProcessCallback::FORK, true);
 
-        /* Flush some files so buffered content isn't output twice. */
-        fflush(stdout);
-        fflush(stderr);
-        if (t->get_process()->get_tracing_file())
-            fflush(t->get_process()->get_tracing_file());
+        /* Apply process pre-fork callbacks */
+        p->get_callbacks().call_process_callbacks(RSIM_Callbacks::BEFORE, p, RSIM_Callbacks::ProcessCallback::FORK, true);
 
-        /* We cannot use clone() because it's a wrapper around the clone system call and we'd need to provide a function for it to
-         * execute. We want fork-like semantics. */
+        /* We cannot use clone() because it's a wrapper around the clone system call and we'd need to provide a function for it
+         * to execute. We want fork-like semantics.  The RSIM_Process::atfork_*() callbacks are invoked here, and among other
+         * actions, wait and post the simulator's global semaphore. */
+        t->atfork_prepare();
         pid_t pid = fork();
-        if (-1==pid)
-            return -errno;
 
-        if (0==pid) {
-            /* Kludge for now. FIXME [RPM 2011-02-14] */
-            t->post_fork();
-
-            /* Open new log files if necessary */
-            t->get_process()->open_tracing_file();
-            t->get_process()->btrace_close();
+        if (0!=pid) {
+            t->atfork_parent();
+        } else {
+            t->atfork_child();
 
             /* Thread-related things. We have to initialize a few data structures because the specimen may be using a
              * thread-aware library. */
             if (0!=(flags & CLONE_CHILD_SETTID) && child_tls_va) {
                 uint32_t pid32 = getpid();
-                size_t nwritten = t->get_process()->mem_write(&pid32, child_tls_va, 4);
+                size_t nwritten = p->mem_write(&pid32, child_tls_va, 4);
                 ROSE_ASSERT(4==nwritten);
             }
             if (0!=(flags & CLONE_CHILD_CLEARTID))
@@ -4011,14 +4004,13 @@ sys_clone(RSIM_Thread *t, unsigned flags, uint32_t newsp, uint32_t parent_tid_va
             regs.gs = t->policy.readRegister<16>(t->policy.reg_gs).known_value();
             regs.ss = t->policy.readRegister<16>(t->policy.reg_ss).known_value();
             regs.flags = t->policy.readRegister<32>(t->policy.reg_eflags).known_value();
-            if (sizeof(regs)!=t->get_process()->mem_write(&regs, pt_regs_va, sizeof regs))
+            if (sizeof(regs)!=p->mem_write(&regs, pt_regs_va, sizeof regs))
                 return -EFAULT;
 
-            t->get_process()->get_callbacks().call_process_callbacks(RSIM_Callbacks::AFTER, t->get_process(),
-                                                                     RSIM_Callbacks::ProcessCallback::FORK, true);
+            p->get_callbacks().call_process_callbacks(RSIM_Callbacks::AFTER, p, RSIM_Callbacks::ProcessCallback::FORK, true);
         }
-
-        return pid;
+        
+        return -1==pid ? -errno : pid;
         
     } else if (flags == (CLONE_VM |
                          CLONE_FS |
@@ -4034,7 +4026,7 @@ sys_clone(RSIM_Thread *t, unsigned flags, uint32_t newsp, uint32_t parent_tid_va
         regs.sp = newsp;
         regs.ax = 0;
 
-        pid_t tid = t->get_process()->clone_thread(t, flags, parent_tid_va, child_tls_va, regs);
+        pid_t tid = p->clone_thread(t, flags, parent_tid_va, child_tls_va, regs);
         return tid;
     } else {
         return -EINVAL; /* can't handle this combination of flags */

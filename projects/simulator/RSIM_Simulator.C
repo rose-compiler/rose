@@ -89,6 +89,7 @@ RSIM_Simulator::ctor()
 {
     RTS_rwlock_init(&instance_rwlock, RTS_LAYER_RSIM_SIMULATOR_OBJ, NULL);
 
+    /* Some special syscalls that are available to specimens when they're being simulated. */
     syscall_define(1000000, syscall_RSIM_is_present_enter, syscall_RSIM_is_present, syscall_RSIM_is_present_leave);
     syscall_define(1000001, syscall_RSIM_message_enter,    syscall_RSIM_message,    syscall_RSIM_message_leave);
     syscall_define(1000002, syscall_RSIM_delay_enter,      syscall_RSIM_delay,      syscall_RSIM_delay_leave);

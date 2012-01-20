@@ -472,6 +472,12 @@ private:
     RSIM_Thread *create_thread();
 
 public:
+    /** Sets the main thread.  This discards all known threads from the "threads" map and reinitializes the map with the single
+     *  specified thread.
+     *
+     *  Thread safety:  Not thread safe.  This should only be called during process initialization. */
+    void set_main_thread(RSIM_Thread *t);
+
     /** Creates a new simulated thread and corresponding real thread.  Returns the ID of the new thread, or a negative errno.
      *  The @p parent_tid_va and @p child_tid_va are optional addresses at which to write the new thread's TID if the @p flags
      *  contain the CLONE_PARENT_TID and/or CLONE_CHILD_TID bits.  We gaurantee that the TID is written to both before the
@@ -602,8 +608,6 @@ public:
     }
 
 public:
-    void post_fork();
-
     void btrace_close();
 
     /** Sets the core dump styles. */

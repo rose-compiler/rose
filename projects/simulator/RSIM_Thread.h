@@ -58,7 +58,8 @@ private:
     pthread_t real_thread;
     
     /** The TID of the real thread that is simulating the specimen thread described by this RSIM_Thread object.  Valid until
-     * the "process" data member is null. */
+     * the "process" data member is null.   This value is updated for the main thread of a child process after a fork (see
+     * RSIM_Process::atfork_child(). */
     pid_t my_tid;
 
     /** Like a TID, but a small sequence number instead. This is more readable in error messages, and is what the id() method
@@ -91,6 +92,14 @@ public:
      *  Thread safety: This can be called by any thread and will always return the TID of the real thread simulating this
      *  RSIM_Thread. */
     int get_tid() { return my_tid; }
+
+    /** Initialize the thread ID.  The specimen thread ID is the same as the real simulator thread that "owns" the specimen
+     *  thread.  The thread ID should not be changed except by parts of the RSIM_Process that understand how threads are looked
+     *  up, since the process typically uses an std::map indexed by thread ID.
+     *
+     *  Thread safety: Not thread safe, but this is normally called by initialization functions before the thread is known to
+     *  other parts of the simulator. */
+    void set_tid();
 
     /** Returns the POSIX thread object describing the real thread that's simulating this specimen thread. */
     pthread_t get_real_thread() const { assert(process!=NULL); return real_thread; }
@@ -358,6 +367,11 @@ public:
      *  shut down and the simulator returns to user control. */
     int signal_deliver(const RSIM_SignalHandling::siginfo_32&);
 
+    /** Clears all pending signals.
+     *
+     *  Thread safety:  This method is thread safe. */
+    void signal_clear_pending();
+
     /** Handles return from a signal handler. Returns zero on success, negative errno on failure. The only failure that is
      *  detected at this time is -EFAULT when reading the signal handler stack frame, in which case a message is printed to
      *  TRACE_SIGNAL and no registers or memory are modified.
@@ -425,6 +439,36 @@ public:
      *  Thread safety: This method is thread safe. */
     int sys_sigaltstack(const stack_32 *in, stack_32 *out);
     
+
+    /**************************************************************************************************************************
+     *                                  Process forking
+     **************************************************************************************************************************/
+public:
+
+    /** Fork pre/post processing.
+     *
+     *  Forking a multi-threaded process is fraught with danger.  The entire address space of the parent process is replicated
+     *  in the child, including the states of mutexes, condition variables, and other pthreads objects, but only one thread
+     *  runs in the child--the other threads appear to have simply died.  According to pthread_atfork(3) for Linux 2.6.32, "The
+     *  mutexes are not usable after the fork and must be initialized with pthread_mutex_init in the child process.  This is a
+     *  limitation of the current implementation and might or might not be present in future versions."
+     *
+     *  Since the simulator uses a variety of thread synchronization objects, we must take special care when a multi-threaded
+     *  specimen (and thus multi-threaded simulator) is forked.  All forks within the simulator should be surrounded with calls
+     *  to atfork_prepare(), atfork_parent(), and atfork_child(). (At the time of this writing [2012-01-20] the only fork()
+     *  call is for the emulated fork system call in RSIM_Linux32.C).
+     *
+     *  Only one thread (per process) can be calling fork.  We enforce that through the simulator's global IPC semaphore, the
+     *  same one that ensures that instruction emulation is atomic.  The semaphore is obtained in the atfork_prepare() call and
+     *  released afterward by atfork_parent().  The child need not protect any data structures immediately after the fork since
+     *  it will not share RSIM data structures with the parent, and will be running with only one thread.
+     *
+     * @{ */
+    void atfork_prepare();
+    void atfork_parent();
+    void atfork_child();
+    /** @} */
+
 
     /**************************************************************************************************************************
      *                                  Futex interface
@@ -526,9 +570,6 @@ protected:
     /** Initializes an ArgInfo object to pass to syscall printing functions.  This is called internally by the syscall_enter()
      *  and syscall_leave() methods. */
     void syscall_arginfo(char fmt, uint32_t val, ArgInfo *info, va_list *ap);
-
-public:
-    void post_fork();           /**< Kludge for now. */
 
     /**************************************************************************************************************************
      *                                  Data members

@@ -81,6 +81,13 @@ RSIM_Process::create_thread()
 }
 
 void
+RSIM_Process::set_main_thread(RSIM_Thread *t)
+{
+    threads.clear();
+    threads[t->get_tid()] = t;
+}
+
+void
 RSIM_Process::remove_thread(RSIM_Thread *thread)
 {
     RTS_WRITE(rwlock()) {
@@ -1516,17 +1523,6 @@ RSIM_Process::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char *argv[]
 
         main_thread->policy.writeRegister<32>(main_thread->policy.reg_esp, sp);
     } RTS_WRITE_END;
-}
-
-void
-RSIM_Process::post_fork()
-{
-    assert(1==threads.size());
-    RSIM_Thread *t = threads.begin()->second;
-    threads.clear();
-    threads[t->get_tid()] = t;
-
-    t->policy.set_ninsns(0);            /* restart instruction counter for trace output */
 }
 
 /* The "thread" arg must be the calling thread */
