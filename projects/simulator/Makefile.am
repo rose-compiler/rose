@@ -65,25 +65,25 @@ noinst_PROGRAMS += x86sim
 include_HEADERS += x86sim.h
 x86sim_SOURCES = x86sim.C
 x86sim_CPPFLAGS = $(ROSE_INCLUDES) -DX86_VDSO_PATH_1='"$(srcdir)"' -DX86_VDSO_PATH_2='"$(include_dir)"'
-x86sim_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
+x86sim_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
 
 # Simulator for windows programs
 noinst_PROGRAMS += x86win
 x86win_SOURCES = x86win.C
 x86win_CPPFLAGS = $(ROSE_INCLUDES)
-x86win_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+x86win_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 # Robb's debugging area so he doesn't need to monkey with x86sim all the time
 noinst_PROGRAMS += x86robb
 x86robb_SOURCES = x86robb.C
 x86robb_CPPFLAGS = $(ROSE_INCLUDES)
-x86robb_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+x86robb_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 # Dump contents of an RSIM_FutexTable
 noinst_PROGRAMS += x86futex
 x86futex_SOURCES = x86futex.C
 x86futex_CPPFLAGS = $(ROSE_INCLUDES)
-x86futex_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+x86futex_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 
 ###############################################################################################################################
@@ -97,14 +97,14 @@ EXTRA_DIST += demos/README demos/SignAnalysisExample.h
 noinst_PROGRAMS += demo1
 demo1_SOURCES = demos/demo1.C
 demo1_CPPFLAGS = $(ROSE_INCLUDES)
-demo1_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+demo1_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------------
 # demo 2: synchronous sign analysis
 noinst_PROGRAMS += demo2
 demo2_SOURCES = demos/demo2.C
 demo2_CPPFLAGS = $(ROSE_INCLUDES)
-demo2_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+demo2_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------------
 # demo 3: symbolic semantics for an uncalled function using the Yices SMT solver.
@@ -112,7 +112,7 @@ demo2_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 noinst_PROGRAMS += demo3
 demo3_SOURCES = demos/demo3.C
 demo3_CPPFLAGS = $(ROSE_INCLUDES)
-demo3_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+demo3_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 EXTRA_DIST += demos/demo3input.c
 MOSTLYCLEANFILES += demo3input
@@ -129,7 +129,7 @@ run_demo3: demo3 demo3input
 noinst_PROGRAMS += demo4
 demo4_SOURCES = demos/demo4.C
 demo4_CPPFLAGS = $(ROSE_INCLUDES)
-demo4_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+demo4_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 MOSTLYCLEANFILES += demo4input
 demo4input: demo3input
@@ -144,7 +144,7 @@ run_demo4: demo4 demo4input
 noinst_PROGRAMS += demo5
 demo5_SOURCES = demos/demo5.C
 demo5_CPPFLAGS = $(ROSE_INCLUDES)
-demo5_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+demo5_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 EXTRA_DIST += demos/demo5input.c
 MOSTLYCLEANFILES += demo5input
@@ -161,7 +161,7 @@ run_demo5: demo5 demo5input
 noinst_PROGRAMS += demo6
 demo6_SOURCES = demos/demo6.C
 demo6_CPPFLAGS = $(ROSE_INCLUDES)
-demo6_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+demo6_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 .PHONY: run_demo6
 run_demo6: demo6
@@ -172,7 +172,7 @@ run_demo6: demo6
 noinst_PROGRAMS += demo7
 demo7_SOURCES = demos/demo7.C
 demo7_CPPFLAGS = $(ROSE_INCLUDES)
-demo7_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+demo7_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 .PHONY: run_demo7
 run_demo7: demo7
@@ -183,7 +183,7 @@ run_demo7: demo7
 noinst_PROGRAMS += demo7b
 demo7b_SOURCES = demos/demo7b.C
 demo7b_CPPFLAGS = $(ROSE_INCLUDES)
-demo7b_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+demo7b_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 .PHONY: run_demo7b
 run_demo7b: demo7b
@@ -194,7 +194,7 @@ run_demo7b: demo7b
 noinst_PROGRAMS += demo8
 demo8_SOURCES = demos/demo8.C
 demo8_CPPFLAGS = $(ROSE_INCLUDES)
-demo8_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+demo8_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 
 
@@ -207,7 +207,7 @@ demo8_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 noinst_PROGRAMS += concrete_1
 concrete_1_SOURCES = papers/concrete_1.C
 concrete_1_CPPFLAGS = $(ROSE_INCLUDES)
-concrete_1_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+concrete_1_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 EXTRA_DIST += papers/gzip_sample_1.c
 concrete_1_input: papers/gzip_sample_1.c
@@ -224,7 +224,7 @@ run_concrete_1: concrete_1 concrete_1_input
 noinst_PROGRAMS += concrete_2
 concrete_2_SOURCES = papers/concrete_2.C
 concrete_2_CPPFLAGS = $(ROSE_INCLUDES)
-concrete_2_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+concrete_2_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 EXTRA_DIST += papers/gzip_sample_1.c
 concrete_2_input: papers/gzip_sample_1.c
@@ -241,7 +241,7 @@ run_concrete_2: concrete_2 concrete_2_input
 noinst_PROGRAMS += symbolic_1
 symbolic_1_SOURCES = papers/symbolic_1.C
 symbolic_1_CPPFLAGS = $(ROSE_INCLUDES)
-symbolic_1_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+symbolic_1_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 EXTRA_DIST += papers/gzip_sample_2.c
 symbolic_1_input: papers/gzip_sample_2.c
@@ -261,7 +261,7 @@ run_symbolic_1: symbolic_1 symbolic_1_input
 noinst_PROGRAMS += symbolic_2
 symbolic_2_SOURCES = papers/symbolic_2.C
 symbolic_2_CPPFLAGS = $(ROSE_INCLUDES)
-symbolic_2_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+symbolic_2_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 EXTRA_DIST += papers/grep_sample_1.c papers/glibc_strcmp.c
 grep_sample_1: papers/grep_sample_1.c
@@ -298,7 +298,7 @@ run_symbolic_2_grep_strchr: symbolic_2 $(32BIT_REPO)/grep
 noinst_PROGRAMS += types_1
 types_1_SOURCES = papers/types_1.C
 types_1_CPPFLAGS = $(ROSE_INCLUDES)
-types_1_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+types_1_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 # Input files for types_1 analysis
 EXTRA_DIST += local_tests/types.c local_tests/types_extern.c test_types_1.conf test_types_1.conf
