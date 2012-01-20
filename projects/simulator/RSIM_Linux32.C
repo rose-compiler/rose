@@ -196,6 +196,9 @@ static void syscall_pause_leave(RSIM_Thread *t, int callno);
 static void syscall_pipe(RSIM_Thread *t, int callno);
 static void syscall_pipe_enter(RSIM_Thread *t, int callno);
 static void syscall_pipe_leave(RSIM_Thread *t, int callno);
+static void syscall_pipe2(RSIM_Thread *t, int callno);
+static void syscall_pipe2_enter(RSIM_Thread *t, int callno);
+static void syscall_pipe2_leave(RSIM_Thread *t, int callno);
 static void syscall_prctl(RSIM_Thread *t, int callno);
 static void syscall_prctl_enter(RSIM_Thread *t, int callno);
 static void syscall_pread64(RSIM_Thread *t, int callno);
@@ -428,7 +431,7 @@ RSIM_Linux32::ctor()
     SC_REG(271, utimes,                         default);
     SC_REG(306, fchmodat,                       default);
     SC_REG(311, set_robust_list,                default);
-
+    SC_REG(331, pipe2,                          pipe2);
 
 #undef SC_REG
 }
@@ -1191,6 +1194,44 @@ syscall_pipe(RSIM_Thread *t, int callno)
 
 static void
 syscall_pipe_leave(RSIM_Thread *t, int callno)
+{
+    t->syscall_leave("dP", (size_t)8, print_int_32);
+}
+
+/*******************************************************************************************************************************/
+
+static void
+syscall_pipe2_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("pipe", "pf", open_flags);
+}
+
+static void
+syscall_pipe2(RSIM_Thread *t, int callno)
+{
+    int flags = t->syscall_arg(1);
+    int host[2];
+    int result = pipe2(host, flags);
+    if (-1==result) {
+        t->syscall_return(-errno);
+        return;
+    }
+
+    int32_t guest[2];
+    guest[0] = host[0];
+    guest[1] = host[1];
+    if (sizeof(guest)!=t->get_process()->mem_write(guest, t->syscall_arg(0), sizeof guest)) {
+        close(host[0]);
+        close(host[1]);
+        t->syscall_return(-EFAULT);
+        return;
+    }
+
+    t->syscall_return(result);
+}
+
+static void
+syscall_pipe2_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave("dP", (size_t)8, print_int_32);
 }
@@ -3725,7 +3766,8 @@ syscall_ipc(RSIM_Thread *t, int callno)
      * Linux kernel. */
     unsigned call = t->syscall_arg(0) & 0xffff;
     int version = t->syscall_arg(0) >> 16;
-    uint32_t first=t->syscall_arg(1), second=t->syscall_arg(2), third=t->syscall_arg(3), ptr=t->syscall_arg(4), fifth=t->syscall_arg(5);
+    uint32_t first=t->syscall_arg(1), second=t->syscall_arg(2), third=t->syscall_arg(3);
+    uint32_t ptr=t->syscall_arg(4), fifth=t->syscall_arg(5);
     switch (call) {
         case 1: /* SEMOP */
             sys_semtimedop(t, first, ptr, second, 0);
