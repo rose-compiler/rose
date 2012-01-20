@@ -11,7 +11,7 @@ extractMPISkeleton_SOURCES = APIDepFinder.cc APIReader.cc APISpec.cc \
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 clean-local:
-	rm -f *.o ${bin_PROGRAMS} out out-o *.pdf rose_*.c rose_*.C
+	rm -rf *.o ${bin_PROGRAMS} out out-o *.pdf rose_*.c rose_*.C
 
 noinst_HEADERS = APIDepAttrib.h APIDepFinder.h APIReader.h APISpec.h \
   DangerousOperationFinder.h GenericDepAttrib.h Outline.h \
@@ -19,8 +19,8 @@ noinst_HEADERS = APIDepAttrib.h APIDepFinder.h APIReader.h APISpec.h \
 
 EXTRA_DIST=mpi_api.spec stdio_input.spec
 
-EXAMPLES=$(shell ls $(srcdir)/examples/*/*.c)
-SOURCES=${EXAMPLES} $(shell ls $(srcdir)/test-sources/*.c)
+EXAMPLES=$(shell find $(srcdir)/examples -name "*.c")
+SOURCES=${EXAMPLES} $(shell find $(srcdir)/test-sources -name "*.c")
 OUTS=$(addsuffix .o, $(addprefix out/, $(basename $(notdir ${SOURCES}))))
 OUTS_O=$(addsuffix .o, (addprefix out-o/, $(basename $(notdir ${SOURCES}))))
 
