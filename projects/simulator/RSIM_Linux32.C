@@ -131,6 +131,9 @@ static void syscall_getgid(RSIM_Thread *t, int callno);
 static void syscall_getgid32(RSIM_Thread *t, int callno);
 static void syscall_getgid32_enter(RSIM_Thread *t, int callno);
 static void syscall_getgid_enter(RSIM_Thread *t, int callno);
+static void syscall_getgroups32_enter(RSIM_Thread *t, int callno);
+static void syscall_getgroups32(RSIM_Thread *t, int callno);
+static void syscall_getgroups32_leave(RSIM_Thread *t, int callno);
 static void syscall_getpgrp(RSIM_Thread *t, int callno);
 static void syscall_getpgrp_enter(RSIM_Thread *t, int callno);
 static void syscall_getpid(RSIM_Thread *t, int callno);
@@ -247,6 +250,8 @@ static void syscall_sched_yield_enter(RSIM_Thread *t, int callno);
 static void syscall_select(RSIM_Thread *t, int callno);
 static void syscall_select_enter(RSIM_Thread *t, int callno);
 static void syscall_select_leave(RSIM_Thread *t, int callno);
+static void syscall_setgroups32_enter(RSIM_Thread *t, int callno);
+static void syscall_setgroups32(RSIM_Thread *t, int callno);
 static void syscall_set_robust_list(RSIM_Thread *t, int callno);
 static void syscall_set_robust_list_enter(RSIM_Thread *t, int callno);
 static void syscall_set_thread_area(RSIM_Thread *t, int callno);
@@ -411,6 +416,8 @@ RSIM_Linux32::ctor()
     SC_REG(200, getgid32,                       default);
     SC_REG(201, geteuid32,                      default);
     SC_REG(202, getegid32,                      default);
+    SC_REG(205, getgroups32,                    getgroups32);
+    SC_REG(206, setgroups32,                    default);
     SC_REG(207, fchown32,                       default);
     SC_REG(212, chown,                          default);
     SC_REG(219, madvise,                        default);
@@ -5098,6 +5105,105 @@ syscall_getegid32(RSIM_Thread *t, int callno)
 {
     uid_t id = getegid();
     t->syscall_return(id);
+}
+
+/*******************************************************************************************************************************/
+
+static void
+syscall_getgroups32_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("getgroups32", "dp");
+}
+
+static void
+syscall_getgroups32(RSIM_Thread *t, int callno)
+{
+    int nelmts = t->syscall_arg(0);
+    uint32_t list_ptr = t->syscall_arg(1);
+    int ngroups = 0;
+    gid_t *list = NULL;
+
+    /* Use the process mutex so we can figure out how much memory will be needed before we obtain the groups. */
+    RTS_READ(t->get_process()->rwlock()) {
+        if (-1==(ngroups = getgroups(0, NULL)))
+            t->syscall_return(-errno); // capture errno before we lose it
+        if (ngroups>0 && nelmts>0 && ngroups<=nelmts) {
+            list = new gid_t[ngroups];
+            int ngroups2 __attribute__((unused)) = getgroups(ngroups, list);
+            assert(ngroups2==ngroups);
+        }
+    } RTS_READ_END;
+
+    if (-1==ngroups) {
+        // errno already captured
+    } else if (0==nelmts) {
+        t->syscall_return(ngroups);
+    } else if (ngroups>nelmts) {
+        t->syscall_return(-EINVAL);
+    } else {
+        assert(list!=NULL);
+        assert(sizeof(list[0])==4); // gid_t is 4 bytes on i386
+        size_t nwrite = t->get_process()->mem_write(list, list_ptr, ngroups*sizeof(list[0]));
+        if (nwrite!=ngroups*sizeof(list[0])) {
+            t->syscall_return(-EFAULT);
+        } else {
+            t->syscall_return(ngroups);
+        }
+    }
+
+    delete[] list;
+}
+
+static void
+syscall_getgroups32_leave(RSIM_Thread *t, int callno)
+{
+    int ngroups = t->syscall_arg(-1);
+    int nreq = t->syscall_arg(0);
+    if (nreq>0) {
+        t->syscall_leave("d-P", std::min(ngroups, nreq)*sizeof(gid_t), print_int_32);
+    } else {
+        t->syscall_leave("d");
+    }
+}
+
+/*******************************************************************************************************************************/
+
+static void
+syscall_setgroups32_enter(RSIM_Thread *t, int callno)
+{
+    size_t ngroups = t->syscall_arg(0);
+    size_t maxgroups = sysconf(_SC_NGROUPS_MAX);
+    t->syscall_enter("setgroups32", "dP", std::min(ngroups, maxgroups)*sizeof(gid_t), print_int_32);
+}
+
+static void
+syscall_setgroups32(RSIM_Thread *t, int callno)
+{
+    int nelmts = t->syscall_arg(0);
+    uint32_t list_ptr = t->syscall_arg(1);
+    long maxgroups = sysconf(_SC_NGROUPS_MAX);
+
+    if (nelmts>maxgroups) {
+        t->syscall_return(-EINVAL);
+        return;
+    }
+    
+    gid_t *list = new gid_t[nelmts];
+    size_t nread = t->get_process()->mem_read(list, list_ptr, nelmts*sizeof(*list));
+    if (nread!=nelmts*sizeof(*list)) {
+        t->syscall_return(-EFAULT);
+        delete[] list;
+        return;
+    }
+
+    /* The write lock is required by syscall_getgroups32() */
+    int retval = 0;
+    RTS_WRITE(t->get_process()->rwlock()) {
+        retval = setgroups(nelmts, list);
+        t->syscall_return(-1==retval ? -errno : retval); // capture errno before we lose it
+    } RTS_WRITE_END;
+
+    delete[] list;
 }
 
 /*******************************************************************************************************************************/
