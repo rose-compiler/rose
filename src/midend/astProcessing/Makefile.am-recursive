@@ -55,7 +55,7 @@ include_HEADERS = \
    AstTraversal.h AstCombinedProcessing.h AstCombinedProcessingImpl.h \
    AstCombinedSimpleProcessing.h StackFrameVector.h AstSharedMemoryParallelProcessing.h \
    AstSharedMemoryParallelProcessingImpl.h AstSharedMemoryParallelSimpleProcessing.h graphProcessing.h \
-   graphProcessingSgIncGraph.h graphTemplate.h
+   graphTemplate.h SgGraphTemplate.h 
 
 # Removed AstTests.h AstStatistics.h 
 
