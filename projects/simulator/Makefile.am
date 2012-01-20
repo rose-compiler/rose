@@ -490,7 +490,6 @@ SYS_TEST_INPUTS_TS_SRC = \
 		   $(srcdir)/syscall_tests/syscall_tst.117.shmget.01.c \
 		   $(srcdir)/syscall_tests/syscall_tst.117.shmget.02.c \
 		   $(srcdir)/syscall_tests/syscall_tst.118.1.c \
-		   $(srcdir)/syscall_tests/syscall_tst.118.2.c \
 		   $(srcdir)/syscall_tests/syscall_tst.118.3.c \
 		   $(srcdir)/syscall_tests/syscall_tst.122.c \
 		   $(srcdir)/syscall_tests/syscall_tst.125.1.c \
@@ -711,6 +710,7 @@ TEST_INPUTS_FAILING = \
 		   $(srcdir)/tests/syscall_tst.117.shmget.03.c \
 		   $(srcdir)/tests/syscall_tst.117.shmget.04.c \
 		   $(srcdir)/tests/syscall_tst.117.shmget.05.c \
+		   $(srcdir)/syscall_tests/syscall_tst.118.2.c \
 		   $(srcdir)/tests/syscall_tst.195.1.c	       \
 		   $(srcdir)/tests/syscall_tst.195.2.c	       \
 		   $(srcdir)/tests/syscall_tst.195.3.c	       \
@@ -779,6 +779,8 @@ TEST_INPUTS_FAILING = \
 #			This test cannot be run under the simulator with stderr redirected to a file (it enters an infinite loop
 #			somewhere in the setrlimit() syscall emulation). Since "make check" runs tests with their stderr
 #			redirected to a file, we will skip this test.
+#		   $(srcdir)/syscall_tests/syscall_tst.118.2.c
+#			Uses floating point instructions
 
 
 
