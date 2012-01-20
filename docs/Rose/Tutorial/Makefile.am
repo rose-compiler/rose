@@ -19,7 +19,7 @@ latexFiles = \
    partialRedundancyElimination.tex codeGenerationFormatControl.tex copyHelp.tex \
    roseHPCT.tex sharedMemoryTraversals.tex distributedMemoryTraversals.tex bugSeeding.tex \
    modifiers.tex howToContribute.tex virtualCFG.tex binaryConstruction.tex reductionRecognition.tex \
-   haskell.tex livenessAnalysis.tex parserBuildingBlocks.tex astConstruction.tex
+   haskell.tex livenessAnalysis.tex CFGTraversalTutorial.tex parserBuildingBlocks.tex astConstruction.tex
 
 # This is an evolving list, but these are a few of the required files
 generatedCodeExamples = \
@@ -35,7 +35,9 @@ generatedCodeExamples = \
    $(top_builddir)/tutorial/codeCoverage.out \
    $(top_builddir)/tutorial/vcfg.pdf \
    $(top_builddir)/tutorial/rose_inputCode_inlineTransformations.C \
-   $(top_builddir)/tutorial/roseHPCT/profiled.out
+   $(top_builddir)/tutorial/roseHPCT/profiled.out \
+   $(top_builddir)/tutorial/sourceTraversalTutorial.C \
+   $(top_builddir)/tutorial/binaryTraversalTutorial.C
 
 $(generatedCodeExamples):
 	cd $(top_builddir)/tutorial; $(MAKE) docs

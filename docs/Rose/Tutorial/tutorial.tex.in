@@ -230,6 +230,7 @@ visualization, traversal, query, and debugging.}
 \input{wholeGraphAST}
 \input{AST_PDF_Generator}
 \input{traversal}
+\input{CFGTraversalTutorial}
 % the chapter talking about scope uses AST traversal
 % So I moved it after the traversal chapter.  Liao 3/3/2010
 \input{scopeInformation}
@@ -270,6 +271,7 @@ to build customized analyses using ROSE.}
 \input{loopRecognition}
 \input{virtualCFG}
 \input{buildCFG}
+\input{CFGTraversalTutorial}
 \input{defuseAnalysis}
 \input{buildCallGraph}
 \input{buildVFA}
