@@ -5987,26 +5987,27 @@ syscall_utimes(RSIM_Thread *t, int callno)
 static void
 syscall_fchmodat_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("fchmodat", "dsdd");
+    /* Note that the library fchmodat() takes a fourth flags argument with the only defined bit being AT_SYMLINK_NOFOLLOW, but
+     * the Linux 2.6.32 man page notes that "this flag is not currently implemented." */
+    t->syscall_enter("fchmodat", "dsf-", file_mode_flags /*, fchmod_flags*/);
 }
 
 static void
 syscall_fchmodat(RSIM_Thread *t, int callno)
 {
     int dirfd = t->syscall_arg(0);
-    uint32_t path = t->syscall_arg(1);
+    uint32_t path_va = t->syscall_arg(1);
     bool error;
-    std::string sys_path = t->get_process()->read_string(path, 0, &error);
+    std::string path = t->get_process()->read_string(path_va, 0, &error);
     if (error) {
         t->syscall_return(-EFAULT);
         return;
     }
     mode_t mode = t->syscall_arg(2);
-    int flags = t->syscall_arg(3);
+    int flags = 0;  // t->syscall_arg(3);
 
-    int result = syscall( 306, dirfd, (long) sys_path.c_str(), mode, flags);
-    if (result == -1) result = -errno;
-    t->syscall_return(result);
+    int result = fchmodat(dirfd, path.c_str(), mode, flags);
+    t->syscall_return(-1==result ? -errno : result);
 }
 
 /*******************************************************************************************************************************/

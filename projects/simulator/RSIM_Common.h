@@ -1415,6 +1415,11 @@ static const Translate prctl_options[] = {
     T_END
 };
 
+static const Translate fchmod_flags[] = {
+    TF(AT_SYMLINK_NOFOLLOW),
+    T_END
+};
+
 /* Conversion functions */
 void convert(statfs_32 *g, const statfs64_native *h);
 void convert(statfs_32 *g, const statfs_native *h);
