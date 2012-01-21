@@ -10,7 +10,7 @@ FINISH TEMPFLATPATH CODE
 // Original Author (SgGraphTraversal mechanisms): Michael Hoffman
 //$id$
 //#define PERFDEBUG 1
-//#define LP 1
+#define LP 1
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -538,6 +538,7 @@ bfsTraversePath(int begin, int end, CFG*& g, bool loop) {
     std::set<int> nodes;
     std::vector<std::vector<int> > pathContainer;
     std::vector<std::vector<int> > oldPaths;
+    std::vector<int> completedLoops;
     std::vector<std::vector<int> > npc;
     std::vector<int> bgpath;
     bgpath.push_back(begin);
@@ -761,7 +762,7 @@ int tg = getTarget(oeds[j], g);
             }
             else if (find(newpath.begin(), newpath.end(), tg) != newpath.end() && tg != end) { 
                 std::vector<int> ieds = getInEdges(tg, g);
-                if (ieds.size() > 1/*find(closures.begin(), closures.end(), tg) != closures.end()*/ && find(localLoops.begin(), localLoops.end(), tg) == localLoops.end() && find(recurses.begin(), recurses.end(), tg) == recurses.end()) {
+                if (ieds.size() > 1/*find(closures.begin(), closures.end(), tg) != closures.end()*/ && find(completedLoops.begin(), completedLoops.end(), tg) == completedLoops.end() && find(localLoops.begin(), localLoops.end(), tg) == localLoops.end() && find(recurses.begin(), recurses.end(), tg) == recurses.end()) {
                  //  #pragma omp critical
                  //  {
                    localLoops.push_back(tg);
@@ -791,7 +792,7 @@ int tg = getTarget(oeds[j], g);
     //std::cout << "completedbuild, begin while" << std::endl;
     while (true) {
     //   std::cout << "paths.size(): " << paths.size() << std::endl;
-        if (paths.size() > 10000000) {
+        if (paths.size() > 1000000) {
            std::cout << "too many paths, consider a subgraph" << std::endl;
            ROSE_ASSERT(false);
        }
@@ -912,16 +913,18 @@ int tg = getTarget(oeds[j], g);
     for (unsigned int k = 0; k < localLoops.size(); k++) {
         int lk = localLoops[k];
         std::vector<std::vector<int> > loopp;
-        //if (loopStore.find(localLoops[k]) != loopStore.end()) {
-        //    loopp.insert(loopp.end(), loopStore[localLoops[k]].begin(), loopStore[localLoops[k]].end());
-       // }
-       // else {
+        if (loopStore.find(localLoops[k]) != loopStore.end()) {
+            loopp.insert(loopp.end(), loopStore[localLoops[k]].begin(), loopStore[localLoops[k]].end());
+        }
+        else {
         std::map<int, std::vector<std::vector<int> > > localLoopPaths;
         //std::cout << "loop: " << localLoops[k] << std::endl;
+        completedLoops.push_back(lk);
         recurses.push_back(lk);
         loopp = bfsTraversePath(lk, lk, g, true);
+        //loopStore[lk] = loopp;
         recurses.pop_back();
-        //}
+        }
         //globalLoopPaths[localLoops[k]] = loop;
         for (unsigned int ik = 0; ik < loopp.size(); ik++) {
                 //std::cout << "loop at " << loop[ik][0] << std::endl;
@@ -940,7 +943,7 @@ int tg = getTarget(oeds[j], g);
                 //}
                 }
         }
-        
+        //} 
     /*(    std::set<std::vector<int> > llps = uTraversePath(begin, end, g, true, localLoopPaths);
     for (std::set<std::vector<int> >::iterator ij = llps.begin(); ij != llps.end(); ij++) {
     std::vector<int> ijk = (*ij);
@@ -959,10 +962,12 @@ int tg = getTarget(oeds[j], g);
     borrowed = true;
    // if (!recursedloop) {
     std::vector<std::vector<int> > lps2;
-    unsigned int pathdivisor = 100;
-    unsigned int maxpaths = paths.size()/pathdivisor;
+    //unsigned int pathdivisor = 100;
+   // unsigned int maxpaths = paths.size()/pathdivisor;
+    unsigned int maxpaths = 1000;
+    unsigned int pathdivisor = paths.size()/maxpaths;///paths.size();
 
-    if (maxpaths < 100) {
+    if (pathdivisor < 1) {
         pathdivisor = 1;
         maxpaths = paths.size();
     }
@@ -1085,7 +1090,7 @@ uTraversePath(int begin, int end, CFG*& g, bool loop, std::map<int, std::vector<
     //std::set<std::vector<int> > movepaths;
     //std::set<std::vector<int> > movepaths2;
     #ifdef LP
-    if (loopStore.find(begin) != loopStore.end()) {
+    if (loop && loopStore.find(begin) != loopStore.end()) {
         return loopStore[begin];
     }
     #endif
@@ -1128,7 +1133,7 @@ uTraversePath(int begin, int end, CFG*& g, bool loop, std::map<int, std::vector<
         //    std::cout << "loopStore find: " << begin << std::endl;
          //   return loopStore[begin];
         //}
-        if (paths.size() > 100000) {
+        if (paths.size() > 1000000) {
             std::cout << "nearly 1 million paths with no loops, stopping" << std::endl;
             return loopPaths;
             std::cout << "ended early" << std::endl;
@@ -1551,7 +1556,7 @@ uTraversePath(int begin, int end, CFG*& g, bool loop, std::map<int, std::vector<
                       evaledpaths++; 
                       if (evaledpaths % 1000000 == 0 && evaledpaths != 0) {
                           std::cout << "evaled paths: " << evaledpaths << std::endl;
-                          //std::cout << "badpaths: " << badpaths << std::endl;
+                         ///std::cout << "badpaths: " << badpaths << std::endl;
                       }
                       }
                       //}
@@ -1657,6 +1662,7 @@ uTraversePath(int begin, int end, CFG*& g, bool loop, std::map<int, std::vector<
 if (newpaths.size() != 0) {
                     std::cout << "went too far" << std::endl; 
                     //int evaledpaths = 0;
+                    ROSE_ASSERT(false);
                     for (std::set<std::vector<int> >::iterator qw = newpaths.begin(); qw != newpaths.end(); qw++) {
                     std::vector<int> npath = *qw;
                     bool analyzed = false;
@@ -1723,7 +1729,7 @@ if (newpaths.size() != 0) {
                     std::cout << "uTraverse time: " << tX << std::endl; 
                     #endif
                     #ifdef LP
-                    if (loop) {
+                    if (loop && loopPaths.size() < 100) {
                     std::cout << "loopPaths: " << loopPaths.size() << std::endl;
                     loopStore[begin] = loopPaths;
                     }
