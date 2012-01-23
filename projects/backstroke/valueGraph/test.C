@@ -230,8 +230,22 @@ int main(int argc, char *argv[])
     option = 3;
     //cin >> option;
         
+    set<string> events;
+
+    vector<string> args;
+    for (int i = 0; i < argc; ++i)
+    {
+        if (string(argv[i]) == "-H")
+        {
+            ++i;
+            events.insert(argv[i]);
+        }
+        else
+            args.push_back(argv[i]);
+    }
+
     // Build the AST used by ROSE
-    SgProject* project = frontend(argc, argv);
+    SgProject* project = frontend(args);
 
     if (option == 2)
     {
@@ -335,8 +349,7 @@ int main(int argc, char *argv[])
     else if (option == 3)
     {
         set<SgFunctionDefinition*> funcDefs;
-        
-        set<string> events;
+                
         events.insert("Handle");
         events.insert("tmr_event_handler");
         events.insert("event_handler");
