@@ -15,6 +15,9 @@
 
 #include "AstNodePtrs.h"
 
+#ifdef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+   #include "AstReverseProcessing.h"
+#endif
 
 class TestAstPropertiesSA 
    {
@@ -88,13 +91,16 @@ class TestAstNullPointers : public AstNodePtrs {
     void visit(SgNode* n) {}
   };
 
+// #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
   class DummyISTestQuery2 : public AstReversePrefixInhSynProcessing<DI,DS> {
     DI evaluateInheritedAttribute(SgNode* n, DI inh) { return inh; }
     DS evaluateSynthesizedAttribute(SgNode*, DI inh, SubTreeSynthesizedAttributes st) { DS syn; return syn; }
   };
+
   class DummyITestQuery2 : public AstReversePrefixInhProcessing<DI> {
     DI evaluateInheritedAttribute(SgNode* n, DI inh) { return inh; }
   };
+
   class DummySTestQuery2 : public AstReversePrefixSynProcessing<DS> {
     DS evaluateSynthesizedAttribute(SgNode* n, SubTreeSynthesizedAttributes st) { DS syn; return syn; }
   };
@@ -115,6 +121,7 @@ class TestAstNullPointers : public AstNodePtrs {
   class DummyTestQuery3 : public AstReverseBranchSimpleProcessing {
     void visit(SgNode* n) {}
   };
+// #endif
 
 // DQ (3/30/2004): Added tests on templates!
 // class TestAstTemplateProperties : public AstPreOrderTraversal
@@ -454,6 +461,35 @@ class TestForProperLanguageAndSymbolTableCaseSensitivity : public AstTopDownProc
 
        // Simple funtion to call to get the traversal started (sets up the inherited attribute, etc.).
           static void test(SgNode* node);
+   };
+
+
+
+class TestForReferencesToDeletedNodes : public ROSE_VisitTraversal
+   {
+  // DQ (9/26/2011): This class is part of a test to verify consistancy of 
+  // the AST by verifying that no IR node referenced in the AST is a SgNode.
+  // Note that in a proper AST all IR nodes are derived from an SgNode, but
+  // that there should be no IR nodes in the AST that are only SgNode types.
+  // It can happen that a referenced IR nodes will only be able to report 
+  // that it is a SgNode, when this happens it is generally because it is 
+  // and dangling pointer to an IR node that was deleted (at which point
+  // it can no longer be identified by type to be more than an SgNode).
+  // So this is a test for references in the AST to IR nodes that have been
+  // deleted.
+
+     private:
+         int detect_dangling_pointers;
+         std::string filename;
+
+     public:
+          TestForReferencesToDeletedNodes(int input_detect_dangling_pointers, const std::string & s );
+
+       // Overloaded pure virtual function.
+          void visit( SgNode* node );
+
+       // Simple funtion to call to get the traversal started...
+          static void test( SgProject* project );
    };
 
 

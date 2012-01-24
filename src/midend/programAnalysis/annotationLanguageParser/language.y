@@ -2,6 +2,9 @@
 
 #include "broadway.h"
 
+// DQ (9/12/2011): Added assert to support use in testing suggested by static analysis.
+#include "assert.h"
+
 extern int annlex(void);
 extern int annlineno;
 extern int line_number_offset;
@@ -503,12 +506,14 @@ member:
 procedure:
     procedure_declaration '{' procedure_annotations '}'
       {
+        assert(procedureAnn::Current != NULL);
         Annotations::Current->add_procedure(procedureAnn::Current);
         procedureAnn::Current = 0;
       }
 
   | procedure_declaration '{' '}'
       {
+        assert(procedureAnn::Current != NULL);
         Annotations::Current->add_procedure(procedureAnn::Current);
         procedureAnn::Current = 0;
       }
@@ -558,11 +563,15 @@ procedure_annotation:
 structure_annotation:
     tokON_ENTRY '{' structures '}'
       {
+     // DQ (9/12/2011): Static analysis reports that this could be NULL, check it explicitly.
+        assert(procedureAnn::Current != NULL);
         procedureAnn::Current->add_on_entry($3);
       }
 
   | tokON_EXIT  '{' structures '}'
       {
+     // DQ (9/12/2011): Static analysis reports that this could be NULL, check it explicitly.
+        assert(procedureAnn::Current != NULL);
         procedureAnn::Current->add_on_exit(new pointerRuleAnn((exprAnn *)0, $3, $1));
       }
 
@@ -587,6 +596,8 @@ pointer_rule_list:
 pointer_rule:
     tokIF '(' condition ')' '{' structures '}'
       {
+     // DQ (9/12/2011): Static analysis reports that this could be NULL, check it explicitly.
+        assert(procedureAnn::Current != NULL);
         procedureAnn::Current->add_on_exit(new pointerRuleAnn($3, $6, $1));
       }
 
@@ -594,11 +605,16 @@ pointer_rule:
       {
         structuretree_list * temp = new structuretree_list();
         temp->push_back($5);
+
+     // DQ (9/12/2011): Static analysis reports that this could be NULL, check it explicitly.
+        assert(procedureAnn::Current != NULL);
         procedureAnn::Current->add_on_exit(new pointerRuleAnn($3, temp, $1));
       }
 
   | tokDEFAULT '{' structures '}'
       {
+     // DQ (9/12/2011): Static analysis reports that this could be NULL, check it explicitly.
+        assert(procedureAnn::Current != NULL);
         procedureAnn::Current->add_on_exit(new pointerRuleAnn((exprAnn *)0, $3, $1));
       }
 
@@ -606,6 +622,9 @@ pointer_rule:
       {
         structuretree_list * temp = new structuretree_list();
         temp->push_back($2);
+
+     // DQ (9/12/2011): Static analysis reports that this could be NULL, check it explicitly.
+        assert(procedureAnn::Current != NULL);
         procedureAnn::Current->add_on_exit(new pointerRuleAnn((exprAnn *)0, temp, $1));
       }
 
@@ -632,6 +651,8 @@ structures:
 
   | tokDELETE qualified_identifier
       { 
+     // DQ (9/12/2011): Static analysis reports that this could be NULL, check it explicitly.
+        assert(procedureAnn::Current != NULL);
         procedureAnn::Current->add_delete($2);
         delete $2;
 
@@ -644,6 +665,8 @@ structures:
 
   | structures tokDELETE qualified_identifier
       {
+     // DQ (9/12/2011): Static analysis reports that this could be NULL, check it explicitly.
+        assert(procedureAnn::Current != NULL);
         procedureAnn::Current->add_delete($3);
         delete $3;
         $$ = $1;
@@ -651,6 +674,8 @@ structures:
 
   | structures ',' tokDELETE qualified_identifier
       {
+     // DQ (9/12/2011): Static analysis reports that this could be NULL, check it explicitly.
+        assert(procedureAnn::Current != NULL);
         procedureAnn::Current->add_delete($4);
         delete $4;
         $$ = $1;
@@ -690,6 +715,8 @@ behavior_annotation:
 
     tokACCESS '{' identifier_list '}'
       {
+     // DQ (9/12/2011): Static analysis reports that this could be NULL, check it explicitly.
+        assert(procedureAnn::Current != NULL);
         procedureAnn::Current->add_uses( $3 );
         delete $3;
       }
@@ -698,12 +725,16 @@ behavior_annotation:
       {
         parserid_list temp;
         temp.push_back( * $2);
+     // DQ (9/12/2011): Static analysis reports that this could be NULL, check it explicitly.
+        assert(procedureAnn::Current != NULL);
         procedureAnn::Current->add_uses( & temp );
         delete $2;
       }
 
   | tokMODIFY '{' identifier_list '}'
       {
+     // DQ (9/12/2011): Static analysis reports that this could be NULL, check it explicitly.
+        assert(procedureAnn::Current != NULL);
         procedureAnn::Current->add_defs( $3 );
         delete $3;
       }
@@ -712,6 +743,8 @@ behavior_annotation:
       {
         parserid_list temp;
         temp.push_back( * $2);
+     // DQ (9/12/2011): Static analysis reports that this could be NULL, check it explicitly.
+        assert(procedureAnn::Current != NULL);
         procedureAnn::Current->add_defs( & temp );
         delete $2;
       }
@@ -1004,20 +1037,28 @@ report_annotation:
 
      tokREPORT report_element_list ';'
        {
+     // DQ (9/12/2011): Static analysis reports that this could be NULL, check it explicitly.
+        assert(procedureAnn::Current != NULL);
          procedureAnn::Current->add_report(new reportAnn((exprAnn *)0, false, $2, $1));
        }
 
   |  tokREPORT tokIF '(' condition ')' report_element_list ';'
        {
+     // DQ (9/12/2011): Static analysis reports that this could be NULL, check it explicitly.
+        assert(procedureAnn::Current != NULL);
          procedureAnn::Current->add_report(new reportAnn($4, false, $6, $1));
        }
   |  tokERROR report_element_list ';'
        {
+     // DQ (9/12/2011): Static analysis reports that this could be NULL, check it explicitly.
+        assert(procedureAnn::Current != NULL);
          procedureAnn::Current->add_report(new reportAnn((exprAnn *)0, true, $2, $1));
        }
 
   |  tokERROR tokIF '(' condition ')' report_element_list ';'
        {
+     // DQ (9/12/2011): Static analysis reports that this could be NULL, check it explicitly.
+        assert(procedureAnn::Current != NULL);
          procedureAnn::Current->add_report(new reportAnn($4, true, $6, $1));
        }
   ;

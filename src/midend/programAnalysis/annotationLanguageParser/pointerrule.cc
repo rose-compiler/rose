@@ -1,5 +1,6 @@
 
 #include "broadway.h"
+#include <assert.h>
 
 using namespace std;
 
@@ -25,6 +26,16 @@ pointerRuleAnn::~pointerRuleAnn()
     delete (*p);
   
 }
+
+pointerRuleAnn::pointerRuleAnn(const pointerRuleAnn & X)
+   : Ann(X)
+   {
+  // DQ (9/13/2011): This copy constructor was built because static analysis tools 
+  // suggested it would avoid a possible double free error.  I agree.
+     printf ("Error: it is an error to call this copy constructor. \n");
+     assert(false);
+   }
+
 
 #ifdef __PROCLOCATION
 void pointerRuleAnn::test(procLocation * where,

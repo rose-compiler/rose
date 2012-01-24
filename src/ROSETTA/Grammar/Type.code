@@ -5055,10 +5055,6 @@ SgArrayType::createType ( SgType* base_type, SgExpression* idx, SgExpression* op
   // DQ (10/4/2010): I think that reference types can't have a kind parameter, so this should be NULL.
      ROSE_ASSERT(optional_fortran_type_kind == NULL);
 
-#if 0
-     SgArrayType* returnType = new SgArrayType(base_type, idx);
-     ROSE_ASSERT(returnType != NULL);
-#else
      SgArrayType* returnType = new SgArrayType(base_type, idx);
      ROSE_ASSERT(returnType != NULL);
 
@@ -5070,6 +5066,10 @@ SgArrayType::createType ( SgType* base_type, SgExpression* idx, SgExpression* op
 
   // Only look for pointers to type in the global type table.
      SgType* t = get_globalTypeTable()->lookup_type(name);
+
+#if 0
+     printf ("In SgArrayType::createType(): After get_globalTypeTable()->lookup_type(%s) t = %p \n",name.str(),t);
+#endif
 
      if (t == NULL)
         {
@@ -5100,21 +5100,52 @@ SgArrayType::createType ( SgType* base_type, SgExpression* idx, SgExpression* op
         {
        // If it is already present in the type table then delete the type (so that it will remain unique).
 #if 0
-          printf ("Mangled type name for SgArrayType = %s (already exists in type table) \n",name.str());
+           printf ("Mangled type name for SgArrayType = %s (already exists in type table) t = %p returnType = %p \n",name.str(),t,returnType);
 #endif
           ROSE_ASSERT(t != returnType);
+
+       // DQ (9/25/2011): the array index can be an expression tree (not just one node) and it can have valid 
+       // original expression trees from constant folding.  So we don't want to delete the index unless we are 
+       // going to do the job completely. so we want to:
+       //    1) Avoid having it be deleted by the SgArrayType destructor.
+       //    2) Delete it using the SageInterface::deleteAST() function.
+          if (idx != NULL)
+             {
+#if 0
+               printf ("In SgArrayType::createType(): idx = %p (deleting the index subtree) \n",idx);
+#endif
+               ROSE_ASSERT(idx->get_parent() == NULL);
+
+            // Let the parent point to the SgArrayType that we will return.
+               idx->set_parent(t);
+
+               returnType->set_index(NULL);
+            // SageInterface::deleteAST(idx);
+               SageInterface::deleteExpressionTreeWithOriginalExpressionSubtrees(idx);
+               idx = NULL;
+             }
+          ROSE_ASSERT(returnType->get_index() == NULL);
 
           delete returnType;
           returnType = NULL;
 
           returnType = isSgArrayType(t);
         }
+
+#if 0
+     printf ("In SgArrayType::createType(): idx = %p \n",idx);
 #endif
 
   // DQ (2/20/2007): Added setting the parent (which should not have been set already)
   // note also that the index expression is not required to be specified.
      if (idx != NULL)
         {
+#if 0
+          printf ("In SgArrayType::createType(): fixing up the array index idx = %p = %s \n",idx,idx->class_name().c_str());
+#endif
+       // DQ (9/25/2011): If we have deleted the array index then it should be listed as V_SgNode (which would be an error we would want to catch).
+          ROSE_ASSERT(idx->variantT() != V_SgNode);
+
           ROSE_ASSERT(idx->get_parent() == NULL);
           idx->set_parent(returnType);
         }

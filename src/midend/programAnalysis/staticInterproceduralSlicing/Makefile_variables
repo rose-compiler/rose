@@ -2,7 +2,7 @@
 
 mpaStaticInterproceduralSlicing_includes=\
 	-I$(mpaStaticInterproceduralSlicingPath)/.. \
-	-I$(mpaStaticInterproceduralSlicingPath)/../dataflowAnalysis \
+	-I$(mpaStaticInterproceduralSlicingPath)/../bitvectorDataflow \
 	-I$(mpaStaticInterproceduralSlicingPath)/../CFG \
 	-I$(top_srcdir)/src/midend/loopProcessing \
 	-I$(top_srcdir)/src/midend/astUtil \

@@ -115,6 +115,12 @@ class UnparseFormat
           UnparseFormat( std::ostream* _os = NULL, UnparseFormatHelp *help = NULL );
          ~UnparseFormat();
 
+       // DQ (9/11/2011): Added copy constructor.
+          UnparseFormat(const UnparseFormat & X);
+
+       // DQ (9/11/2011): Added operator==() to fix issue detected in static analysis.
+          UnparseFormat & operator=(const UnparseFormat & X);
+
       //! the ultimate formatting functions
           void format(SgLocatedNode*, SgUnparse_Info& info, FormatOpt opt = FORMAT_BEFORE_STMT);
 

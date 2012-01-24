@@ -7,7 +7,7 @@ using namespace std;
 namespace VirtualBinCFG {
 
     string CFGNode::toString() const {
-        if (isSgAsmFunctionDeclaration(node)) {
+        if (isSgAsmFunction(node)) {
             return "BinaryFunctionDefinition";
         }
         return "";
@@ -185,7 +185,7 @@ namespace VirtualBinCFG {
         std::map<SgAsmInstruction*, std::set<uint64_t> >::const_iterator succsIter = indirectJumpTargets.find(insn);
         if (isSgAsmx86Instruction(insn) && isSgAsmx86Instruction(insn)->get_kind() == x86_ret) {
             SgNode* f = insn;
-            while (f && !isSgAsmBlock(f) && !isSgAsmFunctionDeclaration(f)) f = f->get_parent();
+            while (f && !isSgAsmBlock(f) && !isSgAsmFunction(f)) f = f->get_parent();
             std::map<SgAsmStatement*, std::set<uint64_t> >::const_iterator retIter = returnTargets.find(isSgAsmStatement(f));
             if (retIter == returnTargets.end()) {
                 return emptySet;
@@ -229,7 +229,7 @@ namespace VirtualBinCFG {
                 if (!tgt) return;
                 //cerr << "Found target insn" << endl;
                 SgNode* f = tgt;
-                while (f && !isSgAsmBlock(f) && !isSgAsmFunctionDeclaration(f)) f = f->get_parent();
+                while (f && !isSgAsmBlock(f) && !isSgAsmFunction(f)) f = f->get_parent();
                 if (!f) return;
                 //cerr << "Found function of target" << endl;
                 uint64_t next = insn->get_address() + insn->get_raw_bytes().size();

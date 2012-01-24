@@ -15,8 +15,8 @@ namespace SageInterface
   // Simple way to get the section that that a pointer points into (if any).
      SgAsmElfSection* getSection ( SgProject* project, size_t ptr );
 
- //! Traverses AST backwards up the tree along the "parent" edges to the SgAsmFunctionDeclaration.
-     SgAsmFunctionDeclaration* getAsmFunctionDeclaration ( SgAsmInstruction* asmInstruction );
+ //! Traverses AST backwards up the tree along the "parent" edges to the SgAsmFunction.
+     SgAsmFunction* getAsmFunction ( SgAsmInstruction* asmInstruction );
 
  //! Traverses AST backwards up the tree along the "parent" edges to the SgAsmBlock.
      SgAsmBlock* getAsmBlock ( SgAsmInstruction* asmInstruction );

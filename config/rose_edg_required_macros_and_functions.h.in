@@ -1,5 +1,22 @@
 /* JJW (12/8/2008): Do not include these definitions for EDG 3.10 */
-#ifndef ROSE_USE_NEW_EDG_INTERFACE
+/* #ifndef ROSE_USE_NEW_EDG_INTERFACE */
+/* DQ (11/1/2011): I think we do need this for at least C++ code (e.g. __CHAR_BIT__ must
+   be defined along with lots of other Common Predefined Macros.
+*/
+#if 1
+
+/* DQ (6/12/2005): Permit this to be optionally commented out because it makes it hard to
+    look at the AST merging graphs. The ROSE-IR graphs will now filter nodes associated
+    with declarations from this file (marked as front-end specific).
+*/
+#if 0
+#define SKIP_ROSE_BUILTIN_DECLARATIONS
+#endif
+
+/* This macro can be defined using "-DSKIP_ROSE_BUILTIN_DECLARATIONS" to avoid ROSE
+   builtin functions required for compatability with the user selected backend compiler 
+*/
+#ifndef SKIP_ROSE_BUILTIN_DECLARATIONS
 
 /* Must use C style comments so that "--edg:old_c" options will work! */
 /* DQ (7/13/2006): Undefine these before defining them to avoid warnings. */
@@ -46,19 +63,6 @@
 /* for GNU g++ */
 #define restrict __restrict__
 #endif
-
-/* DQ (6/12/2005): Permit this to be optionally commented out because it makes it hard to
-    look at the AST merging graphs. The ROSE-IR graphs will now filter nodes associated
-    with declarations from this file (marked as front-end specific).
-*/
-#if 0
-#define SKIP_ROSE_BUILTIN_DECLARATIONS
-#endif
-
-/* This macro can be defined using "-DSKIP_ROSE_BUILTIN_DECLARATIONS" to avoid ROSE
-   builtin functions required for compatability with the user selected backend compiler 
-*/
-#ifndef SKIP_ROSE_BUILTIN_DECLARATIONS
 
 /* Defined language modes in ROSE (permits control over what builting functions are defined) */
 #define ROSE_C_LANGUAGE_MODE      0
@@ -358,9 +362,11 @@ _Atomic_word  __sync_fetch_and_add(volatile _Atomic_word* __mem, int __val);
 /* DQ (8/25/2009): Added another builtin function required to compile ROSE with ROSE. (required for boost) */
 /* #if ROSE_CPP_MODE */
 #if (ROSE_LANGUAGE_MODE == ROSE_CXX_LANGUAGE_MODE)
-/* These use C++ references and so can't be used in C mode */
+/* These use C++ references and so can't be used in C mode (should not be used with EDG 4.3) */
+#ifndef ROSE_USE_NEW_EDG_INTERFACE
 int __sync_lock_test_and_set( int & v, int n );
 int __sync_lock_release( int & v );
+#endif
 #endif
 
 /* DQ and Liao (7/11/2009) Added macros to define away new GNU C++ extension (not required for newer EDG 4.0 use */
@@ -497,24 +503,6 @@ function is just defined as being the offsetof macro.
   (__offsetof__ (reinterpret_cast <size_t>			\
                  (&reinterpret_cast <const volatile char &>	\
                   (static_cast<TYPE *> (0)->MEMBER))))
-#endif
-
-/* matching else for SKIP_ROSE_BUILTIN_DECLARATIONS */
-#else
-
-/* When compiling using -DSKIP_ROSE_BUILTIN_DECLARATIONS we need to have a variable
-   defined in this faile so that we can locate the file in the AST and obtain the
-   absolute path of this front-end specific header file.  This allows us to mark
-   all IR nodes in the AST as being front-end specific if they originate from this
-   header file. The following variable guarentees that a variable declaration from
-   this file will exist when -DSKIP_ROSE_BUILTIN_DECLARATIONS is used.  The 
-   -DSKIP_ROSE_BUILTIN_DECLARATIONS option is typically used to reduce the size of
-   the AST and permit visualization of the whole AST using DOT (which can't layout
-   a graph containing too many IR nodes).
- */
-int __frontend_specific_variable_to_provide_header_file_path;
-
-/* matching endif for SKIP_ROSE_BUILTIN_DECLARATIONS */
 #endif
 
 /* DQ (10/30/2005): Added to allow compilation of g++ 
@@ -2154,5 +2142,30 @@ int __builtin_ia32_psradi(int,int);
 int __builtin_ia32_psrlwi(int,int);
 int __builtin_ia32_psrldi(int,int);
 int __builtin_ia32_psrlqi(long long,int);
+
+/* matching else for SKIP_ROSE_BUILTIN_DECLARATIONS */
+#else
+
+/* When compiling using -DSKIP_ROSE_BUILTIN_DECLARATIONS we need to have a variable
+   defined in this faile so that we can locate the file in the AST and obtain the
+   absolute path of this front-end specific header file.  This allows us to mark
+   all IR nodes in the AST as being front-end specific if they originate from this
+   header file. The following variable guarentees that a variable declaration from
+   this file will exist when -DSKIP_ROSE_BUILTIN_DECLARATIONS is used.  The 
+   -DSKIP_ROSE_BUILTIN_DECLARATIONS option is typically used to reduce the size of
+   the AST and permit visualization of the whole AST using DOT (which can't layout
+   a graph containing too many IR nodes).
+ */
+int __frontend_specific_variable_to_provide_header_file_path;
+
+/* matching endif for SKIP_ROSE_BUILTIN_DECLARATIONS */
+#endif
+
+//I think these definitions will break on 32-bit systems
+//The built-in declarations from gcc actually specify the bit length explictly
+//e.g. int32_t __builtin_bswap32 (int32_t x)
+//However, integer types such as int32_t are not defined here.
+int __builtin_bswap32 (int x);
+long int __builtin_bswap64 (long int x);
 
 #endif /* !ROSE_USE_NEW_EDG_INTERFACE */

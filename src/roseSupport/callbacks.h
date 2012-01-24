@@ -85,6 +85,11 @@ namespace ROSE_Callbacks {
             RTS_mutex_init(&mutex, RTS_LAYER_ROSE_CALLBACKS_LIST_OBJ, NULL);
         }
 
+        explicit List(CallbackType *callback) {
+            RTS_mutex_init(&mutex, RTS_LAYER_ROSE_CALLBACKS_LIST_OBJ, NULL);
+            append(callback);
+        }
+
         /** Returns the number of callbacks in the list.
          *
          *  Thread safety: This method is thread safe. */
@@ -129,6 +134,43 @@ namespace ROSE_Callbacks {
             RTS_MUTEX(mutex) {
                 assert(cb!=NULL);
                 list.push_front(cb);
+            } RTS_MUTEX_END;
+            return *this;
+        }
+
+        /** Insert a callback after another.  The callback is inserted after each occurrence of the @p relative_to
+         *  callback. Up to @p nreplacement insertions are made beginning at the front of the list.
+         *
+         *  Thread safety: This method is thread safe.  In fact, it is safe to modify the list while apply() is calling the
+         *  functors on that list. */
+        List& after(CallbackType *relative_to, CallbackType *cb, size_t nreplacements=(size_t)(-1)) {
+            RTS_MUTEX(mutex) {
+                assert(cb!=NULL);
+                for (typename CBList::iterator li=list.begin(); li!=list.end() && nreplacements>0; ++li) {
+                    if (*li==relative_to) {
+                        li = list.insert(++li, cb);
+                        --nreplacements;
+                    }
+                }
+            } RTS_MUTEX_END;
+            return *this;
+        }
+
+        /** Insert a callback before another.  The callback is inserted before each occurrence of the @p relative_to
+         *  callback. Up to @p nreplacement insertions are made begin$ning at the front of the list.
+         *
+         *  Thread safety: This method is thread safe.  In fact, it is safe to modify the list while apply() is calling the
+         *  functors on that list. */
+        List& before(CallbackType *relative_to, CallbackType *cb, size_t nreplacements=(size_t)(-1)) {
+            RTS_MUTEX(mutex) {
+                assert(cb!=NULL);
+                for (typename CBList::iterator li=list.begin(); li!=list.end() && nreplacements>0; ++li) {
+                    if (*li==relative_to) {
+                        li = list.insert(li, cb);
+                        ++li;
+                        --nreplacements;
+                    }
+                }
             } RTS_MUTEX_END;
             return *this;
         }
@@ -224,7 +266,7 @@ namespace ROSE_Callbacks {
          *  callbacks should not assume that any particular mutexes or other thread synchronization resources are held. It is
          *  possible for a single callback to be invoked concurrently if two or more threads invoke apply() concurrently. */
         template<class ArgumentType>
-        bool apply(bool b, const ArgumentType &args, Direction dir=FORWARD) {
+        bool apply(bool b, const ArgumentType &args, Direction dir=FORWARD) const {
             CBList list = callbacks(); /* copy, so callbacks can safely modify this object's list */
             if (FORWARD==dir) {
                 for (typename CBList::iterator li=list.begin(); li!=list.end(); ++li) {

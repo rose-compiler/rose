@@ -111,6 +111,7 @@ Unparse_Java::unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_In
          case V_SgNotEqualOp:
          case V_SgRshiftOp:
          case V_SgSubtractOp:
+         case V_SgCommaOpExp: // charles4 10/14/2011
              unparseBinaryOp( isSgBinaryOp(expr), info ); break;
 
          case V_SgPlusPlusOp:
@@ -186,6 +187,7 @@ Unparse_Java::getPrecedence(SgExpression* expr) {
         case V_SgRshiftAssignOp:               return 1;
         case V_SgLshiftAssignOp:               return 1;
         case V_SgJavaUnsignedRshiftAssignOp:   return 1;
+        case V_SgCommaOpExp:                   return 1; // charles4 10/14/2011
 
         default:                               return ROSE_UNPARSER_NO_PRECEDENCE;
     }
@@ -612,6 +614,37 @@ Unparse_Java::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
    {
      SgFunctionCallExp* func_call = isSgFunctionCallExp(expr);
      ROSE_ASSERT(func_call != NULL);
+
+     if (func_call -> attributeExists("prefix")) {
+         AstRegExAttribute *attribute = (AstRegExAttribute *) func_call -> getAttribute("prefix");
+         curprint(attribute -> expression);
+         curprint(".");
+     /*
+         SgFunctionDeclaration *declaration = func_call -> getAssociatedFunctionDeclaration();
+         SgMemberFunctionDeclaration *functionDeclaration = isSgMemberFunctionDeclaration(declaration);
+         ROSE_ASSERT(functionDeclaration);
+         SgClassDeclaration *classDeclaration = functionDeclaration -> get_associatedClassDeclaration();
+         ROSE_ASSERT(classDeclaration);
+         SgClassType *classType = classDeclatation -> get_type();
+         ROSE_ASSERT (classType != NUL);
+         curprint(classType -> get_qualified_name().getString());
+         curprint(".");
+     */
+     }
+     /*
+     if (isSgMemberFunctionType(func_call -> get_type())) {
+         SgFunctionDeclaration *declaration = func_call -> getAssociatedFunctionDeclaration();
+         SgMemberFunctionDeclaration *functionDeclaration = isSgMemberFunctionDeclaration(declaration);
+         ROSE_ASSERT(functionDeclaration);
+
+         if (functionDeclaration -> get_declarationModifier().get_storageModifier().isStatic()) {
+             SgType *type = isSgMemberFunctionType(func_call -> get_type()) -> get_class_type();
+             ROSE_ASSERT (type != NULL && isSgNamedType(type));
+             curprint(isSgNamedType(type) -> get_qualified_name().getString());
+             curprint(".");
+         }
+     }
+     */
 
      unparseExpression(func_call->get_function(), info);
      curprint("(");
@@ -1075,6 +1108,7 @@ Unparse_Java::unparseBinaryOp(SgBinaryOp* op,
         case V_SgNotEqualOp:           curprint(" != ");  break;
         case V_SgRshiftOp:             curprint(" >> ");  break;
         case V_SgSubtractOp:           curprint(" - ");   break;
+        case V_SgCommaOpExp:           curprint(", ");    break; // charles4 10/14/2011
         default: {
              cout << "error: cannot unparse binary op: " << op->class_name() << endl;
              ROSE_ASSERT(false);

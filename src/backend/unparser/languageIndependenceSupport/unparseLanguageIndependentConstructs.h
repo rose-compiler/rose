@@ -74,23 +74,10 @@ class UnparseLanguageIndependentConstructs
       //! counts the number of statements in a basic block
           int num_stmt_in_block(SgBasicBlock*);
 
-       // DQ (8/14/2007): Support function added by Thomas
           std::string resBool(bool val) const;
-
-       // DQ (8/14/2007): Support function added by Thomas
-      //! Internal support for conversion of types to strings
           template<typename T> std::string tostring(T t) const;
-
-       // DQ (8/14/2007): Support function added by Thomas
           void curprint (const std::string & str) const;
-
           void printOutComments ( SgLocatedNode* locatedNode ) const;
-
-       // DQ (5/27/2005): Added to support unparsing of compiler generated statements after comments 
-       // attached to the following statement. We would like to not have any comments be attached to 
-       // compiler generated statements so that they can be easily inserted anywhere.
-      //! Unparser support for compiler-generated statments
-       // void saveCompilerGeneratedStatements ( SgStatement* stmt, SgUnparse_Info & info );
 
       //! Unparser support for compiler-generated statments
           void outputCompilerGeneratedStatements( SgUnparse_Info & info );
@@ -121,11 +108,6 @@ class UnparseLanguageIndependentConstructs
 
       //! Support for Fortran numeric labels (can appear on any statement), this is an empty function for C/C++.
           virtual void unparseStatementNumbers ( SgStatement* stmt, SgUnparse_Info& info );
-
-       // DQ (8/13/2007): This is no longer used
-       // DQ (12/21/2005): Added to support name qualification when explicitly stored in the AST
-       // (rather than generated).
-//        virtual void unparseQualifiedNameList(const SgQualifiedNamePtrList & qualifiedNameList);
 
        // DQ (8/14/2007): This is where all the language specific statement unparsing is done
           virtual void unparseLanguageSpecificStatement  (SgStatement* stmt,  SgUnparse_Info& info) = 0;
@@ -360,35 +342,14 @@ class UnparseLanguageIndependentConstructs
           bool isTransformed(SgStatement* stmt);
           void markGeneratedFile() const;
 
-       // DQ (8/13/2007): This function was added by Thomas to replace (wrap) the use of cur as an output stream.
-       // void curprint (std::string str);
-
-       // DQ (5/1/2004): Added support for unparsing namespace constructs
-//        virtual void unparseNamespaceDeclarationStatement      ( SgStatement* stmt, SgUnparse_Info & info );
-//        virtual void unparseNamespaceDefinitionStatement       ( SgStatement* stmt, SgUnparse_Info & info );
-//        virtual void unparseNamespaceAliasDeclarationStatement ( SgStatement* stmt, SgUnparse_Info & info );
-//        virtual void unparseUsingDirectiveStatement            ( SgStatement* stmt, SgUnparse_Info & info );
-//        virtual void unparseUsingDeclarationStatement          ( SgStatement* stmt, SgUnparse_Info & info );
-
        // DQ (10/14/2004): Supporting function shared by unparseClassDecl and unparseClassType
           void initializeDeclarationsFromParent ( SgDeclarationStatement* declarationStatement,
                                                   SgClassDefinition* & cdefn,
                                                   SgNamespaceDefinitionStatement* & namespaceDefn, int debugSupport = 0 );
 
-      //! DQ (10/12/2006): Support for qualified names (function names can't have global scope specifier in GNU, or so it seems).
-      //  std::string trimGlobalScopeQualifier ( std::string qualifiedName );
-
-      //! Support for exception specification for functions and member functions
-//        virtual void unparseExceptionSpecification( SgTypePtrList* exceptionSpecifierList, SgUnparse_Info& info);
-
 #if USE_OLD_MECHANISM_OF_HANDLING_PREPROCESSING_INFO
           void getDirectives ( char* sourceFilename );
 #endif
-
-       // This should go into the unparser.h, since it is an interface function for the unparser generally.
-      //! begin the unparser (unparser.C)
-      //  void run_unparser();
-      //
 
        // Support for language-independent precedence
           virtual bool requiresParentheses(SgExpression* expr, SgUnparse_Info& info);

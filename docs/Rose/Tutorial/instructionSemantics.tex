@@ -48,7 +48,7 @@ serves to demonstrate a simple way to track constants.
  5
  6  /* Returns the function name if known, or the address as a string otherwise. */
  7  static std::string
- 8  name\_or\_addr(const SgAsmFunctionDeclaration *f)
+ 8  name\_or\_addr(const SgAsmFunction *f)
  9  {
 10      if (f->get\_name()!="")
 11          return f->get\_name();
@@ -65,7 +65,7 @@ serves to demonstrate a simple way to track constants.
 22          traverse(project, postorder);
 23      }
 24      void visit(SgNode *node) {
-25          SgAsmFunctionDeclaration *func = isSgAsmFunctionDeclaration(node);
+25          SgAsmFunction *func = isSgAsmFunction(node);
 26          if (func) {
 27              std::cout <<"==============================================\n"
 28                        <<"Constant propagation in function \"" <<name\_or\_addr(func) <<"\"\n"

@@ -1,19 +1,18 @@
+# Non-recursive Makefile
 
-mptFunctionCallNormalization_la_sources=\
+mptFunctionCallNormalization_la_sources = \
 	$(mptFunctionCallNormalizationPath)/FunctionNormalization.C
 
-
-mptFunctionCallNormalization_includeHeaders=\
+mptFunctionCallNormalization_includeHeaders = \
 	$(mptFunctionCallNormalizationPath)/FunctionNormalization.h
 
+mptFunctionCallNormalization_extraDist = \
+	$(mptFunctionCallNormalizationPath)/CMakeLists.txt
 
-mptFunctionCallNormalization_extraDist=\
-$(mptFunctionCallNormalizationPath)/CMakeLists.txt
-
-
-mptFunctionCallNormalization_cleanLocal=\
+mptFunctionCallNormalization_cleanLocal = \
 	rm -rf \
-		$(mptFunctionCallNormalizationPath)/Templates.DB \
+		$(mptFunctionCallNormalizationPath)/core \
 		$(mptFunctionCallNormalizationPath)/ii_files \
 		$(mptFunctionCallNormalizationPath)/ti_files \
-		$(mptFunctionCallNormalizationPath)/core
+		$(mptFunctionCallNormalizationPath)/Templates.DB
+
