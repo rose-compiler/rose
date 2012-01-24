@@ -478,7 +478,8 @@ public:
     /** Wait for a futex.  Verifies that the aligned memory at @p va contains the value @p oldval and sleeps, waiting
      *  sys_futex_wake on this address.  Returns zero on success; negative error number on failure.  See manpage futex(2) for
      *  details about the return value, although the return values here are negative error numbers rather than -1 with errno
-     *  set.
+     *  set.  May return -EINTR if interrupted by a signal, in which case internal semaphores and the futex table are restored
+     *  to their original states.
      *
      *  The @p bitset value is a bit vector added to the wait queue.  When waking threads that are blocked, we wake only those
      *  threads where the intersection of the wait and wake bitsets is non-empty.
@@ -487,7 +488,7 @@ public:
     int futex_wait(rose_addr_t va, uint32_t oldval, uint32_t bitset=0xffffffff);
 
     /** Wakes blocked processes.  Wakes at most @p nprocs processes waiting for the specified address.  Returns the number of
-     *  processes woken up; negative error number on failure.
+     *  processes woken up; negative error number on failure.  When returning error, no processes were woken up.
      *
      *  The @p bitset value is a bit vector used when waking blocked threads.  Only threads where the intersection of the wait
      *  bitset with this wake bitset is non-empty are awoken.

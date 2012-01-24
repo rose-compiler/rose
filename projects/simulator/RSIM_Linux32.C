@@ -5576,7 +5576,7 @@ syscall_futex(RSIM_Thread *t, int callno)
             break;
     }
 
-    t->syscall_return(-1==result ? -errno : result);
+    t->syscall_return(result);
 }
 
 static void
