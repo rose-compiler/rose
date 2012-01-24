@@ -929,19 +929,13 @@ PTHREAD_TEST_INPUTS_SRC =							   \
 		    $(srcdir)/pthread_tests/pthread_attr_setdetachstate.4-1.c	   \
 		    $(srcdir)/pthread_tests/pthread_attr_setinheritsched.1-1.c	   \
 		    $(srcdir)/pthread_tests/pthread_attr_setinheritsched.2-1.c	   \
-		    $(srcdir)/pthread_tests/pthread_attr_setinheritsched.2-2.c	   \
-		    $(srcdir)/pthread_tests/pthread_attr_setinheritsched.2-3.c	   \
-		    $(srcdir)/pthread_tests/pthread_attr_setinheritsched.2-4.c	   \
 		    $(srcdir)/pthread_tests/pthread_attr_setinheritsched.4-1.c	   \
 		    $(srcdir)/pthread_tests/pthread_attr_setschedparam.1-1.c	   \
 		    $(srcdir)/pthread_tests/pthread_attr_setschedparam.1-2.c	   \
-		    $(srcdir)/pthread_tests/pthread_attr_setschedparam.1-3.c	   \
-		    $(srcdir)/pthread_tests/pthread_attr_setschedparam.1-4.c	   \
 		    $(srcdir)/pthread_tests/pthread_attr_setschedpolicy.1-1.c	   \
 		    $(srcdir)/pthread_tests/pthread_attr_setschedpolicy.4-1.c	   \
 		    $(srcdir)/pthread_tests/pthread_attr_setscope.1-1.c		   \
 		    $(srcdir)/pthread_tests/pthread_attr_setscope.4-1.c		   \
-		    $(srcdir)/pthread_tests/pthread_attr_setscope.5-1.c		   \
 		    $(srcdir)/pthread_tests/pthread_attr_setstack.1-1.c		   \
 		    $(srcdir)/pthread_tests/pthread_attr_setstack.2-1.c		   \
 		    $(srcdir)/pthread_tests/pthread_attr_setstack.4-1.c		   \
@@ -1272,20 +1266,26 @@ PTHREAD_TEST_INPUTS_SRC =							   \
 		    $(srcdir)/pthread_tests/pthread_testcancel.1-1.c		   \
 		    $(srcdir)/pthread_tests/pthread_testcancel.2-1.c
 
-PTHREAD_INPUTS_FAILING =							\
-		    $(srcdir)/pthread_tests/pthread_barrier_wait.6-1.c		\
-		    $(srcdir)/pthread_tests/pthread_cond_destroy.2-1.c		\
-		    $(srcdir)/pthread_tests/pthread_cond_init.1-3.c		\
-		    $(srcdir)/pthread_tests/pthread_cond_init.4-2.c		\
-		    $(srcdir)/pthread_tests/pthread_cond_signal.1-2.c		\
-		    $(srcdir)/pthread_tests/pthread_create.10-1.c		\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_getprotocol.1-2.c	\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_setprotocol.1-1.c	\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_setprotocol.3-1.c	\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_setprotocol.3-2.c	\
-		    $(srcdir)/pthread_tests/pthread_mutexattr_settype.2-1.c	\
-		    $(srcdir)/pthread_tests/pthread_once.4-1.c			\
-		    $(srcdir)/pthread_tests/pthread_spin_trylock.1-1.c
+PTHREAD_INPUTS_FAILING =                                                        \
+                    $(srcdir)/pthread_tests/pthread_attr_setinheritsched.2-2.c  \
+                    $(srcdir)/pthread_tests/pthread_attr_setinheritsched.2-3.c  \
+                    $(srcdir)/pthread_tests/pthread_attr_setinheritsched.2-4.c  \
+                    $(srcdir)/pthread_tests/pthread_attr_setschedparam.1-3.c    \
+                    $(srcdir)/pthread_tests/pthread_attr_setschedparam.1-4.c    \
+		    $(srcdir)/pthread_tests/pthread_attr_setscope.5-1.c         \
+                    $(srcdir)/pthread_tests/pthread_barrier_wait.6-1.c          \
+                    $(srcdir)/pthread_tests/pthread_cond_destroy.2-1.c          \
+                    $(srcdir)/pthread_tests/pthread_cond_init.1-3.c             \
+                    $(srcdir)/pthread_tests/pthread_cond_init.4-2.c             \
+                    $(srcdir)/pthread_tests/pthread_cond_signal.1-2.c           \
+                    $(srcdir)/pthread_tests/pthread_create.10-1.c               \
+                    $(srcdir)/pthread_tests/pthread_mutexattr_getprotocol.1-2.c \
+                    $(srcdir)/pthread_tests/pthread_mutexattr_setprotocol.1-1.c \
+                    $(srcdir)/pthread_tests/pthread_mutexattr_setprotocol.3-1.c \
+                    $(srcdir)/pthread_tests/pthread_mutexattr_setprotocol.3-2.c \
+                    $(srcdir)/pthread_tests/pthread_mutexattr_settype.2-1.c     \
+                    $(srcdir)/pthread_tests/pthread_once.4-1.c                  \
+                    $(srcdir)/pthread_tests/pthread_spin_trylock.1-1.c
 
 # Details about why things are listed in $(PTHREAD_INPUTS_FAILING)
 #	test result is non-deterministic when run natively
@@ -1308,6 +1308,14 @@ PTHREAD_INPUTS_FAILING =							\
 #		    $(srcdir)/pthread_tests/pthread_cond_destroy.2-1.c
 #		    $(srcdir)/pthread_tests/pthread_cond_init.4-2.c
 #		    $(srcdir)/pthread_tests/pthread_cond_signal.1-2.c
+#       these tests require special privileges that aren't available for many users
+#		    $(srcdir)/pthread_tests/pthread_attr_setinheritsched.2-2.c
+#		    $(srcdir)/pthread_tests/pthread_attr_setinheritsched.2-3.c
+#		    $(srcdir)/pthread_tests/pthread_attr_setinheritsched.2-4.c
+#		    $(srcdir)/pthread_tests/pthread_attr_setschedparam.1-3.c
+#		    $(srcdir)/pthread_tests/pthread_attr_setschedparam.1-4.c
+#	these tests are hard coded to always fail
+#		    $(srcdir)/pthread_tests/pthread_attr_setscope.5-1.c
 
 PTHREAD_TEST_INCLUDES= \
                     ${srcdir}/pthread_tests/pthread_atfork.testfrmw.c \
@@ -1367,7 +1375,6 @@ EXTRA_DIST += ${PTHREAD_TEST_INPUTS_SRC} ${PTHREAD_TEST_INCLUDES}
 PTHREAD_TEST_INPUTS = $(basename $(notdir $(PTHREAD_TEST_INPUTS_SRC)))
 MOSTLYCLEANFILES += $(PTHREAD_TEST_INPUTS) $(addsufix .o, $(PTHREAD_TEST_INPUTS))
 
-
 $(PTHREAD_TEST_INPUTS): %: $(srcdir)/pthread_tests/%.c
 	@echo "  CC32    $@"
 	@$(CC) $(CFLAGS32) -g -I$(srcdir)/pthread_tests -Wall -o $@ $^ -lpthread -lrt
@@ -1409,7 +1416,7 @@ check-pthread:  $(PTHREAD_TEST_TARGETS)
 test-inputs: $(SYS_TEST_INPUTS) $(PTHREAD_TEST_INPUTS)
 
 .PHONY: run-tests
-run-tests: check-syscalls #  check-pthread  # pthread tests are temporarily disabled
+run-tests: check-syscalls check-pthread
 	@$(RTH_STATS)
 
 check-local: run-tests
