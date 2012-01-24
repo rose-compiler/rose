@@ -100,6 +100,7 @@ void blockifySpansOfFillets (SgBasicBlock *block) {
 
   // if (debug)  std::cout << "blockifySpansOfFillets:" << std::endl;
 
+  /*
   SgStatementPtrList &ss = block->get_statements();
   SgStatementPtrList::iterator i = ss.begin();
 
@@ -144,6 +145,7 @@ void blockifySpansOfFillets (SgBasicBlock *block) {
     }
     i++; // i should now point to what j pointed to before erase/insert.
   }
+  */
 }
 
 /******************************************************************************
