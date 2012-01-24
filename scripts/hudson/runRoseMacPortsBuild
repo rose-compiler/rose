@@ -1,0 +1,149 @@
+#!/bin/bash
+
+# ==============================================================================
+# Global variables
+# ==============================================================================
+declare -r HUDSON_TMPDIR=/export/tmp.hudson-rose
+declare -r CCACHE_DIR="$HUDSON_TMPDIR"/caches/ccache
+declare -r SRCDIR="$(pwd)"
+declare -r BUILDDIR="./buildTree"
+declare -r INSTALLDIR="${SRCDIR}/installTree"
+
+declare -r -i NUM_PROCESS=6
+
+REQUIRED_PORTS="gcc44 boost libtool graphviz wget testxxx"
+
+case "$ROSE_TEST_BUILD_STYLE" in
+  "make-check-install-minimal") ;;
+  "make-check-install-full")
+    REQUIRED_PORTS="$REQUIRED_PORTS qt4-mac sqlite3"
+    ;;
+  "enable-only")
+    if [ ! -n "$ROSE_TEST_LANGUAGE_OPTION" ]; then
+      echo
+      echo "Error: \$ROSE_TEST_LANGUAGE_OPTION is not defined."
+      echo
+      exit 1
+    fi
+
+    # TOO (3/21/2011): Currently, C and C++ must be simultaneously
+    # enabled/disabled so we don't need to have separate tests for C and C++.
+    if [ "x$ROSE_TEST_LANGUAGE_OPTION" = "xc-and-cxx" ]; then
+      ROSE_TEST_LANGUAGE_OPTION="c"
+    fi
+    ;;
+  *)
+    echo "ERROR: unrecognized build step = $ROSE_TEST_BUILD_STEP"
+    ;;
+esac
+
+# ==============================================================================
+# MacPorts toolchain
+# ==============================================================================
+source "$HUDSON_TMPDIR"/opt/macports/setup.sh
+
+if [ ! -n "$MACPORTS_INSTALL" ]; then
+  echo "!! ******************************************** !!"
+  echo
+  echo "Error: \$MACPORTS_INSTALL is not defined. This should have been"
+  echo "sourced from ${HUDSON_TMPDIR}/opt/macports/setup.sh"
+  echo
+  echo "!! ******************************************** !!"
+  exit 1
+fi
+
+MISSING_PORTS=
+for port in $REQUIRED_PORTS; do
+  if [ ! -n "$(port installed "$port")" ]; then
+    MISSING_PORTS="$MISSING_PORTS $port"
+  fi
+done
+
+if [ -n "$MISSING_PORTS" ]; then
+  echo "!! ******************************************** !!"
+  echo
+  echo "Error: missing required MacPorts software:"
+  echo
+  echo "$MISSING_PORTS"
+  echo
+  echo "!! ******************************************** !!"
+  exit 1
+fi
+
+export CCACHE_DIR
+mkdir -p "$CCACHE_DIR"
+ccache -M 10G
+ccache -z
+ccache -s
+
+echo "DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH"
+echo "PATH=$PATH"
+
+# ==============================================================================
+# Build
+# ==============================================================================
+set -ex;
+
+  ./build
+
+  rm -rf "$BUILDDIR" "$INSTALLDIR"
+  mkdir "$BUILDDIR" "$INSTALLDIR"
+
+  cd "$BUILDDIR"
+
+# ==============================================================================
+# Configure
+# ==============================================================================
+
+CONFIGURE="${SRCDIR}/configure"
+PREFIX="--prefix=$INSTALLDIR"
+BOOST="--with-boost=$MACPORTS_INSTALL"
+CPPFLAGS="--with-CXX_DEBUG=-g --with-CXX_WARNINGS=-Wall"
+CC="CC=${MACPORTS_INSTALL}/bin/ccache-compilers/gcc"
+CXX="CXX=${MACPORTS_INSTALL}/bin/ccache-compilers/g++"
+QT="--with-qt=$MACPORTS_INSTALL --with-roseQt"
+LONG_MAKE_CHECK="--with-ROSE_LONG_MAKE_CHECK_RULE=yes"
+SQLITE="--with-sqlite3=$MACPORTS_INSTALL"
+PCH="--with-pch"
+ENABLE_ONLY="--enable-only-$ROSE_TEST_LANGUAGE_OPTION"
+
+  case "$ROSE_TEST_BUILD_STYLE" in
+    "make-check-install-minimal")
+      $CONFIGURE $PREFIX $BOOST $CPPFLAGS $CC $CXX
+      ;;
+
+    "make-check-install-full")
+      $CONFIGURE $PREFIX $BOOST $CPPFLAGS $CC $CXX \
+        $QT $LONG_MAKE_CHECK $SQLITE $PCH
+      ;;
+
+    "enable-only")
+      $CONFIGURE $PREFIX $BOOST $CPPFLAGS $CC $CXX $ENABLE_ONLY
+      ;;
+
+    *)
+      echo "ERROR: unrecognized build step = $ROSE_TEST_BUILD_STEP"
+      ;;
+    esac
+
+# ==============================================================================
+# Build
+# ==============================================================================
+
+  case "$ROSE_TEST_BUILD_STYLE" in
+    "make-check-install-minimal"|"make-check-install-full"|"enable-only")
+      make -j"$NUM_PROCESS" check
+      make -j"$NUM_PROCESS" install
+      make -j"$NUM_PROCESS" installcheck
+
+      make -j"$NUM_PROCESS" PrintRoseTranslatorVersion
+     ;;
+
+    *)
+       echo "ERROR: unrecognized build step = $ROSE_TEST_BUILD_STEP"
+       exit 1;
+ ;;
+  esac
+
+ccache -s
+echo "Success!"

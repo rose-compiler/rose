@@ -419,7 +419,6 @@ NEXT:
             else
                 paths |= route.paths;
         }
-        cout << "^^^" << paths << endl;
         //ROSE_ASSERT(!paths.flip().any());
         
         foreach (const Route& route, routes)

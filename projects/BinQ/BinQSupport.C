@@ -279,7 +279,7 @@ BinQSupport::memoryExpressionContainsRegister(X86RegisterClass cl, int registerN
 SgAsmInstruction*
 BinQSupport::getNextStmt(SgAsmInstruction* inst) {
   SgAsmInstruction* nextStmt = NULL;
-  SgAsmFunctionDeclaration * parBlock = isSgAsmFunctionDeclaration(inst->get_parent());
+  SgAsmFunction * parBlock = isSgAsmFunction(inst->get_parent());
   //cerr << " Checking nextStmt  :  parent : " << inst->get_parent()->class_name() << " : " << parBlock << endl;
   if (parBlock) {
     int pos=-1;
@@ -325,7 +325,7 @@ BinQSupport::checkIfValidAddress(rose_addr_t next_addr, SgAsmInstruction* inst) 
 SgAsmInstruction*
 BinQSupport::getPrevStmt(SgAsmInstruction* inst) {
   SgAsmInstruction* nextStmt = NULL;
-  SgAsmFunctionDeclaration * parBlock = isSgAsmFunctionDeclaration(inst->get_parent());
+  SgAsmFunction * parBlock = isSgAsmFunction(inst->get_parent());
   //cerr << " Checking nextStmt  :  parent : " << inst->get_parent()->class_name() << " : " << parBlock << endl;
   if (parBlock) {
     Rose_STL_Container<SgAsmStatement*> stmtList = parBlock->get_statementList();

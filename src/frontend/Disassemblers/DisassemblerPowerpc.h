@@ -3,7 +3,6 @@
 #ifndef ROSE_DISASSEMBLER_POWERPC_H
 #define ROSE_DISASSEMBLER_POWERPC_H
 
-//#include "sage3.h"
 #include "integerOps.h"
 #include "sageBuilderAsm.h"
 
@@ -32,9 +31,6 @@ private:
             bytes.push_back((d->insn>>16) & 0xff);
             bytes.push_back((d->insn>>8) & 0xff);
             bytes.push_back(d->insn & 0xff);
-#ifdef _MSC_VER
-//#define __builtin_constant_p(exp) (0)
-#endif
             ROSE_ASSERT(bit<=32);
             this->bit = 8*(4-(bit/8)) + bit%8; /*convert from native uint32_t bit position to big-endian*/
         }

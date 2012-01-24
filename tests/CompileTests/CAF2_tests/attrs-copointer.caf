@@ -5,9 +5,9 @@
 ! DIMENSION (with deferred shape), OPTIONAL, SAVE, PUBLIC, PRIVATE
 ! CAF 2.0 features copointer, which can point to array and coarray.
 ! CAF 2.0 disallows pointer to copointer to avoid ambiguity.
-!
+
 MODULE attrs_copointer
-!
+
 ! an allocatable 2-dim coarray of real that can be a target and a cotarget
   REAL, ALLOCATABLE, PRIVATE, SAVE, TARGET, COTARGET :: ca (:, :) 
   
@@ -22,7 +22,7 @@ MODULE attrs_copointer
   
 ! a copointer TO a  2-dim real array initialized to NULL()
   REAL, SAVE, COPOINTER, PRIVATE, DIMENSION(:,:) :: gp => NULL()
-!  
+
   TYPE :: Rec
     PRIVATE 
   ! an allocatable 1-dim coarray of 1-dim logical array
@@ -37,11 +37,11 @@ MODULE attrs_copointer
   ! a copointer to a copointer of 1-dim coarray of 1-dim complex array
     COMPLEX, DIMENSION(:), PUBLIC, COPOINTER :: cpc1c[*]
   END TYPE
-!  
+
   CONTAINS
-!  
+
   SUBROUTINE MySub(n, m, d, c)
-  !
+
     INTEGER n, m
     REAL, OPTIONAL, DIMENSION(:, :), COPOINTER :: c ! copointer to 2-dim real array
     LOGICAL, COPOINTER :: d(:) ! copointer to 1-dim logical array
@@ -58,14 +58,14 @@ MODULE attrs_copointer
     
     ALLOCATE(gc(n))
     cpgc => gc
-  !
+
   END SUBROUTINE
-!
+
 END MODULE
 
 PROGRAM prog
 USE attrs_copointer
-!
+
 REAL, POINTER, DIMENSION(:,:), CODIMENSION[*] :: pa
 LOGICAL, POINTER :: pb(:)[*]
 TYPE(Rec), SAVE, POINTER :: p
@@ -73,26 +73,25 @@ REAL r
 LOGICAL s
 INTEGER k
 COMPLEX x
-!
+
 CALL MySub(2, 3, pb, pa)
 CALL MySub(4, 5, pb)
 pa(6,7) = 7.8
 pb(9) = .true.
 
 ALLOCATE(p)
-! ALLOCATE(p%ca(6)) ! type error
-! ALLOCATE(p%ca[*]) ! does not parse
-ALLOCATE(p%ca(6)[])  ! does not parse ALLOCATE(p%ca(6)[*]); 
-ALLOCATE(p%cb(2,3)[10])
+ALLOCATE(p%ca[*])
+ALLOCATE(p%ca(6)[*]) 
+ALLOCATE(p%cb(2,3)[])
 ALLOCATE(p%cpi)  ! allocate memory for a copointer to a 1-dim coarray of integer
 ALLOCATE(p%cpc1c(100)[]) ! allocate memory for ca copointer to a coarray of 1-dim complex array of size 100
-!
-p%ca(2)[3] = .false.  ! common sense syntax should call for p%ca[3](2)
+
+p%ca(2)[3] = .false.
 p%cb(1,2)[3] = 4.0
 r = p%cb(1,2)
 p%cpi[9] = 4
 k = p%cpi[9]
 p%cpc1c(88) = (1.0, 2.0)
 x = p%cpc1c(99)[10]
-!
+
 END

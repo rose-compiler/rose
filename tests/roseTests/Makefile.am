@@ -62,7 +62,15 @@ if !ROSE_USE_INSURE
 # DQ (4/23/2011): At least one of the files (process_cmdline.o) in this directory does not seem 
 # to compile with Insure++ (it hangs for Hudson, but I can't reproduce the problem locally).
 # This was not a problem the second time that Insure++ compiled ROSE.
-   SUBDIRS += roseHPCToolkitTests utilTests
+
+# DQ (9/2/2011): utilTests has C++ specific tests.
+# SUBDIRS += roseHPCToolkitTests utilTests
+  SUBDIRS += roseHPCToolkitTests
+
+# DQ (9/2/2011): Only run these tests if C or C++ is supported.
+#if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+   SUBDIRS += utilTests
+#endif
 endif
 
 # Binary tests are a current problem for Insure++.

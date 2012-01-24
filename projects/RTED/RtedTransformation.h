@@ -5,6 +5,8 @@
 #define RTEDTRANS_H
 
 #include <set>
+#include <vector>
+#include <map>
 #include <string>
 
 #include "RtedSymbols.h"
@@ -14,6 +16,36 @@
 #include "CppRuntimeSystem/rted_typedefs.h"
 
 enum { RTEDDEBUG = 1 };
+
+/// analyzed files
+typedef std::set<std::string> RtedFiles;
+
+/// options that can be set on the command line
+struct RtedOptions
+{
+  bool globalsInitialized;
+};
+
+
+/// \brief returns the language of the specified source file
+SourceFileType fileType(const std::string& filename);
+
+/// \overload
+SourceFileType fileType(const SgSourceFile& sf);
+
+struct ScopeDescriptor
+{
+  SgScopeStatement* stmt;                ///< node in the AST
+  bool              falloff_protection;  ///< scope requires protection from
+                                         ///  exiting a non-void function without
+                                         ///  return. e.g., int foo() {}
+  bool              cxx_lang;            ///< scope requires C++ scope handling
+  bool              delay_leak_check;    ///< scope requires lazy leak check
+
+  ScopeDescriptor(SgScopeStatement* scopestmt, bool antiFalloff, bool cxx, bool delayChecks)
+  : stmt(scopestmt), falloff_protection(antiFalloff), cxx_lang(cxx), delay_leak_check(delayChecks)
+  {}
+};
 
 //
 // convenience and debug functions
@@ -30,6 +62,10 @@ SgScopeStatement* get_scope(SgInitializedName* initname)
 /// \note  recognizes UPC main functions (as opposed to SageInterface::isMain)
 // \pp \todo integrate into SageInterface::isMain
 bool is_main_func(const SgFunctionDefinition& func);
+
+/// \brief returns the first variable of a declaration
+/// \todo  move to SageInterface
+SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl);
 
 /// \brief builds a UPC barrier statement
 // \pp \todo integrate into SageBuilder
@@ -116,7 +152,7 @@ SgType* skip_ModifierType(SgType* t);
 /// \brief Follow the base type of @c type until we reach a non-typedef.
 SgType* skip_Typedefs( SgType* type );
 
-/// \brief skips all references and modifiers on top
+/// \brief skips all references, typedefs, and modifiers on top
 SgType* skip_TopLevelTypes( SgType* type );
 
 /// skips potential typedefs and references and returns the array underneath
@@ -176,6 +212,9 @@ void appendClassName( SgExprListExp* arg_list, SgType* type );
 /// appends a boolean value
 void appendBool( SgExprListExp* arg_list, bool b );
 
+/// implemented in support
+SgExpression* getExprBelowAssignment(SgExpression* exp);
+
 //
 // helper functions to insert rted checks
 
@@ -205,6 +244,51 @@ SgAggregateInitializer* genAggregateInitializer(SgExprListExp* initexpr, SgType*
 /// \brief   creates a variable reference expression from a given name
 SgVarRefExp* genVarRef( SgInitializedName* initName );
 
+/// \brief   moves the body of a function f to a new function f`;
+///          f's body is replaced with code that forwards the call to f`.
+/// \return  a pair indicating the statement containing the call of f`
+///          and an initialized name refering to the temporary variable
+///          holding the result of f`. In case f returns void
+///          the initialized name is NULL.
+/// \param   definingDeclaration the defining function declaration of f
+/// \param   newName the name of function f`
+/// \pre     definingDeclaration must be a defining declaration of a
+///          free standing C/C++ function.
+///          typeid(SgFunctionDeclaration) == typeid(definingDeclaration)
+///          i.e., this function is NOT implemented for class member functions,
+///          template functions, procedures, etc.
+/// \details f's new body becomes { f`(...) } and { int res = f`(...); return res; }
+///          for functions returning void and a value, respectively.
+///          two function declarations are inserted in f's enclosing scope
+///          result_type f`(...);                       <--- (1)
+///          result_type f (...) { forward call to f` }
+///          result_type f`(...) { original code }      <--- (2)
+///          Calls to f are not updated, thus in the transformed code all
+///          calls will continue calling f (this is also true for
+///          recursive function calls from within the body of f`).
+///          After the function has created the wrapper,
+///          definingDeclaration becomes the wrapper function
+///          The definition of f` is the next entry in the
+///          statement list; the forward declaration of f` is the previous
+///          entry in the statement list.
+/// \todo    move to SageInterface
+/// \todo    are the returned values the most meaningful?
+///          maybe it is better to return the call statement of the original
+///          implementation?
+std::pair<SgStatement*, SgInitializedName*>
+wrapFunction(SgFunctionDeclaration& definingDeclaration, SgName newName);
+
+/// \overload
+/// \tparam  functor that generates a new name based on the old name.
+///          interface: SgName @nameGen(const SgName&)
+/// \param   nameGen name generator
+/// \todo    move to SageInterface
+template <class NameGen>
+std::pair<SgStatement*, SgInitializedName*>
+wrapFunction(SgFunctionDeclaration& definingDeclaration, NameGen nameGen)
+{
+  return wrapFunction(definingDeclaration, nameGen(definingDeclaration.get_name()));
+}
 
 typedef std::vector<SgMemberFunctionDeclaration*> SgMemberFunctionDeclarationPtrList;
 
@@ -213,16 +297,35 @@ typedef std::vector<SgMemberFunctionDeclaration*> SgMemberFunctionDeclarationPtr
 ///        the type.
 void appendConstructors(SgClassDefinition* cdef, SgMemberFunctionDeclarationPtrList& constructors);
 
+void populateDimensions( RtedArray& array, SgInitializedName& init, SgArrayType& type );
+
+
 /* -----------------------------------------------------------
  * tps : 6March 2009: This class adds transformations
  * so that runtime errors are caught at runtime before they happen
  * -----------------------------------------------------------*/
 
-typedef std::pair<SgReturnStmt*, size_t> ReturnInfo;
+struct ReturnInfo
+{
+  enum Kind { rtNone = 1, rtVoid = 2, rtValue = 3, rtIndirection = 4 };
+
+  SgReturnStmt*  stmt;
+  size_t         open_blocks;
+  Kind           expected_return;
+  SourceFileType filetype;
+
+  ReturnInfo(SgReturnStmt* returnstmt, size_t openBlocks, Kind expectedReturn, SourceFileType srcfile_type)
+  : stmt(returnstmt), open_blocks(openBlocks), expected_return(expectedReturn),
+    filetype(srcfile_type)
+  {}
+};
+
+/// \brief determines the kind of type a function returns
+ReturnInfo::Kind functionReturnType(SgType* t);
 
 class RtedTransformation
 {
-   typedef std::map<SgVarRefExp*,std::pair< SgInitializedName*, AllocKind> > InitializedVarMap;
+   typedef std::map<SgVarRefExp*, std::pair< SgInitializedName*, AllocKind> > InitializedVarMap;
 
 public:
    enum ReadWriteMask { Read = 1, Write = 2, BoundsCheck = 4 };
@@ -238,32 +341,35 @@ private:
 
 public:
    typedef std::vector< std::pair<SgExpression*, AllocKind> >        Deallocations;
-   typedef std::vector<SgScopeStatement*>                            ScopeContainer;
+   typedef std::vector<ScopeDescriptor>                              ScopeContainer;
    typedef std::map<SgSourceFile*, SgNamespaceDeclarationStatement*> SourceFileRoseNMType;
    typedef std::vector<SgPointerDerefExp*>                           SharedPtrDerefContainer;
    typedef std::vector<SgFunctionCallExp*>                           CallSiteContainer;
+
+   typedef std::pair<SgFunctionDefinition*, ReturnInfo::Kind>        FunctionDefEntry;
+   typedef std::vector<FunctionDefEntry>                             FunctionDefContainer;
+
+   typedef std::vector<RtedArray>                                    StackMultiArrayContainer;
+   typedef std::vector<std::pair<SgPointerDerefExp*,SgVarRefExp*> >  PtrDerefContainer;
 
    RtedSymbols                   symbols;
    std::vector< SgSourceFile* >  srcfiles;
 
 private:
-   std::set< std::string >       rtedfiles;
+   RtedFiles                     rtedfiles;
 
    // VARIABLES ------------------------------------------------------------
    // ------------------------ array ------------------------------------
-   /// The array of callArray calls that need to be inserted
-   std::map<SgVarRefExp*, RtedArray>        create_array_define_varRef_multiArray;
-   std::map<SgPntrArrRefExp*, RtedArray>    create_array_access_call;
 
-   /// remember variables that were used to create an array. These cant be reused for array usage calls
-   std::vector<SgVarRefExp*>                variablesUsedForArray;
+   std::map<SgVarRefExp*, RtedArray>        create_array_define_varRef_multiArray; ///< The array of callArray calls that need to be inserted
+   std::map<SgPntrArrRefExp*, RtedArray>    create_array_access_call;
+   std::vector<SgVarRefExp*>                variablesUsedForArray; ///< remember variables that were used to create an
+                                                                   ///  array. These cant be reused for array usage calls
 
 public:
-   /// stores deref expressions of shared pointers
-   SharedPtrDerefContainer                  sharedptr_derefs;
-
-   /// stores call sites that need to be instrumented
-   CallSiteContainer                        callsites;
+   SharedPtrDerefContainer                  sharedptr_derefs;    ///< stores deref expressions of shared pointers
+   CallSiteContainer                        unusedReturnValue;   ///< stores function calls returning a pointer
+                                                                 ///  where the result vanishes
 
 private:
    /// this vector is used to check which variables have been marked as initialized (through assignment)
@@ -273,10 +379,10 @@ public:
    /// the following stores all variables that are created (and used e.g. in functions)
    /// We need to store the name, type and initialized value
    /// We need to store the variables that are being accessed
-   std::map<SgInitializedName*, RtedArray>  create_array_define_varRef_multiArray_stack;
+   StackMultiArrayContainer                 create_array_define_varRef_multiArray_stack;
    std::vector<SgVarRefExp*>                variable_access_varref;
    std::vector<SgInitializedName*>          variable_declarations;
-   std::vector<SgFunctionDefinition*>       function_definitions;
+   FunctionDefContainer                     function_definitions;
 
    /// function calls to free
    Deallocations                            frees;
@@ -289,7 +395,7 @@ public:
 private:
    /// map of expr ϵ { SgPointerDerefExp, SgArrowExp }, SgVarRefExp pairs
    /// the deref expression must be an ancestor of the varref
-   std::map<SgPointerDerefExp*,SgVarRefExp*> variable_access_pointerderef;
+   PtrDerefContainer                        variable_access_pointerderef;
 
    /// The second SgExpression can contain either SgVarRefExp,
    /// or a SgThisExp
@@ -340,36 +446,47 @@ public:
    /// possible.  If the direct link does not exist, will do a memory pool
    /// traversal to find the definition.  May still return NULL if the definition
    /// cannot be determined statically.
-   SgFunctionDeclaration* getDefiningDeclaration( SgFunctionCallExp* fn_call );
+   SgFunctionDeclaration* getDefiningDeclaration( SgFunctionCallExp& fn_call );
 
    void insertAssertFunctionSignature( SgFunctionCallExp* exp );
-   void insertConfirmFunctionSignature( SgFunctionDefinition* fndef );
+   void handleFunctionDefinition( FunctionDefContainer::value_type fndef );
    void insertFreeCall(SgExpression* freeExp, AllocKind ak);
    void insertReallocateCall( SgFunctionCallExp* exp );
 
-   /**
-    * @return @c true @b iff @c exp is a descendent of an assignment expression
-    * (such as @ref SgAssignmentOp or @ref SgPlusAssignOp)
-    */
-   bool isthereAnotherDerefOpBetweenCurrentAndAssign(SgExpression* exp );
-
 public:
-   bool isInInstrumentedFile( SgNode* n );
-   void visit_isArraySgAssignOp(SgAssignOp* const);
+    bool isInInstrumentedFile( SgNode* n );
+    void visit_isArraySgAssignOp(SgAssignOp* const);
 
-   void appendFileInfo( SgExprListExp* arg_list, SgStatement* stmt);
-   void appendFileInfo( SgExprListExp* arg_list, SgScopeStatement* scope, Sg_File_Info* n);
+    /// builds a call to rtedExitBlock
+    /// \param blocks number of blocks to close (e.g., for return statements, etc.)
+    SgExprStatement* buildExitBlockStmt(size_t blocks, SgScopeStatement&, Sg_File_Info*);
 
-   /// appends the allocation kind
-   void appendAllocKind( SgExprListExp* arg_list, AllocKind kind );
+    /// builds a call to rtedEnterBlock
+    /// \param scopename name helps users debugging
+    SgExprStatement* buildEnterBlockStmt(const std::string& scopename);
 
-   /// appends a function signature (typecount, returntype, arg1, ... argn)
-   /// to the argument list.
-   void appendSignature( SgExprListExp* arg_list, SgType* return_type, const SgTypePtrList& param_types);
+    /// \brief   builds a call to rted_ExitFunctionReturnPointer
+    /// \details delays checking for memory leaks until a possible return
+    ///          value could have been assigned
+    SgExprStatement*
+    buildDelayedLeakCheckExitStmt( SourceFileType filetype,
+                                   size_t blocks,
+                                   SgScopeStatement& scope,
+                                   SgInitializedName& result,
+                                   Sg_File_Info* fileinfo
+                                 );
+
+    void appendFileInfo( SgExprListExp* arg_list, SgStatement* stmt);
+    void appendFileInfo( SgExprListExp* arg_list, SgScopeStatement* scope, Sg_File_Info* n);
+
+    /// appends the allocation kind
+    void appendAllocKind( SgExprListExp* arg_list, AllocKind kind );
+
+    /// appends a function signature (typecount, returntype, arg1, ... argn)
+    /// to the argument list.
+    void appendSignature( SgExprListExp* arg_list, SgType* return_type, const SgTypePtrList& param_types);
 private:
 
-   bool isUsedAsLvalue( SgExpression* exp );
-   SgExpression* getExprBelowAssignment(SgExpression* exp);
 
    // ********************* Deep copy classes in headers into source **********
    SgClassDeclaration* instrumentClassDeclarationIntoTopOfAllSourceFiles(SgProject* project, SgClassDeclaration* classDecl);
@@ -439,6 +556,9 @@ public:
    /// \brief rewrites the last statement in main (see member variable mainLast)
    void insertMainCloseCall();
 
+    /// \brief   reports an error during execution
+    void insertErrorReport(SgStatement& loc, const std::string& msg);
+
    void visit_isAssignInitializer(SgAssignInitializer* const n);
    void visit_isArrayPntrArrRefExp(SgPntrArrRefExp* const n);
 
@@ -453,10 +573,10 @@ public:
    void insertArrayAccessCall(SgPntrArrRefExp* arrayExp, const RtedArray& value);
    void insertArrayAccessCall(SgStatement* stmt, SgPntrArrRefExp* arrayExp, const RtedArray& array);
 
-   bool isVarRefInCreateArray(SgInitializedName* search);
+   //~ bool isVarRefInCreateArray(SgInitializedName* search);
    void insertFuncCall(RtedArguments& args);
    void insertIOFuncCall(RtedArguments& args);
-   void visit_isFunctionCall(SgFunctionCallExp* const fcexp);
+   ReturnInfo::Kind visit_FunctionCall(SgFunctionCallExp& fcexp);
 
 public:
    /// Insert calls to registerPointerChange.  Don't worry about checkMemReads,
@@ -469,9 +589,11 @@ private:
    /// \note  used to pass unstructured arguments to the runtime-system
    SgFunctionCallExp* convertIntToString(SgExpression* i);
 
-   // simple scope handling
-   void bracketWithScopeEnterExit( SgScopeStatement* stmt_or_block, Sg_File_Info* exit_file_info );
+   /// adds enterScope and exitScope calls to keep track of stack memory
+   void bracketWithScopeEnterExit( ScopeContainer::value_type scope );
 
+   /// builds a C++ ScopeGuard variable decl for the given scope
+   SgStatement* buildEnterScopeGuard(SgScopeStatement& scope);
 
    // is it a variable?
    void insertCreateObjectCall( RtedClassDefinition* cdef );
@@ -487,9 +609,9 @@ private:
 
    SgExprStatement* buildVariableCreateCallStmt( SgInitializedName* name, bool isparam=false );
 
-   void insertVariableCreateInitForParams( SgFunctionDefinition* n);
+   void insertVariableCreateInitForParams( SgFunctionDefinition& n);
    void insertAccessVariable(SgVarRefExp* varRefE,SgExpression* derefExp);
-   void insertAccessVariable(SgThisExp* varRefE,SgExpression* derefExp);
+   void insertAccessVariable(SgThisExp* varRefE, SgExpression* derefExp);
    void insertAccessVariable(SgScopeStatement* scope, SgExpression* derefExp, SgStatement* stmt, SgExpression* varRefE);
    void addFileIOFunctionCall(SgVarRefExp* n, bool read);
    void insertCheckIfThisNull(SgThisExp* texp);
@@ -497,21 +619,13 @@ private:
 public:
    void visit_isSgVarRefExp(SgVarRefExp* n, bool isRightBranchOfBinaryOp, bool thinkItsStopSearch);
    void visit_isSgArrowExp(SgArrowExp* const n);
-   void visit_isSgPointerDerefExp(SgPointerDerefExp* const);
+   void visit_sgPointerDerefExp(SgPointerDerefExp&);
 private:
    /// Renames the original main function
    /// copied from projects/UpcTranslation/upc_translation.C
-   void renameMain(SgFunctionDeclaration * sg_func);
+   void renameMain(SgFunctionDefinition& sg_func);
    void changeReturnStmt(ReturnInfo rstmt);
    void insertExitBlock(SgStatement& stmt, size_t openblocks);
-
-   /// builds a call to rtedExitBlock
-   /// \param blocks number of blocks to close (e.g., for return statements, etc.)
-   SgExprStatement* buildExitBlockStmt(size_t blocks, SgScopeStatement*, Sg_File_Info*);
-
-   /// builds a call to rtedEnterBlock
-   /// \param scopename name helps users debugging
-   SgExprStatement* buildEnterBlockStmt(const std::string& scopename);
 
    /// factors commonalities of heap allocations
    void arrayHeapAlloc(SgInitializedName*, SgVarRefExp*, SgExpression*, AllocKind);
@@ -531,11 +645,11 @@ public:
    typedef std::vector<SgStatement*>    UpcBlockingOpsContainer;
 
    UpcBlockingOpsContainer upcBlockingOps;
-   const bool              withupc;
+   RtedOptions             options;
 
 public:
 
-   RtedTransformation(bool testsupc, const std::set<std::string>& prjfiles)
+   RtedTransformation(const RtedFiles& prjfiles, const RtedOptions& cmdlineOpt)
    : symbols(),
      srcfiles(),
      rtedfiles(prjfiles),
@@ -543,7 +657,7 @@ public:
      create_array_access_call(),
      variablesUsedForArray(),
      sharedptr_derefs(),
-     callsites(),
+     unusedReturnValue(),
      variableIsInitialized(),
      create_array_define_varRef_multiArray_stack(),
      variable_access_varref(),
@@ -568,7 +682,7 @@ public:
      sourceFileRoseNamespaceMap(),
      classesInRTEDNamespace(),
      upcBlockingOps(),
-     withupc(testsupc)
+     options(cmdlineOpt)
    {}
 
 
@@ -579,7 +693,7 @@ public:
    SgProject* parse(int argc, char** argv);
 
    /// \brief Looks up RTED symbols in the given source file (needed for transformations)
-   void loadFunctionSymbols(SgSourceFile& n);
+   void loadFunctionSymbols(SgSourceFile& n, SourceFileType sft);
 
    SgAggregateInitializer* mkTypeInformation(SgType* type, bool resolve_class_names, bool array_to_pointer);
 
@@ -631,13 +745,27 @@ public:
    void insertNamespaceIntoSourceFile(SgProject* project);
    // void insertNamespaceIntoSourceFile(SgProject* project, std::vector<SgClassDeclaration*>&);
 
-   void populateDimensions( RtedArray& array, SgInitializedName& init, SgArrayType& type );
    void transformIfMain(SgFunctionDefinition&);
 
    //
-   // dependencies on AstSimpleProcessing
-   //   (see also comment in RtedTransformation.cpp)
-   // virtual void visit(SgNode* n); // needed for the class extraction
+   // implemented in RtedTransf_funcdef
+
+   /// inserts a check to make sure that a pointer value was not deallocated upon
+   /// function exit.
+   void insertDeallocationCheck(SgStatement& loc, SgInitializedName& resvar);
+
+   //
+   // implemented in RtedTransf_funccal.cpp
+
+   /// wraps a function call returning an unused pointer to allow the runtime monitor
+   /// properly keeping track of memory references.
+   void transformUnusedPointerReturn(CallSiteContainer::value_type callexp);
+
+   /// wraps a function call returning a pointer to allow the runtime monitor
+   /// check whether the pointer points to memory reclaimed upon function
+   /// exit (e.g., stack memory, or heap memory explicitly freed by a
+   /// C++ destructor).
+   void transformPointerReturnValidation(CallSiteContainer::value_type callexp);
 
    //
    // implemented in RtedTransf_Upc.cpp
@@ -646,9 +774,6 @@ public:
    /// wraps UPC shared ptr to shared derefs by a lock
    ///   to guarantee consistency
    void transformPtrDerefs(SharedPtrDerefContainer::value_type ptrderef);
-
-   /// wraps function calls in beginScope / endScope
-   void transformCallSites(CallSiteContainer::value_type callexp);
 
    /// \brief transforms a UPC barrier statement
    // void transformUpcBarriers(SgUpcBarrierStatement* stmt);

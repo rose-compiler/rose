@@ -156,6 +156,12 @@ SgAsmArmInstruction::terminatesBasicBlock() {
 }
 
 bool
+SgAsmArmInstruction::is_unknown() const
+{
+    return arm_unknown_instruction == get_kind();
+}
+
+bool
 DisassemblerArm::can_disassemble(SgAsmGenericHeader *header) const
 {
     SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();

@@ -8,9 +8,10 @@
 #include <QListWidgetItem>
 
 #include "MainWindow.h"
-#include "qcodeedit.h"
-
 #include "RtedDebug.h"
+#include "../CppRuntimeSystem.h"
+
+#include "qcodeedit.h"
 
 #include "ui_MainWindow.h"
 
@@ -18,14 +19,11 @@
 #include "MemoryTypeDisplay.h"
 #include "VariablesTypeDisplay.h"
 #include "PointerDisplay.h"
-
 #include "ItemTreeModel.h"
-
 #include "ModelRoles.h"
 
 
-DbgMainWindow::DbgMainWindow(RtedDebug * dbgObj_,
-                             QWidget * par)
+DbgMainWindow::DbgMainWindow(RtedDebug * dbgObj_, QWidget * par)
     : QMainWindow(par),
       dbgObj(dbgObj_),
       singleStep(true),
@@ -41,7 +39,7 @@ DbgMainWindow::DbgMainWindow(RtedDebug * dbgObj_,
     ui = new Ui::MainWindow();
     ui->setupUi(this);
 
-    rs = RuntimeSystem::instance();
+    rs = &RuntimeSystem::instance();
 
     ui->editorToolbar->addAction(ui->codeEdit1->action("undo"));
     ui->editorToolbar->addAction(ui->codeEdit1->action("redo"));
@@ -61,7 +59,7 @@ DbgMainWindow::DbgMainWindow(RtedDebug * dbgObj_,
     ui->codeEdit2->enableBreakPointEdit();
 
 
-    rs = RuntimeSystem::instance();
+    rs = &RuntimeSystem::instance();
 
     //restore settings
     QSettings settings;
@@ -240,7 +238,7 @@ void DbgMainWindow::updateAllRsData(bool showAlways)
 }
 void DbgMainWindow::updateTypeDisplay()
 {
-    ItemTreeNode * typeRoot = RsTypeDisplay::build(rs->getTypeSystem());
+    ItemTreeNode * typeRoot = RsTypeDisplay::build(&rs->getTypeSystem());
     typeModel->setRoot(typeRoot);
 
     if(typeProxyModel)
@@ -268,7 +266,7 @@ void DbgMainWindow::updateMemoryDisplay()
     bool showHeap = ui->chkShowHeap->isChecked();
     bool showStack = ui->chkShowStack->isChecked();
 
-    ItemTreeNode * memRoot = MemoryTypeDisplay::build(rs->getMemManager(),showHeap,showStack);
+    ItemTreeNode * memRoot = MemoryTypeDisplay::build(&rs->getMemManager(),showHeap,showStack);
     memModel->setRoot(memRoot);
 
     if(memProxyModel)
@@ -284,16 +282,16 @@ void DbgMainWindow::updateMemoryDisplay()
 
 
     // GraphicsView
-    MemoryManager * mm = RuntimeSystem::instance()->getMemManager();
-    if (!mm->getAllocationSet().empty())
+    MemoryManager& mm = RuntimeSystem::instance().getMemManager();
+    if (!mm.getAllocationSet().empty())
     {
-        ui->memGraphicsView->setMemoryType(mm->getAllocationSet().begin()->second);
+        ui->memGraphicsView->setMemoryType(mm.getAllocationSet().begin()->second);
     }
 }
 
 void DbgMainWindow::updateStackDisplay()
 {
-    ItemTreeNode * stackRoot = VariablesTypeDisplay::build(rs->getStackManager());
+    ItemTreeNode * stackRoot = VariablesTypeDisplay::build(&rs->getStackManager());
     stackModel->setRoot(stackRoot);
 
     if(stackProxyModel)
@@ -311,7 +309,7 @@ void DbgMainWindow::updateStackDisplay()
 
 void DbgMainWindow::updatePointerDisplay()
 {
-    ItemTreeNode * pointerRoot = PointerDisplay::build(rs->getPointerManager());
+    ItemTreeNode * pointerRoot = PointerDisplay::build(&rs->getPointerManager());
     pointerModel->setRoot(pointerRoot);
 
     if(pointerProxyModel)

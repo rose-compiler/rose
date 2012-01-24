@@ -6,7 +6,7 @@
 #ifndef SYSTEM_DEPENDENCE_GRAPH_UTIL_H
 #define SYSTEM_DEPENDENCE_GRAPH_UTIL_H
 
-#include "staticCFG.h"
+#include "cong_staticCFG.h"
 
 namespace SDG
 {

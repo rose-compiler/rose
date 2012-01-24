@@ -60,17 +60,23 @@ OCT_1_2010_F90_TESTCODES_REQUIRED_TO_PASS = \
 # These tests now pass using options to ignore gfortran (using both -rose:skip_syntax_check AND -rose:skipfinalCompileStep)
 OCT_1_2010_PREVIOUSLY_PASSING_F90_TESTCODES_REQUIRED_TO_PASS = \
    20080806-1.f90 \
+  ambig.f90 \
    defined_type_1.f90 \
    defined_type_3.f90 \
    implicit.f90 \
    implicit_1.f90 \
    logical-1.f90 \
    pr30147.f90 \
-   pr36078.f90
+   pr36078.f90 \
+   arrayio.f90 \
+   pr33276.f90 \
+   pr40413.f90 \
+   pr42781.f90 \
+   pr45598.f90 \
+   vrp_1.f90 
 
 # Oct 1 2010 tests that were supposed to pass (maybe a step backwards in robustness):
 # Failed in OFP
-#  ambig.f90
 #  pr40421.f90 
 
 
@@ -96,11 +102,16 @@ SEPT_1_2010_F90_TESTCODES_REQUIRED_TO_PASS = \
    parameter_3.f90 \
    shape_reshape.f90 \
    transfer-1.f90 \
-   write.f90
+   write.f90 \
+   defined_type_1.f90 \
+   defined_type_3.f90 \
+   implicit.f90 \
+   pr36078.f90
 
 
 OCT_1_2010_F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
-   pr32583.f
+   pr32583.f \
+   noncontinuation_1.f 
 
 # This is supposed to be an empty list.
 SEPT_1_2010_F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = 
@@ -108,8 +119,8 @@ SEPT_1_2010_F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS =
 
 F03_TESTCODES_REQUIRED_TO_PASS = 
 
-
-# F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS += $(OPENMP_TESTS_F77_TESTCODES_REQUIRED_TO_PASS)
+# DXN (08/08/2011):
+F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = $(OCT_1_2010_F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS)
 
 
 # #######################
@@ -120,41 +131,30 @@ F90_TESTCODES_CURRENTLY_FAILING = $(OCT_1_2010_F90_TESTCODES_CURRENTLY_FAILING)
 
 # This is a complete list of the failing tests...
 OCT_1_2010_F90_TESTCODES_CURRENTLY_FAILING = \
-   arrayio.f90 \
    data_1.f90 \
    do_1.f90 \
    enum_1.f90 \
    forall-1.f90 \
-   parameter_2.f90 \
-   pr33276.f90 \
-   pr40413.f90 \
-   pr42781.f90 \
-   pr45598.f90 \
-   vrp_1.f90
+   parameter_2.f90 
+
 
 # These are the only previously passing tests that currently fail.
 OCT_1_2010_F90_PREVOUSLY_PASSING_TESTCODES_CURRENTLY_FAILING = \
-  ambig.f90 \
   pr40421.f90 
 
+
 # This is an incomplete list (just the failing subset of those that were supposed to pass)
-SEPT_1_2010_F90_TESTCODES_CURRENTLY_FAILING = \
-   defined_type_1.f90 \
-   defined_type_3.f90 \
-   implicit.f90 \
-   pr36078.f90
+SEPT_1_2010_F90_TESTCODES_CURRENTLY_FAILING = 
 
 F77_FIXED_FORMAT_TESTCODES_CURRENTLY_FAILING = $(OCT_1_2010_F77_FIXED_FORMAT_TESTCODES_CURRENTLY_FAILING)
 
 # This is marked as a failing test.
 OCT_1_2010_F77_FIXED_FORMAT_TESTCODES_CURRENTLY_FAILING = \
-   noncontinuation_1.f \
    pr32663.f \
    pr39937.f \
    pr40421.f 
 
-SEPT_1_2010_F77_FIXED_FORMAT_TESTCODES_CURRENTLY_FAILING = \
-   noncontinuation_1.f 
+SEPT_1_2010_F77_FIXED_FORMAT_TESTCODES_CURRENTLY_FAILING = 
 
 
 F03_TESTCODES_CURRENTLY_FAILING = 
@@ -199,7 +199,10 @@ PERFORMANCE_REPORT_OPTION = -rose:compilationPerformanceFile $(top_builddir)/FOR
 # ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict $(PERFORMANCE_REPORT_OPTION)
 # ROSE_FLAGS = -rose:verbose 0 -rose:output_parser_actions
 # ROSE_FLAGS = -rose:verbose 0
-ROSE_FLAGS = -rose:verbose 0 -rose:skip_syntax_check -rose:skipfinalCompileStep
+# ROSE_FLAGS = -rose:verbose 0 -rose:skip_syntax_check -rose:skipfinalCompileStep
+
+# DQ (9/26/2011): Added optional test for dangling pointers to IR nodes in the AST (level 1 causes only an error message if dangling pointers is found).
+ROSE_FLAGS = -rose:verbose 0 -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:detect_dangling_pointers 1
 
 # VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
 # VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes

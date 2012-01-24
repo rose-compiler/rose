@@ -1,12 +1,16 @@
 // tps (01/14/2010) : Switching from rose.h to sage3
 // test cases are put into tests/roseTests/astInterfaceTests
 #include "sage3basic.h"
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 #include "roseAdapter.h"
 #include "markLhsValues.h"
 #include "sageBuilder.h"
 #include <fstream>
 #include <boost/algorithm/string/trim.hpp>
 #include "Outliner.hh"
+#endif
+
 using namespace std;
 using namespace SageInterface;
 

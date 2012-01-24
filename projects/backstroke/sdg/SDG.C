@@ -178,10 +178,22 @@ void SystemDependenceGraph::build()
                 
                 // Get the associated function declaration.
                 SgFunctionDeclaration* funcDecl = funcCallExpr->getAssociatedFunctionDeclaration();
+                
+                if (funcDecl == NULL)
+                    continue;
+                ROSE_ASSERT(funcDecl);
+                
                 const SgInitializedNamePtrList& formalArgs = funcDecl->get_args();
                 
                 SgExprListExp* args = funcCallExpr->get_args();
                 const SgExpressionPtrList& actualArgs = args->get_expressions();
+                
+                if (formalArgs.size() != actualArgs.size())
+                {
+                    cout << funcDecl->get_file_info()->get_filename() << endl;
+                    cout << funcDecl->get_name() << formalArgs.size() << " " << actualArgs.size() << endl;
+                    continue;
+                }
                 
                 for (int i = 0, s = actualArgs.size(); i < s; ++i)
                 {
@@ -255,8 +267,8 @@ void SystemDependenceGraph::build()
         ROSE_ASSERT(funcDecl);
         if (functionsToEntries_.count(funcDecl))
             addEdge(callInfo.vertex, functionsToEntries_[funcDecl], new SDGEdge(SDGEdge::Call));
-        else
-            ROSE_ASSERT(false);
+        //else
+            //ROSE_ASSERT(false);
     }
     
     //=============================================================================================//

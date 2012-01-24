@@ -1,4 +1,5 @@
-AUTOMAKE_OPTIONS = foreign no-dependencies
+# DQ (10/17/2011): Commented out to trace down why we don't have automatically generated dependencies.
+# AUTOMAKE_OPTIONS = foreign no-dependencies
 
 include_HEADERS =   hpdf.h hpdf_annotation.h hpdf_encoder.h hpdf_ext_gstate.h \
 					hpdf_mmgr.h hpdf_pages.h hpdf_utils.h hpdf_catalog.h \

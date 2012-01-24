@@ -24,7 +24,7 @@ std::string InitPointerToNull::getDescription() {
 
 void
 InitPointerToNull::visit(SgNode* node) {
-  if (isSgAsmFunctionDeclaration(node)) {
+  if (isSgAsmFunction(node)) {
     memoryWrites.clear();
     memoryRead.clear();
   } else
@@ -41,7 +41,7 @@ InitPointerToNull::visit(SgNode* node) {
 
     if (instBlock==NULL)
       return;
-    SgAsmFunctionDeclaration* instFunc = isSgAsmFunctionDeclaration(instBlock->get_parent());
+    SgAsmFunction* instFunc = isSgAsmFunction(instBlock->get_parent());
     if (instFunc==NULL)
       return;
 
@@ -109,9 +109,9 @@ InitPointerToNull::visit(SgNode* node) {
 	    string res = "Possibly uninitialized variable: ";
 	    string funcname="";
 	    SgAsmBlock* b = isSgAsmBlock(inst->get_parent());
-	    SgAsmFunctionDeclaration* func = NULL;
+	    SgAsmFunction* func = NULL;
 	    if (b)
-	      func=isSgAsmFunctionDeclaration(b->get_parent()); 
+	      func=isSgAsmFunction(b->get_parent()); 
 	    if (func)
 	      funcname = func->get_name();
 	    res+=" ("+RoseBin_support::HexToString(inst->get_address())+") : "+unparseInstruction(inst)+

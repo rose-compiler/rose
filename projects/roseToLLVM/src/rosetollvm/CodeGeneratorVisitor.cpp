@@ -1505,10 +1505,7 @@ void CodeGeneratorVisitor::preOrderVisit(SgNode *node) {
      //         SgAliasSymbol
      //     SgAsmNode:
      //         SgAsmStatement:
-     //             SgAsmDeclaration:
-     //                 SgAsmDataStructureDeclaration
-     //                 SgAsmFunctionDeclaration
-     //                 SgAsmFieldDeclaration
+     //             SgAsmFunction
      //             SgAsmBlock
      //             SgAsmInstruction:
      //                 SgAsmx86Instruction
@@ -3322,10 +3319,7 @@ void CodeGeneratorVisitor::postOrderVisit(SgNode *node) {
      //         SgAliasSymbol
      //     SgAsmNode:
      //         SgAsmStatement:
-     //             SgAsmDeclaration:
-     //                 SgAsmDataStructureDeclaration
-     //                 SgAsmFunctionDeclaration
-     //                 SgAsmFieldDeclaration
+     //             SgAsmFunction
      //             SgAsmBlock
      //             SgAsmInstruction:
      //                 SgAsmx86Instruction

@@ -313,6 +313,7 @@ struct NetlistTranslationPolicy {
   void hlt() {registerMap.errorFlag[bmc_error_program_failure] = TRUE;} // FIXME
   void interrupt(uint8_t num) {} // FIXME
   void sysenter() {} // FIXME
+  void cpuid() {} // FIXME
   LitList(64) rdtsc() {return problem.newVars<64>();}
 
   LitList(32) filterIndirectJumpTarget(const LitList(32)& addr) {return addr;}

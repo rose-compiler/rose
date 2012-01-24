@@ -110,9 +110,9 @@ void Slide::updateMouse() {
   if (item) {
     SgAsmNode* stmt=isSgAsmNode(item->statement);
     if (stmt) {
-      if (isSgAsmFunctionDeclaration(stmt)) {
+      if (isSgAsmFunction(stmt)) {
 	QString res = QString("FILE_A: selected Function  %1    pos:%2")
-	  .arg(isSgAsmFunctionDeclaration(stmt)->get_name().c_str())
+	  .arg(isSgAsmFunction(stmt)->get_name().c_str())
 	  .arg(selected);
 	if (lastStringA!=res) {
 	  lastStringA = res;
@@ -187,9 +187,9 @@ void Slide::updateMouse() {
   if (item2) {
     SgNode* stmt=item2->statement;
     if (stmt) {
-      if (isSgAsmFunctionDeclaration(stmt)) {
+      if (isSgAsmFunction(stmt)) {
 	QString res = QString("FILE_B: selected Function  %1    pos:%2")
-	  .arg(isSgAsmFunctionDeclaration(stmt)->get_name().c_str())
+	  .arg(isSgAsmFunction(stmt)->get_name().c_str())
 	  .arg(selected);
 	if (lastStringB!=res) {
 	  lastStringB = res;

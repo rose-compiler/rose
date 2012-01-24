@@ -10,8 +10,9 @@
 ###############################################################################
 
 # Directory containing this script, which must be the top of the source tree.
-srcdir="${0%/*}"
-srcdir="$(cd $srcdir && pwd)"
+srcdir="$(dirname "$0")"
+#srcdir="${0%/*}"
+#srcdir="$(cd $srcdir && pwd)"
 
 # Name of a file that would exist in a ROSE source tree but not other projects
 # that might be using this same build script.
@@ -24,6 +25,14 @@ ROSE_DISTRIBUTION=${ROSE_DISTRIBUTION:-.}
 # Parse command-line
 do_quiet=yes
 do_timing=
+
+# Turn this on by default (header file dependence checking).
+# On second through make the default OFF and allow users to activate it using --allow-header-file-dependence-checking
+# since this works for Linux (RedHat), but fails for OSX and Ubuntu (and needs to be reviewed with the author of the
+# UPC configuration checking when he gets back (or any other excuse will work).
+# do_header_file_dependence_checking=yes
+do_header_file_dependence_checking=no
+
 while [[ "$#" -gt 0 ]]; do
     arg="$1"; shift
     case "$arg" in
@@ -44,6 +53,15 @@ while [[ "$#" -gt 0 ]]; do
             ;;
         --srcpath)
             ROSE_DISTRIBUTION="$1"; shift
+            ;;
+        -i)
+            do_header_file_dependence_checking=no
+            ;;
+        --ignore-header-file-dependence-checking)
+            do_header_file_dependence_checking=no
+            ;;
+        --allow-header-file-dependence-checking)
+            do_header_file_dependence_checking=yes
             ;;
         *)
             echo "$0: unrecognized argument: $arg" >&2
@@ -100,21 +118,58 @@ rm -rf autom4te.cache
 # Test libtool version and run libtoolize.  Warn if the libtool version is too old, but run it anyway.  Show the command that
 # is run by preceding it with a "+ " on stderr as is the usual debugging style for shell scripts.
 ###############################################################################################################################
+echo "checking for glibtool..."
+libtoolize_name=
 # Liao 2/9/2011. Ensure the libtool on Mac is the gnu one
-OS=`uname -s`
-if test "$OS" = "Darwin" ; then 
-  if [[ -n "$(type libtool)" ]]; then
-     echo "Check libtool on Mac OS X ..."
-    libtool --version  
-   if [ $? -ne 0 ]; then
-     echo "Error. The libtool found is not gnu libtool." 
-     echo "Please install gnu libtool (e.g. version 2.2.4) and export its path before the default libtool's path!" 
-     exit 1;
-   else
-     echo "Found a gnu libtool."
-   fi
-  fi
+#
+# Look for libtoolize, glibtoolize in various places.
+# Liao 2/9/2011. We have better handling now
+#
+OS="$(uname -s)"
+if [ "x$OS" = "xDarwin" ]; then
+    if [ -n "$(type glibtool)" ]; then
+        echo "Found glibtool... $(which glibtool)"
+    elif [ -n "$(type glibtool)" ]; then
+        echo "checking if $(which libtool) is GNU libtool..."
+        libtool --version
+        if [ $? -ne 0 ]; then
+            echo "Error: $(which libtool) is not GNU libtool!"
+            exit 1
+        else
+            echo "Found glibtool... $(which libtool)"
+        fi
+    fi
+
+    libtoolize_name="$(which glibtoolize)"
+    if [ ! -n "$libtoolize_name" ]; then
+        echo "glibtoolize not found!"
+        exit 1
+    fi
 fi
+
+if [ ! -n "$libtoolize_name" ]; then
+    libtoolize_name="$(which libtoolize)"
+fi
+
+if [ ! -n "$libtoolize_name" ]; then
+    # If the user is running build then libtool should be available.
+    echo "$0: neither libtoolize nor glibtoolize were found in the user's path."
+    exit 1
+fi
+
+
+# Version required and version actually present.
+LIBTOOL_VERSION_PREREQ=1.5.6
+get_version "$($libtoolize_name --version)"
+LIBTOOL_VERSION="$VERSION"
+if [[ -z "$LIBTOOL_VERSION" ]]; then
+    echo "$0: warning: cannot determine libtool version; skipping libtoolize" 2>&1
+elif version_ok "$LIBTOOL_VERSION" "$LIBTOOL_VERSION_PREREQ"; then
+    (set -x; $libtoolize_name --force --copy --ltdl --automake)
+else
+    echo "$0: warning: libtool $LIBTOOL_VERSION is too old (require >= $LIBTOOL_VERSION_PREREQ); skipping libtoolize" 2>&1
+fi
+
 # Liao 2/15/2011
 # check flex and yacc
 # the assumption is that ./build should only run from a developer version, which requires flex and yacc
@@ -127,33 +182,6 @@ fi
 if [[ -z "$(type yacc)" ]]; then
    echo "Cannot find yacc in your path! Please install GNU bison."
    exit 1;
-fi
-
-# Look for libtoolize, glibtoolize in various places.
-libtoolize_name=
-#if [[ -x /Users/dquinlan/local/libtool-install/bin/libtoolize ]]; then
-#    # See README.OSX
-#    libtoolize_name=/Users/dquinlan/local/libtool-install/bin/libtoolize
-# Liao 2/9/2011. We have better handling now
-if [[ -n "$(type libtoolize)" ]]; then
-    libtoolize_name=$(which libtoolize)
-elif [[ -n "$(type glibtoolize)" ]]; then
-    libtoolize_name=$(which glibtoolize)
-else
-    # If the user is running build then libtool should be available.
-    echo "$0: neither libtoolize nor glibtoolize were found in the user's path." 2>&1
-    exit 1;
-fi
-
-# Version required and version actually present.
-LIBTOOL_VERSION_PREREQ=1.5.6
-get_version "`$libtoolize_name --version`"; LIBTOOL_VERSION=$VERSION
-if [[ -z "$LIBTOOL_VERSION" ]]; then
-    echo "$0: warning: cannot determine libtool version; skipping libtoolize" 2>&1
-elif version_ok "$LIBTOOL_VERSION" "$LIBTOOL_VERSION_PREREQ"; then
-    (set -x; $libtoolize_name --force --copy --ltdl --automake)
-else
-    echo "$0: warning: libtool $LIBTOOL_VERSION is too old (require >= $LIBTOOL_VERSION_PREREQ); skipping libtoolize" 2>&1
 fi
 
 ###############################################################################################################################
@@ -173,6 +201,39 @@ else
     echo "$0: warning: automake $AUTOMAKE_VERSION is too old (require >= $AUTOMAKE_VERSION_PREREQ)" 2>&1
 fi
 
+###############################################################################################################################
+# Link in optional projects to the configure scripts.
+#
+# Each subdirectory of "projects" which which has a file named "rose.config" will be enabled in the build system. The contents
+# of the projects's rose.config is copied into config/projects.m4 which is called from ROSE's configure.in.
+#
+# Usually, the only thing that rose.config will need is the list of Makefiles, which is done with the AC_CONFIG_FILES autoconf
+# macro:
+#    AC_CONFIG_FILES([projects/foo/Makefile projects/foo/subdir/Makefile])
+###############################################################################################################################
+
+(
+    echo "dnl This file generated by the ROSE build script."
+    echo "AC_DEFUN([ROSE_OPTIONAL_PROJECTS],["
+    echo "OPTIONAL_PROJECTS="
+    echo "AC_SUBST(OPTIONAL_PROJECTS)"
+    for project in projects/*; do
+	if [[ -f "$project/rose.config" ]]; then
+	    echo "+ NOTE: Adding optional $project" >&2
+	    echo
+	    echo
+	    echo "dnl -----------------------------------------------------------------------------------------------------"
+	    echo "dnl -- This part of the file comes from $project/rose.config"
+	    echo "dnl -----------------------------------------------------------------------------------------------------"
+	    echo "AC_MSG_NOTICE([configuring optional $project])"
+	    echo "OPTIONAL_PROJECTS=\"\$OPTIONAL_PROJECTS ${project#projects/}\""
+	    echo
+	    cat "$project/rose.config"
+	fi
+    done
+    echo "])"
+) >config/support-projects.m4
+	
 ###############################################################################################################################
 # Run autoconf tools: aclocal, autoheader, autoconf, and automake
 ###############################################################################################################################
@@ -219,11 +280,17 @@ fi
 # Run all autoconf, indenting their output for readability.  Exit if a tool fails (this is different than the
 # semantics of the original version of this script).  The '-I' switches of aclocal are because some macros may be
 # installed in non-standard locations (e.g., libxml's on NMI build machines).
+header_file_dependence_checking=
+if test "x$do_header_file_dependence_checking" = "xno"; then
+header_file_dependence_checking=--ignore-deps
+fi
 (set -ex
     aclocal -I $ROSE_DISTRIBUTION/config -I $ROSE_DISTRIBUTION/acmacros -I /usr/share/aclocal $ACLOCAL_INCLUDES
     autoheader
     autoconf
-    automake -a -c -i
+# DQ (10/17/2011): Allow header file dependencies to be built by default (-a: --add-missing, -c: --copy; made more explicitly clear).
+#   automake -a -c -i
+    automake -a -c $header_file_dependence_checking
 ) 2>&1 |$ROSE_DISTRIBUTION/scripts/autoconf-filter.pl |sed '/^[^+]/s/^/    /'
 if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
     echo "$0: unable to initialize your build environment!" 2>&1

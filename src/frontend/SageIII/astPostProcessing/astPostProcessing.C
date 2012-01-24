@@ -499,6 +499,13 @@ void postProcessingSupport (SgNode* node)
   // Moved from astConsistancy tests (since it deletes nodes not connected to the AST).
   // TestForDisconnectedAST::test(node);
 
+  // DQ (9/14/2011): Process the AST to remove constant folded values held in the expression trees.
+  // This step defines a consistant AST more suitable for analysis since only the constant folded
+  // values will be visited.  However, the default should be to save the original expression trees
+  // and remove the constant folded values since this represents the original code.  This mechanism
+  // will provide a default when it is more fully implemented.
+     resetConstantFoldedValues(node);
+
   // DQ (5/22/2005): Nearly all AST fixup should be done before this closing step
   // QY: check the isModified flag
   // CheckIsModifiedFlagSupport(node); 

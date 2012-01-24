@@ -388,6 +388,7 @@ void EventReverser::processExpression(SgExpression* expr)
         case V_SgLessOrEqualOp:
         case V_SgAndOp:
         case V_SgOrOp:
+        case V_SgModOp:
         case V_SgBitAndOp:
         case V_SgBitOrOp:
         case V_SgBitXorOp:

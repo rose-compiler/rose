@@ -675,7 +675,9 @@ int main( int argc, char * argv[] )
 	// ------------------------------ TESTCASE 1 -----------------------------------------
 	argvList[1]=srcdir+"tests/test20.C";
 	resultsMe.clear();      useresults.clear();
-	testOneFunctionDEFUSE("::bar",argvList, debug, 8, resultsMe,useresults);
+// DQ (9/24/2011): We have a different value of nodes within the new replacement of constant folded values with the original expression trees.
+// testOneFunctionDEFUSE("::bar",argvList, debug, 8, resultsMe,useresults);
+	testOneFunctionDEFUSE("::bar",argvList, debug, 7, resultsMe,useresults);
       }
 
       if (startNrInt==21 || testAll) {
@@ -690,7 +692,9 @@ int main( int argc, char * argv[] )
 	argvList[1]=srcdir+"tests/test22.C";
 	resultsMe.clear();      useresults.clear();
 	resultsMe.insert(pair<string,int>("b", 7));
-	testOneFunctionDEFUSE("::func",argvList, debug, 16, resultsMe,useresults);
+// DQ (9/24/2011): We have a different value of nodes within the new replacement of constant folded values with the original expression trees.
+// testOneFunctionDEFUSE("::func",argvList, debug, 16, resultsMe,useresults);
+	testOneFunctionDEFUSE("::func",argvList, debug, 15, resultsMe,useresults);
       }
 
       if (startNrInt==23 || testAll) {
@@ -712,10 +716,12 @@ int main( int argc, char * argv[] )
 	// ------------------------------ TESTCASE 24 -----------------------------------------
 	argvList[1]=srcdir+"tests/jacobi_seq.C";
 	resultsMe.clear();  useresults.clear();
-	testOneFunctionDEFUSE("::jacobi", argvList, debug, 563, resultsMe,useresults);
-	testOneFunctionDEFUSE("::main", argvList, debug, 563, resultsMe,useresults);
+// DQ (9/24/2011): We have a different value of nodes within the new replacement of constant folded values with the original expression trees.
+// testOneFunctionDEFUSE("::jacobi", argvList, debug, 563, resultsMe,useresults);
+	testOneFunctionDEFUSE("::jacobi", argvList, debug, 554, resultsMe,useresults);
+// testOneFunctionDEFUSE("::main", argvList, debug, 563, resultsMe,useresults);
+	testOneFunctionDEFUSE("::main", argvList, debug, 554, resultsMe,useresults);
       }
-
     }
 
     // -------------------------------------- use-def tests
@@ -756,7 +762,7 @@ int main( int argc, char * argv[] )
       // ------------------------------ TESTCASE 3 -----------------------------------------
       argvList[1]=srcdir+"tests/test3.C";
       results.clear();       outputResults.clear();
-#if 1
+
       vector<string> in1;
       results.insert(pair<int,  vector<string> >( make_pair(6, in1 )));
       vector<string> in10;
@@ -770,7 +776,7 @@ int main( int argc, char * argv[] )
       string arrout[] = {"d"};
       vector<string> out(arrout,arrout+1);
       outputResults.insert(pair<int,  vector<string> >( make_pair(8, out )));
-#endif
+
       testOneFunction("::main", argvList, debug, 18, results,outputResults);
     }
 
@@ -824,7 +830,6 @@ int main( int argc, char * argv[] )
       testOneFunction("::main", argvList, debug, 29, results,outputResults);
     }
 
-#if 1
 
     if (startNrInt==7 || testAll) {
       // ------------------------------ TESTCASE 7 -----------------------------------------
@@ -928,7 +933,9 @@ int main( int argc, char * argv[] )
       // ------------------------------ TESTCASE 20 -----------------------------------------
       argvList[1]=srcdir+"tests/test20.C";
       results.clear();      outputResults.clear();
-      testOneFunction("::bar",argvList, debug, 8, results,outputResults);
+   // DQ (9/24/2011): We have a different value of nodes within the new replacement of constant folded values with the original expression trees.
+   // testOneFunction("::bar",argvList, debug, 8, results,outputResults);
+      testOneFunction("::bar",argvList, debug, 7, results,outputResults);
     }
 
     if (startNrInt==21 || testAll) {
@@ -942,7 +949,9 @@ int main( int argc, char * argv[] )
       // ------------------------------ TESTCASE 22 -----------------------------------------
       argvList[1]=srcdir+"tests/test22.C";
       results.clear();      outputResults.clear();
-      testOneFunction("::func",argvList, debug, 18, results,outputResults);
+   // DQ (9/24/2011): We have a different value of nodes within the new replacement of constant folded values with the original expression trees.
+   // testOneFunction("::func",argvList, debug, 18, results,outputResults);
+      testOneFunction("::func",argvList, debug, 17, results,outputResults);
     }
 
     if (startNrInt==23 || testAll) {
@@ -951,7 +960,6 @@ int main( int argc, char * argv[] )
       results.clear();      outputResults.clear();
       testOneFunction("::func",argvList, debug, 37, results,outputResults);
     }
-#endif
 
     if (startNrInt==24 || testAll) {
       // ------------------------------ TESTCASE 24 -----------------------------------------
@@ -967,7 +975,16 @@ int main( int argc, char * argv[] )
       // ------------------------------ TESTCASE 25 -----------------------------------------
       argvList[1]=srcdir+"tests/jacobi_seq.C";
       results.clear();  outputResults.clear();
-      testOneFunction("::jacobi", argvList, debug, 264, results,outputResults);
+   // DQ (9/24/2011): We have a different value of nodes within the new replacement of constant folded values with the original expression trees.
+   // DQ (9/22/2011): Restoring to original test so that I can introduce changes to the original expression tree handling 
+   // more gradually as part of debugging a few failing test codes (like this one).
+   // DQ (9/19/2011): Changed to reflect work to eliminate the original expression tree and make the AST more consistant.
+   // Not sure if this should be changed since I tried to restore the original work before the change to fixup constant
+   // folding and yet I still get different results now.
+   // testOneFunction("::jacobi", argvList, debug, 264, results,outputResults);
+   // testOneFunction("::jacobi", argvList, debug, 274, results,outputResults);
+   // testOneFunction("::jacobi", argvList, debug, 264, results,outputResults);
+      testOneFunction("::jacobi", argvList, debug, 261, results,outputResults);
       testOneFunction("::main", argvList, debug, 24, results,outputResults);
     }
   }

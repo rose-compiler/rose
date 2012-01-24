@@ -441,7 +441,7 @@ print OUTPUT <<"EOF"
     if (retval.empty()) {
         char buf[@{[length($name)+64]}];
 #ifndef _MSC_VER
-        int nprint = snprintf(buf, sizeof buf, \"(${name})\%d\", n);
+        int nprint __attribute__((unused)) = snprintf(buf, sizeof buf, \"(${name})\%d\", n);
 #else
         int nprint = 0; assert(0);
 #endif

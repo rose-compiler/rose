@@ -40,6 +40,13 @@ struct AstSharedMemoryParallelProcessingSynchronizationInfo
 
     AstSharedMemoryParallelProcessingSynchronizationInfo(size_t numberOfThreads, size_t synchronizationWindowSize);
     ~AstSharedMemoryParallelProcessingSynchronizationInfo();
+
+#if 1
+ // We can't implement this as private since it is required.  So we have a potential double free error here.
+ // private:
+ // DQ (9/13/2011): This copy constructor was built because static analysis tools (made it private to force compile time error if used).
+    AstSharedMemoryParallelProcessingSynchronizationInfo( const AstSharedMemoryParallelProcessingSynchronizationInfo & X );
+#endif
 };
 
 // Class containing the code needed for synchronization of parallelizable traversals. The parallelizable processing

@@ -35,10 +35,10 @@ class RoseBin_CompareAnalysis : public AstSimpleProcessing{
   local_vars_type local_vars;
  
   typedef std::map<std::string, std::pair<SgFunctionDeclaration*,
-    SgAsmFunctionDeclaration*> > function_map_type;
+    SgAsmFunction*> > function_map_type;
   function_map_type function_map;
 
-  std::map<std::string, SgAsmFunctionDeclaration*> bin_funcs;
+  std::map<std::string, SgAsmFunction*> bin_funcs;
 
   std::stack<SgExpression*> srcNodesTodo;
   
@@ -173,7 +173,7 @@ class RoseBin_CompareAnalysis : public AstSimpleProcessing{
   // compare a src function and a binary function
   void checkFunctions(std::string name,
                       SgFunctionDeclaration* funcDecl,
-                      SgAsmFunctionDeclaration* binDecl);
+                      SgAsmFunction* binDecl);
 
   // filter instructions that are known
   bool instruction_filter(SgAsmStatement* stat, std::string name,

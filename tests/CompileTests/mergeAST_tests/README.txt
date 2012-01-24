@@ -16,3 +16,15 @@ Current problem test:
    ./testMerge -rose:astMerge -c /home/dquinlan/ROSE/git-dq-main-rc/tests/CompileTests/mergeAST_tests/mergeTest_137.C
 
 
+DQ (9/24/2011): After fixing the AST so that constant folded values can be by default
+    replaced by the original expression trees, the follwoing two codes faile to merge.
+    The work also restricted the AST traversal to NOT traverse the original expression
+    trees.  An option in the frontend allows the the original expression trees to be
+    removed from the AST; leaving the constant folded values.  However the default is
+    to replace the constant folded values with the original expression trees (since ROSE
+    is focused on source-to-source).  
+    The following test codes now file (our of hundreds that are tested):
+         mergeTest_90.C
+         mergeTest_124.C
+    Each of these used to pass, each now file on what appears to be the same error.
+

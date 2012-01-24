@@ -1667,7 +1667,7 @@ Grammar::setUpStatements ()
 
      LabelStatement.setFunctionPrototype ( "HEADER_LABEL_STATEMENT", "../Grammar/Statement.code" );
      LabelStatement.setDataPrototype     ( "SgName", "label", "= \"\"",
-                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      LabelStatement.setDataPrototype     ( "SgScopeStatement*", "scope", "= NULL",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -1687,6 +1687,8 @@ Grammar::setUpStatements ()
 
   // DQ (8/26/2011): Added Java Label statement (it is a scope) different from C/C++.
      JavaLabelStatement.setFunctionPrototype ( "HEADER_JAVA_LABEL_STATEMENT", "../Grammar/Statement.code" );
+     JavaLabelStatement.setDataPrototype     ( "SgName", "label", "= \"\"",
+                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      JavaLabelStatement.setDataPrototype     ( "SgStatement*", "statement", "= NULL",
                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
@@ -1985,7 +1987,7 @@ Grammar::setUpStatements ()
      JavaForEachStatement.setDataPrototype ( "SgStatement*", "loop_body",   "= NULL",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
-  // DQ (8/17/2011):  Added Java "throw" statement support (constructor required SgExpression pointer).
+  // DQ (8/17/2011):  Added Java "synchronized" statement support (constructor required SgExpression pointer).
      JavaSynchronizedStatement.setFunctionPrototype  ( "HEADER_JAVA_SYNCHRONIZED_STATEMENT", "../Grammar/Statement.code" );
      JavaSynchronizedStatement.setDataPrototype ( "SgExpression*", "expression", "= NULL",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -3147,6 +3149,7 @@ Grammar::setUpStatements ()
 
      PassStatement.setFunctionSource        ( "SOURCE_PASS_STATEMENT", "../Grammar/Statement.code" );
 
+     AssertStmt.setFunctionPrototype        ( "HEADER_ASSERT_STMT", "../Grammar/Statement.code" );
      AssertStmt.setFunctionSource           ( "SOURCE_ASSERT_STMT", "../Grammar/Statement.code" );
      AssertStmt.setDataPrototype            ( "SgExpression*", "test", "= NULL",
              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);

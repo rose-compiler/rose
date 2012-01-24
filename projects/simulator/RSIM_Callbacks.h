@@ -81,7 +81,7 @@
  *  @section Example2 Example: Using the disassembler to trace functions
  *
  *  A side effect of calling RSIM_Process::disassemble() is that the resulting AST contains instruction nodes
- *  (SgAsmInstruction) whose grandparents are function nodes (SgAsmFunctionDeclaration).  We can use this fact to print the
+ *  (SgAsmInstruction) whose grandparents are function nodes (SgAsmFunction).  We can use this fact to print the
  *  name of the function in which we're currently executing.
  *
  *  @code
@@ -93,9 +93,9 @@
  *      // The actual callback.
  *      virtual bool operator()(bool prev, const Args &args) {
  *          SgAsmBlock *basic_block = isSgAsmBlock(args.insn->get_parent());
- *          SgAsmFunctionDeclaration *func = basic_block ?
- *                                           SageInterface::getEnclosingNode<SgAsmFunctionDeclaration>(basic_block) :
- *                                           NULL;
+ *          SgAsmFunction *func = basic_block ?
+ *                                SageInterface::getEnclosingNode<SgAsmFunction>(basic_block) :
+ *                                NULL;
  *          if (func && func->get_name()!=name) {
  *              name = func->get_name();
  *              args.thread->tracing(TRACE_MISC)->mesg("in function \"%s\"", name.c_str());
