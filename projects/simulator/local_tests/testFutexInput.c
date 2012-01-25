@@ -1,6 +1,5 @@
 #include <assert.h>
 #include <pthread.h>
-#include <linux/futex.h>
 #include <stdio.h>
 
 #define NTESTS  100
