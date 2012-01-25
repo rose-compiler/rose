@@ -568,7 +568,9 @@ static const Translate open_flags[] = { TF(O_RDWR), TF(O_RDONLY), TF(O_WRONLY),
                                         TF(O_CREAT), TF(O_EXCL), TF(O_NONBLOCK), TF(O_NOCTTY), TF(O_TRUNC),
                                         TF(O_APPEND), TF(O_NDELAY), TF(O_ASYNC), TF(O_FSYNC), TF(O_SYNC), TF(O_NOATIME),
                                         TF(O_LARGEFILE), /*0x8000*/
+#ifdef O_CLOEXEC
                                         TF(O_CLOEXEC),
+#endif
                                         T_END };
 
 /* Types for getdents syscalls */
