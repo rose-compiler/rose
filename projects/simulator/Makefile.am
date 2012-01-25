@@ -15,7 +15,7 @@ TEST_TARGETS =
 #  DOCUMENTATION, CONFIGURATION, ETC
 ###############################################################################################################################
 
-EXTRA_DIST += README test_status.txt syscall_tests.conf pthread_tests.conf RSIM.dxy
+EXTRA_DIST += README test_status.txt internal_tests.conf syscall_tests.conf pthread_tests.conf RSIM.dxy
 
 ###############################################################################################################################
 #  SIMULATOR LIBRARY
@@ -352,6 +352,35 @@ noinst_PROGRAMS += ptrace_jmp
 ptrace_jmp_SOURCES = papers/ptrace_jmp.C
 ptrace_jmp_CPPFLAGS = $(ROSE_INCLUDES)
 ptrace_jmp_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+
+###############################################################################################################################
+#  INTERNAL SIMULATOR TESTS
+###############################################################################################################################
+
+INTERNAL_TEST_TARGETS =
+
+noinst_PROGRAMS += testFutex
+testFutex_SOURCES = testFutex.C
+testFutex_CPPFLAGS = $(ROSE_INCLUDES)
+testFutex_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+INTERNAL_TEST_TARGETS += testFutex.passed
+
+# Input file (specimen) for testFutex
+EXTRA_DIST += local_tests/testFutexInput.c
+MOSTLYCLEANFILES += testFutexInput
+testFutexInput: local_tests/testFutexInput.c
+	@echo "  CC32    $@"
+	@$(CC) $(CFLAGS32) -o $@ $^ -pthread -lpthread -lrt
+
+# The test, which simulates the specimen, which makes a special system call, which tests the futex layer
+MOSTLYCLEANFILES += testFutex.passed testFutex.failed testFutex.out testFutex.err
+testFutex.passed: testFutex testFutexInput $(srcdir)/internal_tests.conf
+	@$(RTH_RUN) SIMULATOR=./testFutex SPECIMEN=./testFutexInput $(srcdir)/internal_tests.conf $@
+
+MOSTLYCLEANFILES += $(INTERNAL_TEST_TARGETS)
+check-internal: $(INTERNAL_TEST_TARGETS)
+
 
 ###############################################################################################################################
 #  SYSTEM CALL TESTS
@@ -1416,7 +1445,7 @@ check-pthread:  $(PTHREAD_TEST_TARGETS)
 test-inputs: $(SYS_TEST_INPUTS) $(PTHREAD_TEST_INPUTS)
 
 .PHONY: run-tests
-run-tests: check-syscalls check-pthread
+run-tests: check-syscalls check-pthread check-internal
 	@$(RTH_STATS)
 
 check-local: run-tests
