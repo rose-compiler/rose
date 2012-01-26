@@ -113,6 +113,13 @@ struct PtrInfo {
 template<template <size_t> class T>
 class PtrState: public SymbolicSemantics::State<T> {
 public:
+
+    /** Initialize the pointer analysis state from a pure symbolic semantics state. */
+    PtrState& operator=(const SymbolicSemantics::State<T> &other) {
+        *(dynamic_cast<SymbolicSemantics::State<T>*>(this)) = other;
+        return *this;
+    }
+
     /** Merge other policy into this one and return true if this one changed.  We merge the list of instructions that define
      *  each register's value, but we don't merge the values themselves.  We also don't currently do anything for memory. */
     bool merge(const PtrState &other) {
@@ -154,7 +161,10 @@ public:
     SymbolicSemantics::InsnSet *addr_definers;
 
     PtrPolicy(PtrInfo *info): info(info) {}
-
+    PtrPolicy(const SymbolicSemantics::Policy<SymbolicSemantics::State, T> &init_policy, PtrInfo *info): info(info) {
+        this->cur_state  = init_policy.get_state();
+    }
+    
     bool merge(const PtrPolicy &other) {
         if (info->verbosity>=VB_LOTS)
             info->m->more(" merging... ");
@@ -260,6 +270,11 @@ public:
     typedef PtrPolicy<PtrState, ValueType> Policy;
     typedef X86InstructionSemantics<Policy, ValueType> Semantics;
     typedef std::map<rose_addr_t, PtrPolicy<PtrState, ValueType> > StateMap;
+    typedef SymbolicSemantics::Policy<SymbolicSemantics::State, ValueType> InitialPolicy;
+
+    InitialPolicy initial_policy;
+
+    PtrAnalysis(const InitialPolicy &p): initial_policy(p) {}
 
     // Limit the number of instructions we process.  The symbolic expressions can become very large quite quickly.  A better
     // approach might be to bail when the expression complexity reaches a certain point.
@@ -282,9 +297,8 @@ public:
         // we'll load this this policy object with the instructions initial state, process the instruction, and then obtain
         // the instruction's final state from the same policy object.  (The X86InstructionSemantics keeps a modifiable
         // reference to this policy.)
-        Policy policy(&info);
+        Policy policy(initial_policy, &info);
         Semantics semantics(policy);
-        const RegisterDescriptor *ESP = policy.get_register_dictionary()->lookup("esp");
         const RegisterDescriptor *EIP = policy.get_register_dictionary()->lookup("eip");
 
         // Make two passes.  During the first pass we discover what addresses are used to dereference memory and what
@@ -298,11 +312,11 @@ public:
             WorkList worklist;
             size_t nprocessed = 0; // number of instructions processed, including failures
 
-            // Initialize the policy for the first simulated instruction.  We choose a concrete value for the ESP register
-            // only because we'll use that same value in another analysis.
-            PtrPolicy<PtrState, ValueType> initial_policy(&info);
-            initial_policy.writeRegister(*ESP, policy.number<32>(analysis_stack_va)); // arbitrary
-            before.insert(std::make_pair(info.analysis_addr, initial_policy));
+            // Initialize the policy for the first simulated instruction.
+            {
+                PtrPolicy<PtrState, ValueType> p(initial_policy, &info);
+                before.insert(std::make_pair(info.analysis_addr, p));
+            }
 
             worklist.push(info.analysis_addr);
             while (!worklist.empty() && nprocessed++ < max_processed) {
@@ -423,6 +437,10 @@ public:
 template<template <size_t> class ValueType>
 class OracleState: public SymbolicSemantics::State<ValueType> {
 public:
+    OracleState& operator=(const SymbolicSemantics::State<ValueType> &other) {
+        *dynamic_cast<SymbolicSemantics::State<ValueType>*>(this) = other;
+        return *this;
+    }
 };
 
 template<
@@ -435,7 +453,10 @@ public:
     typedef typename State<ValueType>::Memory Memory;
     const PtrInfo &info; // memory addresses of known pointer variables
 
-    OraclePolicy(const PtrInfo &info): info(info) {}
+    OraclePolicy(const SymbolicSemantics::Policy<SymbolicSemantics::State, ValueType> &init_policy, const PtrInfo &info)
+        : info(info) {
+        this->cur_state = init_policy.get_state();
+    }
 
     // Provide a memory oracle
     template<size_t nBits>
@@ -486,6 +507,11 @@ class OracleAnalysis {
 public:
     typedef OraclePolicy<OracleState, ValueType> Policy;
     typedef X86InstructionSemantics<Policy, ValueType> Semantics;
+    typedef SymbolicSemantics::Policy<SymbolicSemantics::State, ValueType> InitialPolicy;
+
+    InitialPolicy initial_policy;
+
+    OracleAnalysis(const InitialPolicy &p): initial_policy(p) {}
 
     // Throws:
     //   Disassembler::Exception when it can't disassemble something, probably because we supplied a bugus value for
@@ -497,13 +523,12 @@ public:
 
         static const size_t limit = 200;        // max number of instructions to process
         size_t ninsns = 0;                      // number of instructions processed
-        Policy policy(info);
+        Policy policy(initial_policy, info);
         Semantics semantics(policy);
 
         try {
             // Initialize the policy for the first simulated instruction.
             policy.writeRegister(semantics.REG_EIP, policy.number<32>(info.analysis_addr));
-            policy.writeRegister(semantics.REG_ESP, policy.number<32>(analysis_stack_va));
             if (info.verbosity>=VB_MINIMAL) {
                 std::stringstream ss; ss <<policy;
                 info.m->more("%s: initial state:\n%s", name, ss.str().c_str());
@@ -634,6 +659,15 @@ public:
                 }
             }
 
+            // Create an initial state.  Both PtrAnalysis and OracleAnlaysis accept a SymbolicSemantics::Policy as an
+            // initializer.
+            typedef X86InstructionSemantics<PtrAnalysis::InitialPolicy, ValueType> InitSemantics;
+            PtrAnalysis::InitialPolicy init_policy;
+            InitSemantics init_semantics(init_policy);
+            init_semantics.writeRegister(init_semantics.REG_ESP, init_policy.number<32>(analysis_stack_va)); // arbitrary
+
+
+            // Run the PtrAnalysis and OracleAnalysis repeatedly with different starting addresses
             for (size_t n=0; n<std::max((size_t)1, randomize); ++n) {
 
                 // Choose an analysis address
@@ -663,11 +697,11 @@ public:
 
                 // Do the analyses
                 PtrInfo ptr_info(args.thread, m, analysis_addr, verbosity, addrspc);
-                PtrAnalysis().analyze(ptr_info);
+                PtrAnalysis(init_policy).analyze(ptr_info);
                 for (size_t iter=0; iter<niters; ++iter) {
                     m->mesg("%s: MemoryOracle at virtual address 0x%08"PRIx64" (%zu of %zu), iteration %zu",
                             name, analysis_addr, n+1, std::max(randomize, (size_t)1), iter);
-                    size_t ninsns = OracleAnalysis().analyze(ptr_info);
+                    size_t ninsns = OracleAnalysis(init_policy).analyze(ptr_info);
                     m->mesg("%s:   MemoryOracle processed %zu instruction%s", name, ninsns, 1==ninsns?"":"s");
                 }
             }
