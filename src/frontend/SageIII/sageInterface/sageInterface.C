@@ -987,9 +987,13 @@ SageInterface::get_name ( const SgScopeStatement* scope )
           case V_SgNamespaceDefinitionStatement:
                name = get_name(isSgNamespaceDefinitionStatement(scope)->get_namespaceDeclaration());
                break;
+          case V_SgJavaLabelStatement:
+               name = (isSgJavaLabelStatement(scope)->get_label()).getString();
+               break;
 
-       // DQ (11/30/2007): Added more fortran suport.
+       // DQ (11/30/2007): Added more fortran support.
           case V_SgAssociateStatement:
+          case V_SgJavaForEachStatement:
 
           case V_SgBasicBlock:
           case V_SgCatchOptionStmt:
@@ -1505,7 +1509,8 @@ SageInterface::get_name ( const SgExpression* expr )
 
             // DQ (4/8/2010): define something specific to this function to make debugging more clear.
             // printf ("Note: default reached in get_name() expr = %p = %s \n",expr,expr->class_name().c_str());
-               name = "undefined_expression_name";
+              // name = "undefined_expression_name";
+               name = expr->class_name() + "_undef_name";
                break;
              }
         }
@@ -9059,10 +9064,11 @@ int SageInterface::fixVariableReferences(SgNode* root)
         {
             // make sure the lhs operand has been fixed
             counter += fixVariableReferences(arrowExp->get_lhs_operand_i());
-
-            SgPointerType* ptrType = isSgPointerType(arrowExp->get_lhs_operand_i()->get_type());
+            SgType* lhs_type = arrowExp->get_lhs_operand_i()->get_type() ;
+            lhs_type = lhs_type->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_TYPEDEF_TYPE);
+            SgPointerType* ptrType = isSgPointerType(lhs_type);
             ROSE_ASSERT(ptrType);
-            SgClassType* clsType = isSgClassType(ptrType->get_base_type());
+            SgClassType* clsType = isSgClassType(ptrType->get_base_type()-> stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_TYPEDEF_TYPE));
             ROSE_ASSERT(clsType);
             SgClassDeclaration* decl = isSgClassDeclaration(clsType->get_declaration());
             decl = isSgClassDeclaration(decl->get_definingDeclaration());
@@ -9079,7 +9085,9 @@ int SageInterface::fixVariableReferences(SgNode* root)
             // make sure the lhs operand has been fixed
             counter += fixVariableReferences(dotExp->get_lhs_operand_i());
 
-            SgClassType* clsType = isSgClassType(dotExp->get_lhs_operand_i()->get_type());
+            SgType* lhs_type = dotExp->get_lhs_operand_i()->get_type() ;
+            lhs_type = lhs_type->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_TYPEDEF_TYPE);
+            SgClassType* clsType = isSgClassType(lhs_type);
             ROSE_ASSERT(clsType);
             SgClassDeclaration* decl = isSgClassDeclaration(clsType->get_declaration());
             decl = isSgClassDeclaration(decl->get_definingDeclaration());
