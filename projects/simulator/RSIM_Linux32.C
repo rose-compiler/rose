@@ -4,12 +4,6 @@
  *    RSIM_Linux32::syscall_FOO                 -- implements the system call
  *    RSIM_Linux32::syscall_FOO_leave           -- prints syscall tracing info when the call returns
  */
-
-/* _GNU_SOURCE is needed for the declaration of pipe2() and probably some other GNU-specific functions. */
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
-
 #include "rose.h"
 #include "RSIM_Private.h"
 
