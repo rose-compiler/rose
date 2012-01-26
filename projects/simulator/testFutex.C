@@ -39,14 +39,16 @@ static void test1_enter(RSIM_Thread *t, int callno)
 
 static void test1_body(RSIM_Thread *t, int callno)
 {
+    RTS_Message *m     = t->tracing(TRACE_MISC);
     uint32_t futex_va  = t->syscall_arg(0);
     size_t nthreads    = t->syscall_arg(1); // including the master
-    assert(nthreads>=2);
+    if (nthreads<2) {
+        m->mesg("test1 must run with at least two threads.");
+        t->syscall_return(-EINVAL);
+        return;
+    }
     size_t to_wake     = rand() % (nthreads-1);
-    assert(to_wake<nthreads);
-
     uint32_t bitset    = (uint32_t)(-1);
-    RTS_Message *m     = t->tracing(TRACE_MISC);
 
     static const bool verbose = false;
     static RTS_mutex_t mutex = RTS_MUTEX_INITIALIZER((RTS_Layer)144);
@@ -90,7 +92,11 @@ static void test1_body(RSIM_Thread *t, int callno)
             m->mesg("master: resuming; about to wake %zu thread%s", to_wake, 1==to_wake?"":"s");
         for (size_t nwoke=0; nwoke<to_wake; /*void*/) {
             int status = t->futex_wake(futex_va, to_wake-nwoke, bitset);
-            assert(status>=0);
+            if (status<0) {
+                m->mesg("master: futex wake failed: %s", strerror(-status));
+                t->syscall_return(status);
+                return;
+            }
             assert(status+nwoke<=to_wake);
             nwoke += status;
         }
@@ -118,7 +124,11 @@ static void test1_body(RSIM_Thread *t, int callno)
             } RTS_MUTEX_END;
             if (n>0) {
                 int status = t->futex_wake(futex_va, n, bitset);
-                assert(status>=0);
+                if (status<0) {
+                    m->mesg("master: futex wake failed: %s", strerror(-status));
+                    t->syscall_return(status);
+                    return;
+                }
                 if (status<(int)n)
                     delay(0.1);
             }
@@ -131,7 +141,11 @@ static void test1_body(RSIM_Thread *t, int callno)
          * ones that are the main part of the test), or the master's second set of calls (the ones that are waking up the
          * rest of the blocked threads).  The thread makes note of why it woke up, and then returns. */
         int status = t->futex_wait(futex_va, 0, bitset);
-        assert(status>=0);
+        if (status<0) {
+            m->mesg("slave: futex wait failed: %s", strerror(-status));
+            t->syscall_return(status);
+            return;
+        }
 
         bool intended;
         RTS_MUTEX(mutex) {
