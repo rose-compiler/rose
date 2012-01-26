@@ -179,6 +179,17 @@ run_demo7: demo7
 	./demo7 --debug $(top_srcdir)/binaries/samples/buffer2.bin
 
 #------------------------------------------------------------------------------------------------------------------------------
+# demo 7b: generate a disassembly listing after dynamic linking
+noinst_PROGRAMS += demo7b
+demo7b_SOURCES = demos/demo7b.C
+demo7b_CPPFLAGS = $(ROSE_INCLUDES)
+demo7b_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+.PHONY: run_demo7b
+run_demo7b: demo7b
+	./demo7b --debug $(top_srcdir)/binaries/samples/buffer2.bin
+
+#------------------------------------------------------------------------------------------------------------------------------
 # demo 8: report statistics about number of instructions and system calls
 noinst_PROGRAMS += demo8
 demo8_SOURCES = demos/demo8.C
@@ -281,6 +292,66 @@ run_symbolic_2_grep_strchr: symbolic_2 $(32BIT_REPO)/grep
 	: 0x08049488 is strchr@plt
 	LD_BIND_NOW=y ./symbolic_2 --debug --trigger=0x08049508 --analysis-func=0x08049488 --take-branch=nnnnnnyy $(32BIT_REPO)/grep x /dev/null
 
+
+#------------------------------------------------------------------------------------------------------------------------------
+# Analysis to determine type info
+noinst_PROGRAMS += types_1
+types_1_SOURCES = papers/types_1.C
+types_1_CPPFLAGS = $(ROSE_INCLUDES)
+types_1_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+# Input files for types_1 analysis
+EXTRA_DIST += local_tests/types.c local_tests/types_extern.c test_types_1.conf test_types_1.conf
+MOSTLYCLEANFILES += types_extern.o libtypes_extern.{a,so} types_{static,shared}
+
+types_extern.o: local_tests/types_extern.c
+	@echo "  CC32    $@"
+	@$(CC) $(CFLAGS32) -fPIC -o $@ -c $^
+
+libtypes_extern.a: types_extern.o
+	@echo "  AR      $@"
+	@ar rcs $@ $^
+
+libtypes_extern.so: types_extern.o
+	@echo "  LINK    $@"
+	@$(CC) $(CFLAGS32) -shared -fPIC -Wl,-soname,$@ -o $@ $^
+
+types_static: local_tests/types.c libtypes_extern.a
+	@echo "  LINK    $@"
+	@$(CC) $(CFLAGS32) -static -o $@ $^
+
+types_shared: local_tests/types.c libtypes_extern.so
+	@echo "  LINK    $@"
+	@$(CC) $(CFLAGS32) -fPIC -o $@ $^
+
+# Names of functions to analyze in types_static and types_shared executables
+TYPES_1_FUNCTIONS =simple1  simple2  simple3  simple4  simple5  simple6  simple7  simple8  simple9  simple10 \
+                   simple11 simple12 simple13 simple14 simple15 simple16 simple17 simple18 simple19 simple20 \
+                   simple21 flow1 flow2 flow3 flow4 flow5
+
+# Test targets for types_1 analysis.  Done this way for parallelism, etc.  See scripts/rth_run.pl --help for details.
+TYPES_1_TARGETS = $(addprefix test_types_1_,$(addsuffix .passed,$(TYPES_1_FUNCTIONS)))
+$(TYPES_1_TARGETS): %.passed: $(srcdir)/test_types_1.conf types_1 types_static types_shared
+	@$(RTH_RUN) ANALYSIS_FUNC=$(patsubst test_types_1_%.passed,%,$@) $(srcdir)/test_types_1.conf $@
+
+.PHONY: test_types_1
+test_types_1: $(TYPES_1_TARGETS)
+
+# Cleanup targets. We can't put all the generated files in MOSTLYCLEANFILES because the list gets too long to pass
+# as arguments to "rm" (deficiency in automake).  Therefore we'll create a *.clean target for each test and have
+# clean-local depend on it.
+.PHONY: test_types_1_cleanups
+TYPES_1_CLEANUPS = $(patsubst %.passed, %.clean, $(TYPES_1_TARGETS))
+.PHONY: $(TYPES_1_CLEANUPS)
+$(TYPES_1_CLEANUPS):
+	rm -f $(foreach ext, passed failed err out, $(patsubst %.clean, %, $@).$(ext))
+
+#------------------------------------------------------------------------------------------------------------------------------
+# Ptraced-based "run to original entry point, then branch and count how long it takes for child to crash.
+noinst_PROGRAMS += ptrace_jmp
+ptrace_jmp_SOURCES = papers/ptrace_jmp.C
+ptrace_jmp_CPPFLAGS = $(ROSE_INCLUDES)
+ptrace_jmp_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 ###############################################################################################################################
 #  SYSTEM CALL TESTS
@@ -1348,7 +1419,7 @@ check-local: run-tests
 # Rather than stuffing *everything* in MOSTLYCLEANFILES, we use cleanup targets. This is to avoid argument lists that
 # are too long due.  In general, we don't want to use wild cards because some users might have some similarly named files
 # that they wouldn't expect a "make clean" to delete.
-clean-local: $(SYS_TEST_CLEANUPS) $(PTHREAD_TEST_CLEANUPS)
+clean-local: $(SYS_TEST_CLEANUPS) $(PTHREAD_TEST_CLEANUPS) $(TYPES_1_CLEANUPS)
 	-chmod -f -R a+rwx tmp-sim
 	rm -rf tmp-sim x-core.rose test-file-fchown32
 	-chmod -f -R a+rwx fchmodattestdir* fchmodattestfile*.txt

@@ -25,24 +25,29 @@ RSIM_Thread::ctor()
     memset(&last_report, 0, sizeof last_report);
     memset(tls_array, 0, sizeof tls_array);
 
+    reopen_trace_facilities(process->get_tracing_file());
+}
+
+void
+RSIM_Thread::reopen_trace_facilities(FILE *file)
+{
     for (int tf=0; tf<TRACE_NFACILITIES; tf++) {
-        if ((process->get_tracing_flags() & tracingFacilityBit((TracingFacility)tf))) {
-            trace_mesg[tf] = new RTS_Message(process->get_tracing_file(), &mesg_prefix);
-        } else {
-            trace_mesg[tf] = new RTS_Message(NULL, NULL);
-        }
+        if (trace_mesg[tf]==NULL)
+            trace_mesg[tf] = new RTS_Message(NULL, &mesg_prefix);
+        if ((process->get_tracing_flags() & tracingFacilityBit((TracingFacility)tf)))
+            trace_mesg[tf]->set_file(file);
     }
 }
 
 std::string
 RSIM_Thread::id()
 {
-    static struct timeval start;
     struct timeval now;
     gettimeofday(&now, NULL);
-    if (0==start.tv_sec)
-        start = now;
-    double elapsed = (now.tv_sec - start.tv_sec) + 1e-6 * ((double)now.tv_usec - start.tv_usec);
+
+    const struct timeval &ctime = get_process()->get_ctime();
+
+    double elapsed = (now.tv_sec - ctime.tv_sec) + 1e-6 * ((double)now.tv_usec - ctime.tv_usec);
     char buf1[32];
     sprintf(buf1, "%1.3f", elapsed);
 
@@ -329,7 +334,7 @@ RSIM_Thread::signal_deliver(const RSIM_SignalHandling::siginfo_32 &_info)
                 RSIM_SignalHandling::rt_sigframe_32 frame;
                 memset(&frame, 0, sizeof frame);
                 stack_32 stack; /* signal alternate stack */
-                int status = sighand.sigaltstack(NULL, &stack, regs.sp);
+                int status __attribute__((unused)) = sighand.sigaltstack(NULL, &stack, regs.sp);
                 assert(status>=0);
                 frame_va = sighand.get_sigframe(&sa, sizeof frame, regs.sp);
 
@@ -548,7 +553,7 @@ RSIM_Thread::signal_dequeue(RSIM_SignalHandling::siginfo_32 *info/*out*/)
     int signo = sighand.dequeue(info);
     if (0==signo) {
         RSIM_SignalHandling::sigset_32 mask;
-        int status = sighand.sigprocmask(0, NULL, &mask);
+        int status __attribute__((unused)) = sighand.sigprocmask(0, NULL, &mask);
         assert(status>=0);
         signo = get_process()->sighand.dequeue(info, &mask);
     }
@@ -562,12 +567,14 @@ RSIM_Thread::report_progress_maybe()
     if (mesg->get_file()) {
         struct timeval now;
         gettimeofday(&now, NULL);
-        double delta = (now.tv_sec - last_report.tv_sec) + 1e-1 * (now.tv_usec - last_report.tv_usec);
-        if (delta > report_interval) {
-            double insn_rate = delta>0 ? get_ninsns() / delta : 0;
-            mesg->mesg("processed %zu insns in %d sec (%d insns/sec)\n", get_ninsns(), (int)(delta+0.5), (int)(insn_rate+0.5));
+        double report_delta = (now.tv_sec - last_report.tv_sec) + 1e-6 * (now.tv_usec - last_report.tv_usec);
+        if (report_delta > report_interval) {
+            const struct timeval &ctime = get_process()->get_ctime();
+            double elapsed = (now.tv_sec - ctime.tv_sec) + 1e-6 * (now.tv_usec - ctime.tv_usec);
+            double insn_rate = elapsed>0.0 ? get_ninsns() / elapsed : 0;
+            mesg->mesg("processed %zu insns in %d sec (%d insns/sec)\n", get_ninsns(), (int)(elapsed+0.5), (int)(insn_rate+0.5));
+            last_report = now;
         }
-        last_report = now;
     }
 }
 
@@ -690,7 +697,7 @@ RSIM_Thread::main()
                 policy.dump_registers(mesg);
         } catch (const Disassembler::Exception &e) {
             if (!insn_semaphore_posted) {
-                int status = sem_post(process->get_simulator()->get_semaphore());
+                int status __attribute__((unused)) = sem_post(process->get_simulator()->get_semaphore());
                 assert(0==status);
                 insn_semaphore_posted = true;
             }
@@ -704,7 +711,7 @@ RSIM_Thread::main()
         } catch (const RSIM_Semantics::Exception &e) {
             /* Thrown for instructions whose semantics are not implemented yet. */
             if (!insn_semaphore_posted) {
-                int status = sem_post(process->get_simulator()->get_semaphore());
+                int status __attribute__((unused)) = sem_post(process->get_simulator()->get_semaphore());
                 assert(0==status);
                 insn_semaphore_posted = true;
             }
@@ -722,7 +729,7 @@ RSIM_Thread::main()
 #endif
         } catch (const RSIM_SEMANTIC_POLICY::Exception &e) {
             if (!insn_semaphore_posted) {
-                int status = sem_post(process->get_simulator()->get_semaphore());
+                int status __attribute__((unused)) = sem_post(process->get_simulator()->get_semaphore());
                 assert(0==status);
                 insn_semaphore_posted = true;
             }
@@ -735,7 +742,7 @@ RSIM_Thread::main()
             abort();
         } catch (const RSIM_Process::Exit &e) {
             if (!insn_semaphore_posted) {
-                int status = sem_post(process->get_simulator()->get_semaphore());
+                int status __attribute__((unused)) = sem_post(process->get_simulator()->get_semaphore());
                 assert(0==status);
                 insn_semaphore_posted = true;
             }
@@ -743,7 +750,7 @@ RSIM_Thread::main()
             return NULL;
         } catch (RSIM_SignalHandling::siginfo_32 &e) {
             if (!insn_semaphore_posted) {
-                int status = sem_post(process->get_simulator()->get_semaphore());
+                int status __attribute__((unused)) = sem_post(process->get_simulator()->get_semaphore());
                 assert(0==status);
                 insn_semaphore_posted = true;
             }
@@ -1057,6 +1064,12 @@ RSIM_Thread::sys_sigaltstack(const stack_32 *in, stack_32 *out)
 void
 RSIM_Thread::post_fork()
 {
+    /* Delete all the message queues and trace file, reopen the logging file(s), and recreate the RTS_Message objects based on
+     * the new file handles. */
+    get_process()->open_tracing_file();
+    get_process()->btrace_close();
+    reopen_trace_facilities(process->get_tracing_file());
+
     my_tid = syscall(SYS_gettid);
     assert(my_tid==getpid());
     process->post_fork();
@@ -1070,7 +1083,7 @@ void
 RSIM_Thread::emulate_syscall()
 {
     /* Post the instruction semphore because some system calls can block indefinitely. */
-    int status = sem_post(get_process()->get_simulator()->get_semaphore());
+    int status __attribute__((unused)) = sem_post(get_process()->get_simulator()->get_semaphore());
     assert(0==status);
     insn_semaphore_posted = true;
 

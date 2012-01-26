@@ -77,7 +77,7 @@ int RSIM_Thread::getdents_syscall(int fd, uint32_t dirent_va, size_t sz)
 
 template <size_t Len> VirtualMachineSemantics::ValueType<Len>
 RSIM_SemanticPolicy::readMemory(X86SegmentRegister sr, const VirtualMachineSemantics::ValueType<32> &addr,
-                                const VirtualMachineSemantics::ValueType<1> cond) {
+                                const VirtualMachineSemantics::ValueType<1> &cond) {
     ROSE_ASSERT(0==Len % 8 && Len<=64);
     RSIM_Process *process = thread->get_process();
     uint32_t offset = addr.known_value();
@@ -112,7 +112,8 @@ RSIM_SemanticPolicy::readMemory(X86SegmentRegister sr, const VirtualMachineSeman
 /* Writes memory to the memory map rather than the super class. */
 template <size_t Len> void
 RSIM_SemanticPolicy::writeMemory(X86SegmentRegister sr, const VirtualMachineSemantics::ValueType<32> &addr,
-                                 const VirtualMachineSemantics::ValueType<Len> &data,  VirtualMachineSemantics::ValueType<1> cond) {
+                                 const VirtualMachineSemantics::ValueType<Len> &data,
+                                 const VirtualMachineSemantics::ValueType<1> &cond) {
     ROSE_ASSERT(0==Len % 8 && Len<=64);
     RSIM_Process *process = thread->get_process();
     uint32_t offset = addr.known_value();

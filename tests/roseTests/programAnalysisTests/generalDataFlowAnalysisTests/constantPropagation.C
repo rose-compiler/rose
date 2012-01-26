@@ -152,6 +152,7 @@ ConstantPropagationLattice::meetUpdate(Lattice* X)
 
 
   // This is the more technically interesting required function.
+  //   2. unknownValue, missing the cases that meet bottom, top ??
      if (this->level == unknownValue && that->level == unknownValue)
         {
        // leave it and return false
@@ -166,7 +167,7 @@ ConstantPropagationLattice::meetUpdate(Lattice* X)
                return true;
              }
             else
-             {
+             {   //  3. const value: missing the cases of meeting bottom and top ??
                if (this->level == constantValue && that->level == unknownValue)
                   {
                     return false;
@@ -185,9 +186,9 @@ ConstantPropagationLattice::meetUpdate(Lattice* X)
                               return true;
                             }
                        }
-                      else
+                      else // 4.  undefinedValue  is not covered ???
                        {
-                         if (this->level == bottom)
+                         if (this->level == bottom) // 1. can only go up: must be the value of that lattice since this lattice is already the bottom
                             {
                               this->level = that->level;
                               this->value = that->value;
@@ -196,7 +197,7 @@ ConstantPropagationLattice::meetUpdate(Lattice* X)
                             }
                            else
                             {
-                              if (this->level == top)
+                              if (this->level == top) //5.  already at the top. Cannot go up further.
                                  {
                                    return false;
                                  }

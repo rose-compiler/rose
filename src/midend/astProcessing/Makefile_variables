@@ -50,7 +50,8 @@ mAstProcessing_includeHeaders=\
 	$(mAstProcessingPath)/AstSharedMemoryParallelSimpleProcessing.h \
 	$(mAstProcessingPath)/graphProcessing.h \
 	$(mAstProcessingPath)/graphProcessingSgIncGraph.h \
-	$(mAstProcessingPath)/graphTemplate.h
+	$(mAstProcessingPath)/graphTemplate.h \
+        $(mAstProcessingPath)/SgGraphTemplate.h
 
 mAstProcessing_extraDist=\
 	$(mAstProcessingPath)/CMakeLists.txt \

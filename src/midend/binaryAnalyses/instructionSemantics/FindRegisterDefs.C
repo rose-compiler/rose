@@ -30,7 +30,7 @@ State::equal_registers(const State &other) const
         if (segreg[i].defbits != other.segreg[i].defbits)
             return false;
 
-    if (flags.defbits!=other.ip.defbits)
+    if (flags.defbits!=other.flags.defbits)
         return false;
 
     if (ip.defbits != other.ip.defbits)

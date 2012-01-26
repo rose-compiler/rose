@@ -13,6 +13,52 @@
  *  source code and write similar tools as classes within your own source files, which are then registered as RSIM callbacks. */
 namespace RSIM_Tools {
 
+/** Pauses at process fork.
+ *
+ *  When a process forks, this callback is invoked first for the process performing the fork, and then for the new process
+ *  created by the fork.  Whether the callback is on the BEFORE or AFTER list determines whether it's called by the parent
+ *  and/or child process.  The affected process creates a named fifo and blocks until some other process writes something to
+ *  that fifo.  The fifo is then closed, removed from the file system, and the specimen calling thread is allowed to continue.
+ *
+ *  For instance, to cause the specimen to stop in all newly forked processes, the callback should be registered on the AFTER
+ *  list only, like this:
+ *
+ *  @code
+ *  RSIM_Linux32 *sim = ...;
+ *  RSIM_Tools::ForkPauser pause;
+ *  sim.get_callbacks().add_process_callback(RSIM_Callbacks::AFTER, &pause);
+ *  @endcode
+ */
+class ForkPauser: public RSIM_Callbacks::ProcessCallback {
+public:
+    bool pause_on_fork;
+
+    ForkPauser(): pause_on_fork(true) {}
+
+    virtual ForkPauser *clone() { return this; }
+
+    virtual bool operator()(bool enabled, const Args &args) {
+        if (enabled && args.reason==FORK) {
+            std::cerr <<"ForkPauser: pid=" <<getpid();
+            if (pause_on_fork) {
+                std::string filename("/tmp/paused_"); filename += StringUtility::numberToString(getpid());
+                int status __attribute__((unused)) = mkfifo(filename.c_str(), 0666);
+                assert(status>=0);
+                std::cerr <<"; paused -- say \"echo >" <<filename <<"\" to resume...";
+                int fd = open(filename.c_str(), O_RDONLY);
+                assert(fd>=0);
+                char buf;
+                read(fd, &buf, 1);
+                std::cerr <<" resumed";
+                close(fd);
+                unlink(filename.c_str());
+            }
+            std::cerr <<std::endl;
+        }
+        return enabled;
+    }
+};
+
 /** Traverses the AST to find a symbol for a global function with the specified name.
  *
  *  This class operates over an AST and is not a callback like most of the other classes in this collection of tools.  The
@@ -507,12 +553,17 @@ public:
     rose_addr_t when;                   /**< IP value when this callback is to be triggered. */
     rose_addr_t va;                     /**< Starting address to dump. */
     size_t nbytes;                      /**< Number of bytes to dump. */
+    bool do_binary;                     /**< If true, then dump binary data, otherwise format with 'fmt'. */
     HexdumpFormat fmt;                  /**< Format to use for hexdump. */
+    std::string filename;               /**< Optional output file.  If empty, output is sent to the TRACE_MISC facility. */
+
 
     /** Constructor.  Creates an instruction callback that will dump @p nbytes bytes of memory starting at address @p va every
-     *  time the simulator is about to execute an instruction at address @p when. */
-    MemoryDumper(rose_addr_t when, rose_addr_t va, size_t nbytes)
-        : when(when), va(va), nbytes(nbytes) {
+     *  time the simulator is about to execute an instruction at address @p when.  If a file name is specified, then data will
+     *  be dumped in binary format to the specified file, otherwise the data is dumped in hexdump format to the TRACE_MISC
+     *  facility. */
+    MemoryDumper(rose_addr_t when, rose_addr_t va, size_t nbytes, const std::string filename="")
+        : when(when), va(va), nbytes(nbytes), do_binary(!filename.empty()), filename(filename) {
         fmt.prefix = "  ";
         fmt.multiline = true;
     }
@@ -524,14 +575,70 @@ public:
             RTS_Message *m = args.thread->tracing(TRACE_MISC);
             m->multipart("MemoryDumper", "MemoryDumper triggered: dumping %zu byte%s at 0x%08"PRIx64"\n",
                          nbytes, 1==nbytes?"":"s", va);
-            uint8_t *buffer = new uint8_t[nbytes];
-            size_t nread = args.thread->get_process()->mem_read(buffer, va, nbytes);
-            if (nread < nbytes)
-                m->mesg("MemoryDumper: read failed at 0x%08"PRIx64, va+nread);
-            std::string s = SgAsmExecutableFileFormat::hexdump(va, buffer, nbytes, fmt);
-            m->more("%s", s.c_str());
+            if (do_binary) {
+                /* Raw output to a file */
+                assert(!filename.empty());
+                int fd = open(filename.c_str(), O_TRUNC|O_CREAT|O_RDWR, 0666);
+                if (fd<=0) {
+                    m->mesg("MemoryDumper: %s: %s", filename.c_str(), strerror(errno));
+                    goto error;
+                }
+                uint8_t buffer[4096];
+                rose_addr_t va = this->va;
+                size_t nbytes = this->nbytes;
+                while (nbytes>0) {
+                    size_t to_read = std::min(nbytes, sizeof buffer);
+                    size_t nread = args.thread->get_process()->mem_read(buffer, va, to_read);
+                    for (size_t nwrite=0; nwrite<nread; /*void*/) {
+                        ssize_t n = write(fd, buffer+nwrite, nread-nwrite);
+                        if (n<0) {
+                            m->mesg("MemoryDumper: write failed\n");
+                            close(fd);
+                            goto error;
+                        }
+                        nwrite += n;
+                    }
+                    if (nread<to_read) {
+                        m->mesg("MemoryDumper: read failed at 0x%08"PRIx64, va+nread);
+                        close(fd);
+                        goto error;
+                    }
+                    nbytes -= nread;
+                    va += nread;
+                }
+                close(fd);
+            } else {
+                /* Formatted output to a file or trace facility. */
+                uint8_t *buffer = new uint8_t[nbytes];
+                size_t nread = args.thread->get_process()->mem_read(buffer, va, nbytes);
+                int fd = -1;
+                if (nread < nbytes)
+                    m->mesg("MemoryDumper: read failed at 0x%08"PRIx64, va+nread);
+                std::string s = SgAsmExecutableFileFormat::hexdump(va, buffer, nread, fmt);
+                if (!filename.empty()) {
+                    if (-1==(fd=open(filename.c_str(), O_TRUNC|O_CREAT|O_RDWR, 0666))) {
+                        m->mesg("MemoryDumper: %s: %s", filename.c_str(), strerror(errno));
+                        delete[] buffer;
+                        goto error;
+                    }
+                    for (size_t nwrite=0; nwrite<nread; /*void*/) {
+                        ssize_t n = write(fd, buffer+nwrite, nread-nwrite);
+                        if (n<0) {
+                            m->mesg("MemoryDumper: write failed\n");
+                            close(fd);
+                            delete[] buffer;
+                            goto error;
+                        }
+                        nwrite += n;
+                    }
+                    close(fd);
+                } else {
+                    m->more("%s", s.c_str());
+                }
+                delete[] buffer;
+            }
+        error:
             m->multipart_end();
-            delete[] buffer;
         }
         return enabled;
     }

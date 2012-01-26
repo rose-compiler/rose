@@ -62,8 +62,9 @@ public:
 
             /* Create the policy that holds the analysis state which is modified by each instruction.  Then plug the policy
              * into the X86InstructionSemantics to which we'll feed each instruction. */
-            SymbolicSemantics::Policy policy(&smt_solver);
-            X86InstructionSemantics<SymbolicSemantics::Policy, SymbolicSemantics::ValueType> semantics(policy);
+            SymbolicSemantics::Policy<SymbolicSemantics::State, SymbolicSemantics::ValueType> policy(&smt_solver);
+            X86InstructionSemantics<SymbolicSemantics::Policy<SymbolicSemantics::State, SymbolicSemantics::ValueType>,
+                                    SymbolicSemantics::ValueType> semantics(policy);
 
             /* The top of the stack contains the (unknown) return address.  The value above that is the function's first
              * argument, which we print for reference.  It will be an unkown value, like "v62[32]". */

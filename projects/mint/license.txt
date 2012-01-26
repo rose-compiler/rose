@@ -1,4 +1,4 @@
-Copyright (c) 20011, The Regents of the University of California.
+Copyright (c) 2011, The Regents of the University of California.
 Produced at the University of California, San Diego
 by Didem Unat and Scott B. Baden
 and at the Simula Research Laboratory, Lysaker, Norway
@@ -18,7 +18,7 @@ of conditions and the disclaimer below.
 list of conditions and the disclaimer (as noted below) in the documentation and/or
 other materials provided with the distribution.
 
-   * Neither the name of the UC/LLNL nor the names of its contributors may be
+   * Neither the name of the UC/Simula nor the names of its contributors may be
 used to endorse or promote products derived from this software without specific
 prior written permission. 
 
@@ -39,10 +39,7 @@ THE POSSIBILITY OF SUCH DAMAGE.
 
 Additional BSD Notice:
 
-   1. This notice is required to be provided under our contract with the U.S. Department of
-Energy (DOE). This work was produced at the University of California, Lawrence
-Livermore National Laboratory under Contract No. W7405ENG48
-with the DOE.
+   1. This work was produced at the University of California, and at the Simula Research Laboratory.
 
    2. Neither the United States Government nor the University of California,
 nor the Simula Research Laboratory, nor any of their employees, makes any warranty,

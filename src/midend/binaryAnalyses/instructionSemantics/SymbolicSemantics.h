@@ -34,6 +34,11 @@ namespace SymbolicSemantics {
     typedef InsnSemanticsExpr::LeafNode LeafNode;
     typedef InsnSemanticsExpr::InternalNode InternalNode;
     typedef InsnSemanticsExpr::TreeNode TreeNode;
+    typedef std::set<SgAsmInstruction*> InsnSet;
+
+    /**************************************************************************************************************************
+     *                          ValueType
+     **************************************************************************************************************************/
 
     /* ValueType cannot directly be a TreeNode because ValueType's bit size is a template argument while tree node sizes are
      * stored as a data member.  Therefore, ValueType will always point to a TreeNode.  Most of the methods that are invoked on
@@ -42,6 +47,10 @@ namespace SymbolicSemantics {
     struct ValueType {
 
         TreeNode *expr; /*reference counted*/
+
+        /** Instructions defining this value.  Any instruction that saves the value to a register or memory location adds
+         *  itself to the saved value. */
+        InsnSet defs;
 
         /** Construct a value that is unknown and unique. */
         ValueType() {
@@ -52,6 +61,7 @@ namespace SymbolicSemantics {
         ValueType(const ValueType &other) {
             expr = other.expr;
             expr->inc_nrefs();
+            defs = other.defs;
         }
 
         ValueType& operator=(const ValueType &other) {
@@ -59,6 +69,7 @@ namespace SymbolicSemantics {
             expr->deleteDeeply();
             expr = other.expr;
             expr->inc_nrefs();
+            defs = other.defs;
             return *this;
         }
 
@@ -80,10 +91,37 @@ namespace SymbolicSemantics {
             expr->deleteDeeply();
         }
 
+        /** Adds instructions to the list of defining instructions.  Adds the specified instruction and defining sets into this
+         *  value and returns a reference to this value.  Any combination of instruction and set pointers may be null. */
+        ValueType& defined_by(SgAsmInstruction *insn,
+                              const InsnSet *set1=NULL, const InsnSet *set2=NULL, const InsnSet *set3=NULL) {
+            if (insn)
+                defs.insert(insn);
+            if (set1)
+                defs.insert(set1->begin(), set1->end());
+            if (set2)
+                defs.insert(set2->begin(), set2->end());
+            if (set3)
+                defs.insert(set3->begin(), set3->end());
+            return *this;
+        }
+
         /** Print the value. If a rename map is specified a named value will be renamed to have a shorter name.  See the rename()
          *  method for details. */
         void print(std::ostream &o, RenameMap *rmap=NULL) const {
+            o <<"defs={";
+            size_t ndefs=0;
+            for (InsnSet::const_iterator di=defs.begin(); di!=defs.end(); ++di, ++ndefs) {
+                SgAsmInstruction *insn = *di;
+                if (insn!=NULL)
+                    o <<(ndefs>0?",":"") <<StringUtility::addrToString(insn->get_address());
+            }
+            o <<"} expr=";
             expr->print(o, rmap);
+        }
+        friend std::ostream& operator<<(std::ostream &o, const ValueType &e) {
+            e.print(o, NULL);
+            return o;
         }
 
         /** Returns true if the value is a known constant. */
@@ -97,13 +135,28 @@ namespace SymbolicSemantics {
             assert(leaf);
             return leaf->get_value();
         }
+
+        /** Returns the set of instructions that defined this value.  The return value is a flattened lattice represented as a
+         *  set.  When analyzing this basic block starting with an initial default state:
+         *
+         *  @code
+         *  1: mov eax, 2
+         *  2: add eax, 1
+         *  3: mov ebx, eax;
+         *  4: mov ebx, 3
+         *  @endcode
+         *
+         *  the defining set for EAX will be instructions {1, 2} and the defining set for EBX will be {4}.  Defining sets for
+         *  other registers are the empty set. */
+        const std::set<SgAsmInstruction*> &get_defining_instructions() const {
+            return defs;
+        }
     };
 
-    template<size_t Len>
-    std::ostream& operator<<(std::ostream &o, const ValueType<Len> &e) {
-        e.print(o, NULL);
-        return o;
-    }
+
+    /**************************************************************************************************************************
+     *                          MemoryCell
+     **************************************************************************************************************************/
 
     /** Represents one location in memory. Has an address data and size in bytes.
      *
@@ -124,6 +177,7 @@ namespace SymbolicSemantics {
      *  actually read.
      *
      *  See also readMemory() and writeMemory(). */
+    template <template <size_t> class ValueType>
     struct MemoryCell {
         ValueType<32> address;
         ValueType<32> data;
@@ -132,32 +186,92 @@ namespace SymbolicSemantics {
         bool written;               /* Set to true by writeMemory */
 
         template <size_t Len>
-        MemoryCell(const ValueType<32> &address, const ValueType<Len> data, size_t nbytes)
-            : address(address), data(data), nbytes(nbytes), clobbered(false), written(false) {}
+        MemoryCell(const ValueType<32> &address, const ValueType<Len> data, size_t nbytes, SgAsmInstruction *insn)
+            : address(address), data(data), nbytes(nbytes), clobbered(false), written(false) {
+            if (insn!=NULL)
+                this->data.defs.insert(insn);
+        }
 
         bool is_clobbered() const { return clobbered; }
         void set_clobbered() { clobbered = true; }
         bool is_written() const { return written; }
         void set_written() { written = true; }
 
-        /** Returns true if this memory value could possibly overlap with the @p other memory value.  In other words, returns false
-         *  only if this memory location cannot overlap with @p other memory location. Two addresses that are identical alias one
-         *  another. The @p solver is optional but recommended (absence of a solver will result in a naive definition). */
-        bool may_alias(const MemoryCell &other, SMTSolver *solver) const;
+        /** Returns true if this memory value could possibly overlap with the @p other memory value.  In other words, returns
+         *  false only if this memory location cannot overlap with @p other memory location. Two addresses that are identical
+         *  alias one another. The @p solver is optional but recommended (absence of a solver will result in a naive
+         *  definition).
+         * 
+         *  Address X and Y may alias each other if X+datasize(X)>=Y or X<Y+datasize(Y) where datasize(A) is the number of
+         *  bytes stored at address A. In other words, if the following expression is satisfiable, then the memory cells might
+         *  alias one another.
+         *
+         *  \code
+         *     ((X.addr + X.nbytes > Y.addr) && (X.addr < Y.addr + Y.nbytes)) ||
+         *     ((Y.addr + Y.nbytes > X.addr) && (Y.addr < X.addr + X.nbytes))
+         *  \code
+         *
+         *  Or, equivalently written in LISP style
+         *
+         *  \code
+         *     (and (or (> (+ X.addr X.nbytes) Y.addr) (< X.addr (+ Y.addr Y.nbytes)))
+         *          (or (> (+ Y.addr Y.nbytes) X.addr) (< Y.addr (+ X.addr X.nbytes))))
+         *  \endcode
+         */
+        bool may_alias(const MemoryCell &other, SMTSolver *solver) const {
+            bool retval = must_alias(other, solver); /*this might be faster to solve*/
+            if (retval)
+                return retval;
+            if (solver) {
+                TreeNode *x_addr   = this->address.expr;
+                TreeNode *x_nbytes = LeafNode::create_integer(32, this->nbytes);
+                TreeNode *y_addr   = other.address.expr;
+                TreeNode *y_nbytes = LeafNode::create_integer(32, other.nbytes);
+
+                TreeNode *x_end = new InternalNode(32, InsnSemanticsExpr::OP_ADD, x_addr, x_nbytes);
+                TreeNode *y_end = new InternalNode(32, InsnSemanticsExpr::OP_ADD, y_addr, y_nbytes);
+
+                TreeNode *and1 = new InternalNode(1, InsnSemanticsExpr::OP_AND,
+                                                  new InternalNode(1, InsnSemanticsExpr::OP_UGT, x_end, y_addr),
+                                                  new InternalNode(1, InsnSemanticsExpr::OP_ULT, x_addr, y_end));
+                TreeNode *and2 = new InternalNode(1, InsnSemanticsExpr::OP_AND,
+                                                  new InternalNode(1, InsnSemanticsExpr::OP_UGT, y_end, x_addr),
+                                                  new InternalNode(1, InsnSemanticsExpr::OP_ULT, y_addr, x_end));
+
+                TreeNode *assertion = new InternalNode(1, InsnSemanticsExpr::OP_OR, and1, and2);
+                retval = solver->satisfiable(assertion);
+                assertion->deleteDeeply();
+            }
+            return retval;
+        }
 
         /** Returns true if this memory address is the same as the @p other. Note that "same" is more strict than "overlap".
          *  The @p solver is optional but recommended (absence of a solver will result in a naive definition). */
-        bool must_alias(const MemoryCell &other, SMTSolver *solver) const;
-
+        bool must_alias(const MemoryCell &other, SMTSolver *solver) const {
+            return address.expr->equal_to(other.address.expr, solver);
+        }
+        
         /** Prints the value of a memory cell on a single line. If a rename map is specified then named values will be renamed to
          *  have a shorter name.  See the ValueType<>::rename() method for details. */
-        void print(std::ostream &o, RenameMap *rmap=NULL) const;
+        void print(std::ostream &o, RenameMap *rmap=NULL) const {
+            address.print(o, rmap);
+            o <<": ";
+            data.print(o, rmap);
+            o <<" " <<nbytes <<" byte" <<(1==nbytes?"":"s");
+            if (!written) o <<" read-only";
+            if (clobbered) o <<" clobbered";
+        }
+        friend std::ostream& operator<<(std::ostream &o, const MemoryCell &mc) {
+            mc.print(o, NULL);
+            return o;
+        }
     };
 
-    typedef std::vector<MemoryCell> Memory;
-
     /** Represents the entire state of the machine. However, the instruction pointer is not included in the state. */
+    template <template <size_t> class ValueType>
     struct State {
+        typedef std::vector<MemoryCell<ValueType> > Memory;
+
         static const size_t n_gprs = 8;             /**< Number of general-purpose registers in this state. */
         static const size_t n_segregs = 6;          /**< Number of segmentation registers in this state. */
         static const size_t n_flags = 16;           /**< Number of flag registers in this state. */
@@ -170,7 +284,37 @@ namespace SymbolicSemantics {
 
         /** Print the state in a human-friendly way.  If a rename map is specified then named values will be renamed to have a
          *  shorter name.  See the ValueType<>::rename() method for details. */
-        void print(std::ostream &o, RenameMap *rmap=NULL) const;
+        void print(std::ostream &o, RenameMap *rmap=NULL) const {
+            std::string prefix = "    ";
+            for (size_t i=0; i<n_gprs; ++i) {
+                o <<prefix <<gprToString((X86GeneralPurposeRegister)i) <<"=";
+                gpr[i].print(o, rmap);
+                o <<"\n";
+            }
+            for (size_t i=0; i<n_segregs; ++i) {
+                o <<prefix <<segregToString((X86SegmentRegister)i) <<"=";
+                segreg[i].print(o, rmap);
+                o <<"\n";
+            }
+            for (size_t i=0; i<n_flags; ++i) {
+                o <<prefix <<flagToString((X86Flag)i) <<"=";
+                flag[i].print(o, rmap);
+                o <<"\n";
+            }
+            o <<prefix <<"ip=";
+            ip.print(o, rmap);
+            o <<"\n";
+            o <<prefix << "memory:\n";
+            for (typename Memory::const_iterator mi=mem.begin(); mi!=mem.end(); ++mi) {
+                o <<prefix <<"    ";
+                (*mi).print(o, rmap);
+                o <<"\n";
+            }
+        }
+        friend std::ostream& operator<<(std::ostream &o, const State &state) {
+            state.print(0);
+            return o;
+        }
 
         /** Print info about how registers differ.  If a rename map is specified then named values will be renamed to have a
          *  shorter name.  See the ValueType<>::rename() method for details. */
@@ -184,17 +328,18 @@ namespace SymbolicSemantics {
         void discard_popped_memory() {
             /*FIXME: not implemented yet. [RPM 2010-05-24]*/
         }
-
     };
 
-    std::ostream& operator<<(std::ostream &o, const MemoryCell& mc);
-    std::ostream& operator<<(std::ostream &o, const State& state);
-
     /** A policy that is supplied to the semantic analysis constructor. See documentation for the SymbolicSemantics namespace. */
+    template <
+        template <template <size_t> class ValueType> class State,
+        template <size_t> class ValueType>
     class Policy {
-    private:
+    protected:
+        typedef typename State<ValueType>::Memory Memory;
+
         SgAsmInstruction *cur_insn;         /**< Set by startInstruction(), cleared by finishInstruction() */
-        mutable State orig_state;           /**< Original machine state, initialized by constructor and mem_write. This data
+        mutable State<ValueType> orig_state;/**< Original machine state, initialized by constructor and mem_write. This data
                                              *   member is mutable because a mem_read() operation, although conceptually const,
                                              *   may cache the value that was read so that subsquent reads from the same address
                                              *   will return the same value. This member is initialized by the first call to
@@ -203,7 +348,7 @@ namespace SymbolicSemantics {
                                              *   interface that's used to process instructions.  In other words, if one wants the
                                              *   stack pointer to contain a specific original value, then one may initialize the
                                              *   stack pointer by calling writeGPR() before processing the first instruction. */
-        mutable State cur_state;            /**< Current machine state updated by each processInstruction().  The instruction
+        mutable State<ValueType> cur_state;/**< Current machine state updated by each processInstruction().  The instruction
                                              *   pointer is updated before we process each instruction. This data member is
                                              *   mutable because a mem_read() operation, although conceptually const, may cache
                                              *   the value that was read so that subsequent reads from the same address will
@@ -266,13 +411,13 @@ namespace SymbolicSemantics {
         SMTSolver *get_solver() const { return solver; }
 
         /** Returns the current state. */
-        const State& get_state() const { return cur_state; }
-        State& get_state() { return cur_state; }
+        const State<ValueType>& get_state() const { return cur_state; }
+        State<ValueType>& get_state() { return cur_state; }
 
         /** Returns the original state.  The original state is initialized to be equal to the current state twice: once by the
          *  constructor, and then again when the first instruction is processed. */
-        const State& get_orig_state() const { return orig_state; }
-        State& get_orig_state() { return orig_state; }
+        const State<ValueType>& get_orig_state() const { return orig_state; }
+        State<ValueType>& get_orig_state() { return orig_state; }
 
         /** Returns the current instruction pointer. */
         const ValueType<32>& get_ip() const { return cur_state.ip; }
@@ -281,7 +426,7 @@ namespace SymbolicSemantics {
         const ValueType<32>& get_orig_ip() const { return orig_state.ip; }
 
         /** Returns a copy of the state after removing memory that is not pertinent to an equal_states() comparison. */
-        Memory memory_for_equality(const State&) const;
+        Memory memory_for_equality(const State<ValueType>&) const;
 
         /** Returns a copy of the current state after removing memory that is not pertinent to an equal_states() comparison. */
         Memory memory_for_equality() const { return memory_for_equality(cur_state); }
@@ -289,11 +434,13 @@ namespace SymbolicSemantics {
         /** Compares two states for equality. The comarison looks at all register values and the memory locations that are
          *  different than their original value (but excluding differences due to clobbering). It does not compare memory that has
          *  only been read. */
-        bool equal_states(const State&, const State&) const;
+        bool equal_states(const State<ValueType>&, const State<ValueType>&) const;
 
         /** Print the current state of this policy.  If a rename map is specified then named values will be renamed to have a
          *  shorter name.  See the ValueType<>::rename() method for details. */
-        void print(std::ostream&, RenameMap *rmap=NULL) const;
+        void print(std::ostream &o, RenameMap *rmap=NULL) const {
+            cur_state.print(o, rmap);
+        }
         friend std::ostream& operator<<(std::ostream &o, const Policy &p) {
             p.print(o, NULL);
             return o;
@@ -316,11 +463,11 @@ namespace SymbolicSemantics {
 
         /** Print only the differences between two states.  If a rename map is specified then named values will be renamed to
          *  have a shorter name.  See the ValueType<>::rename() method for details. */
-        void print_diff(std::ostream&, const State&, const State&, RenameMap *rmap=NULL) const ;
+        void print_diff(std::ostream&, const State<ValueType>&, const State<ValueType>&, RenameMap *rmap=NULL) const ;
 
         /** Print the difference between a state and the initial state.  If a rename map is specified then named values will be
          *  renamed to have a shorter name.  See the ValueType<>::rename() method for details. */
-        void print_diff(std::ostream &o, const State &state, RenameMap *rmap=NULL) const {
+        void print_diff(std::ostream &o, const State<ValueType> &state, RenameMap *rmap=NULL) const {
             print_diff(o, orig_state, state, rmap);
         }
 
@@ -339,32 +486,36 @@ namespace SymbolicSemantics {
         template <size_t FromLen, size_t ToLen>
         ValueType<ToLen> unsignedExtend(const ValueType<FromLen> &a) const {
             if (a.is_known())
-                return ValueType<ToLen>(IntegerOps::GenMask<uint64_t,ToLen>::value & a.known_value());
+                return ValueType<ToLen>(IntegerOps::GenMask<uint64_t,ToLen>::value & a.known_value())
+                    .defined_by(cur_insn, &a.defs);
             if (FromLen==ToLen)
-                return ValueType<ToLen>(a.expr);
+                return ValueType<ToLen>(a.expr).defined_by(NULL, &a.defs); // no-op, so not defined by current insn
             if (FromLen>ToLen)
                 return ValueType<ToLen>(new InternalNode(ToLen, InsnSemanticsExpr::OP_EXTRACT,
                                                          LeafNode::create_integer(32, 0),
                                                          LeafNode::create_integer(32, ToLen),
-                                                         a.expr));
+                                                         a.expr))
+                    .defined_by(cur_insn, &a.defs);
             return ValueType<ToLen>(new InternalNode(ToLen, InsnSemanticsExpr::OP_UEXTEND,
-                                                     LeafNode::create_integer(32, ToLen), a.expr));
+                                                     LeafNode::create_integer(32, ToLen), a.expr))
+                .defined_by(cur_insn, &a.defs);
         }
 
         /** Sign extend from @p FromLen bits to @p ToLen bits. */
         template <size_t FromLen, size_t ToLen>
         ValueType<ToLen> signedExtend(const ValueType<FromLen> &a) const {
             if (a.is_known())
-                return ValueType<ToLen>(IntegerOps::signExtend<FromLen, ToLen>(a.known_value()));
+                return ValueType<ToLen>(IntegerOps::signExtend<FromLen, ToLen>(a.known_value())).defined_by(cur_insn, &a.defs);
             if (FromLen==ToLen)
-                return ValueType<ToLen>(a.expr);
+                return ValueType<ToLen>(a.expr).defined_by(NULL, &a.defs); // no-op, so not defined by current insns
             if (FromLen > ToLen)
                 return ValueType<ToLen>(new InternalNode(ToLen, InsnSemanticsExpr::OP_EXTRACT,
                                                          LeafNode::create_integer(32, 0),
                                                          LeafNode::create_integer(32, ToLen),
-                                                         a.expr));
+                                                         a.expr)).defined_by(cur_insn, &a.defs);
             return ValueType<ToLen>(new InternalNode(ToLen, InsnSemanticsExpr::OP_SEXTEND,
-                                                     LeafNode::create_integer(32, ToLen), a.expr));
+                                                     LeafNode::create_integer(32, ToLen), a.expr))
+                .defined_by(cur_insn, &a.defs);
         }
 
         /** Extracts certain bits from the specified value and shifts them to the low-order positions in the result.  The bits of
@@ -374,11 +525,13 @@ namespace SymbolicSemantics {
             if (0==BeginAt)
                 return unsignedExtend<Len,EndAt-BeginAt>(a);
             if (a.is_known())
-                return ValueType<EndAt-BeginAt>((a.known_value()>>BeginAt) & IntegerOps::genMask<uint64_t>(EndAt-BeginAt));
+                return ValueType<EndAt-BeginAt>((a.known_value()>>BeginAt) & IntegerOps::genMask<uint64_t>(EndAt-BeginAt))
+                    .defined_by(cur_insn, &a.defs);
             return ValueType<EndAt-BeginAt>(new InternalNode(EndAt-BeginAt, InsnSemanticsExpr::OP_EXTRACT,
                                                              LeafNode::create_integer(32, BeginAt),
                                                              LeafNode::create_integer(32, EndAt),
-                                                             a.expr));
+                                                             a.expr))
+                .defined_by(cur_insn, &a.defs);
         }
 
         /** Reads a value from memory in a way that always returns the same value provided there are not intervening writes that
@@ -389,11 +542,11 @@ namespace SymbolicSemantics {
          *
          *  The documentation for MemoryCell has an example that demonstrates the desired behavior of mem_read() and
          *  mem_write(). */
-        template <size_t Len> ValueType<Len> mem_read(State &state, const ValueType<32> &addr) const {
-            MemoryCell new_cell(addr, ValueType<32>(), Len/8);
+        template <size_t Len> ValueType<Len> mem_read(State<ValueType> &state, const ValueType<32> &addr) const {
+            MemoryCell<ValueType> new_cell(addr, ValueType<32>(), Len/8, NULL/*no defining instruction*/);
             bool aliased = false; /*is new_cell aliased by any existing writes?*/
 
-            for (Memory::iterator mi=state.mem.begin(); mi!=state.mem.end(); ++mi) {
+            for (typename Memory::iterator mi=state.mem.begin(); mi!=state.mem.end(); ++mi) {
                 if (new_cell.must_alias(*mi, solver)) {
                     if ((*mi).clobbered) {
                         (*mi).clobbered = false;
@@ -410,7 +563,7 @@ namespace SymbolicSemantics {
             if (!aliased && &state!=&orig_state) {
                 /* We didn't find the memory cell in the specified state and it's not aliased to any writes in that state.
                  * Therefore use the value from the initial memory state (creating it if necessary). */
-                for (Memory::iterator mi=orig_state.mem.begin(); mi!=orig_state.mem.end(); ++mi) {
+                for (typename Memory::iterator mi=orig_state.mem.begin(); mi!=orig_state.mem.end(); ++mi) {
                     if (new_cell.must_alias(*mi, solver)) {
                         ROSE_ASSERT(!(*mi).clobbered);
                         ROSE_ASSERT(!(*mi).written);
@@ -424,7 +577,7 @@ namespace SymbolicSemantics {
 
             /* Create the cell in the current state. */
             state.mem.push_back(new_cell);
-            return unsignedExtend<32,Len>(new_cell.data);
+            return unsignedExtend<32,Len>(new_cell.data); // no defining instruction
         }
 
         /** See memory_reference_type(). */
@@ -433,7 +586,7 @@ namespace SymbolicSemantics {
         /** Determines if the specified address is related to the current stack or frame pointer. This is used by mem_write() when
          *  we're operating under the assumption that memory written via stack pointer is different than memory written via frame
          *  pointer, and that memory written by either pointer is different than all other memory. */
-        MemRefType memory_reference_type(const State &state, const ValueType<32> &addr) const {
+        MemRefType memory_reference_type(const State<ValueType> &state, const ValueType<32> &addr) const {
 #if 0 /*FIXME: not implemented yet [RPM 2010-05-24]*/
             if (addr.name) {
                 if (addr.name==state.gpr[x86_gpr_sp].name) return MRT_STACK_PTR;
@@ -448,9 +601,9 @@ namespace SymbolicSemantics {
 
         /** Writes a value to memory. If the address written to is an alias for other addresses then the other addresses will be
          *  clobbered. Subsequent reads from clobbered addresses will return new values. See also, mem_read(). */
-        template <size_t Len> void mem_write(State &state, const ValueType<32> &addr, const ValueType<Len> &data) {
+        template <size_t Len> void mem_write(State<ValueType> &state, const ValueType<32> &addr, const ValueType<Len> &data) {
             ROSE_ASSERT(&state!=&orig_state);
-            MemoryCell new_cell(addr, unsignedExtend<Len, 32>(data), Len/8);
+            MemoryCell<ValueType> new_cell(addr, unsignedExtend<Len, 32>(data), Len/8, cur_insn);
             new_cell.set_written();
             bool saved = false; /* has new_cell been saved into memory? */
 
@@ -458,7 +611,7 @@ namespace SymbolicSemantics {
             MemRefType new_mrt = memory_reference_type(state, addr);
 
             /* Overwrite and/or clobber existing memory locations. */
-            for (Memory::iterator mi=state.mem.begin(); mi!=state.mem.end(); ++mi) {
+            for (typename Memory::iterator mi=state.mem.begin(); mi!=state.mem.end(); ++mi) {
                 if (new_cell.must_alias(*mi, solver)) {
                     *mi = new_cell;
                     saved = true;
@@ -499,7 +652,11 @@ namespace SymbolicSemantics {
 
         /* Called at the beginning of X86InstructionSemantics::processInstruction() */
         void startInstruction(SgAsmInstruction *insn) {
-            cur_state.ip = ValueType<32>(insn->get_address());
+            if (!cur_state.ip.is_known()) {
+                cur_state.ip = ValueType<32>(insn->get_address()); // semantics user should have probably initialized EIP
+            } else {
+                assert(cur_state.ip.known_value()==insn->get_address());
+            }
             if (0==ninsns++)
                 orig_state = cur_state;
             cur_insn = insn;
@@ -520,23 +677,23 @@ namespace SymbolicSemantics {
 
         /** True value */
         ValueType<1> true_() const {
-            return ValueType<1>(1);
+            return ValueType<1>(1).defined_by(cur_insn);
         }
 
         /** False value */
         ValueType<1> false_() const {
-            return ValueType<1>((uint64_t)0);
+            return ValueType<1>((uint64_t)0).defined_by(cur_insn);
         }
 
         /** Undefined Boolean */
         ValueType<1> undefined_() const {
-            return ValueType<1>();
+            return ValueType<1>().defined_by(cur_insn);
         }
 
         /** Used to build a known constant. */
         template <size_t Len>
         ValueType<Len> number(uint64_t n) const {
-            return ValueType<Len>(n);
+            return ValueType<Len>(n).defined_by(cur_insn);
         }
 
 
@@ -573,12 +730,12 @@ namespace SymbolicSemantics {
 
         /** Called only for the INT instruction. */
         void interrupt(uint8_t num) {
-            cur_state = State(); /*reset entire machine state*/
+            cur_state = State<ValueType>(); /*reset entire machine state*/
         }
 
         /** Called for SYSENTER instruction. */
         void sysenter() {
-            cur_state = State(); /*reset entire machine state*/
+            cur_state = State<ValueType>(); /*reset entire machine state*/
         }
 
 
@@ -592,14 +749,16 @@ namespace SymbolicSemantics {
         ValueType<Len> add(const ValueType<Len> &a, const ValueType<Len> &b) const {
             if (a.is_known()) {
                 if (b.is_known()) {
-                    return ValueType<Len>(LeafNode::create_integer(Len, a.known_value()+b.known_value()));
+                    return ValueType<Len>(LeafNode::create_integer(Len, a.known_value()+b.known_value()))
+                        .defined_by(cur_insn, &a.defs, &b.defs);
                 } else if (0==a.known_value()) {
                     return b;
                 }
             } else if (b.is_known() && 0==b.known_value()) {
                 return a;
             }
-            return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_ADD, a.expr, b.expr));
+            return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_ADD, a.expr, b.expr))
+                .defined_by(cur_insn, &a.defs, &b.defs);
         }
 
         /** Add two values of equal size and a carry bit.  Carry information is returned via carry_out argument.  The carry_out
@@ -631,24 +790,31 @@ namespace SymbolicSemantics {
         template <size_t Len>
         ValueType<Len> and_(const ValueType<Len> &a, const ValueType<Len> &b) const {
             if (a.is_known() && b.is_known())
-                return ValueType<Len>(a.known_value() & b.known_value());
-            return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_BV_AND, a.expr, b.expr));
+                return ValueType<Len>(a.known_value() & b.known_value())
+                    .defined_by(cur_insn, &a.defs, &b.defs);
+            return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_BV_AND, a.expr, b.expr))
+                .defined_by(cur_insn, &a.defs, &b.defs);
         }
 
         /** Returns true_, false_, or undefined_ depending on whether argument is zero. */
         template <size_t Len>
         ValueType<1> equalToZero(const ValueType<Len> &a) const {
-            if (a.is_known())
-                return a.known_value() ? false_() : true_();
-            return ValueType<1>(new InternalNode(1, InsnSemanticsExpr::OP_ZEROP, a.expr));
+            if (a.is_known()) {
+                ValueType<1> retval = a.known_value() ? false_() : true_();
+                return retval.defined_by(cur_insn, &a.defs);
+            }
+            return ValueType<1>(new InternalNode(1, InsnSemanticsExpr::OP_ZEROP, a.expr))
+                .defined_by(cur_insn, &a.defs);
         }
 
         /** One's complement */
         template <size_t Len>
         ValueType<Len> invert(const ValueType<Len> &a) const {
             if (a.is_known())
-                return ValueType<Len>(LeafNode::create_integer(Len, ~a.known_value()));
-            return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_INVERT, a.expr));
+                return ValueType<Len>(LeafNode::create_integer(Len, ~a.known_value()))
+                    .defined_by(cur_insn, &a.defs);
+            return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_INVERT, a.expr))
+                .defined_by(cur_insn, &a.defs);
         }
 
         /** Concatenate the values of @p a and @p b so that the result has @p b in the high-order bits and @p a in the low order
@@ -656,15 +822,18 @@ namespace SymbolicSemantics {
         template<size_t Len1, size_t Len2>
         ValueType<Len1+Len2> concat(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
             if (a.is_known() && b.is_known())
-                return ValueType<Len1+Len2>(a.known_value() | (b.known_value() << Len1));
-            return ValueType<Len1+Len2>(new InternalNode(Len1+Len2, InsnSemanticsExpr::OP_CONCAT, b.expr, a.expr));
+                return ValueType<Len1+Len2>(a.known_value() | (b.known_value() << Len1))
+                    .defined_by(cur_insn, &a.defs, &b.defs);
+            return ValueType<Len1+Len2>(new InternalNode(Len1+Len2, InsnSemanticsExpr::OP_CONCAT, b.expr, a.expr))
+                .defined_by(cur_insn, &a.defs, &b.defs);
         }
 
         /** Returns second or third arg depending on value of first arg. "ite" means "if-then-else". */
         template <size_t Len>
         ValueType<Len> ite(const ValueType<1> &sel, const ValueType<Len> &ifTrue, const ValueType<Len> &ifFalse) const {
             if (sel.is_known()) {
-                return sel.known_value() ? ifTrue : ifFalse;
+                ValueType<Len> retval = sel.known_value() ? ifTrue : ifFalse;
+                return retval.defined_by(cur_insn, &sel.defs);
             }
             if (solver) {
                 /* If the selection expression cannot be true, then return ifFalse */
@@ -672,16 +841,23 @@ namespace SymbolicSemantics {
                                                        sel.expr, LeafNode::create_integer(1, 1));
                 bool can_be_true = solver->satisfiable(assertion);
                 assertion->deleteDeeply(); assertion=NULL;
-                if (!can_be_true) return ifFalse;
+                if (!can_be_true) {
+                    ValueType<Len> retval = ifFalse;
+                    return retval.defined_by(cur_insn, &sel.defs);
+                }
 
                 /* If the selection expression cannot be false, then return ifTrue */
                 assertion = new InternalNode(1, InsnSemanticsExpr::OP_EQ,
                                              sel.expr, LeafNode::create_integer(1, 0));
                 bool can_be_false = solver->satisfiable(assertion);
                 assertion->deleteDeeply(); assertion=NULL;
-                if (!can_be_false) return ifTrue;
+                if (!can_be_false) {
+                    ValueType<Len> retval = ifTrue;
+                    return retval.defined_by(cur_insn, &sel.defs);
+                }
             }
-            return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_ITE, sel.expr, ifTrue.expr, ifFalse.expr));
+            return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_ITE, sel.expr, ifTrue.expr, ifFalse.expr))
+                .defined_by(cur_insn, &sel.defs, &ifTrue.defs, &ifFalse.defs);
         }
 
         /** Returns position of least significant set bit; zero when no bits are set. */
@@ -691,11 +867,11 @@ namespace SymbolicSemantics {
                 uint64_t n = a.known_value();
                 for (size_t i=0; i<Len; ++i) {
                     if (n & ((uint64_t)1 << i))
-                        return ValueType<Len>(i);
+                        return number<Len>(i).defined_by(cur_insn, &a.defs);
                 }
-                return ValueType<Len>((uint64_t)0);
+                return number<Len>(0).defined_by(cur_insn, &a.defs);
             }
-            return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_LSSB, a.expr));
+            return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_LSSB, a.expr)).defined_by(cur_insn, &a.defs);
         }
 
         /** Returns position of most significant set bit; zero when no bits are set. */
@@ -705,67 +881,78 @@ namespace SymbolicSemantics {
                 uint64_t n = a.known_value();
                 for (size_t i=Len; i>0; --i) {
                     if (n & ((uint64_t)1 << (i-1)))
-                        return ValueType<Len>(i-1);
+                        return number<Len>(i-1).defined_by(cur_insn, &a.defs);
                 }
-                return ValueType<Len>((uint64_t)0);
+                return number<Len>(0);
             }
-            return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_MSSB, a.expr));
+            return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_MSSB, a.expr)).defined_by(cur_insn, &a.defs);
         }
 
         /** Two's complement. */
         template <size_t Len>
         ValueType<Len> negate(const ValueType<Len> &a) const {
             if (a.is_known())
-                return ValueType<Len>(-a.known_value());
-            return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_NEGATE, a.expr));
+                return ValueType<Len>(-a.known_value()).defined_by(cur_insn, &a.defs);
+            return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_NEGATE, a.expr)).defined_by(cur_insn, &a.defs);
         }
 
         /** Computes bit-wise OR of two values. */
         template <size_t Len>
         ValueType<Len> or_(const ValueType<Len> &a, const ValueType<Len> &b) const {
             if (a.is_known() && b.is_known())
-                return ValueType<Len>(a.known_value() | b.known_value());
-            return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_BV_OR, a.expr, b.expr));
+                return ValueType<Len>(a.known_value() | b.known_value()).defined_by(cur_insn, &a.defs, &b.defs);
+            return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_BV_OR, a.expr, b.expr))
+                .defined_by(cur_insn, &a.defs, &b.defs);
         }
 
         /** Rotate bits to the left. */
         template <size_t Len, size_t SALen>
         ValueType<Len> rotateLeft(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
             if (a.is_known() && sa.is_known())
-                return ValueType<Len>(IntegerOps::rotateLeft<Len>(a.known_value(), sa.known_value()));
-            return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_ROL, sa.expr, a.expr));
+                return ValueType<Len>(IntegerOps::rotateLeft<Len>(a.known_value(), sa.known_value()))
+                    .defined_by(cur_insn, &a.defs, &sa.defs);
+            return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_ROL, sa.expr, a.expr))
+                .defined_by(cur_insn, &a.defs, &sa.defs);
         }
 
         /** Rotate bits to the right. */
         template <size_t Len, size_t SALen>
         ValueType<Len> rotateRight(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
             if (a.is_known() && sa.is_known())
-                return ValueType<Len>(IntegerOps::rotateRight<Len>(a.known_value(), sa.known_value()));
-            return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_ROR, sa.expr, a.expr));
+                return ValueType<Len>(IntegerOps::rotateRight<Len>(a.known_value(), sa.known_value()))
+                    .defined_by(cur_insn, &a.defs, &sa.defs);
+            return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_ROR, sa.expr, a.expr))
+                .defined_by(cur_insn, &a.defs, &sa.defs);
         }
 
         /** Returns arg shifted left. */
         template <size_t Len, size_t SALen>
         ValueType<Len> shiftLeft(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
             if (a.is_known() && sa.is_known())
-                return ValueType<Len>(IntegerOps::shiftLeft<Len>(a.known_value(), sa.known_value()));
-            return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_SHL0, sa.expr, a.expr));
+                return ValueType<Len>(IntegerOps::shiftLeft<Len>(a.known_value(), sa.known_value()))
+                    .defined_by(cur_insn, &a.defs, &sa.defs);
+            return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_SHL0, sa.expr, a.expr))
+                .defined_by(cur_insn, &a.defs, &sa.defs);
         }
 
         /** Returns arg shifted right logically (no sign bit). */
         template <size_t Len, size_t SALen>
         ValueType<Len> shiftRight(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
             if (a.is_known() && sa.is_known())
-                return ValueType<Len>(IntegerOps::shiftRightLogical<Len>(a.known_value(), sa.known_value()));
-            return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_SHR0, sa.expr, a.expr));
+                return ValueType<Len>(IntegerOps::shiftRightLogical<Len>(a.known_value(), sa.known_value()))
+                    .defined_by(cur_insn, &a.defs, &sa.defs);
+            return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_SHR0, sa.expr, a.expr))
+                .defined_by(cur_insn, &a.defs, &sa.defs);
         }
 
         /** Returns arg shifted right arithmetically (with sign bit). */
         template <size_t Len, size_t SALen>
         ValueType<Len> shiftRightArithmetic(const ValueType<Len> &a, const ValueType<SALen> &sa) const {
             if (a.is_known() && sa.is_known())
-                return ValueType<Len>(IntegerOps::shiftRightArithmetic<Len>(a.known_value(), sa.known_value()));
-            return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_ASR, sa.expr, a.expr));
+                return ValueType<Len>(IntegerOps::shiftRightArithmetic<Len>(a.known_value(), sa.known_value()))
+                    .defined_by(cur_insn, &a.defs, &sa.defs);
+            return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_ASR, sa.expr, a.expr))
+                .defined_by(cur_insn, &a.defs, &sa.defs);
         }
 
         /** Sign extends a value. */
@@ -779,8 +966,10 @@ namespace SymbolicSemantics {
         ValueType<Len1> signedDivide(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
             if (a.is_known() && b.is_known() && 0!=b.known_value())
                 return ValueType<Len1>(IntegerOps::signExtend<Len1, 64>(a.known_value()) /
-                                       IntegerOps::signExtend<Len2, 64>(b.known_value()));
-            return ValueType<Len1>(new InternalNode(Len1, InsnSemanticsExpr::OP_SDIV, a.expr, b.expr));
+                                       IntegerOps::signExtend<Len2, 64>(b.known_value()))
+                    .defined_by(cur_insn, &a.defs, &b.defs);
+            return ValueType<Len1>(new InternalNode(Len1, InsnSemanticsExpr::OP_SDIV, a.expr, b.expr))
+                .defined_by(cur_insn, &a.defs, &b.defs);
         }
 
         /** Calculates modulo with signed values. */
@@ -788,8 +977,10 @@ namespace SymbolicSemantics {
         ValueType<Len2> signedModulo(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
             if (a.is_known() && b.is_known() && 0!=b.known_value())
                 return ValueType<Len2>(IntegerOps::signExtend<Len1, 64>(a.known_value()) %
-                                       IntegerOps::signExtend<Len2, 64>(b.known_value()));
-            return ValueType<Len2>(new InternalNode(Len2, InsnSemanticsExpr::OP_SMOD, a.expr, b.expr));
+                                       IntegerOps::signExtend<Len2, 64>(b.known_value()))
+                    .defined_by(cur_insn, &a.defs, &b.defs);
+            return ValueType<Len2>(new InternalNode(Len2, InsnSemanticsExpr::OP_SMOD, a.expr, b.expr))
+                .defined_by(cur_insn, &a.defs, &b.defs);
         }
 
         /** Multiplies two signed values. */
@@ -797,40 +988,51 @@ namespace SymbolicSemantics {
         ValueType<Len1+Len2> signedMultiply(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
             if (a.is_known() && b.is_known())
                 return ValueType<Len1+Len2>(IntegerOps::signExtend<Len1, 64>(a.known_value()) *
-                                            IntegerOps::signExtend<Len2, 64>(b.known_value()));
-            return ValueType<Len1+Len2>(new InternalNode(Len1+Len2, InsnSemanticsExpr::OP_SMUL, a.expr, b.expr));
+                                            IntegerOps::signExtend<Len2, 64>(b.known_value()))
+                    .defined_by(cur_insn, &a.defs, &b.defs);
+            return ValueType<Len1+Len2>(new InternalNode(Len1+Len2, InsnSemanticsExpr::OP_SMUL, a.expr, b.expr))
+                .defined_by(cur_insn, &a.defs, &b.defs);
         }
 
         /** Divides two unsigned values. */
         template <size_t Len1, size_t Len2>
         ValueType<Len1> unsignedDivide(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
             if (a.is_known() && b.is_known() && 0!=b.known_value())
-                return ValueType<Len1>(a.known_value() / b.known_value());
-            return ValueType<Len1>(new InternalNode(Len1, InsnSemanticsExpr::OP_UDIV, a.expr, b.expr));
+                return ValueType<Len1>(a.known_value() / b.known_value())
+                    .defined_by(cur_insn, &a.defs, &b.defs);
+            return ValueType<Len1>(new InternalNode(Len1, InsnSemanticsExpr::OP_UDIV, a.expr, b.expr))
+                .defined_by(cur_insn, &a.defs, &b.defs);
         }
 
         /** Calculates modulo with unsigned values. */
         template <size_t Len1, size_t Len2>
         ValueType<Len2> unsignedModulo(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
             if (a.is_known() && b.is_known() && 0!=b.known_value())
-                return ValueType<Len2>(a.known_value() % b.known_value());
-            return ValueType<Len2>(new InternalNode(Len2, InsnSemanticsExpr::OP_UMOD, a.expr, b.expr));
+                return ValueType<Len2>(a.known_value() % b.known_value())
+                    .defined_by(cur_insn, &a.defs, &b.defs);
+            return ValueType<Len2>(new InternalNode(Len2, InsnSemanticsExpr::OP_UMOD, a.expr, b.expr))
+                .defined_by(cur_insn, &a.defs, &b.defs);
         }
 
         /** Multiply two unsigned values. */
         template <size_t Len1, size_t Len2>
         ValueType<Len1+Len2> unsignedMultiply(const ValueType<Len1> &a, const ValueType<Len2> &b) const {
             if (a.is_known() && b.is_known())
-                return ValueType<Len1+Len2>(a.known_value()*b.known_value());
-            return ValueType<Len1+Len2>(new InternalNode(Len1+Len2, InsnSemanticsExpr::OP_UMUL, a.expr, b.expr));
+                return ValueType<Len1+Len2>(a.known_value()*b.known_value())
+                    .defined_by(cur_insn, &a.defs, &b.defs);
+            return ValueType<Len1+Len2>(new InternalNode(Len1+Len2, InsnSemanticsExpr::OP_UMUL, a.expr, b.expr))
+                .defined_by(cur_insn, &a.defs, &b.defs);
         }
 
         /** Computes bit-wise XOR of two values. */
         template <size_t Len>
         ValueType<Len> xor_(const ValueType<Len> &a, const ValueType<Len> &b) const {
             if (a.is_known() && b.is_known())
-                return ValueType<Len>(a.known_value() ^ b.known_value());
-            return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_BV_XOR, a.expr, b.expr));
+                return ValueType<Len>(a.known_value() ^ b.known_value()).defined_by(cur_insn, &a.defs, &b.defs);
+            if (a.expr->equal_to(b.expr, solver))
+                return number<Len>(0).defined_by(cur_insn, &a.defs, &b.defs);
+            return ValueType<Len>(new InternalNode(Len, InsnSemanticsExpr::OP_BV_XOR, a.expr, b.expr))
+                .defined_by(cur_insn, &a.defs, &b.defs);
         }
 
 
@@ -839,17 +1041,296 @@ namespace SymbolicSemantics {
          * Functions invoked by the X86InstructionSemantics class for data access operations
          *************************************************************************************************************************/
 
-#include "ReadWriteRegisterFragment.h"
+
+        /** Finds a register by name. */
+        const RegisterDescriptor& findRegister(const std::string &regname, size_t nbits=0) {
+            const RegisterDescriptor *reg = get_register_dictionary()->lookup(regname);
+            if (!reg) {
+                std::ostringstream ss;
+                ss <<"Invalid register: \"" <<regname <<"\"";
+                throw Exception(ss.str());
+            }
+            if (nbits>0 && reg->get_nbits()!=nbits) {
+                std::ostringstream ss;
+                ss <<"Invalid " <<nbits <<"-bit register: \"" <<regname <<"\" is "
+                   <<reg->get_nbits() <<" " <<(1==reg->get_nbits()?"byte":"bytes");
+                throw Exception(ss.str());
+            }
+            return *reg;
+        }
+
+        /** Reads from a named register. */
+        template<size_t Len/*bits*/>
+        ValueType<Len> readRegister(const char *regname) {
+            return readRegister<Len>(findRegister(regname, Len));
+        }
+
+        /** Writes to a named register. */
+        template<size_t Len/*bits*/>
+        void writeRegister(const char *regname, const ValueType<Len> &value) {
+            writeRegister<Len>(findRegister(regname, Len), value);
+        }
+
+        /** Generic register read. */
+        template<size_t Len>
+        ValueType<Len> readRegister(const RegisterDescriptor &reg) {
+            switch (Len) {
+                case 1:
+                    // Only FLAGS/EFLAGS bits have a size of one.  Other registers cannot be accessed at this granularity.
+                    if (reg.get_major()!=x86_regclass_flags)
+                        throw Exception("bit access only valid for FLAGS/EFLAGS register");
+                    if (reg.get_minor()!=0 || reg.get_offset()>=cur_state.n_flags)
+                        throw Exception("register not implemented in semantic policy");
+                    if (reg.get_nbits()!=1)
+                        throw Exception("semantic policy supports only single-bit flags");
+                    return unsignedExtend<1, Len>(cur_state.flag[reg.get_offset()]);
+
+                case 8:
+                    // Only general-purpose registers can be accessed at a byte granularity, and we can access only the low-order
+                    // byte or the next higher byte.  For instance, "al" and "ah" registers.
+                    if (reg.get_major()!=x86_regclass_gpr)
+                        throw Exception("byte access only valid for general purpose registers");
+                    if (reg.get_minor()>=cur_state.n_gprs)
+                        throw Exception("register not implemented in semantic policy");
+                    assert(reg.get_nbits()==8); // we had better be asking for a one-byte register (e.g., "ah", not "ax")
+                    switch (reg.get_offset()) {
+                        case 0:
+                            return extract<0, Len>(cur_state.gpr[reg.get_minor()]);
+                        case 8:
+                            return extract<8, 8+Len>(cur_state.gpr[reg.get_minor()]);
+                        default:
+                            throw Exception("invalid one-byte access offset");
+                    }
+
+                case 16:
+                    if (reg.get_nbits()!=16)
+                        throw Exception("invalid 2-byte register");
+                    if (reg.get_offset()!=0)
+                        throw Exception("policy does not support non-zero offsets for word granularity register access");
+                    switch (reg.get_major()) {
+                        case x86_regclass_segment:
+                            if (reg.get_minor()>=cur_state.n_segregs)
+                                throw Exception("register not implemented in semantic policy");
+                            return unsignedExtend<16, Len>(cur_state.segreg[reg.get_minor()]);
+                        case x86_regclass_gpr:
+                            if (reg.get_minor()>=cur_state.n_gprs)
+                                throw Exception("register not implemented in semantic policy");
+                            return extract<0, Len>(cur_state.gpr[reg.get_minor()]);
+                        case x86_regclass_flags:
+                            if (reg.get_minor()!=0 || cur_state.n_flags<16)
+                                throw Exception("register not implemented in semantic policy");
+                            return unsignedExtend<16, Len>(concat(cur_state.flag[0],
+                                                           concat(cur_state.flag[1],
+                                                           concat(cur_state.flag[2],
+                                                           concat(cur_state.flag[3],
+                                                           concat(cur_state.flag[4],
+                                                           concat(cur_state.flag[5],
+                                                           concat(cur_state.flag[6],
+                                                           concat(cur_state.flag[7],
+                                                           concat(cur_state.flag[8],
+                                                           concat(cur_state.flag[9],
+                                                           concat(cur_state.flag[10],
+                                                           concat(cur_state.flag[11],
+                                                           concat(cur_state.flag[12],
+                                                           concat(cur_state.flag[13],
+                                                           concat(cur_state.flag[14],
+                                                                  cur_state.flag[15]))))))))))))))));
+                        default:
+                            throw Exception("word access not valid for this register type");
+                    }
+
+                case 32:
+                    if (reg.get_offset()!=0)
+                        throw Exception("policy does not support non-zero offsets for double word granularity register access");
+                    switch (reg.get_major()) {
+                        case x86_regclass_gpr:
+                            if (reg.get_minor()>=cur_state.n_gprs)
+                                throw Exception("register not implemented in semantic policy");
+                            return unsignedExtend<32, Len>(cur_state.gpr[reg.get_minor()]);
+                        case x86_regclass_ip:
+                            if (reg.get_minor()!=0)
+                                throw Exception("register not implemented in semantic policy");
+                            return unsignedExtend<32, Len>(cur_state.ip);
+                        case x86_regclass_segment:
+                            if (reg.get_minor()>=cur_state.n_segregs || reg.get_nbits()!=16)
+                                throw Exception("register not implemented in semantic policy");
+                            return unsignedExtend<16, Len>(cur_state.segreg[reg.get_minor()]);
+                        case x86_regclass_flags: {
+                            if (reg.get_minor()!=0 || cur_state.n_flags<32)
+                                throw Exception("register not implemented in semantic policy");
+                            if (reg.get_nbits()!=32)
+                                throw Exception("register is not 32 bits");
+                            return unsignedExtend<32, Len>(concat(readRegister<16>("flags"), // no-op sign extension
+                                                           concat(cur_state.flag[16],
+                                                           concat(cur_state.flag[17],
+                                                           concat(cur_state.flag[18],
+                                                           concat(cur_state.flag[19],
+                                                           concat(cur_state.flag[20],
+                                                           concat(cur_state.flag[21],
+                                                           concat(cur_state.flag[22],
+                                                           concat(cur_state.flag[23],
+                                                           concat(cur_state.flag[24],
+                                                           concat(cur_state.flag[25],
+                                                           concat(cur_state.flag[26],
+                                                           concat(cur_state.flag[27],
+                                                           concat(cur_state.flag[28],
+                                                           concat(cur_state.flag[29],
+                                                           concat(cur_state.flag[30],
+                                                                  cur_state.flag[31])))))))))))))))));
+                        }
+                        default:
+                            throw Exception("double word access not valid for this register type");
+                    }
+
+                default:
+                    throw Exception("invalid register access width");
+            }
+        }
+
+        /** Generic register write. */
+        template<size_t Len>
+        void writeRegister(const RegisterDescriptor &reg, const ValueType<Len> &value) {
+            switch (Len) {
+                case 1:
+                    // Only FLAGS/EFLAGS bits have a size of one.  Other registers cannot be accessed at this granularity.
+                    if (reg.get_major()!=x86_regclass_flags)
+                        throw Exception("bit access only valid for FLAGS/EFLAGS register");
+                    if (reg.get_minor()!=0 || reg.get_offset()>=cur_state.n_flags)
+                        throw Exception("register not implemented in semantic policy");
+                    if (reg.get_nbits()!=1)
+                        throw Exception("semantic policy supports only single-bit flags");
+                    cur_state.flag[reg.get_offset()] = unsignedExtend<Len, 1>(value);
+                    cur_state.flag[reg.get_offset()].defined_by(cur_insn);
+                    break;
+
+                case 8:
+                    // Only general purpose registers can be accessed at byte granularity, and only for offsets 0 and 8.
+                    if (reg.get_major()!=x86_regclass_gpr)
+                        throw Exception("byte access only valid for general purpose registers.");
+                    if (reg.get_minor()>=cur_state.n_gprs)
+                        throw Exception("register not implemented in semantic policy");
+                    assert(reg.get_nbits()==8); // we had better be asking for a one-byte register (e.g., "ah", not "ax")
+                    switch (reg.get_offset()) {
+                        case 0:
+                            cur_state.gpr[reg.get_minor()] =
+                                concat(signExtend<Len, 8>(value), extract<8, 32>(cur_state.gpr[reg.get_minor()])); // no-op extend
+                            cur_state.gpr[reg.get_minor()].defined_by(cur_insn);
+                            break;
+                        case 8:
+                            cur_state.gpr[reg.get_minor()] =
+                                concat(extract<0, 8>(cur_state.gpr[reg.get_minor()]),
+                                       concat(unsignedExtend<Len, 8>(value),
+                                              extract<16, 32>(cur_state.gpr[reg.get_minor()])));
+                            cur_state.gpr[reg.get_minor()].defined_by(cur_insn);
+                            break;
+                        default:
+                            throw Exception("invalid byte access offset");
+                    }
+                    break;
+
+                case 16:
+                    if (reg.get_nbits()!=16)
+                        throw Exception("invalid 2-byte register");
+                    if (reg.get_offset()!=0)
+                        throw Exception("policy does not support non-zero offsets for word granularity register access");
+                    switch (reg.get_major()) {
+                        case x86_regclass_segment:
+                            if (reg.get_minor()>=cur_state.n_segregs)
+                                throw Exception("register not implemented in semantic policy");
+                            cur_state.segreg[reg.get_minor()] = unsignedExtend<Len, 16>(value);
+                            cur_state.segreg[reg.get_minor()].defined_by(cur_insn);
+                            break;
+                        case x86_regclass_gpr:
+                            if (reg.get_minor()>=cur_state.n_gprs)
+                                throw Exception("register not implemented in semantic policy");
+                            cur_state.gpr[reg.get_minor()] =
+                                concat(unsignedExtend<Len, 16>(value),
+                                       extract<16, 32>(cur_state.gpr[reg.get_minor()]));
+                            cur_state.gpr[reg.get_minor()].defined_by(cur_insn);
+                            break;
+                        case x86_regclass_flags:
+                            if (reg.get_minor()!=0 || cur_state.n_flags<16)
+                                throw Exception("register not implemented in semantic policy");
+                            cur_state.flag[0]  = extract<0,  1 >(value); cur_state.flag[0].defined_by(cur_insn);
+                            cur_state.flag[1]  = extract<1,  2 >(value); cur_state.flag[1].defined_by(cur_insn);
+                            cur_state.flag[2]  = extract<2,  3 >(value); cur_state.flag[2].defined_by(cur_insn);
+                            cur_state.flag[3]  = extract<3,  4 >(value); cur_state.flag[3].defined_by(cur_insn);
+                            cur_state.flag[4]  = extract<4,  5 >(value); cur_state.flag[4].defined_by(cur_insn);
+                            cur_state.flag[5]  = extract<5,  6 >(value); cur_state.flag[5].defined_by(cur_insn);
+                            cur_state.flag[6]  = extract<6,  7 >(value); cur_state.flag[6].defined_by(cur_insn);
+                            cur_state.flag[7]  = extract<7,  8 >(value); cur_state.flag[7].defined_by(cur_insn);
+                            cur_state.flag[8]  = extract<8,  9 >(value); cur_state.flag[8].defined_by(cur_insn);
+                            cur_state.flag[9]  = extract<9,  10>(value); cur_state.flag[9].defined_by(cur_insn);
+                            cur_state.flag[10] = extract<10, 11>(value); cur_state.flag[10].defined_by(cur_insn);
+                            cur_state.flag[11] = extract<11, 12>(value); cur_state.flag[11].defined_by(cur_insn);
+                            cur_state.flag[12] = extract<12, 13>(value); cur_state.flag[12].defined_by(cur_insn);
+                            cur_state.flag[13] = extract<13, 14>(value); cur_state.flag[13].defined_by(cur_insn);
+                            cur_state.flag[14] = extract<14, 15>(value); cur_state.flag[14].defined_by(cur_insn);
+                            cur_state.flag[15] = extract<15, 16>(value); cur_state.flag[15].defined_by(cur_insn);
+                            break;
+                        default:
+                            throw Exception("word access not valid for this register type");
+                    }
+                    break;
+
+                case 32:
+                    if (reg.get_offset()!=0)
+                        throw Exception("policy does not support non-zero offsets for double word granularity register access");
+                    switch (reg.get_major()) {
+                        case x86_regclass_gpr:
+                            if (reg.get_minor()>=cur_state.n_gprs)
+                                throw Exception("register not implemented in semantic policy");
+                            cur_state.gpr[reg.get_minor()] = signExtend<Len, 32>(value);
+                            cur_state.gpr[reg.get_minor()].defined_by(cur_insn);
+                            break;
+                        case x86_regclass_ip:
+                            if (reg.get_minor()!=0)
+                                throw Exception("register not implemented in semantic policy");
+                            cur_state.ip = unsignedExtend<Len, 32>(value);
+                            cur_state.ip.defined_by(cur_insn);
+                            break;
+                        case x86_regclass_flags:
+                            if (reg.get_minor()!=0 || cur_state.n_flags<32)
+                                throw Exception("register not implemented in semantic policy");
+                            if (reg.get_nbits()!=32)
+                                throw Exception("register is not 32 bits");
+                            writeRegister<16>("flags", unsignedExtend<Len, 16>(value));
+                            cur_state.flag[16] = extract<16, 17>(value); cur_state.flag[16].defined_by(cur_insn);
+                            cur_state.flag[17] = extract<17, 18>(value); cur_state.flag[17].defined_by(cur_insn);
+                            cur_state.flag[18] = extract<18, 19>(value); cur_state.flag[18].defined_by(cur_insn);
+                            cur_state.flag[19] = extract<19, 20>(value); cur_state.flag[19].defined_by(cur_insn);
+                            cur_state.flag[20] = extract<20, 21>(value); cur_state.flag[20].defined_by(cur_insn);
+                            cur_state.flag[21] = extract<21, 22>(value); cur_state.flag[21].defined_by(cur_insn);
+                            cur_state.flag[22] = extract<22, 23>(value); cur_state.flag[22].defined_by(cur_insn);
+                            cur_state.flag[23] = extract<23, 24>(value); cur_state.flag[23].defined_by(cur_insn);
+                            cur_state.flag[24] = extract<24, 25>(value); cur_state.flag[24].defined_by(cur_insn);
+                            cur_state.flag[25] = extract<25, 26>(value); cur_state.flag[25].defined_by(cur_insn);
+                            cur_state.flag[26] = extract<26, 27>(value); cur_state.flag[26].defined_by(cur_insn);
+                            cur_state.flag[27] = extract<27, 28>(value); cur_state.flag[27].defined_by(cur_insn);
+                            cur_state.flag[28] = extract<28, 29>(value); cur_state.flag[28].defined_by(cur_insn);
+                            cur_state.flag[29] = extract<29, 30>(value); cur_state.flag[29].defined_by(cur_insn);
+                            cur_state.flag[30] = extract<30, 31>(value); cur_state.flag[30].defined_by(cur_insn);
+                            cur_state.flag[31] = extract<31, 32>(value); cur_state.flag[31].defined_by(cur_insn);
+                            break;
+                        default:
+                            throw Exception("double word access not valid for this register type");
+                    }
+                    break;
+
+                default:
+                    throw Exception("invalid register access width");
+            }
+        }
 
         /** Reads a value from memory. */
         template <size_t Len> ValueType<Len>
-        readMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<1> cond) const {
+        readMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<1> &cond) const {
             return mem_read<Len>(cur_state, addr);
         }
 
         /** Writes a value to memory. */
         template <size_t Len> void
-        writeMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<Len> &data, ValueType<1> cond) {
+        writeMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<Len> &data, const ValueType<1> &cond) {
             mem_write<Len>(cur_state, addr, data);
         }
     };

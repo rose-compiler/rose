@@ -188,7 +188,7 @@ SgFunctionSymbol* X86CTranslationPolicy::addHelperFunction(const std::string& na
   return sym;
 }
 
-X86CTranslationPolicy::X86CTranslationPolicy(SgSourceFile* f, SgAsmGenericFile* asmFile): asmFile(asmFile), globalScope(NULL) {
+X86CTranslationPolicy::X86CTranslationPolicy(SgSourceFile* f, SgAsmGenericFile* asmFile): asmFile(asmFile), globalScope(NULL), regdict(NULL) {
   ROSE_ASSERT (f);
   ROSE_ASSERT (f->get_globalScope());
   globalScope = f->get_globalScope();
