@@ -153,9 +153,9 @@ pthread_equal.1-2                        no
 pthread_equal.2-1                        no
 pthread_exit.1-1                         no
 pthread_exit.2-1                         no
-pthread_exit.2-2                         no
+pthread_exit.2-2                         yes
 pthread_exit.3-1                         no
-pthread_exit.3-2                         no
+pthread_exit.3-2                         yes
 pthread_getcpuclockid.1-1                no
 pthread_getschedparam.1-1                no
 pthread_getschedparam.1-2                yes
@@ -168,7 +168,7 @@ pthread_join.1-2                         no
 pthread_join.2-1                         no
 pthread_join.3-1                         no
 pthread_join.5-1                         no
-pthread_join.6-2                         no
+pthread_join.6-2                         yes
 pthread_join.6-3                         yes
 pthread_key_create.1-1                   no
 pthread_key_create.2-1                   no
@@ -182,7 +182,7 @@ pthread_kill.2-1                         no
 pthread_kill.3-1                         no
 pthread_kill.6-1                         no
 pthread_kill.7-1                         no
-pthread_kill.8-1                         no
+pthread_kill.8-1                         yes
 pthread_mutex_destroy.1-1                no
 pthread_mutex_destroy.2-1                no
 pthread_mutex_destroy.2-2                no
@@ -211,7 +211,7 @@ pthread_mutex_trylock.2-1                no
 pthread_mutex_trylock.3-1                no
 pthread_mutex_trylock.4-1                no
 pthread_mutex_trylock.4-2                no
-pthread_mutex_trylock.4-3                no
+pthread_mutex_trylock.4-3                yes
 pthread_mutex_unlock.1-1                 no
 pthread_mutex_unlock.2-1                 no
 pthread_mutex_unlock.3-1                 no
