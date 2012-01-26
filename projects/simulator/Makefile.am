@@ -11,6 +11,9 @@ noinst_PROGRAMS=
 lib_LIBRARIES=
 TEST_TARGETS = 
 
+warn_no_tests:
+	@echo "  NOTE    simulator testing is disabled (no i386 support)"
+
 ###############################################################################################################################
 #  DOCUMENTATION, CONFIGURATION, ETC
 ###############################################################################################################################
@@ -364,7 +367,6 @@ noinst_PROGRAMS += testFutex
 testFutex_SOURCES = testFutex.C
 testFutex_CPPFLAGS = $(ROSE_INCLUDES)
 testFutex_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-INTERNAL_TEST_TARGETS += testFutex.passed
 
 # Input file (specimen) for testFutex
 EXTRA_DIST += local_tests/testFutexInput.c
@@ -374,11 +376,15 @@ testFutexInput: local_tests/testFutexInput.c
 	@$(CC) $(CFLAGS32) -o $@ $^ -pthread -lpthread -lrt
 
 # The test, which simulates the specimen, which makes a special system call, which tests the futex layer
-MOSTLYCLEANFILES += testFutex.passed testFutex.failed testFutex.out testFutex.err
+if ENABLE_I386
+INTERNAL_TEST_TARGETS += testFutex.passed
 testFutex.passed: testFutex testFutexInput $(srcdir)/internal_tests.conf
 	@$(RTH_RUN) SIMULATOR=./testFutex SPECIMEN=./testFutexInput $(srcdir)/internal_tests.conf $@
+else
+INTERNAL_TEST_TARGETS += warn_no_tests
+endif
 
-MOSTLYCLEANFILES += $(INTERNAL_TEST_TARGETS)
+MOSTLYCLEANFILES += $(INTERNAL_TEST_TARGETS) testFutex.passed testFutex.failed testFutex.out testFutex.err
 check-internal: $(INTERNAL_TEST_TARGETS)
 
 
@@ -909,8 +915,6 @@ $(SYS_TEST_TARGETS): %.passed: % $(srcdir)/syscall_tests.conf x86sim
 	@$(RTH_RUN) INPUT=./$< $(srcdir)/syscall_tests.conf $@
 else
 SYS_TEST_TARGETS = warn_no_tests
-warn_no_tests:
-	@echo "  NOTE    x86sim testing is disabled (no i386 support)"
 endif
 
 # Cleanup targets. We can't put all the generated files in MOSTLYCLEANFILES because the list gets too long to pass
