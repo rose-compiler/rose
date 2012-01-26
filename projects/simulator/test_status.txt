@@ -71,7 +71,7 @@ pthread_cleanup_pop.1-1                  no
 pthread_cleanup_pop.1-2                  no
 pthread_cleanup_pop.1-3                  no
 pthread_cleanup_push.1-1                 no
-pthread_cleanup_push.1-2                 no
+pthread_cleanup_push.1-2                 yes
 pthread_cleanup_push.1-3                 no
 pthread_cond_broadcast.1-1               yes
 pthread_cond_broadcast.1-2               yes
@@ -100,7 +100,7 @@ pthread_cond_timedwait.2-3               no
 pthread_cond_timedwait.2-4               yes
 pthread_cond_timedwait.2-5               yes
 pthread_cond_timedwait.2-6               yes
-pthread_cond_timedwait.2-7               no
+pthread_cond_timedwait.2-7               yes
 pthread_cond_timedwait.3-1               yes
 pthread_cond_timedwait.4-1               yes
 pthread_cond_timedwait.4-2               yes
