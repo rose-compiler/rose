@@ -1222,6 +1222,7 @@ syscall_pipe2_enter(RSIM_Thread *t, int callno)
 static void
 syscall_pipe2(RSIM_Thread *t, int callno)
 {
+#ifdef HAVE_PIPE2
     int flags = t->syscall_arg(1);
     int host[2];
     int result = pipe2(host, flags);
@@ -1241,6 +1242,9 @@ syscall_pipe2(RSIM_Thread *t, int callno)
     }
 
     t->syscall_return(result);
+#else
+    t->syscall_return(-ENOSYS);
+#endif
 }
 
 static void
