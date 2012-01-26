@@ -253,16 +253,23 @@ namespace SymbolicSemantics {
         
         /** Prints the value of a memory cell on a single line. If a rename map is specified then named values will be renamed to
          *  have a shorter name.  See the ValueType<>::rename() method for details. */
-        void print(std::ostream &o, RenameMap *rmap=NULL) const {
+        void print(std::ostream &o, RenameMap *rmap=NULL, const std::string &prefix="") const {
+            o <<prefix <<"address = { ";
             address.print(o, rmap);
-            o <<": ";
+            o <<" }\n";
+
+            o <<prefix <<"  value = { ";
             data.print(o, rmap);
-            o <<" " <<nbytes <<" byte" <<(1==nbytes?"":"s");
-            if (!written) o <<" read-only";
-            if (clobbered) o <<" clobbered";
+            o <<" }\n";
+
+            o <<prefix <<"  flags = { size=" <<nbytes;
+            if (!written) o <<"; read-only";
+            if (clobbered) o <<"; clobbered";
+            o <<" }\n";
+                
         }
         friend std::ostream& operator<<(std::ostream &o, const MemoryCell &mc) {
-            mc.print(o, NULL);
+            mc.print(o, NULL, "");
             return o;
         }
     };
@@ -285,31 +292,42 @@ namespace SymbolicSemantics {
         /** Print the state in a human-friendly way.  If a rename map is specified then named values will be renamed to have a
          *  shorter name.  See the ValueType<>::rename() method for details. */
         void print(std::ostream &o, RenameMap *rmap=NULL) const {
-            std::string prefix = "    ";
-            for (size_t i=0; i<n_gprs; ++i) {
-                o <<prefix <<gprToString((X86GeneralPurposeRegister)i) <<"=";
-                gpr[i].print(o, rmap);
-                o <<"\n";
+            std::ios_base::fmtflags orig_flags = o.flags();
+            try {
+                std::string prefix = "    ";
+                o <<prefix <<"registers:\n";
+                for (size_t i=0; i<n_gprs; ++i) {
+                    o <<prefix <<"    " <<std::setw(7) <<std::left <<gprToString((X86GeneralPurposeRegister)i) <<" = { ";
+                    gpr[i].print(o, rmap);
+                    o <<" }\n";
+                }
+                for (size_t i=0; i<n_segregs; ++i) {
+                    o <<prefix <<"    " <<std::setw(7) <<std::left <<segregToString((X86SegmentRegister)i) <<" = { ";
+                    segreg[i].print(o, rmap);
+                    o <<" }\n";
+                }
+                for (size_t i=0; i<n_flags; ++i) {
+                    o <<prefix <<"    " <<std::setw(7) <<std::left <<flagToString((X86Flag)i) <<" = { ";
+                    flag[i].print(o, rmap);
+                    o <<" }\n";
+                }
+                o <<prefix <<"    " <<std::setw(7) <<std::left <<"ip" <<" = { ";
+                ip.print(o, rmap);
+                o <<" }\n";
+
+                o <<prefix <<"memory:\n";
+                if (mem.empty()) {
+                    o <<prefix <<"    (empty)\n";
+                } else {
+                    for (typename Memory::const_iterator mi=mem.begin(); mi!=mem.end(); ++mi) {
+                        (*mi).print(o, rmap, prefix+"    ");
+                    }
+                }
+            } catch (...) {
+                o.flags(orig_flags);
+                throw;
             }
-            for (size_t i=0; i<n_segregs; ++i) {
-                o <<prefix <<segregToString((X86SegmentRegister)i) <<"=";
-                segreg[i].print(o, rmap);
-                o <<"\n";
-            }
-            for (size_t i=0; i<n_flags; ++i) {
-                o <<prefix <<flagToString((X86Flag)i) <<"=";
-                flag[i].print(o, rmap);
-                o <<"\n";
-            }
-            o <<prefix <<"ip=";
-            ip.print(o, rmap);
-            o <<"\n";
-            o <<prefix << "memory:\n";
-            for (typename Memory::const_iterator mi=mem.begin(); mi!=mem.end(); ++mi) {
-                o <<prefix <<"    ";
-                (*mi).print(o, rmap);
-                o <<"\n";
-            }
+            o.flags(orig_flags);
         }
         friend std::ostream& operator<<(std::ostream &o, const State &state) {
             state.print(0);
