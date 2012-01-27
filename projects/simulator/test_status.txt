@@ -164,7 +164,7 @@ pthread_getschedparam.4-1                no
 pthread_getspecific.1-1                  no
 pthread_getspecific.3-1                  no
 pthread_join.1-1                         no
-pthread_join.1-2                         no
+pthread_join.1-2                         yes
 pthread_join.2-1                         no
 pthread_join.3-1                         no
 pthread_join.5-1                         no
@@ -416,7 +416,7 @@ syscall_tst.114.2                        no
 syscall_tst.116.1                        no
 syscall_tst.116.2                        no
 syscall_tst.117                          no
-syscall_tst.117.msgctl.01                no
+syscall_tst.117.msgctl.01                yes
 syscall_tst.117.msgctl.02                no
 syscall_tst.117.msgctl.03                yes
 syscall_tst.117.msgctl.08                no
@@ -520,7 +520,7 @@ syscall_tst.20.1                         no
 syscall_tst.20.2                         no
 syscall_tst.200.1                        no
 syscall_tst.201.1                        no
-syscall_tst.207                          no
+syscall_tst.207                          yes
 syscall_tst.212                          no
 syscall_tst.220.1                        no
 syscall_tst.220.2                        no
@@ -591,10 +591,10 @@ syscall_tst.4.4                          no
 syscall_tst.4.5                          no
 syscall_tst.57.1                         no
 syscall_tst.57.2                         no
-syscall_tst.57.3                         no
+syscall_tst.57.3                         yes
 syscall_tst.60.1                         no
 syscall_tst.60.2                         no
-syscall_tst.60.3                         no
+syscall_tst.60.3                         yes
 syscall_tst.63.1                         no
 syscall_tst.63.2                         no
 syscall_tst.63.3                         no
