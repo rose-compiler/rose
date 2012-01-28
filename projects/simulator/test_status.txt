@@ -147,7 +147,7 @@ pthread_detach.2-1                       no
 pthread_detach.2-2                       yes
 pthread_detach.3-1                       no
 pthread_detach.4-1                       no
-pthread_detach.4-2                       no
+pthread_detach.4-2                       yes
 pthread_equal.1-1                        no
 pthread_equal.1-2                        no
 pthread_equal.2-1                        no
@@ -417,7 +417,7 @@ syscall_tst.116.1                        no
 syscall_tst.116.2                        no
 syscall_tst.117                          no
 syscall_tst.117.msgctl.01                yes
-syscall_tst.117.msgctl.02                no
+syscall_tst.117.msgctl.02                yes
 syscall_tst.117.msgctl.03                yes
 syscall_tst.117.msgctl.08                no
 syscall_tst.117.msgget.01                no
