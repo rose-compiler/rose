@@ -595,7 +595,12 @@ int64_t
 BinaryLoader::gcd(int64_t a, int64_t b, int64_t *xout/*=NULL*/, int64_t *yout/*=NULL*/)
 {
     uint64_t x=0, xprev=1, y=1, yprev=0;
-    if (b>a) std::swap(a, b);
+    bool swapped = false;
+    if (b>a) {
+        std::swap(a, b);
+        swapped = true;
+    }
+
     while (b!=0) {
         uint64_t quotient = a / b;
         uint64_t temp;
@@ -616,6 +621,9 @@ BinaryLoader::gcd(int64_t a, int64_t b, int64_t *xout/*=NULL*/, int64_t *yout/*=
             yprev = temp;
         }
     }
+
+    if (swapped)
+        std::swap(xprev, yprev);
     
     if (xout) *xout = xprev;
     if (yout) *yout = yprev;
@@ -628,11 +636,16 @@ BinaryLoader::bialign(rose_addr_t val1, rose_addr_t align1, rose_addr_t val2, ro
     if (0==val1 % align1 && 0==val2 % align2)
         return 0;
 
-    if (debug) fprintf(debug, "    Aligning %"PRIu64" to %"PRIu64" and %"PRIu64" to %"PRIu64"\n", val1, align1, val2, align2);
-
     /* Minimum amount by which the addresses must be adjusted downward to independently meet their alignment constraint. */
     int64_t Ma = val1 - ALIGN_DN(val1, align1);
     int64_t Mb = val2 - ALIGN_DN(val2, align2);
+    if (Ma > Mb) {
+        std::swap(val1, val2);
+        std::swap(align1, align2);
+        std::swap(Ma, Mb);
+    }
+
+    if (debug) fprintf(debug, "    Aligning %"PRIu64" to %"PRIu64" and %"PRIu64" to %"PRIu64"\n", val1, align1, val2, align2);
     if (debug) fprintf(debug, "      Misalignment: Ma=%"PRId64", Mb=%"PRId64"\n", Ma, Mb);
 
     /* Alignment constraints that must both be satisfied. */
