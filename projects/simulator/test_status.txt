@@ -70,7 +70,7 @@ pthread_cancel.5-1                       no
 pthread_cleanup_pop.1-1                  no
 pthread_cleanup_pop.1-2                  no
 pthread_cleanup_pop.1-3                  no
-pthread_cleanup_push.1-1                 no
+pthread_cleanup_push.1-1                 yes
 pthread_cleanup_push.1-2                 yes
 pthread_cleanup_push.1-3                 no
 pthread_cond_broadcast.1-1               yes
@@ -423,7 +423,7 @@ syscall_tst.117.msgctl.08                yes
 syscall_tst.117.msgget.01                yes
 syscall_tst.117.msgget.02                yes
 syscall_tst.117.msgrcv.01                yes
-syscall_tst.117.msgrcv.03                no
+syscall_tst.117.msgrcv.03                yes
 syscall_tst.117.msgrcv.04                no
 syscall_tst.117.msgrcv.05                no
 syscall_tst.117.msgrcv.06                no
