@@ -1,6 +1,7 @@
 #ifndef Rose_SymbolicSemantics_H
 #define Rose_SymbolicSemantics_H
 #include <stdint.h>
+
 #ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
 #endif

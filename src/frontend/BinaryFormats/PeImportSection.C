@@ -2,8 +2,6 @@
  * special section in the section table, but rather have the SgAsmPEFileHeader::PAIR_IMPORTS RVA/Size pair point to part of the
  * memory mapped from another read-only section, such as the ".text" section. */
 #include "sage3basic.h"
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 #include <stdarg.h>
 
 /** Optionally prints an error/warning/info message regarding import tables. The messages are silenced after a certain amount

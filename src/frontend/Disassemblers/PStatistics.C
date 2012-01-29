@@ -1,7 +1,5 @@
 /* Partitioner statistics */
-#define __STDC_FORMAT_MACROS
 #include "sage3basic.h"
-#include <inttypes.h>
 #include <cmath>
 
 #include "Partitioner.h"

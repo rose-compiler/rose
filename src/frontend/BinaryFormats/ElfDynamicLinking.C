@@ -1,8 +1,6 @@
 /* ELF Dynamic Linking (SgAsmElfDynamicSection and related classes) */
 #include "sage3basic.h"
 #include "stringify.h"
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 
 /** Adds the newly constructed entry to the dynamic section. */
 void
