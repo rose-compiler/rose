@@ -14,8 +14,6 @@
  */
 
 #include "sage3basic.h"
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 
 /*========================================================================================================================
  * Methods for classes related to the GNU Symbol Version Table

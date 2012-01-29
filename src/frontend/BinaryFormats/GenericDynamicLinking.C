@@ -1,8 +1,6 @@
 /* Generic Dynamic Linking */
 #include "sage3basic.h"
 #include "stringify.h"
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 
 /** Accessors for "name" like ROSETTA's except setting name reparents the SgAsmGenericString. */
 SgAsmGenericString *

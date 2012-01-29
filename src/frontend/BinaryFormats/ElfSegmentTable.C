@@ -1,8 +1,6 @@
 /* ELF Segment Tables (SgAsmElfSegmentTable and related classes) */
 #include "sage3basic.h"
 #include "stringify.h"
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 
 /** Converts 32-bit disk representation to host representation */
 void

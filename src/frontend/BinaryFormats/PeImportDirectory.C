@@ -1,7 +1,5 @@
 /* PE Import Directory. A PE Import Section is a list of PE Import Directories. */
 #include "sage3basic.h"
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 
 /** Constructor. The constructor makes @p section the parent of this new import directory, and adds this new import
  *  directory to the import section. */

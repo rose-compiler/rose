@@ -1,9 +1,6 @@
 /* ELF File Header (SgAsmElfFileHeader and related classes) */
 
-// tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 
 /** Construct a new ELF File Header with default values. The new section is placed at file offset zero and the size is
  *  initially one byte (calling parse() will extend it as necessary). Setting the initial size of non-parsed sections to a
