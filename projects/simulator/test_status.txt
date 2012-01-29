@@ -424,7 +424,7 @@ syscall_tst.117.msgget.01                yes
 syscall_tst.117.msgget.02                yes
 syscall_tst.117.msgrcv.01                yes
 syscall_tst.117.msgrcv.03                yes
-syscall_tst.117.msgrcv.04                no
+syscall_tst.117.msgrcv.04                yes
 syscall_tst.117.msgrcv.05                no
 syscall_tst.117.msgrcv.06                no
 syscall_tst.117.msgsnd.01                no
