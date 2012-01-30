@@ -291,14 +291,13 @@ public:
         SymbolicSemantics::InsnSet defs = addr.defs;
         defs.erase(this->cur_insn);
         if (!defs.empty()) {
+            if (info->verbosity>=VB_SOME)
+                info->m->more("    Address for %s depends on insn%s at", desc.c_str(), 1==defs.size()?"":"s");
+            mark_addr_definers(defs, type);
             if (info->verbosity>=VB_SOME) {
                 std::ostringstream ss; ss<<addr;
-                info->m->more("    Address for %s depends on insn%s at", desc.c_str(), 1==defs.size()?"":"s");
-                info->m->more("        Address is %s\n", ss.str().c_str());
+                info->m->more("\n        Address is %s\n", ss.str().c_str());
             }
-            mark_addr_definers(defs, type);
-            if (info->verbosity>=VB_SOME)
-                info->m->more("\n");
         }
     }
 
