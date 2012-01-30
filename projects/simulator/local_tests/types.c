@@ -121,10 +121,33 @@ int simple20() {
     return e4[2];
 }
 
-/* oine pointer, "i".  See simple12 explanation. */
+/* one pointer, "i".  See simple12 explanation. */
 int simple21(int i) {
     return e4[i];
 }
+
+/* one code pointer, "f" */
+int simple22(int(*f)()) {
+    return f();
+}
+
+/* one code pointer, "f".  The address of x in the call to f is an R-value. */
+int simple23(int(*f)(int*)) {
+    int x = 100;
+    return f(&x);
+}
+
+/* one code pointer, "f".  The "a" pointer is not detected because it is never dereferenced by this function -- it is
+ * impossible to tell, looking only at the code generated for this one function, that "a" is a pointer. */
+int simple24(int(*f)(int*), int *a) {
+    return f(a);
+}
+
+/* detects both pointers: code pointer "f", data pointer "a" */
+int simple25(int(*f)(int), int *a) {
+    return f(*a);
+}
+
 
 /******************************************************************************************************************************
  *                                      TESTS WITH CONTROL-FLOW STATEMENTS
