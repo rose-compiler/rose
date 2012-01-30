@@ -166,7 +166,7 @@ pthread_getspecific.3-1                  no
 pthread_join.1-1                         no
 pthread_join.1-2                         yes
 pthread_join.2-1                         no
-pthread_join.3-1                         no
+pthread_join.3-1                         yes
 pthread_join.5-1                         no
 pthread_join.6-2                         yes
 pthread_join.6-3                         yes
