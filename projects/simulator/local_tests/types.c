@@ -18,47 +18,49 @@ int main() {
 }
 
 /* no pointer */
-int simple1(int a) {
+int simple01(int a) {
     return a;
 }
 
 /* one pointer argument */
-int simple2(int *a) {
+int simple02(int *a) {
     return *a;
 }
 
 /* two pointers: the stack argument and the thing that pointer points to */
-int simple3(int **a) {
+int simple03(int **a) {
     return **a;
 }
 
 /* no pointer since g1 is defined in this object file */
-int simple4() {
+int simple04() {
     return g1;
 }
 
 /* one pointer at a known address */
-int simple5() {
+int simple05() {
     return *g2;
 }
 
-/* two pointers both at known addresses */
-int simple6() {
+/* two pointers:
+ *   both are known addresses when statically linked;
+ *   one address is known when dynamically linked. */
+int simple06() {
     return **g3;
 }
 
 /* the address is not an L-value, thus not detected as a pointer */
-int* simple7() {
+int* simple07() {
     return &g1;
 }
 
 /* one pointer with known value */
-int* simple8() {
+int* simple08() {
     return *g3;
 }
 
 /* two pointers: one with a known address, the other is the local stack variable */
-int simple9() {
+int simple09() {
     int *s1 = g2;
     return *s1;
 }
@@ -90,7 +92,9 @@ int simple14() {
     return *e2;
 }
 
-/* two pointers both at known addresses */
+/* two pointers:
+ *   one is a known address if the specimen is dynamically linked;
+ *   both are known addresses if the specimen is statically linked. */
 int simple15() {
     return **e3;
 }
@@ -165,8 +169,9 @@ int flow2(int n, int *a, int *b) {
     return *b;
 }
 
+/* two pointers on the stack; one local variable */
 int flow3(int n, int *a, int *b) {
-    int *x = n ? a : b;                                         // FIXME: x not detected as pointer
+    int *x = n ? a : b;
     return *x;
 }
 
@@ -178,10 +183,11 @@ int flow4(int n, int *a) {
     return retval;
 }
 
+
 int flow5(int n, int *a, int *b)
 {
     int i, retval=0;
     for (i=0; i<n; ++i)
-        retval += (i%2) ? *a : *b;                              // FIXME: only detects 
+        retval += (i%2) ? *a : *b;                              // FIXME: only detects b
     return retval;
 }

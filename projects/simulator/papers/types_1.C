@@ -120,6 +120,18 @@ struct PtrInfo {
 template<template <size_t> class T>
 class PtrState: public SymbolicSemantics::State<T> {
 public:
+    typedef SymbolicSemantics::State<T> Super;
+    typedef SymbolicSemantics::MemoryCell<T> MemoryCell;
+
+    class MemoryCellComparator {
+    public:
+        T<32> address;
+        SMTSolver *solver;
+        MemoryCellComparator(const T<32> &address, SMTSolver *solver=NULL): address(address), solver(solver) {}
+        bool operator()(const MemoryCell &elmt) {
+            return elmt.address.expr->equal_to(address.expr, solver);
+        }
+    };
 
     /** Initialize the pointer analysis state from a pure symbolic semantics state. */
     PtrState& operator=(const SymbolicSemantics::State<T> &other) {
@@ -127,9 +139,11 @@ public:
         return *this;
     }
 
-    /** Merge other policy into this one and return true if this one changed.  We merge the list of instructions that define
-     *  each register's value, but we don't merge the values themselves.  We also don't currently do anything for memory. */
-    bool merge(const PtrState &other) {
+    /** Merge other policy into this one and return true if this one changed.  We currently merge the list of defining
+     *  instructions, but we don't try to merge the value expressions. */
+    bool merge(const PtrState &other, SMTSolver *smt_solver) {
+
+        // Merge registers
         size_t old_size = this->ip.defs.size();
         this->ip.defs.insert(other.ip.defs.begin(), other.ip.defs.end());
         bool changed = old_size!=this->ip.defs.size();
@@ -148,6 +162,25 @@ public:
             this->flag[i].defs.insert(other.flag[i].defs.begin(), other.flag[i].defs.end());
             changed = changed || old_size!=this->flag[i].defs.size();
         }
+
+        // Merge memory
+        for (typename Super::Memory::const_iterator mi=other.mem.begin(); mi!=other.mem.end(); ++mi) {
+            typename Super::Memory::iterator found = std::find_if(this->mem.begin(), this->mem.end(),
+                                                                  MemoryCellComparator(mi->address, smt_solver));
+            if (found==this->mem.end()) {
+                this->mem.push_back(*mi);
+                changed = true;
+            } else {
+                old_size = found->address.defs.size();
+                found->address.defs.insert(mi->address.defs.begin(), mi->address.defs.end());
+                changed = changed || old_size!=found->address.defs.size();
+
+                old_size = found->data.defs.size();
+                found->data.defs.insert(mi->data.defs.begin(), mi->data.defs.end());
+                changed = changed || old_size!=found->data.defs.size();
+            }
+        }
+
         return changed;
     }
 };
@@ -203,7 +236,7 @@ public:
     bool merge(const PtrPolicy &other) {
         if (info->verbosity>=VB_LOTS)
             info->m->more(" merging... ");
-        bool changed = this->get_state().merge(other.get_state());
+        bool changed = this->get_state().merge(other.get_state(), this->get_solver());
         if (info->verbosity>=VB_LOTS)
             info->m->more(changed ? "(changed)" : "(no change)");
         return changed;
