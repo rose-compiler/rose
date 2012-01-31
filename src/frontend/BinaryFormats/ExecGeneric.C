@@ -1,7 +1,5 @@
 /* Copyright 2008 Lawrence Livermore National Security, LLC */
 #include "sage3basic.h"
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 #include "checkIsModifiedFlag.h"
 #include <algorithm>
 #include <fstream>

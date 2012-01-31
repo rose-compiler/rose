@@ -1,9 +1,6 @@
 /* Classes describing basic features of a binary file that are in common to all file formats. (SgAsmGenericFormat class) */
 
-// tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 
 /* Print some debugging info */
 void

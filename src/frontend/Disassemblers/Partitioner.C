@@ -1,8 +1,6 @@
 /* Algorithms to detect what instructions make up basic blocks and which blocks make up functions, and how to create the
  * necessary SgAsmBlock and SgAsmFunction IR nodes from this information. */
-#define __STDC_FORMAT_MACROS
 #include "sage3basic.h"
-#include <inttypes.h>
 
 #include "Partitioner.h"
 #include "Assembler.h"

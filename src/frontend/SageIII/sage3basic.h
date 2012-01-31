@@ -13,6 +13,16 @@
 // because that can't be read early enough to effect what header files are included.
 // #define ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 
+// Much of ROSE's binary support uses the intX_t and uintX_t types (where X is a bit width), so we need to have the stdc printf
+// format macros defined for portability.  We do that here because it needs to be done before <inttypes.h> is included for the
+// first time, and we know that most source files for the ROSE library include this file (sage3basic.h) at or near the
+// beginning.  We don't want to define __STDC_FORMAT_MACROS in user code that includes "rose.h" (the user may define it), and
+// we need to define it in such a way that we won't get warning's if its already defined.  [RMP 2012-01-29]
+#ifndef __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS
+#endif
+#include <inttypes.h>
+
 
 #include <semaphore.h>
 #include "fileoffsetbits.h"

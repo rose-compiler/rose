@@ -3,8 +3,6 @@
 
 #include "sage3basic.h"
 #include "stringify.h"
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 
 
 /** Section constructors set the optional section header relationship--a bidirectional link between this new section and its

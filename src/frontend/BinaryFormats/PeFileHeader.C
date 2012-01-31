@@ -1,7 +1,5 @@
 /* Windows PE file header (SgAsmPEFileHeader and related classes) */
 #include "sage3basic.h"
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 
 
 /** Convert an RVA/Size Pair index number into a section name. This is different than stringifySgAsmPEFileHeaderPairPurpose()

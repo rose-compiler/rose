@@ -16,8 +16,6 @@
 #include "VirtualMachineSemantics.h"
 #include "YicesSolver.h"
 
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 #include <sstream>
 
 

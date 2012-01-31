@@ -9,10 +9,11 @@
  */
 
 
+/* There is no need to include "sage3basic.h"; this file defines all it needs. */
 
-
-#undef __STDC_FORMAT_MACROS /* to prevent redef warning on next line */
+#ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
+#endif
 #include <inttypes.h>
 
 #include <cassert>

@@ -2,11 +2,7 @@
  * least one header that serves as sort of a superblock for describing the rest of the file.  Many formats have more than one
  * header (e.g., Microsoft Windows files have both a DOS header and a PE header). */
 
-// tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
-
 
 /** Constructor.
  *  Headers (SgAsmGenericHeader and derived classes) set the file/header relationship--a bidirectional link between this new

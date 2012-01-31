@@ -2,9 +2,6 @@
 #include "sage3basic.h"
 #include "stringify.h"
 
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
-
 /** Constructs a new import lookup table or import address table and adds it as a child of the import directory. */
 void
 SgAsmPEImportLookupTable::ctor(SgAsmPEImportDirectory *idir)

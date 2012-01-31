@@ -8,9 +8,6 @@
 #include "BinaryLoaderElf.h"
 #include "BinaryLoaderPe.h"
 
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
-
 std::vector<BinaryLoader*> BinaryLoader::loaders;
 
 std::ostream&

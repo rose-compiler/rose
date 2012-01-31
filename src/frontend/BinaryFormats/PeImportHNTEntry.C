@@ -1,7 +1,5 @@
 /* PE Import Hint Name Table Entry */
 #include "sage3basic.h"
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 
 /* Constructor */
 void
