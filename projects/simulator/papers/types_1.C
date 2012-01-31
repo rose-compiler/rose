@@ -144,24 +144,13 @@ public:
     bool merge(const PtrState &other, SMTSolver *smt_solver) {
 
         // Merge registers
-        size_t old_size = this->ip.defs.size();
-        this->ip.defs.insert(other.ip.defs.begin(), other.ip.defs.end());
-        bool changed = old_size!=this->ip.defs.size();
-        for (size_t i=0; i<this->n_gprs; ++i) {
-            old_size = this->gpr[i].defs.size();
-            this->gpr[i].defs.insert(other.gpr[i].defs.begin(), other.gpr[i].defs.end());
-            changed = changed || old_size!=this->gpr[i].defs.size();
-        }
-        for (size_t i=0; i<this->n_segregs; ++i) {
-            old_size = this->segreg[i].defs.size();
-            this->segreg[i].defs.insert(other.segreg[i].defs.begin(), other.segreg[i].defs.end());
-            changed = changed || old_size!=this->segreg[i].defs.size();
-        }
-        for (size_t i=0; i<this->n_flags; ++i) {
-            old_size = this->flag[i].defs.size();
-            this->flag[i].defs.insert(other.flag[i].defs.begin(), other.flag[i].defs.end());
-            changed = changed || old_size!=this->flag[i].defs.size();
-        }
+        size_t nchanges = this->ip.add_defining_instructions(other.ip.get_defining_instructions());
+        for (size_t i=0; i<this->n_gprs; ++i)
+            nchanges += this->gpr[i].add_defining_instructions(other.gpr[i].get_defining_instructions());
+        for (size_t i=0; i<this->n_segregs; ++i)
+            nchanges += this->segreg[i].add_defining_instructions(other.gpr[i].get_defining_instructions());
+        for (size_t i=0; i<this->n_flags; ++i)
+            nchanges += this->flag[i].add_defining_instructions(other.gpr[i].get_defining_instructions());
 
         // Merge memory
         for (typename Super::Memory::const_iterator mi=other.mem.begin(); mi!=other.mem.end(); ++mi) {
@@ -169,19 +158,14 @@ public:
                                                                   MemoryCellComparator(mi->address, smt_solver));
             if (found==this->mem.end()) {
                 this->mem.push_back(*mi);
-                changed = true;
+                ++nchanges;
             } else {
-                old_size = found->address.defs.size();
-                found->address.defs.insert(mi->address.defs.begin(), mi->address.defs.end());
-                changed = changed || old_size!=found->address.defs.size();
-
-                old_size = found->data.defs.size();
-                found->data.defs.insert(mi->data.defs.begin(), mi->data.defs.end());
-                changed = changed || old_size!=found->data.defs.size();
+                nchanges += found->address.add_defining_instructions(mi->address.get_defining_instructions());
+                nchanges += found->data.   add_defining_instructions(mi->data   .get_defining_instructions());
             }
         }
 
-        return changed;
+        return nchanges!=0;
     }
 };
 

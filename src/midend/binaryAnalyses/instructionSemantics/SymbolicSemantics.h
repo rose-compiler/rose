@@ -93,7 +93,9 @@ namespace SymbolicSemantics {
         }
 
         /** Adds instructions to the list of defining instructions.  Adds the specified instruction and defining sets into this
-         *  value and returns a reference to this value.  Any combination of instruction and set pointers may be null. */
+         *  value and returns a reference to this value.  Any combination of instruction and set pointers may be null.  This is
+         *  a convenience function used internally by the policy's X86InstructionSemantics callback methods. See also
+         *  add_defining_instructions(). */
         ValueType& defined_by(SgAsmInstruction *insn,
                               const InsnSet *set1=NULL, const InsnSet *set2=NULL, const InsnSet *set3=NULL) {
             if (insn)
@@ -149,9 +151,22 @@ namespace SymbolicSemantics {
          *
          *  the defining set for EAX will be instructions {1, 2} and the defining set for EBX will be {4}.  Defining sets for
          *  other registers are the empty set. */
-        const std::set<SgAsmInstruction*> &get_defining_instructions() const {
+        const InsnSet& get_defining_instructions() const {
             return defs;
         }
+
+        /** Adds definitions to the list of defining instructions. Returns the number of items added that weren't already in
+         *  the list of defining instructions. */
+        size_t add_defining_instructions(const InsnSet &to_add) {
+            size_t nadded = 0;
+            for (InsnSet::const_iterator i=to_add.begin(); i!=to_add.end(); ++i) {
+                std::pair<InsnSet::iterator, bool> inserted = defs.insert(*i);
+                if (inserted.second)
+                    ++nadded;
+            }
+            return nadded;
+        }
+
     };
 
 
