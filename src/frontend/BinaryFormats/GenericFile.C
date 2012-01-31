@@ -5,11 +5,9 @@
 #include "sage3basic.h"
 #include "AsmUnparser_compat.h"
 
-#define __STDC_FORMAT_MACROS
 #include <boost/math/common_factor.hpp>
 #include <errno.h>
 #include <fcntl.h>
-#include <inttypes.h>
 #include <unistd.h>
 
 /** Non-parsing constructor. If you're creating an executable from scratch then call this function and you're done. But if

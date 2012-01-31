@@ -8,11 +8,7 @@
  *    SgAsmGenericStrtab.  An SgAsmElfStrtab points back to the SgAsmElfStringSection that contains it.
  */
 
-
-// tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
     
 /** Non-parsing constructor. The ELF String Table is constructed to contain one NUL byte. */
 void

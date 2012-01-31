@@ -3,10 +3,7 @@
  * single extent.  This class is used to keep track of what parts of a binary file have been parsed, and is also used to
  * manage string table free lists, among other things. */
 
-// tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 
 /** Class method comparing two extents. The return value is one of the following letters, depending on how extent A is related
  *  to extent B:

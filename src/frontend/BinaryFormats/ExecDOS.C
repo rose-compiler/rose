@@ -1,9 +1,6 @@
 /* Copyright 2008 Lawrence Livermore National Security, LLC */
 
-// tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // MS-DOS Real Mode File Header
