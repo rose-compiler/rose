@@ -329,7 +329,7 @@ pthread_spin_destroy.3-1                 yes
 pthread_spin_init.1-1                    no
 pthread_spin_init.2-1                    no
 pthread_spin_init.2-2                    no
-pthread_spin_init.4-1                    no
+pthread_spin_init.4-1                    yes
 pthread_spin_lock.1-2                    no
 pthread_spin_lock.3-1                    no
 pthread_spin_lock.3-2                    no
