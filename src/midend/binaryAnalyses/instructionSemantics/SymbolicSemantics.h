@@ -47,7 +47,7 @@ namespace SymbolicSemantics {
     template<size_t nBits>
     class ValueType {
     protected:
-        TreeNode *expr; /*reference counted*/
+        TreeNode *expr; /* reference counted, thus protected */
 
         /** Instructions defining this value.  Any instruction that saves the value to a register or memory location adds
          *  itself to the saved value. */
