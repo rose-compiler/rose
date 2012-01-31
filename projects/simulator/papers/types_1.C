@@ -766,7 +766,7 @@ public:
                 SgAsmBlock *gblk = args.thread->get_process()->disassemble(!limit_to_function);
                 insns = SageInterface::querySubTree<SgAsmInstruction>(gblk);
                 m->mesg("%s: disassembled %zu instructions", name, insns.size());
-#if 1
+#if 0
                 const char *listing_name = "x-prog.lst";
                 m->mesg("%s: generating assembly listing in \"%s\"", name, listing_name);
                 std::ofstream listing(listing_name);
