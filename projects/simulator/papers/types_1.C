@@ -140,17 +140,28 @@ public:
     }
 
     /** Merge other policy into this one and return true if this one changed.  We currently merge the list of defining
-     *  instructions, but we don't try to merge the value expressions. */
+     *  instructions, and this determines whether the function returns true or false.  Also, if the two value expressions are
+     *  unequal, we replace the value expression with a new, unknown value.  A chance in the value expression does not affect
+     *  the return value of this method, otherwise the data flow equation may not converge on a solution. */
     bool merge(const PtrState &other, SMTSolver *smt_solver) {
 
         // Merge registers
         size_t nchanges = this->ip.add_defining_instructions(other.ip.get_defining_instructions());
-        for (size_t i=0; i<this->n_gprs; ++i)
+        for (size_t i=0; i<this->n_gprs; ++i) {
             nchanges += this->gpr[i].add_defining_instructions(other.gpr[i].get_defining_instructions());
-        for (size_t i=0; i<this->n_segregs; ++i)
+            if (!this->gpr[i].get_expression()->equal_to(other.gpr[i].get_expression(), smt_solver))
+                this->gpr[i].set_expression(T<32>()); // new, unknown value
+        }
+        for (size_t i=0; i<this->n_segregs; ++i) {
             nchanges += this->segreg[i].add_defining_instructions(other.gpr[i].get_defining_instructions());
-        for (size_t i=0; i<this->n_flags; ++i)
+            if (!this->segreg[i].get_expression()->equal_to(other.segreg[i].get_expression(), smt_solver))
+                this->segreg[i].set_expression(T<16>()); // new, unknown value
+        }
+        for (size_t i=0; i<this->n_flags; ++i) {
             nchanges += this->flag[i].add_defining_instructions(other.gpr[i].get_defining_instructions());
+            if (!this->flag[i].get_expression()->equal_to(other.flag[i].get_expression(), smt_solver))
+                this->flag[i].set_expression(T<1>()); // new, unknown value
+        }
 
         // Merge memory
         for (typename Super::Memory::const_iterator mi=other.mem.begin(); mi!=other.mem.end(); ++mi) {
@@ -160,8 +171,15 @@ public:
                 this->mem.push_back(*mi);
                 ++nchanges;
             } else {
+                /* The address */
                 nchanges += found->address.add_defining_instructions(mi->address.get_defining_instructions());
-                nchanges += found->data.   add_defining_instructions(mi->data   .get_defining_instructions());
+                if (!found->address.get_expression()->equal_to(mi->address.get_expression(), smt_solver))
+                    found->address.set_expression(T<32>()); // new, unknown value
+
+                /* The data */
+                nchanges += found->data.add_defining_instructions(mi->data.get_defining_instructions());
+                if (!found->data.get_expression()->equal_to(mi->address.get_expression(), smt_solver))
+                    found->data.set_expression(T<32>()); // new, unknown value
             }
         }
 

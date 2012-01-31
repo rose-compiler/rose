@@ -183,11 +183,25 @@ int flow4(int n, int *a) {
     return retval;
 }
 
-
+/* both arguments are detected as pointers. */
 int flow5(int n, int *a, int *b)
 {
     int i, retval=0;
     for (i=0; i<n; ++i)
-        retval += (i%2) ? *a : *b;                              // FIXME: only detects b
+        retval += (i%2) ? *a : *b;
+    return retval;
+}
+
+/* both arguments are detected as pointers. */
+int flow6(int n, int *a, int *b)
+{
+    int i, retval=0;
+    for (i=0; i<n; ++i) {
+        if (i % 2) {
+            retval += *a;
+        } else {
+            retval += *b;
+        }
+    }
     return retval;
 }
