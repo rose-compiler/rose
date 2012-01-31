@@ -1,0 +1,7 @@
+--- Statically linked specimen ---
+Pointers discovered by PtrAnalysis:
+    data pointer at 0xb0000004[32]
+--- Dynamically linked specimen ---
+Pointers discovered by PtrAnalysis:
+    data pointer at 0xb0000004[32]
+    data pointer at (add[32] (add[32] v33[32] 4928[32]) -20[32])

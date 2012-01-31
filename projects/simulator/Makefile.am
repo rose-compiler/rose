@@ -328,9 +328,10 @@ types_shared: local_tests/types.c libtypes_extern.so
 	@$(CC) $(CFLAGS32) -fPIC -o $@ $^
 
 # Names of functions to analyze in types_static and types_shared executables
-TYPES_1_FUNCTIONS =simple1  simple2  simple3  simple4  simple5  simple6  simple7  simple8  simple9  simple10 \
+TYPES_1_FUNCTIONS =simple01 simple02 simple03 simple04 simple05 simple06 simple07 simple08 simple09 simple10 \
                    simple11 simple12 simple13 simple14 simple15 simple16 simple17 simple18 simple19 simple20 \
-                   simple21 flow1 flow2 flow3 flow4 flow5
+                   simple21 simple22 simple23 simple24 simple25 \
+                   flow01 flow02 flow03 flow04 flow05 flow06
 
 # Test targets for types_1 analysis.  Done this way for parallelism, etc.  See scripts/rth_run.pl --help for details.
 TYPES_1_TARGETS = $(addprefix test_types_1_,$(addsuffix .passed,$(TYPES_1_FUNCTIONS)))
@@ -1449,7 +1450,7 @@ check-pthread:  $(PTHREAD_TEST_TARGETS)
 test-inputs: $(SYS_TEST_INPUTS) $(PTHREAD_TEST_INPUTS)
 
 .PHONY: run-tests
-run-tests: check-syscalls check-pthread check-internal
+run-tests: check-syscalls check-pthread check-internal test_types_1
 	@$(RTH_STATS)
 
 check-local: run-tests
