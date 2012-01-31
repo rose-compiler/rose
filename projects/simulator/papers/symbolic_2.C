@@ -142,7 +142,7 @@ public:
                     trace->mesg("%s: branch %staken; target=0x%08"PRIx64, name, take?"":"not ", target);
 
                     // Is this path feasible?  We don't really need to check it now; we could wait until the end.
-                    InternalNode *c = new InternalNode(32, OP_EQ, policy.readRegister<32>("eip").expr,
+                    InternalNode *c = new InternalNode(32, OP_EQ, policy.readRegister<32>("eip").get_expression(),
                                                        LeafNode::create_integer(32, target));
                     constraints.push_back(c); // shouldn't really have to do this again if we could save some state
                     if (smt_solver.satisfiable(constraints)) {
@@ -157,7 +157,7 @@ public:
             // Show the value of the EAX register since this is where GCC puts the function's return value.  If we did things
             // right, the return value should depend only on the unknown bytes from the beginning of the buffer.
             SymbolicSemantics::ValueType<32> result = policy.readRegister<32>("eax");
-            std::set<const InsnSemanticsExpr::LeafNode*> vars = result.expr->get_variables();
+            std::set<const InsnSemanticsExpr::LeafNode*> vars = result.get_expression()->get_variables();
             {
                 std::ostringstream s;
                 s <<name <<": symbolic return value is " <<result <<"\n"
@@ -178,7 +178,7 @@ public:
                 trace->mesg("%s: setting variables (buffer bytes) to 'x' and evaluating the function symbolically...", name);
                 std::vector<const TreeNode*> exprs = constraints;
                 LeafNode *result_var = LeafNode::create_variable(32);
-                InternalNode *expr = new InternalNode(32, OP_EQ, result.expr, result_var);
+                InternalNode *expr = new InternalNode(32, OP_EQ, result.get_expression(), result_var);
                 exprs.push_back(expr);
                 for (std::set<const LeafNode*>::iterator vi=vars.begin(); vi!=vars.end(); ++vi) {
                     expr = new InternalNode(32, OP_EQ, *vi, LeafNode::create_integer(32, (int)'x'));
@@ -203,7 +203,8 @@ public:
             if (!result.is_known()) {
                 trace->mesg("%s: setting result equal to 0xff015e7c and trying to find inputs...", name);
                 std::vector<const TreeNode*> exprs = constraints;
-                InternalNode *expr = new InternalNode(32, OP_EQ, result.expr, LeafNode::create_integer(32, 0xff015e7c));
+                InternalNode *expr = new InternalNode(32, OP_EQ, result.get_expression(),
+                                                      LeafNode::create_integer(32, 0xff015e7c));
                 exprs.push_back(expr);
                 if (smt_solver.satisfiable(exprs)) {
                     for (std::set<const LeafNode*>::iterator vi=vars.begin(); vi!=vars.end(); ++vi) {

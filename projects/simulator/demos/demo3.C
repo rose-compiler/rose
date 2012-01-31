@@ -92,8 +92,8 @@ public:
             if (!arg1.is_known()) {
                 using namespace InsnSemanticsExpr;
                 LeafNode *target = LeafNode::create_integer(32, 2067789406);
-                uint64_t arg1_varno = dynamic_cast<LeafNode*>(arg1.expr)->get_name();
-                InternalNode expr(32, OP_EQ, policy.readRegister<32>("eax").expr, target);
+                uint64_t arg1_varno = dynamic_cast<LeafNode*>(arg1.get_expression())->get_name();
+                InternalNode expr(32, OP_EQ, policy.readRegister<32>("eax").get_expression(), target);
                 std::cout <<"using an SMT solver to find a solution to f(x) = " <<target <<"...\n";
                 if (smt_solver.satisfiable(&expr)) {
                     LeafNode *arg1_value = dynamic_cast<LeafNode*>(smt_solver.get_definition(arg1_varno));

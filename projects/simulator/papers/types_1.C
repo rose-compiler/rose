@@ -92,7 +92,7 @@ struct PtrInfo {
         SMTSolver *solver;
         Comparator(const ValueType<32> &addr, SMTSolver *solver=NULL): addr(addr), solver(solver) {}
         bool operator()(const Pointer &elmt) {
-            return elmt.address.expr->equal_to(addr.expr, solver);
+            return elmt.address.get_expression()->equal_to(addr.get_expression(), solver);
         }
     };
 
@@ -129,7 +129,7 @@ public:
         SMTSolver *solver;
         MemoryCellComparator(const T<32> &address, SMTSolver *solver=NULL): address(address), solver(solver) {}
         bool operator()(const MemoryCell &elmt) {
-            return elmt.address.expr->equal_to(address.expr, solver);
+            return elmt.address.get_expression()->equal_to(address.get_expression(), solver);
         }
     };
 
@@ -272,7 +272,7 @@ public:
      * @endcode
      */
     void dereference(const T<32> &addr, PtrInfo::PtrType type, const std::string &desc) {
-        SymbolicSemantics::InsnSet defs = addr.defs;
+        SymbolicSemantics::InsnSet defs = addr.get_defining_instructions();
         defs.erase(this->cur_insn);
         if (!defs.empty()) {
             if (info->verbosity>=VB_SOME)
@@ -327,13 +327,13 @@ public:
     template<size_t Len>
     void writeRegister(const RegisterDescriptor &reg, const T<Len> &value) {
         if (0==info->pass && !value.is_known() && reg.equal(this->findRegister("eip", 32))) {
-            InsnSemanticsExpr::InternalNode *inode = dynamic_cast<InsnSemanticsExpr::InternalNode*>(value.expr);
+            InsnSemanticsExpr::InternalNode *inode = dynamic_cast<InsnSemanticsExpr::InternalNode*>(value.get_expression());
             if (inode!=NULL && InsnSemanticsExpr::OP_ITE==inode->get_operator() &&
                 inode->child(1)->is_known() && inode->child(2)->is_known()) {
                 // We must have processed a branch instruction.  Both directions of the branch are concrete addresses, so there
                 // is no code pointer involved here.
             } else {
-                SymbolicSemantics::InsnSet defs = value.defs;
+                SymbolicSemantics::InsnSet defs = value.get_defining_instructions();
                 if (!defs.empty()) {
                     if (info->verbosity>=VB_SOME)
                         info->m->more("    EIP write depends on insn%s at", 1==defs.size()?"":"s");
@@ -464,7 +464,8 @@ public:
                 // Find control flow successors
                 std::set<rose_addr_t> successors;
                 ValueType<32> eip_value = policy.readRegister<32>(semantics.REG_EIP);
-                InsnSemanticsExpr::InternalNode *inode = dynamic_cast<InsnSemanticsExpr::InternalNode*>(eip_value.expr);
+                InsnSemanticsExpr::InternalNode *inode = dynamic_cast<InsnSemanticsExpr::InternalNode*>(eip_value.
+                                                                                                        get_expression());
                 if (eip_value.is_known()) {
                     successors.insert(eip_value.known_value());
                     // assume all CALLs return since we might not actually traverse the called function
