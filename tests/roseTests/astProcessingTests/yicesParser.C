@@ -1123,16 +1123,16 @@ int main(int argc, char *argv[]) {
 
 
   Rose_STL_Container<SgNode*> functionDeclarationList = NodeQuery::querySubTree(proj,V_SgFunctionDeclaration);
-  std::vector<SgNode*> forsA;
+  std::vector<SgNode*> funcs;
   //int counter = 0;
   for (Rose_STL_Container<SgNode*>::iterator i = functionDeclarationList.begin(); i != functionDeclarationList.end(); i++) {
 
           SgFunctionDeclaration* fni = isSgFunctionDeclaration(*i);
           ROSE_ASSERT(fni != NULL);
-          forsA.push_back(fni);
+          funcs.push_back(fni);
   }
-  for (unsigned int i = 0; i < forsA.size(); i++) {
-      SgFunctionDeclaration* sfd = isSgFunctionDeclaration(forsA[i]);
+  for (unsigned int i = 0; i < funcs.size(); i++) {
+      SgFunctionDeclaration* sfd = isSgFunctionDeclaration(funcs[i]);
       SgFunctionDefinition* sfdd = sfd->get_definition();
       //visitorTraversal* visInter = new visitorTraversal();
   

@@ -3,7 +3,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 EXTRA_DIST = tf1.C tf2.C tf3.C tfif1.C tfif2.C tfif3.C tfif4.C mf1.C mf3.C mf4.C mf5.C eif.C eif2.C eif3.C eif4.C efor2.C efor3.C input1.C test11.C test12.C test13.C test14.C createTest.C t1 t2 t3 t4
 
 # To keep compile commands tidy, please ONLY put required include flags here.
-INCLUDES = $(ROSE_INCLUDES)
+INCLUDES = $(ROSE_INCLUDES) -fopenmp -O3
 
 ## Don't use the repository in ../src
 CXX_TEMPLATE_REPOSITORY_PATH = .
@@ -25,44 +25,52 @@ ROSE_DEVELOPMENT_LIBS = $(ROSE_SEPARATE_LIBS)
 
 e0_SOURCES = efor2.C.maintest.C
 e0_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-# = -O3 -fopenmp
+e0_LDFLAGS = -O3 -fopenmp
 
 e1_SOURCES = efor3.C.maintest.C
 e1_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-# = -O3 -fopenmp
+e1_LDFLAGS = -O3 -fopenmp
 
 f1_SOURCES = tfif1.C.maintest.C
 f1_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+f1_LDFLAGS = -O3 -fopenmp
 
 f2_SOURCES = tfif2.C.maintest.C
 f2_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+f2_LDFLAGS = -O3 -fopenmp
 
 f3_SOURCES = tfif3.C.maintest.C
 f3_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+f3_LDFLAGS = -O3 -fopenmp
 
 f4_SOURCES = tfif4.C.maintest.C
 f4_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+f4_LDFLAGS = -O3 -fopenmp
 
 ff1_SOURCES = tf1.C.maintest.C
 ff1_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+ff1_LDFLAGS = -O3 -fopenmp
 
 ff2_SOURCES = tf2.C.maintest.C
 ff2_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+ff2_LDFLAGS = -O3 -fopenmp
 
 ff3_SOURCES = tf3.C.maintest.C
 ff3_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-
+ff3_LDFLAGS = -O3 -fopenmp
 
 interproceduralCFG_SOURCES = interproceduralCFG.C
 interproceduralCFG_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-# = -O3 -fopenmp
+interproceduralCFG_LDFLAGS = -O3 -fopenmp
 
 astTraversalTest_SOURCES      = astTraversalTest.C
 astTraversalTest_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
+astTraversalTest_LDFLAGS = -O3 -fopenmp
+
 
 proFunSIG_SOURCES = proFunSIG.C
 proFunSIG_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-# = -O3 -fopenmp
+proFunSIG_LDFLAGS = -O3 -fopenmp
 #t14tt_SOURCES = test14.C.maintest.C
 #t14tt_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
  
@@ -81,41 +89,41 @@ proFunSIG_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
 
 createTest_SOURCES = createTest.C
 createTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-# = -O3 -fopenmp
+createTest_LDFLAGS = -O3 -fopenmp
 
 bPTP_SOURCES = bPTP.C
 bPTP_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-# = -O3 -fopenmp
+bPTP_LDFLAGS = -O3 -fopenmp
 
 processnew3Down4SgIncGraph2_SOURCES      = processnew3Down4SgIncGraph2.C
 processnew3Down4SgIncGraph2_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-# = -O3 -fopenmp
+processnew3Down4SgIncGraph2_LDFLAGS = -O3 -fopenmp
 
 processnew3Down4SgIncGraph3_SOURCES      = processnew3Down4SgIncGraph3.C
 processnew3Down4SgIncGraph3_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-# = -O3 -fopenmp
+processnew3Down4SgIncGraph3_LDFLAGS = -O3 -fopenmp
  #
 
 
 binaryPaths_SOURCES = binaryPaths.C
 binaryPaths_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-# = -fopenmp -O3 
+binaryPaths_LDFLAGS = -fopenmp -O3 
 
 strictGraphTest_SOURCES = strictGraphTest.C
 strictGraphTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-# = -fopenmp -O3
+strictGraphTest_LDFLAGS = -fopenmp -O3
 
 strictGraphTest2_SOURCES = strictGraphTest2.C
 strictGraphTest2_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-# = -fopenmp -O3
+strictGraphTest2_LDFLAGS = -fopenmp -O3
 
 smtlibParser_SOURCES = smtlibParser.C
 smtlibParser_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-# = -fopenmp -O3
+smtlibParser_LDFLAGS = -fopenmp -O3
 
 sourcePTP_SOURCES = sourcePTP.C
 sourcePTP_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-# = -O3 -fopenmp
+sourcePTP_LDFLAGS = -O3 -fopenmp
 
 
 if HAVE_YICES
@@ -131,7 +139,7 @@ endif
 
 strictGraphTest3_SOURCES = strictGraphTest3.C
 strictGraphTest3_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-# = -O3 -fopenmp
+strictGraphTest3_LDFLAGS = -O3 -fopenmp
 # source files don't contain anything that would be merged
 # TESTCODES = $(srcdir)/performanceTest.C
 
