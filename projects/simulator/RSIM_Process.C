@@ -266,6 +266,7 @@ public:
         }
 
         vdso_entry_va = vdso_mapped_va + entry_rva;
+        vdso = fhdr;
         return true;
     }
 };
