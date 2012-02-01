@@ -334,6 +334,7 @@ TYPES_1_FUNCTIONS =simple01 simple02 simple03 simple04 simple05 simple06 simple0
                    flow01 flow02 flow03 flow04 flow05 flow06 flow07
 
 # Test targets for types_1 analysis.  Done this way for parallelism, etc.  See scripts/rth_run.pl --help for details.
+if ENABLE_I386
 TYPES_1_STATIC_TARGETS = $(addprefix test_types_1_,$(addsuffix _static.passed,$(TYPES_1_FUNCTIONS)))
 TYPES_1_SHARED_TARGETS = $(addprefix test_types_1_,$(addsuffix _shared.passed,$(TYPES_1_FUNCTIONS)))
 $(TYPES_1_STATIC_TARGETS): %.passed: $(srcdir)/test_types_1.conf types_1 types_static
@@ -342,6 +343,10 @@ $(TYPES_1_STATIC_TARGETS): %.passed: $(srcdir)/test_types_1.conf types_1 types_s
 $(TYPES_1_SHARED_TARGETS): %.passed: $(srcdir)/test_types_1.conf types_1 types_shared
 	@$(RTH_RUN) ANALYSIS_FUNC=$(patsubst test_types_1_%_shared.passed,%,$@) SPECIMEN=./types_shared \
 		$(srcdir)/test_types_1.conf $@
+else
+TYPES_1_STATIC_TARGETS = warn_no_tests
+TYPES_1_SHARED_TARGETS = warn_no_tests
+endif
 
 .PHONY: test_types_1
 test_types_1: $(TYPES_1_STATIC_TARGETS) $(TYPES_1_SHARED_TARGETS)
