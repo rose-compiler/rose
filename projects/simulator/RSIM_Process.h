@@ -478,6 +478,9 @@ public:
      *  Thread safety:  Not thread safe.  This should only be called during process initialization. */
     void set_main_thread(RSIM_Thread *t);
 
+    /** Returns the main thread. */
+    RSIM_Thread *get_main_thread() const;
+
     /** Creates a new simulated thread and corresponding real thread.  Returns the ID of the new thread, or a negative errno.
      *  The @p parent_tid_va and @p child_tid_va are optional addresses at which to write the new thread's TID if the @p flags
      *  contain the CLONE_PARENT_TID and/or CLONE_CHILD_TID bits.  We gaurantee that the TID is written to both before the

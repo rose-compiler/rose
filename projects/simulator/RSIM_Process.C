@@ -87,6 +87,14 @@ RSIM_Process::set_main_thread(RSIM_Thread *t)
     threads[t->get_tid()] = t;
 }
 
+RSIM_Thread *
+RSIM_Process::get_main_thread() const
+{
+    std::map<pid_t, RSIM_Thread*>::const_iterator found = threads.find(getpid());
+    assert(found!=threads.end());
+    return found->second;
+}
+
 void
 RSIM_Process::remove_thread(RSIM_Thread *thread)
 {
