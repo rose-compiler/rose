@@ -4529,7 +4529,9 @@ SgProject::parse()
         {
           SgFile *file = *fIterator;
           ROSE_ASSERT(file != NULL);
+#ifndef ROSE_USE_CLANG_FRONTEND
           file->secondaryPassOverSourceFile();
+#endif
         }
 
      if ( get_verbose() > 0 )
@@ -5155,7 +5157,12 @@ SgFile::callFrontEnd()
 
   // Build the commandline for EDG
   // printf ("Inside of SgFile::callFrontEnd(): Calling build_EDG_CommandLine (fileNameIndex = %d) \n",fileNameIndex);
+  #ifndef ROSE_USE_CLANG_FRONTEND
      build_EDG_CommandLine (inputCommandLine,localCopy_argv,fileNameIndex );
+  #else
+     // TODO build_CLANG_CommandLine (inputCommandLine,localCopy_argv,fileNameIndex );
+     build_EDG_CommandLine (inputCommandLine,localCopy_argv,fileNameIndex );
+  #endif
   // printf ("DONE: Inside of SgFile::callFrontEnd(): Calling build_EDG_CommandLine (fileNameIndex = %d) \n",fileNameIndex);
 
   // DQ (10/15/2005): This is now a single C++ string (and not a list)

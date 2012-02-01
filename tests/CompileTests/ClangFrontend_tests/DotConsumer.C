@@ -12,6 +12,7 @@
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/TargetOptions.h"
 
+#include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/DiagnosticOptions.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 
@@ -22,6 +23,7 @@
 
 #include "llvm/Config/config.h"
 
+#include "llvm/Support/Host.h"
 #include "llvm/Support/raw_os_ostream.h"
 
 // Module's function
@@ -41,12 +43,12 @@ int DotConsumer::generateDot(std::string input, std::string output, Language lan
 
     clang::TextDiagnosticPrinter * diag_printer = new clang::TextDiagnosticPrinter(output_stream, diag_opts);
 
-    clang::Diagnostic diagnostic(diag_id_ptr, diag_printer);
-        diagnostic.setSuppressAllDiagnostics(true);
+    clang::DiagnosticsEngine * diagnostic_engine = new clang::DiagnosticsEngine(diag_id_ptr, diag_printer);
 
-    clang::SourceManager source_manager(diagnostic, file_manager);
+    clang::Diagnostic diagnostic(diagnostic_engine);
+//        diagnostic.setSuppressAllDiagnostics(true);
 
-    clang::HeaderSearch header_search(file_manager);
+    clang::SourceManager source_manager(*diagnostic_engine, file_manager);
 
     clang::LangOptions lang_options;
         switch (language) {
@@ -57,21 +59,25 @@ int DotConsumer::generateDot(std::string input, std::string output, Language lan
                 exit(-1);
         }
 
+    clang::HeaderSearch header_search(file_manager, *diagnostic_engine, lang_options);
 
     clang::TargetOptions target_options;
-        target_options.Triple = LLVM_HOSTTRIPLE;
+        target_options.Triple = llvm::sys::getDefaultTargetTriple();
         target_options.ABI = "";
         target_options.CPU = "";
         target_options.Features.clear();
 
-    clang::TargetInfo * target_info = clang::TargetInfo::CreateTargetInfo(diagnostic, target_options);
+    const clang::TargetInfo * target_info = clang::TargetInfo::CreateTargetInfo(*diagnostic_engine, target_options);
+
+    clang::CompilerInstance compiler_instance;
 
     clang::Preprocessor preprocessor(
-        diagnostic,
+        *diagnostic_engine,
         lang_options,
-        *target_info,
+        target_info,
         source_manager,
-        header_search
+        header_search,
+        compiler_instance
     );
 
     DotConsumer * consumer = new DotConsumer(source_manager, lang_options);
@@ -80,12 +86,12 @@ int DotConsumer::generateDot(std::string input, std::string output, Language lan
 
     clang::SelectorTable selector_table;
 
-    clang::Builtin::Context builtin_context(*target_info);
+    clang::Builtin::Context builtin_context;
 
     clang::ASTContext context(
         lang_options,
         source_manager,
-        *target_info,
+        target_info,
         identifier_table,
         selector_table,
         builtin_context,
@@ -96,7 +102,7 @@ int DotConsumer::generateDot(std::string input, std::string output, Language lan
 
     source_manager.createMainFileID(input_file_id);
 
-    clang::ParseAST(preprocessor, consumer, context, false, true, NULL);
+    clang::ParseAST(preprocessor, consumer, context, false);
 
     std::ofstream output_file_stream;
 

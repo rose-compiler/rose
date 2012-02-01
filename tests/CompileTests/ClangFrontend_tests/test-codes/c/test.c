@@ -1,5 +1,14 @@
 
-void f();
+void f() {
+  int a;
 
-void f() {}
+  a = 0;
 
+  {
+    int b;
+
+    b = 0;
+    a = 1;
+
+  }
+}

@@ -1,12 +1,15 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 include c_test_codes.inc
+#include cuda_test_codes.inc
 
 all-am: Clang2Dot ../../testTranslator
 
-check-am: $(C_TEST_CODES_dot) $(C_TEST_CODES_obj) $(C_TEST_CODES_rose_dot) 
+#check-am: $(C_TEST_CODES_dot) $(C_TEST_CODES_obj) $(C_TEST_CODES_rose_dot) 
+check-am: $(C_TEST_CODES_obj) $(C_TEST_CODES_rose_dot) 
 
-png: $(C_TEST_CODES_png) $(C_TEST_CODES_rose_png)
+#png: $(C_TEST_CODES_png) $(C_TEST_CODES_rose_png)
+png: $(C_TEST_CODES_rose_png)
 
 INCLUDES = $(ROSE_INCLUDES)
 

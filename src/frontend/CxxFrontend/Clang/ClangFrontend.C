@@ -25,7 +25,29 @@ int clang_main(int argc, char* argv[], SgSourceFile& sageFile) {
 
     global_scope->set_endOfConstruct(end_fi);
 
+    finishSageAST(translator);
+
     return 1;
+}
+
+void finishSageAST(ClangToSageTranslator & translator) {
+    SgGlobal * global_scope = translator.getGlobalScope();
+
+ // 1 - Label Statements: Move sub-statement after the label statement.
+
+    std::vector<SgLabelStatement *> label_stmts = SageInterface::querySubTree<SgLabelStatement>(global_scope, V_SgLabelStatement);
+    std::vector<SgLabelStatement *>::iterator label_stmt_it;
+    for (label_stmt_it = label_stmts.begin(); label_stmt_it != label_stmts.end(); label_stmt_it++) {
+        SgStatement * sub_stmt = (*label_stmt_it)->get_statement();
+        if (!isSgNullStatement(sub_stmt)) {
+            SgNullStatement * null_stmt = SageBuilder::buildNullStatement();
+            (*label_stmt_it)->set_statement(null_stmt);
+            null_stmt->set_parent(*label_stmt_it);
+            SageInterface::insertStatementAfter(*label_stmt_it, sub_stmt);
+        }
+    }
+
+ // 2 - Place Preprocessor informations
 }
 
 SgGlobal * ClangToSageTranslator::getGlobalScope() { return p_global_scope; }
@@ -36,13 +58,18 @@ ClangToSageTranslator::ClangToSageTranslator(std::vector<std::string> & arg) :
     p_stmt_translation_map(),
     p_type_translation_map(),
     p_global_scope(NULL),
+    p_diagnostic_engine(NULL),
     p_file_manager(NULL),
     p_diagnostic(NULL),
     p_source_manager(NULL),
     p_header_search(NULL),
+    p_compiler_instance(NULL),
+    p_sage_preprocessor_recorder(NULL),
     p_preprocessor(NULL)
 {
   /* 1 - Analyse command line */
+
+    // TODO !!!!!!!!!!!!!!!!!!
 
     /* Input file */
     std::string input = arg[arg.size() - 1];
@@ -84,42 +111,52 @@ ClangToSageTranslator::ClangToSageTranslator(std::vector<std::string> & arg) :
 
     clang::TextDiagnosticPrinter * diag_printer = new clang::TextDiagnosticPrinter(output_stream, diag_opts);
 
-    p_diagnostic = new clang::Diagnostic(diag_id_ptr, diag_printer);
+    p_diagnostic_engine = new clang::DiagnosticsEngine(diag_id_ptr, diag_printer);
 
-    p_source_manager = new clang::SourceManager(*p_diagnostic, *p_file_manager);
+    p_diagnostic = new clang::Diagnostic(p_diagnostic_engine);
 
-    p_header_search = new clang::HeaderSearch(*p_file_manager);
+    p_source_manager = new clang::SourceManager(*p_diagnostic_engine, *p_file_manager);
 
     clang::LangOptions lang_options;
         switch (language) {
             case C: break;
             case CPLUSPLUS: lang_options.CPlusPlus = 1; break;
+            case CUDA:
+                lang_options.CUDA = 1;
+                lang_options.CPlusPlus = 1;
+                break;
+            case OPENCL:    lang_options.OpenCL = 1; break;
             default:
                 std::cerr << "Unsupported language..." << std::endl;
                 exit(-1);
         }
 
+    p_header_search = new clang::HeaderSearch(*p_file_manager, *p_diagnostic_engine, lang_options);
 
     clang::TargetOptions target_options;
-        target_options.Triple = LLVM_HOSTTRIPLE;
+        target_options.Triple = llvm::sys::getDefaultTargetTriple();
         target_options.ABI = "";
         target_options.CPU = "";
         target_options.Features.clear();
 
-    clang::TargetInfo * target_info = clang::TargetInfo::CreateTargetInfo(*p_diagnostic, target_options);
+    const clang::TargetInfo * target_info = clang::TargetInfo::CreateTargetInfo(*p_diagnostic_engine, target_options);
 
-    p_preprocessor = new clang::Preprocessor(*p_diagnostic, lang_options, *target_info, *p_source_manager, *p_header_search);
+    p_compiler_instance = new clang::CompilerInstance();
+
+    p_sage_preprocessor_recorder = new SagePreprocessorRecord(p_source_manager);
+    p_preprocessor = new clang::Preprocessor(*p_diagnostic_engine, lang_options, target_info, *p_source_manager, *p_header_search, *p_compiler_instance);
+        p_preprocessor->addPPCallbacks(p_sage_preprocessor_recorder);
 
     clang::IdentifierTable identifier_table(lang_options);
 
     clang::SelectorTable selector_table;
 
-    clang::Builtin::Context builtin_context(*target_info);
+    clang::Builtin::Context builtin_context;
 
     clang::ASTContext context(
         lang_options,
         *p_source_manager,
-        *target_info,
+        target_info,
         identifier_table,
         selector_table,
         builtin_context,
@@ -130,7 +167,7 @@ ClangToSageTranslator::ClangToSageTranslator(std::vector<std::string> & arg) :
 
     p_source_manager->createMainFileID(input_file_id);
 
-    clang::ParseAST(*p_preprocessor, this, context, false, true, NULL);
+    clang::ParseAST(*p_preprocessor, this, context, false);
 }
 
 
@@ -197,6 +234,97 @@ void ClangToSageTranslator::applySourceRange(SgNode * node, clang::SourceRange s
 
 }
 
+SgSymbol * ClangToSageTranslator::GetSymbolFromSymbolTable(clang::NamedDecl * decl) {
+    SgScopeStatement * scope = SageBuilder::topScopeStack();
+
+    SgName name(decl->getNameAsString());
+
+    std::list<SgScopeStatement *>::reverse_iterator it;
+    SgSymbol * sym = NULL;
+    switch (decl->getKind()) {
+        case clang::Decl::Typedef:
+        {
+            it = SageBuilder::ScopeStack.rbegin();
+            while (it != SageBuilder::ScopeStack.rend() && sym == NULL) {
+                 sym = (*it)->lookup_typedef_symbol(name);
+                 it++;
+            }
+            break;
+        }
+        case clang::Decl::Var:
+        case clang::Decl::ParmVar:
+        {
+            it = SageBuilder::ScopeStack.rbegin();
+            while (it != SageBuilder::ScopeStack.rend() && sym == NULL) {
+                sym = (*it)->lookup_variable_symbol(name);
+                it++;
+            }
+            break;
+        }
+        case clang::Decl::Function:
+        {
+            SgNode * tmp_type = Traverse(((clang::FunctionDecl *)decl)->getType().getTypePtr());
+            SgFunctionType * type = isSgFunctionType(tmp_type);
+            it = SageBuilder::ScopeStack.rbegin();
+            while (it != SageBuilder::ScopeStack.rend() && sym == NULL) {
+                sym = (*it)->lookup_function_symbol(name, type);
+                it++;
+            }
+            break;
+        }
+        case clang::Decl::Field:
+        {
+            SgClassDeclaration * sg_class_decl = isSgClassDeclaration(Traverse(((clang::FieldDecl *)decl)->getParent()));
+            ROSE_ASSERT(sg_class_decl != NULL);
+            if (sg_class_decl->get_definingDeclaration() == NULL)
+                std::cerr << "Runtime Error: cannot find the definition of the class/struct associate to the field: " << name << std::endl;
+            else {
+                scope = isSgClassDeclaration(sg_class_decl->get_definingDeclaration())->get_definition();
+                // TODO: for C++, if 'scope' is in 'SageBuilder::ScopeStack': problem!!!
+                while (scope != NULL && sym == NULL) {
+                    sym = scope->lookup_variable_symbol(name);
+                    scope = scope->get_scope();
+                }
+            }
+            break;
+        }
+        case clang::Decl::Record:
+        {
+            it = SageBuilder::ScopeStack.rbegin();
+            while (it != SageBuilder::ScopeStack.rend() && sym == NULL) {
+                sym = (*it)->lookup_class_symbol(name);
+                it++;
+            }
+            break;
+        }
+        case clang::Decl::Label:
+        {
+            // Should not be reach as we use Traverse to retrieve Label (they are "terminal" statements) (it avoids the problem of forward use of label: goto before declaration)
+            name = SgName(((clang::LabelDecl *)decl)->getStmt()->getName());
+            it = SageBuilder::ScopeStack.rbegin();
+            while (it != SageBuilder::ScopeStack.rend() && sym == NULL) {
+                sym = (*it)->lookup_label_symbol(name);
+                it++;
+            }
+            break;
+        }
+        default:
+            std::cerr << "Runtime Error: Unknown type of Decl." << std::endl;
+    }
+
+    return sym;
+}
+
+/*
+SgSymbol * ClangToSageTranslator::GetSymbolFromSymbolTable(clang::TypeDecl * decl) {
+    SgSymbol * sym = NULL;
+
+    // TODO
+
+    return sym;
+}
+*/
+
 /* Overload of ASTConsumer::HandleTranslationUnit, it is the "entry point" */
 
 void ClangToSageTranslator::HandleTranslationUnit(clang::ASTContext & ast_context) {
@@ -226,8 +354,7 @@ SgNode * ClangToSageTranslator::Traverse(clang::Decl * decl) {
             ret_status = VisitTranslationUnitDecl((clang::TranslationUnitDecl *)decl, &result);
             break;
         case clang::Decl::Typedef:
-            // TODO
-//          ret_status = VisitTypedef((clang::TypedefDecl *)decl, &result);
+            ret_status = VisitTypedefDecl((clang::TypedefDecl *)decl, &result);
             break;
         case clang::Decl::Var:
             ret_status = VisitVarDecl((clang::VarDecl *)decl, &result);
@@ -237,6 +364,12 @@ SgNode * ClangToSageTranslator::Traverse(clang::Decl * decl) {
             break;
         case clang::Decl::ParmVar:
             ret_status = VisitParmVarDecl((clang::ParmVarDecl *)decl, &result);
+            break;
+        case clang::Decl::Record:
+            ret_status = VisitRecordDecl((clang::RecordDecl *)decl, &result);
+            break;
+        case clang::Decl::Field:
+            ret_status = VisitFieldDecl((clang::FieldDecl *)decl, &result);
             break;
         // TODO cases
         default:
@@ -288,13 +421,41 @@ SgNode * ClangToSageTranslator::Traverse(clang::Stmt * stmt) {
         case clang::Stmt::DeclRefExprClass:
             ret_status = VisitDeclRefExpr((clang::DeclRefExpr *)stmt, &result);
             break;
+        case clang::Stmt::UnaryOperatorClass:
+            ret_status = VisitUnaryOperator((clang::UnaryOperator *)stmt, &result);
+            break;
+        case clang::Stmt::ForStmtClass:
+            ret_status = VisitForStmt((clang::ForStmt *)stmt, &result);
+            break;
+        case clang::Stmt::IfStmtClass:
+            ret_status = VisitIfStmt((clang::IfStmt *)stmt, &result);
+            break;
         case clang::Stmt::ReturnStmtClass:
             ret_status = VisitReturnStmt((clang::ReturnStmt *)stmt, &result);
             break;
         case clang::Stmt::BinaryOperatorClass:
+        case clang::Stmt::CompoundAssignOperatorClass:
             ret_status = VisitBinaryOperator((clang::BinaryOperator *)stmt, &result);
             break;
-
+        case clang::Stmt::ConditionalOperatorClass:
+            ret_status = VisitConditionalOperator((clang::ConditionalOperator *)stmt, &result);
+            break;
+        case clang::Stmt::ArraySubscriptExprClass:
+            ret_status = VisitArraySubscriptExpr((clang::ArraySubscriptExpr *)stmt, &result);
+            break;
+        case clang::Stmt::MemberExprClass:
+            ret_status = VisitMemberExpr((clang::MemberExpr *)stmt, &result);
+            break;
+        case clang::Stmt::LabelStmtClass:
+            ret_status = VisitLabelStmt((clang::LabelStmt *)stmt, &result);
+            break;
+        case clang::Stmt::NullStmtClass:
+            ret_status = VisitNullStmt((clang::NullStmt *)stmt, &result);
+            break;
+        case clang::Stmt::GotoStmtClass:
+            ret_status = VisitGotoStmt((clang::GotoStmt *)stmt, &result);
+            break;
+//        case clang::Stmt::ImplicitValueInitExprClass: break; // FIXME
         // TODO
         default:
             std::cerr << "Unknown statement kind: " << stmt->getStmtClassName() << " !" << std::endl;
@@ -338,6 +499,15 @@ SgNode * ClangToSageTranslator::Traverse(const clang::Type * type) {
         case clang::Type::FunctionNoProto:
             ret_status = VisitFunctionNoProtoType((clang::FunctionNoProtoType *)type, &result);
             break;
+        case clang::Type::Elaborated:
+            ret_status = VisitElaboratedType((clang::ElaboratedType *)type, &result);
+            break;
+        case clang::Type::Record:
+            ret_status = VisitRecordType((clang::RecordType *)type, &result);
+            break;
+        case clang::Type::Typedef:
+            ret_status = VisitTypedefType((clang::TypedefType *)type, &result);
+            break;
         // TODO cases
         default:
             std::cerr << "Unknown type kind " << type->getTypeClassName() << " !" << std::endl;
@@ -373,8 +543,157 @@ bool ClangToSageTranslator::VisitDecl(clang::Decl * decl, SgNode ** node) {
     return true;
 }
 
+bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgNode ** node) {
+    bool res = true;
+
+    SgClassDeclaration * sg_class_decl = NULL;
+
+    clang::RecordDecl * prev_record_decl = record_decl->getPreviousDecl();
+    SgClassDeclaration * sg_prev_class_decl = isSgClassDeclaration(Traverse(prev_record_decl));
+
+    SgClassDeclaration * sg_first_class_decl = sg_prev_class_decl == NULL ? NULL : isSgClassDeclaration(sg_prev_class_decl->get_firstNondefiningDeclaration());
+    SgClassDeclaration * sg_def_class_decl = sg_prev_class_decl == NULL ? NULL : isSgClassDeclaration(sg_prev_class_decl->get_definingDeclaration());
+
+    ROSE_ASSERT(sg_first_class_decl != NULL || sg_def_class_decl == NULL);
+
+    SgName name(record_decl->getNameAsString());
+
+    if (sg_first_class_decl == NULL || record_decl->field_empty()) {
+        *node = SageBuilder::buildNondefiningClassDeclaration(name, SageBuilder::topScopeStack());
+        sg_class_decl = isSgClassDeclaration(*node);
+        if (record_decl->isAnonymousStructOrUnion()) sg_class_decl->set_isUnNamed(true);
+        sg_class_decl->set_parent(SageBuilder::topScopeStack());
+        if (sg_first_class_decl == NULL) {
+            sg_first_class_decl = sg_class_decl;
+            sg_first_class_decl->set_firstNondefiningDeclaration(sg_first_class_decl);
+        }
+        else {
+            sg_class_decl->set_firstNondefiningDeclaration(sg_first_class_decl);
+            sg_class_decl->set_definingDeclaration(sg_def_class_decl);
+        }
+    }
+    else {
+        *node = SageBuilder::buildDefiningClassDeclaration(name, SageBuilder::topScopeStack());
+        sg_class_decl = isSgClassDeclaration(*node);
+        if (record_decl->isAnonymousStructOrUnion()) sg_class_decl->set_isUnNamed(true);
+        sg_class_decl->set_parent(SageBuilder::topScopeStack());
+        sg_class_decl->set_firstNondefiningDeclaration(sg_first_class_decl);
+        if (sg_def_class_decl != NULL) {
+            // FIXME second definition
+            sg_class_decl->set_definingDeclaration(sg_def_class_decl);
+        }
+        else {
+            sg_def_class_decl = sg_class_decl;
+            sg_first_class_decl->set_definingDeclaration(sg_def_class_decl);
+        }
+    }
+
+    switch (record_decl->getTagKind()) {
+        case clang::TTK_Struct:
+            sg_class_decl->set_class_type(SgClassDeclaration::e_struct);
+            break;
+        case clang::TTK_Class:
+            sg_class_decl->set_class_type(SgClassDeclaration::e_class);
+            break;
+        case clang::TTK_Union:
+            sg_class_decl->set_class_type(SgClassDeclaration::e_union);
+            break;
+        default:
+            std::cerr << "Runtime error: RecordDecl can only be a struct/class/union." << std::endl;
+            res = false;
+    }
+
+    if (!record_decl->field_empty()) {
+        if (sg_first_class_decl == sg_class_decl) {
+            *node = SageBuilder::buildDefiningClassDeclaration(name, SageBuilder::topScopeStack());
+            sg_class_decl = isSgClassDeclaration(*node);
+            if (record_decl->isAnonymousStructOrUnion()) sg_class_decl->set_isUnNamed(true);
+            sg_class_decl->set_parent(SageBuilder::topScopeStack());
+            sg_class_decl->set_firstNondefiningDeclaration(sg_first_class_decl);
+            sg_class_decl->set_class_type(sg_first_class_decl->get_class_type());
+            sg_def_class_decl = sg_class_decl;
+            sg_first_class_decl->set_definingDeclaration(sg_def_class_decl);
+            sg_first_class_decl->setCompilerGenerated();
+        }
+
+        SgClassDefinition * sg_class_def = isSgClassDefinition(sg_class_decl->get_definition());
+        if (sg_class_def == NULL) {
+            sg_class_def = SageBuilder::buildClassDefinition(sg_class_decl);
+            sg_class_def->set_parent(sg_class_decl);
+        }
+
+        SageBuilder::pushScopeStack(sg_class_def);
+
+        clang::RecordDecl::field_iterator it;
+        for (it = record_decl->field_begin(); it != record_decl->field_end(); it++) {
+            SgNode * tmp_field = Traverse(*it);
+            SgDeclarationStatement * field_decl = isSgDeclarationStatement(tmp_field);
+            ROSE_ASSERT(field_decl != NULL);
+            sg_class_def->append_member(field_decl);
+        }
+
+        SageBuilder::popScopeStack();
+    }
+
+    return VisitDecl(record_decl, node) && res;
+}
+
+bool ClangToSageTranslator::VisitTypedefDecl(clang::TypedefDecl * typedef_decl, SgNode ** node) {
+    bool res = true;
+
+    SgName name(typedef_decl->getNameAsString());
+
+    SgNode * tmp_type = Traverse(typedef_decl->getUnderlyingType().getTypePtr());
+    SgType * type = isSgType(tmp_type);
+    if (type == NULL) {
+        std::cerr << "Runtime Error: Cannot retrieve the base type of the typedef: " << name << std::endl;
+        res = false;
+    }
+
+    *node = SageBuilder::buildTypedefDeclaration_nfi(name, type, SageBuilder::topScopeStack());
+
+    return VisitDecl(typedef_decl, node) && res;
+}
+
+bool ClangToSageTranslator::VisitFieldDecl(clang::FieldDecl * field_decl, SgNode ** node) {
+    bool res = true;
+    
+    SgName name(field_decl->getNameAsString());
+
+    clang::QualType qual_type = field_decl->getType();
+    SgNode * tmp_type = Traverse(qual_type.getTypePtr());
+    SgType * type = isSgType(tmp_type);
+    if (tmp_type != NULL && type == NULL) {
+        std::cerr << "Runtime error: tmp_type != NULL && type == NULL" << std::endl;
+        res = false;
+    }
+    else if (type != NULL) {
+        // TODO qualifiers
+    }
+
+    clang::Expr * init_expr = field_decl->getInClassInitializer();
+    SgNode * tmp_init = Traverse(init_expr);
+    SgExpression * expr = isSgExpression(tmp_init);
+    if (tmp_init != NULL && expr == NULL) {
+        std::cerr << "Runtime error: not a SgInitializer..." << std::endl; // TODO
+        res = false;
+    }
+    SgInitializer * init = expr != NULL ? SageBuilder::buildAssignInitializer_nfi(expr, expr->get_type()) : NULL;
+    if (init != NULL)
+        applySourceRange(init, init_expr->getSourceRange());
+
+    *node = SageBuilder::buildVariableDeclaration(name, type, init, SageBuilder::topScopeStack());
+    (*node)->set_parent(SageBuilder::topScopeStack());
+
+    return VisitDecl(field_decl, node) && res; 
+}
+
 bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_decl, SgNode ** node) {
     bool res = true;
+
+    // FIXME: There is something weird here when try to Traverse a function reference in a recursive function (when first Traverse is not complete)
+    //        It seems that it tries to instantiate the decl inside the function...
+    //        It may be faster to recode from scratch...
 
     SgName name(function_decl->getNameAsString());
 
@@ -419,6 +738,18 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
 
         SgFunctionDefinition * function_definition = new SgFunctionDefinition(sg_function_decl, NULL);
 
+        SgInitializedNamePtrList & init_names = param_list->get_args();
+        SgInitializedNamePtrList::iterator it;
+        for (it = init_names.begin(); it != init_names.end(); it++) {
+            (*it)->set_scope(function_definition);
+            SgSymbolTable * st = function_definition->get_symbol_table();
+            ROSE_ASSERT(st != NULL);
+            SgVariableSymbol * tmp_sym  = new SgVariableSymbol(*it);
+            st->insert((*it)->get_name(), tmp_sym);
+            tmp_sym->set_parent(st);
+        }
+
+
         SageBuilder::pushScopeStack(function_definition);
 
         SgNode * tmp_body = Traverse(function_decl->getBody());
@@ -438,14 +769,6 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
 
         sg_function_decl->set_definition(function_definition);
         function_definition->set_parent(sg_function_decl);
-
-        SgInitializedNamePtrList & init_names = param_list->get_args();
-        SgInitializedNamePtrList::iterator it;
-        for (it = init_names.begin(); it != init_names.end(); it++) {
-             (*it)->set_scope(function_definition);
-             SgSymbolTable * st = function_definition->get_symbol_table();
-             // TODO insert symbol
-        }
 
         SgFunctionDeclaration * first_decl;
         if (function_decl->getFirstDeclaration() == function_decl) {
@@ -612,6 +935,7 @@ bool ClangToSageTranslator::VisitTranslationUnitDecl(clang::TranslationUnitDecl 
         SgDeclarationStatement * decl_stmt = isSgDeclarationStatement(child);
         if (decl_stmt == NULL) {
             std::cerr << "Runtime error: the node produce for a clang::Decl is not a SgDeclarationStatement !" << std::endl;
+            std::cerr << "    class = " << child->class_name() << std::endl;
             res = false;
         }
         else
@@ -724,6 +1048,24 @@ bool ClangToSageTranslator::VisitExpr(clang::Expr * expr, SgNode ** node) {
      return VisitStmt(expr, node);
 }
 
+bool ClangToSageTranslator::VisitConditionalOperator(clang::ConditionalOperator * conditional_operator, SgNode ** node) {
+    bool res = true;
+
+    SgNode * tmp_cond  = Traverse(conditional_operator->getCond());
+    SgExpression * cond_expr = isSgExpression(tmp_cond);
+    ROSE_ASSERT(cond_expr);
+    SgNode * tmp_true  = Traverse(conditional_operator->getTrueExpr());
+    SgExpression * true_expr = isSgExpression(tmp_true);
+    ROSE_ASSERT(true_expr);
+    SgNode * tmp_false = Traverse(conditional_operator->getFalseExpr());
+    SgExpression * false_expr = isSgExpression(tmp_false);
+    ROSE_ASSERT(false_expr);
+
+    *node = SageBuilder::buildConditionalExp(cond_expr, true_expr, false_expr);
+
+    return VisitExpr(conditional_operator, node) && res;
+}
+
 bool ClangToSageTranslator::VisitBinaryOperator(clang::BinaryOperator * binary_operator, SgNode ** node) {
     bool res = true;
 
@@ -780,6 +1122,28 @@ bool ClangToSageTranslator::VisitBinaryOperator(clang::BinaryOperator * binary_o
     }
 
     return VisitExpr(binary_operator, node) && res;
+}
+
+bool ClangToSageTranslator::VisitArraySubscriptExpr(clang::ArraySubscriptExpr * array_subscript_expr, SgNode ** node) {
+    bool res = true;
+
+    SgNode * tmp_base = Traverse(array_subscript_expr->getBase());
+    SgExpression * base = isSgExpression(tmp_base);
+    if (tmp_base != NULL && base == NULL) {
+        std::cerr << "Runtime error: tmp_base != NULL && base == NULL" << std::endl;
+        res = false;
+    }
+
+    SgNode * tmp_idx = Traverse(array_subscript_expr->getIdx());
+    SgExpression * idx = isSgExpression(tmp_idx);
+    if (tmp_idx != NULL && idx == NULL) {
+        std::cerr << "Runtime error: tmp_idx != NULL && idx == NULL" << std::endl;
+        res = false;
+    }
+
+    *node = SageBuilder::buildPntrArrRefExp(base, idx);
+
+    return VisitExpr(array_subscript_expr, node) && res;
 }
 
 bool ClangToSageTranslator::VisitCallExpr(clang::CallExpr * call_expr, SgNode ** node) {
@@ -854,25 +1218,32 @@ bool ClangToSageTranslator::VisitCharacterLiteral(clang::CharacterLiteral * char
 bool ClangToSageTranslator::VisitDeclRefExpr(clang::DeclRefExpr * decl_ref_expr, SgNode ** node) {
     bool res = true;
 
-    SgNode * tmp_node = Traverse(decl_ref_expr->getDecl());
-    SgVariableDeclaration * var_decl = isSgVariableDeclaration(tmp_node);
-    SgFunctionDeclaration * fun_decl = isSgFunctionDeclaration(tmp_node);
-    SgInitializedName * init_name    = isSgInitializedName(tmp_node);
-    
-    bool successful_cast = var_decl || fun_decl || init_name;
-    if (tmp_node != NULL && !successful_cast) {
-        std::cerr << "Runtime error: tmp_node != NULL && !successful_cast" << std::endl;
-        std::cerr << "tmp_node->class_name() = " << tmp_node->class_name()  << std::endl;
+    //SgNode * tmp_node = Traverse(decl_ref_expr->getDecl());
+    // DONE: Do not use Traverse(...) as the declaration can not be complete (recursive functions)
+    //       Instead use SymbolTable from ROSE as the symbol should be ready (cannot have a reference before the declaration)
+    // FIXME: This fix will not work for C++ (methods/fields can be use before they are declared...)
+
+    SgSymbol * sym = GetSymbolFromSymbolTable(decl_ref_expr->getDecl());
+
+    if (sym == NULL) {
+        std::cerr << "Runtime error: Cannot find the symbol for a declaration reference." << std::endl;
         res = false;
     }
-    else if (var_decl != NULL) {
-        *node = SageBuilder::buildVarRefExp(var_decl);
+
+    SgVariableSymbol * var_sym  = isSgVariableSymbol(sym);
+    SgFunctionSymbol * func_sym = isSgFunctionSymbol(sym);
+
+    bool successful_cast = var_sym || func_sym;
+    if (sym != NULL && !successful_cast) {
+        std::cerr << "Runtime error: Unknown type of symbol for a declaration reference." << std::endl;
+        std::cerr << "    sym->class_name() = " << sym->class_name()  << std::endl;
+        res = false;
     }
-    else if (fun_decl != NULL) {
-        *node = SageBuilder::buildFunctionRefExp(fun_decl);
+    else if (var_sym != NULL) {
+        *node = SageBuilder::buildVarRefExp(var_sym);
     }
-    else if (init_name != NULL) {
-        *node = SageBuilder::buildVarRefExp(init_name, init_name->get_scope());
+    else if (func_sym != NULL) {
+        *node = SageBuilder::buildFunctionRefExp(func_sym);
     }
 
     return VisitExpr(decl_ref_expr, node) && res;
@@ -885,11 +1256,294 @@ bool ClangToSageTranslator::VisitIntegerLiteral(clang::IntegerLiteral * integer_
     return VisitExpr(integer_literal, node);
 }
 
+bool ClangToSageTranslator::VisitMemberExpr(clang::MemberExpr * member_expr, SgNode ** node) {
+    bool res = true;
+
+    SgNode * tmp_base = Traverse(member_expr->getBase());
+    SgExpression * base = isSgExpression(tmp_base);
+    ROSE_ASSERT(base != NULL);
+
+    SgSymbol * sym = GetSymbolFromSymbolTable(member_expr->getMemberDecl());
+
+    SgVariableSymbol * var_sym  = isSgVariableSymbol(sym);
+    SgMemberFunctionSymbol * func_sym = isSgMemberFunctionSymbol(sym);
+
+    SgExpression * sg_member_expr = NULL;
+
+    bool successful_cast = var_sym || func_sym;
+    if (sym != NULL && !successful_cast) {
+        std::cerr << "Runtime error: Unknown type of symbol for a member reference." << std::endl;
+        std::cerr << "    sym->class_name() = " << sym->class_name()  << std::endl;
+        res = false;
+    }
+    else if (var_sym != NULL) {
+        sg_member_expr = SageBuilder::buildVarRefExp(var_sym);
+    }
+    else if (func_sym != NULL) { // C++
+        sg_member_expr = SageBuilder::buildMemberFunctionRefExp_nfi(func_sym, false, false); // FIXME 2nd and 3rd params ?
+    }
+
+    ROSE_ASSERT(sg_member_expr != NULL);
+
+    // TODO (C++) member_expr->getQualifier() : for 'a->Base::foo'
+
+    if (member_expr->isArrow())
+        *node = SageBuilder::buildArrowExp(base, sg_member_expr);
+    else
+        *node = SageBuilder::buildDotExp(base, sg_member_expr);
+
+    return VisitExpr(member_expr, node) && res;
+}
+
 bool ClangToSageTranslator::VisitStringLiteral(clang::StringLiteral * string_literal, SgNode ** node) {
 //  *node = SageBuilder::buildStringVal_nfi(string_literal->getString().str());
     *node = SageBuilder::buildStringVal(string_literal->getString().str());
 
     return VisitExpr(string_literal, node);
+}
+
+bool ClangToSageTranslator::VisitUnaryOperator(clang::UnaryOperator * unary_operator, SgNode ** node) {
+    bool res = true;
+
+    SgNode * tmp_subexpr = Traverse(unary_operator->getSubExpr());
+    SgExpression * subexpr = isSgExpression(tmp_subexpr);
+    if (tmp_subexpr != NULL && subexpr == NULL) {
+        std::cerr << "Runtime error: tmp_subexpr != NULL && subexpr == NULL" << std::endl;
+        res = false;
+    }
+
+    switch (unary_operator->getOpcode()) {
+        case clang::UO_PostInc:
+            *node = SageBuilder::buildPlusPlusOp(subexpr, SgUnaryOp::postfix);
+            break;
+        case clang::UO_PostDec:
+            *node = SageBuilder::buildMinusMinusOp(subexpr, SgUnaryOp::postfix);
+            break;
+        case clang::UO_PreInc:
+            *node = SageBuilder::buildPlusPlusOp(subexpr, SgUnaryOp::prefix);
+            break;
+        case clang::UO_PreDec:
+            *node = SageBuilder::buildMinusMinusOp(subexpr, SgUnaryOp::prefix);
+            break;
+        case clang::UO_AddrOf:
+            *node = SageBuilder::buildAddressOfOp(subexpr);
+            break;
+        case clang::UO_Deref:
+            *node = SageBuilder::buildPointerDerefExp(subexpr);
+            break;
+        case clang::UO_Plus:
+            *node = SageBuilder::buildUnaryAddOp(subexpr);
+            break;
+        case clang::UO_Minus:
+            *node = SageBuilder::buildMinusOp(subexpr);
+            break;
+        case clang::UO_Not:
+            *node = SageBuilder::buildNotOp(subexpr);
+            break;
+        case clang::UO_LNot:
+            *node = SageBuilder::buildBitComplementOp(subexpr);
+            break;
+        case clang::UO_Real:
+        case clang::UO_Imag:
+        case clang::UO_Extension:
+        default:
+            std::cerr << "Runtime error: Unknown unary operator." << std::endl;
+            res = false;
+    }
+
+    return VisitStmt(unary_operator, node) && res;
+}
+
+bool ClangToSageTranslator::VisitForStmt(clang::ForStmt * for_stmt, SgNode ** node) {
+    bool res = true;
+
+//    *node = SageBuilder::buildForStatement_nfi(init_stmt, SageBuilder::buildExprStatement(cond), inc, NULL);
+    *node = SageBuilder::buildForStatement_nfi((SgForInitStatement *)NULL, NULL, NULL, NULL);
+
+    SageBuilder::pushScopeStack(isSgScopeStatement(*node));
+
+    SgNode * tmp_init = Traverse(for_stmt->getInit());
+    SgStatement * init_stmt = isSgStatement(tmp_init);
+    SgExpression * init_expr = isSgExpression(tmp_init);
+    if (tmp_init != NULL && init_stmt == NULL) {
+        if (init_expr == NULL) {
+            std::cerr << "Runtime error: tmp_init != NULL && init_stmt == NULL && init_expr == NULL (" << tmp_init->class_name() << ")" << std::endl;
+            res = false;
+        }
+        else {
+            init_stmt = SageBuilder::buildExprStatement(init_expr);
+            applySourceRange(init_stmt, for_stmt->getInit()->getSourceRange());
+        }
+    }
+
+    SgNode * tmp_cond = Traverse(for_stmt->getCond());
+    SgExpression * cond = isSgExpression(tmp_cond);
+    if (tmp_cond != NULL && cond == NULL) {
+        std::cerr << "Runtime error: tmp_cond != NULL && cond == NULL" << std::endl;
+        res = false;
+    }
+    SgStatement * cond_stmt = SageBuilder::buildExprStatement(cond);
+
+    SgNode * tmp_inc  = Traverse(for_stmt->getInc());
+    SgExpression * inc = isSgExpression(tmp_inc);
+    if (tmp_inc != NULL && inc == NULL) {
+        std::cerr << "Runtime error: tmp_inc != NULL && inc == NULL" << std::endl;
+        res = false;
+    }
+
+    SgNode * tmp_body = Traverse(for_stmt->getBody());
+    SgStatement * body = isSgStatement(tmp_body);
+    if (body == NULL) {
+        SgExpression * body_expr = isSgExpression(tmp_body);
+        if (body_expr != NULL)
+            body = SageBuilder::buildExprStatement(body_expr);
+    }
+    if (tmp_body != NULL && body == NULL) {
+        std::cerr << "Runtime error: tmp_body != NULL && body == NULL" << std::endl;
+        res = false;
+    }
+
+    SageBuilder::popScopeStack();
+
+    SgStatementPtrList for_init_stmt_list;
+    for_init_stmt_list.push_back(init_stmt);
+    SgForInitStatement * for_init_stmt = SageBuilder::buildForInitStatement_nfi(for_init_stmt_list);
+//    applySourceRange(for_init_stmt, for_stmt->getInit()->getSourceRange());
+
+    for_init_stmt->set_parent(*node);
+    if (isSgForStatement(*node)->get_for_init_stmt() != NULL)
+        SageInterface::deleteAST(isSgForStatement(*node)->get_for_init_stmt());
+    isSgForStatement(*node)->set_for_init_stmt(for_init_stmt);
+
+    cond_stmt->set_parent(*node);
+    isSgForStatement(*node)->set_test(cond_stmt);
+
+    inc->set_parent(*node);
+    isSgForStatement(*node)->set_increment(inc);
+
+    body->set_parent(*node);
+    isSgForStatement(*node)->set_loop_body(body);
+
+    applySourceRange(isSgForStatement(*node)->get_for_init_stmt(), for_stmt->getInit()->getSourceRange());
+    applySourceRange(isSgForStatement(*node)->get_test(), for_stmt->getCond()->getSourceRange());
+
+    return VisitStmt(for_stmt, node) && res;
+}
+
+bool ClangToSageTranslator::VisitGotoStmt(clang::GotoStmt * goto_stmt, SgNode ** node) {
+    bool res = true;
+/*
+    SgSymbol * tmp_sym = GetSymbolFromSymbolTable(goto_stmt->getLabel());
+    SgLabelSymbol * sym = isSgLabelSymbol(tmp_sym);
+    if (sym == NULL) {
+        std::cerr << "Runtime error: Cannot find the symbol for the label: \"" << goto_stmt->getLabel()->getStmt()->getName() << "\"." << std::endl;
+        res = false;
+    }
+    else {
+        *node = SageBuilder::buildGotoStatement(sym->get_declaration());
+    }
+*/
+
+    SgNode * tmp_label = Traverse(goto_stmt->getLabel()->getStmt());
+    SgLabelStatement * label_stmt = isSgLabelStatement(tmp_label);
+    if (label_stmt == NULL) {
+        std::cerr << "Runtime Error: Cannot find the label: \"" << goto_stmt->getLabel()->getStmt()->getName() << "\"." << std::endl;
+        res = false;
+    }
+    else {
+        *node = SageBuilder::buildGotoStatement(label_stmt);
+    }
+
+    return VisitStmt(goto_stmt, node) && res;
+}
+
+bool ClangToSageTranslator::VisitIfStmt(clang::IfStmt * if_stmt, SgNode ** node) {
+    bool res = true;
+
+    // TODO if_stmt->getConditionVariable()
+
+    *node = SageBuilder::buildIfStmt_nfi(NULL, NULL, NULL);
+
+    SageBuilder::pushScopeStack(isSgScopeStatement(*node));
+
+    SgNode * tmp_cond = Traverse(if_stmt->getCond());
+    SgExpression * cond_expr = isSgExpression(tmp_cond);
+    SgStatement * cond_stmt = SageBuilder::buildExprStatement(cond_expr);
+    applySourceRange(cond_stmt, if_stmt->getCond()->getSourceRange());
+
+    SgNode * tmp_then = Traverse(if_stmt->getThen());
+    SgStatement * then_stmt = isSgStatement(tmp_then);
+    if (then_stmt == NULL) {
+        SgExpression * then_expr = isSgExpression(tmp_then);
+        ROSE_ASSERT(then_expr != NULL);
+        then_stmt = SageBuilder::buildExprStatement(then_expr);
+    }
+    applySourceRange(then_stmt, if_stmt->getThen()->getSourceRange());
+
+    SgNode * tmp_else = Traverse(if_stmt->getElse());
+    SgStatement * else_stmt = isSgStatement(tmp_else);
+    if (else_stmt == NULL) {
+        SgExpression * else_expr = isSgExpression(tmp_else);
+        if (else_expr != NULL)
+            else_stmt = SageBuilder::buildExprStatement(else_expr);
+    }
+    if (else_stmt != NULL) applySourceRange(else_stmt, if_stmt->getElse()->getSourceRange());
+
+    SageBuilder::popScopeStack();
+
+    cond_stmt->set_parent(*node);
+    isSgIfStmt(*node)->set_conditional(cond_stmt);
+
+    then_stmt->set_parent(*node);
+    isSgIfStmt(*node)->set_true_body(then_stmt);
+    if (else_stmt != NULL) {
+      else_stmt->set_parent(*node);
+      isSgIfStmt(*node)->set_false_body(else_stmt);
+    }
+
+    return VisitStmt(if_stmt, node) && res;
+}
+
+bool ClangToSageTranslator::VisitLabelStmt(clang::LabelStmt * label_stmt, SgNode ** node) {
+    bool res = true;
+
+    SgName name(label_stmt->getName());
+
+    SgNode * tmp_sub_stmt = Traverse(label_stmt->getSubStmt());
+    SgStatement * sg_sub_stmt = isSgStatement(tmp_sub_stmt);
+    if (sg_sub_stmt == NULL) {
+        SgExpression * sg_sub_expr = isSgExpression(tmp_sub_stmt);
+        ROSE_ASSERT(sg_sub_expr != NULL);
+        sg_sub_stmt = SageBuilder::buildExprStatement(sg_sub_expr);
+    }
+
+    ROSE_ASSERT(sg_sub_stmt != NULL);
+
+    *node = SageBuilder::buildLabelStatement_nfi(name, sg_sub_stmt, SageBuilder::topScopeStack());
+
+    SgLabelStatement * sg_label_stmt = isSgLabelStatement(*node);
+    SgFunctionDefinition * label_scope = NULL;
+    std::list<SgScopeStatement *>::reverse_iterator it = SageBuilder::ScopeStack.rbegin();
+    while (it != SageBuilder::ScopeStack.rend() && label_scope == NULL) {
+        label_scope = isSgFunctionDefinition(*it);
+        it++;
+    }
+    if (label_scope == NULL) {
+         std::cerr << "Runtime error: Cannot find a surrounding function definition for the label statement: \"" << name << "\"." << std::endl;
+         res = false;
+    }
+    else {
+        sg_label_stmt->set_scope(label_scope);
+        SgLabelSymbol* label_sym = new SgLabelSymbol(sg_label_stmt);
+        label_scope->insert_symbol(label_sym->get_name(), label_sym);
+    }
+
+    return VisitStmt(label_stmt, node) && res;
+}
+
+bool ClangToSageTranslator::VisitNullStmt(clang::NullStmt * null_stmt, SgNode ** node) {
+    *node = SageBuilder::buildNullStatement_nfi();
+    return VisitStmt(null_stmt, node);
 }
 
 bool ClangToSageTranslator::VisitReturnStmt(clang::ReturnStmt * return_stmt, SgNode ** node) {
@@ -1053,7 +1707,7 @@ bool ClangToSageTranslator::VisitParenType(clang::ParenType * paren_type, SgNode
 
     // TODO qualifiers
 
-    return true;
+    return VisitType(paren_type, node);
 }
 
 bool ClangToSageTranslator::VisitPointerType(clang::PointerType * pointer_type, SgNode ** node) {
@@ -1067,5 +1721,200 @@ bool ClangToSageTranslator::VisitPointerType(clang::PointerType * pointer_type, 
     *node = SageBuilder::buildPointerType(type);
 
     return VisitType(pointer_type, node);
+}
+
+bool ClangToSageTranslator::VisitRecordType(clang::RecordType * record_type, SgNode ** node) {
+    bool res = true;
+
+    SgSymbol * sym = GetSymbolFromSymbolTable(record_type->getDecl());
+
+    SgClassSymbol * class_sym = isSgClassSymbol(sym);
+
+    if (class_sym == NULL) {
+        std::cerr << "Runtime Error: Cannot find a class symbol for the RecordType." << std::endl;
+        res = false;
+    }
+
+    *node = class_sym->get_type();
+
+    return VisitType(record_type, node) && res;
+}
+
+bool ClangToSageTranslator::VisitTypedefType(clang::TypedefType * typedef_type, SgNode ** node) {
+    bool res = true;
+
+    SgSymbol * sym = GetSymbolFromSymbolTable(typedef_type->getDecl());
+    SgTypedefSymbol * tdef_sym = isSgTypedefSymbol(sym);
+
+    if (tdef_sym == NULL) {
+        std::cerr << "Runtime Error: Cannot find a typedef symbol for the TypedefType." << std::endl;
+        res = false;
+    }
+
+    *node = tdef_sym->get_type();
+
+   return VisitType(typedef_type, node) && res;
+}
+
+bool ClangToSageTranslator::VisitElaboratedType(clang::ElaboratedType * elaborated_type, SgNode ** node) {
+    clang::QualType qual_type = elaborated_type->getNamedType();
+
+    SgNode * tmp_type = Traverse(qual_type.getTypePtr());
+    SgType * type = isSgType(tmp_type);
+
+    ROSE_ASSERT(type != NULL);
+
+    // TODO clang::ElaboratedType contains the "sugar" of a type reference (eg, "struct A" or "M::N::A"), it should be pass down to ROSE
+
+    *node = type;
+
+    // TODO qualifiers
+
+    return VisitType(elaborated_type, node);
+}
+
+std::pair<Sg_File_Info *, PreprocessingInfo *> ClangToSageTranslator::preprocessor_top() {
+    return p_sage_preprocessor_recorder->top();
+}
+
+bool ClangToSageTranslator::preprocessor_pop() {
+    return p_sage_preprocessor_recorder->pop();
+}
+
+// 
+
+SagePreprocessorRecord::SagePreprocessorRecord(clang::SourceManager * source_manager) :
+  p_source_manager(source_manager),
+  p_preprocessor_record_list()
+{}
+
+void SagePreprocessorRecord::InclusionDirective(clang::SourceLocation HashLoc, const clang::Token & IncludeTok, llvm::StringRef FileName, bool IsAngled,
+                                                const clang::FileEntry * File, clang::SourceLocation EndLoc, llvm::StringRef SearchPath, llvm::StringRef RelativePath) {
+    std::cerr << "InclusionDirective" << std::endl;
+
+    bool inv_begin_line;
+    bool inv_begin_col;
+
+    unsigned ls = p_source_manager->getSpellingLineNumber(HashLoc, &inv_begin_line);
+    unsigned cs = p_source_manager->getSpellingColumnNumber(HashLoc, &inv_begin_col);
+
+    std::string file = p_source_manager->getFileEntryForID(p_source_manager->getFileID(HashLoc))->getName();
+
+    std::cerr << "    In file  : " << file << std::endl;
+    std::cerr << "    From     : " << ls << ":" << cs << std::endl;
+    std::cerr << "    Included : " << FileName.str() << std::endl;
+    std::cerr << "    Is angled: " << (IsAngled ? "T" : "F") << std::endl;
+
+    Sg_File_Info * file_info = new Sg_File_Info(file, ls, cs);
+    PreprocessingInfo * preproc_info = new PreprocessingInfo(
+                                                  PreprocessingInfo::CpreprocessorIncludeDeclaration,
+                                                  FileName.str(),
+                                                  file,
+                                                  ls,
+                                                  cs,
+                                                  0,
+                                                  PreprocessingInfo::before
+                                           );
+
+    p_preprocessor_record_list.push_back(std::pair<Sg_File_Info *, PreprocessingInfo *>(file_info, preproc_info));
+}
+
+void SagePreprocessorRecord::EndOfMainFile() {
+    std::cerr << "EndOfMainFile" << std::endl;
+    ROSE_ASSERT(false);
+}
+
+void SagePreprocessorRecord::Ident(clang::SourceLocation Loc, const std::string & str) {
+    std::cerr << "Ident" << std::endl;
+    ROSE_ASSERT(false);
+}
+
+void SagePreprocessorRecord::PragmaComment(clang::SourceLocation Loc, const clang::IdentifierInfo * Kind, const std::string & Str) {
+    std::cerr << "PragmaComment" << std::endl;
+    ROSE_ASSERT(false);
+}
+
+void SagePreprocessorRecord::PragmaMessage(clang::SourceLocation Loc, llvm::StringRef Str) {
+    std::cerr << "PragmaMessage" << std::endl;
+    ROSE_ASSERT(false);
+}
+
+void SagePreprocessorRecord::PragmaDiagnosticPush(clang::SourceLocation Loc, llvm::StringRef Namespace) {
+    std::cerr << "PragmaDiagnosticPush" << std::endl;
+    ROSE_ASSERT(false);
+}
+
+void SagePreprocessorRecord::PragmaDiagnosticPop(clang::SourceLocation Loc, llvm::StringRef Namespace) {
+    std::cerr << "PragmaDiagnosticPop" << std::endl;
+    ROSE_ASSERT(false);
+}
+
+void SagePreprocessorRecord::PragmaDiagnostic(clang::SourceLocation Loc, llvm::StringRef Namespace, clang::diag::Mapping mapping, llvm::StringRef Str) {
+    std::cerr << "PragmaDiagnostic" << std::endl;
+    ROSE_ASSERT(false);
+}
+
+void SagePreprocessorRecord::MacroExpands(const clang::Token & MacroNameTok, const clang::MacroInfo * MI, clang::SourceRange Range) {
+    std::cerr << "MacroExpands" << std::endl;
+    ROSE_ASSERT(false);
+}
+
+void SagePreprocessorRecord::MacroDefined(const clang::Token & MacroNameTok, const clang::MacroInfo * MI) {
+    std::cerr << "" << std::endl;
+    ROSE_ASSERT(false);
+}
+
+void SagePreprocessorRecord::MacroUndefined(const clang::Token & MacroNameTok, const clang::MacroInfo * MI) {
+    std::cerr << "MacroUndefined" << std::endl;
+    ROSE_ASSERT(false);
+}
+
+void SagePreprocessorRecord::Defined(const clang::Token & MacroNameTok) {
+    std::cerr << "Defined" << std::endl;
+    ROSE_ASSERT(false);
+}
+
+void SagePreprocessorRecord::SourceRangeSkipped(clang::SourceRange Range) {
+    std::cerr << "SourceRangeSkipped" << std::endl;
+    ROSE_ASSERT(false);
+}
+
+void SagePreprocessorRecord::If(clang::SourceRange Range) {
+    std::cerr << "If" << std::endl;
+    ROSE_ASSERT(false);
+}
+
+void SagePreprocessorRecord::Elif(clang::SourceRange Range) {
+    std::cerr << "Elif" << std::endl;
+    ROSE_ASSERT(false);
+}
+
+void SagePreprocessorRecord::Ifdef(const clang::Token & MacroNameTok) {
+    std::cerr << "Ifdef" << std::endl;
+    ROSE_ASSERT(false);
+}
+
+void SagePreprocessorRecord::Ifndef(const clang::Token & MacroNameTok) {
+    std::cerr << "Ifndef" << std::endl;
+    ROSE_ASSERT(false);
+}
+
+void SagePreprocessorRecord::Else() {
+    std::cerr << "Else" << std::endl;
+    ROSE_ASSERT(false);
+}
+
+void SagePreprocessorRecord::Endif() {
+    std::cerr << "Endif" << std::endl;
+    ROSE_ASSERT(false);
+}
+
+std::pair<Sg_File_Info *, PreprocessingInfo *> SagePreprocessorRecord::top() {
+    return p_preprocessor_record_list.front();
+}
+
+bool SagePreprocessorRecord::pop() {
+    p_preprocessor_record_list.erase(p_preprocessor_record_list.begin());
+    return !p_preprocessor_record_list.empty();
 }
 

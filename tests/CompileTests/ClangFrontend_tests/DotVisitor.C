@@ -125,6 +125,12 @@ std::string DotVisitor::genNameForEmptyNode() {
 }
 
 std::string DotVisitor::findNameForDeclContext(clang::DeclContext * decl_context) {
+    return genNameForEmptyNode();
+
+    if (decl_context == NULL) return genNameForEmptyNode();
+
+//    std::cout << "decl_context->getDeclKindName() = " << decl_context->getDeclKindName() << "(decl_context = " << decl_context << ")" << std::endl;
+
     return DotVisitor::genNameForNode((clang::Decl *)decl_context);
 }
 
@@ -144,16 +150,19 @@ std::string DotVisitor::genNameForNode(clang::Stmt * stmt) {
 
 std::string DotVisitor::genNameForNode(clang::Decl * decl) {
     if (decl == NULL) return genNameForEmptyNode();
-   std::map<const clang::Decl *, std::string>::iterator name_it = p_decls_name.find(decl);
-   if (name_it == p_decls_name.end()) {
-       std::ostringstream name;
-       name << decl->getDeclKindName() << "_" << decl;
-       name_it = p_decls_name.insert(std::pair<const clang::Decl *, std::string>(decl, name.str())).first;
-   }
 
-   p_all_decls.insert(std::pair<std::string, clang::Decl *>(name_it->second, decl));
+//    std::cout << "decl->getDeclKindName() = " << decl->getDeclKindName() << "(decl = " << decl << ")" << std::endl;
 
-   return name_it->second;
+    std::map<const clang::Decl *, std::string>::iterator name_it = p_decls_name.find(decl);
+    if (name_it == p_decls_name.end()) {
+        std::ostringstream name;
+        name << decl->getDeclKindName() << "_" << decl;
+        name_it = p_decls_name.insert(std::pair<const clang::Decl *, std::string>(decl, name.str())).first;
+    }
+
+    p_all_decls.insert(std::pair<std::string, clang::Decl *>(name_it->second, decl));
+
+    return name_it->second;
 }
 
 std::string DotVisitor::genNameForNode(const clang::Type * type) {
@@ -371,12 +380,12 @@ bool DotVisitor::VisitFunctionDecl(clang::FunctionDecl * function_decl) {
 
     dot_node_it->second.setChild(
         "most_recent_decl",
-        genNameForNode(function_decl->getMostRecentDeclaration())
+        genNameForNode(function_decl->getMostRecentDecl())
     );
 
     dot_node_it->second.setChild(
         "previous_decl",
-        genNameForNode(function_decl->getPreviousDeclaration())
+        genNameForNode(function_decl->getPreviousDecl())
     );
 
     dot_node_it->second.setChild(
@@ -635,7 +644,7 @@ bool DotVisitor::VisitRecordDecl(clang::RecordDecl * record_decl) {
 
     dot_node_it->second.setChild(
         "previous_declaration",
-        genNameForNode(record_decl->getPreviousDeclaration())
+        genNameForNode(record_decl->getPreviousDecl())
     );
 
     dot_node_it->second.setChild(
@@ -672,7 +681,7 @@ bool DotVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl * cxx_record_decl) {
 
     dot_node_it->second.setChild(
         "previous_declaration",
-        genNameForNode(cxx_record_decl->getPreviousDeclaration())
+        genNameForNode(cxx_record_decl->getPreviousDecl())
     );
 
     dot_node_it->second.setChild(
@@ -974,10 +983,10 @@ bool DotVisitor::VisitNamespaceDecl(clang::NamespaceDecl * namespace_decl) {
 
     dot_node_it->second.setTitle("Namespace Declaration");
 
-    dot_node_it->second.setChild(
-        "next",
-        genNameForNode(namespace_decl->getNextNamespace())
-    );
+//    dot_node_it->second.setChild(
+//        "next",
+//        genNameForNode(namespace_decl->getNextNamespace())
+//    );
 
     dot_node_it->second.setChild(
         "original",
@@ -3503,7 +3512,7 @@ void DotNode::useAsDeclContext(clang::DeclContext * decl_context, DotVisitor & d
     setChild("primary_context", dot_visitor.findNameForDeclContext(decl_context->getPrimaryContext()), DotNode::decl_context);
     setChild("redecl_context", dot_visitor.findNameForDeclContext(decl_context->getRedeclContext()), DotNode::decl_context);
     setChild("enclosing_context", dot_visitor.findNameForDeclContext(decl_context->getEnclosingNamespaceContext()), DotNode::decl_context);
-    setChild("next_context", dot_visitor.findNameForDeclContext(decl_context->getNextContext()), DotNode::decl_context);
+//    setChild("next_context", dot_visitor.findNameForDeclContext(decl_context->getNextContext()), DotNode::decl_context);
 
     clang::DeclContext::decl_iterator it;
     unsigned cnt = 0;
