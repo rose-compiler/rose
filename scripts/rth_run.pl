@@ -538,7 +538,7 @@ if ($config{may_fail} eq 'yes') {
 	unlink $lock;
 	die "$0: $file: $!\n";
       };
-      print MAY_FAIL $_, " ", $may_fail{$_}, "\n" for sort keys %may_fail;
+      printf MAY_FAIL "%-40s %s\n", $_, $may_fail{$_} for sort keys %may_fail;
       close MAY_FAIL;
     } else {
       # Test may-fail value is "promote" and the test passed. We'd like to promote the test to "must-pass", but we can't
