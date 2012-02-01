@@ -124,9 +124,20 @@ struct PtrInfo {
             o <<"    no pointers\n";
         } else {
             for (PtrInfo::Pointers::const_iterator pi=pointers.begin(); pi!=pointers.end(); ++pi) {
-                o <<"    "
-                  <<(0!=(pi->type & PtrInfo::CODE_PTR) ? "code" : "data")
-                  <<" pointer at " <<(pi->address.get_expression()) <<"\n";
+                o <<"    " <<(0!=(pi->type & PtrInfo::CODE_PTR) ? "code pointer" : "data pointer");
+                if (pi->address.is_known()) {
+                    if (pi->address.known_value()>=analysis_stack_va &&
+                        pi->address.known_value()<analysis_stack_va + 0x8000) { // arbitrary limit
+                        o <<", function argument at " <<pi->address.get_expression() <<"\n";
+                    } else if (pi->address.known_value()<analysis_stack_va &&
+                               pi->address.known_value()>=analysis_stack_va - 0x8000) { // arbitrary limit
+                        o <<", auto variable at " <<pi->address.get_expression() <<"\n";
+                    } else {
+                        o <<", non-stack, constant address\n";
+                    }
+                } else {
+                    o <<", symbolic address\n";
+                }
             }
         }
     }

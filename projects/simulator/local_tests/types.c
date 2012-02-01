@@ -287,3 +287,19 @@ int flow06(int n, int *a, int *b)
     }
     return retval;
 }
+
+/* three pointers detected: a, b, ptr. */
+int flow07(int n, int *a, int *b)
+{
+    int *ptr = (int*)0;
+    if (0==n) {
+        ptr = a;
+    } else {
+        ptr = b;
+    }
+    return *ptr;
+}
+
+    
+    
+        
