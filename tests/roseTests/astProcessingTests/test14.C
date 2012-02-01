@@ -2,7 +2,7 @@ int main()
  { 
 int k = 0;
 int x = 2;
-if (true && true && true || false) {
+if ((true && true && true) || false) {
 x = 2
 ;for (int i = 0; i < 5; i++) { 
 for (int p = 0; p < 5; p++) { 
