@@ -514,6 +514,7 @@ private:
     rose_addr_t ep_start_va;                    /**< Entry point where simulation starts (e.g., the dynamic linker). */
     bool terminated;                            /**< True when the process has finished running. */
     int termination_status;                     /**< As would be returned by the parent's waitpid() call. */
+    std::vector<SgAsmGenericHeader*> headers;   /**< Headers of files loaded into the process (only those that we parse). */
 
 public:
     /** Thrown by exit system calls. */
@@ -563,6 +564,12 @@ public:
      *
      *  Operating system simulation data is initialized (brk, mmap, etc). */
     SgAsmGenericHeader *load(const char *name);
+
+    /** Returns the list of projects loaded for this process.  The list is initialized by the load() method.  The first item in
+     *  the list is the main executable file; additional items are for dynamic libraries, etc. */
+    const std::vector<SgAsmGenericHeader*> get_loads() const {
+        return headers;
+    }
 
     /** Returns the interpretation that is being simulated.  The interpretation was chosen by the load() method. */
     SgAsmInterpretation *get_interpretation() const {
