@@ -328,23 +328,34 @@ types_shared: local_tests/types.c libtypes_extern.so
 	@$(CC) $(CFLAGS32) -fPIC -o $@ $^
 
 # Names of functions to analyze in types_static and types_shared executables
-TYPES_1_FUNCTIONS =simple1  simple2  simple3  simple4  simple5  simple6  simple7  simple8  simple9  simple10 \
+TYPES_1_FUNCTIONS =simple01 simple02 simple03 simple04 simple05 simple06 simple07 simple08 simple09 simple10 \
                    simple11 simple12 simple13 simple14 simple15 simple16 simple17 simple18 simple19 simple20 \
-                   simple21 flow1 flow2 flow3 flow4 flow5
+                   simple21 simple22 simple23 simple24 simple25 \
+                   flow01 flow02 flow03 flow04 flow05 flow06 flow07
 
 # Test targets for types_1 analysis.  Done this way for parallelism, etc.  See scripts/rth_run.pl --help for details.
-TYPES_1_TARGETS = $(addprefix test_types_1_,$(addsuffix .passed,$(TYPES_1_FUNCTIONS)))
-$(TYPES_1_TARGETS): %.passed: $(srcdir)/test_types_1.conf types_1 types_static types_shared
-	@$(RTH_RUN) ANALYSIS_FUNC=$(patsubst test_types_1_%.passed,%,$@) $(srcdir)/test_types_1.conf $@
+if ENABLE_I386
+TYPES_1_STATIC_TARGETS = $(addprefix test_types_1_,$(addsuffix _static.passed,$(TYPES_1_FUNCTIONS)))
+TYPES_1_SHARED_TARGETS = $(addprefix test_types_1_,$(addsuffix _shared.passed,$(TYPES_1_FUNCTIONS)))
+$(TYPES_1_STATIC_TARGETS): %.passed: $(srcdir)/test_types_1.conf types_1 types_static
+	@$(RTH_RUN) ANALYSIS_FUNC=$(patsubst test_types_1_%_static.passed,%,$@) SPECIMEN=./types_static \
+		$(srcdir)/test_types_1.conf $@
+$(TYPES_1_SHARED_TARGETS): %.passed: $(srcdir)/test_types_1.conf types_1 types_shared
+	@$(RTH_RUN) ANALYSIS_FUNC=$(patsubst test_types_1_%_shared.passed,%,$@) SPECIMEN=./types_shared \
+		$(srcdir)/test_types_1.conf $@
+else
+TYPES_1_STATIC_TARGETS = warn_no_tests
+TYPES_1_SHARED_TARGETS = warn_no_tests
+endif
 
 .PHONY: test_types_1
-test_types_1: $(TYPES_1_TARGETS)
+test_types_1: $(TYPES_1_STATIC_TARGETS) $(TYPES_1_SHARED_TARGETS)
 
 # Cleanup targets. We can't put all the generated files in MOSTLYCLEANFILES because the list gets too long to pass
 # as arguments to "rm" (deficiency in automake).  Therefore we'll create a *.clean target for each test and have
 # clean-local depend on it.
 .PHONY: test_types_1_cleanups
-TYPES_1_CLEANUPS = $(patsubst %.passed, %.clean, $(TYPES_1_TARGETS))
+TYPES_1_CLEANUPS = $(patsubst %.passed, %.clean, $(TYPES_1_STATIC_TARGETS) $(TYPES_1_SHARED_TARGETS))
 .PHONY: $(TYPES_1_CLEANUPS)
 $(TYPES_1_CLEANUPS):
 	rm -f $(foreach ext, passed failed err out, $(patsubst %.clean, %, $@).$(ext))
@@ -1449,7 +1460,7 @@ check-pthread:  $(PTHREAD_TEST_TARGETS)
 test-inputs: $(SYS_TEST_INPUTS) $(PTHREAD_TEST_INPUTS)
 
 .PHONY: run-tests
-run-tests: check-syscalls check-pthread check-internal
+run-tests: check-syscalls check-pthread check-internal test_types_1
 	@$(RTH_STATS)
 
 check-local: run-tests

@@ -114,6 +114,33 @@ struct PtrInfo {
     bool is_pointer(const ValueType<32> &addr, SMTSolver *solver) const {
         return find_if(pointers.begin(), pointers.end(), Comparator(addr, solver)) != pointers.end();
     }
+
+    /** Output information about the pointers that were detected.  If a pointer is marked as both "code" and "data", indicate
+     *  "code" in the output, otherwise indicate "data".  Display the only the value expression part of the addresses, not
+     *  the addresses of the value's defining instructions.  This makes the output more suitable for automated comparison
+     *  against precomputed answers, a feature used by the makefiles when testing. */
+    void show_pointers(std::ostream &o) {
+        if (pointers.empty()) {
+            o <<"    no pointers\n";
+        } else {
+            for (PtrInfo::Pointers::const_iterator pi=pointers.begin(); pi!=pointers.end(); ++pi) {
+                o <<"    " <<(0!=(pi->type & PtrInfo::CODE_PTR) ? "code pointer" : "data pointer");
+                if (pi->address.is_known()) {
+                    if (pi->address.known_value()>=analysis_stack_va &&
+                        pi->address.known_value()<analysis_stack_va + 0x8000) { // arbitrary limit
+                        o <<", function argument at " <<pi->address.get_expression() <<"\n";
+                    } else if (pi->address.known_value()<analysis_stack_va &&
+                               pi->address.known_value()>=analysis_stack_va - 0x8000) { // arbitrary limit
+                        o <<", auto variable at " <<pi->address.get_expression() <<"\n";
+                    } else {
+                        o <<", non-stack, constant address\n";
+                    }
+                } else {
+                    o <<", symbolic address\n";
+                }
+            }
+        }
+    }
 };
     
 /** Analysis state.  This class adds the ability to merge two states, which is used when two control flow paths meet. */
@@ -539,6 +566,7 @@ public:
 
 
 
+
 /******************************************************************************************************************************
  *                                              Memory Oracle Analysis
  ******************************************************************************************************************************/
@@ -749,7 +777,7 @@ public:
                 SgAsmBlock *gblk = args.thread->get_process()->disassemble(!limit_to_function);
                 insns = SageInterface::querySubTree<SgAsmInstruction>(gblk);
                 m->mesg("%s: disassembled %zu instructions", name, insns.size());
-#if 1
+#if 0
                 const char *listing_name = "x-prog.lst";
                 m->mesg("%s: generating assembly listing in \"%s\"", name, listing_name);
                 std::ofstream listing(listing_name);
@@ -804,9 +832,13 @@ public:
                     addrspc = limits;
                 }
 
-                // Do the analyses
+                // Do one pointer analysis
                 PtrInfo ptr_info(args.thread, m, analysis_addr, verbosity, addrspc);
                 PtrAnalysis(init_policy).analyze(ptr_info);
+                std::cout <<"Pointers discovered by PtrAnalysis:\n";
+                ptr_info.show_pointers(std::cout);
+
+                // Do a bunch of memory oracle analyses
                 for (size_t iter=0; iter<niters; ++iter) {
                     m->mesg("%s: MemoryOracle at virtual address 0x%08"PRIx64" (%zu of %zu), iteration %zu",
                             name, analysis_addr, n+1, std::max(randomize, (size_t)1), iter);
