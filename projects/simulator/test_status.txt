@@ -432,7 +432,7 @@ syscall_tst.117.msgsnd.03                yes
 syscall_tst.117.msgsnd.04                yes
 syscall_tst.117.msgsnd.05                yes
 syscall_tst.117.msgsnd.06                yes
-syscall_tst.117.semctl.01                no
+syscall_tst.117.semctl.01                yes
 syscall_tst.117.semctl.05                no
 syscall_tst.117.semget.01                no
 syscall_tst.117.semget.03                no
