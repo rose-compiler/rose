@@ -86,34 +86,46 @@ public:
  *       rose_addr_t f2_va = FunctionFinder().address(project, "printf");
  *  @endcode
  */
-class FunctionFinder: public AstSimpleProcessing {
+class FunctionFinder {
 private:
-    std::string fname;          /**< Holds address() function for use during traversal. */
+    struct T1: public AstSimpleProcessing {
+        std::string fname;          /* Holds address() function for use during traversal. */
+        T1(const std::string &fname): fname(fname) {}
+        void visit(SgNode *node) {
+            SgAsmElfSymbol *sym = isSgAsmElfSymbol(node);
+            if (sym &&
+                sym->get_def_state() == SgAsmGenericSymbol::SYM_DEFINED &&
+                sym->get_binding()   == SgAsmGenericSymbol::SYM_GLOBAL &&
+                sym->get_type()      == SgAsmGenericSymbol::SYM_FUNC &&
+                sym->get_name()->get_string() == fname)
+                throw sym->get_value();
+        }
+    };
 
 public:
     /** Search for a function.  Searches for a function named @p fname in the specified @p ast and returns its entry
      *  address. The function must be a global, defined symbol.  If the function cannot be found, then the null address is
      *  returned. */
     rose_addr_t address(SgNode *ast, const std::string &fname) {
-        this->fname = fname;
         try {
-            traverse(ast, preorder);
+            T1(fname).traverse(ast, preorder);
         } catch (rose_addr_t addr) {
             return addr;
         }
         return 0;
     }
 
-private:
-    /** Traversal callback. */
-    void visit(SgNode *node) {
-        SgAsmElfSymbol *sym = isSgAsmElfSymbol(node);
-        if (sym &&
-            sym->get_def_state() == SgAsmGenericSymbol::SYM_DEFINED &&
-            sym->get_binding()   == SgAsmGenericSymbol::SYM_GLOBAL &&
-            sym->get_type()      == SgAsmGenericSymbol::SYM_FUNC &&
-            sym->get_name()->get_string() == fname)
-            throw sym->get_value();
+    /** Search for a function.  Searches for a function named @p fname in all of the specified binary headers and returns the
+     *  first one found.  The function must be a global, defined symbol.  If the function cannot be found under any header,
+     *  then the null address is returned.  This function is intended to be called with RSIM_Process::get_loads() as the
+     *  argument, which is why the vector uses SgAsmGenericHeader instead of SgNode. */
+    rose_addr_t address(const std::vector<SgAsmGenericHeader*> &headers, const std::string &fname) {
+        for (std::vector<SgAsmGenericHeader*>::const_iterator hi=headers.begin(); hi!=headers.end(); ++hi) {
+            rose_addr_t addr = address(*hi, fname);
+            if (addr!=0)
+                return addr;
+        }
+        return 0;
     }
 };
 

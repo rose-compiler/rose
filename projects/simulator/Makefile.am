@@ -88,6 +88,12 @@ x86futex_SOURCES = x86futex.C
 x86futex_CPPFLAGS = $(ROSE_INCLUDES)
 x86futex_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+# Disassemble a process
+noinst_PROGRAMS += x86dis
+x86dis_SOURCES = x86dis.C
+x86dis_CPPFLAGS = $(ROSE_INCLUDES)
+x86dis_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
 
 ###############################################################################################################################
 #  DEMOS

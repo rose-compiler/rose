@@ -478,6 +478,9 @@ public:
      *  Thread safety:  Not thread safe.  This should only be called during process initialization. */
     void set_main_thread(RSIM_Thread *t);
 
+    /** Returns the main thread. */
+    RSIM_Thread *get_main_thread() const;
+
     /** Creates a new simulated thread and corresponding real thread.  Returns the ID of the new thread, or a negative errno.
      *  The @p parent_tid_va and @p child_tid_va are optional addresses at which to write the new thread's TID if the @p flags
      *  contain the CLONE_PARENT_TID and/or CLONE_CHILD_TID bits.  We gaurantee that the TID is written to both before the
@@ -514,6 +517,7 @@ private:
     rose_addr_t ep_start_va;                    /**< Entry point where simulation starts (e.g., the dynamic linker). */
     bool terminated;                            /**< True when the process has finished running. */
     int termination_status;                     /**< As would be returned by the parent's waitpid() call. */
+    std::vector<SgAsmGenericHeader*> headers;   /**< Headers of files loaded into the process (only those that we parse). */
 
 public:
     /** Thrown by exit system calls. */
@@ -563,6 +567,12 @@ public:
      *
      *  Operating system simulation data is initialized (brk, mmap, etc). */
     SgAsmGenericHeader *load(const char *name);
+
+    /** Returns the list of projects loaded for this process.  The list is initialized by the load() method.  The first item in
+     *  the list is the main executable file; additional items are for dynamic libraries, etc. */
+    const std::vector<SgAsmGenericHeader*> get_loads() const {
+        return headers;
+    }
 
     /** Returns the interpretation that is being simulated.  The interpretation was chosen by the load() method. */
     SgAsmInterpretation *get_interpretation() const {
