@@ -44,6 +44,8 @@ void generateDefUseChainsFromSSA(SgProject* project, DefUseChains& defUseChains)
         foreach (SgVarRefExp* varRef, uses)
         {
             SSA_UnfilteredCfg::ReachingDefPtr reachingDef = ssa.getDefinitionForUse(varRef);
+            
+            if (!reachingDef) continue;
 
             set<VirtualCFG::CFGNode> defs = reachingDef->getActualDefinitions();
 
