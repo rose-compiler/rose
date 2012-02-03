@@ -56,8 +56,8 @@ namespace SymbolicSemantics {
     public:
 
         /** Construct a value that is unknown and unique. */
-        ValueType() {
-            expr = LeafNode::create_variable(nBits);
+        ValueType(std::string comment="") {
+            expr = LeafNode::create_variable(nBits, comment);
             expr->inc_nrefs();
         }
 
@@ -74,8 +74,8 @@ namespace SymbolicSemantics {
         }
 
         /** Construct a ValueType with a known value. */
-        explicit ValueType(uint64_t n) {
-            expr = LeafNode::create_integer(nBits, n);
+        explicit ValueType(uint64_t n, std::string comment="") {
+            expr = LeafNode::create_integer(nBits, n, comment);
             expr->inc_nrefs();
         }
 
@@ -255,7 +255,7 @@ namespace SymbolicSemantics {
         bool written;               /* Set to true by writeMemory */
 
         template <size_t Len>
-        MemoryCell(const ValueType<32> &address, const ValueType<Len> data, size_t nbytes, SgAsmInstruction *insn)
+        MemoryCell(const ValueType<32> &address, const ValueType<Len> &data, size_t nbytes, SgAsmInstruction *insn)
             : address(address), data(data), nbytes(nbytes), clobbered(false), written(false) {
             this->data.add_defining_instructions(insn);
         }
@@ -357,6 +357,30 @@ namespace SymbolicSemantics {
         ValueType<1> flag[n_flags];                 /**< Control/status flags (i.e., FLAG register). */
         Memory mem;                                 /**< Core memory. */
 
+        /** Initialize state to unknown values. */
+        void clear() {
+            ip = ValueType<32>();
+            for (size_t i=0; i<n_gprs; ++i)
+                gpr[i] = ValueType<32>();
+            for (size_t i=0; i<n_segregs; ++i)
+                segreg[i] = ValueType<16>();
+            for (size_t i=0; i<n_flags; ++i)
+                flag[i] = ValueType<1>();
+            mem.clear();
+        }
+
+        /** Initialize all registers to zero. */
+        void zero() {
+            static const uint64_t z = 0;
+            ip = ValueType<32>(z);
+            for (size_t i=0; i<n_gprs; ++i)
+                gpr[i] = ValueType<32>(z);
+            for (size_t i=0; i<n_segregs; ++i)
+                segreg[i] = ValueType<16>(z);
+            for (size_t i=0; i<n_flags; ++i)
+                flag[i] = ValueType<1>(z);
+        }
+
         /** Print the state in a human-friendly way.  If a rename map is specified then named values will be renamed to have a
          *  shorter name.  See the ValueType<>::rename() method for details. */
         void print(std::ostream &o, RenameMap *rmap=NULL) const {
@@ -398,7 +422,7 @@ namespace SymbolicSemantics {
             o.flags(orig_flags);
         }
         friend std::ostream& operator<<(std::ostream &o, const State &state) {
-            state.print(0);
+            state.print(o);
             return o;
         }
 
@@ -629,12 +653,15 @@ namespace SymbolicSemantics {
          *  would clobber the value either directly or by aliasing.  Also, if appropriate, the value is added to the original
          *  memory state (thus changing the value at that address from an implicit named value to an explicit named value).
          *
+         *  The @p dflt is the value to use if the memory address has not been assigned a value yet.
+         *
          *  It is safe to call this function and supply the policy's original state as the state argument.
          *
          *  The documentation for MemoryCell has an example that demonstrates the desired behavior of mem_read() and
          *  mem_write(). */
-        template <size_t Len> ValueType<Len> mem_read(State<ValueType> &state, const ValueType<32> &addr) const {
-            MemoryCell<ValueType> new_cell(addr, ValueType<32>(), Len/8, NULL/*no defining instruction*/);
+        template <size_t Len> ValueType<Len> mem_read(State<ValueType> &state, const ValueType<32> &addr,
+                                                      const ValueType<Len> &dflt) const {
+            MemoryCell<ValueType> new_cell(addr, unsignedExtend<Len,32>(dflt), Len/8, NULL/*no defining instruction*/);
             bool aliased = false; /*is new_cell aliased by any existing writes?*/
 
             for (typename Memory::iterator mi=state.mem.begin(); mi!=state.mem.end(); ++mi) {
@@ -1426,7 +1453,7 @@ namespace SymbolicSemantics {
         /** Reads a value from memory. */
         template <size_t Len> ValueType<Len>
         readMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<1> &cond) const {
-            return mem_read<Len>(cur_state, addr);
+            return mem_read<Len>(cur_state, addr, ValueType<Len>());
         }
 
         /** Writes a value to memory. */
