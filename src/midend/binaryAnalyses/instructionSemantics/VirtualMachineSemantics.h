@@ -17,7 +17,7 @@
 #endif
 
 #include "x86InstructionSemantics.h"
-
+#include "SemanticState.h"
 
 
 /** A policy for x86InstructionSemantics.
@@ -120,6 +120,9 @@ struct ValueType {
                 o <<" (-0x" <<std::hex <<negative <<")";
         }
     }
+    void print(std::ostream &o, SEMANTIC_NO_PRINT_HELPER *unused=NULL) const {
+        print(o, (RenameMap*)0);
+    }
 
     friend bool operator==(const ValueType &a, const ValueType &b) {
         return a.name==b.name && (!a.name || a.negate==b.negate) && a.offset==b.offset;
@@ -140,45 +143,20 @@ struct ValueType {
 
 template<size_t Len>
 std::ostream& operator<<(std::ostream &o, const ValueType<Len> &e) {
-    e.print(o, NULL);
+    e.print(o, (RenameMap*)0);
     return o;
 }
 
-/** Represents one location in memory. Has an address data and size in bytes.
- *
- *  When a state is created, every register and memory location will be given a unique named value. However, it's not
- *  practicle to store a named value for every possible memory address, yet we want the following example to work correctly:
- *  \code
- *  1: mov eax, ds:[edx]    // first read returns V1
- *  2: mov eax, ds:[edx]    // subsequent reads from same address also return V1
- *  3: mov ds:[ecx], eax    // write to unknown address clobbers all memory
- *  4: mov eax, ds:[edx]    // read from same address as above returns V2
- *  5: mov eax, ds:[edx]    // subsequent reads from same address also return V2
- *  \endcode
- *
- *  Furthermore, the read from ds:[edx] at #1 above, retroactively stores V1 in the original memory state. That way if we need
- *  to do additional analyses starting from the same initial state it will be available to use.
- *
- *  To summarize: every memory address is given a unique named value. These values are implicit until the memory location is
- *  actually read.
- *
- *  See also readMemory() and writeMemory(). */
-template <template <size_t> class ValueType>
-struct MemoryCell {
-    ValueType<32> address;
-    ValueType<32> data;
-    size_t nbytes;
-    bool clobbered;             /* Set to invalidate possible aliases during writeMemory() */
-    bool written;               /* Set to true by writeMemory */
+/** Memory cell with partially symbolic address and data.  The ValueType template argument should be a subclass of
+ * VirtualMachineSemantics::ValueType. */
+template <template <size_t> class ValueType=VirtualMachineSemantics::ValueType>
+class MemoryCell: public SemanticMemoryCell<ValueType> {
+public:
 
+    /** Constructor same as super class. */
     template <size_t Len>
     MemoryCell(const ValueType<32> &address, const ValueType<Len> data, size_t nbytes)
-        : address(address), data(data), nbytes(nbytes), clobbered(false), written(false) {}
-
-    bool is_clobbered() const { return clobbered; }
-    void set_clobbered() { clobbered = true; }
-    bool is_written() const { return written; }
-    void set_written() { written = true; }
+        : SemanticMemoryCell<ValueType>(address, data, nbytes) {}
 
     /** Returns true if this memory value could possibly overlap with the @p other memory value.  In other words, returns false
      *  only if this memory location cannot overlap with @p other memory location. Two addresses that are identical alias one
@@ -188,43 +166,25 @@ struct MemoryCell {
     /** Returns true if this memory address is the same as the @p other. Note that "same" is more strict than "overlap". */
     bool must_alias(const MemoryCell &other) const;
 
-    /** Prints the value of a memory cell on a single line. If a rename map is specified then named values will be renamed to
-     *  have a shorter name.  See the ValueType<>::rename() method for details. */
-    void print(std::ostream&, RenameMap *rmap=NULL) const;
-
     friend bool operator==(const MemoryCell &a, const MemoryCell &b) {
-        return a.address==b.address && a.data==b.data && a.nbytes==b.nbytes && a.clobbered==b.clobbered && a.written==b.written;
+        return (a.get_address()==b.get_address() &&
+                a.get_data()==b.get_data() &&
+                a.get_nbytes()==b.get_nbytes() &&
+                a.get_clobbered()==b.get_clobbered() &&
+                a.get_written()==b.get_written());
     }
     friend bool operator!=(const MemoryCell &a, const MemoryCell &b) {
         return !(a==b);
     }
     friend bool operator<(const MemoryCell &a, const MemoryCell &b) {
-        return a.address < b.address;
-    }
-    friend std::ostream& operator<<(std::ostream &o, const MemoryCell &me) {
-        me.print(o, NULL);
-        return o;
+        return a.get_address() < b.get_address();
     }
 };
 
-/** Represents the entire state of the machine. However, the instruction pointer is not included in the state. */
-template <template <size_t> class ValueType>
-struct State {
-    typedef std::vector<MemoryCell<ValueType> > Memory;
-
-    static const size_t n_gprs = 8;             /**< Number of general-purpose registers in this state. */
-    static const size_t n_segregs = 6;          /**< Number of segmentation registers in this state. */
-    static const size_t n_flags = 32;           /**< Number of flag registers in this state. */
-
-    ValueType<32> ip;                           /**< Instruction pointer. */
-    ValueType<32> gpr[n_gprs];                  /**< General-purpose registers */
-    ValueType<16> segreg[n_segregs];            /**< Segmentation registers. */
-    ValueType<1> flag[n_flags];                 /**< Control/status flags (i.e., FLAG register). */
-    Memory mem;                                 /**< Core memory. */
-
-    /** Print the state in a human-friendly way.  If a rename map is specified then named values will be renamed to have a
-     *  shorter name.  See the ValueType<>::rename() method for details. */
-    void print(std::ostream &o, RenameMap *rmap=NULL) const;
+/** Represents the entire state of the machine. */
+template <template <size_t> class ValueType=VirtualMachineSemantics::ValueType>
+struct State: public SemanticStateX86<MemoryCell, ValueType> {
+    typedef typename SemanticStateX86<MemoryCell, ValueType>::Memory Memory;
 
     /** Print info about how registers differ.  If a rename map is specified then named values will be renamed to have a
      *  shorter name.  See the ValueType<>::rename() method for details. */
@@ -236,11 +196,6 @@ struct State {
     /** Removes from memory those values at addresses below the current stack pointer. This is automatically called after each
      *  instruction if the policy's p_discard_popped_memory property is set. */
     void discard_popped_memory();
-
-    friend std::ostream& operator<<(std::ostream &o, const State& state) {
-        state.print(o);
-        return o;
-    }
 };
 
 /** A policy that is supplied to the semantic analysis constructor. */
@@ -431,14 +386,14 @@ public:
 
         for (typename Memory::iterator mi=state.mem.begin(); mi!=state.mem.end(); ++mi) {
             if (new_cell.must_alias(*mi)) {
-                if ((*mi).clobbered) {
-                    (*mi).clobbered = false;
-                    (*mi).data = new_cell.data;
-                    return new_cell.data;
+                if ((*mi).is_clobbered()) {
+                    (*mi).set_clobbered(false);
+                    (*mi).set_data(new_cell.get_data());
+                    return new_cell.get_data();
                 } else {
-                    return (*mi).data;
+                    return (*mi).get_data();
                 }
-            } else if (new_cell.may_alias(*mi) && (*mi).written) {
+            } else if (new_cell.may_alias(*mi) && (*mi).is_written()) {
                 aliased = true;
             }
         }
@@ -448,11 +403,11 @@ public:
              * use the value from the initial memory state (creating it if necessary). */
             for (typename Memory::iterator mi=orig_state.mem.begin(); mi!=orig_state.mem.end(); ++mi) {
                 if (new_cell.must_alias(*mi)) {
-                    ROSE_ASSERT(!(*mi).clobbered);
-                    ROSE_ASSERT(!(*mi).written);
+                    ROSE_ASSERT(!(*mi).is_clobbered());
+                    ROSE_ASSERT(!(*mi).is_written());
                     state.mem.push_back(*mi);
                     std::sort(state.mem.begin(), state.mem.end());
-                    return (*mi).data;
+                    return (*mi).get_data();
                 }
             }
 
@@ -466,7 +421,7 @@ public:
                     uint64_t n = 0;
                     for (size_t i=0; i<Len/8; i++)
                         n |= buf[i] << (8*i);
-                    new_cell.data = number<32>(n);
+                    new_cell.set_data(number<32>(n));
                 }
             }
 
@@ -477,7 +432,7 @@ public:
         /* Create the cell in the current state. */
         state.mem.push_back(new_cell);
         std::sort(state.mem.begin(), state.mem.end());
-        return new_cell.data;
+        return new_cell.get_data();
     }
 
     /** See memory_reference_type(). */
@@ -513,7 +468,7 @@ public:
             if (new_cell.must_alias(*mi)) {
                 *mi = new_cell;
                 saved = true;
-            } else if (p_discard_popped_memory && new_mrt!=memory_reference_type(state, (*mi).address)) {
+            } else if (p_discard_popped_memory && new_mrt!=memory_reference_type(state, (*mi).get_address())) {
                 /* Assume that memory referenced through the stack pointer does not alias that which is referenced through the
                  * frame pointer, and neither of them alias memory that is referenced other ways. */
             } else if (new_cell.may_alias(*mi)) {
@@ -988,55 +943,9 @@ MemoryCell<ValueType>::must_alias(const MemoryCell<ValueType> &other) const {
     return this->address == other.address;
 }
 
-template<template<size_t> class ValueType>
-void
-MemoryCell<ValueType>::print(std::ostream &o, RenameMap *rmap/*=NULL*/) const
-{
-    o <<address.rename(rmap) <<": " <<data.rename(rmap) <<" " <<nbytes <<" byte" <<(1==nbytes?"":"s");
-    if (!written) o <<" read-only";
-    if (clobbered) o <<" clobbered";
-}
-
-
 /*************************************************************************************************************************
  *                              State template functions
  *************************************************************************************************************************/
-
-template<template<size_t> class ValueType>
-void
-State<ValueType>::print(std::ostream &o, RenameMap *rmap/*=NULL*/) const
-{
-    std::string prefix = "    ";
-
-    /* Print registers in columns of minimal width */
-    size_t ssi=0;
-    std::stringstream *ss = new std::stringstream[n_gprs + n_segregs + n_flags + 1]; /*1 for IP register*/
-    for (size_t i=0; i<n_gprs; ++i)
-        ss[ssi++] <<gprToString((X86GeneralPurposeRegister)i) <<"=" <<gpr[i].rename(rmap);
-    for (size_t i=0; i<n_segregs; ++i)
-        ss[ssi++] <<segregToString((X86SegmentRegister)i) <<"=" <<segreg[i].rename(rmap);
-    for (size_t i=0; i<n_flags; ++i)
-        ss[ssi++] <<flagToString((X86Flag)i) <<"=" <<flag[i].rename(rmap);
-    ss[ssi++] <<"ip=" <<ip.rename(rmap);
-    size_t colwidth = 0;
-    for (size_t i=0; i<ssi; i++)
-        colwidth = std::max(colwidth, ss[i].str().size());
-    for (size_t i=0; i<ssi; i++) {
-        if (0==i%4) o <<(i?"\n":"") <<prefix;
-        std::string s = ss[i].str();
-        if (s.size()<colwidth+1) s.resize(colwidth+1, ' ');
-        o <<s;
-    }
-    o <<"\n";
-
-    /* Print memory contents. */
-    o <<prefix << "memory:\n";
-    for (typename Memory::const_iterator mi=mem.begin(); mi!=mem.end(); ++mi) {
-        o <<prefix <<"    ";
-        (*mi).print(o, rmap);
-        o <<"\n";
-    }
-}
 
 template<template<size_t> class ValueType>
 void
@@ -1047,26 +956,26 @@ State<ValueType>::print_diff_registers(std::ostream &o, const State &other, Rena
 
     std::string prefix = "    ";
 
-    for (size_t i=0; i<n_gprs; ++i) {
-        if (gpr[i]!=other.gpr[i]) {
+    for (size_t i=0; i<this->n_gprs; ++i) {
+        if (this->gpr[i]!=other.gpr[i]) {
             o <<prefix <<gprToString((X86GeneralPurposeRegister)i) <<": "
-              <<gpr[i].rename(rmap) <<" -> " <<other.gpr[i].rename(rmap) <<"\n";
+              <<this->gpr[i].rename(rmap) <<" -> " <<other.gpr[i].rename(rmap) <<"\n";
         }
     }
-    for (size_t i=0; i<n_segregs; ++i) {
-        if (segreg[i]!=other.segreg[i]) {
+    for (size_t i=0; i<this->n_segregs; ++i) {
+        if (this->segreg[i]!=other.segreg[i]) {
             o <<prefix <<segregToString((X86SegmentRegister)i) <<": "
-              <<segreg[i].rename(rmap) <<" -> " <<other.segreg[i].rename(rmap) <<"\n";
+              <<this->segreg[i].rename(rmap) <<" -> " <<other.segreg[i].rename(rmap) <<"\n";
         }
     }
-    for (size_t i=0; i<n_flags; ++i) {
-        if (flag[i]!=other.flag[i]) {
+    for (size_t i=0; i<this->n_flags; ++i) {
+        if (this->flag[i]!=other.flag[i]) {
             o <<prefix <<flagToString((X86Flag)i) <<": "
-              <<flag[i].rename(rmap) <<" -> " <<other.flag[i].rename(rmap) <<"\n";
+              <<this->flag[i].rename(rmap) <<" -> " <<other.flag[i].rename(rmap) <<"\n";
         }
     }
-    if (ip!=other.ip) {
-        o <<prefix <<"ip: " <<ip.rename(rmap) <<" -> " <<other.ip.rename(rmap) <<"\n";
+    if (this->ip!=other.ip) {
+        o <<prefix <<"ip: " <<this->ip.rename(rmap) <<" -> " <<other.ip.rename(rmap) <<"\n";
     }
 #endif
 }
@@ -1076,13 +985,13 @@ bool
 State<ValueType>::equal_registers(const State &other) const
 {
 #ifndef CXX_IS_ROSE_ANALYSIS
-    for (size_t i=0; i<n_gprs; ++i)
-        if (gpr[i]!=other.gpr[i]) return false;
-    for (size_t i=0; i<n_segregs; ++i)
-        if (segreg[i]!=other.segreg[i]) return false;
-    for (size_t i=0; i<n_flags; ++i)
-        if (flag[i]!=other.flag[i]) return false;
-    if (ip!=other.ip) return false;
+    for (size_t i=0; i<this->n_gprs; ++i)
+        if (this->gpr[i]!=other.gpr[i]) return false;
+    for (size_t i=0; i<this->n_segregs; ++i)
+        if (this->segreg[i]!=other.segreg[i]) return false;
+    for (size_t i=0; i<this->n_flags; ++i)
+        if (this->flag[i]!=other.flag[i]) return false;
+    if (this->ip!=other.ip) return false;
 #endif
     return true;
 }
@@ -1092,13 +1001,13 @@ void
 State<ValueType>::discard_popped_memory()
 {
     Memory new_mem;
-    const ValueType<32> &sp = gpr[x86_gpr_sp];
-    for (typename Memory::const_iterator mi=mem.begin(); mi!=mem.end(); ++mi) {
-        const ValueType<32> &addr = (*mi).address;
+    const ValueType<32> &sp = this->gpr[x86_gpr_sp];
+    for (typename Memory::const_iterator mi=this->mem.begin(); mi!=this->mem.end(); ++mi) {
+        const ValueType<32> &addr = (*mi).get_address();
         if (addr.name!=sp.name || addr.negate!=sp.negate || (int32_t)addr.offset>=(int32_t)sp.offset)
             new_mem.push_back(*mi);
     }
-    mem = new_mem;
+    this->mem = new_mem;
 }
 
 /*************************************************************************************************************************
@@ -1116,7 +1025,7 @@ Policy<State, ValueType>::memory_for_equality(const State<ValueType> &state) con
     Memory retval;
 #ifndef CXX_IS_ROSE_ANALYSIS
     for (typename State<ValueType>::Memory::const_iterator mi=state.mem.begin(); mi!=state.mem.end(); ++mi) {
-        if ((*mi).is_written() && (*mi).data!=mem_read<32>(orig_state, (*mi).address))
+        if ((*mi).is_written() && (*mi).get_data()!=mem_read<32>(orig_state, (*mi).get_address()))
             retval.push_back(*mi);
     }
 #endif
@@ -1137,9 +1046,9 @@ Policy<State, ValueType>::equal_states(const State<ValueType> &s1, const State<V
     if (m1.size()!=m2.size())
         return false;
     for (size_t i=0; i<m1.size(); ++i) {
-        if (m1[i].nbytes != m2[i].nbytes ||
-            m1[i].address!= m2[i].address ||
-            m1[i].data   != m2[i].data)
+        if (m1[i].get_nbytes() != m2[i].get_nbytes() ||
+            m1[i].get_address()!= m2[i].get_address() ||
+            m1[i].get_data()   != m2[i].get_data())
             return false;
     }
 #endif
@@ -1169,11 +1078,11 @@ Policy<State, ValueType>::print_diff(std::ostream &o, const State<ValueType> &s1
     std::set<ValueType<32> > addresses;
     for (typename Memory::const_iterator mi=s1.mem.begin(); mi!=s1.mem.end(); ++mi) {
         if (!(*mi).is_clobbered() && (*mi).is_written())
-            addresses.insert((*mi).address);
+            addresses.insert((*mi).get_address());
     }
     for (typename Memory::const_iterator mi=s2.mem.begin(); mi!=s2.mem.end(); ++mi) {
         if (!(*mi).is_clobbered() && (*mi).is_written())
-            addresses.insert((*mi).address);
+            addresses.insert((*mi).get_address());
     }
 
     State<ValueType> tmp_s1 = s1;
@@ -1199,8 +1108,8 @@ Policy<State, ValueType>::on_stack(const ValueType<32> &value) const
 #ifndef CXX_IS_ROSE_ANALYSIS
     const ValueType<32> sp_inverted = invert(cur_state.gpr[x86_gpr_sp]);
     for (typename Memory::const_iterator mi=cur_state.mem.begin(); mi!=cur_state.mem.end(); ++mi) {
-        if ((*mi).nbytes!=4 || !((*mi).data==value)) continue;
-        const ValueType<32> &addr = (*mi).address;
+        if ((*mi).get_nbytes()!=4 || !((*mi).get_data()==value)) continue;
+        const ValueType<32> &addr = (*mi).get_address();
 
         /* Is addr >= sp? */
         ValueType<32> carries = 0;

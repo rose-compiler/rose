@@ -71,7 +71,7 @@
         }
         void dump(SgAsmInstruction *insn) {
             std::cout <<unparseInstructionWithAddress(insn) <<"\n";
-            get_state().print(std::cout);
+            get_state().print<SEMANTIC_NO_PRINT_HELPER>(std::cout, "    ");
             std::cout <<"    ip = ";
             std::cout <<get_ip();
             std::cout <<"\n";

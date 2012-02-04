@@ -8,6 +8,7 @@
 #include <inttypes.h>
 
 #include "x86InstructionSemantics.h"
+#include "SemanticState.h"
 #include "SMTSolver.h"
 
 #include <map>
@@ -126,8 +127,11 @@ namespace SymbolicSemantics {
             o <<"} expr=";
             expr->print(o, rmap);
         }
+        void print(std::ostream &o, SEMANTIC_NO_PRINT_HELPER *unused=NULL) const {
+            print(o, (RenameMap*)0);
+        }
         friend std::ostream& operator<<(std::ostream &o, const ValueType &e) {
-            e.print(o, NULL);
+            e.print(o, (RenameMap*)0);
             return o;
         }
 
@@ -227,43 +231,19 @@ namespace SymbolicSemantics {
      *                          MemoryCell
      **************************************************************************************************************************/
 
-    /** Represents one location in memory. Has an address data and size in bytes.
-     *
-     *  When a state is created, every register and memory location will be given a unique named value. However, it's not
-     *  practicle to store a named value for every possible memory address, yet we want the following example to work correctly:
-     *  \code
-     *  1: mov eax, ds:[edx]    // first read returns V1
-     *  2: mov eax, ds:[edx]    // subsequent reads from same address also return V1
-     *  3: mov ds:[ecx], eax    // write to unknown address clobbers all memory
-     *  4: mov eax, ds:[edx]    // read from same address as above returns V2
-     *  5: mov eax, ds:[edx]    // subsequent reads from same address also return V2
-     *  \endcode
-     *
-     *  Furthermore, the read from ds:[edx] at #1 above, retroactively stores V1 in the original memory state. That way if we need
-     *  to do additional analyses starting from the same initial state it will be available to use.
-     *
-     *  To summarize: every memory address is given a unique named value. These values are implicit until the memory location is
-     *  actually read.
-     *
-     *  See also readMemory() and writeMemory(). */
-    template <template <size_t> class ValueType>
-    struct MemoryCell {
-        ValueType<32> address;
-        ValueType<32> data;
-        size_t nbytes;
-        bool clobbered;             /* Set to invalidate possible aliases during writeMemory() */
-        bool written;               /* Set to true by writeMemory */
+    /** Memory cell with symbolic address and data.  The ValueType template argument should be a subclass of
+     *  SymbolicSemantics::ValueType. */
+    template<template<size_t> class ValueType=SymbolicSemantics::ValueType>
+    class MemoryCell: public SemanticMemoryCell<ValueType> {
+    public:
 
+        /** Constructor that sets the defining instruction.  This is just like the base class, except we also add an optional
+         *  defining instruction. */
         template <size_t Len>
-        MemoryCell(const ValueType<32> &address, const ValueType<Len> &data, size_t nbytes, SgAsmInstruction *insn)
-            : address(address), data(data), nbytes(nbytes), clobbered(false), written(false) {
-            this->data.add_defining_instructions(insn);
+        MemoryCell(const ValueType<32> &address, const ValueType<Len> &data, size_t nbytes, SgAsmInstruction *insn=NULL)
+            : SemanticMemoryCell<ValueType>(address, data, nbytes) {
+            this->get_data().add_defining_instructions(insn);
         }
-
-        bool is_clobbered() const { return clobbered; }
-        void set_clobbered() { clobbered = true; }
-        bool is_written() const { return written; }
-        void set_written() { written = true; }
 
         /** Returns true if this memory value could possibly overlap with the @p other memory value.  In other words, returns
          *  false only if this memory location cannot overlap with @p other memory location. Two addresses that are identical
@@ -316,116 +296,13 @@ namespace SymbolicSemantics {
         /** Returns true if this memory address is the same as the @p other. Note that "same" is more strict than "overlap".
          *  The @p solver is optional but recommended (absence of a solver will result in a naive definition). */
         bool must_alias(const MemoryCell &other, SMTSolver *solver) const {
-            return address.get_expression()->equal_to(other.address.get_expression(), solver);
-        }
-        
-        /** Prints the value of a memory cell on a single line. If a rename map is specified then named values will be renamed to
-         *  have a shorter name.  See the ValueType<>::rename() method for details. */
-        void print(std::ostream &o, RenameMap *rmap=NULL, const std::string &prefix="") const {
-            o <<prefix <<"address = { ";
-            address.print(o, rmap);
-            o <<" }\n";
-
-            o <<prefix <<"  value = { ";
-            data.print(o, rmap);
-            o <<" }\n";
-
-            o <<prefix <<"  flags = { size=" <<nbytes;
-            if (!written) o <<"; read-only";
-            if (clobbered) o <<"; clobbered";
-            o <<" }\n";
-                
-        }
-        friend std::ostream& operator<<(std::ostream &o, const MemoryCell &mc) {
-            mc.print(o, NULL, "");
-            return o;
+            return this->get_address().get_expression()->equal_to(other.get_address().get_expression(), solver);
         }
     };
 
-    /** Represents the entire state of the machine. However, the instruction pointer is not included in the state. */
-    template <template <size_t> class ValueType>
-    struct State {
-        typedef std::vector<MemoryCell<ValueType> > Memory;
-
-        static const size_t n_gprs = 8;             /**< Number of general-purpose registers in this state. */
-        static const size_t n_segregs = 6;          /**< Number of segmentation registers in this state. */
-        static const size_t n_flags = 16;           /**< Number of flag registers in this state. */
-
-        ValueType<32> ip;                           /**< Instruction pointer. */
-        ValueType<32> gpr[n_gprs];                  /**< General-purpose registers */
-        ValueType<16> segreg[n_segregs];            /**< Segmentation registers. */
-        ValueType<1> flag[n_flags];                 /**< Control/status flags (i.e., FLAG register). */
-        Memory mem;                                 /**< Core memory. */
-
-        /** Initialize state to unknown values. */
-        void clear() {
-            ip = ValueType<32>();
-            for (size_t i=0; i<n_gprs; ++i)
-                gpr[i] = ValueType<32>();
-            for (size_t i=0; i<n_segregs; ++i)
-                segreg[i] = ValueType<16>();
-            for (size_t i=0; i<n_flags; ++i)
-                flag[i] = ValueType<1>();
-            mem.clear();
-        }
-
-        /** Initialize all registers to zero. */
-        void zero() {
-            static const uint64_t z = 0;
-            ip = ValueType<32>(z);
-            for (size_t i=0; i<n_gprs; ++i)
-                gpr[i] = ValueType<32>(z);
-            for (size_t i=0; i<n_segregs; ++i)
-                segreg[i] = ValueType<16>(z);
-            for (size_t i=0; i<n_flags; ++i)
-                flag[i] = ValueType<1>(z);
-        }
-
-        /** Print the state in a human-friendly way.  If a rename map is specified then named values will be renamed to have a
-         *  shorter name.  See the ValueType<>::rename() method for details. */
-        void print(std::ostream &o, RenameMap *rmap=NULL) const {
-            std::ios_base::fmtflags orig_flags = o.flags();
-            try {
-                std::string prefix = "    ";
-                o <<prefix <<"registers:\n";
-                for (size_t i=0; i<n_gprs; ++i) {
-                    o <<prefix <<"    " <<std::setw(7) <<std::left <<gprToString((X86GeneralPurposeRegister)i) <<" = { ";
-                    gpr[i].print(o, rmap);
-                    o <<" }\n";
-                }
-                for (size_t i=0; i<n_segregs; ++i) {
-                    o <<prefix <<"    " <<std::setw(7) <<std::left <<segregToString((X86SegmentRegister)i) <<" = { ";
-                    segreg[i].print(o, rmap);
-                    o <<" }\n";
-                }
-                for (size_t i=0; i<n_flags; ++i) {
-                    o <<prefix <<"    " <<std::setw(7) <<std::left <<flagToString((X86Flag)i) <<" = { ";
-                    flag[i].print(o, rmap);
-                    o <<" }\n";
-                }
-                o <<prefix <<"    " <<std::setw(7) <<std::left <<"ip" <<" = { ";
-                ip.print(o, rmap);
-                o <<" }\n";
-
-                o <<prefix <<"memory:\n";
-                if (mem.empty()) {
-                    o <<prefix <<"    (empty)\n";
-                } else {
-                    for (typename Memory::const_iterator mi=mem.begin(); mi!=mem.end(); ++mi) {
-                        (*mi).print(o, rmap, prefix+"    ");
-                    }
-                }
-            } catch (...) {
-                o.flags(orig_flags);
-                throw;
-            }
-            o.flags(orig_flags);
-        }
-        friend std::ostream& operator<<(std::ostream &o, const State &state) {
-            state.print(o);
-            return o;
-        }
-
+    /** Represents the entire state of the machine. */
+    template <template <size_t> class ValueType=SymbolicSemantics::ValueType>
+    struct State: public SemanticStateX86<MemoryCell, ValueType> {
         /** Print info about how registers differ.  If a rename map is specified then named values will be renamed to have a
          *  shorter name.  See the ValueType<>::rename() method for details. */
         void print_diff_registers(std::ostream &o, const State&, RenameMap *rmap=NULL) const;
@@ -549,7 +426,7 @@ namespace SymbolicSemantics {
         /** Print the current state of this policy.  If a rename map is specified then named values will be renamed to have a
          *  shorter name.  See the ValueType<>::rename() method for details. */
         void print(std::ostream &o, RenameMap *rmap=NULL) const {
-            cur_state.print(o, rmap);
+            cur_state.print(o, "", rmap);
         }
         friend std::ostream& operator<<(std::ostream &o, const Policy &p) {
             p.print(o, NULL);
@@ -666,14 +543,14 @@ namespace SymbolicSemantics {
 
             for (typename Memory::iterator mi=state.mem.begin(); mi!=state.mem.end(); ++mi) {
                 if (new_cell.must_alias(*mi, solver)) {
-                    if ((*mi).clobbered) {
-                        (*mi).clobbered = false;
-                        (*mi).data = new_cell.data;
-                        return unsignedExtend<32, Len>(new_cell.data);
+                    if ((*mi).is_clobbered()) {
+                        (*mi).set_clobbered(false);
+                        (*mi).set_data(new_cell.get_data());
+                        return unsignedExtend<32, Len>(new_cell.get_data());
                     } else {
-                        return unsignedExtend<32, Len>((*mi).data);
+                        return unsignedExtend<32, Len>((*mi).get_data());
                     }
-                } else if ((*mi).written && new_cell.may_alias(*mi, solver)) {
+                } else if ((*mi).is_written() && new_cell.may_alias(*mi, solver)) {
                     aliased = true;
                 }
             }
@@ -683,10 +560,10 @@ namespace SymbolicSemantics {
                  * Therefore use the value from the initial memory state (creating it if necessary). */
                 for (typename Memory::iterator mi=orig_state.mem.begin(); mi!=orig_state.mem.end(); ++mi) {
                     if (new_cell.must_alias(*mi, solver)) {
-                        ROSE_ASSERT(!(*mi).clobbered);
-                        ROSE_ASSERT(!(*mi).written);
+                        ROSE_ASSERT(!(*mi).is_clobbered());
+                        ROSE_ASSERT(!(*mi).is_written());
                         state.mem.push_back(*mi);
-                        return unsignedExtend<32, Len>((*mi).data);
+                        return unsignedExtend<32, Len>((*mi).get_data());
                     }
                 }
 
@@ -695,7 +572,7 @@ namespace SymbolicSemantics {
 
             /* Create the cell in the current state. */
             state.mem.push_back(new_cell);
-            return unsignedExtend<32,Len>(new_cell.data); // no defining instruction
+            return unsignedExtend<32,Len>(new_cell.get_data()); // no defining instruction
         }
 
         /** See memory_reference_type(). */
@@ -733,7 +610,7 @@ namespace SymbolicSemantics {
                 if (new_cell.must_alias(*mi, solver)) {
                     *mi = new_cell;
                     saved = true;
-                } else if (p_discard_popped_memory && new_mrt!=memory_reference_type(state, (*mi).address)) {
+                } else if (p_discard_popped_memory && new_mrt!=memory_reference_type(state, (*mi).get_address())) {
                     /* Assume that memory referenced through the stack pointer does not alias that which is referenced through the
                      * frame pointer, and neither of them alias memory that is referenced other ways. */
                 } else if (new_cell.may_alias(*mi, solver)) {
