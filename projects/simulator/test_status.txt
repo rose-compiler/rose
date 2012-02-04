@@ -445,7 +445,7 @@ syscall_tst.117.shmctl.01                no
 syscall_tst.117.shmctl.04                no
 syscall_tst.117.shmdt.01                 no
 syscall_tst.117.shmdt.02                 no
-syscall_tst.117.shmget.01                no
+syscall_tst.117.shmget.01                yes
 syscall_tst.117.shmget.02                no
 syscall_tst.118.1                        no
 syscall_tst.118.2                        no
