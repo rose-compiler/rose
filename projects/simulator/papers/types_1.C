@@ -47,14 +47,20 @@ public:
  *                                      Values used for Pointer and Oracle Analysis
  ******************************************************************************************************************************/
 
-// This is a stub and is here so that if we need to add something to the values we can do so quite easily.
+// This is a stub and is here so that if we need to add something to the values we can do so quite easily.  It also allows us
+// to define conversions between ValueTypes defined for different instruction semantics name spaces.
 template<size_t nBits>
 class ValueType: public SymbolicSemantics::ValueType<nBits> {
 public:
-    ValueType(): SymbolicSemantics::ValueType<nBits>() {}
+    ValueType(std::string comment=""): SymbolicSemantics::ValueType<nBits>(comment) {}
     ValueType(const SymbolicSemantics::ValueType<nBits> &other): SymbolicSemantics::ValueType<nBits>(other) {}
-    ValueType(uint64_t n): SymbolicSemantics::ValueType<nBits>(n) {}
+    ValueType(uint64_t n, std::string comment=""): SymbolicSemantics::ValueType<nBits>(n, comment) {}
     explicit ValueType(SymbolicSemantics::TreeNode *node): SymbolicSemantics::ValueType<nBits>(node) {}
+    ValueType(const VirtualMachineSemantics::ValueType<nBits> &other, std::string comment="") {
+        set_expression(other.is_known() ?
+                       InsnSemanticsExpr::LeafNode::create_integer(nBits, other.known_value(), comment) :
+                       InsnSemanticsExpr::LeafNode::create_variable(nBits, comment));
+    }
 };
 
 
@@ -156,7 +162,7 @@ public:
         SMTSolver *solver;
         MemoryCellComparator(const T<32> &address, SMTSolver *solver=NULL): address(address), solver(solver) {}
         bool operator()(const MemoryCell &elmt) {
-            return elmt.address.get_expression()->equal_to(address.get_expression(), solver);
+            return elmt.get_address().get_expression()->equal_to(address.get_expression(), solver);
         }
     };
 
@@ -193,20 +199,20 @@ public:
         // Merge memory
         for (typename Super::Memory::const_iterator mi=other.mem.begin(); mi!=other.mem.end(); ++mi) {
             typename Super::Memory::iterator found = std::find_if(this->mem.begin(), this->mem.end(),
-                                                                  MemoryCellComparator(mi->address, smt_solver));
+                                                                  MemoryCellComparator(mi->get_address(), smt_solver));
             if (found==this->mem.end()) {
                 this->mem.push_back(*mi);
                 ++nchanges;
             } else {
                 /* The address */
-                nchanges += found->address.add_defining_instructions(mi->address.get_defining_instructions());
-                if (!found->address.get_expression()->equal_to(mi->address.get_expression(), smt_solver))
-                    found->address.set_expression(T<32>()); // new, unknown value
+                nchanges += found->get_address().add_defining_instructions(mi->get_address().get_defining_instructions());
+                if (!found->get_address().get_expression()->equal_to(mi->get_address().get_expression(), smt_solver))
+                    found->get_address().set_expression(T<32>()); // new, unknown value
 
                 /* The data */
-                nchanges += found->data.add_defining_instructions(mi->data.get_defining_instructions());
-                if (!found->data.get_expression()->equal_to(mi->address.get_expression(), smt_solver))
-                    found->data.set_expression(T<32>()); // new, unknown value
+                nchanges += found->get_data().add_defining_instructions(mi->get_data().get_defining_instructions());
+                if (!found->get_data().get_expression()->equal_to(mi->get_data().get_expression(), smt_solver))
+                    found->get_data().set_expression(T<32>()); // new, unknown value
             }
         }
 
@@ -595,7 +601,16 @@ public:
         this->cur_state = init_policy.get_state();
     }
 
-    // Provide a memory oracle
+    // Provide a memory oracle.  When reading memory we could have two approaches.  A simple approach would be to first do a
+    // readMemory() from the superclass and if the obtained value is symbolic, follow it with a writeMemory() to the
+    // superclass.  Howerver, this has the problem that a readMemory() is also responsible for updating the initial memory
+    // state (it's done this way so we don't have to store an initial value for every possible memory address--we only store
+    // the values for memory locations that are read without having first been written.)  The initial state ends up containing
+    // symbolic values rather than the concrete values we would have liked.
+    //
+    // So we use a different approach.  Instead of using the policy's readMemory() interface, we call the
+    // SymbolicSemantics::Policy::mem_read() method and supply a default value.  The drawback is that we need to compute the
+    // default value for every call to mem_read() since we don't know before hand whether the default value will be needed.
     template<size_t nBits>
     ValueType<nBits>
     readMemory(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<1> &cond) {
@@ -604,12 +619,8 @@ public:
             ss <<"    reading from memory address " <<addr <<"\n";
             info.m->more("%s", ss.str().c_str());
         }
-        ValueType<nBits> retval = super::template readMemory<nBits>(segreg, addr, cond);
-        if (!retval.is_known()) {
-            retval = info.is_pointer(addr, this->get_solver()) ? random_pointer<nBits>() : random_integer<nBits>();
-            super::template writeMemory<nBits>(segreg, addr, retval, cond);
-        }
-        return retval;
+        ValueType<nBits> dflt = info.is_pointer(addr, this->get_solver()) ? random_pointer<nBits>() : random_integer<nBits>();
+        return super::template mem_read(this->get_state(), addr, dflt);
     }
 
     // Return a random pointer
@@ -666,10 +677,6 @@ public:
         try {
             // Initialize the policy for the first simulated instruction.
             policy.writeRegister(semantics.REG_EIP, policy.number<32>(info.analysis_addr));
-            if (info.verbosity>=VB_MINIMAL) {
-                std::stringstream ss; ss <<policy;
-                info.m->more("%s: initial state:\n%s", name, ss.str().c_str());
-            }
 
             // Simulate some instructions
             for (/*void*/; ninsns<limit && policy.readRegister<32>(semantics.REG_EIP).is_known(); ++ninsns) {
@@ -713,9 +720,11 @@ public:
         
         // Cleanup
         if (info.verbosity>=VB_MINIMAL) {
-            std::ostringstream ss; ss <<policy;
-            info.m->more("%s finished after processing %zu instruction%s.  Final state:\n%s",
-                         name, ninsns, 1==ninsns?"":"s", ss.str().c_str());
+            std::ostringstream ss;
+            ss <<name <<": finished after processing " <<ninsns <<" instruction" <<(1==ninsns?"":"s") <<".\n"
+               <<name <<": initial state was:\n" <<policy.get_orig_state()
+               <<name <<": final state is:\n" <<policy.get_state();
+            info.m->more("%s", ss.str().c_str());
             info.m->multipart_end();
         }
         return ninsns;
@@ -800,8 +809,7 @@ public:
             // initializer.
             typedef X86InstructionSemantics<PtrAnalysis::InitialPolicy, ValueType> InitSemantics;
             PtrAnalysis::InitialPolicy init_policy;
-            InitSemantics init_semantics(init_policy);
-            init_semantics.writeRegister(init_semantics.REG_ESP, init_policy.number<32>(analysis_stack_va)); // arbitrary
+            init_policy.get_state().gpr[x86_gpr_sp] = ValueType<32>(analysis_stack_va, "esp@init");
 
 
             // Run the PtrAnalysis and OracleAnalysis repeatedly with different starting addresses
@@ -840,6 +848,18 @@ public:
 
                 // Do a bunch of memory oracle analyses
                 for (size_t iter=0; iter<niters; ++iter) {
+
+                    // Initialize some registers
+                    SymbolicSemantics::State<ValueType> &state = init_policy.get_state();
+                    for (size_t i=0; i<state.n_gprs; ++i) {
+                        if (i!=x86_gpr_sp && i!=x86_gpr_bp)
+                            state.gpr[i] = ValueType<32>((uint64_t)rand() & 0xffffffffull);
+                    }
+                    for (size_t i=0; i<state.n_segregs; ++i)
+                        state.segreg[i] = args.thread->policy.get_state().segreg[i];
+                    for (size_t i=0; i<state.n_flags; ++i)
+                        state.flag[i] = ValueType<1>((uint64_t)rand() & 1ull);
+
                     m->mesg("%s: MemoryOracle at virtual address 0x%08"PRIx64" (%zu of %zu), iteration %zu",
                             name, analysis_addr, n+1, std::max(randomize, (size_t)1), iter);
                     size_t ninsns = OracleAnalysis(init_policy).analyze(ptr_info);

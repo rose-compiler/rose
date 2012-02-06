@@ -433,11 +433,11 @@ syscall_tst.117.msgsnd.04                yes
 syscall_tst.117.msgsnd.05                yes
 syscall_tst.117.msgsnd.06                yes
 syscall_tst.117.semctl.01                yes
-syscall_tst.117.semctl.05                no
-syscall_tst.117.semget.01                no
-syscall_tst.117.semget.03                no
+syscall_tst.117.semctl.05                yes
+syscall_tst.117.semget.01                yes
+syscall_tst.117.semget.03                yes
 syscall_tst.117.semop.01                 no
-syscall_tst.117.semop.03                 no
+syscall_tst.117.semop.03                 yes
 syscall_tst.117.semop.04                 no
 syscall_tst.117.semop.05                 no
 syscall_tst.117.shmat.01                 no
@@ -445,7 +445,7 @@ syscall_tst.117.shmctl.01                no
 syscall_tst.117.shmctl.04                no
 syscall_tst.117.shmdt.01                 no
 syscall_tst.117.shmdt.02                 no
-syscall_tst.117.shmget.01                no
+syscall_tst.117.shmget.01                yes
 syscall_tst.117.shmget.02                no
 syscall_tst.118.1                        no
 syscall_tst.118.2                        no
