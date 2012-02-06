@@ -18,15 +18,14 @@
  *  entry, and wherever "Directories" appears in the following description it does not include this null directory.
  *
  *  @par Import Directory
- *  Each directory points to (by relative virtual address (RVA)) both an Import Lookup Table (ILT) and Import Address
- *  Table (IAT).  The ILT and IAT have identical structure and thus are represented in ROSE by a single internal node
- *  type. Within the executable file, the IAT is an exact copy of the ILT; the IAT is modified in the process memory by the
- *  dynamic linker as imported library functions are bound to the executable.
+ *  Each directory points to (by relative virtual address (RVA)) both an Import Lookup Table (ILT) and Import Address Table
+ *  (IAT).
  *
  *  @par Import Lookup Table (and Import Address Table)
- *  The Import Lookup Table (ILT) and Import Address Table (IAT) have identical structure and ROSE represents them with a
- *  single internal node type.  The ILT and IAT are parallel arrays of 32- or 64-bit (PE32 or PE32+) entries terminated with an
- *  all-zero entry.  The terminating entry is not stored explicitly by ROSE.  The entries are identical for both ILTs and IATs.
+ *  The Import Lookup Table (ILT) and Import Address Table (IAT) have identical structure.  ROSE represents them as a list of
+ *  SgAsmPEImportItem in the Import Directory.  The ILT and IAT are parallel arrays of 32- or 64-bit (PE32 or PE32+) entries
+ *  terminated with an all-zero entry.  The terminating entry is not stored explicitly by ROSE.  The entries are identical for
+ *  both ILTs and IATs.
  *
  *  @par Import Lookup Table Entry (and Import Address Table Entry)
  *  Entries for ILTs and IATs are structurally identical.  They are 32- or 64-bit vectors.  The most significant bit (31/63)
@@ -74,8 +73,8 @@
     |  |                                  |   |    |        |
     |  +----------------------------------+   |    |        |
     |                                         |    |        |
-    +-----------------------------------------+    |        |           (SgAsmPEImportLookupTable)
-                                                   |        |           (SgAsmPEImportILTEntry)
+    +-----------------------------------------+    |        |           (Entries of the ILT and IAT are combined into
+                                                   |        |            SgAsmPEImportItem objects.)
                                                    |        |
                                                    |        |
     +----------- Import Lookup Table ---------+ <--+        +-->  +----------- Import Address Table --------+
@@ -109,33 +108,68 @@
     + - - - - - - - - - - - - - - - - - - - - +
 @endverbatim
  *
+ * When parsing an Import Directory, ROSE assumes that the IAT contains ordinals and/or hint/name addresses rather than bound
+ * addresses.  ROSE checks that the IAT entries are compatible with the ILT entries there were already parsed and if an
+ * inconsistency is detected then a warning is issued and ROSE assumes that the IAT entry is a bound value instead.  Passing
+ * true as the @p assume_bound argument for the parser will cause ROSE to not issue such warnings and immediately assume that
+ * all IAT entries are bound addresses.  One can therefore find the conflicting entries by looking for SgAsmImportItem objects
+ * that are created with a non-zero bound address.
+ *
+ * The IAT is often required to be allocated at a fixed address, often the beginning of the ".rdata" section.  Increasing the
+ * size of the IAT by adding more items to the import list(s) can be problematic because ROSE is unable to safely write beyond
+ * the end of the original IAT.  We require the user to manually allocate space for the new IAT and tell the
+ * SgAsmPEImportDirectory object the location and size of the allocated space before unparsing.  On a related note, due to ROSE
+ * allocators being section-local, reallocation of an Import Section does not cause reallocation of ILTs, Hint/Name pairs, or
+ * DLL names that have addresses outside the Import Section.  If these items' sizes increase, the items will be truncated when
+ * written back to disk.  The reallocation happens automatically for all import-related objects that are either bound to the
+ * import section or have a null RVA, so one method of getting things reallocated is to traverse the AST and null their RVAs:
+ *
+ * @code
+ *  struct Traversal: public AstSimpleTraversal {
+ *      void visit(SgNode *node) {
+ *          SgAsmPEImportDirectory *idir = isSgAsmPEImportDirectory(node);
+ *          SgAsmPEImportItem *import = isSgAsmPEImportItem(node);
+ *          static const rose_rva_t nil(0);
+ *
+ *          if (idir) {
+ *              idir->set_dll_name_rva(nil);
+ *              idir->set_ilt_rva(nil);
+ *              idir->set_iat_rva(nil);
+ *          }
+ *
+ *          if (import)
+ *              idir->set_hintname_rva(nil);
+ *     }
+ *  };
+ * @endcode
+ * 
  * @sa
  *      SgAsmPEImportDirectory
- *      SgAsmPEImportLookupTable
- *      SgAsmPEImportILTEntry
- *      SgAsmPEImportHNTEntry
+ *      SgAsmPEImportItem
  */
+
+/** Counter for import_mesg() */
+size_t SgAsmPEImportSection::mesg_nprinted = 0;
 
 /** Optionally prints an error/warning/info message regarding import tables. The messages are silenced after a certain amount
  *  are printed. Returns true if printed; false if silenced. */
 bool
 SgAsmPEImportSection::import_mesg(const char *fmt, ...)
 {
-    static size_t nprinted=0;
     static const size_t max_to_print=15;
 
     bool printed=false;
     va_list ap;
     va_start(ap, fmt);
 
-    if (nprinted < max_to_print) {
+    if (mesg_nprinted < max_to_print) {
         vfprintf(stderr, fmt, ap);
         printed = true;
-    } else if (nprinted == max_to_print) {
+    } else if (mesg_nprinted == max_to_print) {
         fprintf(stderr, "Import message limit reached; import errors are now suppressed.\n");
     }
 
-    nprinted++;
+    ++mesg_nprinted;
     va_end(ap);
     return printed;
 }
@@ -151,9 +185,13 @@ SgAsmPEImportSection::ctor()
     p_import_directories->set_parent(this);
 }
 
+/** Parse a PE Import Section.  This parses an entire PE Import Section, by recursively parsing the section's Import
+ * Directories.  An Import Section is a sequence of Import Directories terminated by a zero-filled Import Directory struct.
+ * The terminating entry is not stored explicitly in the section's list of directories. */
 SgAsmPEImportSection*
 SgAsmPEImportSection::parse()
 {
+    import_mesg_reset();
     SgAsmPESection::parse();
 
     SgAsmPEFileHeader *fhdr = isSgAsmPEFileHeader(get_header());
@@ -162,8 +200,8 @@ SgAsmPEImportSection::parse()
     ROSE_ASSERT(is_mapped());
     rose_addr_t idir_va = get_mapped_actual_va();
 
-    /* Parse each directory entry and its import lookup table and import address table. The list of directories is terminated
-     * with a zero-filled entry, which is not added to this import section. */
+    /* Parse each Import Directory. The list of directories is terminated with a zero-filled entry, which is not added to this
+     * import section. */
     for (size_t i = 0; 1; i++) {
         /* Import directory entry */
         SgAsmPEImportDirectory *idir = new SgAsmPEImportDirectory(this);
@@ -174,37 +212,6 @@ SgAsmPEImportSection::parse()
             break;
         }
         idir_va += sizeof(SgAsmPEImportDirectory::PEImportDirectory_disk);
-
-        /* DLL name */
-        rose_rva_t rva = idir->get_dll_name_rva();
-        if (rva.get_section()!=this) {
-            rose_addr_t start_rva = get_mapped_actual_va() - get_base_va();
-            import_mesg("SgAsmPEImportSection::ctor: warning: Name RVA is outside PE Import Table\n"
-                        "    Import Directory Entry #%zu\n"
-                        "    Name RVA is %s\n"
-                        "    PE Import Table mapped from 0x%08"PRIx64" to 0x%08"PRIx64"\n",
-                        i,
-                        rva.to_string().c_str(),
-                        start_rva, start_rva+get_mapped_size());
-        }
-
-        /* Import Lookup Table */
-        SgAsmPEImportLookupTable *ilt = new SgAsmPEImportLookupTable(idir, SgAsmPEImportLookupTable::ILT_LOOKUP_TABLE);
-        ilt->parse(idir->get_ilt_rva(), i);
-
-        /* Import Address Table */
-        SgAsmPEImportLookupTable *iat = new SgAsmPEImportLookupTable(idir, SgAsmPEImportLookupTable::ILT_ADDRESS_TABLE);
-        iat->parse(idir->get_iat_rva(), i);
-
-        /* Create the GenericDLL for this library */
-        SgAsmGenericDLL *dll = new SgAsmGenericDLL(idir->get_dll_name());
-        for (size_t j=0; j<ilt->get_entries()->get_vector().size(); j++) {
-            SgAsmPEImportILTEntry *e = ilt->get_entries()->get_vector()[j];
-            SgAsmPEImportHNTEntry *hn = e->get_hnt_entry();
-            if (hn!=NULL)
-                dll->add_symbol(hn->get_name()->get_string());
-        }
-        fhdr->add_dll(dll);
     }
     return this;
 }
@@ -244,11 +251,12 @@ SgAsmPEImportSection::remove_import_directory(SgAsmPEImportDirectory *d)
 bool
 SgAsmPEImportSection::reallocate()
 {
+    import_mesg_reset();
     bool reallocated = SgAsmPESection::reallocate();
     rose_rva_t end_rva(this->get_mapped_preferred_rva(), this);
     SgAsmPEImportDirectoryPtrList &dirlist = get_import_directories()->get_vector();
 
-    /* Space needed for the import directories. The list is terminated with a zero entry. */
+    /* Space needed for the list of import directory structs. The list is terminated with a zero entry. */
     size_t nimports = dirlist.size();
     end_rva.increment((1 + nimports) * sizeof(SgAsmPEImportDirectory::PEImportDirectory_disk));
 
@@ -271,10 +279,33 @@ SgAsmPEImportSection::reallocate()
     return reallocated;
 }
 
+/** Reallocate space for all Import Address Table.
+ *
+ *  This method traverses the AST beginning at this PE Import Section and assigns addresses and sizes to all Import Address
+ *  Tables (IATs).  The first IAT is given the @p start_at RVA and its size is reset to what ever size is needed to store the
+ *  entire table.  Each subsequent IAT is given the next available address and it's size is also updated.  The result is that
+ *  all the IATs under this Import Section are given addresses and sizes that make them contiguous in memory. This method
+ *  returns the total number of bytes required for all the IATs. */
+size_t
+SgAsmPEImportSection::reallocate_iats(rose_rva_t start_at)
+{
+    rose_rva_t rva = start_at;
+    const SgAsmPEImportDirectoryPtrList &dirs = get_import_directories()->get_vector();
+    for (SgAsmPEImportDirectoryPtrList::const_iterator di=dirs.begin(); di!=dirs.end(); ++di) {
+        (*di)->set_iat_rva(rva);
+        size_t need = (*di)->iat_required_size();
+        (*di)->set_iat_nalloc(need);
+        rva.increment(need);
+    }
+    return rva.get_rel() - start_at.get_rel();
+}
+
+
 /* Write the import section back to disk */
 void
 SgAsmPEImportSection::unparse(std::ostream &f) const
 {
+    import_mesg_reset();
 #if 1 /* DEBUGGING [RPM 2010-11-09] */
     {
         uint8_t byte = 0;

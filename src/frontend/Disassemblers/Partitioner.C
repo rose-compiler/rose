@@ -2729,27 +2729,12 @@ Partitioner::name_import_entries(SgAsmGenericHeader *fhdr)
             traverse(fhdr, preorder);
         }
         void visit(SgNode *node) {
-            SgAsmPEImportDirectory *idir = isSgAsmPEImportDirectory(node);
-            SgAsmPEImportLookupTable *ilt = idir ? idir->get_ilt() : NULL;
-            SgAsmPEImportLookupTable *iat = idir ? idir->get_iat() : NULL;
-            if (ilt && iat) {
-                rose_addr_t iat_base_va = idir->get_iat_rva() + fhdr->get_base_va();
-                size_t nentries = ilt->get_entries()->get_vector().size();
-                if (nentries!=iat->get_entries()->get_vector().size()) {
-                    if (partitioner->debug)
-                        fprintf(partitioner->debug, "Partitioner::name_import_entries: malformed import directory skipped\n");
-                    return;
-                }
-                for (size_t i=0; i<nentries; ++i) {
-                    SgAsmPEImportILTEntry *ilt_entry = ilt->get_entries()->get_vector()[i];
-                    if (NULL!=ilt_entry && NULL!=iat->get_entries()->get_vector()[i]) {
-                        rose_addr_t iat_entry_va = iat_base_va + i*fhdr->get_word_size();
-                        if (ilt_entry->get_entry_type() == SgAsmPEImportILTEntry::ILT_HNT_ENTRY_RVA)
-                            index[iat_entry_va] = ilt_entry->get_hnt_entry()->get_name()->get_string();
-                    } else if (partitioner->debug) {
-                        fprintf(partitioner->debug, "Partitioner::name_import_entries: malformed ILT/IAT entry skipped\n");
-                    }
-                }
+            SgAsmPEImportItem *import = isSgAsmPEImportItem(node);
+            if (import) {
+                std::string name = import->get_name()->get_string();
+                rose_addr_t va = import->get_bound_rva().get_va();
+                if (va!=0 && !name.empty())
+                    index[va] = name;
             }
         }
     } imports(this, fhdr);

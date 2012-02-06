@@ -380,6 +380,15 @@ testLibraryDb.passed: testLibraryDb.conf testLibraryDb
 	@$(RTH_RUN) $< $@
 endif
 
+# Tests reading import sections from PE files
+noinst_PROGRAMS += testPeImports
+testPeImports_SOURCES = testPeImports.C
+testPeImports_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+STATIC_TEST_TARGETS += testPeImports.passed
+EXTRA_DIST += testPeImports.conf testPeImports.ans
+testPeImports.passed: testPeImports.conf testPeImports
+	@$(RTH_RUN) INPUT=proxycfg.exe $< $@
+
 ###############################################################################################################################
 # DEMOS
 #
