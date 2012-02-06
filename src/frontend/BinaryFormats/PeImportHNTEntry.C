@@ -1,6 +1,13 @@
 /* PE Import Hint Name Table Entry */
 #include "sage3basic.h"
 
+/** @class SgAsmPEImportHNTEntry
+ *
+ *  Portable Executable Import Section Hint/Name Table Entry.
+ *
+ *  See SgAsmPEImportSection for details. */
+
+
 /* Constructor */
 void
 SgAsmPEImportHNTEntry::ctor(SgAsmPEImportILTEntry *ilt_entry, std::string name)

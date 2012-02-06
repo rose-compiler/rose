@@ -1,6 +1,16 @@
 /* PE Import Lookup Table Entry (also used for Import Address Table Entries) */
 #include "sage3basic.h"
 
+/** @class SgAsmPEImportILTEntry
+ *
+ *  Portable Executable Import Lookup Table Entry.
+ *
+ *  This class is used to represent both the ILT and IAT entries--they are structurally identical, although the IAT entries are
+ *  converted to addresses by the dynamic linker.  See SgAsmPEImportSection for details. */
+
+
+
+
 /** Construct an Import Lookup Table Entry (or Import Address Table Entry) and links it into the parent Import Lookup Table (or
  *  Import Address Table). If the Import Lookup Table, @p ilt, is the null pointer then the entry is not added to the table and
  *  the user must call SgAsmPEImportLookupTable::add_entry() to add it later. */

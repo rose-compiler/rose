@@ -1,6 +1,16 @@
 /* PE Import Directory. A PE Import Section is a list of PE Import Directories. */
 #include "sage3basic.h"
 
+/** @class SgAsmPEImportDirectory
+ *
+ *  Portable Executable Import Directory.
+ *
+ *  Represents a single directory (usually corresponding to a single library) in the PE Import Section. See
+ *  SgAsmPEImportSection for details. */
+
+
+
+
 /** Constructor. The constructor makes @p section the parent of this new import directory, and adds this new import
  *  directory to the import section. */
 void

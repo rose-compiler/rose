@@ -2,6 +2,14 @@
 #include "sage3basic.h"
 #include "stringify.h"
 
+/** @class SgAsmPEImportLookupTable
+ *
+ * Portable Executable Import Section Import Lookup Table.
+ *
+ * Represents an Import Lookup Table (ILT) for a PE Import Section.  See SgAsmPEImportSection for details. */
+
+
+
 /** Constructs a new import lookup table or import address table and adds it as a child of the import directory. */
 void
 SgAsmPEImportLookupTable::ctor(SgAsmPEImportDirectory *idir)
