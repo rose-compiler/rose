@@ -4,6 +4,118 @@
 #include "sage3basic.h"
 #include <stdarg.h>
 
+/** @class SgAsmPEImportSection
+ *
+ *  Portable Executable Import Section.
+ *
+ *  Constructs an SgAsmPEImportSection that represents either a PE ".idata" section as defined by the PE Section Table, or a PE
+ *  Import Table as described by the RVA/Size pairs at the end of the NT Optional Header. The ".idata" section and PE Import
+ *  Table both have the same format (only important fields shown):
+ *
+ *  @par Import Section
+ *  An Import Section consists of a list of Import Directory Entries ("Directories"), one per dynamically linked library,
+ *  followed by an all-zero Directory entry that marks the end of the list.  ROSE does not explicitly store the terminating
+ *  entry, and wherever "Directories" appears in the following description it does not include this null directory.
+ *
+ *  @par Import Directory
+ *  Each directory points to (by relative virtual address (RVA)) both an Import Lookup Table (ILT) and Import Address
+ *  Table (IAT).  The ILT and IAT have identical structure and thus are represented in ROSE by a single internal node
+ *  type. Within the executable file, the IAT is an exact copy of the ILT; the IAT is modified in the process memory by the
+ *  dynamic linker as imported library functions are bound to the executable.
+ *
+ *  @par Import Lookup Table (and Import Address Table)
+ *  The Import Lookup Table (ILT) and Import Address Table (IAT) have identical structure and ROSE represents them with a
+ *  single internal node type.  The ILT and IAT are parallel arrays of 32- or 64-bit (PE32 or PE32+) entries terminated with an
+ *  all-zero entry.  The terminating entry is not stored explicitly by ROSE.  The entries are identical for both ILTs and IATs.
+ *
+ *  @par Import Lookup Table Entry (and Import Address Table Entry)
+ *  Entries for ILTs and IATs are structurally identical.  They are 32- or 64-bit vectors.  The most significant bit (31/63)
+ *  indicates whether the remaining bits are an Ordinal (when set) or Hint/Name address (when clear).  Ordinals are represented
+ *  by the low-order 16 bits and Hint/Name addresses are stored in the low-order 31 bits.  All other bits must be zero
+ *  according to the PE specification.  Hint/Name addresses are relative virtual addresses of entries in the (implicit)
+ *  Hint/Name Table. When a function is bound by the dynamic linkter, its IAT Entry within process memory is overwritten with
+ *  the virtual address of the bound function.
+ *
+ *  @par Hint/Name Table
+ *  Some Import Lookup Table (and Import Address Table) entries contain a Hint/Name Table Entry RVA.  The Hint/Name Table
+ *  Entries collectively form the Hint/Name Table, but there is no requirement that the entries appear in any particular order
+ *  or even that they appear contiguously in memory.  In other words, the Hint/Name Table is a conceptual object rather than a
+ *  true table in the PE file.
+ *
+ *
+ * @verbatim
+    +------------ Import Section -------------+                         (SgAsmPEImportSection)
+    |                                         |
+    |                                         |
+    |  +------- Import Directory #0 ------+   |                         (SgAsmPEImportDirectory)
+    |  |   1. Import Lookup Table RVA     |   |
+    |  |   2. Date/time stamp             |   |
+    |  |   3. Forwarder chain index       |   |
+    |  |   4. Name RVA                    |   |
+    |  |   5. Import Address Table RVA    |   |
+    |  +----------------------------------+   |
+    |                                         |
+    |                                         |
+    |  +------- Import Directory #1 ------+   |
+    |  |   1. Import Lookup Table RVA     |--------+
+    |  |   2. Date/time stamp             |   |    |
+    |  |   3. Forwarder chain index       |   |    |
+    |  |   4. Name RVA                    |   |    |
+    |  |   5. Import Address Table RVA    |------- | -------+
+    |  +----------------------------------+   |    |        |
+    |                                         |    |        |
+    |         . . .                           |    |        |
+    |                                         |    |        |
+    |  +------- Import Directory #N ------+   |    |        |
+    |  |                                  |   |    |        |
+    |  |   Terminating directory is       |   |    |        |
+    |  |   zero filled.                   |   |    |        |
+    |  |                                  |   |    |        |
+    |  |                                  |   |    |        |
+    |  +----------------------------------+   |    |        |
+    |                                         |    |        |
+    +-----------------------------------------+    |        |           (SgAsmPEImportLookupTable)
+                                                   |        |           (SgAsmPEImportILTEntry)
+                                                   |        |
+                                                   |        |
+    +----------- Import Lookup Table ---------+ <--+        +-->  +----------- Import Address Table --------+
+    | #0  32/64-bit vector                    |                   | #0  32/64-bit vector or VA when bound   |
+    |                                         |   These arrays    |                                         |
+    | #1  32/64-bit vector                    |   are parallel    | #1  32/64-bit vector or VA when bound   |
+    |                      \                  |                   |                                         |
+    |     ...               \when used as     |                   |     ...                                 |
+    |                        \a Hint/Name     |                   |                                         |
+    | #N  32/64-bit zero      \RVA            |                   | #N  32/64-bit zero                      |
+    +--------------------------\--------------+                   +-----------------------------------------+
+                                \
+                                 \
+                                  |
+    + - - - - -  Hint/Name Table  | - - - - - +           The Hint/Name Table doesn't actually
+                                  v                       exist explicitly--there is no pointer
+    |  +------ Hint/Name ----------------+    |           to the beginning of the table and no
+       |  1. 2-byte index ENPT           |                requirement that the entries be in any
+    |  |  2. NUL-terminated name         |    |           particular order, or even contiguous.
+       |  3. Optional extran NUL         |
+    |  +---------------------------------+    |           "ENPT" means Export Name Pointer Table,
+                                                          which is a table in the linked-to
+    |          . . .                          |           shared library.
+
+    |  +------ Hint/Name ----------------+    |
+       |  1. 2-byte index ENPT           |                              (SgAsmPEImportHNTEntry)
+    |  |  2. NUL-terminated name         |    |
+       |  3. Optional extran NUL         |
+    |  +---------------------------------+    |
+
+    + - - - - - - - - - - - - - - - - - - - - +
+@endverbatim
+ *
+ * @sa
+ *      SgAsmPEImportDirectory
+ *      SgAsmPEImportLookupTable
+ *      SgAsmPEImportILTEntry
+ *      SgAsmPEImportHNTEntry
+ */
+
 /** Optionally prints an error/warning/info message regarding import tables. The messages are silenced after a certain amount
  *  are printed. Returns true if printed; false if silenced. */
 bool
@@ -28,32 +140,6 @@ SgAsmPEImportSection::import_mesg(const char *fmt, ...)
     return printed;
 }
 
-/** Constructor for PE import data. Constructs an SgAsmPEImportSection that represents either a PE ".idata" section as defined
- *  by the PE Section Table, or a PE Import Table as described by the RVA/Size pairs at the end of the NT Optional Header. The
- *  ".idata" section and PE Import Table both have the same format, which is generally:
- * 
- * @code
- * +-------------------------------+  Starts at address zero of the .idata
- * | Import Directory Table:       |  section or PE Import Table. Each Directory
- * |   Import Directory Entry #0   |  represents one library and all  its
- * |   Import Directory Entry #1   |  associated symbols.
- * |   ...                         |
- * |   Zero-filled Directory Entry |
- * +-------------------------------+
- *
- * +-------------------------------+  One table per dynamic library, starting
- * | Import Lookup Table (ILT)     |  at arbitrary RVA specified in the
- * |   ILT Entry #0                |  Directory Table.
- * |   ILT Entry #1                |
- * |   Zero-filled ILTEntry        |
- * +-------------------------------+
- *
- * +-------------------------------+  There is no starting RVA for this table.
- * | Hint-Name Table               |  Rather, ILT Entries each contain an RVA
- * |                               |  to an entry in the Hint-Name Table.
- * +-------------------------------+
- * @endcode
- */
 void
 SgAsmPEImportSection::ctor()
 {
@@ -140,7 +226,7 @@ SgAsmPEImportSection::add_import_directory(SgAsmPEImportDirectory *d)
 
 /** Remove an import directory from the import directory list. Does not delete it. */
 void
-SgAsmPEImportSection::remove_import_directory(SgAsmPEImportDirectory *d) 
+SgAsmPEImportSection::remove_import_directory(SgAsmPEImportDirectory *d)
 {
     SgAsmPEImportDirectoryPtrList &dirlist = get_import_directories()->get_vector();
     SgAsmPEImportDirectoryPtrList::iterator found = std::find(dirlist.begin(), dirlist.end(), d);
