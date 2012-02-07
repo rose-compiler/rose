@@ -143,7 +143,7 @@ pthread_create.5-2                       no
 pthread_create.8-1                       yes
 pthread_create.8-2                       yes
 pthread_detach.1-1                       no
-pthread_detach.2-1                       no
+pthread_detach.2-1                       yes
 pthread_detach.2-2                       yes
 pthread_detach.3-1                       no
 pthread_detach.4-1                       no
