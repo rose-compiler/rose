@@ -649,8 +649,22 @@ namespace SymbolicSemantics {
         void startInstruction(SgAsmInstruction *insn) {
             if (!cur_state.ip.is_known()) {
                 cur_state.ip = ValueType<32>(insn->get_address()); // semantics user should have probably initialized EIP
-            } else {
-                assert(cur_state.ip.known_value()==insn->get_address());
+            } else if (cur_state.ip.known_value()!=insn->get_address()) {
+                fprintf(stderr, "SymbolicSemantics::Policy::startInstruction: invalid EIP value for current instruction\n\
+    startInstruction() is being called for an instruction with a concrete\n\
+    address stored in the SgAsmx86Instruction object, but the current value of\n\
+    this policy's EIP register does not match the instruction.  This might\n\
+    happen if you're processing instructions in an order that's different than\n\
+    the order the policy thinks they would be executed.  If this is truly your\n\
+    intent, then you need to set the policy's EIP register to the instruction\n\
+    address before you translate the instruction--and you might want to make\n\
+    sure the other state information is also appropriate for this instruction\n\
+    rather than use the final state from the previously translated\n\
+    instruction.  x86 \"REP\" instructions might be the culprit: ROSE\n\
+    instruction semantics treat them as a tiny loop, updating the policy's EIP\n\
+    depending on whether the loop is to be taken again, or not.\n");
+                assert(cur_state.ip.known_value()==insn->get_address()); // redundant with 'if' condition, used for error mesg
+                abort(); // we must fail even when optimized
             }
             if (0==ninsns++)
                 orig_state = cur_state;
