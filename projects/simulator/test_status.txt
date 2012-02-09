@@ -310,7 +310,7 @@ pthread_setschedparam.5-1                no
 pthread_setschedprio.1-1                 yes
 pthread_setspecific.1-1                  no
 pthread_setspecific.1-2                  no
-pthread_sigmask.10-1                     no
+pthread_sigmask.10-1                     yes
 pthread_sigmask.12-1                     no
 pthread_sigmask.14-1                     no
 pthread_sigmask.15-1                     no

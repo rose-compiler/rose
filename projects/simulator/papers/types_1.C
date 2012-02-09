@@ -519,7 +519,9 @@ public:
                                                                                                         get_expression());
                 if (eip_value.is_known()) {
                     successors.insert(eip_value.known_value());
-                    // assume all CALLs return since we might not actually traverse the called function
+                    // assume all CALLs return since we might not actually traverse the called function.  If we had done a full
+                    // disassembly with partitioning then we could be more precise here by looking to see if the CALL was
+                    // indeed a function call, and if so, whether the called function's can_return() property is set.
                     if (insn->get_kind()==x86_call)
                         successors.insert(insn->get_address()+insn->get_size());
                 } else if (NULL!=inode && InsnSemanticsExpr::OP_ITE==inode->get_operator() &&
