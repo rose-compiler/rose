@@ -166,7 +166,7 @@ SgAsmPEImportSection::import_mesg(const char *fmt, ...)
         vfprintf(stderr, fmt, ap);
         printed = true;
     } else if (mesg_nprinted == max_to_print) {
-        fprintf(stderr, "Import message limit reached; import errors are now suppressed.\n");
+        fprintf(stderr, "Import message limit reached; import diagnostics are now suppressed.\n");
     }
 
     ++mesg_nprinted;
@@ -178,7 +178,11 @@ void
 SgAsmPEImportSection::ctor()
 {
     set_synthesized(true);
-    set_name(new SgAsmBasicString("PE Section Table"));
+
+    SgAsmBasicString *name = new SgAsmBasicString("PE Section Table");
+    set_name(name);
+    name->set_parent(this);
+
     set_purpose(SP_HEADER);
 
     p_import_directories = new SgAsmPEImportDirectoryList();
