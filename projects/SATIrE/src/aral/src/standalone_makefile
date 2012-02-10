@@ -12,7 +12,7 @@ aralparser.h aralparser.C: aralparser.yxx
 	${YACC} --defines=aralparser.h -p aral -o aralparser.C aralparser.yxx
 
 aralscanner.C: aralscanner.lxx aralparser.h
-	flex --prefix=aral -o aralscanner.C aralscanner.lxx
+	flex -Paral -oaralscanner.C aralscanner.lxx
 
 aral :	aral.C aralscanner.C aralparser.h aralir.C satire/aralir.h 
 	$(CC) aral.C aralscanner.C aralparser.C aralir.C -Isatire -lfl -o aral 

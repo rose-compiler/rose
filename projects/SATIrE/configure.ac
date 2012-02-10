@@ -1,17 +1,13 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ(2.68)
+AC_PREREQ(2.67)
 AC_INIT(SATIrE, 0.9.0, schordan@technikum-wien.at or adrian@llnl.gov)
 AC_CONFIG_SRCDIR([README])
 
 AC_CONFIG_MACRO_DIR([m4])
 
-# MS: add 'std-options' once all scripts conform to standard options
-AM_INIT_AUTOMAKE([foreign no-installinfo no-texinfo.tex 1.11
-  dist-bzip2 color-tests silent-rules]) dnl  parallel-tests
-dnl do `make V=1' or `./configure --disable-silent-rules' for a verbose build
-AM_SILENT_RULES([yes])
+AM_INIT_AUTOMAKE([foreign no-installinfo no-texinfo.tex tar-pax 1.9.5])
 
 # Checks for programs.
 AC_PROG_YACC
@@ -168,8 +164,9 @@ AC_ARG_WITH([cbmc],
      [enable CBMC model checker (optional) @<:@default=check@:>@])],
    [],
    [with_cbmc=check])
-          
-AX_WITH_PROG(CBMC, cbmc-3-0-i686-linux)
+ 
+#MS:requires autoconf 2.61 (we want 2.59 to be sufficient)         
+#AX_WITH_PROG(CBMC, cbmc-3-0-i686-linux)
 AS_IF([test "x$with_cbmc" != xno],
       [AS_IF([test -x "$CBMC"],
             [with_cbmc=yes; CBMCHOME=`dirname $CBMC`/..],

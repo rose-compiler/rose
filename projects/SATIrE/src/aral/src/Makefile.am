@@ -29,7 +29,7 @@ aralexample1_LDADD = libaral.la
 BUILT_SOURCES = aralparser.h
 
 AM_YFLAGS = -d -p aral
-AM_LFLAGS = --prefix=aral
+AM_LFLAGS = -Paral
 LEX_OUTPUT_ROOT = lex.aral
 
 libaral_la_SOURCES = aralscanner.lxx aralparser.yxx aralir.C

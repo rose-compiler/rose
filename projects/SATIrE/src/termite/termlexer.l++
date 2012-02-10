@@ -41,8 +41,12 @@ operator [\-\+\*\/\<\=\>\:\.\#]+
 [ \t\n]   { count(); }
 
 {singlechar} {
-	  // ISO Prolog insists on quoting Characters as "\123\" 
-	  // which leads to this strange ambiguity
+          /* MS: FIX: the following comment MUST be a C-multi line comment 
+             otherwise the prolog notation example leads to an error in 
+             flex 2.5.4 (it did work in flex 2.5.35 as single line comments) */
+
+          /* ISO Prolog insists on quoting Characters as "\123\" 
+	     which leads to this strange ambiguity */
           count();
           yytext[5] = 0;
           yylval.intValue = (int)strtol(yytext+2, NULL, 10);

@@ -1,4 +1,16 @@
-V0.9.0 2012-01-xx MS,AP,GB,DE,FB
+V0.9.1 2012-01-xx MS
+
+* Termite FIX [MS]
+  workaround for new bug in flex 2.5.4 (does not properly parse single line 
+  comments in difference to flex 2.5.35)
+  Problem: // "\123\"
+	   above single line comment causes flex 2.5.4 to generate wrong code
+	   using a C multiline comment fixes the problem
+
+* ARAL FIX [MS]
+  changed --prefix to -P in makefiles to support flex 2.5.4+.
+
+V0.9.0 2012-01-11 MS,AP,GB,DE,FB
 
 * Tested with: [MS]
   - ROSE 0.9.5a-17156
