@@ -267,7 +267,7 @@ BinaryLoader::createAsmAST(SgBinaryComposite* binaryFile, std::string filePath)
   
     // TODO do I need to attach here - or can I do after return
     binaryFile->get_genericFileList()->get_files().push_back(file);
-    file->set_parent(binaryFile);
+    file->set_parent(binaryFile->get_genericFileList());
 
     /* Add a new interpretation to the SgBinaryComposite object for each header of the newly parsed
      * SgAsmGenericFile for which a suitable interpretation does not already exist. */
@@ -287,7 +287,7 @@ BinaryLoader::createAsmAST(SgBinaryComposite* binaryFile, std::string filePath)
         if (!interp) {
             interp = new SgAsmInterpretation();
             interps.push_back(interp);
-            interp->set_parent(binaryFile);
+            interp->set_parent(binaryFile->get_interpretations());
         }
         interp->get_headers()->get_headers().push_back(header);
     }

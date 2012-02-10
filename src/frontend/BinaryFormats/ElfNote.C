@@ -53,10 +53,7 @@ rose_addr_t
 SgAsmElfNoteEntry::parse(rose_addr_t at)
 {
     /* Find the section holding this note */
-    SgAsmElfNoteSection *notes = NULL;
-    for (SgNode *node=this->get_parent(); node && !notes; node=node->get_parent()) {
-        notes = dynamic_cast<SgAsmElfNoteSection*>(node);
-    }
+    SgAsmElfNoteSection *notes = SageInterface::getEnclosingNode<SgAsmElfNoteSection>(this);
     ROSE_ASSERT(notes!=NULL);
     ROSE_ASSERT(at < notes->get_size());
     SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(notes->get_header());
@@ -98,10 +95,7 @@ rose_addr_t
 SgAsmElfNoteEntry::unparse(std::ostream &f, rose_addr_t at)
 {
     /* Find the section holding this note */
-    SgAsmElfNoteSection *notes = NULL;
-    for (SgNode *node=this->get_parent(); node && !notes; node=node->get_parent()) {
-        notes = dynamic_cast<SgAsmElfNoteSection*>(node);
-    }
+    SgAsmElfNoteSection *notes = SageInterface::getEnclosingNode<SgAsmElfNoteSection>(this);
     ROSE_ASSERT(notes!=NULL);
     ROSE_ASSERT(at < notes->get_size());
     SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(notes->get_header());

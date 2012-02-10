@@ -50,7 +50,7 @@ struct Dumper: public SgSimpleProcessing {
                 }
 
                 /* Dump interpretations that point only to this file. */
-                SgBinaryComposite *binary = isSgBinaryComposite(file->get_parent());
+                SgBinaryComposite *binary = SageInterface::getEnclosingNode<SgBinaryComposite>(file);
                 ROSE_ASSERT(binary!=NULL);
                 const SgAsmInterpretationPtrList &interps = binary->get_interpretations()->get_interpretations();
                 for (size_t i=0; i<interps.size(); i++) {

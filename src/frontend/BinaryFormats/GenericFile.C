@@ -1116,7 +1116,7 @@ SgAsmGenericFile::dump_all(const std::string &dump_name)
         }
 
         /* Dump interpretations that point only to this file. */
-        SgBinaryComposite *binary = isSgBinaryComposite(get_parent());
+        SgBinaryComposite *binary = SageInterface::getEnclosingNode<SgBinaryComposite>(this);
         ROSE_ASSERT(binary!=NULL);
         const SgAsmInterpretationPtrList &interps = binary->get_interpretations()->get_interpretations();
         for (size_t i=0; i<interps.size(); i++) {

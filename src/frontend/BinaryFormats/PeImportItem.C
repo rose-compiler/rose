@@ -17,10 +17,13 @@ SgAsmPEImportItem::ctor(SgAsmPEImportItemList *parent)
     set_by_ordinal(true);
     set_ordinal(0);
     set_hint(0);
-    set_name(new SgAsmBasicString(""));
     set_hintname_rva(0);
     set_hintname_nalloc(0);
     set_bound_rva(0);
+
+    SgAsmBasicString *name = new SgAsmBasicString("");
+    set_name(name);
+    name->set_parent(this);
 }
 
 void
