@@ -338,7 +338,7 @@ SgAsmPEImportDirectory::unparse_ilt_iat(std::ostream &f, const rose_rva_t &table
     assert(fhdr!=NULL);
     assert(fhdr->get_word_size() <= sizeof(uint64_t));
     const SgAsmPEImportItemPtrList &imports = get_imports()->get_vector();
-    rose_addr_t entry_size = fhdr->get_word_size();
+    size_t entry_size = fhdr->get_word_size();
     uint64_t by_ordinal_bit = 1ull << (8*entry_size-1);
 
     if (0==table_start.get_rva() || imports.empty())
