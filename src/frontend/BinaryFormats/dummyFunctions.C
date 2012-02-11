@@ -87,6 +87,7 @@ void SgAsmElfSegmentTable::dump(FILE *f, const char *prefix, ssize_t idx) const 
 void SgAsmDOSFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const {}
 void SgAsmDOSExtendedHeader::dump(FILE *f, const char *prefix, ssize_t idx) const {}
 void SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx) const {}
+void SgAsmPeImportItem::dump(FILE*f, char const *prefix, ssize_t idx) const {}
 
 
 
