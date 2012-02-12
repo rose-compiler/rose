@@ -1531,10 +1531,20 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                            // Make this statement different in the generated dot graph
                               labelWithSourceCode = 
                                  "\\n" + currentNodeFileInfo->get_filenameString() + 
-                                 "\\n line: " +  StringUtility::numberToString(currentNodeFileInfo->get_line()) + 
-                                 " column: " +  StringUtility::numberToString(currentNodeFileInfo->get_col()) + "  " +
-                                 "\\n raw line: " +  StringUtility::numberToString(currentNodeFileInfo->get_raw_line()) + 
-                                 " raw column: " +  StringUtility::numberToString(currentNodeFileInfo->get_raw_col()) + "  " +
+                                 "\\n line: "          +  StringUtility::numberToString(currentNodeFileInfo->get_line()) + 
+                                    " column: "        +  StringUtility::numberToString(currentNodeFileInfo->get_col()) + "  " +
+                                 "\\n raw line: "      +  StringUtility::numberToString(currentNodeFileInfo->get_raw_line()) + 
+                                    " raw column: "    +  StringUtility::numberToString(currentNodeFileInfo->get_raw_col()) + "  " +
+                              // DQ (1/16/2012): Added more information to the output of the source poisition information.
+                                 "\\n hasPositionInSource() = "                    + (currentNodeFileInfo->hasPositionInSource() == true ? "T" : "F") + 
+                                    " isTransformation() = "                       + (currentNodeFileInfo->isTransformation() == true ? "T" : "F") + "  " +
+                                    " isCompilerGenerated() = "                    + (currentNodeFileInfo->isCompilerGenerated() == true ? "T" : "F") + "  " +
+                                 "\\n isOutputInCodeGeneration() = "               + (currentNodeFileInfo->isOutputInCodeGeneration() == true ? "T" : "F") + "  " +
+                                    " isShared() = "                               + (currentNodeFileInfo->isShared() == true ? "T" : "F") + "  " +
+                                    " isFrontendSpecific() = "                     + (currentNodeFileInfo->isFrontendSpecific() == true ? "T" : "F") + "  " +
+                                  "\\n isSourcePositionUnavailableInFrontend() = " + (currentNodeFileInfo->isSourcePositionUnavailableInFrontend() == true ? "T" : "F") + "  " +
+                                    " isCommentOrDirective() = "                   + (currentNodeFileInfo->isCommentOrDirective() == true ? "T" : "F") + "  " +
+                                    " isToken() = "                                + (currentNodeFileInfo->isToken() == true ? "T" : "F") + "  " +
                                  "\\n pointer value: " +  StringUtility::numberToString(currentNodeFileInfo) + "  ";
                             }
                        }
@@ -1909,45 +1919,45 @@ void CustomMemoryPoolDOTGeneration::s_Filter_Flags::print_filter_flags ()
 
 /* Construct an instance from */
 CustomMemoryPoolDOTGeneration::s_Filter_Flags::s_Filter_Flags(std::vector <std::string>& argvList)
-{
-   setDefault(); // set default first
+   {
+     setDefault(); // set default options first
+
   // stop here if no arguments are specified at all
-  if ( argvList.size() == 0)
-    return;
+     if ( argvList.size() == 0)
+          return;
 
-  CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","asmFileFormatFilter", m_asmFileFormat, true);
-  CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","asmTypeFilter", m_asmType, true);
-  CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","binaryExecutableFormatFilter", m_binaryExecutableFormat, true);
-  CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","commentAndDirectiveFilter", m_commentAndDirective, true);
-  CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","ctorInitializerListFilter", m_ctorInitializer, true);
+     CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","asmFileFormatFilter", m_asmFileFormat, true);
+     CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","asmTypeFilter", m_asmType, true);
+     CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","binaryExecutableFormatFilter", m_binaryExecutableFormat, true);
+     CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","commentAndDirectiveFilter", m_commentAndDirective, true);
+     CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","ctorInitializerListFilter", m_ctorInitializer, true);
 
-  CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","defaultColorFilter", m_defaultColor, true);
-  CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","defaultFilter", m_default, true);
-  CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","edgeFilter", m_edge, true);
-  CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","emptySymbolTableFilter", m_emptySymbolTable, true);
-  CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","expressionFilter", m_expression, true);
+     CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","defaultColorFilter", m_defaultColor, true);
+     CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","defaultFilter", m_default, true);
+     CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","edgeFilter", m_edge, true);
+     CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","emptySymbolTableFilter", m_emptySymbolTable, true);
+     CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","expressionFilter", m_expression, true);
 
-  CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","fileInfoFilter", m_fileInfo, true);
-  CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","frontendCompatibilityFilter", m_frontendCompatibility, true);
-  CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","symbolFilter", m_symbol, true);
-  CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","typeFilter", m_type, true);
-  CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","variableDeclarationFilter", m_variableDeclaration, true);
+     CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","fileInfoFilter", m_fileInfo, true);
+     CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","frontendCompatibilityFilter", m_frontendCompatibility, true);
+     CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","symbolFilter", m_symbol, true);
+     CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","typeFilter", m_type, true);
+     CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","variableDeclarationFilter", m_variableDeclaration, true);
 
-  CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","variableDefinitionFilter", m_variableDefinition, true);
+     CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","variableDefinitionFilter", m_variableDefinition, true);
 
-  CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","noFilter", m_noFilter, true);
+     CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","noFilter", m_noFilter, true);
 
 #if 1
-  if (CommandlineProcessing::isOption(argvList, "-rose:","help", false)
-     || CommandlineProcessing::isOption(argvList, "-help","", false)
-     || CommandlineProcessing::isOption(argvList, "--help","", false))
-  {
-    print_commandline_help();
-    print_filter_flags();
-  }
+     if (CommandlineProcessing::isOption(argvList, "-rose:","help", false)
+      || CommandlineProcessing::isOption(argvList, "-help","", false)
+      || CommandlineProcessing::isOption(argvList, "--help","", false))
+        {
+          print_commandline_help();
+          print_filter_flags();
+        }
 #endif
-
-}
+   }
 
 void
 CustomMemoryPoolDOTGeneration::s_Filter_Flags::print_commandline_help()

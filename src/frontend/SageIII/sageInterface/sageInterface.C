@@ -687,6 +687,9 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
                break;
              }
 
+       // DQ (2/10/2012): Added support for template variable declarations (using base class support).
+          case V_SgTemplateVariableDeclaration:
+
        // DQ (3/8/2006): Implemented case for variable declaration (forgot this case)
           case V_SgVariableDeclaration:
              {

@@ -1064,6 +1064,8 @@ Unparse_ExprStmt::unparseFuncRef(SgExpression* expr, SgUnparse_Info& info)
         }
 #endif
 
+     printf ("In unparseFuncRef(): usingGeneratedNameQualifiedFunctionNameString = %s \n",usingGeneratedNameQualifiedFunctionNameString ? "true" : "false");
+
      if (usingGeneratedNameQualifiedFunctionNameString == true)
         {
        // Output the previously generated type name contianing the correct name qualification of subtypes (e.g. template arguments).
@@ -1086,7 +1088,7 @@ Unparse_ExprStmt::unparseFuncRef(SgExpression* expr, SgUnparse_Info& info)
      string func_name = func_ref->get_symbol()->get_name().str();
      int diff = 0; // the length difference between "operator" and function
 
-  // printf ("Inside of Unparse_ExprStmt::unparseFuncRef(): func_name = %s \n",func_name.c_str());
+     printf ("Inside of Unparse_ExprStmt::unparseFuncRef(): func_name = %s \n",func_name.c_str());
 
      ROSE_ASSERT(func_ref->get_symbol() != NULL);
      ROSE_ASSERT(func_ref->get_symbol()->get_declaration() != NULL);
@@ -1178,6 +1180,8 @@ Unparse_ExprStmt::unparseFuncRef(SgExpression* expr, SgUnparse_Info& info)
                  // printf ("In unparseFuncRef(): No name qualification permitted in this case! \n");
                   }
              }
+
+          curprint ("\n /* unparseFuncRef func_name = " + func_name + " */ \n");
 #if 0
        // DQ (12/2/2004): Put a little extra space after the function name (avoids i !=0)
           curprint (func_name);
@@ -1195,7 +1199,7 @@ Unparse_ExprStmt::unparseFuncRef(SgExpression* expr, SgUnparse_Info& info)
              {
                if ( (declaration->get_declarationModifier().isFriend() == false) && (diff == 0) )
                   {
-#if 0
+#if 1
                     printf ("Regenerate the name func_name = %s \n",func_name.c_str());
                     printf ("templateInstantiationFunctionDecl->get_templateName() = %s \n",templateInstantiationFunctionDecl->get_templateName().str());
 #endif
@@ -1885,7 +1889,7 @@ Unparse_ExprStmt::unparseUpcMythread(SgExpression* expr, SgUnparse_Info& info)
 void
 Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
    {
-#if 0
+#if 1
      printf ("In Unparse_ExprStmt::unparseFuncCall expr = %p unp->opt.get_overload_opt() = %s \n",expr,(unp->opt.get_overload_opt() == true) ? "true" : "false");
      curprint ( "\n/* In unparseFuncCall */ \n");
 #endif
@@ -2062,7 +2066,7 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
          !(isSgDotExp(func_call->get_function())) && !(isSgArrowExp(func_call->get_function())))
         {
           unp->u_debug->printDebugInfo("in FIRST PART of unparseFuncCall", true);
-#if 0
+#if 1
           printf ("output 1st part (without syntax sugar) \n");
           curprint ( " /* output 1st part (without syntax sugar) */ ");
 #endif
@@ -2104,7 +2108,7 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
 
             // printf ("DONE: output function argument (right) \n");
              }
-#if 0
+#if 1
           curprint ( "\n/* Leaving processing first part in unparseFuncCall */ \n");
 #endif
         }
@@ -2122,9 +2126,9 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
 
           if (unp->opt.get_overload_opt())
                info.set_nested_expression();
-#if 0
+#if 1
           printf ("output 2nd part func_call->get_function() = %s \n",func_call->get_function()->sage_class_name());
-          curprint ( " /* output 2nd part  func_call->get_function() = " + func_call->get_function()->sage_class_name() + " */ \n");
+          curprint ("/* output 2nd part  func_call->get_function() = " + func_call->get_function()->class_name() + " */ \n");
 #endif
 
        //
@@ -2144,9 +2148,11 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
 
           unparseExpression(func_call->get_function(), alt_info);
 
+          func_call->get_function()->get_file_info()->display("In unparse function call: debug");
+
           alt_info.set_reference_node_for_qualification(NULL);
 
-#if 0
+#if 1
           curprint ( " /* after output func_call->get_function() */ ");
 #endif
 

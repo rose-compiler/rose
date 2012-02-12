@@ -138,7 +138,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
   // can be improved.  So this is a fine temporary fix for now.
      if (StringUtility::fileNameSuffix(sourceFilename)=="rmod") 
         {
-       // If we are to unparse a module  into the .rmod file this this is ALWAYS true
+       // If we are to unparse a module into the .rmod file this this is ALWAYS true
           return true;
         }
 
@@ -215,11 +215,10 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                    }
                }
              }
-#if 0
+#if 1
           printf ("In Unparser::statementFromFile (statementInFile = %s output = %s stmt = %p = %s = %s in file = %s sourceFilename = %s ) \n",
-               (statementInFile == true) ? "true": "false", (isOutputInCodeGeneration == true) ? "true": "false", 
-               stmt, stmt->class_name().c_str(), SageInterface::get_name(stmt).c_str(), 
-               statementfilename.c_str(), sourceFilename.c_str());
+               (statementInFile == true) ? "true": "false", (isOutputInCodeGeneration == true) ? "true": "false", stmt, 
+               stmt->class_name().c_str(), SageInterface::get_name(stmt).c_str(),statementfilename.c_str(), sourceFilename.c_str());
 #endif
 #if 0
           stmt->get_file_info()->display("In Unparser::statementFromFile()");
