@@ -29,12 +29,15 @@ bin_PROGRAMS = \
    testTranslator \
    testTranslatorUnfoldedConstants \
    testTranslatorFoldedConstants \
-   testAstFileIO \
    testAstFileRead \
    parallelASTMerge \
    testGraphGeneration \
    testTokenGeneration
 
+# DQ (1/16/2012): This test code is not supported when compiling for simple front-end testing (smallest subset of ROSE that can be built).
+if !ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+   bin_PROGRAMS += testAstFileIO 
+endif
 
 # Phase 0 tests code:
 # This is a test of the EDG and OFP parser support. No significant part of ROSE is generated.
@@ -195,10 +198,15 @@ testObjectFileTokenGeneration: testTokenGeneration
 
 test_testTokenGeneration: testObjectFileTokenGeneration 
 
+test_testGraphGeneration: testGraphGeneration
+
 # Rule to run all the example translator tests
 # test: test_testAnalysis test_testCodeGeneration test_testTranslator test_testAstFileIO testSimpleLinkFileTranslator
-test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testAstFileIO testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants
-
+if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+   test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testGraphGeneration testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants
+else
+   test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testGraphGeneration test_testAstFileIO testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants
+endif
 
 # Make check rule
 check-local: test

@@ -683,6 +683,9 @@ buildFunctionParameterList(SgFunctionParameterTypeList * paraTypeList);
 SgFunctionParameterList*
 buildFunctionParameterList_nfi(SgFunctionParameterTypeList * paraTypeList);
 
+// DQ (2/11/2012): Added support to set the template name in function template instantations (member and non-member).
+void setTemplateNameInTemplateInstantiations( SgFunctionDeclaration* func, const SgName & name );
+
 // DQ (1/21/2009): This is a support function called by the buildNondefiningFunctionDeclaration() and 
 // buildNondefiningMemberFunctionDeclaration() functions.  Since we constructe the function type in 
 // the support function and require either a SgFunctionType or SgMemberFunctionType, we need to to pass in 

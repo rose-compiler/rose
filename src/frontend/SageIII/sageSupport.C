@@ -2557,6 +2557,24 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
   // DQ (9/26/2011): Added support for different levesl of detection for dangling pointers.
      optionCount = sla(argv, "-rose:", "($)^", "detect_dangling_pointers",&integerOption,1);
 
+  // DQ (1/16/2012): Added all of the currently defined dot file options.
+     optionCount = sla(argv, "-rose:dotgraph:", "($)^", "(asmFileFormatFilter)",&integerOption,1);
+     optionCount = sla(argv, "-rose:dotgraph:", "($)^", "(asmTypeFilter)",&integerOption,1);
+     optionCount = sla(argv, "-rose:dotgraph:", "($)^", "(binaryExecutableFormatFilter)",&integerOption,1);
+     optionCount = sla(argv, "-rose:dotgraph:", "($)^", "(commentAndDirectiveFilter)",&integerOption,1);
+     optionCount = sla(argv, "-rose:dotgraph:", "($)^", "(ctorInitializerListFilter)",&integerOption,1);
+     optionCount = sla(argv, "-rose:dotgraph:", "($)^", "(defaultColorFilter)",&integerOption,1);
+     optionCount = sla(argv, "-rose:dotgraph:", "($)^", "(defaultFilter)",&integerOption,1);
+     optionCount = sla(argv, "-rose:dotgraph:", "($)^", "(edgeFilter)",&integerOption,1);
+     optionCount = sla(argv, "-rose:dotgraph:", "($)^", "(emptySymbolTableFilter)",&integerOption,1);
+     optionCount = sla(argv, "-rose:dotgraph:", "($)^", "(expressionFilter)",&integerOption,1);
+     optionCount = sla(argv, "-rose:dotgraph:", "($)^", "(fileInfoFilter)",&integerOption,1);
+     optionCount = sla(argv, "-rose:dotgraph:", "($)^", "(frontendCompatibilityFilter)",&integerOption,1);
+     optionCount = sla(argv, "-rose:dotgraph:", "($)^", "(symbolFilter)",&integerOption,1);
+     optionCount = sla(argv, "-rose:dotgraph:", "($)^", "(typeFilter)",&integerOption,1);
+     optionCount = sla(argv, "-rose:dotgraph:", "($)^", "(variableDeclarationFilter)",&integerOption,1);
+     optionCount = sla(argv, "-rose:dotgraph:", "($)^", "(noFilter)",&integerOption,1);
+
 #if 1
      if ( (ROSE_DEBUG >= 1) || (SgProject::get_verbose() > 2 ))
         {
@@ -5141,6 +5159,24 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
 
        // DQ (9/26/2011): Added support for detection of dangling pointers within translators built using ROSE.
           argument == "-rose:detect_dangling_pointers" ||   // Used to specify level of debugging support for optional detection of dangling pointers 
+
+       // DQ (1/16/2012): Added all of the currently defined dot file options.
+          argument == "-rose:dotgraph:asmFileFormatFilter" ||
+          argument == "-rose:dotgraph:asmTypeFilter" ||
+          argument == "-rose:dotgraph:binaryExecutableFormatFilter" ||
+          argument == "-rose:dotgraph:commentAndDirectiveFilter" ||
+          argument == "-rose:dotgraph:ctorInitializerListFilter" ||
+          argument == "-rose:dotgraph:defaultColorFilter" ||
+          argument == "-rose:dotgraph:defaultFilter" ||
+          argument == "-rose:dotgraph:edgeFilter" ||
+          argument == "-rose:dotgraph:emptySymbolTableFilter" ||
+          argument == "-rose:dotgraph:expressionFilter" ||
+          argument == "-rose:dotgraph:fileInfoFilter" ||
+          argument == "-rose:dotgraph:frontendCompatibilityFilter" ||
+          argument == "-rose:dotgraph:symbolFilter" ||
+          argument == "-rose:dotgraph:typeFilter" ||
+          argument == "-rose:dotgraph:variableDeclarationFilter" ||
+          argument == "-rose:dotgraph:noFilter" ||
           false)
         {
           result = true;

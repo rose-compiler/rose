@@ -1597,7 +1597,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationMemberFunctionDeclStmt (SgStatemen
      if ( isTransformed (templateInstantiationMemberFunctionDeclaration) == true )
         {
        // Always output the template member function declaration if they are transformed.
-       // printf ("templateInstantiationMemberFunctionDeclaration has been transformed \n");
+          printf ("templateInstantiationMemberFunctionDeclaration has been transformed \n");
 
           SgDeclarationStatement* definingDeclaration = templateInstantiationMemberFunctionDeclaration->get_definingDeclaration();
        // ROSE_ASSERT(definingDeclaration != NULL);
@@ -1626,7 +1626,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationMemberFunctionDeclStmt (SgStatemen
           ROSE_ASSERT(templateInstantiationMemberFunctionDeclaration->get_templateDeclaration()->get_file_info() != NULL);
           ROSE_ASSERT(templateInstantiationMemberFunctionDeclaration->get_templateDeclaration()->get_file_info()->get_filename() != NULL);
           string declarationFileName = templateInstantiationMemberFunctionDeclaration->get_templateDeclaration()->get_file_info()->get_filename();
-#if 0
+#if 1
           printf ("In unparseTemplateInstantiationMemberFunctionDeclStmt(): currentFileName     = %s \n",currentFileName.c_str());
           printf ("In unparseTemplateInstantiationMemberFunctionDeclStmt(): declarationFileName = %s \n",declarationFileName.c_str());
           printf ("templateInstantiationMemberFunctionDeclaration source position information: \n");
@@ -1654,17 +1654,16 @@ Unparse_ExprStmt::unparseTemplateInstantiationMemberFunctionDeclStmt (SgStatemen
              }
             else
              {
-#if 0
+#if 1
                printf ("Declaration does NOT appear in the current source file (templateInstantiationMemberFunctionDeclaration = %p = %s) \n",
-                    templateInstantiationMemberFunctionDeclaration,
-                    templateInstantiationMemberFunctionDeclaration->get_qualified_name().str());
+                    templateInstantiationMemberFunctionDeclaration, templateInstantiationMemberFunctionDeclaration->get_qualified_name().str());
                printf ("   isSpecialization() = %s \n",templateInstantiationMemberFunctionDeclaration->isSpecialization() ? "true" : "false");
 #endif
              }
         }
 
-#if 0
-     printf ("outputMemberFunctionTemplateInstantiation = %s \n",outputMemberFunctionTemplateInstantiation ? "true" : "false");
+#if 1
+     printf ("Inside of unparseTemplateInstantiationMemberFunctionDeclStmt(): outputMemberFunctionTemplateInstantiation = %s \n",outputMemberFunctionTemplateInstantiation ? "true" : "false");
 #endif
 
      if (outputMemberFunctionTemplateInstantiation == true )
@@ -1718,7 +1717,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationMemberFunctionDeclStmt (SgStatemen
         }
        else
         {
-#if 0
+#if 1
           curprint ( string("/* Skipped output of member function declaration (name = ") + templateInstantiationMemberFunctionDeclaration->get_templateName().getString() + string(") */ \n") );
 #endif
 #if PRINT_DEVELOPER_WARNINGS
@@ -3222,7 +3221,7 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 void
 Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
-#if 0
+#if 1
      printf ("Inside of unparseVarDeclStmt(%p) \n",stmt);
      ROSE_ASSERT(info.get_current_scope() != NULL);
      printf ("An the current scope is (from info): info.get_current_scope() = %p = %s = %s \n",info.get_current_scope(),info.get_current_scope()->class_name().c_str(),SageInterface::get_name(info.get_current_scope()).c_str());
@@ -3336,6 +3335,9 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      while (p != vardecl_stmt->get_variables().end())
         {
+#if 1
+          curprint ( string("\n /* Inside of unparseVarDeclStmt(): top of loop over variables */ \n"));
+#endif
           decl_item = *p;
           ROSE_ASSERT(decl_item != NULL);
 
@@ -3838,6 +3840,9 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                   }
              }
 
+#if 1
+          curprint ( string("\n /* Inside of unparseVarDeclStmt(): increment the variable iterator */ \n"));
+#endif
        // Increment the iterator through the list of variables within a single variable declaration.
        // Currently each variable declaration contains only a single variable!
           p++;
@@ -3897,7 +3902,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
   // curprint ( string("\n/* END: Close off the statement with a \";\" */ \n";
 
-#if 0
+#if 1
      printf ("Leaving unparseVarDeclStmt() \n");
      curprint ( string("/* Leaving unparseVarDeclStmt() */ \n"));
 #endif
@@ -4725,14 +4730,16 @@ Unparse_ExprStmt::unparseCatchStmt(SgStatement* stmt, SgUnparse_Info& info)
           ninfo.set_inVarDecl();
 
        // DQ (12/8/2011): debugging catch parameter...
-       // curprint ( string("/* START: variable declaration */ "));
-       // printf ("In unparseCatchStmt(): catch_statement->get_condition() = %p = %s \n",catch_statement->get_condition(),catch_statement->get_condition()->class_name().c_str());
+          curprint ( string("/* START: variable declaration */ "));
+          printf ("In unparseCatchStmt(): catch_statement->get_condition() = %p = %s \n",catch_statement->get_condition(),catch_statement->get_condition()->class_name().c_str());
+
+          catch_statement->get_condition()->get_file_info()->display("catch condition in unparseCatchStmt(): debug");
 
        // DQ (5/6/2004): this does not unparse correctly if the ";" is included
           ninfo.set_SkipSemiColon();
           ninfo.set_SkipClassSpecifier();
           unparseStatement(catch_statement->get_condition(), ninfo);
-       // curprint ( string("/* END: variable declaration */ "));
+          curprint ( string("/* END: variable declaration */ "));
        // printf ("DONE: In unparseCatchStmt(): catch_statement->get_condition() = %p = %s \n",catch_statement->get_condition(),catch_statement->get_condition()->class_name().c_str());
         }
 

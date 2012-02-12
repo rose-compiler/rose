@@ -1,6 +1,12 @@
 // Example ROSE Translator reads input program and tests AST and WholeAST graph generation.
 #include "rose.h"
 
+// Options to generate graphs with and without filering of
+// IR nodes can be use to tailor the generated graph output.
+// Example graph options are:
+//      -rose:dotgraph:expressionFilter 1
+//      -rose:dotgraph:fileInfoFilter 0 
+
 int main( int argc, char * argv[] )
    {
   // Generate the ROSE AST.
@@ -20,3 +26,4 @@ int main( int argc, char * argv[] )
   // compiler, only backend error code is reported.
      return backend(project);
    }
+

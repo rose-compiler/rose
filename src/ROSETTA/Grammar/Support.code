@@ -4586,11 +4586,11 @@ HEADER_FILE_INFORMATION_START
           int   get_col() const;
 
           void set_file_id ( int file_id );
-          int get_file_id () const;
+          int  get_file_id () const;
 
           std::string get_raw_filename() const;
-          int   get_raw_line() const;
-          int   get_raw_col() const;
+          int  get_raw_line() const;
+          int  get_raw_col() const;
 
        // DQ (12/22/2006): This copies the line number and column number information and verifies that 
        // the file name is the same (it does not reset any fo the classification flags).  This is more

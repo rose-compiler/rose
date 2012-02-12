@@ -40,6 +40,10 @@ int TestIntegerArgument<T>::foo ()
    }
 #endif
 
+// DQ (1/16/2012): Since the template instantiations are not transformed the template instantion for the 
+// templated class should not be output.  To compound problems, the non-defining member function instantiation 
+// declaration is NOT output which it should be if the class is output.  So there are two issues to fix! 
+// (tomorrow)...
 
 int main()
    {
