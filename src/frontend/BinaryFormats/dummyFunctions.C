@@ -64,9 +64,6 @@ void SgAsmElfFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const {}
 void SgAsmElfNoteEntry::dump(FILE *f, const char *prefix, ssize_t idx) const {}
 void SgAsmElfNoteSection::dump(FILE *f, const char *prefix, ssize_t idx) const {}
 void SgAsmPEImportDirectory::dump(FILE *f, const char *prefix, ssize_t idx) const {}
-void SgAsmPEImportILTEntry::dump(FILE *f, const char *prefix, ssize_t idx) const {}
-void SgAsmPEImportLookupTable::dump(FILE *f, const char *prefix, ssize_t idx) const {}
-void SgAsmPEImportHNTEntry::dump(FILE *f, const char *prefix, ssize_t idx) const {}
 void SgAsmPEImportSection::dump(FILE *f, const char *prefix, ssize_t idx) const {}
 bool SgAsmPEImportSection::reallocate(){}
 void SgAsmElfSectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const {}
@@ -90,6 +87,7 @@ void SgAsmElfSegmentTable::dump(FILE *f, const char *prefix, ssize_t idx) const 
 void SgAsmDOSFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const {}
 void SgAsmDOSExtendedHeader::dump(FILE *f, const char *prefix, ssize_t idx) const {}
 void SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx) const {}
+void SgAsmPEImportItem::dump(FILE*f, char const *prefix, ssize_t idx) const {}
 
 
 
@@ -179,7 +177,6 @@ void SgAsmLESectionTable::unparse(std::ostream &f) const {}
 void SgAsmLENameTable::unparse(std::ostream &f) const {}
 void SgAsmGenericSection::unparse(std::ostream &f) const {}
 void SgAsmLEPageTable::unparse(std::ostream &f) const {}
-void SgAsmPEImportLookupTable::unparse(std::ostream &f, const SgAsmPEFileHeader *fhdr, rose_rva_t rva) const {}
 void SgAsmElfStrtab::unparse(std::ostream &f) const {}
 void SgAsmNEEntryTable::unparse(std::ostream &f) const {}
 void SgAsmElfEHFrameSection::unparse(std::ostream &f) const {}
@@ -212,8 +209,6 @@ std::string SgAsmElfEHFrameEntryFD::unparse(const SgAsmElfEHFrameSection *ehfram
 rose_addr_t SgAsmElfEHFrameSection::unparse(std::ostream *fp) const { return NULL; }
 void SgAsmGenericFile::unparse(std::ostream &f) const {}
 rose_addr_t SgAsmLEEntryPoint::unparse(std::ostream &f, ByteOrder sex, const SgAsmGenericSection *section, rose_addr_t spos) const { return NULL; }
-void SgAsmPEImportILTEntry::unparse(std::ostream &f, const SgAsmPEFileHeader *fhdr, rose_rva_t rva, size_t idx) const {}
-void SgAsmPEImportHNTEntry::unparse(std::ostream &f, rose_rva_t rva) const {}
 #endif
 
 // These are needed because there is no SOURCE block for ROSETTA to put the function definitions 
@@ -318,9 +313,6 @@ void SgAsmElfFileHeader::ctor()
 void SgAsmElfNoteEntry::ctor(SgAsmElfNoteSection *section)
 void SgAsmElfNoteSection::ctor()
 void SgAsmPEImportDirectory::ctor(SgAsmPEImportSection *section, size_t idx, addr_t *idir_rva_p)
-void SgAsmPEImportILTEntry::ctor(SgAsmPEImportSection *isec, uint64_t ilt_word)
-void SgAsmPEImportLookupTable::ctor(SgAsmPEImportSection *isec, rose_rva_t rva, size_t idir_idx, bool is_iat)
-void SgAsmPEImportHNTEntry::ctor(SgAsmPEImportSection *isec, rose_rva_t rva)
 void SgAsmPEImportSection::ctor()
 void SgAsmElfSectionTableEntry::ctor(ByteOrder sex, const Elf32SectionTableEntry_disk *disk) 
 void SgAsmElfSectionTableEntry::ctor(ByteOrder sex, const Elf64SectionTableEntry_disk *disk) 
