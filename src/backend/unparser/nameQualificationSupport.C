@@ -1875,7 +1875,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgInitializedName* initiali
   // DQ (12/28/2011): Added test...
      ROSE_ASSERT(initializedName->get_scope() != NULL);
 
-     printf ("In NameQualificationTraversal::nameQualificationDepth(): initializedName->get_scope() = %p = %s \n",initializedName->get_scope(),initializedName->get_scope()->class_name().c_str());
+  // printf ("In NameQualificationTraversal::nameQualificationDepth(): initializedName->get_scope() = %p = %s \n",initializedName->get_scope(),initializedName->get_scope()->class_name().c_str());
 
      SgDeclarationStatement* declaration = associatedDeclaration(initializedName->get_scope());
   // ROSE_ASSERT(declaration != NULL);
