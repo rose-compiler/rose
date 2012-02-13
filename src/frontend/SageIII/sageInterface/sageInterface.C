@@ -80,6 +80,35 @@ string getVariantName ( VariantT v )
      return string(roseGlobalVariantNameList[v]);
    }
 
+void
+SageInterface::whereAmI(SgNode* node)
+   {
+  // DQ (2/12/2012): Refactoring disagnostic support for detecting where we are when something fails.
+
+  // This highest level node acceptable for us by this function is a SgGlobal (global scope).
+
+     ROSE_ASSERT(node != NULL);
+     printf ("Inside of SageInterface::whereAmI(node = %p = %s) \n",node,node->class_name().c_str());
+
+  // Enforce that some IR nodes should not be acepted inputs.
+     ROSE_ASSERT(isSgFile(node)     == NULL);
+     ROSE_ASSERT(isSgFileList(node) == NULL);
+     ROSE_ASSERT(isSgProject(node)  == NULL);
+
+     SgNode* parent = node->get_parent();
+
+  // Don't traverse past the SgFile level.
+     while (parent != NULL && isSgFileList(parent) == NULL)
+        {
+          printf ("--- parent = %p = %s \n",parent,parent->class_name().c_str());
+
+          ROSE_ASSERT(parent->get_file_info() != NULL);
+          parent->get_file_info()->display("In SageInterface::whereAmI() diagnostics support");
+
+          parent = parent->get_parent();
+        }
+   }
+
 SgNamespaceDefinitionStatement*
 SageInterface::enclosingNamespaceScope( SgDeclarationStatement* declaration )
    {

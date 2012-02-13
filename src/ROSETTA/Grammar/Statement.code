@@ -6422,6 +6422,8 @@ resetTemplateNamesInScope ( SgScopeStatement* scope )
                     break;
                   }
 
+            // DQ (2/12/2012): Adding support for SgTemplateClassDefinition (not previously used).
+               case V_SgTemplateClassDefinition:
                case V_SgClassDefinition:
                   {
                     SgDeclarationStatement* parentDeclaration = NULL;
@@ -10405,8 +10407,10 @@ SgVariableDeclaration::append_variable( SgInitializedName* what, SgInitializer *
                copyOfFileInfo = new Sg_File_Info(*(this->get_file_info()));
                ROSE_ASSERT (copyOfFileInfo != NULL);
 
+            // Note that the SgVariableDefinition will connect the new IR node into the AST.
                defn_stmt = new SgVariableDefinition(copyOfFileInfo,get_variables().back(),initializer);  
                assert (defn_stmt != NULL);
+
                copyOfFileInfo->set_parent(defn_stmt);
 
             // DQ (3/13/2007): We can't enforce that the endOfConstruct is set (if the interface using the startOfConstruct is used.
@@ -10421,8 +10425,12 @@ SgVariableDeclaration::append_variable( SgInitializedName* what, SgInitializer *
              }
             else
              {
+            // Note that the SgVariableDefinition will connect the new IR node into the AST.
                defn_stmt = new SgVariableDefinition(get_variables().back(),initializer);
              }
+
+          ROSE_ASSERT(defn_stmt != NULL);
+       // printf ("In SgVariableDeclaration::append_variable(): SgVariableDefinition *defn_stmt = %p \n",defn_stmt);
         }
    }
 
@@ -10463,7 +10471,9 @@ SgVariableDeclaration::prepend_variable( SgInitializedName* what, SgInitializer 
                copyOfFileInfo = new Sg_File_Info(*(this->get_file_info()));
                ROSE_ASSERT (copyOfFileInfo != NULL);
 
+            // Note that the SgVariableDefinition will connect the new IR node into the AST.
                defn_stmt = new SgVariableDefinition(copyOfFileInfo,get_variables().front(),initializer);  
+
                assert (defn_stmt != NULL);
                copyOfFileInfo->set_parent(defn_stmt);
 
@@ -10475,8 +10485,12 @@ SgVariableDeclaration::prepend_variable( SgInitializedName* what, SgInitializer 
              }
             else
              {
+            // Note that the SgVariableDefinition will connect the new IR node into the AST.
                defn_stmt = new SgVariableDefinition(get_variables().front(),initializer);
              }
+
+          ROSE_ASSERT(defn_stmt != NULL);
+       // printf ("In SgVariableDeclaration::prepend_variable(): SgVariableDefinition *defn_stmt = %p \n",defn_stmt);
         }
    }
 

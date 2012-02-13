@@ -477,6 +477,9 @@ NameQualificationTraversal::requiresTypeElaboration(SgSymbol* symbol)
        // DQ (7/23/2011): Class elaboration can be required....
           case V_SgClassSymbol:
 
+       // DQ (2/12/2012): Added support for SgTemplateMemberFunctionSymbol.
+          case V_SgTemplateMemberFunctionSymbol:
+
        // DQ (6/21/2011): Added case for SgFunctionSymbol (triggers type elaboration).
           case V_SgFunctionSymbol:
           case V_SgMemberFunctionSymbol:
@@ -504,6 +507,7 @@ NameQualificationTraversal::requiresTypeElaboration(SgSymbol* symbol)
                typeElaborationRequired = requiresTypeElaboration(baseSymbol);
                break;
              }
+
 
           default:
              {
@@ -3794,8 +3798,34 @@ NameQualificationTraversal::setNameQualification(SgConstructorInitializer* const
         }
        else
         {
+       // DQ (2/12/2012): Fixing support where the name qualification must be rewritten where it is used in a different context.
+       // this appears to be a common requirement.  This case appears to not have been a problem before but is now with the 
+       // new EDG 4.3 support.  This has been added because of the requirements of that support.
+
+       // If it already existes then overwrite the existing information.
+          std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(constructorInitializer);
+          ROSE_ASSERT (i != qualifiedNameMapForNames.end());
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          string previousQualifier = i->second.c_str();
+          printf ("WARNING: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
+#endif
+       // I think I can do this!
+       // *i = std::pair<SgNode*,std::string>(templateArgument,qualifier);
+          if (i->second != qualifier)
+             {
+               i->second = qualifier;
+
+#if 1
+               printf ("Error: name in qualifiedNameMapForNames already exists and is different... \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+#if 0
+       // DQ (2/12/2012): commented this code out.
           printf ("Error: name in qualifiedNameMapForNames already exists... \n");
           ROSE_ASSERT(false);
+#endif
         }
 
   // DQ (6/4/2011): Added test...

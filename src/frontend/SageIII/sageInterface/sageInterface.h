@@ -347,6 +347,10 @@ struct hash_nodeptr
    \brief Not sure the classifications right now
  */
 
+ // DQ (2/12/2012): Added some diagnostic support.
+//! Diagnostic function for tracing back through the parent list to understand at runtime where in the AST a failure happened.
+   void whereAmI(SgNode* node);
+
    //! Check if a node is SgOmp*Statement
    bool isOmpStatement(SgNode* );
    /*! \brief Return true if function is overloaded.

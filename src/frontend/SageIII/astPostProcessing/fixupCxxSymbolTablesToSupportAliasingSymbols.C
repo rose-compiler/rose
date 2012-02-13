@@ -165,6 +165,9 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                               break;
                             }
 
+                      // DQ (2/12/2012): Not clear if this is the best way to add this support.
+                         case V_SgTemplateClassSymbol:
+
                          case V_SgClassSymbol:
                             {
                            // alreadyExists = (currentScope->lookup_class_symbol(name) != NULL);
@@ -177,7 +180,37 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                                  }
                               break;
                             }
+#if 0
+                      // DQ (2/12/2012): Added support for SgTemplateFunctionSymbol.
+                         case V_SgTemplateFunctionSymbol:
+                            {
+                              SgTemplateFunctionSymbol* tmpSymbol = currentScope->lookup_template_function_symbol(name);
+                              if (tmpSymbol != NULL)
+                                 {
+                                   SgNode* tmpSymbolBasis = tmpSymbol->get_symbol_basis();
+                                   ROSE_ASSERT(tmpSymbolBasis != NULL);
+                                   alreadyExists = (tmpSymbolBasis == symbolBasis);
+                                 }
+                              break;
+                            }
 
+                      // DQ (2/12/2012): Added support for SgTemplateMemberFunctionSymbol.
+                         case V_SgTemplateMemberFunctionSymbol:
+                            {
+                              SgTemplateMemberFunctionSymbol* tmpSymbol = currentScope->lookup_template_member_function_symbol(name);
+                              if (tmpSymbol != NULL)
+                                 {
+                                   SgNode* tmpSymbolBasis = tmpSymbol->get_symbol_basis();
+                                   ROSE_ASSERT(tmpSymbolBasis != NULL);
+                                   alreadyExists = (tmpSymbolBasis == symbolBasis);
+                                 }
+                              break;
+                            }
+#else
+                      // DQ (2/12/2012): Not clear if this is the best way to add this support.
+                         case V_SgTemplateFunctionSymbol:
+                         case V_SgTemplateMemberFunctionSymbol:
+#endif
                          case V_SgFunctionSymbol:
                          case V_SgMemberFunctionSymbol:
                             {

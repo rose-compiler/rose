@@ -1565,13 +1565,32 @@ ResetFileInfoParentPointersInMemoryPool::visit(SgNode* node)
                   {
                     printf ("     locatedNode->get_parent() locatedNode = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
                   }
-
+#if 0
                ROSE_ASSERT(locatedNode->get_parent() != NULL);
                if (locatedNode->get_parent()->get_startOfConstruct() != NULL)
                   {
                     printf ("     This is a ???, so look at the parent = %p = %s \n",locatedNode->get_parent(),locatedNode->get_parent()->class_name().c_str());
                     locatedNode->get_parent()->get_startOfConstruct()->display("Error: locatedNode->get_parent()->get_startOfConstruct() == NULL");
                   }
+#else
+#if 1
+            // DQ (2/12/2012): Refactoring disagnostic support for detecting where we are when something fails.
+               SageInterface::whereAmI(locatedNode);
+#else
+            // DQ (2/12/2012): Added better support for tracing back trhough the AST (better diagnostics).
+               SgNode* parent = locatedNode->get_parent();
+               while (parent != NULL)
+                  {
+                    printf ("Tracing back through parent = %p = %s \n",parent,parent->class_name().c_str());
+                    if (parent->get_startOfConstruct() != NULL)
+                       {
+                         parent->get_startOfConstruct()->display("Error: parent->get_startOfConstruct() == NULL");
+                       }
+
+                    parent = parent->get_parent();
+                  }
+#endif
+#endif
             // ROSE_ASSERT(locatedNode->get_file_info() != NULL);
             // locatedNode->get_parent()->get_file_info()->display("Error: locatedNode->get_startOfConstruct() == NULL");
              }

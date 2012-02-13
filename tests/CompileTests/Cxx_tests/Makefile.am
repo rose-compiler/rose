@@ -102,6 +102,7 @@ test2004_31.C \
 test2004_32.C \
 test2004_33.C \
 test2004_34.C \
+test2004_35.C \
 test2004_37.C \
 test2004_38.C \
 test2004_40.C \
@@ -204,7 +205,6 @@ endif
 #
 if ROSE_USE_EDG_VERSION_4_3
 TESTCODE_CURRENTLY_FAILING = \
-test2004_35.C \
 test2004_36.C \
 test2004_39.C \
 test2004_48.C \
