@@ -183,6 +183,13 @@ void postProcessingSupport (SgNode* node)
        // correct visability of symbols included from alternative scopes (e.g. namespaces).
           fixupAstSymbolTablesToSupportAliasedSymbols(node);
 
+       // DQ (2/12/2012): Added support for this, since AST_consistancy expects get_nameResetFromMangledForm() == true.
+          resetTemplateNames(node);
+
+       // DQ (2/12/2012): This is a problem for test2004_35.C (debugging this issue).
+       // printf ("Exiting after calling resetTemplateNames() \n");
+       // ROSE_ASSERT(false);
+
        // This resets the isModified flag on each IR node so that we can record 
        // where transformations are done in the AST.  If any transformations on
        // the AST are done, even just building it, this step should be the final
@@ -274,6 +281,10 @@ void postProcessingSupport (SgNode* node)
   // analysis to support the name qualification.
   // reset the names of template class declarations
      resetTemplateNames(node);
+
+  // DQ (2/12/2012): This is a problem for test2004_35.C (debugging this issue).
+  // printf ("Exiting after calling resetTemplateNames() \n");
+  // ROSE_ASSERT(false);
 
   // DQ (3/17/2007): This should be empty
      ROSE_ASSERT(SgNode::get_globalMangledNameMap().size() == 0);

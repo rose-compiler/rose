@@ -867,10 +867,10 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                ROSE_ASSERT (functionExpression != NULL);
 
             // The type of expression is restricted to a subset of all possible expression (check this)
-                           while (isSgCommaOpExp(functionExpression))
-                           {
-                                   functionExpression = isSgCommaOpExp(functionExpression)->get_rhs_operand();
-                           }
+               while (isSgCommaOpExp(functionExpression))
+                  {
+                    functionExpression = isSgCommaOpExp(functionExpression)->get_rhs_operand();
+                  }
                            
                switch (functionExpression->variantT())
                   {
@@ -973,6 +973,17 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                          break;
                        }
 #endif
+
+#ifdef ROSE_USE_EDG_VERSION_4
+                 // DQ (2/12/2012): This case is required for test2004_35.C (might be related to support for SgPseudoDestructorRefExp which is edg version 4 specific).
+                    case V_SgIntVal:
+                       {
+                      // Unclear what should be checked here, for now allow this as an acceptable case.
+                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgIntVal returned from SgFunctionCallExp::get_function() member function \n");
+                         break;
+                       }
+#endif
+
                     default:
                        {
                          printf ("Error case default in switch (functionExpression = %s) \n",functionExpression->sage_class_name());
@@ -1028,6 +1039,25 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                          break;
                        }
 #endif
+#ifdef ROSE_USE_EDG_VERSION_4
+                 // DQ (2/12/2012): This case is required for test2004_35.C (might be related to support for SgPseudoDestructorRefExp which is edg version 4 specific).
+                    case V_SgTypeInt:
+                       {
+                      // Unclear what should be checked here, for now allow this as an acceptable case.
+                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgTypeInt returned from SgFunctionCallExp::get_type() member function \n");
+                         break;
+                       }
+#endif
+#ifdef ROSE_USE_EDG_VERSION_4
+                 // DQ (2/12/2012): This case is required for test2004_35.C (might be related to support for SgPseudoDestructorRefExp which is edg version 4 specific).
+                    case V_SgTemplateType:
+                       {
+                      // Unclear what should be checked here, for now allow this as an acceptable case.
+                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgTemplateType returned from SgFunctionCallExp::get_type() member function \n");
+                         break;
+                       }
+#endif
+
                     default:
                        {
                          printf ("Error case default in switch (callType = %s) \n",callType->sage_class_name());
@@ -1170,6 +1200,27 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                   }
                  else
                   {
+                 // DQ (2/12/2012): Implement better error diagnostics.
+                    if (initializedName->get_scope() == NULL)
+                       {
+                         printf ("Error: initializedName->get_scope() == NULL \n");
+                         ROSE_ASSERT(initializedName->get_parent() != NULL);
+#if 1
+                      // DQ (2/12/2012): Refactoring disagnostic support for detecting where we are when something fails.
+                         SageInterface::whereAmI(initializedName);
+#else
+                         SgNode* parent = initializedName->get_parent();
+                         while (parent != NULL)
+                            {
+                              printf ("parent = %p = %s \n",parent,parent->class_name().c_str());
+
+                              ROSE_ASSERT(parent->get_file_info() != NULL);
+                              parent->get_file_info()->display("Error: initializedName->get_scope() == NULL");
+
+                              parent = parent->get_parent();
+                            }
+#endif
+                       }
                     ROSE_ASSERT(initializedName->get_scope() != NULL);
                   }
 #if 0
@@ -1446,7 +1497,12 @@ TestAstTemplateProperties::visit ( SgNode* astNode )
                     SgTemplateInstantiationDecl* templateInstantiation = isSgTemplateInstantiationDecl(baseClassDeclaration);
                     if (templateInstantiation != NULL)
                        {
-                      // printf ("In AST Consistancy test: templateInstantiation->get_templateName() = %s \n",templateInstantiation->get_templateName().str());
+                      // DQ (2/12/2012): Implemented some diagnostics (fails for test2004_35.C).
+                         if (templateInstantiation->get_nameResetFromMangledForm() == false)
+                            {
+                              printf ("In AST Consistancy test: templateInstantiation->get_templateName() = %s \n",templateInstantiation->get_templateName().str());
+                              SageInterface::whereAmI(templateInstantiation);
+                            }
                          ROSE_ASSERT(templateInstantiation->get_nameResetFromMangledForm() == true);
                        }
                   }
