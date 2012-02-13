@@ -791,7 +791,7 @@ void Unparse_Type::unparseNameType(SgType* type, SgUnparse_Info& info)
 void
 Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
    {
-#if 1
+#if 0
      printf ("Inside of Unparse_Type::unparseClassType \n");
 #endif
 
@@ -809,7 +809,7 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
      SgClassDeclaration *decl = isSgClassDeclaration(class_type->get_declaration());
      ROSE_ASSERT(decl != NULL);
 
-     printf ("In Unparse_Type::unparseClassType(): decl = %p = %s \n",decl,decl->class_name().c_str());
+  // printf ("In Unparse_Type::unparseClassType(): decl = %p = %s \n",decl,decl->class_name().c_str());
 
      if (decl->get_definition() == NULL)
         {
@@ -898,7 +898,7 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
        // bases typedefed types).
           SgName nm = decl->get_name();
 
-          printf ("In unparseClassType: nm = %s \n",nm.str());
+       // printf ("In unparseClassType: nm = %s \n",nm.str());
 
        // DQ (6/27/2006): nm.is_null() is a better test for an empty name, don't output the qualifier for un-named
        // structs.  This is part of the fix for the Red Hat 7.3 gconv problem (see ChangeLog for details).
