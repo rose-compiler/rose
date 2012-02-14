@@ -117,15 +117,20 @@ SgAsmPEImportDirectory::parse(rose_addr_t idir_va)
      * a warning because ROSE may have problems allocating new space for the name if it's changed. */
     ROSE_ASSERT(p_dll_name!=NULL);
     std::string dll_name;
-    try {
-        dll_name = p_dll_name_rva.get_section()->read_content_str(fhdr->get_loader_map(), p_dll_name_rva.get_rva());
-    } catch (const MemoryMap::NotMapped &e) {
-        if (SgAsmPEImportSection::import_mesg("SgAsmPEImportDirectory::parse: short read of dll name at rva %s for "
-                                              " import directory at va 0x%08"PRIx64"\n",
-                                              p_dll_name_rva.to_string().c_str(), idir_va) &&
-            e.map) {
-            fprintf(stderr, "    Memory map in effect at time of error is:\n");
-            e.map->dump(stderr, "        ");
+    if (0==p_dll_name_rva.get_section()) {
+        SgAsmPEImportSection::import_mesg("SgAsmPEImportDirectory::parse: import directory at va 0x%08"PRIx64
+                                          " has bad DLL name rva %s\n", idir_va, p_dll_name_rva.to_string().c_str());
+    } else {
+        try {
+            dll_name = p_dll_name_rva.get_section()->read_content_str(fhdr->get_loader_map(), p_dll_name_rva.get_rva());
+        } catch (const MemoryMap::NotMapped &e) {
+            if (SgAsmPEImportSection::import_mesg("SgAsmPEImportDirectory::parse: short read of dll name at rva %s for "
+                                                  " import directory at va 0x%08"PRIx64"\n",
+                                                  p_dll_name_rva.to_string().c_str(), idir_va) &&
+                e.map) {
+                fprintf(stderr, "    Memory map in effect at time of error is:\n");
+                e.map->dump(stderr, "        ");
+            }
         }
     }
     p_dll_name->set_string(dll_name);
