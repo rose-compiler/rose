@@ -14,23 +14,7 @@
 #include <set>
 #include <vector>
 
-// *************************************************
-// FIXME move to maths/Polynome.hpp                *
-
-template <class T>
-class Expression {};
-
-template <class T>
-class LinearExpression : public Expression<T> {};
-
-template <class T>
-class BilinearExpression : public Expression<T> {};
-
-template <class T>
-class PolynomialExpression : public Expression<T> {};
-
-//                                                 *
-// *************************************************
+#include <maths/Expression.hpp>
 
 // *************************************************
 // FIXME move to .../ArrayDescriptor.hpp           *
@@ -118,6 +102,8 @@ class PolyhedralFunction { // Does it need to be a 'PolyhedralElement' ?
 		
 		Symbol * p_return_symbol;
 
+                PolyhedralElement * p_polyhedral_element;
+
 	public:
 		PolyhedralFunction(SgFunctionDeclaration *, FunctionTable *);
 
@@ -128,6 +114,9 @@ class PolyhedralFunction { // Does it need to be a 'PolyhedralElement' ?
 		SgFunctionDeclaration * getDefDecl();
 		SymbolTable * getSymbolTable();
 		Symbol * getReturnSymbol();
+
+		void setPolyhedralElement(PolyhedralElement *);
+		PolyhedralElement * getPolyhedralElement();
 };
 
 class FunctionTable {
@@ -145,7 +134,6 @@ class FunctionTable {
 		std::set<PolyhedralFunction *> & get();
 };
 
-// FIXME only 2 kind of access: 1 element (1 Subscript<Symbol>) or 1 domain (2 Subscript<Symbol>). 
 class Access {
 	public:
 		enum AccessType {
@@ -160,7 +148,7 @@ class Access {
 		Access(PolyhedralElement *);
 		virtual ~Access();
 		
-		virtual void print(std::ostream &, std::string = std::string()) = 0;
+		virtual void print(std::ostream &, std::string = std::string()) const = 0;
 };
 
 class DataAccess : public Access {
@@ -168,20 +156,16 @@ class DataAccess : public Access {
 		AccessType access_type;
 		Symbol * symbol;
 
-		Polyhedron accessed_domain;
-		
-		unsigned int dimension;
+		std::vector<Expression<Symbol> *> subscripts;
 
 	public:
 		DataAccess(PolyhedralElement *, AccessType, Symbol *);
+		DataAccess(PolyhedralElement *, AccessType, Symbol *, std::vector<Expression<Symbol> *> &);
 		virtual ~DataAccess();
+
+                bool isLinear() const;
 		
-		void restrainAccessedDomain(LinearExpression_ppl &, unsigned int, constraint_type_e = equality);
-		
-		void addAccessDimension();
-		unsigned int getAccessDimension() const;
-		
-		virtual void print(std::ostream &, std::string = std::string());
+		virtual void print(std::ostream &, std::string = std::string()) const;
 };
 
 class ParametrizedAccess : public Access {
@@ -193,102 +177,128 @@ class ParametrizedAccess : public Access {
 		ParametrizedAccess(PolyhedralElement *, PolyhedralFunction *);
 		virtual ~ParametrizedAccess();
 		
-		virtual void print(std::ostream &, std::string = std::string());
-};
-
-class PolynomialAccess : public Access {
-	public:
-		std::vector<PolynomialExpression<Symbol> > p_polynomial_subscript;
-
-	public:
-		PolynomialAccess(PolyhedralElement *, AccessType, Symbol *);
-		virtual ~PolynomialAccess();
-
-		// TODO
+		virtual void print(std::ostream &, std::string = std::string()) const;
 };
 
 class PolyhedralPredicate;
 class PolyhedralControl;
 
 class PolyhedralElement {
-	public:
-		const PolyhedralControl * parent;
+  public:
+    const PolyhedralControl * parent;
 
-	protected:
-		std::map<PolyhedralPredicate *, bool> predicate_map;
-		std::map<Symbol *, VariableID> symbol_id_map;
-		Polyhedron domain;
+  protected:
+    std::map<PolyhedralPredicate *, bool> predicate_map;
+    std::map<Symbol *, VariableID> symbol_id_map;
+    Polyhedron domain;
 
-	public:
-		PolyhedralElement(const PolyhedralElement &);
+  public:
+    PolyhedralElement(const PolyhedralElement &);
 
-		PolyhedralElement(PolyhedralControl *);
-		virtual ~PolyhedralElement();
+    PolyhedralElement(PolyhedralControl *);
+    virtual ~PolyhedralElement();
 
-		void refineDomain(Constraint);
-		void addPredicate(PolyhedralPredicate *, bool);
+    void refineDomain(Constraint);
+    void addPredicate(PolyhedralPredicate *, bool);
 
-		virtual void print(std::ostream &, std::string = std::string()) = 0;
+    bool collectPolyhedralElement(
+            std::set<PolyhedralElement *> & result,
+            bool top_level_only,
+            bool allow_parametrized_accesses,
+            bool allow_non_linear_data_accesses,
+            bool allow_data_dependant_conditionals,
+            bool allow_data_dependant_loops
+    ) const;
 
-		VariableID getID(Symbol *);
+    virtual void collectAccess(std::set<Access *> & results) const = 0;
+
+    virtual void print(std::ostream &, std::string = std::string()) = 0;
+
+    VariableID getID(Symbol *);
 };
 
 class PolyhedralStatement : public PolyhedralElement {
-	public:
-		SgStatement * statement;
+  public:
+    SgStatement * statement;
 
-	protected:
-		std::set<Access *> p_access_set;
+  protected:
+    std::set<Access *> p_access_set;
 
-	public:
-		PolyhedralStatement(SgStatement *);
-		virtual ~PolyhedralStatement();
+  public:
+    PolyhedralStatement(SgStatement *);
+    virtual ~PolyhedralStatement();
 
-		virtual void print(std::ostream &, std::string = std::string());
-		
-		void addAccess(Access *);
-		void addAccess(const std::set<Access *> &);
+    virtual void print(std::ostream &, std::string = std::string());
+
+    void addAccess(Access *);
+    void addAccess(const std::set<Access *> &);
+
+    std::set<Access *> * getNonLinearAccess() const;
+
+    virtual void collectAccess(std::set<Access *> & results) const;
+
+  friend class PolyhedralElement;
 };
 
 class PolyhedralPredicate : public PolyhedralStatement {
-	public:
-		Symbol * predicate;
+  public:
+    Symbol * predicate;
+    bool data_dependent_loop;
 
-	public:
-		PolyhedralPredicate(SgStatement *, SgScopeStatement *, SymbolTable *);
-		
-		virtual void print(std::ostream &, std::string = std::string());
+  public:
+    PolyhedralPredicate(SgStatement *, SgScopeStatement *, SymbolTable *, bool = false);
+
+    virtual void print(std::ostream &, std::string = std::string());
+
+  friend class PolyhedralElement;
 };
 
 class PolyhedralControl : public PolyhedralElement {
-	public:
-		PolyhedralControl(PolyhedralControl *); // kind of copy constructor...
-		PolyhedralControl(SgNode * = NULL, SymbolTable * = NULL);
-		virtual ~PolyhedralControl();
-	
-		PolyhedralControl * genNext(SgNode *) const;
+  public:
+    PolyhedralControl(PolyhedralControl *); // kind of copy constructor...
+    PolyhedralControl(SgNode * = NULL, SymbolTable * = NULL);
+    virtual ~PolyhedralControl();
 
-		virtual void print(std::ostream &, std::string = std::string());
-		
-		void collectPredicate(PolyhedralStatement *) const;
-	
-	public:
-		SgNode * associated_node;
-		
-		SymbolTable * symbol_table;
+    PolyhedralControl * genNext(SgNode *) const;
 
-		// empty during top-down, filled by bottom-up needed for scattering generation
-		std::vector<PolyhedralElement *> elements_set;
-		
-		// store a statement that needs to be move before the current control (generated by top-down, consume by bottom-up)
-		std::vector<PolyhedralElement *> previous_statements;
-		
-		// Only valid for loops
-		unsigned int stride; // absolute value of the increment
-		bool natural_order; // sign of the increment (true for positive)
-		
-		// Only valid for statically controlled conditionals and if it have a false statement
-		PolyhedralControl * false_statement;
+    virtual void print(std::ostream &, std::string = std::string());
+
+    void collectPredicate(PolyhedralStatement *) const;
+
+    void genReport(std::ostream &, std::string = std::string()) const;
+
+    virtual void collectAccess(std::set<Access *> & results) const;
+
+  protected:
+    bool containsLoop() const;
+
+    bool isScop() const;
+
+  public:
+    SgNode * associated_node;
+
+    SymbolTable * symbol_table;
+
+    // empty during top-down, filled by bottom-up needed for scattering generation
+    std::vector<PolyhedralElement *> elements_set;
+
+    // store a statement that needs to be move before the current control (generated by top-down, consume by bottom-up)
+    std::vector<PolyhedralElement *> previous_statements;
+
+    // Only valid for loops
+    unsigned int stride; // absolute value of the increment
+    bool natural_order; // sign of the increment (true for positive)
+
+    // Only valid for statically controlled conditionals and if it have a false statement
+    PolyhedralControl * false_statement;
+
+  friend class PolyhedralElement;
+};
+
+class PolyhedralAttribute : public AstAttribute {
+    public:
+        PolyhedralAttribute(PolyhedralElement *);
+        PolyhedralElement * polyhedral_element;
 };
 
 /**/
@@ -306,6 +316,8 @@ enum SymbolRelation {
 	addr_of,
 // if we internally modify a variable (only use case for now is privatization):
 	original_variable,
+// to handle C++...
+        this_ref,
 // default
 	nothing
 };
@@ -339,77 +351,93 @@ struct Symbol {
 	
 	unsigned int id;
 
-	void print(std::ostream &, std::string = std::string());
+	void print(std::ostream &) const;
 };
 
 class SymbolTable {
-	public:
-		SymbolTable * parent_table;
-		
-		FunctionTable * function_table;
-		PolyhedralFunction * current_function;
+  public:
+    SymbolTable * parent_table;
 
-	protected:
-		unsigned int nb_child;
-		
-		std::set<Symbol *> symbol_set;
-		
+    FunctionTable * function_table;
+    PolyhedralFunction * current_function;
 
-		Symbol * makeSymbol();
-		
-		Symbol * symbolFor(SgSymbol *, bool, bool);
-		
-		bool haveSymbol(Symbol *) const;
+  protected:
+    unsigned int nb_child;
 
-	public:
-		SymbolTable(PolyhedralFunction *);
-		SymbolTable(SymbolTable *);
-		~SymbolTable(); // assert if nb_child > 0 && parent->nb_child--
-		
-		Symbol * genSymbol(SgInitializedName *);
-		
-		Symbol * genSymbol(SgVarRefExp *, bool = true);
-		
-		Symbol * genSymbol(SgArrowExp *, bool = true);
-		Symbol * genSymbol(SgDotExp *, bool = true);
-		Symbol * genSymbol(SgPntrArrRefExp *, bool = true);
-		Symbol * genSymbol(SgPointerDerefExp *, bool = true);
-		Symbol * genSymbol(SgAddressOfOp *, bool = true);
-		
-		Symbol * genSymbol(SgFunctionCallExp *, bool = true);
+    std::set<Symbol *> symbol_set;
 
-		Symbol * genSymbol(SgExpression *, bool = true);
-		
-		Symbol * genIteratorSymbol(SgScopeStatement *);
-		Symbol * genPredicate(SgScopeStatement *);
-		Symbol * genReturnSymbol();
-		
-		bool isSymbol(SgExpression *, Symbol *);
-		
-		unsigned int nbrReferencedVariables() const;
-		
-		VariableID getID(Symbol *) const;
-		
-		void addControl(PolyhedralControl *);
-		
-		void print(std::ostream &, std::string = std::string());
-		
-		void embedSymbolTable(SymbolTable *);
+    std::set<SymbolTable *> saved_childrens;
+
+    Symbol * makeSymbol();
+
+    Symbol * symbolFor(SgSymbol *, bool, bool);
+
+    bool haveSymbol(Symbol *) const;
+
+  public:
+    SymbolTable(PolyhedralFunction *);
+    SymbolTable(SymbolTable *);
+    ~SymbolTable(); // assert if nb_child > 0 && parent->nb_child--
+
+    Symbol * genSymbol(SgInitializedName *);
+
+    Symbol * genSymbol(SgVarRefExp *, bool = true);
+
+    Symbol * genSymbol(SgArrowExp *, bool = true);
+    Symbol * genSymbol(SgDotExp *, bool = true);
+    Symbol * genSymbol(SgPntrArrRefExp *, bool = true);
+    Symbol * genSymbol(SgPointerDerefExp *, bool = true);
+    Symbol * genSymbol(SgAddressOfOp *, bool = true);
+
+    Symbol * genSymbol(SgFunctionCallExp *, bool = true);
+
+    Symbol * genSymbol(SgExpression *, bool = true);
+
+    Symbol * genIteratorSymbol(SgScopeStatement *);
+    Symbol * genPredicate(SgScopeStatement *);
+    Symbol * genReturnSymbol();
+
+    bool isSymbol(SgExpression *, Symbol *);
+
+    unsigned int nbrReferencedVariables() const;
+
+    VariableID getID(Symbol *) const;
+
+    void addControl(PolyhedralControl *);
+
+    void print(std::ostream &, std::string = std::string()) const;
+
+    void embedSymbolTable(SymbolTable *);
+
+    bool shouldBeDelete();
 };
 
 /**/
 
 class PolyhedralModelisation {
-	protected:
-		std::set<PolyhedralElement *> p_results;
+  protected:
+    std::set<PolyhedralElement *> p_results;
 
-	public:
-		PolyhedralModelisation();
+  public:
+    PolyhedralModelisation();
 		
-		FunctionTable * traverse(SgProject *);
+    FunctionTable * traverse(SgProject *);
+
+    const std::set<PolyhedralElement *> & getPolyhedralElement() const;
+
+    void genReport(std::ostream &) const;
+
+    void collectPolyhedralElement(
+             std::set<PolyhedralElement *> & result,
+             bool top_level_only = true,                    // if the top level 'PolyhedralElement' matches no need to store the childrens
+             bool allow_parametrized_accesses = false,      // wether or not to accept function call
+             bool allow_non_linear_data_accesses = true,    // wether or not to accept flattened arrays (pseudo multi dimensional arrays)
+             bool allow_data_dependant_conditionals = true, // 
+             bool allow_data_dependant_loops = false        // 
+         ) const;
 		
-	protected:	
-		PolyhedralElement * evaluate(SgNode *, PolyhedralControl *, std::string = std::string());
+  protected:	
+    PolyhedralElement * evaluate(SgNode *, PolyhedralControl *, std::string = std::string());
 };
 
 #endif /* _TDBU_TRAVERSAL_HPP_ */
