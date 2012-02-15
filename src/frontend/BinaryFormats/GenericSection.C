@@ -40,7 +40,7 @@ SgAsmGenericSection::~SgAsmGenericSection()
 
     /* Delete children */
     /*not a child*/;     p_file   = NULL;
-    delete p_name;       p_name   = NULL;
+    SageInterface::deleteAST(p_name);       p_name   = NULL;
 
     /* If the section has allocated its own local pool for the p_data member (rather than pointing into the SgAsmGenericFile)
      * then free that now. */
@@ -128,7 +128,7 @@ SgAsmGenericSection::set_name(SgAsmGenericString *s)
     if (s!=p_name) {
         if (p_name) {
             p_name->set_parent(NULL);
-            delete p_name;
+            SageInterface::deleteAST(p_name);
         }
         p_name = s;
         if (p_name)

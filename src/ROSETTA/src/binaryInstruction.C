@@ -1113,7 +1113,6 @@ Grammar::setUpBinaryInstructions()
      NEW_TERMINAL_MACRO(AsmPEFileHeader, "AsmPEFileHeader", "AsmPEFileHeaderTag");
      AsmPEFileHeader.setFunctionPrototype("HEADER_PE_FILE_HEADER", "../Grammar/BinaryInstruction.code");
      AsmPEFileHeader.setFunctionSource("SOURCE_PE_FILE_HEADER", "../Grammar/BinaryInstruction.code");
-     AsmPEFileHeader.setAutomaticGenerationOfDestructor(false);
      AsmPEFileHeader.setDataPrototype("unsigned", "e_cpu_type", "= 0",
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEFileHeader.setDataPrototype("unsigned", "e_nsections", "= 0",
