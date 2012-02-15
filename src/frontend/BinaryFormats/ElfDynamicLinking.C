@@ -66,7 +66,7 @@ SgAsmElfDynamicEntry::set_name(SgAsmGenericString *name)
     if (name!=p_name) {
         if (p_name) {
             p_name->set_parent(NULL);
-            delete p_name;
+            SageInterface::deleteAST(p_name);
         }
         p_name = name;
         if (p_name)
