@@ -62,7 +62,7 @@ user:message_hook(_Term, error, _Lines) :-
 :- use_module(library(visicfg)).
 %:- use_module(library(clpq)), use_module(sum).
 
-:- guitracer.
+%:- guitracer.
 
 % FUNCTION SEARCH
 

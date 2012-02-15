@@ -9,8 +9,11 @@ PL_INCLUDE=@plinclude@
 SATIRE_LIB=@satirelib@
 SATIRE_INCLUDE=@satireinclude@
 SATIRE_DATA=@pkgdatadir@
-CC=@cc@
-CXX=@cxx@
+# Adrian: By using libtool, we are creating both static and shared object files
+CC=satire-libtool --tag=C --mode=compile @cc@
+CXX=satire-libtool --tag=CXX --mode=compile @cxx@
+# Adrian: we use libtool to extract the correct -rpath for the C++ runtime libraries
+LD=satire-libtool --tag=CXX --mode=link $(CXX)
 
 # variable CUSTOM_CFLAGS can be in separate file; so can options from
 # newcombinedanalysis
@@ -24,7 +27,7 @@ OTHERANALYSISLIBS = ${OTHERANALYSES:%=otheranalyses/%.a}
 
 PAG = $(PAGDIR)/bin/pag
 CXXFLAGS = -O2 -Wall -Wno-deprecated -ggdb -I$(ROSE_INCLUDE) -I$(PAGDIR)/include/pag -I$(PAGDIR)/include/pag/analyzer -I$(BOOST_INCLUDE) -I$(PL_INCLUDE) -I$(SATIRE_INCLUDE) -I$(ANALYSIS)-out/src/
-LPATH = -L$(ROSE_LIB) -Wl,--rpath -Wl,$(ROSE_LIB) -L$(BOOST_LIB) @pllibs@ @plldadd@ -Wl,-rpath $(BOOST_LIB) -L$(PAGDIR)/lib/pag -L$(SATIRE_LIB) -Wl,--rpath -Wl,$(SATIRE_LIB)
+LPATH = -L$(ROSE_LIB) -Wl,-rpath -Wl,$(ROSE_LIB) -L$(BOOST_LIB) @pllibs@ @plldadd@ -Wl,-rpath $(BOOST_LIB) -L$(PAGDIR)/lib/pag -L$(SATIRE_LIB) -Wl,-rpath -Wl,$(SATIRE_LIB)
 LIBS = $(ANALYSIS).a $(OTHERANALYSISLIBS) -lsatire -lsatiredfa -lsyntree -ltermsupport -lpagdatatypes -lrose -lpag
 
 # common macro definitions passed on the command line
@@ -58,7 +61,7 @@ $(ANALYSIS).a: $(ANALYSIS).optla Makefile
 	# customize prefixed_support_funcs.h with the analysis prefix
 	sed -e 's/[@]PREFIX[@]/$(PREFIX)/g' < $(SATIRE_DATA)/prefixed_support_funcs.h-template > $(ANALYSIS)-out/src/prefixed_support_funcs.h
 	# make the analyzer library; suppress warnings with -w; do not recompile our files
-	$(MAKE) -j1 CC=$(CC) CFLAGS="$(CUSTOM_CFLAGS) $(D_FLAGS) -w" -C $(ANALYSIS)-out/src/
+	$(MAKE) -j1 CC="$(CC)" CFLAGS="$(CUSTOM_CFLAGS) $(D_FLAGS) -w" -C $(ANALYSIS)-out/src/
 	cp $(ANALYSIS)-out/src/$(ANALYSIS).a .
 
 main.o: main.C main.h $(ANALYSIS).a Makefile
@@ -75,7 +78,7 @@ $(ANALYSIS)_implementation.o: $(ANALYSIS)_implementation.h $(ANALYSIS)_implement
 	fi
 
 $(ANALYSIS): $(ANALYSIS).a $(ANALYSIS)_implementation.o main.o main-support.o $(OTHERANALYSISLIBS)
-	$(CXX) $(CXXFLAGS) $(D_FLAGS) $(CUSTOM_CFLAGS) $(ANALYSIS)_implementation.o main.o main-support.o -o $(ANALYSIS) $(LPATH) $(LIBS) 
+	$(LD) $(ANALYSIS)_implementation.o main.o main-support.o -o $(ANALYSIS) $(LPATH) $(LIBS) 
 	@echo
 	@echo 'PAG said:'
 	@cat pag-out

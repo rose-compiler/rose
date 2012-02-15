@@ -44,15 +44,15 @@ EXTRA_DIST= \
 testdir=installcheck-executable-examples
 
 # The tests are now split into separate targets to facilitate a
-# paralellized run of the testsuite (make -j #N installcheck)
+# parallelized run of the testsuite (make -j #N installcheck)
 
 TESTS_WITH_PAG = sl1rd sl2rd pointsto_live_variables testsuite interval satire_driver
 TESTS_WITHOUT_PAG = termite
 
 if WITH_SWI_PROLOG
 #MS: deactivated loopbounds test (9.1.2012) [to be fixed]
-#TESTS_WITH_PAG += itvl_stresstest loopbounds
-TESTS_WITH_PAG += itvl_stresstest
+TESTS_WITH_PAG += itvl_stresstest loopbounds
+#TESTS_WITH_PAG += itvl_stresstest
 endif
 
 

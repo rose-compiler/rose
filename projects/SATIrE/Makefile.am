@@ -1,5 +1,10 @@
 ## Process this file with automake to create Makefile.in.
 
+bin_SCRIPTS = $(builddir)/satire-libtool
+
+$(builddir)/satire-libtool: $(builddir)/libtool
+	cp $< $@
+
 ACLOCAL_AMFLAGS = -I m4
 
 SUBDIRS= src tools examples
