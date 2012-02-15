@@ -7,11 +7,10 @@
 **************************/
 
 %{
-#include <stdio.h>
-#include <assert.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
-#include <string>
 #include "parser_decls.h"
 #include "synparser.h"
 
