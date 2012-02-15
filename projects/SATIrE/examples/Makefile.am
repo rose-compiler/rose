@@ -51,8 +51,8 @@ TESTS_WITHOUT_PAG = termite
 
 if WITH_SWI_PROLOG
 #MS: deactivated loopbounds test (9.1.2012) [to be fixed]
-TESTS_WITH_PAG += itvl_stresstest loopbounds
-#TESTS_WITH_PAG += itvl_stresstest
+#TESTS_WITH_PAG += itvl_stresstest loopbounds
+TESTS_WITH_PAG += itvl_stresstest
 endif
 
 
