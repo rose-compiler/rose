@@ -48,6 +48,7 @@ void
 SgAsmGenericSymbol::ctor()
 {
     p_name = new SgAsmBasicString("");
+    p_name->set_parent(this);
 }
 
 /** Like ROSETTA-generated accessors, but also sets parent */
