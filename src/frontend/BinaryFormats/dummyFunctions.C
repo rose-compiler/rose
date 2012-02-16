@@ -433,4 +433,5 @@ bool SgAsmElfSymbolSection::reallocate() { return false; }
 rose_addr_t SgAsmElfSymverSection::calculate_sizes(size_t*, size_t*, size_t*, size_t*) const { return 0;}
 
 void SgAsmGenericSection::set_size(rose_addr_t) {}
-
+SgAsmGenericString* SgAsmElfNoteEntry::get_name() const {}
+SgAsmGenericString* SgAsmGenericSymbol::get_name() const {}
