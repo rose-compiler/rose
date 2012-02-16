@@ -3221,7 +3221,7 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 void
 Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
-#if 1
+#if 0
      printf ("Inside of unparseVarDeclStmt(%p) \n",stmt);
      ROSE_ASSERT(info.get_current_scope() != NULL);
      printf ("An the current scope is (from info): info.get_current_scope() = %p = %s = %s \n",info.get_current_scope(),info.get_current_scope()->class_name().c_str(),SageInterface::get_name(info.get_current_scope()).c_str());
@@ -3335,7 +3335,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      while (p != vardecl_stmt->get_variables().end())
         {
-#if 1
+#if 0
           curprint ( string("\n /* Inside of unparseVarDeclStmt(): top of loop over variables */ \n"));
 #endif
           decl_item = *p;
@@ -3431,7 +3431,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
                ROSE_ASSERT(ninfo.get_declstatement_ptr() != NULL);
 
-               printf ("Inside of unparseVarDeclStmt: namedType = %p \n",namedType);
+            // printf ("Inside of unparseVarDeclStmt: namedType = %p \n",namedType);
                if (namedType != NULL)
                   {
                  // DQ (10/5/2004): This controls the unparsing of the class definition
@@ -3579,11 +3579,11 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                ninfo_for_type.set_global_qualification_required(decl_item->get_global_qualification_required_for_type());
                ninfo_for_type.set_type_elaboration_required(decl_item->get_type_elaboration_required_for_type());
 
-               printf ("Inside of unparseVarDeclStmt: calling unparseType() tmp_type = %p = %s \n",tmp_type,tmp_type->class_name().c_str());
+            // printf ("Inside of unparseVarDeclStmt: calling unparseType() tmp_type = %p = %s \n",tmp_type,tmp_type->class_name().c_str());
             // unp->u_type->unparseType(tmp_type, ninfo2);
                ROSE_ASSERT(isSgType(tmp_type) != NULL);
                unp->u_type->unparseType(tmp_type, ninfo_for_type);
-               printf ("Inside of unparseVarDeclStmt: DONE calling unparseType() \n");
+            // printf ("Inside of unparseVarDeclStmt: DONE calling unparseType() \n");
 
             // ROSE_ASSERT(ninfo2.get_declstatement_ptr() != NULL);
                ROSE_ASSERT(ninfo_for_type.get_declstatement_ptr() != NULL);
@@ -3840,7 +3840,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                   }
              }
 
-#if 1
+#if 0
           curprint ( string("\n /* Inside of unparseVarDeclStmt(): increment the variable iterator */ \n"));
 #endif
        // Increment the iterator through the list of variables within a single variable declaration.
@@ -3902,7 +3902,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
   // curprint ( string("\n/* END: Close off the statement with a \";\" */ \n";
 
-#if 1
+#if 0
      printf ("Leaving unparseVarDeclStmt() \n");
      curprint ( string("/* Leaving unparseVarDeclStmt() */ \n"));
 #endif
