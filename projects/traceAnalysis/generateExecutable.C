@@ -78,11 +78,31 @@ generateTextSections(HeaderType *fhdr, const Disassembler::InstructionMap &insns
 
     typedef std::map<rose_addr_t, unsigned char*> SectionContent;
 
-    /* Determine what regions of address space we need for text sections. */
+    /* Determine what regions of address space we need for text sections.  Find the union of all the instruction extents, each
+     * expanded to satisfy the section alignment.  Then fill in any small holes left in the section. */
     ExtentMap section_extents;
-    for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii)
-        section_extents.insert(ii->first, ii->second->get_raw_bytes().size(), mem_align, mem_align);
-    section_extents.precipitate(max_separation);
+    for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
+        rose_addr_t start = ii->first;
+        rose_addr_t aligned_start = ALIGN_DN(start, mem_align);
+        rose_addr_t size = ii->second->get_size() + (start-aligned_start);
+        rose_addr_t aligned_end = ALIGN_UP(aligned_start + size, mem_align);
+        section_extents.insert(Extent(aligned_start, aligned_end-aligned_start));
+    }
+    std::vector<Extent> small_holes;
+    rose_addr_t start_of_hole = 0;
+    for (ExtentMap::iterator ri=section_extents.begin(); ri!=section_extents.end(); ++ri) {
+        Extent e = ri->first;
+        if (ri!=section_extents.begin()) {
+            rose_addr_t hole_size = e.first() - start_of_hole;
+            if (hole_size <= max_separation)
+                small_holes.push_back(Extent(start_of_hole, hole_size));
+            start_of_hole = e.last() + 1;
+        }
+        start_of_hole = e.last() + 1;
+    }
+    for (std::vector<Extent>::iterator smi=small_holes.begin(); smi!=small_holes.end(); ++smi)
+        section_extents.insert(*smi);
+
 
     /* Create the text sections */
     SectionContent content;
@@ -92,15 +112,15 @@ generateTextSections(HeaderType *fhdr, const Disassembler::InstructionMap &insns
         section->set_purpose(SgAsmGenericSection::SP_PROGRAM);
         section->set_file_alignment(file_align);
         section->set_mapped_alignment(mem_align);
-        section->set_size(sei->second);
-        section->set_mapped_preferred_rva(sei->first - fhdr->get_base_va());
-        section->set_mapped_size(sei->second);
+        section->set_size(sei->first.first());
+        section->set_mapped_preferred_rva(sei->first.first() - fhdr->get_base_va());
+        section->set_mapped_size(sei->first.size());
         section->set_mapped_rperm(true);
         section->set_mapped_wperm(false);
         section->set_mapped_xperm(true);
         section->align();                                       /* Necessary because we changed alignment constraints */
         sections.push_back(section);
-        content.insert(std::make_pair(sei->first, section->writable_content(sei->second)));
+        content.insert(std::make_pair(sei->first.first(), section->writable_content(sei->first.size())));
     }
     
     /* Copy instructions into their appropriate sections. */

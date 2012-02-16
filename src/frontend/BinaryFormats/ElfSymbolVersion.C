@@ -169,9 +169,9 @@ SgAsmElfSymverDefinedAux::ctor(SgAsmElfSymverDefinedEntry* entry, SgAsmElfSymver
   
     ROSE_ASSERT(NULL != entry);
     ROSE_ASSERT(NULL != entry->get_entries());
+    
     entry->get_entries()->get_entries().push_back(this);
-
-    set_parent(entry);
+    set_parent(entry->get_entries());
 }
 
 /** Print debugging information about the specified auxiliary data for an entry in the Symbol Version Definition Table. Note
@@ -537,8 +537,8 @@ SgAsmElfSymverNeededAux::ctor(SgAsmElfSymverNeededEntry* entry, SgAsmElfSymverNe
     ROSE_ASSERT(NULL != entry);
     ROSE_ASSERT(NULL != entry->get_entries());
     entry->get_entries()->get_entries().push_back(this);
+    set_parent(entry->get_entries());
 
-    set_parent(entry);
     p_flags  = 0;
     p_other = 0;
     p_hash  = 0;
@@ -606,6 +606,8 @@ SgAsmElfSymverNeededEntry::ctor(SgAsmElfSymverNeededSection *section)
     set_file_name(new SgAsmStoredString(strsec->get_strtab(), 0));
 
     p_entries = new SgAsmElfSymverNeededAuxList;
+    p_entries->set_parent(this);
+
     p_version  = 0;
 }
 

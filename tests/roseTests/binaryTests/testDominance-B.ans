@@ -104,29 +104,19 @@ digraph G {
 0[ label="0x080483c0" ];
 1[ label="0x080483da" ];
 2[ label="0x080483f4" ];
-3[ label="0x080483f8" ];
-4[ label="0x080483fb" ];
-5[ label="0x0804840a" ];
-6[ label="0x08048412" ];
+3[ label="0x080483fb" ];
+4[ label="0x08048412" ];
 0->1 ;
-1->5 ;
 }
 
 === testDominance-B11.dot ===
 digraph G {
 0[ label="0x08048414" ];
 1[ label="0x0804843f" ];
-2[ label="0x08048440" ];
-3[ label="0x08048443" ];
-4[ label="0x08048444" ];
-5[ label="0x08048449" ];
-6[ label="0x0804844e" ];
-7[ label="0x08048456" ];
-4->2 ;
-2->3 ;
-0->4 ;
-4->5 ;
-5->6 ;
+2[ label="0x08048443" ];
+3[ label="0x0804844e" ];
+4[ label="0x08048456" ];
+0->3 ;
 }
 
 === testDominance-B12.dot ===
