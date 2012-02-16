@@ -593,7 +593,7 @@ SgAsmGenericFile::best_section_by_va(const SgAsmGenericSectionPtrList &sections,
     rose_addr_t fo0 = sections[0]->get_va_offset(va);
     for (size_t i=1; i<sections.size(); i++) {
         if (fo0 != sections[i]->get_va_offset(va))
-            return NULL; /* all sections sections must map the VA to the same file offset */
+            return NULL; /* all sections must map the VA to the same file offset */
         if (best->get_mapped_size() > sections[i]->get_mapped_size()) {
             best = sections[i]; /*prefer sections with a smaller mapped size*/
         } else if (best->get_name()->get_string().size()==0 && sections[i]->get_name()->get_string().size()>0) {
@@ -1116,7 +1116,7 @@ SgAsmGenericFile::dump_all(const std::string &dump_name)
         }
 
         /* Dump interpretations that point only to this file. */
-        SgBinaryComposite *binary = isSgBinaryComposite(get_parent());
+        SgBinaryComposite *binary = SageInterface::getEnclosingNode<SgBinaryComposite>(this);
         ROSE_ASSERT(binary!=NULL);
         const SgAsmInterpretationPtrList &interps = binary->get_interpretations()->get_interpretations();
         for (size_t i=0; i<interps.size(); i++) {
