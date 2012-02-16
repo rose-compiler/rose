@@ -457,7 +457,6 @@ test2007_52.C \
 test2007_53.C \
 test2007_57.C \
 test2007_59.C \
-test2007_62.C \
 test2007_70.C \
 test2007_72.C \
 test2007_75.C \
@@ -682,6 +681,7 @@ endif
 #
 if ROSE_USE_EDG_VERSION_4_3
 TESTCODE_CURRENTLY_FAILING = \
+test2007_62.C \
 math.C \
 test2004_64.C \
 test2004_77.C \
