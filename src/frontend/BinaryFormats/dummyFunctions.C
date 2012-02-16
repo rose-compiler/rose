@@ -87,7 +87,7 @@ void SgAsmElfSegmentTable::dump(FILE *f, const char *prefix, ssize_t idx) const 
 void SgAsmDOSFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const {}
 void SgAsmDOSExtendedHeader::dump(FILE *f, const char *prefix, ssize_t idx) const {}
 void SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx) const {}
-void SgAsmPEImportItem::dump(FILE*f, char const *prefix, ssize_t idx) const {}
+void SgAsmPeImportItem::dump(FILE*f, char const *prefix, ssize_t idx) const {}
 
 
 
@@ -157,7 +157,6 @@ void SgAsmElfRelocEntry::parse(ByteOrder sex, const Elf64RelEntry_disk *disk) {}
 // NOTE that "~SgAsmPEStringSection() {}" is implemented in the Cxx_Header.h header file.
 SgAsmCoffStrtab::~SgAsmCoffStrtab() {}
 SgAsmGenericHeader::~SgAsmGenericHeader() {}
-SgAsmPEFileHeader::~SgAsmPEFileHeader() {}
 SgAsmGenericSection::~SgAsmGenericSection() {}
 SgAsmGenericFile::~SgAsmGenericFile() {}
 SgAsmElfStrtab::~SgAsmElfStrtab() {}
