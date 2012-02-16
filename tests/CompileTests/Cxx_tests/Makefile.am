@@ -102,7 +102,6 @@ test2004_31.C \
 test2004_32.C \
 test2004_33.C \
 test2004_34.C \
-test2004_35.C \
 test2004_36.C \
 test2004_37.C \
 test2004_38.C \
@@ -256,7 +255,6 @@ test2005_77.C \
 test2005_78.C \
 test2005_80.C \
 test2005_81.C \
- test2005_82.C \
 test2005_83.C \
 test2005_84.C \
 test2005_86.C \
@@ -265,7 +263,6 @@ test2005_88.C \
 test2005_90.C \
 test2005_91.C \
 test2005_92.C \
- test2005_93.C \
 test2005_96.C \
 test2005_97.C \
 test2005_100.C \
@@ -525,7 +522,6 @@ test2010_18.C \
 test2011_01.C \
 test2011_02.C \
 test2011_05.C \
-test2011_06.C \
 test2011_07.C \
 test2011_19.C \
 test2011_20.C \
@@ -657,7 +653,12 @@ test2005_09.C \
  test2011_89.C \
  test2006_125.C 
 
-# $(TESTCODE_CURRENTLY_FAILING)
+# DQ (2/15/2012): These test codes fail on OSX only.
+TESTCODE_CURRENTLY_FAILING_ON_OSX = \
+test2005_82.C \
+test2005_93.C \
+test2011_06.C \
+test2004_35.C 
 
 # DQ (12/29/2011): This passes but I had to handle a template constant parameter incorrectly in the AST to get past a problem in EDG (or my lack of understanding of an aspect of EDG).
 # test2011_191.C 
