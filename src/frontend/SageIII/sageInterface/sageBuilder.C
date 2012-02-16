@@ -4355,20 +4355,25 @@ SgIfStmt * SageBuilder::buildIfStmt(SgStatement* conditional, SgStatement * true
 }
 
 SgIfStmt * SageBuilder::buildIfStmt_nfi(SgStatement* conditional, SgStatement * true_body, SgStatement * false_body)
-{
-  SgIfStmt *ifstmt = new SgIfStmt(conditional, true_body, false_body);
-  ROSE_ASSERT(ifstmt);
+   {
+     SgIfStmt *ifstmt = new SgIfStmt(conditional, true_body, false_body);
+     ROSE_ASSERT(ifstmt);
+#if 0
+  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+     if (symbol_table_case_insensitive_semantics == true)
+          ifstmt->setCaseInsensitive(true);
 
- // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
-  if (symbol_table_case_insensitive_semantics == true)
-       ifstmt->setCaseInsensitive(true);
-
-  setOneSourcePositionNull(ifstmt);
-  if (conditional) conditional->set_parent(ifstmt);
-  if (true_body) true_body->set_parent(ifstmt);
-  if (false_body) false_body->set_parent(ifstmt);
-  return ifstmt;
-}
+     setOneSourcePositionNull(ifstmt);
+     if (conditional) conditional->set_parent(ifstmt);
+     if (true_body) true_body->set_parent(ifstmt);
+     if (false_body) false_body->set_parent(ifstmt);
+     return ifstmt;
+#else
+  // DQ (2/13/2012): This allows us to separate teh construction from the initialization (see note below).
+     initializeIfStmt(ifstmt,conditional,true_body,false_body);
+     return ifstmt;
+#endif
+   }
 
 // charles4 10/14/2011:  Vanilla allocation. Use prepend_init_stmt and append_init_stmt to populate afterward.
 SgForInitStatement * SageBuilder::buildForInitStatement() {
@@ -4589,27 +4594,36 @@ SgWhileStmt * SageBuilder::buildWhileStmt(SgStatement *  condition, SgStatement 
   return result;
 }
 
-SgWhileStmt * SageBuilder::buildWhileStmt_nfi(SgStatement *  condition, SgStatement *body, SgStatement *else_body)
-{
-  SgWhileStmt * result = new SgWhileStmt(condition,body);
-  ROSE_ASSERT(result);
 
- // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
-  if (symbol_table_case_insensitive_semantics == true)
-       result->setCaseInsensitive(true);
+SgWhileStmt*
+SageBuilder::buildWhileStmt_nfi(SgStatement *  condition, SgStatement *body, SgStatement *else_body)
+   {
+     SgWhileStmt * result = new SgWhileStmt(condition,body);
+     ROSE_ASSERT(result);
 
-  setOneSourcePositionNull(result);
-  if (condition) condition->set_parent(result);
-  if (body) body->set_parent(result);
+#if 0
+  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+     if (symbol_table_case_insensitive_semantics == true)
+          result->setCaseInsensitive(true);
 
-// DQ (8/10/2011): This is added by Michael to support a Python specific feature.
-  if (else_body != NULL) {
-      result->set_else_body(else_body);
-      else_body->set_parent(result);
-  }
+     setOneSourcePositionNull(result);
+     if (condition) condition->set_parent(result);
+     if (body) body->set_parent(result);
 
-  return result;
-}
+  // DQ (8/10/2011): This is added by Michael to support a Python specific feature.
+     if (else_body != NULL)
+        {
+          result->set_else_body(else_body);
+          else_body->set_parent(result);
+        }
+#else
+  // DQ (2/15/2012): This function supports the case where in C++ the condition can include a variable declaration.
+     initializeWhileStatement(result,condition,body,else_body);
+#endif
+
+     return result;
+   }
+
 
 SgWithStatement* SageBuilder::buildWithStatement(SgExpression* expr, SgStatement *body)
 {
@@ -5112,20 +5126,27 @@ SgSwitchStatement* SageBuilder::buildSwitchStatement(SgStatement *item_selector,
   return result;
 }
 
-SgSwitchStatement* SageBuilder::buildSwitchStatement_nfi(SgStatement *item_selector,SgStatement *body)
-{
-  SgSwitchStatement* result = new SgSwitchStatement(item_selector,body);
-  ROSE_ASSERT(result);
+SgSwitchStatement*
+SageBuilder::buildSwitchStatement_nfi(SgStatement *item_selector,SgStatement *body)
+   {
+     SgSwitchStatement* result = new SgSwitchStatement(item_selector,body);
+     ROSE_ASSERT(result);
 
- // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
-  if (symbol_table_case_insensitive_semantics == true)
-       result->setCaseInsensitive(true);
+#if 0
+  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+     if (symbol_table_case_insensitive_semantics == true)
+          result->setCaseInsensitive(true);
 
-  setOneSourcePositionNull(result);
-  if (item_selector) item_selector->set_parent(result);
-  if (body) body->set_parent(result);
-  return result;
-}
+     setOneSourcePositionNull(result);
+     if (item_selector) item_selector->set_parent(result);
+     if (body) body->set_parent(result);
+#else
+  // DQ (2/15/2012): Modified to handle C++ case where variable declarations are allowed in the condition.
+     initializeSwitchStatement(result,item_selector,body);
+#endif
+
+     return result;
+   }
 
 //! Build a NULL statement
 SgNullStatement* SageBuilder::buildNullStatement()
