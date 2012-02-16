@@ -109,6 +109,91 @@ SageInterface::whereAmI(SgNode* node)
         }
    }
 
+void
+SageInterface::initializeIfStmt(SgIfStmt *ifstmt, SgStatement* conditional, SgStatement * true_body, SgStatement * false_body)
+   {
+  // DQ (2/13/2012): Added new function to support proper initialization of a SgIfStmt that has already been built.
+  // This is important when we have to build the scope ahead of the test becasue the text contains a simple
+  // declaration (which must be put into the SgIfStmt scope).
+
+  // SgIfStmt *ifstmt = new SgIfStmt(conditional, true_body, false_body);
+     ROSE_ASSERT(ifstmt);
+
+     if (ifstmt->get_conditional() == NULL)
+          ifstmt->set_conditional(conditional);
+
+     if (ifstmt->get_true_body() == NULL)
+          ifstmt->set_true_body(true_body);
+
+     if (ifstmt->get_false_body() == NULL)
+          ifstmt->set_false_body(false_body);
+
+  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+     if (symbol_table_case_insensitive_semantics == true)
+         ifstmt->setCaseInsensitive(true);
+
+     setOneSourcePositionNull(ifstmt);
+     if (conditional) conditional->set_parent(ifstmt);
+     if (true_body) true_body->set_parent(ifstmt);
+     if (false_body) false_body->set_parent(ifstmt);
+   }
+
+
+void 
+SageInterface::initializeSwitchStatement(SgSwitchStatement* switchStatement,SgStatement *item_selector,SgStatement *body)
+   {
+     ROSE_ASSERT(switchStatement != NULL);
+
+  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+     if (symbol_table_case_insensitive_semantics == true)
+          switchStatement->setCaseInsensitive(true);
+
+     if (switchStatement->get_item_selector() == NULL)
+          switchStatement->set_item_selector(item_selector);
+
+     if (switchStatement->get_body() == NULL)
+          switchStatement->set_body(body);
+
+     setOneSourcePositionForTransformation(switchStatement);
+     if (item_selector != NULL)
+          item_selector->set_parent(switchStatement);
+     if (body != NULL)
+          body->set_parent(switchStatement);
+   }
+
+
+void
+SageInterface::initializeWhileStatement(SgWhileStmt* whileStatement, SgStatement *  condition, SgStatement *body, SgStatement *else_body)
+   {
+     ROSE_ASSERT(whileStatement);
+
+  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+     if (symbol_table_case_insensitive_semantics == true)
+          whileStatement->setCaseInsensitive(true);
+
+     if (whileStatement->get_condition() == NULL)
+          whileStatement->set_condition(condition);
+     if (whileStatement->get_body() == NULL)
+          whileStatement->set_body(body);
+
+  // Python support.
+     if (whileStatement->get_else_body() == NULL)
+          whileStatement->set_else_body(else_body);
+
+     setOneSourcePositionNull(whileStatement);
+     if (condition) condition->set_parent(whileStatement);
+     if (body) body->set_parent(whileStatement);
+
+  // DQ (8/10/2011): This is added by Michael to support a Python specific feature.
+     if (else_body != NULL)
+        {
+          whileStatement->set_else_body(else_body);
+          else_body->set_parent(whileStatement);
+        }
+   }
+
+
+
 SgNamespaceDefinitionStatement*
 SageInterface::enclosingNamespaceScope( SgDeclarationStatement* declaration )
    {

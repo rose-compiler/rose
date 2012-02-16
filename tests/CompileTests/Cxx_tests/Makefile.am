@@ -126,6 +126,7 @@ test2004_59.C \
 test2004_60.C \
 test2004_61.C \
 test2004_62.C \
+test2004_63.C \
 test2004_65.C \
 test2004_67.C \
 test2004_68.C \
@@ -453,7 +454,6 @@ test2007_52.C \
 test2007_53.C \
 test2007_57.C \
 test2007_59.C \
-test2007_62.C \
 test2007_70.C \
 test2007_72.C \
 test2007_75.C \
@@ -646,11 +646,14 @@ test_int_lexemes_donot_pass.C \
 test_simple_int.C \
 test_wchars.C \
 lexPhase2003_01.C \
-math.C \
 inputForLoopLocator.C \
 X.C \
 test2005_09.C \
  test2011_89.C \
+ test2012_01.C \
+ test2012_02.C \
+ test2012_03.C \
+ test2012_04.C \
  test2006_125.C 
 
 # DQ (2/15/2012): These test codes fail on OSX only.
@@ -679,7 +682,8 @@ endif
 #
 if ROSE_USE_EDG_VERSION_4_3
 TESTCODE_CURRENTLY_FAILING = \
-test2004_63.C \
+test2007_62.C \
+math.C \
 test2004_64.C \
 test2004_77.C \
 test2004_78.C \

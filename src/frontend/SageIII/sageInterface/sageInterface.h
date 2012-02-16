@@ -358,8 +358,18 @@ struct hash_nodeptr
    // DQ (8/27/2005):
    bool isOverloaded (SgFunctionDeclaration * functionDeclaration);
 
+// DQ (2/14/2012): Added support function used for variable declarations in conditionals.
+//! Support function used for variable declarations in conditionals
+   void initializeIfStmt(SgIfStmt *ifstmt, SgStatement* conditional, SgStatement * true_body, SgStatement * false_body);
+
+//! Support function used for variable declarations in conditionals
+   void initializeSwitchStatement(SgSwitchStatement* switchStatement,SgStatement *item_selector,SgStatement *body);
+
+//! Support function used for variable declarations in conditionals
+   void initializeWhileStatement(SgWhileStmt* whileStatement, SgStatement *  condition, SgStatement *body, SgStatement *else_body);
+
   //! Generate unique names for expressions and attach the names as persistent attributes ("UniqueNameAttribute")
-  void annotateExpressionsWithUniqueNames (SgProject* project);
+   void annotateExpressionsWithUniqueNames (SgProject* project);
 
    //! Check if a SgNode is a main() function declaration
    bool isMain (const SgNode* node);

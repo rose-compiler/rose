@@ -5343,7 +5343,7 @@ $CLASSNAME::get_type() const
   // DQ (9/27/2006): Added assertion
   // ROSE_ASSERT(get_symbol()->get_type() != NULL);
 
-     printf ("In $CLASSNAME::get_type(): symbol = %p = %s \n",symbol,symbol->class_name().c_str());
+  // printf ("In $CLASSNAME::get_type(): symbol = %p = %s \n",symbol,symbol->class_name().c_str());
      SgType* type = symbol->get_type();
      if (type == NULL)
         {

@@ -215,7 +215,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                    }
                }
              }
-#if 1
+#if 0
           printf ("In Unparser::statementFromFile (statementInFile = %s output = %s stmt = %p = %s = %s in file = %s sourceFilename = %s ) \n",
                (statementInFile == true) ? "true": "false", (isOutputInCodeGeneration == true) ? "true": "false", stmt, 
                stmt->class_name().c_str(), SageInterface::get_name(stmt).c_str(),statementfilename.c_str(), sourceFilename.c_str());
