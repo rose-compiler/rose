@@ -3431,7 +3431,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
                ROSE_ASSERT(ninfo.get_declstatement_ptr() != NULL);
 
-               printf ("Inside of unparseVarDeclStmt: namedType = %p \n",namedType);
+            // printf ("Inside of unparseVarDeclStmt: namedType = %p \n",namedType);
                if (namedType != NULL)
                   {
                  // DQ (10/5/2004): This controls the unparsing of the class definition
@@ -3579,11 +3579,11 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                ninfo_for_type.set_global_qualification_required(decl_item->get_global_qualification_required_for_type());
                ninfo_for_type.set_type_elaboration_required(decl_item->get_type_elaboration_required_for_type());
 
-               printf ("Inside of unparseVarDeclStmt: calling unparseType() tmp_type = %p = %s \n",tmp_type,tmp_type->class_name().c_str());
+            // printf ("Inside of unparseVarDeclStmt: calling unparseType() tmp_type = %p = %s \n",tmp_type,tmp_type->class_name().c_str());
             // unp->u_type->unparseType(tmp_type, ninfo2);
                ROSE_ASSERT(isSgType(tmp_type) != NULL);
                unp->u_type->unparseType(tmp_type, ninfo_for_type);
-               printf ("Inside of unparseVarDeclStmt: DONE calling unparseType() \n");
+            // printf ("Inside of unparseVarDeclStmt: DONE calling unparseType() \n");
 
             // ROSE_ASSERT(ninfo2.get_declstatement_ptr() != NULL);
                ROSE_ASSERT(ninfo_for_type.get_declstatement_ptr() != NULL);

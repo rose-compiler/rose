@@ -5273,7 +5273,7 @@ SgScopeStatement::getStatementList () const
                ROSE_ASSERT (switchStatement != NULL);
                ROSE_ASSERT (switchStatement->get_body() != NULL);
             // currentStatementList = &(switchStatement->get_body()->getStatementList());
-               return isSgBasicBlock(switchStatement->get_body()) ? isSgBasicBlock(switchStatement->get_body())->getStatementList() : emptyStatementList;
+               return (isSgBasicBlock(switchStatement->get_body()) != NULL) ? isSgBasicBlock(switchStatement->get_body())->getStatementList() : emptyStatementList;
                break;
              }
 
@@ -5283,7 +5283,7 @@ SgScopeStatement::getStatementList () const
                ROSE_ASSERT (whileStatement != NULL);
                ROSE_ASSERT (whileStatement->get_body() != NULL);
             // currentStatementList = &(whileStatement->get_body()->getStatementList());
-               return isSgBasicBlock(whileStatement->get_body()) ? isSgBasicBlock(whileStatement->get_body())->getStatementList() : emptyStatementList;
+               return (isSgBasicBlock(whileStatement->get_body()) != NULL) ? isSgBasicBlock(whileStatement->get_body())->getStatementList() : emptyStatementList;
                break;
              }
 
