@@ -10,7 +10,9 @@ SgAsmElfNoteEntry::ctor(SgAsmElfNoteSection *section)
     section->get_entries()->get_entries().push_back(this);
     ROSE_ASSERT(section->get_entries()->get_entries().size()>0);
     set_parent(section->get_entries());
-    set_name(new SgAsmBasicString(""));
+
+    p_name = new SgAsmBasicString("");
+    p_name->set_parent(this);
 }
 
 /** Get name of note. */
