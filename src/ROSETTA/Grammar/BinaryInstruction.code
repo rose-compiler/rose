@@ -2628,7 +2628,6 @@ HEADER_PE_FILE_HEADER_START
 		explicit SgAsmPEFileHeader(SgAsmGenericFile *f)
 			: SgAsmGenericHeader(f), p_loader_map(NULL), p_section_table(NULL), p_coff_symtab(NULL)
 			{ctor();}
-		virtual ~SgAsmPEFileHeader();
 
 		virtual const char *format_name() const {return "PE";}
 		static bool is_PE (SgAsmGenericFile*);

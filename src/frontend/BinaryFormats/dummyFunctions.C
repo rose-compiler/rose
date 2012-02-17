@@ -157,7 +157,6 @@ void SgAsmElfRelocEntry::parse(ByteOrder sex, const Elf64RelEntry_disk *disk) {}
 // NOTE that "~SgAsmPEStringSection() {}" is implemented in the Cxx_Header.h header file.
 SgAsmCoffStrtab::~SgAsmCoffStrtab() {}
 SgAsmGenericHeader::~SgAsmGenericHeader() {}
-SgAsmPEFileHeader::~SgAsmPEFileHeader() {}
 SgAsmGenericSection::~SgAsmGenericSection() {}
 SgAsmGenericFile::~SgAsmGenericFile() {}
 SgAsmElfStrtab::~SgAsmElfStrtab() {}
@@ -434,4 +433,5 @@ bool SgAsmElfSymbolSection::reallocate() { return false; }
 rose_addr_t SgAsmElfSymverSection::calculate_sizes(size_t*, size_t*, size_t*, size_t*) const { return 0;}
 
 void SgAsmGenericSection::set_size(rose_addr_t) {}
-
+SgAsmGenericString* SgAsmElfNoteEntry::get_name() const {}
+SgAsmGenericString* SgAsmGenericSymbol::get_name() const {}
