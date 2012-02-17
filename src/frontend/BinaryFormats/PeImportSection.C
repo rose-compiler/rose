@@ -212,7 +212,7 @@ SgAsmPEImportSection::parse()
         if (NULL==idir->parse(idir_va)) {
             /* We've reached the zero entry. Remove this directory from the section and delete it. */
             remove_import_directory(idir);
-            delete idir;
+            SageInterface::deleteAST(idir);
             break;
         }
         idir_va += sizeof(SgAsmPEImportDirectory::PEImportDirectory_disk);

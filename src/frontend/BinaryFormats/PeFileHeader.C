@@ -351,16 +351,6 @@ SgAsmPEFileHeader::parse()
     return this;
 }
 
-SgAsmPEFileHeader::~SgAsmPEFileHeader() 
-{
-    // Delete the pointers to the IR nodes containing the STL lists
-    size_t n = get_rvasize_pairs()->get_pairs().size();
-    for (size_t i=0; i<n; i++)
-        delete get_rvasize_pairs()->get_pairs()[i];
-    delete p_rvasize_pairs;
-    p_rvasize_pairs = NULL;
-}
-
 /* Encode the PE header into disk format */
 void *
 SgAsmPEFileHeader::encode(PEFileHeader_disk *disk) const
