@@ -9,7 +9,7 @@ ACLOCAL_AMFLAGS = -I m4
 
 SUBDIRS= src tools examples
 
-DIST_SUBDIRS = src tools examples docs
+#DIST_SUBDIRS = src tools examples docs
 
 DISTCHECK_CONFIGURE_FLAGS=--with-rosedir=$(ROSEDIR) --with-boostdir=$(BOOSTDIR) --with-boost-compiler-string=$(BOOST_COMPILER_STRING) CXX=$(CXX)
 

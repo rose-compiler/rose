@@ -1,4 +1,4 @@
-PDFS=manual.pdf pig-doc.pdf
+PDFS=manual.pdf pig-doc.pdf 
 dist_doc_DATA=$(PDFS)
 nodist_EXTRA_DATA=manual/manual_vars.tex.in
 
@@ -20,7 +20,10 @@ EXTRA_DIST= \
 	icons/internet-news-reader.png
 
 .PHONY: docs HTML clean-termite
-docs: $(PDFS) docs-termite
+docs: $(PDFS) SATIrE-@PACKAGE_VERSION@-manual.pdf # docs-termite
+
+SATIrE-@PACKAGE_VERSION@-manual.pdf: manual.pdf
+	cp manual.pdf SATIrE-@PACKAGE_VERSION@-manual.pdf
 
 $(PDFS): 
 	dir=`basename $@ .pdf` && \
@@ -82,8 +85,7 @@ MYTEXINPUT=$(srcdir)/ltx2htm:$(srcdir)
 if WITH_SWI_PROLOG  # --------------------------------------------------
 
 docs-termite: termite.pdf mostlyclean # MS: deactivated HTML here (target is still available)
-dist_doc_DATA += \
-	termite.pdf
+dist_doc_DATA += termite.pdf
 
 nobase_dist_doc_DATA = $(TERMITE_HTML)
 
